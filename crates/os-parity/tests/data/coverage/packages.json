@@ -1,0 +1,6 @@
+[
+  {"id": "M1-PA", "kind": "package", "spec_ids": ["ALPHA-001", "ALPHA-002", "ALPHA-003", "ALPHA-004", "ALPHA-005", "ALPHA-006", "ALPHA-007", "ALPHA-008", "ALPHA-009", "ALPHA-010", "ALPHA-011"]},
+  {"id": "M1-PB", "kind": "package", "spec_ids": ["ALPHA-012", "ALPHA-013", "ALPHA-014", "ALPHA-015", "ALPHA-016", "BETA-001", "BETA-002", "BETA-003", "GAMMA-001", "ROOT-001"]},
+  {"id": "M1-W15", "kind": "orchestrator_step", "spec_ids": ["ORCH-001"]},
+  {"id": "M1-P00a", "kind": "package", "spec_ids": []}
+]

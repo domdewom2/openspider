@@ -1,0 +1,43 @@
+#[cfg(test)]
+mod tests {
+    // spec: ALPHA-004
+    #[test]
+    fn shared_name() {}
+
+    // spec: ALPHA-005 [M2]
+    #[test]
+    #[ignore = "M2: ALPHA-005 braucht JS-Rendering"]
+    fn deferred_one() {}
+
+    // spec: ALPHA-006
+    #[test]
+    #[ignore = "wartet auf M1-P09"]
+    fn placeholder() {}
+
+    // spec: ALPHA-011
+    #[test]
+    fn criterion_one() {}
+
+    // spec: ALPHA-011 [M2]
+    #[test]
+    #[ignore = "M2: ALPHA-011 zweites Kriterium"]
+    fn criterion_two() {}
+
+    // spec: ALPHA-012
+    #[test]
+    fn fails_for_twelve() {}
+
+    // spec: ALPHA-014
+    #[test]
+    #[ignore = "Klärung K-12: Spec offen"]
+    fn needs_clarification() {}
+
+    // spec: ALPHA-015
+    #[test]
+    #[ignore]
+    fn bare_ignore_with_tag() {}
+
+    // spec: ALPHA-016
+    #[test]
+    fn never_ran_on_this_platform() {}
+}
