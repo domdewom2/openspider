@@ -857,7 +857,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Akzeptanzkriterien:**
   - [ ] `index` + `noindex` (egal ob in einem Tag, zwei Tags oder Meta + Header) → `noindex` wirkt; die Seite steht in beiden Filtern „Index“ und „Noindex“.
   - [ ] `follow` + `nofollow` → `nofollow` wirkt.
-  - [ ] Bei mehreren `max-snippet`-Werten gilt der kleinste nicht-negative Wert (Festlegung, nur für Detailansicht).
+  - [ ] Bei mehreren `max-snippet`-Werten gilt der kleinste nicht-negative Wert (Festlegung, nur für Detailansicht). [M2: Detailansicht; die gespeicherten Rohwerte liefert M1]
 - **Testfixture:** `directives/conflict-meta.html` (`index` und `noindex` in zwei Tags), `/conflict-mixed` (Meta `index`, Header `noindex`).
 
 ### TECH-067 „Respect Noindex“ und „Follow Internal/External Nofollow“
@@ -921,7 +921,7 @@ Begriffe: Eine **Annotation** ist ein Paar (Code, URL) auf Seite P. Die **Annota
 - **Ausgabe (Spalten/Filter/Export):** Feld `code_valid` je Annotation; Fehlergrund (`invalid_language`, `invalid_region`, `invalid_format`).
 - **Akzeptanzkriterien:**
   - [ ] Gültige Formen (case-insensitiv): `x-default`; `ll`; `ll-RR`; mit Script-Option zusätzlich `ll-Ssss` und `ll-Ssss-RR`. `ll` ∈ ISO 639-1, `RR` ∈ ISO 3166-1 alpha-2, `Ssss` ∈ ISO 15924.
-  - [ ] Ungültig: `en-UK` (UK ist kein ISO-3166-Code), `en_GB` (Unterstrich), `eng` (dreistellig), `jp` (kein Sprachcode), `es-419` (numerische Region), `EU`, `de-` , leere Zeichenkette, `x-default-de`.
+  - [ ] Ungültig: `en-UK` (UK ist kein ISO-3166-Code), `en_GB` (Unterstrich), `eng` (dreistellig), `jp` (kein Sprachcode), `es-419` (numerische Region), `EU`, `de-` , leere Zeichenkette, `x-default-de`. **OS-Festlegung 13.10.2026 (K-28):** `eu` ist der ISO-639-1-Code für Baskisch und gültig. Ungültig ist nur ein allein stehendes, vollständig großgeschriebenes `EU` (gelesen als Regionscode ohne Sprache); sonst ist die Prüfung case-insensitiv.
   - [ ] Gültig: `EN-gb`, `de`, `pt-BR`, `zh-Hant`, `zh-Hant-TW`, `X-Default`.
   - [ ] Ein reiner Ländercode, der zufällig auch ein Sprachcode ist (`be` = Belarussisch), gilt als gültige Sprache.
   - [ ] Zurückgezogene ISO-639-1-Codes (`iw`, `in`, `ji`) gelten als ungültig (Festlegung).
@@ -1670,7 +1670,7 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
 - **Eingaben/Konfiguration:** „Crawl Linked XML Sitemaps“ (Standard aus), „Auto Discover XML Sitemaps via robots.txt“ (Standard an, wenn Ersteres an), manuelle Sitemap-URL-Liste.
 - **Ausgabe (Spalten/Filter/Export):** Je Sitemap-Datei: URL, Typ (`urlset`/`sitemapindex`), Anzahl Einträge, unkomprimierte Größe in Bytes, Status. Je Seiten-URL: Liste der Sitemaps, in denen sie steht.
 - **Akzeptanzkriterien:**
-  - [ ] Sitemap-Index-Dateien werden rekursiv aufgelöst (Tiefe max. 3, Festlegung); Zyklen werden erkannt.
+  - [ ] Sitemap-Index-Dateien werden rekursiv aufgelöst (Tiefe max. 3, Festlegung; CRAWL-060 angeglichen, K-27); Zyklen werden erkannt; tiefere Indizes ergeben eine Warnung.
   - [ ] gzip-komprimierte Sitemaps (`.xml.gz` oder `Content-Encoding`/`Content-Type` gzip) werden entpackt; die Größenprüfung nutzt die entpackte Größe.
   - [ ] `<loc>`-Werte werden getrimmt und entity-dekodiert; ungültige URLs werden gezählt, aber nicht übernommen.
   - [ ] Sitemaps werden auch ohne „Crawl Linked XML Sitemaps“ verarbeitet, wenn sie als Start-/Listen-URL angegeben sind.

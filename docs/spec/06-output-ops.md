@@ -1752,7 +1752,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - [ ] Konfiguration mit Exclude `/privat/` → keine URL unter `/privat/` im Crawl.
   - [ ] Nicht lesbare/ungültige Datei → Exit-Code 2 mit Zeilen-/Feldangabe des Fehlers.
   - [ ] Konfiguration einer neueren Schemaversion mit unbekannten Feldern → Warnung, unbekannte Felder werden ignoriert.
-  - [ ] `--set threads=abc` → Exit-Code 2 mit Meldung „ungültiger Wert für threads: Ganzzahl 1–200 erwartet“; `--set unbekannt=1` → Exit-Code 2 mit Vorschlag des ähnlichsten Schlüssels (übernommen aus CRAWL-135, Exit-Code nach OUT-204).
+  - [ ] `--set threads=abc` → Exit-Code 2 mit Meldung „ungültiger Wert für threads: Ganzzahl 1–200 erwartet“; `--set unbekannt=1` → Exit-Code 2 mit Vorschlag des ähnlichsten Schlüssels (übernommen aus CRAWL-135, Exit-Code nach OUT-204). **OS-Festlegung 13.10.2026 (K-30):** Vorgeschlagen wird nur bei Levenshtein ≤ 3 (dieselbe Schwelle wie OUT-203); ohne ähnlichen Schlüssel lautet die Meldung „unbekannter Schlüssel“ mit Verweis auf die Liste der setzbaren Schlüssel.
   - [ ] `--config a.osconfig --set threads=10` → effektiver Wert 10, auch wenn `a.osconfig` 5 setzt.
 - **Testfixture:** `tests/fixtures/out-basic-site/exclude.osconfig`.
 
@@ -2063,6 +2063,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - [ ] Fehlende Felder → Standardwert; unbekannte Felder → Warnung mit Feldpfad, Laden wird fortgesetzt.
   - [ ] Typfehler (z. B. `max_depth = "abc"`) → Fehlermeldung mit Zeile/Spalte, Datei wird nicht geladen.
   - [ ] Handbearbeitete Datei mit Kommentaren lädt korrekt.
+  - **OS-Festlegung 13.10.2026 (K-31):** „Pflichtfeld“ gilt für das Schreiben: jede geschriebene Datei trägt `schema_version` und `generator` (beim Schreiben immer auf die eigene Version gesetzt). Eine Datei ohne `schema_version` lädt als Version 1 ohne Warnung (Regel „fehlende Felder → Standardwert“). „Alle Werte“ heißt alle gesetzten Werte: nicht gesetzte optionale Werte (z. B. `limits.max_depth`) fehlen in der Datei, weil TOML kein `null` kennt. Wertebereiche, die die Spec nicht nennt (z. B. `response_timeout_s` 1–3600, `robots.retries` 0–10), legt die Validierung fest; maßgeblich ist das JSON-Schema.
 - **Testfixture:** `tests/fixtures/config/` mit gültigen, unvollständigen, fehlerhaften und zukünftigen (`schema_version` + 1) Dateien.
 
 ### OUT-222 Trennung von Crawl-Konfiguration und App-Einstellungen

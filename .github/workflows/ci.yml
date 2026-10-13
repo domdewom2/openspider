@@ -12,6 +12,7 @@ jobs:
   fmt:
     name: rustfmt
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -22,6 +23,7 @@ jobs:
   deny:
     name: cargo-deny (licenses, bans, sources)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: EmbarkStudios/cargo-deny-action@v2
@@ -31,6 +33,8 @@ jobs:
   build:
     name: build (${{ matrix.name }})
     runs-on: ${{ matrix.os }}
+    # Obergrenze je Build-Job (Fable-Gate Welle 1: Windows-Haenger in setup-node ohne Abbruch).
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -53,6 +57,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - uses: actions/setup-node@v4
+        timeout-minutes: 10
         with:
           node-version: 22
           cache: npm

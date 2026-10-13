@@ -229,7 +229,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
   - [ ] Eingabe ohne Schema (`site.test`) wird zu `http://site.test/` ergänzt; folgt eine Weiterleitung auf HTTPS, wird diese normal verarbeitet (CRAWL-014).
   - [ ] Eingabe ohne Pfad erhält den Pfad `/`.
   - [ ] Großbuchstaben im Schema/Host werden kleingeschrieben (`HTTPS://Site.TEST/a` → `https://site.test/a`); der Pfad bleibt unverändert.
-  - [ ] Ungültige Eingaben (`htp:/x`, leerer Host, Leerzeichen im Host, nicht unterstütztes Schema wie `ftp:`) werden vor dem Start mit einer Fehlermeldung abgewiesen; es wird kein Crawl angelegt.
+  - [ ] Ungültige Eingaben (`htp:/x`, leerer Host, Leerzeichen im Host, nicht unterstütztes Schema wie `ftp:`) werden vor dem Start mit einer Fehlermeldung abgewiesen; es wird kein Crawl angelegt. Leerzeichen im Pfad sind dagegen gültig und werden prozentkodiert (`site.test/a b` → `http://site.test/a%20b`) (OS-Festlegung 13.10.2026, K-23).
   - [ ] Internationalisierte Domainnamen (`müller.test`) werden per IDNA/Punycode aufgelöst, in der Oberfläche aber in Unicode angezeigt.
   - [ ] Ein laufender Crawl muss pausiert oder gelöscht werden, bevor eine neue Start-URL gestartet werden kann; der vorherige Crawl ist dabei bereits in seiner Crawl-Datei gesichert (CRAWL-125) und bleibt in der Crawl-Verwaltung verfügbar.
   - [ ] Die Start-URL wird unabhängig von Include-/Exclude-Regeln gecrawlt (CRAWL-109/110).
@@ -238,7 +238,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 
 ### CRAWL-002 URL-Parsing und Auflösung relativer Links
 - **Priorität:** P0
-- **Beschreibung:** Gefundene Link-Ziele werden nach WHATWG-URL-Standard gegen die Basis-URL aufgelöst. Die Basis ist das erste gültige `<base href>` im Dokument, sonst die finale URL nach Weiterleitungen.
+- **Beschreibung:** Gefundene Link-Ziele werden nach WHATWG-URL-Standard gegen die Basis-URL aufgelöst. Die Basis ist das erste gültige `<base href>` im Dokument, sonst die finale URL nach Weiterleitungen. „Gültig“ heißt: das `href` löst gegen die Dokument-URL zu einer `http(s)`-URL auf; `<base>`-Elemente ohne oder mit unbrauchbarem `href` werden übersprungen (OS-Festlegung 13.10.2026, K-26).
 - **Eingaben/Konfiguration:** keine (immer aktiv).
 - **Ausgabe:** absolute URL in Spalte `Adresse` `address`; die Originalschreibweise steht im Outlinks-Detail als `Link-Pfad` (OS-Erweiterung, nur bei aktivierter Speicherung).
 - **Akzeptanzkriterien:**
@@ -309,7 +309,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
   - [ ] Ein Wechsel nur des Schemas (`http` ↔ `https`) auf demselben Host bleibt intern.
   - [ ] Ein anderer Port auf demselben Host gilt als intern (OS-Default, siehe Q).
   - [ ] `www.site.test` und `site.test` sind unterschiedliche Subdomains; im Modus „Subdomain“ ist die jeweils andere extern.
-- **Testfixture:** `crawl-scope-basic`: `site.test` verlinkt auf `www.site.test/`, `blog.site.test/`, `other.test/`, `https://site.test/`, `site.test:8081/`; `other.test/` enthält weitere Links, die nicht verfolgt werden dürfen.
+- **Testfixture:** `crawl-scope-basic`: Start auf `www.site.test/`, das auf `site.test/`, `blog.site.test/`, `other.test/`, `https://www.site.test/`, `www.site.test:8081/` verlinkt; `other.test/` enthält weitere Links, die nicht verfolgt werden dürfen. **OS-Festlegung 13.10.2026 (K-21):** Die Fixture startet auf `www`, nicht auf der Stammdomain – ein Start auf `site.test` macht nach der Ausnahme in CRAWL-007 alle Subdomains intern, das Kriterium „die jeweils andere Subdomain ist extern“ wäre dort nicht prüfbar. Die Stammdomain-Ausnahme prüft `crawl-scope-subdomains`.
 
 ### CRAWL-007 Crawl-Bereich: Subdomain (Standard)
 - **Priorität:** P0
@@ -341,7 +341,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 - **Ausgabe:** Tab „Intern“ enthält Ordner-URLs; URLs außerhalb erscheinen gemäß CRAWL-010.
 - **Akzeptanzkriterien:**
   - [ ] Start `https://site.test/blog/`: `/blog/a/` und `/blog/b.html` werden gecrawlt; `/shop/` nicht.
-  - [ ] Start `https://site.test/blog` (ohne abschließenden Schrägstrich): Startordner ist `/`; die Oberfläche zeigt einen Hinweis, dass ein Schrägstrich für die Ordnererkennung fehlt.
+  - [ ] Start `https://site.test/blog` (ohne abschließenden Schrägstrich): Startordner ist `/`; die Oberfläche zeigt einen Hinweis, dass ein Schrägstrich für die Ordnererkennung fehlt. **OS-Festlegung 13.10.2026 (K-22):** Der Hinweis erscheint, wenn der Unterordner-Modus aktiv ist, der Pfad der Start-URL nicht mit `/` endet und das letzte Pfadsegment keinen Punkt enthält (`/blog` → Hinweis, `/blog/index.html` → kein Hinweis). Der Kern liefert den Startordner (`Scope::start_folder`); der Hinweis selbst ist UI (M2).
   - [ ] Die Start-URL muss mit 2xx antworten und auf Seiten im Ordner verlinken; antwortet sie mit 3xx in einen anderen Ordner, wird der Crawl nach dem Abruf des Ziels beendet und ein Hinweis angezeigt.
   - [ ] Mit „Außerhalb des Startordners crawlen“ = an wird die ganze Subdomain gecrawlt, der Start erfolgt aber im Ordner.
   - [ ] Kombination mit „Alle Subdomains“: Ordnerbeschränkung gilt auf jeder Subdomain (OS-Festlegung; siehe Q).
@@ -399,7 +399,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
   - [ ] Verbindung wird mitten im Body abgebrochen → „Verbindungsfehler“ (bereits empfangener Statuscode wird verworfen, OS-Festlegung).
   - [ ] Ungültiges/abgelaufenes Zertifikat → „TLS-Fehler“ (sofern nicht CRAWL-023 anders konfiguriert).
   - [ ] Alle diese Fälle erscheinen im Filter „Keine Antwort“; „Durch robots.txt blockiert“ erscheint ausschließlich im eigenen Filter, nicht zusätzlich unter „Keine Antwort“ (Referenz-Fix 23.1).
-- **Testfixture:** `crawl-no-response`: Links auf `nicht-existent.invalid`, `site.test:1` (geschlossen), `/hang-connect` (Server nimmt Verbindung nicht an, via Blackhole-Port), `/hang-response` (antwortet nie), `/reset-mid-body`, `https://expired.site.test/` (abgelaufenes Zertifikat).
+- **Testfixture:** `crawl-no-response`: Links auf `nicht-existent.invalid`, `site.test:1` (geschlossen), `/hang-response` (antwortet nie), `/reset-mid-body`, `https://expired.site.test/` (abgelaufenes Zertifikat). **OS-Festlegung 13.10.2026 (K-24):** Die frühere Route `/hang-connect` (Blackhole-Port) entfällt, weil ein hängender TCP-Aufbau plattformübergreifend nicht deterministisch herstellbar ist. Das Kriterium „TCP-Aufbau hängt“ wird über die Klassifikation (Unit-Test) und die Berechnung des Verbindungs-Timeouts (min(10 s, Antwort-Timeout), Test gegen einen nicht annehmenden Mini-Server bzw. simulierte Zeit) geprüft.
 
 ### CRAWL-014 HTTP-Weiterleitungen (3xx)
 - **Priorität:** P0
@@ -693,7 +693,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 
 ### CRAWL-039 Bilder
 - **Priorität:** P0
-- **Beschreibung:** Bilder, die über `<img src>`, `<picture><source srcset>` (siehe CRAWL-055), `<input type="image">`, `<link rel="icon">` (OS-Festlegung) und Bild-Links `<a href="x.jpg">` eingebunden sind.
+- **Beschreibung:** Bilder, die über `<img src>`, `<picture><source srcset>` (siehe CRAWL-055), `<input type="image">` und Bild-Links `<a href="x.jpg">` eingebunden sind. `<link rel="icon">` wird nicht als Bild erfasst (OS-Festlegung 13.10.2026, K-25: maßgeblich ist die verbindliche Linkquellen-Liste in CRAWL-052; ONPAGE-170 schließt Icons als Bild-Instanz ebenfalls aus).
 - **Eingaben/Konfiguration:** Ressourcenlinks › Bilder: Speichern (Standard: an), Crawlen (Standard: an).
 - **Ausgabe:** Tab „Intern/Extern › Bilder“; Bilddaten im Bereich „Bilder“.
 - **Akzeptanzkriterien:**
@@ -947,12 +947,12 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 - **Priorität:** P1
 - **Beschreibung:** Robuster Parser für XML-Sitemaps und Sitemap-Indizes nach sitemaps.org-Protokoll inklusive gängiger Erweiterungen.
 - **Eingaben/Konfiguration:** keine.
-- **Ausgabe:** je Eintrag: `loc`, `lastmod`, `changefreq`, `priority`; Erweiterungen: `image:loc`, `xhtml:link rel=alternate hreflang` (für Hreflang-Bereich), `video:*`, `news:*` (nur gespeichert, P2-Auswertung).
+- **Ausgabe:** je Eintrag: `loc`, `lastmod`, `changefreq`, `priority`; Erweiterungen: `image:loc`, `xhtml:link rel=alternate hreflang` (für Hreflang-Bereich), `video:*`, `news:*` (nur gespeichert, P2-Auswertung). M1 liefert `loc`, `lastmod` und hreflang; `changefreq`, `priority`, `image:loc`, `video:*`, `news:*` werden in M1 überlesen (K-27, M2).
 - **Akzeptanzkriterien:**
-  - [ ] `<urlset>` und `<sitemapindex>` werden erkannt; verschachtelte Indizes (Index in Index) werden bis Tiefe 5 verfolgt (OS-Default), darüber Warnung.
+  - [ ] `<urlset>` und `<sitemapindex>` werden erkannt; verschachtelte Indizes (Index in Index) werden bis Tiefe 3 verfolgt (OS-Festlegung 13.10.2026, K-27: angeglichen an TECH-210), darüber Warnung.
   - [ ] gzip-Dateien werden anhand Magic-Bytes erkannt, unabhängig von Endung und Content-Type.
   - [ ] Whitespace um `loc` wird entfernt; XML-Entities (`&amp;`) werden dekodiert.
-  - [ ] Ungültiges XML: alle bis zum Fehler gelesenen Einträge werden verwendet; Fehler wird an der Sitemap vermerkt.
+  - [ ] Ungültiges XML: alle bis zum Fehler gelesenen Einträge werden verwendet; Fehler wird an der Sitemap vermerkt. [M2: Vermerk des Fehlers; M1 verwendet die gelesenen Einträge, K-27]
   - [ ] Sitemaps über 50 000 URLs bzw. 50 MB (unkomprimiert) werden vollständig gelesen, aber für den Sitemaps-Bereich als Verstoß markiert.
   - [ ] Plain-Text-Sitemaps (eine URL pro Zeile) und RSS/Atom-Feeds werden als Sitemap akzeptiert (OS-Festlegung, siehe Q).
   - [ ] Speicherverbrauch beim Parsen einer 50-MB-Sitemap bleibt unter 100 MB (Streaming-Parser).
@@ -1388,11 +1388,11 @@ Gemeinsame Regeln: Ein Limit von 0 oder leer bedeutet „unbegrenzt“, sofern n
 - **Eingaben/Konfiguration:** robots.txt-Modus (CRAWL-099); robots-User-Agent-Token (CRAWL-114).
 - **Ausgabe:** blockierte URLs mit Statuscode 0, Status „Durch robots.txt blockiert“; Spalten `Gesperrt durch Zeile` (Zeilennummer und Regeltext) und `robots.txt-URL` (OS-Erweiterung, auch im Tester CRAWL-102).
 - **Akzeptanzkriterien:**
-  - [ ] Gruppenauswahl: Die spezifischste passende `User-agent`-Gruppe gewinnt (Token-Vergleich case-insensitiv); mehrere Gruppen für denselben Agent werden zusammengeführt; `*` nur, wenn keine spezifische passt.
+  - [ ] Gruppenauswahl: Die spezifischste passende `User-agent`-Gruppe gewinnt (Token-Vergleich case-insensitiv); mehrere Gruppen für denselben Agent werden zusammengeführt; `*` nur, wenn keine spezifische passt. Gruppengrenzen wie im Google-Parser: aufeinanderfolgende `User-agent`-Zeilen bilden eine Gruppe, auch wenn dazwischen `Sitemap:`- oder unbekannte Zeilen stehen; eine neue Gruppe beginnt erst mit einer `User-agent`-Zeile nach einer Regelzeile (`Allow`/`Disallow`) (OS-Festlegung 13.10.2026, K-29).
   - [ ] Regelvorrang: längste passende Regel (nach Zeichenzahl des Musters) gewinnt; bei Gleichstand gewinnt `Allow`.
   - [ ] Platzhalter `*` und Ende-Anker `$` werden unterstützt; Vergleich auf dem prozentkodierten Pfad inklusive Query.
   - [ ] `Disallow:` (leer) erlaubt alles.
-  - [ ] Unbekannte Direktiven werden ignoriert; `Crawl-delay` wird gelesen und als Hinweis angezeigt, aber nicht angewandt (OS-Festlegung; Tempo steuert CRAWL-113).
+  - [ ] Unbekannte Direktiven werden ignoriert; `Crawl-delay` wird gelesen und als Hinweis angezeigt, aber nicht angewandt (OS-Festlegung; Tempo steuert CRAWL-113). Der Hinweis steht als Text „Crawl-delay: <n> s (nicht angewandt)“ im Hinweisfeld der robots.txt-Zeile (`robots_files.note`); die Anzeige ist M2 (K-29).
   - [ ] BOM, CRLF/LF/CR-Zeilenenden, Kommentare (`#`) und Leerzeichen vor dem Doppelpunkt werden toleriert.
   - [ ] Nur die ersten 500 KiB werden ausgewertet (RFC 9309).
   - [ ] Weiterleitungen beim robots.txt-Abruf werden bis zu 5 Hops verfolgt.
@@ -1612,7 +1612,7 @@ Gemeinsame Regeln: Umschreibungen gelten ausschließlich für URLs, die **währe
 - **Akzeptanzkriterien:**
   - [ ] `/echo-headers` zeigt exakt den eingestellten UA-String.
   - [ ] Bei Voreinstellung „Googlebot Smartphone“ wird als robots-Token `Googlebot` verwendet; die Gruppe `User-agent: Googlebot` der Fixture greift.
-  - [ ] Ein frei eingegebener UA ohne gesetztes Token verwendet das Token `*`-Fallback und eine Warnung erscheint.
+  - [ ] Ein frei eingegebener UA ohne gesetztes Token verwendet das Token `*`-Fallback und eine Warnung erscheint. Ohne explizites Token gilt bei Voreinstellungen deren Token aus der Datendatei (nie die Kennung der Voreinstellung, K-29).
   - [ ] Derselbe UA wird für Rendering, Formular-Login und Sitemaps verwendet.
   - [ ] Chrome-Version in Browser-Voreinstellungen entspricht der mitgelieferten Chromium-Version.
   - [ ] [M4] Die Menge der KI-Crawler-Voreinstellungen ist gleich {nicht veraltete `search`- und `user-fetch`-Tokens des Katalogs} ∪ {`GPTBot`, `ClaudeBot`, `Google-Extended`} (Gleichheitstest gegen `ai-crawlers.json`, Gegenstück in AI-120); veraltete Einträge (z. B. `anthropic-ai`, `Google-NotebookLM`) erscheinen nicht. Ein im Katalog ergänzter `search`-Eintrag erscheint nach Neustart ohne Code-Änderung; Voreinstellung `OAI-SearchBot` sendet den `ua_example` des Katalogs und wertet die robots.txt-Gruppe `User-agent: OAI-SearchBot` aus.
