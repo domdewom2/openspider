@@ -72,7 +72,8 @@ fn tabs_match_filter_registry() {
 #[test]
 fn placeholder_tabs_have_address_column_and_population() {
     for tab in tabs::all() {
-        assert_eq!(tab.population, "1", "Grundmenge von {}", tab.id);
+        // Die Grundmenge ist ab P20–P25 je Tab eigene Bedingung (nicht mehr der Platzhalter "1").
+        assert!(!tab.population.is_empty(), "Grundmenge von {}", tab.id);
         assert_eq!(tab.columns.first().map(|c| c.key), Some("Address"));
         let all: Vec<_> = tab.filters.iter().filter(|f| f.id == "All").collect();
         for f in all {

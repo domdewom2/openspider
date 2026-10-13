@@ -1,0 +1,9 @@
+# Szenario "onpage-security" (ONPAGE-030 … ONPAGE-032, F-TLS): Crawls laufen über Hostnamen unter ".test"
+# (network.resolve), HTTP und HTTPS am selben Port. http://site.test/alt.html und https://site.test/secure.html
+# gehören zum selben Host und sind intern; other.test ist extern. /pic.png ist ein internes Bild (alle
+# Inhaltstypen gehören zu "All").
+
+[[route]]
+path = "/pic.png"
+content_type = "image/png"
+body = "PNG"

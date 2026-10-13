@@ -1,0 +1,123 @@
+# Szenario "onpage-internal" (ONPAGE-010 … ONPAGE-018): Internal-Tab, Spalten und Klassenfilter.
+# Start "/" (index.html) verlinkt alle Fälle; /links/a.html (Linkzähler, ONPAGE-015) wird von eigenen
+# Crawls gestartet und ist von "/" aus nicht erreichbar. Der Host "localhost" ist für den Crawler ein anderer
+# Host als 127.0.0.1 und damit extern (F-HOST2).
+
+# ONPAGE-010: Reason-Phrase des Servers, fehlender Content-Type, Non-ASCII-Adressen
+[[route]]
+path = "/custom-reason"
+status = 200
+reason = "Alles gut"
+body = "<!doctype html><html><head><title>Custom Reason</title></head><body><p>custom</p></body></html>"
+
+[[route]]
+path = "/no-ct"
+no_content_type = true
+body = "<!doctype html><html><head><title>No Content Type</title></head><body><p>ohne</p></body></html>"
+
+[[route]]
+path = "/blocked/x.html"
+body = "<!doctype html><html><head><title>Blocked</title></head><body><p>gesperrt</p></body></html>"
+
+[[route]]
+path = "/empty-reason"
+status = 404
+reason = ""
+body = "<!doctype html><html><head><title>Empty Reason</title></head><body><p>404 ohne Reason-Phrase</p></body></html>"
+
+[[route]]
+path = "/caf%C3%A9"
+body = "<!doctype html><html><head><title>Cafe</title></head><body><p>cafe</p></body></html>"
+
+[[route]]
+path = "/stra%C3%9Fe"
+body = "<!doctype html><html><head><title>Strasse</title></head><body><p>strasse</p></body></html>"
+
+# ONPAGE-011: Direktiven und Paginierung aus Headern
+[[route]]
+path = "/elements-header"
+body = "<!doctype html><html><head><title>Elements Header</title></head><body><p>header</p></body></html>"
+[route.headers]
+X-Robots-Tag = "noindex"
+Link = '</p2>; rel="next", </p0>; rel="prev"'
+
+[[route]]
+path = "/p2"
+body = "<!doctype html><html><head><title>P2</title></head><body><p>p2</p></body></html>"
+
+[[route]]
+path = "/p0"
+body = "<!doctype html><html><head><title>P0</title></head><body><p>p0</p></body></html>"
+
+# ONPAGE-018: Refresh-Header (eigener Redirect Type, A-10)
+[[route]]
+path = "/http-refresh"
+body = "<!doctype html><html><head><title>Refresh Header</title></head><body><p>refresh</p></body></html>"
+[route.headers]
+Refresh = "0; url=/ziel"
+
+[[route]]
+path = "/doc.pdf"
+content_type = "application/pdf"
+
+# ONPAGE-012: Größen
+[[route]]
+path = "/size-10k.html"
+body = "<!doctype html><html><head><title>Size 10k</title></head><body><p>10000 Byte</p></body></html>"
+body_size = 10000
+
+[[route]]
+path = "/size-10k-gz"
+body = "<!doctype html><html><head><title>Size 10k gzip</title></head><body><p>10000 Byte, gzip</p></body></html>"
+body_size = 10000
+encoding = "gzip"
+
+[[route]]
+path = "/chunked.pdf"
+content_type = "application/pdf"
+chunked = true
+body = "%PDF-1.4 chunked ohne Content-Length"
+
+# ONPAGE-014: Weiterleitungen und Ordnertiefe
+[[route]]
+path = "/r"
+status = 301
+location = "/ziel"
+
+[[route]]
+path = "/rel-redirect"
+status = 302
+location = "/ziel"
+
+[[route]]
+path = "/ziel"
+body = "<!doctype html><html><head><title>Ziel</title></head><body><p>ziel</p></body></html>"
+
+[[route]]
+path = "/folders/b"
+body = "<!doctype html><html><head><title>Folders b</title></head><body><p>b</p></body></html>"
+
+# ONPAGE-018: technische Spalten (gzip-Kopie von same1.html)
+[[route]]
+path = "/tech/gz-same1.html"
+encoding = "gzip"
+
+[[route]]
+path = "/slow"
+delay_ms = 500
+body = "<!doctype html><html><head><title>Slow</title></head><body><p>langsam</p></body></html>"
+
+[[route]]
+path = "/lm"
+body = "<!doctype html><html><head><title>Last Modified</title></head><body><p>lm</p></body></html>"
+[route.headers]
+Last-Modified = "Wed, 21 Oct 2026 07:28:00 GMT"
+
+[[route]]
+path = "/no-lm"
+body = "<!doctype html><html><head><title>No Last Modified</title></head><body><p>ohne</p></body></html>"
+
+# Gegenseite für die Linkzähler (ONPAGE-015): externer Host localhost
+[[route]]
+path = "/extern/ziel.html"
+body = "<!doctype html><html><head><title>Extern</title></head><body><a href='/never-seen.html'>nie</a></body></html>"

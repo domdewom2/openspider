@@ -1,0 +1,59 @@
+# Szenario "onpage-external" (ONPAGE-025, ONPAGE-026): Start auf 127.0.0.1, der Host "localhost" ist extern
+# (F-HOST2). index.html verlinkt ext.html viermal (2 Seiten x 2 Links), dazu je einen externen Link pro
+# Inhaltstyp und eine durch die robots.txt gesperrte URL. refused.html (eigener Crawl, ein Wiederholversuch
+# der Engine kostet Zeit) verlinkt einen geschlossenen Port (localhost:1, Connection Refused). ext.html verlinkt /never-seen.html (darf nie abgerufen werden). sub.html verlinkt eine
+# Subdomain (blog.site.test), die extern bleibt, solange "alle Subdomains" aus ist.
+
+[[route]]
+path = "/ext-404"
+status = 404
+body = "<!doctype html><html><head><title>404</title></head><body><p>nicht da</p></body></html>"
+
+[[route]]
+path = "/ext.png"
+content_type = "image/png"
+body = "PNG"
+
+[[route]]
+path = "/ext.js"
+content_type = "application/javascript"
+body = "var a = 1;"
+
+[[route]]
+path = "/ext.css"
+content_type = "text/css"
+body = "body { color: red; }"
+
+[[route]]
+path = "/ext.pdf"
+content_type = "application/pdf"
+body = "%PDF-1.4"
+
+[[route]]
+path = "/ext.swf"
+content_type = "application/x-shockwave-flash"
+body = "FWS"
+
+[[route]]
+path = "/ext.json"
+content_type = "application/json"
+body = "{}"
+
+[[route]]
+path = "/ext.mp4"
+content_type = "video/mp4"
+body = "mp4"
+
+[[route]]
+path = "/ext.xml"
+content_type = "application/xml"
+body = "<a/>"
+
+[[route]]
+path = "/ext-none"
+no_content_type = true
+body = "ohne Content-Type"
+
+[[route]]
+path = "/ext-blocked/x.html"
+body = "<!doctype html><html><head><title>Blocked</title></head><body><p>gesperrt</p></body></html>"
