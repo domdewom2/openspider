@@ -47,3 +47,46 @@ axum = "0.8"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "time", "sync", "io-util", "signal"] }
 toml = "0.9"
 serde_json = "1"
+
+# M1 (docs/plan/M1.md 3.1) – von den Paketen über `workspace = true` eingebunden
+uuid = { version = "1", features = ["v7", "serde"] }
+time = { version = "0.3", features = ["serde", "formatting", "parsing", "local-offset"] }
+thiserror = "2"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+bytes = "1"
+futures-util = "0.3"
+# Keine automatische Dekompression (gzip/brotli/deflate-Features bewusst aus): Transfer-Bytes werden selbst gezählt.
+reqwest = { version = "0.13", default-features = false, features = ["rustls", "http2", "stream"] }
+flate2 = "1"
+brotli = "9"
+cookie_store = "0.22"
+md-5 = "0.11"
+hex = "0.4"
+keyring = "4"
+fancy-regex = "0.19"
+psl = "2"
+scraper = "0.27"
+ego-tree = "0.11"
+encoding_rs = "0.8"
+quick-xml = "0.42"
+lopdf = "0.45"
+unicode-segmentation = "1"
+csv = "1"
+rust_xlsxwriter = "0.99"
+calamine = "0.36"
+base64 = "0.23"
+rmcp = { version = "3", default-features = false, features = ["server", "client", "transport-io"] }
+strsim = "0.11"
+dirs = "7"
+rustls = "0.23"
+tokio-rustls = "0.26"
+rcgen = "0.14"
+schemars = "1"
+libc = "0.2"
+tempfile = "3"
+# nur Windows (P28, RSS über GetProcessMemoryInfo): in den Crate-Manifesten unter [target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_System_ProcessStatus", "Win32_System_Threading", "Win32_Foundation"] }
+# dev-Abhängigkeiten (Property-Rundreise P13, Schriftgenerator UI-038)
+proptest = "1"
+ttf-parser = "0.25"

@@ -10,3 +10,7 @@ authors.workspace = true
 [dependencies]
 os-model.workspace = true
 rusqlite.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

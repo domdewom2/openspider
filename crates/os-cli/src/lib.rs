@@ -25,11 +25,7 @@ pub enum Command {
 pub fn run(cli: Cli) -> i32 {
     match cli.command {
         Command::Crawl { url } => {
-            let config = os_model::CrawlConfig::new(url);
-            eprintln!(
-                "openspider crawl: noch nicht implementiert (Start-URL: {})",
-                config.start_url
-            );
+            eprintln!("openspider crawl: noch nicht implementiert (Start-URL: {url})");
             0
         }
     }

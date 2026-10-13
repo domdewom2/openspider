@@ -10,3 +10,5 @@ authors.workspace = true
 [dependencies]
 os-model.workspace = true
 os-url.workspace = true
+scraper.workspace = true
+ego-tree.workspace = true

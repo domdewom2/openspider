@@ -1,0 +1,96 @@
+//! Fehlertyp von `os-store`.
+
+use std::path::PathBuf;
+
+use os_model::ModelError;
+
+/// Fehler beim Anlegen, Öffnen und Lesen einer Crawl-Datei.
+#[derive(Debug, thiserror::Error)]
+pub enum StoreError {
+    /// Dateisystemfehler.
+    #[error("Dateifehler bei {path}: {source}")]
+    Io {
+        /// Betroffener Pfad.
+        path: PathBuf,
+        /// Ursache.
+        #[source]
+        source: std::io::Error,
+    },
+    /// SQLite-Fehler.
+    #[error("SQLite-Fehler: {0}")]
+    Sqlite(#[from] rusqlite::Error),
+    /// Die Datei existiert nicht.
+    #[error("Datei nicht gefunden: {}", .0.display())]
+    NotFound(PathBuf),
+    /// Beim Anlegen existiert die Datei schon.
+    #[error("Datei existiert bereits: {}", .0.display())]
+    AlreadyExists(PathBuf),
+    /// Keine OpenSpider-Crawl-Datei (OUT-230): fremde SQLite-Datei oder gar keine SQLite-Datei.
+    #[error("{}: keine OpenSpider-Crawl-Datei", .path.display())]
+    NotACrawlFile {
+        /// Betroffene Datei.
+        path: PathBuf,
+    },
+    /// Die Datei ist beschädigt (z. B. abgeschnitten).
+    #[error("{}: Datei beschädigt ({detail})", .path.display())]
+    Corrupt {
+        /// Betroffene Datei.
+        path: PathBuf,
+        /// Ursache.
+        detail: String,
+    },
+    /// Mit einer neueren Schemaversion erstellt (CRAWL-127); die Datei bleibt unverändert.
+    #[error(
+        "{}: mit {generator} erstellt (Schema {found}, unterstützt bis {supported}) – bitte OpenSpider aktualisieren",
+        .path.display()
+    )]
+    NewerVersion {
+        /// Betroffene Datei.
+        path: PathBuf,
+        /// Version laut Datei.
+        found: u32,
+        /// Höchste unterstützte Version.
+        supported: u32,
+        /// Erzeuger laut Datei, falls lesbar (sonst ein allgemeiner Hinweis).
+        generator: String,
+    },
+    /// Die Datei ist älter als das aktuelle Schema und wurde nur lesend geöffnet.
+    #[error("{}: Schema {found} muss auf {supported} migriert werden (nicht im Nur-Lese-Modus möglich)", .path.display())]
+    MigrationRequired {
+        /// Betroffene Datei.
+        path: PathBuf,
+        /// Version laut Datei.
+        found: u32,
+        /// Aktuelle Version.
+        supported: u32,
+    },
+    /// Fehlerhafte Migrationsliste (Lücke oder falsche Reihenfolge).
+    #[error("ungültige Migration: {0}")]
+    Migration(String),
+    /// Ein Pflichtschlüssel fehlt in `crawl_meta`.
+    #[error("crawl_meta: Schlüssel {0:?} fehlt")]
+    MissingMeta(String),
+    /// Ein Wert in `crawl_meta` ist unlesbar.
+    #[error("crawl_meta: Wert {value:?} für {key:?} ungültig")]
+    InvalidMeta {
+        /// Schlüssel.
+        key: String,
+        /// Wert.
+        value: String,
+    },
+    /// In der Datei ist keine Konfiguration gespeichert.
+    #[error("keine Konfiguration in der Crawl-Datei")]
+    MissingConfig,
+    /// Modellfehler (Enum, Zeitstempel, Konfiguration).
+    #[error(transparent)]
+    Model(#[from] ModelError),
+}
+
+impl StoreError {
+    pub(crate) fn io(path: &std::path::Path, source: std::io::Error) -> Self {
+        StoreError::Io {
+            path: path.to_path_buf(),
+            source,
+        }
+    }
+}

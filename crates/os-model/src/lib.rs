@@ -1,37 +1,28 @@
 //! `os-model` – gemeinsame Typen für alle OpenSpider-Crates.
 //!
-//! Enthält `CrawlConfig`, `UrlRecord`, `Link`, `Issue` und IDs. Das Crate hängt nur an
-//! `serde` und ist die Basis, auf die alle anderen Crates aufsetzen.
+//! Enthält Kennungen, Zeit-/ID-Quellen, Enums, das Parse- und Schreibmodell, die Crawl-Konfiguration
+//! und die Indexierbarkeitsbewertung (M1-Plan 3.3/3.4). Das Crate kennt weder HTTP noch SQLite noch HTML.
 
-use serde::{Deserialize, Serialize};
+pub mod config;
+pub mod enums;
+pub mod error;
+pub mod ids;
+pub mod indexability;
+pub mod issue;
+pub mod parse;
+pub mod progress;
+pub mod time;
+pub mod value;
+pub mod write;
 
-/// Konfiguration eines Crawls (Gerüst; wird mit der Spec erweitert).
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct CrawlConfig {
-    /// Start-URL des Crawls.
-    pub start_url: String,
-    /// Optionales Limit für die Anzahl gecrawlter URLs.
-    pub max_urls: Option<u64>,
-}
-
-impl CrawlConfig {
-    /// Neue Konfiguration mit Standardwerten für die gegebene Start-URL.
-    pub fn new(start_url: impl Into<String>) -> Self {
-        Self {
-            start_url: start_url.into(),
-            max_urls: None,
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn new_config_has_defaults() {
-        let cfg = CrawlConfig::new("https://example.com/");
-        assert_eq!(cfg.start_url, "https://example.com/");
-        assert_eq!(cfg.max_urls, None);
-    }
-}
+pub use config::*;
+pub use enums::*;
+pub use error::ModelError;
+pub use ids::*;
+pub use indexability::{evaluate, IndexabilityInput};
+pub use issue::*;
+pub use parse::*;
+pub use progress::Progress;
+pub use time::*;
+pub use value::Value;
+pub use write::*;

@@ -1,21 +1,16 @@
 //! `os-store` – Crawl-Datei (SQLite, WAL), Schema-Migrationen und Abfragen für UI-Tabellen
 //! (Paging, Filter, Sortierung).
 
-use rusqlite::Connection;
+pub mod error;
+pub mod meta;
+pub mod open;
+pub mod profile;
+pub mod schema;
+pub mod sink;
 
-/// Öffnet eine flüchtige In-Memory-Datenbank (Gerüst; echte Crawl-Dateien folgen).
-pub fn open_in_memory() -> rusqlite::Result<Connection> {
-    Connection::open_in_memory()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn sqlite_is_usable() {
-        let conn = open_in_memory().unwrap();
-        let one: i64 = conn.query_row("SELECT 1", [], |row| row.get(0)).unwrap();
-        assert_eq!(one, 1);
-    }
-}
+pub use error::StoreError;
+pub use meta::CrawlMeta;
+pub use open::{backup_path, CrawlFile, CrawlInit, OpenMode};
+pub use profile::StorageProfile;
+pub use schema::{Migration, APPLICATION_ID, MIGRATIONS, SCHEMA_VERSION};
+pub use sink::CrawlSink;
