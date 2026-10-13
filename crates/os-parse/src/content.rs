@@ -23,7 +23,8 @@ use scraper::{ElementRef, Node};
 
 use crate::dom::Document;
 
-const XHTML_NS: &str = "http://www.w3.org/1999/xhtml";
+/// HTML-Namensraum (auch von `elements` genutzt; `dom.rs` führt eine eigene Kopie, siehe Hinweis an `is_block_element`).
+pub(crate) const XHTML_NS: &str = "http://www.w3.org/1999/xhtml";
 
 /// Kennzahlen des Inhaltsbereichs.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -35,6 +36,9 @@ pub struct ContentStats {
 }
 
 /// Elemente, die einen Block bilden (Leerraum davor und danach); `br` zählt als Umbruch.
+///
+/// Entspricht `dom::is_block` (privat in `dom.rs`, anderer Paketbesitz). Sobald diese `pub(crate)` ist, ist diese
+/// Liste durch einen Aufruf von dort zu ersetzen, damit es nur eine Liste gibt.
 pub(crate) fn is_block_element(name: &str) -> bool {
     matches!(
         name,

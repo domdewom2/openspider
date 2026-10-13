@@ -93,7 +93,7 @@ fn emit_font(out: &mut String, prefix: &str, label: &str, map: &BTreeMap<u32, u1
     let _ = writeln!(out, "#[rustfmt::skip]");
     let _ = writeln!(
         out,
-        "pub(super) const {prefix}_OTHER: [(u32, u16); {}] = [",
+        "pub(super) static {prefix}_OTHER: [(u32, u16); {}] = [",
         rest.len()
     );
     for chunk in rest.chunks(6) {

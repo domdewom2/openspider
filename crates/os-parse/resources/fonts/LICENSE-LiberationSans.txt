@@ -1,26 +1,102 @@
-Liberation Sans, Version 1.07.4 (LiberationSans-Regular.ttf, LiberationSans-Bold.ttf)
-=====================================================================================
+Digitized data copyright (c) 2010 Google Corporation
+	with Reserved Font Arimo, Tinos and Cousine.
+Copyright (c) 2012 Red Hat, Inc.
+	with Reserved Font Name Liberation.
 
-Diese beiden Schriftdateien sind die Liberation-1.x-Ausgabe (Hersteller Ascender Corporation, Entwurf
-Steve Matteson, "Copyright (c) 2007 Red Hat, Inc. All rights reserved. LIBERATION is a trademark of Red Hat,
-Inc."). Lizenz laut name-Tabelle der Dateien (Eintrag 13/14):
+This Font Software is licensed under the SIL Open Font License,
+Version 1.1.
 
-    Licensed under the Liberation Fonts license,
-    see https://fedoraproject.org/wiki/Licensing/LiberationFontLicense
+This license is copied below, and is also available with a FAQ at:
+http://scripts.sil.org/OFL
 
-Die Liberation-Fonts-Lizenz der 1.x-Reihe ist die GNU General Public License Version 2 mit einer
-Schriftarten-Ausnahme (Dokumente, die die Schrift einbetten, werden dadurch nicht GPL-pflichtig). Es ist
-NICHT die SIL Open Font License; diese gilt erst ab Liberation 2.0 (Hinweis: der Kopf "Digitized data
-copyright (c) 2010 Google Corporation ... Copyright (c) 2012 Red Hat" gehoert zur 2.x-Reihe und nicht zu
-diesen Dateien).
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
 
-Verwendung in OpenSpider: Aus den Dateien werden nur die Advance-Widths (Zahlen) als Rust-Konstante
-erzeugt (crates/os-parse/src/pixel/metrics.rs); die Schrift selbst wird weder eingebettet noch mit dem
-Programm ausgeliefert.
+PREAMBLE The goals of the Open Font License (OFL) are to stimulate
+worldwide development of collaborative font projects, to support the font
+creation efforts of academic and linguistic communities, and to provide
+a free and open framework in which fonts may be shared and improved in
+partnership with others.
 
-OFFEN (Blocker fuer die Freigabe, siehe Review M1-P05): UI-038 und docs/plan/M1.md verlangen Liberation Sans
-bzw. Arimo unter der SIL OFL 1.1. Die beiden TTF-Dateien sind durch Liberation Sans 2.1.x (OFL 1.1,
-https://github.com/liberationfonts/liberation-fonts/releases) oder Arimo (OFL, Google Fonts) zu ersetzen.
-Danach diese Datei durch den OFL-Text der gewaehlten Ausgabe samt deren Copyright-Zeilen ersetzen, NOTICE
-anpassen, `cargo run -p os-parse --example gen_pixel_metrics` ausfuehren und die Tests laufen lassen
-(tests/pixel_license.rs prueft, dass NOTICE und diese Datei zur name-Tabelle der Schriftdateien passen).
+The OFL allows the licensed fonts to be used, studied, modified and
+redistributed freely as long as they are not sold by themselves.
+The fonts, including any derivative works, can be bundled, embedded,
+redistributed and/or sold with any software provided that any reserved
+names are not used by derivative works.  The fonts and derivatives,
+however, cannot be released under any other type of license.  The
+requirement for fonts to remain under this license does not apply to
+any document created using the fonts or their derivatives.
+
+ 
+
+DEFINITIONS
+"Font Software" refers to the set of files released by the Copyright
+Holder(s) under this license and clearly marked as such.
+This may include source files, build scripts and documentation.
+
+"Reserved Font Name" refers to any names specified as such after the
+copyright statement(s).
+
+"Original Version" refers to the collection of Font Software components
+as distributed by the Copyright Holder(s).
+
+"Modified Version" refers to any derivative made by adding to, deleting,
+or substituting ? in part or in whole ?
+any of the components of the Original Version, by changing formats or
+by porting the Font Software to a new environment.
+
+"Author" refers to any designer, engineer, programmer, technical writer
+or other person who contributed to the Font Software.
+
+
+PERMISSION & CONDITIONS
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of the Font Software, to use, study, copy, merge, embed, modify,
+redistribute, and sell modified and unmodified copies of the Font
+Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components,in
+   Original or Modified Versions, may be sold by itself.
+
+2) Original or Modified Versions of the Font Software may be bundled,
+   redistributed and/or sold with any software, provided that each copy
+   contains the above copyright notice and this license. These can be
+   included either as stand-alone text files, human-readable headers or
+   in the appropriate machine-readable metadata fields within text or
+   binary files as long as those fields can be easily viewed by the user.
+
+3) No Modified Version of the Font Software may use the Reserved Font
+   Name(s) unless explicit written permission is granted by the
+   corresponding Copyright Holder. This restriction only applies to the
+   primary font name as presented to the users.
+
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
+   Software shall not be used to promote, endorse or advertise any
+   Modified Version, except to acknowledge the contribution(s) of the
+   Copyright Holder(s) and the Author(s) or with their explicit written
+   permission.
+
+5) The Font Software, modified or unmodified, in part or in whole, must
+   be distributed entirely under this license, and must not be distributed
+   under any other license. The requirement for fonts to remain under
+   this license does not apply to any document created using the Font
+   Software.
+
+
+ 
+TERMINATION
+This license becomes null and void if any of the above conditions are not met.
+
+ 
+
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT.  IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM OTHER
+DEALINGS IN THE FONT SOFTWARE.
+

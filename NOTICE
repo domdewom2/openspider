@@ -4,17 +4,16 @@ Copyright (c) OpenSpider contributors. Licensed under the Apache License, Versio
 Dieses Produkt enthält folgende Fremdkomponenten mit eigenen Lizenzbedingungen.
 
 --------------------------------------------------------------------------------
-Liberation Sans (Regular, Bold), Version 1.07.4
+Liberation Sans (Regular, Bold), Version 2.1.5
 --------------------------------------------------------------------------------
 Verwendet für die Pixelbreiten-Engine (UI-038, crates/os-parse): Aus den Schriftdateien unter
 crates/os-parse/resources/fonts/ werden mit examples/gen_pixel_metrics.rs ausschließlich die
 Advance-Widths als Rust-Konstante (crates/os-parse/src/pixel/metrics.rs) erzeugt. Die unveränderten
 Schriftdateien liegen zur Reproduzierbarkeit im Repository, werden aber nicht in das Programm eingebettet.
 
-Copyright (c) 2007 Red Hat, Inc. All rights reserved. LIBERATION is a trademark of Red Hat, Inc.
-Schrift: Ascender Corporation (Steve Matteson).
+Digitized data copyright (c) 2010 Google Corporation.
+Copyright (c) 2012 Red Hat, Inc.
+Schrift: Ascender Corporation (Steve Matteson), basierend auf Arimo.
 
-Lizenz: Liberation Fonts license (1.x-Reihe: GNU General Public License Version 2 mit
-Schriftarten-Ausnahme), https://fedoraproject.org/wiki/Licensing/LiberationFontLicense
-Hinweis: Das ist nicht die SIL Open Font License. Die Dateien sind vorläufig und durch Liberation Sans 2.1.x
-oder Arimo (beide SIL OFL 1.1) zu ersetzen, siehe crates/os-parse/resources/fonts/LICENSE-LiberationSans.txt.
+Lizenz: SIL Open Font License, Version 1.1, Volltext in
+crates/os-parse/resources/fonts/LICENSE-LiberationSans.txt

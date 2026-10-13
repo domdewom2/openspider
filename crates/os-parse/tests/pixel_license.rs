@@ -1,7 +1,8 @@
 //! UI-038: Die Lizenzangaben im Repository passen zu den tatsächlich eingecheckten Schriftdateien. Die name-Tabelle
 //! der Schrift (Version, Copyright, Lizenzhinweis) ist maßgeblich; NOTICE und der Lizenztext unter
 //! `resources/fonts/` dürfen nichts anderes behaupten (Liberation 1.x ist GPLv2 mit Schriftarten-Ausnahme,
-//! erst Liberation 2.x und Arimo stehen unter der SIL OFL).
+//! erst Liberation 2.x und Arimo stehen unter der SIL OFL). Die eingecheckten Dateien müssen laut UI-038 die
+//! OFL-Ausgabe sein.
 
 use std::path::PathBuf;
 
@@ -49,17 +50,23 @@ fn notice_names_the_version_and_copyright_of_the_font_files() {
             notice.contains(&version),
             "NOTICE nennt nicht {version:?} ({file})"
         );
-        // Erste Copyright-Zeile der Schrift (ohne Vorspann "Copyright (c) "): Jahr und Inhaber.
+        // Jede Copyright-Zeile der Schrift (name-Eintrag 0 kann mehrzeilig sein): Jahr und Inhaber.
         let copyright = name_entry(file, 0);
-        let holder = copyright
-            .split(". All rights")
-            .next()
-            .unwrap()
-            .trim_end_matches('.');
-        assert!(
-            notice.contains(holder),
-            "NOTICE nennt nicht {holder:?} ({file})"
-        );
+        for line in copyright.lines() {
+            let holder = line
+                .split(". All rights")
+                .next()
+                .unwrap()
+                .trim()
+                .trim_end_matches('.');
+            if holder.is_empty() {
+                continue;
+            }
+            assert!(
+                notice.contains(holder),
+                "NOTICE nennt nicht {holder:?} ({file})"
+            );
+        }
     }
 }
 
@@ -109,6 +116,24 @@ fn generated_metrics_header_carries_the_font_provenance() {
         assert!(
             metrics.contains(&name_entry(file, 13)),
             "metrics.rs nennt die Lizenz aus {file} nicht"
+        );
+    }
+}
+
+// spec: UI-038
+#[test]
+fn bundled_font_files_are_ofl_licensed() {
+    // UI-038: Liberation Sans 2.x bzw. Arimo unter SIL OFL 1.1 – Liberation 1.x (GPLv2 + Ausnahme) ist nicht zulässig.
+    for file in FILES {
+        let license = name_entry(file, 13);
+        assert!(
+            license.contains("SIL Open Font License"),
+            "{file}: keine OFL-Schrift, name-Tabelle sagt: {license}"
+        );
+        let version = name_entry(file, 5);
+        assert!(
+            !version.contains("1.07") && !version.starts_with("Version 1."),
+            "{file}: Liberation-1.x-Ausgabe ({version})"
         );
     }
 }

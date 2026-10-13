@@ -13,11 +13,9 @@ use ego_tree::iter::Edge;
 use os_model::ExtractedText;
 use scraper::{ElementRef, Node};
 
-use crate::content::is_block_element;
+use crate::content::{is_block_element, XHTML_NS};
 use crate::dom::{self, Document};
 use crate::text;
-
-const XHTML_NS: &str = "http://www.w3.org/1999/xhtml";
 
 /// Vollständige Listen der erfassten Elemente in Dokumentreihenfolge.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
