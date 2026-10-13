@@ -1,0 +1,74 @@
+// spec: B-001
+#[test]
+fn regular_ok() {}
+
+// spec: B-001
+#[test]
+#[ignore = "Benchmark (P28): Durchsatz 1 Mio. Zeilen"]
+fn bench_throughput() {}
+
+// spec: B-002
+#[test]
+#[ignore = "Benchmark (P28): nur manuell"]
+fn bench_only_one() {}
+
+// spec: B-002
+#[test]
+#[ignore = "Benchmark (P28): zweiter Lauf"]
+fn bench_only_two() {}
+
+// spec: B-003 [M2]
+#[test]
+#[ignore = "M2: B-003 braucht JS-Rendering"]
+fn deferred_regular() {}
+
+// spec: B-003
+#[test]
+#[ignore = "Benchmark (P28): Speicher"]
+fn bench_next_to_deferred() {}
+
+// spec: B-004
+#[test]
+#[ignore = "wartet auf M1-P09"]
+fn placeholder() {}
+
+// spec: B-004
+#[test]
+#[ignore = "Benchmark (P28): Laufzeit"]
+fn bench_next_to_placeholder() {}
+
+// spec: B-005
+#[test]
+fn bench_that_ran_green() {}
+
+// spec: B-005
+#[test]
+#[ignore = "Benchmark (P28): mit --ignored gelaufen"]
+fn bench_with_result() {}
+
+// spec: X-001
+#[test]
+fn extra_ok() {}
+
+// spec: X-001
+#[test]
+#[ignore = "Benchmark (P28): Zusatz-ID"]
+fn extra_bench() {}
+
+// spec: X-002
+#[test]
+#[ignore = "Benchmark (P28): nur Benchmark"]
+fn extra_only_bench() {}
+
+// spec: Z-999
+#[test]
+fn tag_without_package() {}
+
+#[test]
+#[ignore = "Benchmark (P28): ohne Tag"]
+fn untagged_bench() {}
+
+// spec: B-004
+#[test]
+#[ignore = "benchmark: kleingeschrieben ist kein gueltiger Praefix"]
+fn lowercase_bench() {}
