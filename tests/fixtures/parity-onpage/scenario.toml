@@ -1,0 +1,49 @@
+# Szenario "parity-onpage" (Port 8902) - erzeugt von tests/parity/gen/generate.py,
+# nicht von Hand bearbeiten (Aenderungen im Generator vornehmen und neu erzeugen).
+
+[[route]]
+path = "/content/dupe-noindex.html"
+[route.headers]
+"X-Robots-Tag" = "noindex"
+
+[[route]]
+path = "/ctype/t-invalid"
+content_type = "foo"
+body = "invalid content type fixture"
+
+[[route]]
+path = "/ctype/t-mp4"
+content_type = "video/mp4"
+body = "mp4 fixture"
+
+[[route]]
+path = "/ctype/t-pdf.pdf"
+content_type = "application/pdf"
+
+[[route]]
+path = "/ctype/t-swf"
+content_type = "application/x-shockwave-flash"
+body = "FWS fixture"
+
+[[route]]
+path = "/ctype/t-woff2"
+content_type = "font/woff2"
+body = "woff2 fixture"
+
+[[route]]
+path = "/ctype/t-xhtml"
+content_type = "application/xhtml+xml"
+body = "<?xml version=\"1.0\"?><html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title>Content type XHTML</title></head><body><h1>XHTML</h1></body></html>"
+
+[[route]]
+path = "/urls/%C3%BCber-uns.html"
+body = "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>urls umlaut river breeze harbor midland</title>\n<meta name=\"description\" content=\"Description of urls umlaut maple pond glacier delta alpha cliff window moon orchard equator\">\n</head>\n<body>\n<nav><a href=\"/\">Home</a> <a href=\"/urls/\">Section</a></nav>\n<main>\n<h1>urls umlaut silver harbor</h1>\n<h2>Section urls umlaut dew</h2>\n<p>cosmos grassland highland omega canyon timber library engine whisper marble glacier upland equator grassland kappa sigma pebble tropic upland frost bridge lake sigma pattern meadow cosmos summit journal library sigma galaxy dune sleet stone sigma basin gamma cloud ocean sleet alpha horizon brook valley copper signal wasteland summit tropic pebble equator storm wasteland mist cedar inland basin savanna sleet ocean archive comet horizon evening whisper stone upland wasteland anchor island orchard equator ledger equator thunder meridian snow library tundra orchard compass snow brook breeze marble star equator sleet orbit arctic wasteland whisper glacier cove window valley meridian spring storm granite network meadow copper whisper evening willow meridian horizon signal season delta harvest kappa archive maple pond fjord whisper dew basin</p>\n</main>\n<footer><p>Fixture footer text for parity checks.</p></footer>\n</body>\n</html>\n"
+
+[[route]]
+path = "/urls/a//b.html"
+body = "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>urls double slash tundra meadow market</title>\n<meta name=\"description\" content=\"Description of urls double slash journal star sun galaxy pebble forest nebula orbit cotton\">\n</head>\n<body>\n<nav><a href=\"/\">Home</a> <a href=\"/urls/\">Section</a></nav>\n<main>\n<h1>urls double slash galaxy</h1>\n<h2>Section urls double slash</h2>\n<p>storm stone star market moon alpha inland anchor fjord sleet lake velvet lake horizon journal ledger planet pond tropic cedar polar marble storm sun woodland pattern letter quartz glacier ledger cliff river bridge lowland polar sun delta marble pebble willow station grassland planet ledger brook snow evening harvest whisper lantern quartz orbit lake willow wasteland ledger station polar midland window mist network delta wasteland dew kappa archive basin tundra galaxy letter arctic cliff compass ridge network summit creek pebble cliff ribbon ledger journal lagoon haze savanna alpha silver amber copper nebula cliff homeland gamma granite mist rain ridge savanna alpha copper storm wasteland zenith lowland moon basin willow reef market haze gamma pebble breeze maple morning frost kitchen timber compass</p>\n</main>\n<footer><p>Fixture footer text for parity checks.</p></footer>\n</body>\n</html>\n"
+
+[[route]]
+path = "/urls/mein%20artikel.html"
+body = "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>urls space moon library spring basin</title>\n<meta name=\"description\" content=\"Description of urls space valley haze silver kappa upland fjord omega fjord evening inland\">\n</head>\n<body>\n<nav><a href=\"/\">Home</a> <a href=\"/urls/\">Section</a></nav>\n<main>\n<h1>urls space thunder evening</h1>\n<h2>Section urls space fjord</h2>\n<p>archive meridian orbit cloud kitchen season lagoon wasteland meridian bridge lagoon ocean cove stone gamma nebula valley library highland morning homeland letter pattern inland creek cove lambda pond island cedar copper ridge frost reef homeland horizon pattern bridge grassland creek tropic evening dew linen amber market star rain quartz tropic galaxy dune omega coastal valley compass thunder window granite storm pebble dew compass breeze coastal galaxy dune whisper forest anchor marble borderland creek kitchen harbor inland river tropic cotton granite archive river breeze kappa star marble galaxy maple meridian timber mist equator mist season thunder lowland bridge evening frost upland woodland homeland tropic lake signal cosmos cotton beta pebble woodland orchard lantern signal planet timber alpha tropic compass rain lagoon</p>\n</main>\n<footer><p>Fixture footer text for parity checks.</p></footer>\n</body>\n</html>\n"
+

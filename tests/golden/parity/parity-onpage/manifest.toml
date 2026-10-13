@@ -1,0 +1,80 @@
+# Paritaets-Golden fuer "parity-onpage": Metadaten und Exportliste (Format: docs/plan/M1.md 5.2).
+# Vom Nutzer auszufuellen: sf_version, exported_at, je Export status (pending -> present | unavailable) und ggf. sf_file.
+# Die Roh-Exporte der Referenz liegen unveraendert in sf/ (siehe ../README.md); Agents legen dort nichts an.
+site = "parity-onpage"
+port = 8902                       # Port beim SF-Export (wird beim Vergleich zu {BASE} normalisiert)
+sf_version = ""                  # vom Nutzer eintragen, z. B. "24.3"
+exported_at = ""                 # vom Nutzer eintragen, z. B. "2026-10-20"
+sf_settings = "SF Free, Standardkonfiguration nach Neuinstallation (Speicher-Modus Standard, robots.txt respektieren); zusaetzlich aktiviert: Hreflang speichern+crawlen, XML-Sitemaps ueber robots.txt crawlen (falls in der Free-Version gesperrt: Exporte dieser Bereiche auf status = \"unavailable\" setzen und hier vermerken)."
+
+[[export]]
+sf_file = "internal_all.csv"
+os = "tab:Internal:All"
+mapping = "internal_all"
+status = "pending"               # pending | present | unavailable
+
+[[export]]
+sf_file = "external_all.csv"
+os = "tab:External:All"
+mapping = "external_all"
+status = "pending"               # pending | present | unavailable
+
+[[export]]
+sf_file = "response_codes_all.csv"
+os = "tab:Response Codes:All"
+mapping = "response_codes_all"
+status = "pending"               # pending | present | unavailable
+
+[[export]]
+sf_file = "url_all.csv"
+os = "tab:URL:All"
+mapping = "url_all"
+status = "pending"               # pending | present | unavailable
+
+[[export]]
+sf_file = "page_titles_all.csv"
+os = "tab:Page Titles:All"
+mapping = "page_titles_all"
+status = "pending"               # pending | present | unavailable
+
+[[export]]
+sf_file = "meta_description_all.csv"
+os = "tab:Meta Description:All"
+mapping = "meta_description_all"
+status = "pending"               # pending | present | unavailable
+
+[[export]]
+sf_file = "h1_all.csv"
+os = "tab:H1:All"
+mapping = "h1_all"
+status = "pending"               # pending | present | unavailable
+
+[[export]]
+sf_file = "h2_all.csv"
+os = "tab:H2:All"
+mapping = "h2_all"
+status = "pending"               # pending | present | unavailable
+
+[[export]]
+sf_file = "content_all.csv"
+os = "tab:Content:All"
+mapping = "content_all"
+status = "pending"               # pending | present | unavailable
+
+[[export]]
+sf_file = "images_all.csv"
+os = "tab:Images:All"
+mapping = "images_all"
+status = "pending"               # pending | present | unavailable
+
+[[export]]
+sf_file = "all_inlinks.csv"
+os = "bulk:Links:All Inlinks"
+mapping = "all_inlinks"
+status = "pending"               # pending | present | unavailable
+
+[[export]]
+sf_file = "crawl_overview.csv"
+os = "report:Crawl Overview"
+mapping = "crawl_overview"
+status = "pending"               # pending | present | unavailable

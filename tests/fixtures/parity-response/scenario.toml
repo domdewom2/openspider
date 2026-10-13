@@ -1,0 +1,165 @@
+# Szenario "parity-response" (Port 8904) - erzeugt von tests/parity/gen/generate.py,
+# nicht von Hand bearbeiten (Aenderungen im Generator vornehmen und neu erzeugen).
+
+[[route]]
+path = "/chain1"
+status = 301
+location = "/chain2"
+
+[[route]]
+path = "/chain2"
+status = 301
+location = "/ok.html"
+
+[[route]]
+path = "/e400"
+status = 400
+body = "<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\"><title>Error 400</title></head><body><h1>Error 400</h1></body></html>\n"
+
+[[route]]
+path = "/e403"
+status = 403
+body = "<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\"><title>Error 403</title></head><body><h1>Error 403</h1></body></html>\n"
+
+[[route]]
+path = "/e404"
+status = 404
+body = "<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\"><title>Error 404</title></head><body><h1>Error 404</h1></body></html>\n"
+
+[[route]]
+path = "/e410"
+status = 410
+body = "<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\"><title>Error 410</title></head><body><h1>Error 410</h1></body></html>\n"
+
+[[route]]
+path = "/e429"
+status = 429
+body = "<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\"><title>Error 429</title></head><body><h1>Error 429</h1></body></html>\n"
+
+[[route]]
+path = "/e500"
+status = 500
+body = "<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\"><title>Error 500</title></head><body><h1>Error 500</h1></body></html>\n"
+
+[[route]]
+path = "/e503"
+status = 503
+body = "<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\"><title>Error 503</title></head><body><h1>Error 503</h1></body></html>\n"
+
+[[route]]
+path = "/http-refresh-nourl.html"
+[route.headers]
+"Refresh" = "10"
+
+[[route]]
+path = "/http-refresh.html"
+[route.headers]
+"Refresh" = "0; url=/ok.html"
+
+[[route]]
+path = "/long1"
+status = 301
+location = "/long2"
+
+[[route]]
+path = "/long2"
+status = 301
+location = "/long3"
+
+[[route]]
+path = "/long3"
+status = 301
+location = "/long4"
+
+[[route]]
+path = "/long4"
+status = 301
+location = "/long5"
+
+[[route]]
+path = "/long5"
+status = 301
+location = "/ok.html"
+
+[[route]]
+path = "/loop1"
+status = 302
+location = "/loop2"
+
+[[route]]
+path = "/loop2"
+status = 302
+location = "/loop1"
+
+[[route]]
+path = "/r-chain-500"
+status = 301
+location = "/r-chain-500b"
+
+[[route]]
+path = "/r-chain-500b"
+status = 301
+location = "/e500"
+
+[[route]]
+path = "/r-to-404"
+status = 301
+location = "/e404"
+
+[[route]]
+path = "/r-to-blocked"
+status = 302
+location = "/blocked/a.html"
+
+[[route]]
+path = "/r-to-dead"
+status = 301
+location = "http://localhost:1/"
+
+[[route]]
+path = "/r301"
+status = 301
+location = "/ok.html"
+
+[[route]]
+path = "/r301-noloc"
+status = 301
+
+[[route]]
+path = "/r302"
+status = 302
+location = "/ok.html"
+
+[[route]]
+path = "/r303"
+status = 303
+location = "/ok.html"
+
+[[route]]
+path = "/r304"
+status = 304
+
+[[route]]
+path = "/r307"
+status = 307
+location = "/ok.html"
+
+[[route]]
+path = "/r308"
+status = 308
+location = "/ok.html"
+
+[[route]]
+path = "/s201"
+status = 201
+body = "<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\"><title>Created 201</title></head><body><h1>Created 201</h1></body></html>\n"
+
+[[route]]
+path = "/s204"
+status = 204
+
+[[route]]
+path = "/s999"
+status = 999
+body = "<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\"><title>Status 999</title></head><body><h1>Status 999</h1></body></html>\n"
+

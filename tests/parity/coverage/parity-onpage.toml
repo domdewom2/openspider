@@ -1,0 +1,333 @@
+# Absichtserklaerung der Fixture "parity-onpage" je Tab/Filter (erzeugt von tests/parity/gen/generate.py).
+# hit  = URLs, die nach Spec im Filter stehen muessen; miss = URLs, die nicht darin stehen duerfen.
+# Adressen: "/pfad" intern, "ext:/pfad" externer Host localhost, "dead:<url>" nicht erreichbar.
+# [[report]] = Absichtserklaerung zu einem Report ohne Filter (z. B. Redirects to Errors): hit/miss
+# als "<Adresse> -> <Endziel>" (Treffer) bzw. Adresse (Nicht-Treffer).
+# [[report]] = Absichtserklaerung zu einem Report ohne Filter (z. B. Redirects to Errors).
+# Wird von tests/parity/fixtures_check.rs gegen die ausgelieferte Site geprueft.
+site = "parity-onpage"
+
+[[case]]
+tab = "Page Titles"
+filter = "All"
+hit = ["/titles/ok-1.html", "/titles/missing-none.html"]
+miss = ["/img/small.png"]
+
+[[case]]
+tab = "Page Titles"
+filter = "Missing"
+hit = ["/titles/missing-none.html", "/titles/missing-empty.html", "/titles/missing-spaces.html"]
+miss = ["/titles/ok-1.html", "/titles/multi-two.html", "/titles/len-30.html"]
+
+[[case]]
+tab = "Page Titles"
+filter = "Duplicate"
+hit = ["/titles/dup-a.html", "/titles/dup-b.html"]
+miss = ["/titles/dup-case.html", "/titles/dup-canonical.html", "/titles/ok-1.html"]
+
+[[case]]
+tab = "Page Titles"
+filter = "Over 60 Characters"
+hit = ["/titles/len-61.html", "/titles/pixel-i70.html"]
+miss = ["/titles/len-60.html", "/titles/len-58-padded.html", "/titles/ok-1.html"]
+
+[[case]]
+tab = "Page Titles"
+filter = "Below 30 Characters"
+hit = ["/titles/len-29.html"]
+miss = ["/titles/len-30.html", "/titles/missing-none.html", "/titles/ok-1.html"]
+
+[[case]]
+tab = "Page Titles"
+filter = "Multiple"
+hit = ["/titles/multi-two.html"]
+miss = ["/titles/ok-1.html", "/titles/len-60.html"]
+
+[[case]]
+tab = "Meta Description"
+filter = "All"
+hit = ["/meta/ok-1.html", "/meta/missing-none.html"]
+miss = ["/img/small.png"]
+
+[[case]]
+tab = "Meta Description"
+filter = "Missing"
+hit = ["/meta/missing-none.html", "/meta/missing-empty.html", "/meta/og-only.html"]
+miss = ["/meta/ok-1.html", "/meta/multi-two.html", "/meta/len-70.html"]
+
+[[case]]
+tab = "Meta Description"
+filter = "Duplicate"
+hit = ["/meta/dup-a.html", "/meta/dup-b.html"]
+miss = ["/meta/dup-case.html", "/meta/dup-canonical.html", "/meta/ok-1.html"]
+
+[[case]]
+tab = "Meta Description"
+filter = "Over 155 Characters"
+hit = ["/meta/len-156.html"]
+miss = ["/meta/len-155.html", "/meta/ok-1.html"]
+
+[[case]]
+tab = "Meta Description"
+filter = "Below 70 Characters"
+hit = ["/meta/len-69.html"]
+miss = ["/meta/len-70.html", "/meta/missing-none.html", "/meta/ok-1.html"]
+
+[[case]]
+tab = "Meta Description"
+filter = "Multiple"
+hit = ["/meta/multi-two.html"]
+miss = ["/meta/ok-1.html"]
+
+[[case]]
+tab = "H1"
+filter = "All"
+hit = ["/h1/ok-1.html", "/h1/missing-none.html"]
+miss = ["/img/small.png"]
+
+[[case]]
+tab = "H1"
+filter = "Missing"
+hit = ["/h1/missing-none.html", "/h1/missing-empty.html"]
+miss = ["/h1/ok-1.html", "/h1/multi-two.html"]
+
+[[case]]
+tab = "H1"
+filter = "Duplicate"
+hit = ["/h1/dup-a.html", "/h1/dup-b.html"]
+miss = ["/h1/ok-1.html", "/h1/len-70.html"]
+
+[[case]]
+tab = "H1"
+filter = "Over 70 Characters"
+hit = ["/h1/len-71.html"]
+miss = ["/h1/len-70.html", "/h1/ok-1.html"]
+
+[[case]]
+tab = "H1"
+filter = "Multiple"
+hit = ["/h1/multi-two.html", "/h1/five-h1.html"]
+miss = ["/h1/ok-1.html", "/h1/missing-none.html"]
+
+[[case]]
+tab = "H2"
+filter = "All"
+hit = ["/h2/ok-1.html", "/h2/missing-none.html"]
+miss = ["/img/small.png"]
+
+[[case]]
+tab = "H2"
+filter = "Missing"
+hit = ["/h2/missing-none.html", "/h2/missing-empty.html"]
+miss = ["/h2/ok-1.html", "/h2/multi-two.html"]
+
+[[case]]
+tab = "H2"
+filter = "Duplicate"
+hit = ["/h2/dup-a.html", "/h2/dup-b.html"]
+miss = ["/h2/ok-1.html", "/h2/len-70.html"]
+
+[[case]]
+tab = "H2"
+filter = "Over 70 Characters"
+hit = ["/h2/len-71.html"]
+miss = ["/h2/len-70.html", "/h2/ok-1.html"]
+
+[[case]]
+tab = "H2"
+filter = "Multiple"
+hit = ["/h2/multi-two.html", "/h2/twelve.html"]
+miss = ["/h2/ok-1.html", "/h2/missing-none.html"]
+
+[[case]]
+tab = "Content"
+filter = "All"
+hit = ["/content/words-200.html", "/content/footer-heavy.html"]
+miss = ["/img/small.png"]
+
+[[case]]
+tab = "Content"
+filter = "Exact Duplicates"
+hit = ["/content/dupe-a.html", "/content/dupe-b.html", "/content/dupe-a.html?ref=x"]
+miss = ["/content/dupe-c.html", "/content/dupe-noindex.html", "/content/words-199.html"]
+
+[[case]]
+tab = "Content"
+filter = "Low Content Pages"
+hit = ["/content/words-199.html", "/content/footer-heavy.html", "/content/short-50.html"]
+miss = ["/content/words-200.html", "/content/noindex-50.html", "/content/dupe-a.html"]
+
+[[case]]
+tab = "Images"
+filter = "All"
+hit = ["/img/small.png", "/img/missing.png"]
+miss = ["/images/gallery.html"]
+
+[[case]]
+tab = "Images"
+filter = "Over 100 KB"
+hit = ["/img/size-102401.png", "ext:/img/size-102401.png"]
+miss = ["/img/size-102400.png", "/img/small.png"]
+
+[[case]]
+tab = "Images"
+filter = "Missing Alt Text"
+hit = ["/img/empty-alt.png"]
+miss = ["/img/good-alt.png", "/img/no-alt.png"]
+
+[[case]]
+tab = "Images"
+filter = "Missing Alt Attribute"
+hit = ["/img/no-alt.png"]
+miss = ["/img/good-alt.png", "/img/empty-alt.png"]
+
+[[case]]
+tab = "Images"
+filter = "Alt Text Over 100 Characters"
+hit = ["/img/alt-101.png"]
+miss = ["/img/alt-100.png", "/img/good-alt.png"]
+
+[[case]]
+tab = "URL"
+filter = "All"
+hit = ["/urls/clean-page.html", "/urls/%C3%BCber-uns.html"]
+miss = ["ext:/ctype/t-html.html"]
+
+[[case]]
+tab = "URL"
+filter = "Non ASCII Characters"
+hit = ["/urls/%C3%BCber-uns.html"]
+miss = ["/urls/clean-page.html", "/urls/mein%20artikel.html"]
+
+[[case]]
+tab = "URL"
+filter = "Underscores"
+hit = ["/urls/mein_artikel.html"]
+miss = ["/urls/clean-page.html", "/urls/params.html?sort_by=x"]
+
+[[case]]
+tab = "URL"
+filter = "Uppercase"
+hit = ["/urls/Produkte.html"]
+miss = ["/urls/clean-page.html", "/urls/%C3%BCber-uns.html"]
+
+[[case]]
+tab = "URL"
+filter = "Multiple Slashes"
+hit = ["/urls/a//b.html"]
+miss = ["/urls/clean-page.html", "/urls/params.html?id=1"]
+
+[[case]]
+tab = "URL"
+filter = "Contains A Space"
+hit = ["/urls/mein%20artikel.html"]
+miss = ["/urls/clean-page.html", "/urls/mein_artikel.html"]
+
+[[case]]
+tab = "URL"
+filter = "Parameters"
+hit = ["/urls/params.html?id=1", "/urls/params.html?a=1&b=2"]
+miss = ["/urls/clean-page.html", "/urls/mein_artikel.html"]
+
+[[case]]
+tab = "URL"
+filter = "Over 115 Characters"
+hit = ["/urls/lang-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.html"]
+miss = ["/urls/lang-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.html", "/urls/clean-page.html"]
+
+[[case]]
+tab = "Internal"
+filter = "All"
+hit = ["/ctype/t-html.html", "/ctype/t-invalid"]
+miss = ["ext:/ctype/t-html.html"]
+
+[[case]]
+tab = "Internal"
+filter = "HTML"
+hit = ["/ctype/t-html.html", "/ctype/t-xhtml"]
+miss = ["/ctype/t-xml.xml", "/ctype/t-js.js"]
+
+[[case]]
+tab = "Internal"
+filter = "JavaScript"
+hit = ["/ctype/t-js.js"]
+miss = ["/ctype/t-html.html", "/ctype/t-css.css"]
+
+[[case]]
+tab = "Internal"
+filter = "CSS"
+hit = ["/ctype/t-css.css"]
+miss = ["/ctype/t-js.js"]
+
+[[case]]
+tab = "Internal"
+filter = "Images"
+hit = ["/ctype/t-png.png", "/ctype/t-svg.svg"]
+miss = ["/ctype/t-pdf.pdf", "/ctype/t-html.html"]
+
+[[case]]
+tab = "Internal"
+filter = "PDF"
+hit = ["/ctype/t-pdf.pdf"]
+miss = ["/ctype/t-png.png"]
+
+[[case]]
+tab = "Internal"
+filter = "Unknown"
+hit = ["/ctype/t-invalid"]
+miss = ["/ctype/t-html.html", "/ctype/t-json.json"]
+
+[[case]]
+tab = "External"
+filter = "All"
+hit = ["ext:/ctype/t-html.html", "ext:/ctype/t-json.json"]
+miss = ["/ctype/t-html.html"]
+
+[[case]]
+tab = "External"
+filter = "HTML"
+hit = ["ext:/ctype/t-html.html"]
+miss = ["ext:/ctype/t-js.js", "/ctype/t-html.html"]
+
+[[case]]
+tab = "External"
+filter = "JavaScript"
+hit = ["ext:/ctype/t-js.js"]
+miss = ["ext:/ctype/t-css.css"]
+
+[[case]]
+tab = "External"
+filter = "CSS"
+hit = ["ext:/ctype/t-css.css"]
+miss = ["ext:/ctype/t-js.js"]
+
+[[case]]
+tab = "External"
+filter = "Images"
+hit = ["ext:/ctype/t-png.png"]
+miss = ["ext:/ctype/t-pdf.pdf"]
+
+[[case]]
+tab = "External"
+filter = "PDF"
+hit = ["ext:/ctype/t-pdf.pdf"]
+miss = ["ext:/ctype/t-png.png"]
+
+[[case]]
+tab = "External"
+filter = "Flash"
+hit = ["ext:/ctype/t-swf"]
+miss = ["ext:/ctype/t-json.json"]
+
+[[case]]
+tab = "External"
+filter = "Other"
+hit = ["ext:/ctype/t-json.json"]
+miss = ["ext:/ctype/t-html.html", "ext:/ctype/t-swf"]
+
+[[case]]
+tab = "External"
+filter = "Unknown"
+hit = ["dead:http://localhost:1/"]
+miss = ["ext:/ctype/t-html.html"]
+

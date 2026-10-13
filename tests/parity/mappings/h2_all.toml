@@ -1,0 +1,22 @@
+# Spaltenmapping SF -> OpenSpider fuer den Export "H2:All" (Format: docs/plan/M1.md 5.2).
+# Spaltennamen rechts sind die kanonischen OpenSpider-Namen aus der Spec; Annahme: die Referenz nutzt dieselben
+# funktionalen Bezeichner. Abweichungen klaert M1-P29 anhand der echten Exporte.
+key = ["Address"]
+drop_sf_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Referenz nie einlesen
+
+[columns]
+"Address" = "Address"
+"Occurrences" = "Occurrences"
+"H2-1" = "H2-1"
+"H2-1 Length" = "H2-1 Length"
+"H2-2" = "H2-2"
+"H2-2 Length" = "H2-2 Length"
+"Indexability" = "Indexability"
+"Indexability Status" = "Indexability Status"
+
+[normalize]
+base_url = true          # http://127.0.0.1:<port> -> {BASE}, http://localhost:<port> -> {EXT}
+trim = true
+bool = "case-insensitive"
+number_decimals = 3      # Zahlen werden nach Rundung verglichen
+empty_equals_null = true

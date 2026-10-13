@@ -1,0 +1,57 @@
+# Szenario "parity-technical" (Port 8903) - erzeugt von tests/parity/gen/generate.py,
+# nicht von Hand bearbeiten (Aenderungen im Generator vornehmen und neu erzeugen).
+
+[[route]]
+path = "/canon/gone-404.html"
+status = 404
+body = "<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\"><title>Canonical target gone</title></head><body><h1>Canonical target gone</h1></body></html>\n"
+
+[[route]]
+path = "/canon/header-only.html"
+[route.headers]
+"Link" = "</canon/header-only.html>; rel=\"canonical\""
+
+[[route]]
+path = "/canon/moved-301"
+status = 301
+location = "/canon/target.html"
+
+[[route]]
+path = "/canon/multi-mixed-same.html"
+[route.headers]
+"Link" = "</canon/multi-mixed-same.html>; rel=\"canonical\""
+
+[[route]]
+path = "/dir/noindex-header.html"
+[route.headers]
+"X-Robots-Tag" = "noindex"
+
+[[route]]
+path = "/dir/refresh-header.html"
+[route.headers]
+"Refresh" = "0; url=/dir/refresh-target.html"
+
+[[route]]
+path = "/hl/es-old/"
+status = 301
+location = "/hl/es/"
+
+[[route]]
+path = "/hl/it/"
+status = 404
+body = "<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\"><title>Italian page missing</title></head><body><h1>Italian page missing</h1></body></html>\n"
+
+[[route]]
+path = "/map/gone"
+status = 410
+body = "<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\"><title>Gone</title></head><body><h1>Gone</h1></body></html>\n"
+
+[[route]]
+path = "/map/redirected"
+status = 301
+location = "/map/in-sitemap.html"
+
+[[route]]
+path = "/sitemap-posts.xml.gz"
+content_type = "application/gzip"
+

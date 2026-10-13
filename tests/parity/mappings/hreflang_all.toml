@@ -1,0 +1,41 @@
+# Spaltenmapping SF -> OpenSpider fuer den Export "Hreflang:All" (Format: docs/plan/M1.md 5.2).
+# Spaltennamen rechts sind die kanonischen OpenSpider-Namen aus der Spec; Annahme: die Referenz nutzt dieselben
+# funktionalen Bezeichner. Abweichungen klaert M1-P29 anhand der echten Exporte.
+key = ["Address"]
+drop_sf_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Referenz nie einlesen
+
+[columns]
+"Address" = "Address"
+"Title 1" = "Title 1"
+"Occurrences" = "Occurrences"
+"HTML hreflang 1" = "HTML hreflang 1"
+"HTML hreflang 1 URL" = "HTML hreflang 1 URL"
+"HTML hreflang 2" = "HTML hreflang 2"
+"HTML hreflang 2 URL" = "HTML hreflang 2 URL"
+"HTML hreflang 3" = "HTML hreflang 3"
+"HTML hreflang 3 URL" = "HTML hreflang 3 URL"
+"HTML hreflang 4" = "HTML hreflang 4"
+"HTML hreflang 4 URL" = "HTML hreflang 4 URL"
+"HTML hreflang 5" = "HTML hreflang 5"
+"HTML hreflang 5 URL" = "HTML hreflang 5 URL"
+"HTML hreflang 6" = "HTML hreflang 6"
+"HTML hreflang 6 URL" = "HTML hreflang 6 URL"
+"HTML hreflang 7" = "HTML hreflang 7"
+"HTML hreflang 7 URL" = "HTML hreflang 7 URL"
+"HTML hreflang 8" = "HTML hreflang 8"
+"HTML hreflang 8 URL" = "HTML hreflang 8 URL"
+"HTTP hreflang 1" = "HTTP hreflang 1"
+"HTTP hreflang 1 URL" = "HTTP hreflang 1 URL"
+"Sitemap hreflang 1" = { ignore = true, reason = "Referenz fuellt Sitemap-Spalten nur im Listenmodus (TECH-071)" }
+"Sitemap hreflang 1 URL" = { ignore = true, reason = "Referenz fuellt Sitemap-Spalten nur im Listenmodus (TECH-071)" }
+"HTTP hreflang 2" = "HTTP hreflang 2"
+"HTTP hreflang 2 URL" = "HTTP hreflang 2 URL"
+"Sitemap hreflang 2" = { ignore = true, reason = "Referenz fuellt Sitemap-Spalten nur im Listenmodus (TECH-071)" }
+"Sitemap hreflang 2 URL" = { ignore = true, reason = "Referenz fuellt Sitemap-Spalten nur im Listenmodus (TECH-071)" }
+
+[normalize]
+base_url = true          # http://127.0.0.1:<port> -> {BASE}, http://localhost:<port> -> {EXT}
+trim = true
+bool = "case-insensitive"
+number_decimals = 3      # Zahlen werden nach Rundung verglichen
+empty_equals_null = true

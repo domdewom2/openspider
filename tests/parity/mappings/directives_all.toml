@@ -1,0 +1,29 @@
+# Spaltenmapping SF -> OpenSpider fuer den Export "Directives:All" (Format: docs/plan/M1.md 5.2).
+# Spaltennamen rechts sind die kanonischen OpenSpider-Namen aus der Spec; Annahme: die Referenz nutzt dieselben
+# funktionalen Bezeichner. Abweichungen klaert M1-P29 anhand der echten Exporte.
+key = ["Address"]
+drop_sf_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Referenz nie einlesen
+
+[columns]
+"Address" = "Address"
+"Occurrences" = "Occurrences"
+"Meta Robots 1" = "Meta Robots 1"
+"Meta Robots 2" = "Meta Robots 2"
+"Meta Robots 3" = "Meta Robots 3"
+"X-Robots-Tag 1" = "X-Robots-Tag 1"
+"X-Robots-Tag 2" = "X-Robots-Tag 2"
+"X-Robots-Tag 3" = "X-Robots-Tag 3"
+"Meta Refresh 1" = "Meta Refresh 1"
+"Meta Refresh 2" = "Meta Refresh 2"
+"Canonical Link Element 1" = "Canonical Link Element 1"
+"Canonical Link Element 2" = "Canonical Link Element 2"
+"Canonical Link Element 3" = "Canonical Link Element 3"
+"HTTP Canonical 1" = "HTTP Canonical 1"
+"HTTP Canonical 2" = "HTTP Canonical 2"
+
+[normalize]
+base_url = true          # http://127.0.0.1:<port> -> {BASE}, http://localhost:<port> -> {EXT}
+trim = true
+bool = "case-insensitive"
+number_decimals = 3      # Zahlen werden nach Rundung verglichen
+empty_equals_null = true

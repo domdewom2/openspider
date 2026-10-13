@@ -1,0 +1,86 @@
+# Spaltenmapping SF -> OpenSpider fuer den Export "Internal:All" (Format: docs/plan/M1.md 5.2).
+# Spaltennamen rechts sind die kanonischen OpenSpider-Namen aus der Spec; Annahme: die Referenz nutzt dieselben
+# funktionalen Bezeichner. Abweichungen klaert M1-P29 anhand der echten Exporte.
+key = ["Address"]
+drop_sf_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Referenz nie einlesen
+
+[columns]
+"Address" = "Address"
+"Content" = "Content"
+"Status Code" = "Status Code"
+"Status" = "Status"
+"Indexability" = "Indexability"
+"Indexability Status" = "Indexability Status"
+"Title 1" = "Title 1"
+"Title 1 Length" = "Title 1 Length"
+"Title 1 Pixel Width" = { os = "Title 1 Pixel Width", tolerance_pct = 3.0 }
+"Meta Description 1" = "Meta Description 1"
+"Meta Description 1 Length" = "Meta Description 1 Length"
+"Meta Description 1 Pixel Width" = { os = "Meta Description 1 Pixel Width", tolerance_pct = 3.0 }
+"Meta Keywords 1" = "Meta Keywords 1"
+"Meta Keywords 1 Length" = "Meta Keywords 1 Length"
+"H1-1" = "H1-1"
+"H1-1 Length" = "H1-1 Length"
+"H2-1" = "H2-1"
+"H2-1 Length" = "H2-1 Length"
+"Meta Robots 1" = "Meta Robots 1"
+"X-Robots-Tag 1" = "X-Robots-Tag 1"
+"Meta Refresh 1" = "Meta Refresh 1"
+"Canonical Link Element 1" = "Canonical Link Element 1"
+"rel=\"next\" 1" = "rel=\"next\" 1"
+"rel=\"prev\" 1" = "rel=\"prev\" 1"
+"HTTP rel=\"next\" 1" = "HTTP rel=\"next\" 1"
+"HTTP rel=\"prev\" 1" = "HTTP rel=\"prev\" 1"
+"Size (bytes)" = "Size (bytes)"
+"Transferred (bytes)" = { ignore = true, reason = "Header-Overhead implementierungsabhaengig" }
+"Total Transferred (bytes)" = { ignore = true, reason = "Header-Overhead implementierungsabhaengig" }
+"Word Count" = "Word Count"
+"Text Ratio" = { os = "Text Ratio", tolerance_pct = 1.0 }
+"Crawl Depth" = "Crawl Depth"
+"Folder Depth" = "Folder Depth"
+"Link Score" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Inlinks" = "Inlinks"
+"Unique Inlinks" = "Unique Inlinks"
+"Unique JS Inlinks" = { ignore = true, reason = "nur mit JavaScript-Rendering (M2)" }
+"% of Total" = "% of Total"
+"Outlinks" = "Outlinks"
+"Unique Outlinks" = "Unique Outlinks"
+"Unique JS Outlinks" = { ignore = true, reason = "nur mit JavaScript-Rendering (M2)" }
+"External Outlinks" = "External Outlinks"
+"Unique External Outlinks" = "Unique External Outlinks"
+"Unique External JS Outlinks" = { ignore = true, reason = "nur mit JavaScript-Rendering (M2)" }
+"Hash" = "Hash"
+"Response Time" = { ignore = true, reason = "nicht deterministisch" }
+"Last-Modified" = "Last-Modified"
+"Redirect URL" = "Redirect URL"
+"Redirect Type" = "Redirect Type"
+"HTTP Version" = { ignore = true, reason = "Transportdetail, nicht Teil der Parität" }
+"URL Encoded Address" = "URL Encoded Address"
+"Crawl Timestamp" = { ignore = true, reason = "nicht deterministisch" }
+"Title 2" = "Title 2"
+"Title 2 Length" = "Title 2 Length"
+"Title 2 Pixel Width" = { os = "Title 2 Pixel Width", tolerance_pct = 3.0 }
+"Meta Description 2" = "Meta Description 2"
+"Meta Description 2 Length" = "Meta Description 2 Length"
+"Meta Description 2 Pixel Width" = { os = "Meta Description 2 Pixel Width", tolerance_pct = 3.0 }
+"H1-2" = "H1-2"
+"H1-2 Length" = "H1-2 Length"
+"H2-2" = "H2-2"
+"H2-2 Length" = "H2-2 Length"
+"Sentence Count" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Average Words Per Sentence" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Flesch Reading Ease Score" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Readability" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Closest Similarity Match" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"No. Near Duplicates" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Total Language Errors" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Spelling Errors" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Grammar Errors" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Language" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+
+[normalize]
+base_url = true          # http://127.0.0.1:<port> -> {BASE}, http://localhost:<port> -> {EXT}
+trim = true
+bool = "case-insensitive"
+number_decimals = 3      # Zahlen werden nach Rundung verglichen
+empty_equals_null = true

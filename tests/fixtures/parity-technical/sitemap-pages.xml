@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>http://127.0.0.1:8903/map/in-sitemap.html</loc></url>
+  <url><loc>http://127.0.0.1:8903/map/linked-and-listed.html</loc></url>
+  <url><loc>http://127.0.0.1:8903/map/redirected</loc></url>
+  <url><loc>http://127.0.0.1:8903/map/gone</loc></url>
+  <url><loc>http://127.0.0.1:8903/map/noindex.html</loc></url>
+  <url><loc>http://127.0.0.1:8903/map/canonicalised.html</loc></url>
+  <url><loc>http://127.0.0.1:8903/blocked/page.html</loc></url>
+  <url><loc>http://127.0.0.1:8903/map/orphan-page.html</loc></url>
+</urlset>

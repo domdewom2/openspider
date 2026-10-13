@@ -1,0 +1,33 @@
+# Spaltenmapping SF -> OpenSpider fuer den Export "Content:All" (Format: docs/plan/M1.md 5.2).
+# Spaltennamen rechts sind die kanonischen OpenSpider-Namen aus der Spec; Annahme: die Referenz nutzt dieselben
+# funktionalen Bezeichner. Abweichungen klaert M1-P29 anhand der echten Exporte.
+key = ["Address"]
+drop_sf_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Referenz nie einlesen
+
+[columns]
+"Address" = "Address"
+"Word Count" = "Word Count"
+"Sentence Count" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Average Words Per Sentence" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Flesch Reading Ease Score" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Readability" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Closest Similarity Match" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"No. Near Duplicates" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Closest Semantically Similar Address" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Semantic Similarity Score" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"No. Semantically Similar" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Semantic Relevance Score" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Total Language Errors" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Spelling Errors" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Grammar Errors" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Language" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
+"Hash" = "Hash"
+"Indexability" = "Indexability"
+"Indexability Status" = "Indexability Status"
+
+[normalize]
+base_url = true          # http://127.0.0.1:<port> -> {BASE}, http://localhost:<port> -> {EXT}
+trim = true
+bool = "case-insensitive"
+number_decimals = 3      # Zahlen werden nach Rundung verglichen
+empty_equals_null = true

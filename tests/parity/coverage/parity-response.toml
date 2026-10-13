@@ -1,0 +1,211 @@
+# Absichtserklaerung der Fixture "parity-response" je Tab/Filter (erzeugt von tests/parity/gen/generate.py).
+# hit  = URLs, die nach Spec im Filter stehen muessen; miss = URLs, die nicht darin stehen duerfen.
+# Adressen: "/pfad" intern, "ext:/pfad" externer Host localhost, "dead:<url>" nicht erreichbar.
+# [[report]] = Absichtserklaerung zu einem Report ohne Filter (z. B. Redirects to Errors): hit/miss
+# als "<Adresse> -> <Endziel>" (Treffer) bzw. Adresse (Nicht-Treffer).
+# [[report]] = Absichtserklaerung zu einem Report ohne Filter (z. B. Redirects to Errors).
+# Wird von tests/parity/fixtures_check.rs gegen die ausgelieferte Site geprueft.
+site = "parity-response"
+
+[[case]]
+tab = "Response Codes"
+filter = "All"
+hit = ["/ok.html", "ext:/ok.html"]
+miss = []
+
+[[case]]
+tab = "Response Codes"
+filter = "Internal All"
+hit = ["/ok.html", "/e404"]
+miss = ["ext:/ok.html"]
+
+[[case]]
+tab = "Response Codes"
+filter = "External All"
+hit = ["ext:/ok.html", "ext:/e404"]
+miss = ["/ok.html"]
+
+[[case]]
+tab = "Response Codes"
+filter = "Blocked by Robots.txt"
+hit = ["/blocked/a.html", "/blocked/b.html"]
+miss = ["/ok.html", "/e404"]
+
+[[case]]
+tab = "Response Codes"
+filter = "Internal Blocked by Robots.txt"
+hit = ["/blocked/a.html", "/blocked/b.html"]
+miss = ["/ok.html", "/e404"]
+
+[[case]]
+tab = "Response Codes"
+filter = "No Response"
+hit = ["dead:http://localhost:1/"]
+miss = ["/e404", "/ok.html"]
+
+[[case]]
+tab = "Response Codes"
+filter = "External No Response"
+hit = ["dead:http://localhost:1/"]
+miss = ["/e404", "ext:/e500"]
+
+[[case]]
+tab = "Response Codes"
+filter = "Success (2XX)"
+hit = ["/ok.html", "/s201", "/s204", "ext:/ok.html"]
+miss = ["/r301", "/e404"]
+
+[[case]]
+tab = "Response Codes"
+filter = "Internal Success (2XX)"
+hit = ["/ok.html", "/s201", "/s204"]
+miss = ["/r301", "/e404", "ext:/ok.html"]
+
+[[case]]
+tab = "Response Codes"
+filter = "External Success (2XX)"
+hit = ["ext:/ok.html"]
+miss = ["/r301", "/e404"]
+
+[[case]]
+tab = "Response Codes"
+filter = "Redirection (3XX)"
+hit = ["/r301", "/r302", "/r303", "/r307", "/r308", "/r304", "/r301-noloc", "/r-to-404", "/r-to-blocked", "/r-chain-500", "/r-chain-500b", "/r-to-dead", "ext:/r301"]
+miss = ["/ok.html", "/e404"]
+
+[[case]]
+tab = "Response Codes"
+filter = "Internal Redirection (3XX)"
+hit = ["/r301", "/r302", "/r303", "/r307", "/r308", "/r304", "/r301-noloc", "/r-to-404", "/r-to-blocked", "/r-chain-500", "/r-chain-500b", "/r-to-dead"]
+miss = ["/ok.html", "/e404", "ext:/r301"]
+
+[[case]]
+tab = "Response Codes"
+filter = "External Redirection (3XX)"
+hit = ["ext:/r301"]
+miss = ["/ok.html", "/e404"]
+
+[[case]]
+tab = "Response Codes"
+filter = "Redirection (Meta Refresh)"
+hit = ["/meta-refresh.html", "/meta-refresh-5.html", "/r-meta-to-404.html"]
+miss = ["/meta-refresh-self.html", "/ok.html"]
+
+[[case]]
+tab = "Response Codes"
+filter = "Internal Redirection (Meta Refresh)"
+hit = ["/meta-refresh.html", "/meta-refresh-5.html", "/r-meta-to-404.html"]
+miss = ["/meta-refresh-self.html", "/ok.html"]
+
+[[case]]
+tab = "Response Codes"
+filter = "Redirect Chain"
+hit = ["/chain1", "/long1", "/mixed-chain.html", "/r-chain-500"]
+miss = ["/r301", "/chain2", "/loop1", "/r-to-404"]
+
+[[case]]
+tab = "Response Codes"
+filter = "Internal Redirect Chain"
+hit = ["/chain1", "/long1", "/mixed-chain.html", "/r-chain-500"]
+miss = ["/r301", "/chain2", "/loop1", "/r-to-404"]
+
+[[case]]
+tab = "Response Codes"
+filter = "Redirect Loop"
+hit = ["/loop1", "/loop2"]
+miss = ["/chain1", "/r301"]
+
+[[case]]
+tab = "Response Codes"
+filter = "Internal Redirect Loop"
+hit = ["/loop1", "/loop2"]
+miss = ["/chain1", "/r301"]
+
+[[case]]
+tab = "Response Codes"
+filter = "Client Error (4XX)"
+hit = ["/e400", "/e403", "/e404", "/e410", "/e429", "ext:/e404"]
+miss = ["/ok.html", "/e500"]
+
+[[case]]
+tab = "Response Codes"
+filter = "Internal Client Error (4XX)"
+hit = ["/e400", "/e403", "/e404", "/e410", "/e429"]
+miss = ["/ok.html", "/e500", "ext:/e404"]
+
+[[case]]
+tab = "Response Codes"
+filter = "External Client Error (4XX)"
+hit = ["ext:/e404"]
+miss = ["/ok.html", "/e500"]
+
+[[case]]
+tab = "Response Codes"
+filter = "Server Error (5XX)"
+hit = ["/e500", "/e503", "ext:/e500"]
+miss = ["/e404", "/ok.html"]
+
+[[case]]
+tab = "Response Codes"
+filter = "Internal Server Error (5XX)"
+hit = ["/e500", "/e503"]
+miss = ["/e404", "/ok.html", "ext:/e500"]
+
+[[case]]
+tab = "Response Codes"
+filter = "External Server Error (5XX)"
+hit = ["ext:/e500"]
+miss = ["/e404", "/ok.html"]
+
+[[case]]
+tab = "Response Codes"
+filter = "Other"
+hit = ["/s999"]
+miss = ["/ok.html", "/e404"]
+
+[[case]]
+tab = "Response Codes"
+filter = "Internal Other"
+hit = ["/s999"]
+miss = ["/ok.html", "/e404"]
+
+[[report]]
+name = "Redirects to Errors"
+hit = ["/r-to-404 -> Client Error (4XX)", "/r-to-blocked -> Blocked by Robots.txt", "/r-chain-500 -> Server Error (5XX)", "/r-to-dead -> No Response", "/r-meta-to-404.html -> Client Error (4XX)"]
+miss = ["/r301", "/chain1", "/mixed-chain.html", "/loop1", "/meta-refresh.html"]
+
+[[exempt]]
+tab = "Response Codes"
+filter = "All"
+reason = "Grundmenge aller URLs: es gibt keinen Nicht-Treffer (Internal All/External All grenzen ab)"
+
+[[exempt]]
+tab = "Response Codes"
+filter = "External Blocked by Robots.txt"
+reason = "Verhalten der Referenz fuer robots.txt externer Hosts nicht festgelegt (ONPAGE-052, A-17)"
+
+[[exempt]]
+tab = "Response Codes"
+filter = "Internal No Response"
+reason = "braucht einen internen Abbruch (hang/abort_after_headers) aus M1-P09; mit der aktuellen Testsite nicht darstellbar"
+
+[[exempt]]
+tab = "Response Codes"
+filter = "External Redirection (Meta Refresh)"
+reason = "externe Seiten werden nur auf den Status geprueft, nicht geparst (ONPAGE-025)"
+
+[[exempt]]
+tab = "Response Codes"
+filter = "External Redirect Chain"
+reason = "Ketten gelten nur fuer interne URLs (ONPAGE-060)"
+
+[[exempt]]
+tab = "Response Codes"
+filter = "External Redirect Loop"
+reason = "Schleifen gelten nur fuer interne URLs (ONPAGE-061)"
+
+[[exempt]]
+tab = "Response Codes"
+filter = "External Other"
+reason = "kein externer Status ausserhalb 100-599 vorgesehen (ONPAGE-066 ist P2)"
+

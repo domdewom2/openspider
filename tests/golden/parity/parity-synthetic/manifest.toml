@@ -1,0 +1,32 @@
+# Paritaets-Golden fuer "parity-synthetic": Metadaten und Exportliste (Format: docs/plan/M1.md 5.2).
+# Vom Nutzer auszufuellen: sf_version, exported_at, je Export status (pending -> present | unavailable) und ggf. sf_file.
+# Die Roh-Exporte der Referenz liegen unveraendert in sf/ (siehe ../README.md); Agents legen dort nichts an.
+site = "parity-synthetic"
+port = 8905                       # Port beim SF-Export (wird beim Vergleich zu {BASE} normalisiert)
+sf_version = ""                  # vom Nutzer eintragen, z. B. "24.3"
+exported_at = ""                 # vom Nutzer eintragen, z. B. "2026-10-20"
+sf_settings = "SF Free, Standardkonfiguration nach Neuinstallation (Speicher-Modus Standard, robots.txt respektieren); zusaetzlich aktiviert: Hreflang speichern+crawlen, XML-Sitemaps ueber robots.txt crawlen (falls in der Free-Version gesperrt: Exporte dieser Bereiche auf status = \"unavailable\" setzen und hier vermerken)."
+
+[[export]]
+sf_file = "internal_all.csv"
+os = "tab:Internal:All"
+mapping = "internal_all"
+status = "pending"               # pending | present | unavailable
+
+[[export]]
+sf_file = "links_all.csv"
+os = "tab:Links:All"
+mapping = "links_all"
+status = "pending"               # pending | present | unavailable
+
+[[export]]
+sf_file = "all_inlinks.csv"
+os = "bulk:Links:All Inlinks"
+mapping = "all_inlinks"
+status = "pending"               # pending | present | unavailable
+
+[[export]]
+sf_file = "crawl_overview.csv"
+os = "report:Crawl Overview"
+mapping = "crawl_overview"
+status = "pending"               # pending | present | unavailable

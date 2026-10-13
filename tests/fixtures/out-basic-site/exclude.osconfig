@@ -1,0 +1,7 @@
+# OUT-186: Konfiguration mit Exclude-Regel - keine URL unter /privat/ gelangt in den Crawl.
+# Auch AGENT-Tests (Gruende fuer "nicht gecrawlt") nutzen diese Datei.
+schema_version = 1
+generator = "openspider 0.1.0"
+
+[scope]
+exclude = [".*/privat/.*"]

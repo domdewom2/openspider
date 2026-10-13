@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /blocked/
+
+Sitemap: http://127.0.0.1:8903/sitemap_index.xml
