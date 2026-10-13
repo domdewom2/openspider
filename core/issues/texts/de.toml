@@ -1,0 +1,308 @@
+# OpenSpider – Issue-Texte (Deutsch). Eigenständig für OpenSpider formuliert (Clean-Room, keine Referenztexte).
+# Schlüssel: issues.<id>.what | why | fix. Platzhalter: {max}, {min}, {unit}, {threshold}
+# (aus der Crawl-Konfiguration ersetzt, siehe CatalogEntry.text_params).
+
+[issues.security-http-urls]
+what = "Die URL wird über unverschlüsseltes HTTP statt über HTTPS ausgeliefert."
+why = "Browser kennzeichnen unverschlüsselte Seiten als nicht sicher, jeder auf dem Übertragungsweg kann den Datenverkehr mitlesen oder verändern, und Suchmaschinen bevorzugen die verschlüsselte Fassung einer Seite."
+fix = "Ein gültiges Zertifikat einrichten, die gesamte Website über HTTPS ausliefern und jede HTTP-Adresse per dauerhafter Weiterleitung auf ihr HTTPS-Gegenstück schicken. Danach interne Links, Canonical-Angaben und Sitemaps auf die HTTPS-Adressen umstellen."
+
+[issues.response-codes-internal-blocked-by-robots-txt]
+what = "Die robots.txt der Website verbietet das Crawlen dieser internen URL, ihr Inhalt wurde daher nicht abgerufen."
+why = "Gesperrte Seiten können von Crawlern nicht gelesen werden. Sie können trotzdem als nackte Adressen ohne Beschreibung in den Suchergebnissen auftauchen, und Links auf sie geben keinen lesbaren Zusammenhang weiter."
+fix = "Prüfen, ob die Sperre gewollt ist. Soll die Seite gefunden werden, die passende Disallow-Regel in der robots.txt entfernen oder enger fassen. Soll sie nicht in den Suchergebnissen erscheinen, das Crawlen erlauben und stattdessen noindex setzen."
+
+[issues.response-codes-internal-no-response]
+what = "Der Server hat für diese interne URL nicht geantwortet, etwa wegen einer Zeitüberschreitung, einer abgelehnten Verbindung oder einer fehlgeschlagenen DNS-Auflösung."
+why = "Besucher und Crawler erreichen die Seite überhaupt nicht. Wiederholte Ausfälle führen dazu, dass die URL aus dem Index fällt, und sie verbrauchen Crawl-Kapazität."
+fix = "Den zur URL vermerkten Grund prüfen, etwa Zeitüberschreitung oder Verbindungsfehler. DNS-Einträge, Erreichbarkeit des Servers und Firewall-Regeln kontrollieren und sicherstellen, dass die Adresse in den verweisenden Links richtig geschrieben ist. Bei überlastetem Server Kapazität erhöhen."
+
+[issues.response-codes-internal-redirection-3xx]
+what = "Die interne URL antwortet mit einer Weiterleitung auf eine andere Adresse, statt selbst Inhalt zu liefern."
+why = "Eine Weiterleitung ist normal, aber jeder interne Link auf eine weiterleitende Adresse kostet eine zusätzliche Anfrage und verzögert Besucher und Crawler geringfügig."
+fix = "Interne Links, Canonical-Angaben und Sitemap-Einträge direkt auf die endgültige Zieladresse setzen. Die Weiterleitung selbst bleibt für externe Links und Lesezeichen bestehen."
+
+[issues.response-codes-internal-redirection-meta-refresh]
+what = "Die Seite weist den Browser über eine Meta-Refresh-Anweisung im HTML an, nach dem Laden zu einer anderen Adresse zu wechseln."
+why = "Meta-Refresh-Weiterleitungen sind langsamer als Server-Weiterleitungen, können vor dem Wechsel kurz die alte Seite zeigen und werden von Suchmaschinen weniger zuverlässig ausgewertet als HTTP-Weiterleitungen."
+fix = "Den Meta-Refresh durch eine dauerhafte serverseitige Weiterleitung (HTTP 301 oder 308) von der alten auf die Zieladresse ersetzen und interne Links auf die Zieladresse umstellen."
+
+[issues.response-codes-internal-redirect-chain]
+what = "Die Weiterleitungen dieser internen URL führen über mehrere Zwischenschritte, bevor die endgültige Adresse erreicht ist."
+why = "Jeder Schritt kostet Wartezeit, lange Ketten werden von Crawlern unter Umständen abgebrochen, bevor das Ziel erreicht ist, und Signale wie Linkwert können unterwegs verloren gehen."
+fix = "Die erste Adresse der Kette mit einer einzigen Weiterleitung direkt auf das Ziel schicken und interne Links auf die endgültige Adresse korrigieren. Die Weiterleitungsregeln prüfen, damit keine neuen Zwischenschritte hinzukommen."
+
+[issues.response-codes-internal-redirect-loop]
+what = "Die Weiterleitungen dieser internen URL führen zu einer bereits besuchten Adresse zurück und erreichen daher nie eine endgültige Seite."
+why = "Weder Browser noch Crawler können die Seite öffnen. Besucher sehen eine Fehlermeldung, und der Inhalt kann nicht indexiert werden."
+fix = "Die beteiligten Weiterleitungsregeln nachverfolgen, etwa widersprüchliche Regeln für www, abschließenden Schrägstrich oder HTTPS, und die Regel entfernen, die die Anfrage zurückschickt. Die korrigierte Adresse testen, bis sie auf einer Seite mit Status 200 endet."
+
+[issues.response-codes-internal-client-error-4xx]
+what = "Die interne URL antwortet mit einem Client-Fehler im Bereich 4xx, etwa 404 (nicht gefunden) oder 410 (entfernt)."
+why = "Besucher landen auf einer Fehlerseite, Links auf die Adresse führen ins Leere, und Suchmaschinen nehmen die Seite aus dem Index. Viele defekte Links wirken außerdem nachlässig gepflegt."
+fix = "Die Seite wiederherstellen, falls sie versehentlich entfernt wurde. Ist sie endgültig weg, die Adresse auf die passendste Ersatzseite weiterleiten und jeden internen Link, der noch darauf zeigt, entfernen oder aktualisieren."
+
+[issues.response-codes-internal-server-error-5xx]
+what = "Die interne URL antwortet mit einem Server-Fehler im Bereich 5xx, der Server konnte die Seite also nicht ausliefern."
+why = "Besucher sehen eine Fehlermeldung, und Crawler, die wiederholt Serverfehler erhalten, kommen seltener vorbei und nehmen die Seite eventuell aus dem Index, bis sie wieder funktioniert."
+fix = "In den Server-Protokollen zum Zeitpunkt der Anfrage die Ursache suchen, etwa ein fehlerhaftes Skript, ein Datenbankproblem oder einen überlasteten Server. Die Ursache beheben und die URL neu crawlen, um Status 200 zu bestätigen."
+
+[issues.response-codes-external-no-response]
+what = "Eine verlinkte externe URL hat nicht geantwortet, etwa wegen einer Zeitüberschreitung oder einer fehlgeschlagenen DNS-Auflösung."
+why = "Links auf nicht erreichbare Websites enttäuschen Besucher und lassen eine Seite ungepflegt wirken. Die Ursache liegt außerhalb der eigenen Website, ob der Link bleibt, entscheiden aber Sie."
+fix = "Den Link im Browser öffnen und prüfen, ob das Ziel nur kurz ausgefallen ist. Bleibt es unerreichbar, den Link entfernen oder durch eine funktionierende Quelle ersetzen."
+
+[issues.response-codes-external-client-error-4xx]
+what = "Eine verlinkte externe URL antwortet mit einem Client-Fehler wie 404 (nicht gefunden)."
+why = "Besucher, die dem Link folgen, landen auf einer Fehlerseite, was das Vertrauen in Ihre Inhalte mindert. Viele tote ausgehende Links können Seiten zudem veraltet wirken lassen."
+fix = "Den neuen Ort des Ziels oder eine vergleichbare Quelle suchen und den Link aktualisieren. Gibt es nichts Passendes, den Link entfernen und den umgebenden Satz anpassen."
+
+[issues.response-codes-external-server-error-5xx]
+what = "Eine verlinkte externe URL antwortet mit einem Server-Fehler im Bereich 5xx."
+why = "Die Zielwebsite liefert die Seite derzeit nicht aus, Besucher sehen nach dem Klick einen Fehler. Das Problem kann vorübergehend oder dauerhaft sein."
+fix = "Später erneut crawlen und prüfen, ob der Fehler verschwindet. Bleibt er bestehen, den Link durch eine andere Quelle ersetzen oder entfernen."
+
+[issues.url-non-ascii-characters]
+what = "Die URL enthält Zeichen außerhalb des einfachen ASCII-Bereichs, etwa Umlaute oder Buchstaben mit Akzent."
+why = "Solche Zeichen werden kodiert übertragen, wodurch Adressen schwerer zu lesen, einzutippen und weiterzugeben sind. Manche Werkzeuge und ältere Systeme gehen uneinheitlich damit um."
+fix = "In neuen Adressen einfache Kleinbuchstaben, Ziffern und Bindestriche verwenden. Eine bestehende Adresse nur ändern, wenn der Nutzen klar ist, und die alte URL dann dauerhaft auf die neue weiterleiten."
+
+[issues.url-underscores]
+what = "Die URL trennt Wörter mit Unterstrichen statt mit Bindestrichen."
+why = "Suchmaschinen lesen Bindestriche als Worttrenner, Unterstriche dagegen können Wörter zu einem langen Begriff verbinden, was den Abgleich der Adresse mit einer Suchanfrage erschwert."
+fix = "In neuen URLs Bindestriche verwenden. Eine bestehende Adresse nur umbenennen, wenn sich der Aufwand lohnt, die alte Adresse dauerhaft auf die neue weiterleiten und interne Links anpassen."
+
+[issues.url-uppercase]
+what = "Die URL enthält Großbuchstaben im Pfad oder in der Abfrage."
+why = "Pfade unterscheiden auf vielen Servern zwischen Groß- und Kleinschreibung, daher ist dieselbe Seite unter mehreren Schreibweisen erreichbar. Das erzeugt Duplikate und Tippfehler in Links."
+fix = "Durchgängig kleingeschriebene Adressen verwenden. Varianten mit Großbuchstaben dauerhaft auf die kleingeschriebene Fassung weiterleiten und darauf achten, dass interne Links, Canonical-Angaben und Sitemaps die Kleinschreibung nutzen."
+
+[issues.url-multiple-slashes]
+what = "Die URL enthält im Pfad zwei oder mehr Schrägstriche hintereinander."
+why = "Server können eine solche Adresse als andere Seite behandeln als die saubere, was zu doppelten Inhalten und Fehlern führt. Meist steckt ein Fehler beim Zusammensetzen der Links dahinter."
+fix = "Die Vorlage oder Link-Funktion suchen, die die Pfadteile verbindet, und den überzähligen Schrägstrich entfernen. Die fehlerhafte Adresse dauerhaft auf die saubere Fassung weiterleiten und interne Links korrigieren."
+
+[issues.url-contains-a-space]
+what = "Die URL enthält ein Leerzeichen, das in kodierter Form als %20 erscheint."
+why = "Leerzeichen zerreißen Links in E-Mails und Texteditoren, und Werkzeuge schneiden die Adresse womöglich am Leerzeichen ab. Kodierte Adressen sind zudem schlecht lesbar."
+fix = "Leerzeichen in Datei- und Ordnernamen durch Bindestriche ersetzen und die alte Adresse dauerhaft auf die neue weiterleiten. Jeden internen Link mit der alten Schreibweise anpassen."
+
+[issues.url-parameters]
+what = "Die URL enthält Abfrageparameter hinter einem Fragezeichen."
+why = "Parameter erzeugen oft viele Adressen für denselben Inhalt, etwa durch Sortierung, Filter oder Sitzungsdaten. Das verwässert Signale und verbraucht Crawl-Kapazität."
+fix = "Prüfen, welche Parameter den Inhalt wirklich ändern. Die übrigen aus internen Links entfernen oder die Canonical-Angabe auf die saubere Adresse setzen. Nur Parameter behalten, die tatsächlich gebraucht werden."
+
+[issues.url-over-max-chars]
+what = "Die Adresse der Seite ist länger als {max} Zeichen, dem eingestellten Grenzwert für die URL-Länge."
+why = "Sehr lange Adressen sind schwer zu lesen und weiterzugeben, werden in den Suchergebnissen abgeschnitten und deuten oft auf tiefe Ordnerstrukturen oder unnötige Parameter hin."
+fix = "Die Adresse auf höchstens {max} Zeichen kürzen, indem Füllwörter, wiederholte Ordnernamen und unnötige Parameter entfallen. Wird eine etablierte Adresse geändert, die alte dauerhaft auf die neue weiterleiten."
+
+[issues.page-titles-missing]
+what = "Die Seite hat kein Title-Element, oder der Titel ist leer."
+why = "Der Titel ist die Hauptüberschrift einer Seite in den Suchergebnissen und in Browser-Tabs. Fehlt er, erfinden Suchmaschinen einen eigenen, der selten zu Ihrer Absicht passt."
+fix = "Im Head der Seite einen einmaligen, aussagekräftigen Titel ergänzen, der das Thema in klaren Worten nennt. Die wichtigsten Begriffe nach vorn stellen und die empfohlene Länge einhalten."
+
+[issues.page-titles-duplicate]
+what = "Mehrere Seiten verwenden genau denselben Titel."
+why = "Identische Titel machen Seiten in Suchergebnissen und Browser-Tabs schwer unterscheidbar und deuten darauf hin, dass die Seiten um dasselbe Thema konkurrieren."
+fix = "Jeder Seite einen Titel geben, der ihren eigenen Inhalt widerspiegelt. Sind die Seiten tatsächlich gleich, sie zusammenführen oder die Canonical-Angabe auf die bevorzugte Fassung setzen."
+
+[issues.page-titles-over-max-chars]
+what = "Der Seitentitel ist länger als {max} Zeichen, dem eingestellten Grenzwert für Titel."
+why = "Suchmaschinen zeigen von einem langen Titel nur den ersten Teil und schneiden den Rest ab, sodass wichtige Begriffe am Ende womöglich nie zu sehen sind."
+fix = "Den Titel auf höchstens {max} Zeichen kürzen und die wichtigsten Begriffe an den Anfang stellen. Nebensächliches wie den Markennamen ans Ende setzen oder weglassen."
+
+[issues.page-titles-below-min-chars]
+what = "Der Seitentitel ist kürzer als {min} Zeichen, dem eingestellten Mindestwert für Titel."
+why = "Ein sehr kurzer Titel lässt Platz ungenutzt, um die Seite zu beschreiben und Begriffe unterzubringen, nach denen Suchende suchen könnten."
+fix = "Den Titel auf mindestens {min} Zeichen erweitern und dabei Inhalt und Hauptthema der Seite genau beschreiben. Nicht mit wiederholten Wörtern auffüllen."
+
+[issues.page-titles-multiple]
+what = "Die Seite enthält mehr als ein Title-Element."
+why = "Es kann nur ein Titel verwendet werden, Browser und Suchmaschinen müssen also wählen, und ihre Wahl entspricht womöglich nicht Ihrer Absicht."
+fix = "Die überzähligen Title-Elemente entfernen, sodass genau eines im Head bleibt. Plugins, Vorlagen und Skripte prüfen, die einen zweiten Titel einfügen könnten."
+
+[issues.meta-description-missing]
+what = "Die Seite hat keine Meta-Beschreibung, oder die Beschreibung ist leer."
+why = "Ohne Beschreibung bauen Suchmaschinen den Textauszug aus dem Seitentext. Das funktioniert, aber Sie haben weniger Einfluss darauf, wie die Seite Suchenden präsentiert wird."
+fix = "Eine kurze, einmalige Zusammenfassung der Seite schreiben, die zum Klicken einlädt, und sie als Meta-Beschreibung im Head ergänzen. Dabei die empfohlene Länge einhalten."
+
+[issues.meta-description-duplicate]
+what = "Mehrere Seiten tragen dieselbe Meta-Beschreibung."
+why = "Identische Beschreibungen lassen Suchergebnisse eintönig wirken und helfen Suchenden nicht, die passende Seite zu wählen."
+fix = "Für jede wichtige Seite eine eigene Beschreibung schreiben, die ihren Inhalt widerspiegelt. Bei vielen ähnlichen Seiten die Beschreibungen aus unterscheidenden Merkmalen zusammensetzen, statt einen Text wiederzuverwenden."
+
+[issues.meta-description-over-max-chars]
+what = "Die Meta-Beschreibung ist länger als {max} Zeichen."
+why = "Suchmaschinen schneiden lange Beschreibungen ab, sodass die letzten Worte und ein möglicher Aufruf zum Handeln nicht angezeigt werden."
+fix = "Die Beschreibung auf höchstens {max} Zeichen kürzen und die Kernaussage an den Anfang stellen."
+
+[issues.meta-description-below-min-chars]
+what = "Die Meta-Beschreibung ist kürzer als {min} Zeichen."
+why = "Eine sehr kurze Beschreibung nutzt den Platz in den Suchergebnissen nicht, um zu erklären, was die Seite bietet."
+fix = "Die Beschreibung auf mindestens {min} Zeichen erweitern. Den Inhalt der Seite zusammenfassen und einen Grund zum Klicken nennen."
+
+[issues.meta-description-multiple]
+what = "Die Seite enthält mehr als ein Meta-Description-Element."
+why = "Suchmaschinen verwenden nur eines davon, und man kann nicht sicher sein, welches. Die widersprüchlichen Einträge stammen meist von verschiedenen Plugins oder Vorlagen."
+fix = "Eine einzige Meta-Beschreibung im Head behalten und die anderen entfernen. Vorlagen, Plugins und Skripte prüfen, die das Element hinzufügen."
+
+[issues.h1-missing]
+what = "Die Seite hat keine Überschrift erster Ebene, oder die Überschrift ist leer."
+why = "Die Hauptüberschrift sagt Besuchern und Suchmaschinen, worum es auf der Seite geht. Ohne sie leiden Struktur und Barrierefreiheit der Seite."
+fix = "Eine klare h1-Überschrift ergänzen, die das Thema der Seite nennt und die wichtigsten Begriffe des Titels aufgreift. Überschriftenelemente zur Gliederung nutzen, nicht nur zur Gestaltung."
+
+[issues.h1-duplicate]
+what = "Mehrere Seiten verwenden dieselbe Überschrift erster Ebene."
+why = "Gleiche Hauptüberschriften lassen Seiten so wirken, als behandelten sie dasselbe Thema, und machen das Navigieren über Überschriften weniger hilfreich."
+fix = "Jeder Seite eine Hauptüberschrift geben, die ihren eigenen Inhalt beschreibt. Seiten zusammenführen, die sich tatsächlich doppeln."
+
+[issues.h1-over-max-chars]
+what = "Die Überschrift erster Ebene ist länger als {max} Zeichen."
+why = "Lange Überschriften sind schwerer zu überfliegen, brechen auf kleinen Bildschirmen über mehrere Zeilen um und verwässern das Thema der Seite."
+fix = "Die Überschrift auf höchstens {max} Zeichen kürzen, den Hauptbegriff behalten und Einzelheiten in den folgenden Text verlagern."
+
+[issues.h1-multiple]
+what = "Die Seite enthält mehr als eine Überschrift erster Ebene."
+why = "Mehrere Hauptüberschriften verwischen das Thema der Seite. Hilfstechniken und Suchmaschinen können schwerer erkennen, worum es auf der Seite im Kern geht."
+fix = "Eine einzige h1 für das Hauptthema behalten und die übrigen Überschriften zu h2 oder tieferen Ebenen machen. Vorlagen prüfen, die Überschriften einfügen, etwa in Logos oder Widgets."
+
+[issues.h2-missing]
+what = "Die Seite hat keine Überschrift zweiter Ebene, oder alle sind leer."
+why = "Ohne Zwischenüberschriften sind längere Texte schwerer zu überfliegen, und Suchmaschinen erhalten weniger Hinweise auf die Abschnitte der Seite. Bei sehr kurzen Seiten kann das in Ordnung sein."
+fix = "Längere Inhalte in Abschnitte gliedern und jedem eine kurze h2-Überschrift mit seinem Thema geben. Kurze Seiten dürfen ohne Zwischenüberschriften bleiben, wenn sie keine brauchen."
+
+[issues.h2-duplicate]
+what = "Die erste Überschrift zweiter Ebene der Seite stimmt mit der anderer Seiten überein."
+why = "Wiederholte Zwischenüberschriften über mehrere Seiten deuten auf wiederholte Inhalte hin und erschweren es, Abschnitte beim Navigieren über Überschriften zu unterscheiden."
+fix = "Die Zwischenüberschriften so umformulieren, dass sie das Besondere der jeweiligen Seite beschreiben. Werden ganze Abschnitte wiederholt, sie in eine gemeinsame Seite auslagern und darauf verlinken."
+
+[issues.h2-over-max-chars]
+what = "Die erste Überschrift zweiter Ebene ist länger als {max} Zeichen."
+why = "Lange Zwischenüberschriften sind schwerer zu überfliegen und brechen auf kleinen Bildschirmen über mehrere Zeilen um."
+fix = "Die Zwischenüberschrift auf höchstens {max} Zeichen kürzen und Erläuterungen in den darunterstehenden Absatz verlagern."
+
+[issues.h2-multiple]
+what = "Die Seite enthält mehr als eine Überschrift zweiter Ebene."
+why = "Mehrere Zwischenüberschriften sind in einem gut gegliederten Text normal. Der Filter dient der schnellen Durchsicht, etwa um Seiten zu finden, deren Gliederung zu lang oder zu kleinteilig geworden ist."
+fix = "Prüfen, ob die Zwischenüberschriften eine logische Gliederung bilden. Zu kleine Abschnitte zusammenlegen und zu groß gewordene Themen aufteilen. Ist die Struktur gewollt, ist nichts zu tun."
+
+[issues.content-exact-duplicates]
+what = "Die Seite ist laut Inhalts-Hash Byte für Byte identisch mit mindestens einer anderen Seite."
+why = "Suchmaschinen nehmen von identischen Seiten nur eine in den Index auf, und ihre Wahl entspricht womöglich nicht Ihrer bevorzugten Adresse. Der Linkwert verteilt sich auf die Kopien."
+fix = "Festlegen, welche Adresse das Original sein soll. Die Kopien dauerhaft darauf weiterleiten oder ihre Canonical-Angabe auf das Original setzen. Unterschiede in Vorlage oder Sitzung beseitigen, die die Kopien erzeugen."
+
+[issues.content-low-content-pages]
+what = "Die Seite hat weniger als {threshold} Wörter Inhalt."
+why = "Sehr kurze Seiten beantworten eine Suchanfrage selten ausführlich und können als dünner Inhalt gelten, was die Bewertung der ganzen Website schwächen kann."
+fix = "Die Seite um Inhalte erweitern, die Besuchern wirklich nützen, oder sie mit einer verwandten Seite zusammenführen. Absichtlich kurze Seiten, etwa Kontaktseiten, dürfen so bleiben."
+
+[issues.images-over-max-kb]
+what = "Die Bilddatei ist größer als {max} KB, dem eingestellten Grenzwert für die Bildgröße."
+why = "Große Bilder verlangsamen das Laden der Seite, was Besucher mit langsamer Verbindung trifft und die Leistung der Seite in der Suche schwächen kann."
+fix = "Das Bild komprimieren, ein modernes Format wie WebP oder AVIF verwenden und es in der Größe ausliefern, in der es angezeigt wird. Prüfen, ob das Bild überhaupt gebraucht wird."
+
+[issues.images-missing-alt-text]
+what = "Das Bild wird auf einer Seite mit vorhandenem, aber leerem alt-Attribut verwendet."
+why = "Nutzer von Screenreadern und Suchmaschinen erfahren nur aus dem Alternativtext, was ein Bild zeigt. Dekorative Bilder sind eine Ausnahme, informative Bilder brauchen eine Beschreibung."
+fix = "Eine kurze Beschreibung schreiben, was das Bild zeigt und wozu es dient, und sie ins alt-Attribut eintragen. Das alt-Attribut nur bei rein dekorativen Bildern leer lassen."
+
+[issues.images-missing-alt-attribute]
+what = "Das Bild wird auf einer Seite ganz ohne alt-Attribut verwendet."
+why = "Ohne alt-Attribut lesen Screenreader womöglich den Dateinamen vor, und Suchmaschinen erhalten keine Beschreibung des Bildes."
+fix = "Jedem Bildelement ein alt-Attribut geben. Informative Bilder in wenigen Worten beschreiben und bei rein dekorativen Bildern ein leeres alt-Attribut verwenden."
+
+[issues.images-alt-text-over-max-chars]
+what = "Der Alternativtext des Bildes ist länger als {max} Zeichen."
+why = "Lange Alternativtexte sind für Nutzer von Screenreadern mühsam und bringen Suchmaschinen kaum zusätzlichen Nutzen."
+fix = "Den Alternativtext auf höchstens {max} Zeichen kürzen und nur beschreiben, worauf es ankommt. Längere Erklärungen in den sichtbaren Text neben dem Bild verlagern."
+
+[issues.canonicals-canonicalised]
+what = "Die Seite nennt eine andere URL als ihre kanonische Adresse."
+why = "Die Seite selbst wird normalerweise nicht indexiert, weil die andere Adresse sie vertritt. Bei Duplikaten ist das gewollt, aber ein Fehler an dieser Stelle nimmt eine Seite aus der Suche."
+fix = "Prüfen, ob die genannte Adresse wirklich die bevorzugte Fassung ist und mit Status 200 antwortet. Soll die Seite unter ihrer eigenen Adresse gefunden werden, die Canonical-Angabe auf sie selbst setzen."
+
+[issues.canonicals-missing]
+what = "Die Seite nennt keine kanonische Adresse."
+why = "Ohne Canonical-Hinweis wählen Suchmaschinen die bevorzugte Fassung der Seite selbst, und die Signale von Duplikat-Varianten können sich auf mehrere Adressen verteilen."
+fix = "Im Head ein Canonical-Element ergänzen, das auf die bevorzugte Adresse der Seite zeigt. Für Seiten ohne Duplikate ist eine selbstverweisende Canonical-Angabe eine gute Voreinstellung."
+
+[issues.canonicals-multiple]
+what = "Die Seite nennt mehr als eine kanonische Adresse."
+why = "Suchmaschinen ignorieren womöglich alle, wenn sie nicht erkennen können, welche gemeint ist. Selbst gleichlautende Einträge sind fehleranfällig, weil spätere Änderungen sie auseinanderlaufen lassen können."
+fix = "Ein Canonical-Element behalten und die anderen entfernen. Prüfen, ob Seitenvorlage, ein Plugin und die HTTP-Header jeweils eines hinzufügen."
+
+[issues.canonicals-multiple-conflicting]
+what = "Die Seite nennt mehrere kanonische Adressen, die voneinander abweichen."
+why = "Widersprüchliche Hinweise lassen sich nicht alle befolgen, daher ignorieren Suchmaschinen sie wahrscheinlich und wählen die bevorzugte Fassung selbst, womöglich eine ungewollte Adresse."
+fix = "Sich auf eine bevorzugte Adresse festlegen und die übrigen Canonical-Einträge entfernen. Sowohl den HTML-Head als auch die HTTP-Header und Plugins prüfen, die Canonical-Elemente einfügen."
+
+[issues.canonicals-non-indexable-canonical]
+what = "Die kanonische Adresse der Seite zeigt auf eine nicht indexierbare URL, etwa mit Fehlerstatus, Weiterleitung oder noindex-Anweisung."
+why = "Ein Canonical-Hinweis auf ein unbrauchbares Ziel läuft ins Leere: Suchmaschinen ignorieren ihn, und die Seite kann als Duplikat gelten oder aus dem Index fallen."
+fix = "Das Canonical-Element auf eine Adresse setzen, die mit Status 200 antwortet, nicht gesperrt ist und indexiert werden kann. Wurde das Ziel verschoben, die Canonical-Angabe auf den neuen Ort ändern."
+
+[issues.directives-noindex]
+what = "Die Seite trägt eine noindex-Anweisung im Meta-Robots-Tag oder im X-Robots-Tag-Header."
+why = "Noindex hält die Seite aus den Suchergebnissen heraus. Bei internen oder dünnen Seiten ist das gewollt, versehentlich gesetzt macht es eine wichtige Seite unsichtbar."
+fix = "Prüfen, ob die Anweisung gewollt ist. Soll die Seite in der Suche erscheinen, noindex in der Vorlage, der Plugin-Einstellung oder dem Server-Header entfernen und zur Bestätigung neu crawlen."
+
+[issues.directives-nofollow]
+what = "Die Seite trägt eine nofollow-Anweisung im Meta-Robots-Tag oder im X-Robots-Tag-Header."
+why = "Nofollow bittet Suchmaschinen, keinem Link der Seite zu folgen. Linkwert wird nicht weitergegeben, und verlinkte Seiten werden später oder gar nicht gefunden."
+fix = "Prüfen, ob die Anweisung gewollt ist. Sollen die Links der Seite verfolgt werden, nofollow aus der Seitenanweisung entfernen. Nofollow nur an einzelnen Links setzen, wo es nötig ist."
+
+[issues.directives-none]
+what = "Die Seite trägt die Anweisung none, die für noindex und nofollow zusammen steht."
+why = "Die Seite bleibt aus den Suchergebnissen heraus, und ihren Links wird nicht gefolgt. Versehentlich gesetzt versteckt das die Seite und alles, was nur über sie erreichbar ist."
+fix = "Prüfen, ob beide Wirkungen gewollt sind. Wenn nicht, die Anweisung durch die tatsächlich gewünschte ersetzen oder entfernen und zur Bestätigung neu crawlen."
+
+[issues.hreflang-non-200-hreflang-urls]
+what = "Eine in den hreflang-Angaben der Seite genannte Sprachalternative antwortet nicht mit Status 200."
+why = "Suchmaschinen können eine fehlende, weitergeleitete oder defekte Sprachversion nicht nutzen, sodass Suchenden unter Umständen die falsche Sprachfassung angezeigt wird."
+fix = "Die Angabe so korrigieren, dass sie die endgültige Adresse der Sprachversion nennt, oder die Zielseite reparieren, damit sie mit Status 200 antwortet. Einträge für nicht mehr vorhandene Versionen entfernen."
+
+[issues.hreflang-missing-return-links]
+what = "Eine in den hreflang-Angaben genannte Sprachalternative verweist nicht zu dieser Seite zurück."
+why = "Hreflang funktioniert nur, wenn beide Seiten sich gegenseitig bestätigen. Ohne Rückverweis ignorieren Suchmaschinen die Angabe unter Umständen und zeigen die falsche Sprachfassung."
+fix = "Auf der anderen Sprachseite die passende hreflang-Angabe ergänzen, sodass jede Fassung alle anderen und sich selbst aufführt. Die Angaben aus einer zentralen Liste erzeugen, damit sie konsistent bleiben."
+
+[issues.hreflang-incorrect-language-region-codes]
+what = "Eine hreflang-Angabe verwendet einen Sprach- oder Regionscode, der nicht gültig ist."
+why = "Suchmaschinen ignorieren Angaben mit Codes, die sie nicht lesen können, daher wird die Seite nicht der gewünschten Sprache oder dem gewünschten Land zugeordnet."
+fix = "Gültige Sprachcodes (ISO 639-1) und bei Bedarf Regionscodes (ISO 3166-1 Alpha-2) wie en-GB oder de-AT verwenden. Die Region darf nicht allein stehen, der Wert x-default ist erlaubt."
+
+[issues.links-pages-with-high-crawl-depth]
+what = "Die Seite ist erst nach {threshold} oder mehr Klicks von der Startseite aus erreichbar."
+why = "Seiten tief in der Struktur erhalten wenig Linkwert und werden von Crawlern und Besuchern später gefunden. Wichtige Inhalte sollten nahe an der Startseite liegen."
+fix = "Die Seite von Seiten näher an der Startseite aus verlinken, etwa über Kategorieseiten, verwandte Links oder die Navigation. Die Struktur in zu tief verschachtelten Bereichen abflachen."
+
+[issues.links-pages-without-internal-outlinks]
+what = "Die Seite verlinkt auf keine andere Seite der Website."
+why = "Eine Seite ohne ausgehende Links ist für Besucher und Crawler eine Sackgasse und gibt keinen Linkwert an den Rest der Website weiter."
+fix = "Navigation, verwandte Links oder Links im Text ergänzen, die zu passenden Seiten der Website führen. Prüfen, ob die Vorlage ihre Navigation versehentlich weglässt."
+
+[issues.links-internal-nofollow-outlinks]
+what = "Die Seite enthält interne Links, die mit nofollow gekennzeichnet sind."
+why = "Nofollow an einem internen Link hält Linkwert von der Zielseite fern. Das ist manchmal gewollt, meist aber nur ein Überbleibsel aus Vorlagen oder Plugins."
+fix = "Das Attribut nofollow von internen Links entfernen, die Wert weitergeben sollen. Nur für Links auf Seiten behalten, die Sie bewusst nicht fördern wollen, etwa Anmeldeseiten."
+
+[issues.links-internal-outlinks-with-no-anchor-text]
+what = "Die Seite enthält interne Links ohne Ankertext, etwa einen Bildlink ohne Alternativtext oder einen leeren Link."
+why = "Der Ankertext sagt Besuchern und Suchmaschinen, was sie hinter einem Link erwartet. Leere Links nützen Screenreader-Nutzern nichts und geben Suchmaschinen keinen Zusammenhang."
+fix = "Jedem Link einen aussagekräftigen Text geben. Bei Bildlinks dem Bild einen sinnvollen Alternativtext mitgeben. Leere Links ohne Zweck entfernen."
+
+[issues.sitemaps-urls-not-in-sitemap]
+what = "Die Seite ist indexierbar und wurde beim Crawlen gefunden, steht aber in keiner XML-Sitemap."
+why = "Sitemaps helfen Suchmaschinen, Seiten zu entdecken und zu gewichten. Indexierbare Seiten, die dort fehlen, werden unter Umständen später gefunden oder seltener gecrawlt."
+fix = "Alle indexierbaren Seiten, die in der Suche erscheinen sollen, in die XML-Sitemap aufnehmen, am besten durch automatische Erzeugung. Bewusst ausgeschlossene Seiten, etwa mit noindex, brauchen keinen Eintrag."
+
+[issues.sitemaps-orphan-urls]
+what = "Die URL ist nicht über Links von der Startseite aus erreichbar. Sie ist nur aus einer Sitemap bekannt oder wurde nur über eine solche URL gefunden."
+why = "Seiten, die nur in einer Sitemap stehen, haben keine internen Linksignale. Besucher können nicht zu ihnen navigieren, und Suchmaschinen halten sie tendenziell für weniger wichtig."
+fix = "Die Seite von passenden Seiten der Website aus verlinken, etwa von Kategorie- oder Übersichtsseiten. Ist die Seite veraltet, sie aus der Sitemap nehmen und weiterleiten oder löschen."
+
+[issues.sitemaps-non-indexable-urls-in-sitemap]
+what = "Die Sitemap führt eine URL auf, die nicht indexiert werden kann, etwa weil sie weiterleitet, einen Fehler liefert oder eine noindex-Anweisung trägt."
+why = "Sitemaps sollten nur Adressen nennen, die im Index stehen sollen. Widersprüchliche Angaben verschwenden Crawl-Kapazität und mindern das Vertrauen in die Sitemap."
+fix = "Die betroffenen Adressen aus der Sitemap entfernen oder indexierbar machen, falls sie gefunden werden sollen. Die Sitemap nur aus der Liste der indexierbaren Seiten erzeugen."

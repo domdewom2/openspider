@@ -1,18 +1,51 @@
 //! Issue-Katalog (UI-063/UI-064): Klassifizierung, eigene Texte (de/en) und Issue-Zeilen aus Filterzählern.
 //!
-//! STUB(M1-P12): P12 legt `core/issues/catalog.toml` an und füllt Katalog und Texte.
+//! Quellen (alle im Repo, per `include_str!` eingebettet):
+//! - `core/issues/catalog.toml` – die einzige Klassifizierungsdatei (Typ/Priorität mit Regelcodes),
+//! - `core/issues/texts/{de,en}.toml` – die drei Texte `what`/`why`/`fix` je Issue (Schlüssel
+//!   `issues.<id>.what|why|fix`),
+//! - `docs/issues/<doc_key>.md` – Doku-Seite je Eintrag (erzeugt aus Katalog und Texten, siehe [`doc_page`]).
+//!
+//! Platzhalter der Texte (`{max}`, `{min}`, `{unit}`, `{threshold}`) ersetzt [`texts`] mit den Werten aus
+//! `TabDef.params(cfg)`: Ein Parameter wird über seinen Konfigurationspfad gefunden (`title.max_chars`);
+//! Schreibweisen mit `_` statt `.` und ein führendes `:` (benannter SQL-Parameter) gelten gleich. Fehlt der
+//! Parameter, gilt der Standardwert aus `CrawlConfig::default()`.
 
-use os_model::{IssuePriority, IssueType, Value};
+mod catalog;
+mod render;
+
+use std::sync::OnceLock;
+
+use os_model::{FilterState, IssuePriority, IssueType, Value};
 
 use crate::views::FilterCount;
 
+pub use catalog::{
+    override_share, parse_catalog, validate, CatalogError, CatalogProblem, ALLOWED_PLACEHOLDERS,
+    OVERRIDE_REASON_PREFIXES, PRIORITY_RULES, TYPE_RULES,
+};
+pub use render::{doc_page, filter_label, matches_filter};
+
 /// Sprache der Katalogtexte.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Lang {
     /// Deutsch.
     De,
     /// Englisch.
     En,
+}
+
+impl Lang {
+    /// Alle Sprachen mit Texten.
+    pub const ALL: &'static [Lang] = &[Lang::De, Lang::En];
+
+    /// Sprachkürzel (`"de"`, `"en"`).
+    pub fn code(self) -> &'static str {
+        match self {
+            Lang::De => "de",
+            Lang::En => "en",
+        }
+    }
 }
 
 /// Ein Eintrag des Issue-Katalogs.
@@ -73,21 +106,101 @@ pub struct IssueRow {
     pub pct: Option<f64>,
 }
 
+const CATALOG_SRC: &str = include_str!("../../../../core/issues/catalog.toml");
+const TEXTS_DE_SRC: &str = include_str!("../../../../core/issues/texts/de.toml");
+const TEXTS_EN_SRC: &str = include_str!("../../../../core/issues/texts/en.toml");
+
 /// Der Katalog (`core/issues/catalog.toml`).
-// STUB(M1-P12): leer
+///
+/// # Panics
+/// Wenn die eingebettete Katalogdatei nicht lesbar ist (Build-Fehler; `tests/issues_catalog.rs` fängt das ab).
 pub fn catalog() -> &'static [CatalogEntry] {
-    &[]
+    static CATALOG: OnceLock<Vec<CatalogEntry>> = OnceLock::new();
+    CATALOG.get_or_init(|| match parse_catalog(CATALOG_SRC) {
+        Ok(entries) => entries,
+        Err(e) => panic!("core/issues/catalog.toml ist ungültig: {e}"),
+    })
+}
+
+/// Der Katalogeintrag zu einem `doc_key`.
+pub fn entry_by_doc_key(doc_key: &str) -> Option<&'static CatalogEntry> {
+    catalog().iter().find(|e| e.doc_key == doc_key)
+}
+
+/// Der Katalogeintrag zu Tab und Filter. Der Filtername darf der Katalogschreibweise mit Platzhaltern
+/// (`Over {title.max_chars} Characters`) oder der aufgelösten Form (`Over 65 Characters`) entsprechen;
+/// Groß-/Kleinschreibung zählt nicht (K-08).
+pub fn entry_for(tab: &str, filter: &str) -> Option<&'static CatalogEntry> {
+    catalog()
+        .iter()
+        .find(|e| e.tab.eq_ignore_ascii_case(tab) && matches_filter(&e.filter, filter))
 }
 
 /// Texte zu einem `doc_key`; ersetzt die Platzhalter `{max}`, `{min}`, `{unit}`, `{threshold}` durch die Werte
-/// aus `params` (`TabDef.params(cfg)`).
-// STUB(M1-P12)
-pub fn texts(_doc_key: &str, _lang: Lang, _params: &[(&str, Value)]) -> Option<IssueTexts> {
-    None
+/// aus `params` (`TabDef.params(cfg)`). Fehlt der Text in der gewünschten Sprache, gilt der englische;
+/// ein unbekannter `doc_key` liefert `None`.
+pub fn texts(doc_key: &str, lang: Lang, params: &[(&str, Value)]) -> Option<IssueTexts> {
+    let entry = entry_by_doc_key(doc_key)?;
+    let raw =
+        render::raw_texts(&entry.id, lang).or_else(|| render::raw_texts(&entry.id, Lang::En))?;
+    Some(render::fill(entry, &raw, params))
 }
 
-/// Issue-Zeilen aus den Filterzählern (nur Zähler > 0 im Zustand „bereit“).
-// STUB(M1-P12)
-pub fn issues_from_counts(_counts: &[FilterCount]) -> Vec<IssueRow> {
-    Vec::new()
+/// Die ungefüllten Texte eines Eintrags (mit Platzhaltern), z. B. für Prüfungen.
+pub fn raw_texts(doc_key: &str, lang: Lang) -> Option<IssueTexts> {
+    let entry = entry_by_doc_key(doc_key)?;
+    render::raw_texts(&entry.id, lang)
+}
+
+fn type_order(t: IssueType) -> u8 {
+    match t {
+        IssueType::Issue => 0,
+        IssueType::Warning => 1,
+        IssueType::Opportunity => 2,
+    }
+}
+
+fn priority_order(p: IssuePriority) -> u8 {
+    match p {
+        IssuePriority::High => 0,
+        IssuePriority::Medium => 1,
+        IssuePriority::Low => 2,
+    }
+}
+
+/// Issue-Zeilen aus den Filterzählern (nur Zähler > 0 im Zustand „bereit“), sortiert nach Typ
+/// (Issue → Warning → Opportunity), Priorität (High → Medium → Low), `count` absteigend, Name (UI-062).
+pub fn issues_from_counts(counts: &[FilterCount]) -> Vec<IssueRow> {
+    let mut rows: Vec<IssueRow> = counts
+        .iter()
+        .filter(|c| c.state == FilterState::Ready)
+        .filter_map(|c| {
+            let n = c.count.filter(|n| *n > 0)?;
+            let entry = entry_for(&c.tab, &c.filter).or_else(|| entry_for(&c.tab, &c.label))?;
+            Some(IssueRow {
+                id: entry.id.clone(),
+                tab: c.tab.clone(),
+                filter: c.filter.clone(),
+                issue_type: entry.issue_type,
+                priority: entry.priority,
+                count: n,
+                pct: c.pct,
+            })
+        })
+        .collect();
+    rows.sort_by(|a, b| {
+        type_order(a.issue_type)
+            .cmp(&type_order(b.issue_type))
+            .then(priority_order(a.priority).cmp(&priority_order(b.priority)))
+            .then(b.count.cmp(&a.count))
+            .then_with(|| (&a.tab, &a.filter).cmp(&(&b.tab, &b.filter)))
+    });
+    rows
+}
+
+pub(crate) fn texts_source(lang: Lang) -> &'static str {
+    match lang {
+        Lang::De => TEXTS_DE_SRC,
+        Lang::En => TEXTS_EN_SRC,
+    }
 }
