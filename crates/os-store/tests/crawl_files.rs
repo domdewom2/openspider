@@ -477,6 +477,48 @@ fn opened_crawl_keeps_the_embedded_config_until_it_is_adopted() {
     let _ = queries::change_seq(reopened.conn());
 }
 
+// spec: CRAWL-127, CRAWL-124
+#[test]
+fn set_config_with_clock_stamps_the_time_from_the_clock() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = new_crawl(dir.path(), "clk.ospider", StorageProfile::Balanced);
+    let file = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
+    let updated_at = |f: &CrawlFile| -> String {
+        f.conn()
+            .query_row(
+                "SELECT updated_at FROM crawl_config WHERE id = 1",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap()
+    };
+    let start = Timestamp::from_db("2026-10-13T08:00:00.000Z").unwrap();
+    let clock = ManualClock::new(start);
+    let mut cfg = CrawlConfig::default();
+    cfg.speed.threads = 4;
+    file.set_config_with_clock(&cfg, &clock).unwrap();
+    assert_eq!(updated_at(&file), start.to_db());
+    assert_eq!(file.config().unwrap().speed.threads, 4);
+
+    // Gleiche Uhr, gleiche Konfiguration: derselbe Zeitstempel; nach `advance` der spätere.
+    clock.advance(std::time::Duration::from_secs(90));
+    cfg.speed.threads = 5;
+    file.set_config_with_clock(&cfg, &clock).unwrap();
+    assert_eq!(
+        updated_at(&file),
+        start.plus(std::time::Duration::from_secs(90)).to_db()
+    );
+    assert_eq!(file.config().unwrap().speed.threads, 5);
+
+    // `set_config` behält seine Signatur und stempelt mit der Systemuhr (nicht 2026-10-13T08:01:30).
+    file.set_config(&cfg).unwrap();
+    assert_ne!(
+        updated_at(&file),
+        start.plus(std::time::Duration::from_secs(90)).to_db()
+    );
+    assert_eq!(file.config().unwrap().speed.threads, 5);
+}
+
 #[test]
 fn effective_state_marks_crawls_without_heartbeat_as_incomplete() {
     let dir = tempfile::tempdir().unwrap();

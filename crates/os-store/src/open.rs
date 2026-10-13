@@ -3,7 +3,8 @@
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
-use os_model::{CrawlConfig, CrawlId, CrawlMode, CrawlState, Timestamp};
+use os_model::time::SystemClock;
+use os_model::{Clock, CrawlConfig, CrawlId, CrawlMode, CrawlState, Timestamp};
 use rusqlite::{Connection, ErrorCode, OpenFlags};
 
 use crate::collation;
@@ -332,11 +333,23 @@ impl CrawlFile {
     }
 
     /// Ersetzt die eingebettete Konfiguration („Konfiguration übernehmen“).
+    ///
+    /// Der Zeitstempel kommt von der Systemuhr; für deterministische Läufe siehe
+    /// [`CrawlFile::set_config_with_clock`].
     pub fn set_config(&self, c: &CrawlConfig) -> Result<(), StoreError> {
+        self.set_config_with_clock(c, &SystemClock)
+    }
+
+    /// Wie [`CrawlFile::set_config`], aber mit dem Zeitstempel aus `clock` (Regel 2.8).
+    pub fn set_config_with_clock(
+        &self,
+        c: &CrawlConfig,
+        clock: &dyn Clock,
+    ) -> Result<(), StoreError> {
         self.conn.execute(
             "INSERT INTO crawl_config (id, osconfig, updated_at) VALUES (1, ?1, ?2) \
              ON CONFLICT(id) DO UPDATE SET osconfig = excluded.osconfig, updated_at = excluded.updated_at",
-            [&c.to_toml_string()?, &Timestamp::now_utc().to_db()],
+            [&c.to_toml_string()?, &clock.now().to_db()],
         )?;
         Ok(())
     }

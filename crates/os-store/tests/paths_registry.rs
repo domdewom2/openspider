@@ -92,6 +92,96 @@ fn default_crawl_folder_is_the_one_defined_in_out_227() {
     );
 }
 
+/// Kopiert die Fixture `schema-v1.ospider` (pausierter Crawl, 42 URLs) unter dem Namen der Verwaltung
+/// (`<crawl_id>.ospider`) in `dir`.
+fn fixture_crawl_in(dir: &Path) -> (CrawlId, std::path::PathBuf) {
+    std::fs::create_dir_all(dir).unwrap();
+    let staged = tempfile::tempdir().unwrap();
+    let source = copy_fixture("schema-v1.ospider", staged.path());
+    let id = CrawlFile::open(&source, OpenMode::ReadOnly)
+        .unwrap()
+        .meta()
+        .unwrap()
+        .crawl_id;
+    let target = registry::path_for(dir, &id);
+    std::fs::copy(&source, &target).unwrap();
+    (id, target)
+}
+
+// spec: OUT-231
+#[test]
+fn fixture_crawl_in_openspider_home_is_listed_found_and_opened_from_the_crawl_folder() {
+    let home = tempfile::tempdir().unwrap();
+    let p = app_paths_with_home(Some(home.path().as_os_str()));
+    p.create_all().unwrap();
+    let (id, path) = fixture_crawl_in(&p.crawls);
+    assert_eq!(path.parent(), Some(p.crawls.as_path()));
+
+    let listed = registry::list_crawls(&p.crawls).unwrap();
+    assert_eq!(listed.len(), 1);
+    assert_eq!(listed[0].meta.crawl_id, id);
+    assert_eq!(listed[0].path, path);
+    assert_eq!(listed[0].url_count, 42);
+    assert_eq!(registry::find(&p.crawls, &id), Some(path.clone()));
+    let file = CrawlFile::open_by_id(&p.crawls, &id, OpenMode::ReadOnly).unwrap();
+    assert_eq!(file.meta().unwrap().crawl_id, id);
+
+    // Einstellungen, Logs und Cache bleiben frei von Crawl-Dateien.
+    for dir in [&p.settings, &p.logs, &p.cache] {
+        let crawl_files: Vec<_> = std::fs::read_dir(dir)
+            .unwrap()
+            .map(|e| e.unwrap().path())
+            .filter(|f| f.extension().is_some_and(|e| e == "ospider"))
+            .collect();
+        assert!(crawl_files.is_empty(), "{dir:?}: {crawl_files:?}");
+    }
+}
+
+// spec: OUT-231
+#[test]
+fn changing_the_storage_location_leaves_existing_crawls_in_place() {
+    // Alter Ort (hier ein Ordner, wie ihn der Standardpfad liefern würde) und neuer Ort unter OPENSPIDER_HOME.
+    let old_root = tempfile::tempdir().unwrap();
+    let old_crawls = old_root.path().join("crawls");
+    let (id, old_path) = fixture_crawl_in(&old_crawls);
+
+    let home = tempfile::tempdir().unwrap();
+    let new = app_paths_with_home(Some(home.path().as_os_str()));
+    new.create_all().unwrap();
+    assert_ne!(new.crawls, old_crawls);
+
+    // Der neue Ort ist zunächst leer; der bestehende Crawl wird nicht automatisch verschoben.
+    assert!(registry::list_crawls(&new.crawls).unwrap().is_empty());
+    assert_eq!(registry::find(&new.crawls, &id), None);
+    assert!(old_path.exists());
+    assert_eq!(registry::find(&old_crawls, &id), Some(old_path.clone()));
+
+    // Neue Crawls entstehen am neuen Ort; die Verwaltung findet beide, bis verschoben wird.
+    let (new_id, new_path) = crawl_in(&new.crawls, 9);
+    assert_eq!(registry::find(&new.crawls, &new_id), Some(new_path));
+    assert_eq!(registry::find(&old_crawls, &new_id), None);
+    assert_eq!(registry::list_crawls(&old_crawls).unwrap().len(), 1);
+    assert_eq!(registry::list_crawls(&new.crawls).unwrap().len(), 1);
+}
+
+// spec: OUT-231
+#[test]
+fn default_crawl_folder_is_separate_from_the_override_and_never_inside_it() {
+    let home = tempfile::tempdir().unwrap();
+    let overridden = app_paths_with_home(Some(home.path().as_os_str()));
+    let default = app_paths_with_home(None);
+    assert_ne!(default.crawls, overridden.crawls);
+    assert!(!default.crawls.starts_with(home.path()));
+    assert!(overridden.crawls.starts_with(home.path()));
+    // Der Standardordner trägt den Anwendungsnamen und endet auf `crawls` (OUT-227).
+    assert!(ends_with(&default.crawls, &["OpenSpider", "crawls"]));
+    // Ein leerer Wert von OPENSPIDER_HOME zählt als nicht gesetzt.
+    assert_eq!(
+        app_paths_with_home(Some(OsStr::new(""))).crawls,
+        default.crawls
+    );
+}
+
 fn crawl_in(dir: &Path, seed: u64) -> (CrawlId, std::path::PathBuf) {
     std::fs::create_dir_all(dir).unwrap();
     let init = init(seed);
