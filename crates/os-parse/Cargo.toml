@@ -11,4 +11,5 @@ authors.workspace = true
 os-model.workspace = true
 os-url.workspace = true
 scraper.workspace = true
+html5ever.workspace = true
 ego-tree.workspace = true

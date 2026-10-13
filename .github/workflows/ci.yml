@@ -67,10 +67,10 @@ jobs:
         run: npm run -w apps/desktop test
 
       - name: Clippy
-        run: cargo clippy --workspace --all-targets -- -D warnings
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
 
       - name: Rust tests
-        run: cargo test --workspace
+        run: cargo test --workspace --locked
 
       - name: Tauri build check (debug, no bundle)
         run: npm run -w apps/desktop tauri -- build --debug --no-bundle

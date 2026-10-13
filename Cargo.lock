@@ -2519,6 +2519,7 @@ name = "os-parse"
 version = "0.1.0"
 dependencies = [
  "ego-tree",
+ "html5ever",
  "os-model",
  "os-url",
  "scraper",

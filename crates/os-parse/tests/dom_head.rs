@@ -59,10 +59,49 @@ fn noscript_with_allowed_content_does_not_close_head() {
     assert!(canonical_in_head(src));
     let doc = Document::parse(src);
     assert!(in_head(find(&doc, "noscript")));
-    // Mit img im noscript (Scripting an) bleibt der Head ebenfalls offen: der Inhalt ist reiner Text.
-    assert!(canonical_in_head(
-        "<html><head><noscript><img src=x></noscript><link rel=canonical href=/a></head><body></body></html>"
-    ));
+    // Der Inhalt von noscript ist ein Element (Scripting aus) und liegt im Head.
+    assert!(in_head(find(&doc, "noscript link[rel=stylesheet]")));
+}
+
+// spec: TECH-017
+#[test]
+fn canonical_in_head_noscript_is_an_element_in_head() {
+    let doc = Document::parse(
+        "<html><head><noscript><link rel=canonical href=/a></noscript></head><body></body></html>",
+    );
+    let link = find(&doc, "link[rel=canonical]");
+    assert!(in_head(link));
+    assert!(!in_template(link));
+}
+
+// spec: TECH-008
+#[test]
+fn img_in_head_noscript_closes_head() {
+    // Mit Scripting aus ist <img> in noscript im Head kein erlaubter Inhalt: der Head endet,
+    // das <img> und alles danach liegt im Body.
+    let src = "<html><head><noscript><img src=x></noscript><link rel=canonical href=/a></head><body></body></html>";
+    let doc = Document::parse(src);
+    assert!(!in_head(find(&doc, "img")));
+    assert!(!canonical_in_head(src));
+}
+
+// spec: CRAWL-052
+#[test]
+fn noscript_content_in_body_is_parsed_into_elements() {
+    let doc = Document::parse(
+        "<html><body><noscript><a href=/n>n</a><img src=n.png></noscript><p>x</p></body></html>",
+    );
+    assert!(!in_head(find(&doc, "noscript a")));
+    assert_eq!(
+        xpath(find(&doc, "noscript a")),
+        "/html[1]/body[1]/noscript[1]/a[1]"
+    );
+    assert_eq!(
+        xpath(find(&doc, "noscript img")),
+        "/html[1]/body[1]/noscript[1]/img[1]"
+    );
+    // sichtbarer Text schließt noscript weiterhin aus (ONPAGE-140)
+    assert_eq!(text_content(find(&doc, "body"), true).trim(), "x");
 }
 
 // spec: TECH-003
@@ -140,7 +179,10 @@ fn base_href_is_first_base_with_href_outside_templates() {
 #[test]
 fn xpath_matches_spec_examples() {
     let doc = Document::parse("<body><main><div></div><div><img></div></main></body>");
-    assert_eq!(xpath(find(&doc, "img")), "/html/body/main/div[2]/img");
+    assert_eq!(
+        xpath(find(&doc, "img")),
+        "/html[1]/body[1]/main[1]/div[2]/img[1]"
+    );
 
     let doc = Document::parse(
         "<body><main><p>a</p><p>b <a href=1>x</a> <a href=2>y</a></p></main></body>",
@@ -149,9 +191,12 @@ fn xpath_matches_spec_examples() {
     let paths: Vec<_> = doc.html().select(&sel).map(xpath).collect();
     assert_eq!(
         paths,
-        ["/html/body/main/p[2]/a[1]", "/html/body/main/p[2]/a[2]"]
+        [
+            "/html[1]/body[1]/main[1]/p[2]/a[1]",
+            "/html[1]/body[1]/main[1]/p[2]/a[2]"
+        ]
     );
-    assert_eq!(xpath(find(&doc, "html")), "/html");
+    assert_eq!(xpath(find(&doc, "html")), "/html[1]");
 }
 
 // spec: OUT-031
@@ -169,9 +214,15 @@ fn xpath_is_stable_and_counts_only_same_name_siblings() {
         doc.html().select(&sel).map(xpath).collect()
     };
     assert_eq!(first, second);
-    assert_eq!(first, ["/html/body/ul/li[2]/a", "/html/body/span/a"]);
+    assert_eq!(
+        first,
+        [
+            "/html[1]/body[1]/ul[1]/li[2]/a[1]",
+            "/html[1]/body[1]/span[1]/a[1]"
+        ]
+    );
     let doc = Document::parse(src);
-    assert_eq!(xpath(find(&doc, "title")), "/html/head/title");
+    assert_eq!(xpath(find(&doc, "title")), "/html[1]/head[1]/title[1]");
 }
 
 // spec: ONPAGE-140

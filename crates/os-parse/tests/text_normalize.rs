@@ -1,6 +1,7 @@
 //! ONPAGE-003: Textnormalisierung N(x) und Zeichenlänge.
 
-use os_parse::text::{char_len, normalize};
+use os_parse::dom::{text_content, Document};
+use os_parse::text::{char_len, normalize, normalize_ws};
 
 // spec: ONPAGE-003
 #[test]
@@ -87,4 +88,37 @@ fn title_example_from_fixture_spec() {
     let n = normalize("  Shop &amp; Mehr&nbsp; ");
     assert_eq!(n, "Shop & Mehr");
     assert_eq!(char_len(&n), 11);
+}
+
+// spec: ONPAGE-003
+#[test]
+fn normalize_ws_skips_entity_decoding_for_dom_text() {
+    // Rohstring: Entities werden dekodiert, DOM-Text ist bereits dekodiert.
+    assert_eq!(normalize_ws("  A&amp;B\u{00A0}\n c "), "A&amp;B c");
+    assert_eq!(normalize_ws("\u{2003}a\tb\u{3000}"), "a b");
+    assert_eq!(normalize_ws(""), "");
+    assert_eq!(normalize_ws(" \n\t "), "");
+    // ohne Entities identisch mit normalize
+    for s in [
+        "  Hallo\n\t Welt  ",
+        "a\u{2003}b\u{3000}c\u{0085}d",
+        "Über",
+        "",
+    ] {
+        assert_eq!(normalize_ws(s), normalize(s), "{s:?}");
+    }
+}
+
+// spec: ONPAGE-003
+#[test]
+fn dom_text_is_not_decoded_twice() {
+    let doc =
+        Document::parse("<body><p id=p title=\"x&amp;amp;y\"> a &amp;amp; b &lt;i&gt; </p></body>");
+    let sel = scraper::Selector::parse("#p").unwrap();
+    let p = doc.html().select(&sel).next().unwrap();
+    // Quelltext `&amp;amp;` ist im DOM `&amp;` und bleibt nach normalize_ws genau so.
+    assert_eq!(normalize_ws(&text_content(p, true)), "a &amp; b <i>");
+    assert_eq!(normalize_ws(p.value().attr("title").unwrap()), "x&amp;y");
+    // normalize würde ein zweites Mal dekodieren.
+    assert_eq!(normalize(&text_content(p, true)), "a & b <i>");
 }

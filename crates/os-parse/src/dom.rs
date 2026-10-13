@@ -4,10 +4,18 @@
 //! `<head>` liegt, entscheidet allein der HTML5-Tree-Builder: Ein `<img>`, `<div>` oder Text im Head
 //! beendet ihn implizit, ein zweites `<head>` vor `<body>` wird ignoriert, seine Kinder landen im
 //! ersten Head.
+//!
+//! Der Tree-Builder läuft mit `scripting_enabled = false` (wie ein Browser ohne JavaScript): Der Inhalt von
+//! `<noscript>` wird als Elemente geparst und ist damit für die Extraktion sichtbar (TECH-017, TECH-008,
+//! CRAWL-052 Q9). Ein `<noscript>` im Head mit Nicht-Head-Inhalt (`<img>`, `<div>`, Text) schließt den Head
+//! wie jedes andere Element.
 
 use std::sync::OnceLock;
 
-use scraper::{ElementRef, Html, Selector};
+use html5ever::driver::{self, ParseOpts};
+use html5ever::tendril::TendrilSink;
+use html5ever::tree_builder::TreeBuilderOpts;
+use scraper::{ElementRef, Html, HtmlTreeSink, Selector};
 
 const XHTML_NS: &str = "http://www.w3.org/1999/xhtml";
 
@@ -17,10 +25,19 @@ pub struct Document {
 }
 
 impl Document {
-    /// Parst `html` nach dem WHATWG-Algorithmus (immer erfolgreich; Fehler werden wie im Browser repariert).
+    /// Parst `html` nach dem WHATWG-Algorithmus (immer erfolgreich; Fehler werden wie im Browser repariert),
+    /// mit `scripting_enabled = false`: `<noscript>`-Inhalt wird zu Elementen (TECH-017, CRAWL-052 Q9).
     pub fn parse(html: &str) -> Self {
+        let opts = ParseOpts {
+            tree_builder: TreeBuilderOpts {
+                scripting_enabled: false,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let parser = driver::parse_document(HtmlTreeSink::new(Html::new_document()), opts);
         Document {
-            html: Html::parse_document(html),
+            html: parser.one(html),
         }
     }
 
@@ -63,37 +80,33 @@ pub fn in_template(node: ElementRef) -> bool {
         .any(|a| is_html_element_named(&a, "template"))
 }
 
-/// Absoluter XPath des Elements, z. B. `/html/body/main/p[2]/a[1]`. Ein Positionsindex (1-basiert unter
-/// gleichnamigen Geschwistern) steht nur, wenn es mehrere gleichnamige Geschwister gibt; derselbe Quelltext
-/// ergibt immer denselben Pfad.
+/// Absoluter XPath des Elements mit durchgängigen Positionsindizes (1-basiert unter gleichnamigen
+/// Geschwistern, auch bei nur einem Geschwister), z. B. `/html[1]/body[1]/main[1]/p[2]/a[1]`. Das ist die
+/// verbindliche Form der Spalte `Link Path` (OUT-031); derselbe Quelltext ergibt immer denselben Pfad.
 pub fn xpath(node: ElementRef) -> String {
     let mut segments: Vec<String> = Vec::new();
     let mut current = Some(*node);
     while let Some(n) = current {
         if let Some(el) = n.value().as_element() {
             let name = el.name();
-            let mut same = 0usize;
-            let mut position = 0usize;
+            let mut position = 1usize;
             if let Some(parent) = n.parent() {
+                let mut same = 0usize;
                 for sibling in parent.children() {
-                    if let Some(se) = sibling.value().as_element() {
-                        if se.name() == name {
-                            same += 1;
-                            if sibling.id() == n.id() {
-                                position = same;
-                            }
+                    if sibling
+                        .value()
+                        .as_element()
+                        .is_some_and(|se| se.name() == name)
+                    {
+                        same += 1;
+                        if sibling.id() == n.id() {
+                            position = same;
+                            break;
                         }
                     }
                 }
-            } else {
-                position = 1;
-                same = 1;
             }
-            if same > 1 {
-                segments.push(format!("{name}[{position}]"));
-            } else {
-                segments.push(name.to_string());
-            }
+            segments.push(format!("{name}[{position}]"));
         }
         current = n.parent();
     }
@@ -183,7 +196,9 @@ fn collect_text(node: ego_tree::NodeRef<scraper::Node>, block_separators: bool, 
 /// Textinhalt des Elements in Dokumentreihenfolge, ohne `script`, `style`, `noscript`, `template`, `svg`
 /// und Kommentare. Mit `block_separators` erzeugen Blockgrenzen (`p`, `div`, `li`, `td`, `h1`–`h6`, `br`,
 /// `section`, `article` …) je ein Leerzeichen, damit `<p>a</p><p>b</p>` zu „a b“ wird (ONPAGE-140).
-/// Der Text ist nicht normalisiert – Aufrufer wenden [`crate::text::normalize`] an.
+/// Der Text ist nicht normalisiert und enthält bereits dekodierte Zeichen (der Tree-Builder hat Entities
+/// aufgelöst): Aufrufer wenden [`crate::text::normalize_ws`] an, **nicht** [`crate::text::normalize`] – sonst
+/// würde `&amp;amp;` im Quelltext doppelt zu `&` dekodiert.
 pub fn text_content(node: ElementRef, block_separators: bool) -> String {
     let mut out = String::new();
     let name = node.value().name();

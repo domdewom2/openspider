@@ -25,11 +25,21 @@ fn decode_entities(s: &str) -> Cow<'_, str> {
 /// N(x): (1) Entities dekodieren, (2) jede Folge von Unicode-`White_Space` (inkl. U+00A0, Tab, CR, LF)
 /// durch genau ein U+0020 ersetzen, (3) führenden und abschließenden Leerraum entfernen. Keine Änderung der
 /// Groß-/Kleinschreibung und keine Unicode-Normalisierung (Annahme A-1).
+///
+/// Nur für **Rohstrings** (z. B. Header- oder Attributwerte, die nicht durch den HTML-Tree-Builder liefen).
+/// Texte und Attributwerte aus dem DOM sind bereits dekodiert: dafür [`normalize_ws`] verwenden, sonst
+/// entsteht Doppeldekodierung (`&amp;amp;` im Quelltext → `&amp;` im DOM → `&` nach `normalize`).
 pub fn normalize(s: &str) -> String {
-    let decoded = decode_entities(s);
-    let mut out = String::with_capacity(decoded.len());
+    normalize_ws(&decode_entities(s))
+}
+
+/// N(x) ohne Entity-Schritt: nur die Schritte (2) und (3), für bereits dekodierte DOM-Texte und -Attribute
+/// (`dom::text_content`, `Element::attr`). Die Ausgabe stimmt mit [`normalize`] überein, sobald die
+/// Eingabe keine Entities mehr enthält.
+pub fn normalize_ws(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
     let mut pending_space = false;
-    for c in decoded.chars() {
+    for c in s.chars() {
         if c.is_whitespace() {
             pending_space = !out.is_empty();
         } else {
