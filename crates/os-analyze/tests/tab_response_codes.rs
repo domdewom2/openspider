@@ -478,7 +478,17 @@ fn no_response_lists_timeouts_refused_connections_and_dns_failures() {
     ] {
         assert!(contains(d, "No Response", url), "{url}");
         assert_eq!(cell(d, url, "Status Code"), &Value::Int(0), "{url}");
-        assert_eq!(text(cell(d, url, "Status")), Some(status), "{url}");
+        let got = text(cell(d, url, "Status"));
+        // Windows beantwortet einen geschlossenen Port nicht sofort mit RST, sondern wiederholt das SYN: Der
+        // kurze Fetch-Timeout läuft zuerst ab (Timeout statt Refused).
+        if cfg!(windows) && status == "Connection Refused" {
+            assert!(
+                matches!(got, Some("Connection Refused" | "Connection Timeout")),
+                "{url}: {got:?}"
+            );
+        } else {
+            assert_eq!(got, Some(status), "{url}");
+        }
     }
     assert_eq!(
         list(d, "Internal No Response"),
