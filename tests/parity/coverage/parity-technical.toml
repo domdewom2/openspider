@@ -1,0 +1,192 @@
+# Absichtserklaerung der Fixture "parity-technical" je Tab/Filter (erzeugt von tests/parity/gen/generate.py).
+# hit  = URLs, die nach Spec im Filter stehen muessen; miss = URLs, die nicht darin stehen duerfen.
+# Adressen: "/pfad" intern, "ext:/pfad" externer Host localhost, "dead:<url>" nicht erreichbar.
+# Wird von tests/parity/fixtures_check.rs gegen die ausgelieferte Site geprueft.
+site = "parity-technical"
+
+[[case]]
+tab = "Canonicals"
+filter = "All"
+hit = ["/canon/self.html", "/canon/none.html"]
+miss = ["/canon/gone-404.html", "/img/small.png"]
+
+[[case]]
+tab = "Canonicals"
+filter = "Contains Canonical"
+hit = ["/canon/self.html", "/canon/header-only.html"]
+miss = ["/canon/none.html"]
+
+[[case]]
+tab = "Canonicals"
+filter = "Self Referencing"
+hit = ["/canon/self.html", "/canon/target.html", "/canon/header-only.html", "/canon/multi-same.html"]
+miss = ["/canon/to-other.html", "/canon/none.html"]
+
+[[case]]
+tab = "Canonicals"
+filter = "Canonicalised"
+hit = ["/canon/to-other.html", "/canon/to-external.html", "/canon/to-404.html"]
+miss = ["/canon/self.html", "/canon/none.html"]
+
+[[case]]
+tab = "Canonicals"
+filter = "Missing"
+hit = ["/canon/none.html"]
+miss = ["/canon/self.html", "/canon/header-only.html"]
+
+[[case]]
+tab = "Canonicals"
+filter = "Multiple"
+hit = ["/canon/multi-same.html", "/canon/multi-conflict.html", "/canon/multi-mixed-same.html"]
+miss = ["/canon/self.html", "/canon/none.html"]
+
+[[case]]
+tab = "Canonicals"
+filter = "Multiple Conflicting"
+hit = ["/canon/multi-conflict.html"]
+miss = ["/canon/multi-same.html", "/canon/multi-mixed-same.html", "/canon/self.html"]
+
+[[case]]
+tab = "Canonicals"
+filter = "Non-Indexable Canonical"
+hit = ["/canon/to-404.html", "/canon/to-301.html", "/canon/to-noindex.html"]
+miss = ["/canon/to-other.html", "/canon/self.html"]
+
+[[case]]
+tab = "Directives"
+filter = "All"
+hit = ["/dir/plain.html", "/dir/noindex.html"]
+miss = ["ext:/dir/plain.html"]
+
+[[case]]
+tab = "Directives"
+filter = "Index"
+hit = ["/dir/index-follow.html", "/dir/conflict.html"]
+miss = ["/dir/plain.html", "/dir/all.html"]
+
+[[case]]
+tab = "Directives"
+filter = "Noindex"
+hit = ["/dir/noindex.html", "/dir/noindex-header.html", "/dir/conflict.html"]
+miss = ["/dir/plain.html", "/dir/none.html"]
+
+[[case]]
+tab = "Directives"
+filter = "Follow"
+hit = ["/dir/index-follow.html", "/dir/noindex.html"]
+miss = ["/dir/plain.html", "/dir/nofollow.html"]
+
+[[case]]
+tab = "Directives"
+filter = "Nofollow"
+hit = ["/dir/nofollow.html"]
+miss = ["/dir/index-follow.html", "/dir/none.html"]
+
+[[case]]
+tab = "Directives"
+filter = "None"
+hit = ["/dir/none.html"]
+miss = ["/dir/noindex.html", "/dir/plain.html"]
+
+[[case]]
+tab = "Directives"
+filter = "Refresh"
+hit = ["/dir/refresh-0.html", "/dir/refresh-bare.html", "/dir/refresh-header.html"]
+miss = ["/dir/plain.html", "/dir/refresh-target.html"]
+
+[[case]]
+tab = "Hreflang"
+filter = "All"
+hit = ["/hl/en/", "/hl/fr/"]
+miss = ["/hl/it/", "/img/small.png"]
+
+[[case]]
+tab = "Hreflang"
+filter = "Contains Hreflang"
+hit = ["/hl/en/", "/hl/de/", "/hl/bad-codes.html"]
+miss = ["/hl/fr/", "/hl/about.html"]
+
+[[case]]
+tab = "Hreflang"
+filter = "Non-200 Hreflang URLs"
+hit = ["/hl/en/"]
+miss = ["/hl/de/"]
+
+[[case]]
+tab = "Hreflang"
+filter = "Missing Return Links"
+hit = ["/hl/en/"]
+miss = ["/hl/de/"]
+
+[[case]]
+tab = "Hreflang"
+filter = "Incorrect Language & Region Codes"
+hit = ["/hl/bad-codes.html"]
+miss = ["/hl/en/", "/hl/de/"]
+
+[[case]]
+tab = "Hreflang"
+filter = "Missing"
+hit = ["/hl/fr/", "/hl/about.html"]
+miss = ["/hl/en/", "/hl/bad-codes.html"]
+
+[[case]]
+tab = "Links"
+filter = "All"
+hit = ["/links/l1.html", "/links/attrs.html"]
+miss = ["/img/small.png"]
+
+[[case]]
+tab = "Links"
+filter = "Pages With High Crawl Depth"
+hit = ["/links/l3.html", "/links/l4.html", "/links/l5.html"]
+miss = ["/links/l1.html", "/links/l2.html", "/links/attrs.html"]
+
+[[case]]
+tab = "Links"
+filter = "Pages Without Internal Outlinks"
+hit = ["/links/deadend.html", "/links/self-only.html"]
+miss = ["/links/attrs.html", "/links/l1.html"]
+
+[[case]]
+tab = "Links"
+filter = "Internal Nofollow Outlinks"
+hit = ["/links/attrs.html"]
+miss = ["/links/l1.html", "/links/deadend.html", "/links/multi.html"]
+
+[[case]]
+tab = "Links"
+filter = "Internal Outlinks With No Anchor Text"
+hit = ["/links/no-anchor.html"]
+miss = ["/links/attrs.html", "/links/l1.html"]
+
+[[case]]
+tab = "Sitemaps"
+filter = "All"
+hit = ["/map/in-sitemap.html", "/map/not-in-sitemap.html"]
+miss = ["ext:/map/in-sitemap.html"]
+
+[[case]]
+tab = "Sitemaps"
+filter = "URLs In Sitemap"
+hit = ["/map/in-sitemap.html", "/map/post-1.html", "/map/orphan-page.html"]
+miss = ["/map/not-in-sitemap.html", "/map/orphan-child.html"]
+
+[[case]]
+tab = "Sitemaps"
+filter = "URLs Not In Sitemap"
+hit = ["/map/not-in-sitemap.html"]
+miss = ["/map/in-sitemap.html", "/map/noindex.html", "/img/small.png"]
+
+[[case]]
+tab = "Sitemaps"
+filter = "Orphan URLs"
+hit = ["/map/orphan-page.html", "/map/orphan-child.html", "/map/orphan-grandchild.html"]
+miss = ["/map/linked-and-listed.html", "/map/in-sitemap.html", "/map/not-in-sitemap.html"]
+
+[[case]]
+tab = "Sitemaps"
+filter = "Non-Indexable URLs In Sitemap"
+hit = ["/map/redirected", "/map/gone", "/map/noindex.html", "/map/canonicalised.html", "/blocked/page.html"]
+miss = ["/map/in-sitemap.html", "/map/post-1.html"]
+

@@ -1,0 +1,22 @@
+# OUT-009: gespeicherte Spaltenkonfiguration fuer out-basic-site - sichtbare Spalten in sichtbarer Reihenfolge je Tab.
+# Gegenueber dem Standard-Layout: "Meta Keywords 1" ausgeblendet, "Title 1" vor "Status Code" verschoben.
+# "Address" steht immer an erster Stelle und kann nicht ausgeblendet werden.
+[tab.Internal]
+columns = [
+  "Address",
+  "Title 1",
+  "Content",
+  "Status Code",
+  "Status",
+  "Indexability",
+  "Indexability Status",
+  "Title 1 Length",
+  "Meta Description 1",
+  "Meta Description 1 Length",
+  "H1-1",
+  "H1-1 Length",
+  "H2-1",
+  "Crawl Depth",
+  "Inlinks",
+  "Outlinks",
+]

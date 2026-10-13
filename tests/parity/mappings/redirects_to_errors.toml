@@ -1,0 +1,49 @@
+# Spaltenmapping SF -> OpenSpider fuer den Export "Report Redirects:Redirects to Errors" (Format: docs/plan/M1.md 5.2).
+# Spaltennamen rechts sind die kanonischen OpenSpider-Namen aus der Spec; Annahme: die Referenz nutzt dieselben
+# funktionalen Bezeichner. Abweichungen klaert M1-P29 anhand der echten Exporte.
+key = ["Address"]
+drop_sf_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Referenz nie einlesen
+
+[columns]
+"Chain Type" = "Chain Type"
+"Number of Redirects" = "Number of Redirects"
+"Redirect Loop" = "Redirect Loop"
+"Temp Redirect in Chain" = "Temp Redirect in Chain"
+"Address" = "Address"
+"Final Address" = "Final Address"
+"Final Status Code" = "Final Status Code"
+"Final Status" = "Final Status"
+"Final Content Type" = "Final Content Type"
+"Final Indexability" = "Final Indexability"
+"Final Indexability Status" = "Final Indexability Status"
+"Redirect Type 1" = "Redirect Type 1"
+"Redirect URL 1" = "Redirect URL 1"
+"Status Code 1" = "Status Code 1"
+"Status 1" = "Status 1"
+"Redirect Type 2" = "Redirect Type 2"
+"Redirect URL 2" = "Redirect URL 2"
+"Status Code 2" = "Status Code 2"
+"Status 2" = "Status 2"
+"Redirect Type 3" = "Redirect Type 3"
+"Redirect URL 3" = "Redirect URL 3"
+"Status Code 3" = "Status Code 3"
+"Status 3" = "Status 3"
+"Redirect Type 4" = "Redirect Type 4"
+"Redirect URL 4" = "Redirect URL 4"
+"Status Code 4" = "Status Code 4"
+"Status 4" = "Status 4"
+"Redirect Type 5" = "Redirect Type 5"
+"Redirect URL 5" = "Redirect URL 5"
+"Status Code 5" = "Status Code 5"
+"Status 5" = "Status 5"
+"Redirect Type 6" = "Redirect Type 6"
+"Redirect URL 6" = "Redirect URL 6"
+"Status Code 6" = "Status Code 6"
+"Status 6" = "Status 6"
+
+[normalize]
+base_url = true          # http://127.0.0.1:<port> -> {BASE}, http://localhost:<port> -> {EXT}
+trim = true
+bool = "case-insensitive"
+number_decimals = 3      # Zahlen werden nach Rundung verglichen
+empty_equals_null = true

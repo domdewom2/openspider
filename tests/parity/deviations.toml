@@ -1,0 +1,17 @@
+# Dokumentierte Paritaetsabweichungen (docs/plan/M1.md 5.3, Schritt 4).
+#
+# Jede Abweichung zwischen OpenSpider und den Referenz-Exporten ist entweder ein Fehler (-> Nachbesserungspaket)
+# oder steht hier mit Spec-ID und Kennzeichen. Der Runner `os-parity` (M1-P11) wendet die Eintraege beim Vergleich an.
+# Ohne Eintraege: keine bekannten Abweichungen (Stand M1-P10, vor dem ersten Vergleich mit echten Exporten).
+#
+# Schema (jede Abweichung ein Block; alle Textwerte als TOML-Strings):
+#
+# [[deviation]]
+# id = "DEV-001"                  # fortlaufend, eindeutig
+# spec = "ONPAGE-081"             # Spec-ID, auf die sich die Abweichung bezieht
+# kind = "Annahme"                # "Paritaetsabweichung" | "Annahme" | "OS-Festlegung" (Kennzeichen aus der Spec)
+# export = "internal_all"         # Mapping-Slug aus tests/parity/mappings oder "*" fuer alle Exporte
+# site = "*"                      # Site-Name oder "*"
+# column = "Title 1 Pixel Width"  # optional: nur diese (OpenSpider-)Spalte
+# address = "{BASE}/x.html"       # optional: nur diese Zeile (Adresse nach Normalisierung)
+# reason = "Kurze Begruendung, wie in der Spec festgelegt"

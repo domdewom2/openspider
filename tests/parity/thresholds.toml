@@ -1,0 +1,18 @@
+# Schwellen fuer `os-parity run` (Abnahmekriterium A3 in docs/plan/M1.md 6). Ist die Datei nicht vorhanden,
+# gelten dieselben Werte als Standard im Code. Werte in Prozent der verglichenen Zellen.
+min_sites_present = 4          # mindestens 4 der 5 Sites mit status = "present"
+
+[agreement_pct]
+internal_all = 99.0
+response_codes_all = 99.0
+page_titles_all = 99.0
+meta_description_all = 99.0
+h1_all = 99.0
+h2_all = 99.0
+canonicals_all = 99.0
+directives_all = 99.0
+images_all = 97.0
+hreflang_all = 97.0
+links_all = 97.0
+all_inlinks = 97.0
+redirect_chains = 97.0

@@ -1,0 +1,38 @@
+# OpenSpider-Konfiguration fuer Paritaetslaeufe gegen die Referenz-Exporte (docs/plan/M1.md 5.3).
+# Entspricht der Standardkonfiguration der Referenz nach Neuinstallation, ergaenzt um die Bereiche, die der
+# Abgleich braucht (hreflang, Sitemaps). Alle nicht genannten Schluessel behalten ihre Standardwerte.
+schema_version = 1
+generator = "openspider 0.1.0"
+mode = "spider"
+
+[spider]
+follow_internal_nofollow = false
+follow_external_nofollow = false
+
+[spider.canonicals]
+store = true
+crawl = true
+
+[spider.hreflang]          # Standard: nur speichern; fuer Non-200 / Missing Return Links wird gecrawlt (TECH-071)
+store = true
+crawl = true
+
+[spider.pagination]
+store = true
+crawl = false
+
+[robots]
+mode = "respect"
+
+[advanced]
+cookies = "session_only"
+response_timeout_s = 20
+assume_html = false
+respect_self_ref_meta_refresh = true
+
+[sitemaps]                 # TECH-210: robots.txt-Sitemap-Zeile und verlinkte Sitemaps auswerten
+crawl_linked = true
+auto_discover_robots = true
+
+[analysis]                 # Nachlauf (Canonicals, Sitemaps, Links) am Crawl-Ende
+auto_at_end = true

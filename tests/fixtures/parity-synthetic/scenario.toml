@@ -1,0 +1,14 @@
+# parity-synthetic (Port 8905): entspricht synthetic:n=400,links=10,seed=42 (Kurzform) und ergaenzt die
+# Anteile, die die Kurzform nicht setzen kann (301/404/5xx, noindex, Canonical auf andere URL,
+# Duplikat-Titel), damit Struktur, Tiefen, Duplikat-Titel, noindex und Canonical vorkommen (M1.md 5.1).
+# Die Site wird on-the-fly aus (seed, Pfad) berechnet; es gibt keine Dateien neben dieser.
+[synthetic]
+pages = 400
+links_per_page = 10
+seed = 42
+status_301_share = 0.02
+status_404_share = 0.02
+status_5xx_share = 0.01
+noindex_share = 0.05
+canonical_other_share = 0.03
+duplicate_title_share = 0.10

@@ -1,0 +1,21 @@
+# Spaltenmapping SF -> OpenSpider fuer den Export "Report Crawl Overview" (Format: docs/plan/M1.md 5.2).
+# Spaltennamen rechts sind die kanonischen OpenSpider-Namen aus der Spec; Annahme: die Referenz nutzt dieselben
+# funktionalen Bezeichner. Abweichungen klaert M1-P29 anhand der echten Exporte.
+# Das Layout des Referenz-Exports (Abschnitte als Zeilen vs. Spalte "Section") ist ungeklaert; P29 passt key/columns an.
+# Zeilen "Summary" mit Zeitwerten und "Issues" sind nicht vergleichbar und werden ueber deviations.toml ausgenommen.
+key = ["Section", "Item"]
+drop_sf_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Referenz nie einlesen
+
+[columns]
+"Section" = "Section"
+"Item" = "Item"
+"URLs" = "URLs"
+"% of Total" = "% of Total"
+"Total URLs" = { ignore = true, reason = "Spalte der Referenz ohne OpenSpider-Gegenstueck (P29 klaert)" }
+
+[normalize]
+base_url = true          # http://127.0.0.1:<port> -> {BASE}, http://localhost:<port> -> {EXT}
+trim = true
+bool = "case-insensitive"
+number_decimals = 3      # Zahlen werden nach Rundung verglichen
+empty_equals_null = true
