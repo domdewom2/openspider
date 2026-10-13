@@ -1,0 +1,11 @@
+Address,Occurrences,Indexability Status
+/refresh-0.html,0,Redirected
+/refresh-5-self.html,0,Self Referencing Meta Refresh
+/refresh-bare.html,0,Self Referencing Meta Refresh
+/refresh-header.html,0,Redirected
+/refresh-query.html,0,Redirected
+/refresh-query.html?x=1,0,Self Referencing Meta Refresh
+/refresh-self-0.html,0,Self Referencing Meta Refresh
+/refresh-self-300.html,0,Self Referencing Meta Refresh
+/refresh-self-fragment.html,0,Self Referencing Meta Refresh
+/refresh-self-header.html,0,Self Referencing Meta Refresh

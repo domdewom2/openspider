@@ -1,0 +1,26 @@
+Address,Occurrences,Indexability Status,Canonical URL
+/body-only.html,1,Canonicalised,/target.html
+/canonicalised-target.html,1,Canonicalised,/target.html
+/doc.pdf,1,Canonicalised,/target.html
+/header-over-head.html,2,Canonicalised,/target-a.html
+/multi-case.html,2,Canonicalised,/case/a
+/multi-conflict-mixed.html,2,Canonicalised,/target-a.html
+/multi-conflict.html,2,Canonicalised,/target-a.html
+/multi-fragment.html,2,Canonicalised,/target.html
+/multi-invalid.html,2,Canonicalised,/target-a.html
+/multi-mixed-same.html,2,Canonicalised,/target.html
+/multi-pct.html,2,Canonicalised,/pct/a~b.html
+/multi-relabs.html,2,Canonicalised,/target.html
+/multi-same.html,2,Canonicalised,/target.html
+/noindex-with-canonical.html,1,noindex,/target.html
+/slash.html,1,Canonicalised,/slash.html/
+/to-404.html,1,Canonicalised,/gone-404
+/to-blocked.html,1,Canonicalised,/blocked-target.html
+/to-canonicalised.html,1,Canonicalised,/canonicalised-target.html
+/to-excluded.html,1,Canonicalised,/excluded/noindex-target.html
+/to-external-404.html,1,Canonicalised,{EXT}/ext-missing.html
+/to-external.html,1,Canonicalised,{EXT}/ext-ok.html
+/to-https.html,1,Canonicalised,{HTTPS}/to-https.html
+/to-noindex.html,1,Canonicalised,/noindex-target.html
+/to-other.html,1,Canonicalised,/target.html
+/to-redirect.html,1,Canonicalised,/moved

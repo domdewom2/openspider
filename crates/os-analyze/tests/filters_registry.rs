@@ -72,6 +72,10 @@ fn tabs_match_filter_registry() {
 #[test]
 fn placeholder_tabs_have_address_column_and_population() {
     for tab in tabs::all() {
+        // Umgesetzte Tabs (P20–P25) haben mehr als die Platzhalterspalte; für sie gilt die Platzhalterform nicht.
+        if tab.columns.len() > 1 {
+            continue;
+        }
         assert_eq!(tab.population, "1", "Grundmenge von {}", tab.id);
         assert_eq!(tab.columns.first().map(|c| c.key), Some("Address"));
         let all: Vec<_> = tab.filters.iter().filter(|f| f.id == "All").collect();

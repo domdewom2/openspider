@@ -1,0 +1,10 @@
+Address,Occurrences,Indexability Status,Canonical URL
+/,1,,/
+/header-unquoted.html,1,Canonicalised,/c-one.html
+/header.pdf,1,Canonicalised,/target.html
+/html-basic.html,1,,/html-basic.html
+/in-noscript.html,1,,/in-noscript.html
+/one-header-two-entries.html,2,Canonicalised,/b-one.html
+/rel-multi.html,1,,/rel-multi.html
+/rel-upper.html,1,,/rel-upper.html
+/two-headers.html,2,Canonicalised,/a-one.html

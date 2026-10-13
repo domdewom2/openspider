@@ -605,16 +605,18 @@ async fn canonical_store_off_with_crawl_on_requests_the_target_but_leaves_every_
         ),
         0
     );
+    // Die Startseite trägt zusätzlich einen Meta Refresh auf eine andere URL: nach TECH-001 (M1-P24) ist sie
+    // `Redirected` – aber eben nicht `Canonicalised`.
     let start: String = fx
         .file
         .conn()
         .query_row(
-            "SELECT indexability FROM urls WHERE url = ?1",
+            "SELECT indexability_status FROM urls WHERE url = ?1",
             [fx.site.url("/")],
             |r| r.get(0),
         )
         .unwrap();
-    assert_eq!(start, "Indexable");
+    assert_eq!(start, "Redirected");
 }
 
 // spec: CRAWL-038

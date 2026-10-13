@@ -1,0 +1,34 @@
+Address,Occurrences,Indexability Status
+/,0,
+/all.html,1,
+/body-noindex.html,1,noindex
+/canonical-and-robots.html,1,noindex
+/conflict-meta.html,2,noindex
+/conflict-mixed.html,2,noindex
+/follow-nofollow.html,1,
+/gone.html,1,Client Error
+/index-follow.html,1,
+/max.html,1,
+/mixed-case.html,1,noindex
+/nofollow.html,1,
+/noindex-bingbot.html,1,
+/noindex-googlebot.html,1,noindex
+/noindex-header.html,1,noindex
+/noindex-meta.html,1,noindex
+/noindex.pdf,1,noindex
+/none.html,1,noindex
+/ok.html,0,
+/refresh-0.html,0,Redirected
+/refresh-5-self.html,0,Self Referencing Meta Refresh
+/refresh-bare.html,0,Self Referencing Meta Refresh
+/refresh-header.html,0,Redirected
+/refresh-query.html,0,Redirected
+/refresh-query.html?x=1,0,Self Referencing Meta Refresh
+/refresh-self-0.html,0,Self Referencing Meta Refresh
+/refresh-self-300.html,0,Self Referencing Meta Refresh
+/refresh-self-fragment.html,0,Self Referencing Meta Refresh
+/refresh-self-header.html,0,Self Referencing Meta Refresh
+/robots.txt,0,Client Error
+/unavailable-past.html,1,
+/xrobots-agent.html,2,noindex
+/xrobots-two.html,2,noindex

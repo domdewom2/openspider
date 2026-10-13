@@ -1,0 +1,17 @@
+Address,Occurrences,Indexability Status,Canonical URL
+/,1,,/
+/other/base.html,1,,/other/base.html
+/u/abs-scheme-upper.html,1,,/u/abs-scheme-upper.html
+/u/base.html,1,Canonicalised,/other/base.html
+/u/broken.html,1,,
+/u/dotdot.html,1,,/u/dotdot.html
+/u/empty.html,1,,/u/empty.html
+/u/explicit-slash.html,1,,/u/explicit-slash.html
+/u/fragment.html,1,,/u/fragment.html#top
+/u/pct-case.html,1,Canonicalised,/u/pct%c3%a4.html
+/u/query.html,1,Canonicalised,/u/query.html?x=1
+/u/query.html?x=1,1,,/u/query.html?x=1
+/u/rel.html,1,,/u/rel.html
+/u/root.html,1,,/u/root.html
+/u/trailing-slash.html,1,Canonicalised,/u/trailing-slash.html/
+/u/trailing-slash.html/,1,,/u/trailing-slash.html/

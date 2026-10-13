@@ -1,0 +1,8 @@
+Address,Occurrences,Indexability Status,Canonical URL
+/to-404.html,1,Canonicalised,/gone-404
+/to-blocked.html,1,Canonicalised,/blocked-target.html
+/to-canonicalised.html,1,Canonicalised,/canonicalised-target.html
+/to-excluded.html,1,Canonicalised,/excluded/noindex-target.html
+/to-external-404.html,1,Canonicalised,{EXT}/ext-missing.html
+/to-noindex.html,1,Canonicalised,/noindex-target.html
+/to-redirect.html,1,Canonicalised,/moved

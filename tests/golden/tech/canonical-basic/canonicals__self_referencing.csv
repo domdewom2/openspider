@@ -1,0 +1,17 @@
+Address,Occurrences,Indexability Status,Canonical URL
+/,1,,/
+/case/A,1,,/case/A
+/case/a,1,,/case/a
+/excluded/noindex-target.html,1,noindex,/excluded/noindex-target.html
+/fragment.html,1,,/fragment.html#top
+/head-self-body-other.html,2,,/head-self-body-other.html
+/header-only.html,1,,/header-only.html
+/noindex-target.html,1,noindex,/noindex-target.html
+/pct/a~b.html,1,,/pct/a~b.html
+/self-abs.html,1,,/self-abs.html
+/self.html,1,,/self.html
+/slash.html/,1,,/slash.html/
+/target-a.html,1,,/target-a.html
+/target-b.html,1,,/target-b.html
+/target.html,1,,/target.html
+{HTTPS}/to-https.html,1,,{HTTPS}/to-https.html
