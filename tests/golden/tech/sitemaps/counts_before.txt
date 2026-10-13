@@ -1,0 +1,5 @@
+All: 21
+URLs In Sitemap: needs_crawl_analysis
+URLs Not In Sitemap: needs_crawl_analysis
+Orphan URLs: needs_crawl_analysis
+Non-Indexable URLs In Sitemap: needs_crawl_analysis

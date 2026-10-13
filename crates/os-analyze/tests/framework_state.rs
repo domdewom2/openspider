@@ -262,10 +262,10 @@ fn default_run_skips_deselected_and_marks_steps_without_data_basis() {
         StepState::NotApplicable
     );
     assert_eq!(states[&AnalysisStep::LinkMetrics], StepState::NotApplicable);
-    // Die Stubs von P24/P25 und alle übrigen Schritte sind in M1 nicht anwendbar.
-    // M1-P24: der Schritt „Kanonisierungen“ ist umgesetzt und läuft.
+    // Die Schritte „Kanonisierungen“ (P24) und „Sitemaps“ (P25) sind umgesetzt und laufen; Sitemaps endet auch
+    // ohne Sitemap fertig (ohne Einträge keine Marken). Alle übrigen Stubs sind in M1 nicht anwendbar.
     assert_eq!(states[&AnalysisStep::Canonicals], StepState::Done);
-    assert_eq!(states[&AnalysisStep::Sitemaps], StepState::NotApplicable);
+    assert_eq!(states[&AnalysisStep::Sitemaps], StepState::Done);
     assert_eq!(states[&AnalysisStep::LinkScore], StepState::NotApplicable);
     // Reihenfolge der Ausgabe = AnalysisStep::ALL, unabhängig von der Abschlussreihenfolge.
     let order: Vec<_> = outcome.steps.iter().map(|(s, _)| *s).collect();

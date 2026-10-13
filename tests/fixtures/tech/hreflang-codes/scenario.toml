@@ -1,0 +1,2 @@
+# Szenario tech/hreflang-codes (TECH-072, TECH-080): /valid/ mit allen gültigen, /invalid/ mit allen
+# ungültigen Beispielen aus der Spec als <link rel="alternate" hreflang>; Ziel überall /target/.

@@ -1,0 +1,11 @@
+All: 5
+Contains Hreflang: 2
+Non-200 Hreflang URLs: 0
+Missing Return Links: 1
+Incorrect Language & Region Codes: 0
+Missing: 3
+All: 6
+URLs In Sitemap: needs_crawl_analysis
+URLs Not In Sitemap: needs_crawl_analysis
+Orphan URLs: needs_crawl_analysis
+Non-Indexable URLs In Sitemap: needs_crawl_analysis

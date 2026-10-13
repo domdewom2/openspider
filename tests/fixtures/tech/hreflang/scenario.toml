@@ -1,0 +1,22 @@
+# Szenario tech/hreflang (TECH-070, TECH-071, TECH-073, TECH-074, TECH-076, TECH-080, TECH-085).
+# Host: site.test. /en/ annotiert de, fr, fr-ca (-> /fr-old/, 301), es, it (-> /it/, 404), nl (nirgends verlinkt).
+# Rücklinks: /de/ ja (HTML), /fr/ und /es/ nur per Sitemap, /nl/ nein. /de/ annotiert /fr/ ohne Rücklink.
+# /pdf-en.pdf trägt HTTP-hreflang (Link-Header). sitemap-hreflang.xml: <loc> /es/, /it/, /fr/ mit xhtml:link.
+
+[[route]]
+path = "/fr-old/"
+status = 301
+location = "/fr/"
+
+[[route]]
+path = "/it/"
+status = 404
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Nicht gefunden</title></head><body><h1>404</h1></body></html>"
+
+[[route]]
+path = "/pdf-en.pdf"
+content_type = "application/pdf"
+body = "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n"
+[route.headers]
+Link = "<http://site.test/pdf-en.pdf>; rel=\"alternate\"; hreflang=\"en\""
