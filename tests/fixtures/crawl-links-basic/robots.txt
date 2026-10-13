@@ -1,0 +1,5 @@
+# Fixture crawl-links-basic: alles erlaubt; die Sitemap-Zeile dient der Autodiscovery (TECH-210).
+User-agent: *
+Disallow:
+
+Sitemap: {{BASE_URL}}/sitemap-index.xml

@@ -1,0 +1,61 @@
+# Szenario crawl-canonicals (CRAWL-046). Jedes *-Ziel ist nur ueber den Canonical der jeweiligen Seite erreichbar.
+# /variante und /variante?farbe=rot liefern dasselbe Dokument (Routen kennen keine Query): canonical -> /variante.
+
+[[route]]
+path = "/c1"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>c1</title>\n<link rel=\"canonical\" href=\"/nur-canonical\">\n</head>\n<body>\n<h1>c1</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/c2"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>c2</title>\n</head>\n<body>\n<h1>c2</h1>\n</body>\n</html>\n"
+[route.headers]
+Link = "</nur-header-canonical>; rel=\"canonical\""
+
+[[route]]
+path = "/c3"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>c3</title>\n<link rel=\"canonical\" href=\"/nur-canonical-a\">\n<link rel=\"canonical\" href=\"/nur-canonical-b\">\n</head>\n<body>\n<h1>c3</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/c4"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>c4</title>\n</head>\n<body>\n<h1>c4</h1>\n<link rel=\"canonical\" href=\"/nur-body-canonical\">\n</body>\n</html>\n"
+
+[[route]]
+path = "/c5"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>c5</title>\n<link rel=\"Canonical\" href=\"/nur-canonical-gross\">\n</head>\n<body>\n<h1>c5</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/c6"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>c6</title>\n<link rel=\"canonical nofollow\" href=\"/nur-canonical-multi\">\n</head>\n<body>\n<h1>c6</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/variante"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>Variante</title>\n<link rel=\"canonical\" href=\"/variante\">\n</head>\n<body>\n<h1>Variante</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/nur-canonical"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/nur-canonical</title>\n</head>\n<body>\n<h1>/nur-canonical</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/nur-header-canonical"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/nur-header-canonical</title>\n</head>\n<body>\n<h1>/nur-header-canonical</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/nur-canonical-a"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/nur-canonical-a</title>\n</head>\n<body>\n<h1>/nur-canonical-a</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/nur-canonical-b"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/nur-canonical-b</title>\n</head>\n<body>\n<h1>/nur-canonical-b</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/nur-body-canonical"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/nur-body-canonical</title>\n</head>\n<body>\n<h1>/nur-body-canonical</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/nur-canonical-gross"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/nur-canonical-gross</title>\n</head>\n<body>\n<h1>/nur-canonical-gross</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/nur-canonical-multi"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/nur-canonical-multi</title>\n</head>\n<body>\n<h1>/nur-canonical-multi</h1>\n</body>\n</html>\n"
+

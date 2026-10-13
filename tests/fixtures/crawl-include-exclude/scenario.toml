@@ -1,0 +1,56 @@
+# Szenario crawl-include-exclude (CRAWL-109/110). / verlinkt alle Faelle; /blog/a bindet ein Bild ein.
+# blog.site.test wird per network.resolve (*.test) auf diese Site abgebildet und ist fuer eine Start-URL auf
+# 127.0.0.1 extern. Pfade mit Leerzeichen/Umlaut: Routen vergleichen auch gegen den dekodierten Pfad.
+
+[[route]]
+path = "/blog/a"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/blog/a</title>\n</head>\n<body>\n<h1>/blog/a</h1>\n<p><img src=\"/img/a.png\" alt=\"A\"></p>\n</body>\n</html>\n"
+
+[[route]]
+path = "/img/a.png"
+png_size = 200
+
+[[route]]
+path = "/blog/b"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/blog/b</title>\n</head>\n<body>\n<h1>/blog/b</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/shop/x"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/shop/x</title>\n</head>\n<body>\n<h1>/shop/x</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/Blog/c"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/Blog/c</title>\n</head>\n<body>\n<h1>/Blog/c</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/handbuch.pdf"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/handbuch.pdf</title>\n</head>\n<body>\n<h1>/handbuch.pdf</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/liste"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/liste</title>\n</head>\n<body>\n<h1>/liste</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/artikel/2024/titel"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/artikel/2024/titel</title>\n</head>\n<body>\n<h1>/artikel/2024/titel</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/artikel/24/titel"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/artikel/24/titel</title>\n</head>\n<body>\n<h1>/artikel/24/titel</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/kalender/2025-01"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/kalender/2025-01</title>\n</head>\n<body>\n<h1>/kalender/2025-01</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/kalender/x"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/kalender/x</title>\n</head>\n<body>\n<h1>/kalender/x</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/a b"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/a b</title>\n</head>\n<body>\n<h1>/a b</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/über"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/über</title>\n</head>\n<body>\n<h1>/über</h1>\n</body>\n</html>\n"
+

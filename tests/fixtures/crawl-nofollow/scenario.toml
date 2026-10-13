@@ -1,0 +1,79 @@
+# Szenario crawl-nofollow (CRAWL-056). Seiten ohne Dateiendung brauchen Routen; external.test wird per network.resolve
+# auf diese Site abgebildet.
+
+[[route]]
+path = "/nur-nofollow"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/nur-nofollow</title>\n</head>\n<body>\n<h1>/nur-nofollow</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/nur-sponsored"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/nur-sponsored</title>\n</head>\n<body>\n<h1>/nur-sponsored</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/nur-ugc"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/nur-ugc</title>\n</head>\n<body>\n<h1>/nur-ugc</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/nofollow-noopener"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/nofollow-noopener</title>\n</head>\n<body>\n<h1>/nofollow-noopener</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/auch-follow"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/auch-follow</title>\n</head>\n<body>\n<h1>/auch-follow</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/frei"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/frei</title>\n</head>\n<body>\n<h1>/frei</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/ext-nofollow"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/ext-nofollow</title>\n</head>\n<body>\n<h1>/ext-nofollow</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/ext-sponsored"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/ext-sponsored</title>\n</head>\n<body>\n<h1>/ext-sponsored</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/ext-ugc"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/ext-ugc</title>\n</head>\n<body>\n<h1>/ext-ugc</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/ext-follow"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/ext-follow</title>\n</head>\n<body>\n<h1>/ext-follow</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/hinter-meta"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/hinter-meta</title>\n</head>\n<body>\n<h1>/hinter-meta</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/hinter-header"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/hinter-header</title>\n</head>\n<body>\n<h1>/hinter-header</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/hinter-googlebot"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/hinter-googlebot</title>\n</head>\n<body>\n<h1>/hinter-googlebot</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/hinter-header-googlebot"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/hinter-header-googlebot</title>\n</head>\n<body>\n<h1>/hinter-header-googlebot</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/meta-nofollow"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>Meta nofollow</title>\n<meta name=\"robots\" content=\"nofollow\">\n</head>\n<body>\n<h1>Meta nofollow</h1>\n<p><a href=\"/hinter-meta\">Link hinter meta nofollow</a></p>\n</body>\n</html>\n"
+
+[[route]]
+path = "/header-nofollow"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>Header nofollow</title>\n</head>\n<body>\n<h1>Header nofollow</h1>\n<p><a href=\"/hinter-header\">Link hinter X-Robots-Tag nofollow</a></p>\n</body>\n</html>\n"
+[route.headers]
+X-Robots-Tag = "nofollow"
+
+[[route]]
+path = "/googlebot-nofollow"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>Googlebot nofollow</title>\n<meta name=\"googlebot\" content=\"nofollow\">\n</head>\n<body>\n<h1>Googlebot nofollow</h1>\n<p><a href=\"/hinter-googlebot\">Link hinter googlebot nofollow</a></p>\n</body>\n</html>\n"
+
+[[route]]
+path = "/header-googlebot-nofollow"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>Header googlebot nofollow</title>\n</head>\n<body>\n<h1>Header googlebot nofollow</h1>\n<p><a href=\"/hinter-header-googlebot\">Link hinter X-Robots-Tag googlebot</a></p>\n</body>\n</html>\n"
+[route.headers]
+X-Robots-Tag = "googlebot: nofollow"
+
