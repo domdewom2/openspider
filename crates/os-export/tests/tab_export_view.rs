@@ -6,8 +6,9 @@ mod support;
 
 use calamine::{open_workbook, Data, Reader, Xlsx};
 use os_analyze::views::{filter_counts_in, ColumnSelection, SearchSpec, ViewQuery};
+use os_engine::testing::crawl_fixture;
 use os_export::tab_export::{
-    canonical_name, export_tab_in, suggest_file_name, suggest_tab_file_name_in,
+    canonical_name, export_tab, export_tab_in, suggest_file_name, suggest_tab_file_name_in,
 };
 use os_export::Format;
 use os_model::{CrawlConfig, Timestamp};
@@ -188,14 +189,30 @@ fn export_of_the_current_filter_view_uses_all_columns_on_request() {
 }
 
 // spec: ONPAGE-191
-#[test]
+// spec: OUT-020
+#[tokio::test]
 #[ignore = "M1-P26"]
-fn golden_page_titles_missing_with_all_columns() {
-    // P26: Fixture onpage-titles (P22) crawlen, `Page Titles:Missing` mit ColumnSelection::All als CSV
-    // exportieren und gegen tests/golden/onpage-titles/page_titles__missing.csv (Normalisierung nach
-    // 06 §0) prüfen. Erst möglich, wenn P22 Tab, Fixture und Golden liefert.
-    let golden = repo_tests_dir().join("golden/onpage-titles/page_titles__missing.csv");
-    assert!(golden.exists(), "Golden von P22 fehlt");
+async fn golden_page_titles_missing_with_all_columns() {
+    // Läuft, sobald P22 Tab `Page Titles`, Fixture `onpage-titles` liefert; P26 entfernt das Ignore und
+    // erzeugt das Golden mit UPDATE_GOLDEN=1 (Normalisierung nach 06 §0).
+    let fx = crawl_fixture("onpage-titles", CrawlConfig::default()).await;
+    let dir = tempfile::tempdir().unwrap();
+    let mut q = ViewQuery::new("Page Titles", "Missing");
+    q.columns = ColumnSelection::All;
+    let info = export_tab(
+        &fx.file,
+        &CrawlConfig::default(),
+        &q,
+        dir.path(),
+        Format::Csv,
+    )
+    .unwrap();
+    let csv = read_csv(&info.path);
+    assert!(
+        csv.lines().next().unwrap().contains("Title 1 Pixel Width"),
+        "mit „Alle Spalten“ steht Title 1 Pixel Width in der Kopfzeile"
+    );
+    assert_golden("onpage-titles/page_titles__missing.csv", &csv);
 }
 
 // spec: OUT-020

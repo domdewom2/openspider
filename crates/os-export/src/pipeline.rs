@@ -26,7 +26,7 @@ use crate::fs_paths;
 use crate::links_export::export_link_entry;
 use crate::naming;
 use crate::output::open_writer;
-use crate::types::{ExportFileInfo, Format, WriterOptions};
+use crate::types::{ExportFileInfo, Format, TableWriter, WriterOptions};
 
 /// Schreiboptionen aus der Konfiguration (`export.utf8_bom`, `export.line_ending`).
 pub fn writer_options(cfg: &CrawlConfig) -> WriterOptions {
@@ -103,6 +103,21 @@ pub fn export_view(
     format: Format,
     sheet: &str,
 ) -> Result<ExportFileInfo, ExportError> {
+    write_view(tabs, file, cfg, q, || {
+        open_writer(path, format, sheet, &writer_options(cfg))
+    })
+}
+
+/// Wie [`export_view`], aber mit frei wählbarem Schreiber: `open` wird erst aufgerufen, wenn Tab und Filter
+/// aufgelöst sind. Ein Fehler des Schreibers (auch mitten im Zeilenstrom) bricht den Export ab und kommt
+/// unverändert beim Aufrufer an. Dient auch Tests mit einem Schreiber, der gezielt scheitert.
+pub fn write_view(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    q: &ViewQuery,
+    open: impl FnOnce() -> Result<Box<dyn TableWriter>, ExportError>,
+) -> Result<ExportFileInfo, ExportError> {
     // Kopfzeile vorab: `stream_view` meldet die Spaltennamen erst nach dem letzten Datensatz.
     let mut probe = q.clone();
     probe.limit = 1;
@@ -120,7 +135,7 @@ pub fn export_view(
         .collect();
     let state = views::state_of_in(tabs, file, cfg, tab.id, &q.filter)?;
 
-    let mut writer = open_writer(path, format, sheet, &writer_options(cfg))?;
+    let mut writer = open()?;
     writer.header(&header)?;
 
     let mut failure: Option<ExportError> = None;

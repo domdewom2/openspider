@@ -363,7 +363,14 @@ pub fn response_codes_tab() -> TabDef {
 // Speichermessung (Benchmarks)
 
 /// Resident-Set-Size des Prozesses in MiB (Unix über `ps`); `None`, wo nicht messbar.
+///
+/// Linux liest `/proc/self/statm`; macOS und andere Unix-Systeme fragen `ps` (nur in `#[ignore]`-Benchmarks);
+/// auf Windows ist der Wert nicht messbar (`None`, der Benchmark meldet das).
 pub fn rss_mib() -> Option<f64> {
+    if let Ok(statm) = std::fs::read_to_string("/proc/self/statm") {
+        let pages: f64 = statm.split_whitespace().nth(1)?.parse().ok()?;
+        return Some(pages * 4096.0 / (1024.0 * 1024.0));
+    }
     if !cfg!(unix) {
         return None;
     }

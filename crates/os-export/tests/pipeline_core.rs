@@ -289,3 +289,57 @@ fn registered_tab_names_resolve_to_themselves() {
         }
     }
 }
+
+/// Schreiber, der ab der `fail_at`-ten Datenzeile einen Fehler meldet (volle Platte, gesperrte Datei).
+struct FailingWriter {
+    fail_at: usize,
+    rows: std::rc::Rc<std::cell::Cell<usize>>,
+}
+
+impl os_export::types::TableWriter for FailingWriter {
+    fn header(&mut self, _columns: &[String]) -> Result<(), ExportError> {
+        Ok(())
+    }
+    fn row(
+        &mut self,
+        _kinds: &[os_analyze::ColumnKind],
+        _values: &[Value],
+    ) -> Result<(), ExportError> {
+        let n = self.rows.get() + 1;
+        self.rows.set(n);
+        if n >= self.fail_at {
+            return Err(ExportError::Write("Datenträger voll".into()));
+        }
+        Ok(())
+    }
+    fn finish(self: Box<Self>) -> Result<os_export::types::ExportFileInfo, ExportError> {
+        panic!("finish darf nach einem Schreibfehler nicht erreicht werden")
+    }
+}
+
+// spec: OUT-001
+#[test]
+fn write_error_in_the_middle_of_the_row_stream_aborts_the_export_with_that_error() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = titles_file(dir.path());
+    let tabs = [page_titles_tab()];
+    let q = ViewQuery::new("Page Titles", "All");
+    let rows = std::rc::Rc::new(std::cell::Cell::new(0));
+    let counter = rows.clone();
+    let err = os_export::pipeline::write_view(&tabs, &file, &CrawlConfig::default(), &q, || {
+        Ok(Box::new(FailingWriter {
+            fail_at: 2,
+            rows: counter,
+        }))
+    })
+    .unwrap_err();
+    assert!(
+        matches!(&err, ExportError::Write(m) if m == "Datenträger voll"),
+        "der Fehler des Schreibers kommt unverändert an: {err:?}"
+    );
+    assert_eq!(
+        rows.get(),
+        2,
+        "nach dem Fehler wird nicht weitergeschrieben"
+    );
+}

@@ -1,4 +1,4 @@
-//! Detail-Export Inlinks/Outlinks für URL-Listen (OUT-021, OUT-022, ONPAGE-192).
+//! Detail-Export Inlinks/Outlinks für URL-Listen (OUT-021, ONPAGE-192).
 
 #[path = "links_support.rs"]
 mod support;
@@ -113,7 +113,7 @@ async fn inlinks_of_a_404_url_list_all_linking_pages_with_their_anchor_text() {
     );
 }
 
-// spec: OUT-022
+// spec: OUT-021
 #[tokio::test]
 async fn selection_of_three_urls_with_two_inlinks_each_gives_six_rows_in_list_order() {
     let fx = crawl_codes().await;
@@ -152,7 +152,7 @@ async fn selection_of_three_urls_with_two_inlinks_each_gives_six_rows_in_list_or
     assert_eq!(again, rows);
 }
 
-// spec: OUT-022
+// spec: OUT-021
 #[test]
 fn fifty_thousand_urls_are_streamed() {
     let dir = tempfile::tempdir().unwrap();

@@ -66,8 +66,9 @@ fn wide_tab() -> TabDef {
     }
 }
 
+// spec: OUT-001
 #[test]
-#[ignore = "Messung, ausgeführt in P28"]
+#[ignore = "Benchmark (P28): 1 Mio × 60 Spalten ≤ 300 MB"]
 fn one_million_rows_by_sixty_columns_stay_within_300_mb_of_extra_memory() {
     let rows: u64 = std::env::var("OS_BENCH_ROWS")
         .ok()

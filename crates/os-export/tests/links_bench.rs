@@ -16,8 +16,9 @@ use os_export::{export_bulk, Format};
 use os_model::CrawlConfig;
 use support::*;
 
+// spec: OUT-031
 #[test]
-#[ignore = "Messung, ausgeführt in P28"]
+#[ignore = "Benchmark (P28): 1 Mio Links < 60 s"]
 fn one_million_links_are_written_as_csv_in_under_60_seconds() {
     let links: u64 = std::env::var("OS_BENCH_LINKS")
         .ok()
