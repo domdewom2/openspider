@@ -1,48 +1,257 @@
-//! Tab „Response Codes“.
+//! Tab „Response Codes“ (ONPAGE-050 … 063, CRAWL-012).
 //!
-//! STUB(M1-P21): Platzhalter mit den kanonischen Filter-Kennungen aus `docs/plan/M1-filters.toml`;
-//! das Paket ersetzt Spalten, Prädikate und Parameter. Der Test `tests/filters_registry.rs` bleibt aktiv.
+//! Grundmenge: alle URLs mit Antwort- oder Blockierungsstatus, die in den Tabellen stehen (intern und
+//! extern; Sitemap-Dateien und die robots.txt externer Hosts sind `in_tables = 0`, K-40). Jede Statusklasse
+//! gibt es in drei Sichten (ONPAGE-051): ohne Präfix (intern + extern), `Internal …` und `External …`; die
+//! beiden letzten zerlegen die erste disjunkt.
+//!
+//! Klassen (alle live per SQL, kein Nachlauf):
+//! * **Blocked by Robots.txt** – `robots_blocked = 1` (Modus „Respektieren“ mit Status 0 und Modus
+//!   „Ignorieren, aber melden“ mit echtem Status, A-17, CRAWL-099).
+//! * **No Response** – Status 0 ohne robots.txt-Sperre.
+//! * **Success (2XX)**, **Redirection (3XX)** (auch ohne `Location`), **Client Error (4XX)**,
+//!   **Server Error (5XX)** – nach Statuscode.
+//! * **Redirection (Meta Refresh)** – Weiterleitungsart `meta_refresh`; die Engine setzt sie nur, wenn das
+//!   Refresh-Ziel nicht die eigene URL ist.
+//! * **Redirect Chain** – interne URL, die auf eine URL weiterleitet, die selbst weiterleitet (≥ 2 Hops, jede
+//!   Weiterleitungsart zählt); Ketten, die in einer Schleife enden, gehören zu **Redirect Loop**
+//!   (Flag `redirect_loop`, gesetzt bei den Zyklus-Mitgliedern; der Filter enthält auch die URLs davor,
+//!   deren Kette in den Zyklus führt, A-20). Beide Filter betreffen nur interne Start-URLs (ONPAGE-060: „Externe Ketten
+//!   erscheinen nicht im Filter“); die `External …`-Sichten sind daher immer leer.
+//! * **Other** – Codes außerhalb 100–599 (CRAWL-012, OS-Erweiterung); die Oberfläche zeigt den Filter nur
+//!   bei Treffern.
 
-use crate::defs::{placeholder_tab, FilterDef, FilterKind, TabDef};
+use crate::defs::{ColumnDef, ColumnKind, ColumnSql, FilterDef, FilterKind, TabDef};
+
+/// Grundmenge: Zeilen mit Antwort- oder Blockierungsstatus, sichtbar in den Tabellen.
+const POPULATION: &str = "u.in_tables = 1 AND u.status_code IS NOT NULL";
+
+macro_rules! blocked {
+    () => {
+        "u.robots_blocked = 1"
+    };
+}
+macro_rules! no_response {
+    () => {
+        "(u.status_code = 0 AND u.robots_blocked = 0)"
+    };
+}
+macro_rules! success {
+    () => {
+        "u.status_code BETWEEN 200 AND 299"
+    };
+}
+macro_rules! redirection {
+    () => {
+        "u.status_code BETWEEN 300 AND 399"
+    };
+}
+macro_rules! meta_refresh {
+    () => {
+        "u.redirect_type = 'meta_refresh'"
+    };
+}
+macro_rules! client_error {
+    () => {
+        "u.status_code BETWEEN 400 AND 499"
+    };
+}
+macro_rules! server_error {
+    () => {
+        "u.status_code BETWEEN 500 AND 599"
+    };
+}
+macro_rules! other {
+    () => {
+        "(u.status_code <> 0 AND (u.status_code < 100 OR u.status_code > 599))"
+    };
+}
+
+/// Die Weiterleitungskette ab dieser URL erreicht eine Schleife (Flag `redirect_loop`, gesetzt von der Engine
+/// bei den Mitgliedern des Zyklus): die URL selbst oder eine URL, auf die sie (über beliebig viele Hops)
+/// weiterleitet. `UNION` (ohne `ALL`) beendet den Lauf auch im Zyklus. Der erste Teil (unkorreliert, nur einmal
+/// ausgewertet) spart die Kettenläufe, solange der Crawl überhaupt keine Schleife kennt.
+macro_rules! reaches_loop {
+    () => {
+        "(EXISTS (SELECT 1 FROM url_flags WHERE flag = 'redirect_loop') \
+          AND EXISTS (WITH RECURSIVE walk(id) AS (SELECT u.id UNION \
+                   SELECT t.redirect_target_id FROM urls t JOIN walk w ON t.id = w.id \
+                   WHERE t.redirect_target_id IS NOT NULL) \
+                 SELECT 1 FROM url_flags f JOIN walk w ON f.url_id = w.id \
+                 WHERE f.flag = 'redirect_loop'))"
+    };
+}
+
+/// Die URL leitet weiter und ihr Ziel leitet ebenfalls weiter; ihre Kette endet nicht in einer Schleife.
+macro_rules! redirect_chain {
+    () => {
+        concat!(
+            "(u.is_internal = 1 AND u.redirect_url IS NOT NULL AND u.redirect_target_id IS NOT NULL \
+              AND EXISTS (SELECT 1 FROM urls t WHERE t.id = u.redirect_target_id \
+                          AND t.redirect_url IS NOT NULL) \
+              AND NOT ",
+            reaches_loop!(),
+            ")"
+        )
+    };
+}
+
+/// Die URL leitet weiter und ihre Kette erreicht eine Schleife (Mitglieder des Zyklus und URLs davor).
+macro_rules! redirect_loop {
+    () => {
+        concat!(
+            "(u.is_internal = 1 AND u.redirect_target_id IS NOT NULL AND ",
+            reaches_loop!(),
+            ")"
+        )
+    };
+}
+
+/// Anzahl der weiterleitenden URLs ab dieser URL (Hops einer Kette; Schleifen zählen jede URL einmal). Eine
+/// URL leitet weiter, wenn sie eine Redirect URL hat; das Ziel muss dafür nicht gespeichert sein.
+const NUMBER_OF_REDIRECTS_SQL: &str = "(SELECT COUNT(*) FROM (WITH RECURSIVE w(id) AS ( \
+     SELECT u.id WHERE u.redirect_url IS NOT NULL \
+     UNION \
+     SELECT t.redirect_target_id FROM urls t JOIN w ON t.id = w.id \
+       JOIN urls b ON b.id = t.redirect_target_id \
+       WHERE b.redirect_url IS NOT NULL) \
+     SELECT id FROM w))";
+
+/// Anzeigename der Weiterleitungsart (ONPAGE-018, `RedirectType::tab_label`).
+const REDIRECT_TYPE_SQL: &str = "CASE u.redirect_type \
+     WHEN 'http' THEN 'HTTP Redirect' \
+     WHEN 'hsts_policy' THEN 'HSTS Policy' \
+     WHEN 'javascript' THEN 'JavaScript Redirect' \
+     WHEN 'meta_refresh' THEN 'Meta Refresh Redirect' \
+     WHEN 'http_refresh' THEN 'HTTP Refresh Redirect' \
+     ELSE NULL END";
+
+fn column(key: &'static str, sql: &'static str, kind: ColumnKind, visible: bool) -> ColumnDef {
+    ColumnDef {
+        key,
+        sql: ColumnSql::Expr(sql),
+        kind,
+        default_visible: visible,
+        extension: false,
+    }
+}
+
+fn filter(id: &'static str, predicate: &'static str) -> FilterDef {
+    FilterDef {
+        id,
+        predicate,
+        kind: FilterKind::Live,
+        requires: Vec::new(),
+        ignore_non_indexable: false,
+    }
+}
+
+/// Die drei Sichten eines Prädikats: alle, intern, extern.
+macro_rules! views {
+    ($p:expr) => {
+        (
+            $p,
+            concat!("u.is_internal = 1 AND (", $p, ")"),
+            concat!("u.is_internal = 0 AND (", $p, ")"),
+        )
+    };
+}
+
+/// Spalten nach ONPAGE-050; `Matched Robots.txt Line` (ONPAGE-052) und `Number of Redirects`
+/// (ONPAGE-060, OS-Erweiterung) sind standardmäßig ausgeblendet.
+fn columns() -> Vec<ColumnDef> {
+    vec![
+        column("Address", "u.address", ColumnKind::Url, true),
+        column("Content", "u.content_type", ColumnKind::Text, true),
+        column("Status Code", "u.status_code", ColumnKind::Int, true),
+        column("Status", "u.status", ColumnKind::Text, true),
+        column("Indexability", "u.indexability", ColumnKind::Text, true),
+        column(
+            "Indexability Status",
+            "u.indexability_status",
+            ColumnKind::Text,
+            true,
+        ),
+        column("Inlinks", "u.inlinks", ColumnKind::Int, true),
+        column(
+            "Response Time",
+            "u.response_time_ms",
+            ColumnKind::Seconds3,
+            true,
+        ),
+        column("Redirect URL", "u.redirect_url", ColumnKind::Url, true),
+        column("Redirect Type", REDIRECT_TYPE_SQL, ColumnKind::Text, true),
+        column(
+            "Matched Robots.txt Line",
+            "u.robots_matched_line",
+            ColumnKind::Text,
+            false,
+        ),
+        ColumnDef {
+            extension: true,
+            ..column(
+                "Number of Redirects",
+                NUMBER_OF_REDIRECTS_SQL,
+                ColumnKind::Int,
+                false,
+            )
+        },
+    ]
+}
 
 /// Definition des Tabs „Response Codes“.
 pub fn tab() -> TabDef {
-    placeholder_tab(
-        "Response Codes",
-        vec![
-            FilterDef::placeholder("All", FilterKind::Live, &[]),
-            FilterDef::placeholder("Blocked by Robots.txt", FilterKind::Live, &[]),
-            FilterDef::placeholder("No Response", FilterKind::Live, &[]),
-            FilterDef::placeholder("Success (2XX)", FilterKind::Live, &[]),
-            FilterDef::placeholder("Redirection (3XX)", FilterKind::Live, &[]),
-            FilterDef::placeholder("Redirection (Meta Refresh)", FilterKind::Live, &[]),
-            FilterDef::placeholder("Redirect Chain", FilterKind::Live, &[]),
-            FilterDef::placeholder("Redirect Loop", FilterKind::Live, &[]),
-            FilterDef::placeholder("Client Error (4XX)", FilterKind::Live, &[]),
-            FilterDef::placeholder("Server Error (5XX)", FilterKind::Live, &[]),
-            FilterDef::placeholder("Other", FilterKind::Live, &[]),
-            FilterDef::placeholder("Internal All", FilterKind::Live, &[]),
-            FilterDef::placeholder("Internal Blocked by Robots.txt", FilterKind::Live, &[]),
-            FilterDef::placeholder("Internal No Response", FilterKind::Live, &[]),
-            FilterDef::placeholder("Internal Success (2XX)", FilterKind::Live, &[]),
-            FilterDef::placeholder("Internal Redirection (3XX)", FilterKind::Live, &[]),
-            FilterDef::placeholder("Internal Redirection (Meta Refresh)", FilterKind::Live, &[]),
-            FilterDef::placeholder("Internal Redirect Chain", FilterKind::Live, &[]),
-            FilterDef::placeholder("Internal Redirect Loop", FilterKind::Live, &[]),
-            FilterDef::placeholder("Internal Client Error (4XX)", FilterKind::Live, &[]),
-            FilterDef::placeholder("Internal Server Error (5XX)", FilterKind::Live, &[]),
-            FilterDef::placeholder("Internal Other", FilterKind::Live, &[]),
-            FilterDef::placeholder("External All", FilterKind::Live, &[]),
-            FilterDef::placeholder("External Blocked by Robots.txt", FilterKind::Live, &[]),
-            FilterDef::placeholder("External No Response", FilterKind::Live, &[]),
-            FilterDef::placeholder("External Success (2XX)", FilterKind::Live, &[]),
-            FilterDef::placeholder("External Redirection (3XX)", FilterKind::Live, &[]),
-            FilterDef::placeholder("External Redirection (Meta Refresh)", FilterKind::Live, &[]),
-            FilterDef::placeholder("External Redirect Chain", FilterKind::Live, &[]),
-            FilterDef::placeholder("External Redirect Loop", FilterKind::Live, &[]),
-            FilterDef::placeholder("External Client Error (4XX)", FilterKind::Live, &[]),
-            FilterDef::placeholder("External Server Error (5XX)", FilterKind::Live, &[]),
-            FilterDef::placeholder("External Other", FilterKind::Live, &[]),
+    let blocked = views!(blocked!());
+    let no_response = views!(no_response!());
+    let success = views!(success!());
+    let redirection = views!(redirection!());
+    let meta_refresh = views!(meta_refresh!());
+    let chain = views!(redirect_chain!());
+    let looped = views!(redirect_loop!());
+    let client_error = views!(client_error!());
+    let server_error = views!(server_error!());
+    let other = views!(other!());
+
+    TabDef {
+        id: "Response Codes",
+        population: POPULATION,
+        columns: columns(),
+        filters: vec![
+            filter("All", "1"),
+            filter("Blocked by Robots.txt", blocked.0),
+            filter("No Response", no_response.0),
+            filter("Success (2XX)", success.0),
+            filter("Redirection (3XX)", redirection.0),
+            filter("Redirection (Meta Refresh)", meta_refresh.0),
+            filter("Redirect Chain", chain.0),
+            filter("Redirect Loop", looped.0),
+            filter("Client Error (4XX)", client_error.0),
+            filter("Server Error (5XX)", server_error.0),
+            filter("Other", other.0),
+            filter("Internal All", "u.is_internal = 1"),
+            filter("Internal Blocked by Robots.txt", blocked.1),
+            filter("Internal No Response", no_response.1),
+            filter("Internal Success (2XX)", success.1),
+            filter("Internal Redirection (3XX)", redirection.1),
+            filter("Internal Redirection (Meta Refresh)", meta_refresh.1),
+            filter("Internal Redirect Chain", chain.1),
+            filter("Internal Redirect Loop", looped.1),
+            filter("Internal Client Error (4XX)", client_error.1),
+            filter("Internal Server Error (5XX)", server_error.1),
+            filter("Internal Other", other.1),
+            filter("External All", "u.is_internal = 0"),
+            filter("External Blocked by Robots.txt", blocked.2),
+            filter("External No Response", no_response.2),
+            filter("External Success (2XX)", success.2),
+            filter("External Redirection (3XX)", redirection.2),
+            filter("External Redirection (Meta Refresh)", meta_refresh.2),
+            filter("External Redirect Chain", chain.2),
+            filter("External Redirect Loop", looped.2),
+            filter("External Client Error (4XX)", client_error.2),
+            filter("External Server Error (5XX)", server_error.2),
+            filter("External Other", other.2),
         ],
-    )
+        default_sort: Vec::new(),
+        params: |_| Vec::new(),
+    }
 }

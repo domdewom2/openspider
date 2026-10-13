@@ -71,7 +71,9 @@ fn tabs_match_filter_registry() {
 
 #[test]
 fn placeholder_tabs_have_address_column_and_population() {
-    for tab in tabs::all() {
+    // Ersetzt ein Tab-Paket (P20–P25) seinen Platzhalter, hat der Tab mehr als die Spalte „Address“ und eine
+    // eigene Grundmenge; nur die verbliebenen Platzhalter-Tabs (genau eine Spalte) werden geprüft.
+    for tab in tabs::all().into_iter().filter(|t| t.columns.len() == 1) {
         assert_eq!(tab.population, "1", "Grundmenge von {}", tab.id);
         assert_eq!(tab.columns.first().map(|c| c.key), Some("Address"));
         let all: Vec<_> = tab.filters.iter().filter(|f| f.id == "All").collect();

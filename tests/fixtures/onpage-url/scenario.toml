@@ -1,0 +1,134 @@
+# Szenario onpage-url (ONPAGE-070 … 081): URL-Varianten der Startseite; jede Route liefert 200 HTML.
+# Start: http://site.test/ (intern). /Nicht_Da hat keine Route (404). Pfad-Routen ignorieren die Query.
+# Pfade mit exakt 39/40 Zeichen Länge nach dem Slash (/aaa…, /bbb…) und 98/99 (/ddd…, /ccc…) für die
+# Längenfilter: Adresse = "http://site.test" (16 Zeichen) + Pfad, also 56, 57, 115 und 116 Zeichen.
+
+[[route]]
+path = "/über-uns"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/über-uns</title></head><body><h1>/über-uns</h1></body></html>"
+
+[[route]]
+path = "/über-mich"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/über-mich</title></head><body><h1>/über-mich</h1></body></html>"
+
+[[route]]
+path = "/ueber-uns"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/ueber-uns</title></head><body><h1>/ueber-uns</h1></body></html>"
+
+[[route]]
+path = "/a%20b"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/a%20b</title></head><body><h1>/a%20b</h1></body></html>"
+
+[[route]]
+path = "/mein_artikel"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/mein_artikel</title></head><body><h1>/mein_artikel</h1></body></html>"
+
+[[route]]
+path = "/mein-artikel"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/mein-artikel</title></head><body><h1>/mein-artikel</h1></body></html>"
+
+[[route]]
+path = "/seite"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/seite</title></head><body><h1>/seite</h1></body></html>"
+
+[[route]]
+path = "/Produkte"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/Produkte</title></head><body><h1>/Produkte</h1></body></html>"
+
+[[route]]
+path = "/produkte"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/produkte</title></head><body><h1>/produkte</h1></body></html>"
+
+[[route]]
+path = "/schema-gross"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/schema-gross</title></head><body><h1>/schema-gross</h1></body></html>"
+
+[[route]]
+path = "/café"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/café</title></head><body><h1>/café</h1></body></html>"
+
+[[route]]
+path = "/ÜBER"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/ÜBER</title></head><body><h1>/ÜBER</h1></body></html>"
+
+[[route]]
+path = "/a//b"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/a//b</title></head><body><h1>/a//b</h1></body></html>"
+
+[[route]]
+path = "//start"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>//start</title></head><body><h1>//start</h1></body></html>"
+
+[[route]]
+path = "/a/b"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/a/b</title></head><body><h1>/a/b</h1></body></html>"
+
+[[route]]
+path = "/mein%20artikel"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/mein%20artikel</title></head><body><h1>/mein%20artikel</h1></body></html>"
+
+[[route]]
+path = "/zweiter%20artikel"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/zweiter%20artikel</title></head><body><h1>/zweiter%20artikel</h1></body></html>"
+
+[[route]]
+path = "/suche"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/suche</title></head><body><h1>/suche</h1></body></html>"
+
+[[route]]
+path = "/p"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/p</title></head><body><h1>/p</h1></body></html>"
+
+[[route]]
+path = "/a&b"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/a&b</title></head><body><h1>/a&b</h1></body></html>"
+
+[[route]]
+path = "/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</title></head><body><h1>/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</h1></body></html>"
+
+[[route]]
+path = "/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb</title></head><body><h1>/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb</h1></body></html>"
+
+[[route]]
+path = "/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd</title></head><body><h1>/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd</h1></body></html>"
+
+[[route]]
+path = "/ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc</title></head><body><h1>/ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc</h1></body></html>"
+
+[[route]]
+path = "/canon-demo"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/canon-demo</title><link rel=\"canonical\" href=\"/Produkte\"></head><body><h1>/canon-demo</h1></body></html>"
+
+[[route]]
+path = "/Extern_Gross"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>/Extern_Gross</title></head><body><h1>/Extern_Gross</h1></body></html>"
