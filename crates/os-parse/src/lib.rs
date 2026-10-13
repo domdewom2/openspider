@@ -83,7 +83,7 @@ pub struct ParseInput<'a> {
 /// Wertet eine HTML-Antwort aus. Reihenfolge verbindlich (M1-Plan 3.6):
 /// 1 `charset::decode` → 2 `dom::Document::parse` → 3 `base::resolve_base` →
 /// 4 `links::extract`, `images::extract`, `css::extract_inline` →
-/// 5 `elements::extract`, `content::analyze`, `pixel::annotate` (Titel 20 px, Meta-Descriptions 14 px, Regular;
+/// 5 `elements::extract`, `content::analyze_with_source` (Quelltextlänge = `html.chars().count()`, A-7), `pixel::annotate` (Titel 20 px, Meta-Descriptions 14 px, Regular;
 /// nur bei `cfg.pixel`) → 6 `directives::extract` (Token `[robots_token, "googlebot"]`, K-12),
 /// `canonical::extract`, `hreflang::extract`, `refresh::extract`, `pagination::extract` →
 /// 7 `headers::merge(headers::hints(…))` → 8 `effective::compute`.
@@ -105,7 +105,7 @@ pub fn parse_html(input: &ParseInput) -> ParsedPage {
         h1,
         h2,
     } = elements::extract(&doc);
-    let stats = content::analyze(&doc, &cfg.content_area);
+    let stats = content::analyze_with_source(&doc, &cfg.content_area, html.chars().count());
     if cfg.pixel {
         pixel::annotate(&mut titles, 20.0, false);
         pixel::annotate(&mut meta_descriptions, 14.0, false);
