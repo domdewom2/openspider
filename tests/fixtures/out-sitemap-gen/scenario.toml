@@ -1,0 +1,40 @@
+# Szenario out-sitemap-gen (OUT-120, OUT-129, OUT-131): 20 URLs mit Seiten, die in die Sitemap gehören, und solchen,
+# die nicht hineingehören (noindex, kanonisiert, rel=prev, PDF, 301, 404, 500, robots.txt, extern, URL über 2048 Zeichen).
+# Der Umlaut-Pfad und die Query mit & stehen als Routen, weil sie keine Dateien sind.
+
+[[route]]
+path = "/über-uns"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>Über uns</title>\n</head>\n<body>\n<h1>Über uns</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/search"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>Suche</title>\n</head>\n<body>\n<h1>Suche</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/list"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>Liste Seite 2</title>\n<link rel=\"prev\" href=\"/list?page=1\">\n<link rel=\"next\" href=\"/list?page=3\">\n</head>\n<body>\n<h1>Liste</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/redirect"
+status = 301
+location = "/p2.html"
+
+[[route]]
+path = "/missing"
+status = 404
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>Nicht gefunden</title>\n</head>\n<body>\n<h1>404</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/error"
+status = 500
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>Serverfehler</title>\n</head>\n<body>\n<h1>500</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/long"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>Lange URL</title>\n</head>\n<body>\n<h1>Lange URL</h1>\n</body>\n</html>\n"

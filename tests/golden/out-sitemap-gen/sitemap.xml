@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>{BASE}/</loc>
+  </url>
+  <url>
+    <loc>{BASE}/p1.html</loc>
+  </url>
+  <url>
+    <loc>{BASE}/%C3%BCber-uns</loc>
+  </url>
+  <url>
+    <loc>{BASE}/p2.html</loc>
+  </url>
+  <url>
+    <loc>{BASE}/search?a=1&amp;b=2</loc>
+  </url>
+  <url>
+    <loc>{BASE}/p3.html</loc>
+  </url>
+  <url>
+    <loc>{BASE}/p4.html</loc>
+  </url>
+  <url>
+    <loc>{BASE}/p5.html</loc>
+  </url>
+</urlset>

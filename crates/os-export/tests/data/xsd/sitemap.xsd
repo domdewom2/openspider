@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  OpenSpider-Testdaten (M1-P17): Schema für <urlset> nach dem sitemaps.org-Protokoll 0.9.
+  Eigene, knapp gehaltene Fassung der im Protokoll beschriebenen Struktur (kein Auszug aus einer fremden Datei):
+  eine <urlset> mit 1 bis 50 000 <url>-Einträgen; je Eintrag <loc> (absolute URL, 12 bis 2 048 Zeichen) und
+  optional <lastmod>, <changefreq>, <priority> in dieser Reihenfolge, danach beliebige Elemente anderer
+  Namensräume (z. B. xhtml:link für hreflang, image:image).
+  Geprüft wird in crates/os-export/tests/sitemap_gen.rs mit dem Strukturprüfer aus sitemap_xsd.rs, der dieses
+  Schema liest (kein XSD-Validator mit passender Lizenz verfügbar).
+-->
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+            targetNamespace="http://www.sitemaps.org/schemas/sitemap/0.9"
+            elementFormDefault="qualified">
+
+  <xsd:element name="urlset">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="url" type="tUrl" minOccurs="1" maxOccurs="50000"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+
+  <xsd:complexType name="tUrl">
+    <xsd:sequence>
+      <xsd:element name="loc" type="tLoc"/>
+      <xsd:element name="lastmod" type="tLastmod" minOccurs="0"/>
+      <xsd:element name="changefreq" type="tChangeFreq" minOccurs="0"/>
+      <xsd:element name="priority" type="tPriority" minOccurs="0"/>
+      <xsd:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:simpleType name="tLoc">
+    <xsd:restriction base="xsd:anyURI">
+      <xsd:minLength value="12"/>
+      <xsd:maxLength value="2048"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="tLastmod">
+    <xsd:union memberTypes="xsd:date xsd:dateTime"/>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="tChangeFreq">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="always"/>
+      <xsd:enumeration value="hourly"/>
+      <xsd:enumeration value="daily"/>
+      <xsd:enumeration value="weekly"/>
+      <xsd:enumeration value="monthly"/>
+      <xsd:enumeration value="yearly"/>
+      <xsd:enumeration value="never"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="tPriority">
+    <xsd:restriction base="xsd:decimal">
+      <xsd:minInclusive value="0.0"/>
+      <xsd:maxInclusive value="1.0"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+</xsd:schema>

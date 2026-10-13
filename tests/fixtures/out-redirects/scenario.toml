@@ -1,0 +1,217 @@
+# Szenario out-redirects (OUT-081, OUT-082, OUT-085): einfache und lange Ketten, Schleifen, 404-Ziel,
+# Meta-/HTTP-Refresh, 308, gemischte Kette und Host-Wechsel. Start: http://site.test/ mit
+# scope.all_subdomains = true (www.site.test ist dann intern). Zwischenglieder, die nur über Ketten erreicht
+# werden (/d, /g, /l2 ...), sind absichtlich nicht verlinkt; /x2 ist es.
+
+[[route]]
+path = "/a"
+status = 301
+location = "/b"
+
+[[route]]
+path = "/b"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Ziel b</title></head><body><h1>Ziel b</h1></body></html>"
+
+[[route]]
+path = "/c"
+status = 302
+location = "/d"
+
+[[route]]
+path = "/d"
+status = 301
+location = "/e"
+
+[[route]]
+path = "/e"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Ziel e</title></head><body><h1>Ziel e</h1></body></html>"
+
+[[route]]
+path = "/t303"
+status = 303
+location = "/ok"
+
+[[route]]
+path = "/t307"
+status = 307
+location = "/ok"
+
+[[route]]
+path = "/ok"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Ziel ok</title></head><body><h1>Ziel ok</h1></body></html>"
+
+[[route]]
+path = "/l1"
+status = 301
+location = "/l2"
+
+[[route]]
+path = "/l2"
+status = 301
+location = "/l3"
+
+[[route]]
+path = "/l3"
+status = 301
+location = "/l4"
+
+[[route]]
+path = "/l4"
+status = 301
+location = "/l5"
+
+[[route]]
+path = "/l5"
+status = 301
+location = "/l6"
+
+[[route]]
+path = "/l6"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Ende der 5er-Kette</title></head><body><h1>Ende der 5er-Kette</h1></body></html>"
+
+[[route]]
+path = "/f"
+status = 301
+location = "/g"
+
+[[route]]
+path = "/g"
+status = 301
+location = "/f"
+
+[[route]]
+path = "/s"
+status = 301
+location = "/s"
+
+[[route]]
+path = "/m"
+status = 301
+location = "/n"
+
+[[route]]
+path = "/n"
+status = 404
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Nicht gefunden</title></head><body><h1>Nicht gefunden</h1></body></html>"
+
+[[route]]
+path = "/meta"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Meta Refresh</title><meta http-equiv=\"refresh\" content=\"0;url=/meta2\"></head><body><h1>Meta Refresh</h1></body></html>"
+
+[[route]]
+path = "/meta-delay"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Meta Refresh verzögert</title><meta http-equiv=\"refresh\" content=\"5;url=/meta2\"></head><body><h1>Meta Refresh verzögert</h1></body></html>"
+
+[[route]]
+path = "/meta2"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Ziel meta2</title></head><body><h1>Ziel meta2</h1></body></html>"
+
+[[route]]
+path = "/hr"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>HTTP Refresh</title></head><body><h1>HTTP Refresh</h1></body></html>"
+[route.headers]
+Refresh = "0; url=/hr2"
+
+[[route]]
+path = "/hr2"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Ziel hr2</title></head><body><h1>Ziel hr2</h1></body></html>"
+
+[[route]]
+path = "/p308"
+status = 308
+location = "/p308-ok"
+
+[[route]]
+path = "/p308-ok"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Ziel 308</title></head><body><h1>Ziel 308</h1></body></html>"
+
+[[route]]
+path = "/mix"
+status = 301
+location = "/mixmeta"
+
+[[route]]
+path = "/mixmeta"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Meta Station</title><meta http-equiv=\"refresh\" content=\"0;url=/mixend\"></head><body><h1>Meta Station</h1></body></html>"
+
+[[route]]
+path = "/mixend"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Ende gemischt</title></head><body><h1>Ende gemischt</h1></body></html>"
+
+[[route]]
+path = "/hw1"
+status = 301
+location = "http://www.site.test/hw2"
+
+[[route]]
+path = "/hw2"
+status = 301
+location = "/hw3"
+
+[[route]]
+path = "/hw3"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Ende Host-Wechsel</title></head><body><h1>Ende Host-Wechsel</h1></body></html>"
+
+[[route]]
+path = "/x1"
+status = 301
+location = "/x2"
+
+[[route]]
+path = "/x2"
+status = 301
+location = "/x3"
+
+[[route]]
+path = "/x3"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Ende x</title></head><body><h1>Ende x</h1></body></html>"
+
+[[route]]
+path = "/long1"
+status = 301
+location = "/long2"
+
+[[route]]
+path = "/long2"
+status = 301
+location = "/long3"
+
+[[route]]
+path = "/long3"
+status = 301
+location = "/long4"
+
+[[route]]
+path = "/long4"
+status = 301
+location = "/long5"
+
+[[route]]
+path = "/long5"
+status = 301
+location = "/long6"
+
+[[route]]
+path = "/long6"
+status = 301
+location = "/long7"
+
+[[route]]
+path = "/long7"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Ende der langen Kette</title></head><body><h1>Ende der langen Kette</h1></body></html>"
