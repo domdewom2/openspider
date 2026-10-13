@@ -1,0 +1,5 @@
+All: 18
+Pages With High Crawl Depth: 2
+Pages Without Internal Outlinks: 2
+Internal Nofollow Outlinks: 1
+Internal Outlinks With No Anchor Text: 4

@@ -1,0 +1,6 @@
+All: 9
+Contains Hreflang: 7
+Non-200 Hreflang URLs: 1
+Missing Return Links: 1
+Incorrect Language & Region Codes: 1
+Missing: 2

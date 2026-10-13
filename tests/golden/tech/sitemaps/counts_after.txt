@@ -1,0 +1,5 @@
+All: 21
+URLs In Sitemap: 14
+URLs Not In Sitemap: 5
+Orphan URLs: 3
+Non-Indexable URLs In Sitemap: 5

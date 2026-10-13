@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>http://site.test/</loc></url>
+  <url><loc>http://site.test/in-sitemap-and-linked</loc></url>
+  <url><loc>http://site.test/orphan-page</loc></url>
+  <url><loc>http://site.test/redirected</loc></url>
+  <url><loc>http://site.test/gone</loc></url>
+  <url><loc>http://site.test/noindex</loc></url>
+  <url><loc>http://site.test/canonicalised</loc></url>
+  <url><loc>http://site.test/blocked</loc></url>
+  <url><loc>http://site.test/both</loc></url>
+  <url><loc>http://site.test/dup-same-file</loc></url>
+  <url><loc>http://site.test/dup-same-file</loc></url>
+  <url><loc>http://site.test/a/</loc></url>
+  <url><loc>http://site.test/orphan.png</loc></url>
+</urlset>

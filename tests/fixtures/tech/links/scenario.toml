@@ -1,0 +1,5 @@
+# Szenario tech/links (TECH-130 … TECH-135, TECH-144).
+# Hauptbaum ab "/": Kette / -> /l1/ -> … -> /l5/ (Tiefe 0 … 5); /deadend.html ohne Links; /self-only.html nur mit
+# Selbstlink; /attrs.html mit nofollow/ugc/sponsored/noopener; /meta-nofollow.html mit Seiten-nofollow;
+# /anchors.html -> 7 Seiten mit Ankertext-Sonderfällen. Teilbaum ab "/menu10/": 10 Seiten, alle mit Menülink
+# auf /menu10/ (% of Total = 90.00).

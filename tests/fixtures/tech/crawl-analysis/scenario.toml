@@ -1,0 +1,3 @@
+# Szenario tech/crawl-analysis (TECH-005): / verlinkt /en/ und /de/. /en/ annotiert de und nl (/nl/ ist nirgends
+# verlinkt und hat keinen Rücklink: Missing Return Links = 1, live ohne Analyse). /nl/ ist nur per hreflang
+# erreichbar (Kante, kein Orphan). /sitemap-orphan/ steht nur in sitemap.xml (Orphan erst nach der Analyse).

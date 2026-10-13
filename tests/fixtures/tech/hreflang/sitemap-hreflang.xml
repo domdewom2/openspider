@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>http://site.test/es/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="http://site.test/es/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="http://site.test/en/"/>
+  </url>
+  <url>
+    <loc>http://site.test/it/</loc>
+    <xhtml:link rel="alternate" hreflang="it" href="http://site.test/it/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="http://site.test/en/"/>
+  </url>
+  <url>
+    <loc>http://site.test/fr/</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="http://site.test/fr/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="http://site.test/en/"/>
+  </url>
+</urlset>

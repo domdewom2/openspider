@@ -69,10 +69,16 @@ fn tabs_match_filter_registry() {
     }
 }
 
+/// Tabs, deren Paket den Platzhalter ersetzt hat: Sie haben eine echte Grundmenge (M1-P25: Hreflang, Links,
+/// Sitemaps); „All“ bleibt die Grundmenge (`1` über der Population).
+const IMPLEMENTED: &[&str] = &["Hreflang", "Links", "Sitemaps"];
+
 #[test]
 fn placeholder_tabs_have_address_column_and_population() {
     for tab in tabs::all() {
-        assert_eq!(tab.population, "1", "Grundmenge von {}", tab.id);
+        if !IMPLEMENTED.contains(&tab.id) {
+            assert_eq!(tab.population, "1", "Grundmenge von {}", tab.id);
+        }
         assert_eq!(tab.columns.first().map(|c| c.key), Some("Address"));
         let all: Vec<_> = tab.filters.iter().filter(|f| f.id == "All").collect();
         for f in all {

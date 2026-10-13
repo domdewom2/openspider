@@ -1,0 +1,102 @@
+# Szenario tech/sitemaps (TECH-210 … TECH-215): robots.txt -> sitemap_index.xml ->
+# sitemap-pages.xml und sitemap-posts.xml.gz. Orphans: /orphan-page (nur Sitemap), /orphan-child (nur von
+# /orphan-page), /orphan-grandchild (nur von /orphan-child); /shared-child ist zusätzlich von der Startseite
+# verlinkt (kein Orphan). Nicht indexierbar in der Sitemap: /redirected (301), /gone (410), /noindex,
+# /canonicalised, /blocked (robots.txt). /noindex, /blocked und /orphan-* sind nirgends von der Startseite aus
+# verlinkt. /a/ steht in der Sitemap, gecrawlt werden /a und /a/ (zwei verschiedene URLs). /orphan.png ist ein
+# Bild in der Sitemap ohne Link (Ressourcen werden nie als Orphan gemeldet).
+
+[[route]]
+path = "/in-sitemap-and-linked"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>In Sitemap and linked</title></head><body><h1>In Sitemap and linked</h1><a href=\"/\">Home</a></body></html>"
+
+[[route]]
+path = "/orphan-page"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Orphan page</title></head><body><h1>Orphan page</h1><a href=\"/orphan-child\">Child</a> <a href=\"/shared-child\">Shared</a></body></html>"
+
+[[route]]
+path = "/orphan-child"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Orphan child</title></head><body><h1>Orphan child</h1><a href=\"/orphan-grandchild\">Grandchild</a></body></html>"
+
+[[route]]
+path = "/orphan-grandchild"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Orphan grandchild</title></head><body><h1>Orphan grandchild</h1></body></html>"
+
+[[route]]
+path = "/shared-child"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Shared child</title></head><body><h1>Shared child</h1></body></html>"
+
+[[route]]
+path = "/not-in-sitemap"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Not in sitemap</title></head><body><h1>Not in sitemap</h1></body></html>"
+
+[[route]]
+path = "/noindex"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Noindex</title><meta name=\"robots\" content=\"noindex\"></head><body><h1>Noindex</h1></body></html>"
+
+[[route]]
+path = "/noindex-not-in-sitemap"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Noindex not in sitemap</title><meta name=\"robots\" content=\"noindex\"></head><body><h1>Noindex not in sitemap</h1></body></html>"
+
+[[route]]
+path = "/canonicalised"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Canonicalised</title><link rel=\"canonical\" href=\"http://site.test/in-sitemap-and-linked\"></head><body><h1>Canonicalised</h1></body></html>"
+
+[[route]]
+path = "/blocked"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Blocked</title></head><body><h1>Blocked</h1></body></html>"
+
+[[route]]
+path = "/both"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Both</title></head><body><h1>Both</h1></body></html>"
+
+[[route]]
+path = "/dup-same-file"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Dup same file</title></head><body><h1>Dup same file</h1></body></html>"
+
+[[route]]
+path = "/post-1"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Post 1</title></head><body><h1>Post 1</h1></body></html>"
+
+[[route]]
+path = "/post-2"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Post 2</title></head><body><h1>Post 2</h1></body></html>"
+
+[[route]]
+path = "/a"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>A without slash</title></head><body><h1>A without slash</h1></body></html>"
+
+[[route]]
+path = "/a/"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>A with slash</title></head><body><h1>A with slash</h1></body></html>"
+
+[[route]]
+path = "/redirected"
+status = 301
+location = "/in-sitemap-and-linked"
+
+[[route]]
+path = "/gone"
+status = 410
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Gone</title></head><body><h1>Gone</h1></body></html>"
+
+[[route]]
+path = "/sitemap-posts.xml.gz"
+content_type = "application/gzip"
