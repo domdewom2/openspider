@@ -500,8 +500,19 @@ async fn analyze<F: Fetch>(
         a.redirect = redirect::http_target(url, &resp.headers);
         return a;
     }
-    // externe URLs werden nie geparst; defekte Kompression liefert keinen verlässlichen Inhalt
-    if item.purpose == Purpose::External || resp.decode_error.is_some() {
+    // defekte Kompression liefert keinen verlässlichen Inhalt
+    if resp.decode_error.is_some() {
+        return a;
+    }
+    // Externe URLs werden nicht ausgewertet, mit einer Ausnahme (ONPAGE-058/059): Refresh-Header und
+    // Meta-Refresh externer HTML-Seiten. Daraus entstehen Redirect URL/Type wie bei internen Seiten; ob das
+    // Ziel abgerufen wird, entscheidet `assemble` nach `decide` (K-40) und `spider.external.crawl`.
+    if item.purpose == Purpose::External {
+        if a.facts.content_class == ContentClass::Html {
+            let refs = external_refresh(sh, url, resp).await;
+            a.refresh = refs.clone();
+            parsed_refresh(&mut a, url, &refs);
+        }
         return a;
     }
     match a.facts.content_class {
@@ -531,6 +542,47 @@ fn parsed_refresh(a: &mut Analysis, url: &Url, refs: &[os_model::RefreshRef]) {
     let outcome = redirect::refresh_target(url, refs);
     a.facts.meta_refresh_delay = outcome.delay;
     a.redirect = outcome.redirect;
+}
+
+/// Refresh-Angaben einer externen HTML-Seite: der `Refresh`-Header vor den Meta-Tags (Quelltextreihenfolge).
+/// Der Rest der Seite wird nicht ausgewertet.
+async fn external_refresh<F: Fetch>(
+    sh: &Arc<Shared<F>>,
+    url: &Url,
+    resp: &HttpResponse,
+) -> Vec<os_model::RefreshRef> {
+    let mut refs = os_parse::parse_headers(url, &resp.headers, &sh.pcfg).refresh;
+    let content_type = header(&resp.headers, "content-type").map(str::to_string);
+    let found = if resp.body.len() < BLOCKING_PARSE_THRESHOLD {
+        meta_refresh(url, &resp.body, content_type.as_deref(), &resp.headers)
+    } else {
+        let url = url.clone();
+        let body: Bytes = resp.body.clone();
+        let headers = resp.headers.clone();
+        tokio::task::spawn_blocking(move || {
+            meta_refresh(&url, &body, content_type.as_deref(), &headers)
+        })
+        .await
+        .unwrap_or_default()
+    };
+    let shift = refs.len() as u32;
+    refs.extend(found.into_iter().map(|mut r| {
+        r.order = r.order.saturating_add(shift);
+        r
+    }));
+    refs
+}
+
+fn meta_refresh(
+    url: &Url,
+    body: &[u8],
+    content_type: Option<&str>,
+    headers: &[(String, String)],
+) -> Vec<os_model::RefreshRef> {
+    let (html, _) = os_parse::charset::decode(body, content_type, headers);
+    let doc = os_parse::dom::Document::parse(&html);
+    let base = os_parse::base::resolve_base(&doc, url);
+    os_parse::refresh::extract(&doc, &base)
 }
 
 async fn parse_html_page<F: Fetch>(
@@ -1255,7 +1307,14 @@ pub(crate) async fn ingest_sitemaps<F: Fetch>(
     let slot = sh.writer.reserve().await?;
     let batch = {
         let mut core = sh.lock_core();
-        let mut batch = build_sitemap_batch(&mut core, &sh.cfg, &sh.scope, &sh.rules, &fetched);
+        let mut batch = build_sitemap_batch(
+            &mut core,
+            &sh.cfg,
+            &sh.scope,
+            &sh.rules,
+            &fetched,
+            sh.clock.now(),
+        );
         batch.events.extend(events);
         batch
     };
@@ -1266,12 +1325,18 @@ pub(crate) async fn ingest_sitemaps<F: Fetch>(
 
 /// Bildet das Schreibmodell der abgerufenen Sitemaps: URL-Zeile der Datei, `SitemapWrite` und die URLs der
 /// Einträge als Warteschlangeneinträge ohne Tiefe (Priorität 1, TECH-210/CRAWL-005).
+///
+/// K-41d (Sitemap-Protokoll): Ein `<loc>` gilt nur, wenn Schema, Host und Port mit der Sitemap-Datei
+/// übereinstimmen. Andere Einträge zählen wie ungültige (`invalid_entries`), bekommen keine URL-Zeile und
+/// keinen Warteschlangeneintrag; je Datei meldet ein `CrawlEvent` (warn) ihre Anzahl. Cross-Submission per
+/// robots.txt ist M2.
 pub(crate) fn build_sitemap_batch(
     core: &mut Core,
     cfg: &CrawlConfig,
     scope: &impl Classify,
     rules: &os_url::RuleSet,
     fetched: &[FetchedSitemap],
+    now: Timestamp,
 ) -> WriteBatch {
     let mut batch = WriteBatch::default();
     let base = core.next_sitemap_id;
@@ -1319,6 +1384,10 @@ pub(crate) fn build_sitemap_batch(
         if let FetchOutcome::Response(r) = &fs.fetch.outcome {
             status_code = Some(r.status);
         }
+        let sitemap_origins: Vec<Url> = [Url::parse(&fs.url).ok(), Some(fs.fetch.url.clone())]
+            .into_iter()
+            .flatten()
+            .collect();
         let (kind, entries, invalid, size) = match &fs.doc {
             Some(d) => (d.kind, d.locs.len() as u32, d.invalid_entries, d.size_bytes),
             None => (SitemapKind::Invalid, 0, 0, 0),
@@ -1332,6 +1401,7 @@ pub(crate) fn build_sitemap_batch(
         } else {
             (DiscoveryKind::Sitemap, None)
         };
+        let mut foreign = 0u32;
         if let (Some(doc), SitemapKind::Urlset) = (&fs.doc, kind) {
             for loc in &doc.locs {
                 let Some(u) = loc.url.as_deref() else {
@@ -1341,6 +1411,10 @@ pub(crate) fn build_sitemap_batch(
                     continue;
                 };
                 if !matches!(parsed.scheme(), "http" | "https") || parsed.host_str().is_none() {
+                    continue;
+                }
+                if !same_origin(&parsed, &sitemap_origins) {
+                    foreign += 1;
                     continue;
                 }
                 let norm = os_url::normalize(&parsed);
@@ -1360,7 +1434,9 @@ pub(crate) fn build_sitemap_batch(
                 };
                 let id = core.discover(&cand, entry_depth, 0, 0, rules, &mut batch);
                 entry_urls.push((id, loc.loc_raw.clone(), loc.lastmod.clone()));
-                if cfg.spider.hreflang.store {
+                // Auch bei `store = false, crawl = true` durchlaufen: die Ziele laufen über `decide` und
+                // `discover`, nur die hreflang-Zeilen entfallen (CRAWL-038).
+                if cfg.spider.hreflang.store || cfg.spider.hreflang.crawl {
                     sitemap_hreflang(
                         core,
                         cfg,
@@ -1375,6 +1451,17 @@ pub(crate) fn build_sitemap_batch(
                 }
             }
         }
+        if foreign > 0 {
+            batch.events.push(os_model::CrawlEvent {
+                at: now,
+                kind: "warn".to_string(),
+                code: "sitemap_foreign_entries".to_string(),
+                message: format!(
+                    "{foreign} Einträge in {} verworfen: anderes Schema, anderer Host oder anderer Port als die Sitemap-Datei",
+                    fs.url
+                ),
+            });
+        }
         batch.sitemaps.push(SitemapWrite {
             id: sid,
             url: fs.url.clone(),
@@ -1382,7 +1469,7 @@ pub(crate) fn build_sitemap_batch(
             parent,
             kind,
             entries,
-            invalid_entries: invalid,
+            invalid_entries: invalid + foreign,
             size_bytes: size,
             status_code,
             depth: fs.depth,
@@ -1394,9 +1481,19 @@ pub(crate) fn build_sitemap_batch(
     batch
 }
 
+/// Gleiches Schema, gleicher Host und gleicher Port wie eine der Adressen der Sitemap-Datei (K-41d).
+fn same_origin(loc: &Url, files: &[Url]) -> bool {
+    files.iter().any(|f| {
+        f.scheme() == loc.scheme()
+            && f.host_str() == loc.host_str()
+            && f.port_or_known_default() == loc.port_or_known_default()
+    })
+}
+
 /// hreflang-Angaben eines `<url>`-Blocks (TECH-210, K-41e): Ziele laufen über `decide` wie HTML-hreflang
 /// (`LinkType::Hreflang`, `spider.hreflang`); `order` zählt je `loc`-URL fortlaufend über alle Sitemaps, damit
-/// mehrfach gelistete URLs nichts überschreiben. `target_id` gilt, sobald eine Zielzeile existiert.
+/// mehrfach gelistete URLs nichts überschreiben. `target_id` gilt, sobald eine Zielzeile existiert. Bei
+/// `spider.hreflang.store = false` entstehen keine Zeilen, die Ziele werden trotzdem eingeplant.
 #[allow(clippy::too_many_arguments)]
 fn sitemap_hreflang(
     core: &mut Core,
@@ -1443,6 +1540,9 @@ fn sitemap_hreflang(
             let depth = core.list_mode.then_some(1);
             Some(core.discover(&cand, depth, 0, 0, rules, batch))
         });
+        if !cfg.spider.hreflang.store {
+            continue;
+        }
         let next = core.sitemap_hreflang_next.entry(loc_id).or_insert(0);
         let mut r = h.clone();
         r.order = *next;
@@ -1655,16 +1755,29 @@ mod tests {
                 )),
             },
         ];
-        let batch = build_sitemap_batch(&mut core, &cfg, &scope, &rules, &fetched);
+        let batch = build_sitemap_batch(
+            &mut core,
+            &cfg,
+            &scope,
+            &rules,
+            &fetched,
+            Timestamp::UNIX_EPOCH,
+        );
         assert_eq!(batch.sitemaps.len(), 2);
         assert_eq!(batch.sitemaps[0].parent, None);
         assert_eq!(batch.sitemaps[1].parent, Some(batch.sitemaps[0].id));
         assert_eq!(batch.sitemaps[0].kind, SitemapKind::Index);
         assert_eq!(batch.sitemaps[0].entries, 1);
-        assert_eq!(batch.sitemaps[1].invalid_entries, 1);
+        // K-41d: der Eintrag auf other.test zählt zu den ungültigen (1 aus der Datei + 1 fremder)
+        assert_eq!(batch.sitemaps[1].invalid_entries, 2);
+        assert_eq!(batch.sitemaps[1].entries, 2);
+        assert_eq!(batch.events.len(), 1);
+        assert_eq!(batch.events[0].kind, "warn");
+        assert_eq!(batch.events[0].code, "sitemap_foreign_entries");
+        assert!(batch.events[0].message.starts_with("1 "));
         assert_eq!(batch.sitemaps[1].status_code, Some(200));
         assert_eq!(batch.sitemaps[1].found_via, "config");
-        // nur die interne URL wird übernommen
+        // nur der Eintrag desselben Ursprungs wird übernommen
         assert_eq!(batch.sitemaps[1].entry_urls.len(), 1);
         let (id, loc, lastmod) = &batch.sitemaps[1].entry_urls[0];
         assert_eq!(loc, "https://site.test/nur-sitemap");
@@ -1747,7 +1860,14 @@ mod tests {
                 vec![loc(vec![alt("en", "https://other.test/en/a")])],
             ),
         ];
-        let batch = build_sitemap_batch(&mut core, &cfg, &scope, &rules, &fetched);
+        let batch = build_sitemap_batch(
+            &mut core,
+            &cfg,
+            &scope,
+            &rules,
+            &fetched,
+            Timestamp::UNIX_EPOCH,
+        );
         let orders = |i: usize| -> Vec<(u32, String)> {
             batch.sitemaps[i]
                 .hreflang
@@ -1789,8 +1909,60 @@ mod tests {
         let mut off = CrawlConfig::default();
         off.spider.hreflang = os_model::StoreCrawl::OFF;
         let mut core = Core::new(0, None);
-        let batch = build_sitemap_batch(&mut core, &off, &scope, &rules, &fetched);
+        let batch = build_sitemap_batch(
+            &mut core,
+            &off,
+            &scope,
+            &rules,
+            &fetched,
+            Timestamp::UNIX_EPOCH,
+        );
         assert!(batch.sitemaps.iter().all(|s| s.hreflang.is_empty()));
         assert!(batch.new_urls.iter().all(|n| !n.url.contains("/fr/")));
+    }
+
+    // spec: TECH-210
+    #[test]
+    fn sitemap_hreflang_with_store_off_and_crawl_on_queues_targets_but_writes_no_rows() {
+        let cfg = {
+            let mut c = CrawlConfig::default();
+            c.spider.hreflang = os_model::StoreCrawl {
+                store: false,
+                crawl: true,
+            };
+            c
+        };
+        let start = os_url::parse_start_url("https://site.test/").unwrap();
+        let scope = Scope::new(&start, &cfg.scope);
+        let rules = os_url::RuleSet::compile(&[], &[], false).unwrap();
+        let mut core = Core::new(0, None);
+        let fetched = vec![urlset_fetch(
+            "https://site.test/s1.xml",
+            vec![SitemapLoc {
+                loc_raw: "https://site.test/a".to_string(),
+                url: Some("https://site.test/a".to_string()),
+                lastmod: None,
+                hreflang: vec![alt("fr", "https://site.test/fr/a")],
+            }],
+        )];
+        let batch = build_sitemap_batch(
+            &mut core,
+            &cfg,
+            &scope,
+            &rules,
+            &fetched,
+            Timestamp::UNIX_EPOCH,
+        );
+        assert!(batch.sitemaps[0].hreflang.is_empty(), "keine Zeilen");
+        let fr = batch
+            .new_urls
+            .iter()
+            .find(|n| n.url == "https://site.test/fr/a")
+            .expect("Ziel über decide eingeplant");
+        assert!(!fr.in_tables, "nicht gespeichert");
+        assert!(batch
+            .queue
+            .iter()
+            .any(|q| matches!(q, QueueOp::Push { id, .. } if *id == fr.id)));
     }
 }

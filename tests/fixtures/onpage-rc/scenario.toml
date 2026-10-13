@@ -1,6 +1,8 @@
 # Szenario onpage-rc (ONPAGE-050 … 063, CRAWL-012): Statusklassen, Weiterleitungen, Ketten, Schleifen, robots.txt.
 # Start: http://site.test/ (intern); other.test ist extern (ein Fixture-Server, der Host-Header entscheidet).
-# Die Hosts nohost.invalid (DNS-Fehler) und 127.0.0.1:1 (Verbindung abgelehnt) sind externe Links der Startseite.
+# Der Host nohost.invalid (DNS-Fehler) ist ein externer Link der Startseite. „Connection Refused“ prüft ein
+# eigener Teilcrawl mit einem frisch freigegebenen Loopback-Port (Test, kein fester Port in dieser Fixture).
+# http://other.test/meta-refresh.html ist eine externe Seite mit Meta Refresh auf /ok (ONPAGE-058).
 # /timeout antwortet nach 3 s: Tests setzen advanced.response_timeout_s = 1.
 # /blocked/a ist durch robots.txt (Disallow: /blocked/) gesperrt; /flaky liefert erst 503, dann 200 (nur
 # über flaky-start.html erreichbar, Retry-Kriterium ONPAGE-063 ist M2).

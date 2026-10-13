@@ -41,7 +41,7 @@ fn normalize(address: &str) -> String {
 
 fn config() -> CrawlConfig {
     let mut cfg = CrawlConfig::default();
-    // /timeout antwortet nach 3 s; ein Host ohne erreichbare robots.txt (nohost.invalid, 127.0.0.1:1) soll
+    // /timeout antwortet nach 3 s; ein Host ohne erreichbare robots.txt (nohost.invalid, geschlossener Port) soll
     // seinen Fehlerstatus zeigen und nicht als „robots.txt nicht erreichbar“ gesperrt werden (CRAWL-100).
     cfg.advanced.response_timeout_s = 1;
     cfg.robots.unreachable_policy = RobotsUnreachablePolicy::AllowAll;
@@ -472,23 +472,12 @@ fn no_response_lists_timeouts_refused_connections_and_dns_failures() {
     assert_eq!(list(d, "No Response"), golden("No Response"));
     for (url, status) in [
         ("{BASE}/timeout", "Connection Timeout"),
-        ("http://127.0.0.1:1/", "Connection Refused"),
         ("http://nohost.invalid/", "DNS Lookup Failed"),
         ("{BASE}/drop", "Connection Error"),
     ] {
         assert!(contains(d, "No Response", url), "{url}");
         assert_eq!(cell(d, url, "Status Code"), &Value::Int(0), "{url}");
-        let got = text(cell(d, url, "Status"));
-        // Windows beantwortet einen geschlossenen Port nicht sofort mit RST, sondern wiederholt das SYN: Der
-        // kurze Fetch-Timeout läuft zuerst ab (Timeout statt Refused).
-        if cfg!(windows) && status == "Connection Refused" {
-            assert!(
-                matches!(got, Some("Connection Refused" | "Connection Timeout")),
-                "{url}: {got:?}"
-            );
-        } else {
-            assert_eq!(got, Some(status), "{url}");
-        }
+        assert_eq!(text(cell(d, url, "Status")), Some(status), "{url}");
     }
     assert_eq!(
         list(d, "Internal No Response"),
@@ -497,6 +486,83 @@ fn no_response_lists_timeouts_refused_connections_and_dns_failures() {
     assert_eq!(
         list(d, "External No Response"),
         golden("External No Response")
+    );
+}
+
+// spec: ONPAGE-054
+#[test]
+fn a_closed_loopback_port_is_connection_refused() {
+    // Eigener Teilcrawl mit einem frisch freigegebenen Loopback-Port (statt fest Port 1): Das Betriebssystem
+    // lehnt die Verbindung ab. Windows beantwortet ein SYN auf einen geschlossenen Port nicht sofort mit RST,
+    // sondern wiederholt es (~2 s); das Antwort-Timeout von 5 s lässt diesen Verbindungsaufbau nicht als
+    // Timeout enden, deshalb gilt die strenge Prüfung auf allen Plattformen.
+    let port = {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("freier Loopback-Port");
+        listener.local_addr().expect("Adresse").port()
+        // Listener fällt hier: der Port ist wieder geschlossen
+    };
+    let dir = tempfile::tempdir().expect("temporäres Verzeichnis");
+    let refused = format!("http://127.0.0.1:{port}/");
+    std::fs::write(
+        dir.path().join("index.html"),
+        format!(
+            "<!doctype html><html><head><meta charset=\"utf-8\"><title>Refused</title></head>\
+             <body><h1>Refused</h1><a href=\"{refused}\">geschlossener Port</a></body></html>"
+        ),
+    )
+    .expect("index.html");
+    let mut cfg = config();
+    cfg.advanced.response_timeout_s = 5;
+    let started = std::time::Instant::now();
+    let (addresses, status, code) = std::thread::spawn({
+        let refused = refused.clone();
+        let cfg = cfg.clone();
+        let path = dir.path().to_path_buf();
+        move || {
+            tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .build()
+                .expect("Runtime")
+                .block_on(async move {
+                    let fx = os_engine::testing::crawl_dir_with(
+                        &path,
+                        "http://site.test/",
+                        cfg.clone(),
+                        os_engine::testing::test_deps(),
+                    )
+                    .await;
+                    let mut q = ViewQuery::new(TAB, "External No Response");
+                    q.limit = 50;
+                    q.sort = by_address();
+                    q.columns = ColumnSelection::Named(
+                        ["Address", "Status Code", "Status"]
+                            .map(str::to_string)
+                            .to_vec(),
+                    );
+                    let page = views::query_view(&fx.file, &cfg, &q).expect("Ansicht");
+                    let addresses: Vec<String> = page
+                        .rows
+                        .iter()
+                        .map(|r| text(&r[0]).expect("Address").to_string())
+                        .collect();
+                    let row = page
+                        .rows
+                        .iter()
+                        .find(|r| text(&r[0]) == Some(refused.as_str()))
+                        .expect("geschlossener Port in External No Response");
+                    (addresses, text(&row[2]).map(str::to_string), row[1].clone())
+                })
+        }
+    })
+    .join()
+    .expect("Crawl-Thread");
+    assert_eq!(addresses, [refused]);
+    assert_eq!(code, Value::Int(0));
+    assert_eq!(status.as_deref(), Some("Connection Refused"));
+    assert!(
+        started.elapsed() < std::time::Duration::from_secs(10),
+        "kein Warten über 10 s: {:?}",
+        started.elapsed()
     );
 }
 
@@ -614,6 +680,43 @@ fn meta_refresh_lists_pages_that_refresh_to_another_url() {
         // die Seite selbst ist ein 200
         assert!(contains(d, "Success (2XX)", &url), "{p}");
     }
+}
+
+// spec: ONPAGE-058
+#[test]
+fn meta_refresh_of_an_external_page_fills_the_external_filter() {
+    // ONPAGE-058: „Interne/externe HTML-Seiten“. `http://other.test/meta-refresh.html` (extern, verlinkt von
+    // der Startseite) leitet per Meta Refresh auf `/ok` desselben Hosts.
+    let d = dump();
+    let url = "{EXT}/meta-refresh.html".to_string();
+    for filter in [
+        "Redirection (Meta Refresh)",
+        "External Redirection (Meta Refresh)",
+    ] {
+        assert!(contains(d, filter, &url), "{filter}");
+    }
+    assert!(!contains(d, "Internal Redirection (Meta Refresh)", &url));
+    assert_eq!(
+        text(cell(d, &url, "Redirect URL")),
+        Some("http://other.test/ok")
+    );
+    assert_eq!(
+        text(cell(d, &url, "Redirect Type")),
+        Some("Meta Refresh Redirect")
+    );
+    // die Seite selbst ist ein 200; eine einzelne Weiterleitung ist keine Kette (K-44: extern nie Chain/Loop)
+    assert!(contains(d, "External Success (2XX)", &url));
+    assert!(!contains(d, "External Redirect Chain", &url));
+    assert!(!contains(d, "Redirect Chain", &url));
+    // das Ziel steht in den Tabellen und wurde genau einmal abgerufen (auch als Link-Ziel der Startseite)
+    assert!(contains(d, "External Success (2XX)", "{EXT}/ok"));
+    assert_eq!(
+        d.requests
+            .iter()
+            .filter(|(h, p)| h == "other.test" && p == "/ok")
+            .count(),
+        1
+    );
 }
 
 // spec: ONPAGE-058

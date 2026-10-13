@@ -107,7 +107,9 @@ pub fn refresh_target(own: &Url, refs: &[RefreshRef]) -> RefreshOutcome {
     out
 }
 
-/// Weiterleitungsgraph (nur Quellen von Weiterleitungen) mit den gesammelten Flags.
+/// Weiterleitungsgraph (nur Quellen von Weiterleitungen) mit den Schleifenmitgliedern. Die Flags
+/// `redirect_loop`/`redirect_limit_reached` schreibt der Worker über `WriteBatch.url_flags`; hier stehen sie
+/// nur als Zustand (Schleifenerkennung, Fortsetzen).
 #[derive(Debug, Default)]
 pub struct RedirectGraph {
     next: HashMap<UrlId, UrlId>,
@@ -138,21 +140,14 @@ impl RedirectGraph {
         }
     }
 
-    /// Merkt, dass die Kette bei `id` das Limit erreicht hat (CRAWL-072).
+    /// Merkt, dass die Kette bei `id` das Limit erreicht hat (CRAWL-072; beim Fortsetzen aus `url_flags`).
     pub fn flag_limit(&mut self, id: UrlId) {
         self.limits.insert(id);
     }
 
-    /// Alle Flags `(url_id, flag)` in stabiler Reihenfolge.
-    pub fn flags(&self) -> Vec<(UrlId, &'static str)> {
-        let mut out: Vec<(UrlId, &'static str)> = self
-            .loops
-            .iter()
-            .map(|id| (*id, FLAG_LOOP))
-            .chain(self.limits.iter().map(|id| (*id, FLAG_LIMIT)))
-            .collect();
-        out.sort();
-        out
+    /// Ob die Kette bei dieser URL das Limit erreicht hat.
+    pub fn is_limit(&self, id: UrlId) -> bool {
+        self.limits.contains(&id)
     }
 
     /// Ob die URL als Schleifenmitglied geflaggt ist.
@@ -275,7 +270,6 @@ mod tests {
         let members = g.add_edge(id(2), id(1)).expect("Schleife");
         assert_eq!(members.len(), 2);
         assert!(g.is_loop(id(1)) && g.is_loop(id(2)));
-        assert_eq!(g.flags(), vec![(id(1), FLAG_LOOP), (id(2), FLAG_LOOP)]);
     }
 
     // spec: CRAWL-017
@@ -288,7 +282,7 @@ mod tests {
         assert_eq!(g.add_edge(id(1), id(2)), None);
         assert_eq!(g.add_edge(id(2), id(3)), None);
         assert_eq!(g.add_edge(id(3), id(4)), None);
-        assert!(g.flags().is_empty());
+        assert!((1..=4).all(|n| !g.is_loop(id(n))));
     }
 
     // spec: CRAWL-017
@@ -302,15 +296,16 @@ mod tests {
         // 9 → 1: führt in die Schleife hinein, ist aber kein Mitglied
         assert_eq!(g.add_edge(id(9), id(1)), None);
         assert!(!g.is_loop(id(9)));
-        assert_eq!(g.flags().len(), 3);
+        assert!((1..=3).all(|n| g.is_loop(id(n))));
     }
 
     // spec: CRAWL-072
     #[test]
-    fn limit_flags_are_collected_and_sorted() {
+    fn limit_marks_are_kept_per_url_and_independent_of_loops() {
         let mut g = RedirectGraph::default();
         g.flag_limit(id(7));
         g.add_edge(id(1), id(1));
-        assert_eq!(g.flags(), vec![(id(1), FLAG_LOOP), (id(7), FLAG_LIMIT)]);
+        assert!(g.is_limit(id(7)) && !g.is_limit(id(1)));
+        assert!(g.is_loop(id(1)) && !g.is_loop(id(7)));
     }
 }

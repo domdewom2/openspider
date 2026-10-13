@@ -1,11 +1,11 @@
 Address
-http://127.0.0.1:1/
 http://nohost.invalid/
 {EXT}/blocked/x
 {EXT}/chain1
 {EXT}/chain2
 {EXT}/e404
 {EXT}/e500
+{EXT}/meta-refresh.html
 {EXT}/ok
 {EXT}/r301
 {EXT}/s999
