@@ -128,3 +128,41 @@ async fn depth_zero_crawls_only_the_start_url() {
         Some("depth_limit")
     );
 }
+
+// spec: CRAWL-067
+#[tokio::test]
+async fn resources_of_pages_on_the_maximum_depth_are_still_checked() {
+    // Tiefe 2: `/2` liegt auf der letzten Ebene und bindet `/style.css` ein (Tiefe 3 = Grenze + 1).
+    let mut cfg = CrawlConfig::default();
+    cfg.limits.max_depth = Some(2);
+    let fx = crawl_fixture_from("crawl-depth", START, cfg).await;
+    let paths = requested_paths(&fx, Some("site.test"));
+    assert!(
+        paths.contains(&"/style.css".to_string()),
+        "Ressource der letzten Ebene wird geprüft: {paths:?}"
+    );
+    let css = row_of(&fx, &url("site.test", "/style.css"));
+    assert_eq!((css.status_code, css.depth), (Some(200), Some(3)));
+    assert!(css.in_tables);
+    // `/3` (Seite jenseits der Grenze) und sein Bild werden nicht angefragt
+    assert!(!paths.contains(&"/3".to_string()), "{paths:?}");
+    assert!(!paths.contains(&"/img/b3.png".to_string()), "{paths:?}");
+
+    // Tiefe 3: `/3` liegt auf der letzten Ebene, sein Bild (Tiefe 4) wird geprüft, `/4` nicht.
+    let mut cfg = CrawlConfig::default();
+    cfg.limits.max_depth = Some(3);
+    let fx = crawl_fixture_from("crawl-depth", START, cfg).await;
+    let paths = requested_paths(&fx, Some("site.test"));
+    assert!(paths.contains(&"/3".to_string()), "{paths:?}");
+    assert!(
+        paths.contains(&"/img/b3.png".to_string()),
+        "Bild der letzten Ebene wird geprüft: {paths:?}"
+    );
+    let img = row_of(&fx, &url("site.test", "/img/b3.png"));
+    assert_eq!((img.status_code, img.depth), (Some(200), Some(4)));
+    assert!(!paths.contains(&"/4".to_string()), "{paths:?}");
+    assert_eq!(
+        row_of(&fx, &url("site.test", "/4")).reason.as_deref(),
+        Some("depth_limit")
+    );
+}

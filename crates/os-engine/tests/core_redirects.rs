@@ -286,7 +286,8 @@ async fn disabling_meta_refresh_crawling_stores_the_redirect_but_does_not_reques
     assert_eq!(count_requests(&fx, HOST, "/ziel1"), 0);
     assert_eq!(
         row_of(&fx, &u("/ziel1")).reason.as_deref(),
-        Some("crawl_disabled")
+        Some("store_only"),
+        "Grund wie in der Speichern/Crawlen-Matrix (decide, CRAWL-038)"
     );
 }
 

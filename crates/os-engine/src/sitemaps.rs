@@ -9,7 +9,10 @@
 //!   `FetchedSitemap::parent` verweist auf den Index in der Ergebnisliste.
 //! * **Doppelte:** dieselbe Sitemap-URL (nach `os_url::normalize::normalize`, ohne Fragment) wird genau einmal
 //!   abgerufen; bei mehreren Seeds gewinnt der erste (`found_via`). Das gilt auch für Zyklen (ein Index, der sich
-//!   selbst oder einen Vorfahren nennt) – sie ergeben eine Warnung und keinen zweiten Abruf.
+//!   selbst oder einen Vorfahren nennt) – sie ergeben eine Warnung und keinen zweiten Abruf. Als abgerufen gilt
+//!   eine Datei unter der angefragten **und** unter der End-URL (nach Weiterleitungen, K-41a). Über mehrere
+//!   Aufrufe hinweg (robots.txt weiterer Hosts, Konfiguration, Start-URL) führt der Aufrufer die Schlüsselmenge
+//!   und übergibt sie an [`ingest_with_known`].
 //! * **Tiefe:** Seeds liegen auf Tiefe 0, die Kinder eines Index auf Tiefe + 1. Abgerufen wird bis
 //!   `max_index_depth` (M1: 3); die Einträge eines Index auf dieser Tiefe werden nicht abgerufen und ergeben eine
 //!   Warnung (TECH-210, K-27).
@@ -118,6 +121,23 @@ pub async fn ingest_with_warnings<F: Fetch + ?Sized>(
     seeds: Vec<SitemapSeed>,
     max_index_depth: u32,
 ) -> SitemapIngest {
+    ingest_with_known(fetcher, seeds, max_index_depth, &HashSet::new()).await
+}
+
+/// Schlüssel einer Sitemap-URL für die Menge `known` von [`ingest_with_known`] (URL Encoded Address).
+pub fn sitemap_key(u: &url::Url) -> String {
+    key(u)
+}
+
+/// Wie [`ingest_with_warnings`], ruft aber keine Sitemap ab, deren Schlüssel (siehe [`sitemap_key`]) in `known`
+/// steht – die Datei wurde in diesem Crawl schon über einen anderen Weg geholt (K-41a: genau ein Abruf je Datei).
+/// Die Seeds selbst dürfen nicht in `known` stehen, sonst gelten auch sie als erledigt.
+pub async fn ingest_with_known<F: Fetch + ?Sized>(
+    fetcher: &F,
+    seeds: Vec<SitemapSeed>,
+    max_index_depth: u32,
+    known: &HashSet<String>,
+) -> SitemapIngest {
     struct Todo {
         url: url::Url,
         parent: Option<usize>,
@@ -126,7 +146,9 @@ pub async fn ingest_with_warnings<F: Fetch + ?Sized>(
     }
 
     let mut out = SitemapIngest::default();
-    let mut seen: HashSet<String> = HashSet::new();
+    // `seen`: eingeplant oder abgerufen; `done`: tatsächlich abgerufen (angefragte und End-URL).
+    let mut seen: HashSet<String> = known.clone();
+    let mut done: HashSet<String> = known.clone();
     let mut queue: VecDeque<Todo> = VecDeque::new();
     for seed in seeds {
         if seen.insert(key(&seed.url)) {
@@ -140,7 +162,36 @@ pub async fn ingest_with_warnings<F: Fetch + ?Sized>(
     }
 
     while let Some(todo) = queue.pop_front() {
+        let requested_key = key(&todo.url);
+        if done.contains(&requested_key) {
+            // wurde bereits als End-URL einer Weiterleitung geholt
+            out.warnings.push(SitemapWarning {
+                code: "sitemap_cycle",
+                message: format!(
+                    "Sitemap {} wurde bereits abgerufen und wird übersprungen",
+                    todo.url
+                ),
+            });
+            continue;
+        }
         let fetch = fetch_following_redirects(fetcher, &todo.url).await;
+        let end_key = key(&fetch.url);
+        if end_key != requested_key {
+            if done.contains(&end_key) {
+                out.warnings.push(SitemapWarning {
+                    code: "sitemap_cycle",
+                    message: format!(
+                        "Sitemap {} führt auf {}, die bereits abgerufen wurde; die Datei zählt nur einmal",
+                        todo.url, fetch.url
+                    ),
+                });
+                done.insert(requested_key);
+                continue;
+            }
+            seen.insert(end_key.clone());
+            done.insert(end_key);
+        }
+        done.insert(requested_key);
         let doc = parse(&todo.url, &fetch);
         let mut fetch = fetch;
         drop_body(&mut fetch);
@@ -508,6 +559,76 @@ mod tests {
         assert_eq!(out.len(), 1);
         assert_eq!(out[0].found_via, "config");
         assert_eq!(site.count("127.0.0.1", "/s.xml"), 1);
+    }
+
+    // spec: TECH-210
+    #[tokio::test]
+    async fn a_file_counts_as_fetched_under_its_requested_and_its_end_url() {
+        // K-41a: /alt.xml leitet auf /echt.xml; /echt.xml als zweiter Seed ist damit schon abgerufen.
+        let dir = tempfile::tempdir().unwrap();
+        write(dir.path(), "echt.xml", urlset(&["{{BASE_URL}}/seite"]));
+        write(
+            dir.path(),
+            "scenario.toml",
+            "[[route]]\npath = \"/alt.xml\"\nstatus = 301\nlocation = \"/echt.xml\"\n",
+        );
+        let site = TestSite::start_dir(dir.path(), 0).await.unwrap();
+        let out = ingest_with_warnings(
+            &fetcher(),
+            vec![
+                seed(&site, "/alt.xml", "config"),
+                seed(&site, "/echt.xml", "robots"),
+            ],
+            3,
+        )
+        .await;
+        assert_eq!(out.sitemaps.len(), 1);
+        assert_eq!(out.sitemaps[0].url, site.url("/alt.xml"));
+        assert_eq!(site.count("127.0.0.1", "/echt.xml"), 1, "genau ein Abruf");
+        assert!(out.warnings.iter().any(|w| w.code == "sitemap_cycle"));
+
+        // Umgekehrte Reihenfolge: echt.xml zuerst, /alt.xml führt dann auf eine schon geholte Datei.
+        site.reset_request_log();
+        let out = ingest_with_warnings(
+            &fetcher(),
+            vec![
+                seed(&site, "/echt.xml", "config"),
+                seed(&site, "/alt.xml", "robots"),
+            ],
+            3,
+        )
+        .await;
+        assert_eq!(
+            out.sitemaps.len(),
+            1,
+            "die Weiterleitung liefert keine zweite Datei"
+        );
+        assert_eq!(out.sitemaps[0].url, site.url("/echt.xml"));
+        assert!(out.warnings.iter().any(|w| w.code == "sitemap_cycle"));
+    }
+
+    // spec: TECH-210
+    #[tokio::test]
+    async fn known_sitemaps_are_not_fetched_again() {
+        let (site, _dir) = site_with(|d, base| {
+            write(d, "i.xml", index(&[&format!("{base}/s.xml")]));
+            write(d, "s.xml", urlset(&[&format!("{base}/a")]));
+        })
+        .await;
+        let known: HashSet<String> = [key(&url::Url::parse(&site.url("/s.xml")).unwrap())].into();
+        let out =
+            ingest_with_known(&fetcher(), vec![seed(&site, "/i.xml", "robots")], 3, &known).await;
+        assert_eq!(
+            out.sitemaps.len(),
+            1,
+            "nur der Index, die Unter-Sitemap ist bekannt"
+        );
+        assert_eq!(site.count("127.0.0.1", "/s.xml"), 0);
+        // ein bekannter Seed entfällt ganz
+        let out =
+            ingest_with_known(&fetcher(), vec![seed(&site, "/s.xml", "config")], 3, &known).await;
+        assert!(out.sitemaps.is_empty());
+        assert_eq!(site.count("127.0.0.1", "/s.xml"), 0);
     }
 
     // spec: TECH-210

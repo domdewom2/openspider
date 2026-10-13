@@ -64,7 +64,8 @@ async fn five_threads_keep_at_least_four_requests_busy_on_average_and_finish_wit
     assert_eq!(summary.state, CrawlState::Completed);
 
     let reqs = fetcher.page_requests();
-    assert!(reqs.len() >= 100, "{} Abrufe", reqs.len());
+    // Abrufe außer robots.txt: 100 Seiten + 10 Bilder + 3 CSS + 3 JS (Aufbau von `SimSite::tree`), jede URL einmal.
+    assert_eq!(reqs.len(), 100 + 10 + 3 + 3, "{} Abrufe", reqs.len());
     let elapsed = reqs.iter().map(|r| r.end).max().unwrap();
     assert!(elapsed <= secs(5.2), "Dauer {elapsed:?} (Grenze 5,2 s)");
     let busy: Duration = reqs.iter().map(|r| r.end - r.start).sum();

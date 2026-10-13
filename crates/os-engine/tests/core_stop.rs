@@ -119,3 +119,133 @@ async fn pause_stores_running_pages_and_leaves_state_paused() {
         .unwrap();
     assert_eq!(broken, 0);
 }
+
+// ---------------------------------------------------------------------------------------------------
+// Weiterleitungs-Flags laufen über den Writer (M1.md 3.11): sie stehen auch nach Pause und Stopp in der Datei.
+
+/// Szenario: `/` verlinkt eine Schleife (`/loop-a` ↔ `/loop-b`), den Anfang einer Kette (`/chain-1` → `/chain-2`
+/// → `/chain-3`) und einen langsamen Schwanz `/tail-1` → `/tail-2` → … (je 120 ms), damit der Crawl noch läuft,
+/// wenn die Flags in der Datei stehen.
+fn flag_site() -> tempfile::TempDir {
+    let dir = tempfile::tempdir().unwrap();
+    let page = |links: &[String]| {
+        let mut body = String::from("<!doctype html><html><head><title>t</title></head><body>");
+        for l in links {
+            body.push_str(&format!("<a href=\"{l}\">{l}</a>"));
+        }
+        body.push_str("</body></html>");
+        body.replace('"', "\\\"")
+    };
+    let mut toml = String::new();
+    let mut route = |path: &str, extra: &str| {
+        toml.push_str(&format!("[[route]]\npath = \"{path}\"\n{extra}\n\n"));
+    };
+    route(
+        "/",
+        &format!(
+            "body = \"{}\"",
+            page(&[
+                "/loop-a".to_string(),
+                "/loop-b".to_string(),
+                "/chain-1".to_string(),
+                "/tail-1".to_string()
+            ])
+        ),
+    );
+    route("/loop-a", "status = 301\nlocation = \"/loop-b\"");
+    route("/loop-b", "status = 301\nlocation = \"/loop-a\"");
+    route("/chain-1", "status = 301\nlocation = \"/chain-2\"");
+    route("/chain-2", "status = 301\nlocation = \"/chain-3\"");
+    route("/chain-3", &format!("body = \"{}\"", page(&[])));
+    for n in 1..=30 {
+        route(
+            &format!("/tail-{n}"),
+            &format!(
+                "delay_ms = 120\nbody = \"{}\"",
+                page(&[format!("/tail-{}", n + 1)])
+            ),
+        );
+    }
+    std::fs::write(dir.path().join("scenario.toml"), toml).unwrap();
+    dir
+}
+
+/// Wartet, bis die Datei `want` Flags enthält (Lesen aus einer zweiten Verbindung, WAL).
+async fn wait_for_flags(path: &std::path::Path, want: i64) {
+    for _ in 0..400 {
+        if let Ok(file) = CrawlFile::open(path, OpenMode::ReadOnly) {
+            let n: i64 = file
+                .conn()
+                .query_row("SELECT COUNT(*) FROM url_flags", [], |r| r.get(0))
+                .unwrap_or(0);
+            if n >= want {
+                return;
+            }
+        }
+        tokio::time::sleep(Duration::from_millis(25)).await;
+    }
+    panic!("die Flags erscheinen nicht in der Datei");
+}
+
+fn flags_in(file: &CrawlFile) -> Vec<(String, String)> {
+    let mut stmt = file
+        .conn()
+        .prepare("SELECT u.address, f.flag FROM url_flags f JOIN urls u ON u.id = f.url_id ORDER BY u.address, f.flag")
+        .unwrap();
+    stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?)))
+        .unwrap()
+        .map(Result::unwrap)
+        .collect()
+}
+
+async fn flags_survive(pause: bool) {
+    let site = flag_site();
+    let mut cfg = CrawlConfig::default();
+    cfg.speed.threads = 1;
+    cfg.limits.max_redirects = 1;
+    let run = support::launch(site.path(), "/", cfg).await;
+    // Schleife (2) + Limit an /chain-2 (1)
+    wait_for_flags(&run.path, 3).await;
+    if pause {
+        run.handle.pause();
+    } else {
+        run.handle.stop();
+    }
+    let summary = run.handle.wait().await.unwrap();
+    assert_eq!(
+        summary.state,
+        if pause {
+            CrawlState::Paused
+        } else {
+            CrawlState::Completed
+        }
+    );
+
+    let file = CrawlFile::open(&run.path, OpenMode::ReadOnly).unwrap();
+    let base = run.site.base_url();
+    assert_eq!(
+        flags_in(&file),
+        vec![
+            (
+                format!("{base}/chain-2"),
+                "redirect_limit_reached".to_string()
+            ),
+            (format!("{base}/loop-a"), "redirect_loop".to_string()),
+            (format!("{base}/loop-b"), "redirect_loop".to_string()),
+        ]
+    );
+    let (queue, _) = queue_is_consistent(&file);
+    assert!(queue > 0, "der Crawl wurde mittendrin beendet");
+}
+
+// spec: CRAWL-017, CRAWL-072
+#[tokio::test]
+async fn redirect_flags_are_in_the_file_after_a_pause() {
+    flags_survive(true).await;
+}
+
+// spec: CRAWL-017, CRAWL-072
+#[tokio::test]
+async fn redirect_flags_are_in_the_file_after_a_stop() {
+    flags_survive(false).await;
+}

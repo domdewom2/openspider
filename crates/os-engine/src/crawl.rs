@@ -5,12 +5,13 @@
 //! (live über [`CrawlHandle::set_threads`] änderbar) vorgibt, veröffentlicht den Fortschritt (alle 100 ms)
 //! und schreibt den Heartbeat (alle 2 s). Sie endet bei leerer Warteschlange, erreichtem URL-Limit, Stopp
 //! oder Pause. Dann wartet sie auf die laufenden Worker, schreibt den Endzustand, führt den abschließenden
-//! Checkpoint aus, speichert die Weiterleitungs-Flags und ruft `EngineDeps::on_finished` (nicht bei Pause).
+//! Checkpoint aus und ruft `EngineDeps::on_finished` (nicht bei Pause). Die Weiterleitungs-Flags
+//! (`url_flags`) gehen schon während des Laufs mit den Seiten-Batches in den Writer (M1.md 3.11).
 //!
 //! `pause` beendet den Lauf mit Zustand `Paused`; die Warteschlange liegt in der Datei. Das Fortsetzen
 //! (`resume_crawl`) setzt P19 um.
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU8, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -22,7 +23,7 @@ use os_model::{
     Progress, RenderingMode, WriteBatch,
 };
 use os_parse::ParseConfig;
-use os_store::{CrawlFile, CrawlInit, CrawlSink, OpenMode, SqliteSink};
+use os_store::{CrawlFile, CrawlInit, CrawlSink, SqliteSink};
 use os_url::{RuleSet, Scope};
 use tokio::sync::watch;
 use tokio::task::{JoinHandle, JoinSet};
@@ -201,26 +202,31 @@ pub async fn start_crawl<F: Fetch>(
     });
     let scope = Scope::new(&start, &cfg.scope);
 
-    // Start-URL und Metadaten
+    // Start-URL und Metadaten. Ist die Start-URL eine Sitemap-Datei, holt sie ausschließlich der Sitemap-Ingest
+    // (K-41a); ihre URL-Zeile entsteht mit dem Ergebnis des Abrufs, nicht als Crawl-URL.
+    let seeds = initial_sitemap_seeds(&cfg, &start.url);
+    let start_is_sitemap = seeds.iter().any(|s| s.found_via == "start");
     let mut first = WriteBatch::default();
-    core.discover(
-        &Cand {
-            norm: &start,
-            internal: true,
-            kind: DiscoveryKind::Start,
-            store: true,
-            crawl: true,
-            reason: None,
-            resource_like: false,
-            apply_rules: false,
-            purpose: Purpose::Page,
-        },
-        Some(0),
-        0,
-        0,
-        &rules,
-        &mut first,
-    );
+    if !start_is_sitemap {
+        core.discover(
+            &Cand {
+                norm: &start,
+                internal: true,
+                kind: DiscoveryKind::Start,
+                store: true,
+                crawl: true,
+                reason: None,
+                resource_like: false,
+                apply_rules: false,
+                purpose: Purpose::Page,
+            },
+            Some(0),
+            0,
+            0,
+            &rules,
+            &mut first,
+        );
+    }
     first.meta = vec![
         (
             "state".to_string(),
@@ -270,7 +276,6 @@ pub async fn start_crawl<F: Fetch>(
         start_url: start.encoded.clone(),
         cfg: Arc::clone(&cfg),
     });
-    let seeds = initial_sitemap_seeds(&cfg, &start.url);
     let file = req.file.clone();
     let hook = deps.on_finished.clone();
     let task = tokio::spawn(run(RunParts {
@@ -489,12 +494,6 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
     write_ok = write_ok && writer.flush().await.is_ok();
     write_ok = write_ok && writer.checkpoint().await.is_ok();
 
-    let flags = sh
-        .core
-        .lock()
-        .unwrap_or_else(|p| p.into_inner())
-        .redirects
-        .flags();
     let shared_error = sh.error.lock().unwrap_or_else(|p| p.into_inner()).take();
     drop(sh); // gibt den letzten Absender frei, damit der Writer-Thread enden kann
     let finished = writer.finish();
@@ -509,9 +508,6 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
         return Err(EngineError::Join(
             "Crawl wegen eines Fehlers beim Schreiben abgebrochen".to_string(),
         ));
-    }
-    if !flags.is_empty() {
-        persist_flags(&file, &flags)?;
     }
 
     let summary = CrawlSummary {
@@ -530,27 +526,4 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
         }
     }
     Ok(summary)
-}
-
-/// Schreibt die Flags (`url_flags`) mit einer eigenen Verbindung: der Schreibweg des Stores kennt sie noch
-/// nicht (`WriteBatch` hat kein Feld dafür, Schnittstellenbedarf an den Orchestrator).
-fn persist_flags(
-    path: &Path,
-    flags: &[(os_model::UrlId, &'static str)],
-) -> Result<(), EngineError> {
-    use os_store::StoreError;
-    let file = CrawlFile::open(path, OpenMode::ReadWrite)?;
-    let conn = file.conn();
-    let tx = conn.unchecked_transaction().map_err(StoreError::from)?;
-    for (id, flag) in flags {
-        tx.execute(
-            "INSERT OR REPLACE INTO url_flags (url_id, flag, value) VALUES (?1, ?2, NULL)",
-            (id.0, *flag),
-        )
-        .map_err(StoreError::from)?;
-    }
-    tx.commit().map_err(StoreError::from)?;
-    conn.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |_| Ok(()))
-        .map_err(StoreError::from)?;
-    Ok(())
 }

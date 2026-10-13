@@ -351,6 +351,7 @@ fn url_updates_queue_sitemaps_robots_meta_events_counters() {
                 (UrlId(1), "/p1".into(), Some("2026-01-01".into())),
                 (UrlId(2), "/p2".into(), None),
             ],
+            hreflang: vec![],
         }],
         robots: vec![RobotsWrite {
             origin: "https://site.test".into(),
@@ -454,6 +455,7 @@ fn url_updates_queue_sitemaps_robots_meta_events_counters() {
             depth: 0,
             found_via: "robots".into(),
             entry_urls: vec![(UrlId(3), "/p3".into(), None)],
+            hreflang: vec![],
         }],
         ..WriteBatch::default()
     };

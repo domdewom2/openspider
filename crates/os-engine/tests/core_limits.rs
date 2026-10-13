@@ -91,6 +91,57 @@ async fn start_records_owner_and_process_and_the_pages_carry_titles_and_links() 
     );
 }
 
+// spec: CRAWL-022 [M2]
+#[ignore = "Klärung K-02: Total Transferred = Seite + Ressourcen (CRAWL-022) zurückgestellt, ONPAGE-012 führt"]
+#[tokio::test]
+async fn total_transferred_is_the_page_plus_its_resources_once_each() {
+    // CRAWL-022 `/with-assets`: HTML 10 000 B, bindet `a.png` (20 000 B) zweimal und `b.css` (5 000 B) ein.
+    // In M1 gilt K-02: `total_transferred_bytes = transferred_bytes` (siehe der Test oben); dieser Test hält das
+    // Kriterium aus CRAWL-022 fest, bis K-02 entschieden ist.
+    let dir = tempfile::tempdir().unwrap();
+    let html = "<!doctype html><html><head><link rel=\\\"stylesheet\\\" href=\\\"/b.css\\\"></head>\
+                <body><img src=\\\"/a.png\\\" alt=\\\"a\\\"><img src=\\\"/a.png\\\" alt=\\\"a\\\"></body></html>";
+    std::fs::write(
+        dir.path().join("scenario.toml"),
+        format!(
+            "[[route]]\npath = \"/with-assets\"\ncontent_type = \"text/html\"\nbody_size = 10000\nbody = \"{html}\"\n\n\
+             [[route]]\npath = \"/a.png\"\npng_size = 20000\n\n\
+             [[route]]\npath = \"/b.css\"\ncontent_type = \"text/css\"\nbody_size = 5000\nbody = \"body{{}}\"\n"
+        ),
+    )
+    .unwrap();
+    let fx = crawl_dir_with(
+        dir.path(),
+        "/with-assets",
+        CrawlConfig::default(),
+        test_deps(),
+    )
+    .await;
+    let col = |path: &str, column: &str| -> i64 {
+        scalar(
+            &fx,
+            &format!("SELECT {column} FROM urls WHERE url LIKE '%{path}'"),
+        )
+    };
+    let (page, png, css) = (
+        col("/with-assets", "transferred_bytes"),
+        col("/a.png", "transferred_bytes"),
+        col("/b.css", "transferred_bytes"),
+    );
+    assert!(
+        png > 20_000 && css > 5_000 && page > 10_000,
+        "{page} {png} {css}"
+    );
+    assert_eq!(
+        col("/with-assets", "total_transferred_bytes"),
+        page + png + css,
+        "Seite + a.png (einmal, obwohl zweimal eingebunden) + b.css"
+    );
+    // Nicht-HTML-URLs: Gesamt übertragen = Übertragen
+    assert_eq!(col("/a.png", "total_transferred_bytes"), png);
+    assert_eq!(col("/b.css", "total_transferred_bytes"), css);
+}
+
 // spec: CRAWL-109, CRAWL-110
 #[tokio::test]
 async fn the_start_url_is_crawled_regardless_of_include_and_exclude() {

@@ -22,8 +22,9 @@ use std::sync::{Arc, OnceLock};
 
 use os_model::time::{Clock, SystemClock};
 use os_model::{
-    CanonicalRow, DirectiveRow, HeaderRow, HreflangRow, ImageRow, LinkRow, PageFacts, PageWrite,
-    PaginationRow, QueueOp, RefreshRow, RobotsWrite, SitemapWrite, UrlUpdate, WriteBatch,
+    CanonicalRow, DirectiveRow, HeaderRow, HintSource, HreflangRow, ImageRow, LinkRow, PageFacts,
+    PageWrite, PaginationRow, QueueOp, RefreshRow, RobotsWrite, SitemapWrite, UrlId, UrlUpdate,
+    WriteBatch,
 };
 use os_model::{ElementPair, NewUrl};
 use rusqlite::types::Value;
@@ -136,6 +137,7 @@ fn is_empty(batch: &WriteBatch) -> bool {
         && batch.meta.is_empty()
         && batch.events.is_empty()
         && batch.counters.is_empty()
+        && batch.url_flags.is_empty()
 }
 
 fn int(v: u64) -> i64 {
@@ -157,6 +159,7 @@ fn write_batch(conn: &Connection, batch: &WriteBatch, clock: &dyn Clock) -> Resu
         write_page(&tx, page, seq, &mut batch_counters)?;
     }
     batch_counters.flush(&tx, seq)?;
+    write_url_flags(&tx, &batch.url_flags, seq)?;
     apply_queue(&tx, &batch.queue)?;
     for sitemap in &batch.sitemaps {
         write_sitemap(&tx, sitemap)?;
@@ -458,7 +461,10 @@ fn delete_children(tx: &Transaction<'_>, id: i64) -> Result<(), StoreError> {
         "DELETE FROM canonicals WHERE url_id = ?1",
         "DELETE FROM directives WHERE url_id = ?1",
         "DELETE FROM refresh WHERE url_id = ?1",
-        "DELETE FROM hreflang WHERE url_id = ?1",
+        // hreflang aus Sitemaps gehören der Sitemap, nicht der Seite (M1.md 3.11)
+        "DELETE FROM hreflang WHERE url_id = ?1 AND source <> 'sitemap'",
+        // Weiterleitungs-Flags werden beim erneuten Abruf neu bestimmt
+        "DELETE FROM url_flags WHERE url_id = ?1 AND flag IN ('redirect_loop', 'redirect_limit_reached')",
         "DELETE FROM pagination WHERE url_id = ?1",
         "DELETE FROM http_headers WHERE url_id = ?1",
     ] {
@@ -761,6 +767,28 @@ fn raise_meta_counter(tx: &Transaction<'_>, key: &str, value: i64) -> Result<(),
     Ok(())
 }
 
+/// Schreibt `url_flags` (`INSERT OR REPLACE`) und stempelt `change_seq` der betroffenen URLs (K-20).
+fn write_url_flags(
+    tx: &Transaction<'_>,
+    flags: &[(UrlId, String, Option<String>)],
+    seq: i64,
+) -> Result<(), StoreError> {
+    if flags.is_empty() {
+        return Ok(());
+    }
+    let mut insert = tx.prepare_cached(
+        "INSERT OR REPLACE INTO url_flags (url_id, flag, value) VALUES (?1, ?2, ?3)",
+    )?;
+    let mut stamp = tx.prepare_cached("UPDATE urls SET change_seq = ?1 WHERE id = ?2")?;
+    for (id, flag, value) in flags {
+        if stamp.execute(params![seq, id.0])? == 0 {
+            return Err(batch_error(format!("url_flags: URL {id} existiert nicht")));
+        }
+        insert.execute(params![id.0, flag, value])?;
+    }
+    Ok(())
+}
+
 fn write_sitemap(tx: &Transaction<'_>, s: &SitemapWrite) -> Result<(), StoreError> {
     tx.prepare_cached(
         "INSERT OR REPLACE INTO sitemaps (id, url, url_id, parent_id, kind, entries, invalid_entries, \
@@ -788,6 +816,32 @@ fn write_sitemap(tx: &Transaction<'_>, s: &SitemapWrite) -> Result<(), StoreErro
         )?;
         for (url_id, loc_raw, lastmod) in &s.entry_urls {
             stmt.execute(params![s.id.0, url_id.0, loc_raw, lastmod])?;
+        }
+    }
+    // Eine erneute Übergabe derselben Sitemap ersetzt auch deren hreflang-Angaben.
+    tx.prepare_cached("DELETE FROM hreflang WHERE source = 'sitemap' AND sitemap_id = ?1")?
+        .execute([s.id.0])?;
+    if !s.hreflang.is_empty() {
+        let mut stmt = tx.prepare_cached(
+            "INSERT OR REPLACE INTO hreflang (url_id, source, position, sitemap_id, code_raw, code_norm, \
+             code_valid, invalid_reason, href_raw, url, target_id, in_head) \
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
+        )?;
+        for (url_id, h) in &s.hreflang {
+            stmt.execute(params![
+                url_id.0,
+                HintSource::Sitemap.as_str(),
+                h.r.order,
+                s.id.0,
+                h.r.code_raw,
+                h.r.code_norm,
+                h.r.code_valid,
+                h.r.invalid_reason,
+                h.r.href_raw,
+                h.r.resolved,
+                h.target_id.map(|t| t.0),
+                h.r.in_head
+            ])?;
         }
     }
     Ok(())

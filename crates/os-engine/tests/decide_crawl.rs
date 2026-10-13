@@ -1,9 +1,8 @@
 //! Crawl-Integrationstests gegen die Fixtures von M1-P15b (CRAWL-038/039/044/045/046/056, TECH-210, dazu die
 //! Engine-Anteile von CRAWL-098/099 und CRAWL-109/110).
 //!
-//! Alle Tests laufen über `os_engine::testing::crawl_fixture` und brauchen den echten Crawl-Kern aus P15. Bis dahin
-//! sind sie `#[ignore = "wartet auf M1-P15"]`; der Orchestrator schaltet sie in Welle 2.5 (M1-W25) scharf. Die
-//! gleichen Entscheidungen prüft `decide_fixtures.rs` ohne Engine (grün schon in Welle 2).
+//! Alle Tests laufen über `os_engine::testing::crawl_fixture` gegen den echten Crawl-Kern (P15, scharf geschaltet in
+//! Welle 2.5, M1-W25). Die gleichen Entscheidungen prüft `decide_fixtures.rs` ohne Engine.
 //!
 //! Geprüft wird über das Request-Log der Testsite (wurde ein Ziel angefragt?) und die Crawl-Datei (`urls`,
 //! `links`, `canonicals`, `sitemaps`, `robots_files`).
@@ -63,14 +62,24 @@ fn in_tables(fx: &FixtureCrawl, url: &str) -> bool {
     url_row(fx, url).is_some_and(|r| r.in_tables)
 }
 
-/// Anzahl Anfragen an `127.0.0.1` für den Pfad.
+/// Anzahl Anfragen an `host` mit genau diesem `path_and_query`. `TestSite::count` vergleicht ohne `?` im Suchpfad
+/// nur den Pfad; `/handbuch.pdf?v=2` zählte dort für `/handbuch.pdf` mit. Hier gilt immer die Vollübereinstimmung.
+fn exact_hits(fx: &FixtureCrawl, host: &str, path_and_query: &str) -> usize {
+    fx.site
+        .requests()
+        .iter()
+        .filter(|r| r.host == host && r.path_and_query == path_and_query)
+        .count()
+}
+
+/// Anzahl Anfragen an `127.0.0.1` für genau diesen Pfad (samt Query).
 fn hits(fx: &FixtureCrawl, path: &str) -> usize {
-    fx.site.count("127.0.0.1", path)
+    exact_hits(fx, "127.0.0.1", path)
 }
 
 /// Anzahl Anfragen an den externen Testhost.
 fn ext_hits(fx: &FixtureCrawl, path: &str) -> usize {
-    fx.site.count("external.test", path)
+    exact_hits(fx, "external.test", path)
 }
 
 fn link_rows(fx: &FixtureCrawl, target_raw: &str) -> i64 {
@@ -88,6 +97,12 @@ fn with(f: impl FnOnce(&mut CrawlConfig)) -> CrawlConfig {
     f(&mut cfg);
     cfg
 }
+
+/// Speichern aus, Crawlen an.
+const CRAWL_ONLY: StoreCrawl = StoreCrawl {
+    store: false,
+    crawl: true,
+};
 
 type Slot = fn(&mut SpiderConfig) -> &mut StoreCrawl;
 
@@ -188,7 +203,6 @@ fn cases() -> Vec<Case> {
 
 // spec: CRAWL-038
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn store_crawl_matrix_all_four_combinations_per_link_type() {
     for case in cases() {
         for (store, crawl) in [(true, true), (true, false), (false, true), (false, false)] {
@@ -253,7 +267,6 @@ async fn store_crawl_matrix_all_four_combinations_per_link_type() {
 
 // spec: CRAWL-039
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn images_are_fetched_by_default_and_not_when_image_crawl_is_off() {
     let fx = crawl_fixture("crawl-store-crawl-matrix", CrawlConfig::default()).await;
     assert_eq!(hits(&fx, "/m/bild.png"), 1);
@@ -279,7 +292,6 @@ async fn images_are_fetched_by_default_and_not_when_image_crawl_is_off() {
 
 // spec: CRAWL-044
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn internal_links_are_crawled_once_and_counted_per_instance() {
     let fx = crawl_fixture("crawl-links-basic", CrawlConfig::default()).await;
     assert_eq!(hits(&fx, "/a"), 1, "drei Links auf /a, ein Abruf");
@@ -300,7 +312,6 @@ async fn internal_links_are_crawled_once_and_counted_per_instance() {
 
 // spec: CRAWL-044
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn internal_crawl_off_requests_only_the_start_url() {
     let fx = crawl_fixture(
         "crawl-links-basic",
@@ -315,9 +326,100 @@ async fn internal_crawl_off_requests_only_the_start_url() {
     assert_eq!(row.status, None);
 }
 
+// spec: OUT-031
+#[tokio::test]
+async fn target_raw_is_the_markup_value_and_every_stored_link_has_a_target_row() {
+    // K-37: `links.target_raw` trägt den Rohwert des Attributs, das aufgelöste Ziel steht über `target_id`.
+    let fx = crawl_fixture("crawl-links-basic", CrawlConfig::default()).await;
+    let raw: Vec<String> = {
+        let mut stmt = fx
+            .file
+            .conn()
+            .prepare("SELECT target_raw FROM links ORDER BY position")
+            .unwrap();
+        stmt.query_map([], |r| r.get(0))
+            .unwrap()
+            .map(Result::unwrap)
+            .collect()
+    };
+    assert_eq!(
+        raw,
+        [
+            "/a",
+            "/a",
+            "/a",
+            "/b",
+            "/area-ziel",
+            "#",
+            "http://external.test/ext"
+        ],
+        "Rohwerte wie im Markup, nicht die aufgelösten Adressen"
+    );
+    // Das aufgelöste Ziel liefert die Zeile in `urls`.
+    let resolved: String = fx
+        .file
+        .conn()
+        .query_row(
+            "SELECT u.url FROM links l JOIN urls u ON u.id = l.target_id WHERE l.target_raw = '/b'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(resolved, fx.site.url("/b"));
+    // Nicht auflösbare Links (mailto:, tel:, javascript:, ohne href) erzeugen weder URL- noch Linkzeile; `#`
+    // zeigt auf die eigene Seite und hat deren Zeile als Ziel.
+    assert_eq!(
+        count(
+            &fx,
+            "SELECT COUNT(*) FROM links WHERE target_raw LIKE 'mailto:%' OR target_raw LIKE 'tel:%' \
+             OR target_raw LIKE 'javascript:%'"
+        ),
+        0
+    );
+    assert_eq!(
+        count(
+            &fx,
+            "SELECT COUNT(*) FROM links l WHERE l.target_raw = '#' AND l.target_id = l.source_id"
+        ),
+        1
+    );
+    // Invariante: jeder gespeicherte Link hat eine Zielzeile (im selben oder einem früheren Batch).
+    assert_eq!(
+        count(
+            &fx,
+            "SELECT COUNT(*) FROM links l LEFT JOIN urls u ON u.id = l.target_id WHERE u.id IS NULL"
+        ),
+        0
+    );
+
+    // Auch Ziele, die Include ausschließt, haben eine Zielzeile – außerhalb der Tabellen.
+    let fx = crawl_fixture(
+        "crawl-include-exclude",
+        with(|c| c.scope.include = vec![".*/blog/.*".to_string()]),
+    )
+    .await;
+    assert_eq!(
+        count(
+            &fx,
+            "SELECT COUNT(*) FROM links l LEFT JOIN urls u ON u.id = l.target_id WHERE u.id IS NULL"
+        ),
+        0
+    );
+    let shop = url_row(&fx, &fx.site.url("/shop/x")).expect("Zielzeile des abgelehnten Links");
+    assert!(!shop.in_tables);
+    assert_eq!(shop.reason.as_deref(), Some("not_included"));
+    assert_eq!(
+        count(
+            &fx,
+            "SELECT COUNT(*) FROM links l JOIN urls u ON u.id = l.target_id \
+             WHERE l.target_raw = '/shop/x' AND u.state = 'discovered'"
+        ),
+        1
+    );
+}
+
 // spec: CRAWL-045
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn external_links_are_checked_once_and_not_followed() {
     let fx = crawl_fixture("crawl-links-basic", CrawlConfig::default()).await;
     assert_eq!(ext_hits(&fx, "/ext"), 1);
@@ -328,7 +430,6 @@ async fn external_links_are_checked_once_and_not_followed() {
 
 // spec: CRAWL-045
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn external_crawl_off_sends_no_request_to_external_hosts() {
     let fx = crawl_fixture(
         "crawl-links-basic",
@@ -349,7 +450,6 @@ async fn external_crawl_off_sends_no_request_to_external_hosts() {
 
 // spec: CRAWL-046
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn canonical_targets_are_fetched_by_default() {
     let fx = crawl_fixture("crawl-canonicals", CrawlConfig::default()).await;
     for path in [
@@ -398,7 +498,6 @@ async fn canonical_targets_are_fetched_by_default() {
 
 // spec: CRAWL-046
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn canonical_crawl_off_keeps_the_column_but_requests_nothing() {
     let fx = crawl_fixture(
         "crawl-canonicals",
@@ -428,7 +527,6 @@ async fn canonical_crawl_off_keeps_the_column_but_requests_nothing() {
 
 // spec: CRAWL-046
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn canonical_store_off_leaves_columns_and_tab_empty() {
     let fx = crawl_fixture(
         "crawl-canonicals",
@@ -453,6 +551,113 @@ async fn canonical_store_off_leaves_columns_and_tab_empty() {
     }
 }
 
+// spec: CRAWL-046
+#[tokio::test]
+async fn canonical_store_off_with_crawl_on_requests_the_target_but_leaves_every_column_empty() {
+    // Die Startseite hat ein Canonical auf `/m/canonical.html`.
+    let fx = crawl_fixture("crawl-store-crawl-matrix", CrawlConfig::default()).await;
+    assert_eq!(
+        count(
+            &fx,
+            &format!(
+                "SELECT COUNT(*) FROM urls WHERE url = '{}' AND canonical_count = 1 AND canonical_url = '{}' \
+                 AND canonical_target_id IS NOT NULL AND canonical_self = 0",
+                sql_quote(&fx.site.url("/")),
+                sql_quote(&fx.site.url("/m/canonical.html"))
+            )
+        ),
+        1,
+        "Gegenprobe: mit Speichern an trägt die Startseite ihr Canonical"
+    );
+
+    let fx = crawl_fixture(
+        "crawl-store-crawl-matrix",
+        with(|c| c.spider.canonicals = CRAWL_ONLY),
+    )
+    .await;
+    assert_eq!(hits(&fx, "/m/canonical.html"), 1, "Crawlen bleibt an");
+    assert!(
+        !in_tables(&fx, &fx.site.url("/m/canonical.html")),
+        "gecrawlt, aber nicht gespeichert"
+    );
+    assert_eq!(count(&fx, "SELECT COUNT(*) FROM canonicals"), 0);
+    assert_eq!(
+        count(
+            &fx,
+            "SELECT COUNT(*) FROM links WHERE link_type IN ('Canonical', 'HttpCanonical')"
+        ),
+        0
+    );
+    assert_eq!(
+        count(
+            &fx,
+            "SELECT COUNT(*) FROM urls WHERE canonical_count > 0 OR canonical_url IS NOT NULL \
+             OR canonical_target_id IS NOT NULL OR canonical_self IS NOT NULL"
+        ),
+        0
+    );
+    // CRAWL-046: kein Canonical in der Indexierbarkeit, also nie „Canonicalised“. Die Eingabe der Bewertung
+    // (`PageFacts`) trägt kein Canonical (Spalten oben leer); der Status selbst entsteht mit `evaluate` (P24).
+    assert_eq!(
+        count(
+            &fx,
+            "SELECT COUNT(*) FROM urls WHERE indexability_status = 'Canonicalised'"
+        ),
+        0
+    );
+    let start: String = fx
+        .file
+        .conn()
+        .query_row(
+            "SELECT indexability FROM urls WHERE url = ?1",
+            [fx.site.url("/")],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(start, "Indexable");
+}
+
+// spec: CRAWL-038
+#[tokio::test]
+async fn hreflang_and_pagination_store_off_leave_detail_tables_and_columns_empty() {
+    let fx = crawl_fixture("crawl-store-crawl-matrix", CrawlConfig::default()).await;
+    assert_eq!(count(&fx, "SELECT COUNT(*) FROM hreflang"), 1, "Gegenprobe");
+    assert_eq!(
+        count(&fx, "SELECT COUNT(*) FROM pagination"),
+        2,
+        "Gegenprobe"
+    );
+
+    let fx = crawl_fixture(
+        "crawl-store-crawl-matrix",
+        with(|c| {
+            c.spider.hreflang = CRAWL_ONLY;
+            c.spider.pagination = CRAWL_ONLY;
+        }),
+    )
+    .await;
+    for path in ["/m/hreflang-fr.html", "/m/next.html", "/m/prev.html"] {
+        assert_eq!(hits(&fx, path), 1, "{path}: Crawlen bleibt an");
+        assert!(!in_tables(&fx, &fx.site.url(path)), "{path}");
+    }
+    assert_eq!(count(&fx, "SELECT COUNT(*) FROM hreflang"), 0);
+    assert_eq!(count(&fx, "SELECT COUNT(*) FROM pagination"), 0);
+    assert_eq!(
+        count(
+            &fx,
+            "SELECT COUNT(*) FROM links WHERE link_type IN ('Hreflang', 'HttpHreflang', 'RelNext', 'RelPrev')"
+        ),
+        0
+    );
+    assert_eq!(
+        count(
+            &fx,
+            "SELECT COUNT(*) FROM urls WHERE hreflang_count > 0 OR has_rel_next = 1 OR has_rel_prev = 1"
+        ),
+        0
+    );
+}
+
 // ---------------------------------------------------------------------------------------------------------------
 // CRAWL-056
 
@@ -466,7 +671,6 @@ const EXTERNAL_NOFOLLOW: [&str; 3] = ["/ext-nofollow", "/ext-sponsored", "/ext-u
 
 // spec: CRAWL-056
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn nofollow_links_are_stored_with_follow_false_but_not_requested() {
     let fx = crawl_fixture("crawl-nofollow", CrawlConfig::default()).await;
     for path in INTERNAL_NOFOLLOW {
@@ -513,7 +717,6 @@ async fn nofollow_links_are_stored_with_follow_false_but_not_requested() {
 
 // spec: CRAWL-056
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn follow_internal_nofollow_requests_internal_targets_only() {
     let fx = crawl_fixture(
         "crawl-nofollow",
@@ -541,7 +744,6 @@ async fn follow_internal_nofollow_requests_internal_targets_only() {
 
 // spec: CRAWL-056
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn follow_external_nofollow_requests_external_targets_only() {
     let fx = crawl_fixture(
         "crawl-nofollow",
@@ -561,7 +763,6 @@ async fn follow_external_nofollow_requests_external_targets_only() {
 
 // spec: TECH-210
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn robots_sitemap_lines_are_followed_when_linked_sitemaps_are_crawled() {
     let fx = crawl_fixture(
         "crawl-links-basic",
@@ -593,7 +794,6 @@ async fn robots_sitemap_lines_are_followed_when_linked_sitemaps_are_crawled() {
 
 // spec: TECH-210
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn robots_sitemap_lines_are_ignored_by_default_and_without_autodiscovery() {
     // Standard: „Verlinkte XML-Sitemaps crawlen“ ist aus.
     let fx = crawl_fixture("crawl-links-basic", CrawlConfig::default()).await;
@@ -628,7 +828,6 @@ async fn robots_sitemap_lines_are_ignored_by_default_and_without_autodiscovery()
 
 // spec: TECH-210
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn sitemap_as_start_url_is_processed_without_crawl_linked() {
     // Start-URL ist eine Sitemap-Index-Datei: sie wird als Sitemap ausgewertet (kein HTML-Crawl), ihre
     // Unter-Sitemap und deren URLs fließen in die Warteschlange; `/nur-in-sitemap` hat keine Crawl-Tiefe.
@@ -667,12 +866,141 @@ async fn sitemap_as_start_url_is_processed_without_crawl_linked() {
     );
 }
 
+// spec: TECH-210
+#[tokio::test]
+async fn every_sitemap_file_is_requested_exactly_once_and_is_not_a_table_row() {
+    // K-41a: Start-URL = Sitemap-Index, dieselbe Datei steht zusätzlich in der robots.txt (Autodiscovery).
+    // Die Dateien holt nur der Sitemap-Ingest, je Crawl genau einmal.
+    let fx = os_engine::testing::crawl_fixture_from(
+        "crawl-links-basic",
+        "/sitemap-index.xml",
+        with(|c| {
+            c.sitemaps.crawl_linked = true;
+            c.sitemaps.auto_discover_robots = true;
+        }),
+    )
+    .await;
+    assert_eq!(hits(&fx, "/sitemap-index.xml"), 1);
+    assert_eq!(hits(&fx, "/sitemap.xml"), 1);
+    assert_eq!(hits(&fx, "/nur-in-sitemap"), 1);
+    assert_eq!(count(&fx, "SELECT COUNT(*) FROM sitemaps"), 2);
+    // Die URL-Zeilen der Dateien tragen den Status des Ingest-Abrufs und stehen nicht in den Tabellen.
+    for path in ["/sitemap-index.xml", "/sitemap.xml"] {
+        let row = url_row(&fx, &fx.site.url(path)).expect(path);
+        assert_eq!(row.status, Some(200), "{path}");
+        assert_eq!(row.state, "done", "{path}");
+        assert!(!row.in_tables, "{path}");
+    }
+    assert_eq!(
+        count(
+            &fx,
+            &format!(
+                "SELECT COUNT(*) FROM urls WHERE url = '{}' AND discovered_via = 'start' AND crawl_depth = 0",
+                sql_quote(&fx.site.url("/sitemap-index.xml"))
+            )
+        ),
+        1
+    );
+}
+
+// spec: TECH-210
+#[tokio::test]
+async fn sitemap_hreflang_is_stored_per_loc_url_with_source_sitemap() {
+    // `sitemap.xml` führt zu `/a` drei `xhtml:link`-Angaben (de → /a, en → /b, x-default → /nur-in-sitemap);
+    // zweite Quelle für dieselbe URL gibt es nicht, die Angaben bleiben vollständig und fortlaufend nummeriert.
+    let fx = crawl_fixture(
+        "crawl-links-basic",
+        with(|c| {
+            c.sitemaps.crawl_linked = true;
+            c.sitemaps.auto_discover_robots = true;
+            // hreflang crawlen: die Ziele werden über `decide` wie HTML-hreflang behandelt
+            c.spider.hreflang = StoreCrawl::ON;
+        }),
+    )
+    .await;
+    assert_eq!(
+        count(&fx, "SELECT COUNT(*) FROM sitemap_entries"),
+        2,
+        "entries bleibt 2"
+    );
+    let sitemap_id = count(&fx, "SELECT id FROM sitemaps WHERE kind = 'urlset'");
+    let a = fx.site.url("/a");
+    type Row = (i64, String, String, i64, Option<String>, Option<i64>);
+    let rows: Vec<Row> = {
+        let mut stmt = fx
+            .file
+            .conn()
+            .prepare(
+                "SELECT h.position, h.code_norm, h.source, h.sitemap_id, h.url, h.target_id \
+                 FROM hreflang h JOIN urls u ON u.id = h.url_id WHERE u.url = ?1 ORDER BY h.position",
+            )
+            .unwrap();
+        stmt.query_map([&a], |r| {
+            Ok((
+                r.get(0)?,
+                r.get(1)?,
+                r.get(2)?,
+                r.get(3)?,
+                r.get(4)?,
+                r.get(5)?,
+            ))
+        })
+        .unwrap()
+        .map(Result::unwrap)
+        .collect()
+    };
+    assert_eq!(rows.len(), 3, "{rows:?}");
+    assert_eq!(
+        rows.iter().map(|r| r.1.as_str()).collect::<Vec<_>>(),
+        ["de", "en", "x-default"]
+    );
+    assert_eq!(
+        rows.iter().map(|r| r.0).collect::<Vec<_>>(),
+        [0, 1, 2],
+        "position = order, fortlaufend"
+    );
+    assert!(rows.iter().all(|r| r.2 == "sitemap" && r.3 == sitemap_id));
+    assert_eq!(rows[0].4.as_deref(), Some(a.as_str()));
+    assert_eq!(rows[1].4.as_deref(), Some(fx.site.url("/b").as_str()));
+    // target_id: jede Zielzeile existiert (die Ziele sind verlinkt bzw. stehen in der Sitemap).
+    assert!(rows.iter().all(|r| r.5.is_some()), "{rows:?}");
+    let target_of_en: String = fx
+        .file
+        .conn()
+        .query_row(
+            "SELECT u.url FROM hreflang h JOIN urls u ON u.id = h.target_id WHERE h.code_norm = 'en'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(target_of_en, fx.site.url("/b"));
+    // Die Angaben gehören der Sitemap, nicht der Seite: andere Quellen sind nicht betroffen.
+    assert_eq!(
+        count(
+            &fx,
+            "SELECT COUNT(*) FROM hreflang WHERE source <> 'sitemap'"
+        ),
+        0
+    );
+
+    // hreflang speichern aus: keine Zeilen.
+    let fx = crawl_fixture(
+        "crawl-links-basic",
+        with(|c| {
+            c.sitemaps.crawl_linked = true;
+            c.sitemaps.auto_discover_robots = true;
+            c.spider.hreflang = CRAWL_ONLY;
+        }),
+    )
+    .await;
+    assert_eq!(count(&fx, "SELECT COUNT(*) FROM hreflang"), 0);
+}
+
 // ---------------------------------------------------------------------------------------------------------------
 // CRAWL-098 / CRAWL-099: robots.txt auf Request-Log-Ebene (Engine-Anteil, Nachtrag Welle-1-Sichtung)
 
 // spec: CRAWL-098
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn robots_respect_blocks_with_status_zero_and_lists_robots_txt_as_url() {
     let fx = crawl_fixture("crawl-robots", CrawlConfig::default()).await;
     assert_eq!(
@@ -707,9 +1035,52 @@ async fn robots_respect_blocks_with_status_zero_and_lists_robots_txt_as_url() {
     assert_eq!(count(&fx, "SELECT COUNT(*) FROM robots_files"), 1);
 }
 
+// spec: CRAWL-098
+#[tokio::test]
+async fn robots_txt_of_internal_hosts_is_listed_in_the_tables_external_ones_are_not() {
+    // `crawl-links-basic` verlinkt `external.test`; dessen robots.txt wird ebenfalls geholt (K-40).
+    let fx = crawl_fixture("crawl-links-basic", CrawlConfig::default()).await;
+    assert_eq!(hits(&fx, "/robots.txt"), 1);
+    assert_eq!(ext_hits(&fx, "/robots.txt"), 1);
+
+    let internal = fx.site.url("/robots.txt");
+    let row = url_row(&fx, &internal).expect("robots.txt des internen Hosts");
+    assert!(row.in_tables, "intern: in den Tabellen");
+    assert_eq!(row.status, Some(200));
+    let (content_type, class): (String, String) = fx
+        .file
+        .conn()
+        .query_row(
+            "SELECT content_type, content_class FROM urls WHERE url = ?1",
+            [&internal],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .unwrap();
+    assert!(
+        content_type.starts_with("text/plain"),
+        "Inhaltstyp Text: {content_type}"
+    );
+    assert_ne!(class, "HTML", "die robots.txt ist keine HTML-Seite");
+    assert_eq!(
+        count(
+            &fx,
+            &format!(
+                "SELECT is_internal FROM urls WHERE url = '{}'",
+                sql_quote(&internal)
+            )
+        ),
+        1
+    );
+
+    let external = url_row(&fx, "http://external.test/robots.txt")
+        .expect("robots.txt des externen Hosts bleibt als URL-Zeile");
+    assert!(!external.in_tables, "extern: nicht in den Tabellen");
+    assert_eq!(external.status, Some(200));
+    assert_eq!(count(&fx, "SELECT COUNT(*) FROM robots_files"), 2);
+}
+
 // spec: CRAWL-099
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn robots_ignore_never_fetches_robots_txt() {
     let fx = crawl_fixture("crawl-robots", with(|c| c.robots.mode = RobotsMode::Ignore)).await;
     assert_eq!(hits(&fx, "/robots.txt"), 0);
@@ -720,7 +1091,6 @@ async fn robots_ignore_never_fetches_robots_txt() {
 
 // spec: CRAWL-099
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn robots_ignore_but_report_fetches_and_marks_would_be_blocked() {
     let fx = crawl_fixture(
         "crawl-robots",
@@ -751,7 +1121,6 @@ async fn robots_ignore_but_report_fetches_and_marks_would_be_blocked() {
 
 // spec: CRAWL-109
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn include_rules_limit_the_crawl_but_not_the_start_url() {
     let fx = crawl_fixture(
         "crawl-include-exclude",
@@ -774,7 +1143,6 @@ async fn include_rules_limit_the_crawl_but_not_the_start_url() {
 
 // spec: CRAWL-110
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn exclude_rules_skip_matching_urls_but_keep_the_outlink() {
     let fx = crawl_fixture(
         "crawl-include-exclude",
@@ -788,21 +1156,16 @@ async fn exclude_rules_skip_matching_urls_but_keep_the_outlink() {
     )
     .await;
     assert_eq!(hits(&fx, "/handbuch.pdf"), 0);
-    assert_eq!(fx.site.count("127.0.0.1", "/handbuch.pdf?v=2"), 1);
-    assert_eq!(fx.site.count("127.0.0.1", "/liste?sortierung=preis"), 0);
-    assert_eq!(
-        fx.site
-            .count("127.0.0.1", "/liste?seite=2&sortierung=preis"),
-        0
-    );
-    assert_eq!(fx.site.count("127.0.0.1", "/liste?seite=2"), 1);
+    assert_eq!(hits(&fx, "/handbuch.pdf?v=2"), 1);
+    assert_eq!(hits(&fx, "/liste?sortierung=preis"), 0);
+    assert_eq!(hits(&fx, "/liste?seite=2&sortierung=preis"), 0);
+    assert_eq!(hits(&fx, "/liste?seite=2"), 1);
     assert_eq!(hits(&fx, "/a%20b"), 0);
     assert_eq!(link_rows(&fx, "/handbuch.pdf"), 1, "bleibt Outlink");
 }
 
 // spec: CRAWL-110
 #[tokio::test]
-#[ignore = "wartet auf M1-P15"]
 async fn exclude_with_full_url_pattern_spares_other_hosts() {
     // Port der Testsite ist vorab unbekannt: `[0-9]+` ersetzt ihn.
     let fx = crawl_fixture(
@@ -814,5 +1177,5 @@ async fn exclude_with_full_url_pattern_spares_other_hosts() {
     .await;
     assert_eq!(hits(&fx, "/kalender/2025-01"), 0);
     // blog.site.test/kalender/x liegt auf einem anderen Host (extern) und wird geprüft.
-    assert_eq!(fx.site.count("blog.site.test", "/kalender/x"), 1);
+    assert_eq!(exact_hits(&fx, "blog.site.test", "/kalender/x"), 1);
 }
