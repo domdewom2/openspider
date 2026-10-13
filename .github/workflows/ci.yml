@@ -19,6 +19,15 @@ jobs:
           components: rustfmt
       - run: cargo fmt --all --check
 
+  deny:
+    name: cargo-deny (licenses, bans, sources)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check licenses bans sources
+
   build:
     name: build (${{ matrix.name }})
     runs-on: ${{ matrix.os }}
