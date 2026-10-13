@@ -1,0 +1,104 @@
+# Szenario onpage-images (ONPAGE-170 ff.). Fixture des Pakets M1-P23.
+
+[[route]]
+path = "/img/a.png"
+png_size = 2000
+
+[[route]]
+path = "/img/big.jpg"
+png_size = 3000
+content_type = "image/jpeg"
+
+[[route]]
+path = "/img/p.jpg"
+png_size = 1500
+content_type = "image/jpeg"
+
+[[route]]
+path = "/img/only-link.jpg"
+png_size = 1200
+content_type = "image/jpeg"
+
+[[route]]
+path = "/img/size-102400.png"
+png_size = 102400
+
+[[route]]
+path = "/img/size-102401.png"
+png_size = 102401
+
+[[route]]
+path = "/img/clen.png"
+png_size = 1234
+
+[[route]]
+path = "/img/chunked.png"
+png_size = 5000
+chunked = true
+
+[[route]]
+path = "/img/gz.png"
+png_size = 60000
+encoding = "gzip"
+
+[[route]]
+path = "/img/missing-big.png"
+status = 404
+body_size = 300000
+content_type = "text/html; charset=utf-8"
+
+[[route]]
+path = "/img/ext-200k.png"
+png_size = 204800
+
+[[route]]
+path = "/img/alt-empty.png"
+png_size = 800
+
+[[route]]
+path = "/img/alt-spaces.png"
+png_size = 800
+
+[[route]]
+path = "/img/alt-ok.png"
+png_size = 800
+
+[[route]]
+path = "/img/alt-none.png"
+png_size = 800
+
+[[route]]
+path = "/img/alt-bare.png"
+png_size = 800
+
+[[route]]
+path = "/img/mixed.png"
+png_size = 800
+
+[[route]]
+path = "/img/role.png"
+png_size = 800
+
+[[route]]
+path = "/img/aria.png"
+png_size = 800
+
+[[route]]
+path = "/img/both.png"
+png_size = 800
+
+[[route]]
+path = "/img/alt-100.png"
+png_size = 800
+
+[[route]]
+path = "/img/alt-101.png"
+png_size = 800
+
+[[route]]
+path = "/img/alt-entities.png"
+png_size = 800
+
+[[route]]
+path = "/img/counted.png"
+png_size = 800

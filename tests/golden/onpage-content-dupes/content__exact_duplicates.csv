@@ -1,0 +1,6 @@
+﻿Address,Word Count,Sentence Count,Average Words Per Sentence,Flesch Reading Ease Score,Readability,Closest Similarity Match,No. Near Duplicates,Closest Semantically Similar Address,Semantic Similarity Score,No. Semantically Similar,Semantic Relevance Score,Total Language Errors,Spelling Errors,Grammar Errors,Language,Hash,Indexability,Indexability Status
+{BASE}/a.html,42,,,,,,,,,,,,,,,4061f6a97e80d8fd980c13a496cc515d,Indexable,
+{BASE}/a.html?ref=x,42,,,,,,,,,,,,,,,4061f6a97e80d8fd980c13a496cc515d,Indexable,
+{BASE}/b.html,42,,,,,,,,,,,,,,,4061f6a97e80d8fd980c13a496cc515d,Indexable,
+{BASE}/short-a.html,3,,,,,,,,,,,,,,,5bfaa7f3baf15e7150848a116fbf8004,Indexable,
+{BASE}/short-b.html,3,,,,,,,,,,,,,,,5bfaa7f3baf15e7150848a116fbf8004,Indexable,

@@ -1,0 +1,16 @@
+# Szenario onpage-content-dupes (ONPAGE-143). Fixture des Pakets M1-P23.
+
+[[route]]
+path = "/noidx.html"
+[route.headers]
+"X-Robots-Tag" = "noindex"
+
+[[route]]
+path = "/gone1.html"
+status = 404
+body = "<!doctype html><html><head><title>Weg</title></head><body><main><p>diese seite gibt es nicht</p></main></body></html>"
+
+[[route]]
+path = "/gone2.html"
+status = 404
+body = "<!doctype html><html><head><title>Weg</title></head><body><main><p>diese seite gibt es nicht</p></main></body></html>"
