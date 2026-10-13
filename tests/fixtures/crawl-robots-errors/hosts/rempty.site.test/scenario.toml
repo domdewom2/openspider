@@ -1,0 +1,10 @@
+# 200 mit 0 Bytes -> alles erlaubt (CRAWL-100)
+[[route]]
+path = "/robots.txt"
+status = 200
+body = ""
+content_type = "text/plain"
+
+[[route]]
+path = "/seite"
+body = "<!doctype html><html><head><title>seite</title></head><body><h1>seite</h1></body></html>"

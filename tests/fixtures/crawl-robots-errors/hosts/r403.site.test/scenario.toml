@@ -1,0 +1,10 @@
+# 403 -> alles erlaubt (CRAWL-100: alle 4xx ausser 429)
+[[route]]
+path = "/robots.txt"
+status = 403
+body = "Forbidden"
+content_type = "text/plain"
+
+[[route]]
+path = "/seite"
+body = "<!doctype html><html><head><title>seite</title></head><body><h1>seite</h1></body></html>"

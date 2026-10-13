@@ -1,0 +1,10 @@
+# 500 -> nicht erreichbar: 3 Abrufe, danach Policy (CRAWL-100)
+[[route]]
+path = "/robots.txt"
+status = 500
+body = "Internal Server Error"
+content_type = "text/plain"
+
+[[route]]
+path = "/seite"
+body = "<!doctype html><html><head><title>seite</title></head><body><h1>seite</h1></body></html>"

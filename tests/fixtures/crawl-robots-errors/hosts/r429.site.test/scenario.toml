@@ -1,0 +1,12 @@
+# 429 -> wie Serverfehler (CRAWL-100)
+[[route]]
+path = "/robots.txt"
+status = 429
+body = "Too Many Requests"
+content_type = "text/plain"
+[route.headers]
+Retry-After = "1"
+
+[[route]]
+path = "/seite"
+body = "<!doctype html><html><head><title>seite</title></head><body><h1>seite</h1></body></html>"

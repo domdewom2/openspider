@@ -1,0 +1,26 @@
+# Fixture crawl-robots (CRAWL-098/099): Gruppen fuer *, OpenSpider und Googlebot.
+# Zeilennummern sind Teil der Tests (Spalte "Gesperrt durch Zeile") - Zeilen nicht verschieben.
+User-agent: *
+Disallow: /
+
+User-agent: Googlebot
+Disallow: /nur-google/
+
+User-agent: OpenSpider
+Disallow: /privat/
+Allow: /privat/oeffentlich
+Disallow: /*.pdf$
+Disallow: /*?sessionid=
+Allow: /seite$
+Disallow: /seite
+Disallow : /mit-leerzeichen/   # Leerzeichen vor dem Doppelpunkt, Kommentar am Zeilenende
+Crawl-delay: 2
+Noindex: /unbekannte-direktive/
+Host: unbekannt.example
+
+# zweite Gruppe fuer denselben Agenten (case-insensitiv): wird mit der ersten zusammengefuehrt
+user-agent: openspider
+Disallow: /zweite-gruppe/
+
+Sitemap: {{BASE_URL}}/sitemap.xml
+Sitemap: {{BASE_URL}}/sitemap-news.xml
