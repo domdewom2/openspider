@@ -192,7 +192,7 @@ Summe: 150 Funktionen (P0: 80, P1: 67, P2: 3), davon 12 Verweis-Stubs (ONPAGE-00
 
 ### 0.1 Begriffe
 
-- **Interne URL:** URL, deren Host dem Host der Start-URL entspricht (Groß-/Kleinschreibung egal, Port muss übereinstimmen, Schema darf abweichen: `http://` und `https://` desselben Hosts gelten beide als intern). Subdomains gelten als extern, außer die Crawl-Option „alle Subdomains crawlen“ ist aktiv (Definition liegt im Crawl-Bereich; hier nur referenziert). `www.` ist eine eigene Subdomain.
+- **Interne URL:** URL, deren Host dem Host der Start-URL entspricht (Groß-/Kleinschreibung egal; Port und Schema dürfen abweichen: `http://` und `https://` desselben Hosts sowie ein anderer Port desselben Hosts gelten als intern – CRAWL-006 führt, OS-Festlegung 14.10.2026, Welle-3-Sichtung, K-43). Subdomains gelten als extern, außer die Crawl-Option „alle Subdomains crawlen“ ist aktiv (Definition liegt im Crawl-Bereich; hier nur referenziert). `www.` ist eine eigene Subdomain.
 - **Externe URL:** jede nicht interne URL.
 - **HTML-Seite:** URL, deren Inhaltstyp nach ONPAGE-020 als „HTML“ klassifiziert ist.
 - **Indexierbar:** gemäß Indexierbarkeits-Logik (eigener Spec-Bereich). In diesem Dokument wird nur das Ergebnis genutzt: `Indexability ∈ {Indexable, Non-Indexable}` und `Indexability Status` als Begründung (z. B. `Canonicalised`, `noindex`, `Blocked by robots.txt`, `Redirected`, `Client Error`, `Server Error`, `No Response`).
@@ -410,7 +410,7 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
 
 ### ONPAGE-012 Internal: Size, Transferred, Total Transferred
 - **Priorität:** P0
-- **Beschreibung:** `Size` = Größe der Ressource in Bytes. Für HTML-Seiten die Größe des **unkomprimierten** HTML. Für andere Ressourcen der Wert des `Content-Length`-Headers, 0 wenn er fehlt (**Annahme A-6**: für heruntergeladene Bilder wird stattdessen die tatsächliche Körpergröße genutzt, siehe ONPAGE-173). `Transferred` = tatsächlich über das Netz übertragene Bytes des Körpers (bei gzip/br kleiner als Size). `Total Transferred` = Transferred der Seite plus aller beim Rendern geladenen Ressourcen (nur im JS-Rendering-Modus, sonst = Transferred).
+- **Beschreibung:** `Size` = Größe der Ressource in Bytes. Für HTML-Seiten die Größe des **unkomprimierten** HTML. Für andere Ressourcen der Wert des `Content-Length`-Headers, 0 wenn er fehlt (**Annahme A-6**: für heruntergeladene Bilder wird stattdessen die tatsächliche Körpergröße genutzt, siehe ONPAGE-173). `Transferred` = tatsächlich über das Netz übertragene Bytes des Körpers, ohne Statuszeile, Header und Chunk-Rahmen (bei gzip/br kleiner als Size; K-02, CRAWL-022 angeglichen). `Total Transferred` = Transferred der Seite plus aller beim Rendern geladenen Ressourcen (nur im JS-Rendering-Modus, sonst = Transferred).
 - **Eingaben/Konfiguration:** Rendering-Modus.
 - **Ausgabe:** Spalten `Size (bytes)`, `Transferred (bytes)`, `Total Transferred (bytes)`; UI zeigt KB mit einer Nachkommastelle, Exporte in Bytes.
 - **Akzeptanzkriterien:**
@@ -620,7 +620,7 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
   - [ ] Externe URL ohne Antwort (Port geschlossen) erscheint in External → Unknown.
   - [ ] Externe URL, die durch die robots.txt des externen Hosts blockiert ist (wenn robots.txt für externe beachtet wird), erscheint in Unknown.
   - [ ] Summe aller Klassenfilter = External All.
-- **Testfixture:** `onpage-external/` mit `<img src="http://localhost:<port>/ext.png">`, Link auf `http://127.0.0.1:1/` (Port 1, Connection Refused – Achtung: dann intern-Host gleich, Port verschieden → gilt laut 0.1 als extern).
+- **Testfixture:** `onpage-external/` mit `<img src="http://localhost:<port>/ext.png">`, Link auf `http://localhost:1/` (anderer Host, Port 1, Connection Refused; ein anderer Port am Start-Host wäre nach 0.1/CRAWL-006 intern, K-43).
 
 ---
 
@@ -852,6 +852,7 @@ Grundmenge („All“): alle internen und externen URLs mit Antwort- oder Blocki
   - [ ] `http://nohost.invalid/` → Status „DNS Lookup Failed“.
   - [ ] Link `htps://x` mit „Crawl Invalid Links“ an → Eintrag mit Status „Malformed“; aus → kein Eintrag.
   - [ ] Robots-blockierte URLs erscheinen **nicht** in No Response (Fehler aus 23.1 nicht nachbauen).
+  - [ ] Hosts ohne erreichbare robots.txt folgen CRAWL-100: mit der Voreinstellung „Host sperren“ stehen sie als „Blocked by Robots.txt (robots.txt unreachable)“ in Blocked by Robots.txt, nicht in No Response; die Fehlerstatus oben gelten mit „alles erlauben“ (OS-Festlegung 14.10.2026, K-44).
 - **Testfixture:** `onpage-rc/` wie ONPAGE-051, plus `invalid-links.html` mit `<a href="htps://x">`.
 
 ### ONPAGE-055 Filter Success (2XX)
@@ -919,7 +920,7 @@ Grundmenge („All“): alle internen und externen URLs mit Antwort- oder Blocki
   - [ ] `/r301` → `/ok` (1 Hop) → nicht im Filter.
   - [ ] Meta-Refresh-Seite → 301 → `/ok` → im Filter (gemischte Arten).
   - [ ] Kette länger als Redirect-Limit: Start-URL im Filter, Final Status Code „Max Redirects“ im Report.
-  - [ ] Externe Ketten erscheinen nicht im Filter (nur „interne URLs“).
+  - [ ] Externe Ketten erscheinen nicht im Filter (nur „interne URLs“). Die Sicht `External Redirect Chain` (ONPAGE-051) ist deshalb immer leer; dasselbe gilt für `External Redirect Loop` (ONPAGE-061; OS-Festlegung 14.10.2026, K-44, Prüfung im Paritätslauf).
 - **Testfixture:** `onpage-rc/` Routen `/chain1`, `/chain2`, `/mixed-chain.html` (meta refresh → `/r301`), `/long1`…`/long7`.
 
 ### ONPAGE-061 Filter Redirect Loop

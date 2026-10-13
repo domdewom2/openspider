@@ -20,6 +20,16 @@
       "status": "implemented",
       "tests": [
         {
+          "file": "crates/os-engine/tests/lifecycle_crash.rs",
+          "result": "ok",
+          "test": "a_killed_crawl_is_incomplete_and_consistent_and_resumes_to_the_reference_result"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_pause.rs",
+          "result": "ok",
+          "test": "only_paused_interrupted_and_unfinished_crawls_can_be_resumed"
+        },
+        {
           "file": "crates/os-model/tests/model_time.rs",
           "result": "ok",
           "test": "seeded_ids_are_deterministic_uuid_v7"
@@ -94,10 +104,60 @@
           "test": "link_header_next_and_prev_with_duplicates"
         }
       ]
+    },
+    "TECH-068": {
+      "note": "kein Test mit `// spec:`-Tag gefunden",
+      "packages": [
+        "M1-P24"
+      ],
+      "status": "open",
+      "tests": []
     }
   },
   "generated_by": "os-parity coverage",
-  "ignored_without_valid_reason": [],
+  "ignored_without_valid_reason": [
+    {
+      "file": "crates/os-export/tests/links_response_codes.rs",
+      "line": 403,
+      "problem": "Grund beginnt nicht mit M2:/M3:/Klärung K-xx (Platzhalter zählen nicht als deferred)",
+      "reason": "M1-P26",
+      "spec_ids": [
+        "OUT-050"
+      ],
+      "test": "golden_inlinks_exports_with_the_real_response_codes_filters"
+    },
+    {
+      "file": "crates/os-export/tests/reports_issues.rs",
+      "line": 531,
+      "problem": "Grund beginnt nicht mit M2:/M3:/Klärung K-xx (Platzhalter zählen nicht als deferred)",
+      "reason": "M1-P26",
+      "spec_ids": [
+        "OUT-063"
+      ],
+      "test": "issues_golden_with_the_real_tab_counters"
+    },
+    {
+      "file": "crates/os-export/tests/reports_overview.rs",
+      "line": 852,
+      "problem": "Grund beginnt nicht mit M2:/M3:/Klärung K-xx (Platzhalter zählen nicht als deferred)",
+      "reason": "M1-P26",
+      "spec_ids": [
+        "OUT-080"
+      ],
+      "test": "crawl_overview_golden_with_the_real_tab_counters"
+    },
+    {
+      "file": "crates/os-export/tests/tab_export_view.rs",
+      "line": 195,
+      "problem": "Grund beginnt nicht mit M2:/M3:/Klärung K-xx (Platzhalter zählen nicht als deferred)",
+      "reason": "M1-P26",
+      "spec_ids": [
+        "ONPAGE-191",
+        "OUT-020"
+      ],
+      "test": "golden_page_titles_missing_with_all_columns"
+    }
+  ],
   "specs": {
     "AGENT-001": {
       "packages": [
@@ -1565,20 +1625,106 @@
       ]
     },
     "CRAWL-027": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P19"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-engine/src/list_input.rs",
+          "result": "ok",
+          "test": "tests::urls_are_extracted_up_to_whitespace_quote_and_angle_brackets"
+        },
+        {
+          "file": "crates/os-engine/src/list_input.rs",
+          "result": "ok",
+          "test": "tests::plan_counts_match_the_dupes_fixture_arithmetic"
+        },
+        {
+          "file": "crates/os-engine/src/list_input.rs",
+          "result": "ok",
+          "test": "tests::sitemap_addresses_are_not_list_urls_and_invalid_urls_are_counted"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_list.rs",
+          "result": "ok",
+          "test": "text_files_yield_all_http_strings_and_count_lines_without_a_url"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_list.rs",
+          "result": "ok",
+          "test": "csv_and_both_excel_sheets_are_searched_in_every_cell"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_list.rs",
+          "result": "ok",
+          "test": "sitemaps_and_indexes_including_gzip_are_read_by_their_loc_entries"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_list.rs",
+          "result": "ok",
+          "test": "pasting_and_typing_the_same_text_give_the_same_counts"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_list.rs",
+          "result": "ok",
+          "test": "dupes_fixture_with_an_exclude_shows_the_documented_counts"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_list.rs",
+          "result": "ok",
+          "test": "the_duplicate_check_uses_the_normalised_form"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_list.rs",
+          "result": "ok",
+          "test": "a_list_of_ten_thousand_lines_is_planned_and_every_line_is_accounted_for"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_list.rs",
+          "ignore_reason": "Benchmark (P28): 100 000 Zeilen in unter 10 s einlesen und planen (Wanduhr, Referenzmaschine)",
+          "result": "ignored",
+          "test": "a_list_of_one_hundred_thousand_urls_is_read_in_under_ten_seconds"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_list.rs",
+          "result": "ok",
+          "test": "a_list_crawl_requests_each_listed_url_once_and_fills_the_list_input_table"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_list.rs",
+          "result": "ok",
+          "test": "sitemap_addresses_in_the_list_are_fetched_and_their_entries_become_the_list"
+        }
+      ]
     },
     "CRAWL-028": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P19"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-engine/tests/lifecycle_list.rs",
+          "result": "ok",
+          "test": "by_default_only_the_listed_urls_are_requested_and_robots_txt_is_ignored"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_list.rs",
+          "result": "ok",
+          "test": "with_depth_one_the_directly_linked_urls_are_checked_too"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_list.rs",
+          "result": "ok",
+          "test": "choosing_respect_reports_blocked_list_urls_as_blocked_by_robots"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_list.rs",
+          "result": "ok",
+          "test": "a_paused_list_crawl_resumes_with_all_hosts_still_internal"
+        }
+      ]
     },
     "CRAWL-038": {
       "packages": [
@@ -2034,6 +2180,16 @@
       "status": "implemented",
       "tests": [
         {
+          "file": "crates/os-analyze/tests/tab_sitemaps.rs",
+          "result": "ok",
+          "test": "sitemap_index_and_gzip_files_are_resolved_from_robots_txt"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_sitemaps.rs",
+          "result": "ok",
+          "test": "nested_indexes_are_followed_to_depth_three_and_deeper_ones_give_a_warning"
+        },
+        {
           "file": "crates/os-parse/tests/sitemap_gzip.rs",
           "result": "ok",
           "test": "gzip_is_detected_by_magic_bytes_regardless_of_name_and_content_type"
@@ -2161,6 +2317,11 @@
           "file": "crates/os-engine/tests/core_robots.rs",
           "result": "ok",
           "test": "blocked_urls_get_status_zero_are_never_requested_and_do_not_use_up_the_limit"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_pause.rs",
+          "result": "ok",
+          "test": "the_limit_can_be_raised_after_a_pause_and_lowered_below_the_crawled_count"
         }
       ]
     },
@@ -2337,12 +2498,22 @@
       ]
     },
     "CRAWL-089": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_duplicates.rs",
+          "result": "ok",
+          "test": "ignore_non_indexable_applies_to_every_problem_filter_but_not_to_all"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_titles.rs",
+          "result": "ok",
+          "test": "non_indexable_pages_leave_the_problem_filters_but_not_all"
+        }
+      ]
     },
     "CRAWL-095": {
       "packages": [
@@ -2922,6 +3093,11 @@
           "test": "exclude_fixture_matches_the_spec_examples"
         },
         {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "skipped_url_counters_come_from_the_crawl_file"
+        },
+        {
           "file": "crates/os-url/tests/url_rules.rs",
           "result": "ok",
           "test": "exclude_examples_with_full_match"
@@ -3270,6 +3446,26 @@
       "status": "implemented",
       "tests": [
         {
+          "file": "crates/os-engine/src/disk_guard.rs",
+          "result": "ok",
+          "test": "tests::warning_below_two_gib_and_pause_below_one_gib"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_determinism.rs",
+          "result": "ok",
+          "test": "two_crawls_with_a_fixed_clock_a_seed_and_one_thread_are_byte_identical"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_determinism.rs",
+          "result": "ok",
+          "test": "with_the_standard_writer_only_the_batch_sequence_depends_on_timing"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_disk.rs",
+          "result": "ok",
+          "test": "the_crawl_warns_at_two_gb_pauses_below_one_gb_and_resumes_cleanly"
+        },
+        {
           "file": "crates/os-store/tests/crawl_files.rs",
           "result": "ok",
           "test": "set_config_with_clock_stamps_the_time_from_the_clock"
@@ -3322,20 +3518,96 @@
       ]
     },
     "CRAWL-125": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P19"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-engine/tests/lifecycle_crash.rs",
+          "result": "ok",
+          "test": "a_killed_crawl_is_incomplete_and_consistent_and_resumes_to_the_reference_result"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_pause.rs",
+          "result": "ok",
+          "test": "resuming_after_a_restart_equals_the_uninterrupted_crawl_without_repeating_a_request"
+        }
+      ]
     },
     "CRAWL-126": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P19"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-engine/tests/lifecycle_list.rs",
+          "result": "ok",
+          "test": "a_paused_list_crawl_resumes_with_all_hosts_still_internal"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_pause.rs",
+          "result": "ok",
+          "test": "after_pause_no_request_starts_and_the_running_ones_are_stored"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_pause.rs",
+          "result": "ok",
+          "test": "a_paused_file_holds_state_queue_pause_time_and_no_owner"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_pause.rs",
+          "result": "ok",
+          "test": "resuming_after_a_restart_equals_the_uninterrupted_crawl_without_repeating_a_request"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_pause.rs",
+          "result": "ok",
+          "test": "a_copied_file_resumes_on_another_machine_with_the_same_result"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_pause.rs",
+          "result": "ok",
+          "test": "an_exclude_added_during_the_pause_drops_matching_queue_entries_at_once"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_pause.rs",
+          "result": "ok",
+          "test": "the_limit_can_be_raised_after_a_pause_and_lowered_below_the_crawled_count"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_pause.rs",
+          "result": "ok",
+          "test": "fewer_threads_after_the_pause_never_exceed_the_new_number_of_parallel_requests"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_pause.rs",
+          "result": "ok",
+          "test": "mode_scope_and_rendering_cannot_change_while_paused"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_pause.rs",
+          "result": "ok",
+          "test": "forcing_a_forbidden_change_through_resume_is_refused_and_leaves_the_file_unchanged"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_pause.rs",
+          "result": "ok",
+          "test": "only_paused_interrupted_and_unfinished_crawls_can_be_resumed"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_pause.rs",
+          "result": "ok",
+          "test": "the_time_between_pause_and_resume_counts_as_paused_time_and_the_counters_continue"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_pause.rs",
+          "ignore_reason": "Benchmark (P28): Pausieren mit 1 Mio. Warteschlangeneinträgen in unter 3 s (Wanduhr, Referenzmaschine)",
+          "result": "ignored",
+          "test": "pausing_with_a_million_queue_entries_takes_under_three_seconds"
+        }
+      ]
     },
     "CRAWL-127": {
       "packages": [
@@ -3534,12 +3806,37 @@
       ]
     },
     "CRAWL-131": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P19"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/analysis_trigger_stale.rs",
+          "result": "ok",
+          "test": "remove_and_recrawl_make_the_analysis_stale_without_starting_it"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_rescan.rs",
+          "result": "ok",
+          "test": "recrawl_replaces_status_content_and_outlinks_and_corrects_the_inlink_counters"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_rescan.rs",
+          "result": "ok",
+          "test": "recrawl_of_a_page_that_now_answers_404_drops_its_links"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_rescan.rs",
+          "result": "ok",
+          "test": "a_selection_of_many_urls_is_recrawled_in_one_go"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_rescan.rs",
+          "result": "ok",
+          "test": "remove_deletes_the_url_and_its_outlinks_and_leaves_inlinks_without_a_target"
+        }
+      ]
     },
     "CRAWL-132": {
       "packages": [
@@ -3767,6 +4064,46 @@
       "status": "implemented",
       "tests": [
         {
+          "file": "crates/os-analyze/tests/analysis_trigger_hook.rs",
+          "result": "ok",
+          "test": "the_analysis_starts_by_itself_when_the_crawl_ends_regularly"
+        },
+        {
+          "file": "crates/os-analyze/tests/analysis_trigger_hook.rs",
+          "result": "ok",
+          "test": "with_the_switch_off_no_analysis_runs_and_ensure_analysis_runs_it_on_demand"
+        },
+        {
+          "file": "crates/os-analyze/tests/analysis_trigger_hook.rs",
+          "result": "ok",
+          "test": "a_pause_starts_no_analysis_a_manual_start_leaves_it_incomplete_and_the_end_after_resume_runs_it"
+        },
+        {
+          "file": "crates/os-analyze/tests/analysis_trigger_stale.rs",
+          "result": "ok",
+          "test": "remove_and_recrawl_make_the_analysis_stale_without_starting_it"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_hook.rs",
+          "result": "ok",
+          "test": "the_hook_runs_within_a_second_of_the_regular_end_after_the_checkpoint_and_before_wait_returns"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_hook.rs",
+          "result": "ok",
+          "test": "the_hook_also_runs_after_the_url_limit_and_after_a_stop"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_hook.rs",
+          "result": "ok",
+          "test": "a_pause_never_calls_the_hook_and_the_resumed_crawl_calls_it_once_at_the_end"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_list.rs",
+          "result": "ok",
+          "test": "sitemap_addresses_in_the_list_are_fetched_and_their_entries_become_the_list"
+        },
+        {
           "file": "crates/os-model/tests/model_enums.rs",
           "result": "ok",
           "test": "analysis_step_keys_match_config_keys"
@@ -3918,6 +4255,41 @@
           "test": "thresholds_come_from_the_config_without_recrawl"
         },
         {
+          "file": "crates/os-analyze/tests/tab_h1.rs",
+          "result": "ok",
+          "test": "goldens_of_all_filters"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_h2.rs",
+          "result": "ok",
+          "test": "goldens_of_all_filters"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_meta.rs",
+          "result": "ok",
+          "test": "thresholds_change_after_the_crawl_without_new_requests"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_meta.rs",
+          "result": "ok",
+          "test": "goldens_of_all_filters"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_titles.rs",
+          "result": "ok",
+          "test": "thresholds_change_after_the_crawl_without_new_requests"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_titles.rs",
+          "result": "ok",
+          "test": "thresholds_of_the_crawl_file_apply_when_reopened"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_titles.rs",
+          "result": "ok",
+          "test": "defaults_and_validation_of_the_thresholds"
+        },
+        {
           "file": "crates/os-model/tests/model_config.rs",
           "result": "ok",
           "test": "defaults_match_table_3_4"
@@ -4006,12 +4378,77 @@
       ]
     },
     "ONPAGE-005": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_duplicates.rs",
+          "result": "ok",
+          "test": "two_indexable_pages_with_the_same_value_are_duplicates_in_every_tab"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_duplicates.rs",
+          "result": "ok",
+          "test": "canonicalised_page_is_outside_the_comparison_set_by_default"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_duplicates.rs",
+          "result": "ok",
+          "test": "comparison_is_case_sensitive_on_normalized_values"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_duplicates.rs",
+          "result": "ok",
+          "test": "empty_values_and_second_values_never_form_a_group"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_duplicates.rs",
+          "result": "ok",
+          "test": "paginated_pages_leave_the_comparison_set_when_ignore_paginated_is_on"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_duplicates.rs",
+          "result": "ok",
+          "test": "rel_prev_as_link_header_acts_like_the_html_element"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_duplicates.rs",
+          "result": "ok",
+          "test": "switching_ignore_paginated_off_lists_every_page_of_the_series"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_duplicates.rs",
+          "result": "ok",
+          "test": "duplicate_goldens"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_duplicates.rs",
+          "result": "ok",
+          "test": "duplicates_appear_as_soon_as_the_second_page_is_written"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_duplicates.rs",
+          "result": "ok",
+          "test": "only_indexable_and_ignore_non_indexable_combine_as_specified"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_duplicates.rs",
+          "result": "ok",
+          "test": "exact_values_empty_and_null_and_foreign_pages"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_duplicates.rs",
+          "result": "ok",
+          "test": "ignore_paginated_uses_rel_prev_from_head_or_header_only"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_duplicates.rs",
+          "result": "ok",
+          "test": "groups_are_found_through_an_index_on_the_value_column"
+        }
+      ]
     },
     "ONPAGE-006": {
       "packages": [
@@ -4188,36 +4625,146 @@
       ]
     },
     "ONPAGE-009": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_h1.rs",
+          "result": "ok",
+          "test": "base_set_and_filters_are_consistent"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_h2.rs",
+          "result": "ok",
+          "test": "base_set_and_filters_are_consistent"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_meta.rs",
+          "result": "ok",
+          "test": "base_set_and_filters_are_consistent"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_titles.rs",
+          "result": "ok",
+          "test": "base_set_is_internal_html_with_2xx"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_titles.rs",
+          "result": "ok",
+          "test": "every_filter_is_a_subset_of_all_and_counts_match_rows"
+        }
+      ]
     },
     "ONPAGE-010": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P20"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "internal_tab_has_the_base_columns_first_in_spec_order"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "status_code_status_and_content_follow_the_response"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "address_is_shown_decoded_and_the_requested_form_is_in_url_encoded_address"
+        },
+        {
+          "deferred_hint": true,
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "ignore_reason": "M2: ONPAGE-010 HTTP/2-Antwort (os-testsite spricht nur HTTP/1.1, ALPN http/1.1); Ersatz: leere Reason-Phrase",
+          "result": "ignored",
+          "test": "http2_404_has_the_standard_status_text"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "internal_all_lists_the_internal_urls_in_tables_and_no_external_ones"
+        }
+      ]
     },
     "ONPAGE-011": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P20"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "second_occurrences_stand_at_the_end_of_the_column_list"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "element_columns_carry_the_values_of_the_page"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "header_values_fill_x_robots_tag_and_http_rel_columns"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "second_occurrences_and_numbered_columns_follow_the_page"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "non_html_urls_have_empty_element_columns_and_pdfs_use_document_properties"
+        }
+      ]
     },
     "ONPAGE-012": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P20"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "size_is_the_uncompressed_html_and_transferred_is_smaller_when_compressed"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "ignore_reason": "Klärung K-02: Transferred = Kopf + Body (CRAWL-022, os-fetch), ONPAGE-012 nennt nur den Body",
+          "result": "ignored",
+          "test": "transferred_of_an_uncompressed_page_equals_size"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "size_of_a_chunked_pdf_without_content_length_is_zero"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "size_of_a_pdf_with_content_length_is_the_header_value"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "total_transferred_equals_transferred_without_rendering"
+        },
+        {
+          "deferred_hint": true,
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "ignore_reason": "M2: ONPAGE-012 [P1] Total Transferred mit Rendering braucht JavaScript-Rendering",
+          "result": "ignored",
+          "test": "total_transferred_with_rendering_includes_resources"
+        }
+      ]
     },
     "ONPAGE-013": {
       "packages": [
@@ -4226,6 +4773,21 @@
       "status": "implemented",
       "tests": [
         {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "word_count_counts_only_the_content_area"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "text_ratio_is_visible_text_over_source_in_percent_with_one_decimal"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "non_html_urls_have_no_word_count_and_no_text_ratio"
+        },
+        {
           "file": "crates/os-parse/tests/elements_parse_html.rs",
           "result": "ok",
           "test": "parse_html_text_ratio_uses_source_length_in_chars"
@@ -4233,20 +4795,55 @@
       ]
     },
     "ONPAGE-014": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P20"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "crawl_depth_counts_clicks_and_a_redirect_is_one_more_level"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "folder_depth_counts_segments_followed_by_a_slash_and_ignores_the_query"
+        }
+      ]
     },
     "ONPAGE-015": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P20"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "inlinks_count_every_instance_and_unique_inlinks_the_source_pages"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "outlinks_count_internal_targets_and_external_outlinks_the_rest"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "self_links_and_nofollow_links_are_counted"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "pct_of_total_is_unique_html_200_inlinks_over_all_internal_html_200_pages"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "pct_of_total_is_rounded_to_two_decimals"
+        }
+      ]
     },
     "ONPAGE-018": {
       "packages": [
@@ -4254,6 +4851,31 @@
       ],
       "status": "implemented",
       "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "hash_is_md5_of_the_decoded_body"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "response_time_is_in_seconds_with_three_decimals"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "last_modified_is_the_raw_header_and_empty_without_it"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "redirect_url_is_absolute_and_redirect_type_has_the_tab_label"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "http_version_url_encoded_address_and_crawl_timestamp"
+        },
         {
           "file": "crates/os-model/tests/model_enums.rs",
           "result": "ok",
@@ -4315,148 +4937,437 @@
       ]
     },
     "ONPAGE-021": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P20"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "class_filters_of_the_internal_scenario_match_the_golden_lists"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "html_filter_has_every_html_class_url_regardless_of_status"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "every_url_is_in_at_most_one_class_filter_and_filters_are_subsets_of_all"
+        }
+      ]
     },
     "ONPAGE-022": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P20"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "class_filters_of_the_internal_scenario_match_the_golden_lists"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "javascript_css_images_and_pdf_filters_follow_the_content_type"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "images_filter_is_empty_when_images_are_not_stored"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "every_url_is_in_at_most_one_class_filter_and_filters_are_subsets_of_all"
+        }
+      ]
     },
     "ONPAGE-024": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P20"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "class_filters_of_the_internal_scenario_match_the_golden_lists"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "unknown_filter_has_missing_invalid_blocked_and_unanswered_urls"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "every_url_is_in_at_most_one_class_filter_and_filters_are_subsets_of_all"
+        }
+      ]
     },
     "ONPAGE-025": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P20"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_external.rs",
+          "result": "ok",
+          "test": "default_layout_has_exactly_the_six_parity_columns_and_hides_the_extensions"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_external.rs",
+          "result": "ok",
+          "test": "default_view_shows_six_columns_and_export_of_all_columns_appends_the_extensions"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_external.rs",
+          "result": "ok",
+          "test": "a_link_to_localhost_is_external_and_not_internal"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_external.rs",
+          "result": "ok",
+          "test": "an_external_page_is_requested_once_and_its_links_are_not_followed"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_external.rs",
+          "result": "ok",
+          "test": "crawl_depth_is_the_depth_of_the_linking_page_plus_one"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_external.rs",
+          "result": "ok",
+          "test": "inlinks_count_the_link_instances_from_internal_pages"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_external.rs",
+          "result": "ok",
+          "test": "status_and_response_data_are_those_of_the_single_check"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_external.rs",
+          "result": "ok",
+          "test": "an_external_subdomain_is_external_while_all_subdomains_is_off"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_external.rs",
+          "result": "ok",
+          "test": "with_external_checks_off_the_urls_are_listed_but_not_requested"
+        }
+      ]
     },
     "ONPAGE-026": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P20"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_external.rs",
+          "result": "ok",
+          "test": "class_filters_assign_external_urls_by_content_type"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_external.rs",
+          "result": "ok",
+          "test": "an_external_image_from_img_src_is_in_the_images_filter"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_external.rs",
+          "result": "ok",
+          "test": "unanswered_and_robots_blocked_external_urls_are_unknown"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_external.rs",
+          "result": "ok",
+          "test": "an_external_url_with_a_closed_port_is_unknown"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_external.rs",
+          "result": "ok",
+          "test": "the_class_filters_partition_external_all"
+        }
+      ]
     },
     "ONPAGE-031": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P20"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_security.rs",
+          "result": "ok",
+          "test": "http_urls_filter_lists_internal_urls_with_the_http_scheme"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_security.rs",
+          "result": "ok",
+          "test": "an_https_crawl_still_lists_the_internal_http_link_of_the_same_host"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_security.rs",
+          "result": "ok",
+          "test": "http_urls_and_https_urls_together_are_exactly_all"
+        }
+      ]
     },
     "ONPAGE-032": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P20"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_security.rs",
+          "result": "ok",
+          "test": "https_urls_filter_lists_internal_urls_with_the_https_scheme"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_security.rs",
+          "result": "ok",
+          "test": "http_urls_and_https_urls_together_are_exactly_all"
+        }
+      ]
     },
     "ONPAGE-050": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P21"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "columns_follow_the_spec_order_and_extras_come_last"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "a_301_has_an_absolute_redirect_url_and_type_a_200_has_neither"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "inlinks_count_internal_hyperlink_instances_like_the_internal_tab"
+        }
+      ]
     },
     "ONPAGE-051": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P21"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "every_class_is_the_disjoint_union_of_internal_and_external"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "an_external_404_appears_in_the_external_view_only"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "all_views_match_the_golden_lists"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "filter_names_resolve_in_all_three_views"
+        }
+      ]
     },
     "ONPAGE-052": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P21"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "respect_mode_lists_blocked_urls_with_status_0_and_never_requests_them"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "ignore_mode_requests_the_url_and_keeps_it_out_of_the_filter"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "ignore_but_report_mode_requests_the_url_and_still_lists_it"
+        }
+      ]
     },
     "ONPAGE-054": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P21"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "no_response_lists_timeouts_refused_connections_and_dns_failures"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "robots_blocked_urls_are_not_in_no_response"
+        },
+        {
+          "deferred_hint": true,
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "ignore_reason": "M2: ONPAGE-054 „Malformed“ für ungültige Links braucht die Option „Crawl Invalid Links“ (CRAWL-054, P2)",
+          "result": "ignored",
+          "test": "invalid_links_are_reported_as_malformed_with_crawl_invalid_links"
+        }
+      ]
     },
     "ONPAGE-055": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P21"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "success_lists_200_and_204_but_not_redirects"
+        }
+      ]
     },
     "ONPAGE-056": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P21"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "redirection_lists_all_3xx_with_and_without_location"
+        }
+      ]
     },
     "ONPAGE-058": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P21"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "meta_refresh_lists_pages_that_refresh_to_another_url"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "meta_refresh_without_target_or_to_itself_is_not_a_redirect"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "meta_refresh_outside_head_is_detected_too"
+        }
+      ]
     },
     "ONPAGE-060": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P21"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "a_two_hop_chain_lists_its_start_url_only"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "a_meta_refresh_before_a_301_makes_a_mixed_chain"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "chains_longer_than_the_redirect_limit_still_list_their_start_url"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "external_chains_do_not_appear_in_the_filter"
+        }
+      ]
     },
     "ONPAGE-061": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P21"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "a_loop_lists_all_members_and_the_crawl_terminates"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "a_self_redirect_is_a_loop"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "a_loop_through_a_changed_query_is_detected_and_urls_leading_into_it_are_listed"
+        }
+      ]
     },
     "ONPAGE-062": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P21"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "client_errors_list_4xx_with_their_status_texts"
+        }
+      ]
     },
     "ONPAGE-063": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P21"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "server_errors_list_5xx"
+        },
+        {
+          "deferred_hint": true,
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "ignore_reason": "M2: ONPAGE-063 „Retry liefert 200“ setzt Wiederholungen bei 5xx voraus (CRAWL-096, P1)",
+          "result": "ignored",
+          "test": "a_retry_that_returns_200_removes_the_url_from_the_filter"
+        }
+      ]
     },
     "ONPAGE-065": {
       "packages": [
@@ -4532,244 +5443,481 @@
       ]
     },
     "ONPAGE-070": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P21"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "columns_follow_the_spec_order_and_have_the_right_kinds"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "length_counts_codepoints_of_the_display_address"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "length_of_a_plain_address_is_25_for_http_127_0_0_1_8080_abc"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "status_content_hash_and_canonical_columns_are_filled"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "population_is_internal_urls_with_a_response_only"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "every_filter_is_a_subset_of_all"
+        }
+      ]
     },
     "ONPAGE-071": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P21"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "non_ascii_counts_decoded_and_percent_encoded_characters"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "non_ascii_in_idn_hosts_query_and_leftover_escapes"
+        }
+      ]
     },
     "ONPAGE-072": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P21"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "underscores_count_in_the_path_only"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "underscores_ignore_host_query_and_fragment"
+        }
+      ]
     },
     "ONPAGE-073": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P21"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "uppercase_finds_capitals_in_path_and_query_but_not_in_scheme_host_or_hex"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "uppercase_uses_unicode_category_lu_and_ignores_escape_digits"
+        }
+      ]
     },
     "ONPAGE-074": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P21"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "multiple_slashes_count_in_the_path_only"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "the_crawl_does_not_collapse_slashes_in_paths"
+        }
+      ]
     },
     "ONPAGE-076": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P21"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "space_counts_literal_spaces_and_percent_20_but_not_plus"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "space_detects_literal_spaces_in_stored_addresses"
+        }
+      ]
     },
     "ONPAGE-078": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P21"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "parameters_list_question_marks_and_ampersands_outside_the_fragment"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "parameters_ignore_question_marks_in_the_fragment"
+        }
+      ]
     },
     "ONPAGE-081": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P21"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "over_115_characters_lists_urls_longer_than_the_default_threshold"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "over_x_characters_follows_the_threshold_without_recrawl"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_url.rs",
+          "result": "ok",
+          "test": "exactly_115_characters_is_not_over_and_116_is"
+        }
+      ]
     },
     "ONPAGE-090": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_titles.rs",
+          "result": "ok",
+          "test": "columns_and_extraction_values"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_titles.rs",
+          "result": "ok",
+          "test": "tab_is_empty_when_titles_are_not_stored"
+        },
+        {
+          "deferred_hint": true,
+          "file": "crates/os-analyze/tests/tab_titles.rs",
+          "ignore_reason": "M2: ONPAGE-090 Titel aus dem gerenderten DOM (js-title.html) braucht JavaScript-Rendering",
+          "result": "ignored",
+          "test": "rendering_mode_takes_the_title_from_the_rendered_dom"
+        }
+      ]
     },
     "ONPAGE-091": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_titles.rs",
+          "result": "ok",
+          "test": "missing_lists_pages_without_any_filled_title"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_titles.rs",
+          "result": "ok",
+          "test": "missing_golden_matches_all_columns_view"
+        }
+      ]
     },
     "ONPAGE-092": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_titles.rs",
+          "result": "ok",
+          "test": "duplicate_filter_is_sorted_by_title_so_groups_stand_together"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_titles.rs",
+          "result": "ok",
+          "test": "duplicate_is_empty_when_all_titles_differ"
+        }
+      ]
     },
     "ONPAGE-093": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_titles.rs",
+          "result": "ok",
+          "test": "over_filter_uses_normalized_length_of_title_1_only"
+        }
+      ]
     },
     "ONPAGE-094": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_titles.rs",
+          "result": "ok",
+          "test": "below_filter_needs_a_title_and_is_exclusive_at_the_limit"
+        }
+      ]
     },
     "ONPAGE-098": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_titles.rs",
+          "result": "ok",
+          "test": "multiple_counts_html_titles_only"
+        }
+      ]
     },
     "ONPAGE-100": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_meta.rs",
+          "result": "ok",
+          "test": "columns_and_extraction_values"
+        }
+      ]
     },
     "ONPAGE-101": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_meta.rs",
+          "result": "ok",
+          "test": "missing_lists_pages_without_any_filled_description"
+        }
+      ]
     },
     "ONPAGE-102": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_meta.rs",
+          "result": "ok",
+          "test": "duplicate_compares_the_first_description_and_sorts_by_it"
+        }
+      ]
     },
     "ONPAGE-103": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_meta.rs",
+          "result": "ok",
+          "test": "over_filter_155_is_inclusive_below_the_limit"
+        }
+      ]
     },
     "ONPAGE-104": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_meta.rs",
+          "result": "ok",
+          "test": "below_filter_70_needs_a_description"
+        }
+      ]
     },
     "ONPAGE-107": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_meta.rs",
+          "result": "ok",
+          "test": "multiple_counts_description_elements_only"
+        }
+      ]
     },
     "ONPAGE-120": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_h1.rs",
+          "result": "ok",
+          "test": "columns_and_extraction_values"
+        }
+      ]
     },
     "ONPAGE-121": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_h1.rs",
+          "result": "ok",
+          "test": "missing_lists_pages_without_any_filled_h1"
+        }
+      ]
     },
     "ONPAGE-122": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_h1.rs",
+          "result": "ok",
+          "test": "duplicate_compares_the_first_h1_and_sorts_by_it"
+        }
+      ]
     },
     "ONPAGE-123": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_h1.rs",
+          "result": "ok",
+          "test": "over_filter_70_looks_at_h1_1_only"
+        }
+      ]
     },
     "ONPAGE-124": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_h1.rs",
+          "result": "ok",
+          "test": "multiple_is_not_capped_and_counts_empty_h1"
+        }
+      ]
     },
     "ONPAGE-130": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_h2.rs",
+          "result": "ok",
+          "test": "columns_and_extraction_values"
+        }
+      ]
     },
     "ONPAGE-131": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_h2.rs",
+          "result": "ok",
+          "test": "missing_lists_pages_without_any_filled_h2"
+        }
+      ]
     },
     "ONPAGE-132": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_h2.rs",
+          "result": "ok",
+          "test": "duplicate_compares_the_first_h2_and_sorts_by_it"
+        }
+      ]
     },
     "ONPAGE-133": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_h2.rs",
+          "result": "ok",
+          "test": "over_filter_70_looks_at_h2_1_only"
+        }
+      ]
     },
     "ONPAGE-134": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P22"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_h2.rs",
+          "result": "ok",
+          "test": "multiple_lists_pages_with_more_than_one_h2"
+        }
+      ]
     },
     "ONPAGE-140": {
       "packages": [
@@ -4903,28 +6051,91 @@
       ]
     },
     "ONPAGE-142": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P23"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_content.rs",
+          "result": "ok",
+          "test": "columns_follow_the_spec_and_p1_columns_are_empty_and_hidden"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_content.rs",
+          "result": "ok",
+          "test": "hash_column_is_empty_when_hash_storage_is_off"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_content.rs",
+          "result": "ok",
+          "test": "base_set_is_internal_html_with_2xx"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_content.rs",
+          "result": "ok",
+          "test": "pdf_is_in_the_base_set_only_with_pdf_store"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_content.rs",
+          "ignore_reason": "M2: ONPAGE-142 PDF-Zeile mit Word Count, Sentence Count und Lesbarkeit (P1-Funktionen ONPAGE-149/166)",
+          "result": "ignored",
+          "test": "pdf_row_has_word_count_and_readability"
+        }
+      ]
     },
     "ONPAGE-143": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P23"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_content.rs",
+          "result": "ok",
+          "test": "exact_duplicates_compare_the_hash_of_indexable_pages"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_content.rs",
+          "result": "ok",
+          "test": "exact_duplicates_only_indexable_switch_works_without_new_requests"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_content.rs",
+          "result": "ok",
+          "test": "exact_duplicates_are_live_not_a_crawl_analysis_filter"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_content.rs",
+          "result": "ok",
+          "test": "exact_duplicates_need_hash_storage_and_the_exact_switch"
+        },
+        {
+          "deferred_hint": true,
+          "file": "crates/os-analyze/tests/tab_content.rs",
+          "ignore_reason": "M2: ONPAGE-143 Hash nach Wiedereinschalten ohne HTTP-Anfragen aus gespeichertem HTML (CRAWL-063, Vorhalt)",
+          "result": "ignored",
+          "test": "hash_is_recomputed_from_stored_html"
+        }
+      ]
     },
     "ONPAGE-146": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P23"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_content.rs",
+          "result": "ok",
+          "test": "low_content_pages_use_the_word_count_threshold"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_content.rs",
+          "result": "ok",
+          "test": "low_content_respects_ignore_non_indexable"
+        }
+      ]
     },
     "ONPAGE-166": {
       "packages": [
@@ -4975,60 +6186,142 @@
       ]
     },
     "ONPAGE-170": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P23"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_images.rs",
+          "result": "ok",
+          "test": "image_sources_img_and_link_are_found_and_srcset_is_only_an_instance"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_images.rs",
+          "result": "ok",
+          "test": "image_address_comes_from_the_target_not_from_the_raw_attribute"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_images.rs",
+          "result": "ok",
+          "test": "check_images_off_leaves_the_tab_empty_and_store_only_lists_without_download"
+        },
+        {
+          "deferred_hint": true,
+          "file": "crates/os-analyze/tests/tab_images.rs",
+          "ignore_reason": "M2: ONPAGE-170 Lazy-Load-Bilder (data-src) und srcset-Option brauchen Rendering bzw. die Option 'Extract images from srcset' (P1)",
+          "result": "ignored",
+          "test": "lazy_load_images_are_found_with_rendering"
+        }
+      ]
     },
     "ONPAGE-171": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P23"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_images.rs",
+          "result": "ok",
+          "test": "columns_and_img_inlinks"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_images.rs",
+          "result": "ok",
+          "test": "filters_are_live_subsets_of_all_and_ready"
+        }
+      ]
     },
     "ONPAGE-173": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P23"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_images.rs",
+          "result": "ok",
+          "test": "size_is_body_bytes_then_content_length_then_zero"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_images.rs",
+          "result": "ok",
+          "test": "size_falls_back_to_content_length_header_when_no_body_was_stored"
+        }
+      ]
     },
     "ONPAGE-174": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P23"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_images.rs",
+          "result": "ok",
+          "test": "over_kb_compares_bytes_against_the_threshold_for_internal_and_external_images"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_images.rs",
+          "result": "ok",
+          "test": "filters_are_live_subsets_of_all_and_ready"
+        }
+      ]
     },
     "ONPAGE-175": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P23"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_images.rs",
+          "result": "ok",
+          "test": "missing_alt_text_is_an_empty_alt_on_at_least_one_img_instance"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_images.rs",
+          "result": "ok",
+          "test": "filters_are_live_subsets_of_all_and_ready"
+        }
+      ]
     },
     "ONPAGE-176": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P23"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_images.rs",
+          "result": "ok",
+          "test": "missing_alt_attribute_is_an_img_instance_without_alt"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_images.rs",
+          "result": "ok",
+          "test": "filters_are_live_subsets_of_all_and_ready"
+        }
+      ]
     },
     "ONPAGE-177": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P23"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_images.rs",
+          "result": "ok",
+          "test": "alt_text_over_n_characters_measures_decoded_codepoints"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_images.rs",
+          "result": "ok",
+          "test": "filters_are_live_subsets_of_all_and_ready"
+        }
+      ]
     },
     "ONPAGE-190": {
       "packages": [
@@ -5059,28 +6352,90 @@
       ]
     },
     "ONPAGE-191": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P16"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-export/tests/tab_export_view.rs",
+          "result": "ok",
+          "test": "export_of_the_current_filter_view_uses_all_columns_on_request"
+        },
+        {
+          "file": "crates/os-export/tests/tab_export_view.rs",
+          "ignore_reason": "M1-P26",
+          "result": "ignored",
+          "test": "golden_page_titles_missing_with_all_columns"
+        }
+      ]
     },
     "ONPAGE-192": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P16"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-export/tests/links_detail.rs",
+          "result": "ok",
+          "test": "inlinks_of_a_404_url_list_all_linking_pages_with_their_anchor_text"
+        },
+        {
+          "file": "crates/os-export/tests/links_detail.rs",
+          "result": "ok",
+          "test": "outlinks_of_a_page_are_listed_in_document_order"
+        }
+      ]
     },
     "OUT-001": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P16"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-export/tests/pipeline_bench.rs",
+          "ignore_reason": "Benchmark (P28): 1 Mio × 60 Spalten ≤ 300 MB",
+          "result": "ignored",
+          "test": "one_million_rows_by_sixty_columns_stay_within_300_mb_of_extra_memory"
+        },
+        {
+          "file": "crates/os-export/tests/pipeline_core.rs",
+          "result": "ok",
+          "test": "header_is_written_even_when_the_view_has_no_rows"
+        },
+        {
+          "file": "crates/os-export/tests/pipeline_core.rs",
+          "result": "ok",
+          "test": "default_order_is_ascending_url_id_and_two_exports_are_byte_identical"
+        },
+        {
+          "file": "crates/os-export/tests/pipeline_core.rs",
+          "result": "ok",
+          "test": "rows_arrive_one_by_one_and_all_of_them_are_written"
+        },
+        {
+          "file": "crates/os-export/tests/pipeline_core.rs",
+          "result": "ok",
+          "test": "filter_waiting_for_the_crawl_analysis_exports_the_header_and_a_hint"
+        },
+        {
+          "file": "crates/os-export/tests/pipeline_core.rs",
+          "result": "ok",
+          "test": "write_errors_are_reported_not_swallowed"
+        },
+        {
+          "file": "crates/os-export/tests/pipeline_core.rs",
+          "result": "ok",
+          "test": "unknown_names_give_suggestions"
+        },
+        {
+          "file": "crates/os-export/tests/pipeline_core.rs",
+          "result": "ok",
+          "test": "write_error_in_the_middle_of_the_row_stream_aborts_the_export_with_that_error"
+        }
+      ]
     },
     "OUT-002": {
       "packages": [
@@ -5254,6 +6609,11 @@
           "file": "crates/os-export/tests/naming_rules.rs",
           "result": "ok",
           "test": "no_two_registered_exports_share_a_file_name"
+        },
+        {
+          "file": "crates/os-export/tests/pipeline_core.rs",
+          "result": "ok",
+          "test": "no_two_registered_exports_share_a_file_name"
         }
       ]
     },
@@ -5296,20 +6656,91 @@
       ]
     },
     "OUT-020": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P16"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-export/tests/pipeline_core.rs",
+          "result": "ok",
+          "test": "every_tab_and_filter_of_the_registry_exports_without_error"
+        },
+        {
+          "file": "crates/os-export/tests/pipeline_core.rs",
+          "result": "ok",
+          "test": "registered_tab_names_resolve_to_themselves"
+        },
+        {
+          "file": "crates/os-export/tests/tab_export_view.rs",
+          "result": "ok",
+          "test": "standard_export_has_the_visible_columns_all_columns_adds_the_hidden_ones"
+        },
+        {
+          "file": "crates/os-export/tests/tab_export_view.rs",
+          "ignore_reason": "M1-P26",
+          "result": "ignored",
+          "test": "golden_page_titles_missing_with_all_columns"
+        },
+        {
+          "file": "crates/os-export/tests/tab_export_view.rs",
+          "result": "ok",
+          "test": "sorting_and_search_come_from_the_view_query"
+        },
+        {
+          "file": "crates/os-export/tests/tab_export_view.rs",
+          "result": "ok",
+          "test": "filter_export_has_exactly_the_rows_counted_for_the_filter"
+        },
+        {
+          "file": "crates/os-export/tests/tab_export_view.rs",
+          "result": "ok",
+          "test": "numbers_use_a_decimal_point_and_xlsx_cells_are_typed"
+        },
+        {
+          "file": "crates/os-export/tests/tab_export_view.rs",
+          "result": "ok",
+          "test": "warnings_of_the_writers_reach_the_caller"
+        },
+        {
+          "file": "crates/os-export/tests/tab_export_view.rs",
+          "result": "ok",
+          "test": "suggested_file_name_uses_the_local_start_date_of_the_crawl"
+        },
+        {
+          "file": "crates/os-export/tests/tab_export_view.rs",
+          "result": "ok",
+          "test": "suggested_name_for_a_crawl_file_reads_the_start_time_from_the_file"
+        }
+      ]
     },
     "OUT-021": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P16"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-export/tests/links_detail.rs",
+          "result": "ok",
+          "test": "inlinks_of_a_url_with_two_hyperlinks_and_a_canonical_give_three_rows"
+        },
+        {
+          "file": "crates/os-export/tests/links_detail.rs",
+          "result": "ok",
+          "test": "selection_of_three_urls_with_two_inlinks_each_gives_six_rows_in_list_order"
+        },
+        {
+          "file": "crates/os-export/tests/links_detail.rs",
+          "result": "ok",
+          "test": "fifty_thousand_urls_are_streamed"
+        },
+        {
+          "file": "crates/os-export/tests/links_detail.rs",
+          "result": "ok",
+          "test": "no_urls_or_unknown_urls_give_the_header_only_and_xlsx_works_too"
+        }
+      ]
     },
     "OUT-031": {
       "packages": [
@@ -5326,6 +6757,82 @@
           "file": "crates/os-engine/tests/decide_crawl.rs",
           "result": "ok",
           "test": "target_raw_is_the_markup_value_and_every_stored_link_has_a_target_row"
+        },
+        {
+          "file": "crates/os-export/tests/links_bench.rs",
+          "ignore_reason": "Benchmark (P28): 1 Mio Links < 60 s",
+          "result": "ignored",
+          "test": "one_million_links_are_written_as_csv_in_under_60_seconds"
+        },
+        {
+          "file": "crates/os-export/tests/links_format.rs",
+          "result": "ok",
+          "test": "header_is_exactly_the_standard_link_format"
+        },
+        {
+          "file": "crates/os-export/tests/links_format.rs",
+          "result": "ok",
+          "test": "all_inlinks_golden"
+        },
+        {
+          "file": "crates/os-export/tests/links_format.rs",
+          "result": "ok",
+          "test": "nofollow_link_with_target_has_the_expected_cells"
+        },
+        {
+          "file": "crates/os-export/tests/links_format.rs",
+          "result": "ok",
+          "test": "image_row_has_alt_text_path_type_and_size_of_the_crawled_image"
+        },
+        {
+          "file": "crates/os-export/tests/links_format.rs",
+          "result": "ok",
+          "test": "identical_links_are_not_deduplicated"
+        },
+        {
+          "file": "crates/os-export/tests/links_format.rs",
+          "result": "ok",
+          "test": "target_without_fetch_is_not_crawled_and_has_no_status_code"
+        },
+        {
+          "file": "crates/os-export/tests/links_format.rs",
+          "result": "ok",
+          "test": "link_types_follow_their_source"
+        },
+        {
+          "file": "crates/os-export/tests/links_format.rs",
+          "result": "ok",
+          "test": "link_position_follows_the_enclosing_element"
+        },
+        {
+          "file": "crates/os-export/tests/links_format.rs",
+          "result": "ok",
+          "test": "unresolvable_target_keeps_the_raw_attribute_value"
+        },
+        {
+          "file": "crates/os-export/tests/links_format.rs",
+          "result": "ok",
+          "test": "every_link_type_of_the_spec_is_exported_unchanged"
+        },
+        {
+          "file": "crates/os-export/tests/links_format.rs",
+          "result": "ok",
+          "test": "inlinks_are_sorted_by_destination_then_source_then_document_order"
+        },
+        {
+          "file": "crates/os-export/tests/links_format.rs",
+          "result": "ok",
+          "test": "store_off_means_no_rows_of_that_link_type"
+        },
+        {
+          "file": "crates/os-export/tests/links_format.rs",
+          "result": "ok",
+          "test": "xlsx_has_the_same_cells_with_numbers_where_the_format_has_numbers"
+        },
+        {
+          "file": "crates/os-export/tests/links_format.rs",
+          "result": "ok",
+          "test": "catalog_names_resolve_without_regard_to_case"
         },
         {
           "file": "crates/os-model/tests/model_enums.rs",
@@ -5345,36 +6852,304 @@
       ]
     },
     "OUT-032": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P16"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-export/tests/links_format.rs",
+          "result": "ok",
+          "test": "all_outlinks_golden"
+        },
+        {
+          "file": "crates/os-export/tests/links_format.rs",
+          "result": "ok",
+          "test": "outlinks_are_sorted_by_source_and_keep_the_document_order_within_a_source"
+        },
+        {
+          "file": "crates/os-export/tests/links_format.rs",
+          "result": "ok",
+          "test": "outlinks_of_each_page_match_the_outlinks_detail_export"
+        }
+      ]
     },
     "OUT-050": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P16"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-export/tests/links_response_codes.rs",
+          "result": "ok",
+          "test": "all_36_entries_are_registered_with_distinct_file_names"
+        },
+        {
+          "file": "crates/os-export/tests/links_response_codes.rs",
+          "result": "ok",
+          "test": "unknown_entry_names_get_suggestions"
+        },
+        {
+          "file": "crates/os-export/tests/links_response_codes.rs",
+          "result": "ok",
+          "test": "internal_client_errors_list_every_link_to_an_internal_4xx_target"
+        },
+        {
+          "file": "crates/os-export/tests/links_response_codes.rs",
+          "result": "ok",
+          "test": "the_source_can_itself_be_a_redirect"
+        },
+        {
+          "file": "crates/os-export/tests/links_response_codes.rs",
+          "result": "ok",
+          "test": "scopes_split_internal_and_external_targets"
+        },
+        {
+          "file": "crates/os-export/tests/links_response_codes.rs",
+          "result": "ok",
+          "test": "no_response_and_blocked_targets_have_no_status_code"
+        },
+        {
+          "file": "crates/os-export/tests/links_response_codes.rs",
+          "result": "ok",
+          "test": "refresh_targets_are_classified_by_their_refresh_and_not_as_success"
+        },
+        {
+          "file": "crates/os-export/tests/links_response_codes.rs",
+          "result": "ok",
+          "test": "all_error_inlinks_are_the_union_of_no_response_4xx_and_5xx"
+        },
+        {
+          "file": "crates/os-export/tests/links_response_codes.rs",
+          "result": "ok",
+          "test": "entries_without_an_m1_filter_deliver_the_header_only"
+        },
+        {
+          "file": "crates/os-export/tests/links_response_codes.rs",
+          "result": "ok",
+          "test": "every_entry_of_every_scope_exports_a_file_with_the_link_header"
+        },
+        {
+          "file": "crates/os-export/tests/links_response_codes.rs",
+          "result": "ok",
+          "test": "every_entry_exports_against_the_registered_tabs"
+        },
+        {
+          "file": "crates/os-export/tests/links_response_codes.rs",
+          "ignore_reason": "M1-P26",
+          "result": "ignored",
+          "test": "golden_inlinks_exports_with_the_real_response_codes_filters"
+        }
+      ]
     },
     "OUT-063": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P17"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-export/tests/reports_issues.rs",
+          "result": "ok",
+          "test": "one_file_per_issue_row_named_after_type_tab_and_filter"
+        },
+        {
+          "file": "crates/os-export/tests/reports_issues.rs",
+          "result": "ok",
+          "test": "every_file_holds_exactly_the_urls_of_its_issue_counter"
+        },
+        {
+          "file": "crates/os-export/tests/reports_issues.rs",
+          "result": "ok",
+          "test": "issues_overview_columns_follow_the_panel_export_with_why_it_matters_last"
+        },
+        {
+          "file": "crates/os-export/tests/reports_issues.rs",
+          "result": "ok",
+          "test": "texts_use_the_thresholds_of_the_crawl_configuration"
+        },
+        {
+          "file": "crates/os-export/tests/reports_issues.rs",
+          "result": "ok",
+          "test": "ignore_non_indexable_acts_on_panel_and_export_alike"
+        },
+        {
+          "file": "crates/os-export/tests/reports_issues.rs",
+          "result": "ok",
+          "test": "link_related_issues_get_an_inlinks_variant_or_a_warning"
+        },
+        {
+          "file": "crates/os-export/tests/reports_issues.rs",
+          "result": "ok",
+          "test": "the_link_related_rule_covers_response_codes_only"
+        },
+        {
+          "file": "crates/os-export/tests/reports_issues.rs",
+          "result": "ok",
+          "test": "xlsx_writes_one_workbook_per_issue_and_an_overview_workbook"
+        },
+        {
+          "file": "crates/os-export/tests/reports_issues.rs",
+          "result": "ok",
+          "test": "the_overview_is_written_last_with_its_header_for_the_real_tabs"
+        },
+        {
+          "file": "crates/os-export/tests/reports_issues.rs",
+          "result": "ok",
+          "test": "crawl_analysis_dependencies_are_named_in_the_warnings"
+        },
+        {
+          "file": "crates/os-export/tests/reports_issues.rs",
+          "result": "ok",
+          "test": "the_bulk_name_is_registered_and_unique_among_file_names"
+        },
+        {
+          "file": "crates/os-export/tests/reports_issues.rs",
+          "result": "ok",
+          "test": "issue_files_match_the_regression_golden_with_test_tabs"
+        },
+        {
+          "file": "crates/os-export/tests/reports_issues.rs",
+          "ignore_reason": "M1-P26",
+          "result": "ignored",
+          "test": "issues_golden_with_the_real_tab_counters"
+        },
+        {
+          "file": "crates/os-export/tests/reports_issues.rs",
+          "result": "ok",
+          "test": "text_thresholds_come_from_the_configuration_even_if_a_tab_names_its_params_differently"
+        }
+      ]
     },
     "OUT-080": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P17"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "long_format_with_all_sections_in_order"
+        },
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "summary_section_has_the_specified_items_in_order"
+        },
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "summary_counts_and_the_encountered_crawled_invariant"
+        },
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "crawl_data_counts_per_content_class_with_two_decimal_percentages"
+        },
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "response_code_sections_split_internal_and_external_and_all_errors_adds_up"
+        },
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "all_errors_is_no_response_plus_4xx_plus_5xx_per_scope"
+        },
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "crawl_depth_rows_zero_to_ten_and_ten_plus"
+        },
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "empty_denominators_leave_percentages_empty"
+        },
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "every_tab_filter_appears_with_count_and_share_of_all"
+        },
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "filters_that_cannot_be_filled_have_an_empty_urls_cell_not_zero"
+        },
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "issues_section_counts_issues_by_type_and_priority"
+        },
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "redirect_rows_count_chains_loops_and_refresh_pages"
+        },
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "skipped_url_counters_come_from_the_crawl_file"
+        },
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "placeholder_tabs_give_every_tab_with_all_filters_in_ui_order"
+        },
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "overview_names_come_from_the_canonical_filter_list"
+        },
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "missing_crawl_analysis_is_a_warning_and_never_aborts"
+        },
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "xlsx_holds_numbers_as_numbers_and_the_same_rows"
+        },
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "report_matches_the_regression_golden_with_test_tabs"
+        },
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "ignore_reason": "M1-P26",
+          "result": "ignored",
+          "test": "crawl_overview_golden_with_the_real_tab_counters"
+        },
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "rows_convert_to_typed_cells"
+        },
+        {
+          "file": "crates/os-export/tests/reports_prereq.rs",
+          "result": "ok",
+          "test": "the_register_lists_the_reports_with_canonical_names"
+        },
+        {
+          "file": "crates/os-export/tests/reports_prereq.rs",
+          "result": "ok",
+          "test": "names_resolve_case_insensitively_and_tolerate_spaces_around_the_colon"
+        },
+        {
+          "file": "crates/os-export/tests/reports_prereq.rs",
+          "result": "ok",
+          "test": "no_two_exports_of_this_package_share_a_file_name"
+        },
+        {
+          "file": "crates/os-export/tests/reports_prereq.rs",
+          "result": "ok",
+          "test": "every_registered_report_can_be_saved"
+        }
+      ]
     },
     "OUT-081": {
       "packages": [
@@ -5383,6 +7158,105 @@
       "status": "implemented",
       "tests": [
         {
+          "file": "crates/os-export/tests/reports_prereq.rs",
+          "result": "ok",
+          "test": "the_register_lists_the_reports_with_canonical_names"
+        },
+        {
+          "file": "crates/os-export/tests/reports_prereq.rs",
+          "result": "ok",
+          "test": "names_resolve_case_insensitively_and_tolerate_spaces_around_the_colon"
+        },
+        {
+          "file": "crates/os-export/tests/reports_prereq.rs",
+          "result": "ok",
+          "test": "every_registered_report_can_be_saved"
+        },
+        {
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "result": "ok",
+          "test": "all_redirects_header_and_hop_columns_follow_the_longest_chain"
+        },
+        {
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "result": "ok",
+          "test": "simple_301_is_one_row_with_one_hop"
+        },
+        {
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "result": "ok",
+          "test": "temp_redirect_rule_covers_302_303_307_and_delayed_refresh_but_not_301_308"
+        },
+        {
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "result": "ok",
+          "test": "refresh_redirects_use_the_page_status_and_their_own_labels"
+        },
+        {
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "result": "ok",
+          "test": "mixed_chain_301_then_meta_refresh"
+        },
+        {
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "result": "ok",
+          "test": "five_hop_chain_and_chain_across_hosts"
+        },
+        {
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "result": "ok",
+          "test": "chain_to_404_reports_the_final_error"
+        },
+        {
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "result": "ok",
+          "test": "redirect_loops_have_no_final_address"
+        },
+        {
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "result": "ok",
+          "test": "intermediate_hops_get_a_row_only_when_directly_linked"
+        },
+        {
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "result": "ok",
+          "test": "rows_follow_the_crawl_order"
+        },
+        {
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "result": "ok",
+          "test": "max_redirects_reached_ends_the_chain_at_the_last_fetched_hop"
+        },
+        {
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "result": "ok",
+          "test": "target_that_was_not_fetched_is_reported_as_not_followed"
+        },
+        {
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "result": "ok",
+          "test": "files_are_named_after_the_report_and_xlsx_holds_the_same_table"
+        },
+        {
+          "deferred_hint": true,
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "ignore_reason": "M2: CRAWL-018 HSTS-Policy braucht den HSTS-Speicher der Engine (TLS-Fixture mit Strict-Transport-Security)",
+          "result": "ignored",
+          "test": "hsts_policy_hop_is_307_hsts_policy"
+        },
+        {
+          "deferred_hint": true,
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "ignore_reason": "M2: ONPAGE-057 JavaScript-Weiterleitungen gibt es nur mit Rendering",
+          "result": "ignored",
+          "test": "javascript_redirect_hop_needs_rendering"
+        },
+        {
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "result": "ok",
+          "test": "reports_match_the_regression_goldens"
+        },
+        {
           "file": "crates/os-model/tests/model_enums.rs",
           "result": "ok",
           "test": "redirect_type_labels_differ_only_for_http_refresh"
@@ -5390,44 +7264,230 @@
       ]
     },
     "OUT-082": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P17"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-export/tests/reports_prereq.rs",
+          "result": "ok",
+          "test": "the_register_lists_the_reports_with_canonical_names"
+        },
+        {
+          "file": "crates/os-export/tests/reports_prereq.rs",
+          "result": "ok",
+          "test": "names_resolve_case_insensitively_and_tolerate_spaces_around_the_colon"
+        },
+        {
+          "file": "crates/os-export/tests/reports_prereq.rs",
+          "result": "ok",
+          "test": "unknown_names_come_with_suggestions"
+        },
+        {
+          "file": "crates/os-export/tests/reports_prereq.rs",
+          "result": "ok",
+          "test": "every_registered_report_can_be_saved"
+        },
+        {
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "result": "ok",
+          "test": "redirect_chains_report_has_only_chains_and_loops"
+        },
+        {
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "result": "ok",
+          "test": "chains_report_columns_shrink_to_the_longest_selected_chain"
+        },
+        {
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "result": "ok",
+          "test": "files_are_named_after_the_report_and_xlsx_holds_the_same_table"
+        },
+        {
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "result": "ok",
+          "test": "reports_match_the_regression_goldens"
+        }
+      ]
     },
     "OUT-112": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P17"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-export/tests/reports_issues.rs",
+          "result": "ok",
+          "test": "crawl_analysis_dependencies_are_named_in_the_warnings"
+        },
+        {
+          "file": "crates/os-export/tests/reports_overview.rs",
+          "result": "ok",
+          "test": "missing_crawl_analysis_is_a_warning_and_never_aborts"
+        },
+        {
+          "file": "crates/os-export/tests/reports_prereq.rs",
+          "result": "ok",
+          "test": "missing_extraction_names_the_report_and_the_requirement"
+        },
+        {
+          "file": "crates/os-export/tests/reports_prereq.rs",
+          "result": "ok",
+          "test": "a_satisfied_config_requirement_gives_no_warning"
+        },
+        {
+          "file": "crates/os-export/tests/reports_prereq.rs",
+          "result": "ok",
+          "test": "analysis_dependent_reports_name_the_empty_filters"
+        },
+        {
+          "file": "crates/os-export/tests/reports_prereq.rs",
+          "result": "ok",
+          "test": "rendering_requirement_follows_the_rendering_mode"
+        },
+        {
+          "file": "crates/os-export/tests/reports_prereq.rs",
+          "result": "ok",
+          "test": "warnings_never_stop_the_export"
+        },
+        {
+          "file": "crates/os-export/tests/reports_redirects.rs",
+          "result": "ok",
+          "test": "redirect_reports_have_no_prerequisites_to_warn_about"
+        }
+      ]
     },
     "OUT-120": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P17"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-export/tests/sitemap_gen.rs",
+          "result": "ok",
+          "test": "default_selection_is_internal_indexable_html_200_in_crawl_order"
+        },
+        {
+          "file": "crates/os-export/tests/sitemap_gen.rs",
+          "result": "ok",
+          "test": "generated_sitemap_matches_the_golden_file"
+        },
+        {
+          "file": "crates/os-export/tests/sitemap_gen.rs",
+          "result": "ok",
+          "test": "selection_rules_one_by_one"
+        },
+        {
+          "file": "crates/os-export/tests/sitemap_gen.rs",
+          "result": "ok",
+          "test": "no_matching_url_writes_no_file"
+        },
+        {
+          "file": "crates/os-export/tests/sitemap_gen.rs",
+          "result": "ok",
+          "test": "selection_sql_is_the_documented_predicate"
+        },
+        {
+          "file": "crates/os-export/tests/sitemap_gen.rs",
+          "result": "ok",
+          "test": "generated_files_validate_against_the_schemas"
+        },
+        {
+          "file": "crates/os-export/tests/sitemap_gen.rs",
+          "result": "ok",
+          "test": "schema_checker_rejects_what_the_protocol_forbids"
+        }
+      ]
     },
     "OUT-129": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P17"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-export/tests/sitemap_gen.rs",
+          "result": "ok",
+          "test": "schema_checker_rejects_what_the_protocol_forbids"
+        },
+        {
+          "file": "crates/os-export/tests/sitemap_gen.rs",
+          "result": "ok",
+          "test": "exactly_49999_urls_make_one_file_without_index"
+        },
+        {
+          "file": "crates/os-export/tests/sitemap_gen.rs",
+          "result": "ok",
+          "test": "fifty_thousand_urls_make_two_files_and_an_index"
+        },
+        {
+          "file": "crates/os-export/tests/sitemap_gen.rs",
+          "result": "ok",
+          "test": "index_uses_the_given_base_url"
+        },
+        {
+          "file": "crates/os-export/tests/sitemap_gen.rs",
+          "result": "ok",
+          "test": "byte_limit_splits_files_before_they_exceed_it"
+        },
+        {
+          "file": "crates/os-export/tests/sitemap_gen.rs",
+          "ignore_reason": "Benchmark (P28): 50-MiB-Grenze mit dem Originalwert (rund 60 MB Testdaten in der Crawl-Datei und der Ausgabe)",
+          "result": "ignored",
+          "test": "default_byte_limit_of_50_mib_splits_files_with_very_long_urls"
+        },
+        {
+          "file": "crates/os-export/tests/sitemap_gen.rs",
+          "result": "ok",
+          "test": "urls_per_file_must_stay_within_the_protocol_limit"
+        },
+        {
+          "file": "crates/os-export/tests/sitemap_gen.rs",
+          "result": "ok",
+          "test": "default_options_follow_the_spec"
+        },
+        {
+          "file": "crates/os-export/tests/sitemap_gen.rs",
+          "result": "ok",
+          "test": "index_base_defaults_to_the_start_url_origin_of_a_crawl"
+        }
+      ]
     },
     "OUT-131": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P17"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-export/src/sitemap_gen/mod.rs",
+          "result": "ok",
+          "test": "tests::escapes_the_five_xml_characters"
+        },
+        {
+          "file": "crates/os-export/src/sitemap_gen/mod.rs",
+          "result": "ok",
+          "test": "tests::loc_is_percent_encoded_punycode_and_without_fragment"
+        },
+        {
+          "file": "crates/os-export/tests/sitemap_gen.rs",
+          "result": "ok",
+          "test": "encoding_is_utf8_without_bom_with_escaped_and_percent_encoded_urls"
+        },
+        {
+          "file": "crates/os-export/tests/sitemap_gen.rs",
+          "result": "ok",
+          "test": "special_characters_idn_hosts_and_fragments"
+        },
+        {
+          "file": "crates/os-export/tests/sitemap_gen.rs",
+          "result": "ok",
+          "test": "urls_over_2048_chars_are_left_out_and_listed_in_the_report"
+        }
+      ]
     },
     "OUT-180": {
       "note": "kein Test mit `// spec:`-Tag gefunden",
@@ -5983,6 +8043,96 @@
       "status": "implemented",
       "tests": [
         {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "noindex_wins_over_a_foreign_canonical_in_the_tab"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_indexability.rs",
+          "result": "ok",
+          "test": "each_reason_of_the_check_order_has_its_page"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_indexability.rs",
+          "result": "ok",
+          "test": "meta_refresh_to_another_url_is_redirected_and_to_itself_is_not_indexable"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_indexability.rs",
+          "result": "ok",
+          "test": "self_referencing_refresh_is_ignored_without_the_option"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_indexability.rs",
+          "result": "ok",
+          "test": "external_urls_are_judged_by_their_status_only"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_indexability.rs",
+          "result": "ok",
+          "test": "canonicals_that_are_not_stored_never_canonicalise"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_indexability.rs",
+          "result": "ok",
+          "test": "canonical_variants_are_compared_after_url_normalisation"
+        },
+        {
+          "file": "crates/os-model/tests/indexability_order.rs",
+          "result": "ok",
+          "test": "a_clean_200_page_is_indexable"
+        },
+        {
+          "file": "crates/os-model/tests/indexability_order.rs",
+          "result": "ok",
+          "test": "every_reason_is_reported_on_its_own"
+        },
+        {
+          "file": "crates/os-model/tests/indexability_order.rs",
+          "result": "ok",
+          "test": "the_first_matching_reason_wins"
+        },
+        {
+          "file": "crates/os-model/tests/indexability_order.rs",
+          "result": "ok",
+          "test": "meta_refresh_to_another_url_is_a_redirect_with_any_delay"
+        },
+        {
+          "file": "crates/os-model/tests/indexability_order.rs",
+          "result": "ok",
+          "test": "self_referencing_refresh_depends_on_the_option"
+        },
+        {
+          "file": "crates/os-model/tests/indexability_order.rs",
+          "result": "ok",
+          "test": "the_header_refresh_is_the_one_that_counts"
+        },
+        {
+          "file": "crates/os-model/tests/indexability_order.rs",
+          "result": "ok",
+          "test": "an_unparseable_refresh_target_has_no_effect"
+        },
+        {
+          "file": "crates/os-model/tests/indexability_order.rs",
+          "result": "ok",
+          "test": "canonical_is_compared_with_the_url_equality_of_the_engine"
+        },
+        {
+          "file": "crates/os-model/tests/indexability_order.rs",
+          "result": "ok",
+          "test": "without_stored_canonicals_nothing_is_canonicalised"
+        },
+        {
+          "file": "crates/os-model/tests/indexability_order.rs",
+          "result": "ok",
+          "test": "non_html_resources_and_external_urls"
+        },
+        {
+          "file": "crates/os-model/tests/indexability_order.rs",
+          "result": "ok",
+          "test": "robots_blocked_with_a_real_status_is_still_blocked"
+        },
+        {
           "file": "crates/os-model/tests/model_enums.rs",
           "result": "ok",
           "test": "indexability_status_order_and_labels"
@@ -6005,6 +8155,16 @@
       ],
       "status": "implemented",
       "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "canonical_variants_resolve_to_absolute_urls_and_compare_after_normalisation"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_indexability.rs",
+          "result": "ok",
+          "test": "canonical_variants_are_compared_after_url_normalisation"
+        },
         {
           "file": "crates/os-url/tests/url_compare.rs",
           "result": "ok",
@@ -6105,6 +8265,11 @@
           "file": "crates/os-analyze/tests/framework_views.rs",
           "result": "ok",
           "test": "multi_columns_can_be_sorted_by_a_numbered_column"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "numbered_canonical_columns_reach_the_maximum_of_the_view"
         }
       ]
     },
@@ -6163,6 +8328,26 @@
           "file": "crates/os-analyze/tests/framework_state.rs",
           "result": "ok",
           "test": "already_cancelled_token_runs_nothing"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_sitemaps.rs",
+          "result": "ok",
+          "test": "post_crawl_filters_wait_for_the_analysis_and_all_is_live"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_sitemaps.rs",
+          "result": "ok",
+          "test": "live_filters_count_without_analysis_while_orphans_wait_for_it"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_sitemaps.rs",
+          "result": "ok",
+          "test": "a_deselected_step_keeps_its_filters_pending"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_sitemaps.rs",
+          "result": "ok",
+          "test": "a_cancelled_run_leaves_the_step_pending_without_partial_results"
         }
       ]
     },
@@ -6441,6 +8626,11 @@
       "status": "implemented",
       "tests": [
         {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "extraction_follows_the_rules_for_rel_tokens_headers_and_hiding_places"
+        },
+        {
           "file": "crates/os-parse/tests/canonical_extract.rs",
           "result": "ok",
           "test": "html_canonical_raw_resolved_and_in_head"
@@ -6498,52 +8688,104 @@
       ]
     },
     "TECH-011": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P24"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "population_is_internal_200_html_plus_non_html_with_http_canonical"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "columns_follow_the_spec_order_with_numbered_canonical_columns"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "the_tab_is_empty_when_canonicals_are_not_stored"
+        },
+        {
+          "deferred_hint": true,
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "ignore_reason": "M2: TECH-011 Respect Canonical (CRAWL-092) gehört nicht zu M1",
+          "result": "ignored",
+          "test": "respect_canonical_hides_canonicalised_pages_except_in_their_filter"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "goldens_canonical_basic"
+        }
+      ]
     },
     "TECH-012": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P24"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "contains_canonical_counts_html_and_header_canonicals"
+        }
+      ]
     },
     "TECH-013": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P24"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "self_referencing_compares_the_authoritative_canonical_after_normalisation"
+        }
+      ]
     },
     "TECH-014": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P24"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "canonicalised_pages_point_elsewhere_and_become_non_indexable"
+        }
+      ]
     },
     "TECH-015": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P24"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "missing_lists_only_html_pages_without_any_canonical"
+        }
+      ]
     },
     "TECH-016": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P24"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "multiple_counts_elements_and_headers_together"
+        }
+      ]
     },
     "TECH-017": {
       "packages": [
@@ -6551,6 +8793,16 @@
       ],
       "status": "implemented",
       "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "multiple_conflicting_needs_two_different_valid_normalised_urls"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "authoritative_canonical_prefers_header_then_head_then_body"
+        },
         {
           "file": "crates/os-engine/src/worker.rs",
           "result": "ok",
@@ -6564,12 +8816,32 @@
       ]
     },
     "TECH-018": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P24"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "non_indexable_canonical_is_a_post_crawl_filter"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "the_step_is_repeatable_and_stamps_the_change_feed"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "a_target_that_was_not_crawled_is_not_listed"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "without_canonical_crawling_no_target_status_is_known"
+        }
+      ]
     },
     "TECH-050": {
       "packages": [
@@ -6577,6 +8849,11 @@
       ],
       "status": "implemented",
       "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_directives.rs",
+          "result": "ok",
+          "test": "raw_values_keep_their_spelling_agents_and_valued_directives"
+        },
         {
           "file": "crates/os-parse/tests/directives_meta.rs",
           "result": "ok",
@@ -6670,52 +8947,116 @@
       ]
     },
     "TECH-051": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P24"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_directives.rs",
+          "result": "ok",
+          "test": "population_is_every_internal_url_with_a_response"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_directives.rs",
+          "result": "ok",
+          "test": "columns_and_occurrences_follow_the_spec"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_directives.rs",
+          "result": "ok",
+          "test": "follow_nofollow_option_changes_crawling_but_not_the_filters"
+        },
+        {
+          "deferred_hint": true,
+          "file": "crates/os-analyze/tests/tab_directives.rs",
+          "ignore_reason": "M2: TECH-051 Respect Noindex (CRAWL-091) gehört nicht zu M1",
+          "result": "ignored",
+          "test": "respect_noindex_hides_noindex_urls_except_in_the_directives_filters"
+        },
+        {
+          "deferred_hint": true,
+          "file": "crates/os-analyze/tests/tab_directives.rs",
+          "ignore_reason": "M2: TECH-008 HTML-Validierung (Outside-<head>-Filter) gehört nicht zu M1",
+          "result": "ignored",
+          "test": "outside_head_filter_needs_html_validation"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_directives.rs",
+          "result": "ok",
+          "test": "goldens_directives"
+        }
+      ]
     },
     "TECH-052": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P24"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_directives.rs",
+          "result": "ok",
+          "test": "index_filter_wants_the_explicit_token_and_all_does_not_count"
+        }
+      ]
     },
     "TECH-053": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P24"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_directives.rs",
+          "result": "ok",
+          "test": "noindex_filter_checks_the_token_in_meta_and_header_for_the_crawler"
+        }
+      ]
     },
     "TECH-054": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P24"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_directives.rs",
+          "result": "ok",
+          "test": "follow_filter_wants_the_explicit_token"
+        }
+      ]
     },
     "TECH-055": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P24"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_directives.rs",
+          "result": "ok",
+          "test": "nofollow_filter_and_the_frontier"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_directives.rs",
+          "result": "ok",
+          "test": "follow_nofollow_option_changes_crawling_but_not_the_filters"
+        }
+      ]
     },
     "TECH-056": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P24"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_directives.rs",
+          "result": "ok",
+          "test": "none_filter_acts_as_noindex_and_nofollow"
+        }
+      ]
     },
     "TECH-064": {
       "packages": [
@@ -6723,6 +9064,16 @@
       ],
       "status": "implemented",
       "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_directives.rs",
+          "result": "ok",
+          "test": "refresh_filter_and_the_indexability_it_causes"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_directives.rs",
+          "result": "ok",
+          "test": "self_referencing_refresh_stays_in_the_filter_without_the_option"
+        },
         {
           "file": "crates/os-parse/tests/refresh_variants.rs",
           "result": "ok",
@@ -6746,6 +9097,11 @@
       ],
       "status": "implemented",
       "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_directives.rs",
+          "result": "ok",
+          "test": "conflicting_directives_are_restrictive_and_listed_in_both_filters"
+        },
         {
           "file": "crates/os-parse/tests/directives_effective.rs",
           "result": "ok",
@@ -6799,6 +9155,16 @@
       ],
       "status": "implemented",
       "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_hreflang.rs",
+          "result": "ok",
+          "test": "population_columns_and_occurrences_over_all_sources"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_hreflang.rs",
+          "result": "ok",
+          "test": "code_validation_matches_the_examples_of_the_spec"
+        },
         {
           "file": "crates/os-parse/tests/hreflang_extract.rs",
           "result": "ok",
@@ -6867,12 +9233,27 @@
       ]
     },
     "TECH-071": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P25"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_hreflang.rs",
+          "result": "ok",
+          "test": "population_columns_and_occurrences_over_all_sources"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_hreflang.rs",
+          "result": "ok",
+          "test": "store_off_leaves_the_tab_and_all_filters_empty"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_hreflang.rs",
+          "result": "ok",
+          "test": "store_on_crawl_off_fills_the_tab_with_the_filters_that_need_only_the_own_page"
+        }
+      ]
     },
     "TECH-072": {
       "packages": [
@@ -6880,6 +9261,21 @@
       ],
       "status": "implemented",
       "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_hreflang.rs",
+          "result": "ok",
+          "test": "code_validation_matches_the_examples_of_the_spec"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_hreflang.rs",
+          "result": "ok",
+          "test": "incorrect_codes_filter_follows_the_script_subtag_option_without_recrawl"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_hreflang.rs",
+          "result": "ok",
+          "test": "script_subtag_off_at_crawl_time_marks_script_codes_invalid"
+        },
         {
           "file": "crates/os-parse/tests/hreflang_codes.rs",
           "result": "ok",
@@ -6923,52 +9319,102 @@
       ]
     },
     "TECH-073": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P25"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_hreflang.rs",
+          "result": "ok",
+          "test": "contains_hreflang_includes_urls_with_sitemap_annotations_only"
+        }
+      ]
     },
     "TECH-074": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P25"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_hreflang.rs",
+          "result": "ok",
+          "test": "non_200_lists_pages_with_redirecting_or_missing_targets_and_ignores_unfetched"
+        }
+      ]
     },
     "TECH-076": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P25"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_hreflang.rs",
+          "result": "ok",
+          "test": "missing_return_links_are_live_and_accept_return_links_from_any_source"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_hreflang.rs",
+          "result": "ok",
+          "test": "return_link_to_the_http_variant_is_a_missing_return_link"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_sitemaps.rs",
+          "result": "ok",
+          "test": "live_filters_count_without_analysis_while_orphans_wait_for_it"
+        }
+      ]
     },
     "TECH-080": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P25"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_hreflang.rs",
+          "result": "ok",
+          "test": "incorrect_codes_lists_pages_with_an_invalid_annotation"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_hreflang.rs",
+          "result": "ok",
+          "test": "incorrect_codes_filter_follows_the_script_subtag_option_without_recrawl"
+        }
+      ]
     },
     "TECH-085": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P25"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_hreflang.rs",
+          "result": "ok",
+          "test": "missing_lists_internal_html_200_pages_without_any_annotation"
+        }
+      ]
     },
     "TECH-130": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P25"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_links.rs",
+          "result": "ok",
+          "test": "population_is_internal_html_200_and_counts_exclude_self_links"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_links.rs",
+          "result": "ok",
+          "test": "percent_of_total_of_a_menu_page_is_ninety"
+        }
+      ]
     },
     "TECH-131": {
       "packages": [
@@ -7004,44 +9450,69 @@
       ]
     },
     "TECH-132": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P25"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_links.rs",
+          "result": "ok",
+          "test": "high_crawl_depth_uses_the_threshold_and_ignores_non_indexable_urls"
+        }
+      ]
     },
     "TECH-133": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P25"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_links.rs",
+          "result": "ok",
+          "test": "pages_without_internal_outlinks_count_only_non_self_links"
+        }
+      ]
     },
     "TECH-134": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P25"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_links.rs",
+          "result": "ok",
+          "test": "internal_nofollow_outlinks_are_rel_based_not_page_based"
+        }
+      ]
     },
     "TECH-135": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P25"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_links.rs",
+          "result": "ok",
+          "test": "internal_outlinks_with_no_anchor_text_cover_images_areas_and_aria_labels"
+        }
+      ]
     },
     "TECH-144": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P25"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_links.rs",
+          "result": "ok",
+          "test": "link_preferences_live_in_the_crawl_file_and_apply_without_recrawl"
+        }
+      ]
     },
     "TECH-210": {
       "packages": [
@@ -7049,6 +9520,11 @@
       ],
       "status": "implemented",
       "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_sitemaps.rs",
+          "result": "ok",
+          "test": "sitemap_index_and_gzip_files_are_resolved_from_robots_txt"
+        },
         {
           "file": "crates/os-engine/src/robots_glue.rs",
           "result": "ok",
@@ -7190,6 +9666,26 @@
           "test": "sitemap_fixture_index_is_read_down_to_the_orphan_url"
         },
         {
+          "file": "crates/os-engine/tests/lifecycle_sitemaps.rs",
+          "result": "ok",
+          "test": "robots_and_configured_sitemaps_are_each_fetched_once_and_orphans_are_crawled"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_sitemaps.rs",
+          "result": "ok",
+          "test": "nested_indexes_are_followed_to_depth_three_and_deeper_ones_give_a_warning"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_sitemaps.rs",
+          "result": "ok",
+          "test": "sitemap_redirects_are_followed_and_loops_do_not_hang_the_crawl"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_sitemaps.rs",
+          "result": "ok",
+          "test": "sitemap_hreflang_is_stored_with_source_sitemap"
+        },
+        {
           "file": "crates/os-parse/tests/sitemap_gzip.rs",
           "result": "ok",
           "test": "gzip_is_detected_by_magic_bytes_regardless_of_name_and_content_type"
@@ -7222,44 +9718,109 @@
       ]
     },
     "TECH-211": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P25"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_sitemaps.rs",
+          "result": "ok",
+          "test": "post_crawl_filters_wait_for_the_analysis_and_all_is_live"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_sitemaps.rs",
+          "result": "ok",
+          "test": "urls_in_sitemap_compares_the_exact_url"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_sitemaps.rs",
+          "result": "ok",
+          "test": "without_a_processed_sitemap_the_tab_is_empty_and_not_in_sitemap_reports_nothing"
+        }
+      ]
     },
     "TECH-212": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P25"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_sitemaps.rs",
+          "result": "ok",
+          "test": "urls_in_sitemap_compares_the_exact_url"
+        }
+      ]
     },
     "TECH-213": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P25"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_sitemaps.rs",
+          "result": "ok",
+          "test": "urls_not_in_sitemap_lists_indexable_html_pages_only"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_sitemaps.rs",
+          "result": "ok",
+          "test": "without_a_processed_sitemap_the_tab_is_empty_and_not_in_sitemap_reports_nothing"
+        }
+      ]
     },
     "TECH-214": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P25"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_sitemaps.rs",
+          "result": "ok",
+          "test": "orphans_include_follow_up_orphans_and_exclude_linked_pages_and_resources"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_sitemaps.rs",
+          "result": "ok",
+          "test": "orphan_result_is_deterministic_and_a_rerun_changes_nothing"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_sitemaps.rs",
+          "result": "ok",
+          "test": "live_filters_count_without_analysis_while_orphans_wait_for_it"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_sitemaps.rs",
+          "result": "ok",
+          "test": "orphan_step_walks_hyperlink_edges_but_not_resource_links"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_sitemaps.rs",
+          "result": "ok",
+          "test": "orphan_step_reports_nothing_in_list_mode"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_sitemaps.rs",
+          "result": "ok",
+          "test": "orphan_step_clears_marks_that_no_longer_apply"
+        }
+      ]
     },
     "TECH-215": {
-      "note": "kein Test mit `// spec:`-Tag gefunden",
       "packages": [
         "M1-P25"
       ],
-      "status": "open",
-      "tests": []
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-analyze/tests/tab_sitemaps.rs",
+          "result": "ok",
+          "test": "non_indexable_urls_in_sitemap_lists_fetched_urls_only"
+        }
+      ]
     },
     "UI-038": {
       "packages": [
@@ -7539,10 +10100,12 @@
   },
   "summary": {
     "deferred": 0,
-    "implemented": 102,
-    "open": 140,
+    "implemented": 217,
+    "open": 25,
     "total": 242,
     "verified": 0
   },
-  "warnings": []
+  "warnings": [
+    "1 Testergebnisse ohne getaggte Quelle bzw. unbekanntes Test-Binär (ohne Wirkung)"
+  ]
 }

@@ -516,16 +516,17 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 - **Ausgabe:**
   - `Antwortzeit (s)` `response_time`: Zeit vom Absenden des ersten Request-Bytes (nach Verbindungsaufbau aus dem Pool bzw. inkl. DNS/TCP/TLS, wenn eine neue Verbindung nötig ist) bis zum Empfang des letzten Body-Bytes; ohne Warteschlangen-, Drossel- und Renderzeit.
   - `Größe (Bytes)` `size`: Länge des dekomprimierten Bodys (ohne Header).
-  - `Übertragen (Bytes)` `transferred`: tatsächlich über die Leitung empfangene Bytes für diese eine URL (Header + komprimierter Body).
-  - `Gesamt übertragen (Bytes)` `total_transferred` (Referenz-Spalte des Tabs „Intern“): Summe aus `Übertragen` der Seite und `Übertragen` aller Ressourcen, die zum Darstellen der Seite geladen werden. Im JS-Modus = alle vom Browser für diese Seite geladenen Ressourcen (Netzwerk-Mitschnitt, Cache-Treffer zählen mit ihrer Originalgröße); im Textmodus = Seite + alle eingebundenen, gecrawlten Bilder/CSS/JS/Medien/Schriftarten (je Ressource einmal, auch wenn mehrfach eingebunden). Grundlage für die CO2-Schätzung (CRAWL-139).
+  - `Übertragen (Bytes)` `transferred`: tatsächlich über die Leitung empfangene Bytes des Bodys für diese eine URL (komprimierter Body ohne Statuszeile, Header und Chunk-Rahmen; OS-Festlegung 14.10.2026, Welle-3-Sichtung, K-02 – ONPAGE-012 führt; Antworten ohne Body → 0).
+  - `Gesamt übertragen (Bytes)` `total_transferred` (Referenz-Spalte des Tabs „Intern“): Summe aus `Übertragen` der Seite und `Übertragen` aller Ressourcen, die zum Darstellen der Seite geladen werden. Im JS-Modus = alle vom Browser für diese Seite geladenen Ressourcen (Netzwerk-Mitschnitt, Cache-Treffer zählen mit ihrer Originalgröße); im Textmodus = `Übertragen` der Seite (K-02, ONPAGE-012: „ohne Rendering = Transferred“). [P1] Die Summe aus Seite und allen eingebundenen, gecrawlten Bildern/CSS/JS/Medien/Schriftarten (je Ressource einmal) entsteht erst mit dem JS-Rendering (M2). Grundlage für die CO2-Schätzung (CRAWL-139).
   - `Last-Modified` `last_modified`: Header-Wert als Datum (UTC), `Gecrawlt am` `crawl_timestamp` (UTC, ISO 8601, Zeitpunkt des Request-Beginns).
 - **Akzeptanzkriterien:**
   - [ ] Antwort mit 800 ms künstlicher Verzögerung vor dem ersten Byte zeigt `Antwortzeit` ≥ 0,800 s und ≤ 1,000 s (unbelastete Testmaschine, 1 Thread).
   - [ ] Bei aktiver URL-Drosselung (CRAWL-113, 0,5 URLs/s) steigt die gemessene `Antwortzeit` der `/fast`-Route nicht über 0,100 s (Wartezeit wird nicht mitgemessen).
   - [ ] Zeit wird auf Millisekunden genau gespeichert und mit drei Nachkommastellen angezeigt (`0,812`).
-  - [ ] `/gzip-50k` (50 000 Bytes HTML, gzip auf ca. 5 000 Bytes): `Größe` = 50 000; `Übertragen` = Header-Bytes + komprimierte Body-Bytes (Abweichung zum Byte-Zähler des Fixture-Servers ≤ 0).
-  - [ ] `/with-assets` (HTML 10 000 B unkomprimiert, bindet `a.png` 20 000 B und `b.css` 5 000 B ein, keine Kompression): `Gesamt übertragen` = Summe der drei `Übertragen`-Werte; bindet die Seite `a.png` zweimal ein, ändert sich der Wert nicht.
-  - [ ] Ist das Crawlen von Bildern abgeschaltet, zählen Bilder im Textmodus nicht zu `Gesamt übertragen` (Wert = Seite + gecrawlte Ressourcen); die Spalte trägt dann den Tooltip „unvollständig – Ressourcen nicht gecrawlt“.
+  - [ ] `/gzip-50k` (50 000 Bytes HTML, gzip auf ca. 5 000 Bytes): `Größe` = 50 000; `Übertragen` = komprimierte Body-Bytes (gleich dem Body-Byte-Zähler des Fixture-Servers, ohne Header und Chunk-Rahmen; K-02).
+  - [ ] Textmodus: `Gesamt übertragen` = `Übertragen` für jede URL (K-02).
+  - [ ] [P1] `/with-assets` (HTML 10 000 B unkomprimiert, bindet `a.png` 20 000 B und `b.css` 5 000 B ein, keine Kompression) mit JS-Rendering: `Gesamt übertragen` = Summe der drei `Übertragen`-Werte; bindet die Seite `a.png` zweimal ein, ändert sich der Wert nicht.
+  - [ ] [P1] Ist das Crawlen von Bildern abgeschaltet, zählen Bilder nicht zu `Gesamt übertragen` (Wert = Seite + geladene Ressourcen); die Spalte trägt dann den Tooltip „unvollständig – Ressourcen nicht gecrawlt“.
   - [ ] Für Nicht-HTML-URLs (Bild, CSS) gilt `Gesamt übertragen` = `Übertragen`.
   - [ ] Ungültiges `Last-Modified` (`gestern`) → Spalte leer, kein Fehler; gültiges RFC-1123-Datum wird als `2015-10-21 07:28:00` (UTC) gespeichert.
   - [ ] Bei Weiterleitungen gilt die Zeit des jeweiligen einzelnen Requests, nicht der ganzen Kette (`/r301` → `/slow-800`: Zeile `/r301` < 0,100 s).
