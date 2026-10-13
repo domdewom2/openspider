@@ -6,7 +6,8 @@ use crate::enums::{CrawlState, EndReason};
 use crate::time::Timestamp;
 
 /// Fortschrittsstand. Die JSON-Feldnamen `crawled`, `queued`, `percent`, `rate`, `avg_response_time`,
-/// `elapsed_s`, `eta_s`, `state` sind fest (`--json-progress`).
+/// `elapsed_s`, `eta_s`, `state` sind fest (`--json-progress`); `avg_rate`, `paused_s` und `discovered` sind
+/// JSON-Zusatzfelder (M1-P00c, docs/plan/M1.md 3.9).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Progress {
     /// Zustand des Crawls.
@@ -31,4 +32,14 @@ pub struct Progress {
     pub active_threads: u32,
     /// Startzeitpunkt.
     pub started_at: Timestamp,
+    /// Mittlere Rate: abgeschlossene Abrufe ÷ Laufzeit ohne Pausen (UI-013). Zusatzfeld (M1-P00c); die
+    /// Pflichtfelder von CRAWL-130 bleiben unverändert.
+    #[serde(default)]
+    pub avg_rate: f64,
+    /// Summe der Pausen in Sekunden. Zusatzfeld (M1-P00c).
+    #[serde(default)]
+    pub paused_s: u64,
+    /// Bekannte URLs gesamt. Zusatzfeld (M1-P00c).
+    #[serde(default)]
+    pub discovered: u64,
 }

@@ -29,6 +29,8 @@ pub struct ColumnDef {
     pub kind: ColumnKind,
     /// In der Standardansicht sichtbar.
     pub default_visible: bool,
+    /// [OS-Erweiterung]: im Default-Export ausgeblendet, sonst hinter den Referenzspalten.
+    pub extension: bool,
 }
 
 /// Wie eine Spalte berechnet wird.
@@ -48,8 +50,10 @@ pub enum ColumnSql {
 /// Darstellungsart einer Spalte.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ColumnKind {
-    /// Text.
+    /// Text (sortiert mit `COLLATE OS_TEXT`).
     Text,
+    /// URL (bytewise sortiert, Export als Text).
+    Url,
     /// Ganzzahl.
     Int,
     /// Dezimalzahl mit festen Nachkommastellen.
@@ -131,6 +135,7 @@ pub fn placeholder_tab(id: &'static str, filters: Vec<FilterDef>) -> TabDef {
             sql: ColumnSql::Expr("u.address"),
             kind: ColumnKind::Text,
             default_visible: true,
+            extension: false,
         }],
         filters,
         default_sort: vec![SortKey {
