@@ -1,0 +1,2 @@
+# Szenario crawl-scope-subdomains (CRAWL-007/008): vier Hosts liefern dieselbe Seite, die auf alle vier verlinkt.
+# Zwei Läufe: Start auf site.test (Stammdomain-Ausnahme) und Start auf www.site.test.

@@ -1,3 +1,1475 @@
-//! Worker-Pool: Abruf, Auswertung und Schreibmodell je URL.
+//! Worker: Abruf, Auswertung und Schreibmodell je URL (Datenfluss M1-Plan 3.7).
 //!
-//! STUB(M1-P15): Modul wird von M1-P15 umgesetzt.
+//! Ablauf je URL (`process`):
+//! 1. robots.txt prüfen (`RobotsGate`); beim Erstabruf je Origin entsteht eine URL-Zeile für die robots.txt
+//!    (`DiscoveryKind::RobotsTxt`, zählt nicht). Gesperrte URL → Zeile mit Status 0, kein Abruf.
+//! 2. Abrufen (`Fetch`), Fakten (`FetchFacts`) aus der Antwort bilden.
+//! 3. Interne HTML-Seiten parsen (`parse_html`), CSS nach `url()`/`@import` durchsuchen, bei allem anderen nur
+//!    die Header auswerten. Externe URLs und 3xx-Bodys werden nie geparst.
+//! 4. Weiterleitung bestimmen: HTTP-3xx vor Refresh-Header vor Meta-Refresh.
+//! 5. Alle Ziele (Links, Bilder, Canonical, hreflang, Paginierung, Weiterleitung) entdecken: Entscheidung über
+//!    `decide::decide`, Include/Exclude, Tiefe; neue URLs bekommen ihre Kennung und werden eingeplant.
+//! 6. `PageWrite` samt Kindzeilen und Indexierbarkeit an den Writer.
+//!
+//! **Reihenfolge im Kanal:** Die neuen URLs (und ihre Queue-Einträge) gehen in einer eigenen Nachricht vor der
+//! Seite in den Kanal, und zwar *unter der Sperre* über einen vorab reservierten Platz. So kann kein anderer
+//! Worker eine neue URL abrufen und ihre `PageWrite` vor der `NewUrl`-Zeile senden.
+
+use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU8, Ordering};
+use std::sync::{Arc, Mutex};
+
+use bytes::Bytes;
+use os_fetch::robots::{RobotsDecision, RobotsGate};
+use os_fetch::{content_class, Fetch, FetchOutcome, FetchRequest, FetchResult, HttpResponse};
+use os_model::{
+    CanonicalRow, Clock, ContentClass, CrawlConfig, DirectiveRow, DiscoveryKind, ElementPair,
+    ExtractedLink, ExtractedText, FetchFacts, HeaderHints, HeaderRow, HintSource, HreflangRow,
+    ImageRow, Indexability, IndexabilityInput, LinkOrigin, LinkPosition, LinkRow, LinkType,
+    NoResponseReason, NotCrawledReason, PageFacts, PageWrite, PaginationRow, ParsedPage, PathType,
+    PdfMeta, QueueOp, RedirectType, RefreshRow, RefreshSource, SitemapId, SitemapKind,
+    SitemapWrite, Timestamp, UrlId, UrlState, WriteBatch,
+};
+use os_parse::{ParseConfig, ParseInput};
+use os_url::{NormUrl, Scope, ScopeClass};
+use tokio::sync::{Notify, OwnedSemaphorePermit, Semaphore};
+use url::Url;
+
+use crate::decide::{self, LinkDecision};
+use crate::error::EngineError;
+use crate::frontier::{
+    Cand, Core, Purpose, QueueItem, COUNTER_REDIRECT_LIMIT, F_QUEUED, F_RULE_OK,
+};
+use crate::progress::ProgressTracker;
+use crate::redirect::{self, RedirectTarget};
+use crate::sitemaps::{self, FetchedSitemap, SitemapSeed};
+use crate::writer_thread::{WriterGone, WriterSender};
+
+/// Ab dieser Body-Größe wird auf einem Blocking-Thread geparst.
+const BLOCKING_PARSE_THRESHOLD: usize = 1024 * 1024;
+
+/// Steuerung von außen (`CrawlHandle`) und zwischen Worker und Steuerschleife.
+pub(crate) struct Control {
+    /// Weckt die Steuerschleife (neue Arbeit, Worker fertig, Einstellung geändert).
+    pub notify: Notify,
+    /// Gewünschte Zahl paralleler Threads.
+    pub threads: AtomicU32,
+    /// `STOP_*`.
+    pub stop: AtomicU8,
+}
+
+/// Kein Stopp angefordert.
+pub(crate) const STOP_NONE: u8 = 0;
+/// Beenden, Warteschlange bleibt erhalten.
+pub(crate) const STOP_STOP: u8 = 1;
+/// Pausieren (Zustand `Paused`, kein Abschluss-Hook).
+pub(crate) const STOP_PAUSE: u8 = 2;
+
+/// Zustand, den alle Worker und die Steuerschleife teilen.
+pub(crate) struct Shared<F: Fetch> {
+    pub fetcher: Arc<F>,
+    pub cfg: Arc<CrawlConfig>,
+    pub clock: Arc<dyn Clock>,
+    pub scope: Scope,
+    pub rules: os_url::RuleSet,
+    pub gate: RobotsGate,
+    pub pcfg: ParseConfig,
+    pub core: Mutex<Core>,
+    pub ctl: Arc<Control>,
+    pub writer: WriterSender,
+    pub progress: Mutex<ProgressTracker>,
+    /// Ein Worker hat einen nicht behebbaren Fehler gemeldet (oder der Writer ist ausgefallen).
+    pub abort: AtomicBool,
+    pub error: Mutex<Option<EngineError>>,
+    pub host_gates: Mutex<HashMap<String, Arc<Semaphore>>>,
+    pub max_per_host: Option<u32>,
+    /// URL Encoded Address der Start-URL (von Include/Exclude ausgenommen).
+    pub start_url: String,
+}
+
+impl<F: Fetch> Shared<F> {
+    /// Meldet einen Fehler; der erste gewinnt, der Crawl endet.
+    pub fn fail(&self, e: EngineError) {
+        let mut slot = self.error.lock().unwrap_or_else(|p| p.into_inner());
+        if slot.is_none() {
+            *slot = Some(e);
+        }
+        self.abort.store(true, Ordering::SeqCst);
+        self.ctl.notify.notify_one();
+    }
+
+    fn lock_core(&self) -> std::sync::MutexGuard<'_, Core> {
+        self.core.lock().unwrap_or_else(|p| p.into_inner())
+    }
+
+    async fn host_permit(&self, url: &Url) -> Option<OwnedSemaphorePermit> {
+        let cap = self.max_per_host?;
+        let key = format!(
+            "{}:{}",
+            url.host_str().unwrap_or(""),
+            url.port_or_known_default().unwrap_or(0)
+        );
+        let sem = {
+            let mut gates = self.host_gates.lock().unwrap_or_else(|p| p.into_inner());
+            Arc::clone(
+                gates
+                    .entry(key)
+                    .or_insert_with(|| Arc::new(Semaphore::new(cap.max(1) as usize))),
+            )
+        };
+        sem.acquire_owned().await.ok()
+    }
+
+    pub(crate) fn clock_mono(&self) -> std::time::Duration {
+        self.clock.monotonic()
+    }
+}
+
+struct ActiveGuard<F: Fetch> {
+    sh: Arc<Shared<F>>,
+}
+
+impl<F: Fetch> Drop for ActiveGuard<F> {
+    fn drop(&mut self) {
+        self.sh.lock_core().finish_worker();
+        self.sh.ctl.notify.notify_one();
+    }
+}
+
+/// Bearbeitet eine URL der Warteschlange (der Abruf ist bereits reserviert, `active` erhöht).
+pub(crate) async fn process<F: Fetch>(sh: Arc<Shared<F>>, item: QueueItem) {
+    let _guard = ActiveGuard {
+        sh: Arc::clone(&sh),
+    };
+    match run_item(&sh, &item).await {
+        Ok(()) => {}
+        Err(Failure::Writer) => {
+            sh.abort.store(true, Ordering::SeqCst);
+        }
+        Err(Failure::Engine(e)) => sh.fail(e),
+    }
+}
+
+pub(crate) enum Failure {
+    /// Der Writer ist ausgefallen; die Ursache liefert `WriterThread::finish`.
+    Writer,
+    Engine(EngineError),
+}
+
+impl From<WriterGone> for Failure {
+    fn from(_: WriterGone) -> Self {
+        Failure::Writer
+    }
+}
+
+async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(), Failure> {
+    let url = Url::parse(&item.url)
+        .map_err(|e| Failure::Engine(EngineError::Invalid(format!("{}: {e}", item.url))))?;
+    let cfg = &*sh.cfg;
+    let _host = sh.host_permit(&url).await;
+
+    // 1. robots.txt
+    let check = sh.gate.check(&*sh.fetcher, &url).await;
+    let mut sitemap_seeds = Vec::new();
+    if let Some((fetch_result, write)) = check.robots_fetch {
+        sitemap_seeds = record_robots(sh, fetch_result, write).await?;
+    }
+    let internal = item.purpose != Purpose::External;
+    match &check.decision {
+        RobotsDecision::Blocked { .. } => {
+            let facts = crate::robots_glue::blocked_fetch_facts(&check.decision, &*sh.clock);
+            sh.lock_core().refund();
+            let counter = if internal {
+                "robots_blocked_internal"
+            } else {
+                "robots_blocked_external"
+            };
+            let mut batch = WriteBatch::default();
+            batch.counters.push((counter.to_string(), 1));
+            batch.pages.push(PageWrite {
+                url_id: item.id,
+                replace: false,
+                indexability: Indexability::NonIndexable,
+                indexability_status: None,
+                fetch: facts,
+                page: None,
+                links: vec![],
+                images: vec![],
+                canonicals: vec![],
+                directives: vec![],
+                refresh: vec![],
+                hreflang: vec![],
+                pagination: vec![],
+                headers: vec![],
+            });
+            let page = &mut batch.pages[0];
+            let (ind, status) = os_model::evaluate(&IndexabilityInput {
+                fetch: &page.fetch,
+                page: None,
+                page_url: &item.url,
+                refresh: &[],
+                cfg,
+                same_url: os_url::eq_for_compare,
+            });
+            page.indexability = ind;
+            page.indexability_status = status;
+            batch.queue.push(QueueOp::Pop { id: item.id });
+            sh.writer.send(batch).await?;
+            sh.progress
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .record_completion(sh.clock_mono(), None);
+            sh.ctl.notify.notify_one();
+            return Ok(());
+        }
+        RobotsDecision::Allowed | RobotsDecision::ReportOnly { .. } => {}
+    }
+
+    // 2. Abruf
+    let cookies = sh.lock_core().session_jar(item.session);
+    let result = sh
+        .fetcher
+        .fetch(FetchRequest {
+            url: url.clone(),
+            purpose: item.purpose.fetch_purpose(),
+            cookies,
+            max_body_bytes: cfg.limits.max_page_kb.saturating_mul(1024),
+        })
+        .await;
+
+    // 3. Auswertung
+    let mut analysis = analyze(sh, item, &url, &result).await;
+    if let RobotsDecision::ReportOnly {
+        would_block,
+        matched_line,
+        robots_url,
+    } = &check.decision
+    {
+        analysis.facts.robots_blocked = *would_block;
+        analysis.facts.robots_matched_line = matched_line.clone();
+        analysis.facts.robots_txt_url = Some(robots_url.clone());
+    }
+
+    // 4./5. Ziele entdecken und Schreibmodell bilden
+    let response_ms = analysis
+        .facts
+        .response_time_ms
+        .filter(|_| analysis.facts.status_code != 0);
+    let batch = assemble(sh, item, analysis).await?;
+    sh.writer.send(batch).await?;
+    sh.progress
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .record_completion(sh.clock_mono(), response_ms);
+    sh.ctl.notify.notify_one();
+
+    // 6. Sitemaps aus der robots.txt
+    if !sitemap_seeds.is_empty() {
+        ingest_sitemaps(sh, sitemap_seeds).await?;
+    }
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------------------------------
+// robots.txt
+
+/// Legt die URL-Zeile der robots.txt an und gibt die `Sitemap:`-Ausgangspunkte zurück.
+async fn record_robots<F: Fetch>(
+    sh: &Arc<Shared<F>>,
+    result: FetchResult,
+    write: os_model::RobotsWrite,
+) -> Result<Vec<SitemapSeed>, WriterGone> {
+    let cfg = &*sh.cfg;
+    let seeds = write
+        .body
+        .as_deref()
+        .map(|body| {
+            let listed: Vec<String> = os_fetch::robots::parse(body).sitemaps().to_vec();
+            crate::robots_glue::sitemap_seeds(&listed, cfg)
+        })
+        .unwrap_or_default();
+
+    let mut batch = WriteBatch::default();
+    if let Ok(parsed) = Url::parse(&write.robots_url) {
+        let norm = os_url::normalize(&parsed);
+        let internal = sh.scope.classify(&norm) == ScopeClass::Internal;
+        let slot = sh.writer.reserve().await?;
+        let mut core = sh.lock_core();
+        if core.lookup(&norm.encoded).is_none() {
+            let id = core.alloc_id();
+            core.register(&norm.encoded, id, None, F_QUEUED | F_RULE_OK);
+            batch.new_urls.push(os_model::NewUrl {
+                id,
+                url: norm.encoded.clone(),
+                address: norm.display.clone(),
+                origin: norm.origin.clone(),
+                is_internal: internal,
+                in_tables: false,
+                discovered_via: DiscoveryKind::RobotsTxt,
+                crawl_depth: None,
+                folder_depth: os_url::folder_depth(&norm.url),
+                url_length: os_url::url_length(&norm.display),
+                state: UrlState::Done,
+                not_crawled_reason: None,
+            });
+            let mut page = plain_page(id, &result, cfg);
+            page.headers = header_rows(&result, cfg);
+            batch.pages.push(page);
+        }
+        batch.robots.push(write);
+        slot.send(batch);
+        drop(core);
+    } else {
+        batch.robots.push(write);
+        sh.writer.send(batch).await?;
+    }
+    Ok(seeds)
+}
+
+/// `PageWrite` ohne Auswertung (robots.txt, Sitemap-Datei).
+fn plain_page(id: UrlId, result: &FetchResult, cfg: &CrawlConfig) -> PageWrite {
+    let fetch = facts_from_result(result, cfg);
+    let (indexability, indexability_status) = os_model::evaluate(&IndexabilityInput {
+        fetch: &fetch,
+        page: None,
+        page_url: result.url.as_str(),
+        refresh: &[],
+        cfg,
+        same_url: os_url::eq_for_compare,
+    });
+    PageWrite {
+        url_id: id,
+        replace: false,
+        fetch,
+        page: None,
+        indexability,
+        indexability_status,
+        links: vec![],
+        images: vec![],
+        canonicals: vec![],
+        directives: vec![],
+        refresh: vec![],
+        hreflang: vec![],
+        pagination: vec![],
+        headers: vec![],
+    }
+}
+
+fn header_rows(result: &FetchResult, cfg: &CrawlConfig) -> Vec<HeaderRow> {
+    if !cfg.extraction.http_headers {
+        return Vec::new();
+    }
+    match &result.outcome {
+        FetchOutcome::Response(r) => r
+            .headers
+            .iter()
+            .enumerate()
+            .map(|(i, (name, value))| HeaderRow {
+                request: false,
+                position: i as u32,
+                name: name.clone(),
+                value: value.clone(),
+            })
+            .collect(),
+        FetchOutcome::NoResponse { .. } => Vec::new(),
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------
+// Fakten aus der Antwort
+
+fn header<'a>(headers: &'a [(String, String)], name: &str) -> Option<&'a str> {
+    headers
+        .iter()
+        .find(|(n, _)| n.eq_ignore_ascii_case(name))
+        .map(|(_, v)| v.as_str())
+}
+
+/// Liest ein HTTP-Datum (`Wed, 21 Oct 2015 07:28:00 GMT`, RFC 9110).
+pub(crate) fn parse_http_date(s: &str) -> Option<Timestamp> {
+    use time::format_description::well_known::Rfc2822;
+    time::OffsetDateTime::parse(s.trim(), &Rfc2822)
+        .ok()
+        .map(|t| Timestamp(t.to_offset(time::UtcOffset::UTC)))
+}
+
+/// Bildet die Fakten des Abrufs (CRAWL-011/012/022, K-02: `total_transferred = transferred`).
+pub(crate) fn facts_from_result(res: &FetchResult, cfg: &CrawlConfig) -> FetchFacts {
+    let mut f = FetchFacts {
+        crawl_timestamp: res.started_at,
+        ..FetchFacts::default()
+    };
+    match &res.outcome {
+        FetchOutcome::NoResponse { reason, .. } => {
+            f.status_code = 0;
+            f.status = reason.status_text().to_string();
+            f.no_response_reason = Some(*reason);
+        }
+        FetchOutcome::Response(r) => {
+            f.status_code = r.status;
+            if r.decode_error.is_some() {
+                f.status = NoResponseReason::ConnectionError.status_text().to_string();
+                f.no_response_reason = Some(NoResponseReason::ConnectionError);
+            } else {
+                f.status = r.status_text.clone();
+            }
+            let ct = header(&r.headers, "content-type").map(str::to_string);
+            f.content_class = content_class(ct.as_deref(), cfg.advanced.assume_html);
+            f.content_type = ct;
+            f.http_version = Some(r.http_version.clone());
+            f.size_bytes = r.size_bytes;
+            f.transferred_bytes = r.transferred_bytes;
+            f.total_transferred_bytes = r.transferred_bytes;
+            if cfg.extraction.response_time {
+                f.response_time_ms = Some(r.response_time_ms);
+            }
+            if cfg.extraction.last_modified {
+                f.last_modified_raw = header(&r.headers, "last-modified").map(str::to_string);
+                f.last_modified = f.last_modified_raw.as_deref().and_then(parse_http_date);
+            }
+            if cfg.extraction.hash {
+                f.hash_md5 = Some(r.md5_hex.clone());
+            }
+        }
+    }
+    f
+}
+
+// ---------------------------------------------------------------------------------------------------
+// Auswertung
+
+#[derive(Default)]
+struct Analysis {
+    facts: FetchFacts,
+    headers: Vec<HeaderRow>,
+    parsed: Option<ParsedPage>,
+    hints: Option<HeaderHints>,
+    css_links: Vec<ExtractedLink>,
+    pdf: Option<PdfMeta>,
+    redirect: Option<RedirectTarget>,
+    refresh: Vec<os_model::RefreshRef>,
+}
+
+async fn analyze<F: Fetch>(
+    sh: &Arc<Shared<F>>,
+    item: &QueueItem,
+    url: &Url,
+    result: &FetchResult,
+) -> Analysis {
+    let cfg = &*sh.cfg;
+    let mut a = Analysis {
+        facts: facts_from_result(result, cfg),
+        headers: header_rows(result, cfg),
+        ..Analysis::default()
+    };
+    let FetchOutcome::Response(resp) = &result.outcome else {
+        return a;
+    };
+    // 3xx: nur Location auswerten, der Body wird nie geparst (Q5)
+    if redirect::is_redirect_status(resp.status) {
+        a.redirect = redirect::http_target(url, &resp.headers);
+        return a;
+    }
+    // externe URLs werden nie geparst; defekte Kompression liefert keinen verlässlichen Inhalt
+    if item.purpose == Purpose::External || resp.decode_error.is_some() {
+        return a;
+    }
+    match a.facts.content_class {
+        ContentClass::Html => {
+            let parsed = parse_html_page(sh, url, resp).await;
+            a.facts.charset = parsed.charset.clone();
+            a.refresh = parsed.refresh.clone();
+            parsed_refresh(&mut a, url, &parsed.refresh);
+            a.parsed = Some(parsed);
+        }
+        other => {
+            let hints = os_parse::parse_headers(url, &resp.headers, &sh.pcfg);
+            a.refresh = hints.refresh.clone();
+            parsed_refresh(&mut a, url, &hints.refresh);
+            match other {
+                ContentClass::Css => a.css_links = os_parse::parse_css(url, &resp.body),
+                ContentClass::Pdf => a.pdf = Some(os_parse::parse_pdf_meta(&resp.body)),
+                _ => {}
+            }
+            a.hints = Some(hints);
+        }
+    }
+    a
+}
+
+fn parsed_refresh(a: &mut Analysis, url: &Url, refs: &[os_model::RefreshRef]) {
+    let outcome = redirect::refresh_target(url, refs);
+    a.facts.meta_refresh_delay = outcome.delay;
+    a.redirect = outcome.redirect;
+}
+
+async fn parse_html_page<F: Fetch>(
+    sh: &Arc<Shared<F>>,
+    url: &Url,
+    resp: &HttpResponse,
+) -> ParsedPage {
+    let content_type = header(&resp.headers, "content-type").map(str::to_string);
+    if resp.body.len() < BLOCKING_PARSE_THRESHOLD {
+        return parse_now(
+            url,
+            &resp.body,
+            content_type.as_deref(),
+            &resp.headers,
+            &sh.pcfg,
+        );
+    }
+    let url = url.clone();
+    let body: Bytes = resp.body.clone();
+    let headers = resp.headers.clone();
+    let pcfg = sh.pcfg.clone();
+    tokio::task::spawn_blocking(move || {
+        parse_now(&url, &body, content_type.as_deref(), &headers, &pcfg)
+    })
+    .await
+    .unwrap_or_default()
+}
+
+fn parse_now(
+    url: &Url,
+    body: &[u8],
+    content_type: Option<&str>,
+    headers: &[(String, String)],
+    cfg: &ParseConfig,
+) -> ParsedPage {
+    os_parse::parse_html(&ParseInput {
+        url,
+        body,
+        content_type,
+        headers,
+        cfg,
+    })
+}
+
+// ---------------------------------------------------------------------------------------------------
+// Ziele
+
+/// Eine Referenz auf ein Ziel (Link, Bild, Canonical, hreflang, Paginierung).
+struct Ref {
+    ext: ExtractedLink,
+    /// Zeile in `links` anlegen (Links aus dem Dokument und synthetische für Canonical, hreflang …).
+    row: bool,
+    norm: Option<usize>,
+    decision: LinkDecision,
+}
+
+struct Targets {
+    list: Vec<(NormUrl, bool)>,
+    index: HashMap<String, usize>,
+}
+
+impl Targets {
+    fn new() -> Self {
+        Targets {
+            list: Vec::new(),
+            index: HashMap::new(),
+        }
+    }
+
+    fn get<F: Fetch>(&mut self, sh: &Shared<F>, resolved: &str) -> Option<usize> {
+        if let Some(i) = self.index.get(resolved) {
+            return Some(*i);
+        }
+        let url = Url::parse(resolved).ok()?;
+        if !matches!(url.scheme(), "http" | "https") || url.host_str().is_none() {
+            return None;
+        }
+        let norm = os_url::normalize(&url);
+        let internal = sh.scope.classify(&norm) == ScopeClass::Internal;
+        self.list.push((norm, internal));
+        let i = self.list.len() - 1;
+        self.index.insert(resolved.to_string(), i);
+        Some(i)
+    }
+}
+
+fn path_type_of(raw: &str) -> PathType {
+    let t = raw.trim();
+    if t.starts_with("//") {
+        PathType::ProtocolRelative
+    } else if t.contains("://") {
+        PathType::Absolute
+    } else if t.starts_with('/') {
+        PathType::RootRelative
+    } else {
+        PathType::PathRelative
+    }
+}
+
+fn synth_link(link_type: LinkType, raw: &str, resolved: Option<&str>) -> ExtractedLink {
+    ExtractedLink {
+        link_type,
+        href_raw: raw.to_string(),
+        resolved: resolved.map(str::to_string),
+        anchor: None,
+        alt_text: None,
+        rel: None,
+        nofollow_rel: false,
+        target: None,
+        path_type: path_type_of(raw),
+        xpath: String::new(),
+        position: LinkPosition::Content,
+        in_head: true,
+        doc_order: 0,
+    }
+}
+
+/// Maßgebliche Canonical-URL (TECH-017): erster gültiger HTTP-Header-Eintrag, sonst erstes gültiges
+/// HTML-Element im Head, sonst erstes gültiges HTML-Element außerhalb des Heads.
+pub(crate) fn pick_canonical(canonicals: &[os_model::CanonicalRef]) -> Option<usize> {
+    let valid = |c: &os_model::CanonicalRef| c.resolved.is_some();
+    canonicals
+        .iter()
+        .position(|c| c.source == HintSource::Http && valid(c))
+        .or_else(|| {
+            canonicals
+                .iter()
+                .position(|c| c.source == HintSource::Html && c.in_head && valid(c))
+        })
+        .or_else(|| {
+            canonicals
+                .iter()
+                .position(|c| c.source == HintSource::Html && !c.in_head && valid(c))
+        })
+}
+
+/// Wo in der Referenzliste welche Art von Verweis steht.
+#[derive(Default)]
+struct RefMap {
+    links: Vec<usize>,
+    canonicals: Vec<usize>,
+    hreflang: Vec<usize>,
+    pagination: Vec<usize>,
+}
+
+fn element_pair(texts: &[ExtractedText], enabled: bool) -> ElementPair {
+    if !enabled {
+        return ElementPair::default();
+    }
+    ElementPair {
+        count: texts.len() as u32,
+        first: texts.first().cloned(),
+        second: texts.get(1).cloned(),
+    }
+}
+
+fn pdf_pair(text: Option<&str>) -> ElementPair {
+    match text.map(str::trim).filter(|t| !t.is_empty()) {
+        Some(t) => ElementPair {
+            count: 1,
+            first: Some(ExtractedText {
+                text: t.to_string(),
+                len: t.chars().count() as u32,
+                px: None,
+                in_head: false,
+            }),
+            second: None,
+        },
+        None => ElementPair::default(),
+    }
+}
+
+/// Entdeckt die Ziele und bildet das Schreibmodell der Seite.
+async fn assemble<F: Fetch>(
+    sh: &Arc<Shared<F>>,
+    item: &QueueItem,
+    a: Analysis,
+) -> Result<WriteBatch, Failure> {
+    let cfg = &*sh.cfg;
+    let Analysis {
+        mut facts,
+        headers,
+        parsed,
+        hints,
+        css_links,
+        pdf,
+        redirect,
+        refresh,
+    } = a;
+    let page_follow = parsed.as_ref().is_none_or(|p| p.effective_follow);
+
+    let mut targets = Targets::new();
+    let mut refs: Vec<Ref> = Vec::new();
+    let mut map = RefMap::default();
+    let add_ref = |refs: &mut Vec<Ref>, targets: &mut Targets, ext: ExtractedLink, row: bool| {
+        let norm = ext.resolved.as_deref().and_then(|r| targets.get(&**sh, r));
+        let scope = match norm.map(|i| targets.list[i].1) {
+            Some(true) => ScopeClass::Internal,
+            _ => ScopeClass::External,
+        };
+        let decision = decide::decide(&ext, scope, cfg, page_follow);
+        refs.push(Ref {
+            ext,
+            row,
+            norm,
+            decision,
+        });
+        refs.len() - 1
+    };
+
+    // Links aus dem Dokument (HTML) bzw. aus der CSS-Datei
+    if let Some(p) = &parsed {
+        for l in &p.links {
+            let i = add_ref(&mut refs, &mut targets, l.clone(), true);
+            map.links.push(i);
+        }
+    }
+    for l in &css_links {
+        let i = add_ref(&mut refs, &mut targets, l.clone(), true);
+        map.links.push(i);
+    }
+    // Canonical, hreflang, Paginierung (Dokument und Header)
+    let (canonicals, hreflang, pagination, directives) = match (&parsed, &hints) {
+        (Some(p), _) => (
+            p.canonicals.clone(),
+            p.hreflang.clone(),
+            p.pagination.clone(),
+            p.directives.clone(),
+        ),
+        (None, Some(h)) => (
+            h.canonicals.clone(),
+            h.hreflang.clone(),
+            h.pagination.clone(),
+            h.directives.clone(),
+        ),
+        (None, None) => Default::default(),
+    };
+    for c in &canonicals {
+        let lt = match c.source {
+            HintSource::Http => LinkType::HttpCanonical,
+            _ => LinkType::Canonical,
+        };
+        let ext = synth_link(lt, &c.raw, c.resolved.as_deref());
+        let i = add_ref(&mut refs, &mut targets, ext, true);
+        map.canonicals.push(i);
+    }
+    for h in &hreflang {
+        let lt = match h.source {
+            HintSource::Http => LinkType::HttpHreflang,
+            _ => LinkType::Hreflang,
+        };
+        let ext = synth_link(lt, &h.href_raw, h.resolved.as_deref());
+        let i = add_ref(&mut refs, &mut targets, ext, true);
+        map.hreflang.push(i);
+    }
+    for p in &pagination {
+        let lt = if p.rel_next {
+            LinkType::RelNext
+        } else {
+            LinkType::RelPrev
+        };
+        let ext = synth_link(lt, &p.raw, p.resolved.as_deref());
+        let i = add_ref(&mut refs, &mut targets, ext, true);
+        map.pagination.push(i);
+    }
+    // Bildinstanzen: nur nachschlagen (die Bild-Links stehen schon in `links`)
+    let image_targets: Vec<Option<usize>> = parsed
+        .as_ref()
+        .map(|p| {
+            p.images
+                .iter()
+                .map(|im| im.resolved.as_deref().and_then(|r| targets.get(&**sh, r)))
+                .collect()
+        })
+        .unwrap_or_default();
+
+    // Weiterleitung: Entscheidung und Limit (CRAWL-072)
+    let redirect_plan = redirect.as_ref().map(|r| {
+        let internal = sh.scope.classify(&r.target) == ScopeClass::Internal;
+        targets.list.push((r.target.clone(), internal));
+        (r, targets.list.len() - 1)
+    });
+
+    // Discovery unter der Sperre, Nachricht mit den neuen URLs vor der Seite in den Kanal
+    let depth = item.depth.map(|d| d + 1);
+    let slot = sh.writer.reserve().await?;
+    let mut disc = WriteBatch::default();
+    let mut ids: Vec<Option<UrlId>> = Vec::with_capacity(refs.len());
+    let mut image_ids: Vec<Option<UrlId>> = Vec::new();
+    let mut redirect_id: Option<UrlId> = None;
+    {
+        let mut core = sh.lock_core();
+        for r in &refs {
+            let d = &r.decision;
+            let Some(ti) = r.norm else {
+                ids.push(None);
+                continue;
+            };
+            if !d.store && !d.crawl {
+                ids.push(None);
+                continue;
+            }
+            let (norm, internal) = &targets.list[ti];
+            let lt = r.ext.link_type;
+            let resource_like = lt.is_resource() || lt == LinkType::Other;
+            let purpose = if !*internal {
+                Purpose::External
+            } else if resource_like {
+                Purpose::Resource
+            } else {
+                Purpose::Page
+            };
+            let cand = Cand {
+                norm,
+                internal: *internal,
+                kind: DiscoveryKind::Link,
+                store: d.store,
+                crawl: d.crawl,
+                reason: d.reason,
+                resource_like,
+                apply_rules: norm.encoded != sh.start_url,
+                purpose,
+            };
+            let id = core.discover(&cand, depth, 0, item.session, &sh.rules, &mut disc);
+            ids.push(Some(id));
+        }
+        for t in &image_targets {
+            let id = t
+                .and_then(|ti| core.lookup(&targets.list[ti].0.encoded))
+                .map(|s| s.id);
+            image_ids.push(id);
+        }
+        if let Some((r, ti)) = &redirect_plan {
+            let (norm, internal) = &targets.list[*ti];
+            let (store, mut crawl, mut reason) = match r.kind {
+                RedirectType::Http => (true, true, None),
+                _ => {
+                    let mr = cfg.spider.meta_refresh;
+                    (
+                        mr.store,
+                        mr.crawl,
+                        (!mr.crawl).then_some(NotCrawledReason::CrawlDisabled),
+                    )
+                }
+            };
+            let internal = *internal;
+            if !internal && crawl && !cfg.spider.external.crawl {
+                crawl = false;
+                reason = Some(NotCrawledReason::ExternalNotChecked);
+            }
+            let limit_hit = item.hops >= cfg.limits.max_redirects;
+            if limit_hit {
+                crawl = false;
+                reason = Some(NotCrawledReason::RedirectLimit);
+                disc.counters.push((COUNTER_REDIRECT_LIMIT.to_string(), 1));
+                core.redirects.flag_limit(item.id);
+            }
+            if store || crawl || limit_hit {
+                let cand = Cand {
+                    norm,
+                    internal,
+                    kind: DiscoveryKind::Redirect,
+                    store: store && !limit_hit,
+                    crawl,
+                    reason,
+                    resource_like: false,
+                    apply_rules: norm.encoded != sh.start_url,
+                    purpose: if internal {
+                        Purpose::Page
+                    } else {
+                        Purpose::External
+                    },
+                };
+                let id = core.discover(
+                    &cand,
+                    depth,
+                    item.hops + 1,
+                    item.session,
+                    &sh.rules,
+                    &mut disc,
+                );
+                core.redirects.add_edge(item.id, id);
+                redirect_id = Some(id);
+            }
+        }
+    }
+    slot.send(disc);
+    sh.ctl.notify.notify_one();
+
+    // Schreibmodell
+    if let Some((r, ti)) = &redirect_plan {
+        facts.redirect_url = Some(targets.list[*ti].0.encoded.clone());
+        facts.redirect_type = Some(r.kind);
+        facts.redirect_target = redirect_id;
+    }
+    let mut batch = WriteBatch::default();
+    let own = item.url.as_ref();
+    let mut links: Vec<LinkRow> = Vec::new();
+    let mut position = 0u32;
+    let mut push_row = |links: &mut Vec<LinkRow>, r: &Ref, id: Option<UrlId>, follow: bool| {
+        let e = &r.ext;
+        links.push(LinkRow {
+            target_id: id,
+            target_raw: e.resolved.clone().unwrap_or_else(|| e.href_raw.clone()),
+            link_type: e.link_type,
+            position,
+            anchor: e.anchor.clone(),
+            alt_text: e.alt_text.clone(),
+            follow,
+            rel: e.rel.clone(),
+            target_attr: e.target.clone(),
+            path_type: Some(e.path_type),
+            link_path: (!e.xpath.is_empty()).then(|| e.xpath.clone()),
+            link_position: (!e.xpath.is_empty()).then_some(e.position),
+            link_origin: LinkOrigin::Html,
+            in_head: Some(e.in_head),
+        });
+        position += 1;
+    };
+    for &i in &map.links {
+        let r = &refs[i];
+        if r.row && r.decision.store {
+            push_row(&mut links, r, ids[i], page_follow && !r.ext.nofollow_rel);
+        }
+    }
+    for &i in map
+        .canonicals
+        .iter()
+        .chain(&map.hreflang)
+        .chain(&map.pagination)
+    {
+        let r = &refs[i];
+        if r.row && r.decision.store {
+            push_row(&mut links, r, ids[i], true);
+        }
+    }
+    if let (Some((r, _)), Some(id)) = (&redirect_plan, redirect_id) {
+        let lt = match r.kind {
+            RedirectType::Http => LinkType::HttpRedirect,
+            RedirectType::MetaRefresh => LinkType::MetaRefresh,
+            RedirectType::HttpRefresh => LinkType::HttpRefresh,
+            RedirectType::HstsPolicy => LinkType::HstsPolicy,
+            RedirectType::JavaScript => LinkType::JavaScriptRedirect,
+        };
+        links.push(LinkRow {
+            target_id: Some(id),
+            target_raw: r.raw.clone(),
+            link_type: lt,
+            position,
+            anchor: None,
+            alt_text: None,
+            follow: true,
+            rel: None,
+            target_attr: None,
+            path_type: Some(path_type_of(&r.raw)),
+            link_path: None,
+            link_position: None,
+            link_origin: LinkOrigin::Html,
+            in_head: None,
+        });
+    }
+
+    let images: Vec<ImageRow> = parsed
+        .as_ref()
+        .map(|p| {
+            p.images
+                .iter()
+                .zip(&image_ids)
+                .map(|(im, id)| ImageRow {
+                    image_id: *id,
+                    instance: im.clone(),
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+
+    let canon_rows: Vec<CanonicalRow> = canonicals
+        .iter()
+        .enumerate()
+        .map(|(n, c)| CanonicalRow {
+            target_id: ids.get(map.canonicals[n]).copied().flatten(),
+            r: c.clone(),
+        })
+        .collect();
+    let hreflang_rows: Vec<HreflangRow> = hreflang
+        .iter()
+        .enumerate()
+        .map(|(n, h)| HreflangRow {
+            target_id: ids.get(map.hreflang[n]).copied().flatten(),
+            sitemap_id: None,
+            r: h.clone(),
+        })
+        .collect();
+    let pagination_rows: Vec<PaginationRow> = pagination
+        .iter()
+        .enumerate()
+        .map(|(n, p)| PaginationRow {
+            target_id: ids.get(map.pagination[n]).copied().flatten(),
+            r: p.clone(),
+        })
+        .collect();
+    let refresh_rows: Vec<RefreshRow> = refresh
+        .iter()
+        .map(|r| {
+            let chosen = redirect_plan
+                .as_ref()
+                .is_some_and(|(t, _)| r.target_raw.as_deref() == Some(t.raw.as_str()))
+                && matches!(
+                    (r.source, redirect_plan.as_ref().map(|(t, _)| t.kind)),
+                    (RefreshSource::Meta, Some(RedirectType::MetaRefresh))
+                        | (RefreshSource::Header, Some(RedirectType::HttpRefresh))
+                );
+            RefreshRow {
+                target_id: if chosen { redirect_id } else { None },
+                r: r.clone(),
+            }
+        })
+        .collect();
+
+    // Seitenfakten
+    let canon_pick = pick_canonical(&canonicals);
+    let canonical_url = canon_pick.and_then(|i| canonicals[i].resolved.clone());
+    let canonical_target = canon_pick.and_then(|i| canon_rows[i].target_id);
+    let canonical_self = canonical_url
+        .as_deref()
+        .map(|c| os_url::eq_for_compare(own, c));
+    let (eff_index, eff_follow) = match &parsed {
+        Some(p) => (p.effective_index, p.effective_follow),
+        None => {
+            let hdr: Vec<_> = directives
+                .iter()
+                .filter(|d| d.source == os_model::DirectiveSource::XRobotsTag)
+                .cloned()
+                .collect();
+            os_parse::effective::compute(&[], &hdr)
+        }
+    };
+    let has_hints = !(canonicals.is_empty()
+        && directives.is_empty()
+        && refresh.is_empty()
+        && hreflang.is_empty()
+        && pagination.is_empty());
+    let page_facts = match (&parsed, &pdf) {
+        (Some(p), _) => Some(PageFacts {
+            title: element_pair(&p.titles, cfg.extraction.page_titles),
+            meta_description: element_pair(&p.meta_descriptions, cfg.extraction.meta_description),
+            meta_keywords: element_pair(&p.meta_keywords, cfg.extraction.meta_keywords),
+            h1: element_pair(&p.h1, cfg.extraction.h1),
+            h2: element_pair(&p.h2, cfg.extraction.h2),
+            word_count: p.word_count,
+            text_ratio: p.text_ratio,
+            canonical_count: canonicals.len() as u32,
+            canonical_url,
+            canonical_target,
+            canonical_self,
+            effective_index: eff_index,
+            effective_follow: eff_follow,
+            has_rel_next: pagination.iter().any(|x| x.rel_next),
+            has_rel_prev: pagination.iter().any(|x| !x.rel_next),
+            hreflang_count: hreflang.len() as u32,
+        }),
+        (None, pdf_meta) if pdf_meta.is_some() || (hints.is_some() && has_hints) => {
+            let (title, keywords) = match pdf_meta {
+                Some(m) => (
+                    pdf_pair(m.title.as_deref()),
+                    pdf_pair(m.keywords.as_deref()),
+                ),
+                None => (ElementPair::default(), ElementPair::default()),
+            };
+            Some(PageFacts {
+                title,
+                meta_description: ElementPair::default(),
+                meta_keywords: keywords,
+                h1: ElementPair::default(),
+                h2: ElementPair::default(),
+                word_count: None,
+                text_ratio: None,
+                canonical_count: canonicals.len() as u32,
+                canonical_url,
+                canonical_target,
+                canonical_self,
+                effective_index: eff_index,
+                effective_follow: eff_follow,
+                has_rel_next: pagination.iter().any(|x| x.rel_next),
+                has_rel_prev: pagination.iter().any(|x| !x.rel_next),
+                hreflang_count: hreflang.len() as u32,
+            })
+        }
+        _ => None,
+    };
+    let (indexability, indexability_status) = os_model::evaluate(&IndexabilityInput {
+        fetch: &facts,
+        page: page_facts.as_ref(),
+        page_url: own,
+        refresh: &refresh,
+        cfg,
+        same_url: os_url::eq_for_compare,
+    });
+    batch.pages.push(PageWrite {
+        url_id: item.id,
+        replace: false,
+        fetch: facts,
+        page: page_facts,
+        indexability,
+        indexability_status,
+        links,
+        images,
+        canonicals: canon_rows,
+        directives: directives.into_iter().map(DirectiveRow).collect(),
+        refresh: refresh_rows,
+        hreflang: hreflang_rows,
+        pagination: pagination_rows,
+        headers,
+    });
+    batch.queue.push(QueueOp::Pop { id: item.id });
+    // Weiterleitungs-Flags werden am Ende des Crawls einmal geschrieben (siehe crawl.rs).
+    Ok(batch)
+}
+
+// ---------------------------------------------------------------------------------------------------
+// Sitemaps
+
+/// Ruft Sitemaps ab und überträgt ihre URLs in die Warteschlange.
+pub(crate) async fn ingest_sitemaps<F: Fetch>(
+    sh: &Arc<Shared<F>>,
+    seeds: Vec<SitemapSeed>,
+) -> Result<(), Failure> {
+    if seeds.is_empty() {
+        return Ok(());
+    }
+    let fetched = sitemaps::ingest(&*sh.fetcher, seeds, 3).await;
+    if fetched.is_empty() {
+        return Ok(());
+    }
+    let slot = sh.writer.reserve().await?;
+    let batch = {
+        let mut core = sh.lock_core();
+        build_sitemap_batch(&mut core, &sh.cfg, &sh.scope, &sh.rules, &fetched)
+    };
+    slot.send(batch);
+    sh.ctl.notify.notify_one();
+    Ok(())
+}
+
+/// Bildet das Schreibmodell der abgerufenen Sitemaps: URL-Zeile der Datei, `SitemapWrite` und die URLs der
+/// Einträge als Warteschlangeneinträge ohne Tiefe (Priorität 1, TECH-210/CRAWL-005).
+pub(crate) fn build_sitemap_batch(
+    core: &mut Core,
+    cfg: &CrawlConfig,
+    scope: &Scope,
+    rules: &os_url::RuleSet,
+    fetched: &[FetchedSitemap],
+) -> WriteBatch {
+    let mut batch = WriteBatch::default();
+    let base = core.next_sitemap_id;
+    core.next_sitemap_id += fetched.len() as i64;
+    for (i, fs) in fetched.iter().enumerate() {
+        let sid = SitemapId(base + i as i64);
+        let parent = fs.parent.map(|p| SitemapId(base + p as i64));
+        let mut url_id = None;
+        let mut status_code = None;
+        if let Ok(parsed) = Url::parse(&fs.url) {
+            let norm = os_url::normalize(&parsed);
+            let internal = scope.classify(&norm) == ScopeClass::Internal;
+            match core.lookup(&norm.encoded) {
+                Some(seen) => url_id = Some(seen.id),
+                None => {
+                    let id = core.alloc_id();
+                    core.register(&norm.encoded, id, None, F_QUEUED | F_RULE_OK);
+                    batch.new_urls.push(os_model::NewUrl {
+                        id,
+                        url: norm.encoded.clone(),
+                        address: norm.display.clone(),
+                        origin: norm.origin.clone(),
+                        is_internal: internal,
+                        in_tables: false,
+                        discovered_via: DiscoveryKind::Sitemap,
+                        crawl_depth: None,
+                        folder_depth: os_url::folder_depth(&norm.url),
+                        url_length: os_url::url_length(&norm.display),
+                        state: UrlState::Done,
+                        not_crawled_reason: None,
+                    });
+                    let mut page = plain_page(id, &fs.fetch, cfg);
+                    page.headers = header_rows(&fs.fetch, cfg);
+                    batch.pages.push(page);
+                    url_id = Some(id);
+                }
+            }
+        }
+        if let FetchOutcome::Response(r) = &fs.fetch.outcome {
+            status_code = Some(r.status);
+        }
+        let (kind, entries, invalid, size) = match &fs.doc {
+            Some(d) => (d.kind, d.locs.len() as u32, d.invalid_entries, d.size_bytes),
+            None => (SitemapKind::Invalid, 0, 0, 0),
+        };
+        let mut entry_urls = Vec::new();
+        if let (Some(doc), SitemapKind::Urlset) = (&fs.doc, kind) {
+            for loc in &doc.locs {
+                let Some(u) = loc.url.as_deref() else {
+                    continue;
+                };
+                let Ok(parsed) = Url::parse(u) else {
+                    continue;
+                };
+                if !matches!(parsed.scheme(), "http" | "https") || parsed.host_str().is_none() {
+                    continue;
+                }
+                let norm = os_url::normalize(&parsed);
+                if scope.classify(&norm) != ScopeClass::Internal {
+                    continue;
+                }
+                let cand = Cand {
+                    norm: &norm,
+                    internal: true,
+                    kind: DiscoveryKind::Sitemap,
+                    store: true,
+                    crawl: true,
+                    reason: None,
+                    resource_like: false,
+                    apply_rules: true,
+                    purpose: Purpose::Page,
+                };
+                let id = core.discover(&cand, None, 0, 0, rules, &mut batch);
+                entry_urls.push((id, loc.loc_raw.clone(), loc.lastmod.clone()));
+            }
+        }
+        batch.sitemaps.push(SitemapWrite {
+            id: sid,
+            url: fs.url.clone(),
+            url_id,
+            parent,
+            kind,
+            entries,
+            invalid_entries: invalid,
+            size_bytes: size,
+            status_code,
+            depth: fs.depth,
+            found_via: fs.found_via.clone(),
+            entry_urls,
+        });
+    }
+    batch
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use os_model::{CanonicalRef, SitemapDoc, SitemapLoc};
+
+    fn response(status: u16, headers: &[(&str, &str)], body: &str) -> FetchResult {
+        FetchResult {
+            url: Url::parse("https://site.test/p").unwrap(),
+            started_at: Timestamp::UNIX_EPOCH,
+            outcome: FetchOutcome::Response(HttpResponse {
+                status,
+                reason_phrase: None,
+                status_text: os_fetch::http::status_text(status, None),
+                http_version: "HTTP/1.1".to_string(),
+                headers: headers
+                    .iter()
+                    .map(|(n, v)| (n.to_string(), v.to_string()))
+                    .collect(),
+                body: Bytes::from(body.to_string()),
+                size_bytes: body.len() as u64,
+                transferred_bytes: 123,
+                response_time_ms: 42,
+                truncated: false,
+                decode_error: None,
+                md5_hex: "d41d8cd98f00b204e9800998ecf8427e".to_string(),
+            }),
+        }
+    }
+
+    // spec: CRAWL-022
+    #[test]
+    fn http_date_is_parsed_to_utc() {
+        let t = parse_http_date("Wed, 21 Oct 2015 07:28:00 GMT").expect("gültig");
+        assert_eq!(t.to_db(), "2015-10-21T07:28:00.000Z");
+        assert!(parse_http_date("kein Datum").is_none());
+    }
+
+    // spec: CRAWL-022
+    #[test]
+    fn facts_follow_the_response_and_k02() {
+        let cfg = CrawlConfig::default();
+        let res = response(
+            200,
+            &[
+                ("content-type", "text/html; charset=utf-8"),
+                ("last-modified", "Wed, 21 Oct 2015 07:28:00 GMT"),
+            ],
+            "<html></html>",
+        );
+        let f = facts_from_result(&res, &cfg);
+        assert_eq!(f.status_code, 200);
+        assert_eq!(f.status, "OK");
+        assert_eq!(f.content_class, ContentClass::Html);
+        assert_eq!(f.transferred_bytes, 123);
+        assert_eq!(f.total_transferred_bytes, 123, "K-02");
+        assert_eq!(f.response_time_ms, Some(42));
+        assert_eq!(
+            f.last_modified.map(|t| t.to_db()).as_deref(),
+            Some("2015-10-21T07:28:00.000Z")
+        );
+        assert_eq!(f.hash_md5.as_deref().map(str::len), Some(32));
+
+        let mut off = CrawlConfig::default();
+        off.extraction.response_time = false;
+        off.extraction.hash = false;
+        off.extraction.last_modified = false;
+        let f = facts_from_result(&res, &off);
+        assert_eq!(
+            (f.response_time_ms, f.hash_md5, f.last_modified_raw),
+            (None, None, None)
+        );
+    }
+
+    // spec: CRAWL-011
+    #[test]
+    fn broken_compression_keeps_the_status_code_but_reads_connection_error() {
+        let cfg = CrawlConfig::default();
+        let mut res = response(200, &[("content-type", "text/html")], "<html>");
+        if let FetchOutcome::Response(r) = &mut res.outcome {
+            r.decode_error = Some("unerwartetes Ende".into());
+        }
+        let f = facts_from_result(&res, &cfg);
+        assert_eq!(f.status_code, 200);
+        assert_eq!(f.status, "Connection Error");
+        assert_eq!(
+            f.no_response_reason,
+            Some(NoResponseReason::ConnectionError)
+        );
+    }
+
+    // spec: CRAWL-013
+    #[test]
+    fn no_response_gives_status_zero_and_the_reason_text() {
+        let cfg = CrawlConfig::default();
+        let res = FetchResult {
+            url: Url::parse("https://site.test/").unwrap(),
+            started_at: Timestamp::UNIX_EPOCH,
+            outcome: FetchOutcome::NoResponse {
+                reason: NoResponseReason::DnsLookupFailed,
+                detail: String::new(),
+                elapsed_ms: 5,
+            },
+        };
+        let f = facts_from_result(&res, &cfg);
+        assert_eq!(f.status_code, 0);
+        assert_eq!(f.status, "DNS Lookup Failed");
+        assert_eq!(f.response_time_ms, None);
+    }
+
+    // spec: OUT-031
+    #[test]
+    fn path_type_distinguishes_the_four_forms() {
+        assert_eq!(path_type_of("https://a.test/x"), PathType::Absolute);
+        assert_eq!(path_type_of("//a.test/x"), PathType::ProtocolRelative);
+        assert_eq!(path_type_of("/x"), PathType::RootRelative);
+        assert_eq!(path_type_of("x/y"), PathType::PathRelative);
+    }
+
+    fn canon(source: HintSource, in_head: bool, resolved: Option<&str>) -> CanonicalRef {
+        CanonicalRef {
+            source,
+            raw: resolved.unwrap_or("").to_string(),
+            resolved: resolved.map(str::to_string),
+            in_head,
+            order: 0,
+        }
+    }
+
+    // spec: TECH-017
+    #[test]
+    fn authoritative_canonical_prefers_header_then_head_then_body() {
+        let c = vec![
+            canon(HintSource::Html, false, Some("https://s.test/body")),
+            canon(HintSource::Html, true, Some("https://s.test/head")),
+            canon(HintSource::Http, true, Some("https://s.test/header")),
+        ];
+        assert_eq!(pick_canonical(&c), Some(2));
+        assert_eq!(pick_canonical(&c[..2]), Some(1));
+        assert_eq!(pick_canonical(&c[..1]), Some(0));
+        let invalid = vec![
+            canon(HintSource::Http, true, None),
+            canon(HintSource::Html, true, Some("https://s.test/ok")),
+        ];
+        assert_eq!(pick_canonical(&invalid), Some(1));
+        assert_eq!(pick_canonical(&[]), None);
+    }
+
+    // spec: CRAWL-005, TECH-210
+    #[test]
+    fn sitemap_batch_queues_loc_urls_without_depth_and_links_the_hierarchy() {
+        let cfg = CrawlConfig::default();
+        let start = os_url::parse_start_url("https://site.test/").unwrap();
+        let scope = Scope::new(&start, &cfg.scope);
+        let rules = os_url::RuleSet::compile(&[], &[], false).unwrap();
+        let mut core = Core::new(0, None);
+        let doc = |kind, locs: Vec<&str>| SitemapDoc {
+            kind,
+            locs: locs
+                .into_iter()
+                .map(|l| SitemapLoc {
+                    loc_raw: l.to_string(),
+                    url: Some(l.to_string()),
+                    lastmod: Some("2026-01-01".to_string()),
+                    hreflang: vec![],
+                })
+                .collect(),
+            invalid_entries: 1,
+            size_bytes: 77,
+        };
+        let fr = |u: &str| FetchResult {
+            url: Url::parse(u).unwrap(),
+            started_at: Timestamp::UNIX_EPOCH,
+            outcome: response(200, &[("content-type", "application/xml")], "<x/>").outcome,
+        };
+        let fetched = vec![
+            FetchedSitemap {
+                url: "https://site.test/sitemap.xml".into(),
+                parent: None,
+                depth: 0,
+                found_via: "config".into(),
+                fetch: fr("https://site.test/sitemap.xml"),
+                doc: Some(doc(SitemapKind::Index, vec!["https://site.test/s1.xml"])),
+            },
+            FetchedSitemap {
+                url: "https://site.test/s1.xml".into(),
+                parent: Some(0),
+                depth: 1,
+                found_via: "config".into(),
+                fetch: fr("https://site.test/s1.xml"),
+                doc: Some(doc(
+                    SitemapKind::Urlset,
+                    vec!["https://site.test/nur-sitemap", "https://other.test/extern"],
+                )),
+            },
+        ];
+        let batch = build_sitemap_batch(&mut core, &cfg, &scope, &rules, &fetched);
+        assert_eq!(batch.sitemaps.len(), 2);
+        assert_eq!(batch.sitemaps[0].parent, None);
+        assert_eq!(batch.sitemaps[1].parent, Some(batch.sitemaps[0].id));
+        assert_eq!(batch.sitemaps[0].kind, SitemapKind::Index);
+        assert_eq!(batch.sitemaps[0].entries, 1);
+        assert_eq!(batch.sitemaps[1].invalid_entries, 1);
+        assert_eq!(batch.sitemaps[1].status_code, Some(200));
+        assert_eq!(batch.sitemaps[1].found_via, "config");
+        // nur die interne URL wird übernommen
+        assert_eq!(batch.sitemaps[1].entry_urls.len(), 1);
+        let (id, loc, lastmod) = &batch.sitemaps[1].entry_urls[0];
+        assert_eq!(loc, "https://site.test/nur-sitemap");
+        assert_eq!(lastmod.as_deref(), Some("2026-01-01"));
+        let row = batch.new_urls.iter().find(|n| n.id == *id).unwrap();
+        assert_eq!(row.crawl_depth, None, "ohne Tiefe");
+        assert_eq!(row.discovered_via, DiscoveryKind::Sitemap);
+        assert_eq!(row.state, UrlState::Queued);
+        assert!(batch.queue.iter().any(
+            |q| matches!(q, QueueOp::Push { id: i, priority: 1, depth: None, .. } if i == id)
+        ));
+        // die Sitemap-Dateien haben eine URL-Zeile mit Status
+        assert!(batch.sitemaps.iter().all(|s| s.url_id.is_some()));
+        assert_eq!(batch.pages.len(), 2);
+        assert!(batch
+            .new_urls
+            .iter()
+            .filter(|n| n.url.ends_with(".xml"))
+            .all(|n| !n.in_tables));
+    }
+}

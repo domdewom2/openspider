@@ -1,0 +1,128 @@
+# Szenario crawl-redirect-chains (CRAWL-017, CRAWL-072): Ketten, Schleifen, gemischte Typen, Host-Wechsel.
+# Start mit http://site.test/ (other.test ist extern).
+
+[[route]]
+path = "/a"
+status = 301
+location = "/b"
+
+[[route]]
+path = "/b"
+status = 301
+location = "/c"
+
+[[route]]
+path = "/c"
+status = 301
+location = "/d"
+
+[[route]]
+path = "/d"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Ende der Kette</title></head><body><h1>Ende der Kette</h1></body></html>"
+
+[[route]]
+path = "/x"
+status = 301
+location = "/y"
+
+[[route]]
+path = "/y"
+status = 301
+location = "/x"
+
+[[route]]
+path = "/s"
+status = 301
+location = "/s"
+
+[[route]]
+path = "/mix1"
+status = 301
+location = "/mix2"
+
+[[route]]
+path = "/mix2"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Meta-Refresh-Station</title><meta http-equiv=\"refresh\" content=\"0;url=/mix3\"></head><body><h1>Meta-Refresh-Station</h1></body></html>"
+
+[[route]]
+path = "/mix3"
+status = 302
+location = "/ok"
+
+[[route]]
+path = "/ok"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Ziel ok</title></head><body><h1>Ziel ok</h1></body></html>"
+
+[[route]]
+path = "/ext-hop"
+status = 301
+location = "https://other.test/back"
+
+[[route]]
+path = "/back"
+host = "other.test"
+status = 301
+location = "http://site.test/ok"
+
+[[route]]
+path = "/hop1"
+status = 301
+location = "/hop2"
+
+[[route]]
+path = "/hop2"
+status = 301
+location = "/hop3"
+
+[[route]]
+path = "/hop3"
+status = 301
+location = "/hop4"
+
+[[route]]
+path = "/hop4"
+status = 301
+location = "/hop5"
+
+[[route]]
+path = "/hop5"
+status = 301
+location = "/hop6"
+
+[[route]]
+path = "/hop6"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Ende hop</title></head><body><h1>Ende hop</h1></body></html>"
+
+[[route]]
+path = "/c2-1"
+status = 301
+location = "/c2-2"
+
+[[route]]
+path = "/c2-2"
+status = 301
+location = "/c2-3"
+
+[[route]]
+path = "/c2-3"
+status = 301
+location = "/c2-4"
+
+[[route]]
+path = "/c2-4"
+status = 301
+location = "/c2-5"
+
+[[route]]
+path = "/c2-5"
+status = 301
+location = "/c2-6"
+
+[[route]]
+path = "/c2-6"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Ende c2-</title></head><body><h1>Ende c2-</h1></body></html>"
