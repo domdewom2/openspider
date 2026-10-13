@@ -1,6 +1,3 @@
-use clap::Parser;
-
 fn main() {
-    let cli = os_cli::Cli::parse();
-    std::process::exit(os_cli::run(cli));
+    std::process::exit(os_cli::main_entry(std::env::args_os()));
 }

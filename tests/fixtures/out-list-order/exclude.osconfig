@@ -1,0 +1,6 @@
+# Konfiguration für out-list-order: schließt /privat/ aus (OUT-015: ausgeschlossene Listeneinträge).
+schema_version = 1
+generator = "openspider 0.1.0"
+
+[scope]
+exclude = [".*/privat/.*"]

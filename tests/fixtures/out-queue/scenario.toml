@@ -1,0 +1,88 @@
+# Szenario out-queue (OUT-030, OUT-184, CRAWL-126): Startseite mit 20 Links /q1.html … /q20.html.
+# Jede Unterseite antwortet mit 400 ms Verzögerung; mit --max-urls bleibt eine Restwarteschlange, per SIGINT
+# lässt sich der Crawl mitten im Lauf pausieren.
+
+[[route]]
+path = "/q1.html"
+delay_ms = 400
+
+[[route]]
+path = "/q2.html"
+delay_ms = 400
+
+[[route]]
+path = "/q3.html"
+delay_ms = 400
+
+[[route]]
+path = "/q4.html"
+delay_ms = 400
+
+[[route]]
+path = "/q5.html"
+delay_ms = 400
+
+[[route]]
+path = "/q6.html"
+delay_ms = 400
+
+[[route]]
+path = "/q7.html"
+delay_ms = 400
+
+[[route]]
+path = "/q8.html"
+delay_ms = 400
+
+[[route]]
+path = "/q9.html"
+delay_ms = 400
+
+[[route]]
+path = "/q10.html"
+delay_ms = 400
+
+[[route]]
+path = "/q11.html"
+delay_ms = 400
+
+[[route]]
+path = "/q12.html"
+delay_ms = 400
+
+[[route]]
+path = "/q13.html"
+delay_ms = 400
+
+[[route]]
+path = "/q14.html"
+delay_ms = 400
+
+[[route]]
+path = "/q15.html"
+delay_ms = 400
+
+[[route]]
+path = "/q16.html"
+delay_ms = 400
+
+[[route]]
+path = "/q17.html"
+delay_ms = 400
+
+[[route]]
+path = "/q18.html"
+delay_ms = 400
+
+[[route]]
+path = "/q19.html"
+delay_ms = 400
+
+[[route]]
+path = "/q20.html"
+delay_ms = 400
+
+# Eigene Startseite für den Abbruch-Test: antwortet erst nach 6 s (nicht verlinkt).
+[[route]]
+path = "/slow.html"
+delay_ms = 6000
