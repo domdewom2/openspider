@@ -10,7 +10,6 @@ use os_model::CrawlConfig;
 use support::*;
 
 // spec: CRAWL-005
-#[ignore = "wartet auf M1-P15b: sitemaps::ingest ist bis dahin der P00b-Stub"]
 #[tokio::test]
 async fn urls_found_only_in_a_sitemap_have_no_depth_and_are_crawled_after_all_linked_urls() {
     let mut cfg = CrawlConfig::default();

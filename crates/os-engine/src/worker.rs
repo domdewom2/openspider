@@ -24,10 +24,10 @@ use os_fetch::robots::{RobotsDecision, RobotsGate};
 use os_fetch::{content_class, Fetch, FetchOutcome, FetchRequest, FetchResult, HttpResponse};
 use os_model::{
     CanonicalRow, Clock, ContentClass, CrawlConfig, DirectiveRow, DiscoveryKind, ElementPair,
-    ExtractedLink, ExtractedText, FetchFacts, HeaderHints, HeaderRow, HintSource, HreflangRow,
-    ImageRow, Indexability, IndexabilityInput, LinkOrigin, LinkPosition, LinkRow, LinkType,
-    NoResponseReason, NotCrawledReason, PageFacts, PageWrite, PaginationRow, ParsedPage, PathType,
-    PdfMeta, QueueOp, RedirectType, RefreshRow, RefreshSource, SitemapId, SitemapKind,
+    ExtractedLink, ExtractedText, FetchFacts, HeaderHints, HeaderRow, HintSource, HreflangRef,
+    HreflangRow, ImageRow, Indexability, IndexabilityInput, LinkOrigin, LinkPosition, LinkRow,
+    LinkType, NoResponseReason, NotCrawledReason, PageFacts, PageWrite, PaginationRow, ParsedPage,
+    PathType, PdfMeta, QueueOp, RedirectType, RefreshRow, RefreshSource, SitemapId, SitemapKind,
     SitemapWrite, Timestamp, UrlId, UrlState, WriteBatch,
 };
 use os_parse::{ParseConfig, ParseInput};
@@ -38,7 +38,7 @@ use url::Url;
 use crate::decide::{self, LinkDecision};
 use crate::error::EngineError;
 use crate::frontier::{
-    Cand, Core, Purpose, QueueItem, COUNTER_REDIRECT_LIMIT, F_QUEUED, F_RULE_OK,
+    Cand, Core, Purpose, QueueItem, COUNTER_REDIRECT_LIMIT, F_IN_TABLES, F_QUEUED, F_RULE_OK,
 };
 use crate::progress::ProgressTracker;
 use crate::redirect::{self, RedirectTarget};
@@ -280,31 +280,45 @@ async fn record_robots<F: Fetch>(
     write: os_model::RobotsWrite,
 ) -> Result<Vec<SitemapSeed>, WriterGone> {
     let cfg = &*sh.cfg;
-    let seeds = write
-        .body
-        .as_deref()
-        .map(|body| {
-            let listed: Vec<String> = os_fetch::robots::parse(body).sitemaps().to_vec();
-            crate::robots_glue::sitemap_seeds(&listed, cfg)
-        })
-        .unwrap_or_default();
+    let parsed_robots = Url::parse(&write.robots_url).ok();
+    let norm_robots = parsed_robots.as_ref().map(os_url::normalize);
+    let internal = norm_robots
+        .as_ref()
+        .is_some_and(|n| sh.scope.classify(n) == ScopeClass::Internal);
+    // `Sitemap:`-Zeilen gelten nur für interne Hosts: die Sitemaps fremder Hosts gehören nicht zu diesem Crawl.
+    let seeds = if internal {
+        write
+            .body
+            .as_deref()
+            .map(|body| {
+                let listed: Vec<String> = os_fetch::robots::parse(body).sitemaps().to_vec();
+                crate::robots_glue::sitemap_seeds(&listed, cfg)
+            })
+            .unwrap_or_default()
+    } else {
+        Vec::new()
+    };
 
     let mut batch = WriteBatch::default();
-    if let Ok(parsed) = Url::parse(&write.robots_url) {
-        let norm = os_url::normalize(&parsed);
-        let internal = sh.scope.classify(&norm) == ScopeClass::Internal;
+    if let Some(norm) = norm_robots {
         let slot = sh.writer.reserve().await?;
         let mut core = sh.lock_core();
         if core.lookup(&norm.encoded).is_none() {
             let id = core.alloc_id();
-            core.register(&norm.encoded, id, None, F_QUEUED | F_RULE_OK);
+            // K-40: die robots.txt interner Hosts erscheint in den Tabellen (Inhaltstyp Text), die externer nicht.
+            let flags = if internal {
+                F_QUEUED | F_RULE_OK | F_IN_TABLES
+            } else {
+                F_QUEUED | F_RULE_OK
+            };
+            core.register(&norm.encoded, id, None, flags);
             batch.new_urls.push(os_model::NewUrl {
                 id,
                 url: norm.encoded.clone(),
                 address: norm.display.clone(),
                 origin: norm.origin.clone(),
                 is_internal: internal,
-                in_tables: false,
+                in_tables: internal,
                 discovered_via: DiscoveryKind::RobotsTxt,
                 crawl_depth: None,
                 folder_depth: os_url::folder_depth(&norm.url),
@@ -791,6 +805,8 @@ async fn assemble<F: Fetch>(
     let mut ids: Vec<Option<UrlId>> = Vec::with_capacity(refs.len());
     let mut image_ids: Vec<Option<UrlId>> = Vec::new();
     let mut redirect_id: Option<UrlId> = None;
+    // Weiterleitungs-Flags (CRAWL-017, CRAWL-072) gehen mit der Seite in den Writer (M1.md 3.11).
+    let mut url_flags: Vec<(UrlId, String, Option<String>)> = Vec::new();
     {
         let mut core = sh.lock_core();
         for r in &refs {
@@ -837,13 +853,22 @@ async fn assemble<F: Fetch>(
             let (norm, internal) = &targets.list[*ti];
             let (store, mut crawl, mut reason) = match r.kind {
                 RedirectType::Http => (true, true, None),
-                _ => {
-                    let mr = cfg.spider.meta_refresh;
-                    (
-                        mr.store,
-                        mr.crawl,
-                        (!mr.crawl).then_some(NotCrawledReason::CrawlDisabled),
-                    )
+                kind => {
+                    // Meta-/Header-Refresh hängen am Schalter „Meta Refresh“ (K-40); Grund und Außenwirkung
+                    // wie bei jedem anderen Linktyp aus der Matrix.
+                    let link_type = if kind == RedirectType::MetaRefresh {
+                        LinkType::MetaRefresh
+                    } else {
+                        LinkType::HttpRefresh
+                    };
+                    let ext = synth_link(link_type, &r.raw, Some(&norm.encoded));
+                    let class = if *internal {
+                        ScopeClass::Internal
+                    } else {
+                        ScopeClass::External
+                    };
+                    let d = decide::decide(&ext, class, cfg, true);
+                    (d.store, d.crawl, d.reason)
                 }
             };
             let internal = *internal;
@@ -857,6 +882,7 @@ async fn assemble<F: Fetch>(
                 reason = Some(NotCrawledReason::RedirectLimit);
                 disc.counters.push((COUNTER_REDIRECT_LIMIT.to_string(), 1));
                 core.redirects.flag_limit(item.id);
+                url_flags.push((item.id, redirect::FLAG_LIMIT.to_string(), None));
             }
             if store || crawl || limit_hit {
                 let cand = Cand {
@@ -882,7 +908,13 @@ async fn assemble<F: Fetch>(
                     &sh.rules,
                     &mut disc,
                 );
-                core.redirects.add_edge(item.id, id);
+                if let Some(members) = core.redirects.add_edge(item.id, id) {
+                    url_flags.extend(
+                        members
+                            .into_iter()
+                            .map(|m| (m, redirect::FLAG_LOOP.to_string(), None)),
+                    );
+                }
                 redirect_id = Some(id);
             }
         }
@@ -904,7 +936,8 @@ async fn assemble<F: Fetch>(
         let e = &r.ext;
         links.push(LinkRow {
             target_id: id,
-            target_raw: e.resolved.clone().unwrap_or_else(|| e.href_raw.clone()),
+            // K-37: der Rohwert wie im Markup; das aufgelöste Ziel steht über `target_id`.
+            target_raw: e.href_raw.clone(),
             link_type: e.link_type,
             position,
             anchor: e.anchor.clone(),
@@ -977,31 +1010,48 @@ async fn assemble<F: Fetch>(
         })
         .unwrap_or_default();
 
-    let canon_rows: Vec<CanonicalRow> = canonicals
-        .iter()
-        .enumerate()
-        .map(|(n, c)| CanonicalRow {
-            target_id: ids.get(map.canonicals[n]).copied().flatten(),
-            r: c.clone(),
-        })
-        .collect();
-    let hreflang_rows: Vec<HreflangRow> = hreflang
-        .iter()
-        .enumerate()
-        .map(|(n, h)| HreflangRow {
-            target_id: ids.get(map.hreflang[n]).copied().flatten(),
-            sitemap_id: None,
-            r: h.clone(),
-        })
-        .collect();
-    let pagination_rows: Vec<PaginationRow> = pagination
-        .iter()
-        .enumerate()
-        .map(|(n, p)| PaginationRow {
-            target_id: ids.get(map.pagination[n]).copied().flatten(),
-            r: p.clone(),
-        })
-        .collect();
+    // „Speichern“ aus (CRAWL-038, CRAWL-046, K-40): keine Detailzeilen und keine Spaltenwerte. Das Crawlen der
+    // Ziele ist davon unabhängig und hat oben schon stattgefunden.
+    let keep_canonicals = cfg.spider.canonicals.store;
+    let keep_hreflang = cfg.spider.hreflang.store;
+    let keep_pagination = cfg.spider.pagination.store;
+    let canon_rows: Vec<CanonicalRow> = if keep_canonicals {
+        canonicals
+            .iter()
+            .enumerate()
+            .map(|(n, c)| CanonicalRow {
+                target_id: ids.get(map.canonicals[n]).copied().flatten(),
+                r: c.clone(),
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
+    let hreflang_rows: Vec<HreflangRow> = if keep_hreflang {
+        hreflang
+            .iter()
+            .enumerate()
+            .map(|(n, h)| HreflangRow {
+                target_id: ids.get(map.hreflang[n]).copied().flatten(),
+                sitemap_id: None,
+                r: h.clone(),
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
+    let pagination_rows: Vec<PaginationRow> = if keep_pagination {
+        pagination
+            .iter()
+            .enumerate()
+            .map(|(n, p)| PaginationRow {
+                target_id: ids.get(map.pagination[n]).copied().flatten(),
+                r: p.clone(),
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
     let refresh_rows: Vec<RefreshRow> = refresh
         .iter()
         .map(|r| {
@@ -1021,9 +1071,21 @@ async fn assemble<F: Fetch>(
         .collect();
 
     // Seitenfakten
-    let canon_pick = pick_canonical(&canonicals);
+    let canon_pick = pick_canonical(&canonicals).filter(|_| keep_canonicals);
     let canonical_url = canon_pick.and_then(|i| canonicals[i].resolved.clone());
     let canonical_target = canon_pick.and_then(|i| canon_rows[i].target_id);
+    let canonical_count = if keep_canonicals {
+        canonicals.len() as u32
+    } else {
+        0
+    };
+    let has_rel_next = keep_pagination && pagination.iter().any(|x| x.rel_next);
+    let has_rel_prev = keep_pagination && pagination.iter().any(|x| !x.rel_next);
+    let hreflang_count = if keep_hreflang {
+        hreflang.len() as u32
+    } else {
+        0
+    };
     let canonical_self = canonical_url
         .as_deref()
         .map(|c| os_url::eq_for_compare(own, c));
@@ -1052,15 +1114,15 @@ async fn assemble<F: Fetch>(
             h2: element_pair(&p.h2, cfg.extraction.h2),
             word_count: p.word_count,
             text_ratio: p.text_ratio,
-            canonical_count: canonicals.len() as u32,
+            canonical_count,
             canonical_url,
             canonical_target,
             canonical_self,
             effective_index: eff_index,
             effective_follow: eff_follow,
-            has_rel_next: pagination.iter().any(|x| x.rel_next),
-            has_rel_prev: pagination.iter().any(|x| !x.rel_next),
-            hreflang_count: hreflang.len() as u32,
+            has_rel_next,
+            has_rel_prev,
+            hreflang_count,
         }),
         (None, pdf_meta) if pdf_meta.is_some() || (hints.is_some() && has_hints) => {
             let (title, keywords) = match pdf_meta {
@@ -1078,15 +1140,15 @@ async fn assemble<F: Fetch>(
                 h2: ElementPair::default(),
                 word_count: None,
                 text_ratio: None,
-                canonical_count: canonicals.len() as u32,
+                canonical_count,
                 canonical_url,
                 canonical_target,
                 canonical_self,
                 effective_index: eff_index,
                 effective_follow: eff_follow,
-                has_rel_next: pagination.iter().any(|x| x.rel_next),
-                has_rel_prev: pagination.iter().any(|x| !x.rel_next),
-                hreflang_count: hreflang.len() as u32,
+                has_rel_next,
+                has_rel_prev,
+                hreflang_count,
             })
         }
         _ => None,
@@ -1116,7 +1178,7 @@ async fn assemble<F: Fetch>(
         headers,
     });
     batch.queue.push(QueueOp::Pop { id: item.id });
-    // Weiterleitungs-Flags werden am Ende des Crawls einmal geschrieben (siehe crawl.rs).
+    batch.url_flags = url_flags;
     Ok(batch)
 }
 
@@ -1124,6 +1186,10 @@ async fn assemble<F: Fetch>(
 // Sitemaps
 
 /// Ruft Sitemaps ab und überträgt ihre URLs in die Warteschlange.
+///
+/// K-41a: Sitemap-Dateien holt ausschließlich dieser Weg, und zwar je Crawl genau einmal. Die Schlüssel der
+/// angefragten und der End-URL stehen in `Core::sitemap_keys`; Seeds, die dort schon stehen (z. B. dieselbe
+/// `Sitemap:`-Zeile in der robots.txt eines zweiten Hosts), entfallen.
 pub(crate) async fn ingest_sitemaps<F: Fetch>(
     sh: &Arc<Shared<F>>,
     seeds: Vec<SitemapSeed>,
@@ -1131,14 +1197,51 @@ pub(crate) async fn ingest_sitemaps<F: Fetch>(
     if seeds.is_empty() {
         return Ok(());
     }
-    let fetched = sitemaps::ingest(&*sh.fetcher, seeds, 3).await;
-    if fetched.is_empty() {
+    let (fresh, known) = {
+        let mut core = sh.lock_core();
+        let known = core.sitemap_keys.clone();
+        let mut fresh = Vec::new();
+        for seed in seeds {
+            if core.sitemap_keys.insert(sitemaps::sitemap_key(&seed.url)) {
+                fresh.push(seed);
+            }
+        }
+        (fresh, known)
+    };
+    if fresh.is_empty() {
         return Ok(());
+    }
+    let out = sitemaps::ingest_with_known(&*sh.fetcher, fresh, 3, &known).await;
+    let fetched = out.sitemaps;
+    if fetched.is_empty() && out.warnings.is_empty() {
+        return Ok(());
+    }
+    let events: Vec<os_model::CrawlEvent> = out
+        .warnings
+        .iter()
+        .map(|w| os_model::CrawlEvent {
+            at: sh.clock.now(),
+            kind: "warn".to_string(),
+            code: w.code.to_string(),
+            message: w.message.clone(),
+        })
+        .collect();
+    {
+        let mut core = sh.lock_core();
+        for fs in &fetched {
+            if let Ok(u) = Url::parse(&fs.url) {
+                core.sitemap_keys.insert(sitemaps::sitemap_key(&u));
+            }
+            core.sitemap_keys
+                .insert(sitemaps::sitemap_key(&fs.fetch.url));
+        }
     }
     let slot = sh.writer.reserve().await?;
     let batch = {
         let mut core = sh.lock_core();
-        build_sitemap_batch(&mut core, &sh.cfg, &sh.scope, &sh.rules, &fetched)
+        let mut batch = build_sitemap_batch(&mut core, &sh.cfg, &sh.scope, &sh.rules, &fetched);
+        batch.events.extend(events);
+        batch
     };
     slot.send(batch);
     sh.ctl.notify.notify_one();
@@ -1170,6 +1273,8 @@ pub(crate) fn build_sitemap_batch(
                 None => {
                     let id = core.alloc_id();
                     core.register(&norm.encoded, id, None, F_QUEUED | F_RULE_OK);
+                    // Die Start-URL einer Sitemap-Datei ist Tiefe 0; alle anderen Dateien haben keine Tiefe.
+                    let is_start = fs.found_via == "start" && fs.parent.is_none();
                     batch.new_urls.push(os_model::NewUrl {
                         id,
                         url: norm.encoded.clone(),
@@ -1177,8 +1282,12 @@ pub(crate) fn build_sitemap_batch(
                         origin: norm.origin.clone(),
                         is_internal: internal,
                         in_tables: false,
-                        discovered_via: DiscoveryKind::Sitemap,
-                        crawl_depth: None,
+                        discovered_via: if is_start {
+                            DiscoveryKind::Start
+                        } else {
+                            DiscoveryKind::Sitemap
+                        },
+                        crawl_depth: is_start.then_some(0),
                         folder_depth: os_url::folder_depth(&norm.url),
                         url_length: os_url::url_length(&norm.display),
                         state: UrlState::Done,
@@ -1199,6 +1308,7 @@ pub(crate) fn build_sitemap_batch(
             None => (SitemapKind::Invalid, 0, 0, 0),
         };
         let mut entry_urls = Vec::new();
+        let mut hreflang_rows: Vec<(UrlId, HreflangRow)> = Vec::new();
         if let (Some(doc), SitemapKind::Urlset) = (&fs.doc, kind) {
             for loc in &doc.locs {
                 let Some(u) = loc.url.as_deref() else {
@@ -1227,6 +1337,19 @@ pub(crate) fn build_sitemap_batch(
                 };
                 let id = core.discover(&cand, None, 0, 0, rules, &mut batch);
                 entry_urls.push((id, loc.loc_raw.clone(), loc.lastmod.clone()));
+                if cfg.spider.hreflang.store {
+                    sitemap_hreflang(
+                        core,
+                        cfg,
+                        scope,
+                        rules,
+                        &mut batch,
+                        sid,
+                        id,
+                        &loc.hreflang,
+                        &mut hreflang_rows,
+                    );
+                }
             }
         }
         batch.sitemaps.push(SitemapWrite {
@@ -1242,9 +1365,73 @@ pub(crate) fn build_sitemap_batch(
             depth: fs.depth,
             found_via: fs.found_via.clone(),
             entry_urls,
+            hreflang: hreflang_rows,
         });
     }
     batch
+}
+
+/// hreflang-Angaben eines `<url>`-Blocks (TECH-210, K-41e): Ziele laufen über `decide` wie HTML-hreflang
+/// (`LinkType::Hreflang`, `spider.hreflang`); `order` zählt je `loc`-URL fortlaufend über alle Sitemaps, damit
+/// mehrfach gelistete URLs nichts überschreiben. `target_id` gilt, sobald eine Zielzeile existiert.
+#[allow(clippy::too_many_arguments)]
+fn sitemap_hreflang(
+    core: &mut Core,
+    cfg: &CrawlConfig,
+    scope: &Scope,
+    rules: &os_url::RuleSet,
+    batch: &mut WriteBatch,
+    sitemap: SitemapId,
+    loc_id: UrlId,
+    refs: &[HreflangRef],
+    out: &mut Vec<(UrlId, HreflangRow)>,
+) {
+    for h in refs {
+        let ext = synth_link(LinkType::Hreflang, &h.href_raw, h.resolved.as_deref());
+        let target = h
+            .resolved
+            .as_deref()
+            .and_then(|r| Url::parse(r).ok())
+            .filter(|u| matches!(u.scheme(), "http" | "https") && u.host_str().is_some())
+            .map(|u| os_url::normalize(&u));
+        let target_id = target.and_then(|norm| {
+            let class = scope.classify(&norm);
+            let internal = class == ScopeClass::Internal;
+            let d = decide::decide(&ext, class, cfg, true);
+            if !d.store && !d.crawl {
+                return core.lookup(&norm.encoded).map(|s| s.id);
+            }
+            let cand = Cand {
+                norm: &norm,
+                internal,
+                kind: DiscoveryKind::Sitemap,
+                store: d.store,
+                crawl: d.crawl,
+                reason: d.reason,
+                resource_like: false,
+                apply_rules: true,
+                purpose: if internal {
+                    Purpose::Page
+                } else {
+                    Purpose::External
+                },
+            };
+            Some(core.discover(&cand, None, 0, 0, rules, batch))
+        });
+        let next = core.sitemap_hreflang_next.entry(loc_id).or_insert(0);
+        let mut r = h.clone();
+        r.order = *next;
+        r.source = HintSource::Sitemap;
+        *next += 1;
+        out.push((
+            loc_id,
+            HreflangRow {
+                target_id,
+                sitemap_id: Some(sitemap),
+                r,
+            },
+        ));
+    }
 }
 
 #[cfg(test)]
@@ -1471,5 +1658,113 @@ mod tests {
             .iter()
             .filter(|n| n.url.ends_with(".xml"))
             .all(|n| !n.in_tables));
+    }
+
+    fn alt(code: &str, href: &str) -> HreflangRef {
+        HreflangRef {
+            source: HintSource::Sitemap,
+            code_raw: code.to_string(),
+            code_norm: code.to_string(),
+            code_valid: true,
+            invalid_reason: None,
+            href_raw: href.to_string(),
+            resolved: Some(href.to_string()),
+            in_head: false,
+            order: 0,
+        }
+    }
+
+    fn urlset_fetch(url: &str, locs: Vec<SitemapLoc>) -> FetchedSitemap {
+        FetchedSitemap {
+            url: url.to_string(),
+            parent: None,
+            depth: 0,
+            found_via: "config".into(),
+            fetch: FetchResult {
+                url: Url::parse(url).unwrap(),
+                started_at: Timestamp::UNIX_EPOCH,
+                outcome: response(200, &[("content-type", "application/xml")], "<x/>").outcome,
+            },
+            doc: Some(SitemapDoc {
+                kind: SitemapKind::Urlset,
+                locs,
+                invalid_entries: 0,
+                size_bytes: 10,
+            }),
+        }
+    }
+
+    // spec: TECH-210
+    #[test]
+    fn sitemap_hreflang_is_numbered_per_url_across_sitemaps_and_targets_follow_decide() {
+        let cfg = CrawlConfig::default();
+        let start = os_url::parse_start_url("https://site.test/").unwrap();
+        let scope = Scope::new(&start, &cfg.scope);
+        let rules = os_url::RuleSet::compile(&[], &[], false).unwrap();
+        let mut core = Core::new(0, None);
+        let loc = |alts: Vec<HreflangRef>| SitemapLoc {
+            loc_raw: "https://site.test/a".to_string(),
+            url: Some("https://site.test/a".to_string()),
+            lastmod: None,
+            hreflang: alts,
+        };
+        let fetched = vec![
+            urlset_fetch(
+                "https://site.test/s1.xml",
+                vec![loc(vec![
+                    alt("de", "https://site.test/a"),
+                    alt("fr", "https://site.test/fr/a"),
+                ])],
+            ),
+            urlset_fetch(
+                "https://site.test/s2.xml",
+                vec![loc(vec![alt("en", "https://other.test/en/a")])],
+            ),
+        ];
+        let batch = build_sitemap_batch(&mut core, &cfg, &scope, &rules, &fetched);
+        let orders = |i: usize| -> Vec<(u32, String)> {
+            batch.sitemaps[i]
+                .hreflang
+                .iter()
+                .map(|(_, h)| (h.r.order, h.r.code_norm.clone()))
+                .collect()
+        };
+        assert_eq!(orders(0), [(0, "de".to_string()), (1, "fr".to_string())]);
+        assert_eq!(
+            orders(1),
+            [(2, "en".to_string())],
+            "die Nummer läuft über alle Sitemaps weiter, nichts wird überschrieben"
+        );
+        let a_id = batch.sitemaps[0].entry_urls[0].0;
+        assert!(batch
+            .sitemaps
+            .iter()
+            .flat_map(|s| &s.hreflang)
+            .all(|(id, h)| *id == a_id
+                && h.r.source == HintSource::Sitemap
+                && h.target_id.is_some()));
+        assert_eq!(
+            batch.sitemaps[0].hreflang[0].1.sitemap_id,
+            Some(batch.sitemaps[0].id)
+        );
+        // Standard: hreflang speichern an, crawlen aus – interne und externe Ziele sind gespeichert, nicht eingeplant.
+        let target = |url: &str| batch.new_urls.iter().find(|n| n.url == url).unwrap();
+        let fr = target("https://site.test/fr/a");
+        assert!(fr.in_tables);
+        assert_eq!(fr.not_crawled_reason, Some(NotCrawledReason::StoreOnly));
+        let en = target("https://other.test/en/a");
+        assert!(!en.is_internal && en.in_tables);
+        assert!(!batch
+            .queue
+            .iter()
+            .any(|q| matches!(q, QueueOp::Push { id, .. } if *id == fr.id || *id == en.id)));
+
+        // Speichern aus: keine Zeilen, keine Zielzeilen.
+        let mut off = CrawlConfig::default();
+        off.spider.hreflang = os_model::StoreCrawl::OFF;
+        let mut core = Core::new(0, None);
+        let batch = build_sitemap_batch(&mut core, &off, &scope, &rules, &fetched);
+        assert!(batch.sitemaps.iter().all(|s| s.hreflang.is_empty()));
+        assert!(batch.new_urls.iter().all(|n| !n.url.contains("/fr/")));
     }
 }

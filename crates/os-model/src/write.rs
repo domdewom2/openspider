@@ -31,6 +31,9 @@ pub struct WriteBatch {
     pub events: Vec<CrawlEvent>,
     /// Zähler-Deltas.
     pub counters: Vec<(String, i64)>,
+    /// URL-Flags `(URL, Flag, Wert)` (`url_flags`, z. B. `redirect_loop`, `redirect_limit_reached`); der Writer
+    /// schreibt sie in derselben Transaktion und stempelt `change_seq` der URL (M1.md 3.11).
+    pub url_flags: Vec<(UrlId, String, Option<String>)>,
 }
 
 /// Eine neue URL.
@@ -365,6 +368,9 @@ pub struct SitemapWrite {
     pub found_via: String,
     /// Einträge: (URL, `loc` roh, `lastmod`).
     pub entry_urls: Vec<(UrlId, String, Option<String>)>,
+    /// hreflang-Angaben aus den `<url>`-Blöcken, zugeordnet der `loc`-URL. Der Writer speichert sie mit
+    /// `source = 'sitemap'`, `sitemap_id` = Kennung dieser Sitemap und `position` = `r.order` (M1.md 3.11).
+    pub hreflang: Vec<(UrlId, HreflangRow)>,
 }
 
 /// Eine robots.txt-Datei.

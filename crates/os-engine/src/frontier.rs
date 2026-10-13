@@ -273,6 +273,11 @@ pub struct Core {
     pub redirects: RedirectGraph,
     /// Tiefengrenze (`None` = unbegrenzt).
     pub max_depth: Option<u32>,
+    /// Schlüssel (URL Encoded Address) der Sitemap-Dateien, die in diesem Crawl schon abgerufen werden oder
+    /// wurden – angefragte und End-URL (K-41a: genau ein Abruf je Sitemap-Datei, nur über `sitemaps::ingest`).
+    pub sitemap_keys: std::collections::HashSet<String>,
+    /// Nächste Reihenfolgenummer je URL für hreflang-Angaben aus Sitemaps (fortlaufend über alle Sitemaps).
+    pub sitemap_hreflang_next: HashMap<UrlId, u32>,
 }
 
 impl Core {
@@ -290,6 +295,8 @@ impl Core {
             sessions: vec![None],
             redirects: RedirectGraph::default(),
             max_depth,
+            sitemap_keys: std::collections::HashSet::new(),
+            sitemap_hreflang_next: HashMap::new(),
         }
     }
 

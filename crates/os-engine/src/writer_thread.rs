@@ -102,6 +102,7 @@ fn is_empty(b: &WriteBatch) -> bool {
         && b.meta.is_empty()
         && b.events.is_empty()
         && b.counters.is_empty()
+        && b.url_flags.is_empty()
 }
 
 /// Der Writer-Thread samt Kanal.
@@ -267,6 +268,7 @@ fn merge(into: &mut WriteBatch, from: WriteBatch) {
     into.meta.extend(from.meta);
     into.events.extend(from.events);
     into.counters.extend(from.counters);
+    into.url_flags.extend(from.url_flags);
 }
 
 fn record_error(shared: &Shared, e: StoreError) {
