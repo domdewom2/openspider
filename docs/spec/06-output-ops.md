@@ -396,6 +396,7 @@ Menü „Bulk Export“. Alle Bulk-Exporte beziehen sich auf den gesamten Crawl 
   - [ ] `<img src="pic.jpg" alt="Hund">` → `Type`=Image, `Alt Text`=Hund, `Path Type`=Path-Relative, `Size (Bytes)` = Größe des Bildes (wenn gecrawlt).
   - [ ] Zwei identische Links auf derselben Seite → zwei Zeilen (keine Deduplizierung).
   - [ ] `Status Code` ist leer, wenn das Ziel nicht gecrawlt wurde (z. B. externe Links bei deaktivierter Prüfung); `Status` dann `Not Crawled` **(OS-Festlegung)**.
+  - [ ] `Destination` = Adresse der Ziel-URL (aufgelöst, wie `Address` der Ziel-Zeile); nur für Links ohne auflösbares Ziel (z. B. `mailto:`, `tel:`, ungültige URL) steht der Rohwert des Attributs. Die Crawl-Datei hält je Link den Rohwert wie im Markup (`links.target_raw`) und die Kennung der Ziel-URL; jeder gespeicherte Link mit auflösbarem Ziel hat eine Ziel-URL-Zeile (OS-Festlegung 13.10.2026, Welle-2-Sichtung, K-37).
   - [ ] Bei JS-Rendering: Link nur im gerenderten DOM → `Link Origin`=Rendered HTML; in beiden → `HTML & Rendered HTML`.
   - [ ] Link im `<nav>` → `Link Position`=Navigation; im `<footer>` → Footer; im `<main>` → Content.
   - [ ] 1 Mio. Links werden in < 60 s als CSV geschrieben (Referenz-Hardware: Apple M1, SSD).

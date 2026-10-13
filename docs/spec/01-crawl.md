@@ -380,6 +380,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 - **Akzeptanzkriterien:**
   - [ ] Jeder Statuscode 100–599 wird unverändert übernommen, auch nicht registrierte wie 218, 299, 418, 499, 520–530.
   - [ ] Fehlt die Reason-Phrase (HTTP/2 oder leer), wird der Standardtext laut IANA-Registry eingesetzt; für unbekannte Codes bleibt `Status` leer.
+  - [ ] Reason-Phrasen mit Bytes außerhalb von ASCII liefert der HTTP-Stack nicht; dann gilt ebenfalls der IANA-Standardtext (OS-Festlegung 13.10.2026, Welle-2-Sichtung, K-39). Gespeichert wird die gesendete Phrase nur, wenn sie vom IANA-Text abweicht; `Status` ist in jedem Fall gefüllt (Phrase, sonst IANA, sonst leer).
   - [ ] 1xx-Zwischenantworten (z. B. 103 Early Hints) werden übersprungen; gespeichert wird die finale Antwort.
   - [ ] Codes außerhalb 100–599 (z. B. 600, 999) werden gespeichert und der Klasse „Sonstige“ zugeordnet (OS-Festlegung; die Referenz kennt diese Klasse nicht). Sie erscheinen im Filter „Sonstige“ und in keinem anderen Statuscode-Filter (insbesondere nicht unter „Serverfehler (5xx)“ oder „Keine Antwort“).
   - [ ] Ohne Codes außerhalb 100–599 ist der Filter „Sonstige“ ausgeblendet; die Summe aller Klassenfilter entspricht der Zeilenzahl des Filters „Alle“.
@@ -689,6 +690,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
   - [ ] Speichern aus, Crawlen an: URL wird angefragt, erscheint nicht in Tabellen; über sie gefundene Seiten erscheinen normal.
   - [ ] Beide aus: URL wird weder angefragt noch angezeigt; der Link ist in den Outlinks der Quellseite nicht vorhanden.
   - [ ] Änderungen während eines pausierten Crawls wirken auf alle noch nicht abgerufenen URLs.
+- **Zuordnung der Linktypen zu den Schaltern (OS-Festlegung 13.10.2026, Welle-2-Sichtung, K-40):** Hyperlink (`<a>`, `<area>`) und PDF-Link → „Interne Hyperlinks“ bzw. „Externe Links“; Bild, CSS, JavaScript, Medien, iframe, Canonical, rel next/prev, hreflang, Meta Refresh, AMP, Mobile Alternate → jeweils eigener Schalter; Typ „Sonstige“ (Schriftarten aus `@font-face`, `<object>`/`<embed>`, `preload` mit unbekanntem `as`) → Schalter CSS; HTTP Refresh → Schalter Meta Refresh; HTTP-Weiterleitung und JavaScript-Weiterleitung → immer speichern und crawlen (Weiterleitungen folgen nach CRAWL-014); HSTS Policy und XML Sitemap → nur speichern (Sitemap-Dateien ruft ausschließlich der Sitemap-Ingest ab, TECH-210). Ist für einen Typ „Speichern“ aus, entstehen weder Link-Zeile noch Detailzeile (Canonicals, hreflang, Paginierung) noch Spaltenwerte. Eine robots.txt eines internen Hosts erscheint als eigene URL in den Tabellen (CRAWL-098); robots.txt-Dateien externer Hosts und Sitemap-Dateien sind eigene URL-Zeilen mit Statuscode, erscheinen aber nicht in den Tabellen (Sitemap-Dateien stehen im Sitemaps-Bereich, TECH-210). Der Paritätslauf (M1-P29) prüft diese Festlegung gegen die Referenz.
 - **Testfixture:** `crawl-store-crawl-matrix`: Seite mit je einem Link jedes Typs (Bild, CSS, JS, Medien, intern, extern, Canonical, next/prev, hreflang, AMP, Meta Refresh, iframe, mobile alternate); Testmatrix über alle 4 Schalterkombinationen je Typ.
 
 ### CRAWL-039 Bilder
@@ -899,6 +901,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
   - [ ] „Internem nofollow folgen“ an: interne nofollow-Ziele werden angefragt, externe nicht (und umgekehrt).
   - [ ] `rel="sponsored"` und `rel="ugc"` verhalten sich wie `nofollow`.
   - [ ] Auch wenn eine Folgen-Option nofollow-Links verfolgen lässt, behalten diese Links in den Outlinks `Folgen` = false (Anzeige unverändert; übernommen aus TECH-067, das hierher verweist).
+  - [ ] Nofollow (am Link wie als Seiten-Direktive) wirkt nur auf Hyperlinks (inkl. `<area>`) und PDF-Links; Bilder, CSS, JavaScript, Canonicals, hreflang, Paginierung und Refresh-Ziele sind nicht betroffen. Die Folgen-Optionen heben Seiten-nofollow ebenso auf wie `rel`-nofollow (OS-Festlegung 13.10.2026, Welle-2-Sichtung, K-40).
 - **Testfixture:** `crawl-nofollow`: `/` mit `rel=nofollow`, `rel=sponsored`, `rel=ugc` auf interne und externe Ziele; `/meta-nofollow`, `/header-nofollow`, `/googlebot-nofollow`.
 
 ### CRAWL-057 Links in PDF-Dokumenten
@@ -1399,7 +1402,8 @@ Gemeinsame Regeln: Ein Limit von 0 oder leer bedeutet „unbegrenzt“, sofern n
   - [ ] Ein Host-Wechsel (anderer Port, http vs. https) bedeutet eine eigene robots.txt.
   - [ ] Jeder Content-Type mit Textinhalt wird als robots.txt gelesen (Referenz-Fix 18.5).
   - [ ] Sehr große robots.txt (mehrere MB) führen zu keinem Absturz (Referenz-Fix 19.7).
-  - [ ] Die robots.txt wird je Host genau einmal pro Crawl abgerufen und erscheint selbst als URL in den Tabellen (Inhaltstyp Text).
+  - [ ] Die robots.txt wird je Host genau einmal pro Crawl abgerufen; die eines internen Hosts erscheint selbst als URL in den Tabellen (Inhaltstyp Text).
+  - [ ] Die robots.txt externer Hosts wird für die Regelprüfung abgerufen und als URL-Zeile ohne Tabellen-Sichtbarkeit gespeichert (OS-Festlegung 13.10.2026, Welle-2-Sichtung, K-40).
 - **Testfixture:** `crawl-robots`: `robots.txt` mit Gruppen für `*`, `OpenSpider`, `Googlebot`; Regeln `Disallow: /privat/`, `Allow: /privat/oeffentlich`, `Disallow: /*.pdf$`, `Disallow: /*?sessionid=`, `Allow: /seite$`, `Disallow: /seite`; Links auf alle Grenzfälle; Varianten-Hosts `bom.site.test` (BOM + CRLF), `big.site.test` (3 MB), `redirect.site.test` (robots → 301 → andere Datei).
 
 ### CRAWL-099 robots.txt-Modi

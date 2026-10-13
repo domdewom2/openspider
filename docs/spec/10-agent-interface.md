@@ -13,6 +13,8 @@ Meilensteine (OS-Festlegung, einzige Quelle der Zuordnung): **M1** (headless, ST
 
 **Abgrenzung zu OUT-285 (OS-Festlegung, Nacharbeit reviews-open-v1):** OUT-285 bleibt führend für HTTP-Transport, Menü/Werkzeugliste und die Markdown-Werkzeugbeschreibung (P1). Der STDIO-Kern (`openspider mcp`, lesende Werkzeuge) ist als AGENT-001 mit P0 vorgezogen; OUT-285 setzt darauf auf. Die Standard-Freigabe der Werkzeuge ist ausschließlich in AGENT-003 festgelegt (nur Klasse `read`); OUT-285 und UI-129 übernehmen sie. Jede ID trägt genau eine Priorität; die Werkzeugklasse steht im eigenen Feld.
 
+**Begriff „MCP-Fehler“ (OS-Festlegung 13.10.2026, Welle-2-Sichtung, K-38):** Fehler, die ein Modell selbst korrigieren kann – unbekanntes oder nicht freigegebenes Werkzeug, ungültige Parameter (`limit`, `cursor`, Tab-/Filtername, Prioritätswert), verbotenes Crawl-Ziel, unbekannte Crawl-ID, Werkzeugfehler – liefert der Server als Werkzeugergebnis mit `isError: true` und lesbarer Meldung samt Hinweis (z. B. wie man ein Werkzeug freigibt, welche Namen gültig sind). JSON-RPC-Fehler gibt es nur für Protokollfehler (ungültige Nachricht, unbekannte Methode). Crawl-Werkzeuge führen ihr Ziel in den Argumenten `start_url`, `url` oder `urls`; daran prüft der Server Domain-Liste (AGENT-003) und – solange „Private Ziele erlauben“ aus ist – literale Loopback-/private Adressen schon vor dem Aufruf; die Prüfung nach DNS-Auflösung bleibt AGENT-020. Schließt der Client stdin vor dem Handshake, endet der Server mit Exit-Code 0.
+
 ---
 
 ## A. Server & Transport
