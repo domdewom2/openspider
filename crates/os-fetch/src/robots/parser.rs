@@ -3,9 +3,10 @@
 //! * Zeilenenden CRLF, LF und CR, BOM am Anfang, Kommentare (`#`), Leerzeichen um den Doppelpunkt.
 //! * Nur die ersten 500 KiB werden ausgewertet; eine dabei angeschnittene letzte Zeile entfällt
 //!   (ein abgeschnittenes Muster würde sonst mehr sperren als gewollt).
-//! * Gruppen: aufeinanderfolgende `User-agent`-Zeilen bilden eine Gruppe. Jede andere Direktive
-//!   (auch `Sitemap` und Unbekanntes) beendet die Aufzählung der Agenten; ein späteres `User-agent`
-//!   beginnt dann eine neue Gruppe. Regeln vor der ersten `User-agent`-Zeile gelten nirgends.
+//! * Gruppen wie bei Google (OS-Festlegung K-29): aufeinanderfolgende `User-agent`-Zeilen bilden eine
+//!   Gruppe, auch über `Sitemap:`, `Crawl-delay` und unbekannte Zeilen hinweg. Eine neue Gruppe beginnt
+//!   erst mit einer `User-agent`-Zeile nach einer Regelzeile (`Allow`/`Disallow`). Regeln vor der ersten
+//!   `User-agent`-Zeile gelten nirgends.
 //! * Auswahl: alle Gruppen, die das Token nennen (case-insensitiv), werden zusammengeführt; nur wenn es
 //!   keine gibt, gelten die `*`-Gruppen (ebenfalls zusammengeführt).
 //! * Vorrang: längstes Muster (Länge des kanonischen Musters inklusive `*` und `$`), bei Gleichstand
@@ -93,7 +94,7 @@ pub fn parse(body: &str) -> RobotsTxt {
     let text = text.strip_prefix('\u{feff}').unwrap_or(text);
     let mut txt = RobotsTxt::default();
     // Gruppe, der folgende Regeln zugeordnet werden; `agent_run`: es folgen weitere User-agent-Zeilen
-    // in dieselbe Gruppe.
+    // in dieselbe Gruppe (bleibt bis zur nächsten Regelzeile bestehen, K-29).
     let mut current: Option<usize> = None;
     let mut agent_run = false;
 
@@ -156,20 +157,14 @@ pub fn parse(body: &str) -> RobotsTxt {
                 }
             }
             "crawl-delay" => {
-                agent_run = false;
                 if let (Some(idx), Ok(secs)) = (current, value.parse::<f64>()) {
                     if secs.is_finite() && secs >= 0.0 {
                         txt.groups[idx].crawl_delay.get_or_insert(secs);
                     }
                 }
             }
-            "sitemap" => {
-                agent_run = false;
-                if !value.is_empty() {
-                    txt.sitemaps.push(value.to_string());
-                }
-            }
-            _ => agent_run = false,
+            "sitemap" if !value.is_empty() => txt.sitemaps.push(value.to_string()),
+            _ => {}
         }
     }
     txt
@@ -414,18 +409,34 @@ mod tests {
 
     // spec: CRAWL-098
     #[test]
-    fn rules_outside_groups_and_after_other_directives() {
+    fn rules_outside_groups_and_group_boundaries_follow_google() {
         // Regeln vor jedem User-agent gelten nirgends.
         let txt = parse("Disallow: /vorab\nUser-agent: *\nDisallow: /x\n");
         assert!(!blocked(&txt, "x", "/vorab"));
         // Sitemap in der Mitte einer Gruppe beendet die Gruppe nicht für ihre Regeln ...
         let txt = parse("User-agent: a\nSitemap: https://s.test/m.xml\nDisallow: /a/\n");
         assert!(blocked(&txt, "a", "/a/x"));
-        // ... aber ein folgendes User-agent beginnt eine neue Gruppe.
+        // ... und auch nicht die Aufzählung der Agenten (K-29): a und b bilden eine Gruppe.
         let txt =
             parse("User-agent: a\nSitemap: https://s.test/m.xml\nUser-agent: b\nDisallow: /b/\n");
         assert!(blocked(&txt, "b", "/b/x"));
+        assert!(blocked(&txt, "a", "/b/x"));
+        // Dasselbe über unbekannte Zeilen und Crawl-delay hinweg.
+        let txt =
+            parse("User-agent: a\nHost: x.test\nCrawl-delay: 3\nUser-agent: b\nDisallow: /b/\n");
+        assert!(blocked(&txt, "a", "/b/x"));
+        assert!(blocked(&txt, "b", "/b/x"));
+        assert_eq!(txt.crawl_delay("a"), Some(3.0));
+        // Erst nach einer Regelzeile beginnt eine neue Gruppe.
+        let txt = parse("User-agent: a\nDisallow: /a/\nSitemap: https://s.test/m.xml\nUser-agent: b\nDisallow: /b/\n");
+        assert!(blocked(&txt, "a", "/a/x"));
         assert!(!blocked(&txt, "a", "/b/x"));
+        assert!(blocked(&txt, "b", "/b/x"));
+        assert!(!blocked(&txt, "b", "/a/x"));
+        // Auch eine leere Regel (`Disallow:`) ist eine Regelzeile und beendet die Aufzählung.
+        let txt = parse("User-agent: a\nDisallow:\nUser-agent: b\nDisallow: /b/\n");
+        assert!(!blocked(&txt, "a", "/b/x"));
+        assert!(blocked(&txt, "b", "/b/x"));
     }
 
     // spec: CRAWL-098
