@@ -1,0 +1,8 @@
+#1 conn=1 GET site.test /who?x=1 tls=false at <TS>
+    Host: site.test
+    Connection: close
+    Referer: {BASE}/start
+#2 conn=2 GET other.test / tls=false at <TS>
+    Host: other.test
+    Connection: close
+    X-Request-Id: <ID>

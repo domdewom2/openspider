@@ -1,0 +1,533 @@
+//! Eigener HTTP/1.1-Server: Annahme-Schleife, TLS-Erkennung am ersten Byte, Request-Parser und
+//! Antwort-Ausgabe. Handgeschrieben, weil die Fehlerrouten (eigener Reason-Text, abgebrochene
+//! Antworten, TCP-Reset, tröpfelnder Body, mehrfache Header) unter hyper/axum nicht möglich sind.
+
+use std::io::{self, Write};
+use std::pin::Pin;
+use std::sync::Arc;
+use std::task::{Context, Poll};
+use std::time::Duration;
+
+use bytes::{Buf, BytesMut};
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, ReadBuf};
+use tokio::net::{TcpListener, TcpStream};
+use tokio::task::JoinSet;
+use tokio_rustls::server::TlsStream;
+use tokio_rustls::TlsAcceptor;
+
+use crate::log::RequestRecord;
+use crate::respond::{build_reply, Mode, Reply, Request};
+use crate::{lock, synthetic, AppState};
+
+/// Größtes akzeptiertes Request-Kopfstück.
+const MAX_HEAD: usize = 64 * 1024;
+/// Größter Request-Body, der gelesen und verworfen wird.
+const MAX_REQUEST_BODY: usize = 16 * 1024 * 1024;
+/// Stückgröße des Bodys bei `chunked` ohne `trickle_bytes_per_s`.
+const CHUNK_SIZE: usize = 128;
+
+/// Verbindung, unverschlüsselt oder TLS.
+enum Conn {
+    Plain(TcpStream),
+    Tls(Box<TlsStream<TcpStream>>),
+}
+
+impl Conn {
+    /// Schließt die Verbindung hart (RST statt FIN).
+    fn reset(self) {
+        let tcp = match self {
+            Conn::Plain(t) => t,
+            Conn::Tls(t) => (*t).into_inner().0,
+        };
+        // SO_LINGER mit 0 s blockiert beim Schließen nicht (das tut nur ein Wert > 0), sondern
+        // verwirft ungesendete Daten und sendet einen Reset – genau das wird hier gebraucht.
+        #[allow(deprecated)]
+        let _ = tcp.set_linger(Some(Duration::ZERO));
+        drop(tcp);
+    }
+}
+
+impl AsyncRead for Conn {
+    fn poll_read(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &mut ReadBuf<'_>,
+    ) -> Poll<io::Result<()>> {
+        match self.get_mut() {
+            Conn::Plain(s) => Pin::new(s).poll_read(cx, buf),
+            Conn::Tls(s) => Pin::new(&mut **s).poll_read(cx, buf),
+        }
+    }
+}
+
+impl AsyncWrite for Conn {
+    fn poll_write(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &[u8],
+    ) -> Poll<io::Result<usize>> {
+        match self.get_mut() {
+            Conn::Plain(s) => Pin::new(s).poll_write(cx, buf),
+            Conn::Tls(s) => Pin::new(&mut **s).poll_write(cx, buf),
+        }
+    }
+
+    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
+        match self.get_mut() {
+            Conn::Plain(s) => Pin::new(s).poll_flush(cx),
+            Conn::Tls(s) => Pin::new(&mut **s).poll_flush(cx),
+        }
+    }
+
+    fn poll_shutdown(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
+        match self.get_mut() {
+            Conn::Plain(s) => Pin::new(s).poll_shutdown(cx),
+            Conn::Tls(s) => Pin::new(&mut **s).poll_shutdown(cx),
+        }
+    }
+}
+
+/// Nimmt Verbindungen an, bis die Aufgabe abgebrochen wird (dann enden auch alle Verbindungen).
+pub(crate) async fn accept_loop(listener: TcpListener, state: Arc<AppState>) {
+    let mut conns: JoinSet<()> = JoinSet::new();
+    loop {
+        tokio::select! {
+            accepted = listener.accept() => match accepted {
+                Ok((tcp, _)) => {
+                    conns.spawn(serve(tcp, Arc::clone(&state)));
+                }
+                Err(_) => tokio::time::sleep(Duration::from_millis(10)).await,
+            },
+            Some(_) = conns.join_next(), if !conns.is_empty() => {}
+        }
+    }
+}
+
+async fn serve(tcp: TcpStream, state: Arc<AppState>) {
+    let _ = tcp.set_nodelay(true);
+    let conn_id = state.log.new_conn();
+    // Erstes Byte 0x16 = TLS-Handshake (ClientHello), alles andere ist HTTP.
+    let mut first = [0u8; 1];
+    // `peek` wartet auf das erste Byte; 0 Byte oder ein Fehler bedeutet: Verbindung ohne Request.
+    if !matches!(tcp.peek(&mut first).await, Ok(n) if n > 0) {
+        return;
+    }
+    let (conn, tls) = if first[0] == 0x16 {
+        let Ok(material) = state.tls() else { return };
+        let acceptor = TlsAcceptor::from(Arc::clone(&material.server_config));
+        match acceptor.accept(tcp).await {
+            Ok(stream) => (Conn::Tls(Box::new(stream)), true),
+            Err(_) => return,
+        }
+    } else {
+        (Conn::Plain(tcp), false)
+    };
+    let _ = run(conn, tls, conn_id, &state).await;
+}
+
+/// Ein geparster Request-Kopf.
+struct Head {
+    method: String,
+    target: String,
+    http11: bool,
+    headers: Vec<(String, String)>,
+}
+
+impl Head {
+    fn header(&self, name: &str) -> Option<&str> {
+        self.headers
+            .iter()
+            .find(|(k, _)| k.eq_ignore_ascii_case(name))
+            .map(|(_, v)| v.as_str())
+    }
+
+    fn has_token(&self, name: &str, token: &str) -> bool {
+        self.headers
+            .iter()
+            .filter(|(k, _)| k.eq_ignore_ascii_case(name))
+            .flat_map(|(_, v)| v.split(','))
+            .any(|t| t.trim().eq_ignore_ascii_case(token))
+    }
+}
+
+async fn run(mut conn: Conn, tls: bool, conn_id: u64, state: &AppState) -> io::Result<()> {
+    let mut buf = BytesMut::with_capacity(4096);
+    loop {
+        let head = match read_head(&mut conn, &mut buf).await? {
+            HeadResult::Head(h) => h,
+            HeadResult::Closed => return Ok(()),
+            HeadResult::Malformed => {
+                conn.write_all(
+                    b"HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+                )
+                .await?;
+                return Ok(());
+            }
+        };
+
+        // Request-Body lesen und verwerfen, damit Keep-Alive-Verbindungen im Takt bleiben.
+        let mut keep_alive = if head.http11 {
+            !head.has_token("connection", "close")
+        } else {
+            head.has_token("connection", "keep-alive")
+        };
+        if head.header("transfer-encoding").is_some() {
+            keep_alive = false; // gechunkte Request-Bodies werden nicht geparst
+        }
+        if let Some(len) = head
+            .header("content-length")
+            .and_then(|v| v.trim().parse::<usize>().ok())
+        {
+            if len > MAX_REQUEST_BODY {
+                return Ok(());
+            }
+            while buf.len() < len {
+                if conn.read_buf(&mut buf).await? == 0 {
+                    return Ok(());
+                }
+            }
+            buf.advance(len);
+        }
+
+        let (target, host_from_target) = split_target(&head.target);
+        // Absolute Form des Ziels hat Vorrang vor dem Host-Header (RFC 9112, 3.2.2).
+        let host = host_from_target
+            .or_else(|| head.header("host").map(host_only))
+            .unwrap_or_default();
+        let path = target
+            .split_once('?')
+            .map_or(target, |(p, _)| p)
+            .to_string();
+        let req = Request {
+            method: head.method.clone(),
+            target: target.to_string(),
+            path,
+            host,
+            headers: head.headers.clone(),
+            tls,
+        };
+
+        if state.counts.is_some() && req.path == synthetic::REQUEST_LOG_PATH {
+            let reply = request_log_reply(state);
+            if write_reply(&mut conn, &reply, req.method == "HEAD", keep_alive).await?
+                == Next::Close
+            {
+                return Ok(());
+            }
+            continue;
+        }
+
+        let _inflight = state.log.begin();
+        if let Some(counts) = &state.counts {
+            *lock(counts).entry(req.path.clone()).or_insert(0) += 1;
+        }
+        if state.detailed_log {
+            state.log.push(RequestRecord {
+                seq: 0,
+                ts: crate::log::now_ts(),
+                conn_id,
+                method: req.method.clone(),
+                host: req.host.clone(),
+                path_and_query: req.target.clone(),
+                headers: req.headers.clone(),
+                tls,
+            });
+        }
+
+        let reply = build_reply(state, &req).await;
+        if reply.mode == Mode::Hang {
+            // Nie antworten; die Aufgabe endet erst, wenn die Site beendet wird.
+            std::future::pending::<()>().await;
+        }
+        match write_reply(&mut conn, &reply, req.method == "HEAD", keep_alive).await? {
+            Next::KeepAlive => {}
+            Next::Close => return Ok(()),
+            Next::Reset => {
+                conn.reset();
+                return Ok(());
+            }
+        }
+    }
+}
+
+enum HeadResult {
+    Head(Head),
+    Closed,
+    Malformed,
+}
+
+async fn read_head(conn: &mut Conn, buf: &mut BytesMut) -> io::Result<HeadResult> {
+    let mut searched = 0;
+    let end = loop {
+        // Führende Leerzeilen zwischen Requests ignorieren (RFC 9112, 2.2).
+        while buf.starts_with(b"\r\n") {
+            buf.advance(2);
+            searched = 0;
+        }
+        if let Some(pos) = find_head_end(buf, searched) {
+            break pos;
+        }
+        searched = buf.len().saturating_sub(3);
+        if buf.len() > MAX_HEAD {
+            return Ok(HeadResult::Malformed);
+        }
+        match conn.read_buf(buf).await {
+            Ok(0) | Err(_) => return Ok(HeadResult::Closed),
+            Ok(_) => {}
+        }
+    };
+    let raw = buf.split_to(end + 4);
+    let text = String::from_utf8_lossy(&raw[..end]);
+    let mut lines = text.split("\r\n");
+    let Some(request_line) = lines.next() else {
+        return Ok(HeadResult::Malformed);
+    };
+    let mut parts = request_line.split(' ');
+    let (Some(method), Some(target), Some(version), None) =
+        (parts.next(), parts.next(), parts.next(), parts.next())
+    else {
+        return Ok(HeadResult::Malformed);
+    };
+    if !version.starts_with("HTTP/1.") || method.is_empty() || target.is_empty() {
+        return Ok(HeadResult::Malformed);
+    }
+    let mut headers = Vec::new();
+    for line in lines {
+        let Some((name, value)) = line.split_once(':') else {
+            return Ok(HeadResult::Malformed);
+        };
+        headers.push((name.trim().to_string(), value.trim().to_string()));
+    }
+    Ok(HeadResult::Head(Head {
+        method: method.to_string(),
+        target: target.to_string(),
+        http11: version == "HTTP/1.1",
+        headers,
+    }))
+}
+
+fn find_head_end(buf: &[u8], from: usize) -> Option<usize> {
+    buf.get(from..)?
+        .windows(4)
+        .position(|w| w == b"\r\n\r\n")
+        .map(|p| p + from)
+}
+
+/// Zerlegt ein Request-Ziel; die absolute Form (`http://host/pfad`) liefert den Host mit.
+fn split_target(target: &str) -> (&str, Option<String>) {
+    for scheme in ["http://", "https://"] {
+        if let Some(rest) = target.strip_prefix(scheme) {
+            let (authority, path) = rest
+                .find('/')
+                .map_or((rest, "/"), |i| (&rest[..i], &rest[i..]));
+            return (path, Some(host_only(authority)));
+        }
+    }
+    (target, None)
+}
+
+/// Host ohne Port in Kleinbuchstaben (`[::1]:80` → `[::1]`).
+fn host_only(value: &str) -> String {
+    let value = value.trim();
+    let host = if value.starts_with('[') {
+        value.find(']').map_or(value, |i| &value[..=i])
+    } else {
+        value.split(':').next().unwrap_or(value)
+    };
+    host.to_ascii_lowercase()
+}
+
+fn request_log_reply(state: &AppState) -> Reply {
+    let counts = state.counts.as_ref().map(|m| {
+        lock(m)
+            .iter()
+            .map(|(k, v)| (k.clone(), *v))
+            .collect::<std::collections::BTreeMap<_, _>>()
+    });
+    let counts = counts.unwrap_or_default();
+    let total: u64 = counts.values().sum();
+    let json = serde_json::json!({ "total": total, "paths": counts });
+    Reply {
+        status: 200,
+        reason: "OK".to_string(),
+        headers: vec![("Content-Type".to_string(), "application/json".to_string())],
+        body: json.to_string().into_bytes(),
+        chunked: false,
+        trickle: None,
+        mode: Mode::Normal,
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum Next {
+    KeepAlive,
+    Close,
+    /// Verbindung hart zurücksetzen (RST).
+    Reset,
+}
+
+fn has_header(headers: &[(String, String)], name: &str) -> bool {
+    headers.iter().any(|(k, _)| k.eq_ignore_ascii_case(name))
+}
+
+/// Schreibt die Antwort gemäß [`Reply::mode`].
+async fn write_reply(
+    conn: &mut Conn,
+    reply: &Reply,
+    head_only: bool,
+    keep_alive: bool,
+) -> io::Result<Next> {
+    let bodyless = reply.status == 204 || reply.status == 304 || reply.status < 200;
+    let custom_framing = has_header(&reply.headers, "content-length")
+        || has_header(&reply.headers, "transfer-encoding");
+    let close = !keep_alive
+        || custom_framing
+        || matches!(reply.mode, Mode::AbortAfterHeaders | Mode::ResetMidBody);
+
+    let mut head: Vec<u8> = Vec::with_capacity(256);
+    let _ = write!(head, "HTTP/1.1 {} {}\r\n", reply.status, reply.reason);
+    for (name, value) in &reply.headers {
+        let _ = write!(head, "{name}: {value}\r\n");
+    }
+    if !bodyless && !custom_framing {
+        if reply.chunked {
+            head.extend_from_slice(b"Transfer-Encoding: chunked\r\n");
+        } else {
+            let _ = write!(head, "Content-Length: {}\r\n", reply.body.len());
+        }
+    }
+    if close {
+        head.extend_from_slice(b"Connection: close\r\n");
+    }
+    head.extend_from_slice(b"\r\n");
+
+    let body: &[u8] = if bodyless || head_only {
+        &[]
+    } else {
+        &reply.body
+    };
+    let chunked = reply.chunked && !bodyless && !custom_framing;
+
+    match reply.mode {
+        Mode::AbortAfterHeaders => {
+            conn.write_all(&head).await?;
+            conn.flush().await?;
+            let _ = conn.shutdown().await;
+            return Ok(Next::Close);
+        }
+        Mode::ResetMidBody => {
+            let half = &reply.body[..reply.body.len() / 2];
+            conn.write_all(&head).await?;
+            if chunked {
+                write_chunk(conn, half).await?;
+            } else {
+                conn.write_all(half).await?;
+            }
+            conn.flush().await?;
+            // Dem Client Zeit geben, Kopf und halben Body zu lesen, bevor der Reset kommt.
+            tokio::time::sleep(Duration::from_millis(20)).await;
+            return Ok(Next::Reset);
+        }
+        Mode::Hang | Mode::Normal => {}
+    }
+
+    match (reply.trickle, chunked) {
+        (None, false) => {
+            // Häufigster Fall: Kopf und Body in einem Schreibvorgang.
+            if body.len() <= 1024 * 1024 {
+                head.extend_from_slice(body);
+                conn.write_all(&head).await?;
+            } else {
+                conn.write_all(&head).await?;
+                conn.write_all(body).await?;
+            }
+        }
+        (None, true) => {
+            conn.write_all(&head).await?;
+            for piece in body.chunks(CHUNK_SIZE) {
+                write_chunk(conn, piece).await?;
+            }
+            if !head_only {
+                conn.write_all(b"0\r\n\r\n").await?;
+            }
+        }
+        (Some(rate), _) => {
+            conn.write_all(&head).await?;
+            conn.flush().await?;
+            let (piece_len, interval) = trickle_plan(rate);
+            let mut first = true;
+            for piece in body.chunks(piece_len) {
+                if !first {
+                    tokio::time::sleep(interval).await;
+                }
+                first = false;
+                if chunked {
+                    write_chunk(conn, piece).await?;
+                } else {
+                    conn.write_all(piece).await?;
+                }
+                conn.flush().await?;
+            }
+            if chunked && !head_only {
+                conn.write_all(b"0\r\n\r\n").await?;
+            }
+        }
+    }
+    conn.flush().await?;
+    if close {
+        let _ = conn.shutdown().await;
+        return Ok(Next::Close);
+    }
+    Ok(Next::KeepAlive)
+}
+
+async fn write_chunk(conn: &mut Conn, piece: &[u8]) -> io::Result<()> {
+    if piece.is_empty() {
+        return Ok(());
+    }
+    let mut out = Vec::with_capacity(piece.len() + 16);
+    let _ = write!(out, "{:x}\r\n", piece.len());
+    out.extend_from_slice(piece);
+    out.extend_from_slice(b"\r\n");
+    conn.write_all(&out).await
+}
+
+/// Stückgröße und Pause, die zusammen `rate` Byte pro Sekunde ergeben.
+fn trickle_plan(rate: u64) -> (usize, Duration) {
+    if rate >= 10 {
+        (
+            usize::try_from(rate / 10).unwrap_or(usize::MAX).max(1),
+            Duration::from_millis(100),
+        )
+    } else {
+        (1, Duration::from_millis(1000 / rate.max(1)))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn host_parsing() {
+        assert_eq!(host_only("Site.Test:8080"), "site.test");
+        assert_eq!(host_only("[::1]:80"), "[::1]");
+        assert_eq!(host_only("127.0.0.1"), "127.0.0.1");
+        let (path, host) = split_target("http://A.test:81/x?y=1");
+        assert_eq!((path, host.as_deref()), ("/x?y=1", Some("a.test")));
+        assert_eq!(split_target("/plain").0, "/plain");
+    }
+
+    #[test]
+    fn trickle_rates() {
+        assert_eq!(trickle_plan(1000), (100, Duration::from_millis(100)));
+        assert_eq!(trickle_plan(5), (1, Duration::from_millis(200)));
+        assert_eq!(trickle_plan(1), (1, Duration::from_millis(1000)));
+    }
+
+    #[test]
+    fn head_end_search() {
+        assert_eq!(find_head_end(b"GET / HTTP/1.1\r\n\r\nrest", 0), Some(14));
+        assert_eq!(find_head_end(b"GET /", 0), None);
+    }
+}

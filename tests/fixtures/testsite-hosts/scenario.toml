@@ -1,0 +1,21 @@
+# Virtuelle Hosts (M1-P09): hostgebundene Routen, Verzeichnisse hosts/<host>/, Platzhalter.
+
+[[route]]
+path = "/who"
+host = "site.test"
+body = "route:site.test"
+
+[[route]]
+path = "/who"
+host = "*.site.test"
+body = "route:wildcard"
+
+[[route]]
+path = "/who"
+body = "route:any"
+
+# Nur für den Host other.test; andere Hosts bekommen hier eine 404.
+[[route]]
+path = "/only-other"
+host = "other.test"
+body = "only other"
