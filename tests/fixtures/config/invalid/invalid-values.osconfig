@@ -1,0 +1,16 @@
+# Syntaktisch und typrichtig, aber von validate() abzulehnen.
+schema_version = 1
+
+[speed]
+threads = 0
+max_urls_per_sec = -1.5
+
+[title]
+min_chars = 100
+max_chars = 60
+
+[scope]
+exclude = ["(offene Klammer"]
+
+[network]
+resolve = ["staging.example.com"]

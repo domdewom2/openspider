@@ -1,0 +1,20 @@
+schema_version = 1
+generator = "openspider 0.1.0"
+
+[speed]
+threads = 3
+turbo = true
+
+[storage]
+mode = "memory"
+
+[spider.images]
+store = true
+crawl = false
+preview = "small"
+
+[[auth.basic]]
+prefix = "https://staging.example.com/"
+username = "tester"
+secret_ref = "staging"
+password = "nicht-im-profil-speichern"

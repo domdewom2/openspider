@@ -1,0 +1,54 @@
+# Profil mit den Bereichen, die CRAWL-132 ausdrücklich im Profil verlangt:
+# Include/Exclude, Host-Auflösung, Zugangsdaten-Verweis (nie das Passwort), Inhaltsbereich, Header-Speicherung.
+schema_version = 1
+generator = "openspider 0.1.0"
+mode = "spider"
+
+[scope]
+all_subdomains = true
+regex_partial_match = false
+include = ["https://www\\.example\\.com/.*"]
+exclude = [".*/privat/.*", ".*\\?session=.*"]
+
+[spider.images]
+store = true
+crawl = false
+
+[speed]
+threads = 10
+max_per_host = 4
+max_urls_per_sec = 5.0
+
+[user_agent]
+preset = "openspider"
+http = "OpenSpider-Test/1.0"
+robots_token = "openspider-test"
+
+[robots]
+mode = "ignore_but_report"
+unreachable_policy = "allow_all"
+retries = 1
+retry_delay_s = 2
+
+[network]
+resolve = ["*.site.test=127.0.0.1", "staging.example.com=127.0.0.1:8080"]
+
+[[auth.basic]]
+prefix = "https://www.example.com/intern/"
+username = "tester"
+secret_ref = "profil-intern"
+
+[extraction]
+http_headers = true
+store_html = false
+
+[content.area]
+exclude_elements = ["nav", "footer", "aside"]
+exclude_classes = ["cookie-banner"]
+
+[analysis]
+auto_at_end = false
+
+[export]
+utf8_bom = false
+line_ending = "lf"
