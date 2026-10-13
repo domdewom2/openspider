@@ -1,0 +1,174 @@
+# Szenario "crawl-content-types" (CRAWL-019, ONPAGE-020): je eine Route pro MIME-Typ der Klassentabelle.
+# /falscher-ct liefert text/plain mit HTML-Body, /HTML-upper den Wert "Text/HTML; Charset=UTF-8".
+#
+# Offen (M1-P09): /kein-ct (HTML-Body ganz ohne Content-Type-Header) – der Testserver setzt immer einen.
+
+[[route]]
+path = "/t-html"
+content_type = "text/html"
+body = "<html><body>Inhalt von t-html</body></html>"
+
+[[route]]
+path = "/t-xhtml"
+content_type = "application/xhtml+xml"
+body = "<html><body>Inhalt von t-xhtml</body></html>"
+
+[[route]]
+path = "/t-js"
+content_type = "application/javascript"
+body = "<html><body>Inhalt von t-js</body></html>"
+
+[[route]]
+path = "/t-js-text"
+content_type = "text/javascript"
+body = "<html><body>Inhalt von t-js-text</body></html>"
+
+[[route]]
+path = "/t-js-x"
+content_type = "application/x-javascript"
+body = "<html><body>Inhalt von t-js-x</body></html>"
+
+[[route]]
+path = "/t-js-ecma"
+content_type = "application/ecmascript"
+body = "<html><body>Inhalt von t-js-ecma</body></html>"
+
+[[route]]
+path = "/t-js-text-ecma"
+content_type = "text/ecmascript"
+body = "<html><body>Inhalt von t-js-text-ecma</body></html>"
+
+[[route]]
+path = "/t-js-x-ecma"
+content_type = "application/x-ecmascript"
+body = "<html><body>Inhalt von t-js-x-ecma</body></html>"
+
+[[route]]
+path = "/t-js-text-x"
+content_type = "text/x-javascript"
+body = "<html><body>Inhalt von t-js-text-x</body></html>"
+
+[[route]]
+path = "/t-css"
+content_type = "text/css"
+body = "<html><body>Inhalt von t-css</body></html>"
+
+[[route]]
+path = "/t-png"
+content_type = "image/png"
+body = "<html><body>Inhalt von t-png</body></html>"
+
+[[route]]
+path = "/t-svg"
+content_type = "image/svg+xml"
+body = "<html><body>Inhalt von t-svg</body></html>"
+
+[[route]]
+path = "/t-webp"
+content_type = "image/webp"
+body = "<html><body>Inhalt von t-webp</body></html>"
+
+[[route]]
+path = "/t-avif"
+content_type = "image/avif"
+body = "<html><body>Inhalt von t-avif</body></html>"
+
+[[route]]
+path = "/t-pdf"
+content_type = "application/pdf"
+body = "<html><body>Inhalt von t-pdf</body></html>"
+
+[[route]]
+path = "/t-swf"
+content_type = "application/x-shockwave-flash"
+body = "<html><body>Inhalt von t-swf</body></html>"
+
+[[route]]
+path = "/t-spl"
+content_type = "application/futuresplash"
+body = "<html><body>Inhalt von t-spl</body></html>"
+
+[[route]]
+path = "/t-mp4"
+content_type = "video/mp4"
+body = "<html><body>Inhalt von t-mp4</body></html>"
+
+[[route]]
+path = "/t-mp3"
+content_type = "audio/mpeg"
+body = "<html><body>Inhalt von t-mp3</body></html>"
+
+[[route]]
+path = "/t-woff2"
+content_type = "font/woff2"
+body = "<html><body>Inhalt von t-woff2</body></html>"
+
+[[route]]
+path = "/t-woff"
+content_type = "application/font-woff"
+body = "<html><body>Inhalt von t-woff</body></html>"
+
+[[route]]
+path = "/t-ttf"
+content_type = "application/x-font-ttf"
+body = "<html><body>Inhalt von t-ttf</body></html>"
+
+[[route]]
+path = "/t-eot"
+content_type = "application/vnd.ms-fontobject"
+body = "<html><body>Inhalt von t-eot</body></html>"
+
+[[route]]
+path = "/t-xml"
+content_type = "application/xml"
+body = "<html><body>Inhalt von t-xml</body></html>"
+
+[[route]]
+path = "/t-xml-text"
+content_type = "text/xml"
+body = "<html><body>Inhalt von t-xml-text</body></html>"
+
+[[route]]
+path = "/t-rss"
+content_type = "application/rss+xml"
+body = "<html><body>Inhalt von t-rss</body></html>"
+
+[[route]]
+path = "/t-atom"
+content_type = "application/atom+xml"
+body = "<html><body>Inhalt von t-atom</body></html>"
+
+[[route]]
+path = "/t-json"
+content_type = "application/json"
+body = "<html><body>Inhalt von t-json</body></html>"
+
+[[route]]
+path = "/t-text"
+content_type = "text/plain"
+body = "<html><body>Inhalt von t-text</body></html>"
+
+[[route]]
+path = "/t-zip"
+content_type = "application/zip"
+body = "<html><body>Inhalt von t-zip</body></html>"
+
+[[route]]
+path = "/t-doc"
+content_type = "application/msword"
+body = "<html><body>Inhalt von t-doc</body></html>"
+
+[[route]]
+path = "/t-invalid"
+content_type = "foo"
+body = "<html><body>Inhalt von t-invalid</body></html>"
+
+[[route]]
+path = "/HTML-upper"
+content_type = "Text/HTML; Charset=UTF-8"
+body = "<html><body>Inhalt von HTML-upper</body></html>"
+
+[[route]]
+path = "/falscher-ct"
+content_type = "text/plain"
+body = "<html><body>Inhalt von falscher-ct</body></html>"

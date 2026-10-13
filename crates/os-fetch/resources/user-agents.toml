@@ -1,0 +1,174 @@
+# User-Agent-Voreinstellungen (CRAWL-114).
+#
+# Die Datei wird zur Übersetzungszeit eingebettet, kann aber zur Laufzeit ohne Code-Änderung durch eine
+# eigene Datei gleichen Aufbaus ersetzt werden (os_fetch::user_agents::parse_presets).
+#
+# Je Eintrag:
+#   id            stabile Kennung (steht in `user_agent.preset` der .osconfig)
+#   name          Anzeigename
+#   group         Gruppe in der Auswahlliste
+#   user_agent    HTTP-User-Agent; "{version}" wird durch die OpenSpider-Version ersetzt.
+#                 Fehlt der Eintrag, ist die Voreinstellung „nur Token“ (z. B. Google-Extended).
+#   robots_token  Token, unter dem robots.txt-Gruppen und agentenspezifische Meta-Robots ausgewertet
+#                 werden; "*" = kein eigenes Token (Browser).
+#
+# Browser-Voreinstellungen tragen die Hauptversion 138 (Stand der Datei).
+
+[[preset]]
+id = "openspider"
+name = "OpenSpider"
+group = "OpenSpider"
+user_agent = "Mozilla/5.0 (compatible; OpenSpider/{version}; +https://openspider.de)"
+robots_token = "OpenSpider"
+
+[[preset]]
+id = "googlebot-smartphone"
+name = "Googlebot Smartphone"
+group = "Suchmaschinen"
+user_agent = "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+robots_token = "Googlebot"
+
+[[preset]]
+id = "googlebot-desktop"
+name = "Googlebot Desktop"
+group = "Suchmaschinen"
+user_agent = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+robots_token = "Googlebot"
+
+[[preset]]
+id = "googlebot-image"
+name = "Googlebot Image"
+group = "Suchmaschinen"
+user_agent = "Googlebot-Image/1.0"
+robots_token = "Googlebot-Image"
+
+[[preset]]
+id = "googlebot-news"
+name = "Googlebot News"
+group = "Suchmaschinen"
+user_agent = "Googlebot-News"
+robots_token = "Googlebot-News"
+
+[[preset]]
+id = "googlebot-video"
+name = "Googlebot Video"
+group = "Suchmaschinen"
+user_agent = "Googlebot-Video/1.0"
+robots_token = "Googlebot-Video"
+
+[[preset]]
+id = "google-inspectiontool"
+name = "Google-InspectionTool"
+group = "Suchmaschinen"
+user_agent = "Mozilla/5.0 (compatible; Google-InspectionTool/1.0)"
+robots_token = "Google-InspectionTool"
+
+[[preset]]
+id = "google-extended"
+name = "Google-Extended (nur Token)"
+group = "KI-Crawler"
+robots_token = "Google-Extended"
+
+[[preset]]
+id = "bingbot-mobile"
+name = "Bingbot Mobil"
+group = "Suchmaschinen"
+user_agent = "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)"
+robots_token = "bingbot"
+
+[[preset]]
+id = "bingbot-desktop"
+name = "Bingbot Desktop"
+group = "Suchmaschinen"
+user_agent = "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)"
+robots_token = "bingbot"
+
+[[preset]]
+id = "yandex"
+name = "Yandex"
+group = "Suchmaschinen"
+user_agent = "Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)"
+robots_token = "Yandex"
+
+[[preset]]
+id = "baiduspider"
+name = "Baiduspider"
+group = "Suchmaschinen"
+user_agent = "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.html)"
+robots_token = "Baiduspider"
+
+[[preset]]
+id = "duckduckbot"
+name = "DuckDuckBot"
+group = "Suchmaschinen"
+user_agent = "DuckDuckBot/1.1; (+http://duckduckgo.com/duckduckbot.html)"
+robots_token = "DuckDuckBot"
+
+[[preset]]
+id = "applebot"
+name = "Applebot"
+group = "Suchmaschinen"
+user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Safari/605.1.15 (Applebot/0.1; +http://www.apple.com/go/applebot)"
+robots_token = "Applebot"
+
+[[preset]]
+id = "gptbot"
+name = "GPTBot"
+group = "KI-Crawler"
+user_agent = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.1; +https://openai.com/gptbot"
+robots_token = "GPTBot"
+
+[[preset]]
+id = "claudebot"
+name = "ClaudeBot"
+group = "KI-Crawler"
+user_agent = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; ClaudeBot/1.0; +claudebot@anthropic.com)"
+robots_token = "ClaudeBot"
+
+[[preset]]
+id = "perplexitybot"
+name = "PerplexityBot"
+group = "KI-Crawler"
+user_agent = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)"
+robots_token = "PerplexityBot"
+
+[[preset]]
+id = "chrome-desktop"
+name = "Chrome Desktop"
+group = "Browser"
+user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+robots_token = "*"
+
+[[preset]]
+id = "chrome-mobile"
+name = "Chrome Mobil"
+group = "Browser"
+user_agent = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36"
+robots_token = "*"
+
+[[preset]]
+id = "safari-iphone"
+name = "Safari iPhone"
+group = "Browser"
+user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"
+robots_token = "*"
+
+[[preset]]
+id = "firefox"
+name = "Firefox"
+group = "Browser"
+user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0"
+robots_token = "*"
+
+[[preset]]
+id = "edge"
+name = "Edge"
+group = "Browser"
+user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0"
+robots_token = "*"
+
+[[preset]]
+id = "custom"
+name = "Benutzerdefiniert"
+group = "Benutzerdefiniert"
+robots_token = "*"

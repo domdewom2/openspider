@@ -1,0 +1,12 @@
+# Szenario "crawl-cookies" (CRAWL-088): /set setzt ein Cookie und leitet auf /check weiter.
+#
+# Offen (M1-P09): /check, /check2 und /secure-only müssen die empfangenen Cookies im Body anzeigen
+# (Echo der Request-Header); /secure-only setzt außerdem ein Secure-Cookie. Bis dahin prüft
+# tests/http_session.rs das Verhalten gegen einen eigenen Mini-Server.
+
+[[route]]
+path = "/set"
+status = 302
+location = "/check"
+[route.headers]
+Set-Cookie = "sid=abc123; Path=/"
