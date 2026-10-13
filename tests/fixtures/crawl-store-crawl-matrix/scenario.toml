@@ -1,0 +1,12 @@
+# Szenario crawl-store-crawl-matrix (CRAWL-038): eine Seite mit je einem Link jedes Typs.
+# Jedes Ziel ist nur ueber genau diesen einen Link erreichbar, damit das Request-Log je Typ eindeutig ist.
+# Der externe Host external.test wird ueber network.resolve (*.test) auf dieselbe Site abgebildet.
+
+[[route]]
+path = "/m/bild.png"
+png_size = 200
+
+[[route]]
+path = "/m/film.mp4"
+content_type = "video/mp4"
+body_size = 1024

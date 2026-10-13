@@ -1,0 +1,24 @@
+# Szenario crawl-links-basic (CRAWL-044/045): / verlinkt dreimal /a (verschiedene Ankertexte), ein <area>, <a> ohne href.
+# Dazu fuer TECH-210 (Sitemap-Ingest): sitemap-index.xml -> sitemap.xml -> /a und /nur-in-sitemap (von / nicht verlinkt).
+# Ziele ohne Dateiendung brauchen Routen. external.test wird per network.resolve auf diese Site abgebildet.
+
+[[route]]
+path = "/a"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/a</title>\n</head>\n<body>\n<h1>/a</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/b"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/b</title>\n</head>\n<body>\n<h1>/b</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/area-ziel"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/area-ziel</title>\n</head>\n<body>\n<h1>/area-ziel</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/ext"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/ext</title>\n</head>\n<body>\n<h1>/ext</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/nur-in-sitemap"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/nur-in-sitemap</title>\n</head>\n<body>\n<h1>/nur-in-sitemap</h1>\n</body>\n</html>\n"
+
