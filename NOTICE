@@ -1,0 +1,19 @@
+OpenSpider
+Copyright (c) OpenSpider contributors. Licensed under the Apache License, Version 2.0.
+
+Dieses Produkt enthält folgende Fremdkomponenten mit eigenen Lizenzbedingungen.
+
+--------------------------------------------------------------------------------
+Liberation Sans (Regular, Bold), Version 2.1.5
+--------------------------------------------------------------------------------
+Verwendet für die Pixelbreiten-Engine (UI-038, crates/os-parse): Aus den Schriftdateien unter
+crates/os-parse/resources/fonts/ werden mit examples/gen_pixel_metrics.rs ausschließlich die
+Advance-Widths als Rust-Konstante (crates/os-parse/src/pixel/metrics.rs) erzeugt. Die unveränderten
+Schriftdateien liegen zur Reproduzierbarkeit im Repository, werden aber nicht in das Programm eingebettet.
+
+Digitized data copyright (c) 2010 Google Corporation.
+Copyright (c) 2012 Red Hat, Inc.
+Schrift: Ascender Corporation (Steve Matteson), basierend auf Arimo.
+
+Lizenz: SIL Open Font License, Version 1.1, Volltext in
+crates/os-parse/resources/fonts/LICENSE-LiberationSans.txt
