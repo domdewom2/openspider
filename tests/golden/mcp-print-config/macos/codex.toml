@@ -1,0 +1,3 @@
+[mcp_servers.openspider]
+args = ["mcp"]
+command = "/Applications/OpenSpider.app/Contents/MacOS/openspider"

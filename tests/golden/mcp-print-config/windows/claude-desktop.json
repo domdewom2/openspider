@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "openspider": {
+      "args": [
+        "mcp"
+      ],
+      "command": "C:\\Program Files\\OpenSpider\\openspider.exe"
+    }
+  }
+}

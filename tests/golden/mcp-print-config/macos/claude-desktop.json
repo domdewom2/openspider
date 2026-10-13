@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "openspider": {
+      "args": [
+        "mcp"
+      ],
+      "command": "/Applications/OpenSpider.app/Contents/MacOS/openspider"
+    }
+  }
+}
