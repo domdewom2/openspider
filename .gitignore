@@ -1,0 +1,9 @@
+/target
+node_modules/
+dist/
+.DS_Store
+*.ospider
+*.ospider-wal
+*.ospider-shm
+apps/desktop/src-tauri/gen/
+.env
