@@ -97,10 +97,10 @@ impl CrawlHandle {
     }
 }
 
-/// Baut das robots.txt-Gate. Einzige Stelle, die den Konstruktor aufruft: nach M1-N04 ist es
-/// `RobotsGateConfig::from_crawl_config(cfg)` ohne Uhr (Token aus `user_agents::resolve`).
-fn build_gate(cfg: &CrawlConfig, clock: Arc<dyn Clock>) -> RobotsGate {
-    RobotsGate::new(RobotsGateConfig::from_crawl_config(cfg, clock))
+/// Baut das robots.txt-Gate ausschließlich über `RobotsGateConfig::from_crawl_config` (M1-N04: ohne Uhr,
+/// Token aus `user_agents::resolve`, nie die Preset-Kennung; kein Struct-Literal).
+fn build_gate(cfg: &CrawlConfig) -> RobotsGate {
+    RobotsGate::new(RobotsGateConfig::from_crawl_config(cfg))
 }
 
 /// Parse-Konfiguration: Pixelbreiten an, Token wie das robots-Gate.
@@ -254,7 +254,7 @@ pub async fn start_crawl<F: Fetch>(
 
     let sh = Arc::new(Shared {
         fetcher,
-        gate: build_gate(&cfg, deps.clock.clone()),
+        gate: build_gate(&cfg),
         pcfg: parse_config(&cfg),
         clock: deps.clock.clone(),
         scope,

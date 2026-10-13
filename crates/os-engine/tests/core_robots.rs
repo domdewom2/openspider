@@ -101,3 +101,22 @@ async fn blocked_urls_get_status_zero_are_never_requested_and_do_not_use_up_the_
     );
     assert!(fx.summary.crawled >= 4);
 }
+
+// spec: CRAWL-114, CRAWL-098
+#[tokio::test]
+async fn the_gate_takes_its_token_from_the_user_agent_preset() {
+    // Voreinstellung „Googlebot“ ohne eigenes Token: es gilt die Gruppe „User-agent: Googlebot“
+    // (sperrt /nur-google/), nicht die des OpenSpider-Tokens (sperrt /privat/).
+    let mut cfg = one_thread();
+    cfg.user_agent.preset = "googlebot-smartphone".to_string();
+    let fx = crawl_fixture("crawl-robots", cfg).await;
+    let base = fx.site.base_url();
+    let google_only = row_of(&fx, &format!("{base}/nur-google/a"));
+    assert_eq!(google_only.status_code, Some(0));
+    assert_eq!(google_only.status.as_deref(), Some("Blocked by Robots.txt"));
+    assert_eq!(
+        row_of(&fx, &format!("{base}/privat/x")).status_code,
+        Some(200)
+    );
+    assert!(!requested_paths(&fx, None).contains(&"/nur-google/a".to_string()));
+}
