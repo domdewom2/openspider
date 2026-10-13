@@ -1,0 +1,42 @@
+# Szenario für informational.rs und wire_log.rs (1xx-Zwischenantworten, SNI, gesendete Bytes).
+
+[[route]]
+path = "/plain"
+body = "plain body"
+
+[[route]]
+path = "/nocontent"
+status = 204
+
+[[route]]
+path = "/hints"
+informational = [103]
+body = "final body"
+[route.informational_headers]
+Link = ["</a.css>; rel=preload; as=style", "</b.js>; rel=preload; as=script"]
+
+[[route]]
+path = "/hints-no-headers"
+informational = [103]
+body = "final body"
+
+[[route]]
+path = "/multi"
+informational = [102, 103]
+status = 404
+body = "not found"
+[route.informational_headers]
+X-Interim = "1"
+
+[[route]]
+path = "/chunked"
+chunked = true
+body_size = 300
+
+[[route]]
+path = "/chunked-hints"
+chunked = true
+body_size = 300
+informational = [103]
+[route.informational_headers]
+Link = "</a.css>; rel=preload; as=style"

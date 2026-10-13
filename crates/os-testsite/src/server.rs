@@ -15,7 +15,7 @@ use tokio::task::JoinSet;
 use tokio_rustls::server::TlsStream;
 use tokio_rustls::TlsAcceptor;
 
-use crate::log::RequestRecord;
+use crate::log::{RequestRecord, Sent};
 use crate::respond::{build_reply, Mode, Reply, Request};
 use crate::{lock, synthetic, AppState};
 
@@ -26,18 +26,42 @@ const MAX_REQUEST_BODY: usize = 16 * 1024 * 1024;
 /// Stückgröße des Bodys bei `chunked` ohne `trickle_bytes_per_s`.
 const CHUNK_SIZE: usize = 128;
 
-/// Verbindung, unverschlüsselt oder TLS.
-enum Conn {
+/// Unterliegender Strom, unverschlüsselt oder TLS.
+enum Stream {
     Plain(TcpStream),
     Tls(Box<TlsStream<TcpStream>>),
 }
 
+/// Verbindung, die alle geschriebenen Bytes zählt (für `sent_bytes` im Request-Log).
+struct Conn {
+    stream: Stream,
+    /// Alle bisher geschriebenen Bytes (auf HTTP-Ebene, bei TLS vor der Verschlüsselung).
+    written: u64,
+    /// Davon Chunk-Rahmen.
+    framing: u64,
+    /// Davon 1xx-Zwischenantworten.
+    interim: u64,
+}
+
 impl Conn {
+    fn new(stream: Stream) -> Self {
+        Self {
+            stream,
+            written: 0,
+            framing: 0,
+            interim: 0,
+        }
+    }
+
+    fn counters(&self) -> (u64, u64, u64) {
+        (self.written, self.framing, self.interim)
+    }
+
     /// Schließt die Verbindung hart (RST statt FIN).
     fn reset(self) {
-        let tcp = match self {
-            Conn::Plain(t) => t,
-            Conn::Tls(t) => (*t).into_inner().0,
+        let tcp = match self.stream {
+            Stream::Plain(t) => t,
+            Stream::Tls(t) => (*t).into_inner().0,
         };
         // SO_LINGER mit 0 s blockiert beim Schließen nicht (das tut nur ein Wert > 0), sondern
         // verwirft ungesendete Daten und sendet einen Reset – genau das wird hier gebraucht.
@@ -53,9 +77,9 @@ impl AsyncRead for Conn {
         cx: &mut Context<'_>,
         buf: &mut ReadBuf<'_>,
     ) -> Poll<io::Result<()>> {
-        match self.get_mut() {
-            Conn::Plain(s) => Pin::new(s).poll_read(cx, buf),
-            Conn::Tls(s) => Pin::new(&mut **s).poll_read(cx, buf),
+        match &mut self.get_mut().stream {
+            Stream::Plain(s) => Pin::new(s).poll_read(cx, buf),
+            Stream::Tls(s) => Pin::new(&mut **s).poll_read(cx, buf),
         }
     }
 }
@@ -66,23 +90,28 @@ impl AsyncWrite for Conn {
         cx: &mut Context<'_>,
         buf: &[u8],
     ) -> Poll<io::Result<usize>> {
-        match self.get_mut() {
-            Conn::Plain(s) => Pin::new(s).poll_write(cx, buf),
-            Conn::Tls(s) => Pin::new(&mut **s).poll_write(cx, buf),
+        let this = self.get_mut();
+        let polled = match &mut this.stream {
+            Stream::Plain(s) => Pin::new(s).poll_write(cx, buf),
+            Stream::Tls(s) => Pin::new(&mut **s).poll_write(cx, buf),
+        };
+        if let Poll::Ready(Ok(n)) = &polled {
+            this.written += *n as u64;
         }
+        polled
     }
 
     fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
-        match self.get_mut() {
-            Conn::Plain(s) => Pin::new(s).poll_flush(cx),
-            Conn::Tls(s) => Pin::new(&mut **s).poll_flush(cx),
+        match &mut self.get_mut().stream {
+            Stream::Plain(s) => Pin::new(s).poll_flush(cx),
+            Stream::Tls(s) => Pin::new(&mut **s).poll_flush(cx),
         }
     }
 
     fn poll_shutdown(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
-        match self.get_mut() {
-            Conn::Plain(s) => Pin::new(s).poll_shutdown(cx),
-            Conn::Tls(s) => Pin::new(&mut **s).poll_shutdown(cx),
+        match &mut self.get_mut().stream {
+            Stream::Plain(s) => Pin::new(s).poll_shutdown(cx),
+            Stream::Tls(s) => Pin::new(&mut **s).poll_shutdown(cx),
         }
     }
 }
@@ -112,17 +141,21 @@ async fn serve(tcp: TcpStream, state: Arc<AppState>) {
     if !matches!(tcp.peek(&mut first).await, Ok(n) if n > 0) {
         return;
     }
-    let (conn, tls) = if first[0] == 0x16 {
+    let (conn, tls, sni) = if first[0] == 0x16 {
         let Ok(material) = state.tls() else { return };
         let acceptor = TlsAcceptor::from(Arc::clone(&material.server_config));
         match acceptor.accept(tcp).await {
-            Ok(stream) => (Conn::Tls(Box::new(stream)), true),
+            Ok(stream) => {
+                // SNI aus dem ClientHello; fehlt er (Verbindung per IP-Adresse), bleibt es `None`.
+                let sni = stream.get_ref().1.server_name().map(str::to_string);
+                (Conn::new(Stream::Tls(Box::new(stream))), true, sni)
+            }
             Err(_) => return,
         }
     } else {
-        (Conn::Plain(tcp), false)
+        (Conn::new(Stream::Plain(tcp)), false, None)
     };
-    let _ = run(conn, tls, conn_id, &state).await;
+    let _ = run(conn, tls, sni, conn_id, &state).await;
 }
 
 /// Ein geparster Request-Kopf.
@@ -150,7 +183,13 @@ impl Head {
     }
 }
 
-async fn run(mut conn: Conn, tls: bool, conn_id: u64, state: &AppState) -> io::Result<()> {
+async fn run(
+    mut conn: Conn,
+    tls: bool,
+    sni: Option<String>,
+    conn_id: u64,
+    state: &AppState,
+) -> io::Result<()> {
     let mut buf = BytesMut::with_capacity(4096);
     loop {
         let head = match read_head(&mut conn, &mut buf).await? {
@@ -209,7 +248,7 @@ async fn run(mut conn: Conn, tls: bool, conn_id: u64, state: &AppState) -> io::R
 
         if state.counts.is_some() && req.path == synthetic::REQUEST_LOG_PATH {
             let reply = request_log_reply(state);
-            if write_reply(&mut conn, &reply, req.method == "HEAD", keep_alive).await?
+            if write_reply(&mut conn, &reply, req.method == "HEAD", keep_alive, false).await?
                 == Next::Close
             {
                 return Ok(());
@@ -217,11 +256,12 @@ async fn run(mut conn: Conn, tls: bool, conn_id: u64, state: &AppState) -> io::R
             continue;
         }
 
+        let (written_before, framing_before, interim_before) = conn.counters();
         let _inflight = state.log.begin();
         if let Some(counts) = &state.counts {
             *lock(counts).entry(req.path.clone()).or_insert(0) += 1;
         }
-        if state.detailed_log {
+        let token = state.detailed_log.then(|| {
             state.log.push(RequestRecord {
                 seq: 0,
                 ts: crate::log::now_ts(),
@@ -231,15 +271,39 @@ async fn run(mut conn: Conn, tls: bool, conn_id: u64, state: &AppState) -> io::R
                 path_and_query: req.target.clone(),
                 headers: req.headers.clone(),
                 tls,
-            });
-        }
+                sni: sni.clone(),
+                sent_bytes: 0,
+                sent_framing_bytes: 0,
+                sent_interim_bytes: 0,
+            })
+        });
 
         let reply = build_reply(state, &req).await;
         if reply.mode == Mode::Hang {
             // Nie antworten; die Aufgabe endet erst, wenn die Site beendet wird.
             std::future::pending::<()>().await;
         }
-        match write_reply(&mut conn, &reply, req.method == "HEAD", keep_alive).await? {
+        // Zwischenantworten sind erst ab HTTP/1.1 erlaubt (RFC 9110, 15.2).
+        let written = write_reply(
+            &mut conn,
+            &reply,
+            req.method == "HEAD",
+            keep_alive,
+            head.http11,
+        )
+        .await;
+        if let Some(token) = token {
+            let (w, f, i) = conn.counters();
+            state.log.set_sent(
+                token,
+                Sent {
+                    total: w - written_before,
+                    framing: f - framing_before,
+                    interim: i - interim_before,
+                },
+            );
+        }
+        match written? {
             Next::KeepAlive => {}
             Next::Close => return Ok(()),
             Next::Reset => {
@@ -348,6 +412,7 @@ fn request_log_reply(state: &AppState) -> Reply {
     let total: u64 = counts.values().sum();
     let json = serde_json::json!({ "total": total, "paths": counts });
     Reply {
+        informational: Vec::new(),
         status: 200,
         reason: "OK".to_string(),
         headers: vec![("Content-Type".to_string(), "application/json".to_string())],
@@ -376,7 +441,11 @@ async fn write_reply(
     reply: &Reply,
     head_only: bool,
     keep_alive: bool,
+    interim_allowed: bool,
 ) -> io::Result<Next> {
+    if interim_allowed {
+        write_informational(conn, reply).await?;
+    }
     let bodyless = reply.status == 204 || reply.status == 304 || reply.status < 200;
     let custom_framing = has_header(&reply.headers, "content-length")
         || has_header(&reply.headers, "transfer-encoding");
@@ -448,7 +517,7 @@ async fn write_reply(
                 write_chunk(conn, piece).await?;
             }
             if !head_only {
-                conn.write_all(b"0\r\n\r\n").await?;
+                write_last_chunk(conn).await?;
             }
         }
         (Some(rate), _) => {
@@ -469,7 +538,7 @@ async fn write_reply(
                 conn.flush().await?;
             }
             if chunked && !head_only {
-                conn.write_all(b"0\r\n\r\n").await?;
+                write_last_chunk(conn).await?;
             }
         }
     }
@@ -481,6 +550,23 @@ async fn write_reply(
     Ok(Next::KeepAlive)
 }
 
+/// Sendet die 1xx-Zwischenantworten der Route, jede sofort (damit der Client sie vor der finalen
+/// Antwort sieht).
+async fn write_informational(conn: &mut Conn, reply: &Reply) -> io::Result<()> {
+    for info in &reply.informational {
+        let mut out: Vec<u8> = Vec::with_capacity(128);
+        let _ = write!(out, "HTTP/1.1 {} {}\r\n", info.status, info.reason);
+        for (name, value) in &info.headers {
+            let _ = write!(out, "{name}: {value}\r\n");
+        }
+        out.extend_from_slice(b"\r\n");
+        conn.write_all(&out).await?;
+        conn.flush().await?;
+        conn.interim += out.len() as u64;
+    }
+    Ok(())
+}
+
 async fn write_chunk(conn: &mut Conn, piece: &[u8]) -> io::Result<()> {
     if piece.is_empty() {
         return Ok(());
@@ -489,7 +575,15 @@ async fn write_chunk(conn: &mut Conn, piece: &[u8]) -> io::Result<()> {
     let _ = write!(out, "{:x}\r\n", piece.len());
     out.extend_from_slice(piece);
     out.extend_from_slice(b"\r\n");
+    conn.framing += (out.len() - piece.len()) as u64;
     conn.write_all(&out).await
+}
+
+/// Schlusschunk (`0\r\n\r\n`), zählt vollständig als Chunk-Rahmen.
+async fn write_last_chunk(conn: &mut Conn) -> io::Result<()> {
+    const LAST: &[u8] = b"0\r\n\r\n";
+    conn.framing += LAST.len() as u64;
+    conn.write_all(LAST).await
 }
 
 /// Stückgröße und Pause, die zusammen `rate` Byte pro Sekunde ergeben.
