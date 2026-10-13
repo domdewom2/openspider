@@ -22,9 +22,9 @@ use os_model::ContentAreaConfig;
 use scraper::{ElementRef, Node};
 
 use crate::dom::Document;
-
-/// HTML-Namensraum (auch von `elements` genutzt; `dom.rs` führt eine eigene Kopie, siehe Hinweis an `is_block_element`).
-pub(crate) const XHTML_NS: &str = "http://www.w3.org/1999/xhtml";
+// Eine gemeinsame Liste und ein Namensraum-Wert in `dom.rs`; `elements.rs` importiert diese Namen weiterhin
+// von hier.
+pub(crate) use crate::dom::{is_block as is_block_element, XHTML_NS};
 
 /// Kennzahlen des Inhaltsbereichs.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -33,60 +33,6 @@ pub struct ContentStats {
     pub word_count: u32,
     /// Textanteil in Prozent.
     pub text_ratio: f32,
-}
-
-/// Elemente, die einen Block bilden (Leerraum davor und danach); `br` zählt als Umbruch.
-///
-/// Entspricht `dom::is_block` (privat in `dom.rs`, anderer Paketbesitz). Sobald diese `pub(crate)` ist, ist diese
-/// Liste durch einen Aufruf von dort zu ersetzen, damit es nur eine Liste gibt.
-pub(crate) fn is_block_element(name: &str) -> bool {
-    matches!(
-        name,
-        "address"
-            | "article"
-            | "aside"
-            | "blockquote"
-            | "body"
-            | "br"
-            | "caption"
-            | "dd"
-            | "details"
-            | "dialog"
-            | "div"
-            | "dl"
-            | "dt"
-            | "fieldset"
-            | "figcaption"
-            | "figure"
-            | "footer"
-            | "form"
-            | "h1"
-            | "h2"
-            | "h3"
-            | "h4"
-            | "h5"
-            | "h6"
-            | "header"
-            | "hgroup"
-            | "hr"
-            | "html"
-            | "li"
-            | "main"
-            | "nav"
-            | "ol"
-            | "p"
-            | "pre"
-            | "section"
-            | "summary"
-            | "table"
-            | "tbody"
-            | "td"
-            | "tfoot"
-            | "th"
-            | "thead"
-            | "tr"
-            | "ul"
-    )
 }
 
 /// Zählt Token und deren Zeichen in einem Strom aus Textstücken und Blockgrenzen.
