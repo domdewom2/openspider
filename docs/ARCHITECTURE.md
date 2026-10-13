@@ -22,8 +22,10 @@ Ziel: Funktionsparität mit Screaming Frog SEO Spider 24.3, aber schneller und s
 | `os-engine` | Frontier, Scheduler, Worker-Pool, Pause/Resume, Modi (Spider/Liste/SERP/Vergleich) | tokio |
 | `os-analyze` | Filterlogik je Tab, Issues, Nachlauf-Analyse (Link Score, Duplikate per SimHash/MinHash, Orphans, Ketten, hreflang-Rücklinks, Sitemaps) | |
 | `os-export` | CSV, XLSX, Bulk-Exporte, Reports, Sitemap-Generator | csv, rust_xlsxwriter |
-| `os-integrations` | GSC, GA4, PSI, Majestic/Ahrefs/Moz, KI-Anbieter, OAuth | reqwest, oauth2 |
-| `os-cli` | `openspider` Binary: headless Crawl, Export, Scheduling-Ziel | clap |
+| `os-ai` | KI-Anbieter (Claude, OpenAI Responses + Decisions API, OpenRouter, Ollama), Embeddings, Decision-Engine (predicate/choice/score), Batch, Cache, Kostenschätzung/Budget, „Frag den Crawl“ (read-only SQL) | reqwest, keyring |
+| `os-integrations` | GSC, GA4, PSI, Majestic/Ahrefs/Moz, DataForSEO (Labs, Backlinks, SERP, LLM Mentions), OAuth | reqwest, oauth2, keyring |
+| `os-mcp` | MCP-Server (STDIO + Streamable HTTP auf Loopback mit Token), Werkzeugklassen read/crawl/write/cost, Prompts; Skill + Claude-Code-Plugin unter `integrations/` | rmcp |
+| `os-cli` | `openspider` Binary: headless Crawl, Export, `openspider mcp`, Scheduling-Ziel | clap |
 | `os-testsite` | Lokaler Fixture-Server (axum) mit Szenarien aus `tests/fixtures`; synthetische Sites ohne Dateien (`synthetic:n=1000000,links=30` oder `[synthetic]` in `scenario.toml`), optionales Request-Log | axum |
 | `os-loadtest` | Lasttest-Runner (Binary, PERF-009): `os-loadtest run --scenario perf-001 --size small` bzw. `--size large`, schreibt `target/loadtest/report.json`; Trait `CrawlerUnderTest`, den `os-engine` später implementiert | os-testsite, clap |
 
@@ -33,6 +35,26 @@ Ziel: Funktionsparität mit Screaming Frog SEO Spider 24.3, aber schneller und s
 - Tabellen: Glide Data Grid (Canvas, MIT) mit serverseitigem Paging über Tauri-Commands → `os-store`.
 - Fortschritt/Ereignisse: Tauri-Events (Throttling auf ~10 Hz).
 - Visualisierungen: D3 / Cytoscape.js.
+
+## KI & externe Daten (nach Release 1.0, M4/M5)
+
+- Alle KI-Aufrufe laufen über `os-ai`; Fachlogik kennt nur „Frage“ bzw. „Aufgabe“, nie einen konkreten Anbieter.
+- Decision-Engine: Fragen einmal anbieterneutral definiert; OpenAI Decisions API bevorzugt, sonst strukturierte Ausgabe über Claude/OpenAI/OpenRouter (Wahrscheinlichkeit dann als Selbsteinschätzung gekennzeichnet).
+- Ergebnis-Cache je (Inhalts-Hash, Fragen-Version, Modell) in der Crawl-Datei; Kostenschätzung vor jedem Lauf, hartes Budget je Crawl.
+- API-Schlüssel ausschließlich im OS-Schlüsselbund. In CI nur Mock-Server (`os-testsite`), keine echten API-Aufrufe.
+- Spezifikation: `docs/spec/08-ai.md`, `docs/spec/09-dataforseo.md`.
+
+## Meilensteine
+
+**Version 1.0 (stabil)** = M1 + M2 + M3. KI-API-Funktionen und DataForSEO kommen erst danach als eigene Feature-Releases.
+
+| M | Inhalt | Abnahme durch Fable |
+|---|---|---|
+| M1 | Crawl-Kern, Speicher, CLI, Basis-Tabs (P0 aus 01/02/03/06), MCP headless lesend (10: AGENT P0), Lasttests klein | Paritätstests gegen SF-Free-Exporte, PERF-001/003/005 |
+| M2 | Desktop-UI, alle P0/P1-Tabs und Filter, Reports/Exporte, JS-Rendering, Google-APIs (GSC, GA4, PSI) und Linkmetriken (04 ohne KI), MCP-Menü, Skill + Plugin | volle Paritätsmatrix P0+P1 (ohne KI), PERF komplett |
+| M3 | Signierte Installer (dmg/exe/msi), Auto-Update, Homebrew/winget → **Release 1.0** | Installationstest macOS arm64/x64, Windows |
+| M4 | KI-Funktionen: 08-ai, KI-Teile aus 04 (Anbieter, Prompts, Embeddings, semantische Ähnlichkeit), AGENT-030 → Release 1.x | Mock-Tests + Stichprobe mit echten Schlüsseln |
+| M5 | DataForSEO: 09-dataforseo → Release 1.y | Mock-Tests + Stichprobe mit echtem Konto |
 
 ## Datenfluss
 
