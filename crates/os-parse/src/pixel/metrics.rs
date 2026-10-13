@@ -1,4 +1,8 @@
-//! Advance-Widths von Liberation Sans (SIL OFL 1.1), Regular und Bold, in Schrifteinheiten.
+//! Advance-Widths von Liberation Sans, Regular und Bold, in Schrifteinheiten.
+//!
+//! Quelle (name-Tabelle der Schriftdateien unter `resources/fonts/`):
+//! * Regular: Version 1.07.4 – Licensed under the Liberation Fonts license, see https://fedoraproject.org/wiki/Licensing/LiberationFontLicense
+//! * Bold: Version 1.07.4 – Licensed under the Liberation Fonts license, see https://fedoraproject.org/wiki/Licensing/LiberationFontLicense
 //!
 //! GENERIERT von `examples/gen_pixel_metrics.rs` aus `resources/fonts/*.ttf` – nicht von Hand ändern.
 //! Neu erzeugen: `cargo run -p os-parse --example gen_pixel_metrics`.

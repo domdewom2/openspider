@@ -282,3 +282,27 @@ fn h1_length_counts_codepoints() {
     let s = sets("<body><h1>Größe 😀</h1></body>");
     assert_eq!(s.h1[0].len, 7);
 }
+
+// spec: ONPAGE-008
+#[test]
+fn deeply_nested_heading_does_not_overflow_the_stack() {
+    let mut html = String::from("<body><h1>");
+    for _ in 0..3000 {
+        html.push_str("<div>");
+    }
+    html.push_str("tief unten");
+    // Die Tiefe wird vom Tree-Builder nicht begrenzt; die Auswertung ist iterativ.
+    let text = std::thread::Builder::new()
+        .stack_size(2 * 1024 * 1024)
+        .spawn(move || {
+            let doc = Document::parse(&html);
+            let text = extract(&doc).h1[0].text.clone();
+            // Der Baum wird iterativ freigegeben; erst danach den Text zurückgeben.
+            drop(doc);
+            text
+        })
+        .unwrap()
+        .join()
+        .unwrap();
+    assert_eq!(text, "tief unten");
+}

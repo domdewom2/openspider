@@ -6,7 +6,9 @@
 //! Optional: Ausgabepfad als erstes Argument; mit `--check` wird die vorhandene Datei nur mit der
 //! frisch erzeugten verglichen (Exit-Code 1 bei Abweichung).
 //!
-//! Die Schriften liegen unter `resources/fonts/` (SIL OFL 1.1, Attribution in `NOTICE`). Je Schrift wird die
+//! Die Schriften liegen unter `resources/fonts/` (Lizenz und Attribution: `NOTICE` und
+//! `resources/fonts/LICENSE-LiberationSans.txt`; Version und Lizenzhinweis werden aus der name-Tabelle der
+//! Schriftdatei in den Kopf von `metrics.rs` übernommen, nie von Hand behauptet). Je Schrift wird die
 //! Horizontal-Advance-Width jedes Zeichens der Unicode-Zeichentabelle (cmap) in Schrifteinheiten
 //! (`units_per_em` = 2048) ausgegeben: ASCII als dichtes Feld, alles darüber als nach Codepoint sortierte
 //! Liste für die Binärsuche. Die Ausgabe ist deterministisch.
@@ -48,6 +50,17 @@ fn advances(font_file: &Path) -> BTreeMap<u32, u16> {
         });
     }
     map
+}
+
+/// Lesbarer Eintrag der name-Tabelle (Windows/Unicode bevorzugt, sonst der erste passende).
+fn name_entry(font_file: &Path, name_id: u16) -> String {
+    let data = std::fs::read(font_file).unwrap_or_else(|e| panic!("{}: {e}", font_file.display()));
+    let face = Face::parse(&data, 0).expect("gültige TrueType-Datei");
+    face.names()
+        .into_iter()
+        .filter(|n| n.name_id == name_id)
+        .find_map(|n| n.to_string())
+        .unwrap_or_else(|| panic!("{}: name-Eintrag {name_id} fehlt", font_file.display()))
 }
 
 fn emit_font(out: &mut String, prefix: &str, label: &str, map: &BTreeMap<u32, u16>) {
@@ -95,15 +108,25 @@ fn emit_font(out: &mut String, prefix: &str, label: &str, map: &BTreeMap<u32, u1
 
 fn generate() -> String {
     let fonts = crate_dir().join("resources").join("fonts");
-    let regular = advances(&fonts.join("LiberationSans-Regular.ttf"));
-    let bold = advances(&fonts.join("LiberationSans-Bold.ttf"));
-
+    let regular_file = fonts.join("LiberationSans-Regular.ttf");
+    let bold_file = fonts.join("LiberationSans-Bold.ttf");
+    let regular = advances(&regular_file);
+    let bold = advances(&bold_file);
     let mut out = String::new();
-    out.push_str(
-        "//! Advance-Widths von Liberation Sans (SIL OFL 1.1), Regular und Bold, in Schrifteinheiten.\n\
+    let _ = writeln!(
+        out,
+        "//! Advance-Widths von Liberation Sans, Regular und Bold, in Schrifteinheiten.\n\
+         //!\n\
+         //! Quelle (name-Tabelle der Schriftdateien unter `resources/fonts/`):\n\
+         //! * Regular: {} – {}\n\
+         //! * Bold: {} – {}\n\
          //!\n\
          //! GENERIERT von `examples/gen_pixel_metrics.rs` aus `resources/fonts/*.ttf` – nicht von Hand ändern.\n\
-         //! Neu erzeugen: `cargo run -p os-parse --example gen_pixel_metrics`.\n\n",
+         //! Neu erzeugen: `cargo run -p os-parse --example gen_pixel_metrics`.\n",
+        name_entry(&regular_file, 5),
+        name_entry(&regular_file, 13),
+        name_entry(&bold_file, 5),
+        name_entry(&bold_file, 13),
     );
     let _ = writeln!(
         out,

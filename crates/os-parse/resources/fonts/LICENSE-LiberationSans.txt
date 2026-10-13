@@ -1,0 +1,26 @@
+Liberation Sans, Version 1.07.4 (LiberationSans-Regular.ttf, LiberationSans-Bold.ttf)
+=====================================================================================
+
+Diese beiden Schriftdateien sind die Liberation-1.x-Ausgabe (Hersteller Ascender Corporation, Entwurf
+Steve Matteson, "Copyright (c) 2007 Red Hat, Inc. All rights reserved. LIBERATION is a trademark of Red Hat,
+Inc."). Lizenz laut name-Tabelle der Dateien (Eintrag 13/14):
+
+    Licensed under the Liberation Fonts license,
+    see https://fedoraproject.org/wiki/Licensing/LiberationFontLicense
+
+Die Liberation-Fonts-Lizenz der 1.x-Reihe ist die GNU General Public License Version 2 mit einer
+Schriftarten-Ausnahme (Dokumente, die die Schrift einbetten, werden dadurch nicht GPL-pflichtig). Es ist
+NICHT die SIL Open Font License; diese gilt erst ab Liberation 2.0 (Hinweis: der Kopf "Digitized data
+copyright (c) 2010 Google Corporation ... Copyright (c) 2012 Red Hat" gehoert zur 2.x-Reihe und nicht zu
+diesen Dateien).
+
+Verwendung in OpenSpider: Aus den Dateien werden nur die Advance-Widths (Zahlen) als Rust-Konstante
+erzeugt (crates/os-parse/src/pixel/metrics.rs); die Schrift selbst wird weder eingebettet noch mit dem
+Programm ausgeliefert.
+
+OFFEN (Blocker fuer die Freigabe, siehe Review M1-P05): UI-038 und docs/plan/M1.md verlangen Liberation Sans
+bzw. Arimo unter der SIL OFL 1.1. Die beiden TTF-Dateien sind durch Liberation Sans 2.1.x (OFL 1.1,
+https://github.com/liberationfonts/liberation-fonts/releases) oder Arimo (OFL, Google Fonts) zu ersetzen.
+Danach diese Datei durch den OFL-Text der gewaehlten Ausgabe samt deren Copyright-Zeilen ersetzen, NOTICE
+anpassen, `cargo run -p os-parse --example gen_pixel_metrics` ausfuehren und die Tests laufen lassen
+(tests/pixel_license.rs prueft, dass NOTICE und diese Datei zur name-Tabelle der Schriftdateien passen).

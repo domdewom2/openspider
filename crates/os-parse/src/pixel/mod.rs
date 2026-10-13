@@ -1,5 +1,5 @@
-//! Pixelbreiten-Engine (UI-038): Schriftmetriken von Liberation Sans (metrisch Arial-kompatibel, SIL OFL),
-//! Regular und Bold.
+//! Pixelbreiten-Engine (UI-038): Schriftmetriken von Liberation Sans (metrisch Arial-kompatibel), Regular und
+//! Bold. Version und Lizenz der Schriftdateien stehen in `NOTICE` und im Kopf von [`metrics`].
 //!
 //! Breite = Summe der Advance-Widths aller Grapheme (`Einheiten / 2048 × Schriftgröße`), in `f64`
 //! summiert, ohne Kerning und ohne Ligaturen, **einmal** am Ende kaufmännisch auf die nächste ganze Zahl

@@ -330,8 +330,40 @@ fn text_ratio(doc: &Document, source_chars: usize) -> f32 {
 /// angenähert, weil [`Document`] den Quelltext nicht hält; [`analyze_with_source`] liefert den exakten
 /// Textanteil.
 pub fn analyze(doc: &Document, area: &ContentAreaConfig) -> ContentStats {
-    let approx = doc.html().root_element().html().chars().count();
-    analyze_with_source(doc, area, approx)
+    analyze_with_source(doc, area, serialized_chars(doc))
+}
+
+/// Schreibziel, das nur die UTF-8-Zeichen zählt (Bytes, die keine Fortsetzungsbytes sind) und nichts
+/// speichert: die Serialisierung des Baums braucht so keine seitengroße String-Allokation.
+#[derive(Default)]
+struct CharCounter {
+    chars: usize,
+}
+
+impl std::io::Write for CharCounter {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.chars += buf.iter().filter(|b| (**b & 0xC0) != 0x80).count();
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+/// Zeichenzahl der Serialisierung des gesamten Baums (identisch mit `root_element().html().chars().count()`,
+/// aber ohne den String zu bauen).
+fn serialized_chars(doc: &Document) -> usize {
+    use html5ever::serialize::{serialize, SerializeOpts, TraversalScope};
+    let mut counter = CharCounter::default();
+    let opts = SerializeOpts {
+        scripting_enabled: false,
+        traversal_scope: TraversalScope::IncludeNode,
+        create_missing_parent: false,
+    };
+    // Schreiben in den Zähler schlägt nie fehl.
+    let _ = serialize(&mut counter, &doc.html().root_element(), opts);
+    counter.chars
 }
 
 /// Wie [`analyze`], aber mit der echten Zeichenzahl des dekodierten HTML-Quelltexts (`html.chars().count()`)

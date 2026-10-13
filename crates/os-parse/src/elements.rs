@@ -9,7 +9,7 @@
 //! Textnormalisierung: Texte und Attributwerte kommen bereits entity-dekodiert aus dem Tree-Builder und
 //! werden daher nur mit [`text::normalize_ws`] normalisiert (nie mit `normalize`, sonst Doppeldekodierung).
 
-use ego_tree::NodeRef;
+use ego_tree::iter::Edge;
 use os_model::ExtractedText;
 use scraper::{ElementRef, Node};
 
@@ -47,38 +47,46 @@ fn extracted(raw: &str, in_head: bool) -> ExtractedText {
 /// Text einer Überschrift: Textknoten und `alt` von `<img>` (A-30) in Dokumentreihenfolge; `<br>` und
 /// Blockgrenzen sind Leerraum (A-31); `script`, `style`, `noscript`, `template` und `svg` zählen nicht.
 /// Versteckte Überschriften werden nicht anders behandelt (keine Sichtbarkeitsprüfung).
+///
+/// Iterativ (`ego_tree::traverse`, wie `content::walk`), damit auch pathologisch tief verschachtelte
+/// Überschriften keinen Stapelüberlauf auslösen.
 fn heading_text(node: ElementRef) -> String {
-    fn walk(node: NodeRef<Node>, out: &mut String) {
-        for child in node.children() {
-            match child.value() {
-                Node::Text(t) => out.push_str(t),
+    let mut out = String::new();
+    // > 0: innerhalb eines ausgeschlossenen Teilbaums (Tiefe relativ zu dessen Wurzel).
+    let mut skip_depth = 0usize;
+    for edge in node.traverse() {
+        match edge {
+            Edge::Open(child) => match child.value() {
                 Node::Element(e) => {
+                    if skip_depth > 0 {
+                        skip_depth += 1;
+                        continue;
+                    }
                     let name = e.name();
-                    match name {
-                        "script" | "style" | "noscript" | "template" | "svg" => {}
-                        "img" => {
-                            if let Some(alt) = e.attr("alt") {
-                                out.push_str(alt);
-                            }
+                    if matches!(name, "script" | "style" | "noscript" | "template" | "svg") {
+                        skip_depth = 1;
+                    } else if name == "img" {
+                        if let Some(alt) = e.attr("alt") {
+                            out.push_str(alt);
                         }
-                        _ => {
-                            let block = is_block_element(name);
-                            if block {
-                                out.push(' ');
-                            }
-                            walk(child, out);
-                            if block {
-                                out.push(' ');
-                            }
-                        }
+                    } else if child.id() != node.id() && is_block_element(name) {
+                        out.push(' ');
                     }
                 }
+                Node::Text(t) if skip_depth == 0 => out.push_str(t),
                 _ => {}
+            },
+            Edge::Close(child) => {
+                if let Node::Element(e) = child.value() {
+                    if skip_depth > 0 {
+                        skip_depth -= 1;
+                    } else if child.id() != node.id() && is_block_element(e.name()) {
+                        out.push(' ');
+                    }
+                }
             }
         }
     }
-    let mut out = String::new();
-    walk(*node, &mut out);
     out
 }
 

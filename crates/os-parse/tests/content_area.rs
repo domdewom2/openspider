@@ -337,3 +337,19 @@ fn analyze_without_source_stays_within_range() {
         Default::default()
     );
 }
+
+// spec: ONPAGE-141
+#[test]
+fn analyze_counts_serialized_chars_without_building_the_string() {
+    // Mehrbyte-Zeichen (ä, €, Emoji) und Entities: die Zählung muss Codepoints zählen, nicht Bytes, und mit
+    // der Zeichenzahl der Baum-Serialisierung übereinstimmen.
+    let html = "<html><head><title>Käse &amp; €</title></head>\
+                <body><p>Größe 10 € 😀 &lt;ok&gt;</p><img src=\"a.png\" alt=\"ä\"></body></html>";
+    let doc = Document::parse(html);
+    let cfg = ContentAreaConfig::default();
+    let serialized = doc.html().root_element().html().chars().count();
+    assert_eq!(
+        analyze(&doc, &cfg),
+        analyze_with_source(&doc, &cfg, serialized)
+    );
+}
