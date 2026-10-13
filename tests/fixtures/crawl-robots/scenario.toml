@@ -1,0 +1,77 @@
+# Szenario crawl-robots: alle verlinkten Seiten existieren (200), damit "Ignorieren" echte Statuscodes liefert.
+
+[[route]]
+path = "/privat/x"
+body = "<!doctype html><html><head><title>/privat/x</title></head><body><h1>/privat/x</h1></body></html>"
+
+[[route]]
+path = "/privat/oeffentlich"
+body = "<!doctype html><html><head><title>/privat/oeffentlich</title></head><body><h1>/privat/oeffentlich</h1></body></html>"
+
+[[route]]
+path = "/privat/oeffentlich/unterseite"
+body = "<!doctype html><html><head><title>/privat/oeffentlich/unterseite</title></head><body><h1>/privat/oeffentlich/unterseite</h1></body></html>"
+
+[[route]]
+path = "/privat/"
+body = "<!doctype html><html><head><title>/privat/</title></head><body><h1>/privat/</h1></body></html>"
+
+[[route]]
+path = "/privat"
+body = "<!doctype html><html><head><title>/privat</title></head><body><h1>/privat</h1></body></html>"
+
+[[route]]
+path = "/dokument.pdf"
+body = "<!doctype html><html><head><title>/dokument.pdf</title></head><body><h1>/dokument.pdf</h1></body></html>"
+
+[[route]]
+path = "/ordner/dokument.pdf"
+body = "<!doctype html><html><head><title>/ordner/dokument.pdf</title></head><body><h1>/ordner/dokument.pdf</h1></body></html>"
+
+[[route]]
+path = "/dokument.pdfx"
+body = "<!doctype html><html><head><title>/dokument.pdfx</title></head><body><h1>/dokument.pdfx</h1></body></html>"
+
+[[route]]
+path = "/liste"
+body = "<!doctype html><html><head><title>/liste</title></head><body><h1>/liste</h1></body></html>"
+
+[[route]]
+path = "/seite"
+body = "<!doctype html><html><head><title>/seite</title></head><body><h1>/seite</h1></body></html>"
+
+[[route]]
+path = "/seite2"
+body = "<!doctype html><html><head><title>/seite2</title></head><body><h1>/seite2</h1></body></html>"
+
+[[route]]
+path = "/seite/unterseite"
+body = "<!doctype html><html><head><title>/seite/unterseite</title></head><body><h1>/seite/unterseite</h1></body></html>"
+
+[[route]]
+path = "/mit-leerzeichen/a"
+body = "<!doctype html><html><head><title>/mit-leerzeichen/a</title></head><body><h1>/mit-leerzeichen/a</h1></body></html>"
+
+[[route]]
+path = "/zweite-gruppe/a"
+body = "<!doctype html><html><head><title>/zweite-gruppe/a</title></head><body><h1>/zweite-gruppe/a</h1></body></html>"
+
+[[route]]
+path = "/nur-google/a"
+body = "<!doctype html><html><head><title>/nur-google/a</title></head><body><h1>/nur-google/a</h1></body></html>"
+
+[[route]]
+path = "/unbekannte-direktive/a"
+body = "<!doctype html><html><head><title>/unbekannte-direktive/a</title></head><body><h1>/unbekannte-direktive/a</h1></body></html>"
+
+[[route]]
+path = "/frei/a"
+body = "<!doctype html><html><head><title>/frei/a</title></head><body><h1>/frei/a</h1></body></html>"
+
+[[route]]
+path = "/caf%C3%A9"
+body = "<!doctype html><html><head><title>/caf%C3%A9</title></head><body><h1>/caf%C3%A9</h1></body></html>"
+
+[[route]]
+path = "/gross%2Fklein"
+body = "<!doctype html><html><head><title>/gross%2Fklein</title></head><body><h1>/gross%2Fklein</h1></body></html>"

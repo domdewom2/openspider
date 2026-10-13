@@ -1,0 +1,12 @@
+# erster Abruf 503, danach 200 mit Disallow: /seite (CRAWL-100). fail_first_n: Routen-Option aus M1-P09 (zustandsbehaftet);
+# in Welle 1.5 gegen die tatsaechliche P09-Syntax pruefen.
+[[route]]
+path = "/robots.txt"
+status = 200
+fail_first_n = 1
+content_type = "text/plain"
+body = "User-agent: *\nDisallow: /seite\n"
+
+[[route]]
+path = "/seite"
+body = "<!doctype html><html><head><title>seite</title></head><body><h1>seite</h1></body></html>"
