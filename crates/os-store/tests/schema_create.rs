@@ -61,6 +61,7 @@ fn schema_has_expected_indexes_and_columns() {
         "sitemap_entries_url",
         "queue_order",
         "url_flags_flag",
+        "urls_change_seq",
     ] {
         assert!(idx.iter().any(|i| i == name), "Index {name} fehlt");
     }
@@ -84,6 +85,7 @@ fn schema_has_expected_indexes_and_columns() {
         "meta_desc_2_in_head",
         "canonical_self",
         "indexability_status",
+        "change_seq",
     ] {
         assert!(cols.iter().any(|x| x == c), "Spalte urls.{c} fehlt");
     }
@@ -263,4 +265,61 @@ fn list_mode_records_list_source() {
         f.get_meta("list_source").unwrap().as_deref(),
         Some("urls.txt")
     );
+}
+
+// spec: OUT-230
+#[test]
+fn change_seq_column_index_and_meta_start_at_zero() {
+    let dir = tempfile::tempdir().unwrap();
+    let (path, file) = create(dir.path(), "a.ospider");
+    // urls.change_seq: INTEGER NOT NULL DEFAULT 0, indiziert über urls_change_seq.
+    let (ty, notnull, default): (String, i64, Option<String>) = file
+        .conn()
+        .query_row(
+            "SELECT type, \"notnull\", dflt_value FROM pragma_table_info('urls') WHERE name = 'change_seq'",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+        )
+        .unwrap();
+    assert_eq!(
+        (ty.as_str(), notnull, default.as_deref()),
+        ("INTEGER", 1, Some("0"))
+    );
+    let idx_cols: Vec<String> = file
+        .conn()
+        .prepare("SELECT name FROM pragma_index_info('urls_change_seq')")
+        .unwrap()
+        .query_map([], |r| r.get(0))
+        .unwrap()
+        .collect::<Result<_, _>>()
+        .unwrap();
+    assert_eq!(idx_cols, ["change_seq"]);
+    file.conn()
+        .execute(
+            "INSERT INTO urls (id, url, address, origin, is_internal, state, discovered_via, folder_depth, url_length) \
+             VALUES (1, 'https://a.test/', 'https://a.test/', 'https://a.test', 1, 'queued', 'start', 0, 15)",
+            [],
+        )
+        .unwrap();
+    let seq: i64 = file
+        .conn()
+        .query_row("SELECT change_seq FROM urls WHERE id = 1", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(seq, 0);
+    // crawl_meta.change_seq wird bei create mit 0 angelegt und von queries::change_seq gelesen.
+    assert_eq!(file.get_meta("change_seq").unwrap().as_deref(), Some("0"));
+    assert_eq!(os_store::queries::change_seq(file.conn()).unwrap(), 0);
+    file.set_meta("change_seq", "7").unwrap();
+    drop(file);
+    let again = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
+    assert_eq!(os_store::queries::change_seq(again.conn()).unwrap(), 7);
+    // Fehlt der Schlüssel, ist die Sequenz 0.
+    let (_, f2) = create(dir.path(), "b.ospider");
+    f2.conn()
+        .execute("DELETE FROM crawl_meta WHERE key = 'change_seq'", [])
+        .unwrap();
+    assert_eq!(os_store::queries::change_seq(f2.conn()).unwrap(), 0);
+    assert!(os_store::queries::changed_since(f2.conn(), 0, 10)
+        .unwrap()
+        .is_empty());
 }

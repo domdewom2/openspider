@@ -2,7 +2,7 @@
 //!
 //! STUB(M1-P12): P12 legt `core/issues/catalog.toml` an und füllt Katalog und Texte.
 
-use os_model::{IssuePriority, IssueType};
+use os_model::{IssuePriority, IssueType, Value};
 
 use crate::views::FilterCount;
 
@@ -38,15 +38,20 @@ pub struct CatalogEntry {
     pub needs_crawl_analysis: bool,
     /// Schlüssel der Texte.
     pub doc_key: String,
+    /// Platzhalter der Texte (`{max}`, `{min}`, `{unit}`, `{threshold}`) und der Konfigurationspfad, aus dem
+    /// ihr Wert stammt, z. B. `("max", "title.max_chars")`.
+    pub text_params: Vec<(String, String)>,
 }
 
 /// Beschreibung und Behebung eines Issues.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IssueTexts {
-    /// Beschreibung.
-    pub description: String,
+    /// Was das Issue ist.
+    pub what: String,
+    /// Warum es relevant ist.
+    pub why: String,
     /// Wie sich das Issue beheben lässt.
-    pub how_to_fix: String,
+    pub fix: String,
 }
 
 /// Eine Issue-Zeile (Filter mit Treffern).
@@ -74,9 +79,10 @@ pub fn catalog() -> &'static [CatalogEntry] {
     &[]
 }
 
-/// Texte zu einem `doc_key`.
+/// Texte zu einem `doc_key`; ersetzt die Platzhalter `{max}`, `{min}`, `{unit}`, `{threshold}` durch die Werte
+/// aus `params` (`TabDef.params(cfg)`).
 // STUB(M1-P12)
-pub fn texts(_doc_key: &str, _lang: Lang) -> Option<IssueTexts> {
+pub fn texts(_doc_key: &str, _lang: Lang, _params: &[(&str, Value)]) -> Option<IssueTexts> {
     None
 }
 

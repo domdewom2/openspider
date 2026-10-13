@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use os_model::{CrawlConfig, CrawlId, CrawlMode, CrawlState, Timestamp};
 use rusqlite::{Connection, ErrorCode, OpenFlags};
 
+use crate::collation;
 use crate::error::StoreError;
 use crate::profile::{self, StorageProfile};
 use crate::schema::{self, Migration, APPLICATION_ID, MIGRATIONS};
@@ -161,6 +162,7 @@ impl CrawlFile {
             path,
             OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_CREATE,
         )?;
+        collation::ensure(&conn)?;
         profile::apply(&conn, profile)?;
         conn.pragma_update(None, "application_id", APPLICATION_ID)?;
         schema::migrate(&mut conn, 0, MIGRATIONS)?;
@@ -183,6 +185,8 @@ impl CrawlFile {
                 ("next_url_id", "1".to_string()),
                 ("next_seq", "1".to_string()),
                 ("analysis_stale", "0".to_string()),
+                // Änderungsfeed (P00c, 3.9): der Writer erhöht den Wert je Batch.
+                ("change_seq", "0".to_string()),
             ];
             if let Some(u) = &init.start_url {
                 rows.push(("start_url", u.clone()));
@@ -276,6 +280,7 @@ impl CrawlFile {
             OpenMode::ReadWrite => OpenFlags::SQLITE_OPEN_READ_WRITE,
         };
         let mut conn = Connection::open_with_flags(path, flags).map_err(|e| classify(path, e))?;
+        collation::ensure(&conn)?;
         if mode == OpenMode::ReadWrite {
             profile::apply(&conn, StorageProfile::default())?;
         } else {

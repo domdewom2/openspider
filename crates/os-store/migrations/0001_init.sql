@@ -6,7 +6,9 @@
 CREATE TABLE crawl_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID;
 -- Schlüssel: crawl_id, schema_version, generator, created_at, mode, start_url, list_source, project, name,
 --            state, end_reason, started_at, ended_at, paused_at, heartbeat_at, next_url_id, next_seq,
---            analysis_state, analysis_at, analysis_stale
+--            analysis_state, analysis_at, analysis_stale,
+--            change_seq (Nachtrag P00c: Änderungsfeed, vom Writer je Batch erhöht), reset_seq (P19: Löschungen → Caches verwerfen),
+--            owner_kind (app|cli|mcp-stdio), owner_pid (P15/P19, F-14 des M2-Konzepts)
 CREATE TABLE crawl_config (id INTEGER PRIMARY KEY CHECK (id = 1), osconfig TEXT NOT NULL, updated_at TEXT NOT NULL);
 
 CREATE TABLE urls (
@@ -40,8 +42,10 @@ CREATE TABLE urls (
   inlinks_all INTEGER NOT NULL DEFAULT 0,      -- alle Linktypen inkl. Ressourcen
   outlinks INTEGER NOT NULL DEFAULT 0, unique_outlinks INTEGER NOT NULL DEFAULT 0, self_outlinks INTEGER NOT NULL DEFAULT 0,
   external_outlinks INTEGER NOT NULL DEFAULT 0, unique_external_outlinks INTEGER NOT NULL DEFAULT 0,
-  img_inlinks INTEGER NOT NULL DEFAULT 0       -- verschiedene Seiten mit Bild-Instanz (ONPAGE-171)
+  img_inlinks INTEGER NOT NULL DEFAULT 0,      -- verschiedene Seiten mit Bild-Instanz (ONPAGE-171)
+  change_seq INTEGER NOT NULL DEFAULT 0        -- Nachtrag P00c: Batch-Sequenz der letzten Änderung dieser Zeile (Änderungsfeed, K-2 des M2-Konzepts)
 );
+CREATE INDEX urls_change_seq ON urls(change_seq);  -- Nachtrag P00c
 CREATE INDEX urls_status ON urls(status_code); CREATE INDEX urls_class ON urls(is_internal, content_class);
 CREATE INDEX urls_state ON urls(state);        CREATE INDEX urls_depth ON urls(crawl_depth);
 CREATE INDEX urls_title1 ON urls(title_1);     CREATE INDEX urls_md1 ON urls(meta_desc_1);

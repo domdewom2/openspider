@@ -13,6 +13,7 @@ rusqlite.workspace = true
 thiserror.workspace = true
 dirs.workspace = true
 serde_json.workspace = true
+icu_collator.workspace = true
 
 # physischer RAM und freier Speicherplatz (CRAWL-124, P07)
 [target.'cfg(unix)'.dependencies]

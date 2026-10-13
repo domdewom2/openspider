@@ -2,8 +2,12 @@
 
 use std::path::PathBuf;
 
-/// Klasse eines Werkzeugs; der Nutzer gibt Klassen frei (AGENT-010 ff.).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+use serde::{Deserialize, Serialize};
+
+/// Klasse eines Werkzeugs; der Nutzer gibt Klassen frei (AGENT-010 ff.). In den Einstellungsdateien
+/// kleingeschrieben (`read`, `crawl`, `write`, `cost`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum ToolClass {
     /// Lesender Zugriff auf Crawl-Dateien (Standard, ab Auslieferung freigegeben).
     Read,
@@ -15,7 +19,9 @@ pub enum ToolClass {
     Cost,
 }
 
-/// Umgebung eines Werkzeugaufrufs.
+/// Umgebung eines Werkzeugaufrufs. Neue Felder (M2: optionales Sitzungs-Trait-Objekt, das `os-app`
+/// bereitstellt) kommen ohne Umbau der Aufrufer hinzu: Konstruktion nur über [`ToolContext::new`].
+#[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct ToolContext {
     /// Ordner mit den Crawl-Dateien.

@@ -79,6 +79,9 @@ fn progress_json_field_names_are_fixed() {
         eta_s: None,
         active_threads: 5,
         started_at: Timestamp::from_db("2026-10-13T07:35:00.000Z").unwrap(),
+        avg_rate: 6.0,
+        paused_s: 0,
+        discovered: 42,
     };
     let v = serde_json::to_value(&p).unwrap();
     for key in [

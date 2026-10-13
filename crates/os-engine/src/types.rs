@@ -30,6 +30,9 @@ pub struct EngineDeps {
     pub sink_factory: Option<SinkFactory>,
     /// Hook am Crawl-Ende. `os-cli` (P26) übergibt hier `os_analyze::analysis::run_after_crawl` (CRAWL-141).
     pub on_finished: Option<FinishedHook>,
+    /// Wer den Crawl besitzt, für `crawl_meta.owner_kind`: `"cli"` (Kommandozeile), `"app"` (Oberfläche),
+    /// `"mcp-stdio"` (MCP-Server). Keine weitere Steuerung.
+    pub owner_kind: &'static str,
 }
 
 /// Zusammenfassung eines beendeten Crawls.
