@@ -1,0 +1,36 @@
+[package]
+name = "os-mcp"
+description = "OpenSpider: MCP-Server (STDIO), Werkzeugklassen read/crawl/write/cost"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+os-model.workspace = true
+os-store.workspace = true
+os-analyze.workspace = true
+os-export.workspace = true
+clap.workspace = true
+rmcp.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tokio.workspace = true
+dirs.workspace = true
+
+[[bin]]
+# Schlanker Starter nur für die Prozess-Tests von P18/P27 (stdout-Reinheit, rmcp-Client über Kindprozess);
+# ausgeliefert wird `openspider mcp` aus os-cli.
+name = "openspider-mcp"
+path = "src/main.rs"
+
+[dev-dependencies]
+os-engine = { workspace = true, features = ["testing"] }
+os-testsite.workspace = true
+tempfile.workspace = true
+tokio = { workspace = true, features = ["test-util"] }

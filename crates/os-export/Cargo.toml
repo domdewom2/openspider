@@ -11,3 +11,19 @@ authors.workspace = true
 os-model.workspace = true
 os-store.workspace = true
 os-analyze.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+csv.workspace = true
+rust_xlsxwriter.workspace = true
+quick-xml.workspace = true
+time.workspace = true
+url.workspace = true
+
+[dev-dependencies]
+os-engine = { workspace = true, features = ["testing"] }
+os-testsite.workspace = true
+calamine.workspace = true
+tempfile.workspace = true
+tokio = { workspace = true, features = ["test-util"] }

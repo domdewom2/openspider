@@ -25,7 +25,7 @@ async fn get(site: &TestSite, path: &str) -> (u16, String, String) {
 
 #[tokio::test]
 async fn serves_static_page_on_random_port() {
-    let site = TestSite::start("basic").await.unwrap();
+    let site = TestSite::start("out-basic-site").await.unwrap();
     assert_ne!(site.addr().port(), 0);
     let (status, head, body) = get(&site, "/index.html").await;
     assert_eq!(status, 200);
@@ -38,7 +38,7 @@ async fn serves_static_page_on_random_port() {
 
 #[tokio::test]
 async fn root_serves_index() {
-    let site = TestSite::start("basic").await.unwrap();
+    let site = TestSite::start("out-basic-site").await.unwrap();
     let (status, _, body) = get(&site, "/").await;
     assert_eq!(status, 200);
     assert!(body.contains("Basic Site"));
@@ -46,7 +46,7 @@ async fn root_serves_index() {
 
 #[tokio::test]
 async fn scenario_redirect_and_404() {
-    let site = TestSite::start("basic").await.unwrap();
+    let site = TestSite::start("out-basic-site").await.unwrap();
 
     let (status, head, _) = get(&site, "/old-page").await;
     assert_eq!(status, 301);
@@ -62,7 +62,7 @@ async fn scenario_redirect_and_404() {
 
 #[tokio::test]
 async fn serves_robots_and_sitemap() {
-    let site = TestSite::start("basic").await.unwrap();
+    let site = TestSite::start("out-basic-site").await.unwrap();
     let (status, _, body) = get(&site, "/robots.txt").await;
     assert_eq!(status, 200);
     assert!(body.contains(&format!("Sitemap: {}/sitemap.xml", site.base_url())));
@@ -75,7 +75,7 @@ async fn serves_robots_and_sitemap() {
 
 #[tokio::test]
 async fn blocks_traversal_and_scenario_file() {
-    let site = TestSite::start("basic").await.unwrap();
+    let site = TestSite::start("out-basic-site").await.unwrap();
     let (status, _, _) = get(&site, "/scenario.toml").await;
     assert_eq!(status, 404);
     let (status, _, _) = get(&site, "/../Cargo.toml").await;

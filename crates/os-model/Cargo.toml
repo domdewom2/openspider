@@ -9,12 +9,14 @@ authors.workspace = true
 
 [dependencies]
 serde.workspace = true
+serde_json.workspace = true
 toml.workspace = true
 thiserror.workspace = true
 uuid.workspace = true
 time.workspace = true
 schemars.workspace = true
+fancy-regex.workspace = true
+strsim.workspace = true
 
 [dev-dependencies]
 proptest.workspace = true
-serde_json.workspace = true

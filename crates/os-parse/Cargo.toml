@@ -10,6 +10,18 @@ authors.workspace = true
 [dependencies]
 os-model.workspace = true
 os-url.workspace = true
+url.workspace = true
 scraper.workspace = true
 html5ever.workspace = true
 ego-tree.workspace = true
+encoding_rs.workspace = true
+quick-xml.workspace = true
+lopdf.workspace = true
+unicode-segmentation.workspace = true
+flate2.workspace = true
+
+[dev-dependencies]
+os-testsite.workspace = true
+tokio.workspace = true
+ttf-parser.workspace = true
+proptest.workspace = true

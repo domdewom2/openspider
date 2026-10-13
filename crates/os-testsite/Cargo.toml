@@ -13,3 +13,13 @@ serde.workspace = true
 tokio = { workspace = true, features = ["fs"] }
 toml.workspace = true
 serde_json.workspace = true
+# P09: TLS auf demselben Port (Test-CA, Host-Zertifikate per SNI), Kompressions-Routen, Basic-Auth-Routen
+tokio-rustls.workspace = true
+rustls.workspace = true
+rcgen.workspace = true
+time.workspace = true
+bytes.workspace = true
+futures-util.workspace = true
+flate2.workspace = true
+brotli.workspace = true
+base64.workspace = true

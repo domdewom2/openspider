@@ -81,6 +81,9 @@ pub enum StoreError {
     /// In der Datei ist keine Konfiguration gespeichert.
     #[error("keine Konfiguration in der Crawl-Datei")]
     MissingConfig,
+    /// Noch nicht umgesetzt (Stub, `STUB(M1-Pxx)`).
+    #[error("nicht implementiert: {0}")]
+    NotImplemented(&'static str),
     /// Modellfehler (Enum, Zeitstempel, Konfiguration).
     #[error(transparent)]
     Model(#[from] ModelError),

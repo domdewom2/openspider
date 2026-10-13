@@ -12,5 +12,27 @@ os-model.workspace = true
 os-url.workspace = true
 os-fetch.workspace = true
 os-parse.workspace = true
-os-render.workspace = true
 os-store.workspace = true
+url.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tokio.workspace = true
+bytes.workspace = true
+futures-util.workspace = true
+time.workspace = true
+flate2.workspace = true
+calamine.workspace = true
+csv.workspace = true
+# nur Feature `testing` (Testhelfer crate::testing); os-engine hängt nie an os-analyze (M1-Plan 3.2)
+os-testsite = { workspace = true, optional = true }
+tempfile = { workspace = true, optional = true }
+
+[features]
+testing = ["dep:os-testsite", "dep:tempfile"]
+
+[dev-dependencies]
+# Selbst-Abhängigkeit: `cargo test -p os-engine` schaltet das Feature `testing` für die eigenen Tests ein
+os-engine = { workspace = true, features = ["testing"] }
+os-testsite.workspace = true
+tempfile.workspace = true
+tokio = { workspace = true, features = ["test-util"] }

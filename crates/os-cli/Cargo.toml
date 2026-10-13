@@ -9,10 +9,35 @@ authors.workspace = true
 
 [dependencies]
 os-model.workspace = true
+os-url.workspace = true
+os-fetch.workspace = true
+os-store.workspace = true
 os-engine.workspace = true
+os-analyze.workspace = true
 os-export.workspace = true
+os-mcp.workspace = true
 clap.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tokio.workspace = true
 
 [[bin]]
 name = "openspider"
 path = "src/main.rs"
+
+[dev-dependencies]
+os-engine = { workspace = true, features = ["testing"] }
+os-testsite.workspace = true
+calamine.workspace = true
+csv.workspace = true
+tempfile.workspace = true
+tokio = { workspace = true, features = ["test-util"] }
+
+# Signal-Tests (SIGINT / Ctrl-C, P26)
+[target.'cfg(unix)'.dev-dependencies]
+libc.workspace = true
+
+[target.'cfg(windows)'.dev-dependencies]
+windows-sys.workspace = true

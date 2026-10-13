@@ -11,6 +11,15 @@ authors.workspace = true
 os-model.workspace = true
 rusqlite.workspace = true
 thiserror.workspace = true
+dirs.workspace = true
+serde_json.workspace = true
+
+# physischer RAM und freier Speicherplatz (CRAWL-124, P07)
+[target.'cfg(unix)'.dependencies]
+libc.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-sys.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true

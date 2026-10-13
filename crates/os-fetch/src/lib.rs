@@ -1,14 +1,23 @@
 //! `os-fetch` – HTTP-Client, robots.txt, Rate-Limit, Authentifizierung, Proxy, Cookies, HTTP/2.
+//!
+//! Modulgerüst nach M1-Plan 3.6 (P00b); die Umsetzung liefern M1-P02 (Abruf) und M1-P03 (`robots`).
 
-/// Name dieses Crates (Platzhalter bis zur ersten echten Funktion).
-pub const NAME: &str = env!("CARGO_PKG_NAME");
+pub mod auth;
+pub mod client;
+pub mod content_type;
+pub mod cookies;
+pub mod error;
+pub mod http;
+pub mod rate;
+pub mod redact;
+pub mod resolve;
+pub mod robots;
+pub mod secrets;
+pub mod user_agents;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn crate_name_matches() {
-        assert_eq!(NAME, "os-fetch");
-    }
-}
+pub use client::{BasicAuthEntry, FetchConfig, HttpFetcher};
+pub use content_type::content_class;
+pub use cookies::CookieJar;
+pub use error::FetchError;
+pub use http::{Fetch, FetchOutcome, FetchPurpose, FetchRequest, FetchResult, HttpResponse};
+pub use secrets::{MemorySecretStore, SecretStore};

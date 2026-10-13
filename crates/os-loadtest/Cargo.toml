@@ -8,12 +8,28 @@ repository.workspace = true
 authors.workspace = true
 
 [dependencies]
+os-model.workspace = true
+os-fetch.workspace = true
+os-store.workspace = true
+os-engine.workspace = true
 os-testsite.workspace = true
 clap.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
+tempfile.workspace = true
+tracing.workspace = true
+
+# Spitzen-RSS des Kernprozesses (PERF-001, P28)
+[target.'cfg(unix)'.dependencies]
+libc.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-sys.workspace = true
 
 [[bin]]
 name = "os-loadtest"
 path = "src/main.rs"
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }

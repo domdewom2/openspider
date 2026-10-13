@@ -11,6 +11,8 @@ members = [
     "crates/os-analyze",
     "crates/os-export",
     "crates/os-integrations",
+    "crates/os-mcp",
+    "crates/os-parity",
     "crates/os-cli",
     "crates/os-testsite",
     "crates/os-loadtest",
@@ -36,11 +38,16 @@ os-engine = { path = "crates/os-engine" }
 os-analyze = { path = "crates/os-analyze" }
 os-export = { path = "crates/os-export" }
 os-integrations = { path = "crates/os-integrations" }
+os-mcp = { path = "crates/os-mcp" }
+os-parity = { path = "crates/os-parity" }
 os-testsite = { path = "crates/os-testsite" }
 
 # extern
 serde = { version = "1", features = ["derive"] }
 url = "2"
+# os-url (P01): Anzeigeform (IDN/Non-ASCII dekodiert) und Prozent-Dekodierung der Normalisierung
+idna = "1"
+percent-encoding = "2"
 rusqlite = { version = "0.37", features = ["bundled"] }
 clap = { version = "4", features = ["derive"] }
 axum = "0.8"
@@ -53,7 +60,7 @@ uuid = { version = "1", features = ["v7", "serde"] }
 time = { version = "0.3", features = ["serde", "formatting", "parsing", "local-offset"] }
 thiserror = "2"
 tracing = "0.1"
-tracing-subscriber = "0.3"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 bytes = "1"
 futures-util = "0.3"
 # Keine automatische Dekompression (gzip/brotli/deflate-Features bewusst aus): Transfer-Bytes werden selbst gezählt.
@@ -78,7 +85,8 @@ csv = "1"
 rust_xlsxwriter = "0.99"
 calamine = "0.36"
 base64 = "0.23"
-rmcp = { version = "3", default-features = false, features = ["server", "client", "transport-io"] }
+# STDIO-Server (P18/P27) und Client (Tests): Kindprozess- und In-Process-Transport für die Integrationstests
+rmcp = { version = "3", default-features = false, features = ["server", "client", "transport-io", "transport-child-process"] }
 strsim = "0.11"
 dirs = "7"
 rustls = "0.23"
@@ -88,7 +96,9 @@ schemars = "1"
 libc = "0.2"
 tempfile = "3"
 # nur Windows (P28, RSS über GetProcessMemoryInfo): in den Crate-Manifesten unter [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.61", features = ["Win32_System_ProcessStatus", "Win32_System_Threading", "Win32_Foundation"] }
+# Win32_System_SystemInformation/Win32_Storage_FileSystem: physischer RAM und freier Speicher (P07, CRAWL-124);
+# Win32_System_Console: Ctrl-C-Ereignis in den CLI-Tests (P26)
+windows-sys = { version = "0.61", features = ["Win32_System_ProcessStatus", "Win32_System_Threading", "Win32_Foundation", "Win32_System_SystemInformation", "Win32_Storage_FileSystem", "Win32_System_Console"] }
 # dev-Abhängigkeiten (Property-Rundreise P13, Schriftgenerator UI-038)
 proptest = "1"
 ttf-parser = "0.25"

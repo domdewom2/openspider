@@ -8,4 +8,10 @@ repository.workspace = true
 authors.workspace = true
 
 [dependencies]
+os-model.workspace = true
 url.workspace = true
+thiserror.workspace = true
+fancy-regex.workspace = true
+psl.workspace = true
+idna.workspace = true
+percent-encoding.workspace = true

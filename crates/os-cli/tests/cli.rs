@@ -16,8 +16,16 @@ fn version_flag_prints_version() {
 #[test]
 fn crawl_stub_succeeds() {
     let out = openspider()
-        .args(["crawl", "https://example.com/"])
+        .args(["--crawl", "https://example.com/"])
         .output()
         .unwrap();
     assert!(out.status.success());
+}
+
+#[test]
+fn mcp_help_runs() {
+    let out = openspider().args(["mcp", "--help"]).output().unwrap();
+    assert!(out.status.success());
+    let stdout = String::from_utf8(out.stdout).unwrap();
+    assert!(stdout.contains("--read-only"), "unexpected: {stdout}");
 }
