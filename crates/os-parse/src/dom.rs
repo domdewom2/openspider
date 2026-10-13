@@ -17,7 +17,7 @@ use html5ever::tendril::TendrilSink;
 use html5ever::tree_builder::TreeBuilderOpts;
 use scraper::{ElementRef, Html, HtmlTreeSink, Selector};
 
-/// HTML-Namensraum (gemeinsam genutzt von `content`, `elements` und `links`).
+/// HTML-Namensraum (gemeinsam genutzt von `content` und `elements`).
 pub(crate) const XHTML_NS: &str = "http://www.w3.org/1999/xhtml";
 
 /// Ein geparstes HTML-Dokument.
