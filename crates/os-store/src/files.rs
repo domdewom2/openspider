@@ -412,13 +412,13 @@ impl Rescue<'_> {
     /// Kopiert die Zeilen mit `lo <= key <= hi`; bei einem Lesefehler wird der Bereich halbiert.
     fn range(&mut self, key: &str, lo: i64, hi: i64) {
         match self.read_rows(Some((key, lo, hi))) {
-            Ok(rows) => self.store(rows),
-            Err(_) if lo < hi => {
+            Some(rows) => self.store(rows),
+            None if lo < hi => {
                 let mid = lo + (hi - lo) / 2;
                 self.range(key, lo, mid);
                 self.range(key, mid + 1, hi);
             }
-            Err(_) => self.lost += 1,
+            None => self.lost += 1,
         }
     }
 
@@ -431,13 +431,10 @@ impl Rescue<'_> {
         }
     }
 
-    fn read_rows(&self, range: Option<(&str, i64, i64)>) -> rusqlite::Result<Vec<Vec<Value>>> {
+    /// Alle Zeilen oder `None`, wenn beim Lesen ein Fehler aufgetreten ist.
+    fn read_rows(&self, range: Option<(&str, i64, i64)>) -> Option<Vec<Vec<Value>>> {
         let (rows, failed) = self.read_rows_partial(range);
-        if failed {
-            Err(rusqlite::Error::InvalidQuery)
-        } else {
-            Ok(rows)
-        }
+        (!failed).then_some(rows)
     }
 
     /// `(Zeilen, Fehler aufgetreten)`; die Zeilen vor dem Fehler bleiben erhalten.

@@ -21,10 +21,7 @@ use ego_tree::iter::Edge;
 use os_model::ContentAreaConfig;
 use scraper::{ElementRef, Node};
 
-use crate::dom::Document;
-// Eine gemeinsame Liste und ein Namensraum-Wert in `dom.rs`; `elements.rs` importiert diese Namen weiterhin
-// von hier.
-pub(crate) use crate::dom::{is_block as is_block_element, XHTML_NS};
+use crate::dom::{is_block, Document, XHTML_NS};
 
 /// Kennzahlen des Inhaltsbereichs.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -211,7 +208,7 @@ fn walk(body: ElementRef, rules: &Rules) -> TokenCounter {
                         continue;
                     }
                     let name = el.name();
-                    let block = is_block_element(name);
+                    let block = is_block(name);
                     if rules.always_dropped(name) || rules.excluded(el) {
                         skip_depth = 1;
                         if block {
@@ -237,7 +234,7 @@ fn walk(body: ElementRef, rules: &Rules) -> TokenCounter {
                 if let Node::Element(el) = node.value() {
                     if skip_depth > 0 {
                         skip_depth -= 1;
-                        if skip_depth == 0 && is_block_element(el.name()) {
+                        if skip_depth == 0 && is_block(el.name()) {
                             counter.boundary();
                         }
                         continue;
@@ -245,7 +242,7 @@ fn walk(body: ElementRef, rules: &Rules) -> TokenCounter {
                     if include_marks.pop() == Some(true) {
                         include_depth -= 1;
                     }
-                    if is_block_element(el.name()) {
+                    if is_block(el.name()) {
                         counter.boundary();
                     }
                 }

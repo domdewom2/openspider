@@ -76,7 +76,9 @@ pub enum FetchOutcome {
 pub struct HttpResponse {
     /// Statuscode.
     pub status: u16,
-    /// Reason-Phrase der Antwort, falls gesendet.
+    /// Reason-Phrase der Antwort, nur gesetzt, wenn die gesendete Phrase vom IANA-Standardtext des Statuscodes
+    /// abweicht. Nicht-ASCII-Phrasen liefern hyper/httparse nicht; dann ist der Wert `None`. Quelle für die
+    /// Anzeige bleibt [`status_text`].
     pub reason_phrase: Option<String>,
     /// Anzeigetext (Reason-Phrase oder IANA-Standardtext).
     pub status_text: String,

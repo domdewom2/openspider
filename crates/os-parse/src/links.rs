@@ -12,10 +12,9 @@ use os_model::{ExtractedLink, LinkPosition, LinkType};
 use scraper::ElementRef;
 
 use crate::base::{clean_url_text, is_data_uri, path_type, resolve_string};
-use crate::dom::{self, Document};
+use crate::dom::{self, Document, XHTML_NS};
 use crate::{text, ParseConfig};
 
-const XHTML_NS: &str = "http://www.w3.org/1999/xhtml";
 const SVG_NS: &str = "http://www.w3.org/2000/svg";
 
 /// Element im HTML-Namensraum?
