@@ -6,9 +6,12 @@
 #
 # /reset-mid-body (halber Body, dann TCP-Reset) und /drop (nur der Kopf, dann Verbindung zu);
 # https://expired.site.test/ hat ein abgelaufenes Zertifikat (macht der Testserver per SNI selbst).
-# /hang-connect (Blackhole-Port) entfällt bewusst: Der Testserver bietet keinen Blackhole-Port (plattform-
-# abhängig, siehe os-testsite/src/lib.rs); Spec-Fixture CRAWL-013 ist entsprechend anzupassen (Nachbesserung
-# M1-P3x). Die Berechnung des Verbindungs-Timeouts prüft crates/os-fetch/tests/http_fetch.rs.
+#
+# Entscheidung K-24: Die Route /hang-connect (Blackhole-Port für einen hängenden TCP-Aufbau) entfällt.
+# Ein deterministisches Verhalten gibt es nicht plattformübergreifend (Begründung: Abschnitt „Nicht
+# enthalten“ in crates/os-testsite/src/lib.rs). Die Spec-Fixture (01-crawl.md, CRAWL-013) ist
+# entsprechend angepasst. „TCP-Aufbau hängt“ wird über die Klassifikation und die Berechnung des
+# Verbindungs-Timeouts geprüft (crates/os-fetch/tests/http_fetch.rs, Mini-Server und simulierte Zeit).
 
 [[route]]
 path = "/hang-response"

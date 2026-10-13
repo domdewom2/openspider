@@ -1,9 +1,9 @@
 # Szenario "crawl-status-codes" (CRAWL-012): Route /code/{n} liefert den Statuscode n.
 # 3xx (außer 304) leiten auf /code/200 weiter; 204 und 304 haben keinen Body.
 #
-# Offen (Nachbesserung os-testsite, M1-P3x): /early-hints (103 Early Hints, danach 200). Der Testserver
-# kann keine Zwischenantworten senden; bis dahin prüft crates/os-fetch/tests/http_fetch.rs
-# (informational_responses_are_skipped) das Überspringen von 1xx gegen einen eigenen Mini-Server.
+# /early-hints sendet zuerst eine 103-Zwischenantwort (Early Hints, mit Link-Header) und danach die
+# finale 200-Antwort (Route-Option `informational`, siehe os-testsite). Der Abrufer überspringt die
+# 1xx-Antwort: gespeichert werden Statuscode, Header und Body der 200-Antwort.
 
 [[route]]
 path = "/code/200"
@@ -33,6 +33,15 @@ body = "<html><head><title>Status 218</title></head><body>Status 218</body></htm
 path = "/code/299"
 status = 299
 body = "<html><head><title>Status 299</title></head><body>Status 299</body></html>"
+
+[[route]]
+path = "/early-hints"
+status = 200
+informational = [103]
+body = "<html><head><title>Early Hints</title></head><body>Early Hints</body></html>"
+
+[route.informational_headers]
+Link = "</style.css>; rel=preload; as=style"
 
 [[route]]
 path = "/code/301"

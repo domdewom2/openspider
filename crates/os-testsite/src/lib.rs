@@ -63,6 +63,8 @@
 //! | `body_size` | Body exakt so viele Byte (auffüllen mit Leerzeichen / kürzen) |
 //! | `png_size` | gültiges PNG mit exakt dieser Byte-Größe |
 //! | `requires_chromium` | Markierung für Rendering-Tests, wird nur geparst |
+//! | `informational = [103]` | 1xx-Zwischenantworten (nicht 101), die unmittelbar vor der finalen Antwort gesendet werden (nach `delay_ms`); nicht an HTTP/1.0-Clients |
+//! | `informational_headers` | Header jeder Zwischenantwort (Text oder Array), z. B. `Link` bei 103 |
 //!
 //! Zustandsbehaftete Optionen (`sequence`, `fail_first_n`) zählen je Route (nicht je Host/Pfad)
 //! und beginnen bei jedem Start der Site neu.
@@ -72,15 +74,26 @@
 //! geroutete Adressen werden je nach Netz und OS sofort abgewiesen, und ein volles
 //! Listen-Backlog verhält sich unter Linux, macOS und Windows verschieden. Tests für
 //! Verbindungs-Timeouts nutzen stattdessen `hang` (Antwort-Timeout) bzw. simulierte Zeit.
+//! Deshalb entfällt die Route `/hang-connect` der Fixture `crawl-no-response` (Entscheidung K-24);
+//! die Berechnung des Verbindungs-Timeouts prüft `os-fetch` gegen einen Mini-Server.
 //!
 //! # Request-Log
 //!
 //! [`TestSite::requests`] liefert [`RequestRecord`]s (`seq, ts, conn_id, method, host,
-//! path_and_query, headers`), dazu [`TestSite::count`], [`TestSite::max_concurrency`] und
+//! path_and_query, headers, tls, sni, sent_bytes`), dazu [`TestSite::count`], [`TestSite::max_concurrency`] und
 //! [`TestSite::connections`]. Das detaillierte Log ist bei Dateiszenarien immer an, bei
 //! synthetischen Sites nur mit [`SiteOptions::log_requests`] (Last-Tests sollen nicht
 //! mitwachsen). Mit `log_requests` zählt der Server zusätzlich Requests je Pfad
 //! ([`TestSite::request_counts`], als JSON unter [`synthetic::REQUEST_LOG_PATH`]).
+//!
+//! * `sni` ist der Servername aus dem TLS-ClientHello der Verbindung (`None` bei Klartext und bei
+//!   TLS ohne SNI, etwa per IP-Adresse).
+//! * `sent_bytes` sind die Bytes, die der Server für den Request geschrieben hat (1xx-Antworten,
+//!   Kopf, Body; bei TLS vor der Verschlüsselung), aufgeschlüsselt in `sent_framing_bytes`
+//!   (Chunk-Rahmen bei `chunked`) und `sent_interim_bytes` (1xx-Zwischenantworten);
+//!   [`RequestRecord::sent_payload_bytes`] ist der Rest = Kopf + Body der finalen Antwort. Der
+//!   Server verbucht die Bytes erst nach dem Schreiben – wer unmittelbar nach dem Lesen der
+//!   Antwort nachsieht, wartet kurz, bis `sent_bytes > 0` ist.
 //!
 //! # Golden-Dateien
 //!
@@ -239,6 +252,14 @@ pub struct Route {
     pub png_size: Option<usize>,
     /// `Set-Cookie`-Header (Text oder Liste).
     pub set_cookie: Option<HeaderValues>,
+    /// 1xx-Zwischenantworten (z. B. `[103]`), die der Server unmittelbar vor der finalen Antwort
+    /// sendet; erlaubt sind 100..=199 außer 101. Wird nicht an HTTP/1.0-Clients gesendet.
+    #[serde(default)]
+    pub informational: Vec<u16>,
+    /// Header, die jede Zwischenantwort aus `informational` trägt (z. B. `Link` bei 103);
+    /// Werte als Text oder Array wie bei `headers`. Nur zusammen mit `informational` erlaubt.
+    #[serde(default)]
+    pub informational_headers: BTreeMap<String, HeaderValues>,
     /// Route braucht einen Rendering-Browser; wird nur geparst, der Server ignoriert es.
     #[serde(default)]
     pub requires_chromium: bool,
@@ -287,6 +308,17 @@ impl Scenario {
             }
             if r.trickle_bytes_per_s == Some(0) {
                 return Err(at("trickle_bytes_per_s muss > 0 sein"));
+            }
+            if r.informational
+                .iter()
+                .any(|c| !(100..=199).contains(c) || *c == 101)
+            {
+                return Err(at(
+                    "informational braucht Statuscodes 100..=199 außer 101 (Protokollwechsel)",
+                ));
+            }
+            if r.informational.is_empty() && !r.informational_headers.is_empty() {
+                return Err(at("informational_headers braucht informational"));
             }
         }
         Ok(())

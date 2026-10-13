@@ -34,8 +34,17 @@ pub(crate) enum Mode {
     ResetMidBody,
 }
 
+/// Eine 1xx-Zwischenantwort, die vor der finalen Antwort gesendet wird.
+pub(crate) struct Informational {
+    pub status: u16,
+    pub reason: String,
+    pub headers: Vec<(String, String)>,
+}
+
 /// Die fertig berechnete Antwort (noch ohne Framing-Header).
 pub(crate) struct Reply {
+    /// 1xx-Zwischenantworten in Sendereihenfolge (Route-Option `informational`).
+    pub informational: Vec<Informational>,
     pub status: u16,
     pub reason: String,
     pub headers: Vec<(String, String)>,
@@ -48,6 +57,7 @@ pub(crate) struct Reply {
 impl Reply {
     fn new(status: u16) -> Self {
         Self {
+            informational: Vec::new(),
             status,
             reason: canonical_reason(status),
             headers: Vec::new(),
@@ -132,6 +142,25 @@ fn route_reply(route: &Route, hit: u64, req: &Request, file: Option<(String, Vec
     }
 
     let mut reply = Reply::new(status);
+    let interim_headers: Vec<(String, String)> = route
+        .informational_headers
+        .iter()
+        .flat_map(|(name, values)| {
+            values
+                .values()
+                .into_iter()
+                .map(|v| (name.clone(), v.to_string()))
+        })
+        .collect();
+    reply.informational = route
+        .informational
+        .iter()
+        .map(|&code| Informational {
+            status: code,
+            reason: canonical_reason(code),
+            headers: interim_headers.clone(),
+        })
+        .collect();
     if let Some(reason) = &route.reason {
         reply.reason.clone_from(reason);
     }

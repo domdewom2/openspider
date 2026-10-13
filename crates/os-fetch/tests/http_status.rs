@@ -85,6 +85,41 @@ async fn every_status_code_of_the_fixture_is_kept_unchanged() {
     assert_eq!(by_class.values().sum::<usize>(), expected.len());
 }
 
+// spec: CRAWL-012
+#[tokio::test]
+async fn early_hints_from_the_fixture_are_skipped_and_the_final_200_is_stored() {
+    let site = TestSite::start("crawl-status-codes").await.unwrap();
+    let f = fetcher_with(Arc::new(SystemClock), |_| {});
+    let resp = expect_response(get(&f, url(&site, "/early-hints")).await);
+    assert_eq!(resp.status, 200, "gespeichert wird die finale Antwort");
+    assert_eq!(resp.status_text, "OK");
+    assert_eq!(StatusClass::of(resp.status), StatusClass::Success);
+    assert!(
+        String::from_utf8_lossy(&resp.body).contains("<title>Early Hints</title>"),
+        "Body der 200-Antwort"
+    );
+    assert_eq!(
+        header(&resp, "link"),
+        None,
+        "Header der 103-Antwort gehören nicht zur gespeicherten Antwort"
+    );
+    // Die 103-Antwort wurde wirklich gesendet (Zwischenantwort vor der finalen Antwort) …
+    let log = site.requests();
+    assert_eq!(log.len(), 1, "ein Abruf, keine Wiederholung wegen 1xx");
+    assert!(log[0].sent_interim_bytes > 0, "{:?}", log[0]);
+    // … und zählt nicht zu `Übertragen` der gespeicherten Antwort: Kopf + Body der 200-Antwort
+    for _ in 0..500 {
+        if site.requests()[0].sent_bytes > 0 {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(10)).await;
+    }
+    assert_eq!(
+        resp.transferred_bytes,
+        site.requests()[0].sent_payload_bytes()
+    );
+}
+
 // spec: ONPAGE-020, CRAWL-019
 #[tokio::test]
 async fn content_type_fixture_routes_map_to_the_class_table() {
