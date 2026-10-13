@@ -441,9 +441,10 @@ async fn size_is_the_uncompressed_html_and_transferred_is_smaller_when_compresse
 
     // 10 000-Byte-HTML-Seite
     assert_eq!(t.int("/size-10k.html", "Size (bytes)"), 10_000);
-    assert!(
-        t.int("/size-10k.html", "Transferred (bytes)") >= 10_000,
-        "unkomprimiert wird mindestens der Body übertragen"
+    assert_eq!(
+        t.int("/size-10k.html", "Transferred (bytes)"),
+        10_000,
+        "unkomprimiert werden genau die Body-Bytes übertragen, der Kopf zählt nicht (K-02)"
     );
 
     // dieselbe Größe, gzip-komprimiert: Size bleibt, Transferred ist deutlich kleiner
@@ -457,7 +458,6 @@ async fn size_is_the_uncompressed_html_and_transferred_is_smaller_when_compresse
 
 // spec: ONPAGE-012
 #[tokio::test]
-#[ignore = "Klärung K-02: Transferred = Kopf + Body (CRAWL-022, os-fetch), ONPAGE-012 nennt nur den Body"]
 async fn transferred_of_an_uncompressed_page_equals_size() {
     let fx = internal_site().await;
     let t = all_columns(&fx, "All");
@@ -514,6 +514,112 @@ async fn total_transferred_equals_transferred_without_rendering() {
 #[ignore = "M2: ONPAGE-012 [P1] Total Transferred mit Rendering braucht JavaScript-Rendering"]
 fn total_transferred_with_rendering_includes_resources() {
     unreachable!("Rendering ist M2");
+}
+
+// ---------------------------------------------------------------------------------------------------
+// ONPAGE-011 Gleichheit mit den Element-Tabs
+
+/// Zeile der Tabelle mit der Adresse `address`, als Spaltenname → Wert.
+fn row_by_address<'a>(t: &'a Table, address: &str) -> Option<&'a Vec<Value>> {
+    let a = t.col("Address");
+    t.rows
+        .iter()
+        .find(|r| r[a] == Value::Text(address.to_string()))
+}
+
+/// Länge und Pixelbreite zeigen die Element-Tabs bei fehlendem Element als 0, der Internal-Tab als
+/// leere Zelle; für den Vergleich gilt beides als gleich.
+fn element_value(column: &str, v: &Value) -> Value {
+    let numeric = column.ends_with("Length") || column.ends_with("Pixel Width");
+    match v {
+        Value::Null if numeric => Value::Int(0),
+        other => other.clone(),
+    }
+}
+
+// spec: ONPAGE-011
+#[tokio::test]
+async fn internal_element_columns_equal_the_element_tabs_per_address() {
+    let fx = internal_site().await;
+    let cfg = CrawlConfig::default();
+    let internal = all_columns(&fx, "All");
+
+    // Element-Tab → Spalten, die der Internal-Tab unter demselben Namen führt
+    let tabs: [(&str, &[&str]); 4] = [
+        (
+            "Page Titles",
+            &[
+                "Title 1",
+                "Title 1 Length",
+                "Title 1 Pixel Width",
+                "Title 2",
+                "Title 2 Length",
+            ],
+        ),
+        (
+            "Meta Description",
+            &[
+                "Meta Description 1",
+                "Meta Description 1 Length",
+                "Meta Description 1 Pixel Width",
+                "Meta Description 2",
+                "Meta Description 2 Length",
+            ],
+        ),
+        ("H1", &["H1-1", "H1-1 Length", "H1-2", "H1-2 Length"]),
+        ("H2", &["H2-1", "H2-1 Length", "H2-2", "H2-2 Length"]),
+    ];
+
+    for (tab, columns) in tabs {
+        let element = query(&fx, &cfg, tab, "All", ColumnSelection::All);
+        assert!(
+            element.rows.len() >= 2,
+            "{tab}: die Fixture liefert mindestens elements.html und two-of-each.html"
+        );
+        for row in &element.rows {
+            let address = match &row[element.col("Address")] {
+                Value::Text(s) => s.clone(),
+                other => panic!("{tab}: Address ist kein Text: {other:?}"),
+            };
+            let internal_row = row_by_address(&internal, &address)
+                .unwrap_or_else(|| panic!("{tab}: {address} fehlt im Internal-Tab"));
+            for column in columns {
+                assert_eq!(
+                    element_value(column, &internal_row[internal.col(column)]),
+                    element_value(column, &row[element.col(column)]),
+                    "{tab} / {address} / {column}: Internal ≠ Element-Tab"
+                );
+            }
+        }
+    }
+
+    // Die Gleichheit ist nicht leer: die Werte der beiden Fixture-Seiten stehen in beiden Tabs
+    let titles = query(&fx, &cfg, "Page Titles", "All", ColumnSelection::All);
+    let metas = query(&fx, &cfg, "Meta Description", "All", ColumnSelection::All);
+    let h1s = query(&fx, &cfg, "H1", "All", ColumnSelection::All);
+    let h2s = query(&fx, &cfg, "H2", "All", ColumnSelection::All);
+    for tab in [&internal, &titles] {
+        assert_eq!(tab.text("/elements.html", "Title 1"), "Elements Title");
+        assert_eq!(tab.int("/elements.html", "Title 1 Length"), 14);
+        assert_eq!(tab.text("/two-of-each.html", "Title 2"), "Second Title");
+    }
+    for tab in [&internal, &metas] {
+        assert_eq!(
+            tab.text("/elements.html", "Meta Description 1"),
+            "Elements description text"
+        );
+        assert_eq!(tab.int("/elements.html", "Meta Description 1 Length"), 25);
+    }
+    for tab in [&internal, &h1s] {
+        assert_eq!(tab.text("/elements.html", "H1-1"), "Elements H1");
+        assert_eq!(tab.int("/elements.html", "H1-1 Length"), 11);
+        assert_eq!(tab.text("/two-of-each.html", "H1-2"), "Second H1");
+    }
+    for tab in [&internal, &h2s] {
+        assert_eq!(tab.text("/elements.html", "H2-1"), "Elements H2");
+        assert_eq!(tab.int("/elements.html", "H2-1 Length"), 11);
+        assert_eq!(tab.text("/two-of-each.html", "H2-2"), "Second H2");
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------

@@ -41,6 +41,8 @@ struct Conn {
     framing: u64,
     /// Davon 1xx-Zwischenantworten.
     interim: u64,
+    /// Davon Body-Nutzdaten der finalen Antwort (ohne Kopf und Chunk-Rahmen).
+    body: u64,
 }
 
 impl Conn {
@@ -50,11 +52,12 @@ impl Conn {
             written: 0,
             framing: 0,
             interim: 0,
+            body: 0,
         }
     }
 
-    fn counters(&self) -> (u64, u64, u64) {
-        (self.written, self.framing, self.interim)
+    fn counters(&self) -> (u64, u64, u64, u64) {
+        (self.written, self.framing, self.interim, self.body)
     }
 
     /// Schließt die Verbindung hart (RST statt FIN).
@@ -256,7 +259,7 @@ async fn run(
             continue;
         }
 
-        let (written_before, framing_before, interim_before) = conn.counters();
+        let (written_before, framing_before, interim_before, body_before) = conn.counters();
         let _inflight = state.log.begin();
         if let Some(counts) = &state.counts {
             *lock(counts).entry(req.path.clone()).or_insert(0) += 1;
@@ -275,6 +278,7 @@ async fn run(
                 sent_bytes: 0,
                 sent_framing_bytes: 0,
                 sent_interim_bytes: 0,
+                sent_body_bytes: 0,
             })
         });
 
@@ -293,13 +297,14 @@ async fn run(
         )
         .await;
         if let Some(token) = token {
-            let (w, f, i) = conn.counters();
+            let (w, f, i, b) = conn.counters();
             state.log.set_sent(
                 token,
                 Sent {
                     total: w - written_before,
                     framing: f - framing_before,
                     interim: i - interim_before,
+                    body: b - body_before,
                 },
             );
         }
@@ -490,6 +495,7 @@ async fn write_reply(
             if chunked {
                 write_chunk(conn, half).await?;
             } else {
+                conn.body += half.len() as u64;
                 conn.write_all(half).await?;
             }
             conn.flush().await?;
@@ -503,6 +509,7 @@ async fn write_reply(
     match (reply.trickle, chunked) {
         (None, false) => {
             // Häufigster Fall: Kopf und Body in einem Schreibvorgang.
+            conn.body += body.len() as u64;
             if body.len() <= 1024 * 1024 {
                 head.extend_from_slice(body);
                 conn.write_all(&head).await?;
@@ -533,6 +540,7 @@ async fn write_reply(
                 if chunked {
                     write_chunk(conn, piece).await?;
                 } else {
+                    conn.body += piece.len() as u64;
                     conn.write_all(piece).await?;
                 }
                 conn.flush().await?;
@@ -576,6 +584,7 @@ async fn write_chunk(conn: &mut Conn, piece: &[u8]) -> io::Result<()> {
     out.extend_from_slice(piece);
     out.extend_from_slice(b"\r\n");
     conn.framing += (out.len() - piece.len()) as u64;
+    conn.body += piece.len() as u64;
     conn.write_all(&out).await
 }
 

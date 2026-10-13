@@ -80,7 +80,8 @@ async fn plain_http_and_ip_urls_carry_no_sni() {
 
 // spec: CRAWL-022
 #[tokio::test]
-async fn transferred_equals_the_bytes_the_server_sent_for_content_length_responses() {
+async fn transferred_equals_the_body_bytes_the_server_sent_for_content_length_responses() {
+    // K-02: `Transferred` = Body-Bytes auf der Leitung, ohne Statuszeile und Header.
     let site = TestSite::start("crawl-status-codes").await.unwrap();
     let f = fetcher_with(Arc::new(SystemClock), |_| {});
     let resp = expect_response(get(&f, Url::parse(&site.url("/code/200")).unwrap()).await);
@@ -92,24 +93,29 @@ async fn transferred_equals_the_bytes_the_server_sent_for_content_length_respons
     );
     assert_eq!(sent.sent_interim_bytes, 0);
     assert_eq!(
-        resp.transferred_bytes, sent.sent_bytes,
-        "Übertragen = Kopf + Body, Abweichung zum Byte-Zähler des Servers: 0"
+        resp.transferred_bytes, sent.sent_body_bytes,
+        "Übertragen = Body-Bytes des Servers, Abweichung: 0"
     );
-    assert!(resp.transferred_bytes > resp.size_bytes, "Kopf kommt hinzu");
+    assert_eq!(resp.transferred_bytes, resp.size_bytes, "unkomprimiert");
+    assert!(
+        resp.transferred_bytes < sent.sent_payload_bytes(),
+        "der Kopf kommt nicht hinzu"
+    );
 
-    // Auch eine Antwort ohne Body (204) zählt nur den Kopf
+    // Eine Antwort ohne Body (204) überträgt 0 Bytes, obwohl der Kopf gesendet wurde
     let no_body = expect_response(get(&f, Url::parse(&site.url("/code/204")).unwrap()).await);
     let log = settled(&site, 2).await;
     assert_eq!(no_body.size_bytes, 0);
-    assert_eq!(no_body.transferred_bytes, log[1].sent_bytes);
+    assert_eq!(no_body.transferred_bytes, 0);
+    assert_eq!(log[1].sent_body_bytes, 0);
+    assert!(log[1].sent_bytes > 0);
 }
 
 // spec: CRAWL-022
 #[tokio::test]
-async fn chunked_responses_are_counted_without_chunk_framing() {
-    // Dokumentierte Abweichung: `Übertragen` zählt bei Transfer-Encoding: chunked Kopf + Body ohne
-    // Chunk-Rahmen (der HTTP-Stack liefert nur die Nutzdaten); der Server schreibt die Rahmenbytes
-    // zusätzlich. Die Differenz zum Byte-Zähler des Servers ist genau `sent_framing_bytes`.
+async fn chunked_responses_are_counted_without_chunk_framing_and_without_head() {
+    // `Transferred` zählt bei Transfer-Encoding: chunked nur die Nutzdaten des Bodys – weder
+    // Chunk-Rahmen noch Kopf. Der Server verbucht dieselben Nutzdaten als `sent_body_bytes`.
     let site = TestSite::start("crawl-http-basic").await.unwrap();
     let f = fetcher_with(Arc::new(SystemClock), |_| {});
     let resp = expect_response(get(&f, Url::parse(&site.url("/chunked")).unwrap()).await);
@@ -117,11 +123,8 @@ async fn chunked_responses_are_counted_without_chunk_framing() {
     let log = settled(&site, 1).await;
     let sent = &log[0];
     assert!(sent.sent_framing_bytes > 0, "{sent:?}");
-    assert_eq!(
-        resp.transferred_bytes,
-        sent.sent_bytes - sent.sent_framing_bytes,
-        "ohne Rahmenbytes: {sent:?}"
-    );
-    assert_eq!(resp.transferred_bytes, sent.sent_payload_bytes());
-    assert!(resp.transferred_bytes < sent.sent_bytes);
+    assert!(sent.sent_body_bytes > 0, "{sent:?}");
+    assert_eq!(resp.transferred_bytes, sent.sent_body_bytes, "{sent:?}");
+    assert!(resp.transferred_bytes < sent.sent_payload_bytes());
+    assert!(resp.transferred_bytes < sent.sent_bytes - sent.sent_framing_bytes);
 }

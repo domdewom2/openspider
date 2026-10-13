@@ -91,7 +91,9 @@ pub struct HttpResponse {
     pub body: Bytes,
     /// Größe des dekomprimierten Bodys in Bytes.
     pub size_bytes: u64,
-    /// Übertragene Bytes (Kopf + komprimierter Body).
+    /// Übertragene Bytes (K-02, CRAWL-022): die über die Leitung empfangenen Body-Bytes –
+    /// komprimiert, ohne Statuszeile, Header, Chunk-Rahmen und 1xx-Zwischenantworten; Antworten
+    /// ohne Body (HEAD, 204, 304) → 0. Die Größe des Kopfs wird nicht gespeichert.
     pub transferred_bytes: u64,
     /// Antwortzeit in Millisekunden.
     pub response_time_ms: u32,
@@ -230,7 +232,9 @@ pub(crate) fn version_label(v: reqwest::Version) -> String {
 }
 
 /// Länge von Statuszeile und Header-Block, wie sie über die Leitung gingen (`HTTP/1.1 200 OK\r\n`,
-/// je Header `name: wert\r\n`, abschließend `\r\n`). Grundlage für `Übertragen` (CRAWL-022).
+/// je Header `name: wert\r\n`, abschließend `\r\n`). Seit K-02 (N08) nicht mehr Teil von
+/// `Übertragen` (`transferred_bytes` zählt nur den Body); nur noch als Messhilfe getestet.
+#[allow(dead_code)]
 pub(crate) fn head_len(
     version: &str,
     status: u16,
