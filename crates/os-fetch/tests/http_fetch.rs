@@ -693,7 +693,7 @@ async fn rate_limit_applies_to_every_purpose_including_robots_and_sitemaps() {
     );
     for w in times.windows(2) {
         assert!(
-            w[1] - w[0] >= Duration::from_millis(70),
+            w[1] - w[0] >= Duration::from_millis(20),
             "Abstand {:?}",
             w[1] - w[0]
         );

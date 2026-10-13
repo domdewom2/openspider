@@ -198,7 +198,8 @@ async fn keep_alive_connection_stays_in_step_after_an_interim_response() {
         let n = stream.read(&mut chunk).await.unwrap();
         assert!(n > 0, "Verbindung unerwartet geschlossen");
         raw.extend_from_slice(&chunk[..n]);
-        if let Some(r) = split_responses(&raw) {
+        // 103 und 200 können in getrennten Segmenten ankommen: erst bei der finalen Antwort weiter.
+        if let Some(r) = split_responses(&raw).filter(|r| r.iter().any(|w| w.status >= 200)) {
             break r;
         }
     };
