@@ -5,16 +5,17 @@
 //! * Es wird nie eine Formel geschrieben: ein Wert `=SUM(A1)` steht als Text in der Zelle.
 //! * Die erste Zeile ist fixiert und hat einen Autofilter über alle Spalten.
 //! * Texte über 32 767 Zeichen werden gekürzt und enden auf `…[truncated]`; die Anzahl gekürzter Zellen
-//!   steht als Warnung im Log (`tracing`).
+//!   steht als Warnung im Log (`tracing`) und in [`ExportFileInfo::warnings`].
 //! * Ab [`WriterOptions::max_rows_per_sheet`] Datenzeilen (Standard 1 048 575) folgt ein Blatt
-//!   `<Name> (2)` mit eigener Kopfzeile.
+//!   `<Name> (2)` mit eigener Kopfzeile; auch das steht als Warnung in [`ExportFileInfo::warnings`].
 //! * Blattnamen: höchstens 31 Zeichen, ohne `[]:*?/\`, innerhalb der Datei eindeutig ([`sheet_name`],
 //!   [`unique_sheet_name`]).
 //!
-//! Hinweis zum Speicher: Das Workspace bindet `rust_xlsxwriter` ohne das Feature `constant_memory` ein; die
-//! Arbeitsmappe liegt deshalb bis `finish` im Speicher (höchstens ein Blatt mit `max_rows_per_sheet` Zeilen je
-//! Folgeblatt, aber alle Blätter zugleich). Für 1-Mio.-Zeilen-Exporte mit XLSX meldet das Paket den Bedarf an
-//! das Feature.
+//! Speicher: Blätter entstehen mit `add_worksheet_with_constant_memory()` (Feature `constant_memory` von
+//! `rust_xlsxwriter`). Zeilen werden dadurch beim Schreiben in eine temporäre Datei ausgelagert und müssen
+//! aufsteigend geschrieben werden (Kopfzeile, dann Datenzeilen); Fixierung, Spaltenbreiten und Autofilter sind
+//! Blatteigenschaften und werden erst beim Speichern ausgewertet. Eine RSS-Messung mit 1 Mio. Zeilen gehört
+//! zum Benchmark (P28).
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -279,7 +280,7 @@ impl XlsxWriter {
     }
 
     fn add_sheet(&mut self, name: String) -> Result<(), ExportError> {
-        let ws = self.workbook.add_worksheet();
+        let ws = self.workbook.add_worksheet_with_constant_memory();
         ws.set_name(&name).map_err(|e| xlsx_err(&self.path, e))?;
         self.sheet_names.push(name);
         self.sheet_rows.push(0);
@@ -436,12 +437,17 @@ impl TableWriter for XlsxWriter {
                     .map_err(|e| xlsx_err(&this.path, e))?;
             }
         }
+        let mut warnings = Vec::new();
         if this.truncated > 0 {
             tracing::warn!(
                 file = %this.path.display(),
                 cells = this.truncated,
                 "Zellen über {MAX_CELL_CHARS} Zeichen auf {MAX_CELL_CHARS} gekürzt (…[truncated])"
             );
+            warnings.push(format!(
+                "{} Zelle(n) über {MAX_CELL_CHARS} Zeichen auf {MAX_CELL_CHARS} Zeichen gekürzt (…[truncated])",
+                this.truncated
+            ));
         }
         if this.sheet_names.len() > 1 {
             tracing::warn!(
@@ -449,6 +455,12 @@ impl TableWriter for XlsxWriter {
                 sheets = this.sheet_names.len(),
                 "Mehr Datenzeilen als ein Blatt fasst: Fortsetzung auf Folgeblättern"
             );
+            warnings.push(format!(
+                "Mehr als {} Datenzeilen: Fortsetzung auf {} Blättern ({})",
+                this.max_rows,
+                this.sheet_names.len(),
+                this.sheet_names.join(", ")
+            ));
         }
         let target = fs_paths::fs_path(&this.path);
         this.workbook
@@ -464,6 +476,7 @@ impl TableWriter for XlsxWriter {
             path: this.path,
             rows: this.total_rows,
             bytes,
+            warnings,
         })
     }
 }

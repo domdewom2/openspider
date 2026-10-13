@@ -342,3 +342,20 @@ fn row_width_must_match_header() {
         "zweite Kopfzeile ist ein Fehler"
     );
 }
+
+// spec: OUT-002
+#[test]
+fn csv_keeps_long_texts_unchanged_and_reports_no_warnings() {
+    // Die 32 767-Zeichen-Grenze gilt nur für XLSX (OUT-003); CSV kürzt nichts und meldet nichts.
+    let tmp = tempfile::tempdir().unwrap();
+    let path = tmp.path().join("long.csv");
+    let mut w = open_writer(&path, Format::Csv, "Long", &WriterOptions::default()).unwrap();
+    w.header(&["Text".into()]).unwrap();
+    let long = "x".repeat(40_000);
+    w.row(&[ColumnKind::Text], &[Value::Text(long.clone())])
+        .unwrap();
+    let info = w.finish().unwrap();
+    assert!(info.warnings.is_empty(), "{:?}", info.warnings);
+    let bytes = std::fs::read(&path).unwrap();
+    assert!(find(&bytes, long.as_bytes()).is_some());
+}

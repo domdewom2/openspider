@@ -23,3 +23,8 @@ futures-util.workspace = true
 flate2.workspace = true
 brotli.workspace = true
 base64.workspace = true
+
+# M1-P10/N01: Fixture-Test der Referenz-Sites des Paritätsabgleichs; braucht die Repo-Wurzel (CARGO_MANIFEST_DIR/../..)
+[[test]]
+name = "parity_fixtures"
+path = "../../tests/parity/fixtures_check.rs"

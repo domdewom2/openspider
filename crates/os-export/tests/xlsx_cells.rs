@@ -220,7 +220,14 @@ fn long_texts_are_truncated_with_marker() {
         w.row(&[ColumnKind::Text], &[Value::Text(t.clone())])
             .unwrap();
     }
-    w.finish().unwrap();
+    let info = w.finish().unwrap();
+    // drei gekürzte Zellen (over, huge, emoji) stehen als Hinweis in der Rückgabe
+    assert_eq!(info.warnings.len(), 1, "{:?}", info.warnings);
+    assert!(
+        info.warnings[0].starts_with("3 Zelle(n)") && info.warnings[0].contains("32767"),
+        "{:?}",
+        info.warnings
+    );
 
     let mut wb = open(&path);
     let range = wb.worksheet_range("Long").unwrap();
@@ -235,6 +242,22 @@ fn long_texts_are_truncated_with_marker() {
     let e = cell(4);
     assert!(e.ends_with(TRUNCATION_MARKER));
     assert!(e.encode_utf16().count() <= MAX_CELL_CHARS);
+}
+
+// spec: OUT-003
+#[test]
+fn regular_file_has_no_warnings() {
+    let tmp = tempfile::tempdir().unwrap();
+    let path = tmp.path().join("plain.xlsx");
+    let mut w = open_writer(&path, Format::Xlsx, "Plain", &WriterOptions::default()).unwrap();
+    w.header(&["Text".into()]).unwrap();
+    w.row(
+        &[ColumnKind::Text],
+        &[Value::Text("e".repeat(MAX_CELL_CHARS))],
+    )
+    .unwrap();
+    let info = w.finish().unwrap();
+    assert!(info.warnings.is_empty(), "{:?}", info.warnings);
 }
 
 // spec: OUT-003
@@ -260,6 +283,12 @@ fn rows_overflow_to_following_sheets_with_header() {
     }
     let info = w.finish().unwrap();
     assert_eq!(info.rows, 8);
+    assert_eq!(info.warnings.len(), 1, "{:?}", info.warnings);
+    assert!(
+        info.warnings[0].contains("Internal All (3)"),
+        "Warnung nennt die Folgeblätter: {:?}",
+        info.warnings
+    );
 
     let mut wb = open(&path);
     assert_eq!(
@@ -381,7 +410,7 @@ fn unique_sheet_names_for_consolidated_workbooks() {
 
 // spec: OUT-003
 #[test]
-#[ignore = "Langläufer: erzeugt 1,1 Mio. Zeilen im Speicher (P28 führt ihn aus)"]
+#[ignore = "Benchmark (P28): 1,1 Mio. Zeilen, Blattüberlauf und Speicherbedarf mit constant_memory"]
 fn default_limit_overflows_after_1048575_rows() {
     let tmp = tempfile::tempdir().unwrap();
     let path = tmp.path().join("big.xlsx");

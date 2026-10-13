@@ -391,6 +391,15 @@ impl HttpFetcher {
 
         let status = response.status().as_u16();
         let version = version_label(response.version());
+        // hyper legt die Reason-Phrase nur ab, wenn sie vom IANA-Text abweicht; HTTP/2 hat keine, und Phrasen
+        // mit Nicht-ASCII-Bytes meldet httparse als leer (dann gilt der IANA-Text).
+        let reason_phrase = response
+            .extensions()
+            .get::<hyper::ext::ReasonPhrase>()
+            .and_then(|r| std::str::from_utf8(r.as_bytes()).ok())
+            .map(str::trim)
+            .filter(|r| !r.is_empty())
+            .map(str::to_string);
         let raw_headers: Vec<(String, String)> = response
             .headers()
             .iter()
@@ -445,6 +454,7 @@ impl HttpFetcher {
 
         Ok(Exchange {
             status,
+            reason_phrase,
             version,
             headers: raw_headers,
             encodings,
@@ -459,6 +469,8 @@ impl HttpFetcher {
 /// Rohergebnis eines Abrufs vor der Dekompression.
 struct Exchange {
     status: u16,
+    /// Vom Server gesendete Reason-Phrase (nur wenn sie vom IANA-Text abweicht).
+    reason_phrase: Option<String>,
     version: String,
     headers: Vec<(String, String)>,
     encodings: Vec<decode::Encoding>,
@@ -473,6 +485,7 @@ struct Exchange {
 async fn finish_response(ex: Exchange, max_body: u64, response_time_ms: u32) -> HttpResponse {
     let Exchange {
         status,
+        reason_phrase,
         version,
         headers,
         encodings,
@@ -482,9 +495,7 @@ async fn finish_response(ex: Exchange, max_body: u64, response_time_ms: u32) -> 
         ..
     } = ex;
 
-    // Die gesendete Reason-Phrase steht in einer hyper-Erweiterung; ohne direkte hyper-Abhängigkeit
-    // ist sie hier nicht lesbar (Schnittstellenbedarf an den Orchestrator) – bis dahin gilt der IANA-Text.
-    let reason_phrase: Option<String> = None;
+    // Gesendete Reason-Phrase, sonst IANA-Text, für unbekannte Codes leer (CRAWL-012).
     let wire_text = status_text(status, reason_phrase.as_deref());
     let transferred_bytes = head_len(&version, status, &wire_text, &headers) + wire_body_bytes;
 
