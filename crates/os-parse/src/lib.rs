@@ -185,7 +185,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn parse_html_stub_returns_neutral_page() {
+    fn parse_entry_points_smoke() {
         let url = url::Url::parse("https://site.test/a").unwrap();
         let cfg = ParseConfig::from_crawl_config(&CrawlConfig::default());
         let input = ParseInput {
@@ -198,7 +198,7 @@ mod tests {
         let page = parse_html(&input);
         assert_eq!(page.base_url, "https://site.test/a");
         assert!(page.effective_index && page.effective_follow);
-        assert_eq!(page.word_count, Some(0));
+        assert_eq!(page.word_count, Some(1));
         assert!(parse_headers(&url, &[], &cfg).canonicals.is_empty());
         assert!(parse_css(&url, b"a{}").is_empty());
         assert_eq!(parse_pdf_meta(b"%PDF"), PdfMeta::default());
