@@ -1,0 +1,47 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/os-model",
+    "crates/os-url",
+    "crates/os-fetch",
+    "crates/os-parse",
+    "crates/os-render",
+    "crates/os-store",
+    "crates/os-engine",
+    "crates/os-analyze",
+    "crates/os-export",
+    "crates/os-integrations",
+    "crates/os-cli",
+    "crates/os-testsite",
+    "apps/desktop/src-tauri",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/domdewom2/openspider"
+authors = ["OpenSpider contributors"]
+
+[workspace.dependencies]
+# interne Crates
+os-model = { path = "crates/os-model" }
+os-url = { path = "crates/os-url" }
+os-fetch = { path = "crates/os-fetch" }
+os-parse = { path = "crates/os-parse" }
+os-render = { path = "crates/os-render" }
+os-store = { path = "crates/os-store" }
+os-engine = { path = "crates/os-engine" }
+os-analyze = { path = "crates/os-analyze" }
+os-export = { path = "crates/os-export" }
+os-integrations = { path = "crates/os-integrations" }
+os-testsite = { path = "crates/os-testsite" }
+
+# extern
+serde = { version = "1", features = ["derive"] }
+url = "2"
+rusqlite = { version = "0.37", features = ["bundled"] }
+clap = { version = "4", features = ["derive"] }
+axum = "0.8"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "time", "sync", "io-util", "signal"] }
+toml = "0.9"

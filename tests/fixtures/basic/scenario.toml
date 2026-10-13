@@ -1,0 +1,13 @@
+# Programmatische Antworten für das Szenario "basic".
+
+# Permanente Weiterleitung auf eine existierende Seite.
+[[route]]
+path = "/old-page"
+status = 301
+location = "/about.html"
+
+# Explizite 404-Seite mit Body.
+[[route]]
+path = "/missing.html"
+status = 404
+body = "<!doctype html><html><head><title>Not Found</title></head><body><h1>404</h1></body></html>"

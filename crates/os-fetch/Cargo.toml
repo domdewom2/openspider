@@ -1,0 +1,12 @@
+[package]
+name = "os-fetch"
+description = "OpenSpider: HTTP-Client, robots.txt, Rate-Limit, Auth, Proxy, Cookies"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+os-model.workspace = true
+os-url.workspace = true

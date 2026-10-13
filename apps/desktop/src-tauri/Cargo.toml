@@ -1,0 +1,19 @@
+[package]
+name = "openspider-desktop"
+description = "OpenSpider Desktop (Tauri v2)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[lib]
+name = "openspider_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+os-model.workspace = true

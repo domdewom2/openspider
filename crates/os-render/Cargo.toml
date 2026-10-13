@@ -1,0 +1,11 @@
+[package]
+name = "os-render"
+description = "OpenSpider: JS-Rendering ueber Chromium (CDP)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+os-model.workspace = true

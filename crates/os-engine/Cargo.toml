@@ -1,0 +1,16 @@
+[package]
+name = "os-engine"
+description = "OpenSpider: Frontier, Scheduler, Worker-Pool, Crawl-Modi"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+os-model.workspace = true
+os-url.workspace = true
+os-fetch.workspace = true
+os-parse.workspace = true
+os-render.workspace = true
+os-store.workspace = true

@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /private/
+
+Sitemap: {{BASE_URL}}/sitemap.xml

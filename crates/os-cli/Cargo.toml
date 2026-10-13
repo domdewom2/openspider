@@ -1,0 +1,18 @@
+[package]
+name = "os-cli"
+description = "OpenSpider: Kommandozeile (Binary openspider)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+os-model.workspace = true
+os-engine.workspace = true
+os-export.workspace = true
+clap.workspace = true
+
+[[bin]]
+name = "openspider"
+path = "src/main.rs"

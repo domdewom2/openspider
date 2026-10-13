@@ -1,0 +1,13 @@
+[package]
+name = "os-export"
+description = "OpenSpider: CSV/XLSX-Exporte, Reports, Sitemap-Generator"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+os-model.workspace = true
+os-store.workspace = true
+os-analyze.workspace = true
