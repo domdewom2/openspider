@@ -72,16 +72,23 @@ fn tabs_match_filter_registry() {
 #[test]
 fn placeholder_tabs_have_address_column_and_population() {
     for tab in tabs::all() {
-        // Die Grundmenge ist ab P20–P25 je Tab eigene Bedingung (nicht mehr der Platzhalter "1").
-        assert!(!tab.population.is_empty(), "Grundmenge von {}", tab.id);
         assert_eq!(tab.columns.first().map(|c| c.key), Some("Address"));
+        // Die Tab-Pakete P20–P25 ersetzen die Platzhalter (eine Spalte, Grundmenge "1") durch echte
+        // Definitionen mit eigener Grundmenge und weiteren Spalten (M1-P22: Element-Tabs).
+        let is_placeholder = tab.columns.len() == 1;
+        assert!(!tab.population.is_empty(), "Grundmenge von {}", tab.id);
+        if is_placeholder {
+            assert_eq!(tab.population, "1", "Grundmenge von {}", tab.id);
+        }
         let all: Vec<_> = tab.filters.iter().filter(|f| f.id == "All").collect();
         for f in all {
-            assert_eq!(
-                f.predicate, "1",
-                "Filter All von {} ist die Grundmenge",
-                tab.id
-            );
+            if is_placeholder {
+                assert_eq!(
+                    f.predicate, "1",
+                    "Filter All von {} ist die Grundmenge",
+                    tab.id
+                );
+            }
         }
     }
 }

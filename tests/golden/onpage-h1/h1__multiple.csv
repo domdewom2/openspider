@@ -1,0 +1,4 @@
+﻿Address,Occurrences,H1-1,H1-1 Length,H1-2,H1-2 Length,Indexability,Indexability Status
+{BASE}/five-h1.html,5,Ueberschrift fuenf 1 aaaa bbbb cccc dddd,40,Ueberschrift fuenf 2 aaaa bbbb cccc dddd,40,Indexable,
+{BASE}/multi-two.html,2,Ueberschrift multi erste aaaa bbbb ccccz,40,Ueberschrift multi zweite aaaa bbbb cccc,40,Indexable,
+{BASE}/empty-then-filled.html,2,,0,Ueberschrift empty-then-filled aaaa bbbb,40,Indexable,
