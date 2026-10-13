@@ -5,9 +5,9 @@ use os_model::{CrawlConfig, Value};
 
 use super::{ColumnSelection, SearchSpec, ViewPlan, ViewQuery};
 use crate::cursor;
-use crate::defs::{ColumnDef, ColumnKind, ColumnSql, FilterDef, SortKey, TabDef};
+use crate::defs::{ColumnDef, ColumnKind, ColumnSql, FilterDef, PairedPart, SortKey, TabDef};
 use crate::error::{NameError, ViewError};
-use crate::names;
+use crate::{names, tabs};
 
 /// Ein Sortierschlüssel in SQL.
 #[derive(Debug, Clone)]
@@ -40,11 +40,34 @@ impl SortTerm {
     }
 }
 
+/// Welcher Teil einer Spalte ausgewählt ist.
+#[derive(Debug, Clone)]
+pub(super) enum Pick {
+    /// Die ganze Spalte (Mehrfachspalten: alle Indizes).
+    Whole,
+    /// Genau eine nummerierte Teilspalte einer Mehrfachspalte, z. B. `Meta Robots 1` oder
+    /// `HTML hreflang 1 URL`.
+    Numbered {
+        /// Ausgabename in kanonischer Schreibweise.
+        name: String,
+        /// Index (ab 1).
+        n: usize,
+        /// Teilspalte bei [`ColumnSql::MultiPaired`] (sonst 0).
+        part: usize,
+    },
+}
+
+/// Eine ausgewählte Spalte der Ansicht.
+pub(super) struct SelectedColumn<'t> {
+    pub def: &'t ColumnDef,
+    pub pick: Pick,
+}
+
 /// Ein aufgelöster Plan samt der Teile, die Ausführung und Cursor brauchen.
 pub(super) struct Built<'t> {
     pub filter: &'t FilterDef,
     pub plan: ViewPlan,
-    pub columns: Vec<&'t ColumnDef>,
+    pub columns: Vec<SelectedColumn<'t>>,
     pub sort: Vec<SortTerm>,
     pub query_hash: String,
 }
@@ -98,7 +121,7 @@ pub(super) fn build<'t>(
     });
 
     let columns = select_columns(tab, &q.columns)?;
-    let sort = sort_terms(tab, &q.sort)?;
+    let sort = sort_terms(tab, filter, &q.sort)?;
     let order_by = order_by(&sort);
 
     let sort_sig = sort
@@ -151,6 +174,18 @@ pub(super) fn where_sql(plan: &ViewPlan) -> String {
     sql
 }
 
+/// Ergebnis der Namensauflösung einer Spalte.
+enum Resolved<'t> {
+    /// Eine Spalte über ihren Schlüssel.
+    Whole(&'t ColumnDef),
+    /// Eine nummerierte Teilspalte einer Mehrfachspalte.
+    Numbered {
+        def: &'t ColumnDef,
+        n: usize,
+        part: usize,
+    },
+}
+
 fn find_column<'t>(tab: &'t TabDef, name: &str) -> Option<&'t ColumnDef> {
     let wanted = name.trim();
     tab.columns.iter().find(|c| c.key == wanted).or_else(|| {
@@ -160,27 +195,129 @@ fn find_column<'t>(tab: &'t TabDef, name: &str) -> Option<&'t ColumnDef> {
     })
 }
 
+/// Liest `"<base> <n>"` bzw. `"<base> <n> <suffix>"` (Groß-/Kleinschreibung gleichgültig); `suffix` leer =
+/// ohne Zusatz. `n` ist eine Zahl ab 1.
+fn parse_numbered(name: &str, base: &str, suffix: &str) -> Option<usize> {
+    let head = name.get(..base.len())?;
+    if !head.eq_ignore_ascii_case(base) {
+        return None;
+    }
+    let rest = name[base.len()..].strip_prefix(' ')?;
+    let (num, tail) = match rest.split_once(' ') {
+        Some((num, tail)) => (num, Some(tail)),
+        None => (rest, None),
+    };
+    if num.is_empty() || !num.bytes().all(|b| b.is_ascii_digit()) {
+        return None;
+    }
+    let n: usize = num.parse().ok().filter(|n| *n >= 1)?;
+    match (tail, suffix.is_empty()) {
+        (None, true) => Some(n),
+        (Some(t), false) if t.eq_ignore_ascii_case(suffix) => Some(n),
+        _ => None,
+    }
+}
+
+/// Löst einen Spaltennamen auf: erst der Schlüssel einer Spalte, dann der nummerierte Name einer
+/// Mehrfachspalte (`Meta Robots 1`, `Canonical Link Element 2`, `HTML hreflang 1 URL`).
+fn resolve_column<'t>(tab: &'t TabDef, name: &str) -> Option<Resolved<'t>> {
+    if let Some(def) = find_column(tab, name) {
+        return Some(Resolved::Whole(def));
+    }
+    let wanted = name.trim();
+    for def in &tab.columns {
+        match &def.sql {
+            ColumnSql::Expr(_) => {}
+            ColumnSql::Multi { base, .. } => {
+                if let Some(n) = parse_numbered(wanted, base, "") {
+                    return Some(Resolved::Numbered { def, n, part: 0 });
+                }
+            }
+            ColumnSql::MultiPaired { base, parts } => {
+                for (part, p) in parts.iter().enumerate() {
+                    if let Some(n) = parse_numbered(wanted, base, p.suffix) {
+                        return Some(Resolved::Numbered { def, n, part });
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
+/// Ausgabename der nummerierten Teilspalte in kanonischer Schreibweise.
+pub(super) fn numbered_name(base: &str, n: usize, suffix: &str) -> String {
+    if suffix.is_empty() {
+        format!("{base} {n}")
+    } else {
+        format!("{base} {n} {suffix}")
+    }
+}
+
+/// Grundname und Teilspalten einer Mehrfachspalte; `None` bei einfachen Spalten. Eine einfache
+/// Mehrfachspalte hat eine Teilspalte ohne Suffix.
+pub(super) fn series_parts(def: &ColumnDef) -> Option<(&'static str, Vec<PairedPart>)> {
+    match &def.sql {
+        ColumnSql::Expr(_) => None,
+        ColumnSql::Multi { base, list_sql } => Some((
+            *base,
+            vec![PairedPart {
+                suffix: "",
+                list_sql,
+                kind: def.kind,
+            }],
+        )),
+        ColumnSql::MultiPaired { base, parts } => Some((*base, parts.to_vec())),
+    }
+}
+
 fn select_columns<'t>(
     tab: &'t TabDef,
     selection: &ColumnSelection,
-) -> Result<Vec<&'t ColumnDef>, ViewError> {
+) -> Result<Vec<SelectedColumn<'t>>, ViewError> {
+    let whole = |def: &'t ColumnDef| SelectedColumn {
+        def,
+        pick: Pick::Whole,
+    };
     match selection {
-        ColumnSelection::Default => Ok(tab.columns.iter().filter(|c| c.default_visible).collect()),
+        ColumnSelection::Default => Ok(tab
+            .columns
+            .iter()
+            .filter(|c| c.default_visible)
+            .map(whole)
+            .collect()),
         ColumnSelection::All => {
             // Referenzspalten zuerst, OS-Erweiterungen dahinter (ColumnDef.extension).
-            let mut cols: Vec<&ColumnDef> = tab.columns.iter().filter(|c| !c.extension).collect();
-            cols.extend(tab.columns.iter().filter(|c| c.extension));
+            let mut cols: Vec<SelectedColumn<'t>> = tab
+                .columns
+                .iter()
+                .filter(|c| !c.extension)
+                .map(whole)
+                .collect();
+            cols.extend(tab.columns.iter().filter(|c| c.extension).map(whole));
             Ok(cols)
         }
         ColumnSelection::Named(wanted) => wanted
             .iter()
-            .map(|name| {
-                find_column(tab, name).ok_or_else(|| {
-                    unknown(
-                        format!("{}: Spalte {name}", tab.id),
-                        names::column_suggestions(tab.columns.iter().map(|c| c.key), name),
-                    )
-                })
+            .map(|name| match resolve_column(tab, name) {
+                Some(Resolved::Whole(def)) => Ok(whole(def)),
+                Some(Resolved::Numbered { def, n, part }) => {
+                    let (base, parts) = series_parts(def)
+                        .ok_or_else(|| unknown(format!("{}: Spalte {name}", tab.id), Vec::new()))?;
+                    let suffix = parts.get(part).map_or("", |p| p.suffix);
+                    Ok(SelectedColumn {
+                        def,
+                        pick: Pick::Numbered {
+                            name: numbered_name(base, n, suffix),
+                            n,
+                            part,
+                        },
+                    })
+                }
+                None => Err(unknown(
+                    format!("{}: Spalte {name}", tab.id),
+                    names::column_suggestions(tab.columns.iter().map(|c| c.key), name),
+                )),
             })
             .collect(),
     }
@@ -195,35 +332,32 @@ pub(super) fn multi_nth_expr(list_sql: &str, n: usize) -> String {
     )
 }
 
-/// Zerlegt `"Basis 3"` in (`"Basis"`, 3).
-fn split_numbered(key: &str) -> Option<(&str, usize)> {
-    let (base, num) = key.trim().rsplit_once(' ')?;
-    let n: usize = num.parse().ok()?;
-    (n >= 1).then_some((base, n))
-}
-
 fn sort_term(tab: &TabDef, key: &SortKey) -> Result<SortTerm, ViewError> {
-    let (raw, kind, is_address) = if let Some(col) = find_column(tab, &key.column) {
-        let is_address = col.key.eq_ignore_ascii_case("Address");
-        match &col.sql {
-            ColumnSql::Expr(e) => ((*e).to_string(), col.kind, is_address),
-            ColumnSql::Multi { list_sql, .. } => (multi_nth_expr(list_sql, 1), col.kind, false),
-        }
-    } else if let Some((col, n)) = split_numbered(&key.column).and_then(|(base, n)| {
-        tab.columns
-            .iter()
-            .find(|c| matches!(&c.sql, ColumnSql::Multi { base: b, .. } if b.eq_ignore_ascii_case(base)))
-            .map(|c| (c, n))
-    }) {
-        match &col.sql {
-            ColumnSql::Multi { list_sql, .. } => (multi_nth_expr(list_sql, n), col.kind, false),
-            ColumnSql::Expr(_) => unreachable!("nur Mehrfachspalten gefunden"),
-        }
-    } else {
-        return Err(unknown(
+    let not_found = || {
+        unknown(
             format!("{}: Sortierspalte {}", tab.id, key.column),
             names::column_suggestions(tab.columns.iter().map(|c| c.key), &key.column),
-        ));
+        )
+    };
+    let (raw, kind, is_address) = match resolve_column(tab, &key.column).ok_or_else(not_found)? {
+        Resolved::Whole(def) => match &def.sql {
+            ColumnSql::Expr(e) => (
+                (*e).to_string(),
+                def.kind,
+                def.key.eq_ignore_ascii_case("Address"),
+            ),
+            // Ganze Mehrfachspalte: nach dem ersten Wert der ersten Teilspalte.
+            _ => {
+                let (_, parts) = series_parts(def).ok_or_else(not_found)?;
+                let first = parts.first().ok_or_else(not_found)?;
+                (multi_nth_expr(first.list_sql, 1), first.kind, false)
+            }
+        },
+        Resolved::Numbered { def, n, part } => {
+            let (_, parts) = series_parts(def).ok_or_else(not_found)?;
+            let p = parts.get(part).ok_or_else(not_found)?;
+            (multi_nth_expr(p.list_sql, n), p.kind, false)
+        }
     };
     Ok(SortTerm {
         raw,
@@ -232,12 +366,21 @@ fn sort_term(tab: &TabDef, key: &SortKey) -> Result<SortTerm, ViewError> {
     })
 }
 
-/// Wirksame Sortierschlüssel: die der Abfrage, sonst `default_sort` des Tabs.
-fn sort_terms(tab: &TabDef, requested: &[SortKey]) -> Result<Vec<SortTerm>, ViewError> {
-    let keys = if requested.is_empty() {
-        &tab.default_sort
-    } else {
+/// Wirksame Sortierschlüssel: die der Abfrage, sonst die Standardsortierung des Filters
+/// ([`tabs::filter_default_sort`]), sonst `default_sort` des Tabs, sonst Entdeckungsreihenfolge.
+fn sort_terms(
+    tab: &TabDef,
+    filter: &FilterDef,
+    requested: &[SortKey],
+) -> Result<Vec<SortTerm>, ViewError> {
+    let registry;
+    let keys: &[SortKey] = if !requested.is_empty() {
         requested
+    } else if let Some(keys) = tabs::filter_default_sort(tab.id, filter.id) {
+        registry = keys;
+        &registry
+    } else {
+        &tab.default_sort
     };
     keys.iter().map(|k| sort_term(tab, k)).collect()
 }

@@ -3,7 +3,9 @@
 //! Zellwerte entstehen nach `ColumnKind`: `Bool` → `Value::Bool`, `Float { decimals }` gerundet,
 //! `Seconds3` rechnet Millisekunden in Sekunden (3 Stellen) um, `Text`/`Url`/`Hash`/`Timestamp` bleiben
 //! Text. Mehrfachspalten (TECH-004) erhalten so viele nummerierte Spalten wie das Maximum über die
-//! gesamte Ansicht (mindestens eine); fehlende Werte sind leere Texte, nie `null`.
+//! gesamte Ansicht (mindestens eine); fehlende Werte sind leere Texte, nie `null`. Verschränkte Mehrfachspalten
+//! (`ColumnSql::MultiPaired`) liefern je Index alle Teilspalten hintereinander; wird nur eine nummerierte
+//! Teilspalte gewählt (`Meta Robots 1`), entsteht genau diese eine Spalte.
 
 use os_model::{UrlId, Value};
 use os_store::{queries, CrawlFile};
@@ -11,10 +13,12 @@ use rusqlite::types::{Value as SqlValue, ValueRef};
 use rusqlite::{Connection, Statement};
 use serde_json::Value as Json;
 
-use super::build::{where_sql, Built, SortTerm};
+use super::build::{
+    multi_nth_expr, numbered_name, series_parts, where_sql, Built, Pick, SelectedColumn, SortTerm,
+};
 use super::{PageStart, ViewPage, ViewQuery};
 use crate::cursor::Cursor;
-use crate::defs::{ColumnDef, ColumnKind, ColumnSql};
+use crate::defs::{ColumnKind, ColumnSql, PairedPart};
 use crate::error::ViewError;
 
 /// Größte erlaubte Seitengröße.
@@ -152,62 +156,84 @@ fn after_condition(
 }
 
 /// Eine ausgewählte Spalte, bereit zur Ausführung.
-enum ColExec<'c> {
+enum ColExec {
+    /// Ein SQL-Ausdruck in der SELECT-Liste (auch eine nummerierte Teilspalte: n-ter Wert als Ausdruck).
     Expr {
         idx: usize,
         kind: ColumnKind,
+        /// Fehlende Werte als leerer Text statt `null` (nummerierte Teilspalten).
+        empty_text: bool,
     },
-    Multi {
-        list_sql: &'c str,
-        kind: ColumnKind,
+    /// Mehrfachspalte: `count` Indizes, je Index alle Teilspalten in Reihenfolge.
+    Series {
+        base: &'static str,
+        parts: Vec<PairedPart>,
         count: usize,
     },
 }
 
 /// Spaltennamen der Ausgabe (Mehrfachspalten nummeriert).
-fn header(cols: &[&ColumnDef], plans: &[ColExec<'_>]) -> Vec<String> {
+fn header(cols: &[SelectedColumn<'_>], plans: &[ColExec]) -> Vec<String> {
     let mut out = Vec::new();
     for (col, plan) in cols.iter().zip(plans) {
-        match (&col.sql, plan) {
-            (ColumnSql::Multi { base, .. }, ColExec::Multi { count, .. }) => {
-                out.extend((1..=*count).map(|n| format!("{base} {n}")));
+        match (&col.pick, plan) {
+            (Pick::Numbered { name, .. }, _) => out.push(name.clone()),
+            (Pick::Whole, ColExec::Series { base, parts, count }) => {
+                for n in 1..=*count {
+                    out.extend(parts.iter().map(|p| numbered_name(base, n, p.suffix)));
+                }
             }
-            _ => out.push(col.key.to_string()),
+            (Pick::Whole, ColExec::Expr { .. }) => out.push(col.def.key.to_string()),
         }
     }
     out
 }
 
-/// Anzahl nummerierter Spalten einer Mehrfachspalte: Maximum über die Ansicht, mindestens 1.
-fn multi_count(conn: &Connection, built: &Built<'_>, list_sql: &str) -> Result<usize, ViewError> {
-    let correlated = list_sql.replace("?1", "u.id");
-    let sql = format!(
-        "SELECT COALESCE(MAX(c), 0) FROM (SELECT (SELECT COUNT(*) FROM ({correlated})) AS c \
-         FROM urls u WHERE {})",
-        where_sql(&built.plan)
-    );
-    let mut stmt = conn.prepare(&sql)?;
-    bind_named(&mut stmt, &built.plan.params, &[])?;
-    let mut rows = stmt.raw_query();
-    let max: i64 = match rows.next()? {
-        Some(r) => r.get(0)?,
-        None => 0,
-    };
-    Ok((max.max(1)) as usize)
+/// Anzahl nummerierter Spalten einer Mehrfachspalte: Maximum über die Ansicht und alle Teillisten,
+/// mindestens 1.
+fn multi_count(
+    conn: &Connection,
+    built: &Built<'_>,
+    parts: &[PairedPart],
+) -> Result<usize, ViewError> {
+    let mut max_count: i64 = 0;
+    for part in parts {
+        let correlated = part.list_sql.replace("?1", "u.id");
+        let sql = format!(
+            "SELECT COALESCE(MAX(c), 0) FROM (SELECT (SELECT COUNT(*) FROM ({correlated})) AS c \
+             FROM urls u WHERE {})",
+            where_sql(&built.plan)
+        );
+        let mut stmt = conn.prepare(&sql)?;
+        bind_named(&mut stmt, &built.plan.params, &[])?;
+        let mut rows = stmt.raw_query();
+        let max: i64 = match rows.next()? {
+            Some(r) => r.get(0)?,
+            None => 0,
+        };
+        max_count = max_count.max(max);
+    }
+    Ok((max_count.max(1)) as usize)
+}
+
+fn no_series() -> ViewError {
+    ViewError::Store(os_store::StoreError::InvalidInput(
+        "Mehrfachspalte ohne Teillisten".to_string(),
+    ))
 }
 
 /// Gemeinsamer Teil: Spaltenplan, SELECT-Liste.
-struct Prepared<'c> {
-    plans: Vec<ColExec<'c>>,
+struct Prepared {
+    plans: Vec<ColExec>,
     select_list: String,
     nk: usize,
 }
 
-fn prepare_columns<'c>(
+fn prepare_columns(
     conn: &Connection,
-    built: &'c Built<'_>,
+    built: &Built<'_>,
     count_multi: bool,
-) -> Result<Prepared<'c>, ViewError> {
+) -> Result<Prepared, ViewError> {
     let nk = built.sort.len();
     let mut exprs: Vec<String> = vec!["u.id".to_string()];
     for (i, t) in built.sort.iter().enumerate() {
@@ -216,25 +242,35 @@ fn prepare_columns<'c>(
     exprs.push("u.address AS __a".to_string());
     let mut plans = Vec::new();
     for col in &built.columns {
-        match &col.sql {
-            ColumnSql::Expr(e) => {
+        let def = col.def;
+        match (&col.pick, &def.sql) {
+            (Pick::Whole, ColumnSql::Expr(e)) => {
                 let idx = exprs.len();
                 exprs.push(format!("({e}) AS __c{idx}"));
                 plans.push(ColExec::Expr {
                     idx,
-                    kind: col.kind,
+                    kind: def.kind,
+                    empty_text: false,
                 });
             }
-            ColumnSql::Multi { list_sql, .. } => {
+            (Pick::Whole, _) => {
+                let (base, parts) = series_parts(def).ok_or_else(no_series)?;
                 let count = if count_multi {
-                    multi_count(conn, built, list_sql)?
+                    multi_count(conn, built, &parts)?
                 } else {
                     1
                 };
-                plans.push(ColExec::Multi {
-                    list_sql,
-                    kind: col.kind,
-                    count,
+                plans.push(ColExec::Series { base, parts, count });
+            }
+            (Pick::Numbered { n, part, .. }, _) => {
+                let (_, parts) = series_parts(def).ok_or_else(no_series)?;
+                let p = parts.get(*part).ok_or_else(no_series)?;
+                let idx = exprs.len();
+                exprs.push(format!("{} AS __c{idx}", multi_nth_expr(p.list_sql, *n)));
+                plans.push(ColExec::Expr {
+                    idx,
+                    kind: p.kind,
+                    empty_text: true,
                 });
             }
         }
@@ -246,7 +282,7 @@ fn prepare_columns<'c>(
     })
 }
 
-/// Werte einer Mehrfachspalte für eine URL.
+/// Werte einer Teilliste einer Mehrfachspalte für eine URL.
 fn multi_values(
     stmt: &mut Statement<'_>,
     kind: ColumnKind,
@@ -270,8 +306,8 @@ struct RawRow {
 
 fn read_row(
     row: &rusqlite::Row<'_>,
-    prepared: &Prepared<'_>,
-    multi_stmts: &mut [Option<Statement<'_>>],
+    prepared: &Prepared,
+    multi_stmts: &mut [Vec<Statement<'_>>],
 ) -> Result<RawRow, ViewError> {
     let id: i64 = row.get(0)?;
     let mut keys = Vec::with_capacity(prepared.nk);
@@ -280,21 +316,32 @@ fn read_row(
     }
     let address: String = row.get(1 + prepared.nk)?;
     let mut cells = Vec::new();
-    for (plan, stmt) in prepared.plans.iter().zip(multi_stmts.iter_mut()) {
+    for (plan, stmts) in prepared.plans.iter().zip(multi_stmts.iter_mut()) {
         match plan {
-            ColExec::Expr { idx, kind } => cells.push(cell(*kind, row.get_ref(*idx)?)),
-            ColExec::Multi { kind, count, .. } => {
-                let values = match stmt {
-                    Some(s) => multi_values(s, *kind, id)?,
-                    None => Vec::new(),
-                };
+            ColExec::Expr {
+                idx,
+                kind,
+                empty_text,
+            } => {
+                let v = cell(*kind, row.get_ref(*idx)?);
+                cells.push(match (v, empty_text) {
+                    (Value::Null, true) => Value::Text(String::new()),
+                    (v, _) => v,
+                });
+            }
+            ColExec::Series { parts, count, .. } => {
+                let mut values: Vec<Vec<Value>> = Vec::with_capacity(parts.len());
+                for (part, stmt) in parts.iter().zip(stmts.iter_mut()) {
+                    values.push(multi_values(stmt, part.kind, id)?);
+                }
                 for n in 0..*count {
-                    cells.push(
-                        values
-                            .get(n)
-                            .cloned()
-                            .unwrap_or_else(|| Value::Text(String::new())),
-                    );
+                    for list in &values {
+                        cells.push(
+                            list.get(n)
+                                .cloned()
+                                .unwrap_or_else(|| Value::Text(String::new())),
+                        );
+                    }
                 }
             }
         }
@@ -309,14 +356,17 @@ fn read_row(
 
 fn multi_statements<'a>(
     conn: &'a Connection,
-    prepared: &Prepared<'_>,
-) -> Result<Vec<Option<Statement<'a>>>, ViewError> {
+    prepared: &Prepared,
+) -> Result<Vec<Vec<Statement<'a>>>, ViewError> {
     prepared
         .plans
         .iter()
         .map(|p| match p {
-            ColExec::Multi { list_sql, .. } => Ok(Some(conn.prepare(list_sql)?)),
-            ColExec::Expr { .. } => Ok(None),
+            ColExec::Series { parts, .. } => parts
+                .iter()
+                .map(|part| Ok(conn.prepare(part.list_sql)?))
+                .collect(),
+            ColExec::Expr { .. } => Ok(Vec::new()),
         })
         .collect()
 }

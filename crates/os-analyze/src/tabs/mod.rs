@@ -19,7 +19,7 @@ pub mod security;
 pub mod sitemaps;
 pub mod url;
 
-use crate::defs::TabDef;
+use crate::defs::{SortKey, TabDef};
 
 /// Alle Tabs in UI-Reihenfolge: internal, external, security, response_codes, url, page_titles,
 /// meta_description, h1, h2, content, images, canonicals, directives, hreflang, links, sitemaps.
@@ -42,4 +42,34 @@ pub fn all() -> Vec<TabDef> {
         links::tab(),
         sitemaps::tab(),
     ]
+}
+
+/// Spalte, nach der der Filter `Duplicate` der Element-Tabs gruppiert (ONPAGE-092, -102, -122, -132).
+const DUPLICATE_GROUP_COLUMN: [(&str, &str); 4] = [
+    ("Page Titles", "Title 1"),
+    ("Meta Description", "Meta Description 1"),
+    ("H1", "H1-1"),
+    ("H2", "H2-1"),
+];
+
+/// Standardsortierung eines einzelnen Filters (ONPAGE-001). Die Ansicht fragt sie ab, wenn die Abfrage keine
+/// Sortierung angibt, und zwar **vor** `TabDef.default_sort`; `None` heißt: der Filter hat keine eigene
+/// Standardsortierung, es gilt `TabDef.default_sort` und danach die Entdeckungsreihenfolge (`UrlId`, K-17).
+///
+/// Page Titles, Meta Description, H1 und H2 haben kein `default_sort`; nur ihr Filter `Duplicate` gruppiert
+/// gleiche Werte direkt untereinander (Sortierung nach dem ersten Wert, ONPAGE-092 und Gegenstücke), alle
+/// anderen Filter erscheinen in Entdeckungsreihenfolge.
+pub fn filter_default_sort(tab_id: &str, filter_id: &str) -> Option<Vec<SortKey>> {
+    if filter_id != "Duplicate" {
+        return None;
+    }
+    DUPLICATE_GROUP_COLUMN
+        .iter()
+        .find(|(tab, _)| *tab == tab_id)
+        .map(|(_, column)| {
+            vec![SortKey {
+                column: (*column).to_string(),
+                descending: false,
+            }]
+        })
 }

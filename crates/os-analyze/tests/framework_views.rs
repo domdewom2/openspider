@@ -9,7 +9,7 @@ use os_analyze::views::{
     self, filter_counts_in, plan_in, query_view_in, stream_view_in, ColumnSelection, PageStart,
     SearchSpec, ViewQuery,
 };
-use os_analyze::ViewError;
+use os_analyze::{ColumnKind, ColumnSql, ViewError};
 use os_model::{CrawlConfig, FilterState, UrlId, Value};
 use os_store::CrawlFile;
 
@@ -513,6 +513,234 @@ fn multi_columns_can_be_sorted_by_a_numbered_column() {
     let page = query(&file, &cfg, &query_);
     // „c1“ (URL 1) < „x1“ (URL 2); alle übrigen sind leer und folgen am Ende.
     assert_eq!(&ids(&page)[..2], &[1, 2]);
+}
+
+// spec: TECH-004
+#[test]
+fn numbered_names_resolve_for_selection_and_sort() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = sample(dir.path(), 1);
+    with_canonicals(&file);
+    let cfg = CrawlConfig::default();
+
+    // Auswahl über den nummerierten Namen (auch in anderer Schreibweise): genau diese eine Spalte.
+    let mut one = q("All");
+    one.columns = ColumnSelection::Named(vec!["Address".into(), "canonical 2".into()]);
+    let page = query(&file, &cfg, &one);
+    assert_eq!(page.columns, vec!["Address", "Canonical 2"]);
+    assert_eq!(page.rows[0][1], Value::Text("c2".into()));
+    // Fehlender Wert: leerer Text, nie null.
+    assert_eq!(page.rows[1][1], Value::Text(String::new()));
+
+    // Der Grundname wählt weiterhin alle Indizes.
+    one.columns = ColumnSelection::Named(vec!["Canonical".into()]);
+    assert_eq!(query(&file, &cfg, &one).columns.len(), 3);
+
+    // Ungültige Nummern sind unbekannte Spalten.
+    for bad in ["Canonical 0", "Canonical x", "Canonical 1 URL", "Canonical"] {
+        let mut b = q("All");
+        b.columns = ColumnSelection::Named(vec![bad.into()]);
+        let r = query_view_in(&[test_tab()], &file, &cfg, &b);
+        if bad == "Canonical" {
+            assert!(r.is_ok());
+        } else {
+            assert!(
+                matches!(r, Err(ViewError::Name(_))),
+                "{bad}: {r:?} statt unbekannter Spalte"
+            );
+        }
+    }
+
+    // Sortierung nach der zweiten Teilspalte: „c2“ (URL 1) vor allen leeren Werten.
+    let mut sorted = q("All");
+    sorted.sort = vec![sort("Canonical 2", false)];
+    assert_eq!(ids(&query(&file, &cfg, &sorted))[0], 1);
+}
+
+/// Test-Tab mit verschränkter Mehrfachspalte „Pair“: je Index erst `raw`, dann `source`.
+fn paired_tab() -> os_analyze::TabDef {
+    use os_analyze::defs::PairedPart;
+    let mut tab = test_tab();
+    tab.columns.push(os_analyze::ColumnDef {
+        key: "Pair",
+        sql: ColumnSql::MultiPaired {
+            base: "Pair",
+            parts: &[
+                PairedPart {
+                    suffix: "",
+                    list_sql: "SELECT raw FROM canonicals WHERE url_id = ?1 ORDER BY position",
+                    kind: ColumnKind::Text,
+                },
+                PairedPart {
+                    suffix: "Src",
+                    list_sql: "SELECT source FROM canonicals WHERE url_id = ?1 ORDER BY position",
+                    kind: ColumnKind::Text,
+                },
+            ],
+        },
+        kind: ColumnKind::Text,
+        default_visible: false,
+        extension: false,
+    });
+    tab
+}
+
+// spec: TECH-004
+#[test]
+fn paired_multi_columns_interleave_the_parts_per_index() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = sample(dir.path(), 1);
+    with_canonicals(&file);
+    file.conn()
+        .execute("UPDATE canonicals SET source = 'Http' WHERE raw = 'c2'", [])
+        .unwrap();
+    let cfg = CrawlConfig::default();
+    let tabs = [paired_tab()];
+    let run = |cols: &[&str], sort_by: Option<&str>| {
+        let mut query_ = q("All");
+        query_.columns = ColumnSelection::Named(cols.iter().map(|c| (*c).into()).collect());
+        if let Some(c) = sort_by {
+            query_.sort = vec![sort(c, true)];
+        }
+        query_view_in(&tabs, &file, &cfg, &query_)
+    };
+
+    // Maximum 3 Indizes (URL 1); je Index Wert, dann Teilspalte „Src“.
+    let page = run(&["Address", "Pair"], None).unwrap();
+    assert_eq!(
+        page.columns,
+        vec![
+            "Address",
+            "Pair 1",
+            "Pair 1 Src",
+            "Pair 2",
+            "Pair 2 Src",
+            "Pair 3",
+            "Pair 3 Src"
+        ]
+    );
+    let text = |s: &str| Value::Text(s.into());
+    assert_eq!(
+        page.rows[0],
+        vec![
+            text("b.html"),
+            text("c1"),
+            text("Html"),
+            text("c2"),
+            text("Http"),
+            text("c3"),
+            text("Html")
+        ]
+    );
+    // Fehlende Werte sind leere Texte.
+    assert_eq!(page.rows[1][3], text(""));
+    assert_eq!(page.rows[1][4], text(""));
+
+    // Einzelne Teilspalte über den nummerierten Namen; Reihenfolge der Auswahl bleibt erhalten.
+    let part = run(&["Pair 2 Src", "Pair 1"], None).unwrap();
+    assert_eq!(part.columns, vec!["Pair 2 Src", "Pair 1"]);
+    assert_eq!(part.rows[0], vec![text("Http"), text("c1")]);
+    assert!(
+        run(&["Pair 4 Src"], None).is_ok(),
+        "Index über dem Maximum ist leer"
+    );
+    assert!(run(&["Pair 1 Nope"], None).is_err());
+
+    // Sortierung nach einer Teilspalte (absteigend: „x1“ vor „c1“).
+    let sorted = run(&["Address"], Some("Pair 1")).unwrap();
+    assert_eq!(sorted.row_keys[0].0, 2);
+    let by_src = run(&["Address"], Some("Pair 1 Src")).unwrap();
+    assert_eq!(by_src.row_keys.len(), sorted.row_keys.len());
+}
+
+// spec: ONPAGE-001
+#[test]
+fn filter_default_sort_comes_from_the_registry_before_the_tab_default() {
+    use os_analyze::tabs;
+    let dir = tempfile::tempdir().unwrap();
+    let file = sample(dir.path(), 1);
+    let cfg = CrawlConfig::default();
+
+    // Die Registry kennt nur den Filter „Duplicate“ der vier Element-Tabs.
+    for (tab, column) in [
+        ("Page Titles", "Title 1"),
+        ("Meta Description", "Meta Description 1"),
+        ("H1", "H1-1"),
+        ("H2", "H2-1"),
+    ] {
+        let keys = tabs::filter_default_sort(tab, "Duplicate").expect(tab);
+        assert_eq!(
+            (keys.len(), keys[0].column.as_str(), keys[0].descending),
+            (1, column, false)
+        );
+        assert!(tabs::filter_default_sort(tab, "All").is_none());
+        assert!(tabs::filter_default_sort(tab, "Missing").is_none());
+    }
+    assert!(tabs::filter_default_sort("Internal", "Duplicate").is_none());
+    for tab in ["Page Titles", "Meta Description", "H1", "H2"] {
+        let def = tabs::all().into_iter().find(|t| t.id == tab).unwrap();
+        assert!(def.default_sort.is_empty(), "{tab}: keine Tab-Sortierung");
+    }
+
+    // Der Test-Tab trägt die Kennung „Page Titles“: „Duplicate“ sortiert nach Title 1, „All“ bleibt in
+    // Entdeckungsreihenfolge (UrlId, K-17).
+    let make_tab = |default_sort: Vec<os_analyze::SortKey>| {
+        let mut tab = test_tab();
+        tab.id = "Page Titles";
+        tab.default_sort = default_sort;
+        tab.filters.push(os_analyze::FilterDef {
+            id: "Duplicate",
+            predicate: "1",
+            kind: os_analyze::FilterKind::Live,
+            requires: Vec::new(),
+            ignore_non_indexable: false,
+        });
+        tab
+    };
+    let tab = make_tab(Vec::new());
+    let run = |filter: &str, sort_by: Option<SortKeyArg>| {
+        let mut query_ = ViewQuery::new("Page Titles", filter);
+        query_.limit = 500;
+        if let Some((c, d)) = sort_by {
+            query_.sort = vec![sort(c, d)];
+        }
+        query_view_in(std::slice::from_ref(&tab), &file, &cfg, &query_).unwrap()
+    };
+    type SortKeyArg = (&'static str, bool);
+
+    let all = run("All", None);
+    let mut by_id = ids(&all);
+    by_id.sort_unstable();
+    assert_eq!(ids(&all), by_id, "All: Entdeckungsreihenfolge");
+
+    let dup = run("Duplicate", None);
+    let by_title = run("Duplicate", Some(("Title 1", false)));
+    assert_eq!(
+        ids(&dup),
+        ids(&by_title),
+        "Duplicate: nach Title 1 gruppiert"
+    );
+    assert_ne!(ids(&dup), by_id);
+    assert_eq!(dup.rows.len(), all.rows.len());
+
+    // Eine ausdrückliche Sortierung der Abfrage hat Vorrang vor der Registry.
+    let explicit = run("Duplicate", Some(("Address", true)));
+    assert_eq!(addresses(&explicit)[0], "ni.html");
+
+    // Die Registry geht dem Tab-Standard voraus; ohne Registry-Eintrag gilt der Tab-Standard.
+    let with_tab_default = make_tab(vec![sort("Address", true)]);
+    let mut dq = ViewQuery::new("Page Titles", "Duplicate");
+    dq.limit = 500;
+    let page = query_view_in(std::slice::from_ref(&with_tab_default), &file, &cfg, &dq).unwrap();
+    assert_eq!(ids(&page), ids(&dup), "Registry vor TabDef.default_sort");
+    let mut aq = ViewQuery::new("Page Titles", "All");
+    aq.limit = 500;
+    let page = query_view_in(&[with_tab_default], &file, &cfg, &aq).unwrap();
+    assert_eq!(
+        addresses(&page)[0],
+        "ni.html",
+        "ohne Registry: TabDef.default_sort"
+    );
 }
 
 // spec: ONPAGE-190
