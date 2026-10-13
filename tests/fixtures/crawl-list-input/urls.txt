@@ -1,0 +1,7 @@
+# Liste der zu prüfenden Adressen (gemischt)
+http://site.test/a
+https://site.test/b  http://site.test/c
+HTTPS://SITE.test/d
+www.site.test/ohne-schema
+# noch ein Kommentar ohne Link
+http://site.test/e?x=1&y=2

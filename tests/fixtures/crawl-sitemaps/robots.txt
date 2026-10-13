@@ -1,0 +1,5 @@
+User-agent: *
+Disallow:
+
+Sitemap: /sitemap_index.xml
+sitemap: http://site.test/news.xml

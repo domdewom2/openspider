@@ -22,12 +22,75 @@ use os_fetch::{CookieJar, FetchPurpose};
 use os_model::{
     DiscoveryKind, NewUrl, NotCrawledReason, QueueOp, UrlId, UrlState, UrlUpdate, WriteBatch,
 };
-use os_url::{NormUrl, RuleDecision, RuleSet};
+use os_url::{NormUrl, RuleDecision, RuleSet, Scope, ScopeClass};
 
 use crate::redirect::RedirectGraph;
 
 /// Tiefe „unbekannt“ im Seen-Set und im Schlüssel (sortiert hinter jeder echten Tiefe).
 pub const NO_DEPTH: u32 = u32::MAX;
+
+/// Ordnet URLs dem Crawl-Bereich zu (intern/extern). `Scope` und [`CrawlScope`] implementieren es.
+pub trait Classify {
+    /// Intern oder extern?
+    fn classify(&self, url: &NormUrl) -> ScopeClass;
+}
+
+impl Classify for Scope {
+    fn classify(&self, url: &NormUrl) -> ScopeClass {
+        Scope::classify(self, url)
+    }
+}
+
+/// Crawl-Bereich der Engine: der `Scope` aus Start-URL und Konfiguration, im Listenmodus zusätzlich alle
+/// Hosts der Liste (CRAWL-028: jeder Host der Liste ist im Bereich).
+#[derive(Debug, Clone)]
+pub struct CrawlScope {
+    base: Scope,
+    extra_hosts: std::collections::HashSet<String>,
+}
+
+impl CrawlScope {
+    /// Bereich ohne weitere Hosts (Spider-Modus).
+    pub fn new(base: Scope) -> Self {
+        CrawlScope {
+            base,
+            extra_hosts: std::collections::HashSet::new(),
+        }
+    }
+
+    /// Bereich mit zusätzlichen internen Hosts (Kleinbuchstaben, ohne Port).
+    pub fn with_hosts(base: Scope, hosts: impl IntoIterator<Item = String>) -> Self {
+        CrawlScope {
+            base,
+            extra_hosts: hosts.into_iter().map(|h| h.to_ascii_lowercase()).collect(),
+        }
+    }
+
+    /// Fügt einen internen Host hinzu.
+    pub fn add_host(&mut self, host: &str) {
+        self.extra_hosts.insert(host.to_ascii_lowercase());
+    }
+
+    /// Ordnet eine URL ein.
+    pub fn classify(&self, url: &NormUrl) -> ScopeClass {
+        if let Some(host) = url.url.host_str() {
+            if !self.extra_hosts.is_empty()
+                && self
+                    .extra_hosts
+                    .contains(host.trim_end_matches('.').to_ascii_lowercase().as_str())
+            {
+                return ScopeClass::Internal;
+            }
+        }
+        self.base.classify(url)
+    }
+}
+
+impl Classify for CrawlScope {
+    fn classify(&self, url: &NormUrl) -> ScopeClass {
+        CrawlScope::classify(self, url)
+    }
+}
 
 /// Wofür eine URL abgerufen wird.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -70,6 +133,8 @@ pub struct QueueItem {
     pub hops: u32,
     /// Cookie-Sitzung (Index in `Core::sessions`).
     pub session: u32,
+    /// Die Daten der URL ersetzen (`PageWrite.replace`): „Neu crawlen“ (CRAWL-131).
+    pub replace: bool,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -278,6 +343,9 @@ pub struct Core {
     pub sitemap_keys: std::collections::HashSet<String>,
     /// Nächste Reihenfolgenummer je URL für hreflang-Angaben aus Sitemaps (fortlaufend über alle Sitemaps).
     pub sitemap_hreflang_next: HashMap<UrlId, u32>,
+    /// Listenmodus (CRAWL-028): Das Tiefenlimit gilt streng, auch für Ressourcen und externe Prüfungen der
+    /// letzten Ebene, und die Einträge einer Sitemap sind Listen-URLs der Tiefe 0.
+    pub list_mode: bool,
 }
 
 impl Core {
@@ -297,6 +365,7 @@ impl Core {
             max_depth,
             sitemap_keys: std::collections::HashSet::new(),
             sitemap_hreflang_next: HashMap::new(),
+            list_mode: false,
         }
     }
 
@@ -407,12 +476,19 @@ impl Core {
         }
         // 3. Tiefengrenze (Ressourcen und externe Prüfungen der letzten Ebene bleiben erlaubt)
         if let (Some(max), Some(d)) = (self.max_depth, depth) {
-            let allowance = u32::from(c.resource_like || c.purpose == Purpose::External);
+            // Im Listenmodus gibt es keine Zugabe für die letzte Ebene (CRAWL-028: Ressourcen und externe
+            // Ziele der Listenseiten werden bei Tiefe 0 nicht angefragt).
+            let allowance =
+                u32::from(!self.list_mode && (c.resource_like || c.purpose == Purpose::External));
             if d > max.saturating_add(allowance) {
                 return Admission {
                     enqueue: false,
                     in_tables: false,
-                    reason: Some(NotCrawledReason::DepthLimit),
+                    reason: Some(if self.list_mode {
+                        NotCrawledReason::ListModeDepth
+                    } else {
+                        NotCrawledReason::DepthLimit
+                    }),
                     rule_flag,
                 };
             }
@@ -493,6 +569,7 @@ impl Core {
                         purpose: c.purpose,
                         hops,
                         session,
+                        replace: false,
                     });
                     batch.url_updates.push(UrlUpdate::State {
                         id,
@@ -532,7 +609,7 @@ impl Core {
             Some(NotCrawledReason::NotIncluded) => {
                 batch.counters.push((COUNTER_NOT_INCLUDED.to_string(), 1));
             }
-            Some(NotCrawledReason::DepthLimit) => {
+            Some(NotCrawledReason::DepthLimit | NotCrawledReason::ListModeDepth) => {
                 batch.counters.push((COUNTER_DEPTH_LIMIT.to_string(), 1));
             }
             _ => {}
@@ -567,6 +644,7 @@ impl Core {
                 purpose: c.purpose,
                 hops,
                 session,
+                replace: false,
             });
             batch.queue.push(QueueOp::Push {
                 id,

@@ -46,10 +46,8 @@ async fn start_records_owner_and_process_and_the_pages_carry_titles_and_links() 
         fx.file.get_meta("owner_kind").unwrap().as_deref(),
         Some("cli")
     );
-    assert_eq!(
-        fx.file.get_meta("owner_pid").unwrap(),
-        Some(std::process::id().to_string())
-    );
+    // Rev. 3 (M1-P19): Nach dem regulären Ende besitzt kein Prozess den Crawl mehr (`owner_pid` leer).
+    assert_eq!(fx.file.get_meta("owner_pid").unwrap().as_deref(), Some(""));
     // Seite 1: Titel, drei Kinder + Start als Hyperlinks, ein Bild
     let (title, h1, outlinks): (String, String, i64) = fx
         .file

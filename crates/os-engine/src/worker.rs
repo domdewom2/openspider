@@ -31,14 +31,15 @@ use os_model::{
     SitemapWrite, Timestamp, UrlId, UrlState, WriteBatch,
 };
 use os_parse::{ParseConfig, ParseInput};
-use os_url::{NormUrl, Scope, ScopeClass};
+use os_url::{NormUrl, ScopeClass};
 use tokio::sync::{Notify, OwnedSemaphorePermit, Semaphore};
 use url::Url;
 
 use crate::decide::{self, LinkDecision};
 use crate::error::EngineError;
 use crate::frontier::{
-    Cand, Core, Purpose, QueueItem, COUNTER_REDIRECT_LIMIT, F_IN_TABLES, F_QUEUED, F_RULE_OK,
+    Cand, Classify, Core, CrawlScope, Purpose, QueueItem, COUNTER_REDIRECT_LIMIT, F_IN_TABLES,
+    F_QUEUED, F_RULE_OK,
 };
 use crate::progress::ProgressTracker;
 use crate::redirect::{self, RedirectTarget};
@@ -56,6 +57,8 @@ pub(crate) struct Control {
     pub threads: AtomicU32,
     /// `STOP_*`.
     pub stop: AtomicU8,
+    /// Grund einer Pause, die die Engine selbst auslöst (Speicherplatz): `(Code, Meldung)`.
+    pub reason: Mutex<Option<(&'static str, String)>>,
 }
 
 /// Kein Stopp angefordert.
@@ -70,7 +73,7 @@ pub(crate) struct Shared<F: Fetch> {
     pub fetcher: Arc<F>,
     pub cfg: Arc<CrawlConfig>,
     pub clock: Arc<dyn Clock>,
-    pub scope: Scope,
+    pub scope: CrawlScope,
     pub rules: os_url::RuleSet,
     pub gate: RobotsGate,
     pub pcfg: ParseConfig,
@@ -83,8 +86,11 @@ pub(crate) struct Shared<F: Fetch> {
     pub error: Mutex<Option<EngineError>>,
     pub host_gates: Mutex<HashMap<String, Arc<Semaphore>>>,
     pub max_per_host: Option<u32>,
-    /// URL Encoded Address der Start-URL (von Include/Exclude ausgenommen).
+    /// URL Encoded Address der Start-URL (von Include/Exclude ausgenommen; im Listenmodus leer).
     pub start_url: String,
+    /// Origins, deren robots.txt aus der Crawl-Datei übernommen wurde (Fortsetzen): kein erneuter Abruf, kein
+    /// neues Schreiben (P19).
+    pub primed_origins: std::collections::HashSet<String>,
 }
 
 impl<F: Fetch> Shared<F> {
@@ -188,7 +194,7 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
             batch.counters.push((counter.to_string(), 1));
             batch.pages.push(PageWrite {
                 url_id: item.id,
-                replace: false,
+                replace: item.replace,
                 indexability: Indexability::NonIndexable,
                 indexability_status: None,
                 fetch: facts,
@@ -263,8 +269,9 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
         .record_completion(sh.clock_mono(), response_ms);
     sh.ctl.notify.notify_one();
 
-    // 6. Sitemaps aus der robots.txt
-    if !sitemap_seeds.is_empty() {
+    // 6. Sitemaps aus der robots.txt – nicht mehr, wenn schon pausiert oder gestoppt wird: nach der Pause
+    // keine neuen Abrufe (CRAWL-126). Beim Fortsetzen leitet das robots-Gate die Adressen erneut ab.
+    if !sitemap_seeds.is_empty() && sh.ctl.stop.load(Ordering::SeqCst) == STOP_NONE {
         ingest_sitemaps(sh, sitemap_seeds).await?;
     }
     Ok(())
@@ -292,12 +299,21 @@ async fn record_robots<F: Fetch>(
             .as_deref()
             .map(|body| {
                 let listed: Vec<String> = os_fetch::robots::parse(body).sitemaps().to_vec();
-                crate::robots_glue::sitemap_seeds(&listed, cfg)
+                // relative Angaben (`Sitemap: /sitemap_index.xml`) löst die URL der robots.txt auf (CRAWL-058)
+                match &parsed_robots {
+                    Some(base) => crate::robots_glue::sitemap_seeds_at(base, &listed, cfg),
+                    None => crate::robots_glue::sitemap_seeds(&listed, cfg),
+                }
             })
             .unwrap_or_default()
     } else {
         Vec::new()
     };
+
+    // Fortsetzen: die robots.txt dieses Origins stammt aus der Crawl-Datei; Zeile und Eintrag bleiben unverändert.
+    if sh.primed_origins.contains(&write.origin) {
+        return Ok(seeds);
+    }
 
     let mut batch = WriteBatch::default();
     if let Some(norm) = norm_robots {
@@ -1163,7 +1179,7 @@ async fn assemble<F: Fetch>(
     });
     batch.pages.push(PageWrite {
         url_id: item.id,
-        replace: false,
+        replace: item.replace,
         fetch: facts,
         page: page_facts,
         indexability,
@@ -1253,7 +1269,7 @@ pub(crate) async fn ingest_sitemaps<F: Fetch>(
 pub(crate) fn build_sitemap_batch(
     core: &mut Core,
     cfg: &CrawlConfig,
-    scope: &Scope,
+    scope: &impl Classify,
     rules: &os_url::RuleSet,
     fetched: &[FetchedSitemap],
 ) -> WriteBatch {
@@ -1309,6 +1325,13 @@ pub(crate) fn build_sitemap_batch(
         };
         let mut entry_urls = Vec::new();
         let mut hreflang_rows: Vec<(UrlId, HreflangRow)> = Vec::new();
+        // Spider-Modus: Einträge ohne Tiefe (Priorität 1, nur über die Sitemap erreicht). Listenmodus: die
+        // Einträge sind Listen-URLs der Tiefe 0 (CRAWL-027).
+        let (entry_kind, entry_depth) = if core.list_mode {
+            (DiscoveryKind::ListInput, Some(0))
+        } else {
+            (DiscoveryKind::Sitemap, None)
+        };
         if let (Some(doc), SitemapKind::Urlset) = (&fs.doc, kind) {
             for loc in &doc.locs {
                 let Some(u) = loc.url.as_deref() else {
@@ -1327,7 +1350,7 @@ pub(crate) fn build_sitemap_batch(
                 let cand = Cand {
                     norm: &norm,
                     internal: true,
-                    kind: DiscoveryKind::Sitemap,
+                    kind: entry_kind,
                     store: true,
                     crawl: true,
                     reason: None,
@@ -1335,7 +1358,7 @@ pub(crate) fn build_sitemap_batch(
                     apply_rules: true,
                     purpose: Purpose::Page,
                 };
-                let id = core.discover(&cand, None, 0, 0, rules, &mut batch);
+                let id = core.discover(&cand, entry_depth, 0, 0, rules, &mut batch);
                 entry_urls.push((id, loc.loc_raw.clone(), loc.lastmod.clone()));
                 if cfg.spider.hreflang.store {
                     sitemap_hreflang(
@@ -1378,7 +1401,7 @@ pub(crate) fn build_sitemap_batch(
 fn sitemap_hreflang(
     core: &mut Core,
     cfg: &CrawlConfig,
-    scope: &Scope,
+    scope: &impl Classify,
     rules: &os_url::RuleSet,
     batch: &mut WriteBatch,
     sitemap: SitemapId,
@@ -1416,7 +1439,9 @@ fn sitemap_hreflang(
                     Purpose::External
                 },
             };
-            Some(core.discover(&cand, None, 0, 0, rules, batch))
+            // Listenmodus: Alternativen sind Links der Listenseite (Tiefe 1) und fallen unter das Tiefenlimit.
+            let depth = core.list_mode.then_some(1);
+            Some(core.discover(&cand, depth, 0, 0, rules, batch))
         });
         let next = core.sitemap_hreflang_next.entry(loc_id).or_insert(0);
         let mut r = h.clone();
@@ -1438,6 +1463,7 @@ fn sitemap_hreflang(
 mod tests {
     use super::*;
     use os_model::{CanonicalRef, SitemapDoc, SitemapLoc};
+    use os_url::Scope;
 
     fn response(status: u16, headers: &[(&str, &str)], body: &str) -> FetchResult {
         FetchResult {

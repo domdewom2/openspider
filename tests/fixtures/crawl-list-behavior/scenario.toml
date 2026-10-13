@@ -1,0 +1,52 @@
+# Szenario crawl-list-behavior (CRAWL-028): Liste aus site.test/a, site.test/robots-blocked, other.test/b, site.test/r301.
+# /a verlinkt /a-kind und bindet bild.png ein; /robots-blocked ist per robots.txt gesperrt; /r301 leitet auf /ziel um.
+
+[[route]]
+path = "/a"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>/a</title></head><body><h1>/a</h1><a href="/a-kind">Kind</a> <img src="/bild.png" alt="Bild"></body></html>"""
+
+[[route]]
+path = "/a-kind"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>/a-kind</title></head><body><h1>/a-kind</h1></body></html>"""
+
+[[route]]
+path = "/robots-blocked"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>/robots-blocked</title></head><body><h1>/robots-blocked</h1></body></html>"""
+
+[[route]]
+path = "/ziel"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>/ziel</title></head><body><h1>/ziel</h1></body></html>"""
+
+[[route]]
+path = "/b"
+host = "other.test"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>other.test /b</title></head><body><h1>other.test /b</h1><a href="/b-kind">Kind</a></body></html>"""
+
+[[route]]
+path = "/b-kind"
+host = "other.test"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>other.test /b-kind</title></head><body><h1>other.test /b-kind</h1></body></html>"""
+
+[[route]]
+path = "/robots.txt"
+content_type = "text/plain"
+body = """User-agent: *
+Disallow: /robots-blocked
+"""
+
+[[route]]
+path = "/r301"
+status = 301
+location = "/ziel"
+
+[[route]]
+path = "/bild.png"
+content_type = "image/png"
+png_size = 200
+

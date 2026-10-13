@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>
+  http://site.test/e?x=1&amp;y=2  
+</loc></url><url><loc><![CDATA[http://site.test/cdata?a=1&b=2]]></loc></url></urlset>

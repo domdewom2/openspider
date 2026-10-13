@@ -43,6 +43,9 @@ pub struct ProgressTracker {
     limit: Option<u64>,
     /// Zeitpunkt (monoton), zu dem der Crawl beendet wurde; danach läuft die Uhr nicht weiter.
     finished_at: Option<Duration>,
+    /// Laufzeit vor dem aktuellen Lauf (Fortsetzen): Pausen eingeschlossen, die Wartezeit bis zum Fortsetzen
+    /// gehört zu `paused_total`.
+    elapsed_before: Duration,
 }
 
 impl ProgressTracker {
@@ -61,6 +64,7 @@ impl ProgressTracker {
             paused_since: None,
             limit,
             finished_at: None,
+            elapsed_before: Duration::ZERO,
         }
     }
 
@@ -68,6 +72,18 @@ impl ProgressTracker {
     pub fn resume_from(&mut self, crawled: u64, paused_total: Duration) {
         self.crawled = crawled;
         self.paused_total = paused_total;
+    }
+
+    /// Wie [`resume_from`](Self::resume_from), zusätzlich mit der Laufzeit der früheren Läufe samt Pausen
+    /// (`elapsed_s` zählt über Pause und Neustart hinweg weiter, `paused_s` enthält die Wartezeit).
+    pub fn resume_with_elapsed(
+        &mut self,
+        crawled: u64,
+        paused_total: Duration,
+        elapsed_before: Duration,
+    ) {
+        self.resume_from(crawled, paused_total);
+        self.elapsed_before = elapsed_before;
     }
 
     /// Ein Abruf ist abgeschlossen. `response_ms` nur bei echter Antwort.
@@ -142,7 +158,7 @@ impl ProgressTracker {
     ) -> Progress {
         let now = self.finished_at.unwrap_or(now);
         self.trim(now);
-        let elapsed = now.saturating_sub(self.start_mono);
+        let elapsed = self.elapsed_before + now.saturating_sub(self.start_mono);
         let paused = self.paused_total(now);
         let active_elapsed = elapsed.saturating_sub(paused);
 

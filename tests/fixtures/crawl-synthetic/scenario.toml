@@ -1,0 +1,11 @@
+# Szenario crawl-synthetic (CRAWL-124/125/126, PERF): deterministische Site ohne Dateien, aus (seed, Pfad) berechnet.
+# CRAWL-125: 10 000 Seiten, 10 Links je Seite; die Tests verkleinern `pages` über `SyntheticConfig`.
+[synthetic]
+pages = 10000
+links_per_page = 10
+seed = 42
+status_301_share = 0.01
+status_404_share = 0.01
+status_5xx_share = 0.005
+noindex_share = 0.02
+duplicate_title_share = 0.05

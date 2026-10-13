@@ -1,0 +1,52 @@
+# Szenario crawl-sitemaps (CRAWL-058/059/060, TECH-210, CRAWL-141): Sitemap-Dateien; /nur-in-sitemap ist nirgends verlinkt.
+
+[[route]]
+path = "/nur-in-sitemap"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>nur in Sitemap</title></head><body><h1>nur in Sitemap</h1></body></html>"""
+
+[[route]]
+path = "/gz-seite"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>gz</title></head><body><h1>gz</h1></body></html>"""
+
+[[route]]
+path = "/news-1"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>News</title></head><body><h1>News</h1></body></html>"""
+
+[[route]]
+path = "/extra-1"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>Extra</title></head><body><h1>Extra</h1></body></html>"""
+
+[[route]]
+path = "/tief-3"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>Tief 3</title></head><body><h1>Tief 3</h1></body></html>"""
+
+[[route]]
+path = "/de/"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>de</title></head><body><h1>de</h1></body></html>"""
+
+[[route]]
+path = "/en/"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>en</title></head><body><h1>en</h1></body></html>"""
+
+[[route]]
+path = "/sitemap-redirect.xml"
+status = 301
+location = "/pages.xml"
+
+[[route]]
+path = "/redirect-loop.xml"
+status = 301
+location = "/redirect-loop2.xml"
+
+[[route]]
+path = "/redirect-loop2.xml"
+status = 301
+location = "/redirect-loop.xml"
+
