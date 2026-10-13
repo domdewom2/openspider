@@ -1,0 +1,78 @@
+# Zeichensatz-Fixtures (CRAWL-021). Der Content-Type steuert, welche Stufe der Erkennung greift;
+# die Dateien enthalten rohe Bytes in der jeweiligen Kodierung und werden unverändert ausgeliefert.
+
+[[route]]
+path = "/utf8-bom"
+content_type = "text/html"
+
+[[route]]
+path = "/latin1-header"
+content_type = "text/html; charset=ISO-8859-1"
+
+[[route]]
+path = "/latin1-alias"
+content_type = "text/html; charset=latin1"
+
+[[route]]
+path = "/meta-sjis"
+content_type = "text/html"
+
+[[route]]
+path = "/meta-http-equiv"
+content_type = "text/html"
+
+[[route]]
+path = "/meta-euc-kr"
+content_type = "text/html"
+
+[[route]]
+path = "/meta-gb18030"
+content_type = "text/html"
+
+[[route]]
+path = "/header-vs-meta"
+content_type = "text/html; charset=utf-8"
+
+[[route]]
+path = "/utf16le-bom"
+content_type = "text/html"
+
+[[route]]
+path = "/utf16be-bom"
+content_type = "text/html"
+
+[[route]]
+path = "/bom-vs-header"
+content_type = "text/html; charset=iso-8859-1"
+
+[[route]]
+path = "/unknown-charset"
+content_type = "text/html; charset=foo"
+
+[[route]]
+path = "/unknown-charset-no-meta"
+content_type = "text/html; charset=foo"
+
+[[route]]
+path = "/unknown-meta"
+content_type = "text/html"
+
+[[route]]
+path = "/invalid-bytes"
+content_type = "text/html; charset=utf-8"
+
+[[route]]
+path = "/invalid-bytes-undeclared"
+content_type = "text/html"
+
+[[route]]
+path = "/meta-late"
+content_type = "text/html"
+
+[[route]]
+path = "/meta-commented"
+content_type = "text/html"
+
+[[route]]
+path = "/plain-utf8"
+content_type = "text/html"

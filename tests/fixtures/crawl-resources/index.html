@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>crawl-resources</title>
+<link rel="stylesheet" href="style.css">
+<link rel="modulepreload" href="module.mjs">
+<style>
+@import url("inline-import.css");
+.hero { background: url(img/hero.png); }
+.logo { background-image: url('img/logo.png'); }
+</style>
+<script src="app.js"></script>
+<script type="module" src="module.mjs"></script>
+</head>
+<body>
+<h1>Ressourcen (CRAWL-039, CRAWL-040, CRAWL-041)</h1>
+<img src="img/pic.png" alt="Bild">
+<a href="foto.jpg">Foto</a>
+<input type="image" src="img/send.png" alt="Senden">
+<img data-src="img/lazy.png" alt="lazy">
+<div style="background:url(img/bg.png)">mit Hintergrund</div>
+<img src="https://cdn.other.test/x.png" alt="extern">
+<a href="sources.html">Bildquellen</a>
+</body>
+</html>
