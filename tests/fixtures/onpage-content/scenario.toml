@@ -1,0 +1,19 @@
+# Szenario onpage-content (ONPAGE-142, ONPAGE-146). Fixture des Pakets M1-P23.
+
+[[route]]
+path = "/short.pdf"
+content_type = "application/pdf"
+
+[[route]]
+path = "/img/logo.png"
+png_size = 300
+
+[[route]]
+path = "/old.html"
+status = 301
+location = "/words-200.html"
+
+[[route]]
+path = "/server-error.html"
+status = 500
+body = "<!doctype html><html><head><title>Fehler</title></head><body><main><p>kurz</p></main></body></html>"
