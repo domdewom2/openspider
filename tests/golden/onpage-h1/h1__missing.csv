@@ -1,0 +1,5 @@
+﻿Address,Occurrences,H1-1,H1-1 Length,H1-2,H1-2 Length,Indexability,Indexability Status
+{BASE}/img-noalt.html,1,,0,,0,Indexable,
+{BASE}/missing-empty.html,1,,0,,0,Indexable,
+{BASE}/missing-none.html,0,,0,,0,Indexable,
+{BASE}/missing-spaces.html,1,,0,,0,Indexable,

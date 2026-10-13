@@ -1,0 +1,7 @@
+# Szenario onpage-duplicates (ONPAGE-005, -092, -102, -122, -132). Erzeugt, nicht von Hand bearbeiten.
+# /pagination/blog/page/4/: rel="prev" nur als HTTP-Link-Header.
+
+[[route]]
+path = "/pagination/blog/page/4/"
+[route.headers]
+Link = "</pagination/blog/page/3/>; rel=\"prev\""

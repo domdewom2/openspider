@@ -1,3 +1,207 @@
-//! Duplikat-Logik der Element-Tabs (ONPAGE-092 ff.) und `ignore_non_indexable` (CRAWL-089).
+//! Gemeinsame Bausteine der Element-Tabs Page Titles, Meta Description, H1 und H2: Grundmenge (ONPAGE-009),
+//! Duplikat-Logik (ONPAGE-005) und `ignore_non_indexable` (CRAWL-089).
 //!
-//! STUB(M1-P22): Modul wird von P22 umgesetzt.
+//! # Grundmenge (ONPAGE-009)
+//!
+//! Interne HTML-Seiten mit Statuscode 2xx, die in den Tabellen stehen (`in_tables = 1`; `robots.txt` interner
+//! Hosts ist eine Text-URL und fällt über die Inhaltsklasse heraus). PDFs gehören nicht dazu (A-5b), ebenso
+//! wenig Weiterleitungen, Fehlerseiten und blockierte URLs. Nicht indexierbare Seiten bleiben in „All“.
+//!
+//! # Duplikate (ONPAGE-005)
+//!
+//! Eine Seite ist Duplikat, wenn ihr erster Wert nicht leer ist und mindestens eine *andere* Seite der
+//! Vergleichsmenge denselben Wert hat (exakt, Groß-/Kleinschreibung zählt – A-4; die Normalisierung N(x) ist
+//! beim Speichern geschehen). Die Vergleichsmenge ist die Grundmenge, eingeschränkt
+//!
+//! * auf indexierbare Seiten, solange `duplicates.only_indexable` gilt, und
+//! * ohne Seiten einer Paginierungsserie, solange `duplicates.ignore_paginated` gilt: Das sind Seiten mit
+//!   `rel="prev"` – als `<link>` im `<head>` mit nicht leerem Wert oder als `Link`-Header.
+//!
+//! Beide Schalter und die Gruppierung werden **live** in SQL ausgewertet (kein Zwischenspeicher): Die
+//! Prädikate sind korrelierte `EXISTS`-Abfragen auf den indizierten Wertspalten (`urls_title1`, `urls_md1`,
+//! `urls_h1`, `urls_h2`), die Schalter kommen als benannte Parameter aus [`element_params`]. Eine Änderung
+//! der Schalter nach dem Crawl wirkt deshalb sofort und ohne neue Abrufe; Duplikate erscheinen bereits
+//! während des Crawls, sobald die zweite Seite geschrieben ist.
+//!
+//! # `ignore_non_indexable` (CRAWL-089)
+//!
+//! Alle Problemfilter der Element-Tabs tragen `FilterDef.ignore_non_indexable = true`; der Plan (`views`)
+//! schließt dann bei `issues.ignore_non_indexable` (Standard an) nicht indexierbare Seiten aus. „All“ bleibt
+//! unverändert. [`problem_filter`] und [`all_filter`] setzen das Kennzeichen an einer Stelle.
+//!
+//! # Benannte Parameter
+//!
+//! `:element_enabled` (Speicher-Schalter des Elements; aus → Tab leer, ONPAGE-090), `:dup_only_indexable`,
+//! `:dup_ignore_paginated` sowie die Schwellen des jeweiligen Tabs (`:title_max_chars` …).
+
+use os_model::{CrawlConfig, Value};
+
+use crate::defs::{ColumnDef, ColumnKind, ColumnSql, FilterDef, FilterKind};
+
+/// Grundmenge der Element-Tabs über dem Alias `$a` (ONPAGE-009), inklusive Speicher-Schalter. `$p` steht vor
+/// jeder Spalte: leer für die Abfrage selbst, `"+"` in der Duplikat-Unterabfrage – das unäre Plus verbietet
+/// dem Planer die Indizes auf Klasse und Status, damit er die Vergleichszeilen über den Index der Wertspalte
+/// (`urls_title1` …) sucht statt alle internen HTML-Zeilen zu durchlaufen.
+macro_rules! population {
+    ($a:literal) => {
+        $crate::tabs::duplicates::population!("", $a)
+    };
+    ($p:literal, $a:literal) => {
+        concat!(
+            $p,
+            $a,
+            ".is_internal = 1 AND ",
+            $p,
+            $a,
+            ".in_tables = 1 AND ",
+            $p,
+            $a,
+            ".content_class = 'HTML' AND ",
+            $p,
+            $a,
+            ".status_code BETWEEN 200 AND 299 AND :element_enabled = 1"
+        )
+    };
+}
+
+/// Seite einer Paginierungsserie über dem Alias `$a` (ONPAGE-005): `rel="prev"` als `<link>` im `<head>` mit
+/// Wert oder als HTTP-`Link`-Header.
+macro_rules! paginated {
+    ($a:literal) => {
+        concat!(
+            "(",
+            $a,
+            ".has_rel_prev = 1 AND EXISTS (SELECT 1 FROM pagination g WHERE g.url_id = ",
+            $a,
+            ".id AND g.rel = 'prev' AND g.raw <> '' AND (g.in_head = 1 OR g.source <> 'html')))"
+        )
+    };
+}
+
+/// Zugehörigkeit zur Vergleichsmenge (ohne Grundmenge) über dem Alias `$a`.
+macro_rules! comparison_member {
+    ($a:literal) => {
+        concat!(
+            "((:dup_only_indexable = 0 OR COALESCE(",
+            $a,
+            ".indexability, '') <> 'Non-Indexable') AND (:dup_ignore_paginated = 0 OR NOT ",
+            $crate::tabs::duplicates::paginated!($a),
+            "))"
+        )
+    };
+}
+
+/// Prädikat „Duplicate“ für die Wertspalte `$col` von `urls` (Alias `u`).
+macro_rules! duplicate_predicate {
+    ($col:literal) => {
+        concat!(
+            "(u.",
+            $col,
+            " IS NOT NULL AND u.",
+            $col,
+            " <> '' AND ",
+            $crate::tabs::duplicates::comparison_member!("u"),
+            " AND EXISTS (SELECT 1 FROM urls d WHERE d.",
+            $col,
+            " = u.",
+            $col,
+            " AND d.id <> u.id AND ",
+            $crate::tabs::duplicates::population!("+", "d"),
+            " AND ",
+            $crate::tabs::duplicates::comparison_member!("d"),
+            "))"
+        )
+    };
+}
+
+pub(crate) use {comparison_member, duplicate_predicate, paginated, population};
+
+/// Prädikat „Missing“ (ONPAGE-091/101/121/131): beide gespeicherten Vorkommen leer oder nicht vorhanden.
+macro_rules! missing_predicate {
+    ($a:literal, $b:literal) => {
+        concat!(
+            "(COALESCE(u.",
+            $a,
+            ", '') = '' AND COALESCE(u.",
+            $b,
+            ", '') = '')"
+        )
+    };
+}
+
+pub(crate) use missing_predicate;
+
+/// Die Filter „All“ aller Element-Tabs: die Grundmenge, von `ignore_non_indexable` nie betroffen.
+pub(crate) fn all_filter() -> FilterDef {
+    FilterDef {
+        id: "All",
+        predicate: "1",
+        kind: FilterKind::Live,
+        requires: Vec::new(),
+        ignore_non_indexable: false,
+    }
+}
+
+/// Ein Problemfilter: live, ohne Voraussetzungen, `issues.ignore_non_indexable` wirkt (CRAWL-089).
+pub(crate) fn problem_filter(id: &'static str, predicate: &'static str) -> FilterDef {
+    FilterDef {
+        id,
+        predicate,
+        kind: FilterKind::Live,
+        requires: Vec::new(),
+        ignore_non_indexable: true,
+    }
+}
+
+/// Eine Referenzspalte; Pixelbreiten sind standardmäßig ausgeblendet (ONPAGE-191, OUT-020).
+pub(crate) fn column(
+    key: &'static str,
+    sql: &'static str,
+    kind: ColumnKind,
+    default_visible: bool,
+) -> ColumnDef {
+    ColumnDef {
+        key,
+        sql: ColumnSql::Expr(sql),
+        kind,
+        default_visible,
+        extension: false,
+    }
+}
+
+/// `Address`, vorn in jedem Element-Tab (URL-Spalte: bytewise sortiert).
+pub(crate) fn address_column() -> ColumnDef {
+    column("Address", "u.address", ColumnKind::Url, true)
+}
+
+/// `Indexability` und `Indexability Status`, am Ende jedes Element-Tabs.
+pub(crate) fn indexability_columns() -> [ColumnDef; 2] {
+    [
+        column("Indexability", "u.indexability", ColumnKind::Text, true),
+        column(
+            "Indexability Status",
+            "u.indexability_status",
+            ColumnKind::Text,
+            true,
+        ),
+    ]
+}
+
+/// Parameter, die alle Element-Tabs brauchen: Speicher-Schalter des Elements und die beiden
+/// Duplikat-Schalter (ONPAGE-005, ONPAGE-090).
+pub(crate) fn element_params(
+    cfg: &CrawlConfig,
+    element_stored: bool,
+) -> Vec<(&'static str, Value)> {
+    vec![
+        ("element_enabled", Value::Int(i64::from(element_stored))),
+        (
+            "dup_only_indexable",
+            Value::Int(i64::from(cfg.duplicates.only_indexable)),
+        ),
+        (
+            "dup_ignore_paginated",
+            Value::Int(i64::from(cfg.duplicates.ignore_paginated)),
+        ),
+    ]
+}

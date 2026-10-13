@@ -1,0 +1,5 @@
+# Szenario onpage-h1 (ONPAGE-120 ff.). Erzeugt, nicht von Hand bearbeiten.
+
+[[route]]
+path = "/img/logo.png"
+png_size = 120

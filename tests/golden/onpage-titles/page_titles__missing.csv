@@ -1,0 +1,7 @@
+﻿Address,Occurrences,Title 1,Title 1 Length,Title 1 Pixel Width,Title 2,Title 2 Length,Title 2 Pixel Width,Indexability,Indexability Status
+{BASE}/missing-empty.html,1,,0,0,,0,0,Indexable,
+{BASE}/missing-nbsp.html,1,,0,0,,0,0,Indexable,
+{BASE}/missing-none.html,0,,0,0,,0,0,Indexable,
+{BASE}/missing-spaces.html,1,,0,0,,0,0,Indexable,
+{BASE}/multi-empty.html,2,,0,0,,0,0,Indexable,
+"{BASE}/quote.html?name=a,b",0,,0,0,,0,0,Indexable,
