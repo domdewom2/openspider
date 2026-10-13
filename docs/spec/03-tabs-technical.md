@@ -3,11 +3,15 @@
 Clean-Room-Spezifikation. Grundlage: öffentliche Benutzerdokumentation, Issue-Bibliothek, Tutorials und Release-Notes (Versionen 18–24.3) des Referenzprodukts, alles in eigenen Worten beschrieben. Es wurde weder die installierte App noch ihr Code angesehen. Wo die Referenz-Dokumentation keine Zahl oder Logik nennt, legt diese Spec eine **OpenSpider-Festlegung** fest; solche Stellen sind mit „(Festlegung)“ markiert und in Anhang A gesammelt. Sie werden gegen Golden-Exporte geprüft, bevor sie als „verifiziert“ gelten.
 
 Prioritäten: **P0** = MVP-Kern, **P1** = für Parität nötig, **P2** = später/Nische.
-Issue-Einstufung: Jeder Filter, der ein Problem anzeigt, trägt eine Art (**Fehler** / **Warnung** / **Chance**) und eine Dringlichkeit (**Hoch** / **Mittel** / **Niedrig**). Diese Werte speisen den Issues-Tab (Spec für Übersicht/Issues). Die Einstufungen sind **OpenSpider-eigene Bewertungen** nach der Rubrik in Anhang B (eigene Kriterien, je Filter begründet). Die Issue-Bibliothek des Referenzprodukts dient nur als Abgleich im Paritätstest; Abweichungen sind zulässig und werden in Anhang B als solche markiert. Es wird keine Einstufungstabelle aus der Referenz als Datenbestand übernommen.
+Issue-Einstufung: Jeder Filter, der ein Problem anzeigt, trägt eine Art (**Fehler** / **Warnung** / **Chance**, Katalogschlüssel `Issue` / `Warning` / `Opportunity`) und eine Dringlichkeit (**Hoch** / **Mittel** / **Niedrig**, Schlüssel `High` / `Medium` / `Low`). Diese Werte speisen den Issues-Tab. **Führend für die Entscheidungslogik ist UI-063** (eigene Regelcodes `T-*`/`P-*`, Clean-Room, keine 1:1-Abbildung der Referenz). Die Einstufungen dieses Dokuments sind die Katalogeinträge für die TECH-Filter; Anhang B begründet sie bereichsspezifisch und ordnet die Rubrik den UI-063-Codes zu. Die Issue-Bibliothek des Referenzprodukts dient nur als Abgleich im Paritätstest; Abweichungen sind zulässig. Es wird keine Einstufungstabelle aus der Referenz als Datenbestand übernommen.
 
 **Funktionsbezeichnungen:** Tab-, Filter-, Spalten- und Exportnamen (englisch, z. B. „Multiple Conflicting“) werden als **funktionale Bezeichner** verwendet, weil Nutzer und Paritätstests (Golden-Exporte, Spalten-Mapping) sie wiedererkennen müssen. Sie sind kurze Funktionsnamen, keine übernommenen Beschreibungstexte; alle Beschreibungen, Bedingungen und Meldungstexte sind eigene Formulierungen. Reihenfolge und Gruppierung der Filter folgen der Referenz nur, soweit das für die Wiedererkennbarkeit nötig ist; die UI-Spec darf sie ändern. Wo die Referenz für dieselbe Funktion mehrere Namen verwendet (Tab-Doku vs. Report-Menü vs. Issue-Bibliothek), führt die jeweilige Funktion alle Varianten als **Mapping-Aliase** für den Paritätstest auf.
 
 **Paritätsabweichungen** (bewusst anderes Verhalten als die Referenz) sind im Akzeptanzkriterium mit „(Paritätsabweichung)“ gekennzeichnet und in Anhang A gesammelt; Golden-Vergleiche schließen die betroffenen Spalten/Filter aus oder erwarten die dokumentierte Differenz.
+
+**Änderungsstand (Spec v1, Architektenentscheidungen 2026-10-13):** Grundregel „eine Quelle je Funktion“ angewandt. Nicht führende Duplikate sind zu Verweis-Stubs gekürzt (IDs bleiben bestehen, Priorität = die des führenden Eintrags): TECH-009 → CRAWL-089, TECH-024 → CRAWL-092, TECH-042 → CRAWL-093, TECH-067 → CRAWL-091 (Respect-Schalter), TECH-306 → OUT-146 (URL-Mapping), TECH-308 → OUT-152 (Auto Compare, K-2; ohne Speichermodus-Bedingung). Bereichsspezifische Zusatzkriterien der gekürzten Einträge stehen jetzt in TECH-011, TECH-031 und TECH-051. Führend in diesem Dokument und um die Kriterien der Duplikate ergänzt: TECH-008 (HTML-Validierung, aus CRAWL-138), TECH-068 (Self Referencing Meta Refresh, K-12), TECH-114 (Logik JS-Fehler, K-13; Schalter CRAWL-084, Detail-Tab UI-040), TECH-145 (Link Score inkl. formaler Definition aus UI-081), TECH-231 ff. (Mobile-Tab, K-14; gegen die öffentliche Doku geprüft; INTEG-140 ff. liefern nur die Daten), TECH-259 (Inhalt Accessibility Details, K-15; Layout UI-048), TECH-292 (Green Hosting, aus CRAWL-139), TECH-300 ff. (Change Detection, K-3; Elementliste und Standards hier festgelegt, gegen die öffentliche Doku geprüft; OUT-144/OUT-145 und CRAWL-033 verweisen hierher, der Compare-Ablauf bleibt in OUT-140 ff.). TECH-005 ist auf die Filterzustände dieses Dokuments begrenzt (Ablauf CRAWL-141, Teilschritte/Darstellung UI-080). TECH-142 verweist auf den neuen Bulk-Export OUT-068 (G-1). Issue-Einstufung folgt UI-063 (K-10, Anhang B). Nachtrag Fable-Gegenprüfung (R-05, R-16): TECH-230 ist an INTEG-130/INTEG-132 angeglichen (Quelle „Lokal“ = lokaler Lighthouse-Lauf, Standardquelle in INTEG-130, Score-Umrechnung INTEG-140) und führt nur noch Tab, Filter und Spalten. Report- und Exportangaben sind nach der Grundregel zu Verweisen auf 06 gekürzt: TECH-025 → OUT-086/OUT-087, TECH-088 → OUT-091 … OUT-096, TECH-190 → OUT-100/OUT-101 (Verweis-Stubs); TECH-036/037, TECH-219, TECH-231 und TECH-259 verweisen für Namen und Spalten ihrer Exporte auf OUT-088/OUT-089, OUT-057, OUT-108 bzw. OUT-062/OUT-109 und behalten nur die Zeilenauswahl. Die Kettenermittlung aus TECH-025 steht neu in TECH-026.
+
+**Nacharbeit reviews-open-v1 (2026-10-13):** Change Detection nach Architektenentscheidung: Indexability-Status- **und** Grundwechsel zählen als Änderung (TECH-304), strukturierte Daten werden als Typ-Menge + Anzahl verglichen (TECH-303, neue Spalten `Unique Type Names`), Content Change P1 mit plattformübergreifendem Golden-Test (TECH-305). Verweis-Stubs auf das strikte Format „siehe <ID> (führend). <ein Satz>“ normiert (TECH-024, 025, 042, 067, 088, 190, 308). TECH-259-Feldnamen gelten exakt in OUT-021/062/109; `Incomplete`-Export jetzt in OUT-062. TECH-214 legt die Spalte `Found Via` fest. TECH-292 um die CO2.js-Toleranz 0,1 % ergänzt. TECH-145 Priorität P1 bestätigt (OS-Festlegung).
 
 ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 
@@ -39,7 +43,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - TECH-006 Rohes vs. gerendertes HTML als Datenquelle (P1)
 - TECH-007 Fixture-Konventionen für diesen Bereich (P0)
 - TECH-008 Option „Perform HTML Validation“ (Validation- und „Outside \<head>“-Filter) (P1)
-- TECH-009 Option „Ignore Non-Indexable URLs for Issues“ (P1)
+- TECH-009 Option „Ignore Non-Indexable URLs for Issues“ (P1, Verweis → CRAWL-089)
 
 **Canonicals**
 - TECH-010 Canonical-Extraktion (Link-Element und HTTP-Header) (P0)
@@ -56,8 +60,9 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - TECH-021 Filter „Invalid Attribute In Annotation“ (P1)
 - TECH-022 Filter „Contains Fragment URL“ (P1)
 - TECH-023 Filter „Outside \<head>“ (Canonical) (P1)
-- TECH-024 Canonicals crawlen/speichern und „Respect Canonical“ (P1)
-- TECH-025 Report „Canonical Chains“ und Export „Non-Indexable Canonicals“ (P1)
+- TECH-024 Canonicals crawlen/speichern und „Respect Canonical“ (P1, Verweis → CRAWL-092)
+- TECH-025 Report „Canonical Chains“ und Export „Non-Indexable Canonicals“ (P1, Verweis → OUT-086/OUT-087)
+- TECH-026 Canonical-Ketten: Ermittlung und Zeilenauswahl (P1)
 
 **Pagination**
 - TECH-030 Extraktion rel="next"/rel="prev" (P1)
@@ -72,7 +77,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - TECH-039 Filter „Multiple Pagination URLs“ (P1)
 - TECH-040 Filter „Pagination Loop“ (P1)
 - TECH-041 Filter „Sequence Error“ (P1)
-- TECH-042 Pagination crawlen/speichern, „Respect Next/Prev“ und Reports (P2)
+- TECH-042 Pagination crawlen/speichern, „Respect Next/Prev“ und Reports (P2, Verweis → CRAWL-093)
 
 **Directives**
 - TECH-050 Directive-Extraktion (Meta Robots, X-Robots-Tag, Meta Refresh) (P0)
@@ -92,7 +97,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - TECH-064 Filter „Refresh“ (P0)
 - TECH-065 Filter „Outside \<head>“ (Meta Robots) (P1)
 - TECH-066 Konfliktauflösung widersprüchlicher Direktiven (P0)
-- TECH-067 „Respect Noindex“ und „Follow Internal/External Nofollow“ (P1)
+- TECH-067 „Respect Noindex“ und „Follow Internal/External Nofollow“ (P1, Verweis → CRAWL-091)
 - TECH-068 Option „Respect Self Referencing Meta Refresh“ (P1)
 
 **Hreflang**
@@ -114,7 +119,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - TECH-085 Filter „Missing“ (Hreflang) (P0)
 - TECH-086 Filter „Outside \<head>“ (Hreflang) (P1)
 - TECH-087 Hreflang crawlen, externe Domains als intern (CDN-Liste) (P1)
-- TECH-088 Hreflang-Reports (Bulk-Exporte je Problemtyp) (P1)
+- TECH-088 Hreflang-Reports (Bulk-Exporte je Problemtyp) (P1, Verweis → OUT-091 … OUT-096)
 - TECH-089 Untere Detailansicht „URL Details“ mit Bestätigungsstatus je Annotation (P1)
 
 **JavaScript**
@@ -170,7 +175,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - TECH-187 Schema.org-Validierung und Filter „Validation Errors“/„Validation Warnings“ (P1)
 - TECH-188 Google-Rich-Result-Validierung und Filter „Rich Result Validation Errors“/„… Warnings“ (P1)
 - TECH-189 Detailansicht „Structured Data Details“ (P1)
-- TECH-190 Reports „Validation Errors & Warnings“ (+ Summary) (P1)
+- TECH-190 Reports „Validation Errors & Warnings“ (+ Summary) (P1, Verweis → OUT-100/OUT-101)
 
 **Sitemaps**
 - TECH-210 Sitemap-Einbindung in den Crawl (P0)
@@ -228,9 +233,9 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - TECH-303 Elementfilter für Zahlen (Wortzahl, Tiefe, Links, Typen) (P1)
 - TECH-304 Elementfilter „Indexability“ (P1)
 - TECH-305 Elementfilter „Content“ (MinHash-Ähnlichkeit) (P1)
-- TECH-306 URL-Mapping zwischen den Crawls (P1)
+- TECH-306 URL-Mapping zwischen den Crawls (P1, Verweis → OUT-146)
 - TECH-307 Umschalter „Changed“/„Not Changed“ und Sortierung nach Änderung (P1)
-- TECH-308 Automatischer Crawl-Vergleich („Auto Compare Crawls“) für geplante und CLI-Crawls (P1)
+- TECH-308 Automatischer Crawl-Vergleich („Auto Compare Crawls“) für geplante und CLI-Crawls (P1, Verweis → OUT-152)
 
 **Anhang A:** Offene Punkte, Festlegungen und Paritätsabweichungen, die gegen Golden-Exporte zu prüfen sind.
 **Anhang B:** Rubrik und Begründung der Issue-Einstufungen.
@@ -295,17 +300,17 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 
 ### TECH-005 Live-Filter vs. Nachlauf-Analyse („Crawl-Analyse erforderlich“)
 - **Priorität:** P0
-- **Beschreibung:** Es gibt zwei Arten von Filtern. **Live-Filter** werden während des Crawls laufend aktualisiert, auch wenn sie Daten anderer URLs brauchen: Sobald das Ziel abgerufen ist, wird die Quelle neu bewertet (inkrementell). **Nachlauf-Filter** brauchen eine Gesamtsicht auf den fertigen Linkgraphen, z. B. „kein einziger Hyperlink zeigt auf X“ oder „nur aus Sitemaps erreichbar“. Sie werden erst in der Nachlauf-Analyse (`os-analyze`) berechnet. Bis dahin steht neben dem Filter der Hinweis „Crawl-Analyse erforderlich“.
-- **Eingaben/Konfiguration:** Dialog „Crawl-Analyse konfigurieren“ mit je einem Häkchen pro Bereich, Standard alle an. Bereiche mit Referenzentsprechung: `Link Score`, `Pagination`, `Hreflang`, `AMP`, `Sitemaps`, `Analytics` (Orphans aus Analytics-Daten, Integrations-Spec), `Search Console` (Orphans aus GSC-Daten, Integrations-Spec), `Link Metrics` (Integrations-Spec) und `Content` (Near-Duplicates, On-Page-Spec). OpenSpider-Ergänzungen (Festlegung): `Canonicals` (für TECH-018/020) und `Links` (für TECH-139/140/142). Option „Analyse automatisch am Crawl-Ende starten“ (Standard an, Festlegung; Referenzstandard nicht dokumentiert). Manueller Start über das Menü „Crawl-Analyse > Starten“.
+- **Beschreibung:** Es gibt zwei Arten von Filtern. **Live-Filter** werden während des Crawls laufend aktualisiert, auch wenn sie Daten anderer URLs brauchen: Sobald das Ziel abgerufen ist, wird die Quelle neu bewertet (inkrementell). **Nachlauf-Filter** brauchen eine Gesamtsicht auf den fertigen Linkgraphen, z. B. „kein einziger Hyperlink zeigt auf X“ oder „nur aus Sitemaps erreichbar“. Sie werden erst in der Nachlauf-Analyse (`os-analyze`) berechnet. Bis dahin steht neben dem Filter der Hinweis „Crawl-Analyse erforderlich“. Dieser Eintrag legt nur fest, **welche Filter dieses Dokuments** live bzw. im Nachlauf berechnet werden und welchem Analyse-Teilschritt sie angehören. Auslösung, automatischer Start am Crawl-Ende, manueller Start, Pause/Abbruch: **CRAWL-141 (führend für den Ablauf)**; Teilschritt-Dialog, Fortschritt und Darstellung des Hinweises: UI-080.
+- **Eingaben/Konfiguration:** Teilschritte gemäß UI-080/CRAWL-141. Zuordnung der TECH-Nachlauf-Filter zu den Teilschritten: `Link Score` (TECH-145), `Kanonisierungen` (TECH-018/020), `Paginierung` (TECH-037/040/041), `Hreflang` (TECH-075), `Links` (TECH-139/140/142), `AMP` (TECH-162), `Sitemaps` (TECH-212–216). Die Teilschritte `Kanonisierungen` und `Links` sind OpenSpider-Ergänzungen ohne dokumentierte Referenzentsprechung (Festlegung, Anhang A Punkt 25).
 - **Ausgabe (Spalten/Filter/Export):** Pro Filter ein Status `live` / `nachlauf_ausstehend` / `final`.
 - **Akzeptanzkriterien:**
   - [ ] Nachlauf-Filter in diesem Dokument (abschließende Liste): TECH-018, TECH-020 (Bereich Canonicals); TECH-037, TECH-040, TECH-041 (Pagination); TECH-075 (Hreflang – laut Referenz-Tutorial der **einzige** hreflang-Filter mit Analysepflicht); TECH-139, TECH-140, TECH-142 (Links); TECH-145 `Link Score` (Link Score); TECH-162 „Missing Non-AMP Return Link“ und „Non-Indexable Canonical“ (AMP); TECH-212, TECH-213, TECH-214, TECH-215, TECH-216 (Sitemaps).
   - [ ] Live (inkrementell) berechnet werden insbesondere: TECH-035, TECH-036 (sobald das Paginierungsziel abgerufen ist), alle hreflang-Filter außer TECH-075 – also auch TECH-074 und TECH-076–TECH-079, die neu bewertet werden, sobald ein Alternate abgerufen ist, sowie TECH-083, das nur die eigene Seite braucht – und TECH-217/TECH-218.
   - [ ] Sitemaps: Von den 7 Sitemap-Filtern sind genau 2 live (TECH-217, TECH-218: Eigenschaften der einzelnen Sitemap-Datei) und 5 Nachlauf (TECH-212–TECH-216). Begründung: Das Referenz-Tutorial nennt das Verhältnis 2 : 5. Die Zuordnung „URL steht in Sitemap“ (TECH-212) wird erst final, wenn alle Sitemap-Dateien eingelesen und die Abgleiche mit den gecrawlten URLs abgeschlossen sind. Vorher wäre die Zahl unvollständig.
-  - [ ] Vor Abschluss der Analyse zeigt (a) die rechte Übersicht bei jedem Nachlauf-Filter den Zusatz „(Crawl-Analyse erforderlich)“ statt einer Zahl und (b) die **Haupttabelle** bei Auswahl eines solchen Filters einen Hinweisbalken „Crawl-Analyse erforderlich“ mit Schaltfläche „Analyse starten“ statt einer leeren Tabelle. Nach Abschluss (Fortschritt 100 %) verschwinden beide Hinweise, und die Zahl erscheint.
+  - [ ] Vor Abschluss des zugehörigen Teilschritts tragen die Nachlauf-Filter dieses Dokuments den Zustand `nachlauf_ausstehend` (Darstellung „Crawl-Analyse erforderlich“ in Übersicht und Haupttabelle nach UI-080); nach Abschluss erscheint die Zahl (`final`).
   - [ ] Live-Filter zeigen während des Crawls Zwischenstände. Ein Live-Filter darf eine Quelle wieder entfernen, wenn ein später abgerufenes Ziel die Bedingung aufhebt (z. B. Rücklink gefunden).
-  - [ ] Ist ein Bereich im Analyse-Dialog abgewählt, bleiben dessen Nachlauf-Filter leer und dauerhaft mit dem Hinweis markiert.
-  - [ ] Ein pausierter und fortgesetzter Crawl erfordert eine erneute Analyse. Die Ergebnisse sind deterministisch (gleiche Eingabe → gleiche Zahlen, unabhängig von der Abrufreihenfolge).
+  - [ ] Ist ein Teilschritt abgewählt, bleiben dessen Nachlauf-Filter leer und dauerhaft im Zustand `nachlauf_ausstehend`.
+  - [ ] Die Ergebnisse der Nachlauf-Filter sind deterministisch (gleiche Eingabe → gleiche Zahlen, unabhängig von der Abrufreihenfolge). Verhalten bei Pause/Fortsetzen: CRAWL-141.
 - **Testfixture:** `tests/fixtures/tech/crawl-analysis/`: kleine Site mit fehlendem hreflang-Rücklink (live, muss nach Crawl-Ende **ohne** Analyse gezählt sein), einem nur per hreflang erreichbaren Alternate (TECH-075, erst nach Analyse) und einem Sitemap-Orphan. Test prüft: Missing Return Links = 1 vor der Analyse; Unlinked Hreflang URLs und Orphan URLs „ausstehend“ vor der Analyse, Zahl danach. Zweiter Lauf mit abgewähltem Bereich „Sitemaps“ → TECH-212–216 bleiben markiert.
 
 ### TECH-006 Rohes vs. gerendertes HTML als Datenquelle
@@ -333,29 +338,23 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 
 ### TECH-008 Option „Perform HTML Validation“ (Validation- und „Outside \<head>“-Filter)
 - **Priorität:** P1
-- **Beschreibung:** Ein Schalter in der Spider-Konfiguration (Bereich „Advanced“) steuert, ob die Strukturprüfungen ausgeführt werden. Davon hängen zwei Filterfamilien ab: alle Filter des Validation-Tabs, die auf der Token-Analyse beruhen, und alle „Outside \<head>“-Filter in den Tabs Canonicals, Directives, Hreflang, Page Titles und Meta Description.
-- **Eingaben/Konfiguration:** `perform_html_validation` (bool). Standard in OpenSpider: **an** (Festlegung). Der Referenzstandard ist in der öffentlichen Doku nicht angegeben und wird gegen eine Standardinstallation geprüft (Anhang A). Die Option wird in der Crawl-Datei gespeichert.
+- **Beschreibung:** Führender Eintrag für die HTML-Validierung (CRAWL-138 verweist hierher). Ein Schalter in der Spider-Konfiguration (Bereich „Advanced“) steuert, ob die Strukturprüfungen ausgeführt werden. Die Prüfung ist keine W3C-Vollvalidierung, sondern erhebt beim Parsen jeder internen HTML-Seite Zusatzdaten auf Token-Ebene (Position und Anzahl von `<html>`, `<head>`, `<body>`, unzulässige Elemente im Head, Elemente, die den Head vorzeitig beenden; Prüflogik TECH-280). Ohne Schalter werden diese Daten nicht erhoben. Davon hängen zwei Filterfamilien ab: alle Filter des Validation-Tabs, die auf der Token-Analyse beruhen, und alle „Outside \<head>“-Filter in den Tabs Canonicals, Directives, Hreflang, Page Titles und Meta Description.
+- **Eingaben/Konfiguration:** `perform_html_validation` (bool; Konfigurationsschlüssel `advanced.html_validation`, Spider › Erweitert). Standard in OpenSpider: **an** (Festlegung; Begründung: die Outside-\<head>-Filter sind für die Indexierung von Titel, Meta-Angaben und Canonical relevant, die Mehrkosten der Token-Zählung sind gering). Der Referenzstandard ist in der öffentlichen Doku nicht angegeben (die Beschreibung legt ein Opt-in nahe) und wird gegen eine Standardinstallation geprüft (Anhang A). Die Option wird in der Crawl-Datei gespeichert.
 - **Ausgabe (Spalten/Filter/Export):** Betroffene Filter: TECH-282–TECH-288 (Token-Analyse), TECH-023, TECH-065, TECH-086 sowie die Outside-Filter der On-Page-Spec. **Nicht** betroffen: TECH-289/TECH-290 (Größe, Festlegung: nutzen nur die Antwortgröße) und TECH-291 (CO2).
 - **Akzeptanzkriterien:**
-  - [ ] Option aus → Die Token-Analyse (TECH-280) läuft nicht. TECH-282–288 und alle Outside-Filter sind leer und tragen in der Übersicht den Hinweis „HTML-Validierung deaktiviert“ statt einer 0.
+  - [ ] Option aus → Die Token-Analyse (TECH-280) läuft nicht. TECH-282–288 und alle Outside-Filter sind leer und tragen in der Übersicht den Hinweis „HTML-Validierung deaktiviert (Spider › Erweitert)“ statt einer 0. In der Crawl-Datei sind keine Validierungs-Rohdaten gespeichert (Tabellenzeilen = 0).
   - [ ] Option aus → Spaltenwerte wie `Canonical Link Element n`, `Meta Robots n`, hreflang-Spalten und die Indexierbarkeit bleiben unverändert (die Extraktion hängt nicht von der Option ab).
-  - [ ] Option an → Filter werden live während des Crawls befüllt (keine Crawl-Analyse nötig).
+  - [ ] Option an → Filter werden live während des Crawls befüllt (keine Crawl-Analyse nötig). Die Prüfung läuft immer gegen das Roh-HTML, auch im JS-Modus (TECH-280).
   - [ ] Wird die Option nach dem Crawl eingeschaltet, sind die Filter erst nach einem erneuten Crawl befüllt (die Rohtoken werden nicht gespeichert). Die UI zeigt das mit dem Hinweis „Neu crawlen erforderlich“.
+  - [ ] Wird die Option während einer Pause eingeschaltet, haben nur die nach dem Fortsetzen gecrawlten Seiten Validierungsdaten; die Filter tragen dann den Hinweis „unvollständig – n Seiten ohne Prüfung, Neu crawlen empfohlen“.
+  - [ ] Die Größenfilter TECH-289/290 und die CO2-Schätzung TECH-291 hängen **nicht** von der Option ab (sie brauchen nur Größenangaben aus dem Abruf).
+  - [ ] Mehrkosten: Ein Crawl der Fixture `crawl-site-100` im Textmodus ist mit Option an höchstens 5 % langsamer als ohne (Benchmark).
   - [ ] Die CLI akzeptiert den Schalter über die gespeicherte Konfigurationsdatei.
-- **Testfixture:** `tests/fixtures/tech/validation/` und `tests/fixtures/tech/outside-head/`, je ein Lauf mit Option an und aus. Golden „aus“: alle genannten Filter 0 und markiert, Spalten identisch zum Lauf „an“.
+- **Testfixture:** `tests/fixtures/tech/validation/` und `tests/fixtures/tech/outside-head/`, je ein Lauf mit Option an und aus. Golden „aus“: alle genannten Filter 0 und markiert, Spalten identisch zum Lauf „an“. Zusätzlich die Crawl-Fixture `crawl-validation` (`/ok.html`, `/kein-head.html`, `/zwei-heads.html`, `/canonical-im-body.html`, `/title-nach-div.html`) aus CRAWL-138 und ein Pause-Lauf (Option während der Pause eingeschaltet).
 
 ### TECH-009 Option „Ignore Non-Indexable URLs for Issues“
 - **Priorität:** P1
-- **Beschreibung:** Ein Schalter (Spider-Konfiguration, Bereich „Advanced“) begrenzt bestimmte Issue-Filter auf indexierbare Seiten. Ziel: Dass eine noindex-Seite z. B. eine zu tiefe Position hat, ist für Suchmaschinen meist egal und soll die Issue-Liste nicht aufblähen. Bei einer Staging-Umgebung mit seitenweitem noindex muss man die Option abschalten, sonst bleiben diese Filter leer.
-- **Eingaben/Konfiguration:** `ignore_non_indexable_for_issues` (bool). Standard in OpenSpider: **an** (Festlegung, Referenzstandard nicht dokumentiert, Anhang A).
-- **Ausgabe (Spalten/Filter/Export):** Betroffene Filter in diesem Dokument (abschließend): TECH-132 „Pages With High Crawl Depth“, TECH-214 „Orphan URLs“, TECH-184 „Missing Structured Data“, TECH-186 „Parse Errors“, TECH-187 „Validation Errors/Warnings“, TECH-188 „Rich Result Validation Errors/Warnings“. Außerhalb dieses Dokuments: Page Titles, Meta Description, Meta Keywords, H1, H2, „Low Content Pages“ (On-Page-Spec) sowie Analytics-/GSC-Orphan-Filter (Integrations-Spec).
-- **Akzeptanzkriterien:**
-  - [ ] Option an → Ein betroffener Filter enthält nur URLs mit `Indexability = Indexable`. Die Spaltenwerte der ausgeschlossenen URLs bleiben im Tab „All“ sichtbar.
-  - [ ] Option an → Filter, deren Definition Nicht-Indexierbarkeit voraussetzt oder die sich gerade auf nicht indexierbare Seiten beziehen (TECH-018, TECH-038, TECH-053, TECH-079, TECH-162, TECH-215 usw.), werden **nie** eingeschränkt.
-  - [ ] Für alle übrigen Issue-Filter dieses Dokuments gilt: keine Einschränkung (Festlegung). Sie hängen an Eigenschaften der Seite (Kanonisierung, hreflang, Links), die auch bei nicht indexierbaren Seiten relevant sind. Der Paritätstest prüft diese Abgrenzung (Anhang A).
-  - [ ] Option aus → Alle Filter wie in ihren Einzeldefinitionen.
-  - [ ] Die Umschaltung erfordert keinen neuen Crawl, nur eine Neuberechnung der Filter.
-- **Testfixture:** `tests/fixtures/tech/ignore-nonindexable/`: Site mit `/deep/1/2/3/4/noindex.html` (Tiefe 5, noindex), `/deep/1/2/3/4/ok.html` (Tiefe 5, indexierbar), noindex-Seite mit kaputtem JSON-LD, noindex-Seite nur in der Sitemap. Lauf „an“: nur `ok.html` in TECH-132, die noindex-Seiten in keinem der betroffenen Filter. Lauf „aus“: alle gelistet.
+- **Verweis:** siehe CRAWL-089 (führend). Welche Filter dieses Dokuments die Option einschränkt, legt der Wirkungsbereich von CRAWL-089 abschließend fest.
 
 ---
 
@@ -383,7 +382,10 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
   - [ ] Population: interne URLs mit Status 200 und HTML-Inhalt, plus interne Nicht-HTML-200-URLs mit HTTP-Canonical. Nicht-200-URLs erscheinen nicht.
   - [ ] Filter „All“ = Population; jede URL kann in mehreren Filtern zugleich stehen.
   - [ ] Export „Canonicals > All“ und jeder Einzelfilter als CSV/XLSX mit obigen Spalten.
-- **Testfixture:** `tests/fixtures/tech/canonical-basic/` (siehe die folgenden Filter; eine Site deckt alle ab).
+  - [ ] Canonicals speichern aus (CRAWL-046) → Tab Canonicals leer, und es wird kein Indexierbarkeitsstatus `Canonicalised` gesetzt (Festlegung).
+  - [ ] Canonicals crawlen aus (CRAWL-046) → Ziele, die nur per Canonical bekannt sind, werden nicht abgerufen; TECH-018 und TECH-020 bleiben für sie leer. Canonical-Ziele, die abgerufen werden, erscheinen in Internal/External mit Inlink-Typ „Canonical“.
+  - [ ] „Respect Canonical“ an (CRAWL-092) → canonicalisierte URLs werden weiterhin gecrawlt und ihre Links verfolgt, sind aber in Tabellen/Exporten ausgeblendet – ausgenommen der Filter „Canonicalised“ (TECH-014) dieses Tabs, damit die Kanonisierung nachvollziehbar bleibt (Festlegung, Anhang A Punkt 35).
+- **Testfixture:** `tests/fixtures/tech/canonical-basic/` (siehe die folgenden Filter; eine Site deckt alle ab); für die Konfigurationskriterien drei Läufe (Standard, Crawlen aus, Respect Canonical an).
 
 ### TECH-012 Filter „Contains Canonical“
 - **Priorität:** P0
@@ -460,7 +462,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 ### TECH-018 Filter „Non-Indexable Canonical“
 - **Priorität:** P0
 - **Beschreibung:** Das Canonical-Ziel ist selbst nicht indexierbar.
-- **Eingaben/Konfiguration:** Canonicals crawlen (TECH-024) muss aktiv sein, sonst ist der Zielstatus unbekannt und der Filter bleibt leer.
+- **Eingaben/Konfiguration:** Canonicals crawlen (CRAWL-046) muss aktiv sein, sonst ist der Zielstatus unbekannt und der Filter bleibt leer.
 - **Ausgabe (Spalten/Filter/Export):** Filter „Non-Indexable Canonical“; Einstufung: Fehler / Hoch. Nachlauf-Filter (TECH-005).
 - **Akzeptanzkriterien:**
   - [ ] Bedingung: Seite ist Canonicalised (TECH-014) und das Ziel ist `Non-Indexable` nach TECH-001 – also robots-gesperrt, ohne Antwort, 3xx, 4xx, 5xx, noindex oder selbst canonicalised.
@@ -482,7 +484,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 ### TECH-020 Filter „Unlinked“
 - **Priorität:** P1
 - **Beschreibung:** Canonical-Ziele, auf die keine normale Verlinkung im Crawl zeigt; sie wurden nur über das Canonical entdeckt.
-- **Eingaben/Konfiguration:** Canonicals crawlen (TECH-024). Nachlauf-Filter.
+- **Eingaben/Konfiguration:** Canonicals crawlen (CRAWL-046). Nachlauf-Filter.
 - **Ausgabe (Spalten/Filter/Export):** Filter „Unlinked“; Einstufung: Warnung / Mittel. Gelistet wird die **Seite mit dem Canonical** (Quelle), Export „Unlinked Canonical“ listet Quelle und Ziel.
 - **Akzeptanzkriterien:**
   - [ ] Bedingung: Seite hat eine Canonical-URL C (≠ sich selbst), und C hat im Crawl keinen eingehenden Hyperlink (`<a href>`, `<area href>`; JS-Links im JS-Modus zählen) von einer internen Seite. Eingänge über Canonical, hreflang, Pagination-Link-Element, Redirect oder Sitemap zählen nicht als Verlinkung.
@@ -523,27 +525,25 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 
 ### TECH-024 Canonicals crawlen/speichern und „Respect Canonical“
 - **Priorität:** P1
-- **Beschreibung:** Steuert, ob Canonical-Ziele als zu crawlende URLs in die Frontier aufgenommen werden und ob canonicalisierte URLs in der Oberfläche ausgeblendet werden.
-- **Eingaben/Konfiguration:** „Store Canonicals“ (Standard an), „Crawl Canonicals“ (Standard an), „Respect Canonical“ (Standard aus), „Always Follow Canonicals“ im Listenmodus (Standard aus).
-- **Ausgabe (Spalten/Filter/Export):** Canonical-Ziele erscheinen in Internal/External mit Inlink-Typ „Canonical“.
-- **Akzeptanzkriterien:**
-  - [ ] Store aus → Tab Canonicals leer, und es wird auch kein Indexierbarkeitsstatus `Canonicalised` gesetzt (Festlegung).
-  - [ ] Crawl aus → Ziel-URLs, die nur per Canonical bekannt sind, werden nicht abgerufen; TECH-018 und TECH-020 bleiben für sie leer.
-  - [ ] Respect Canonical an → canonicalisierte URLs werden weiterhin gecrawlt und ihre Links verfolgt, erscheinen aber nicht in den Tabellen/Exporten (außer im Canonicals-Tab-Filter „Canonicalised“).
-  - [ ] Always Follow Canonicals (Listenmodus) → Canonical-Ketten werden unabhängig vom Tiefenlimit bis zum Ende verfolgt.
-- **Testfixture:** `canonical-basic/` mit drei Konfigurationsläufen (Standard, Crawl aus, Respect an).
+- **Verweis:** siehe CRAWL-092 (führend). Speichern/Crawlen der Canonicals regelt CRAWL-046, „Canonicals immer folgen“ im Listenmodus CRAWL-030 und die Auswirkung auf den Canonicals-Tab TECH-011.
 
 ### TECH-025 Report „Canonical Chains“ und Export „Non-Indexable Canonicals“
 - **Priorität:** P1
-- **Beschreibung:** Report über Ketten, in denen Canonicals auf Canonicals zeigen oder mit Redirects gemischt sind; separater Export aller Seiten mit non-indexable Canonical-Ziel.
-- **Eingaben/Konfiguration:** Canonicals crawlen; Nachlauf.
-- **Ausgabe (Spalten/Filter/Export):** Report-Spalten: `Chain Type` (`Canonical` | `Redirect` | `Mixed`), `Number of Redirects/Canonicals`, `Address` (Start), je Hop `Address n`, `Status Code n`, `Indexability n`, abschließend `Final Address`, `Final Status Code`, `Final Indexability`, `Loop` (true/false).
+- **Verweis:** siehe OUT-086 (führend). Für „Non-Indexable Canonicals“ ist OUT-087 führend, hier gilt nur die Zeilenauswahl (Ketten nach TECH-026, Canonical-Ziele nach TECH-018/TECH-020), während Spaltennamen und die Werte von `Chain Type` ausschließlich 06 festlegt (OUT-081/OUT-083).
+
+### TECH-026 Canonical-Ketten: Ermittlung und Zeilenauswahl
+- **Priorität:** P1
+- **Beschreibung:** Legt fest, welche Folgen von Canonical-Verweisen (auch gemischt mit Weiterleitungen) als Kette gelten. Diese Menge bestimmt die Zeilen der Reports OUT-086 (Canonical Chains) und OUT-083 (Redirect & Canonical Chains). Abgespalten aus TECH-025; Spalten, Report-Namen und die Werte von `Chain Type` stehen ausschließlich in 06.
+- **Eingaben/Konfiguration:** Canonicals speichern und crawlen (CRAWL-046); Nachlauf (TECH-005). Sprunglimit: dasselbe Weiterleitungslimit wie für Weiterleitungsketten (Crawl-Limits, OUT-081); ein Canonical-Glied zählt dabei wie ein Weiterleitungssprung (Festlegung).
+- **Ausgabe (Spalten/Filter/Export):** keine eigenen Spalten; Zeilenmenge für OUT-083/OUT-086.
 - **Akzeptanzkriterien:**
-  - [ ] Eine Kette entsteht erst ab 2 Hops (A→B→C); A→B allein ist keine Kette.
-  - [ ] Typ `Mixed`, sobald mindestens ein Redirect-Hop und ein Canonical-Hop vorkommen.
-  - [ ] Schleifen (A→B→A) werden erkannt, `Loop = true`, die Kette endet beim ersten wiederholten Knoten.
-  - [ ] Maximal 10 Hops werden verfolgt (Festlegung, analog Redirect-Ketten-Spec).
-- **Testfixture:** `tests/fixtures/tech/canonical-chains/`: A→(canonical)B→(canonical)C; D→(canonical)E→(301)F; G↔H Schleife.
+  - [ ] Ein Kettenglied ist ein Canonical-Verweis (HTML-Element oder HTTP-`Link`-Header, maßgebliche Canonical-URL nach TECH-017) auf eine andere URL (Vergleich nach TECH-002) oder ein Weiterleitungssprung; ein selbstreferenzierendes Canonical bildet kein Glied.
+  - [ ] Eine Kette entsteht erst ab 2 Gliedern (A→B→C); A→B allein ist keine Kette.
+  - [ ] Eine Kette gilt als gemischt, sobald mindestens ein Weiterleitungs- und ein Canonical-Glied vorkommen, sonst als reine Canonical-Kette. Daraus ergeben sich Report-Zuordnung und `Chain Type`-Wert nach OUT-083/OUT-086; dieses Dokument vergibt keine eigenen Typwerte.
+  - [ ] Schleifen (A→B→A) werden erkannt; die Kette endet beim ersten wiederholten Knoten und wird als Schleife gekennzeichnet (Spalte nach OUT-081).
+  - [ ] Wird das Sprunglimit erreicht, endet die Kette dort; die Kennzeichnung des Abbruchs folgt OUT-081.
+  - [ ] Startzeilen: jede gecrawlte URL, die erstes Glied einer Kette ist; Zwischenglieder erhalten nur dann eine eigene Zeile, wenn sie unabhängig verlinkt sind (wie OUT-081/OUT-086).
+- **Testfixture:** `tests/fixtures/tech/canonical-chains/`: A→(canonical)B→(canonical)C; D→(canonical)E→(301)F; G↔H Schleife; I→(canonical)J (nur ein Glied, keine Kette).
 
 ---
 
@@ -567,7 +567,9 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Ausgabe (Spalten/Filter/Export):** `Address`, `Occurrences` (Anzahl next+prev-Angaben), `Indexability`, `Indexability Status`, `rel="next" 1..n`, `rel="prev" 1..n`, `Canonical Link Element 1..n`, `HTTP Canonical 1..n`, `Meta Robots 1..n`, `X-Robots-Tag 1..n`. Filter: TECH-032 bis TECH-041 plus „All“.
 - **Akzeptanzkriterien:**
   - [ ] Population: interne HTML-200-Seiten **und** Paginierungsziele, die gecrawlt wurden (auch mit Nicht-200-Status, damit TECH-036 sie zeigen kann).
-- **Testfixture:** `tests/fixtures/tech/pagination/`.
+  - [ ] Paginierung crawlen aus (CRAWL-047) → Ziele, die nur per Link-Element bekannt sind, werden nicht abgerufen; TECH-036/037 bleiben für sie leer.
+  - [ ] „Respect Next/Prev“ an (CRAWL-093) → Seiten mit `prev` werden gecrawlt und ihre Links verfolgt, sind aber in allen Tabellen **außer dem Pagination-Tab** ausgeblendet (Festlegung, Anhang A Punkt 35).
+- **Testfixture:** `tests/fixtures/tech/pagination/`, Läufe mit Paginierung crawlen an/aus und „Respect Next/Prev“ an.
 
 ### TECH-032 Filter „Contains Pagination“
 - **Priorität:** P1
@@ -612,7 +614,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Priorität:** P1
 - **Beschreibung:** Seiten, deren next/prev-Ziele nicht mit 200 antworten.
 - **Eingaben/Konfiguration:** Paginierungsziele müssen gecrawlt sein (Crawl Pagination an oder anderweitig entdeckt). Live, inkrementell (TECH-005): Die Quelle wird neu bewertet, sobald ein Ziel abgerufen ist.
-- **Ausgabe (Spalten/Filter/Export):** Filter „Non-200 Pagination URLs“; Einstufung: Fehler / Hoch. Export „Pagination > Non-200 Pagination URLs“ mit `Source`, `Pagination URL`, `Direction`, `Status Code`, `Status`.
+- **Ausgabe (Spalten/Filter/Export):** Filter „Non-200 Pagination URLs“; Einstufung: Fehler / Hoch. Export „Pagination > Non-200 Pagination URLs“: OUT-088 (führend für Namen und Spalten); Zeilenauswahl: je (Quelle, Ziel) mit Status ≠ 200 nach der Bedingung unten eine Zeile.
 - **Akzeptanzkriterien:**
   - [ ] Bedingung: Mindestens ein Ziel hat Status ≠ 200 – einschließlich robots-gesperrt, keine Antwort, 3xx, 4xx, 5xx.
   - [ ] Nicht abgerufene Ziele (Crawl aus, nicht anderweitig gefunden) werden nicht gemeldet.
@@ -622,7 +624,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Priorität:** P1
 - **Beschreibung:** Paginierungsziele, die nirgends im Crawl per Hyperlink verlinkt sind.
 - **Eingaben/Konfiguration:** Nachlauf.
-- **Ausgabe (Spalten/Filter/Export):** Filter „Unlinked Pagination URLs“; Einstufung: Fehler / Mittel. Gelistet wird die Quellseite; Export „Pagination > Unlinked Pagination URLs“ mit Quelle und Ziel.
+- **Ausgabe (Spalten/Filter/Export):** Filter „Unlinked Pagination URLs“; Einstufung: Fehler / Mittel. Gelistet wird die Quellseite; Export „Pagination > Unlinked Pagination URLs“: OUT-089 (führend für Namen und Spalten); Zeilenauswahl: je (Quelle, unverlinktes Ziel) eine Zeile.
 - **Akzeptanzkriterien:**
   - [ ] Bedingung: Ein next/prev-Ziel hat keinen eingehenden Hyperlink (`<a href>`/`<area href>`) von irgendeiner internen Seite (Logik wie TECH-020).
   - [ ] Unterschied zu TECH-035: Hier genügt ein Link von irgendeiner Seite.
@@ -674,13 +676,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 
 ### TECH-042 Pagination crawlen/speichern, „Respect Next/Prev“ und Reports
 - **Priorität:** P2
-- **Beschreibung:** Steuerung, ob Paginierungsziele in die Frontier kommen, ob Seiten 2+ ausgeblendet werden, und Bulk-Exporte.
-- **Eingaben/Konfiguration:** „Crawl Pagination“ (Standard aus), „Respect Next/Prev“ (Standard aus).
-- **Ausgabe (Spalten/Filter/Export):** Reports „Pagination > Non-200 Pagination URLs“ und „Pagination > Unlinked Pagination URLs“.
-- **Akzeptanzkriterien:**
-  - [ ] Crawl Pagination aus → nur per Link-Element bekannte Ziele werden nicht abgerufen.
-  - [ ] Respect Next/Prev an → Seiten mit `prev` werden gecrawlt, Links verfolgt, aber in Tabellen außer dem Pagination-Tab ausgeblendet.
-- **Testfixture:** `pagination/` mit Konfiguration Crawl an/aus.
+- **Verweis:** siehe CRAWL-093 (führend). Speichern/Crawlen der Paginierung regelt CRAWL-047, die Reports „Pagination > Non-200 Pagination URLs“/„Unlinked Pagination URLs“ OUT-088/OUT-089 und die Auswirkung auf den Pagination-Tab TECH-031.
 
 ---
 
@@ -709,7 +705,9 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
   - [ ] Population: alle internen URLs mit einer HTTP-Antwort (jeder Status), da X-Robots-Tag auch an Nicht-HTML und Nicht-200-Antworten hängen kann.
   - [ ] Spaltenwert `Meta Robots n` enthält den Rohinhalt des Attributs `content`; bei spezifischem Agent mit Präfix, z. B. `googlebot: noindex`.
   - [ ] Jeder Filter TECH-052–TECH-064 prüft auf das **Vorhandensein des Tokens** in irgendeiner Quelle (Meta oder Header, generisch oder zum Token passend), nicht auf die effektive Wirkung (die regelt TECH-066).
-- **Testfixture:** `tests/fixtures/tech/directives/`.
+  - [ ] „Respect Noindex“ an (CRAWL-091) → noindex-URLs werden gecrawlt und ihre Links verfolgt, sind aber in Tabellen/Exporten ausgeblendet – ausgenommen die Directives-Filter dieses Tabs (Festlegung, Anhang A Punkt 35). Zusammen mit TECH-068 an werden nur Seiten mit dem Grund `noindex` ausgeblendet, nicht Selbst-Refresh-Seiten.
+  - [ ] „Follow Internal Nofollow“ / „Follow External Nofollow“ an (CRAWL-056) → die Links behalten in der Anzeige `Follow = false`; die Filter dieses Tabs ändern sich nicht.
+- **Testfixture:** `tests/fixtures/tech/directives/`, Läufe Standard, „Respect Noindex“ an, „Follow Internal Nofollow“ an, „Follow External Nofollow“ an.
 
 ### TECH-052 Filter „Index“
 - **Priorität:** P0
@@ -744,7 +742,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 ### TECH-055 Filter „Nofollow“
 - **Priorität:** P0
 - **Beschreibung:** Anweisung, Links der Seite nicht zu folgen.
-- **Eingaben/Konfiguration:** „Follow Internal Nofollow“ / „Follow External Nofollow“ (Standard aus, TECH-067).
+- **Eingaben/Konfiguration:** „Follow Internal Nofollow“ / „Follow External Nofollow“ (Standard aus, CRAWL-056).
 - **Ausgabe (Spalten/Filter/Export):** Filter „Nofollow“; Einstufung: Warnung / Hoch.
 - **Akzeptanzkriterien:**
   - [ ] Bedingung: Token `nofollow` vorhanden.
@@ -864,19 +862,11 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 
 ### TECH-067 „Respect Noindex“ und „Follow Internal/External Nofollow“
 - **Priorität:** P1
-- **Beschreibung:** Konfiguration, wie Direktiven den Crawl und die Darstellung beeinflussen.
-- **Eingaben/Konfiguration:** „Respect Noindex“ (Standard aus), „Follow Internal Nofollow“ (Standard aus), „Follow External Nofollow“ (Standard aus), „Respect Self Referencing Meta Refresh“ (Standard an, eigene Funktion TECH-068), „Ignore Non-Indexable URLs for Issues“ (TECH-009).
-- **Ausgabe (Spalten/Filter/Export):** –
-- **Akzeptanzkriterien:**
-  - [ ] Respect Noindex an → noindex-URLs werden gecrawlt und ihre Links verfolgt, aber in Tabellen/Exporten (außer Directives-Filtern) ausgeblendet.
-  - [ ] Follow Internal Nofollow an → interne Links mit `rel` nofollow/ugc/sponsored und Links auf Seiten mit Seiten-nofollow werden verfolgt; die Links behalten `Follow = false` in der Anzeige.
-  - [ ] Follow External Nofollow analog für externe Ziele (Statusprüfung).
-  - [ ] Die Optionen sind unabhängig voneinander. Eine Kombination (z. B. Respect Noindex an + TECH-068 an) blendet nur noindex-Seiten aus, nicht Selbst-Refresh-Seiten (Festlegung: Ausblenden betrifft nur den Grund `noindex`).
-- **Testfixture:** `directives/` mit vier Konfigurationsläufen (Standard, Respect Noindex an, Follow Internal Nofollow an, Follow External Nofollow an).
+- **Verweis:** siehe CRAWL-091 (führend). „Follow Internal/External Nofollow“ regelt CRAWL-056, „Respect Self Referencing Meta Refresh“ TECH-068, „Ignore Non-Indexable URLs for Issues“ CRAWL-089 und die Auswirkung auf den Directives-Tab TECH-051.
 
 ### TECH-068 Option „Respect Self Referencing Meta Refresh“
 - **Priorität:** P1
-- **Beschreibung:** Legt fest, ob eine Seite, die sich per Meta Refresh (oder `Refresh`-Header) selbst neu lädt, als nicht indexierbar geführt wird. Solche Selbst-Refreshes sind verbreitet (z. B. Nachrichtenseiten, die sich periodisch aktualisieren) und schaden der Indexierung meist nicht. Sie sollen aber sichtbar werden, damit man sie bewusst prüft. Die Referenz stuft sie standardmäßig als nicht indexierbar ein; die Option erlaubt das Abschalten.
+- **Beschreibung:** Führender Eintrag (K-12; CRAWL-094 verweist hierher). Legt fest, ob eine Seite, die sich per Meta Refresh (oder `Refresh`-Header) selbst neu lädt, als nicht indexierbar geführt wird. Solche Selbst-Refreshes sind verbreitet (z. B. Nachrichtenseiten, die sich periodisch aktualisieren) und schaden der Indexierung meist nicht. Sie sollen aber sichtbar werden, damit man sie bewusst prüft. Die Referenz stuft sie standardmäßig als nicht indexierbar ein; die Option erlaubt das Abschalten.
 - **Eingaben/Konfiguration:** `respect_self_referencing_meta_refresh` (bool), Standard **an** (wie Referenz; Konfiguration > Spider > Advanced). Selbst-Refresh = Refresh ohne Ziel-URL oder mit Ziel, das nach TECH-002 gleich der eigenen URL ist (Fragment ignoriert).
 - **Ausgabe (Spalten/Filter/Export):** `Indexability = Non-Indexable`, `Indexability Status = Self Referencing Meta Refresh` (Statustext Festlegung).
 - **Akzeptanzkriterien:**
@@ -951,7 +941,7 @@ Begriffe: Eine **Annotation** ist ein Paar (Code, URL) auf Seite P. Die **Annota
 - **Priorität:** P0
 - **Beschreibung:** Seiten, deren hreflang-Ziele nicht mit 200 antworten.
 - **Eingaben/Konfiguration:** Ziele müssen abgerufen sein (Crawl Hreflang an oder anderweitig entdeckt). Live, inkrementell (TECH-005): keine Crawl-Analyse nötig.
-- **Ausgabe (Spalten/Filter/Export):** Filter „Non-200 Hreflang URLs“; Einstufung: Fehler / Hoch. Report TECH-088.
+- **Ausgabe (Spalten/Filter/Export):** Filter „Non-200 Hreflang URLs“; Einstufung: Fehler / Hoch. Report OUT-091 (Zeilenauswahl TECH-088).
 - **Akzeptanzkriterien:**
   - [ ] Bedingung: mindestens ein Ziel mit robots-Sperre, ohne Antwort, 3xx, 4xx oder 5xx.
   - [ ] Externe Ziele werden nach Status bewertet (Statusprüfung genügt).
@@ -985,7 +975,7 @@ Begriffe: Eine **Annotation** ist ein Paar (Code, URL) auf Seite P. Die **Annota
 - **Priorität:** P1
 - **Beschreibung:** Der Rücklink nennt für P einen anderen Code, als P für sich selbst angibt.
 - **Eingaben/Konfiguration:** Live, inkrementell (TECH-005).
-- **Ausgabe (Spalten/Filter/Export):** Filter „Inconsistent Language & Region Return Links“; Einstufung: Fehler / Hoch. Report mit P, Q, Selbstcode von P, Code im Rücklink. Mapping-Aliase für den Paritätstest: Tab-Doku „Inconsistent Language & Region Return Links“ (Hauptname); Report-Menü „Inconsistent Language Return Links“ (TECH-088); laut Review in der Issue-Bibliothek „Inconsistent Language & Region Confirmation Links“ (in der öffentlichen Tab-Doku nicht bestätigt, vor dem Golden-Test prüfen). In der Detailansicht TECH-089 heißt der zugehörige Bestätigungsstatus `Inconsistent`.
+- **Ausgabe (Spalten/Filter/Export):** Filter „Inconsistent Language & Region Return Links“; Einstufung: Fehler / Hoch. Report: OUT-094 (führend für Namen und Spalten). Mapping-Aliase für den Paritätstest: Tab-Doku „Inconsistent Language & Region Return Links“ (Hauptname); Report-Menü der Referenz „Inconsistent Language Return Links“ (OpenSpider-Report-Name nach OUT-094); laut Review in der Issue-Bibliothek „Inconsistent Language & Region Confirmation Links“ (in der öffentlichen Tab-Doku nicht bestätigt, vor dem Golden-Test prüfen). In der Detailansicht TECH-089 heißt der zugehörige Bestätigungsstatus `Inconsistent`.
 - **Akzeptanzkriterien:**
   - [ ] Bedingung: P hat einen Selbstcode S; ein Alternate Q hat einen Rücklink auf P mit Code C; C ≠ S (case-insensitiv verglichen).
   - [ ] P ohne Selbstreferenz → Filter für P nicht auswertbar, nicht gelistet.
@@ -1092,14 +1082,7 @@ Begriffe: Eine **Annotation** ist ein Paar (Code, URL) auf Seite P. Die **Annota
 
 ### TECH-088 Hreflang-Reports (Bulk-Exporte je Problemtyp)
 - **Priorität:** P1
-- **Beschreibung:** Exporte, die je Zeile eine Quelle-Ziel-Beziehung zeigen.
-- **Eingaben/Konfiguration:** Für „Unlinked Hreflang URLs“ abgeschlossene Crawl-Analyse; alle anderen Reports sind jederzeit exportierbar (Stand der Live-Filter).
-- **Ausgabe (Spalten/Filter/Export):** Reports im Menü „Reports > Hreflang“: „Non-200 Hreflang URLs“, „Unlinked Hreflang URLs“, „Missing Return Links“, „Inconsistent Language Return Links“, „Non Canonical Return Links“, „Noindex Return Links“. Mapping-Aliase (Report-Name ↔ Filtername): „Inconsistent Language Return Links“ ↔ Filter „Inconsistent Language & Region Return Links“ (Issue-Bibliothek laut Review: „Inconsistent Language & Region Confirmation Links“); „Non Canonical Return Links“ (Report, ohne Bindestrich) ↔ Filter „Non-Canonical Return Links“. Dateinamen der Exporte nutzen die Report-Namen in Kleinbuchstaben mit `_` (z. B. `inconsistent_language_return_links.csv`). Gemeinsame Spalten: `Source URL`, `Source Language Code`, `Hreflang URL`, `Hreflang Language Code`, `Source`(html/http/sitemap), je nach Report zusätzlich `Status Code`, `Status`, `Return Link Language Code`, `Canonical`, `Indexability Status`.
-- **Akzeptanzkriterien:**
-  - [ ] Je fehlerhafter Beziehung genau eine Zeile; Summe der Zeilen ≥ Anzahl gelisteter Seiten im Filter.
-  - [ ] CSV und XLSX; leere Reports werden erzeugt (Header-Zeile) außer bei „leere überspringen“ (Export-Spec).
-  - [ ] Für jeden der 6 Reports gilt: Die Menge der distinct `Source URL` ist gleich der Menge der Adressen im zugehörigen Filter.
-- **Testfixture:** `tests/fixtures/tech/hreflang/` Golden-Reports.
+- **Verweis:** siehe OUT-091 (führend). Die Zeilenauswahl aller Hreflang-Reports OUT-091 … OUT-096 ist dort festgelegt.
 
 ### TECH-089 Untere Detailansicht „URL Details“ mit Bestätigungsstatus je Annotation
 - **Priorität:** P1
@@ -1265,9 +1248,9 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
 
 ### TECH-114 Filter „Pages With JavaScript Errors“ und Konsolen-Log
 - **Priorität:** P1
-- **Beschreibung:** Während des Renderns aufgetretene JavaScript-Fehler.
-- **Eingaben/Konfiguration:** Option „JavaScript-Fehler erfassen“ im Rendering-Bereich (Standard an).
-- **Ausgabe (Spalten/Filter/Export):** Filter „Pages With JavaScript Errors“; Einstufung: Warnung / Niedrig. Untere Detailansicht „Chrome Console Log“ mit `Level`, `Message`, `Source URL`, `Line`, `Column`, `Timestamp`. Bulk-Export „Bulk Export > JavaScript > Pages With JavaScript Issues“ (Referenzname, korrigiert): eine Zeile je Konsoleneintrag der Seiten im Filter, Spalten `Address`, `Level`, `Message`, `Source URL`, `Line`, `Column`. Der frühere Arbeitsname „JavaScript > Console Log“ entfällt.
+- **Beschreibung:** Während des Renderns aufgetretene JavaScript-Fehler, wie sie in der Konsole des eingebauten Chromium erscheinen. Führend für die **Filterlogik** (K-13). Die Erfassung der Konsolenmeldungen (Schalter, Speicherlimit je Seite, Ausfiltern interner Browser-Meldungen) regelt CRAWL-084, den Detail-Tab „Chrome Console Log“ (Layout, Level-Filter) UI-040, Bulk-Export und Summary-Report OUT-058/OUT-107.
+- **Eingaben/Konfiguration:** Schalter „JavaScript-Fehlerberichte aktivieren“ (CRAWL-084, Standardwert dort) und Rendering-Modus „JavaScript“ (TECH-006). Ist der Schalter aus, bleibt der Filter leer und trägt in der Übersicht den Hinweis „JavaScript-Fehlererfassung deaktiviert“ statt einer 0.
+- **Ausgabe (Spalten/Filter/Export):** Filter „Pages With JavaScript Errors“; Einstufung: Warnung / Niedrig. Datengrundlage je Seite: Konsoleneinträge mit `Level`, `Message`, `Source URL`, `Line`, `Column`, `Timestamp` (Anzeige im Detail-Tab UI-040). Bulk-Export „Bulk Export > JavaScript > Pages With JavaScript Issues“ (Referenzname, korrigiert; Format OUT-058): eine Zeile je Konsoleneintrag der Seiten im Filter, Spalten `Address`, `Level`, `Message`, `Source URL`, `Line`, `Column`. Der frühere Arbeitsname „JavaScript > Console Log“ entfällt.
 - **Akzeptanzkriterien:**
   - [ ] Bedingung: mindestens ein Konsoleneintrag mit Level `error` oder eine nicht abgefangene Ausnahme (`Runtime.exceptionThrown`) bis zum Ende des AJAX-Timeouts.
   - [ ] Warnungen und `console.log` erscheinen im Log, lösen den Filter aber nicht aus.
@@ -1409,7 +1392,7 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
 - **Priorität:** P1
 - **Beschreibung:** Indexierbare Seiten, die nur von nicht indexierbaren Seiten verlinkt werden (deren Links Suchmaschinen schlechter oder gar nicht sehen).
 - **Eingaben/Konfiguration:** Nachlauf.
-- **Ausgabe (Spalten/Filter/Export):** Filter „Non-Indexable Page Inlinks Only“; Einstufung: Warnung / Hoch.
+- **Ausgabe (Spalten/Filter/Export):** Filter „Non-Indexable Page Inlinks Only“; Einstufung: Warnung / Hoch. Bulk-Export „Links > Non-Indexable Page Inlinks Only“ (die Inlinks der gelisteten Seiten im Standard-Linkformat): OUT-068.
 - **Akzeptanzkriterien:**
   - [ ] Bedingung: Seite ist `Indexable`, hat ≥ 1 internen Hyperlink-Inlink (ohne Self-Links), und jede Quellseite ist `Non-Indexable` (noindex, canonicalised oder robots-gesperrt – Letzteres nur, wenn Links aus gesperrten Seiten bekannt sind, z. B. bei „robots.txt ignorieren, aber melden“).
   - [ ] Die Startseite wird nie gelistet.
@@ -1440,18 +1423,27 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
 
 ### TECH-145 „% of Total“ und Link Score als Spalten
 - **Priorität:** P1
-- **Beschreibung:** Zwei abgeleitete Kennzahlen im Links-Tab.
-- **Eingaben/Konfiguration:** Nachlauf „Link Score“ (Algorithmus in der Crawl-Analyse-Spec; hier nur Darstellung).
-- **Ausgabe (Spalten/Filter/Export):** `Link Score` (0–100, ganzzahlig), `% of Total`.
+- **Beschreibung:** Zwei abgeleitete Kennzahlen im Links-Tab. **Führend für Link Score** (Definition, Berechnung im Kern, Spaltenwerte); ONPAGE-017 (Spalte im Internal-Tab) und UI-081 verweisen hierher, der Ablauf der Crawl-Analyse steht in CRAWL-141/UI-080. Link Score ist eine relative Gewichtung jeder URL im internen Linkgraphen auf einer Skala 0–100; tatsächlich vergeben werden Werte von 1 (schwächste teilnehmende URL) bis 100 (stärkste). Berechnet wird eine PageRank-Variante mit fester Iterationszahl; das Verfahren ist allgemein bekannt, die folgende formale Definition ist OpenSpiders eigene Festlegung. **OS-Festlegung zur Priorität:** P1 (bestätigt; ONPAGE-017 und UI-081 übernehmen sie). Der Ablauf der Crawl-Analyse (CRAWL-141, P0) funktioniert ohne Link Score; der Teilschritt ist im MVP abschaltbar und blockiert keine P0-Funktion.
+- **Eingaben/Konfiguration:** Teilschritt „Link Score“ der Crawl-Analyse (TECH-005). Formale Definition:
+  - **Knotenmenge V:** interne, gecrawlte HTML-URLs mit Antwort, die weder selbst weiterleiten noch auf eine andere URL kanonisiert sind; n = |V|.
+  - **Auflösung `res(u)`:** von u aus Weiterleitungen (HTTP 3xx, Meta Refresh, JavaScript-Weiterleitung, interne HSTS-Umleitung) und Canonicals (Link-Element oder HTTP-Header) folgen, bis ein Knoten aus V erreicht ist; höchstens 10 Schritte; bei Schleife oder Abbruch undefiniert.
+  - **Kanten:** Für jede Quelle s ∈ V ist `T(s)` die *Menge* der aufgelösten Hyperlink-Ziele (`<a href>`) von s ohne s selbst und ohne undefinierte Ziele (Mehrfachlinks zählen einmal). `F(s)` ⊆ `T(s)` sind die Ziele mit mindestens einem folgbaren Link (kein nofollow/ugc/sponsored, Quelle nicht per Meta Robots nofollow). Ausgangsgrad `out(s) = |T(s)|`: nofollow-Ziele zählen im Nenner, erhalten aber keinen Anteil.
+  - **Iteration:** Dämpfung d = 0,85, genau k = 10 Durchläufe, Startwert 1/n je Knoten. Je Durchlauf erhält jeder Knoten den Grundwert (1 − d)/n; jede Quelle mit `out(s) > 0` gibt `d · r(s) / out(s)` an jedes Ziel in `F(s)` weiter. Knoten ohne Ausgangskanten geben nichts weiter; es wird nichts umverteilt. Rechnung in f64, Summation in fester Reihenfolge (Knoten-ID aufsteigend).
+  - **Normierung:** min/max über die Rohwerte in V; Standard logarithmisch `round(1 + 99 · (ln r − ln min) / (ln max − ln min))`, alternativ linear `round(1 + 99 · (r − min) / (max − min))` als interne Option; kaufmännische Rundung. Welche Variante der Referenz entspricht, entscheidet der Benchmark (Anhang A Punkt 36).
+- **Ausgabe (Spalten/Filter/Export):** `Link Score` (ganzzahlig 1–100; leer für nicht teilnehmende URLs) in den Tabs Links und Internal sowie in den URL-Details; Skalierungsgröße für Visualisierungen (UI). `% of Total`.
 - **Akzeptanzkriterien:**
   - [ ] `% of Total` = `Unique Inlinks / Anzahl interner HTML-200-Seiten × 100`, 2 Nachkommastellen (Festlegung; die Referenz nennt die Formel nicht).
-  - [ ] `Link Score` leer, solange die Analyse aussteht.
-- **Testfixture:** `links/` mit 10 Seiten; Seite im globalen Menü hat `% of Total = 90.00` (9 von 10 Seiten, ohne Self-Link).
+  - [ ] `Link Score` ist leer, solange der Teilschritt aussteht; danach hat jede URL aus V einen ganzzahligen Wert 1–100 (0 wird nie vergeben); nicht teilnehmende URLs (Weiterleitungen, kanonisierte, externe, Nicht-HTML) bleiben leer.
+  - [ ] Bei genau einer teilnehmenden URL ist ihr Wert 100; sind alle Rohwerte gleich, erhalten alle 100.
+  - [ ] Fixture `fx-ui-linkscore` (A Start; A→B, A→R, A→D nofollow, A→A; R = 301 auf C; B→C zweimal, B→A; C→A, C→K; K kanonisiert auf D; D→E; E→A) liefert nach 10 Iterationen die Rohwerte A 0,21601; B 0,09190; C 0,13147; D 0,08661; E 0,10450 (± 1e-5) und normiert logarithmisch A 100, C 46, E 21, B 7, D 1 (linear: A 100, C 35, E 15, B 5, D 1).
+  - [ ] Deterministisch: gleiche Eingabe → bitgleiche Rohwerte, unabhängig von der Thread-Anzahl.
+  - [ ] Berechnung für 5 Mio. Knoten / 100 Mio. Kanten ≤ 60 s und ≤ 2 GB zusätzlicher Arbeitsspeicher auf Referenzhardware (Performance-Rahmen PERF).
+- **Testfixture:** `links/` mit 10 Seiten; Seite im globalen Menü hat `% of Total = 90.00` (9 von 10 Seiten, ohne Self-Link). `fx-ui-linkscore` wie oben (Herleitung: V = {A, B, C, D, E}; R und K werden aufgelöst; T(A) = {B, C, D} mit D nur nofollow, T(B) = {A, C}, T(C) = {A, D}, T(D) = {E}, T(E) = {A}); zusätzlich Zufallsgraphen gegen eine unabhängige Python-Implementierung desselben Verfahrens (nicht den Standard-PageRank einer Bibliothek, der Knoten ohne Ausgangskanten umverteilt und bis zur Konvergenz iteriert).
 
 ### TECH-146 Aggregierte Ankertext-Ansicht („Anchors“) in Inlinks/Outlinks
 - **Priorität:** P1
-- **Beschreibung:** In den unteren Ansichten „Inlinks“ und „Outlinks“ lassen sich die Links statt einzeln auch **gruppiert nach Ankertext** anzeigen. So sieht man, mit welchen Formulierungen eine Seite (oder eine Auswahl von Seiten) intern verlinkt wird, ohne Hunderte Einzelzeilen durchzugehen. Ein Klick auf eine Gruppe zeigt die zugehörigen Einzellinks.
-- **Eingaben/Konfiguration:** Ansichtsumschalter `Alle Links` | `Anchors` in der unteren Inlinks-/Outlinks-Ansicht; Kontrollkästchen „Self-Links ausschließen“ (Standard an) und „Nofollow ausschließen“ (Standard aus) (Festlegung der Standardwerte).
+- **Beschreibung:** In den unteren Ansichten „Inlinks“ und „Outlinks“ lassen sich die Links statt einzeln auch **gruppiert nach Ankertext** anzeigen. So sieht man, mit welchen Formulierungen eine Seite (oder eine Auswahl von Seiten) intern verlinkt wird, ohne Hunderte Einzelzeilen durchzugehen. Ein Klick auf eine Gruppe zeigt die zugehörigen Einzellinks. Die Ankertext-Wortwolke UI-099 nutzt dieselbe Aggregation (übernommen aus UI-034).
+- **Eingaben/Konfiguration:** Ansichtsumschalter `Alle Links` | `Anchors` in der unteren Inlinks-/Outlinks-Ansicht; Kontrollkästchen „Self-Links ausschließen“ (Standard an) und „Nofollow ausschließen“ (Standard aus) (Festlegung der Standardwerte); [P2] Kontrollkästchen „Groß-/Kleinschreibung zusammenfassen“ (Standard aus).
 - **Ausgabe (Spalten/Filter/Export):** Spalten der Anchors-Ansicht: `Anchor Text`, `Links` (Anzahl Hyperlinks mit diesem Text), `Unique Sources` (bei Inlinks: verschiedene Quellseiten) bzw. `Unique Targets` (bei Outlinks: verschiedene Ziele), `% of Links`. Export der Ansicht (CSV/XLSX).
 - **Akzeptanzkriterien:**
   - [ ] Gruppierungsschlüssel: Anchor Text nach TECH-131, bei Bild-Links ohne Text der Alt Text; Normalisierung nur Trim und Whitespace-Zusammenfassung, **case-sensitiv** („Mehr“ und „mehr“ sind zwei Gruppen, Festlegung). Links ohne Anchor und ohne Alt bilden die Gruppe `(leer)`.
@@ -1461,6 +1453,7 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
   - [ ] `% of Links` = `Links / Summe Links aller Gruppen × 100`, 2 Nachkommastellen; die Summe aller Gruppen ergibt 100,00 (± 0,01 Rundung).
   - [ ] Klick auf eine Gruppe filtert die Einzel-Link-Liste auf genau diese Links.
   - [ ] Nur Hyperlinks; Ressourcen-Links (img, script, link) erscheinen nicht.
+  - [ ] [P2] „Groß-/Kleinschreibung zusammenfassen“ an → Gruppierungsschlüssel ist der normalisierte Text nach Unicode-Case-Folding (vollständig, sprachunabhängig; „STRASSE“ und „Straße“ fallen zusammen); angezeigt wird die häufigste Schreibweise der Gruppe, bei Gleichstand die in Unicode-Codepunktfolge kleinste **(OS-Festlegung)**. Fixture: „Produkte“ und „produkte“ bilden eine Gruppe „Produkte“ mit `Links = 5`; `% of Links` und Sortierung werden über die zusammengefassten Gruppen berechnet; Klick auf die Gruppe zeigt die Einzellinks beider Schreibweisen. Ausgeschaltet gilt unverändert die case-sensitive Gruppierung oben; der Export enthält die Ansicht im jeweils aktiven Modus.
 - **Testfixture:** `tests/fixtures/tech/links/anchors/`: Zielseite `/target` mit Inlinks „Produkte“ (3×, von 3 Seiten), „produkte“ (1×), „Mehr“ (2× von derselben Seite), einem Bild-Link mit Alt „Logo“, einem leeren Link, einem nofollow-Link „Produkte“ und einem Self-Link „Produkte“. Erwartung Standard: „Produkte“ `Links = 4`, `Unique Sources = 4` (inkl. nofollow, ohne Self-Link); mit „Nofollow ausschließen“ `Links = 3`.
 
 ---
@@ -1665,13 +1658,7 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
 
 ### TECH-190 Reports „Validation Errors & Warnings“ (+ Summary)
 - **Priorität:** P1
-- **Beschreibung:** Zwei Reports über alle Befunde.
-- **Eingaben/Konfiguration:** –
-- **Ausgabe (Spalten/Filter/Export):** (1) „Validation Errors & Warnings“: eine Zeile je Befund mit `Address`, `Format`, `Type`, `Validation Type`, `Severity`, `Property`, `Issue`. (2) „Validation Errors & Warnings Summary“: eine Zeile je (Validation Type, Type, Property, Issue, Severity) mit `URLs` (Anzahl betroffener URLs) und `Sample URL`.
-- **Akzeptanzkriterien:**
-  - [ ] Summe der `URLs` im Summary ≥ Zeilen-Anzahl distinct (Address, Befund-ID) im Detailreport.
-  - [ ] `Sample URL` = lexikographisch kleinste betroffene URL (deterministisch, Festlegung).
-- **Testfixture:** `sd/` gesamt; Golden-Reports.
+- **Verweis:** siehe OUT-101 (führend). Für die Summary ist OUT-100 führend, hier gilt nur die Zeilenauswahl: eine Zeile je Befund aus TECH-187/TECH-188 mit seiner stabilen Befund-ID (TECH-189).
 
 ---
 
@@ -1732,7 +1719,7 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
   - [ ] Ressourcen (Bilder, CSS, JS) werden nie als Orphan gemeldet, nur HTML-Seiten und Dokumente (PDF) (Festlegung).
   - [ ] Bei „Ignore Non-Indexable URLs for Issues“ an (TECH-009) nur indexierbare Orphans.
   - [ ] Im Listenmodus (ohne Spider-Crawl) bleibt der Filter leer.
-  - [ ] Die Inlinks-Ansicht einer Folge-Orphan-URL zeigt die Orphan-Quelle als Hyperlink-Inlink, nicht als Sitemap-Inlink. Der Export TECH-219 „Orphan URLs Inlinks“ listet für Folge-Orphans die Sitemap der Wurzel-Orphan-URL in einer Spalte `Via` (Festlegung).
+  - [ ] Die Inlinks-Ansicht einer Folge-Orphan-URL zeigt die Orphan-Quelle als Hyperlink-Inlink, nicht als Sitemap-Inlink. Der Export „Orphan URLs“ (OUT-057, Zeilenauswahl TECH-219) führt für Folge-Orphans in `Sitemap` die Sitemap der Wurzel-Orphan-URL und in der Spalte `Found Via` deren Adresse; bei Wurzel-Orphans ist `Found Via` leer (OS-Festlegung, dieser Eintrag ist für den Spaltennamen führend, OUT-057 übernimmt ihn).
 - **Testfixture:** `sitemaps/orphan-page` nur in Sitemap; `/orphan-child` nur von `/orphan-page` verlinkt (Orphan); `/orphan-grandchild` nur von `/orphan-child` verlinkt (Orphan); `/shared-child` von `/orphan-page` **und** von der Startseite verlinkt (kein Orphan); `/in-sitemap-and-linked` in Sitemap und im Menü (kein Orphan). Golden: genau 3 Orphans.
 
 ### TECH-215 Filter „Non-Indexable URLs In Sitemap“
@@ -1775,11 +1762,11 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
 
 ### TECH-219 Sitemap-Inlinks und Bulk-Exporte
 - **Priorität:** P1
-- **Beschreibung:** Nachvollziehbarkeit, aus welcher Sitemap eine URL stammt.
+- **Beschreibung:** Nachvollziehbarkeit, aus welcher Sitemap eine URL stammt. Die Bulk-Exporte der Sitemaps-Filter sind führend in OUT-057 spezifiziert (Namen und Spalten); dieser Eintrag legt nur die Inlinks-Darstellung und die Zeilenauswahl fest.
 - **Eingaben/Konfiguration:** –
-- **Ausgabe (Spalten/Filter/Export):** In der unteren Inlinks-Ansicht Typ `XML Sitemap` mit `From` = Sitemap-URL. Bulk-Exporte „Sitemaps > URLs In Sitemap Inlinks“, „Sitemaps > Non-Indexable URLs In Sitemap Inlinks“, „Sitemaps > Orphan URLs Inlinks“, „Sitemaps > URLs In Multiple Sitemaps Inlinks“ mit `Sitemap`, `URL`, `Status Code`, `Indexability`, `Indexability Status`.
+- **Ausgabe (Spalten/Filter/Export):** In der unteren Inlinks-Ansicht Typ `XML Sitemap` mit `From` = Sitemap-URL. Bulk-Exporte: OUT-057.
 - **Akzeptanzkriterien:**
-  - [ ] Je (Sitemap, URL)-Paar genau eine Zeile.
+  - [ ] Zeilenauswahl der Bulk-Exporte (OUT-057): je (Sitemap, URL)-Paar einer URL im jeweiligen Filter genau eine Zeile; bei Filtern ohne Sitemap-Bezug („URLs Not In Sitemap“) je URL eine Zeile.
   - [ ] Sitemap-Inlinks zählen nicht in `Inlinks`/`Unique Inlinks` des Links-Tabs.
 - **Testfixture:** `sitemaps/` Golden-Exporte.
 
@@ -1789,33 +1776,34 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
 
 ### TECH-230 Mobile-Prüfungen: Ausführungsweg (lokal/PSI)
 - **Priorität:** P1
-- **Beschreibung:** Die Mobile-Prüfungen laufen im gerenderten Dokument in mobiler Emulation. Wie in der Referenz sind sie Teil der PageSpeed-/Lighthouse-Anbindung (Integrations-Spec) und werden dort über die Quelle gesteuert: (a) **Local**: Lighthouse-kompatible Prüfungen im eingebauten Chromium (eigene Messskripte nach den öffentlich dokumentierten Lighthouse-Regeln; keine externen Dienste, kein API-Schlüssel, auch für Seiten hinter Login und ohne Tageskontingent); (b) **Remote**: PageSpeed-Insights-API mit API-Schlüssel, deren Lighthouse-Ergebnisse auf dieselben Spalten abgebildet werden.
+- **Beschreibung:** Führend für Tab, Filter und Spalten des Mobile-Bereichs (K-14; TECH-230–237). Die Datenbeschaffung ist führend in 04 spezifiziert: Quellen und **Standardquelle** in INTEG-130, lokaler Lighthouse-Lauf in INTEG-132, Gerätetyp und mobile Emulation in INTEG-131, Auswahl der Metrikgruppe in INTEG-133, Audit-Zuordnung und Score-Umrechnung in INTEG-140, Fehlerbehandlung in INTEG-143. Dieser Eintrag legt keine eigene Quelle, Emulation oder Standardquelle fest. Die beiden Quellen im Sinne dieses Tabs: **Lokal** = Lighthouse läuft auf dem eigenen Rechner (INTEG-132: eigene Chrome-Instanz getrennt vom Render-Browser des Crawls, gebündelte oder vorhandene Node-/Lighthouse-Laufzeit, kein API-Schlüssel, kein Tageskontingent, Authentifizierung aus der Crawl-Konfiguration); **Remote** = Lighthouse über die PageSpeed-Insights-API mit API-Schlüssel (INTEG-130). Beide Quellen liefern Lighthouse-Audits, die nach INTEG-140 auf dieselben Spalten abgebildet werden.
 - **Eingaben/Konfiguration:**
-  - PSI-/Lighthouse-Anbindung aktiviert (Konfiguration > API-Zugang > PageSpeed Insights) mit Quelle `local` | `remote`. Standard `local` (Festlegung; die Referenz hat keine Voreinstellung, die ohne Zutun läuft).
-  - **Im Metrik-Reiter der Anbindung ist die Metrik-Gruppe „Mobile Friendly“ ausgewählt.** Standard: an, sobald die Anbindung aktiviert wird (Festlegung; in der Referenz meist vorausgewählt).
-  - Mobile Emulation 411×731 CSS-px, Device-Pixel-Ratio 2,625, Touch an, mobiler User-Agent (Festlegung).
-  - Ohne diese beiden Voraussetzungen (Anbindung an **und** Gruppe gewählt) bleibt der Mobile-Tab leer. Die Übersicht zeigt dann den Hinweis „Mobile-Prüfung nicht konfiguriert“ statt 0.
-- **Ausgabe (Spalten/Filter/Export):** Spalten `PSI Status` (`Success`/`Error`; leer, solange die URL noch nicht abgefragt wurde), `PSI Error` (Fehlermeldung).
+  - PSI-/Lighthouse-Anbindung verbunden (INTEG-130) mit Quelle Lokal oder Remote; Standardquelle: siehe INTEG-130.
+  - Metrikgruppe „Mobile“ ausgewählt (INTEG-133; Standardauswahl dort).
+  - Ohne diese beiden Voraussetzungen (Anbindung an **und** Gruppe gewählt) bleiben alle Lighthouse-basierten Spalten und Filter (TECH-232–236) leer; die Übersicht zeigt bei ihnen den Hinweis „Mobile-Prüfung nicht konfiguriert“ statt 0. Spalte und Filter `Mobile Alternate Link` (TECH-237) stammen aus dem gecrawlten HTML und sind davon unabhängig.
+- **Ausgabe (Spalten/Filter/Export):** Spalten `PSI Status` (genau `Success` oder `Error`, wie in der Referenz-Doku; leer, solange die URL noch nicht abgefragt wurde; Wertebereich führend hier, INTEG-143 verweist hierher) und `PSI Error` (Code und Meldung nach INTEG-143; ein erschöpftes Tageskontingent ist ein `Error` mit entsprechender Meldung).
 - **Akzeptanzkriterien:**
-  - [ ] Anbindung an, Gruppe „Mobile Friendly“ abgewählt → keine Mobile-Spalten befüllt, Tab leer, Hinweis wie oben. Die übrigen PSI-Metriken (Performance usw.) sind davon unabhängig.
-  - [ ] Lokal: Die Prüfungen benötigen **keinen** globalen JS-Rendering-Modus; die Seite wird für die Mobile-Prüfung separat in mobiler Emulation geladen, falls der Crawl im Text-only-Modus läuft (Festlegung).
-  - [ ] Fehler beim Laden (Timeout, Absturz, API-Fehler, Kontingent erschöpft) → alle Mobile-Prüfspalten leer, `PSI Status = Error`, `PSI Error` mit Grund, URL in keinem Mobile-Filter.
-  - [ ] **Nur mit Quelle `local` verfügbar:** „Content Not Sized Correctly“ (TECH-234) **und** „Illegible Font Size“ (TECH-235). Beide Lighthouse-Audits sind abgekündigt und werden von der Remote-API nicht mehr geliefert. Bei `remote` bleiben die Spalten `Content Width` und `Font Display` leer, und beide Filter enthalten keine URL. Der Filter trägt in der Übersicht dann den Hinweis „nur mit lokaler Quelle“.
-  - [ ] Die Ergebnisse beider Wege für dieselbe Seite sind im Golden-Test für `Viewport`, `Tap Targets` und `Plugins` identisch (Mock der PSI-Antwort aus einem lokalen Lauf).
-- **Testfixture:** `tests/fixtures/tech/mobile/`: Seiten je Filter (siehe unten) plus `ok.html` (responsiv, keine Befunde). Läufe: (1) `local` + Gruppe an; (2) `remote` mit gemockter PSI-Antwort (enthält keine Audits für Content Width/Font Size) → `Content Width`/`Font Display` leer; (3) Anbindung an, Gruppe aus → Tab leer.
+  - [ ] Anbindung an, Gruppe „Mobile“ abgewählt → keine Mobile-Prüfspalten befüllt, Tab ohne Lighthouse-Werte, Hinweis wie oben. Die übrigen PSI-Metriken (Performance usw.) sind davon unabhängig.
+  - [ ] Quelle Lokal: Die Befüllung hängt nicht vom Rendering-Modus des Crawls ab. Der Lighthouse-Lauf nutzt seine eigene Chrome-Instanz (INTEG-132), auch wenn der Crawl im Text-only-Modus läuft.
+  - [ ] Fehler beim Abruf (Timeout, Absturz des Lighthouse-Prozesses, API-Fehler, Kontingent erschöpft; Klassen nach INTEG-143) → alle Mobile-Prüfspalten leer, `PSI Status = Error`, `PSI Error` mit Grund, URL in keinem Mobile-Filter.
+  - [ ] **Nur mit Quelle Lokal verfügbar:** „Content Not Sized Correctly“ (TECH-234); die Referenz-Doku nennt dieses Audit ausdrücklich als von der Remote-API nicht mehr geliefert. Bei Remote bleibt die Spalte `Content Width` leer, der Filter enthält keine URL und trägt in der Übersicht den Hinweis „nur mit lokaler Quelle“.
+  - [ ] Allgemein gilt für jedes Lighthouse-Audit dieses Tabs: Liefert die gewählte Quelle das Audit nicht (welche Audits je Quelle geliefert werden und wie fehlende Audits umgerechnet werden, regelt INTEG-140), bleibt die Spalte leer, die URL steht in keinem zugehörigen Filter, und die Übersicht zeigt „Audit von der Quelle nicht geliefert“.
+  - [ ] Für dieselbe Lighthouse-Antwort ergeben Remote- und Lokal-Weg identische Spaltenwerte und Filtermengen (Umrechnung INTEG-140). Golden-Test für `Viewport`, `Tap Targets` und `Plugins` mit einer PSI-Mock-Antwort, deren `lighthouseResult` aus einem lokalen Lauf stammt.
+- **Testfixture:** `tests/fixtures/tech/mobile/`: Seiten je Filter (siehe unten) plus `ok.html` (responsiv, keine Befunde). Läufe: (1) Quelle Lokal + Gruppe an (lokaler Lighthouse-Lauf nach INTEG-132); (2) Remote mit gemockter PSI-Antwort ohne die Audits `content-width` und `font-size` → `Content Width`/`Font Display` leer; (3) Anbindung an, Gruppe aus → Lighthouse-Spalten leer, `m-alternate.html` trotzdem im Filter „Mobile Alternate Link“; (4) Anbindung aus → wie (3).
 
 ### TECH-231 Tab „Mobile“: Population und Spalten
 - **Priorität:** P1
 - **Beschreibung:** Mobile-Tauglichkeit je Seite.
-- **Eingaben/Konfiguration:** PSI-/Lighthouse-Anbindung mit Metrik-Gruppe „Mobile Friendly“ (TECH-230); für `Mobile Alternate Link` zusätzlich „Store“/„Crawl“ für mobile Alternate-Links in der Spider-Konfiguration (Crawl-Spec).
-- **Ausgabe (Spalten/Filter/Export):** `Address`, `PSI Status`, `PSI Error`, `Viewport`, `Tap Targets`, `Content Width`, `Font Display`, `Plugins`, `Mobile Alternate Link`. Filter TECH-232 bis TECH-237 plus „All“. Untere Ansicht „Lighthouse Details“ mit den betroffenen Elementen je Audit (Selektor, Größe in CSS-px, Textausschnitt bzw. Anteil). Bulk-Exporte im Menü „Reports > Mobile“.
+- **Eingaben/Konfiguration:** PSI-/Lighthouse-Anbindung mit Metrikgruppe „Mobile“ (TECH-230, INTEG-133) für die Prüfspalten; für `Mobile Alternate Link` die Speichern-/Crawlen-Optionen für mobile Alternate-Links (CRAWL-051).
+- **Ausgabe (Spalten/Filter/Export):** `Address`, `PSI Status`, `PSI Error`, `Viewport`, `Tap Targets`, `Content Width`, `Font Display`, `Plugins`, `Mobile Alternate Link`. Filter TECH-232 bis TECH-237 plus „All“. Untere Ansicht „Lighthouse Details“: Inhalt INTEG-144, Layout UI-046, Export der Ansicht OUT-021. Bulk-Export „Reports > Mobile“: OUT-108 (führend für Aufbau und Spalten).
 - **Akzeptanzkriterien:**
-  - [ ] Population: interne HTML-200-Seiten, für die die Prüfung lief (`PSI Status` gesetzt).
-  - [ ] **Werte der Prüfspalten** `Viewport`, `Tap Targets`, `Content Width`, `Font Display`, `Plugins`: ganzzahliger Lighthouse-Score 0–100 wie in der Referenz. Die lokalen Prüfungen sind binär und liefern `100` (bestanden) oder `0` (nicht bestanden). Bei `remote` wird der von der API gelieferte Score (0–1) × 100 gerundet übernommen. Leer = nicht geprüft (z. B. Audit bei `remote` nicht verfügbar, Prüfung übersprungen). Ein Filter enthält eine URL genau dann, wenn der Score der zugehörigen Spalte gesetzt und `< 100` ist. Das gilt auch für nicht-binäre Remote-Scores wie Target Size (Festlegung: jeder Abzug zählt als Befund).
+  - [ ] Population: interne HTML-200-Seiten, für die die Prüfung lief (`PSI Status` gesetzt), **oder** die eine Mobil-Alternative nach TECH-237 haben (dann ggf. mit leeren Prüfspalten).
+  - [ ] Spaltennamen und -reihenfolge sind gegen die öffentliche Referenz-Doku geprüft (Stand 24.3): `Address`, `PSI Status`, `PSI Error`, `Viewport`, `Tap Targets`, `Content Width`, `Font Display`, `Plugins`, `Mobile Alternate Link`; die fünf Prüfspalten sind dort als Lighthouse-Score von 100 beschrieben.
+  - [ ] **Werte der Prüfspalten** `Viewport`, `Tap Targets`, `Content Width`, `Font Display`, `Plugins`: ganzzahliger Lighthouse-Score 0–100 wie in der Referenz. Die Umrechnung aus dem Audit-Ergebnis ist führend in INTEG-140 und gilt für beide Quellen gleich (Score × 100, gerundet; nicht gelieferte, fehlerhafte oder manuelle Audits leer). Nur die DOM-Erkennung von `Plugins` (TECH-236) liefert binär `100` (bestanden) oder `0` (nicht bestanden). Leer = nicht geprüft. Ein Filter enthält eine URL genau dann, wenn der Score der zugehörigen Spalte gesetzt und `< 100` ist. Das gilt auch für nicht-binäre Scores wie Target Size (Festlegung: jeder Abzug zählt als Befund).
+  - [ ] Die Bedingungen in TECH-232 … TECH-235 beschreiben die erwartete Semantik der zugehörigen Lighthouse-Audits und bestimmen die Fixture-Erwartungen; maßgeblich für Spalte und Filter ist der Audit-Score. Weicht die gebündelte Lighthouse-Version (INTEG-132) davon ab, gilt der Audit-Score, und die Fixture-Erwartung wird mit Vermerk in Anhang A angepasst.
   - [ ] `Mobile Alternate Link`: Ziel-URL (Text), nicht Score.
   - [ ] Spaltenname `Font Display` = Referenzname für die Schriftgrößen-Prüfung (TECH-235). Die frühere Arbeitsbezeichnung `Font Size` entfällt, damit das Spalten-Mapping ohne Alias auskommt. Im Tooltip steht „Lesbare Schriftgrößen“.
-  - [ ] Bulk-Export „Reports > Mobile“ (korrigiert, vorher „Mobile > All Issues“): ein Report je Audit (`Viewport`, `Target Size`, `Content Width`, `Font Size`, `Plugins`) mit einer Zeile je betroffenem Element (`Address`, `Audit`, `Selector`, `Snippet`, `Detail`) plus ein Sammelreport „All“ (Festlegung zur Aufteilung; Referenz-Unterpunkte vor Golden-Test abgleichen).
-  - [ ] Export-Schaltfläche der unteren „Lighthouse Details“-Ansicht exportiert die Details der gewählten URL(s).
+  - [ ] Zeilenauswahl für „Reports > Mobile“ (OUT-108): Die Tabelle je Mobile-Filter enthält genau die URLs dieses Filters.
 - **Testfixture:** `mobile/`; Golden: `ok.html` alle Prüfspalten `100`; `no-viewport.html` `Viewport = 0`; Remote-Lauf: `Content Width`/`Font Display` leer.
 
 ### TECH-232 Filter „Viewport Not Set“
@@ -1824,15 +1812,15 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
 - **Eingaben/Konfiguration:** –
 - **Ausgabe (Spalten/Filter/Export):** Filter „Viewport Not Set“; Einstufung: Fehler / Hoch. Spalte `Viewport`.
 - **Akzeptanzkriterien:**
-  - [ ] Fail, wenn kein `<meta name="viewport">` existiert **oder** dessen `content` keine `width`-Angabe enthält (`initial-scale=1` allein → Fail).
-  - [ ] `width=device-width` → Pass; `width=1024` → Pass für diese Prüfung (Festlegung: jede `width`-Angabe genügt, wie in der Referenzbeschreibung).
-  - [ ] Spaltenwert: Pass = `100`, Fail = `0`, nicht geprüft = leer (TECH-231).
-- **Testfixture:** `mobile/no-viewport.html`, `/viewport-scale-only.html`, `/viewport-fixed-1024.html`.
+  - [ ] Erwartete Semantik des Audits `viewport` (TECH-231): Fail, wenn kein `<meta name="viewport">` existiert **oder** dessen `content` weder eine `width`- noch eine `initial-scale`-Angabe enthält.
+  - [ ] `width=device-width` → Pass; `width=1024` → Pass; `initial-scale=1` allein → Pass (Lighthouse-Semantik; die Referenzbeschreibung nennt nur `width`, siehe Anhang A).
+  - [ ] Spaltenwert: Audit-Score nach INTEG-140 (`100` bestanden, `0` nicht bestanden), nicht geprüft = leer (TECH-231).
+- **Testfixture:** `mobile/no-viewport.html` (→ `0`), `/viewport-scale-only.html` (nur `initial-scale=1` → `100`), `/viewport-fixed-1024.html` (→ `100`).
 
 ### TECH-233 Filter „Target Size“
 - **Priorität:** P1
 - **Beschreibung:** Bedienelemente (Links, Buttons, Formularfelder) sind zu klein oder liegen zu dicht beieinander.
-- **Eingaben/Konfiguration:** Mindestgröße 24×24 CSS-px (fest, entspricht WCAG 2.2 SC 2.5.8 und dem aktuellen Lighthouse-Audit). Gemessen in der mobilen Emulation (TECH-230), nach Ablauf des AJAX-Timeouts, im initialen Viewport **und** unterhalb (ganze Seitenhöhe bis 8192 px, TECH-006).
+- **Eingaben/Konfiguration:** Mindestgröße 24×24 CSS-px (fest, entspricht WCAG 2.2 SC 2.5.8 und dem aktuellen Lighthouse-Audit). Gemessen im Lighthouse-Lauf in mobiler Emulation (INTEG-131/INTEG-132), im initialen Viewport **und** unterhalb (ganze Seitenhöhe bis 8192 px, TECH-006).
 - **Ausgabe (Spalten/Filter/Export):** Filter „Target Size“; Einstufung: Fehler / Mittel. Spalte `Tap Targets` (Score, TECH-231). Lighthouse Details: je fehlerhaftem Ziel Selektor, Größe `B×H`, nächster Nachbar und Abstand in px.
 - **Akzeptanzkriterien:**
   - [ ] Geprüfte Elemente (Ziele): `a[href]`, `button`, `input` (außer `type=hidden`), `select`, `textarea`, `summary`, Elemente mit `role` ∈ {`button`, `link`, `checkbox`, `radio`, `tab`, `menuitem`, `switch`, `option`} und Elemente mit `tabindex ≥ 0`. Nicht geprüft: `disabled`-Elemente, Elemente mit `display:none`, `visibility:hidden`, `opacity:0`, Breite oder Höhe 0, und Elemente vollständig außerhalb der Seite.
@@ -1841,55 +1829,60 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
   - [ ] Regel B (Abstand), nur für Ziele, die A nicht erfüllen: Um den Mittelpunkt der Box wird ein Kreis mit Durchmesser 24 px gelegt. Das Ziel besteht, wenn dieser Kreis weder die Box eines anderen Ziels noch den 24-px-Kreis eines anderen unterdimensionierten Ziels **schneidet**. Berühren (Abstand der Mittelpunkte genau 24,0 px bzw. Kreisrand genau auf Boxkante) gilt als nicht schneidend.
   - [ ] Regel C (Ausnahme Fließtext): Links, die inline in einem Satz stehen (Elternblock enthält außerhalb des Links nicht-leeren Text in derselben Zeilenbox), bestehen immer.
   - [ ] Verschachtelte Ziele (z. B. `button` in `a`) werden als ein Ziel gewertet (das äußere), um Doppelzählung zu vermeiden (Festlegung).
-  - [ ] Ergebnis: Score `0` (Filter), sobald mindestens ein Ziel weder A noch B noch C erfüllt; sonst `100`. Bei Quelle `remote` wird der API-Score übernommen (TECH-231).
+  - [ ] Erwartetes Ergebnis: Score `0` (Filter), sobald mindestens ein Ziel weder A noch B noch C erfüllt; sonst `100`. Maßgeblich ist für beide Quellen der Audit-Score nach INTEG-140 (TECH-231).
   - [ ] Unabhängig von der Accessibility-Regel `target-size` (TECH-257); beide dürfen für dieselbe Seite auslösen.
 - **Testfixture:** `mobile/target-size/`: `adjacent-16.html` (zwei 16×16-Buttons ohne Abstand → 0), `adjacent-23.html` (23×23 nebeneinander → 0), `adjacent-24.html` (24×24 ohne Abstand → 100), `spaced-16-24.html` (16×16, Mittelpunkte genau 24 px auseinander → 100, Berührung), `spaced-16-23.html` (Mittelpunkte 23 px → 0), `spaced-16-30.html` (→ 100), `inline-link.html` (kleiner Link im Satz → 100), `hidden-small.html` (unsichtbarer 10×10-Button → 100), `below-fold.html` (fehlerhafte Ziele erst bei y = 2000 px → 0).
 
 ### TECH-234 Filter „Content Not Sized Correctly“
 - **Priorität:** P1
 - **Beschreibung:** Inhaltsbreite passt nicht zur Viewport-Breite (horizontales Scrollen).
-- **Eingaben/Konfiguration:** Nur Quelle `local` (TECH-230).
+- **Eingaben/Konfiguration:** Nur Quelle Lokal (TECH-230; Audit `content-width`, INTEG-140).
 - **Ausgabe (Spalten/Filter/Export):** Filter „Content Not Sized Correctly“; Einstufung: Fehler / Hoch. Spalte `Content Width`.
 - **Akzeptanzkriterien:**
-  - [ ] Fail, wenn `document.scrollingElement.scrollWidth > window.innerWidth` nach Ablauf des AJAX-Timeouts (Toleranz 0 px, Festlegung).
-  - [ ] Seite ohne Viewport-Meta: Prüfung wird übersprungen (leer), weil die Breite dann nicht aussagekräftig ist (Festlegung).
-  - [ ] Quelle `remote`: Spalte `Content Width` leer, Filter leer (Audit von der API nicht mehr geliefert, TECH-230).
-  - [ ] Spaltenwert: Pass = `100`, Fail = `0`, nicht geprüft = leer (TECH-231).
+  - [ ] Erwartete Semantik des Audits: Fail, wenn die Inhaltsbreite die Viewport-Breite übersteigt (`document.scrollingElement.scrollWidth > window.innerWidth`).
+  - [ ] Seite ohne Viewport-Meta: keine eigene Sonderregel; der Spaltenwert folgt dem Audit-Ergebnis nach INTEG-140.
+  - [ ] Quelle Remote: Spalte `Content Width` leer, Filter leer (Audit von der API nicht mehr geliefert, TECH-230).
+  - [ ] Spaltenwert: Audit-Score nach INTEG-140, nicht geprüft = leer (TECH-231).
 - **Testfixture:** `mobile/wide.html` (Element mit fester Breite 900 px), `ok.html`.
 
 ### TECH-235 Filter „Illegible Font Size“
 - **Priorität:** P1
 - **Beschreibung:** Zu großer Anteil zu kleiner Schrift.
-- **Eingaben/Konfiguration:** Schwelle 12 px, Anteil 40 % (fest). **Nur Quelle `local`** (TECH-230): Das zugrunde liegende Lighthouse-Audit ist abgekündigt und wird von der Remote-API nicht mehr geliefert (korrigiert; vorher nur TECH-234 als lokal-exklusiv geführt).
+- **Eingaben/Konfiguration:** Schwelle 12 px, Anteil 40 % (fest, wie in der Referenz-Doku). Verfügbarkeit: bei beiden Quellen nur, wenn das Lighthouse-Ergebnis das Audit `font-size` enthält (TECH-230, INTEG-140; die Referenz-Doku kennzeichnet nur „Content Not Sized Correctly“ als lokal-exklusiv).
 - **Ausgabe (Spalten/Filter/Export):** Filter „Illegible Font Size“; Einstufung: Fehler / Hoch. Spalte `Font Display` (Score, TECH-231); Detail: Anteil in % und die drei häufigsten zu kleinen Schriftgrößen mit Selektor.
 - **Akzeptanzkriterien:**
-  - [ ] Quelle `remote`: Spalte `Font Display` leer, Filter leer, Übersicht mit Hinweis „nur mit lokaler Quelle“.
-  - [ ] Spaltenwert: Pass = `100`, Fail = `0`.
-  - [ ] Gemessen wird über alle sichtbaren Textknoten: Gewicht = Anzahl Zeichen ohne Whitespace; Schriftgröße = berechnete `font-size` des Elternelements in CSS-px.
+  - [ ] Quelle ohne geliefertes Audit: Spalte `Font Display` leer, Filter leer, Übersicht mit Hinweis „Audit von der Quelle nicht geliefert“ (TECH-230). Liefert die Quelle das Audit, wird dessen Score übernommen (TECH-231).
+  - [ ] Spaltenwert: Audit-Score nach INTEG-140.
+  - [ ] Erwartete Semantik des Audits: Gemessen wird über alle sichtbaren Textknoten: Gewicht = Anzahl Zeichen ohne Whitespace; Schriftgröße = berechnete `font-size` des Elternelements in CSS-px.
   - [ ] Fail, wenn Anteil der Zeichen mit `font-size < 12` **größer als 40 %** ist. Genau 40 % → Pass.
-  - [ ] Seite ohne Viewport-Meta: Prüfung übersprungen (leer), da ohne Viewport skaliert wird (Festlegung, analog Lighthouse-Verhalten).
+  - [ ] Seite ohne Viewport-Meta: keine eigene Sonderregel; der Spaltenwert folgt dem Audit-Ergebnis nach INTEG-140.
 - **Testfixture:** `mobile/small-font-41.html` (41 % der Zeichen in 11 px → 0), `/small-font-40.html` (genau 40 % → 100), `/small-font-12px.html` (alles in genau 12 px → 100, Grenze exklusiv). Zusätzlich Remote-Lauf mit gemockter PSI-Antwort: `Font Display` leer.
 
 ### TECH-236 Filter „Unsupported Plugins“
 - **Priorität:** P1
-- **Beschreibung:** Seiten mit Browser-Plugins (Flash, Silverlight, Java-Applets), die mobil nicht laufen und nicht indexiert werden.
-- **Eingaben/Konfiguration:** –
+- **Beschreibung:** Seiten mit Browser-Plugins (Flash, Silverlight, Java-Applets), die mobil nicht laufen und von Suchmaschinen nicht indexiert werden.
+- **Eingaben/Konfiguration:** Metrikgruppe „Mobile“ (TECH-230, INTEG-133). Liefert die Quelle ein Lighthouse-Audit `plugins`, wird dessen Score übernommen (INTEG-140); sonst ermittelt OpenSpider den Wert selbst aus dem DOM des Crawls (gerendert im JS-Rendering-Modus, sonst Roh-HTML) nach den folgenden Regeln (Festlegung).
 - **Ausgabe (Spalten/Filter/Export):** Filter „Unsupported Plugins“; Einstufung: Fehler / Hoch. Spalte `Plugins`.
 - **Akzeptanzkriterien:**
-  - [ ] Fail bei: `<applet>`; `<embed>` oder `<object>` mit `type` `application/x-shockwave-flash`, `application/x-silverlight*`, `application/x-java-applet*` oder Datei-Endung `.swf`, `.xap`, `.class`, `.jar` in `src`/`data`; `<param name="movie">` mit `.swf`.
-  - [ ] `<object type="image/svg+xml">` und `<embed type="application/pdf">` → Pass.
-  - [ ] Spaltenwert: Pass = `100`, Fail = `0`, nicht geprüft = leer (TECH-231).
-- **Testfixture:** `mobile/flash.html`, `/silverlight.html`, `/svg-object.html` (Negativtest).
+  - [ ] Fail bei: `<applet>`; `<embed>` oder `<object>` mit `type` `application/x-shockwave-flash`, `application/futuresplash`, `application/x-silverlight`, `application/x-silverlight-2` bzw. `application/x-silverlight*` oder `application/x-java-applet*`; `<object classid>` mit einer bekannten Flash-, Silverlight- oder Java-ClassID; Datei-Endung `.swf`, `.xap`, `.class`, `.jar` in `src`/`data`; `<param name="movie">` mit `.swf`.
+  - [ ] `<object>`/`<embed>` mit Bild-, SVG-, PDF- oder HTML-Inhalt (z. B. `type="image/svg+xml"`, `type="application/pdf"`) → Pass.
+  - [ ] Ein per JavaScript eingefügtes Plugin-Element wird nur erkannt, wenn das DOM gerendert geprüft wird (JS-Rendering-Modus oder Lighthouse-Audit `plugins`).
+  - [ ] Spaltenwert: Pass = `100`, Fail = `0`, nicht geprüft = leer (TECH-231); Filter enthält die URL genau dann, wenn `Plugins` < 100.
+- **Testfixture:** `mobile/flash.html`, `/silverlight.html`, `/applet.html`, `/js-flash.html`, `/svg-object.html` und `/object-pdf.html` (Negativtests).
 
 ### TECH-237 Filter „Mobile Alternate Link“
 - **Priorität:** P1
-- **Beschreibung:** Seite verweist auf eine separate Mobil-URL (statt responsivem Design). Zulässig, aber meist weniger effizient.
-- **Eingaben/Konfiguration:** Option „Mobile Alternate URLs crawlen“ (Standard aus, Crawl-Spec).
-- **Ausgabe (Spalten/Filter/Export):** Filter „Mobile Alternate Link“; Einstufung: Warnung / Hoch. Spalte `Mobile Alternate Link` = Ziel-URL.
+- **Beschreibung:** Führend für Spalte und Filter (K-14; INTEG-147 und CRAWL-051 verweisen für die Logik hierher). Seite verweist auf eine separate Mobil-URL (statt responsivem Design). Zulässig, aber meist weniger effizient, weil dieselben Inhalte unter zwei URLs gepflegt werden. Die Daten stammen aus dem gecrawlten Dokument, nicht aus Lighthouse, und werden daher auch ohne PSI-Anbindung befüllt (die Referenz-Doku beschreibt die Spalte ohne PSI-Bezug).
+- **Eingaben/Konfiguration:** Speichern/Crawlen von Mobile-Alternate-Links in der Spider-Konfiguration (CRAWL-051; Standardwerte dort). „Speichern“ befüllt Spalte und Filter, „Crawlen“ ruft zusätzlich die Mobil-URLs ab.
+- **Ausgabe (Spalten/Filter/Export):** Filter „Mobile Alternate Link“; Einstufung: Warnung / Hoch. Spalte `Mobile Alternate Link` = absolut aufgelöste Ziel-URL (TECH-002).
 - **Akzeptanzkriterien:**
-  - [ ] Bedingung: `<link rel="alternate" media="…" href>` mit nicht-leerem `media` (z. B. `only screen and (max-width: 640px)`), ohne `hreflang` und ohne `type`.
+  - [ ] Bedingung: `<link>` im Head (TECH-003), dessen `rel` das Token `alternate` enthält, mit einem `media`-Attribut, das eine Bildschirmbreiten-Bedingung (`max-width` oder `max-device-width`) enthält oder `handheld` lautet, ohne `hreflang` und ohne `type` (Festlegung der Erkennungsregel).
+  - [ ] Ein gleichwertiger HTTP-`Link`-Header (`rel="alternate"` mit passendem `media`) wird ebenso ausgewertet.
+  - [ ] Mehrere passende Angaben: Die erste in Dokumentreihenfolge (HTML vor Header) steht in der Spalte; die Anzahl steht im Tooltip.
+  - [ ] Relatives `href` wird gegen die Basis-URL aufgelöst.
   - [ ] `rel=alternate` mit `hreflang` (TECH-070) oder `type="application/rss+xml"` → nicht gelistet.
-- **Testfixture:** `mobile/m-alternate.html` → `https://m.site.test/page`.
+  - [ ] Filter enthält die URL genau dann, wenn die Spalte nicht leer ist; das gilt auch bei abgeschalteter PSI-Anbindung.
+- **Testfixture:** `mobile/m-alternate.html` → `https://m.site.test/page`; `/m-alternate-relative.html` (`href="/m/page"`), `/m-alternate-header` (Link-Header), `/hreflang-only.html` und `/rss-alternate.html` (Negativtests); Lauf mit abgeschalteter PSI-Anbindung.
 
 ---
 
@@ -2076,18 +2069,18 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
 
 ### TECH-259 Detailansicht „Accessibility Details“ und Exporte
 - **Priorität:** P1
-- **Beschreibung:** Untere Detailansicht und Bulk-Exporte.
+- **Beschreibung:** Untere Detailansicht und Bulk-Exporte. Führend für den **Inhalt** des Detail-Tabs „Accessibility Details“ (K-15: Datenfelder, Ergebnisarten, Zählregeln); Layout, Ergebnisfilter-Umschalter, Standardauswahl, Sortierung in der Anzeige und Kontextaktionen regelt UI-048 (P1).
 - **Eingaben/Konfiguration:** –
 - **Ausgabe (Spalten/Filter/Export):**
-  - Untere Ansicht „Accessibility Details“, linker Bereich: eine Zeile je Regel der gewählten URL mit `Issue` (Regel-Kurzname), `Result` (`Violation` / `Incomplete` / `Inapplicable` / `Passed`), `Guideline` (Gruppe), `Impact`, `Nodes` (Anzahl Knoten, bei Inapplicable/Passed leer), `Help URL` (Regelseite des Herstellers). Umschalter oben: „Alle“ / „Nur Verstöße“ / „Incomplete“ / „Inapplicable“ / „Passed“ (Standard „Alle“, sortiert nach Ergebnisart in obiger Reihenfolge, dann Impact absteigend).
-  - Rechter Bereich bei Klick auf eine Regel mit Knoten: `Address` (bei Mehrfachauswahl mehrere URLs) und `Location on Page` (CSS-Selektor), dazu `HTML` (Ausschnitt, max. 500 Zeichen). Kontextaktionen „Im Browser zeigen“ (öffnet die gerenderte Seite und hebt das Element hervor) und „Im gerenderten HTML zeigen“.
-  - Bulk-Exporte „Accessibility > All Violations“ und je Gruppe „Accessibility > <Gruppe> Violations“, zusätzlich „Accessibility > Incomplete“ (Knoten zur manuellen Prüfung). Report „Accessibility Violations Summary“ (je Regel: Anzahl Seiten, Anzahl Knoten, Beispiel-URL).
+  - Daten je Regel der gewählten URL (linker Bereich in UI-048): `Issue` (Regel-Kurzname), `Result` (`Violation` / `Incomplete` / `Inapplicable` / `Passed`), `Guideline` (Gruppe), `Impact`, `Nodes` (Anzahl Knoten, bei Inapplicable/Passed leer), `Help URL` (Regelseite des Herstellers).
+  - Daten je betroffenem Knoten einer Regel (rechter Bereich in UI-048): `Address` (bei Mehrfachauswahl mehrere URLs), `Location on Page` (CSS-Selektor), `HTML` (Ausschnitt, max. 500 Zeichen).
+  - Bulk-Exporte und Report: OUT-062 („All Violations“, je WCAG-Stufe und „Incomplete“) und OUT-109 („Violations Summary“) legen fest, welche Exporte es gibt und welche Zusatzspalten sie haben; die oben definierten Feldnamen übernehmen sie exakt (Detail-Export OUT-021). Hier gilt nur die Zeilenauswahl (Kriterien unten).
 - **Akzeptanzkriterien:**
   - [ ] Die Detailansicht zeigt für eine geprüfte URL genau eine Zeile je aktivierter Regel; die Anzahl der Zeilen mit `Result = Violation` ist gleich der Summe der Gruppen-Zählspalten dieser URL (TECH-251).
   - [ ] Eine Regel, die auf der Seite nicht anwendbar ist (z. B. `video-caption` ohne `<video>`), erscheint als `Inapplicable` ohne Impact.
   - [ ] Eine Regel mit unentscheidbarem Ergebnis (typisch `color-contrast` bei Text über Hintergrundbild) erscheint als `Incomplete` mit Knoten und zählt **nicht** in den Filtern.
   - [ ] Je Knoten genau eine Zeile im All-Violations-Export.
-  - [ ] Summary-Report: Summe der Seiten je Regel stimmt mit der Zeilenanzahl des jeweiligen Regel-Filters überein.
+  - [ ] Summary-Report (OUT-109): `URLs` je Regel stimmt mit der Zeilenanzahl des jeweiligen Regel-Filters überein.
 - **Testfixture:** `a11y/` Golden-Exporte; zusätzlich `a11y/result-types.html`: ein Bild ohne Alt (Violation `image-alt`), Text über einem Hintergrundbild (Incomplete `color-contrast`), keine `<video>` (Inapplicable `video-caption`), korrektes `lang` am html (Passed `html-has-lang`). Golden: Ergebnisart je dieser vier Regeln.
 
 ---
@@ -2226,47 +2219,57 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
 
 ### TECH-292 Option „Green Hosting Carbon Calculation“
 - **Priorität:** P2
-- **Beschreibung:** Läuft eine Website nachweislich mit erneuerbarer Energie, ist der Anteil des Rechenzentrums am Ausstoß kleiner. Die Option sagt der CO2-Schätzung (TECH-291), dass sie für diesen Anteil mit dem Emissionsfaktor für erneuerbare Energie rechnen soll. Ob ein Host grün ist, kann der Nutzer z. B. über die öffentliche Prüfung der Green Web Foundation klären. OpenSpider fragt diesen Dienst **nicht** automatisch ab (keine externen Aufrufe ohne Zustimmung, Festlegung).
-- **Eingaben/Konfiguration:** `green_hosting` (bool), Standard **aus**; Spider-Konfiguration, Bereich „Advanced“ (wie Referenz). Gilt für alle internen URLs des Crawls (Festlegung: keine Unterscheidung je Host; externe Ressourcen werden immer als nicht grün gerechnet).
-- **Ausgabe (Spalten/Filter/Export):** wirkt auf `CO2 (mg)` und `Carbon Rating`; die Einstellung wird in der Crawl-Datei und im Export-Kopf vermerkt.
+- **Beschreibung:** Führender Eintrag für Green Hosting (CRAWL-139 verweist hierher). Läuft eine Website nachweislich mit erneuerbarer Energie, ist der Anteil des Rechenzentrums am Ausstoß kleiner. Die Option sagt der CO2-Schätzung (TECH-291), dass sie für diesen Anteil mit dem Emissionsfaktor für erneuerbare Energie rechnen soll. Ob ein Host grün ist, kann der Nutzer z. B. über die öffentliche Prüfung der Green Web Foundation klären; der Konfigurationsdialog bietet dafür nur einen Link „Hosting-Status prüfen“, der eine öffentliche Prüfseite im Systembrowser öffnet. OpenSpider fragt diesen Dienst **nicht** automatisch ab (keine externen Aufrufe ohne Nutzeraktion, Festlegung).
+- **Eingaben/Konfiguration:** `green_hosting` (bool; Konfigurationsschlüssel `advanced.green_hosting`), Standard **aus** (die Referenz nennt keinen Standard, die Beschreibung legt „nur aktivieren, wenn zutreffend“ nahe); Spider-Konfiguration, Bereich „Advanced“ (wie Referenz). Gilt für alle internen URLs des Crawls (Festlegung: keine Unterscheidung je Host; externe Ressourcen werden immer als nicht grün gerechnet).
+- **Ausgabe (Spalten/Filter/Export):** wirkt auf `CO2 (mg)` und `Carbon Rating`; die Einstellung wird in der Crawl-Datei, in der Crawl-Übersicht („Grünes Hosting: ja/nein“) und im Export-Kopf vermerkt.
 - **Akzeptanzkriterien:**
   - [ ] Option an → Der Rechenzentrumsanteil der Dokument-Bytes und der **internen** Ressourcen-Bytes wird mit dem Grünstrom-Faktor des Modells berechnet (CO2.js-Parameter für grünes Hosting); externe Ressourcen weiter mit dem Standardfaktor. Option aus → alles mit dem Standardfaktor.
   - [ ] Für dieselbe Seite gilt `CO2 (mg)` (an) < `CO2 (mg)` (aus), sofern interne Bytes > 0.
-  - [ ] Umschalten erfordert keinen neuen Crawl (Neuberechnung aus `Total Transferred (Bytes)`, getrennt gespeichert nach intern/extern).
+  - [ ] Für feste Bytezahlen (intern/extern) weicht `CO2 (mg)` bei Option an und aus höchstens 0,1 % vom Ergebnis der fixierten CO2.js-Version mit denselben Parametern ab (übernommen aus CRAWL-139).
+  - [ ] Umschalten erfordert keinen neuen Crawl (Neuberechnung aus `Total Transferred (Bytes)`, getrennt gespeichert nach intern/extern; Request-Zähler unverändert) und dauert < 2 s bei 10 000 URLs.
+  - [ ] Gemischte Seite (1 MiB intern + 1 MiB extern): Bei Option an liegt `CO2 (mg)` zwischen dem Wert „alles grün“ und „alles mit Standardfaktor“.
+  - [ ] Ohne Nutzeraktion wird kein Request an einen Green-Hosting-Prüfdienst gesendet (Netzwerkmitschnitt im Test).
   - [ ] Im Text-only-Modus ohne Wirkung (Spalten leer).
-- **Testfixture:** `validation/medium.html` (ca. 800 KB intern, 200 KB externes Skript von einem zweiten Fixture-Host). Zwei Läufe (an/aus); Golden: CO2 „an“ kleiner, Rating ggf. eine Stufe besser; Unit-Test mit festen Bytezahlen gegen CO2.js-Referenzwerte mit `green=true`.
+- **Testfixture:** `validation/medium.html` (ca. 800 KB intern, 200 KB externes Skript von einem zweiten Fixture-Host), `/mixed-host.html` (1 MiB intern + 1 MiB von `cdn.other.test`). Zwei Läufe (an/aus); Golden: CO2 „an“ kleiner, Rating ggf. eine Stufe besser; Unit-Test mit festen Bytezahlen gegen CO2.js-Referenzwerte mit `green=true`.
 
 ---
 
 ## Change Detection
 
-Change Detection ist Teil des Vergleichsmodus (Moduswechsel und die Zustände Added/New/Removed/Missing für alle anderen Tabs regelt die Modus-Spec). Hier: der Tab, der Wertänderungen einzelner Elemente zwischen zwei Crawls zeigt – auch wenn die URL dadurch keinen anderen Filter betritt oder verlässt.
+Change Detection ist Teil des Vergleichsmodus. Auswahl der Crawls, Rollentausch, Klassifikation Added/New/Removed/Missing für alle anderen Tabs, URL-Mapping, gespeicherte Vergleiche, Vergleichs-Exporte und Auto Compare regelt **OUT-140 ff. (führend für den Compare-Ablauf)**. Hier – **führend für Change Detection (K-3)** – der Tab, der Wertänderungen einzelner Elemente zwischen zwei Crawls zeigt, auch wenn die URL dadurch keinen anderen Filter betritt oder verlässt. OUT-144, OUT-145 und CRAWL-033 verweisen hierher.
 
 ### TECH-300 Change-Detection-Konfiguration
 - **Priorität:** P1
-- **Beschreibung:** Auswahl der zu vergleichenden Elemente und der Schwelle für Inhaltsänderungen.
-- **Eingaben/Konfiguration:** Elemente (Mehrfachauswahl): Indexability, Page Titles, Meta Description, H1, Word Count, Crawl Depth, Inlinks, Unique Inlinks, Internal Outlinks, Unique Internal Outlinks, External Outlinks, Unique External Outlinks, Structured Data Unique Types, Content. Standard: alle außer Content an (Festlegung). Schwelle Inhaltsänderung in % (Standard 10).
-- **Ausgabe (Spalten/Filter/Export):** –
+- **Beschreibung:** Auswahl der zu vergleichenden Elemente und der Schwelle für Inhaltsänderungen (Konfiguration › Compare › Change Detection). Einzige Stelle, an der Elementliste, Reihenfolge und Standardauswahl festgelegt sind.
+- **Eingaben/Konfiguration:** Elemente (Mehrfachauswahl) in dieser Reihenfolge, die zugleich die Filterreihenfolge ist (gegen die öffentliche Tab-Doku der Referenz geprüft, Stand 24.3: genau diese 14 Filter):
+  1. `Indexability` (TECH-304), 2. `Page Titles`, 3. `Meta Description`, 4. `H1` (TECH-302),
+  5. `Word Count`, 6. `Crawl Depth`, 7. `Inlinks`, 8. `Unique Inlinks`, 9. `Internal Outlinks`, 10. `Unique Internal Outlinks`, 11. `External Outlinks`, 12. `Unique External Outlinks`, 13. `Structured Data Unique Types` (TECH-303),
+  14. `Content` (TECH-305).
+  
+  **Standardauswahl:** Elemente 1–13 an, `Content` aus (Festlegung; die öffentliche Referenz-Doku nennt keine Standardauswahl. Begründung: Elemente 1–13 werden aus ohnehin gespeicherten Crawl-Daten verglichen und kosten kaum Rechenzeit; `Content` setzt gespeicherte Inhalte voraus, die standardmäßig nicht vorliegen, und ist rechenintensiv). **Schwelle Inhaltsänderung** in %, ganzzahlig 0–100, Standard **10** (in der Referenz-Doku als Standard des Content-Filters genannt, verifiziert).
+- **Ausgabe (Spalten/Filter/Export):** – (Spalten und Filter: TECH-301 ff.)
 - **Akzeptanzkriterien:**
-  - [ ] Abgewählte Elemente erscheinen weder als Filter noch als Spalten.
-  - [ ] „Content“ ist nur wählbar, wenn beide Crawls den Seitentext gespeichert haben (sonst ausgegraut mit Hinweis).
-  - [ ] Konfigurationsänderung erfordert nur Neuberechnung des Vergleichs, keinen neuen Crawl.
+  - [ ] Registry-Test: genau 14 Elemente in obiger Reihenfolge; jedes ist einzeln abschaltbar; Standardauswahl wie oben.
+  - [ ] Abgewählte Elemente erscheinen weder als Filter noch als Spalten. Ist kein Element aktiv, fehlt der Tab „Change Detection“ (auch im rechten Übersichtsbereich).
+  - [ ] „Content“ ist nur wählbar, wenn beide Crawls den Text des Inhaltsbereichs bzw. dessen MinHash-Signatur gespeichert haben (die Referenz verlangt dafür gespeichertes HTML); sonst ist es ausgegraut mit Hinweis. Fehlen die Daten nur in einem Crawl eines bereits geöffneten Vergleichs, bleibt das Element mit Hinweis leer.
+  - [ ] Konfigurationsänderung (Elemente, Schwelle) erfordert nur Neuberechnung bzw. Neuklassifikation des Vergleichs, keinen neuen Crawl; ein bereits gespeicherter Vergleich bleibt dabei unverändert (OUT-150).
+  - [ ] Die Konfiguration ist Teil der Konfigurationsdatei und wird von CLI/Auto Compare (OUT-152) übernommen.
 - **Testfixture:** `tests/fixtures/tech/compare/`: Fixture-Server liefert in Version `v1` und `v2` (umschaltbar per Manifest) unterschiedliche Inhalte unter denselben URLs; zwei Crawls werden erzeugt und verglichen.
 
 ### TECH-301 Tab „Change Detection“: Population und Spalten
 - **Priorität:** P1
 - **Beschreibung:** Letzter Tab im Vergleichsmodus.
 - **Eingaben/Konfiguration:** Vergleichsmodus mit zwei Crawls (aktuell/vorher, vertauschbar).
-- **Ausgabe (Spalten/Filter/Export):** `Address`, dann je gewähltem Element `<Element> (Current)`, `<Element> (Previous)`, bei Zahlen zusätzlich `<Element> Change` (absolut) und `<Element> Change %`. Elementspalten: `Indexability`, `Title 1`, `Meta Description 1`, `H1-1`, `Word Count`, `Crawl Depth`, `Inlinks`, `Unique Inlinks`, `Outlinks`, `Unique Outlinks`, `External Outlinks`, `Unique External Outlinks`, `Unique Types`, `Content Change %`. Filter: „All“ + je Element ein Filter (TECH-302–305). Übersicht je Filter: `Current`, `Previous`, `Change` (alle drei = Anzahl geänderter URLs).
+- **Ausgabe (Spalten/Filter/Export):** `Address`, dann je gewähltem Element `<Element> (Current)`, `<Element> (Previous)`, bei Zahlen zusätzlich `<Element> Change` (absolut) und `<Element> Change %`. Elementspalten: `Indexability` (dazu `Indexability Status`, TECH-304), `Title 1`, `Meta Description 1`, `H1-1`, `Word Count`, `Crawl Depth`, `Inlinks`, `Unique Inlinks`, `Outlinks`, `Unique Outlinks`, `External Outlinks`, `Unique External Outlinks`, `Unique Types` (dazu `Unique Type Names`, TECH-303), `Content Change %`. Filter: „All“ + je Element ein Filter (TECH-302–305). Übersicht je Filter: `Current`, `Previous`, `Change` (alle drei = Anzahl geänderter URLs).
 - **Akzeptanzkriterien:**
-  - [ ] Population „All“: URLs, die in **beiden** Crawls vorkommen (nach URL-Mapping TECH-306) und analysiert wurden (interne HTML-Seiten mit Antwort in beiden Crawls).
+  - [ ] Population „All“: URLs, die in **beiden** Crawls vorkommen (nach URL-Mapping OUT-146) und analysiert wurden (interne HTML-Seiten mit Antwort in beiden Crawls).
   - [ ] URLs nur in einem Crawl erscheinen hier nicht (sie sind New/Missing in den anderen Tabs).
   - [ ] `Change %` = `(Current − Previous) / Previous × 100`; bei Previous = 0 und Current > 0 → leer (Division vermeiden), Sortierung behandelt leer als +∞ (Festlegung).
 - **Testfixture:** `compare/`.
 
 ### TECH-302 Elementfilter für Text-Elemente (Titel, Meta Description, H1)
 - **Priorität:** P1
-- **Beschreibung:** Filter „Page Titles“, „Meta Description“, „H1“: Seiten, deren erstes Element dieses Typs sich geändert hat.
+- **Beschreibung:** Filter „Page Titles“, „Meta Description“, „H1“: Seiten, deren erstes Element dieses Typs (Spalten `Title 1`, `Meta Description 1`, `H1-1`) sich geändert hat. Verglichen wird nur das erste Element, damit die angezeigten Spalten die Änderung immer erklären (Festlegung; eine reine Reihenfolgeänderung weiterer H1 ist keine Änderung).
 - **Eingaben/Konfiguration:** –
 - **Ausgabe (Spalten/Filter/Export):** Drei Filter (Information).
 - **Akzeptanzkriterien:**
@@ -2277,48 +2280,46 @@ Change Detection ist Teil des Vergleichsmodus (Moduswechsel und die Zustände Ad
 
 ### TECH-303 Elementfilter für Zahlen (Wortzahl, Tiefe, Links, Typen)
 - **Priorität:** P1
-- **Beschreibung:** Filter „Word Count“, „Crawl Depth“, „Inlinks“, „Unique Inlinks“, „Internal Outlinks“, „Unique Internal Outlinks“, „External Outlinks“, „Unique External Outlinks“, „Structured Data Unique Types“.
+- **Beschreibung:** Filter „Word Count“, „Crawl Depth“, „Inlinks“, „Unique Inlinks“, „Internal Outlinks“, „Unique Internal Outlinks“, „External Outlinks“, „Unique External Outlinks“, „Structured Data Unique Types“. Zählweise: `Inlinks` = alle internen Hyperlink-Inlinks einschließlich mehrerer Links derselben Quelle, `Unique Inlinks` = Anzahl verschiedener Quellseiten; analog `Internal Outlinks`/`Unique Internal Outlinks` und `External Outlinks`/`Unique External Outlinks` (verschiedene Ziele).
 - **Eingaben/Konfiguration:** –
 - **Ausgabe (Spalten/Filter/Export):** Neun Filter (Information).
 - **Akzeptanzkriterien:**
   - [ ] Bedingung je Filter: Current ≠ Previous (jede Differenz ≥ 1 zählt).
-  - [ ] Structured Data Unique Types: Vergleich der **Anzahl** eindeutiger Typen (nicht der Typnamen); Wechsel von `Product` zu `Article` bei gleicher Anzahl ist keine Änderung (Festlegung gemäß Referenzbeschreibung).
+  - [ ] Structured Data Unique Types (Entscheidung des Architekten): verglichen werden die **Menge** der eindeutigen `@type`-Werte und deren **Anzahl**; Änderung, wenn sich eines von beiden unterscheidet. Wechsel von `Product` zu `Article` bei gleicher Anzahl ist eine Änderung; reine Reihenfolge- oder Mehrfachvorkommen-Unterschiede (`Product` zweimal statt einmal) sind keine. Die Referenz-Doku nennt nur die geänderte Anzahl; die Typ-Menge ist eine bewusste OS-Erweiterung (übernommen aus OUT-144).
+  - [ ] Zur Erklärung der Änderung führt der Tab neben `Unique Types` (Anzahl) die Spalten `Unique Type Names (Current)`/`Unique Type Names (Previous)` (alphabetisch sortiert, mit `; ` getrennt; OS-Festlegung).
+  - [ ] Inlinks vs. Unique Inlinks: Die Startseite verlinkt `/x` jetzt zweimal statt einmal (sonst unverändert) → `Inlinks` geändert (1 → 2), `Unique Inlinks` nicht geändert; analog für die Outlink-Paare.
+  - [ ] `Change %` wie TECH-301 (Previous = 0 → leer).
   - [ ] Wert in einem Crawl nicht erhoben (z. B. strukturierte Daten aus) → Element für diese URL nicht verglichen.
-- **Testfixture:** `compare/`: `/e` +30 Wörter, `/f` eine Ebene tiefer, `/g` zwei zusätzliche Inlinks, `/h` Product→Product+Breadcrumb.
+- **Testfixture:** `compare/`: `/e` +30 Wörter, `/f` eine Ebene tiefer, `/g` zwei zusätzliche Inlinks, `/h` Product→Product+Breadcrumb, `/h2` Product→Article (gleiche Anzahl, gelistet), `/x` von der Startseite zusätzlich doppelt verlinkt, `/y` mit neuem externem Link.
 
 ### TECH-304 Elementfilter „Indexability“
 - **Priorität:** P1
-- **Beschreibung:** Seiten, die zwischen indexierbar und nicht indexierbar gewechselt haben.
+- **Beschreibung:** Seiten, deren Indexierbarkeit sich geändert hat: Wechsel zwischen indexierbar und nicht indexierbar **oder** Wechsel des Grundes der Nicht-Indexierbarkeit (Entscheidung des Architekten; die Referenz-Doku beschreibt nur den Wechsel Indexable/Non-Indexable, die Erweiterung um den Grund ist eine bewusste OS-Abweichung, damit z. B. ein neu gesetztes `noindex` auf einer bereits kanonisierten Seite sichtbar wird).
 - **Eingaben/Konfiguration:** –
 - **Ausgabe (Spalten/Filter/Export):** Filter „Indexability“ (Information).
 - **Akzeptanzkriterien:**
-  - [ ] Bedingung: `Indexability` (Current) ≠ `Indexability` (Previous).
-  - [ ] Wechsel nur des Grundes (noindex → Canonicalised) bei gleichbleibend Non-Indexable → keine Änderung (Festlegung); Grund steht trotzdem in Spalten `Indexability Status (Current/Previous)`.
-- **Testfixture:** `compare/i` erhält in v2 `noindex`; `/j` wechselt von noindex zu canonicalised.
+  - [ ] Bedingung: `Indexability` (Current) ≠ `Indexability` (Previous) **oder** `Indexability Status` (Current) ≠ `Indexability Status` (Previous).
+  - [ ] Wechsel nur des Grundes (noindex → Canonicalised) bei gleichbleibend Non-Indexable → Änderung (übernommen aus OUT-144); beide Gründe stehen in den Spalten `Indexability Status (Current)`/`Indexability Status (Previous)`.
+  - [ ] Mehrere Gründe (z. B. `noindex` und `Canonicalised`) werden als Menge verglichen; nur eine geänderte Reihenfolge ist keine Änderung (OS-Festlegung).
+- **Testfixture:** `compare/i` erhält in v2 `noindex` (gelistet); `/j` wechselt von noindex zu canonicalised (gelistet); `/j2` behält `noindex` unverändert (nicht gelistet).
 
 ### TECH-305 Elementfilter „Content“ (MinHash-Ähnlichkeit)
 - **Priorität:** P1
 - **Beschreibung:** Seiten, deren Textinhalt sich über die Schwelle hinaus geändert hat.
-- **Eingaben/Konfiguration:** Schwelle (Standard 10 %); Inhaltsbereich wie Content-Spec.
+- **Eingaben/Konfiguration:** Schwelle (TECH-300, Standard 10 %); Inhaltsbereich wie Content-Spec.
 - **Ausgabe (Spalten/Filter/Export):** Filter „Content“ (Information); Spalte `Content Change %`.
 - **Akzeptanzkriterien:**
-  - [ ] Verfahren: Text des Inhaltsbereichs normalisiert (Kleinbuchstaben, Whitespace zusammengefasst), Wort-Shingles der Länge 3, MinHash mit 128 Permutationen und festem Seed (Festlegung); Ähnlichkeit = geschätzte Jaccard-Ähnlichkeit; `Content Change % = (1 − Ähnlichkeit) × 100`, 1 Nachkommastelle.
-  - [ ] Bedingung: `Content Change % > Schwelle`. Genau 10,0 → nicht gelistet.
-  - [ ] Identischer Text → 0,0; vollständig anderer Text → 100,0 (± MinHash-Toleranz 3 Prozentpunkte in Tests).
-  - [ ] Deterministisch: gleiche Eingaben liefern auf allen Plattformen denselben Wert.
-- **Testfixture:** `compare/k` (ein Satz von 50 geändert → unter 10 %), `/l` (Hälfte des Texts ersetzt → ca. 50 %), `/m` (identisch).
+  - [ ] Verfahren: Text des Inhaltsbereichs normalisiert (Kleinbuchstaben, Whitespace zusammengefasst), Wort-Shingles der Länge 3, MinHash mit 128 Permutationen und festem Seed (Festlegung); Ähnlichkeit = geschätzte Jaccard-Ähnlichkeit; `Content Change % = (1 − Ähnlichkeit) × 100`, gerundet auf 2 Nachkommastellen. Die Klassifikation nutzt den gerundeten Wert, damit Anzeige und Filter übereinstimmen.
+  - [ ] Bedingung: `Content Change % > Schwelle` (strikt; in der Referenz-Doku „mehr als 10 %“). Grenzfalltest über injizierte Ähnlichkeitswerte: 10,00 → nicht gelistet, 10,01 → gelistet.
+  - [ ] Identischer Text → 0,00; vollständig anderer Text → 100,00 (± MinHash-Toleranz 3 Prozentpunkte in Tests); Hälfte des Texts ersetzt → zwischen 35 und 65.
+  - [ ] Änderung der Schwelle (z. B. 10 → 40) klassifiziert ohne erneutes Crawlen aus den gespeicherten Signaturen neu.
+  - [ ] Deterministisch: gleiche Eingaben liefern auf allen Plattformen denselben Wert; Golden-Test `compare/content-change.golden.csv` läuft unverändert auf macOS arm64, macOS x64 und Windows x64 (übernommen aus OUT-145).
+  - [ ] Content Change ist P1 wie die übrigen Elemente (Entscheidung des Architekten; OUT-145 ist Verweis-Stub hierher).
+- **Testfixture:** `compare/k` (ein Satz von 50 geändert → unter 10 %), `/l` (Hälfte des Texts ersetzt → ca. 50 %), `/m` (identisch), `/n` (ca. 30 % ersetzt → gelistet bei 10, nicht gelistet bei 40), `/o` (nur Footer geändert → 0 bei Inhaltsbereich ohne Footer).
 
 ### TECH-306 URL-Mapping zwischen den Crawls
 - **Priorität:** P1
-- **Beschreibung:** Ordnet URLs des vorherigen Crawls per Regex ihren Gegenstücken im aktuellen Crawl zu (z. B. Staging-Host → Live-Host, Trailing Slash, `/mobile/`-Pfad), damit Change Detection und die Vergleichszustände sie als dieselbe Seite behandeln.
-- **Eingaben/Konfiguration:** Liste von Regeln (Regex auf vorherige URL, Ersetzung mit Rückverweisen `$1`), in Reihenfolge angewendet, beliebig viele; Test-Ansicht mit Eingabe-URL → Ergebnis.
-- **Ausgabe (Spalten/Filter/Export):** `Address` zeigt die aktuelle URL; Export enthält zusätzlich `Previous Address`.
-- **Akzeptanzkriterien:**
-  - [ ] Regeln werden nacheinander auf die vorherige URL angewendet (Ergebnis einer Regel ist Eingabe der nächsten).
-  - [ ] Bilden mehrere vorherige URLs auf dieselbe aktuelle URL ab, wird die erste (lexikographisch kleinste vorherige URL) verwendet und ein Hinweis protokolliert (Festlegung).
-  - [ ] Beispiel: Regel `^https://staging\.site\.test/(.*)$` → `https://site.test/$1` ordnet `https://staging.site.test/a` der URL `https://site.test/a` zu.
-  - [ ] Regex-Syntax: Rust-`regex` (kein Lookaround); ungültige Regel wird beim Speichern abgelehnt.
-- **Testfixture:** `compare/` mit vorherigem Crawl unter Host `staging.site.test` und aktuellem unter `site.test` (Host-Override im Fixture-Server).
+- **Verweis:** siehe OUT-146 (führend). Die Spalte `Previous Address` regelt OUT-151.
 
 ### TECH-307 Umschalter „Changed“/„Not Changed“ und Sortierung nach Änderung
 - **Priorität:** P1
@@ -2333,25 +2334,7 @@ Change Detection ist Teil des Vergleichsmodus (Moduswechsel und die Zustände Ad
 
 ### TECH-308 Automatischer Crawl-Vergleich („Auto Compare Crawls“) für geplante und CLI-Crawls
 - **Priorität:** P1
-- **Beschreibung:** Geplante Crawls und CLI-Crawls, die einem Projekt zugeordnet sind, werden nach Abschluss automatisch mit dem vorherigen Crawl desselben Projekts verglichen (Vergleichsmodus inkl. Change Detection). Die Ergebnisse stehen danach in der Oberfläche als fertiger Vergleich bereit und fließen in die Benachrichtigungs-E-Mail ein, die eine Änderungstabelle enthält. Neu in der Referenz mit 24.0. Moduswechsel, Projektverwaltung, Scheduler und E-Mail-Versand regeln die Modus- und Betriebs-Spec. Hier wird nur festgelegt, was der Vergleich liefern muss.
-- **Eingaben/Konfiguration:**
-  - Scheduler-Aufgabe: Häkchen „Crawls automatisch vergleichen“ (Standard aus), nur aktivierbar, wenn ein Projektname gesetzt ist.
-  - CLI: Schalter `--compare-with-previous` (OpenSpider-Name, Festlegung) zusammen mit `--project-name <Name>`. Für das Paritäts-Mapping ist der Referenz-Schalter laut Review `--project-crawl-comparison`; der Name wird vor der Umsetzung gegen die Hilfe-Ausgabe der Referenz-CLI geprüft (Anhang A).
-  - Voraussetzung: Datenbank-Speichermodus (wie der manuelle Vergleichsmodus).
-  - Vergleichskonfiguration (TECH-300, URL-Mapping TECH-306) aus dem Projekt bzw. der übergebenen Konfigurationsdatei.
-- **Ausgabe (Spalten/Filter/Export):**
-  - Gespeicherter Vergleich „<aktueller Crawl> vs. <vorheriger Crawl>“ im Projekt.
-  - E-Mail-Benachrichtigung (Betriebs-Spec) mit zwei Tabellen. (1) Issue-Tabelle des aktuellen Crawls unter der Zusammenfassung: Issue, Art, Dringlichkeit, URLs. (2) Bei aktivem Vergleich zusätzlich eine Änderungstabelle: Issue/Filter, `Previous`, `Current`, `Change` (absolut), `Change %`, sortiert nach Betrag von `Change` absteigend; dazu je eine Zeile für hinzugekommene und entfernte URLs (Added/Removed aus der Modus-Spec) und die Change-Detection-Filter (TECH-302–305) mit Anzahl geänderter URLs.
-  - Optionale Exporte des Vergleichs wie im manuellen Vergleichsmodus.
-- **Akzeptanzkriterien:**
-  - [ ] Erster Crawl eines Projekts (kein Vorgänger) → kein Vergleich, E-Mail enthält nur die Issue-Tabelle und den Hinweis „kein vorheriger Crawl“.
-  - [ ] Verglichen wird immer mit dem **unmittelbar vorherigen, erfolgreich abgeschlossenen** Crawl desselben Projekts. Abgebrochene oder fehlgeschlagene Crawls werden übersprungen.
-  - [ ] Die Crawl-Analyse (TECH-005) beider Crawls ist vor dem Vergleich abgeschlossen; fehlt sie beim aktuellen Crawl, wird sie automatisch gestartet.
-  - [ ] Die Zahlen der Änderungstabelle stimmen mit dem manuell geöffneten Vergleich derselben zwei Crawls überein (Golden-Vergleich).
-  - [ ] `Change %` wie TECH-301 (Previous = 0 → leer). Zeilen mit `Change = 0` werden in der E-Mail weggelassen, wenn „Leere Reports überspringen“ aktiv ist (Export-Spec), sonst angezeigt (Festlegung).
-  - [ ] Beispiele, die die E-Mail sichtbar machen muss: Zunahme der nicht indexierbaren Seiten, verschwundene Seitentitel (Page Titles > Missing steigt), hinzugekommene/entfernte URLs.
-  - [ ] Ohne Datenbank-Speichermodus lässt sich die Option nicht aktivieren (UI ausgegraut; CLI bricht mit verständlicher Fehlermeldung und Exit-Code ≠ 0 ab).
-- **Testfixture:** `tests/fixtures/tech/compare/` (v1/v2 umschaltbar): Projekt `fixture-compare`, CLI-Crawl gegen v1, dann gegen v2 mit `--compare-with-previous`. Erwartung: Vergleich gespeichert; E-Mail-Mock (lokaler SMTP-Fänger) enthält die Änderungstabelle mit `Indexability` +1 (`/i` erhält noindex) und `Page Titles` +1 (`/a`). Dritter Lauf nach abgebrochenem Crawl vergleicht mit dem zweiten, nicht mit dem abgebrochenen.
+- **Verweis:** siehe OUT-152 (führend). Eine Abhängigkeit von einem Speichermodus gibt es nicht (CRAWL-124).
 
 ---
 
@@ -2369,34 +2352,41 @@ Legende: **F** = OpenSpider-Festlegung (Referenzverhalten unbekannt, gegen Golde
 8. **K – Orphan-Definition (TECH-214):** Korrigiert nach Tab-Doku und Sitemap-Tutorial: Orphans sind URLs nur aus Sitemaps **und** URLs, die nur über solche Sitemap-URLs entdeckt wurden (Folge-Orphans). **F:** Welche Kantentypen (Canonical, hreflang, Redirect, Pagination) als „im Crawl gefunden“ gelten, ist nicht dokumentiert; Festlegung: alle außer „XML Sitemap“.
 9. **PA – Sitemap-hreflang-Spalten (TECH-071):** Referenz füllt sie laut Doku nur im Listenmodus; OpenSpider füllt sie immer.
 10. **F – Accessibility-Zählweise (TECH-251):** Anzahl verletzter Regeln statt Anzahl Knoten.
-11. **K – Mobile-Spaltenname (TECH-231):** Referenzname `Font Display` übernommen; Alias `Font Size` entfällt.
+11. **K – Mobile-Spaltenname (TECH-231):** Referenzname `Font Display` übernommen; Alias `Font Size` entfällt. Spaltenliste und Score-Darstellung (0–100) am 2026-10-13 gegen die öffentliche Tab-Doku geprüft.
 12. **F – Carbon-Modellversion (TECH-291):** Welche SWD-Version die Referenz nutzt, ist nicht dokumentiert (Standard `swd-v3`). **K:** Grünes Hosting ist eine Option (TECH-292), keine feste Annahme. Die Grenzwerte stammen aus der fixierten CO2.js-Version (Anhang C).
 13. **F – HTML-Größengrenze 2 MB (TECH-289):** Einheit (MB vs. MiB) nicht dokumentiert; Festlegung MiB.
 14. **Lizenz schema.org-Vokabular (TECH-187):** siehe Anhang C.
 15. **K/PA – Google-Rich-Result-Features (TECH-188):** FAQ wird wie in der Referenz (seit 24.2 entfernt) nicht validiert → keine Abweichung. Sitelinks Searchbox (und HowTo) validiert OpenSpider nicht, obwohl die Referenz-Doku die Sitelinks Searchbox noch führt → **PA**, Ausschlussliste `assets/sd/parity-exclusions.toml`.
 16. **F – Head-Zugehörigkeit bei zweitem `<head>` vor `<body>` (TECH-003):** „zählt als im Head“.
-17. **F – Mobile-Prüfung im Text-only-Modus (TECH-230):** separater mobiler Render-Durchgang nur für diese Prüfung.
+17. **K – Mobile-Prüfung im Text-only-Modus (TECH-230):** Quelle „Lokal“ ist ein lokaler Lighthouse-Lauf in eigener Chrome-Instanz (INTEG-132) und daher unabhängig vom Rendering-Modus des Crawls. Die frühere Festlegung (eigene Messskripte im eingebauten Chromium, Standardquelle `local`) entfällt; die Standardquelle legt INTEG-130 fest.
 18. **F – Standardwert „Perform HTML Validation“ (TECH-008):** Referenzstandard nicht dokumentiert; OpenSpider: an. Prüfung an einer frischen Referenzinstallation (nur Beobachtung der Oberfläche, kein Code). Falls die Referenz „aus“ verwendet, ändert sich nur der Standardwert, nicht die Logik.
 19. **F – „Ignore Non-Indexable URLs for Issues“ (TECH-009):** Standard (an) und Abgrenzung der betroffenen Filter. Die Referenz-Doku nennt nur eine Beispielliste. Weitere technische Filter sind in OpenSpider bewusst nicht betroffen.
 20. **F – Statustext `Self Referencing Meta Refresh` (TECH-001/068):** Die Referenz nennt den genauen Indexierbarkeitsstatus nicht. **K:** Selbst-Refresh ist bei Standard nicht indexierbar (vorher fälschlich „ändert nichts“).
 21. **PA – hreflang > 500 Annotationen (TECH-004/070):** Referenz meldet solche Seiten nicht; OpenSpider wertet die ersten 500 aus (`hreflang_over_limit = truncate`), Referenzverhalten über `skip`.
 22. **PA – Hreflang-Tab ohne „Crawl Hreflang“ (TECH-071):** Referenz verlangt Store **und** Crawl; OpenSpider befüllt eigenseitige Filter schon mit Store.
 23. **F – Bestätigungsstatus der hreflang-Detailansicht (TECH-089):** `Missing`/`Inconsistent` wie Referenz; `Self`, `Not Crawled`, `Non-200`, `Noindex`, `Non-Canonical`, `Confirmed` und die Vorrangregel sind Festlegung.
-24. **F – Alias „Inconsistent Language & Region Confirmation Links“ (TECH-077/088):** im Review als Name der Issue-Bibliothek genannt, in der öffentlichen Tab- und Tutorial-Doku nicht gefunden. Vor dem Golden-Test bestätigen; bis dahin nur als Alias im Mapping.
+24. **F – Alias „Inconsistent Language & Region Confirmation Links“ (TECH-077; Report OUT-094):** im Review als Name der Issue-Bibliothek genannt, in der öffentlichen Tab- und Tutorial-Doku nicht gefunden. Vor dem Golden-Test bestätigen; bis dahin nur als Alias im Mapping.
 25. **K/F – Live vs. Nachlauf (TECH-005):** **K:** hreflang-Filter außer „Unlinked Hreflang URLs“ sind live (Referenz-Tutorial). Sitemaps: 2 live / 5 Nachlauf (Referenz-Tutorial nennt das Verhältnis; welche zwei live sind, ist aus der Sache abgeleitet: die beiden Dateieigenschaften). **F:** Analysebereiche „Canonicals“ und „Links“ sind OpenSpider-Ergänzungen; ob die Referenz TECH-018/020/139/140/142 live berechnet, ist ungeprüft.
-26. **F – Mobile-Scores lokal (TECH-231):** Lokale Prüfungen liefern nur 0 oder 100; Remote-Scores werden übernommen. Aufteilung des Menüs „Reports > Mobile“ in Einzelreports ist Festlegung.
+26. **K – Mobile-Scores (TECH-231):** Spaltenwerte sind für beide Quellen der Audit-Score nach INTEG-140 (vorher: lokale Prüfungen binär 0/100). Binär bleibt nur die DOM-Erkennung von `Plugins` (TECH-236). Aufbau des Menüs „Reports > Mobile“ führend in OUT-108 (vorher eigene Aufteilung hier).
 27. **F – Accessibility-Ergebnisarten (TECH-250/259):** `passes`/`inapplicable` ohne Knoten gespeichert.
-28. **F – CLI-Schalter für Auto-Vergleich (TECH-308):** OpenSpider `--compare-with-previous`; Referenzname (laut Review `--project-crawl-comparison`) in der öffentlichen Doku nicht bestätigt.
+28. **K – CLI-Schalter für Auto-Vergleich (TECH-308):** TECH-308 ist ein Verweis auf OUT-152; CLI-Schalter (einschließlich `--compare-with-previous`) gehören in den CLI-Block von 06. Die frühere Bedingung „Datenbank-Speichermodus“ entfällt (OpenSpider hat nur einen disk-first-Speichermodus).
 29. **PA – Spalte `Inlinks` im Links-Tab (TECH-130):** in der Referenz nicht vorhanden; bei OpenSpider standardmäßig ausgeblendet.
 30. **K – „\<body> Element Preceding \<html>“ (TECH-288):** laut Issue-Beschreibung jedes Body-Inhaltselement vor `<html>`, nicht nur `<body>`. **F:** Head-Elemente vor `<html>` lösen nicht aus.
 31. **K – AMP-Viewport (TECH-163):** `width=device-width` **und** `minimum-scale=1` sind Pflicht (Tab-Doku); `initial-scale=1` nur empfohlen.
 32. **F – Anchors-Ansicht (TECH-146):** Standardwerte der Ausschluss-Kästchen, Groß-/Kleinschreibung und Spaltennamen; die Referenz beschreibt nur die Funktion.
 33. **K – Issue-Einstufung „Unlinked Hreflang URLs“ (TECH-075):** Fehler / Mittel statt Warnung / Mittel.
 34. **K – Bulk-Export-Name JavaScript (TECH-114):** „Pages With JavaScript Issues“.
+35. **F – Ausnahmen beim Ausblenden durch Respect-Schalter (TECH-011/031/051):** Ausgeblendete URLs bleiben im jeweils eigenen Fachfilter sichtbar (Canonicalised, Pagination-Tab, Directives-Filter). CRAWL-091/092 beschreiben ein Ausblenden in allen Tabs; die Referenz-Doku nennt keine Ausnahme. Vor dem Golden-Test abgleichen und ggf. in CRAWL-091 ff. oder hier vereinheitlichen.
+36. **F – Link-Score-Normierung (TECH-145):** logarithmisch (Standard) vs. linear; Behandlung gemischt follow/nofollow verlinkter Ziele (zählt als folgbar). Entscheidung per Benchmark.
+37. **F/K – Change Detection (TECH-300–305):** **K:** Elementliste (14, Reihenfolge), Schwelle 10 % mit „mehr als“, Schwelle und Elementliste gegen die öffentliche Tab-Doku geprüft. **PA (Entscheidung des Architekten):** Indexability zählt zusätzlich den Wechsel des Grundes (TECH-304), Structured Data vergleicht Typ-Menge und Anzahl (TECH-303); die Referenz-Doku nennt nur Indexable ↔ Non-Indexable bzw. die Anzahl. **F:** Standardauswahl (1–13 an, Content aus) – die Referenz-Doku nennt keine Standardauswahl; H1-Vergleich nur des ersten Elements; Rundung `Content Change %` auf 2 Nachkommastellen.
+38. **F/K – Mobile (TECH-230–237):** **K:** `PSI Status` nur `Success`/`Error`; nur „Content Not Sized Correctly“ ist laut Referenz-Doku lokal-exklusiv (vorher auch „Illegible Font Size“); `Mobile Alternate Link` wird unabhängig von PSI befüllt. **F:** Erkennungsregel für Mobil-Alternativen (`media` mit Breitenbedingung oder `handheld`, HTTP-Link-Header, erster Treffer); Filter = Score < 100 auch bei nicht-binären Scores. **F:** „Viewport Not Set“ (TECH-232) folgt der Lighthouse-Semantik (`initial-scale` ohne `width` gilt als gesetzt), die Referenzbeschreibung nennt nur `width`; gegen die gebündelte Lighthouse-Version und Golden-Exporte prüfen. Die früheren Sonderregeln „ohne Viewport-Meta übersprungen“ (TECH-234/235) entfallen zugunsten des Audit-Ergebnisses.
+39. **K – Report- und Exportangaben (TECH-025, 036, 037, 088, 190, 219, 231, 259):** Namen und Spalten stehen nur noch in 06; hier bleibt die Zeilenauswahl. Die früheren TECH-025-Werte von `Chain Type` (`Canonical`/`Redirect`/`Mixed`) und die Spalte `Loop` entfallen zugunsten OUT-081/OUT-083. **F:** Sprunglimit der Canonical-Ketten (TECH-026) = Weiterleitungslimit statt fester 10 Glieder.
 
 ---
 
 ## Anhang B: Rubrik und Begründung der Issue-Einstufungen
+
+**Verhältnis zu UI-063 (K-10):** Führend für die Entscheidungslogik ist UI-063 (Typ-Regeln `T-*`, Prioritäts-Regeln `P-*`, Katalog `core/issues/catalog.toml`). Die Werte dieses Anhangs sind die Katalogeinträge für die TECH-Filter; die Rubrik unten ist ihre bereichsspezifische Begründung. Zuordnung der Rubrik zu den UI-063-Codes: Art **Fehler** (a) → `T-I2` bzw. bei widersprüchlichen Signalen `T-I3`, (b) → `T-I1` bzw. `T-I3`, (c) → `T-I2`; **Warnung** → `T-W1` (gewollt mögliches Steuerungssignal) bzw. `T-W2` (abhängig von Ausführung/Interpretation); **Chance** → `T-O1`/`T-O2`. Dringlichkeit **Hoch** → `P-H1`/`P-H2`/`P-H3`, **Mittel** → `P-M1`/`P-M2`, **Niedrig** → `P-L1`/`P-L2`. Beim Anlegen des Katalogs erhält jeder Eintrag die passenden Codes; ergibt der Code eine andere Einstufung als dieser Anhang, gilt UI-063, und die Abweichung braucht ein `override_reason` (z. B. TECH-061).
 
 Die Einstufungen sind eine eigenständige OpenSpider-Bewertung nach den folgenden Kriterien. Sie wurden je Filter aus der Wirkung auf Suchmaschinen und Nutzer abgeleitet und nicht als Tabelle aus einer fremden Quelle übernommen. Für den Paritätstest wird die Einstufung der Referenz je Filter beobachtet und **nur** dann übernommen, wenn sie mit der Rubrik vereinbar ist; sonst wird die Abweichung hier vermerkt. Stand: Paritätsabgleich je Filter ausstehend, ausgenommen TECH-075 (abgeglichen).
 

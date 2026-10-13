@@ -10,7 +10,7 @@ Referenzstand: Screaming Frog SEO Spider 24.3 (Verhalten laut öffentlicher Doku
 
 | Abschnitt | IDs | Inhalt | P0 | P1 | P2 |
 |---|---|---|---|---|---|
-| A Gemeinsame API-Infrastruktur | INTEG-001 – INTEG-019 | Verbindungen, Credentials, OAuth, Kontingente, Fortschritt, APIs-Modus, URL-Abgleich, Testbarkeit | 9 | 8 | 2 |
+| A Gemeinsame API-Infrastruktur | INTEG-001 – INTEG-019 | Verbindungen, Credentials, OAuth, Kontingente, Fortschritt, APIs-Modus, URL-Abgleich, Testbarkeit | 9 | 9 | 1 |
 | B Custom Search | INTEG-020 – INTEG-035 | Enthält/enthält nicht, Text/Regex, Suchbereiche, Ausgabe, Bulk Add | 8 | 7 | 1 |
 | C Custom Extraction | INTEG-040 – INTEG-055 | XPath, CSS, Regex, Ausgabearten, Mehrfachwerte, visuelle Extraktion | 11 | 3 | 2 |
 | D Custom JavaScript | INTEG-060 – INTEG-072 | Extraktions-/Aktions-Snippets, Laufzeit-API, Bibliothek, Tester | 0 | 6 | 7 |
@@ -18,12 +18,12 @@ Referenzstand: Screaming Frog SEO Spider 24.3 (Verhalten laut öffentlicher Doku
 | F Google Analytics 4 | INTEG-090 – INTEG-101 | Property, Zeitraum, Metriken, Dimensionen, Filter, Analytics-Tab, Kompatibilitätsprüfung | 0 | 12 | 0 |
 | G Search Console – Search Analytics | INTEG-110 – INTEG-117 | Property, Zeitraum, Suchtyp, Dimensionsfilter, Tab | 0 | 8 | 0 |
 | H Search Console – URL Inspection | INTEG-120 – INTEG-128 | Kontingent, Mehrfach-Properties, 17 Felder, 7 Filter, Read-Timeout | 0 | 8 | 1 |
-| I PageSpeed Insights / Lighthouse | INTEG-130 – INTEG-147 | Remote/Lokal, Gerät, Overview, CrUX, Lab, Insights, Diagnostics, 19 Filter, Mobile-Tab (6 Filter), Plugins, Mobile Alternate Link | 0 | 14 | 4 |
+| I PageSpeed Insights / Lighthouse | INTEG-130 – INTEG-147 | Remote/Lokal, Gerät, Overview, CrUX, Lab, Insights, Diagnostics, 19 Filter, Datenbeschaffung für den Mobile-Tab (Tab/Filter führend in TECH-231 ff.), Verweise Plugins / Mobile Alternate Link | 0 | 15 | 3 |
 | J Linkmetriken | INTEG-150 – INTEG-157 | Ebenen, Majestic, Ahrefs (inkl. Optionen Land/Volumen), Moz, Link-Metrics-Tab | 0 | 6 | 2 |
 | K KI-Anbieter & Prompts | INTEG-160 – INTEG-179 | Konten, Endpunkte, Prompts, Eingaben, Bibliothek, Tester, Limits, KI-Tab, System-Prompt, Tokenverbrauch, Timeout | 0 | 14 | 6 |
-| L Embeddings & semantische Analyse | INTEG-180 – INTEG-189 | Ähnlichkeit, Low Relevance, Filterregeln, semantische Suche, Cluster, Reduktions-Presets | 0 | 4 | 6 |
+| L Embeddings & semantische Analyse | INTEG-180 – INTEG-189 | Ähnlichkeit, Low Relevance, Filterregeln, semantische Suche, Cluster, Reduktions-Presets (führend für Embeddings, ONPAGE-159 … 164 verweisen hierher) | 0 | 10 | 0 |
 
-Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
+Summe: 154 Funktionen (P0: 28, P1: 102, P2: 24). Davon sind 6 Einträge Verweis-Stubs auf führende Einträge anderer Bereiche (INTEG-016, 017, 034, 145, 146, 147); sie behalten ihre ID und tragen die Priorität des führenden Eintrags.
 
 ## Inhaltsverzeichnis
 
@@ -213,7 +213,9 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 - **Filternamen, Tab-Namen und Statuswerte** (z. B. `URL is on Google, But Has Issues`, `Non-Indexable with GA Data`, `Does Not Contain`) gelten ebenso als **Schnittstellenbezeichner**: Sie werden bewusst 1:1 übernommen, damit Exporte, Bulk-Export-Namen, Zeitplan-Konfigurationen und bestehende Auswerte-Vorlagen kompatibel bleiben. Übernommen werden nur diese Bezeichner, nicht die erklärenden Texte dazu; alle Beschreibungen, Hinweis- und Fehlermeldungen sind eigenständig formuliert.
 - **Bewusste Abweichungen** vom Referenzverhalten sind mit **(OpenSpider-Abweichung)** markiert, Werte, die nicht aus der Referenz-Doku, sondern aus Anbieter-Dokumentation oder eigener Festlegung stammen, mit **(abgeleitet)** bzw. **(Annahme, zu verifizieren)**.
 - **Leerwerte:** Fehlt ein Wert, weil die API nichts geliefert hat, ist die Zelle leer (nicht `0`). `0` bedeutet „API hat 0 geliefert".
-- **„Crawl-Analyse"** bezeichnet den Nachlauf nach Crawl-Ende (siehe Bereich Analyse); Filter, die ihn brauchen, zeigen bis dahin einen Hinweis statt Ergebnissen.
+- **„Crawl-Analyse"** bezeichnet den Nachlauf nach Crawl-Ende; der Ablauf ist in CRAWL-141 (führend) festgelegt, die Ergebnisse je Filter in diesem Dokument. Filter, die ihn brauchen, zeigen bis dahin den Leerzustand aus UI-016 statt Ergebnissen.
+- **Eine Quelle je Funktion:** Führend ist die Fachdomäne – externe APIs, KI und Embeddings in diesem Dokument; Crawl-Verhalten in 01, Tab-/Filter-/Spaltenlogik in 02/03, Darstellung und Detail-Tab-Layout in 05 (der Inhalt eines Detail-Tabs bleibt hier), Exporte/Reports/CLI/Scheduling in 06, Performance in 07. Nicht-führende Einträge sind als Verweis-Stub (`- **Verweis:** siehe <ID> (führend)`) gekürzt; ID und Nummerierung bleiben erhalten.
+- **Speichermodus:** OpenSpider hat genau einen, festplattenbasierten Speichermodus (CRAWL-124); keine Funktion dieses Bereichs hängt von einem Speichermodus ab.
 - **Gemeinsame Testinfrastruktur:** Alle Fixtures liegen unter `fixtures/integ/`. Ein lokaler Fixture-Webserver (`fixture-site`) liefert statische Testseiten unter `http://integ.test:8080/…`. Ein Mock-Server (`fixture-apis`, siehe INTEG-019) emuliert die externen APIs mit aufgezeichneten JSON-Antworten. Kein Akzeptanztest darf echte Fremd-APIs aufrufen; optionale Live-Tests laufen nur mit gesetzter Umgebungsvariable `OPENSPIDER_LIVE_API_TESTS=1`.
 
 ---
@@ -222,31 +224,32 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 
 ### INTEG-001 API-Zugriffsdialog und Verbindungsstatus
 - **Priorität:** P0
-- **Beschreibung:** Ein zentraler Konfigurationsbereich „API-Zugriff" listet alle Integrationen (GA4, Search Console, PageSpeed Insights, Majestic, Ahrefs, Moz, KI). Je Integration gibt es die Unterbereiche Konto/Verbindung, Metriken bzw. Prompts, integrationsspezifische Optionen und „Erweitert". Der Verbindungsstatus ist jederzeit sichtbar.
+- **Beschreibung:** Ein zentraler Konfigurationsbereich „API-Zugriff" listet alle Integrationen (GA4, Search Console, PageSpeed Insights, Majestic, Ahrefs, Moz; ab M4 die KI-Anbieter unter „KI"; ab M5 DataForSEO unter „Daten-APIs", D4S-001). Je Integration gibt es die Unterbereiche Konto/Verbindung, Metriken bzw. Prompts, integrationsspezifische Optionen und „Erweitert". Der Verbindungsstatus ist jederzeit sichtbar.
 - **Eingaben/Konfiguration:** Je Integration: Verbinden/Trennen, Kontoauswahl (sofern zutreffend), Integrationsoptionen.
 - **Ausgabe (Spalten/Filter/Export):** Statusanzeige je Integration: `Nicht verbunden`, `Verbinde…`, `Verbunden (<Kontoname>)`, `Fehler: <Meldung>`. Die Konfiguration (ohne Geheimnisse) ist Teil des Konfigurationsprofils.
 - **Akzeptanzkriterien:**
-  - [ ] Der Dialog enthält genau zehn Einträge: Google Analytics 4, Search Console, PageSpeed Insights, Majestic, Ahrefs, Moz sowie unter „KI" die Anbieter OpenAI, Gemini, Anthropic und Ollama. Jeder Eintrag zeigt zu jedem Zeitpunkt genau einen der vier Status.
+  - [ ] Der Dialog enthält je Ausbaustand genau diese Einträge: bis Release 1.0 (M1–M3) sechs – Google Analytics 4, Search Console, PageSpeed Insights, Majestic, Ahrefs, Moz; [M4] zusätzlich unter „KI" die fünf Anbieter OpenAI, Gemini, Anthropic, Ollama und OpenRouter (OpenRouter nativ nach AI-005/AI-009, übernommen aus 08), also elf; [M5] zusätzlich unter „Daten-APIs" DataForSEO (D4S-001, übernommen aus 09, Änderungsbedarf X1), also zwölf. Jeder Eintrag zeigt zu jedem Zeitpunkt genau einen der vier Status; der Statusautomat gilt für alle Einträge unverändert.
   - [ ] Zustandsübergänge: `Nicht verbunden` → (Klick „Verbinden") → `Verbinde…` → `Verbunden (…)` bei HTTP 2xx des Test-Requests bzw. `Fehler: …` bei jedem anderen Ergebnis; `Verbunden`/`Fehler` → (Klick „Trennen") → `Nicht verbunden`. Kein anderer Übergang ist möglich (Zustandsautomat-Unittest).
-  - [ ] „Verbinden" führt genau einen Test-Request aus (GA4/GSC: Property-Liste; PSI: Analyse einer Test-URL bzw. Start des lokalen Lighthouse; Linkmetriken: Konto-/Kontingentabfrage; KI: Modellliste) und setzt `Verbunden` erst nach dessen Erfolg (Mock-Log: genau 1 Request je Klick).
+  - [ ] „Verbinden" führt genau einen Test-Request aus (GA4/GSC: Property-Liste; PSI: Analyse einer Test-URL bzw. Start des lokalen Lighthouse; Linkmetriken: Konto-/Kontingentabfrage; KI: Modellliste, bei OpenRouter `GET /models`; DataForSEO: kostenloses `GET /v3/appendix/user_data`) und setzt `Verbunden` erst nach dessen Erfolg (Mock-Log: genau 1 Request je Klick).
   - [ ] Antwortet der Test-Request nicht innerhalb von 30 s, wechselt der Status auf `Fehler: Zeitüberschreitung nach 30 s`.
   - [ ] Bei ungültigem Schlüssel (HTTP 401/403 des Anbieters) lautet der Status `Fehler: <HTTP-Code> <Meldung des Anbieters>`; ein parallel laufender Crawl wird nicht unterbrochen (Zahl gecrawlter URLs steigt weiter).
   - [ ] „Trennen" entfernt die aktive Verbindung; bereits geholte Daten bleiben im Crawl erhalten (Spaltenwerte vor/nach Trennen identisch).
   - [ ] Ein gespeichertes Konfigurationsprofil enthält Integrationsoptionen und Metrikauswahl, aber keine Schlüssel/Tokens (Prüfung: Profil-Datei per `grep` auf den Testschlüssel → kein Treffer).
   - [ ] Sind PSI, GA4 und eine KI gleichzeitig verbunden und antwortet jeder Mock mit 2 s Latenz, überlappen sich laut Mock-Zeitstempeln Anfragen verschiedener Integrationen zeitlich (es gibt mindestens ein Intervall, in dem ≥ 2 Integrationen gleichzeitig offene Anfragen haben).
-- **Testfixture:** `fixture-apis` mit Endpunkten, die je nach Header `Authorization: Bearer good` → 200 bzw. `bad` → 401 liefern, plus Szenario `?scenario=hang` (antwortet nie); UI-Test verbindet nacheinander alle zehn Einträge.
+- **Testfixture:** `fixture-apis` mit Endpunkten, die je nach Header `Authorization: Bearer good` → 200 bzw. `bad` → 401 liefern, plus Szenario `?scenario=hang` (antwortet nie); OpenRouter über `ai-mock` (08), DataForSEO über die Kontoprofile `mock-good`/`mock-bad` des DataForSEO-Mocks (Basic-Auth, 09); UI-Test verbindet nacheinander alle Einträge des jeweiligen Ausbaustands (6, 11 bzw. 12).
 
 ### INTEG-002 Sichere Ablage von Zugangsdaten
 - **Priorität:** P0
-- **Beschreibung:** API-Schlüssel, OAuth-Refresh-Tokens und Server-Header mit Geheimnissen werden im Schlüsselbund des Betriebssystems abgelegt (macOS Keychain, Windows Credential Manager), nie im Klartext in Konfigurationsdateien, Crawl-Datenbanken oder Logs.
+- **Beschreibung:** API-Schlüssel, OAuth-Refresh-Tokens und Server-Header mit Geheimnissen werden im Schlüsselbund des Betriebssystems abgelegt (macOS Keychain, Windows Credential Manager), nie im Klartext in Konfigurationsdateien, Crawl-Datenbanken oder Logs. **Ablageschema (führend für alle Bereiche; Entscheidung (Fable-Empfehlung) vom 13.10.2026, aus der Prüfung von 08/09):** Dienst `OpenSpider`, Konto = Integrationskennung `<integration>` in Kleinbuchstaben, je Integration genau ein Eintrag (z. B. `ai.anthropic`, `ai.openai`, `ai.openrouter` aus AI-009, `dataforseo` aus D4S-001; die übrigen Integrationen aus INTEG-001 folgen demselben Muster). Besteht ein Zugang aus mehreren Teilen (z. B. DataForSEO: API-Login und API-Passwort; OAuth: Refresh-Token und Kontokennung), ist das gespeicherte Geheimnis ein JSON-Objekt mit diesen Teilen; Login, E-Mail-Adresse oder Kontokennung sind nie der Kontoname des Schlüsselbund-Eintrags.
 - **Eingaben/Konfiguration:** Schlüsselfelder in den Kontodialogen; Option „Schlüssel merken" (Standard: an).
 - **Ausgabe:** Maskierte Anzeige (`••••••••abcd`, letzte 4 Zeichen sichtbar).
 - **Akzeptanzkriterien:**
   - [ ] Nach Eingabe eines Schlüssels und Neustart ist die Integration ohne erneute Eingabe nutzbar (bei „merken" = an).
   - [ ] Der Schlüssel erscheint in keiner Datei unter dem Datenverzeichnis und in keinem Log (Volltextsuche nach Testschlüssel ergibt 0 Treffer).
   - [ ] Bei „merken" = aus ist der Schlüssel nach Neustart nicht mehr vorhanden.
+  - [ ] Jeder Eintrag liegt unter Dienst `OpenSpider` mit der Integrationskennung als Konto (Mock-Keychain-Test über alle Einträge aus INTEG-001 des jeweiligen Ausbaustands); kein Eintrag verwendet einen anderen Dienstnamen oder einen Login bzw. eine E-Mail-Adresse als Konto; ein Login-Wechsel überschreibt den bestehenden Eintrag.
   - [ ] Ist der Schlüsselbund gesperrt oder nicht verfügbar, erscheint eine verständliche Meldung, und der Schlüssel kann für die laufende Sitzung im Speicher verwendet werden.
-  - [ ] Ein Export der Konfiguration für CLI/Zeitplanung (INTEG-017) enthält Schlüssel nur, wenn der Nutzer dies ausdrücklich bestätigt; dann wird die Datei mit einem Passwort verschlüsselt (AES-256-GCM).
+  - [ ] Ein Export der Konfiguration für CLI/Zeitplanung (OUT-201, OUT-164) enthält Schlüssel nur, wenn der Nutzer dies ausdrücklich bestätigt; dann wird die Datei mit einem Passwort verschlüsselt (AES-256-GCM).
 - **Testfixture:** Integrationstest mit Mock-Keychain-Backend; Dateisystem-Scan nach dem Teststring `sk-TEST-INTEG-002`.
 
 ### INTEG-003 Google-OAuth-2.0 (Desktop-Loopback mit PKCE)
@@ -278,7 +281,7 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 ### INTEG-005 Ratenbegrenzung und Wiederholungslogik
 - **Priorität:** P0
 - **Beschreibung:** Jede Integration hat eine eigene Drosselung (Token-Bucket je Anbieter, je Modell bzw. je Property), damit dokumentierte Anbieterlimits eingehalten werden. Bei HTTP 429 und vorübergehenden Serverfehlern (500, 502, 503, 504) wird mit exponentiellem Backoff und Jitter wiederholt; ein `Retry-After`-Header hat Vorrang.
-- **Eingaben/Konfiguration:** Je Integration „Erweitert": maximale Anfragen pro Zeitfenster (Vorgaben siehe jeweilige Integration), maximale Wiederholungen (Standard 5), maximale gleichzeitige Anfragen (Standard 5, Bereich 1–50). Backoff-Parameter (fest, nicht in der UI): Basis 1 s, Faktor 2, Obergrenze 60 s, Jitter ±20 % → Wartezeiten ca. 1, 2, 4, 8, 16 s.
+- **Eingaben/Konfiguration:** Je Integration „Erweitert": maximale Anfragen pro Zeitfenster (Vorgaben siehe jeweilige Integration), maximale Wiederholungen (Standard 5), maximale gleichzeitige Anfragen (Standard 5, Bereich 1–50). **Integrationen können abweichende Vorgaben für gleichzeitige Anfragen und Anfragen je Zeitfenster festlegen**; sie stehen dann im Eintrag der Integration und gelten dort vorrangig (übernommen aus 08/09): DataForSEO Standard 10, Bereich 1–30, höchstens 1.000 Anfragen je Minute und Endpunkt (D4S-005, Änderungsbedarf X3); Ollama Standard 1, da lokal rechenbegrenzt (AI-006). Ebenso legt der jeweilige Eintrag fest, welche anbieterspezifischen Antworten als Drosselung gelten (DataForSEO: HTTP 200 mit Statuscode 40202/40209, D4S-004/005; OpenRouter: 402 `openrouter_in_flight_budget` wie 429, AI-005) oder trotz HTTP 429 **nicht** wiederholt werden (Anthropic `enforced_spend_limit_reached`, AI-002). Backoff-Parameter (fest, nicht in der UI): Basis 1 s, Faktor 2, Obergrenze 60 s, Jitter ±20 % → Wartezeiten ca. 1, 2, 4, 8, 16 s.
 - **Ausgabe:** Fehler, die nach allen Wiederholungen bestehen bleiben, werden je URL in den Statusspalten der Integration gespeichert (z. B. `PSI Status` = `Error`, `PSI Error` = `500 Unable to process request`).
 - **Akzeptanzkriterien:**
   - [ ] Bei einer Vorgabe von 60 Anfragen / 100 s werden in einem beliebigen 100-s-Fenster nie mehr als 60 Anfragen gesendet (Messung am Mock-Server).
@@ -288,6 +291,7 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
   - [ ] 400/401/403/404 werden nicht wiederholt (Mock-Log: genau 1 Request).
   - [ ] Nach 5 erfolglosen Wiederholungen (insgesamt 6 Requests) wird der Fehler gespeichert und die URL als „fehlgeschlagen" markiert; sie kann über INTEG-008/INTEG-009 erneut angefordert werden.
   - [ ] Bei Einstellung „gleichzeitige Anfragen = 2" hat der Mock zu keinem Zeitpunkt mehr als 2 offene Anfragen dieser Integration.
+  - [ ] Integrationen mit eigener Vorgabe zeigen im Reiter „Erweitert" deren Standard und Bereich ([M5] DataForSEO: Standard 10, Eingabe 31 wird abgelehnt; [M4] Ollama: Standard 1); alle anderen Integrationen zeigen Standard 5 und Bereich 1–50 (Konfigurationstest über alle Einträge aus INTEG-001).
   - [ ] Isolation: Crawl von `site-10-pages` mit PSI-Mock im Szenario `500-always` dauert höchstens 10 % länger als derselbe Crawl ohne Integration; eine gleichzeitig verbundene GA4-Integration erhält ihre Daten in derselben Zeit (±10 %) wie ohne gestörte PSI.
 - **Testfixture:** `fixture-apis` mit Szenario-Schaltern `?scenario=429x2`, `?scenario=retry-after-7`, `?scenario=retry-after-date`, `?scenario=500-always`, `?scenario=slow-2s`; Zeitstempel-Log des Mock-Servers wird ausgewertet.
 
@@ -308,7 +312,7 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 - **Priorität:** P0
 - **Beschreibung:** API-Abfragen laufen in einer eigenen Warteschlange neben dem Crawl. Eine separate Fortschrittsanzeige „API" zeigt den Prozentsatz der erledigten API-Anfragen über alle verbundenen Integrationen. Zusätzlich gibt es in der rechten Seitenleiste eine Übersicht „API", die je Integration Fortschritt **und Fehleranzahl** ausweist. Daten erscheinen live an den URLs, sobald sie vorliegen.
 - **Eingaben/Konfiguration:** keine.
-- **Ausgabe:** Fortschrittsanzeige `API: 73 %`; Tooltip mit Aufschlüsselung je Integration inkl. Fehlern (`PSI 120/400 (3 Fehler), GSC 400/400 (0 Fehler), GA4 fertig (0 Fehler)`); Seitenleisten-Übersicht „API" mit Spalten `Integration`, `Progress` (Prozent), `Errors` (Anzahl URLs mit endgültigem Fehlerstatus).
+- **Ausgabe:** Fortschrittsanzeige `API: 73 %`; Tooltip mit Aufschlüsselung je Integration inkl. Fehlern (`PSI 120/400 (3 Fehler), GSC 400/400 (0 Fehler), GA4 fertig (0 Fehler)`); Seitenleisten-Übersicht „API" (Layout und Spaltensatz führend in UI-070); dieser Eintrag legt fest, wie `Progress` (Prozent) und `Errors` (Anzahl URLs mit endgültigem Fehlerstatus) gezählt werden.
 - **Akzeptanzkriterien:**
   - [ ] Liefert der PSI-Mock für 3 von 10 URLs einen endgültigen Fehler, zeigt die Übersicht „API" für PSI `Progress = 100 %` und `Errors = 3`; ein Doppelklick auf die Fehlerzahl öffnet den PageSpeed-Tab mit Filter auf die fehlerhaften URLs.
   - [ ] Die Fehleranzahl zählt nur endgültige Fehler (nach allen Wiederholungen gemäß INTEG-005); eine URL, die nach 2 × 429 erfolgreich war, zählt nicht. `Quota exceeded` zählt als Fehler.
@@ -365,7 +369,7 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 
 ### INTEG-012 APIs-Modus (Datenabruf ohne Crawl)
 - **Priorität:** P1
-- **Beschreibung:** Eigener Modus, in dem eine URL-Liste (Eingabe, Datei, Sitemap) hochgeladen wird und nur API-Daten abgerufen werden; die URLs werden nicht gecrawlt (kein HTTP-Request an die Zielseiten).
+- **Beschreibung:** Eigener Modus, in dem eine URL-Liste (Eingabe, Datei, Sitemap) hochgeladen wird und nur API-Daten abgerufen werden; die URLs werden nicht gecrawlt (kein HTTP-Request an die Zielseiten). Führender Eintrag für den APIs-Modus; CRAWL-037 verweist hierher. Aufruf per Kommandozeile: siehe CLI-Block in 06 (OUT-208).
 - **Eingaben/Konfiguration:** Modus „APIs", URL-Liste, verbundene Integrationen.
 - **Ausgabe:** Tabs der Integrationen und Internal-Tab mit Adresse und API-Spalten; Crawl-Spalten (Status Code, Title …) bleiben leer.
 - **Akzeptanzkriterien:**
@@ -373,6 +377,7 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
   - [ ] Für jede hochgeladene URL werden PSI, URL Inspection, Linkmetriken und GA4/GSC-Werte (sofern verbunden) zugeordnet.
   - [ ] KI-Prompts mit Seiteninhalt als Eingabe werden im APIs-Modus übersprungen (Status `No content – APIs mode`); Prompts ohne Seiteninhalt (nur URL) werden ausgeführt.
   - [ ] Doppelte URLs in der Liste werden nur einmal abgefragt.
+  - [ ] Ist beim Start im APIs-Modus keine Integration verbunden, wird kein Lauf gestartet; stattdessen erscheint ein Hinweis, dass mindestens eine Integration verbunden sein muss (kein leerer Lauf, kein Eintrag in der Crawl-Verwaltung).
 - **Testfixture:** `fixtures/integ/apis-mode-list.txt` (5 URLs, davon 1 Duplikat) + Request-Log des Fixture-Servers.
 
 ### INTEG-013 Integrationsspalten im Internal-Tab
@@ -404,35 +409,22 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 - **Priorität:** P1
 - **Beschreibung:** Optional werden URLs, die nur in GA4 oder Search Analytics vorkommen (nicht über interne Links gefunden), in die Crawl-Warteschlange aufgenommen. Diese URLs gelten als Orphan-URLs ihrer Quelle. Ist die Option aus, erscheinen solche URLs nur im Orphan-Pages-Report.
 - **Eingaben/Konfiguration:** GA4: „In GA4 entdeckte neue URLs crawlen"; GSC: „In Search Console entdeckte neue URLs crawlen" (beide Standard aus).
-- **Ausgabe:** Filter `Orphan URLs` im Analytics- bzw. Search-Console-Tab (nach Crawl-Analyse); Report „Orphan Pages" mit Spalte `Source` (`GA4`, `GSC`, `Sitemap` …).
+- **Ausgabe:** Filter `Orphan URLs` im Analytics- bzw. Search-Console-Tab (nach Crawl-Analyse); Report „Orphan Pages" mit Spalte `Source` (Report, Spalten und Quellwerte führend in OUT-099).
 - **Akzeptanzkriterien:**
   - [ ] Mit aktivierter Option wird eine nur in der API vorkommende URL des gleichen Hosts gecrawlt und ist nach der Crawl-Analyse im Filter `Orphan URLs` enthalten.
   - [ ] URLs fremder Hosts aus den API-Daten werden nie gecrawlt.
-  - [ ] Ohne aktivierte Option wird die URL nicht gecrawlt, erscheint aber im Orphan-Pages-Report mit Quelle.
+  - [ ] Ohne aktivierte Option wird die URL nicht gecrawlt, erscheint aber im Orphan-Pages-Report (OUT-099) mit ihrer Quelle.
   - [ ] Ohne Crawl-Analyse zeigt der Filter `Orphan URLs` einen Hinweis „Crawl-Analyse erforderlich".
   - [ ] Include/Exclude-Regeln und robots.txt gelten auch für so entdeckte URLs.
 - **Testfixture:** `fixtures/integ/orphans/` (Startseite verlinkt `/linked`, `/orphan` existiert ohne Link) + Mock-GA4/GSC mit Zeilen für `/linked`, `/orphan`, `https://fremd.test/x`.
 
 ### INTEG-016 Proxy und eigener Truststore für API-Verbindungen
-- **Priorität:** P2
-- **Beschreibung:** API-Verbindungen nutzen den konfigurierten Proxy. Für TLS-inspizierende Proxys können zusätzliche CA-Zertifikate geladen oder das System-Zertifikatsspeicher genutzt werden.
-- **Eingaben/Konfiguration:** Proxy (aus globalen Einstellungen), „Systemzertifikate vertrauen", „Zusätzliche CA-Datei (PEM)".
-- **Ausgabe:** keine.
-- **Akzeptanzkriterien:**
-  - [ ] Mit gesetztem Proxy laufen alle API-Requests über den Proxy (Proxy-Log zeigt Requests an Mock-Host).
-  - [ ] Mit einer selbstsignierten CA des Proxys und ohne Truststore-Eintrag scheitert die Verbindung mit TLS-Fehlermeldung; nach Laden der CA-Datei gelingt sie.
-- **Testfixture:** lokaler MITM-Testproxy mit eigener CA vor `fixture-apis`.
+- **Priorität:** P1
+- **Verweis:** siehe CRAWL-122 (führend). Eine eigene Proxy-Einstellung je Integration gibt es nicht.
 
 ### INTEG-017 API-Integrationen in Zeitplanung und CLI
 - **Priorität:** P1
-- **Beschreibung:** Konfigurierte Integrationen (Konto, Property, Metriken, Prompts) können in geplanten und Kommandozeilen-Crawls verwendet werden. Die Auswahl von Konto **und** Property wird dabei vollständig berücksichtigt.
-- **Eingaben/Konfiguration:** CLI-Parameter `--use-ga4 <konto> --ga4-property <id>`, `--use-gsc <konto> --gsc-property <property>`, `--use-psi`, `--use-ai`, `--use-link-metrics <anbieter>`; Konfigurationsprofil.
-- **Ausgabe:** wie UI-Crawl; Exporte enthalten Integrationsspalten.
-- **Akzeptanzkriterien:**
-  - [ ] Ein CLI-Crawl mit `--use-gsc kontoA --gsc-property sc-domain:integ.test` fragt genau diese Property ab (Mock-Log prüft Property-Parameter).
-  - [ ] Fehlt im Schlüsselbund das Token für das genannte Konto, endet der CLI-Lauf mit Exit-Code ≠ 0 und Meldung, sofern `--require-apis` gesetzt ist; sonst läuft er ohne Integration mit Warnung.
-  - [ ] Die API-Warteschlange wird vor dem Export abgearbeitet (INTEG-007).
-- **Testfixture:** CLI-Integrationstest gegen `fixture-site` + `fixture-apis`.
+- **Verweis:** siehe OUT-201 (führend). Geplante Aufgaben wählen ihre Integrationen nach OUT-164.
 
 ### INTEG-018 Datenschutz und lokale Datenhaltung
 - **Priorität:** P0
@@ -446,20 +438,21 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 
 ### INTEG-019 Testbarkeit: überschreibbare API-Basis-URLs und Mock-Server
 - **Priorität:** P0
-- **Beschreibung:** Jede Integration hat eine intern überschreibbare Basis-URL (Umgebungsvariable `OPENSPIDER_API_BASE_<ANBIETER>`), damit Akzeptanztests gegen den Mock-Server `fixture-apis` laufen. Der Mock-Server liefert aufgezeichnete, anonymisierte Antworten für GA4 Data API, Search Analytics, URL Inspection, PSI v5, Majestic, Ahrefs v3, Moz v3, OpenAI, Gemini, Anthropic und Ollama.
+- **Beschreibung:** Jede Integration hat eine intern überschreibbare Basis-URL (Umgebungsvariable `OPENSPIDER_API_BASE_<ANBIETER>`), damit Akzeptanztests gegen den Mock-Server `fixture-apis` laufen. Der Mock-Server liefert aufgezeichnete, anonymisierte Antworten für GA4 Data API, Search Analytics, URL Inspection, PSI v5, Majestic, Ahrefs v3, Moz v3, [M4] OpenAI, Gemini, Anthropic, Ollama und OpenRouter (Modul `ai-mock`, Pfade und Szenarien führend in 08, Konventionen) sowie [M5] DataForSEO (Routen unter `/__mock/dataforseo/v3/…`, Kontoprofile und Szenarien führend in D4S-009, übernommen aus 09, Änderungsbedarf X2). Alle Mocks sind Module des Crates `os-testsite` (`docs/ARCHITECTURE.md`); `fixture-apis` ist der Sammelname dieser Module.
 - **Eingaben/Konfiguration:** Umgebungsvariablen; nur in Debug-/Testbuilds oder mit explizitem Flag `--allow-api-override` wirksam.
 - **Ausgabe:** keine.
 - **Akzeptanzkriterien:**
   - [ ] In Release-Builds ohne Flag werden die Variablen ignoriert.
-  - [ ] Für jede Integration existiert mindestens ein Erfolgs-, ein Leer-, ein Fehler- (4xx) und ein Drossel-Szenario (429) im Mock.
+  - [ ] Für jede Integration existiert mindestens ein Erfolgs-, ein Leer-, ein Fehler- (4xx) und ein Drossel-Szenario im Mock; das Drossel-Szenario verwendet die dokumentierte Drosselform des Anbieters (in der Regel HTTP 429, bei DataForSEO HTTP 200 mit Statuscode 40202).
+  - [ ] Alle vier Pflichtszenarien sind je Integration über den Header `X-Scenario` erreichbar (zusätzlich zum Query-Parameter, wo vorhanden). [M5] Für DataForSEO gilt die Abbildung Erfolg → `ok`, Leer → `empty`, Fehler (4xx) → `invalid-field-one`, Drossel → `ratelimit-x2`; weitere DFS-Szenarien und die Steuerung über `POST /__control/dfs/scenario` sind in D4S-009 festgelegt.
   - [ ] Alle Akzeptanztests dieses Dokuments laufen offline.
-- **Testfixture:** `fixtures/integ/fixture-apis/` (Rust- oder Node-Mock mit Szenario-Routing über Query-Parameter bzw. Header `X-Scenario`).
+- **Testfixture:** `fixtures/integ/fixture-apis/` (Szenariodaten der `os-testsite`-Module, Szenario-Routing über Query-Parameter bzw. Header `X-Scenario`); Ein Test iteriert über alle Einträge aus INTEG-001 des jeweiligen Ausbaustands und ruft die vier Pflichtszenarien per `X-Scenario` ab.
 
 ---
 
 ## B Custom Search
 
-> Umsetzungshinweis (Rust): Die Standard-Crate `regex` unterstützt weder Lookaround noch Rückverweise. Für Parität (Lookahead-Beispiele wie `(?=.*a)(?=.*b)` sind in der Referenz-Doku ausdrücklich vorgesehen) wird eine Backtracking-Engine (z. B. `fancy-regex`) mit Zeit-/Schrittlimit benötigt. Ziel ist Kompatibilität zur verbreiteten Java/PCRE-Syntax.
+> Umsetzungshinweis (Rust): Es gilt der einheitliche Regex-Dialekt aus den Konventionen von 01-crawl.md (`fancy-regex` mit Schrittlimit; Lookaround und Rückverweise, wie sie die Referenz-Doku mit Beispielen wie `(?=.*a)(?=.*b)` vorsieht). Ziel ist Kompatibilität zur verbreiteten Java/PCRE-Syntax.
 
 ### INTEG-020 Suchfilter definieren
 - **Priorität:** P0
@@ -545,7 +538,7 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 
 ### INTEG-027 Suchbereich „Content Area"
 - **Priorität:** P1
-- **Beschreibung:** Durchsucht den Text des konfigurierten Inhaltsbereichs, der auch für Wortanzahl und Duplicate-Content genutzt wird (Standard: Body ohne `<nav>` und `<footer>`; konfigurierbar per Ein-/Ausschluss von Elementen, Klassen und IDs – siehe Bereich Content).
+- **Beschreibung:** Durchsucht den Text des konfigurierten Inhaltsbereichs, der auch für Wortanzahl und Duplicate-Content genutzt wird (Standard: Body ohne `<nav>` und `<footer>`; konfigurierbar per Ein-/Ausschluss von Elementen, Klassen und IDs; Definition führend in ONPAGE-140).
 - **Eingaben/Konfiguration:** Suchbereich = Content Area; Inhaltsbereich-Einstellungen.
 - **Ausgabe:** Trefferzahl.
 - **Akzeptanzkriterien:**
@@ -628,13 +621,7 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 
 ### INTEG-034 Bulk-Export „Inlinks je Suchfilter"
 - **Priorität:** P1
-- **Beschreibung:** Für jeden Suchfilter können alle Inlinks zu den URLs, die den Filter erfüllen, exportiert werden (z. B. um interne Links auf Seiten mit „nicht vorrätig" zu finden).
-- **Eingaben/Konfiguration:** Menü „Bulk Export → Custom Search → <Filtername> Inlinks".
-- **Ausgabe:** CSV mit Spalten der Inlinks-Ansicht (`Type`, `Source`, `Destination`, `Anchor`, `Status Code`, `Link Position` …).
-- **Akzeptanzkriterien:**
-  - [ ] Für einen Filter, den 2 Seiten erfüllen, die von 5 Quellseiten verlinkt sind, enthält der Export genau diese 5 (bzw. alle Link-Instanzen) Zeilen.
-  - [ ] Für „enthält nicht"-Filter werden die Inlinks der URLs mit `Does Not Contain` exportiert.
-- **Testfixture:** `fixtures/integ/search/inlinks/` (Linkgraph mit erwarteter Exportdatei).
+- **Verweis:** siehe OUT-060 (führend). Für „Does Not Contain"-Filter umfasst der Inlinks-Export die Inlinks der URLs mit Status `Does Not Contain` (Filtersemantik INTEG-020/031).
 
 ### INTEG-035 Geltungsbereich der Suche
 - **Priorität:** P0
@@ -815,13 +802,13 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 - **Priorität:** P0
 - **Beschreibung:** Tab „Custom Extraction" mit Basisspalten und je Extraktor dessen Spalte(n). Je Extraktor existiert ein gleichnamiger Filter, der die URLs mit mindestens einem Wert dieses Extraktors zeigt. Werte erscheinen in Echtzeit während des Crawls.
 - **Eingaben/Konfiguration:** —
-- **Ausgabe:** Spalten `Address`, `Content`, `Status Code`, `Status`, `<Extraktor> 1..n` (Benennung `Content` statt `Content Type` siehe INTEG-031); Filter je Extraktor; Export CSV/XLSX/Google Sheets.
+- **Ausgabe:** Spalten `Address`, `Content`, `Status Code`, `Status`, `<Extraktor> 1..n` (Benennung `Content` statt `Content Type` siehe INTEG-031); Filter je Extraktor. Export der Tab-Ansicht über die Export-Engine (OUT-020, führend), Bulk-Exporte der Extraktionen in OUT-061 (führend); dieser Eintrag legt nur Spalten und Spaltenreihenfolge fest, die diese Exporte übernehmen.
 - **Akzeptanzkriterien:**
   - [ ] Der CSV-Export beginnt mit den Headern `Address,Content,Status Code,Status`.
   - [ ] Filter „<Extraktor>" zeigt genau die URLs mit mindestens einem nicht-leeren Wert dieses Extraktors (und blendet die Spalten anderer Extraktoren aus).
   - [ ] Ein Export bei aktivem Filter enthält nur die gefilterten URLs.
   - [ ] Werte mit Zeilenumbrüchen werden im CSV korrekt gequotet.
-  - [ ] Nach Laden eines gespeicherten Crawls (Datenbankmodus) sind alle Extraktionsspalten vorhanden.
+  - [ ] Nach Laden eines gespeicherten Crawls (CRAWL-127) sind alle Extraktionsspalten mit unveränderten Werten vorhanden.
   - [ ] Werte über 32.767 Zeichen werden im XLSX-Export auf 32.767 Zeichen gekürzt (Excel-Zellgrenze), im CSV nicht.
 - **Testfixture:** `fixtures/integ/extract/` komplett + Referenzexport `expected-extraction.csv`.
 
@@ -1055,7 +1042,7 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 - **Eingaben/Konfiguration:** Checkbox „Link-Positionen speichern" (Standard: an).
 - **Ausgabe:** Spalten `Link Path`/`Link Position` leer.
 - **Akzeptanzkriterien:**
-  - [ ] Bei deaktivierter Option sind beide Spalten leer und der Datenbankumfang des Crawls kleiner als mit Option (Messung auf Fixture mit 1.000 Links).
+  - [ ] Bei deaktivierter Option sind beide Spalten leer und der Speicherumfang der Crawl-Datei kleiner als mit Option (Messung auf Fixture mit 1.000 Links).
   - [ ] Filter, die von Link-Positionen abhängen (z. B. „nur Content-Links"), zeigen einen Hinweis.
 - **Testfixture:** `fixtures/integ/linkpos/many-links.html` (1.000 Links).
 
@@ -1193,12 +1180,12 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 
 ### INTEG-100 GA4-Daten in Segmenten und Reports
 - **Priorität:** P1
-- **Beschreibung:** GA4-Spalten sind wie alle Spalten in Segment-Regeln, Spaltenfiltern und Sortierung nutzbar (z. B. Segment „Seiten mit > 100 Sessions"). Der Orphan-Pages-Report enthält GA4 als Quelle.
-- **Eingaben/Konfiguration:** Segment-Editor (Bereich Segmente).
+- **Beschreibung:** GA4-Spalten sind wie alle Spalten in Segment-Regeln, Spaltenfiltern und Sortierung nutzbar (z. B. Segment „Seiten mit > 100 Sessions"). Segmentdefinition führend in CRAWL-134, Darstellung in UI-020/067/068. Der Orphan-Pages-Report (OUT-099, führend) enthält GA4 als Quelle.
+- **Eingaben/Konfiguration:** Segment-Editor (CRAWL-134).
 - **Ausgabe:** —
 - **Akzeptanzkriterien:**
   - [ ] Segment „GA4 Sessions > 100" ordnet genau die URLs mit mehr als 100 Sessions zu (Operator „größer als" ist streng).
-  - [ ] Orphan-Pages-Report listet GA4-only-URLs mit `Source = GA4`.
+  - [ ] Orphan-Pages-Report listet GA4-only-URLs mit dem GA-Quellwert aus OUT-099.
 - **Testfixture:** Fixture aus INTEG-098.
 
 ### INTEG-101 Kompatibilitätsprüfung von GA4-Metriken und -Dimensionen
@@ -1405,11 +1392,11 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 
 ### INTEG-126 Detailansicht URL Inspection
 - **Priorität:** P2
-- **Beschreibung:** Unterer Detail-Tab „URL Inspection" mit allen Feldern der Rohantwort, inkl. `referringUrls`, `sitemap`, Rich-Result-Elementen mit Einzel-Issues und einem Link zur Prüfung der URL in der Search-Console-Oberfläche (`inspectionResultLink`). Bulk-Export „URL Inspection → Rich Results" mit einer Zeile je Issue.
+- **Beschreibung:** Unterer Detail-Tab „URL Inspection" mit allen Feldern der Rohantwort, inkl. `referringUrls`, `sitemap`, Rich-Result-Elementen mit Einzel-Issues und einem Link zur Prüfung der URL in der Search-Console-Oberfläche (`inspectionResultLink`). Dieser Eintrag legt den Inhalt fest; Layout und Grundverhalten des Detailfensters: UI-030 (führend). Bulk-Exporte „URL Inspection → Rich Results / Referring Pages / Sitemaps": OUT-064 (führend).
 - **Eingaben/Konfiguration:** —
-- **Ausgabe:** Detailtabelle; Export `URL`, `Rich Result Type`, `Item Name`, `Severity`, `Issue`.
+- **Ausgabe:** Detailtabelle mit einer Zeile je Rich-Result-Issue (`Rich Result Type`, `Item Name`, `Severity`, `Issue`).
 - **Akzeptanzkriterien:**
-  - [ ] Für eine URL mit 2 Rich-Result-Fehlern zeigt die Detailansicht beide Meldungen; der Bulk-Export enthält 2 Zeilen.
+  - [ ] Für eine URL mit 2 Rich-Result-Fehlern zeigt die Detailansicht beide Meldungen; der Bulk-Export nach OUT-064 enthält für diese URL 2 Zeilen.
   - [ ] Der Link „In Search Console öffnen" verwendet `inspectionResultLink` aus der Antwort.
 - **Testfixture:** `inspect-rich-error.json`.
 
@@ -1446,10 +1433,11 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 ### INTEG-130 PSI-Verbindung und Quelle (Remote/Lokal)
 - **Priorität:** P1
 - **Beschreibung:** Zwei Quellen: **Remote** – Lighthouse läuft über die PSI-API auf Google-Servern; liefert zusätzlich CrUX-Felddaten; benötigt einen (kostenlosen) API-Schlüssel aus der Google Cloud Console mit aktivierter PSI-API. **Lokal** – Lighthouse läuft auf dem eigenen Rechner (INTEG-132); kein Schlüssel, kein Tageslimit, auch für Staging-/Login-Seiten, aber keine CrUX-Daten.
-- **Eingaben/Konfiguration:** Quelle (Remote/Lokal), API-Schlüssel (Remote), Verbinden.
+- **Eingaben/Konfiguration:** Quelle (Remote/Lokal; Schlüssel `psi.source`, **Standard `remote`**), API-Schlüssel (Remote), Verbinden. **OS-Festlegung** (die Referenz-Doku nennt keinen Standard): Remote ist Standard, weil nur diese Quelle CrUX-Felddaten liefert und unter den Messbedingungen der Google-Server mit Referenz-Exporten vergleichbar ist; Lokal ist eine Auswahl ohne Schlüssel und für Staging-Seiten. Dieser Eintrag ist führend für Quellen und Standardquelle (TECH-230 verweist hierher).
 - **Ausgabe:** Status; PageSpeed-Tab.
 - **Akzeptanzkriterien:**
   - [ ] „Verbinden" (Remote) prüft den Schlüssel mit einer Testanfrage. Antwortet Google mit 403 `SERVICE_DISABLED` bzw. `API_KEY_INVALID`, lautet der Status `Fehler: PSI-Zugriff abgelehnt (<Grund>)`, und darunter erscheint eine Prüfliste: (a) Ist im Google-Cloud-Projekt des Schlüssels die „PageSpeed Insights API" freigeschaltet? (b) Wurde der Schlüssel eben erst angelegt? Dann später erneut verbinden. (c) Ist der Schlüssel auf bestimmte APIs/Referrer beschränkt?
+  - [ ] Ein neues Profil ohne gespeicherte Auswahl steht auf Quelle Remote; ohne API-Schlüssel ist die Integration nicht verbunden (keine stille Umstellung auf Lokal).
   - [ ] Bei Quelle Lokal sind alle CrUX-Spalten leer und die CrUX-Metrikgruppe ist im Dialog deaktiviert.
   - [ ] Abgefragt werden nur interne HTML-URLs mit Status 200 (keine Weiterleitungen, keine Ressourcen).
 - **Testfixture:** Mock-PSI mit Szenarien `key-ok`, `key-not-enabled` (403 `SERVICE_DISABLED`), `key-invalid` (400 `API_KEY_INVALID`).
@@ -1483,12 +1471,12 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 - **Priorität:** P1
 - **Beschreibung:** Im Reiter „Metriken" werden die Gruppen Overview, CrUX (Felddaten), Lighthouse (Labordaten), Insights, Diagnostics und Mobile ein-/ausgeschaltet bzw. einzelne Metriken gewählt. Nur gewählte Metriken erscheinen als Spalten. Die Gruppenzuordnung folgt der Metrikauswahl der Referenz-Konfigurationsdoku: **Optimize DOM Size** (`DOM Size`) und **Font Display** (`Font Display Savings (ms)`) gehören zu Diagnostics, **Avoid Enormous Network Payloads** (`Network Payload Size (Bytes)`) gehört zu Insights. (Die Tab-Doku der Referenz listet diese Spalten teilweise in der jeweils anderen Gruppe; maßgeblich für OpenSpider ist die Metrikauswahl, weil sie bestimmt, welche Spalten und Filter erscheinen.)
 - **Eingaben/Konfiguration:** Metrik-Baum.
-- **Ausgabe:** Spaltenumfang des PageSpeed-Tabs; Spaltenreihenfolge im Tab: Overview, CrUX, Lighthouse, Insights, Diagnostics (Mobile-Spalten erscheinen im Mobile-Tab, INTEG-140).
+- **Ausgabe:** Spaltenumfang des PageSpeed-Tabs; Spaltenreihenfolge im Tab: Overview, CrUX, Lighthouse, Insights, Diagnostics (Mobile-Spalten erscheinen im Mobile-Tab, TECH-231; Datenbeschaffung INTEG-140).
 - **Akzeptanzkriterien:**
   - [ ] Abwahl der Gruppe Diagnostics entfernt genau die Spalten aus INTEG-138 (inkl. `DOM Size`, `Font Display Savings (ms)`, `Efficient Cache Policy Savings (Bytes)`) sowie die Filter Minify CSS, Minify JavaScript, Reduce Unused CSS, Reduce Unused JavaScript, Reduce JavaScript Execution Time, Minimize Main-Thread Work, Optimize DOM Size und Font Display; der Filter Avoid Enormous Network Payloads bleibt.
   - [ ] Abwahl der Gruppe Insights entfernt die Spalten aus INTEG-137 (inkl. `Network Payload Size (Bytes)`) und die Filter Document Request Latency bis Duplicated JavaScript sowie Avoid Enormous Network Payloads.
   - [ ] Filter, deren Metrik nicht gewählt ist, erscheinen weder im Tab noch in der Übersicht rechts.
-  - [ ] Abwahl der Gruppe Mobile entfernt die Lighthouse-basierten Spalten und Filter des Mobile-Tabs (INTEG-140); `Mobile Alternate Link` (INTEG-147) bleibt, da es aus dem Crawl stammt.
+  - [ ] Abwahl der Gruppe Mobile entfernt die Lighthouse-basierten Spalten und Filter des Mobile-Tabs (TECH-231 ff., Daten aus INTEG-140); `Mobile Alternate Link` (TECH-237) bleibt, da es aus dem Crawl stammt.
   - [ ] Eine Abwahl verändert keine gespeicherten Werte: erneutes Anwählen nach dem Crawl zeigt die Spalten mit ihren Werten wieder an, sofern sie abgefragt wurden.
 - **Testfixture:** UI-Test mit `psi-heavy.json`; erwartete Spalten-/Filterlisten je Gruppenkombination in `expected-groups.json`.
 
@@ -1598,21 +1586,22 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 
 ### INTEG-140 Mobile-Prüfungen aus Lighthouse
 - **Priorität:** P1
-- **Beschreibung:** Mobile-Tauglichkeitsprüfungen aus Lighthouse (lokal oder remote) werden im Mobile-Tab ausgegeben. Tab-Population, Issue-Einstufung und UI der Filter sind in `03-tabs-technical.md` (TECH-230–TECH-237) beschrieben; dieser Eintrag legt Datenquelle, Spaltenwerte und Filterbedingungen fest und ist für die Wertdarstellung maßgeblich (Score 0–100 statt Pass/Fail, Spaltenname `Font Display` statt `Font Size` – TECH-231 ist entsprechend anzugleichen). Voraussetzung: PSI ist verbunden und die Metrikgruppe Mobile ist gewählt. Die Werte sind – wie in der Referenz – **Audit-Scores 0–100** (Lighthouse-Score × 100; bestanden = 100, die Mobile-Audits sind binär und liefern praktisch nur 0 oder 100). Die Prüfung der Inhaltsbreite steht nur mit Quelle **Lokal** zur Verfügung, weil die Remote-PSI-API dieses Audit nicht mehr ausliefert. Nicht unterstützte Plugins (INTEG-146) und mobile Alternativ-URLs (INTEG-147) ergänzen den Tab.
+- **Beschreibung:** Datenbeschaffung für den Mobile-Tab: Die Mobile-Prüfergebnisse werden aus Lighthouse gewonnen – remote über die PSI-API oder lokal (Quelle gemäß INTEG-130/132) – und als Spaltenwerte bereitgestellt. **Tab-Population, Spaltennamen, Filterbedingungen (Pass/Fail) und Einstufung sind führend in TECH-230 … TECH-237 spezifiziert**; dieser Eintrag legt nur fest, welche Lighthouse-Audits abgefragt werden, wie deren Ergebnisse in Spaltenwerte umgerechnet werden und was bei fehlenden Audits gilt. Gegen die öffentliche Referenz-Doku verifiziert: Die Prüfspalten sind Lighthouse-Scores 0–100 (kein Pass/Fail-Text), die Spalte für die Schriftgrößen-Prüfung heißt `Font Display`, und die Prüfung der Inhaltsbreite ist nur mit Quelle Lokal verfügbar, weil die Remote-API dieses Audit nicht mehr liefert. Voraussetzung: PSI ist verbunden und die Metrikgruppe Mobile ist gewählt (INTEG-133).
 - **Eingaben/Konfiguration:** Gruppe Mobile; Quelle Remote/Lokal (INTEG-130).
-- **Ausgabe:** Spalten `Address`, `PSI Status`, `PSI Error`, `Viewport`, `Tap Targets`, `Content Width`, `Font Display`, `Plugins`, `Mobile Alternate Link`. Hinweis zur Benennung: Die Spalte `Font Display` enthält im Mobile-Tab das Ergebnis der **Schriftgrößen-Lesbarkeit** (Audit `font-size`), nicht das Font-Display-Insight des PageSpeed-Tabs; der Name wird zur Export-Kompatibilität beibehalten, der Spaltentooltip erklärt den Inhalt. Zuordnung: `Viewport` ← `viewport`; `Tap Targets` ← `target-size` (ersatzweise das ältere `tap-targets`, falls nur dieses geliefert wird); `Content Width` ← `content-width`; `Font Display` ← `font-size`; `Plugins` siehe INTEG-146. Filter: `Viewport Not Set`, `Target Size`, `Content Not Sized Correctly`, `Illegible Font Size`, `Unsupported Plugins` (INTEG-146), `Mobile Alternate Link` (INTEG-147).
+- **Ausgabe:** Werte für die Spalten des Mobile-Tabs (Namen und Reihenfolge: TECH-231). Zuordnung Spalte ← Lighthouse-Audit: `Viewport` ← `viewport`; `Tap Targets` ← `target-size` (ersatzweise das ältere `tap-targets`, falls nur dieses geliefert wird); `Content Width` ← `content-width` (nur Quelle Lokal); `Font Display` ← `font-size` (Schriftgrößen-Lesbarkeit, nicht das Font-Display-Insight des PageSpeed-Tabs; der Name bleibt aus Export-Kompatibilität, der Tooltip erklärt den Inhalt); `Plugins` ← `plugins`, sofern die genutzte Lighthouse-Version es liefert, sonst DOM-Erkennung nach TECH-236. `PSI Status`/`PSI Error` gemäß INTEG-143. `Mobile Alternate Link` stammt nicht aus Lighthouse, sondern aus dem gecrawlten HTML (TECH-237).
 - **Akzeptanzkriterien:**
-  - [ ] **Viewport Not Set:** URLs mit `Viewport` < 100 – die Seite hat kein `<meta name="viewport">` oder dessen `content` enthält keine `width`-Angabe. Seite ohne Viewport-Tag → `Viewport = 0` und im Filter; Seite mit `content="initial-scale=1"` (ohne `width`) → ebenfalls im Filter; Seite mit `width=device-width, initial-scale=1` → `100`, nicht im Filter.
-  - [ ] **Target Size:** URLs mit `Tap Targets` < 100 – Bedienelemente kleiner als 24 × 24 CSS-Pixel ohne ausreichenden Abstand zu Nachbarn. Seite mit dicht gesetzten 20×20-px-Buttons → im Filter; Seite mit 48×48-px-Buttons → `100`.
-  - [ ] **Content Not Sized Correctly:** URLs mit `Content Width` < 100 – die Inhaltsbreite weicht von der Viewport-Breite ab (horizontales Scrollen). Seite mit festem 1.200-px-Container → mit Quelle Lokal `Content Width = 0` und im Filter. Mit Quelle Remote ist `Content Width` leer, und der Filter zeigt statt Ergebnissen den Hinweis „Nur mit lokaler Lighthouse-Quelle verfügbar".
-  - [ ] **Illegible Font Size:** URLs mit `Font Display` < 100 – mehr als 40 % des Seitentexts sind kleiner als 12 px (Schwelle des Lighthouse-Audits). Seite mit 9-px-Fließtext → im Filter; Seite mit 16-px-Fließtext und 10-px-Fußnote (< 40 % des Texts) → `100`. Liefert die genutzte Lighthouse-Version das Audit nicht, bleibt die Spalte leer und die URL ist in keinem Filter.
-  - [ ] `PSI Status` ∈ {`Success`, `Error`, `Quota exceeded`}; bei `Error` enthält `PSI Error` Code und Meldung (INTEG-143). URLs mit `PSI Status ≠ Success` haben leere Score-Spalten und erscheinen in keinem Lighthouse-basierten Mobile-Filter.
-  - [ ] Score-Spalten sind ganzzahlig 0–100; leere Zelle bedeutet „Audit nicht geliefert", nicht „0".
-- **Testfixture:** `fixtures/integ/psi/mobile/` (Seiten `no-viewport.html`, `viewport-no-width.html`, `small-targets.html`, `big-targets.html`, `wide-content.html`, `tiny-font.html`, `small-footnote.html`, `ok.html`) + Mock-PSI-Antworten `psi-mobile-remote.json` (ohne `content-width`) und lokaler Lauf.
+  - [ ] Spaltenwert = Audit-Score × 100, kaufmännisch auf eine ganze Zahl gerundet (0–100); ein Remote-Score von 0,5 für `target-size` ergibt `Tap Targets = 50`.
+  - [ ] Audits mit `scoreDisplayMode = notApplicable` ergeben `100`; Audits, die die genutzte Lighthouse-Version nicht liefert oder die mit Fehler bzw. `manual` zurückkommen, ergeben eine leere Zelle (nicht `0`).
+  - [ ] Mit Quelle Remote und der Antwort `psi-mobile-remote.json` (ohne `content-width`) ist `Content Width` leer; mit Quelle Lokal wird es für `wide-content.html` als `0` und für `ok.html` als `100` befüllt.
+  - [ ] Liefert eine Antwort nur `tap-targets` (ältere Lighthouse-Version), wird dessen Score in `Tap Targets` übernommen; liefert sie beide, gilt `target-size`.
+  - [ ] Liefert die Antwort kein `plugins`-Audit, wird `Plugins` aus der DOM-Erkennung nach TECH-236 befüllt; liefert sie es, wird dessen Score übernommen.
+  - [ ] URLs mit `PSI Status ≠ Success` haben leere Prüfspalten.
+  - [ ] Bei abgewählter Gruppe Mobile werden für die Mobile-Audits keine zusätzlichen Kategorien angefragt (Mock-Log) und die Prüfspalten bleiben leer.
+- **Testfixture:** `fixtures/integ/psi/mobile/` (Seiten `no-viewport.html`, `viewport-no-width.html`, `small-targets.html`, `big-targets.html`, `wide-content.html`, `tiny-font.html`, `small-footnote.html`, `ok.html`) + Mock-PSI-Antworten `psi-mobile-remote.json` (ohne `content-width`), `psi-mobile-legacy.json` (nur `tap-targets`, mit `plugins`) und lokaler Lauf; die Filtererwartungen je Seite stehen in den Fixtures von TECH-232 … TECH-236.
 
 ### INTEG-141 Accessibility-Score aus Lighthouse
 - **Priorität:** P2
-- **Beschreibung:** Optional wird zusätzlich die Lighthouse-Kategorie Accessibility abgefragt und als Score 0–100 ausgegeben (die detaillierte Barrierefreiheitsprüfung ist Teil eines anderen Bereichs).
+- **Beschreibung:** Optional wird zusätzlich die Lighthouse-Kategorie Accessibility abgefragt und als Score 0–100 ausgegeben (die detaillierte Barrierefreiheitsprüfung ist in TECH-250 ff. spezifiziert).
 - **Eingaben/Konfiguration:** Checkbox „Accessibility-Score abfragen".
 - **Ausgabe:** `Accessibility Score`.
 - **Akzeptanzkriterien:**
@@ -1627,7 +1616,7 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 - **Ausgabe:** Restzeit-Schätzung in der Fortschrittsanzeige.
 - **Akzeptanzkriterien:**
   - [ ] Nie mehr als 60 Anfragen in 100 s (Mock-Messung).
-  - [ ] Nach 25.000 Anfragen am Tag (lokaler Zähler, Tageswechsel America/Los_Angeles) → `PSI Status = Quota exceeded` für weitere URLs; bei Quelle Lokal greift diese Grenze nicht (25.001. lokaler Lauf wird ausgeführt).
+  - [ ] Nach 25.000 Anfragen am Tag (lokaler Zähler, Tageswechsel America/Los_Angeles) werden für weitere URLs keine Anfragen mehr gesendet; diese URLs erhalten `PSI Status = Error` und `PSI Error = Quota exceeded: <Meldung>` (INTEG-143); bei Quelle Lokal greift diese Grenze nicht (25.001. lokaler Lauf wird ausgeführt).
   - [ ] Rechenbeispiel ratenbegrenzt: 3.000 offene URLs, 60 Anfragen/100 s, mittlere Antwortzeit 4 s, 5 gleichzeitige Anfragen → max(3.000 ÷ 0,6/s; 3.000 × 4 s ÷ 5) = max(5.000 s; 2.400 s) = 5.000 s; Anzeige „ca. 1 h 23 min" (±5 %).
   - [ ] Rechenbeispiel antwortzeitbegrenzt: 3.000 URLs, mittlere Antwortzeit 20 s, 5 gleichzeitige Anfragen → max(5.000 s; 12.000 s) = 12.000 s; Anzeige „ca. 3 h 20 min" (±5 %).
 - **Testfixture:** Mock-PSI mit Zeitmessung, Testuhr.
@@ -1636,62 +1625,38 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 - **Priorität:** P1
 - **Beschreibung:** „500 Unable to process request" ist häufig vorübergehend und wird mit Backoff wiederholt; bei gehäuftem Auftreten pausiert die Integration 10 Minuten. Lighthouse-Fehler wie `ERRORED_DOCUMENT_REQUEST`, `FAILED_DOCUMENT_REQUEST`, `NO_FCP` sind seitenbedingt und werden nicht automatisch wiederholt.
 - **Eingaben/Konfiguration:** —
-- **Ausgabe:** Spalten `PSI Status` (`Success` | `Error` | `Quota exceeded`) und `PSI Error` (Code und Meldung, sonst leer) im PageSpeed- und Mobile-Tab; Filter `PSI Errors` im PageSpeed-Tab.
+- **Ausgabe:** Spalten `PSI Status` (genau `Success` | `Error`; leer, solange die URL noch nicht abgefragt wurde – Wertebereich führend TECH-230) und `PSI Error` (Code und Meldung, sonst leer) im PageSpeed- und Mobile-Tab; Filter `PSI Errors` im PageSpeed-Tab. Ein erschöpftes Kontingent (lokaler Tageszähler nach INTEG-142 oder API-Antwort 429 mit Tageskontingent-Grund) ist kein eigener Statuswert, sondern `PSI Status = Error` mit `PSI Error = Quota exceeded: <Meldung>`.
 - **Akzeptanzkriterien:**
   - [ ] 500 einmalig → nach Wiederholung Daten vorhanden, `PSI Status = Success`, `PSI Error` leer.
   - [ ] Mehr als 10 aufeinanderfolgende 500er → Integration pausiert 10 Minuten (Testuhr), Hinweis in der UI.
   - [ ] `lighthouseResult.runtimeError.code = ERRORED_DOCUMENT_REQUEST` → `PSI Status = Error`, `PSI Error = ERRORED_DOCUMENT_REQUEST <Meldung>`, keine Wiederholung (Mock-Log: 1 Request).
-  - [ ] Filter **PSI Errors** zeigt genau die URLs mit `PSI Status = Error` (nicht `Quota exceeded`).
+  - [ ] Filter **PSI Errors** zeigt genau die URLs mit `PSI Status = Error`, einschließlich der URLs mit erschöpftem Kontingent (`PSI Error` beginnt mit `Quota exceeded:`); URLs mit leerem `PSI Status` (noch nicht abgefragt) erscheinen nicht.
+  - [ ] Kontingent erschöpft (Mock-Restkontingent 0) → `PSI Status = Error`, `PSI Error` beginnt mit `Quota exceeded:`; der Wert `Quota exceeded` kommt in `PSI Status` nie vor.
   - [ ] URLs mit Fehler sind über INTEG-008/INTEG-009 erneut anforderbar.
-- **Testfixture:** Mock-Szenarien `500-once`, `500-burst`, `lh-errored-document`.
+- **Testfixture:** Mock-Szenarien `500-once`, `500-burst`, `lh-errored-document`, `quota-exhausted` (Restkontingent 0).
 
 ### INTEG-144 Lighthouse-Details (unterer Tab) und Ressourcen-Export
 - **Priorität:** P2
-- **Beschreibung:** Unterer Tab „Lighthouse Details" zeigt je ausgewählter URL alle Audits mit Score und Anzeigewert und – nach Auswahl eines Audits – dessen beanstandete Ressourcen. Je Insight/Diagnostic-Filter kann die Ressourcenliste über alle URLs exportiert werden (Menü „Reports → PageSpeed → <Audit>").
+- **Beschreibung:** Unterer Tab „Lighthouse Details" zeigt je ausgewählter URL alle Audits mit Score und Anzeigewert und – nach Auswahl eines Audits – dessen beanstandete Ressourcen. Dieser Eintrag legt den Inhalt fest; Layout des Detail-Tabs: UI-046 (führend), Export des Detail-Tabs einer URL: OUT-021 (führend). Der Export der Ressourcenliste je Audit über alle URLs (Menü „Reports → PageSpeed → <Audit>") ist in OUT-114 führend spezifiziert.
 - **Eingaben/Konfiguration:** —
-- **Ausgabe:** Ressourcentabelle im unteren Tab mit den kanonischen Spalten `Source Page`, `URL`, `Size (Bytes)`, `Potential Savings` (Spaltensatz der Referenz-Oberfläche; in der öffentlichen Doku nicht aufgeführt – **zu verifizieren**). Der Export „Reports → PageSpeed → <Audit>" verwendet dieselben vier Spalten in derselben Reihenfolge und hängt die OpenSpider-Zusatzspalten `Audit`, `Potential Savings (ms)` an **(OpenSpider-Abweichung, nur angehängt)**. Feldzuordnung aus `details.items`: `URL` ← `url`; `Size (Bytes)` ← `totalBytes` (ersatzweise `transferSize`/`resourceSize`); `Potential Savings` ← `wastedBytes` in Bytes, bei Audits ohne Byte-Angabe `wastedMs` in ms (Einheit steht im Spaltentooltip bzw. im Export in `Potential Savings (ms)`).
+- **Ausgabe:** Ressourcentabelle im unteren Tab mit den kanonischen Spalten `Source Page`, `URL`, `Size (Bytes)`, `Potential Savings` (Spaltensatz der Referenz-Oberfläche; in der öffentlichen Doku nicht aufgeführt – **zu verifizieren**). Feldzuordnung aus `details.items`: `URL` ← `url`; `Size (Bytes)` ← `totalBytes` (ersatzweise `transferSize`/`resourceSize`); `Potential Savings` ← `wastedBytes` in Bytes, bei Audits ohne Byte-Angabe `wastedMs` in ms (Einheit im Spaltentooltip). Spalten und Format des Ressourcen-Exports je Audit: OUT-114 (führend).
 - **Akzeptanzkriterien:**
   - [ ] Für `psi-heavy.json` listet der Detail-Tab beim Audit „Reduce Unused JavaScript" alle Skripte aus `details.items` mit `Size (Bytes)` und `Potential Savings`.
-  - [ ] Export „Reduce Unused JavaScript" hat die Header `Source Page,URL,Size (Bytes),Potential Savings,Audit,Potential Savings (ms)` und eine Zeile je (Seite, Ressource).
-  - [ ] Bei „Render Blocking Requests" (nur ms-Einsparung je Ressource) steht der ms-Wert in `Potential Savings (ms)`, `Potential Savings` bleibt leer.
+  - [ ] Bei „Render Blocking Requests" (nur ms-Einsparung je Ressource) zeigt der Detail-Tab den ms-Wert in `Potential Savings` mit Einheit „ms“ im Tooltip.
   - [ ] Items ohne `url` (z. B. Elemente bei Layout-Shift-Verursachern) erscheinen mit dem Element-Selektor bzw. Snippet in `URL` und leerer Größe.
 - **Testfixture:** `psi-heavy.json`.
 
 ### INTEG-145 Report „PageSpeed Opportunities Summary"
 - **Priorität:** P2
-- **Beschreibung:** Report, der je Audit zusammenfasst: Anzahl betroffener URLs, Summe und Durchschnitt der Einsparung (ms und Bytes). Nicht für jedes Audit sind alle Werte verfügbar; fehlende bleiben leer.
-- **Eingaben/Konfiguration:** Menü Reports.
-- **Ausgabe:** `Audit`, `URLs`, `Total Savings (ms)`, `Average Savings (ms)`, `Total Savings (Bytes)`, `Average Savings (Bytes)`.
-- **Akzeptanzkriterien:**
-  - [ ] Bei 3 URLs mit Einsparungen 100, 200, 0 ms für Render-Blocking → `URLs = 2`, `Total = 300`, `Average = 150`.
-- **Testfixture:** 3 Mock-Antworten mit definierten Einsparungen.
+- **Verweis:** siehe OUT-104 (führend). Die Einsparwerte stammen aus denselben Audit-Feldern wie die Spalten in INTEG-137/138.
 
 ### INTEG-146 Nicht unterstützte Plugins (Mobile)
-- **Priorität:** P2
-- **Beschreibung:** Prüft, ob eine Seite Browser-Plugins einbettet, die auf Mobilgeräten (und in aktuellen Desktop-Browsern) nicht laufen: Flash, Silverlight, Java-Applets und vergleichbare `<object>`/`<embed>`-Inhalte. Liefert die genutzte Lighthouse-Version ein entsprechendes Audit (`plugins`), wird dessen Score übernommen; sonst ermittelt OpenSpider das Ergebnis selbst aus dem (gerenderten bzw. rohen) DOM **(abgeleitet)**. Erkennungsregeln: `<applet>`; `<object>`/`<embed>` mit `type` bzw. MIME-Typ `application/x-shockwave-flash`, `application/futuresplash`, `application/x-silverlight`, `application/x-silverlight-2`, `application/x-java-applet*`; `<object classid>` mit den bekannten Flash-/Silverlight-/Java-ClassIDs; `data`/`src` mit Endung `.swf`, `.xap`, `.class`, `.jar`. `<object>` mit Bild-, PDF- oder HTML-Inhalt zählt nicht.
-- **Eingaben/Konfiguration:** Gruppe Mobile.
-- **Ausgabe:** Spalte `Plugins` im Mobile-Tab (0–100; 100 = keine Plugins); Filter `Unsupported Plugins` (UI und Einstufung: TECH-236).
-- **Akzeptanzkriterien:**
-  - [ ] **Unsupported Plugins:** URLs mit `Plugins` < 100.
-  - [ ] `flash.html` (`<embed src="movie.swf" type="application/x-shockwave-flash">`) → `Plugins = 0`, im Filter.
-  - [ ] `silverlight.html` (`<object type="application/x-silverlight-2">`) und `applet.html` (`<applet code="A.class">`) → je `Plugins = 0`, im Filter.
-  - [ ] `object-pdf.html` (`<object data="doc.pdf" type="application/pdf">`) und `object-svg.html` → `Plugins = 100`, nicht im Filter.
-  - [ ] Ein per JavaScript eingefügtes Flash-`<embed>` wird nur im Rendering-Modus bzw. vom Lighthouse-Audit erkannt.
-- **Testfixture:** `fixtures/integ/psi/mobile/plugins/` (Seiten `flash.html`, `silverlight.html`, `applet.html`, `object-pdf.html`, `object-svg.html`, `js-flash.html`).
+- **Priorität:** P1
+- **Verweis:** siehe TECH-236 (führend). Liefert die genutzte Lighthouse-Version ein `plugins`-Audit, wird dessen Score in die Spalte `Plugins` übernommen, sonst greift die DOM-Erkennung von TECH-236 (Datenbeschaffung: INTEG-140).
 
 ### INTEG-147 Mobile Alternate Link
 - **Priorität:** P1
-- **Beschreibung:** Erkennt Seiten, die per `<link rel="alternate" media="…">` auf eine separate Mobilversion verweisen (getrennte Mobil-URLs, z. B. `m.example.com`). Die Daten stammen aus dem gecrawlten HTML, nicht aus Lighthouse, und werden daher auch ohne PSI-Abfrage befüllt **(abgeleitet)**. Als Mobil-Alternative gilt ein `<link>` im `<head>` mit `rel` enthält `alternate` und einem `media`-Attribut, das eine Bildschirmbreiten-Bedingung enthält (`max-width` bzw. `max-device-width`) oder `handheld` lautet; `hreflang`-Alternates ohne `media` zählen nicht. Mehrere passende Links: der erste in Dokumentreihenfolge wird ausgegeben, die Anzahl steht im Tooltip. Ein gleichwertiger HTTP-`Link`-Header wird ebenfalls ausgewertet.
-- **Eingaben/Konfiguration:** — (Teil des Mobile-Tabs; unabhängig von der Gruppenauswahl in INTEG-133).
-- **Ausgabe:** Spalte `Mobile Alternate Link` (absolut aufgelöste URL) im Mobile-Tab; Filter `Mobile Alternate Link` (UI, Einstufung und Option zum Crawlen der Mobil-URLs: TECH-237).
-- **Akzeptanzkriterien:**
-  - [ ] **Mobile Alternate Link:** URLs mit nicht-leerer Spalte `Mobile Alternate Link`.
-  - [ ] `<link rel="alternate" media="only screen and (max-width: 640px)" href="https://m.integ.test/a">` → Spalte `https://m.integ.test/a`, im Filter.
-  - [ ] Relatives `href="/m/a"` wird gegen die Basis-URL aufgelöst.
-  - [ ] `<link rel="alternate" hreflang="en" href="…">` ohne `media` → Spalte leer, nicht im Filter.
-  - [ ] HTTP-Header `Link: <https://m.integ.test/b>; rel="alternate"; media="only screen and (max-width: 640px)"` → Spalte `https://m.integ.test/b`.
-  - [ ] Die Spalte ist auch befüllt, wenn PSI nicht verbunden ist.
-- **Testfixture:** `fixtures/integ/psi/mobile/alternate/` (Seiten mit absolutem/relativem Mobil-Alternate, hreflang-only, Link-Header; Mobil-Host `m.integ.test`).
+- **Verweis:** siehe TECH-237 (führend). Die Spalte wird aus dem gecrawlten HTML befüllt, unabhängig von PSI und der Metrikgruppen-Auswahl (INTEG-133).
 
 ---
 
@@ -1801,6 +1766,7 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
   - [ ] Ollama ohne laufenden Server → `Fehler: Server nicht erreichbar (http://localhost:11434)`.
   - [ ] Mehrere Anbieter können gleichzeitig verbunden und in unterschiedlichen Prompts verwendet werden.
   - [ ] Schlüssel werden gemäß INTEG-002 gespeichert.
+- **Hinweis (übernommen aus 08):** OpenRouter ist ab M4 als fünfter, nativer Anbieter verfügbar (AI-005; Schlüssel gemeinsam mit 08 nach AI-009, Eintrag in INTEG-001). Für die Paritäts-Prompts dieses Abschnitts bleibt OpenRouter zusätzlich als OpenAI-kompatibler Endpunkt über INTEG-161 nutzbar; beide Wege teilen sich denselben Schlüssel.
 - **Testfixture:** Mock-Endpunkte für Modelllisten aller vier Anbieter; Profil mit einem Prompt auf Modell `retired-model-1`, das in der Mock-Liste fehlt.
 
 ### INTEG-161 OpenAI-kompatible und eigene Endpunkte
@@ -1854,7 +1820,7 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 
 ### INTEG-165 Prompt nur auf Segment anwenden
 - **Priorität:** P2
-- **Beschreibung:** Ein Prompt kann auf URLs eines Segments beschränkt werden („Match on Segment"). Segmente können auch auf Issues basieren (z. B. „Bilder ohne Alt-Text"), sodass kostenpflichtige Anfragen nur dort gestellt werden, wo sie nötig sind.
+- **Beschreibung:** Ein Prompt kann auf URLs eines Segments beschränkt werden („Match on Segment"; Segmentdefinition führend in CRAWL-134). Segmente können auch auf Issues basieren (z. B. „Bilder ohne Alt-Text"), sodass kostenpflichtige Anfragen nur dort gestellt werden, wo sie nötig sind.
 - **Eingaben/Konfiguration:** Dropdown „Segment" (Standard: kein Segment = alle URLs).
 - **Ausgabe:** Nicht passende URLs: Zelle leer, Status `Skipped (segment)`.
 - **Akzeptanzkriterien:**
@@ -1871,7 +1837,7 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
   - [ ] Anthropic bietet keine Kategorie Embeddings an; Ollama bietet keine Kategorien Moderation und Text-to-Speech an.
   - [ ] Ein Ollama-Prompt der Kategorie Bildgenerierung sendet die Anfrage an den konfigurierten Ollama-Endpunkt für Bildgenerierung (Pfad aus INTEG-161) und erzeugt eine Bilddatei gemäß INTEG-167.
   - [ ] Moderation-Ergebnis erscheint als `true`/`false` in `<Prompt>` und die Kategorien in `<Prompt> Categories`.
-  - [ ] Embedding-Prompts zeigen in der Tabelle nur `Vector (<Dimensionen>)`, nicht den Rohvektor; der Vektor ist im Export „Embeddings" als JSON-Array verfügbar.
+  - [ ] Embedding-Prompts zeigen in der Tabelle nur `Vector (<Dimensionen>)`, nicht den Rohvektor; der Vektor ist im Export „AI:Embeddings" (OUT-069, führend für das Format) als JSON-Array verfügbar.
 - **Testfixture:** Mock-Endpunkte je Kategorie.
 
 ### INTEG-167 Bild- und Sprachausgabe
@@ -2026,82 +1992,103 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 
 ## L Embeddings & semantische Analyse
 
+> Dieser Abschnitt ist **führend** für Embeddings: Anbieter und Konfiguration, Berechnung, Logik der Content-Filter „Semantically Similar" und „Low Relevance Content", Regeln, semantische Suche und Cluster. ONPAGE-159 … ONPAGE-164 sind Verweise hierher. Darstellung: UI-044 (Duplicate Details), UI-072 (Seitenleiste Semantic Search), UI-101 (Cluster-Diagramm); Exporte: OUT-052 (Bulk-Exporte Content), OUT-025 (Seitenleiste), OUT-026 (Visualisierungen). **Vergleichsregel einheitlich für alle Einträge:** Ein Ähnlichkeitswert erfüllt eine Schwelle, wenn er **≥** der Schwelle ist; verglichen wird immer der ungerundete Wert.
+
 ### INTEG-180 Embedding-Funktionalität aktivieren
 - **Priorität:** P1
-- **Beschreibung:** Unter den Content-Einstellungen wird „Embedding-Funktionalität aktivieren" eingeschaltet und gewählt, welcher Embedding-Prompt (INTEG-166) als Quelle dient. Eingabe ist der Seitentext des Inhaltsbereichs (rohes HTML im Textmodus, gerendertes im Rendering-Modus). Vorbedingungen in den Speicher-Einstellungen: Im Textmodus muss „HTML speichern" aktiv sein; im JavaScript-Rendering-Modus müssen **sowohl** „HTML speichern" **als auch** „Gerendertes HTML speichern" aktiv sein. Teilfunktionen „Semantische Ähnlichkeit" und „Low Relevance" werden einzeln aktiviert. Berechnungen erfolgen in der Crawl-Analyse.
-- **Eingaben/Konfiguration:** Checkbox Hauptschalter, Embedding-Quelle (Prompt), Checkboxen Semantic Similarity / Low Relevance, Schwellen (INTEG-181/182), Filterregeln (INTEG-184).
-- **Ausgabe:** Spalten und Filter im Content-Tab nach Crawl-Analyse.
+- **Beschreibung:** Unter den Content-Einstellungen wird „Embedding-Funktionalität aktivieren" eingeschaltet und gewählt, welcher Embedding-Prompt (INTEG-166) als Quelle dient. Anbieter, Modell, Vektordimension (INTEG-187) und Inhaltsbegrenzung (INTEG-172) sind Eigenschaften dieses Prompts. Eingabe ist die Inhaltseingabe des Prompts (INTEG-163); Standard ist der Seitentext des Inhaltsbereichs (ONPAGE-140), gewonnen aus dem rohen HTML im Textmodus bzw. dem gerenderten HTML im Rendering-Modus. Vorbedingungen in den Speicher-Einstellungen: Im Textmodus muss „HTML speichern" aktiv sein; im JavaScript-Rendering-Modus müssen **sowohl** „HTML speichern" **als auch** „Gerendertes HTML speichern" aktiv sein. Teilfunktionen „Semantische Ähnlichkeit" und „Low Relevance" werden einzeln aktiviert. Berechnungen erfolgen in der Crawl-Analyse (Ablauf: CRAWL-141). Vektoren werden je URL in der Crawl-Datei gespeichert (float32).
+  - **Inhaltsbegrenzung:** Es gilt die Begrenzung des Prompts (INTEG-172). Für Embedding-Prompts ist sie standardmäßig **aus** (Annahme: der Standardzustand der Referenz ist nicht dokumentiert; ihre Anleitung empfiehlt das Einschalten bei großen Seiten). Ist sie aus, wird der Text ungekürzt gesendet; eine automatische Kürzung auf das Token-Limit des Modells findet nicht statt.
+  - **URLs ohne Vektor:** Scheitert die Anfrage (z. B. Kontextlänge überschritten, Kontingent erschöpft, Zeitüberschreitung) oder wird sie übersprungen (leere Eingabe, INTEG-173; Segment, INTEG-165), erhält die URL keinen Vektor. Sie ist dann weder Quelle noch Ziel in INTEG-181, erhält keinen `Semantic Relevance Score` und trägt nicht zum Zentroid bei. Der Grund steht in `<Prompt> Status` (Werte gemäß INTEG-174); eine eigene Spalte `Embedding Status` gibt es nicht. Neuanforderung ohne Recrawl über INTEG-009 bzw. „Fehlgeschlagene neu anfordern" (INTEG-172).
+- **Eingaben/Konfiguration:** Checkbox Hauptschalter, Embedding-Quelle (Prompt), Checkboxen Semantic Similarity / Low Relevance, Schwellen (INTEG-181/182), Regeln (INTEG-184). Konfigurationsschlüssel (Konfigurationsprofil und Headless-Konfigurationsdatei): `embeddings.enabled`, `embeddings.source_prompt`, `embeddings.similarity_enabled`, `embeddings.similarity_threshold`, `embeddings.low_relevance_enabled`, `embeddings.low_relevance_threshold`, `embeddings.only_indexable`, `embeddings.rules`, `embeddings.compare_within_rule`, `embeddings.pair_rules`. Anbieter, Modell, Dimension und Inhaltsbegrenzung sind Prompt-Einstellungen und haben keine `embeddings.*`-Schlüssel.
+- **Ausgabe:** Spalten und Filter im Content-Tab nach Crawl-Analyse; gespeicherte Vektoren (Export gemäß INTEG-166).
 - **Akzeptanzkriterien:**
   - [ ] Textmodus ohne „HTML speichern" → beim Aktivieren erscheint die Warnung „Embeddings benötigt: HTML speichern" mit Direktlink zur Einstellung; mit „HTML speichern" keine Warnung.
   - [ ] Rendering-Modus mit „HTML speichern", aber ohne „Gerendertes HTML speichern" → Warnung „Embeddings benötigt: Gerendertes HTML speichern"; fehlen beide, nennt die Warnung beide Einstellungen.
   - [ ] Wird der Crawl trotz Warnung gestartet, wird keine Embedding-Anfrage gesendet (Mock-Zähler 0), und die Embedding-Filter zeigen den Hinweis „Vorbedingung nicht erfüllt".
-  - [ ] Ohne Crawl-Analyse zeigen die Filter „Semantically Similar" und „Low Relevance Content" einen Hinweis statt Ergebnissen.
-  - [ ] Embeddings werden je URL einmal berechnet und mit dem Crawl gespeichert (erneute Analyse ruft die API nicht erneut auf; Mock-Zähler unverändert).
-  - [ ] URLs, für die kein Embedding erzeugt werden konnte (Fehler, leerer Text), werden in den Berechnungen ignoriert und erscheinen in keinem Filter.
-- **Testfixture:** `fixtures/integ/embed/site/` (10 Seiten: 3 nahezu gleiche Texte über Laufschuhe, 1 Seite über Steuerrecht, 6 thematisch passende Seiten) + Mock-Embedding-Endpunkt mit deterministischen Vektoren (Hash des Texts → fester Vektor; vordefinierte Vektoren für die Fixture-Seiten).
+  - [ ] Ohne Crawl-Analyse zeigen die Filter „Semantically Similar" und „Low Relevance Content" den Leerzustand `NEEDS_CRAWL_ANALYSIS` (UI-016); ist die jeweilige Teilfunktion aus, zeigen sie `FEATURE_DISABLED`.
+  - [ ] Jede URL der Vergleichsmenge erhält genau einen Vektor fester Dimension; eine erneute Crawl-Analyse ruft die API nicht erneut auf (Mock-Zähler unverändert). Ist der gesendete Text einer URL unverändert (Hash des gesendeten Texts), wird auch bei einer Neuanforderung keine Anfrage gestellt.
+  - [ ] Eine Seite ohne Text im Inhaltsbereich wird nicht gesendet (`<Prompt> Status = Skipped (empty input)`).
+  - [ ] Inhaltsbegrenzung an mit 5.000 Zeichen: Für `long-12000.html` empfängt der Mock genau die ersten 5.000 Codepoints des Texts; `short-3000.html` wird unverändert gesendet. Inhaltsbegrenzung aus: Der Mock empfängt alle 12.000 Zeichen; lehnt er Texte über 8.000 Zeichen mit HTTP 400 ab, lautet der Status `Error: 400 …`, und die URL hat keinen Vektor.
+  - [ ] Eine URL ohne Vektor erscheint weder im Filter „Semantically Similar" noch als `Closest Semantically Similar Address` einer anderen URL, hat einen leeren `Semantic Relevance Score`, und der Zentroid ist mit und ohne diese URL identisch.
+  - [ ] Der API-Fehler einer URL bricht die Analyse der übrigen URLs nicht ab.
+  - [ ] Nach Einschalten der Begrenzung und „Fehlgeschlagene neu anfordern" erhält die zuvor fehlerhafte URL einen Vektor; an die gecrawlte Website geht dabei keine HTTP-Anfrage.
+- **Testfixture:** `fixtures/integ/embed/site/` (10 Seiten: 3 nahezu gleiche Texte über Laufschuhe, 1 Seite über Steuerrecht, 6 thematisch passende Seiten) + `fixtures/integ/embed/limits/` (`long-12000.html`, `short-3000.html`, `empty.html`) + Mock-Embedding-Endpunkt mit deterministischen Vektoren (Hash des Texts → fester Vektor; vordefinierte Vektoren für die Fixture-Seiten), konfigurierbarer Längengrenze und Request-Log.
 
 ### INTEG-181 Semantische Ähnlichkeit
 - **Priorität:** P1
-- **Beschreibung:** Für jede URL wird die Kosinus-Ähnlichkeit zu allen anderen URLs berechnet (0–1). URLs oberhalb der Schwelle gelten als semantisch ähnlich. Standardschwelle 0,95, einstellbar zwischen 0,5 und 1,0.
-- **Eingaben/Konfiguration:** Schwelle „Semantische Ähnlichkeit".
-- **Ausgabe:** Content-Tab-Spalten `Closest Semantically Similar Address`, `Semantic Similarity Score`, `No. Semantically Similar`; Filter `Semantically Similar`.
+- **Beschreibung:** Für jede URL der Vergleichsmenge wird die Kosinus-Ähnlichkeit (über L2-normalisierte Vektoren, 0–1) zu allen URLs berechnet, mit denen sie nach INTEG-184 verglichen werden darf. Ein Paar gilt als semantisch ähnlich, wenn seine Ähnlichkeit **≥** der Schwelle ist. Standardschwelle 0,95, einstellbar von 0,50 bis 1,00. **(OpenSpider-Festlegung:** Die Referenz beschreibt ähnliche Seiten als „über" der Schwelle und lässt den Grenzfall offen; OpenSpider schließt die Grenze einheitlich ein.)
+- **Eingaben/Konfiguration:** Schwelle „Semantische Ähnlichkeit" (`embeddings.similarity_threshold`).
+- **Ausgabe:** Content-Tab-Spalten `Closest Semantically Similar Address`, `Semantic Similarity Score`, `No. Semantically Similar`; Filter `Semantically Similar`. Detailansicht: INTEG-183; Bulk-Export „Content → Semantically Similar": OUT-052 (führend).
 - **Akzeptanzkriterien:**
-  - [ ] Filter **Semantically Similar** zeigt URLs mit mindestens einem Partner, dessen Ähnlichkeit > Schwelle ist (streng größer); ein Paar mit exakt 0,9500 bei Schwelle 0,95 zählt nicht.
+  - [ ] Filter **Semantically Similar** zeigt URLs mit mindestens einem Partner, dessen Ähnlichkeit ≥ Schwelle ist. Ein Paar mit exakt 0,9500 (Mock-Vektoren bis auf 1e-9) zählt bei Schwelle 0,95; ein Paar mit 0,9499 zählt nicht.
   - [ ] Eine URL wird nie mit sich selbst verglichen; URLs mit identischer Adresse nach Normalisierung (z. B. nur abweichendes Fragment) gelten als dieselbe URL.
-  - [ ] Bei den 3 Laufschuh-Seiten (Fixture-Vektoren mit paarweisen Scores 0,9700 / 0,9650 / 0,9600) zeigt jede Seite `No. Semantically Similar = 2`; `Closest Semantically Similar Address` ist der Partner mit dem höchsten Score, `Semantic Similarity Score` dessen Wert (z. B. Seite A → Partner B mit 0,9700).
+  - [ ] Bei den 3 Laufschuh-Seiten (Fixture-Vektoren mit paarweisen Scores 0,9700 / 0,9650 / 0,9600) zeigt jede Seite `No. Semantically Similar = 2`; `Closest Semantically Similar Address` ist der Partner mit dem höchsten Score, `Semantic Similarity Score` dessen Wert (z. B. Seite A → Partner B mit 0,970).
   - [ ] Gleichstand beim höchsten Score: Es wird die lexikografisch kleinste Adresse gewählt (deterministisch).
-  - [ ] URLs ohne Partner über der Schwelle haben `No. Semantically Similar = 0`; `Closest Semantically Similar Address` und `Semantic Similarity Score` zeigen trotzdem den nächsten Partner und dessen Score (auch unter der Schwelle), damit Grenzfälle sichtbar sind.
-  - [ ] Bei Schwelle 0,98 ist der Filter für diese Seiten leer; eine Schwellenänderung wirkt nach erneuter Crawl-Analyse ohne neue API-Anfragen.
-  - [ ] Scores werden in der UI mit 4 Nachkommastellen angezeigt und im Export ungerundet (mind. 6 Nachkommastellen) ausgegeben; Werte außerhalb 0,5–1,0 werden im Schwellenfeld abgelehnt.
-  - [ ] Leistung: Bis 50.000 URLs wird exakt (paarweise) gerechnet und auf alle CPU-Kerne verteilt; 10.000 URLs à 768 Dimensionen benötigen auf der Referenzmaschine (8 Kerne) ≤ 60 s. Über 50.000 URLs wird ein approximativer Nachbarschaftsindex (z. B. HNSW) verwendet; auf dem Benchmark-Datensatz `embed-bench-60k` erreicht er für die Spalte `Closest Semantically Similar Address` eine Übereinstimmung von ≥ 99 % mit der exakten Rechnung, und auf der 10-Seiten-Fixture sind die Ergebnisse identisch.
-- **Testfixture:** `fixtures/integ/embed/site/` mit vordefinierten Vektoren und erwarteten Scores (`expected-similarity.csv`, inkl. Gleichstand-Paar und Grenzwertpaar 0,9500); synthetischer Datensatz `fixtures/integ/embed/embed-bench-60k.bin` (60.000 Zufallsvektoren mit eingebetteten Clustern, festem Seed).
+  - [ ] URLs ohne Partner ≥ Schwelle haben `No. Semantically Similar = 0`; `Closest Semantically Similar Address` und `Semantic Similarity Score` zeigen trotzdem den nächsten zulässigen Partner und dessen Score (auch unter der Schwelle), damit Grenzfälle sichtbar sind. Hat eine URL nach INTEG-184 gar keinen zulässigen Partner, bleiben beide Zellen leer.
+  - [ ] Identische Vektoren ergeben den Score `1.000`.
+  - [ ] Bei Schwelle 0,98 ist der Filter für die Laufschuh-Seiten leer; eine Schwellenänderung wirkt nach erneuter Crawl-Analyse ohne neue API-Anfragen.
+  - [ ] Scores werden in der Oberfläche mit 3 Nachkommastellen angezeigt (Darstellung gemäß UI-044) und im Export ungerundet (mindestens 6 Nachkommastellen) ausgegeben; Werte außerhalb 0,50–1,00 werden im Schwellenfeld mit Fehlermeldung abgelehnt.
+  - [ ] Leistung: Bis 50.000 URLs wird exakt (paarweise) gerechnet und auf alle CPU-Kerne verteilt; 10.000 URLs à 768 Dimensionen benötigen auf der Referenzmaschine (8 Kerne) ≤ 60 s. Über 50.000 URLs wird ein approximativer Nachbarschaftsindex (z. B. HNSW) verwendet; auf dem Benchmark-Datensatz `embed-bench-60k` erreicht er für `Closest Semantically Similar Address` eine Übereinstimmung von ≥ 99 % mit der exakten Rechnung, von den 1.000 eingebetteten Paaren ≥ Schwelle werden mindestens 990 gefunden, und auf der 10-Seiten-Fixture sind die Ergebnisse identisch.
+- **Testfixture:** `fixtures/integ/embed/site/` mit vordefinierten Vektoren und erwarteten Scores (`expected-similarity.csv`, inkl. Gleichstand-Paar, Grenzwertpaaren 0,9500 und 0,9499 sowie identischem Vektorpaar); synthetischer Datensatz `fixtures/integ/embed/embed-bench-60k.bin` (60.000 Zufallsvektoren mit eingebetteten Clustern und 1.000 eingebetteten Paaren ≥ 0,95, fester Seed).
 
 ### INTEG-182 Low Relevance Content
 - **Priorität:** P1
-- **Beschreibung:** Aus allen Embeddings wird der Mittelwert (Zentroid) der Website gebildet; für jede URL wird ihre Kosinus-Ähnlichkeit zum Zentroid als „Semantic Relevance Score" ausgegeben. URLs unter der Schwelle (Standard 0,4) gelten als thematische Ausreißer.
-- **Eingaben/Konfiguration:** Schwelle „Low Relevance" (0–1, Standard 0,4).
-- **Ausgabe:** Spalte `Semantic Relevance Score`; Filter `Low Relevance Content`.
+- **Beschreibung:** Aus den L2-normalisierten Vektoren aller URLs der Vergleichsmenge (INTEG-184; Ein-/Ausschlussregeln und „nur indexierbare Seiten" wirken, Paarregeln nicht) wird der Mittelwert (Zentroid) gebildet; für jede URL wird ihre Kosinus-Ähnlichkeit zum Zentroid als „Semantic Relevance Score" ausgegeben (Wertebereich −1 bis 1). URLs unter der Schwelle (Standard 0,4, laut Referenz-Anleitung ebenfalls 0,4) gelten als thematische Ausreißer.
+- **Eingaben/Konfiguration:** Schwelle „Low Relevance" (`embeddings.low_relevance_threshold`, 0–1, Standard 0,4).
+- **Ausgabe:** Spalte `Semantic Relevance Score`; Filter `Low Relevance Content`; Bulk-Export: OUT-052.
 - **Akzeptanzkriterien:**
-  - [ ] Filter **Low Relevance Content** zeigt URLs mit `Semantic Relevance Score` < Schwelle (streng kleiner).
+  - [ ] Filter **Low Relevance Content** zeigt URLs mit `Semantic Relevance Score` < Schwelle; ein Score genau gleich der Schwelle gilt als relevant und steht nicht im Filter (konsistent zur ≥-Regel dieses Abschnitts).
   - [ ] Die Steuerrecht-Seite der Fixture hat einen Score < 0,4 und ist im Filter; alle anderen nicht.
-  - [ ] Der Zentroid wird nur aus URLs gebildet, die die Filterregeln (INTEG-184) erfüllen.
-- **Testfixture:** wie INTEG-181.
+  - [ ] Mock mit 5 nahezu gleichen und 1 orthogonalen Vektor → nur die orthogonale URL im Filter; jeder Score liegt in [−1, 1] und wird mit 3 Nachkommastellen angezeigt.
+  - [ ] Der Zentroid wird nur aus URLs der Vergleichsmenge gebildet; URLs außerhalb (ausgeschlossen, nicht indexierbar bei aktivem `embeddings.only_indexable`, ohne Vektor) erhalten keinen Score.
+- **Testfixture:** wie INTEG-181, ergänzt um `fixtures/integ/embed/orthogonal/` (5 + 1 Mock-Vektoren).
 
 ### INTEG-183 Detailansicht „Semantic Similarity"
 - **Priorität:** P1
-- **Beschreibung:** Im unteren Tab „Duplicate Details" listet der Filter „Semantic Similarity" für die gewählte URL alle semantisch ähnlichen URLs mit Score; rechts wird der analysierte Text beider Seiten angezeigt.
+- **Beschreibung:** Inhalt des Filters „Semantic Similarity" im unteren Tab „Duplicate Details": Für die gewählte URL werden alle Partner mit Ähnlichkeit ≥ Schwelle mit Score absteigend gelistet; daneben steht der an das Modell gesendete Text beider Seiten. Layout und Umschaltung zwischen Near Duplicates und Semantic Similarity: UI-044 (führend). Bulk-Export „Content → Semantically Similar": OUT-052 (führend).
 - **Eingaben/Konfiguration:** —
 - **Ausgabe:** `Address`, `Semantic Similarity Score`; Textvergleich.
 - **Akzeptanzkriterien:**
-  - [ ] Für eine Laufschuh-Seite erscheinen die 2 Partnerseiten absteigend nach Score.
-  - [ ] Bulk-Export „Content → Semantically Similar" enthält je Paar eine Zeile (`Address`, `Similar Address`, `Score`).
+  - [ ] Für eine Laufschuh-Seite erscheinen die 2 Partnerseiten absteigend nach Score; die Zeilenzahl entspricht `No. Semantically Similar` der Fokus-URL.
+  - [ ] Der angezeigte Text ist byte-gleich mit dem gespeicherten Eingabetext des Embeddings; wurde nach INTEG-172 gekürzt, ist das über der Textspalte vermerkt.
+  - [ ] Der Bulk-Export nach OUT-052 enthält je Paar und Richtung eine Zeile mit denselben Paaren wie die Detailansicht.
 - **Testfixture:** wie INTEG-181.
 
 ### INTEG-184 Embedding-Filterregeln
-- **Priorität:** P2
-- **Beschreibung:** URL-Regeln (Regex) legen fest, welche URLs in die Analyse eingehen und welche Paare verglichen werden, z. B. nur `/blog/` mit `/blog/` oder Ausschluss von `/tag/`.
-- **Eingaben/Konfiguration:** Liste von Regeln: „Einschließen"/„Ausschließen", Regex; optional „nur innerhalb gleicher Regel vergleichen".
-- **Ausgabe:** —
+- **Priorität:** P1
+- **Beschreibung:** Regeln legen fest, welche URLs in die Analyse eingehen und welche Paare verglichen werden. Zwei Regelarten sind kombinierbar:
+  - **Einschluss-/Ausschlussregeln** (Regex auf `Address`) bestimmen die Vergleichsmenge für Ähnlichkeit, Zentroid und Low Relevance. Gibt es mindestens eine Einschlussregel, gehören nur passende URLs dazu; eine Ausschlussregel hat Vorrang vor einer Einschlussregel. Option „nur innerhalb gleicher Regel vergleichen": Ein Paar wird nur verglichen, wenn beide URLs dieselbe Einschlussregel erfüllen (z. B. nur `/blog/` mit `/blog/`).
+  - **Quell-/Zielmuster-Paare** (je Regel ein Regex für die Quelle und eines für das Ziel): Gibt es mindestens eine Paarregel, werden nur gerichtete Paare (A, B) verglichen, bei denen A das Quell- und B das Zielmuster derselben Regel erfüllt. Anwendungsfälle: Weiterleitungs-Mapping „alte Struktur → neue Struktur", Staging nur gegen Live. Paarregeln wirken nur auf INTEG-181/183, nicht auf Zentroid und Low Relevance.
+  - **Nur indexierbare Seiten** (Standard an) **(OpenSpider-Erweiterung):** Nicht indexierbare URLs gehören nicht zur Vergleichsmenge und werden nicht an den Anbieter gesendet. Die Referenz-Doku beschreibt eine solche Option nur für Duplikate, nicht für Embeddings (Annahme: die Referenz analysiert alle Seiten mit Embedding; der Paritäts-Standard wäre dann „aus").
+  - Auswertung: Ein Paar (A, B) wird verglichen, wenn beide URLs zur Vergleichsmenge gehören, eine vorhandene Paarregel für (A, B) zutrifft und – bei aktiver Option – A und B eine gemeinsame Einschlussregel erfüllen.
+- **Eingaben/Konfiguration:** `embeddings.rules` (Liste aus `{mode: include|exclude, regex}`), `embeddings.compare_within_rule` (Standard aus), `embeddings.pair_rules` (Liste aus `{source_regex, target_regex}`), `embeddings.only_indexable` (Standard an).
+- **Ausgabe:** wirkt auf INTEG-181 … INTEG-186.
 - **Akzeptanzkriterien:**
   - [ ] Ausschluss `/tag/` → Tag-Seiten haben keine Scores und erscheinen in keinem Filter.
-  - [ ] Mit „nur innerhalb gleicher Regel vergleichen" und Regeln `/blog/`, `/shop/` wird ein Blog-Artikel nie als ähnlich zu einer Shop-Seite gemeldet, auch bei Score 0,99.
-- **Testfixture:** `fixtures/integ/embed/rules/` (Blog-/Shop-/Tag-Seiten mit vorgegebenen Vektoren).
+  - [ ] Einschluss `/blog/` und Ausschluss `/blog/tag/` → `/blog/tag/x` gehört nicht zur Vergleichsmenge (Ausschluss hat Vorrang).
+  - [ ] Mit „nur innerhalb gleicher Regel vergleichen" und Einschlussregeln `/blog/`, `/shop/` wird ein Blog-Artikel nie als ähnlich zu einer Shop-Seite gemeldet, auch bei Score 0,99.
+  - [ ] Paarregel `^.*/alt/` → `^.*/neu/`: `/alt/x` erhält nur Partner unter `/neu/`; `/neu/y` ist keine Quelle einer Regel und hat daher keinen Closest-Eintrag und `No. Semantically Similar = 0`.
+  - [ ] Eine Paarregel ändert keinen `Semantic Relevance Score` (Werte mit und ohne Paarregel identisch).
+  - [ ] Ein ungültiger Regex wird beim Speichern der Konfiguration mit Meldung abgelehnt.
+  - [ ] Eine `noindex`-Seite erhält mit Standardeinstellung weder eine Embedding-Anfrage noch einen Score; mit `embeddings.only_indexable = false` erhält sie beides.
+- **Testfixture:** `fixtures/integ/embed/rules/` (Blog-/Shop-/Tag-Seiten mit vorgegebenen Vektoren, `alt/*.html`, `neu/*.html`, `noindex.html`).
 
 ### INTEG-185 Semantische Suche
-- **Priorität:** P2
-- **Beschreibung:** Ein rechter Seitenbereich „Semantic Search" nimmt eine Freitext-Anfrage entgegen, erzeugt deren Embedding mit demselben Modell wie die Seiten und listet die URLs nach Kosinus-Ähnlichkeit absteigend. Ein Mindestscore filtert schwache Treffer. Eine Ansicht „Zentroid" zeigt die Seiten nach Nähe zum Website-Mittelpunkt (zentralste und fernste Seiten).
-- **Eingaben/Konfiguration:** Suchfeld, Mindestscore (Standard 0,0), Ansicht „Abfrage"/„Zentroid", Embedding-Satz (INTEG-188).
+- **Priorität:** P1
+- **Beschreibung:** Ein rechter Seitenbereich „Semantic Search" nimmt eine Freitext-Anfrage entgegen, erzeugt deren Embedding mit demselben Modell wie die Seiten und listet die URLs nach Kosinus-Ähnlichkeit absteigend. Ein Mindestscore blendet schwache Treffer aus; angezeigt werden Treffer mit Score ≥ Mindestscore. Eine Ansicht „Zentroid" zeigt die Seiten nach Nähe zum Website-Mittelpunkt (zentralste und fernste Seiten). Dieser Eintrag ist führend für Logik und Standardwert; Layout der Seitenleiste: UI-072, Export: OUT-025.
+- **Eingaben/Konfiguration:** Suchfeld, Mindestscore (0,0–1,0, Standard **0,5** – OpenSpider-Festlegung: die öffentliche Referenz-Doku nennt für die semantische Suche keinen Standardwert; geprüft gegen User Guide, Anleitungen und Release History), Ansicht „Abfrage"/„Zentroid", Embedding-Satz (INTEG-188).
 - **Ausgabe:** `Address`, `Score`.
 - **Akzeptanzkriterien:**
+  - [ ] Frische Installation: Mindestscore 0,5.
   - [ ] Anfrage „Laufschuhe für Marathon" listet die 3 Laufschuh-Seiten oben (Mock-Vektor der Anfrage vordefiniert).
-  - [ ] Mindestscore 0,5 blendet alle Treffer < 0,5 aus.
+  - [ ] Mindestscore 0,5 blendet alle Treffer < 0,5 aus; ein Treffer mit genau 0,5 bleibt sichtbar. Mindestscore 0,0 zeigt alle URLs mit Vektor.
   - [ ] Ansicht „Zentroid" sortiert nach `Semantic Relevance Score`.
   - [ ] Die Anfrage verbraucht genau 1 Embedding-Request.
 - **Testfixture:** wie INTEG-181 + vordefinierter Anfrage-Vektor.
 
 ### INTEG-186 Content-Cluster-Diagramm
-- **Priorität:** P2
-- **Beschreibung:** Visualisierung der Embeddings als 2D-Streudiagramm nach Dimensionsreduktion (t-SNE oder UMAP; Voreinstellungen siehe INTEG-189) mit Clusterfärbung (k-means oder HDBSCAN). Einstellbar: Stichprobengröße, Reduktionsverfahren, Clusterverfahren, Farbschema; Einschränkung auf ein Segment. Per Rechtsklick auf einen Punkt lassen sich die internen Links dieser URL einblenden: **Show Inlinks** (alle eingehenden Links als Linien von den Quell-Punkten), **Show Outlinks** (alle ausgehenden Links zu Ziel-Punkten), **Show Inlinks Within Cluster** (nur eingehende Links von Seiten desselben Clusters – zeigt, ob thematisch verwandte Seiten untereinander verlinken). Eine Legende listet die Cluster mit Farbe und Anzahl; ein Klick auf einen Legendeneintrag blendet den Cluster aus bzw. wieder ein. Ausreißer liegen isoliert am Rand. (Rendering-Details im Bereich Visualisierungen.)
+- **Priorität:** P1
+- **Beschreibung:** Visualisierung der Embeddings als 2D-Streudiagramm nach Dimensionsreduktion (t-SNE oder UMAP; Voreinstellungen siehe INTEG-189) mit Clusterfärbung (k-means oder HDBSCAN). Einstellbar: Stichprobengröße, Reduktionsverfahren, Clusterverfahren, Farbschema; Einschränkung auf ein Segment. Per Rechtsklick auf einen Punkt lassen sich die internen Links dieser URL einblenden: **Show Inlinks** (alle eingehenden Links als Linien von den Quell-Punkten), **Show Outlinks** (alle ausgehenden Links zu Ziel-Punkten), **Show Inlinks Within Cluster** (nur eingehende Links von Seiten desselben Clusters – zeigt, ob thematisch verwandte Seiten untereinander verlinken). Eine Legende listet die Cluster mit Farbe und Anzahl; ein Klick auf einen Legendeneintrag blendet den Cluster aus bzw. wieder ein. Ausreißer liegen isoliert am Rand. Dieser Eintrag ist führend für Berechnung, Stichprobe, Clusterbildung, Linkdaten und die diagrammspezifische Interaktion (UI-101 verweist hierher); gemeinsamer Visualisierungs-Rahmen (Fenster, Zoom, Suche, Browser-Modus): UI-090, Export der Visualisierung: OUT-026.
 - **Eingaben/Konfiguration:** Zahnrad-Dialog (Stichprobengröße Standard 5.000 URLs, Bereich 100–50.000; Reduktionsverfahren; Clusterverfahren mit k bzw. Mindest-Clustergröße; Farbschema; Zufalls-Seed); Segment-Auswahl; Kontextmenü je Punkt; klickbare Legende.
 - **Ausgabe:** interaktives Diagramm; Export PNG/SVG und CSV (`Address`, `x`, `y`, `Cluster`); HDBSCAN-Rauschpunkte erhalten `Cluster = -1` und die Legende „Ausreißer".
 - **Akzeptanzkriterien:**
@@ -2113,10 +2100,35 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
   - [ ] **Show Outlinks** auf Seite A zeichnet je eindeutigem internem Ziel im Diagramm eine Linie (Fixture: 3).
   - [ ] **Show Inlinks Within Cluster** auf Seite A zeichnet nur Linien von Quellseiten mit gleicher Cluster-ID (Fixture: 2 von 4); hat A keine solchen Inlinks, erscheint der Hinweis „Keine Inlinks aus demselben Cluster".
   - [ ] Ein Klick auf einen Legendeneintrag blendet alle Punkte dieses Clusters (und dazugehörige Linklinien) aus; ein zweiter Klick blendet sie ein; der Zustand wirkt nicht auf den CSV-Export (der immer alle Punkte enthält).
+  - [ ] `[OS-Erweiterung]` Alt-Klick (macOS: Option-Klick) auf einen Legendeneintrag blendet alle übrigen Cluster aus, sodass nur dieser Cluster sichtbar bleibt; ein erneuter Alt-Klick auf denselben Eintrag blendet wieder alle Cluster ein. Die Koordinaten der Punkte ändern sich dabei nicht (keine Neuberechnung).
+  - [ ] `[OS-Erweiterung]` Der SVG-/PNG-Export enthält nur die aktuell sichtbaren Cluster (Punkte, Linklinien, Legendeneinträge); Fixture mit 4 Clustern, einer ausgeblendet → Export zeigt 3 Cluster. Der CSV-Export bleibt davon unberührt (siehe vorheriges Kriterium).
+  - [ ] `[OS-Erweiterung]` Ausgeblendete Cluster erscheinen in der Legende ausgegraut und werden von der Diagrammsuche und den Tooltips ausgenommen (übernommen aus UI-101 Rev. 2).
+  - [ ] OS-Festlegung: Der CSV-Export hat genau die Spalten `Address`, `x`, `y`, `Cluster` (keine Spalte `Visible`, damit das Format und die byte-identische CSV unabhängig vom Legendenzustand bleiben).
+  - [ ] `[OS-Erweiterung]` Eine Neuberechnung (Wechsel des Reduktionsverfahrens, eines Parameters oder einer Voreinstellung nach INTEG-189) läuft mit Fortschrittsanzeige im Hintergrund und dauert bei einer Stichprobe von 10.000 Punkten höchstens 30 s auf Referenzhardware (07-performance.md); die Oberfläche bleibt währenddessen bedienbar.
 - **Testfixture:** wie INTEG-181, ergänzt um einen Linkgraphen: Laufschuh-Seite A mit 4 internen Inlinks (2 aus dem Laufschuh-Cluster, 2 von anderen Seiten) und 3 internen Outlinks; Segment „Blog" über URL-Präfix `/blog/`.
 
+### INTEG-187 Dimensionsreduktion der Vektoren
+- **Priorität:** P1
+- **Beschreibung:** Über Modellparameter (`dimensions` bei OpenAI, `outputDimensionality` bei Gemini) können kürzere Vektoren angefordert werden (z. B. 256 statt 1.024 Dimensionen), um Speicher und Analysezeit zu reduzieren. Vektoren werden vor der Kosinus-Berechnung normalisiert, da verkürzte Vektoren nicht zwingend Einheitslänge haben. Nicht zu verwechseln mit der 2D-Projektion für das Cluster-Diagramm und deren Voreinstellungen (INTEG-189).
+- **Eingaben/Konfiguration:** Modellparameter (INTEG-175).
+- **Ausgabe:** `Vector (256)` in der Prompt-Spalte.
+- **Akzeptanzkriterien:**
+  - [ ] Parameter `outputDimensionality = 256` erscheint im Request; gespeicherte Vektoren haben 256 Einträge.
+  - [ ] Nicht normalisierte Mock-Vektoren ergeben dieselben Scores wie ihre normalisierten Varianten.
+- **Testfixture:** Mock mit nicht normalisierten 256-d-Vektoren.
+
+### INTEG-188 Mehrere Embedding-Sätze
+- **Priorität:** P1
+- **Beschreibung:** Sind mehrere Embedding-Prompts konfiguriert (z. B. Gemini und lokales Ollama-Modell), werden alle gespeichert; in Content-Tab, semantischer Suche und Cluster-Diagramm kann zwischen den Sätzen gewechselt werden. Vektoren verschiedener Modelle werden nie miteinander verglichen.
+- **Eingaben/Konfiguration:** Dropdown „Embedding-Satz".
+- **Ausgabe:** Spalten/Ansichten je gewähltem Satz.
+- **Akzeptanzkriterien:**
+  - [ ] Wechsel des Satzes ändert die Scores entsprechend den Vektoren des anderen Modells ohne neue API-Anfragen.
+  - [ ] Eine semantische Suchanfrage wird mit dem Modell des gewählten Satzes eingebettet.
+- **Testfixture:** zwei Mock-Embedding-Endpunkte mit unterschiedlichen Vektoren.
+
 ### INTEG-189 Voreinstellungen für die Dimensionsreduktion
-- **Priorität:** P2
+- **Priorität:** P1
 - **Beschreibung:** Für das Cluster-Diagramm gibt es Voreinstellungen (in der Referenz seit 22.1), damit Nutzer ohne Kenntnis der t-SNE-/UMAP-Parameter brauchbare Darstellungen erhalten. OpenSpider definiert drei Presets **(OpenSpider-Festlegung der Parameterwerte)**: „Lokal" (betont kleine, dichte Gruppen), „Ausgewogen" (Standard), „Global" (betont die Gesamtstruktur). Werte: UMAP – Lokal `n_neighbors=5, min_dist=0.0`, Ausgewogen `n_neighbors=15, min_dist=0.1`, Global `n_neighbors=50, min_dist=0.5`; t-SNE – Lokal `perplexity=5`, Ausgewogen `perplexity=30`, Global `perplexity=50`; jeweils Distanzmaß Kosinus. Zusätzlich „Benutzerdefiniert" mit freien Parametern. Das Preset ist unabhängig von der Verkürzung der Vektoren über Modellparameter (INTEG-187).
 - **Eingaben/Konfiguration:** Dropdown „Voreinstellung" (Lokal / Ausgewogen / Global / Benutzerdefiniert) im Zahnrad-Dialog; bei „Benutzerdefiniert" Felder `n_neighbors` (2–200), `min_dist` (0,0–0,99), `perplexity` (2–100).
 - **Ausgabe:** Diagramm; CSV-Export enthält in einer Kopfzeile Verfahren, Preset und Parameter.
@@ -2128,26 +2140,6 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
   - [ ] Mit festem Seed liefern zwei Läufe mit gleichem Preset identische Koordinaten; verschiedene Presets liefern verschiedene Koordinaten.
 - **Testfixture:** `fixtures/integ/embed/site/` (10 Punkte) und `embed-bench-60k` (Stichprobe 5.000) mit festem Seed.
 
-### INTEG-187 Dimensionsreduktion der Vektoren
-- **Priorität:** P2
-- **Beschreibung:** Über Modellparameter (`dimensions` bei OpenAI, `outputDimensionality` bei Gemini) können kürzere Vektoren angefordert werden (z. B. 256 statt 1.024 Dimensionen), um Speicher und Analysezeit zu reduzieren. Vektoren werden vor der Kosinus-Berechnung normalisiert, da verkürzte Vektoren nicht zwingend Einheitslänge haben. Nicht zu verwechseln mit der 2D-Projektion für das Cluster-Diagramm und deren Voreinstellungen (INTEG-189).
-- **Eingaben/Konfiguration:** Modellparameter (INTEG-175).
-- **Ausgabe:** `Vector (256)` in der Prompt-Spalte.
-- **Akzeptanzkriterien:**
-  - [ ] Parameter `outputDimensionality = 256` erscheint im Request; gespeicherte Vektoren haben 256 Einträge.
-  - [ ] Nicht normalisierte Mock-Vektoren ergeben dieselben Scores wie ihre normalisierten Varianten.
-- **Testfixture:** Mock mit nicht normalisierten 256-d-Vektoren.
-
-### INTEG-188 Mehrere Embedding-Sätze
-- **Priorität:** P2
-- **Beschreibung:** Sind mehrere Embedding-Prompts konfiguriert (z. B. Gemini und lokales Ollama-Modell), werden alle gespeichert; in Content-Tab, semantischer Suche und Cluster-Diagramm kann zwischen den Sätzen gewechselt werden. Vektoren verschiedener Modelle werden nie miteinander verglichen.
-- **Eingaben/Konfiguration:** Dropdown „Embedding-Satz".
-- **Ausgabe:** Spalten/Ansichten je gewähltem Satz.
-- **Akzeptanzkriterien:**
-  - [ ] Wechsel des Satzes ändert die Scores entsprechend den Vektoren des anderen Modells ohne neue API-Anfragen.
-  - [ ] Eine semantische Suchanfrage wird mit dem Modell des gewählten Satzes eingebettet.
-- **Testfixture:** zwei Mock-Embedding-Endpunkte mit unterschiedlichen Vektoren.
-
 ---
 
 ## Zählung und offene Punkte
@@ -2155,10 +2147,19 @@ Summe: 154 Funktionen (P0: 28, P1: 94, P2: 32).
 | Priorität | Anzahl | IDs |
 |---|---|---|
 | P0 | 28 | INTEG-001, 002, 003, 005, 007, 013, 014, 018, 019, 020, 021, 022, 028, 029, 030, 031, 035, 040, 041, 043, 044, 045, 046, 047, 049, 051, 052, 053 |
-| P1 | 94 | alle übrigen, sofern nicht P2 |
-| P2 | 32 | INTEG-011, 016, 033, 054, 055, 064–070, 083, 126, 141, 144, 145, 146, 155, 156, 164, 165, 167, 169, 175, 176, 184–189 |
+| P1 | 101 | alle übrigen, sofern nicht P2 |
+| P2 | 25 | INTEG-011, 017, 033, 054, 055, 064–070, 083, 126, 141, 144, 145, 155, 156, 164, 165, 167, 169, 175, 176 |
 
-Gesamt: 154 Funktionen mit 607 Akzeptanzkriterien. Maßgeblich ist jeweils das Feld **Priorität** des Eintrags.
+Gesamt: 154 Funktionen mit 603 Akzeptanzkriterien (Verweis-Stubs haben keine eigenen Kriterien). Maßgeblich ist jeweils das Feld **Priorität** des Eintrags; jede ID hat genau eine Priorität.
+
+**Änderungen gegenüber Revision 2 (Architektenentscheidungen zur Spec v1)**
+- K-1: Abschnitt L ist führend für Embeddings, alle Einträge INTEG-180 … 189 sind P1. Schwellenvergleich einheitlich „≥" (INTEG-181/183/185). Die Zusatzkriterien aus ONPAGE-159 … 164 (Inhaltsbegrenzung, URLs ohne Vektor, Konfigurationsschlüssel `embeddings.*`, Zentroid aus normalisierten Vektoren, Quell-/Zielmuster-Paare, „nur indexierbare Seiten", Detailansicht) sind in INTEG-180 … 184 übernommen; INTEG-184 enthält beide Regelmodelle. INTEG-189 steht jetzt hinter INTEG-188.
+- K-7: INTEG-012 führend für den APIs-Modus (Kriterium aus CRAWL-037 übernommen).
+- K-14: INTEG-140 beschreibt nur noch die Datenbeschaffung aus PSI/Lighthouse; Tab, Spalten und Filter führend in TECH-230 … 237. INTEG-146 → Verweis auf TECH-236 (P1), INTEG-147 → Verweis auf TECH-237 (P1).
+- K-16: Mindestscore der semantischen Suche 0,5 (INTEG-185); die öffentliche Referenz-Doku nennt keinen Standardwert.
+- Grundregel: INTEG-016 → CRAWL-122/OUT-269/OUT-270, INTEG-017 → OUT-201/OUT-164, INTEG-034 → OUT-060, INTEG-145 → OUT-104 als Verweis-Stubs; Querverweise auf führende Einträge in INTEG-012, 015, 027, 053, 100, 126, 133, 141, 144, 165, 186 und in den Konventionen (Crawl-Analyse CRAWL-141, Speichermodus CRAWL-124).
+
+- Nacharbeit reviews-open-v1: INTEG-017 (Stub) P2 → P1 wie OUT-201; INTEG-130 legt die Standardquelle `remote` fest (OS-Festlegung); INTEG-144 verweist für den Ressourcen-Export je Audit auf OUT-114; INTEG-186 um ausgeblendete Cluster (Legende, Suche, Tooltips) und die OS-Festlegung „keine Spalte `Visible`“ ergänzt; Vektor-Export führend in OUT-069; Regex-Dialekt nach Konvention 01 (`fancy-regex` mit Schrittlimit); Auth-Profile führend OUT-223.
 
 **Offene Punkte / bewusst abgeleitete Annahmen**
 - GSC-Suchtyp, Dimensionsfilter und „vorläufige Daten" (INTEG-111–113) sind in der Referenz-Doku nicht im Detail beschrieben und wurden aus den Fähigkeiten der Search Console API abgeleitet.
@@ -2166,8 +2167,11 @@ Gesamt: 154 Funktionen mit 607 Akzeptanzkriterien. Maßgeblich ist jeweils das F
 - Lighthouse-Audit-IDs (INTEG-137–139) beziehen sich auf Lighthouse 13; vor Implementierung gegen die gebündelte Lighthouse-Version prüfen.
 - Die Ahrefs- und Moz-Metrikkataloge (INTEG-153/154) folgen den aktuellen API-Versionen v3; die exakte Liste wird aus der Anbieter-Doku zum Implementierungszeitpunkt übernommen.
 - Mobile-Usability-Daten der URL Inspection API sind seit Einstellung des Google-Berichts möglicherweise leer; Spalten/Filter bleiben für Parität erhalten (INTEG-123/125).
-- Website-Authentifizierung (Basic/Digest, Formular-Login, Auth-Profile) ist Teil des Crawl-Bereichs; hier nur referenziert (INTEG-132).
+- Website-Authentifizierung (Basic/Digest, Formular-Login, Auth-Profile) ist in CRAWL-117 … CRAWL-120 und OUT-223 (Auth-Profile) spezifiziert; hier nur referenziert (INTEG-132).
 - PSI-Gruppenzuordnung (INTEG-133/137/138): Die Referenz-Doku ordnet DOM Size, Font Display und Network Payload je nach Kapitel unterschiedlichen Gruppen zu; OpenSpider folgt der Metrikauswahl-Doku (DOM Size/Font Display → Diagnostics, Avoid Enormous Network Payloads → Insights).
-- Mobile-Tab (INTEG-140): Darstellung als Scores 0–100 entspricht der Referenz; `03-tabs-technical.md` (TECH-231) beschreibt noch Pass/Fail und den Spaltennamen `Font Size` und muss an INTEG-140 angeglichen werden; `Content Width` nur mit lokaler Quelle. Die Plugin-Erkennung (INTEG-146) und Mobile Alternate Link (INTEG-147) sind teilweise abgeleitet, weil die Referenz-Doku die Datenquelle nicht nennt.
+- Mobile-Tab (INTEG-140): gegen die öffentliche Referenz-Doku verifiziert – Prüfspalten sind Lighthouse-Scores 0–100, Spaltenname `Font Display`, `Content Width` nur mit lokaler Quelle. Die Referenz-Doku nennt nur „Content Not Sized Correctly" als lokal-exklusiv; ob das Schriftgrößen-Audit remote noch geliefert wird, ist bei Implementierung gegen die gebündelte Lighthouse-Version zu prüfen (INTEG-140 lässt die Spalte leer, wenn das Audit fehlt).
+- Embeddings (INTEG-181): Die Referenz-Anleitung beschreibt ähnliche Seiten als „über" der Schwelle; OpenSpider schließt den Grenzwert bewusst ein (Architektenentscheidung K-1). Die Anzeige des nächsten Partners auch unter der Schwelle stützt sich auf die Referenz-Anleitung (Zähler 0, bester Kandidat weiterhin sichtbar).
+- „Nur indexierbare Seiten" für Embeddings (INTEG-184) ist eine OpenSpider-Erweiterung; Paritätsstandard per Black-Box-Test klären.
+- Export der Ressourcenliste je PageSpeed-Audit ist in OUT-114 übernommen (INTEG-144 verweist dorthin).
 - Zu verifizieren: Spaltensatz des Lighthouse-Details-Tabs (INTEG-144), Standard-Volumenbasis der Ahrefs-Optionen (INTEG-157), Moz-Free-Rate (INTEG-154), Release-Zuordnung der GA4-Kompatibilitätsprüfung (INTEG-101), fehlende Untergrenze des GA4-Startdatums (INTEG-091).
 - OpenSpider-Festlegungen ohne Referenzvorgabe: Rangfolge systemweiter/prompt-spezifischer System-Prompt (INTEG-177), Standard-Timeouts der KI-Anbieter (INTEG-179), Parameterwerte der Reduktions-Presets (INTEG-189), anbieterneutrale statt markengebundener Snippet-Vorlagen (INTEG-069).

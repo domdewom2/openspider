@@ -2,21 +2,26 @@
 
 Clean-Room-Spezifikation für OpenSpider. Grundlage: öffentliche Benutzerdokumentation, FAQ, Tutorials und Release-Notes (Versionen 18.0 bis 24.3) des Referenzprodukts, in eigenen Worten zusammengefasst. Es wurde weder Code noch Bytecode des Referenzprodukts eingesehen.
 
-Stand: 2026-10-13 (Revision 2 nach Review) · Referenzversion: 24.3 · ID-Präfix: `CRAWL` · Zuständige Crates laut `docs/ARCHITECTURE.md`: `os-engine`, `os-fetch`, `os-url`, `os-render`, `os-store`, `os-cli`.
+Stand: 2026-10-13 (Revision 3, Konsolidierung nach PARITY.md) · Referenzversion: 24.3 · ID-Präfix: `CRAWL` · Zuständige Crates laut `docs/ARCHITECTURE.md`: `os-engine`, `os-fetch`, `os-url`, `os-render`, `os-store`, `os-cli`.
 
 **Revision 2:** Einträge CRAWL-138 bis CRAWL-144 ergänzt (HTML-Validierung, Green Hosting, Voreinstellungen/Grenzwerte, automatische Crawl-Analyse, Update-Prüfung/Fokus-Modus als Verweis, Kontextmenü der Crawl-Verwaltung, Vergleichs-Detailansichten). Korrigiert: Geltungsbereich der URL-Umschreibung (J), Include/Exclude-Abgleichsemantik (CRAWL-109/110), CLI-Syntax (CRAWL-036/135), Vergleich ohne Speichermodus-Bedingung (CRAWL-032), Kennzeichnung nicht belegter Defaults (CRAWL-018/047/062/065/100), Proxy-Abweichung (CRAWL-122). Bestehende IDs unverändert.
 
+**Revision 3 (Konsolidierung nach PARITY.md, verbindliche Architektenentscheidungen):** Grundregel „eine Quelle je Funktion“ (siehe Konventionen). Auf Verweis-Stubs gekürzt (IDs bleiben, Priorität = die des führenden Eintrags): CRAWL-032 → OUT-142, CRAWL-033 → TECH-300, CRAWL-034 → OUT-146, CRAWL-035 → OUT-148, CRAWL-036 → OUT-152, CRAWL-037 → INTEG-012, CRAWL-094 → TECH-068, CRAWL-133 → OUT-224, CRAWL-135 → OUT-180, CRAWL-136 → OUT-160, CRAWL-137 → UI-121, CRAWL-138 → TECH-008, CRAWL-139 → TECH-292, CRAWL-142 → OUT-250, CRAWL-144 → OUT-149. Führend in diesem Dokument und um die Kriterien der bisherigen Parallel-Einträge ergänzt: Respect-Schalter CRAWL-089 bis CRAWL-093 (aus TECH-009/024/042/067; dazu CRAWL-046/056), Proxy CRAWL-122 (aus OUT-269/INTEG-016), Speichermodus CRAWL-124 (nur disk-first, Arbeitsspeichermodus entfällt), Segment-Definition CRAWL-134 (aus UI-068), Ablauf der Crawl-Analyse CRAWL-141 (aus UI-080/TECH-005), Cookie-Erfassung CRAWL-062, Schalter JS-Fehler CRAWL-084. CRAWL-128/143 auf die Pause-/Fortsetzen-Semantik eingegrenzt (Datei- und Projektverwaltung führend OUT-228/229). Jede ID trägt genau eine Priorität; Teilumfänge sind am Akzeptanzkriterium mit [P1]/[P2] markiert (CRAWL-024, CRAWL-027, CRAWL-077, CRAWL-122, CRAWL-123, CRAWL-140, CRAWL-115). Prioritäten geändert: CRAWL-051 P2 → P1, CRAWL-084 P2 → P1; Stubs übernehmen die Priorität des führenden Eintrags (CRAWL-036/037/094/136/142 → P1, CRAWL-135/137 → P0). Lücke G-3: Akzeptanzkriterium Shopify-Bot-Authentifizierungs-Header in CRAWL-115.
+
+**Nacharbeit reviews-open-v1 (Architekten-/Planerentscheidungen, 2026-10-13):** CRAWL-131 P1 → P0 (UI-114 bleibt Layout-Eintrag); CRAWL-121 → Verweis-Stub auf OUT-223 (einziges Auth-Profilformat `.osauth`, P1); Regex-Dialekt verbindlich `fancy-regex` mit Schrittlimit für alle Regex-Stellen (Konventionen, Q23); Q36/Q37/Q39 entschieden; CRAWL-051 Standard „Speichern an, Crawlen aus“ und Spaltenname `Mobile Alternate Link`; CRAWL-062 Cookie-Herkunft `JavaScript` nach UI-043; CRAWL-091 … 093 nennen die Ausnahmen aus TECH-011/031/051; CRAWL-124 Determinismus-Kriterium; CRAWL-134 Neuzuordnungsbudget als OS-Festlegung.
+
 ## Konventionen dieses Dokuments
 
-- **Priorität:** P0 = MVP-Kern (ohne das ist OpenSpider kein Crawler), P1 = für Funktionsparität nötig, P2 = später/Nische.
+- **Priorität:** P0 = MVP-Kern (ohne das ist OpenSpider kein Crawler), P1 = für Funktionsparität nötig, P2 = später/Nische. Jede ID trägt genau **eine** Priorität (die ihres Kerns). Abweichende Teilumfänge stehen als Präfix `[P1]`/`[P2]` am betroffenen Akzeptanzkriterium.
+- **Eine Quelle je Funktion (Revision 3):** Führend ist die Fachdomäne – Crawl-Verhalten, Konfiguration und Fetching in diesem Dokument; Tab-/Filter-/Spaltenlogik in 02/03; externe APIs, KI, Embeddings in 04; Darstellung, Interaktion und Detail-Tab-Layout in 05; Exporte, Reports, CLI, Planung, Vergleich, Update und Plattform in 06; Performance in 07. Nicht führende Duplikate bleiben mit ihrer ID als Verweis-Stub erhalten (Felder `Priorität` = Priorität des führenden Eintrags, `Verweis` = führende ID plus höchstens ein Satz zu bereichsspezifischen Besonderheiten).
 - **„Referenz-Default“** heißt: Wert ist in der öffentlichen Doku ausdrücklich genannt. **„Referenz-Default (abgeleitet)“** heißt: die Doku nennt den Wert nicht wörtlich, er ergibt sich aber eindeutig aus der Beschreibung (z. B. „kann abgeschaltet werden“ ⇒ Standard an). **„OS-Default“** bzw. **„OS-Festlegung“** heißt: Verhalten oder Wert ist dort nicht dokumentiert, OpenSpider legt es selbst fest. Diese Stellen sind in [Abschnitt Q](#q-offene-punkte--zu-verifizieren) gesammelt und per Black-Box-Vergleich (normale Bedienung der Referenz-UI gegen dieselbe Fixture, kein Dekompilieren) zu bestätigen oder zu korrigieren.
 - **Kein Lizenz-Gating:** Das Referenzprodukt sperrt einige Funktionen (Speichern/Öffnen, Profile, Formular-Login, JS-Rendering, Vergleich, > 500 URLs) hinter einer Lizenz. In OpenSpider ist alles immer verfügbar.
-- **Speicherarchitektur:** Gemäß `docs/ARCHITECTURE.md` ist jeder Crawl eine SQLite-Datei (`*.ospider`). Funktionen, die im Referenzprodukt nur im „Datenbankmodus“ verfügbar sind (Vergleich, Segmente, Auto-Save, Crawl-Verwaltung), sind in OpenSpider immer verfügbar – es gibt keinen Modus, in dem sie deaktiviert sind. Der Referenz-„Arbeitsspeichermodus“ wird ausschließlich als Leistungsprofil (CRAWL-124) abgebildet und schränkt keine Funktion ein.
-- **Regex-Abgleichsemantik:** Include, Exclude (CRAWL-109/110) und die URL-Pfad-Limits (CRAWL-076) prüfen **Vollübereinstimmung** (das Muster muss die gesamte URL abdecken, intern implizit `^(?:…)$`). Regex-Ersetzung (CRAWL-104), Vergleichs-URL-Zuordnung (CRAWL-034) und der Segment-Operator „Regex passt“ (CRAWL-134) arbeiten mit **Suche** (Treffer irgendwo in der Zeichenkette). Siehe Q25.
+- **Speicherarchitektur:** Gemäß `docs/ARCHITECTURE.md` (disk-first) ist jeder Crawl eine SQLite-Datei (`*.ospider`). Es gibt genau einen Speichermodus; den Referenz-„Arbeitsspeichermodus“ gibt es in OpenSpider nicht (bewusste Abweichung, Begründung in CRAWL-124). Funktionen, die im Referenzprodukt nur im „Datenbankmodus“ verfügbar sind (Vergleich, Segmente, Auto-Save, Crawl-Verwaltung), sind daher immer verfügbar; keine Funktion ist von einem Speichermodus abhängig. Die Cache-Leistungsprofile aus CRAWL-124 sind kein Speichermodus und schränken keine Funktion ein.
+- **Regex-Abgleichsemantik:** Include, Exclude (CRAWL-109/110) und die URL-Pfad-Limits (CRAWL-076) prüfen **Vollübereinstimmung** (das Muster muss die gesamte URL abdecken, intern implizit `^(?:…)$`). Regex-Ersetzung (CRAWL-104), Vergleichs-URL-Zuordnung (OUT-146) und der Segment-Operator „Regex passt“ (CRAWL-134) arbeiten mit **Suche** (Treffer irgendwo in der Zeichenkette). Siehe Q25.
 - **Statuscode 0:** URLs ohne HTTP-Antwort (blockiert, DNS-Fehler, Timeout …) erhalten den Statuscode `0`; die Ursache steht in der Spalte `Status`.
 - **Spaltennamen:** deutsche UI-Bezeichner; der stabile Export-/Datenmodell-Schlüssel steht beim ersten Vorkommen in `code`-Schrift dahinter.
 - **Konfigurationsschlüssel:** Jede Option hat einen stabilen Schlüssel im Konfigurationsprofil (CRAWL-132), Schema `bereich.option` (z. B. `limits.max_depth`). Wo er nicht explizit genannt ist, leitet die Implementierung ihn aus Abschnitt und Optionsname ab und dokumentiert ihn im Profil-Schema.
-- **Regex-Dialekt:** Überall, wo Regex verwendet wird (Include/Exclude, Umschreibung, URL-Zuordnung, Segmente), gilt ein einheitlicher Dialekt mit Lookahead/Lookbehind, Rückreferenzen im Ersatztext (`$1`), Inline-Flags `(?i)` und nicht-gierigen Quantoren. Die Rust-Crate `regex` deckt Lookaround nicht ab; `os-url` braucht daher `fancy-regex` (MIT) oder Gleichwertiges. Mit dem Orchestrator abzustimmen (Abhängigkeit in der Architektur bisher `regex`).
+- **Regex-Dialekt (verbindlich, Q23 entschieden):** Überall, wo OpenSpider Regex auswertet (Include/Exclude, Umschreibung, URL-Zuordnung im Vergleich OUT-146, Segmente, Custom Search/Extraction in 04, Tabellensuche UI-011 in 05, Filter- und Konfigurationsfelder), gilt **ein** Dialekt: die Backtracking-Engine `fancy-regex` (MIT) mit Lookahead/Lookbehind, Rückverweisen im Muster (`\1`) und im Ersatztext (`$1`), Inline-Flags `(?i)` und nicht-gierigen Quantoren. Jede Auswertung läuft mit einem **Schrittlimit** (Backtrack-Limit, Standard 1 000 000 Schritte je Abgleich, OS-Festlegung); wird es überschritten, gilt der Abgleich als „kein Treffer“, und die Stelle meldet die Regel einmal als Warnung („Ausdruck zu aufwendig“) – kein Absturz, kein Hängen. Ein Wechsel auf die Crate `regex` für einfache Ausdrücke ist eine interne Optimierung und darf das Ergebnis nicht ändern. Ausnahme sind nur Muster, die an externe Dienste gesendet werden (z. B. RE2 der Search Console, INTEG), dort gilt der Dialekt des Dienstes. Die Crate-Tabelle in `docs/ARCHITECTURE.md` führt bei `os-url` derzeit noch `regex`; maßgeblich ist diese Konvention, die Tabelle ist auf `fancy-regex` umzustellen (offene Nacharbeit R-02 außerhalb von docs/spec).
 
 ### Testfixture-Konvention
 
@@ -57,7 +62,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 - [CRAWL-021 Zeichensatz-Erkennung](#crawl-021-zeichensatz-erkennung) · P0
 - [CRAWL-022 Antwortzeit, Größe, Last-Modified](#crawl-022-antwortzeit-größe-last-modified) · P0
 - [CRAWL-023 TLS und Zertifikate](#crawl-023-tls-und-zertifikate) · P1
-- [CRAWL-024 HTTP-Versionen (HTTP/1.1, HTTP/2)](#crawl-024-http-versionen-http11-http2) · P1/P2
+- [CRAWL-024 HTTP-Versionen (HTTP/1.1, HTTP/2)](#crawl-024-http-versionen-http11-http2) · P1
 - [CRAWL-025 IPv6](#crawl-025-ipv6) · P2
 
 **B. Crawl-Modi**
@@ -67,12 +72,12 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 - [CRAWL-029 Listen-Modus: Export in Upload-Reihenfolge](#crawl-029-listen-modus-export-in-upload-reihenfolge) · P1
 - [CRAWL-030 Weiterleitungen/Canonicals immer bis zum Ziel folgen](#crawl-030-weiterleitungencanonicals-immer-bis-zum-ziel-folgen) · P1
 - [CRAWL-031 SERP-Modus](#crawl-031-serp-modus) · P1
-- [CRAWL-032 Vergleichsmodus: Auswahl und Kategorien](#crawl-032-vergleichsmodus-auswahl-und-kategorien) · P1
-- [CRAWL-033 Vergleichsmodus: Änderungserkennung](#crawl-033-vergleichsmodus-änderungserkennung) · P1
-- [CRAWL-034 Vergleichsmodus: URL-Zuordnung](#crawl-034-vergleichsmodus-url-zuordnung) · P1
-- [CRAWL-035 Vergleichsmodus: Seitenstruktur-Ansicht](#crawl-035-vergleichsmodus-seitenstruktur-ansicht) · P2
-- [CRAWL-036 Vergleich automatisch (geplante/CLI-Crawls)](#crawl-036-vergleich-automatisch-geplantecli-crawls) · P2
-- [CRAWL-037 API-Modus (Daten ohne Crawl)](#crawl-037-api-modus-daten-ohne-crawl) · P2
+- [CRAWL-032 Vergleichsmodus: Auswahl und Kategorien](#crawl-032-vergleichsmodus-auswahl-und-kategorien) · P1 → OUT-142
+- [CRAWL-033 Vergleichsmodus: Änderungserkennung](#crawl-033-vergleichsmodus-änderungserkennung) · P1 → TECH-300
+- [CRAWL-034 Vergleichsmodus: URL-Zuordnung](#crawl-034-vergleichsmodus-url-zuordnung) · P1 → OUT-146
+- [CRAWL-035 Vergleichsmodus: Seitenstruktur-Ansicht](#crawl-035-vergleichsmodus-seitenstruktur-ansicht) · P2 → OUT-148
+- [CRAWL-036 Vergleich automatisch (geplante/CLI-Crawls)](#crawl-036-vergleich-automatisch-geplantecli-crawls) · P1 → OUT-152
+- [CRAWL-037 API-Modus (Daten ohne Crawl)](#crawl-037-api-modus-daten-ohne-crawl) · P1 → INTEG-012
 
 **C. Spider-Konfiguration: Ressourcen- und Seitenlinks**
 - [CRAWL-038 Grundprinzip „Speichern“ vs. „Crawlen“](#crawl-038-grundprinzip-speichern-vs-crawlen) · P0
@@ -88,7 +93,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 - [CRAWL-048 Hreflang](#crawl-048-hreflang) · P1
 - [CRAWL-049 AMP](#crawl-049-amp) · P2
 - [CRAWL-050 Meta Refresh und iframes](#crawl-050-meta-refresh-und-iframes) · P1
-- [CRAWL-051 Mobile-Alternate-Links](#crawl-051-mobile-alternate-links) · P2
+- [CRAWL-051 Mobile-Alternate-Links](#crawl-051-mobile-alternate-links) · P1
 - [CRAWL-052 Link-Quellen im HTML (welche Elemente Links erzeugen)](#crawl-052-link-quellen-im-html-welche-elemente-links-erzeugen) · P0
 - [CRAWL-053 Nicht crawlbare Links speichern](#crawl-053-nicht-crawlbare-links-speichern) · P1
 - [CRAWL-054 Ungültige Links crawlen](#crawl-054-ungültige-links-crawlen) · P2
@@ -129,7 +134,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 - [CRAWL-081 Viewport und Geräte-Voreinstellungen](#crawl-081-viewport-und-geräte-voreinstellungen) · P1
 - [CRAWL-082 Gerenderte Screenshots](#crawl-082-gerenderte-screenshots) · P1
 - [CRAWL-083 Blockierte Ressourcen beim Rendern](#crawl-083-blockierte-ressourcen-beim-rendern) · P1
-- [CRAWL-084 JavaScript-Fehler / Konsolen-Log](#crawl-084-javascript-fehler--konsolen-log) · P2
+- [CRAWL-084 JavaScript-Fehler / Konsolen-Log](#crawl-084-javascript-fehler--konsolen-log) · P1
 - [CRAWL-085 Shadow DOM und iframes abflachen](#crawl-085-shadow-dom-und-iframes-abflachen) · P2
 - [CRAWL-086 Website-Archiv (Ordner / WARC)](#crawl-086-website-archiv-ordner--warc) · P2
 - [CRAWL-087 Altes AJAX-Crawling-Schema](#crawl-087-altes-ajax-crawling-schema) · P2
@@ -141,7 +146,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 - [CRAWL-091 noindex respektieren](#crawl-091-noindex-respektieren) · P1
 - [CRAWL-092 Canonical respektieren](#crawl-092-canonical-respektieren) · P1
 - [CRAWL-093 next/prev respektieren](#crawl-093-nextprev-respektieren) · P2
-- [CRAWL-094 Selbstreferenzierenden Meta-Refresh respektieren](#crawl-094-selbstreferenzierenden-meta-refresh-respektieren) · P2
+- [CRAWL-094 Selbstreferenzierenden Meta-Refresh respektieren](#crawl-094-selbstreferenzierenden-meta-refresh-respektieren) · P1 → TECH-068
 - [CRAWL-095 Antwort-Timeout](#crawl-095-antwort-timeout) · P0
 - [CRAWL-096 Wiederholung bei 5xx-Antworten](#crawl-096-wiederholung-bei-5xx-antworten) · P1
 - [CRAWL-097 Wiederholung bei Netzwerkfehlern und 429](#crawl-097-wiederholung-bei-netzwerkfehlern-und-429) · P1
@@ -178,34 +183,34 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 - [CRAWL-118 Standard-Authentifizierung: Digest](#crawl-118-standard-authentifizierung-digest) · P1
 - [CRAWL-119 NTLM und Negotiate/Kerberos](#crawl-119-ntlm-und-negotiatekerberos) · P2
 - [CRAWL-120 Formularbasierte Anmeldung (eingebetteter Browser)](#crawl-120-formularbasierte-anmeldung-eingebetteter-browser) · P1
-- [CRAWL-121 Authentifizierungsprofile (verschlüsselt)](#crawl-121-authentifizierungsprofile-verschlüsselt) · P2
+- [CRAWL-121 Authentifizierungsprofile (verschlüsselt)](#crawl-121-authentifizierungsprofile-verschlüsselt) · P1 → OUT-223
 - [CRAWL-122 Proxy](#crawl-122-proxy) · P1
 - [CRAWL-123 Host-Auflösung überschreiben](#crawl-123-host-auflösung-überschreiben) · P1
 
 **N. Speicher, Persistenz, Steuerung**
-- [CRAWL-124 Speichermodus: Datenbank vs. Arbeitsspeicher](#crawl-124-speichermodus-datenbank-vs-arbeitsspeicher) · P0
+- [CRAWL-124 Speichermodus: nur disk-first (kein Arbeitsspeichermodus)](#crawl-124-speichermodus-nur-disk-first-kein-arbeitsspeichermodus) · P0
 - [CRAWL-125 Automatisches Speichern und Wiederherstellung](#crawl-125-automatisches-speichern-und-wiederherstellung) · P0
 - [CRAWL-126 Crawl pausieren und fortsetzen](#crawl-126-crawl-pausieren-und-fortsetzen) · P0
 - [CRAWL-127 Crawl speichern, öffnen, importieren, exportieren](#crawl-127-crawl-speichern-öffnen-importieren-exportieren) · P0
-- [CRAWL-128 Crawl-Verwaltung (Projekte, Sperren, Aufbewahrung)](#crawl-128-crawl-verwaltung-projekte-sperren-aufbewahrung) · P1
+- [CRAWL-128 Crawl-Verwaltung: Crawl-Zustände und Fortsetzbarkeit](#crawl-128-crawl-verwaltung-crawl-zustände-und-fortsetzbarkeit) · P1
 - [CRAWL-129 Speicherwarnung und Ressourcenschutz](#crawl-129-speicherwarnung-und-ressourcenschutz) · P1
 - [CRAWL-130 Fortschritt und Crawl-Statistik](#crawl-130-fortschritt-und-crawl-statistik) · P0
-- [CRAWL-131 Einzelne URLs neu crawlen, entfernen, hinzufügen](#crawl-131-einzelne-urls-neu-crawlen-entfernen-hinzufügen) · P1
+- [CRAWL-131 Einzelne URLs neu crawlen, entfernen, hinzufügen](#crawl-131-einzelne-urls-neu-crawlen-entfernen-hinzufügen) · P0
 - [CRAWL-132 Konfigurationsprofile](#crawl-132-konfigurationsprofile) · P0
-- [CRAWL-133 Konfigurations-Diff zum Standard](#crawl-133-konfigurations-diff-zum-standard) · P2
+- [CRAWL-133 Konfigurations-Diff zum Standard](#crawl-133-konfigurations-diff-zum-standard) · P2 → OUT-224
 - [CRAWL-134 Segmente](#crawl-134-segmente) · P1
-- [CRAWL-135 Kommandozeile / Headless-Betrieb](#crawl-135-kommandozeile--headless-betrieb) · P1
-- [CRAWL-136 Geplante Crawls](#crawl-136-geplante-crawls) · P2
-- [CRAWL-137 Oberflächensprache](#crawl-137-oberflächensprache) · P2
+- [CRAWL-135 Kommandozeile / Headless-Betrieb](#crawl-135-kommandozeile--headless-betrieb) · P0 → OUT-180
+- [CRAWL-136 Geplante Crawls](#crawl-136-geplante-crawls) · P1 → OUT-160
+- [CRAWL-137 Oberflächensprache](#crawl-137-oberflächensprache) · P0 → UI-121
 
 **O. Ergänzungen (Revision 2)**
-- [CRAWL-138 HTML-Validierung durchführen](#crawl-138-html-validierung-durchführen) · P1
-- [CRAWL-139 Green Hosting für die CO2-Berechnung](#crawl-139-green-hosting-für-die-co2-berechnung) · P2
-- [CRAWL-140 Voreinstellungen (crawl-relevante Grenzwerte)](#crawl-140-voreinstellungen-crawl-relevante-grenzwerte) · P0/P1
+- [CRAWL-138 HTML-Validierung durchführen](#crawl-138-html-validierung-durchführen) · P1 → TECH-008
+- [CRAWL-139 Green Hosting für die CO2-Berechnung](#crawl-139-green-hosting-für-die-co2-berechnung) · P2 → TECH-292
+- [CRAWL-140 Voreinstellungen (crawl-relevante Grenzwerte)](#crawl-140-voreinstellungen-crawl-relevante-grenzwerte) · P0
 - [CRAWL-141 Automatische Crawl-Analyse am Crawl-Ende](#crawl-141-automatische-crawl-analyse-am-crawl-ende) · P0
-- [CRAWL-142 Update-Prüfung und Fokus-Modus (Abgrenzung)](#crawl-142-update-prüfung-und-fokus-modus-abgrenzung) · P2
-- [CRAWL-143 Kontextmenü der Crawl-Verwaltung](#crawl-143-kontextmenü-der-crawl-verwaltung) · P1
-- [CRAWL-144 Vergleichsmodus: Detailansichten (Links, Issues, gerenderte Seite)](#crawl-144-vergleichsmodus-detailansichten-links-issues-gerenderte-seite) · P1/P2
+- [CRAWL-142 Update-Prüfung und Fokus-Modus (Abgrenzung)](#crawl-142-update-prüfung-und-fokus-modus-abgrenzung) · P1 → OUT-250
+- [CRAWL-143 Kontextmenü der Crawl-Verwaltung: Wirkung auf den Crawl-Zustand](#crawl-143-kontextmenü-der-crawl-verwaltung-wirkung-auf-den-crawl-zustand) · P1
+- [CRAWL-144 Vergleichsmodus: Detailansichten (Links, Issues, gerenderte Seite)](#crawl-144-vergleichsmodus-detailansichten-links-issues-gerenderte-seite) · P1 → OUT-149
 
 **Q.** [Offene Punkte / zu verifizieren](#q-offene-punkte--zu-verifizieren)
 
@@ -418,7 +423,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 - **Ausgabe:** Weiterleitungstyp „Meta Refresh“ bzw. „HTTP Refresh“; Filter „Weiterleitung (Meta Refresh)“ und „Weiterleitung (HTTP Refresh)“; der Statuscode der Seite bleibt (meist 200).
 - **Akzeptanzkriterien:**
   - [ ] Varianten werden erkannt: `0;url=/x`, `0; URL='/x'`, `5;url="/x"`, ohne Leerzeichen, mit Großbuchstaben im `http-equiv`.
-  - [ ] Ein Refresh ohne URL (`content="30"`) ist keine Weiterleitung, sondern ein Selbst-Refresh (relevant für CRAWL-094).
+  - [ ] Ein Refresh ohne URL (`content="30"`) ist keine Weiterleitung, sondern ein Selbst-Refresh (Indexierbarkeitswirkung: TECH-068).
   - [ ] Nur das erste Meta-Refresh-Tag im Dokument zählt.
   - [ ] Bei gleichzeitiger HTTP-3xx-Antwort hat die HTTP-Weiterleitung Vorrang.
   - [ ] HTTP-Refresh-Header wird mit derselben Syntax geparst.
@@ -539,13 +544,13 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 - **Testfixture:** `crawl-tls`: `expired.site.test`, `selfsigned.site.test`, `wronghost.site.test` (Zertifikat für `other.test`), CA-Datei `tests/fixtures/crawl-tls/ca.pem`.
 
 ### CRAWL-024 HTTP-Versionen (HTTP/1.1, HTTP/2)
-- **Priorität:** P1 (Spalte `HTTP-Version`) / P2 (Auswahlschalter)
-- **Beschreibung:** Die Referenz führt im Tab „Intern“ bereits eine Spalte `HTTP-Version` mit der Protokollversion der Antwort; diese Spalte ist damit **Paritätsumfang** (Priorität der Spalte: P1). Eine **wählbare** HTTP-Version dokumentiert die Referenz dagegen nicht – der Auswahlschalter ist eine OS-Erweiterung (P2). OpenSpider unterstützt HTTP/1.1 und HTTP/2 (per ALPN).
-- **Eingaben/Konfiguration:** Erweitert › „HTTP-Version“ (OS-Erweiterung): Automatisch (Standard, ALPN) / Nur HTTP/1.1 / HTTP/2 bevorzugen.
+- **Priorität:** P1
+- **Beschreibung:** Die Referenz führt im Tab „Intern“ bereits eine Spalte `HTTP-Version` mit der Protokollversion der Antwort; diese Spalte und die automatische Protokollwahl per ALPN sind damit **Paritätsumfang** (Kern, P1). Eine **wählbare** HTTP-Version dokumentiert die Referenz dagegen nicht – der Auswahlschalter ist eine OS-Erweiterung und Teilumfang `[P2]`. OpenSpider unterstützt HTTP/1.1 und HTTP/2 (per ALPN).
+- **Eingaben/Konfiguration:** [P2] Erweitert › „HTTP-Version“ (OS-Erweiterung): Automatisch (Standard, ALPN) / Nur HTTP/1.1 / HTTP/2 bevorzugen. Ohne den Schalter gilt immer „Automatisch“.
 - **Ausgabe:** Spalte `HTTP-Version` `http_version` (Referenz-Spalte; Werte `HTTP/1.0`, `HTTP/1.1`, `HTTP/2`; leer bei Statuscode 0).
 - **Akzeptanzkriterien:**
   - [ ] Server mit h2-ALPN wird im Modus „Automatisch“ mit HTTP/2 angesprochen; Spalte zeigt `HTTP/2`.
-  - [ ] „Nur HTTP/1.1“ erzwingt HTTP/1.1 auch gegen h2-fähige Server.
+  - [ ] [P2] „Nur HTTP/1.1“ erzwingt HTTP/1.1 auch gegen h2-fähige Server.
   - [ ] Statuscodes und Header-Auswertung sind zwischen HTTP/1.1 und HTTP/2 identisch (gleiche Fixture, gleiche Ergebnisse).
   - [ ] Unverschlüsseltes HTTP/2 (h2c) wird nicht verwendet.
 - **Testfixture:** `crawl-http2`: `https://h2.site.test/` (h2 + http/1.1), `https://h1only.site.test/`.
@@ -578,7 +583,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 ### CRAWL-027 Listen-Modus: Eingabequellen
 - **Priorität:** P0
 - **Beschreibung:** Statt einer Start-URL wird eine Liste von URLs geprüft. Die Liste kann eingefügt, aus Dateien geladen oder aus einer XML-Sitemap gelesen werden.
-- **Eingaben/Konfiguration:** Modus › Liste; Schaltfläche „Hochladen“ mit den Quellen: **Aus Datei**, **Manuell eingeben** (mehrzeiliges Textfeld zum Tippen/Bearbeiten vor der Übernahme), **Einfügen** (übernimmt den Zwischenablage-Inhalt direkt ohne Zwischendialog), **XML-Sitemap herunterladen** (eine URL), **Mehrere XML-Sitemaps herunterladen** (mehrere URLs ohne Index-Datei), **Google-Tabelle** (P2; Konto + Tabellen-URL, Integration im API-Bereich).
+- **Eingaben/Konfiguration:** Modus › Liste; Schaltfläche „Hochladen“ mit den Quellen: **Aus Datei**, **Manuell eingeben** (mehrzeiliges Textfeld zum Tippen/Bearbeiten vor der Übernahme), **Einfügen** (übernimmt den Zwischenablage-Inhalt direkt ohne Zwischendialog), **XML-Sitemap herunterladen** (eine URL), **Mehrere XML-Sitemaps herunterladen** (mehrere URLs ohne Index-Datei), **Google-Tabelle** (Teilumfang [P2]; Konto + Tabellen-URL, Integration im API-Bereich).
 - **Ausgabe:** Zusammenfassungsdialog mit Zählern: `Gelesen` (alle als URL erkannten Zeichenketten), `Ungültig` (erkannte, aber nicht parsbare URLs), `Ignorierte Zeilen` (ohne URL), `Duplikate entfernt`, `Durch Exclude entfernt`, `Durch Include entfernt`, `Zu crawlen` (= Gelesen − Ungültig − Duplikate − Exclude − Include). Schaltflächen „OK“ (Crawl starten) und „Abbrechen“.
 - **Akzeptanzkriterien:**
   - [ ] Dateiformate `.txt`, `.csv`, `.tsv`, `.xls`, `.xlsx`, `.xml` (Sitemap oder Sitemap-Index), `.xml.gz` werden gelesen; andere Endungen werden als Text versucht.
@@ -590,6 +595,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
   - [ ] Fixture `dupes.txt` (10 URLs, 3 Duplikate) mit Exclude `.*/privat/.*` (1 Treffer): Dialog zeigt `Gelesen` 10, `Duplikate entfernt` 3, `Durch Exclude entfernt` 1, `Zu crawlen` 6.
   - [ ] Die Duplikat-Erkennung nutzt die normalisierte Form (CRAWL-003): `HTTPS://SITE.test/a` und `https://site.test/a` sind Duplikate.
   - [ ] Eine Liste mit 100 000 URLs wird in unter 10 s eingelesen (Referenzmaschine: 8 Kerne, SSD).
+  - [ ] [P2] Quelle „Google-Tabelle“: Nach Kontoauswahl und Eingabe der Tabellen-URL werden alle Zellen aller Blätter wie bei `.xlsx` durchsucht und dieselben Zähler ausgegeben (Kontoanbindung im API-Bereich).
   - [ ] Nach einem Listen-Crawl aus einer XML-Sitemap sind die sitemapbezogenen Filter (z. B. „In Sitemap“, „Nicht in Sitemap“, „Verwaiste URLs“) erst nach Abschluss der Crawl-Analyse (CRAWL-141) befüllt; vorher zeigen sie den Hinweis „Crawl-Analyse erforderlich“ statt 0.
 - **Testfixture:** `crawl-list-input`: Dateien `urls.txt` (gemischt mit Kommentarzeilen, zwei URLs in einer Zeile, `HTTPS://`, `www.site.test/ohne-schema`), `urls.csv` (URLs in Spalte 3), `urls.xlsx` (zwei Blätter), `sitemap-index.xml` → zwei Kind-Sitemaps (eine davon `.gz`), `dupes.txt` (10 URLs, 3 doppelt, 1 unter `/privat/`).
 
@@ -647,84 +653,27 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 
 ### CRAWL-032 Vergleichsmodus: Auswahl und Kategorien
 - **Priorität:** P1
-- **Beschreibung:** Zwei gespeicherte Crawls werden verglichen. Für jeden Tab und Filter wird gezählt, wie sich die URL-Mengen verändert haben. Da jeder OpenSpider-Crawl gespeichert ist (Konventionen, Speicherarchitektur), ist der Vergleich unabhängig vom Leistungsprofil (CRAWL-124) immer verfügbar.
-- **Eingaben/Konfiguration:** Modus › Vergleich; Auswahl „Aktueller Crawl“ und „Vorheriger Crawl“ aus der Crawl-Verwaltung (oder in der Verwaltung zwei Crawls markieren › „Zum Vergleich auswählen“); Tauschen-Schaltfläche.
-- **Ausgabe:** Übersicht je Filter mit Spalten `Aktuell`, `Vorher`, `Änderung`, `Hinzugefügt`, `Neu`, `Entfernt`, `Fehlend`; Hauptfenster-Umschalter Aktuell/Vorher und Kategorie-Filter. Detailansichten im unteren Fenster siehe CRAWL-144.
-- **Kategorien (formal):** Sei C die URL-Menge des aktuellen, P die des vorherigen Crawls (nach URL-Zuordnung, CRAWL-034), F_C(u) bzw. F_P(u) die Aussage „u erfüllt den betrachteten Filter im jeweiligen Crawl“. Dann gilt:
-  - Hinzugefügt = { u ∈ C ∩ P | F_C(u) ∧ ¬F_P(u) }
-  - Entfernt = { u ∈ C ∩ P | F_P(u) ∧ ¬F_C(u) }
-  - Neu = { u ∈ C \ P | F_C(u) }
-  - Fehlend = { u ∈ P \ C | F_P(u) }
-  - `Aktuell` = |{ u ∈ C | F_C(u) }|, `Vorher` = |{ u ∈ P | F_P(u) }|, `Änderung` = `Aktuell` − `Vorher`.
-- **Akzeptanzkriterien:**
-  - [ ] Standardmäßig ist der Crawl mit dem jüngeren Startzeitpunkt „Aktuell“, der ältere „Vorher“; Tauschen vertauscht die Rollen und damit Hinzugefügt ↔ Entfernt und Neu ↔ Fehlend.
-  - [ ] Für jeden Filter jedes Tabs gilt die Identität `Aktuell` − `Vorher` = |Hinzugefügt| + |Neu| − |Entfernt| − |Fehlend| (automatisierter Test über alle Filter der Fixture).
-  - [ ] Fixture v1→v2, Filter „Seitentitel › Fehlt“: `/c` ∈ Hinzugefügt, `/d` ∈ Entfernt; Filter „Intern › HTML“: `/a` ∈ Neu, `/b` ∈ Fehlend.
-  - [ ] Ein Klick auf eine Zahl listet genau diese URLs (Zeilenzahl = angezeigte Zahl).
-  - [ ] Der Vergleich wird als eigener Eintrag (Typ „Vergleich“) in der Crawl-Verwaltung gespeichert und kann ohne Neuberechnung geöffnet werden (Öffnen eines gespeicherten Vergleichs mit 2 × 10 000 URLs < 3 s).
-  - [ ] Wird einer der beiden Quell-Crawls gelöscht, wird der Vergleich als nicht mehr verfügbar markiert (nicht stillschweigend gelöscht).
-  - [ ] Der Vergleichsmodus ist bei jedem Leistungsprofil (CRAWL-124) wählbar; es gibt keinen Zustand, in dem er deaktiviert ist.
-- **Testfixture:** `crawl-compare`: zwei Varianten derselben Site (`v1/`, `v2/`), umschaltbar per Fixture-Parameter: in v2 ist `/a` neu, `/b` fehlt, `/c` bekommt einen leeren Titel (Hinzugefügt in „Titel fehlt“), `/d` verliert seinen leeren Titel (Entfernt).
+- **Verweis:** siehe OUT-142 (führend). Auswahl, Tausch und gespeicherte Vergleiche regeln OUT-140, OUT-141 und OUT-150.
 
 ### CRAWL-033 Vergleichsmodus: Änderungserkennung
 - **Priorität:** P1
-- **Beschreibung:** Zusätzlich zu Filterwechseln kann für ausgewählte Elemente jede inhaltliche Änderung erkannt werden, auch wenn kein Filter anschlägt.
-- **Eingaben/Konfiguration:** Konfiguration › Vergleich › Änderungserkennung, auswählbar: Seitentitel, Meta-Beschreibung, H1, Wortanzahl, Crawl-Tiefe, Interne Links (eindeutige Inlinks), Strukturierte Daten (eindeutige Typen/Fehler), Inhalt (Ähnlichkeit via MinHash; erfordert gespeichertes HTML in beiden Crawls).
-- **Ausgabe:** Tab „Änderungserkennung“ mit Filtern „Alle“ (URLs in beiden Crawls) und je Element; Umschalter „Geändert“/„Nicht geändert“; Spalten je Element `Aktuell`, `Vorher`, bei numerischen Werten `Änderung` und `Änderung %`; bei Inhalt `Inhaltsänderung %`.
-- **Akzeptanzkriterien:**
-  - [ ] Nur URLs, die in beiden Crawls vorkommen (nach URL-Zuordnung), werden betrachtet.
-  - [ ] Titel „A“ → „B“ erscheint unter „Seitentitel › Geändert“ mit beiden Werten nebeneinander.
-  - [ ] Wortanzahl 300 → 450 ergibt `Änderung` = 150 und `Änderung %` = 50.
-  - [ ] Inhaltsänderung: identischer Body → 0 %; komplett anderer Body → nahe 100 %; Änderung eines Absatzes von 10 → Wert zwischen 5 und 30 %.
-  - [ ] Ist „Inhalt“ gewählt, aber in einem Crawl kein HTML gespeichert, zeigt die Oberfläche einen Hinweis und lässt das Element leer.
-  - [ ] Nicht gewählte Elemente erzeugen keinen Filter.
-- **Testfixture:** `crawl-compare` mit zusätzlichen Änderungen: `/t` (Titel geändert), `/w` (Wortanzahl), `/content` (ein Absatz geändert), `/depth` (Crawl-Tiefe 1 → 2, weil Link von Startseite entfernt).
+- **Verweis:** siehe TECH-300 (führend). Crawl-seitig gilt nur, dass das Element „Inhalt“ in beiden Crawls gespeichertes HTML bzw. gespeicherte Inhalts-Signaturen voraussetzt (CRAWL-063), während der Vergleichsablauf selbst in OUT-140 ff. liegt.
 
 ### CRAWL-034 Vergleichsmodus: URL-Zuordnung
 - **Priorität:** P1
-- **Beschreibung:** URLs des vorherigen Crawls werden per Regex auf URLs des aktuellen Crawls abgebildet, damit z. B. Staging gegen Live verglichen werden kann.
-- **Eingaben/Konfiguration:** Konfiguration › Vergleich › URL-Zuordnung: Liste von Regeln (Regex, Ersetzung), beliebig viele, in Reihenfolge angewandt; Reiter „Test“ mit Eingabe-URL und Ergebnis.
-- **Ausgabe:** zugeordnete URL-Paare gelten als „in beiden Crawls“.
-- **Akzeptanzkriterien:**
-  - [ ] Regel `https://staging\.site\.test` → `https://www.site.test` ordnet alle Staging-URLs den Live-URLs zu.
-  - [ ] Regel für abschließenden Schrägstrich (`^(.*[^/])$` → `$1/`) ordnet `/a` → `/a/` zu.
-  - [ ] Mehrere Regeln werden nacheinander angewandt; das Ergebnis der ersten ist Eingabe der zweiten.
-  - [ ] Der Test-Reiter zeigt für eine Eingabe die Ausgabe nach jeder Regel.
-  - [ ] Ungültiger Regex wird beim Speichern abgewiesen (Fehlermeldung mit Position).
-  - [ ] Eine Zuordnung, die mehrere vorherige URLs auf dieselbe aktuelle URL abbildet, verwendet die erste und meldet die Kollision im Log (OS-Festlegung).
-- **Testfixture:** `crawl-compare-mapping`: Crawl A auf `staging.site.test` (Pfade ohne Slash), Crawl B auf `www.site.test` (Pfade mit Slash).
+- **Verweis:** siehe OUT-146 (führend). Für die Zuordnungsregeln gelten der gemeinsame Regex-Dialekt und die Suchsemantik aus den Konventionen dieses Dokuments.
 
 ### CRAWL-035 Vergleichsmodus: Seitenstruktur-Ansicht
 - **Priorität:** P2
-- **Beschreibung:** Verzeichnisbaum beider Crawls mit Zählern pro Ordner, wie viele URLs hinzukamen bzw. fehlen, und Verteilung der Crawl-Tiefe.
-- **Eingaben/Konfiguration:** keine.
-- **Ausgabe:** Tab „Seitenstruktur“: Spalten `Pfad`, `Aktuell`, `Vorher`, `Neu` (Pfeil hoch), `Fehlend` (Pfeil runter); aufklappbar bis auf URL-Ebene; Export.
-- **Akzeptanzkriterien:**
-  - [ ] Ordner `/blog/` mit 3 neuen und 1 fehlenden URL zeigt +3 / −1.
-  - [ ] Summen eines Elternordners entsprechen der Summe der Kinder plus eigener URLs.
-- **Testfixture:** `crawl-compare` (v1/v2 mit Änderungen in `/blog/`).
+- **Verweis:** siehe OUT-148 (führend).
 
 ### CRAWL-036 Vergleich automatisch (geplante/CLI-Crawls)
-- **Priorität:** P2
-- **Beschreibung:** Bei geplanten oder per Kommandozeile gestarteten Crawls eines Projekts wird nach Abschluss automatisch mit dem vorherigen Crawl desselben Projekts verglichen.
-- **Eingaben/Konfiguration:** Option „Automatisch vergleichen“ in geplanten Aufgaben; CLI `--project-name "<Projekt>" --project-crawl-comparison "true"` (Projekt wird ausschließlich über `--project-name` bestimmt; der Wert von `--project-crawl-comparison` ist ein Wahrheitswert) bzw. `--crawl-comparison <Datenbank-ID 1> <Datenbank-ID 2>` (Rollen Aktuell/Vorher nach Crawl-Datum). Details der CLI-Flags: OUT-202, OUT-152.
-- **Ausgabe:** gespeicherter Vergleich; optional Zusammenfassung der Änderungen in der Abschluss-E-Mail.
-- **Akzeptanzkriterien:**
-  - [ ] Zwei aufeinanderfolgende CLI-Crawls mit `--project-name "P" --project-crawl-comparison "true"` erzeugen genau einen Vergleichseintrag (Crawl 2 aktuell, Crawl 1 vorher).
-  - [ ] Beim ersten Crawl eines Projekts wird kein Vergleich erzeugt und kein Fehler gemeldet (Exit-Code 0).
-  - [ ] `--project-crawl-comparison "true"` ohne `--project-name` → Exit-Code 1 mit Meldung „Projektname fehlt“.
-  - [ ] Andere Werte als `true`/`false` (case-insensitiv) → Exit-Code 1.
-- **Testfixture:** `crawl-compare` (zwei CLI-Läufe gegen v1, dann v2).
+- **Priorität:** P1
+- **Verweis:** siehe OUT-152 (führend). Eine Abhängigkeit von einem Speichermodus gibt es nicht (CRAWL-124).
 
 ### CRAWL-037 API-Modus (Daten ohne Crawl)
-- **Priorität:** P2
-- **Beschreibung:** Für eine hochgeladene URL-Liste werden ausschließlich Daten aus angebundenen Schnittstellen (Analytics, Search Console, PageSpeed, Backlink-APIs) geholt, ohne die URLs selbst abzurufen. Die API-Anbindungen sind in einem eigenen Bereich spezifiziert.
-- **Eingaben/Konfiguration:** Modus › APIs; Upload wie Listenmodus.
-- **Ausgabe:** API-Spalten in den jeweiligen Tabs.
-- **Akzeptanzkriterien:**
-  - [ ] Kein Request an die hochgeladenen URLs (Request-Log der Fixture leer).
-  - [ ] Ohne verbundene API zeigt der Start einen Hinweis statt eines leeren Laufs.
-- **Testfixture:** `crawl-list-input/urls.txt` mit Mock-API-Server.
+- **Priorität:** P1
+- **Verweis:** siehe INTEG-012 (führend). Crawl-seitig gilt nur, dass die Engine im APIs-Modus keine Anfrage an die hochgeladenen URLs sendet und der Upload dieselben Quellen und Zähler wie der Listenmodus nutzt (CRAWL-027).
 
 ---
 
@@ -829,6 +778,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
   - [ ] `rel="Canonical"` (Großbuchstaben) und `rel="canonical nofollow"` (mehrere Tokens) werden erkannt.
   - [ ] Canonical im `<body>` wird erfasst und als „außerhalb von head“ markiert (für den Canonical-Bereich).
   - [ ] Mehrere Canonical-Elemente werden alle erfasst.
+  - [ ] Speichern aus: Canonical-Spalten und Canonicals-Tab bleiben leer, und es wird kein Indexierbarkeitsstatus „Kanonisiert“ gesetzt (übernommen aus TECH-024, das hierher verweist).
 - **Testfixture:** `crawl-canonicals`: `/c1` (canonical auf `/nur-canonical`), `/c2` (Header-Canonical), `/c3` (zwei Elemente), `/c4` (im body).
 
 ### CRAWL-047 Paginierung (rel next/prev)
@@ -875,13 +825,13 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 - **Testfixture:** `crawl-frames`: `/mit-iframe`, `/frameset` (`<frame>`), `/srcdoc`.
 
 ### CRAWL-051 Mobile-Alternate-Links
-- **Priorität:** P2
+- **Priorität:** P1
 - **Beschreibung:** Separate Mobilversionen aus `<link rel="alternate" media="only screen and (max-width: 640px)">`.
-- **Eingaben/Konfiguration:** Seitenlinks › Mobile Alternate: Speichern/Crawlen (Standard: aus/aus).
-- **Ausgabe:** Spalte `Mobile-Alternate-Link`.
+- **Eingaben/Konfiguration:** Seitenlinks › Mobile Alternate: Speichern/Crawlen (Standard: Speichern an, Crawlen aus; OS-Default, die Referenz-Doku nennt keinen Standard – Festlegung analog Paginierung Q28, damit Spalte und P1-Filter aus TECH-237 ohne Konfigurationsänderung befüllt sind).
+- **Ausgabe:** Spalte `Mobile Alternate Link` (Spaltenname führend TECH-231/TECH-237). Filter „Mobile Alternate Link“, Bedingung und Einstufung: TECH-237 (führend für die Filterlogik); dieser Eintrag ist führend für den Crawl-Schalter.
 - **Akzeptanzkriterien:**
-  - [ ] Nur `rel="alternate"` mit `media`-Attribut zählt; `hreflang`-Alternates werden nicht verwechselt.
-  - [ ] Standard: Mobil-URL nicht angefragt.
+  - [ ] Welche `rel="alternate"`-Angaben zählen (Bildschirmbreiten-`media` bzw. `handheld`, ohne `hreflang`/`type`, auch per HTTP-`Link`-Header), legt TECH-237 fest; `hreflang`-Alternates werden nicht verwechselt.
+  - [ ] Standard: Spalte befüllt, Mobil-URL nicht angefragt; mit Speichern aus bleiben Spalte und Filter leer.
 - **Testfixture:** `crawl-mobile-alt`: `www.site.test/` mit Alternate auf `m.site.test/`.
 
 ### CRAWL-052 Link-Quellen im HTML (welche Elemente Links erzeugen)
@@ -948,6 +898,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
   - [ ] User-Agent-spezifische Direktiven (`<meta name="googlebot" content="nofollow">`, `X-Robots-Tag: googlebot: nofollow`) gelten, wenn der eingestellte robots-User-Agent passt (CRAWL-114); `name="robots"` gilt immer.
   - [ ] „Internem nofollow folgen“ an: interne nofollow-Ziele werden angefragt, externe nicht (und umgekehrt).
   - [ ] `rel="sponsored"` und `rel="ugc"` verhalten sich wie `nofollow`.
+  - [ ] Auch wenn eine Folgen-Option nofollow-Links verfolgen lässt, behalten diese Links in den Outlinks `Folgen` = false (Anzeige unverändert; übernommen aus TECH-067, das hierher verweist).
 - **Testfixture:** `crawl-nofollow`: `/` mit `rel=nofollow`, `rel=sponsored`, `rel=ugc` auf interne und externe Ziele; `/meta-nofollow`, `/header-nofollow`, `/googlebot-nofollow`.
 
 ### CRAWL-057 Links in PDF-Dokumenten
@@ -1027,12 +978,12 @@ Dieser Abschnitt legt nur fest, **dass** und **wann** die Engine Daten erhebt un
 
 ### CRAWL-062 URL-Details: Antwortzeit, Last-Modified, HTTP-Header, Cookies
 - **Priorität:** P1
-- **Beschreibung:** Optional werden alle Response-Header und alle gesetzten Cookies je URL gespeichert.
+- **Beschreibung:** Optional werden alle Response-Header und alle gesetzten Cookies je URL gespeichert. Dieser Eintrag ist führend für die **Erfassung** von Cookies; Detail-Tab „Cookies“ (Inhalt und Layout): UI-043 (P1); Exporte: OUT-049 („Alle Cookies“) und OUT-111 („Cookie-Übersicht“).
 - **Eingaben/Konfiguration:** Spider › Extraktion › URL-Details: Antwortzeit (OS-Default: an), Last-Modified (OS-Default: an), HTTP-Header (OS-Default: aus), Cookies (OS-Default: aus). Die Referenz-Doku beschreibt die Optionen, nennt aber keine Standardwerte (siehe Q29).
-- **Ausgabe:** Detailbereich „HTTP-Header“ (Request- und Response-Header als Liste); Detailbereich „Cookies“ (Name, Wert, Domain, Pfad, Ablauf, Secure, HttpOnly, SameSite, Herkunft HTTP/JS); bei HTTP-Header-Speicherung zusätzlich je Header-Name eine Spalte im Tab „Intern“ (z. B. `Header: Cache-Control`).
+- **Ausgabe:** Detailbereich „HTTP-Header“ (Request- und Response-Header als Liste); Rohdaten je Cookie (alle Attribute aus `Set-Cookie` bzw. `document.cookie` sowie die Herkunft `HTTP` oder `JavaScript`) für den Detail-Tab UI-043 und die Exporte OUT-049/OUT-111 – Spaltennamen und Wertelisten legt ausschließlich UI-043 fest; bei HTTP-Header-Speicherung zusätzlich je Header-Name eine Spalte im Tab „Intern“ (z. B. `Header: Cache-Control`).
 - **Akzeptanzkriterien:**
   - [ ] Mehrfach-Header (z. B. zwei `Set-Cookie`, zwei `Link`) werden einzeln gespeichert, Reihenfolge erhalten.
-  - [ ] Cookies, die per JavaScript gesetzt werden, erscheinen nur bei JS-Rendering (Herkunft „JS“).
+  - [ ] Cookies, die per JavaScript gesetzt werden, erscheinen nur bei JS-Rendering (Herkunft `JavaScript`, Spalte `Type` nach UI-043).
   - [ ] Ist Cookie-Speicherung an, werden Analytics-Skripte beim Rendern nicht mehr automatisch blockiert (sonst fehlen deren Cookies). Standard (aus): bekannte Analytics-/Tag-Manager-Endpunkte werden beim Rendern blockiert, damit Crawls die Statistik der Website nicht verfälschen (OS-Liste: google-analytics.com, googletagmanager.com, analytics.google.com; erweiterbar).
   - [ ] Header-Spalten erscheinen dynamisch für jeden beobachteten Header-Namen (case-insensitiv zusammengeführt).
 - **Testfixture:** `crawl-headers-cookies`: `/set-cookies` (drei `Set-Cookie`, eines mit allen Attributen), `/js-cookie` (setzt `document.cookie`), `/many-headers`, `/ga.html` (lädt Fake-Analytics-Skript von `www.google-analytics.test`, über Host-Überschreibung auf Fixture gemappt).
@@ -1196,14 +1147,14 @@ Gemeinsame Regeln: Ein Limit von 0 oder leer bedeutet „unbegrenzt“, sofern n
 ## G. Rendering
 
 ### CRAWL-077 Rendering-Modus wählen
-- **Priorität:** P0 (Textmodus) / P1 (Umschalter)
-- **Beschreibung:** Drei Modi: **Nur Text** (rohes HTML wird geparst, kein JS; Standard), **JavaScript** (Headless-Chromium rendert, siehe CRAWL-078), **Altes AJAX-Crawling-Schema** (veraltet, siehe CRAWL-087).
+- **Priorität:** P0
+- **Beschreibung:** Drei Modi: **Nur Text** (rohes HTML wird geparst, kein JS; Standard), **JavaScript** (Headless-Chromium rendert, siehe CRAWL-078), **Altes AJAX-Crawling-Schema** (veraltet, siehe CRAWL-087). Kern (P0) ist der Textmodus; die Umschaltung auf andere Modi ist Teilumfang `[P1]`.
 - **Eingaben/Konfiguration:** Spider › Rendering › Modus.
 - **Ausgabe:** abhängig vom Modus.
 - **Akzeptanzkriterien:**
   - [ ] Textmodus startet keinen Browserprozess (Prozessliste während des Crawls).
-  - [ ] Wechsel des Modus während eines pausierten Crawls wird verweigert (Hinweis: neuer Crawl nötig) (OS-Festlegung).
-  - [ ] Ist JavaScript gewählt und Chromium nicht verfügbar, erscheint vor dem Start eine Fehlermeldung mit Download-/Pfad-Option; kein stiller Rückfall auf Text.
+  - [ ] [P1] Wechsel des Modus während eines pausierten Crawls wird verweigert (Hinweis: neuer Crawl nötig) (OS-Festlegung).
+  - [ ] [P1] Ist JavaScript gewählt und Chromium nicht verfügbar, erscheint vor dem Start eine Fehlermeldung mit Download-/Pfad-Option; kein stiller Rückfall auf Text.
 - **Testfixture:** `crawl-js`: `/csr.html` (Inhalt und Links nur per JS), `/ssr.html`.
 
 ### CRAWL-078 JavaScript-Rendering mit Headless-Chromium
@@ -1281,14 +1232,16 @@ Gemeinsame Regeln: Ein Limit von 0 oder leer bedeutet „unbegrenzt“, sofern n
 - **Testfixture:** `crawl-js/blocked.html` lädt `/private-js/app.js` (robots `Disallow: /private-js/`) und `/missing.css` (404).
 
 ### CRAWL-084 JavaScript-Fehler / Konsolen-Log
-- **Priorität:** P2
-- **Beschreibung:** Konsolenmeldungen und unbehandelte Ausnahmen während des Renderns werden je Seite gespeichert.
-- **Eingaben/Konfiguration:** Spider › Rendering › „JavaScript-Fehlerberichte aktivieren“ (Standard: aus).
-- **Ausgabe:** Detailbereich „Konsolen-Log“ mit Spalten `Ebene` (Fehler/Warnung/Info), `Meldung`, `Quelle`, `Zeile`, `Zeitpunkt (ms)`.
+- **Priorität:** P1
+- **Beschreibung:** Crawl-Schalter: Während des Renderns werden Konsolenmeldungen und unbehandelte Ausnahmen je Seite erhoben und in der Crawl-Datei gespeichert. Dieser Eintrag ist führend für den Schalter und die Erhebung. Filterlogik („Seiten mit JavaScript-Fehlern“), Einstufung, Spaltennamen und Bulk-Export: TECH-114 (führend); Layout des Detail-Tabs „Konsolen-Log“: UI-040.
+- **Eingaben/Konfiguration:** Spider › Rendering › „JavaScript-Fehlerberichte aktivieren“ (Schlüssel `rendering.js_error_reporting`; OS-Default: an, wirksam nur im JavaScript-Modus; im Textmodus ausgegraut). Die Referenz-Doku nennt keinen Standardwert (Q39); der OS-Default ist mit TECH-114 abgestimmt, weil das Mitschneiden der Konsolen-Ereignisse kaum Kosten verursacht.
+- **Ausgabe:** Rohdaten je Konsoleneintrag: Ebene (Fehler/Warnung/Info), Meldung, Quell-URL, Zeile, Spalte, Zeitpunkt (ms seit Navigationsbeginn). Darstellung und Spaltenbezeichner siehe TECH-114/UI-040.
 - **Akzeptanzkriterien:**
-  - [ ] `throw new Error("x")` erscheint als Ebene „Fehler“ mit Quelle und Zeile.
-  - [ ] Pro Seite werden höchstens 500 Meldungen gespeichert (OS-Default), Rest gezählt.
-  - [ ] Interne Browser-Meldungen (z. B. zu blockierten Analytics) werden herausgefiltert (Referenz-Fix 23.2).
+  - [ ] `throw new Error("x")` wird als Ebene „Fehler“ mit Quell-URL, Zeile und Spalte gespeichert.
+  - [ ] Pro Seite werden höchstens 500 Meldungen gespeichert (OS-Default), der Rest wird gezählt.
+  - [ ] Interne Browser-Meldungen (z. B. zu blockierten Analytics-Endpunkten, CRAWL-062) werden herausgefiltert (Referenz-Fix 23.2).
+  - [ ] Schalter aus: Es werden keine Konsolendaten gespeichert (Tabellenzeilen = 0); der Filter aus TECH-114 zeigt „Erfassung deaktiviert“ statt 0.
+  - [ ] Erfasst werden Meldungen bis zum Ende des AJAX-Timeouts (CRAWL-080); spätere Meldungen nicht.
 - **Testfixture:** `crawl-js/errors.html`.
 
 ### CRAWL-085 Shadow DOM und iframes abflachen
@@ -1340,13 +1293,16 @@ Gemeinsame Regeln: Ein Limit von 0 oder leer bedeutet „unbegrenzt“, sofern n
 
 ### CRAWL-089 Nicht indexierbare URLs bei Problemen ignorieren
 - **Priorität:** P1
-- **Beschreibung:** Inhaltliche Problemfilter (z. B. fehlender Titel, doppelte Beschreibung) betrachten nur indexierbare Seiten. Die Option kann abgeschaltet werden, z. B. für Staging-Sites mit sitewidem `noindex`.
-- **Eingaben/Konfiguration:** Erweitert › „Nicht indexierbare URLs bei On-Page-Filtern ignorieren“ (Standard: an; OS-Default, siehe Q16). Achtung: `02-tabs-onpage.md` (0.3, `issues.ignore_non_indexable`, Annahme A-51) setzt denselben Schlüssel auf `false` – Widerspruch zwischen den Bereichen, Entscheidung durch Orchestrator (Q36); bis dahin gilt für Tests der Wert aus 0.3.
+- **Beschreibung:** Problemfilter (z. B. fehlender Titel, doppelte Beschreibung, zu hohe Crawl-Tiefe) betrachten nur indexierbare Seiten. Die Option kann abgeschaltet werden, z. B. für Staging-Sites mit sitewidem `noindex`. Dieser Eintrag ist führend für den Schalter (TECH-009 und die On-Page-Spec verweisen hierher); ob ein einzelner Filter eingeschränkt wird, steht in seiner Filterdefinition.
+- **Eingaben/Konfiguration:** Erweitert › „Nicht indexierbare URLs bei Issues ignorieren“ (Schlüssel `issues.ignore_non_indexable`; Standard: an; OS-Default, Referenz-Doku nennt keinen Standard, siehe Q16/Q36). Entscheidung des Architekten: Der Wert „an“ gilt für alle Bereiche (02-tabs-onpage.md 0.3/A-51 und TECH-009 sind angeglichen).
+- **Wirkungsbereich (abschließend für 03, für 02/04 gepflegt in den Filterdefinitionen):** in 03 genau TECH-132 (hohe Crawl-Tiefe), TECH-214 (verwaiste URLs), TECH-184 (nur „Missing Structured Data“), TECH-186, TECH-187, TECH-188 (strukturierte Daten), alle übrigen Issue-Filter von 03 nie (u. a. TECH-018, TECH-038, TECH-053, TECH-079, TECH-162, TECH-215; übernommen aus TECH-009, 03 Anhang A Punkt 19); On-Page-Filter für Seitentitel, Meta-Beschreibung, Meta-Keywords, H1, H2 und geringen Inhalt (ONPAGE); Analytics-/Search-Console-Orphan-Filter (INTEG). Filter, deren Definition Nicht-Indexierbarkeit voraussetzt oder die sich gerade auf nicht indexierbare Seiten beziehen, werden nie eingeschränkt.
 - **Akzeptanzkriterien:**
   - [ ] An: Seite mit `noindex` und fehlendem Titel erscheint nicht im Filter „Titel fehlt“.
   - [ ] Aus: Sie erscheint.
+  - [ ] An: Die Spaltenwerte der ausgeschlossenen URLs bleiben im Tab bzw. Filter „Alle“ sichtbar; nur die Problemfilter schließen sie aus.
+  - [ ] An: Filter, die gerade nicht indexierbare Seiten auflisten (z. B. „Nicht indexierbar“, „noindex“), sind von der Option nie betroffen.
   - [ ] Umschalten nach dem Crawl wirkt sofort auf die Filter (keine Neucrawl nötig; Neuberechnung der Filter).
-- **Testfixture:** `crawl-indexability`: `/noindex-notitle`, `/canonicalised-dupe`, `/ok`.
+- **Testfixture:** `crawl-indexability`: `/noindex-notitle`, `/canonicalised-dupe`, `/ok`; für die TECH-Filter `tests/fixtures/tech/ignore-nonindexable/` (übernommen aus TECH-009).
 
 ### CRAWL-090 Paginierte URLs bei Duplikat-Filtern ignorieren
 - **Priorität:** P2
@@ -1359,40 +1315,35 @@ Gemeinsame Regeln: Ein Limit von 0 oder leer bedeutet „unbegrenzt“, sofern n
 
 ### CRAWL-091 noindex respektieren
 - **Priorität:** P1
-- **Beschreibung:** Seiten mit `noindex` werden weiterhin abgerufen und ihre Links verfolgt, aber aus den Ergebnistabellen ausgeblendet – zur Sicht „wie ein Suchmaschinen-Index“.
+- **Beschreibung:** Seiten mit `noindex` werden weiterhin abgerufen und ihre Links verfolgt, aber aus den Ergebnistabellen ausgeblendet – zur Sicht „wie ein Suchmaschinen-Index“. Führend für den Schalter; TECH-067 verweist hierher.
 - **Eingaben/Konfiguration:** Erweitert › „noindex respektieren“ (Standard: aus).
 - **Akzeptanzkriterien:**
-  - [ ] An: `/noindex` fehlt in allen Tabs; `/nur-von-noindex` (nur dort verlinkt) wird gecrawlt und angezeigt.
+  - [ ] An: `/noindex` fehlt in allen Tabs außer den Filtern des Direktiven-Tabs (Ausnahme nach TECH-051); `/nur-von-noindex` (nur dort verlinkt) wird gecrawlt und angezeigt.
+  - [ ] Kombination mit dem Selbst-Refresh-Schalter (TECH-068): ausgeblendet werden nur Seiten mit dem Grund `noindex`, nicht Seiten, die nur wegen eines Selbst-Refreshs nicht indexierbar sind.
   - [ ] Die Ausblendung gilt auch für Exporte und Berichte.
   - [ ] Request-Log enthält `/noindex` (wurde abgerufen).
 - **Testfixture:** `crawl-indexability`: `/noindex` (Meta), `/noindex-header` (X-Robots-Tag), beide verlinken exklusiv `/nur-von-noindex`.
 
 ### CRAWL-092 Canonical respektieren
 - **Priorität:** P1
-- **Beschreibung:** Kanonisierte Seiten (Canonical zeigt auf andere URL) werden abgerufen und ihre Links verfolgt, aber ausgeblendet.
+- **Beschreibung:** Kanonisierte Seiten (Canonical zeigt auf andere URL) werden abgerufen und ihre Links verfolgt, aber ausgeblendet. Führend für den Schalter; TECH-024 verweist hierher.
 - **Eingaben/Konfiguration:** Erweitert › „Canonical respektieren“ (Standard: aus).
 - **Akzeptanzkriterien:**
-  - [ ] An: `/variante?farbe=rot` (canonical → `/variante`) fehlt in den Tabellen; `/variante` wird angezeigt.
+  - [ ] An: `/variante?farbe=rot` (canonical → `/variante`) fehlt in den Tabellen und Exporten außer im Canonicals-Filter „Canonicalised“ (Ausnahme nach TECH-011); `/variante` wird angezeigt.
   - [ ] Selbstreferenzierende Canonicals führen nicht zur Ausblendung.
 - **Testfixture:** `crawl-canonicals`: `/variante`, `/variante?farbe=rot`.
 
 ### CRAWL-093 next/prev respektieren
 - **Priorität:** P2
-- **Beschreibung:** Nur die erste Seite einer Paginierungsserie (Seite mit `rel=next`, ohne `rel=prev`) wird angezeigt; Folgeseiten werden gecrawlt, aber ausgeblendet.
+- **Beschreibung:** Nur die erste Seite einer Paginierungsserie (Seite mit `rel=next`, ohne `rel=prev`) wird angezeigt; Folgeseiten werden gecrawlt, aber ausgeblendet. Führend für den Schalter; TECH-042 verweist hierher.
 - **Eingaben/Konfiguration:** Erweitert › „next/prev respektieren“ (Standard: aus).
 - **Akzeptanzkriterien:**
-  - [ ] An: `/seite/1` sichtbar; `/seite/2`…`/seite/5` ausgeblendet, aber im Request-Log.
+  - [ ] An: `/seite/1` sichtbar; `/seite/2`…`/seite/5` in allen Tabellen außer dem Paginierungs-Tab (Ausnahme nach TECH-031) ausgeblendet, aber im Request-Log; ihre Links werden verfolgt.
 - **Testfixture:** `crawl-pagination`.
 
 ### CRAWL-094 Selbstreferenzierenden Meta-Refresh respektieren
-- **Priorität:** P2
-- **Beschreibung:** Eine Seite, die sich per Meta-Refresh auf sich selbst neu lädt, gilt standardmäßig als nicht indexierbar (Indexierbarkeitsstatus „Meta Refresh auf sich selbst“, wird im Indexierbarkeitsbereich ausgewertet). Die Option schaltet diese Einstufung ab.
-- **Eingaben/Konfiguration:** Erweitert › „Selbstreferenzierenden Meta-Refresh respektieren“ (Standard: an).
-- **Akzeptanzkriterien:**
-  - [ ] An: `/meta-self-url` (Refresh mit URL auf sich selbst) ist nicht indexierbar.
-  - [ ] Aus: indexierbar.
-  - [ ] Refresh ohne URL (`content="30"`) wird wie selbstreferenzierend behandelt (OS-Festlegung, siehe Q).
-- **Testfixture:** `crawl-refresh`: `/meta-self-url`, `/meta-self`.
+- **Priorität:** P1
+- **Verweis:** siehe TECH-068 (führend). Der Schalter steht unter Spider › Erweitert neben den Respect-Schaltern CRAWL-089 bis CRAWL-093.
 
 ### CRAWL-095 Antwort-Timeout
 - **Priorität:** P0
@@ -1657,14 +1608,15 @@ Gemeinsame Regeln: Umschreibungen gelten ausschließlich für URLs, die **währe
 ### CRAWL-114 User-Agent und Voreinstellungen
 - **Priorität:** P0
 - **Beschreibung:** Der HTTP-User-Agent ist frei wählbar oder aus Voreinstellungen. Getrennt davon wird das Token festgelegt, unter dem robots.txt-Gruppen und agentenspezifische Meta-Robots ausgewertet werden.
-- **Eingaben/Konfiguration:** Konfiguration › User-Agent: Voreinstellung (Liste), Feld „HTTP-User-Agent“, Feld „robots.txt-User-Agent“ (Token). Voreinstellungen mindestens: OpenSpider (Standard: `Mozilla/5.0 (compatible; OpenSpider/<Version>; +https://…)`, Token `OpenSpider`), Googlebot Smartphone, Googlebot Desktop, Googlebot Image, Googlebot News, Googlebot Video, Google-InspectionTool, Google-Extended (nur Token), Bingbot Mobil, Bingbot Desktop, Yandex, Baiduspider, DuckDuckBot, Applebot, GPTBot, ClaudeBot, PerplexityBot, Chrome Desktop, Chrome Mobil, Safari iPhone, Firefox, Edge, Benutzerdefiniert. Die Liste liegt als Datendatei vor und kann ohne Code-Änderung aktualisiert werden.
+- **Eingaben/Konfiguration:** Konfiguration › User-Agent: Voreinstellung (Liste), Feld „HTTP-User-Agent“, Feld „robots.txt-User-Agent“ (Token). Voreinstellungen mindestens: OpenSpider (Standard: `Mozilla/5.0 (compatible; OpenSpider/<Version>; +https://…)`, Token `OpenSpider`), Googlebot Smartphone, Googlebot Desktop, Googlebot Image, Googlebot News, Googlebot Video, Google-InspectionTool, Google-Extended (nur Token), Bingbot Mobil, Bingbot Desktop, Yandex, Baiduspider, DuckDuckBot, Applebot, GPTBot, ClaudeBot, PerplexityBot, Chrome Desktop, Chrome Mobil, Safari iPhone, Firefox, Edge, Benutzerdefiniert. Die Liste liegt als Datendatei vor und kann ohne Code-Änderung aktualisiert werden. [M4] **KI-Crawler aus dem Katalog (übernommen aus 08):** Ab M4 werden die Voreinstellungen für KI-Crawler aus dem AI-Crawler-Katalog AI-120 (`resources/ai/ai-crawlers.json`) gespeist: zusätzlich zu den festen Einträgen oben erscheint jeder nicht veraltete Katalogeintrag der Kategorien `search` und `user-fetch` als Voreinstellung (HTTP-User-Agent = `ua_example`, robots-Token = `token`), gruppiert unter „KI-Crawler“; feste Einträge mit einem Katalog-Token (GPTBot, ClaudeBot, PerplexityBot, Applebot, Google-Extended) übernehmen ihre Werte aus dem Katalog und erscheinen nicht doppelt. Benutzereinträge des Katalogs (AI-120) erscheinen ebenfalls, wenn sie diese Kategorien haben.
 - **Akzeptanzkriterien:**
   - [ ] `/echo-headers` zeigt exakt den eingestellten UA-String.
   - [ ] Bei Voreinstellung „Googlebot Smartphone“ wird als robots-Token `Googlebot` verwendet; die Gruppe `User-agent: Googlebot` der Fixture greift.
   - [ ] Ein frei eingegebener UA ohne gesetztes Token verwendet das Token `*`-Fallback und eine Warnung erscheint.
   - [ ] Derselbe UA wird für Rendering, Formular-Login und Sitemaps verwendet.
   - [ ] Chrome-Version in Browser-Voreinstellungen entspricht der mitgelieferten Chromium-Version.
-- **Testfixture:** `crawl-http-basic/echo-headers`, `crawl-robots` (Googlebot-Gruppe).
+  - [ ] [M4] Die Menge der KI-Crawler-Voreinstellungen ist gleich {nicht veraltete `search`- und `user-fetch`-Tokens des Katalogs} ∪ {`GPTBot`, `ClaudeBot`, `Google-Extended`} (Gleichheitstest gegen `ai-crawlers.json`, Gegenstück in AI-120); veraltete Einträge (z. B. `anthropic-ai`, `Google-NotebookLM`) erscheinen nicht. Ein im Katalog ergänzter `search`-Eintrag erscheint nach Neustart ohne Code-Änderung; Voreinstellung `OAI-SearchBot` sendet den `ua_example` des Katalogs und wertet die robots.txt-Gruppe `User-agent: OAI-SearchBot` aus.
+- **Testfixture:** `crawl-http-basic/echo-headers`, `crawl-robots` (Googlebot-Gruppe); [M4] `crawl-robots` um eine Gruppe `User-agent: OAI-SearchBot` erweitert, Test-Katalog mit zusätzlichem `search`-Eintrag.
 
 ### CRAWL-115 Eigene HTTP-Request-Header
 - **Priorität:** P1
@@ -1677,6 +1629,7 @@ Gemeinsame Regeln: Umschreibungen gelten ausschließlich für URLs, die **währe
   - [ ] Header mit Zeilenumbrüchen im Wert werden abgewiesen (Header-Injection).
   - [ ] Standardmäßig werden eigene Header nicht an externe Hosts gesendet (Schutz von Tokens; OS-Festlegung, siehe Q).
   - [ ] Der Renderer sendet dieselben Header.
+  - [ ] [P2] Die Voreinstellungsliste enthält die Header-Namen der Web-Bot-Authentifizierung, mit der Shopify verifizierten Crawlern Zugriff gewährt (Referenz seit 23.1): `Signature`, `Signature-Input` und `Signature-Agent` (Namen nach HTTP Message Signatures, RFC 9421, und dem Web-Bot-Auth-Entwurf; die Referenz-Release-Notes nennen die Namen nicht, Abgleich Q38). Die Auswahl der Voreinstellung legt alle drei Zeilen mit leerem Pflicht-Wert an; `/echo-headers` zeigt danach alle drei Header mit den eingetragenen Werten, ein externer Host keinen.
 - **Testfixture:** `crawl-http-basic/echo-headers`, `other.test/echo-headers`.
 
 ### CRAWL-116 Accept-Language
@@ -1742,63 +1695,65 @@ Gemeinsame Regeln: Umschreibungen gelten ausschließlich für URLs, die **währe
   - [ ] Sitzungsschutz vom Nutzer geleert: vor dem Start erscheint eine Bestätigungsabfrage, die die Gefahr in einem Satz benennt; nach Bestätigung wird `/logout` angefragt und Folgeseiten liefern 302 auf `/login`.
   - [ ] Erkennt die Engine während des Crawls, dass die Sitzung verloren ging (≥ 3 Antworten mit Weiterleitung auf die Login-URL), meldet die Statusleiste „Sitzung verloren“ und der Eintrag erhält den Status „Sitzung im Crawl verloren“; der Crawl läuft weiter (OS-Festlegung).
   - [ ] Zwei-Faktor-Anmeldungen funktionieren, weil der Nutzer selbst im Browser handelt (Fixture `/login-2fa` mit festem Code).
-  - [ ] Die übernommenen Cookies werden im Konfigurationsprofil nicht im Klartext gespeichert (nur über Auth-Profil CRAWL-121).
+  - [ ] Die übernommenen Cookies werden im Konfigurationsprofil nicht im Klartext gespeichert (nur über Auth-Profil OUT-223).
 - **Testfixture:** `crawl-auth`: `form.site.test` mit `/login` (Formular, setzt Session-Cookie und `localStorage.token`), `/login-2fa`, `/mitglieder/` (prüft Cookie, verlinkt `/logout`, `/konto/loeschen?id=1` und 20 Unterseiten), `/mitglieder/app` (prüft Token per JS), `/logout` (löscht Session).
 
 ### CRAWL-121 Authentifizierungsprofile (verschlüsselt)
-- **Priorität:** P2
-- **Beschreibung:** Alle hinterlegten Zugangsdaten (standardbasiert und Formular-Cookies) können als verschlüsselte Datei exportiert werden, um sie in geplanten Crawls und der Kommandozeile zu verwenden.
-- **Eingaben/Konfiguration:** Authentifizierung › Profile: „Exportieren“ (Passphrase), „Importieren“; CLI `--auth-config <Datei>` (+ Passphrase per Umgebungsvariable).
-- **Ausgabe:** Datei `*.ospiderauth` (AES-256-GCM, Schlüssel per Argon2id aus Passphrase).
-- **Akzeptanzkriterien:**
-  - [ ] Datei enthält keine Klartext-Zugangsdaten (Test: Suche nach Passwort-Bytes negativ).
-  - [ ] Falsche Passphrase → klare Fehlermeldung, kein Absturz.
-  - [ ] Headless-Crawl mit importiertem Profil erreicht `/mitglieder/` mit 200 (solange Cookies gültig).
-- **Testfixture:** `crawl-auth`.
+- **Priorität:** P1
+- **Verweis:** siehe OUT-223 (führend). Crawl-seitig gilt nur, dass ein importiertes Profil dieselben Zugangsdaten und Formular-Cookies liefert wie die interaktive Konfiguration (CRAWL-117 ff.).
 
 ### CRAWL-122 Proxy
 - **Priorität:** P1
-- **Beschreibung:** Alle HTTP(S)-Anfragen (inkl. Renderer) laufen über einen konfigurierten Proxy.
+- **Beschreibung:** Alle Netzwerkzugriffe der App laufen über eine app-weite Proxy-Einstellung: Crawl (einschließlich Renderer, robots.txt und Sitemaps), API-Integrationen, Update-Prüfung sowie Google- und E-Mail-Versand. Dieser Eintrag ist führend für den Proxy; OUT-269 (App-Einstellung) und INTEG-016 (API-Verbindungen) verweisen hierher. Zusätzliche vertrauenswürdige Zertifikate für TLS-inspizierende Proxys: CRAWL-023/OUT-270.
 - **Paritätsabgleich (bewusste Abweichungen):** Die Referenz unterstützt genau **einen** Proxy-Server, **keine Ausnahmen** (entweder läuft der gesamte Verkehr über den Proxy oder keiner) und übernimmt Änderungen erst nach einem **Neustart der App**. OpenSpider ist eine Obermenge: Die Referenz-Konfiguration (ein HTTP-Proxy, keine Ausnahmen) ist vollständig abbildbar; zusätzlich gibt es SOCKS5, Ausnahmeliste, System-Proxy und Wirksamkeit ohne Neustart. Keine Referenz-Funktion fehlt.
-- **Eingaben/Konfiguration:** Einstellungen › Proxy: Typ (HTTP, HTTPS, SOCKS5; SOCKS5 = OS-Erweiterung), Host, Port, optional Benutzername/Passwort (Schlüsselbund), Ausnahmeliste (OS-Erweiterung, Standard leer), „System-Proxy verwenden“ (OS-Erweiterung; Standardwert laut OUT-269, das diese Einstellung app-weit verbindlich festlegt). Genau ein Proxy je Typ-Auswahl (wie Referenz). Wirksam ab dem nächsten Crawl-Start (kein App-Neustart nötig, OS-Festlegung); ein laufender oder pausierter Crawl behält den Proxy, mit dem er gestartet wurde. Die Proxy-Einstellung ist app-weit (Crawl, Updates, Integrationen) und in OUT-269 beschrieben; dieser Eintrag legt nur das crawl-spezifische Verhalten fest.
+- **Eingaben/Konfiguration:** Einstellungen › Proxy, Modus: **System-Proxy verwenden** (Standard; OS-Erweiterung, übernimmt die Proxy-Einstellung des Betriebssystems), **Kein Proxy**, **Manuell**: Typ (HTTP, HTTPS, SOCKS5; SOCKS5 = OS-Erweiterung), Host, Port, optional Benutzername/Passwort (Schlüsselbund, OUT-225), Ausnahmeliste (OS-Erweiterung, Standard leer). Genau ein manueller Proxy (wie Referenz). App-Einstellung, nicht Teil des Crawl-Profils (CRAWL-132). Wirksam ab dem nächsten Crawl-Start bzw. der nächsten API-/Update-Anfrage (kein App-Neustart nötig, OS-Festlegung); ein laufender oder pausierter Crawl behält den Proxy, mit dem er gestartet wurde.
 - **Akzeptanzkriterien:**
-  - [ ] Mit Proxy: Fixture-Proxy protokolliert jede Anfrage; Ziel-Fixture sieht die Proxy-IP.
+  - [ ] Manueller Proxy: Fixture-Proxy protokolliert jede Anfrage; Ziel-Fixture sieht die Proxy-IP.
   - [ ] HTTPS über HTTP-Proxy nutzt `CONNECT`.
   - [ ] Proxy-Authentifizierung (Basic) funktioniert; falsche Daten → Status „Proxy-Authentifizierung fehlgeschlagen“ (407) je URL.
   - [ ] Hosts in der Ausnahmeliste werden direkt angesprochen.
   - [ ] Proxy nicht erreichbar → klarer Fehler vor dem Start (Verbindungstest), nicht Tausende „Keine Antwort“-Zeilen.
   - [ ] Proxy-Änderung während eines pausierten Crawls: „Fortsetzen“ nutzt weiterhin den alten Proxy; ein neu gestarteter Crawl nutzt den neuen (Fixture-Proxy-Log), ohne dass die App neu gestartet wurde.
   - [ ] Paritätskonfiguration (HTTP-Proxy, leere Ausnahmeliste): ausnahmslos jede Anfrage einschließlich robots.txt, Sitemaps und Renderer-Ressourcen erscheint im Proxy-Log.
-- **Testfixture:** `crawl-proxy`: Fixture-Proxy (HTTP CONNECT, SOCKS5, Basic-Auth) in `os-testsite`.
+  - [ ] App-weit: Bei manuellem Proxy erscheinen auch Anfragen an den Mock-API-Server (Integrationen) und an den Mock-Update-Server im Proxy-Log.
+  - [ ] System-Proxy (Standard): Ist im Betriebssystem kein Proxy gesetzt, gehen Anfragen direkt; ist einer gesetzt, laufen sie über ihn (Test je Plattform mit simulierter Systemeinstellung).
+  - [ ] [P2] PAC-Dateien der Systemeinstellung werden ausgewertet (macOS/Windows).
+- **Testfixture:** `crawl-proxy`: Fixture-Proxy (HTTP CONNECT, SOCKS5, Basic-Auth) in `os-testsite`; Mock-API- und Mock-Update-Server hinter demselben Proxy.
 
 ### CRAWL-123 Host-Auflösung überschreiben
-- **Priorität:** P1 (wegen Testbarkeit aller Fixtures; im UI P2)
-- **Beschreibung:** Zuordnung Hostname → IP-Adresse, die die DNS-Auflösung ersetzt (wie ein Eintrag in der Hosts-Datei). Nutzen: Staging-Server unter der Live-Domain crawlen; Grundlage aller Fixture-Tests mit `.test`-Domains.
-- **Eingaben/Konfiguration:** Erweitert › „Host-Auflösung“: Tabelle (Host oder `*.domain`, IP); CLI `--resolve host=ip`.
+- **Priorität:** P1
+- **Beschreibung:** Zuordnung Hostname → IP-Adresse, die die DNS-Auflösung ersetzt (wie ein Eintrag in der Hosts-Datei). Nutzen: Staging-Server unter der Live-Domain crawlen; Grundlage aller Fixture-Tests mit `.test`-Domains. Die Zuordnung gilt nicht nur für Crawler und Renderer, sondern im Testbetrieb auch für die HTTP-Clients der API-Integrationen (`os-integrations`, ab M4 `os-ai`, ab M5 DataForSEO), damit deren Mocks unter `.test`-Hostnamen erreichbar sind (übernommen aus 08, Konventionen „Hostnamen im Test“). „Testbetrieb“ heißt: Test-/Debug-Build oder Flag `--allow-api-override` (INTEG-019); in Release-Builds ohne dieses Flag wirkt die Zuordnung nur auf Crawl-Requests, Rendering, Sitemaps und robots.txt, nicht auf API-Clients.
+- **Eingaben/Konfiguration:** Profil-Schlüssel und CLI `--resolve host=ip` (Kern P1, wegen Testbarkeit aller Fixtures); [P2] Erweitert › „Host-Auflösung“: Tabelle (Host oder `*.domain`, IP) im Konfigurationsdialog.
 - **Akzeptanzkriterien:**
   - [ ] `*.site.test → 127.0.0.1` lässt alle Fixture-Hosts lokal auflösen.
   - [ ] TLS-SNI und `Host`-Header verwenden weiterhin den Hostnamen.
   - [ ] Der Renderer verwendet dieselbe Zuordnung (Chromium-Host-Resolver-Regeln).
-  - [ ] Ist eine Überschreibung aktiv, zeigt die Statusleiste ein Symbol mit Hinweis.
+  - [ ] Im Testbetrieb lösen auch die API-Clients die Zuordnung auf: mit `*.mock.test → 127.0.0.1` und `OPENSPIDER_API_BASE_PSI=http://psi.mock.test:<port>` erreicht der PSI-Client den Mock; der Mock sieht `Host: psi.mock.test:<port>`. [M4] Dasselbe für `openai.mock.test` und `openrouter.mock.test` (`ai-mock`, 08); [M5] für den DataForSEO-Mock (09).
+  - [ ] In einem Release-Build ohne `--allow-api-override` ignorieren die API-Clients die Zuordnung (Negativtest: Auflösung von `psi.mock.test` scheitert).
+  - [ ] [P2] Die Tabelle im Konfigurationsdialog legt dieselben Einträge an wie `--resolve`; ist eine Überschreibung aktiv, zeigt die Statusleiste ein Symbol mit Hinweis.
 - **Testfixture:** alle Fixtures; zusätzlich Test, dass ohne Überschreibung `site.test` „DNS-Auflösung fehlgeschlagen“ liefert.
 
 ---
 
 ## N. Speicher, Persistenz, Steuerung
 
-### CRAWL-124 Speichermodus: Datenbank vs. Arbeitsspeicher
+### CRAWL-124 Speichermodus: nur disk-first (kein Arbeitsspeichermodus)
 - **Priorität:** P0
-- **Beschreibung:** Das Referenzprodukt kennt einen Datenbankmodus (Standard, Daten auf SSD, unbegrenzt große Crawls, automatisch gespeichert) und einen Arbeitsspeichermodus (schneller, für kleinere Crawls, manuelles Speichern). OpenSpider schreibt laut Architektur immer in eine SQLite-Crawl-Datei und bildet den Unterschied über ein Leistungsprofil ab.
-- **Eingaben/Konfiguration:** Einstellungen › Speicher: Speicherort für Crawls (Standard: Benutzer-Datenverzeichnis über `dirs`), Leistungsprofil „Ausgewogen“ (Standard; SQLite-Cache 256 MB) / „Maximale Geschwindigkeit“ (großer Cache, z. B. 25 % des RAM, synchrone Schreibvorgänge reduziert) / „Minimaler Speicher“ (Cache 64 MB); RAM-Obergrenze für den Prozess (Warnschwelle, CRAWL-129).
+- **Beschreibung:** Das Referenzprodukt kennt einen Datenbankmodus (Standard, Daten auf SSD, unbegrenzt große Crawls, automatisch gespeichert) und einen Arbeitsspeichermodus (Daten nur im RAM, für kleinere Crawls, manuelles Speichern). OpenSpider hat genau **einen** Speichermodus: disk-first gemäß `docs/ARCHITECTURE.md` – jeder Crawl schreibt fortlaufend in seine SQLite-Crawl-Datei (`*.ospider`, WAL). Dieser Eintrag ist führend für den Speichermodus; UI-122 beschreibt nur die Darstellung der Einstellungsseite.
+- **Bewusste Abweichung – der Arbeitsspeichermodus entfällt. Begründung:** (1) SQLite hält mit seinem Seiten-Cache die heißen Daten ohnehin im RAM; der Geschwindigkeitsvorteil eines reinen RAM-Modus ist gering, während er die Crawl-Größe an den Arbeitsspeicher bindet und bei Absturz alle Daten verliert. (2) Ein zweiter Modus verdoppelt Speicherpfade, Fehlerfälle und Testmatrix. (3) In der Referenz hängen Vergleich, Segmente, Auto-Save und Crawl-Verwaltung am Datenbankmodus; mit nur einem Modus sind sie in OpenSpider immer verfügbar und Abstürze verlieren keine Daten (CRAWL-125). Zur Anpassung an die Hardware gibt es Cache-Leistungsprofile; sie sind **kein** Speichermodus, ändern keine Funktion und emulieren den Arbeitsspeichermodus nicht (die Daten liegen immer in der Datei).
+- **Eingaben/Konfiguration:** Einstellungen › Speicher: Speicherort für Crawls (Standard: Benutzer-Datenverzeichnis über `dirs`), Leistungsprofil „Ausgewogen“ (Standard; SQLite-Cache 256 MB) / „Maximale Geschwindigkeit“ (großer Cache, z. B. 25 % des RAM, synchrone Schreibvorgänge reduziert) / „Minimaler Speicher“ (Cache 64 MB); RAM-Obergrenze für den Prozess (Warnschwelle, CRAWL-129). Es gibt keine Einstellung, keinen Profil-Schlüssel und keinen CLI-Schalter für einen Arbeitsspeichermodus.
 - **Ausgabe:** Einstellungsseite zeigt das aktive Profil und den Speicherort; Hilfe › Diagnose (CRAWL-129) zeigt den tatsächlich gesetzten SQLite-Cache.
 - **Akzeptanzkriterien:**
   - [ ] Profil-Parameter sind überprüfbar: „Ausgewogen“ setzt `PRAGMA cache_size` auf −262144 (256 MiB) und `synchronous = NORMAL`; „Minimaler Speicher“ −65536 (64 MiB), `synchronous = NORMAL`; „Maximale Geschwindigkeit“ −(25 % des physischen RAM in KiB, höchstens 8 GiB), `synchronous = OFF` während des Crawls, `NORMAL` nach Abschluss. Test liest die PRAGMAs der offenen Crawl-Datei aus.
   - [ ] Ein Crawl von 1 000 000 URLs (synthetische Fixture) läuft mit Profil „Ausgewogen“ bei < 2 GB RSS durch.
   - [ ] Ein Crawl von 100 000 URLs ist mit „Maximale Geschwindigkeit“ mindestens so schnell wie mit „Ausgewogen“ (Benchmark im CI-Nightly; Toleranz 5 %).
   - [ ] Mit „Minimaler Speicher“ bleibt der RSS-Spitzenwert beim 1-Mio.-Crawl mindestens 20 % unter dem von „Ausgewogen“.
-  - [ ] Alle Funktionen (Vergleich, Segmente, Verwaltung, Fortsetzen nach Absturz) sind in allen drei Profilen verfügbar (Test durchläuft CRAWL-032/125/134 je Profil).
+  - [ ] Alle Funktionen (Vergleich, Segmente, Verwaltung, Fortsetzen nach Absturz) sind in allen drei Profilen verfügbar (Test durchläuft OUT-140 ff., CRAWL-125 und CRAWL-134 je Profil).
+  - [ ] Es existiert kein Arbeitsspeichermodus: Ein Profil mit einem Schlüssel wie `storage.mode = "memory"` wird wie jeder unbekannte Schlüssel ignoriert und gemeldet (CRAWL-132); auch mit Profil „Maximale Geschwindigkeit“ liegt nach SIGKILL ein konsistenter, fortsetzbarer Crawl vor (CRAWL-125).
   - [ ] Speicherort auf Netzlaufwerken (SMB/AFP/NFS), Sync-Ordnern (Pfade unter den bekannten Dropbox-, OneDrive-, iCloud-Drive-, Google-Drive-Wurzeln) oder Dateisystemen ohne zuverlässige Dateisperren (FAT32/exFAT) wird beim Auswählen erkannt: Dialog mit Warnung und den Optionen „Anderen Ordner wählen“ / „Trotzdem verwenden“; die Wahl wird gespeichert.
-  - [ ] Fehlender Speicherplatz (< 1 GB frei auf dem Laufwerk des Speicherorts, geprüft alle 5 s) pausiert den Crawl automatisch mit Meldung „Speicherplatz knapp“; die Datei bleibt konsistent (`PRAGMA integrity_check` = ok).
+  - [ ] Startwarnung: Sind beim Start eines Crawls weniger als 2 GB auf dem Laufwerk des Speicherorts frei, erscheint vor dem ersten Abruf ein Hinweis „Wenig freier Speicherplatz (x,x GB) – der Crawl wird bei < 1 GB automatisch pausiert“ mit den Optionen „Trotzdem starten“ / „Abbrechen“; im CLI-Betrieb wird stattdessen eine Warnung auf stderr ausgegeben und der Crawl startet (Exit-Code unverändert).
+  - [ ] Fehlender Speicherplatz (< 1 GB frei auf dem Laufwerk des Speicherorts, geprüft alle 5 s) pausiert den Crawl automatisch mit Meldung „Speicherplatz knapp“; die Datei bleibt konsistent (`PRAGMA integrity_check` = ok). Die Pausenschwelle 1 GB ist eine OS-Festlegung (bewusst höher als die frühere Angabe von 500 MB): SQLite benötigt beim WAL-Checkpoint und bei Index-Aufbau bzw. Crawl-Analyse (CRAWL-141) temporär zusätzlichen Platz in der Größenordnung mehrerer hundert MB, und das geordnete Pausieren muss Warteschlange und WAL noch vollständig schreiben können; bei 500 MB wäre ein konsistentes Pausieren großer Crawls nicht sicher.
+  - [ ] Determinismus (OS-Festlegung, Voraussetzung für UI-005 und Golden-Tests): Engine und Speicherschicht beziehen Zeitstempel und Crawl-ID (UUID v7, CRAWL-128) aus injizierbaren Quellen; mit fixierter Uhr, festem Seed, Parallelität 1 und deterministischer Fixture erzeugen zwei Crawls nach dem abschließenden WAL-Checkpoint byte-identische Crawl-Dateien.
   - [ ] Ändern des Speicherorts verschiebt bestehende Crawls nicht automatisch, sondern bietet „Vorhandene Crawls verschieben“ an; die Crawl-Verwaltung findet Crawls an beiden Orten bis zur Verschiebung.
 - **Testfixture:** `crawl-synthetic` (Generator-Route `/gen/{n}` mit 10 Links je Seite, deterministisch, beliebig groß).
 
@@ -1846,21 +1801,25 @@ Gemeinsame Regeln: Umschreibungen gelten ausschließlich für URLs, die **währe
   - [ ] Import von Crawl-Dateien des Referenzprodukts ist **nicht** Teil der Spezifikation (proprietäres Format; siehe Q21).
 - **Testfixture:** `crawl-site-100`; beschädigte Datei `tests/fixtures/crawl-files/corrupt.ospider` (abgeschnitten), `not-a-crawl.ospider` (PNG-Inhalt), `schema-v1.ospider`, `schema-v99.ospider` (künstlich hohe Version).
 
-### CRAWL-128 Crawl-Verwaltung (Projekte, Sperren, Aufbewahrung)
+### CRAWL-128 Crawl-Verwaltung: Crawl-Zustände und Fortsetzbarkeit
 - **Priorität:** P1
-- **Beschreibung:** Übersicht aller gespeicherten Crawls mit Ordnung in Projekte, Umbenennen, Löschen, Sperren und automatischer Aufbewahrungsregel.
-- **Eingaben/Konfiguration:** Datei › Crawls: Tabelle mit Spalten `Projekt`, `Name`, `Modus`, `Start-URL`, `Gestartet`, `Dauer`, `URLs`, `Größe auf Datenträger`, `Status` (Abgeschlossen / Pausiert / Unterbrochen / Fehlgeschlagen; Export-Schlüssel wie OUT-228), `Gesperrt`, `Datenbank-ID` `crawl_id`. Kontextmenü und Schaltflächen siehe CRAWL-143. Filter „Anzeigen: Crawls / Vergleiche / Alle“; Suche (Strg/Cmd+F) über Name, Projekt, Start-URL. Aufbewahrungsregel: Einstellungen › Crawl-Aufbewahrung, Werte und Bezugszeitpunkt verbindlich in OUT-229 (Standard „Nie“). Dieser Eintrag ist die crawl-seitige Sicht auf OUT-228/229; bei Widerspruch gilt OUT.
+- **Beschreibung:** Legt fest, in welchem Zustand ein Crawl in der Crawl-Verwaltung erscheint, wodurch er in diesen Zustand kommt und ob er fortgesetzt werden kann (Zusammenspiel mit CRAWL-125, CRAWL-126, CRAWL-129). Dieser Eintrag ist führend nur für die Pause-/Fortsetzen-Semantik der Verwaltung; führend für die Datei- und Projektverwaltung (Liste, Spalten, Projekte, Umbenennen, Löschen, Sperren, Import/Export, Suche) ist OUT-228, für die Aufbewahrung OUT-229, die Darstellung beschreibt UI-124.
+- **Eingaben/Konfiguration:** —
+- **Ausgabe:** Spalte `Status` der Verwaltung mit den Zuständen (Export-Schlüssel wie OUT-228): **Läuft** (`Running`), **Pausiert** (`Paused`), **Abgeschlossen** (`Completed`), **Unterbrochen** (`Incomplete`), **Fehlgeschlagen** (`Failed`); Spalte `Datenbank-ID` `crawl_id`.
+- **Zustandsregeln:**
+  - Läuft: die Engine arbeitet die Warteschlange ab.
+  - Pausiert: geordnet angehalten durch „Pause“, SIGINT (CRAWL-126), Ressourcenschutz (CRAWL-129) oder Speicherplatzmangel (CRAWL-124); Warteschlange vollständig gespeichert.
+  - Unterbrochen: der Prozess endete ohne geordnetes Pausieren (Absturz, SIGKILL, Stromausfall; CRAWL-125).
+  - Abgeschlossen: Warteschlange leer oder Ende durch ein Limit (Status der Crawl-Analyse wird getrennt geführt, CRAWL-141).
+  - Fehlgeschlagen: der Crawl konnte nicht starten oder brach mit fatalem Fehler ab (z. B. Start-URL nicht erreichbar).
 - **Akzeptanzkriterien:**
-  - [ ] Die Spalte `Datenbank-ID` enthält eine stabile, eindeutige Kennung (UUID v7, OS-Festlegung), die sich durch Umbenennen, Verschieben in ein Projekt oder Sperren nicht ändert; Duplizieren vergibt eine neue ID.
-  - [ ] Die per Kontextmenü kopierte ID ist byte-identisch mit dem Wert in `--list-crawls` und wird von `--load-crawl <ID>` akzeptiert (End-to-End-Test: UI-Zwischenablage → CLI).
-  - [ ] Gesperrte Crawls und alle Crawls gesperrter Projekte werden von der Aufbewahrungsregel nie gelöscht; auch nach dem Sperren neu angelegte Crawls im gesperrten Projekt sind geschützt.
-  - [ ] Aufbewahrung „1 Woche“: ein Crawl mit Ende vor 8 Tagen wird beim nächsten App-Start gelöscht, einer mit Ende vor 6 Tagen bleibt (Unit-Test mit manipulierbarer Uhr).
-  - [ ] Gesperrte Crawls lassen sich nicht löschen (Kontextmenü „Löschen“ ausgegraut, Tooltip „gesperrt“).
-  - [ ] Löschen eines Crawls, der in einem gespeicherten Vergleich verwendet wird, zeigt vorher eine Warnung mit dem Namen des Vergleichs.
-  - [ ] Mehrfachauswahl (Umschalt/Strg-Klick) erlaubt Löschen, Sperren, Verschieben und Exportieren von bis zu 1 000 Crawls in einem Schritt.
-  - [ ] Die Liste lädt bei 1 000 Crawls in < 1 s (Metadaten in separatem Index, nicht durch Öffnen jeder Datei); die Suche filtert bei 1 000 Einträgen in < 100 ms.
-  - [ ] Status-Abbildung: ein per SIGKILL abgebrochener Crawl erscheint als „Unterbrochen“ (CRAWL-125), ein per Pause/SIGINT beendeter als „Pausiert“.
-- **Testfixture:** Unit-/Integrationstest in `os-store` mit generierten Crawl-Dateien (3 Projekte, eines gesperrt), manipulierten Zeitstempeln und einem Vergleich, der zwei davon referenziert.
+  - [ ] Status-Abbildung: ein per SIGKILL abgebrochener Crawl erscheint als „Unterbrochen“ (CRAWL-125), ein per Pause/SIGINT beendeter als „Pausiert“, ein durch den Ressourcenschutz angehaltener als „Pausiert“.
+  - [ ] „Fortsetzen“ ist für „Pausiert“ und „Unterbrochen“ möglich und führt zum selben Ergebnis wie ein ununterbrochener Crawl (CRAWL-126); für „Fehlgeschlagen“ und für „Abgeschlossen“ mit leerer Warteschlange ist es ausgegraut, CLI `--load-crawl <ID> --resume` endet dann mit Exit 1 und Meldung des Zustands.
+  - [ ] Ein durch ein Limit beendeter Crawl lässt sich nach Erhöhen des Limits fortsetzen (CRAWL-126); ohne Erhöhung endet „Fortsetzen“ sofort wieder mit „Limit erreicht“.
+  - [ ] Die Spalte `Datenbank-ID` enthält eine stabile, eindeutige Kennung (UUID v7, OS-Festlegung), die sich durch Umbenennen, Verschieben, Sperren, Pausieren und Fortsetzen nicht ändert; Duplizieren vergibt eine neue ID.
+  - [ ] Die per Kontextmenü kopierte ID ist byte-identisch mit dem Wert in `--list-crawls` und wird von `--load-crawl <ID>` und `--load-crawl <ID> --resume` akzeptiert (End-to-End-Test: UI-Zwischenablage → CLI).
+  - [ ] Ein Crawl im Zustand „Läuft“ kann weder gelöscht noch von der Aufbewahrung (OUT-229) erfasst werden; ein pausierter Crawl wird von der Aufbewahrung nach seiner letzten Änderung bewertet.
+- **Testfixture:** Integrationstest in `os-store` mit generierten Crawl-Dateien in allen fünf Zuständen; `crawl-site-100` mit `delay_ms=100` für Pause/SIGINT/SIGKILL.
 
 ### CRAWL-129 Speicherwarnung und Ressourcenschutz
 - **Priorität:** P1
@@ -1874,6 +1833,8 @@ Gemeinsame Regeln: Umschreibungen gelten ausschließlich für URLs, die **währe
   - [ ] Die Warnung erscheint in allen Phasen: Crawl, Crawl-Analyse (Referenz-Fix 23.2), Export, Vergleichsberechnung; während der Analyse wird diese pausiert statt abgebrochen.
   - [ ] Renderer-Prozesse werden mitgezählt: JS-Crawl mit künstlich speicherhungriger Seite (`/mem-hog.html` alloziert 200 MB) löst Stufe 2 aus, obwohl der Engine-Prozess allein darunter liegt.
   - [ ] Hilfe › Diagnose zeigt aktuelle RAM-Nutzung (Engine, Renderer, Summe), Obergrenze, Crawl-Dateigröße, freien Speicherplatz, aktives Leistungsprofil (CRAWL-124).
+  - [ ] Obergrenze: Standard = 50 % des physischen RAM, begrenzt auf [1 GB, physischer RAM − 2 GB] (16-GB-Rechner → 8,0 GB; 3-GB-Rechner → 1,0 GB); Eingaben über physischer RAM − 2 GB oder unter 1 GB werden nicht übernommen, sondern mit Hinweis auf den zulässigen Bereich abgelehnt (übernommen aus UI-123).
+  - [ ] Eine geänderte RAM-Obergrenze wirkt ohne Neustart der App ab der nächsten Messung (≤ 1 s), auch während eines laufenden Crawls (Test: Obergrenze während des Crawls von 4 GB auf 300 MB senken → Stufe 2 innerhalb von 2 s); einen Neustart-Hinweis gibt es daher nicht (OS-Festlegung zu „sonst Hinweis“ aus UI-123).
   - [ ] Ein Speicherengpass führt nie zu einem Prozessabsturz ohne vorherige Pause (Stresstest: 10 Läufe mit Obergrenze 300 MB, 0 Abstürze, alle Crawl-Dateien konsistent).
 - **Testfixture:** `crawl-synthetic` mit Obergrenze 300 MB; `crawl-js/mem-hog.html`.
 
@@ -1894,12 +1855,13 @@ Gemeinsame Regeln: Umschreibungen gelten ausschließlich für URLs, die **währe
 - **Testfixture:** `crawl-site-100` mit `delay_ms=100`.
 
 ### CRAWL-131 Einzelne URLs neu crawlen, entfernen, hinzufügen
-- **Priorität:** P1
-- **Beschreibung:** Per Kontextmenü können markierte URLs erneut abgerufen („Neu crawlen“) oder aus dem Crawl entfernt werden; über die Listenfunktion können während/nach einem Spider-Crawl zusätzliche URLs eingereiht werden.
+- **Priorität:** P0
+- **Beschreibung:** Führend für die Crawl-Semantik; Bedienung und Anzeige: UI-114 (Layout). P0 nach Architektenentscheidung, weil „Neu crawlen“ und „Entfernen“ zur Kernbedienung gehören; das Nachreichen zusätzlicher URLs ist Teilumfang [P1]. Per Kontextmenü können markierte URLs erneut abgerufen („Neu crawlen“) oder aus dem Crawl entfernt werden; über die Listenfunktion können während/nach einem Spider-Crawl zusätzliche URLs eingereiht werden.
 - **Eingaben/Konfiguration:** Kontextmenü „Neu crawlen“, „Entfernen“; Menü „URLs hinzufügen“.
 - **Akzeptanzkriterien:**
   - [ ] „Neu crawlen“ ersetzt alle Daten der URL (Status, Inhalte, Outlinks); neue Outlinks werden eingereiht, wenn sie im Bereich liegen; entfallene Outlinks werden entfernt und Inlink-Zähler anderer URLs angepasst.
   - [ ] Mehrfachauswahl von 1 000 URLs wird gebündelt verarbeitet.
+  - [ ] [P1] „URLs hinzufügen“ reiht die eingegebenen URLs in den laufenden bzw. abgeschlossenen Spider-Crawl ein (ein abgeschlossener Crawl wird dafür fortgesetzt); bereits bekannte URLs werden nicht doppelt angelegt.
   - [ ] „Entfernen“ löscht die URL und ihre ausgehenden Links; Inlinks auf sie bleiben als Links ohne Statuscode bestehen.
   - [ ] Nach diesen Aktionen wird ein Hinweis angezeigt, dass die Crawl-Analyse veraltet ist (UI-082); ist „Automatisch am Crawl-Ende analysieren“ (CRAWL-141) an, wird sie bei „Neu crawlen“ nicht automatisch erneut gestartet (OS-Festlegung, Nutzer startet manuell).
 - **Testfixture:** `crawl-site-100` mit umschaltbarer Seite `/wechsel` (liefert beim 2. Abruf andere Links und 404).
@@ -1912,7 +1874,7 @@ Gemeinsame Regeln: Umschreibungen gelten ausschließlich für URLs, die **währe
 - **Akzeptanzkriterien:**
   - [ ] Speichern → Laden ergibt eine identische Konfiguration (Round-Trip-Test über alle Optionen).
   - [ ] Ein Profil ohne einzelne Schlüssel lädt fehlende Werte mit Standardwerten (Vorwärtskompatibilität); unbekannte Schlüssel werden ignoriert und gemeldet.
-  - [ ] Passwörter sind nicht im Profil enthalten (nur Verweis auf Schlüsselbund bzw. Auth-Profil, CRAWL-121).
+  - [ ] Passwörter sind nicht im Profil enthalten (nur Verweis auf Schlüsselbund bzw. Auth-Profil, OUT-223).
   - [ ] „Standard zurücksetzen“ stellt die Werkseinstellungen wieder her.
   - [ ] Das Profil kann von CLI (`--config`) und geplanten Crawls verwendet werden.
   - [ ] Segmente, eigene robots.txt, Include/Exclude, Umschreibungen, CDNs, Header werden im Profil gespeichert.
@@ -1920,19 +1882,13 @@ Gemeinsame Regeln: Umschreibungen gelten ausschließlich für URLs, die **währe
 
 ### CRAWL-133 Konfigurations-Diff zum Standard
 - **Priorität:** P2
-- **Beschreibung:** Ein Fenster listet alle Optionen, die von den Werkseinstellungen abweichen – nützlich zur Fehlersuche bei unerwartetem Crawl-Verhalten.
-- **Eingaben/Konfiguration:** Tastenkürzel Strg/Cmd+Umschalt+C oder Menü Konfiguration › „Abweichungen anzeigen“.
-- **Ausgabe:** Tabelle (Option, Standardwert, Aktueller Wert).
-- **Akzeptanzkriterien:**
-  - [ ] Nach Änderung von Threads 5 → 10 zeigt das Fenster genau diese eine Zeile.
-  - [ ] Kopieren als Text ist möglich.
-- **Testfixture:** Unit-Test.
+- **Verweis:** siehe OUT-224 (führend). Optionen des Konfigurationsprofils (CRAWL-132) erscheinen dort mit ihrem stabilen Schlüssel `bereich.option`.
 
 ### CRAWL-134 Segmente
 - **Priorität:** P1
-- **Beschreibung:** Benannte, farbige Gruppen von URLs anhand von Regeln (z. B. „Produktseiten“, „Blog“, „Wichtige Seiten“). Jede URL erhält höchstens ein Segment: Segmente werden in der Reihenfolge der Liste geprüft, das erste passende gewinnt. Segmente können sich auf andere Segmente beziehen; Abhängigkeiten müssen weiter oben stehen. Sie können vor, während oder nach dem Crawl angelegt werden.
-- **Eingaben/Konfiguration:** Konfiguration › Segmente: Liste (Name, Farbe, Reihenfolge); je Segment Regelgruppen: Bedingungen innerhalb einer Gruppe UND-verknüpft, Gruppen untereinander ODER-verknüpft. Bedingung = Feld (beliebige Spalte des Crawls, inkl. Adresse, Statuscode, Indexierbarkeit, Crawl-Tiefe, Inhaltstyp, Wortanzahl, API-Daten, Nachlauf-Analysewerte, Issues, anderes Segment) + Operator (enthält, enthält nicht, ist gleich, ist nicht gleich, beginnt mit, endet mit, Regex passt, Regex passt nicht, größer als, kleiner als, größer gleich, kleiner gleich, ist leer, ist nicht leer, hat Issue, hat Issue nicht, ist in Segment) + Wert.
-- **Ausgabe:** Spalte `Segment` (farbiges Label) in allen Tabs; Segment-Filter in jeder Tabelle; rechter Bereich „Segmente“ mit Aggregaten je Segment (URLs, indexierbar/nicht indexierbar, Issues, Ansicht „nach Crawl-Tiefe“ etc.); Segment-Leiste im Issues-Bereich; Nutzung in Visualisierungen, Sitemap-Erzeugung je Segment, Berichten.
+- **Beschreibung:** Benannte, farbige Gruppen von URLs anhand von Regeln (z. B. „Produktseiten“, „Blog“, „Wichtige Seiten“). Jede URL erhält höchstens ein Segment: Segmente werden in der Reihenfolge der Liste geprüft, das erste passende gewinnt. Segmente können sich auf andere Segmente beziehen; Abhängigkeiten müssen weiter oben stehen. Sie können vor, während oder nach dem Crawl angelegt werden. Dieser Eintrag ist führend für Definition, Regelmodell und Zuordnungssemantik. Darstellung: UI-020 (Spalte und Segmentfilter), UI-067 (Segments-Tab), UI-068 (Konfigurationsdialog); Export auf ein Segment: OUT-011; Sitemap je Segment: OUT-130.
+- **Eingaben/Konfiguration:** Konfiguration › Segmente: Liste (Name – eindeutig ohne Beachtung der Groß-/Kleinschreibung, 1–64 Zeichen –, Farbe, Reihenfolge); Import/Export der Segmentliste als JSON; je Segment Regelgruppen: Bedingungen innerhalb einer Gruppe UND-verknüpft, Gruppen untereinander ODER-verknüpft. Bedingung = Feld (beliebige Spalte des Crawls, inkl. Adresse, Statuscode, Indexierbarkeit, Crawl-Tiefe, Inhaltstyp, Wortanzahl, API-Daten, Nachlauf-Analysewerte, Issues, anderes Segment) + Operator (enthält, enthält nicht, ist gleich, ist nicht gleich, beginnt mit, endet mit, Regex passt, Regex passt nicht, größer als, kleiner als, größer gleich, kleiner gleich, ist leer, ist nicht leer, hat Issue, hat Issue nicht, ist in Segment, ist in keinem Segment) + Wert. „ist in Segment“ und „ist in keinem Segment“ beziehen sich nur auf weiter oben stehende Segmente.
+- **Ausgabe:** Feld `Segment` `segment` je URL (Name und Farbe) als einzige Zuordnung, die alle Ansichten, Filter, Visualisierungen, Exporte, Berichte und Sitemaps verwenden (keine eigene Neuberechnung in Folgefunktionen). Darstellung siehe UI-020/UI-067/UI-068, Export siehe OUT-011/OUT-130.
 - **Operator-Semantik:** Textoperatoren (enthält, ist gleich, beginnt/endet mit) vergleichen case-sensitiv (OS-Festlegung; `(?i)` über den Regex-Operator für case-insensitiv); numerische Operatoren nur auf numerischen Feldern, Leerwerte erfüllen keinen numerischen Vergleich; „Regex passt“ = Suche (Treffer irgendwo, siehe Konventionen); „ist leer“ trifft auf fehlende und leere Werte zu; Felder mit mehreren Werten (z. B. `Titel 1`, `Titel 2`) erfüllen eine Bedingung, wenn mindestens ein Wert sie erfüllt.
 - **Akzeptanzkriterien:**
   - [ ] Regel „Adresse enthält `/produkt/`“ auf `crawl-shop`: genau die 40 Produkt-URLs tragen das Segment (Zähler im Segment-Bereich = 40).
@@ -1941,110 +1897,45 @@ Gemeinsame Regeln: Umschreibungen gelten ausschließlich für URLs, die **währe
   - [ ] Regel „Statuscode größer als 399“ funktioniert numerisch (404 und 500 ja, 200 und 301 nein; nicht lexikalisch; Referenz-Fix 21.2); Zeilen ohne Statuscode erfüllen sie nicht.
   - [ ] Regex-Operator verwendet den gemeinsamen Dialekt; eine ungültige Regex wird beim Speichern mit Zeile und Position gemeldet und das Segment nicht gespeichert (Referenz-Fix 19.1).
   - [ ] Bedingung „ist in Segment Shop“ in Segment „Shop-Fehler“ (unterhalb von „Shop“) funktioniert; dieselbe Bedingung in einem Segment **oberhalb** von „Shop“ wird beim Speichern als ungültig markiert.
-  - [ ] Änderung der Segmente nach dem Crawl aktualisiert alle Ansichten ohne Neucrawl (Request-Zähler unverändert) in < 5 s bei 100 000 URLs.
-  - [ ] Segmente, die vor dem Crawl angelegt wurden, sind während des Crawls an neuen Zeilen sofort sichtbar (≤ 1 s nach Erscheinen der Zeile).
+  - [ ] Änderung der Segmente nach dem Crawl aktualisiert alle Ansichten ohne Neucrawl (Request-Zähler unverändert) in < 5 s bei 100 000 URLs. OS-Festlegung: Dieses Budget gilt verbindlich (auch für UI-020); das frühere UI-Budget „1 Mio. URLs in 5 s“ entfällt, weil Segmentregeln den gemeinsamen Backtracking-Regex-Dialekt nutzen (Konventionen) und dafür keine lineare Laufzeit garantiert ist. Für 1 Mio. URLs gilt < 60 s.
+  - [ ] Segmente, die vor dem Crawl angelegt wurden, werden neuen URLs während des Crawls sofort zugeordnet (≤ 1 s nach dem Speichern der URL).
+  - [ ] Zwei Segmente mit Namen „Blog“ und „blog“ werden beim Speichern abgewiesen; ein leerer Name oder mehr als 64 Zeichen ebenso.
+  - [ ] Segment „Rest“ mit Bedingung „ist in keinem Segment“ (unterhalb aller anderen) enthält genau die URLs ohne anderes Segment.
+  - [ ] Export → Import der Segmentliste als JSON ergibt eine identische Zuordnung.
   - [ ] Segmente werden im Profil und in der Crawl-Datei gespeichert; Öffnen eines Crawls zeigt die damals gespeicherten Segmente, „Konfiguration übernehmen“ (CRAWL-127) übernimmt sie ins aktuelle Profil.
   - [ ] URLs ohne passendes Segment haben ein leeres Segment und sind über den Filter „Kein Segment“ erreichbar; Summe aller Segmentzähler + „Kein Segment“ = Anzahl interner URLs.
-  - [ ] Bedingungen auf Werte der Crawl-Analyse (z. B. Link Score) sind vor Abschluss der Analyse (CRAWL-141) als „ausstehend“ gekennzeichnet und weisen der URL kein Segment zu.
+  - [ ] Bedingungen auf Werte der Crawl-Analyse (z. B. Link Score) oder auf API-Daten sind vor Abschluss der Analyse (CRAWL-141) bzw. des API-Abrufs als „ausstehend“ gekennzeichnet und weisen der URL kein Segment zu; danach werden sie automatisch neu ausgewertet (ohne Neucrawl).
 - **Testfixture:** `crawl-shop` (40 Produktseiten, davon 3 mit 404, 10 Kategorieseiten, 10 Blogseiten, 1 Seite mit 500) mit vordefiniertem Segment-Profil `segments.ospiderconfig`.
 
 ### CRAWL-135 Kommandozeile / Headless-Betrieb
-- **Priorität:** P1
-- **Beschreibung:** Das Binary `openspider` führt Crawls ohne Oberfläche aus – für Server, Automatisierung und geplante Crawls. Verbindliche Einzelspezifikation jedes Flags (inkl. Exit-Codes) liegt im Export-/Betriebsbereich (OUT-180 bis OUT-209); dieser Eintrag legt den crawl-seitigen Mindestumfang fest und hält die Referenz-Syntax fest, damit vorhandene Skripte mit minimaler Anpassung übertragbar sind.
-- **Eingaben/Konfiguration – Referenz-Flags (Syntax wie Referenz):**
-  - Crawl-Quelle: `--crawl <URL>` (Spider-Modus); `--crawl-list <Datei|Sitemap-URL>` (Listenmodus; eine XML-Sitemap bzw. ein Sitemap-Index wird – wie in der Referenz – über `--crawl-list` übergeben, OUT-183); `--crawl-google-sheet <Google-Konto> <Tabellen-URL>` (Listenmodus aus Google-Tabelle; in der Referenz laut Release-Notes 22/23 vorhanden, offizielle Syntax nicht in der Handbuchseite gefunden – Q31; Integration im API-Bereich).
-  - Konfiguration: `--config <Profil>`, `--auth-config <Datei>`, `--headless`, `--save-crawl`, `--output-folder <Pfad>`, `--timestamped-output`, `--overwrite`, `--project-name <Name>`, `--task-name <Name>`.
-  - Gespeicherte Crawls: `--load-crawl <Datei|Datenbank-ID>`, `--list-crawls`.
-  - Vergleich: `--crawl-comparison <Datenbank-ID> <Datenbank-ID>`; `--project-crawl-comparison "true"` (nur zusammen mit `--project-name`; vergleicht die beiden jüngsten Crawls des Projekts, CRAWL-036).
-  - APIs (Verweis, Spezifikation in OUT-201 bzw. API-Bereich `04-custom-integrations.md`): `--use-google-analytics-4 "<Konto>" "<Account>" "<Property>" "<Datenstrom>"`, `--use-google-search-console "<Konto>" "<Website>"`, `--use-pagespeed`, `--use-majestic`, `--use-mozscape`, `--use-ahrefs`.
-  - Benachrichtigung: `--email-on-complete <Adresse[,Adresse…]>` (OUT-199).
-  - Exporte (Verweis OUT-192 ff.): `--export-tabs`, `--bulk-export`, `--save-report`, `--export-format`, `--create-sitemap`, `--create-images-sitemap`.
-  - Hilfe: `--help`, `--help <Unterthema>`, `--version`.
-- **Eingaben/Konfiguration – OS-Erweiterungen (in der Referenz nicht vorhanden, so gekennzeichnet):** `--crawl-sitemap <URL>` (Kurzform für `--crawl-list <Sitemap-URL>`, verhält sich identisch; reine Bequemlichkeit), `--set <schlüssel>=<wert>` (Einzeloption des Profils überschreiben, mehrfach), `--resolve <host>=<ip>` (CRAWL-123), `--max-urls <n>` (Kurzform für `--set limits.max_urls=<n>`), `--resume` (mit `--load-crawl`, CRAWL-126), `--quiet`, `--json-progress` (Fortschritt als JSON-Zeilen auf stdout, Felder siehe CRAWL-130).
-- **Ausgabe:** Exit-Codes verbindlich nach OUT-204; Kurzfassung: 0 = Erfolg, 1 = Konfigurations-/Aufruffehler, 2 = Crawl-Fehler (z. B. Start-URL nicht erreichbar, unbekannte ID), 3 = Exportfehler, 130 = durch Nutzer abgebrochen (Crawl gespeichert).
-- **Akzeptanzkriterien:**
-  - [ ] `openspider --crawl https://site.test/ --headless --save-crawl --output-folder X --resolve '*.site.test=127.0.0.1'` erzeugt eine `.ospider`-Datei mit identischem Ergebnis (URL-Menge, Statuscodes, Tiefen) wie der UI-Crawl derselben Fixture mit demselben Profil.
-  - [ ] `--crawl-list https://site.test/sitemap_index.xml` und `--crawl-sitemap https://site.test/sitemap_index.xml` erzeugen identische Crawls (gleiche URL-Menge, gleiche Reihenfolge im Request-Log).
-  - [ ] `--crawl-list urls.txt` mit Fixture `dupes.txt` gibt auf stderr dieselben Zähler aus wie der Zusammenfassungsdialog in CRAWL-027.
-  - [ ] Ohne `--timestamped-output` und mit nicht leerem Ausgabeordner ohne `--overwrite`: Abbruch mit Exit 1 und Meldung, welche Datei überschrieben würde (statt stiller Leerausgabe).
-  - [ ] `--load-crawl <ID>` öffnet einen Crawl aus der Verwaltung ohne Netzwerkzugriff; `--list-crawls` listet je Zeile `Datenbank-ID`, Name, Projekt, Startzeit, URLs, Status; die IDs sind identisch mit „Datenbank-ID kopieren“ in der UI (CRAWL-143).
-  - [ ] `--project-crawl-comparison "true"` ohne `--project-name` → Exit 1; `--project-crawl-comparison MeinProjekt` (Projektname als Wert) → Exit 1 mit Hinweis auf die richtige Syntax.
-  - [ ] `--use-pagespeed` ohne hinterlegten Schlüssel → Exit 2 vor dem ersten Crawl-Request (Request-Log leer).
-  - [ ] `--email-on-complete a@b.test` ohne konfiguriertes E-Mail-Konto → Warnung auf stderr, Crawl läuft, Exit 0 (OUT-199).
-  - [ ] `--set threads=abc` → Exit 1 mit Meldung „ungültiger Wert für threads: Ganzzahl 1–200 erwartet“; `--set unbekannt=1` → Exit 1 mit Vorschlag.
-  - [ ] Läuft ohne Display (Linux-CI/SSH, Windows-Dienst); JS-Rendering funktioniert headless (`crawl-js/csr.html` liefert Titel aus dem Skript).
-  - [ ] Unbekannte Option → Exit 1 mit Vorschlag der nächstliegenden Option (Levenshtein ≤ 3, z. B. `--crawl-lst` → „meinten Sie `--crawl-list`?“).
-  - [ ] `--help` listet alle Flags gruppiert (Quelle, Konfiguration, Vergleich, APIs, Exporte, OS-Erweiterungen); OS-Erweiterungen sind in der Hilfe als solche markiert.
-- **Testfixture:** `crawl-site-100`, `crawl-sitemaps`, `crawl-list-input/dupes.txt`, `crawl-js`; Integrationstests in `os-cli`.
+- **Priorität:** P0
+- **Verweis:** siehe OUT-180 (führend). Crawl-seitige Schalter des CLI-Blocks OUT-180 bis OUT-209 sind in ihren Einträgen definiert, nämlich `--resolve` (CRAWL-123), `--auth-config` (OUT-223), `--load-crawl <ID> --resume` samt SIGINT-Verhalten (CRAWL-126) und die Felder von `--json-progress` (CRAWL-130).
 
 ### CRAWL-136 Geplante Crawls
-- **Priorität:** P2
-- **Beschreibung:** Wiederkehrende Crawls zu festen Zeiten (einmalig, täglich, wöchentlich, monatlich) mit Profil, Auth-Profil, API-Nutzung, Exporten und Benachrichtigungen. Die Ausführung erfolgt über den Aufgabenplaner des Betriebssystems (launchd / Windows-Aufgabenplanung), der das CLI aufruft. Export- und E-Mail-Details liegen im Export-Bereich.
-- **Eingaben/Konfiguration:** Datei › Planung: Aufgabenliste mit „Hinzufügen“, „Bearbeiten“, „Löschen“, „Duplizieren“, „Verlauf“, „Export/Import“. Der Aufgabendialog folgt der Reiterstruktur der Referenz, damit Umsteiger Felder an gewohnter Stelle finden; verbindliche Feldspezifikation in OUT-160 bis OUT-171:
-  - **Allgemein** (OUT-161): Aufgabenname, Projektname, Beschreibung, Datum/Uhrzeit, Intervall (Einmalig / Täglich / Wöchentlich / Monatlich).
-  - **Spider** (OUT-162/163): Modus (Spider / Liste), Start-URL bzw. Listenquelle (Datei, XML-Sitemap-URL(s), Google-Tabelle), Konfigurationsprofil, Auth-Profil (CRAWL-121), „Automatisch vergleichen“ (CRAWL-036). Headless ist in OpenSpider immer aktiv (OUT-163); die Referenz-Option „Headless“ entfällt als Schalter.
-  - **APIs** (OUT-164): Auswahl der Integrationen (GA4, Search Console, PageSpeed Insights, Majestic, Ahrefs, Moz).
-  - **Exporte** (OUT-165) mit Unterreitern **Ausgabe-Einstellungen** (lokaler Ordner / Google Drive, Überschreiben vs. Zeitstempel-Ordner, Format, Konsolidierung, Segment), **Tabellen** (Tabs/Filter, Bulk-Exporte, Berichte), **Lokale Dateien** (Crawl-Datei, XML-Sitemap, Bild-Sitemap), **Looker Studio** (OUT-210), **Vorlagen/Presets** (gespeicherte Multi-Export-Auswahlen), **Benachrichtigungen** (E-Mail an Adressen, OUT-281).
-  - Schalter **„Leere Berichte überspringen“** (Referenz 24.0; Verhalten OUT-012): Exporte ohne Datenzeilen werden weder geschrieben noch an E-Mails angehängt.
-- **Steuerung laufender geplanter Crawls:** In der Referenz können laufende geplante Crawls weder pausiert noch abgebrochen werden. OpenSpider: **Pausieren** ist nicht möglich (Parität; ein geplanter Lauf ist ein Prozess ohne UI); **Abbrechen** ist als OS-Erweiterung möglich (OUT-171, Status „Abgebrochen“, Crawl wird gespeichert, keine Exporte).
-- **Akzeptanzkriterien:**
-  - [ ] Eine geplante Aufgabe mit Intervall „täglich 03:00“ legt einen Betriebssystem-Eintrag an, der das CLI mit den gespeicherten Argumenten aufruft (Test: generierte launchd-plist / Task-XML gegen Golden-Datei `daily-0300.plist` / `daily-0300.xml`).
-  - [ ] Der Aufgabendialog zeigt genau die Reiter Allgemein, Spider, APIs, Exporte; der Reiter Exporte genau die sechs Unterreiter in der oben genannten Reihenfolge.
-  - [ ] „Leere Berichte überspringen“ an: Ein Lauf mit Export „Antwortcodes › Clientfehler (4xx)“ gegen eine Fixture ohne 4xx erzeugt keine Datei für diesen Export; aus: eine Datei nur mit Kopfzeile.
-  - [ ] Überlappende Ausführungen laufen als getrennte Prozesse und schreiben in getrennte Crawl-Dateien (zwei Aufgaben zur selben Minute → zwei `.ospider`-Dateien mit unterschiedlichen Datenbank-IDs).
-  - [ ] Ein laufender geplanter Crawl bietet in der Aufgabenliste keine Aktion „Pausieren“; „Abbrechen“ beendet den Prozess innerhalb von 10 s (OUT-171).
-  - [ ] Läuft auch im Akkubetrieb und ohne Zeitlimit (Referenz 18.2): generierte Windows-Task-XML enthält `DisallowStartIfOnBatteries=false`, `StopIfGoingOnBatteries=false`, `ExecutionTimeLimit=PT0S`.
-  - [ ] Verlauf zeigt Listenmodus-Crawls ebenso wie Spider-Crawls (Referenz-Fix 21.4) mit Startzeit, Ende, Exit-Code, Anzahl URLs, Fehlertext.
-  - [ ] Die Start-URL-Eingabe bietet zuletzt gecrawlte URLs an (Referenz 24.1; dieselbe Liste wie CRAWL-001).
-- **Testfixture:** Golden-Dateien unter `tests/fixtures/crawl-schedule/`; `crawl-site-100` (ohne 4xx) für den Leer-Bericht-Test.
+- **Priorität:** P1
+- **Verweis:** siehe OUT-160 (führend). Crawl-seitig gilt nur, dass ein geplanter Lauf aus dem Block OUT-160 bis OUT-171 ein CLI-Prozess ohne Oberfläche ist und daher nicht pausiert, sondern nur abgebrochen werden kann (OUT-171), während Pausieren und Fortsetzen nach CRAWL-126 nur interaktiv bzw. per `--resume` möglich sind.
 
 ### CRAWL-137 Oberflächensprache
-- **Priorität:** P2
-- **Beschreibung:** Die Oberfläche ist mehrsprachig; beim ersten Start wird die Systemsprache übernommen, später ist sie in den Einstellungen änderbar. Mindestens Deutsch und Englisch (P2: Spanisch, Französisch, Italienisch wie in der Referenz). Exporte verwenden stabile Spaltenschlüssel; die Spaltenüberschriften folgen der UI-Sprache (umschaltbar auf Englisch für Weiterverarbeitung).
-- **Eingaben/Konfiguration:** Einstellungen › Sprache.
-- **Akzeptanzkriterien:**
-  - [ ] Systemsprache Deutsch → deutsche UI beim ersten Start; nicht unterstützte Sprache → Englisch.
-  - [ ] Sprachwechsel wirkt ohne App-Neustart (OS-Festlegung).
-  - [ ] SERP-Upload akzeptiert Kopfzeilen in beiden Sprachen (CRAWL-031).
-  - [ ] Zahlen- und Datumsformate folgen der UI-Sprache; CSV-Exporte verwenden immer `.` als Dezimaltrenner (OS-Festlegung, siehe Q).
-- **Testfixture:** UI-Test (Vitest) mit simuliertem `navigator.language`.
+- **Priorität:** P0
+- **Verweis:** siehe UI-121 (führend). Crawl-seitig gilt nur, dass der SERP-Upload Kopfzeilen in Deutsch und Englisch akzeptiert (CRAWL-031).
 
 ---
 
 ## O. Ergänzungen (Revision 2)
 
-Die folgenden Einträge wurden nach dem Review angehängt. Sie gehören thematisch zu den Abschnitten H (Erweitert), E/N (Konfiguration, Persistenz) und B (Vergleich); die Nummern folgen dem Schema „neue IDs anhängen“.
+Die folgenden Einträge wurden nach dem Review angehängt. Sie gehören thematisch zu den Abschnitten H (Erweitert), E/N (Konfiguration, Persistenz) und B (Vergleich); die Nummern folgen dem Schema „neue IDs anhängen“. Seit Revision 3 sind CRAWL-138, CRAWL-139, CRAWL-142 und CRAWL-144 Verweis-Stubs.
 
 ### CRAWL-138 HTML-Validierung durchführen
 - **Priorität:** P1
-- **Beschreibung:** Crawl-Schalter, der festlegt, ob die Engine beim Parsen jeder internen HTML-Seite eine strukturelle Prüfung des Quelltextes mitlaufen lässt (Token-Ebene, keine W3C-Vollvalidierung; Prüflogik in TECH-280). Die Prüfung ist nicht nur Auswertung: Sie verlangt, dass die Engine beim Parsen Zusatzdaten erhebt (Position und Anzahl von `<html>`, `<head>`, `<body>`, unzulässige Elemente im Head, Elemente, die den Head vorzeitig beenden). Ohne den Schalter werden diese Daten nicht erhoben.
-- **Eingaben/Konfiguration:** Spider › Erweitert › „HTML-Validierung durchführen“ (Schlüssel `advanced.html_validation`; OS-Default: an – in der Referenz-Doku ist kein Standard genannt, die Beschreibung legt ein Opt-in nahe; siehe Q32). Begründung des OS-Defaults: Die Filter „außerhalb von `<head>`“ sind für Titel/Meta/Canonical sicherheitsrelevant für die Indexierung; die Mehrkosten der Token-Zählung sind gering.
-- **Ausgabe (Spalten/Filter/Export):** Bei aktivem Schalter: Filter TECH-282 bis TECH-288 im Tab „Validierung“ sowie die Filter „außerhalb von `<head>`“ in den Tabs Seitentitel, Meta-Beschreibung, Canonicals, Hreflang, Meta Robots (anderer Bereich); intern je Seite die Rohdaten aus TECH-280. Bei inaktivem Schalter: diese Filter zeigen „Prüfung deaktiviert – Spider › Erweitert › HTML-Validierung“ statt 0.
-- **Akzeptanzkriterien:**
-  - [ ] Schalter an: `/kein-head.html` erscheint im Filter „Fehlendes `<head>`“; `/canonical-im-body.html` im Canonical-Filter „außerhalb von `<head>`“; `/ok.html` in keinem Validierungsfilter.
-  - [ ] Schalter aus: dieselben Filter zeigen den Hinweis „Prüfung deaktiviert“ (nicht „0“); in der Crawl-Datei sind keine Validierungs-Rohdaten gespeichert (Tabellenzeilen = 0).
-  - [ ] Die Größenfilter TECH-289/290 (Dokument/Ressource über Grenzwert) und die CO2-Schätzung TECH-291 hängen **nicht** von diesem Schalter ab (OS-Festlegung, Q32), weil sie nur Größenangaben aus CRAWL-022 benötigen.
-  - [ ] Die Prüfung läuft immer gegen das Roh-HTML, auch im JS-Modus (TECH-280).
-  - [ ] Schalter während einer Pause eingeschaltet: Seiten, die nach dem Fortsetzen gecrawlt werden, haben Validierungsdaten, vorher gecrawlte nicht; die Filter tragen dann den Hinweis „unvollständig – n Seiten ohne Prüfung, Neu crawlen empfohlen“.
-  - [ ] Mehrkosten: `crawl-site-100` im Textmodus ist mit Schalter höchstens 5 % langsamer als ohne (Benchmark).
-- **Testfixture:** `crawl-validation`: `/ok.html`, `/kein-head.html`, `/zwei-heads.html`, `/canonical-im-body.html` (ein `<img>` im Head beendet den Head vorzeitig, danach folgt das Canonical), `/title-nach-div.html`.
+- **Verweis:** siehe TECH-008 (führend). Crawl-seitig gilt, dass die Engine ohne den Schalter keine Validierungs-Rohdaten (Positionen und Anzahl von `<html>`, `<head>`, `<body>`, Head-beendende Elemente) erhebt und ein während einer Pause eingeschalteter Schalter nur für danach gecrawlte Seiten wirkt.
 
 ### CRAWL-139 Green Hosting für die CO2-Berechnung
 - **Priorität:** P2
-- **Beschreibung:** Crawl-Schalter (Referenz seit 20.0, Spider › Erweitert), mit dem der Nutzer angibt, dass die gecrawlte Website mit erneuerbarer Energie betrieben wird. Die CO2-Schätzung je Seite (TECH-291) verwendet dann den im verwendeten Sustainable-Web-Design-Modell vorgesehenen reduzierten Faktor für das Rechenzentrumssegment. OpenSpider prüft den Hosting-Status **nicht** automatisch bei einem Drittanbieter (kein Netzwerkzugriff ohne Nutzeraktion); der Dialog bietet lediglich einen Link „Hosting-Status prüfen“, der eine öffentliche Prüfseite im Systembrowser öffnet.
-- **Eingaben/Konfiguration:** Spider › Erweitert › „Website nutzt grünes Hosting (für CO2-Berechnung)“ (Schlüssel `advanced.green_hosting`; OS-Default: aus – Referenz nennt keinen Standard, die Beschreibung legt „nur aktivieren, wenn zutreffend“ nahe; Q33). Wirkt nur auf interne URLs; externe Ressourcen werden stets mit dem Standardfaktor gerechnet (OS-Festlegung).
-- **Ausgabe (Spalten/Filter/Export):** Spalten `CO2 (mg)` und `CO2-Bewertung` (Definition und Filter „Hohe CO2-Bewertung“ in TECH-291); Crawl-Übersicht nennt „Grünes Hosting: ja/nein“.
-- **Akzeptanzkriterien:**
-  - [ ] Schalter aus: `CO2 (mg)` der Fixture-Seite `/heavy.html` entspricht der Referenzimplementierung des Modells (CO2.js, Funktion für Byte-basierte Schätzung, `green = false`) für den Wert `Gesamt übertragen` (CRAWL-022) mit Toleranz 0,1 %.
-  - [ ] Schalter an: Wert entspricht derselben Funktion mit `green = true` (Toleranz 0,1 %) und ist strikt kleiner als bei „aus“.
-  - [ ] Umschalten nach dem Crawl berechnet `CO2 (mg)` und `CO2-Bewertung` ohne Neucrawl neu (Request-Zähler unverändert), Dauer < 2 s bei 10 000 URLs.
-  - [ ] Externe Ressourcen, die eine interne Seite lädt, gehen bei Schalter „an“ mit dem Standardfaktor in die Summe ein (Test: Seite mit 1 MB internem und 1 MB externem Bild ergibt einen Wert zwischen „alles grün“ und „alles grau“).
-  - [ ] Ohne Nutzeraktion wird kein Request an einen Green-Hosting-Prüfdienst gesendet (Netzwerkmitschnitt).
-- **Testfixture:** `crawl-validation/heavy.html` (lädt dynamisch erzeugtes 6-MiB-Bild), `/mixed-host.html` (1 MiB intern + 1 MiB von `cdn.other.test`), JS-Modus.
+- **Verweis:** siehe TECH-292 (führend). Die Engine speichert dafür die übertragenen Bytes getrennt nach internen und externen Ressourcen (CRAWL-022).
 
 ### CRAWL-140 Voreinstellungen (crawl-relevante Grenzwerte)
-- **Priorität:** P0 (Seite und Mechanik) / P1 (Größengrenzwerte)
-- **Beschreibung:** Die Referenz bündelt Grenzwerte, die Filter steuern, unter Spider › Voreinstellungen. OpenSpider übernimmt diese Seite im Konfigurationsdialog. Die fachliche Wirkung jedes Grenzwerts ist im Zielbereich spezifiziert; dieser Eintrag legt fest, welche Grenzwerte die Seite enthält, wo sie verbindlich definiert sind und welche davon die **Crawl-Engine** betreffen (weil Rohdaten erhoben werden müssen). Grundregel: Filter werden aus gespeicherten Rohwerten berechnet, Grenzwertänderungen wirken daher ohne Neucrawl (ONPAGE-002).
+- **Priorität:** P0
+- **Beschreibung:** Die Referenz bündelt Grenzwerte, die Filter steuern, unter Spider › Voreinstellungen. OpenSpider übernimmt diese Seite im Konfigurationsdialog. Die fachliche Wirkung jedes Grenzwerts ist im Zielbereich spezifiziert; dieser Eintrag legt fest, welche Grenzwerte die Seite enthält, wo sie verbindlich definiert sind und welche davon die **Crawl-Engine** betreffen (weil Rohdaten erhoben werden müssen). Grundregel: Filter werden aus gespeicherten Rohwerten berechnet, Grenzwertänderungen wirken daher ohne Neucrawl (ONPAGE-002). Kern (P0) sind Seite und Mechanik; die Größengrenzwerte für den Suchmaschinen-Abruf sind Teilumfang `[P1]`.
 - **Eingaben/Konfiguration:** Spider › Voreinstellungen, gruppiert:
   - **Seitentitel / Meta-Beschreibung / URL / H1 / H2 / Bilder (Größe, Alt-Text) / Inhalt (geringe Wortzahl)**: Schlüssel und Defaults verbindlich in ONPAGE 0.3 (u. a. `image.max_kb` = 100, `content.low_word_count` = 200).
   - **Soft-404-Text** (Referenz seit 19.0): Liste von Phrasen, `content.soft404_phrases`, verbindlich in ONPAGE-147.
@@ -2053,9 +1944,9 @@ Die folgenden Einträge wurden nach dem Review angehängt. Sie gehören thematis
 - **Ausgabe (Spalten/Filter/Export):** Filterbezeichnungen enthalten den aktuellen Wert (z. B. „HTML-Dokument über 2 MB“, „Bilder über 100 KB“).
 - **Akzeptanzkriterien:**
   - [ ] Die Seite „Voreinstellungen“ zeigt alle oben genannten Gruppen; jeder Wert ist mit seinem Schlüssel im Profil gespeichert (Round-Trip CRAWL-132).
-  - [ ] Crawl-seitige Pflicht: Für jede HTML-Seite und jede Ressource wird `Größe` (dekomprimiert, CRAWL-022) auch dann bestimmt, wenn sie den Grenzwert übersteigt; ist der Body wegen CRAWL-075 abgeschnitten, wird `Content-Length` bzw. bei fehlendem Header die bis zum Abbruch gelesene Größe mit Vermerk `Abgeschnitten` verwendet.
-  - [ ] Ein HTML-Dokument mit 2 097 153 Bytes erscheint bei Standard im Filter TECH-289; nach Änderung von `validation.html_doc_max_bytes` auf 3 MiB nicht mehr – ohne neuen Request (Request-Zähler unverändert).
-  - [ ] `validation.html_doc_max_bytes` größer als „Max. Seitengröße“ (CRAWL-075) wird beim Speichern mit Warnung „Grenzwert kann nicht erkannt werden, wenn Seiten vorher abgeschnitten werden“ angenommen, nicht abgelehnt.
+  - [ ] [P1] Crawl-seitige Pflicht: Für jede HTML-Seite und jede Ressource wird `Größe` (dekomprimiert, CRAWL-022) auch dann bestimmt, wenn sie den Grenzwert übersteigt; ist der Body wegen CRAWL-075 abgeschnitten, wird `Content-Length` bzw. bei fehlendem Header die bis zum Abbruch gelesene Größe mit Vermerk `Abgeschnitten` verwendet.
+  - [ ] [P1] Ein HTML-Dokument mit 2 097 153 Bytes erscheint bei Standard im Filter TECH-289; nach Änderung von `validation.html_doc_max_bytes` auf 3 MiB nicht mehr – ohne neuen Request (Request-Zähler unverändert).
+  - [ ] [P1] `validation.html_doc_max_bytes` größer als „Max. Seitengröße“ (CRAWL-075) wird beim Speichern mit Warnung „Grenzwert kann nicht erkannt werden, wenn Seiten vorher abgeschnitten werden“ angenommen, nicht abgelehnt.
   - [ ] Soft-404-Text: Eine leere Phrasenliste deaktiviert den Filter (Hinweis statt 0), die Engine erhebt aber weiterhin Titel/H1/Inhaltsbereich.
   - [ ] Ungültige Werte (negativ, min > max, nicht numerisch) werden beim Speichern abgewiesen, das Feld wird markiert.
   - [ ] „Standard zurücksetzen“ auf der Seite setzt nur die Voreinstellungen zurück, nicht die übrige Konfiguration.
@@ -2063,65 +1954,51 @@ Die folgenden Einträge wurden nach dem Review angehängt. Sie gehören thematis
 
 ### CRAWL-141 Automatische Crawl-Analyse am Crawl-Ende
 - **Priorität:** P0
-- **Beschreibung:** Einige Kennzahlen und Filter (u. a. Link Score, verwaiste URLs, Sitemap-Filter, Kanonisierungsketten, Near-Duplicates) benötigen den vollständigen Linkgraphen und werden in einem Nachlauf berechnet (Mechanik UI-080). Dieser Eintrag spezifiziert den Konfigurationsschalter und die crawl-seitige Auslösung. Mehrere Kriterien dieses Dokuments (CRAWL-027, CRAWL-059, CRAWL-131, CRAWL-134) setzen die Analyse voraus.
-- **Eingaben/Konfiguration:** Konfiguration › Crawl-Analyse › „Automatisch am Crawl-Ende analysieren“ (Schlüssel `analysis.auto_at_end`; OS-Default: an – die Referenz beschreibt den Schalter, nennt aber keinen Standard, Q35; Festlegung konsistent mit UI-080). Dazu die Teilschritt-Auswahl (UI-080). Gehört zum Konfigurationsprofil.
-- **Ausgabe:** Status „Analyse läuft“ mit eigenem Fortschritt (UI-080), danach „Abgeschlossen“; Crawl-Übersicht vermerkt Zeitpunkt der letzten Analyse.
+- **Beschreibung:** Einige Kennzahlen und Filter (u. a. Link Score, verwaiste URLs, Sitemap-Filter, Kanonisierungsketten, Near-Duplicates) benötigen den vollständigen Linkgraphen und werden in einem Nachlauf berechnet. Dieser Eintrag ist **führend für den Ablauf** der Crawl-Analyse: Auslösung, Teilschritte, Abbruch, Veraltung, Persistenz. Welche Filter und Spalten ein Teilschritt befüllt, legen die Fachspecs fest (TECH-005, ONPAGE-007, INTEG; Link Score TECH-145); Fortschrittsanzeige und Kennzeichnung „Crawl-Analyse erforderlich“ in der Oberfläche: UI-080. Mehrere Kriterien dieses Dokuments (CRAWL-027, CRAWL-059, CRAWL-131, CRAWL-134) setzen die Analyse voraus.
+- **Eingaben/Konfiguration:** Konfiguration › Crawl-Analyse: „Automatisch am Crawl-Ende analysieren“ (Schlüssel `analysis.auto_at_end`; OS-Default: an – die Referenz beschreibt den Schalter, nennt aber keinen Standard, Q35) und je Teilschritt ein Schalter (Standard: alle an): **Link Score**, **Kanonisierungen**, **Paginierung**, **Hreflang**, **Links**, **Sitemaps**, **Inhalt** (Near-Duplicates, semantisch ähnlich, geringe Relevanz), **Bilder** (nur mit JS-Rendering wählbar), **Analytics**, **Search Console**, **Linkmetriken**, **AMP**. Kanonisierungen und Links sind OS-Ergänzungen (TECH-005). Gehört zum Konfigurationsprofil. Manueller Start über das Menü „Crawl-Analyse › Starten“.
+- **Ablauf (verbindlich):**
+  1. Automatische Auslösung (Schalter an) bei regulärem Ende (Warteschlange leer), bei Ende durch ein Limit (CRAWL-066 ff.) und bei „Stopp“. Keine automatische Auslösung bei Pause, Ressourcenschutz-Pause (CRAWL-129) und Unterbrechung (CRAWL-125).
+  2. Manueller Start ist nach Crawl-Ende und während einer Pause möglich; während einer Pause mit dem Hinweis, dass die Ergebnisse unvollständig sein können.
+  3. Abgewählte Teilschritte werden übersprungen; Teilschritte ohne Datengrundlage (z. B. Bilder ohne JS-Rendering, Analytics ohne verbundene API) gelten als „nicht anwendbar“. Voneinander unabhängige Teilschritte laufen parallel.
+  4. Abbruch: Bereits fertige Teilschritte bleiben gültig, abgebrochene bleiben „ausstehend“.
+  5. Ergebnisse werden in der Crawl-Datei gespeichert; erneutes Öffnen zeigt sie ohne Neuberechnung.
+  6. Veraltung: Nach „Neu crawlen“, „Entfernen“, „URLs hinzufügen“ (CRAWL-131) oder einer Konfigurationsänderung, die einen Teilschritt betrifft, gilt die Analyse als veraltet; sie wird nicht automatisch neu gestartet.
+- **Ausgabe:** Zustand der Analyse je Crawl (nicht gestartet / läuft / abgeschlossen / unvollständig / veraltet) und je Teilschritt (ausstehend / fertig / übersprungen / nicht anwendbar); Crawl-Übersicht vermerkt Zeitpunkt der letzten Analyse.
 - **Akzeptanzkriterien:**
   - [ ] Schalter an: Endet ein Crawl regulär (Warteschlange leer) oder durch ein Limit (CRAWL-066 ff.), startet die Analyse innerhalb von 1 s automatisch; Filter „Verwaiste URLs“ der Fixture ist danach befüllt.
-  - [ ] Schalter an: Wird der Crawl pausiert, startet **keine** Analyse; erst nach Fortsetzen und regulärem Ende.
+  - [ ] Schalter an: Wird der Crawl pausiert, startet **keine** Analyse; erst nach Fortsetzen und regulärem Ende. Ein manueller Start während der Pause ist möglich und setzt den Analysezustand auf „unvollständig“.
   - [ ] Schalter an, Abbruch durch Absturz: beim Wiederöffnen wird die Analyse nicht automatisch gestartet; die Filter zeigen „Crawl-Analyse erforderlich“.
   - [ ] Schalter aus: Nach Crawl-Ende läuft keine Analyse; analyseabhängige Filter zeigen „Crawl-Analyse erforderlich (Jetzt starten)“, nicht 0; „Crawl-Analyse › Starten“ führt sie manuell aus.
+  - [ ] Abbruch nach dem ersten Teilschritt: dessen Ergebnisse bleiben sichtbar, alle übrigen Teilschritte stehen auf „ausstehend“.
+  - [ ] Abgewählter Teilschritt: seine Filter bleiben „–“; die übrigen werden befüllt.
+  - [ ] Teilschritt „Bilder“ ist ohne JS-Rendering nicht wählbar und steht auf „nicht anwendbar“.
   - [ ] CLI/geplante Crawls: Der Schalter gilt auch headless; ist er aus und ein angeforderter Export enthält analyseabhängige Filter, wird die Analyse vor dem Export trotzdem ausgeführt und eine Hinweiszeile auf stderr ausgegeben (OS-Festlegung: Exporte sollen nie stillschweigend leer sein).
-  - [ ] Listen-Crawl aus einer Sitemap (CRAWL-027): Sitemap-Filter sind erst nach der Analyse befüllt; mit Schalter an ist das ohne Nutzeraktion der Fall.
+  - [ ] Listen-Crawl aus einer Sitemap (CRAWL-027): Sitemap-Filter sind erst nach der Analyse befüllt; mit Schalter an ist das ohne Nutzeraktion der Fall. Im Listenmodus liefern nur Teilschritte mit Datengrundlage Werte.
   - [ ] Wird während einer laufenden Analyse ein neuer Crawl gestartet, wird die Analyse sauber abgebrochen und der alte Crawl als „Analyse unvollständig“ markiert.
-- **Testfixture:** `crawl-sitemaps` (verwaiste URL `/nur-in-sitemap`), Sitemap-Listen-Crawl, `crawl-site-100` mit Pause.
+  - [ ] Erneutes Öffnen eines analysierten Crawls zeigt die Ergebnisse ohne Neuberechnung (keine Analyseabfrage im Log).
+  - [ ] Laufzeitbudget: siehe UI-080 bzw. PERF (1 Mio. URLs / 20 Mio. Links ohne semantische Schritte ≤ 3 min auf Referenzhardware).
+- **Testfixture:** `crawl-sitemaps` (verwaiste URL `/nur-in-sitemap`), Sitemap-Listen-Crawl, `crawl-site-100` mit Pause; `crawl-js` für den Teilschritt Bilder.
 
 ### CRAWL-142 Update-Prüfung und Fokus-Modus (Abgrenzung)
-- **Priorität:** P2
-- **Beschreibung:** Zwei Einstellungen der Referenz ohne Crawl-Logik, die hier nur zur Vollständigkeit verankert werden: (a) die automatische Prüfung auf neue Versionen (Referenz: Hilfe › Debug bzw. Konfigurationsdatei-Eintrag), (b) der Fokus-Modus der Oberfläche (Ausblenden ungenutzter Tabs). Verbindlich spezifiziert in **OUT-250** (Update-Prüfung, Einstellungen › „Automatisch nach Updates suchen“, Standard an, `updates.check` in `settings.toml`) bzw. **UI-005** (Fokus-Modus, Menü Ansicht). Dieser Eintrag legt nur die Wechselwirkungen mit der Crawl-Engine fest.
-- **Eingaben/Konfiguration:** siehe OUT-250, UI-005; beide gehören zu den App-Einstellungen, nicht zum Crawl-Profil (CRAWL-132).
-- **Akzeptanzkriterien:**
-  - [ ] Eine Update-Prüfung oder ein Update-Download beeinflusst einen laufenden Crawl nicht: kein Neustart, keine Pause, keine Rate-Änderung > 5 % (Messung während simuliertem Download).
-  - [ ] Ein Update wird nie installiert, solange ein Crawl läuft oder pausiert-ungespeichert ist; der Installationsdialog bietet „Nach Crawl-Ende installieren“.
-  - [ ] Das CLI prüft nie automatisch auf Updates (OUT-250); ein geplanter Crawl erzeugt keinen Request an den Update-Server (Netzwerkmitschnitt).
-  - [ ] Der Fokus-Modus ändert weder Konfigurationsprofil noch erhobene Daten: Ein Crawl mit und ohne Fokus-Modus ergibt byte-identische Crawl-Dateien (abgesehen von Zeitstempeln).
-  - [ ] Weder Update-Prüfung noch Fokus-Modus erscheinen im Konfigurations-Diff (CRAWL-133).
-- **Testfixture:** `crawl-site-100`; Update-Manifest-Mock.
-
-### CRAWL-143 Kontextmenü der Crawl-Verwaltung
 - **Priorität:** P1
-- **Beschreibung:** Aktionen auf markierten Einträgen der Crawl-Verwaltung (CRAWL-128). Die Datenbank-ID ist die Brücke zur Kommandozeile (`--load-crawl <ID>`, `--crawl-comparison <ID> <ID>`) und muss daher direkt kopierbar sein. Der Export einzelner Crawls aus dem Kontextmenü muss auch für Crawls in Projektordnern funktionieren (Referenz-Fix 21.2).
-- **Eingaben/Konfiguration:** Kontextmenü (Rechtsklick) und gleichnamige Schaltflächen: **Öffnen**, **Umbenennen**, **In Projekt verschieben…**, **Duplizieren**, **Crawl exportieren…** (speichert eine `.ospider`-Kopie an frei wählbarem Ort), **Datenbank-ID kopieren**, **Sperren** / **Entsperren**, **Löschen**, **Zum Vergleich auswählen** (nur bei genau zwei markierten Crawls), **Im Dateimanager zeigen** (OS-Erweiterung). Für Projektordner: **Projekt umbenennen**, **Projekt sperren/entsperren**, **Projekt exportieren** (alle Crawls des Projekts als ZIP, OS-Erweiterung).
+- **Verweis:** siehe OUT-250 (führend). Crawl-seitig gilt nur, dass Update-Prüfung, Update-Download und der in UI-005 beschriebene Fokus-Modus weder einen laufenden Crawl noch die erhobenen Daten beeinflussen und ein Update nie installiert wird, solange ein Crawl läuft.
+
+### CRAWL-143 Kontextmenü der Crawl-Verwaltung: Wirkung auf den Crawl-Zustand
+- **Priorität:** P1
+- **Beschreibung:** Dieser Eintrag ist führend nur dafür, wie die Aktionen der Verwaltung mit dem Crawl-Zustand (CRAWL-128) und dem Fortsetzen (CRAWL-126) zusammenwirken; führend für Aktionen und Kontextmenü der Verwaltung ist OUT-228, die Darstellung beschreibt UI-124. Die Datenbank-ID ist die Brücke zur Kommandozeile (`--load-crawl <ID>`, `--load-crawl <ID> --resume`, `--crawl-comparison <ID> <ID>`) und muss direkt kopierbar sein. Aktionen auf laufenden Crawls sind eingeschränkt; Aktionen auf pausierten Crawls dürfen die Fortsetzbarkeit nicht zerstören.
+- **Eingaben/Konfiguration:** Aktionen „Datenbank-ID kopieren“ und „Fortsetzen“ zusätzlich zu den Aktionen aus OUT-228.
 - **Akzeptanzkriterien:**
   - [ ] „Datenbank-ID kopieren“ legt genau die ID (ohne Leerzeichen, ohne Zeilenumbruch) in die Zwischenablage; bei Mehrfachauswahl eine ID je Zeile in Tabellenreihenfolge.
   - [ ] `openspider --load-crawl <eingefügte ID> --export-tabs "Intern:Alle"` exportiert genau diesen Crawl (End-to-End-Test).
-  - [ ] „Crawl exportieren…“ funktioniert für einen Crawl ohne Projekt **und** für einen Crawl in einem Projektordner; die exportierte Datei lässt sich auf einem anderen Rechner importieren und ergibt identische Tabelleninhalte (CRAWL-127).
-  - [ ] Export eines laufenden Crawls ist deaktiviert (Tooltip „Crawl läuft – erst pausieren“); Export eines pausierten Crawls ist möglich und der Crawl bleibt fortsetzbar.
-  - [ ] „Zum Vergleich auswählen“ ist bei 1 oder ≥ 3 markierten Einträgen ausgegraut; bei zwei Einträgen öffnet es den Vergleichsmodus mit dem jüngeren als „Aktuell“ (CRAWL-032).
-  - [ ] „Löschen“ und „Umbenennen“ sind für gesperrte Crawls ausgegraut; „Entsperren“ verlangt keine Bestätigung, „Löschen“ immer.
-  - [ ] Jede Aktion ist per Tastatur erreichbar (Kontextmenü-Taste bzw. Umschalt+F10), Löschen zusätzlich über Entf/Rücktaste mit Bestätigung.
+  - [ ] „Fortsetzen“ ist nur bei Zustand „Pausiert“ oder „Unterbrochen“ aktiv (CRAWL-128).
+  - [ ] Export eines laufenden Crawls ist deaktiviert (Tooltip „Crawl läuft – erst pausieren“); Export eines pausierten Crawls ist möglich, der Crawl bleibt fortsetzbar, und die exportierte Kopie lässt sich auf einem anderen Rechner öffnen und fortsetzen (CRAWL-126).
+  - [ ] Löschen, Umbenennen und Verschieben eines laufenden Crawls sind deaktiviert; ein pausierter Crawl kann umbenannt und verschoben werden und bleibt mit unveränderter ID fortsetzbar.
+  - [ ] Duplizieren eines pausierten Crawls ergibt eine eigenständig fortsetzbare Kopie mit neuer ID; Fortsetzen der Kopie verändert das Original nicht (Request-Log und Zeilenzahl des Originals unverändert).
 - **Testfixture:** Integrationstest in `os-store` + UI-Test: 3 Crawls (einer im Projekt „Kunde A“, einer gesperrt, einer pausiert).
 
 ### CRAWL-144 Vergleichsmodus: Detailansichten (Links, Issues, gerenderte Seite)
-- **Priorität:** P1 (Inlinks/Outlinks, Issues) / P2 (gerenderte Seite)
-- **Beschreibung:** Ergänzung zu CRAWL-032: Im Vergleichsmodus zeigt das untere Fenster die Daten der markierten URL aus beiden Crawls, und die Issues-Übersicht stellt Veränderungen je Issue dar.
-- **Eingaben/Konfiguration:**
-  - **Unteres Fenster, Reiter Inlinks/Outlinks:** Auswahlfeld „Quelle“ mit **Auto** (Standard; folgt der Auswahl Aktuell/Vorher des oberen Fensters), **Aktueller Crawl**, **Vorheriger Crawl**; zusätzliches Auswahlfeld „Änderung“ mit **Alle**, **Hinzugefügt**, **Entfernt**, **Unverändert**.
-  - **Issues-Ansicht** (rechte Seitenleiste bzw. Issues-Tab, UI-Bereich) im Vergleich.
-  - **Unteres Fenster, Reiter „Gerenderte Seite“:** Nebeneinander-Darstellung der Screenshots beider Crawls (CRAWL-082).
-- **Definitionen:** Für eine URL u, die in beiden Crawls vorkommt, sei L_C(u) bzw. L_P(u) die Menge ihrer Links im jeweiligen Crawl, wobei ein Link durch das Paar (Ziel-URL nach URL-Zuordnung CRAWL-034, Linktyp) identifiziert wird. Hinzugefügt = L_C(u) \ L_P(u); Entfernt = L_P(u) \ L_C(u); Unverändert = L_C(u) ∩ L_P(u). Änderungen nur des Ankertexts oder der Position zählen als „Unverändert“ (OS-Festlegung; Ankertext-Änderungen sind über die Änderungserkennung CRAWL-033 sichtbar). Für Inlinks gilt dasselbe mit den eingehenden Links.
-- **Ausgabe (Spalten/Filter/Export):** Inlinks/Outlinks-Tabelle mit den Spalten aus CRAWL-052 plus `Änderung` (Hinzugefügt/Entfernt/Unverändert) und `Crawl` (Aktuell/Vorher); Issues-Ansicht mit Spalten `Issue`, `Typ`, `Priorität`, `Aktuell`, `Vorher`, `Änderung`, `Hinzugefügt`, `Neu`, `Entfernt`, `Fehlend` (Mengen wie CRAWL-032, Filter = „URL hat dieses Issue“); gerenderte Seite mit Beschriftung je Bild: Crawl-Name, Datum, User-Agent, Viewport.
-- **Akzeptanzkriterien:**
-  - [ ] Quelle „Auto“: Steht das obere Fenster auf „Vorher“, zeigt der Inlinks-Reiter die Inlinks aus dem vorherigen Crawl; Umschalten oben auf „Aktuell“ wechselt den Reiter ohne weitere Aktion.
-  - [ ] Fixture v1→v2: Seite `/start` verliert in v2 den Link auf `/b` und erhält einen auf `/a`. Outlinks von `/start` mit Filter „Hinzugefügt“ = {`/a`}, „Entfernt“ = {`/b`}; mit „Alle“ und Quelle „Aktueller Crawl“ fehlt `/b`.
-  - [ ] Nur geänderter Ankertext (`/c` „Alt“ → „Neu“) erscheint unter „Unverändert“, nicht unter „Hinzugefügt“/„Entfernt“.
-  - [ ] Ist u nur in einem Crawl vorhanden, sind die Filter „Hinzugefügt“/„Entfernt“ ausgegraut und die Tabelle zeigt die Links des Crawls, in dem u existiert.
-  - [ ] Issues-Ansicht: Für das Issue „Titel fehlt“ gelten dieselben Zahlen wie im Tab-Vergleich von CRAWL-032 (`/c` Hinzugefügt, `/d` Entfernt); die Identität `Aktuell` − `Vorher` = |Hinzugefügt| + |Neu| − |Entfernt| − |Fehlend| gilt für jedes Issue.
-  - [ ] Issues-Ansicht ist nach `Änderung` sortierbar; Klick auf eine Zahl listet die URLs im oberen Fenster.
-  - [ ] Gerenderte Seite: Sind in beiden Crawls Screenshots vorhanden, werden beide nebeneinander in gleicher Skalierung gezeigt; typischer Anwendungsfall „Desktop- gegen Mobil-Crawl“ (Crawl 1 mit Googlebot Desktop, Crawl 2 mit Googlebot Mobil, CRAWL-081/114) zeigt unter jedem Bild den jeweiligen User-Agent und Viewport.
-  - [ ] Fehlt in einem Crawl der Screenshot (Textmodus oder Screenshots aus), zeigt die betreffende Hälfte „Kein Screenshot in diesem Crawl“.
-  - [ ] Export der Inlinks/Outlinks-Ansicht im Vergleich enthält die Spalten `Änderung` und `Crawl` (Verweis OUT-151).
-- **Testfixture:** `crawl-compare` (v1/v2) mit zusätzlicher Seite `/start` (Linkänderungen wie oben, `/c` mit geändertem Ankertext); zwei JS-Crawls derselben Fixture mit Googlebot Desktop bzw. Googlebot Mobil für die Screenshot-Gegenüberstellung.
+- **Priorität:** P1
+- **Verweis:** siehe OUT-149 (führend). Issues im Vergleich regelt OUT-143, die Gegenüberstellung der Screenshots beider Crawls OUT-153.
 
 ---
 
@@ -2146,14 +2023,14 @@ Diese Punkte sind in der öffentlichen Doku nicht eindeutig. Sie werden per Blac
 | Q13 | CRAWL-067 | Werden Ressourcen der Seiten auf maximaler Tiefe geprüft? | ja |
 | Q14 | CRAWL-072 | Standardwert „Max. Weiterleitungen“? | 10 |
 | Q15 | CRAWL-074 | Zählen Ressourcen-Links zum Limit „Max. Links pro URL“? | ja |
-| Q16 | CRAWL-089 | Standard „Nicht indexierbare URLs ignorieren“? | an |
+| Q16 | CRAWL-089 | Standard „Nicht indexierbare URLs ignorieren“? | an (Revision 3 verbindlich, Black-Box-Bestätigung offen) |
 | Q17 | CRAWL-090 | Standard „Paginierte URLs ignorieren“? | an |
-| Q18 | CRAWL-094 | Gilt ein Refresh ohne URL als selbstreferenzierend? | ja |
+| Q18 | CRAWL-094 → TECH-068 | Gilt ein Refresh ohne URL als selbstreferenzierend? | ja (festgelegt in TECH-068, führend) |
 | Q19 | CRAWL-096 | Standardanzahl der 5xx-Wiederholungen? | 0 |
 | Q20 | CRAWL-115 | Werden eigene Header auch an externe Hosts gesendet? | nein (Sicherheitsentscheidung, bewusste Abweichung möglich) |
 | Q21 | CRAWL-127 | Import von Referenz-Crawldateien? | nicht vorgesehen (proprietär, Clean-Room) |
-| Q22 | CRAWL-137 | Dezimaltrenner in CSV-Exporten bei deutscher UI? | immer `.` |
-| Q23 | Allgemein | Regex-Dialekt erfordert `fancy-regex` statt `regex` in `os-url` – Architekturentscheidung durch Orchestrator. | `fancy-regex` |
+| Q22 | CRAWL-137 → UI-121 | Dezimaltrenner in CSV-Exporten bei deutscher UI? | immer `.` (an UI-121/Export-Bereich übergeben) |
+| Q23 | Allgemein | Regex-Dialekt erfordert `fancy-regex` statt `regex` in `os-url`. | entschieden (Architekt): ein Dialekt `fancy-regex` mit Schrittlimit für alle Regex-Stellen inkl. URL-Mapping (OUT-146), siehe Konventionen |
 | Q24 | CRAWL-119 | NTLM/Kerberos: in Referenz-Doku nicht erwähnt – Bedarf bestätigen. | P2 |
 | Q25 | CRAWL-109/110/076 | Abgleichsemantik Include/Exclude: Doku verlangt für Include ausdrücklich Vollübereinstimmung; Exclude-Beispiele sind in verkürzter Wiedergabe als Teiltreffer lesbar. Black-Box: Exclude `\.pdf` (ohne `.*`) gegen `/x.pdf` – wird ausgeschlossen? | Vollübereinstimmung für beide; Schalter für Teiltreffer |
 | Q26 | CRAWL-018 | Standardwert „HSTS respektieren“ (Doku nennt nur Abschaltbarkeit) | an (abgeleitet) |
@@ -2161,13 +2038,15 @@ Diese Punkte sind in der öffentlichen Doku nicht eindeutig. Sie werden per Blac
 | Q28 | CRAWL-047 | Standard „Paginierung speichern“ (Doku: nur „nicht gecrawlt, nicht zur Entdeckung genutzt“) | Speichern an, Crawlen aus |
 | Q29 | CRAWL-062/065 | Standardwerte der URL-Details (Antwortzeit, Last-Modified, HTTP-Header, Cookies) und Direktiven-Schalter | an/an/aus/aus; Meta Robots + X-Robots-Tag an |
 | Q30 | CRAWL-100 | Verhalten der Referenz bei robots.txt 5xx/429/Timeout/DNS-Fehler (Doku schweigt; Risiko: Referenz crawlt weiter) | Host gesperrt (konfigurierbar „Alles erlauben“) |
-| Q31 | CRAWL-135 | Exakte Syntax von `--crawl-google-sheet` (nur Release-Notes/Sekundärquellen gefunden: `<Konto> <Tabellen-URL>`) | `--crawl-google-sheet <Konto> <Tabellen-URL>` |
-| Q32 | CRAWL-138 | Standard „HTML-Validierung durchführen“; hängen Größenfilter (2 MB) und CO2 von diesem Schalter ab? | an; Größenfilter/CO2 unabhängig |
-| Q33 | CRAWL-139 | Standard „Green Hosting“; gilt der Faktor auch für externe Ressourcen? | aus; nur interne URLs |
+| Q31 | CRAWL-135 → OUT-180 ff. | Exakte Syntax von `--crawl-google-sheet` (nur Release-Notes/Sekundärquellen gefunden: `<Konto> <Tabellen-URL>`) | `--crawl-google-sheet <Konto> <Tabellen-URL>` |
+| Q32 | CRAWL-138 → TECH-008 | Standard „HTML-Validierung durchführen“; hängen Größenfilter (2 MB) und CO2 von diesem Schalter ab? | an; Größenfilter/CO2 unabhängig |
+| Q33 | CRAWL-139 → TECH-292 | Standard „Green Hosting“; gilt der Faktor auch für externe Ressourcen? | aus; nur interne URLs |
 | Q34 | CRAWL-140 | Seit welcher Version sind die 2-MB-Grenzen (Dokument/Ressource) einstellbar, und heißen sie in den Voreinstellungen genau so? (Review nennt 23.3; TECH-289 nennt 24.3 als Stand mit 2 MB, vorher 15 MB) | einstellbar, Standard 2 MiB |
 | Q35 | CRAWL-141 | Standard „Automatisch am Crawl-Ende analysieren“ | an |
-| Q36 | CRAWL-089 / ONPAGE 0.3 | Widerspruch Standard `issues.ignore_non_indexable`: 01 = an, 02 (A-51) = aus | Orchestrator entscheidet; bis dahin Wert aus 02 |
-| Q37 | CRAWL-144 | Wie identifiziert die Referenz „hinzugefügte/entfernte“ Links (nur Ziel, oder Ziel + Ankertext)? | Ziel + Linktyp, Ankertext ignoriert |
+| Q36 | CRAWL-089 / ONPAGE 0.3 | Widerspruch Standard `issues.ignore_non_indexable`: 01 = an, 02 (A-51) = aus | entschieden (Architekt): an, CRAWL-089 führend; ONPAGE 0.3/A-51 und TECH-009 nachgezogen |
+| Q37 | CRAWL-144 → OUT-149 | Wie identifiziert die Referenz „hinzugefügte/entfernte“ Links (nur Ziel, oder Ziel + Ankertext)? | entschieden (Architekt): Identität (Quelle, Ziel, Linktyp), Ankertextwechsel ist eigene Änderungsart „Ankertext geändert“ – OUT-149 führend |
+| Q38 | CRAWL-115 | Welche Header-Namen enthält die Referenz-Voreinstellung für die Shopify-Bot-Authentifizierung (Release-Notes 23.1 nennen nur die Funktion)? | `Signature`, `Signature-Input`, `Signature-Agent` (RFC 9421 / Web-Bot-Auth) |
+| Q39 | CRAWL-084 | Standard „JavaScript-Fehlerberichte aktivieren“ (Referenz-Doku nennt keinen Wert) | an – vom Architekten bestätigt (nur im JS-Modus wirksam; abgestimmt mit TECH-114) |
 
 ---
 
@@ -2184,6 +2063,6 @@ Diese Punkte sind in der öffentlichen Doku nicht eindeutig. Sie werden per Blac
 - Tutorial JavaScript-Crawling: https://www.screamingfrog.co.uk/seo-spider/tutorials/crawl-javascript-seo/
 - Leitfaden Authentifizierung: https://www.screamingfrog.co.uk/guides/authentication
 - Release-Historie: https://www.screamingfrog.co.uk/seo-spider/release-history/
-- Release-Notes: https://www.screamingfrog.co.uk/seo-spider-18/, …-19/, …-20/, …-21/, …-22/, …-23/, …-24/
+- Release-Notes: https://www.screamingfrog.co.uk/seo-spider-18/, …-19/, …-20/, …-21/, …-22/, …-23/, …-24/ (23.1: Voreinstellung der Shopify-Bot-Authentifizierungs-Header, CRAWL-115; abgerufen 2026-10-13)
 
-Normative Fremdstandards: RFC 9309 (robots.txt), RFC 6265 (Cookies), RFC 6797 (HSTS), RFC 7616 (Digest), RFC 9110 (HTTP-Semantik), WHATWG URL- und Encoding-Standard, sitemaps.org-Protokoll, Public Suffix List.
+Normative Fremdstandards: RFC 9309 (robots.txt), RFC 6265 (Cookies), RFC 6797 (HSTS), RFC 7616 (Digest), RFC 9421 (HTTP Message Signatures, Header-Namen CRAWL-115), RFC 9110 (HTTP-Semantik), WHATWG URL- und Encoding-Standard, sitemaps.org-Protokoll, Public Suffix List.

@@ -11,9 +11,9 @@ Zuständige Crates (siehe `docs/ARCHITECTURE.md`): `os-export` (Formate, Bulk-Ex
 | [0 Konventionen](#0-konventionen) | – | Spaltennamen, Fixtures, Golden-Dateien, Begriffe |
 | [1 Export-Engine & Formate](#1-export-engine--formate) | OUT-001 – OUT-016 | CSV, XLSX, XLS, Google Sheets, Dateinamen, Limits, Streaming, Segment-Filter, leere Exporte |
 | [2 Tab- und Detail-Exporte](#2-tab--und-detail-exporte) | OUT-020 – OUT-027 | Export aktueller Tab/Filter, untere Detail-Tabs (inkl. Lighthouse, Accessibility, Header, Cookies, Konsole, N-grams), rechte Panels (inkl. Spelling & Grammar, Semantic Search), Mehrfachauswahl, Crawl-Pfad |
-| [3 Bulk-Exporte](#3-bulk-exporte) | OUT-030 – OUT-075 | Queued URLs, Links, Web, Path Type, filterbasierte Exporte je Tab, All Error Inlinks, Issues, URL Inspection, KI, Multi-Export |
-| [4 Reports](#4-reports) | OUT-080 – OUT-119 | Crawl Overview, Redirects, Canonicals, Pagination, Hreflang, Insecure Content, SERP Summary, Orphan Pages, Structured Data, PageSpeed, JavaScript, Mobile, Accessibility, HTTP-Header, Cookies |
-| [5 XML- und Bild-Sitemaps](#5-xml--und-bild-sitemaps) | OUT-120 – OUT-134 | Seitenauswahl, lastmod, priority, changefreq, Bilder, hreflang, Aufteilung, Segmente |
+| [3 Bulk-Exporte](#3-bulk-exporte) | OUT-030 – OUT-075 | Queued URLs, Links, Web, Path Type, filterbasierte Exporte je Tab, All Error Inlinks, Issues, URL Inspection, KI, Multi-Export, Non-Indexable Page Inlinks Only (OUT-068), Embedding-Vektoren (OUT-069) |
+| [4 Reports](#4-reports) | OUT-080 – OUT-114 | Crawl Overview, Redirects, Canonicals, Pagination, Hreflang, Insecure Content, SERP Summary, Orphan Pages, Structured Data, PageSpeed (inkl. Ressourcen je Audit, OUT-114), JavaScript, Mobile, Accessibility, HTTP-Header, Cookies |
+| [5 XML- und Bild-Sitemaps](#5-xml--und-bild-sitemaps) | OUT-120 – OUT-133 | Seitenauswahl, lastmod, priority, changefreq, Bilder, hreflang, Aufteilung, Segmente |
 | [6 Crawl-Vergleich](#6-crawl-vergleich) | OUT-140 – OUT-153 | Compare-Modus, Added/New/Removed/Missing, Change Detection, URL-Mapping, Site Structure, Auto-Compare |
 | [7 Geplante Crawls](#7-geplante-crawls-scheduling) | OUT-160 – OUT-171 | Aufgaben, Intervalle, OS-Integration, Exporte, Historie, Benachrichtigungen, Import/Export |
 | [8 Kommandozeile / Headless](#8-kommandozeile--headless) | OUT-180 – OUT-209 | alle Optionen, Exit-Codes, Fehlerverhalten |
@@ -37,6 +37,8 @@ Prioritäten: **P0** = MVP-Kern, **P1** = für Parität nötig, **P2** = später
 - **Zahlenformat in Exporten:** Dezimalpunkt `.`, kein Tausendertrennzeichen, Prozentwerte als Zahl 0–100 mit max. 2 Nachkommastellen (CSV) bzw. als numerische Zelle (XLSX). Datum/Zeit ISO 8601 mit Zeitzonenoffset (`2026-10-13T09:35:00+02:00`).
 - **Leere Werte:** Fehlende Werte sind leere Zellen, nicht `null`, `-` oder `0`. Eine echte `0` wird als `0` ausgegeben.
 - **„Inlinks-Export zu Filter X“** bezeichnet in diesem Dokument immer: alle Links (Hyperlinks und Ressourcen-Referenzen) im Crawl, deren Ziel-URL im Filter X enthalten ist, im Inlink-Spaltenformat aus OUT-031.
+- **Eine Quelle je Funktion (Spec v1):** Dieses Dokument ist führend für Exporte, Reports, CLI, Scheduling, Crawl-Vergleich (ohne Change Detection, führend TECH-300), Update und Plattform. Ist eine Funktion in einem anderen Bereich führend, steht hier nur ein **Verweis-Eintrag** (Priorität = die des führenden Eintrags, Zeile „Verweis: siehe <ID> (führend)“); IDs werden dabei weder gelöscht noch umnummeriert. Umgekehrt sind Zusatzkriterien aus anderen Bereichen in die hier führenden Einträge übernommen und als „(übernommen aus <ID>)“ gekennzeichnet.
+- **Priorität je ID:** Jede ID hat genau eine Priorität (die ihres Kerns). Teilumfänge mit abweichender Priorität tragen am Akzeptanzkriterium bzw. an der Option das Präfix **[P1]** oder **[P2]**.
 
 ---
 
@@ -57,7 +59,7 @@ Prioritäten: **P0** = MVP-Kern, **P1** = für Parität nötig, **P2** = später
 ### OUT-002 CSV-Format
 - **Priorität:** P0
 - **Beschreibung:** CSV nach RFC 4180.
-- **Eingaben/Konfiguration:** Einstellungen → Export: „UTF-8-BOM schreiben“ (Standard: an), „Trennzeichen“ (Komma Standard; Semikolon und Tab wählbar, P2), „Zeilenende“ (CRLF Standard **(OS-Festlegung)**).
+- **Eingaben/Konfiguration:** Einstellungen → Export: „UTF-8-BOM schreiben“ (Standard: an), „Trennzeichen“ (Komma Standard; **[P2]** Semikolon und Tab wählbar), „Zeilenende“ (CRLF Standard **(OS-Festlegung)**).
 - **Ausgabe:** Datei `*.csv`, Kodierung UTF-8.
 - **Akzeptanzkriterien:**
   - [ ] Felder, die Trennzeichen, `"`, CR oder LF enthalten, werden in `"` eingeschlossen; enthaltene `"` werden verdoppelt.
@@ -66,6 +68,7 @@ Prioritäten: **P0** = MVP-Kern, **P1** = für Parität nötig, **P2** = später
   - [ ] Nicht-ASCII-Zeichen (z. B. `ü`, `日本`, Emoji) werden unverändert UTF-8-kodiert ausgegeben.
   - [ ] Zahlen werden ohne Anführungszeichen und mit Dezimalpunkt geschrieben, unabhängig von der Systemsprache (Test unter `LANG=de_DE`).
   - [ ] Ungültige UTF-8-Sequenzen aus Quelldaten werden durch U+FFFD ersetzt; der Export bricht nicht ab.
+  - [ ] [P2] Mit Trennzeichen Semikolon bzw. Tab gelten die Quoting-Regeln für das gewählte Trennzeichen; Zahlen behalten den Dezimalpunkt.
 - **Testfixture:** `out-csv-edge`: Seiten mit Title `a,b`, Title mit `"Zitat"`, Title mit Zeilenumbruch (`<title>Zeile1\nZeile2</title>`), Title `日本語 🕷`, Seite in ISO-8859-1 deklariert mit ungültigen Bytes.
 
 ### OUT-003 Excel-Workbook (XLSX)
@@ -140,6 +143,7 @@ Prioritäten: **P0** = MVP-Kern, **P1** = für Parität nötig, **P2** = später
   - [ ] Erlaubte Zeichen im Dateinamen: `a-z 0-9 _ - .`; mehrere `_` hintereinander werden zu einem zusammengefasst; führende/abschließende `_` entfallen.
   - [ ] Dateinamen sind ≤ 120 Zeichen (Kürzung vor der Erweiterung) und auf Windows gültig (keine reservierten Namen wie `con`, `nul`).
   - [ ] Bei Segment-Exporten wird `_segment_<segmentname>` angehängt.
+  - [ ] Der Dateinamensvorschlag des UI-Exportdialogs hängt an den Basisnamen dieses Eintrags `_<YYYY-MM-DD>` an; Regel und Datumsquelle sind in OUT-020 führend festgelegt. CLI, Scheduling und Multi-Export verwenden den Basisnamen ohne Datum; dort trennen Zeitstempel-Ordner die Läufe (OUT-013, OUT-190).
   - [ ] Die Zuordnung kanonischer Name → Dateiname ist in einer Tabelle in `os-export` hinterlegt und per `openspider --help export-tabs --verbose` einsehbar.
 - **Testfixture:** Unit-Test über alle registrierten Exportnamen (keine Kollision zweier Exporte auf denselben Dateinamen).
 
@@ -175,6 +179,7 @@ Prioritäten: **P0** = MVP-Kern, **P1** = für Parität nötig, **P2** = später
   - [ ] Bei Inlink-Exporten gilt das Segment für die **Ziel**-URL (Segment „/blog/“ → alle Links, die auf Blog-URLs zeigen) **(OS-Festlegung)**.
   - [ ] Mit `--segment all` entsteht pro konfiguriertem Segment eine Datei sowie eine ungefilterte Datei.
   - [ ] Bulk-Exporte funktionieren auch bei aktivem Segment (bekannter Fehler der Referenz, der hier nicht auftreten darf).
+  - [ ] Segment-Definition und -Zuordnung kommen ausschließlich aus CRAWL-134 (Darstellung UI-020/UI-067/UI-068): Ein Segment-Export enthält genau die URLs, deren Tabellenspalte `Segment` dieses Segment zeigt; der Export berechnet die Zuordnung nicht neu (übernommen aus UI-068).
 - **Testfixture:** `out-segments`: Seiten unter `/blog/`, `/shop/`, `/info/`; Segmentdefinitionen „Blog“ (Pfad enthält `/blog/`), „Shop“.
 
 ### OUT-012 Leere Exporte überspringen
@@ -236,39 +241,45 @@ Prioritäten: **P0** = MVP-Kern, **P1** = für Parität nötig, **P2** = später
 
 ### OUT-020 Export des aktuellen Haupt-Tabs inkl. Filter
 - **Priorität:** P0
-- **Beschreibung:** Die Schaltfläche „Export“ über der Haupttabelle exportiert genau die aktuell sichtbare Ansicht: gewählter Tab, gewählter Filter, aktive Suche (inkl. Regex/Spaltensuche), aktive Segment-Einschränkung und aktuelle Sortierung.
-- **Eingaben/Konfiguration:** aktueller UI-Zustand.
-- **Ausgabe:** Datei mit sichtbaren Spalten (OUT-009), Zeilen in sichtbarer Reihenfolge.
+- **Beschreibung:** Die Schaltfläche „Export“ über der Haupttabelle exportiert genau die aktuell sichtbare Ansicht: gewählter Tab, gewählter Filter, aktive Suche (inkl. Regex/Spaltensuche), aktive Segment-Einschränkung und aktuelle Sortierung. Führender Eintrag für „Export der aktuellen Ansicht“; ONPAGE-191 und UI-015 verweisen hierher (Lage der Schaltfläche: UI-015).
+- **Eingaben/Konfiguration:** aktueller UI-Zustand; Format (OUT-006); Option „Alle Spalten exportieren (auch ausgeblendete)“ im Exportdialog, Standard aus (übernommen aus UI-015/ONPAGE-191).
+- **Ausgabe:** Datei mit sichtbaren Spalten (OUT-009), Zeilen in sichtbarer Reihenfolge; mit Option „Alle Spalten“: alle Spalten des Tabs in Standardreihenfolge der Fachspec. Dateiname nach OUT-008, Kodierung/Quoting nach OUT-002/OUT-003.
 - **Akzeptanzkriterien:**
+  - [ ] Mit Option „Alle Spalten“ enthält der Export von „Page Titles:Missing“ auch die ausgeblendete Spalte `Title 1 Pixel Width`; ohne Option nicht (übernommen aus ONPAGE-191).
+  - [ ] Golden-Test: Export „Page Titles:Missing“ der Fixture `onpage-titles` (Fachspec 02) mit Option „Alle Spalten“ ist nach Normalisierung byte-identisch zur dort abgelegten Golden-CSV (übernommen aus ONPAGE-191).
+  - [ ] Bei deutscher Systemsprache steht `Response Time` als `0.512`, nicht `0,512`; in XLSX ist `Status Code` eine Zahlenzelle, `Hash` eine Textzelle (übernommen aus ONPAGE-191).
   - [ ] Tab „Response Codes“, Filter „Client Error (4xx)“ → Export enthält genau die Zeilen dieses Filters (Anzahl = Zähler in der Filterliste).
   - [ ] Mit Suchbegriff `/blog/` in der Suchleiste enthält der Export nur passende Zeilen.
   - [ ] Nach Sortierung nach `Word Count` absteigend ist die erste Exportzeile die mit der höchsten Wortzahl.
   - [ ] Für jeden Tab und jeden Filter aller Spec-Bereiche existiert ein Export (automatisierter Test iteriert über die Filter-Registry und prüft, dass ein Export ohne Fehler entsteht).
   - [ ] Während eines laufenden Crawls ist der Export möglich (Snapshot, OUT-010).
+  - [ ] Dateinamensvorschlag (führend hier, Entscheidung des Architekten; übernommen aus UI-015): `<tab>_<filter>_<YYYY-MM-DD>` aus dem Basisnamen nach OUT-008 plus Datum; Datum = **Startdatum des Crawls in lokaler Zeitzone** (im Vergleichsmodus das des Current-Crawls), nicht das Exportdatum, damit Exporte älterer Crawls richtig datiert sind; ein Segmentsuffix steht vor dem Datum. Beispiel: „Response Codes:Client Error (4xx)“ eines am 2026-10-13 um 23:30 Ortszeit (21:30 UTC) gestarteten und am 2026-10-14 exportierten Crawls → `response_codes_client_error_4xx_2026-10-13.csv`. Hintergrundausführung und Abbruch: OUT-010; Mehrfachauswahl: OUT-022.
 - **Testfixture:** `out-basic-site`.
 
 ### OUT-021 Export der unteren Detail-Tabs
-- **Priorität:** P0 (Inlinks, Outlinks), P1 (übrige)
-- **Beschreibung:** Für die in der Haupttabelle markierte(n) URL(s) lassen sich die Detailtabellen des unteren Fensters exportieren: URL Details, Inlinks, Outlinks, Image Details, Resources, Duplicate Details, Structured Data Details, Spelling & Grammar Details, Lighthouse Details, Accessibility Details, HTTP Headers, Cookies, Chrome Console Log, N-grams. Zugriff über die Export-Schaltfläche des unteren Fensters oder Rechtsklick → Export → <Detailtab>. Detail-Tabs, deren Daten für die gewählte URL nicht erhoben wurden (z. B. Lighthouse ohne PSI/Lighthouse-Integration), sind im Export-Menü ausgegraut; der Tooltip nennt die nötige Einstellung.
+- **Priorität:** P0
+- **Beschreibung:** Kern (P0) ist der Export der Detail-Tabs Inlinks und Outlinks; alle übrigen Detail-Tabs sind Teilumfang **[P1]**, N-grams **[P2]** wegen der Priorität des Detail-Tabs UI-049 (Kennzeichnung an den Akzeptanzkriterien). Spaltennamen der Detail-Exporte sind die kanonischen Schlüssel des jeweils führenden Eintrags; weichen sie hier ab, gilt der führende Eintrag. Inhalt der Detail-Tabs: jeweilige Fachspec; Layout: UI-031 ff. Für die in der Haupttabelle markierte(n) URL(s) lassen sich die Detailtabellen des unteren Fensters exportieren: URL Details, Inlinks, Outlinks, Image Details, Resources, Duplicate Details, Structured Data Details, Spelling & Grammar Details, Lighthouse Details, Accessibility Details, HTTP Headers, Cookies, Chrome Console Log, N-grams. Zugriff über die Export-Schaltfläche des unteren Fensters oder Rechtsklick → Export → <Detailtab>. Detail-Tabs, deren Daten für die gewählte URL nicht erhoben wurden (z. B. Lighthouse ohne PSI/Lighthouse-Integration), sind im Export-Menü ausgegraut; der Tooltip nennt die nötige Einstellung.
 - **Eingaben/Konfiguration:** Auswahl in der Haupttabelle; Filter des Detail-Tabs (z. B. Inlinks-Filter „Auto/Current/Previous“ im Vergleichsmodus; N-grams-Auswahl n = 1…6 und Inhaltsbereich).
-- **Ausgabe:** Spalten wie im jeweiligen Detail-Tab; Inlinks/Outlinks im Format aus OUT-031. Kanonische Exportpfade **(OS-Festlegung)**: `Detail:<Detailtab>` (z. B. `Detail:Lighthouse Details`), damit Detail-Exporte auch per CLI für eine URL-Liste (`--detail-export "<Detailtab>" --urls <datei>`, P2) ansprechbar sind.
+- **Ausgabe:** Spalten wie im jeweiligen Detail-Tab; Inlinks/Outlinks im Format aus OUT-031. Kanonische Exportpfade **(OS-Festlegung)**: `Detail:<Detailtab>` (z. B. `Detail:Lighthouse Details`), damit Detail-Exporte auch per CLI für eine URL-Liste (**[P2]** `--detail-export "<Detailtab>" --urls <datei>`) ansprechbar sind.
   - Lighthouse Details: Langformat `Address`, `Category` (Performance/Accessibility/Best Practices/SEO), `Audit ID`, `Audit Title`, `Score` (0–1, leer bei informativen Audits), `Display Value`, `Numeric Value`, `Numeric Unit`, `Savings (ms)`, `Savings (Bytes)`, `Item` (je Detailzeile eines Audits, z. B. Ressourcen-URL), `Item Value`.
-  - Accessibility Details: zwei Teiltabellen, im XLSX als zwei Blätter, im CSV als zwei Dateien `…_violations.csv` und `…_locations.csv` **(OS-Festlegung)**: (a) Violations: `Address`, `Issue`, `Rule ID`, `Guidelines`, `User Impact`, `Priority`, `Occurrences`; (b) Location: `Address`, `Rule ID`, `Location` (CSS-Selektor), `HTML Snippet`, `Failure Summary`.
+  - Accessibility Details: zwei Teiltabellen, im XLSX als zwei Blätter, im CSV als zwei Dateien `…_rules.csv` und `…_locations.csv` **(OS-Festlegung)**; Spaltennamen und Ergebniswerte führend TECH-259: (a) Regeln: `Address`, `Issue`, `Result` (`Violation`/`Incomplete`/`Inapplicable`/`Passed`), `Guideline`, `Impact`, `Nodes`, `Help URL`; (b) Knoten: `Address`, `Issue`, `Location on Page` (CSS-Selektor), `HTML`.
   - HTTP Headers: `Address`, `Direction` (`Request`/`Response`), `Header Name`, `Header Value` (Redaktion wie OUT-048).
-  - Cookies: Spalten wie OUT-049.
-  - Chrome Console Log: `Address`, `Level`, `Message`, `Source`, `Line`, `Column`, `Timestamp`.
-  - N-grams: `N-gram`, `n`, `Count`, `Density %` (= Count × n / Wortanzahl × 100), `In Title` (True/False), `In H1`, `In H2`, `In Meta Description`.
+  - Cookies: Spalten und Werte wie UI-043 (führend; identisch mit OUT-049).
+  - Chrome Console Log: `Address`, `Level`, `Message`, `Source URL`, `Line`, `Column`, `Timestamp` (kanonische Schlüssel aus TECH-114, führend).
+  - N-grams: `N-Gram`, `Occurrences`, `Pages`, `Linked`, `Unlinked` (kanonische Schlüssel und Bedeutung aus UI-049, führend; dort nicht definierte Zusatzspalten gibt es im Export nicht).
 - **Akzeptanzkriterien:**
   - [ ] Inlinks-Export einer URL mit 3 eingehenden Verweisen (2× Hyperlink, 1× Canonical) liefert 3 Zeilen mit `Type` = `Hyperlink`, `Hyperlink`, `Canonical`.
-  - [ ] URL Details: zwei Spalten `Name`, `Value` mit allen Eigenschaften der URL; Anzahl Zeilen = Anzahl Spalten der Haupttabelle „Internal:All“ (alle, auch ausgeblendete).
-  - [ ] Structured Data Details: eine Zeile pro Eigenschaft mit Spalten `Subject`, `Predicate`, `Object`, `Format` (JSON-LD/Microdata/RDFa), `Validation Type`, `Severity`, `Issue`.
-  - [ ] Duplicate Details: Spalten `Address`, `Near Duplicate Address`, `Similarity` (Prozent).
-  - [ ] Spelling & Grammar Details: `Error Type` (Spelling/Grammar), `Error`, `Suggestion`, `Section` (Title/Meta Description/Content …), `Context`, `Count`.
-  - [ ] Lighthouse Details: Mock-PSI-Antwort mit 3 Audits, davon eines mit 4 Detailzeilen → 6 Zeilen (1 + 1 + 4); `Score` des informativen Audits ist leer, nicht 0.
-  - [ ] Accessibility Details: Seite mit 2 Bildern ohne alt → Violations-Tabelle 1 Zeile `image-alt` mit `Occurrences`=2; Location-Tabelle 2 Zeilen mit unterschiedlichen Selektoren.
-  - [ ] HTTP Headers: Seite mit 2 `Set-Cookie`-Headern → 2 Zeilen `Set-Cookie`, `Direction`=Response; `Authorization` im Request erscheint als `<redacted>`.
-  - [ ] Chrome Console Log: Seite mit `console.warn("w")` und `console.error("e")` → 2 Zeilen mit `Level` warning bzw. error; ohne JS-Rendering ist der Export deaktiviert.
-  - [ ] N-grams: Text „rot blau rot blau rot“ mit n = 2 → Zeilen `rot blau` (Count 2) und `blau rot` (Count 2); n = 1 → `rot` (3), `blau` (2); Sortierung `Count` absteigend, bei Gleichstand alphabetisch.
+  - [ ] [P1] URL Details: zwei Spalten `Name`, `Value` mit allen Eigenschaften der URL; Anzahl Zeilen = Anzahl Spalten der Haupttabelle „Internal:All“ (alle, auch ausgeblendete).
+  - [ ] [P1] Structured Data Details: eine Zeile pro Eigenschaft mit Spalten `Subject`, `Predicate`, `Object`, `Format` (JSON-LD/Microdata/RDFa), `Validation Type`, `Severity`, `Issue`.
+  - [ ] [P1] Duplicate Details: Spalten `Address`, `Near Duplicate Address`, `Similarity` (Prozent).
+  - [ ] [P1] Spelling & Grammar Details: Spalten führend ONPAGE-157, Kopfzeile genau `Address,Error,Type,Detail,Suggestion,Page Section,Rule ID` (Paritätsspalten, dann die OpenSpider-Erweiterungen; `Page Section` ∈ `Page Title`/`Meta Description`/`Body`).
+  - [ ] [P1] Lighthouse Details: Mock-PSI-Antwort mit 3 Audits, davon eines mit 4 Detailzeilen → 6 Zeilen (1 + 1 + 4); `Score` des informativen Audits ist leer, nicht 0.
+  - [ ] [P1] Accessibility Details: Seite mit 2 Bildern ohne alt → Regeltabelle enthält die Zeile `image-alt` mit `Result`=`Violation`, `Nodes`=2; Knotentabelle 2 Zeilen mit unterschiedlichen `Location on Page`.
+  - [ ] [P1] HTTP Headers: Seite mit 2 `Set-Cookie`-Headern → 2 Zeilen `Set-Cookie`, `Direction`=Response; `Authorization` im Request erscheint als `<redacted>`.
+  - [ ] [P1] Chrome Console Log: Seite mit `console.warn("w")` und `console.error("e")` → 2 Zeilen mit `Level` warning bzw. error; die Kopfzeile enthält `Source URL`, nicht `Source`; ohne JS-Rendering ist der Export deaktiviert.
+  - [ ] [P2] N-grams (Priorität des Detail-Tabs UI-049): Text „rot blau rot blau rot“ (unverlinkt, ein Absatz) mit n = 2 → Zeilen `rot blau` (`Occurrences` 2) und `blau rot` (`Occurrences` 2), je `Pages`=1, `Linked`=0, `Unlinked`=2; n = 1 → `rot` (3), `blau` (2); Sortierung `Occurrences` absteigend, bei Gleichstand alphabetisch. Kopfzeile genau `N-Gram,Occurrences,Pages,Linked,Unlinked`.
+  - [ ] [P1] Image Details und Resources: Export enthält je eingebundener Ressource der gewählten URL eine Zeile im Standard-Linkformat (OUT-031).
+  - [ ] [P2] `--detail-export "Inlinks" --urls <datei>` mit 3 URLs erzeugt eine Datei mit den Inlinks aller 3 URLs (Spalte `Address` wie OUT-022).
 - **Testfixture:** `out-detail-tabs`: Seite `/target` mit 2 Hyperlinks und einem Canonical darauf, JSON-LD-Block, Rechtschreibfehler „Beispeil“, Nah-Duplikat `/target-copy`, Seite `/a11y` mit 2 Bildern ohne alt, Seite `/console` mit Konsolenmeldungen, Seite `/ngram` mit Text „rot blau rot blau rot“, Header-Seite mit 2 `Set-Cookie`; Mock-PSI-Antwort.
 
 ### OUT-022 Mehrfachauswahl-Export der Detail-Tabs
@@ -312,20 +323,20 @@ Prioritäten: **P0** = MVP-Kern, **P1** = für Parität nötig, **P2** = später
 - **Eingaben/Konfiguration:** Export-Schaltfläche im jeweiligen Panel.
 - **Ausgabe:**
   - Overview: identisch mit OUT-080 Crawl Overview.
-  - Issues: Spalten `Issue Name`, `Issue Type` (Issue/Warning/Opportunity), `Issue Priority` (High/Medium/Low), `URLs`, `% of Total`, `Description`, `How To Fix`. Die Texte in `Description` und `How To Fix` sind eigenständig verfasste OpenSpider-Texte (gepflegt in `os-analyze/issues/*.toml`, de/en); Issue-Beschreibungen der Referenz werden weder übernommen noch paraphrasierend nachgebaut (Clean-Room-Regel).
+  - Issues: Spalten `Issue Name`, `Issue Type` (Issue/Warning/Opportunity), `Issue Priority` (High/Medium/Low), `URLs`, `% of Total`, `Description`, `How To Fix`. Die Texte in `Description` und `How To Fix` sind eigenständig verfasste OpenSpider-Texte (gepflegt im einzigen Issue-Katalog `core/issues/catalog.toml` nach UI-063, de/en); Issue-Beschreibungen der Referenz werden weder übernommen noch paraphrasierend nachgebaut (Clean-Room-Regel).
   - Site Structure: zwei Tabellen (XLSX: zwei Blätter; CSV: `site_structure_directories.csv` und `site_structure_depth.csv`) **(OS-Festlegung** der Aufteilung):
     - Verzeichnisse: `Path` (Verzeichnis), `URLs` (gesamt), `Indexable`, `Non-Indexable`.
     - Tiefe: `Crawl Depth` (Zeilen `1` … `10`, `10+`), je Antwortcode-Klasse eine Spalte (`2xx`, `3xx`, `4xx`, `5xx`, `No Response`, `Blocked`) und `Total`. Die Referenz zeigt Tiefen 1 bis 10+; OpenSpider ergänzt eine Zeile `0` für die Start-URL(s) **(OS-Festlegung, Abweichung** – beim Paritätsabgleich wird Zeile `0` ausgeblendet).
   - Response Times: Spalten `Response Time Range` (Buckets 0–1 s, 1–2 s, 2–3 s, 3–4 s, 4–5 s, 5–6 s, 6–7 s, 7–8 s, 8–9 s, 9–10 s, über 10 s), `URLs`, `% of Total`.
   - Segments: je Segment eine Zeile mit `Segment`, `URLs`, `Indexable`, `Non-Indexable`, `Issues`, `Warnings`, `Opportunities`.
-  - Spelling & Grammar: die häufigsten eindeutigen Fehler (max. 100, wie im Panel) mit `Error`, `Error Type` (Spelling/Grammar), `Rule` (nur Grammatik), `Suggestion`, `URLs` (Anzahl betroffener URLs), `Occurrences` **(OS-Festlegung** für `Rule`/`Occurrences`).
-  - Semantic Search: Ergebnisliste der zuletzt ausgeführten Abfrage mit `Query`, `Rank`, `Address`, `Similarity` (Kosinus, 0–1, 4 Nachkommastellen), `Embedding Model`; bei Anzeige „Centroid“ stattdessen `Address`, `Distance To Centroid`.
+  - Spelling & Grammar: die häufigsten eindeutigen Fehler (max. 100, wie im Panel) mit den Spalten aus ONPAGE-158 (führend): `Error`, `Type` (Spelling/Grammar), `URLs` (Anzahl betroffener URLs), `Instances` (Anzahl Vorkommen). Derselbe Inhalt ist der Report „Spelling & Grammar Errors Summary“ (OUT-052).
+  - Semantic Search: Ergebnisliste der zuletzt ausgeführten Abfrage; Spaltennamen führend INTEG-185: `Address`, `Score` (Kosinus, 0–1, ungerundet wie INTEG-181), davor die Export-Zusatzspalten `Query`, `Rank` und danach `Embedding Model` **(OS-Festlegung)**; bei Anzeige „Zentroid“ stattdessen `Address`, `Semantic Relevance Score` (INTEG-182).
 - **Akzeptanzkriterien:**
   - [ ] Issues-Export enthält genau die Zeilen, die im Issues-Panel angezeigt werden (gleiche Zähler).
   - [ ] Für jedes registrierte Issue existieren nicht-leere `Description`- und `How To Fix`-Texte in Deutsch und Englisch (Registry-Test).
   - [ ] Response-Times-Buckets sind halboffene Intervalle `[a, b)`; eine Antwortzeit von exakt 1,000 s fällt in 1–2 s.
   - [ ] Site Structure Tiefe: Fixture mit Start-URL, 2 Seiten in Tiefe 1 (eine davon 404) und 11 Seiten in Tiefe 11 → Zeile `1`: `2xx`=1, `4xx`=1; Zeile `10+`: `2xx`=11; Zeile `0`: 1. Summe `Total` über alle Zeilen = Anzahl interner URLs mit bekannter Tiefe.
-  - [ ] Spelling & Grammar: Fehler „Beispeil“ auf 3 Seiten (insgesamt 5-mal) → eine Zeile `URLs`=3, `Occurrences`=5; bei mehr als 100 eindeutigen Fehlern enthält der Export genau 100 Zeilen, sortiert nach `URLs` absteigend, dann `Error` alphabetisch.
+  - [ ] Spelling & Grammar: Fehler „Beispeil“ auf 3 Seiten (insgesamt 5-mal) → eine Zeile `URLs`=3, `Instances`=5; bei mehr als 100 eindeutigen Fehlern enthält der Export genau 100 Zeilen, sortiert nach `URLs` absteigend, dann `Error` alphabetisch.
   - [ ] Semantic Search: Export ohne vorherige Abfrage ist deaktiviert; mit Mock-Embeddings und Abfrage „rote Schuhe“ stimmen Reihenfolge und Werte mit der Panel-Anzeige überein.
 - **Testfixture:** `out-basic-site` mit Fixture-Server-Option `delay_ms` je Seite (100, 1000, 2500, 11000 ms); `out-site-structure` (Tiefenkette bis 11, eine 404 in Tiefe 1); `out-detail-tabs` (Rechtschreibfehler); Mock-Embedding-Endpunkt mit festen Vektoren.
 
@@ -477,7 +488,7 @@ Menü „Bulk Export“. Alle Bulk-Exporte beziehen sich auf den gesamten Crawl 
 - **Ausgabe:** Standard-Linkformat.
 - **Akzeptanzkriterien:**
   - [ ] Enthalten: Ziele mit Host `localhost`, `127.0.0.0/8`, `[::1]`, `0.0.0.0`, Hosts mit Endung `.localhost`.
-  - [ ] Nicht enthalten: private Netze `192.168.x.x`/`10.x.x.x` **(OS-Festlegung;** eigener Filter wäre P2).
+  - [ ] Nicht enthalten: private Netze `192.168.x.x`/`10.x.x.x` **(OS-Festlegung;** ein eigener Filter für private Netze ist nicht Teil dieses Eintrags).
   - [ ] Wenn die Fixture selbst auf 127.0.0.1 läuft, werden Links auf den **eigenen** Crawl-Host nicht gemeldet (sonst wäre jede Fixture positiv).
 - **Testfixture:** `out-links` gemappt auf Host `site.test`, mit Links auf `http://localhost:3000/x` und `http://127.0.0.1/y`.
 
@@ -567,10 +578,11 @@ Menü „Bulk Export“. Alle Bulk-Exporte beziehen sich auf den gesamten Crawl 
 - **Priorität:** P1
 - **Beschreibung:** Alle gesetzten Cookies je URL (aus HTTP-Headern und – bei Rendering – per JavaScript gesetzt).
 - **Eingaben/Konfiguration:** Extraktion „Cookies speichern“.
-- **Ausgabe:** `Address`, `Cookie Name`, `Cookie Value`, `Domain`, `Path`, `Expires`, `Max-Age`, `Secure`, `HttpOnly`, `SameSite`, `Type` (`HTTP`/`JavaScript`), `Session` (`True` wenn weder Expires noch Max-Age).
+- **Ausgabe:** Spalten und Wertelisten führend UI-043, in dieser Reihenfolge: `Address`, `Cookie Name`, `Cookie Value`, `Domain`, `Path`, `Expires`, `Max-Age`, `Secure`, `HttpOnly`, `SameSite`, `Type` (`HTTP`/`JavaScript`), `Session` (`True` wenn weder Expires noch Max-Age), `First-Party` (`True`/`False`). Alle Spalten erscheinen unabhängig von ihrer Sichtbarkeit im Detail-Tab.
 - **Akzeptanzkriterien:**
   - [ ] `Set-Cookie: a=1; Secure; HttpOnly; SameSite=Lax` → eine Zeile mit `Secure`=True, `HttpOnly`=True, `SameSite`=Lax, `Session`=True.
   - [ ] Per `document.cookie` gesetztes Cookie erscheint nur mit Rendering, `Type`=JavaScript.
+  - [ ] Kopfzeile ist exakt `Address,Cookie Name,Cookie Value,Domain,Path,Expires,Max-Age,Secure,HttpOnly,SameSite,Type,Session,First-Party` (identisch mit dem Cookies-Detail-Export OUT-021); ein Cookie aus einem Drittanbieter-iframe hat `First-Party`=False.
 - **Testfixture:** `out-headers`.
 
 ### OUT-050 Response Codes: Inlinks-Exporte je Filter
@@ -601,14 +613,15 @@ Menü „Bulk Export“. Alle Bulk-Exporte beziehen sich auf den gesamten Crawl 
 ### OUT-052 Content: Duplikat-, Ähnlichkeits- und Rechtschreib-Exporte
 - **Priorität:** P1
 - **Beschreibung:** Paarweise bzw. detaillierte Exporte der Content-Filter.
-- **Ausgabe:**
-  - `Exact Duplicates`: `Address`, `Exact Duplicate Address`, `Hash`.
-  - `Near Duplicates`: `Address`, `Near Duplicate Address`, `Similarity` (%), nur Paare ≥ eingestellter Schwelle (Standard 90 %).
-  - `Semantically Similar`: `Address`, `Semantically Similar Address`, `Similarity Score` (0–1), nur Paare ≥ Schwelle.
-  - `Low Relevance Content`: `Address`, `Relevance Score`.
-  - `Spelling Errors`: `Address`, `Error`, `Suggestion`, `Section` (Title/Meta Description/H1/Content …), `Context`, `Language`.
-  - `Grammar Errors`: `Address`, `Error`, `Rule`, `Detail` (eigene Kurzbeschreibung der Regel), `Suggestion`, `Section`, `Context`, `Language`.
-  - `Spelling & Grammar Errors`: Vereinigung beider mit zusätzlicher Spalte `Error Type` (Spelling/Grammar) an zweiter Stelle.
+- **Ausgabe:** Spaltennamen bestimmt der jeweils führende Fach-Eintrag (in Klammern); dieser Export übernimmt sie exakt. Die Zeilenauswahl je Export steht in ONPAGE-165.
+  - `Exact Duplicates` (ONPAGE-165): `Address`, `Exact Duplicate Address`, `Hash`.
+  - `Near Duplicates` (ONPAGE-145): `Address`, `Near Duplicate Address`, `Similarity` (%), nur Paare ≥ eingestellter Schwelle (Standard 90 %).
+  - `Semantically Similar` (INTEG-181): `Address`, `Closest Semantically Similar Address`, `Semantic Similarity Score` (0–1, ungerundet); je URL des Filters eine Zeile je Partner ≥ Schwelle, sodass die nächste Adresse immer enthalten ist (Referenz-Anleitung: nächste Adresse plus alle Partner über der Schwelle); die Spalte heißt in jeder Zeile `Closest Semantically Similar Address`, sortiert je URL nach Score absteigend **(OS-Festlegung)**.
+  - `Low Relevance Content` (INTEG-182): `Address`, `Semantic Relevance Score`.
+  - `Spelling & Grammar Errors` (ONPAGE-157): `Address`, `Language`, `Type`, `Error`, `Detail`, `Suggestion`, `Page Section`, danach die Erweiterung `Rule ID` (nur Grammatik). `Spelling Errors` und `Grammar Errors` sind dieselbe Tabelle, gefiltert auf `Type` = Spelling bzw. Grammar.
+  - `Spelling & Grammar Errors Summary` (ONPAGE-158): `Error`, `Type`, `URLs`, `Instances` (höchstens 100 Zeilen, Inhalt wie OUT-025).
+  - `Soft 404 Inlinks` (ONPAGE-165/ONPAGE-147): Inlinks-Export zu Filter „Soft 404 Pages“ im Format aus OUT-031.
+  - `All Page Text`: siehe OUT-046.
   - Hinweis zur Benennung: Die öffentliche Tutorial-Doku der Referenz beschreibt einen kombinierten Export; der Spec-Review gegen Version 24.3 nennt getrennte Einträge für Rechtschreib- und Grammatikfehler (vor Umsetzung per Golden-Export der Free-Version bestätigen, Anhang B). OpenSpider registriert alle drei kanonischen Pfade `Content:Spelling Errors`, `Content:Grammar Errors`, `Content:Spelling & Grammar Errors`, damit Skripte beider Varianten funktionieren.
 - **Akzeptanzkriterien:**
   - [ ] Zwei Seiten mit identischem Inhaltsbereich → je Seite eine Zeile (Paar symmetrisch in beide Richtungen).
@@ -616,13 +629,15 @@ Menü „Bulk Export“. Alle Bulk-Exporte beziehen sich auf den gesamten Crawl 
   - [ ] Exporte erfordern abgeschlossene Crawl-Analyse; sonst Hinweis „Crawl-Analyse ausführen“ und leerer Export.
   - [ ] Seite mit 2 Rechtschreib- und 1 Grammatikfehler → `Spelling Errors` 2 Zeilen, `Grammar Errors` 1 Zeile, `Spelling & Grammar Errors` 3 Zeilen; Zeilenzahl kombiniert = Summe der beiden Einzelexporte (Invariante, Registry-Test).
   - [ ] `--bulk-export "Content:Spelling Errors,Content:Grammar Errors"` erzeugt `content_spelling_errors.csv` und `content_grammar_errors.csv`.
-  - [ ] Fehler im Title werden mit `Section`=Title ausgegeben, Fehler im Fließtext mit `Section`=Content.
+  - [ ] Fehler im Title werden mit `Page Section`=`Page Title` ausgegeben, Fehler im Fließtext mit `Page Section`=`Body`.
+  - [ ] Semantically Similar: URL A mit Partnern B (0,970) und C (0,965) über der Schwelle 0,95 → zwei Zeilen für A in dieser Reihenfolge; eine URL ohne Partner ≥ Schwelle erscheint nicht.
+  - [ ] Soft 404 Inlinks: Fixture `onpage-content/` (Fachspec 02) → genau 4 Zeilen (Kriterium aus ONPAGE-165).
 - **Testfixture:** `out-content-dupes`: 2 exakte Duplikate, 2 Seiten mit ~92 % Überschneidung, 1 Seite mit ~85 %; `out-detail-tabs`: Seite mit „Beispeil“ im Title und „Fehlerr“ im Text sowie einem Grammatikfehler („die Haus“).
 
 ### OUT-053 Images: Exporte je Filter
 - **Priorität:** P1
 - **Beschreibung:** Verweise auf Bilder der jeweiligen Image-Filter (Quelle = einbindende Seite).
-- **Ausgabe:** Standard-Linkformat. Einträge: `All Image Inlinks`, `Images Missing Alt Text Inlinks`, `Images Missing Alt Attribute Inlinks`, `Images With Alt Text Over X Characters Inlinks` (X aus Präferenzen, Standard 100), `Images Over X KB Inlinks` (X Standard 100), `Images Missing Size Attributes Inlinks`, `Incorrectly Sized Images Inlinks`, `Background Images`.
+- **Ausgabe:** Instanzspalten führend ONPAGE-181/ONPAGE-172 (Kopfzeile genau `From,To,Alt Text,Size,Real Dimensions (WxH),Dimensions in Attributes (WxH),Display Dimensions (WxH),Potential Savings,Path Type,Link Path,Link Position,Link Origin`; Werte wie ONPAGE-172), eine Zeile je Bildinstanz; dieser Eintrag legt Exportnamen, Dateinamen und Mechanik fest. Einträge: `All Image Inlinks`, `Images Missing Alt Text Inlinks`, `Images Missing Alt Attribute Inlinks`, `Images With Alt Text Over X Characters Inlinks` (X aus Präferenzen, Standard 100), `Images Over X KB Inlinks` (X Standard 100), `Images Missing Size Attributes Inlinks`, `Incorrectly Sized Images Inlinks`, `Background Images`.
 - **Akzeptanzkriterien:**
   - [ ] `<img src="a.png" alt="">` → in „Missing Alt Text“, nicht in „Missing Alt Attribute“; `<img src="b.png">` → nur in „Missing Alt Attribute“ (beide Filter sind disjunkt).
   - [ ] Alt-Text mit 101 Zeichen → enthalten; mit 100 Zeichen → nicht.
@@ -660,17 +675,18 @@ Menü „Bulk Export“. Alle Bulk-Exporte beziehen sich auf den gesamten Crawl 
 ### OUT-057 Sitemaps: Exporte je Filter
 - **Priorität:** P1
 - **Beschreibung:** Für Filter des Sitemaps-Tabs: welche URL steht in welcher Sitemap.
-- **Ausgabe:** `Sitemap`, `Address`, `Status Code`, `Indexability`, `Indexability Status`. Einträge: `URLs In Sitemap`, `URLs Not In Sitemap` (nur `Address`), `Non-Indexable URLs In Sitemap`, `URLs In Multiple Sitemaps`, `XML Sitemap With Over 50k URLs`, `XML Sitemap Over 50MB`, `Orphan URLs`.
+- **Ausgabe:** `Sitemap`, `Address`, `Status Code`, `Indexability`, `Indexability Status`; bei `Orphan URLs` zusätzlich `Found Via` (Spaltenname und Bedeutung führend TECH-214). Einträge: `URLs In Sitemap`, `URLs Not In Sitemap` (nur `Address`), `Non-Indexable URLs In Sitemap`, `URLs In Multiple Sitemaps`, `XML Sitemap With Over 50k URLs`, `XML Sitemap Over 50MB`, `Orphan URLs`. Zeilenauswahl: TECH-219. **OS-Festlegung (R-16):** Die Exportnamen tragen keinen Zusatz „Inlinks“, die URL-Spalte heißt `Address` (nicht `URL`); die früheren Namen aus TECH-219 („… Inlinks“) werden von CLI und Presets als Mapping-Alias akzeptiert.
 - **Akzeptanzkriterien:**
   - [ ] URL in `sitemap-a.xml` und `sitemap-b.xml` → 2 Zeilen in „URLs In Multiple Sitemaps“.
   - [ ] Noindex-URL in Sitemap → „Non-Indexable URLs In Sitemap“.
+  - [ ] Folge-Orphan `/o2`, gefunden über die Orphan-URL `/o1` aus `sitemap-a.xml` → Zeile mit `Sitemap`=`sitemap-a.xml`, `Found Via`=`/o1`; die Zeile von `/o1` hat leeres `Found Via`.
   - [ ] Erfordert, dass Sitemaps gecrawlt wurden; sonst Hinweis.
 - **Testfixture:** `out-sitemaps-in`: Sitemap-Index mit 2 Sitemaps, Überschneidung, noindex-URL, 404-URL, verwaiste URL.
 
 ### OUT-058 JavaScript: Exporte je Filter
 - **Priorität:** P2
 - **Beschreibung:** Inlinks-Exporte je JavaScript-Filter sowie Konsolen-Log aller Seiten.
-- **Ausgabe:** Standard-Linkformat je Filter (`Blocked Resource`, `Contains JavaScript Links`, `Contains JavaScript Content`, `Noindex Only In Original HTML`, `Nofollow Only In Original HTML`, `Canonical Only In Rendered HTML`, `Canonical Mismatch`, `Page Title Only In Rendered HTML`, `Pages With JavaScript Errors`, …); `All Console Messages`: `Address`, `Level` (error/warning/info/log), `Message`, `Source`, `Line`.
+- **Ausgabe:** Standard-Linkformat je Filter (`Blocked Resource`, `Contains JavaScript Links`, `Contains JavaScript Content`, `Noindex Only In Original HTML`, `Nofollow Only In Original HTML`, `Canonical Only In Rendered HTML`, `Canonical Mismatch`, `Page Title Only In Rendered HTML`, `Pages With JavaScript Errors`, …); `All Console Messages`: `Address`, `Level` (error/warning/info/log), `Message`, `Source URL`, `Line`, `Column` (kanonische Schlüssel wie TECH-114, führend; gleiche Spalten wie der Bulk-Export „JavaScript:Pages With JavaScript Issues“ dort).
 - **Akzeptanzkriterien:**
   - [ ] `Contains JavaScript Links` liefert die Links, die nur im gerenderten DOM vorhanden sind (nicht leer, bekannter Fehler der Referenz).
   - [ ] `console.error("x")` auf einer Seite → eine Zeile `Level`=error.
@@ -712,10 +728,11 @@ Menü „Bulk Export“. Alle Bulk-Exporte beziehen sich auf den gesamten Crawl 
 - **Priorität:** P1
 - **Beschreibung:** Alle Barrierefreiheitsverstöße mit Fundstelle; zusätzlich gefiltert nach WCAG-Stufe.
 - **Eingaben/Konfiguration:** Accessibility-Prüfung + JS-Rendering aktiv.
-- **Ausgabe:** `Address`, `Issue`, `Rule ID`, `Guidelines` (z. B. `WCAG 2.0 A, 1.1.1`), `User Impact` (Critical/Serious/Moderate/Minor), `Priority` (High/Medium/Low), `Location` (CSS-Selektor), `HTML Snippet`, `Help URL`. Einträge: `All Violations`, `WCAG 2.0 A`, `WCAG 2.0 AA`, `WCAG 2.0 AAA`, `WCAG 2.1 AA`, `WCAG 2.2 AA`, `Best Practice`.
+- **Ausgabe:** `Address`, `Issue`, `Rule ID`, `Guideline` (z. B. `WCAG 2.0 A, 1.1.1`), `Impact` (Critical/Serious/Moderate/Minor), `Priority` (High/Medium/Low), `Location on Page` (CSS-Selektor), `HTML`, `Help URL`. Die mit dem Detail-Tab gemeinsamen Spalten (`Issue`, `Guideline`, `Impact`, `Location on Page`, `HTML`, `Help URL`) heißen exakt wie in TECH-259 (führend); `Rule ID` und `Priority` (UI-063) sind Export-Zusatzspalten. Einträge: `All Violations`, `WCAG 2.0 A`, `WCAG 2.0 AA`, `WCAG 2.0 AAA`, `WCAG 2.1 AA`, `WCAG 2.2 AA`, `Best Practice` sowie `Incomplete` (alle Knoten mit Ergebnisart `Incomplete` zur manuellen Prüfung, gleiche Spalten; übernommen aus TECH-259).
 - **Akzeptanzkriterien:**
   - [ ] `<img src="x.png">` ohne alt → Zeile mit Regel „image-alt“, Stufe WCAG 2.0 A, Impact Critical.
   - [ ] Summe der Stufen-Exporte = All Violations (jede Verletzung genau einer Stufe zugeordnet; maßgeblich ist die niedrigste zutreffende Stufe).
+  - [ ] `Incomplete`: Text über einem Hintergrundbild (`color-contrast` unentscheidbar) → eine Zeile je Knoten; diese Knoten erscheinen in keinem Violations-Export.
 - **Testfixture:** `out-a11y`: fehlender alt, zu geringer Kontrast, fehlendes Label, doppelte IDs.
 
 ### OUT-063 Issues: Alle Issues als Dateisammlung
@@ -776,7 +793,9 @@ Menü „Bulk Export“. Alle Bulk-Exporte beziehen sich auf den gesamten Crawl 
   - [ ] Ein externes Ziel mit 500 erscheint in `Internal & External` und `External`, nicht in `Internal`.
   - [ ] Sortierung: `Status Code` aufsteigend (leere Werte = No Response zuerst), dann `Destination`, dann `Source` **(OS-Festlegung)**.
   - [ ] Erscheint im Crawl Overview (OUT-080) und im Multi-Export-Baum (OUT-075).
-- **Testfixture:** `out-response-codes` (enthält No Response, 403, 404, 410, 500, 503, extern 404/500, 301→404).
+  - [ ] Die Zeilenauswahl stützt sich ausschließlich auf die Filterzuordnung der Fachspec (No Response ONPAGE-054, Client Error (4xx) ONPAGE-062, Server Error (5xx) ONPAGE-063); ein Ziel, das dort in Success (2xx), Redirection (3xx) oder Blocked by Robots.txt steht, erscheint nie (übernommen aus ONPAGE-067).
+  - [ ] Fixture `onpage-rc/` (Fachspec 02): `Internal:All Error Inlinks` enthält die Verweise auf `/e400`, `/e403`, `/e404`, `/e410`, `/e429`, `/e500`, `/e503`, `/timeout`, `/drop` und keine auf `/ok`, `/r301`, `/blocked/a`, `/s999`; `External:All Error Inlinks` enthält die Verweise auf das externe `/e404`, `http://nohost.invalid/` und `http://127.0.0.1:1/` und keine internen Ziele (übernommen aus ONPAGE-067).
+- **Testfixture:** `out-response-codes` (enthält No Response, 403, 404, 410, 500, 503, extern 404/500, 301→404); `onpage-rc/` aus Fachspec 02.
 
 ### OUT-075 Multi-Export (Mehrfachexport mit Vorlagen)
 - **Priorität:** P1
@@ -790,6 +809,32 @@ Menü „Bulk Export“. Alle Bulk-Exporte beziehen sich auf den gesamten Crawl 
   - [ ] Preset mit unbekanntem Exportnamen (z. B. aus neuerer Version) → Warnung, übrige Exporte laufen.
   - [ ] Einträge, deren Voraussetzung fehlt (z. B. Screenshots ohne Rendering), sind markiert und werden übersprungen mit Logeintrag.
 - **Testfixture:** `out-basic-site`.
+
+### OUT-068 Links: Non-Indexable Page Inlinks Only
+- **Priorität:** P1
+- **Beschreibung:** Bulk-Export (Menü Links) aller internen Verweise auf indexierbare Seiten, die **ausschließlich** von nicht indexierbaren Seiten aus verlinkt werden – also Seiten, die Suchmaschinen nur über nicht indexierbare Quellen finden können. Die Auswahl der Zielseiten folgt dem gleichnamigen Filter der Fachspec (TECH-142, führend für die Filterlogik); dieser Eintrag legt nur den Export fest. Kanonischer Pfad `Links:Non-Indexable Page Inlinks Only`. (Lücke G-1 aus PARITY.md.)
+- **Eingaben/Konfiguration:** keine.
+- **Ausgabe:** Standard-Linkformat (OUT-031); eine Zeile je Verweis auf eine betroffene Zielseite.
+- **Akzeptanzkriterien:**
+  - [ ] Ziel `/x`, verlinkt nur von `/noindex-a` (meta noindex) und `/canon-b` (kanonisiert auf eine andere URL) → 2 Zeilen mit `Destination`=`/x`.
+  - [ ] Ziel `/y`, verlinkt von `/noindex-a` und von der indexierbaren Startseite → keine Zeile für `/y`.
+  - [ ] Menge der Ziel-URLs im Export = Menge der URLs im Filter aus TECH-142 (Registry-/Konsistenztest).
+  - [ ] Maßgeblich sind interne Hyperlink-Inlinks ohne Self-Links (wie TECH-142); Canonical-, hreflang- und Ressourcen-Verweise werden weder als Quelle gezählt noch exportiert **(OS-Festlegung** für den Export). Die Startseite erscheint nie als Ziel.
+  - [ ] Per CLI `--bulk-export "Links:Non-Indexable Page Inlinks Only"` ansprechbar und im Multi-Export-Baum (OUT-075) enthalten; Dateiname `links_non_indexable_page_inlinks_only.csv` (OUT-008).
+  - [ ] Erfordert die abgeschlossene Crawl-Analyse (der Filter entsteht im Nachlauf); vorher Hinweis und leerer Export wie OUT-112.
+- **Testfixture:** `out-links-follow` erweitert um `/noindex-a`, `/canon-b`, `/x`, `/y`.
+
+### OUT-069 AI: Embeddings (Vektor-Export)
+- **Priorität:** P2
+- **Beschreibung:** Exportiert die gespeicherten Embedding-Vektoren (INTEG-166/INTEG-180) je URL, z. B. zur Weiterverarbeitung in eigenen Werkzeugen. Führend für Name und Format dieses Exports; INTEG-166 verweist hierher. Kanonischer Pfad `AI:Embeddings` **(OS-Festlegung,** Entscheidung zu der offenen Formatfrage JSON-Array aus INTEG-166 gegenüber CSV aus dem früheren ONPAGE-159).
+- **Eingaben/Konfiguration:** Embedding-Funktionalität aktiv (INTEG-180); Auswahl des Embedding-Prompts, falls mehrere existieren.
+- **Ausgabe:** CSV/XLSX mit den Spalten `Address`, `Prompt`, `Embedding Model`, `Dimensions`, `Embedding`; `Embedding` enthält den Vektor als JSON-Array von Gleitkommazahlen in kürzester verlustfreier Dezimaldarstellung (Dezimalpunkt, kein Leerzeichen), z. B. `[0.0123,-0.4567,…]`. Eine Zeile je URL mit Vektor; URLs ohne Vektor fehlen. XLSX: Zellen über 32 767 Zeichen sind nicht zulässig – der Export bietet dann nur CSV an (Hinweis im Dialog).
+- **Akzeptanzkriterien:**
+  - [ ] Für die Fixture `fixtures/integ/embed/site/` (Fachspec 04) enthält der Export 10 Zeilen; `Dimensions` stimmt mit der Länge des JSON-Arrays überein.
+  - [ ] Einlesen des JSON-Arrays ergibt bitgleich dieselben Gleitkommawerte wie der gespeicherte Vektor (im gespeicherten Zahlentyp) (Round-Trip-Test).
+  - [ ] Eine URL, deren Embedding-Anfrage fehlschlug, erscheint nicht.
+  - [ ] Ohne aktive Embedding-Funktionalität ist der Eintrag ausgegraut.
+- **Testfixture:** Mock-Embedding-Endpunkt aus 04 (deterministische Vektoren).
 
 ---
 
@@ -849,9 +894,10 @@ Menü „Reports“. Reports sind aufbereitete Auswertungen, die nicht 1:1 einem
 ### OUT-083 Redirects: Redirect & Canonical Chains
 - **Priorität:** P1
 - **Beschreibung:** Ketten aus Weiterleitungen **und/oder** Canonicals mit mindestens 2 Gliedern (z. B. 301 auf eine Seite, deren Canonical woandershin zeigt).
-- **Ausgabe:** wie OUT-081; `Redirect Type n` kann zusätzlich `Canonical`/`HTTP Canonical` sein; `Chain Type` dann `Redirect & Canonical` bzw. `Canonical`.
+- **Ausgabe:** wie OUT-081; `Redirect Type n` kann zusätzlich `Canonical` (Link-Element) bzw. `HTTP Canonical` (HTTP-`Link`-Header) sein. **Werteliste `Chain Type` für Ketten mit Canonical-Gliedern (führend hier, OS-Festlegung zu R-16; die Kettenermittlung steht in TECH-026):** `Canonical` = nur Canonical-Glieder; `Redirect & Canonical` = mindestens ein Weiterleitungs- und ein Canonical-Glied. Reine Weiterleitungsketten behalten ihre Werte aus OUT-081 (`Mixed` bezeichnet nur Weiterleitungsketten mit unterschiedlichen Weiterleitungsarten). Die früheren Werte `Canonical`/`Redirect`/`Mixed` aus TECH-025 entfallen. Das Sprunglimit ist dasselbe Weiterleitungslimit wie in OUT-081 (CRAWL-072); ein Canonical-Glied zählt wie ein Sprung.
 - **Akzeptanzkriterien:**
-  - [ ] `/h` 301→ `/i` (Canonical → `/j`, 200, self-canonical) → 2 Glieder, `Final Address`=`/j`.
+  - [ ] `/h` 301→ `/i` (Canonical → `/j`, 200, self-canonical) → 2 Glieder, `Final Address`=`/j`, `Chain Type`=`Redirect & Canonical`, `Redirect Type 1`=`HTTP Redirect`, `Redirect Type 2`=`Canonical`.
+  - [ ] Reine Canonical-Kette A→B→C erscheint hier mit `Chain Type`=`Canonical` (gleiche Zeile wie in OUT-086).
   - [ ] Seite mit selbstreferenzierendem Canonical bildet kein Kettenglied.
   - [ ] Canonical-Schleife `/k`↔`/l` → `Redirect Loop`=True.
 - **Testfixture:** `out-redirects` + `out-canonicals`.
@@ -864,7 +910,10 @@ Menü „Reports“. Reports sind aufbereitete Auswertungen, die nicht 1:1 einem
   - [ ] Kette `/m` 301→ `/n` 404 enthalten; `/a`→200 nicht.
   - [ ] Weiterleitung auf robots-gesperrte URL enthalten mit `Final Status` = `Blocked by Robots.txt`.
   - [ ] Weiterleitung auf DNS-Fehler-Host enthalten mit `Final Status` = `No Response` / `DNS Lookup Failed`.
-- **Testfixture:** `out-redirects`.
+  - [ ] Alle Weiterleitungsarten zählen (HTTP 3xx, Meta Refresh, HTTP Refresh, JavaScript, HSTS Policy); auch Ketten mit nur einem Sprung sind enthalten; eine Schleife ohne fehlerhaftes Endziel ist nicht enthalten (übernommen aus ONPAGE-067).
+  - [ ] Das Endziel wird ausschließlich über die Filterzuordnung der Fachspec bestimmt: Blocked by Robots.txt (ONPAGE-052), No Response (ONPAGE-054), Client Error (4xx) (ONPAGE-062), Server Error (5xx) (ONPAGE-063) (übernommen aus ONPAGE-067).
+  - [ ] Fixture `onpage-rc/` (Fachspec 02): `/r-to-404` → `Number of Redirects`=1, `Final Status Code`=404; `/r-to-blocked` → `Final Status`=`Blocked by Robots.txt`; `/r-chain-500` → `Number of Redirects`=2; `/r301` (→ 200) und `/loop1` fehlen (übernommen aus ONPAGE-067).
+- **Testfixture:** `out-redirects`; `onpage-rc/` aus Fachspec 02.
 
 ### OUT-085 Ketten-Reports im Listenmodus
 - **Priorität:** P1
@@ -880,7 +929,7 @@ Menü „Reports“. Reports sind aufbereitete Auswertungen, die nicht 1:1 einem
 ### OUT-086 Canonicals: Canonical Chains
 - **Priorität:** P1
 - **Beschreibung:** Canonical-Ketten mit mindestens 2 Gliedern (A → B, B → C).
-- **Ausgabe:** wie OUT-081 mit `Redirect Type n` = `Canonical`/`HTTP Canonical`.
+- **Ausgabe:** wie OUT-081 mit `Redirect Type n` = `Canonical`/`HTTP Canonical` und `Chain Type` = `Canonical` (Werteliste OUT-083). Zeilenmenge: reine Canonical-Ketten nach TECH-026; Sprunglimit wie OUT-081 (Abbruch → `Final Status` = `Max Redirects Reached`).
 - **Akzeptanzkriterien:**
   - [ ] A (canonical B), B (canonical C), C (self) → eine Zeile für A mit 2 Gliedern; B erscheint nicht als eigene Startzeile, sofern nicht unabhängig verlinkt.
   - [ ] Canonical per HTTP-`Link`-Header wird gleich behandelt.
@@ -924,7 +973,7 @@ Menü „Reports“. Reports sind aufbereitete Auswertungen, die nicht 1:1 einem
 
 ### OUT-091 Hreflang: Non-200 Hreflang URLs
 - **Priorität:** P1
-- **Beschreibung:** hreflang-Ziele, die nicht mit 200 antworten (inkl. Weiterleitung, Blockierung, keine Antwort).
+- **Beschreibung:** hreflang-Ziele, die nicht mit 200 antworten (inkl. Weiterleitung, Blockierung, keine Antwort). Führend für die Zeilenauswahl aller Hreflang-Reports OUT-091 … OUT-096 (TECH-088 verweist hierher): Jeder Report enthält genau die Beziehungen der Seiten im entsprechenden Filter TECH-074 … TECH-079; „Unlinked Hreflang URLs“ (OUT-092) ist erst nach der Crawl-Analyse befüllt (TECH-005); Mapping-Aliase stehen beim jeweiligen Filter (z. B. TECH-077) (übernommen aus TECH-088).
 - **Ausgabe:** wie OUT-090 + `Status`.
 - **Akzeptanzkriterien:**
   - [ ] Ziel 404 → enthalten; Ziel 301 → enthalten; Ziel 200 → nicht.
@@ -955,6 +1004,7 @@ Menü „Reports“. Reports sind aufbereitete Auswertungen, die nicht 1:1 einem
 - **Akzeptanzkriterien:**
   - [ ] A annotiert B als `de-AT`, B annotiert sich selbst als `de-DE` → enthalten.
   - [ ] Vergleich ist case-insensitiv (`de-at` = `de-AT`).
+  - [ ] Der frühere Referenz-Reportname „Inconsistent Language Return Links“ wird von CLI (`--save-report`) und Presets als Mapping-Alias akzeptiert und erzeugt denselben Report (übernommen aus TECH-088; Alias auch beim Filter TECH-077).
 - **Testfixture:** `out-hreflang`.
 
 ### OUT-095 Hreflang: Non Canonical Return Links
@@ -1002,7 +1052,7 @@ Menü „Reports“. Reports sind aufbereitete Auswertungen, die nicht 1:1 einem
 - **Priorität:** P1
 - **Beschreibung:** URLs, die aus Google Analytics, der Search Console oder XML-Sitemaps bekannt sind, aber im Crawl nicht über interne Links gefunden wurden.
 - **Eingaben/Konfiguration:** Mindestens eine Quelle: GA4-Verbindung, GSC-Verbindung, Sitemap-Crawl; Crawl-Analyse abgeschlossen.
-- **Ausgabe:** `Address`, `Source` ∈ {`GA`, `GSC`, `Sitemap`, `GA & GSC`, `GA & Sitemap`, `GSC & Sitemap`, `GA & GSC & Sitemap`}, `Status Code` (falls die URL über die Quelle gecrawlt wurde), `Indexability`.
+- **Ausgabe:** `Address`, `Source` ∈ {`GA`, `GSC`, `Sitemap`, `GA & GSC`, `GA & Sitemap`, `GSC & Sitemap`, `GA & GSC & Sitemap`} (Quellwert `GA` auch für GA4-Daten, nicht `GA4`; OS-Festlegung zur offenen Frage aus 04, Kompatibilität mit bestehenden Auswertungen), `Status Code` (falls die URL über die Quelle gecrawlt wurde), `Indexability`.
 - **Akzeptanzkriterien:**
   - [ ] URL nur in Sitemap, nicht verlinkt → `Source`=Sitemap.
   - [ ] URL in GA4 (Mock) und Sitemap → `Source`=`GA & Sitemap`.
@@ -1014,9 +1064,11 @@ Menü „Reports“. Reports sind aufbereitete Auswertungen, die nicht 1:1 einem
 ### OUT-100 Structured Data: Validation Errors & Warnings Summary
 - **Priorität:** P1
 - **Beschreibung:** Aggregierte Validierungsfunde über alle URLs mit Beispiel-URL.
-- **Ausgabe:** `Validation Type` (`Schema.org`/`Google Rich Results`), `Severity` (`Error`/`Warning`), `Type` (Schema-Typ), `Feature` (Rich-Result-Feature), `Issue`, `URLs`, `% of Total`, `Sample URL`.
+- **Ausgabe:** `Validation Type` (`Schema.org`/`Google Rich Results`), `Severity` (`Error`/`Warning`), `Type` (Schema-Typ), `Feature` (Rich-Result-Feature), `Issue`, `URLs`, `% of Total`, `Sample URL`. Zeilenauswahl: TECH-190 (Befunde aus TECH-187/188 mit Befund-ID TECH-189).
 - **Akzeptanzkriterien:**
   - [ ] Drei Produktseiten ohne `offers` → eine Zeile mit `URLs`=3.
+  - [ ] `Sample URL` ist die lexikographisch kleinste betroffene URL (deterministisch) (übernommen aus TECH-190).
+  - [ ] Die Summe von `URLs` über alle Zeilen ist größer oder gleich der Anzahl distinct Paare (`Address`, Befund-ID) im Detailreport OUT-101 (übernommen aus TECH-190).
   - [ ] Sortierung: Errors vor Warnings, dann `URLs` absteigend.
 - **Testfixture:** `out-structured-data`.
 
@@ -1047,12 +1099,15 @@ Menü „Reports“. Reports sind aufbereitete Auswertungen, die nicht 1:1 einem
 
 ### OUT-104 PageSpeed: Opportunities Summary
 - **Priorität:** P2
-- **Beschreibung:** Aggregierte Lighthouse/PSI-Verbesserungsvorschläge (Insight-Audits) über alle URLs.
+- **Beschreibung:** Aggregierte Lighthouse/PSI-Verbesserungsvorschläge (Insight- und Diagnose-Audits mit Einsparangabe) über alle URLs. Führend; INTEG-145 verweist hierher. Die Einsparwerte stammen aus denselben Audit-Feldern wie die Spalten des PageSpeed-Tabs (INTEG-137/138).
 - **Eingaben/Konfiguration:** PSI-API oder lokale Lighthouse-Integration.
-- **Ausgabe:** `Opportunity`, `URLs`, `% of Total`, `Total Savings (ms)`, `Average Savings (ms)`, `Total Savings (Bytes)`, `Average Savings (Bytes)`.
+- **Ausgabe:** `Audit`, `URLs`, `% of Total`, `Total Savings (ms)`, `Average Savings (ms)`, `Total Savings (Bytes)`, `Average Savings (Bytes)`. Kanonischer Schlüssel der ersten Spalte ist `Audit` (nicht `Opportunity`) **(OS-Festlegung,** Entscheidung zu R-13): Lighthouse führt die früheren „Opportunities“ inzwischen als „Insights“, und `Audit` ist derselbe Schlüssel wie im Ressourcen-Export OUT-114 und im Detail-Export OUT-021; der Report-Name bleibt „PageSpeed Opportunities Summary“. Je Audit eine Zeile; Werte, die ein Audit nicht liefert (z. B. keine Byte-Einsparung), bleiben leer.
 - **Akzeptanzkriterien:**
+  - [ ] Zählregel (übernommen aus INTEG-145): `URLs` zählt nur URLs mit Einsparung > 0; URLs mit Einsparung 0 oder ohne PSI-Daten zählen nicht und gehen auch nicht in den Mittelwert ein. Beispiel: 3 URLs mit 100, 200 und 0 ms beim Audit „Render Blocking Requests“ → `URLs`=2, `Total Savings (ms)`=300, `Average Savings (ms)`=150.
+  - [ ] `% of Total` = `URLs` / Anzahl URLs mit PSI-Daten × 100.
+  - [ ] Audit ohne Byte-Angabe → `Total Savings (Bytes)` und `Average Savings (Bytes)` leer, nicht 0.
   - [ ] Werte = Summe/Mittel der Einzelwerte aus dem PageSpeed-Tab (Golden aus Mock-PSI-Antworten).
-- **Testfixture:** Mock-PSI-Endpunkt mit 3 festen Antworten.
+- **Testfixture:** Mock-PSI-Endpunkt mit 3 festen Antworten (Einsparungen 100/200/0 ms für Render-Blocking, eine Antwort mit Byte-Einsparung für „Reduce Unused JavaScript“).
 
 ### OUT-105 PageSpeed: CSS Coverage Summary
 - **Priorität:** P2
@@ -1085,15 +1140,16 @@ Menü „Reports“. Reports sind aufbereitete Auswertungen, die nicht 1:1 einem
 ### OUT-108 Mobile
 - **Priorität:** P2
 - **Beschreibung:** Gesammelter Export aller Mobile-Filter und der Lighthouse-Detaildaten.
-- **Ausgabe:** Ordner/Arbeitsmappe mit je einer Tabelle pro Mobile-Filter (Spalten wie Tab) sowie `lighthouse_details` im Langformat `Address`, `Audit`, `Score`, `Display Value`, `Details`.
+- **Ausgabe:** Ordner/Arbeitsmappe mit je einer Tabelle pro Mobile-Filter (Spalten wie Tab, führend TECH-231) sowie `lighthouse_details` im Langformat `Address`, `Audit`, `Score`, `Display Value`, `Item`, `Snippet`: eine Zeile je Detailzeile (`details.items`) eines Mobile-Audits mit CSS-Selektor bzw. Ressourcen-URL in `Item` und HTML-Ausschnitt in `Snippet`; Audits ohne Detailzeilen ergeben eine Zeile mit leerem `Item`/`Snippet` (OS-Festlegung zu R-16; ersetzt die frühere Aufteilung je Audit aus TECH-231). Priorität P2 bleibt (OS-Festlegung): Der Mobile-Tab (TECH-231, P1) und sein Tab-Export (OUT-020) decken die Parität ab; der gesammelte Report ist eine Zusatzfunktion.
 - **Akzeptanzkriterien:**
   - [ ] Anzahl Tabellen = Anzahl Mobile-Filter + 1.
+  - [ ] `tap-targets`/`target-size`-Audit mit 3 zu kleinen Zielen → 3 Zeilen in `lighthouse_details` mit unterschiedlichem `Item`.
 - **Testfixture:** `out-mobile` mit lokalem Lighthouse-Mock.
 
 ### OUT-109 Accessibility: Violations Summary
 - **Priorität:** P1
 - **Beschreibung:** Aggregierte Barrierefreiheitsverstöße.
-- **Ausgabe:** `Issue`, `Rule ID`, `Guidelines`, `User Impact`, `Priority`, `URLs`, `% of Total`, `Sample URL`.
+- **Ausgabe:** `Issue`, `Rule ID`, `Guideline`, `Impact`, `Priority`, `URLs`, `% of Total`, `Sample URL` (gemeinsame Spaltennamen wie TECH-259).
 - **Akzeptanzkriterien:**
   - [ ] `URLs` zählt Seiten, nicht Vorkommen (Seite mit 5 Bildern ohne alt zählt 1).
   - [ ] Sortierung: Priority (High→Low), dann `URLs` absteigend.
@@ -1113,7 +1169,7 @@ Menü „Reports“. Reports sind aufbereitete Auswertungen, die nicht 1:1 einem
 - **Priorität:** P1
 - **Beschreibung:** Eindeutige Cookies über den Crawl – nützlich für Datenschutz-/Consent-Prüfungen.
 - **Eingaben/Konfiguration:** Cookie-Extraktion aktiv (mit Rendering für JS-Cookies).
-- **Ausgabe:** `Cookie Name`, `Domain`, `Path`, `Persistence` (`Session` oder Laufzeit in Tagen), `Secure`, `HttpOnly`, `SameSite`, `Type` (`HTTP`/`JavaScript`), `First-Party` (True/False), `URLs`, `Sample URL`.
+- **Ausgabe:** `Cookie Name`, `Domain`, `Path`, `Persistence` (`Session` oder Laufzeit in Tagen), `Secure`, `HttpOnly`, `SameSite`, `Type`, `First-Party`, `URLs`, `Sample URL`. Namen und Wertelisten der mit UI-043 gemeinsamen Spalten (`Secure`, `HttpOnly`, `SameSite`, `Type` `HTTP`/`JavaScript`, `First-Party` `True`/`False`) sind führend in UI-043; `Persistence`, `URLs` und `Sample URL` sind Report-eigene Aggregatspalten.
 - **Akzeptanzkriterien:**
   - [ ] Eindeutigkeit über (Name, Domain, Path, Secure, HttpOnly, SameSite, Type): derselbe Cookie auf 12 Seiten → eine Zeile `URLs`=12.
   - [ ] Cookie mit `Max-Age=86400` → `Persistence`=1.
@@ -1137,6 +1193,19 @@ Menü „Reports“. Reports sind aufbereitete Auswertungen, die nicht 1:1 einem
   - [ ] Redirect Chains mit Segment „Shop“ → nur Ketten, deren Start-URL im Segment liegt.
   - [ ] Im Vergleichsmodus ist das Reports-Menü bedienbar.
 - **Testfixture:** `out-segments`.
+
+### OUT-114 PageSpeed: Ressourcen je Audit
+- **Priorität:** P2
+- **Beschreibung:** Je Insight- bzw. Diagnose-Audit lässt sich die Liste der beanstandeten Ressourcen über alle URLs exportieren (Menü Reports → PageSpeed → <Audit>; CLI `--save-report "PageSpeed:<Audit>"`). Führend für diesen Export; INTEG-144 verweist hierher (Inhalt des Detail-Tabs einer URL bleibt INTEG-144, dessen Export OUT-021). Datengrundlage sind die Detailzeilen (`details.items`) des Audits in der gespeicherten PSI/Lighthouse-Antwort.
+- **Eingaben/Konfiguration:** PSI-API oder lokale Lighthouse-Integration; Audit-Auswahl im Menü bzw. per CLI-Namen (Namensliste über `--list-reports`, OUT-203).
+- **Ausgabe:** Spalten in dieser Reihenfolge: `Source Page`, `URL`, `Size (Bytes)`, `Potential Savings`, danach angehängt `Audit`, `Potential Savings (ms)` **(OS-Festlegung;** die ersten vier Spalten entsprechen der Ressourcentabelle des Detail-Tabs nach INTEG-144, die beiden angehängten sind OpenSpider-Zusätze). Eine Zeile je (Seite, Ressource). Feldzuordnung: `URL` aus `url`; `Size (Bytes)` aus `totalBytes`, ersatzweise `transferSize` bzw. `resourceSize`; `Potential Savings` aus `wastedBytes` in Bytes; liefert ein Audit nur eine Zeiteinsparung (`wastedMs`), steht diese in `Potential Savings (ms)` und `Potential Savings` bleibt leer. Sortierung: `Source Page`, dann Reihenfolge der Detailzeilen.
+- **Akzeptanzkriterien:**
+  - [ ] Export „Reduce Unused JavaScript“ für `psi-heavy.json` hat die Kopfzeile `Source Page,URL,Size (Bytes),Potential Savings,Audit,Potential Savings (ms)` und je Seite eine Zeile pro Skript aus `details.items`.
+  - [ ] „Render Blocking Requests“ (nur Zeiteinsparung je Ressource) → Wert in `Potential Savings (ms)`, `Potential Savings` leer.
+  - [ ] Detailzeilen ohne `url` (z. B. Elemente bei Layout-Verschiebungen) erscheinen mit Selektor bzw. Snippet in `URL` und leerer `Size (Bytes)`.
+  - [ ] Seiten ohne PSI-Daten oder ohne Befund für das Audit erzeugen keine Zeile; gibt es für das Audit keine einzige Zeile, greift OUT-012.
+  - [ ] Die Zeilenzahl je Seite stimmt mit der Ressourcentabelle des Detail-Tabs „Lighthouse Details“ für dasselbe Audit überein.
+- **Testfixture:** `psi-heavy.json` (Fachspec 04) im PSI-Mock des `os-testsite`.
 
 ---
 
@@ -1215,13 +1284,14 @@ Menü „Sitemaps → XML-Sitemap erstellen / Bild-Sitemap erstellen“. Ein Ass
 ### OUT-126 Sitemap: Bilder in der XML-Sitemap
 - **Priorität:** P1
 - **Beschreibung:** Optional werden Bilder je Seite als `<image:image><image:loc>` aufgenommen (Namespace `http://www.google.com/schemas/sitemap-image/1.1`).
-- **Eingaben/Konfiguration:** „Bilder aufnehmen“ (Standard aus); „Externe Bilder (CDN) einschließen per Regex“ (leer = keine externen); „Nur relevante Bilder mit bis zu N IMG-Inlinks aufnehmen“ (Standard deaktiviert; dient dem Ausschluss seitenweiter Logos/Icons). Die Schwelle ist – wie in der Referenz – eine inklusive Obergrenze der Anzahl einbindender Seiten (`IMG Inlinks`); OpenSpider übernimmt das Referenzverhalten unverändert. Option „noindex-Bilder ausschließen“ (P2).
+- **Eingaben/Konfiguration:** „Bilder aufnehmen“ (Standard aus); „Externe Bilder (CDN) einschließen per Regex“ (leer = keine externen); „Nur relevante Bilder mit bis zu N IMG-Inlinks aufnehmen“ (Standard deaktiviert; dient dem Ausschluss seitenweiter Logos/Icons). Die Schwelle ist – wie in der Referenz – eine inklusive Obergrenze der Anzahl einbindender Seiten (`IMG Inlinks`); OpenSpider übernimmt das Referenzverhalten unverändert. **[P2]** Option „noindex-Bilder ausschließen“.
 - **Ausgabe:** `<url>` mit 0..n `<image:image>`.
 - **Akzeptanzkriterien:**
   - [ ] Interne Bilder mit Status 200 werden der einbindenden Seite zugeordnet; Bilder mit Status ≠ 200 nie.
   - [ ] Externes Bild `https://cdn.test/p.jpg` erscheint nur, wenn es auf die Regex `cdn\.test` passt.
   - [ ] Schwelle N = 5: Logo auf 20 Seiten (20 IMG-Inlinks) fehlt, Produktbild mit 1 Inlink ist enthalten; Grenzfälle: Bild mit genau 5 IMG-Inlinks enthalten, mit 6 nicht.
   - [ ] Max. 1 000 Bilder je `<url>`; weitere werden ausgelassen und gewarnt.
+  - [ ] [P2] Mit „noindex-Bilder ausschließen“ fehlen Bilder, deren Antwort `X-Robots-Tag: noindex` trägt.
 - **Testfixture:** `out-sitemap-images`: Logo auf allen 20 Seiten, je Produktseite ein Bild, ein Banner auf genau 5 und eines auf genau 6 Seiten, ein CDN-Bild, ein 404-Bild.
 
 ### OUT-127 Bild-Sitemap (separat)
@@ -1267,6 +1337,7 @@ Menü „Sitemaps → XML-Sitemap erstellen / Bild-Sitemap erstellen“. Ein Ass
 - **Akzeptanzkriterien:**
   - [ ] Segmente Blog/Shop → zwei Sitemaps + Index; URLs ohne Segment landen in `sitemap_unsegmented.xml` **(OS-Festlegung)**.
   - [ ] Segmentnamen werden für Dateinamen bereinigt (OUT-008); Bindestriche bleiben erlaubt.
+  - [ ] Die URL-Menge jeder Segment-Sitemap ist identisch mit der Segmentzuordnung aus CRAWL-134 (Spalte `Segment`), auch bei Segmenten mit der Bedingung „ist in keinem Segment“ (übernommen aus UI-068).
 - **Testfixture:** `out-segments`.
 
 ### OUT-131 Sitemap: XML-Korrektheit und Kodierung
@@ -1300,7 +1371,9 @@ Menü „Sitemaps → XML-Sitemap erstellen / Bild-Sitemap erstellen“. Ein Ass
 
 ## 6 Crawl-Vergleich
 
-Voraussetzung: beide Crawls liegen als Crawl-Dateien (`*.ospider`) in der Crawl-Verwaltung vor (OUT-228). Da OpenSpider immer auf Disk speichert, entfällt die Einschränkung der Referenz auf einen bestimmten Speichermodus.
+Voraussetzung: beide Crawls liegen als Crawl-Dateien (`*.ospider`) in der Crawl-Verwaltung vor (OUT-228). Da OpenSpider immer auf Disk speichert (ein einziger disk-first-Modus, siehe CRAWL-124 und `docs/ARCHITECTURE.md`), entfällt die Einschränkung der Referenz auf einen bestimmten Speichermodus; keine Vergleichsfunktion (auch nicht Auto Compare, OUT-152) hängt von einem Speichermodus oder Leistungsprofil ab.
+
+Führung: Dieser Abschnitt ist führend für den Vergleichsablauf (Auswahl, Klassifikation, URL-Mapping, Site Structure, Detailansichten, gespeicherte Vergleiche, Exporte, Auto Compare). CRAWL-032/034/035/036/144 und TECH-306/308 verweisen hierher. **Change Detection** (Elementauswahl, Standardwerte, Spalten, Elementfilter) ist führend in TECH-300 ff.; OUT-144 ist nur ein Verweis.
 
 ### OUT-140 Compare-Modus: Crawls auswählen
 - **Priorität:** P1
@@ -1312,6 +1385,7 @@ Voraussetzung: beide Crawls liegen als Crawl-Dateien (`*.ospider`) in der Crawl-
   - [ ] Mehr oder weniger als zwei markierte Crawls → Schaltfläche deaktiviert.
   - [ ] Vergleich von Crawls unterschiedlicher Modi (Spider vs. Liste) ist erlaubt; ein Hinweis weist darauf hin.
   - [ ] Crawls aus älteren Dateiversionen werden vor dem Vergleich migriert (Schema-Migration aus `os-store`), ohne das Original zu verändern.
+  - [ ] Der Vergleichsmodus ist bei jedem Leistungsprofil (CRAWL-124) wählbar; es gibt keinen Zustand, in dem er wegen der Speicherart deaktiviert ist (übernommen aus CRAWL-032).
 - **Testfixture:** `out-compare`: Fixture-Server mit Umschalter `?version=1|2` (Version 2: 3 Seiten neu, 2 gelöscht, 1 Title geändert, 1 Seite neu noindex, 1 Link entfernt → Tiefe ändert sich, 1 404 behoben).
 
 ### OUT-141 Current/Previous tauschen
@@ -1336,6 +1410,7 @@ Voraussetzung: beide Crawls liegen als Crawl-Dateien (`*.ospider`) in der Crawl-
   - [ ] Gelöschte Seite (nicht mehr verlinkt, nicht gecrawlt) → Missing in „Internal:HTML“.
   - [ ] Neue Seite → New in „Internal:HTML“.
   - [ ] „Existiert in Crawl“ heißt: URL wurde gecrawlt (nicht nur entdeckt/blockiert) **(OS-Festlegung)**.
+  - [ ] Ein Klick auf eine Zahl im Overview listet genau diese URLs in der Haupttabelle (Zeilenzahl = angezeigte Zahl) (übernommen aus CRAWL-032).
 - **Testfixture:** `out-compare`.
 
 ### OUT-143 Vergleich im Issues-Panel
@@ -1344,57 +1419,33 @@ Voraussetzung: beide Crawls liegen als Crawl-Dateien (`*.ospider`) in der Crawl-
 - **Akzeptanzkriterien:**
   - [ ] Klick auf die Zahl in „Added“ eines Issues filtert die Haupttabelle auf genau diese URLs.
   - [ ] Issues, die nur in einem Crawl existieren, erscheinen mit 0 im anderen.
+  - [ ] Je Issue gilt die Invariante aus OUT-142 (`Current − Previous = Added + New − Removed − Missing`), wobei der Filter „URL hat dieses Issue“ ist; die Zahlen stimmen mit dem Tab-Vergleich desselben Filters überein (übernommen aus CRAWL-144).
+  - [ ] Die Issues-Ansicht ist nach `Change` sortierbar (übernommen aus CRAWL-144).
 - **Testfixture:** `out-compare`.
 
 ### OUT-144 Change Detection (Elementänderungen)
 - **Priorität:** P1
-- **Beschreibung:** Für URLs, die in beiden Crawls existieren, wird ermittelt, ob sich bestimmte Elemente geändert haben. Ein eigener Tab „Change Detection“ (oben und im rechten Overview als letzter Eintrag) zeigt je Element die Anzahl geänderter URLs.
-- **Eingaben/Konfiguration:** Konfiguration → Compare → Change Detection: Elemente einzeln an/aus (Standard: alle aus außer Indexability, Page Titles, Meta Description, H1 **(OS-Festlegung)**). Elemente in dieser Reihenfolge (entspricht der Filterreihenfolge der Referenz):
-  1. `Indexability` (Vergleich von `Indexability` **und** `Indexability Status`),
-  2. `Page Titles`, 3. `Meta Description`, 4. `H1`, 5. `Word Count`, 6. `Crawl Depth`,
-  7. `Inlinks` (Anzahl aller internen Inlinks, inkl. Mehrfachlinks derselben Quelle), 8. `Unique Inlinks` (Anzahl eindeutiger Quellseiten),
-  9. `Internal Outlinks` (alle), 10. `Unique Internal Outlinks` (eindeutige Ziele),
-  11. `External Outlinks` (alle), 12. `Unique External Outlinks` (eindeutige Ziele),
-  13. `Structured Data Unique Types`, 14. `Content` (OUT-145).
-- **Ausgabe:** Overview-Zeile je Element mit `Current`, `Previous`, `Change` (alle drei = Anzahl geänderter URLs, wie in der Referenz) und Filter `All` (= Anzahl in beiden Crawls vorhandener, analysierter URLs). Haupttabelle je Element: `Address`, `Current <Element>`, `Previous <Element>`, bei Zahlen zusätzlich `Change` (absolut) und `Change %`; Filterumschalter `Changed`/`Not Changed`.
-- **Akzeptanzkriterien:**
-  - [ ] Textelemente werden nach Whitespace-Normalisierung (trim, Mehrfach-Leerzeichen → eines) verglichen; Groß-/Kleinschreibung zählt als Änderung.
-  - [ ] Element vorher fehlend, jetzt vorhanden (oder umgekehrt) → geändert.
-  - [ ] H1: verglichen wird die geordnete Liste aller H1; Reihenfolgeänderung = geändert.
-  - [ ] Indexability: Seite vorher `Indexable`, jetzt `Non-Indexable` (noindex) → geändert; Seite in beiden Crawls `Non-Indexable`, aber Grund wechselt von `Noindex` zu `Canonicalised` → geändert (Statusvergleich); Seite in beiden `Indexable` → nicht geändert. Tabelle zeigt `Current Indexability`, `Previous Indexability`, `Current Indexability Status`, `Previous Indexability Status`.
-  - [ ] Word Count / alle sechs Link-Elemente / Crawl Depth: jede Abweichung ≠ 0 = geändert; `Change %` = (Current − Previous) / Previous × 100, bei Previous = 0 leer.
-  - [ ] Inlinks vs. Unique Inlinks: Startseite verlinkt `/x` jetzt zweimal statt einmal (sonst unverändert) → `Inlinks` geändert (1 → 2), `Unique Inlinks` nicht geändert (1 → 1). Analog für Internal/External Outlinks vs. Unique-Varianten.
-  - [ ] Structured Data Unique Types: Vergleich der Mengen der `@type`-Werte (Reihenfolge egal).
-  - [ ] URLs nur in einem Crawl sind ausgeschlossen (sie stehen unter New/Missing).
-  - [ ] Ausgeschaltete Elemente erscheinen nicht im Tab; ist kein Element aktiv, fehlt der Tab.
-  - [ ] Sortierung nach `Change` und `Change %` möglich.
-  - [ ] Registry-Test: genau 14 Elemente in der oben genannten Reihenfolge; jedes ist einzeln abschaltbar.
-- **Testfixture:** `out-compare` (Indexability, Title, Description, H1-Reihenfolge, Wortanzahl, Tiefe, doppelter Link auf `/x`, neuer externer Link, Schema-Typen ändern sich gezielt auf je einer Seite; eine Seite wechselt von noindex zu kanonisiert).
+- **Verweis:** siehe TECH-300 (führend). Die Population (nur URLs, die nach URL-Mapping OUT-146 in beiden Crawls existieren) regelt TECH-301.
 
 ### OUT-145 Content Change Detection
-- **Priorität:** P2
-- **Beschreibung:** Inhaltliche Änderung des Hauptinhalts als Prozentwert über eine MinHash-Ähnlichkeitsschätzung. Erfordert in beiden Crawls gespeichertes HTML bzw. gespeicherte Inhalts-Signaturen.
-- **Eingaben/Konfiguration:** Schwelle in Konfiguration → Compare: als geändert gilt eine Seite, deren Inhalt sich um **mehr als** X % geändert hat; Standard X = 10 % wie in der Referenz (dort als Ähnlichkeitsschwelle unter Config → Compare einstellbar). Wertebereich 0–100, ganzzahlig.
-- **Ausgabe:** `Content Change %` (= 100 − geschätzte Ähnlichkeit in %, 2 Nachkommastellen), Filter Changed/Not Changed.
-- **Akzeptanzkriterien:**
-  - [ ] Identischer Inhalt → 0 %, Not Changed.
-  - [ ] Standardschwelle 10 %: berechnete Änderung 10,00 % → Not Changed; 10,01 % → Changed (strikt „größer als“). Grenzfalltest über injizierte Ähnlichkeitswerte (Unit-Test der Klassifikation, unabhängig von der MinHash-Schätzung).
-  - [ ] Seite mit ca. 30 % ersetztem Text → Changed bei Standardschwelle; nach Änderung der Schwelle auf 40 % → Not Changed, ohne erneutes Crawlen (Neuklassifikation aus gespeicherten Signaturen).
-  - [ ] Hälfte des Textes ersetzt → zwischen 35 % und 65 % (Toleranz wegen Approximation; fester Seed → deterministisch).
-  - [ ] Fehlen Inhalts-Signaturen in einem Crawl → Element deaktiviert mit Hinweis.
-- **Testfixture:** `out-compare` (Seite mit 50 % neuem Text, Seite mit ca. 30 % neuem Text, Seite mit nur geändertem Footer → bei Inhaltsbereich ohne Footer 0 %).
+- **Priorität:** P1
+- **Verweis:** siehe TECH-305 (führend). Die gespeicherten Inhalts-Signaturen erlauben Vergleich, Auto Compare (OUT-152) und gespeicherte Vergleiche (OUT-150) ohne erneutes Crawlen.
 
 ### OUT-146 URL-Mapping zwischen Crawls
 - **Priorität:** P1
-- **Beschreibung:** Regex-Ersetzungsregeln bilden URLs des Previous-Crawls auf URLs des Current-Crawls ab, damit z. B. Staging gegen Live, Mobil-Unterordner gegen Desktop oder URLs mit/ohne Trailing Slash verglichen werden können. Gilt für Overview, Issues, Site Structure und Change Detection.
-- **Eingaben/Konfiguration:** Liste von Regeln `Suchmuster (Regex)` → `Ersetzung` (mit `$1`-Gruppen), beliebig viele, nacheinander angewendet; Reiter „Test“ mit Eingabe-URL und Ergebnisanzeige.
+- **Beschreibung:** Regex-Ersetzungsregeln bilden URLs des Previous-Crawls auf URLs des Current-Crawls ab, damit z. B. Staging gegen Live, Mobil-Unterordner gegen Desktop oder URLs mit/ohne Trailing Slash verglichen werden können. Gilt für Overview, Issues, Site Structure, Inlinks/Outlinks-Vergleich (OUT-149) und Change Detection. Führend; CRAWL-034 und TECH-306 verweisen hierher.
+- **Eingaben/Konfiguration:** Liste von Regeln `Suchmuster (Regex)` → `Ersetzung` (mit `$1`-Gruppen), beliebig viele, nacheinander angewendet; Regex-Dialekt und Abgleichsemantik sind die gemeinsamen aus den Konventionen von 01-crawl.md (Lookahead/Lookbehind, Rückreferenzen `$1` im Ersatztext, Inline-Flags `(?i)`, nicht-gierige Quantoren; Backtracking-Engine `fancy-regex` mit Schrittlimit, Q23) und **Suche**, nicht Vollübereinstimmung: ersetzt wird jeder Treffer irgendwo in der URL (Entscheidung des Architekten zu R-02; die frühere Einschränkung auf die Crate `regex` ohne Lookaround aus TECH-306 entfällt). Reiter „Test“ mit Eingabe-URL und Ergebnisanzeige je Regel.
 - **Akzeptanzkriterien:**
   - [ ] Regel `^https://staging\.site\.test` → `https://www.site.test`: Staging-URL `/a` wird als dieselbe URL wie Live-`/a` behandelt (keine New/Missing-Einträge für gemappte Paare).
   - [ ] Regel `/$` → `` (Trailing Slash entfernen) mappt `/a/` auf `/a`.
   - [ ] Mehrere Regeln werden in Listenreihenfolge auf das Ergebnis der vorigen angewendet.
-  - [ ] Bilden zwei Previous-URLs auf dieselbe Current-URL ab, wird die erste verwendet und eine Warnung angezeigt **(OS-Festlegung)**.
-  - [ ] Ungültige Regex → Fehlermeldung im Dialog, Speichern nicht möglich.
-  - [ ] Test-Reiter zeigt für eine Eingabe die gemappte URL sofort an.
+  - [ ] Kollision (Entscheidung des Architekten): Bilden mehrere Previous-URLs auf dieselbe Current-URL ab, gewinnt die Previous-URL, deren erste passende Regel in der vom Nutzer festgelegten Listenreihenfolge am weitesten vorn steht. **OS-Festlegung** für Gleichstände: Eine Previous-URL, auf die keine Regel passt (unverändert identisch), geht jeder gemappten vor; bei gleicher erster Regel gewinnt die lexikographisch kleinste Previous-URL. Die unterlegenen Previous-URLs bleiben ohne Partner (wie nicht zugeordnete Previous-URLs); die Kollision wird als Warnung angezeigt und geloggt. Beispiel: Previous enthält `/a/` und `/a`, Regel `/$` → `` → `/a` (unverändert) wird `/a` zugeordnet, `/a/` bleibt ohne Partner.
+  - [ ] Ungültige Regex → Fehlermeldung im Dialog mit Fehlerposition, Speichern nicht möglich.
+  - [ ] Lookaround wird unterstützt: Regel `^https://staging\.site\.test(?=/shop/)` → `https://www.site.test` bildet `https://staging.site.test/shop/a` auf `https://www.site.test/shop/a` ab und lässt `https://staging.site.test/blog/b` unverändert.
+  - [ ] Suchsemantik: Regel `/amp/` → `/` (ohne Anker) bildet `https://site.test/de/amp/a` auf `https://site.test/de/a` ab.
+  - [ ] Überschreitet eine Regel beim Abgleich das Schrittlimit der Engine, bleibt die URL für diese Regel unverändert, und die Regel wird einmal je Vergleich als Warnung gemeldet (kein Absturz, kein Hängen).
+  - [ ] Test-Reiter zeigt für eine Eingabe die URL nach jeder einzelnen Regel und das Endergebnis sofort an (übernommen aus CRAWL-034).
+  - [ ] Regel `^https://staging\.site\.test/(.*)$` → `https://www.site.test/$1` ordnet `https://staging.site.test/a` der URL `https://www.site.test/a` zu (Rückverweis-Test, übernommen aus TECH-306).
 - **Testfixture:** `out-compare-mapping`: zwei Hosts (`staging.site.test`, `www.site.test`) mit gleicher Struktur, einer mit Trailing Slashes.
 
 ### OUT-147 Crawl-Overview-Export im Vergleichsmodus
@@ -1412,15 +1463,27 @@ Voraussetzung: beide Crawls liegen als Crawl-Dateien (`*.ospider`) in der Crawl-
 - **Ausgabe:** Export: `Path`, `Current URLs`, `Previous URLs`, `New`, `Missing`, `Average Depth Current`, `Average Depth Previous`.
 - **Akzeptanzkriterien:**
   - [ ] Verzeichnis `/blog/` mit 2 neuen und 1 fehlenden URL → `New`=2, `Missing`=1.
+  - [ ] Die Werte eines Elternverzeichnisses sind die Summe seiner Unterverzeichnisse plus seiner eigenen URLs (übernommen aus CRAWL-035).
 - **Testfixture:** `out-compare`.
 
 ### OUT-149 Inlinks/Outlinks-Vergleich im unteren Fenster
-- **Priorität:** P2
-- **Beschreibung:** Detail-Tabs Inlinks/Outlinks haben im Vergleichsmodus einen Umschalter `Auto` (folgt dem oberen Fenster), `Current`, `Previous` und Filter `Added`/`Removed` für Links, die zwischen den Crawls hinzugekommen/weggefallen sind.
+- **Priorität:** P1
+- **Beschreibung:** Die Detail-Tabs Inlinks und Outlinks zeigen im Vergleichsmodus die Links der markierten URL aus beiden Crawls und welche Links zwischen den Crawls hinzugekommen, weggefallen oder gleich geblieben sind. Führend; CRAWL-144 verweist hierher (Layout des Detail-Tabs: UI-Bereich).
+- **Eingaben/Konfiguration:**
+  - Auswahl „Quelle“: `Auto` (Standard; folgt der Auswahl Current/Previous des oberen Fensters), `Current`, `Previous`.
+  - Auswahl „Änderung“ mit den Filterwerten **Alle / Hinzugefügt / Entfernt / Ankertext geändert / Unverändert** (kanonische Werte für Export/CLI: `All` / `Added` / `Removed` / `Anchor Changed` / `Unchanged`); Standard „Alle“.
+- **Definitionen (OS-Festlegung):** Für eine URL u, die nach URL-Mapping (OUT-146) in beiden Crawls existiert, seien L_C(u) und L_P(u) die Mengen ihrer Outlinks (bzw. Inlinks) im Current- bzw. Previous-Crawl. **Link-Identität (Entscheidung des Architekten):** das Tripel (Quelle, Ziel, `Type`), Quelle und Ziel jeweils nach URL-Mapping; der Ankertext gehört nicht zur Identität (bei Outlinks ist die Quelle u, bei Inlinks das Ziel u). Hinzugefügt = L_C(u) \ L_P(u); Entfernt = L_P(u) \ L_C(u). Für Links in L_C(u) ∩ L_P(u) wird der Ankertext verglichen (Menge der Ankertexte aller Link-Instanzen mit dieser Identität, Whitespace normalisiert, case-sensitiv): unterscheidet er sich, ist die Änderungsart **„Ankertext geändert“**, sonst **„Unverändert“**. Ein Ankertextwechsel ist also nie „Entfernt + Hinzugefügt“. Änderungen nur von Position, `Rel` oder Pfad lassen einen Link „Unverändert“ (OS-Festlegung).
+- **Ausgabe (Spalten/Filter/Export):** Spalten des Standard-Linkformats (OUT-031) plus `Link Change` (`Added`/`Removed`/`Anchor Changed`/`Unchanged`), `Crawl` (`Current`/`Previous`; bei „Entfernt“ stets `Previous`) und `Previous Anchor` (genau bei `Anchor Changed` gefüllt) **(OS-Festlegung** der Spaltennamen). Der Export (OUT-021) trägt dieselben Zusatzspalten.
 - **Akzeptanzkriterien:**
-  - [ ] Seite, deren Tiefe von 1 auf 2 stieg, zeigt unter Inlinks → Removed den entfernten Link von der Startseite.
-  - [ ] Link-Identität: (Source, Destination, Type, Anchor) nach URL-Mapping **(OS-Festlegung)**.
-- **Testfixture:** `out-compare`.
+  - [ ] Seite, deren Tiefe von 1 auf 2 stieg, zeigt unter Inlinks → „Entfernt“ den entfernten Link von der Startseite.
+  - [ ] Quelle „Auto“: Steht das obere Fenster auf „Previous“, zeigt der Inlinks-Tab die Inlinks des Previous-Crawls; Umschalten oben auf „Current“ wechselt den Tab ohne weitere Aktion (übernommen aus CRAWL-144).
+  - [ ] Fixture v1→v2: `/start` verliert den Link auf `/b` und erhält einen auf `/a` → Outlinks von `/start` mit „Hinzugefügt“ = {`/a`}, „Entfernt“ = {`/b`}; mit „Alle“ und Quelle „Current“ fehlt `/b` (übernommen aus CRAWL-144).
+  - [ ] Nur geänderter Ankertext (`/c` „Alt“ → „Neu“) erscheint unter „Ankertext geändert“ mit `Link Change`=`Anchor Changed`, `Anchor`=Neu und `Previous Anchor`=Alt, nicht unter „Hinzugefügt“/„Entfernt“/„Unverändert“.
+  - [ ] Derselbe Ziel-URL-Wechsel bei gleichem Ankertext (Link von `/start` auf `/b` → `/a`) ist „Entfernt“ + „Hinzugefügt“; ein Wechsel nur des `Type` (Hyperlink → Canonical auf dasselbe Ziel) ebenfalls.
+  - [ ] Invariante je URL: |Alle mit Quelle Current| = |Hinzugefügt| + |Ankertext geändert| + |Unverändert|; |Alle mit Quelle Previous| = |Entfernt| + |Ankertext geändert| + |Unverändert|.
+  - [ ] Existiert u nur in einem Crawl, sind „Hinzugefügt“/„Entfernt“/„Ankertext geändert“/„Unverändert“ ausgegraut und die Tabelle zeigt die Links des Crawls, in dem u existiert (übernommen aus CRAWL-144).
+  - [ ] Export der Ansicht enthält die Spalten `Link Change`, `Crawl` und `Previous Anchor` (OUT-151).
+- **Testfixture:** `out-compare` erweitert um `/start` (Linkwechsel `/b` → `/a`) und `/c` (geänderter Ankertext).
 
 ### OUT-150 Gespeicherte Vergleiche
 - **Priorität:** P2
@@ -1439,53 +1502,63 @@ Voraussetzung: beide Crawls liegen als Crawl-Dateien (`*.ospider`) in der Crawl-
 ### OUT-151 Tab-Exporte im Vergleichsmodus
 - **Priorität:** P1
 - **Beschreibung:** Exporte aus der Vergleichsansicht enthalten die Vergleichsinformation.
-- **Ausgabe:** Zusätzlich zu den Spalten des Current-Crawls die Spalte `Comparison Status` (`Added`/`New`/`Removed`/`Missing`/`Unchanged`) und für Change-Detection-Ansichten die `Previous …`-Spalten **(OS-Festlegung)**.
+- **Ausgabe:** Zusätzlich zu den Spalten des Current-Crawls die Spalte `Comparison Status` (`Added`/`New`/`Removed`/`Missing`/`Unchanged`), bei aktivem URL-Mapping die Spalte `Previous Address` (übernommen aus TECH-306) und für Change-Detection-Ansichten die `Previous …`-Spalten (Spaltennamen gemäß TECH-301) **(OS-Festlegung)**. Detail-Exporte von Inlinks/Outlinks tragen `Link Change`, `Crawl`, `Previous Anchor` (OUT-149).
 - **Akzeptanzkriterien:**
   - [ ] Export „Response Codes:Client Error (4xx)“ mit Unterfilter „Removed“ enthält die behobene 404 mit `Comparison Status`=Removed.
   - [ ] Bulk-Exporte und Reports beziehen sich auf den Current-Crawl.
+  - [ ] Change-Detection-Exporte berücksichtigen den aktiven Umschalter „Changed“/„Not Changed“ (übernommen aus TECH-307).
+  - [ ] Mit Mapping-Regel Staging→Live enthält ein Export für die Live-URL `/a` die Spalte `Previous Address` = Staging-URL `/a`.
 - **Testfixture:** `out-compare`.
 
 ### OUT-152 Automatischer Vergleich (Auto Compare) für Scheduling und CLI
 - **Priorität:** P1
-- **Beschreibung:** Nach Abschluss eines geplanten oder CLI-Crawls wird automatisch mit dem vorherigen Crawl desselben Projekts verglichen; der Vergleich wird gespeichert (OUT-150) und kann in die Abschlussmail (OUT-282) einfließen.
-- **Eingaben/Konfiguration:** Aufgaben-Option „Mit vorherigem Crawl vergleichen“; CLI `--project-crawl-comparison ["true"|"false"]` (vergleicht die letzten beiden Crawls eines Projekts; das Argument ist optional, die Referenz-Syntax mit `"true"` wird ebenfalls akzeptiert, siehe OUT-202) bzw. `--crawl-comparison <idA> <idB>`.
+- **Beschreibung:** Nach Abschluss eines geplanten oder CLI-Crawls, der einem Projekt zugeordnet ist, wird automatisch mit dem vorherigen Crawl desselben Projekts verglichen (Vergleich inkl. Change Detection gemäß TECH-300); der Vergleich wird gespeichert (OUT-150) und fließt in die Abschlussmail ein (Änderungstabelle, OUT-282). Führender Eintrag; CRAWL-036 und TECH-308 verweisen hierher. Keine Abhängigkeit von einem Speichermodus oder Leistungsprofil: OpenSpider hat nur den disk-first-Modus (CRAWL-124, `docs/ARCHITECTURE.md`), die Option ist daher nie wegen der Speicherart gesperrt.
+- **Eingaben/Konfiguration:** Aufgaben-Option „Mit vorherigem Crawl vergleichen“ im Aufgabendialog (Reiter Spider, OUT-160/162), Standard aus, nur aktivierbar, wenn ein Projektname gesetzt ist (übernommen aus TECH-308); CLI `--project-crawl-comparison ["true"|"false"]` bzw. das gleichwertige OS-Alias `--compare-with-previous` (vergleicht mit dem vorherigen Crawl des Projekts; Syntax und Validierung in OUT-202) bzw. `--crawl-comparison <idA> <idB>`. Change-Detection-Einstellungen (TECH-300) und URL-Mapping (OUT-146) kommen aus der Aufgaben- bzw. übergebenen Konfigurationsdatei.
+- **Ausgabe:** gespeicherter Vergleich „<Projekt> – <Name Current> vs <Name Previous>“ (OUT-150); Änderungstabelle in der Abschlussmail (OUT-282); optional Exporte im Vergleichskontext (OUT-151).
 - **Akzeptanzkriterien:**
-  - [ ] Erster Crawl eines Projekts → kein Vergleich, Hinweis im Log, kein Fehler.
-  - [ ] Zweiter Crawl → gespeicherter Vergleich mit den beiden letzten Crawls des Projekts (nach Startzeit).
+  - [ ] Erster Crawl eines Projekts → kein Vergleich, Hinweis im Log, kein Fehler (Exit-Code 0); die Mail enthält nur die Issue-Tabelle und den Hinweis „kein vorheriger Crawl“ (übernommen aus TECH-308).
+  - [ ] Zweiter Crawl → genau ein gespeicherter Vergleich mit Current = Crawl 2, Previous = Crawl 1.
+  - [ ] Verglichen wird immer mit dem **unmittelbar vorherigen, erfolgreich abgeschlossenen** Crawl desselben Projekts (nach Startzeit); abgebrochene, fehlgeschlagene und unvollständige Crawls werden übersprungen: Lauf 3 nach abgebrochenem Lauf vergleicht mit Lauf 2 (übernommen aus TECH-308).
+  - [ ] Fehlt beim aktuellen Crawl die Crawl-Analyse (TECH-005), wird sie vor dem Vergleich automatisch ausgeführt (übernommen aus TECH-308).
+  - [ ] Die Zahlen des automatisch erzeugten Vergleichs (Overview und Mail-Änderungstabelle) stimmen mit einem manuell geöffneten Vergleich derselben zwei Crawls überein (Golden-Vergleich des Crawl Overview, OUT-147) (übernommen aus TECH-308).
   - [ ] Change-Detection-Einstellungen und URL-Mapping kommen aus der Konfigurationsdatei.
   - [ ] Exporte (`--export-tabs` usw.) können im Vergleichskontext ausgeführt werden und tragen dann die Vergleichsspalten (OUT-151).
-- **Testfixture:** `out-compare` via CLI-Integrationstest (zwei Läufe mit Projektname).
+  - [ ] Die Option ist bei jedem Leistungsprofil aktivierbar; es gibt keine Fehlermeldung oder ausgegraute Option wegen eines Speichermodus.
+  - [ ] `--project-crawl-comparison "true"` und `--compare-with-previous` erzeugen bei sonst gleichen Argumenten identische gespeicherte Vergleiche.
+- **Testfixture:** `out-compare` via CLI-Integrationstest (zwei Läufe mit Projektname; dritter Lauf nach absichtlich abgebrochenem Lauf); SMTP-Mock für die Mail.
 
 ### OUT-153 Paritätsprüfungen über Vergleich
 - **Priorität:** P2
 - **Beschreibung:** Der Vergleich dient auch für Paritätschecks zwischen Konfigurationen: Mobil- vs. Desktop-User-Agent, rohes vs. gerendertes HTML, verschiedene User-Agents. Im Detail-Tab „Rendered Page“ lassen sich die Screenshots beider Crawls nebeneinander zeigen.
 - **Akzeptanzkriterien:**
   - [ ] Zwei Crawls derselben Fixture mit unterschiedlichem User-Agent (Fixture liefert für Mobil-UA einen anderen Title) → Change Detection meldet die Title-Änderung.
-  - [ ] Nebeneinander-Ansicht nur verfügbar, wenn beide Crawls Screenshots enthalten.
+  - [ ] Nebeneinander-Ansicht nur verfügbar, wenn beide Crawls Screenshots enthalten; fehlt in einem Crawl der Screenshot, zeigt die betreffende Hälfte „Kein Screenshot in diesem Crawl“ (übernommen aus CRAWL-144).
+  - [ ] Beide Screenshots werden in gleicher Skalierung gezeigt; unter jedem Bild stehen Crawl-Name, Datum, User-Agent und Viewport (Anwendungsfall Desktop- vs. Mobil-Crawl) (übernommen aus CRAWL-144).
 - **Testfixture:** `out-compare-ua`: Fixture-Server variiert Title nach User-Agent.
 
 ---
 
 ## 7 Geplante Crawls (Scheduling)
 
-Menü „Datei → Zeitplanung“. Eine geplante Aufgabe ist eine Beschreibung von Crawl + Exporten, die zu festgelegten Zeiten über das CLI-Binary (Abschnitt 8) ausgeführt wird. Aufgaben werden als Dateien im Einstellungsordner gespeichert (`schedules/<task-id>.ostask`, TOML) **(OS-Festlegung)**.
+Menü „Datei → Zeitplanung“. Eine geplante Aufgabe ist eine Beschreibung von Crawl + Exporten, die zu festgelegten Zeiten über das CLI-Binary (Abschnitt 8) ausgeführt wird. Aufgaben werden als Dateien im Einstellungsordner gespeichert (`schedules/<task-id>.ostask`, TOML) **(OS-Festlegung)**. Dieser Abschnitt (OUT-160 … OUT-171) ist führend für geplante Crawls; CRAWL-136 verweist hierher. Die Priorität P1 aus der Architektenentscheidung K-5 ist eine **Einzelpriorität**: Jede ID dieses Abschnitts hat P1; weitergehende Teilumfänge tragen am Kriterium **[P2]** (Entscheidung zu R-08).
 
 ### OUT-160 Aufgabenverwaltung
 - **Priorität:** P1
-- **Beschreibung:** Liste aller Aufgaben mit Spalten `Name`, `Project`, `Next Run`, `Interval`, `Mode`, `Start URL / Source`, `Status` (Valid/Invalid), `Last Run Result`. Aktionen: Hinzufügen, Bearbeiten, Duplizieren, Löschen, Jetzt ausführen, Historie.
-- **Eingaben/Konfiguration:** –
+- **Beschreibung:** Liste aller Aufgaben mit Spalten `Name`, `Project`, `Next Run`, `Interval`, `Mode`, `Start URL / Source`, `Status` (Valid/Invalid), `Last Run Result`. Aktionen: Hinzufügen, Bearbeiten, Duplizieren, Löschen, Jetzt ausführen, Historie, Export/Import (OUT-170), Abbrechen eines laufenden Laufs (OUT-171).
+- **Eingaben/Konfiguration:** Der Aufgabendialog folgt der Reiterstruktur der Referenz, damit Umsteiger Felder an gewohnter Stelle finden (übernommen aus CRAWL-136): **Allgemein** (OUT-161), **Spider** (Modus, Start-URL/Listenquelle, Konfiguration, Auth-Profil, „Mit vorherigem Crawl vergleichen“ – OUT-162/163, OUT-152), **APIs** (OUT-164), **Exporte** mit den Unterreitern in dieser Reihenfolge: Ausgabe-Einstellungen, Tabellen, Lokale Dateien, Looker Studio (OUT-165/210), Vorlagen/Presets (OUT-075), Benachrichtigungen (OUT-281). Ein Schalter „Headless“ existiert nicht (OUT-163).
 - **Ausgabe:** Aufgabendateien + Registrierung beim Betriebssystem (OUT-166).
 - **Akzeptanzkriterien:**
   - [ ] Hinzufügen → Aufgabe erscheint in der Liste und ist im OS-Planer registriert (macOS: LaunchAgent-plist vorhanden; Windows: Eintrag in der Aufgabenplanung unter Ordner `\OpenSpider\`).
   - [ ] Löschen → Aufgabendatei und OS-Registrierung entfernt; bereits erzeugte Crawls und Exporte bleiben erhalten.
   - [ ] „Jetzt ausführen“ startet sofort einen Lauf, unabhängig vom Zeitplan, und verschiebt den nächsten geplanten Lauf nicht.
   - [ ] Bearbeiten einer Aufgabe während sie läuft wirkt erst auf den nächsten Lauf.
+  - [ ] Der Aufgabendialog zeigt genau die Reiter Allgemein, Spider, APIs, Exporte; der Reiter Exporte genau die sechs Unterreiter in der oben genannten Reihenfolge (übernommen aus CRAWL-136).
 - **Testfixture:** Integrationstest mit gemocktem OS-Planer-Adapter (Trait in `os-cli`), plus manueller Test je OS pro Release.
 
 ### OUT-161 Aufgabe: Allgemein (Name, Projekt, Zeitplan)
 - **Priorität:** P1
 - **Beschreibung:** Grunddaten einer Aufgabe.
-- **Eingaben/Konfiguration:** `Task Name` (Pflicht, eindeutig), `Project Name` (Projektordner in der Crawl-Verwaltung und Drive, Standard = Taskname), `Description`, `Start Date/Time`, `Interval` ∈ {Einmalig, Täglich, Wöchentlich, Monatlich} (P1); erweitert **(OS-Festlegung, P2)**: Stündlich, alle N Tage, Wochentage-Auswahl.
+- **Eingaben/Konfiguration:** `Task Name` (Pflicht, eindeutig), `Project Name` (Projektordner in der Crawl-Verwaltung und Drive, Standard = Taskname), `Description`, `Start Date/Time`, `Interval` ∈ {Einmalig, Täglich, Wöchentlich, Monatlich}; **[P2]** erweitert **(OS-Festlegung)**: Stündlich, alle N Tage, Wochentage-Auswahl.
 - **Ausgabe:** Zeitplan im OS-Planer.
 - **Akzeptanzkriterien:**
   - [ ] Startzeitpunkt in der Vergangenheit → Validierungsfehler bei „Einmalig“; bei wiederkehrenden Intervallen wird der nächste zukünftige Termin berechnet und angezeigt.
@@ -1493,29 +1566,33 @@ Menü „Datei → Zeitplanung“. Eine geplante Aufgabe ist eine Beschreibung v
   - [ ] Wöchentlich → gleicher Wochentag und gleiche Uhrzeit wie Startzeitpunkt.
   - [ ] Zeitangaben gelten in lokaler Zeit; bei Sommerzeitumstellung läuft ein täglicher 02:30-Lauf am Umstellungstag genau einmal (in der fehlenden Stunde: 03:30; in der doppelten: beim ersten Auftreten).
   - [ ] Taskname mit für Dateinamen unzulässigen Zeichen wird für Ordnernamen bereinigt (OUT-008), Anzeige bleibt unverändert.
+  - [ ] [P2] Intervall „Stündlich“, „alle N Tage“ und Wochentage-Auswahl erzeugen korrekte nächste Termine (Unit-Tests von `next_run` inkl. DST).
 - **Testfixture:** Unit-Tests der Terminberechnung (`next_run(start, interval, now, tz)`) mit Zeitzone `Europe/Berlin` inkl. DST-Daten 2026-03-29 und 2026-10-25.
 
 ### OUT-162 Aufgabe: Crawl-Einstellungen
 - **Priorität:** P1
 - **Beschreibung:** Was und wie gecrawlt wird.
-- **Eingaben/Konfiguration:** `Mode` ∈ {Spider, List, APIs (P2)}; Spider: Start-URL; List: Quelle = lokale Datei (`.txt`, `.csv`, `.xlsx`), XML-Sitemap-URL (auch Sitemap-Index; mehrere Sitemap-URLs zulässig) oder Google-Sheet-URL (mit Drive-Konto für private Tabellen); `Config File` (`.osconfig`, optional – sonst Standardkonfiguration); `Auth Profile` (`.osauth`, optional).
+- **Eingaben/Konfiguration:** `Mode` ∈ {Spider, List, **[P2]** APIs}; Spider: Start-URL (Eingabefeld bietet die zuletzt gecrawlten URLs an, dieselbe Liste wie CRAWL-001; übernommen aus CRAWL-136); List: Quelle = lokale Datei (`.txt`, `.csv`, `.xlsx`), XML-Sitemap-URL (auch Sitemap-Index; mehrere Sitemap-URLs zulässig) oder Google-Sheet-URL (mit Drive-Konto für private Tabellen); `Config File` (`.osconfig`, optional – sonst Standardkonfiguration); `Auth Profile` (`.osauth`, optional).
 - **Akzeptanzkriterien:**
   - [ ] List-Quelle Sitemap-URL → alle `<loc>` der Sitemap (rekursiv über Index) werden gecrawlt.
   - [ ] List-Quelle Google-Sheet → URLs der ersten Spalte des ersten Blatts werden gecrawlt (Kopfzeile wird erkannt, wenn die erste Zelle keine URL ist).
   - [ ] Fehlt die Konfigurationsdatei zur Laufzeit → Lauf schlägt mit Status „Failed: config not found“ fehl, Historie-Eintrag, keine Teil-Exporte.
   - [ ] Auth-Profil mit Formular-Login → der geplante Crawl erreicht die geschützte Seite (Status 200 statt Weiterleitung zum Login).
+  - [ ] Das Start-URL-Feld zeigt nach zwei manuellen Crawls beide URLs als Vorschläge (jüngste zuerst) (übernommen aus CRAWL-136).
+  - [ ] [P2] Modus APIs: der Lauf ruft nur API-Daten für die Liste ab und sendet keine Requests an die gelisteten URLs (wie OUT-208).
 - **Testfixture:** `out-schedule`: Fixture mit Sitemap-Index, Login-Formular-Bereich (Cookie-Session) und Basic-Auth-Bereich.
 
 ### OUT-163 Aufgabe: Ausführungsart (headless)
 - **Priorität:** P1
-- **Beschreibung:** Geplante Läufe laufen immer ohne Benutzeroberfläche über das CLI-Binary **(OS-Festlegung;** in der Referenz muss „Headless“ für Exporte aktiviert sein – bei OpenSpider entfällt die Wahl). Optional „Nach Abschluss in der App öffnen“ (P2): Ist die Desktop-App geöffnet, wird der Crawl dort als Benachrichtigung angeboten.
+- **Beschreibung:** Geplante Läufe laufen immer ohne Benutzeroberfläche über das CLI-Binary **(OS-Festlegung;** in der Referenz muss „Headless“ für Exporte aktiviert sein – bei OpenSpider entfällt die Wahl). **[P2]** Optional „Nach Abschluss in der App öffnen“: Ist die Desktop-App geöffnet, wird der Crawl dort als Benachrichtigung angeboten.
 - **Akzeptanzkriterien:**
   - [ ] Ein geplanter Lauf öffnet kein Fenster und stiehlt keinen Fokus.
   - [ ] Läuft die Desktop-App, beeinflusst der geplante Lauf deren Crawl nicht (getrennte Prozesse, getrennte Crawl-Dateien).
+  - [ ] [P2] Mit „Nach Abschluss in der App öffnen“ und geöffneter App erscheint nach Laufende genau ein In-App-Hinweis mit „Öffnen“.
 - **Testfixture:** manueller Test je OS.
 
 ### OUT-164 Aufgabe: API-Datenquellen
-- **Priorität:** P2
+- **Priorität:** P1
 - **Beschreibung:** Pro Aufgabe wählbar, welche Integrationen während des Crawls abgefragt werden: GA4, Search Console, PageSpeed Insights, Majestic, Ahrefs, Moz. Zugangsdaten stammen aus den globalen Integrationseinstellungen (Schlüsselbund).
 - **Akzeptanzkriterien:**
   - [ ] Aktivierte Integration ohne gültige Zugangsdaten → Aufgabe „Invalid“ mit Grund.
@@ -1540,15 +1617,17 @@ Menü „Datei → Zeitplanung“. Eine geplante Aufgabe ist eine Beschreibung v
 - **Priorität:** P1
 - **Beschreibung:** Damit geplante Crawls ohne geöffnete App laufen, registriert OpenSpider jede Aufgabe beim OS-Planer, der `openspider --run-task <task-id>` aufruft **(OS-Festlegung)**.
   - macOS: LaunchAgent (`~/Library/LaunchAgents/de.openspider.task.<id>.plist`) mit `StartCalendarInterval`; läuft im Benutzerkontext, wenn der Benutzer angemeldet ist.
-  - Windows: Aufgabe in der Aufgabenplanung (Ordner `\OpenSpider\`), Trigger gemäß Intervall, „Nur ausführen, wenn Benutzer angemeldet ist“ (Standard); Option „Unabhängig von der Anmeldung ausführen“ (P2, verlangt Kennworteingabe im Windows-Dialog – OpenSpider speichert kein Windows-Kennwort).
-- **Eingaben/Konfiguration:** Optionen: „Auch im Akkubetrieb ausführen“ (Standard an, wie Referenz seit 18.2), „Verpasste Läufe nach dem Aufwachen nachholen“ (Standard an: höchstens **ein** Nachhol-Lauf), „Rechner zum Ausführen aufwecken“ (Windows, P2).
+  - Windows: Aufgabe in der Aufgabenplanung (Ordner `\OpenSpider\`), Trigger gemäß Intervall, „Nur ausführen, wenn Benutzer angemeldet ist“ (Standard); **[P2]** Option „Unabhängig von der Anmeldung ausführen“ (verlangt Kennworteingabe im Windows-Dialog – OpenSpider speichert kein Windows-Kennwort).
+- **Eingaben/Konfiguration:** Optionen: „Auch im Akkubetrieb ausführen“ (Standard an, wie Referenz seit 18.2), „Verpasste Läufe nach dem Aufwachen nachholen“ (Standard an: höchstens **ein** Nachhol-Lauf), **[P2]** „Rechner zum Ausführen aufwecken“ (Windows).
 - **Akzeptanzkriterien:**
   - [ ] Bei geschlossener App startet der Lauf zur geplanten Zeit (± 60 s).
   - [ ] Nach Ruhezustand über 3 verpasste tägliche Termine → genau ein Nachhol-Lauf.
   - [ ] Keine Begrenzung der Laufzeit durch den Planer (Windows: Option „Aufgabe beenden, falls länger als“ deaktiviert) – lange Crawls werden nicht abgebrochen.
   - [ ] Nach einem App-Update zeigen registrierte Aufgaben auf das neue Binary (stabiler Pfad oder Neuregistrierung beim ersten Start nach Update).
   - [ ] Deinstallation entfernt alle OS-Registrierungen.
-- **Testfixture:** Adapter-Unit-Tests (erzeugtes plist/Task-XML gegen Golden), manueller Release-Test.
+  - [ ] Aufgabe „täglich 03:00“ erzeugt plist bzw. Task-XML identisch zu den Golden-Dateien `daily-0300.plist` / `daily-0300.xml`; die Task-XML enthält `DisallowStartIfOnBatteries=false`, `StopIfGoingOnBatteries=false` und `ExecutionTimeLimit=PT0S` (übernommen aus CRAWL-136).
+  - [ ] [P2] „Unabhängig von der Anmeldung ausführen“ und „Rechner zum Ausführen aufwecken“ setzen die entsprechenden Felder der Task-XML (Golden-Varianten).
+- **Testfixture:** Adapter-Unit-Tests (erzeugtes plist/Task-XML gegen Golden unter `tests/golden/out-schedule/`), manueller Release-Test.
 
 ### OUT-167 Parallele und überlappende Läufe
 - **Priorität:** P1
@@ -1578,7 +1657,7 @@ Menü „Datei → Zeitplanung“. Eine geplante Aufgabe ist eine Beschreibung v
 - **Testfixture:** CLI-Integrationstest mit absichtlich abgebrochenem Prozess.
 
 ### OUT-170 Aufgaben exportieren/importieren
-- **Priorität:** P2
+- **Priorität:** P1
 - **Beschreibung:** Aufgaben können als Datei exportiert und auf einem anderen Rechner importiert werden.
 - **Ausgabe:** `.ostask`-Datei (TOML) ohne Geheimnisse; referenzierte Konfigurations-/Auth-Dateien optional als `.zip` mitgepackt.
 - **Akzeptanzkriterien:**
@@ -1587,19 +1666,20 @@ Menü „Datei → Zeitplanung“. Eine geplante Aufgabe ist eine Beschreibung v
 - **Testfixture:** Roundtrip-Test.
 
 ### OUT-171 Laufende geplante Crawls abbrechen
-- **Priorität:** P2
-- **Beschreibung:** Aus der Aufgabenliste kann ein laufender Lauf abgebrochen werden; optional maximale Laufzeit je Aufgabe **(OS-Festlegung;** die Referenz unterstützt das laut Hersteller noch nicht).
-- **Eingaben/Konfiguration:** „Max. Laufzeit (h)“, Standard leer.
+- **Priorität:** P1
+- **Beschreibung:** Aus der Aufgabenliste kann ein laufender Lauf abgebrochen werden; **[P2]** optional maximale Laufzeit je Aufgabe **(OS-Festlegung;** die Referenz unterstützt das laut Hersteller noch nicht).
+- **Eingaben/Konfiguration:** **[P2]** „Max. Laufzeit (h)“, Standard leer.
 - **Akzeptanzkriterien:**
   - [ ] Abbruch → Prozess beendet sich innerhalb 10 s, Crawl wird gespeichert, Status `Aborted`, Exporte werden nicht erzeugt.
-  - [ ] Max. Laufzeit erreicht → Crawl wird gestoppt, Exporte des bisherigen Stands werden erzeugt, Status `Completed with warnings`.
+  - [ ] [P2] Max. Laufzeit erreicht → Crawl wird gestoppt, Exporte des bisherigen Stands werden erzeugt, Status `Completed with warnings`.
+  - [ ] Ein laufender geplanter Crawl bietet keine Aktion „Pausieren“ (Parität: ein geplanter Lauf ist ein Prozess ohne Oberfläche), nur „Abbrechen“ (übernommen aus CRAWL-136).
 - **Testfixture:** `out-basic-site` mit großer Verzögerung.
 
 ---
 
 ## 8 Kommandozeile / Headless
 
-Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen ohne Benutzeroberfläche. Optionsnamen orientieren sich an der Referenz, damit vorhandene Skripte leicht übertragbar sind; abweichende/zusätzliche Optionen sind markiert. Alle Exporte nutzen die kanonischen Namen aus Abschnitt 0.
+Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen ohne Benutzeroberfläche. Optionsnamen orientieren sich an der Referenz, damit vorhandene Skripte leicht übertragbar sind; abweichende/zusätzliche Optionen sind markiert. Alle Exporte nutzen die kanonischen Namen aus Abschnitt 0. Dieser Abschnitt ist führend für die Kommandozeile (K-6: OUT-180 … OUT-195 tragen als **Einzelpriorität** je ID P0 – einzige begründete Ausnahme ist OUT-187 mit P1, weil `--auth-config` Authentifizierungsprofile voraussetzt (OUT-223, P1) und ohne sie nicht umsetzbar ist; OUT-196 ff. haben eigene Prioritäten; Entscheidung zu R-08); CRAWL-135 verweist hierher, die crawl-seitige Wirkung einzelner Optionen (z. B. `--resolve`, `--resume`) beschreibt der jeweils genannte CRAWL-Eintrag. Exit-Codes gelten ausschließlich nach OUT-204.
 
 ### OUT-180 CLI-Binary und Aufruf je Plattform
 - **Priorität:** P0
@@ -1615,11 +1695,12 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 ### OUT-181 Hilfe und Version
 - **Priorität:** P0
 - **Beschreibung:** Selbstdokumentation.
-- **Eingaben/Konfiguration:** `--help`; `--help export-tabs`, `--help bulk-export`, `--help save-report`, `--help export-custom-summary` listen alle gültigen Namen der jeweiligen Kategorie (aus derselben Registry wie die UI); `--version`.
+- **Eingaben/Konfiguration:** `--help`; `--help export-tabs`, `--help bulk-export`, `--help save-report`, `--help export-custom-summary` listen alle gültigen Namen der jeweiligen Kategorie (aus derselben Registry wie die UI; Syntax wie Referenz); `--version`. Kurzformen `--list-exports` / `--list-reports` siehe OUT-203.
 - **Akzeptanzkriterien:**
   - [ ] `--help export-tabs` listet jeden `Tab:Filter`, eine Zeile je Eintrag, maschinenlesbar mit `--json`.
   - [ ] `--version` gibt `openspider <semver> (<git-hash>, <os>-<arch>)` aus.
   - [ ] Liste ist vollständig: Registry-Test vergleicht Anzahl mit UI-Filterregistry.
+  - [ ] `--help` listet alle Flags gruppiert (Quelle, Konfiguration, Vergleich, APIs, Exporte, OS-Erweiterungen); OS-Erweiterungen sind als solche markiert (übernommen aus CRAWL-135).
 - **Testfixture:** Golden-Ausgabe `tests/golden/out-cli/help_export_tabs.txt`.
 
 ### OUT-182 `--crawl <url>`
@@ -1629,30 +1710,34 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - [ ] URL ohne Schema → `http://` wird ergänzt (wie UI), Hinweis auf stderr.
   - [ ] Ungültige URL → Exit-Code 2 vor Crawlbeginn.
   - [ ] Start-URL nicht erreichbar → Crawl endet regulär mit 1 URL (No Response), Exit-Code 0, Warnung **(OS-Festlegung:** kein Fehler, weil das ein gültiges Crawlergebnis ist); mit `--fail-on-start-error` Exit-Code 3.
+  - [ ] `openspider --crawl https://site.test/ --save-crawl --output-folder X --resolve '*.site.test=127.0.0.1'` mit demselben Profil wie ein UI-Crawl derselben Fixture ergibt dieselbe URL-Menge, dieselben Statuscodes und Tiefen (übernommen aus CRAWL-135; `--resolve` ist OS-Erweiterung, Wirkung CRAWL-123).
 - **Testfixture:** `out-basic-site`.
 
 ### OUT-183 `--crawl-list <quelle>`
 - **Priorität:** P0
-- **Beschreibung:** Crawl im Listenmodus. Quelle: lokale Datei (`.txt`, `.csv`, `.xlsx`; URLs werden aus allen Zellen extrahiert), XML-Sitemap-URL oder -Datei (inkl. Index; mehrfach angebbar), Google-Sheet-URL (mit `--google-drive-account`).
+- **Beschreibung:** Crawl im Listenmodus. Quelle: lokale Datei (`.txt`, `.csv`, `.xlsx`; URLs werden aus allen Zellen extrahiert), XML-Sitemap-URL oder -Datei (inkl. Index; mehrfach angebbar), Google-Sheet-URL (mit `--google-drive-account`). Zusätzlich akzeptiert (übernommen aus CRAWL-135): `--crawl-google-sheet <Google-Konto> <Tabellen-URL>` (Referenz-Schreibweise laut Release-Notes; exakte Referenz-Syntax noch offen, Q31 in 01) als gleichwertige Form; OS-Erweiterung `--crawl-sitemap <URL>` als Kurzform für `--crawl-list <Sitemap-URL>`.
 - **Akzeptanzkriterien:**
   - [ ] Datei mit 10 URLs, davon 2 Duplikate → 8 gecrawlte URLs; Export in Upload-Reihenfolge (OUT-015) mit 10 Zeilen.
   - [ ] `--crawl-list https://site.test/sitemap_index.xml` crawlt alle URLs aller untergeordneten Sitemaps.
-  - [ ] Mehrere `--crawl-list`-Angaben werden zusammengeführt (P2).
+  - [ ] [P2] Mehrere `--crawl-list`-Angaben werden zusammengeführt.
+  - [ ] `--crawl-list https://site.test/sitemap_index.xml` und `--crawl-sitemap https://site.test/sitemap_index.xml` erzeugen identische Crawls (gleiche URL-Menge, gleiche Reihenfolge im Request-Log) (übernommen aus CRAWL-135).
+  - [ ] Bei `--crawl-list <datei>` gibt die CLI auf stderr dieselben Zähler (gelesen, gültig, Duplikate, ungültig) aus wie der Zusammenfassungsdialog des Listenmodus (CRAWL-027) (übernommen aus CRAWL-135).
   - [ ] Leere Liste → Exit-Code 2 mit Meldung.
 - **Testfixture:** `out-list-order`, `out-sitemaps-in`.
 
 ### OUT-184 `--load-crawl <datei|id>`
-- **Priorität:** P1
+- **Priorität:** P0
 - **Beschreibung:** Öffnet einen gespeicherten Crawl (Pfad zu `.ospider` oder Crawl-ID aus der Crawl-Verwaltung), um ohne erneutes Crawlen zu exportieren.
 - **Akzeptanzkriterien:**
   - [ ] `--load-crawl <id> --export-tabs "Internal:All" --output-folder out` erzeugt den Export ohne Netzwerkzugriff.
   - [ ] Unbekannte ID → Exit-Code 2 mit Hinweis auf `--list-crawls`.
   - [ ] Ein noch laufender oder unvollständiger Crawl kann geladen werden; Exporte zeigen den gespeicherten Stand; Warnung „crawl incomplete“.
   - [ ] Crawl-Dateien älterer Schemaversion werden migriert (Kopie, Original bleibt unverändert) **(OS-Festlegung)**.
-- **Testfixture:** gespeicherter Crawl `tests/fixtures/out-basic-site/crawl.ospider`.
+  - [ ] OS-Erweiterung `--resume` zusammen mit `--load-crawl` setzt einen pausierten oder unterbrochenen Crawl fort (Fortsetzungssemantik: CRAWL-126/CRAWL-128); ohne `--resume` wird nicht weitergecrawlt (übernommen aus CRAWL-135).
+- **Testfixture:** gespeicherter Crawl `tests/fixtures/out-basic-site/crawl.ospider`; pausierter Crawl aus `out-queue`.
 
 ### OUT-185 `--list-crawls`
-- **Priorität:** P1
+- **Priorität:** P0
 - **Beschreibung:** Listet alle Crawls der Crawl-Verwaltung.
 - **Ausgabe:** Tabelle `ID`, `Project`, `Name`, `Mode`, `Start URL`, `Started`, `URLs`, `Status`, `Locked`; mit `--json` als JSON-Array.
 - **Akzeptanzkriterien:**
@@ -1662,16 +1747,18 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 
 ### OUT-186 `--config <datei>`
 - **Priorität:** P0
-- **Beschreibung:** Verwendet eine gespeicherte Crawl-Konfiguration (OUT-221). Alle Optionen ohne eigene CLI-Flags (Rendering, Include/Exclude, Custom Extraction, Spalten, Sitemap-Optionen, Change Detection, Segmente …) werden so gesetzt.
+- **Beschreibung:** Verwendet eine gespeicherte Crawl-Konfiguration (OUT-221). Alle Optionen ohne eigene CLI-Flags (Rendering, Include/Exclude, Custom Extraction, Spalten, Sitemap-Optionen, Change Detection, Segmente …) werden so gesetzt. OS-Erweiterungen (übernommen aus CRAWL-135): `--set <schlüssel>=<wert>` überschreibt einzelne Konfigurationswerte (mehrfach angebbar, wirkt nach dem Laden von `--config`); `--max-urls <n>` ist Kurzform für `--set limits.max_urls=<n>`.
 - **Akzeptanzkriterien:**
   - [ ] Konfiguration mit Exclude `/privat/` → keine URL unter `/privat/` im Crawl.
   - [ ] Nicht lesbare/ungültige Datei → Exit-Code 2 mit Zeilen-/Feldangabe des Fehlers.
   - [ ] Konfiguration einer neueren Schemaversion mit unbekannten Feldern → Warnung, unbekannte Felder werden ignoriert.
+  - [ ] `--set threads=abc` → Exit-Code 2 mit Meldung „ungültiger Wert für threads: Ganzzahl 1–200 erwartet“; `--set unbekannt=1` → Exit-Code 2 mit Vorschlag des ähnlichsten Schlüssels (übernommen aus CRAWL-135, Exit-Code nach OUT-204).
+  - [ ] `--config a.osconfig --set threads=10` → effektiver Wert 10, auch wenn `a.osconfig` 5 setzt.
 - **Testfixture:** `tests/fixtures/out-basic-site/exclude.osconfig`.
 
 ### OUT-187 `--auth-config <datei>`
 - **Priorität:** P1
-- **Beschreibung:** Verwendet ein Authentifizierungsprofil (Basic/Digest/NTLM-Zugangsdaten und/oder gespeicherte Formular-Login-Cookies), damit automatisierte Crawls geschützte Bereiche erreichen.
+- **Beschreibung:** Verwendet ein Authentifizierungsprofil (Basic/Digest/NTLM-Zugangsdaten und/oder gespeicherte Formular-Login-Cookies), damit automatisierte Crawls geschützte Bereiche erreichen. Bewusste Ausnahme von der P0-Einzelpriorität des CLI-Kerns (siehe Abschnittseinleitung): P1, weil das Profilformat OUT-223 (P1) Voraussetzung ist.
 - **Akzeptanzkriterien:**
   - [ ] Basic-Auth-Bereich der Fixture liefert mit Profil 200, ohne 401.
   - [ ] Formular-Login: gespeicherte Session-Cookies werden gesendet; abgelaufene Session → Warnung „authentication cookies expired“ im Log.
@@ -1680,9 +1767,10 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 
 ### OUT-188 `--headless`
 - **Priorität:** P0
-- **Beschreibung:** Das CLI-Binary läuft immer ohne Oberfläche; `--headless` wird aus Kompatibilitätsgründen akzeptiert und ist wirkungslos **(OS-Festlegung)**. Mit `--gui` (P2) wird stattdessen die Desktop-App mit dem gestarteten Crawl geöffnet.
+- **Beschreibung:** Das CLI-Binary läuft immer ohne Oberfläche; `--headless` wird aus Kompatibilitätsgründen akzeptiert und ist wirkungslos **(OS-Festlegung)**. **[P2]** Mit `--gui` wird stattdessen die Desktop-App mit dem gestarteten Crawl geöffnet.
 - **Akzeptanzkriterien:**
   - [ ] Mit und ohne `--headless` identisches Verhalten des CLI-Binaries.
+  - [ ] [P2] `--gui` öffnet die Desktop-App bzw. übergibt den Crawl an eine laufende Instanz (OUT-232).
 - **Testfixture:** CLI-Test.
 
 ### OUT-189 `--save-crawl`
@@ -1705,7 +1793,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 - **Testfixture:** CLI-Integrationstests mit temporären Ordnern.
 
 ### OUT-191 `--project-name`, `--task-name`
-- **Priorität:** P1
+- **Priorität:** P0
 - **Beschreibung:** Ordnet den Crawl einem Projekt und Namen in der Crawl-Verwaltung zu; bestimmt auch die Ordnerstruktur in Google Drive und lokal (OUT-165).
 - **Akzeptanzkriterien:**
   - [ ] Crawl erscheint in der UI-Crawl-Verwaltung unter dem Projekt mit dem Namen.
@@ -1732,11 +1820,15 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 
 ### OUT-194 `--save-report "<Menü>:<Report>,…"`
 - **Priorität:** P0
-- **Beschreibung:** Speichert Reports aus Abschnitt 4.
+- **Beschreibung:** Speichert Reports aus Abschnitt 4. Zusätzlich registrierte Report-Namen anderer Bereiche (übernommen aus 08/09; Inhalt und Format führend dort, Namensprüfung nach OUT-203):
+  - [M4] `AI:Action Plan` – Maßnahmenplan (AI-106/AI-107); Format über `--export-format` bzw. die Report-Option `md|html|pdf|docx` (Standard `md`); `AI:AI Crawler Accessibility` (AI-125); `AI:AI Search Readiness` (AI-127).
+  - [M5] `DataForSEO:Keyword Cannibalization`, `DataForSEO:DataForSEO Relevant Pages`, `DataForSEO:LLM Share of Voice`, `DataForSEO:LLM Top Domains per Keyword`, `DataForSEO:LLM Top Pages per Keyword`, `DataForSEO:LLM Co-Cited Pages`, `DataForSEO:LLM Mentions History`, `DataForSEO:DataForSEO Cost Log` (D4S-072/073).
 - **Akzeptanzkriterien:**
   - [ ] `--save-report "Crawl Overview,Redirects:Redirect Chains"` erzeugt `crawl_overview.csv` und `redirect_chains.csv`.
   - [ ] Report mit unerfüllter Voraussetzung → Warnung, kein Abbruch, Exit-Code 0 (bzw. 4 mit `--strict`).
-- **Testfixture:** `out-redirects`.
+  - [ ] [M4] `--save-report "AI:Action Plan"` nach einem Lauf mit `--ai-tasks audit-summary` erzeugt `ai_action_plan.md`, inhaltsgleich mit `tests/golden/ai/action-plan.md` (AI-107); ohne KI-Lauf im Crawl gilt die Voraussetzungsregel oben (Warnung, kein Abbruch).
+  - [ ] [M5] `--save-report "DataForSEO:Keyword Cannibalization"` gegen den DataForSEO-Mock erzeugt die Datei aus D4S-072.
+- **Testfixture:** `out-redirects`; [M4] `tests/fixtures/ai/site/` + `ai-mock` (08); [M5] `tests/fixtures/dfs-site/` + DataForSEO-Mock (09).
 
 ### OUT-195 `--export-format csv|xls|xlsx|gsheet`
 - **Priorität:** P0
@@ -1766,7 +1858,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 - **Beschreibung:** Wählt ein in der App verbundenes Google-Konto (E-Mail-Adresse) für Drive/Sheets-Exporte und Google-Sheet-Listenquellen.
 - **Akzeptanzkriterien:**
   - [ ] Nicht verbundenes Konto → Exit-Code 2 mit Hinweis, das Konto in der App zu verbinden (OAuth erfordert einmalig einen Browser).
-  - [ ] Auf Rechnern ohne Browser kann ein in der App exportiertes Konto-Token-Paket importiert werden: `openspider --import-google-credentials <datei>` (P2, verschlüsselt, OUT-223).
+  - [ ] [P2] Auf Rechnern ohne Browser kann ein in der App exportiertes Konto-Token-Paket importiert werden: `openspider --import-google-credentials <datei>` (verschlüsselt, OUT-223).
 - **Testfixture:** Drive-Mock.
 
 ### OUT-199 `--email-on-complete <adresse,…>`
@@ -1786,31 +1878,51 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 - **Testfixture:** Sheets-Mock.
 
 ### OUT-201 API-Optionen
-- **Priorität:** P2
-- **Beschreibung:** Aktiviert Integrationen für den Crawl: `--use-google-analytics-4 "<konto>" "<account>" "<property>" "<datenstrom>"`, `--use-google-search-console "<konto>" "<website>"`, `--use-pagespeed`, `--use-ahrefs`, `--use-majestic`, `--use-mozscape`. Schlüssel kommen aus dem Schlüsselbund der App oder aus Umgebungsvariablen `OPENSPIDER_PSI_KEY`, `OPENSPIDER_AHREFS_KEY`, `OPENSPIDER_MAJESTIC_KEY`, `OPENSPIDER_MOZ_KEY` **(OS-Festlegung)**. `--use-google-analytics` (Universal Analytics) wird mit Fehlermeldung „nicht mehr unterstützt“ abgelehnt.
-- **Akzeptanzkriterien:**
-  - [ ] Fehlender Schlüssel → Exit-Code 2 vor dem Crawl.
-  - [ ] Schlüssel aus Umgebungsvariable erscheinen nie im Log.
-- **Testfixture:** Mock-Endpunkte.
-
-### OUT-202 `--crawl-comparison <id1> <id2>`, `--project-crawl-comparison ["true"|"false"]`
 - **Priorität:** P1
-- **Beschreibung:** Vergleich zweier Crawls bzw. der letzten beiden eines Projekts (OUT-152); Current/Previous nach Crawl-Datum. Die Referenz erwartet `--project-crawl-comparison "true"`; OpenSpider akzeptiert das Flag mit und ohne Argument, damit bestehende Skripte unverändert laufen.
+- **Beschreibung:** Aktiviert Integrationen für einen CLI- oder geplanten Crawl; führend für die CLI-Anbindung der Integrationen, INTEG-017 (Integrationen in Zeitplanung und CLI) und AI-022 (KI-Aufgaben in CLI) verweisen hierher bzw. legen die fachliche Semantik fest. Konto- **und** Property-Auswahl werden vollständig berücksichtigt (übernommen aus INTEG-017).
+  - Analytics/Search Console/PageSpeed: `--use-google-analytics-4 "<konto>" "<account>" "<property>" "<datenstrom>"`, `--use-google-search-console "<konto>" "<website>"`, `--use-pagespeed`.
+  - Linkmetriken: `--use-ahrefs`, `--use-majestic`, `--use-mozscape`.
+  - KI und Embeddings **(OS-Festlegung,** Flagnamen; übernommen aus INTEG-017): `--use-ai` führt die im Konfigurationsprofil aktivierten KI-Prompts aus (INTEG-160 … INTEG-179); `--use-embeddings` erzeugt die im Profil konfigurierten Embeddings und berechnet die semantischen Auswertungen (INTEG-180 … INTEG-189). KI-Aufgaben aus 08 über `--ai-tasks`, `--ai-questions`, `--ai-budget`, `--ai-consent`, `--ai-batch`, `--ai-reuse-cache` (Semantik führend in AI-022) sowie `--export-query "<Name>"` (Export einer gespeicherten „Frag den Crawl“-Abfrage ohne KI-Request, AI-105, P2; Dateiname nach OUT-020) **[M4]**.
+  - DataForSEO **[M5]** (Semantik führend in D4S-073): `--use-dataforseo "<modul,…>"`, `--dfs-location`, `--dfs-language`, `--dfs-device`, `--dfs-serp-mode`, `--dfs-keywords`, `--dfs-budget`, `--dfs-max-cache-age`, `--dfs-cache-from`, `--dfs-sandbox`, `--dfs-query-strings`, `--dfs-allowed-params`, `--dfs-allow-operators`, `--dfs-estimate-only`, `--dfs-accept-data-transfer`, `--dfs-allow-partial`; Bulk-Exporte und Reports unter `DataForSEO:<Eintrag>` (D4S-072).
+  - Gemeinsames Budget **[M4]** (OS-Festlegung, BudgetLedger nach AI-013): `--api-budget <usd>` setzt die Obergrenze aller bezahlten APIs je Crawl (KI und DataForSEO zusammen); `--ai-budget` bzw. `--dfs-budget` setzen nur das jeweilige Teilbudget. Für angeforderte KI-Aufgaben genügt eines von `--api-budget`, `--ai-budget` oder einem Budget im Profil (AI-022).
+  - `--require-apis` **(OS-Festlegung,** übernommen aus INTEG-017): macht jede angeforderte Integration verpflichtend.
+  - Schlüssel kommen aus dem Schlüsselbund der App oder aus Umgebungsvariablen `OPENSPIDER_PSI_KEY`, `OPENSPIDER_AHREFS_KEY`, `OPENSPIDER_MAJESTIC_KEY`, `OPENSPIDER_MOZ_KEY` bzw. für KI-Anbieter `OPENSPIDER_AI_KEY_<ANBIETER>` (AI-009) **(OS-Festlegung)**. `--use-google-analytics` (Universal Analytics) wird mit Fehlermeldung „nicht mehr unterstützt“ abgelehnt.
+- **Ausgabe:** wie ein UI-Crawl mit denselben Integrationen; Exporte enthalten die Integrationsspalten.
+- **Akzeptanzkriterien:**
+  - [ ] `--use-google-search-console "kontoA" "sc-domain:integ.test"` fragt genau diese Property ab (Mock-Log prüft den Property-Parameter); analog fragt `--use-google-analytics-4` genau die angegebene Property und den angegebenen Datenstrom ab (übernommen aus INTEG-017).
+  - [ ] Ohne `--require-apis`: Fehlt für eine angeforderte Integration der Schlüssel bzw. das Token des genannten Kontos, läuft der Crawl ohne diese Integration, stderr und Log enthalten je Integration eine Warnung, Exit-Code 0 (mit `--strict` 4, OUT-204) (übernommen aus INTEG-017).
+  - [ ] Mit `--require-apis`: derselbe Fall endet vor dem Crawl mit Exit-Code 2 und einer Meldung, die Integration und Konto nennt; der Fixture-Server zählt 0 Requests (Prüfung im Rahmen von OUT-203) (übernommen aus INTEG-017).
+  - [ ] `--use-ai` bzw. `--use-embeddings` ohne aktivierte Prompts bzw. ohne Embedding-Konfiguration im Profil → Warnung „keine KI-Prompts konfiguriert“ bzw. „keine Embeddings konfiguriert“, Exit-Code 0; mit `--require-apis` Exit-Code 2 vor dem Crawl.
+  - [ ] Mit `--use-embeddings` enthält ein anschließender Export der semantischen Filter (INTEG-181/182) dieselben Zeilen wie ein UI-Crawl mit gleichem Profil gegen den Embedding-Mock.
+  - [ ] Exporte starten erst, wenn die API-, KI- und Embedding-Warteschlangen leer sind (INTEG-007, AI-022) (übernommen aus INTEG-017).
+  - [ ] Schlüssel aus Umgebungsvariablen erscheinen nie im Log.
+  - [ ] [M4] `--api-budget 0.01 --ai-tasks decisions` gegen `ai-mock` (Kosten 0,004 USD je Request) → genau 2 KI-Requests, danach `Budget exceeded`; Crawl und Exporte laufen vollständig (wie AI-022, nun über das Crawl-Budget). [M5] Mit `--api-budget 1.00` und gleichzeitig `--use-dataforseo labs` zählen KI- und DataForSEO-Kosten gegen dieselbe Obergrenze (D4S-013).
+  - [ ] [M4] `--export-query "Seiten ohne H1"` mit einer im Profil gespeicherten Abfrage erzeugt die Exportdatei ohne KI-Request (Mock-Zähler 0); ein unbekannter Name → Exit-Code 2 vor dem Crawl (OUT-203).
+- **Testfixture:** Mock-Endpunkte im `os-testsite` (GA4, GSC, PSI, Linkmetriken, KI-Text, Embeddings; [M4] `ai-mock`; [M5] DataForSEO-Mock); CLI-Integrationstest mit Request-Zähler.
+
+### OUT-202 `--crawl-comparison <id1> <id2>`, `--project-crawl-comparison ["true"|"false"]`, `--compare-with-previous`
+- **Priorität:** P1
+- **Beschreibung:** Vergleich zweier Crawls bzw. des neuen Crawls mit dem vorherigen erfolgreich abgeschlossenen Crawl desselben Projekts (Auto Compare, OUT-152); Current/Previous nach Crawl-Datum. Die Referenz erwartet `--project-crawl-comparison "true"` (Syntax gegen die öffentliche Referenz-Doku geprüft am 2026-10-13); OpenSpider akzeptiert das Flag mit und ohne Argument, damit bestehende Skripte unverändert laufen. `--compare-with-previous` ist ein gleichwertiges OS-Alias ohne Argument **(OS-Festlegung;** übernommen aus TECH-308). Die IDs für `--crawl-comparison` liefert `--list-crawls` (OUT-185).
 - **Akzeptanzkriterien:**
   - [ ] `--crawl-comparison A B --save-report "Crawl Overview"` erzeugt den Overview mit Vergleichsspalten (OUT-147); die Reihenfolge von A und B ist egal (Current = späteres Crawl-Datum).
   - [ ] Vergleich mit sich selbst → Exit-Code 2.
   - [ ] `--project-crawl-comparison`, `--project-crawl-comparison true` und `--project-crawl-comparison "TRUE"` aktivieren den Vergleich identisch; `--project-crawl-comparison false` deaktiviert ihn (gleichbedeutend mit Weglassen).
   - [ ] Jeder andere Wert (z. B. `yes`, `1`) → Exit-Code 2 mit Meldung der gültigen Werte.
   - [ ] Ein auf das Flag folgendes Argument, das mit `--` beginnt, wird nicht als Wert verbraucht (`--project-crawl-comparison --headless` funktioniert).
-  - [ ] `--project-crawl-comparison` ohne `--project-name` → Exit-Code 2.
+  - [ ] `--project-crawl-comparison` bzw. `--compare-with-previous` ohne `--project-name` → Exit-Code 2 mit Meldung „Projektname fehlt“.
+  - [ ] `--project-crawl-comparison MeinProjekt` (Projektname als Wert) → Exit-Code 2 mit Hinweis auf die richtige Syntax `--project-name "MeinProjekt" --project-crawl-comparison "true"` (übernommen aus CRAWL-036/CRAWL-135).
+  - [ ] `--compare-with-previous` zusammen mit `--project-crawl-comparison false` → Exit-Code 2 (widersprüchliche Angaben).
 - **Testfixture:** `out-compare`.
 
 ### OUT-203 Validierung aller Namen vor dem Crawl
 - **Priorität:** P0
-- **Beschreibung:** Alle Argumente (Tab-, Bulk-, Report-, Metrik-Namen, Formate, Pfade, Konten) werden geprüft, **bevor** gecrawlt wird. Bei unbekannten Namen werden ähnliche gültige Namen vorgeschlagen (Levenshtein ≤ 3) **(OS-Festlegung;** bewusst strenger als die Referenz, deren öffentlich dokumentiertes Verhalten keine Vorab-Validierung beschreibt).
+- **Beschreibung:** Alle Argumente (Optionsnamen, Tab-, Bulk-, Report-, Metrik-Namen, Formate, Pfade, Konten) werden geprüft, **bevor** gecrawlt wird. Bei unbekannten Namen werden ähnliche gültige Namen vorgeschlagen (Levenshtein ≤ 3) **(OS-Festlegung;** bewusst strenger als die Referenz, deren öffentlich dokumentiertes Verhalten keine Vorab-Validierung beschreibt). **[P1]** Gibt es keinen ähnlichen Treffer, wird die vollständige Liste gültiger Namen des betroffenen Katalogs ausgegeben (Lücke G-5); dazu die Optionen `--list-exports` (alle Namen für `--export-tabs` und `--bulk-export`, nach Katalog gruppiert) und `--list-reports` (alle Namen für `--save-report`), jeweils mit `--json` maschinenlesbar.
 - **Akzeptanzkriterien:**
   - [ ] `--export-tabs "Internal:Al"` → Exit-Code 2 in < 1 s, Meldung `unknown export 'Internal:Al' – did you mean 'Internal:All'?`.
   - [ ] Kein Netzwerkzugriff erfolgt vor erfolgreicher Validierung (Fixture-Server zählt 0 Requests).
+  - [ ] Unbekannte Option → Exit-Code 2 mit Vorschlag der nächstliegenden Option (z. B. `--crawl-lst` → „meinten Sie `--crawl-list`?“) (übernommen aus CRAWL-135).
+  - [ ] [P1] `--save-report "Gibtsnicht"` (kein Treffer mit Levenshtein ≤ 3) → Exit-Code 2; stderr enthält nach der Fehlermeldung die vollständige Liste aller gültigen Report-Namen (eine Zeile je Name), identisch mit `--list-reports`. Analog für `--export-tabs`, `--bulk-export` (Liste wie `--list-exports`, nur der betroffene Katalog) und `--export-custom-summary` (Liste wie `--help export-custom-summary`).
+  - [ ] [P1] `--list-exports` und `--list-reports` geben ihre Listen auf stdout aus, Exit-Code 0, ohne Crawl und ohne Netzwerkzugriff; Inhalt identisch mit `--help export-tabs` + `--help bulk-export` bzw. `--help save-report` (gemeinsame Registry, Golden `tests/golden/out-cli/list_exports.txt`, `list_reports.txt`).
 - **Testfixture:** CLI-Test mit Request-Zähler im `os-testsite`.
 
 ### OUT-204 Exit-Codes
@@ -1824,7 +1936,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 
 ### OUT-205 Fortschritt und maschinenlesbare Ausgabe
 - **Priorität:** P1
-- **Beschreibung:** stdout bleibt für Nutzdaten (z. B. `--list-crawls`, `--help`) reserviert; Fortschritt und Logs gehen nach stderr. Mit `--progress json` wird je Sekunde (max.) eine JSON-Zeile mit `{"phase","crawled","queued","errors","elapsed_s","eta_s"}` ausgegeben **(OS-Festlegung)**.
+- **Beschreibung:** stdout bleibt für Nutzdaten (z. B. `--list-crawls`, `--help`) reserviert; Fortschritt und Logs gehen nach stderr. Mit `--progress json` (Alias `--json-progress`, übernommen aus CRAWL-135) wird je Sekunde (max.) eine JSON-Zeile mit `{"phase","crawled","queued","errors","elapsed_s","eta_s"}` auf stderr ausgegeben **(OS-Festlegung;** Felder des Crawl-Fortschritts siehe CRAWL-130).
 - **Akzeptanzkriterien:**
   - [ ] Ohne TTY keine Fortschrittsbalken/ANSI-Sequenzen.
   - [ ] Phasen: `validate`, `crawl`, `analysis`, `export`, `notify`, `done`.
@@ -1837,7 +1949,8 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 - **Akzeptanzkriterien:**
   - [ ] Erstes Strg+C: Crawl stoppt, Crawl-Datei wird konsistent geschlossen, keine Exporte, Exit-Code 130, innerhalb 10 s.
   - [ ] Zweites Strg+C: sofortiger Abbruch; die Crawl-Datei bleibt dank WAL öffnenbar.
-  - [ ] Option `--export-on-interrupt` erzeugt die Exporte des bisherigen Stands vor dem Beenden (P2).
+  - [ ] [P2] Option `--export-on-interrupt` erzeugt die Exporte des bisherigen Stands vor dem Beenden.
+  - [ ] Nach dem ersten Strg+C zeigt die Crawl-Verwaltung den Crawl als `Paused` und er ist per `--load-crawl <id> --resume` fortsetzbar (Status-Semantik CRAWL-128).
 - **Testfixture:** CLI-Test, der nach 2 s SIGINT sendet.
 
 ### OUT-207 JS-Rendering im Headless-Betrieb
@@ -1845,12 +1958,12 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 - **Beschreibung:** JavaScript-Rendering funktioniert im CLI ohne sichtbares Fenster (Chromium headless) auf macOS und Windows, auch bei gesperrtem Bildschirm.
 - **Akzeptanzkriterien:**
   - [ ] Geplanter Lauf mit Rendering bei gesperrtem Bildschirm liefert Screenshots und gerendertes HTML.
-  - [ ] Fehlt die Chromium-Komponente, meldet die CLI das vor dem Crawl (Exit-Code 2) und nennt den Befehl zum Nachinstallieren (`openspider --install-browser`, P1).
+  - [ ] Fehlt die Chromium-Komponente, meldet die CLI das vor dem Crawl (Exit-Code 2) und nennt den Befehl zum Nachinstallieren (`openspider --install-browser`).
 - **Testfixture:** `out-render` in CI (macOS/Windows Runner).
 
 ### OUT-208 Weitere Modi per CLI
 - **Priorität:** P2
-- **Beschreibung:** `--mode apis --crawl-list <datei>` ruft nur API-Daten für die Liste ab; `--mode serp --serp-file <datei>` berechnet Längen/Pixelbreiten für hochgeladene Titles/Descriptions und exportiert das Ergebnis **(OS-Festlegung,** Flagnamen).
+- **Beschreibung:** `--mode apis --crawl-list <datei>` ruft nur API-Daten für die Liste ab (Funktion des APIs-Modus: INTEG-012, führend; hier nur die CLI-Anbindung); `--mode serp --serp-file <datei>` berechnet Längen/Pixelbreiten für hochgeladene Titles/Descriptions und exportiert das Ergebnis **(OS-Festlegung,** Flagnamen).
 - **Akzeptanzkriterien:**
   - [ ] SERP-Modus mit Datei aus OUT-098 → Export identisch zur Eingabe (Rundreise).
   - [ ] APIs-Modus führt keine HTTP-Requests gegen die gelisteten URLs aus.
@@ -1888,6 +2001,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - [ ] Katalog wird aus der Filter-Registry erzeugt; neue Filter erscheinen automatisch.
   - [ ] Nicht befüllte Metriken (Integration inaktiv) werden als leere Zelle geschrieben, nicht als 0.
   - [ ] Metriken lassen sich per Kopieren/Einfügen als Textliste übernehmen (für CLI `--export-custom-summary`).
+  - [ ] [P2] Enthält eine Aufgabe eine gewählte Metrik, die im aktuellen Katalog nicht mehr existiert oder nicht mehr befüllt wird (z. B. nach Umbau einer Integration durch ein Update), zeigt der Aufgabendialog beim Öffnen/Bearbeiten eine Warnung, die jede betroffene Metrik namentlich nennt und „Entfernen“ anbietet; die Aufgabe bleibt `Valid` (Lücke G-4).
 - **Testfixture:** Registry-Unit-Test.
 
 ### OUT-212 Spaltenstabilität bei Änderungen
@@ -1898,6 +2012,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - [ ] Entfernte Metrik: Spalte bleibt bestehen, neue Zeilen erhalten dort leere Werte.
   - [ ] Umsortierung der Auswahl nach dem ersten Lauf ändert die Spaltenreihenfolge der bestehenden Tabelle nicht (Zuordnung über Kopfzeilennamen, nicht Position).
   - [ ] Kopfzeilen nutzen immer kanonische englische Namen (sprachunabhängige Vorlage).
+  - [ ] [P2] Läuft eine Aufgabe mit einer nicht mehr befüllten bzw. nicht mehr existierenden Metrik, schreibt der Lauf eine leere Zelle in deren Spalte, einen Log-Hinweis `metric '<Name>' is no longer populated` im Lauf-Log und einen Eintrag in der Laufhistorie (`Completed with warnings`, OUT-169) (Lücke G-4).
 - **Testfixture:** Sheets-Mock mit vorbelegter Tabelle.
 
 ### OUT-213 Segmentierte Zeitreihen
@@ -1953,30 +2068,39 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 ### OUT-222 Trennung von Crawl-Konfiguration und App-Einstellungen
 - **Priorität:** P1
 - **Beschreibung:** Rechner-/benutzerbezogene Einstellungen liegen nicht in der Crawl-Konfiguration, sondern unter „Einstellungen“ (macOS: App-Menü → Einstellungen; Windows: Datei → Einstellungen): Sprache, Theme, Speicherort der Crawls, Speicher-/Ressourcenlimits, Proxy, vertrauenswürdige Zertifikate, Benachrichtigungen/E-Mail-Konten, Aufbewahrung, Updates, Export-Standards, verbundene Konten. Datei: `settings.toml`.
+  - **Exportordner (OS-Festlegung, führend):** Schlüssel `export.directory`, Standard `<Dokumente>/OpenSpider/Exports`. `<Dokumente>` ist der Dokumente-Ordner des Benutzers laut Betriebssystem (macOS: `~/Documents`; Windows: bekannter Ordner „Dokumente“ (`FOLDERID_Documents`), auch wenn er umgeleitet ist, z. B. nach OneDrive). Er ist das Standardziel aller Exporte ohne ausdrückliche Pfadangabe außerhalb des UI-Exportdialogs, u. a. der MCP-Exporte (AGENT-021, dort zusätzlich die Liste erlaubter Verzeichnisse); der UI-Exportdialog schlägt beim ersten Export ebenfalls diesen Ordner vor.
 - **Akzeptanzkriterien:**
   - [ ] Eine `.osconfig` enthält keine Werte aus `settings.toml`; Austausch einer Konfiguration zwischen Rechnern ändert keine lokalen Einstellungen.
+  - [ ] Ohne Eintrag `export.directory` ist der wirksame Exportordner `<Dokumente>/OpenSpider/Exports`; er wird beim ersten Export angelegt (fehlende Elternordner eingeschlossen). Ein in den Einstellungen geänderter Ordner gilt ohne Neustart für den nächsten Export, auch für AGENT-021.
+  - [ ] Ist der Ordner nicht beschreibbar, scheitert der Export mit einer Meldung, die den Pfad nennt; es wird nicht stillschweigend in einen anderen Ordner geschrieben.
   - [ ] Änderungen an Einstellungen, die einen Neustart erfordern, werden als solche gekennzeichnet.
-- **Testfixture:** Unit-Test der Schlüsselmengen beider Formate (disjunkt).
+- **Testfixture:** Unit-Test der Schlüsselmengen beider Formate (disjunkt); Pfadauflösung `<Dokumente>` mit gemocktem OS-Ordnerdienst (macOS, Windows mit umgeleitetem Dokumente-Ordner); schreibgeschützter Exportordner.
 
 ### OUT-223 Authentifizierungsprofile
 - **Priorität:** P1
-- **Beschreibung:** Zugangsdaten für standardbasierte Authentifizierung (Basic, Digest, NTLM) und beim Formular-Login gespeicherte Cookies können als Profil exportiert und in CLI/Scheduling verwendet werden.
-- **Eingaben/Konfiguration:** Konfiguration → Authentifizierung → Profile → Exportieren; Passphrase (für portable Dateien) oder „an diesen Rechner binden“ (Schlüssel im OS-Schlüsselbund).
-- **Ausgabe:** `.osauth`-Datei, verschlüsselt (AEAD, z. B. XChaCha20-Poly1305; Schlüsselableitung Argon2id bei Passphrase) **(OS-Festlegung)**.
+- **Beschreibung:** Zugangsdaten für standardbasierte Authentifizierung (Basic, Digest, NTLM) und beim Formular-Login gespeicherte Cookies können als Profil exportiert, wieder importiert und in CLI/Scheduling verwendet werden. Führend für Funktion, Priorität und Dateiformat; CRAWL-121 verweist hierher (dessen frühere Festlegung `.ospiderauth`/AES-256-GCM/P2 entfällt, OS-Festlegung zur Auflösung der Doppelspezifikation).
+- **Eingaben/Konfiguration:** Konfiguration → Authentifizierung → Profile → Exportieren bzw. Importieren; CLI `--auth-config <Datei>` (OUT-187); Passphrase (für portable Dateien) oder „an diesen Rechner binden“ (Schlüssel im OS-Schlüsselbund).
+- **Ausgabe:** `.osauth`-Datei, verschlüsselt mit XChaCha20-Poly1305 (AEAD); Schlüsselableitung Argon2id bei Passphrase, bei Rechnerbindung Schlüssel aus dem OS-Schlüsselbund **(OS-Festlegung,** einziges Auth-Profilformat).
 - **Akzeptanzkriterien:**
   - [ ] Datei enthält keine Klartext-Kennwörter/Cookies (Test sucht nach Testgeheimnis).
   - [ ] Falsche Passphrase → eindeutiger Fehler, kein Absturz.
   - [ ] An Rechner gebundenes Profil lässt sich auf anderem Rechner nicht entschlüsseln (klarer Hinweis).
   - [ ] CLI: Passphrase über `OPENSPIDER_AUTH_PASSPHRASE` oder interaktiv (TTY); nie als Argument **(OS-Festlegung)**.
-- **Testfixture:** `out-schedule` (Basic-Auth + Formular-Login).
+  - [ ] Export, Import und Headless-Crawl mit dem importierten Profil erreichen den geschützten Bereich (Fixture `crawl-auth` `/mitglieder/` → 200, solange die Formular-Cookies gültig sind) (übernommen aus CRAWL-121).
+- **Testfixture:** `out-schedule` (Basic-Auth + Formular-Login); `crawl-auth` (Fachspec 01).
 
 ### OUT-224 Konfigurations-Unterschiede anzeigen
 - **Priorität:** P2
-- **Beschreibung:** Ein Fenster zeigt alle Abweichungen der aktuellen Konfiguration von den Werkseinstellungen bzw. von einer gewählten Datei (Tastenkürzel Strg/Cmd+Umschalt+C).
-- **Ausgabe:** Tabelle `Setting`, `Current`, `Default`; kopierbar/exportierbar.
+- **Beschreibung:** Ein Fenster zeigt alle Abweichungen der aktuellen Konfiguration von einer Vergleichsbasis (Tastenkürzel Strg/Cmd+Umschalt+C oder Menü Konfiguration → „Abweichungen anzeigen“). Führender Eintrag; CRAWL-133 und UI-116 verweisen hierher (Fensterlayout: UI-116).
+- **Eingaben/Konfiguration:** Vergleichsbasis: Werkseinstellungen (Standard) / gespeichertes Profil (`.osconfig`) / Konfiguration eines geöffneten Crawls (übernommen aus UI-116).
+- **Ausgabe:** Tabelle `Setting`, `Current`, `Default` (bei anderer Basis: Wert der Basis); `Setting` nennt für Optionen des Konfigurationsprofils (CRAWL-132) den Anzeigenamen und den stabilen Schlüssel `bereich.option` (übernommen aus CRAWL-133); kopierbar als Text und exportierbar (OUT-006).
 - **Akzeptanzkriterien:**
-  - [ ] Nach Änderung von 3 Werten zeigt das Fenster genau 3 Zeilen.
-- **Testfixture:** Unit-Test.
+  - [ ] Nach Änderung von 3 Werten zeigt das Fenster genau 3 Zeilen; nach Änderung nur von Threads 5 → 10 genau diese eine Zeile (übernommen aus CRAWL-133).
+  - [ ] Bei unveränderter Standardkonfiguration ist die Tabelle leer mit Hinweis „Keine Abweichungen“ (übernommen aus UI-116).
+  - [ ] Jede Zeile ist anklickbar und öffnet die betreffende Einstellung im Konfigurationsdialog (übernommen aus UI-116).
+  - [ ] App-Einstellungen (`settings.toml`, OUT-222) wie Update-Prüfung, Sprache oder Fokus-Modus erscheinen nie im Diff (übernommen aus CRAWL-142).
+  - [ ] Kopieren als Text ergibt eine Zeile je Abweichung im Format `<Setting>\t<Current>\t<Default>`.
+- **Testfixture:** Unit-Test; Profil mit 3 geänderten Werten.
 
 ### OUT-225 Geheimnisse außerhalb von Konfigurationsdateien
 - **Priorität:** P0
@@ -2010,8 +2134,8 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 
 ### OUT-228 Crawl-Verwaltung
 - **Priorität:** P1
-- **Beschreibung:** Jeder Crawl wird automatisch fortlaufend gespeichert (auch bei Absturz/Stromausfall bis zum letzten Commit) und erscheint in der Crawl-Verwaltung (Datei → Crawls).
-- **Eingaben/Konfiguration:** Aktionen: Öffnen, Umbenennen, in Projekt verschieben, Projekt anlegen/umbenennen, Duplizieren, Exportieren (`.ospider`), Importieren, Löschen, ID kopieren, Sperren/Entsperren, Zum Vergleich wählen; Filter „Anzeigen: Crawls / Vergleiche / alle“; Suche.
+- **Beschreibung:** Jeder Crawl wird automatisch fortlaufend gespeichert (auch bei Absturz/Stromausfall bis zum letzten Commit) und erscheint in der Crawl-Verwaltung (Datei → Crawls). Führend für Datei- und Projektverwaltung (CRAWL-128, CRAWL-143 und UI-124 verweisen hierher); führend für die Pause-/Fortsetzungs-Semantik und die Status-Zuordnung bei Abbruch sind CRAWL-128/CRAWL-143 (bzw. CRAWL-125/126).
+- **Eingaben/Konfiguration:** Aktionen (Kontextmenü und Schaltflächen, per Tastatur erreichbar): Öffnen, Umbenennen, in Projekt verschieben, Projekt anlegen/umbenennen/sperren, Duplizieren, Exportieren (`.ospider`), Importieren, Löschen, ID kopieren, Sperren/Entsperren, Zum Vergleich wählen, Im Dateimanager zeigen (OS-Erweiterung), **[P2]** Projekt exportieren (alle Crawls eines Projekts als ZIP, OS-Erweiterung); Mehrfachauswahl für Löschen, Sperren, Verschieben, Exportieren (übernommen aus CRAWL-128/143); Filter „Anzeigen: Crawls / Vergleiche / alle“; Suche (Strg/Cmd+F).
 - **Ausgabe:** Tabelle `Project`, `Name`, `Mode`, `Start URL`, `Started`, `Duration`, `URLs`, `Size on Disk`, `Status` (Running/Paused/Completed/Incomplete/Failed), `Locked`, `ID`.
 - **Akzeptanzkriterien:**
   - [ ] Nach erzwungenem Beenden (`kill -9`) während des Crawls erscheint der Crawl als `Incomplete`, ist öffenbar und fortsetzbar; nach Fortsetzen und Abschluss ist die Menge gecrawlter URLs identisch mit einem ununterbrochenen Crawl derselben Fixture.
@@ -2020,15 +2144,21 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - [ ] Duplizieren erzeugt eine unabhängige Kopie mit neuer ID und Name `<Name> (Kopie)`; Änderungen an der Kopie (Umbenennen, Löschen) betreffen das Original nicht.
   - [ ] Umbenennen und Verschieben in ein anderes Projekt ändern die ID nicht; `--list-crawls` zeigt danach den neuen Namen/Projekt.
   - [ ] Suche filtert über `Name`, `Project` und `Start URL` (Teilstring, case-insensitiv); „Anzeigen“-Filter und Suche wirken kombiniert.
-  - [ ] `Status`: laufender Crawl `Running`, pausierter `Paused`, regulär beendeter `Completed`, abgebrochener/abgestürzter `Incomplete`, mit Fehler beendeter `Failed`.
+  - [ ] `Status`: laufender Crawl `Running`, pausierter (auch per Pause oder SIGINT beendeter) `Paused`, regulär beendeter `Completed`, abgestürzter bzw. hart beendeter (SIGKILL) `Incomplete`, mit Fehler beendeter `Failed` (Zuordnung gemäß CRAWL-128; UI-Anzeigenamen dort).
   - [ ] Import einer `.ospider`-Datei kopiert sie in den Crawl-Ordner und vergibt eine neue ID, wenn die ID schon existiert; Import einer Nicht-Crawl-Datei mit Endung `.ospider` → Fehlermeldung, nichts wird kopiert.
-  - [ ] Tabelle bleibt bei 1 000 gespeicherten Crawls flüssig (< 500 ms Öffnen, Sortieren je Spalte < 200 ms).
+  - [ ] Tabelle bleibt bei 1 000 gespeicherten Crawls flüssig (< 500 ms Öffnen, Sortieren je Spalte < 200 ms, Suche < 100 ms); Metadaten stammen aus einem separaten Index, nicht aus dem Öffnen jeder Datei (übernommen aus CRAWL-128).
+  - [ ] `ID` ist eine stabile, eindeutige Kennung (UUID v7) **(OS-Festlegung,** übernommen aus CRAWL-128); „ID kopieren“ legt genau die ID ohne Leerzeichen/Zeilenumbruch in die Zwischenablage, bei Mehrfachauswahl eine ID je Zeile in Tabellenreihenfolge; die kopierte ID wird von `--load-crawl` akzeptiert (End-to-End-Test Zwischenablage → CLI).
+  - [ ] Mehrfachauswahl von bis zu 1 000 Crawls: Löschen, Sperren, Verschieben und Exportieren in einem Schritt (übernommen aus CRAWL-128); der Löschdialog nennt Anzahl und freiwerdenden Speicher und weist darauf hin, dass gelöschte Crawls nicht wiederherstellbar sind (übernommen aus UI-124).
+  - [ ] „Crawl exportieren…“ funktioniert für Crawls ohne Projekt und für Crawls in einem Projektordner (Referenzfehler 21.2 nicht übernehmen); Export eines laufenden Crawls ist deaktiviert (Tooltip „Crawl läuft – erst pausieren“), ein pausierter Crawl ist exportierbar und bleibt fortsetzbar (übernommen aus CRAWL-143).
+  - [ ] „Zum Vergleich wählen“ ist nur bei genau zwei markierten Crawls aktiv; „Löschen“ und „Umbenennen“ sind für gesperrte Crawls ausgegraut (übernommen aus CRAWL-143).
+  - [ ] Löschen eines Crawls, der in einem gespeicherten Vergleich verwendet wird, nennt vorher den Vergleich namentlich (OUT-150).
+  - [ ] [P2] „Projekt exportieren“ erzeugt ein ZIP mit allen `.ospider`-Dateien des Projekts; Import des ZIP auf einem anderen Rechner legt das Projekt mit allen Crawls an.
 - **Testfixture:** Integrationstest mit 3 Projekten und 1 000 synthetischen Crawl-Metadaten; `out-basic-site` für Absturz-/Fortsetzungstest; umbenannte Textdatei `fake.ospider`.
 
 ### OUT-229 Automatische Crawl-Aufbewahrung (Retention)
 - **Priorität:** P1
 - **Beschreibung:** Crawls werden nach einer einstellbaren Dauer automatisch gelöscht; gesperrte Crawls und Crawls in gesperrten Projekten sind ausgenommen. Sperren eines Projekts gilt auch für künftige Crawls darin (inkl. geplanter).
-- **Eingaben/Konfiguration:** Einstellungen → Crawl-Aufbewahrung: `Nie` (Standard), `1 Woche`, `1 Monat`, `3 Monate`, `6 Monate`, `1 Jahr`, `Benutzerdefiniert (Tage)` **(OS-Festlegung** der Auswahlwerte); Bezugszeitpunkt = Crawl-Ende (bei unvollständigen: letzte Änderung).
+- **Eingaben/Konfiguration:** Einstellungen → Crawl-Aufbewahrung: `Nie` (Standard), `1 Woche`, `1 Monat`, `3 Monate`, `6 Monate`, `1 Jahr`, `Benutzerdefiniert (Tage)` **(OS-Festlegung** der Auswahlwerte); Bezugszeitpunkt = Crawl-Ende (bei unvollständigen: letzte Änderung). **[P2]** Zusätzlich „Höchstens N Crawls behalten“ (OS-Erweiterung, übernommen aus UI-124; Standard leer): überzählige ungesperrte Crawls werden, älteste zuerst, gelöscht. Führend; CRAWL-128 und UI-124 verweisen für die Aufbewahrung hierher.
 - **Akzeptanzkriterien:**
   - [ ] Einstellung „1 Woche“ → Crawl mit Ende vor 8 Tagen wird beim nächsten App-Start bzw. spätestens 1 h später gelöscht; Crawl vor 6 Tagen bleibt.
   - [ ] Gesperrter Crawl bleibt unabhängig vom Alter.
@@ -2036,11 +2166,12 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - [ ] Crawls, die von einem gespeicherten Vergleich referenziert werden, werden trotzdem gelöscht; der Vergleich wird als „nicht verfügbar“ markiert (OUT-150), vorher erscheint ein Hinweis bei Aktivierung der Aufbewahrung.
   - [ ] Ein gerade geöffneter oder laufender Crawl wird nie gelöscht.
   - [ ] Jede automatische Löschung wird geloggt (Name, ID, Alter).
+  - [ ] [P2] 5 Crawls (einer gesperrt), „Höchstens 2 Crawls“ → die 2 jüngsten ungesperrten und der gesperrte bleiben (übernommen aus UI-124).
 - **Testfixture:** Unit-Test mit manipulierbarer Uhr.
 
 ### OUT-230 Crawl-Datei speichern und öffnen
 - **Priorität:** P0
-- **Beschreibung:** Ein Crawl kann als einzelne portable Datei `*.ospider` (SQLite, WAL zusammengeführt) gespeichert und auf jedem unterstützten System geöffnet werden; Doppelklick öffnet die App (OUT-272). Pausierte Crawls lassen sich nach dem Öffnen fortsetzen.
+- **Beschreibung:** Ein Crawl kann als einzelne portable Datei `*.ospider` (SQLite, WAL zusammengeführt) gespeichert und auf jedem unterstützten System geöffnet werden; Doppelklick öffnet die App (OUT-272). Pausierte Crawls lassen sich nach dem Öffnen fortsetzen (Fortsetzungssemantik: CRAWL-126/CRAWL-128, führend).
 - **Eingaben/Konfiguration:** Datei → Crawl speichern unter… / Crawl öffnen…; CLI `--save-crawl` (OUT-189), `--load-crawl` (OUT-184).
 - **Ausgabe:** `*.ospider`: SQLite-Datei mit `application_id` = feste OpenSpider-Kennung und `user_version` = Schemaversion **(OS-Festlegung)**; enthält Crawl-Daten, die beim Crawl wirksame Konfiguration (als eingebettete `.osconfig`), Queue-Zustand und Metadaten (Version, Start-URL, Zeiten). Keine Geheimnisse (OUT-225).
 - **Akzeptanzkriterien:**
@@ -2055,13 +2186,8 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 - **Testfixture:** gespeicherter Crawl aus `out-basic-site`, pausierter Crawl aus `out-queue`, absichtlich beschädigte Kopie, fremde SQLite-Datei.
 
 ### OUT-231 Speicherort der Crawl-Daten
-- **Priorität:** P1
-- **Beschreibung:** Der Ordner für Crawl-Dateien ist einstellbar; ungeeignete Ziele werden erkannt.
-- **Akzeptanzkriterien:**
-  - [ ] Netzlaufwerke (SMB/NFS) und cloud-synchronisierte Ordner (iCloud Drive, OneDrive, Dropbox, Google Drive) lösen eine deutliche Warnung aus (Datenverlustrisiko durch Sync von SQLite-Dateien); Speichern ist mit Bestätigung möglich.
-  - [ ] Ordnerwechsel bietet an, vorhandene Crawls zu verschieben; Fortschritt + Abbruch möglich.
-  - [ ] Freier Speicherplatz < 2 GB beim Crawlstart → Warnung; < 500 MB während des Crawls → Crawl pausiert automatisch mit Meldung.
-- **Testfixture:** Unit-Tests mit gemocktem Dateisystem-Typ.
+- **Priorität:** P0
+- **Verweis:** siehe CRAWL-124 (führend). Hier gilt nur, dass der Standardpfad des Crawl-Ordners je Betriebssystem in OUT-227 festgelegt ist.
 
 ### OUT-232 Einzelinstanz und Dateizuordnung beim Öffnen
 - **Priorität:** P1
@@ -2124,11 +2250,17 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 
 ### OUT-245 Lokale Nutzungsstatistik
 - **Priorität:** P2
-- **Beschreibung:** Hilfe → Nutzungsstatistik zeigt eigene Nutzungsdaten über die Zeit (Anzahl Crawls, gecrawlte URLs, Exporte je Monat), kumulativ und nicht-kumulativ. Daten bleiben ausschließlich lokal; es gibt keine Telemetrie ohne ausdrückliche Zustimmung (Opt-in, Standard aus).
+- **Beschreibung:** Hilfe → Nutzungsstatistik zeigt eigene Nutzungsdaten über die Zeit, kumulativ und nicht-kumulativ (Parität 24.0, Umschalter 24.1). Daten bleiben ausschließlich lokal; es gibt keine Telemetrie ohne ausdrückliche Zustimmung (Opt-in, Standard aus). Führend; UI-128 verweist hierher (Dialoglayout und Diagramm: UI-128).
+- **Eingaben/Konfiguration:** Zeitraum (letzte 12 Monate, Kalenderjahr, gesamt); Darstellung „Kumulativ“ / „Je Zeitraum“; „Statistik zurücksetzen“ mit Rückfrage (übernommen aus UI-128).
+- **Ausgabe:** Kennzahlen je Monat: `Crawls`, `URLs Crawled`, `Crawl Time` (Stunden, Laufzeit ohne Pausen), `Exports`, `Reports`; Tabelle kopier-/exportierbar als CSV (übernommen aus UI-128). Speicherung lokal im Einstellungsordner (OUT-227).
 - **Akzeptanzkriterien:**
   - [ ] Nach 3 Crawls zeigt die Statistik 3 Crawls im aktuellen Monat.
-  - [ ] Ohne Opt-in erfolgt kein Netzwerkzugriff außer Update-Prüfung (Netzwerkmitschnitt im Test).
-- **Testfixture:** Unit-Test.
+  - [ ] Ohne Opt-in erfolgt kein Netzwerkzugriff außer Update-Prüfung (Netzwerkmitschnitt im Test); Öffnen des Dialogs und jede Erfassung erzeugen keine ausgehende Verbindung.
+  - [ ] „Kumulativ“: jeder Monatswert = Summe aller Monate bis einschließlich dieses Monats; „Je Zeitraum“: Wert des Monats allein; letzter kumulativer Wert = Summe aller nicht-kumulativen Werte (Fixture 2/0/5 → kumulativ 2/2/7) (übernommen aus UI-128).
+  - [ ] Ein Crawl mit 25 URLs und 30 s Laufzeit, davon 10 s pausiert, erhöht `Crawls` um 1, `URLs Crawled` um 25 und `Crawl Time` um 20 s (übernommen aus UI-128).
+  - [ ] Abgebrochene Crawls zählen mit ihren tatsächlich gecrawlten URLs; CLI- und geplante Läufe zählen ebenfalls (gemeinsamer lokaler Speicher) (übernommen aus UI-128).
+  - [ ] „Statistik zurücksetzen“ löscht ausschließlich die Nutzungsdaten, keine Crawls oder Einstellungen.
+- **Testfixture:** Unit-Test; vorbefüllte Statistikdatei mit 3 Monaten (Crawls 2/0/5).
 
 ---
 
@@ -2136,20 +2268,22 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 
 ### OUT-250 Update-Prüfung
 - **Priorität:** P1
-- **Beschreibung:** Die Desktop-App prüft beim Start (höchstens einmal je 24 h) und manuell über Hilfe → „Nach Updates suchen“ ein signiertes Update-Manifest (z. B. auf GitHub Releases).
+- **Beschreibung:** Die Desktop-App prüft beim Start (höchstens einmal je 24 h) und manuell über Hilfe → „Nach Updates suchen“ ein signiertes Update-Manifest (z. B. auf GitHub Releases). Führend für Update-Prüfung; CRAWL-142 verweist hierher.
 - **Eingaben/Konfiguration:** Einstellungen → Updates: „Automatisch nach Updates suchen“ (Standard an); Schlüssel `updates.check = false` in `settings.toml`; Umgebungsvariable `OPENSPIDER_DISABLE_UPDATE_CHECK=1` (für verwaltete Umgebungen) **(OS-Festlegung)**.
 - **Akzeptanzkriterien:**
   - [ ] Die Anfrage überträgt nur Version, Betriebssystem und Architektur (keine Nutzerkennung).
   - [ ] Offline/Timeout (5 s) → keine Fehlermeldung beim Start, nur Log-Eintrag.
   - [ ] Abgeschaltet → kein Netzwerkzugriff auf den Update-Server (Netzwerkmitschnitt).
-  - [ ] Das CLI prüft nie automatisch; `openspider --check-update` gibt verfügbare Version aus (Exit-Code 0 = aktuell, 10 = Update verfügbar).
+  - [ ] Das CLI prüft nie automatisch; `openspider --check-update` gibt verfügbare Version aus (Exit-Code 0 = aktuell, 10 = Update verfügbar). Ein geplanter Lauf erzeugt keinen Request an den Update-Server (Netzwerkmitschnitt) (übernommen aus CRAWL-142).
+  - [ ] Eine Update-Prüfung oder ein Update-Download während eines laufenden Crawls verursacht keinen Neustart, keine Pause und keine Änderung der Crawl-Rate um mehr als 5 % (Messung während simuliertem Download) (übernommen aus CRAWL-142).
+  - [ ] Die Update-Einstellung gehört zu den App-Einstellungen (`settings.toml`, OUT-222), nicht zum Crawl-Profil, und erscheint nicht im Konfigurations-Diff (OUT-224).
 - **Testfixture:** Mock-Update-Server im `os-testsite`.
 
 ### OUT-251 Herunterladen und Installieren
 - **Priorität:** P1
 - **Beschreibung:** Ein verfügbares Update wird im Hintergrund heruntergeladen; danach bietet die App „Jetzt installieren und neu starten“ oder „Beim Beenden installieren“ an. Release-Notes werden angezeigt.
 - **Akzeptanzkriterien:**
-  - [ ] Während eines laufenden Crawls wird kein Neustart erzwungen; Installieren ist erst nach Pause/Ende möglich (Hinweis).
+  - [ ] Während eines laufenden Crawls wird kein Neustart erzwungen; Installieren ist erst nach Pause/Ende möglich (ein pausierter Crawl wird vorher konsistent geschlossen und bleibt fortsetzbar); während eines laufenden Crawls bietet der Dialog „Nach Crawl-Ende installieren“ (übernommen aus CRAWL-142).
   - [ ] Abgebrochener Download wird beim nächsten Start fortgesetzt oder verworfen, nie halb installiert.
   - [ ] Nach dem Update startet die App neu und öffnet den zuletzt geöffneten Crawl.
   - [ ] Update aktualisiert auch das CLI-Binary und registrierte Aufgaben (OUT-166).
@@ -2208,11 +2342,12 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 
 ### OUT-261 macOS Intel (x86_64)
 - **Priorität:** P0
-- **Beschreibung:** Native x86_64-Builds; Auslieferung als getrennte DMGs je Architektur und zusätzlich als Universal-Binary (P1).
+- **Beschreibung:** Native x86_64-Builds; Auslieferung als getrennte DMGs je Architektur und **[P1]** zusätzlich als Universal-Binary.
 - **Akzeptanzkriterien:**
   - [ ] Unterstützt macOS 12 und neuer.
   - [ ] Vollständige Testsuite in CI auf `macos-13` (x64).
   - [ ] Das Update-Manifest liefert je Architektur das passende Paket.
+  - [ ] [P1] Das Universal-DMG enthält App und CLI mit beiden Architekturen (`lipo -archs` meldet `x86_64 arm64`) und startet auf beiden nativ.
 - **Testfixture:** CI-Matrix.
 
 ### OUT-262 Windows x64
@@ -2226,17 +2361,17 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 - **Testfixture:** CI-Matrix + manueller RDP-Test pro Release.
 
 ### OUT-263 Windows on ARM (arm64)
-- **Priorität:** P2
-- **Beschreibung:** Native arm64-Builds für Windows 11 on ARM. Bis dahin wird der x64-Build unter der Windows-Emulation unterstützt.
+- **Priorität:** P1
+- **Beschreibung:** Kern (P1, ab erstem Release): Der x64-Build wird unter der Windows-11-Emulation auf arm64 unterstützt. **[P2]** Native arm64-Builds für Windows 11 on ARM (Phase 2).
 - **Akzeptanzkriterien:**
-  - Phase 1 (Emulation, P1-Pflicht ab erstem Release):
+  - Phase 1 (Emulation):
     - [ ] x64-Installer (MSI und NSIS) installiert auf Windows 11 arm64 ohne Fehler.
     - [ ] Smoke-Suite unter Emulation besteht: Crawl von `out-basic-site` mit und ohne JS-Rendering, Export `Internal:All` byte-identisch zur x64-Referenz, XML-Sitemap-Erzeugung, geplante Aufgabe läuft zur geplanten Zeit.
     - [ ] Crawl-Geschwindigkeit unter Emulation ≥ 50 % der nativen x64-Leistung auf vergleichbarer Hardware (Richtwert, Messung dokumentiert).
-  - Phase 2 (nativ, P2):
-    - [ ] Eigene arm64-Pakete; der Installer wählt automatisch die passende Architektur, das Update-Manifest liefert je Architektur das passende Paket.
-    - [ ] Kein Prozess (App, CLI, Chromium) läuft emuliert (Prüfung über Task-Manager-Spalte „Architektur“).
-    - [ ] Vollständige Testsuite in CI auf einem Windows-arm64-Runner.
+  - Phase 2 (nativ):
+    - [ ] [P2] Eigene arm64-Pakete; der Installer wählt automatisch die passende Architektur, das Update-Manifest liefert je Architektur das passende Paket.
+    - [ ] [P2] Kein Prozess (App, CLI, Chromium) läuft emuliert (Prüfung über Task-Manager-Spalte „Architektur“).
+    - [ ] [P2] Vollständige Testsuite in CI auf einem Windows-arm64-Runner.
 - **Testfixture:** Smoke-Suite `tests/smoke/` auf Windows-11-arm64-VM bzw. Runner.
 
 ### OUT-264 Linux
@@ -2289,11 +2424,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 
 ### OUT-269 Proxy
 - **Priorität:** P1
-- **Beschreibung:** Netzwerkzugriffe (Crawl, Integrationen, Updates, Google/E-Mail) können über einen Proxy laufen: „System-Proxy verwenden“ (Standard), „Manuell“ (HTTP/HTTPS/SOCKS5, Host, Port, optional Benutzer/Kennwort im Schlüsselbund), „Ausnahmen“ (Hostliste). (Crawl-spezifische Proxy-Details siehe Bereich Fetch, falls dort spezifiziert.)
-- **Akzeptanzkriterien:**
-  - [ ] Mit manuellem Proxy laufen alle Requests nachweislich über den Proxy (Test-Proxy im `os-testsite` zählt Requests).
-  - [ ] PAC-Dateien des Systems werden ausgewertet (macOS/Windows), P2.
-- **Testfixture:** Test-Proxy.
+- **Verweis:** siehe CRAWL-122 (führend). Hier gilt zusätzlich, dass dieselbe app-weite Proxy-Einstellung (`settings.toml`, OUT-222) auch für Integrationen, Update-Prüfung (OUT-250), Google-Drive/Sheets- und E-Mail-Verbindungen (OUT-005, OUT-280) gilt.
 
 ### OUT-270 Vertrauenswürdige Zertifikate
 - **Priorität:** P1
@@ -2306,25 +2437,15 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 - **Testfixture:** `out-security` (eigene Test-CA).
 
 ### OUT-271 Oberflächensprache und Theme
-- **Priorität:** P1
-- **Beschreibung:** UI-Sprachen Deutsch und Englisch (P0), weitere über Übersetzungsdateien (P2); Theme Hell/Dunkel/System.
-- **Eingaben/Konfiguration:** Einstellungen → Darstellung: `Sprache` ∈ {System (Standard), Deutsch, English, …}; `Theme` ∈ {System (Standard), Hell, Dunkel}.
-- **Akzeptanzkriterien:**
-  - [ ] Erststart mit Systemsprache Deutsch → UI Deutsch; mit nicht unterstützter Systemsprache (z. B. Polnisch, solange keine Übersetzung existiert) → Englisch.
-  - [ ] Sprachwechsel wirkt sofort für alle Fenster (ohne Neustart) **(OS-Festlegung)**; laufende Crawls werden davon nicht beeinflusst.
-  - [ ] Sprachwechsel ändert nicht die kanonischen Exportnamen, Dateinamen (OUT-008), CLI-Namen und Spaltenköpfe der Exporte (außer Option „Spaltenüberschriften in UI-Sprache“, Abschnitt 0).
-  - [ ] Vollständigkeit: CI-Prüfung, dass jeder Übersetzungsschlüssel in `de` und `en` vorhanden ist; fehlt ein Schlüssel in einer weiteren Sprache, wird der englische Text angezeigt (kein Schlüsselname in der UI).
-  - [ ] Zahlen- und Datumsanzeige in der UI folgt der UI-Sprache (de: `1.234,5`; en: `1,234.5`), Exporte bleiben sprachunabhängig (Abschnitt 0).
-  - [ ] Theme „System“ folgt dem OS-Wechsel Hell↔Dunkel innerhalb von 1 s ohne Neustart; Hell/Dunkel fest gewählt ignoriert den OS-Wechsel.
-  - [ ] Kontrast aller Text-/Hintergrundpaare in beiden Themes ≥ 4,5:1 (WCAG AA; automatisierter Check der Design-Tokens).
-  - [ ] Einstellung bleibt nach Neustart erhalten (`settings.toml`).
-- **Testfixture:** UI-E2E-Test mit simulierter Systemsprache (de, en, pl) und simuliertem OS-Theme-Wechsel; i18n-Lint in CI.
+- **Priorität:** P0
+- **Verweis:** siehe UI-121 (führend). Das Theme regelt UI-120.
 
 ### OUT-272 Dateizuordnungen und Desktop-Integration
 - **Priorität:** P1
-- **Beschreibung:** Registrierung der Dateitypen `.ospider`, `.osconfig`, `.osauth`, `.ospreset`, `.ostask` mit Icon; Startmenü/Launchpad-Eintrag; Anzeige des Crawl-Fortschritts im Dock-/Taskleisten-Symbol (P2).
+- **Beschreibung:** Registrierung der Dateitypen `.ospider`, `.osconfig`, `.osauth`, `.ospreset`, `.ostask` mit Icon; Startmenü/Launchpad-Eintrag; **[P2]** Anzeige des Crawl-Fortschritts im Dock-/Taskleisten-Symbol.
 - **Akzeptanzkriterien:**
   - [ ] Doppelklick auf `.ospider` öffnet die App mit dem Crawl (OUT-232).
+  - [ ] [P2] Während eines Crawls zeigt das Dock-/Taskleisten-Symbol den Fortschritt (Prozent der bekannten URLs) und entfernt ihn bei Crawl-Ende.
 - **Testfixture:** manueller Test je OS.
 
 ---
@@ -2342,7 +2463,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 
 ### OUT-281 E-Mail bei Crawl-Ende (global und je Aufgabe)
 - **Priorität:** P1
-- **Beschreibung:** Global „E-Mail bei Crawl-Ende“ an festgelegte Empfänger für jeden Crawl; für geplante Aufgaben eigener Reiter „Benachrichtigungen“ mit aufgabenspezifischen Empfängern. Optional auch bei Fehlschlag (Standard an) **(OS-Festlegung)**.
+- **Beschreibung:** Global „E-Mail bei Crawl-Ende“ an festgelegte Empfänger für jeden Crawl; für geplante Aufgaben Unterreiter „Benachrichtigungen“ im Reiter Exporte des Aufgabendialogs (OUT-160) mit aufgabenspezifischen Empfängern. Optional auch bei Fehlschlag (Standard an) **(OS-Festlegung)**.
 - **Akzeptanzkriterien:**
   - [ ] Crawl in der UI mit globaler Option → eine Mail nach Ende.
   - [ ] Fehlgeschlagener geplanter Lauf → Mail mit Betreff-Präfix `[FAILED]` und Fehlermeldung.
@@ -2351,11 +2472,14 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 
 ### OUT-282 Inhalt der Abschlussmail
 - **Priorität:** P1
-- **Beschreibung:** Die Mail (HTML + Klartext-Alternative) enthält: Aufgabe/Projekt, Start-URL, Start/Ende/Dauer, gecrawlte URLs, Verteilung der Antwortcodes, indexierbar/nicht indexierbar, eine Tabelle aller Issues (Name, Typ, Priorität, URLs). Ist Auto-Compare aktiv (OUT-152), zusätzlich je Issue die Veränderung zum Vorlauf (Previous, Current, Change) und hervorgehobene starke Veränderungen (z. B. Anstieg nicht indexierbarer Seiten, verschwundene Titles, neue/fehlende Seiten).
+- **Beschreibung:** Die Mail (HTML + Klartext-Alternative) enthält: Aufgabe/Projekt, Start-URL, Start/Ende/Dauer, gecrawlte URLs, Verteilung der Antwortcodes, indexierbar/nicht indexierbar, eine Tabelle aller Issues (Name, Typ, Priorität, URLs). Ist Auto-Compare aktiv (OUT-152), zusätzlich eine Änderungstabelle (übernommen aus TECH-308): Spalten `Issue / Filter`, `Previous`, `Current`, `Change` (absolut), `Change %` (Previous = 0 → leer), sortiert nach Betrag von `Change` absteigend; dazu je eine Zeile für neue und fehlende URLs (New/Missing, OUT-142) und je Change-Detection-Element (TECH-300 ff.) eine Zeile mit der Anzahl geänderter URLs; starke Veränderungen (z. B. Anstieg nicht indexierbarer Seiten, verschwundene Titles, neue/fehlende Seiten) werden hervorgehoben. Ohne vorherigen Crawl enthält die Mail statt der Änderungstabelle den Hinweis „kein vorheriger Crawl“.
 - **Eingaben/Konfiguration:** Schwelle „starke Veränderung“: Änderung ≥ 10 % und ≥ 10 URLs **(OS-Festlegung)**.
 - **Akzeptanzkriterien:**
   - [ ] Zahlen in der Mail stimmen mit dem Crawl Overview überein.
   - [ ] Mit Vergleich: Fixture `out-compare` → Mail nennt 3 neue und 2 fehlende Seiten.
+  - [ ] Die Zahlen der Änderungstabelle stimmen mit dem manuell geöffneten Vergleich derselben zwei Crawls überein (Golden-Vergleich) (übernommen aus TECH-308).
+  - [ ] Zeilen mit `Change` = 0 werden weggelassen, wenn „Leere Exporte überspringen“ (OUT-012) aktiv ist, sonst angezeigt **(OS-Festlegung,** übernommen aus TECH-308).
+  - [ ] Fixture mit Seite `/i`, die im zweiten Lauf `noindex` erhält, und geändertem Title auf `/a` → Änderungstabelle zeigt `Indexability` +1 und `Page Titles` +1 (übernommen aus TECH-308).
   - [ ] Mail enthält keine Geheimnisse und keine vollständigen Exporte im Text (nur als Anhang, OUT-283).
 - **Testfixture:** Test-SMTP-Server, Golden-Text der Klartext-Variante.
 
@@ -2384,14 +2508,23 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 - **Testfixture:** Benachrichtigungs-Adapter mit Mock-Backend (Unit-Test der Auslöselogik inkl. Vordergrund-Status und Dauer-Schwelle); manueller Test je OS.
 
 ### OUT-285 MCP-Server (Steuerung durch KI-Assistenten)
-- **Priorität:** P2
-- **Beschreibung:** Optionaler, lokal laufender MCP-Server, über den KI-Assistenten Crawls starten, Fortschritt abfragen (inkl. Crawl-ID), Daten abfragen und Exporte/Reports auslösen können – technisch eine Hülle um dieselben Funktionen wie das CLI (Abschnitt 8). Transporte: STDIO (headless) und Streamable HTTP auf `127.0.0.1` (Port konfigurierbar). Standardmäßig deaktiviert. (Falls ein anderer Spec-Bereich Integrationen/KI verantwortet, gilt dessen Definition; hier nur die Betriebsaspekte.)
+- **Priorität:** P1
+- **Beschreibung:** Optionaler, lokal laufender MCP-Server, über den KI-Assistenten Crawls starten, Fortschritt abfragen (inkl. Crawl-ID), Daten abfragen und Exporte/Reports auslösen können – technisch eine Hülle um dieselben Funktionen wie das CLI (Abschnitt 8). Transporte: STDIO (headless) und Streamable HTTP ausschließlich auf Loopback (`127.0.0.1` und `::1`, Port konfigurierbar). Der HTTP-Transport ist nur zusammen mit dem Zugriffsschutz aus AGENT-002 (Bearer-Token + `Origin`-/`Host`-Prüfung) aktivierbar; ohne ihn wäre er für jeden lokalen Prozess und per DNS-Rebinding aus dem Browser erreichbar (OS-Festlegung, AGENT-002 ist Voraussetzung des HTTP-Teils). Standardmäßig deaktiviert. Führender Eintrag (Headline-Funktion der Referenz 24.0, daher P1; der STDIO-Kern mit lesenden Werkzeugen ist als AGENT-001 mit P0 vorgezogen, Erweiterungen in 10-agent-interface.md); UI-129 beschreibt nur Menü, Dialoge und Statusanzeige.
+- **Eingaben/Konfiguration:** Transport STDIO/Streamable HTTP; Port (Vorschlag zufällig aus 49152–65535); „Beim App-Start automatisch starten“ (Standard aus); Werkzeug-Freigaben je Werkzeug an/aus (übernommen aus UI-129); Standardfreigabe nach Werkzeugklassen gemäß AGENT-003 (führend): nur lesende Werkzeuge an, crawlstartende, schreibende und kostenpflichtige erst nach ausdrücklicher Freigabe (OS-Festlegung, bewusste Abweichung zugunsten der Sicherheit).
+- **Ausgabe:** Werkzeugliste über `tools/list`; herunterladbare API-Beschreibung `openspider-mcp-tools.md` (Markdown, je Werkzeug Überschrift, Beschreibung, Parametertabelle) (übernommen aus UI-129).
+  - **Serverstatus (führend; Anzeige im Statusleistenfeld `MCP` nach UI-013, übernommen aus UI-129):** genau einer der Texte `MCP: aus` (HTTP-Server der App gestoppt oder Start gescheitert), `MCP: bereit (Port <p>)` (lauscht, keine aktive Sitzung) oder `MCP: verbunden (<n> Clients)` (n ≥ 1, Singular `1 Client`). n zählt die aktiven Sitzungen des Streamable-HTTP-Transports (Sitzungs-ID nach erfolgreichem `initialize`); eine Sitzung endet mit HTTP `DELETE`, beim Verbindungsabbruch des Clients oder nach 10 Minuten ohne Anfrage **(OS-Festlegung)**. STDIO-Server, die ein Client selbst startet (`openspider mcp`, AGENT-001), laufen als eigener Prozess und zählen nicht. Klick auf das Feld öffnet das Menü „MCP“ (UI-129).
 - **Akzeptanzkriterien:**
-  - [ ] HTTP-Transport bindet ausschließlich an Loopback; Zugriff von anderen Hosts ist nicht möglich.
+  - [ ] HTTP-Transport bindet ausschließlich an Loopback (`127.0.0.1`, `::1`); Zugriff von anderen Hosts ist nicht möglich.
+  - [ ] HTTP-Transport ist nur mit dem Schutz aus AGENT-002 startbar: Anfragen ohne gültigen Token → 401, mit fremdem `Origin`/`Host` → 403; es gibt keine Einstellung, die Token oder Origin-Prüfung abschaltet.
   - [ ] Exporte über MCP verwenden dieselben kanonischen Namen und erzeugen dieselben Dateien wie das CLI.
   - [ ] MCP-Logausgaben gehen nie auf stdout im STDIO-Modus (würde das Protokoll stören).
   - [ ] Große Ergebnisse werden seitenweise bzw. als Datei geliefert statt in einer übergroßen Antwort.
-- **Testfixture:** MCP-Client-Test gegen `out-basic-site`.
+  - [ ] Die Werkzeugliste im UI (UI-129) und die Markdown-Beschreibung stimmen exakt mit der Antwort auf `tools/list` überein (Name und Parameterschema; Anzahl Überschriften = Anzahl Werkzeuge) (übernommen aus UI-129).
+  - [ ] Abgeschaltete Werkzeuge erscheinen nicht in `tools/list` und werden bei direktem Aufruf mit einem MCP-Fehler abgelehnt (übernommen aus UI-129).
+  - [ ] Mit Auto-Start ist der Server ≤ 2 s nach Erscheinen des Hauptfensters erreichbar; ist der Port belegt, erhält der Nutzer eine Benachrichtigung statt eines stillen Fehlschlags (übernommen aus UI-129).
+  - [ ] Statusanzeige live: Jeder Zustandswechsel erscheint ≤ 1 s danach im Feld `MCP` der Statusleiste. Ablauf im Test: Server aus → `MCP: aus`; Start auf Port 51234 → `MCP: bereit (Port 51234)`; erster Client sendet `initialize` → `MCP: verbunden (1 Client)`; zweiter Client → `MCP: verbunden (2 Clients)`; ein Client sendet `DELETE` → `MCP: verbunden (1 Client)`; zweiter Client bricht die Verbindung ab → `MCP: bereit (Port 51234)`; Server stoppen → `MCP: aus`. Bei belegtem Port bleibt die Anzeige `MCP: aus`. Anfragen mit ungültigem Token (401) oder fremdem `Origin` (403) ändern den Zähler nicht.
+  - [ ] Ein Crawl-Start über MCP erzeugt denselben Crawl (URL-Menge, Statuscodes) wie der gleichwertige CLI-Aufruf und erscheint in der Crawl-Verwaltung (OUT-228).
+- **Testfixture:** MCP-Client-Test (STDIO und HTTP) gegen `out-basic-site`: `tools/list` vs. UI-Liste und Markdown, Auto-Start nach Neustart, belegter Port, abgeschaltetes Werkzeug; UI-E2E-Test der Statusanzeige mit zwei HTTP-Test-Clients und Testuhr (10-Minuten-Ablauf).
 
 ---
 
@@ -2407,15 +2540,16 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 | `out-site-structure` | Tiefenkette bis 11, 404 in Tiefe 1 | OUT-025, -080 |
 | `out-crawl-path` | lineare Tiefe, Sitemap-Orphan | OUT-023 |
 | `out-queue` | Crawl-Limit mit Restwarteschlange | OUT-030 |
-| `out-links`, `out-links-anchor`, `out-links-follow`, `out-uncrawlable-links` | Linktypen, Anker, follow/nofollow, nicht crawlbare Links | OUT-031 – -042 |
+| `out-links`, `out-links-anchor`, `out-links-follow`, `out-uncrawlable-links` | Linktypen, Anker, follow/nofollow, nicht crawlbare Links, nur von nicht indexierbaren Seiten verlinkte Ziele | OUT-031 – -042, -068 |
 | `out-render`, `out-pdf`, `out-headers` | Rendering, PDFs, Header, Cookies | OUT-043 – -049, -107, -110, -111 |
 | `out-response-codes`, `out-security` | alle Statuscodes inkl. HTTP-Refresh-Header, TLS, Mixed Content, externe HTTP-Ziele | OUT-050, -051, -067, -080, -097, -270 |
 | `out-content-dupes`, `out-images`, `out-canonicals`, `out-directives`, `out-structured-data`, `out-sitemaps-in`, `out-amp`, `out-custom-search`, `out-custom-extraction`, `out-a11y`, `out-issues` | filterbasierte Bulk-Exporte | OUT-052 – -066 |
 | `out-redirects`, `out-pagination`, `out-hreflang`, `out-serp`, `out-mobile` | Reports (inkl. HSTS-Host, `Refresh`-Header, gemischte Ketten) | OUT-081 – -109 |
 | `out-sitemap-gen`, `out-sitemap-images` | Sitemap-Generator | OUT-120 – -133 |
-| `out-compare`, `out-compare-mapping`, `out-compare-ua` | Crawl-Vergleich | OUT-140 – -153 |
-| `out-schedule` | Sitemap-Index, Formular-/Basic-Auth | OUT-162, -187, -209, -223 |
-| Mocks im `os-testsite` | Google Sheets/Drive, GA4/GSC, PSI, KI (Text/Bild/Audio/Embeddings), SMTP, Update-Server, Proxy | OUT-005, -021, -025, -064, -065, -099, -104 – -106, -210 – -214, -250, -269, -280 |
+| `out-compare`, `out-compare-mapping`, `out-compare-ua` | Crawl-Vergleich inkl. Linkwechsel `/start`, Ankertextwechsel `/c`, Auto-Compare-Läufe | OUT-140 – -153, -282 |
+| `onpage-rc/` (Fachspec 02) | Antwortcode-Fixture für Fehler-Inlinks und Redirects to Errors | OUT-067, -084 |
+| `out-schedule` | Sitemap-Index, Formular-/Basic-Auth, Golden-plist/Task-XML | OUT-162, -166, -187, -209, -223 |
+| Mocks im `os-testsite` | Google Sheets/Drive, GA4/GSC, PSI, KI (Text/Bild/Audio/Embeddings), SMTP, Update-Server, Proxy | OUT-005, -021, -025, -064, -065, -099, -104 – -106, -114, -201, -210 – -214, -250, -269, -280 |
 
 ## Anhang B – Offene Punkte / Annahmen
 
@@ -2428,3 +2562,27 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - Entfernte, nicht belegte Versionsangaben: FAQ-Rich-Result-Entfernung „24.2“ (OUT-102), CLI-Namensliste „seit 24.2“ (OUT-203), RDP-Absturz als Referenzproblem (OUT-262; laut Review in 20.4 behoben, nun eigenes Kriterium). Die Release-History führt 24.1–24.3 nur als Bugfix-Versionen.
   - Noch per Golden-Export zu bestätigen: getrennte Bulk-Exporte `Content:Spelling Errors`/`Content:Grammar Errors` (OUT-052, OpenSpider registriert vorsorglich beide Varianten plus den kombinierten Export); exakte Werteliste `Chain Type` inkl. `HTTP Refresh` (OUT-081); Verfügbarkeit von `All Error Inlinks` im Bereich „Internal & External“ (OUT-067); Spaltennamen der Detail-Exporte Lighthouse/Accessibility/N-grams (OUT-021).
   - Clean-Room-Hinweis: `Description`/`How To Fix` (OUT-025, OUT-063) und die Kurzbeschreibungen in `Grammar Errors:Detail` (OUT-052) werden eigenständig verfasst; Issue-Texte der Referenz dürfen weder kopiert noch als Vorlage für Umformulierungen genutzt werden.
+- Revision Spec v1 (2026-10-13, Entscheidungen des Architekten zu PARITY.md):
+  - Verweis-Einträge (eine Quelle je Funktion): OUT-144 → TECH-300; OUT-145 → TECH-305; OUT-231 → CRAWL-124; OUT-269 → CRAWL-122; OUT-271 → UI-121. Ihre bisherigen Detailkriterien gehören in die führenden Einträge der jeweiligen Bereiche.
+  - Hier führend und um Kriterien anderer Bereiche ergänzt: OUT-020 (ONPAGE-191, UI-015), OUT-011/-130 (CRAWL-134, UI-068), OUT-067/-084 (ONPAGE-067), OUT-140 … -153 (CRAWL-032/034/035/036/144, TECH-305/306/307/308), OUT-160 … -171 (CRAWL-136), OUT-180 … -209 (CRAWL-135, CRAWL-036, TECH-308), OUT-224 (CRAWL-133, UI-116), OUT-228/-229 (CRAWL-128/143, UI-124), OUT-245 (UI-128), OUT-250/-251 (CRAWL-142), OUT-282 (TECH-308), OUT-285 (UI-129).
+  - Prioritäten: OUT-149 P2 → P1; OUT-285 P2 → P1; OUT-021 eine Priorität (P0, übrige Detail-Tabs [P1]); OUT-263 P1 (Emulation) mit [P2]-Phase nativ; Teilumfänge in OUT-002, -126, -161 … -166, -183, -188, -198, -206, -261, -272 als [P1]/[P2] gekennzeichnet.
+  - Lücken geschlossen: G-1 (OUT-068), G-4 (OUT-211/-212), G-5 (OUT-203, `--list-exports`/`--list-reports`). Gegen die öffentliche Referenz-Doku geprüft: CLI-Syntax `--crawl-comparison <id> <id>`, `--project-crawl-comparison "true"`, `--list-crawls` und die `--help <kategorie>`-Namenslisten; das Verhalten bei ungültigen Namen ist dort nicht dokumentiert (OUT-203 bleibt OS-Festlegung).
+- Nacharbeit nach der Fable-Gegenprüfung (2026-10-13, Entscheidungen des Architekten):
+  - R-02: URL-Mapping (OUT-146) nutzt den gemeinsamen Regex-Dialekt aus 01 (fancy-regex, Lookaround, Suchsemantik); die Einschränkung auf die Crate `regex` entfällt.
+  - R-03: OUT-145 ist Verweis auf TECH-305 (P1); Filtername und Toleranzen gelten nur noch dort.
+  - R-08: K-5/K-6 sind Einzelprioritäten. OUT-164, -170, -171 → P1 (maximale Laufzeit in OUT-171 [P2]); OUT-184, -185, -191 → P0; OUT-187 bleibt als begründete Ausnahme P1 (setzt OUT-223 voraus).
+  - R-11: OUT-201 → P1 mit KI-/Embedding-Flags und `--require-apis` (übernommen aus INTEG-017).
+  - R-13: OUT-104 mit Zählbeispiel aus INTEG-145 und kanonischem Spaltenschlüssel `Audit`; neuer Ressourcen-Export je Audit OUT-114 (aus INTEG-144).
+  - R-17: Kanonische Spaltenschlüssel der Detail- und Bulk-Exporte aus den führenden Einträgen: Konsole `Source URL` (TECH-114) in OUT-021/-058, N-grams `N-Gram`, `Occurrences`, `Pages`, `Linked`, `Unlinked` (UI-049) in OUT-021 (dort jetzt [P2] wie UI-049).
+  - R-19: Dateinamensvorschlag `<tab>_<filter>_<YYYY-MM-DD>` des UI-Exportdialogs in OUT-008/OUT-020 (aus UI-015); CLI und Scheduling bleiben ohne Datum.
+- Nacharbeit reviews-open-v1, Runde 3 (Architekten-/Planerentscheidungen):
+  - Inhaltsübersicht: Bereichsgrenzen OUT-114 und OUT-133 korrigiert (R-18).
+  - OUT-146: Kollision – erste passende Regel in Nutzerreihenfolge gewinnt; Gleichstände als OS-Festlegung.
+  - OUT-149: Link-Identität (Quelle, Ziel, Linktyp); neue Änderungsart „Ankertext geändert“ (`Anchor Changed`).
+  - OUT-020 führend für den Dateinamensvorschlag (Startdatum des Crawls, lokale Zeitzone); OUT-008 verweist hierher.
+  - Spaltennamen nach dem führenden Fach-Eintrag: Cookies (UI-043) in OUT-021/-049/-111 inkl. `First-Party`; Accessibility (TECH-259) in OUT-021/-062/-109; Spelling & Grammar (ONPAGE-157/158) in OUT-021/-025/-052; Semantik (INTEG-181/182/185) in OUT-025/-052; Images (ONPAGE-181) in OUT-053; `Found Via` (TECH-214) in OUT-057.
+  - OUT-052 um „Spelling & Grammar Errors Summary“, „Soft 404 Inlinks“ und die Partnerzeilen von „Semantically Similar“ ergänzt; OUT-062 um den Export `Incomplete`; OUT-083/-086 legen die `Chain Type`-Werte für Canonical-Ketten fest; OUT-100 übernimmt die TECH-190-Kriterien; OUT-094 den Alias aus TECH-088; OUT-108 Element-Zeilen; OUT-099 Quellwert `GA`.
+  - Neu: OUT-069 Vektor-Export „AI:Embeddings“ (P2).
+  - OUT-223 führend für Auth-Profile (`.osauth`, XChaCha20-Poly1305, P1), CRAWL-121 verweist hierher.
+  - OUT-285: Standardfreigabe der MCP-Werkzeuge nach AGENT-003 (nur lesend); STDIO-Kern als AGENT-001 (P0) vorgezogen.
+  - Stubs OUT-144, OUT-231, OUT-271 auf das strikte Format normiert.

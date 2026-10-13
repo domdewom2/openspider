@@ -18,10 +18,10 @@ Clean-Room-Funktionsspezifikation für OpenSpider. Referenz: Screaming Frog SEO 
 | 9 Meta Keywords | ONPAGE-110 … 113 | Extraktion und 3 Filter |
 | 10 H1 | ONPAGE-120 … 126 | Extraktion und 6 Filter |
 | 11 H2 | ONPAGE-130 … 135 | Extraktion und 5 Filter |
-| 12 Content | ONPAGE-140 … 166 | Inhaltsbereich, Wortzählung, exakte/Near-Duplicates, Low Content, Soft 404, Lorem Ipsum, Lesbarkeit, Rechtschreibung/Grammatik, Embeddings (semantische Ähnlichkeit, geringe Relevanz), PDF-Inhalte |
+| 12 Content | ONPAGE-140 … 166 | Inhaltsbereich, Wortzählung, exakte/Near-Duplicates, Low Content, Soft 404, Lorem Ipsum, Lesbarkeit, Rechtschreibung/Grammatik, Embeddings (nur Verweise, führend INTEG-180 ff.), PDF-Inhalte |
 | 13 Images | ONPAGE-170 … 181 | Bildquellen, Spalten, Image Details, 7 Filter |
-| 14 Querschnitt | ONPAGE-190 … 194 | Übersichtszähler, Export je Filter, Lower-Tab-Verknüpfung, Live-Aktualisierung, SERP-Snippet |
-| 15 Annahmen & Verifikation | – | Liste aller Annahmen mit Prüfanweisung, Verifikationsaufträge V-1 … V-7 |
+| 14 Querschnitt | ONPAGE-190 … 194 | Übersichtszähler, Export je Filter (Verweis), Lower-Tab-Verknüpfung, Live-Aktualisierung (Verweis), SERP-Snippet |
+| 15 Annahmen & Verifikation | – | Liste aller Annahmen mit Prüfanweisung, Verifikationsaufträge V-1 … V-7, Paritäts-Erwartungswerte Issue-Klassifizierung (zu V-4) |
 
 ### Funktionsübersicht (alle IDs)
 
@@ -30,9 +30,9 @@ Clean-Room-Funktionsspezifikation für OpenSpider. Referenz: Screaming Frog SEO 
 | ONPAGE-001 | Tab-Gerüst: Spalten, Filter, Zähler | P0 |
 | ONPAGE-002 | Präferenzen für Schwellwerte | P0 |
 | ONPAGE-003 | Textnormalisierung und Zeichenlänge | P0 |
-| ONPAGE-004 | Pixelbreiten-Berechnung | P1 |
+| ONPAGE-004 | Pixelbreiten-Berechnung (Verweis → UI-038) | P0 |
 | ONPAGE-005 | Duplikat-Gruppierung (Wertgleichheit über Seiten) | P0 |
-| ONPAGE-006 | Issue-Klassifizierung (Typ/Priorität) | P1 |
+| ONPAGE-006 | Issue-Klassifizierung (Verweis → UI-063) | P0 |
 | ONPAGE-007 | Abhängigkeit „Crawl-Analyse erforderlich“ | P0 |
 | ONPAGE-008 | Mehrfachvorkommen und Spalten „…1/…2“ | P0 |
 | ONPAGE-009 | Grundmenge der Element-Tabs | P0 |
@@ -43,7 +43,7 @@ Clean-Room-Funktionsspezifikation für OpenSpider. Referenz: Screaming Frog SEO 
 | ONPAGE-014 | Internal: Crawl Depth, Folder Depth | P0 |
 | ONPAGE-015 | Internal: Link-Zählspalten | P0 |
 | ONPAGE-016 | Internal: JS-Link-Zählspalten | P1 |
-| ONPAGE-017 | Internal: Link Score (Spaltenanbindung) | P1 |
+| ONPAGE-017 | Internal: Link Score (Verweis → TECH-145) | P1 |
 | ONPAGE-018 | Internal: Technische Spalten (Hash, Response Time, Last-Modified, Redirect, HTTP-Version, URL Encoded Address) | P0 |
 | ONPAGE-019 | Internal: Content-Analyse-Spalten | P1 |
 | ONPAGE-020 | Inhaltstyp-Klassifizierung (gemeinsam für Internal/External) | P0 |
@@ -84,7 +84,7 @@ Clean-Room-Funktionsspezifikation für OpenSpider. Referenz: Screaming Frog SEO 
 | ONPAGE-064 | Redirect Type „HSTS Policy“ | P1 |
 | ONPAGE-065 | Status-Texte für Fehlerfälle ohne Antwort | P0 |
 | ONPAGE-066 | Statuscodes außerhalb 2xx–5xx (1xx, ≥600) | P2 |
-| ONPAGE-067 | Bulk-Export „All Error Inlinks“ und Report „Redirects to Error“ | P1 |
+| ONPAGE-067 | Bulk-Export „All Error Inlinks“ und Report „Redirects to Error“ (Verweis → OUT-067) | P1 |
 | ONPAGE-070 | URL: Spalten | P0 |
 | ONPAGE-071 | URL-Filter Non ASCII Characters | P0 |
 | ONPAGE-072 | URL-Filter Underscores | P0 |
@@ -152,12 +152,12 @@ Clean-Room-Funktionsspezifikation für OpenSpider. Referenz: Screaming Frog SEO 
 | ONPAGE-156 | Content-Filter Grammar Errors | P1 |
 | ONPAGE-157 | Lower-Tab Spelling & Grammar Details, Ignorieren, Wörterbuch | P1 |
 | ONPAGE-158 | Neu-Prüfung ohne Recrawl und Top-100-Fehlerübersicht | P2 |
-| ONPAGE-159 | Embeddings: Anbieter und Konfiguration | P2 |
-| ONPAGE-160 | Content-Filter Semantically Similar | P2 |
-| ONPAGE-161 | Content-Filter Low Relevance Content | P2 |
-| ONPAGE-162 | Embedding-Regeln (URL-Muster) | P2 |
-| ONPAGE-163 | Lower-Tab Duplicate Details: Semantic Similarity | P2 |
-| ONPAGE-164 | Embeddings nur für indexierbare Seiten | P2 |
+| ONPAGE-159 | Embeddings: Anbieter und Konfiguration (Verweis → INTEG-180) | P1 |
+| ONPAGE-160 | Content-Filter Semantically Similar (Verweis → INTEG-181) | P1 |
+| ONPAGE-161 | Content-Filter Low Relevance Content (Verweis → INTEG-182) | P1 |
+| ONPAGE-162 | Embedding-Regeln (URL-Muster) (Verweis → INTEG-184) | P1 |
+| ONPAGE-163 | Lower-Tab Duplicate Details: Semantic Similarity (Verweis → INTEG-183) | P1 |
+| ONPAGE-164 | Embeddings nur für indexierbare Seiten (Verweis → INTEG-180) | P1 |
 | ONPAGE-165 | Bulk-Exporte Content | P1 |
 | ONPAGE-166 | PDF-Dokumente: Titel, Keywords, Wortzahl, Lesbarkeit, Rechtschreibung | P1 |
 | ONPAGE-170 | Bildquellen-Erkennung | P0 |
@@ -173,12 +173,16 @@ Clean-Room-Funktionsspezifikation für OpenSpider. Referenz: Screaming Frog SEO 
 | ONPAGE-180 | Image-Filter Incorrectly Sized Images | P1 |
 | ONPAGE-181 | Bulk-Exporte Images | P1 |
 | ONPAGE-190 | Übersichtszähler je Tab/Filter | P0 |
-| ONPAGE-191 | Export der aktuellen Filteransicht | P0 |
+| ONPAGE-191 | Export der aktuellen Filteransicht (Verweis → OUT-020) | P0 |
 | ONPAGE-192 | Verknüpfung mit Lower-Tabs (Inlinks/Outlinks/Details) | P0 |
-| ONPAGE-193 | Live-Aktualisierung während des Crawls | P1 |
+| ONPAGE-193 | Live-Aktualisierung während des Crawls (Verweis → UI-018) | P0 |
 | ONPAGE-194 | Lower-Tab SERP Snippet: Geräteumschaltung und Bearbeitung | P1 |
 
-Summe: 150 Funktionen (P0: 77, P1: 64, P2: 9). Insgesamt 574 prüfbare Akzeptanzkriterien, 57 dokumentierte Annahmen (A-1 … A-56 inkl. A-5b) und 7 Verifikationsaufträge (V-1 … V-7).
+Summe: 150 Funktionen (P0: 80, P1: 67, P2: 3), davon 12 Verweis-Stubs (ONPAGE-004, -006, -017, -067, -159 … -164, -191, -193). Insgesamt 521 prüfbare Akzeptanzkriterien, 57 dokumentierte Annahmen (A-1 … A-56 inkl. A-5b) und 7 Verifikationsaufträge (V-1 … V-7).
+
+**Änderungsstand (Spec v1, Architektenentscheidungen 2026-10-13):** Grundregel „eine Quelle je Funktion“ angewandt; nicht führende Duplikate sind zu Verweis-Stubs gekürzt (IDs bleiben bestehen): ONPAGE-004 → UI-038 (K-9, P0), ONPAGE-006 → UI-063 (K-10, P0; frühere Zuordnungstabelle nur noch als Paritäts-Erwartungswerte in Abschnitt 15), ONPAGE-017 → TECH-145 (Link Score), ONPAGE-067 → OUT-067/OUT-084 (All Error Inlinks), ONPAGE-159 … 164 → INTEG-180 … 184 (K-1, jetzt P1), ONPAGE-191 → OUT-020 (Export aktuelle Ansicht), ONPAGE-193 → UI-018 (K-11, P0). Jede ID trägt genau eine Priorität: ONPAGE-012 und ONPAGE-142 auf P0 vereinheitlicht, abweichende Teilumfänge als [P1]-Kriterien markiert. ONPAGE-007 auf die Filterzustände dieses Dokuments begrenzt (Ablauf CRAWL-141/UI-080). ONPAGE-157 als führend für den Inhalt des Detail-Tabs gekennzeichnet (Layout UI-047, K-15), gegen die öffentliche Doku geprüft. ONPAGE-165/181 verweisen für Format und Mechanik auf OUT-052/053/066. Gegenprüfung: Default `issues.ignore_non_indexable` auf `true` nach CRAWL-089 nachgezogen (0.3, ONPAGE-009, A-51); ONPAGE-017-Stub auf Skala 1–100 nach TECH-145 korrigiert.
+
+**Nacharbeit reviews-open-v1 (2026-10-13):** ONPAGE-165 legt die Spaltennamen der Content-Bulk-Exporte als führender Fach-Eintrag fest (`Exact Duplicate Address`; OUT-052 übernimmt sie exakt, ebenso `Page Section`/`Type` aus ONPAGE-157 und `Error`/`Type`/`URLs`/`Instances` aus ONPAGE-158); Soft-404-Inlinks im Format OUT-031.
 
 **Änderungsstand (Review-Runde 2):** Ergänzt: Schalter für paginierte URLs bei Duplikaten (ONPAGE-005), Schalter für nicht indexierbare URLs in Problemfiltern (ONPAGE-009), PDF-Unterstützung (ONPAGE-009/011/013/142/149/153, neu ONPAGE-166), Fehler-Exporte im Response-Codes-Bereich (neu ONPAGE-067), Inhaltsbegrenzung und Fehlerfall bei Embeddings (ONPAGE-159), Image-Details-Spalten Path Type/Link Path/Link Position/Link Origin und srcset-Verhalten (ONPAGE-170/172/181), Soft-404-Inlinks-Export (ONPAGE-165), SERP-Snippet je Gerät (neu ONPAGE-194), Sprachliste der Referenz (ONPAGE-153). Korrigiert: Filtername „Flash“ (ONPAGE-023), nicht belegte Spalten als Erweiterung markiert (ONPAGE-025/142/157/172), Real Dimensions nur mit Rendering (ONPAGE-172), Readability-Labels als Annahme (ONPAGE-149), Pixel-Defaults als zu verifizieren markiert (0.3, V-3). Geschärft: ONPAGE-001/004/144/145/153/154/160/191.
 
@@ -230,11 +234,8 @@ Gilt für Titel, Meta-Description, Meta-Keywords, Überschriften, Alt-Texte:
 | `duplicates.only_indexable` | true | ONPAGE-005, -143, -144 |
 | `duplicates.near_enabled` | false | ONPAGE-144 |
 | `duplicates.ignore_paginated` | true (**Annahme A-50**) | ONPAGE-005, -092, -102, -112, -122, -132 |
-| `issues.ignore_non_indexable` | false (**Annahme A-51**) | ONPAGE-009 und alle Problemfilter der Element-Tabs, ONPAGE-146 |
-| `embeddings.similarity_threshold` | 0.95 (Bereich 0.50–1.00) | ONPAGE-160 |
-| `embeddings.low_relevance_threshold` | 0.40 | ONPAGE-161 |
-| `embeddings.limit_page_content` | false (**Annahme A-52**) | ONPAGE-159 |
-| `embeddings.limit_page_content_chars` | 5000 | ONPAGE-159 |
+| `issues.ignore_non_indexable` | true (Festlegung CRAWL-089, führend; ersetzt frühere Annahme A-51) | ONPAGE-009 und alle Problemfilter der Element-Tabs, ONPAGE-146 |
+| Embedding-Schwellen und -Optionen | siehe INTEG-180 … 189 (führend; Vergleich „≥ Schwelle“) | ONPAGE-159 … 164 (Verweise) |
 | `pdf.store` | false | ONPAGE-166 |
 | `serp.<device>.title_max_px`, `serp.<device>.description_max_px` | siehe ONPAGE-194 | ONPAGE-194 |
 | `images.incorrect_size_min_saving_kb` | 4 | ONPAGE-180 |
@@ -300,21 +301,8 @@ Gilt für Titel, Meta-Description, Meta-Keywords, Überschriften, Alt-Texte:
 - **Testfixture:** Unit-Tests in `os-parse`; zusätzlich `onpage-titles/entities.html` mit `<title>  Shop &amp; Mehr&nbsp; </title>` → Title 1 = „Shop & Mehr“, Länge 11.
 
 ### ONPAGE-004 Pixelbreiten-Berechnung
-- **Priorität:** P1
-- **Beschreibung:** Für Titel und Meta-Description wird die geschätzte Darstellungsbreite in einem Suchergebnis berechnet. Die Breite ist die Summe der horizontalen Vorschubbreiten (Advance Widths) der Glyphen des normalisierten Textes in einer Arial-metrisch kompatiblen Schrift. Titel: 20 px Schriftgröße; Meta-Description: 14 px (**Annahme A-3**). Es wird eine metrik-kompatible Schrift mit OFL-Lizenz (z. B. Liberation Sans) als eingebettete Metriktabelle verwendet, keine Systemschrift (deterministisch auf allen Plattformen).
-- **Eingaben/Konfiguration:** Schriftgröße je Elementtyp (intern, nicht in der UI).
-- **Ausgabe:** Spalten „Title 1 Pixel Width“, „Meta Description 1 Pixel Width“ (Ganzzahl).
-- **Berechnungsvorschrift:** `px(text, size) = ceil( Σ advance_units(c) × size ÷ units_per_em )` über alle Codepoints c von N(text). Summiert wird in `f64`, aufgerundet wird **einmal** am Ende (nicht je Zeichen). Kein Kerning, keine Ligaturen. Die Metriktabelle (Liberation Sans Regular, `units_per_em = 2048`) wird als generierte Rust-Konstante eingecheckt.
-- **Akzeptanzkriterien:**
-  - [ ] Leerer Text → 0 px.
-  - [ ] Referenzwerte der Metriktabelle (Titel, 20 px): `px("W") = 19` (1933/2048 × 20 = 18,88), `px("i") = 5` (455/2048 × 20 = 4,44), `px("WWWW") = 76` (75,51), `px("iiii") = 18` (17,77).
-  - [ ] Einmaliges Aufrunden: `px("ii") = 9` (8,89), nicht 10 (= 2 × aufgerundetes 5).
-  - [ ] Meta Description (14 px): `px("W" × 150) = 1983` (1982,08), `px("i" × 160) = 498` (497,66).
-  - [ ] Leerzeichen hat eine Breite > 0 (`px("a b") > px("ab")`).
-  - [ ] Zeichen ohne Glyphe in der Metriktabelle (z. B. CJK, Emoji) zählen 1 em: `px("漢", 20) = 20`.
-  - [ ] Ergebnis bit-identisch auf macOS arm64/x64 und Windows (Golden-Test über 50 Titel, keine Abhängigkeit von Systemschriften).
-  - [ ] Abweichung zur Referenz für 20 Golden-Titel (gemischte Längen, Umlaute, Großbuchstaben, Ziffern) ≤ 3 % je Titel; bei größerer Abweichung Schriftgröße/Metrik kalibrieren (V-3).
-- **Testfixture:** Unit-Tests auf `pixel_width()` mit den obigen Werten; `onpage-titles/pixel-*.html` mit Titeln aus nur `W` (60/70 Zeichen), nur `i` (70 Zeichen), gemischtem Text und CJK; Golden-Werte für den Referenzvergleich aus einem Referenzexport.
+- **Priorität:** P0
+- **Verweis:** siehe UI-038 (führend). Die Spalten `Title 1/2 Pixel Width` und `Meta Description 1/2 Pixel Width` sowie die Filter ONPAGE-095, -096, -105, -106 und die SERP-Vorschau ONPAGE-194 nutzen ausschließlich die UI-038-Berechnung, die im Kern (`os-analyze`/`os-parse`) läuft und nicht im Frontend.
 
 ### ONPAGE-005 Duplikat-Gruppierung (Wertgleichheit über Seiten)
 - **Priorität:** P0
@@ -337,65 +325,19 @@ Gilt für Titel, Meta-Description, Meta-Keywords, Überschriften, Alt-Texte:
 - **Testfixture:** `onpage-duplicates/`: `a.html`, `b.html` (gleicher Titel/MD/H1/H2/Keywords), `c.html` (gleiche Werte, aber `<link rel=canonical href=a.html>`), `d.html` (nur Groß-/Kleinschreibung anders), `e.html` (gleicher Wert mit Zusatz-Leerzeichen); Unterordner `pagination/` mit `blog/index.html`, `blog/page/2/index.html`, `blog/page/3/index.html`, `archiv.html` (alle Titel/MD/Keywords/H1/H2 identisch) und Route `/blog/page/4/` mit `rel="prev"` nur als `Link`-Header.
 
 ### ONPAGE-006 Issue-Klassifizierung (Typ/Priorität)
-- **Priorität:** P1
-- **Beschreibung:** Jeder Filter dieses Dokuments, der ein Problem anzeigt, hat einen Issue-Typ (`Issue`, `Warning`, `Opportunity`) und eine Priorität (`High`, `Medium`, `Low`) für die Issues-Übersicht (eigener Spec-Bereich). Reine Klassifizierungsfilter (Inhaltstypen, HTTPS URLs, Success 2XX) sind keine Issues.
-
-  **Herkunft der Tabelle:** Die folgende Zuordnung ist **keine eigene Vorgabe von OpenSpider**, sondern ein Abbild der Klassifikation, die die Referenz in ihrer öffentlichen Issue-Bibliothek angibt (Stand 24.3, Typ- und Prioritätssymbole je Issue-Seite). Es handelt sich um sachliche Einordnungen ohne übernommene Beschreibungstexte. Die Tabelle ist per Paritätstest (V-4) zu bestätigen; Abweichungen werden hier korrigiert. Die Tabelle wird als Daten (`issue_classes.toml`) gepflegt, damit sie ohne Code-Änderung angepasst werden kann.
-
-| Tab | Filter | Typ | Priorität |
-|---|---|---|---|
-| Response Codes | Internal No Response / Client Error (4XX) / Server Error (5XX) / Redirect Loop | Issue | High |
-| Response Codes | Internal Blocked by Robots.txt / Internal Blocked Resource | Warning | High |
-| Response Codes | Internal Redirect Chain / External Blocked Resource | Warning | Medium |
-| Response Codes | Internal Redirection (3XX/Meta Refresh/HTTP Refresh/JavaScript); External No Response / 4XX / 5XX | Warning | Low |
-| Security | HTTP URLs, Mixed Content, Form URL Insecure, Form on HTTP URL | Issue | High |
-| Security | Missing HSTS, Unsafe Cross-Origin Links, Protocol-Relative Resource Links, Missing CSP, Missing X-Content-Type-Options, Missing X-Frame-Options, Missing Secure Referrer-Policy, Bad Content Type | Warning | Low |
-| URL | Multiple Slashes, Contains A Space, Broken Bookmark | Issue | Low |
-| URL | Non ASCII Characters, Uppercase, Repetitive Path, Internal Search, Parameters, GA Tracking Parameters | Warning | Low |
-| URL | Underscores, Over 115 Characters | Opportunity | Low |
-| Page Titles | Missing, Multiple, Outside <head> | Issue | High |
-| Page Titles | Duplicate, Over/Below X Characters, Over/Below X Pixels | Opportunity | Medium |
-| Page Titles | Same as H1 | Opportunity | Low |
-| Meta Description | Multiple, Outside <head> | Issue | Medium |
-| Meta Description | Missing, Duplicate, Over/Below X Characters, Over/Below X Pixels | Opportunity | Low |
-| Meta Keywords | (keine Issues; reine Filter) | – | – |
-| H1 | Missing | Issue | Medium |
-| H1 | Multiple | Warning | Medium |
-| H1 | Alt Text in h1, Non-sequential | Warning | Low |
-| H1 | Duplicate, Over X Characters | Opportunity | Low |
-| H2 | Missing, Multiple, Non-sequential | Warning | Low |
-| H2 | Duplicate, Over X Characters | Opportunity | Low |
-| Content | Exact Duplicates | Issue | High |
-| Content | Spelling Errors, Grammar Errors | Issue | Medium |
-| Content | Soft 404 Pages, Lorem Ipsum Placeholder | Warning | High |
-| Content | Near Duplicates, Semantically Similar | Warning | Medium |
-| Content | Low Relevance Content | Warning | Low |
-| Content | Low Content Pages | Opportunity | Medium |
-| Content | Readability Difficult, Readability Very Difficult | Opportunity | Low |
-| Images | Missing Alt Text, Missing Alt Attribute | Issue | Low |
-| Images | Background Images | Warning | Low |
-| Images | Over X KB | Opportunity | Medium |
-| Images | Alt Text Over X Characters, Incorrectly Sized Images, Missing Size Attributes | Opportunity | Low |
-
-- **Eingaben/Konfiguration:** Datentabelle `issue_classes.toml` in `os-analyze` (zur Build-Zeit eingebettet).
-- **Ausgabe:** Typ/Priorität je Filter, abrufbar für Issues-Tab und Exporte.
-- **Akzeptanzkriterien:**
-  - [ ] Jeder Problemfilter dieses Dokuments hat genau eine Zuordnung gemäß Tabelle (Test: vollständige Abdeckung aller Filter-IDs).
-  - [ ] Paritätstest V-4: Für jeden Tabelleneintrag stimmen Typ und Priorität mit dem Issues-Export der Referenz (Default-Konfiguration) überein; Abweichungen werden in `PARITY.md` protokolliert und hier nachgezogen.
-  - [ ] Klassifizierungsfilter (HTML, JavaScript, …, HTTPS URLs, Success (2XX), Redirection-Filter External) erzeugen keinen Issue-Eintrag, außer sie stehen explizit in der Tabelle.
-  - [ ] Issues mit 0 Treffern erscheinen nicht als aktives Issue.
-- **Testfixture:** keine eigene; Abdeckungstest über die statische Tabelle.
+- **Priorität:** P0
+- **Verweis:** siehe UI-063 (führend). Die Tabelle „Paritäts-Erwartungswerte Issue-Klassifizierung“ in Abschnitt 15 dieses Dokuments dient nur als Erwartungswert-Liste für den Paritätstest (V-4).
 
 ### ONPAGE-007 Abhängigkeit „Crawl-Analyse erforderlich“
 - **Priorität:** P0
-- **Beschreibung:** Manche Filter benötigen seitenübergreifende Nachberechnung (Near Duplicates, Semantically Similar, Low Relevance Content, Background Images, Incorrectly Sized Images, Redirect Chain/Loop-Vervollständigung, Link Score) oder eine optionale Funktion (JS-Rendering, Spell-/Grammar-Check, Embeddings). Solange die Voraussetzung fehlt, zeigt der Filter einen Zustandshinweis.
+- **Beschreibung:** Manche Filter benötigen seitenübergreifende Nachberechnung (Near Duplicates, Semantically Similar, Low Relevance Content, Background Images, Incorrectly Sized Images, Redirect Chain/Loop-Vervollständigung, Link Score) oder eine optionale Funktion (JS-Rendering, Spell-/Grammar-Check, Embeddings). Solange die Voraussetzung fehlt, zeigt der Filter einen Zustandshinweis. Dieser Eintrag legt nur fest, **welche Filter dieses Dokuments** von welcher Voraussetzung abhängen und welchen Zustand sie zeigen. Auslösung, Ablauf und Abbruch der Crawl-Analyse sind in CRAWL-141 (führend für den Ablauf) bzw. UI-080 (Teilschritte, Fortschritt) spezifiziert, die Darstellung des Hinweises in UI-016/UI-080.
 - **Eingaben/Konfiguration:** Status der Crawl-Analyse (nicht gestartet / läuft / fertig / veraltet nach Konfig-Änderung); Konfigurationsschalter.
 - **Ausgabe:** Filterzustand `ready | needs_crawl_analysis | needs_config(<Schalter>) | needs_rendering`.
 - **Akzeptanzkriterien:**
   - [ ] Nach Crawl-Ende ohne Analyse zeigt „Near Duplicates“ den Zustand `needs_crawl_analysis` und keine Zeilen.
   - [ ] Ist Near-Duplicates deaktiviert, zeigt der Filter `needs_config(duplicates.near_enabled)`.
   - [ ] Nach Änderung von Schwellwert oder Inhaltsbereich wechselt der Zustand auf „veraltet“; erneute Analyse läuft ohne HTTP-Anfragen.
-  - [ ] Crawl-Analyse ist abbrechbar; abgebrochene Analyse hinterlässt den vorherigen konsistenten Stand.
+  - [ ] Nach einer abgebrochenen Crawl-Analyse (Ablauf CRAWL-141/UI-080) zeigen die Filter dieses Dokuments den letzten konsistenten Stand bzw. weiterhin `needs_crawl_analysis`, nie Teilergebnisse.
 - **Testfixture:** `onpage-content-dupes` (ONPAGE-144) mit Zustandsprüfung vor/nach Analyse.
 
 ### ONPAGE-008 Mehrfachvorkommen und Spalten „…1/…2“
@@ -416,7 +358,7 @@ Gilt für Titel, Meta-Description, Meta-Keywords, Überschriften, Alt-Texte:
   - **Element-Tabs** (Page Titles, Meta Description, Meta Keywords, H1, H2): Grundmenge („All“) sind alle **internen HTML-Seiten mit Statuscode 2xx** (**Annahme A-5**; Weiterleitungen, Fehlerseiten und blockierte URLs fehlen, weil deren Inhalt nicht ausgewertet wird).
   - **PDF-Dokumente** (seit Referenz-Version 18.0): Interne PDFs mit Status 2xx werden geparst; ihr Dokumenttitel und ihre Keywords aus den Dokumenteigenschaften erscheinen ohne weitere Konfiguration in den Spalten `Title 1` und `Meta Keywords 1` des Internal-Tabs (ONPAGE-011, ONPAGE-166). Ob PDFs zusätzlich in der Grundmenge der Tabs Page Titles und Meta Keywords geführt werden, legt die öffentliche Doku nicht fest; das wird im Paritätstest V-2 geklärt (**Annahme A-5b**: nein, PDFs erscheinen nur im Internal-Tab). In Meta Description, H1 und H2 erscheinen PDFs nie.
   - **Content-Tab:** Grundmenge sind interne HTML-Seiten mit Status 2xx **und** – sofern `pdf.store = true` – interne PDFs mit Status 2xx (Wortzahl, Lesbarkeit, Rechtschreibung/Grammatik; ONPAGE-166).
-  - **Indexierbarkeit:** schränkt die Grundmenge nicht ein; sie wird als Spalte gezeigt. Ist `issues.ignore_non_indexable = true` (Referenz: Option unter Spider-Konfiguration → Advanced, empfohlen abzuschalten bei komplett `noindex`-geschalteten Staging-Umgebungen), werden nicht indexierbare Seiten aus allen **Problemfiltern** (alle Filter außer „All“) der Element-Tabs sowie aus Low Content Pages entfernt; „All“ bleibt unverändert. Default-Stellung in der öffentlichen Doku nicht angegeben (**Annahme A-51**: aus).
+  - **Indexierbarkeit:** schränkt die Grundmenge nicht ein; sie wird als Spalte gezeigt. Ist `issues.ignore_non_indexable = true` (Referenz: Option unter Spider-Konfiguration → Advanced, empfohlen abzuschalten bei komplett `noindex`-geschalteten Staging-Umgebungen), werden nicht indexierbare Seiten aus allen **Problemfiltern** (alle Filter außer „All“) der Element-Tabs sowie aus Low Content Pages entfernt; „All“ bleibt unverändert. Default-Stellung in der öffentlichen Doku nicht angegeben; OpenSpider-Standard ist **an** (`true`), festgelegt in CRAWL-089 (führend für den Schalter, A-51).
 - **Eingaben/Konfiguration:** `pdf.store`, `issues.ignore_non_indexable`.
 - **Ausgabe:** Grundmenge je Element-Tab und Content-Tab.
 - **Akzeptanzkriterien:**
@@ -427,6 +369,7 @@ Gilt für Titel, Meta-Description, Meta-Keywords, Überschriften, Alt-Texte:
   - [ ] `doc.pdf` erscheint nicht in Meta Description, H1, H2 (immer) und gemäß A-5b nicht in Page Titles / Meta Keywords (Paritätstest V-2 entscheidet; bei Abweichung wird dieses Kriterium angepasst).
   - [ ] Content-Tab → All enthält `doc.pdf` genau dann, wenn `pdf.store = true`.
   - [ ] `issues.ignore_non_indexable = true`: `noindex.html` ohne `<title>` steht in Page Titles → All, aber nicht in Page Titles → Missing; mit `false` steht sie in Missing.
+  - [ ] Default-Konfiguration (ohne Änderung, Standard nach CRAWL-089 = an): `noindex.html` ohne `<title>` steht nicht in Page Titles → Missing.
 - **Testfixture:** `onpage-titles/` mit `noindex.html` (ohne Titel), Route `/gone` (404, HTML-Body mit Titel), Link auf `{{BASE_URL}}` des Fremdhosts (F-HOST2), `doc.pdf` (mit gesetzten Dokumenteigenschaften Title/Keywords, erzeugt per Skript im Fixture-Generator).
 
 ---
@@ -466,7 +409,7 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
 - **Testfixture:** `onpage-internal/elements.html` mit allen Elementen; Route `/elements-header` mit `X-Robots-Tag: noindex` und `Link: <{{BASE_URL}}/p2>; rel="next"`.
 
 ### ONPAGE-012 Internal: Size, Transferred, Total Transferred
-- **Priorität:** P0 (Total Transferred: P1, nur mit Rendering)
+- **Priorität:** P0
 - **Beschreibung:** `Size` = Größe der Ressource in Bytes. Für HTML-Seiten die Größe des **unkomprimierten** HTML. Für andere Ressourcen der Wert des `Content-Length`-Headers, 0 wenn er fehlt (**Annahme A-6**: für heruntergeladene Bilder wird stattdessen die tatsächliche Körpergröße genutzt, siehe ONPAGE-173). `Transferred` = tatsächlich über das Netz übertragene Bytes des Körpers (bei gzip/br kleiner als Size). `Total Transferred` = Transferred der Seite plus aller beim Rendern geladenen Ressourcen (nur im JS-Rendering-Modus, sonst = Transferred).
 - **Eingaben/Konfiguration:** Rendering-Modus.
 - **Ausgabe:** Spalten `Size (bytes)`, `Transferred (bytes)`, `Total Transferred (bytes)`; UI zeigt KB mit einer Nachkommastelle, Exporte in Bytes.
@@ -475,7 +418,7 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
   - [ ] Gleiche Seite gzip-komprimiert ausgeliefert: Size = 10 000, Transferred = komprimierte Länge (< 10 000).
   - [ ] PDF ohne Content-Length (chunked): Size = 0 (A-6).
   - [ ] Ohne Rendering: Total Transferred = Transferred.
-  - [ ] Mit Rendering und 2 Bildern à 5 000 Byte: Total Transferred ≥ Transferred + 10 000.
+  - [ ] [P1] Mit Rendering und 2 Bildern à 5 000 Byte: Total Transferred ≥ Transferred + 10 000 (Total Transferred mit Ressourcen setzt JS-Rendering voraus).
 - **Testfixture:** `onpage-internal/size-10k.html` (exakt 10 000 Byte), Route `/size-10k-gz` (F-RAW gzip), Route `/chunked.pdf`.
 
 ### ONPAGE-013 Internal: Word Count, Text Ratio
@@ -536,13 +479,7 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
 
 ### ONPAGE-017 Internal: Link Score (Spaltenanbindung)
 - **Priorität:** P1
-- **Beschreibung:** Spalte `Link Score` (0–100) wird von der Link-Score-Berechnung (Links-Spec) nach der Crawl-Analyse gefüllt. Hier spezifiziert: nur die Anzeige.
-- **Eingaben/Konfiguration:** Crawl-Analyse.
-- **Ausgabe:** Spalte `Link Score`, leer bis zur Analyse.
-- **Akzeptanzkriterien:**
-  - [ ] Vor Crawl-Analyse leer; danach Ganzzahl 0–100 für interne HTML-Seiten.
-  - [ ] Nicht-HTML-URLs bleiben leer.
-- **Testfixture:** `onpage-internal/links/` (wie ONPAGE-015).
+- **Verweis:** siehe TECH-145 (führend). Die Spalte `Link Score` erscheint zusätzlich im Internal-Tab.
 
 ### ONPAGE-018 Internal: Technische Spalten
 - **Priorität:** P0
@@ -665,7 +602,7 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
   - Paritätsspalten (laut öffentlicher Tab-Doku), in dieser Reihenfolge: `Address`, `Content`, `Status Code`, `Status`, `Crawl Depth`, `Inlinks` (Anzahl Link-Instanzen von internen Seiten).
   - **OpenSpider-Erweiterung** (in der Referenz-Doku nicht belegt; standardmäßig ausgeblendet, über die Spaltenauswahl einblendbar): `Response Time`, `Redirect URL`, `Redirect Type`.
 - **Akzeptanzkriterien:**
-  - [ ] Default-Layout zeigt genau die sechs Paritätsspalten in der genannten Reihenfolge; die drei Erweiterungsspalten sind ausgeblendet, werden aber im Export „alle Spalten“ (ONPAGE-191) mit ausgegeben.
+  - [ ] Default-Layout zeigt genau die sechs Paritätsspalten in der genannten Reihenfolge; die drei Erweiterungsspalten sind ausgeblendet, werden aber im Export mit der Option „alle Spalten“ (UI-015, OUT-020) mit ausgegeben.
   - [ ] Link von `127.0.0.1` auf `localhost` (F-HOST2) erscheint im External-Tab, nicht im Internal-Tab.
   - [ ] Externe Seite wird genau einmal angefragt, ihre ausgehenden Links erscheinen nirgends.
   - [ ] Crawl Depth der externen URL = Tiefe der verlinkenden Seite + 1.
@@ -858,7 +795,7 @@ Grundmenge („All“): alle internen URLs (alle Inhaltstypen). Die seitenbasier
 
 ## 5 Response Codes
 
-Grundmenge („All“): alle internen und externen URLs mit Antwort- oder Blockierungsstatus. Jeder Filter existiert in drei Sichten: **All** (intern + extern), **Internal**, **External** (Filtername mit Präfix, z. B. „Internal Client Error (4XX)“). Zugehörige Bulk-Exporte und Reports mit Fehlerbezug: ONPAGE-067 (Details zu Format und Dateinamen in der Export-Spec).
+Grundmenge („All“): alle internen und externen URLs mit Antwort- oder Blockierungsstatus. Jeder Filter existiert in drei Sichten: **All** (intern + extern), **Internal**, **External** (Filtername mit Präfix, z. B. „Internal Client Error (4XX)“). Zugehörige Bulk-Exporte und Reports mit Fehlerbezug: OUT-067 und OUT-084 (führend; ONPAGE-067 ist Verweis).
 
 ### ONPAGE-050 Response Codes: Spalten
 - **Priorität:** P0
@@ -873,7 +810,7 @@ Grundmenge („All“): alle internen und externen URLs mit Antwort- oder Blocki
 
 ### ONPAGE-051 Response Codes: Aufteilung Internal/External und „All“
 - **Priorität:** P0
-- **Beschreibung:** Jeder Statusfilter (052–063) ist in den Sichten All/Internal/External verfügbar. Die Sicht wird über eine Umschaltung (Dropdown) oder getrennte Filtereinträge gewählt; die Issue-Klassifizierung (ONPAGE-006) unterscheidet intern/extern.
+- **Beschreibung:** Jeder Statusfilter (052–063) ist in den Sichten All/Internal/External verfügbar. Die Sicht wird über eine Umschaltung (Dropdown) oder getrennte Filtereinträge gewählt; die Issue-Klassifizierung (UI-063) unterscheidet intern/extern.
 - **Eingaben/Konfiguration:** Sicht.
 - **Ausgabe:** Filtersicht.
 - **Akzeptanzkriterien:**
@@ -1050,18 +987,7 @@ Grundmenge („All“): alle internen und externen URLs mit Antwort- oder Blocki
 
 ### ONPAGE-067 Bulk-Export „All Error Inlinks“ und Report „Redirects to Error“
 - **Priorität:** P1
-- **Beschreibung:** Zwei seit Referenz-Version 23.0 vorhandene Ausgaben, die Fehlerziele bündeln. Format, Dateinamen und Export-Mechanik sind in der Export-Spec (`06-output-ops.md`) festgelegt; hier wird nur die **Zeilenauswahl** spezifiziert, damit sie mit den Filtern dieses Tabs konsistent ist.
-  1. **Bulk-Export „Response Codes > Internal > All Error Inlinks“** und **„Response Codes > External > All Error Inlinks“**: alle Link-Instanzen (Quelle → Ziel), deren Ziel im jeweiligen Bereich (intern bzw. extern) in einem der Filter No Response (ONPAGE-054), Client Error (4XX) (ONPAGE-062) oder Server Error (5XX) (ONPAGE-063) steht. Es ist die Vereinigung der drei einzelnen Inlink-Exporte dieser Filter, ohne doppelte Zeilen. Spalten wie bei den übrigen Inlink-Exporten (Link-Spec), mindestens `Type`, `Source`, `Destination`, `Anchor`, `Status Code`, `Status`.
-  2. **Report „Redirects > Redirects to Error“**: alle Weiterleitungsketten (Start-URL intern), deren **Endziel** durch robots.txt blockiert ist (ONPAGE-052), keine Antwort liefert (ONPAGE-054), 4XX (ONPAGE-062) oder 5XX (ONPAGE-063) zurückgibt. Spalten wie Report „Redirect Chains“ (ONPAGE-060): `Address`, `Number of Redirects`, Zwischen-URLs, `Final Address`, `Final Status Code`, `Final Status`. Weiterleitungen aller Arten (HTTP, Meta Refresh, HTTP Refresh, JavaScript, HSTS) zählen; auch 1-Hop-Weiterleitungen sind enthalten.
-- **Eingaben/Konfiguration:** keine (Verweis Export-Spec für Format).
-- **Ausgabe:** zwei Bulk-Exporte, ein Report.
-- **Akzeptanzkriterien:**
-  - [ ] Internal All Error Inlinks für `onpage-rc/` enthält die Link-Instanzen auf `/e400`, `/e403`, `/e404`, `/e410`, `/e429`, `/e500`, `/e503`, `/timeout` und `/drop`, und kein Ziel, das in Success (2XX), Redirection (3XX) oder Blocked by Robots.txt steht (also keine Zeilen für `/ok`, `/r301`, `/blocked/a`, `/s999`).
-  - [ ] Zeilenzahl Internal All Error Inlinks = Summe der Zeilenzahlen der Einzel-Exporte „Internal No Response Inlinks“ + „Internal Client Error (4XX) Inlinks“ + „Internal Server Error (5XX) Inlinks“.
-  - [ ] External All Error Inlinks enthält die Links auf den externen `/e404`, `http://nohost.invalid/` und `http://127.0.0.1:1/` und keine internen Ziele.
-  - [ ] Redirects to Error: Route `/r-to-404` (301 → `/e404`) erscheint mit `Number of Redirects` = 1, `Final Status Code` = 404; `/r-to-blocked` (301 → `/blocked/a`) erscheint mit `Final Status` „Blocked by Robots.txt“; `/r-chain-500` (301 → 302 → `/e500`) erscheint mit 2 Redirects.
-  - [ ] `/r301` (→ `/ok`, 200) und `/loop1` (Schleife ohne Fehlerende) erscheinen nicht in Redirects to Error.
-- **Testfixture:** `onpage-rc/` (ONPAGE-051) plus Routen `/r-to-404`, `/r-to-blocked`, `/r-chain-500` → `/r-chain-500b` → `/e500`.
+- **Verweis:** siehe OUT-067 (führend). Den Report „Redirects to Error“ regelt OUT-084.
 
 ---
 
@@ -1386,7 +1312,7 @@ Grundmenge: ONPAGE-009. Vorkommen = `<meta>`-Elemente, deren `name`-Attribut (ge
 
 ### ONPAGE-105 MD-Filter Over 985 Pixels
 - **Priorität:** P1
-- **Beschreibung:** Seiten mit `Meta Description 1 Pixel Width` > `meta_description.max_px` (Default 985), Berechnung ONPAGE-004.
+- **Beschreibung:** Seiten mit `Meta Description 1 Pixel Width` > `meta_description.max_px` (Default 985), Berechnung UI-038.
 - **Eingaben/Konfiguration:** `meta_description.max_px`.
 - **Ausgabe:** Filter `Over 985 Pixels`.
 - **Akzeptanzkriterien:**
@@ -1651,15 +1577,16 @@ Grundmenge: ONPAGE-009 (interne HTML-Seiten mit Status 2xx; zusätzlich interne 
 - **Testfixture:** `onpage-content/wordcount-*.html`, `area.html`.
 
 ### ONPAGE-142 Content: Spalten
-- **Priorität:** P0 (Spalten der P1/P2-Funktionen erscheinen mit diesen)
+- **Priorität:** P0
 - **Beschreibung:** Spalten des Content-Tabs.
 - **Eingaben/Konfiguration:** Aktivierungsschalter der Teilfunktionen.
 - **Ausgabe (Spalten):** `Address`, `Word Count`, `Sentence Count`¹, `Average Words Per Sentence`, `Flesch Reading Ease Score`, `Readability`, `Closest Similarity Match`, `No. Near Duplicates`, `Closest Semantically Similar Address`, `Semantic Similarity Score`, `No. Semantically Similar`, `Semantic Relevance Score`, `Total Language Errors`, `Spelling Errors`, `Grammar Errors`, `Language`, `Hash`, `Indexability`, `Indexability Status`.
+  - Spalten von P1-Funktionen (Near Duplicates ONPAGE-144, Lesbarkeit ONPAGE-149, Rechtschreibung/Grammatik ONPAGE-153 ff., Embeddings INTEG-181/182) erscheinen erst mit diesen Funktionen; Berechnung und Logik der Embedding-Spalten `Closest Semantically Similar Address`, `Semantic Similarity Score`, `No. Semantically Similar`, `Semantic Relevance Score` sind in INTEG-181/182 spezifiziert (führend).
   - ¹ `Sentence Count` ist in der Spaltenliste der Referenz-Tab-Doku **nicht** aufgeführt, wird aber im Lesbarkeits-Tutorial der Referenz als angezeigter Wert genannt. Status: „laut Tutorial“, im Paritätstest V-5 zu bestätigen; bis dahin wird die Spalte geführt (sie wird für `Average Words Per Sentence` ohnehin berechnet).
 - **Akzeptanzkriterien:**
   - [ ] Spalten deaktivierter Funktionen sind leer und standardmäßig ausgeblendet.
-  - [ ] Eine interne PDF (mit `pdf.store = true`) hat eine Zeile mit gefülltem `Word Count`, `Sentence Count`, `Average Words Per Sentence`, `Flesch Reading Ease Score`, `Readability` und – bei aktivierter Prüfung – `Spelling Errors`/`Grammar Errors`; `Hash`, `Closest Similarity Match` und Embedding-Spalten bleiben für PDFs leer (**Annahme A-53**).
-  - [ ] `Total Language Errors` = `Spelling Errors` + `Grammar Errors` (leer, wenn beide Prüfungen aus; wenn nur eine aktiv, gleich dieser).
+  - [ ] [P1] Eine interne PDF (mit `pdf.store = true`) hat eine Zeile mit gefülltem `Word Count`, `Sentence Count`, `Average Words Per Sentence`, `Flesch Reading Ease Score`, `Readability` und – bei aktivierter Prüfung – `Spelling Errors`/`Grammar Errors`; `Hash`, `Closest Similarity Match` und Embedding-Spalten bleiben für PDFs leer (**Annahme A-53**).
+  - [ ] [P1] `Total Language Errors` = `Spelling Errors` + `Grammar Errors` (leer, wenn beide Prüfungen aus; wenn nur eine aktiv, gleich dieser).
   - [ ] `Hash` identisch mit Internal-Tab.
 - **Testfixture:** `onpage-content/`.
 
@@ -1710,7 +1637,7 @@ Grundmenge: ONPAGE-009 (interne HTML-Seiten mit Status 2xx; zusätzlich interne 
 ### ONPAGE-145 Lower-Tab Duplicate Details
 - **Priorität:** P1
 - **Beschreibung:** Für eine ausgewählte URL listet der Lower-Tab „Duplicate Details“ alle exakten Duplikate und Near Duplicates mit den Spalten `Address`, `Similarity` (ganzzahlige Prozent, Rundung wie ONPAGE-144) und `Match Type` (`Exact` | `Near`; OpenSpider-Erweiterung zur Unterscheidung). Exakte Duplikate stehen mit Similarity 100 oben. Sortierung: Similarity absteigend, bei Gleichstand Address aufsteigend. Klick auf eine Zeile öffnet eine Textansicht mit dem analysierten Text (Inhaltsbereich) der Ausgangsseite links und der gewählten Vergleichsseite rechts; Unterschiede werden auf Wortebene hervorgehoben (Diff nach Myers über die Token aus ONPAGE-141; gelöschte Wörter links, eingefügte rechts markiert).
-- **Eingaben/Konfiguration:** Filter im Lower-Tab: „Exact“, „Near“, „Semantic“ (ONPAGE-163).
+- **Eingaben/Konfiguration:** Filter im Lower-Tab: „Exact“, „Near“, „Semantic“ (Inhalt des Filters „Semantic“: INTEG-183, führend).
 - **Ausgabe:** Lower-Tab; Bulk-Export „Content > Near Duplicates“ mit Spalten `Address`, `Near Duplicate Address`, `Similarity`.
 - **Akzeptanzkriterien:**
   - [ ] Auswahl von `near-base` zeigt genau zwei Zeilen: `near-95` (95, Near) vor `near-91` (91, Near); `near-89`/`near-80` erscheinen nicht.
@@ -1901,6 +1828,7 @@ Grundmenge: ONPAGE-009 (interne HTML-Seiten mit Status 2xx; zusätzlich interne 
   - [ ] „Ignorieren (alle)“ auf „Rechtschreibfeler“ entfernt das Wort in allen Seiten dieses Crawls nach Neu-Prüfung; ein neuer Crawl meldet es wieder.
   - [ ] „Zum Wörterbuch hinzufügen“ wirkt auch im nächsten Crawl.
   - [ ] Export filterbar nach Page Section.
+- **Abgrenzung:** Dieser Eintrag ist führend für den **Inhalt** des Detail-Tabs (Spalten, Kontextaktionen, Wirkung); Layout und Interaktion (Markierung im Textausschnitt, Platzierung) regelt UI-047 (P1). Spalten und Kontextaktionen am 2026-10-13 gegen das öffentliche Rechtschreib-/Grammatik-Tutorial der Referenz geprüft: Fehlertext, Typ, Detail, Vorschlag; Aktionen „Regel ignorieren“, „Ignorieren (alle)“, „Zum Wörterbuch hinzufügen“; eine Spalte `Count` und eine Aktion „nur auf dieser Seite ignorieren“ sind dort nicht beschrieben.
 - **Testfixture:** `onpage-spelling/de-errors.html`.
 
 ### ONPAGE-158 Neu-Prüfung ohne Recrawl und Top-100-Fehlerübersicht
@@ -1914,85 +1842,33 @@ Grundmenge: ONPAGE-009 (interne HTML-Seiten mit Status 2xx; zusätzlich interne 
 - **Testfixture:** `onpage-spelling/many-errors/` (generierte Seiten mit 150 verschiedenen Fehlerwörtern).
 
 ### ONPAGE-159 Embeddings: Anbieter und Konfiguration
-- **Priorität:** P2
-- **Beschreibung:** Für semantische Analysen wird je Seite ein Embedding-Vektor des Inhaltsbereich-Textes (optional stattdessen: Titel) über einen konfigurierten Anbieter berechnet: OpenAI, Google Gemini oder lokal Ollama (Anbieterzugang im Integrations-Bereich). Quelle ist das gespeicherte HTML (Roh-HTML im Textmodus, gerendertes HTML im Rendering-Modus). Vektoren werden in der Crawl-Datei gespeichert (float32) und sind exportierbar (CSV `Address`, `Embedding`). Optionale Dimensionsreduktion (Matryoshka-fähige Modelle) über Presets.
-  - **Inhaltsbegrenzung („Limit Page Content“):** Ist `embeddings.limit_page_content = true`, wird der an den Anbieter gesendete Text auf die ersten `embeddings.limit_page_content_chars` Zeichen (Default 5 000, gezählt in Unicode-Codepoints; Schnitt an der letzten Wortgrenze davor, falls diese ≥ 90 % der Grenze liegt) gekürzt. Die Referenz bietet diese Option in den erweiterten Einstellungen des KI-Anbieters an; ihr Default-Zustand ist nicht dokumentiert (**Annahme A-52**: aus). Ist die Option aus, wird der Text **ungekürzt** gesendet; eine automatische Kürzung auf das Token-Limit des Modells findet in Parität **nicht** statt (optionale Erweiterung `embeddings.auto_truncate_tokens`, Default false).
-  - **Fehlgeschlagene Anfragen:** Scheitert die Embedding-Anfrage einer URL (z. B. Kontextlänge überschritten → HTTP 400, Kontingent erschöpft, Zeitüberschreitung), erhält die URL **keinen** Vektor. Sie fließt dann nicht in die Analysen ein: kein Eintrag in Semantically Similar (weder als Quelle noch als Ziel), kein `Semantic Relevance Score`, kein Beitrag zum Zentroid (ONPAGE-161). Der Fehler steht in `Embedding Status`. Über die Kontextaktion „Embeddings erneut anfordern“ (für markierte URLs) wird die Anfrage ohne Recrawl wiederholt, z. B. nach Aktivieren der Inhaltsbegrenzung.
-- **Eingaben/Konfiguration:** `embeddings.provider`, `embeddings.model`, `embeddings.input` (`content_area` | `title`), `embeddings.dimensions`, `embeddings.similarity_enabled`, `embeddings.low_relevance_enabled`, `embeddings.limit_page_content`, `embeddings.limit_page_content_chars`, `embeddings.auto_truncate_tokens`. Voraussetzung: gespeichertes HTML (bzw. gerendertes HTML im Rendering-Modus).
-- **Ausgabe:** gespeicherte Vektoren; Status je URL in Spalte `Embedding Status` (`OK`, `Skipped: empty`, `Error: <HTTP-Status> <Meldung>`).
-- **Akzeptanzkriterien:**
-  - [ ] Mit Ollama-Stub (lokaler HTTP-Mock im Test) erhält jede Seite der Vergleichsmenge genau einen Vektor fester Dimension.
-  - [ ] Leere Seiten (0 Wörter) werden nicht an den Anbieter gesendet (`Embedding Status` = `Skipped: empty`).
-  - [ ] Inhaltsbegrenzung an, Grenze 5 000: Seite mit 12 000 Zeichen Text → der Mock empfängt ≤ 5 000 und ≥ 4 500 Zeichen, beginnend mit dem Textanfang; Seite mit 3 000 Zeichen → unverändert.
-  - [ ] Inhaltsbegrenzung aus: Mock empfängt alle 12 000 Zeichen; ist der Mock so konfiguriert, dass er Texte > 8 000 Zeichen mit HTTP 400 ablehnt, erhält die Seite `Embedding Status` = `Error: 400 …` und keinen Vektor.
-  - [ ] Eine URL ohne Vektor erscheint weder in Semantically Similar noch als Closest-Ziel einer anderen Seite, hat leeren `Semantic Relevance Score` und verändert den Zentroid nicht (Test: Zentroid mit/ohne diese URL identisch).
-  - [ ] API-Fehler einer URL bricht die Analyse der übrigen URLs nicht ab.
-  - [ ] „Embeddings erneut anfordern“ nach Aktivieren der Begrenzung → die zuvor fehlerhafte URL erhält einen Vektor; keine HTTP-Anfrage an die gecrawlte Website.
-  - [ ] Embeddings werden bei unverändertem gesendetem Text nicht erneut angefragt (Cache nach Hash des gesendeten Textes).
-- **Testfixture:** `onpage-embeddings/` (5 thematische Seiten + 1 themenfremde + `long-12000.html` + `short-3000.html` + `empty.html`) und Mock-Embedding-Server mit deterministischen Vektoren (im Test vorgegeben), konfigurierbarer Längengrenze und Request-Log.
+- **Priorität:** P1
+- **Verweis:** siehe INTEG-180 (führend). Eingabetext ist standardmäßig der Inhaltsbereich nach ONPAGE-140.
 
 ### ONPAGE-160 Content-Filter Semantically Similar
-- **Priorität:** P2
-- **Beschreibung:** Nach Crawl-Analyse: Für jede Seite wird die Kosinus-Ähnlichkeit zu allen anderen Seiten der Vergleichsmenge berechnet (exakt für ≤ 50 000 Seiten, darüber ANN-Index mit Recall ≥ 0,99). Seiten mit mindestens einer anderen Seite mit Ähnlichkeit ≥ `embeddings.similarity_threshold` (Default 0,95; Bereich 0,50–1,00) erscheinen im Filter.
-- **Eingaben/Konfiguration:** `embeddings.similarity_threshold`, ONPAGE-162, ONPAGE-164.
-- **Ausgabe (Spalten):** `Closest Semantically Similar Address`, `Semantic Similarity Score` (0–1, drei Nachkommastellen), `No. Semantically Similar`; Filter `Semantically Similar`; Bulk-Export „Content > Semantically Similar“.
-- **Definitionen:** Kosinus über L2-normalisierte Vektoren; eine Seite wird nie mit sich selbst verglichen. `Closest Semantically Similar Address` = Seite mit maximalem Kosinus (Gleichstand → Address aufsteigend), nur gefüllt, wenn dieser ≥ Schwellwert ist. `Semantic Similarity Score` = dieser Maximalwert, kaufmännisch auf drei Nachkommastellen gerundet. `No. Semantically Similar` = Anzahl anderer Seiten mit Kosinus ≥ Schwellwert (Grenze inklusive, Vergleich auf ungerundetem Wert).
-- **Akzeptanzkriterien:**
-  - [ ] Mock-Vektoren mit Kosinus 0,970 zwischen `/a` und `/b` (alle anderen Paare < 0,5) → beide im Filter, `/a` hat Closest `/b` und umgekehrt, Score „0.970“, `No. Semantically Similar` = 1.
-  - [ ] Zweites Szenario (eigener Mock-Vektorsatz): zusätzlich `/c` mit Kosinus 0,960 zu `/a` und 0,955 zu `/b` → `/a`: Closest `/b` (0,970), Anzahl 2; `/c`: Closest `/a` (0,960), Anzahl 2.
-  - [ ] Kosinus exakt 0,950 (Mock liefert Vektoren mit diesem Wert bis auf 1e-9) → im Filter (Grenze inklusive); 0,9499 → nicht.
-  - [ ] Kosinus 0,90 → nicht im Filter bei 0,95, Spalten leer; nach Senken auf 0,85 und Neu-Analyse im Filter, ohne neue Embedding-Anfragen (Mock-Request-Log unverändert).
-  - [ ] Identische Vektoren → Score „1.000“.
-  - [ ] Schwellwert < 0,50 oder > 1,00 wird bei der Konfiguration mit Fehlermeldung abgelehnt.
-  - [ ] Seiten ohne Vektor (ONPAGE-159) sind weder Quelle noch Ziel.
-  - [ ] Bulk-Export „Content > Semantically Similar“ enthält je Quellseite die Closest-Adresse und alle weiteren Seiten ≥ Schwellwert (eine Zeile je Paar und Richtung), Spalten `Address`, `Semantically Similar Address`, `Semantic Similarity Score`.
-  - [ ] ANN-Pfad (> 50 000 Seiten): auf einem synthetischen Korpus mit 60 000 Vektoren und 1 000 eingebauten Paaren ≥ Schwellwert werden ≥ 990 gefunden (Recall ≥ 0,99 gegen Brute-Force).
-  - [ ] Ohne Crawl-Analyse → `needs_crawl_analysis`; ohne `embeddings.similarity_enabled` → `needs_config(embeddings.similarity_enabled)`.
-- **Testfixture:** `onpage-embeddings/similar/` mit Mock-Vektorsätzen je Szenario (`a`, `b`, `c`, `edge-0950a/b`, `edge-09499a/b`, `same-1/2`; Vektoren der Szenarien sind zueinander orthogonal, damit sie sich nicht beeinflussen); synthetischer ANN-Korpus wird im Test generiert (fester Seed).
+- **Priorität:** P1
+- **Verweis:** siehe INTEG-181 (führend). Der Filter erscheint im Content-Tab (Spalten siehe ONPAGE-142).
 
 ### ONPAGE-161 Content-Filter Low Relevance Content
-- **Priorität:** P2
-- **Beschreibung:** Nach Crawl-Analyse: Zentroid = Mittelwert der (L2-normalisierten) Embeddings aller Seiten der Vergleichsmenge. `Semantic Relevance Score` = Kosinus-Ähnlichkeit der Seite zum Zentroid. Seiten mit Score < `embeddings.low_relevance_threshold` (Default 0,40) erscheinen im Filter (themenfremde Ausreißer).
-- **Eingaben/Konfiguration:** `embeddings.low_relevance_enabled`, `embeddings.low_relevance_threshold`.
-- **Ausgabe:** Spalte `Semantic Relevance Score`; Filter `Low Relevance Content`.
-- **Akzeptanzkriterien:**
-  - [ ] Mock: 5 Seiten mit nahezu gleichem Vektor, 1 orthogonale Seite → nur die orthogonale im Filter.
-  - [ ] Score jeder Seite ∈ [−1, 1], Anzeige drei Nachkommastellen.
-  - [ ] Seiten außerhalb der Vergleichsmenge (non-indexable bei aktivem Indexable-only) fließen nicht in den Zentroid ein und erhalten keinen Score.
-- **Testfixture:** `onpage-embeddings/`.
+- **Priorität:** P1
+- **Verweis:** siehe INTEG-182 (führend). Der Filter erscheint im Content-Tab (Spalte `Semantic Relevance Score`, ONPAGE-142).
 
 ### ONPAGE-162 Embedding-Regeln (URL-Muster)
-- **Priorität:** P2
-- **Beschreibung:** Regeln schränken ein, welche Seitenpaare verglichen werden: Jede Regel besteht aus einem Quellmuster und einem Zielmuster (Regex auf Address). Ist mindestens eine Regel definiert, werden nur Paare (A, B) verglichen, bei denen A das Quell- und B das Zielmuster einer Regel erfüllt. Anwendungsfall: Weiterleitungs-Mapping „alte Domain → neue Domain“ oder „Staging nur gegen Live“.
-- **Eingaben/Konfiguration:** `embeddings.rules: [{source_regex, target_regex}]`.
-- **Ausgabe:** wirkt auf ONPAGE-160 (nicht auf ONPAGE-161).
-- **Akzeptanzkriterien:**
-  - [ ] Regel `^.*/alt/` → `^.*/neu/`: `/alt/x` erhält nur Matches unter `/neu/`; `/neu/y` hat keinen Closest-Eintrag aus `/neu/`.
-  - [ ] Ungültiger Regex wird bei der Konfiguration abgelehnt.
-- **Testfixture:** `onpage-embeddings/alt/*.html`, `neu/*.html` mit Mock-Vektoren.
+- **Priorität:** P1
+- **Verweis:** siehe INTEG-184 (führend). Dort sind sowohl Quell-/Zielmuster-Paare als auch Einschluss-/Ausschlussregeln spezifiziert.
 
 ### ONPAGE-163 Lower-Tab Duplicate Details: Semantic Similarity
-- **Priorität:** P2
-- **Beschreibung:** Filter „Semantic Similarity“ im Lower-Tab Duplicate Details: listet für die gewählte URL alle Seiten mit Ähnlichkeit ≥ Schwellwert (`Address`, `Semantic Similarity Score`) absteigend, plus Text der beiden Seiten nebeneinander.
-- **Eingaben/Konfiguration:** keine.
-- **Ausgabe:** Lower-Tab-Sicht.
-- **Akzeptanzkriterien:**
-  - [ ] Für `/a` erscheint `/b` mit 0,970.
-- **Testfixture:** `onpage-embeddings/`.
+- **Priorität:** P1
+- **Verweis:** siehe INTEG-183 (führend). Der Filter „Semantic“ ergänzt die Filter „Exact“ und „Near“ des Lower-Tabs Duplicate Details (ONPAGE-145).
 
 ### ONPAGE-164 Embeddings nur für indexierbare Seiten
-- **Priorität:** P2
-- **Beschreibung:** Option „Nur indexierbare Seiten für semantische Ähnlichkeit prüfen“ (Default an). Aus → alle Seiten der Grundmenge (sinnvoll z. B. für eine komplett `noindex`-geschaltete Staging-Umgebung). Hinweis: Eine solche Option ist in der öffentlichen Doku der Referenz für Embeddings nicht beschrieben (dort nur für Exact/Near Duplicates); sie ist daher bis zum Paritätstest als **OpenSpider-Erweiterung** zu behandeln (**Annahme A-55**: Referenz analysiert alle Seiten mit Embedding, unabhängig von der Indexierbarkeit – dann wäre der Paritäts-Default `false`).
-- **Eingaben/Konfiguration:** `embeddings.only_indexable` (Default true).
-- **Ausgabe:** wirkt auf ONPAGE-159 … 162.
-- **Akzeptanzkriterien:**
-  - [ ] `noindex`-Seite erhält bei Default weder Vektor-Anfrage noch Score; bei `false` schon.
-- **Testfixture:** `onpage-embeddings/noindex.html`.
+- **Priorität:** P1
+- **Verweis:** siehe INTEG-180 (führend). Die Einschränkung der Vergleichsmenge auf indexierbare Seiten (Annahme A-55) wird dort entschieden.
 
 ### ONPAGE-165 Bulk-Exporte Content
 - **Priorität:** P1
-- **Beschreibung:** Bulk-Exporte (Format/Mechanik im Export-Bereich): „Exact Duplicates“ (`Address`, `Hash`, `Duplicate Address`), „Near Duplicates“ (ONPAGE-145), „Semantically Similar“ (ONPAGE-160), „Spelling & Grammar Errors“ (ONPAGE-157), „Spelling & Grammar Errors Summary“ (ONPAGE-158), „Low Relevance Content“, „Soft 404 Inlinks“, „All Page Text“ (`Address`, Inhaltsbereich-Text).
-  - **„Content > Soft 404 Inlinks“:** alle Link-Instanzen (Quelle → Ziel), deren Ziel im Filter Soft 404 Pages (ONPAGE-147) steht; Spalten wie die übrigen Inlink-Exporte (Link-Spec), mindestens `Type`, `Source`, `Destination`, `Anchor`, `Status Code`, `Status`.
+- **Beschreibung:** Bulk-Exporte (Format, Dateinamen und Mechanik führend in OUT-052 bzw. OUT-066; Spaltennamen bestimmt der führende Fach-Eintrag des jeweiligen Inhalts, OUT-052 übernimmt sie exakt; hier die Zeilenauswahl aus den Filtern dieses Tabs): „Exact Duplicates“ (Spalten `Address`, `Exact Duplicate Address`, `Hash`; dieser Eintrag ist für die Spaltennamen führend, OUT-052 übernimmt sie, OS-Festlegung analog `Near Duplicate Address` aus ONPAGE-145), „Near Duplicates“ (ONPAGE-145), „Semantically Similar“ (INTEG-181/183), „Spelling & Grammar Errors“ (ONPAGE-157), „Spelling & Grammar Errors Summary“ (ONPAGE-158), „Low Relevance Content“, „Soft 404 Inlinks“, „All Page Text“ (`Address`, Inhaltsbereich-Text).
+  - **„Content > Soft 404 Inlinks“:** alle Link-Instanzen (Quelle → Ziel), deren Ziel im Filter Soft 404 Pages (ONPAGE-147) steht; Spalten wie alle Inlink-Exporte nach OUT-031.
 - **Eingaben/Konfiguration:** keine.
 - **Ausgabe:** CSV/XLSX.
 - **Akzeptanzkriterien:**
@@ -2185,7 +2061,7 @@ Grundmenge („All“): alle internen **und** externen Bild-URLs (Inhaltsklasse 
 
 ### ONPAGE-181 Bulk-Exporte Images
 - **Priorität:** P1
-- **Beschreibung:** Bulk-Exporte je Filter mit Instanzebene: „Images Missing Alt Text“, „Images Missing Alt Attribute“, „Images Over X KB“, „Alt Text Over X Characters“, „Missing Size Attributes“, „Incorrectly Sized Images“, „Background Images“, „All Image Inlinks“. Spalten: `From`, `To`, `Alt Text`, `Size`, `Real Dimensions (WxH)`, `Dimensions in Attributes (WxH)`, `Display Dimensions (WxH)`, `Potential Savings`, `Path Type`, `Link Path`, `Link Position`, `Link Origin` (Werte wie ONPAGE-172).
+- **Beschreibung:** Bulk-Exporte je Filter mit Instanzebene (Format, Exportnamen und Mechanik führend in OUT-053; hier nur Zeilenauswahl und Instanzspalten aus ONPAGE-172): „Images Missing Alt Text“, „Images Missing Alt Attribute“, „Images Over X KB“, „Alt Text Over X Characters“, „Missing Size Attributes“, „Incorrectly Sized Images“, „Background Images“, „All Image Inlinks“. Spalten: `From`, `To`, `Alt Text`, `Size`, `Real Dimensions (WxH)`, `Dimensions in Attributes (WxH)`, `Display Dimensions (WxH)`, `Potential Savings`, `Path Type`, `Link Path`, `Link Position`, `Link Origin` (Werte wie ONPAGE-172).
 - **Eingaben/Konfiguration:** keine.
 - **Ausgabe:** CSV/XLSX.
 - **Akzeptanzkriterien:**
@@ -2209,25 +2085,11 @@ Grundmenge („All“): alle internen **und** externen Bild-URLs (Inhaltsklasse 
 
 ### ONPAGE-191 Export der aktuellen Filteransicht
 - **Priorität:** P0
-- **Beschreibung:** Jede Tab-Filter-Ansicht ist als CSV oder XLSX exportierbar. Inhalt: genau die Zeilen der aktuellen Ansicht (aktiver Filter, aktive Volltextsuche, aktuelle Sortierung) mit **allen** Spalten des Tabs, auch ausgeblendeten, in Spec-Reihenfolge (ONPAGE-001), Kopfzeile mit den Spaltennamen dieser Spec.
-  - **CSV:** UTF-8 mit BOM, Trennzeichen Komma, Zeilenende CRLF, Quoting nach RFC 4180 (Felder mit Komma, Anführungszeichen oder Zeilenumbruch in `"…"`, innere `"` verdoppelt). Zahlen ohne Tausendertrennzeichen, Dezimalpunkt `.` unabhängig von der Systemsprache; Größen in Bytes; leere Werte als leeres Feld (nicht `0`, nicht `null`).
-  - **XLSX:** ein Arbeitsblatt, Zahlen als numerische Zellen, Texte als Text (auch numerisch aussehende Werte wie Hashes bleiben Text), Kopfzeile fixiert.
-  - **Dateiname-Vorschlag:** `<tab>_<filter>.<ext>` in Kleinbuchstaben, Leerzeichen und Sonderzeichen als `_`, z. B. `page_titles_missing.csv`, `response_codes_internal_client_error_4xx.csv`.
-- **Eingaben/Konfiguration:** Format (CSV/XLSX).
-- **Ausgabe:** Datei.
-- **Akzeptanzkriterien:**
-  - [ ] Export „Page Titles > Missing“ für `onpage-titles` ist byte-identisch zur Golden-CSV `page_titles__missing.csv` (die Fixture enthält keine Zeitstempel-Spalten).
-  - [ ] Zeilenzahl des Exports = Trefferzahl des Filters bei leerer Suche; mit Suche „missing-“ nur die passenden Zeilen.
-  - [ ] Ausgeblendete Spalte `Title 1 Pixel Width` ist im Export enthalten.
-  - [ ] Titel mit Komma, Anführungszeichen und Zeilenumbruch (`quote.html`: `Sale, "Top" Angebot`) → Feld `"Sale, ""Top"" Angebot"`.
-  - [ ] Datei beginnt mit den Bytes `EF BB BF`; Umlaute und Emoji sind nach Öffnen in Excel korrekt (manueller Prüfschritt, einmal je Release).
-  - [ ] Bei deutscher Systemsprache steht `Response Time` als `0.512`, nicht `0,512`.
-  - [ ] XLSX: Zelle `Status Code` ist numerisch, Zelle `Hash` ist Text.
-- **Testfixture:** `onpage-titles/` plus `quote.html`; Golden-CSV/-XLSX unter `tests/golden/onpage-titles/`.
+- **Verweis:** siehe OUT-020 (führend). Der Golden-Vergleich `tests/golden/onpage-titles/page_titles__missing.csv` (inkl. `quote.html`) ist dort als Kriterium geführt.
 
 ### ONPAGE-192 Verknüpfung mit Lower-Tabs
 - **Priorität:** P0
-- **Beschreibung:** Für jede Zeile eines Tabs dieses Dokuments sind die Lower-Tabs `URL Details`, `Inlinks`, `Outlinks`, `Image Details`, `Duplicate Details`, `Spelling & Grammar Details`, `SERP Snippet` (ONPAGE-194), `Rendered Page`, `View Source`, `HTTP Headers` verfügbar (Detailspezifikation teils in anderen Bereichen).
+- **Beschreibung:** Für jede Zeile eines Tabs dieses Dokuments sind die Lower-Tabs `URL Details`, `Inlinks`, `Outlinks`, `Image Details`, `Duplicate Details`, `Spelling & Grammar Details`, `SERP Snippet` (ONPAGE-194), `Rendered Page`, `View Source`, `HTTP Headers` verfügbar (Inhalt der Detail-Tabs in der jeweiligen Fachspec, z. B. ONPAGE-145/157/172/194; Layout und Interaktion in 05, UI-031 ff.).
 - **Eingaben/Konfiguration:** keine.
 - **Ausgabe:** Lower-Tab-Inhalte für die Auswahl.
 - **Akzeptanzkriterien:**
@@ -2236,19 +2098,13 @@ Grundmenge („All“): alle internen **und** externen Bild-URLs (Inhaltsklasse 
 - **Testfixture:** `onpage-rc/`, `onpage-titles/`.
 
 ### ONPAGE-193 Live-Aktualisierung während des Crawls
-- **Priorität:** P1
-- **Beschreibung:** Filter ohne Crawl-Analyse-Abhängigkeit (Statusfilter, Element-Filter inkl. Duplicate, Exact Duplicates, URL-Filter, Security, Images außer Background/Incorrectly Sized) aktualisieren sich während des Crawls inkrementell (UI-Events ≤ 10 Hz).
-- **Eingaben/Konfiguration:** keine.
-- **Ausgabe:** laufend aktualisierte Zähler.
-- **Akzeptanzkriterien:**
-  - [ ] Bei pausiertem Crawl nach der Hälfte der Fixture-Seiten entsprechen die Zähler exakt dem bis dahin gecrawlten Stand.
-  - [ ] Nach Fortsetzen und Abschluss sind die Zähler identisch mit einem ununterbrochenen Crawl.
-- **Testfixture:** `onpage-titles/` mit Pause/Resume über `os-engine`-API.
+- **Priorität:** P0
+- **Verweis:** siehe UI-018 (führend). Welche Filter dieses Dokuments live und welche erst nach der Crawl-Analyse aktualisiert werden, legt ONPAGE-007 fest.
 
 ### ONPAGE-194 Lower-Tab SERP Snippet: Geräteumschaltung und Bearbeitung
 - **Priorität:** P1
 - **Beschreibung:** Der Lower-Tab „SERP Snippet“ zeigt für die gewählte HTML-Seite eine Vorschau eines Suchergebnisses aus Address (als Anzeige-URL), `Title 1` und `Meta Description 1`.
-  - **Geräteumschaltung:** Auswahl `Desktop` (Default), `Mobile`, `Tablet`. Je Gerät gelten eigene Abschneidegrenzen in Pixeln für Titel und Beschreibung und eigene Schriftgrößen für die Pixelberechnung (ONPAGE-004). Die Grenzen sind in den Preferences je Gerät einstellbar (`serp.desktop.*`, `serp.mobile.*`, `serp.tablet.*`). Defaults: Desktop = `title.max_px` / `meta_description.max_px` aus 0.3; Mobile/Tablet: **Annahme A-56** (vorläufig Titel 561 px wie Desktop, Beschreibung 680 px), Paritätstest V-7. Die Referenz-Doku ist hier uneinheitlich: Der Tab-Teil nennt einstellbare Mobile/Tablet-Beschreibungslängen in den Preferences, der Konfigurations-Teil sagt, dass die Preferences-Breiten die Snippet-Vorschau (noch) nicht beeinflussen. OpenSpider koppelt die Desktop-Vorschau an die Filter-Schwellwerte und hält Mobile/Tablet getrennt.
+  - **Geräteumschaltung:** Auswahl `Desktop` (Default), `Mobile`, `Tablet`. Je Gerät gelten eigene Abschneidegrenzen in Pixeln für Titel und Beschreibung und eigene Schriftgrößen für die Pixelberechnung (UI-038). Die Grenzen sind in den Preferences je Gerät einstellbar (`serp.desktop.*`, `serp.mobile.*`, `serp.tablet.*`). Defaults: Desktop = `title.max_px` / `meta_description.max_px` aus 0.3; Mobile/Tablet: **Annahme A-56** (vorläufig Titel 561 px wie Desktop, Beschreibung 680 px), Paritätstest V-7. Die Referenz-Doku ist hier uneinheitlich: Der Tab-Teil nennt einstellbare Mobile/Tablet-Beschreibungslängen in den Preferences, der Konfigurations-Teil sagt, dass die Preferences-Breiten die Snippet-Vorschau (noch) nicht beeinflussen. OpenSpider koppelt die Desktop-Vorschau an die Filter-Schwellwerte und hält Mobile/Tablet getrennt.
   - **Abschneiden:** Überschreitet ein Text die Grenze des gewählten Geräts, wird er am letzten ganzen Wort, dessen Ende einschließlich „ …“ noch in die Grenze passt, gekürzt und mit „ …“ angezeigt. Neben der Vorschau stehen je Feld Zeichenzahl und Pixelbreite sowie die verbleibenden bzw. überschüssigen Pixel.
   - **Bearbeitung:** Titel und Beschreibung sind in der Vorschau editierbar; Zeichen-/Pixelwerte und Kürzung aktualisieren sich bei jeder Eingabe. Änderungen werden je URL in der Crawl-Datei gemerkt (nur Vorschau, keine Änderung an der Website und an den Filter-Werten) und über „Zurücksetzen“ verworfen.
 - **Eingaben/Konfiguration:** Gerät, `serp.<device>.title_max_px`, `serp.<device>.description_max_px`, `serp.<device>.title_font_px`, `serp.<device>.description_font_px`.
@@ -2272,7 +2128,7 @@ Jede Annahme wird mit einer Paritätsfixture gegen die Referenz (Free-Version, �
 |---|---|---|---|
 | A-1 | Keine Case-/Unicode-Normalisierung bei Elementwerten | 003, 005 | Titel mit NFD-Umlaut vs. NFC → Duplicate? |
 | A-2 | Länge in Codepoints | 003 | Titel mit 3 Emoji: Length-Spalte vergleichen |
-| A-3 | Pixelbreite: 20 px Titel / 14 px Description, Arial-Metrik | 004 | 20 Golden-Titel, Abweichung ≤ 3 % |
+| A-3 | Pixelbreite: 20 px Titel / 14 px Description, Arial-Metrik | 004 → UI-038 (führend; dort weiterzuführen) | 20 Golden-Titel, Abweichung ≤ 3 % |
 | A-4 | Duplikatvergleich case-sensitiv | 005 | „Kontakt“ vs. „kontakt“ |
 | A-5 | Element-Tabs nur interne HTML 2xx | 009 | 404-Seite mit Titel im Page-Titles-All? |
 | A-5b | PDFs erscheinen nicht in den Tabs Page Titles / Meta Keywords (nur Title-/Keywords-Spalte im Internal-Tab) | 009, 166 | `doc.pdf` mit Titel crawlen, Page Titles → All prüfen (V-2) |
@@ -2321,11 +2177,11 @@ Jede Annahme wird mit einer Paritätsfixture gegen die Referenz (Free-Version, �
 | A-48 | Savings-Formel flächenproportional | 180 | 3 Sizing-Fixtures, Potential-Savings-Spalte vergleichen |
 | A-49 | Referenz hat keine eigenen Filter Media/Fonts/XML; solche URLs stehen unter Other | 023, 026 | `onpage-ctype/` crawlen, Filterliste und Other-Inhalt vergleichen (V-1) |
 | A-50 | „Ignore Paginated URLs for Duplicate Filters“ standardmäßig an | 005 | Default-Konfiguration der Referenz; `pagination/`-Fixture ohne Konfigurationsänderung |
-| A-51 | „Ignore Non-Indexable URLs for Issues“ standardmäßig aus | 009, 146 | Default-Konfiguration; `noindex.html` ohne Titel in Missing? |
-| A-52 | „Limit Page Content“ (Embeddings) standardmäßig aus | 159 | Default der erweiterten KI-Anbieter-Einstellungen |
+| A-51 | Keine Annahme mehr: „Ignore Non-Indexable URLs for Issues“ standardmäßig **an**, festgelegt in CRAWL-089 (führend) | 009, 146 | Nur noch Paritätsbeobachtung: Default-Konfiguration der Referenz; `noindex.html` ohne Titel in Missing? (Abweichung ändert den OS-Standard nicht) |
+| A-52 | „Limit Page Content“ (Embeddings) standardmäßig aus | 159 → INTEG-180 (führend; dort weiterzuführen) | Default der erweiterten KI-Anbieter-Einstellungen |
 | A-53 | PDFs im Content-Tab nur mit Wortzahl, Lesbarkeit, Sprache, Rechtschreibung/Grammatik; keine Duplikat-/Embedding-/Low-Content-/Soft-404-/Lorem-Auswertung | 142, 146, 166 | zwei identische PDFs, PDF mit 50 Wörtern |
 | A-54 | Readability-Labels außerhalb der belegten Bänder (≥ 50) | 149 | Seiten mit Scores 55/65/75/85/95, Readability-Spalte vergleichen (V-5) |
-| A-55 | Referenz schränkt Embedding-Analysen nicht auf indexierbare Seiten ein | 164 | `noindex`-Seite mit Embedding: erscheint sie in Semantically Similar? |
+| A-55 | Referenz schränkt Embedding-Analysen nicht auf indexierbare Seiten ein | 164 → INTEG-180 (führend; dort weiterzuführen) | `noindex`-Seite mit Embedding: erscheint sie in Semantically Similar? |
 | A-56 | SERP-Snippet-Grenzen Mobile/Tablet (vorläufig Titel 561 px, Beschreibung 680 px) | 194 | Preferences/Snippet der Referenz für Mobile und Tablet ablesen (V-7) |
 
 ### Verifikationsaufträge
@@ -2336,10 +2192,49 @@ Bündeln mehrere Annahmen bzw. unbelegte Werte zu einem Prüflauf gegen die Refe
 |---|---|---|---|
 | V-1 | Filterliste Internal/External (Flash vs. Plugins; Media/Fonts/XML) | 023, 026, A-49 | `onpage-ctype/` crawlen, Filterbaum der Referenz und Filterzugehörigkeit jeder Route exportieren |
 | V-2 | PDF-Behandlung in Element-Tabs und Content-Tab | 009, 166, A-5b, A-53 | `onpage-pdf/` mit „Store PDF“ an/aus crawlen; Page Titles, Meta Keywords, Content exportieren |
-| V-3 | Pixel-Defaults (561/200/985/400) und Pixel-Metrik (Schrift, Größe) | 0.3, 004, 095, 096, 105, 106, A-3 | Filternamen nach Neuinstallation ablesen; 20 Golden-Titel und 20 Golden-Beschreibungen exportieren, Pixel-Spalten vergleichen (≤ 3 % je Wert) |
-| V-4 | Issue-Typ und -Priorität je Filter | 006 | Issues-Export der Referenz über alle Fixtures, Abgleich mit `issue_classes.toml` |
+| V-3 | Pixel-Defaults (561/200/985/400) und Pixel-Metrik (Schrift, Größe) | 0.3, UI-038, 095, 096, 105, 106, A-3 | Filternamen nach Neuinstallation ablesen; 20 Golden-Titel und 20 Golden-Beschreibungen exportieren, Pixel-Spalten vergleichen (≤ 3 % je Wert) |
+| V-4 | Issue-Typ und -Priorität je Filter | UI-063 (führend), Erwartungswerte unten | Issues-Export der Referenz über alle Fixtures, Abgleich mit den Erwartungswerten unten und mit dem Ergebnis der UI-063-Logik; Abweichungen in `PARITY.md` protokollieren (kein Zwang zur Angleichung) |
 | V-5 | Readability-Labels und Spalte Sentence Count | 142, 149, A-54 | Content-Export für Seiten mit gestuften Scores |
 | V-6 | Sprachliste der Rechtschreibprüfung | 153 | Sprachauswahlfeld der Referenz abschreiben (nur Namen/Codes), mit Zielmenge abgleichen |
 | V-7 | SERP-Snippet je Gerät | 194, A-56 | Snippet-Vorschau einer Seite mit langem Titel/Beschreibung auf Desktop/Mobile/Tablet, Abschneidepunkte notieren |
 
 **Bekannte Lücken der öffentlichen Doku** (bewusst offen gelassen, bei Paritätstests beobachten): exakte Default-Liste der Soft-404-Phrasen der Referenz, exakte Shingle-Parameter der Near-Duplicate-Erkennung, Silbenzähl-Algorithmus der Referenz, Schriftart/-größe für Pixelbreiten. Für diese gilt: OpenSpider-Ergebnis muss die Golden-Fixtures erfüllen; Abweichungen zur Referenz ≤ 5 % der Treffer je Filter auf einem realen Test-Crawl (500 URLs) sind akzeptiert und in `PARITY.md` zu dokumentieren.
+
+### Paritäts-Erwartungswerte Issue-Klassifizierung (zu V-4)
+
+Herkunft: früherer Inhalt von ONPAGE-006. Sachliche Einordnung, wie sie die öffentliche Issue-Bibliothek der Referenz (Stand 24.3) je Issue angibt; keine übernommenen Beschreibungstexte. **Keine Vorgabe für OpenSpider:** Maßgeblich ist die eigene Entscheidungslogik in UI-063. Die Tabelle dient ausschließlich als Vergleichsbasis im Paritätstest V-4.
+
+| Tab | Filter | Typ | Priorität |
+|---|---|---|---|
+| Response Codes | Internal No Response / Client Error (4XX) / Server Error (5XX) / Redirect Loop | Issue | High |
+| Response Codes | Internal Blocked by Robots.txt / Internal Blocked Resource | Warning | High |
+| Response Codes | Internal Redirect Chain / External Blocked Resource | Warning | Medium |
+| Response Codes | Internal Redirection (3XX/Meta Refresh/HTTP Refresh/JavaScript); External No Response / 4XX / 5XX | Warning | Low |
+| Security | HTTP URLs, Mixed Content, Form URL Insecure, Form on HTTP URL | Issue | High |
+| Security | Missing HSTS, Unsafe Cross-Origin Links, Protocol-Relative Resource Links, Missing CSP, Missing X-Content-Type-Options, Missing X-Frame-Options, Missing Secure Referrer-Policy, Bad Content Type | Warning | Low |
+| URL | Multiple Slashes, Contains A Space, Broken Bookmark | Issue | Low |
+| URL | Non ASCII Characters, Uppercase, Repetitive Path, Internal Search, Parameters, GA Tracking Parameters | Warning | Low |
+| URL | Underscores, Over 115 Characters | Opportunity | Low |
+| Page Titles | Missing, Multiple, Outside <head> | Issue | High |
+| Page Titles | Duplicate, Over/Below X Characters, Over/Below X Pixels | Opportunity | Medium |
+| Page Titles | Same as H1 | Opportunity | Low |
+| Meta Description | Multiple, Outside <head> | Issue | Medium |
+| Meta Description | Missing, Duplicate, Over/Below X Characters, Over/Below X Pixels | Opportunity | Low |
+| Meta Keywords | (keine Issues; reine Filter) | – | – |
+| H1 | Missing | Issue | Medium |
+| H1 | Multiple | Warning | Medium |
+| H1 | Alt Text in h1, Non-sequential | Warning | Low |
+| H1 | Duplicate, Over X Characters | Opportunity | Low |
+| H2 | Missing, Multiple, Non-sequential | Warning | Low |
+| H2 | Duplicate, Over X Characters | Opportunity | Low |
+| Content | Exact Duplicates | Issue | High |
+| Content | Spelling Errors, Grammar Errors | Issue | Medium |
+| Content | Soft 404 Pages, Lorem Ipsum Placeholder | Warning | High |
+| Content | Near Duplicates, Semantically Similar | Warning | Medium |
+| Content | Low Relevance Content | Warning | Low |
+| Content | Low Content Pages | Opportunity | Medium |
+| Content | Readability Difficult, Readability Very Difficult | Opportunity | Low |
+| Images | Missing Alt Text, Missing Alt Attribute | Issue | Low |
+| Images | Background Images | Warning | Low |
+| Images | Over X KB | Opportunity | Medium |
+| Images | Alt Text Over X Characters, Incorrectly Sized Images, Missing Size Attributes | Opportunity | Low |
