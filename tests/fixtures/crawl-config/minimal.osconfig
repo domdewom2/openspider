@@ -1,0 +1,6 @@
+# Minimales Profil (CRAWL-132): alle übrigen Werte kommen aus den Standardwerten.
+schema_version = 1
+generator = "openspider 0.1.0"
+
+[limits]
+max_depth = 2

@@ -1,0 +1,1348 @@
+{
+  "$defs": {
+    "AdvancedConfig": {
+      "description": "Erweiterte Einstellungen (CRAWL-088/095, ONPAGE-020, TECH-068).",
+      "properties": {
+        "assume_html": {
+          "default": false,
+          "description": "Antworten ohne Content-Type als HTML behandeln.",
+          "type": "boolean"
+        },
+        "cookies": {
+          "$ref": "#/$defs/CookieMode",
+          "default": "session_only",
+          "description": "Cookie-Verhalten."
+        },
+        "respect_self_ref_meta_refresh": {
+          "default": true,
+          "description": "Selbstverweisenden Meta Refresh berücksichtigen.",
+          "type": "boolean"
+        },
+        "response_timeout_s": {
+          "default": 20,
+          "description": "Antwort-Timeout in Sekunden.",
+          "format": "uint32",
+          "maximum": 3600,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "AnalysisConfig": {
+      "description": "Crawl-Analyse (CRAWL-141): automatischer Start und je Teilschritt ein Schalter.",
+      "properties": {
+        "amp": {
+          "default": true,
+          "description": "AMP.",
+          "type": "boolean"
+        },
+        "analytics": {
+          "default": true,
+          "description": "Analytics.",
+          "type": "boolean"
+        },
+        "auto_at_end": {
+          "default": true,
+          "description": "Analyse am Crawl-Ende automatisch starten.",
+          "type": "boolean"
+        },
+        "canonicals": {
+          "default": true,
+          "description": "Kanonisierungen.",
+          "type": "boolean"
+        },
+        "content": {
+          "default": true,
+          "description": "Inhalt.",
+          "type": "boolean"
+        },
+        "hreflang": {
+          "default": true,
+          "description": "hreflang.",
+          "type": "boolean"
+        },
+        "images": {
+          "default": true,
+          "description": "Bilder.",
+          "type": "boolean"
+        },
+        "link_metrics": {
+          "default": true,
+          "description": "Link-Metriken.",
+          "type": "boolean"
+        },
+        "link_score": {
+          "default": true,
+          "description": "Link Score.",
+          "type": "boolean"
+        },
+        "links": {
+          "default": true,
+          "description": "Links.",
+          "type": "boolean"
+        },
+        "pagination": {
+          "default": true,
+          "description": "Paginierung.",
+          "type": "boolean"
+        },
+        "search_console": {
+          "default": true,
+          "description": "Search Console.",
+          "type": "boolean"
+        },
+        "sitemaps": {
+          "default": true,
+          "description": "Sitemaps.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "AuthConfig": {
+      "description": "Authentifizierung (CRAWL-117, OUT-225). Passwörter stehen nie hier, nur der Verweis in den Schlüsselbund.",
+      "properties": {
+        "basic": {
+          "default": [],
+          "description": "Basic-Auth-Einträge.",
+          "items": {
+            "$ref": "#/$defs/BasicAuth"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "BasicAuth": {
+      "description": "Ein Basic-Auth-Eintrag.",
+      "properties": {
+        "prefix": {
+          "description": "URL-Präfix, für das der Eintrag gilt.",
+          "type": "string"
+        },
+        "secret_ref": {
+          "description": "Verweis auf das Passwort im Schlüsselbund (`SecretStore`).",
+          "type": "string"
+        },
+        "username": {
+          "description": "Benutzername.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "prefix",
+        "username",
+        "secret_ref"
+      ],
+      "type": "object"
+    },
+    "ContentAreaConfig": {
+      "description": "Inhaltsbereich (ONPAGE-140).",
+      "properties": {
+        "exclude_classes": {
+          "default": [],
+          "description": "Text in diesen Klassen ausschließen.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "exclude_elements": {
+          "default": [
+            "nav",
+            "footer"
+          ],
+          "description": "Text in diesen Elementen ausschließen.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "exclude_ids": {
+          "default": [],
+          "description": "Text in diesen IDs ausschließen.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "include_classes": {
+          "default": [],
+          "description": "Nur Text innerhalb dieser Klassen.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "include_elements": {
+          "default": [],
+          "description": "Nur Text innerhalb dieser Elemente.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "include_ids": {
+          "default": [],
+          "description": "Nur Text innerhalb dieser IDs.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "ContentConfig": {
+      "description": "Inhalt und Content-Filter (ONPAGE-140/146/147).",
+      "properties": {
+        "area": {
+          "$ref": "#/$defs/ContentAreaConfig",
+          "default": {
+            "exclude_classes": [],
+            "exclude_elements": [
+              "nav",
+              "footer"
+            ],
+            "exclude_ids": [],
+            "include_classes": [],
+            "include_elements": [],
+            "include_ids": []
+          },
+          "description": "Inhaltsbereich."
+        },
+        "low_word_count": {
+          "default": 200,
+          "description": "Wortanzahl, unter der eine Seite als „Low Content“ gilt.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "soft404_phrases": {
+          "default": [
+            "page not found",
+            "404 not found",
+            "error 404",
+            "404 error",
+            "page cannot be found",
+            "page can't be found",
+            "page could not be found",
+            "seite nicht gefunden",
+            "seite wurde nicht gefunden",
+            "fehler 404",
+            "404 fehler",
+            "page introuvable",
+            "página no encontrada",
+            "pagina non trovata",
+            "pagina niet gevonden"
+          ],
+          "description": "Soft-404-Phrasen (leer = Filter aus).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "CookieMode": {
+      "enum": [
+        "session_only",
+        "persistent",
+        "none"
+      ],
+      "type": "string"
+    },
+    "CrawlMode": {
+      "enum": [
+        "spider",
+        "list"
+      ],
+      "type": "string"
+    },
+    "DuplicatesConfig": {
+      "description": "Duplikaterkennung (ONPAGE-005/143/144).",
+      "properties": {
+        "exact_enabled": {
+          "default": true,
+          "description": "Exakte Duplikate suchen.",
+          "type": "boolean"
+        },
+        "ignore_paginated": {
+          "default": true,
+          "description": "Paginierte Seiten ausnehmen.",
+          "type": "boolean"
+        },
+        "near_enabled": {
+          "default": false,
+          "description": "Nahezu-Duplikate suchen.",
+          "type": "boolean"
+        },
+        "near_threshold_pct": {
+          "default": 90,
+          "description": "Schwelle für Nahezu-Duplikate in Prozent.",
+          "format": "uint8",
+          "maximum": 100,
+          "minimum": 50,
+          "type": "integer"
+        },
+        "only_indexable": {
+          "default": true,
+          "description": "Nur indexierbare Seiten vergleichen.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "ExportConfig": {
+      "description": "Export (OUT-002).",
+      "properties": {
+        "line_ending": {
+          "$ref": "#/$defs/LineEnding",
+          "default": "crlf",
+          "description": "Zeilenende in CSV-Dateien."
+        },
+        "utf8_bom": {
+          "default": true,
+          "description": "UTF-8-BOM in CSV-Dateien.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "ExtractionConfig": {
+      "description": "Was aus einer Seite extrahiert wird (ONPAGE-018/090 ff., ONPAGE-140).",
+      "properties": {
+        "h1": {
+          "default": true,
+          "description": "H1.",
+          "type": "boolean"
+        },
+        "h2": {
+          "default": true,
+          "description": "H2.",
+          "type": "boolean"
+        },
+        "hash": {
+          "default": true,
+          "description": "Hash (MD5).",
+          "type": "boolean"
+        },
+        "http_headers": {
+          "default": true,
+          "description": "HTTP-Header speichern.",
+          "type": "boolean"
+        },
+        "last_modified": {
+          "default": true,
+          "description": "Last-Modified.",
+          "type": "boolean"
+        },
+        "meta_description": {
+          "default": true,
+          "description": "Meta Descriptions.",
+          "type": "boolean"
+        },
+        "meta_keywords": {
+          "default": true,
+          "description": "Meta Keywords.",
+          "type": "boolean"
+        },
+        "page_titles": {
+          "default": true,
+          "description": "Page Titles.",
+          "type": "boolean"
+        },
+        "response_time": {
+          "default": true,
+          "description": "Antwortzeit.",
+          "type": "boolean"
+        },
+        "store_html": {
+          "default": false,
+          "description": "Roh-HTML speichern (Vorhalt, CRAWL-063).",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "HeadingLimits": {
+      "description": "Schwelle für Überschriften (ONPAGE-123/133).",
+      "properties": {
+        "max_chars": {
+          "default": 70,
+          "description": "Höchstzahl Zeichen.",
+          "format": "uint32",
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "HreflangConfig": {
+      "description": "hreflang (TECH-004/072).",
+      "properties": {
+        "allow_script_subtag": {
+          "default": true,
+          "description": "Skript-Subtag im Sprachcode zulassen.",
+          "type": "boolean"
+        },
+        "over_limit": {
+          "$ref": "#/$defs/HreflangOverLimit",
+          "default": "truncate",
+          "description": "Verhalten bei mehr als 500 Annotationen."
+        }
+      },
+      "type": "object"
+    },
+    "HreflangOverLimit": {
+      "enum": [
+        "truncate",
+        "skip"
+      ],
+      "type": "string"
+    },
+    "ImageLimits": {
+      "description": "Schwellen für Bilder (ONPAGE-174/177).",
+      "properties": {
+        "alt_max_chars": {
+          "default": 100,
+          "description": "Höchstzahl Zeichen im Alt-Text.",
+          "format": "uint32",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_kb": {
+          "default": 100,
+          "description": "Höchstgröße in KB (1 KB = 1024 Byte).",
+          "format": "uint32",
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "IssuesConfig": {
+      "description": "Issue-Berechnung (CRAWL-089).",
+      "properties": {
+        "ignore_non_indexable": {
+          "default": true,
+          "description": "Nicht indexierbare URLs aus Problemfiltern ausnehmen.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "LimitsConfig": {
+      "description": "Limits (CRAWL-066/067/072/075).",
+      "properties": {
+        "max_depth": {
+          "default": null,
+          "description": "Höchste Crawl-Tiefe; nicht gesetzt = unbegrenzt (im Listenmodus wendet die Engine 0 an).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "max_page_kb": {
+          "default": 51200,
+          "description": "Höchste Seitengröße in KB.",
+          "format": "uint64",
+          "maximum": 1073741824,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_redirects": {
+          "default": 10,
+          "description": "Höchstzahl gefolgter Weiterleitungen.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "max_urls": {
+          "default": 5000000,
+          "description": "Höchstzahl gecrawlter URLs.",
+          "format": "uint64",
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "LineEnding": {
+      "enum": [
+        "crlf",
+        "lf"
+      ],
+      "type": "string"
+    },
+    "LinksConfig": {
+      "description": "Links-Tab (TECH-144).",
+      "properties": {
+        "high_crawl_depth": {
+          "default": 4,
+          "description": "Crawl-Tiefe, ab der „High Crawl Depth“ gilt.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "high_external_outlinks": {
+          "default": 100,
+          "description": "Anzahl externer Outlinks, ab der „High External Outlinks“ gilt.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "high_internal_outlinks": {
+          "default": 1000,
+          "description": "Anzahl interner Outlinks, ab der „High Internal Outlinks“ gilt.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "non_descriptive_anchors": {
+          "default": [
+            "click here",
+            "click",
+            "here",
+            "this",
+            "this page",
+            "link",
+            "more",
+            "read more",
+            "learn more",
+            "more info",
+            "more information",
+            "find out more",
+            "details",
+            "continue",
+            "go",
+            "start",
+            "hier",
+            "hier klicken",
+            "klicken sie hier",
+            "mehr",
+            "weiter",
+            "weiterlesen",
+            "mehr erfahren",
+            "mehr lesen",
+            "mehr info",
+            "details ansehen"
+          ],
+          "description": "Nichtssagende Ankertexte.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "NetworkConfig": {
+      "description": "Netzwerk (CRAWL-123).",
+      "properties": {
+        "resolve": {
+          "default": [],
+          "description": "Host-Auflösung `host=ip[:port]`; `*.domain` erlaubt (Port ist eine Test-Erweiterung, K-11).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "PdfConfig": {
+      "description": "PDF (ONPAGE-009/166).",
+      "properties": {
+        "store": {
+          "default": false,
+          "description": "PDF-Dateien speichern.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "RenderingConfig": {
+      "description": "Rendering (CRAWL-077).",
+      "properties": {
+        "mode": {
+          "$ref": "#/$defs/RenderingMode",
+          "default": "text",
+          "description": "Modus; M1 nur `text`."
+        }
+      },
+      "type": "object"
+    },
+    "RenderingMode": {
+      "enum": [
+        "text",
+        "javascript"
+      ],
+      "type": "string"
+    },
+    "RobotsConfig": {
+      "description": "robots.txt (CRAWL-099/100).",
+      "properties": {
+        "mode": {
+          "$ref": "#/$defs/RobotsMode",
+          "default": "respect",
+          "description": "Umgang mit robots.txt (Listenmodus: die Engine wendet `ignore` an)."
+        },
+        "retries": {
+          "default": 2,
+          "description": "Wiederholungen.",
+          "format": "uint32",
+          "maximum": 10,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "retry_delay_s": {
+          "default": 5,
+          "description": "Wartezeit zwischen Wiederholungen in Sekunden.",
+          "format": "uint32",
+          "maximum": 3600,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "unreachable_policy": {
+          "$ref": "#/$defs/RobotsUnreachablePolicy",
+          "default": "block_host",
+          "description": "Verhalten bei nicht erreichbarer robots.txt."
+        }
+      },
+      "type": "object"
+    },
+    "RobotsMode": {
+      "enum": [
+        "respect",
+        "ignore",
+        "ignore_but_report"
+      ],
+      "type": "string"
+    },
+    "RobotsUnreachablePolicy": {
+      "enum": [
+        "block_host",
+        "allow_all"
+      ],
+      "type": "string"
+    },
+    "ScopeConfig": {
+      "description": "Bereich des Crawls und Include/Exclude (CRAWL-007/009/109/110).",
+      "properties": {
+        "all_subdomains": {
+          "default": false,
+          "description": "Alle Subdomains der Start-Domain crawlen.",
+          "type": "boolean"
+        },
+        "crawl_outside_start_folder": {
+          "default": false,
+          "description": "Ordner verlassen, wenn ein Link darauf zeigt.",
+          "type": "boolean"
+        },
+        "exclude": {
+          "default": [],
+          "description": "Exclude-Regeln (Regex).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "include": {
+          "default": [],
+          "description": "Include-Regeln (Regex).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "regex_partial_match": {
+          "default": false,
+          "description": "Regex-Regeln treffen auch Teilstrings.",
+          "type": "boolean"
+        },
+        "subfolder_only": {
+          "default": false,
+          "description": "Nur den Ordner der Start-URL crawlen.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "SitemapsConfig": {
+      "description": "Sitemaps (TECH-210).",
+      "properties": {
+        "auto_discover_robots": {
+          "default": true,
+          "description": "Sitemaps aus der robots.txt automatisch finden.",
+          "type": "boolean"
+        },
+        "crawl_linked": {
+          "default": false,
+          "description": "Sitemaps aus Links crawlen.",
+          "type": "boolean"
+        },
+        "urls": {
+          "default": [],
+          "description": "Zusätzliche Sitemap-URLs.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "SpeedConfig": {
+      "description": "Geschwindigkeit (CRAWL-112/113).",
+      "properties": {
+        "max_per_host": {
+          "default": null,
+          "description": "Höchstzahl paralleler Abrufe je Host.",
+          "format": "uint32",
+          "maximum": 200,
+          "minimum": 1,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "max_urls_per_sec": {
+          "default": null,
+          "description": "Höchstzahl Abrufe pro Sekunde.",
+          "exclusiveMinimum": 0,
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "threads": {
+          "default": 5,
+          "description": "Parallele Threads.",
+          "format": "uint32",
+          "maximum": 200,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "SpiderConfig": {
+      "description": "Spider-Einstellungen (CRAWL-038 ff.).",
+      "properties": {
+        "amp": {
+          "$ref": "#/$defs/StoreCrawl",
+          "default": {
+            "crawl": false,
+            "store": false
+          },
+          "description": "AMP."
+        },
+        "canonicals": {
+          "$ref": "#/$defs/StoreCrawl",
+          "default": {
+            "crawl": true,
+            "store": true
+          },
+          "description": "Canonicals."
+        },
+        "css": {
+          "$ref": "#/$defs/StoreCrawl",
+          "default": {
+            "crawl": true,
+            "store": true
+          },
+          "description": "CSS."
+        },
+        "external": {
+          "$ref": "#/$defs/StoreCrawl",
+          "default": {
+            "crawl": true,
+            "store": true
+          },
+          "description": "Externe Links."
+        },
+        "follow_external_nofollow": {
+          "default": false,
+          "description": "Externe nofollow-Links folgen.",
+          "type": "boolean"
+        },
+        "follow_internal_nofollow": {
+          "default": false,
+          "description": "Interne nofollow-Links folgen.",
+          "type": "boolean"
+        },
+        "hreflang": {
+          "$ref": "#/$defs/StoreCrawl",
+          "default": {
+            "crawl": false,
+            "store": true
+          },
+          "description": "hreflang."
+        },
+        "iframes": {
+          "$ref": "#/$defs/StoreCrawl",
+          "default": {
+            "crawl": true,
+            "store": true
+          },
+          "description": "Iframes."
+        },
+        "images": {
+          "$ref": "#/$defs/StoreCrawl",
+          "default": {
+            "crawl": true,
+            "store": true
+          },
+          "description": "Bilder."
+        },
+        "internal": {
+          "$ref": "#/$defs/StoreCrawl",
+          "default": {
+            "crawl": true,
+            "store": true
+          },
+          "description": "Interne Hyperlinks."
+        },
+        "javascript": {
+          "$ref": "#/$defs/StoreCrawl",
+          "default": {
+            "crawl": true,
+            "store": true
+          },
+          "description": "JavaScript."
+        },
+        "media": {
+          "$ref": "#/$defs/StoreCrawl",
+          "default": {
+            "crawl": true,
+            "store": true
+          },
+          "description": "Medien."
+        },
+        "meta_refresh": {
+          "$ref": "#/$defs/StoreCrawl",
+          "default": {
+            "crawl": true,
+            "store": true
+          },
+          "description": "Meta Refresh."
+        },
+        "mobile_alternate": {
+          "$ref": "#/$defs/StoreCrawl",
+          "default": {
+            "crawl": false,
+            "store": true
+          },
+          "description": "Mobile Alternate."
+        },
+        "pagination": {
+          "$ref": "#/$defs/StoreCrawl",
+          "default": {
+            "crawl": false,
+            "store": true
+          },
+          "description": "Paginierung."
+        }
+      },
+      "type": "object"
+    },
+    "StoreCrawl": {
+      "description": "Speichern und Crawlen je Linktyp.",
+      "properties": {
+        "crawl": {
+          "default": true,
+          "description": "Abrufen.",
+          "type": "boolean"
+        },
+        "store": {
+          "default": true,
+          "description": "Im Crawl speichern.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "TextLimits": {
+      "description": "Schwellen für Zeichen und Pixel (Titel, Meta-Description; 02 §0.3).",
+      "properties": {
+        "max_chars": {
+          "default": 60,
+          "description": "Höchstzahl Zeichen.",
+          "format": "uint32",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_px": {
+          "default": 561,
+          "description": "Höchstbreite in Pixeln.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "min_chars": {
+          "default": 30,
+          "description": "Mindestzahl Zeichen.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "min_px": {
+          "default": 200,
+          "description": "Mindestbreite in Pixeln.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "UrlLimits": {
+      "description": "Schwelle für URLs (ONPAGE-081).",
+      "properties": {
+        "max_chars": {
+          "default": 115,
+          "description": "Höchstzahl Zeichen.",
+          "format": "uint32",
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "UserAgentConfig": {
+      "description": "User-Agent (CRAWL-114).",
+      "properties": {
+        "http": {
+          "default": null,
+          "description": "Eigener HTTP-User-Agent-String.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "preset": {
+          "default": "openspider",
+          "description": "Name des Voreinstellung.",
+          "type": "string"
+        },
+        "robots_token": {
+          "default": null,
+          "description": "Eigenes robots.txt-Token.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "ValidationConfig": {
+      "description": "Validierung (CRAWL-140 [P1]).",
+      "properties": {
+        "html_doc_max_bytes": {
+          "default": 2097152,
+          "description": "Höchstgröße eines HTML-Dokuments in Byte.",
+          "format": "uint64",
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "resource_max_bytes": {
+          "default": 2097152,
+          "description": "Höchstgröße einer Ressource in Byte.",
+          "format": "uint64",
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Crawl-Konfiguration von OpenSpider (TOML, OUT-221). Fehlende Schlüssel erhalten Standardwerte; unbekannte Schlüssel werden beim Laden gemeldet und ignoriert.",
+  "properties": {
+    "advanced": {
+      "$ref": "#/$defs/AdvancedConfig",
+      "default": {
+        "assume_html": false,
+        "cookies": "session_only",
+        "respect_self_ref_meta_refresh": true,
+        "response_timeout_s": 20
+      },
+      "description": "Erweiterte Einstellungen."
+    },
+    "analysis": {
+      "$ref": "#/$defs/AnalysisConfig",
+      "default": {
+        "amp": true,
+        "analytics": true,
+        "auto_at_end": true,
+        "canonicals": true,
+        "content": true,
+        "hreflang": true,
+        "images": true,
+        "link_metrics": true,
+        "link_score": true,
+        "links": true,
+        "pagination": true,
+        "search_console": true,
+        "sitemaps": true
+      },
+      "description": "Crawl-Analyse."
+    },
+    "auth": {
+      "$ref": "#/$defs/AuthConfig",
+      "default": {
+        "basic": []
+      },
+      "description": "Authentifizierung."
+    },
+    "content": {
+      "$ref": "#/$defs/ContentConfig",
+      "default": {
+        "area": {
+          "exclude_classes": [],
+          "exclude_elements": [
+            "nav",
+            "footer"
+          ],
+          "exclude_ids": [],
+          "include_classes": [],
+          "include_elements": [],
+          "include_ids": []
+        },
+        "low_word_count": 200,
+        "soft404_phrases": [
+          "page not found",
+          "404 not found",
+          "error 404",
+          "404 error",
+          "page cannot be found",
+          "page can't be found",
+          "page could not be found",
+          "seite nicht gefunden",
+          "seite wurde nicht gefunden",
+          "fehler 404",
+          "404 fehler",
+          "page introuvable",
+          "página no encontrada",
+          "pagina non trovata",
+          "pagina niet gevonden"
+        ]
+      },
+      "description": "Inhaltsbereich und Content-Filter."
+    },
+    "duplicates": {
+      "$ref": "#/$defs/DuplicatesConfig",
+      "default": {
+        "exact_enabled": true,
+        "ignore_paginated": true,
+        "near_enabled": false,
+        "near_threshold_pct": 90,
+        "only_indexable": true
+      },
+      "description": "Duplikaterkennung."
+    },
+    "export": {
+      "$ref": "#/$defs/ExportConfig",
+      "default": {
+        "line_ending": "crlf",
+        "utf8_bom": true
+      },
+      "description": "Export."
+    },
+    "extraction": {
+      "$ref": "#/$defs/ExtractionConfig",
+      "default": {
+        "h1": true,
+        "h2": true,
+        "hash": true,
+        "http_headers": true,
+        "last_modified": true,
+        "meta_description": true,
+        "meta_keywords": true,
+        "page_titles": true,
+        "response_time": true,
+        "store_html": false
+      },
+      "description": "Extraktion."
+    },
+    "generator": {
+      "default": "openspider 0.1.0",
+      "description": "Erzeuger, z. B. `openspider 0.1.0`.",
+      "type": "string"
+    },
+    "h1": {
+      "$ref": "#/$defs/HeadingLimits",
+      "default": {
+        "max_chars": 70
+      },
+      "description": "Schwelle für H1."
+    },
+    "h2": {
+      "$ref": "#/$defs/HeadingLimits",
+      "default": {
+        "max_chars": 70
+      },
+      "description": "Schwelle für H2."
+    },
+    "hreflang": {
+      "$ref": "#/$defs/HreflangConfig",
+      "default": {
+        "allow_script_subtag": true,
+        "over_limit": "truncate"
+      },
+      "description": "hreflang."
+    },
+    "image": {
+      "$ref": "#/$defs/ImageLimits",
+      "default": {
+        "alt_max_chars": 100,
+        "max_kb": 100
+      },
+      "description": "Schwellen für Bilder."
+    },
+    "issues": {
+      "$ref": "#/$defs/IssuesConfig",
+      "default": {
+        "ignore_non_indexable": true
+      },
+      "description": "Issue-Berechnung."
+    },
+    "limits": {
+      "$ref": "#/$defs/LimitsConfig",
+      "default": {
+        "max_depth": null,
+        "max_page_kb": 51200,
+        "max_redirects": 10,
+        "max_urls": 5000000
+      },
+      "description": "Limits."
+    },
+    "links": {
+      "$ref": "#/$defs/LinksConfig",
+      "default": {
+        "high_crawl_depth": 4,
+        "high_external_outlinks": 100,
+        "high_internal_outlinks": 1000,
+        "non_descriptive_anchors": [
+          "click here",
+          "click",
+          "here",
+          "this",
+          "this page",
+          "link",
+          "more",
+          "read more",
+          "learn more",
+          "more info",
+          "more information",
+          "find out more",
+          "details",
+          "continue",
+          "go",
+          "start",
+          "hier",
+          "hier klicken",
+          "klicken sie hier",
+          "mehr",
+          "weiter",
+          "weiterlesen",
+          "mehr erfahren",
+          "mehr lesen",
+          "mehr info",
+          "details ansehen"
+        ]
+      },
+      "description": "Links-Tab."
+    },
+    "meta_description": {
+      "$ref": "#/$defs/TextLimits",
+      "default": {
+        "max_chars": 155,
+        "max_px": 985,
+        "min_chars": 70,
+        "min_px": 400
+      },
+      "description": "Schwellen für Meta Descriptions."
+    },
+    "mode": {
+      "$ref": "#/$defs/CrawlMode",
+      "default": "spider",
+      "description": "Crawl-Modus."
+    },
+    "network": {
+      "$ref": "#/$defs/NetworkConfig",
+      "default": {
+        "resolve": []
+      },
+      "description": "Netzwerk."
+    },
+    "pdf": {
+      "$ref": "#/$defs/PdfConfig",
+      "default": {
+        "store": false
+      },
+      "description": "PDF."
+    },
+    "rendering": {
+      "$ref": "#/$defs/RenderingConfig",
+      "default": {
+        "mode": "text"
+      },
+      "description": "Rendering."
+    },
+    "robots": {
+      "$ref": "#/$defs/RobotsConfig",
+      "default": {
+        "mode": "respect",
+        "retries": 2,
+        "retry_delay_s": 5,
+        "unreachable_policy": "block_host"
+      },
+      "description": "robots.txt."
+    },
+    "schema_version": {
+      "default": 1,
+      "description": "Version des Dateiformats (OUT-221).",
+      "format": "uint32",
+      "maximum": 4294967295,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "scope": {
+      "$ref": "#/$defs/ScopeConfig",
+      "default": {
+        "all_subdomains": false,
+        "crawl_outside_start_folder": false,
+        "exclude": [],
+        "include": [],
+        "regex_partial_match": false,
+        "subfolder_only": false
+      },
+      "description": "Bereich und Include/Exclude."
+    },
+    "sitemaps": {
+      "$ref": "#/$defs/SitemapsConfig",
+      "default": {
+        "auto_discover_robots": true,
+        "crawl_linked": false,
+        "urls": []
+      },
+      "description": "Sitemaps."
+    },
+    "speed": {
+      "$ref": "#/$defs/SpeedConfig",
+      "default": {
+        "max_per_host": null,
+        "max_urls_per_sec": null,
+        "threads": 5
+      },
+      "description": "Geschwindigkeit."
+    },
+    "spider": {
+      "$ref": "#/$defs/SpiderConfig",
+      "default": {
+        "amp": {
+          "crawl": false,
+          "store": false
+        },
+        "canonicals": {
+          "crawl": true,
+          "store": true
+        },
+        "css": {
+          "crawl": true,
+          "store": true
+        },
+        "external": {
+          "crawl": true,
+          "store": true
+        },
+        "follow_external_nofollow": false,
+        "follow_internal_nofollow": false,
+        "hreflang": {
+          "crawl": false,
+          "store": true
+        },
+        "iframes": {
+          "crawl": true,
+          "store": true
+        },
+        "images": {
+          "crawl": true,
+          "store": true
+        },
+        "internal": {
+          "crawl": true,
+          "store": true
+        },
+        "javascript": {
+          "crawl": true,
+          "store": true
+        },
+        "media": {
+          "crawl": true,
+          "store": true
+        },
+        "meta_refresh": {
+          "crawl": true,
+          "store": true
+        },
+        "mobile_alternate": {
+          "crawl": false,
+          "store": true
+        },
+        "pagination": {
+          "crawl": false,
+          "store": true
+        }
+      },
+      "description": "Was gespeichert und gecrawlt wird."
+    },
+    "title": {
+      "$ref": "#/$defs/TextLimits",
+      "default": {
+        "max_chars": 60,
+        "max_px": 561,
+        "min_chars": 30,
+        "min_px": 200
+      },
+      "description": "Schwellen für Page Titles."
+    },
+    "url": {
+      "$ref": "#/$defs/UrlLimits",
+      "default": {
+        "max_chars": 115
+      },
+      "description": "Schwelle für URLs."
+    },
+    "user_agent": {
+      "$ref": "#/$defs/UserAgentConfig",
+      "default": {
+        "http": null,
+        "preset": "openspider",
+        "robots_token": null
+      },
+      "description": "User-Agent."
+    },
+    "validation": {
+      "$ref": "#/$defs/ValidationConfig",
+      "default": {
+        "html_doc_max_bytes": 2097152,
+        "resource_max_bytes": 2097152
+      },
+      "description": "Validierung."
+    }
+  },
+  "title": "OpenSpider .osconfig",
+  "type": "object"
+}

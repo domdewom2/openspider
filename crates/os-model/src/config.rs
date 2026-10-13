@@ -3,9 +3,23 @@
 //! Die TOML-Pfade entsprechen den Spec-Schlüsseln (M1-Plan 3.4). Fehlende Schlüssel erhalten beim Laden
 //! den Standardwert (Vorwärtskompatibilität, CRAWL-132); unbekannte Schlüssel werden hier ignoriert –
 //! ihre Meldung, die Validierung, `--set` und das JSON-Schema ergänzt M1-P13.
+//!
+//! M1-P13 liegt in den Untermodulen `io` (Laden/Speichern, Standard-Profil), `validate`, `set`
+//! (`--set`, Voreinstellungsgruppen) und `schema` (JSON-Schema); ihre öffentlichen Typen und Funktionen
+//! sind hier re-exportiert.
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+mod io;
+mod schema;
+mod set;
+mod validate;
+
+pub use io::{ConfigLoadError, LoadedConfig, DEFAULT_PROFILE_FILE};
+pub use schema::{json_schema, json_schema_string};
+pub use set::{settable_keys, suggest_key, PresetGroup, SetError, SHORT_KEYS};
+pub use validate::{ConfigIssue, ConfigIssueKind, ValidationReport};
 
 use crate::enums::{
     CookieMode, CrawlMode, HreflangOverLimit, LineEnding, RenderingMode, RobotsMode,

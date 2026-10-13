@@ -1,0 +1,23 @@
+# OpenSpider-Konfiguration – von Hand bearbeitet, mit Kommentaren (OUT-221)
+schema_version = 1 # Pflichtfeld
+generator = "handgeschrieben"
+
+mode = "spider" # oder "list"
+
+[scope]
+# Nur den Blog crawlen, aber nichts Privates.
+include = [
+    ".*/blog/.*", # Blogartikel
+    # ".*/news/.*",  <- bewusst auskommentiert
+]
+exclude = [".*/privat/.*"]
+
+[speed]
+threads = 8 # Standard ist 5
+max_urls_per_sec = 2.5
+
+[limits]
+max_depth = 3
+
+[title]
+max_chars = 65 # Aufgeweitet gegenüber dem Standard 60

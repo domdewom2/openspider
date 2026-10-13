@@ -1,0 +1,5 @@
+schema_version = 1
+
+[limits]
+max_urls = 1000
+max_depth = "abc"
