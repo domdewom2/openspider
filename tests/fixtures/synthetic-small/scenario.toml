@@ -1,0 +1,14 @@
+# Synthetische Site ohne weitere Dateien: wird deterministisch aus (seed, Pfad) berechnet.
+[synthetic]
+pages = 1000
+links_per_page = 30
+seed = 42
+depth_distribution = [10, 100, 889]
+status_301_share = 0.02
+status_404_share = 0.02
+status_5xx_share = 0.01
+noindex_share = 0.05
+canonical_other_share = 0.03
+duplicate_title_share = 0.10
+large_page_share = 0.01
+large_page_kb = 64

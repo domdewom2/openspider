@@ -45,3 +45,4 @@ clap = { version = "4", features = ["derive"] }
 axum = "0.8"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "time", "sync", "io-util", "signal"] }
 toml = "0.9"
+serde_json = "1"
