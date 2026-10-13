@@ -1,0 +1,34 @@
+pub mod util;
+
+// spec: ALPHA-001
+#[test]
+fn top_level_ok() {}
+
+// Benchmark ohne Spec-Tag: Grund frei, gilt nicht als Fehler.
+#[test]
+#[ignore = "benchmark: Wanduhr, nur manuell"]
+fn bench_wall_clock() {}
+
+// Ignore ganz ohne Grund (kein Tag): wird gelistet.
+#[test]
+#[ignore]
+fn silent_ignore() {}
+
+#[cfg(test)]
+mod tests {
+    // spec: ALPHA-002
+    #[test]
+    fn shared_name() {}
+
+    // spec: ALPHA-003
+    #[test]
+    fn fails_here() {}
+
+    // spec: ALPHA-012
+    #[test]
+    fn passes_here() {}
+
+    // spec: UNKNOWN-001
+    #[test]
+    fn tag_with_unknown_id() {}
+}

@@ -1,0 +1,3 @@
+// spec: ALPHA-008
+#[test]
+fn smoke() {}

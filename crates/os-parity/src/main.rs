@@ -18,6 +18,16 @@ enum Command {
     Run(os_parity::run::RunArgs),
     /// Ermittelt den Umsetzungsstand je Spec-ID.
     Coverage(os_parity::coverage::CoverageArgs),
+    /// Test-Hilfsbefehl: gibt sich als `openspider` aus (nur für die Tests von `run`).
+    #[command(hide = true)]
+    FakeOpenspider(FakeArgs),
+}
+
+#[derive(Debug, clap::Args)]
+struct FakeArgs {
+    /// Die Kommandozeile, die `openspider` erhalten hätte (nach `--`).
+    #[arg(last = true, allow_hyphen_values = true)]
+    args: Vec<String>,
 }
 
 fn main() {
@@ -26,6 +36,7 @@ fn main() {
         Command::Diff(args) => os_parity::diff::run(args),
         Command::Run(args) => os_parity::run::run(args),
         Command::Coverage(args) => os_parity::coverage::run(args),
+        Command::FakeOpenspider(fake) => std::process::exit(os_parity::fake::run(&fake.args)),
     };
     match result {
         Ok(true) => {}

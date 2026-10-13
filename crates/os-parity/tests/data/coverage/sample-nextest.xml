@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="nextest-run" tests="20" failures="2" errors="0" uuid="00000000-0000-0000-0000-000000000000">
+    <testsuite name="alpha" tests="12" disabled="0" errors="0" failures="2">
+        <testcase name="tests::fails_here" classname="alpha" time="0.01">
+            <failure message="boom" type="test failure"/>
+        </testcase>
+        <testcase name="tests::passes_here" classname="alpha" time="0.01"/>
+        <testcase name="tests::shared_name" classname="alpha" time="0.01"/>
+        <testcase name="top_level_ok" classname="alpha" time="0.01"/>
+        <testcase name="util::tests::criterion_one" classname="alpha" time="0.01"/>
+        <testcase name="util::tests::criterion_two" classname="alpha" time="0.01">
+            <skipped/>
+        </testcase>
+        <testcase name="util::tests::deferred_one" classname="alpha" time="0.01">
+            <skipped/>
+        </testcase>
+        <testcase name="util::tests::placeholder" classname="alpha" time="0.01">
+            <skipped/>
+        </testcase>
+        <testcase name="util::tests::shared_name" classname="alpha" time="0.01"/>
+        <testcase name="util::tests::needs_clarification" classname="alpha" time="0.01">
+            <skipped/>
+        </testcase>
+        <testcase name="util::tests::bare_ignore_with_tag" classname="alpha" time="0.01">
+            <skipped/>
+        </testcase>
+        <testcase name="util::tests::fails_for_twelve" classname="alpha" time="0.01">
+            <failure message="boom" type="test failure"/>
+        </testcase>
+    </testsuite>
+    <testsuite name="alpha::bin/alpha" tests="1" disabled="0" errors="0" failures="0">
+        <testcase name="tests::shared_name" classname="alpha::bin/alpha" time="0.01"/>
+    </testsuite>
+    <testsuite name="alpha::other" tests="2" disabled="0" errors="0" failures="0">
+        <testcase name="inner::deep" classname="alpha::other" time="0.01"/>
+        <testcase name="nested_helper" classname="alpha::other" time="0.01"/>
+    </testsuite>
+    <testsuite name="alpha::smoke" tests="1" disabled="0" errors="0" failures="0">
+        <testcase name="smoke" classname="alpha::smoke" time="0.01"/>
+    </testsuite>
+    <testsuite name="beta" tests="1" disabled="0" errors="0" failures="0">
+        <testcase name="smoke" classname="beta" time="0.01"/>
+    </testsuite>
+    <testsuite name="beta::smoke" tests="2" disabled="0" errors="0" failures="0">
+        <testcase name="beta_only" classname="beta::smoke" time="0.01"/>
+        <testcase name="smoke" classname="beta::smoke" time="0.01"/>
+    </testsuite>
+    <testsuite name="gamma::smoke" tests="1" disabled="0" errors="0" failures="0">
+        <testcase name="smoke" classname="gamma::smoke" time="0.01"/>
+    </testsuite>
+</testsuites>

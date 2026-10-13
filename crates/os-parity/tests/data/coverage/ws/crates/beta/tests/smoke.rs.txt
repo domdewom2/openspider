@@ -1,0 +1,7 @@
+// spec: BETA-001
+#[test]
+fn smoke() {}
+
+// spec: BETA-002
+#[test]
+fn beta_only() {}

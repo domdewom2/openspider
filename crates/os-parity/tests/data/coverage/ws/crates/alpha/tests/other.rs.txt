@@ -1,0 +1,9 @@
+// spec: ALPHA-009
+#[test]
+fn nested_helper() {}
+
+mod inner {
+    // spec: ALPHA-010
+    #[test]
+    fn deep() {}
+}

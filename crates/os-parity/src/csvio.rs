@@ -1,0 +1,214 @@
+//! Toleranter CSV-Leser für Referenz- und OpenSpider-Exporte.
+//!
+//! Toleriert UTF-8-BOM, CRLF/LF, Komma/Semikolon/Tab als Trennzeichen (Autodetektion anhand der
+//! Kopfzeile), Anführungszeichen mit eingebetteten Trennzeichen und Zeilenumbrüchen, unterschiedlich
+//! lange Zeilen sowie eine führende Excel-Zeile `sep=;`. Beschreibungsspalten der Referenz werden
+//! beim Einlesen verworfen (`drop`), ihre Inhalte gelangen nie in den Speicher der Auswertung
+//! (Clean-Room, Abschnitt 2 Regel 1).
+
+use std::path::Path;
+
+use crate::error::ParityError;
+
+/// Eingelesene Tabelle: Kopfzeile plus Datenzeilen gleicher Länge.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Table {
+    /// Spaltennamen in Dateireihenfolge (ohne verworfene Spalten; doppelte Namen erhalten `" (2)"` usw.).
+    pub columns: Vec<String>,
+    /// Datenzeilen; jede hat genau `columns.len()` Zellen.
+    pub rows: Vec<Vec<String>>,
+    /// Namen der verworfenen Spalten (so geschrieben wie in der Datei).
+    pub dropped: Vec<String>,
+}
+
+impl Table {
+    /// Index der Spalte mit genau diesem Namen.
+    pub fn index_of(&self, name: &str) -> Option<usize> {
+        self.columns.iter().position(|c| c == name)
+    }
+}
+
+/// Liest eine CSV-Datei; `drop` nennt zu verwerfende Spalten (Vergleich ohne Beachtung der Schreibweise).
+pub fn read_csv(path: &Path, drop: &[String]) -> Result<Table, ParityError> {
+    let bytes = std::fs::read(path).map_err(|e| {
+        ParityError::Invalid(format!("{} kann nicht gelesen werden: {e}", path.display()))
+    })?;
+    parse_csv(&bytes, drop).map_err(|e| match e {
+        ParityError::Invalid(m) => ParityError::Invalid(format!("{}: {m}", path.display())),
+        other => other,
+    })
+}
+
+/// Wie [`read_csv`], aber aus Bytes.
+pub fn parse_csv(bytes: &[u8], drop: &[String]) -> Result<Table, ParityError> {
+    let bytes = bytes.strip_prefix(&[0xEF, 0xBB, 0xBF]).unwrap_or(bytes);
+    let text = String::from_utf8_lossy(bytes);
+    let mut text: &str = &text;
+    // Excel-Hinweiszeile `sep=;` überspringen.
+    if let Some(rest) = text.strip_prefix("sep=") {
+        if let Some(nl) = rest.find('\n') {
+            if rest[..nl].trim_end_matches('\r').chars().count() == 1 {
+                text = &rest[nl + 1..];
+            }
+        }
+    }
+    let delimiter = detect_delimiter(text);
+    let mut reader = csv::ReaderBuilder::new()
+        .has_headers(false)
+        .flexible(true)
+        .delimiter(delimiter)
+        .from_reader(text.as_bytes());
+    let mut records = reader.records();
+    let header: Vec<String> = match records.next() {
+        Some(r) => r
+            .map_err(|e| ParityError::Invalid(format!("Kopfzeile: {e}")))?
+            .iter()
+            .map(|c| c.trim().to_string())
+            .collect(),
+        None => return Ok(Table::default()),
+    };
+    let width = header.len();
+    let drop_lower: Vec<String> = drop.iter().map(|d| d.trim().to_lowercase()).collect();
+    let keep: Vec<usize> = (0..width)
+        .filter(|&i| !drop_lower.contains(&header[i].to_lowercase()))
+        .collect();
+    let dropped: Vec<String> = (0..width)
+        .filter(|i| !keep.contains(i))
+        .map(|i| header[i].clone())
+        .collect();
+    let mut columns: Vec<String> = Vec::with_capacity(keep.len());
+    for &i in &keep {
+        let mut name = header[i].clone();
+        let mut n = 2;
+        while columns.contains(&name) {
+            name = format!("{} ({n})", header[i]);
+            n += 1;
+        }
+        columns.push(name);
+    }
+    let mut rows = Vec::new();
+    for (n, rec) in records.enumerate() {
+        let rec = rec.map_err(|e| ParityError::Invalid(format!("Zeile {}: {e}", n + 2)))?;
+        let row: Vec<String> = keep
+            .iter()
+            .map(|&i| rec.get(i).unwrap_or("").to_string())
+            .collect();
+        rows.push(row);
+    }
+    Ok(Table {
+        columns,
+        rows,
+        dropped,
+    })
+}
+
+/// Bestimmt das Trennzeichen anhand der ersten Zeile (außerhalb von Anführungszeichen):
+/// häufigstes von `,` `;` Tab, bei Gleichstand das Komma.
+pub fn detect_delimiter(text: &str) -> u8 {
+    let (mut comma, mut semi, mut tab) = (0usize, 0usize, 0usize);
+    let mut in_quotes = false;
+    for c in text.chars() {
+        match c {
+            '"' => in_quotes = !in_quotes,
+            '\n' if !in_quotes => break,
+            ',' if !in_quotes => comma += 1,
+            ';' if !in_quotes => semi += 1,
+            '\t' if !in_quotes => tab += 1,
+            _ => {}
+        }
+    }
+    if semi > comma && semi >= tab {
+        b';'
+    } else if tab > comma && tab > semi {
+        b'\t'
+    } else {
+        b','
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn plain_comma_csv() {
+        let t = parse_csv(b"Address,Status Code\nhttp://a/,200\nhttp://b/,404\n", &[]).unwrap();
+        assert_eq!(t.columns, ["Address", "Status Code"]);
+        assert_eq!(t.rows.len(), 2);
+        assert_eq!(t.rows[1], ["http://b/", "404"]);
+    }
+
+    #[test]
+    fn bom_and_crlf_are_tolerated() {
+        let mut data = vec![0xEF, 0xBB, 0xBF];
+        data.extend_from_slice(b"Address,Status Code\r\nhttp://a/,200\r\n\r\nhttp://b/,404\r\n");
+        let t = parse_csv(&data, &[]).unwrap();
+        assert_eq!(t.columns[0], "Address", "BOM darf nicht im Namen stehen");
+        assert_eq!(t.rows.len(), 2, "Leerzeilen werden übersprungen");
+        assert_eq!(t.rows[0], ["http://a/", "200"]);
+    }
+
+    #[test]
+    fn semicolon_is_detected() {
+        let t = parse_csv(b"Address;Title\nhttp://a/;Hallo, Welt\n", &[]).unwrap();
+        assert_eq!(t.columns, ["Address", "Title"]);
+        assert_eq!(t.rows[0][1], "Hallo, Welt");
+    }
+
+    #[test]
+    fn delimiters_inside_quotes_do_not_count() {
+        assert_eq!(detect_delimiter("\"a;b;c\",d\n"), b',');
+        assert_eq!(detect_delimiter("a\tb\tc\n"), b'\t');
+        assert_eq!(detect_delimiter("a,b;c;d\n"), b';');
+        assert_eq!(detect_delimiter("single\n"), b',');
+    }
+
+    #[test]
+    fn quotes_with_embedded_newline_and_escaped_quote() {
+        let t = parse_csv(b"A,B\n\"x\ny\",\"say \"\"hi\"\"\"\n", &[]).unwrap();
+        assert_eq!(t.rows[0], ["x\ny", "say \"hi\""]);
+    }
+
+    #[test]
+    fn ragged_rows_are_padded_and_extra_cells_cut() {
+        let t = parse_csv(b"A,B,C\n1\n1,2,3,4\n", &[]).unwrap();
+        assert_eq!(t.rows[0], ["1", "", ""]);
+        assert_eq!(t.rows[1], ["1", "2", "3"]);
+    }
+
+    #[test]
+    fn sep_hint_line_is_skipped() {
+        let t = parse_csv(b"sep=;\nA;B\n1;2\n", &[]).unwrap();
+        assert_eq!(t.columns, ["A", "B"]);
+    }
+
+    #[test]
+    fn description_columns_are_dropped_on_read() {
+        let t = parse_csv(
+            b"Address,Description,How To Fix,Status Code\nhttp://a/,geheimer Text,noch einer,200\n",
+            &["description".to_string(), "How To Fix".to_string()],
+        )
+        .unwrap();
+        assert_eq!(t.columns, ["Address", "Status Code"]);
+        assert_eq!(t.rows[0], ["http://a/", "200"]);
+        assert_eq!(t.dropped, ["Description", "How To Fix"]);
+        assert!(
+            !t.rows.iter().flatten().any(|c| c.contains("geheim")),
+            "verworfene Inhalte dürfen nicht im Speicher bleiben"
+        );
+    }
+
+    #[test]
+    fn duplicate_headers_get_suffix() {
+        let t = parse_csv(b"A,A,A\n1,2,3\n", &[]).unwrap();
+        assert_eq!(t.columns, ["A", "A (2)", "A (3)"]);
+    }
+
+    #[test]
+    fn empty_input_is_empty_table() {
+        assert_eq!(parse_csv(b"", &[]).unwrap(), Table::default());
+        let t = parse_csv(b"A,B\n", &[]).unwrap();
+        assert!(t.rows.is_empty());
+        assert_eq!(t.columns.len(), 2);
+    }
+}

@@ -1,0 +1,99 @@
+{
+  "export": "internal_all",
+  "site": "parity-onpage",
+  "sf_rows": 5,
+  "os_rows": 5,
+  "matched": 4,
+  "missing_in_os": [
+    "{BASE}/gone"
+  ],
+  "extra_in_os": [
+    "{BASE}/new"
+  ],
+  "cells_compared": 28,
+  "cells_equal": 27,
+  "agreement_pct": 96.429,
+  "columns": [
+    {
+      "sf_column": "Status Code",
+      "os_column": "Status Code",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "sf_column": "Title 1",
+      "os_column": "Title 1",
+      "compared": 4,
+      "errors": 1,
+      "examples": [
+        {
+          "key": "{BASE}/b",
+          "sf": "Seite B",
+          "os": "Seite B anders"
+        }
+      ]
+    },
+    {
+      "sf_column": "Title 1 Pixel Width",
+      "os_column": "Title 1 Pixel Width",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "sf_column": "Indexable",
+      "os_column": "Indexability",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "sf_column": "Indexability Status",
+      "os_column": "Indexability Status",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "sf_column": "Size (bytes)",
+      "os_column": "Size",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "sf_column": "Canonical Link Element 1",
+      "os_column": "Canonical Link Element 1",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    }
+  ],
+  "applied_deviations": [],
+  "dropped_sf_columns": [
+    "Description",
+    "How To Fix"
+  ],
+  "ignored_columns": [
+    {
+      "column": "Response Time",
+      "reason": "nicht deterministisch"
+    }
+  ],
+  "unmapped_sf_columns": [
+    "Meta Robots 1"
+  ],
+  "unmapped_os_columns": [
+    "Why It Matters"
+  ],
+  "missing_sf_columns": [],
+  "missing_os_columns": [],
+  "threshold_pct": 99.0,
+  "url_set_identical": false,
+  "passed": false,
+  "failures": [
+    "Zellübereinstimmung 96.429 % liegt unter 99.000 %",
+    "URL-Menge nicht identisch: 1 fehlen in OpenSpider, 1 zusätzlich"
+  ]
+}
