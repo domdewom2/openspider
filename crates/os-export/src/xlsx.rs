@@ -208,7 +208,7 @@ fn to_cell(kind: ColumnKind, v: &Value) -> Cell {
             },
             _ if i.abs() > MAX_EXACT_INT => Cell::Text(i.to_string()),
             ColumnKind::Float { decimals } => Cell::Number(*i as f64, NumFmt::Fixed(decimals)),
-            ColumnKind::Seconds3 => Cell::Number(round_to(*i as f64 / 1000.0, 3), NumFmt::Seconds3),
+            ColumnKind::Seconds3 => Cell::Number(round_to(*i as f64, 3), NumFmt::Seconds3),
             _ => Cell::Number(*i as f64, NumFmt::Int),
         },
         Value::Float(f) => {
@@ -220,7 +220,7 @@ fn to_cell(kind: ColumnKind, v: &Value) -> Cell {
                 ColumnKind::Float { decimals } => {
                     Cell::Number(round_to(*f, decimals), NumFmt::Fixed(decimals))
                 }
-                ColumnKind::Seconds3 => Cell::Number(round_to(*f / 1000.0, 3), NumFmt::Seconds3),
+                ColumnKind::Seconds3 => Cell::Number(round_to(*f, 3), NumFmt::Seconds3),
                 ColumnKind::Timestamp => match timestamp_export(&Value::Int(*f as i64), None) {
                     Some(ts) => Cell::DateTime(ts),
                     None => Cell::Skip,

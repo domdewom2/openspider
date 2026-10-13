@@ -109,6 +109,9 @@ pub struct SitemapOptions {
     pub max_urls_per_file: u32,
     /// Höchste Größe je Sitemap-Datei in Bytes.
     pub max_bytes_per_file: u64,
+    /// Basis-URL für die `<loc>` des Sitemap-Index (OUT-129), z. B. `https://example.com/`. `None` = Ursprung
+    /// der Start-URL des Crawls.
+    pub base_url: Option<String>,
 }
 
 impl Default for SitemapOptions {
@@ -116,6 +119,7 @@ impl Default for SitemapOptions {
         SitemapOptions {
             max_urls_per_file: 49_999,
             max_bytes_per_file: 50 * 1024 * 1024,
+            base_url: None,
         }
     }
 }

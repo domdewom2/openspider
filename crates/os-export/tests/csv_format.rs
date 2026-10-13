@@ -186,7 +186,7 @@ fn numbers_are_unquoted_with_decimal_point_under_german_locale() {
         &[
             Value::Int(1234567),
             Value::Float(0.512),
-            Value::Int(1234),
+            Value::Float(1.234),
             Value::Float(1234.5),
             Value::Null,
             Value::Int(0),
@@ -199,7 +199,7 @@ fn numbers_are_unquoted_with_decimal_point_under_german_locale() {
         &[
             Value::Int(-3),
             Value::Float(100.0),
-            Value::Float(250.0),
+            Value::Float(0.25),
             Value::Float(0.05),
             Value::Null,
             Value::Int(0),
@@ -211,7 +211,7 @@ fn numbers_are_unquoted_with_decimal_point_under_german_locale() {
     let text = std::fs::read_to_string(&path).unwrap();
     let lines: Vec<&str> = text.split("\r\n").collect();
     assert_eq!(lines[0], "Int,Pct,Secs,Big,Empty,Zero,Flag");
-    // 0.512 mit zwei Stellen: 0.51; Millisekunden als Sekunden; leere Zelle für Null; echte 0 bleibt 0
+    // 0.512 mit zwei Stellen: 0.51; Seconds3 = Sekunden aus views, keine Umrechnung im Schreiber; leere Zelle für Null; echte 0 bleibt 0
     assert_eq!(lines[1], "1234567,0.51,1.234,1234.5,,0,true");
     assert_eq!(lines[2], "-3,100.00,0.250,0.1,,0,false");
     assert!(

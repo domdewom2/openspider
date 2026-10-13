@@ -7,7 +7,7 @@
 //! * Zahlen stehen ohne Anführungszeichen und mit Dezimalpunkt. Der Code liest weder `LANG` noch `LC_*`;
 //!   formatiert wird ausschließlich mit der locale-unabhängigen Rust-Formatierung.
 //! * Leere Zellen für `Null` (06 §0), Prozentwerte/Dezimalzahlen mit den festen Nachkommastellen aus
-//!   [`ColumnKind::Float`], Zeitstempel als ISO 8601 mit Offset, Millisekunden als Sekunden mit drei Stellen.
+//!   [`ColumnKind::Float`], Zeitstempel als ISO 8601 mit Offset, Sekunden (`Seconds3`; `views` liefert sie bereits in Sekunden) mit drei Stellen.
 //! * [`ColumnKind::Url`] wird wie Text geschrieben (nie als Formel oder Link).
 //! * Ungültiges UTF-8 aus Quelldaten ersetzt [`utf8_lossy`] durch U+FFFD; `Value::Text` ist per Typ immer
 //!   gültig, die Ersetzung geschieht beim Einlesen der Quelle.
@@ -166,7 +166,7 @@ pub(crate) fn cell_text(kind: ColumnKind, v: &Value) -> String {
         Value::Int(i) => match kind {
             ColumnKind::Bool if *i == 0 || *i == 1 => (*i == 1).to_string(),
             ColumnKind::Float { decimals } => fixed(*i as f64, decimals),
-            ColumnKind::Seconds3 => seconds3_from_millis(*i),
+            ColumnKind::Seconds3 => fixed(*i as f64, 3),
             ColumnKind::Timestamp => timestamp_export(v, None).unwrap_or_else(|| i.to_string()),
             _ => i.to_string(),
         },
@@ -176,7 +176,7 @@ pub(crate) fn cell_text(kind: ColumnKind, v: &Value) -> String {
             }
             match kind {
                 ColumnKind::Float { decimals } => fixed(*f, decimals),
-                ColumnKind::Seconds3 => fixed(*f / 1000.0, 3),
+                ColumnKind::Seconds3 => fixed(*f, 3),
                 ColumnKind::Int => {
                     if f.fract() == 0.0 && f.abs() < 9.0e15 {
                         format!("{}", *f as i64)
@@ -205,13 +205,6 @@ pub(crate) fn fixed(f: f64, decimals: u8) -> String {
         }
     }
     s
-}
-
-/// Millisekunden als Sekunden mit genau drei Nachkommastellen (ganzzahlig gerechnet, ohne Rundungsfehler).
-pub(crate) fn seconds3_from_millis(ms: i64) -> String {
-    let sign = if ms < 0 { "-" } else { "" };
-    let a = ms.unsigned_abs();
-    format!("{sign}{}.{:03}", a / 1000, a % 1000)
 }
 
 /// Zeitstempel in Exportform (ISO 8601 mit Offset, ohne Sekundenbruchteile), 06 §0.
@@ -259,8 +252,16 @@ mod tests {
             cell_text(ColumnKind::Float { decimals: 2 }, &Value::Float(-0.001)),
             "0.00"
         );
-        assert_eq!(cell_text(ColumnKind::Seconds3, &Value::Int(1234)), "1.234");
-        assert_eq!(cell_text(ColumnKind::Seconds3, &Value::Int(-5)), "-0.005");
+        // Seconds3: Werte kommen von `views` bereits in Sekunden, keine Umrechnung im Schreiber.
+        assert_eq!(
+            cell_text(ColumnKind::Seconds3, &Value::Float(1.234)),
+            "1.234"
+        );
+        assert_eq!(
+            cell_text(ColumnKind::Seconds3, &Value::Float(-0.005)),
+            "-0.005"
+        );
+        assert_eq!(cell_text(ColumnKind::Seconds3, &Value::Int(2)), "2.000");
         assert_eq!(cell_text(ColumnKind::Int, &Value::Int(-7)), "-7");
         assert_eq!(cell_text(ColumnKind::Int, &Value::Null), "");
         assert_eq!(cell_text(ColumnKind::Bool, &Value::Bool(true)), "true");

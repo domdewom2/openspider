@@ -341,3 +341,23 @@ fn datetime_cells_use_the_documented_number_format() {
         "{styles}"
     );
 }
+
+// spec: OUT-003
+#[test]
+fn seconds3_cells_keep_the_three_decimal_number_format() {
+    let tmp = tempfile::tempdir().unwrap();
+    let path = tmp.path().join("s.xlsx");
+    let mut w = open_writer(&path, Format::Xlsx, "S", &WriterOptions::default()).unwrap();
+    w.header(&["Secs".to_string()]).unwrap();
+    w.row(&[ColumnKind::Seconds3], &[Value::Float(0.812)])
+        .unwrap();
+    w.finish().unwrap();
+    let files = read_zip(&path);
+    let styles = text_of(&files, "xl/styles.xml");
+    assert!(styles.contains(r#"formatCode="0.000""#), "{styles}");
+    let sheet = text_of(&files, "xl/worksheets/sheet1.xml");
+    assert!(
+        sheet.contains("<v>0.812</v>"),
+        "Wert unverändert in Sekunden, nicht durch 1000 geteilt: {sheet}"
+    );
+}
