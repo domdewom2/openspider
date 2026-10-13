@@ -1,0 +1,3 @@
+[mcp_servers.openspider]
+args = ["mcp"]
+command = 'C:\Program Files\OpenSpider\openspider.exe'
