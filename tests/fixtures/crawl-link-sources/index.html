@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>crawl-link-sources</title>
+<link rel="stylesheet" href="/css/main.css">
+<link rel="preload" href="/fonts/f.woff2" as="font" crossorigin>
+<link rel="preload" href="/css/pre.css" as="style">
+<link rel="prefetch" href="/js/pre.js" as="script">
+<link rel="prefetch" href="/next-page.html">
+<link rel="modulepreload" href="/js/mod.mjs">
+<link rel="canonical" href="/index.html">
+<link rel="icon" href="/favicon.ico">
+<script src="/js/app.js"></script>
+<script type="module" src="/js/module.mjs"></script>
+</head>
+<body>
+<header><a href="/header-link">Header</a></header>
+<nav><a href="/nav-link">Navigation</a></nav>
+<main>
+<p><a href="/hyperlink">Hyperlink</a> <A HREF="/UPPER">Gross</A> <a HREF='/mixed' Rel="NoFollow">Mixed</a></p>
+<map name="m"><area href="/area" alt="Bereich" shape="rect" coords="0,0,1,1"></map>
+<img src="/img/pic.png" alt="Bild">
+<IMG SRC="/img/upper.png">
+<img srcset="/img/s1.png 1x, /img/s2.png 2x" src="/img/with-srcset.png" alt="mit srcset">
+<picture><source srcset="/img/p.webp" type="image/webp"><img src="/img/p.jpg" alt="P"></picture>
+<img data-src="/img/lazy.png" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="lazy">
+<input type="image" src="/img/btn.png" alt="Senden">
+<video src="/media/v.mp4" poster="/img/poster.png"><source src="/media/v.webm" type="video/webm"><track src="/media/v.vtt" kind="subtitles"></video>
+<audio src="/media/a.mp3"></audio>
+<iframe src="/frame.html"></iframe>
+<object data="/flash/x.swf"></object>
+<embed src="/flash/y.swf">
+<a href="/bild-link.jpg"><img src="/img/linked.png" alt="Verlinktes Bild"></a>
+<a href="/rel-sponsored" rel="sponsored">sponsored</a>
+<a href="/rel-ugc" rel="ugc">ugc</a>
+<a href="/rel-nofollow" rel="nofollow noopener">nofollow noopener</a>
+<!-- <a href="/in-comment">Kommentar</a> -->
+<template><a href="/in-template">template</a><img src="/in-template.png"></template>
+<noscript><a href="/in-noscript">noscript</a></noscript>
+<script>document.write('<a href="/in-script">script</a>');</script>
+</main>
+<aside><a href="/aside-link">Aside</a></aside>
+<footer><a href="/footer-link">Footer</a></footer>
+<!-- Ab hier absichtlich kaputt: nicht geschlossene p/a/b/div. Der HTML5-Parser repariert das; ein
+     nicht geschlossenes <a> würde in nachfolgenden Inhalt "hineinklonen", deshalb steht dieser Block ganz
+     am Ende und die Datei endet ohne Zeilenumbruch hinter </html>. -->
+<p>kaputt <a href="/broken-1">nicht geschlossen <b>fett <a href="/broken-2">verschachtelt</a>
+<div><a href="/broken-3">im div
+</body></html>

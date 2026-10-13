@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="de">
+<head><meta charset="utf-8"><title>Seite in /dir/sub/</title></head>
+<body>
+<h1>Alle Link-Formen</h1>
+<p>Dokument-URL: /dir/sub/page.html</p>
+<ul>
+<li><a href="a.html">relativ: a.html</a></li>
+<li><a href="../b/">relativ: ../b/</a></li>
+<li><a href="./c">relativ: ./c</a></li>
+<li><a href="/d">wurzelrelativ: /d</a></li>
+<li><a href="//cdn.test/x.js">protokollrelativ</a></li>
+<li><a href="?p=2">nur Query</a></li>
+<li><a href="../../../../beyond">ueber die Wurzel hinaus</a></li>
+<li><a href="/dir/./x/../y">Punktsegmente</a></li>
+<li><a href="a&amp;b">Entity im href</a></li>
+<li><a href="x?a=1&amp;b=2">Entity in der Query</a></li>
+<li><a href=" /spaces ">Leerraum um den href</a></li>
+<li><a href="/tab	ed/pa
+th">Tab und Zeilenumbruch im href</a></li>
+<li><a href="https://other.test/abs">absolut</a></li>
+<li><a href="">leerer href (Selbstlink)</a></li>
+<li><a href="#abschnitt">nur Fragment</a></li>
+<li><a href="mailto:info@site.test">mailto</a></li>
+<li><a href="tel:+4930123456">tel</a></li>
+<li><a href="javascript:void(0)">javascript</a></li>
+<li><a href="data:text/html,x">data</a></li>
+<li><a href="about:blank">about</a></li>
+<li><a href="file:///etc/hosts">file</a></li>
+<li><a href="hppts://site.test/x">Schema mit Tippfehler</a></li>
+<li><a href="http://site test/">Leerzeichen im Host</a></li>
+</ul>
+</body>
+</html>

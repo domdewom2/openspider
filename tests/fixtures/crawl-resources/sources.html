@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="de">
+<head><meta charset="utf-8"><title>Bildquellen</title></head>
+<body>
+<img src="img/a.png" alt="A">
+<img src="img/b.png" alt="">
+<img src="img/c.png" alt>
+<img src="img/d.png">
+<img src="img/e.png" alt="  E   mit   Leerraum " width="400" height="300">
+<img src="img/f.png" alt="F" width="400">
+<img src="img/g.png" alt="G" width="" height="">
+<img src="img/h.png" alt="Kleinbild &amp; Ko" style="width:400px;height:300px">
+<img srcset="img/s.png 1x, img/l.png 2x" alt="Srcset">
+<img src="img/m.png" srcset="img/m-480.png 480w, img/m-800.png 800w, img/m.png?x=1,2 2x" alt="Mix">
+<picture><source srcset="img/p.webp" type="image/webp"><img src="img/p.jpg" alt="P"></picture>
+<picture><source srcset="img/q.webp"></picture>
+<img src="data:image/png;base64,iVBORw0KGgo=" alt="data">
+<img data-src="img/lazy.png" alt="lazy">
+<img src="">
+<a href="img/big.jpg">Bild-Link</a>
+<a href="img/vector.SVG?v=2#x">SVG-Link</a>
+<a href="page.html">kein Bild</a>
+<input type="image" src="img/button.png" alt="Senden" width="10" height="10">
+<video poster="img/poster.png" src="media.mp4"></video>
+<div style="background:url(img/css-bg.png)">CSS</div>
+<template><img src="img/in-template.png" alt="t"></template>
+<noscript><img src="img/in-noscript.png" alt="n"></noscript>
+<!-- <img src="img/in-comment.png" alt="c"> -->
+<IMG SRC="img/upper.png" ALT="Gross">
+</body>
+</html>

@@ -1,0 +1,17 @@
+@charset "utf-8";
+@import url("b.css");
+@import "c.css";
+@import url(d.css) screen;
+
+@font-face {
+  font-family: "Fixture Sans";
+  src: url("fonts/fixture.woff2") format("woff2"), url(fonts/fixture.woff) format("woff");
+}
+
+.hero { background: url(img/hero.png) no-repeat; }
+.logo { background-image: url('img/logo.png'); }
+.icon { background: url("img/icon.png"); }
+.inline { background: url(data:image/png;base64,iVBORw0KGgo=); }
+.clip { clip-path: url(#clip); }
+/* url(img/commented.png) */
+.after-comment { background: url(../up.png); }
