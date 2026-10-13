@@ -1,0 +1,106 @@
+# Route-Optionen von os-testsite (M1-P09): je Option mindestens eine Route.
+
+[[route]]
+path = "/reason"
+status = 200
+reason = "Alles Klar"
+body = "ok"
+
+[[route]]
+path = "/multi-header"
+body = "x"
+[route.headers]
+Link = ["<https://a.example/>; rel=preload", "<https://b.example/>; rel=preload"]
+X-Single = "1"
+
+[[route]]
+path = "/no-ct"
+body = "ohne Content-Type"
+no_content_type = true
+
+[[route]]
+path = "/gzip"
+encoding = "gzip"
+body = "gzip gzip gzip gzip gzip gzip gzip gzip"
+
+[[route]]
+path = "/deflate"
+encoding = "deflate"
+body = "deflate deflate deflate deflate deflate"
+
+[[route]]
+path = "/deflate-raw"
+encoding = "deflate-raw"
+body = "raw raw raw raw raw raw raw raw raw raw"
+
+[[route]]
+path = "/br"
+encoding = "br"
+body = "brotli brotli brotli brotli brotli brotli"
+
+[[route]]
+path = "/broken-gzip"
+encoding = "broken-gzip"
+body = "kaputt kaputt kaputt kaputt kaputt kaputt kaputt kaputt kaputt kaputt kaputt kaputt"
+
+[[route]]
+path = "/chunked"
+chunked = true
+body = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
+[[route]]
+path = "/trickle"
+trickle_bytes_per_s = 100
+body = "tropf tropf tropf tropf tropf tropf tropf tropf tropf tropf tropf tropf tropf tropf tropf tropf"
+
+[[route]]
+path = "/hang"
+hang = true
+
+[[route]]
+path = "/reset"
+reset_mid_body = true
+body_size = 20000
+
+[[route]]
+path = "/abort"
+abort_after_headers = true
+body_size = 1000
+
+[[route]]
+path = "/flaky"
+sequence = [503, 503, 200]
+body = "endlich"
+
+[[route]]
+path = "/fail-first"
+fail_first_n = 2
+fail_status = 502
+body = "geschafft"
+
+[[route]]
+path = "/echo"
+echo = "headers"
+
+[[route]]
+path = "/sized"
+body_size = 5000
+
+[[route]]
+path = "/pic.png"
+png_size = 2048
+
+[[route]]
+path = "/cookies"
+body = "cookies"
+set_cookie = ["a=1; Path=/", "b=2; Path=/; HttpOnly"]
+
+[[route]]
+path = "/render-me"
+requires_chromium = true
+body = "<script>document.title='x'</script>"
+
+[[route]]
+path = "/slow"
+delay_ms = 300
+body = "langsam"
