@@ -1,0 +1,6 @@
+# Szenario "out-csv-edge" (OUT-002/OUT-003): Titel mit Komma, Anführungszeichen, Zeilenumbruch,
+# Unicode, Formel-Optik und eine ISO-8859-1-Seite mit Bytes, die kein gültiges UTF-8 sind.
+
+[[route]]
+path = "/latin1.html"
+content_type = "text/html; charset=iso-8859-1"
