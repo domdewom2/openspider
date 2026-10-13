@@ -92,6 +92,31 @@ status = 302
 location = "/loop1"
 
 [[route]]
+path = "/r-chain-500"
+status = 301
+location = "/r-chain-500b"
+
+[[route]]
+path = "/r-chain-500b"
+status = 301
+location = "/e500"
+
+[[route]]
+path = "/r-to-404"
+status = 301
+location = "/e404"
+
+[[route]]
+path = "/r-to-blocked"
+status = 302
+location = "/blocked/a.html"
+
+[[route]]
+path = "/r-to-dead"
+status = 301
+location = "http://localhost:1/"
+
+[[route]]
 path = "/r301"
 status = 301
 location = "/ok.html"

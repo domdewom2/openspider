@@ -1,6 +1,9 @@
 # Absichtserklaerung der Fixture "parity-response" je Tab/Filter (erzeugt von tests/parity/gen/generate.py).
 # hit  = URLs, die nach Spec im Filter stehen muessen; miss = URLs, die nicht darin stehen duerfen.
 # Adressen: "/pfad" intern, "ext:/pfad" externer Host localhost, "dead:<url>" nicht erreichbar.
+# [[report]] = Absichtserklaerung zu einem Report ohne Filter (z. B. Redirects to Errors): hit/miss
+# als "<Adresse> -> <Endziel>" (Treffer) bzw. Adresse (Nicht-Treffer).
+# [[report]] = Absichtserklaerung zu einem Report ohne Filter (z. B. Redirects to Errors).
 # Wird von tests/parity/fixtures_check.rs gegen die ausgelieferte Site geprueft.
 site = "parity-response"
 
@@ -67,13 +70,13 @@ miss = ["/r301", "/e404"]
 [[case]]
 tab = "Response Codes"
 filter = "Redirection (3XX)"
-hit = ["/r301", "/r302", "/r303", "/r307", "/r308", "/r304", "/r301-noloc", "ext:/r301"]
+hit = ["/r301", "/r302", "/r303", "/r307", "/r308", "/r304", "/r301-noloc", "/r-to-404", "/r-to-blocked", "/r-chain-500", "/r-chain-500b", "/r-to-dead", "ext:/r301"]
 miss = ["/ok.html", "/e404"]
 
 [[case]]
 tab = "Response Codes"
 filter = "Internal Redirection (3XX)"
-hit = ["/r301", "/r302", "/r303", "/r307", "/r308", "/r304", "/r301-noloc"]
+hit = ["/r301", "/r302", "/r303", "/r307", "/r308", "/r304", "/r301-noloc", "/r-to-404", "/r-to-blocked", "/r-chain-500", "/r-chain-500b", "/r-to-dead"]
 miss = ["/ok.html", "/e404", "ext:/r301"]
 
 [[case]]
@@ -85,26 +88,26 @@ miss = ["/ok.html", "/e404"]
 [[case]]
 tab = "Response Codes"
 filter = "Redirection (Meta Refresh)"
-hit = ["/meta-refresh.html", "/meta-refresh-5.html"]
+hit = ["/meta-refresh.html", "/meta-refresh-5.html", "/r-meta-to-404.html"]
 miss = ["/meta-refresh-self.html", "/ok.html"]
 
 [[case]]
 tab = "Response Codes"
 filter = "Internal Redirection (Meta Refresh)"
-hit = ["/meta-refresh.html", "/meta-refresh-5.html"]
+hit = ["/meta-refresh.html", "/meta-refresh-5.html", "/r-meta-to-404.html"]
 miss = ["/meta-refresh-self.html", "/ok.html"]
 
 [[case]]
 tab = "Response Codes"
 filter = "Redirect Chain"
-hit = ["/chain1", "/long1", "/mixed-chain.html"]
-miss = ["/r301", "/chain2", "/loop1"]
+hit = ["/chain1", "/long1", "/mixed-chain.html", "/r-chain-500"]
+miss = ["/r301", "/chain2", "/loop1", "/r-to-404"]
 
 [[case]]
 tab = "Response Codes"
 filter = "Internal Redirect Chain"
-hit = ["/chain1", "/long1", "/mixed-chain.html"]
-miss = ["/r301", "/chain2", "/loop1"]
+hit = ["/chain1", "/long1", "/mixed-chain.html", "/r-chain-500"]
+miss = ["/r301", "/chain2", "/loop1", "/r-to-404"]
 
 [[case]]
 tab = "Response Codes"
@@ -165,6 +168,11 @@ tab = "Response Codes"
 filter = "Internal Other"
 hit = ["/s999"]
 miss = ["/ok.html", "/e404"]
+
+[[report]]
+name = "Redirects to Errors"
+hit = ["/r-to-404 -> Client Error (4XX)", "/r-to-blocked -> Blocked by Robots.txt", "/r-chain-500 -> Server Error (5XX)", "/r-to-dead -> No Response", "/r-meta-to-404.html -> Client Error (4XX)"]
+miss = ["/r301", "/chain1", "/mixed-chain.html", "/loop1", "/meta-refresh.html"]
 
 [[exempt]]
 tab = "Response Codes"

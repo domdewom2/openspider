@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """Erzeugt die Referenz-Fixtures fuer den Paritaetsabgleich (M1-P10).
 
-    python3 tests/parity/gen/generate.py
+    python3 -B tests/parity/gen/generate.py
+
+`-B` verhindert __pycache__-Verzeichnisse (der Generator setzt zusaetzlich sys.dont_write_bytecode; ein Aufruf
+von aussen, etwa `py_compile`, legt sonst Bytecode im Arbeitsverzeichnis an). Alle Textdateien werden mit LF
+und Pfade mit "/" geschrieben, damit ein Lauf auf Windows dieselben Bytes liefert wie auf POSIX.
 
 Schreibt nach tests/fixtures/{out-basic-site,parity-*}/ und tests/parity/coverage/*.toml.
 Deterministisch: ein zweiter Lauf aendert keine Datei. Nicht mehr erzeugte Dateien eines frueheren
@@ -45,15 +49,15 @@ def main() -> None:
         written += lib.write_site(mod.build())
     synth = lib.FIXTURES / "parity-synthetic" / "scenario.toml"
     synth.parent.mkdir(parents=True, exist_ok=True)
-    synth.write_text(SYNTHETIC, encoding="utf-8")
-    written.append(str(synth.relative_to(lib.ROOT)))
+    synth.write_text(SYNTHETIC, encoding="utf-8", newline="\n")
+    written.append(synth.relative_to(lib.ROOT).as_posix())
 
     previous = set()
     if lib.GENERATED_LIST.exists():
         previous = set(lib.GENERATED_LIST.read_text(encoding="utf-8").split())
     for rel in sorted(previous - set(written)):
         (lib.ROOT / rel).unlink(missing_ok=True)
-    lib.GENERATED_LIST.write_text("\n".join(sorted(written)) + "\n", encoding="utf-8")
+    lib.GENERATED_LIST.write_text("\n".join(sorted(written)) + "\n", encoding="utf-8", newline="\n")
     print(f"{len(written)} Dateien geschrieben")
 
 

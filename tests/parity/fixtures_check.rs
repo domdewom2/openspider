@@ -1482,7 +1482,7 @@ fn site_files_use_only_allowed_hosts_and_no_javascript_or_placeholders() {
             }
         }
         for (rel, text) in &texts {
-            // Platzhalter: nur {{BASE_URL}} in drei Dateien von out-basic-site (siehe Generator-Kommentar)
+            // Platzhalter: nur {{BASE_URL}} in fünf Dateien von out-basic-site (siehe Generator-Kommentar)
             let stripped = text.replace("{{BASE_URL}}", "");
             assert!(!stripped.contains("{{"), "{name}/{rel}: Platzhalter");
             if text.contains("{{BASE_URL}}") {
@@ -1612,6 +1612,113 @@ async fn evaluate(
         return Err(format!("{tok} wurde vom Rohcrawl nicht erreicht"));
     };
     holds(c, tab, filter, &Subject::Internal(&key, p)).ok_or_else(|| no_oracle(tab, filter))
+}
+
+/// Endziel einer Weiterleitung (HTTP 3xx, Meta Refresh, Refresh-Header) nach der Filterzuordnung der Fachspec:
+/// "Blocked by Robots.txt", "No Response", "Client Error (4XX)", "Server Error (5XX)"; sonst "OK" bzw. "Redirect Loop".
+async fn redirect_end(net: &Net, c: &mut Crawl, start: &str) -> String {
+    fn by_status(status: u16) -> String {
+        match status {
+            400..=499 => "Client Error (4XX)".to_string(),
+            500..=599 => "Server Error (5XX)".to_string(),
+            _ => "OK".to_string(),
+        }
+    }
+    let mut seen = vec![start.to_string()];
+    let mut cur = start.to_string();
+    loop {
+        if seen.len() > 1 && c.robots_blocked(&cur) {
+            return "Blocked by Robots.txt".to_string();
+        }
+        let p = c
+            .parsed
+            .get(&cur)
+            .unwrap_or_else(|| panic!("{cur} wurde vom Rohcrawl nicht erreicht"));
+        let next = if (300..400).contains(&p.status) {
+            p.location.clone()
+        } else {
+            p.refresh.iter().find(|t| **t != Target::Skip).cloned()
+        };
+        match next {
+            Some(Target::Internal(k)) => {
+                if seen.contains(&k) {
+                    return "Redirect Loop".to_string();
+                }
+                seen.push(k.clone());
+                cur = k;
+            }
+            Some(Target::Dead(_)) => return "No Response".to_string(),
+            Some(Target::External(k)) => {
+                let status = ext_resp(net, c, &k).await.status;
+                return by_status(status);
+            }
+            Some(Target::Skip) | None => return by_status(p.status),
+        }
+    }
+}
+
+// spec: OUT-084
+#[tokio::test]
+async fn redirects_to_errors_report_has_error_targets_and_non_targets() {
+    let name = "parity-response";
+    let net = start(name).await;
+    let mut crawl = crawl_site(&net, 8904).await;
+    let doc = read_toml(&format!("tests/parity/coverage/{name}.toml"));
+    let reports = doc["report"].as_array().expect("[[report]] fehlt");
+    let report = reports
+        .iter()
+        .find(|r| r["name"].as_str() == Some("Redirects to Errors"))
+        .expect("Report Redirects to Errors");
+    let list = |key: &str| -> Vec<String> {
+        report[key]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|x| x.as_str().unwrap().to_string())
+            .collect()
+    };
+    let errors = [
+        "Blocked by Robots.txt",
+        "No Response",
+        "Client Error (4XX)",
+        "Server Error (5XX)",
+    ];
+    let mut kinds = BTreeSet::new();
+    for entry in list("hit") {
+        let (addr, expected) = entry
+            .split_once(" -> ")
+            .unwrap_or_else(|| panic!("Eintrag ohne Endziel: {entry}"));
+        assert!(
+            errors.contains(&expected),
+            "{entry}: kein Fehlerziel in der Absichtserklärung"
+        );
+        let end = redirect_end(&net, &mut crawl, &encode_path(addr)).await;
+        assert_eq!(end, expected, "{addr}: Endziel");
+        kinds.insert(expected.to_string());
+    }
+    for kind in errors {
+        assert!(
+            kinds.contains(kind),
+            "Report ohne Treffer mit Endziel {kind}"
+        );
+    }
+    for addr in list("miss") {
+        let end = redirect_end(&net, &mut crawl, &encode_path(&addr)).await;
+        assert!(
+            !errors.contains(&end.as_str()),
+            "{addr} endet in {end}, darf nicht im Report stehen"
+        );
+    }
+    // Sprungzahlen wie im Akzeptanzkriterium (Number of Redirects): 1 Hop auf 404, 2 Hops bis zum 500.
+    assert_eq!(follow_hops(&crawl, "/r-to-404").0, 1);
+    assert_eq!(follow_hops(&crawl, "/r-to-blocked").0, 1);
+    assert_eq!(follow_hops(&crawl, "/r-chain-500").0, 2);
+    assert!(follow_hops(&crawl, "/loop1").1, "/loop1 ist eine Schleife");
+    assert_eq!(
+        redirect_end(&net, &mut crawl, "/r301").await,
+        "OK",
+        "/r301 endet in einer 200-Seite"
+    );
 }
 
 #[test]
@@ -1884,5 +1991,21 @@ fn manifests_mappings_and_profile_are_consistent() {
             "README: {name}"
         );
     }
-    read_toml("tests/parity/thresholds.toml");
+    // Schwellen: nur bekannte Exporte; die Redirects-Reports und das Crawl-Overview sind bewertet (A3).
+    let thresholds = read_toml("tests/parity/thresholds.toml");
+    assert!(thresholds["min_sites_present"].as_integer().is_some());
+    let pct = thresholds["agreement_pct"].as_table().unwrap();
+    for (slug, v) in pct {
+        assert!(
+            repo_root()
+                .join(format!("tests/parity/mappings/{slug}.toml"))
+                .exists(),
+            "Schwelle für unbekannten Export {slug}"
+        );
+        let v = v.as_float().unwrap_or_else(|| panic!("{slug}: keine Zahl"));
+        assert!((0.0..=100.0).contains(&v), "{slug}: {v}");
+    }
+    for slug in ["redirect_chains", "redirects_to_errors", "crawl_overview"] {
+        assert!(pct.contains_key(slug), "A3: Schwelle für {slug} fehlt");
+    }
 }

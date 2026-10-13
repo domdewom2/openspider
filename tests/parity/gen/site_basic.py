@@ -1,8 +1,8 @@
 """out-basic-site (Port 8900): Querschnittsite nach OUT-001.
 
 12 HTML-Seiten, 2 Bilder, 1 CSS, 1 JS, ein 404, ein 301, ein externer Link.
-Ausnahme von der Regel "keine Platzhalter": index.html (Canonical), robots.txt (Sitemap-Zeile) und
-sitemap.xml (drei <loc>) behalten `{{BASE_URL}}`, weil die bestehenden Tests in
+Ausnahme von der Regel "keine Platzhalter": fuenf Dateien behalten `{{BASE_URL}}`: index.html, about.html und
+products.html (Canonical), robots.txt (Sitemap-Zeile) und sitemap.xml (drei <loc>), weil die bestehenden Tests in
 crates/os-testsite/tests/serve.rs diese Stellen pruefen (Platzhalter existiert seit dem Testsite-Gerüst,
 ist also kein P09-Platzhalter).
 """
@@ -116,7 +116,7 @@ def build() -> Site:
         "Imprint of the basic OpenSpider fixture site.",
         "Imprint",
         "Legal notice.",
-        extra='<p><a href="/privat/intern.html">Internal area</a></p>\n',
+        extra='<p><a href="/privat/intern.html">Internal area</a> <a href="/orphan.html">Orphan</a></p>\n',
     )
     # 9 blog index
     page(
@@ -145,13 +145,13 @@ def build() -> Site:
         "Nothing to see here.",
         extra='<p><a href="/">Home</a></p>\n',
     )
-    # 12 orphan (nie verlinkt, nicht in der Sitemap)
+    # 12 orphan (nur vom Impressum verlinkt, nicht in der Sitemap; so erscheinen alle 12 Seiten im Crawl)
     page(
         "/orphan.html",
         "Orphan - Basic Site",
-        "A page nobody links to.",
+        "A page that is linked only from the imprint.",
         "Orphan",
-        "This page is never linked.",
+        "This page is linked only from the imprint and is not part of the sitemap.",
     )
 
     # Bilder, CSS, JS

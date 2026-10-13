@@ -7,7 +7,7 @@
 | `thresholds.toml` | Schwellen des Abnahmekriteriums A3 für `os-parity run` |
 | `profiles/parity.osconfig` | OpenSpider-Konfiguration für Paritätsläufe |
 | `coverage/<site>.toml` | Absichtserklärung je Tab/Filter: welche Adresse Treffer sein soll, welche nicht |
-| `gen/` | Generator der Fixtures: `python3 tests/parity/gen/generate.py` (deterministisch, nur Python-Standardbibliothek) |
+| `gen/` | Generator der Fixtures: `python3 -B tests/parity/gen/generate.py` (deterministisch, nur Python-Standardbibliothek) |
 | `fixtures_check.rs` | Prüftest der Fixtures (siehe unten) |
 
 Die Fixtures liegen unter `tests/fixtures/{out-basic-site,parity-*}/` und werden aus `gen/` erzeugt – Änderungen am
@@ -30,7 +30,7 @@ Er braucht nur `os_testsite`, `tokio`, `toml` und `flate2` (alle bereits Abhäng
 
 - BFS-Rohcrawl jeder Site über den os-testsite-Client: höchstens 500 URLs, Abgleich mit dem Request-Log;
 - Selbstständigkeit: nur `127.0.0.1` (intern) und `localhost` (extern), keine `.test`-Hosts, kein Inline-JavaScript,
-  keine Platzhalter (Ausnahme: `{{BASE_URL}}` in drei Dateien von `out-basic-site`, siehe Kommentar in `gen/site_basic.py`),
+  keine Platzhalter (Ausnahme: `{{BASE_URL}}` in fünf Dateien von `out-basic-site`: index.html, about.html, products.html, robots.txt, sitemap.xml, siehe Kommentar in `gen/site_basic.py`),
   keine Verzögerung über 1 s;
 - die Absichtserklärung (`coverage/*.toml`) gegen die ausgelieferten Seiten, mit einem kleinen unabhängigen Orakel nach den Spec-Regeln;
 - jeder Tab der Gruppen Internal … Sitemaps hat Treffer und Nicht-Treffer; jeder Filter ist abgedeckt oder mit Grund ausgenommen;

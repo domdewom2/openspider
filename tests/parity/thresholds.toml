@@ -16,3 +16,10 @@ hreflang_all = 97.0
 links_all = 97.0
 all_inlinks = 97.0
 redirect_chains = 97.0
+redirects_to_errors = 97.0     # A3: "Redirects-Reports" >= 97 % (Redirect Chains und Redirects to Errors)
+all_error_inlinks = 97.0       # Bulk-Export der Fehler-Inlinks, wie Links:All Inlinks bewertet
+crawl_overview = 100.0         # A3: Crawl-Overview-Zaehler aller M1-Filter identisch (kein Toleranzbereich)
+
+# Nur berichtet, nicht bewertet (keine Schwelle in A3; ein Wert hier wuerde die Abnahme verschaerfen):
+# external_all, url_all, content_all, sitemaps_all. Ihre Zellen und Abweichungen stehen im Bericht
+# (report.json / report.md); die URL-Menge von Internal:All ist ueber internal_all abgedeckt.

@@ -126,6 +126,7 @@ tests/fixtures/parity-response/pages/p1.html
 tests/fixtures/parity-response/pages/p2.html
 tests/fixtures/parity-response/pages/p3.html
 tests/fixtures/parity-response/pages/p4.html
+tests/fixtures/parity-response/r-meta-to-404.html
 tests/fixtures/parity-response/robots.txt
 tests/fixtures/parity-response/scenario.toml
 tests/fixtures/parity-synthetic/scenario.toml

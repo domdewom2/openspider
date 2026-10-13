@@ -15,7 +15,7 @@ dieselben Sites mit OpenSpider und gleicht beide Seiten ab; Adressen werden dabe
 | `out-basic-site` | 8900 | `http://127.0.0.1:8900/` | Querschnitt: 12 HTML-Seiten, 2 Bilder, CSS, JS, ein 404, ein 301, ein externer Link |
 | `parity-onpage` | 8902 | `http://127.0.0.1:8902/` | Titel, Meta Description, H1, H2, Content, Bilder, URL-Varianten, Inhaltstypen (intern/extern) |
 | `parity-technical` | 8903 | `http://127.0.0.1:8903/` | Canonicals, Directives, Hreflang, Links (Tiefe bis 6), Sitemaps (Index + gz, Orphans), Linkbaum |
-| `parity-response` | 8904 | `http://127.0.0.1:8904/` | Statuscodes, Weiterleitungen, Ketten, Schleife, robots-gesperrt, externe Ziele |
+| `parity-response` | 8904 | `http://127.0.0.1:8904/` | Statuscodes, Weiterleitungen (auch auf Fehlerziele), Ketten, Schleife, robots-gesperrt, externe Ziele |
 | `parity-synthetic` | 8905 | `http://127.0.0.1:8905/` | 400 synthetische Seiten (Struktur, Tiefen, Duplikat-Titel, noindex, Canonical) |
 
 Wichtig:
@@ -24,7 +24,7 @@ Wichtig:
   `localhost:<port>` gilt in der Referenz wie in OpenSpider als externer Host. Der Port ist fest (siehe Tabelle);
   externe Links stehen mit diesem Port im HTML.
 - Eine Site hat höchstens 500 URLs (Grenze der Free-Version). Nicht auf andere Hosts oder Ports ausweichen.
-- Eine Site nie ändern, während ein Crawl läuft. Wurden die Fixtures verändert (`python3 tests/parity/gen/generate.py`),
+- Eine Site nie ändern, während ein Crawl läuft. Wurden die Fixtures verändert (`python3 -B tests/parity/gen/generate.py`),
   müssen alle Exporte dieser Site neu erzeugt werden.
 
 ## Ablauf je Site (Schritt für Schritt)
@@ -109,4 +109,4 @@ Welche Exporte zu welcher Site gehören:
 - Nach dem Ablegen der Exporte läuft der Abgleich nur noch lokal: `os-parity run --all` (siehe `docs/plan/M1.md` Abschnitt 5.4).
 - Die Absicht jeder Fixture je Tab und Filter (welche Adresse Treffer sein soll, welche nicht) steht in
   `tests/parity/coverage/<site>.toml` und wird von `tests/parity/fixtures_check.rs` gegen die ausgelieferten Seiten geprüft.
-  Die Fixtures entstehen aus `tests/parity/gen/` (`python3 tests/parity/gen/generate.py`).
+  Die Fixtures entstehen aus `tests/parity/gen/` (`python3 -B tests/parity/gen/generate.py`).

@@ -1,6 +1,9 @@
 # Absichtserklaerung der Fixture "parity-technical" je Tab/Filter (erzeugt von tests/parity/gen/generate.py).
 # hit  = URLs, die nach Spec im Filter stehen muessen; miss = URLs, die nicht darin stehen duerfen.
 # Adressen: "/pfad" intern, "ext:/pfad" externer Host localhost, "dead:<url>" nicht erreichbar.
+# [[report]] = Absichtserklaerung zu einem Report ohne Filter (z. B. Redirects to Errors): hit/miss
+# als "<Adresse> -> <Endziel>" (Treffer) bzw. Adresse (Nicht-Treffer).
+# [[report]] = Absichtserklaerung zu einem Report ohne Filter (z. B. Redirects to Errors).
 # Wird von tests/parity/fixtures_check.rs gegen die ausgelieferte Site geprueft.
 site = "parity-technical"
 

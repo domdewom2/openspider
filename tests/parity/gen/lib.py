@@ -162,6 +162,7 @@ class Site:
         self.routes: list[dict] = []
         self.cases: list[dict] = []
         self.exempt: list[dict] = []
+        self.reports: list[dict] = []
 
     # --- Adressen -------------------------------------------------------------------------
     def ext(self, path: str) -> str:
@@ -188,6 +189,10 @@ class Site:
 
     def case(self, tab: str, flt: str, hit=(), miss=()) -> None:
         self.cases.append({"tab": tab, "filter": flt, "hit": list(hit), "miss": list(miss)})
+
+    def report(self, name: str, hit=(), miss=()) -> None:
+        """Absichtserklaerung zu einem Report (kein Filter): hit-Eintraege "<Adresse> -> <Endziel-Filter>"."""
+        self.reports.append({"name": name, "hit": list(hit), "miss": list(miss)})
 
     def exempt_filter(self, tab: str, flt: str, reason: str) -> None:
         self.exempt.append({"tab": tab, "filter": flt, "reason": reason})
@@ -220,6 +225,9 @@ class Site:
             f"# Absichtserklaerung der Fixture \"{self.name}\" je Tab/Filter (erzeugt von tests/parity/gen/generate.py).",
             "# hit  = URLs, die nach Spec im Filter stehen muessen; miss = URLs, die nicht darin stehen duerfen.",
             "# Adressen: \"/pfad\" intern, \"ext:/pfad\" externer Host localhost, \"dead:<url>\" nicht erreichbar.",
+            "# [[report]] = Absichtserklaerung zu einem Report ohne Filter (z. B. Redirects to Errors): hit/miss",
+            "# als \"<Adresse> -> <Endziel>\" (Treffer) bzw. Adresse (Nicht-Treffer).",
+            "# [[report]] = Absichtserklaerung zu einem Report ohne Filter (z. B. Redirects to Errors).",
             "# Wird von tests/parity/fixtures_check.rs gegen die ausgelieferte Site geprueft.",
             f"site = {toml_str(self.name)}",
             "",
@@ -230,6 +238,12 @@ class Site:
             lines.append(f"filter = {toml_str(c['filter'])}")
             lines.append(f"hit = {toml_list(c['hit'])}")
             lines.append(f"miss = {toml_list(c['miss'])}")
+            lines.append("")
+        for rp in self.reports:
+            lines.append("[[report]]")
+            lines.append(f"name = {toml_str(rp['name'])}")
+            lines.append(f"hit = {toml_list(rp['hit'])}")
+            lines.append(f"miss = {toml_list(rp['miss'])}")
             lines.append("")
         for x in self.exempt:
             lines.append("[[exempt]]")
@@ -363,14 +377,14 @@ def write_site(site: Site) -> list[str]:
         target = base / rel
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(data)
-        written.append(str(target.relative_to(ROOT)))
+        written.append(target.relative_to(ROOT).as_posix())
     scenario = base / "scenario.toml"
     if site.routes or not site.files:
-        scenario.write_text(site.scenario_toml(), encoding="utf-8")
-        written.append(str(scenario.relative_to(ROOT)))
-    if site.cases or site.exempt:
+        scenario.write_text(site.scenario_toml(), encoding="utf-8", newline="\n")
+        written.append(scenario.relative_to(ROOT).as_posix())
+    if site.cases or site.exempt or site.reports:
         COVERAGE.mkdir(parents=True, exist_ok=True)
         cov = COVERAGE / f"{site.name}.toml"
-        cov.write_text(site.coverage_toml(), encoding="utf-8")
-        written.append(str(cov.relative_to(ROOT)))
+        cov.write_text(site.coverage_toml(), encoding="utf-8", newline="\n")
+        written.append(cov.relative_to(ROOT).as_posix())
     return written

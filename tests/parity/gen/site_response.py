@@ -72,6 +72,20 @@ def build() -> Site:
     s.route("/loop2", status=302, location="/loop1")
     add("/loop1", "loop")
 
+    # Weiterleitungen auf Fehlerziele (Report "Redirects to Errors", OUT-084): 4xx, robots.txt-gesperrt,
+    # 5xx nach zwei Spruengen, keine Antwort (externer Host, geschlossener Port), Meta Refresh auf 404.
+    s.route("/r-to-404", status=301, location="/e404")
+    s.route("/r-to-blocked", status=302, location="/blocked/a.html")
+    s.route("/r-chain-500", status=301, location="/r-chain-500b")
+    s.route("/r-chain-500b", status=301, location="/e500")
+    s.route("/r-to-dead", status=301, location="http://localhost:1/")
+    s.file("/r-meta-to-404.html", simple_html("Meta refresh into a 404").replace(
+        "<title>", '<meta http-equiv="refresh" content="0; url=/e404">\n<title>', 1))
+    for p, t in (("/r-to-404", "redirect to 404"), ("/r-to-blocked", "redirect to robots.txt blocked page"),
+                 ("/r-chain-500", "redirect chain to 500"), ("/r-to-dead", "redirect to unreachable host"),
+                 ("/r-meta-to-404.html", "meta refresh to 404")):
+        add(p, t)
+
     # robots.txt-gesperrt
     std(s, "/blocked/a.html", "response blocked a", parent="/", p_words=60)
     std(s, "/blocked/b.html", "response blocked b", parent="/", p_words=60)
@@ -101,11 +115,12 @@ def build() -> Site:
 
     # --- Coverage -------------------------------------------------------------------------
     codes_ok = ["/ok.html", "/s201", "/s204"]
-    r3xx = ["/r301", "/r302", "/r303", "/r307", "/r308", "/r304", "/r301-noloc"]
+    r3xx = ["/r301", "/r302", "/r303", "/r307", "/r308", "/r304", "/r301-noloc",
+            "/r-to-404", "/r-to-blocked", "/r-chain-500", "/r-chain-500b", "/r-to-dead"]
     c4 = ["/e400", "/e403", "/e404", "/e410", "/e429"]
     c5 = ["/e500", "/e503"]
-    meta = ["/meta-refresh.html", "/meta-refresh-5.html"]
-    chain = ["/chain1", "/long1", "/mixed-chain.html"]
+    meta = ["/meta-refresh.html", "/meta-refresh-5.html", "/r-meta-to-404.html"]
+    chain = ["/chain1", "/long1", "/mixed-chain.html", "/r-chain-500"]
     loops = ["/loop1", "/loop2"]
     blocked = ["/blocked/a.html", "/blocked/b.html"]
     other = ["/s999"]
@@ -135,7 +150,7 @@ def build() -> Site:
     both("", "Redirection (Meta Refresh)", meta, ["/meta-refresh-self.html", "/ok.html"])
     s.exempt_filter("Response Codes", "External Redirection (Meta Refresh)",
                     "externe Seiten werden nur auf den Status geprueft, nicht geparst (ONPAGE-025)")
-    both("", "Redirect Chain", chain, ["/r301", "/chain2", "/loop1"])
+    both("", "Redirect Chain", chain, ["/r301", "/chain2", "/loop1", "/r-to-404"])
     s.exempt_filter("Response Codes", "External Redirect Chain", "Ketten gelten nur fuer interne URLs (ONPAGE-060)")
     both("", "Redirect Loop", loops, ["/chain1", "/r301"])
     s.exempt_filter("Response Codes", "External Redirect Loop", "Schleifen gelten nur fuer interne URLs (ONPAGE-061)")
@@ -144,4 +159,18 @@ def build() -> Site:
     both("", "Other", other, ["/ok.html", "/e404"])
     s.exempt_filter("Response Codes", "External Other",
                     "kein externer Status ausserhalb 100-599 vorgesehen (ONPAGE-066 ist P2)")
+
+    # Report "Redirects to Errors" (OUT-084): Startadresse -> Endziel nach Filterzuordnung. Treffer = Endziel ist
+    # "Blocked by Robots.txt", "No Response", "Client Error (4XX)" oder "Server Error (5XX)"; Nicht-Treffer = 200 oder Schleife.
+    s.report(
+        "Redirects to Errors",
+        hit=[
+            "/r-to-404 -> Client Error (4XX)",
+            "/r-to-blocked -> Blocked by Robots.txt",
+            "/r-chain-500 -> Server Error (5XX)",
+            "/r-to-dead -> No Response",
+            "/r-meta-to-404.html -> Client Error (4XX)",
+        ],
+        miss=["/r301", "/chain1", "/mixed-chain.html", "/loop1", "/meta-refresh.html"],
+    )
     return s
