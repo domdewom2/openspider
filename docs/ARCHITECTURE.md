@@ -24,7 +24,8 @@ Ziel: Funktionsparität mit Screaming Frog SEO Spider 24.3, aber schneller und s
 | `os-export` | CSV, XLSX, Bulk-Exporte, Reports, Sitemap-Generator | csv, rust_xlsxwriter |
 | `os-integrations` | GSC, GA4, PSI, Majestic/Ahrefs/Moz, KI-Anbieter, OAuth | reqwest, oauth2 |
 | `os-cli` | `openspider` Binary: headless Crawl, Export, Scheduling-Ziel | clap |
-| `os-testsite` | Lokaler Fixture-Server (axum) mit Szenarien aus `tests/fixtures` | axum |
+| `os-testsite` | Lokaler Fixture-Server (axum) mit Szenarien aus `tests/fixtures`; synthetische Sites ohne Dateien (`synthetic:n=1000000,links=30` oder `[synthetic]` in `scenario.toml`), optionales Request-Log | axum |
+| `os-loadtest` | Lasttest-Runner (Binary, PERF-009): `os-loadtest run --scenario perf-001 --size small` bzw. `--size large`, schreibt `target/loadtest/report.json`; Trait `CrawlerUnderTest`, den `os-engine` später implementiert | os-testsite, clap |
 
 ## Desktop-App
 
@@ -45,7 +46,7 @@ Config → os-engine ─┬→ os-fetch ──→ os-parse ──→ os-store (u
 
 ## Qualitätssicherung
 
-- `cargo test --workspace`, `cargo clippy -- -D warnings`, `cargo fmt --check`, `cargo deny check licenses`.
+- `cargo test --workspace`, `cargo clippy -- -D warnings`, `cargo fmt --check`, `cargo deny check licenses bans sources` (Lizenzpolitik in `deny.toml`: nur permissive Lizenzen und MPL-2.0, kein GPL/LGPL/AGPL).
 - Paritätstests: Fixtures in `tests/fixtures/<szenario>/` + Golden-Exporte in `tests/golden/`. Referenzwerte aus Screaming Frog Free (≤500 URLs) werden manuell exportiert und abgelegt.
-- CI: GitHub Actions Matrix `macos-14` (arm64), `macos-13` (x64), `windows-latest`.
+- CI: GitHub Actions Matrix `macos-14` (arm64), `macos-13` (x64), `windows-latest`. Zusätzlich die Jobs `rustfmt` und `cargo-deny` (ubuntu).
 - Fortschritt: `docs/spec/PARITY.md` – Status je Funktions-ID (offen / in Arbeit / implementiert / verifiziert).

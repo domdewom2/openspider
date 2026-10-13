@@ -1,0 +1,19 @@
+[package]
+name = "os-loadtest"
+description = "OpenSpider: Lasttest-Runner (PERF-009) gegen synthetische os-testsite-Sites"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+os-testsite.workspace = true
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+
+[[bin]]
+name = "os-loadtest"
+path = "src/main.rs"

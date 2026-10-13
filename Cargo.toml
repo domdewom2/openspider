@@ -13,6 +13,7 @@ members = [
     "crates/os-integrations",
     "crates/os-cli",
     "crates/os-testsite",
+    "crates/os-loadtest",
     "apps/desktop/src-tauri",
 ]
 
