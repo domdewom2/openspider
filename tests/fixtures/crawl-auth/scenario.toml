@@ -1,0 +1,10 @@
+# Szenario "crawl-auth" (CRAWL-117).
+#
+# Offen (M1-P09): virtueller Host basic.site.test mit Basic-Auth (Realm "Test", Benutzer prüfer/geheim,
+# UTF-8), Weiterleitung von dort auf other.test/echo-headers und eine Route, die die empfangenen Header
+# zurückgibt. Bis dahin prüft tests/http_session.rs das Verhalten gegen einen eigenen Mini-Server.
+
+[[route]]
+path = "/to-other"
+status = 302
+location = "http://other.test/echo-headers"

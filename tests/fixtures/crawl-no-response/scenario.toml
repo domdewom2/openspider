@@ -1,0 +1,18 @@
+# Szenario "crawl-no-response" (CRAWL-013, ONPAGE-065).
+# /hang-response antwortet erst nach zwei Minuten (praktisch nie); /timeout nach 30 s.
+#
+# Nicht über den Testserver, sondern über den Test selbst: nicht auflösbarer Host (nicht-existent.invalid),
+# geschlossener Port, TLS gegen einen Klartext-Port (siehe tests/http_fetch.rs).
+#
+# Offen (M1-P09): /hang-connect (Blackhole-Port), /reset-mid-body, /drop (abort_after_headers) und
+# https://expired.site.test/ (abgelaufenes Zertifikat).
+
+[[route]]
+path = "/hang-response"
+delay_ms = 120000
+body = "<html><body>zu spät</body></html>"
+
+[[route]]
+path = "/timeout"
+delay_ms = 30000
+body = "<html><body>zu spät</body></html>"

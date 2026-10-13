@@ -1,0 +1,41 @@
+# Szenario "crawl-timing" (CRAWL-022, CRAWL-095): Verzögerungen und Last-Modified.
+#
+# Offen (M1-P09): /gzip-50k, /with-assets (a.png, b.css), /trickle – brauchen Kompression, Binärdateien
+# bzw. tröpfelnde Antworten im Testserver. Die Byte-Zählung prüft bis dahin tests/http_fetch.rs gegen
+# einen eigenen Mini-Server.
+
+[[route]]
+path = "/fast"
+body = "<html><body>schnell</body></html>"
+
+[[route]]
+path = "/slow-800"
+delay_ms = 800
+body = "<html><body>800 ms</body></html>"
+
+[[route]]
+path = "/slow-1000"
+delay_ms = 1000
+body = "<html><body>1000 ms</body></html>"
+
+[[route]]
+path = "/slow-3000"
+delay_ms = 3000
+body = "<html><body>3000 ms</body></html>"
+
+[[route]]
+path = "/r301"
+status = 301
+location = "/slow-800"
+
+[[route]]
+path = "/lm-valid"
+body = "<html><body>Last-Modified gültig</body></html>"
+[route.headers]
+Last-Modified = "Wed, 21 Oct 2015 07:28:00 GMT"
+
+[[route]]
+path = "/lm-invalid"
+body = "<html><body>Last-Modified ungültig</body></html>"
+[route.headers]
+Last-Modified = "gestern"

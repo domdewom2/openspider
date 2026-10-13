@@ -1,0 +1,9 @@
+# Szenario "crawl-http-basic" (CRAWL-011).
+#
+# Offen (M1-P09): /gzip, /br, /deflate-raw, /chunked, /broken-gzip (Header gzip, Body unkomprimiert) und
+# /echo-headers (empfangene Header als JSON). Bis dahin prüft tests/http_fetch.rs Kompression, Chunked
+# und Header gegen einen eigenen Mini-Server.
+
+[[route]]
+path = "/plain"
+body = "<html><head><title>Einfache Seite</title></head><body>Hallo</body></html>"

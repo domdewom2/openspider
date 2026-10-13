@@ -1,0 +1,142 @@
+# Szenario "crawl-status-codes" (CRAWL-012): Route /code/{n} liefert den Statuscode n.
+# 3xx (außer 304) leiten auf /code/200 weiter; 204 und 304 haben keinen Body.
+#
+# Offen (M1-P09): /early-hints (103 Early Hints, danach 200) – braucht Zwischenantworten im Testserver.
+
+[[route]]
+path = "/code/200"
+status = 200
+body = "<html><head><title>Status 200</title></head><body>Status 200</body></html>"
+
+[[route]]
+path = "/code/201"
+status = 201
+body = "<html><head><title>Status 201</title></head><body>Status 201</body></html>"
+
+[[route]]
+path = "/code/204"
+status = 204
+
+[[route]]
+path = "/code/206"
+status = 206
+body = "<html><head><title>Status 206</title></head><body>Status 206</body></html>"
+
+[[route]]
+path = "/code/218"
+status = 218
+body = "<html><head><title>Status 218</title></head><body>Status 218</body></html>"
+
+[[route]]
+path = "/code/299"
+status = 299
+body = "<html><head><title>Status 299</title></head><body>Status 299</body></html>"
+
+[[route]]
+path = "/code/301"
+status = 301
+location = "/code/200"
+
+[[route]]
+path = "/code/302"
+status = 302
+location = "/code/200"
+
+[[route]]
+path = "/code/303"
+status = 303
+location = "/code/200"
+
+[[route]]
+path = "/code/304"
+status = 304
+
+[[route]]
+path = "/code/307"
+status = 307
+location = "/code/200"
+
+[[route]]
+path = "/code/308"
+status = 308
+location = "/code/200"
+
+[[route]]
+path = "/code/400"
+status = 400
+body = "<html><head><title>Status 400</title></head><body>Status 400</body></html>"
+
+[[route]]
+path = "/code/401"
+status = 401
+body = "<html><head><title>Status 401</title></head><body>Status 401</body></html>"
+
+[[route]]
+path = "/code/403"
+status = 403
+body = "<html><head><title>Status 403</title></head><body>Status 403</body></html>"
+
+[[route]]
+path = "/code/404"
+status = 404
+body = "<html><head><title>Status 404</title></head><body>Status 404</body></html>"
+
+[[route]]
+path = "/code/410"
+status = 410
+body = "<html><head><title>Status 410</title></head><body>Status 410</body></html>"
+
+[[route]]
+path = "/code/418"
+status = 418
+body = "<html><head><title>Status 418</title></head><body>Status 418</body></html>"
+
+[[route]]
+path = "/code/429"
+status = 429
+body = "<html><head><title>Status 429</title></head><body>Status 429</body></html>"
+
+[[route]]
+path = "/code/451"
+status = 451
+body = "<html><head><title>Status 451</title></head><body>Status 451</body></html>"
+
+[[route]]
+path = "/code/499"
+status = 499
+body = "<html><head><title>Status 499</title></head><body>Status 499</body></html>"
+
+[[route]]
+path = "/code/500"
+status = 500
+body = "<html><head><title>Status 500</title></head><body>Status 500</body></html>"
+
+[[route]]
+path = "/code/502"
+status = 502
+body = "<html><head><title>Status 502</title></head><body>Status 502</body></html>"
+
+[[route]]
+path = "/code/503"
+status = 503
+body = "<html><head><title>Status 503</title></head><body>Status 503</body></html>"
+
+[[route]]
+path = "/code/504"
+status = 504
+body = "<html><head><title>Status 504</title></head><body>Status 504</body></html>"
+
+[[route]]
+path = "/code/520"
+status = 520
+body = "<html><head><title>Status 520</title></head><body>Status 520</body></html>"
+
+[[route]]
+path = "/code/600"
+status = 600
+body = "<html><head><title>Status 600</title></head><body>Status 600</body></html>"
+
+[[route]]
+path = "/code/999"
+status = 999
+body = "<html><head><title>Status 999</title></head><body>Status 999</body></html>"
