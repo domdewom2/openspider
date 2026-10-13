@@ -1945,7 +1945,7 @@ Grundmenge („All“): alle internen **und** externen Bild-URLs (Inhaltsklasse 
   - `Display Dimensions (WxH)`: gerenderte CSS-Größe (nur Rendering, nur im Viewport gerenderte Bilder),
   - `Potential Savings` (Bytes, ONPAGE-180),
   - `Path Type`: Schreibweise der Bildreferenz im Attribut – `Absolute` (`https://h/a.png`), `Protocol-Relative` (`//h/a.png`), `Root-Relative` (`/a.png`), `Path-Relative` (`a.png`, `../a.png`),
-  - `Link Path`: XPath des referenzierenden Elements im Dokument (z. B. `/html/body/main/div[2]/img`),
+  - `Link Path`: XPath des referenzierenden Elements im Dokument (z. B. `/html[1]/body[1]/main[1]/div[2]/img[1]`; OS-Festlegung: jeder Schritt trägt einen Positionsindex `[n]`),
   - `Link Position`: Seitenbereich der Referenz gemäß Link-Positions-Konfiguration (Link-Spec; laut Referenz-Doku u. a. `Head`, `Nav`, `Footer` und als Auffangbereich `Content`; vollständige Default-Liste und Benutzerdefinition in der Link-Spec),
   - `Link Origin`: `HTML` (nur im Roh-HTML), `Rendered HTML` (nur im gerenderten DOM), `HTML & Rendered HTML` (in beiden), `Dynamically Loaded` (ohne Markup-Referenz, zur Laufzeit per Script geladen).
   - **OpenSpider-Erweiterungen** (standardmäßig ausgeblendet): `Alt Text Length` (Codepoints nach N(x)); `Source` (`img` | `a` | `srcset` | `css`); optional `images.real_dimensions_from_header` (Default false): liest Real Dimensions ohne Rendering aus dem Dateikopf (PNG/JPEG/GIF/WebP/AVIF) – in Parität aus.
@@ -1960,7 +1960,7 @@ Grundmenge („All“): alle internen **und** externen Bild-URLs (Inhaltsklasse 
   - [ ] `width` ohne `height` → Attributes leer.
   - [ ] Real Dimensions (mit Rendering) für PNG, JPEG, GIF, WebP, AVIF; SVG → leer (**Annahme A-44**).
   - [ ] Path Type: `src="https://…/a.png"` → `Absolute`; `src="//…/a.png"` → `Protocol-Relative`; `src="/img/a.png"` → `Root-Relative`; `src="img/a.png"` → `Path-Relative`.
-  - [ ] Link Path für `<body><main><div></div><div><img></div></main>` → `/html/body/main/div[2]/img`.
+  - [ ] Link Path für `<body><main><div></div><div><img></div></main>` → `/html[1]/body[1]/main[1]/div[2]/img[1]`.
   - [ ] Link Position: Bild in `<footer>` → `Footer`; Bild in `<nav>` → `Nav`; Bild in `<main>` → `Content`.
   - [ ] Link Origin: Bild im Roh-HTML ohne Rendering → `HTML`; mit Rendering und unverändertem DOM → `HTML & Rendered HTML`; per `appendChild` eingefügtes `<img>` → `Rendered HTML`; per `new Image().src=…` ohne DOM-Einfügung geladenes Bild → `Dynamically Loaded`.
 - **Testfixture:** `onpage-images/dimensions.html` (inkl. Bild weit unterhalb des Viewports), `img/800x600.png`, `.jpg`, `.gif`, `.webp`, `.avif`, `.svg`; `onpage-images/paths.html` (vier Path-Type-Varianten, Bilder in nav/footer/main, verschachtelte divs); `onpage-images/origin.html` (Inline-Script fügt ein `<img>` ein und lädt ein Bild per `new Image()`).
