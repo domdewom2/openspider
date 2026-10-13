@@ -12,6 +12,11 @@
 //!    - sonst `open` (kein Test, kein Ergebnis, `FAILED`, Platzhalter-Ignores wie `wartet auf M1-Pxx`).
 //!    - `verified` bleibt erhalten, wenn es schon in der Statusdatei steht und der Test weiter `ok` ist
 //!      (P29 setzt es aus dem Paritätsbericht).
+//! 4. **Benchmarks und Zusatz-IDs** (5.4 Punkt 4): Ein Ignore-Grund mit Präfix `Benchmark` ist gültig;
+//!    solche Tests sind für den Status neutral (weder `implemented` noch `deferred`), stehen nicht unter
+//!    „ignoriert ohne gültigen Grund“, und eine ID nur mit Benchmark-Tests bleibt `open`. IDs im
+//!    optionalen Feld `extra_spec_ids` eines Pakets erscheinen im Berichtsabschnitt `extra`, lösen keine
+//!    Warnung „unbekannte IDs“ aus und zählen weder für die Zusammenfassung noch für `--strict`.
 
 pub mod results;
 pub mod scan;
@@ -137,6 +142,8 @@ pub struct CoverageReport {
     pub summary: BTreeMap<String, usize>,
     /// Status je ID.
     pub specs: BTreeMap<String, SpecEntry>,
+    /// Zusatz-IDs (`extra_spec_ids`): Status je ID, ohne Wirkung auf Zusammenfassung und `--strict`.
+    pub extra: BTreeMap<String, SpecEntry>,
     /// Ignorierte Tests ohne gültigen Grund.
     pub ignored_without_valid_reason: Vec<BadIgnore>,
     /// Hinweise.
@@ -157,10 +164,30 @@ pub fn valid_defer_reason(reason: &str) -> bool {
     false
 }
 
+/// Ist der Ignore-Grund ein Benchmark-Grund (`Benchmark (P28): …`)? Gültig, aber für den Status neutral.
+pub fn is_benchmark_reason(reason: &str) -> bool {
+    reason.trim().starts_with("Benchmark")
+}
+
+/// Spec-IDs aus `M1-packages.json`: `specs` (Feld `spec_ids`) und `extra` (Feld `extra_spec_ids`),
+/// jeweils mit den Paketen, die sie führen.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct PackageSpecs {
+    /// Spec-IDs der Pakete (Grundlage von A2/A9).
+    pub specs: BTreeMap<String, Vec<String>>,
+    /// Zusatz-IDs, die Tests eines Pakets mitprüfen; IDs, die auch in `specs` stehen, fehlen hier.
+    pub extra: BTreeMap<String, Vec<String>>,
+}
+
 /// Spec-IDs je Paket aus `M1-packages.json` (nur Einträge mit `kind = "package"`).
 pub fn load_package_specs(
     path: &std::path::Path,
 ) -> Result<BTreeMap<String, Vec<String>>, ParityError> {
+    load_packages(path).map(|p| p.specs)
+}
+
+/// Liest `spec_ids` und das optionale Feld `extra_spec_ids` der Pakete (`kind = "package"`).
+pub fn load_packages(path: &std::path::Path) -> Result<PackageSpecs, ParityError> {
     let text = std::fs::read_to_string(path)
         .map_err(|e| ParityError::Invalid(format!("{} nicht lesbar: {e}", path.display())))?;
     let doc: Value = serde_json::from_str(&text)
@@ -171,26 +198,30 @@ pub fn load_package_specs(
         .ok_or_else(|| {
             ParityError::Invalid(format!("{}: Liste von Paketen erwartet", path.display()))
         })?;
-    let mut ids: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    let mut specs: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    let mut extra: BTreeMap<String, Vec<String>> = BTreeMap::new();
     for p in list {
         if p.get("kind").and_then(|k| k.as_str()) != Some("package") {
             continue;
         }
         let pkg = p.get("id").and_then(|i| i.as_str()).unwrap_or("?");
-        for id in p
-            .get("spec_ids")
-            .and_then(|s| s.as_array())
-            .into_iter()
-            .flatten()
-            .filter_map(|s| s.as_str())
-        {
-            let owners = ids.entry(id.to_string()).or_default();
-            if !owners.iter().any(|o| o == pkg) {
-                owners.push(pkg.to_string());
+        for (field, target) in [("spec_ids", &mut specs), ("extra_spec_ids", &mut extra)] {
+            for id in p
+                .get(field)
+                .and_then(|s| s.as_array())
+                .into_iter()
+                .flatten()
+                .filter_map(|s| s.as_str())
+            {
+                let owners = target.entry(id.to_string()).or_default();
+                if !owners.iter().any(|o| o == pkg) {
+                    owners.push(pkg.to_string());
+                }
             }
         }
     }
-    Ok(ids)
+    extra.retain(|id, _| !specs.contains_key(id));
+    Ok(PackageSpecs { specs, extra })
 }
 
 #[derive(Default, Clone)]
@@ -203,7 +234,7 @@ struct Agg {
 
 /// Rechnet den Status aus Quellen und Ergebnissen.
 pub fn compute(
-    package_specs: &BTreeMap<String, Vec<String>>,
+    package_specs: &PackageSpecs,
     scans: &BTreeMap<String, FileScan>,
     targets_found: Vec<targets::Target>,
     results: &[TestResult],
@@ -279,10 +310,10 @@ pub fn compute(
         src.or_else(|| aggs.get(&i).and_then(|a| a.reason.clone()))
     };
 
-    let mut specs: BTreeMap<String, SpecEntry> = BTreeMap::new();
-    for (id, packages) in package_specs {
-        let idxs = per_id.get(id.as_str()).cloned().unwrap_or_default();
-        let entries: Vec<TestEntry> = idxs
+    let is_bench = |i: usize| -> bool { reason_of(i).is_some_and(|r| is_benchmark_reason(&r)) };
+    let build = |id: &String, packages: &Vec<String>| -> SpecEntry {
+        let all_idxs = per_id.get(id.as_str()).cloned().unwrap_or_default();
+        let entries: Vec<TestEntry> = all_idxs
             .iter()
             .map(|&i| TestEntry {
                 file: tests[i].file.clone(),
@@ -298,8 +329,19 @@ pub fn compute(
                 deferred_hint: tests[i].deferred_hint,
             })
             .collect();
+        // Benchmark-Tests (Ignore-Grund `Benchmark …`) sind für den Status neutral.
+        let idxs: Vec<usize> = all_idxs.iter().copied().filter(|&i| !is_bench(i)).collect();
+        let bench_only = idxs.is_empty() && !all_idxs.is_empty();
         let states: Vec<TestState> = idxs.iter().map(|&i| state_of(i)).collect();
-        let (mut status, note) = if idxs.is_empty() {
+        let (mut status, note) = if bench_only {
+            (
+                Status::Open,
+                Some(
+                    "nur Benchmark-Tests (P28) getaggt; kein regulärer Test mit `// spec:`-Tag"
+                        .to_string(),
+                ),
+            )
+        } else if idxs.is_empty() {
             (
                 Status::Open,
                 Some("kein Test mit `// spec:`-Tag gefunden".to_string()),
@@ -342,23 +384,32 @@ pub fn compute(
                 parity = prev.and_then(|p| p.get("parity")).cloned();
             }
         }
-        specs.insert(
-            id.clone(),
-            SpecEntry {
-                status,
-                packages: packages.clone(),
-                note,
-                tests: entries,
-                parity,
-            },
-        );
-    }
+        SpecEntry {
+            status,
+            packages: packages.clone(),
+            note,
+            tests: entries,
+            parity,
+        }
+    };
+    let specs: BTreeMap<String, SpecEntry> = package_specs
+        .specs
+        .iter()
+        .map(|(id, pk)| (id.clone(), build(id, pk)))
+        .collect();
+    let extra: BTreeMap<String, SpecEntry> = package_specs
+        .extra
+        .iter()
+        .map(|(id, pk)| (id.clone(), build(id, pk)))
+        .collect();
 
     // Unbekannte IDs in Tags.
     let unknown: BTreeSet<&str> = per_id
         .keys()
         .copied()
-        .filter(|id| !package_specs.contains_key(*id))
+        .filter(|id| {
+            !package_specs.specs.contains_key(*id) && !package_specs.extra.contains_key(*id)
+        })
         .collect();
     if !unknown.is_empty() {
         warnings.push(format!(
@@ -383,6 +434,8 @@ pub fn compute(
         let Some(reason) = &t.ignore else { continue };
         let problem = if reason.trim().is_empty() {
             Some("#[ignore] ohne Grund")
+        } else if is_benchmark_reason(reason) {
+            None
         } else if !t.ids.is_empty() && !valid_defer_reason(reason) {
             Some("Grund beginnt nicht mit M2:/M3:/Klärung K-xx (Platzhalter zählen nicht als deferred)")
         } else {
@@ -423,6 +476,7 @@ pub fn compute(
     CoverageReport {
         summary,
         specs,
+        extra,
         ignored_without_valid_reason: bad,
         warnings,
     }
@@ -435,6 +489,7 @@ impl CoverageReport {
             "generated_by": "os-parity coverage",
             "summary": self.summary,
             "specs": self.specs,
+            "extra": self.extra,
             "ignored_without_valid_reason": self.ignored_without_valid_reason,
             "warnings": self.warnings,
         })
@@ -470,6 +525,18 @@ impl CoverageReport {
         if open.len() > 60 {
             let _ = writeln!(s, "  ... und {} weitere offene IDs", open.len() - 60);
         }
+        if !self.extra.is_empty() {
+            let count = |st: Status| self.extra.values().filter(|e| e.status == st).count();
+            let _ = writeln!(
+                s,
+                "Zusatz-IDs (extra, nicht gewertet): {} – implemented {}, verified {}, deferred {}, open {}",
+                self.extra.len(),
+                count(Status::Implemented),
+                count(Status::Verified),
+                count(Status::Deferred),
+                count(Status::Open)
+            );
+        }
         if !self.ignored_without_valid_reason.is_empty() {
             let _ = writeln!(
                 s,
@@ -489,7 +556,7 @@ impl CoverageReport {
 
 /// Ermittelt den Status; `Ok(true)` = keine ID mit Status `open`.
 pub fn run(args: &CoverageArgs) -> Result<bool, ParityError> {
-    let package_specs = load_package_specs(&args.packages)?;
+    let package_specs = load_packages(&args.packages)?;
     let root = &args.root;
 
     let mut scans: BTreeMap<String, FileScan> = BTreeMap::new();

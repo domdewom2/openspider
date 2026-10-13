@@ -50,8 +50,8 @@ pub struct Deviation {
     /// Kennzeichen.
     #[serde(default)]
     pub kind: String,
-    /// Begründung.
-    #[serde(default)]
+    /// Begründung (in `tests/parity/deviations.toml` als `reason` dokumentiert, `note` bleibt erlaubt).
+    #[serde(default, alias = "reason")]
     pub note: String,
     /// Einschränkung auf eine Site.
     #[serde(default)]
@@ -62,8 +62,8 @@ pub struct Deviation {
     /// Einschränkung auf eine Referenzspalte.
     #[serde(default)]
     pub column: Option<String>,
-    /// Einschränkung auf eine Zeile.
-    #[serde(default)]
+    /// Einschränkung auf eine Zeile (in `tests/parity/deviations.toml` als `address` dokumentiert).
+    #[serde(default, alias = "address")]
     pub key: Option<String>,
     /// Einschränkung auf Zeilen mit diesem Schlüsselpräfix.
     #[serde(default)]
@@ -82,12 +82,21 @@ pub struct Deviation {
 /// Erlaubte Kennzeichen.
 pub const KINDS: [&str; 3] = ["Paritätsabweichung", "Annahme", "OS-Festlegung"];
 
+/// Ist das Kennzeichen eines der erlaubten? Die ASCII-Schreibweise `Paritaetsabweichung` (so steht sie im
+/// Schema von `tests/parity/deviations.toml`) gilt als dasselbe Kennzeichen.
+pub fn is_known_kind(kind: &str) -> bool {
+    let k = kind.trim().replace("ae", "ä");
+    KINDS
+        .iter()
+        .any(|known| *known == kind.trim() || *known == k)
+}
+
 impl Deviation {
     /// Gilt die Abweichung für diese Site und diesen Export?
     pub fn applies_to(&self, site: Option<&str>, export: &str) -> bool {
         self.site
             .as_deref()
-            .is_none_or(|s| site.is_some_and(|x| x == s || s == "*"))
+            .is_none_or(|s| s == "*" || site.is_some_and(|x| x == s))
             && self
                 .export
                 .as_deref()
@@ -165,7 +174,7 @@ impl Deviations {
             if d.spec.trim().is_empty() {
                 warnings.push(format!("{label}: Spec-ID (`spec`) fehlt"));
             }
-            if !KINDS.contains(&d.kind.as_str()) {
+            if !is_known_kind(&d.kind) {
                 warnings.push(format!(
                     "{label}: Kennzeichen {:?} ist keines von {}",
                     d.kind,
@@ -264,6 +273,23 @@ kind = "komisch"
         assert!(!d.excuses_cell("k", "c", "100", "98"));
         let missing = Deviations::load(Path::new("/nicht/vorhanden/deviations.toml")).unwrap();
         assert!(missing.items.is_empty());
+    }
+
+    #[test]
+    fn documented_schema_names_and_ascii_kind_are_accepted() {
+        let d = Deviations::parse(
+            "[[deviation]]\nid=\"DEV-001\"\nspec=\"ONPAGE-081\"\nkind=\"Paritaetsabweichung\"\n\
+             export=\"*\"\nsite=\"*\"\naddress=\"{BASE}/x.html\"\nreason=\"Begründung\"\n",
+        )
+        .unwrap();
+        assert!(d.warnings.is_empty(), "{:?}", d.warnings);
+        assert_eq!(d.items[0].note, "Begründung");
+        assert_eq!(d.items[0].key.as_deref(), Some("{BASE}/x.html"));
+        assert!(d.items[0].excuses_cell("{BASE}/x.html", "c", "", ""));
+        assert!(!d.items[0].excuses_cell("{BASE}/y.html", "c", "", ""));
+        // `site = "*"` gilt auch, wenn der Lauf keine Site nennt (`diff` ohne `run`).
+        assert_eq!(d.for_export(None, "internal_all").len(), 1);
+        assert!(is_known_kind("Paritätsabweichung") && !is_known_kind("komisch"));
     }
 
     #[test]

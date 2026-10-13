@@ -1,0 +1,5 @@
+[
+  {"id": "M1-PB1", "kind": "package", "spec_ids": ["B-001", "B-002", "B-003", "B-004", "B-005"], "extra_spec_ids": ["X-001", "X-002", "B-005"]},
+  {"id": "M1-PB2", "kind": "package", "spec_ids": [], "extra_spec_ids": ["X-001", "X-003"]},
+  {"id": "M1-W99", "kind": "orchestrator_step", "spec_ids": [], "extra_spec_ids": ["X-004"]}
+]

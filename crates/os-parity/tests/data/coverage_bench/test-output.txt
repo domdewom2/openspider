@@ -1,0 +1,23 @@
+   Compiling bench v0.1.0 (/work/crates/bench)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.00s
+     Running tests/bench.rs (target/debug/deps/bench-aaaaaaaaaaaaaaaa)
+
+running 16 tests
+test bench_next_to_deferred ... ignored, Benchmark (P28): Speicher
+test bench_next_to_placeholder ... ignored, Benchmark (P28): Laufzeit
+test bench_only_one ... ignored, Benchmark (P28): nur manuell
+test bench_only_two ... ignored, Benchmark (P28): zweiter Lauf
+test bench_throughput ... ignored, Benchmark (P28): Durchsatz 1 Mio. Zeilen
+test bench_that_ran_green ... ok
+test bench_with_result ... ok
+test deferred_regular ... ignored, M2: B-003 braucht JS-Rendering
+test extra_bench ... ignored, Benchmark (P28): Zusatz-ID
+test extra_only_bench ... ignored, Benchmark (P28): nur Benchmark
+test extra_ok ... ok
+test lowercase_bench ... ignored, benchmark: kleingeschrieben ist kein gueltiger Praefix
+test placeholder ... ignored, wartet auf M1-P09
+test regular_ok ... ok
+test tag_without_package ... ok
+test untagged_bench ... ignored, Benchmark (P28): ohne Tag
+
+test result: ok. 5 passed; 0 failed; 11 ignored; 0 measured; 0 filtered out; finished in 0.00s
