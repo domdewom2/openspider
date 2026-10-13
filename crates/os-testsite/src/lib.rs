@@ -94,6 +94,9 @@
 //!   [`RequestRecord::sent_payload_bytes`] ist der Rest = Kopf + Body der finalen Antwort. Der
 //!   Server verbucht die Bytes erst nach dem Schreiben – wer unmittelbar nach dem Lesen der
 //!   Antwort nachsieht, wartet kurz, bis `sent_bytes > 0` ist.
+//! * `sent_body_bytes` (K-02) sind die gesendeten Nutzdaten des Bodys der finalen Antwort ohne
+//!   Statuszeile, Header und Chunk-Rahmen – die Gegenstellung zu `transferred_bytes` des Clients.
+//!   0 bei HEAD, 204 und 304.
 //!
 //! # Golden-Dateien
 //!

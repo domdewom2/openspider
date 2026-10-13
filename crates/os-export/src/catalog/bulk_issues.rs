@@ -297,22 +297,15 @@ pub fn export_in(
         if is_link_related(entry) {
             let ids = filter_url_ids(tabs, file, cfg, &row.tab, &row.filter)?;
             let in_name = names.claim(&inlinks_file_name(row, &label, ext), &format!("{disc}:in"));
-            match crate::detail::export_detail(
+            // `export_detail` nimmt den Pfad der Zieldatei (nicht eines Ordners).
+            let info = crate::detail::export_detail(
                 file,
                 DetailKind::Inlinks,
                 &ids,
                 &dir.join(&in_name),
                 format,
-            ) {
-                Ok(info) => out.files.push(info),
-                Err(ExportError::NotImplemented(what)) => {
-                    out.warnings.push(format!(
-                        "issue '{} {}': inlinks file skipped ({what})",
-                        row.tab, label
-                    ));
-                }
-                Err(e) => return Err(e),
-            }
+            )?;
+            out.files.push(info);
         }
 
         // Zeile der Übersicht.

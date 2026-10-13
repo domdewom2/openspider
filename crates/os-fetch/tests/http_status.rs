@@ -107,16 +107,19 @@ async fn early_hints_from_the_fixture_are_skipped_and_the_final_200_is_stored() 
     let log = site.requests();
     assert_eq!(log.len(), 1, "ein Abruf, keine Wiederholung wegen 1xx");
     assert!(log[0].sent_interim_bytes > 0, "{:?}", log[0]);
-    // … und zählt nicht zu `Übertragen` der gespeicherten Antwort: Kopf + Body der 200-Antwort
+    // … und zählt nicht zu `Übertragen` der gespeicherten Antwort: nur die Body-Bytes der
+    // 200-Antwort (K-02), weder Zwischenantwort noch Kopf
     for _ in 0..500 {
         if site.requests()[0].sent_bytes > 0 {
             break;
         }
         tokio::time::sleep(Duration::from_millis(10)).await;
     }
-    assert_eq!(
-        resp.transferred_bytes,
-        site.requests()[0].sent_payload_bytes()
+    let sent = &site.requests()[0];
+    assert_eq!(resp.transferred_bytes, sent.sent_body_bytes);
+    assert!(
+        resp.transferred_bytes < sent.sent_payload_bytes(),
+        "{sent:?}"
     );
 }
 
@@ -284,9 +287,9 @@ async fn plain_fixture_page_is_fetched_with_body_hash_and_counted_bytes() {
     let body = String::from_utf8(resp.body.to_vec()).unwrap();
     assert!(body.contains("<title>Einfache Seite</title>"));
     assert_eq!(resp.size_bytes, body.len() as u64);
-    assert!(
-        resp.transferred_bytes > resp.size_bytes,
-        "Header kommen dazu"
+    assert_eq!(
+        resp.transferred_bytes, resp.size_bytes,
+        "unkomprimiert: Transferred = Size, der Kopf kommt nicht hinzu (K-02)"
     );
     assert_eq!(resp.md5_hex.len(), 32);
     assert!(!resp.truncated);

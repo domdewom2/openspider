@@ -7,7 +7,8 @@
 //! * Die Kopfzeile entsteht vor dem ersten Datensatz und fehlt nie, auch nicht bei null Zeilen oder wenn der
 //!   Filter nicht auswertbar ist (`Crawl-Analyse erforderlich`); solche Fälle melden einen Hinweis in
 //!   [`ExportFileInfo::warnings`].
-//! * Bulk-Exporte des Katalogs: [`export_bulk`] (Links und Response-Codes-Inlinks, P16; Issues-Exporte P17).
+//! * Bulk-Exporte des Katalogs: [`export_bulk`] (Links, Response-Codes-Inlinks und `Issues:All Issues`).
+//! * Reports des Katalogs: [`export_report`] (Crawl Overview, Redirects).
 //!
 //! `*_in`-Varianten nehmen eine eigene Tab-Liste statt `tabs::all()` (Tests, abweichende Registry).
 
@@ -20,13 +21,13 @@ use os_analyze::ViewError;
 use os_model::{CrawlConfig, FilterState, Value};
 use os_store::{CrawlFile, StoreError};
 
-use crate::catalog::bulk_links;
+use crate::catalog::{self, bulk_issues, bulk_links, ExportKind, ExportRef};
 use crate::error::ExportError;
 use crate::fs_paths;
 use crate::links_export::export_link_entry;
 use crate::naming;
 use crate::output::open_writer;
-use crate::types::{ExportFileInfo, Format, TableWriter, WriterOptions};
+use crate::types::{ExportFileInfo, Format, ReportResult, TableWriter, WriterOptions};
 
 /// Schreiboptionen aus der Konfiguration (`export.utf8_bom`, `export.line_ending`).
 pub fn writer_options(cfg: &CrawlConfig) -> WriterOptions {
@@ -47,16 +48,6 @@ pub(crate) fn filter_warning(tab: &str, filter: &str, state: &FilterState) -> St
         FilterState::NeedsRendering => "JavaScript-Rendering erforderlich".to_string(),
     };
     format!("{tab}:{filter}: leerer Export – {reason}")
-}
-
-/// Spaltenart für den Schreiber. `Seconds3` liefert `views` bereits in Sekunden (P14), der Schreiber rechnet
-/// bei dieser Art aber Millisekunden um; die Werte gehen deshalb als Dezimalzahl mit drei Stellen durch
-/// (nicht erneut durch 1000 teilen).
-fn writer_kind(kind: ColumnKind) -> ColumnKind {
-    match kind {
-        ColumnKind::Seconds3 => ColumnKind::Float { decimals: 3 },
-        other => other,
-    }
 }
 
 /// Spaltenart zu einem Spaltennamen der Ausgabe: Spalten des Tabs über ihren Schlüssel, Mehrfachspalten
@@ -129,10 +120,7 @@ pub fn write_view(
             suggestions: names::suggestions(tabs, &format!("{}:{}", q.tab, q.filter)),
         })
     })?;
-    let kinds: Vec<ColumnKind> = header
-        .iter()
-        .map(|n| writer_kind(column_kind(tab, n)))
-        .collect();
+    let kinds: Vec<ColumnKind> = header.iter().map(|n| column_kind(tab, n)).collect();
     let state = views::state_of_in(tabs, file, cfg, tab.id, &q.filter)?;
 
     let mut writer = open()?;
@@ -173,8 +161,9 @@ pub fn write_view(
 
 /// Führt einen Bulk-Export aus dem Katalog aus (z. B. „All Inlinks“); kann mehrere Dateien liefern.
 ///
-/// Dateiname nach OUT-008 aus dem kanonischen Namen (ohne Datum), Ablage in `out_dir`. Link-Bulk-Exporte
-/// (P16) sind vollständig; Issues-Exporte ergänzt P17 an dieser Stelle.
+/// Dateiname nach OUT-008 aus dem kanonischen Namen (ohne Datum), Ablage in `out_dir`. `Issues:All Issues`
+/// schreibt den Ordner `issues/` mit einer Datei je Issue (OUT-063); die Hinweise dieses Exports stehen in
+/// den `warnings` der letzten Datei (`issues_overview`).
 pub fn export_bulk(
     file: &CrawlFile,
     cfg: &CrawlConfig,
@@ -194,8 +183,26 @@ pub fn export_bulk_in(
     out_dir: &Path,
     format: Format,
 ) -> Result<Vec<ExportFileInfo>, ExportError> {
-    // P17: Einträge aus catalog::bulk_issues hier vor dem Fehlerfall auflösen.
-    let entry = bulk_links::resolve(name)?;
+    // Auflösung über den gemeinsamen Katalog: Vorschläge bei Tippfehlern stammen aus allen Bulk-Namen.
+    let canonical = match catalog::resolve(ExportKind::Bulk, name)? {
+        ExportRef::Bulk(canonical) => canonical,
+        other => unreachable!("Bulk-Auflösung lieferte {other:?}"),
+    };
+    if canonical == bulk_issues::BULK_NAME {
+        let mut result = bulk_issues::export_in(tabs, file, cfg, out_dir, format)?;
+        // Hinweise des Gesamtexports (z. B. fehlende Beschreibungstexte) gehen an die letzte Datei, damit
+        // der Aufrufer sie über `ExportFileInfo::warnings` findet; Voraussetzungen stehen dort schon.
+        if let Some(last) = result.files.last_mut() {
+            for w in result.warnings {
+                if !last.warnings.contains(&w) {
+                    tracing::warn!("{w}");
+                    last.warnings.push(w);
+                }
+            }
+        }
+        return Ok(result.files);
+    }
+    let entry = bulk_links::resolve(&canonical)?;
     fs_paths::create_dir_all(out_dir).map_err(|source| ExportError::Io {
         path: out_dir.to_path_buf(),
         source,
@@ -203,4 +210,33 @@ pub fn export_bulk_in(
     let path = out_dir.join(naming::file_name(&entry.name, None, format.extension()));
     let info = export_link_entry(tabs, file, cfg, entry, &path, format, &entry.name)?;
     Ok(vec![info])
+}
+
+/// Führt einen Report aus dem Katalog aus (z. B. `Crawl Overview`, `Redirects:Redirect Chains`;
+/// `--save-report`). Dateiname nach OUT-008 aus dem Dateinamen-Stamm des Reports, Ablage in `out_dir`;
+/// fehlende Voraussetzungen stehen in [`ReportResult::warnings`] (OUT-112).
+pub fn export_report(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    name: &str,
+    out_dir: &Path,
+    format: Format,
+) -> Result<ReportResult, ExportError> {
+    export_report_in(&os_analyze::tabs::all(), file, cfg, name, out_dir, format)
+}
+
+/// Wie [`export_report`], gegen eine eigene Tab-Liste.
+pub fn export_report_in(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    name: &str,
+    out_dir: &Path,
+    format: Format,
+) -> Result<ReportResult, ExportError> {
+    fs_paths::create_dir_all(out_dir).map_err(|source| ExportError::Io {
+        path: out_dir.to_path_buf(),
+        source,
+    })?;
+    crate::reports::save_report_in(tabs, file, cfg, name, out_dir, format)
 }

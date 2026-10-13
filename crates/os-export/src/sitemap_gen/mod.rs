@@ -10,7 +10,7 @@
 //! * **Aufteilung (OUT-129):** höchstens `max_urls_per_file` (Standard 49 999) URLs und `max_bytes_per_file`
 //!   (Standard 50 MiB, unkomprimiert) je Datei. Eine Datei heißt `sitemap.xml`; bei mehreren entstehen
 //!   `sitemap_1.xml`, `sitemap_2.xml` … und `sitemap_index.xml` mit absoluten `<loc>` unter der Basis-URL
-//!   (Standard: Ursprung der Start-URL plus `/`) und `<lastmod>` = Erzeugungsdatum.
+//!   (`SitemapOptions::base_url`, Standard: Ursprung der Start-URL plus `/`) und `<lastmod>` = Erzeugungsdatum.
 //! * **Kodierung (OUT-131):** UTF-8 mit XML-Deklaration, ohne BOM; `& < > " '` als Entitäten; Pfade und Query
 //!   prozentkodiert (`/über-uns` → `/%C3%BCber-uns`), IDN-Hosts in Punycode; URLs über 2 048 Zeichen fehlen in
 //!   der Sitemap und stehen im Bericht ([`SitemapReport::skipped_too_long`]).
@@ -65,8 +65,8 @@ pub fn generate_sitemap(
     generate_sitemap_with(file, opts, None, &SystemClock, out_dir)
 }
 
-/// Wie [`generate_sitemap`], mit ausdrücklicher Basis-URL für die `<loc>` des Index (OUT-129) und einer Uhr
-/// für das Erzeugungsdatum.
+/// Wie [`generate_sitemap`], mit einer Uhr für das Erzeugungsdatum. Die Basis-URL für die `<loc>` des Index
+/// (OUT-129) ist `base_url`, sonst [`SitemapOptions::base_url`], sonst der Ursprung der Start-URL.
 pub fn generate_sitemap_with(
     file: &CrawlFile,
     opts: &SitemapOptions,
@@ -147,7 +147,7 @@ pub fn generate_sitemap_with(
         }
         _ => {
             let n_parts = parts.len() as u64;
-            let base = base_url_for(file, base_url)?;
+            let base = base_url_for(file, base_url.or(opts.base_url.as_deref()))?;
             let date = clock.now().to_db();
             let date = date.get(..10).unwrap_or(&date).to_string();
             let mut index = String::new();

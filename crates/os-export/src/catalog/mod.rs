@@ -2,9 +2,11 @@
 //!
 //! * Tab-Exporte: `Tab:Filter` aus der Registry von `os-analyze` (`tabs::all()`), Auflösung über
 //!   `os_analyze::names` (case-insensitiv, Levenshtein-Vorschläge).
-//! * Bulk-Exporte: `bulk_links` (P16: Links, Response-Codes-Inlinks); `bulk_issues` (P17) ergänzt sich in
-//!   [`resolve`]/[`list`] an den mit `P17:` markierten Stellen.
-//! * Reports: `reports` (P17), in dieser Fassung noch ohne Einträge.
+//! * Bulk-Exporte: `bulk_links` (Links, Response-Codes-Inlinks) und `bulk_issues` (`Issues:All Issues`).
+//! * Reports: `reports` (Crawl Overview, Redirects).
+//!
+//! Alle Namen einer Art stehen in [`list`]; [`resolve`] löst sie case-insensitiv auf und liefert bei einem
+//! Tippfehler Vorschläge über alle Namen der Art (Levenshtein ≤ 3).
 
 pub mod bulk_issues;
 pub mod bulk_links;
@@ -47,15 +49,19 @@ pub fn resolve(kind: ExportKind, name: &str) -> Result<ExportRef, NameError> {
             Ok(ExportRef::Tab { tab, filter })
         }
         ExportKind::Bulk => {
-            // P17: bulk_issues::find(name) vor dem Fehlerfall ergänzen.
-            bulk_links::resolve(name).map(|e| ExportRef::Bulk(e.name.clone()))
-        }
-        ExportKind::Report => {
-            // P17: reports::find(name) ergänzen.
+            if let Some(entry) = bulk_links::find(name) {
+                return Ok(ExportRef::Bulk(entry.name.clone()));
+            }
+            if let Ok(issues) = bulk_issues::resolve(name) {
+                return Ok(ExportRef::Bulk(issues.to_string()));
+            }
             Err(NameError::Unknown {
                 input: name.to_string(),
-                suggestions: Vec::new(),
+                suggestions: bulk_suggestions(name),
             })
+        }
+        ExportKind::Report => {
+            reports::resolve(name).map(|def| ExportRef::Report(def.name.to_string()))
         }
     }
 }
@@ -74,11 +80,38 @@ pub fn list(kind: ExportKind) -> Vec<String> {
             })
             .collect(),
         ExportKind::Bulk => {
-            // P17: bulk_issues::names() anhängen.
-            bulk_links::names()
+            let mut names = bulk_links::names();
+            names.extend(bulk_issues::names());
+            names
         }
-        ExportKind::Report => Vec::new(),
+        ExportKind::Report => reports::names(),
     }
+}
+
+/// Höchstabstand und -zahl der Vorschläge für Bulk-Namen (wie in `bulk_links`).
+const MAX_DISTANCE: usize = 3;
+const MAX_SUGGESTIONS: usize = 5;
+
+/// Ähnliche Bulk-Namen über alle Kataloge (Links und Issues), nächste zuerst.
+fn bulk_suggestions(input: &str) -> Vec<String> {
+    let norm = |s: &str| {
+        s.split(':')
+            .map(|p| p.split_whitespace().collect::<Vec<_>>().join(" "))
+            .collect::<Vec<_>>()
+            .join(":")
+            .to_lowercase()
+    };
+    let wanted = norm(input);
+    let mut scored: Vec<(usize, String)> = list(ExportKind::Bulk)
+        .into_iter()
+        .filter_map(|n| {
+            let d = bulk_links::levenshtein(&wanted, &norm(&n));
+            (d <= MAX_DISTANCE).then_some((d, n))
+        })
+        .collect();
+    scored.sort();
+    scored.truncate(MAX_SUGGESTIONS);
+    scored.into_iter().map(|(_, n)| n).collect()
 }
 
 /// `Over {title.max_chars} Characters` → `Over X Characters`.

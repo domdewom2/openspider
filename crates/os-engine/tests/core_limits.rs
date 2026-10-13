@@ -79,7 +79,7 @@ async fn start_records_owner_and_process_and_the_pages_carry_titles_and_links() 
         ),
         0
     );
-    // K-02: übertragene Bytes insgesamt = übertragene Bytes
+    // K-02: im Textmodus ist Gesamt übertragen = Übertragen (Body-Bytes auf der Leitung)
     assert_eq!(
         scalar(
             &fx,
@@ -90,12 +90,12 @@ async fn start_records_owner_and_process_and_the_pages_carry_titles_and_links() 
 }
 
 // spec: CRAWL-022 [M2]
-#[ignore = "Klärung K-02: Total Transferred = Seite + Ressourcen (CRAWL-022) zurückgestellt, ONPAGE-012 führt"]
+#[ignore = "M2: CRAWL-022 Total Transferred mit Ressourcen nur mit JS-Rendering (K-02)"]
 #[tokio::test]
 async fn total_transferred_is_the_page_plus_its_resources_once_each() {
     // CRAWL-022 `/with-assets`: HTML 10 000 B, bindet `a.png` (20 000 B) zweimal und `b.css` (5 000 B) ein.
-    // In M1 gilt K-02: `total_transferred_bytes = transferred_bytes` (siehe der Test oben); dieser Test hält das
-    // Kriterium aus CRAWL-022 fest, bis K-02 entschieden ist.
+    // In M1 gilt K-02: `total_transferred_bytes = transferred_bytes` (siehe der Test oben); die Summe mit
+    // Ressourcen gibt es nur mit JavaScript-Rendering (M2). Dieser Test hält das Kriterium aus CRAWL-022 fest.
     let dir = tempfile::tempdir().unwrap();
     let html = "<!doctype html><html><head><link rel=\\\"stylesheet\\\" href=\\\"/b.css\\\"></head>\
                 <body><img src=\\\"/a.png\\\" alt=\\\"a\\\"><img src=\\\"/a.png\\\" alt=\\\"a\\\"></body></html>";
