@@ -1,0 +1,77 @@
+# Szenario "out-response-codes" (OUT-050): Ziele mit allen Statusklassen, Weiterleitungen, Meta-/HTTP-Refresh,
+# robots.txt-gesperrt, keine Antwort (Verbindung nach den Headern geschlossen) und externe Fehlerziele.
+# Start: http://www.site.test/ (Hosts *.test löst der Test über network.resolve auf die Testsite auf).
+# Hinweis: Timeout (60 s Verzögerung) und DNS-Fehler (nonexistent.invalid) sind hier bewusst nicht enthalten:
+# beide hängen von Netz und Resolver ab; "Keine Antwort" deckt /drop ab.
+
+[[route]]
+path = "/drop"
+abort_after_headers = true
+body_size = 4096
+
+[[route]]
+path = "/r301"
+status = 301
+location = "/gone404"
+
+[[route]]
+path = "/r302"
+status = 302
+location = "/ok.html"
+
+[[route]]
+path = "/refresh-header"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><title>HTTP Refresh</title></head><body>HTTP Refresh</body></html>"
+[route.headers]
+Refresh = "0; url=/refresh-target.html"
+
+[[route]]
+path = "/gone404"
+status = 404
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><title>Weg</title></head><body>Weg</body></html>"
+
+[[route]]
+path = "/e403"
+status = 403
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><title>Verboten</title></head><body>Verboten</body></html>"
+
+[[route]]
+path = "/e404"
+status = 404
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><title>Nicht gefunden</title></head><body>Nicht gefunden</body></html>"
+
+[[route]]
+path = "/e410"
+status = 410
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><title>Entfernt</title></head><body>Entfernt</body></html>"
+
+[[route]]
+path = "/e500"
+status = 500
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><title>Serverfehler</title></head><body>Serverfehler</body></html>"
+
+[[route]]
+path = "/e503"
+status = 503
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><title>Nicht verfuegbar</title></head><body>Nicht verfuegbar</body></html>"
+
+[[route]]
+host = "external.test"
+path = "/ext404"
+status = 404
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><title>Extern 404</title></head><body>Extern 404</body></html>"
+
+[[route]]
+host = "external.test"
+path = "/ext500"
+status = 500
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><title>Extern 500</title></head><body>Extern 500</body></html>"
