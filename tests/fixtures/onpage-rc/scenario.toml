@@ -1,0 +1,184 @@
+# Szenario onpage-rc (ONPAGE-050 … 063, CRAWL-012): Statusklassen, Weiterleitungen, Ketten, Schleifen, robots.txt.
+# Start: http://site.test/ (intern); other.test ist extern (ein Fixture-Server, der Host-Header entscheidet).
+# Die Hosts nohost.invalid (DNS-Fehler) und 127.0.0.1:1 (Verbindung abgelehnt) sind externe Links der Startseite.
+# /timeout antwortet nach 3 s: Tests setzen advanced.response_timeout_s = 1.
+# /blocked/a ist durch robots.txt (Disallow: /blocked/) gesperrt; /flaky liefert erst 503, dann 200 (nur
+# über flaky-start.html erreichbar, Retry-Kriterium ONPAGE-063 ist M2).
+# Pfad-Routen ignorieren die Query: /qloop leitet auf /qloop?x=1 weiter, das wieder dieselbe Route trifft.
+
+[[route]]
+path = "/ok"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>ok</title></head><body><h1>ok</h1></body></html>"
+
+[[route]]
+path = "/r301"
+status = 301
+location = "/ok"
+
+[[route]]
+path = "/r302"
+status = 302
+location = "/ok"
+
+[[route]]
+path = "/r307"
+status = 307
+location = "/ok"
+
+[[route]]
+path = "/r308"
+status = 308
+location = "/ok"
+
+[[route]]
+path = "/r304"
+status = 304
+
+[[route]]
+path = "/r301-noloc"
+status = 301
+
+[[route]]
+path = "/s204"
+status = 204
+
+[[route]]
+path = "/s999"
+status = 999
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Status 999</title></head><body><h1>Status 999</h1></body></html>"
+
+[[route]]
+path = "/e400"
+status = 400
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Fehler 400</title></head><body><h1>Fehler 400</h1></body></html>"
+
+[[route]]
+path = "/e403"
+status = 403
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Fehler 403</title></head><body><h1>Fehler 403</h1></body></html>"
+
+[[route]]
+path = "/e404"
+status = 404
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Fehler 404</title></head><body><h1>Fehler 404</h1></body></html>"
+
+[[route]]
+path = "/e410"
+status = 410
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Fehler 410</title></head><body><h1>Fehler 410</h1></body></html>"
+
+[[route]]
+path = "/e429"
+status = 429
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Fehler 429</title></head><body><h1>Fehler 429</h1></body></html>"
+
+[[route]]
+path = "/e500"
+status = 500
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Fehler 500</title></head><body><h1>Fehler 500</h1></body></html>"
+
+[[route]]
+path = "/e503"
+status = 503
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Fehler 503</title></head><body><h1>Fehler 503</h1></body></html>"
+
+[[route]]
+path = "/blocked/a"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>gesperrt</title></head><body><h1>gesperrt</h1></body></html>"
+
+[[route]]
+path = "/timeout"
+delay_ms = 3000
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>zu spät</title></head><body><h1>zu spät</h1></body></html>"
+
+[[route]]
+path = "/drop"
+abort_after_headers = true
+body_size = 1024
+
+[[route]]
+path = "/flaky"
+sequence = [503, 200]
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>flaky</title></head><body><h1>flaky</h1></body></html>"
+
+[[route]]
+path = "/chain1"
+status = 301
+location = "/chain2"
+
+[[route]]
+path = "/chain2"
+status = 301
+location = "/ok"
+
+[[route]]
+path = "/long1"
+status = 301
+location = "/long2"
+
+[[route]]
+path = "/long2"
+status = 301
+location = "/long3"
+
+[[route]]
+path = "/long3"
+status = 301
+location = "/long4"
+
+[[route]]
+path = "/long4"
+status = 301
+location = "/long5"
+
+[[route]]
+path = "/long5"
+status = 301
+location = "/long6"
+
+[[route]]
+path = "/long6"
+status = 301
+location = "/long7"
+
+[[route]]
+path = "/long7"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Ende der langen Kette</title></head><body><h1>Ende der langen Kette</h1></body></html>"
+
+[[route]]
+path = "/loop1"
+status = 301
+location = "/loop2"
+
+[[route]]
+path = "/loop2"
+status = 301
+location = "/loop1"
+
+[[route]]
+path = "/self"
+status = 301
+location = "/self"
+
+[[route]]
+path = "/qloop"
+status = 301
+location = "/qloop?x=1"
+
+[[route]]
+path = "/tail"
+status = 301
+location = "/loop1"
