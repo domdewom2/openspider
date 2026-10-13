@@ -1,0 +1,33 @@
+# Szenario tech/canonical-extract (TECH-010): Link-Element und Link-Header, rel-Token, Header-Varianten.
+
+[[route]]
+path = "/two-headers.html"
+[route.headers]
+Link = ["</a-one.html>; rel=\"canonical\"", "</a-two.html>; rel=\"canonical\""]
+
+[[route]]
+path = "/one-header-two-entries.html"
+[route.headers]
+Link = "</b-one.html>; rel=\"canonical\", </b-two.html>; rel=canonical"
+
+[[route]]
+path = "/header-unquoted.html"
+[route.headers]
+Link = "</c-one.html>; rel=canonical"
+
+[[route]]
+path = "/header-other-rel.html"
+[route.headers]
+Link = "</preload.css>; rel=\"preload\"; as=style"
+
+[[route]]
+path = "/header.pdf"
+content_type = "application/pdf"
+body = "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n"
+[route.headers]
+Link = "</target.html>; rel=\"canonical\""
+
+[[route]]
+path = "/plain.pdf"
+content_type = "application/pdf"
+body = "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n"

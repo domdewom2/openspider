@@ -1,0 +1,47 @@
+# Szenario tech/indexability (TECH-001, TECH-068): je Seite ein Grund der Pruefreihenfolge.
+# robots.txt sperrt /blocked.html; localhost ist fuer den Crawler extern (nur Statusbewertung).
+
+[[route]]
+path = "/moved"
+status = 301
+location = "/ok.html"
+
+[[route]]
+path = "/gone"
+status = 404
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>gone</title>\n</head>\n<body>\n<h1>gone</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/error"
+status = 503
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>error</title>\n</head>\n<body>\n<h1>error</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/aborted"
+abort_after_headers = true
+body_size = 4096
+
+[[route]]
+path = "/noindex.pdf"
+content_type = "application/pdf"
+body = "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n"
+[route.headers]
+X-Robots-Tag = "noindex"
+
+[[route]]
+path = "/refresh-header.html"
+[route.headers]
+Refresh = "0; url=/ok.html"
+
+[[route]]
+path = "/refresh-self-header.html"
+[route.headers]
+Refresh = "30; url=/refresh-self-header.html"
+
+[[route]]
+path = "/ext-gone"
+status = 404
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>ext-gone</title>\n</head>\n<body>\n<h1>ext-gone</h1>\n</body>\n</html>\n"

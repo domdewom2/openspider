@@ -1,0 +1,9 @@
+Address,Occurrences,Indexability Status,Canonical URL
+/,1,,/
+/a.html,3,Canonicalised,/t1.html
+/b.html,1,Canonicalised,/t1.html
+/c510.html,0,,
+/d500.html,0,,
+/t1.html,1,,/t1.html
+/t2.html,1,,/t2.html
+/t3.html,1,,/t3.html

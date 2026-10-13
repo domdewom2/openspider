@@ -1,0 +1,47 @@
+# Szenario tech/directives (TECH-050 bis TECH-056, TECH-064, TECH-066, TECH-068).
+# Die Seite /nofollow.html verlinkt /only-via-nofollow-page.html (sonst nirgends verlinkt).
+
+[[route]]
+path = "/noindex-header.html"
+[route.headers]
+X-Robots-Tag = "noindex"
+
+[[route]]
+path = "/xrobots-agent.html"
+[route.headers]
+X-Robots-Tag = "googlebot: noindex, otherbot: nofollow"
+
+[[route]]
+path = "/xrobots-two.html"
+[route.headers]
+X-Robots-Tag = ["nofollow", "noindex"]
+
+[[route]]
+path = "/noindex.pdf"
+content_type = "application/pdf"
+body = "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n"
+[route.headers]
+X-Robots-Tag = "noindex"
+
+[[route]]
+path = "/gone.html"
+status = 404
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>gone</title>\n</head>\n<body>\n<h1>gone</h1>\n</body>\n</html>\n"
+[route.headers]
+X-Robots-Tag = "noindex"
+
+[[route]]
+path = "/conflict-mixed.html"
+[route.headers]
+X-Robots-Tag = "noindex"
+
+[[route]]
+path = "/refresh-header.html"
+[route.headers]
+Refresh = "0; url=/ok.html"
+
+[[route]]
+path = "/refresh-self-header.html"
+[route.headers]
+Refresh = "30; url=/refresh-self-header.html"

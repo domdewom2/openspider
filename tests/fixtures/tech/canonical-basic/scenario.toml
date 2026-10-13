@@ -1,0 +1,61 @@
+# Szenario tech/canonical-basic (TECH-011 bis TECH-018, TECH-017 Auswahlregel).
+# Jede Seite traegt einen Canonical, der die jeweilige Filterzugehoerigkeit festlegt; Ziele mit eigenem
+# Self-Canonical, damit die Liste "Missing" nur none.html enthaelt. localhost ist fuer den Crawler extern.
+
+[[route]]
+path = "/slash.html/"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>slash.html/</title>\n<link rel=\"canonical\" href=\"/slash.html/\">\n</head>\n<body>\n<h1>slash.html/</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/none.pdf"
+content_type = "application/pdf"
+body = "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n"
+
+[[route]]
+path = "/header-only.html"
+[route.headers]
+Link = "</header-only.html>; rel=\"canonical\""
+
+[[route]]
+path = "/doc.pdf"
+content_type = "application/pdf"
+body = "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n"
+[route.headers]
+Link = "</target.html>; rel=\"canonical\""
+
+[[route]]
+path = "/multi-mixed-same.html"
+[route.headers]
+Link = "</target.html>; rel=canonical"
+
+[[route]]
+path = "/multi-conflict-mixed.html"
+[route.headers]
+Link = "</target-a.html>; rel=\"canonical\""
+
+[[route]]
+path = "/case/a"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/case/a</title>\n<link rel=\"canonical\" href=\"/case/a\">\n</head>\n<body>\n<h1>/case/a</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/case/A"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>/case/A</title>\n<link rel=\"canonical\" href=\"/case/A\">\n</head>\n<body>\n<h1>/case/A</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/header-over-head.html"
+[route.headers]
+Link = "</target-a.html>; rel=\"canonical\""
+
+[[route]]
+path = "/gone-404"
+status = 404
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>404</title>\n<link rel=\"canonical\" href=\"/target.html\">\n</head>\n<body>\n<h1>404</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/moved"
+status = 301
+location = "/target.html"

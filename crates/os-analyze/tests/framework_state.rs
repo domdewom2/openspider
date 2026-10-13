@@ -263,7 +263,8 @@ fn default_run_skips_deselected_and_marks_steps_without_data_basis() {
     );
     assert_eq!(states[&AnalysisStep::LinkMetrics], StepState::NotApplicable);
     // Die Stubs von P24/P25 und alle übrigen Schritte sind in M1 nicht anwendbar.
-    assert_eq!(states[&AnalysisStep::Canonicals], StepState::NotApplicable);
+    // M1-P24: der Schritt „Kanonisierungen“ ist umgesetzt und läuft.
+    assert_eq!(states[&AnalysisStep::Canonicals], StepState::Done);
     assert_eq!(states[&AnalysisStep::Sitemaps], StepState::NotApplicable);
     assert_eq!(states[&AnalysisStep::LinkScore], StepState::NotApplicable);
     // Reihenfolge der Ausgabe = AnalysisStep::ALL, unabhängig von der Abschlussreihenfolge.

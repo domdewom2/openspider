@@ -1,0 +1,12 @@
+Address,Occurrences,Indexability Status,Canonical URL
+/head-self-body-other.html,2,,/head-self-body-other.html
+/header-over-head.html,2,Canonicalised,/target-a.html
+/multi-case.html,2,Canonicalised,/case/a
+/multi-conflict-mixed.html,2,Canonicalised,/target-a.html
+/multi-conflict.html,2,Canonicalised,/target-a.html
+/multi-fragment.html,2,Canonicalised,/target.html
+/multi-invalid.html,2,Canonicalised,/target-a.html
+/multi-mixed-same.html,2,Canonicalised,/target.html
+/multi-pct.html,2,Canonicalised,/pct/a~b.html
+/multi-relabs.html,2,Canonicalised,/target.html
+/multi-same.html,2,Canonicalised,/target.html

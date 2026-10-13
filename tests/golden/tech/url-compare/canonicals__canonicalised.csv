@@ -1,0 +1,5 @@
+Address,Occurrences,Indexability Status,Canonical URL
+/u/base.html,1,Canonicalised,/other/base.html
+/u/pct-case.html,1,Canonicalised,/u/pct%c3%a4.html
+/u/query.html,1,Canonicalised,/u/query.html?x=1
+/u/trailing-slash.html,1,Canonicalised,/u/trailing-slash.html/
