@@ -6,20 +6,20 @@ Ziel: Funktionsparität mit Screaming Frog SEO Spider 24.3, aber schneller und s
 
 1. **Kern ohne UI.** Die gesamte Crawl- und Analyse-Logik lebt in Rust-Crates und ist über CLI und Tauri gleichermaßen nutzbar. Die UI ist eine reine Ansicht auf den Crawl-Speicher.
 2. **Disk-first.** Jeder Crawl ist eine SQLite-Datei (`*.ospider`, WAL-Modus). Kein „Memory vs. Database“-Modus nötig: SQLite + Page-Cache deckt beides ab. Millionen URLs ohne RAM-Explosion.
-3. **Streaming statt Vollbaum.** HTML wird mit einem Streaming-Parser verarbeitet; nur für XPath/Custom JS wird ein DOM aufgebaut.
+3. **Baum je Seite, Speicher begrenzt.** HTML wird je Seite mit html5ever (über `scraper`) in einen Baum geparst, weil die HTML5-Tree-Builder-Semantik (z. B. „liegt im `<head>`“, TECH-003) einen Baum verlangt (Planentscheidung K-09). Der Baum lebt nur während der Verarbeitung einer Seite; sein Speicher ist durch `limits.max_page_kb` begrenzt. Ergebnisse fließen sofort in die Crawl-Datei – es gibt nie einen crawlweiten DOM oder Seiteninhalt im RAM.
 4. **Deterministisch testbar.** Jede Funktion aus `docs/spec` hat eine lokale Testfixture und Golden-Outputs.
 
 ## Crates (Cargo-Workspace)
 
 | Crate | Aufgabe | Wichtige Abhängigkeiten |
 |---|---|---|
-| `os-model` | Gemeinsame Typen: `CrawlConfig`, `UrlRecord`, `Link`, `Issue`, IDs | serde |
-| `os-url` | URL-Normalisierung, Umschreibung, Include/Exclude, Segmente | url, regex |
-| `os-fetch` | HTTP-Client, robots.txt, Rate-Limit, Auth, Proxy, Cookies, HTTP/2 | reqwest (rustls), texting_robots, governor |
-| `os-parse` | HTML-Extraktion: Links, Meta, Headings, Canonicals, hreflang, Bilder, Directives, strukturierte Daten, Custom Search/Extraction | lol_html, scraper, sxd-xpath bzw. libxml, serde_json |
+| `os-model` | Gemeinsame Typen: `CrawlConfig`, Schreib-/Parse-Modell, IDs, `Clock`/`IdSource`, Indexierbarkeitsmodell (`indexability::evaluate`, reine Funktion) | serde, schemars |
+| `os-url` | URL-Normalisierung, Umschreibung, Include/Exclude, Segmente | url, fancy-regex, psl |
+| `os-fetch` | HTTP-Client, robots.txt, Rate-Limit, Auth, Proxy, Cookies, HTTP/2 | reqwest (rustls), cookie_store; **eigener RFC-9309-Parser** für robots.txt, **eigener Token-Bucket** für das Rate-Limit (gilt für alle Abrufe) |
+| `os-parse` | HTML-Extraktion: Links, Meta, Headings, Canonicals, hreflang, Bilder, Directives, Sitemaps, PDF-Metadaten; ab M2 strukturierte Daten, Custom Search/Extraction | scraper/html5ever (**Baum je Seite**, K-09), encoding_rs, quick-xml, lopdf, serde_json |
 | `os-render` | JS-Rendering über Chromium (CDP), Screenshots, gerendertes DOM | chromiumoxide |
 | `os-store` | Crawl-Datei (SQLite), Schema-Migrationen, Abfragen für UI-Tabellen (Paging, Filter, Sortierung) | rusqlite (bundled) |
-| `os-engine` | Frontier, Scheduler, Worker-Pool, Pause/Resume, Modi (Spider/Liste/SERP/Vergleich) | tokio |
+| `os-engine` | Frontier, Scheduler, Worker-Pool, Pause/Resume, Modi (Spider/Liste/SERP/Vergleich); **ohne Abhängigkeit auf `os-analyze`** – Indexierbarkeit aus `os-model`, die Crawl-Analyse am Ende löst der Aufrufer über einen Hook aus | tokio |
 | `os-analyze` | Filterlogik je Tab, Issues, Nachlauf-Analyse (Link Score, Duplikate per SimHash/MinHash, Orphans, Ketten, hreflang-Rücklinks, Sitemaps) | |
 | `os-export` | CSV, XLSX, Bulk-Exporte, Reports, Sitemap-Generator | csv, rust_xlsxwriter |
 | `os-ai` | KI-Anbieter (Claude, OpenAI Responses + Decisions API, OpenRouter, Ollama), Embeddings, Decision-Engine (predicate/choice/score), Batch, Cache, Kostenschätzung/Budget, „Frag den Crawl“ (read-only SQL) | reqwest, keyring |
@@ -27,6 +27,7 @@ Ziel: Funktionsparität mit Screaming Frog SEO Spider 24.3, aber schneller und s
 | `os-mcp` | MCP-Server (STDIO + Streamable HTTP auf Loopback mit Token), Werkzeugklassen read/crawl/write/cost, Prompts; Skill + Claude-Code-Plugin unter `integrations/` | rmcp |
 | `os-cli` | `openspider` Binary: headless Crawl, Export, `openspider mcp`, Scheduling-Ziel | clap |
 | `os-testsite` | Lokaler Fixture-Server (axum) mit Szenarien aus `tests/fixtures`; synthetische Sites ohne Dateien (`synthetic:n=1000000,links=30` oder `[synthetic]` in `scenario.toml`), optionales Request-Log | axum |
+| `os-parity` | Paritätsabgleich gegen Referenz-Exporte (`diff`, `run`) und Spec-Abdeckung aus Tags und Testergebnissen (`coverage`) | csv, toml, serde |
 | `os-loadtest` | Lasttest-Runner (Binary, PERF-009): `os-loadtest run --scenario perf-001 --size small` bzw. `--size large`, schreibt `target/loadtest/report.json`; Trait `CrawlerUnderTest`, den `os-engine` später implementiert | os-testsite, clap |
 
 ## Desktop-App
@@ -65,6 +66,8 @@ Config → os-engine ─┬→ os-fetch ──→ os-parse ──→ os-store (u
                                                        ├→ os-export / os-cli
                                                        └→ Tauri-Commands → UI
 ```
+
+Abhängigkeitsrichtung: `os-engine` kennt `os-analyze` nicht. Nach Crawl-Ende ruft die Engine nur einen Hook (`EngineDeps.on_finished`); CLI bzw. App starten darüber die Crawl-Analyse (`os_analyze::analysis::run_after_crawl`). Verbindliche Crate-Abhängigkeiten für M1: `docs/plan/M1.md` Abschnitt 3.2.
 
 ## Qualitätssicherung
 

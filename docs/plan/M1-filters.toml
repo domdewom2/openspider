@@ -1,0 +1,261 @@
+# Kanonische Filter-Kennungen M1 (Anhang A zu docs/plan/M1.md)
+#
+# Maßgeblich für:
+#   M1-P00b  tabs::all()-Platzhalter (je Tab eine TabDef mit genau diesen FilterDef.id, Prädikat "0" bzw. Population)
+#   M1-P12   Issue-Katalog: jede Katalog-ID (tab + filter) MUSS hier stehen; jeder Eintrag mit issue = true MUSS im Katalog stehen
+#   M1-P14   Namensauflösung "Tab:Filter" (case-insensitiv, K-08)
+#   M1-P20…P25 FilterDef.id exakt so übernehmen (keine eigenen Schreibweisen)
+#   M1-P16/P17/P26/P27 Export-, Report-, CLI- und MCP-Namen
+#
+# Änderungen nur über den Orchestrator (Rückmeldung „Schnittstellenbedarf“), nie in einem Paket-Worktree.
+#
+# Regeln:
+#   - Schreibweise nach 02/03 (K-08): Anzeige und Export „Client Error (4XX)“; Namensvergleich case-insensitiv.
+#   - Schwellen als Platzhalter {config.pfad}; die Anzeige ersetzt sie durch den aktuellen Wert (ONPAGE-002).
+#     default_label = Anzeige mit Standardwerten aus M1.md 3.4.
+#   - Reihenfolge der Tabs = UI-Reihenfolge (tabs::all()); Reihenfolge der Filter = Anzeige-Reihenfolge.
+#   - kind: "live" (während/nach dem Crawl per SQL) | "post_crawl:<AnalysisStep>" (Nachlauf, CRAWL-141/TECH-005).
+#   - issue = true: Befund-Filter mit Eintrag im Issue-Katalog (UI-064, Kategorien Response Codes … Links, Sitemaps).
+#   - requires: Konfigurationsschlüssel, die true sein müssen (sonst Zustand NeedsConfig, ONPAGE-007).
+#   - Nicht in M1 (P1/P2, siehe M1.md 7.2) und daher hier NICHT aufgeführt, z. B. Internal Flash/Other,
+#     Response Codes Blocked Resource/Redirection (JavaScript)/Redirection (HTTP Refresh), Pixel-Filter,
+#     Outside <head>, Meta Keywords. Die zugehörigen OUT-050-Exporte liefern nur die Kopfzeile (K-14).
+
+schema = 1
+
+[[tab]]
+id = "Internal"
+module = "internal"
+package = "M1-P20"
+filters = [
+  { id = "All", spec = "ONPAGE-001", kind = "live" },
+  { id = "HTML", spec = "ONPAGE-021", kind = "live" },
+  { id = "JavaScript", spec = "ONPAGE-022", kind = "live" },
+  { id = "CSS", spec = "ONPAGE-022", kind = "live" },
+  { id = "Images", spec = "ONPAGE-022", kind = "live" },
+  { id = "PDF", spec = "ONPAGE-022", kind = "live" },
+  { id = "Unknown", spec = "ONPAGE-024", kind = "live" },
+]
+
+[[tab]]
+id = "External"
+module = "external"
+package = "M1-P20"
+filters = [
+  { id = "All", spec = "ONPAGE-025", kind = "live" },
+  { id = "HTML", spec = "ONPAGE-026", kind = "live" },
+  { id = "JavaScript", spec = "ONPAGE-026", kind = "live" },
+  { id = "CSS", spec = "ONPAGE-026", kind = "live" },
+  { id = "Images", spec = "ONPAGE-026", kind = "live" },
+  { id = "PDF", spec = "ONPAGE-026", kind = "live" },
+  { id = "Flash", spec = "ONPAGE-026", kind = "live" },
+  { id = "Other", spec = "ONPAGE-026", kind = "live" },
+  { id = "Unknown", spec = "ONPAGE-026", kind = "live" },
+]
+
+[[tab]]
+id = "Security"
+module = "security"
+package = "M1-P20"
+filters = [
+  { id = "All", spec = "ONPAGE-001", kind = "live" },
+  { id = "HTTP URLs", spec = "ONPAGE-031", kind = "live", issue = true },
+  { id = "HTTPS URLs", spec = "ONPAGE-032", kind = "live" },
+]
+
+# Response Codes: jede Statusklasse in drei Sichten (ONPAGE-051): ohne Präfix = intern + extern,
+# „Internal …“, „External …“; Vereinigung disjunkt. „Internal All“/„External All“ sind die Sicht-Grundmengen
+# (OS-Festlegung für die Namensauflösung, z. B. `Response Codes:Internal All`).
+# „Other“ = Codes außerhalb 100–599 (CRAWL-012, OS-Erweiterung), nur sichtbar bei Treffern.
+[[tab]]
+id = "Response Codes"
+module = "response_codes"
+package = "M1-P21"
+filters = [
+  { id = "All", spec = "ONPAGE-051", kind = "live" },
+  { id = "Blocked by Robots.txt", spec = "ONPAGE-052", kind = "live" },
+  { id = "No Response", spec = "ONPAGE-054", kind = "live" },
+  { id = "Success (2XX)", spec = "ONPAGE-055", kind = "live" },
+  { id = "Redirection (3XX)", spec = "ONPAGE-056", kind = "live" },
+  { id = "Redirection (Meta Refresh)", spec = "ONPAGE-058", kind = "live" },
+  { id = "Redirect Chain", spec = "ONPAGE-060", kind = "live" },
+  { id = "Redirect Loop", spec = "ONPAGE-061", kind = "live" },
+  { id = "Client Error (4XX)", spec = "ONPAGE-062", kind = "live" },
+  { id = "Server Error (5XX)", spec = "ONPAGE-063", kind = "live" },
+  { id = "Other", spec = "CRAWL-012", kind = "live" },
+  { id = "Internal All", spec = "ONPAGE-051", kind = "live" },
+  { id = "Internal Blocked by Robots.txt", spec = "ONPAGE-052", kind = "live", issue = true },
+  { id = "Internal No Response", spec = "ONPAGE-054", kind = "live", issue = true },
+  { id = "Internal Success (2XX)", spec = "ONPAGE-055", kind = "live" },
+  { id = "Internal Redirection (3XX)", spec = "ONPAGE-056", kind = "live", issue = true },
+  { id = "Internal Redirection (Meta Refresh)", spec = "ONPAGE-058", kind = "live", issue = true },
+  { id = "Internal Redirect Chain", spec = "ONPAGE-060", kind = "live", issue = true },
+  { id = "Internal Redirect Loop", spec = "ONPAGE-061", kind = "live", issue = true },
+  { id = "Internal Client Error (4XX)", spec = "ONPAGE-062", kind = "live", issue = true },
+  { id = "Internal Server Error (5XX)", spec = "ONPAGE-063", kind = "live", issue = true },
+  { id = "Internal Other", spec = "CRAWL-012", kind = "live" },
+  { id = "External All", spec = "ONPAGE-051", kind = "live" },
+  { id = "External Blocked by Robots.txt", spec = "ONPAGE-052", kind = "live" },
+  { id = "External No Response", spec = "ONPAGE-054", kind = "live", issue = true },
+  { id = "External Success (2XX)", spec = "ONPAGE-055", kind = "live" },
+  { id = "External Redirection (3XX)", spec = "ONPAGE-056", kind = "live" },
+  { id = "External Redirection (Meta Refresh)", spec = "ONPAGE-058", kind = "live" },
+  { id = "External Redirect Chain", spec = "ONPAGE-060", kind = "live" },
+  { id = "External Redirect Loop", spec = "ONPAGE-061", kind = "live" },
+  { id = "External Client Error (4XX)", spec = "ONPAGE-062", kind = "live", issue = true },
+  { id = "External Server Error (5XX)", spec = "ONPAGE-063", kind = "live", issue = true },
+  { id = "External Other", spec = "CRAWL-012", kind = "live" },
+]
+
+[[tab]]
+id = "URL"
+module = "url"
+package = "M1-P21"
+filters = [
+  { id = "All", spec = "ONPAGE-070", kind = "live" },
+  { id = "Non ASCII Characters", spec = "ONPAGE-071", kind = "live", issue = true },
+  { id = "Underscores", spec = "ONPAGE-072", kind = "live", issue = true },
+  { id = "Uppercase", spec = "ONPAGE-073", kind = "live", issue = true },
+  { id = "Multiple Slashes", spec = "ONPAGE-074", kind = "live", issue = true },
+  { id = "Contains A Space", spec = "ONPAGE-076", kind = "live", issue = true },
+  { id = "Parameters", spec = "ONPAGE-078", kind = "live", issue = true },
+  { id = "Over {url.max_chars} Characters", default_label = "Over 115 Characters", spec = "ONPAGE-081", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "Page Titles"
+module = "page_titles"
+package = "M1-P22"
+filters = [
+  { id = "All", spec = "ONPAGE-009", kind = "live" },
+  { id = "Missing", spec = "ONPAGE-091", kind = "live", issue = true },
+  { id = "Duplicate", spec = "ONPAGE-092", kind = "live", issue = true },
+  { id = "Over {title.max_chars} Characters", default_label = "Over 60 Characters", spec = "ONPAGE-093", kind = "live", issue = true },
+  { id = "Below {title.min_chars} Characters", default_label = "Below 30 Characters", spec = "ONPAGE-094", kind = "live", issue = true },
+  { id = "Multiple", spec = "ONPAGE-098", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "Meta Description"
+module = "meta_description"
+package = "M1-P22"
+filters = [
+  { id = "All", spec = "ONPAGE-009", kind = "live" },
+  { id = "Missing", spec = "ONPAGE-101", kind = "live", issue = true },
+  { id = "Duplicate", spec = "ONPAGE-102", kind = "live", issue = true },
+  { id = "Over {meta_description.max_chars} Characters", default_label = "Over 155 Characters", spec = "ONPAGE-103", kind = "live", issue = true },
+  { id = "Below {meta_description.min_chars} Characters", default_label = "Below 70 Characters", spec = "ONPAGE-104", kind = "live", issue = true },
+  { id = "Multiple", spec = "ONPAGE-107", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "H1"
+module = "h1"
+package = "M1-P22"
+filters = [
+  { id = "All", spec = "ONPAGE-009", kind = "live" },
+  { id = "Missing", spec = "ONPAGE-121", kind = "live", issue = true },
+  { id = "Duplicate", spec = "ONPAGE-122", kind = "live", issue = true },
+  { id = "Over {h1.max_chars} Characters", default_label = "Over 70 Characters", spec = "ONPAGE-123", kind = "live", issue = true },
+  { id = "Multiple", spec = "ONPAGE-124", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "H2"
+module = "h2"
+package = "M1-P22"
+filters = [
+  { id = "All", spec = "ONPAGE-009", kind = "live" },
+  { id = "Missing", spec = "ONPAGE-131", kind = "live", issue = true },
+  { id = "Duplicate", spec = "ONPAGE-132", kind = "live", issue = true },
+  { id = "Over {h2.max_chars} Characters", default_label = "Over 70 Characters", spec = "ONPAGE-133", kind = "live", issue = true },
+  { id = "Multiple", spec = "ONPAGE-134", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "Content"
+module = "content"
+package = "M1-P23"
+filters = [
+  { id = "All", spec = "ONPAGE-142", kind = "live" },
+  { id = "Exact Duplicates", spec = "ONPAGE-143", kind = "live", issue = true, requires = ["extraction.hash", "duplicates.exact_enabled"] },
+  { id = "Low Content Pages", spec = "ONPAGE-146", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "Images"
+module = "images"
+package = "M1-P23"
+filters = [
+  { id = "All", spec = "ONPAGE-171", kind = "live" },
+  { id = "Over {image.max_kb} KB", default_label = "Over 100 KB", spec = "ONPAGE-174", kind = "live", issue = true },
+  { id = "Missing Alt Text", spec = "ONPAGE-175", kind = "live", issue = true },
+  { id = "Missing Alt Attribute", spec = "ONPAGE-176", kind = "live", issue = true },
+  { id = "Alt Text Over {image.alt_max_chars} Characters", default_label = "Alt Text Over 100 Characters", spec = "ONPAGE-177", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "Canonicals"
+module = "canonicals"
+package = "M1-P24"
+filters = [
+  { id = "All", spec = "TECH-011", kind = "live" },
+  { id = "Contains Canonical", spec = "TECH-012", kind = "live" },
+  { id = "Self Referencing", spec = "TECH-013", kind = "live" },
+  { id = "Canonicalised", spec = "TECH-014", kind = "live", issue = true },
+  { id = "Missing", spec = "TECH-015", kind = "live", issue = true },
+  { id = "Multiple", spec = "TECH-016", kind = "live", issue = true },
+  { id = "Multiple Conflicting", spec = "TECH-017", kind = "live", issue = true },
+  { id = "Non-Indexable Canonical", spec = "TECH-018", kind = "post_crawl:Canonicals", issue = true },
+]
+
+[[tab]]
+id = "Directives"
+module = "directives"
+package = "M1-P24"
+filters = [
+  { id = "All", spec = "TECH-051", kind = "live" },
+  { id = "Index", spec = "TECH-052", kind = "live" },
+  { id = "Noindex", spec = "TECH-053", kind = "live", issue = true },
+  { id = "Follow", spec = "TECH-054", kind = "live" },
+  { id = "Nofollow", spec = "TECH-055", kind = "live", issue = true },
+  { id = "None", spec = "TECH-056", kind = "live", issue = true },
+  { id = "Refresh", spec = "TECH-064", kind = "live" },
+]
+
+[[tab]]
+id = "Hreflang"
+module = "hreflang"
+package = "M1-P25"
+filters = [
+  { id = "All", spec = "TECH-071", kind = "live" },
+  { id = "Contains Hreflang", spec = "TECH-073", kind = "live" },
+  { id = "Non-200 Hreflang URLs", spec = "TECH-074", kind = "live", issue = true },
+  { id = "Missing Return Links", spec = "TECH-076", kind = "live", issue = true },
+  { id = "Incorrect Language & Region Codes", spec = "TECH-080", kind = "live", issue = true },
+  { id = "Missing", spec = "TECH-085", kind = "live" },
+]
+
+[[tab]]
+id = "Links"
+module = "links"
+package = "M1-P25"
+filters = [
+  { id = "All", spec = "TECH-130", kind = "live" },
+  { id = "Pages With High Crawl Depth", spec = "TECH-132", kind = "live", issue = true },
+  { id = "Pages Without Internal Outlinks", spec = "TECH-133", kind = "live", issue = true },
+  { id = "Internal Nofollow Outlinks", spec = "TECH-134", kind = "live", issue = true },
+  { id = "Internal Outlinks With No Anchor Text", spec = "TECH-135", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "Sitemaps"
+module = "sitemaps"
+package = "M1-P25"
+filters = [
+  { id = "All", spec = "TECH-211", kind = "live" },
+  { id = "URLs In Sitemap", spec = "TECH-212", kind = "post_crawl:Sitemaps" },
+  { id = "URLs Not In Sitemap", spec = "TECH-213", kind = "post_crawl:Sitemaps", issue = true },
+  { id = "Orphan URLs", spec = "TECH-214", kind = "post_crawl:Sitemaps", issue = true },
+  { id = "Non-Indexable URLs In Sitemap", spec = "TECH-215", kind = "post_crawl:Sitemaps", issue = true },
+]
