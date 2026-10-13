@@ -1,0 +1,308 @@
+# OpenSpider – Issue texts (English). Written from scratch for OpenSpider (clean room, no reference texts).
+# Keys: issues.<id>.what | why | fix. Placeholders: {max}, {min}, {unit}, {threshold}
+# (resolved from the crawl configuration, see CatalogEntry.text_params).
+
+[issues.security-http-urls]
+what = "The URL is delivered over plain, unencrypted HTTP instead of HTTPS."
+why = "Browsers label unencrypted pages as not secure, anyone on the network path can read or alter the traffic, and search engines prefer the encrypted version of a page."
+fix = "Install a valid certificate, serve the whole site over HTTPS and send every HTTP address to its HTTPS counterpart with a permanent redirect. Then update internal links, canonical elements and sitemaps to the HTTPS addresses."
+
+[issues.response-codes-internal-blocked-by-robots-txt]
+what = "The robots.txt file of the site forbids crawling this internal URL, so its content was not fetched."
+why = "Blocked pages cannot be read by crawlers. They can still show up in search results as bare addresses without a description, and links pointing to them pass on no readable context."
+fix = "Check whether the block is intended. If the page should be found, remove or narrow the matching Disallow rule in robots.txt. If it should stay out of search results, allow crawling and use a noindex directive instead."
+
+[issues.response-codes-internal-no-response]
+what = "The server did not answer for this internal URL, for example because of a timeout, a refused connection or a failed DNS lookup."
+why = "Visitors and crawlers cannot reach the page at all. Repeated failures lead to the URL being dropped from the index and waste crawl capacity."
+fix = "Check the reason recorded for the URL, such as timeout or connection error. Verify DNS records, server availability and firewall rules, and make sure the address is spelled correctly in the links that point to it. Add capacity if the host is overloaded."
+
+[issues.response-codes-internal-redirection-3xx]
+what = "The internal URL answers with a redirect to another address instead of delivering content itself."
+why = "One redirect is normal, but every internal link that points to a redirecting address costs an extra request and slightly delays visitors and crawlers."
+fix = "Update internal links, canonical elements and sitemap entries so that they point straight at the final target address. Keep the redirect itself in place for external links and bookmarks."
+
+[issues.response-codes-internal-redirection-meta-refresh]
+what = "The page tells the browser to move on to another address after loading, using a meta refresh instruction in its HTML."
+why = "Meta refresh redirects are slower than server redirects, can flash the old page before the switch and are treated less reliably by search engines than HTTP redirects."
+fix = "Replace the meta refresh with a permanent server-side redirect (HTTP 301 or 308) from the old address to the target, and point internal links at the target address."
+
+[issues.response-codes-internal-redirect-chain]
+what = "Following the redirects of this internal URL leads through several hops before the final address is reached."
+why = "Each hop adds waiting time, long chains may be abandoned by crawlers before the target is reached, and signals such as link value can be lost along the way."
+fix = "Send the first address of the chain straight to the final destination with a single redirect and correct internal links to use the final address. Review the redirect rules so that no new hops are stacked on top."
+
+[issues.response-codes-internal-redirect-loop]
+what = "The redirects of this internal URL lead back to an address that was already visited, so they never reach a final page."
+why = "Neither browsers nor crawlers can open the page. Visitors see an error and the content cannot be indexed."
+fix = "Trace the redirect rules involved, for example conflicting rules for www, trailing slash or HTTPS, and remove the rule that sends the request back. Test the corrected address until it ends on a page with status 200."
+
+[issues.response-codes-internal-client-error-4xx]
+what = "The internal URL answers with a client error status in the 4xx range, such as 404 not found or 410 gone."
+why = "Visitors land on an error page, links to the address lead nowhere and search engines drop the page from their index. Many broken links also signal poor site maintenance."
+fix = "Restore the page if it was removed by mistake. If it is gone for good, redirect the address to the closest replacement page and remove or update every internal link that still points to it."
+
+[issues.response-codes-internal-server-error-5xx]
+what = "The internal URL answers with a server error status in the 5xx range, so the server failed to deliver the page."
+why = "Visitors see an error, and crawlers that meet repeated server errors visit less often and may remove the page from the index until it works again."
+fix = "Look into the server logs for the time of the request to find the cause, for example a faulty script, a database problem or an overloaded host. Fix it and recrawl the URL to confirm that it answers with status 200."
+
+[issues.response-codes-external-no-response]
+what = "A linked external URL did not answer, for example because of a timeout or a failed DNS lookup."
+why = "Links to unreachable sites frustrate visitors and make a page look neglected. The cause lies outside your site, but you decide whether the link stays."
+fix = "Open the link in a browser to see whether the target is only down for a moment. If it stays unreachable, remove the link or replace it with a working source."
+
+[issues.response-codes-external-client-error-4xx]
+what = "A linked external URL answers with a client error status such as 404 not found."
+why = "Visitors who follow the link reach an error page, which weakens the trust in your content. Many dead outgoing links can also make pages look outdated."
+fix = "Find the new location of the target or a comparable source and update the link. If nothing suitable exists, remove the link and adjust the sentence around it."
+
+[issues.response-codes-external-server-error-5xx]
+what = "A linked external URL answers with a server error status in the 5xx range."
+why = "The target site currently fails to deliver the page, so visitors who follow the link see an error. The problem may be temporary or permanent."
+fix = "Recrawl later to see whether the error disappears. If it persists, replace the link with another source or remove it."
+
+[issues.url-non-ascii-characters]
+what = "The URL contains characters outside the basic ASCII range, such as umlauts or accented letters."
+why = "Such characters are sent in an encoded form, which makes addresses harder to read, type and share. Some tools and older systems handle them inconsistently."
+fix = "Use plain lowercase letters, digits and hyphens in new addresses. Change an existing address only if the benefit is clear, and then redirect the old URL permanently to the new one."
+
+[issues.url-underscores]
+what = "The URL separates words with underscores instead of hyphens."
+why = "Search engines read hyphens as word separators, while underscores may join words into one long term, which makes it harder to match the address to a search query."
+fix = "Use hyphens in new URLs. Rename an existing address only when it is worth the effort, redirect the old address permanently to the new one and update internal links."
+
+[issues.url-uppercase]
+what = "The URL contains uppercase letters in its path or query."
+why = "Paths are case sensitive on many servers, so the same page can be reached under several spellings. This creates duplicates and mistyped links."
+fix = "Use lowercase addresses throughout. Redirect uppercase variants permanently to the lowercase version and make sure internal links, canonical elements and sitemaps use the lowercase form."
+
+[issues.url-multiple-slashes]
+what = "The URL contains two or more slashes in a row inside its path."
+why = "Servers may treat such an address as a different page than the clean one, which leads to duplicate content and errors. It usually stems from a mistake when links are assembled."
+fix = "Find the template or link builder that joins the path parts and remove the surplus slash. Redirect the faulty address permanently to the clean version and correct internal links."
+
+[issues.url-contains-a-space]
+what = "The URL contains a space character, which shows up as %20 in the encoded form."
+why = "Spaces break links in emails and text editors, and tools may cut the address off at the space. Encoded addresses are also hard to read."
+fix = "Replace spaces with hyphens in file and folder names and redirect the old address permanently to the new one. Update every internal link that uses the old spelling."
+
+[issues.url-parameters]
+what = "The URL contains query parameters after a question mark."
+why = "Parameters often create many addresses for the same content, for example through sorting, filters or session data. This dilutes signals and wastes crawl capacity."
+fix = "Check which parameters really change the content. For the others, remove them from internal links or point the canonical element to the clean address. Keep only the parameters that are needed."
+
+[issues.url-over-max-chars]
+what = "The address of the page is longer than {max} characters, which is the configured limit for URL length."
+why = "Very long addresses are hard to read and share, get cut off in search results and often point to deep folder structures or unnecessary parameters."
+fix = "Shorten the address to at most {max} characters by removing filler words, repeated folder names and unneeded parameters. If you change an established address, redirect the old one permanently to the new one."
+
+[issues.page-titles-missing]
+what = "The page has no title element, or the title is empty."
+why = "The title is the main headline of a page in search results and in browser tabs. Without one, search engines make up their own, which rarely matches your intent."
+fix = "Add a unique, descriptive title in the head of the page that names the topic in plain words. Put the most important terms first and stay within the recommended length."
+
+[issues.page-titles-duplicate]
+what = "Several pages use exactly the same title."
+why = "Identical titles make pages hard to tell apart in search results and browser tabs, and they hint that the pages compete for the same topic."
+fix = "Give every page a title that reflects its own content. If the pages really are the same, consolidate them or point the canonical element to the preferred version."
+
+[issues.page-titles-over-max-chars]
+what = "The page title is longer than {max} characters, which is the configured limit for titles."
+why = "Search engines show only the first part of a long title and cut off the rest, so key words at the end may never be seen."
+fix = "Shorten the title to at most {max} characters and place the most important terms at the beginning. Move secondary wording such as the brand name to the end or drop it."
+
+[issues.page-titles-below-min-chars]
+what = "The page title is shorter than {min} characters, which is the configured minimum for titles."
+why = "A very short title leaves room unused to describe the page and to include terms that searchers might look for."
+fix = "Expand the title to at least {min} characters with a precise description of the page content and its main topic. Avoid padding it with repeated words."
+
+[issues.page-titles-multiple]
+what = "The page contains more than one title element."
+why = "Only one title can be used, so browsers and search engines have to choose, and the one they pick may not be the one you intended."
+fix = "Remove the surplus title elements so that exactly one remains in the head. Check plugins, templates and scripts that may insert a second title."
+
+[issues.meta-description-missing]
+what = "The page has no meta description, or the description is empty."
+why = "Without a description, search engines build a snippet from the page text. That works, but you have less control over how the page is presented to searchers."
+fix = "Write a short, unique summary of the page that invites a click and add it as a meta description in the head. Stay within the recommended length."
+
+[issues.meta-description-duplicate]
+what = "Several pages carry the same meta description."
+why = "Identical descriptions make search results look repetitive and do not help searchers to pick the right page."
+fix = "Write a unique description for each important page that reflects its content. For many similar pages, build descriptions from distinguishing details instead of reusing one text."
+
+[issues.meta-description-over-max-chars]
+what = "The meta description is longer than {max} characters."
+why = "Search engines cut long descriptions off, so the closing words and any call to action may not be displayed."
+fix = "Shorten the description to at most {max} characters and put the key message first."
+
+[issues.meta-description-below-min-chars]
+what = "The meta description is shorter than {min} characters."
+why = "A very short description does not use the space available in search results to explain what the page offers."
+fix = "Expand the description to at least {min} characters. Summarise the content of the page and add a reason to click."
+
+[issues.meta-description-multiple]
+what = "The page contains more than one meta description element."
+why = "Search engines will use only one of them and you cannot be sure which. The contradicting entries usually come from different plugins or templates."
+fix = "Keep a single meta description in the head and remove the others. Check the templates, plugins and scripts that add the element."
+
+[issues.h1-missing]
+what = "The page has no first-level heading, or the heading is empty."
+why = "The main heading tells visitors and search engines what the page is about. Without it, page structure and accessibility suffer."
+fix = "Add one clear h1 heading that states the topic of the page and reflects the main wording of the title. Use heading elements for structure, not only for styling."
+
+[issues.h1-duplicate]
+what = "Several pages use the same first-level heading."
+why = "Identical main headings make pages appear to cover the same topic and make navigating by headings less useful."
+fix = "Give each page a main heading that describes its own content. Merge pages that truly duplicate each other."
+
+[issues.h1-over-max-chars]
+what = "The first-level heading is longer than {max} characters."
+why = "Long headings are harder to scan, wrap over several lines on small screens and dilute the topic of the page."
+fix = "Shorten the heading to at most {max} characters, keep the main term and move details into the text below."
+
+[issues.h1-multiple]
+what = "The page contains more than one first-level heading."
+why = "Several main headings blur the topic of the page. Assistive tools and search engines may find it harder to determine what the page is mainly about."
+fix = "Keep a single h1 for the main topic and turn the other headings into h2 or lower levels. Check templates that add headings, for example in logos or widgets."
+
+[issues.h2-missing]
+what = "The page has no second-level heading, or all of them are empty."
+why = "Without subheadings, longer texts are harder to scan, and search engines get fewer clues about the sections of the page. For very short pages this can be fine."
+fix = "Break longer content into sections and give each a short h2 heading that names its subject. Leave short pages without subheadings if they do not need any."
+
+[issues.h2-duplicate]
+what = "The first second-level heading of the page is identical to that of other pages."
+why = "Repeated subheadings across pages suggest repeated content and make it harder to tell sections apart when navigating by headings."
+fix = "Reword the subheadings so that they describe what is specific to each page. If whole sections are repeated, consider moving them to a shared page and linking to it."
+
+[issues.h2-over-max-chars]
+what = "The first second-level heading is longer than {max} characters."
+why = "Long subheadings are harder to scan and wrap over several lines on small screens."
+fix = "Shorten the subheading to at most {max} characters and move explanations into the paragraph below it."
+
+[issues.h2-multiple]
+what = "The page contains more than one second-level heading."
+why = "Several subheadings are normal in a well-organised text. The filter is a hint for a quick review, for example to spot pages whose outline has grown too long or fragmented."
+fix = "Review whether the subheadings form a logical outline. Merge sections that are too small and split topics that grew too large. No action is needed if the structure is intentional."
+
+[issues.content-exact-duplicates]
+what = "The page is byte for byte identical to at least one other page, based on the content hash."
+why = "Search engines pick only one of identical pages for the index, and which one they pick may not be your preferred address. Link value is split between the copies."
+fix = "Decide which address should be the original. Redirect the copies to it permanently, or point their canonical element to the original. Remove template or session differences that create the copies."
+
+[issues.content-low-content-pages]
+what = "The page has fewer than {threshold} words of content."
+why = "Very short pages rarely answer a search query in depth and can be judged as thin content, which may weaken how the whole site is rated."
+fix = "Extend the page with content that is really useful to visitors, or merge it into a related page. Pages that are short on purpose, such as contact pages, can stay as they are."
+
+[issues.images-over-max-kb]
+what = "The image file is larger than {max} KB, which is the configured limit for image size."
+why = "Large images slow down page loading, which hurts visitors on slow connections and can weaken how the page performs in search."
+fix = "Compress the image, use a modern format such as WebP or AVIF and deliver it at the size it is displayed. Check whether the image is needed at all."
+
+[issues.images-missing-alt-text]
+what = "The image is used on a page with an alt attribute that is present but empty."
+why = "Screen reader users and search engines learn what an image shows only from its alternative text. Decorative images are an exception, informative images need a description."
+fix = "Write a short description of what the image shows and why it is there, and put it into the alt attribute. Keep the alt attribute empty only for purely decorative images."
+
+[issues.images-missing-alt-attribute]
+what = "The image is used on a page without any alt attribute."
+why = "Without an alt attribute, screen readers may read out the file name instead, and search engines get no description of the image."
+fix = "Add an alt attribute to every image element. Describe informative images in a few words and use an empty alt attribute for purely decorative ones."
+
+[issues.images-alt-text-over-max-chars]
+what = "The alternative text of the image is longer than {max} characters."
+why = "Long alternative texts are tedious for screen reader users and are of little additional use for search engines."
+fix = "Shorten the alternative text to at most {max} characters and describe only what matters. Move longer explanations into the visible text near the image."
+
+[issues.canonicals-canonicalised]
+what = "The page names a different URL as its canonical address."
+why = "The page itself will normally not be indexed, because the other address stands in for it. That is intended for duplicates, but a mistake here removes a page from search."
+fix = "Check that the named address is really the preferred version and that it answers with status 200. If the page should be found under its own address, change the canonical element to point to itself."
+
+[issues.canonicals-missing]
+what = "The page does not name a canonical address."
+why = "Without a canonical hint, search engines choose the preferred version of the page on their own, and signals of duplicate variants may be spread over several addresses."
+fix = "Add a canonical element to the head that points to the preferred address of the page. For pages without duplicates, a self-referencing canonical is a good default."
+
+[issues.canonicals-multiple]
+what = "The page names more than one canonical address."
+why = "Search engines may ignore all of them when they cannot tell which one is meant. Even identical entries are error-prone, because later edits can make them diverge."
+fix = "Keep one canonical element and remove the others. Check whether the page template, a plugin and the HTTP headers each add one."
+
+[issues.canonicals-multiple-conflicting]
+what = "The page names several canonical addresses that differ from each other."
+why = "Contradicting hints cannot all be followed, so search engines will probably ignore them and choose the preferred version themselves, which may be an address you did not intend."
+fix = "Decide on one preferred address and remove the other canonical entries. Look at the HTML head as well as the HTTP headers, and at plugins that insert canonical elements."
+
+[issues.canonicals-non-indexable-canonical]
+what = "The canonical address of the page points to a URL that cannot be indexed, for example one with an error status, a redirect or a noindex directive."
+why = "A canonical hint to an unusable target runs into the void: search engines ignore it, and the page may be treated as a duplicate or fall out of the index."
+fix = "Point the canonical element to an address that answers with status 200, is not blocked and can be indexed. If the target was moved, update the canonical element to the new location."
+
+[issues.directives-noindex]
+what = "The page carries a noindex directive in the meta robots tag or the X-Robots-Tag header."
+why = "Noindex keeps the page out of search results. That is intended for internal or thin pages, but set by mistake it makes an important page invisible."
+fix = "Check whether the directive is intended. If the page should appear in search, remove the noindex directive from the template, plugin setting or server header, and recrawl to confirm."
+
+[issues.directives-nofollow]
+what = "The page carries a nofollow directive in the meta robots tag or the X-Robots-Tag header."
+why = "Nofollow asks search engines not to follow any link on the page, so link value is not passed on and linked pages may be found later or not at all."
+fix = "Check whether the directive is intended. If the links on the page should be followed, remove nofollow from the page directive. Use nofollow on single links only where it is needed."
+
+[issues.directives-none]
+what = "The page carries the none directive, which stands for noindex and nofollow together."
+why = "The page is kept out of search results and its links are not followed. Set by mistake, this hides the page and everything that is only reachable through it."
+fix = "Check whether both effects are intended. If not, replace the directive with the one you really want, or remove it, and recrawl to confirm the change."
+
+[issues.hreflang-non-200-hreflang-urls]
+what = "A language alternative named in the hreflang annotations of the page does not answer with status 200."
+why = "Search engines cannot use a language version that is missing, redirected or broken, so the wrong language version may be shown to searchers."
+fix = "Correct the annotation so that it names the final address of the language version, or repair the target page so that it answers with status 200. Remove entries for versions that no longer exist."
+
+[issues.hreflang-missing-return-links]
+what = "A language alternative named in the hreflang annotations does not link back to this page."
+why = "Hreflang works only if both pages confirm each other. Without the return link, search engines may ignore the annotation and show the wrong language version."
+fix = "Add the matching hreflang annotation on the other language page so that each version lists all others, including itself. Generate the annotations from one central list to keep them consistent."
+
+[issues.hreflang-incorrect-language-region-codes]
+what = "An hreflang annotation uses a language or region code that is not valid."
+why = "Search engines ignore annotations with codes they cannot read, so the page is not assigned to the intended language or country."
+fix = "Use valid language codes (ISO 639-1) and, where needed, region codes (ISO 3166-1 alpha-2) such as en-GB or de-AT. Note that the region cannot stand alone and that the value x-default is allowed."
+
+[issues.links-pages-with-high-crawl-depth]
+what = "The page can only be reached after {threshold} or more clicks from the start page."
+why = "Pages deep in the structure receive little link value and are found later by crawlers and visitors. Important content should be close to the start page."
+fix = "Link the page from pages closer to the start, for example through category pages, related links or navigation. Flatten the structure for sections that are nested too deeply."
+
+[issues.links-pages-without-internal-outlinks]
+what = "The page does not link to any other page of the site."
+why = "A page without outgoing links is a dead end for visitors and for crawlers, and it passes no link value on to the rest of the site."
+fix = "Add navigation, related links or links in the text that lead to relevant pages of the site. Check whether the template drops its navigation by accident."
+
+[issues.links-internal-nofollow-outlinks]
+what = "The page contains internal links marked with nofollow."
+why = "Nofollow on an internal link keeps link value from flowing to the target page. That is sometimes intended, but usually only a leftover from templates or plugins."
+fix = "Remove the nofollow attribute from internal links that should pass value. Keep it only for links to pages that you deliberately do not want to promote, such as login pages."
+
+[issues.links-internal-outlinks-with-no-anchor-text]
+what = "The page contains internal links without any anchor text, for example an image link without alternative text or an empty link."
+why = "The anchor text tells visitors and search engines what to expect behind a link. Empty links are useless for screen reader users and give search engines no context."
+fix = "Give each link a descriptive text. For image links, put a meaningful alt text on the image. Remove empty links that serve no purpose."
+
+[issues.sitemaps-urls-not-in-sitemap]
+what = "The page can be indexed and was found by crawling, but it is not listed in any XML sitemap."
+why = "Sitemaps help search engines to discover and prioritise pages. Indexable pages that are missing in them may be found later or crawled less often."
+fix = "Add all indexable pages that should appear in search to the XML sitemap, ideally by generating it automatically. Pages that are intentionally excluded, such as noindex pages, need no entry."
+
+[issues.sitemaps-orphan-urls]
+what = "The URL cannot be reached by following links from the start page. It is known only from a sitemap or was found only through such a URL."
+why = "Pages that exist only in a sitemap lack internal link signals. Visitors cannot navigate to them, and search engines tend to value them as less important."
+fix = "Link the page from relevant pages of the site, for example from category or overview pages. If the page is obsolete, remove it from the sitemap and redirect or delete it."
+
+[issues.sitemaps-non-indexable-urls-in-sitemap]
+what = "The sitemap lists a URL that cannot be indexed, for example one that redirects, returns an error or carries a noindex directive."
+why = "Sitemaps should name only addresses that you want in the index. Contradicting information wastes crawl capacity and reduces the trust in the sitemap."
+fix = "Remove the affected addresses from the sitemap or make them indexable if they should be found. Generate the sitemap from the list of indexable pages only."

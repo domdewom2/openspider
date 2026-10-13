@@ -1,0 +1,698 @@
+# OpenSpider – Issue-Katalog (UI-063/UI-064), einzige Klassifizierungsdatei.
+#
+# Klassifizierung abgeleitet aus öffentlicher Dokumentation der Referenz (Benchmark), begründet nach UI-063.
+#
+# Maßgeblich ist die Herleitung nach UI-063 (type_rule T-*, priority_rule P-*). Weicht der Benchmark aus UI-064
+# von dieser Herleitung ab, steht der Benchmark-Wert in type/priority und der Eintrag trägt override_reason
+# (benchmark-parity). Tab und Filter folgen exakt docs/plan/M1-filters.toml (Schwellen als {config.pfad}).
+# text_params ordnet Platzhalter der Texte ({max}, {min}, {unit}, {threshold}) einem Konfigurationspfad zu.
+# Texte: core/issues/texts/{de,en}.toml (Schlüssel issues.<id>.what|why|fix); Doku: docs/issues/<doc_key>.md.
+
+schema = 1
+
+[[issue]]
+id = "security-http-urls"
+tab = "Security"
+filter = "HTTP URLs"
+type = "Issue"
+priority = "High"
+type_rule = "T-I4"
+priority_rule = "P-H3"
+needs_crawl_analysis = false
+doc_key = "security-http-urls"
+
+[[issue]]
+id = "response-codes-internal-blocked-by-robots-txt"
+tab = "Response Codes"
+filter = "Internal Blocked by Robots.txt"
+type = "Warning"
+priority = "High"
+type_rule = "T-W1"
+priority_rule = "P-H1"
+needs_crawl_analysis = false
+doc_key = "response-codes-internal-blocked-by-robots-txt"
+
+[[issue]]
+id = "response-codes-internal-no-response"
+tab = "Response Codes"
+filter = "Internal No Response"
+type = "Issue"
+priority = "High"
+type_rule = "T-I1"
+priority_rule = "P-H1"
+needs_crawl_analysis = false
+doc_key = "response-codes-internal-no-response"
+
+[[issue]]
+id = "response-codes-internal-redirection-3xx"
+tab = "Response Codes"
+filter = "Internal Redirection (3XX)"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "response-codes-internal-redirection-3xx"
+
+[[issue]]
+id = "response-codes-internal-redirection-meta-refresh"
+tab = "Response Codes"
+filter = "Internal Redirection (Meta Refresh)"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "response-codes-internal-redirection-meta-refresh"
+
+[[issue]]
+id = "response-codes-internal-redirect-chain"
+tab = "Response Codes"
+filter = "Internal Redirect Chain"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W2"
+priority_rule = "P-M2"
+needs_crawl_analysis = false
+doc_key = "response-codes-internal-redirect-chain"
+
+[[issue]]
+id = "response-codes-internal-redirect-loop"
+tab = "Response Codes"
+filter = "Internal Redirect Loop"
+type = "Issue"
+priority = "High"
+type_rule = "T-I1"
+priority_rule = "P-H1"
+needs_crawl_analysis = false
+doc_key = "response-codes-internal-redirect-loop"
+
+[[issue]]
+id = "response-codes-internal-client-error-4xx"
+tab = "Response Codes"
+filter = "Internal Client Error (4XX)"
+type = "Issue"
+priority = "High"
+type_rule = "T-I1"
+priority_rule = "P-H1"
+needs_crawl_analysis = false
+doc_key = "response-codes-internal-client-error-4xx"
+
+[[issue]]
+id = "response-codes-internal-server-error-5xx"
+tab = "Response Codes"
+filter = "Internal Server Error (5XX)"
+type = "Issue"
+priority = "High"
+type_rule = "T-I1"
+priority_rule = "P-H1"
+needs_crawl_analysis = false
+doc_key = "response-codes-internal-server-error-5xx"
+
+[[issue]]
+id = "response-codes-external-no-response"
+tab = "Response Codes"
+filter = "External No Response"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W3"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "response-codes-external-no-response"
+
+[[issue]]
+id = "response-codes-external-client-error-4xx"
+tab = "Response Codes"
+filter = "External Client Error (4XX)"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W3"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "response-codes-external-client-error-4xx"
+
+[[issue]]
+id = "response-codes-external-server-error-5xx"
+tab = "Response Codes"
+filter = "External Server Error (5XX)"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W3"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "response-codes-external-server-error-5xx"
+
+[[issue]]
+id = "url-non-ascii-characters"
+tab = "URL"
+filter = "Non ASCII Characters"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "url-non-ascii-characters"
+
+[[issue]]
+id = "url-underscores"
+tab = "URL"
+filter = "Underscores"
+type = "Opportunity"
+priority = "Low"
+type_rule = "T-O1"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "url-underscores"
+
+[[issue]]
+id = "url-uppercase"
+tab = "URL"
+filter = "Uppercase"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "url-uppercase"
+
+[[issue]]
+id = "url-multiple-slashes"
+tab = "URL"
+filter = "Multiple Slashes"
+type = "Issue"
+priority = "Low"
+type_rule = "T-I2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "url-multiple-slashes"
+
+[[issue]]
+id = "url-contains-a-space"
+tab = "URL"
+filter = "Contains A Space"
+type = "Issue"
+priority = "Low"
+type_rule = "T-I2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "url-contains-a-space"
+
+[[issue]]
+id = "url-parameters"
+tab = "URL"
+filter = "Parameters"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "url-parameters"
+
+[[issue]]
+id = "url-over-max-chars"
+tab = "URL"
+filter = "Over {url.max_chars} Characters"
+type = "Opportunity"
+priority = "Low"
+type_rule = "T-O1"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "url-over-max-chars"
+text_params = { max = "url.max_chars" }
+
+[[issue]]
+id = "page-titles-missing"
+tab = "Page Titles"
+filter = "Missing"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "page-titles-missing"
+
+[[issue]]
+id = "page-titles-duplicate"
+tab = "Page Titles"
+filter = "Duplicate"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O1"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "page-titles-duplicate"
+
+[[issue]]
+id = "page-titles-over-max-chars"
+tab = "Page Titles"
+filter = "Over {title.max_chars} Characters"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O1"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "page-titles-over-max-chars"
+text_params = { max = "title.max_chars" }
+
+[[issue]]
+id = "page-titles-below-min-chars"
+tab = "Page Titles"
+filter = "Below {title.min_chars} Characters"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O1"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "page-titles-below-min-chars"
+text_params = { min = "title.min_chars" }
+
+[[issue]]
+id = "page-titles-multiple"
+tab = "Page Titles"
+filter = "Multiple"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "page-titles-multiple"
+
+[[issue]]
+id = "meta-description-missing"
+tab = "Meta Description"
+filter = "Missing"
+type = "Opportunity"
+priority = "Low"
+type_rule = "T-O2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "meta-description-missing"
+
+[[issue]]
+id = "meta-description-duplicate"
+tab = "Meta Description"
+filter = "Duplicate"
+type = "Opportunity"
+priority = "Low"
+type_rule = "T-O1"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "meta-description-duplicate"
+
+[[issue]]
+id = "meta-description-over-max-chars"
+tab = "Meta Description"
+filter = "Over {meta_description.max_chars} Characters"
+type = "Opportunity"
+priority = "Low"
+type_rule = "T-O1"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "meta-description-over-max-chars"
+text_params = { max = "meta_description.max_chars" }
+
+[[issue]]
+id = "meta-description-below-min-chars"
+tab = "Meta Description"
+filter = "Below {meta_description.min_chars} Characters"
+type = "Opportunity"
+priority = "Low"
+type_rule = "T-O1"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "meta-description-below-min-chars"
+text_params = { min = "meta_description.min_chars" }
+
+[[issue]]
+id = "meta-description-multiple"
+tab = "Meta Description"
+filter = "Multiple"
+type = "Issue"
+priority = "Medium"
+type_rule = "T-I2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "meta-description-multiple"
+
+[[issue]]
+id = "h1-missing"
+tab = "H1"
+filter = "Missing"
+type = "Issue"
+priority = "Medium"
+type_rule = "T-I2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "h1-missing"
+
+[[issue]]
+id = "h1-duplicate"
+tab = "H1"
+filter = "Duplicate"
+type = "Opportunity"
+priority = "Low"
+type_rule = "T-O1"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "h1-duplicate"
+
+[[issue]]
+id = "h1-over-max-chars"
+tab = "H1"
+filter = "Over {h1.max_chars} Characters"
+type = "Opportunity"
+priority = "Low"
+type_rule = "T-O1"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "h1-over-max-chars"
+text_params = { max = "h1.max_chars" }
+
+[[issue]]
+id = "h1-multiple"
+tab = "H1"
+filter = "Multiple"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "h1-multiple"
+
+[[issue]]
+id = "h2-missing"
+tab = "H2"
+filter = "Missing"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "h2-missing"
+
+[[issue]]
+id = "h2-duplicate"
+tab = "H2"
+filter = "Duplicate"
+type = "Opportunity"
+priority = "Low"
+type_rule = "T-O1"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "h2-duplicate"
+
+[[issue]]
+id = "h2-over-max-chars"
+tab = "H2"
+filter = "Over {h2.max_chars} Characters"
+type = "Opportunity"
+priority = "Low"
+type_rule = "T-O1"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "h2-over-max-chars"
+text_params = { max = "h2.max_chars" }
+
+[[issue]]
+id = "h2-multiple"
+tab = "H2"
+filter = "Multiple"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "h2-multiple"
+
+[[issue]]
+id = "content-exact-duplicates"
+tab = "Content"
+filter = "Exact Duplicates"
+type = "Issue"
+priority = "High"
+type_rule = "T-I3"
+priority_rule = "P-M1"
+override_reason = "benchmark-parity: Herleitung ergibt Medium (P-M1), der UI-064-Benchmark verlangt High"
+needs_crawl_analysis = false
+doc_key = "content-exact-duplicates"
+
+[[issue]]
+id = "content-low-content-pages"
+tab = "Content"
+filter = "Low Content Pages"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O2"
+priority_rule = "P-L1"
+override_reason = "benchmark-parity: Herleitung ergibt Low (P-L1), der UI-064-Benchmark verlangt Medium"
+needs_crawl_analysis = false
+doc_key = "content-low-content-pages"
+text_params = { threshold = "content.low_word_count" }
+
+[[issue]]
+id = "images-over-max-kb"
+tab = "Images"
+filter = "Over {image.max_kb} KB"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O2"
+priority_rule = "P-L1"
+override_reason = "benchmark-parity: Herleitung ergibt Low (P-L1), der UI-064-Benchmark verlangt Medium"
+needs_crawl_analysis = false
+doc_key = "images-over-max-kb"
+text_params = { max = "image.max_kb" }
+
+[[issue]]
+id = "images-missing-alt-text"
+tab = "Images"
+filter = "Missing Alt Text"
+type = "Issue"
+priority = "Low"
+type_rule = "T-I2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "images-missing-alt-text"
+
+[[issue]]
+id = "images-missing-alt-attribute"
+tab = "Images"
+filter = "Missing Alt Attribute"
+type = "Issue"
+priority = "Low"
+type_rule = "T-I2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "images-missing-alt-attribute"
+
+[[issue]]
+id = "images-alt-text-over-max-chars"
+tab = "Images"
+filter = "Alt Text Over {image.alt_max_chars} Characters"
+type = "Opportunity"
+priority = "Low"
+type_rule = "T-O1"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "images-alt-text-over-max-chars"
+text_params = { max = "image.alt_max_chars" }
+
+[[issue]]
+id = "canonicals-canonicalised"
+tab = "Canonicals"
+filter = "Canonicalised"
+type = "Warning"
+priority = "High"
+type_rule = "T-W1"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "canonicals-canonicalised"
+
+[[issue]]
+id = "canonicals-missing"
+tab = "Canonicals"
+filter = "Missing"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "canonicals-missing"
+
+[[issue]]
+id = "canonicals-multiple"
+tab = "Canonicals"
+filter = "Multiple"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "canonicals-multiple"
+
+[[issue]]
+id = "canonicals-multiple-conflicting"
+tab = "Canonicals"
+filter = "Multiple Conflicting"
+type = "Issue"
+priority = "High"
+type_rule = "T-I3"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "canonicals-multiple-conflicting"
+
+[[issue]]
+id = "canonicals-non-indexable-canonical"
+tab = "Canonicals"
+filter = "Non-Indexable Canonical"
+type = "Issue"
+priority = "High"
+type_rule = "T-I3"
+priority_rule = "P-H2"
+needs_crawl_analysis = true
+doc_key = "canonicals-non-indexable-canonical"
+
+[[issue]]
+id = "directives-noindex"
+tab = "Directives"
+filter = "Noindex"
+type = "Warning"
+priority = "High"
+type_rule = "T-W1"
+priority_rule = "P-H1"
+needs_crawl_analysis = false
+doc_key = "directives-noindex"
+
+[[issue]]
+id = "directives-nofollow"
+tab = "Directives"
+filter = "Nofollow"
+type = "Warning"
+priority = "High"
+type_rule = "T-W1"
+priority_rule = "P-M2"
+override_reason = "benchmark-parity: Herleitung ergibt Medium (P-M2, Linkfluss), der UI-064-Benchmark verlangt High"
+needs_crawl_analysis = false
+doc_key = "directives-nofollow"
+
+[[issue]]
+id = "directives-none"
+tab = "Directives"
+filter = "None"
+type = "Warning"
+priority = "High"
+type_rule = "T-W1"
+priority_rule = "P-H1"
+needs_crawl_analysis = false
+doc_key = "directives-none"
+
+[[issue]]
+id = "hreflang-non-200-hreflang-urls"
+tab = "Hreflang"
+filter = "Non-200 Hreflang URLs"
+type = "Issue"
+priority = "High"
+type_rule = "T-I1"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "hreflang-non-200-hreflang-urls"
+
+[[issue]]
+id = "hreflang-missing-return-links"
+tab = "Hreflang"
+filter = "Missing Return Links"
+type = "Issue"
+priority = "High"
+type_rule = "T-I3"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "hreflang-missing-return-links"
+
+[[issue]]
+id = "hreflang-incorrect-language-region-codes"
+tab = "Hreflang"
+filter = "Incorrect Language & Region Codes"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "hreflang-incorrect-language-region-codes"
+
+[[issue]]
+id = "links-pages-with-high-crawl-depth"
+tab = "Links"
+filter = "Pages With High Crawl Depth"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O1"
+priority_rule = "P-M2"
+needs_crawl_analysis = false
+doc_key = "links-pages-with-high-crawl-depth"
+text_params = { threshold = "links.high_crawl_depth" }
+
+[[issue]]
+id = "links-pages-without-internal-outlinks"
+tab = "Links"
+filter = "Pages Without Internal Outlinks"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-M2"
+override_reason = "benchmark-parity: Herleitung ergibt Medium (P-M2, Linkfluss), der UI-064-Benchmark verlangt High"
+needs_crawl_analysis = false
+doc_key = "links-pages-without-internal-outlinks"
+
+[[issue]]
+id = "links-internal-nofollow-outlinks"
+tab = "Links"
+filter = "Internal Nofollow Outlinks"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W1"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "links-internal-nofollow-outlinks"
+
+[[issue]]
+id = "links-internal-outlinks-with-no-anchor-text"
+tab = "Links"
+filter = "Internal Outlinks With No Anchor Text"
+type = "Opportunity"
+priority = "Low"
+type_rule = "T-O1"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "links-internal-outlinks-with-no-anchor-text"
+
+[[issue]]
+id = "sitemaps-urls-not-in-sitemap"
+tab = "Sitemaps"
+filter = "URLs Not In Sitemap"
+type = "Issue"
+priority = "Medium"
+type_rule = "T-I3"
+priority_rule = "P-M2"
+needs_crawl_analysis = true
+doc_key = "sitemaps-urls-not-in-sitemap"
+
+[[issue]]
+id = "sitemaps-orphan-urls"
+tab = "Sitemaps"
+filter = "Orphan URLs"
+type = "Issue"
+priority = "Medium"
+type_rule = "T-I3"
+priority_rule = "P-M2"
+needs_crawl_analysis = true
+doc_key = "sitemaps-orphan-urls"
+
+[[issue]]
+id = "sitemaps-non-indexable-urls-in-sitemap"
+tab = "Sitemaps"
+filter = "Non-Indexable URLs In Sitemap"
+type = "Issue"
+priority = "Medium"
+type_rule = "T-I3"
+priority_rule = "P-M2"
+needs_crawl_analysis = true
+doc_key = "sitemaps-non-indexable-urls-in-sitemap"
