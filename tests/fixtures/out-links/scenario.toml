@@ -1,0 +1,25 @@
+# Szenario "out-links" (OUT-031, OUT-032, ONPAGE-192): alle Linktypen, Pfadarten, nofollow/ugc/sponsored,
+# target, Positionen (header/nav/main/aside/footer), Header-Canonical/-hreflang/-Refresh und eine Weiterleitung.
+# Start: http://www.site.test/ (Hosts *.test löst der Test über network.resolve auf die Testsite auf).
+
+[[route]]
+path = "/pic.png"
+png_size = 1234
+
+[[route]]
+path = "/v.mp4"
+content_type = "video/mp4"
+body_size = 500
+
+[[route]]
+path = "/old"
+status = 301
+location = "/target.html"
+
+[[route]]
+path = "/headers.html"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html lang=\"de\"><head><meta charset=\"utf-8\"><title>Header-Seite</title></head><body><main><h1>Header</h1></main></body></html>"
+[route.headers]
+Link = "<http://www.site.test/>; rel=\"canonical\", <http://www.site.test/en.html>; rel=\"alternate\"; hreflang=\"en\""
+Refresh = "0; url=/refresh-target.html"
