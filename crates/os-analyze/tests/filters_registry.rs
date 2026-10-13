@@ -1,5 +1,5 @@
 //! `tabs::all()` stimmt mit `docs/plan/M1-filters.toml` überein (Tabs, Filter-Kennungen, Reihenfolge, Art,
-//! Voraussetzungen). Der Test bleibt dauerhaft aktiv: P20–P25 dürfen Kennungen nicht ändern.
+//! Voraussetzungen). Der Test bleibt dauerhaft aktiv: Kennungen ändern sich nur mit der Registry.
 //! Infrastrukturtest ohne Spec-Tag.
 
 use std::path::Path;
@@ -70,26 +70,33 @@ fn tabs_match_filter_registry() {
 }
 
 #[test]
-fn placeholder_tabs_have_address_column_and_population() {
+fn every_tab_is_a_real_definition_starting_with_the_address_column() {
+    // Seit Welle 3 sind alle 16 Tabs echte Definitionen (keine Platzhalter mit einer Spalte und Grundmenge "1").
     for tab in tabs::all() {
-        assert_eq!(tab.columns.first().map(|c| c.key), Some("Address"));
-        // Die Tab-Pakete P20–P25 ersetzen die Platzhalter (eine Spalte, Grundmenge "1") durch echte
-        // Definitionen mit eigener Grundmenge und weiteren Spalten (M1-P22: Element-Tabs).
-        let is_placeholder = tab.columns.len() == 1;
+        assert_eq!(
+            tab.columns.first().map(|c| c.key),
+            Some("Address"),
+            "Address ist die erste Spalte von {}",
+            tab.id
+        );
+        assert!(
+            tab.columns.len() > 1,
+            "{} hat nur eine Spalte (Platzhalter)",
+            tab.id
+        );
         assert!(!tab.population.is_empty(), "Grundmenge von {}", tab.id);
-        if is_placeholder {
-            assert_eq!(tab.population, "1", "Grundmenge von {}", tab.id);
-        }
+        assert_ne!(
+            tab.population, "1",
+            "{} hat noch die Grundmenge des Platzhalters",
+            tab.id
+        );
         let all: Vec<_> = tab.filters.iter().filter(|f| f.id == "All").collect();
-        for f in all {
-            if is_placeholder {
-                assert_eq!(
-                    f.predicate, "1",
-                    "Filter All von {} ist die Grundmenge",
-                    tab.id
-                );
-            }
-        }
+        assert_eq!(all.len(), 1, "genau ein Filter All in {}", tab.id);
+        assert!(
+            !all[0].predicate.is_empty(),
+            "Filter All von {} hat ein Prädikat",
+            tab.id
+        );
     }
 }
 

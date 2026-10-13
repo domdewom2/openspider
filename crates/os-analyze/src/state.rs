@@ -19,12 +19,15 @@ use crate::error::AnalyzeError;
 use crate::names;
 
 /// Konfigurationsabschnitte, deren Änderung einen Teilschritt veralten lässt (CRAWL-141, Punkt 6).
+///
+/// Der Schritt „Sitemaps“ hängt zusätzlich an `spider.*`: Linkspeicherung, hreflang und Canonical bestimmen,
+/// welche URLs als verlinkt gelten und damit die Orphan-Bewertung (TECH-005).
 fn relevant_sections(step: AnalysisStep) -> &'static [&'static str] {
     match step {
         AnalysisStep::LinkScore | AnalysisStep::Links => &["links"],
         AnalysisStep::Canonicals | AnalysisStep::Pagination | AnalysisStep::Amp => &["spider"],
         AnalysisStep::Hreflang => &["hreflang"],
-        AnalysisStep::Sitemaps => &["sitemaps"],
+        AnalysisStep::Sitemaps => &["sitemaps", "spider"],
         AnalysisStep::Content => &["content", "duplicates"],
         AnalysisStep::Images => &["image", "rendering"],
         AnalysisStep::Analytics | AnalysisStep::SearchConsole | AnalysisStep::LinkMetrics => &[],

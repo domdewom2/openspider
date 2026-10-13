@@ -247,7 +247,9 @@ async fn high_crawl_depth_uses_the_threshold_and_ignores_non_indexable_urls() {
     c5.links.high_crawl_depth = 5;
     assert_eq!(list(&fx.file, &c5, "Pages With High Crawl Depth"), ["/l5/"]);
 
-    // „Ignore Non-Indexable URLs for Issues“ (Standard an): nicht indexierbare Seiten fallen heraus.
+    // „Ignore Non-Indexable URLs for Issues“ (Standard an): nicht indexierbare Seiten fallen heraus. Die Fixture
+    // enthält in dieser Tiefe keine nicht indexierbare Seite; der Zustand wird deshalb unmittelbar in der Datei
+    // gesetzt (kein Ersatz für die Bewertung der Engine, sondern Vorgabe der Eingangsdaten dieses Filters).
     fx.file
         .conn()
         .execute(

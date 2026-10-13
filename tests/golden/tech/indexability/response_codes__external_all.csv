@@ -1,0 +1,4 @@
+Address,Indexability,Indexability Status
+{EXT}/ext-gone,Non-Indexable,Client Error
+{EXT}/ext-noindex.html,Indexable,
+{EXT}/ext-ok.html,Indexable,

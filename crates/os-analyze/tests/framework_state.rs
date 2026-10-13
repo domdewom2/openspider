@@ -11,6 +11,7 @@ use common::*;
 use os_analyze::analysis::persist::{self, RunState};
 use os_analyze::analysis::runner::{run_only, run_with, RunOptions, StepFn};
 use os_analyze::analysis::{self, CancelToken};
+use os_analyze::state::{step_config_hash, AnalysisSnapshot, Freshness};
 use os_analyze::views::{filter_counts_in, query_view_in, state_of_in, ViewQuery};
 use os_analyze::AnalyzeError;
 use os_model::time::ManualClock;
@@ -166,6 +167,51 @@ fn config_change_or_mark_stale_turns_the_state_to_stale() {
     assert!(persist::read_stale(&file).unwrap().is_empty());
 }
 
+// spec: TECH-005, CRAWL-141
+#[test]
+fn sitemaps_step_turns_stale_with_changes_in_spider_and_sitemaps_only() {
+    let dir = tempfile::tempdir().unwrap();
+    let (_, file) = crawl(dir.path(), "a.ospider");
+    let mut cfg = CrawlConfig::default();
+    run_done(&file, &cfg);
+
+    let freshness = |cfg: &CrawlConfig| {
+        let json = serde_json::to_value(cfg).unwrap();
+        AnalysisSnapshot::load(&file)
+            .unwrap()
+            .freshness(AnalysisStep::Sitemaps, &json)
+    };
+    assert_eq!(freshness(&cfg), Freshness::Fresh);
+
+    // Ein fremder Abschnitt (Geschwindigkeit) lässt den Schritt unberührt.
+    let mut other = cfg.clone();
+    other.speed.threads += 1;
+    assert_eq!(freshness(&other), Freshness::Fresh);
+
+    // `spider.*` (Linkspeicherung, hreflang, Canonical) beeinflusst die Orphans → veraltet, ohne HTTP-Anfragen.
+    let mut spider = cfg.clone();
+    spider.spider.follow_internal_nofollow = !spider.spider.follow_internal_nofollow;
+    assert_eq!(freshness(&spider), Freshness::Stale);
+    let mut canonicals = cfg.clone();
+    canonicals.spider.canonicals.store = !canonicals.spider.canonicals.store;
+    assert_eq!(freshness(&canonicals), Freshness::Stale);
+
+    // Weiterhin: der eigene Abschnitt `sitemaps`.
+    cfg.sitemaps.crawl_linked = !cfg.sitemaps.crawl_linked;
+    assert_eq!(freshness(&cfg), Freshness::Stale);
+
+    // Der Konfigurationshash unterscheidet sich entsprechend.
+    let base = CrawlConfig::default();
+    assert_ne!(
+        step_config_hash(AnalysisStep::Sitemaps, &base),
+        step_config_hash(AnalysisStep::Sitemaps, &spider)
+    );
+    assert_eq!(
+        step_config_hash(AnalysisStep::Sitemaps, &base),
+        step_config_hash(AnalysisStep::Sitemaps, &other)
+    );
+}
+
 // spec: TECH-005
 #[test]
 fn deselected_step_keeps_its_filters_pending() {
@@ -262,8 +308,8 @@ fn default_run_skips_deselected_and_marks_steps_without_data_basis() {
         StepState::NotApplicable
     );
     assert_eq!(states[&AnalysisStep::LinkMetrics], StepState::NotApplicable);
-    // Die Schritte „Kanonisierungen“ (P24) und „Sitemaps“ (P25) sind umgesetzt und laufen; Sitemaps endet auch
-    // ohne Sitemap fertig (ohne Einträge keine Marken). Alle übrigen Stubs sind in M1 nicht anwendbar.
+    // Die Schritte „Kanonisierungen“ und „Sitemaps“ sind umgesetzt und enden fertig (`Done`); Sitemaps auch
+    // ohne Sitemap (ohne Einträge keine Marken). Alle übrigen Schritte ohne Datenbasis sind in M1 nicht anwendbar.
     assert_eq!(states[&AnalysisStep::Canonicals], StepState::Done);
     assert_eq!(states[&AnalysisStep::Sitemaps], StepState::Done);
     assert_eq!(states[&AnalysisStep::LinkScore], StepState::NotApplicable);
