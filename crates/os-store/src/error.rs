@@ -81,6 +81,10 @@ pub enum StoreError {
     /// In der Datei ist keine Konfiguration gespeichert.
     #[error("keine Konfiguration in der Crawl-Datei")]
     MissingConfig,
+    /// Ungültige Eingabe des Aufrufers (z. B. Batch mit unbekannter URL-ID oder doppelter Adresse,
+    /// unbekannte Sortierspalte). Die Crawl-Datei bleibt unverändert.
+    #[error("ungültige Eingabe: {0}")]
+    InvalidInput(String),
     /// Noch nicht umgesetzt (Stub, `STUB(M1-Pxx)`).
     #[error("nicht implementiert: {0}")]
     NotImplemented(&'static str),

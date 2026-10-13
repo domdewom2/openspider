@@ -154,7 +154,7 @@ fn parse_opt<T: FromStr<Err = ModelError>>(value: Option<String>) -> Result<Opti
 }
 
 fn invalid_argument(message: String) -> StoreError {
-    StoreError::Sqlite(rusqlite::Error::InvalidParameterName(message))
+    StoreError::InvalidInput(message)
 }
 
 const URL_ROW_COLUMNS: &str =

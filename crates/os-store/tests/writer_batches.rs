@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use os_model::time::FixedClock;
 use os_model::*;
-use os_store::{CrawlFile, CrawlSink, OpenMode, StorageProfile};
+use os_store::{CrawlFile, CrawlSink, OpenMode, StorageProfile, StoreError};
 use store_common::*;
 
 fn extracted(text: &str, in_head: bool) -> ExtractedText {
@@ -476,7 +476,11 @@ fn failing_batch_rolls_back_completely() {
     clash.url = url_of(1, true);
     bad.new_urls.push(clash);
     bad.meta = vec![("x".into(), "y".into())];
-    assert!(sink.write(bad).is_err());
+    let err = sink.write(bad).unwrap_err();
+    assert!(
+        matches!(err, StoreError::InvalidInput(ref m) if m.contains("Adresse")),
+        "{err:?}"
+    );
 
     let file = open_file(&path);
     assert_eq!(count(&file, "SELECT COUNT(*) FROM urls"), 1);
@@ -486,13 +490,40 @@ fn failing_batch_rolls_back_completely() {
     // Seite für nicht vorhandene URL: Fehler, nichts bleibt zurück.
     let mut batch = batch_with_urls([(5, true)]);
     batch.pages.push(page(99, vec![hyperlink(1, 0)]));
-    assert!(sink.write(batch).is_err());
+    let err = sink.write(batch).unwrap_err();
+    assert!(
+        matches!(err, StoreError::InvalidInput(ref m) if m.contains("99")),
+        "{err:?}"
+    );
     assert_eq!(count(&file, "SELECT COUNT(*) FROM urls"), 1);
     assert_eq!(count(&file, "SELECT COUNT(*) FROM links"), 0);
 
     // Die Senke bleibt benutzbar.
     sink.write(batch_with_urls([(2, true)])).unwrap();
     assert_eq!(count(&file, "SELECT COUNT(*) FROM urls"), 2);
+}
+
+#[test]
+fn update_of_an_unknown_url_is_invalid_input_and_changes_nothing() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = new_crawl(dir.path(), "u.ospider", StorageProfile::Balanced);
+    let mut sink = sink(&path, StorageProfile::Balanced);
+    sink.write(batch_with_urls([(1, true)])).unwrap();
+    let before = meta_change_seq(&open_file(&path));
+
+    let mut batch = batch_with_urls([(2, true)]);
+    batch.url_updates.push(UrlUpdate::Depth {
+        id: UrlId(77),
+        depth: 3,
+    });
+    let err = sink.write(batch).unwrap_err();
+    assert!(
+        matches!(err, StoreError::InvalidInput(ref m) if m.contains("77")),
+        "{err:?}"
+    );
+    let file = open_file(&path);
+    assert_eq!(count(&file, "SELECT COUNT(*) FROM urls"), 1);
+    assert_eq!(meta_change_seq(&file), before);
 }
 
 #[test]

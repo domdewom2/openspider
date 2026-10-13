@@ -6,7 +6,7 @@ mod store_common;
 
 use os_model::*;
 use os_store::queries::{self, LinkSortKey, PageReq};
-use os_store::{CrawlFile, CrawlSink, OpenMode, StorageProfile};
+use os_store::{CrawlFile, CrawlSink, OpenMode, StorageProfile, StoreError};
 use store_common::*;
 
 fn reader(path: &std::path::Path) -> CrawlFile {
@@ -228,7 +228,15 @@ fn unknown_sort_column_is_an_error() {
         column: "Gibt es nicht".into(),
         desc: false,
     }];
-    assert!(queries::inlinks(file.conn(), UrlId(1), req).is_err());
+    let err = queries::inlinks(file.conn(), UrlId(1), req.clone()).unwrap_err();
+    assert!(
+        matches!(err, StoreError::InvalidInput(ref m) if m.contains("Gibt es nicht")),
+        "{err:?}"
+    );
+    assert!(matches!(
+        queries::outlinks(file.conn(), UrlId(1), req),
+        Err(StoreError::InvalidInput(_))
+    ));
 }
 
 #[test]

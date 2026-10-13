@@ -121,11 +121,9 @@ impl CrawlSink for SqliteSink {
     }
 }
 
+/// Fehlerhafter Batch (unbekannte URL-ID, doppelte Adresse): `StoreError::InvalidInput`.
 fn batch_error(message: String) -> StoreError {
-    StoreError::Sqlite(rusqlite::Error::SqliteFailure(
-        rusqlite::ffi::Error::new(rusqlite::ffi::SQLITE_CONSTRAINT),
-        Some(message),
-    ))
+    StoreError::InvalidInput(message)
 }
 
 fn is_empty(batch: &WriteBatch) -> bool {
@@ -196,7 +194,7 @@ fn insert_new_urls(tx: &Transaction<'_>, urls: &[NewUrl], seq: i64) -> Result<()
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
     )?;
     for u in urls {
-        stmt.execute(params![
+        let inserted = stmt.execute(params![
             u.id.0,
             u.url,
             u.address,
@@ -210,7 +208,19 @@ fn insert_new_urls(tx: &Transaction<'_>, urls: &[NewUrl], seq: i64) -> Result<()
             u.folder_depth,
             u.url_length,
             seq
-        ])?;
+        ]);
+        match inserted {
+            Ok(_) => {}
+            Err(rusqlite::Error::SqliteFailure(f, _))
+                if f.code == rusqlite::ErrorCode::ConstraintViolation =>
+            {
+                return Err(batch_error(format!(
+                    "NewUrl: URL-ID {} oder Adresse {:?} ist bereits vorhanden",
+                    u.id, u.url
+                )));
+            }
+            Err(e) => return Err(e.into()),
+        }
     }
     Ok(())
 }
