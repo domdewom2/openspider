@@ -4,8 +4,11 @@
 //! Server auf Loopback; so laufen die Tests unabhängig vom echten `HttpFetcher` (M1-P02). Wartezeiten
 //! zwischen Wiederholungen laufen mit `start_paused` in simulierter Zeit (M1-Plan 2.8).
 //!
-//! Tests mit virtuellen Hosts (`*.site.test`) brauchen die Testsite-Erweiterung aus M1-P09 und den echten
-//! `HttpFetcher`; sie sind bis zur Welle 1.5 mit `#[ignore = "wartet auf M1-P09"]` markiert.
+//! Tests mit virtuellen Hosts (`*.site.test`) nutzen die Testsite-Erweiterung aus M1-P09 (hostgebundene
+//! Routen im Wurzel-`scenario.toml` des Szenarios) und den echten `HttpFetcher`. Weil dessen echte
+//! Netzwerk-E/A mit angehaltener Tokio-Uhr nicht zuverlässig ist (die Uhr springt, sobald die Laufzeit auf
+//! Socket-Ereignisse wartet, und löst Scheinzeitüberschreitungen aus), laufen sie in Echtzeit mit auf 1 s
+//! verkürzten Wartezeiten; die 5-s-Abstände selbst prüfen die `start_paused`-Tests mit `Loopback`.
 
 use std::future::Future;
 use std::net::SocketAddr;
@@ -119,6 +122,18 @@ fn gate(mode: RobotsMode, policy: RobotsUnreachablePolicy) -> RobotsGate {
         unreachable_policy: policy,
         retries: 2,
         retry_delay_s: 5,
+        clock: Arc::new(ManualClock::new(Timestamp::UNIX_EPOCH)),
+    })
+}
+
+/// Wie [`respect`], aber mit kurzer Wartezeit für Echtzeit-Tests (siehe Moduldoku).
+fn respect_fast_retry() -> RobotsGate {
+    RobotsGate::new(RobotsGateConfig {
+        token: "OpenSpider".to_string(),
+        mode: RobotsMode::Respect,
+        unreachable_policy: RobotsUnreachablePolicy::BlockHost,
+        retries: 2,
+        retry_delay_s: 1,
         clock: Arc::new(ManualClock::new(Timestamp::UNIX_EPOCH)),
     })
 }
@@ -534,9 +549,9 @@ async fn allow_all_policy_crawls_after_server_errors() {
 }
 
 /// Echter `HttpFetcher` mit Auflösung aller `*.site.test`-Hosts auf Loopback (virtuelle Hosts, M1-P09).
-fn http_fetcher_for_virtual_hosts() -> HttpFetcher {
+fn http_fetcher_for_virtual_hosts(response_timeout_s: u32) -> HttpFetcher {
     let mut crawl = CrawlConfig::default();
-    crawl.advanced.response_timeout_s = 2;
+    crawl.advanced.response_timeout_s = response_timeout_s;
     let clock = Arc::new(ManualClock::new(Timestamp::UNIX_EPOCH));
     let mut cfg = FetchConfig::from_crawl_config(&crawl, &MemorySecretStore::new(), clock)
         .expect("Abruf-Konfiguration");
@@ -549,15 +564,15 @@ fn virtual_url(site: &TestSite, host: &str, path: &str) -> Url {
 }
 
 // spec: CRAWL-100
-#[ignore = "wartet auf M1-P09"]
-#[tokio::test(start_paused = true)]
+#[tokio::test]
 async fn virtual_host_r503_once_recovers_on_second_attempt() {
     let site = TestSite::start("crawl-robots-errors")
         .await
         .expect("Testserver");
-    let fetcher = Recording::new(http_fetcher_for_virtual_hosts());
+    let fetcher = Recording::new(http_fetcher_for_virtual_hosts(2));
     let host = "r503-once.site.test";
-    let check = respect()
+    // Echtzeit (siehe Moduldoku): Wartezeit zwischen den Versuchen auf 1 s verkürzt.
+    let check = respect_fast_retry()
         .check(&fetcher, &virtual_url(&site, host, "/seite"))
         .await;
     assert!(
@@ -576,14 +591,13 @@ async fn virtual_host_r503_once_recovers_on_second_attempt() {
 }
 
 // spec: CRAWL-100
-#[ignore = "wartet auf M1-P09"]
-#[tokio::test(start_paused = true)]
+#[tokio::test]
 async fn virtual_host_rtimeout_blocks_host_after_three_requests() {
     let site = TestSite::start("crawl-robots-errors")
         .await
         .expect("Testserver");
-    let fetcher = Recording::new(http_fetcher_for_virtual_hosts());
-    let check = respect()
+    let fetcher = Recording::new(http_fetcher_for_virtual_hosts(1));
+    let check = respect_fast_retry()
         .check(
             &fetcher,
             &virtual_url(&site, "rtimeout.site.test", "/seite"),
@@ -601,17 +615,32 @@ async fn virtual_host_rtimeout_blocks_host_after_three_requests() {
     );
     let times = fetcher.requests("/robots.txt");
     assert_eq!(times.len(), 3);
-    assert!(times[1] - times[0] >= Duration::from_secs(5));
+    assert!(times[1] - times[0] >= Duration::from_secs(1));
+    assert!(times[2] - times[1] >= Duration::from_secs(1));
+    let (first, write) = check.robots_fetch.expect("Erstabruf");
+    assert!(
+        matches!(
+            first.outcome,
+            FetchOutcome::NoResponse {
+                reason: NoResponseReason::ResponseTimeout,
+                ..
+            }
+        ),
+        "{first:?}"
+    );
+    assert_eq!(
+        (write.fetch_status.as_str(), write.attempts),
+        ("unreachable", 3)
+    );
 }
 
 // spec: CRAWL-100
-#[ignore = "wartet auf M1-P09"]
-#[tokio::test(start_paused = true)]
+#[tokio::test]
 async fn virtual_hosts_client_errors_allow_everything() {
     let site = TestSite::start("crawl-robots-errors")
         .await
         .expect("Testserver");
-    let fetcher = Recording::new(http_fetcher_for_virtual_hosts());
+    let fetcher = Recording::new(http_fetcher_for_virtual_hosts(2));
     let gate = respect();
     for host in ["r404", "r403", "rempty", "rhtml", "rredir404"] {
         let u = virtual_url(&site, &format!("{host}.site.test"), "/seite");
@@ -621,11 +650,10 @@ async fn virtual_hosts_client_errors_allow_everything() {
 }
 
 // spec: CRAWL-098
-#[ignore = "wartet auf M1-P09"]
-#[tokio::test(start_paused = true)]
+#[tokio::test]
 async fn virtual_hosts_bom_redirect_and_big_variants() {
     let site = TestSite::start("crawl-robots").await.expect("Testserver");
-    let fetcher = Recording::new(http_fetcher_for_virtual_hosts());
+    let fetcher = Recording::new(http_fetcher_for_virtual_hosts(2));
     let gate = respect();
     for host in ["bom.site.test", "redirect.site.test"] {
         let check = gate

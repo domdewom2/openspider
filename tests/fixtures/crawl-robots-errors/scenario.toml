@@ -1,0 +1,158 @@
+# Szenario crawl-robots-errors: je Host eine robots.txt-Variante (M1-P03, CRAWL-100).
+# Dieses Wurzel-scenario.toml bedient die virtuellen Hosts (`*.site.test`) mit hostgebundenen Routen
+# (`host = ...`, P09-Format; ein Host-Verzeichnis liefert nur Dateien). Dieselben Varianten liegen als
+# eigenstaendige Szenarien unter hosts/<host>/scenario.toml (Tests ohne virtuelle Hosts); beide Fassungen
+# muessen inhaltlich gleich bleiben.
+
+# --- r403.site.test ---
+# 403 -> alles erlaubt (CRAWL-100: alle 4xx ausser 429)
+[[route]]
+path = "/robots.txt"
+host = "r403.site.test"
+status = 403
+body = "Forbidden"
+content_type = "text/plain"
+
+[[route]]
+path = "/seite"
+host = "r403.site.test"
+body = "<!doctype html><html><head><title>seite</title></head><body><h1>seite</h1></body></html>"
+
+# --- r404.site.test ---
+# robots.txt fehlt: 404 -> alles erlaubt (CRAWL-100)
+[[route]]
+path = "/robots.txt"
+host = "r404.site.test"
+status = 404
+body = "Not Found"
+content_type = "text/plain"
+
+[[route]]
+path = "/seite"
+host = "r404.site.test"
+body = "<!doctype html><html><head><title>seite</title></head><body><h1>seite</h1></body></html>"
+
+# --- r429.site.test ---
+# 429 -> wie Serverfehler (CRAWL-100)
+[[route]]
+path = "/robots.txt"
+host = "r429.site.test"
+status = 429
+body = "Too Many Requests"
+content_type = "text/plain"
+[route.headers]
+Retry-After = "1"
+
+[[route]]
+path = "/seite"
+host = "r429.site.test"
+body = "<!doctype html><html><head><title>seite</title></head><body><h1>seite</h1></body></html>"
+
+# --- r500.site.test ---
+# 500 -> nicht erreichbar: 3 Abrufe, danach Policy (CRAWL-100)
+[[route]]
+path = "/robots.txt"
+host = "r500.site.test"
+status = 500
+body = "Internal Server Error"
+content_type = "text/plain"
+
+[[route]]
+path = "/seite"
+host = "r500.site.test"
+body = "<!doctype html><html><head><title>seite</title></head><body><h1>seite</h1></body></html>"
+
+# --- r503-once.site.test ---
+# erster Abruf 503, danach 200 mit Disallow: /seite (CRAWL-100). fail_first_n: Routen-Option aus M1-P09 (zustandsbehaftet);
+[[route]]
+path = "/robots.txt"
+host = "r503-once.site.test"
+status = 200
+fail_first_n = 1
+content_type = "text/plain"
+body = "User-agent: *\nDisallow: /seite\n"
+
+[[route]]
+path = "/seite"
+host = "r503-once.site.test"
+body = "<!doctype html><html><head><title>seite</title></head><body><h1>seite</h1></body></html>"
+
+# --- rempty.site.test ---
+# 200 mit 0 Bytes -> alles erlaubt (CRAWL-100)
+[[route]]
+path = "/robots.txt"
+host = "rempty.site.test"
+status = 200
+body = ""
+content_type = "text/plain"
+
+[[route]]
+path = "/seite"
+host = "rempty.site.test"
+body = "<!doctype html><html><head><title>seite</title></head><body><h1>seite</h1></body></html>"
+
+# --- rhtml.site.test ---
+# Soft-404: 200 text/html statt robots.txt -> keine gueltigen Regeln, alles erlaubt (CRAWL-100)
+[[route]]
+path = "/robots.txt"
+host = "rhtml.site.test"
+status = 200
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><title>Seite nicht gefunden</title></head><body><h1>Seite nicht gefunden</h1><p>Disallow bedeutet hier nichts</p></body></html>"
+
+[[route]]
+path = "/seite"
+host = "rhtml.site.test"
+body = "<!doctype html><html><head><title>seite</title></head><body><h1>seite</h1></body></html>"
+
+# --- rredir404.site.test ---
+# robots.txt -> 301 -> 404: wie 404 (CRAWL-100)
+[[route]]
+path = "/robots.txt"
+host = "rredir404.site.test"
+status = 301
+location = "/gone"
+
+[[route]]
+path = "/gone"
+host = "rredir404.site.test"
+status = 404
+body = "Not Found"
+content_type = "text/plain"
+
+[[route]]
+path = "/seite"
+host = "rredir404.site.test"
+body = "<!doctype html><html><head><title>seite</title></head><body><h1>seite</h1></body></html>"
+
+# --- rredir503.site.test ---
+# robots.txt -> 301 -> 503: wie 503, Policy greift (CRAWL-100)
+[[route]]
+path = "/robots.txt"
+host = "rredir503.site.test"
+status = 301
+location = "/unavailable"
+
+[[route]]
+path = "/unavailable"
+host = "rredir503.site.test"
+status = 503
+body = "Service Unavailable"
+content_type = "text/plain"
+
+[[route]]
+path = "/seite"
+host = "rredir503.site.test"
+body = "<!doctype html><html><head><title>seite</title></head><body><h1>seite</h1></body></html>"
+
+# --- rtimeout.site.test ---
+# Antwort haengt (CRAWL-100: Timeout). hang: Routen-Option aus M1-P09.
+[[route]]
+path = "/robots.txt"
+host = "rtimeout.site.test"
+hang = true
+
+[[route]]
+path = "/seite"
+host = "rtimeout.site.test"
+body = "<!doctype html><html><head><title>seite</title></head><body><h1>seite</h1></body></html>"

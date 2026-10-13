@@ -47,7 +47,7 @@ async fn compressed_and_chunked_fixture_routes_decode_to_the_same_html() {
     let site = TestSite::start("crawl-http-basic").await.unwrap();
     let f = fetcher_with(Arc::new(SystemClock), |_| {});
     let plain = expect_response(get(&f, url(&site, "/plain")).await);
-    for path in ["/gzip", "/br", "/deflate-raw", "/chunked"] {
+    for path in ["/gzip", "/br", "/deflate", "/deflate-raw", "/chunked"] {
         let resp = expect_response(get(&f, url(&site, path)).await);
         assert_eq!(resp.status, 200, "{path}");
         assert_eq!(resp.decode_error, None, "{path}");
@@ -125,6 +125,20 @@ async fn cookie_fixture_set_check_flow_follows_the_three_modes() {
         ..page_request(url(&site, "/check2"))
     };
     assert!(!text(&expect_response(f.fetch(separate).await)).contains("sid="));
+    // Dauerhaft: ein gemeinsamer Speicher; /check2 sieht das Cookie auch aus einem anderen Thread
+    // und ohne dass der Abruf einen Speicher mitbringt
+    let f = Arc::new(make(CookieMode::Persistent));
+    let _ = expect_response(
+        f.fetch(FetchRequest {
+            cookies: f.cookie_jar_for_new_seed(),
+            ..page_request(url(&site, "/set"))
+        })
+        .await,
+    );
+    let (f2, check2) = (f.clone(), url(&site, "/check2"));
+    let other_thread = tokio::spawn(async move { f2.fetch(page_request(check2)).await });
+    let echoed = text(&expect_response(other_thread.await.unwrap()));
+    assert!(echoed.contains("sid=abc123"), "{echoed}");
     // Nicht speichern: /check bleibt leer
     let f = make(CookieMode::None);
     let _ = expect_response(f.fetch(page_request(url(&site, "/set"))).await);
@@ -132,6 +146,28 @@ async fn cookie_fixture_set_check_flow_follows_the_three_modes() {
         f.fetch(page_request(url(&site, "/check"))).await
     ))
     .contains("sid="));
+}
+
+// spec: CRAWL-088
+#[tokio::test]
+async fn cookie_fixture_secure_cookie_is_not_sent_over_plain_http() {
+    let site = TestSite::start("crawl-cookies").await.unwrap();
+    let port = site.addr().port();
+    // Loopback-Adressen gelten als „sicherer Kontext“; ein Fixture-Hostname nicht.
+    let f = fetcher_with(Arc::new(SystemClock), |c| {
+        c.cookies = CookieMode::SessionOnly;
+        c.resolve = vec![format!("*.site.test=127.0.0.1:{port}")];
+    });
+    let jar = f.cookie_jar_for_new_seed().unwrap();
+    let secure_only = || FetchRequest {
+        cookies: Some(jar.clone()),
+        ..page_request(Url::parse("http://www.site.test/secure-only").unwrap())
+    };
+    // Die Route setzt `tls=geheim; Secure`; der Speicher nimmt es auf, sendet es über http aber nicht zurück
+    let _ = expect_response(f.fetch(secure_only()).await);
+    assert_eq!(jar.len(), 1, "das Secure-Cookie wurde gespeichert");
+    let echoed = text(&expect_response(f.fetch(secure_only()).await));
+    assert!(!echoed.contains("tls=geheim"), "{echoed}");
 }
 
 // spec: CRAWL-117

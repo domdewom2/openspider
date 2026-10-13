@@ -1,8 +1,9 @@
 # Szenario "crawl-status-codes" (CRAWL-012): Route /code/{n} liefert den Statuscode n.
 # 3xx (außer 304) leiten auf /code/200 weiter; 204 und 304 haben keinen Body.
 #
-# 103 Early Hints kann der Testserver nicht senden (keine Zwischenantworten); das Überspringen von 1xx
-# prüft tests/http_fetch.rs (informational_responses_are_skipped) gegen einen eigenen Mini-Server.
+# Offen (Nachbesserung os-testsite, M1-P3x): /early-hints (103 Early Hints, danach 200). Der Testserver
+# kann keine Zwischenantworten senden; bis dahin prüft crates/os-fetch/tests/http_fetch.rs
+# (informational_responses_are_skipped) das Überspringen von 1xx gegen einen eigenen Mini-Server.
 
 [[route]]
 path = "/code/200"

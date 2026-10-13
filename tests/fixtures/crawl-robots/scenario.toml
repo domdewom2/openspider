@@ -75,3 +75,31 @@ body = "<!doctype html><html><head><title>/caf%C3%A9</title></head><body><h1>/ca
 [[route]]
 path = "/gross%2Fklein"
 body = "<!doctype html><html><head><title>/gross%2Fklein</title></head><body><h1>/gross%2Fklein</h1></body></html>"
+
+# Hostgebundene robots.txt-Varianten fuer die virtuellen Hosts (CRAWL-098, P09-Format). Dieselben Varianten
+# liegen als eigenstaendige Szenarien unter hosts/<host>/ (Tests ohne virtuelle Hosts); beide Fassungen gleich halten.
+
+# --- big.site.test ---
+# 3 MB robots.txt (CRAWL-098, Referenz-Fix 19.7). body_size/content_type: Routen-Optionen aus M1-P09.
+[[route]]
+path = "/robots.txt"
+host = "big.site.test"
+content_type = "text/plain"
+body_size = 3145728
+
+# --- bom.site.test ---
+# robots.txt mit BOM und CRLF (CRAWL-098). Als Route-Body mit Escapes, weil .gitattributes (eol=lf)
+# Zeilenenden in Dateien normalisiert.
+[[route]]
+path = "/robots.txt"
+host = "bom.site.test"
+content_type = "text/plain; charset=utf-8"
+body = "﻿User-agent: *\r\nDisallow: /privat/\r\nAllow: /privat/oeffentlich\r\n"
+
+# --- redirect.site.test ---
+# robots.txt -> 301 -> andere Datei (CRAWL-098: Weiterleitungen werden verfolgt)
+[[route]]
+path = "/robots.txt"
+host = "redirect.site.test"
+status = 301
+location = "/robots-real.txt"
