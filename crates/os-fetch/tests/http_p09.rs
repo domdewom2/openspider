@@ -5,9 +5,10 @@
 //! benötigten Routen im Format von P09. Dieselben Verhalten prüfen `http_fetch.rs` und
 //! `http_session.rs` zusätzlich gegen einen eigenen Mini-Server.
 //!
-//! Nicht über den Testserver abbildbar (siehe Doku von `os-testsite`): 103 Early Hints (Zwischenantworten)
-//! und ein Blackhole-Port für Verbindungs-Timeouts. Beides ist in `http_fetch.rs` abgedeckt
-//! (`informational_responses_are_skipped`, `connect_timeout_is_the_smaller_of_ten_seconds_and_the_response_timeout`).
+//! 103 Early Hints (Zwischenantworten) deckt die Fixture-Route `/early-hints` ab (M1-N02, `http_status.rs`).
+//! Nur der Blackhole-Port für Verbindungs-Timeouts lässt sich nicht über den Testserver abbilden (siehe Doku
+//! von `os-testsite`, K-24); er ist in `http_fetch.rs` abgedeckt
+//! (`connect_timeout_is_the_smaller_of_ten_seconds_and_the_response_timeout`).
 
 #[path = "http_support.rs"]
 mod support;

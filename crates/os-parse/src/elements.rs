@@ -13,8 +13,7 @@ use ego_tree::iter::Edge;
 use os_model::ExtractedText;
 use scraper::{ElementRef, Node};
 
-use crate::content::{is_block_element, XHTML_NS};
-use crate::dom::{self, Document};
+use crate::dom::{self, is_block, Document, XHTML_NS};
 use crate::text;
 
 /// Vollständige Listen der erfassten Elemente in Dokumentreihenfolge.
@@ -67,7 +66,7 @@ fn heading_text(node: ElementRef) -> String {
                         if let Some(alt) = e.attr("alt") {
                             out.push_str(alt);
                         }
-                    } else if child.id() != node.id() && is_block_element(name) {
+                    } else if child.id() != node.id() && is_block(name) {
                         out.push(' ');
                     }
                 }
@@ -78,7 +77,7 @@ fn heading_text(node: ElementRef) -> String {
                 if let Node::Element(e) = child.value() {
                     if skip_depth > 0 {
                         skip_depth -= 1;
-                    } else if child.id() != node.id() && is_block_element(e.name()) {
+                    } else if child.id() != node.id() && is_block(e.name()) {
                         out.push(' ');
                     }
                 }

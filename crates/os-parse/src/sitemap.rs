@@ -29,9 +29,9 @@ use quick_xml::reader::NsReader;
 use quick_xml::XmlVersion;
 
 use crate::canonical::{has_rel_token, raw_and_resolved};
+use crate::dom::XHTML_NS;
 use crate::hreflang::{apply_limit, make_ref};
 
-const XHTML_NS: &str = "http://www.w3.org/1999/xhtml";
 /// Mehr entpackte Bytes werden nicht mehr gezählt.
 const MAX_COUNTED: u64 = 1 << 30;
 /// Obergrenze für das Umkodieren nicht-UTF-8-Dateien im Speicher.
