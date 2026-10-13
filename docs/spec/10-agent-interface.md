@@ -104,7 +104,7 @@ Meilensteine (OS-Festlegung, einzige Quelle der Zuordnung): **M1** (headless, ST
   - [ ] Menge der Issues, Typ, Priorität und URL-Anzahl je Issue stimmen exakt mit dem Issues-Tab der Desktop-App bzw. dem Issues-Export (06) desselben Crawls überein.
   - [ ] Filter `priority=high` bzw. `type=error` liefert nur passende Issues; ungültiger Wert → Fehler mit Liste gültiger Werte.
   - [ ] Je Issue höchstens 5 Beispiel-URLs; die Antwort nennt Tab und Filter, mit denen `query_urls` die vollständige Liste liefert, und dieser Aufruf ergibt genau die gemeldete Anzahl.
-  - [ ] Erklärung und Behebungshinweis sind die eigenen OpenSpider-Texte aus UI-063 (Textgleichheit mit der App).
+  - [ ] Erklärung, Relevanz und Behebungshinweis (Texte *what*/*why*/*fix* aus UI-065, eine Kernquelle) sind die eigenen OpenSpider-Texte aus UI-063/UI-065 (Textgleichheit mit der App).
 - **Testfixture:** MCP-Client-Integrationstest gegen `out-basic-site` (06) (Vergleich mit Issues-Export).
 
 ### AGENT-014 Read-only SQL
@@ -139,6 +139,7 @@ Meilensteine (OS-Festlegung, einzige Quelle der Zuordnung): **M1** (headless, ST
 - **Akzeptanzkriterien:**
   - [ ] Gleiches Ergebnis wie gleichwertiger CLI-Aufruf (aus OUT-285).
   - [ ] Läuft die Desktop-App, erscheint ein per MCP gestarteter Crawl dort live.
+  - [ ] **OS-Festlegung Fremdprozess-Crawls (Entscheidung (Fable-Empfehlung) vom 13.10.2026):** Ein von einem anderen Prozess (CLI, MCP über STDIO) gestarteter Crawl erscheint in der App live, aber nur lesend: Die App erkennt ihn über die Crawl-Verwaltung und den Heartbeat und zeigt „gestartet von <cli|mcp-stdio> (PID <n>) – Steuerung nur dort“; Pause/Stopp/Threads sind deaktiviert. Dafür schreibt die Engine `owner_kind` (`app`|`cli`|`mcp-stdio`) und `owner_pid` in die Crawl-Metadaten. Über den In-App-HTTP-MCP-Server gestartete Crawls laufen im App-Prozess und sind voll steuerbar. Kooperative Steuerung fremder Prozesse ist nicht Teil von M2.
   - [ ] Overrides nur für eine dokumentierte Liste sicherer Optionen (Limits, Tiefe, Include/Exclude, User-Agent, Rendering); Proxy/Auth/Custom JS nur über gespeicherte Profile.
   - [ ] **OS-Festlegung Zielschutz (SSRF):** Per MCP gestartete Crawls lehnen standardmäßig Ziele ab, die auf Loopback (`127.0.0.0/8`, `::1`), private Netze (`10/8`, `172.16/12`, `192.168/16`, `fc00::/7`), Link-local (`169.254/16`, `fe80::/10`), CGNAT (`100.64/10`) oder unspezifizierte Adressen auflösen. Geprüft wird nach der DNS-Auflösung bei jeder Verbindung (auch nach Weiterleitungen und für Ressourcen), sodass DNS-Rebinding nicht umgeht. Freigabe nur über die Einstellung „Private Ziele für MCP-Crawls erlauben“ (App/Konfigurationsdatei, Standard aus, nicht per MCP/Override änderbar). Crawls aus App und CLI sind davon nicht betroffen. Test: `start_crawl("http://127.0.0.1:<fixture-port>/")` → MCP-Fehler; Weiterleitung einer erlaubten Fixture-URL auf `169.254.169.254` → Ziel mit Status „Blocked (private target)“, kein Request.
 

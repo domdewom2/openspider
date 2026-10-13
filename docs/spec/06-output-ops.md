@@ -323,7 +323,7 @@ Prioritäten: **P0** = MVP-Kern, **P1** = für Parität nötig, **P2** = später
 - **Eingaben/Konfiguration:** Export-Schaltfläche im jeweiligen Panel.
 - **Ausgabe:**
   - Overview: identisch mit OUT-080 Crawl Overview.
-  - Issues: Spalten `Issue Name`, `Issue Type` (Issue/Warning/Opportunity), `Issue Priority` (High/Medium/Low), `URLs`, `% of Total`, `Description`, `How To Fix`. Die Texte in `Description` und `How To Fix` sind eigenständig verfasste OpenSpider-Texte (gepflegt im einzigen Issue-Katalog `core/issues/catalog.toml` nach UI-063, de/en); Issue-Beschreibungen der Referenz werden weder übernommen noch paraphrasierend nachgebaut (Clean-Room-Regel).
+  - Issues: Spalten `Issue Name`, `Issue Type` (Issue/Warning/Opportunity), `Issue Priority` (High/Medium/Low), `URLs`, `% of Total`, `Description`, `How To Fix`, dahinter `[OS-Erweiterung]` `Why It Matters` (UI-065; Entscheidung (Fable-Empfehlung) vom 13.10.2026). `Description` = Text *what*, `How To Fix` = *fix*, `Why It Matters` = *why* aus UI-065. Die Texte sind eigenständig verfasste OpenSpider-Texte (gepflegt im einzigen Issue-Katalog `core/issues/catalog.toml` mit den Textdateien `core/issues/texts/{de,en}.toml` nach UI-063/UI-065, de/en); Issue-Beschreibungen der Referenz werden weder übernommen noch paraphrasierend nachgebaut (Clean-Room-Regel).
   - Site Structure: zwei Tabellen (XLSX: zwei Blätter; CSV: `site_structure_directories.csv` und `site_structure_depth.csv`) **(OS-Festlegung** der Aufteilung):
     - Verzeichnisse: `Path` (Verzeichnis), `URLs` (gesamt), `Indexable`, `Non-Indexable`.
     - Tiefe: `Crawl Depth` (Zeilen `1` … `10`, `10+`), je Antwortcode-Klasse eine Spalte (`2xx`, `3xx`, `4xx`, `5xx`, `No Response`, `Blocked`) und `Total`. Die Referenz zeigt Tiefen 1 bis 10+; OpenSpider ergänzt eine Zeile `0` für die Start-URL(s) **(OS-Festlegung, Abweichung** – beim Paritätsabgleich wird Zeile `0` ausgeblendet).
@@ -333,7 +333,7 @@ Prioritäten: **P0** = MVP-Kern, **P1** = für Parität nötig, **P2** = später
   - Semantic Search: Ergebnisliste der zuletzt ausgeführten Abfrage; Spaltennamen führend INTEG-185: `Address`, `Score` (Kosinus, 0–1, ungerundet wie INTEG-181), davor die Export-Zusatzspalten `Query`, `Rank` und danach `Embedding Model` **(OS-Festlegung)**; bei Anzeige „Zentroid“ stattdessen `Address`, `Semantic Relevance Score` (INTEG-182).
 - **Akzeptanzkriterien:**
   - [ ] Issues-Export enthält genau die Zeilen, die im Issues-Panel angezeigt werden (gleiche Zähler).
-  - [ ] Für jedes registrierte Issue existieren nicht-leere `Description`- und `How To Fix`-Texte in Deutsch und Englisch (Registry-Test).
+  - [ ] Für jedes registrierte Issue existieren nicht-leere `Description`-, `Why It Matters`- und `How To Fix`-Texte in Deutsch und Englisch (Registry-Test; Längen und Platzhalter nach UI-065).
   - [ ] Response-Times-Buckets sind halboffene Intervalle `[a, b)`; eine Antwortzeit von exakt 1,000 s fällt in 1–2 s.
   - [ ] Site Structure Tiefe: Fixture mit Start-URL, 2 Seiten in Tiefe 1 (eine davon 404) und 11 Seiten in Tiefe 11 → Zeile `1`: `2xx`=1, `4xx`=1; Zeile `10+`: `2xx`=11; Zeile `0`: 1. Summe `Total` über alle Zeilen = Anzahl interner URLs mit bekannter Tiefe.
   - [ ] Spelling & Grammar: Fehler „Beispeil“ auf 3 Seiten (insgesamt 5-mal) → eine Zeile `URLs`=3, `Instances`=5; bei mehr als 100 eindeutigen Fehlern enthält der Export genau 100 Zeilen, sortiert nach `URLs` absteigend, dann `Error` alphabetisch.
@@ -739,7 +739,7 @@ Menü „Bulk Export“. Alle Bulk-Exporte beziehen sich auf den gesamten Crawl 
 - **Priorität:** P0
 - **Beschreibung:** Exportiert jede Zeile des Issues-Panels als eigene Datei mit den betroffenen URLs; bei linkbezogenen Issues zusätzlich die Inlinks-Variante.
 - **Eingaben/Konfiguration:** Zielordner; Format.
-- **Ausgabe:** Ordner `issues/` mit Dateien `<issue_type>_<issue_name>.csv` (z. B. `issue_response_codes_internal_client_error_4xx.csv`, `issue_..._inlinks.csv`) und einer `issues_overview.csv` (Format wie OUT-025 Issues; die Texte in `Description`/`How To Fix` sind eigenständig verfasste OpenSpider-Texte, keine Übernahme oder Nachbildung der Issue-Beschreibungen der Referenz).
+- **Ausgabe:** Ordner `issues/` mit Dateien `<issue_type>_<issue_name>.csv` (z. B. `issue_response_codes_internal_client_error_4xx.csv`, `issue_..._inlinks.csv`) und einer `issues_overview.csv` (Format wie OUT-025 Issues inkl. Erweiterungsspalte `Why It Matters`; die Texte in `Description`/`How To Fix`/`Why It Matters` sind eigenständig verfasste OpenSpider-Texte, keine Übernahme oder Nachbildung der Issue-Beschreibungen der Referenz).
 - **Akzeptanzkriterien:**
   - [ ] Anzahl Dateien (ohne Inlinks-Varianten und Übersicht) = Anzahl Zeilen im Issues-Panel.
   - [ ] Jede Datei enthält genau die URLs, die der Issue-Zähler nennt.
@@ -2335,7 +2335,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 - **Priorität:** P0
 - **Beschreibung:** Native arm64-Builds von App, CLI und gebündelten Komponenten (inkl. Chromium für Rendering).
 - **Akzeptanzkriterien:**
-  - [ ] Unterstützt macOS 12 (Monterey) und neuer **(OS-Festlegung)**.
+  - [ ] Unterstützt macOS 13 (Ventura) und neuer **(OS-Festlegung;** Entscheidung (Fable-Empfehlung) vom 13.10.2026: WKWebView ab Safari 16.2 wird für `color-mix(in oklch)`, `forced-colors` und das Canvas-Verhalten der Tabelle vorausgesetzt; vorher macOS 12**)**. `LSMinimumSystemVersion` = 13.0.
   - [ ] Kein Prozess läuft unter Rosetta 2 (Prüfung über Aktivitätsanzeige/`sysctl.proc_translated`).
   - [ ] Vollständige Testsuite läuft in CI auf `macos-14` (arm64).
 - **Testfixture:** CI-Matrix.
@@ -2344,7 +2344,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 - **Priorität:** P0
 - **Beschreibung:** Native x86_64-Builds; Auslieferung als getrennte DMGs je Architektur und **[P1]** zusätzlich als Universal-Binary.
 - **Akzeptanzkriterien:**
-  - [ ] Unterstützt macOS 12 und neuer.
+  - [ ] Unterstützt macOS 13 und neuer (wie OUT-260).
   - [ ] Vollständige Testsuite in CI auf `macos-13` (x64).
   - [ ] Das Update-Manifest liefert je Architektur das passende Paket.
   - [ ] [P1] Das Universal-DMG enthält App und CLI mit beiden Architekturen (`lipo -archs` meldet `x86_64 arm64`) und startet auf beiden nativ.
@@ -2352,7 +2352,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 
 ### OUT-262 Windows x64
 - **Priorität:** P0
-- **Beschreibung:** Windows 10 (22H2) und Windows 11, 64 Bit.
+- **Beschreibung:** Windows 10 ab Version 1809 und Windows 11, 64 Bit, mit WebView2-Evergreen-Runtime (Entscheidung (Fable-Empfehlung) vom 13.10.2026; vorher „Windows 10 (22H2)“). Die Oberfläche setzt die jeweils aktuelle Evergreen-Version voraus; eine fest gebündelte WebView2-Version wird nicht unterstützt.
 - **Akzeptanzkriterien:**
   - [ ] Benötigte WebView2-Runtime wird vom Installer geprüft und bei Bedarf installiert (Bootstrapper, offline-Variante im MSI-Paket optional).
   - [ ] Pfade > 260 Zeichen funktionieren für Exporte und Crawl-Dateien (Long-Path-fähige APIs).
@@ -2561,7 +2561,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - Belegt in der Referenz-Doku bzw. den Release-Notes: Response-Code-Filter `Redirection (HTTP Refresh)` und Bulk-Export `All Error Inlinks` (beide 23.0, OUT-050/-067/-080); Change-Detection-Filterliste mit 14 Elementen beginnend mit `Indexability` und Content-Schwelle „mehr als 10 %“ (OUT-144/-145); Site-Structure-Tiefen 1 bis 10+ nach Antwortcode (OUT-025); Spelling-&-Grammar-Panel mit den 100 häufigsten Fehlern und URL-Anzahl (OUT-025); CLI-Syntax `--project-crawl-comparison "true"` (OUT-152/-202); Looker-Studio-Export mit Datums- und URL-Feld, frei wählbarer Metrikreihenfolge und separat verlinkter Datentyp-Tabelle (OUT-210/-214); HSTS-Policy als interne 307 (OUT-081); Insecure-Content-Report umfasst HTTP-Links, Canonicals, Paginierung und Mixed Content ohne Einschränkung auf interne Ziele (OUT-097); Arm64-Linux-Pakete seit 24.0 (OUT-264).
   - Entfernte, nicht belegte Versionsangaben: FAQ-Rich-Result-Entfernung „24.2“ (OUT-102), CLI-Namensliste „seit 24.2“ (OUT-203), RDP-Absturz als Referenzproblem (OUT-262; laut Review in 20.4 behoben, nun eigenes Kriterium). Die Release-History führt 24.1–24.3 nur als Bugfix-Versionen.
   - Noch per Golden-Export zu bestätigen: getrennte Bulk-Exporte `Content:Spelling Errors`/`Content:Grammar Errors` (OUT-052, OpenSpider registriert vorsorglich beide Varianten plus den kombinierten Export); exakte Werteliste `Chain Type` inkl. `HTTP Refresh` (OUT-081); Verfügbarkeit von `All Error Inlinks` im Bereich „Internal & External“ (OUT-067); Spaltennamen der Detail-Exporte Lighthouse/Accessibility/N-grams (OUT-021).
-  - Clean-Room-Hinweis: `Description`/`How To Fix` (OUT-025, OUT-063) und die Kurzbeschreibungen in `Grammar Errors:Detail` (OUT-052) werden eigenständig verfasst; Issue-Texte der Referenz dürfen weder kopiert noch als Vorlage für Umformulierungen genutzt werden.
+  - Clean-Room-Hinweis: `Description`/`How To Fix`/`Why It Matters` (OUT-025, OUT-063) und die Kurzbeschreibungen in `Grammar Errors:Detail` (OUT-052) werden eigenständig verfasst; Issue-Texte der Referenz dürfen weder kopiert noch als Vorlage für Umformulierungen genutzt werden.
 - Revision Spec v1 (2026-10-13, Entscheidungen des Architekten zu PARITY.md):
   - Verweis-Einträge (eine Quelle je Funktion): OUT-144 → TECH-300; OUT-145 → TECH-305; OUT-231 → CRAWL-124; OUT-269 → CRAWL-122; OUT-271 → UI-121. Ihre bisherigen Detailkriterien gehören in die führenden Einträge der jeweiligen Bereiche.
   - Hier führend und um Kriterien anderer Bereiche ergänzt: OUT-020 (ONPAGE-191, UI-015), OUT-011/-130 (CRAWL-134, UI-068), OUT-067/-084 (ONPAGE-067), OUT-140 … -153 (CRAWL-032/034/035/036/144, TECH-305/306/307/308), OUT-160 … -171 (CRAWL-136), OUT-180 … -209 (CRAWL-135, CRAWL-036, TECH-308), OUT-224 (CRAWL-133, UI-116), OUT-228/-229 (CRAWL-128/143, UI-124), OUT-245 (UI-128), OUT-250/-251 (CRAWL-142), OUT-282 (TECH-308), OUT-285 (UI-129).

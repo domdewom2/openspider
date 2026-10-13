@@ -7,3 +7,5 @@
 - Abhängigkeiten nur mit Apache-2.0/MIT/BSD/ISC/Zlib/MPL-2.0-kompatibler Lizenz.
 - Plattformneutral bleiben: keine hartkodierten Pfadtrenner, `dirs`-Crate für Benutzerpfade, kein Shell-Aufruf.
 - Commits: klein, Präfix mit Bereich (`fetch:`, `parse:`, `ui:` …).
+- **Nur eigene Pfade committen:** `git add <pfade aus deinem Paket>`, niemals `git add -A`, `git add .` oder `git commit -a`. Fremde Änderungen im Arbeitsverzeichnis nicht anfassen, nicht zurücksetzen, nicht überschreiben (auch nicht per Skript, das Dateien zum Schreiben öffnet).
+- Ab Welle 1 arbeitet jedes Paket in seinem eigenen git-Worktree (siehe docs/plan/M1.md, Ausführungsregeln).
