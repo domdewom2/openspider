@@ -380,18 +380,28 @@ async fn xlsx_writes_one_workbook_per_issue_and_an_overview_workbook() {
 
 // spec: OUT-063
 #[tokio::test]
-async fn a_crawl_without_issues_writes_only_the_overview_with_its_header() {
-    // Platzhalter-Tabs: keine echten Zähler, also keine Issues; die Übersicht entsteht mit Kopfzeile.
+async fn the_overview_is_written_last_with_its_header_for_the_real_tabs() {
+    // Mit den umgesetzten Tabs (P20–P25) hat der Fixture-Crawl echte Issues; die Übersicht entsteht zuletzt, mit
+    // Kopfzeile und je Issue-Zeile eine Datei (Inlinks-Dateien zählen nicht als eigene Zeile).
     let cfg = base_config();
     let fx = crawl(&cfg).await;
     let tmp = tempfile::tempdir().unwrap();
     let files =
         os_export::catalog::bulk_issues::export(&fx.file, &cfg, tmp.path(), Format::Csv).unwrap();
-    assert_eq!(names(&files), vec!["issues_overview.csv"]);
+    let file_names = names(&files);
+    assert_eq!(
+        file_names.last().map(String::as_str),
+        Some("issues_overview.csv")
+    );
     let t = Table::read(&tmp.path().join("issues/issues_overview.csv"));
     assert_eq!(t.header.len(), 8);
-    assert!(t.rows.is_empty());
-    assert_eq!(files[0].rows, 0);
+    assert!(!t.rows.is_empty());
+    let issue_files = file_names
+        .iter()
+        .filter(|n| n.as_str() != "issues_overview.csv" && !n.ends_with("_inlinks.csv"))
+        .count();
+    assert_eq!(t.rows.len(), issue_files);
+    assert_eq!(files.last().map(|f| f.rows), Some(t.rows.len() as u64));
 }
 
 // spec: OUT-063, OUT-112

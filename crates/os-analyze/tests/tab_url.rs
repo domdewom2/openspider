@@ -314,8 +314,12 @@ fn status_content_hash_and_canonical_columns_are_filled() {
         text(cell(d, page, "Content")),
         Some("text/html; charset=utf-8")
     );
-    assert_eq!(text(cell(d, page, "Indexability")), Some("Indexable"));
-    assert_eq!(cell(d, page, "Indexability Status"), &Value::Null);
+    // Der Canonical zeigt auf eine andere URL (M1-P24): „Canonicalised“ macht die Seite nicht indexierbar.
+    assert_eq!(text(cell(d, page, "Indexability")), Some("Non-Indexable"));
+    assert_eq!(
+        text(cell(d, page, "Indexability Status")),
+        Some("Canonicalised")
+    );
     assert!(
         text(cell(d, page, "Hash")).is_some_and(|h| h.len() == 32),
         "MD5 als 32 Hexziffern"

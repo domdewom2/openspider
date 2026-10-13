@@ -1,0 +1,3 @@
+﻿Type,Source,Destination,Size (Bytes),Alt Text,Anchor,Status Code,Status,Follow,Target,Rel,Path Type,Link Path,Link Position,Link Origin
+Hyperlink,{BASE}/,{BASE}/gone,106,,"Defekter Link (404, ohne Endung)",404,Not Found,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[8],Navigation,HTML
+Hyperlink,{BASE}/,{BASE}/missing.html,117,,Defekter Link (404),404,Not Found,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[7],Navigation,HTML
