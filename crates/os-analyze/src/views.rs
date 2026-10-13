@@ -1,12 +1,30 @@
-//! Ansichten auf die Crawl-Datei: Abfragen mit Filter, Sortierung, Suche und Cursor-Paging.
+//! Ansichten auf die Crawl-Datei: Abfragen mit Filter, Sortierung, Suche und Cursor-Paging
+//! (ONPAGE-001, ONPAGE-007, ONPAGE-190, TECH-004, TECH-005).
 //!
-//! STUB(M1-P14)
+//! Aufbau: [`plan`] erzeugt aus `TabDef`/`FilterDef` und Konfiguration einen [`ViewPlan`] (Population ∧
+//! Filter ∧ CRAWL-089-Ausschluss ∧ Suche, Parameter, `ORDER BY`). [`query_view`], [`stream_view`] und
+//! [`filter_counts`] setzen auf diesem Plan auf; M2 berechnet Filter-Bitmaps aus demselben Plan.
+//!
+//! Sortierregel (eine für Tabs, Exporte und MCP): Sortierschlüssel → `Address` bytewise → `UrlId`;
+//! `ColumnKind::Text` mit `COLLATE OS_TEXT`, `ColumnKind::Url` und `Address` bytewise; leere Werte (`NULL`
+//! und `''`) stehen bei auf- und absteigender Sortierung am Ende; ohne Sortierung und ohne `default_sort`
+//! gilt `UrlId` aufsteigend.
+//!
+//! Die Funktionen `*_in` nehmen eine eigene Tab-Liste statt `tabs::all()` (Tests, abweichende Registry).
+
+mod build;
+mod counts;
+mod exec;
 
 use os_model::{CrawlConfig, FilterState, UrlId, Value};
 use os_store::CrawlFile;
 
-use crate::defs::SortKey;
+use crate::defs::{SortKey, TabDef};
 use crate::error::{NameError, ViewError};
+use crate::state::filter_state;
+use crate::tabs;
+
+pub use counts::percent;
 
 /// Welche Spalten geliefert werden.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -106,7 +124,8 @@ pub struct ViewPage {
 pub struct FilterCount {
     /// Tab.
     pub tab: String,
-    /// Filter (kanonisch, Platzhalter aufgelöst).
+    /// Kennung des Filters wie `FilterDef.id` (Platzhalter unaufgelöst, z. B. `Over {title.max_chars}
+    /// Characters`); der Anzeigename mit aktuellen Schwellen steht in `label`.
     pub filter: String,
     /// Anzeigename mit aktuellen Schwellen.
     pub label: String,
@@ -130,43 +149,114 @@ pub struct ViewPlan {
     pub filter_sql: String,
     /// Suchbedingung, falls eine Suche angegeben ist.
     pub search_sql: Option<String>,
-    /// Benannte Parameter (`:name`) mit ihren Werten.
+    /// Benannte Parameter mit führendem `:` (`:q` = Suchtext) und ihren Werten.
     pub params: Vec<(String, Value)>,
-    /// `ORDER BY`-Klausel nach der Sortierregel (3.9).
+    /// Vollständige `ORDER BY`-Klausel (mit Schlüsselwort) nach der Sortierregel (3.9).
     pub order_by: String,
 }
 
 /// Baut den SQL-Plan zu einer Abfrage.
-// STUB(M1-P14)
-pub fn plan(_q: &ViewQuery, _cfg: &CrawlConfig) -> Result<ViewPlan, ViewError> {
-    Err(ViewError::NotImplemented("views::plan (M1-P14)"))
+pub fn plan(q: &ViewQuery, cfg: &CrawlConfig) -> Result<ViewPlan, ViewError> {
+    plan_in(&tabs::all(), q, cfg)
 }
 
-/// Fragt eine Seite einer Ansicht ab.
-// STUB(M1-P14)
+/// Wie [`plan`], gegen eine eigene Tab-Liste.
+pub fn plan_in(tabs: &[TabDef], q: &ViewQuery, cfg: &CrawlConfig) -> Result<ViewPlan, ViewError> {
+    Ok(build::build(tabs, q, cfg)?.plan)
+}
+
+/// Fragt eine Seite einer Ansicht ab. Hat der Filter einen Zustand statt Zahlen (`FilterState` ≠ `Ready`),
+/// ist die Seite leer (`total` 0): nie Teilergebnisse, nie eine 0 an Stelle des Zustands (ONPAGE-007).
 pub fn query_view(
-    _file: &CrawlFile,
-    _cfg: &CrawlConfig,
-    _q: &ViewQuery,
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    q: &ViewQuery,
 ) -> Result<ViewPage, ViewError> {
-    Err(ViewError::NotImplemented("views::query_view (M1-P14)"))
+    query_view_in(&tabs::all(), file, cfg, q)
 }
 
-/// Streamt alle Zeilen einer Ansicht in konstantem Speicher; liefert die Spaltennamen.
-// STUB(M1-P14)
+/// Wie [`query_view`], gegen eine eigene Tab-Liste.
+pub fn query_view_in(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    q: &ViewQuery,
+) -> Result<ViewPage, ViewError> {
+    let built = build::build(tabs, q, cfg)?;
+    let ready = is_ready(file, cfg, &built)?;
+    exec::query_page(file, &built, q, ready)
+}
+
+/// Streamt alle Zeilen einer Ansicht in konstantem Speicher (ohne `limit` und `start`); liefert die
+/// Spaltennamen.
 pub fn stream_view(
-    _file: &CrawlFile,
-    _cfg: &CrawlConfig,
-    _q: &ViewQuery,
-    _sink: &mut dyn FnMut(&[Value]) -> Result<(), ViewError>,
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    q: &ViewQuery,
+    sink: &mut dyn FnMut(&[Value]) -> Result<(), ViewError>,
 ) -> Result<Vec<String>, ViewError> {
-    Err(ViewError::NotImplemented("views::stream_view (M1-P14)"))
+    stream_view_in(&tabs::all(), file, cfg, q, sink)
 }
 
-/// Zähler aller Filter aller Tabs.
-// STUB(M1-P14)
-pub fn filter_counts(_file: &CrawlFile, _cfg: &CrawlConfig) -> Result<Vec<FilterCount>, ViewError> {
-    Ok(Vec::new())
+/// Wie [`stream_view`], gegen eine eigene Tab-Liste.
+pub fn stream_view_in(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    q: &ViewQuery,
+    sink: &mut dyn FnMut(&[Value]) -> Result<(), ViewError>,
+) -> Result<Vec<String>, ViewError> {
+    let built = build::build(tabs, q, cfg)?;
+    let ready = is_ready(file, cfg, &built)?;
+    exec::stream_rows(file, &built, ready, sink)
+}
+
+/// Zustand des Filters einer Abfrage.
+pub fn state_of(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    tab: &str,
+    filter: &str,
+) -> Result<FilterState, ViewError> {
+    state_of_in(&tabs::all(), file, cfg, tab, filter)
+}
+
+/// Wie [`state_of`], gegen eine eigene Tab-Liste.
+pub fn state_of_in(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    tab: &str,
+    filter: &str,
+) -> Result<FilterState, ViewError> {
+    let built = build::build(tabs, &ViewQuery::new(tab, filter), cfg)?;
+    let cfg_json = serde_json::to_value(cfg).unwrap_or(serde_json::Value::Null);
+    let snapshot = counts::analysis_snapshot(file)?;
+    Ok(filter_state(built.filter, cfg, &cfg_json, &snapshot))
+}
+
+fn is_ready(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    built: &build::Built<'_>,
+) -> Result<bool, ViewError> {
+    let cfg_json = serde_json::to_value(cfg).unwrap_or(serde_json::Value::Null);
+    let snapshot = counts::analysis_snapshot(file)?;
+    Ok(filter_state(built.filter, cfg, &cfg_json, &snapshot) == FilterState::Ready)
+}
+
+/// Zähler aller Filter aller Tabs: Trefferzahl und Prozent nur bei `Ready`, sonst der Zustand.
+pub fn filter_counts(file: &CrawlFile, cfg: &CrawlConfig) -> Result<Vec<FilterCount>, ViewError> {
+    counts::counts_in(&tabs::all(), file, cfg)
+}
+
+/// Wie [`filter_counts`], gegen eine eigene Tab-Liste.
+pub fn filter_counts_in(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+) -> Result<Vec<FilterCount>, ViewError> {
+    counts::counts_in(tabs, file, cfg)
 }
 
 /// Löst `"Tab:Filter"` auf (Vorschläge bei Fehlern).
