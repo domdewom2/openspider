@@ -204,6 +204,10 @@ mod tests {
         assert_eq!(parse_pdf_meta(b"%PDF"), PdfMeta::default());
         assert_eq!(
             parse_sitemap(&url, b"<urlset/>", None).kind,
+            os_model::SitemapKind::Urlset
+        );
+        assert_eq!(
+            parse_sitemap(&url, b"<html/>", None).kind,
             os_model::SitemapKind::Invalid
         );
     }

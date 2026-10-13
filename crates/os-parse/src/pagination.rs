@@ -1,13 +1,43 @@
-//! Paginierung (`rel=next`/`rel=prev`).
+//! Paginierung (`<link rel=next|prev>`, TECH-030).
 //!
-//! STUB(M1-P06)
+//! Nur `<link>`-Elemente zählen; `<a rel=next>` ist ein normaler Hyperlink. `rel=previous` wird wie `prev`
+//! behandelt (Festlegung). Steht beides im `rel`-Wert, entstehen zwei Angaben (erst `next`, dann `prev`).
+//! Die Angaben aus dem `Link`-Header liefert `headers`.
 
-use os_model::PaginationRef;
+use os_model::{HintSource, PaginationRef};
 
-use crate::dom::Document;
+use crate::canonical::{has_rel_token, link_elements, raw_and_resolved};
+use crate::dom::{self, Document};
 
 /// Extrahiert die Paginierungs-Angaben.
-// STUB(M1-P06)
-pub fn extract(_doc: &Document, _base: &url::Url) -> Vec<PaginationRef> {
-    Vec::new()
+pub fn extract(doc: &Document, base: &url::Url) -> Vec<PaginationRef> {
+    let mut out = Vec::new();
+    for el in link_elements(doc) {
+        let Some(rel) = el.value().attr("rel") else {
+            continue;
+        };
+        let Some(href) = el.value().attr("href") else {
+            continue;
+        };
+        let next = has_rel_token(rel, "next");
+        let prev = has_rel_token(rel, "prev") || has_rel_token(rel, "previous");
+        if !next && !prev {
+            continue;
+        }
+        let (raw, resolved) = raw_and_resolved(base, href);
+        let in_head = dom::in_head(el);
+        for rel_next in [true, false] {
+            if (rel_next && next) || (!rel_next && prev) {
+                out.push(PaginationRef {
+                    rel_next,
+                    source: HintSource::Html,
+                    raw: raw.clone(),
+                    resolved: resolved.clone(),
+                    in_head,
+                    order: out.len() as u32,
+                });
+            }
+        }
+    }
+    out
 }
