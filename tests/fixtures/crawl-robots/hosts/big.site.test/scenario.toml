@@ -1,0 +1,5 @@
+# 3 MB robots.txt (CRAWL-098, Referenz-Fix 19.7). body_size/content_type: Routen-Optionen aus M1-P09.
+[[route]]
+path = "/robots.txt"
+content_type = "text/plain"
+body_size = 3145728

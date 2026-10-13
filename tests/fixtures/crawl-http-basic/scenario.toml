@@ -1,9 +1,41 @@
-# Szenario "crawl-http-basic" (CRAWL-011).
-#
-# Offen (M1-P09): /gzip, /br, /deflate-raw, /chunked, /broken-gzip (Header gzip, Body unkomprimiert) und
-# /echo-headers (empfangene Header als JSON). Bis dahin prüft tests/http_fetch.rs Kompression, Chunked
-# und Header gegen einen eigenen Mini-Server.
+# Szenario "crawl-http-basic" (CRAWL-011, CRAWL-114): /plain ist die Referenz; /gzip, /br, /deflate-raw,
+# /deflate und /chunked liefern denselben Body kodiert bzw. gechunkt, /broken-gzip meldet gzip bei
+# unkomprimiertem Body (abgeschnittener Strom), /echo-headers gibt die empfangenen Header als JSON zurück.
 
 [[route]]
 path = "/plain"
 body = "<html><head><title>Einfache Seite</title></head><body>Hallo</body></html>"
+
+[[route]]
+path = "/gzip"
+encoding = "gzip"
+body = "<html><head><title>Einfache Seite</title></head><body>Hallo</body></html>"
+
+[[route]]
+path = "/br"
+encoding = "br"
+body = "<html><head><title>Einfache Seite</title></head><body>Hallo</body></html>"
+
+[[route]]
+path = "/deflate"
+encoding = "deflate"
+body = "<html><head><title>Einfache Seite</title></head><body>Hallo</body></html>"
+
+[[route]]
+path = "/deflate-raw"
+encoding = "deflate-raw"
+body = "<html><head><title>Einfache Seite</title></head><body>Hallo</body></html>"
+
+[[route]]
+path = "/chunked"
+chunked = true
+body = "<html><head><title>Einfache Seite</title></head><body>Hallo</body></html>"
+
+[[route]]
+path = "/broken-gzip"
+encoding = "broken-gzip"
+body = "<html><head><title>Einfache Seite</title></head><body>Hallo</body></html>"
+
+[[route]]
+path = "/echo-headers"
+echo = "headers"

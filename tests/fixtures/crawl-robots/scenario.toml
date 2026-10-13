@@ -1,0 +1,105 @@
+# Szenario crawl-robots: alle verlinkten Seiten existieren (200), damit "Ignorieren" echte Statuscodes liefert.
+
+[[route]]
+path = "/privat/x"
+body = "<!doctype html><html><head><title>/privat/x</title></head><body><h1>/privat/x</h1></body></html>"
+
+[[route]]
+path = "/privat/oeffentlich"
+body = "<!doctype html><html><head><title>/privat/oeffentlich</title></head><body><h1>/privat/oeffentlich</h1></body></html>"
+
+[[route]]
+path = "/privat/oeffentlich/unterseite"
+body = "<!doctype html><html><head><title>/privat/oeffentlich/unterseite</title></head><body><h1>/privat/oeffentlich/unterseite</h1></body></html>"
+
+[[route]]
+path = "/privat/"
+body = "<!doctype html><html><head><title>/privat/</title></head><body><h1>/privat/</h1></body></html>"
+
+[[route]]
+path = "/privat"
+body = "<!doctype html><html><head><title>/privat</title></head><body><h1>/privat</h1></body></html>"
+
+[[route]]
+path = "/dokument.pdf"
+body = "<!doctype html><html><head><title>/dokument.pdf</title></head><body><h1>/dokument.pdf</h1></body></html>"
+
+[[route]]
+path = "/ordner/dokument.pdf"
+body = "<!doctype html><html><head><title>/ordner/dokument.pdf</title></head><body><h1>/ordner/dokument.pdf</h1></body></html>"
+
+[[route]]
+path = "/dokument.pdfx"
+body = "<!doctype html><html><head><title>/dokument.pdfx</title></head><body><h1>/dokument.pdfx</h1></body></html>"
+
+[[route]]
+path = "/liste"
+body = "<!doctype html><html><head><title>/liste</title></head><body><h1>/liste</h1></body></html>"
+
+[[route]]
+path = "/seite"
+body = "<!doctype html><html><head><title>/seite</title></head><body><h1>/seite</h1></body></html>"
+
+[[route]]
+path = "/seite2"
+body = "<!doctype html><html><head><title>/seite2</title></head><body><h1>/seite2</h1></body></html>"
+
+[[route]]
+path = "/seite/unterseite"
+body = "<!doctype html><html><head><title>/seite/unterseite</title></head><body><h1>/seite/unterseite</h1></body></html>"
+
+[[route]]
+path = "/mit-leerzeichen/a"
+body = "<!doctype html><html><head><title>/mit-leerzeichen/a</title></head><body><h1>/mit-leerzeichen/a</h1></body></html>"
+
+[[route]]
+path = "/zweite-gruppe/a"
+body = "<!doctype html><html><head><title>/zweite-gruppe/a</title></head><body><h1>/zweite-gruppe/a</h1></body></html>"
+
+[[route]]
+path = "/nur-google/a"
+body = "<!doctype html><html><head><title>/nur-google/a</title></head><body><h1>/nur-google/a</h1></body></html>"
+
+[[route]]
+path = "/unbekannte-direktive/a"
+body = "<!doctype html><html><head><title>/unbekannte-direktive/a</title></head><body><h1>/unbekannte-direktive/a</h1></body></html>"
+
+[[route]]
+path = "/frei/a"
+body = "<!doctype html><html><head><title>/frei/a</title></head><body><h1>/frei/a</h1></body></html>"
+
+[[route]]
+path = "/caf%C3%A9"
+body = "<!doctype html><html><head><title>/caf%C3%A9</title></head><body><h1>/caf%C3%A9</h1></body></html>"
+
+[[route]]
+path = "/gross%2Fklein"
+body = "<!doctype html><html><head><title>/gross%2Fklein</title></head><body><h1>/gross%2Fklein</h1></body></html>"
+
+# Hostgebundene robots.txt-Varianten fuer die virtuellen Hosts (CRAWL-098, P09-Format). Dieselben Varianten
+# liegen als eigenstaendige Szenarien unter hosts/<host>/ (Tests ohne virtuelle Hosts); beide Fassungen gleich halten.
+
+# --- big.site.test ---
+# 3 MB robots.txt (CRAWL-098, Referenz-Fix 19.7). body_size/content_type: Routen-Optionen aus M1-P09.
+[[route]]
+path = "/robots.txt"
+host = "big.site.test"
+content_type = "text/plain"
+body_size = 3145728
+
+# --- bom.site.test ---
+# robots.txt mit BOM und CRLF (CRAWL-098). Als Route-Body mit Escapes, weil .gitattributes (eol=lf)
+# Zeilenenden in Dateien normalisiert.
+[[route]]
+path = "/robots.txt"
+host = "bom.site.test"
+content_type = "text/plain; charset=utf-8"
+body = "﻿User-agent: *\r\nDisallow: /privat/\r\nAllow: /privat/oeffentlich\r\n"
+
+# --- redirect.site.test ---
+# robots.txt -> 301 -> andere Datei (CRAWL-098: Weiterleitungen werden verfolgt)
+[[route]]
+path = "/robots.txt"
+host = "redirect.site.test"
+status = 301
+location = "/robots-real.txt"

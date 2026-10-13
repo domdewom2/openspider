@@ -427,7 +427,8 @@
     "wave": 1.5,
     "spec_ids": [],
     "owns": [
-      "crates/os-fetch/tests/{http,robots}_*.rs (nur `#[ignore = \"wartet auf M1-P09\"]` entfernen)"
+      "crates/os-fetch/tests/{http,robots}_*.rs (nur `#[ignore = \"wartet auf M1-P09\"]` entfernen; Anpassungen an das P09-Format erlaubt, wo die Tests sonst nicht scharf werden)",
+      "tests/fixtures/crawl-{auth,content-types,cookies,http-basic,no-response,status-codes,robots,robots-errors}/** (nur Routen im P09-Format ergänzen bzw. hostgebunden umschreiben; Entscheidung Review Welle 1.5: legitimiert)"
     ],
     "depends_on": [
       "M1-P02",
@@ -435,7 +436,7 @@
       "M1-P09"
     ],
     "size": "S",
-    "prompt_notes": "Orchestrator-Schritt nach Merge von P02, P03, P09 (Worktree m1/w15 nach E1). Alle `#[ignore = \"wartet auf M1-P09\"]` in crates/os-fetch/tests/{http,robots}_*.rs entfernen, `cargo test --workspace --exclude openspider-desktop --locked` grün. Rote Tests → Nachbesserungspaket M1-P3x (Opus) für os-fetch, nicht P15. Erst danach startet Welle 2."
+    "prompt_notes": "Orchestrator-Schritt nach Merge von P02, P03, P09 (Worktree m1/w15 nach E1). Alle `#[ignore = \"wartet auf M1-P09\"]` in crates/os-fetch/tests/{http,robots}_*.rs entfernen, `cargo test --workspace --exclude openspider-desktop --locked` grün. Rote Tests → Nachbesserungspaket M1-P3x (Opus) für os-fetch, nicht P15. Erst danach startet Welle 2. Stand nach Review: P03 muss vor W15 auf main sein (W15-Zweig enthält P03 per Merge). Offen für ein Nachbesserungspaket an os-testsite (P09-Nachfolger): Route-Option für 103 Early Hints (Fixture-Route /early-hints in crawl-status-codes, Test early_hints_are_skipped_in_the_status_fixture, CRAWL-012); /hang-connect (CRAWL-013) wird ohne Blackhole-Port nicht in der Fixture abgebildet – Spec-Fixture an die Entscheidung in os-testsite/src/lib.rs anpassen. Abdeckung bis dahin über http_fetch.rs (informational_responses_are_skipped, connect_timeout_is_the_smaller_of_ten_seconds_and_the_response_timeout)."
   },
   {
     "id": "M1-P15",

@@ -1,0 +1,5 @@
+# robots.txt -> 301 -> andere Datei (CRAWL-098: Weiterleitungen werden verfolgt)
+[[route]]
+path = "/robots.txt"
+status = 301
+location = "/robots-real.txt"

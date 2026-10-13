@@ -1,0 +1,6 @@
+# robots.txt mit BOM und CRLF (CRAWL-098). Als Route-Body mit Escapes, weil .gitattributes (eol=lf)
+# Zeilenenden in Dateien normalisiert.
+[[route]]
+path = "/robots.txt"
+content_type = "text/plain; charset=utf-8"
+body = "﻿User-agent: *\r\nDisallow: /privat/\r\nAllow: /privat/oeffentlich\r\n"
