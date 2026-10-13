@@ -1,10 +1,13 @@
 //! Fixture-Tests, die auf Fähigkeiten des Testservers aus M1-P09 warten (Kompression, Chunked,
 //! Echo der Request-Header, Cookies, virtuelle Hosts mit Basic-Auth, Verbindungsabbrüche, TLS).
 //!
-//! Alle Tests sind mit `#[ignore = "wartet auf M1-P09"]` markiert und werden im Orchestrator-Schritt
-//! Welle 1.5 (M1.md 2a, E6) scharfgeschaltet. Dazu müssen die Szenarien `tests/fixtures/crawl-*`
-//! um die in ihren Kommentaren genannten Routen im Format von P09 ergänzt werden. Dieselben Verhalten
-//! prüfen `http_fetch.rs` und `http_session.rs` bereits gegen einen eigenen Mini-Server.
+//! Scharfgeschaltet in Welle 1.5 (M1.md 2a, E6): die Szenarien `tests/fixtures/crawl-*` liefern die
+//! benötigten Routen im Format von P09. Dieselben Verhalten prüfen `http_fetch.rs` und
+//! `http_session.rs` zusätzlich gegen einen eigenen Mini-Server.
+//!
+//! Nicht über den Testserver abbildbar (siehe Doku von `os-testsite`): 103 Early Hints (Zwischenantworten)
+//! und ein Blackhole-Port für Verbindungs-Timeouts. Beides ist in `http_fetch.rs` abgedeckt
+//! (`informational_responses_are_skipped`, `connect_timeout_is_the_smaller_of_ten_seconds_and_the_response_timeout`).
 
 #[path = "http_support.rs"]
 mod support;
@@ -27,7 +30,6 @@ fn text(resp: &os_fetch::HttpResponse) -> String {
 }
 
 // spec: CRAWL-011, CRAWL-114
-#[ignore = "wartet auf M1-P09"]
 #[tokio::test]
 async fn echo_headers_shows_the_exact_user_agent() {
     let site = TestSite::start("crawl-http-basic").await.unwrap();
@@ -40,7 +42,6 @@ async fn echo_headers_shows_the_exact_user_agent() {
 }
 
 // spec: CRAWL-011
-#[ignore = "wartet auf M1-P09"]
 #[tokio::test]
 async fn compressed_and_chunked_fixture_routes_decode_to_the_same_html() {
     let site = TestSite::start("crawl-http-basic").await.unwrap();
@@ -60,18 +61,7 @@ async fn compressed_and_chunked_fixture_routes_decode_to_the_same_html() {
     assert!(broken.decode_error.is_some());
 }
 
-// spec: CRAWL-012
-#[ignore = "wartet auf M1-P09"]
-#[tokio::test]
-async fn early_hints_are_skipped_in_the_status_fixture() {
-    let site = TestSite::start("crawl-status-codes").await.unwrap();
-    let f = fetcher_with(Arc::new(SystemClock), |_| {});
-    let resp = expect_response(get(&f, url(&site, "/early-hints")).await);
-    assert_eq!(resp.status, 200);
-}
-
 // spec: CRAWL-019, ONPAGE-020
-#[ignore = "wartet auf M1-P09"]
 #[tokio::test]
 async fn route_without_content_type_is_unknown_or_html_when_assumed() {
     let site = TestSite::start("crawl-content-types").await.unwrap();
@@ -84,7 +74,6 @@ async fn route_without_content_type_is_unknown_or_html_when_assumed() {
 }
 
 // spec: CRAWL-013, ONPAGE-065
-#[ignore = "wartet auf M1-P09"]
 #[tokio::test]
 async fn fixture_no_response_routes_have_the_expected_causes() {
     let site = TestSite::start("crawl-no-response").await.unwrap();
@@ -96,13 +85,9 @@ async fn fixture_no_response_routes_have_the_expected_causes() {
         let (reason, _, _) = expect_no_response(get(&f, url(&site, path)).await);
         assert_eq!(reason, NoResponseReason::ConnectionError, "{path}");
     }
-    // Server nimmt die Verbindung nicht an (Blackhole-Port): Verbindungs-Timeout
-    let (reason, _, _) = expect_no_response(get(&f, url(&site, "/hang-connect")).await);
-    assert_eq!(reason, NoResponseReason::ConnectionTimeout);
 }
 
 // spec: CRAWL-013, ONPAGE-065
-#[ignore = "wartet auf M1-P09"]
 #[tokio::test]
 async fn expired_certificate_is_a_tls_error() {
     let site = TestSite::start("crawl-no-response").await.unwrap();
@@ -116,7 +101,6 @@ async fn expired_certificate_is_a_tls_error() {
 }
 
 // spec: CRAWL-088
-#[ignore = "wartet auf M1-P09"]
 #[tokio::test]
 async fn cookie_fixture_set_check_flow_follows_the_three_modes() {
     let site = TestSite::start("crawl-cookies").await.unwrap();
@@ -151,7 +135,6 @@ async fn cookie_fixture_set_check_flow_follows_the_three_modes() {
 }
 
 // spec: CRAWL-117
-#[ignore = "wartet auf M1-P09"]
 #[tokio::test]
 async fn basic_auth_fixture_host_accepts_the_stored_credentials_only_for_itself() {
     let site = TestSite::start("crawl-auth").await.unwrap();
@@ -169,6 +152,9 @@ async fn basic_auth_fixture_host_accepts_the_stored_credentials_only_for_itself(
     });
     let own = expect_response(get(&f, Url::parse("http://basic.site.test/").unwrap()).await);
     assert_eq!(own.status, 200);
+    // Der Abruf kommt mit Basic-Authorization (UTF-8, prüfer:geheim) am Host an
+    let sent = text(&own);
+    assert!(sent.contains("Basic cHLDvGZlcjpnZWhlaW0="), "{sent}");
     // Weiterleitung von dort auf other.test/echo-headers: dort kommt kein Authorization-Header an
     let redirect =
         expect_response(get(&f, Url::parse("http://basic.site.test/to-other").unwrap()).await);

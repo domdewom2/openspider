@@ -1,7 +1,7 @@
 # Szenario "crawl-content-types" (CRAWL-019, ONPAGE-020): je eine Route pro MIME-Typ der Klassentabelle.
 # /falscher-ct liefert text/plain mit HTML-Body, /HTML-upper den Wert "Text/HTML; Charset=UTF-8".
 #
-# Offen (M1-P09): /kein-ct (HTML-Body ganz ohne Content-Type-Header) – der Testserver setzt immer einen.
+# /kein-ct liefert einen HTML-Body ganz ohne Content-Type-Header.
 
 [[route]]
 path = "/t-html"
@@ -172,3 +172,8 @@ body = "<html><body>Inhalt von HTML-upper</body></html>"
 path = "/falscher-ct"
 content_type = "text/plain"
 body = "<html><body>Inhalt von falscher-ct</body></html>"
+
+[[route]]
+path = "/kein-ct"
+no_content_type = true
+body = "<html><body>Inhalt von kein-ct</body></html>"
