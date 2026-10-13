@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenSpider – Open-Source SEO-Crawler für macOS und Windows</title>
+<meta name="description" content="OpenSpider ist ein freier, quelloffener SEO-Crawler und Audit-Werkzeug für macOS (Apple Silicon & Intel) und Windows. Schnell, speichersparsam, mit offenen Crawl-Daten. In Entwicklung.">
+<link rel="canonical" href="https://openspider.de/">
+<meta property="og:title" content="OpenSpider – Open-Source SEO-Crawler">
+<meta property="og:description" content="Freier, quelloffener SEO-Crawler für macOS und Windows. In Entwicklung.">
+<meta property="og:url" content="https://openspider.de/">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f172a'/%3E%3Cg fill='none' stroke='%2338bdf8' stroke-width='3'%3E%3Ccircle cx='32' cy='32' r='8'/%3E%3Ccircle cx='32' cy='32' r='18' stroke-opacity='.55'/%3E%3Cpath d='M32 6v52M6 32h52M13 13l38 38M51 13 13 51' stroke-opacity='.35'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f8fafc;--fg:#0f172a;--muted:#475569;--card:#ffffff;--line:#e2e8f0;--accent:#0284c7;--accent-fg:#ffffff;--chip:#e0f2fe;--chip-fg:#075985;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0b1120;--fg:#e2e8f0;--muted:#94a3b8;--card:#111a2e;--line:#1e293b;--accent:#38bdf8;--accent-fg:#0b1120;--chip:#0c2a3f;--chip-fg:#7dd3fc;}
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:0 20px}
+header{padding:28px 0;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.15rem;letter-spacing:-.01em}
+.brand svg{width:32px;height:32px}
+.gh{color:var(--fg);text-decoration:none;font-size:.95rem;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);padding:7px 12px;border-radius:999px}
+.gh:hover{border-color:var(--accent)}
+.hero{padding:56px 0 40px}
+.chip{display:inline-block;background:var(--chip);color:var(--chip-fg);font-size:.8rem;font-weight:600;padding:4px 10px;border-radius:999px;margin-bottom:18px}
+h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.1;letter-spacing:-.025em;margin:0 0 18px}
+.lead{font-size:1.15rem;color:var(--muted);max-width:640px;margin:0 0 28px}
+.cta{display:flex;flex-wrap:wrap;gap:12px}
+.btn{display:inline-block;padding:11px 18px;border-radius:10px;text-decoration:none;font-weight:600}
+.btn.primary{background:var(--accent);color:var(--accent-fg)}
+.btn.ghost{border:1px solid var(--line);color:var(--fg)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;padding:24px 0 56px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+.card h2{font-size:1rem;margin:0 0 6px}
+.card p{margin:0;color:var(--muted);font-size:.95rem}
+.status{border-top:1px solid var(--line);padding:32px 0}
+.status h2{font-size:1.1rem;margin:0 0 12px}
+.status ol{margin:0;padding-left:20px;color:var(--muted)}
+.status li{margin:4px 0}
+.status li b{color:var(--fg)}
+footer{border-top:1px solid var(--line);padding:24px 0 40px;color:var(--muted);font-size:.85rem;display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-between}
+footer a{color:var(--muted)}
+.en{margin-top:10px;font-size:.9rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#0f172a"/><g fill="none" stroke="#38bdf8" stroke-width="3"><circle cx="32" cy="32" r="8"/><circle cx="32" cy="32" r="18" stroke-opacity=".55"/><path d="M32 6v52M6 32h52M13 13l38 38M51 13 13 51" stroke-opacity=".35"/></g></svg>
+      OpenSpider
+    </div>
+    <a class="gh" href="https://github.com/domdewom2/openspider" rel="noopener">GitHub</a>
+  </header>
+
+  <section class="hero">
+    <span class="chip">In Entwicklung</span>
+    <h1>Der offene SEO-Crawler für macOS und Windows.</h1>
+    <p class="lead">OpenSpider crawlt Websites wie eine Suchmaschine und findet technische SEO-Probleme: Statuscodes, Weiterleitungen, Canonicals, hreflang, Duplikate, Indexierbarkeit und vieles mehr. Frei, quelloffen und gebaut für große Websites.</p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/domdewom2/openspider" rel="noopener">Projekt auf GitHub</a>
+      <a class="btn ghost" href="https://github.com/domdewom2/openspider/blob/main/docs/ARCHITECTURE.md" rel="noopener">Architektur &amp; Roadmap</a>
+    </div>
+    <p class="en">English: OpenSpider is a free, open-source SEO crawler for macOS (Apple Silicon &amp; Intel) and Windows. Currently in development.</p>
+  </section>
+
+  <section class="grid" aria-label="Eigenschaften">
+    <div class="card"><h2>Für große Websites</h2><p>Crawl-Daten liegen von Anfang an auf der Festplatte statt im Arbeitsspeicher. Ziel: eine Million URLs ohne Speicherprobleme und ohne einfrierende Oberfläche.</p></div>
+    <div class="card"><h2>Offene Daten</h2><p>Jeder Crawl ist eine normale SQLite-Datei. Auswerten mit SQL, Python, Excel oder jedem anderen Werkzeug, ohne Umweg über Exporte.</p></div>
+    <div class="card"><h2>Frei und quelloffen</h2><p>Apache-2.0-Lizenz. Keine URL-Grenze, Kommandozeile und geplante Crawls ohne Lizenzschlüssel, auch in CI/CD-Pipelines.</p></div>
+    <div class="card"><h2>Steuerbar durch KI-Assistenten</h2><p>Eingebauter MCP-Server: Claude, Codex und andere Assistenten können Crawls starten und Ergebnisse gezielt abfragen.</p></div>
+    <div class="card"><h2>Native Desktop-App</h2><p>Rust-Kern mit Tauri-Oberfläche. Kleine Installer für macOS (Apple Silicon und Intel) und Windows.</p></div>
+    <div class="card"><h2>KI-Funktionen geplant</h2><p>Nach Version 1.0: Seiten-Klassifizierung, Optimierungsvorschläge, Redirect-Mapping und Anbindung an Claude, OpenAI und OpenRouter.</p></div>
+  </section>
+
+  <section class="status">
+    <h2>Fahrplan</h2>
+    <ol>
+      <li><b>M1</b> – Crawl-Kern, Speicher, Kommandozeile, Basis-Auswertungen</li>
+      <li><b>M2</b> – Desktop-Oberfläche, alle Auswertungen, Reports, JavaScript-Rendering</li>
+      <li><b>M3</b> – Signierte Installer und Auto-Update: <b>Version 1.0</b></li>
+      <li><b>Danach</b> – KI-Funktionen und Anbindung externer SEO-Daten</li>
+    </ol>
+  </section>
+
+  <footer>
+    <span>© 2026 OpenSpider · Apache-2.0 · Unabhängiges Projekt, nicht mit kommerziellen Crawler-Anbietern verbunden.</span>
+    <span><a href="https://wojcik.de/impressum">Impressum</a> · <a href="https://wojcik.de/datenschutz">Datenschutz</a></span>
+  </footer>
+</div>
+</body>
+</html>
