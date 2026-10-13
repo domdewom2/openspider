@@ -3,9 +3,12 @@
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, ValueEnum};
+use os_loadtest::child::{self, ChildArgs};
+use os_loadtest::report::{self, now_rfc3339, Report, SuiteReport};
 use os_loadtest::runner::{self, ProbeParams};
-use os_loadtest::{report, scenario, NoCrawler, Size, SCENARIOS};
+use os_loadtest::{scenario, CrawlerUnderTest, EngineCrawler, NoCrawler, Size, SCENARIOS};
+use os_store::StorageProfile;
 
 #[derive(Parser)]
 #[command(
@@ -17,22 +20,84 @@ struct Cli {
     command: Command,
 }
 
+#[derive(Clone, Copy, ValueEnum)]
+enum CrawlerChoice {
+    /// os-engine im Kindprozess (Standard).
+    Engine,
+    /// Nur den Testserver messen.
+    None,
+}
+
+#[derive(Clone, Copy, ValueEnum)]
+enum ProfileChoice {
+    Balanced,
+    MaxSpeed,
+    MinMemory,
+}
+
+impl From<ProfileChoice> for StorageProfile {
+    fn from(p: ProfileChoice) -> Self {
+        match p {
+            ProfileChoice::Balanced => StorageProfile::Balanced,
+            ProfileChoice::MaxSpeed => StorageProfile::MaxSpeed,
+            ProfileChoice::MinMemory => StorageProfile::MinMemory,
+        }
+    }
+}
+
 #[derive(Subcommand)]
 enum Command {
-    /// Führt ein Szenario aus und schreibt den Bericht.
+    /// Führt Szenarien aus und schreibt den Bericht.
     Run {
-        /// Szenario, z. B. `perf-001` (siehe `list`).
-        #[arg(long)]
-        scenario: String,
+        /// Szenario, z. B. `perf-001` (siehe `list`); mehrfach angebbar, `all` = alle.
+        #[arg(long, required = true)]
+        scenario: Vec<String>,
         /// `small` (10.000 URLs, jede CI) oder `large` (1 Mio., vor Meilensteinen).
         #[arg(long, value_enum)]
         size: Size,
         /// Berichtsdatei (Standard: target/loadtest/report.json).
         #[arg(long)]
         out: Option<PathBuf>,
+        /// Welcher Crawler gemessen wird.
+        #[arg(long, value_enum, default_value = "engine")]
+        crawler: CrawlerChoice,
+        /// Parallele Abrufe des Crawlers.
+        #[arg(long, default_value_t = os_loadtest::engine::DEFAULT_THREADS)]
+        threads: u32,
+        /// Speicherprofil der Crawl-Dateien (CRAWL-124).
+        #[arg(long, value_enum, default_value = "balanced")]
+        profile: ProfileChoice,
+        /// Seed der Abbruchzeitpunkte (PERF-005).
+        #[arg(long, default_value_t = 20_261_014)]
+        seed: u64,
+        /// Anzahl harter Abbrüche (PERF-005; Standard 3 bei small, 5 bei large).
+        #[arg(long)]
+        kills: Option<usize>,
+        /// Ordner für die Crawl-Dateien (Standard: temporärer Ordner; 1-Mio.-Crawls brauchen mehrere GB).
+        #[arg(long)]
+        work_dir: Option<PathBuf>,
     },
     /// Listet die Szenarien auf.
     List,
+    /// Kindprozess eines Crawls (intern; vom Runner gestartet, damit der Spitzen-RSS gemessen werden kann).
+    #[command(hide = true)]
+    CrawlChild(ChildCli),
+}
+
+#[derive(Args)]
+struct ChildCli {
+    #[arg(long)]
+    file: PathBuf,
+    #[arg(long)]
+    start: String,
+    #[arg(long)]
+    resolve: Vec<String>,
+    #[arg(long, default_value_t = os_loadtest::engine::DEFAULT_THREADS)]
+    threads: u32,
+    #[arg(long, default_value = "balanced")]
+    profile: String,
+    #[arg(long)]
+    slow_sink_ms: Option<u64>,
 }
 
 #[tokio::main]
@@ -47,44 +112,143 @@ async fn main() -> ExitCode {
             }
             ExitCode::SUCCESS
         }
-        Command::Run {
-            scenario: name,
-            size,
-            out,
-        } => {
-            let Some(def) = scenario::find(&name) else {
-                eprintln!("Unbekanntes Szenario `{name}`; `os-loadtest list` zeigt alle.");
-                return ExitCode::from(2);
-            };
-            let out = out.unwrap_or_else(report::default_report_path);
-            let result = runner::run(def, size, ProbeParams::for_size(size), &NoCrawler).await;
-            let rep = match result {
-                Ok(rep) => rep,
+        Command::CrawlChild(c) => {
+            let profile = match child::parse_profile(&c.profile) {
+                Ok(p) => p,
                 Err(e) => {
-                    eprintln!("Lauf fehlgeschlagen: {e}");
+                    eprintln!("{e}");
                     return ExitCode::from(2);
                 }
             };
-            if let Err(e) = rep.write(&out) {
+            match child::run(ChildArgs {
+                file: c.file,
+                start: c.start,
+                resolve: c.resolve,
+                threads: c.threads,
+                profile,
+                slow_sink_ms: c.slow_sink_ms,
+            })
+            .await
+            {
+                Ok(0) => ExitCode::SUCCESS,
+                Ok(code) => ExitCode::from(u8::try_from(code).unwrap_or(1)),
+                Err(e) => {
+                    eprintln!("{e}");
+                    ExitCode::FAILURE
+                }
+            }
+        }
+        Command::Run {
+            scenario: names,
+            size,
+            out,
+            crawler,
+            threads,
+            profile,
+            seed,
+            kills,
+            work_dir,
+        } => {
+            let mut defs = Vec::new();
+            for name in &names {
+                if name.eq_ignore_ascii_case("all") {
+                    defs.extend(SCENARIOS.iter());
+                } else if let Some(def) = scenario::find(name) {
+                    defs.push(def);
+                } else {
+                    eprintln!("Unbekanntes Szenario `{name}`; `os-loadtest list` zeigt alle.");
+                    return ExitCode::from(2);
+                }
+            }
+            let engine;
+            let under_test: &dyn CrawlerUnderTest = match crawler {
+                CrawlerChoice::None => &NoCrawler,
+                CrawlerChoice::Engine => {
+                    let exe = match std::env::current_exe() {
+                        Ok(p) => p,
+                        Err(e) => {
+                            eprintln!("Programmpfad unbekannt: {e}");
+                            return ExitCode::from(2);
+                        }
+                    };
+                    let mut c = EngineCrawler::new(exe);
+                    c.threads = threads;
+                    c.profile = profile.into();
+                    c.seed = seed;
+                    c.kills = kills;
+                    c.work_dir = work_dir;
+                    engine = c;
+                    &engine
+                }
+            };
+            let out = out.unwrap_or_else(report::default_report_path);
+            let started_at = now_rfc3339();
+            let mut reports: Vec<Report> = Vec::new();
+            for def in defs {
+                match runner::run(def, size, ProbeParams::for_size(size), under_test).await {
+                    Ok(rep) => {
+                        print_summary(&rep);
+                        reports.push(rep);
+                    }
+                    Err(e) => {
+                        eprintln!("Lauf {} fehlgeschlagen: {e}", def.name);
+                        return ExitCode::from(2);
+                    }
+                }
+            }
+            let (written, passed) = if names.len() == 1 && !names[0].eq_ignore_ascii_case("all") {
+                let rep = &reports[0];
+                (rep.write(&out), rep.passed)
+            } else {
+                let suite = SuiteReport::new(size, started_at, reports);
+                (suite.write(&out), suite.passed)
+            };
+            if let Err(e) = written {
                 eprintln!(
                     "Bericht konnte nicht geschrieben werden ({}): {e}",
                     out.display()
                 );
                 return ExitCode::from(2);
             }
-            println!(
-                "{} ({}): {:.0} Requests/s, passed = {} -> {}",
-                rep.scenario,
-                rep.size.as_str(),
-                rep.metrics["server_requests_per_s"].as_f64().unwrap_or(0.0),
-                rep.passed,
-                out.canonicalize().unwrap_or(out).display()
-            );
-            if rep.passed {
+            println!("Bericht: {}", out.canonicalize().unwrap_or(out).display());
+            if passed {
                 ExitCode::SUCCESS
             } else {
                 ExitCode::FAILURE
             }
         }
+    }
+}
+
+fn print_summary(rep: &Report) {
+    println!(
+        "{} ({}): {:.0} Requests/s, Crawler {}, passed = {}",
+        rep.scenario,
+        rep.size.as_str(),
+        rep.metrics["server_requests_per_s"].as_f64().unwrap_or(0.0),
+        rep.metrics
+            .get("crawler_available")
+            .and_then(|v| v.as_bool())
+            .map_or("?", |a| if a { "ja" } else { "nicht angebunden" }),
+        rep.passed
+    );
+    if let Some(rss) = rep
+        .metrics
+        .get("crawler_peak_rss_bytes")
+        .and_then(|v| v.as_u64())
+    {
+        println!("  Spitzen-RSS des Crawl-Prozesses: {} MB", rss / 1_000_000);
+    }
+    if let Some(v) = rep
+        .metrics
+        .get("crawler_violations")
+        .and_then(|v| v.as_array())
+    {
+        for violation in v {
+            println!("  VERLETZT: {violation}");
+        }
+    }
+    if let Some(err) = rep.metrics.get("crawler_error") {
+        println!("  FEHLER: {err}");
     }
 }

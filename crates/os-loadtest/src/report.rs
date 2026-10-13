@@ -36,6 +36,46 @@ impl Report {
     }
 }
 
+/// Bericht mehrerer Szenarien eines Laufs (`os-loadtest run --scenario all`): Schema
+/// `{size, started_at, passed, reports[...]}`, jeder Eintrag ist ein [`Report`].
+#[derive(Debug, Clone, Serialize)]
+pub struct SuiteReport {
+    /// `small` oder `large`.
+    pub size: Size,
+    /// Startzeit (UTC, RFC 3339).
+    pub started_at: String,
+    /// Alle Szenarien bestanden?
+    pub passed: bool,
+    /// Berichte der Szenarien in Ausführungsreihenfolge.
+    pub reports: Vec<Report>,
+}
+
+impl SuiteReport {
+    /// Fasst Berichte zusammen.
+    pub fn new(size: Size, started_at: String, reports: Vec<Report>) -> Self {
+        Self {
+            size,
+            started_at,
+            passed: reports.iter().all(|r| r.passed),
+            reports,
+        }
+    }
+
+    /// Schreibt die Zusammenfassung nach `path` und jeden Einzelbericht daneben als
+    /// `report-<szenario>-<größe>.json`.
+    pub fn write(&self, path: &Path) -> std::io::Result<()> {
+        if let Some(dir) = path.parent() {
+            std::fs::create_dir_all(dir)?;
+            for r in &self.reports {
+                r.write(&dir.join(format!("report-{}-{}.json", r.scenario, r.size.as_str())))?;
+            }
+        }
+        let json = serde_json::to_string_pretty(self)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
+        std::fs::write(path, json + "\n")
+    }
+}
+
 /// Standardpfad `<target-dir>/loadtest/report.json`.
 pub fn default_report_path() -> PathBuf {
     let target = std::env::var_os("CARGO_TARGET_DIR")

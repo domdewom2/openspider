@@ -94,3 +94,37 @@ async fn crawler_metrics_are_merged_and_judged() {
         .unwrap();
     assert!(!missing.passed, "fehlende URLs lassen den Lauf scheitern");
 }
+
+struct Violating;
+
+impl CrawlerUnderTest for Violating {
+    fn name(&self) -> &str {
+        "violating"
+    }
+
+    fn crawl(&self, job: CrawlJob) -> CrawlFuture<'_> {
+        let pages = job.expected_urls;
+        Box::pin(async move {
+            Ok(CrawlOutcome {
+                urls_crawled: pages,
+                duration: Duration::from_millis(5),
+                violations: vec!["PERF-001: Beispiel".to_string()],
+                ..Default::default()
+            })
+        })
+    }
+}
+
+// spec: PERF-009
+#[tokio::test]
+async fn a_violated_criterion_fails_the_run_and_is_listed_in_the_report() {
+    let def = scenario::find("perf-006").unwrap();
+    let rep = runner::run(def, Size::Small, TINY, &Violating)
+        .await
+        .unwrap();
+    assert!(!rep.passed);
+    assert_eq!(
+        rep.metrics["crawler_violations"],
+        serde_json::json!(["PERF-001: Beispiel"])
+    );
+}

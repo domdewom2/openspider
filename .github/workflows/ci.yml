@@ -79,3 +79,54 @@ jobs:
 
       - name: Tauri build check (debug, no bundle)
         run: npm run -w apps/desktop tauri -- build --debug --no-bundle
+
+  # Lasttest-Suite, kleine Varianten (PERF-009): PERF-001 (Speicherobergrenze, 10 000 Seiten x 30 Links),
+  # PERF-003 (Gegendruck, SlowSink 100 ms je Batch), PERF-005 (gesäte harte Abbrüche, Fortsetzen) sowie die
+  # Server-Messung der übrigen Szenarien. Bericht: target/loadtest/report.json (plus ein Bericht je Szenario).
+  # Die Großvarianten (1 Mio. Seiten) laufen nicht in der CI, sondern vor Meilensteinen per
+  # `cargo run --release -p os-loadtest -- run --scenario perf-001 --size large --work-dir <ordner>`.
+  loadtest-small:
+    name: loadtest-small (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    # Build (mit Cache) plus Lauf; der Lauf selbst hat unten eine eigene Grenze von 10 Minuten.
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macos-arm64
+            os: macos-14
+          - name: macos-x64
+            os: macos-15-intel
+          - name: windows-x64
+            os: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: loadtest
+
+      - name: Build (release)
+        run: |
+          cargo build --release --locked -p os-loadtest
+          cargo build --release --locked -p os-engine --example crawl_child
+
+      - name: Lasttest small (PERF-001, PERF-003, PERF-005, PERF-009)
+        timeout-minutes: 10
+        run: cargo run --release --locked -p os-loadtest -- run --scenario all --size small --out target/loadtest/report.json
+
+      - name: Bericht anzeigen
+        if: always()
+        run: cat target/loadtest/report.json || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: loadtest-small-${{ matrix.name }}
+          path: target/loadtest/
+          if-no-files-found: warn
