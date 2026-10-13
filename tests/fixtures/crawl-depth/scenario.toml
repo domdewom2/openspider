@@ -1,0 +1,62 @@
+# Szenario crawl-depth (CRAWL-005, CRAWL-067): Kette / → /1 → … → /10, Direktlink / → /7,
+# /sitemap.xml mit /nur-sitemap (nur über die Sitemap erreichbar). /2 bindet /style.css ein, /3 ein Bild.
+
+[[route]]
+path = "/1"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Seite 1</title></head><body><h1>Seite 1</h1><a href=\"/2\">weiter 2</a></body></html>"
+
+[[route]]
+path = "/2"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Seite 2</title><link rel=\"stylesheet\" href=\"/style.css\"></head><body><h1>Seite 2</h1><a href=\"/3\">weiter 3</a></body></html>"
+
+[[route]]
+path = "/3"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Seite 3</title></head><body><h1>Seite 3</h1><a href=\"/4\">weiter 4</a><img src=\"/img/b3.png\" alt=\"Bild 3\"></body></html>"
+
+[[route]]
+path = "/4"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Seite 4</title></head><body><h1>Seite 4</h1><a href=\"/5\">weiter 5</a></body></html>"
+
+[[route]]
+path = "/5"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Seite 5</title></head><body><h1>Seite 5</h1><a href=\"/6\">weiter 6</a></body></html>"
+
+[[route]]
+path = "/6"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Seite 6</title></head><body><h1>Seite 6</h1><a href=\"/7\">weiter 7</a></body></html>"
+
+[[route]]
+path = "/7"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Seite 7</title></head><body><h1>Seite 7</h1><a href=\"/8\">weiter 8</a></body></html>"
+
+[[route]]
+path = "/8"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Seite 8</title></head><body><h1>Seite 8</h1><a href=\"/9\">weiter 9</a></body></html>"
+
+[[route]]
+path = "/9"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Seite 9</title></head><body><h1>Seite 9</h1><a href=\"/10\">weiter 10</a></body></html>"
+
+[[route]]
+path = "/10"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Seite 10</title></head><body><h1>Seite 10</h1></body></html>"
+
+[[route]]
+path = "/nur-sitemap"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Nur Sitemap</title></head><body><h1>Nur Sitemap</h1><a href=\"/nur-sitemap-kind\">Kind</a></body></html>"
+
+[[route]]
+path = "/nur-sitemap-kind"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Kind der Sitemap-Seite</title></head><body><h1>Kind der Sitemap-Seite</h1></body></html>"

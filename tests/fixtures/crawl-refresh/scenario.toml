@@ -1,0 +1,100 @@
+# Szenario crawl-refresh (CRAWL-015): Meta- und HTTP-Refresh.
+
+[[route]]
+path = "/meta0"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>meta0</title><meta http-equiv=\"refresh\" content=\"0;url=/ziel1\"></head><body><h1>meta0</h1></body></html>"
+
+[[route]]
+path = "/meta5"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>meta5</title><meta http-equiv=\"refresh\" content=\"5;url=/ziel2\"></head><body><h1>meta5</h1></body></html>"
+
+[[route]]
+path = "/meta-quotes"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>meta-quotes</title><meta http-equiv=\"REFRESH\" content=\"0; URL='/ziel3'\"></head><body><h1>meta-quotes</h1></body></html>"
+
+[[route]]
+path = "/meta-quotes2"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>meta-quotes2</title><meta http-equiv=\"refresh\" content='5;url=\"/ziel4\"'></head><body><h1>meta-quotes2</h1></body></html>"
+
+[[route]]
+path = "/meta-nospace"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>meta-nospace</title><meta http-equiv=\"refresh\" content=\"0;url=/ziel8\"></head><body><h1>meta-nospace</h1></body></html>"
+
+[[route]]
+path = "/meta-self"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Selbst-Refresh</title><meta http-equiv=\"refresh\" content=\"30\"></head><body><h1>Selbst-Refresh</h1></body></html>"
+
+[[route]]
+path = "/meta-two"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Zwei Tags</title><meta http-equiv=\"refresh\" content=\"0;url=/ziel-a\"><meta http-equiv=\"refresh\" content=\"0;url=/ziel-b\"></head><body><h1>Zwei Tags</h1></body></html>"
+
+[[route]]
+path = "/http-refresh"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>HTTP-Refresh</title></head><body><h1>HTTP-Refresh</h1></body></html>"
+[route.headers]
+Refresh = "0; url=/ziel5"
+
+[[route]]
+path = "/meta-and-301"
+status = 301
+location = "/ziel6"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>301 mit Meta</title><meta http-equiv=\"refresh\" content=\"0;url=/ziel7\"></head><body><h1>301 mit Meta</h1></body></html>"
+
+[[route]]
+path = "/ziel1"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>ziel1</title></head><body><h1>ziel1</h1></body></html>"
+
+[[route]]
+path = "/ziel2"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>ziel2</title></head><body><h1>ziel2</h1></body></html>"
+
+[[route]]
+path = "/ziel3"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>ziel3</title></head><body><h1>ziel3</h1></body></html>"
+
+[[route]]
+path = "/ziel4"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>ziel4</title></head><body><h1>ziel4</h1></body></html>"
+
+[[route]]
+path = "/ziel5"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>ziel5</title></head><body><h1>ziel5</h1></body></html>"
+
+[[route]]
+path = "/ziel6"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>ziel6</title></head><body><h1>ziel6</h1></body></html>"
+
+[[route]]
+path = "/ziel7"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>ziel7</title></head><body><h1>ziel7</h1></body></html>"
+
+[[route]]
+path = "/ziel8"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>ziel8</title></head><body><h1>ziel8</h1></body></html>"
+
+[[route]]
+path = "/ziel-a"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>ziel-a</title></head><body><h1>ziel-a</h1></body></html>"
+
+[[route]]
+path = "/ziel-b"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>ziel-b</title></head><body><h1>ziel-b</h1></body></html>"

@@ -1,0 +1,80 @@
+# Szenario crawl-redirects (CRAWL-014): HTTP-Weiterleitungen; other.test/ ist der externe Host.
+
+[[route]]
+path = "/r301"
+status = 301
+location = "/ziel"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Body einer 301</title></head><body><h1>Body einer 301</h1><a href=\"/body-link\">darf nie entdeckt werden</a></body></html>"
+
+[[route]]
+path = "/r302"
+status = 302
+location = "/ziel"
+
+[[route]]
+path = "/r303"
+status = 303
+location = "/ziel"
+
+[[route]]
+path = "/r307"
+status = 307
+location = "/ziel"
+
+[[route]]
+path = "/r308"
+status = 308
+location = "/ziel"
+
+[[route]]
+path = "/dir/r-relativ"
+status = 301
+location = "../ziel"
+
+[[route]]
+path = "/r-leer"
+status = 301
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Body einer 301</title></head><body><h1>Body einer 301</h1><a href=\"/body-link\">darf nie entdeckt werden</a></body></html>"
+
+[[route]]
+path = "/r-extern"
+status = 301
+location = "https://other.test/"
+
+[[route]]
+path = "/r-excluded"
+status = 301
+location = "/privat/"
+
+[[route]]
+path = "/r-umlaut"
+status = 301
+location = "/zïel"
+
+[[route]]
+path = "/ziel"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Ziel</title></head><body><h1>Ziel</h1></body></html>"
+
+[[route]]
+path = "/privat/"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Privat</title></head><body><h1>Privat</h1></body></html>"
+
+[[route]]
+path = "/z%C3%AFel"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Zïel</title></head><body><h1>Zïel</h1></body></html>"
+
+[[route]]
+path = "/body-link"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Body-Link</title></head><body><h1>Body-Link</h1></body></html>"
+
+[[route]]
+path = "/"
+host = "other.test"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Externe Seite</title></head><body><h1>Externe Seite</h1><a href=\"/other-secret\">geheim</a></body></html>"

@@ -1,0 +1,2 @@
+# Szenario crawl-scope-basic (CRAWL-006, K-21): Start auf www.site.test.
+# Alle Hosts außer other.test liefern dieselbe Startseite.
