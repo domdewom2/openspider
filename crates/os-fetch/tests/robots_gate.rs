@@ -122,7 +122,6 @@ fn gate(mode: RobotsMode, policy: RobotsUnreachablePolicy) -> RobotsGate {
         unreachable_policy: policy,
         retries: 2,
         retry_delay_s: 5,
-        clock: Arc::new(ManualClock::new(Timestamp::UNIX_EPOCH)),
     })
 }
 
@@ -134,7 +133,6 @@ fn respect_fast_retry() -> RobotsGate {
         unreachable_policy: RobotsUnreachablePolicy::BlockHost,
         retries: 2,
         retry_delay_s: 1,
-        clock: Arc::new(ManualClock::new(Timestamp::UNIX_EPOCH)),
     })
 }
 
@@ -670,4 +668,49 @@ async fn virtual_hosts_bom_redirect_and_big_variants() {
         .await;
     let (_, write) = check.robots_fetch.expect("Erstabruf");
     assert!(write.body.map_or(0, |b| b.len()) <= 500 * 1024);
+}
+
+// spec: CRAWL-114, CRAWL-098
+#[tokio::test]
+async fn googlebot_preset_selects_the_googlebot_group_of_the_fixture() {
+    let site = site("crawl-robots").await;
+    let fetcher = Recording::new(Loopback);
+    let mut crawl = CrawlConfig::default();
+    crawl.user_agent.preset = "googlebot-smartphone".to_string();
+    crawl.user_agent.robots_token = None;
+    let gate = RobotsGate::new(RobotsGateConfig::from_crawl_config(&crawl));
+
+    // Gruppe `User-agent: Googlebot` (Zeile 7) gilt, nicht `*` (alles gesperrt) und nicht OpenSpider.
+    let check = gate.check(&fetcher, &url(&site, "/nur-google/a")).await;
+    assert_eq!(
+        check.decision,
+        blocked("Zeile 7: Disallow: /nur-google/", &site)
+    );
+    for path in ["/frei/a", "/privat/x", "/dokument.pdf"] {
+        let check = gate.check(&fetcher, &url(&site, path)).await;
+        assert_eq!(check.decision, RobotsDecision::Allowed, "{path}");
+    }
+
+    // Ein eigener User-Agent ohne Token fällt auf `*` zurück (Zeile 4: alles gesperrt).
+    let mut crawl = CrawlConfig::default();
+    crawl.user_agent.preset = "custom".to_string();
+    crawl.user_agent.http = Some("MeinCrawler/1.0".to_string());
+    crawl.user_agent.robots_token = None;
+    let gate = RobotsGate::new(RobotsGateConfig::from_crawl_config(&crawl));
+    let check = gate.check(&fetcher, &url(&site, "/frei/a")).await;
+    assert_eq!(check.decision, blocked("Zeile 4: Disallow: /", &site));
+}
+
+// spec: CRAWL-098
+#[tokio::test]
+async fn crawl_delay_of_the_fixture_is_only_a_note() {
+    let site = site("crawl-robots").await;
+    let fetcher = Recording::new(Loopback);
+    let check = respect().check(&fetcher, &url(&site, "/frei/a")).await;
+    assert_eq!(check.decision, RobotsDecision::Allowed);
+    let (_, write) = check.robots_fetch.expect("Erstabruf");
+    assert_eq!(
+        write.note.as_deref(),
+        Some("Crawl-delay: 2 s (nicht angewandt)")
+    );
 }

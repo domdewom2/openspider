@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use os_model::{Clock, CrawlConfig, RobotsMode, RobotsUnreachablePolicy, RobotsWrite};
+use os_model::{CrawlConfig, RobotsMode, RobotsUnreachablePolicy, RobotsWrite};
 use tokio::sync::OnceCell;
 use url::Url;
 
@@ -29,24 +29,20 @@ pub struct RobotsGateConfig {
     pub retries: u32,
     /// Wartezeit zwischen Wiederholungen in Sekunden.
     pub retry_delay_s: u32,
-    /// Uhr (Wartezeiten und Zeitstempel).
-    pub clock: Arc<dyn Clock>,
 }
 
 impl RobotsGateConfig {
     /// Leitet die Konfiguration aus der Crawl-Konfiguration ab.
-    pub fn from_crawl_config(cfg: &CrawlConfig, clock: Arc<dyn Clock>) -> Self {
+    ///
+    /// Das Token kommt aus [`crate::user_agents::resolve`]: ein explizites `robots_token`, sonst das der
+    /// Voreinstellung, bei einem frei eingegebenen User-Agent ohne Token `*` (nie die Preset-ID).
+    pub fn from_crawl_config(cfg: &CrawlConfig) -> Self {
         RobotsGateConfig {
-            token: cfg
-                .user_agent
-                .robots_token
-                .clone()
-                .unwrap_or_else(|| cfg.user_agent.preset.clone()),
+            token: crate::user_agents::resolve(&cfg.user_agent).robots_token,
             mode: cfg.robots.mode,
             unreachable_policy: cfg.robots.unreachable_policy,
             retries: cfg.robots.retries,
             retry_delay_s: cfg.robots.retry_delay_s,
-            clock,
         }
     }
 }
@@ -225,8 +221,15 @@ impl RobotsGate {
                 let txt = parse(&text);
                 write.fetch_status = "ok".into();
                 write.status_code = Some(status);
+                let mut notes = Vec::new();
                 if txt.rule_count() == 0 && txt.sitemaps().is_empty() {
-                    write.note = Some(format!("robots.txt: {status} – keine Regeln"));
+                    notes.push(format!("robots.txt: {status} – keine Regeln"));
+                }
+                if let Some(delay) = txt.crawl_delay(&self.cfg.token) {
+                    notes.push(format!("Crawl-delay: {delay} s (nicht angewandt)"));
+                }
+                if !notes.is_empty() {
+                    write.note = Some(notes.join("; "));
                 }
                 write.body = Some(text);
                 OriginRules::Rules(txt)
@@ -409,7 +412,7 @@ mod tests {
     use std::pin::Pin;
 
     use bytes::Bytes;
-    use os_model::{ManualClock, NoResponseReason, Timestamp};
+    use os_model::{NoResponseReason, Timestamp};
     use tokio::time::Instant;
 
     use super::*;
@@ -555,7 +558,6 @@ mod tests {
             unreachable_policy: policy,
             retries: 2,
             retry_delay_s: 5,
-            clock: Arc::new(ManualClock::new(Timestamp::UNIX_EPOCH)),
         }
     }
 
@@ -1054,21 +1056,64 @@ mod tests {
     // spec: CRAWL-099, CRAWL-114
     #[test]
     fn config_is_derived_from_crawl_config() {
-        let clock: Arc<dyn Clock> = Arc::new(ManualClock::new(Timestamp::UNIX_EPOCH));
         let mut crawl = CrawlConfig::default();
         crawl.robots.mode = RobotsMode::IgnoreButReport;
         crawl.robots.unreachable_policy = RobotsUnreachablePolicy::AllowAll;
         crawl.robots.retries = 7;
         crawl.robots.retry_delay_s = 3;
         crawl.user_agent.robots_token = Some("MeinBot".to_string());
-        let g = RobotsGateConfig::from_crawl_config(&crawl, Arc::clone(&clock));
+        let g = RobotsGateConfig::from_crawl_config(&crawl);
         assert_eq!(g.token, "MeinBot");
         assert_eq!(g.mode, RobotsMode::IgnoreButReport);
         assert_eq!(g.unreachable_policy, RobotsUnreachablePolicy::AllowAll);
         assert_eq!((g.retries, g.retry_delay_s), (7, 3));
+
+        // Ohne explizites Token gilt das der Voreinstellung (nie die Preset-ID).
         crawl.user_agent.robots_token = None;
-        let g = RobotsGateConfig::from_crawl_config(&crawl, clock);
-        assert_eq!(g.token, crawl.user_agent.preset);
+        crawl.user_agent.preset = "googlebot-smartphone".to_string();
+        assert_eq!(
+            RobotsGateConfig::from_crawl_config(&crawl).token,
+            "Googlebot"
+        );
+
+        // Eigener User-Agent ohne Token: nur die Gruppe `*`.
+        crawl.user_agent.preset = "custom".to_string();
+        crawl.user_agent.http = Some("MeinCrawler/1.0".to_string());
+        assert_eq!(RobotsGateConfig::from_crawl_config(&crawl).token, "*");
+
+        // Ein explizites Token gewinnt auch bei `custom`.
+        crawl.user_agent.robots_token = Some("MeinBot".to_string());
+        assert_eq!(RobotsGateConfig::from_crawl_config(&crawl).token, "MeinBot");
+    }
+
+    // spec: CRAWL-098
+    #[tokio::test(start_paused = true)]
+    async fn crawl_delay_is_reported_in_note_but_not_applied() {
+        let body = "User-agent: *\nCrawl-delay: 5\nDisallow: /x\n";
+        let mock = Mock::with(&[(ROBOTS, vec![ok(body)])]);
+        let t0 = Instant::now();
+        let c = respect().check(&mock, &u("http://h.test/y")).await;
+        assert_eq!(c.decision, RobotsDecision::Allowed);
+        let (_, write) = c.robots_fetch.expect("Erstabruf");
+        assert_eq!(
+            write.note.as_deref(),
+            Some("Crawl-delay: 5 s (nicht angewandt)")
+        );
+        assert_eq!(Instant::now(), t0, "Crawl-delay verzögert nichts");
+
+        // Mit vorhandenem Hinweistext (nur Crawl-delay, keine Regeln) wird per „; “ verbunden.
+        let mock = Mock::with(&[(ROBOTS, vec![ok("User-agent: *\nCrawl-delay: 0.5\n")])]);
+        let c = respect().check(&mock, &u("http://h.test/y")).await;
+        let (_, write) = c.robots_fetch.expect("Erstabruf");
+        assert_eq!(
+            write.note.as_deref(),
+            Some("robots.txt: 200 – keine Regeln; Crawl-delay: 0.5 s (nicht angewandt)")
+        );
+
+        // Ohne Crawl-delay bleibt der Hinweis leer.
+        let mock = Mock::with(&[(ROBOTS, vec![ok("User-agent: *\nDisallow: /x\n")])]);
+        let c = respect().check(&mock, &u("http://h.test/y")).await;
+        assert_eq!(c.robots_fetch.expect("Erstabruf").1.note, None);
     }
 
     // spec: CRAWL-098
