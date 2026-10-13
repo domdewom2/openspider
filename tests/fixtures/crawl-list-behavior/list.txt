@@ -1,0 +1,4 @@
+http://site.test/a
+http://site.test/robots-blocked
+http://other.test/b
+http://site.test/r301

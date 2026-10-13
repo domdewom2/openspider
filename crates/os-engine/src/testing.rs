@@ -15,6 +15,10 @@
 //! * [`SimSite`] / [`SimFetcher`] – ein `Fetch` über eine Website im Speicher mit einstellbarer Verzögerung
 //!   je Seite, Request-Log mit simulierten Zeiten und Zähler für gleichzeitige Abrufe.
 //! * [`MemorySink`] – eine `CrawlSink`, die die Batches im Speicher sammelt (optional mit Verzögerung).
+//! * [`CoalescingSink`] / [`coalescing_sink_factory`] – Prüf-Senke für den Determinismus-Test (CRAWL-124): fasst
+//!   alle Batches eines Laufs bis zum Checkpoint zu einem einzigen zusammen. Die Batch-Grenzen des Writers
+//!   hängen am Zeitverlauf und gehen über `urls.change_seq` in die Datei ein; ohne sie sind zwei Crawls
+//!   mit fixierter Uhr, festem Seed und einem Thread byte-identisch.
 
 use std::collections::{BTreeMap, HashMap};
 use std::future::Future;
@@ -62,6 +66,21 @@ pub fn test_deps() -> EngineDeps {
         on_finished: None,
         owner_kind: "cli",
     }
+}
+
+/// HTTP-Abrufer für eine laufende Testsite (für `resume_crawl`, `recrawl_urls` u. Ä. gegen eine vorhandene
+/// Crawl-Datei): löst `*.test` auf die Site auf (zusätzlich zu den Regeln in `cfg`) und vertraut ihrer Test-CA.
+pub fn site_fetcher(
+    site: &os_testsite::TestSite,
+    cfg: &CrawlConfig,
+    deps: &EngineDeps,
+) -> Arc<HttpFetcher> {
+    let mut cfg = cfg.clone();
+    cfg.network.resolve.push(format!("*.test={}", site.addr()));
+    let mut fetch_cfg = FetchConfig::from_crawl_config(&cfg, &*deps.secrets, deps.clock.clone())
+        .expect("Abruf-Konfiguration");
+    fetch_cfg.extra_root_certs = vec![site.ca_cert_pem().into_bytes()];
+    Arc::new(HttpFetcher::new(fetch_cfg).expect("HTTP-Abrufer"))
 }
 
 /// Crawlt das Szenario ab der Basis-URL der Testsite.
@@ -517,6 +536,69 @@ impl CrawlSink for MemorySink {
     fn checkpoint(&mut self) -> Result<(), StoreError> {
         Ok(())
     }
+}
+
+/// Prüf-Senke für den Determinismus-Test (CRAWL-124): sammelt alle Batches und schreibt sie beim Checkpoint
+/// (bzw. beim Schließen) als **einen** Batch in die Crawl-Datei. Damit hängt die Datei nicht mehr davon ab,
+/// wie der Writer-Thread die Nachrichten zeitabhängig zu Batches bündelt (`urls.change_seq` ist die
+/// Sequenz je Batch).
+pub struct CoalescingSink {
+    inner: os_store::SqliteSink,
+    pending: WriteBatch,
+}
+
+impl CoalescingSink {
+    /// Öffnet die Crawl-Datei; `clock` liefert `robots_files.fetched_at`.
+    pub fn open(
+        path: &Path,
+        profile: StorageProfile,
+        clock: Arc<dyn Clock>,
+    ) -> Result<Self, StoreError> {
+        Ok(CoalescingSink {
+            inner: os_store::SqliteSink::open(path, profile)?.with_clock(clock),
+            pending: WriteBatch::default(),
+        })
+    }
+
+    fn flush(&mut self) -> Result<(), StoreError> {
+        let batch = std::mem::take(&mut self.pending);
+        self.inner.write(batch)
+    }
+}
+
+impl CrawlSink for CoalescingSink {
+    fn write(&mut self, batch: WriteBatch) -> Result<(), StoreError> {
+        let p = &mut self.pending;
+        p.new_urls.extend(batch.new_urls);
+        p.url_updates.extend(batch.url_updates);
+        p.pages.extend(batch.pages);
+        p.queue.extend(batch.queue);
+        p.sitemaps.extend(batch.sitemaps);
+        p.robots.extend(batch.robots);
+        p.meta.extend(batch.meta);
+        p.events.extend(batch.events);
+        p.counters.extend(batch.counters);
+        p.url_flags.extend(batch.url_flags);
+        Ok(())
+    }
+
+    fn checkpoint(&mut self) -> Result<(), StoreError> {
+        self.flush()?;
+        self.inner.checkpoint()
+    }
+}
+
+impl Drop for CoalescingSink {
+    fn drop(&mut self) {
+        let _ = self.flush();
+    }
+}
+
+/// Fabrik für [`CoalescingSink`] (`EngineDeps::sink_factory`).
+pub fn coalescing_sink_factory(clock: Arc<dyn Clock>) -> SinkFactory {
+    Arc::new(move |path, profile| {
+        Ok(Box::new(CoalescingSink::open(path, profile, clock.clone())?) as Box<dyn CrawlSink>)
+    })
 }
 
 /// Abhängigkeiten für Tests mit simulierter Zeit: `TokioClock`, Senke im Speicher.

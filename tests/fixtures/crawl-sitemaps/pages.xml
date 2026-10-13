@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>http://site.test/</loc></url><url><loc>http://site.test/a.html</loc></url><url><loc>http://site.test/b.html</loc></url><url><loc>http://site.test/nur-in-sitemap</loc></url><url><loc>http://other.test/extern</loc></url></urlset>

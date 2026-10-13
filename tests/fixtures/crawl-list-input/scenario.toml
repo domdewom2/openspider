@@ -1,0 +1,37 @@
+# Szenario crawl-list-input (CRAWL-027): Listen-Dateien; die Adressen /a … /f und /privat/geheim antworten mit 200.
+
+[[route]]
+path = "/a"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>/a</title></head><body><h1>/a</h1></body></html>"""
+
+[[route]]
+path = "/b"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>/b</title></head><body><h1>/b</h1></body></html>"""
+
+[[route]]
+path = "/c"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>/c</title></head><body><h1>/c</h1></body></html>"""
+
+[[route]]
+path = "/d"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>/d</title></head><body><h1>/d</h1></body></html>"""
+
+[[route]]
+path = "/e"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>/e</title></head><body><h1>/e</h1></body></html>"""
+
+[[route]]
+path = "/f"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>/f</title></head><body><h1>/f</h1></body></html>"""
+
+[[route]]
+path = "/privat/geheim"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>/privat/geheim</title></head><body><h1>/privat/geheim</h1></body></html>"""
+
