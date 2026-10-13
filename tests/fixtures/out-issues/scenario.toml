@@ -1,0 +1,27 @@
+# Szenario out-issues (OUT-063, OUT-080, OUT-025): Seite ohne Title, doppelte Titles, langer Title,
+# fehlendes H1, zwei 404-Links, durch robots.txt gesperrter Pfad, Serverfehler (/boom),
+# externe Seiten (localhost ist extern).
+
+[[route]]
+path = "/missing.html"
+status = 404
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Nicht gefunden</title></head><body><h1>404</h1></body></html>"
+
+[[route]]
+path = "/gone"
+status = 404
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Weg</title></head><body><h1>404</h1></body></html>"
+
+[[route]]
+path = "/ext-404"
+status = 404
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Extern weg</title></head><body><h1>404</h1></body></html>"
+
+[[route]]
+path = "/boom"
+status = 500
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Serverfehler</title></head><body><h1>500</h1></body></html>"

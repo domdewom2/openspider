@@ -1,0 +1,3 @@
+﻿Address,Status Code,Status
+{BASE}/gone,404,Not Found
+{BASE}/missing.html,404,Not Found
