@@ -10,7 +10,9 @@
 <meta property="og:description" content="Freier, quelloffener SEO-Crawler für macOS und Windows. In Entwicklung.">
 <meta property="og:url" content="https://openspider.de/">
 <meta property="og:type" content="website">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f172a'/%3E%3Cg fill='none' stroke='%2338bdf8' stroke-width='3'%3E%3Ccircle cx='32' cy='32' r='8'/%3E%3Ccircle cx='32' cy='32' r='18' stroke-opacity='.55'/%3E%3Cpath d='M32 6v52M6 32h52M13 13l38 38M51 13 13 51' stroke-opacity='.35'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:image" content="https://openspider.de/logo-256.png">
 <style>
 :root{
   --bg:#f8fafc;--fg:#0f172a;--muted:#475569;--card:#ffffff;--line:#e2e8f0;--accent:#0284c7;--accent-fg:#ffffff;--chip:#e0f2fe;--chip-fg:#075985;
@@ -24,10 +26,11 @@ body{background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,BlinkMacSy
 .wrap{max-width:960px;margin:0 auto;padding:0 20px}
 header{padding:28px 0;display:flex;align-items:center;justify-content:space-between;gap:16px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.15rem;letter-spacing:-.01em}
-.brand svg{width:32px;height:32px}
+.brand img{width:40px;height:40px;border-radius:10px}
 .gh{color:var(--fg);text-decoration:none;font-size:.95rem;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);padding:7px 12px;border-radius:999px}
 .gh:hover{border-color:var(--accent)}
-.hero{padding:56px 0 40px}
+.hero{padding:40px 0 40px}
+.hero-logo{display:block;width:128px;height:auto;margin:0 0 22px;filter:drop-shadow(0 10px 24px rgba(79,70,229,.35))}
 .chip{display:inline-block;background:var(--chip);color:var(--chip-fg);font-size:.8rem;font-weight:600;padding:4px 10px;border-radius:999px;margin-bottom:18px}
 h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.1;letter-spacing:-.025em;margin:0 0 18px}
 .lead{font-size:1.15rem;color:var(--muted);max-width:640px;margin:0 0 28px}
@@ -53,13 +56,14 @@ footer a{color:var(--muted)}
 <div class="wrap">
   <header>
     <div class="brand">
-      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#0f172a"/><g fill="none" stroke="#38bdf8" stroke-width="3"><circle cx="32" cy="32" r="8"/><circle cx="32" cy="32" r="18" stroke-opacity=".55"/><path d="M32 6v52M6 32h52M13 13l38 38M51 13 13 51" stroke-opacity=".35"/></g></svg>
+      <img src="/logo-256.png" width="40" height="40" alt="">
       OpenSpider
     </div>
     <a class="gh" href="https://github.com/domdewom2/openspider" rel="noopener">GitHub</a>
   </header>
 
   <section class="hero">
+    <img class="hero-logo" src="/logo-256.png" width="128" height="127" alt="OpenSpider Logo">
     <span class="chip">In Entwicklung</span>
     <h1>Der offene SEO-Crawler für macOS und Windows.</h1>
     <p class="lead">OpenSpider crawlt Websites wie eine Suchmaschine und findet technische SEO-Probleme: Statuscodes, Weiterleitungen, Canonicals, hreflang, Duplikate, Indexierbarkeit und vieles mehr. Frei, quelloffen und gebaut für große Websites.</p>
