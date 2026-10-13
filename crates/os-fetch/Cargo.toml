@@ -17,6 +17,7 @@ tokio.workspace = true
 bytes.workspace = true
 futures-util.workspace = true
 reqwest.workspace = true
+hyper.workspace = true
 flate2.workspace = true
 brotli.workspace = true
 cookie_store.workspace = true

@@ -66,6 +66,8 @@ futures-util = "0.3"
 # Keine automatische Dekompression (gzip/brotli/deflate-Features bewusst aus): Transfer-Bytes werden selbst gezählt.
 reqwest = { version = "0.13", default-features = false, features = ["rustls", "http2", "stream"] }
 flate2 = "1"
+# os-fetch: Reason-Phrase der Statuszeile (hyper::ext::ReasonPhrase); Version aus dem Lock
+hyper = { version = "1", default-features = false, features = ["http1"] }
 brotli = "9"
 cookie_store = "0.22"
 md-5 = "0.11"
@@ -84,7 +86,8 @@ unicode-segmentation = "1"
 # os-store (P00c): Kollation OS_TEXT = ICU4X-Collator, Root-Locale, Stärke Secondary (Lizenz Unicode-3.0)
 icu_collator = { version = "2", features = ["compiled_data"] }
 csv = "1"
-rust_xlsxwriter = "0.99"
+# constant_memory: Blätter laufen zeilenweise über eine temporäre Datei (zieht tempfile); 1-Mio.-Zeilen-Export
+rust_xlsxwriter = { version = "0.99", features = ["constant_memory"] }
 calamine = "0.36"
 base64 = "0.23"
 # STDIO-Server (P18/P27) und Client (Tests): Kindprozess- und In-Process-Transport für die Integrationstests

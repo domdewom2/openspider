@@ -69,6 +69,9 @@ pub struct ExportFileInfo {
     pub rows: u64,
     /// Größe der Datei in Bytes.
     pub bytes: u64,
+    /// Hinweise zu dieser Datei (OUT-003): auf 32 767 Zeichen gekürzte Zellen, Fortsetzung auf Folgeblättern.
+    /// Dieselben Meldungen stehen zusätzlich im Log.
+    pub warnings: Vec<String>,
 }
 
 /// Zeilenweiser Tabellenschreiber (konstanter Speicher).

@@ -7,3 +7,5 @@ dist/
 *.ospider-shm
 apps/desktop/src-tauri/gen/
 .env
+__pycache__/
+!tests/fixtures/crawl-files/*.ospider

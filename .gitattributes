@@ -2,3 +2,6 @@
 *.ico binary
 *.icns binary
 *.png binary
+*.ttf binary
+*.gz binary
+*.ospider binary

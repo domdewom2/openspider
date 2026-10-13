@@ -143,7 +143,13 @@ impl TableWriter for CsvWriter {
                 source,
             })?
             .len();
-        Ok(ExportFileInfo { path, rows, bytes })
+        // CSV kennt weder Zelllängen- noch Zeilengrenzen: nichts wird gekürzt, es gibt keine Warnungen.
+        Ok(ExportFileInfo {
+            path,
+            rows,
+            bytes,
+            warnings: Vec::new(),
+        })
     }
 }
 
