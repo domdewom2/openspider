@@ -149,7 +149,7 @@ mod imp {
             let cb = std::mem::size_of::<PROCESS_MEMORY_COUNTERS>() as u32;
             counters.cb = cb;
             let ok = GetProcessMemoryInfo(handle, &mut counters, cb);
-            (ok != 0).then(|| counters.PeakWorkingSetSize as u64)
+            (ok != 0).then_some(counters.PeakWorkingSetSize as u64)
         }
     }
 
