@@ -1,5 +1,6 @@
-//! Pixelbreiten-Engine (UI-038, ONPAGE-004): Testvektoren der Spec, Rundung, Bold, Fallback, Grapheme sowie
-//! ein Abgleich der eingecheckten Tabellen gegen die Schriftdateien.
+//! Pixelbreiten-Engine (UI-038, ONPAGE-004): Testvektoren der Spec (kalibrierte Standardprofile 20 px und 14 px),
+//! Rundung des Liberation-Sans-Modells, Bold, Fallback, Grapheme sowie ein Abgleich der eingecheckten Tabellen
+//! gegen die Schriftdateien.
 
 use os_model::ExtractedText;
 use os_parse::pixel::{annotate, width_px};
@@ -14,29 +15,66 @@ fn px(text: &str, size: f64) -> u32 {
 // spec: UI-038
 #[test]
 fn title_vectors_20px_regular() {
-    assert_eq!(px("W", TITLE), 19);
-    assert_eq!(px("WWWWW", TITLE), 94);
-    assert_eq!(px("iiiii", TITLE), 22);
-    assert_eq!(px(&"W".repeat(29), TITLE), 547);
-    assert_eq!(px(&"W".repeat(30), TITLE), 566);
+    // kalibrierte ganzzahlige Zeichenbreiten (K-64): „W“ = 18 px, „i“ = 5 px
+    assert_eq!(px("W", TITLE), 18);
+    assert_eq!(px("WWWWW", TITLE), 90);
+    assert_eq!(px("iiiii", TITLE), 25);
+    assert_eq!(px(&"W".repeat(29), TITLE), 522);
+    assert_eq!(px(&"W".repeat(30), TITLE), 540);
+    // Wiederholungs-Fixtures der Paritäts-Sites: 70 × „i“ = 350 px, 60 × „W“ = 1080 px
+    assert_eq!(px(&"i".repeat(70), TITLE), 350);
+    assert_eq!(px(&"W".repeat(60), TITLE), 1080);
 }
 
 // spec: UI-038
 #[test]
 fn description_vectors_14px_regular() {
-    assert_eq!(px(&"a".repeat(100), DESC), 779);
-    assert_eq!(px(&"a".repeat(126), DESC), 981);
-    assert_eq!(px(&"a".repeat(127), DESC), 989);
-    assert_eq!(px(&"W".repeat(150), DESC), 1982);
-    assert_eq!(px(&"i".repeat(160), DESC), 498);
+    // kalibrierte ganzzahlige Zeichenbreiten (K-64): „a“ = 8 px, „W“ = 12 px, „i“ = 3 px
+    assert_eq!(px(&"a".repeat(100), DESC), 800);
+    assert_eq!(px(&"a".repeat(126), DESC), 1008);
+    assert_eq!(px(&"a".repeat(127), DESC), 1016);
+    assert_eq!(px(&"W".repeat(150), DESC), 1800);
+    assert_eq!(px(&"i".repeat(160), DESC), 480);
+}
+
+// spec: UI-038
+#[test]
+fn calibrated_profiles_add_integer_character_widths_without_final_rounding() {
+    // Titel 20 px: ganzzahlige Breiten je Zeichen, die Summe wird nie gerundet („ii“ = 10, nicht 9)
+    assert_eq!(px("i", TITLE), 5);
+    assert_eq!(px("ii", TITLE), 10);
+    assert_eq!(px("a b", TITLE), 11 + 5 + 11);
+    assert_eq!(
+        px("Titel – Seite 1", TITLE),
+        px("Titel", TITLE) + 5 + 13 + 5 + px("Seite", TITLE) + 5 + 11
+    );
+    // Beschreibung 14 px
+    assert_eq!(px("i", DESC), 3);
+    assert_eq!(px("a b, c.", DESC), 8 + 3 + 8 + 3 + 3 + 7 + 4);
+    // nicht gemessene Zeichen: auf ganze Pixel gerundete Liberation-Sans-Breite („ä“ wie „a“, „ß“ eigener Wert)
+    assert_eq!(px("ä", TITLE), px("a", TITLE));
+    assert_eq!(px("Ä", TITLE), px("A", TITLE));
+    assert!(px("ß", TITLE) > 0 && px("ß", DESC) > 0);
+    // andere Größen und Bold rechnen mit Liberation Sans (einmal gerundet), nicht mit den Profilen
+    assert_eq!(width_px("W", 20.5, false), 19);
+    assert_eq!(
+        width_px("W", 20.0, true),
+        19,
+        "Bold: Liberation Sans Bold, einmal gerundet"
+    );
+    assert_ne!(
+        width_px(&"i".repeat(10), 20.5, false),
+        px(&"i".repeat(10), TITLE)
+    );
 }
 
 // spec: UI-038, ONPAGE-004
 #[test]
 fn rounding_happens_once_at_the_end() {
-    // „ii“ = 2 × 4,443 = 8,89 → 9 (nicht 2 × gerundete 4 = 8)
-    assert_eq!(px("ii", TITLE), 9);
-    assert_eq!(px("i", TITLE), 4);
+    // Liberation-Sans-Modell (Größen außerhalb der kalibrierten Profile): „ii“ = 2 × 4,443 = 8,89 → 9
+    // (nicht 2 × gerundete 4 = 8)
+    assert_eq!(px("ii", 20.01), 9);
+    assert_eq!(px("i", 20.01), 4);
     // Bei Schriftgröße 2048 px ist die Breite exakt die Advance-Width in Schrifteinheiten („a“ = 1139).
     assert_eq!(width_px("a", 2048.0, false), 1139);
     // Kaufmännisch: ab 0,5 auf. Das Leerzeichen hat 569 Einheiten: 569/2048 × 1,8 = 0,5001 → 1; × 1,7 = 0,4723 → 0.
@@ -145,7 +183,7 @@ fn annotate_sets_px_for_all_texts() {
     annotate(&mut list, 20.0, false);
     assert_eq!(
         list.iter().map(|t| t.px).collect::<Vec<_>>(),
-        [Some(19), Some(9), Some(0)]
+        [Some(18), Some(10), Some(0)]
     );
     annotate(&mut list, 20.0, true);
     assert_eq!(list[0].px, Some(width_px("W", 20.0, true)));
