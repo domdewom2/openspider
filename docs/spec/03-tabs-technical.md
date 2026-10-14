@@ -256,8 +256,8 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
   - [ ] Eine Seite mit `noindex` **und** fremdem Canonical erhält Status `noindex` (Reihenfolge oben).
   - [ ] Externe URLs werden nur nach Status bewertet (kein HTML geladen); ein externer 200 gilt als `Indexable`.
   - [ ] Meta Refresh (Element oder `Refresh`-Header) mit Ziel ≠ eigener URL (nach TECH-002, jede Verzögerung) → `Redirected`.
-  - [ ] Meta Refresh auf die eigene URL oder ohne Ziel (`content="30"`) → bei Standardkonfiguration `Non-Indexable` mit Grund `Self Referencing Meta Refresh` (Statustext ist Festlegung, siehe Anhang A); eingeordnet in der Prüfreihenfolge direkt nach `Server Error` und vor `noindex`. Mit abgeschalteter Option TECH-068 ändert ein Selbst-Refresh die Indexierbarkeit nicht.
-- **Testfixture:** `tests/fixtures/tech/indexability/`: je eine Seite pro Grund (robots-gesperrt, 301, 404, 503, Timeout-Route mit 30 s Verzögerung, `noindex`, `none`, X-Robots-Tag `noindex` auf PDF, fremder Canonical, `noindex`+fremder Canonical, `refresh-other.html` mit `5; url=/ziel`, `refresh-self.html` mit `30; url=<eigene URL>`, `refresh-bare.html` mit `content="60"`), Startseite verlinkt alle. Erwartung bei Standard: `refresh-other` → `Redirected`, `refresh-self` und `refresh-bare` → `Self Referencing Meta Refresh`.
+  - [ ] Meta Refresh auf die eigene URL oder ohne Ziel (`content="30"`) → bei Standardkonfiguration (TECH-068 aus) unverändert `Indexable` (sofern kein anderer Grund greift). Mit eingeschalteter Option TECH-068 → `Non-Indexable` mit Grund `Self Referencing Meta Refresh` (Statustext ist Festlegung, siehe Anhang A); eingeordnet in der Prüfreihenfolge direkt nach `Server Error` und vor `noindex` (Standard geändert nach Paritätslauf M1, K-57).
+- **Testfixture:** `tests/fixtures/tech/indexability/`: je eine Seite pro Grund (robots-gesperrt, 301, 404, 503, Timeout-Route mit 30 s Verzögerung, `noindex`, `none`, X-Robots-Tag `noindex` auf PDF, fremder Canonical, `noindex`+fremder Canonical, `refresh-other.html` mit `5; url=/ziel`, `refresh-self.html` mit `30; url=<eigene URL>`, `refresh-bare.html` mit `content="60"`), Startseite verlinkt alle. Erwartung bei Standard: `refresh-other` → `Redirected`, `refresh-self` und `refresh-bare` → `Indexable`. Mit TECH-068 an: `refresh-self` und `refresh-bare` → `Self Referencing Meta Refresh`.
 
 ### TECH-002 URL-Vergleich und Auflösung für technische Verweise
 - **Priorität:** P0
@@ -379,7 +379,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Eingaben/Konfiguration:** –
 - **Ausgabe (Spalten/Filter/Export):** Spalten in dieser Reihenfolge: `Address`, `Occurrences` (Anzahl Canonical-Angaben über beide Quellen), `Indexability`, `Indexability Status`, `Canonical Link Element 1..n`, `HTTP Canonical 1..n`, `Meta Robots 1..n`, `X-Robots-Tag 1..n`, `rel="next" 1`, `rel="prev" 1`. Filter: TECH-012 bis TECH-023 plus „All“.
 - **Akzeptanzkriterien:**
-  - [ ] Population: interne URLs mit Status 200 und HTML-Inhalt, plus interne Nicht-HTML-200-URLs mit HTTP-Canonical. Nicht-200-URLs erscheinen nicht.
+  - [ ] Population: interne URLs mit Status 2xx und HTML-Inhalt, plus interne Nicht-HTML-2xx-URLs mit HTTP-Canonical. URLs ohne 2xx erscheinen nicht. (Paritätsbefund M1 vom 14.10.2026, Befund B-04, K-56: die Referenz führt alle 2xx, Fixture `/s201`; vorher „Status 200“.)
   - [ ] Filter „All“ = Population; jede URL kann in mehreren Filtern zugleich stehen.
   - [ ] Export „Canonicals > All“ und jeder Einzelfilter als CSV/XLSX mit obigen Spalten.
   - [ ] Canonicals speichern aus (CRAWL-046) → Tab Canonicals leer, und es wird kein Indexierbarkeitsstatus `Canonicalised` gesetzt (Festlegung).
@@ -426,7 +426,8 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Eingaben/Konfiguration:** –
 - **Ausgabe (Spalten/Filter/Export):** Filter „Missing“; Einstufung: Warnung / Mittel.
 - **Akzeptanzkriterien:**
-  - [ ] Bedingung: HTML-Seite mit Status 200 und `Occurrences = 0`.
+  - [ ] Bedingung: HTML-Seite mit Status 2xx und `Occurrences = 0` (K-56).
+  - [ ] Bei „Ignore Non-Indexable URLs for Issues“ an (CRAWL-089, Standard) werden nur indexierbare Seiten gelistet (Paritätsbefund M1, Befund B-05, K-56).
   - [ ] Nicht-HTML-Ressourcen ohne HTTP-Canonical erscheinen **nicht** in Missing.
   - [ ] Canonical nur per JS gesetzt: im Text-only-Modus Missing, im JS-Modus nicht (TECH-006).
 - **Testfixture:** `canonical-basic/none.html`, eine PDF ohne Header.
@@ -866,8 +867,8 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 
 ### TECH-068 Option „Respect Self Referencing Meta Refresh“
 - **Priorität:** P1
-- **Beschreibung:** Führender Eintrag (K-12; CRAWL-094 verweist hierher). Legt fest, ob eine Seite, die sich per Meta Refresh (oder `Refresh`-Header) selbst neu lädt, als nicht indexierbar geführt wird. Solche Selbst-Refreshes sind verbreitet (z. B. Nachrichtenseiten, die sich periodisch aktualisieren) und schaden der Indexierung meist nicht. Sie sollen aber sichtbar werden, damit man sie bewusst prüft. Die Referenz stuft sie standardmäßig als nicht indexierbar ein; die Option erlaubt das Abschalten.
-- **Eingaben/Konfiguration:** `respect_self_referencing_meta_refresh` (bool), Standard **an** (wie Referenz; Konfiguration > Spider > Advanced). Selbst-Refresh = Refresh ohne Ziel-URL oder mit Ziel, das nach TECH-002 gleich der eigenen URL ist (Fragment ignoriert).
+- **Beschreibung:** Führender Eintrag (K-12; CRAWL-094 verweist hierher). Legt fest, ob eine Seite, die sich per Meta Refresh (oder `Refresh`-Header) selbst neu lädt, als nicht indexierbar geführt wird. Solche Selbst-Refreshes sind verbreitet (z. B. Nachrichtenseiten, die sich periodisch aktualisieren) und schaden der Indexierung meist nicht. Sie sollen aber sichtbar werden, damit man sie bewusst prüft. Die frühere Annahme „die Referenz stuft sie standardmäßig als nicht indexierbar ein“ ist durch den Paritätslauf M1 (14.10.2026, Befund B-03, K-57) widerlegt: SF Free (Standardkonfiguration) führt Selbst-Refresh-Seiten als `Indexable` und zeigt den Refresh als Weiterleitung auf sich selbst (CRAWL-015). Der Standard folgt deshalb der Referenz; die Option erlaubt das Einschalten.
+- **Eingaben/Konfiguration:** `respect_self_referencing_meta_refresh` (bool, Konfigurationsschlüssel `advanced.respect_self_ref_meta_refresh`), Standard **aus** (wie Referenz; Konfiguration > Spider > Advanced; bis 14.10.2026 „an“). Selbst-Refresh = Refresh ohne Ziel-URL oder mit Ziel, das nach TECH-002 gleich der eigenen URL ist (Fragment ignoriert).
 - **Ausgabe (Spalten/Filter/Export):** `Indexability = Non-Indexable`, `Indexability Status = Self Referencing Meta Refresh` (Statustext Festlegung).
 - **Akzeptanzkriterien:**
   - [ ] Option an → Selbst-Refresh-Seite ist `Non-Indexable` mit obigem Status, unabhängig von der Verzögerung (0 s und 300 s gleich behandelt).
@@ -903,10 +904,10 @@ Begriffe: Eine **Annotation** ist ein Paar (Code, URL) auf Seite P. Die **Annota
 - **Eingaben/Konfiguration:** „Store Hreflang“ (TECH-070), „Crawl Hreflang“ (TECH-087), für Sitemap-hreflang zusätzlich „Crawl Linked XML Sitemaps“ (TECH-210) oder eine direkt angegebene Sitemap.
 - **Ausgabe (Spalten/Filter/Export):** `Address`, `Title 1`, `Occurrences` (Anzahl Annotationen gesamt), `HTML hreflang 1..n` (Code), `HTML hreflang 1..n URL`, `HTTP hreflang 1..n`, `HTTP hreflang 1..n URL`, `Sitemap hreflang 1..n`, `Sitemap hreflang 1..n URL`. Spaltenreihenfolge pro Index: Code, dann URL. Filter TECH-073 bis TECH-086 plus „All“ (14 Filter + All). Untere Detailansicht TECH-089.
 - **Akzeptanzkriterien:**
-  - [ ] Population: interne HTML-200-Seiten, interne Nicht-HTML-URLs mit HTTP-hreflang, URLs mit Sitemap-hreflang sowie gecrawlte hreflang-Ziele (für TECH-074).
+  - [ ] Population: interne HTML-2xx-Seiten (K-56, vorher 200), interne Nicht-HTML-URLs mit HTTP-hreflang, URLs mit Sitemap-hreflang sowie gecrawlte hreflang-Ziele (für TECH-074).
   - [ ] Abhängigkeit von der Konfiguration:
     - Store aus → Tab leer, alle Filter 0, Hinweis „hreflang wird nicht gespeichert“.
-    - Store an, Crawl aus → Tab und alle Filter, die nur die eigene Seite brauchen (TECH-073, TECH-080–TECH-086), sind befüllt. Filter, die den Zustand des Alternates brauchen (TECH-074, TECH-076–TECH-079), werden nur für Alternates befüllt, die anderweitig gecrawlt wurden (z. B. weil sie verlinkt sind).
+    - Store an, Crawl aus → Tab und alle Filter, die nur die eigene Seite brauchen (TECH-073, TECH-080–TECH-086), sind befüllt. Filter, die den Zustand des Alternates brauchen (TECH-074, TECH-076–TECH-079), werden nur für Alternates befüllt, die anderweitig gecrawlt wurden (z. B. weil sie verlinkt sind). Alternates, die **nur** per hreflang bekannt sind, erscheinen in keinem anderen Tab als URL-Zeile (keine Tabellen-Sichtbarkeit, nicht in Internal/External, nicht in den Zählern des Crawl Overview), und ihre hreflang-Linkzeilen fehlen in `Links:All Inlinks` und den übrigen Link-Exporten. In den hreflang-Spalten der Quellseite stehen sie weiterhin (Paritätsbefund M1, Befund N-08, K-62; Fixture `parity-technical` `/hl/it/`).
     - Store an, Crawl an → alles befüllt.
   - [ ] **(Paritätsabweichung):** Die Referenz verlangt laut Doku **beide** Optionen (Store und Crawl), damit Tab und Filter befüllt werden. OpenSpider befüllt den Tab schon mit Store allein, weil die eigenseitigen Prüfungen ohne Abruf der Alternates möglich sind. Paritätstests laufen mit Store **und** Crawl an. Ein Test „Store an, Crawl aus“ prüft nur das OpenSpider-Verhalten.
   - [ ] `Occurrences` = Summe aller gespeicherten Annotationen über alle drei Quellen; eine Annotation, die in HTML und Sitemap identisch vorkommt, zählt zweimal.
@@ -1268,7 +1269,7 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
 - **Eingaben/Konfiguration:** Link-Präferenzen (TECH-144).
 - **Ausgabe (Spalten/Filter/Export):** `Address`, `Indexability`, `Indexability Status`, `Crawl Depth`, `Link Score`, `Inlinks`, `Unique Inlinks`, `Unique JS Inlinks`, `% of Total`, `Outlinks`, `Unique Outlinks`, `Unique JS Outlinks`, `External Outlinks`, `Unique External Outlinks`, `Unique External JS Outlinks`. Filter TECH-132 bis TECH-143 plus „All“.
 - **Akzeptanzkriterien:**
-  - [ ] Population: interne HTML-Seiten mit Status 200.
+  - [ ] Population: interne HTML-Seiten mit Status 2xx (K-56, vorher 200; `% of Total` mit demselben Nenner wie ONPAGE-015).
   - [ ] `Inlinks` = Anzahl aller eingehenden Hyperlinks (inkl. Mehrfachlinks derselben Quelle); `Unique Inlinks` = Anzahl verschiedener Quellseiten. Self-Links zählen nicht (Festlegung, entspricht Standardanzeige).
   - [ ] **Zusatzspalte:** `Inlinks` steht nicht in der Referenz-Spaltenliste des Links-Tabs (dort beginnt der Inlink-Block mit `Unique Inlinks`); in der Referenz gehört sie zum Internal-Tab. OpenSpider zeigt sie hier zusätzlich, standardmäßig **ausgeblendet** (per Spaltenauswahl einblendbar), damit die Standardansicht und der Standardexport genau der Referenz-Spaltenfolge entsprechen. Paritätstests ignorieren `Inlinks` in diesem Tab.
   - [ ] `Outlinks`/`Unique Outlinks` = interne ausgehende Hyperlinks gesamt/verschiedene Ziele; `External Outlinks`/`Unique External Outlinks` analog extern.
@@ -1280,7 +1281,7 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
 - **Priorität:** P0
 - **Beschreibung:** Eigenschaften jedes Hyperlinks, auf denen die Filter beruhen.
 - **Eingaben/Konfiguration:** –
-- **Ausgabe (Spalten/Filter/Export):** In unteren Inlinks/Outlinks-Ansichten: `Type`, `From`, `To`, `Anchor Text`, `Alt Text`, `Follow` (true/false), `Target`, `Rel`, `Status Code`, `Link Path` (XPath), `Link Position` (Navigation/Header/Content/Sidebar/Footer – Spec der Link-Positionen), `Link Origin` (TECH-103), `Link Crawlability` (TECH-143).
+- **Ausgabe (Spalten/Filter/Export):** In unteren Inlinks/Outlinks-Ansichten: `Type`, `From`, `To`, `Anchor Text`, `Alt Text`, `Follow` (true/false), `Target`, `Rel`, `Status Code`, `Link Path` (XPath), `Link Position` (Head/Navigation/Header/Content/Sidebar/Footer – Spec der Link-Positionen OUT-031; `Head` für Elemente im `<head>`, K-63), `Link Origin` (TECH-103), `Link Crawlability` (TECH-143).
 - **Akzeptanzkriterien:**
   - [ ] `Follow = false`, wenn `rel` eines der Token `nofollow`, `ugc`, `sponsored` enthält **oder** die Quellseite effektives Seiten-nofollow hat (TECH-066).
   - [ ] Anchor Text = normalisierter Textinhalt des `<a>`. Ist er leer und enthält der Link ein `<img>` mit nicht-leerem `alt`, wird `Alt Text` gesetzt und gilt als Anchor für TECH-135.
@@ -1308,7 +1309,8 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
   - [ ] Bedingung: `Outlinks = 0` (interne Hyperlinks im ausgewerteten HTML; im JS-Modus das gerenderte).
   - [ ] Eine Seite mit nur einem Self-Link gilt als ohne interne Outlinks (Festlegung).
   - [ ] Eine Seite mit nur nofollow-Links hat Outlinks > 0 und wird nicht gelistet.
-- **Testfixture:** `links/deadend.html`, `links/self-only.html`.
+  - [ ] Bei „Ignore Non-Indexable URLs for Issues“ an (CRAWL-089, Standard) werden nur indexierbare Seiten gelistet (Paritätsbefund M1, Befund B-05, K-56).
+- **Testfixture:** `links/deadend.html`, `links/self-only.html`, dazu eine `noindex`-Sackgasse.
 
 ### TECH-134 Filter „Internal Nofollow Outlinks“
 - **Priorität:** P0
@@ -2361,7 +2363,7 @@ Legende: **F** = OpenSpider-Festlegung (Referenzverhalten unbekannt, gegen Golde
 16. **F – Head-Zugehörigkeit bei zweitem `<head>` vor `<body>` (TECH-003):** „zählt als im Head“.
 17. **K – Mobile-Prüfung im Text-only-Modus (TECH-230):** Quelle „Lokal“ ist ein lokaler Lighthouse-Lauf in eigener Chrome-Instanz (INTEG-132) und daher unabhängig vom Rendering-Modus des Crawls. Die frühere Festlegung (eigene Messskripte im eingebauten Chromium, Standardquelle `local`) entfällt; die Standardquelle legt INTEG-130 fest.
 18. **F – Standardwert „Perform HTML Validation“ (TECH-008):** Referenzstandard nicht dokumentiert; OpenSpider: an. Prüfung an einer frischen Referenzinstallation (nur Beobachtung der Oberfläche, kein Code). Falls die Referenz „aus“ verwendet, ändert sich nur der Standardwert, nicht die Logik.
-19. **F – „Ignore Non-Indexable URLs for Issues“ (TECH-009):** Standard (an) und Abgrenzung der betroffenen Filter. Die Referenz-Doku nennt nur eine Beispielliste. Weitere technische Filter sind in OpenSpider bewusst nicht betroffen.
+19. **F – „Ignore Non-Indexable URLs for Issues“ (TECH-009):** Standard (an) und Abgrenzung der betroffenen Filter. Die Referenz-Doku nennt nur eine Beispielliste. Weitere technische Filter sind in OpenSpider nicht betroffen, solange kein Referenzbeleg vorliegt. **Nachtrag Paritätslauf M1 (14.10.2026, K-56):** TECH-015 (Canonicals › Missing) und TECH-133 (Links › Pages Without Internal Outlinks) sind betroffen, weil die Referenz dort nicht indexierbare Seiten ausschließt.
 20. **F – Statustext `Self Referencing Meta Refresh` (TECH-001/068):** Die Referenz nennt den genauen Indexierbarkeitsstatus nicht. **K:** Selbst-Refresh ist bei Standard nicht indexierbar (vorher fälschlich „ändert nichts“).
 21. **PA – hreflang > 500 Annotationen (TECH-004/070):** Referenz meldet solche Seiten nicht; OpenSpider wertet die ersten 500 aus (`hreflang_over_limit = truncate`), Referenzverhalten über `skip`.
 22. **PA – Hreflang-Tab ohne „Crawl Hreflang“ (TECH-071):** Referenz verlangt Store **und** Crawl; OpenSpider befüllt eigenseitige Filter schon mit Store.

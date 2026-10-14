@@ -306,14 +306,14 @@ Gilt für Titel, Meta-Description, Meta-Keywords, Überschriften, Alt-Texte:
 
 ### ONPAGE-005 Duplikat-Gruppierung (Wertgleichheit über Seiten)
 - **Priorität:** P0
-- **Beschreibung:** Gemeinsame Logik für die Filter „Duplicate“ in Page Titles, Meta Description, Meta Keywords, H1, H2: Eine Seite ist Duplikat, wenn ihr erster Wert (…1) nach Normalisierung N(x) nicht leer ist und mindestens eine andere Seite der Vergleichsmenge denselben Wert hat. Vergleichsmenge = Grundmenge des Tabs, eingeschränkt auf indexierbare Seiten, solange `duplicates.only_indexable = true` (Default). Vergleich exakt, groß-/kleinschreibungssensitiv (**Annahme A-4**).
+- **Beschreibung:** Gemeinsame Logik für die Filter „Duplicate“ in Page Titles, Meta Description, Meta Keywords, H1, H2: Eine Seite ist Duplikat, wenn ihr erster Wert (…1) nach Normalisierung N(x) nicht leer ist und mindestens eine andere Seite der Vergleichsmenge denselben Wert hat. Vergleichsmenge = Grundmenge des Tabs, eingeschränkt auf indexierbare Seiten, solange `duplicates.only_indexable = true` (Default). Vergleich nach N(x) **ohne Beachtung der Groß-/Kleinschreibung**: verglichen werden die Unicode-Kleinschreibungen (`str::to_lowercase`), sonst zeichengenau (**Annahme A-4, revidiert nach Paritätslauf M1 vom 14.10.2026, K-58**: die Referenz zählt Werte, die sich nur in der Schreibweise unterscheiden, als Duplikat; Fixture `parity-onpage` `dup-case.html`).
   - **Paginierte Seiten:** Ist `duplicates.ignore_paginated = true` (Referenz: Option unter Spider-Konfiguration → Advanced), werden Seiten, die ein `<link rel="prev">` (im `<head>`, Wert nicht leer) oder einen HTTP-`Link`-Header mit `rel="prev"` tragen, aus der Vergleichsmenge aller fünf Duplicate-Filter (Page Titles, Meta Description, Meta Keywords, H1, H2) entfernt. Die erste Seite einer Serie (nur `rel="next"`) bleibt in der Vergleichsmenge. Der Schalter wirkt nicht auf Content → Exact/Near Duplicates. Die Default-Stellung ist in der öffentlichen Doku nicht angegeben (**Annahme A-50**: an).
 - **Eingaben/Konfiguration:** `duplicates.only_indexable`, `duplicates.ignore_paginated`.
 - **Ausgabe:** Filter „Duplicate“ je Element-Tab; zusätzlich Gruppen-ID (intern) zur Anzeige „gleicher Wert wie …“.
 - **Akzeptanzkriterien:**
   - [ ] Zwei indexierbare Seiten mit Titel „Startseite“ → beide im Filter.
   - [ ] Eine indexierbare und eine canonicalisierte (non-indexable) Seite mit gleichem Titel → keine im Filter (Default); bei `only_indexable=false` → beide.
-  - [ ] „Startseite“ vs. „startseite“ → kein Duplikat (A-4).
+  - [ ] „Startseite“ vs. „startseite“ → Duplikat, beide im Filter (A-4, revidiert).
   - [ ] „Startseite “ (mit Leerzeichen) vs. „Startseite“ → Duplikat (Normalisierung).
   - [ ] Leere Werte bilden nie eine Duplikatgruppe (die gehören zu „Missing“).
   - [ ] Nur der erste Wert (…1) wird verglichen; ein identischer zweiter Titel (…2) erzeugt kein Duplikat.
@@ -400,6 +400,7 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
 - **Akzeptanzkriterien:**
   - [ ] Werte sind identisch mit den Werten der jeweiligen Element-Tabs (gleiche Normalisierung, gleiche Länge).
   - [ ] Bilder, CSS, JavaScript und andere Nicht-HTML-URLs haben leere Element-Spalten.
+  - [ ] Interne HTML-Seiten ohne Status 2xx (Weiterleitungen, 4xx, 5xx, ohne Antwort) haben leere Element-Spalten einschließlich Längen und Pixelbreiten, auch wenn ihr Körper `<title>`/`<h1>` enthält. Ihr Inhalt wird nicht ausgewertet (A-5, ONPAGE-009). Beispiel: `/e410` (410, `<title>Error 410</title>`) → `Title 1` und `H1-1` leer (Paritätsbefund M1, Befund N-01, K-60; die Referenz schreibt für die Längen 0, OpenSpider lässt sie leer wie bei Nicht-HTML, DEV-003).
   - [ ] PDFs: `Title 1` und `Meta Keywords 1` stammen aus den Dokumenteigenschaften (ONPAGE-166), alle übrigen Element-Spalten (Meta Description, H1, H2, Meta Robots, Canonical …) bleiben leer; `X-Robots-Tag 1` wird wie bei jeder URL aus dem Header gefüllt.
   - [ ] `Meta Robots 1` enthält den `content` des ersten `<meta name="robots">` (Name case-insensitiv), z. B. `noindex, follow`.
   - [ ] `X-Robots-Tag 1` enthält den Wert des ersten `X-Robots-Tag`-Headers.
@@ -432,6 +433,7 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
   - [ ] Inhalt von `<script>`/`<style>` zählt weder zum Word Count noch zum Text Ratio.
   - [ ] Text Ratio ∈ [0, 100]; Seite ohne Body-Text → 0.
   - [ ] Nicht-HTML-URLs → beide Spalten leer; Ausnahme: interne PDF mit `pdf.store = true` → `Word Count` gefüllt (ONPAGE-166), `Text Ratio` leer.
+  - [ ] HTML-Seiten ohne Status 2xx → beide Spalten leer (A-5, K-60).
 - **Testfixture:** `onpage-content/wordcount-3.html`, `onpage-content/nav-footer.html` (10 Wörter im main, 50 im nav, 20 im footer → 10).
 
 ### ONPAGE-014 Internal: Crawl Depth, Folder Depth
@@ -445,6 +447,7 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
   - [ ] Wird B später über einen kürzeren Weg gefunden, gilt die kleinere Tiefe (Breitensuche-Semantik).
   - [ ] In Listenmodus hochgeladene URLs haben Tiefe 0 (Verweis auf Modus-Spec).
   - [ ] Folder-Depth-Beispiele aus der Beschreibung liefern exakt die genannten Werte; Query-Strings werden ignoriert (`/a/?x=1` → 1).
+  - [ ] Leere Pfadsegmente (doppelter Schrägstrich) zählen nicht: `/urls/a//b.html` → 2 (Paritätsbefund M1, Befund N-05, K-60).
 - **Testfixture:** `onpage-internal/depth/` mit Kette `index → a.html → b.html`, Route `/r` → `/ziel` (301).
 
 ### ONPAGE-015 Internal: Link-Zählspalten
@@ -452,7 +455,7 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
 - **Beschreibung:** Zählungen aus dem Link-Graphen (Hyperlinks `<a href>` und gleichwertige Linkelemente gemäß Link-Spec):
   - `Inlinks`: Anzahl interner Hyperlinks auf die URL (jede Link-Instanz zählt, auch mehrfach von derselben Seite).
   - `Unique Inlinks`: Anzahl verschiedener interner Quellseiten.
-  - `% of Total`: Unique Inlinks von internen HTML-Seiten mit Status 200 ÷ Anzahl aller gecrawlten internen HTML-Seiten (Status 200) × 100.
+  - `% of Total`: Unique Inlinks von internen HTML-Seiten mit Status 2xx ÷ Anzahl aller gecrawlten internen HTML-Seiten (Status 2xx) × 100 (Paritätsbefund M1, Befund B-04, K-56: die Referenz zählt alle 2xx, Fixture `/s201`).
   - `Outlinks`: Anzahl interner Hyperlinks von der URL; `Unique Outlinks`: Anzahl verschiedener interner Ziel-URLs.
   - `External Outlinks`: Anzahl Hyperlinks auf externe URLs; `Unique External Outlinks`: verschiedene externe Ziele.
 - **Eingaben/Konfiguration:** keine.
@@ -461,7 +464,7 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
   - [ ] Seite A verlinkt Z dreimal, Seite B einmal → Z: Inlinks 4, Unique Inlinks 2.
   - [ ] A verlinkt Z dreimal und Y einmal → A: Outlinks 4, Unique Outlinks 2.
   - [ ] Selbstverweise (A → A) zählen als Inlink und Outlink (**Annahme A-9**).
-  - [ ] Bei 4 gecrawlten internen 200-HTML-Seiten und 2 eindeutigen verlinkenden Seiten → % of Total = 50,00.
+  - [ ] Bei 4 gecrawlten internen 2xx-HTML-Seiten (davon eine mit Status 201) und 2 eindeutigen verlinkenden Seiten → % of Total = 50,00.
   - [ ] Links mit `rel="nofollow"` werden gezählt (Nofollow beeinflusst nur das Folgen, nicht die Zählung) – Verweis Link-Spec.
   - [ ] Ressourcen-Referenzen (img, script, link stylesheet) zählen nicht als Hyperlink-Inlinks (sie erscheinen in eigenen Spalten/Lower-Tabs).
 - **Testfixture:** `onpage-internal/links/` mit A (3× Z, 1× Y, 1× externer Link zweimal), B (1× Z), Z, Y.
@@ -484,10 +487,10 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
 ### ONPAGE-018 Internal: Technische Spalten
 - **Priorität:** P0
 - **Beschreibung:**
-  - `Hash`: MD5 (hex, 32 Zeichen, Kleinbuchstaben) über den vollständigen, dekomprimierten Antwortkörper der HTML-Seite (Bytes wie empfangen). Ist der Speicher-Schalter „Hash“ aus, entfällt auch die Erkennung exakter Duplikate (ONPAGE-143).
+  - `Hash`: MD5 (hex, 32 Zeichen, Kleinbuchstaben) über den vollständigen, dekomprimierten Antwortkörper der HTML-Seite (Bytes wie empfangen). **Nur für HTML-Antworten** (Inhaltsklasse HTML, ONPAGE-020); Bilder, CSS, JavaScript, Text, JSON, SVG und Antworten ohne Inhaltstyp (z. B. 301 mit leerem Körper) haben einen leeren `Hash` (Paritätsbefund M1, Befund N-06, K-60). Ist der Speicher-Schalter „Hash“ aus, entfällt auch die Erkennung exakter Duplikate (ONPAGE-143).
   - `Response Time`: Sekunden vom Senden der Anfrage bis zum vollständigen Empfang des Körpers, drei Nachkommastellen.
   - `Last-Modified`: Rohwert des Headers, sonst leer.
-  - `Redirect URL`: absolut aufgelöstes Ziel einer Weiterleitung (HTTP-Location, Meta-Refresh-URL, HTTP-Refresh-URL, JS-Ziel), sonst leer.
+  - `Redirect URL`: absolut aufgelöstes Ziel einer Weiterleitung (HTTP-Location, Meta-Refresh-URL, HTTP-Refresh-URL, JS-Ziel), sonst leer. Bei einem Selbst-Refresh (ohne URL oder auf die eigene URL, CRAWL-015) steht hier die eigene Adresse und in `Redirect Type` `Meta Refresh Redirect` bzw. `HTTP Refresh Redirect` (Paritätsbefund M1, Befund N-07, K-57).
   - `Redirect Type`: `HTTP Redirect`, `HSTS Policy`, `JavaScript Redirect`, `Meta Refresh Redirect`, `HTTP Refresh Redirect` (Letzteres als eigene Ausprägung, **Annahme A-10**).
   - `HTTP Version`: z. B. `1.1` oder `2`, wie ausgehandelt.
   - `URL Encoded Address`: die tatsächlich angefragte URL, Non-ASCII-Zeichen prozentkodiert (UTF-8, Großbuchstaben-Hex).
@@ -501,6 +504,8 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
   - [ ] Route mit `Location: /ziel` relativ → Redirect URL absolut (`{{BASE_URL}}/ziel`).
   - [ ] Pfad `/straße` → URL Encoded Address endet auf `/stra%C3%9Fe`.
   - [ ] Fehlt `Last-Modified`, ist die Spalte leer (nicht „0“ oder Datum 1970).
+  - [ ] `Hash` ist für `/assets/logo.png` (Bild) und eine 301-Antwort mit leerem Körper leer, für jede 200-HTML-Seite gefüllt (K-60).
+  - [ ] `content="30"` ohne URL auf `/m.html` → `Redirect URL` = `{{BASE_URL}}/m.html`, `Redirect Type` = `Meta Refresh Redirect` (K-57).
 - **Testfixture:** `onpage-internal/tech/` mit `same1.html`/`same2.html` (identisch), `same3.html` (+1 Leerzeichen), Routen `/slow` (delay 500), `/rel-redirect` (302 → `/ziel`), `/straße`, `/lm` (`Last-Modified`-Header).
 
 ### ONPAGE-019 Internal: Content-Analyse-Spalten
@@ -599,14 +604,15 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
 - **Beschreibung:** Der External-Tab listet alle externen URLs (0.1), die über Hyperlinks oder Ressourcen-Referenzen interner Seiten gefunden wurden. Externe URLs werden nur geprüft (Statuscode abfragen), nicht weiter gecrawlt; ihre Links werden nicht verfolgt.
 - **Eingaben/Konfiguration:** „Check external links“ (Crawl-Spec). Abgeschaltet → externe URLs werden gelistet, aber nicht angefragt (Status leer/0, Status „Not Checked“ – **Annahme A-11**) oder gar nicht gelistet (Referenzverhalten verifizieren).
 - **Ausgabe (Spalten):**
-  - Paritätsspalten (laut öffentlicher Tab-Doku), in dieser Reihenfolge: `Address`, `Content`, `Status Code`, `Status`, `Crawl Depth`, `Inlinks` (Anzahl Link-Instanzen von internen Seiten).
+  - Paritätsspalten (laut öffentlicher Tab-Doku), in dieser Reihenfolge: `Address`, `Content`, `Status Code`, `Status`, `Crawl Depth`, `Inlinks` (Anzahl **Hyperlink**-Instanzen (`<a href>`, `<area href>`) von internen Seiten wie ONPAGE-015; Weiterleitungen, Bild-, CSS-, JS- und andere Ressourcen-Referenzen zählen nicht – Paritätsbefund M1, Befund N-10, K-61).
   - **OpenSpider-Erweiterung** (in der Referenz-Doku nicht belegt; standardmäßig ausgeblendet, über die Spaltenauswahl einblendbar): `Response Time`, `Redirect URL`, `Redirect Type`.
 - **Akzeptanzkriterien:**
   - [ ] Default-Layout zeigt genau die sechs Paritätsspalten in der genannten Reihenfolge; die drei Erweiterungsspalten sind ausgeblendet, werden aber im Export mit der Option „alle Spalten“ (UI-015, OUT-020) mit ausgegeben.
   - [ ] Link von `127.0.0.1` auf `localhost` (F-HOST2) erscheint im External-Tab, nicht im Internal-Tab.
   - [ ] Externe Seite wird genau einmal angefragt, ihre ausgehenden Links erscheinen nirgends.
   - [ ] Crawl Depth der externen URL = Tiefe der verlinkenden Seite + 1.
-  - [ ] Inlinks = Anzahl Link-Instanzen von internen Seiten (2 Seiten × 2 Links → 4).
+  - [ ] Inlinks = Anzahl Hyperlink-Instanzen von internen Seiten (2 Seiten × 2 Links → 4).
+  - [ ] Eine externe URL, die per Hyperlink und zusätzlich als Ziel einer internen 301 erreicht wird, hat Inlinks 1. Ein externes Bild, das nur per `<img src>` eingebunden ist, hat Inlinks 0 (K-61).
   - [ ] Externe Subdomain gilt als extern, solange „alle Subdomains crawlen“ aus ist.
 - **Testfixture:** `onpage-external/` mit `index.html` → zwei Links auf `http://localhost:<port>/ext.html`, `ext.html` enthält Link auf `/never-seen.html`; zusätzlich Route `/ext-404` am externen Host.
 
@@ -895,8 +901,8 @@ Grundmenge („All“): alle internen und externen URLs mit Antwort- oder Blocki
 - **Akzeptanzkriterien:**
   - [ ] `content="0; url=/ok"` → im Filter, Redirect URL `…/ok`.
   - [ ] `content="5;URL='/ok'"` → im Filter.
-  - [ ] `content="30"` (ohne URL, Selbst-Reload) → nicht im Filter.
-  - [ ] `content="0; url=meta-refresh.html"` (auf sich selbst) → nicht im Filter.
+  - [ ] `content="30"` (ohne URL, Selbst-Reload) → im Filter, Redirect URL = eigene Adresse (Paritätsbefund M1, Befund N-07, K-57; ersetzt „nicht im Filter“).
+  - [ ] `content="0; url=meta-refresh.html"` (auf sich selbst) → im Filter, außerdem im Filter Redirect Loop (ONPAGE-061).
   - [ ] Meta Refresh außerhalb `<head>` wird ebenfalls erkannt (Browser tun das auch).
 - **Testfixture:** `onpage-rc/meta-refresh*.html` (4 Varianten).
 
@@ -931,6 +937,7 @@ Grundmenge („All“): alle internen und externen URLs mit Antwort- oder Blocki
 - **Akzeptanzkriterien:**
   - [ ] `/loop1` → `/loop2` → `/loop1` → beide URLs im Filter (**Annahme A-20**: alle Kettenmitglieder, die in die Schleife führen).
   - [ ] Selbst-Weiterleitung `/self` → `/self` → im Filter.
+  - [ ] Selbst-Refresh (Meta oder Header, ohne URL oder auf die eigene URL) → im Filter (K-57).
   - [ ] Weiterleitung `/a?x=1` → `/a` → `/a?x=1` wird als Schleife erkannt (URL-Vergleich nach Normalisierung).
   - [ ] Crawler terminiert (keine Endlosschleife).
 - **Testfixture:** `onpage-rc/` Routen `/loop1`, `/loop2`, `/self`, `/a` mit Query-Weiche.
@@ -1020,12 +1027,12 @@ Grundmenge („All“): alle internen URLs. Prüfungen arbeiten auf der Anzeigef
 
 ### ONPAGE-072 URL-Filter Underscores
 - **Priorität:** P0
-- **Beschreibung:** Interne URLs mit mindestens einem `_` im Pfad (**Annahme A-23**: nur Pfad, nicht Query – sonst würden alle `utm_`-URLs zusätzlich auftauchen; per Referenz zu verifizieren).
+- **Beschreibung:** Interne URLs mit mindestens einem `_` in Pfad **oder Query** (**Annahme A-23, revidiert nach Paritätslauf M1 vom 14.10.2026, K-58**: die Referenz zählt `?sort_by=x` mit; die frühere Annahme „nur Pfad“ ist widerlegt). Das Fragment zählt nicht.
 - **Eingaben/Konfiguration:** keine.
 - **Ausgabe:** Filter `Underscores`.
 - **Akzeptanzkriterien:**
   - [ ] `/mein_artikel` → im Filter; `/mein-artikel` → nicht.
-  - [ ] `/seite?sort_by=x` → nicht (A-23).
+  - [ ] `/seite?sort_by=x` → im Filter (A-23, revidiert); `/seite#a_b` → nicht (Fragment).
 - **Testfixture:** `onpage-url/`.
 
 ### ONPAGE-073 URL-Filter Uppercase
@@ -1147,7 +1154,7 @@ Grundmenge: ONPAGE-009. Extraktion aus dem Parse-Baum (0.1). `<title>`-Elemente 
 - **Priorität:** P0
 - **Beschreibung:** Alle `<title>`-Elemente im HTML-Namensraum werden in Dokumentreihenfolge gesammelt (im `<head>` und außerhalb). Wert = N(Textinhalt). Für jedes Vorkommen wird zusätzlich gespeichert, ob es im `<head>` liegt.
 - **Eingaben/Konfiguration:** Speicher-Schalter „Page Titles“ (aus → Tab leer, Spalten ausgeblendet).
-- **Ausgabe (Spalten):** `Address`, `Occurrences` (max. 2), `Title 1`, `Title 1 Length`, `Title 1 Pixel Width`, `Title 2`, `Title 2 Length`, `Title 2 Pixel Width`, `Indexability`, `Indexability Status`.
+- **Ausgabe (Spalten):** `Address`, `Occurrences` (max. 2), `Title 1`, `Title 1 Length`, `Title 1 Pixel Width`, `Title 2`, `Title 2 Length`, `Title 2 Pixel Width`, `Indexability`, `Indexability Status`. Alle Spalten, auch die Pixelbreiten, sind standardmäßig sichtbar und stehen im Standardexport `Page Titles:<Filter>` (Paritätsbefund M1, Befund N-02, K-60).
 - **Akzeptanzkriterien:**
   - [ ] `<title>Start</title>` → Title 1 „Start“, Length 5, Occurrences 1.
   - [ ] `<title>A <b>B</b></title>` → Wert literal `A <b>B</b>` (Inhalt von `<title>` ist RCDATA, Tags werden nicht interpretiert).
@@ -1267,7 +1274,7 @@ Grundmenge: ONPAGE-009. Vorkommen = `<meta>`-Elemente, deren `name`-Attribut (ge
 - **Priorität:** P0
 - **Beschreibung:** Sammelt alle Meta-Descriptions in Dokumentreihenfolge mit Head-Zugehörigkeit. `<meta property="og:description">` und `<meta name="twitter:description">` zählen nicht.
 - **Eingaben/Konfiguration:** Speicher-Schalter „Meta Description“.
-- **Ausgabe (Spalten):** `Address`, `Occurrences` (max. 2), `Meta Description 1`, `Meta Description 1 Length`, `Meta Description 1 Pixel Width`, `Meta Description 2`, `Meta Description 2 Length`, `Meta Description 2 Pixel Width`, `Indexability`, `Indexability Status`.
+- **Ausgabe (Spalten):** `Address`, `Occurrences` (max. 2), `Meta Description 1`, `Meta Description 1 Length`, `Meta Description 1 Pixel Width`, `Meta Description 2`, `Meta Description 2 Length`, `Meta Description 2 Pixel Width`, `Indexability`, `Indexability Status`. Alle Spalten, auch die Pixelbreiten, sind standardmäßig sichtbar und stehen im Standardexport (K-60).
 - **Akzeptanzkriterien:**
   - [ ] `<meta name="Description" content="Text">` → erkannt (Name case-insensitiv).
   - [ ] `<meta property="og:description" content="X">` allein → Occurrences 0.
@@ -1565,7 +1572,7 @@ Grundmenge: ONPAGE-009 (interne HTML-Seiten mit Status 2xx; zusätzlich interne 
 
 ### ONPAGE-141 Wortzählung
 - **Priorität:** P0
-- **Beschreibung:** `Word Count` = Anzahl Token des Inhaltsbereich-Textes, getrennt an Unicode-Leerraum. Jedes nicht-leere Token zählt, auch reine Satzzeichen-Token wie „–“ (**Annahme A-35**). Keine Sprachsegmentierung (CJK-Text ohne Leerzeichen zählt als ein Wort pro Block – bekannte Einschränkung, dokumentieren).
+- **Beschreibung:** `Word Count` = Anzahl Token des Inhaltsbereich-Textes, getrennt an Unicode-Leerraum. Jedes nicht-leere Token zählt, auch reine Satzzeichen-Token wie „–“ (**Annahme A-35**). **Dazu kommt je Link-Element `<a>` mit `href` im Inhaltsbereich ein Token** (**Annahme A-35b**, Paritätsbefund M1 vom 14.10.2026, Befund N-03, K-59). Die Referenz zählt auf jeder geprüften Seite genau so viele Wörter mehr, wie Link-Elemente im Inhaltsbereich stehen, unabhängig von der Wortzahl des Ankertexts. Links in ausgeschlossenen Bereichen (`nav`, `footer`, Exclude-Regeln) zählen nicht. Belege: `parity-synthetic` `/s1/p1.html` 112 + 10 = 122, `parity-technical` `/dir/` 81 + 13 = 94. Keine Sprachsegmentierung (CJK-Text ohne Leerzeichen zählt als ein Wort pro Block – bekannte Einschränkung, dokumentieren).
 - **Eingaben/Konfiguration:** Inhaltsbereich.
 - **Ausgabe:** Spalte `Word Count` (Internal, Content).
 - **Akzeptanzkriterien:**
@@ -1574,7 +1581,8 @@ Grundmenge: ONPAGE-009 (interne HTML-Seiten mit Status 2xx; zusätzlich interne 
   - [ ] „E-Mail-Adresse“ → 1.
   - [ ] `a&nbsp;b` → 2 (NBSP trennt).
   - [ ] Leerer Body → 0.
-  - [ ] `area.html` aus ONPAGE-140 → 5 + 100 + 15 + 30 + 10 + 3 = 163 (nur nav/footer ausgeschlossen).
+  - [ ] `area.html` aus ONPAGE-140 → 5 + 100 + 15 + 30 + 10 + 3 = 163 (nur nav/footer ausgeschlossen; die Fixture enthält im Inhaltsbereich keine Links).
+  - [ ] `<main><p>eins zwei</p><ul><li><a href="/a">Seite 1</a></li><li><a href="/b">Seite 2</a></li></ul></main><nav><a href="/c">Menü</a></nav>` → 2 + 4 + 2 = 8 (A-35b; der Link in `nav` zählt nicht).
 - **Testfixture:** `onpage-content/wordcount-*.html`, `area.html`.
 
 ### ONPAGE-142 Content: Spalten
@@ -2130,7 +2138,7 @@ Jede Annahme wird mit einer Paritätsfixture gegen die Referenz (Free-Version, �
 | A-1 | Keine Case-/Unicode-Normalisierung bei Elementwerten | 003, 005 | Titel mit NFD-Umlaut vs. NFC → Duplicate? |
 | A-2 | Länge in Codepoints | 003 | Titel mit 3 Emoji: Length-Spalte vergleichen |
 | A-3 | Pixelbreite: 20 px Titel / 14 px Description, Arial-Metrik | 004 → UI-038 (führend; dort weiterzuführen) | 20 Golden-Titel, Abweichung ≤ 3 % |
-| A-4 | Duplikatvergleich case-sensitiv | 005 | „Kontakt“ vs. „kontakt“ |
+| A-4 | ~~Duplikatvergleich case-sensitiv~~ **widerlegt (Paritätslauf M1, 14.10.2026):** Vergleich ohne Groß-/Kleinschreibung (K-58) | 005 | „Kontakt“ vs. „kontakt“ |
 | A-5 | Element-Tabs nur interne HTML 2xx | 009 | 404-Seite mit Titel im Page-Titles-All? |
 | A-5b | PDFs erscheinen nicht in den Tabs Page Titles / Meta Keywords (nur Title-/Keywords-Spalte im Internal-Tab) | 009, 166 | `doc.pdf` mit Titel crawlen, Page Titles → All prüfen (V-2) |
 | A-6 | Size ohne Content-Length = 0 (außer Bilder) | 012, 173 | chunked PDF |
@@ -2150,7 +2158,7 @@ Jede Annahme wird mit einer Paritätsfixture gegen die Referenz (Free-Version, �
 | A-20 | Redirect Loop listet alle Mitglieder | 061 | `/loop1`, `/loop2` |
 | A-21 | HSTS-Weiterleitung als 307 mit Status „HSTS Policy“ | 064 | HTTPS-Fixture mit HSTS |
 | A-22 | Prozentkodiertes UTF-8 zählt als Non-ASCII | 071 | `/%C3%BCber` |
-| A-23 | Underscores nur im Pfad | 072 | `/?sort_by=x` |
+| A-23 | ~~Underscores nur im Pfad~~ **widerlegt (Paritätslauf M1):** Pfad und Query (K-58) | 072 | `/?sort_by=x` |
 | A-24 | Repetitive Path: beliebiges Segment, case-sensitiv | 075 | `/Shop/shop/`, `/a/x/a.html` |
 | A-25 | Space: literal und `%20`, nicht `+` | 076 | drei Varianten |
 | A-26 | Internal-Search-Heuristik (Segmente/Parameter) | 077 | Listen gegen Referenz-Treffer abgleichen |
@@ -2163,6 +2171,7 @@ Jede Annahme wird mit einer Paritätsfixture gegen die Referenz (Free-Version, �
 | A-33 | Leere Überschriften zählen in der Reihenfolge | 126 | leeres `<h3>` vor H1 |
 | A-34 | H2 Non-sequential: h3–h6 vor erstem H2; ohne H1 kein Treffer | 135 | 6 Sequenz-Fixtures |
 | A-35 | Wortzählung zählt Satzzeichen-Token | 141 | „Preis: 10 € – jetzt!“ |
+| A-35b | Je Link-Element `<a href>` im Inhaltsbereich ein zusätzliches Token (Paritätsbefund M1, K-59) | 141 | `parity-synthetic` `/s1/p1.html`: 10 Links → +10 |
 | A-36 | Near-Duplicates: Wort-3-Gramme, exakte Jaccard | 144 | Golden-Paare 95/91/89/80 %; Kalibrierung von n bei Abweichung > 2 Prozentpunkte |
 | A-37 | Near-Duplicate-Export enthält beide Richtungen | 145 | Bulk-Export zählen |
 | A-38 | Low Content unabhängig von Indexierbarkeit (solange `issues.ignore_non_indexable` aus) | 146 | `noindex`-Seite mit 50 Wörtern, Option an/aus |
