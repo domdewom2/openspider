@@ -10,7 +10,7 @@ use super::duplicates::{
     address_column, all_filter, column, duplicate_predicate, element_params, indexability_columns,
     missing_predicate, population, problem_filter,
 };
-use crate::defs::{ColumnKind, SortKey, TabDef};
+use crate::defs::{ColumnKind, TabDef};
 
 /// Definition des Tabs „H1“.
 pub fn tab() -> TabDef {
@@ -56,10 +56,8 @@ pub fn tab() -> TabDef {
             // ONPAGE-124: Occurrences > 1, auch leere H1 zählen.
             problem_filter("Multiple", "u.h1_count > 1"),
         ],
-        default_sort: vec![SortKey {
-            column: "H1-1".to_string(),
-            descending: false,
-        }],
+        // Keine Tab-Sortierung: Entdeckungsreihenfolge; nur `Duplicate` gruppiert (tabs::filter_default_sort).
+        default_sort: Vec::new(),
         params: |cfg| {
             let mut p = element_params(cfg, cfg.extraction.h1);
             p.push(("h1_max_chars", Value::Int(i64::from(cfg.h1.max_chars))));

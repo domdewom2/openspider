@@ -13,34 +13,10 @@ const SCENARIO: &str = "onpage-h2";
 use os_analyze::views::{filter_counts, query_view, ColumnSelection, ViewPage, ViewQuery};
 use os_engine::testing::{crawl_fixture, FixtureCrawl};
 use os_model::{CrawlConfig, Value};
-use os_store::CrawlFile;
-
-/// Bis `M1-P24` (Indexierbarkeit, `os_model::indexability::evaluate`) liefert die Engine nur die
-/// Statuscode-Fälle (STUB); `noindex` und `Canonicalised` setzt dieser Helfer nach dem Crawl aus den
-/// gespeicherten Rohwerten (`effective_index`, `canonical_self`). Nach dem Merge von P24 ist er wirkungslos
-/// (die Zeilen sind dann schon `Non-Indexable`).
-fn emulate_indexability(file: &CrawlFile) {
-    for (status, condition) in [
-        ("noindex", "effective_index = 0"),
-        ("Canonicalised", "canonical_self = 0"),
-    ] {
-        file.conn()
-            .execute(
-                &format!(
-                    "UPDATE urls SET indexability = 'Non-Indexable', indexability_status = ?1 \
-                     WHERE indexability = 'Indexable' AND {condition}"
-                ),
-                [status],
-            )
-            .unwrap();
-    }
-}
 
 /// Crawlt das Szenario vollständig (Testsite auf Loopback).
 async fn crawl(scenario: &str, cfg: CrawlConfig) -> FixtureCrawl {
-    let fx = crawl_fixture(scenario, cfg).await;
-    emulate_indexability(&fx.file);
-    fx
+    crawl_fixture(scenario, cfg).await
 }
 
 /// Alle Zeilen einer Ansicht mit allen Spalten.

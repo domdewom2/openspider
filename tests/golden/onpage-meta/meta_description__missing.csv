@@ -1,6 +1,6 @@
 ﻿Address,Occurrences,Meta Description 1,Meta Description 1 Length,Meta Description 1 Pixel Width,Meta Description 2,Meta Description 2 Length,Meta Description 2 Pixel Width,Indexability,Indexability Status
-{BASE}/missing-empty.html,1,,0,0,,0,0,Indexable,
-{BASE}/missing-none.html,0,,0,0,,0,0,Indexable,
-{BASE}/missing-spaces.html,1,,0,0,,0,0,Indexable,
-{BASE}/no-content.html,1,,0,0,,0,0,Indexable,
 {BASE}/og-only.html,0,,0,0,,0,0,Indexable,
+{BASE}/no-content.html,1,,0,0,,0,0,Indexable,
+{BASE}/missing-none.html,0,,0,0,,0,0,Indexable,
+{BASE}/missing-empty.html,1,,0,0,,0,0,Indexable,
+{BASE}/missing-spaces.html,1,,0,0,,0,0,Indexable,
