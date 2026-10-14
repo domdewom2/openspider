@@ -34,7 +34,7 @@ pub fn tab() -> TabDef {
             "Title 1 Pixel Width",
             "COALESCE(u.title_1_px, 0)",
             ColumnKind::Int,
-            false,
+            true,
         ),
         column("Title 2", "u.title_2", ColumnKind::Text, true),
         column(
@@ -47,7 +47,7 @@ pub fn tab() -> TabDef {
             "Title 2 Pixel Width",
             "COALESCE(u.title_2_px, 0)",
             ColumnKind::Int,
-            false,
+            true,
         ),
     ];
     columns.extend(indexability_columns());

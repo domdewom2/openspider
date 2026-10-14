@@ -38,7 +38,7 @@ pub fn tab() -> TabDef {
             "Meta Description 1 Pixel Width",
             "COALESCE(u.meta_desc_1_px, 0)",
             ColumnKind::Int,
-            false,
+            true,
         ),
         column(
             "Meta Description 2",
@@ -56,7 +56,7 @@ pub fn tab() -> TabDef {
             "Meta Description 2 Pixel Width",
             "COALESCE(u.meta_desc_2_px, 0)",
             ColumnKind::Int,
-            false,
+            true,
         ),
     ];
     columns.extend(indexability_columns());

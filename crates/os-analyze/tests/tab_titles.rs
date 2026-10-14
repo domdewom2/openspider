@@ -273,23 +273,11 @@ async fn columns_and_extraction_values() {
             "Indexability Status"
         ]
     );
-    // Standardansicht: ohne die Pixelbreiten (ONPAGE-191, OUT-020).
+    // Standardansicht: mit den Pixelbreiten (ONPAGE-090, K-60/N-02; Standardexport OUT-020).
     let mut q = ViewQuery::new(TAB, "All");
     q.limit = 1;
     let default_page = query_view(&fx.file, &cfg, &q).unwrap();
-    assert_eq!(
-        default_page.columns,
-        [
-            "Address",
-            "Occurrences",
-            "Title 1",
-            "Title 1 Length",
-            "Title 2",
-            "Title 2 Length",
-            "Indexability",
-            "Indexability Status"
-        ]
-    );
+    assert_eq!(default_page.columns, page.columns);
 
     // <title>Start</title> → Title 1 „Start“, Länge 5, Occurrences 1.
     assert_eq!(cell(&fx, &page, "/basic.html", "Title 1"), text("Start"));

@@ -1,3 +1,3 @@
-﻿Address,Occurrences,Title 1,Title 1 Length,Title 2,Title 2 Length,Indexability,Indexability Status
-{BASE}/dup-a.html,1,Doppelter Titel auf zwei Seiten,31,,0,Indexable,
-{BASE}/dup-b.html,1,Doppelter Titel auf zwei Seiten,31,,0,Indexable,
+﻿Address,Occurrences,Title 1,Title 1 Length,Title 1 Pixel Width,Title 2,Title 2 Length,Title 2 Pixel Width,Indexability,Indexability Status
+{BASE}/dup-a.html,1,Doppelter Titel auf zwei Seiten,31,271,,0,0,Indexable,
+{BASE}/dup-b.html,1,Doppelter Titel auf zwei Seiten,31,271,,0,0,Indexable,
