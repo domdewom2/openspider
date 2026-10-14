@@ -11,8 +11,6 @@ Hyperlink,http://www.site.test/,http://www.site.test/bild.html,141,Hund,,200,OK,
 Hyperlink,http://www.site.test/,http://www.site.test/dup.html,149,,Duplikat,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[3]/a[1],Content,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/dup.html,149,,Duplikat,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[3]/a[2],Content,HTML
 Hyperlink,http://www.site.test/second.html,http://www.site.test/dup.html,149,,Duplikat,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[1]/a[1],Content,HTML
-Hreflang,http://www.site.test/,http://www.site.test/en.html,,,,,Not Crawled,True,,,Root-Relative,,,HTML
-HTTP Hreflang,http://www.site.test/headers.html,http://www.site.test/en.html,,,,,Not Crawled,True,,,Absolute,,,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/footer.html,141,,Fuß,200,OK,True,,,Root-Relative,/html[1]/body[1]/footer[1]/a[1],Footer,HTML
 Iframe,http://www.site.test/,http://www.site.test/frame.html,143,,,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/iframe[1],Content,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/header.html,141,,Kopf,200,OK,True,,,Root-Relative,/html[1]/body[1]/header[1]/a[1],Header,HTML

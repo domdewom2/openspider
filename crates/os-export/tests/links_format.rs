@@ -156,10 +156,9 @@ async fn target_without_fetch_is_not_crawled_and_has_no_status_code() {
     let fx = crawl_links().await;
     let out = tempfile::tempdir().unwrap();
     let all = rows(&bulk_csv(&fx.file, INLINKS, out.path()));
-    // nofollow-Ziel wurde nie abgerufen; hreflang/Paginierung werden nur gespeichert
+    // nofollow-Ziel wurde nie abgerufen; Paginierung wird nur gespeichert (hreflang nicht: K-62, siehe unten)
     for (dest, ty) in [
         (u("/x"), "Hyperlink"),
-        (u("/en.html"), "Hreflang"),
         (u("/page2.html"), "Rel Next"),
         (u("/page0.html"), "Rel Prev"),
         (u("/sponsor.html"), "Hyperlink"),
@@ -178,6 +177,40 @@ async fn target_without_fetch_is_not_crawled_and_has_no_status_code() {
     assert_eq!((r[6].as_str(), r[7].as_str()), ("301", "Moved Permanently"));
 }
 
+// spec: OUT-031, TECH-071
+#[tokio::test]
+async fn hreflang_only_targets_have_no_link_row_unless_hreflang_crawl_is_on() {
+    // K-62 (N-08): /en.html ist nur per hreflang bekannt. Bei spider.hreflang.crawl = false (Standard) steht es
+    // weder in den Tabellen noch in den Link-Exporten; ein Hreflang auf die eigene Seite bleibt.
+    let fx = crawl_links().await;
+    let out = tempfile::tempdir().unwrap();
+    let all = rows(&bulk_csv(&fx.file, INLINKS, out.path()));
+    assert!(!all
+        .iter()
+        .any(|r| (r[0] == "Hreflang" || r[0] == "HTTP Hreflang") && r[2] == u("/en.html")));
+    assert!(all
+        .iter()
+        .any(|r| r[0] == "Hreflang" && r[1] == HOME && r[2] == HOME));
+    // mit Crawl der hreflang-Ziele: Zeilen und Abruf wie bei jedem Link
+    let mut cfg = links_config();
+    cfg.spider.hreflang = StoreCrawl::ON;
+    let on =
+        os_engine::testing::crawl_fixture_from("out-links", "http://www.site.test/", cfg).await;
+    let out = tempfile::tempdir().unwrap();
+    let all = rows(&bulk_csv(&on.file, INLINKS, out.path()));
+    let has = |ty: &str, src: &str| {
+        all.iter()
+            .any(|r| r[0] == ty && r[1] == src && r[2] == u("/en.html"))
+    };
+    assert!(has("Hreflang", HOME));
+    assert!(has("HTTP Hreflang", &u("/headers.html")));
+    let r = all
+        .iter()
+        .find(|r| r[0] == "Hreflang" && r[2] == u("/en.html"))
+        .unwrap();
+    assert_eq!(r[6], "200", "Ziel wurde abgerufen");
+}
+
 // spec: OUT-031
 #[tokio::test]
 async fn link_types_follow_their_source() {
@@ -190,7 +223,7 @@ async fn link_types_follow_their_source() {
     };
     // Elemente im Kopf der Seite
     assert!(has("Canonical", HOME, HOME));
-    assert!(has("Hreflang", HOME, &u("/en.html")));
+    assert!(has("Hreflang", HOME, HOME));
     assert!(has("Rel Next", HOME, &u("/page2.html")));
     assert!(has("Rel Prev", HOME, &u("/page0.html")));
     assert!(has("CSS", HOME, &u("/style.css")));
@@ -199,7 +232,6 @@ async fn link_types_follow_their_source() {
     assert!(has("Media", HOME, &u("/v.mp4")));
     // Antwortheader: Link (canonical/hreflang) und Refresh
     assert!(has("HTTP Canonical", &u("/headers.html"), HOME));
-    assert!(has("HTTP Hreflang", &u("/headers.html"), &u("/en.html")));
     assert!(has(
         "HTTP Refresh",
         &u("/headers.html"),

@@ -74,6 +74,15 @@ impl LinkDecision {
     };
 }
 
+/// hreflang-Ziele bei „Speichern an, Crawlen aus“ (TECH-071, K-62, Paritätsbefund N-08): Eine URL, die nur per
+/// hreflang bekannt ist, hat keine Tabellen-Sichtbarkeit und ihre hreflang-Linkzeile fehlt in den Link-Exporten.
+/// Die Zeile der URL entsteht trotzdem (die hreflang-Spalten der Quellseite verweisen auf sie); ist das Ziel
+/// anderweitig bekannt und in den Tabellen, bleibt alles wie bisher. Gilt nur für `Hreflang` und `HttpHreflang`;
+/// alle anderen Typen behalten „in den Tabellen, nicht angefragt“.
+pub fn is_hreflang_store_only(link_type: LinkType, d: &LinkDecision) -> bool {
+    matches!(link_type, LinkType::Hreflang | LinkType::HttpHreflang) && d.store && !d.crawl
+}
+
 /// `Folgen`-Wert des Links (Spalte `follow`): `false`, wenn `rel` nofollow/sponsored/ugc enthält oder die Seite
 /// nofollow ist. Unabhängig von den Folgen-Optionen (CRAWL-056, TECH-067: die Anzeige bleibt `false`).
 pub fn link_follows(link: &ExtractedLink, page_follow: bool) -> bool {
@@ -272,6 +281,43 @@ mod tests {
                 }
             }
         }
+    }
+
+    // spec: TECH-071
+    #[test]
+    fn only_hreflang_types_with_store_on_and_crawl_off_are_hidden_from_the_tables() {
+        // K-62: die Matrix-Entscheidung bleibt „speichern, nicht abrufen“; der Worker legt für diese Fälle eine
+        // Zeile ohne Tabellen-Sichtbarkeit und keine Linkzeile an.
+        let store_only = LinkDecision {
+            store: true,
+            crawl: false,
+            reason: Some(NotCrawledReason::StoreOnly),
+        };
+        assert!(is_hreflang_store_only(LinkType::Hreflang, &store_only));
+        assert!(is_hreflang_store_only(LinkType::HttpHreflang, &store_only));
+        for t in [
+            LinkType::Canonical,
+            LinkType::RelNext,
+            LinkType::Amp,
+            LinkType::MobileAlternate,
+            LinkType::MetaRefresh,
+            LinkType::Hyperlink,
+        ] {
+            assert!(!is_hreflang_store_only(t, &store_only), "{t:?}");
+        }
+        assert!(!is_hreflang_store_only(
+            LinkType::Hreflang,
+            &STORE_AND_CRAWL
+        ));
+        let mut cfg = CrawlConfig::default();
+        cfg.spider.hreflang = StoreCrawl::STORE_ONLY;
+        let d = decide(
+            &link(LinkType::Hreflang, false),
+            ScopeClass::Internal,
+            &cfg,
+            true,
+        );
+        assert!(is_hreflang_store_only(LinkType::Hreflang, &d));
     }
 
     // spec: CRAWL-038

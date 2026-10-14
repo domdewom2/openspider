@@ -39,8 +39,8 @@ use crate::decide::{self, LinkDecision};
 use crate::diag;
 use crate::error::EngineError;
 use crate::frontier::{
-    Cand, Classify, Core, CrawlScope, Purpose, QueueItem, COUNTER_REDIRECT_LIMIT, F_QUEUED,
-    F_RULE_OK,
+    Cand, Classify, Core, CrawlScope, Purpose, QueueItem, COUNTER_REDIRECT_LIMIT, F_IN_TABLES,
+    F_QUEUED, F_RULE_OK,
 };
 use crate::progress::ProgressTracker;
 use crate::redirect::{self, RedirectTarget};
@@ -898,13 +898,15 @@ async fn assemble<F: Fetch>(
     diag::add_max(&diag::STATS.reserve_ns, &diag::STATS.reserve_max_ns, t);
     let mut disc = WriteBatch::default();
     let mut ids: Vec<Option<UrlId>> = Vec::with_capacity(refs.len());
+    // Referenzen ohne Linkzeile: nur per hreflang bekannte Ziele ohne Tabellen-Sichtbarkeit (K-62)
+    let mut hidden_rows = vec![false; refs.len()];
     let mut image_ids: Vec<Option<UrlId>> = Vec::new();
     let mut redirect_id: Option<UrlId> = None;
     // Weiterleitungs-Flags (CRAWL-017, CRAWL-072) gehen mit der Seite in den Writer (M1.md 3.11).
     let mut url_flags: Vec<(UrlId, String, Option<String>)> = Vec::new();
     {
         let mut core = sh.lock_core();
-        for r in &refs {
+        for (ri, r) in refs.iter().enumerate() {
             let d = &r.decision;
             let Some(ti) = r.norm else {
                 ids.push(None);
@@ -924,11 +926,14 @@ async fn assemble<F: Fetch>(
             } else {
                 Purpose::Page
             };
+            // K-62 (N-08): ein nur per hreflang bekanntes Ziel bekommt eine Zeile, aber keine Tabellen-Sichtbarkeit;
+            // seine hreflang-Linkzeile entsteht nur, wenn das Ziel schon anderweitig in den Tabellen steht.
+            let hreflang_only = decide::is_hreflang_store_only(lt, d);
             let cand = Cand {
                 norm,
                 internal: *internal,
                 kind: DiscoveryKind::Link,
-                store: d.store,
+                store: d.store && !hreflang_only,
                 crawl: d.crawl,
                 reason: d.reason,
                 resource_like,
@@ -936,6 +941,13 @@ async fn assemble<F: Fetch>(
                 purpose,
             };
             let id = core.discover(&cand, depth, 0, item.session, &sh.rules, &mut disc);
+            if hreflang_only
+                && !core
+                    .lookup(&norm.encoded)
+                    .is_some_and(|s| s.flags & F_IN_TABLES != 0)
+            {
+                hidden_rows[ri] = true;
+            }
             ids.push(Some(id));
         }
         for t in &image_targets {
@@ -1065,7 +1077,7 @@ async fn assemble<F: Fetch>(
     };
     for &i in &map.links {
         let r = &refs[i];
-        if r.row && r.decision.store {
+        if r.row && r.decision.store && !hidden_rows[i] {
             push_row(&mut links, r, ids[i], page_follow && !r.ext.nofollow_rel);
         }
     }
@@ -1076,7 +1088,7 @@ async fn assemble<F: Fetch>(
         .chain(&map.pagination)
     {
         let r = &refs[i];
-        if r.row && r.decision.store {
+        if r.row && r.decision.store && !hidden_rows[i] {
             push_row(&mut links, r, ids[i], true);
         }
     }
@@ -1567,7 +1579,8 @@ fn sitemap_hreflang(
                 norm: &norm,
                 internal,
                 kind: DiscoveryKind::Sitemap,
-                store: d.store,
+                // K-62: nur per hreflang bekannt = keine Tabellen-Sichtbarkeit
+                store: d.store && !decide::is_hreflang_store_only(LinkType::Hreflang, &d),
                 crawl: d.crawl,
                 reason: d.reason,
                 resource_like: false,
@@ -1964,13 +1977,14 @@ mod tests {
             batch.sitemaps[0].hreflang[0].1.sitemap_id,
             Some(batch.sitemaps[0].id)
         );
-        // Standard: hreflang speichern an, crawlen aus – interne und externe Ziele sind gespeichert, nicht eingeplant.
+        // Standard: hreflang speichern an, crawlen aus – interne und externe Ziele haben eine Zeile ohne
+        // Tabellen-Sichtbarkeit (K-62) und sind nicht eingeplant.
         let target = |url: &str| batch.new_urls.iter().find(|n| n.url == url).unwrap();
         let fr = target("https://site.test/fr/a");
-        assert!(fr.in_tables);
+        assert!(!fr.in_tables);
         assert_eq!(fr.not_crawled_reason, Some(NotCrawledReason::StoreOnly));
         let en = target("https://other.test/en/a");
-        assert!(!en.is_internal && en.in_tables);
+        assert!(!en.is_internal && !en.in_tables);
         assert!(!batch
             .queue
             .iter()
