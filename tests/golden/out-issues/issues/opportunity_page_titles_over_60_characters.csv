@@ -1,2 +1,2 @@
-﻿Address,Occurrences,Title 1,Title 1 Length,Title 2,Title 2 Length,Indexability,Indexability Status
-{BASE}/long-title.html,1,Dieser Titel ist deutlich länger als die erlaubten sechzig Zeichen und wird deshalb gemeldet,92,,0,Indexable,
+﻿Address,Occurrences,Title 1,Title 1 Length,Title 1 Pixel Width,Title 2,Title 2 Length,Title 2 Pixel Width,Indexability,Indexability Status
+{BASE}/long-title.html,1,Dieser Titel ist deutlich länger als die erlaubten sechzig Zeichen und wird deshalb gemeldet,92,814,,0,0,Indexable,

@@ -725,13 +725,37 @@ fn meta_refresh_of_an_external_page_fills_the_external_filter() {
 
 // spec: ONPAGE-058
 #[test]
-fn meta_refresh_without_target_or_to_itself_is_not_a_redirect() {
+fn meta_refresh_without_target_or_to_itself_is_a_redirect_to_itself() {
+    // K-57 (Paritätsbefund N-07): ein Selbst-Refresh ist eine Weiterleitung auf sich selbst, mit Status 200
+    // (Success), Redirect URL = eigene Adresse, Redirect Type Meta Refresh Redirect und Redirect Loop.
     let d = dump();
     for p in ["meta-refresh-noloc.html", "meta-refresh-self.html"] {
         let url = format!("{{BASE}}/{p}");
-        assert!(!contains(d, "Redirection (Meta Refresh)", &url), "{p}");
+        assert!(contains(d, "Redirection (Meta Refresh)", &url), "{p}");
+        assert!(
+            contains(d, "Internal Redirection (Meta Refresh)", &url),
+            "{p}"
+        );
+        assert!(contains(d, "Redirect Loop", &url), "{p}");
         assert!(contains(d, "Success (2XX)", &url), "{p}");
-        assert_eq!(cell(d, &url, "Redirect URL"), &Value::Null, "{p}");
+        assert!(!contains(d, "Redirection (3XX)", &url), "{p}");
+        assert_eq!(
+            text(cell(d, &url, "Redirect URL")),
+            Some(format!("http://site.test/{p}").as_str()),
+            "{p}"
+        );
+        assert_eq!(
+            text(cell(d, &url, "Redirect Type")),
+            Some("Meta Refresh Redirect"),
+            "{p}"
+        );
+        // genau ein Abruf: das Ziel ist die eigene Adresse
+        let hits = d
+            .requests
+            .iter()
+            .filter(|(host, path)| host == "site.test" && path == &format!("/{p}"))
+            .count();
+        assert_eq!(hits, 1, "{p}");
     }
 }
 

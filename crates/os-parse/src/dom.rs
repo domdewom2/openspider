@@ -81,15 +81,25 @@ pub fn in_template(node: ElementRef) -> bool {
         .any(|a| is_html_element_named(&a, "template"))
 }
 
-/// Absoluter XPath des Elements mit durchgängigen Positionsindizes (1-basiert unter gleichnamigen
-/// Geschwistern, auch bei nur einem Geschwister), z. B. `/html[1]/body[1]/main[1]/p[2]/a[1]`. Das ist die
-/// verbindliche Form der Spalte `Link Path` (OUT-031); derselbe Quelltext ergibt immer denselben Pfad.
+/// XPath des Elements mit durchgängigen Positionsindizes (1-basiert unter gleichnamigen Geschwistern, auch bei
+/// nur einem Geschwister). Das ist die verbindliche Form der Spalte `Link Path` (OUT-031); derselbe Quelltext
+/// ergibt immer denselben Pfad.
+///
+/// * Elemente im Body (und sonst): absolut, z. B. `/html[1]/body[1]/main[1]/p[2]/a[1]`.
+/// * Elemente im `<head>` (OUT-031, TECH-131, K-63): ab dem Kopf, in der Form der Referenz
+///   `//head/<element>[n]`, z. B. `//head/link[3]`, `//head/meta[2]`; `n` zählt die gleichnamigen Geschwister
+///   im Kopf. Das gilt auch für CSS, JavaScript, Canonical, hreflang, Paginierung und Meta Refresh im Kopf.
 pub fn xpath(node: ElementRef) -> String {
     let mut segments: Vec<String> = Vec::new();
     let mut current = Some(*node);
+    let mut head_relative = false;
     while let Some(n) = current {
         if let Some(el) = n.value().as_element() {
             let name = el.name();
+            if name == "head" && &*el.name.ns == XHTML_NS && !segments.is_empty() {
+                head_relative = true;
+                break;
+            }
             let mut position = 1usize;
             if let Some(parent) = n.parent() {
                 let mut same = 0usize;
@@ -112,7 +122,11 @@ pub fn xpath(node: ElementRef) -> String {
         current = n.parent();
     }
     segments.reverse();
-    format!("/{}", segments.join("/"))
+    if head_relative {
+        format!("//head/{}", segments.join("/"))
+    } else {
+        format!("/{}", segments.join("/"))
+    }
 }
 
 /// Elemente, deren Inhalt nie als sichtbarer Text zählt (ONPAGE-140).

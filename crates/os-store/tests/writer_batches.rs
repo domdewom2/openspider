@@ -74,6 +74,7 @@ fn batch_writes_urls_page_facts_and_children() {
             resolved: Some("https://site.test/p1".into()),
             in_head: true,
             order: 0,
+            xpath: None,
         },
     });
     page.directives.push(DirectiveRow(Directive {
@@ -95,6 +96,7 @@ fn batch_writes_urls_page_facts_and_children() {
             target: Some("https://site.test/p2".into()),
             in_head: true,
             order: 0,
+            xpath: None,
         },
     });
     page.hreflang.push(HreflangRow {
@@ -110,6 +112,7 @@ fn batch_writes_urls_page_facts_and_children() {
             resolved: Some("https://site.test/p2".into()),
             in_head: true,
             order: 0,
+            xpath: None,
         },
     });
     page.pagination.push(PaginationRow {
@@ -121,6 +124,7 @@ fn batch_writes_urls_page_facts_and_children() {
             resolved: Some("https://site.test/p2".into()),
             in_head: true,
             order: 0,
+            xpath: None,
         },
     });
     page.images.push(ImageRow {

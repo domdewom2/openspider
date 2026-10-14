@@ -44,6 +44,13 @@ fn indexability(fx: &FixtureCrawl) -> BTreeMap<String, (String, String)> {
     .collect()
 }
 
+/// Konfiguration mit `advanced.respect_self_ref_meta_refresh = true` (K-57: der Standard ist aus).
+fn respecting_self_refresh() -> CrawlConfig {
+    let mut cfg = CrawlConfig::default();
+    cfg.advanced.respect_self_ref_meta_refresh = true;
+    cfg
+}
+
 fn expect(map: &BTreeMap<String, (String, String)>, path: &str, status: &str) {
     let (i, s) = map
         .get(path)
@@ -65,7 +72,6 @@ async fn each_reason_of_the_check_order_has_its_page() {
 
     expect(&m, "/", "");
     expect(&m, "/ok.html", "");
-    expect(&m, "/robots.txt", "");
     expect(&m, "/blocked.html", "Blocked by Robots.txt");
     expect(&m, "/aborted", "No Response");
     expect(&m, "/moved", "Redirected");
@@ -82,7 +88,8 @@ async fn each_reason_of_the_check_order_has_its_page() {
 // spec: TECH-001, TECH-068
 #[tokio::test]
 async fn meta_refresh_to_another_url_is_redirected_and_to_itself_is_not_indexable() {
-    let fx = crawl_fixture("tech/indexability", CrawlConfig::default()).await;
+    // „Self Referencing Meta Refresh“ nur mit der Option (K-57: Standard aus)
+    let fx = crawl_fixture("tech/indexability", respecting_self_refresh()).await;
     let m = indexability(&fx);
 
     // Ziel ≠ eigene URL (jede Verzögerung, Meta-Element und Header) → Redirected.
@@ -110,10 +117,8 @@ async fn meta_refresh_to_another_url_is_redirected_and_to_itself_is_not_indexabl
 // spec: TECH-001, TECH-068
 #[tokio::test]
 async fn self_referencing_refresh_is_ignored_without_the_option() {
-    // TECH-068: Option aus → Selbst-Refresh ändert die Indexierbarkeit nicht.
-    let mut cfg = CrawlConfig::default();
-    cfg.advanced.respect_self_ref_meta_refresh = false;
-    let fx = crawl_fixture("tech/indexability", cfg).await;
+    // TECH-068, K-57: Standard (Option aus) → Selbst-Refresh ändert die Indexierbarkeit nicht.
+    let fx = crawl_fixture("tech/indexability", CrawlConfig::default()).await;
     let m = indexability(&fx);
 
     for path in [
@@ -249,7 +254,8 @@ const COLUMNS: &[&str] = &["Address", "Indexability", "Indexability Status"];
 // spec: TECH-007, TECH-001
 #[tokio::test]
 async fn goldens_indexability_per_url_and_filter() {
-    let fx = crawl_fixture("tech/indexability", CrawlConfig::default()).await;
+    // das Golden hält die ganze Prüfreihenfolge fest, also auch „Self Referencing Meta Refresh“ (Option an)
+    let fx = crawl_fixture("tech/indexability", respecting_self_refresh()).await;
 
     let internal = view_rows(&fx, "Internal", "All", COLUMNS);
     let external = view_rows(&fx, "Response Codes", "External All", COLUMNS);

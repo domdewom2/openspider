@@ -180,6 +180,12 @@ fn link_type_export_values() {
     assert_eq!(PathType::ProtocolRelative.as_str(), "Protocol-Relative");
     assert_eq!(LinkOrigin::Both.as_str(), "HTML & Rendered HTML");
     assert_eq!(LinkPosition::Aside.as_str(), "Aside");
+    // OUT-031/TECH-131 (K-63): Elemente im `<head>`
+    assert_eq!(LinkPosition::Head.as_str(), "Head");
+    assert_eq!(
+        "Head".parse::<LinkPosition>().ok(),
+        Some(LinkPosition::Head)
+    );
     assert!(LinkType::Hyperlink.is_hyperlink());
     assert!(!LinkType::Image.is_hyperlink());
     for t in [

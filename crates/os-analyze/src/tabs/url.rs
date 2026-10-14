@@ -12,7 +12,7 @@
 //! Festlegungen (Annahmen A-22 … A-27):
 //! * **Non ASCII Characters** (A-22): ein Zeichen > U+007F irgendwo in der Adresse (auch im IDN-Host) oder
 //!   ein kodiertes Byte ≥ 0x80, das sich nicht dekodieren ließ (`%FF`, nicht darstellbare Zeichen).
-//! * **Underscores** (A-23): `_` nur im Pfad.
+//! * **Underscores** (ONPAGE-072, K-58 ersetzt A-23): `_` in Pfad oder Query, nicht im Host und nicht im Fragment.
 //! * **Uppercase**: Unicode-Kategorie Lu in Pfad, Query oder Fragment – nicht in Schema, Host und nicht in
 //!   den Hex-Ziffern von `%XX`.
 //! * **Multiple Slashes**: `//` im Pfad (nicht das `//` nach dem Schema, nicht in Query/Fragment).
@@ -69,10 +69,11 @@ const NON_ASCII_SQL: &str = concat!(
     " OR u.address GLOB '*%[89A-F][0-9A-F]*')"
 );
 
-/// Der Vorab-Test (`instr`) spart die Pfadzerlegung für die meisten Zeilen.
+/// Unterstrich in Pfad oder Query, nicht im Host und nicht im Fragment (ONPAGE-072, K-58 ersetzt A-23). Der
+/// Vorab-Test (`instr`) spart die Zerlegung für die meisten Zeilen.
 const UNDERSCORES_SQL: &str = concat!(
     "(instr(u.address, '_') > 0 AND instr(",
-    path_of_address!(),
+    pqnf_of_address!(),
     ", '_') > 0)"
 );
 

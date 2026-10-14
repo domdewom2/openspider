@@ -341,12 +341,9 @@ async fn record_robots<F: Fetch>(
         let mut core = sh.lock_core();
         if core.lookup(&norm.encoded).is_none() {
             let id = core.alloc_id();
-            // K-40: die robots.txt interner Hosts erscheint in den Tabellen (Inhaltstyp Text), die externer nicht.
-            let flags = if internal {
-                F_QUEUED | F_RULE_OK | F_IN_TABLES
-            } else {
-                F_QUEUED | F_RULE_OK
-            };
+            // K-54 (CRAWL-098): die robots.txt jedes Hosts, intern wie extern, wird als URL-Zeile ohne
+            // Tabellen-Sichtbarkeit gespeichert; sie erscheint in keinem Tab, Filter, Zähler oder Export.
+            let flags = F_QUEUED | F_RULE_OK;
             core.register(&norm.encoded, id, None, flags);
             batch.new_urls.push(os_model::NewUrl {
                 id,
@@ -354,7 +351,7 @@ async fn record_robots<F: Fetch>(
                 address: norm.display.clone(),
                 origin: norm.origin.clone(),
                 is_internal: internal,
-                in_tables: internal,
+                in_tables: false,
                 discovered_via: DiscoveryKind::RobotsTxt,
                 crawl_depth: None,
                 folder_depth: os_url::folder_depth(&norm.url),
@@ -477,7 +474,14 @@ pub(crate) fn facts_from_result(res: &FetchResult, cfg: &CrawlConfig) -> FetchFa
                 f.last_modified_raw = header(&r.headers, "last-modified").map(str::to_string);
                 f.last_modified = f.last_modified_raw.as_deref().and_then(parse_http_date);
             }
-            if cfg.extraction.hash {
+            // ONPAGE-018 (K-60): MD5 nur für HTML-Antworten (Inhaltsklasse HTML) mit Status 2xx, sonst leer. Die
+            // Referenz hasht außerdem 2xx-Antworten ohne Content-Type (z. B. 204: Hash des leeren Körpers);
+            // Fehlerseiten, Weiterleitungen, Bilder, CSS, JS, PDF und Text bleiben leer.
+            let ok = (200..300).contains(&r.status);
+            if cfg.extraction.hash
+                && ok
+                && (f.content_class == ContentClass::Html || f.content_type.is_none())
+            {
                 f.hash_md5 = Some(r.md5_hex.clone());
             }
         }
@@ -561,7 +565,8 @@ async fn analyze<F: Fetch>(
 fn parsed_refresh(a: &mut Analysis, url: &Url, refs: &[os_model::RefreshRef]) {
     let outcome = redirect::refresh_target(url, refs);
     a.facts.meta_refresh_delay = outcome.delay;
-    a.redirect = outcome.redirect;
+    // K-57: der Selbst-Refresh ist eine Weiterleitung auf sich selbst (Typ, Redirect URL, Linkzeile, Schleife)
+    a.redirect = outcome.redirect.or(outcome.self_refresh);
 }
 
 /// Refresh-Angaben einer externen HTML-Seite: der `Refresh`-Header vor den Meta-Tags (Quelltextreihenfolge).
@@ -703,6 +708,19 @@ fn path_type_of(raw: &str) -> PathType {
 }
 
 fn synth_link(link_type: LinkType, raw: &str, resolved: Option<&str>) -> ExtractedLink {
+    synth_link_at(link_type, raw, resolved, None, true)
+}
+
+/// Wie `synth_link` für Verweise aus einem Element des Dokuments: Pfad `xpath` (`//head/link[3]` im Kopf,
+/// OUT-031/TECH-131, K-63) und Position `Head` für Elemente im Kopf. Header-Quellen und Sitemaps haben keinen Pfad
+/// (die Linkzeile bleibt ohne Pfad und Position).
+fn synth_link_at(
+    link_type: LinkType,
+    raw: &str,
+    resolved: Option<&str>,
+    xpath: Option<&str>,
+    in_head: bool,
+) -> ExtractedLink {
     ExtractedLink {
         link_type,
         href_raw: raw.to_string(),
@@ -713,9 +731,13 @@ fn synth_link(link_type: LinkType, raw: &str, resolved: Option<&str>) -> Extract
         nofollow_rel: false,
         target: None,
         path_type: path_type_of(raw),
-        xpath: String::new(),
-        position: LinkPosition::Content,
-        in_head: true,
+        xpath: xpath.unwrap_or_default().to_string(),
+        position: if xpath.is_some() && in_head {
+            LinkPosition::Head
+        } else {
+            LinkPosition::Content
+        },
+        in_head,
         doc_order: 0,
     }
 }
@@ -845,7 +867,13 @@ async fn assemble<F: Fetch>(
             HintSource::Http => LinkType::HttpCanonical,
             _ => LinkType::Canonical,
         };
-        let ext = synth_link(lt, &c.raw, c.resolved.as_deref());
+        let ext = synth_link_at(
+            lt,
+            &c.raw,
+            c.resolved.as_deref(),
+            c.xpath.as_deref(),
+            c.in_head,
+        );
         let i = add_ref(&mut refs, &mut targets, ext, true);
         map.canonicals.push(i);
     }
@@ -854,7 +882,13 @@ async fn assemble<F: Fetch>(
             HintSource::Http => LinkType::HttpHreflang,
             _ => LinkType::Hreflang,
         };
-        let ext = synth_link(lt, &h.href_raw, h.resolved.as_deref());
+        let ext = synth_link_at(
+            lt,
+            &h.href_raw,
+            h.resolved.as_deref(),
+            h.xpath.as_deref(),
+            h.in_head,
+        );
         let i = add_ref(&mut refs, &mut targets, ext, true);
         map.hreflang.push(i);
     }
@@ -864,7 +898,13 @@ async fn assemble<F: Fetch>(
         } else {
             LinkType::RelPrev
         };
-        let ext = synth_link(lt, &p.raw, p.resolved.as_deref());
+        let ext = synth_link_at(
+            lt,
+            &p.raw,
+            p.resolved.as_deref(),
+            p.xpath.as_deref(),
+            p.in_head,
+        );
         let i = add_ref(&mut refs, &mut targets, ext, true);
         map.pagination.push(i);
     }
@@ -893,13 +933,15 @@ async fn assemble<F: Fetch>(
     diag::add_max(&diag::STATS.reserve_ns, &diag::STATS.reserve_max_ns, t);
     let mut disc = WriteBatch::default();
     let mut ids: Vec<Option<UrlId>> = Vec::with_capacity(refs.len());
+    // Referenzen ohne Linkzeile: nur per hreflang bekannte Ziele ohne Tabellen-Sichtbarkeit (K-62)
+    let mut hidden_rows = vec![false; refs.len()];
     let mut image_ids: Vec<Option<UrlId>> = Vec::new();
     let mut redirect_id: Option<UrlId> = None;
     // Weiterleitungs-Flags (CRAWL-017, CRAWL-072) gehen mit der Seite in den Writer (M1.md 3.11).
     let mut url_flags: Vec<(UrlId, String, Option<String>)> = Vec::new();
     {
         let mut core = sh.lock_core();
-        for r in &refs {
+        for (ri, r) in refs.iter().enumerate() {
             let d = &r.decision;
             let Some(ti) = r.norm else {
                 ids.push(None);
@@ -919,11 +961,14 @@ async fn assemble<F: Fetch>(
             } else {
                 Purpose::Page
             };
+            // K-62 (N-08): ein nur per hreflang bekanntes Ziel bekommt eine Zeile, aber keine Tabellen-Sichtbarkeit;
+            // seine hreflang-Linkzeile entsteht nur, wenn das Ziel schon anderweitig in den Tabellen steht.
+            let hreflang_only = decide::is_hreflang_store_only(lt, d);
             let cand = Cand {
                 norm,
                 internal: *internal,
                 kind: DiscoveryKind::Link,
-                store: d.store,
+                store: d.store && !hreflang_only,
                 crawl: d.crawl,
                 reason: d.reason,
                 resource_like,
@@ -931,6 +976,13 @@ async fn assemble<F: Fetch>(
                 purpose,
             };
             let id = core.discover(&cand, depth, 0, item.session, &sh.rules, &mut disc);
+            if hreflang_only
+                && !core
+                    .lookup(&norm.encoded)
+                    .is_some_and(|s| s.flags & F_IN_TABLES != 0)
+            {
+                hidden_rows[ri] = true;
+            }
             ids.push(Some(id));
         }
         for t in &image_targets {
@@ -962,50 +1014,65 @@ async fn assemble<F: Fetch>(
                 }
             };
             let internal = *internal;
-            if !internal && crawl && !cfg.spider.external.crawl {
-                crawl = false;
-                reason = Some(NotCrawledReason::ExternalNotChecked);
-            }
-            let limit_hit = item.hops >= cfg.limits.max_redirects;
-            if limit_hit {
-                crawl = false;
-                reason = Some(NotCrawledReason::RedirectLimit);
-                disc.counters.push((COUNTER_REDIRECT_LIMIT.to_string(), 1));
-                core.redirects.flag_limit(item.id);
-                url_flags.push((item.id, redirect::FLAG_LIMIT.to_string(), None));
-            }
-            if store || crawl || limit_hit {
-                let cand = Cand {
-                    norm,
-                    internal,
-                    kind: DiscoveryKind::Redirect,
-                    store: store && !limit_hit,
-                    crawl,
-                    reason,
-                    resource_like: false,
-                    apply_rules: norm.encoded != sh.start_url,
-                    purpose: if internal {
-                        Purpose::Page
-                    } else {
-                        Purpose::External
-                    },
-                };
-                let id = core.discover(
-                    &cand,
-                    depth,
-                    item.hops + 1,
-                    item.session,
-                    &sh.rules,
-                    &mut disc,
-                );
-                if let Some(members) = core.redirects.add_edge(item.id, id) {
-                    url_flags.extend(
-                        members
-                            .into_iter()
-                            .map(|m| (m, redirect::FLAG_LOOP.to_string(), None)),
-                    );
+            // K-57: Selbst-Refresh = Weiterleitung auf sich selbst. Das Ziel ist die eigene, bekannte URL: kein
+            // Abruf, keine Entdeckung, nur die Schleife (Redirect Loop, Redirect-Chains-Zeile).
+            if norm.encoded == *item.url {
+                if store {
+                    redirect_id = Some(item.id);
+                    if let Some(members) = core.redirects.add_edge(item.id, item.id) {
+                        url_flags.extend(
+                            members
+                                .into_iter()
+                                .map(|m| (m, redirect::FLAG_LOOP.to_string(), None)),
+                        );
+                    }
                 }
-                redirect_id = Some(id);
+            } else {
+                if !internal && crawl && !cfg.spider.external.crawl {
+                    crawl = false;
+                    reason = Some(NotCrawledReason::ExternalNotChecked);
+                }
+                let limit_hit = item.hops >= cfg.limits.max_redirects;
+                if limit_hit {
+                    crawl = false;
+                    reason = Some(NotCrawledReason::RedirectLimit);
+                    disc.counters.push((COUNTER_REDIRECT_LIMIT.to_string(), 1));
+                    core.redirects.flag_limit(item.id);
+                    url_flags.push((item.id, redirect::FLAG_LIMIT.to_string(), None));
+                }
+                if store || crawl || limit_hit {
+                    let cand = Cand {
+                        norm,
+                        internal,
+                        kind: DiscoveryKind::Redirect,
+                        store: store && !limit_hit,
+                        crawl,
+                        reason,
+                        resource_like: false,
+                        apply_rules: norm.encoded != sh.start_url,
+                        purpose: if internal {
+                            Purpose::Page
+                        } else {
+                            Purpose::External
+                        },
+                    };
+                    let id = core.discover(
+                        &cand,
+                        depth,
+                        item.hops + 1,
+                        item.session,
+                        &sh.rules,
+                        &mut disc,
+                    );
+                    if let Some(members) = core.redirects.add_edge(item.id, id) {
+                        url_flags.extend(
+                            members
+                                .into_iter()
+                                .map(|m| (m, redirect::FLAG_LOOP.to_string(), None)),
+                        );
+                    }
+                    redirect_id = Some(id);
+                }
             }
         }
     }
@@ -1045,7 +1112,7 @@ async fn assemble<F: Fetch>(
     };
     for &i in &map.links {
         let r = &refs[i];
-        if r.row && r.decision.store {
+        if r.row && r.decision.store && !hidden_rows[i] {
             push_row(&mut links, r, ids[i], page_follow && !r.ext.nofollow_rel);
         }
     }
@@ -1056,7 +1123,7 @@ async fn assemble<F: Fetch>(
         .chain(&map.pagination)
     {
         let r = &refs[i];
-        if r.row && r.decision.store {
+        if r.row && r.decision.store && !hidden_rows[i] {
             push_row(&mut links, r, ids[i], true);
         }
     }
@@ -1079,10 +1146,17 @@ async fn assemble<F: Fetch>(
             rel: None,
             target_attr: None,
             path_type: Some(path_type_of(&r.raw)),
-            link_path: None,
-            link_position: None,
+            // das Meta-Element im Kopf: Position Head und Pfad `//head/meta[n]`; Location und Header ohne beides
+            link_path: r.xpath.clone(),
+            link_position: r.xpath.as_ref().map(|x| {
+                if x.starts_with("//head/") {
+                    LinkPosition::Head
+                } else {
+                    LinkPosition::Content
+                }
+            }),
             link_origin: LinkOrigin::Html,
-            in_head: None,
+            in_head: r.xpath.as_ref().map(|x| x.starts_with("//head/")),
         });
     }
 
@@ -1547,7 +1621,8 @@ fn sitemap_hreflang(
                 norm: &norm,
                 internal,
                 kind: DiscoveryKind::Sitemap,
-                store: d.store,
+                // K-62: nur per hreflang bekannt = keine Tabellen-Sichtbarkeit
+                store: d.store && !decide::is_hreflang_store_only(LinkType::Hreflang, &d),
                 crawl: d.crawl,
                 reason: d.reason,
                 resource_like: false,
@@ -1617,6 +1692,35 @@ mod tests {
         let t = parse_http_date("Wed, 21 Oct 2015 07:28:00 GMT").expect("gültig");
         assert_eq!(t.to_db(), "2015-10-21T07:28:00.000Z");
         assert!(parse_http_date("kein Datum").is_none());
+    }
+
+    // spec: ONPAGE-018
+    #[test]
+    fn hash_is_only_set_for_html_2xx_responses() {
+        let cfg = CrawlConfig::default();
+        let html = response(200, &[("content-type", "text/html")], "<html></html>");
+        assert_eq!(
+            facts_from_result(&html, &cfg)
+                .hash_md5
+                .as_deref()
+                .map(str::len),
+            Some(32)
+        );
+        // Fehlerseiten mit HTML-Körper, Bilder, CSS, Text und Weiterleitungen haben keinen Hash (K-60)
+        let error = response(404, &[("content-type", "text/html")], "<html></html>");
+        assert_eq!(facts_from_result(&error, &cfg).hash_md5, None);
+        for ct in ["image/png", "text/css", "text/plain", "application/json"] {
+            let res = response(200, &[("content-type", ct)], "abc");
+            assert_eq!(facts_from_result(&res, &cfg).hash_md5, None, "{ct}");
+        }
+        let redirect = response(301, &[("location", "/x")], "");
+        assert_eq!(facts_from_result(&redirect, &cfg).hash_md5, None);
+        // 2xx ohne Content-Type (204): Hash des leeren Körpers wie in der Referenz
+        let no_content = response(204, &[], "");
+        assert_eq!(
+            facts_from_result(&no_content, &cfg).hash_md5.as_deref(),
+            Some("d41d8cd98f00b204e9800998ecf8427e")
+        );
     }
 
     // spec: CRAWL-022
@@ -1707,6 +1811,7 @@ mod tests {
             resolved: resolved.map(str::to_string),
             in_head,
             order: 0,
+            xpath: None,
         }
     }
 
@@ -1832,6 +1937,7 @@ mod tests {
             resolved: Some(href.to_string()),
             in_head: false,
             order: 0,
+            xpath: None,
         }
     }
 
@@ -1915,13 +2021,14 @@ mod tests {
             batch.sitemaps[0].hreflang[0].1.sitemap_id,
             Some(batch.sitemaps[0].id)
         );
-        // Standard: hreflang speichern an, crawlen aus – interne und externe Ziele sind gespeichert, nicht eingeplant.
+        // Standard: hreflang speichern an, crawlen aus – interne und externe Ziele haben eine Zeile ohne
+        // Tabellen-Sichtbarkeit (K-62) und sind nicht eingeplant.
         let target = |url: &str| batch.new_urls.iter().find(|n| n.url == url).unwrap();
         let fr = target("https://site.test/fr/a");
-        assert!(fr.in_tables);
+        assert!(!fr.in_tables);
         assert_eq!(fr.not_crawled_reason, Some(NotCrawledReason::StoreOnly));
         let en = target("https://other.test/en/a");
-        assert!(!en.is_internal && en.in_tables);
+        assert!(!en.is_internal && !en.in_tables);
         assert!(!batch
             .queue
             .iter()

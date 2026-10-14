@@ -1,29 +1,27 @@
 Type,Source,Destination,Size (Bytes),Alt Text,Anchor,Status Code,Status,Follow,Target,Rel,Path Type,Link Path,Link Position,Link Origin
 Hyperlink,http://www.site.test/,http://external.test/ext,13,,Extern,404,Not Found,True,,,Absolute,/html[1]/body[1]/main[1]/p[7]/a[1],Content,HTML
-Canonical,http://www.site.test/,http://www.site.test/,1545,,,200,OK,True,,,Root-Relative,,,HTML
-Hreflang,http://www.site.test/,http://www.site.test/,1545,,,200,OK,True,,,Root-Relative,,,HTML
+Canonical,http://www.site.test/,http://www.site.test/,1545,,,200,OK,True,,,Root-Relative,//head/link[1],Head,HTML
+Hreflang,http://www.site.test/,http://www.site.test/,1545,,,200,OK,True,,,Root-Relative,//head/link[2],Head,HTML
 HTTP Canonical,http://www.site.test/headers.html,http://www.site.test/,1545,,,200,OK,True,,,Absolute,,,HTML
 Hyperlink,http://www.site.test/second.html,http://www.site.test/,1545,,Start,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[1]/a[2],Content,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/abs.html,147,,Absolut,200,OK,True,,,Absolute,/html[1]/body[1]/main[1]/p[8]/a[2],Content,HTML
-JavaScript,http://www.site.test/,http://www.site.test/app.js,20,,,200,OK,True,,,Root-Relative,/html[1]/head[1]/script[1],Content,HTML
+JavaScript,http://www.site.test/,http://www.site.test/app.js,20,,,200,OK,True,,,Root-Relative,//head/script[1],Head,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/aside.html,143,,Aside,200,OK,True,,,Root-Relative,/html[1]/body[1]/aside[1]/a[1],Aside,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/bild.html,141,Hund,,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[5]/a[1],Content,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/dup.html,149,,Duplikat,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[3]/a[1],Content,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/dup.html,149,,Duplikat,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[3]/a[2],Content,HTML
 Hyperlink,http://www.site.test/second.html,http://www.site.test/dup.html,149,,Duplikat,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[1]/a[1],Content,HTML
-Hreflang,http://www.site.test/,http://www.site.test/en.html,,,,,Not Crawled,True,,,Root-Relative,,,HTML
-HTTP Hreflang,http://www.site.test/headers.html,http://www.site.test/en.html,,,,,Not Crawled,True,,,Absolute,,,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/footer.html,141,,Fuß,200,OK,True,,,Root-Relative,/html[1]/body[1]/footer[1]/a[1],Footer,HTML
 Iframe,http://www.site.test/,http://www.site.test/frame.html,143,,,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/iframe[1],Content,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/header.html,141,,Kopf,200,OK,True,,,Root-Relative,/html[1]/body[1]/header[1]/a[1],Header,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/headers.html,141,,Header,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[9]/a[2],Content,HTML
-Meta Refresh,http://www.site.test/meta.html,http://www.site.test/meta-target.html,151,,,200,OK,True,,,Root-Relative,,,HTML
+Meta Refresh,http://www.site.test/meta.html,http://www.site.test/meta-target.html,151,,,200,OK,True,,,Root-Relative,//head/meta[2],Head,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/meta.html,212,,Meta,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[9]/a[4],Content,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/missing.html,13,,Fehlt,404,Not Found,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[9]/a[1],Content,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/nav.html,153,,Navigation,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[1],Navigation,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/old,0,,Umleitung,301,Moved Permanently,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[9]/a[3],Content,HTML
-Rel Prev,http://www.site.test/,http://www.site.test/page0.html,,,,,Not Crawled,True,,,Root-Relative,,,HTML
-Rel Next,http://www.site.test/,http://www.site.test/page2.html,,,,,Not Crawled,True,,,Root-Relative,,,HTML
+Rel Prev,http://www.site.test/,http://www.site.test/page0.html,,,,,Not Crawled,True,,,Root-Relative,//head/link[5],Head,HTML
+Rel Next,http://www.site.test/,http://www.site.test/page2.html,,,,,Not Crawled,True,,,Root-Relative,//head/link[4],Head,HTML
 Image,http://www.site.test/,http://www.site.test/pic.png,1234,Hund,,200,OK,True,,,Path-Relative,/html[1]/body[1]/main[1]/p[5]/a[1]/img[1],Content,HTML
 Image,http://www.site.test/second.html,http://www.site.test/pic.png,1234,Hund 2,,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/img[1],Content,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/proto.html,151,,Protokoll,200,OK,True,,,Protocol-Relative,/html[1]/body[1]/main[1]/p[8]/a[1],Content,HTML
@@ -31,7 +29,7 @@ HTTP Refresh,http://www.site.test/headers.html,http://www.site.test/refresh-targ
 Hyperlink,http://www.site.test/,http://www.site.test/rel.html,147,,Relativ,200,OK,True,,,Path-Relative,/html[1]/body[1]/main[1]/p[8]/a[3],Content,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/second.html,233,,Zweite Seite,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[2],Navigation,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/sponsor.html,,,Sponsor,,Not Crawled,False,,sponsored,Root-Relative,/html[1]/body[1]/main[1]/p[4]/a[1],Content,HTML
-CSS,http://www.site.test/,http://www.site.test/style.css,20,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[8],Content,HTML
+CSS,http://www.site.test/,http://www.site.test/style.css,20,,,200,OK,True,,stylesheet,Root-Relative,//head/link[8],Head,HTML
 HTTP Redirect,http://www.site.test/old,http://www.site.test/target.html,141,,,200,OK,True,,,Root-Relative,,,HTML
 Media,http://www.site.test/,http://www.site.test/v.mp4,500,,,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/video[1],Content,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/x,,,Text,,Not Crawled,False,_blank,nofollow,Root-Relative,/html[1]/body[1]/main[1]/p[1]/a[1],Content,HTML

@@ -228,10 +228,8 @@ async fn columns_and_extraction_values() {
     let mut q = ViewQuery::new(TAB, "All");
     q.limit = 1;
     let default_columns = query_view(&fx.file, &cfg, &q).unwrap().columns;
-    assert!(
-        !default_columns.iter().any(|c| c.contains("Pixel")),
-        "{default_columns:?}"
-    );
+    // Standardansicht: mit den Pixelbreiten (ONPAGE-100, K-60/N-02).
+    assert_eq!(default_columns, page.columns);
 
     // name="Description" (Name case-insensitiv) wird erkannt.
     assert_eq!(cell(&fx, &page, "/case.html", "Occurrences"), Value::Int(1));
@@ -318,6 +316,7 @@ async fn duplicate_compares_the_first_description_and_sorts_by_it() {
             "/pagination/blog/page/6/",
             "/a.html",
             "/b.html",
+            "/d.html",
             "/e.html",
         ]
     );

@@ -87,7 +87,7 @@ retry_delay_s = 5
 cookies = "session_only"
 response_timeout_s = 20
 assume_html = false
-respect_self_ref_meta_refresh = true
+respect_self_ref_meta_refresh = false
 
 [auth]
 basic = []

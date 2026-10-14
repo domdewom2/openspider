@@ -231,9 +231,10 @@ async fn store_crawl_matrix_all_four_combinations_per_link_type() {
                     assert_eq!(row.status, Some(200), "{what}");
                 }
                 (true, false) => {
-                    // Speichern an, Crawlen aus: in den Tabellen, ohne Statuscode, nicht angefragt.
+                    // Speichern an, Crawlen aus: in den Tabellen, ohne Statuscode, nicht angefragt. Ausnahme
+                    // hreflang (K-62): die URL hat eine Zeile, aber keine Tabellen-Sichtbarkeit.
                     let row = url_row(&fx, &url).unwrap_or_else(|| panic!("{what}: Zeile fehlt"));
-                    assert!(row.in_tables, "{what}");
+                    assert_eq!(row.in_tables, case.name != "hreflang", "{what}");
                     assert_ne!(row.state, "done", "{what}");
                     assert_eq!(row.status, None, "{what}");
                     let expected = if case.external {
@@ -1127,7 +1128,7 @@ async fn robots_respect_blocks_with_status_zero_and_lists_robots_txt_as_url() {
 
 // spec: CRAWL-098
 #[tokio::test]
-async fn robots_txt_of_internal_hosts_is_listed_in_the_tables_external_ones_are_not() {
+async fn robots_txt_of_every_host_has_a_row_but_no_table_visibility() {
     // `crawl-links-basic` verlinkt `external.test`; dessen robots.txt wird ebenfalls geholt (K-40).
     let fx = crawl_fixture("crawl-links-basic", CrawlConfig::default()).await;
     assert_eq!(hits(&fx, "/robots.txt"), 1);
@@ -1135,7 +1136,10 @@ async fn robots_txt_of_internal_hosts_is_listed_in_the_tables_external_ones_are_
 
     let internal = fx.site.url("/robots.txt");
     let row = url_row(&fx, &internal).expect("robots.txt des internen Hosts");
-    assert!(row.in_tables, "intern: in den Tabellen");
+    assert!(
+        !row.in_tables,
+        "K-54: auch intern nicht in den Tabellen (die Zeile existiert)"
+    );
     assert_eq!(row.status, Some(200));
     let (content_type, class): (String, String) = fx
         .file
@@ -1164,7 +1168,7 @@ async fn robots_txt_of_internal_hosts_is_listed_in_the_tables_external_ones_are_
 
     let external = url_row(&fx, "http://external.test/robots.txt")
         .expect("robots.txt des externen Hosts bleibt als URL-Zeile");
-    assert!(!external.in_tables, "extern: nicht in den Tabellen");
+    assert!(!external.in_tables, "extern: nicht in den Tabellen (K-40)");
     assert_eq!(external.status, Some(200));
     assert_eq!(count(&fx, "SELECT COUNT(*) FROM robots_files"), 2);
 }
@@ -1268,4 +1272,72 @@ async fn exclude_with_full_url_pattern_spares_other_hosts() {
     assert_eq!(hits(&fx, "/kalender/2025-01"), 0);
     // blog.site.test/kalender/x liegt auf einem anderen Host (extern) und wird geprüft.
     assert_eq!(exact_hits(&fx, "blog.site.test", "/kalender/x"), 1);
+}
+
+// spec: TECH-071
+#[tokio::test]
+async fn hreflang_only_targets_have_no_table_visibility_and_no_link_row_when_hreflang_crawl_is_off()
+{
+    // K-62 (Paritätsbefund N-08): /it/ ist nur per hreflang bekannt, /de/ zusätzlich verlinkt. Mit
+    // spider.hreflang.crawl = false (Standard) hat /it/ eine Zeile, aber keine Tabellen-Sichtbarkeit und keine
+    // hreflang-Linkzeile; /de/ bleibt wie bisher in den Tabellen mit Linkzeile. Die hreflang-Spalten der
+    // Quellseite führen beide Ziele.
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::write(
+        dir.path().join("scenario.toml"),
+        r#"
+[[route]]
+path = "/"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><title>start</title><link rel=\"alternate\" hreflang=\"de\" href=\"/de/\"><link rel=\"alternate\" hreflang=\"it\" href=\"/it/\"><link rel=\"alternate\" hreflang=\"en\" href=\"/\"></head><body><a href=\"/de/\">de</a></body></html>"
+
+[[route]]
+path = "/de/"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><title>de</title></head><body>de</body></html>"
+
+[[route]]
+path = "/it/"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><title>it</title></head><body>it</body></html>"
+"#,
+    )
+    .unwrap();
+    let crawl = |cfg: CrawlConfig| {
+        os_engine::testing::crawl_dir_with(dir.path(), "/", cfg, os_engine::testing::test_deps())
+    };
+    let fx = crawl(CrawlConfig::default()).await;
+    let it = url_row(&fx, &fx.site.url("/it/")).expect("Zeile der nur per hreflang bekannten URL");
+    assert!(!it.in_tables);
+    assert_eq!(it.status, None);
+    assert_eq!(hits(&fx, "/it/"), 0, "nicht angefragt");
+    assert_eq!(link_rows(&fx, "/it/"), 0, "keine hreflang-Linkzeile");
+    let de = url_row(&fx, &fx.site.url("/de/")).expect("/de/");
+    assert!(de.in_tables);
+    assert_eq!(
+        count(
+            &fx,
+            "SELECT COUNT(*) FROM links WHERE target_raw = '/de/' AND link_type = 'Hreflang'"
+        ),
+        1
+    );
+    // die hreflang-Spalten der Quellseite führen weiterhin alle Alternativen, mit Verweis auf die Zielzeilen
+    assert_eq!(
+        count(&fx, "SELECT COUNT(*) FROM hreflang WHERE source = 'html'"),
+        3
+    );
+    assert_eq!(
+        count(
+            &fx,
+            "SELECT COUNT(*) FROM hreflang WHERE source = 'html' AND target_id IS NOT NULL"
+        ),
+        3
+    );
+
+    // mit hreflang-Crawl wie jeder Link: Abruf, Tabellen-Sichtbarkeit und Linkzeile
+    let on = crawl(with(|c| c.spider.hreflang = StoreCrawl::ON)).await;
+    let it = url_row(&on, &on.site.url("/it/")).expect("/it/");
+    assert!(it.in_tables);
+    assert_eq!(it.status, Some(200));
+    assert_eq!(link_rows(&on, "/it/"), 1);
 }

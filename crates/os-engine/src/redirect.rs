@@ -7,7 +7,9 @@
 //! * HTTP-3xx (301, 302, 303, 307, 308) mit `Location`: Ziel relativ zur angefragten URL aufgelöst. Der Body
 //!   einer 3xx-Antwort wird nie ausgewertet; 3xx ohne (brauchbare) `Location` ergibt keine Weiterleitung.
 //! * Refresh: HTTP-Header `Refresh` vor dem ersten Meta-Refresh. Ein Refresh ohne Ziel oder mit der eigenen
-//!   URL als Ziel (Vergleich nach TECH-002) ist ein Selbst-Refresh und keine Weiterleitung.
+//!   URL als Ziel (Vergleich nach TECH-002) ist ein Selbst-Refresh (K-57): Er wird als Weiterleitung auf sich
+//!   selbst geführt (Redirect URL = eigene Adresse, Typ Meta/HTTP Refresh, Schleife), ohne neuen Abruf. Die
+//!   Indexierbarkeit ändert sich nur mit `advanced.respect_self_ref_meta_refresh` (os-model).
 //! * Schleife: Beim Eintragen einer Kante `a → b` wird von `b` aus der Graph abgelaufen; kommt man zu `a`
 //!   zurück, bilden die durchlaufenen URLs eine Schleife. Weil jede URL nur einmal abgerufen wird (Seen-Set),
 //!   erzeugt eine Schleife nie einen Endlos-Abruf.
@@ -39,6 +41,8 @@ pub struct RedirectTarget {
     pub raw: String,
     /// Verzögerung (nur Refresh).
     pub delay: Option<u32>,
+    /// Pfad des Meta-Elements (`//head/meta[2]`) für die Linkzeile; `None` bei `Location` und `Refresh`-Header.
+    pub xpath: Option<String>,
 }
 
 /// Wertet `Location` einer 3xx-Antwort aus. `None` bei fehlender oder unbrauchbarer `Location`.
@@ -57,6 +61,7 @@ pub fn http_target(request: &Url, headers: &[(String, String)]) -> Option<Redire
         target: os_url::normalize(&resolved),
         raw,
         delay: None,
+        xpath: None,
     })
 }
 
@@ -67,6 +72,9 @@ pub struct RefreshOutcome {
     pub delay: Option<u32>,
     /// Die Weiterleitung, falls das Ziel eine andere URL ist.
     pub redirect: Option<RedirectTarget>,
+    /// Selbst-Refresh (ohne Ziel oder auf die eigene URL, K-57): die Weiterleitung auf sich selbst. Der
+    /// Aufrufer führt sie ohne neuen Abruf.
+    pub self_refresh: Option<RedirectTarget>,
 }
 
 /// Bestimmt den maßgeblichen Refresh: erst der HTTP-Header, sonst das erste Meta-Tag.
@@ -85,8 +93,24 @@ pub fn refresh_target(own: &Url, refs: &[RefreshRef]) -> RefreshOutcome {
     let mut out = RefreshOutcome {
         delay: r.delay,
         redirect: None,
+        self_refresh: None,
+    };
+    let own_target = |raw: String| RedirectTarget {
+        kind,
+        target: os_url::normalize(own),
+        raw,
+        delay: r.delay,
+        xpath: r.xpath.clone(),
     };
     let Some(target) = r.target.as_deref() else {
+        // ohne (auflösbare) URL: nur ein reiner Meta-Selbst-Refresh (`content="30"`) ist eine Weiterleitung auf
+        // sich selbst. Ein `Refresh`-Header ohne URL ist es nicht: die Referenz führt keine Redirect URL und
+        // keinen Typ (Paritätslauf M1, parity-response `/http-refresh-nourl.html`). Ein angegebenes, nicht
+        // auflösbares Ziel bleibt ohne Wirkung.
+        if r.target_raw.is_none() && r.source == RefreshSource::Meta {
+            // ohne URL im Markup bleibt der Rohwert leer (Path Type „Path-Relative“ wie in der Referenz)
+            out.self_refresh = Some(own_target(String::new()));
+        }
         return out;
     };
     let Ok(url) = Url::parse(target) else {
@@ -96,6 +120,9 @@ pub fn refresh_target(own: &Url, refs: &[RefreshRef]) -> RefreshOutcome {
         return out;
     }
     if os_url::eq_for_compare(own.as_str(), url.as_str()) {
+        out.self_refresh = Some(own_target(
+            r.target_raw.clone().unwrap_or_else(|| target.to_string()),
+        ));
         return out; // Selbst-Refresh
     }
     out.redirect = Some(RedirectTarget {
@@ -103,6 +130,7 @@ pub fn refresh_target(own: &Url, refs: &[RefreshRef]) -> RefreshOutcome {
         target: os_url::normalize(&url),
         raw: r.target_raw.clone().unwrap_or_else(|| target.to_string()),
         delay: r.delay,
+        xpath: r.xpath.clone(),
     });
     out
 }
@@ -179,6 +207,7 @@ mod tests {
             target: target.map(str::to_string),
             in_head: true,
             order,
+            xpath: None,
         }
     }
 
@@ -246,6 +275,12 @@ mod tests {
         let none = refresh_target(&own, &[refresh(RefreshSource::Meta, Some(30), None, 0)]);
         assert!(none.redirect.is_none());
         assert_eq!(none.delay, Some(30), "Verzögerung bleibt erhalten");
+        // K-57: der Selbst-Refresh ist eine Weiterleitung auf sich selbst (Typ und Ziel für den Worker)
+        let me = none.self_refresh.expect("Selbst-Refresh");
+        assert_eq!(me.kind, RedirectType::MetaRefresh);
+        assert_eq!(me.target.encoded, "https://site.test/p");
+        assert_eq!(me.delay, Some(30));
+        assert_eq!(me.raw, "", "kein URL-Rohwert im Markup");
         let same = refresh_target(
             &own,
             &[refresh(
@@ -257,6 +292,33 @@ mod tests {
         );
         assert!(same.redirect.is_none());
         assert_eq!(same.delay, Some(0));
+        let me = same.self_refresh.expect("Selbst-Refresh mit eigener URL");
+        assert_eq!(
+            me.target.encoded, "https://site.test/p",
+            "Fragment entfällt"
+        );
+        assert_eq!(me.raw, "https://site.test/p#x");
+        // Header mit eigener URL: HTTP Refresh auf sich selbst; ohne URL keine Weiterleitung (Referenz)
+        let header = refresh_target(
+            &own,
+            &[refresh(
+                RefreshSource::Header,
+                Some(5),
+                Some("https://site.test/p"),
+                0,
+            )],
+        );
+        assert_eq!(
+            header.self_refresh.expect("Header").kind,
+            RedirectType::HttpRefresh
+        );
+        let bare_header = refresh_target(&own, &[refresh(RefreshSource::Header, Some(5), None, 0)]);
+        assert!(bare_header.self_refresh.is_none() && bare_header.redirect.is_none());
+        assert_eq!(bare_header.delay, Some(5));
+        // ein angegebenes, nicht auflösbares Ziel ist kein Selbst-Refresh
+        let mut unresolvable = refresh(RefreshSource::Meta, Some(0), None, 0);
+        unresolvable.target_raw = Some("http://".to_string());
+        assert!(refresh_target(&own, &[unresolvable]).self_refresh.is_none());
         assert!(refresh_target(&own, &[]).redirect.is_none());
         let _ = HintSource::Html;
     }

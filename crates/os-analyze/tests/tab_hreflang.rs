@@ -434,6 +434,49 @@ async fn missing_lists_internal_html_200_pages_without_any_annotation() {
     );
 }
 
+// spec: TECH-071, TECH-085
+#[test]
+fn population_and_missing_use_the_status_class_2xx() {
+    // K-56 (Befund B-04): eine 201-Seite gehört zur Grundmenge und steht in Missing; eine 404-Seite und eine
+    // Weiterleitung nicht. „Non-200 Hreflang URLs“ behält die wörtliche Bedingung (Status ≠ 200).
+    let dir = tempfile::tempdir().unwrap();
+    let file = synthetic_file(dir.path());
+    for (id, url, status) in [
+        (1, "https://site.test/ok", 200),
+        (2, "https://site.test/created", 201),
+        (3, "https://site.test/gone", 404),
+        (4, "https://site.test/moved", 301),
+    ] {
+        file.conn()
+            .execute(
+                "INSERT INTO urls (id, url, address, origin, is_internal, in_tables, state, discovered_via, \
+                 folder_depth, url_length, status_code, content_class) \
+                 VALUES (?1, ?2, ?2, 'https://site.test', 1, 1, 'done', 'link', 1, 20, ?3, 'HTML')",
+                rusqlite::params![id, url, status],
+            )
+            .unwrap();
+    }
+    let cfg = CrawlConfig::default();
+    let mut all = list(&file, &cfg, "Hreflang", "All");
+    all.sort();
+    assert_eq!(all, ["https://site.test/created", "https://site.test/ok"]);
+    let mut missing = list(&file, &cfg, "Hreflang", "Missing");
+    missing.sort();
+    assert_eq!(missing, all);
+    // eine Annotation von /ok auf die 201-Seite: nicht in Non-200 Hreflang URLs (201 ≠ 200 gilt wörtlich)
+    file.conn()
+        .execute(
+            "INSERT INTO hreflang (url_id, source, position, code_raw, code_norm, code_valid, href_raw, url, \
+             target_id, in_head) VALUES (1, 'html', 0, 'en', 'en', 1, 'x', 'x', 2, 1)",
+            [],
+        )
+        .unwrap();
+    assert_eq!(
+        list(&file, &cfg, "Hreflang", "Non-200 Hreflang URLs"),
+        ["https://site.test/ok"]
+    );
+}
+
 // spec: TECH-071
 #[tokio::test]
 async fn store_off_leaves_the_tab_and_all_filters_empty() {

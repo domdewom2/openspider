@@ -150,6 +150,7 @@ pub fn hints(url: &url::Url, headers: &[(String, String)], cfg: &ParseConfig) ->
                         resolved: resolved.clone(),
                         in_head: true,
                         order: out.canonicals.len() as u32,
+                        xpath: None,
                     });
                 }
                 let next = has_rel_token(rel, "next");
@@ -163,6 +164,7 @@ pub fn hints(url: &url::Url, headers: &[(String, String)], cfg: &ParseConfig) ->
                             resolved: resolved.clone(),
                             in_head: true,
                             order: out.pagination.len() as u32,
+                            xpath: None,
                         });
                     }
                 }

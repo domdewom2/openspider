@@ -132,10 +132,12 @@ const TITLES: &[&str] = &[
 #[test]
 fn at_least_fifty_titles_match_the_reference_from_the_font_files() {
     assert!(TITLES.len() >= 50);
-    for bold in [false, true] {
+    // Das Liberation-Sans-Modell gilt für Bold und für alle Regular-Größen außerhalb der kalibrierten Profile
+    // (20 px und 14 px Regular rechnen mit den ganzzahligen Zeichenbreiten aus `calibrated`, K-64).
+    for (bold, sizes) in [(false, [16u64, 18]), (true, [20, 14])] {
         let data = font_bytes(bold);
         let face = Face::parse(&data, 0).unwrap();
-        for size in [20u64, 14] {
+        for size in sizes {
             for title in TITLES {
                 assert_eq!(
                     u64::from(width_px(title, size as f64, bold)),
@@ -161,30 +163,31 @@ fn bold_is_never_narrower_for_the_golden_titles() {
 // spec: UI-038
 #[test]
 fn golden_values_of_selected_titles_are_stable() {
-    // Festgeschriebene Werte (20 px Regular, 20 px Bold, 14 px Regular). Sie stimmen mit der Referenzberechnung
-    // aus den Schriftdateien überein (Test oben) und fangen versehentliche Änderungen an Tabellen, Graphem-Logik
-    // oder Rundung ab; auf macOS arm64/x64 und Windows identisch.
+    // Festgeschriebene Werte (20 px Regular, 20 px Bold, 14 px Regular). Regular bei 20 px und 14 px sind die
+    // kalibrierten ganzzahligen Zeichenbreiten (K-64; „Startseite“, „Schuhe kaufen“, der Fuchs-Satz und die
+    // 20 × „W“ sind vollständig aus gemessenen Zeichen zusammengesetzt und unabhängig nachgerechnet), Bold ist
+    // Liberation Sans Bold und stimmt mit der Referenzberechnung aus den Schriftdateien überein (Test oben). Die
+    // Werte fangen versehentliche Änderungen an Tabellen, Graphem-Logik oder Rundung ab; auf macOS arm64/x64 und
+    // Windows identisch.
     let golden: &[(&str, u32, u32, u32)] = &[
-        ("Startseite", 84, 91, 59),
-        ("Schuhe kaufen", 133, 142, 93),
-        ("Schuhe kaufen – günstig & schnell | Shop", 370, 398, 259),
-        ("ÄÖÜ Größenübersicht 2026", 248, 261, 174),
+        ("Startseite", 88, 91, 60),
+        ("Schuhe kaufen", 132, 142, 92),
+        ("Schuhe kaufen – günstig & schnell | Shop", 367, 398, 253),
+        ("ÄÖÜ Größenübersicht 2026", 246, 261, 174),
         (
             "Die besten Laufschuhe 2026: Test, Vergleich und Kaufberatung",
             564,
             601,
-            395,
+            389,
         ),
-        ("Preise ab 9,99 € – jetzt bestellen!", 296, 311, 207),
-        ("Café „Zur Sonne“ – Frühstück & Brunch", 352, 382, 247),
-        ("The quick brown fox jumps over the lazy dog", 396, 428, 277),
-        ("WWWWWWWWWWWWWWWWWWWW", 378, 0, 0),
+        ("Preise ab 9,99 € – jetzt bestellen!", 300, 311, 201),
+        ("Café „Zur Sonne“ – Frühstück & Brunch", 348, 382, 244),
+        ("The quick brown fox jumps over the lazy dog", 395, 428, 274),
+        ("WWWWWWWWWWWWWWWWWWWW", 360, 378, 240),
     ];
     for (title, regular20, bold20, regular14) in golden {
         assert_eq!(width_px(title, 20.0, false), *regular20, "{title:?} 20px");
-        if *bold20 != 0 {
-            assert_eq!(width_px(title, 20.0, true), *bold20, "{title:?} 20px bold");
-            assert_eq!(width_px(title, 14.0, false), *regular14, "{title:?} 14px");
-        }
+        assert_eq!(width_px(title, 20.0, true), *bold20, "{title:?} 20px bold");
+        assert_eq!(width_px(title, 14.0, false), *regular14, "{title:?} 14px");
     }
 }

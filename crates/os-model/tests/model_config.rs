@@ -90,7 +90,8 @@ fn defaults_match_table_3_4() {
 
     assert_eq!(c.advanced.cookies, CookieMode::SessionOnly);
     assert_eq!(c.advanced.response_timeout_s, 20);
-    assert!(!c.advanced.assume_html && c.advanced.respect_self_ref_meta_refresh);
+    // K-57: Standard aus wie die Referenz
+    assert!(!c.advanced.assume_html && !c.advanced.respect_self_ref_meta_refresh);
 
     assert!(c.auth.basic.is_empty() && c.network.resolve.is_empty());
     assert_eq!(c.rendering.mode, RenderingMode::Text);

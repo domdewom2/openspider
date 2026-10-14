@@ -128,7 +128,7 @@ async fn a_paused_file_holds_state_queue_pause_time_and_no_owner() {
     );
 }
 
-// spec: CRAWL-126, CRAWL-125
+// spec: CRAWL-126, CRAWL-125, CRAWL-098
 #[tokio::test]
 async fn resuming_after_a_restart_equals_the_uninterrupted_crawl_without_repeating_a_request() {
     // Referenz: ununterbrochen
@@ -172,6 +172,21 @@ async fn resuming_after_a_restart_equals_the_uninterrupted_crawl_without_repeati
     assert_eq!(file.get_meta("owner_pid").unwrap().as_deref(), Some(""));
     assert_eq!(file.meta().unwrap().state, CrawlState::Completed);
     assert!(file.integrity_check().unwrap());
+    // K-54: die robots.txt bleibt nach dem Fortsetzen genau eine Zeile ohne Tabellen-Sichtbarkeit
+    assert_eq!(
+        scalar(
+            &file,
+            "SELECT COUNT(*) FROM urls WHERE discovered_via = 'robots_txt' AND in_tables = 0"
+        ),
+        1
+    );
+    assert_eq!(
+        scalar(
+            &file,
+            "SELECT COUNT(*) FROM urls WHERE discovered_via = 'robots_txt' AND in_tables = 1"
+        ),
+        0
+    );
 }
 
 // spec: CRAWL-126

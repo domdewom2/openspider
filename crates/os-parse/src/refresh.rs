@@ -85,6 +85,7 @@ pub(crate) fn make_ref(
         target,
         in_head,
         order,
+        xpath: None,
     })
 }
 
@@ -103,13 +104,14 @@ pub fn extract(doc: &Document, base: &url::Url) -> Vec<RefreshRef> {
             continue;
         }
         let content = el.value().attr("content").unwrap_or_default();
-        if let Some(r) = make_ref(
+        if let Some(mut r) = make_ref(
             RefreshSource::Meta,
             content,
             base,
             dom::in_head(el),
             out.len() as u32,
         ) {
+            r.xpath = Some(dom::xpath(el));
             out.push(r);
         }
     }

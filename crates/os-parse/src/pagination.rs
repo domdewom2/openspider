@@ -35,6 +35,7 @@ pub fn extract(doc: &Document, base: &url::Url) -> Vec<PaginationRef> {
                     resolved: resolved.clone(),
                     in_head,
                     order: out.len() as u32,
+                    xpath: Some(dom::xpath(el)),
                 });
             }
         }

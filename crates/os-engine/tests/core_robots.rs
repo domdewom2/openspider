@@ -37,8 +37,8 @@ async fn the_robots_txt_row_exists_but_does_not_count_towards_the_limit_or_the_c
     assert_eq!(r.via, "robots_txt");
     assert_eq!(r.status_code, Some(200));
     assert!(
-        r.in_tables,
-        "K-40: die robots.txt interner Hosts erscheint in den Tabellen"
+        !r.in_tables,
+        "K-54: die robots.txt interner Hosts erscheint in keinem Tab"
     );
     // die robots.txt steht mit Inhalt in robots_files
     let (status, attempts, has_body): (String, i64, bool) = fx

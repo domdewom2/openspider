@@ -412,7 +412,6 @@ async fn non_html_urls_have_empty_element_columns_and_pdfs_use_document_properti
         "Meta Robots 1",
         "Canonical Link Element 1",
     ] {
-        assert!(t.is_empty_cell("/robots.txt", col), "robots.txt / {col}");
         assert!(t.is_empty_cell("/chunked.pdf", col), "chunked.pdf / {col}");
     }
     // PDF: Title 1 und Meta Keywords 1 aus den Dokumenteigenschaften, alles Übrige leer
@@ -428,6 +427,44 @@ async fn non_html_urls_have_empty_element_columns_and_pdfs_use_document_properti
     ] {
         assert!(t.is_empty_cell("/doc.pdf", col), "doc.pdf / {col}");
     }
+}
+
+// spec: ONPAGE-011, ONPAGE-009, ONPAGE-013
+#[tokio::test]
+async fn error_and_redirect_pages_have_empty_element_columns_even_with_a_body() {
+    // K-60/N-01: /e400, /e404, /e500 liefern HTML mit <title> und <h1>, /r301 leitet um; nur interne
+    // HTML-Seiten mit 2xx tragen Element-, Längen-, Pixel-, Word-Count- und Text-Ratio-Werte.
+    let fx = crawl_fixture("onpage-rc", CrawlConfig::default()).await;
+    let t = all_columns(&fx, "All");
+    for p in ["/e400", "/e404", "/e500", "/r301"] {
+        if !t.contains(p) {
+            continue;
+        }
+        for col in [
+            "Title 1",
+            "Title 1 Length",
+            "Title 1 Pixel Width",
+            "Meta Description 1",
+            "Meta Description 1 Length",
+            "Meta Description 1 Pixel Width",
+            "Meta Keywords 1",
+            "Meta Keywords 1 Length",
+            "H1-1",
+            "H1-1 Length",
+            "H2-1",
+            "H2-1 Length",
+            "Word Count",
+            "Text Ratio",
+        ] {
+            assert!(t.is_empty_cell(p, col), "{p} / {col}");
+        }
+    }
+    assert!(t.contains("/e400") && t.contains("/e404") && t.contains("/e500"));
+    // Gegenprobe: die 2xx-Seite /ok ist gefüllt
+    assert_eq!(t.text("/ok", "Title 1"), "ok");
+    assert_eq!(t.text("/ok", "H1-1"), "ok");
+    assert_eq!(t.int("/ok", "Title 1 Length"), 2);
+    assert!(t.int("/ok", "Title 1 Pixel Width") > 0);
 }
 
 // ---------------------------------------------------------------------------------------------------
@@ -662,13 +699,7 @@ async fn text_ratio_is_visible_text_over_source_in_percent_with_one_decimal() {
 async fn non_html_urls_have_no_word_count_and_no_text_ratio() {
     let fx = internal_site().await;
     let t = all_columns(&fx, "All");
-    for path in [
-        "/robots.txt",
-        "/chunked.pdf",
-        "/doc.pdf",
-        "/blocked/x.html",
-        "/r",
-    ] {
+    for path in ["/chunked.pdf", "/doc.pdf", "/blocked/x.html", "/r"] {
         assert!(t.is_empty_cell(path, "Word Count"), "{path}");
         assert!(t.is_empty_cell(path, "Text Ratio"), "{path}");
     }
@@ -771,6 +802,73 @@ async fn pct_of_total_is_unique_html_200_inlinks_over_all_internal_html_200_page
 }
 
 // spec: ONPAGE-015
+#[test]
+fn pct_of_total_counts_every_2xx_html_page_in_numerator_and_denominator() {
+    // K-56 (Befund B-04): eine 201-Seite zählt als Quelle und im Nenner; 404 und 301 nicht.
+    use os_model::time::{IdSource, SeededIds};
+    use os_model::{CrawlMode, Timestamp};
+    use os_store::{CrawlFile, CrawlInit, StorageProfile};
+    let dir = tempfile::tempdir().unwrap();
+    let created = Timestamp::from_db("2026-10-14T07:35:00.000Z").unwrap();
+    let init = CrawlInit {
+        crawl_id: SeededIds::new(3).new_crawl_id(created),
+        mode: CrawlMode::Spider,
+        start_url: Some("https://site.test/".into()),
+        list_source: None,
+        project: "Projekt".into(),
+        name: "pct".into(),
+        config: CrawlConfig::default(),
+        created_at: created,
+    };
+    let file = CrawlFile::create(
+        &dir.path().join("p.ospider"),
+        &init,
+        StorageProfile::Balanced,
+    )
+    .unwrap();
+    for (id, path, status) in [
+        (1, "a", 200),
+        (2, "b", 201),
+        (3, "gone", 404),
+        (4, "moved", 301),
+    ] {
+        file.conn()
+            .execute(
+                "INSERT INTO urls (id, url, address, origin, is_internal, in_tables, state, discovered_via, \
+                 folder_depth, url_length, status_code, content_class) \
+                 VALUES (?1, ?2, ?2, 'https://site.test', 1, 1, 'done', 'link', 0, 20, ?3, 'HTML')",
+                rusqlite::params![id, format!("https://site.test/{path}"), status],
+            )
+            .unwrap();
+    }
+    // a und b verlinken beide auf a; die 404-Seite verlinkt ebenfalls (zählt nicht als Quelle)
+    for (n, source) in [1, 2, 3].into_iter().enumerate() {
+        file.conn()
+            .execute(
+                "INSERT INTO links (source_id, target_id, link_type, position, target_raw, follow) \
+                 VALUES (?1, 1, 'Hyperlink', ?2, '/a', 1)",
+                rusqlite::params![source, n as i64],
+            )
+            .unwrap();
+    }
+    let mut q = ViewQuery::new("Internal", "All");
+    q.columns = ColumnSelection::Named(vec!["Address".into(), "% of Total".into()]);
+    q.limit = 500;
+    let page = views::query_view(&file, &CrawlConfig::default(), &q).unwrap();
+    let pct = page
+        .rows
+        .iter()
+        .find(|r| matches!(&r[0], Value::Text(a) if a == "https://site.test/a"))
+        .map(|r| match &r[1] {
+            Value::Float(f) => *f,
+            other => panic!("{other:?}"),
+        })
+        .unwrap();
+    // Quellen 1 und 2 von 2 HTML-2xx-Seiten = 100 %
+    assert!((pct - 100.0).abs() < 1e-9, "{pct}");
+}
+
+// spec: ONPAGE-015
 #[tokio::test]
 async fn pct_of_total_is_rounded_to_two_decimals() {
     let fx = internal_site().await;
@@ -819,6 +917,27 @@ async fn hash_is_md5_of_the_decoded_body() {
     assert_ne!(h1, t.text("/tech/same3.html", "Hash"));
     // gzip-ausgeliefert = Hash der unkomprimierten Seite
     assert_eq!(h1, t.text("/tech/gz-same1.html", "Hash"));
+}
+
+// spec: ONPAGE-018
+#[tokio::test]
+async fn hash_is_empty_for_non_html_responses_and_redirects() {
+    // K-60/N-06: PDF, Weiterleitung (leerer Körper) und gesperrte URL haben keinen Hash; HTML schon.
+    let fx = internal_site().await;
+    let t = all_columns(&fx, "All");
+    for path in ["/doc.pdf", "/chunked.pdf", "/r", "/blocked/x.html"] {
+        assert!(t.is_empty_cell(path, "Hash"), "{path}");
+    }
+    // Fehlerseiten mit HTML-Körper: kein Hash (die Referenz schreibt ihn nur für 2xx)
+    let rc = crawl_fixture("onpage-rc", CrawlConfig::default()).await;
+    let rt = all_columns(&rc, "All");
+    for path in ["/e400", "/e404", "/e500", "/s999"] {
+        assert!(rt.is_empty_cell(path, "Hash"), "{path}");
+    }
+    assert_eq!(rt.text("/ok", "Hash").len(), 32);
+    // 204 ohne Content-Type: Hash des leeren Körpers
+    assert_eq!(rt.text("/s204", "Hash"), "d41d8cd98f00b204e9800998ecf8427e");
+    assert_eq!(t.text("/elements.html", "Hash").len(), 32);
 }
 
 // spec: ONPAGE-018
@@ -896,7 +1015,7 @@ async fn http_version_url_encoded_address_and_crawl_timestamp() {
 // ---------------------------------------------------------------------------------------------------
 // Population und Goldens des Szenarios onpage-internal
 
-// spec: ONPAGE-010
+// spec: ONPAGE-010, CRAWL-098
 #[tokio::test]
 async fn internal_all_lists_the_internal_urls_in_tables_and_no_external_ones() {
     let fx = internal_site().await;
@@ -908,12 +1027,18 @@ async fn internal_all_lists_the_internal_urls_in_tables_and_no_external_ones() {
         "internal__all.csv",
     );
     let t = all_columns(&fx, "All");
-    // robots.txt des internen Hosts erscheint (Inhaltstyp Text → Klasse Other), ohne Sitemap-Dateien (K-40)
-    assert!(t.contains("/robots.txt"));
-    assert_eq!(
-        t.text("/robots.txt", "Content"),
-        "text/plain; charset=utf-8"
-    );
+    // die robots.txt des internen Hosts hat eine URL-Zeile, erscheint aber in keinem Tab (K-54, CRAWL-098)
+    assert!(!t.contains("/robots.txt"));
+    let robots: i64 = fx
+        .file
+        .conn()
+        .query_row(
+            "SELECT COUNT(*) FROM urls WHERE discovered_via = 'robots_txt' AND in_tables = 0",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(robots, 1);
 }
 
 // spec: ONPAGE-021, ONPAGE-022, ONPAGE-024
@@ -1154,17 +1279,17 @@ async fn every_column_of_the_three_tabs_can_be_selected_sorted_and_counted() {
         .iter()
         .find(|c| c.tab == "Internal" && c.filter == "HTML")
         .expect("Internal:HTML");
-    assert_eq!(internal_all.count, Some(39));
+    assert_eq!(internal_all.count, Some(38));
     assert_eq!(html.count, Some(30));
-    // Anteil an „All“ in Prozent mit einer Nachkommastelle: 30 von 39 = 76,92… → 76,9
-    assert_eq!(html.pct.map(|p| (p * 10.0).round() / 10.0), Some(76.9));
+    // Anteil an „All“ in Prozent mit einer Nachkommastelle: 30 von 38 = 78,94… → 78,9 (ohne robots.txt, K-54)
+    assert_eq!(html.pct.map(|p| (p * 10.0).round() / 10.0), Some(78.9));
     let security_http = counts
         .iter()
         .find(|c| c.tab == "Security" && c.filter == "HTTP URLs")
         .expect("Security:HTTP URLs");
     assert_eq!(
         security_http.count,
-        Some(39),
+        Some(38),
         "alle Internal-URLs sind http"
     );
 }

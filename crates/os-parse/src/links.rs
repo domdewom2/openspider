@@ -28,7 +28,7 @@ fn is_svg(el: ElementRef) -> bool {
 
 /// Läuft in Dokumentreihenfolge über alle Elemente außerhalb von `<template>` und ruft `f` mit dem Element,
 /// seiner laufenden Nummer (Pre-Order-Index über alle Elemente, 0-basiert – das ist `doc_order`) und der
-/// Linkposition auf (nächster Vorfahre `nav`/`header`/`main`/`aside`/`footer`, sonst Content).
+/// Linkposition auf (nächster Vorfahre `head`/`nav`/`header`/`main`/`aside`/`footer`, sonst Content).
 pub(crate) fn walk<'a>(doc: &'a Document, mut f: impl FnMut(ElementRef<'a>, u32, LinkPosition)) {
     let mut ordinal: u32 = 0;
     let mut template_depth = 0usize;
@@ -73,6 +73,8 @@ fn landmark_of(el: ElementRef) -> Option<LinkPosition> {
         return None;
     }
     match el.value().name() {
+        // alles im `<head>` hat die Position Head (OUT-031, TECH-131, K-63)
+        "head" => Some(LinkPosition::Head),
         "nav" => Some(LinkPosition::Navigation),
         "header" => Some(LinkPosition::Header),
         "main" => Some(LinkPosition::Content),

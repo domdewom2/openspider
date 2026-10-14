@@ -14,8 +14,8 @@
           "description": "Cookie-Verhalten."
         },
         "respect_self_ref_meta_refresh": {
-          "default": true,
-          "description": "Selbstverweisenden Meta Refresh berücksichtigen.",
+          "default": false,
+          "description": "Selbstverweisenden Meta Refresh berücksichtigen (Indexierbarkeit „Self Referencing Meta Refresh“,\nTECH-068). Standard aus wie die Referenz (K-57); der Selbst-Refresh wird unabhängig davon als\nWeiterleitung auf sich selbst geführt.",
           "type": "boolean"
         },
         "response_timeout_s": {
@@ -974,7 +974,7 @@
       "default": {
         "assume_html": false,
         "cookies": "session_only",
-        "respect_self_ref_meta_refresh": true,
+        "respect_self_ref_meta_refresh": false,
         "response_timeout_s": 20
       },
       "description": "Erweiterte Einstellungen."

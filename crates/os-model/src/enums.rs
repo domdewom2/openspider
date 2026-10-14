@@ -228,7 +228,7 @@ string_enum! {
 }
 
 string_enum! {
-    /// Position eines Links im Dokument (OUT-031).
+    /// Position eines Links im Dokument (OUT-031); `Head` für Elemente im `<head>` (TECH-131, K-63).
     pub enum LinkPosition {
         Navigation => "Navigation",
         Header => "Header",
@@ -236,6 +236,7 @@ string_enum! {
         Sidebar => "Sidebar",
         Aside => "Aside",
         Footer => "Footer",
+        Head => "Head",
     }
 }
 

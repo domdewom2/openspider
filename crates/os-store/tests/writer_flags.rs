@@ -45,6 +45,7 @@ fn sitemap_hreflang(code: &str, href: &str, order: u32, target: Option<i64>) -> 
             resolved: Some(format!("https://site.test{href}")),
             in_head: false,
             order,
+            xpath: None,
         },
     }
 }
@@ -284,6 +285,7 @@ fn page_replace_keeps_sitemap_hreflang_and_removes_page_hreflang() {
             resolved: Some("https://site.test/p2".into()),
             in_head: true,
             order: 0,
+            xpath: None,
         },
     });
     first.pages.push(p);

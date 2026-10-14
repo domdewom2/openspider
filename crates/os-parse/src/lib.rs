@@ -198,6 +198,7 @@ mod tests {
         let page = parse_html(&input);
         assert_eq!(page.base_url, "https://site.test/a");
         assert!(page.effective_index && page.effective_follow);
+        // „b“; ein Link im Absatz zählt nicht extra (A-35b: nur `<li>`)
         assert_eq!(page.word_count, Some(1));
         assert!(parse_headers(&url, &[], &cfg).canonicals.is_empty());
         assert!(parse_css(&url, b"a{}").is_empty());

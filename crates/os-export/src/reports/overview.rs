@@ -448,7 +448,9 @@ fn tab_filters(counts: &[FilterCount], rows: &mut Vec<OverviewRow>) {
 
 fn crawl_depth(file: &CrawlFile, rows: &mut Vec<OverviewRow>) -> Result<(), ExportError> {
     const S: &str = "Crawl Depth";
-    let scope = "in_tables = 1 AND is_internal = 1 AND state = 'done' AND crawl_depth IS NOT NULL";
+    // OUT-080, K-58: nur interne HTML-Seiten mit Status 2xx; Nenner der Prozente ist dieselbe Menge.
+    let scope = "in_tables = 1 AND is_internal = 1 AND state = 'done' AND crawl_depth IS NOT NULL \
+                 AND content_class = 'HTML' AND status_code BETWEEN 200 AND 299";
     let total = count(file, &format!("SELECT COUNT(*) FROM urls WHERE {scope}"))?;
     for depth in 0..=10u32 {
         let n = count(

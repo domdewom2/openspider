@@ -151,6 +151,7 @@ pub(crate) fn make_ref(
         resolved,
         in_head,
         order,
+        xpath: None,
     }
 }
 
@@ -193,7 +194,7 @@ pub fn extract(doc: &Document, base: &url::Url, cfg: &ParseConfig) -> (Vec<Hrefl
             continue;
         };
         let (raw, resolved) = raw_and_resolved(base, href);
-        refs.push(make_ref(
+        let mut r = make_ref(
             HintSource::Html,
             code,
             raw,
@@ -201,7 +202,9 @@ pub fn extract(doc: &Document, base: &url::Url, cfg: &ParseConfig) -> (Vec<Hrefl
             dom::in_head(el),
             refs.len() as u32,
             cfg.allow_script_subtag,
-        ));
+        );
+        r.xpath = Some(dom::xpath(el));
+        refs.push(r);
     }
     apply_limit(refs, cfg.hreflang_over_limit)
 }

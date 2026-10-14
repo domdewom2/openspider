@@ -370,7 +370,9 @@ pub struct AdvancedConfig {
     pub response_timeout_s: u32,
     /// Antworten ohne Content-Type als HTML behandeln.
     pub assume_html: bool,
-    /// Selbstverweisenden Meta Refresh berücksichtigen.
+    /// Selbstverweisenden Meta Refresh berücksichtigen (Indexierbarkeit „Self Referencing Meta Refresh“,
+    /// TECH-068). Standard aus wie die Referenz (K-57); der Selbst-Refresh wird unabhängig davon als
+    /// Weiterleitung auf sich selbst geführt.
     pub respect_self_ref_meta_refresh: bool,
 }
 
@@ -380,7 +382,7 @@ impl Default for AdvancedConfig {
             cookies: CookieMode::SessionOnly,
             response_timeout_s: 20,
             assume_html: false,
-            respect_self_ref_meta_refresh: true,
+            respect_self_ref_meta_refresh: false,
         }
     }
 }

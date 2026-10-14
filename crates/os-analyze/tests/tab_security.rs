@@ -220,9 +220,9 @@ async fn http_urls_and_https_urls_together_are_exactly_all() {
             if scheme == "http" { "" } else { "https-start" },
             "security__all.csv",
         );
-        // alle Inhaltstypen (Bild, robots.txt) gehören zur Grundmenge, externe URLs nie
+        // alle Inhaltstypen (Bild) gehören zur Grundmenge, externe URLs nie; die robots.txt nicht (K-54)
         assert!(all.iter().any(|a| a.ends_with("/pic.png")));
-        assert!(all.iter().any(|a| a.ends_with("/robots.txt")));
+        assert!(!all.iter().any(|a| a.ends_with("/robots.txt")));
         assert!(!all.iter().any(|a| a.contains("other.test")));
     }
 }

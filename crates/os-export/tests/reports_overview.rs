@@ -196,11 +196,11 @@ async fn summary_counts_and_the_encountered_crawled_invariant() {
     let cfg = base_config();
     let fx = issues_crawl(&cfg).await;
     let (_tmp, t, _) = overview(&fx, &cfg, &issue_tabs());
-    // Fixture-Entwurf: 12 interne URLs (Startseite, robots.txt, 7 Seiten, 404, 404, 500, gesperrte Seite) und
-    // 2 externe; eine interne URL ist durch robots.txt gesperrt.
+    // Fixture-Entwurf: 11 interne URLs in den Tabellen (Startseite, 7 Seiten, 404, 404, 500, gesperrte Seite;
+    // die robots.txt zählt nicht, K-54) und 2 externe; eine interne URL ist durch robots.txt gesperrt.
     let n = |it: &str| -> u64 { urls(&t, "Summary", it).parse().unwrap() };
-    assert_eq!(n("Total URLs Encountered"), 14);
-    assert_eq!(n("Total URLs Crawled"), 13);
+    assert_eq!(n("Total URLs Encountered"), 13);
+    assert_eq!(n("Total URLs Crawled"), 12);
     assert_eq!(n("Total Internal Blocked by robots.txt"), 1);
     assert_eq!(n("Total External Blocked by robots.txt"), 0);
     assert_eq!(n("URLs Remaining In Queue"), 0);
@@ -256,13 +256,14 @@ async fn crawl_data_counts_per_content_class_with_two_decimal_percentages() {
         ]
     );
     assert_eq!(section_items(&t, external), section_items(&t, internal));
-    // 12 interne URLs: 10 HTML (inkl. der Fehlerseiten), robots.txt als Other, die gesperrte Seite Unknown.
-    assert_eq!(urls(&t, internal, "All"), "12");
+    // 11 interne URLs: 10 HTML (inkl. der Fehlerseiten), die gesperrte Seite Unknown; die robots.txt steht in
+    // keiner Zeile (K-54).
+    assert_eq!(urls(&t, internal, "All"), "11");
     assert_eq!(pct(&t, internal, "All"), "100.00");
     assert_eq!(urls(&t, internal, "HTML"), "10");
-    assert_eq!(pct(&t, internal, "HTML"), "83.33");
-    assert_eq!(urls(&t, internal, "Other"), "1");
-    assert_eq!(pct(&t, internal, "Other"), "8.33");
+    assert_eq!(pct(&t, internal, "HTML"), "90.91");
+    assert_eq!(urls(&t, internal, "Other"), "0");
+    assert_eq!(pct(&t, internal, "Other"), "0.00");
     assert_eq!(urls(&t, internal, "Unknown"), "1");
     assert_eq!(urls(&t, internal, "CSS"), "0");
     assert_eq!(pct(&t, internal, "CSS"), "0.00");
@@ -272,7 +273,7 @@ async fn crawl_data_counts_per_content_class_with_two_decimal_percentages() {
         .skip(1)
         .map(|i| urls(&t, internal, i).parse::<u64>().unwrap())
         .sum();
-    assert_eq!(sum, 12);
+    assert_eq!(sum, 11);
     // Extern: die beiden Seiten auf localhost.
     assert_eq!(urls(&t, external, "All"), "2");
     assert_eq!(urls(&t, external, "HTML"), "2");
@@ -305,15 +306,15 @@ async fn response_code_sections_split_internal_and_external_and_all_errors_adds_
     assert_eq!(section_items(&t, internal), expected_items);
     assert_eq!(section_items(&t, external), expected_items);
 
-    // Intern (Grundgesamtheit 12 URLs mit Antwort oder Sperre): 1 gesperrt, 8 × 2xx, 2 × 404, 1 × 500.
+    // Intern (Grundgesamtheit 11 URLs mit Antwort oder Sperre): 1 gesperrt, 7 × 2xx, 2 × 404, 1 × 500.
     assert_eq!(urls(&t, internal, "Blocked by Robots.txt"), "1");
     assert_eq!(urls(&t, internal, "No Response"), "0");
-    assert_eq!(urls(&t, internal, "Success (2xx)"), "8");
-    assert_eq!(pct(&t, internal, "Success (2xx)"), "66.67");
+    assert_eq!(urls(&t, internal, "Success (2xx)"), "7");
+    assert_eq!(pct(&t, internal, "Success (2xx)"), "63.64");
     assert_eq!(urls(&t, internal, "Client Error (4xx)"), "2");
     assert_eq!(urls(&t, internal, "Server Error (5xx)"), "1");
     assert_eq!(urls(&t, internal, "All Errors"), "3");
-    assert_eq!(pct(&t, internal, "All Errors"), "25.00");
+    assert_eq!(pct(&t, internal, "All Errors"), "27.27");
     // Extern: 1 × 200, 1 × 404.
     assert_eq!(urls(&t, external, "Success (2xx)"), "1");
     assert_eq!(urls(&t, external, "Client Error (4xx)"), "1");
@@ -371,19 +372,19 @@ async fn crawl_depth_rows_zero_to_ten_and_ten_plus() {
         rows,
         ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "10+"]
     );
-    // Zeile 0 = die Start-URL; die übrigen internen Seiten mit Antwort liegen in Tiefe 1
-    // (robots.txt hat keine Tiefe und fehlt).
+    // Zeile 0 = die Start-URL; die übrigen internen HTML-Seiten mit 2xx liegen in Tiefe 1 (K-58: die 404-/500-
+    // Seiten und die gesperrte Seite zählen nicht).
     assert_eq!(urls(&t, "Crawl Depth", "0"), "1");
-    assert_eq!(urls(&t, "Crawl Depth", "1"), "10");
+    assert_eq!(urls(&t, "Crawl Depth", "1"), "6");
     assert_eq!(urls(&t, "Crawl Depth", "2"), "0");
-    assert_eq!(pct(&t, "Crawl Depth", "0"), "9.09");
-    assert_eq!(pct(&t, "Crawl Depth", "1"), "90.91");
-    // Summe über alle Zeilen = Zahl interner URLs mit bekannter Tiefe.
+    assert_eq!(pct(&t, "Crawl Depth", "0"), "14.29");
+    assert_eq!(pct(&t, "Crawl Depth", "1"), "85.71");
+    // Summe über alle Zeilen = Zahl interner HTML-Seiten mit 2xx und bekannter Tiefe.
     let sum: u64 = rows
         .iter()
         .map(|d| urls(&t, "Crawl Depth", d).parse::<u64>().unwrap())
         .sum();
-    assert_eq!(sum, 11);
+    assert_eq!(sum, 7);
 
     // Synthetisch: eine Kette bis Tiefe 12 → „10“ und „10+“ getrennt.
     let tmp = tempfile::tempdir().unwrap();
