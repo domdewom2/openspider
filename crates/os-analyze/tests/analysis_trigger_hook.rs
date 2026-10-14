@@ -10,9 +10,10 @@ use os_analyze::analysis::persist::{self, RunState};
 use os_analyze::analysis::trigger::{ensure_analysis, run_after_crawl, run_manual};
 use os_analyze::analysis::CancelToken;
 use os_analyze::state::AnalysisSnapshot;
+use os_analyze::views::{filter_counts, query_view, ViewQuery};
 use os_engine::testing::{crawl_fixture_with, test_deps, SimFetcher, SimSite};
 use os_engine::{resume_crawl, start_crawl, CrawlRequest, CrawlSource, CrawlSummary, EngineDeps};
-use os_model::{AnalysisStep, CrawlConfig, CrawlState, StepState};
+use os_model::{AnalysisStep, CrawlConfig, CrawlState, FilterState, StepState, Value};
 use os_store::{CrawlFile, OpenMode};
 
 /// Hook = `run_after_crawl` (so setzt ihn `os-cli` ein); zählt die Aufrufe.
@@ -70,6 +71,48 @@ async fn the_analysis_starts_by_itself_when_the_crawl_ends_regularly() {
             .unwrap_or_else(|| panic!("{step:?} fehlt"));
         assert_ne!(rec.state, StepState::Pending, "{step:?}");
     }
+}
+
+// spec: CRAWL-141
+#[tokio::test]
+async fn the_automatic_analysis_fills_the_sitemaps_orphan_filter() {
+    let (deps, _) = analysis_deps();
+    let cfg = sitemap_crawl_config();
+    let fx = crawl_fixture_with("crawl-sitemaps", "http://site.test/", cfg.clone(), deps).await;
+    let file = open(fx.file.path());
+
+    // Kennung aus M1-filters.toml: Tab "Sitemaps", Filter "Orphan URLs" (Nachlauf-Filter des Schritts Sitemaps).
+    let count = filter_counts(&file, &cfg)
+        .unwrap()
+        .into_iter()
+        .find(|c| c.tab == "Sitemaps" && c.filter == "Orphan URLs")
+        .expect("Filter Sitemaps:Orphan URLs");
+    assert_eq!(count.state, FilterState::Ready, "nach der Analyse bereit");
+
+    let mut q = ViewQuery::new("Sitemaps", "Orphan URLs");
+    q.limit = 100;
+    let page = query_view(&file, &cfg, &q).unwrap();
+    let addresses: Vec<String> = page
+        .rows
+        .iter()
+        .map(|r| match &r[0] {
+            Value::Text(t) => t.clone(),
+            other => panic!("Adresse erwartet: {other:?}"),
+        })
+        .collect();
+    // /nur-in-sitemap steht nur in pages.xml und ist nirgends verlinkt; verlinkte Seiten (/, a.html, b.html) nicht.
+    assert!(
+        addresses.contains(&"http://site.test/nur-in-sitemap".to_string()),
+        "Orphans: {addresses:?}"
+    );
+    for linked in ["http://site.test/", "http://site.test/a.html"] {
+        assert!(
+            !addresses.contains(&linked.to_string()),
+            "{linked} ist verlinkt: {addresses:?}"
+        );
+    }
+    assert_eq!(count.count, Some(page.total), "Zähler = Zeilenzahl");
+    assert!(page.total >= 1);
 }
 
 // spec: CRAWL-141

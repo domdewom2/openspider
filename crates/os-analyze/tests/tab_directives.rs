@@ -473,7 +473,7 @@ async fn conflicting_directives_are_restrictive_and_listed_in_both_filters() {
     // Der kleinste max-snippet-Wert gehört zur Detailansicht (M2); die Rohwerte liefert M1.
 }
 
-// spec: TECH-064
+// spec: TECH-064, TECH-068
 #[tokio::test]
 async fn refresh_filter_and_the_indexability_it_causes() {
     let c = crawl(CrawlConfig::default()).await;
@@ -512,7 +512,7 @@ async fn refresh_filter_and_the_indexability_it_causes() {
     assert!(c.set("All").contains("/ok.html"));
 }
 
-// spec: TECH-064
+// spec: TECH-064, TECH-068
 #[tokio::test]
 async fn self_referencing_refresh_stays_in_the_filter_without_the_option() {
     // TECH-068: Option aus → Selbst-Refresh ändert die Indexierbarkeit nicht, die Seite bleibt in „Refresh“.

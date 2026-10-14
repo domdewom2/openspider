@@ -2,10 +2,8 @@
 //! `Found Via`, Ressourcen nie), Non-Indexable In Sitemap, Zustand der Nachlauf-Filter (TECH-005).
 //! Fixtures `tests/fixtures/tech/{sitemaps,crawl-analysis}`, Goldens unter `tests/golden/tech/…`.
 //!
-//! P24 (Indexierbarkeit: noindex, Canonical) ist parallel in Arbeit: Wo die Spec nicht indexierbare Seiten
-//! voraussetzt, die nur P24 erkennt (`/noindex`, `/canonicalised`), setzt `simulate_indexability` die
-//! Bewertung, die `os_model::indexability::evaluate` liefern muss, falls die Engine sie (noch) nicht
-//! bestimmt hat. Statuscode-Fälle (301, 410, robots) bewertet die Engine selbst.
+//! Die Indexierbarkeit (noindex, Canonical, Statuscodes, robots) bewertet die Engine selbst mit
+//! `os_model::indexability::evaluate`; die Tests lesen nur das Ergebnis.
 
 use std::path::{Path, PathBuf};
 
@@ -117,25 +115,6 @@ fn run_analysis(file: &CrawlFile, cfg: &CrawlConfig) {
     assert!(outcome.complete);
 }
 
-/// Setzt die Bewertung, die P24 für noindex bzw. Canonical liefert, falls die Engine sie noch nicht kennt.
-fn simulate_indexability(file: &CrawlFile) {
-    let conn = file.conn();
-    for path in ["/noindex", "/noindex-not-in-sitemap"] {
-        conn.execute(
-            "UPDATE urls SET indexability = 'Non-Indexable', indexability_status = 'noindex' \
-             WHERE address = ?1 AND state = 'done' AND indexability = 'Indexable'",
-            [format!("{BASE}{path}")],
-        )
-        .unwrap();
-    }
-    conn.execute(
-        "UPDATE urls SET indexability = 'Non-Indexable', indexability_status = 'Canonicalised' \
-         WHERE address = ?1 AND state = 'done' AND indexability = 'Indexable'",
-        [format!("{BASE}/canonicalised")],
-    )
-    .unwrap();
-}
-
 fn cfg_sitemaps() -> CrawlConfig {
     let mut cfg = CrawlConfig::default();
     cfg.speed.threads = 1;
@@ -145,9 +124,7 @@ fn cfg_sitemaps() -> CrawlConfig {
 }
 
 async fn crawl_sitemaps(cfg: &CrawlConfig) -> FixtureCrawl {
-    let fx = crawl_fixture_from("tech/sitemaps", &format!("{BASE}/"), cfg.clone()).await;
-    simulate_indexability(&fx.file);
-    fx
+    crawl_fixture_from("tech/sitemaps", &format!("{BASE}/"), cfg.clone()).await
 }
 
 // spec: TECH-005, TECH-211

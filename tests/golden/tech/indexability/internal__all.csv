@@ -1,0 +1,23 @@
+Address,Indexability,Indexability Status
+{BASE}/,Indexable,
+{BASE}/aborted,Non-Indexable,No Response
+{BASE}/blocked.html,Non-Indexable,Blocked by Robots.txt
+{BASE}/canonical-other.html,Non-Indexable,Canonicalised
+{BASE}/error,Non-Indexable,Server Error
+{BASE}/gone,Non-Indexable,Client Error
+{BASE}/moved,Non-Indexable,Redirected
+{BASE}/noindex-canonical.html,Non-Indexable,noindex
+{BASE}/noindex.html,Non-Indexable,noindex
+{BASE}/noindex.pdf,Non-Indexable,noindex
+{BASE}/none.html,Non-Indexable,noindex
+{BASE}/ok.html,Indexable,
+{BASE}/refresh-bare.html,Non-Indexable,Self Referencing Meta Refresh
+{BASE}/refresh-fragment.html,Non-Indexable,Self Referencing Meta Refresh
+{BASE}/refresh-header.html,Non-Indexable,Redirected
+{BASE}/refresh-other.html,Non-Indexable,Redirected
+{BASE}/refresh-query.html,Non-Indexable,Redirected
+{BASE}/refresh-query.html?x=1,Non-Indexable,Self Referencing Meta Refresh
+{BASE}/refresh-self-abs.html,Non-Indexable,Self Referencing Meta Refresh
+{BASE}/refresh-self-header.html,Non-Indexable,Self Referencing Meta Refresh
+{BASE}/refresh-self.html,Non-Indexable,Self Referencing Meta Refresh
+{BASE}/robots.txt,Indexable,

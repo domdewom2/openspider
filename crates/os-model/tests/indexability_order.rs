@@ -156,7 +156,7 @@ fn the_first_matching_reason_wins() {
     assert_eq!(eval(&fetch(200), Some(&noindex_canon), &[]), Some(Noindex));
 }
 
-// spec: TECH-001
+// spec: TECH-001, TECH-068
 #[test]
 fn meta_refresh_to_another_url_is_a_redirect_with_any_delay() {
     use IndexabilityStatus::*;
@@ -179,7 +179,7 @@ fn meta_refresh_to_another_url_is_a_redirect_with_any_delay() {
     assert_eq!(eval(&fetch(200), Some(&page()), &[query]), Some(Redirected));
 }
 
-// spec: TECH-001
+// spec: TECH-001, TECH-068
 #[test]
 fn self_referencing_refresh_depends_on_the_option() {
     use IndexabilityStatus::*;

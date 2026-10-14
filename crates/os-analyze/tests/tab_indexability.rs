@@ -3,11 +3,18 @@
 //!
 //! Fixtures: `tech/indexability` (je Seite ein Grund der Prüfreihenfolge) und `tech/url-compare`
 //! (Canonical-Varianten). Die Tab-Sicht auf dieselben Daten prüft `tab_canonicals.rs`.
+//!
+//! Golden-Dateien unter `tests/golden/tech/indexability/` (TECH-007) halten je Tab und Filter Adresse,
+//! Indexability und Indexability Status fest; die Werte stehen vorab ausdrücklich in den Tests oben
+//! (aus TECH-001 abgeleitet), die Goldens sichern darüber hinaus die Filterzugehörigkeit.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
+use std::path::PathBuf;
 
+use os_analyze::defs::SortKey;
+use os_analyze::views::{query_view, ColumnSelection, ViewQuery};
 use os_engine::testing::{crawl_fixture, FixtureCrawl};
-use os_model::CrawlConfig;
+use os_model::{CrawlConfig, Value};
 
 /// (Indexability, Indexability Status) je Pfad; externe URLs tragen das Präfix `ext:`.
 fn indexability(fx: &FixtureCrawl) -> BTreeMap<String, (String, String)> {
@@ -72,7 +79,7 @@ async fn each_reason_of_the_check_order_has_its_page() {
     expect(&m, "/noindex-canonical.html", "noindex");
 }
 
-// spec: TECH-001
+// spec: TECH-001, TECH-068
 #[tokio::test]
 async fn meta_refresh_to_another_url_is_redirected_and_to_itself_is_not_indexable() {
     let fx = crawl_fixture("tech/indexability", CrawlConfig::default()).await;
@@ -100,7 +107,7 @@ async fn meta_refresh_to_another_url_is_redirected_and_to_itself_is_not_indexabl
     }
 }
 
-// spec: TECH-001
+// spec: TECH-001, TECH-068
 #[tokio::test]
 async fn self_referencing_refresh_is_ignored_without_the_option() {
     // TECH-068: Option aus → Selbst-Refresh ändert die Indexierbarkeit nicht.
@@ -174,4 +181,154 @@ async fn canonical_variants_are_compared_after_url_normalisation() {
     expect(&m, "/u/base.html", "Canonicalised");
     // ungültige URL: nie ein Treffer, die Seite bleibt indexierbar
     expect(&m, "/u/broken.html", "");
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Golden-Dateien (TECH-007)
+
+fn text(v: &Value) -> String {
+    match v {
+        Value::Text(t) => t.clone(),
+        Value::Int(i) => i.to_string(),
+        Value::Bool(b) => b.to_string(),
+        Value::Float(f) => f.to_string(),
+        Value::Null => String::new(),
+    }
+}
+
+/// Zeilen einer Ansicht (Adresse aufsteigend), Basis-URL und externe Basis zu `{BASE}` bzw. `{EXT}` normalisiert.
+fn view_rows(fx: &FixtureCrawl, tab: &str, filter: &str, columns: &[&str]) -> Vec<Vec<String>> {
+    let base = fx.site.base_url();
+    let ext = format!("http://localhost:{}", fx.site.port());
+    let mut q = ViewQuery::new(tab, filter);
+    q.columns = ColumnSelection::Named(columns.iter().map(|c| c.to_string()).collect());
+    q.limit = 500;
+    q.sort = vec![SortKey {
+        column: "Address".to_string(),
+        descending: false,
+    }];
+    let page = query_view(&fx.file, &CrawlConfig::default(), &q)
+        .unwrap_or_else(|e| panic!("{tab}:{filter}: {e}"));
+    assert_eq!(page.columns, columns, "Spalten von {tab}:{filter}");
+    page.rows
+        .iter()
+        .map(|r| {
+            r.iter()
+                .map(|v| text(v).replace(&base, "{BASE}").replace(&ext, "{EXT}"))
+                .collect()
+        })
+        .collect()
+}
+
+fn csv(columns: &[&str], rows: &[Vec<String>]) -> String {
+    let mut out = format!("{}\n", columns.join(","));
+    for r in rows {
+        out.push_str(&r.join(","));
+        out.push('\n');
+    }
+    out
+}
+
+fn assert_golden(name: &str, columns: &[&str], rows: &[Vec<String>]) {
+    let path: PathBuf = [
+        env!("CARGO_MANIFEST_DIR"),
+        "../../tests/golden/tech/indexability",
+        name,
+    ]
+    .iter()
+    .collect();
+    os_testsite::golden::assert_golden(path, &csv(columns, rows));
+}
+
+fn addresses(rows: &[Vec<String>]) -> BTreeSet<String> {
+    rows.iter().map(|r| r[0].clone()).collect()
+}
+
+const COLUMNS: &[&str] = &["Address", "Indexability", "Indexability Status"];
+
+// spec: TECH-007, TECH-001
+#[tokio::test]
+async fn goldens_indexability_per_url_and_filter() {
+    let fx = crawl_fixture("tech/indexability", CrawlConfig::default()).await;
+
+    let internal = view_rows(&fx, "Internal", "All", COLUMNS);
+    let external = view_rows(&fx, "Response Codes", "External All", COLUMNS);
+
+    // Vorab die aus TECH-001 abgeleiteten Werte (je Grund der Prüfreihenfolge eine Zeile), danach erst das Golden.
+    let row = |rows: &[Vec<String>], address: &str| -> (String, String) {
+        let r = rows
+            .iter()
+            .find(|r| r[0] == address)
+            .unwrap_or_else(|| panic!("{address} fehlt: {rows:#?}"));
+        (r[1].clone(), r[2].clone())
+    };
+    for (address, status) in [
+        ("{BASE}/ok.html", ""),
+        ("{BASE}/blocked.html", "Blocked by Robots.txt"),
+        ("{BASE}/aborted", "No Response"),
+        ("{BASE}/moved", "Redirected"),
+        ("{BASE}/gone", "Client Error"),
+        ("{BASE}/error", "Server Error"),
+        ("{BASE}/refresh-self.html", "Self Referencing Meta Refresh"),
+        ("{BASE}/noindex.html", "noindex"),
+        ("{BASE}/canonical-other.html", "Canonicalised"),
+    ] {
+        let wanted = if status.is_empty() {
+            "Indexable"
+        } else {
+            "Non-Indexable"
+        };
+        assert_eq!(
+            row(&internal, address),
+            (wanted.to_string(), status.to_string()),
+            "{address}"
+        );
+    }
+    // Externe URLs: nur der Statuscode zählt (200 indexierbar, 404 nicht).
+    assert_eq!(
+        row(&external, "{EXT}/ext-ok.html"),
+        ("Indexable".to_string(), String::new())
+    );
+    assert_eq!(
+        row(&external, "{EXT}/ext-gone"),
+        ("Non-Indexable".to_string(), "Client Error".to_string())
+    );
+
+    assert_golden("internal__all.csv", COLUMNS, &internal);
+    assert_golden("response_codes__external_all.csv", COLUMNS, &external);
+
+    // Filterzugehörigkeit: Canonicals:Canonicalised (Canonical zeigt auf andere URL, TECH-014) und
+    // Directives:Noindex (Meta Robots und X-Robots-Tag mit `noindex`; `none` hat den eigenen Filter None).
+    let canonicalised = view_rows(
+        &fx,
+        "Canonicals",
+        "Canonicalised",
+        &["Address", "Indexability Status"],
+    );
+    assert!(addresses(&canonicalised).contains("{BASE}/canonical-other.html"));
+    assert_golden(
+        "canonicals__canonicalised.csv",
+        &["Address", "Indexability Status"],
+        &canonicalised,
+    );
+    let noindex = view_rows(
+        &fx,
+        "Directives",
+        "Noindex",
+        &["Address", "Indexability Status"],
+    );
+    for path in ["/noindex.html", "/noindex.pdf", "/noindex-canonical.html"] {
+        assert!(
+            addresses(&noindex).contains(&format!("{{BASE}}{path}")),
+            "{path} fehlt in Directives:Noindex"
+        );
+    }
+    assert!(!addresses(&noindex).contains("{BASE}/ok.html"));
+    let none = view_rows(&fx, "Directives", "None", &["Address"]);
+    assert!(addresses(&none).contains("{BASE}/none.html"));
+    assert_golden(
+        "directives__noindex.csv",
+        &["Address", "Indexability Status"],
+        &noindex,
+    );
 }
