@@ -45,6 +45,30 @@ pub enum ColumnSql {
         /// SQL für die Werteliste.
         list_sql: &'static str,
     },
+    /// Verschränkte Mehrfachspalte (TECH-004, TECH-071): je Index `n` mehrere Teilspalten hintereinander,
+    /// z. B. `HTML hreflang 1`, `HTML hreflang 1 URL`, `HTML hreflang 2`, `HTML hreflang 2 URL`, …
+    ///
+    /// Die Teilspalten heißen `<base> <n>` (Suffix leer) bzw. `<base> <n> <suffix>`. Die Anzahl der Indizes ist
+    /// das Maximum über alle Teillisten und alle Zeilen der Ansicht (mindestens 1); fehlende Werte sind leere
+    /// Texte. `ColumnDef.key` benennt die ganze Spalte (Auswahl aller Indizes), `ColumnDef.kind` gilt nur für
+    /// den Fallback – maßgeblich ist die Art der jeweiligen Teilspalte.
+    MultiPaired {
+        /// Grundname der Teilspalten, z. B. `"HTML hreflang"`.
+        base: &'static str,
+        /// Teilspalten je Index in Ausgabereihenfolge (mindestens eine).
+        parts: &'static [PairedPart],
+    },
+}
+
+/// Eine Teilspalte einer [`ColumnSql::MultiPaired`]-Spalte.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PairedPart {
+    /// Namenszusatz hinter der Nummer, z. B. `"URL"`; leer für die erste Teilspalte (`<base> <n>`).
+    pub suffix: &'static str,
+    /// SQL für die Werteliste dieser Teilspalte (`?1` = `url_id`, mit `ORDER BY`).
+    pub list_sql: &'static str,
+    /// Darstellungsart der Werte (bestimmt Sortierung und Zellwert).
+    pub kind: ColumnKind,
 }
 
 /// Darstellungsart einer Spalte.

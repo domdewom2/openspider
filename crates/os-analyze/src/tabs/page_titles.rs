@@ -11,7 +11,7 @@ use super::duplicates::{
     address_column, all_filter, column, duplicate_predicate, element_params, indexability_columns,
     missing_predicate, population, problem_filter,
 };
-use crate::defs::{ColumnKind, SortKey, TabDef};
+use crate::defs::{ColumnKind, TabDef};
 
 /// Definition des Tabs „Page Titles“.
 pub fn tab() -> TabDef {
@@ -74,11 +74,8 @@ pub fn tab() -> TabDef {
             // ONPAGE-098: mehr als ein <title> (Anzahl auf 2 gedeckelt gespeichert, > 1 genügt).
             problem_filter("Multiple", "u.title_count > 1"),
         ],
-        // ONPAGE-092: Gleiche Titel stehen im Duplicate-Filter direkt untereinander.
-        default_sort: vec![SortKey {
-            column: "Title 1".to_string(),
-            descending: false,
-        }],
+        // Keine Tab-Sortierung: Entdeckungsreihenfolge; nur `Duplicate` gruppiert (tabs::filter_default_sort).
+        default_sort: Vec::new(),
         params: |cfg| {
             let mut p = element_params(cfg, cfg.extraction.page_titles);
             p.push((

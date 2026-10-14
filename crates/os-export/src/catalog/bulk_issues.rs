@@ -146,6 +146,15 @@ fn kinds_for(tab: &TabDef, columns: &[String]) -> Vec<ColumnKind> {
                         os_analyze::ColumnSql::Multi { base, .. } => name
                             .strip_prefix(*base)
                             .is_some_and(|rest| rest.trim().parse::<u32>().is_ok()),
+                        // Verschränkte Teilspalten: `<Basis> <n>` bzw. `<Basis> <n> <Suffix>` (nur Übersetzbarkeit;
+                        // die Art je Teilspalte regelt M1-N10).
+                        os_analyze::ColumnSql::MultiPaired { base, .. } => {
+                            name.strip_prefix(*base).is_some_and(|rest| {
+                                rest.split_whitespace()
+                                    .next()
+                                    .is_some_and(|n| n.parse::<u32>().is_ok())
+                            })
+                        }
                         os_analyze::ColumnSql::Expr(_) => false,
                     })
                 })

@@ -170,24 +170,55 @@ async fn population_columns_and_occurrences_over_all_sources() {
         .collect();
     assert_eq!(en_codes, ["en", "de", "fr", "fr-CA", "es", "it", "nl"]);
     assert_eq!(
-        cell(&all, "/en/", "HTML hreflang URL 1"),
+        cell(&all, "/en/", "HTML hreflang 1 URL"),
         format!("{BASE}/en/")
     );
     assert_eq!(
-        cell(&all, "/en/", "HTML hreflang URL 4"),
+        cell(&all, "/en/", "HTML hreflang 4 URL"),
         format!("{BASE}/fr-old/")
     );
     assert_eq!(cell(&all, "/en/", "Title 1"), "English");
+    // Reihenfolge der Spalten nach TECH-071: je Index Code, dann URL; erst HTML, dann HTTP, dann Sitemap.
+    let hreflang_cols: Vec<&str> = all
+        .columns
+        .iter()
+        .map(String::as_str)
+        .filter(|c| c.contains("hreflang"))
+        .collect();
+    assert_eq!(
+        &hreflang_cols[..4],
+        [
+            "HTML hreflang 1",
+            "HTML hreflang 1 URL",
+            "HTML hreflang 2",
+            "HTML hreflang 2 URL"
+        ]
+    );
+    let first_http = hreflang_cols
+        .iter()
+        .position(|c| c.starts_with("HTTP"))
+        .unwrap();
+    assert_eq!(hreflang_cols[first_http - 2], "HTML hreflang 7");
+    assert_eq!(hreflang_cols[first_http - 1], "HTML hreflang 7 URL");
+    assert_eq!(
+        &hreflang_cols[first_http..first_http + 2],
+        ["HTTP hreflang 1", "HTTP hreflang 1 URL"]
+    );
+    assert!(hreflang_cols.contains(&"Sitemap hreflang 2 URL"));
+    assert!(
+        !hreflang_cols.iter().any(|c| c.contains("hreflang URL")),
+        "alte Form entfällt"
+    );
     // HTTP- und Sitemap-Spalten.
     assert_eq!(cell(&all, "/pdf-en.pdf", "HTTP hreflang 1"), "en");
     assert_eq!(
-        cell(&all, "/pdf-en.pdf", "HTTP hreflang URL 1"),
+        cell(&all, "/pdf-en.pdf", "HTTP hreflang 1 URL"),
         format!("{BASE}/pdf-en.pdf")
     );
     assert_eq!(cell(&all, "/es/", "Sitemap hreflang 1"), "es");
     assert_eq!(cell(&all, "/es/", "Sitemap hreflang 2"), "en");
     assert_eq!(
-        cell(&all, "/es/", "Sitemap hreflang URL 2"),
+        cell(&all, "/es/", "Sitemap hreflang 2 URL"),
         format!("{BASE}/en/")
     );
     assert_eq!(cell(&all, "/en/", "Sitemap hreflang 1"), "");

@@ -10,7 +10,7 @@ use super::duplicates::{
     address_column, all_filter, column, duplicate_predicate, element_params, indexability_columns,
     missing_predicate, population, problem_filter,
 };
-use crate::defs::{ColumnKind, SortKey, TabDef};
+use crate::defs::{ColumnKind, TabDef};
 
 /// Definition des Tabs „Meta Description“.
 pub fn tab() -> TabDef {
@@ -83,10 +83,8 @@ pub fn tab() -> TabDef {
             // ONPAGE-107
             problem_filter("Multiple", "u.meta_desc_count > 1"),
         ],
-        default_sort: vec![SortKey {
-            column: "Meta Description 1".to_string(),
-            descending: false,
-        }],
+        // Keine Tab-Sortierung: Entdeckungsreihenfolge; nur `Duplicate` gruppiert (tabs::filter_default_sort).
+        default_sort: Vec::new(),
         params: |cfg| {
             let mut p = element_params(cfg, cfg.extraction.meta_description);
             p.push((

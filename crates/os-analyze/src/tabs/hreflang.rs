@@ -25,7 +25,9 @@
 
 use os_model::{CrawlConfig, Value};
 
-use crate::defs::{ColumnDef, ColumnKind, ColumnSql, FilterDef, FilterKind, SortKey, TabDef};
+use crate::defs::{
+    ColumnDef, ColumnKind, ColumnSql, FilterDef, FilterKind, PairedPart, SortKey, TabDef,
+};
 
 /// Grundmenge: interne Seiten mit hreflang-Bezug; `:store` ist `spider.hreflang.store`.
 const POPULATION: &str = "u.is_internal = 1 AND u.in_tables = 1 AND :store = 1 AND (\
@@ -84,16 +86,30 @@ macro_rules! urls_sql {
     };
 }
 
-fn multi(
-    key: &'static str,
-    base: &'static str,
-    list_sql: &'static str,
-    kind: ColumnKind,
-) -> ColumnDef {
+/// Teilspalten je Quelle in der Reihenfolge von TECH-071: je Index erst der Code, dann die URL.
+macro_rules! paired_parts {
+    ($source:literal) => {
+        &[
+            PairedPart {
+                suffix: "",
+                list_sql: codes_sql!($source),
+                kind: ColumnKind::Text,
+            },
+            PairedPart {
+                suffix: "URL",
+                list_sql: urls_sql!($source),
+                kind: ColumnKind::Url,
+            },
+        ]
+    };
+}
+
+/// Verschränkte Mehrfachspalte einer Quelle: `<Basis> <n>`, `<Basis> <n> URL` für n = 1 … max.
+fn paired(base: &'static str, parts: &'static [PairedPart]) -> ColumnDef {
     ColumnDef {
-        key,
-        sql: ColumnSql::Multi { base, list_sql },
-        kind,
+        key: base,
+        sql: ColumnSql::MultiPaired { base, parts },
+        kind: ColumnKind::Text,
         default_visible: true,
         extension: false,
     }
@@ -122,9 +138,9 @@ fn params(cfg: &CrawlConfig) -> Vec<(&'static str, Value)> {
 
 /// Definition des Tabs „Hreflang“.
 ///
-/// Die Spalten je Quelle erscheinen als zwei Mehrfachspalten (Codes, dann URLs): `HTML hreflang 1 … n` und
-/// `HTML hreflang URL 1 … n`. Die Referenz verschränkt Code und URL je Index; das lässt `ColumnSql::Multi`
-/// (Name `<Basis> <n>`) nicht zu (siehe Bericht, Schnittstellenbedarf).
+/// Die Spalten je Quelle sind verschränkte Mehrfachspalten (`ColumnSql::MultiPaired`, TECH-071): je Index erst
+/// der Code, dann die URL – `HTML hreflang 1`, `HTML hreflang 1 URL`, `HTML hreflang 2`, … (ebenso `HTTP` und
+/// `Sitemap`). Die Anzahl der Indizes ist das Maximum über die Ansicht.
 pub fn tab() -> TabDef {
     TabDef {
         id: "Hreflang",
@@ -151,42 +167,9 @@ pub fn tab() -> TabDef {
                 default_visible: true,
                 extension: false,
             },
-            multi(
-                "HTML hreflang",
-                "HTML hreflang",
-                codes_sql!("html"),
-                ColumnKind::Text,
-            ),
-            multi(
-                "HTML hreflang URL",
-                "HTML hreflang URL",
-                urls_sql!("html"),
-                ColumnKind::Url,
-            ),
-            multi(
-                "HTTP hreflang",
-                "HTTP hreflang",
-                codes_sql!("http"),
-                ColumnKind::Text,
-            ),
-            multi(
-                "HTTP hreflang URL",
-                "HTTP hreflang URL",
-                urls_sql!("http"),
-                ColumnKind::Url,
-            ),
-            multi(
-                "Sitemap hreflang",
-                "Sitemap hreflang",
-                codes_sql!("sitemap"),
-                ColumnKind::Text,
-            ),
-            multi(
-                "Sitemap hreflang URL",
-                "Sitemap hreflang URL",
-                urls_sql!("sitemap"),
-                ColumnKind::Url,
-            ),
+            paired("HTML hreflang", paired_parts!("html")),
+            paired("HTTP hreflang", paired_parts!("http")),
+            paired("Sitemap hreflang", paired_parts!("sitemap")),
         ],
         filters: vec![
             filter("All", "1"),
