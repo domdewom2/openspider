@@ -192,7 +192,80 @@ fn block_boundaries_create_whitespace_inline_elements_do_not() {
     assert_eq!(count("<body><h2>a</h2><h3>b</h3></body>"), 2);
     // Inline-Elemente trennen nicht.
     assert_eq!(count("<body>a<b>b</b>c <em>d</em><span>e</span></body>"), 2);
-    assert_eq!(count("<body><a href=\"/x\">link</a>text</body>"), 1);
+    // „link“ und „text“ ohne Leerraum = ein Token, dazu ein Wort für den Link (A-35b)
+    assert_eq!(count("<body><a href=\"/x\">link</a>text</body>"), 2);
+}
+
+// spec: ONPAGE-141
+#[test]
+fn every_link_with_href_in_the_content_area_adds_one_word() {
+    // A-35b, K-59 (Paritätsbefund N-03): je `<a href>` im Inhaltsbereich ein Wort mehr, unabhängig von der
+    // Wortzahl des Ankertexts.
+    assert_eq!(
+        count("<body><p>eins zwei</p><a href=\"/a\">x</a></body>"),
+        4
+    );
+    assert_eq!(
+        count("<body><a href=\"/a\">ein langer Ankertext</a></body>"),
+        4
+    );
+    assert_eq!(
+        count("<body><a href=\"/a\"><img src=\"b.png\"></a></body>"),
+        1
+    );
+    assert_eq!(
+        count("<body><a href=\"/a\">x</a> <a href=\"/b\">y</a> <a href=\"/c\">z</a></body>"),
+        6
+    );
+    // ohne href kein Link
+    assert_eq!(count("<body><a name=\"top\">anker</a></body>"), 1);
+    assert_eq!(count("<body><a>anker</a></body>"), 1);
+}
+
+// spec: ONPAGE-141
+#[test]
+fn links_in_excluded_areas_do_not_add_words() {
+    // Standard-Ausschluss nav und footer
+    assert_eq!(
+        count("<body><nav><a href=\"/a\">x</a></nav><p>eins</p><footer><a href=\"/b\">y</a></footer></body>"),
+        1
+    );
+    // Exclude-Regel nach Klasse; Link im Inhalt daneben zählt
+    let area = ContentAreaConfig {
+        exclude_classes: vec!["skip".to_string()],
+        ..ContentAreaConfig::default()
+    };
+    assert_eq!(
+        count_with(
+            "<body><div class=\"skip\"><a href=\"/a\">x</a></div><p><a href=\"/b\">y</a></p></body>",
+            &area
+        ),
+        2
+    );
+    // Include-Regel: nur Links innerhalb passender Elemente
+    let include = ContentAreaConfig {
+        include_ids: vec!["main".to_string()],
+        ..ContentAreaConfig::default()
+    };
+    assert_eq!(
+        count_with(
+            "<body><a href=\"/a\">draussen</a><div id=\"main\"><a href=\"/b\">drin</a></div></body>",
+            &include
+        ),
+        2
+    );
+    // Text Ratio zählt keine Links mit (nur Zeichen)
+    let with_link = analyze_with_source(
+        &Document::parse("<body><a href=\"/a\">abcd</a></body>"),
+        &ContentAreaConfig::default(),
+        100,
+    );
+    let without = analyze_with_source(
+        &Document::parse("<body>abcd</body>"),
+        &ContentAreaConfig::default(),
+        100,
+    );
+    assert!((with_link.text_ratio - without.text_ratio).abs() < f32::EPSILON);
 }
 
 // spec: ONPAGE-140

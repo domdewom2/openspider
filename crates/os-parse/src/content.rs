@@ -7,9 +7,10 @@
 //! Leerraum (`<p>a</p><p>b</p>` → zwei Wörter), Inline-Elemente nicht (`a<b>b</b>` → ein Wort). Versteckter
 //! Text (`hidden`, `display:none`) bleibt enthalten.
 //!
-//! **Wortzahl (ONPAGE-141, A-35):** Anzahl der durch Unicode-Leerraum (inkl. U+00A0) getrennten nicht
-//! leeren Token; reine Satzzeichen-Token zählen. Keine Sprachsegmentierung: CJK-Text ohne Leerzeichen zählt
-//! als ein Wort je Block (bekannte Einschränkung).
+//! **Wortzahl (ONPAGE-141, A-35, A-35b):** Anzahl der durch Unicode-Leerraum (inkl. U+00A0) getrennten nicht
+//! leeren Token; reine Satzzeichen-Token zählen. Dazu kommt ein Wort je `<a href>` im Inhaltsbereich (A-35b,
+//! K-59, Paritätsbefund N-03): Links in ausgeschlossenen Bereichen (nav, footer, Exclude-Regeln) zählen nicht.
+//! Keine Sprachsegmentierung: CJK-Text ohne Leerzeichen zählt als ein Wort je Block (bekannte Einschränkung).
 //!
 //! **Text Ratio (A-7):** Zeichen des sichtbaren Textes im gesamten `<body>` (ohne `script`, `style`,
 //! `noscript`, `template`; Leerraum zusammengefasst und getrennt durch genau ein Leerzeichen) geteilt durch
@@ -36,6 +37,8 @@ pub struct ContentStats {
 #[derive(Default)]
 struct TokenCounter {
     tokens: u64,
+    /// Anzahl `<a href>` im Inhaltsbereich (A-35b).
+    links: u64,
     token_chars: u64,
     in_token: bool,
 }
@@ -75,6 +78,8 @@ struct Rules {
     exclude_ids: Vec<String>,
     /// `svg` ausschließen (Inhaltsbereich) oder mitzählen (Text Ratio, A-7).
     drop_svg: bool,
+    /// Je `<a href>` ein Wort mehr zählen (Wortzahl, A-35b); die Text Ratio zählt keine Links.
+    count_links: bool,
 }
 
 fn lower_list(list: &[String]) -> Vec<String> {
@@ -101,6 +106,7 @@ impl Rules {
             exclude_classes: token_list(&area.exclude_classes),
             exclude_ids: token_list(&area.exclude_ids),
             drop_svg: true,
+            count_links: true,
         }
     }
 
@@ -114,6 +120,7 @@ impl Rules {
             exclude_classes: Vec::new(),
             exclude_ids: Vec::new(),
             drop_svg: false,
+            count_links: false,
         }
     }
 
@@ -224,6 +231,14 @@ fn walk(body: ElementRef, rules: &Rules) -> TokenCounter {
                         include_depth += 1;
                     }
                     include_marks.push(hit);
+                    if rules.count_links
+                        && (!has_include || include_depth > 0)
+                        && el.name() == "a"
+                        && &*el.name.ns == XHTML_NS
+                        && el.attr("href").is_some()
+                    {
+                        counter.links += 1;
+                    }
                 }
                 Node::Text(text) if skip_depth == 0 && (!has_include || include_depth > 0) => {
                     counter.push_text(text);
@@ -257,7 +272,8 @@ pub fn word_count(doc: &Document, area: &ContentAreaConfig) -> u32 {
     let Some(body) = body_of(doc) else {
         return 0;
     };
-    u32::try_from(walk(body, &Rules::for_area(area)).tokens).unwrap_or(u32::MAX)
+    let counter = walk(body, &Rules::for_area(area));
+    u32::try_from(counter.tokens + counter.links).unwrap_or(u32::MAX)
 }
 
 /// Text Ratio in Prozent (eine Nachkommastelle) aus der Zeichenzahl des gesamten Quelltexts (A-7).
