@@ -425,7 +425,7 @@ async fn a_report_with_an_unmet_prerequisite_warns_and_exit_4_only_with_strict()
     assert_eq!(strict.code, 4, "{}", strict.dump());
 }
 
-// spec: OUT-205
+// spec: CRAWL-135
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn json_progress_writes_json_lines_to_stderr_and_nothing_to_stdout() {
     let site = site("out-basic-site").await;

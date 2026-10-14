@@ -232,9 +232,9 @@ async fn several_crawl_list_sources_are_merged() {
     assert_eq!(paths(&rows), ["/p1.html", "/p2.html", "/p3.html"]);
 }
 
-// spec: OUT-015 [M2]
+// spec: OUT-183 [M2]
 #[test]
-#[ignore = "M2: OUT-015 Export in Upload-Reihenfolge mit Duplikaten und Spalte Original Url gehört zu keinem M1-Paket (os-export liefert die Zeilen der gecrawlten URLs)"]
+#[ignore = "M2: OUT-183 Export in Upload-Reihenfolge mit Duplikaten und Spalte Original Url (OUT-015) gehört zu keinem M1-Paket"]
 fn the_list_export_keeps_the_upload_order_including_duplicates() {
     // Soll: Liste `B, A, B, example.com/c` → 4 Zeilen in dieser Reihenfolge, erste Spalte `Original Url`.
 }

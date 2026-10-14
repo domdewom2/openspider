@@ -371,3 +371,58 @@ mod signals {
         assert_eq!(check, "ok");
     }
 }
+
+// spec: OUT-184
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_crawl_file_of_a_newer_schema_or_a_foreign_file_is_rejected_without_changes() {
+    let site = site("out-basic-site").await;
+    let env = Env::new();
+    let run = env.run_async(crawl_args(&site, &[])).await;
+    assert_eq!(run.code, 0, "{}", run.dump());
+    let (path, _) = only_crawl(&env);
+
+    // Kopie mit höherer Schemaversion
+    let newer = env.work.path().join("neuer.ospider");
+    {
+        let file = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
+        file.conn()
+            .execute_batch("PRAGMA wal_checkpoint(TRUNCATE);")
+            .ok();
+    }
+    std::fs::copy(&path, &newer).unwrap();
+    {
+        let file = CrawlFile::open(&newer, OpenMode::ReadWrite).unwrap();
+        file.conn()
+            .execute_batch("PRAGMA user_version = 99;")
+            .unwrap();
+    }
+    let before = std::fs::read(&newer).unwrap();
+    let run = env
+        .run_async(vec![
+            "--load-crawl".to_string(),
+            newer.to_string_lossy().into_owned(),
+        ])
+        .await;
+    assert_eq!(run.code, 2, "{}", run.dump());
+    assert!(run.stderr.contains("nicht ladbar"), "{}", run.dump());
+    assert_eq!(
+        std::fs::read(&newer).unwrap(),
+        before,
+        "die Datei bleibt unverändert"
+    );
+
+    // Fremde Datei
+    let foreign = env.work.path().join("liste.txt");
+    std::fs::write(&foreign, "keine Crawl-Datei").unwrap();
+    let run = env
+        .run_async(vec![
+            "--load-crawl".to_string(),
+            foreign.to_string_lossy().into_owned(),
+        ])
+        .await;
+    assert_eq!(run.code, 2, "{}", run.dump());
+    assert_eq!(
+        std::fs::read_to_string(&foreign).unwrap(),
+        "keine Crawl-Datei"
+    );
+}
