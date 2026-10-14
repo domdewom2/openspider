@@ -1,19 +1,19 @@
 Type,Source,Destination,Size (Bytes),Alt Text,Anchor,Status Code,Status,Follow,Target,Rel,Path Type,Link Path,Link Position,Link Origin
-CSS,{BASE}/,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[2],Content,HTML
-CSS,{BASE}/about.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[2],Content,HTML
-CSS,{BASE}/blog/,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[1],Content,HTML
-CSS,{BASE}/blog/post-1.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[1],Content,HTML
-CSS,{BASE}/contact.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[1],Content,HTML
-CSS,{BASE}/faq.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[1],Content,HTML
-CSS,{BASE}/imprint.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[1],Content,HTML
-CSS,{BASE}/orphan.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[1],Content,HTML
-CSS,{BASE}/privat/intern.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[1],Content,HTML
-CSS,{BASE}/products.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[2],Content,HTML
-CSS,{BASE}/products/widget.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[1],Content,HTML
-CSS,{BASE}/services.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[1],Content,HTML
-Canonical,{BASE}/,{BASE}/,964,,,200,OK,True,,,Absolute,,,HTML
-Canonical,{BASE}/about.html,{BASE}/about.html,611,,,200,OK,True,,,Absolute,,,HTML
-Canonical,{BASE}/products.html,{BASE}/products.html,630,,,200,OK,True,,,Absolute,,,HTML
+CSS,{BASE}/,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,//head/link[2],Head,HTML
+CSS,{BASE}/about.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,//head/link[2],Head,HTML
+CSS,{BASE}/blog/,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,//head/link[1],Head,HTML
+CSS,{BASE}/blog/post-1.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,//head/link[1],Head,HTML
+CSS,{BASE}/contact.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,//head/link[1],Head,HTML
+CSS,{BASE}/faq.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,//head/link[1],Head,HTML
+CSS,{BASE}/imprint.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,//head/link[1],Head,HTML
+CSS,{BASE}/orphan.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,//head/link[1],Head,HTML
+CSS,{BASE}/privat/intern.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,//head/link[1],Head,HTML
+CSS,{BASE}/products.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,//head/link[2],Head,HTML
+CSS,{BASE}/products/widget.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,//head/link[1],Head,HTML
+CSS,{BASE}/services.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,//head/link[1],Head,HTML
+Canonical,{BASE}/,{BASE}/,964,,,200,OK,True,,,Absolute,//head/link[1],Head,HTML
+Canonical,{BASE}/about.html,{BASE}/about.html,611,,,200,OK,True,,,Absolute,//head/link[1],Head,HTML
+Canonical,{BASE}/products.html,{BASE}/products.html,630,,,200,OK,True,,,Absolute,//head/link[1],Head,HTML
 HTTP Redirect,{BASE}/old-page,{BASE}/about.html,611,,,200,OK,True,,,Root-Relative,,,HTML
 Hyperlink,{BASE}/,{BASE}/about.html,611,,About,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[1],Navigation,HTML
 Hyperlink,{BASE}/,{BASE}/blog/,488,,Blog,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[5],Navigation,HTML

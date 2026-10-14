@@ -85,6 +85,9 @@ pub struct CanonicalRef {
     pub resolved: Option<String>,
     /// Liegt im `<head>`.
     pub in_head: bool,
+    /// Pfad des Elements im Dokument (`//head/link[3]` im Kopf, sonst absolut; `None` für Header-Quellen und
+    /// Sitemaps), OUT-031/TECH-131.
+    pub xpath: Option<String>,
     /// Reihenfolge.
     pub order: u32,
 }
@@ -123,6 +126,9 @@ pub struct RefreshRef {
     pub target: Option<String>,
     /// Liegt im `<head>`.
     pub in_head: bool,
+    /// Pfad des Elements im Dokument (`//head/link[3]` im Kopf, sonst absolut; `None` für Header-Quellen und
+    /// Sitemaps), OUT-031/TECH-131.
+    pub xpath: Option<String>,
     /// Reihenfolge.
     pub order: u32,
 }
@@ -146,6 +152,9 @@ pub struct HreflangRef {
     pub resolved: Option<String>,
     /// Liegt im `<head>`.
     pub in_head: bool,
+    /// Pfad des Elements im Dokument (`//head/link[3]` im Kopf, sonst absolut; `None` für Header-Quellen und
+    /// Sitemaps), OUT-031/TECH-131.
+    pub xpath: Option<String>,
     /// Reihenfolge.
     pub order: u32,
 }
@@ -163,6 +172,9 @@ pub struct PaginationRef {
     pub resolved: Option<String>,
     /// Liegt im `<head>`.
     pub in_head: bool,
+    /// Pfad des Elements im Dokument (`//head/link[3]` im Kopf, sonst absolut; `None` für Header-Quellen und
+    /// Sitemaps), OUT-031/TECH-131.
+    pub xpath: Option<String>,
     /// Reihenfolge.
     pub order: u32,
 }

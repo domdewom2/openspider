@@ -41,6 +41,8 @@ pub struct RedirectTarget {
     pub raw: String,
     /// Verzögerung (nur Refresh).
     pub delay: Option<u32>,
+    /// Pfad des Meta-Elements (`//head/meta[2]`) für die Linkzeile; `None` bei `Location` und `Refresh`-Header.
+    pub xpath: Option<String>,
 }
 
 /// Wertet `Location` einer 3xx-Antwort aus. `None` bei fehlender oder unbrauchbarer `Location`.
@@ -59,6 +61,7 @@ pub fn http_target(request: &Url, headers: &[(String, String)]) -> Option<Redire
         target: os_url::normalize(&resolved),
         raw,
         delay: None,
+        xpath: None,
     })
 }
 
@@ -97,6 +100,7 @@ pub fn refresh_target(own: &Url, refs: &[RefreshRef]) -> RefreshOutcome {
         target: os_url::normalize(own),
         raw,
         delay: r.delay,
+        xpath: r.xpath.clone(),
     };
     let Some(target) = r.target.as_deref() else {
         // ohne (auflösbare) URL: nur ein reiner Meta-Selbst-Refresh (`content="30"`) ist eine Weiterleitung auf
@@ -104,7 +108,8 @@ pub fn refresh_target(own: &Url, refs: &[RefreshRef]) -> RefreshOutcome {
         // keinen Typ (Paritätslauf M1, parity-response `/http-refresh-nourl.html`). Ein angegebenes, nicht
         // auflösbares Ziel bleibt ohne Wirkung.
         if r.target_raw.is_none() && r.source == RefreshSource::Meta {
-            out.self_refresh = Some(own_target(os_url::normalize(own).display));
+            // ohne URL im Markup bleibt der Rohwert leer (Path Type „Path-Relative“ wie in der Referenz)
+            out.self_refresh = Some(own_target(String::new()));
         }
         return out;
     };
@@ -125,6 +130,7 @@ pub fn refresh_target(own: &Url, refs: &[RefreshRef]) -> RefreshOutcome {
         target: os_url::normalize(&url),
         raw: r.target_raw.clone().unwrap_or_else(|| target.to_string()),
         delay: r.delay,
+        xpath: r.xpath.clone(),
     });
     out
 }
@@ -201,6 +207,7 @@ mod tests {
             target: target.map(str::to_string),
             in_head: true,
             order,
+            xpath: None,
         }
     }
 
@@ -273,6 +280,7 @@ mod tests {
         assert_eq!(me.kind, RedirectType::MetaRefresh);
         assert_eq!(me.target.encoded, "https://site.test/p");
         assert_eq!(me.delay, Some(30));
+        assert_eq!(me.raw, "", "kein URL-Rohwert im Markup");
         let same = refresh_target(
             &own,
             &[refresh(

@@ -59,6 +59,7 @@ pub fn extract(doc: &Document, base: &url::Url) -> Vec<CanonicalRef> {
             resolved,
             in_head: dom::in_head(el),
             order: out.len() as u32,
+            xpath: Some(dom::xpath(el)),
         });
     }
     out

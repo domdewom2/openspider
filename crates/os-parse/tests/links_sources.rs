@@ -157,16 +157,16 @@ fn link_position_follows_the_nearest_landmark_ancestor() {
     assert_eq!(pos("/img/pic.png"), LinkPosition::Content);
     assert_eq!(pos("/aside-link"), LinkPosition::Aside);
     assert_eq!(pos("/footer-link"), LinkPosition::Footer);
-    // Ressourcen im Head: kein Landmark -> Content, aber in_head
+    // Ressourcen im Head: Position Head (OUT-031, K-63)
     let css = find(&links, "/css/main.css");
-    assert_eq!(css.position, LinkPosition::Content);
+    assert_eq!(css.position, LinkPosition::Head);
     assert!(css.in_head);
     assert!(!find(&links, "/hyperlink").in_head);
 }
 
 // spec: CRAWL-052
 #[test]
-fn xpath_is_absolute_with_position_indices() {
+fn xpath_is_absolute_in_the_body_and_head_relative_in_the_head() {
     let links = extract("index.html");
     assert_eq!(
         find(&links, "/header-link").xpath,
@@ -184,10 +184,8 @@ fn xpath_is_absolute_with_position_indices() {
         find(&links, "/UPPER").xpath,
         "/html[1]/body[1]/main[1]/p[1]/a[2]"
     );
-    assert_eq!(
-        find(&links, "/css/main.css").xpath,
-        "/html[1]/head[1]/link[1]"
-    );
+    // im Kopf ab `//head` (K-63)
+    assert_eq!(find(&links, "/css/main.css").xpath, "//head/link[1]");
 }
 
 // spec: CRAWL-052

@@ -558,3 +558,77 @@ async fn the_count_starts_anew_for_every_chain() {
         .iter()
         .all(|(_, f)| f != "redirect_limit_reached"));
 }
+
+// spec: OUT-031, TECH-131, CRAWL-015
+#[tokio::test]
+async fn synthetic_link_rows_of_head_elements_carry_position_head_and_the_head_path() {
+    // K-63 (Paritätsbefund N-09): Canonical, hreflang, Rel Next, Meta Refresh und CSS im Kopf: Position Head und
+    // Pfad `//head/<element>[n]`; Header-Quellen haben beides leer.
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::write(
+        dir.path().join("scenario.toml"),
+        r#"
+[[route]]
+path = "/"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><meta charset=\"utf-8\"><link rel=\"canonical\" href=\"/\"><link rel=\"stylesheet\" href=\"/s.css\"><link rel=\"alternate\" hreflang=\"en\" href=\"/\"><link rel=\"next\" href=\"/n\"><meta http-equiv=\"refresh\" content=\"7; url=/n\"><title>t</title></head><body><a href=\"/n\">n</a></body></html>"
+
+[[route]]
+path = "/n"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><title>n</title></head><body>n</body></html>"
+[route.headers]
+Link = "</>; rel=\"canonical\""
+
+[[route]]
+path = "/s.css"
+content_type = "text/css"
+body = "a{}"
+"#,
+    )
+    .unwrap();
+    let fx = os_engine::testing::crawl_dir_with(
+        dir.path(),
+        "/",
+        CrawlConfig::default(),
+        os_engine::testing::test_deps(),
+    )
+    .await;
+    let q = |sql: &str| -> Vec<(String, Option<String>, Option<String>)> {
+        let mut stmt = fx.file.conn().prepare(sql).unwrap();
+        stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))
+            .unwrap()
+            .map(|r| r.unwrap())
+            .collect()
+    };
+    let rows = q(
+        "SELECT l.link_type, l.link_path, l.link_position FROM links l \
+         JOIN urls s ON s.id = l.source_id WHERE s.url LIKE '%/' AND s.discovered_via = 'start' ORDER BY l.position",
+    );
+    let row = |t: &str| {
+        rows.iter()
+            .find(|r| r.0 == t)
+            .unwrap_or_else(|| panic!("{t}: {rows:?}"))
+    };
+    for (ty, path) in [
+        ("Canonical", "//head/link[1]"),
+        ("CSS", "//head/link[2]"),
+        ("Hreflang", "//head/link[3]"),
+        ("Rel Next", "//head/link[4]"),
+        ("Meta Refresh", "//head/meta[2]"),
+    ] {
+        assert_eq!(
+            (row(ty).1.as_deref(), row(ty).2.as_deref()),
+            (Some(path), Some("Head")),
+            "{ty}"
+        );
+    }
+    // Body-Link unverändert, Header-Quelle ohne Pfad und Position
+    assert_eq!(row("Hyperlink").1.as_deref(), Some("/html[1]/body[1]/a[1]"));
+    assert_eq!(row("Hyperlink").2.as_deref(), Some("Content"));
+    let hdr = q(
+        "SELECT l.link_type, l.link_path, l.link_position FROM links l JOIN urls s ON s.id = l.source_id \
+         WHERE s.url LIKE '%/n' AND l.link_type = 'HTTP Canonical'",
+    );
+    assert_eq!(hdr, [("HTTP Canonical".to_string(), None, None)]);
+}

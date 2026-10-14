@@ -116,7 +116,8 @@ fn css_in_style_blocks_and_attributes_comes_from_extract_inline() {
             ),
         ]
     );
-    assert_eq!(inline[0].xpath, "/html[1]/head[1]/style[1]");
+    assert_eq!(inline[0].xpath, "//head/style[1]");
+    assert_eq!(inline[0].position, os_model::LinkPosition::Head);
     assert!(inline[0].in_head);
     assert_eq!(inline[3].xpath, "/html[1]/body[1]/div[1]");
     assert!(!inline[3].in_head);

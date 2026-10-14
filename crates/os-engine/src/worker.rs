@@ -708,6 +708,19 @@ fn path_type_of(raw: &str) -> PathType {
 }
 
 fn synth_link(link_type: LinkType, raw: &str, resolved: Option<&str>) -> ExtractedLink {
+    synth_link_at(link_type, raw, resolved, None, true)
+}
+
+/// Wie `synth_link` für Verweise aus einem Element des Dokuments: Pfad `xpath` (`//head/link[3]` im Kopf,
+/// OUT-031/TECH-131, K-63) und Position `Head` für Elemente im Kopf. Header-Quellen und Sitemaps haben keinen Pfad
+/// (die Linkzeile bleibt ohne Pfad und Position).
+fn synth_link_at(
+    link_type: LinkType,
+    raw: &str,
+    resolved: Option<&str>,
+    xpath: Option<&str>,
+    in_head: bool,
+) -> ExtractedLink {
     ExtractedLink {
         link_type,
         href_raw: raw.to_string(),
@@ -718,9 +731,13 @@ fn synth_link(link_type: LinkType, raw: &str, resolved: Option<&str>) -> Extract
         nofollow_rel: false,
         target: None,
         path_type: path_type_of(raw),
-        xpath: String::new(),
-        position: LinkPosition::Content,
-        in_head: true,
+        xpath: xpath.unwrap_or_default().to_string(),
+        position: if xpath.is_some() && in_head {
+            LinkPosition::Head
+        } else {
+            LinkPosition::Content
+        },
+        in_head,
         doc_order: 0,
     }
 }
@@ -850,7 +867,13 @@ async fn assemble<F: Fetch>(
             HintSource::Http => LinkType::HttpCanonical,
             _ => LinkType::Canonical,
         };
-        let ext = synth_link(lt, &c.raw, c.resolved.as_deref());
+        let ext = synth_link_at(
+            lt,
+            &c.raw,
+            c.resolved.as_deref(),
+            c.xpath.as_deref(),
+            c.in_head,
+        );
         let i = add_ref(&mut refs, &mut targets, ext, true);
         map.canonicals.push(i);
     }
@@ -859,7 +882,13 @@ async fn assemble<F: Fetch>(
             HintSource::Http => LinkType::HttpHreflang,
             _ => LinkType::Hreflang,
         };
-        let ext = synth_link(lt, &h.href_raw, h.resolved.as_deref());
+        let ext = synth_link_at(
+            lt,
+            &h.href_raw,
+            h.resolved.as_deref(),
+            h.xpath.as_deref(),
+            h.in_head,
+        );
         let i = add_ref(&mut refs, &mut targets, ext, true);
         map.hreflang.push(i);
     }
@@ -869,7 +898,13 @@ async fn assemble<F: Fetch>(
         } else {
             LinkType::RelPrev
         };
-        let ext = synth_link(lt, &p.raw, p.resolved.as_deref());
+        let ext = synth_link_at(
+            lt,
+            &p.raw,
+            p.resolved.as_deref(),
+            p.xpath.as_deref(),
+            p.in_head,
+        );
         let i = add_ref(&mut refs, &mut targets, ext, true);
         map.pagination.push(i);
     }
@@ -1111,10 +1146,17 @@ async fn assemble<F: Fetch>(
             rel: None,
             target_attr: None,
             path_type: Some(path_type_of(&r.raw)),
-            link_path: None,
-            link_position: None,
+            // das Meta-Element im Kopf: Position Head und Pfad `//head/meta[n]`; Location und Header ohne beides
+            link_path: r.xpath.clone(),
+            link_position: r.xpath.as_ref().map(|x| {
+                if x.starts_with("//head/") {
+                    LinkPosition::Head
+                } else {
+                    LinkPosition::Content
+                }
+            }),
             link_origin: LinkOrigin::Html,
-            in_head: None,
+            in_head: r.xpath.as_ref().map(|x| x.starts_with("//head/")),
         });
     }
 
@@ -1769,6 +1811,7 @@ mod tests {
             resolved: resolved.map(str::to_string),
             in_head,
             order: 0,
+            xpath: None,
         }
     }
 
@@ -1894,6 +1937,7 @@ mod tests {
             resolved: Some(href.to_string()),
             in_head: false,
             order: 0,
+            xpath: None,
         }
     }
 

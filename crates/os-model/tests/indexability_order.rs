@@ -54,6 +54,7 @@ fn refresh(source: RefreshSource, target: Option<&str>) -> RefreshRef {
         target: target.map(str::to_string),
         in_head: true,
         order: 0,
+        xpath: None,
     }
 }
 

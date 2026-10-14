@@ -222,7 +222,8 @@ fn xpath_is_stable_and_counts_only_same_name_siblings() {
         ]
     );
     let doc = Document::parse(src);
-    assert_eq!(xpath(find(&doc, "title")), "/html[1]/head[1]/title[1]");
+    // K-63: im Kopf in der Form der Referenz `//head/<element>[n]`
+    assert_eq!(xpath(find(&doc, "title")), "//head/title[1]");
 }
 
 // spec: ONPAGE-140
