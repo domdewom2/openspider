@@ -88,7 +88,7 @@ jobs:
   loadtest-small:
     name: loadtest-small (${{ matrix.name }})
     runs-on: ${{ matrix.os }}
-    # Build (mit Cache) plus Lauf; der Lauf selbst hat unten eine eigene Grenze von 10 Minuten.
+    # Build (mit Cache) plus Lauf; der Lauf selbst hat unten eine eigene Grenze von 20 Minuten (Windows-Runner brauchen ca. 9-13 Minuten).
     timeout-minutes: 40
     strategy:
       fail-fast: false
@@ -117,7 +117,7 @@ jobs:
           cargo build --release --locked -p os-engine --example crawl_child
 
       - name: Lasttest small (PERF-001, PERF-003, PERF-005, PERF-009)
-        timeout-minutes: 10
+        timeout-minutes: 20
         run: cargo run --release --locked -p os-loadtest -- run --scenario all --size small --out target/loadtest/report.json
 
       - name: Bericht anzeigen
