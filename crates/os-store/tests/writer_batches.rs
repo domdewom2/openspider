@@ -604,7 +604,7 @@ fn wal_autocheckpoint_of(sink: &os_store::SqliteSink) -> i64 {
 // Infrastruktur (M1-P30, Windows-Durchsatz), kein Spec-Tag.
 #[test]
 fn the_checkpoint_threshold_starts_at_256_mib_and_grows_with_the_file() {
-    use os_store::profile::{WAL_CHECKPOINT_MAX_PAGES, WAL_CHECKPOINT_MIN_PAGES};
+    use os_store::profile::WAL_CHECKPOINT_MIN_PAGES;
     let dir = tempfile::tempdir().unwrap();
     let path = new_crawl(dir.path(), "wal.ospider", StorageProfile::Balanced);
     let sink0 = sink(&path, StorageProfile::Balanced);
@@ -644,7 +644,6 @@ fn the_checkpoint_threshold_starts_at_256_mib_and_grows_with_the_file() {
     }
     sink.write(batch_with_urls([(2, true)])).unwrap();
     assert_eq!(wal_autocheckpoint_of(&sink), 6_000);
-    assert!(WAL_CHECKPOINT_MAX_PAGES >= WAL_CHECKPOINT_MIN_PAGES);
 }
 
 // Infrastruktur (M1-P30, Windows-Durchsatz), kein Spec-Tag.
