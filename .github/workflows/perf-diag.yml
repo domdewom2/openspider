@@ -8,14 +8,12 @@ name: perf-diag
 # NUR zur Diagnose. Ein Fix steht nie im Runner (Nutzer haben denselben Scanner); ein Anteil, der nur so erklärbar
 # ist, wird im Produkt behoben (weniger Dateioperationen).
 #
-# Auslösung: Push auf den Paketbranch (nötig, solange die Datei nicht auf main liegt: GitHub führt
-# `workflow_dispatch` nur für Workflows aus, die auf dem Standardzweig existieren) und von Hand
-# (`gh workflow run perf-diag.yml --ref <branch>`). VOR DEM MERGE entfällt der Block `push:`; danach gilt
-# allein `workflow_dispatch`.
+# Auslösung: nur von Hand (`gh workflow run perf-diag.yml --ref <branch>`). Während der Arbeit an M1-P30 lief der
+# Workflow zusätzlich bei jedem Push auf den Paketbranch (nötig, solange die Datei nicht auf main liegt: GitHub führt
+# `workflow_dispatch` nur für Workflows aus, die auf dem Standardzweig existieren); vor dem Merge ist dieser
+# Block entfallen.
 
 on:
-  push:
-    branches: [m1/m1-p30]
   workflow_dispatch:
     inputs:
       pages:
