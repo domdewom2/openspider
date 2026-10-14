@@ -1,3 +1,306 @@
-//! Werkzeug query_urls: Tab-Ansicht mit Filter, Sortierung und Cursor.
+//! Werkzeug `query_urls` (AGENT-011, AGENT-005): eine Seite einer Tab-Ansicht (Tab, Filter, Spalten,
+//! Sortierung) – dieselbe Abfrage (`views::query_view`) wie der Tab-Export, also dieselben URLs in derselben
+//! Reihenfolge bei gleicher Sortierung.
 //!
-//! STUB(M1-P27): Modul wird von M1-P27 umgesetzt.
+//! Antwort: Spaltennamen, Zeilenschlüssel (`url_ids`) und Zähler stehen in der Zusammenfassung; die Zeilen
+//! selbst (Adressen, Titel, Texte …) stammen aus gecrawlten Seiten und stehen ausschließlich im
+//! Untrusted-Block.
+
+use os_analyze::views::{self, ColumnSelection, PageStart, SearchSpec, ViewQuery};
+use os_analyze::{names, tabs, SortKey, TabDef};
+use os_model::FilterState;
+use serde_json::{json, Value as Json};
+
+use super::common::{
+    object, open_crawl, opt_str, reject_unknown, req_str, resolve_view, row_json, view_error,
+};
+use crate::paging::PageArgs;
+use crate::tool::{Tool, ToolClass, ToolContext, ToolError, ToolOutput};
+
+/// Name des Werkzeugs.
+pub const NAME: &str = "query_urls";
+
+/// Das Werkzeug `query_urls`.
+pub struct QueryUrls;
+
+impl Tool for QueryUrls {
+    fn name(&self) -> &'static str {
+        NAME
+    }
+
+    fn class(&self) -> ToolClass {
+        ToolClass::Read
+    }
+
+    fn description(&self) -> &'static str {
+        "Fragt die URLs eines Tabs und Filters ab (dieselben Namen wie in der Oberfläche und im Export, z. B. \
+         tab \"Response Codes\", filter \"Client Error (4xx)\"; ohne filter gilt \"All\"). Ergebnis: Spaltennamen \
+         (columns), url_ids und die Zeilen in gleicher Reihenfolge wie der Tab-Export bei gleicher Sortierung. \
+         Spalten: Standardspalten, \"all\" für alle oder eine Liste von Spaltennamen (Mehrfachspalten wie \
+         \"Meta Robots 1\" über die nummerierte Schreibweise). Sortierung: Liste von Spaltennamen oder \
+         {column, descending}. Ein ungültiger Name liefert einen Fehler mit den gültigen Namen. Ist ein Filter \
+         noch nicht auswertbar (Crawl-Analyse, Konfiguration oder Rendering fehlen), meldet filter_state den \
+         Grund statt einer 0. Zeitstempel stehen in UTC (ISO 8601 mit Z), Response Time in Sekunden, \
+         Größen in Bytes. Paginiert über limit (1–500, Standard 50) und cursor; total ist die Zahl aller \
+         Treffer."
+    }
+
+    fn input_schema(&self) -> Json {
+        json!({
+            "type": "object",
+            "properties": {
+                "crawl_id": {"type": "string", "description": "Kennung aus list_crawls"},
+                "tab": {"type": "string", "description": "Tab, z. B. \"Internal\" oder \"Response Codes\"; auch als \"Tab:Filter\" möglich"},
+                "filter": {"type": "string", "description": "Filter des Tabs, z. B. \"Client Error (4xx)\" (Standard \"All\"); Schwellen als Zahl oder X"},
+                "columns": {
+                    "description": "\"all\", \"default\" oder eine Liste von Spaltennamen",
+                    "oneOf": [
+                        {"type": "string", "enum": ["all", "default"]},
+                        {"type": "array", "items": {"type": "string"}}
+                    ]
+                },
+                "sort": {
+                    "type": "array",
+                    "description": "Sortierung; Gleichstand entscheidet die Adresse, dann die Entdeckungsreihenfolge",
+                    "items": {"oneOf": [
+                        {"type": "string"},
+                        {"type": "object", "properties": {
+                            "column": {"type": "string"},
+                            "descending": {"type": "boolean"}
+                        }, "required": ["column"]}
+                    ]}
+                },
+                "search": {"type": "string", "description": "Teilzeichenkette der Adresse (Groß-/Kleinschreibung egal)"},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 500, "default": 50},
+                "cursor": {"type": "string", "description": "next_cursor der vorigen Antwort"}
+            },
+            "required": ["crawl_id", "tab"],
+            "additionalProperties": false
+        })
+    }
+
+    fn call(&self, ctx: &ToolContext, args: Json) -> Result<ToolOutput, ToolError> {
+        reject_unknown(
+            &args,
+            &[
+                "crawl_id", "tab", "filter", "columns", "sort", "search", "limit", "cursor",
+            ],
+        )?;
+        let page = PageArgs::from_args(&args)?;
+        let tab_arg = req_str(&args, "tab")?;
+        let filter_arg = opt_str(&args, "filter")?;
+        let tab_defs = tabs::all();
+        let (tab, filter) = resolve_view(&tab_defs, tab_arg, filter_arg)?;
+        let columns = parse_columns(&args, tab)?;
+        let sort = parse_sort(&args, tab)?;
+        let crawl = open_crawl(ctx, &args)?;
+
+        let mut query = ViewQuery::new(tab.id, filter.id);
+        query.columns = columns;
+        query.sort = sort;
+        query.search = opt_str(&args, "search")?.map(|s| SearchSpec::Simple(s.to_string()));
+        query.limit = page.limit;
+        if let Some(cursor) = page.cursor {
+            query.start = PageStart::Cursor(cursor);
+        }
+
+        let state =
+            views::state_of(&crawl.file, &crawl.cfg, tab.id, filter.id).map_err(view_error)?;
+        let result = views::query_view(&crawl.file, &crawl.cfg, &query).map_err(view_error)?;
+        let label = names::label(filter.id, &crawl.cfg);
+
+        let mut summary = vec![
+            ("crawl_id", json!(crawl.id.to_string())),
+            ("tab", json!(tab.id)),
+            ("filter", json!(label)),
+            ("export_name", json!(format!("{}:{}", tab.id, label))),
+            ("columns", json!(result.columns)),
+            (
+                "url_ids",
+                json!(result.row_keys.iter().map(|k| k.0).collect::<Vec<_>>()),
+            ),
+            ("rows", json!(result.rows.len())),
+            ("filter_state", json!(state.as_str())),
+        ];
+        if let Some(note) = state_note(&state) {
+            summary.push(("filter_state_note", json!(note)));
+        }
+        let rows: Vec<Json> = result.rows.iter().map(|r| row_json(r)).collect();
+        // Die Zeilen enthalten Inhalte gecrawlter Seiten (Adressen, Titel, Texte, Header …): nur im Datenblock.
+        let untrusted = json!({ "rows": rows });
+        Ok(ToolOutput {
+            summary: object(summary),
+            untrusted: Some(untrusted),
+            total: Some(result.total),
+            next_cursor: result.next_cursor,
+        })
+    }
+}
+
+/// Erklärung zu einem Filter, der keine Zeilen liefern kann (ONPAGE-007): nie eine 0 an Stelle des Zustands.
+fn state_note(state: &FilterState) -> Option<String> {
+    match state {
+        FilterState::Ready => None,
+        FilterState::NeedsCrawlAnalysis => Some(
+            "Der Filter braucht die Crawl-Analyse, die für diesen Crawl nicht gelaufen ist; total und rows sind \
+             deshalb 0, aber keine echte Null."
+                .to_string(),
+        ),
+        FilterState::Stale => Some(
+            "Die Crawl-Analyse ist veraltet; der Filter liefert keine Zeilen, bis sie erneut gelaufen ist."
+                .to_string(),
+        ),
+        FilterState::NeedsConfig(key) => Some(format!(
+            "Der Filter braucht die Einstellung {key}, die im Crawl ausgeschaltet war; total und rows sind \
+             deshalb 0, aber keine echte Null."
+        )),
+        FilterState::NeedsRendering => Some(
+            "Der Filter braucht JavaScript-Rendering, das in diesem Crawl nicht lief; total und rows sind \
+             deshalb 0, aber keine echte Null."
+                .to_string(),
+        ),
+    }
+}
+
+fn parse_columns(args: &Json, tab: &TabDef) -> Result<ColumnSelection, ToolError> {
+    let valid = || {
+        tab.columns
+            .iter()
+            .map(|c| match &c.sql {
+                os_analyze::ColumnSql::Multi { base, .. } => format!("{base} 1…n"),
+                os_analyze::ColumnSql::Expr(_) => c.key.to_string(),
+            })
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    match args.get("columns") {
+        None | Some(Json::Null) => Ok(ColumnSelection::Default),
+        Some(Json::String(s)) => match s.trim().to_ascii_lowercase().as_str() {
+            "all" => Ok(ColumnSelection::All),
+            "default" | "" => Ok(ColumnSelection::Default),
+            _ => Err(ToolError::InvalidArguments(format!(
+                "columns \"{s}\" ist ungültig: \"all\", \"default\" oder eine Liste von Spaltennamen. \
+                 Gültige Spalten von {}: {}.",
+                tab.id,
+                valid()
+            ))),
+        },
+        Some(Json::Array(items)) => {
+            let mut names_list = Vec::with_capacity(items.len());
+            for item in items {
+                let Json::String(name) = item else {
+                    return Err(ToolError::InvalidArguments(format!(
+                        "columns darf nur Spaltennamen (Zeichenketten) enthalten, erhalten: {item}"
+                    )));
+                };
+                names_list.push(name.trim().to_string());
+            }
+            if names_list.is_empty() {
+                return Ok(ColumnSelection::Default);
+            }
+            check_column_names(tab, &names_list, "columns", &valid)?;
+            Ok(ColumnSelection::Named(names_list))
+        }
+        Some(other) => Err(ToolError::InvalidArguments(format!(
+            "columns muss \"all\", \"default\" oder eine Liste von Spaltennamen sein, erhalten: {other}"
+        ))),
+    }
+}
+
+/// Prüft Spaltennamen vorab, damit die Fehlermeldung die gültigen Namen nennt. Nummerierte Mehrfachspalten
+/// (`Meta Robots 2`) gelten, wenn die Basis eine Mehrfachspalte des Tabs ist.
+fn check_column_names(
+    tab: &TabDef,
+    wanted: &[String],
+    what: &str,
+    valid: &dyn Fn() -> String,
+) -> Result<(), ToolError> {
+    for name in wanted {
+        if column_known(tab, name) {
+            continue;
+        }
+        let suggestions = names::column_suggestions(tab.columns.iter().map(|c| c.key), name);
+        let hint = if suggestions.is_empty() {
+            String::new()
+        } else {
+            format!(" Meinten Sie: {}?", suggestions.join(", "))
+        };
+        return Err(ToolError::InvalidArguments(format!(
+            "{what}: unbekannte Spalte \"{name}\" im Tab {}. Gültige Spalten: {}.{hint}",
+            tab.id,
+            valid()
+        )));
+    }
+    Ok(())
+}
+
+fn column_known(tab: &TabDef, name: &str) -> bool {
+    let wanted = name.trim();
+    if tab
+        .columns
+        .iter()
+        .any(|c| c.key.eq_ignore_ascii_case(wanted))
+    {
+        return true;
+    }
+    wanted.rsplit_once(' ').is_some_and(|(base, num)| {
+        num.parse::<usize>().is_ok_and(|n| n >= 1)
+            && tab.columns.iter().any(|c| {
+                matches!(&c.sql, os_analyze::ColumnSql::Multi { base: b, .. } if b.eq_ignore_ascii_case(base))
+            })
+    })
+}
+
+fn parse_sort(args: &Json, tab: &TabDef) -> Result<Vec<SortKey>, ToolError> {
+    let valid = || {
+        tab.columns
+            .iter()
+            .map(|c| c.key.to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    let items = match args.get("sort") {
+        None | Some(Json::Null) => return Ok(Vec::new()),
+        Some(Json::Array(items)) => items,
+        Some(other) => {
+            return Err(ToolError::InvalidArguments(format!(
+                "sort muss eine Liste sein (Spaltennamen oder {{column, descending}}), erhalten: {other}"
+            )))
+        }
+    };
+    let mut keys = Vec::with_capacity(items.len());
+    for item in items {
+        let (column, descending) = match item {
+            Json::String(s) => (s.trim().to_string(), false),
+            Json::Object(map) => {
+                let column = map
+                    .get("column")
+                    .and_then(Json::as_str)
+                    .map(|s| s.trim().to_string())
+                    .ok_or_else(|| {
+                        ToolError::InvalidArguments(
+                            "sort: jedes Objekt braucht column (Spaltenname)".to_string(),
+                        )
+                    })?;
+                let descending = match map.get("descending") {
+                    None | Some(Json::Null) => false,
+                    Some(Json::Bool(b)) => *b,
+                    Some(other) => {
+                        return Err(ToolError::InvalidArguments(format!(
+                            "sort: descending muss true oder false sein, erhalten: {other}"
+                        )))
+                    }
+                };
+                (column, descending)
+            }
+            other => {
+                return Err(ToolError::InvalidArguments(format!(
+                "sort: Einträge sind Spaltennamen oder {{column, descending}}, erhalten: {other}"
+            )))
+            }
+        };
+        check_column_names(tab, std::slice::from_ref(&column), "sort", &valid)?;
+        keys.push(SortKey { column, descending });
+    }
+    Ok(keys)
+}
