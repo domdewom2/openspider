@@ -372,19 +372,19 @@ async fn crawl_depth_rows_zero_to_ten_and_ten_plus() {
         rows,
         ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "10+"]
     );
-    // Zeile 0 = die Start-URL; die übrigen internen Seiten mit Antwort liegen in Tiefe 1
-    // (robots.txt hat keine Tiefe und fehlt).
+    // Zeile 0 = die Start-URL; die übrigen internen HTML-Seiten mit 2xx liegen in Tiefe 1 (K-58: die 404-/500-
+    // Seiten und die gesperrte Seite zählen nicht).
     assert_eq!(urls(&t, "Crawl Depth", "0"), "1");
-    assert_eq!(urls(&t, "Crawl Depth", "1"), "10");
+    assert_eq!(urls(&t, "Crawl Depth", "1"), "6");
     assert_eq!(urls(&t, "Crawl Depth", "2"), "0");
-    assert_eq!(pct(&t, "Crawl Depth", "0"), "9.09");
-    assert_eq!(pct(&t, "Crawl Depth", "1"), "90.91");
-    // Summe über alle Zeilen = Zahl interner URLs mit bekannter Tiefe.
+    assert_eq!(pct(&t, "Crawl Depth", "0"), "14.29");
+    assert_eq!(pct(&t, "Crawl Depth", "1"), "85.71");
+    // Summe über alle Zeilen = Zahl interner HTML-Seiten mit 2xx und bekannter Tiefe.
     let sum: u64 = rows
         .iter()
         .map(|d| urls(&t, "Crawl Depth", d).parse::<u64>().unwrap())
         .sum();
-    assert_eq!(sum, 11);
+    assert_eq!(sum, 7);
 
     // Synthetisch: eine Kette bis Tiefe 12 → „10“ und „10+“ getrennt.
     let tmp = tempfile::tempdir().unwrap();

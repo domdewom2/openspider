@@ -187,8 +187,8 @@ Sitemaps,URLs In Sitemap,,
 Sitemaps,URLs Not In Sitemap,,
 Sitemaps,Orphan URLs,,
 Sitemaps,Non-Indexable URLs In Sitemap,,
-Crawl Depth,0,1,9.09
-Crawl Depth,1,10,90.91
+Crawl Depth,0,1,14.29
+Crawl Depth,1,6,85.71
 Crawl Depth,2,0,0.00
 Crawl Depth,3,0,0.00
 Crawl Depth,4,0,0.00
