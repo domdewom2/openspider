@@ -138,7 +138,7 @@ Prioritäten: **P0** = MVP-Kern, **P1** = für Parität nötig, **P2** = später
 - **Priorität:** P0
 - **Beschreibung:** Einheitliche, vorhersagbare Dateinamen, die CLI-Nutzer per Skript weiterverarbeiten können.
 - **Eingaben/Konfiguration:** keine.
-- **Ausgabe:** Dateiname = kanonischer Name in Kleinbuchstaben, Leer- und Sonderzeichen durch `_` ersetzt, Bestandteile mit `_` verbunden. Beispiele **(OS-Festlegung)**: `internal_all.csv`, `response_codes_client_error_(4xx).csv` → normalisiert `response_codes_client_error_4xx.csv`, `all_inlinks.csv`, `redirect_chains.csv`, `crawl_overview.csv`.
+- **Ausgabe:** Dateiname = kanonischer Name in Kleinbuchstaben, Leer- und Sonderzeichen durch `_` ersetzt, Bestandteile mit `_` verbunden. Beispiele **(OS-Festlegung)**: `internal_all.csv`, `response_codes_client_error_(4xx).csv` → normalisiert `response_codes_client_error_4xx.csv`, `links_all_inlinks.csv` (Bulk-Export `Links:All Inlinks`, Menü und Name verbunden; M1-Plan K-50), `redirect_chains.csv`, `crawl_overview.csv`.
 - **Akzeptanzkriterien:**
   - [ ] Erlaubte Zeichen im Dateinamen: `a-z 0-9 _ - .`; mehrere `_` hintereinander werden zu einem zusammengefasst; führende/abschließende `_` entfallen.
   - [ ] Dateinamen sind ≤ 120 Zeichen (Kürzung vor der Erweiterung) und auf Windows gültig (keine reservierten Namen wie `con`, `nul`).
