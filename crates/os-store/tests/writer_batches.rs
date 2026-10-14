@@ -601,7 +601,7 @@ fn wal_autocheckpoint_of(sink: &os_store::SqliteSink) -> i64 {
         .unwrap()
 }
 
-// Infrastruktur (M1-P30, Windows-Durchsatz), kein Spec-Tag.
+// spec: CRAWL-125
 #[test]
 fn the_checkpoint_threshold_starts_at_256_mib_and_grows_with_the_file() {
     use os_store::profile::WAL_CHECKPOINT_MIN_PAGES;
@@ -646,7 +646,7 @@ fn the_checkpoint_threshold_starts_at_256_mib_and_grows_with_the_file() {
     assert_eq!(wal_autocheckpoint_of(&sink), 6_000);
 }
 
-// Infrastruktur (M1-P30, Windows-Durchsatz), kein Spec-Tag.
+// spec: CRAWL-125
 #[test]
 fn an_externally_set_checkpoint_threshold_is_left_alone() {
     let dir = tempfile::tempdir().unwrap();

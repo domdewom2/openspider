@@ -163,17 +163,7 @@ fn state_note(state: &FilterState) -> Option<String> {
 }
 
 fn parse_columns(args: &Json, tab: &TabDef) -> Result<ColumnSelection, ToolError> {
-    let valid = || {
-        tab.columns
-            .iter()
-            .map(|c| match &c.sql {
-                os_analyze::ColumnSql::Multi { base, .. }
-                | os_analyze::ColumnSql::MultiPaired { base, .. } => format!("{base} 1…n"),
-                os_analyze::ColumnSql::Expr(_) => c.key.to_string(),
-            })
-            .collect::<Vec<_>>()
-            .join(", ")
-    };
+    let valid = || valid_column_forms(tab);
     match args.get("columns") {
         None | Some(Json::Null) => Ok(ColumnSelection::Default),
         Some(Json::String(s)) => match s.trim().to_ascii_lowercase().as_str() {
@@ -209,7 +199,7 @@ fn parse_columns(args: &Json, tab: &TabDef) -> Result<ColumnSelection, ToolError
 }
 
 /// Prüft Spaltennamen vorab, damit die Fehlermeldung die gültigen Namen nennt. Nummerierte Mehrfachspalten
-/// (`Meta Robots 2`) gelten, wenn die Basis eine Mehrfachspalte des Tabs ist.
+/// (`Meta Robots 2`, `HTML hreflang 1 URL`) gelten, wenn Basis und Suffix zu einer Mehrfachspalte des Tabs passen.
 fn check_column_names(
     tab: &TabDef,
     wanted: &[String],
@@ -235,6 +225,58 @@ fn check_column_names(
     Ok(())
 }
 
+/// Gültige Spaltenformen eines Tabs für Fehlermeldungen: einfache Spalten mit Schlüssel, Mehrfachspalten als
+/// `<Basis> 1…n`, verschränkte Mehrfachspalten zusätzlich je Teilspalte mit Suffix (`<Basis> 1…n URL`).
+fn valid_column_forms(tab: &TabDef) -> String {
+    let mut forms: Vec<String> = Vec::new();
+    for c in &tab.columns {
+        match &c.sql {
+            os_analyze::ColumnSql::Expr(_) => forms.push(c.key.to_string()),
+            os_analyze::ColumnSql::Multi { base, .. } => forms.push(format!("{base} 1…n")),
+            os_analyze::ColumnSql::MultiPaired { base, parts } => {
+                for part in parts.iter() {
+                    if part.suffix.is_empty() {
+                        forms.push(format!("{base} 1…n"));
+                    } else {
+                        forms.push(format!("{base} 1…n {}", part.suffix));
+                    }
+                }
+            }
+        }
+    }
+    forms.join(", ")
+}
+
+/// Liest `"<base> <n>"` bzw. `"<base> <n> <suffix>"` (Groß-/Kleinschreibung gleichgültig, `n` ab 1); `suffix`
+/// leer = ohne Zusatz. Dieselbe Regel wie `parse_numbered` in `os-analyze` (views/build.rs), die den Namen beim
+/// Aufbau der Ansicht auflöst; hier nachgebildet, weil sie dort nicht öffentlich ist.
+fn is_numbered_name(name: &str, base: &str, suffix: &str) -> bool {
+    let Some(head) = name.get(..base.len()) else {
+        return false;
+    };
+    if !head.eq_ignore_ascii_case(base) {
+        return false;
+    }
+    let Some(rest) = name[base.len()..].strip_prefix(' ') else {
+        return false;
+    };
+    let (num, tail) = match rest.split_once(' ') {
+        Some((num, tail)) => (num, Some(tail)),
+        None => (rest, None),
+    };
+    if num.is_empty()
+        || !num.bytes().all(|b| b.is_ascii_digit())
+        || num.parse::<usize>().map_or(true, |n| n < 1)
+    {
+        return false;
+    }
+    match (tail, suffix.is_empty()) {
+        (None, true) => true,
+        (Some(t), false) => t.eq_ignore_ascii_case(suffix),
+        _ => false,
+    }
+}
+
 fn column_known(tab: &TabDef, name: &str) -> bool {
     let wanted = name.trim();
     if tab
@@ -244,16 +286,12 @@ fn column_known(tab: &TabDef, name: &str) -> bool {
     {
         return true;
     }
-    wanted.rsplit_once(' ').is_some_and(|(base, num)| {
-        num.parse::<usize>().is_ok_and(|n| n >= 1)
-            && tab.columns.iter().any(|c| {
-                matches!(
-                    &c.sql,
-                    os_analyze::ColumnSql::Multi { base: b, .. }
-                        | os_analyze::ColumnSql::MultiPaired { base: b, .. }
-                        if b.eq_ignore_ascii_case(base)
-                )
-            })
+    tab.columns.iter().any(|c| match &c.sql {
+        os_analyze::ColumnSql::Expr(_) => false,
+        os_analyze::ColumnSql::Multi { base, .. } => is_numbered_name(wanted, base, ""),
+        os_analyze::ColumnSql::MultiPaired { base, parts } => parts
+            .iter()
+            .any(|p| is_numbered_name(wanted, base, p.suffix)),
     })
 }
 

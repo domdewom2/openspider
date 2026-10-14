@@ -468,6 +468,10 @@ fn ignore_but_report_mode_requests_the_url_and_still_lists_it() {
 // spec: ONPAGE-054
 #[test]
 fn no_response_lists_timeouts_refused_connections_and_dns_failures() {
+    // `nohost.invalid` liegt in der reservierten TLD `.invalid` (RFC 6761, K-51): Der HostResolver von os-fetch
+    // antwortet sofort mit "nicht auflösbar", ohne den System-Resolver zu fragen. Der Test braucht deshalb kein
+    // Netz und ist unabhängig vom Resolver des Rechners deterministisch ("DNS Lookup Failed", nie
+    // "Connection Timeout").
     let d = dump();
     assert_eq!(list(d, "No Response"), golden("No Response"));
     for (url, status) in [

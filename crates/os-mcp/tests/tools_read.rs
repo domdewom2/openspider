@@ -722,6 +722,66 @@ async fn multi_columns_can_be_sorted_by_their_numbered_name_and_listed_with_all_
 
 // spec: AGENT-011
 #[tokio::test]
+async fn a_numbered_name_with_a_suffix_is_accepted_and_an_unknown_suffix_lists_the_valid_names() {
+    // `HTML hreflang 1 URL` ist die URL-Teilspalte der verschränkten Mehrfachspalte (`ColumnSql::MultiPaired`)
+    // im Tab Hreflang; die Vorabprüfung muss denselben Namen akzeptieren wie die Ansicht in os-analyze.
+    let world = World::new();
+    let stored = world.add("tech/hreflang", "/en/", base_config(), 1).await;
+    let client = world.client().await;
+    let page = stored.fx.site.url("/en/");
+    let reply = client
+        .call(
+            "query_urls",
+            json!({"crawl_id": stored.id, "tab": "Hreflang",
+                   "columns": ["Address", "HTML hreflang 1 URL"],
+                   "search": "/en/", "limit": 500}),
+        )
+        .await;
+    assert!(!reply.is_error, "{:?}", reply.blocks);
+    assert_eq!(
+        reply.summary()["columns"],
+        json!(["Address", "HTML hreflang 1 URL"])
+    );
+    let row = reply
+        .rows()
+        .into_iter()
+        .find(|r| cell_text(&r[0]) == page)
+        .expect("die Seite steht im Hreflang-Tab");
+    // Erste Annotation der Fixture (`tech/hreflang`, `/en/`): `en` zeigt auf `/en/` selbst.
+    assert_eq!(cell_text(&row[1]), page);
+
+    // Ein unbekannter Suffix bleibt ein Fehler; die Meldung nennt die gültigen Formen inkl. Suffix.
+    for bad in [
+        "HTML hreflang 1 Foo",
+        "HTML hreflang 0 URL",
+        "HTML hreflang URL",
+    ] {
+        let reply = client
+            .call(
+                "query_urls",
+                json!({"crawl_id": stored.id, "tab": "Hreflang", "columns": [bad]}),
+            )
+            .await;
+        assert!(reply.is_error, "{bad}");
+        let text = reply.error_text();
+        assert!(text.contains(bad), "{text}");
+        assert!(text.contains("HTML hreflang 1…n URL"), "{text}");
+        assert!(text.contains("HTML hreflang 1…n,"), "{text}");
+    }
+    // Auch beim Sortieren gilt dieselbe Regel.
+    let sorted = client
+        .call(
+            "query_urls",
+            json!({"crawl_id": stored.id, "tab": "Hreflang",
+                   "sort": ["HTML hreflang 1 URL"], "limit": 5}),
+        )
+        .await;
+    assert!(!sorted.is_error, "{:?}", sorted.blocks);
+    client.cancel().await;
+}
+
+// spec: AGENT-011
+#[tokio::test]
 async fn a_numbered_multi_column_name_can_be_requested_as_a_column() {
     let world = World::new();
     let stored = world.add("out-basic-site", "/", base_config(), 1).await;
@@ -949,10 +1009,16 @@ async fn hreflang_annotations_come_per_part_column_with_language_and_url_in_fixt
     }
 
     // Dieselben Werte stehen in den Teilspalten des Hreflang-Tabs (MultiPaired): je Index Sprache + URL.
+    // Die Teilspalten werden ausdrücklich angefordert (`<Basis> <n>` und `<Basis> <n> URL`), nicht über `all`.
+    let mut wanted = vec!["Address".to_string()];
+    for n in 1..=entries.len() {
+        wanted.push(format!("HTML hreflang {n}"));
+        wanted.push(format!("HTML hreflang {n} URL"));
+    }
     let tab = client
         .call(
             "query_urls",
-            json!({"crawl_id": stored.id, "tab": "Hreflang", "columns": "all",
+            json!({"crawl_id": stored.id, "tab": "Hreflang", "columns": wanted,
                    "search": "/en/", "limit": 500}),
         )
         .await;
@@ -963,6 +1029,10 @@ async fn hreflang_annotations_come_per_part_column_with_language_and_url_in_fixt
         .iter()
         .map(|c| c.as_str().unwrap().to_string())
         .collect();
+    assert_eq!(
+        names, wanted,
+        "genau die angeforderten Teilspalten, in dieser Reihenfolge"
+    );
     let row = tab
         .rows()
         .into_iter()
