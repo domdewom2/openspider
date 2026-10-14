@@ -537,7 +537,7 @@ mod tests {
         }
     }
 
-    // Infrastruktur (PERF-003), kein Spec-Tag.
+    // spec: PERF-005
     #[tokio::test]
     async fn messages_are_merged_in_order_and_flush_waits_for_the_write() {
         let (s, log) = sink(Duration::ZERO, None);
@@ -562,7 +562,7 @@ mod tests {
         assert!(log.lock().unwrap().checkpoints >= 1, "Abschluss-Checkpoint");
     }
 
-    // Infrastruktur (PERF-003), kein Spec-Tag.
+    // spec: PERF-005
     #[tokio::test]
     async fn the_first_batch_is_cut_at_the_normal_page_limit_before_any_backlog() {
         let (s, log) = sink(Duration::ZERO, None);
@@ -591,7 +591,7 @@ mod tests {
         b
     }
 
-    // Infrastruktur (PERF-003), kein Spec-Tag.
+    // spec: PERF-005
     #[tokio::test]
     async fn a_backlog_is_written_as_few_large_batches_in_order() {
         // Langsame Senke: die Worker (hier ein schneller Absender) liegen vorn, der Writer fasst zusammen.
@@ -630,7 +630,7 @@ mod tests {
         assert_eq!(ids, (1..=total as i64).collect::<Vec<_>>());
     }
 
-    // Infrastruktur (PERF-003), kein Spec-Tag.
+    // spec: PERF-005
     #[tokio::test]
     async fn a_backlog_remainder_is_written_without_flush_after_the_backlog_wait() {
         let (s, log) = sink(Duration::from_millis(30), None);
@@ -663,7 +663,7 @@ mod tests {
         w.finish().unwrap();
     }
 
-    // Infrastruktur (PERF-003), kein Spec-Tag.
+    // spec: PERF-005
     #[tokio::test]
     async fn a_lone_message_is_written_after_the_maximum_wait() {
         let (s, log) = sink(Duration::ZERO, None);
@@ -685,7 +685,7 @@ mod tests {
         w.finish().unwrap();
     }
 
-    // Infrastruktur (PERF-003), kein Spec-Tag.
+    // spec: PERF-005, PERF-003
     #[tokio::test]
     async fn full_channel_blocks_the_sender_until_the_writer_catches_up() {
         // Eine langsame Senke und ein kleiner Kanal: `send` darf nur so weit vorauslaufen wie der Kanal groß ist.

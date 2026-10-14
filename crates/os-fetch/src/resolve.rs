@@ -110,7 +110,15 @@ impl fmt::Display for ResolveError {
 
 impl std::error::Error for ResolveError {}
 
-/// Löst Hosts auf: zuerst die Überschreibungen, sonst das System.
+/// Ob `host` zur reservierten TLD `invalid` gehört (RFC 6761 6.4, K-51): `invalid` selbst und
+/// `*.invalid`, Groß-/Kleinschreibung und abschließender Punkt egal.
+fn is_reserved_invalid(host: &str) -> bool {
+    let host = host.trim_end_matches('.').to_ascii_lowercase();
+    host == "invalid" || host.ends_with(".invalid")
+}
+
+/// Löst Hosts auf: zuerst die Überschreibungen, dann die reservierte TLD `.invalid` (nie
+/// auflösbar, ohne System-Resolver beantwortet), sonst das System.
 #[derive(Debug, Clone)]
 pub struct HostResolver {
     rules: Vec<ResolveRule>,
@@ -167,6 +175,17 @@ impl Resolve for HostResolver {
         let host = name.as_str().to_string();
         if let Some(addrs) = self.lookup_override(&host) {
             return Box::pin(async move { Ok(Box::new(addrs.into_iter()) as Addrs) });
+        }
+        // K-51: `invalid`/`*.invalid` (RFC 6761) sind nie auflösbar. Sofortige Antwort statt
+        // System-Resolver, damit "DNS Lookup Failed" auch ohne Netz und auf trägen CI-Resolvern
+        // deterministisch ist (kein Verbindungs-Timeout).
+        if is_reserved_invalid(&host) {
+            return Box::pin(async move {
+                Err(Box::new(ResolveError::Failed {
+                    host,
+                    detail: "reservierte TLD .invalid (RFC 6761)".to_string(),
+                }) as _)
+            });
         }
         let timeout = self.timeout;
         Box::pin(async move {
@@ -289,5 +308,38 @@ mod tests {
             Ok(_) => panic!("`.invalid` darf nicht auflösbar sein"),
         };
         assert!(err.downcast_ref::<ResolveError>().is_some(), "{err}");
+    }
+
+    // spec: ONPAGE-054, CRAWL-123
+    #[tokio::test]
+    async fn reserved_tld_invalid_fails_immediately_without_the_system_resolver() {
+        // Verbindungs-Timeout 1 ms: Wäre der System-Resolver gefragt, käme `Timeout`.
+        let r = HostResolver::new(&[], Duration::from_millis(1)).unwrap();
+        for host in ["a.invalid", "INVALID.", "x.y.Invalid.", "invalid"] {
+            let err = match r.resolve(host.parse().unwrap()).await {
+                Err(e) => e,
+                Ok(_) => panic!("{host}: `.invalid` darf nicht auflösbar sein"),
+            };
+            match err.downcast_ref::<ResolveError>() {
+                Some(ResolveError::Failed { detail, .. }) => {
+                    assert!(detail.contains(".invalid"), "{host}: {detail}")
+                }
+                other => panic!("{host}: ResolveError::Failed erwartet, bekam {other:?}"),
+            }
+        }
+        // Regeln aus network.resolve gehen vor: eine Regel für x.invalid gilt.
+        let r = HostResolver::new(
+            &["x.invalid=127.0.0.1".to_string()],
+            Duration::from_millis(1),
+        )
+        .unwrap();
+        let found: Vec<SocketAddr> = r
+            .resolve("x.invalid".parse().unwrap())
+            .await
+            .unwrap()
+            .collect();
+        assert_eq!(found, vec!["127.0.0.1:0".parse::<SocketAddr>().unwrap()]);
+        // Andere Namen unter `invalid` ohne Regel bleiben Fehler.
+        assert!(r.resolve("y.invalid".parse().unwrap()).await.is_err());
     }
 }
