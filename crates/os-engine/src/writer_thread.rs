@@ -18,6 +18,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
+use crate::diag;
 use os_model::WriteBatch;
 use os_store::{CrawlSink, StoreError};
 use tokio::sync::{mpsc, oneshot};
@@ -294,7 +295,13 @@ fn write_out(
     if shared.failed.load(Ordering::SeqCst) {
         return; // nach einem Fehler nur noch verwerfen
     }
-    match sink.write(taken) {
+    let t = Instant::now();
+    let written = sink.write(taken);
+    diag::add_max(&diag::STATS.w_write_ns, &diag::STATS.w_write_max_ns, t);
+    diag::inc(&diag::STATS.w_batches);
+    diag::STATS.w_pages.fetch_add(n as u64, Ordering::Relaxed);
+    diag::record_batch_pages(n);
+    match written {
         Ok(()) => {
             let s = &shared.stats;
             s.batches.fetch_add(1, Ordering::Relaxed);
@@ -318,7 +325,10 @@ fn writer_loop(
     loop {
         // nächste Nachricht: leer → blockierend warten, sonst bis zum Ablauf der Wartezeit
         let msg = if first_at.is_none() {
-            match rx.blocking_recv() {
+            let t = Instant::now();
+            let received = rx.blocking_recv();
+            diag::add(&diag::STATS.w_idle_ns, t);
+            match received {
                 Some(m) => m,
                 None => break,
             }
@@ -332,7 +342,10 @@ fn writer_loop(
                         write_out(&mut sink, &mut batch, &mut pages, &shared);
                         first_at = None;
                     } else {
+                        let t = Instant::now();
                         std::thread::sleep(Duration::from_millis(1));
+                        diag::inc(&diag::STATS.w_poll_sleeps);
+                        diag::add(&diag::STATS.w_poll_sleep_ns, t);
                     }
                     continue;
                 }
@@ -340,6 +353,9 @@ fn writer_loop(
         };
         let queued = rx.len() + 1;
         shared.stats.max_queued.fetch_max(queued, Ordering::Relaxed);
+        diag::STATS
+            .w_queue_max
+            .fetch_max(queued as u64, Ordering::Relaxed);
         match msg {
             Msg::Batch(b) => {
                 pages += b.pages.len();

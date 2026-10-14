@@ -1,0 +1,133 @@
+name: perf-diag
+
+# Diagnose des Windows-Durchsatzes der Engine (M1-P30): Sonden (`os-loadtest diag`), Lasttest mit Messzählern von
+# Engine und Store und der Writer-Benchmark von os-store auf macOS und Windows, damit die Ursache mit Messwerten
+# belegt wird (Timer-Auflösung, fsync, localhost/::1, SYN-Wiederholungen, Writer, blockierende Aufrufe).
+#
+# Die Variante `windows-x64-defender-off` schließt die Arbeitsordner vom Echtzeitscan aus und schaltet ihn ab –
+# NUR zur Diagnose. Ein Fix steht nie im Runner (Nutzer haben denselben Scanner); ein Anteil, der nur so erklärbar
+# ist, wird im Produkt behoben (weniger Dateioperationen).
+#
+# Auslösung: Push auf den Paketbranch (nötig, solange die Datei nicht auf main liegt: GitHub führt
+# `workflow_dispatch` nur für Workflows aus, die auf dem Standardzweig existieren) und von Hand
+# (`gh workflow run perf-diag.yml --ref <branch>`). VOR DEM MERGE entfällt der Block `push:`; danach gilt
+# allein `workflow_dispatch`.
+
+on:
+  push:
+    branches: [m1/m1-p30]
+  workflow_dispatch:
+    inputs:
+      pages:
+        description: "Seiten der Sonden-Site (diag)"
+        default: "3000"
+      extra_args:
+        description: "Zusätzliche Argumente für `os-loadtest run` (z. B. --threads 16)"
+        default: ""
+
+env:
+  CARGO_TERM_COLOR: always
+  OS_LOADTEST_DIAG: "1"
+
+jobs:
+  diag:
+    name: diag (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macos-arm64
+            os: macos-14
+          - name: macos-x64
+            os: macos-15-intel
+          - name: windows-x64
+            os: windows-latest
+          - name: windows-x64-defender-off
+            os: windows-latest
+            defender_off: true
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: perf-diag
+
+      - name: Umgebung (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Get-CimInstance Win32_Processor | Select-Object Name, NumberOfCores, NumberOfLogicalProcessors | Format-List
+          Get-CimInstance Win32_OperatingSystem | Select-Object Caption, Version | Format-List
+          Get-PSDrive -PSProvider FileSystem | Format-Table Name, Used, Free
+          "TEMP=$env:TEMP  RUNNER_TEMP=$env:RUNNER_TEMP  WORKSPACE=$env:GITHUB_WORKSPACE"
+          try { Get-MpComputerStatus | Select-Object RealTimeProtectionEnabled, AntivirusEnabled, AMServiceEnabled, IoavProtectionEnabled | Format-List } catch { "Defender-Status nicht lesbar: $_" }
+          try { (Get-MpPreference).ExclusionPath } catch { "Defender-Einstellungen nicht lesbar: $_" }
+          powercfg /getactivescheme
+          netsh int ipv4 show dynamicport tcp
+          netsh int ipv4 show excludedportrange protocol=tcp
+          "TIME_WAIT vor dem Lauf: " + ((netstat -ano | Select-String TIME_WAIT | Measure-Object).Count)
+
+      - name: Defender ausschließen und abschalten (nur Diagnose)
+        if: runner.os == 'Windows' && matrix.defender_off
+        shell: pwsh
+        run: |
+          Add-MpPreference -ExclusionPath $env:GITHUB_WORKSPACE, $env:RUNNER_TEMP, $env:TEMP, "$env:USERPROFILE\.cargo", "$env:USERPROFILE\.rustup"
+          try { Set-MpPreference -DisableRealtimeMonitoring $true } catch { "Echtzeitscan nicht abschaltbar: $_" }
+          Get-MpComputerStatus | Select-Object RealTimeProtectionEnabled | Format-List
+          (Get-MpPreference).ExclusionPath
+
+      - name: Build (release)
+        run: |
+          cargo build --release --locked -p os-loadtest
+          cargo build --release --locked -p os-engine --example crawl_child
+
+      - name: Sonden (diag, alle)
+        run: |
+          mkdir -p target/perf-diag
+          target/release/os-loadtest diag --pages "${{ inputs.pages || '3000' }}" --out target/perf-diag/diag-all.json > /dev/null
+          cat target/perf-diag/diag-all.json
+
+      - name: Crawl-Varianten (diag crawl)
+        run: |
+          B=target/release/os-loadtest
+          P="${{ inputs.pages || '3000' }}"
+          $B diag --only crawl --pages "$P" --out target/perf-diag/crawl-default.json > /dev/null
+          $B diag --only crawl --pages "$P" --wal-autocheckpoint 0 --out target/perf-diag/crawl-wal0.json > /dev/null
+          $B diag --only crawl --pages "$P" --profile max-speed --out target/perf-diag/crawl-maxspeed.json > /dev/null
+          $B diag --only crawl --pages "$P" --threads 1 --out target/perf-diag/crawl-threads1.json > /dev/null
+          $B diag --only crawl --pages "$P" --threads 32 --out target/perf-diag/crawl-threads32.json > /dev/null
+          for f in default wal0 maxspeed threads1 threads32; do
+            echo "== $f"; python3 -c "import json,sys; d=json.load(open('target/perf-diag/crawl-$f.json'))['crawl']; print({k: d.get(k) for k in ('crawled','seconds','urls_per_s','site_connections')})" || true
+          done
+
+      - name: Lasttest perf-001 und perf-003 (small, mit Messzählern)
+        run: |
+          B=target/release/os-loadtest
+          $B run --scenario perf-001 --size small --out target/perf-diag/perf-001.json ${{ inputs.extra_args }}
+          $B run --scenario perf-003 --size small --out target/perf-diag/perf-003.json ${{ inputs.extra_args }}
+          cat target/perf-diag/perf-001.json target/perf-diag/perf-003.json
+
+      - name: Netzwerkzustand nach dem Lauf (Windows)
+        if: runner.os == 'Windows' && always()
+        shell: pwsh
+        run: |
+          "TIME_WAIT nach dem Lauf: " + ((netstat -ano | Select-String TIME_WAIT | Measure-Object).Count)
+          netstat -s -p tcp
+
+      - name: Writer-Benchmark von os-store (100 000 Seiten x 30 Links)
+        continue-on-error: true
+        timeout-minutes: 25
+        run: cargo test -p os-store --release --locked --test bench_writer -- --ignored --nocapture writer_100k 2>&1 | tee target/perf-diag/bench_writer.log
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-diag-${{ matrix.name }}
+          path: target/perf-diag/
+          if-no-files-found: warn

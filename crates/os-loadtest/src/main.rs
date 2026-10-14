@@ -83,6 +83,30 @@ enum Command {
     },
     /// Listet die Szenarien auf.
     List,
+    /// Sondenmessung für den Durchsatz (Timer, fsync, Verbindungsaufbau, HTTP ohne Engine, Crawl mit Messzählern).
+    Diag {
+        /// Seiten der Site für `http` und `crawl`.
+        #[arg(long, default_value_t = 3_000)]
+        pages: u64,
+        /// Parallele Abrufe.
+        #[arg(long, default_value_t = os_loadtest::engine::DEFAULT_THREADS)]
+        threads: u32,
+        /// Nur diese Sonden (`timers`, `fsync`, `connect`, `http`, `crawl`); mehrfach angebbar. Standard: alle.
+        #[arg(long)]
+        only: Vec<String>,
+        /// Speicherprofil des Crawls.
+        #[arg(long, value_enum, default_value = "balanced")]
+        profile: ProfileChoice,
+        /// `PRAGMA wal_autocheckpoint` des Crawls in Seiten (Standard: SQLite-Standard).
+        #[arg(long)]
+        wal_autocheckpoint: Option<u32>,
+        /// Ordner für Dateien der Sonden (Standard: temporärer Ordner).
+        #[arg(long)]
+        work_dir: Option<PathBuf>,
+        /// Ergebnisdatei (JSON).
+        #[arg(long)]
+        out: Option<PathBuf>,
+    },
     /// Kindprozess eines Crawls (intern; vom Runner gestartet, damit der Spitzen-RSS gemessen werden kann).
     #[command(hide = true)]
     CrawlChild(ChildCli),
@@ -115,6 +139,44 @@ async fn main() -> ExitCode {
                     "{:<9} {}  {} (small {}, large {} Seiten)",
                     s.name, s.perf_id, s.description, s.pages.0, s.pages.1
                 );
+            }
+            ExitCode::SUCCESS
+        }
+        Command::Diag {
+            pages,
+            threads,
+            only,
+            profile,
+            wal_autocheckpoint,
+            work_dir,
+            out,
+        } => {
+            if let Some(bad) = only
+                .iter()
+                .find(|o| !os_loadtest::diag::PROBES.contains(&o.as_str()))
+            {
+                eprintln!(
+                    "Unbekannte Sonde `{bad}` (erlaubt: {}).",
+                    os_loadtest::diag::PROBES.join(", ")
+                );
+                return ExitCode::from(2);
+            }
+            let report = os_loadtest::diag::run(&os_loadtest::diag::DiagOptions {
+                pages,
+                threads,
+                work_dir,
+                only,
+                profile: profile.into(),
+                wal_autocheckpoint,
+            })
+            .await;
+            let text = serde_json::to_string_pretty(&report).unwrap_or_default();
+            println!("{text}");
+            if let Some(path) = out {
+                if let Err(e) = std::fs::write(&path, &text) {
+                    eprintln!("{}: {e}", path.display());
+                    return ExitCode::from(2);
+                }
             }
             ExitCode::SUCCESS
         }

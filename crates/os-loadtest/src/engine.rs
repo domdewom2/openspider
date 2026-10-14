@@ -222,6 +222,7 @@ impl EngineCrawler {
             "urls_per_s".into(),
             json!(round(main.crawled as f64 / main.seconds.max(1e-9), 1)),
         );
+        extra.insert("diag".into(), json!(main.diag));
         extra.insert("limit_peak_rss_bytes".into(), json!(MAX_RSS_BYTES));
         extra.insert("limit_rss_ratio".into(), json!(MAX_RSS_RATIO));
         if let Ok(c) = &cache {
@@ -274,6 +275,7 @@ impl EngineCrawler {
             "urls_per_s".into(),
             json!(round(run.crawled as f64 / run.seconds.max(1e-9), 1)),
         );
+        extra.insert("diag".into(), json!(run.diag));
         extra.insert("limit_peak_rss_bytes".into(), json!(BACKPRESSURE_RSS_BYTES));
         Ok(CrawlOutcome {
             urls_crawled: run.crawled,

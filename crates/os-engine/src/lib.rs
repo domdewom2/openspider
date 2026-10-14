@@ -7,6 +7,7 @@
 
 pub mod crawl;
 pub mod decide;
+pub mod diag;
 pub mod disk_guard;
 pub mod error;
 pub mod frontier;

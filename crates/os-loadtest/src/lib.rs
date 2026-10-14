@@ -9,6 +9,7 @@
 
 pub mod child;
 pub mod crawler;
+pub mod diag;
 pub mod engine;
 pub mod proc;
 pub mod report;
@@ -16,6 +17,7 @@ pub mod rss;
 pub mod runner;
 pub mod scenario;
 pub mod sink;
+pub mod timers;
 
 pub use crawler::{CrawlJob, CrawlOutcome, CrawlerError, CrawlerUnderTest, NoCrawler};
 pub use engine::EngineCrawler;

@@ -95,7 +95,10 @@ impl Drop for SqliteSink {
 }
 
 fn wal_checkpoint(conn: &Connection) -> Result<(), StoreError> {
-    conn.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |_| Ok(()))?;
+    let t = std::time::Instant::now();
+    let result = conn.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |_| Ok(()));
+    crate::sink::diag::record_checkpoint(t);
+    result?;
     Ok(())
 }
 
@@ -149,6 +152,7 @@ fn write_batch(conn: &Connection, batch: &WriteBatch, clock: &dyn Clock) -> Resu
     if is_empty(batch) {
         return Ok(());
     }
+    let built = std::time::Instant::now();
     let tx = Transaction::new_unchecked(conn, TransactionBehavior::Immediate)?;
     let seq = read_change_seq(&tx)? + 1;
 
@@ -169,8 +173,11 @@ fn write_batch(conn: &Connection, batch: &WriteBatch, clock: &dyn Clock) -> Resu
     }
     write_meta(&tx, batch, seq)?;
     write_events_and_counters(&tx, batch)?;
+    crate::sink::diag::record_build(built);
 
+    let committing = std::time::Instant::now();
     tx.commit()?;
+    crate::sink::diag::record_commit(committing);
     Ok(())
 }
 

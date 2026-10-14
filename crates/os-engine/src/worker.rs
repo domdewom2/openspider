@@ -36,6 +36,7 @@ use tokio::sync::{Notify, OwnedSemaphorePermit, Semaphore};
 use url::Url;
 
 use crate::decide::{self, LinkDecision};
+use crate::diag;
 use crate::error::EngineError;
 use crate::frontier::{
     Cand, Classify, Core, CrawlScope, Purpose, QueueItem, COUNTER_REDIRECT_LIMIT, F_IN_TABLES,
@@ -147,7 +148,11 @@ pub(crate) async fn process<F: Fetch>(sh: Arc<Shared<F>>, item: QueueItem) {
     let _guard = ActiveGuard {
         sh: Arc::clone(&sh),
     };
-    match run_item(&sh, &item).await {
+    let started = std::time::Instant::now();
+    let outcome = run_item(&sh, &item).await;
+    diag::inc(&diag::STATS.items);
+    diag::add(&diag::STATS.item_ns, started);
+    match outcome {
         Ok(()) => {}
         Err(Failure::Writer) => {
             sh.abort.store(true, Ordering::SeqCst);
@@ -172,10 +177,14 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
     let url = Url::parse(&item.url)
         .map_err(|e| Failure::Engine(EngineError::Invalid(format!("{}: {e}", item.url))))?;
     let cfg = &*sh.cfg;
+    let t = std::time::Instant::now();
     let _host = sh.host_permit(&url).await;
+    diag::add(&diag::STATS.host_wait_ns, t);
 
     // 1. robots.txt
+    let t = std::time::Instant::now();
     let check = sh.gate.check(&*sh.fetcher, &url).await;
+    diag::add(&diag::STATS.robots_ns, t);
     let mut sitemap_seeds = Vec::new();
     if let Some((fetch_result, write)) = check.robots_fetch {
         sitemap_seeds = record_robots(sh, fetch_result, write).await?;
@@ -233,6 +242,7 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
 
     // 2. Abruf
     let cookies = sh.lock_core().session_jar(item.session);
+    let t = std::time::Instant::now();
     let result = sh
         .fetcher
         .fetch(FetchRequest {
@@ -242,9 +252,15 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
             max_body_bytes: cfg.limits.max_page_kb.saturating_mul(1024),
         })
         .await;
+    let fetched = diag::add_max(&diag::STATS.fetch_ns, &diag::STATS.fetch_max_ns, t);
+    if fetched >= diag::SLOW_FETCH_NS {
+        diag::inc(&diag::STATS.fetch_slow);
+    }
 
     // 3. Auswertung
+    let t = std::time::Instant::now();
     let mut analysis = analyze(sh, item, &url, &result).await;
+    diag::add(&diag::STATS.analyze_ns, t);
     if let RobotsDecision::ReportOnly {
         would_block,
         matched_line,
@@ -261,8 +277,12 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
         .facts
         .response_time_ms
         .filter(|_| analysis.facts.status_code != 0);
+    let t = std::time::Instant::now();
     let batch = assemble(sh, item, analysis).await?;
+    diag::add(&diag::STATS.assemble_ns, t);
+    let t = std::time::Instant::now();
     sh.writer.send(batch).await?;
+    diag::add_max(&diag::STATS.send_ns, &diag::STATS.send_max_ns, t);
     sh.progress
         .lock()
         .unwrap_or_else(|p| p.into_inner())
@@ -868,7 +888,9 @@ async fn assemble<F: Fetch>(
 
     // Discovery unter der Sperre, Nachricht mit den neuen URLs vor der Seite in den Kanal
     let depth = item.depth.map(|d| d + 1);
+    let t = std::time::Instant::now();
     let slot = sh.writer.reserve().await?;
+    diag::add_max(&diag::STATS.reserve_ns, &diag::STATS.reserve_max_ns, t);
     let mut disc = WriteBatch::default();
     let mut ids: Vec<Option<UrlId>> = Vec::with_capacity(refs.len());
     let mut image_ids: Vec<Option<UrlId>> = Vec::new();
