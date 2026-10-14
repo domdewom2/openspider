@@ -167,7 +167,8 @@ fn parse_columns(args: &Json, tab: &TabDef) -> Result<ColumnSelection, ToolError
         tab.columns
             .iter()
             .map(|c| match &c.sql {
-                os_analyze::ColumnSql::Multi { base, .. } => format!("{base} 1…n"),
+                os_analyze::ColumnSql::Multi { base, .. }
+                | os_analyze::ColumnSql::MultiPaired { base, .. } => format!("{base} 1…n"),
                 os_analyze::ColumnSql::Expr(_) => c.key.to_string(),
             })
             .collect::<Vec<_>>()
@@ -246,7 +247,12 @@ fn column_known(tab: &TabDef, name: &str) -> bool {
     wanted.rsplit_once(' ').is_some_and(|(base, num)| {
         num.parse::<usize>().is_ok_and(|n| n >= 1)
             && tab.columns.iter().any(|c| {
-                matches!(&c.sql, os_analyze::ColumnSql::Multi { base: b, .. } if b.eq_ignore_ascii_case(base))
+                matches!(
+                    &c.sql,
+                    os_analyze::ColumnSql::Multi { base: b, .. }
+                        | os_analyze::ColumnSql::MultiPaired { base: b, .. }
+                        if b.eq_ignore_ascii_case(base)
+                )
             })
     })
 }

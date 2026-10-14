@@ -578,7 +578,7 @@ fn overview(crawl: &OpenCrawl, facts: &UrlFacts) -> Result<Json, ToolError> {
         .iter()
         .filter_map(|c| match &c.sql {
             ColumnSql::Expr(e) => Some(format!("({e})")),
-            ColumnSql::Multi { .. } => None,
+            ColumnSql::Multi { .. } | ColumnSql::MultiPaired { .. } => None,
         })
         .collect();
     let sql = format!(
@@ -593,9 +593,28 @@ fn overview(crawl: &OpenCrawl, facts: &UrlFacts) -> Result<Json, ToolError> {
         out.insert(col.key.to_string(), cell_json(col.kind, value));
     }
     for col in ordered {
-        if let ColumnSql::Multi { list_sql, .. } = &col.sql {
-            let sql = format!("WITH l(v) AS ({list_sql}) SELECT json_group_array(v) FROM l");
-            out.insert(col.key.to_string(), json_query(crawl, &sql, facts.id)?);
+        match &col.sql {
+            ColumnSql::Multi { list_sql, .. } => {
+                let sql = format!("WITH l(v) AS ({list_sql}) SELECT json_group_array(v) FROM l");
+                out.insert(col.key.to_string(), json_query(crawl, &sql, facts.id)?);
+            }
+            ColumnSql::MultiPaired { base, parts } => {
+                let mut obj = Map::new();
+                for part in *parts {
+                    let sql = format!(
+                        "WITH l(v) AS ({}) SELECT json_group_array(v) FROM l",
+                        part.list_sql
+                    );
+                    let name = if part.suffix.is_empty() {
+                        (*base).to_string()
+                    } else {
+                        format!("{base} {}", part.suffix)
+                    };
+                    obj.insert(name, json_query(crawl, &sql, facts.id)?);
+                }
+                out.insert(col.key.to_string(), Json::Object(obj));
+            }
+            ColumnSql::Expr(_) => {}
         }
     }
     Ok(Json::Object(out))
