@@ -8,8 +8,21 @@
 //!   (`CrawlFile::save_as`) in unter 60 s.
 //! * Writer mit gleichverteilten Zielen (P07: 117 s für 100 000 Seiten bei 200 Seiten je Batch): Bewertung des
 //!   Gruppen-Commits, also mehrerer Writer-Batches in einer Transaktion. Ein Gruppen-Commit aus K Batches zu je 200
-//!   Seiten ist für `SqliteSink` ein Batch mit 200·K Seiten; gemessen werden 200, 1 000 (= `BATCH_PAGES_BACKLOG` der
-//!   Engine) und 5 000 Seiten je Batch auf derselben Last.
+//!   Seiten ist für `SqliteSink` ein Batch mit 200·K Seiten; gemessen werden 200, 1 000 und 5 000 Seiten je Batch
+//!   auf derselben Last.
+//!
+//! Messwerte (M1-P30, Apple M2, 100 000 Seiten x 30 Links, gleichverteilte Ziele; die Maschine war nicht ruhig,
+//! Abweichungen von ±15 % zwischen Läufen sind normal):
+//!
+//! | Seiten je Transaktion | vorher (Checkpoint alle 1 000 Seiten) | nachher (Schwelle ab 256 MiB WAL) |
+//! |---:|---:|---:|
+//! | 200 | 62,7 s | 37,5 s (−40 %) |
+//! | 1 000 | 35,1 s (−44 % gegenüber 200) | 29,1 s (−22 % gegenüber 200) |
+//! | 5 000 | 21,4 s (−66 % gegenüber 200) | 22,9 s (−39 % gegenüber 200) |
+//!
+//! Der Checkpoint-Aufschub nimmt einen Teil des Gruppen-Commit-Gewinns vorweg; zusammen sinkt die Writer-Zeit von
+//! 62,7 s (200 Seiten, Checkpoint alle 1 000 Seiten) auf rund 23–29 s. Die Engine fasst bei Rückstau bis zu
+//! `BATCH_PAGES_BACKLOG` (2 000) Seiten zusammen (`writer_thread`).
 //!
 //! Die Datei baut die Daten selbst (kein Zugriff auf die Hilfen der os-store-Tests).
 

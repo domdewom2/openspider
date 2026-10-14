@@ -3,6 +3,7 @@
 //! Beide Kinder (`os-loadtest crawl-child` und `examples/crawl_child.rs` von os-engine) sprechen dasselbe
 //! Protokoll, siehe [`crate::child`].
 
+use std::collections::BTreeMap;
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
@@ -26,6 +27,8 @@ pub struct RunResult {
     pub peak_rss_bytes: Option<u64>,
     /// Längste Zeit ohne Fortschritt (`PROGRESS` mit größerem `crawled`) in Sekunden.
     pub max_stall_s: f64,
+    /// Messzähler des Kindes aus den `DIAG`-Zeilen (`<gruppe>_<name>` → Wert; M1-P30).
+    pub diag: BTreeMap<String, u64>,
 }
 
 /// Ein laufendes Kind mit gelesenem stdout.
@@ -41,6 +44,23 @@ pub struct Proc {
 pub fn field<'a>(line: &'a str, key: &str) -> Option<&'a str> {
     line.split_whitespace()
         .find_map(|w| w.strip_prefix(key)?.strip_prefix('='))
+}
+
+/// Zähler einer `DIAG`-Zeile (`DIAG <gruppe> <name>=<n> …`) als `<gruppe>_<name>` → Wert; andere Zeilen: leer.
+pub fn parse_diag(line: &str) -> Vec<(String, u64)> {
+    let Some(rest) = line.strip_prefix("DIAG ") else {
+        return Vec::new();
+    };
+    let mut words = rest.split_whitespace();
+    let Some(group) = words.next() else {
+        return Vec::new();
+    };
+    words
+        .filter_map(|w| {
+            let (name, value) = w.split_once('=')?;
+            Some((format!("{group}_{name}"), value.parse().ok()?))
+        })
+        .collect()
 }
 
 /// `crawled` einer `PROGRESS`-Zeile.
@@ -120,6 +140,7 @@ impl Proc {
     /// Liest bis zum Ende der Ausgabe, wartet auf den Exit und misst den Spitzen-RSS.
     pub fn finish(mut self) -> Result<RunResult, String> {
         let mut done: Option<(String, String, u64)> = None;
+        let mut diag = BTreeMap::new();
         let (mut last_crawled, mut last_change) = (u64::MAX, Instant::now());
         let mut max_stall = Duration::ZERO;
         while let Some(line) = self.next_line()? {
@@ -131,6 +152,8 @@ impl Proc {
                     last_crawled = n;
                     last_change = Instant::now();
                 }
+            } else if line.starts_with("DIAG ") {
+                diag.extend(parse_diag(&line));
             } else if line.starts_with("DONE ") {
                 done = Some((
                     field(&line, "state").unwrap_or("?").to_string(),
@@ -154,6 +177,7 @@ impl Proc {
             seconds,
             peak_rss_bytes: exit.peak_rss_bytes,
             max_stall_s: max_stall.as_secs_f64(),
+            diag,
         })
     }
 }
@@ -204,5 +228,13 @@ mod tests {
             Some("-")
         );
         assert_eq!(field("DONE state=Completed", "crawled"), None);
+        assert_eq!(
+            parse_diag("DIAG engine items=3 fetch_ns=40 junk"),
+            vec![
+                ("engine_items".to_string(), 3),
+                ("engine_fetch_ns".to_string(), 40)
+            ]
+        );
+        assert!(parse_diag("PROGRESS crawled=1").is_empty());
     }
 }

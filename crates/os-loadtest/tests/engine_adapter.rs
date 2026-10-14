@@ -132,21 +132,24 @@ async fn seeded_hard_kills_leave_a_consistent_file_that_resumes_to_the_reference
     let bound = metric(&rep, "crawler_repeated_requests_bound")
         .as_u64()
         .unwrap();
+    // K-49: Threads + Kanalkapazität + größter Batch je Abbruch, aus den Konstanten der Writer-Stufe abgeleitet
+    let per_kill = 4
+        + os_engine::writer_thread::CHANNEL_CAPACITY as u64
+        + os_engine::writer_thread::BATCH_PAGES_BACKLOG as u64;
+    assert_eq!(bound, 2 * per_kill, "Gate nach K-49");
     assert_eq!(
-        bound,
-        2 * (4 + 256 + 1_000),
-        "Gate: Threads + Kanal + Rückstau-Batch"
+        metric(&rep, "crawler_repeated_bound_per_kill").as_u64(),
+        Some(per_kill)
     );
     assert!(repeated <= bound, "{repeated} > {bound}");
-    // die engere Grenze aus der Spec (Threads + 200 je Abbruch) steht im Bericht, ihre Einhaltung als Messwert
-    assert_eq!(
-        metric(&rep, "crawler_repeated_requests_spec_bound"),
-        &Value::from(2 * (4 + 200))
-    );
-    assert_eq!(
-        metric(&rep, "crawler_within_spec_bound").as_bool(),
-        Some(repeated <= 2 * (4 + 200))
-    );
+    // die frühere Spec-Grenze (Threads + 200) und ihre Warnung entfallen
+    for gone in [
+        "crawler_repeated_requests_spec_bound",
+        "crawler_within_spec_bound",
+        "crawler_known_issue_open_after_kill",
+    ] {
+        assert!(!rep.metrics.contains_key(gone), "{gone}");
+    }
     // die Statuswerte stehen im Bericht
     let counts = metric(&rep, "crawler_status_counts").as_object().unwrap();
     assert!(counts.contains_key("200"), "{counts:?}");

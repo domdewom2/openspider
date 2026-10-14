@@ -35,6 +35,7 @@ use tokio::task::{JoinHandle, JoinSet};
 use tokio::time::{interval, interval_at, Instant, MissedTickBehavior};
 use url::Url;
 
+use crate::diag;
 use crate::error::EngineError;
 use crate::frontier::{Cand, Core, CrawlScope, Pop, Purpose};
 use crate::list_input::{self, ListOutcome};
@@ -727,6 +728,7 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
     disk_tick.set_missed_tick_behavior(MissedTickBehavior::Delay);
 
     let end = loop {
+        diag::inc(&diag::STATS.run_loops);
         if sh.abort.load(Ordering::SeqCst) || sh.writer.failed() {
             break End::Failed;
         }
@@ -751,6 +753,7 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
             };
             match popped {
                 Some(item) => {
+                    diag::inc(&diag::STATS.run_pops);
                     set.spawn(worker::process(Arc::clone(&sh), item));
                 }
                 None => break,

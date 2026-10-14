@@ -7,6 +7,9 @@
 //! * `READY pid=<pid>` – die Crawl-Datei existiert, der Crawl läuft.
 //! * `PROGRESS crawled=<n> queued=<n> discovered=<n>` – bei jeder Änderung von `crawled`, höchstens alle 20 ms.
 //! * `DONE state=<…> end_reason=<…|-> crawled=<n>` – Abschluss oder Pause.
+//! * `DIAG <gruppe> <name>=<n> …` – Messzähler am Ende (nur dieses Kind, M1-P30): `engine` (os-engine),
+//!   `store` (os-store), bei `OS_LOADTEST_DIAG=1` zusätzlich `rt` (Verspätung des Tokio-Timers) und `os_sleep`
+//!   (Verspätung von `std::thread::sleep`). Der Elternprozess legt sie unter `diag` in den Bericht.
 //!
 //! Gegenüber `crawl_child` kann dieses Kind die Senke tauschen (`--slow-sink-ms`, PERF-003) und das
 //! Speicherprofil wählen (`--profile`, CRAWL-124).
@@ -67,6 +70,15 @@ fn say(line: &str) {
     let mut out = std::io::stdout().lock();
     let _ = writeln!(out, "{line}");
     let _ = out.flush();
+}
+
+/// Eine `DIAG`-Zeile: `DIAG <gruppe> <name>=<n> …`.
+pub fn diag_line(group: &str, values: &[(&'static str, u64)]) -> String {
+    let mut line = format!("DIAG {group}");
+    for (name, value) in values {
+        line.push_str(&format!(" {name}={value}"));
+    }
+    line
 }
 
 fn report(summary: &CrawlSummary) {
@@ -152,8 +164,17 @@ pub async fn run(args: ChildArgs) -> Result<i32, String> {
             tokio::time::sleep(Duration::from_millis(20)).await;
         }
     });
+    let monitors = (std::env::var("OS_LOADTEST_DIAG").as_deref() == Ok("1"))
+        .then(crate::timers::Monitors::start);
     wait_for_end(&handle).await;
     let summary = handle.wait().await.map_err(|e| e.to_string())?;
+    if let Some(m) = monitors {
+        for (group, values) in m.stop().await {
+            say(&diag_line(group, &values));
+        }
+    }
+    say(&diag_line("engine", &os_engine::diag::snapshot()));
+    say(&diag_line("store", &os_store::sink::diag::snapshot()));
     report(&summary);
     Ok(0)
 }
@@ -161,6 +182,12 @@ pub async fn run(args: ChildArgs) -> Result<i32, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn diag_lines_have_the_protocol_shape() {
+        let line = diag_line("engine", &[("items", 3), ("fetch_ns", 40)]);
+        assert_eq!(line, "DIAG engine items=3 fetch_ns=40");
+    }
 
     #[test]
     fn profile_names_round_trip() {

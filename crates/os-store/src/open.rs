@@ -70,8 +70,15 @@ fn classify(path: &Path, e: rusqlite::Error) -> StoreError {
     StoreError::Sqlite(e)
 }
 
+/// Ob neben `path` eine nicht leere `<datei>-wal` liegt (Frames, die beim Öffnen wiederhergestellt werden).
+fn wal_has_frames(path: &Path) -> bool {
+    let mut name = path.as_os_str().to_owned();
+    name.push("-wal");
+    std::fs::metadata(std::path::PathBuf::from(name)).is_ok_and(|m| m.len() > 0)
+}
+
 /// Prüft die SQLite-Kopfzeile: `Ok(false)`, wenn die Datei nicht mit dem SQLite-Magic beginnt (auch bei
-/// kürzeren Dateien); `Err(Corrupt)`, wenn die Datei kürzer ist als der Kopf angibt (abgeschnitten).
+/// kürzeren Dateien); `Err(Corrupt)`, wenn die Datei kürzer ist als der Kopf angibt (abgeschnitten) und keine nicht leere `-wal`-Datei daneben liegt.
 fn check_sqlite_header(path: &Path) -> Result<bool, StoreError> {
     let mut f = std::fs::File::open(path).map_err(|e| StoreError::io(path, e))?;
     let mut head = [0u8; 100];
@@ -101,7 +108,12 @@ fn check_sqlite_header(path: &Path) -> Result<bool, StoreError> {
     let page_count = u64::from(u32::from_be_bytes([head[28], head[29], head[30], head[31]]));
     let change_counter = u32::from_be_bytes([head[24], head[25], head[26], head[27]]);
     let valid_for = u32::from_be_bytes([head[92], head[93], head[94], head[95]]);
-    if page_count > 0 && change_counter == valid_for {
+    // Neben einer nicht leeren `-wal`-Datei gilt der Kopf der Hauptdatei nicht: Ein harter Abbruch mitten im
+    // WAL-Checkpoint hinterlässt eine Hauptdatei, deren Kopf schon die neue Seitenzahl nennt, während die Seiten
+    // noch zum Teil in der `-wal`-Datei stehen. SQLite nimmt die Größe dann aus dem letzten Commit der
+    // `-wal`-Datei und stellt die Datei beim Öffnen wieder her (PERF-005, CRAWL-125). Ohne `-wal`-Datei ist die
+    // Hauptdatei allein maßgeblich und eine zu kurze Datei abgeschnitten.
+    if page_count > 0 && change_counter == valid_for && !wal_has_frames(path) {
         let actual = f.metadata().map_err(|e| StoreError::io(path, e))?.len();
         if actual < page_count * page_size {
             return Err(StoreError::Corrupt {

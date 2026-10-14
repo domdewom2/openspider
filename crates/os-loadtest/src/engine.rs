@@ -7,7 +7,7 @@
 //! |---|---|---|
 //! | `perf-001` | Referenzcrawl mit 1/10 der Seiten, dann der Hauptcrawl (je `os-loadtest crawl-child`) | RSS < 1,5 GB; RSS(Haupt)/RSS(Referenz) < 2; Cache-Grenze des Profils „Maximale Geschwindigkeit“ ≤ 25 % RAM und ≤ 4 GiB |
 //! | `perf-003` | ein Crawl mit [`SlowSink`](crate::sink::SlowSink) (100 ms je Batch) | RSS < 500 MB; der Crawl läuft weiter (kein Stillstand) und endet |
-//! | `perf-005` | Referenzcrawl; Crawl mit gesäten harten Abbrüchen (`examples/crawl_child.rs`), nach jedem Abbruch `integrity_check` und Fortsetzen | `integrity_check = ok`; URL-Menge und Status je URL wie der Referenzcrawl; keine URL doppelt; wiederholte Requests höchstens Threads + 200 je Abbruch |
+//! | `perf-005` | Referenzcrawl; Crawl mit gesäten harten Abbrüchen (`examples/crawl_child.rs`), nach jedem Abbruch `integrity_check` und Fortsetzen | `integrity_check = ok`; URL-Menge und Status je URL wie der Referenzcrawl; keine URL doppelt; wiederholte Requests höchstens Threads + Kanal + größter Batch je Abbruch (K-49) |
 //!
 //! Alle übrigen Szenarien liefern [`CrawlerError::NotImplemented`] (Rendering, Nachlauf-Analysen und Exporte
 //! gehören anderen Paketen).
@@ -38,12 +38,13 @@ pub const BACKPRESSURE_RSS_BYTES: u64 = 500_000_000;
 pub const MAX_STALL_SECS: f64 = 30.0;
 /// PERF-001/K-16: Obergrenze des Caches im Profil „Maximale Geschwindigkeit“.
 pub const CACHE_CAP_BYTES: u64 = 4 * 1024 * 1024 * 1024;
-/// PERF-005 (Spec/Plan): wiederholte Requests je Abbruch höchstens Threads + 200 (offener WriteBatch).
-pub const REPEAT_ALLOWANCE: u64 = 200;
-/// PERF-005 (Gate): was die Engine strukturell ungeschrieben halten kann, wenn der Writer dem Crawl nicht folgt:
-/// der volle Kanal zum Writer-Thread plus ein Rückstau-Batch (`writer_thread::CHANNEL_CAPACITY` +
-/// `BATCH_PAGES_BACKLOG`), zusätzlich zu den Abrufen in Bearbeitung. Mehr bedeutet unbegrenztes Puffern.
-pub const REPEAT_STRUCTURAL_ALLOWANCE: u64 = (os_engine::writer_thread::CHANNEL_CAPACITY
+/// PERF-005/K-49: Was je Abbruch ungeschrieben bleiben darf, wenn der Writer dem Crawl nicht folgt, zusätzlich zu den
+/// Abrufen in Bearbeitung (Threads): der volle Kanal zum Writer-Thread plus der größte Batch der Writer-Stufe
+/// (`writer_thread::CHANNEL_CAPACITY` + `writer_thread::BATCH_PAGES_BACKLOG`). Mehr bedeutet unbegrenztes Puffern.
+/// Die frühere „Spec-Grenze“ Threads + 200 entfällt (Entscheidung K-49): die Spec verlangt „keine Duplikate, keine
+/// Verluste“; wiederholt werden dürfen genau die URLs, die beim Abbruch in Bearbeitung oder abgerufen, aber noch nicht
+/// persistiert waren.
+pub const REPEAT_BUFFER_ALLOWANCE: u64 = (os_engine::writer_thread::CHANNEL_CAPACITY
     + os_engine::writer_thread::BATCH_PAGES_BACKLOG)
     as u64;
 /// Standard für `threads`.
@@ -222,6 +223,7 @@ impl EngineCrawler {
             "urls_per_s".into(),
             json!(round(main.crawled as f64 / main.seconds.max(1e-9), 1)),
         );
+        extra.insert("diag".into(), json!(main.diag));
         extra.insert("limit_peak_rss_bytes".into(), json!(MAX_RSS_BYTES));
         extra.insert("limit_rss_ratio".into(), json!(MAX_RSS_RATIO));
         if let Ok(c) = &cache {
@@ -274,6 +276,7 @@ impl EngineCrawler {
             "urls_per_s".into(),
             json!(round(run.crawled as f64 / run.seconds.max(1e-9), 1)),
         );
+        extra.insert("diag".into(), json!(run.diag));
         extra.insert("limit_peak_rss_bytes".into(), json!(BACKPRESSURE_RSS_BYTES));
         Ok(CrawlOutcome {
             urls_crawled: run.crawled,
@@ -329,18 +332,12 @@ impl EngineCrawler {
             .sum();
         let robots = counts.get("/robots.txt").copied().unwrap_or(0);
         let kills = out.kills_done as u64;
-        let spec_bound = kills * (u64::from(self.threads) + REPEAT_ALLOWANCE);
-        let bound = kills * (u64::from(self.threads) + REPEAT_STRUCTURAL_ALLOWANCE);
+        let per_kill = u64::from(self.threads) + REPEAT_BUFFER_ALLOWANCE;
+        let bound = kills * per_kill;
         if repeated > bound {
             out.violations.push(format!(
-                "PERF-005: {repeated} wiederholte Requests > {bound} ({} Abbrüche x (Threads {} + Kanal + Rückstau-Batch {REPEAT_STRUCTURAL_ALLOWANCE})): die Engine puffert unbegrenzt viel",
+                "PERF-005: {repeated} wiederholte Requests > {bound} ({} Abbrüche x (Threads {} + Kanal und größter Batch {REPEAT_BUFFER_ALLOWANCE}), K-49): die Engine puffert unbegrenzt viel",
                 out.kills_done, self.threads
-            ));
-        }
-        if repeated > spec_bound {
-            out.warnings.push(format!(
-                "PERF-005: {repeated} wiederholte Requests > Spec-Grenze {spec_bound} ({} Abbrüche x (Threads {} + {REPEAT_ALLOWANCE})); der Writer-Rückstau hält bis zu {} Seiten je Abbruch ungeschrieben",
-                out.kills_done, self.threads, REPEAT_STRUCTURAL_ALLOWANCE
             ));
         }
         out.extra.insert("threads".into(), json!(self.threads));
@@ -350,9 +347,7 @@ impl EngineCrawler {
         out.extra
             .insert("repeated_requests_bound".into(), json!(bound));
         out.extra
-            .insert("repeated_requests_spec_bound".into(), json!(spec_bound));
-        out.extra
-            .insert("within_spec_bound".into(), json!(repeated <= spec_bound));
+            .insert("repeated_bound_per_kill".into(), json!(per_kill));
         out.extra.insert(
             "repeated_per_kill".into(),
             json!(if out.kills_done > 0 {
@@ -506,50 +501,9 @@ fn age_heartbeat(path: &Path) -> Result<(), String> {
         .map_err(|e| e.to_string())
 }
 
-/// Bekannter Defekt von os-store (`open.rs`, `check_sqlite_header`), Stand Welle 4: Nach einem harten Abbruch
-/// **während eines WAL-Checkpoints** steht die neue Seitenzahl schon im Kopf der Hauptdatei, die Datei ist aber noch
-/// kürzer; die Größenprüfung von `CrawlFile::open` meldet dann „Datei abgeschnitten“ und das Öffnen (auch das
-/// Fortsetzen) scheitert, obwohl SQLite die Datei mit der noch vorhandenen `-wal`-Datei fehlerfrei wiederherstellt.
-///
-/// Der Lasttest dehnt in diesem Fall die Hauptdatei (nur bei vorhandener, nicht leerer `-wal`-Datei) auf die Größe
-/// aus dem Kopf aus und prüft den Rest (integrity_check, Fortsetzen, Vergleich mit dem Referenzcrawl) trotzdem.
-/// Jeder Fall steht als Warnung `known-issue` im Bericht. Entfällt, sobald os-store die Größenprüfung bei
-/// vorhandener `-wal`-Datei überspringt.
-fn pad_truncated_main_file(path: &Path) -> std::io::Result<bool> {
-    use std::io::Read as _;
-    let mut head = [0u8; 100];
-    let mut f = std::fs::File::open(path)?;
-    if f.read(&mut head)? < head.len() || &head[..16] != b"SQLite format 3\0" {
-        return Ok(false);
-    }
-    let page_size = match u16::from_be_bytes([head[16], head[17]]) {
-        1 => 65_536u64,
-        n => u64::from(n),
-    };
-    let claimed =
-        u64::from(u32::from_be_bytes([head[28], head[29], head[30], head[31]])) * page_size;
-    let actual = f.metadata()?.len();
-    let wal = {
-        let mut name = path.as_os_str().to_owned();
-        name.push("-wal");
-        PathBuf::from(name)
-    };
-    let wal_has_frames = std::fs::metadata(wal).is_ok_and(|m| m.len() > 0);
-    if actual >= claimed || !wal_has_frames {
-        return Ok(false);
-    }
-    drop(f);
-    std::fs::OpenOptions::new()
-        .write(true)
-        .open(path)?
-        .set_len(claimed)?;
-    Ok(true)
-}
-
 fn run005(plan: &Plan005) -> Result<Out005, String> {
     let mut violations = Vec::new();
-    let mut warnings = Vec::new();
-    let mut workarounds = 0u64;
+    let warnings = Vec::new();
     let mut extra: BTreeMap<String, Value> = BTreeMap::new();
 
     // Referenz: ununterbrochener Crawl
@@ -586,13 +540,6 @@ fn run005(plan: &Plan005) -> Result<Out005, String> {
                 std::thread::sleep(Duration::from_millis(rng.range(0, 40)));
                 let last_reported = child.kill().map_err(|e| format!("Abbruch: {e}"))?;
                 kills_done += 1;
-                if pad_truncated_main_file(&path).map_err(|e| format!("{}: {e}", path.display()))? {
-                    workarounds += 1;
-                    warnings.push(format!(
-                        "known-issue: os-store meldet nach Abbruch {} „Datei abgeschnitten“ (Abbruch im WAL-Checkpoint); Hauptdatei auf die Kopfgröße ausgedehnt, SQLite stellt sie aus der -wal-Datei wieder her",
-                        i + 1
-                    ));
-                }
                 let file = CrawlFile::open(&path, OpenMode::ReadOnly).map_err(|e| e.to_string())?;
                 let ok = file.integrity_check().map_err(|e| e.to_string())?;
                 let dup = scalar(&file, "SELECT COUNT(*) - COUNT(DISTINCT url) FROM urls")?;
@@ -701,7 +648,6 @@ fn run005(plan: &Plan005) -> Result<Out005, String> {
     );
     extra.insert("kills_requested".into(), json!(plan.kill_points.len()));
     extra.insert("kills_done".into(), json!(kills_done));
-    extra.insert("known_issue_open_after_kill".into(), json!(workarounds));
     extra.insert("kill_points".into(), json!(plan.kill_points));
     extra.insert("kills".into(), json!(kill_log));
     extra.insert("pages".into(), json!(plan.pages));
@@ -939,46 +885,6 @@ mod tests {
         // gemessen im Profil „Maximale Geschwindigkeit“: 63 -> 416 MB bei 5 und 302 MB Dateigröße
         assert!(scaling(416, 63, 302, 30).verdict.is_ok());
         assert!(scaling(0, 30, 59, 6).verdict.is_err());
-    }
-
-    /// Eine Datei mit SQLite-Kopf, der `pages` Seiten zu 4096 Bytes behauptet, aber nur `actual` Bytes lang ist.
-    fn fake_db(path: &Path, pages: u32, actual: usize) {
-        let mut head = vec![0u8; actual];
-        head[..16].copy_from_slice(b"SQLite format 3\0");
-        head[16..18].copy_from_slice(&4096u16.to_be_bytes());
-        head[28..32].copy_from_slice(&pages.to_be_bytes());
-        std::fs::write(path, head).unwrap();
-    }
-
-    // spec: PERF-005
-    #[test]
-    fn a_main_file_shorter_than_its_header_is_padded_only_when_a_wal_exists() {
-        let dir = tempfile::tempdir().unwrap();
-        let db = dir.path().join("x.ospider");
-        fake_db(&db, 10, 8192);
-        assert!(
-            !pad_truncated_main_file(&db).unwrap(),
-            "ohne -wal bleibt sie abgeschnitten"
-        );
-        assert_eq!(std::fs::metadata(&db).unwrap().len(), 8192);
-
-        std::fs::write(dir.path().join("x.ospider-wal"), b"").unwrap();
-        assert!(
-            !pad_truncated_main_file(&db).unwrap(),
-            "leere -wal: nichts zu retten"
-        );
-
-        std::fs::write(dir.path().join("x.ospider-wal"), [1u8; 32]).unwrap();
-        assert!(pad_truncated_main_file(&db).unwrap());
-        assert_eq!(std::fs::metadata(&db).unwrap().len(), 10 * 4096);
-        assert!(!pad_truncated_main_file(&db).unwrap(), "danach vollständig");
-
-        let other = dir.path().join("png.bin");
-        std::fs::write(&other, [0x89u8; 200]).unwrap();
-        assert!(
-            !pad_truncated_main_file(&other).unwrap(),
-            "fremde Dateien bleiben unberührt"
-        );
     }
 
     #[test]

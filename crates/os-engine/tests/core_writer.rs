@@ -170,7 +170,10 @@ impl CrawlSink for FailingSink {
 // Infrastruktur (PERF-003), kein Spec-Tag.
 #[tokio::test]
 async fn a_failing_store_ends_the_crawl_with_the_store_error_instead_of_hanging() {
-    let fetcher = SimFetcher::new(SimSite::tree("site.test", 3_000));
+    // Die Site ist größer als drei Gruppen-Commits (M1-P30): Der Writer sammelt bei Rückstau bis zu
+    // BATCH_PAGES_BACKLOG Seiten je Batch; der Fehler des zweiten Batches zeigt sich also nach rund so vielen Seiten.
+    let total = 3 * BATCH_PAGES_BACKLOG;
+    let fetcher = SimFetcher::new(SimSite::tree("site.test", total));
     let mut deps = test_deps();
     let factory: SinkFactory =
         Arc::new(|_p, _prof| Ok(Box::new(FailingSink { after: 1, seen: 0 }) as Box<dyn CrawlSink>));
@@ -202,7 +205,7 @@ async fn a_failing_store_ends_the_crawl_with_the_store_error_instead_of_hanging(
         other => panic!("erwartet Store-Fehler, war {:?}", other.map(|s| s.state)),
     }
     assert!(
-        fetcher.page_requests().len() < 3_000,
+        fetcher.page_requests().len() < total,
         "der Crawl bricht ab, statt die Site weiter abzurufen"
     );
 }

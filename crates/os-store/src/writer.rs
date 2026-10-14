@@ -45,6 +45,12 @@ pub struct SqliteSink {
     file: CrawlFile,
     profile: StorageProfile,
     clock: Arc<dyn Clock>,
+    /// Zuletzt gesetzte Schwelle von `PRAGMA wal_autocheckpoint` (Seiten); `None`, sobald jemand anderes sie
+    /// geändert hat (dann stellt der Sink sie nicht mehr um).
+    checkpoint_pages: Option<i64>,
+    /// Grenzen der Checkpoint-Schwelle in Seiten (Standard: [`profile::WAL_CHECKPOINT_MIN_PAGES`] bis
+    /// [`profile::WAL_CHECKPOINT_MAX_PAGES`]).
+    checkpoint_bounds: (i64, i64),
 }
 
 impl SqliteSink {
@@ -60,13 +66,59 @@ impl SqliteSink {
             file,
             profile,
             clock: Arc::new(SystemClock),
+            checkpoint_pages: Some(profile::WAL_CHECKPOINT_MIN_PAGES),
+            checkpoint_bounds: (
+                profile::WAL_CHECKPOINT_MIN_PAGES,
+                profile::WAL_CHECKPOINT_MAX_PAGES,
+            ),
         })
+    }
+
+    /// Setzt die Grenzen der Checkpoint-Schwelle (Seiten) und die Schwelle auf die Untergrenze; sie wächst danach
+    /// mit der Datei bis zur Obergrenze. Für Tests und Messläufe mit kleinen Dateien.
+    pub fn with_checkpoint_bounds(
+        mut self,
+        min_pages: i64,
+        max_pages: i64,
+    ) -> Result<Self, StoreError> {
+        let min_pages = min_pages.max(1);
+        self.file
+            .conn()
+            .pragma_update(None, "wal_autocheckpoint", min_pages)?;
+        self.checkpoint_bounds = (min_pages, max_pages.max(min_pages));
+        self.checkpoint_pages = Some(min_pages);
+        Ok(self)
     }
 
     /// Ersetzt die Zeitquelle (Regel 2.8): sie liefert `robots_files.fetched_at`.
     pub fn with_clock(mut self, clock: Arc<dyn Clock>) -> Self {
         self.clock = clock;
         self
+    }
+
+    /// Lässt die Checkpoint-Schwelle mit der Datei wachsen ([`profile::wal_checkpoint_pages`]); ein von außen
+    /// gesetzter Wert (z. B. im Lasttest) bleibt unangetastet. Fehler sind unkritisch: die Schwelle bleibt dann.
+    fn adapt_checkpoint_threshold(&mut self) {
+        let Some(current) = self.checkpoint_pages else {
+            return;
+        };
+        let conn = self.file.conn();
+        let set: Result<i64, _> = conn.pragma_query_value(None, "wal_autocheckpoint", |r| r.get(0));
+        if set.ok() != Some(current) {
+            self.checkpoint_pages = None;
+            return;
+        }
+        let Ok(pages) = conn.pragma_query_value(None, "page_count", |r| r.get::<_, i64>(0)) else {
+            return;
+        };
+        let (min_pages, max_pages) = self.checkpoint_bounds;
+        let want = profile::wal_checkpoint_pages_between(pages, min_pages, max_pages);
+        // erst ab 25 % Zuwachs umstellen (die Datei wächst nur)
+        if want > current + current / 4
+            && conn.pragma_update(None, "wal_autocheckpoint", want).is_ok()
+        {
+            self.checkpoint_pages = Some(want);
+        }
     }
 
     /// Die geöffnete Crawl-Datei (Lesezugriff, z. B. für Diagnose und Tests).
@@ -95,12 +147,21 @@ impl Drop for SqliteSink {
 }
 
 fn wal_checkpoint(conn: &Connection) -> Result<(), StoreError> {
-    conn.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |_| Ok(()))?;
+    let t = std::time::Instant::now();
+    // Antwort: (busy, Frames im WAL, davon zurückgeführt)
+    let result = conn.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |r| {
+        r.get::<_, i64>(1)
+    });
+    crate::sink::diag::record_checkpoint(t, result.as_ref().map_or(0, |n| (*n).max(0) as u64));
+    result?;
     Ok(())
 }
 
 impl CrawlSink for SqliteSink {
     fn write(&mut self, batch: WriteBatch) -> Result<(), StoreError> {
+        // Die Schwelle gilt für den nächsten Commit; sie wächst mit der Datei, bevor dieser Commit eine
+        // Checkpoint-Entscheidung trifft.
+        self.adapt_checkpoint_threshold();
         write_batch(self.file.conn(), &batch, self.clock.as_ref())
     }
 
@@ -149,6 +210,7 @@ fn write_batch(conn: &Connection, batch: &WriteBatch, clock: &dyn Clock) -> Resu
     if is_empty(batch) {
         return Ok(());
     }
+    let built = std::time::Instant::now();
     let tx = Transaction::new_unchecked(conn, TransactionBehavior::Immediate)?;
     let seq = read_change_seq(&tx)? + 1;
 
@@ -169,8 +231,11 @@ fn write_batch(conn: &Connection, batch: &WriteBatch, clock: &dyn Clock) -> Resu
     }
     write_meta(&tx, batch, seq)?;
     write_events_and_counters(&tx, batch)?;
+    crate::sink::diag::record_build(built);
 
+    let committing = std::time::Instant::now();
     tx.commit()?;
+    crate::sink::diag::record_commit(committing);
     Ok(())
 }
 
