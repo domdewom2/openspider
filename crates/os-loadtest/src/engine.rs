@@ -814,8 +814,8 @@ pub struct CacheSetting {
     pub ram_bytes: Option<u64>,
 }
 
-/// Legt eine Crawl-Datei mit dem Profil „Maximale Geschwindigkeit“ an und liest `cache_size` zurück.
-pub fn max_speed_cache(dir: &Path) -> Result<CacheSetting, String> {
+/// Legt eine leere Crawl-Datei mit dem Profil `profile` an (Hilfe für Prüfungen und Tests).
+pub fn create_crawl_file(path: &Path, profile: StorageProfile) -> Result<CrawlFile, String> {
     let clock = SystemClock;
     let init = CrawlInit {
         crawl_id: RandomIds.new_crawl_id(clock.now()),
@@ -823,13 +823,17 @@ pub fn max_speed_cache(dir: &Path) -> Result<CacheSetting, String> {
         start_url: Some("http://site.test/".to_string()),
         list_source: None,
         project: "loadtest".to_string(),
-        name: "cache".to_string(),
+        name: "loadtest".to_string(),
         config: CrawlConfig::default(),
         created_at: clock.now(),
     };
+    CrawlFile::create(path, &init, profile).map_err(|e| e.to_string())
+}
+
+/// Legt eine Crawl-Datei mit dem Profil „Maximale Geschwindigkeit“ an und liest `cache_size` zurück.
+pub fn max_speed_cache(dir: &Path) -> Result<CacheSetting, String> {
     let path = dir.join("cache-check.ospider");
-    let file =
-        CrawlFile::create(&path, &init, StorageProfile::MaxSpeed).map_err(|e| e.to_string())?;
+    let file = create_crawl_file(&path, StorageProfile::MaxSpeed)?;
     let applied = profile::read(file.conn()).map_err(|e| e.to_string())?;
     drop(file);
     let _ = std::fs::remove_file(&path);

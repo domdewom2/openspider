@@ -21,7 +21,7 @@ use os_fetch::{FetchConfig, HttpFetcher, MemorySecretStore};
 use os_model::{CrawlConfig, CrawlState, RandomIds, SystemClock};
 use os_store::StorageProfile;
 
-use crate::sink::slow_sink_factory;
+use crate::sink::tuned_sink_factory;
 
 /// Parameter des Kindes.
 #[derive(Debug, Clone)]
@@ -38,6 +38,8 @@ pub struct ChildArgs {
     pub profile: StorageProfile,
     /// Verzögerung je Batch der Senke in Millisekunden (`None` = normale `SqliteSink`).
     pub slow_sink_ms: Option<u64>,
+    /// `PRAGMA wal_autocheckpoint` in Seiten (`None` = Standard von SQLite, 1000).
+    pub wal_autocheckpoint: Option<u32>,
 }
 
 /// Name eines Profils auf der Kommandozeile.
@@ -108,8 +110,12 @@ pub async fn run(args: ChildArgs) -> Result<i32, String> {
         on_finished: None,
         owner_kind: "cli",
     };
-    if let Some(ms) = args.slow_sink_ms {
-        deps.sink_factory = Some(slow_sink_factory(Duration::from_millis(ms), clock));
+    if args.slow_sink_ms.is_some() || args.wal_autocheckpoint.is_some() {
+        deps.sink_factory = Some(tuned_sink_factory(
+            args.slow_sink_ms.map(Duration::from_millis),
+            args.wal_autocheckpoint,
+            clock,
+        ));
     }
     let fetch_cfg = FetchConfig::from_crawl_config(&cfg, &*deps.secrets, deps.clock.clone())
         .map_err(|e| e.to_string())?;

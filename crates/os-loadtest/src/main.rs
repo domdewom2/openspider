@@ -73,6 +73,10 @@ enum Command {
         /// Anzahl harter Abbrüche (PERF-005; Standard 3 bei small, 5 bei large).
         #[arg(long)]
         kills: Option<usize>,
+        /// Seitenzahl der synthetischen Site statt der Voreinstellung der Größe (z. B. 100000 für die
+        /// Profilvergleiche aus CRAWL-124).
+        #[arg(long)]
+        pages: Option<u64>,
         /// Ordner für die Crawl-Dateien (Standard: temporärer Ordner; 1-Mio.-Crawls brauchen mehrere GB).
         #[arg(long)]
         work_dir: Option<PathBuf>,
@@ -98,6 +102,8 @@ struct ChildCli {
     profile: String,
     #[arg(long)]
     slow_sink_ms: Option<u64>,
+    #[arg(long)]
+    wal_autocheckpoint: Option<u32>,
 }
 
 #[tokio::main]
@@ -127,6 +133,7 @@ async fn main() -> ExitCode {
                 threads: c.threads,
                 profile,
                 slow_sink_ms: c.slow_sink_ms,
+                wal_autocheckpoint: c.wal_autocheckpoint,
             })
             .await
             {
@@ -147,6 +154,7 @@ async fn main() -> ExitCode {
             profile,
             seed,
             kills,
+            pages,
             work_dir,
         } => {
             let mut defs = Vec::new();
@@ -185,7 +193,11 @@ async fn main() -> ExitCode {
             let started_at = now_rfc3339();
             let mut reports: Vec<Report> = Vec::new();
             for def in defs {
-                match runner::run(def, size, ProbeParams::for_size(size), under_test).await {
+                let mut def = *def;
+                if let Some(n) = pages {
+                    def.pages = (n, n);
+                }
+                match runner::run(&def, size, ProbeParams::for_size(size), under_test).await {
                     Ok(rep) => {
                         print_summary(&rep);
                         reports.push(rep);

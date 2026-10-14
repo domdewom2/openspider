@@ -54,9 +54,30 @@ impl CrawlSink for SlowSink {
 
 /// Fabrik für `EngineDeps.sink_factory`: `SqliteSink` (mit der Uhr der Engine) hinter einem [`SlowSink`].
 pub fn slow_sink_factory(delay: Duration, clock: Arc<dyn Clock>) -> SinkFactory {
+    tuned_sink_factory(Some(delay), None, clock)
+}
+
+/// Fabrik für `EngineDeps.sink_factory` mit optionaler Verlangsamung (`slow`, PERF-003) und optionalem
+/// `PRAGMA wal_autocheckpoint` (Seiten; Messung für den Writer-Engpass, siehe Bericht von M1-P28). Ohne beides
+/// entspricht sie dem Standard der Engine.
+pub fn tuned_sink_factory(
+    slow: Option<Duration>,
+    wal_autocheckpoint: Option<u32>,
+    clock: Arc<dyn Clock>,
+) -> SinkFactory {
     Arc::new(move |path: &Path, profile: StorageProfile| {
         let sqlite = SqliteSink::open(path, profile)?.with_clock(clock.clone());
-        Ok(Box::new(SlowSink::new(Box::new(sqlite), delay)) as Box<dyn CrawlSink>)
+        if let Some(pages) = wal_autocheckpoint {
+            sqlite
+                .file()
+                .conn()
+                .pragma_update(None, "wal_autocheckpoint", pages)?;
+        }
+        let sink: Box<dyn CrawlSink> = match slow {
+            Some(delay) => Box::new(SlowSink::new(Box::new(sqlite), delay)),
+            None => Box::new(sqlite),
+        };
+        Ok(sink)
     })
 }
 
@@ -102,6 +123,33 @@ mod tests {
         let t = Instant::now();
         slow.checkpoint().unwrap();
         assert!(t.elapsed() < Duration::from_millis(30));
+    }
+
+    // spec: PERF-003
+    #[test]
+    fn the_factory_wraps_the_real_sqlite_sink_and_applies_the_delay() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("f.ospider");
+        crate::engine::create_crawl_file(&path, StorageProfile::Balanced).unwrap();
+        let clock: Arc<dyn Clock> = Arc::new(os_model::SystemClock);
+        let factory =
+            tuned_sink_factory(Some(Duration::from_millis(40)), Some(5_000), clock.clone());
+        let mut sink = factory(&path, StorageProfile::Balanced).unwrap();
+        let t = Instant::now();
+        sink.write(WriteBatch::default()).unwrap();
+        assert!(
+            t.elapsed() >= Duration::from_millis(40),
+            "{:?}",
+            t.elapsed()
+        );
+        sink.checkpoint().unwrap();
+        drop(sink);
+        // ohne Verzögerung und ohne Pragma: der Standard der Engine
+        let mut plain =
+            tuned_sink_factory(None, None, clock)(&path, StorageProfile::Balanced).unwrap();
+        let t = Instant::now();
+        plain.write(WriteBatch::default()).unwrap();
+        assert!(t.elapsed() < Duration::from_millis(40));
     }
 
     #[test]
