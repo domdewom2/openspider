@@ -245,10 +245,12 @@ async fn gzip_br_deflate_and_chunked_bodies_are_decoded() {
 
 // spec: CRAWL-011, CRAWL-022
 #[tokio::test]
-async fn size_is_decompressed_and_transferred_is_head_plus_compressed_body() {
+async fn size_is_decompressed_and_transferred_is_the_compressed_body_without_head() {
+    // K-02: `Transferred` = Body-Bytes auf der Leitung (gzip: die komprimierte Länge), ohne Kopf.
     let server = MiniServer::start(encoded_server_handler).await;
     let f = fetcher_with(Arc::new(SystemClock), |_| {});
 
+    let compressed_len = gzip(&html_50k()).len() as u64;
     let before = server.bytes_sent();
     let resp = expect_response(get(&f, server.url("/gzip-50k")).await);
     let sent = server.bytes_sent() - before;
@@ -259,17 +261,18 @@ async fn size_is_decompressed_and_transferred_is_head_plus_compressed_body() {
         "Übertragen ist die komprimierte Größe, nicht {}",
         resp.transferred_bytes
     );
-    // Abweichung zum Byte-Zähler des Servers: genau 0
-    assert_eq!(resp.transferred_bytes, sent, "Header + komprimierter Body");
-
-    let before = server.bytes_sent();
-    let plain = expect_response(get(&f, server.url("/plain-50k")).await);
-    let sent = server.bytes_sent() - before;
-    assert_eq!(plain.size_bytes, 50_000);
-    assert_eq!(plain.transferred_bytes, sent);
+    // Abweichung zur komprimierten Body-Länge: genau 0; der gesendete Kopf kommt nicht hinzu
+    assert_eq!(resp.transferred_bytes, compressed_len, "komprimierter Body");
     assert!(
-        plain.transferred_bytes > 50_000,
-        "Header kommen zum Body hinzu"
+        sent > compressed_len,
+        "der Server sendet zusätzlich den Kopf"
+    );
+
+    let plain = expect_response(get(&f, server.url("/plain-50k")).await);
+    assert_eq!(plain.size_bytes, 50_000);
+    assert_eq!(
+        plain.transferred_bytes, 50_000,
+        "unkomprimiert: Transferred = Size, ohne Kopf"
     );
 }
 

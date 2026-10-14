@@ -40,6 +40,9 @@ pub struct RequestRecord {
     pub sent_framing_bytes: u64,
     /// Teil von [`RequestRecord::sent_bytes`], der auf 1xx-Zwischenantworten entfällt.
     pub sent_interim_bytes: u64,
+    /// Teil von [`RequestRecord::sent_bytes`], der auf den Body der finalen Antwort entfällt: nur
+    /// die Nutzdaten, ohne Statuszeile, Header und Chunk-Rahmen (K-02); 0 bei HEAD, 204 und 304.
+    pub sent_body_bytes: u64,
 }
 
 impl RequestRecord {
@@ -111,6 +114,7 @@ pub(crate) struct Sent {
     pub total: u64,
     pub framing: u64,
     pub interim: u64,
+    pub body: u64,
 }
 
 impl LogState {
@@ -140,6 +144,7 @@ impl LogState {
             rec.sent_bytes = sent.total;
             rec.sent_framing_bytes = sent.framing;
             rec.sent_interim_bytes = sent.interim;
+            rec.sent_body_bytes = sent.body;
         }
     }
 
@@ -217,6 +222,7 @@ mod tests {
             sent_bytes: 0,
             sent_framing_bytes: 0,
             sent_interim_bytes: 0,
+            sent_body_bytes: 0,
         });
         let r = &log.requests()[0];
         assert_eq!(r.seq, 1);
@@ -238,6 +244,7 @@ mod tests {
             sent_bytes: 0,
             sent_framing_bytes: 0,
             sent_interim_bytes: 0,
+            sent_body_bytes: 0,
         }
     }
 
@@ -251,10 +258,12 @@ mod tests {
                 total: 100,
                 framing: 12,
                 interim: 20,
+                body: 40,
             },
         );
         let r = &log.requests()[0];
         assert_eq!((r.sent_bytes, r.sent_payload_bytes()), (100, 68));
+        assert_eq!(r.sent_body_bytes, 40);
         // Nach dem Zurücksetzen darf ein verspätetes Verbuchen den neuen Eintrag nicht treffen.
         log.reset();
         let second = log.push(record());

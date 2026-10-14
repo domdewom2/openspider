@@ -29,8 +29,8 @@ use crate::auth::AuthMatcher;
 use crate::cookies::CookieJar;
 use crate::error::FetchError;
 use crate::http::{
-    head_len, status_text, version_label, Fetch, FetchOutcome, FetchPurpose, FetchRequest,
-    FetchResult, HttpResponse,
+    status_text, version_label, Fetch, FetchOutcome, FetchPurpose, FetchRequest, FetchResult,
+    HttpResponse,
 };
 use crate::rate::RateLimiter;
 use crate::redact;
@@ -497,7 +497,9 @@ async fn finish_response(ex: Exchange, max_body: u64, response_time_ms: u32) -> 
 
     // Gesendete Reason-Phrase, sonst IANA-Text, für unbekannte Codes leer (CRAWL-012).
     let wire_text = status_text(status, reason_phrase.as_deref());
-    let transferred_bytes = head_len(&version, status, &wire_text, &headers) + wire_body_bytes;
+    // K-02: `Transferred` sind die Body-Bytes auf der Leitung (komprimiert, ohne Statuszeile,
+    // Header, Chunk-Rahmen und 1xx-Zwischenantworten); ohne Body (HEAD, 204, 304) 0.
+    let transferred_bytes = wire_body_bytes;
 
     let decoded = if encodings.is_empty() || raw_body.len() < BLOCKING_DECODE_THRESHOLD {
         decode(raw_body, &encodings, max_body, input_truncated)
