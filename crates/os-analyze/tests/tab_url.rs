@@ -428,12 +428,12 @@ fn non_ascii_in_idn_hosts_query_and_leftover_escapes() {
 
 // spec: ONPAGE-072
 #[test]
-fn underscores_count_in_the_path_only() {
+fn underscores_count_in_path_and_query() {
     assert_eq!(list("Underscores"), golden("Underscores"));
     assert!(has("Underscores", "{BASE}/mein_artikel"));
     assert!(!has("Underscores", "{BASE}/mein-artikel"));
-    // A-23: /seite?sort_by=x nicht (Unterstrich nur in der Query)
-    assert!(!has("Underscores", "{BASE}/seite?sort_by=x"));
+    // K-58 (ersetzt A-23): /seite?sort_by=x zählt, der Unterstrich steht in der Query
+    assert!(has("Underscores", "{BASE}/seite?sort_by=x"));
     assert!(has("Parameters", "{BASE}/seite?sort_by=x"));
     // eine 404-Seite gehört dazu
     assert!(has("Underscores", "{BASE}/Nicht_Da"));
@@ -441,7 +441,7 @@ fn underscores_count_in_the_path_only() {
 
 // spec: ONPAGE-072
 #[test]
-fn underscores_ignore_host_query_and_fragment() {
+fn underscores_ignore_host_and_fragment() {
     let dir = tempfile::tempdir().unwrap();
     let (file, cfg) = adhoc(
         dir.path(),
@@ -455,7 +455,11 @@ fn underscores_ignore_host_query_and_fragment() {
     );
     assert_eq!(
         adhoc_filter(&file, &cfg, "Underscores"),
-        ["http://h.test/a/b_c/d", "http://h.test/a_b?x_y=1"]
+        [
+            "http://h.test/?utm_source=x",
+            "http://h.test/a/b_c/d",
+            "http://h.test/a_b?x_y=1"
+        ]
     );
 }
 

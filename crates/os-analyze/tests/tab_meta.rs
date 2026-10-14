@@ -316,6 +316,7 @@ async fn duplicate_compares_the_first_description_and_sorts_by_it() {
             "/pagination/blog/page/6/",
             "/a.html",
             "/b.html",
+            "/d.html",
             "/e.html",
         ]
     );

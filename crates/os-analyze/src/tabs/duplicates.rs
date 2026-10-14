@@ -10,18 +10,22 @@
 //! # Duplikate (ONPAGE-005)
 //!
 //! Eine Seite ist Duplikat, wenn ihr erster Wert nicht leer ist und mindestens eine *andere* Seite der
-//! Vergleichsmenge denselben Wert hat (exakt, Groß-/Kleinschreibung zählt – A-4; die Normalisierung N(x) ist
-//! beim Speichern geschehen). Die Vergleichsmenge ist die Grundmenge, eingeschränkt
+//! Vergleichsmenge denselben Wert hat (die Groß-/Kleinschreibung zählt nicht – K-58, ersetzt A-4; die
+//! Normalisierung N(x) ist beim Speichern geschehen). Verglichen wird mit der Kollation `OS_TEXT`
+//! (os-store, ICU-Root, Stärke Secondary): Groß-/Kleinschreibung gleich, Akzente verschieden. Sie steht an
+//! jeder Verbindung der Crawl-Datei zur Verfügung, auch dort, wo ein Aufrufer (os-mcp) den Plan selbst ausführt;
+//! eine eigene Kollation `str::to_lowercase` bräuchte eine Registrierung an diesen Verbindungen. Die Vergleichsmenge ist die Grundmenge, eingeschränkt
 //!
 //! * auf indexierbare Seiten, solange `duplicates.only_indexable` gilt, und
 //! * ohne Seiten einer Paginierungsserie, solange `duplicates.ignore_paginated` gilt: Das sind Seiten mit
 //!   `rel="prev"` – als `<link>` im `<head>` mit nicht leerem Wert oder als `Link`-Header.
 //!
-//! Beide Schalter und die Gruppierung werden **live** in SQL ausgewertet (kein Zwischenspeicher): Die
-//! Prädikate sind korrelierte `EXISTS`-Abfragen auf den indizierten Wertspalten (`urls_title1`, `urls_md1`,
-//! `urls_h1`, `urls_h2`), die Schalter kommen als benannte Parameter aus [`element_params`]. Eine Änderung
-//! der Schalter nach dem Crawl wirkt deshalb sofort und ohne neue Abrufe; Duplikate erscheinen bereits
-//! während des Crawls, sobald die zweite Seite geschrieben ist.
+//! Beide Schalter und die Gruppierung werden **live** in SQL ausgewertet (kein Zwischenspeicher): Das Prädikat
+//! prüft, ob der Wert der Seite (Kollation `OS_TEXT`) in einer unkorrelierten
+//! Gruppierung der Vergleichsmenge mehr als einmal vorkommt; SQLite wertet sie je Anweisung einmal aus. Die
+//! Schalter kommen als benannte Parameter aus [`element_params`]. Eine Änderung der Schalter nach dem Crawl
+//! wirkt deshalb sofort und ohne neue Abrufe; Duplikate erscheinen bereits während des Crawls, sobald die
+//! zweite Seite geschrieben ist.
 //!
 //! # `ignore_non_indexable` (CRAWL-089)
 //!
@@ -39,9 +43,8 @@ use os_model::{CrawlConfig, Value};
 use crate::defs::{ColumnDef, ColumnKind, ColumnSql, FilterDef, FilterKind};
 
 /// Grundmenge der Element-Tabs über dem Alias `$a` (ONPAGE-009), inklusive Speicher-Schalter. `$p` steht vor
-/// jeder Spalte: leer für die Abfrage selbst, `"+"` in der Duplikat-Unterabfrage – das unäre Plus verbietet
-/// dem Planer die Indizes auf Klasse und Status, damit er die Vergleichszeilen über den Index der Wertspalte
-/// (`urls_title1` …) sucht statt alle internen HTML-Zeilen zu durchlaufen.
+/// jeder Spalte: leer für die Abfrage selbst und die Duplikat-Gruppierung; ein unäres `"+"` verbietet dem
+/// Planer die Indizes auf Klasse und Status.
 macro_rules! population {
     ($a:literal) => {
         $crate::tabs::duplicates::population!("", $a)
@@ -91,7 +94,10 @@ macro_rules! comparison_member {
     };
 }
 
-/// Prädikat „Duplicate“ für die Wertspalte `$col` von `urls` (Alias `u`).
+/// Prädikat „Duplicate“ für die Wertspalte `$col` von `urls` (Alias `u`): Der Wert der Seite kommt in der
+/// Vergleichsmenge mindestens zweimal vor, verglichen ohne Beachtung der Groß-/Kleinschreibung (Kollation
+/// `OS_TEXT`: ICU-Root, Stärke Secondary; ONPAGE-005, K-58). Die Gruppierung ist eine unkorrelierte
+/// Unterabfrage, die SQLite je Anweisung einmal auswertet (O(n log n) statt eines Index-Nachschlags je Zeile).
 macro_rules! duplicate_predicate {
     ($col:literal) => {
         concat!(
@@ -101,15 +107,21 @@ macro_rules! duplicate_predicate {
             $col,
             " <> '' AND ",
             $crate::tabs::duplicates::comparison_member!("u"),
-            " AND EXISTS (SELECT 1 FROM urls d WHERE d.",
+            " AND (u.",
             $col,
-            " = u.",
+            " COLLATE OS_TEXT) IN (SELECT d.",
             $col,
-            " AND d.id <> u.id AND ",
-            $crate::tabs::duplicates::population!("+", "d"),
-            " AND ",
+            " FROM urls d WHERE ",
+            $crate::tabs::duplicates::population!("", "d"),
+            " AND d.",
+            $col,
+            " IS NOT NULL AND d.",
+            $col,
+            " <> '' AND ",
             $crate::tabs::duplicates::comparison_member!("d"),
-            "))"
+            " GROUP BY d.",
+            $col,
+            " COLLATE OS_TEXT HAVING COUNT(*) > 1))"
         )
     };
 }

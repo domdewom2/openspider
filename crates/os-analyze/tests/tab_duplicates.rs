@@ -162,7 +162,7 @@ fn assert_view_golden(
 }
 
 /// Die Seiten ohne Paginierung, die in jedem Tab Duplikate sind: a, b und e (nach N(x) gleich).
-const PLAIN_DUPLICATES: [&str; 3] = ["/a.html", "/b.html", "/e.html"];
+const PLAIN_DUPLICATES: [&str; 4] = ["/a.html", "/b.html", "/d.html", "/e.html"];
 /// Paginierte Seiten, die unter `ignore_paginated` Duplikate bleiben: erste Seite (nur `next`), Archiv ohne
 /// Serie, `prev` im Body (zählt nicht) und `prev` mit leerem Wert (zählt nicht).
 const PAGINATION_KEPT: [&str; 4] = [
@@ -240,13 +240,13 @@ async fn canonicalised_page_is_outside_the_comparison_set_by_default() {
 
 // spec: ONPAGE-005
 #[tokio::test]
-async fn comparison_is_case_sensitive_on_normalized_values() {
+async fn comparison_ignores_case_on_normalized_values() {
     let fx = crawl(SCENARIO, CrawlConfig::default()).await;
     let cfg = fx.file.config().unwrap();
     for (tab, first) in TABS {
         let dup = sorted_addresses(&fx, &cfg, tab, "Duplicate");
-        // „Startseite“ vs. „startseite“ → kein Duplikat (A-4); mit Randleerzeichen → Duplikat.
-        assert!(!dup.contains(&"/d.html".to_string()), "{tab}");
+        // „Startseite“ vs. „startseite“ → Duplikat (K-58, ersetzt A-4); mit Randleerzeichen ebenso.
+        assert!(dup.contains(&"/d.html".to_string()), "{tab}");
         assert!(dup.contains(&"/e.html".to_string()), "{tab}");
         let page = view(&fx, &cfg, tab, "All");
         assert_eq!(
@@ -254,6 +254,7 @@ async fn comparison_is_case_sensitive_on_normalized_values() {
             cell(&fx, &page, "/a.html", first),
             "{tab}"
         );
+        // der gespeicherte Wert behält seine Schreibweise; nur der Vergleich ignoriert sie
         assert_ne!(
             cell(&fx, &page, "/d.html", first),
             cell(&fx, &page, "/a.html", first),
@@ -356,7 +357,7 @@ async fn switching_ignore_paginated_off_lists_every_page_of_the_series() {
     assert_eq!(fx.site.total_requests(), requests);
     // Zurück auf „an“: wie vorher.
     cfg.duplicates.ignore_paginated = true;
-    assert_eq!(sorted_addresses(&fx, &cfg, "H1", "Duplicate").len(), 7);
+    assert_eq!(sorted_addresses(&fx, &cfg, "H1", "Duplicate").len(), 8);
 }
 
 // spec: ONPAGE-005
@@ -518,7 +519,7 @@ fn exact_values_empty_and_null_and_foreign_pages() {
     let file = empty_file(dir.path());
     let cfg = CrawlConfig::default();
     page(&file, 1, Some("Startseite"), true, false);
-    page(&file, 2, Some("startseite"), true, false); // andere Schreibweise
+    page(&file, 2, Some("startseite"), true, false); // andere Schreibweise: Duplikat (K-58)
     page(&file, 3, Some(""), true, false); // leer
     page(&file, 4, Some(""), true, false);
     page(&file, 5, None, true, false); // fehlt
@@ -537,10 +538,10 @@ fn exact_values_empty_and_null_and_foreign_pages() {
         .execute("UPDATE urls SET content_class = 'PDF' WHERE id = 9", [])
         .unwrap();
     for (tab, _) in TABS {
-        assert!(dup_ids(&file, &cfg, tab).is_empty(), "{tab}");
+        assert_eq!(dup_ids(&file, &cfg, tab), [1, 2], "{tab}");
     }
     page(&file, 10, Some("Startseite"), true, false);
-    assert_eq!(dup_ids(&file, &cfg, "H2"), [1, 10]);
+    assert_eq!(dup_ids(&file, &cfg, "H2"), [1, 2, 10]);
 }
 
 // spec: ONPAGE-005
@@ -573,18 +574,14 @@ fn ignore_paginated_uses_rel_prev_from_head_or_header_only() {
 
 // spec: ONPAGE-005
 #[test]
-fn groups_are_found_through_an_index_on_the_value_column() {
+fn the_grouping_is_one_uncorrelated_subquery_not_a_lookup_per_row() {
     let dir = tempfile::tempdir().unwrap();
     let file = empty_file(dir.path());
     let cfg = CrawlConfig::default();
     page(&file, 1, Some("Startseite"), true, false);
-    // Der Plan der Duplikat-Abfrage nutzt für die Gruppierung den Index auf der Wertspalte.
-    for (tab, index) in [
-        ("Page Titles", "urls_title1"),
-        ("Meta Description", "urls_md1"),
-        ("H1", "urls_h1"),
-        ("H2", "urls_h2"),
-    ] {
+    // Der Plan der Duplikat-Abfrage gruppiert die Vergleichsmenge einmal je Anweisung (O(n log n)); eine
+    // korrelierte Abfrage je Zeile wäre bei Kleinschreibungsvergleich ohne Index quadratisch.
+    for tab in ["Page Titles", "Meta Description", "H1", "H2"] {
         let plan = os_analyze::views::plan(&ViewQuery::new(tab, "Duplicate"), &cfg).unwrap();
         let sql = format!(
             "EXPLAIN QUERY PLAN SELECT u.id FROM urls u WHERE {} AND {}",
@@ -613,8 +610,34 @@ fn groups_are_found_through_an_index_on_the_value_column() {
             .map(Result::unwrap)
             .collect();
         assert!(
-            details.iter().any(|d| d.contains(index)),
+            details.iter().any(|d| d.contains("LIST SUBQUERY")),
             "{tab}: {details:?}"
         );
+        assert!(
+            details.iter().any(|d| d.contains("GROUP BY")),
+            "{tab}: {details:?}"
+        );
+        assert!(
+            !details
+                .iter()
+                .any(|d| d.contains("CORRELATED LIST SUBQUERY")),
+            "{tab}: {details:?}"
+        );
+    }
+}
+
+// spec: ONPAGE-005
+#[test]
+fn comparison_ignores_case_of_non_ascii_letters_but_not_accents() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = empty_file(dir.path());
+    let cfg = CrawlConfig::default();
+    page(&file, 1, Some("ÄRGER ÜBER UNS"), true, false);
+    page(&file, 2, Some("ärger über uns"), true, false); // Ä/ä, Ü/ü: gleiche Gruppe
+    page(&file, 3, Some("Arger uber uns"), true, false); // ohne Umlaute: andere Gruppe (Akzent zählt)
+    page(&file, 4, Some("Cafe"), true, false);
+    page(&file, 5, Some("Café"), true, false);
+    for (tab, _) in TABS {
+        assert_eq!(dup_ids(&file, &cfg, tab), [1, 2], "{tab}");
     }
 }

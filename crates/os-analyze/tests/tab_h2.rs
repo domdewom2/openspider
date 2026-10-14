@@ -262,6 +262,7 @@ async fn duplicate_compares_the_first_h2_and_sorts_by_it() {
             "/pagination/blog/page/6/",
             "/a.html",
             "/b.html",
+            "/d.html",
             "/e.html",
         ]
     );

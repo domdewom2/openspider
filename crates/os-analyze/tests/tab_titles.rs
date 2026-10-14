@@ -395,6 +395,7 @@ async fn duplicate_filter_is_sorted_by_title_so_groups_stand_together() {
             "/pagination/blog/page/6/",
             "/a.html",
             "/b.html",
+            "/d.html",
             "/e.html",
         ]
     );
@@ -409,7 +410,12 @@ async fn duplicate_filter_is_sorted_by_title_so_groups_stand_together() {
     );
     assert_eq!(
         &titles[4..],
-        &[text("Startseite"), text("Startseite"), text("Startseite")]
+        &[
+            text("Startseite"),
+            text("Startseite"),
+            text("startseite"), // andere Schreibweise: gehört zur Gruppe (K-58)
+            text("Startseite")
+        ]
     );
 }
 
