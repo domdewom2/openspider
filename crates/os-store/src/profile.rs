@@ -7,6 +7,13 @@
 //! | Maximale Geschwindigkeit | −(25 % des physischen RAM in KiB, höchstens 4 GiB; K-16, an PERF-001 angeglichen) | `OFF` | `NORMAL` |
 //!
 //! Alle Profile laufen im WAL-Modus; das Profil ändert keine Funktion, nur Cache und Synchronisation.
+//!
+//! **WAL-Checkpoint (M1-P30):** SQLite führt das WAL standardmäßig nach 1 000 Seiten (4 MiB) in die Hauptdatei
+//! zurück und synchronisiert dabei beide Dateien. Beim Crawl mit gleichverteilten Zielen schreibt jeder dieser
+//! Checkpoints einen großen Teil der Datei neu; unter Windows (`FlushFileBuffers`, Echtzeitscan des Virenscanners)
+//! kostete er rund 0,5–1,5 s und machte 94 % der Writer-Zeit aus (CI-Messung: 54 statt 2 233 URLs/s bei
+//! macOS-arm64). Der Schwellwert wächst deshalb mit der Datei ([`wal_checkpoint_pages`]): Der Aufwand je Checkpoint
+//! wächst mit der Dateigröße, die Zahl der Checkpoints sinkt im gleichen Maß, der Gesamtaufwand bleibt linear.
 //! [`read`] liefert die tatsächlich gesetzten Werte (Hilfe › Diagnose, Test der Akzeptanzkriterien).
 
 use rusqlite::Connection;
@@ -27,6 +34,20 @@ pub enum StorageProfile {
 
 /// Obergrenze des Caches im Profil „Maximale Geschwindigkeit“: 4 GiB in KiB (K-16, PERF-001).
 pub const MAX_SPEED_CACHE_CAP_KIB: i64 = 4 * 1024 * 1024;
+
+/// Untergrenze des automatischen WAL-Checkpoints in Seiten: 16 384 Seiten (64 MiB bei 4 KiB Seitengröße).
+pub const WAL_CHECKPOINT_MIN_PAGES: i64 = 16_384;
+
+/// Obergrenze des automatischen WAL-Checkpoints in Seiten: 131 072 Seiten (512 MiB bei 4 KiB Seitengröße). Das
+/// WAL kann sich bis dahin füllen, ehe es zurückgeführt wird; größere Werte kosten Plattenplatz und
+/// Wiederherstellungszeit nach einem Abbruch (das WAL wird beim Öffnen wiedereingespielt).
+pub const WAL_CHECKPOINT_MAX_PAGES: i64 = 131_072;
+
+/// Schwelle für `PRAGMA wal_autocheckpoint` bei einer Datei mit `db_pages` Seiten: die Dateigröße, begrenzt auf
+/// [`WAL_CHECKPOINT_MIN_PAGES`] bis [`WAL_CHECKPOINT_MAX_PAGES`].
+pub fn wal_checkpoint_pages(db_pages: i64) -> i64 {
+    db_pages.clamp(WAL_CHECKPOINT_MIN_PAGES, WAL_CHECKPOINT_MAX_PAGES)
+}
 
 /// Untergrenze des Caches im Profil „Maximale Geschwindigkeit“: der Wert von „Ausgewogen“ (nur relevant auf
 /// Rechnern mit weniger als 1 GiB RAM, damit das schnelle Profil nie kleiner ausfällt als das Standardprofil).
@@ -96,12 +117,14 @@ impl AppliedPragmas {
 }
 
 /// Setzt die Verbindungs-PRAGMAs: WAL, `synchronous` nach Profil (während des Crawls), `foreign_keys = OFF`
-/// (Konsistenz sichert der Writer), Cache nach Profil und Wartezeit bei gesperrter Datei.
+/// (Konsistenz sichert der Writer), Cache nach Profil, Checkpoint-Schwelle ([`WAL_CHECKPOINT_MIN_PAGES`]) und
+/// Wartezeit bei gesperrter Datei.
 pub fn apply(conn: &Connection, profile: StorageProfile) -> Result<(), StoreError> {
     conn.pragma_update_and_check(None, "journal_mode", "WAL", |r| r.get::<_, String>(0))?;
     conn.pragma_update(None, "synchronous", profile.synchronous_during_crawl())?;
     conn.pragma_update(None, "foreign_keys", false)?;
     conn.pragma_update(None, "cache_size", profile.cache_size_kib())?;
+    conn.pragma_update(None, "wal_autocheckpoint", WAL_CHECKPOINT_MIN_PAGES)?;
     conn.busy_timeout(std::time::Duration::from_secs(5))?;
     Ok(())
 }
@@ -159,4 +182,17 @@ pub fn physical_ram_bytes() -> Option<u64> {
 #[cfg(not(any(unix, windows)))]
 pub fn physical_ram_bytes() -> Option<u64> {
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Infrastruktur (M1-P30), kein Spec-Tag.
+    #[test]
+    fn the_checkpoint_threshold_follows_the_file_size_within_its_bounds() {
+        assert_eq!(wal_checkpoint_pages(0), WAL_CHECKPOINT_MIN_PAGES);
+        assert_eq!(wal_checkpoint_pages(20_000), 20_000);
+        assert_eq!(wal_checkpoint_pages(i64::MAX), WAL_CHECKPOINT_MAX_PAGES);
+    }
 }

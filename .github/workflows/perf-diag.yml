@@ -120,14 +120,50 @@ jobs:
           "TIME_WAIT nach dem Lauf: " + ((netstat -ano | Select-String TIME_WAIT | Measure-Object).Count)
           netstat -s -p tcp
 
-      - name: Writer-Benchmark von os-store (100 000 Seiten x 30 Links)
+      - name: Writer-Benchmark von os-store (100 000 Seiten x 30 Links, seitentypische Ziele)
         continue-on-error: true
         timeout-minutes: 25
-        run: cargo test -p os-store --release --locked --test bench_writer -- --ignored --nocapture writer_100k 2>&1 | tee target/perf-diag/bench_writer.log
+        run: cargo test -p os-store --release --locked --test bench_writer -- --ignored --nocapture --test-threads=1 writer_100k_pages_with_30_links 2>&1 | tee target/perf-diag/bench_writer.log
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: perf-diag-${{ matrix.name }}
+          path: target/perf-diag/
+          if-no-files-found: warn
+
+  # Teil (c) von M1-P30 (nur Bericht): Laufen die Signal-, Pfad- und Loopback-Tests unter Windows wirklich, oder
+  # überspringen sie sich still? `--nocapture` zeigt die Meldungen „Test übersprungen“, die bei bestandenen Tests im
+  # normalen Log fehlen.
+  windows-tests:
+    name: cli-tests (windows-x64)
+    runs-on: windows-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: perf-diag-tests
+
+      - name: Signal-, Pfad- und Loopback-Tests mit Ausgabe
+        continue-on-error: true
+        run: |
+          mkdir -p target/perf-diag
+          {
+            cargo test --locked -p os-cli --test cli_load --test cli_crawl --test cli_basics -- --nocapture --test-threads=1
+            cargo test --locked -p os-analyze --test tab_response_codes a_closed_loopback_port_is_connection_refused -- --nocapture
+          } 2>&1 | tee target/perf-diag/cli-tests.log
+          echo "== Zeilen mit 'übersprungen':"
+          grep -n "übersprungen" target/perf-diag/cli-tests.log || echo "keine"
+          grep -n "^test .*\(signals::\|backslash\|unicode_paths\|closed_loopback\)" target/perf-diag/cli-tests.log
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-diag-cli-tests
           path: target/perf-diag/
           if-no-files-found: warn

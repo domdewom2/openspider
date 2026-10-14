@@ -593,3 +593,53 @@ fn checkpoint_merges_the_wal_and_keeps_writing_possible() {
     assert_eq!(wal, 0, "WAL nach finish() leer");
     assert_eq!(count(sink.file(), "SELECT COUNT(*) FROM urls"), 3);
 }
+
+fn wal_autocheckpoint_of(sink: &os_store::SqliteSink) -> i64 {
+    sink.file()
+        .conn()
+        .pragma_query_value(None, "wal_autocheckpoint", |r| r.get(0))
+        .unwrap()
+}
+
+// Infrastruktur (M1-P30, Windows-Durchsatz), kein Spec-Tag.
+#[test]
+fn the_checkpoint_threshold_starts_at_64_mib_and_grows_with_the_file() {
+    use os_store::profile::{WAL_CHECKPOINT_MAX_PAGES, WAL_CHECKPOINT_MIN_PAGES};
+    let dir = tempfile::tempdir().unwrap();
+    let path = new_crawl(dir.path(), "wal.ospider", StorageProfile::Balanced);
+    let mut sink = sink(&path, StorageProfile::Balanced);
+    assert_eq!(wal_autocheckpoint_of(&sink), WAL_CHECKPOINT_MIN_PAGES);
+
+    // Datei auf rund 24 000 Seiten bringen (je Zeile eine Seite): über 125 % der Untergrenze
+    {
+        let conn = sink.file().conn();
+        conn.execute_batch("CREATE TABLE filler (a BLOB)").unwrap();
+        let tx = conn.unchecked_transaction().unwrap();
+        for _ in 0..24_000 {
+            tx.execute("INSERT INTO filler VALUES (zeroblob(4000))", [])
+                .unwrap();
+        }
+        tx.commit().unwrap();
+    }
+    sink.write(batch_with_urls([(1, true)])).unwrap();
+    let grown = wal_autocheckpoint_of(&sink);
+    assert!(
+        grown > WAL_CHECKPOINT_MIN_PAGES && grown <= WAL_CHECKPOINT_MAX_PAGES,
+        "Schwelle {grown} Seiten"
+    );
+}
+
+// Infrastruktur (M1-P30, Windows-Durchsatz), kein Spec-Tag.
+#[test]
+fn an_externally_set_checkpoint_threshold_is_left_alone() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = new_crawl(dir.path(), "wal2.ospider", StorageProfile::Balanced);
+    let mut sink = sink(&path, StorageProfile::Balanced);
+    sink.file()
+        .conn()
+        .pragma_update(None, "wal_autocheckpoint", 5_000)
+        .unwrap();
+    sink.write(batch_with_urls([(1, true)])).unwrap();
+    sink.write(batch_with_urls([(2, true)])).unwrap();
+    assert_eq!(wal_autocheckpoint_of(&sink), 5_000);
+}

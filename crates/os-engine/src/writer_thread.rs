@@ -4,11 +4,25 @@
 //! schreibt, was die Worker über einen **begrenzten** Kanal schicken. Ist der Kanal voll, warten die Worker
 //! in `reserve().await`/`send().await`: Fetch und Auswertung werden gedrosselt, der Speicher wächst nicht.
 //!
-//! Der Thread fasst die Nachrichten zu Batches zusammen: höchstens [`BATCH_PAGES`] Seiten oder
-//! [`BATCH_MAX_WAIT`] Wartezeit, bei Rückstau (mehr als die Hälfte des Kanals belegt) bis zu
-//! [`BATCH_PAGES_BACKLOG`] Seiten. Die Reihenfolge der Nachrichten bleibt erhalten; der Store verarbeitet
-//! innerhalb eines Batches `new_urls` vor `pages`, deshalb genügt es, dass die Nachricht mit den neuen URLs
-//! vor der mit der Seite im Kanal liegt (die Worker sorgen dafür, siehe `worker.rs`).
+//! Der Thread fasst die Nachrichten zu Batches zusammen (**Gruppen-Commit**, M1-P30). Die Reihenfolge der
+//! Nachrichten bleibt erhalten; der Store verarbeitet innerhalb eines Batches `new_urls` vor `pages`, deshalb
+//! genügt es, dass die Nachricht mit den neuen URLs vor der mit der Seite im Kanal liegt (die Worker sorgen
+//! dafür, siehe `worker.rs`).
+//!
+//! * **Normalbetrieb** (die Senke kommt hinterher): geschrieben wird, sobald [`BATCH_PAGES`] Seiten beisammen sind
+//!   oder [`BATCH_MAX_WAIT`] seit der ersten Nachricht des Batches verstrichen ist – ein einzelner Batch liegt also
+//!   höchstens 100 ms im Speicher.
+//! * **Rückstau** (während des letzten Schreibens oder beim Eintreffen der Nachricht war der Kanal nicht leer, die
+//!   Senke ist der Engpass): mehrere Batches werden zu **einer** Transaktion zusammengefasst, bis
+//!   [`BATCH_PAGES_BACKLOG`] Seiten beisammen sind oder [`BATCH_MAX_WAIT_BACKLOG`] verstrichen ist. Jeder Commit
+//!   schreibt die geänderten Seiten der Indizes und der Tabellen neu ins WAL; bei gleichverteilten Zielen (jede
+//!   Seite berührt 30 verschiedene Zeilen) wächst die Zahl dieser Seiten kaum mit der Batchgröße, die Kosten je
+//!   Seite sinken also mit größeren Batches (Messung P28/P30: 1 000 statt 200 Seiten je Commit −42 %, 5 000 −71 %
+//!   Writer-Zeit). Der Writer sammelt in seinem eigenen Speicher weiter, die Worker werden dadurch nicht
+//!   zusätzlich gedrosselt, und der Speicher bleibt durch die Seitengrenze begrenzt (PERF-001/003).
+//!
+//! Was bei einem harten Abbruch ungeschrieben bleibt, ist durch die Konstanten begrenzt: Kanal
+//! ([`CHANNEL_CAPACITY`]) plus größter Batch ([`BATCH_PAGES_BACKLOG`]) plus die Abrufe in Bearbeitung (K-49).
 //!
 //! Ein Fehler der Senke wird gemerkt; danach verwirft der Thread weitere Batches (die Worker blockieren
 //! nicht) und meldet den Fehler bei `flush`/`finish`. Die Engine bricht den Crawl dann ab.
@@ -25,10 +39,13 @@ use tokio::sync::{mpsc, oneshot};
 
 /// Seiten je Batch im Normalbetrieb (M1-Plan 3.7).
 pub const BATCH_PAGES: usize = 200;
-/// Seiten je Batch bei Rückstau.
-pub const BATCH_PAGES_BACKLOG: usize = 1_000;
-/// Längste Wartezeit, bis ein nicht voller Batch geschrieben wird.
+/// Größter Batch (Seiten) bei Rückstau, der Gruppen-Commit (M1-P30). Begrenzt auch, was bei einem harten Abbruch
+/// ungeschrieben bleiben kann (K-49).
+pub const BATCH_PAGES_BACKLOG: usize = 5_000;
+/// Längste Wartezeit, bis ein nicht voller Batch im Normalbetrieb geschrieben wird.
 pub const BATCH_MAX_WAIT: Duration = Duration::from_millis(100);
+/// Längste Wartezeit beim Sammeln eines Gruppen-Commits (Rückstau).
+pub const BATCH_MAX_WAIT_BACKLOG: Duration = Duration::from_millis(500);
 /// Nachrichten, die im Kanal warten dürfen, bevor die Worker blockieren.
 pub const CHANNEL_CAPACITY: usize = 256;
 
@@ -312,44 +329,78 @@ fn write_out(
     }
 }
 
+/// Ergebnis des Wartens auf die nächste Nachricht.
+enum Next {
+    Msg(Msg),
+    /// Die Wartezeit des offenen Batches ist abgelaufen.
+    Timeout,
+    /// Alle Absender sind weg und der Kanal ist leer.
+    Closed,
+}
+
 fn writer_loop(
     mut sink: Box<dyn CrawlSink>,
     mut rx: mpsc::Receiver<Msg>,
     capacity: usize,
     shared: Arc<Shared>,
 ) {
+    // Eigene kleine Laufzeit nur für das Warten mit Zeitgrenze: `recv()` mit `timeout` schläft im Betriebssystem
+    // bis zur nächsten Nachricht oder zum Ablauf – ohne Abfragen im Millisekundentakt (unter Windows rundet
+    // `sleep(1 ms)` auf die Timer-Auflösung von ~15,6 ms).
+    let waiter = tokio::runtime::Builder::new_current_thread()
+        .enable_time()
+        .build()
+        .expect("Warteschleife des Writers");
     let mut batch = WriteBatch::default();
     let mut pages = 0usize;
     let mut first_at: Option<Instant> = None;
+    // Die Senke ist der Engpass: bei der letzten Nachricht oder nach dem letzten Schreiben stand Arbeit im Kanal.
+    let mut behind = false;
 
     loop {
-        // nächste Nachricht: leer → blockierend warten, sonst bis zum Ablauf der Wartezeit
-        let msg = if first_at.is_none() {
-            let t = Instant::now();
-            let received = rx.blocking_recv();
-            diag::add(&diag::STATS.w_idle_ns, t);
-            match received {
-                Some(m) => m,
-                None => break,
+        let next = match first_at {
+            None => {
+                let t = Instant::now();
+                let received = rx.try_recv().ok().or_else(|| waiter.block_on(rx.recv()));
+                diag::add(&diag::STATS.w_idle_ns, t);
+                received.map_or(Next::Closed, Next::Msg)
             }
-        } else {
-            match rx.try_recv() {
-                Ok(m) => m,
-                Err(mpsc::error::TryRecvError::Disconnected) => break,
+            Some(first) => match rx.try_recv() {
+                Ok(m) => Next::Msg(m),
+                Err(mpsc::error::TryRecvError::Disconnected) => Next::Closed,
                 Err(mpsc::error::TryRecvError::Empty) => {
-                    let waited = first_at.map_or(Duration::ZERO, |t| t.elapsed());
-                    if waited >= BATCH_MAX_WAIT {
-                        write_out(&mut sink, &mut batch, &mut pages, &shared);
-                        first_at = None;
+                    let max_wait = if behind {
+                        BATCH_MAX_WAIT_BACKLOG
+                    } else {
+                        BATCH_MAX_WAIT
+                    };
+                    let left = max_wait.saturating_sub(first.elapsed());
+                    if left.is_zero() {
+                        Next::Timeout
                     } else {
                         let t = Instant::now();
-                        std::thread::sleep(Duration::from_millis(1));
+                        let received =
+                            waiter.block_on(async { tokio::time::timeout(left, rx.recv()).await });
                         diag::inc(&diag::STATS.w_poll_sleeps);
                         diag::add(&diag::STATS.w_poll_sleep_ns, t);
+                        match received {
+                            Ok(Some(m)) => Next::Msg(m),
+                            Ok(None) => Next::Closed,
+                            Err(_) => Next::Timeout,
+                        }
                     }
-                    continue;
                 }
+            },
+        };
+        let msg = match next {
+            Next::Msg(m) => m,
+            Next::Timeout => {
+                write_out(&mut sink, &mut batch, &mut pages, &shared);
+                first_at = None;
+                behind = !rx.is_empty();
+                continue;
             }
+            Next::Closed => break,
         };
         let queued = rx.len() + 1;
         shared.stats.max_queued.fetch_max(queued, Ordering::Relaxed);
@@ -361,7 +412,9 @@ fn writer_loop(
                 pages += b.pages.len();
                 merge(&mut batch, *b);
                 first_at.get_or_insert_with(Instant::now);
-                let limit = if rx.len() * 2 > capacity {
+                // Rückstau auch dann, wenn schon mehr als ein Achtel des Kanals wartet.
+                let backlog = behind || rx.len() * 8 > capacity;
+                let limit = if backlog {
                     BATCH_PAGES_BACKLOG
                 } else {
                     BATCH_PAGES
@@ -369,16 +422,19 @@ fn writer_loop(
                 if pages >= limit {
                     write_out(&mut sink, &mut batch, &mut pages, &shared);
                     first_at = None;
+                    behind = !rx.is_empty();
                 }
             }
             Msg::Flush(ack) => {
                 write_out(&mut sink, &mut batch, &mut pages, &shared);
                 first_at = None;
+                behind = !rx.is_empty();
                 let _ = ack.send(!shared.failed.load(Ordering::SeqCst));
             }
             Msg::Checkpoint(ack) => {
                 write_out(&mut sink, &mut batch, &mut pages, &shared);
                 first_at = None;
+                behind = !rx.is_empty();
                 let ok = if shared.failed.load(Ordering::SeqCst) {
                     false
                 } else if let Err(e) = sink.checkpoint() {
@@ -506,7 +562,7 @@ mod tests {
 
     // Infrastruktur (PERF-003), kein Spec-Tag.
     #[tokio::test]
-    async fn a_batch_never_exceeds_the_page_limit_without_backlog() {
+    async fn the_first_batch_is_cut_at_the_normal_page_limit_before_any_backlog() {
         let (s, log) = sink(Duration::ZERO, None);
         let w = WriterThread::spawn(s);
         let tx = w.sender();
@@ -518,12 +574,91 @@ mod tests {
         let stats = w.finish().unwrap();
         assert_eq!(stats.pages, 600);
         let log = log.lock().unwrap();
-        assert!(
-            log.batches.len() >= 3,
-            "mindestens 3 Batches bei 600 Seiten"
-        );
-        // Der Rückstau-Fall darf größer werden, bleibt aber unter dem oberen Limit + einer Nachricht.
+        // Noch kein Rückstau (weniger als ein Achtel des Kanals wartet): der erste Batch endet bei 200 Seiten.
+        assert_eq!(log.batches[0].pages.len(), BATCH_PAGES);
+        // Spätere Batches dürfen bei Rückstau größer werden, bleiben aber unter dem oberen Limit + einer Nachricht.
         assert!(stats.max_batch_pages <= BATCH_PAGES_BACKLOG + 20);
+    }
+
+    /// Batch mit `n` Seiten, deren Kennungen bei `first` beginnen (Reihenfolgeprüfung).
+    fn numbered_batch(first: i64, n: usize) -> WriteBatch {
+        let mut b = page_batch(n);
+        for (i, p) in b.pages.iter_mut().enumerate() {
+            p.url_id = os_model::UrlId(first + i as i64);
+        }
+        b
+    }
+
+    // Infrastruktur (PERF-003), kein Spec-Tag.
+    #[tokio::test]
+    async fn a_backlog_is_written_as_few_large_batches_in_order() {
+        // Langsame Senke: die Worker (hier ein schneller Absender) liegen vorn, der Writer fasst zusammen.
+        let (s, log) = sink(Duration::from_millis(40), None);
+        let w = WriterThread::spawn(s);
+        let tx = w.sender();
+        let total = 6_000usize;
+        for i in 0..(total / 50) {
+            tx.send(numbered_batch((i * 50) as i64 + 1, 50))
+                .await
+                .unwrap();
+        }
+        tx.flush().await.unwrap();
+        drop(tx);
+        let stats = w.finish().unwrap();
+        assert_eq!(stats.pages, total as u64);
+        let log = log.lock().unwrap();
+        // Ohne Gruppen-Commit wären es mindestens total / BATCH_PAGES = 30 Batches.
+        assert!(
+            log.batches.len() <= 12,
+            "{} Batches für {total} Seiten (Gruppen-Commit erwartet)",
+            log.batches.len()
+        );
+        assert!(
+            stats.max_batch_pages >= 4 * BATCH_PAGES,
+            "größter Batch {} Seiten",
+            stats.max_batch_pages
+        );
+        assert!(stats.max_batch_pages <= BATCH_PAGES_BACKLOG + 50);
+        // Reihenfolge und Vollständigkeit über alle Batches
+        let ids: Vec<i64> = log
+            .batches
+            .iter()
+            .flat_map(|b| b.pages.iter().map(|p| p.url_id.0))
+            .collect();
+        assert_eq!(ids, (1..=total as i64).collect::<Vec<_>>());
+    }
+
+    // Infrastruktur (PERF-003), kein Spec-Tag.
+    #[tokio::test]
+    async fn a_backlog_remainder_is_written_without_flush_after_the_backlog_wait() {
+        let (s, log) = sink(Duration::from_millis(30), None);
+        let w = WriterThread::spawn(s);
+        let tx = w.sender();
+        for i in 0..40 {
+            tx.send(numbered_batch(i * 50 + 1, 50)).await.unwrap(); // 2 000 Seiten
+        }
+        let start = Instant::now();
+        loop {
+            let written: usize = log
+                .lock()
+                .unwrap()
+                .batches
+                .iter()
+                .map(|b| b.pages.len())
+                .sum();
+            if written == 2_000 {
+                break;
+            }
+            assert!(
+                start.elapsed() < Duration::from_secs(5),
+                "nur {written} von 2 000 Seiten geschrieben"
+            );
+            tokio::time::sleep(Duration::from_millis(5)).await;
+        }
+        // Spätestens nach der Sammelzeit des Gruppen-Commits plus dem Schreiben (mit Reserve für langsame Runner)
+        assert!(start.elapsed() < BATCH_MAX_WAIT_BACKLOG + Duration::from_secs(3));
+        drop(tx);
+        w.finish().unwrap();
     }
 
     // Infrastruktur (PERF-003), kein Spec-Tag.
@@ -582,10 +717,16 @@ mod tests {
         }
         producer.await.unwrap();
         tx.flush().await.unwrap();
-        // Kanal (4) + sich ansammelnder Batch (bis 5 Nachrichten) + gerade geschriebener Batch (bis 5)
+        // Kanal (4) + sich ansammelnder Batch (bis BATCH_PAGES_BACKLOG Seiten) + gerade geschriebener Batch
+        let per_batch = BATCH_PAGES_BACKLOG / BATCH_PAGES + 1;
+        let bound = 4 + 2 * per_batch + 2;
         assert!(
-            max_ahead <= 4 + 5 + 5 + 2,
-            "Produzent lief {max_ahead} von 120 Nachrichten voraus (Kanal 4)"
+            max_ahead <= bound,
+            "Produzent lief {max_ahead} von 120 Nachrichten voraus (Kanal 4, Grenze {bound})"
+        );
+        assert!(
+            max_ahead < 120,
+            "ohne Gegendruck liefe er ungebremst voraus"
         );
         drop(tx);
         let stats = w.finish().unwrap();

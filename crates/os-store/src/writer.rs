@@ -45,6 +45,9 @@ pub struct SqliteSink {
     file: CrawlFile,
     profile: StorageProfile,
     clock: Arc<dyn Clock>,
+    /// Zuletzt gesetzte Schwelle von `PRAGMA wal_autocheckpoint` (Seiten); `None`, sobald jemand anderes sie
+    /// geändert hat (dann stellt der Sink sie nicht mehr um).
+    checkpoint_pages: Option<i64>,
 }
 
 impl SqliteSink {
@@ -60,6 +63,7 @@ impl SqliteSink {
             file,
             profile,
             clock: Arc::new(SystemClock),
+            checkpoint_pages: Some(profile::WAL_CHECKPOINT_MIN_PAGES),
         })
     }
 
@@ -67,6 +71,30 @@ impl SqliteSink {
     pub fn with_clock(mut self, clock: Arc<dyn Clock>) -> Self {
         self.clock = clock;
         self
+    }
+
+    /// Lässt die Checkpoint-Schwelle mit der Datei wachsen ([`profile::wal_checkpoint_pages`]); ein von außen
+    /// gesetzter Wert (z. B. im Lasttest) bleibt unangetastet. Fehler sind unkritisch: die Schwelle bleibt dann.
+    fn adapt_checkpoint_threshold(&mut self) {
+        let Some(current) = self.checkpoint_pages else {
+            return;
+        };
+        let conn = self.file.conn();
+        let set: Result<i64, _> = conn.pragma_query_value(None, "wal_autocheckpoint", |r| r.get(0));
+        if set.ok() != Some(current) {
+            self.checkpoint_pages = None;
+            return;
+        }
+        let Ok(pages) = conn.pragma_query_value(None, "page_count", |r| r.get::<_, i64>(0)) else {
+            return;
+        };
+        let want = profile::wal_checkpoint_pages(pages);
+        // erst ab 25 % Zuwachs umstellen (die Datei wächst nur)
+        if want > current + current / 4
+            && conn.pragma_update(None, "wal_autocheckpoint", want).is_ok()
+        {
+            self.checkpoint_pages = Some(want);
+        }
     }
 
     /// Die geöffnete Crawl-Datei (Lesezugriff, z. B. für Diagnose und Tests).
@@ -104,6 +132,9 @@ fn wal_checkpoint(conn: &Connection) -> Result<(), StoreError> {
 
 impl CrawlSink for SqliteSink {
     fn write(&mut self, batch: WriteBatch) -> Result<(), StoreError> {
+        // Die Schwelle gilt für den nächsten Commit; sie wächst mit der Datei, bevor dieser Commit eine
+        // Checkpoint-Entscheidung trifft.
+        self.adapt_checkpoint_threshold();
         write_batch(self.file.conn(), &batch, self.clock.as_ref())
     }
 
