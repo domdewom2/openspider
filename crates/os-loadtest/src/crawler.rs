@@ -1,13 +1,15 @@
 //! Schnittstelle zum getesteten Crawler.
 //!
-//! `os-engine` implementiert [`CrawlerUnderTest`], sobald der Crawler existiert. Bis dahin
-//! liefert [`NoCrawler`] immer [`CrawlerError::NotImplemented`]; der Runner misst dann nur
+//! [`crate::engine::EngineCrawler`] implementiert [`CrawlerUnderTest`] mit `os-engine`. Ohne Crawler
+//! (`--crawler none`) liefert [`NoCrawler`] immer [`CrawlerError::NotImplemented`]; der Runner misst dann nur
 //! den Testserver.
 
 use std::collections::BTreeMap;
 use std::future::Future;
 use std::pin::Pin;
 use std::time::Duration;
+
+use os_testsite::SyntheticConfig;
 
 use crate::scenario::Size;
 
@@ -22,6 +24,8 @@ pub struct CrawlJob {
     pub start_url: String,
     /// Erwartete Anzahl erreichbarer URLs.
     pub expected_urls: u64,
+    /// Konfiguration der synthetischen Site (für Referenz- und Zusatzläufe auf eigenen Instanzen).
+    pub site: SyntheticConfig,
 }
 
 /// Messwerte eines Crawl-Laufs.
@@ -35,6 +39,11 @@ pub struct CrawlOutcome {
     pub peak_rss_bytes: Option<u64>,
     /// Weitere szenariospezifische Messwerte; landen mit Präfix `crawler_` im Bericht.
     pub extra: BTreeMap<String, serde_json::Value>,
+    /// Verletzte Kriterien des Szenarios (leer = alle erfüllt); jede Verletzung lässt den Lauf scheitern.
+    pub violations: Vec<String>,
+    /// Auffälligkeiten, die den Lauf nicht scheitern lassen (z. B. bekannte Defekte, überschrittene
+    /// Spec-Richtwerte); landen als `crawler_warnings` im Bericht.
+    pub warnings: Vec<String>,
 }
 
 /// Fehler eines Crawl-Laufs.

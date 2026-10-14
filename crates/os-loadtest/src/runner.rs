@@ -209,6 +209,7 @@ pub async fn run(
         size,
         start_url: site.url("/"),
         expected_urls: model.pages(),
+        site: model.config().clone(),
     };
     match crawler.crawl(job).await {
         Ok(outcome) => {
@@ -224,7 +225,9 @@ pub async fn run(
             for (k, v) in outcome.extra {
                 metrics.insert(format!("crawler_{k}"), v);
             }
-            crawler_ok = outcome.urls_crawled >= model.pages();
+            metrics.insert("crawler_violations".into(), json!(outcome.violations));
+            metrics.insert("crawler_warnings".into(), json!(outcome.warnings));
+            crawler_ok = outcome.urls_crawled >= model.pages() && outcome.violations.is_empty();
         }
         Err(CrawlerError::NotImplemented) => {
             metrics.insert("crawler_available".into(), json!(false));
