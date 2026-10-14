@@ -260,12 +260,47 @@ async fn crawl_overview_names_the_same_state_as_list_crawls_also_for_a_crashed_c
     client.cancel().await;
 }
 
+/// Crawl-Ordner-Erweiterung: speichert das Fixture ohne die Crawl-Analyse (wie die Golden-Tests in `os-export`).
+trait AddWithoutAnalysis {
+    async fn add_without_analysis(
+        &self,
+        scenario: &str,
+        start: &str,
+        cfg: CrawlConfig,
+        seed: u64,
+    ) -> Stored;
+}
+
+impl AddWithoutAnalysis for World {
+    async fn add_without_analysis(
+        &self,
+        scenario: &str,
+        start: &str,
+        cfg: CrawlConfig,
+        seed: u64,
+    ) -> Stored {
+        let mut deps = os_engine::testing::test_deps();
+        deps.ids = std::sync::Arc::new(os_model::SeededIds::new(seed));
+        let fx = os_engine::testing::crawl_fixture_with(scenario, start, cfg, deps).await;
+        let id = fx.file.meta().unwrap().crawl_id.to_string();
+        fx.file
+            .save_as(&self.dir.path().join(format!("{id}.ospider")))
+            .expect("Crawl speichern");
+        let cfg = fx.file.config().unwrap();
+        Stored { id, fx, cfg }
+    }
+}
+
 // spec: OUT-080, AGENT-010
 #[tokio::test]
-#[ignore = "M1-P26: tests/golden/out-issues/crawl_overview.csv entsteht erst mit den scharfen Tab-Zählern"]
 async fn crawl_overview_equals_the_golden_of_the_overview_report() {
+    // Das Golden entsteht wie in `os-export` (`reports_overview.rs`) aus dem frisch gecrawlten Fixture OHNE
+    // Crawl-Analyse: Zähler, die sie brauchen, stehen dort leer. `World::add` führt sie wie die CLI aus
+    // (dann stünde dort 0), also wird der Crawl hier ohne Analyse gespeichert.
     let world = World::new();
-    let stored = world.add("out-issues", "/", base_config(), 1).await;
+    let stored = world
+        .add_without_analysis("out-issues", "/", base_config(), 1)
+        .await;
     let client = world.client().await;
     let reply = client
         .call("crawl_overview", json!({"crawl_id": stored.id}))
@@ -687,7 +722,6 @@ async fn multi_columns_can_be_sorted_by_their_numbered_name_and_listed_with_all_
 
 // spec: AGENT-011
 #[tokio::test]
-#[ignore = "M1-N09: nummerierte Mehrfachspaltennamen als columns"]
 async fn a_numbered_multi_column_name_can_be_requested_as_a_column() {
     let world = World::new();
     let stored = world.add("out-basic-site", "/", base_config(), 1).await;
@@ -862,6 +896,113 @@ async fn the_start_page_comes_with_all_sections() {
     ] {
         assert!(data.get(key).is_some(), "{key}");
     }
+    client.cancel().await;
+}
+
+// spec: AGENT-012
+#[tokio::test]
+async fn hreflang_annotations_come_per_part_column_with_language_and_url_in_fixture_order() {
+    // Die Hreflang-Spalten sind verschränkte Mehrfachspalten (`ColumnSql::MultiPaired`, TECH-071): je Index
+    // `HTML hreflang n` (Sprache) und `HTML hreflang n URL`. `url_details` nennt je Annotation ein Objekt mit
+    // Sprache und URL, in der Reihenfolge des Quelltextes (`tech/hreflang`, `/en/`), und stimmt mit den
+    // Teilspalten des Hreflang-Tabs überein.
+    let world = World::new();
+    let stored = world.add("tech/hreflang", "/en/", base_config(), 1).await;
+    let client = world.client().await;
+    let page = stored.fx.site.url("/en/");
+    let reply = details(
+        &client,
+        &stored.id,
+        &page,
+        json!({"sections": ["hreflang"]}),
+    )
+    .await;
+    assert!(!reply.is_error, "{:?}", reply.blocks);
+    let entries = reply.untrusted.as_ref().expect("Datenblock")["hreflang"]
+        .as_array()
+        .expect("Liste der Annotationen")
+        .clone();
+
+    // Reihenfolge und Sprache wie im `<head>` der Fixture; die URL ist die aufgelöste Adresse des Ziels
+    // (relative `href` gegen den Host der Testsite, absolute unverändert).
+    let fixture: [(&str, &str); 7] = [
+        ("en", "/en/"),
+        ("de", "/de/"),
+        ("fr", "/fr/"),
+        ("fr-CA", "/fr-old/"),
+        ("es", "http://site.test/es/"),
+        ("it", "/it/"),
+        ("nl", "/nl/"),
+    ];
+    assert_eq!(entries.len(), fixture.len(), "{entries:?}");
+    for (i, (entry, (code, href))) in entries.iter().zip(fixture).enumerate() {
+        let expected_url = if href.starts_with("http") {
+            href.to_string()
+        } else {
+            stored.fx.site.url(href)
+        };
+        assert_eq!(entry["source"], "html", "{i}");
+        assert_eq!(entry["position"], i as u64, "{i}");
+        assert_eq!(entry["code"], code, "{i}");
+        assert_eq!(entry["href"], href, "{i}");
+        assert_eq!(entry["url"], expected_url.as_str(), "{i}");
+    }
+
+    // Dieselben Werte stehen in den Teilspalten des Hreflang-Tabs (MultiPaired): je Index Sprache + URL.
+    let tab = client
+        .call(
+            "query_urls",
+            json!({"crawl_id": stored.id, "tab": "Hreflang", "columns": "all",
+                   "search": "/en/", "limit": 500}),
+        )
+        .await;
+    assert!(!tab.is_error, "{:?}", tab.blocks);
+    let names: Vec<String> = tab.summary()["columns"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|c| c.as_str().unwrap().to_string())
+        .collect();
+    let row = tab
+        .rows()
+        .into_iter()
+        .find(|r| cell_text(&r[0]) == page)
+        .expect("die Seite steht im Hreflang-Tab");
+    let cell = |name: &str| -> String {
+        let at = names
+            .iter()
+            .position(|n| n == name)
+            .unwrap_or_else(|| panic!("Spalte {name} fehlt in {names:?}"));
+        cell_text(&row[at])
+    };
+    for (i, entry) in entries.iter().enumerate() {
+        let n = i + 1;
+        assert_eq!(
+            cell(&format!("HTML hreflang {n}")),
+            entry["code"].as_str().unwrap(),
+            "Sprache {n}"
+        );
+        assert_eq!(
+            cell(&format!("HTML hreflang {n} URL")),
+            entry["url"].as_str().unwrap(),
+            "URL {n}"
+        );
+    }
+
+    // Eine Seite ohne Annotation liefert eine leere Liste, keinen Fehler.
+    let home = stored.fx.site.url("/");
+    let reply = details(
+        &client,
+        &stored.id,
+        &home,
+        json!({"sections": ["hreflang"]}),
+    )
+    .await;
+    assert!(!reply.is_error, "{:?}", reply.blocks);
+    assert_eq!(
+        reply.untrusted.as_ref().expect("Datenblock")["hreflang"],
+        json!([])
+    );
     client.cancel().await;
 }
 
