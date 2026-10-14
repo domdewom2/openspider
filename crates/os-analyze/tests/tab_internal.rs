@@ -854,6 +854,18 @@ async fn hash_is_md5_of_the_decoded_body() {
 
 // spec: ONPAGE-018
 #[tokio::test]
+async fn hash_is_empty_for_non_html_responses_and_redirects() {
+    // K-60/N-06: PDF, Weiterleitung (leerer Körper) und gesperrte URL haben keinen Hash; HTML schon.
+    let fx = internal_site().await;
+    let t = all_columns(&fx, "All");
+    for path in ["/doc.pdf", "/chunked.pdf", "/r", "/blocked/x.html"] {
+        assert!(t.is_empty_cell(path, "Hash"), "{path}");
+    }
+    assert_eq!(t.text("/elements.html", "Hash").len(), 32);
+}
+
+// spec: ONPAGE-018
+#[tokio::test]
 async fn response_time_is_in_seconds_with_three_decimals() {
     // echte Uhr statt FixedClock: die Route /slow wartet 500 ms
     let mut deps = test_deps();

@@ -474,7 +474,8 @@ pub(crate) fn facts_from_result(res: &FetchResult, cfg: &CrawlConfig) -> FetchFa
                 f.last_modified_raw = header(&r.headers, "last-modified").map(str::to_string);
                 f.last_modified = f.last_modified_raw.as_deref().and_then(parse_http_date);
             }
-            if cfg.extraction.hash {
+            // ONPAGE-018 (K-60): MD5 nur für HTML-Antworten (Inhaltsklasse HTML), sonst leer.
+            if cfg.extraction.hash && f.content_class == ContentClass::Html {
                 f.hash_md5 = Some(r.md5_hex.clone());
             }
         }
@@ -1614,6 +1615,29 @@ mod tests {
         let t = parse_http_date("Wed, 21 Oct 2015 07:28:00 GMT").expect("gültig");
         assert_eq!(t.to_db(), "2015-10-21T07:28:00.000Z");
         assert!(parse_http_date("kein Datum").is_none());
+    }
+
+    // spec: ONPAGE-018
+    #[test]
+    fn hash_is_only_set_for_html_responses() {
+        let cfg = CrawlConfig::default();
+        let html = response(200, &[("content-type", "text/html")], "<html></html>");
+        assert_eq!(
+            facts_from_result(&html, &cfg)
+                .hash_md5
+                .as_deref()
+                .map(str::len),
+            Some(32)
+        );
+        // 404 mit HTML-Körper trägt einen Hash, Bilder, CSS, Text und Antworten ohne Content-Type nicht (K-60)
+        let error = response(404, &[("content-type", "text/html")], "<html></html>");
+        assert!(facts_from_result(&error, &cfg).hash_md5.is_some());
+        for ct in ["image/png", "text/css", "text/plain", "application/json"] {
+            let res = response(200, &[("content-type", ct)], "abc");
+            assert_eq!(facts_from_result(&res, &cfg).hash_md5, None, "{ct}");
+        }
+        let redirect = response(301, &[("location", "/x")], "");
+        assert_eq!(facts_from_result(&redirect, &cfg).hash_md5, None);
     }
 
     // spec: CRAWL-022

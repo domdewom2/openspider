@@ -324,7 +324,7 @@ async fn pdf_is_in_the_base_set_only_with_pdf_store() {
     // Ohne neuen Abruf: die Umstellung wirkt allein über die Konfiguration.
     assert_eq!(all.len(), content_pages().len() + 1);
 
-    // Hash ist für PDFs leer (A-53), das PDF steht nie in Exact Duplicates und nie in Low Content Pages
+    // Hash ist für PDFs leer (A-53, ONPAGE-018), das PDF steht nie in Exact Duplicates und nie in Low Content Pages
     // (50 Wörter lägen unter der Schwelle).
     let page = view(&off, &with_pdf, TAB, "All");
     assert_eq!(cell(&off, &page, "/short.pdf", "Hash"), Value::Null);
@@ -337,7 +337,10 @@ async fn pdf_is_in_the_base_set_only_with_pdf_store() {
             |r| r.get(0),
         )
         .unwrap();
-    assert!(stored_hash.is_some(), "die PDF hat einen Hash in der Datei");
+    assert!(
+        stored_hash.is_none(),
+        "K-60 (ONPAGE-018): Hash nur für HTML-Antworten, auch in der Datei nicht für die PDF"
+    );
     assert!(!sorted_addresses(&off, &with_pdf, TAB, "Low Content Pages")
         .contains(&"/short.pdf".to_string()));
     assert!(!sorted_addresses(&off, &with_pdf, TAB, "Exact Duplicates")

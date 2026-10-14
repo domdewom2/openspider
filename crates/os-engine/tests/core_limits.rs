@@ -75,7 +75,7 @@ async fn start_records_owner_and_process_and_the_pages_carry_titles_and_links() 
     assert_eq!(
         scalar(
             &fx,
-            "SELECT COUNT(*) FROM urls WHERE status_code = 200 AND hash_md5 IS NULL"
+            "SELECT COUNT(*) FROM urls WHERE status_code = 200 AND content_class = 'HTML' AND hash_md5 IS NULL"
         ),
         0
     );
