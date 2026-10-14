@@ -41,6 +41,31 @@ const SIZE: &str =
 const HTTP_VERSION: &str = "CASE WHEN u.http_version LIKE 'HTTP/%' THEN substr(u.http_version, 6) \
      ELSE u.http_version END";
 
+/// Bedingung für die Element-Spalten des Internal-Tabs (ONPAGE-011, K-60): nur interne HTML-Seiten mit
+/// Status 2xx. Weiterleitungen, Fehlerseiten und URLs ohne Antwort haben leere Zellen, auch wenn ihr Körper
+/// `<title>` oder `<h1>` enthält (A-5: der Inhalt wird nicht ausgewertet).
+macro_rules! html_2xx {
+    ($e:expr) => {
+        concat!(
+            "CASE WHEN u.content_class = 'HTML' AND u.status_code BETWEEN 200 AND 299 THEN ",
+            $e,
+            " END"
+        )
+    };
+}
+
+/// Wie `html_2xx!`, zusätzlich PDFs mit Status 2xx (Titel und Keywords aus den Dokumenteigenschaften,
+/// ONPAGE-009/-166).
+macro_rules! html_or_pdf_2xx {
+    ($e:expr) => {
+        concat!(
+            "CASE WHEN u.content_class IN ('HTML', 'PDF') AND u.status_code BETWEEN 200 AND 299 THEN ",
+            $e,
+            " END"
+        )
+    };
+}
+
 /// Bausteine der Spaltenlisten (auch für `security.rs` und `external.rs`).
 pub(crate) fn col(
     key: &'static str,
@@ -140,43 +165,43 @@ pub fn tab() -> TabDef {
     let mut columns = base_columns();
     columns.extend([
         // ONPAGE-011: Kernwerte der Element-Tabs und Direktiven
-        col("Title 1", "u.title_1", ColumnKind::Text, true),
-        col("Title 1 Length", "u.title_1_len", ColumnKind::Int, true),
+        col("Title 1", html_or_pdf_2xx!("u.title_1"), ColumnKind::Text, true),
+        col("Title 1 Length", html_or_pdf_2xx!("u.title_1_len"), ColumnKind::Int, true),
         col(
             "Title 1 Pixel Width",
-            "u.title_1_px",
+            html_or_pdf_2xx!("u.title_1_px"),
             ColumnKind::Int,
             true,
         ),
         col(
             "Meta Description 1",
-            "u.meta_desc_1",
+            html_2xx!("u.meta_desc_1"),
             ColumnKind::Text,
             true,
         ),
         col(
             "Meta Description 1 Length",
-            "u.meta_desc_1_len",
+            html_2xx!("u.meta_desc_1_len"),
             ColumnKind::Int,
             true,
         ),
         col(
             "Meta Description 1 Pixel Width",
-            "u.meta_desc_1_px",
+            html_2xx!("u.meta_desc_1_px"),
             ColumnKind::Int,
             true,
         ),
-        col("Meta Keywords 1", "u.meta_kw_1", ColumnKind::Text, true),
+        col("Meta Keywords 1", html_or_pdf_2xx!("u.meta_kw_1"), ColumnKind::Text, true),
         col(
             "Meta Keywords 1 Length",
-            "u.meta_kw_1_len",
+            html_or_pdf_2xx!("u.meta_kw_1_len"),
             ColumnKind::Int,
             true,
         ),
-        col("H1-1", "u.h1_1", ColumnKind::Text, true),
-        col("H1-1 Length", "u.h1_1_len", ColumnKind::Int, true),
-        col("H2-1", "u.h2_1", ColumnKind::Text, true),
-        col("H2-1 Length", "u.h2_1_len", ColumnKind::Int, true),
+        col("H1-1", html_2xx!("u.h1_1"), ColumnKind::Text, true),
+        col("H1-1 Length", html_2xx!("u.h1_1_len"), ColumnKind::Int, true),
+        col("H2-1", html_2xx!("u.h2_1"), ColumnKind::Text, true),
+        col("H2-1 Length", html_2xx!("u.h2_1_len"), ColumnKind::Int, true),
         multi("Meta Robots", META_ROBOTS_LIST, ColumnKind::Text),
         multi("X-Robots-Tag", X_ROBOTS_LIST, ColumnKind::Text),
         col(
@@ -225,10 +250,10 @@ pub fn tab() -> TabDef {
             true,
         ),
         // ONPAGE-013
-        col("Word Count", "u.word_count", ColumnKind::Int, true),
+        col("Word Count", html_2xx!("u.word_count"), ColumnKind::Int, true),
         col(
             "Text Ratio",
-            "u.text_ratio",
+            html_2xx!("u.text_ratio"),
             ColumnKind::Float { decimals: 1 },
             true,
         ),
@@ -278,43 +303,43 @@ pub fn tab() -> TabDef {
             true,
         ),
         // zweite Vorkommen am Ende der Tabelle (ONPAGE-011)
-        col("Title 2", "u.title_2", ColumnKind::Text, true),
-        col("Title 2 Length", "u.title_2_len", ColumnKind::Int, true),
+        col("Title 2", html_or_pdf_2xx!("u.title_2"), ColumnKind::Text, true),
+        col("Title 2 Length", html_or_pdf_2xx!("u.title_2_len"), ColumnKind::Int, true),
         col(
             "Title 2 Pixel Width",
-            "u.title_2_px",
+            html_or_pdf_2xx!("u.title_2_px"),
             ColumnKind::Int,
             true,
         ),
         col(
             "Meta Description 2",
-            "u.meta_desc_2",
+            html_2xx!("u.meta_desc_2"),
             ColumnKind::Text,
             true,
         ),
         col(
             "Meta Description 2 Length",
-            "u.meta_desc_2_len",
+            html_2xx!("u.meta_desc_2_len"),
             ColumnKind::Int,
             true,
         ),
         col(
             "Meta Description 2 Pixel Width",
-            "u.meta_desc_2_px",
+            html_2xx!("u.meta_desc_2_px"),
             ColumnKind::Int,
             true,
         ),
-        col("Meta Keywords 2", "u.meta_kw_2", ColumnKind::Text, true),
+        col("Meta Keywords 2", html_or_pdf_2xx!("u.meta_kw_2"), ColumnKind::Text, true),
         col(
             "Meta Keywords 2 Length",
-            "u.meta_kw_2_len",
+            html_or_pdf_2xx!("u.meta_kw_2_len"),
             ColumnKind::Int,
             true,
         ),
-        col("H1-2", "u.h1_2", ColumnKind::Text, true),
-        col("H1-2 Length", "u.h1_2_len", ColumnKind::Int, true),
-        col("H2-2", "u.h2_2", ColumnKind::Text, true),
-        col("H2-2 Length", "u.h2_2_len", ColumnKind::Int, true),
+        col("H1-2", html_2xx!("u.h1_2"), ColumnKind::Text, true),
+        col("H1-2 Length", html_2xx!("u.h1_2_len"), ColumnKind::Int, true),
+        col("H2-2", html_2xx!("u.h2_2"), ColumnKind::Text, true),
+        col("H2-2 Length", html_2xx!("u.h2_2_len"), ColumnKind::Int, true),
     ]);
 
     let mut filters = vec![class_filter("All", "1")];

@@ -430,6 +430,44 @@ async fn non_html_urls_have_empty_element_columns_and_pdfs_use_document_properti
     }
 }
 
+// spec: ONPAGE-011, ONPAGE-009, ONPAGE-013
+#[tokio::test]
+async fn error_and_redirect_pages_have_empty_element_columns_even_with_a_body() {
+    // K-60/N-01: /e400, /e404, /e500 liefern HTML mit <title> und <h1>, /r301 leitet um; nur interne
+    // HTML-Seiten mit 2xx tragen Element-, Längen-, Pixel-, Word-Count- und Text-Ratio-Werte.
+    let fx = crawl_fixture("onpage-rc", CrawlConfig::default()).await;
+    let t = all_columns(&fx, "All");
+    for p in ["/e400", "/e404", "/e500", "/r301"] {
+        if !t.contains(p) {
+            continue;
+        }
+        for col in [
+            "Title 1",
+            "Title 1 Length",
+            "Title 1 Pixel Width",
+            "Meta Description 1",
+            "Meta Description 1 Length",
+            "Meta Description 1 Pixel Width",
+            "Meta Keywords 1",
+            "Meta Keywords 1 Length",
+            "H1-1",
+            "H1-1 Length",
+            "H2-1",
+            "H2-1 Length",
+            "Word Count",
+            "Text Ratio",
+        ] {
+            assert!(t.is_empty_cell(p, col), "{p} / {col}");
+        }
+    }
+    assert!(t.contains("/e400") && t.contains("/e404") && t.contains("/e500"));
+    // Gegenprobe: die 2xx-Seite /ok ist gefüllt
+    assert_eq!(t.text("/ok", "Title 1"), "ok");
+    assert_eq!(t.text("/ok", "H1-1"), "ok");
+    assert_eq!(t.int("/ok", "Title 1 Length"), 2);
+    assert!(t.int("/ok", "Title 1 Pixel Width") > 0);
+}
+
 // ---------------------------------------------------------------------------------------------------
 // ONPAGE-012 Größen
 
