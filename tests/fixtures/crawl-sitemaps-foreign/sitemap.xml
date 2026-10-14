@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url><loc>http://site.test/ok-a</loc></url>
+<url><loc>http://site.test:80/ok-b</loc></url>
+<url><loc>http://site.test:{{PORT2}}/andere-port</loc></url>
+<url><loc>https://site.test/anderes-schema</loc></url>
+<url><loc>http://other.test/anderer-host</loc></url>
+</urlset>

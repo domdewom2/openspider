@@ -1,0 +1,36 @@
+# Szenario crawl-sitemaps-foreign (K-41d, TECH-210): sitemap.xml führt Einträge desselben Ursprungs
+# (/ok-a, /ok-b mit ausdrücklichem Standardport) und drei fremde: anderer Port ({{PORT2}}), anderes Schema
+# (https) und anderer Host (other.test). Nur die eigenen dürfen in Tabellen und Warteschlange; die fremden
+# Routen existieren, damit ein (fälschlicher) Abruf im Request-Log auffiele.
+
+[[route]]
+path = "/ok-a"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>ok a</title></head><body><h1>ok a</h1></body></html>"""
+
+[[route]]
+path = "/ok-b"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>ok b</title></head><body><h1>ok b</h1></body></html>"""
+
+[[route]]
+path = "/andere-port"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>anderer Port</title></head><body><h1>anderer Port</h1></body></html>"""
+
+[[route]]
+path = "/anderes-schema"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>anderes Schema</title></head><body><h1>anderes Schema</h1></body></html>"""
+
+[[route]]
+path = "/anderer-host"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>anderer Host</title></head><body><h1>anderer Host</h1></body></html>"""
+
+# Sitemap-hreflang (CRAWL-038): /nur-hreflang steht nur als xhtml:link in hreflang-sitemap.xml
+# (robots.txt → Autodiscovery); die Sitemap kennt /ok-a als <loc>.
+[[route]]
+path = "/nur-hreflang"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>nur hreflang</title></head><body><h1>nur hreflang</h1></body></html>"""

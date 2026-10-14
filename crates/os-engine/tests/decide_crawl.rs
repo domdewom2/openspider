@@ -596,8 +596,7 @@ async fn canonical_store_off_with_crawl_on_requests_the_target_but_leaves_every_
         ),
         0
     );
-    // CRAWL-046: kein Canonical in der Indexierbarkeit, also nie „Canonicalised“. Die Eingabe der Bewertung
-    // (`PageFacts`) trägt kein Canonical (Spalten oben leer); der Status selbst entsteht mit `evaluate` (P24).
+    // CRAWL-046: kein Canonical in der Indexierbarkeit, also nie „Canonicalised“ (echtes `evaluate`, P24).
     assert_eq!(
         count(
             &fx,
@@ -617,6 +616,47 @@ async fn canonical_store_off_with_crawl_on_requests_the_target_but_leaves_every_
         )
         .unwrap();
     assert_eq!(start, "Redirected");
+    assert_ne!(start, "Canonicalised");
+
+    // Gegenprobe auf einer Seite ohne Meta Refresh: `/c1` trägt ein Canonical auf `/nur-canonical`. Mit
+    // Speichern an ist sie `Canonicalised`, mit Speichern aus (Crawlen an) nicht, sondern indexierbar.
+    let status_of_c1 = |fx: &FixtureCrawl| -> (String, Option<String>) {
+        fx.file
+            .conn()
+            .query_row(
+                "SELECT indexability, indexability_status FROM urls WHERE url = ?1",
+                [fx.site.url("/c1")],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .unwrap()
+    };
+    let fx = crawl_fixture("crawl-canonicals", CrawlConfig::default()).await;
+    assert_eq!(
+        status_of_c1(&fx),
+        (
+            "Non-Indexable".to_string(),
+            Some("Canonicalised".to_string())
+        ),
+        "store = true: Canonicalised"
+    );
+    let fx = crawl_fixture(
+        "crawl-canonicals",
+        with(|c| c.spider.canonicals = CRAWL_ONLY),
+    )
+    .await;
+    assert_eq!(hits(&fx, "/nur-canonical"), 1, "Crawlen bleibt an");
+    assert_eq!(
+        status_of_c1(&fx),
+        ("Indexable".to_string(), None),
+        "store = false: nie Canonicalised"
+    );
+    assert_eq!(
+        count(
+            &fx,
+            "SELECT COUNT(*) FROM urls WHERE indexability_status = 'Canonicalised'"
+        ),
+        0
+    );
 }
 
 // spec: CRAWL-038
@@ -995,6 +1035,54 @@ async fn sitemap_hreflang_is_stored_per_loc_url_with_source_sitemap() {
         }),
     )
     .await;
+    assert_eq!(count(&fx, "SELECT COUNT(*) FROM hreflang"), 0);
+}
+
+// spec: CRAWL-038
+#[tokio::test]
+async fn sitemap_hreflang_with_store_off_and_crawl_on_requests_the_target_without_rows() {
+    // `/nur-hreflang` steht nur als `xhtml:link` in hreflang-sitemap.xml. Mit hreflang „nur crawlen“ wird das
+    // Ziel über decide/discover eingeplant und abgerufen (genau einmal), die hreflang-Tabelle bleibt leer;
+    // mit „nur speichern“ ist es umgekehrt.
+    let sitemaps = |c: &mut CrawlConfig| {
+        c.sitemaps.crawl_linked = true;
+        c.sitemaps.auto_discover_robots = true;
+    };
+    let fx = crawl_fixture(
+        "crawl-sitemaps-foreign",
+        with(|c| {
+            sitemaps(c);
+            c.spider.hreflang = CRAWL_ONLY;
+        }),
+    )
+    .await;
+    assert_eq!(hits(&fx, "/hreflang-sitemap.xml"), 1);
+    assert_eq!(hits(&fx, "/nur-hreflang"), 1, "Ziel abgerufen");
+    let row = url_row(&fx, &fx.site.url("/nur-hreflang")).expect("Zielzeile");
+    assert_eq!(row.status, Some(200));
+    assert!(!row.in_tables, "gespeichert wird nichts");
+    assert_eq!(count(&fx, "SELECT COUNT(*) FROM hreflang"), 0);
+
+    let fx = crawl_fixture(
+        "crawl-sitemaps-foreign",
+        with(|c| {
+            sitemaps(c);
+            c.spider.hreflang = StoreCrawl::STORE_ONLY;
+        }),
+    )
+    .await;
+    assert_eq!(hits(&fx, "/nur-hreflang"), 0, "nur speichern: kein Abruf");
+    assert_eq!(count(&fx, "SELECT COUNT(*) FROM hreflang"), 2);
+
+    let fx = crawl_fixture(
+        "crawl-sitemaps-foreign",
+        with(|c| {
+            sitemaps(c);
+            c.spider.hreflang = StoreCrawl::OFF;
+        }),
+    )
+    .await;
+    assert_eq!(hits(&fx, "/nur-hreflang"), 0, "aus: kein Abruf");
     assert_eq!(count(&fx, "SELECT COUNT(*) FROM hreflang"), 0);
 }
 
