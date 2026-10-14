@@ -756,7 +756,9 @@ const GROWTH_SLACK_BYTES: u64 = 64 * 1024 * 1024;
 /// Referenzlaufs mindestens so groß wie der Cache; bei 100 000 Seiten mit 30 Links und dem Profil „Ausgewogen“
 /// der Fall). Bei den kleinen Varianten (10 000 gegen 1 000 Seiten) wächst der RSS dagegen mit dem Cache, der die
 /// kleine Datei komplett aufnimmt – das Verhältnis wäre kein Maß für unbegrenztes Wachstum. Dort gilt:
-/// der RSS-Zuwachs darf höchstens den Zuwachs der Datei plus 64 MiB betragen (`cache-bounded-growth`).
+/// der RSS-Zuwachs darf höchstens 125 % des Dateizuwachses plus 64 MiB betragen (`cache-bounded-growth`; der
+/// Seiten-Cache von SQLite hält Seiten samt Verwaltungsdaten, im Profil „Maximale Geschwindigkeit“ mit bis zu 4 GiB
+/// die ganze Datei).
 pub fn judge_rss_scaling(s: RssScaling) -> ScalingVerdict {
     if s.rss == 0 || s.reference_rss == 0 {
         return ScalingVerdict {
@@ -782,12 +784,13 @@ pub fn judge_rss_scaling(s: RssScaling) -> ScalingVerdict {
         };
     }
     let growth = s.rss.saturating_sub(s.reference_rss);
-    let allowed = s.file_bytes.saturating_sub(s.reference_file_bytes) + GROWTH_SLACK_BYTES;
+    let file_growth = s.file_bytes.saturating_sub(s.reference_file_bytes);
+    let allowed = file_growth + file_growth / 4 + GROWTH_SLACK_BYTES;
     let verdict = if growth <= allowed {
         Ok(())
     } else {
         Err(format!(
-            "PERF-001: RSS wächst von {} auf {} MB (+{} MB), mehr als Dateizuwachs + 64 MiB ({} MB) bei {} gegen {} Seiten",
+            "PERF-001: RSS wächst von {} auf {} MB (+{} MB), mehr als 125 % des Dateizuwachses + 64 MiB ({} MB) bei {} gegen {} Seiten",
             s.reference_rss / 1_000_000,
             s.rss / 1_000_000,
             growth / 1_000_000,
@@ -933,6 +936,8 @@ mod tests {
         // Wachstum um 400 MB bei 53 MB mehr Daten: Leck
         let bad = scaling(430, 30, 59, 6);
         assert!(bad.verdict.is_err());
+        // gemessen im Profil „Maximale Geschwindigkeit“: 63 -> 416 MB bei 5 und 302 MB Dateigröße
+        assert!(scaling(416, 63, 302, 30).verdict.is_ok());
         assert!(scaling(0, 30, 59, 6).verdict.is_err());
     }
 

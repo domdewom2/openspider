@@ -146,14 +146,15 @@ mod imp {
         // bleibt für die Dauer des Aufrufs gültig (gehört dem `Child` bzw. ist der Pseudo-Handle des Prozesses).
         unsafe {
             let mut counters: PROCESS_MEMORY_COUNTERS = std::mem::zeroed();
-            counters.cb = std::mem::size_of::<PROCESS_MEMORY_COUNTERS>() as u32;
-            let ok = GetProcessMemoryInfo(handle, &mut counters, counters.cb);
+            let cb = std::mem::size_of::<PROCESS_MEMORY_COUNTERS>() as u32;
+            counters.cb = cb;
+            let ok = GetProcessMemoryInfo(handle, &mut counters, cb);
             (ok != 0).then(|| counters.PeakWorkingSetSize as u64)
         }
     }
 
     pub fn wait_with_peak_rss(child: &mut Child) -> io::Result<ChildExit> {
-        let handle = child.as_raw_handle() as HANDLE;
+        let handle: HANDLE = child.as_raw_handle();
         let mut peak = 0u64;
         loop {
             if let Some(v) = peak_working_set(handle) {
