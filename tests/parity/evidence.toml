@@ -9,6 +9,7 @@
 specs = ["ONPAGE-012"]
 exports = ["internal_all"]
 columns = ["Size (Bytes)", "Transferred (Bytes)", "Total Transferred (Bytes)"]
+url_set = false          # Beleg ueber Spalten der zugeordneten Zeilen; die URL-Menge steht in Befund N-08
 
 # H1- und H2-Tab: Extraktion und Spalten
 [[evidence]]

@@ -401,6 +401,9 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
         }
     }
 
+    // Die Zeilenfolge von OpenSpider hängt von der Entdeckungsreihenfolge ab: Listen sortiert für stabile Berichte.
+    extra_in_os.sort();
+    os_only_rows.sort();
     let agreement = if cells_compared == 0 {
         if missing_in_os.is_empty() && extra_in_os.is_empty() {
             100.0
@@ -414,14 +417,18 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
         .iter()
         .zip(dev_hits)
         .filter(|(_, (n, _))| *n > 0)
-        .map(|(d, (count, keys))| AppliedDeviation {
-            id: d.id.clone(),
-            spec: d.spec.clone(),
-            kind: d.kind.clone(),
-            note: d.note.clone(),
-            scope: d.scope,
-            count,
-            keys,
+        .map(|(d, (count, mut keys))| {
+            // Die Reihenfolge der Beispiele hängt von der Crawl-Reihenfolge ab: für stabile Berichte sortieren.
+            keys.sort();
+            AppliedDeviation {
+                id: d.id.clone(),
+                spec: d.spec.clone(),
+                kind: d.kind.clone(),
+                note: d.note.clone(),
+                scope: d.scope,
+                count,
+                keys,
+            }
         })
         .collect();
 

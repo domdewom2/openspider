@@ -7,11 +7,13 @@
 //! specs = ["ONPAGE-120"]          # IDs, die der Export belegt
 //! exports = ["h1_all"]            # Mapping-Slugs der Exporte in report.json
 //! columns = ["H1-1", "H1-1 Length"]   # optional: nur diese Referenzspalten müssen fehlerfrei sein
+//! url_set = false                 # optional (Standard true): URL-Menge muss nicht identisch sein
 //! ```
 //!
 //! Eine ID mit Status `implemented` wird `verified`, wenn für **jeden** Eintrag, der sie nennt:
 //! * mindestens ein Export der genannten Slugs verglichen wurde (Sites mit Status `present`),
-//! * in jedem verglichenen Bericht die URL-Menge identisch ist (nach dokumentierten Abweichungen),
+//! * in jedem verglichenen Bericht die URL-Menge identisch ist (nach dokumentierten Abweichungen; `url_set = false`
+//!   hebt das für Belege über einzelne Spalten auf),
 //! * die genannten Spalten (ohne Angabe: alle verglichenen) keine Abweichung zeigen und
 //! * keine Referenzeinschränkung der Free-Version (`SF-FREE-nn`, K-53) auf den Bericht gewirkt hat – solche
 //!   Filter bleiben `implemented`, ihr Beleg ist der spec-abgeleitete Fixture-Test.
@@ -34,6 +36,14 @@ pub struct Evidence {
     /// Optional: nur diese Referenzspalten prüfen.
     #[serde(default)]
     pub columns: Vec<String>,
+    /// Die URL-Menge des Exports muss identisch sein (Standard). Bei einem Beleg über einzelne Spalten
+    /// (`columns`) darf `url_set = false` stehen: dann zählen nur die zugeordneten Zeilen.
+    #[serde(default = "yes")]
+    pub url_set: bool,
+}
+
+fn yes() -> bool {
+    true
 }
 
 #[derive(Deserialize)]
@@ -100,7 +110,7 @@ fn check(ev: &Evidence, compared: &[Compared<'_>]) -> Result<Vec<Value>, String>
         }
         for c in reports {
             let r = c.report;
-            if r.get("url_set_identical").and_then(|v| v.as_bool()) != Some(true) {
+            if ev.url_set && r.get("url_set_identical").and_then(|v| v.as_bool()) != Some(true) {
                 return Err(format!("{}/{slug}: URL-Menge nicht identisch", c.site));
             }
             for col in r
@@ -200,6 +210,7 @@ mod tests {
             specs: vec!["ONPAGE-120".into()],
             exports: vec!["h1_all".into()],
             columns: columns.iter().map(|c| c.to_string()).collect(),
+            url_set: true,
         }]
     }
 
@@ -215,6 +226,9 @@ mod tests {
         assert!(evaluate(&ev(&[]), &parity(2, true, false))["ONPAGE-120"].is_err());
         assert!(evaluate(&ev(&["H1-2"]), &parity(2, true, false))["ONPAGE-120"].is_ok());
         assert!(evaluate(&ev(&[]), &parity(0, false, false))["ONPAGE-120"].is_err());
+        let mut columns_only = ev(&["H1-2"]);
+        columns_only[0].url_set = false;
+        assert!(evaluate(&columns_only, &parity(0, false, false))["ONPAGE-120"].is_ok());
         let free = evaluate(&ev(&[]), &parity(0, true, true));
         assert!(free["ONPAGE-120"].as_ref().unwrap_err().contains("SF Free"));
         let missing = evaluate(
@@ -222,6 +236,7 @@ mod tests {
                 specs: vec!["X-1".into()],
                 exports: vec!["nicht_da".into()],
                 columns: vec![],
+                url_set: true,
             }],
             &parity(0, true, false),
         );
