@@ -235,19 +235,138 @@ async fn meta_refresh_variants_are_recognised_and_keep_the_page_status() {
 #[tokio::test]
 async fn refresh_without_url_is_a_self_refresh_and_only_the_first_meta_tag_counts() {
     let fx = crawl_fixture_from("crawl-refresh", "http://site.test/", CrawlConfig::default()).await;
+    // K-57: der Selbst-Refresh ist eine Weiterleitung auf sich selbst, ohne neuen Abruf
     let selfr = row_of(&fx, &u("/meta-self"));
-    assert_eq!(selfr.redirect_url, None);
-    assert_eq!(selfr.redirect_type, None, "keine Weiterleitung");
+    assert_eq!(
+        selfr.redirect_url.as_deref(),
+        Some(u("/meta-self").as_str())
+    );
+    assert_eq!(selfr.redirect_type.as_deref(), Some("meta_refresh"));
+    assert_eq!(selfr.redirect_target, Some(selfr.id), "Ziel = eigene Zeile");
+    assert_eq!(selfr.status_code, Some(200));
     assert_eq!(
         selfr.refresh_delay,
         Some(30),
         "Verzögerung wird trotzdem gespeichert"
     );
+    assert_eq!(
+        count_requests(&fx, HOST, "/meta-self"),
+        1,
+        "kein neuer Abruf"
+    );
+    // Schleife (Redirect Loop) und eine Linkzeile Meta Refresh mit Quelle = Ziel
+    let loops: i64 = fx
+        .file
+        .conn()
+        .query_row(
+            "SELECT COUNT(*) FROM url_flags WHERE url_id = ?1 AND flag = 'redirect_loop'",
+            [selfr.id],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(loops, 1);
+    let link_rows: i64 = fx
+        .file
+        .conn()
+        .query_row(
+            "SELECT COUNT(*) FROM links WHERE source_id = ?1 AND target_id = ?1 AND link_type = 'Meta Refresh'",
+            [selfr.id],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(link_rows, 1);
+    // Standard (K-57): die Indexierbarkeit ändert sich nicht; mit der Option „Self Referencing Meta Refresh“
+    let indexability = |fx: &os_engine::testing::FixtureCrawl| -> (String, Option<String>) {
+        fx.file
+            .conn()
+            .query_row(
+                "SELECT indexability, indexability_status FROM urls WHERE url = ?1",
+                [u("/meta-self")],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .unwrap()
+    };
+    assert_eq!(indexability(&fx), ("Indexable".to_string(), None));
+    let mut respect = CrawlConfig::default();
+    respect.advanced.respect_self_ref_meta_refresh = true;
+    let fx_on = crawl_fixture_from("crawl-refresh", "http://site.test/", respect).await;
+    assert_eq!(
+        indexability(&fx_on),
+        (
+            "Non-Indexable".to_string(),
+            Some("Self Referencing Meta Refresh".to_string())
+        )
+    );
+    let on = row_of(&fx_on, &u("/meta-self"));
+    assert_eq!(on.redirect_type.as_deref(), Some("meta_refresh"));
 
     let two = row_of(&fx, &u("/meta-two"));
     assert_eq!(two.redirect_url.as_deref(), Some("http://site.test/ziel-a"));
     assert!(row(&fx, &u("/ziel-b")).is_none(), "zweites Tag zählt nicht");
     assert_eq!(count_requests(&fx, HOST, "/ziel-b"), 0);
+}
+
+// spec: CRAWL-015
+#[tokio::test]
+async fn a_refresh_header_to_itself_is_an_http_refresh_to_itself_but_one_without_url_is_no_redirect(
+) {
+    // K-57: mit eigener URL wie der Meta-Refresh: Redirect URL = eigene Adresse, Typ HTTP Refresh, Schleife, kein
+    // neuer Abruf. Ohne URL (`Refresh: 60`) führt die Referenz keine Weiterleitung (Paritätslauf M1).
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::write(
+        dir.path().join("scenario.toml"),
+        r#"
+[[route]]
+path = "/"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><title>start</title></head><body><a href=\"/h-bare\">a</a> <a href=\"/h-own\">b</a></body></html>"
+
+[[route]]
+path = "/h-bare"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><title>h-bare</title></head><body>x</body></html>"
+[route.headers]
+Refresh = "60"
+
+[[route]]
+path = "/h-own"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><title>h-own</title></head><body>x</body></html>"
+[route.headers]
+Refresh = "5; url=/h-own"
+"#,
+    )
+    .unwrap();
+    let fx = os_engine::testing::crawl_dir_with(
+        dir.path(),
+        "/",
+        CrawlConfig::default(),
+        os_engine::testing::test_deps(),
+    )
+    .await;
+    let bare = all_rows(&fx)
+        .into_iter()
+        .find(|r| r.url.ends_with("/h-bare"))
+        .expect("/h-bare");
+    assert_eq!((bare.redirect_type, bare.redirect_url), (None, None));
+    assert_eq!(bare.refresh_delay, Some(60));
+    {
+        let path = "/h-own";
+        let r = all_rows(&fx)
+            .into_iter()
+            .find(|r| r.url.ends_with(path))
+            .unwrap_or_else(|| panic!("{path}"));
+        assert_eq!(r.redirect_type.as_deref(), Some("http_refresh"), "{path}");
+        assert_eq!(r.redirect_url.as_deref(), Some(r.url.as_str()), "{path}");
+        assert_eq!(r.redirect_target, Some(r.id), "{path}");
+        let hits = fx
+            .site
+            .requests()
+            .iter()
+            .filter(|q| q.path() == path)
+            .count();
+        assert_eq!(hits, 1, "{path}: kein neuer Abruf");
+    }
 }
 
 // spec: CRAWL-015

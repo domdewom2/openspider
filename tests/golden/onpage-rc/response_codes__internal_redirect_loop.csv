@@ -1,6 +1,8 @@
 Address
 {BASE}/loop1
 {BASE}/loop2
+{BASE}/meta-refresh-noloc.html
+{BASE}/meta-refresh-self.html
 {BASE}/qloop
 {BASE}/qloop?x=1
 {BASE}/self

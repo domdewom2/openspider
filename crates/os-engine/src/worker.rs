@@ -565,7 +565,8 @@ async fn analyze<F: Fetch>(
 fn parsed_refresh(a: &mut Analysis, url: &Url, refs: &[os_model::RefreshRef]) {
     let outcome = redirect::refresh_target(url, refs);
     a.facts.meta_refresh_delay = outcome.delay;
-    a.redirect = outcome.redirect;
+    // K-57: der Selbst-Refresh ist eine Weiterleitung auf sich selbst (Typ, Redirect URL, Linkzeile, Schleife)
+    a.redirect = outcome.redirect.or(outcome.self_refresh);
 }
 
 /// Refresh-Angaben einer externen HTML-Seite: der `Refresh`-Header vor den Meta-Tags (Quelltextreihenfolge).
@@ -966,50 +967,65 @@ async fn assemble<F: Fetch>(
                 }
             };
             let internal = *internal;
-            if !internal && crawl && !cfg.spider.external.crawl {
-                crawl = false;
-                reason = Some(NotCrawledReason::ExternalNotChecked);
-            }
-            let limit_hit = item.hops >= cfg.limits.max_redirects;
-            if limit_hit {
-                crawl = false;
-                reason = Some(NotCrawledReason::RedirectLimit);
-                disc.counters.push((COUNTER_REDIRECT_LIMIT.to_string(), 1));
-                core.redirects.flag_limit(item.id);
-                url_flags.push((item.id, redirect::FLAG_LIMIT.to_string(), None));
-            }
-            if store || crawl || limit_hit {
-                let cand = Cand {
-                    norm,
-                    internal,
-                    kind: DiscoveryKind::Redirect,
-                    store: store && !limit_hit,
-                    crawl,
-                    reason,
-                    resource_like: false,
-                    apply_rules: norm.encoded != sh.start_url,
-                    purpose: if internal {
-                        Purpose::Page
-                    } else {
-                        Purpose::External
-                    },
-                };
-                let id = core.discover(
-                    &cand,
-                    depth,
-                    item.hops + 1,
-                    item.session,
-                    &sh.rules,
-                    &mut disc,
-                );
-                if let Some(members) = core.redirects.add_edge(item.id, id) {
-                    url_flags.extend(
-                        members
-                            .into_iter()
-                            .map(|m| (m, redirect::FLAG_LOOP.to_string(), None)),
-                    );
+            // K-57: Selbst-Refresh = Weiterleitung auf sich selbst. Das Ziel ist die eigene, bekannte URL: kein
+            // Abruf, keine Entdeckung, nur die Schleife (Redirect Loop, Redirect-Chains-Zeile).
+            if norm.encoded == *item.url {
+                if store {
+                    redirect_id = Some(item.id);
+                    if let Some(members) = core.redirects.add_edge(item.id, item.id) {
+                        url_flags.extend(
+                            members
+                                .into_iter()
+                                .map(|m| (m, redirect::FLAG_LOOP.to_string(), None)),
+                        );
+                    }
                 }
-                redirect_id = Some(id);
+            } else {
+                if !internal && crawl && !cfg.spider.external.crawl {
+                    crawl = false;
+                    reason = Some(NotCrawledReason::ExternalNotChecked);
+                }
+                let limit_hit = item.hops >= cfg.limits.max_redirects;
+                if limit_hit {
+                    crawl = false;
+                    reason = Some(NotCrawledReason::RedirectLimit);
+                    disc.counters.push((COUNTER_REDIRECT_LIMIT.to_string(), 1));
+                    core.redirects.flag_limit(item.id);
+                    url_flags.push((item.id, redirect::FLAG_LIMIT.to_string(), None));
+                }
+                if store || crawl || limit_hit {
+                    let cand = Cand {
+                        norm,
+                        internal,
+                        kind: DiscoveryKind::Redirect,
+                        store: store && !limit_hit,
+                        crawl,
+                        reason,
+                        resource_like: false,
+                        apply_rules: norm.encoded != sh.start_url,
+                        purpose: if internal {
+                            Purpose::Page
+                        } else {
+                            Purpose::External
+                        },
+                    };
+                    let id = core.discover(
+                        &cand,
+                        depth,
+                        item.hops + 1,
+                        item.session,
+                        &sh.rules,
+                        &mut disc,
+                    );
+                    if let Some(members) = core.redirects.add_edge(item.id, id) {
+                        url_flags.extend(
+                            members
+                                .into_iter()
+                                .map(|m| (m, redirect::FLAG_LOOP.to_string(), None)),
+                        );
+                    }
+                    redirect_id = Some(id);
+                }
             }
         }
     }

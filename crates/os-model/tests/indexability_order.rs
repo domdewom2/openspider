@@ -87,6 +87,13 @@ fn eval(
     status
 }
 
+/// Konfiguration mit `advanced.respect_self_ref_meta_refresh = true` (der Standard ist aus, K-57).
+fn respect_self_refresh() -> CrawlConfig {
+    let mut cfg = CrawlConfig::default();
+    cfg.advanced.respect_self_ref_meta_refresh = true;
+    cfg
+}
+
 // spec: TECH-001
 #[test]
 fn a_clean_200_page_is_indexable() {
@@ -114,9 +121,16 @@ fn every_reason_is_reported_on_its_own() {
     canon.canonical_url = Some("https://site.test/other".into());
     assert_eq!(eval(&fetch(200), Some(&canon), &[]), Some(Canonicalised));
 
+    // Selbst-Refresh: nur mit der Option (K-57, Standard aus)
     let selfref = [refresh(RefreshSource::Meta, None)];
     assert_eq!(
-        eval(&fetch(200), Some(&page()), &selfref),
+        eval_with(
+            &fetch(200),
+            Some(&page()),
+            &selfref,
+            &respect_self_refresh()
+        )
+        .1,
         Some(SelfReferencingMetaRefresh)
     );
 }
@@ -148,9 +162,15 @@ fn the_first_matching_reason_wins() {
     // Fehler vor Selbst-Refresh
     assert_eq!(eval(&fetch(404), None, &selfref), Some(ClientError));
     assert_eq!(eval(&fetch(500), None, &selfref), Some(ServerError));
-    // Selbst-Refresh vor noindex, noindex vor Canonical
+    // Selbst-Refresh (mit Option) vor noindex, noindex vor Canonical
     assert_eq!(
-        eval(&fetch(200), Some(&noindex_canon), &selfref),
+        eval_with(
+            &fetch(200),
+            Some(&noindex_canon),
+            &selfref,
+            &respect_self_refresh()
+        )
+        .1,
         Some(SelfReferencingMetaRefresh)
     );
     assert_eq!(eval(&fetch(200), Some(&noindex_canon), &[]), Some(Noindex));
@@ -187,17 +207,18 @@ fn self_referencing_refresh_depends_on_the_option() {
     let own = refresh(RefreshSource::Meta, Some(PAGE));
     let fragment = refresh(RefreshSource::Meta, Some("https://site.test/p#top"));
     for r in [bare, own, fragment] {
+        // K-57: Standard ist aus; ohne Option ändert ein Selbst-Refresh die Indexierbarkeit nicht
         assert_eq!(
             eval(&fetch(200), Some(&page()), std::slice::from_ref(&r)),
-            Some(SelfReferencingMetaRefresh),
-            "Standard: Selbst-Refresh ist nicht indexierbar ({r:?})"
+            None,
+            "Standard: Selbst-Refresh ändert die Indexierbarkeit nicht ({r:?})"
         );
         let mut cfg = CrawlConfig::default();
-        cfg.advanced.respect_self_ref_meta_refresh = false;
+        cfg.advanced.respect_self_ref_meta_refresh = true;
         assert_eq!(
             eval_with(&fetch(200), Some(&page()), &[r], &cfg),
-            (Indexability::Indexable, None),
-            "ohne Option ändert ein Selbst-Refresh nichts"
+            (Indexability::NonIndexable, Some(SelfReferencingMetaRefresh)),
+            "mit Option ist ein Selbst-Refresh nicht indexierbar"
         );
     }
     // ohne Option bleiben die übrigen Gründe wirksam
@@ -219,17 +240,22 @@ fn the_header_refresh_is_the_one_that_counts() {
     // Wie beim Abruf: zuerst der Header, sonst das erste Meta-Element.
     let meta_other = refresh(RefreshSource::Meta, Some("https://site.test/x"));
     let header_self = refresh(RefreshSource::Header, Some(PAGE));
+    // der Selbst-Refresh wirkt nur mit der Option (K-57: Standard aus)
+    let mut cfg = CrawlConfig::default();
+    cfg.advanced.respect_self_ref_meta_refresh = true;
     assert_eq!(
-        eval(
+        eval_with(
             &fetch(200),
             Some(&page()),
-            &[meta_other.clone(), header_self]
-        ),
+            &[meta_other.clone(), header_self],
+            &cfg
+        )
+        .1,
         Some(SelfReferencingMetaRefresh)
     );
     let meta_self = refresh(RefreshSource::Meta, None);
     assert_eq!(
-        eval(&fetch(200), Some(&page()), &[meta_self, meta_other]),
+        eval_with(&fetch(200), Some(&page()), &[meta_self, meta_other], &cfg).1,
         Some(SelfReferencingMetaRefresh),
         "das erste Meta-Element entscheidet"
     );

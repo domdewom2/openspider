@@ -475,7 +475,10 @@ async fn conflicting_directives_are_restrictive_and_listed_in_both_filters() {
 // spec: TECH-064, TECH-068
 #[tokio::test]
 async fn refresh_filter_and_the_indexability_it_causes() {
-    let c = crawl(CrawlConfig::default()).await;
+    // „Self Referencing Meta Refresh“ gibt es nur mit der Option (K-57: Standard aus)
+    let mut cfg = CrawlConfig::default();
+    cfg.advanced.respect_self_ref_meta_refresh = true;
+    let c = crawl(cfg).await;
     assert_eq!(c.set("Refresh"), set(REFRESH));
 
     // Ziel ≠ eigene URL (Meta und Header, Query unterscheidet): Redirected
@@ -514,10 +517,9 @@ async fn refresh_filter_and_the_indexability_it_causes() {
 // spec: TECH-064, TECH-068
 #[tokio::test]
 async fn self_referencing_refresh_stays_in_the_filter_without_the_option() {
-    // TECH-068: Option aus → Selbst-Refresh ändert die Indexierbarkeit nicht, die Seite bleibt in „Refresh“.
-    let mut cfg = CrawlConfig::default();
-    cfg.advanced.respect_self_ref_meta_refresh = false;
-    let c = crawl(cfg).await;
+    // TECH-068, K-57: Standard (Option aus) → Selbst-Refresh ändert die Indexierbarkeit nicht, die Seite bleibt in
+    // „Refresh“.
+    let c = crawl(CrawlConfig::default()).await;
     assert_eq!(c.set("Refresh"), set(REFRESH));
     for a in [
         "/refresh-5-self.html",
