@@ -78,7 +78,7 @@ fn cell_types_follow_column_kind() {
             Value::Int(200),
             Value::Int(123_456_789_012),
             Value::Float(12.3456),
-            Value::Int(1234),
+            Value::Float(0.812),
             Value::Text("2026-10-13T09:35:00+02:00".into()),
             // sieht aus wie eine Zahl, ist aber ein Hash: immer Text, führende Nullen bleiben
             Value::Text("00123456".into()),
@@ -123,7 +123,11 @@ fn cell_types_follow_column_kind() {
     );
     assert_eq!(num(r1(2)), 123_456_789_012.0);
     assert_eq!(num(r1(3)), 12.35, "auf die Nachkommastellen gerundet");
-    assert_eq!(num(r1(4)), 1.234, "Millisekunden als Sekunden");
+    assert_eq!(
+        num(r1(4)),
+        0.812,
+        "Seconds3 = Sekunden, keine Umrechnung im Schreiber"
+    );
     // Datumszelle: Seriennummer von 2026-10-13 09:35:00 (46308 + 9:35 h)
     match r1(5) {
         Data::DateTime(dt) => {

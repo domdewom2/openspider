@@ -565,6 +565,48 @@ fn index_uses_the_given_base_url() {
 
 // spec: OUT-129
 #[test]
+fn index_uses_base_url_from_the_options() {
+    let tmp = tempfile::tempdir().unwrap();
+    let file = empty_crawl(tmp.path(), "o.ospider");
+    bulk_pages(&file, 3, "q");
+    let out = tempfile::tempdir().unwrap();
+    let opts = SitemapOptions {
+        max_urls_per_file: 2,
+        base_url: Some("https://static.example/maps/".to_string()),
+        ..SitemapOptions::default()
+    };
+    generate_sitemap(&file, &opts, out.path()).unwrap();
+    let index =
+        xsd::validate_file(&xsd::index_schema(), &out.path().join("sitemap_index.xml")).unwrap();
+    let index_locs: Vec<&str> = index
+        .children
+        .iter()
+        .map(|s| s.children[0].text.as_str())
+        .collect();
+    assert_eq!(
+        index_locs,
+        vec![
+            "https://static.example/maps/sitemap_1.xml",
+            "https://static.example/maps/sitemap_2.xml"
+        ]
+    );
+    // Ohne Angabe: Ursprung der Start-URL.
+    let out2 = tempfile::tempdir().unwrap();
+    let opts = SitemapOptions {
+        max_urls_per_file: 2,
+        ..SitemapOptions::default()
+    };
+    assert_eq!(opts.base_url, None);
+    generate_sitemap(&file, &opts, out2.path()).unwrap();
+    let text = std::fs::read_to_string(out2.path().join("sitemap_index.xml")).unwrap();
+    assert!(
+        text.contains("<loc>https://site.test/sitemap_1.xml</loc>"),
+        "{text}"
+    );
+}
+
+// spec: OUT-129
+#[test]
 fn byte_limit_splits_files_before_they_exceed_it() {
     let tmp = tempfile::tempdir().unwrap();
     let file = empty_crawl(tmp.path(), "d.ospider");
