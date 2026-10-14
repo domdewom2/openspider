@@ -245,6 +245,16 @@ fn resolve_column<'t>(tab: &'t TabDef, name: &str) -> Option<Resolved<'t>> {
     None
 }
 
+/// Öffentliche Namensregel für Spalten eines Tabs: `true`, wenn `name` eine Spalte des Tabs benennt, also
+/// ihren Schlüssel (Groß-/Kleinschreibung gleichgültig) oder eine nummerierte Teilspalte einer
+/// Mehrfachspalte (`Meta Robots 2`, `HTML hreflang 1`, `HTML hreflang 1 URL`). Dieselbe Auflösung wie beim
+/// Aufbau der Ansicht (`resolve_column`): Basis und Suffix ohne Beachtung der Schreibweise, `n` nur Ziffern
+/// und mindestens 1. Aufrufer wie das MCP-Werkzeug `query_urls` prüfen Namen damit vorab, ohne die Regel
+/// nachzubauen.
+pub fn column_name_resolves(tab: &TabDef, name: &str) -> bool {
+    resolve_column(tab, name).is_some()
+}
+
 /// Ausgabename der nummerierten Teilspalte in kanonischer Schreibweise.
 pub(super) fn numbered_name(base: &str, n: usize, suffix: &str) -> String {
     if suffix.is_empty() {
@@ -402,4 +412,79 @@ fn order_by(sort: &[SortTerm]) -> String {
     }
     terms.push("u.id ASC".to_string());
     format!("ORDER BY {}", terms.join(", "))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::tabs;
+
+    fn tab(id: &str) -> TabDef {
+        tabs::all()
+            .into_iter()
+            .find(|t| t.id == id)
+            .unwrap_or_else(|| panic!("Tab {id} fehlt"))
+    }
+
+    // spec: AGENT-011
+    #[test]
+    fn numbered_names_resolve_for_multi_and_paired_columns() {
+        let hreflang = tab("Hreflang");
+        for name in [
+            "HTML hreflang 1",
+            "html HREFLANG 12",
+            "HTML hreflang 1 URL",
+            "html hreflang 3 url",
+            "  HTML hreflang 2 URL  ",
+        ] {
+            assert!(column_name_resolves(&hreflang, name), "{name}");
+        }
+        let internal = tab("Internal");
+        for name in [
+            "Title 1",
+            "title 2",
+            "H1-2",
+            "h1-2",
+            "Meta Robots 3",
+            "meta ROBOTS 1",
+        ] {
+            assert!(column_name_resolves(&internal, name), "{name}");
+        }
+        assert!(column_name_resolves(&internal, "Address"));
+        assert!(column_name_resolves(&internal, "address"));
+    }
+
+    // spec: AGENT-011
+    #[test]
+    fn invalid_numbered_names_do_not_resolve() {
+        let hreflang = tab("Hreflang");
+        for name in [
+            "HTML hreflang 0",
+            "HTML hreflang 0 URL",
+            "HTML hreflang x",
+            "HTML hreflang +1 URL",
+            "HTML hreflang URL",
+            "HTML hreflang 1 URLs",
+            "HTML hreflang 1 Foo",
+            "HTML hreflang 1  URL",
+            "",
+        ] {
+            assert!(!column_name_resolves(&hreflang, name), "{name:?}");
+        }
+        let internal = tab("Internal");
+        for name in ["Title 0", "Title x", "Meta Robots 0", "Meta Robots 1 URL"] {
+            assert!(!column_name_resolves(&internal, name), "{name}");
+        }
+    }
+
+    // spec: AGENT-011
+    #[test]
+    fn parse_numbered_reads_base_number_and_suffix() {
+        assert_eq!(parse_numbered("Base 3", "base", ""), Some(3));
+        assert_eq!(parse_numbered("BASE 3 url", "Base", "URL"), Some(3));
+        assert_eq!(parse_numbered("Base 3 URL", "Base", ""), None);
+        assert_eq!(parse_numbered("Base 3", "Base", "URL"), None);
+        assert_eq!(parse_numbered("Base 0", "Base", ""), None);
+        assert_eq!(parse_numbered("Baseline 1", "Base", ""), None);
+    }
 }
