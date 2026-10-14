@@ -59,3 +59,16 @@ body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<
 path = "/moved"
 status = 301
 location = "/target.html"
+
+# M1-N16 (K-56): Teilbaum /n16/ (Start /n16/index.html, vom Hauptbaum aus nicht verlinkt). Seiten mit Status 201.
+[[route]]
+path = "/n16/created.html"
+status = 201
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>n16/created.html</title>\n</head>\n<body>\n<h1>n16/created.html</h1>\n</body>\n</html>\n"
+
+[[route]]
+path = "/n16/created-canon.html"
+status = 201
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<title>n16/created-canon.html</title>\n<link rel=\"canonical\" href=\"/n16/noindex-nocanon.html\">\n</head>\n<body>\n<h1>n16/created-canon.html</h1>\n</body>\n</html>\n"

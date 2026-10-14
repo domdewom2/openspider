@@ -366,3 +366,58 @@ async fn link_preferences_live_in_the_crawl_file_and_apply_without_recrawl() {
         ["/l4/", "/l5/"]
     );
 }
+
+// ---------------------------------------------------------------------------------------------------
+// M1-N16: 2xx statt 200 (K-56), `issues.ignore_non_indexable` für Sackgassen (CRAWL-089, B-05)
+
+async fn crawl_n16(cfg: &CrawlConfig) -> FixtureCrawl {
+    crawl_fixture_from("tech/links", &format!("{BASE}/n16/"), cfg.clone()).await
+}
+
+// spec: TECH-130
+#[tokio::test]
+async fn population_and_percent_of_total_cover_status_2xx() {
+    // Teilbaum /n16/: Start, eine 201-Seite und zwei Sackgassen, jede einmal vom Start verlinkt.
+    let cfg = cfg_links();
+    let fx = crawl_n16(&cfg).await;
+    let all = page(&fx.file, &cfg, "All", true);
+    assert_eq!(
+        list(&fx.file, &cfg, "All"),
+        [
+            "/n16/",
+            "/n16/created.html",
+            "/n16/noindex-deadend.html",
+            "/n16/plain-deadend.html"
+        ]
+    );
+    // Die 201-Seite zählt im Nenner (4 Seiten) wie im Zähler: 1 von 4 = 25 %, nicht 1 von 3.
+    assert_eq!(cell(&all, "/n16/created.html", "Unique Inlinks"), "1");
+    assert_eq!(cell(&all, "/n16/created.html", "% of Total"), "25");
+    assert_eq!(cell(&all, "/n16/plain-deadend.html", "% of Total"), "25");
+}
+
+// spec: TECH-133
+#[tokio::test]
+async fn dead_ends_skip_non_indexable_pages_by_default_and_list_them_when_the_option_is_off() {
+    let cfg = cfg_links();
+    assert!(cfg.issues.ignore_non_indexable);
+    let fx = crawl_n16(&cfg).await;
+    // Standard: die noindex-Sackgasse fehlt, die 201-Sackgasse steht drin.
+    assert_eq!(
+        list(&fx.file, &cfg, "Pages Without Internal Outlinks"),
+        ["/n16/created.html", "/n16/plain-deadend.html"]
+    );
+    // Option aus (ohne Recrawl): auch die noindex-Seite steht in der Liste.
+    let mut off = cfg.clone();
+    off.issues.ignore_non_indexable = false;
+    assert_eq!(
+        list(&fx.file, &off, "Pages Without Internal Outlinks"),
+        [
+            "/n16/created.html",
+            "/n16/noindex-deadend.html",
+            "/n16/plain-deadend.html"
+        ]
+    );
+    // „All“ ist von der Option nie betroffen.
+    assert!(list(&fx.file, &cfg, "All").contains(&"/n16/noindex-deadend.html".to_string()));
+}

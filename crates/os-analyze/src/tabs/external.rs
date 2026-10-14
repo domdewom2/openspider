@@ -40,8 +40,9 @@ pub fn tab() -> TabDef {
         col("Status Code", "u.status_code", ColumnKind::Int, true),
         col("Status", STATUS, ColumnKind::Text, true),
         col("Crawl Depth", "u.crawl_depth", ColumnKind::Int, true),
-        // Link-Instanzen von internen Seiten: Hyperlinks und Ressourcen-Referenzen
-        col("Inlinks", "u.inlinks_all", ColumnKind::Int, true),
+        // Hyperlink-Instanzen (`<a href>`, `<area href>`) interner Seiten wie ONPAGE-015; Weiterleitungen und
+        // Ressourcen-Referenzen zählen nicht (ONPAGE-025, K-61).
+        col("Inlinks", "u.inlinks", ColumnKind::Int, true),
         ext_col("Response Time", "u.response_time_ms", ColumnKind::Seconds3),
         ext_col("Redirect URL", "u.redirect_url", ColumnKind::Url),
         ext_col("Redirect Type", REDIRECT_TYPE, ColumnKind::Text),

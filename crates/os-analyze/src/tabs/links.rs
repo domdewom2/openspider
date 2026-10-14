@@ -8,6 +8,11 @@
 //! ebenso. Eine Seite, die nur auf sich selbst verlinkt, hat damit 0 Outlinks (TECH-133).
 //! Nofollow-Links zählen als Outlinks (TECH-133).
 //!
+//! # `ignore_non_indexable` (CRAWL-089, K-56)
+//!
+//! „Pages With High Crawl Depth“ und „Pages Without Internal Outlinks“ schließen bei
+//! `issues.ignore_non_indexable` (Standard an) nicht indexierbare Seiten aus; „All“ und die übrigen Filter nicht.
+//!
 //! # Präferenzen (TECH-144)
 //!
 //! Die Schwellen stammen aus `links.*` der Konfiguration, die in der Crawl-Datei liegt; eine Änderung wirkt
@@ -25,7 +30,7 @@ use crate::defs::{ColumnDef, ColumnKind, ColumnSql, FilterDef, FilterKind, SortK
 macro_rules! total_pages {
     () => {
         "(SELECT COUNT(*) FROM urls t WHERE t.is_internal = 1 AND t.in_tables = 1 \
-         AND t.content_class = 'HTML' AND t.status_code = 200)"
+         AND t.content_class = 'HTML' AND t.status_code BETWEEN 200 AND 299)"
     };
 }
 
@@ -36,9 +41,9 @@ macro_rules! unique_inlinks {
     };
 }
 
-/// Grundmenge: interne HTML-Seiten mit Status 200.
-const POPULATION: &str =
-    "u.is_internal = 1 AND u.in_tables = 1 AND u.content_class = 'HTML' AND u.status_code = 200";
+/// Grundmenge: interne HTML-Seiten mit Status 2xx (K-56).
+const POPULATION: &str = "u.is_internal = 1 AND u.in_tables = 1 AND u.content_class = 'HTML' \
+     AND u.status_code BETWEEN 200 AND 299";
 
 /// Hohe Crawl-Tiefe (TECH-132); unerreichte Seiten (Tiefe leer) zählen nicht.
 const HIGH_DEPTH: &str = "u.crawl_depth >= :high_crawl_depth";
@@ -147,7 +152,7 @@ pub fn tab() -> TabDef {
         filters: vec![
             filter("All", "1", false),
             filter("Pages With High Crawl Depth", HIGH_DEPTH, true),
-            filter("Pages Without Internal Outlinks", NO_OUTLINKS, false),
+            filter("Pages Without Internal Outlinks", NO_OUTLINKS, true),
             filter("Internal Nofollow Outlinks", NOFOLLOW_OUTLINK, false),
             filter("Internal Outlinks With No Anchor Text", NO_ANCHOR, false),
         ],

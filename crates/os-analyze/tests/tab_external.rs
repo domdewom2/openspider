@@ -290,8 +290,8 @@ async fn inlinks_count_the_link_instances_from_internal_pages() {
     let ext = ext(&fx);
     // zwei Seiten mit je zwei Links → 4
     assert_eq!(t.get(&format!("{ext}/ext.html"), "Inlinks"), Value::Int(4));
-    // eine Ressourcen-Referenz (<img src>) ist ebenfalls eine Link-Instanz
-    assert_eq!(t.get(&format!("{ext}/ext.png"), "Inlinks"), Value::Int(1));
+    // eine Ressourcen-Referenz (<img src>) ist keine Hyperlink-Instanz (K-61)
+    assert_eq!(t.get(&format!("{ext}/ext.png"), "Inlinks"), Value::Int(0));
     assert_eq!(
         t.get(&format!("{ext}/ext-deep.html"), "Inlinks"),
         Value::Int(1)
@@ -535,4 +535,29 @@ async fn the_class_filters_partition_external_all() {
     let mut expected = all.clone();
     expected.sort();
     assert_eq!(union, expected, "Summe aller Klassenfilter = External All");
+}
+
+// spec: ONPAGE-025
+#[tokio::test]
+async fn inlinks_count_only_hyperlinks_not_redirects_or_resource_references() {
+    // `/inlink-types.html`: Hyperlink auf `ext.test/inlinks-both.html`, dazu ein interner 301 auf dieselbe URL;
+    // ein Bild nur per `<img src>`; eine externe URL nur per `<area href>`.
+    let cfg = CrawlConfig::default();
+    let fx = crawl_fixture_from("onpage-external", "/inlink-types.html", cfg.clone()).await;
+    let t = query(&fx, &cfg, "External", "All", ColumnSelection::All);
+    // Hyperlink + 301-Ziel → 1 (die Weiterleitung zählt nicht)
+    assert_eq!(
+        t.get("http://ext.test/inlinks-both.html", "Inlinks"),
+        Value::Int(1)
+    );
+    // nur Bild-Referenz → 0
+    assert_eq!(
+        t.get("http://ext.test/inlinks-img-only.png", "Inlinks"),
+        Value::Int(0)
+    );
+    // `<area href>` ist ein Hyperlink
+    assert_eq!(
+        t.get("http://ext.test/inlinks-area.html", "Inlinks"),
+        Value::Int(1)
+    );
 }
