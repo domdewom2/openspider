@@ -34,6 +34,10 @@ pub struct ExportEntry {
     /// Optional: Dateiname der OpenSpider-Ausgabe, wenn er von der Namensregel (OUT-008) abweicht.
     #[serde(default)]
     pub os_file: Option<String>,
+    /// Optional: Grund, warum der Export nicht verglichen wird, obwohl die Referenz vorliegt (z. B. Funktion
+    /// außerhalb von M1). Der Eintrag erscheint im Bericht als übersprungen mit diesem Grund.
+    #[serde(default)]
+    pub skip: Option<String>,
 }
 
 /// Manifest einer Site.

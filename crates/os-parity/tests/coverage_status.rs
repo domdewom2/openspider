@@ -46,6 +46,8 @@ fn run_with(test_output: Option<&str>, junit: Option<&str>) -> Outcome {
         write: Some(write.clone()),
         root: dir.path().to_path_buf(),
         strict: false,
+        parity_report: None,
+        evidence: None,
     })
     .unwrap();
     let json: Value = serde_json::from_str(&std::fs::read_to_string(write).unwrap()).unwrap();
@@ -306,6 +308,8 @@ fn status_file_is_deterministic_and_verified_is_preserved() {
         write: Some(path.clone()),
         root: o.dir.path().to_path_buf(),
         strict: false,
+        parity_report: None,
+        evidence: None,
     })
     .unwrap();
     assert!(!ok);
@@ -342,6 +346,8 @@ fn strict_mode_fails_on_ignored_tests_without_reason() {
         write: None,
         root: dir.path().to_path_buf(),
         strict: false,
+        parity_report: None,
+        evidence: None,
     };
     assert!(
         run(&args).unwrap(),
@@ -364,6 +370,8 @@ fn invalid_inputs_are_errors() {
         write: None,
         root: dir.path().to_path_buf(),
         strict: false,
+        parity_report: None,
+        evidence: None,
     };
     assert!(run(&base).is_err());
     std::fs::write(dir.path().join("p.json"), "{\"nope\": 1}").unwrap();
@@ -380,4 +388,62 @@ fn invalid_inputs_are_errors() {
         ..base
     })
     .is_err());
+}
+
+#[test]
+fn parity_evidence_sets_verified_only_for_clean_implemented_ids() {
+    let o = run_with(Some("sample-test-output.txt"), None);
+    let dir = o.dir.path();
+    let report = dir.join("parity-report.json");
+    // ALPHA-001: sauberer Export. ALPHA-002: Spaltenfehler. ALPHA-003 ist offen und bleibt es.
+    let clean = serde_json::json!({"outcome": "compared", "report": {
+        "export": "good", "url_set_identical": true, "cells_compared": 40, "agreement_pct": 100.0,
+        "columns": [{"sf_column": "A", "errors": 0}], "applied_deviations": [{"id": "DEV-001"}]}});
+    let bad = serde_json::json!({"outcome": "compared", "report": {
+        "export": "bad", "url_set_identical": true, "cells_compared": 40, "agreement_pct": 90.0,
+        "columns": [{"sf_column": "A", "errors": 4}], "applied_deviations": []}});
+    std::fs::write(
+        &report,
+        serde_json::json!({"sites": [{"site": "s", "exports": [clean, bad]}]}).to_string(),
+    )
+    .unwrap();
+    let evidence = dir.join("evidence.toml");
+    std::fs::write(
+        &evidence,
+        "[[evidence]]\nspecs = [\"ALPHA-001\"]\nexports = [\"good\"]\n[[evidence]]\nspecs = [\"ALPHA-002\", \"ALPHA-003\", \"UNBEKANNT-1\"]\nexports = [\"bad\"]\n",
+    )
+    .unwrap();
+    let write = dir.join("status-with-parity.json");
+    let ok = run(&CoverageArgs {
+        packages: data().join("packages.json"),
+        test_output: Some(data().join("sample-test-output.txt")),
+        junit: None,
+        write: Some(write.clone()),
+        root: dir.to_path_buf(),
+        strict: false,
+        parity_report: Some(report),
+        evidence: Some(evidence),
+    })
+    .unwrap();
+    assert!(!ok, "ALPHA-003 bleibt offen");
+    let json: Value = serde_json::from_str(&std::fs::read_to_string(write).unwrap()).unwrap();
+    let specs = &json["specs"];
+    assert_eq!(specs["ALPHA-001"]["status"], "verified");
+    assert_eq!(specs["ALPHA-001"]["parity"]["exports"][0]["export"], "good");
+    assert_eq!(
+        specs["ALPHA-001"]["parity"]["exports"][0]["deviations"][0],
+        "DEV-001"
+    );
+    assert_eq!(specs["ALPHA-002"]["status"], "implemented");
+    assert!(specs["ALPHA-002"]["parity"]["not_verified"]
+        .as_str()
+        .unwrap()
+        .contains("Spalte A"));
+    assert_eq!(specs["ALPHA-003"]["status"], "open");
+    assert_eq!(json["summary"]["verified"], 1);
+    assert!(json["warnings"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|w| w.as_str().unwrap().contains("UNBEKANNT-1")));
 }

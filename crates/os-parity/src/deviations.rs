@@ -10,14 +10,18 @@
 //! kind = "OS-Festlegung"         # Pflicht: Paritätsabweichung | Annahme | OS-Festlegung
 //! note = "Begründung"
 //! site = "parity-onpage"         # optional: nur diese Site
-//! export = "page_titles_all"     # optional: nur dieser Export (Mapping-Name)
+//! export = "page_titles_all"     # optional: nur dieser Export (Mapping-Name; mehrere durch `|` getrennt, `*` = alle)
 //! column = "Title 1"             # optional: nur diese Referenzspalte (Scope cell)
 //! key = "{BASE}/a.html"          # optional: genau diese Zeile (normalisierter Schlüssel)
 //! key_prefix = "{BASE}/robots"   # optional: alle Zeilen mit diesem Präfix
 //! scope = "cell"                 # cell (Standard) | missing_in_os | extra_in_os
 //! sf = "100"                     # optional: nur wenn der Referenzwert so lautet
 //! os = "99"                      # optional: nur wenn der OpenSpider-Wert so lautet
+//! delta = 1                       # optional: nur wenn OpenSpider-Wert − Referenzwert genau so groß ist
+//! key_prefixes = ["Internal | All", "Security | "]   # optional: Zeilen, deren Schlüssel mit einem davon beginnt
 //! ```
+//!
+//! `column` darf mehrere Spalten nennen, getrennt durch `|` (`column = "Title 1 Length|Title 2 Length"`).
 
 use std::path::Path;
 
@@ -68,6 +72,12 @@ pub struct Deviation {
     /// Einschränkung auf Zeilen mit diesem Schlüsselpräfix.
     #[serde(default)]
     pub key_prefix: Option<String>,
+    /// Einschränkung auf Zeilen, deren Schlüssel mit einem dieser Präfixe beginnt.
+    #[serde(default)]
+    pub key_prefixes: Vec<String>,
+    /// Nur bei genau dieser Differenz „OpenSpider-Wert − Referenzwert“ (beide Werte numerisch).
+    #[serde(default)]
+    pub delta: Option<f64>,
     /// Geltungsbereich.
     #[serde(default)]
     pub scope: Scope,
@@ -94,13 +104,12 @@ pub fn is_known_kind(kind: &str) -> bool {
 impl Deviation {
     /// Gilt die Abweichung für diese Site und diesen Export?
     pub fn applies_to(&self, site: Option<&str>, export: &str) -> bool {
-        self.site
+        self.site.as_deref().is_none_or(|s| {
+            s == "*" || site.is_some_and(|x| s.split('|').any(|part| part.trim() == x))
+        }) && self
+            .export
             .as_deref()
-            .is_none_or(|s| s == "*" || site.is_some_and(|x| x == s))
-            && self
-                .export
-                .as_deref()
-                .is_none_or(|e| e == export || e == "*")
+            .is_none_or(|e| e == "*" || e.split('|').any(|part| part.trim() == export))
     }
 
     fn matches_key(&self, key: &str) -> bool {
@@ -114,6 +123,9 @@ impl Deviation {
                 return false;
             }
         }
+        if !self.key_prefixes.is_empty() && !self.key_prefixes.iter().any(|p| key.starts_with(p)) {
+            return false;
+        }
         true
     }
 
@@ -124,9 +136,18 @@ impl Deviation {
             && self
                 .column
                 .as_deref()
-                .is_none_or(|c| c == column || c == "*")
+                .is_none_or(|c| c == "*" || c.split('|').any(|x| x.trim() == column))
             && self.sf.as_deref().is_none_or(|v| v == sf)
             && self.os.as_deref().is_none_or(|v| v == os)
+            && self.delta.is_none_or(|d| {
+                match (
+                    crate::normalize::parse_number(sf),
+                    crate::normalize::parse_number(os),
+                ) {
+                    (Some(a), Some(b)) => ((b - a) - d).abs() < 1e-9,
+                    _ => false,
+                }
+            })
     }
 
     /// Entschuldigt die Abweichung eine fehlende bzw. zusätzliche Zeile?

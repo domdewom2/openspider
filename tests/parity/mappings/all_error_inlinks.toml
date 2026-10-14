@@ -1,24 +1,25 @@
 # Spaltenmapping SF -> OpenSpider fuer den Export "Bulk Export Response Codes:All Error Inlinks" (Format: docs/plan/M1.md 5.2).
-# Spaltennamen rechts sind die kanonischen OpenSpider-Namen aus der Spec; Annahme: die Referenz nutzt dieselben
-# funktionalen Bezeichner. Abweichungen klaert M1-P29 anhand der echten Exporte.
-# Gleiches Standard-Linkformat wie all_inlinks (OUT-031, OUT-067).
-key = ["Source", "Destination", "Type", "#"]
+# Stand M1-P29 (Welle 5): an die echten Kopfzeilen der Referenz (SF 24.3 Free, englische Oberflaeche) angepasst.
+# Nur Spaltennamen der Kopfzeile; Beschreibungsspalten werden beim Einlesen verworfen (Clean-Room, A8).
+# Wie all_inlinks. Referenzdatei: all_error_(4xx_5xx_no_response)_inlinks.csv.
+key = ["Type", "Source", "Destination", "#"]
 drop_sf_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Referenz nie einlesen
 
 [columns]
-"Type" = "Type"
+"Type" = { os = "Type", map = { "HTML Canonical" = "Canonical", "HTML Hreflang" = "Hreflang", "Meta Refresh Redirect" = "Meta Refresh", "HTTP Refresh Redirect" = "HTTP Refresh" } }
 "Source" = "Source"
 "Destination" = "Destination"
 "Size (Bytes)" = "Size (Bytes)"
 "Alt Text" = "Alt Text"
 "Anchor" = "Anchor"
 "Status Code" = "Status Code"
-"Status" = "Status"
+"Status" = { os = "Status", transform = ["ignore_case"] }
+"Crawlability" = { ignore = true, reason = "OpenSpider fuehrt die Spalte `Crawlability` nicht (OUT-023 liefert 15 Spalten ohne sie); `Follow` deckt nofollow ab" }
 "Follow" = "Follow"
 "Target" = "Target"
 "Rel" = "Rel"
 "Path Type" = "Path Type"
-"Link Path" = "Link Path"
+"Link Path" = { os = "Link Path", transform = ["xpath_tags"] }
 "Link Position" = "Link Position"
 "Link Origin" = "Link Origin"
 

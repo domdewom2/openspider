@@ -1,8 +1,14 @@
-# Dokumentierte Paritaetsabweichungen (docs/plan/M1.md 5.3, Schritt 4).
+# Dokumentierte Paritaetsabweichungen (docs/plan/M1.md 5.3, Schritt 4). Stand M1-P29 (Welle 5).
 #
-# Jede Abweichung zwischen OpenSpider und den Referenz-Exporten ist entweder ein Fehler (-> Nachbesserungspaket)
-# oder steht hier mit Spec-ID und Kennzeichen. Der Runner `os-parity` (M1-P11) wendet die Eintraege beim Vergleich an.
-# Ohne Eintraege: keine bekannten Abweichungen (Stand M1-P10, vor dem ersten Vergleich mit echten Exporten).
+# Jede Abweichung zwischen OpenSpider und den Referenz-Exporten (SF 24.3 Free) ist entweder ein Fehler (-> Nachbesserungs-
+# auftrag im Abnahmebericht docs/plan/M1-acceptance/checklist.md, ohne Eintrag hier) oder steht hier mit Spec-ID und
+# Kennzeichen. Der Runner `os-parity` wendet die Eintraege beim Vergleich an und weist sie im Bericht aus.
+#
+# Abschnitt 1: begruendete Paritaetsabweichungen (DEV-nnn): die OpenSpider-Spec legt das Verhalten fest (OS-Festlegung,
+#              Annahme) oder weicht bewusst von der Referenz ab (Paritaetsabweichung).
+# Abschnitt 2: Referenzeinschraenkungen SF Free (SF-FREE-nn, K-53): die Spider-Konfiguration der Free-Version ist gesperrt;
+#              diese Eintraege zaehlen NICHT als begruendete Paritaetsabweichung, die betroffenen Filter erhalten kein
+#              `verified` (Beleg bleibt der spec-abgeleitete Fixture-Test, A2).
 #
 # Schema (jede Abweichung ein Block; alle Textwerte als TOML-Strings):
 #
@@ -15,3 +21,372 @@
 # column = "Title 1 Pixel Width"  # optional: nur diese (OpenSpider-)Spalte
 # address = "{BASE}/x.html"       # optional: nur diese Zeile (Adresse nach Normalisierung)
 # reason = "Kurze Begruendung, wie in der Spec festgelegt"
+#
+# Weitere optionale Felder (M1-P29): export/site/column duerfen mehrere Werte nennen, getrennt durch "|"; key_prefix
+# (Zeilen, deren Schluessel so beginnt), key_prefixes (Liste), scope ("cell" Standard | "missing_in_os" | "extra_in_os"),
+# sf / os (nur bei diesem Referenz- bzw. OpenSpider-Wert), delta (nur wenn OpenSpider-Wert minus Referenzwert so gross ist).
+
+[[deviation]]
+id = "DEV-001"
+spec = "CRAWL-098"
+kind = "OS-Festlegung"
+export = "*"
+site = "*"
+key_prefix = "{BASE}/robots.txt"
+scope = "extra_in_os"
+reason = "K-40: Die robots.txt eines internen Hosts erscheint als eigene URL-Zeile in den Tabellen (200, text/plain). Die Referenz listet sie nicht. Offene Planerentscheidung: Festlegung beibehalten oder in_tables=0 fuer interne robots.txt (siehe Abnahmebericht, Befund B-01)."
+
+[[deviation]]
+id = "DEV-002"
+spec = "CRAWL-098"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefixes = ["summary | total urls encountered", "summary | total urls crawled", "internal | all", "internal | unknown", "security | all", "security | http urls", "response codes | all", "response codes | success (2xx)", "response codes | internal all", "response codes | internal success (2xx)", "url | all"]
+delta = 1
+reason = "Folge von DEV-001: Die robots.txt-Zeile zaehlt in allen Zaehlern, deren Grundgesamtheit alle internen URLs mit Antwort ist, um genau 1 hoeher als in der Referenz."
+
+[[deviation]]
+id = "DEV-003"
+spec = "ONPAGE-011"
+kind = "OS-Festlegung"
+export = "internal_all"
+site = "*"
+column = "Title 1 Length|Title 1 Pixel Width|Title 2 Length|Title 2 Pixel Width|Meta Description 1 Length|Meta Description 1 Pixel Width|Meta Description 2 Length|Meta Description 2 Pixel Width|Meta Keywords 1 Length|H1-1 Length|H1-2 Length|H2-1 Length|H2-2 Length|Word Count"
+sf = "0"
+os = ""
+reason = "Nicht-HTML-URLs haben leere Element-Spalten (ONPAGE-011) und eine Seite ohne Element leere Wertspalten (ONPAGE-008); die Referenz schreibt 0."
+
+[[deviation]]
+id = "DEV-004"
+spec = "ONPAGE-013"
+kind = "OS-Festlegung"
+export = "internal_all"
+site = "*"
+column = "Text Ratio"
+sf = "0.000"
+os = ""
+reason = "Nicht-HTML-URLs: Word Count und Text Ratio leer (ONPAGE-013); die Referenz schreibt 0."
+
+[[deviation]]
+id = "DEV-005"
+spec = "ONPAGE-065"
+kind = "Paritaetsabweichung"
+export = "*"
+site = "*"
+column = "Status"
+sf = "Connection Timeout"
+os = "Connection Refused"
+reason = "OS-Festlegung ONPAGE-065 unterscheidet Connection Refused (abgelehnte Verbindung) von Connection Timeout; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout."
+
+[[deviation]]
+id = "DEV-006"
+spec = "OUT-031"
+kind = "Paritaetsabweichung"
+export = "all_inlinks"
+site = "*"
+column = "Status Code"
+sf = "0"
+os = ""
+reason = "Status Code ist in den Link-Exporten leer, wenn das Ziel nicht abgerufen wurde (OUT-031, Not Crawled); die Referenz schreibt 0 fuer robots.txt-blockierte Ziele."
+
+[[deviation]]
+id = "DEV-006b"
+spec = "OUT-031"
+kind = "Paritaetsabweichung"
+export = "all_error_inlinks"
+site = "*"
+column = "Status Code"
+sf = "0"
+os = ""
+reason = "wie DEV-006 (Fehler-Inlinks auf nicht abgerufene Ziele)."
+
+[[deviation]]
+id = "DEV-007"
+spec = "OUT-031"
+kind = "Paritaetsabweichung"
+export = "all_inlinks|all_error_inlinks"
+site = "*"
+column = "Rel"
+sf = ""
+os = "stylesheet"
+reason = "Rel = alle rel-Werte des Elements in Originalreihenfolge (OUT-031); die Referenz laesst rel=\"stylesheet\" leer."
+
+[[deviation]]
+id = "DEV-008"
+spec = "OUT-031"
+kind = "OS-Festlegung"
+export = "all_inlinks"
+site = "*"
+column = "Follow"
+sf = "true"
+os = "False"
+reason = "Follow=False auch bei Meta/X-Robots nofollow der Quellseite (OUT-031); die Referenz bewertet nur das Link-Attribut."
+
+[[deviation]]
+id = "DEV-009"
+spec = "OUT-031"
+kind = "Paritaetsabweichung"
+export = "all_inlinks"
+site = "*"
+column = "Link Origin"
+sf = "HTTP"
+os = "HTML"
+reason = "Die Spec kennt Link Origin nur HTML/Rendered HTML (OUT-031); die Referenz schreibt HTTP fuer Links aus Antwort-Headern und Weiterleitungen."
+
+[[deviation]]
+id = "DEV-010"
+spec = "TECH-130"
+kind = "OS-Festlegung"
+export = "links_all"
+site = "*"
+column = "Inlinks|Unique Inlinks|Outlinks|Unique Outlinks|% of Total"
+key_prefix = "{BASE}/links/self-only.html"
+reason = "K-07: Selbstlinks zaehlen im Links-Tab nicht (TECH-130); die Referenz zaehlt sie. Betrifft die Seite mit Selbstlink."
+
+[[deviation]]
+id = "DEV-011"
+spec = "TECH-130"
+kind = "OS-Festlegung"
+export = "links_all"
+site = "out-basic-site"
+column = "Unique Inlinks|Outlinks|Unique Outlinks|% of Total"
+key_prefixes = ["{BASE}/contact.html", "{BASE}/products.html", "{BASE}/"]
+reason = "K-07 (wie DEV-010), Seiten mit Selbstlink in out-basic-site."
+
+[[deviation]]
+id = "DEV-012"
+spec = "TECH-051"
+kind = "OS-Festlegung"
+export = "directives_all"
+site = "*"
+key_prefixes = ["{BASE}/hl/es-old/", "{BASE}/canon/gone-404.html", "{BASE}/canon/moved-301"]
+scope = "extra_in_os"
+reason = "Population des Directives-Tabs: alle internen URLs mit HTTP-Antwort, jeder Status (TECH-051); die Referenz fuehrt Weiterleitungen und Fehlerseiten nicht."
+
+[[deviation]]
+id = "DEV-013"
+spec = "TECH-051"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefixes = ["directives | all"]
+reason = "wie DEV-012: Zaehler des Abschnitts Directives (Population aller internen URLs mit Antwort)."
+
+[[deviation]]
+id = "DEV-014"
+spec = "ONPAGE-024"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefixes = ["internal | unknown", "external | unknown", "external | other"]
+reason = "Klassifizierung ONPAGE-024: fehlender Content-Type, keine Antwort und robots.txt-Sperre sind Unknown; die Referenz fuehrt Antworten ohne Content-Type (z. B. Weiterleitungen) unter Other. Der Filter Other ist P1 (M1.md 7.2)."
+
+[[deviation]]
+id = "DEV-015"
+spec = "OUT-080"
+kind = "Paritaetsabweichung"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefixes = ["crawl depth | "]
+reason = "Die Crawl-Depth-Zeilen der Referenz zaehlen nur interne HTML-Seiten mit 2xx (Zeile 0 = Start-URL); OpenSpider zaehlt alle internen URLs mit bekannter Tiefe (OUT-025 Site Structure, Summe = interne URLs)."
+
+[[deviation]]
+id = "DEV-016"
+spec = "ONPAGE-166"
+kind = "OS-Festlegung"
+export = "content_all"
+site = "*"
+key_prefix = "{BASE}/ctype/t-pdf.pdf"
+scope = "missing_in_os"
+reason = "PDF-Inhalte (Word Count, Content-Tab-Zeile) sind P1 (ONPAGE-166, M1.md 7.2); in M1 nur Titel und Keywords aus den PDF-Eigenschaften."
+
+[[deviation]]
+id = "DEV-017"
+spec = "OUT-081"
+kind = "OS-Festlegung"
+export = "redirect_chains"
+site = "*"
+column = "Status Code 3|Status 3|Status Code 4|Status 4|Status Code 5|Status 5|Status Code 6|Status 6|Status Code 7|Status 7"
+os = ""
+reason = "OUT-081: die Hop-Spalten n beschreiben die Spruenge (Redirect Type n, Redirect URL n, Status Code n, Status n); die Referenz haengt als letzten Hop das Endziel an."
+
+[[deviation]]
+id = "DEV-018"
+spec = "ONPAGE-171"
+kind = "OS-Festlegung"
+export = "images_all"
+site = "*"
+column = "IMG Inlinks"
+sf = "0"
+os = "1"
+reason = "IMG Inlinks (OpenSpider-Erweiterung) zaehlt auch Hyperlinks auf Bilder (ONPAGE-170 Nr. 2); die Referenz zaehlt nur eingebettete Bilder."
+
+[[deviation]]
+id = "DEV-019"
+spec = "ONPAGE-005"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefixes = ["page titles | duplicate", "meta description | duplicate"]
+reason = "Annahme A-4 (Duplikate exakt, Gross-/Kleinschreibung sensitiv) ist durch die Referenz widerlegt: Titel/Meta Description die sich nur in der Schreibweise unterscheiden zaehlen dort als Duplikat (Fixture dup-case.html). Spec-Korrektur offen (Abnahmebericht)."
+
+[[deviation]]
+id = "DEV-020"
+spec = "ONPAGE-072"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefixes = ["url | underscores"]
+reason = "Annahme A-23 (Underscore nur im Pfad) ist durch die Referenz widerlegt: sort_by in der Query zaehlt dort mit. Spec-Korrektur offen (Abnahmebericht)."
+
+[[deviation]]
+id = "DEV-021"
+spec = "TECH-011"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefixes = ["canonicals | all", "links | all", "hreflang | all", "hreflang | missing"]
+reason = "Die Tabs Canonicals, Links und Hreflang fuehren interne HTML-Seiten mit Status 200 (TECH-011/-071/-130); die Referenz zaehlt alle 2xx (Fixture /s201, Status 201)."
+
+[[deviation]]
+id = "DEV-022"
+spec = "CRAWL-089"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefixes = ["canonicals | missing", "links | pages without internal outlinks"]
+reason = "Der Wirkungsbereich von issues.ignore_non_indexable ist in CRAWL-089 abschliessend auf die Element-Tabs und Low Content Pages begrenzt; die Referenz schliesst nicht indexierbare URLs auch in Canonicals/Missing und Links/Pages Without Internal Outlinks aus."
+
+[[deviation]]
+id = "DEV-023"
+spec = "TECH-064"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefixes = ["directives | refresh"]
+reason = "Der Filter Refresh umfasst Meta Refresh und den Refresh-Header (TECH-064); die Referenz zaehlt den Refresh-Header im Response-Codes-Filter Redirection (HTTP Refresh)."
+
+[[deviation]]
+id = "DEV-024"
+spec = "ONPAGE-166"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefixes = ["content | all"]
+delta = -1
+reason = "PDF-Inhalte (Content-Tab-Zeile) sind P1 (ONPAGE-166, M1.md 7.2), siehe DEV-016."
+
+[[deviation]]
+id = "DEV-025"
+spec = "TECH-001"
+kind = "OS-Festlegung"
+export = "internal_all|links_all"
+site = "*"
+column = "Indexability Status"
+sf = "Canonicalised,noindex"
+os = "noindex"
+reason = "Indexability Status nennt genau den ersten zutreffenden Grund in der Pruefreihenfolge (TECH-001); die Referenz nennt bei noindex und fremdem Canonical beide, kommagetrennt."
+
+[[deviation]]
+id = "DEV-026"
+spec = "TECH-064"
+kind = "OS-Festlegung"
+export = "directives_all"
+site = "*"
+column = "Meta Refresh 1"
+sf = ""
+reason = "Die Spalte Meta Refresh im Directives-Tab zeigt auch den Wert des Refresh-Headers (TECH-064: Refresh umfasst Meta und Header); die Referenz laesst sie bei reinem Header-Refresh leer."
+
+[[deviation]]
+id = "DEV-027"
+spec = "TECH-071"
+kind = "OS-Festlegung"
+export = "hreflang_all"
+site = "*"
+key_prefix = "{BASE}/hl/es-old/"
+scope = "extra_in_os"
+reason = "Population des Hreflang-Tabs: auch gecrawlte hreflang-Ziele (TECH-071); die Referenz fuehrt das umgeleitete Ziel (301) nicht."
+
+[[deviation]]
+id = "DEV-028"
+spec = "ONPAGE-170"
+kind = "OS-Festlegung"
+export = "images_all"
+site = "*"
+key_prefix = "{BASE}/img/missing.png"
+scope = "extra_in_os"
+reason = "Grundmenge des Images-Tabs: auch per Bild-Referenz entdeckte Bild-URLs mit Fehlerantwort (Images-Intro, ONPAGE-170); die Referenz fuehrt das nicht abrufbare Bild (404) nicht."
+
+[[deviation]]
+id = "DEV-029"
+spec = "ONPAGE-170"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefixes = ["images | all"]
+delta = 1
+reason = "wie DEV-028: Zaehler des Abschnitts Images enthaelt das per Referenz entdeckte, nicht abrufbare Bild."
+
+[[deviation]]
+id = "DEV-030"
+spec = "OUT-081"
+kind = "OS-Festlegung"
+export = "redirect_chains"
+site = "*"
+column = "Final Address|Final Indexability|Final Indexability Status|Final Status Code|Final Status"
+key_prefix = "{BASE}/loop1"
+reason = "Bei einer Weiterleitungsschleife ist Final Address leer und Final Status = Redirect Loop (OUT-081); die Referenz nennt die letzte Station der Schleife samt ihrem Status."
+
+[[deviation]]
+id = "DEV-031"
+spec = "OUT-081"
+kind = "OS-Festlegung"
+export = "redirect_chains"
+site = "*"
+column = "Temp Redirect in Chain"
+key_prefix = "{BASE}/mixed-chain.html"
+sf = "true"
+os = "False"
+reason = "Meta Refresh und Refresh-Header gelten nur mit Verzoegerung > 0 als temporaer (OUT-081); die Referenz wertet den Meta Refresh ohne Verzoegerung als temporaer."
+
+[[deviation]]
+id = "DEV-032"
+spec = "ONPAGE-015"
+kind = "OS-Festlegung"
+export = "internal_all"
+site = "parity-response"
+column = "% of Total"
+reason = "% of Total teilt durch alle gecrawlten internen HTML-Seiten mit Status 200 (ONPAGE-015); die Referenz teilt durch alle HTML-Seiten mit 2xx (Fixture /s201, Status 201: 14 statt 13 Seiten)."
+
+[[deviation]]
+id = "SF-FREE-01"
+spec = "TECH-210"
+kind = "Annahme"
+export = "sitemaps_all"
+site = "*"
+key_prefix = "{BASE}/"
+scope = "missing_in_os"
+reason = "SF-Free-Einschraenkung (Spider-Konfiguration gesperrt): verlinkte XML-Sitemaps und robots.txt-Sitemaps werden nicht abgerufen; die Referenz listet im Tab Sitemaps dennoch alle internen URLs, OpenSpider ohne verarbeitete Sitemap keine (TECH-211: Tab leer)."
+
+[[deviation]]
+id = "SF-FREE-02"
+spec = "TECH-210"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefixes = ["sitemaps | "]
+reason = "SF-Free-Einschraenkung (Spider-Konfiguration gesperrt): ohne Sitemap-Crawl zaehlt die Referenz alle URLs im Abschnitt Sitemaps, OpenSpider 0 (TECH-211)."
+

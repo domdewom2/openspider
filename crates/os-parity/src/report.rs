@@ -11,6 +11,18 @@ use crate::error::ParityError;
 /// Höchstzahl Beispiele je Spalte und je Abweichung.
 pub const MAX_EXAMPLES: usize = 10;
 
+/// Umgebungsvariable, die die Zahl der Beispiele je Spalte für die Fehlersuche erhöht (Standard: [`MAX_EXAMPLES`]).
+pub const EXAMPLES_ENV: &str = "OS_PARITY_MAX_EXAMPLES";
+
+/// Zahl der Beispiele je Spalte und je Abweichung: [`MAX_EXAMPLES`] oder der Wert von [`EXAMPLES_ENV`].
+pub fn max_examples() -> usize {
+    std::env::var(EXAMPLES_ENV)
+        .ok()
+        .and_then(|v| v.trim().parse::<usize>().ok())
+        .filter(|n| *n > 0)
+        .unwrap_or(MAX_EXAMPLES)
+}
+
 /// Ein abweichender Wert.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Example {
@@ -104,6 +116,12 @@ pub struct Report {
     pub missing_sf_columns: Vec<String>,
     /// Gemappte Spalten, die in der OpenSpider-Datei fehlen (Werte gelten als leer).
     pub missing_os_columns: Vec<String>,
+    /// Zeilen der Referenz außerhalb von M1 (Crawl-Overview: Filter, die M1 nicht umsetzt); nur gezählt.
+    #[serde(default)]
+    pub ignored_sf_rows: Vec<String>,
+    /// Zeilen, die nur OpenSpider hat und die laut Mapping kein Fehler sind (Zusatzabschnitte).
+    #[serde(default)]
+    pub os_only_rows: Vec<String>,
     /// Geforderte Mindest-Übereinstimmung in Prozent.
     pub threshold_pct: f64,
     /// URL-Menge identisch (nichts fehlt, nichts zusätzlich, nach Abweichungen).
@@ -122,6 +140,11 @@ pub fn write_report(dir: &Path, report: &Report) -> Result<(), ParityError> {
     std::fs::write(dir.join("report.json"), json + "\n")?;
     std::fs::write(dir.join("report.md"), render_markdown(report))?;
     Ok(())
+}
+
+/// Kennungen `SF-FREE-nn` bezeichnen Referenzeinschränkungen der Free-Version (K-53).
+pub fn is_sf_free(id: &str) -> bool {
+    id.starts_with("SF-FREE-")
 }
 
 fn cell(s: &str) -> String {
@@ -198,13 +221,35 @@ pub fn render_markdown(r: &Report) -> String {
     }
     list_section(&mut s, "Fehlen in OpenSpider", &r.missing_in_os);
     list_section(&mut s, "Zusätzlich in OpenSpider", &r.extra_in_os);
-    if !r.applied_deviations.is_empty() {
-        let _ = writeln!(s, "## Angewandte Abweichungen\n");
+    list_section(
+        &mut s,
+        "Zeilen der Referenz außerhalb von M1 (nicht verglichen)",
+        &r.ignored_sf_rows,
+    );
+    list_section(
+        &mut s,
+        "Zeilen nur in OpenSpider (kein Fehler)",
+        &r.os_only_rows,
+    );
+    // Referenzeinschränkungen der Free-Version (K-53) stehen getrennt von den begründeten Abweichungen.
+    for (title, free) in [
+        ("Angewandte Abweichungen", false),
+        ("Referenzeinschränkungen SF Free", true),
+    ] {
+        let list: Vec<&AppliedDeviation> = r
+            .applied_deviations
+            .iter()
+            .filter(|d| is_sf_free(&d.id) == free)
+            .collect();
+        if list.is_empty() {
+            continue;
+        }
+        let _ = writeln!(s, "## {title}\n");
         let _ = writeln!(
             s,
             "| Kennung | Spec | Kennzeichen | Anzahl | Begründung |\n|---|---|---|---:|---|"
         );
-        for d in &r.applied_deviations {
+        for d in list {
             let _ = writeln!(
                 s,
                 "| {} | {} | {} | {} | {} |",

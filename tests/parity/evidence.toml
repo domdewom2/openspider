@@ -1,0 +1,26 @@
+# Paritaetsbelege fuer den Status `verified` (docs/plan/M1.md 5.4 Punkt 3, A9). Format und Regeln: crates/os-parity/src/coverage/evidence.rs.
+#
+# Eine ID wird `verified`, wenn jeder Eintrag, der sie nennt, im Paritaetslauf (report.json) fehlerfrei ist: URL-Menge identisch,
+# keine Abweichung in den genannten Spalten, keine Referenzeinschraenkung SF Free (K-53). Aufgenommen sind nur IDs, deren Spec-
+# Umfang die verglichenen Spalten vollstaendig abdecken; alles andere bleibt `implemented` (Beleg: Fixture-Test, A2).
+
+# Internal: Size, Transferred, Total Transferred (K-02: die Referenz zaehlt keine Header-Bytes in Transferred)
+[[evidence]]
+specs = ["ONPAGE-012"]
+exports = ["internal_all"]
+columns = ["Size (Bytes)", "Transferred (Bytes)", "Total Transferred (Bytes)"]
+
+# H1- und H2-Tab: Extraktion und Spalten
+[[evidence]]
+specs = ["ONPAGE-120"]
+exports = ["h1_all"]
+
+[[evidence]]
+specs = ["ONPAGE-130"]
+exports = ["h2_all"]
+
+# Canonicals: Extraktion (Link-Element, HTTP-Header) und Spalten des Tabs
+[[evidence]]
+specs = ["TECH-010", "TECH-011"]
+exports = ["canonicals_all"]
+columns = ["Occurrences", "Indexability", "Indexability Status", "Canonical Link Element 1", "Canonical Link Element 2", "Canonical Link Element 3", "HTTP Canonical", "rel=\"next\" 1", "rel=\"prev\" 1", "HTTP rel=\"next\" 1", "HTTP rel=\"prev\" 1"]

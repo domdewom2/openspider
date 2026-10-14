@@ -6,9 +6,11 @@
 //! beim Einlesen verworfen (`drop`), ihre Inhalte gelangen nie in den Speicher der Auswertung
 //! (Clean-Room, Abschnitt 2 Regel 1).
 
+use std::collections::BTreeMap;
 use std::path::Path;
 
 use crate::error::ParityError;
+use crate::mapping::{Mapping, RefFormat};
 
 /// Eingelesene Tabelle: Kopfzeile plus Datenzeilen gleicher Länge.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -99,6 +101,111 @@ pub fn parse_csv(bytes: &[u8], drop: &[String]) -> Result<Table, ParityError> {
         columns,
         rows,
         dropped,
+    })
+}
+
+/// Spaltennamen der Tabelle, in die [`parse_blocks`] das Blockformat überführt.
+pub const BLOCK_COLUMNS: [&str; 4] = ["Section", "Item", "URLs", "% of Total"];
+
+/// Liest die Referenzdatei nach dem Layout des Mappings (Tabelle oder Blockformat).
+pub fn read_reference(path: &Path, mapping: &Mapping) -> Result<Table, ParityError> {
+    match mapping.format {
+        RefFormat::Table => read_csv(path, &mapping.drop_sf_columns),
+        RefFormat::Blocks => {
+            let bytes = std::fs::read(path).map_err(|e| {
+                ParityError::Invalid(format!("{} kann nicht gelesen werden: {e}", path.display()))
+            })?;
+            parse_blocks(&bytes, &mapping.blocks.section_map).map_err(|e| match e {
+                ParityError::Invalid(m) => ParityError::Invalid(format!("{}: {m}", path.display())),
+                other => other,
+            })
+        }
+    }
+}
+
+/// Überführt das Blockformat des Crawl-Overview-Exports der Referenz in eine Tabelle
+/// `(Section, Item, URLs, % of Total)`.
+///
+/// Aufbau der Datei: zuerst Schlüssel/Wert-Zeilen (`Site Crawled`, Datum, Uhrzeit, …) bis zur ersten Leerzeile
+/// – sie gehören nicht zu den Zählern und werden verworfen. Danach folgen durch Leerzeilen getrennte
+/// Abschnitte. Ein Abschnitt beginnt mit einer Zeile, die entweder nur den Abschnittsnamen enthält oder
+/// den Namen gefolgt von den Spaltenköpfen (`Summary,URLs,% of Total,Total URLs,…`); die weiteren Zeilen sind
+/// Einträge `Name,URLs,% of Total[,Gesamtzahl,Beschreibung]`. Die Beschreibungsspalte wird nie eingelesen
+/// (Clean-Room). Der Prozentwert bleibt als Text erhalten (Dezimalkomma und `%` normalisiert das Mapping).
+/// `section_map` benennt Abschnitte der Referenz um.
+pub fn parse_blocks(
+    bytes: &[u8],
+    section_map: &BTreeMap<String, String>,
+) -> Result<Table, ParityError> {
+    let bytes = bytes.strip_prefix(&[0xEF, 0xBB, 0xBF]).unwrap_or(bytes);
+    let text = String::from_utf8_lossy(bytes);
+    let mut reader = csv::ReaderBuilder::new()
+        .has_headers(false)
+        .flexible(true)
+        .from_reader(text.as_bytes());
+    let mut rows: Vec<Vec<String>> = Vec::new();
+    let mut section: Option<String> = None;
+    let mut last_section: Option<String> = None;
+    let mut preamble = true;
+    let mut seen_any = false;
+    for (n, rec) in reader.records().enumerate() {
+        let rec = rec.map_err(|e| ParityError::Invalid(format!("Zeile {}: {e}", n + 1)))?;
+        let cells: Vec<String> = rec.iter().map(|c| c.trim().to_string()).collect();
+        let blank = cells.iter().all(|c| c.is_empty());
+        if blank {
+            if seen_any {
+                preamble = false;
+            }
+            section = None;
+            continue;
+        }
+        seen_any = true;
+        if preamble {
+            continue;
+        }
+        if section.is_none() {
+            // Zeile mit Spaltenköpfen (`Summary,URLs,…`) oder nur dem Abschnittsnamen.
+            if cells.len() == 1 || cells.get(1).is_some_and(|c| c == "URLs") {
+                let name = cells[0].clone();
+                section = Some(section_map.get(&name).cloned().unwrap_or(name));
+                last_section = section.clone();
+                continue;
+            }
+            // Ein Eintrag ohne Kopf nach einer Leerzeile setzt den vorigen Abschnitt fort (Summary hat
+            // Teilblöcke).
+            match &last_section {
+                Some(_) => section = last_section.clone(),
+                None => {
+                    return Err(ParityError::Invalid(format!(
+                        "Zeile {}: Abschnittskopf erwartet, gefunden {:?}",
+                        n + 1,
+                        cells
+                    )))
+                }
+            }
+        }
+        if cells.len() < 3 {
+            return Err(ParityError::Invalid(format!(
+                "Zeile {}: Eintrag mit mindestens drei Zellen erwartet",
+                n + 1
+            )));
+        }
+        rows.push(vec![
+            section.clone().unwrap_or_default(),
+            cells[0].clone(),
+            cells[1].clone(),
+            cells[2].clone(),
+        ]);
+    }
+    if rows.is_empty() {
+        return Err(ParityError::Invalid(
+            "kein Abschnitt im Blockformat gefunden".into(),
+        ));
+    }
+    Ok(Table {
+        columns: BLOCK_COLUMNS.iter().map(|c| c.to_string()).collect(),
+        rows,
+        dropped: vec!["Total URLs".into(), "Total URLs Description".into()],
     })
 }
 

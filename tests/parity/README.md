@@ -3,9 +3,10 @@
 | Pfad | Inhalt |
 |---|---|
 | `mappings/<export>.toml` | Spaltenmapping Referenz → OpenSpider je Export (Format: `docs/plan/M1.md` 5.2) |
-| `deviations.toml` | dokumentierte Paritätsabweichungen (leer mit Schema-Kommentar) |
+| `deviations.toml` | dokumentierte Paritätsabweichungen (`DEV-nnn`) und Referenzeinschränkungen der Free-Version (`SF-FREE-nn`, K-53) |
+| `evidence.toml` | Zuordnung Spec-ID ↔ Export für den Status `verified` (`os-parity coverage --parity-report … --evidence …`) |
 | `thresholds.toml` | Schwellen des Abnahmekriteriums A3 für `os-parity run` |
-| `profiles/parity.osconfig` | OpenSpider-Konfiguration für Paritätsläufe |
+| `profiles/parity.osconfig` | OpenSpider-Konfiguration für Paritätsläufe; entspricht der tatsächlichen Referenzkonfiguration (SF 24.3 Free, K-53) |
 | `coverage/<site>.toml` | Absichtserklärung je Tab/Filter: welche Adresse Treffer sein soll, welche nicht |
 | `gen/` | Generator der Fixtures: `python3 -B tests/parity/gen/generate.py` (deterministisch, nur Python-Standardbibliothek) |
 | `fixtures_check.rs` | Prüftest der Fixtures (siehe unten) |
@@ -35,3 +36,27 @@ Er braucht nur `os_testsite`, `tokio`, `toml` und `flate2` (alle bereits Abhäng
 - die Absichtserklärung (`coverage/*.toml`) gegen die ausgelieferten Seiten, mit einem kleinen unabhängigen Orakel nach den Spec-Regeln;
 - jeder Tab der Gruppen Internal … Sitemaps hat Treffer und Nicht-Treffer; jeder Filter ist abgedeckt oder mit Grund ausgenommen;
 - Manifeste, Mappings, Profil, Abweichungsliste und README sind vorhanden und konsistent.
+
+## Stand M1-P29 (Referenzexporte SF 24.3 Free)
+
+Die Referenzexporte liegen unter `tests/golden/parity/<site>/sf/` (unverändert, nur dort; A8). Der Lauf:
+
+```sh
+cargo build -p os-cli -p os-parity
+target/debug/os-parity run --all --openspider target/debug/openspider --out target/parity
+# Fehlersuche: mehr Beispiele je Spalte im Bericht
+OS_PARITY_MAX_EXAMPLES=500 target/debug/os-parity run --site parity-onpage --openspider target/debug/openspider
+```
+
+Anpassungen an das reale Referenzformat (Mapping-Optionen, siehe `crates/os-parity/src/mapping.rs`):
+
+- `format = "blocks"` + `[blocks]`: das Crawl Overview der Referenz ist ein Blockformat (Kopfzeilen, dann je Abschnitt eine
+  Kopfzeile) mit Dezimalkomma; der Runner überführt es in `(Section, Item, URLs, % of Total)`. Nur Zeilen zu M1-Filtern
+  (`docs/plan/M1-filters.toml`) müssen in OpenSpider vorkommen.
+- Spaltenoption `transform = [...]`: `ignore_case`, `zero_as_empty`, `xpath_tags`, `hex_trim_zeros`, `decimal_comma`
+  (nur reine Darstellungsunterschiede; inhaltliche Abweichungen gehören nach `deviations.toml`).
+- `dedupe_reference = true`: Referenzzeilen mit gleichem Schlüssel zählen als eine (Redirect-Reports: eine Zeile je Quelle).
+- Nummerierte Spalten (`Title 2`, `H1-2`, `HTML hreflang 3 URL` …) schreibt die Referenz nur bei vorhandenen Daten; fehlen sie,
+  gilt die Referenz als leer, sobald OpenSpider die Spalte liefert.
+- Manifest `skip = "…"`: Referenz liegt vor, der Export gehört aber nicht zum M1-Umfang (übersprungen mit Grund).
+- Abweichungen: `delta`, `key_prefixes`, mehrere Spalten (`a|b`) und Exporte (`export = "x|y"`).

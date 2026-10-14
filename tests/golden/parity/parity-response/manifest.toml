@@ -33,7 +33,8 @@ status = "present"               # pending | present | unavailable
 
 [[export]]
 sf_file = "all_error_(4xx_5xx_no_response)_inlinks.csv"
-os = "bulk:Response Codes:All Error Inlinks"
+os = "bulk:Response Codes:Internal & External:All Error Inlinks"
+os_file = "response_codes_internal_external_all_error_inlinks.csv"
 mapping = "all_error_inlinks"
 status = "present"               # pending | present | unavailable
 
@@ -48,6 +49,7 @@ sf_file = "redirects_to_error.csv"
 os = "report:Redirects:Redirects to Errors"
 mapping = "redirects_to_errors"
 status = "present"               # pending | present | unavailable
+skip = "Report Redirects to Errors (OUT-084) ist P1 und kein M1-Umfang (M1.md 7.2); OpenSpider hat in M1 nur Redirects:All Redirects und Redirects:Redirect Chains"
 
 [[export]]
 sf_file = "crawl_overview.csv"

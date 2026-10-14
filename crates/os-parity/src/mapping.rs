@@ -1,7 +1,7 @@
 //! Spaltenmapping SF → OS (`tests/parity/mappings/<export-slug>.toml`, Abschnitt 5.2).
 
-use std::collections::BTreeMap;
-use std::path::Path;
+use std::collections::{BTreeMap, BTreeSet};
+use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
 
@@ -52,6 +52,10 @@ struct RawColumnOpts {
     bool: Option<RawBool>,
     empty_equals_null: Option<bool>,
     trim: Option<bool>,
+    /// Zusatzregeln für den Zellvergleich: `ignore_case`, `zero_as_empty`, `xpath_tags`, `hex_trim_zeros`,
+    /// `decimal_comma`.
+    #[serde(default)]
+    transform: Vec<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -73,6 +77,8 @@ struct RawNormalize {
     number_decimals: Option<u32>,
     #[serde(default)]
     empty_equals_null: bool,
+    #[serde(default)]
+    transform: Vec<String>,
 }
 
 impl Default for RawNormalize {
@@ -83,8 +89,25 @@ impl Default for RawNormalize {
             bool: None,
             number_decimals: None,
             empty_equals_null: false,
+            transform: Vec::new(),
         }
     }
+}
+
+/// Block-Layout der Referenz (Crawl Overview): mehrere Abschnitte mit eigener Kopfzeile statt einer Tabelle.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawBlocks {
+    /// Abschnittsnamen der Referenz → Abschnittsnamen von OpenSpider.
+    #[serde(default)]
+    section_map: BTreeMap<String, String>,
+    /// Pfad (relativ zur Repository-Wurzel) der Filterliste M1; nur Zeilen zu M1-Filtern müssen in
+    /// OpenSpider vorkommen, alle übrigen Zeilen der Referenz werden nur gezählt.
+    #[serde(default)]
+    m1_filters: Option<String>,
+    /// Zeilen, die nur OpenSpider hat (Zusatzabschnitte, Programmangaben), sind kein Fehler.
+    #[serde(default)]
+    os_only_rows_ok: bool,
 }
 
 fn yes() -> bool {
@@ -101,6 +124,36 @@ struct RawMapping {
     columns: BTreeMap<String, RawColumn>,
     #[serde(default)]
     normalize: RawNormalize,
+    /// `"table"` (Standard) oder `"blocks"` (Crawl-Overview-Blockformat der Referenz).
+    #[serde(default)]
+    format: Option<String>,
+    #[serde(default)]
+    blocks: Option<RawBlocks>,
+    /// Mehrere Referenzzeilen mit gleichem Schlüssel (Redirect-Reports: eine Zeile je verlinkende Quelle)
+    /// zählen als eine Zeile; verglichen wird die erste.
+    #[serde(default)]
+    dedupe_reference: bool,
+}
+
+/// Layout der Referenzdatei.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum RefFormat {
+    /// Eine Kopfzeile, dann Datenzeilen.
+    #[default]
+    Table,
+    /// Abschnitte mit eigener Kopfzeile (Crawl Overview).
+    Blocks,
+}
+
+/// Einstellungen für [`RefFormat::Blocks`].
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct BlocksOpts {
+    /// Abschnittsnamen der Referenz → OpenSpider.
+    pub section_map: BTreeMap<String, String>,
+    /// Gelesene M1-Filter als `(tab, filter)` in Kleinschreibung; `None` = jede Zeile der Referenz zählt.
+    pub m1_filters: Option<BTreeSet<(String, String)>>,
+    /// Zeilen nur in OpenSpider sind kein Fehler.
+    pub os_only_rows_ok: bool,
 }
 
 /// Eine Spalte des Mappings.
@@ -129,6 +182,72 @@ pub struct Mapping {
     pub columns: Vec<ColumnMap>,
     /// Regeln für Schlüsselspalten und nicht explizit aufgeführte Spalten.
     pub defaults: CellRules,
+    /// Layout der Referenzdatei.
+    pub format: RefFormat,
+    /// Einstellungen des Block-Layouts (nur bei [`RefFormat::Blocks`]).
+    pub blocks: BlocksOpts,
+    /// Referenzzeilen mit gleichem Schlüssel zu einer Zeile zusammenfassen (die erste gilt).
+    pub dedupe_reference: bool,
+    /// Pfad der Filterliste, solange [`Mapping::load`] sie noch nicht gelesen hat.
+    m1_filters_path: Option<String>,
+}
+
+/// Wendet Zusatzregeln (`transform`) auf Vergleichsregeln an.
+fn apply_transforms(rules: &mut CellRules, names: &[String]) -> Result<(), ParityError> {
+    for n in names {
+        match n.trim() {
+            "ignore_case" => rules.ignore_case = true,
+            "zero_as_empty" => rules.zero_as_empty = true,
+            "xpath_tags" => rules.xpath_tags = true,
+            "hex_trim_zeros" => rules.hex_trim_zeros = true,
+            "decimal_comma" => rules.decimal_comma = true,
+            other => {
+                return Err(ParityError::Invalid(format!(
+                    "unbekannte transform-Regel {other:?} (erlaubt: ignore_case, zero_as_empty, xpath_tags, hex_trim_zeros, decimal_comma)"
+                )))
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Liest die M1-Filterliste (`docs/plan/M1-filters.toml`): `(tab, filter)` in Kleinschreibung.
+fn load_m1_filters(path: &Path) -> Result<BTreeSet<(String, String)>, ParityError> {
+    let text = std::fs::read_to_string(path).map_err(|e| {
+        ParityError::Invalid(format!("Filterliste {} nicht lesbar: {e}", path.display()))
+    })?;
+    let v: toml::Value = toml::from_str(&text)
+        .map_err(|e| ParityError::Invalid(format!("Filterliste {}: {e}", path.display())))?;
+    let mut out = BTreeSet::new();
+    for tab in v
+        .get("tab")
+        .and_then(|t| t.as_array())
+        .into_iter()
+        .flatten()
+    {
+        let Some(id) = tab.get("id").and_then(|i| i.as_str()) else {
+            continue;
+        };
+        for f in tab
+            .get("filters")
+            .and_then(|f| f.as_array())
+            .into_iter()
+            .flatten()
+        {
+            if let Some(fid) = f.get("id").and_then(|i| i.as_str()) {
+                out.insert((id.to_lowercase(), fid.to_lowercase()));
+            }
+        }
+    }
+    Ok(out)
+}
+
+/// Sucht `rel` in `start` und seinen Elternordnern.
+fn find_upwards(start: &Path, rel: &str) -> Option<PathBuf> {
+    start
+        .ancestors()
+        .map(|d| d.join(rel))
+        .find(|candidate| candidate.is_file())
 }
 
 impl Mapping {
@@ -137,8 +256,20 @@ impl Mapping {
         let text = std::fs::read_to_string(path).map_err(|e| {
             ParityError::Invalid(format!("Mapping {} nicht lesbar: {e}", path.display()))
         })?;
-        Self::parse(&text)
-            .map_err(|e| ParityError::Invalid(format!("Mapping {}: {e}", path.display())))
+        let mut mapping = Self::parse(&text)
+            .map_err(|e| ParityError::Invalid(format!("Mapping {}: {e}", path.display())))?;
+        if let Some(rel) = mapping.m1_filters_path.take() {
+            let dir = path.parent().unwrap_or_else(|| Path::new("."));
+            let dir = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
+            let file = find_upwards(&dir, &rel).ok_or_else(|| {
+                ParityError::Invalid(format!(
+                    "Mapping {}: Filterliste {rel} nicht gefunden",
+                    path.display()
+                ))
+            })?;
+            mapping.blocks.m1_filters = Some(load_m1_filters(&file)?);
+        }
+        Ok(mapping)
     }
 
     /// Parst ein Mapping aus TOML-Text.
@@ -162,7 +293,10 @@ impl Mapping {
             tolerance_pct: None,
             empty_equals_null: n.empty_equals_null,
             map: BTreeMap::new(),
+            ..CellRules::default()
         };
+        let mut defaults = defaults;
+        apply_transforms(&mut defaults, &n.transform)?;
         let mut columns = Vec::new();
         for (sf, col) in raw.columns {
             let cm = match col {
@@ -189,6 +323,7 @@ impl Mapping {
                         rules.empty_equals_null = e;
                     }
                     rules.map = o.map;
+                    apply_transforms(&mut rules, &o.transform)?;
                     ColumnMap {
                         os: o.os.unwrap_or_else(|| sf.clone()),
                         sf,
@@ -200,11 +335,35 @@ impl Mapping {
             };
             columns.push(cm);
         }
+        let format = match raw.format.as_deref().map(str::trim) {
+            None | Some("") | Some("table") => RefFormat::Table,
+            Some("blocks") => RefFormat::Blocks,
+            Some(other) => {
+                return Err(ParityError::Invalid(format!(
+                    "unbekanntes format {other:?} (erlaubt: table, blocks)"
+                )))
+            }
+        };
+        let (blocks, m1_filters_path) = match raw.blocks {
+            Some(b) => (
+                BlocksOpts {
+                    section_map: b.section_map,
+                    m1_filters: None,
+                    os_only_rows_ok: b.os_only_rows_ok,
+                },
+                b.m1_filters,
+            ),
+            None => (BlocksOpts::default(), None),
+        };
         Ok(Self {
             key: raw.key,
             drop_sf_columns: raw.drop_sf_columns,
             columns,
             defaults,
+            format,
+            blocks,
+            dedupe_reference: raw.dedupe_reference,
+            m1_filters_path,
         })
     }
 
