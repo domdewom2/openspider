@@ -145,29 +145,7 @@
     }
   },
   "generated_by": "os-parity coverage",
-  "ignored_without_valid_reason": [
-    {
-      "file": "crates/os-mcp/tests/tools_read.rs",
-      "line": 266,
-      "problem": "Grund beginnt nicht mit M2:/M3:/Klärung K-xx (Platzhalter zählen nicht als deferred)",
-      "reason": "M1-P26: tests/golden/out-issues/crawl_overview.csv entsteht erst mit den scharfen Tab-Zählern",
-      "spec_ids": [
-        "OUT-080",
-        "AGENT-010"
-      ],
-      "test": "crawl_overview_equals_the_golden_of_the_overview_report"
-    },
-    {
-      "file": "crates/os-mcp/tests/tools_read.rs",
-      "line": 691,
-      "problem": "Grund beginnt nicht mit M2:/M3:/Klärung K-xx (Platzhalter zählen nicht als deferred)",
-      "reason": "M1-N09: nummerierte Mehrfachspaltennamen als columns",
-      "spec_ids": [
-        "AGENT-011"
-      ],
-      "test": "a_numbered_multi_column_name_can_be_requested_as_a_column"
-    }
-  ],
+  "ignored_without_valid_reason": [],
   "specs": {
     "AGENT-001": {
       "packages": [
@@ -725,8 +703,7 @@
         },
         {
           "file": "crates/os-mcp/tests/tools_read.rs",
-          "ignore_reason": "M1-P26: tests/golden/out-issues/crawl_overview.csv entsteht erst mit den scharfen Tab-Zählern",
-          "result": "ignored",
+          "result": "ok",
           "test": "crawl_overview_equals_the_golden_of_the_overview_report"
         },
         {
@@ -809,8 +786,7 @@
         },
         {
           "file": "crates/os-mcp/tests/tools_read.rs",
-          "ignore_reason": "M1-N09: nummerierte Mehrfachspaltennamen als columns",
-          "result": "ignored",
+          "result": "ok",
           "test": "a_numbered_multi_column_name_can_be_requested_as_a_column"
         },
         {
@@ -865,6 +841,11 @@
           "file": "crates/os-mcp/tests/tools_read.rs",
           "result": "ok",
           "test": "the_start_page_comes_with_all_sections"
+        },
+        {
+          "file": "crates/os-mcp/tests/tools_read.rs",
+          "result": "ok",
+          "test": "hreflang_annotations_come_per_part_column_with_language_and_url_in_fixture_order"
         },
         {
           "file": "crates/os-mcp/tests/tools_read.rs",
@@ -3750,7 +3731,8 @@
     },
     "CRAWL-124": {
       "packages": [
-        "M1-P07"
+        "M1-P07",
+        "M1-N14"
       ],
       "status": "implemented",
       "tests": [
@@ -3847,12 +3829,23 @@
           "file": "crates/os-engine/tests/lifecycle_pause.rs",
           "result": "ok",
           "test": "resuming_after_a_restart_equals_the_uninterrupted_crawl_without_repeating_a_request"
+        },
+        {
+          "file": "crates/os-store/tests/schema_open.rs",
+          "result": "ok",
+          "test": "main_file_shorter_than_its_header_opens_when_a_wal_exists"
+        },
+        {
+          "file": "crates/os-store/tests/schema_open.rs",
+          "result": "ok",
+          "test": "main_file_shorter_than_its_header_is_still_rejected_without_a_wal"
         }
       ]
     },
     "CRAWL-126": {
       "packages": [
-        "M1-P19"
+        "M1-P19",
+        "M1-N14"
       ],
       "status": "implemented",
       "tests": [
@@ -3926,7 +3919,8 @@
     },
     "CRAWL-127": {
       "packages": [
-        "M1-P07"
+        "M1-P07",
+        "M1-N14"
       ],
       "status": "implemented",
       "tests": [
@@ -6779,7 +6773,8 @@
     },
     "OUT-001": {
       "packages": [
-        "M1-P16"
+        "M1-P16",
+        "M1-N14"
       ],
       "status": "implemented",
       "tests": [
@@ -7591,8 +7586,7 @@
         },
         {
           "file": "crates/os-mcp/tests/tools_read.rs",
-          "ignore_reason": "M1-P26: tests/golden/out-issues/crawl_overview.csv entsteht erst mit den scharfen Tab-Zählern",
-          "result": "ignored",
+          "result": "ok",
           "test": "crawl_overview_equals_the_golden_of_the_overview_report"
         }
       ]
@@ -8824,7 +8818,8 @@
     },
     "PERF-001": {
       "packages": [
-        "M1-P28"
+        "M1-P28",
+        "M1-N14"
       ],
       "status": "implemented",
       "tests": [
@@ -8877,7 +8872,8 @@
     },
     "PERF-003": {
       "packages": [
-        "M1-P28"
+        "M1-P28",
+        "M1-N14"
       ],
       "status": "implemented",
       "tests": [
@@ -8910,15 +8906,11 @@
     },
     "PERF-005": {
       "packages": [
-        "M1-P28"
+        "M1-P28",
+        "M1-N14"
       ],
       "status": "implemented",
       "tests": [
-        {
-          "file": "crates/os-loadtest/src/engine.rs",
-          "result": "ok",
-          "test": "tests::a_main_file_shorter_than_its_header_is_padded_only_when_a_wal_exists"
-        },
         {
           "file": "crates/os-loadtest/tests/engine_adapter.rs",
           "result": "ok",
