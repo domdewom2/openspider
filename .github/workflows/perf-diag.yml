@@ -93,25 +93,33 @@ jobs:
           target/release/os-loadtest diag --pages "${{ inputs.pages || '3000' }}" --out target/perf-diag/diag-all.json > /dev/null
           cat target/perf-diag/diag-all.json
 
-      - name: Crawl-Varianten (diag crawl)
+      - name: Crawl-Varianten (diag crawl, 10 000 Seiten, je zweimal)
         run: |
           B=target/release/os-loadtest
-          P="${{ inputs.pages || '3000' }}"
-          $B diag --only crawl --pages "$P" --out target/perf-diag/crawl-default.json > /dev/null
-          $B diag --only crawl --pages "$P" --wal-autocheckpoint 0 --out target/perf-diag/crawl-wal0.json > /dev/null
-          $B diag --only crawl --pages "$P" --profile max-speed --out target/perf-diag/crawl-maxspeed.json > /dev/null
-          $B diag --only crawl --pages "$P" --threads 1 --out target/perf-diag/crawl-threads1.json > /dev/null
-          $B diag --only crawl --pages "$P" --threads 32 --out target/perf-diag/crawl-threads32.json > /dev/null
-          for f in default wal0 maxspeed threads1 threads32; do
-            echo "== $f"; python3 -c "import json,sys; d=json.load(open('target/perf-diag/crawl-$f.json'))['crawl']; print({k: d.get(k) for k in ('crawled','seconds','urls_per_s','site_connections')})" || true
+          for rep in 1 2; do
+            $B diag --only crawl --pages 10000 --out target/perf-diag/crawl-default-$rep.json > /dev/null
+            $B diag --only crawl --pages 10000 --wal-autocheckpoint 65536 --out target/perf-diag/crawl-wal65536-$rep.json > /dev/null
+            $B diag --only crawl --pages 10000 --wal-autocheckpoint 0 --out target/perf-diag/crawl-wal0-$rep.json > /dev/null
+            $B diag --only crawl --pages 10000 --profile max-speed --out target/perf-diag/crawl-maxspeed-$rep.json > /dev/null
+          done
+          for f in target/perf-diag/crawl-*.json; do
+            echo "== $f"; python3 -c "import json,sys; d=json.load(open('$f'))['crawl']; print({k: d.get(k) for k in ('crawled','seconds','urls_per_s','site_connections')})" || true
           done
 
-      - name: Lasttest perf-001 und perf-003 (small, mit Messzählern)
+      - name: Lasttest perf-001 und perf-003 (small, mit Messzählern, je dreimal)
         run: |
           B=target/release/os-loadtest
-          $B run --scenario perf-001 --size small --out target/perf-diag/perf-001.json ${{ inputs.extra_args }}
-          $B run --scenario perf-003 --size small --out target/perf-diag/perf-003.json ${{ inputs.extra_args }}
-          cat target/perf-diag/perf-001.json target/perf-diag/perf-003.json
+          for rep in 1 2 3; do
+            $B run --scenario perf-001 --size small --out target/perf-diag/perf-001-$rep.json ${{ inputs.extra_args }}
+            $B run --scenario perf-003 --size small --out target/perf-diag/perf-003-$rep.json ${{ inputs.extra_args }}
+          done
+          python3 - <<'EOF'
+          import json
+          for rep in (1, 2, 3):
+              for s in ("001", "003"):
+                  m = json.load(open(f"target/perf-diag/perf-{s}-{rep}.json"))["metrics"]
+                  print(f"perf-{s} #{rep}: {m['crawler_urls_per_s']} URLs/s, {m['crawler_seconds']} s")
+          EOF
 
       - name: Netzwerkzustand nach dem Lauf (Windows)
         if: runner.os == 'Windows' && always()
