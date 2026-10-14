@@ -789,8 +789,8 @@ fn url_issues(crawl: &OpenCrawl, tab_defs: &[TabDef], id: UrlId) -> Result<UrlIs
                 views::plan(&ViewQuery::new(tab.id, filter.id), &crawl.cfg).map_err(view_error)?;
             let sql = format!(
                 "SELECT EXISTS(SELECT 1 FROM urls u WHERE {} AND {} AND u.id = ?1)",
-                inline_params(&plan.population_sql, &plan.params),
-                inline_params(&plan.filter_sql, &plan.params)
+                inline_params(&plan.population_sql, &plan.params).map_err(internal)?,
+                inline_params(&plan.filter_sql, &plan.params).map_err(internal)?
             );
             let hit: i64 = crawl
                 .file
@@ -825,7 +825,12 @@ fn url_issues(crawl: &OpenCrawl, tab_defs: &[TabDef], id: UrlId) -> Result<UrlIs
 /// Setzt die benannten Parameter eines Plans als Literale in das SQL ein (Zeichenketten in einfachen
 /// Anführungszeichen werden übersprungen). Die Werte stammen aus der Crawl-Konfiguration, nie aus
 /// Argumenten des Aufrufers.
-fn inline_params(sql: &str, params: &[(String, Value)]) -> String {
+///
+/// Dieser Mini-Ersatz ist nötig, weil `os-mcp` rusqlite nicht als Abhängigkeit hat und der Plan aus
+/// `os-analyze` (M1-N-Paket: `views::url_matches`) noch keine Einzel-URL-Prüfung mit `bind_named` anbietet.
+/// Ein Parameter ohne Wert im Plan ist ein Fehler mit dem Namen des Parameters (statt eines stehen
+/// gebliebenen `:name`, das erst die Datenbank als Syntaxfehler gemeldet hätte).
+fn inline_params(sql: &str, params: &[(String, Value)]) -> Result<String, UnboundParameter> {
     let chars: Vec<char> = sql.chars().collect();
     let mut out = String::with_capacity(sql.len());
     let mut in_string = false;
@@ -855,11 +860,25 @@ fn inline_params(sql: &str, params: &[(String, Value)]) -> String {
         let name: String = chars[i..j].iter().collect();
         match params.iter().find(|(n, _)| *n == name) {
             Some((_, value)) => out.push_str(&literal(value)),
-            None => out.push_str(&name),
+            None => return Err(UnboundParameter(name)),
         }
         i = j;
     }
-    out
+    Ok(out)
+}
+
+/// Ein benannter Parameter des Plans hat keinen Wert in der Crawl-Konfiguration.
+#[derive(Debug, PartialEq, Eq)]
+struct UnboundParameter(String);
+
+impl std::fmt::Display for UnboundParameter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Der Filterplan verwendet den Parameter {}, die Crawl-Konfiguration liefert keinen Wert dafür",
+            self.0
+        )
+    }
 }
 
 fn literal(v: &Value) -> String {
@@ -885,11 +904,20 @@ mod tests {
             (":title_max_px".to_string(), Value::Int(561)),
             (":label".to_string(), Value::Text("it's".into())),
         ];
-        let sql = "u.len > :title_max AND u.px > :title_max_px AND u.s = :label AND u.x LIKE 'a:title_max' AND u.y = :unbekannt";
+        let sql = "u.len > :title_max AND u.px > :title_max_px AND u.s = :label AND u.x LIKE 'a:title_max' AND u.y = 1";
         assert_eq!(
-            inline_params(sql, &params),
-            "u.len > 60 AND u.px > 561 AND u.s = 'it''s' AND u.x LIKE 'a:title_max' AND u.y = :unbekannt"
+            inline_params(sql, &params).unwrap(),
+            "u.len > 60 AND u.px > 561 AND u.s = 'it''s' AND u.x LIKE 'a:title_max' AND u.y = 1"
         );
+    }
+
+    // spec: AGENT-012
+    #[test]
+    fn a_parameter_without_a_value_is_named_in_the_error() {
+        let params = vec![(":title_max".to_string(), Value::Int(60))];
+        let err = inline_params("u.len > :title_max AND u.y = :unbekannt", &params).unwrap_err();
+        assert_eq!(err, UnboundParameter(":unbekannt".to_string()));
+        assert!(err.to_string().contains(":unbekannt"), "{err}");
     }
 
     // spec: AGENT-012

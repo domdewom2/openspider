@@ -9,6 +9,7 @@ use os_analyze::issues::{self, IssueRow};
 use os_analyze::tabs;
 use os_analyze::views::{self, FilterCount};
 use os_export::reports::overview::{self, Cell};
+use os_model::{CrawlState, SystemClock};
 use serde_json::{json, Value as Json};
 
 use super::common::{internal, object, open_crawl, reject_unknown, view_error};
@@ -82,14 +83,28 @@ impl Tool for CrawlOverview {
             .map(|row| issue_json(row, &counts))
             .collect();
 
+        // Wie list_crawls: der tatsächliche Zustand, ein „Running“ ohne Lebenszeichen gilt als „Incomplete“.
+        let state = if crawl.meta.state == CrawlState::Running {
+            crawl
+                .file
+                .effective_state(&SystemClock)
+                .unwrap_or(crawl.meta.state)
+        } else {
+            crawl.meta.state
+        };
+        let mut fields = vec![
+            ("crawl_id", json!(crawl.id.to_string())),
+            ("state", json!(state.as_str())),
+        ];
+        if state != crawl.meta.state {
+            fields.push(("stored_state", json!(crawl.meta.state.as_str())));
+        }
+        fields.push(("sections", Json::Array(sections)));
+        fields.push(("top_issues", Json::Array(top_issues)));
+        fields.push(("needs_crawl_analysis", json!(report.pending_analysis)));
+
         Ok(ToolOutput {
-            summary: object(vec![
-                ("crawl_id", json!(crawl.id.to_string())),
-                ("state", json!(crawl.meta.state.as_str())),
-                ("sections", Json::Array(sections)),
-                ("top_issues", Json::Array(top_issues)),
-                ("needs_crawl_analysis", json!(report.pending_analysis)),
-            ]),
+            summary: object(fields),
             untrusted: None,
             total: None,
             next_cursor: None,

@@ -218,6 +218,106 @@ async fn crawl_overview_has_exactly_the_numbers_of_the_crawl_overview_report() {
 
 // spec: AGENT-010
 #[tokio::test]
+async fn crawl_overview_names_the_same_state_as_list_crawls_also_for_a_crashed_crawl() {
+    let world = World::new();
+    // Gespeichert als „Running“, aber ohne Lebenszeichen der letzten zehn Sekunden: abgestürzt.
+    let crashed = world
+        .add_with_state("out-basic-site", "/", base_config(), 1, Some("Running"))
+        .await;
+    let done = world.add("out-basic-site", "/", base_config(), 2).await;
+    let client = world.client().await;
+
+    let listing = client.call("list_crawls", json!({})).await;
+    let listed = |id: &str| -> Value {
+        listing.summary()["crawls"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|c| c["crawl_id"] == id)
+            .unwrap()
+            .clone()
+    };
+    for stored in [&crashed, &done] {
+        let overview = client
+            .call("crawl_overview", json!({"crawl_id": stored.id}))
+            .await;
+        assert_eq!(
+            overview.summary()["state"],
+            listed(&stored.id)["state"],
+            "beide Werkzeuge nennen denselben Zustand"
+        );
+    }
+    let overview = client
+        .call("crawl_overview", json!({"crawl_id": crashed.id}))
+        .await;
+    assert_eq!(overview.summary()["state"], "Incomplete");
+    assert_eq!(overview.summary()["stored_state"], "Running");
+    let overview = client
+        .call("crawl_overview", json!({"crawl_id": done.id}))
+        .await;
+    assert_eq!(overview.summary()["state"], "Completed");
+    assert!(overview.summary().get("stored_state").is_none());
+    client.cancel().await;
+}
+
+// spec: OUT-080, AGENT-010
+#[tokio::test]
+#[ignore = "M1-P26: tests/golden/out-issues/crawl_overview.csv entsteht erst mit den scharfen Tab-Zählern"]
+async fn crawl_overview_equals_the_golden_of_the_overview_report() {
+    let world = World::new();
+    let stored = world.add("out-issues", "/", base_config(), 1).await;
+    let client = world.client().await;
+    let reply = client
+        .call("crawl_overview", json!({"crawl_id": stored.id}))
+        .await;
+
+    let bases = stored.fx.site.golden_bases();
+    let bases: Vec<&str> = bases.iter().map(String::as_str).collect();
+    // Die Durchschnitte hängen an der Laufzeit des Crawls und sind im Golden maskiert.
+    let mask = |item: &str, text: String| {
+        if item == "Average Response Time (ms)" || item == "Average URLs/s" {
+            "<N>".to_string()
+        } else {
+            os_testsite::golden::normalize(&text, &bases)
+        }
+    };
+    let mut actual = Vec::new();
+    for section in reply.summary()["sections"].as_array().unwrap() {
+        for item in section["items"].as_array().unwrap() {
+            let name = item["item"].as_str().unwrap();
+            actual.push((
+                section["section"].as_str().unwrap().to_string(),
+                name.to_string(),
+                mask(name, report_cell(&item["urls"])),
+                report_cell(&item["percent_of_total"]),
+            ));
+        }
+    }
+    let golden = Table::read(
+        &fixtures_dir()
+            .join("..")
+            .join("golden")
+            .join("out-issues")
+            .join("crawl_overview.csv"),
+    );
+    let expected: Vec<(String, String, String, String)> = golden
+        .rows
+        .iter()
+        .map(|r| {
+            (
+                r[golden.col("Section")].clone(),
+                r[golden.col("Item")].clone(),
+                r[golden.col("URLs")].clone(),
+                r[golden.col("% of Total")].clone(),
+            )
+        })
+        .collect();
+    assert_eq!(actual, expected, "Zeile für Zeile wie der Golden");
+    client.cancel().await;
+}
+
+// spec: AGENT-010
+#[tokio::test]
 async fn crawl_overview_names_the_top_issues_like_the_issues_tab() {
     let world = World::new();
     let stored = world.add("out-issues", "/", base_config(), 1).await;
@@ -581,6 +681,28 @@ async fn multi_columns_can_be_sorted_by_their_numbered_name_and_listed_with_all_
     assert!(
         columns.contains(&"Response Time".to_string()),
         "OS-Erweiterung bei all"
+    );
+    client.cancel().await;
+}
+
+// spec: AGENT-011
+#[tokio::test]
+#[ignore = "M1-N09: nummerierte Mehrfachspaltennamen als columns"]
+async fn a_numbered_multi_column_name_can_be_requested_as_a_column() {
+    let world = World::new();
+    let stored = world.add("out-basic-site", "/", base_config(), 1).await;
+    let client = world.client().await;
+    let reply = client
+        .call(
+            "query_urls",
+            json!({"crawl_id": stored.id, "tab": "Internal",
+                   "columns": ["Address", "Meta Robots 1"], "limit": 500}),
+        )
+        .await;
+    assert!(!reply.is_error, "{:?}", reply.blocks);
+    assert_eq!(
+        reply.summary()["columns"],
+        json!(["Address", "Meta Robots 1"])
     );
     client.cancel().await;
 }
