@@ -14,15 +14,16 @@ use crate::defs::{ColumnDef, ColumnKind, ColumnSql, FilterDef, FilterKind, TabDe
 /// Grundmenge der internen URLs.
 pub(crate) const POPULATION: &str = "u.is_internal = 1 AND u.in_tables = 1";
 
-/// `% of Total` (ONPAGE-015): verschiedene interne 200-HTML-Quellseiten mit mindestens einem Hyperlink auf die
-/// URL (Selbstlinks zählen mit, A-9) ÷ Anzahl interner 200-HTML-Seiten × 100. Ohne solche Seiten leer.
+/// `% of Total` (ONPAGE-015, K-56): verschiedene interne HTML-Quellseiten mit Status 2xx und mindestens einem
+/// Hyperlink auf die URL (Selbstlinks zählen mit, A-9) ÷ Anzahl interner HTML-Seiten mit 2xx × 100. Ohne solche
+/// Seiten leer.
 const PCT_OF_TOTAL: &str = "CASE WHEN (SELECT COUNT(*) FROM urls h WHERE h.is_internal = 1 AND \
-     h.content_class = 'HTML' AND h.status_code = 200) = 0 THEN NULL ELSE \
+     h.content_class = 'HTML' AND h.status_code BETWEEN 200 AND 299) = 0 THEN NULL ELSE \
      100.0 * (SELECT COUNT(DISTINCT l.source_id) FROM links l JOIN urls h ON h.id = l.source_id \
      WHERE l.target_id = u.id AND l.link_type = 'Hyperlink' AND h.is_internal = 1 AND \
-     h.content_class = 'HTML' AND h.status_code = 200) / \
+     h.content_class = 'HTML' AND h.status_code BETWEEN 200 AND 299) / \
      (SELECT COUNT(*) FROM urls h WHERE h.is_internal = 1 AND h.content_class = 'HTML' AND \
-     h.status_code = 200) END";
+     h.status_code BETWEEN 200 AND 299) END";
 
 /// `Redirect Type` in der Bezeichnung der Tabs (ONPAGE-018, K-03).
 pub(crate) const REDIRECT_TYPE: &str = "CASE u.redirect_type WHEN 'http' THEN 'HTTP Redirect' \

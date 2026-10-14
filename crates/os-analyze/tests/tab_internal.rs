@@ -802,6 +802,73 @@ async fn pct_of_total_is_unique_html_200_inlinks_over_all_internal_html_200_page
 }
 
 // spec: ONPAGE-015
+#[test]
+fn pct_of_total_counts_every_2xx_html_page_in_numerator_and_denominator() {
+    // K-56 (Befund B-04): eine 201-Seite zählt als Quelle und im Nenner; 404 und 301 nicht.
+    use os_model::time::{IdSource, SeededIds};
+    use os_model::{CrawlMode, Timestamp};
+    use os_store::{CrawlFile, CrawlInit, StorageProfile};
+    let dir = tempfile::tempdir().unwrap();
+    let created = Timestamp::from_db("2026-10-14T07:35:00.000Z").unwrap();
+    let init = CrawlInit {
+        crawl_id: SeededIds::new(3).new_crawl_id(created),
+        mode: CrawlMode::Spider,
+        start_url: Some("https://site.test/".into()),
+        list_source: None,
+        project: "Projekt".into(),
+        name: "pct".into(),
+        config: CrawlConfig::default(),
+        created_at: created,
+    };
+    let file = CrawlFile::create(
+        &dir.path().join("p.ospider"),
+        &init,
+        StorageProfile::Balanced,
+    )
+    .unwrap();
+    for (id, path, status) in [
+        (1, "a", 200),
+        (2, "b", 201),
+        (3, "gone", 404),
+        (4, "moved", 301),
+    ] {
+        file.conn()
+            .execute(
+                "INSERT INTO urls (id, url, address, origin, is_internal, in_tables, state, discovered_via, \
+                 folder_depth, url_length, status_code, content_class) \
+                 VALUES (?1, ?2, ?2, 'https://site.test', 1, 1, 'done', 'link', 0, 20, ?3, 'HTML')",
+                rusqlite::params![id, format!("https://site.test/{path}"), status],
+            )
+            .unwrap();
+    }
+    // a und b verlinken beide auf a; die 404-Seite verlinkt ebenfalls (zählt nicht als Quelle)
+    for (n, source) in [1, 2, 3].into_iter().enumerate() {
+        file.conn()
+            .execute(
+                "INSERT INTO links (source_id, target_id, link_type, position, target_raw, follow) \
+                 VALUES (?1, 1, 'Hyperlink', ?2, '/a', 1)",
+                rusqlite::params![source, n as i64],
+            )
+            .unwrap();
+    }
+    let mut q = ViewQuery::new("Internal", "All");
+    q.columns = ColumnSelection::Named(vec!["Address".into(), "% of Total".into()]);
+    q.limit = 500;
+    let page = views::query_view(&file, &CrawlConfig::default(), &q).unwrap();
+    let pct = page
+        .rows
+        .iter()
+        .find(|r| matches!(&r[0], Value::Text(a) if a == "https://site.test/a"))
+        .map(|r| match &r[1] {
+            Value::Float(f) => *f,
+            other => panic!("{other:?}"),
+        })
+        .unwrap();
+    // Quellen 1 und 2 von 2 HTML-2xx-Seiten = 100 %
+    assert!((pct - 100.0).abs() < 1e-9, "{pct}");
+}
+
+// spec: ONPAGE-015
 #[tokio::test]
 async fn pct_of_total_is_rounded_to_two_decimals() {
     let fx = internal_site().await;

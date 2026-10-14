@@ -8,8 +8,8 @@
 //!
 //! # Grundmenge (TECH-071)
 //!
-//! Interne HTML-200-Seiten, interne URLs mit HTTP- oder Sitemap-hreflang und gecrawlte interne
-//! hreflang-Ziele. Ist „hreflang speichern“ aus (`spider.hreflang.store`), ist der Tab leer (OS-Verhalten:
+//! Interne HTML-Seiten mit Status 2xx (K-56, vorher 200), interne URLs mit HTTP- oder Sitemap-hreflang und
+//! gecrawlte interne hreflang-Ziele. Der Filter „Non-200 Hreflang URLs“ behält seine wörtliche Bedingung. Ist „hreflang speichern“ aus (`spider.hreflang.store`), ist der Tab leer (OS-Verhalten:
 //! „Store an, Crawl aus“ befüllt ihn bereits; „Store aus“ lässt ihn und alle Filter bei 0).
 //!
 //! # Live-Filter (TECH-005)
@@ -31,7 +31,7 @@ use crate::defs::{
 
 /// Grundmenge: interne Seiten mit hreflang-Bezug; `:store` ist `spider.hreflang.store`.
 const POPULATION: &str = "u.is_internal = 1 AND u.in_tables = 1 AND :store = 1 AND (\
-    (u.content_class = 'HTML' AND u.status_code = 200) \
+    (u.content_class = 'HTML' AND u.status_code BETWEEN 200 AND 299) \
     OR EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id AND h.source <> 'html') \
     OR (u.state = 'done' AND EXISTS \
         (SELECT 1 FROM hreflang h WHERE h.target_id = u.id AND h.url_id <> u.id)))";
@@ -59,8 +59,9 @@ const INCORRECT_CODES: &str = "EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id =
         (h.code_norm GLOB '[a-z][a-z]-[a-z][a-z][a-z][a-z]' \
          OR h.code_norm GLOB '[a-z][a-z]-[a-z][a-z][a-z][a-z]-*'))))";
 
-/// Interne HTML-200-Seite ohne Annotation (TECH-085).
-const MISSING: &str = "u.is_internal = 1 AND u.content_class = 'HTML' AND u.status_code = 200 \
+/// Interne HTML-Seite mit Status 2xx ohne Annotation (TECH-085, K-56).
+const MISSING: &str =
+    "u.is_internal = 1 AND u.content_class = 'HTML' AND u.status_code BETWEEN 200 AND 299 \
     AND NOT EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id)";
 
 /// Liste der Codes einer Quelle (`?1` = URL-Kennung), in Quelltext- bzw. Header-Reihenfolge (TECH-004).
