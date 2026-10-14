@@ -65,7 +65,6 @@ async fn each_reason_of_the_check_order_has_its_page() {
 
     expect(&m, "/", "");
     expect(&m, "/ok.html", "");
-    expect(&m, "/robots.txt", "");
     expect(&m, "/blocked.html", "Blocked by Robots.txt");
     expect(&m, "/aborted", "No Response");
     expect(&m, "/moved", "Redirected");

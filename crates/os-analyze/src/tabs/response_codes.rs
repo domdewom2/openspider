@@ -1,7 +1,7 @@
 //! Tab „Response Codes“ (ONPAGE-050 … 063, CRAWL-012).
 //!
 //! Grundmenge: alle URLs mit Antwort- oder Blockierungsstatus, die in den Tabellen stehen (intern und
-//! extern; Sitemap-Dateien und die robots.txt externer Hosts sind `in_tables = 0`, K-40). Jede Statusklasse
+//! extern; Sitemap-Dateien und die robots.txt jedes Hosts sind `in_tables = 0`, K-40/K-54). Jede Statusklasse
 //! gibt es in drei Sichten (ONPAGE-051): ohne Präfix (intern + extern), `Internal …` und `External …`; die
 //! beiden letzten zerlegen die erste disjunkt.
 //!

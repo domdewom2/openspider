@@ -20,4 +20,3 @@ Address,Indexability,Indexability Status
 {BASE}/refresh-self-abs.html,Non-Indexable,Self Referencing Meta Refresh
 {BASE}/refresh-self-header.html,Non-Indexable,Self Referencing Meta Refresh
 {BASE}/refresh-self.html,Non-Indexable,Self Referencing Meta Refresh
-{BASE}/robots.txt,Indexable,

@@ -20,7 +20,6 @@ Address
 {BASE}/p?
 {BASE}/p?id=1
 {BASE}/produkte?Farbe=rot
-{BASE}/robots.txt
 {BASE}/schema-gross
 {BASE}/seite?sort_by=x
 {BASE}/suche?q=a+b

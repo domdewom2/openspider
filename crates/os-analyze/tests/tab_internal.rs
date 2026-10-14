@@ -412,7 +412,6 @@ async fn non_html_urls_have_empty_element_columns_and_pdfs_use_document_properti
         "Meta Robots 1",
         "Canonical Link Element 1",
     ] {
-        assert!(t.is_empty_cell("/robots.txt", col), "robots.txt / {col}");
         assert!(t.is_empty_cell("/chunked.pdf", col), "chunked.pdf / {col}");
     }
     // PDF: Title 1 und Meta Keywords 1 aus den Dokumenteigenschaften, alles Übrige leer
@@ -700,13 +699,7 @@ async fn text_ratio_is_visible_text_over_source_in_percent_with_one_decimal() {
 async fn non_html_urls_have_no_word_count_and_no_text_ratio() {
     let fx = internal_site().await;
     let t = all_columns(&fx, "All");
-    for path in [
-        "/robots.txt",
-        "/chunked.pdf",
-        "/doc.pdf",
-        "/blocked/x.html",
-        "/r",
-    ] {
+    for path in ["/chunked.pdf", "/doc.pdf", "/blocked/x.html", "/r"] {
         assert!(t.is_empty_cell(path, "Word Count"), "{path}");
         assert!(t.is_empty_cell(path, "Text Ratio"), "{path}");
     }
@@ -934,7 +927,7 @@ async fn http_version_url_encoded_address_and_crawl_timestamp() {
 // ---------------------------------------------------------------------------------------------------
 // Population und Goldens des Szenarios onpage-internal
 
-// spec: ONPAGE-010
+// spec: ONPAGE-010, CRAWL-098
 #[tokio::test]
 async fn internal_all_lists_the_internal_urls_in_tables_and_no_external_ones() {
     let fx = internal_site().await;
@@ -946,12 +939,18 @@ async fn internal_all_lists_the_internal_urls_in_tables_and_no_external_ones() {
         "internal__all.csv",
     );
     let t = all_columns(&fx, "All");
-    // robots.txt des internen Hosts erscheint (Inhaltstyp Text → Klasse Other), ohne Sitemap-Dateien (K-40)
-    assert!(t.contains("/robots.txt"));
-    assert_eq!(
-        t.text("/robots.txt", "Content"),
-        "text/plain; charset=utf-8"
-    );
+    // die robots.txt des internen Hosts hat eine URL-Zeile, erscheint aber in keinem Tab (K-54, CRAWL-098)
+    assert!(!t.contains("/robots.txt"));
+    let robots: i64 = fx
+        .file
+        .conn()
+        .query_row(
+            "SELECT COUNT(*) FROM urls WHERE discovered_via = 'robots_txt' AND in_tables = 0",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(robots, 1);
 }
 
 // spec: ONPAGE-021, ONPAGE-022, ONPAGE-024
@@ -1192,17 +1191,17 @@ async fn every_column_of_the_three_tabs_can_be_selected_sorted_and_counted() {
         .iter()
         .find(|c| c.tab == "Internal" && c.filter == "HTML")
         .expect("Internal:HTML");
-    assert_eq!(internal_all.count, Some(39));
+    assert_eq!(internal_all.count, Some(38));
     assert_eq!(html.count, Some(30));
-    // Anteil an „All“ in Prozent mit einer Nachkommastelle: 30 von 39 = 76,92… → 76,9
-    assert_eq!(html.pct.map(|p| (p * 10.0).round() / 10.0), Some(76.9));
+    // Anteil an „All“ in Prozent mit einer Nachkommastelle: 30 von 38 = 78,94… → 78,9 (ohne robots.txt, K-54)
+    assert_eq!(html.pct.map(|p| (p * 10.0).round() / 10.0), Some(78.9));
     let security_http = counts
         .iter()
         .find(|c| c.tab == "Security" && c.filter == "HTTP URLs")
         .expect("Security:HTTP URLs");
     assert_eq!(
         security_http.count,
-        Some(39),
+        Some(38),
         "alle Internal-URLs sind http"
     );
 }

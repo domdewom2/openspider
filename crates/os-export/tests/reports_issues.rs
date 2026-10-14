@@ -193,13 +193,13 @@ async fn issues_overview_columns_follow_the_panel_export_with_why_it_matters_las
             assert!(!t.get(row, col).trim().is_empty(), "{col} leer in {row:?}");
         }
     }
-    // Prozent des 4xx-Issues: 2 von 14 Zeilen der Grundmenge dieses Test-Tabs.
+    // Prozent des 4xx-Issues: 2 von 13 Zeilen der Grundmenge dieses Test-Tabs.
     assert_eq!(
         t.get(
             t.row("Issue Name", "Response Codes: Internal Client Error (4XX)"),
             "% of Total"
         ),
-        "14.29"
+        "15.38"
     );
 }
 

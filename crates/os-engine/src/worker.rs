@@ -39,8 +39,8 @@ use crate::decide::{self, LinkDecision};
 use crate::diag;
 use crate::error::EngineError;
 use crate::frontier::{
-    Cand, Classify, Core, CrawlScope, Purpose, QueueItem, COUNTER_REDIRECT_LIMIT, F_IN_TABLES,
-    F_QUEUED, F_RULE_OK,
+    Cand, Classify, Core, CrawlScope, Purpose, QueueItem, COUNTER_REDIRECT_LIMIT, F_QUEUED,
+    F_RULE_OK,
 };
 use crate::progress::ProgressTracker;
 use crate::redirect::{self, RedirectTarget};
@@ -341,12 +341,9 @@ async fn record_robots<F: Fetch>(
         let mut core = sh.lock_core();
         if core.lookup(&norm.encoded).is_none() {
             let id = core.alloc_id();
-            // K-40: die robots.txt interner Hosts erscheint in den Tabellen (Inhaltstyp Text), die externer nicht.
-            let flags = if internal {
-                F_QUEUED | F_RULE_OK | F_IN_TABLES
-            } else {
-                F_QUEUED | F_RULE_OK
-            };
+            // K-54 (CRAWL-098): die robots.txt jedes Hosts, intern wie extern, wird als URL-Zeile ohne
+            // Tabellen-Sichtbarkeit gespeichert; sie erscheint in keinem Tab, Filter, Zähler oder Export.
+            let flags = F_QUEUED | F_RULE_OK;
             core.register(&norm.encoded, id, None, flags);
             batch.new_urls.push(os_model::NewUrl {
                 id,
@@ -354,7 +351,7 @@ async fn record_robots<F: Fetch>(
                 address: norm.display.clone(),
                 origin: norm.origin.clone(),
                 is_internal: internal,
-                in_tables: internal,
+                in_tables: false,
                 discovered_via: DiscoveryKind::RobotsTxt,
                 crawl_depth: None,
                 folder_depth: os_url::folder_depth(&norm.url),

@@ -1127,7 +1127,7 @@ async fn robots_respect_blocks_with_status_zero_and_lists_robots_txt_as_url() {
 
 // spec: CRAWL-098
 #[tokio::test]
-async fn robots_txt_of_internal_hosts_is_listed_in_the_tables_external_ones_are_not() {
+async fn robots_txt_of_every_host_has_a_row_but_no_table_visibility() {
     // `crawl-links-basic` verlinkt `external.test`; dessen robots.txt wird ebenfalls geholt (K-40).
     let fx = crawl_fixture("crawl-links-basic", CrawlConfig::default()).await;
     assert_eq!(hits(&fx, "/robots.txt"), 1);
@@ -1135,7 +1135,10 @@ async fn robots_txt_of_internal_hosts_is_listed_in_the_tables_external_ones_are_
 
     let internal = fx.site.url("/robots.txt");
     let row = url_row(&fx, &internal).expect("robots.txt des internen Hosts");
-    assert!(row.in_tables, "intern: in den Tabellen");
+    assert!(
+        !row.in_tables,
+        "K-54: auch intern nicht in den Tabellen (die Zeile existiert)"
+    );
     assert_eq!(row.status, Some(200));
     let (content_type, class): (String, String) = fx
         .file
@@ -1164,7 +1167,7 @@ async fn robots_txt_of_internal_hosts_is_listed_in_the_tables_external_ones_are_
 
     let external = url_row(&fx, "http://external.test/robots.txt")
         .expect("robots.txt des externen Hosts bleibt als URL-Zeile");
-    assert!(!external.in_tables, "extern: nicht in den Tabellen");
+    assert!(!external.in_tables, "extern: nicht in den Tabellen (K-40)");
     assert_eq!(external.status, Some(200));
     assert_eq!(count(&fx, "SELECT COUNT(*) FROM robots_files"), 2);
 }

@@ -3,8 +3,8 @@
 //!
 //! # Grundmenge (ONPAGE-009)
 //!
-//! Interne HTML-Seiten mit Statuscode 2xx, die in den Tabellen stehen (`in_tables = 1`; `robots.txt` interner
-//! Hosts ist eine Text-URL und fällt über die Inhaltsklasse heraus). PDFs gehören nicht dazu (A-5b), ebenso
+//! Interne HTML-Seiten mit Statuscode 2xx, die in den Tabellen stehen (`in_tables = 1`; die `robots.txt` hat
+//! keine Tabellen-Sichtbarkeit, K-54). PDFs gehören nicht dazu (A-5b), ebenso
 //! wenig Weiterleitungen, Fehlerseiten und blockierte URLs. Nicht indexierbare Seiten bleiben in „All“.
 //!
 //! # Duplikate (ONPAGE-005)

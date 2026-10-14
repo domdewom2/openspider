@@ -1,6 +1,5 @@
 ﻿Address,Content,Status Code,Status,Indexability,Indexability Status,Canonical Link Element 1,Meta Robots 1,X-Robots-Tag 1
 {BASE}/,text/html; charset=utf-8,200,OK,Indexable,,,,
-{BASE}/robots.txt,text/plain; charset=utf-8,200,OK,Indexable,,,,
 {BASE}/ok.html,text/html; charset=utf-8,200,OK,Indexable,,,,
 {BASE}/no-title.html,text/html; charset=utf-8,200,OK,Indexable,,,,
 {BASE}/dup-a.html,text/html; charset=utf-8,200,OK,Indexable,,,,

@@ -151,7 +151,6 @@ const ALL: &[&str] = &[
     "/refresh-self-300.html",
     "/refresh-self-fragment.html",
     "/refresh-self-header.html",
-    "/robots.txt",
     "/unavailable-past.html",
     "/xrobots-agent.html",
     "/xrobots-two.html",

@@ -1,9 +1,9 @@
 //! Tab „Internal“ (ONPAGE-010 … ONPAGE-015, ONPAGE-018, ONPAGE-021, ONPAGE-022, ONPAGE-024).
 //!
 //! Grundmenge: alle internen URLs, die in den Tabellen erscheinen (`in_tables = 1`, K-40): auch
-//! Weiterleitungen, Fehlerseiten, durch robots.txt gesperrte URLs, Ressourcen und die robots.txt interner
-//! Hosts (Inhaltstyp Text, Klasse „Other“). Sitemap-Dateien und robots.txt externer Hosts haben
-//! `in_tables = 0` und fehlen. Die Klassenfilter folgen `urls.content_class` (ONPAGE-020).
+//! Weiterleitungen, Fehlerseiten, durch robots.txt gesperrte URLs und Ressourcen. Sitemap-Dateien und die
+//! robots.txt jedes Hosts haben `in_tables = 0` und fehlen (K-54, CRAWL-098). Die Klassenfilter folgen
+//! `urls.content_class` (ONPAGE-020).
 //!
 //! Spalten in der Reihenfolge der Spec; die zweiten Vorkommen von Titel, Beschreibung, Keywords, H1 und
 //! H2 stehen am Ende. Die Spalten dieses Moduls dienen auch dem Tab „Security“ (`security.rs`) und dem Tab

@@ -4,7 +4,7 @@ Non-200 Hreflang URLs: 0
 Missing Return Links: 1
 Incorrect Language & Region Codes: 0
 Missing: 3
-All: 6
+All: 5
 URLs In Sitemap: 4
 URLs Not In Sitemap: 1
 Orphan URLs: 1

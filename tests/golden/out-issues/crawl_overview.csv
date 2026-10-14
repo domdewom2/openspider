@@ -4,8 +4,8 @@ Summary,Mode,Spider,
 Summary,Crawl Start,<TS>,
 Summary,Crawl End,<TS>,
 Summary,Elapsed Time,00:00:00,
-Summary,Total URLs Encountered,14,
-Summary,Total URLs Crawled,13,
+Summary,Total URLs Encountered,13,
+Summary,Total URLs Crawled,12,
 Summary,Total Internal Blocked by robots.txt,1,
 Summary,Total External Blocked by robots.txt,0,
 Summary,URLs Remaining In Queue,0,
@@ -16,8 +16,8 @@ Summary,Skipped By Exclude,0,
 Summary,Skipped Not In Include,0,
 Summary,Skipped By Depth Limit,0,
 Summary,Skipped By Redirect Limit,0,
-Crawl Data – Internal,All,12,100.00
-Crawl Data – Internal,HTML,10,83.33
+Crawl Data – Internal,All,11,100.00
+Crawl Data – Internal,HTML,10,90.91
 Crawl Data – Internal,JavaScript,0,0.00
 Crawl Data – Internal,CSS,0,0.00
 Crawl Data – Internal,Images,0,0.00
@@ -26,8 +26,8 @@ Crawl Data – Internal,Plugins,0,0.00
 Crawl Data – Internal,Media,0,0.00
 Crawl Data – Internal,Fonts,0,0.00
 Crawl Data – Internal,XML,0,0.00
-Crawl Data – Internal,Other,1,8.33
-Crawl Data – Internal,Unknown,1,8.33
+Crawl Data – Internal,Other,0,0.00
+Crawl Data – Internal,Unknown,1,9.09
 Crawl Data – External,All,2,100.00
 Crawl Data – External,HTML,2,100.00
 Crawl Data – External,JavaScript,0,0.00
@@ -40,19 +40,19 @@ Crawl Data – External,Fonts,0,0.00
 Crawl Data – External,XML,0,0.00
 Crawl Data – External,Other,0,0.00
 Crawl Data – External,Unknown,0,0.00
-Response Codes – Internal,Blocked by Robots.txt,1,8.33
+Response Codes – Internal,Blocked by Robots.txt,1,9.09
 Response Codes – Internal,Blocked Resource,,
 Response Codes – Internal,No Response,0,0.00
-Response Codes – Internal,Success (2xx),8,66.67
+Response Codes – Internal,Success (2xx),7,63.64
 Response Codes – Internal,Redirection (3xx),0,0.00
 Response Codes – Internal,Redirection (JavaScript),,
 Response Codes – Internal,Redirection (Meta Refresh),0,0.00
 Response Codes – Internal,Redirection (HTTP Refresh),0,0.00
 Response Codes – Internal,Redirect Chain,0,0.00
 Response Codes – Internal,Redirect Loop,0,0.00
-Response Codes – Internal,Client Error (4xx),2,16.67
-Response Codes – Internal,Server Error (5xx),1,8.33
-Response Codes – Internal,All Errors,3,25.00
+Response Codes – Internal,Client Error (4xx),2,18.18
+Response Codes – Internal,Server Error (5xx),1,9.09
+Response Codes – Internal,All Errors,3,27.27
 Response Codes – External,Blocked by Robots.txt,0,0.00
 Response Codes – External,Blocked Resource,,
 Response Codes – External,No Response,0,0.00
@@ -66,13 +66,13 @@ Response Codes – External,Redirect Loop,0,0.00
 Response Codes – External,Client Error (4xx),1,50.00
 Response Codes – External,Server Error (5xx),0,0.00
 Response Codes – External,All Errors,1,50.00
-Internal,All,12,100.00
-Internal,HTML,10,83.33
+Internal,All,11,100.00
+Internal,HTML,10,90.91
 Internal,JavaScript,0,0.00
 Internal,CSS,0,0.00
 Internal,Images,0,0.00
 Internal,PDF,0,0.00
-Internal,Unknown,1,8.33
+Internal,Unknown,1,9.09
 External,All,2,100.00
 External,HTML,2,100.00
 External,JavaScript,0,0.00
@@ -82,43 +82,43 @@ External,PDF,0,0.00
 External,Flash,0,0.00
 External,Other,0,0.00
 External,Unknown,0,0.00
-Security,All,12,100.00
-Security,HTTP URLs,12,100.00
+Security,All,11,100.00
+Security,HTTP URLs,11,100.00
 Security,HTTPS URLs,0,0.00
-Response Codes,All,14,100.00
-Response Codes,Blocked by Robots.txt,1,7.14
+Response Codes,All,13,100.00
+Response Codes,Blocked by Robots.txt,1,7.69
 Response Codes,No Response,0,0.00
-Response Codes,Success (2XX),9,64.29
+Response Codes,Success (2XX),8,61.54
 Response Codes,Redirection (3XX),0,0.00
 Response Codes,Redirection (Meta Refresh),0,0.00
 Response Codes,Redirect Chain,0,0.00
 Response Codes,Redirect Loop,0,0.00
-Response Codes,Client Error (4XX),3,21.43
-Response Codes,Server Error (5XX),1,7.14
+Response Codes,Client Error (4XX),3,23.08
+Response Codes,Server Error (5XX),1,7.69
 Response Codes,Other,0,0.00
-Response Codes,Internal All,12,85.71
-Response Codes,Internal Blocked by Robots.txt,1,7.14
+Response Codes,Internal All,11,84.62
+Response Codes,Internal Blocked by Robots.txt,1,7.69
 Response Codes,Internal No Response,0,0.00
-Response Codes,Internal Success (2XX),8,57.14
+Response Codes,Internal Success (2XX),7,53.85
 Response Codes,Internal Redirection (3XX),0,0.00
 Response Codes,Internal Redirection (Meta Refresh),0,0.00
 Response Codes,Internal Redirect Chain,0,0.00
 Response Codes,Internal Redirect Loop,0,0.00
-Response Codes,Internal Client Error (4XX),2,14.29
-Response Codes,Internal Server Error (5XX),1,7.14
+Response Codes,Internal Client Error (4XX),2,15.38
+Response Codes,Internal Server Error (5XX),1,7.69
 Response Codes,Internal Other,0,0.00
-Response Codes,External All,2,14.29
+Response Codes,External All,2,15.38
 Response Codes,External Blocked by Robots.txt,0,0.00
 Response Codes,External No Response,0,0.00
-Response Codes,External Success (2XX),1,7.14
+Response Codes,External Success (2XX),1,7.69
 Response Codes,External Redirection (3XX),0,0.00
 Response Codes,External Redirection (Meta Refresh),0,0.00
 Response Codes,External Redirect Chain,0,0.00
 Response Codes,External Redirect Loop,0,0.00
-Response Codes,External Client Error (4XX),1,7.14
+Response Codes,External Client Error (4XX),1,7.69
 Response Codes,External Server Error (5XX),0,0.00
 Response Codes,External Other,0,0.00
-URL,All,12,100.00
+URL,All,11,100.00
 URL,Non ASCII Characters,0,0.00
 URL,Underscores,0,0.00
 URL,Uppercase,0,0.00
@@ -164,7 +164,7 @@ Canonicals,Missing,7,100.00
 Canonicals,Multiple,0,0.00
 Canonicals,Multiple Conflicting,0,0.00
 Canonicals,Non-Indexable Canonical,,
-Directives,All,11,100.00
+Directives,All,10,100.00
 Directives,Index,0,0.00
 Directives,Noindex,0,0.00
 Directives,Follow,0,0.00

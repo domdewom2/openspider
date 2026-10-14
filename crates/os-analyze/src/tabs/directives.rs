@@ -1,7 +1,8 @@
 //! Tab „Directives“ (TECH-051 bis TECH-056, TECH-064).
 //!
 //! **Grundmenge (TECH-051):** alle internen Tabellenzeilen mit einer HTTP-Antwort (jeder Status), weil
-//! `X-Robots-Tag` auch an Nicht-HTML- und Nicht-200-Antworten hängt.
+//! `X-Robots-Tag` auch an Nicht-HTML- und Nicht-200-Antworten hängt. Die robots.txt hat keine
+//! Tabellen-Sichtbarkeit und gehört nicht dazu (K-54, ersetzt K-45).
 //!
 //! **Filter** prüfen das Vorhandensein des Tokens in irgendeiner wirksamen Quelle (Meta oder Header, generisch
 //! oder zum Agent-Token passend: `directives.applies = 1`), nicht die effektive Wirkung (TECH-066): `index` und

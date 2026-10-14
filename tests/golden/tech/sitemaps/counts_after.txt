@@ -1,4 +1,4 @@
-All: 21
+All: 20
 URLs In Sitemap: 14
 URLs Not In Sitemap: 5
 Orphan URLs: 3
