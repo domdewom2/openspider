@@ -247,52 +247,10 @@ fn valid_column_forms(tab: &TabDef) -> String {
     forms.join(", ")
 }
 
-/// Liest `"<base> <n>"` bzw. `"<base> <n> <suffix>"` (Groß-/Kleinschreibung gleichgültig, `n` ab 1); `suffix`
-/// leer = ohne Zusatz. Dieselbe Regel wie `parse_numbered` in `os-analyze` (views/build.rs), die den Namen beim
-/// Aufbau der Ansicht auflöst; hier nachgebildet, weil sie dort nicht öffentlich ist.
-fn is_numbered_name(name: &str, base: &str, suffix: &str) -> bool {
-    let Some(head) = name.get(..base.len()) else {
-        return false;
-    };
-    if !head.eq_ignore_ascii_case(base) {
-        return false;
-    }
-    let Some(rest) = name[base.len()..].strip_prefix(' ') else {
-        return false;
-    };
-    let (num, tail) = match rest.split_once(' ') {
-        Some((num, tail)) => (num, Some(tail)),
-        None => (rest, None),
-    };
-    if num.is_empty()
-        || !num.bytes().all(|b| b.is_ascii_digit())
-        || num.parse::<usize>().map_or(true, |n| n < 1)
-    {
-        return false;
-    }
-    match (tail, suffix.is_empty()) {
-        (None, true) => true,
-        (Some(t), false) => t.eq_ignore_ascii_case(suffix),
-        _ => false,
-    }
-}
-
+/// Ob `name` eine Spalte des Tabs benennt (Schlüssel oder nummerierte Mehrfachspalte). Die Regel liegt in
+/// `os-analyze`, damit Vorabprüfung und Ansicht dieselben Namen akzeptieren.
 fn column_known(tab: &TabDef, name: &str) -> bool {
-    let wanted = name.trim();
-    if tab
-        .columns
-        .iter()
-        .any(|c| c.key.eq_ignore_ascii_case(wanted))
-    {
-        return true;
-    }
-    tab.columns.iter().any(|c| match &c.sql {
-        os_analyze::ColumnSql::Expr(_) => false,
-        os_analyze::ColumnSql::Multi { base, .. } => is_numbered_name(wanted, base, ""),
-        os_analyze::ColumnSql::MultiPaired { base, parts } => parts
-            .iter()
-            .any(|p| is_numbered_name(wanted, base, p.suffix)),
-    })
+    os_analyze::views::column_name_resolves(tab, name)
 }
 
 fn parse_sort(args: &Json, tab: &TabDef) -> Result<Vec<SortKey>, ToolError> {

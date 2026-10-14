@@ -24,6 +24,7 @@ use crate::error::{NameError, ViewError};
 use crate::state::filter_state;
 use crate::tabs;
 
+pub use build::column_name_resolves;
 pub use counts::percent;
 
 /// Welche Spalten geliefert werden.
