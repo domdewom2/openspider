@@ -1,0 +1,2 @@
+﻿Address,Content,Status Code,Status,Indexability,Indexability Status,Inlinks,Response Time,Redirect URL,Redirect Type
+{BASE}/boom,text/html; charset=utf-8,500,Internal Server Error,Non-Indexable,Server Error,1,<VAR>,,

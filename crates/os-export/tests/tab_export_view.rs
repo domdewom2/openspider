@@ -191,10 +191,8 @@ fn export_of_the_current_filter_view_uses_all_columns_on_request() {
 // spec: ONPAGE-191
 // spec: OUT-020
 #[tokio::test]
-#[ignore = "M1-P26"]
 async fn golden_page_titles_missing_with_all_columns() {
-    // Läuft, sobald P22 Tab `Page Titles`, Fixture `onpage-titles` liefert; P26 entfernt das Ignore und
-    // erzeugt das Golden mit UPDATE_GOLDEN=1 (Normalisierung nach 06 §0).
+    // Fixture `onpage-titles` und Golden `onpage-titles/page_titles__missing.csv` stammen aus P22/N09.
     let fx = crawl_fixture("onpage-titles", CrawlConfig::default()).await;
     let dir = tempfile::tempdir().unwrap();
     let mut q = ViewQuery::new("Page Titles", "Missing");
@@ -212,7 +210,11 @@ async fn golden_page_titles_missing_with_all_columns() {
         csv.lines().next().unwrap().contains("Title 1 Pixel Width"),
         "mit „Alle Spalten“ steht Title 1 Pixel Width in der Kopfzeile"
     );
-    assert_golden("onpage-titles/page_titles__missing.csv", &csv);
+    // Normalisierung nach 06 §0: Basis-URL der Testsite → {BASE}; das Golden trägt die UTF-8-BOM der Datei.
+    let bases = fx.site.golden_bases();
+    let bases: Vec<&str> = bases.iter().map(String::as_str).collect();
+    let normalized = format!("\u{feff}{}", os_testsite::golden::normalize(&csv, &bases));
+    assert_golden("onpage-titles/page_titles__missing.csv", &normalized);
 }
 
 // spec: OUT-020

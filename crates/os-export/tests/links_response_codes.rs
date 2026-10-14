@@ -1,7 +1,7 @@
 //! Response-Codes-Inlinks-Exporte (OUT-050): 12 Einträge × {Internal & External, Internal, External}.
 //! Fixture `out-response-codes`. Platzhalter-Modus: Die Auswertung läuft gegen den Test-Tab
 //! `response_codes_tab()` (echte Prädikate, `links_support.rs`); die Goldens gegen die echten Filter von P21
-//! stehen mit `#[ignore = "M1-P26"]` bereit.
+//! liegen unter `tests/golden/out-response-codes/` (M1-P26).
 
 #[path = "links_support.rs"]
 mod support;
@@ -399,9 +399,8 @@ async fn every_entry_exports_against_the_registered_tabs() {
 
 // spec: OUT-050
 #[tokio::test]
-#[ignore = "M1-P26"]
 async fn golden_inlinks_exports_with_the_real_response_codes_filters() {
-    // P26: nach dem Merge von P21 Ignore entfernen und die Goldens mit UPDATE_GOLDEN=1 erzeugen.
+    // Goldens `tests/golden/out-response-codes/*.csv` (M1-P26) gegen die echten Filter von P21.
     let fx = crawl_codes().await;
     let dir = tempfile::tempdir().unwrap();
     let cfg = CrawlConfig::default();

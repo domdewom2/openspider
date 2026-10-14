@@ -1,0 +1,3 @@
+# Szenario out-list-order (OUT-015, OUT-183): acht Seiten /p1.html … /p8.html und /privat/geheim.html.
+# Die Listendateien urls10.txt und list.txt verweisen auf Host site.test (Auflösung per --resolve '*.test=…').
+# Keine eigenen Routen: der Server liefert die statischen Dateien dieses Ordners.

@@ -2,8 +2,8 @@
 //! synthetisch befüllte Crawl-Dateien und strukturell gegen die Platzhalter-Tabs (`tabs::all()`).
 //!
 //! Erwartungen stammen aus dem Fixture-Entwurf und den Akzeptanzkriterien der Spec; echte Tab-Zähler der
-//! Platzhalter-Tabs gibt es erst mit den Tab-Paketen (P20–P25), der Golden mit ihnen steht als
-//! `#[ignore = "M1-P26"]` bereit.
+//! Platzhalter-Tabs liefern die Tab-Pakete (P20–P25); der Golden mit ihnen liegt unter
+//! `tests/golden/out-issues/crawl_overview.csv` (M1-P26).
 
 #[path = "reports_common.rs"]
 mod common;
@@ -812,18 +812,9 @@ async fn xlsx_holds_numbers_as_numbers_and_the_same_rows() {
     assert!(matches!(range.get((row_idx, 3)).unwrap(), Data::Float(_)));
 }
 
-// spec: OUT-080
-#[tokio::test]
-async fn report_matches_the_regression_golden_with_test_tabs() {
-    let cfg = base_config();
-    let fx = issues_crawl(&cfg).await;
-    let (_tmp, _t, result) = overview(&fx, &cfg, &issue_tabs());
-    let text = std::fs::read_to_string(&result.files[0].path).unwrap();
-    let bases = fx.site.golden_bases();
-    let bases: Vec<&str> = bases.iter().map(String::as_str).collect();
-    let normalized = normalize(&text, &bases);
-    // Die Durchschnitte hängen an der Laufzeit des Crawls und werden maskiert.
-    let masked: String = normalized
+/// Die Durchschnitte hängen an der Laufzeit des Crawls und werden maskiert.
+fn mask_averages(normalized: &str) -> String {
+    normalized
         .lines()
         .map(|l| {
             if l.starts_with("Summary,Average Response Time (ms),") {
@@ -836,7 +827,19 @@ async fn report_matches_the_regression_golden_with_test_tabs() {
         })
         .collect::<Vec<_>>()
         .join("\n")
-        + "\n";
+        + "\n"
+}
+
+// spec: OUT-080
+#[tokio::test]
+async fn report_matches_the_regression_golden_with_test_tabs() {
+    let cfg = base_config();
+    let fx = issues_crawl(&cfg).await;
+    let (_tmp, _t, result) = overview(&fx, &cfg, &issue_tabs());
+    let text = std::fs::read_to_string(&result.files[0].path).unwrap();
+    let bases = fx.site.golden_bases();
+    let bases: Vec<&str> = bases.iter().map(String::as_str).collect();
+    let masked = mask_averages(&normalize(&text, &bases));
     assert_golden(
         concat!(
             env!("CARGO_MANIFEST_DIR"),
@@ -848,23 +851,24 @@ async fn report_matches_the_regression_golden_with_test_tabs() {
 
 // spec: OUT-080
 #[tokio::test]
-#[ignore = "M1-P26"]
 async fn crawl_overview_golden_with_the_real_tab_counters() {
-    // P26 schaltet den Test scharf und erzeugt den Golden `tests/golden/out-issues/crawl_overview.csv`, sobald
-    // die Tabs P20–P25 echte Zähler liefern.
+    // Golden `tests/golden/out-issues/crawl_overview.csv` (M1-P26) mit den echten Zählern der Tabs P20–P25.
     let cfg = base_config();
     let fx = issues_crawl(&cfg).await;
     let tmp = tempfile::tempdir().unwrap();
     let result = save_report(&fx.file, &cfg, OVERVIEW, tmp.path(), Format::Csv).unwrap();
     let text = std::fs::read_to_string(&result.files[0].path).unwrap();
-    let bases = fx.site.golden_bases();
+    let mut bases = fx.site.golden_bases();
+    for port in [fx.site.port(), fx.site.port2()] {
+        bases.push(format!("http://localhost:{port}"));
+    }
     let bases: Vec<&str> = bases.iter().map(String::as_str).collect();
     assert_golden(
         concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/../../tests/golden/out-issues/crawl_overview.csv"
         ),
-        &normalize(&text, &bases),
+        &mask_averages(&normalize(&text, &bases)),
     );
 }
 

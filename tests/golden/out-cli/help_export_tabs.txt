@@ -1,0 +1,121 @@
+Internal:All
+Internal:HTML
+Internal:JavaScript
+Internal:CSS
+Internal:Images
+Internal:PDF
+Internal:Unknown
+External:All
+External:HTML
+External:JavaScript
+External:CSS
+External:Images
+External:PDF
+External:Flash
+External:Other
+External:Unknown
+Security:All
+Security:HTTP URLs
+Security:HTTPS URLs
+Response Codes:All
+Response Codes:Blocked by Robots.txt
+Response Codes:No Response
+Response Codes:Success (2XX)
+Response Codes:Redirection (3XX)
+Response Codes:Redirection (Meta Refresh)
+Response Codes:Redirect Chain
+Response Codes:Redirect Loop
+Response Codes:Client Error (4XX)
+Response Codes:Server Error (5XX)
+Response Codes:Other
+Response Codes:Internal All
+Response Codes:Internal Blocked by Robots.txt
+Response Codes:Internal No Response
+Response Codes:Internal Success (2XX)
+Response Codes:Internal Redirection (3XX)
+Response Codes:Internal Redirection (Meta Refresh)
+Response Codes:Internal Redirect Chain
+Response Codes:Internal Redirect Loop
+Response Codes:Internal Client Error (4XX)
+Response Codes:Internal Server Error (5XX)
+Response Codes:Internal Other
+Response Codes:External All
+Response Codes:External Blocked by Robots.txt
+Response Codes:External No Response
+Response Codes:External Success (2XX)
+Response Codes:External Redirection (3XX)
+Response Codes:External Redirection (Meta Refresh)
+Response Codes:External Redirect Chain
+Response Codes:External Redirect Loop
+Response Codes:External Client Error (4XX)
+Response Codes:External Server Error (5XX)
+Response Codes:External Other
+URL:All
+URL:Non ASCII Characters
+URL:Underscores
+URL:Uppercase
+URL:Multiple Slashes
+URL:Contains A Space
+URL:Parameters
+URL:Over X Characters
+Page Titles:All
+Page Titles:Missing
+Page Titles:Duplicate
+Page Titles:Over X Characters
+Page Titles:Below X Characters
+Page Titles:Multiple
+Meta Description:All
+Meta Description:Missing
+Meta Description:Duplicate
+Meta Description:Over X Characters
+Meta Description:Below X Characters
+Meta Description:Multiple
+H1:All
+H1:Missing
+H1:Duplicate
+H1:Over X Characters
+H1:Multiple
+H2:All
+H2:Missing
+H2:Duplicate
+H2:Over X Characters
+H2:Multiple
+Content:All
+Content:Exact Duplicates
+Content:Low Content Pages
+Images:All
+Images:Over X KB
+Images:Missing Alt Text
+Images:Missing Alt Attribute
+Images:Alt Text Over X Characters
+Canonicals:All
+Canonicals:Contains Canonical
+Canonicals:Self Referencing
+Canonicals:Canonicalised
+Canonicals:Missing
+Canonicals:Multiple
+Canonicals:Multiple Conflicting
+Canonicals:Non-Indexable Canonical
+Directives:All
+Directives:Index
+Directives:Noindex
+Directives:Follow
+Directives:Nofollow
+Directives:None
+Directives:Refresh
+Hreflang:All
+Hreflang:Contains Hreflang
+Hreflang:Non-200 Hreflang URLs
+Hreflang:Missing Return Links
+Hreflang:Incorrect Language & Region Codes
+Hreflang:Missing
+Links:All
+Links:Pages With High Crawl Depth
+Links:Pages Without Internal Outlinks
+Links:Internal Nofollow Outlinks
+Links:Internal Outlinks With No Anchor Text
+Sitemaps:All
+Sitemaps:URLs In Sitemap
+Sitemaps:URLs Not In Sitemap
+Sitemaps:Orphan URLs
+Sitemaps:Non-Indexable URLs In Sitemap

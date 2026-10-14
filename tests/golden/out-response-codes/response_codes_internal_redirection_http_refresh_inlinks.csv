@@ -1,0 +1,2 @@
+Type,Source,Destination,Size (Bytes),Alt Text,Anchor,Status Code,Status,Follow,Target,Rel,Path Type,Link Path,Link Position,Link Origin
+Hyperlink,http://www.site.test/,http://www.site.test/refresh-header,93,,HTTP Refresh,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[2]/a[2],Content,HTML

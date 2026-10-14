@@ -1,0 +1,2 @@
+Type,Source,Destination,Size (Bytes),Alt Text,Anchor,Status Code,Status,Follow,Target,Rel,Path Type,Link Path,Link Position,Link Origin
+Hyperlink,http://www.site.test/,http://www.site.test/private/blocked.html,0,,Gesperrt,,Blocked by Robots.txt,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[4]/a[1],Content,HTML

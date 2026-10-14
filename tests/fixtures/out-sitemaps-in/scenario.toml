@@ -1,0 +1,2 @@
+# Szenario out-sitemaps-in (OUT-183): Sitemap-Index mit zwei Sitemaps und fünf Seiten /s1.html … /s5.html.
+# Host site.test (Auflösung per --resolve '*.test=…'). Keine eigenen Routen: statische Dateien.

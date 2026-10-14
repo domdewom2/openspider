@@ -1,0 +1,8 @@
+﻿Address,Word Count,Hash,Indexability,Indexability Status
+{BASE}/,1,<VAR>,Indexable,
+{BASE}/dup-a.html,2,<VAR>,Indexable,
+{BASE}/dup-b.html,2,<VAR>,Indexable,
+{BASE}/long-title.html,2,<VAR>,Indexable,
+{BASE}/no-h1.html,3,<VAR>,Indexable,
+{BASE}/no-title.html,3,<VAR>,Indexable,
+{BASE}/ok.html,7,<VAR>,Indexable,

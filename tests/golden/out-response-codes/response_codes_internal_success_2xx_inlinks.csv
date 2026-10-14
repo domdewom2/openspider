@@ -1,0 +1,10 @@
+Type,Source,Destination,Size (Bytes),Alt Text,Anchor,Status Code,Status,Follow,Target,Rel,Path Type,Link Path,Link Position,Link Origin
+Hyperlink,http://www.site.test/,http://www.site.test/js.html,199,,JavaScript,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[2]/a[3],Content,HTML
+Hyperlink,http://www.site.test/,http://www.site.test/meta.html,203,,Meta Refresh,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[2]/a[1],Content,HTML
+Hyperlink,http://www.site.test/,http://www.site.test/ok.html,137,,OK,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[1]/a[1],Content,HTML
+Meta Refresh,http://www.site.test/meta.html,http://www.site.test/ok.html,137,,,200,OK,True,,,Root-Relative,,,HTML
+HTTP Redirect,http://www.site.test/r302,http://www.site.test/ok.html,137,,,200,OK,True,,,Root-Relative,,,HTML
+Hyperlink,http://www.site.test/second.html,http://www.site.test/ok.html,137,,OK,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[1]/a[2],Content,HTML
+Hyperlink,http://www.site.test/,http://www.site.test/refresh-header,93,,HTTP Refresh,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[2]/a[2],Content,HTML
+HTTP Refresh,http://www.site.test/refresh-header,http://www.site.test/refresh-target.html,157,,,200,OK,True,,,Root-Relative,,,HTML
+Hyperlink,http://www.site.test/,http://www.site.test/second.html,269,,Zweite Seite,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[6]/a[1],Content,HTML

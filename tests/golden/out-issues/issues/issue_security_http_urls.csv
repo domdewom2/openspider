@@ -1,0 +1,13 @@
+﻿Address,Content,Status Code,Status,Indexability,Indexability Status,Canonical Link Element 1,Meta Robots 1,X-Robots-Tag 1
+{BASE}/,text/html; charset=utf-8,200,OK,Indexable,,,,
+{BASE}/robots.txt,text/plain; charset=utf-8,200,OK,Indexable,,,,
+{BASE}/ok.html,text/html; charset=utf-8,200,OK,Indexable,,,,
+{BASE}/no-title.html,text/html; charset=utf-8,200,OK,Indexable,,,,
+{BASE}/dup-a.html,text/html; charset=utf-8,200,OK,Indexable,,,,
+{BASE}/dup-b.html,text/html; charset=utf-8,200,OK,Indexable,,,,
+{BASE}/long-title.html,text/html; charset=utf-8,200,OK,Indexable,,,,
+{BASE}/no-h1.html,text/html; charset=utf-8,200,OK,Indexable,,,,
+{BASE}/missing.html,text/html; charset=utf-8,404,Not Found,Non-Indexable,Client Error,,,
+{BASE}/gone,text/html; charset=utf-8,404,Not Found,Non-Indexable,Client Error,,,
+{BASE}/privat/secret.html,,0,Blocked by Robots.txt,Non-Indexable,Blocked by Robots.txt,,,
+{BASE}/boom,text/html; charset=utf-8,500,Internal Server Error,Non-Indexable,Server Error,,,
