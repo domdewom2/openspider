@@ -22,7 +22,7 @@ use std::process::Command;
 
 use serde::Serialize;
 
-use crate::csvio::read_csv;
+use crate::csvio::{read_csv, read_reference};
 use crate::deviations::Deviations;
 use crate::diff::{compare, evaluate, CompareInput};
 use crate::error::ParityError;
@@ -435,6 +435,15 @@ fn run_site(
         outcome,
     };
     for e in &manifest.export {
+        if let (ExportStatus::Present, Some(why)) = (e.status, &e.skip) {
+            results.push(result_of(
+                e,
+                Outcome::Skipped {
+                    reason: format!("außerhalb des M1-Umfangs: {why}"),
+                },
+            ));
+            continue;
+        }
         match e.status {
             ExportStatus::Present => {
                 let prep = OsExport::parse(&e.os).and_then(|os| {
@@ -623,7 +632,7 @@ fn compare_one(
             ))
         })?;
     let sf_path = opts.golden_dir(site).join("sf").join(&p.entry.sf_file);
-    let sf = read_csv(&sf_path, &p.mapping.drop_sf_columns)?;
+    let sf = read_reference(&sf_path, &p.mapping)?;
     let os = read_csv(&os_path, &[])?;
     let devs = deviations.for_export(Some(site), &p.entry.mapping);
     let mut report = compare(&CompareInput {
@@ -647,6 +656,69 @@ fn write_summary(out: &Path, s: &RunSummary) -> Result<(), ParityError> {
     std::fs::write(out.join("report.json"), json + "\n")?;
     std::fs::write(out.join("report.md"), summary_markdown(s))?;
     Ok(())
+}
+
+/// Angewandte Abweichungen aller Berichte, getrennt nach begründeten Paritätsabweichungen und
+/// Referenzeinschränkungen der Free-Version (K-53).
+fn summary_deviations(m: &mut String, s: &RunSummary) {
+    use std::collections::BTreeMap;
+    use std::fmt::Write as _;
+    // Kennung → (Spec, Kennzeichen, Begründung, Anzahl, Sites)
+    let mut agg: BTreeMap<
+        String,
+        (
+            String,
+            String,
+            String,
+            u64,
+            std::collections::BTreeSet<String>,
+        ),
+    > = BTreeMap::new();
+    for site in &s.sites {
+        for x in &site.exports {
+            if let Outcome::Compared { report } = &x.outcome {
+                for d in &report.applied_deviations {
+                    let e = agg.entry(d.id.clone()).or_insert_with(|| {
+                        (
+                            d.spec.clone(),
+                            d.kind.clone(),
+                            d.note.clone(),
+                            0,
+                            Default::default(),
+                        )
+                    });
+                    e.3 += d.count;
+                    e.4.insert(site.site.clone());
+                }
+            }
+        }
+    }
+    for (title, free) in [
+        ("Begründete Paritätsabweichungen", false),
+        ("Referenzeinschränkungen SF Free", true),
+    ] {
+        let list: Vec<_> = agg
+            .iter()
+            .filter(|(id, _)| crate::report::is_sf_free(id) == free)
+            .collect();
+        if list.is_empty() {
+            continue;
+        }
+        let _ = writeln!(m, "## {title}\n");
+        let _ = writeln!(
+            m,
+            "| Kennung | Spec | Kennzeichen | Zellen/Zeilen | Sites | Begründung |\n|---|---|---|---:|---|---|"
+        );
+        for (id, (spec, kind, note, count, sites)) in list {
+            let _ = writeln!(
+                m,
+                "| {id} | {spec} | {kind} | {count} | {} | {} |",
+                sites.iter().cloned().collect::<Vec<_>>().join(", "),
+                note.replace('|', "/")
+            );
+        }
+        m.push('\n');
+    }
 }
 
 /// Markdown-Übersicht eines Laufs.
@@ -714,6 +786,7 @@ pub fn summary_markdown(s: &RunSummary) -> String {
         }
         m.push('\n');
     }
+    summary_deviations(&mut m, s);
     if !s.warnings.is_empty() {
         let _ = writeln!(m, "## Hinweise\n");
         for w in &s.warnings {

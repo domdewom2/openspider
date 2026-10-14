@@ -132,3 +132,217 @@ jobs:
           name: loadtest-small-${{ matrix.name }}
           path: target/loadtest/
           if-no-files-found: warn
+
+  # Paritätslauf gegen die Referenzexporte (SF 24.3 Free, docs/plan/M1.md 5; Abnahmekriterium A3). Läuft nur, wenn unter
+  # tests/golden/parity/*/sf/ Referenzdateien liegen. Solange die Nachbesserungen aus dem Abnahmebericht
+  # (docs/plan/M1-acceptance/checklist.md, Abschnitt A3) nicht gemergt sind, endet der Lauf mit Exit-Code 1: der Schritt
+  # ist dann `continue-on-error`; den Bericht (report.md/report.json) gibt es immer als Artefakt und in der Job-Zusammenfassung.
+  # Nach den Nachbesserungen `continue-on-error` entfernen (A3 wird dann erzwungen).
+  parity:
+    name: parity (macos-arm64)
+    runs-on: macos-14
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Referenzexporte vorhanden?
+        id: reference
+        run: |
+          if ls tests/golden/parity/*/sf/*.csv >/dev/null 2>&1; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "Keine Referenzexporte unter tests/golden/parity/*/sf/ – Paritätslauf übersprungen." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: dtolnay/rust-toolchain@stable
+        if: steps.reference.outputs.present == 'true'
+      - uses: Swatinem/rust-cache@v2
+        if: steps.reference.outputs.present == 'true'
+        with:
+          key: parity
+
+      - name: Build (openspider, os-parity)
+        if: steps.reference.outputs.present == 'true'
+        run: cargo build --locked -p os-cli -p os-parity
+
+      - name: Paritätslauf (os-parity run --all)
+        if: steps.reference.outputs.present == 'true'
+        continue-on-error: true
+        run: |
+          status=0
+          target/debug/os-parity run --all --openspider target/debug/openspider --out target/parity || status=$?
+          if [ -f target/parity/report.md ]; then cat target/parity/report.md >> "$GITHUB_STEP_SUMMARY"; fi
+          exit $status
+
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.reference.outputs.present == 'true'
+        with:
+          name: parity-report
+          path: target/parity/
+          if-no-files-found: warn
+
+  # Crawl-Datei zwischen den Plattformen (A6, OUT-230): jede Plattform crawlt dieselbe Fixture-Site, legt die
+  # .ospider-Datei und die Exporte Internal:All und Links:All Inlinks ab; im zweiten Job laden alle Plattformen die
+  # Dateien der anderen, exportieren erneut und vergleichen byte-gleich (macOS → Windows und Windows → macOS).
+  crawlfile-create:
+    name: crawlfile create (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macos-arm64
+            os: macos-14
+          - name: macos-x64
+            os: macos-15-intel
+          - name: windows-x64
+            os: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: crawlfile
+
+      - name: Build (openspider, os-testsite)
+        run: cargo build --locked -p os-cli -p os-testsite
+
+      - name: Fixture-Site crawlen, Crawl-Datei speichern, exportieren
+        run: |
+          set -euo pipefail
+          out="crawlfile-out/${{ matrix.name }}"
+          mkdir -p "$out"
+          target/debug/os-testsite parity-technical 8903 > crawlfile-site.log 2>&1 &
+          site_pid=$!
+          for i in $(seq 1 100); do
+            if curl -fsS http://127.0.0.1:8903/ > /dev/null 2>&1; then break; fi
+            sleep 0.3
+          done
+          curl -fsS http://127.0.0.1:8903/ > /dev/null
+          target/debug/openspider --crawl http://127.0.0.1:8903/ \
+            --config tests/parity/profiles/parity.osconfig \
+            --output-folder "$out" --overwrite --save-crawl \
+            --export-tabs "Internal:All" --bulk-export "Links:All Inlinks"
+          kill "$site_pid" 2> /dev/null || true
+          ls -l "$out"
+          test -s "$out/crawl.ospider"
+          test -s "$out/internal_all.csv"
+          test -s "$out/links_all_inlinks.csv"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: crawlfile-${{ matrix.name }}
+          path: crawlfile-out/${{ matrix.name }}
+          if-no-files-found: error
+
+  crawlfile-crossplatform:
+    name: crawlfile load (${{ matrix.name }})
+    needs: crawlfile-create
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macos-arm64
+            os: macos-14
+          - name: macos-x64
+            os: macos-15-intel
+          - name: windows-x64
+            os: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: crawlfile
+
+      - name: Build (openspider)
+        run: cargo build --locked -p os-cli
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: crawlfile-*
+          path: crawlfiles
+
+      - name: Crawl-Dateien der anderen Plattformen laden und byte-gleich exportieren
+        run: |
+          set -euo pipefail
+          ls -R crawlfiles | head -40
+          compared=0
+          for dir in crawlfiles/crawlfile-*; do
+            origin="${dir#crawlfiles/crawlfile-}"
+            if [ "$origin" = "${{ matrix.name }}" ]; then continue; fi
+            work="reload/$origin"
+            mkdir -p "$work"
+            cp "$dir/crawl.ospider" "$work/crawl-copy.ospider"
+            target/debug/openspider --load-crawl "$work/crawl-copy.ospider" \
+              --output-folder "$work" --overwrite \
+              --export-tabs "Internal:All" --bulk-export "Links:All Inlinks"
+            cmp "$dir/internal_all.csv" "$work/internal_all.csv"
+            cmp "$dir/links_all_inlinks.csv" "$work/links_all_inlinks.csv"
+            echo "Crawl-Datei von $origin auf ${{ matrix.name }}: Exporte byte-gleich"
+            compared=$((compared + 1))
+          done
+          test "$compared" -ge 2
+
+  # Spec-Abdeckung (A2, A9): alle Tests laufen, danach wird der Status je Spec-ID aus den Tags und den Ergebnissen ermittelt.
+  # Die Testausgabe muss stdout UND stderr enthalten (cargo schreibt die `Running`-Zeilen nach stderr). Der Job schlägt
+  # fehl, wenn eine M1-ID den Status `open` hat; `--strict` zusätzlich bei ignorierten Tests ohne gültigen Grund.
+  spec-coverage:
+    name: spec-coverage
+    runs-on: macos-14
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: spec-coverage
+
+      - name: cargo test (Ausgabe in out.txt)
+        run: |
+          status=0
+          cargo test --workspace --exclude openspider-desktop --no-fail-fast --locked > out.txt 2>&1 || status=$?
+          tail -n 30 out.txt
+          echo "cargo-test-exit=$status" >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+
+      # Paritätsbericht für den Status `verified` (A9); Abweichungen sind hier kein Fehler (dafür gibt es den Job parity).
+      - name: Paritätsbericht erzeugen
+        run: |
+          cargo build --locked -p os-cli -p os-parity
+          target/debug/os-parity run --all --openspider target/debug/openspider --out target/parity > /dev/null || true
+          ls target/parity/report.json
+
+      - name: Status je Spec-ID (os-parity coverage)
+        run: |
+          status=0
+          cargo run --locked -p os-parity -- coverage \
+            --packages docs/plan/M1-packages.json --test-output out.txt \
+            --parity-report target/parity/report.json --evidence tests/parity/evidence.toml \
+            --write docs/plan/M1-status.json --strict > coverage.txt 2>&1 || status=$?
+          cat coverage.txt
+          cat coverage.txt >> "$GITHUB_STEP_SUMMARY"
+          exit $status
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: spec-coverage
+          path: |
+            out.txt
+            coverage.txt
+            docs/plan/M1-status.json
+          if-no-files-found: warn

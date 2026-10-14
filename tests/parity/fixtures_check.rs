@@ -1867,10 +1867,12 @@ fn manifests_mappings_and_profile_are_consistent() {
         assert!(!exports.is_empty());
         let mut sf_files = BTreeSet::new();
         for e in exports {
-            assert_eq!(
-                e["status"].as_str(),
-                Some("pending"),
-                "{name}: status muss pending sein"
+            let status = e["status"]
+                .as_str()
+                .unwrap_or_else(|| panic!("{name}: status"));
+            assert!(
+                matches!(status, "pending" | "present" | "unavailable"),
+                "{name}: unbekannter status {status}"
             );
             let sf_file = e["sf_file"].as_str().unwrap();
             assert!(sf_file.ends_with(".csv") && !sf_file.contains('/'));
@@ -1906,15 +1908,37 @@ fn manifests_mappings_and_profile_are_consistent() {
                 "Mapping {mapping}"
             );
         }
-        assert!(
-            !repo_root()
-                .join(format!("tests/golden/parity/{name}/sf"))
-                .exists()
-                || std::fs::read_dir(repo_root().join(format!("tests/golden/parity/{name}/sf")))
-                    .unwrap()
-                    .next()
-                    .is_none(),
-            "{name}: sf/ gehört dem Nutzer, P10 legt dort nichts ab"
+        // sf/ gehört dem Nutzer (A8): genau die Dateien der Einträge mit status = present – vorhanden, nicht
+        // leer, Endung .csv, keine Unterordner, nichts sonst. pending/unavailable haben keine Datei.
+        let present: BTreeSet<String> = exports
+            .iter()
+            .filter(|e| e["status"].as_str() == Some("present"))
+            .map(|e| e["sf_file"].as_str().unwrap().to_string())
+            .collect();
+        let sf_dir = repo_root().join(format!("tests/golden/parity/{name}/sf"));
+        let mut found = BTreeSet::new();
+        if sf_dir.exists() {
+            for entry in std::fs::read_dir(&sf_dir).unwrap() {
+                let entry = entry.unwrap();
+                let file_name = entry.file_name().to_string_lossy().into_owned();
+                assert!(
+                    entry.file_type().unwrap().is_file(),
+                    "{name}: sf/{file_name} ist keine Datei (keine Unterordner erlaubt)"
+                );
+                assert!(
+                    file_name.ends_with(".csv"),
+                    "{name}: sf/{file_name} ist keine .csv-Datei"
+                );
+                assert!(
+                    entry.metadata().unwrap().len() > 0,
+                    "{name}: sf/{file_name} ist leer"
+                );
+                found.insert(file_name);
+            }
+        }
+        assert_eq!(
+            found, present,
+            "{name}: sf/ muss genau die Dateien der Einträge mit status = present enthalten"
         );
     }
     // Mappings
@@ -1982,8 +2006,12 @@ fn manifests_mappings_and_profile_are_consistent() {
     let profile = read_toml("tests/parity/profiles/parity.osconfig");
     assert_eq!(profile["schema_version"].as_integer(), Some(1));
     assert_eq!(profile["robots"]["mode"].as_str(), Some("respect"));
-    assert_eq!(profile["spider"]["hreflang"]["crawl"].as_bool(), Some(true));
-    assert_eq!(profile["sitemaps"]["crawl_linked"].as_bool(), Some(true));
+    // K-53: die Referenz (SF Free) hat Hreflang und verlinkte Sitemaps nicht gecrawlt.
+    assert_eq!(
+        profile["spider"]["hreflang"]["crawl"].as_bool(),
+        Some(false)
+    );
+    assert_eq!(profile["sitemaps"]["crawl_linked"].as_bool(), Some(false));
     let readme = read("tests/golden/parity/README.md");
     for (name, port) in SITES {
         assert!(

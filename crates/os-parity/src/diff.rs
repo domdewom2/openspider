@@ -9,13 +9,13 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use crate::csvio::{read_csv, Table};
+use crate::csvio::{read_csv, read_reference, Table};
 use crate::deviations::{Deviation, Deviations, Scope};
 use crate::error::ParityError;
-use crate::mapping::{Mapping, ORDINAL_KEY};
+use crate::mapping::{Mapping, RefFormat, ORDINAL_KEY};
 use crate::normalize::{BaseUrls, CellRules};
 use crate::report::{
-    write_report, AppliedDeviation, ColumnReport, Example, IgnoredColumn, Report, MAX_EXAMPLES,
+    max_examples, write_report, AppliedDeviation, ColumnReport, Example, IgnoredColumn, Report,
 };
 use crate::thresholds::Thresholds;
 
@@ -78,16 +78,26 @@ struct KeyedRow {
     tuple: String,
     /// Anzeigeform mit laufender Nummer.
     display: String,
+    /// Wievieltes Vorkommen dieses Schlüssels (0 = erstes).
+    ordinal: usize,
 }
 
 struct ColumnPlan<'a> {
     map: &'a crate::mapping::ColumnMap,
-    sf_idx: usize,
+    /// `None`: nummerierte Spalte, die die Referenz nur bei vorhandenen Daten schreibt – gilt als leer.
+    sf_idx: Option<usize>,
     os_idx: Option<usize>,
     report: ColumnReport,
 }
 
 const SEP: char = '\u{1f}';
+
+/// Nummerierte Spalte (`Title 2`, `H1-2`, `HTML hreflang 3 URL`): enthält ein Wort, das nur aus Ziffern besteht.
+/// Die Referenz schreibt solche Spalten nur, wenn Daten vorliegen; fehlen sie, sind alle Zellen leer.
+pub fn is_numbered_column(name: &str) -> bool {
+    name.split(|c: char| c.is_whitespace() || c == '-')
+        .any(|w| !w.is_empty() && w.chars().all(|c| c.is_ascii_digit()))
+}
 
 fn key_rows(
     table: &Table,
@@ -105,8 +115,13 @@ fn key_rows(
                 .iter()
                 .map(|(i, rules)| {
                     let v = rules.prepare(&row[*i], bases);
-                    if is_reference {
+                    let v = if is_reference {
                         rules.map_reference(&v)
+                    } else {
+                        v
+                    };
+                    if rules.ignore_case {
+                        v.to_lowercase()
                     } else {
                         v
                     }
@@ -126,9 +141,26 @@ fn key_rows(
                 id: format!("{tuple_id}{SEP}{ordinal}"),
                 tuple,
                 display,
+                ordinal,
             }
         })
         .collect()
+}
+
+/// Blockformat: Zeile der Referenz, die kein M1-Filter ist (und deshalb in OpenSpider fehlen darf)?
+/// Ohne Filterliste im Mapping gilt jede Zeile als relevant.
+fn blocks_outside_m1(mapping: &Mapping, tuple: &str) -> bool {
+    if mapping.format != RefFormat::Blocks {
+        return false;
+    }
+    let Some(m1) = &mapping.blocks.m1_filters else {
+        return false;
+    };
+    let mut parts = tuple.splitn(2, " | ");
+    let (Some(section), Some(item)) = (parts.next(), parts.next()) else {
+        return false;
+    };
+    !m1.contains(&(section.to_lowercase(), item.to_lowercase()))
 }
 
 fn clip(s: &str) -> String {
@@ -221,7 +253,7 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
                 }
                 plans.push(ColumnPlan {
                     map: cm,
-                    sf_idx,
+                    sf_idx: Some(sf_idx),
                     os_idx,
                     report: ColumnReport {
                         sf_column: cm.sf.clone(),
@@ -234,6 +266,27 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
             }
         }
     }
+    // Nummerierte Spalten, die die Referenz nicht schreibt, die OpenSpider aber liefert: Referenz = leer.
+    for cm in mapping.columns.iter().filter(|c| {
+        !c.ignore
+            && !key_sf_names.contains(&c.sf.as_str())
+            && sf.index_of(&c.sf).is_none()
+            && is_numbered_column(&c.sf)
+            && os.index_of(&c.os).is_some()
+    }) {
+        plans.push(ColumnPlan {
+            map: cm,
+            sf_idx: None,
+            os_idx: os.index_of(&cm.os),
+            report: ColumnReport {
+                sf_column: cm.sf.clone(),
+                os_column: cm.os.clone(),
+                compared: 0,
+                errors: 0,
+                examples: Vec::new(),
+            },
+        });
+    }
     let missing_sf_columns: Vec<String> = mapping
         .columns
         .iter()
@@ -241,6 +294,7 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
             !c.ignore
                 && !key_sf_names.contains(&c.sf.as_str())
                 && sf.index_of(&c.sf).is_none()
+                && !plans.iter().any(|p| p.map.sf == c.sf)
                 && !mapping
                     .drop_sf_columns
                     .iter()
@@ -261,12 +315,13 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
         .cloned()
         .collect();
 
+    let max_n = max_examples();
     // Abweichungszähler.
     let mut dev_hits: Vec<(u64, Vec<String>)> = vec![(0, Vec::new()); deviations.len()];
     let mut hit = |idx: usize, key: &str| {
         let h = &mut dev_hits[idx];
         h.0 += 1;
-        if h.1.len() < MAX_EXAMPLES {
+        if h.1.len() < max_n {
             h.1.push(key.to_string());
         }
     };
@@ -275,8 +330,17 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
     let mut cells_compared = 0u64;
     let mut cells_equal = 0u64;
     let mut missing_in_os = Vec::new();
+    let mut ignored_sf_rows = Vec::new();
+    let mut os_only_rows = Vec::new();
     for (ri, srow) in sf_rows.iter().enumerate() {
+        if mapping.dedupe_reference && srow.ordinal > 0 {
+            continue;
+        }
         let Some(&oi) = os_index.get(srow.id.as_str()) else {
+            if blocks_outside_m1(mapping, &srow.tuple) {
+                ignored_sf_rows.push(srow.display.clone());
+                continue;
+            }
             match deviations
                 .iter()
                 .position(|d| d.excuses_row(Scope::MissingInOs, &srow.tuple))
@@ -291,7 +355,8 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
         let os_cells = &os.rows[oi];
         for plan in plans.iter_mut() {
             let rules = &plan.map.rules;
-            let sf_value = rules.map_reference(&rules.prepare(&sf_cells[plan.sf_idx], sf_bases));
+            let sf_raw = plan.sf_idx.map_or("", |i| sf_cells[i].as_str());
+            let sf_value = rules.map_reference(&rules.prepare(sf_raw, sf_bases));
             let os_value = match plan.os_idx {
                 Some(i) => rules.prepare(&os_cells[i], os_bases),
                 None => String::new(),
@@ -312,7 +377,7 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
             plan.report.compared += 1;
             plan.report.errors += 1;
             cells_compared += 1;
-            if plan.report.examples.len() < MAX_EXAMPLES {
+            if plan.report.examples.len() < max_n {
                 plan.report.examples.push(Example {
                     key: srow.display.clone(),
                     sf: clip(&sf_value),
@@ -323,6 +388,10 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
     }
     let mut extra_in_os = Vec::new();
     for orow in os_rows.iter().filter(|r| !sf_ids.contains(r.id.as_str())) {
+        if mapping.blocks.os_only_rows_ok {
+            os_only_rows.push(orow.display.clone());
+            continue;
+        }
         match deviations
             .iter()
             .position(|d| d.excuses_row(Scope::ExtraInOs, &orow.tuple))
@@ -332,6 +401,9 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
         }
     }
 
+    // Die Zeilenfolge von OpenSpider hängt von der Entdeckungsreihenfolge ab: Listen sortiert für stabile Berichte.
+    extra_in_os.sort();
+    os_only_rows.sort();
     let agreement = if cells_compared == 0 {
         if missing_in_os.is_empty() && extra_in_os.is_empty() {
             100.0
@@ -345,14 +417,18 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
         .iter()
         .zip(dev_hits)
         .filter(|(_, (n, _))| *n > 0)
-        .map(|(d, (count, keys))| AppliedDeviation {
-            id: d.id.clone(),
-            spec: d.spec.clone(),
-            kind: d.kind.clone(),
-            note: d.note.clone(),
-            scope: d.scope,
-            count,
-            keys,
+        .map(|(d, (count, mut keys))| {
+            // Die Reihenfolge der Beispiele hängt von der Crawl-Reihenfolge ab: für stabile Berichte sortieren.
+            keys.sort();
+            AppliedDeviation {
+                id: d.id.clone(),
+                spec: d.spec.clone(),
+                kind: d.kind.clone(),
+                note: d.note.clone(),
+                scope: d.scope,
+                count,
+                keys,
+            }
         })
         .collect();
 
@@ -376,6 +452,8 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
         unmapped_os_columns,
         missing_sf_columns,
         missing_os_columns,
+        ignored_sf_rows,
+        os_only_rows,
         threshold_pct: 0.0,
         passed: false,
         failures: Vec::new(),
@@ -420,7 +498,7 @@ pub fn export_name_of(mapping_path: &Path) -> String {
 /// Führt den Vergleich aus; `Ok(true)` = alle Schwellen erfüllt.
 pub fn run(args: &DiffArgs) -> Result<bool, ParityError> {
     let mapping = Mapping::load(&args.mapping)?;
-    let sf = read_csv(&args.sf, &mapping.drop_sf_columns)?;
+    let sf = read_reference(&args.sf, &mapping)?;
     let os = read_csv(&args.os, &[])?;
     let deviations = match &args.deviations {
         Some(p) => Deviations::load(p)?,

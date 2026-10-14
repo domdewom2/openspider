@@ -18,6 +18,7 @@
 //!    optionalen Feld `extra_spec_ids` eines Pakets erscheinen im Berichtsabschnitt `extra`, lösen keine
 //!    Warnung „unbekannte IDs“ aus und zählen weder für die Zusammenfassung noch für `--strict`.
 
+pub mod evidence;
 pub mod results;
 pub mod scan;
 pub mod targets;
@@ -54,6 +55,12 @@ pub struct CoverageArgs {
     /// Auch bei ignorierten Tests ohne gültigen Grund mit Exit-Code 1 enden.
     #[arg(long)]
     pub strict: bool,
+    /// Bericht des Paritätslaufs (`report.json` von `os-parity run`) für den Status `verified`.
+    #[arg(long)]
+    pub parity_report: Option<PathBuf>,
+    /// Zuordnung Spec-ID ↔ Export für `verified` (`tests/parity/evidence.toml`).
+    #[arg(long)]
+    pub evidence: Option<PathBuf>,
 }
 
 /// Status einer Spec-ID.
@@ -597,6 +604,40 @@ pub fn run(args: &CoverageArgs) -> Result<bool, ParityError> {
         &results,
         previous.as_ref(),
     );
+
+    let mut report = report;
+    if let (Some(rep), Some(ev)) = (&args.parity_report, &args.evidence) {
+        let parity: Value =
+            serde_json::from_str(&std::fs::read_to_string(rep).map_err(|e| {
+                ParityError::Invalid(format!("{} nicht lesbar: {e}", rep.display()))
+            })?)
+            .map_err(|e| ParityError::Invalid(format!("{}: {e}", rep.display())))?;
+        let evidence = evidence::load_evidence(ev)?;
+        for (id, res) in evidence::evaluate(&evidence, &parity) {
+            let Some(entry) = report.specs.get_mut(&id) else {
+                report
+                    .warnings
+                    .push(format!("evidence.toml nennt unbekannte ID {id}"));
+                continue;
+            };
+            match res {
+                Ok(proof) if entry.status == Status::Implemented => {
+                    entry.status = Status::Verified;
+                    entry.parity = Some(proof);
+                }
+                Ok(_) => {}
+                Err(why) => {
+                    if entry.status == Status::Implemented {
+                        entry.parity = Some(json!({ "not_verified": why }));
+                    }
+                }
+            }
+        }
+        let count = |st: Status| report.specs.values().filter(|s| s.status == st).count();
+        let (implemented, verified) = (count(Status::Implemented), count(Status::Verified));
+        report.summary.insert("implemented".into(), implemented);
+        report.summary.insert("verified".into(), verified);
+    }
 
     if let Some(out) = &args.write {
         if let Some(dir) = out.parent().filter(|d| !d.as_os_str().is_empty()) {

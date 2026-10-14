@@ -787,6 +787,11 @@
         {
           "file": "crates/os-mcp/tests/tools_read.rs",
           "result": "ok",
+          "test": "a_numbered_name_with_a_suffix_is_accepted_and_an_unknown_suffix_lists_the_valid_names"
+        },
+        {
+          "file": "crates/os-mcp/tests/tools_read.rs",
+          "result": "ok",
           "test": "a_numbered_multi_column_name_can_be_requested_as_a_column"
         },
         {
@@ -3688,6 +3693,11 @@
           "test": "tests::resolve_trait_returns_override_and_fails_for_unknown_names"
         },
         {
+          "file": "crates/os-fetch/src/resolve.rs",
+          "result": "ok",
+          "test": "tests::reserved_tld_invalid_fails_immediately_without_the_system_resolver"
+        },
+        {
           "file": "crates/os-fetch/tests/http_fetch.rs",
           "result": "ok",
           "test": "wildcard_resolve_maps_fixture_hosts_with_port_and_keeps_the_host_header"
@@ -3839,6 +3849,16 @@
           "file": "crates/os-store/tests/schema_open.rs",
           "result": "ok",
           "test": "main_file_shorter_than_its_header_is_still_rejected_without_a_wal"
+        },
+        {
+          "file": "crates/os-store/tests/writer_batches.rs",
+          "result": "ok",
+          "test": "the_checkpoint_threshold_starts_at_256_mib_and_grows_with_the_file"
+        },
+        {
+          "file": "crates/os-store/tests/writer_batches.rs",
+          "result": "ok",
+          "test": "an_externally_set_checkpoint_threshold_is_left_alone"
         }
       ]
     },
@@ -5104,7 +5124,68 @@
       "packages": [
         "M1-P20"
       ],
-      "status": "implemented",
+      "parity": {
+        "exports": [
+          {
+            "agreement_pct": 98.443,
+            "cells_compared": 899,
+            "deviations": [
+              "DEV-001",
+              "DEV-003",
+              "DEV-004"
+            ],
+            "export": "internal_all",
+            "site": "out-basic-site"
+          },
+          {
+            "agreement_pct": 99.286,
+            "cells_compared": 4761,
+            "deviations": [
+              "DEV-001",
+              "DEV-003",
+              "DEV-004"
+            ],
+            "export": "internal_all",
+            "site": "parity-onpage"
+          },
+          {
+            "agreement_pct": 95.692,
+            "cells_compared": 2159,
+            "deviations": [
+              "DEV-001",
+              "DEV-003",
+              "DEV-004",
+              "DEV-032"
+            ],
+            "export": "internal_all",
+            "site": "parity-response"
+          },
+          {
+            "agreement_pct": 97.548,
+            "cells_compared": 20722,
+            "deviations": [
+              "DEV-001",
+              "DEV-003",
+              "DEV-004",
+              "DEV-025"
+            ],
+            "export": "internal_all",
+            "site": "parity-synthetic"
+          },
+          {
+            "agreement_pct": 99.572,
+            "cells_compared": 6070,
+            "deviations": [
+              "DEV-001",
+              "DEV-003",
+              "DEV-004"
+            ],
+            "export": "internal_all",
+            "site": "parity-technical"
+          }
+        ]
+      },
+      "status": "verified",
       "tests": [
         {
           "file": "crates/os-analyze/tests/tab_internal.rs",
@@ -5612,6 +5693,11 @@
           "ignore_reason": "M2: ONPAGE-054 „Malformed“ für ungültige Links braucht die Option „Crawl Invalid Links“ (CRAWL-054, P2)",
           "result": "ignored",
           "test": "invalid_links_are_reported_as_malformed_with_crawl_invalid_links"
+        },
+        {
+          "file": "crates/os-fetch/src/resolve.rs",
+          "result": "ok",
+          "test": "tests::reserved_tld_invalid_fails_immediately_without_the_system_resolver"
         }
       ]
     },
@@ -6177,7 +6263,18 @@
       "packages": [
         "M1-P22"
       ],
-      "status": "implemented",
+      "parity": {
+        "exports": [
+          {
+            "agreement_pct": 100.0,
+            "cells_compared": 588,
+            "deviations": [],
+            "export": "h1_all",
+            "site": "parity-onpage"
+          }
+        ]
+      },
+      "status": "verified",
       "tests": [
         {
           "file": "crates/os-analyze/tests/tab_h1.rs",
@@ -6242,7 +6339,18 @@
       "packages": [
         "M1-P22"
       ],
-      "status": "implemented",
+      "parity": {
+        "exports": [
+          {
+            "agreement_pct": 100.0,
+            "cells_compared": 588,
+            "deviations": [],
+            "export": "h2_all",
+            "site": "parity-onpage"
+          }
+        ]
+      },
+      "status": "verified",
       "tests": [
         {
           "file": "crates/os-analyze/tests/tab_h2.rs",
@@ -8878,6 +8986,11 @@
       "status": "implemented",
       "tests": [
         {
+          "file": "crates/os-engine/src/writer_thread.rs",
+          "result": "ok",
+          "test": "tests::full_channel_blocks_the_sender_until_the_writer_catches_up"
+        },
+        {
           "file": "crates/os-engine/tests/perf_backpressure.rs",
           "result": "ok",
           "test": "a_slow_store_throttles_the_crawl_but_it_continues_loses_nothing_and_ends"
@@ -8911,6 +9024,36 @@
       ],
       "status": "implemented",
       "tests": [
+        {
+          "file": "crates/os-engine/src/writer_thread.rs",
+          "result": "ok",
+          "test": "tests::messages_are_merged_in_order_and_flush_waits_for_the_write"
+        },
+        {
+          "file": "crates/os-engine/src/writer_thread.rs",
+          "result": "ok",
+          "test": "tests::the_first_batch_is_cut_at_the_normal_page_limit_before_any_backlog"
+        },
+        {
+          "file": "crates/os-engine/src/writer_thread.rs",
+          "result": "ok",
+          "test": "tests::a_backlog_is_written_as_few_large_batches_in_order"
+        },
+        {
+          "file": "crates/os-engine/src/writer_thread.rs",
+          "result": "ok",
+          "test": "tests::a_backlog_remainder_is_written_without_flush_after_the_backlog_wait"
+        },
+        {
+          "file": "crates/os-engine/src/writer_thread.rs",
+          "result": "ok",
+          "test": "tests::a_lone_message_is_written_after_the_maximum_wait"
+        },
+        {
+          "file": "crates/os-engine/src/writer_thread.rs",
+          "result": "ok",
+          "test": "tests::full_channel_blocks_the_sender_until_the_writer_catches_up"
+        },
         {
           "file": "crates/os-loadtest/tests/engine_adapter.rs",
           "result": "ok",
@@ -9553,7 +9696,18 @@
       "packages": [
         "M1-P06"
       ],
-      "status": "implemented",
+      "parity": {
+        "exports": [
+          {
+            "agreement_pct": 100.0,
+            "cells_compared": 1272,
+            "deviations": [],
+            "export": "canonicals_all",
+            "site": "parity-technical"
+          }
+        ]
+      },
+      "status": "verified",
       "tests": [
         {
           "file": "crates/os-analyze/tests/tab_canonicals.rs",
@@ -9621,7 +9775,18 @@
       "packages": [
         "M1-P24"
       ],
-      "status": "implemented",
+      "parity": {
+        "exports": [
+          {
+            "agreement_pct": 100.0,
+            "cells_compared": 1272,
+            "deviations": [],
+            "export": "canonicals_all",
+            "site": "parity-technical"
+          }
+        ]
+      },
+      "status": "verified",
       "tests": [
         {
           "file": "crates/os-analyze/tests/tab_canonicals.rs",
@@ -11040,10 +11205,10 @@
   },
   "summary": {
     "deferred": 0,
-    "implemented": 242,
+    "implemented": 237,
     "open": 0,
     "total": 242,
-    "verified": 0
+    "verified": 5
   },
   "warnings": []
 }

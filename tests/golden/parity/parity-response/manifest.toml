@@ -3,54 +3,56 @@
 # Die Roh-Exporte der Referenz liegen unveraendert in sf/ (siehe ../README.md); Agents legen dort nichts an.
 site = "parity-response"
 port = 8904                       # Port beim SF-Export (wird beim Vergleich zu {BASE} normalisiert)
-sf_version = ""                  # vom Nutzer eintragen, z. B. "24.3"
-exported_at = ""                 # vom Nutzer eintragen, z. B. "2026-10-20"
-sf_settings = "SF Free, Standardkonfiguration nach Neuinstallation (Speicher-Modus Standard, robots.txt respektieren); zusaetzlich aktiviert: Hreflang speichern+crawlen, XML-Sitemaps ueber robots.txt crawlen (falls in der Free-Version gesperrt: Exporte dieser Bereiche auf status = \"unavailable\" setzen und hier vermerken)."
+sf_version = "24.3"
+exported_at = "2026-10-14"
+sf_settings = "SF Free 24.3 (macOS arm64), Oberflächensprache für den Export auf English (UK) gestellt (Spaltennamen englisch), sonst Standardkonfiguration. In der Free-Version ist die Spider-Konfiguration gesperrt; daher galten die Standards: Hreflang speichern=an/crawlen=aus, Pagination speichern=an/crawlen=aus, verlinkte XML-Sitemaps crawlen=aus, XML-Sitemaps über robots.txt automatisch erkennen=an (Crawl aber aus), robots.txt respektieren, kein JS-Rendering. Crawl-Analyse wurde nach jedem Crawl ausgeführt. Exportiert per Bildschirmsteuerung durch den Orchestrator am 2026-10-14."
 
 [[export]]
 sf_file = "internal_all.csv"
 os = "tab:Internal:All"
 mapping = "internal_all"
-status = "pending"               # pending | present | unavailable
+status = "present"               # pending | present | unavailable
 
 [[export]]
 sf_file = "external_all.csv"
 os = "tab:External:All"
 mapping = "external_all"
-status = "pending"               # pending | present | unavailable
+status = "present"               # pending | present | unavailable
 
 [[export]]
 sf_file = "response_codes_all.csv"
 os = "tab:Response Codes:All"
 mapping = "response_codes_all"
-status = "pending"               # pending | present | unavailable
+status = "present"               # pending | present | unavailable
 
 [[export]]
 sf_file = "all_inlinks.csv"
 os = "bulk:Links:All Inlinks"
 mapping = "all_inlinks"
-status = "pending"               # pending | present | unavailable
+status = "present"               # pending | present | unavailable
 
 [[export]]
-sf_file = "all_error_inlinks.csv"
-os = "bulk:Response Codes:All Error Inlinks"
+sf_file = "all_error_(4xx_5xx_no_response)_inlinks.csv"
+os = "bulk:Response Codes:Internal & External:All Error Inlinks"
+os_file = "response_codes_internal_external_all_error_inlinks.csv"
 mapping = "all_error_inlinks"
-status = "pending"               # pending | present | unavailable
+status = "present"               # pending | present | unavailable
 
 [[export]]
 sf_file = "redirect_chains.csv"
 os = "report:Redirects:Redirect Chains"
 mapping = "redirect_chains"
-status = "pending"               # pending | present | unavailable
+status = "present"               # pending | present | unavailable
 
 [[export]]
-sf_file = "redirects_to_errors.csv"
+sf_file = "redirects_to_error.csv"
 os = "report:Redirects:Redirects to Errors"
 mapping = "redirects_to_errors"
-status = "pending"               # pending | present | unavailable
+status = "present"               # pending | present | unavailable
+skip = "Report Redirects to Errors (OUT-084) ist P1 und kein M1-Umfang (M1.md 7.2); OpenSpider hat in M1 nur Redirects:All Redirects und Redirects:Redirect Chains"
 
 [[export]]
 sf_file = "crawl_overview.csv"
 os = "report:Crawl Overview"
 mapping = "crawl_overview"
-status = "pending"               # pending | present | unavailable
+status = "present"               # pending | present | unavailable

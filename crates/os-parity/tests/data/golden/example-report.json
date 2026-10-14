@@ -89,6 +89,8 @@
   ],
   "missing_sf_columns": [],
   "missing_os_columns": [],
+  "ignored_sf_rows": [],
+  "os_only_rows": [],
   "threshold_pct": 99.0,
   "url_set_identical": false,
   "passed": false,

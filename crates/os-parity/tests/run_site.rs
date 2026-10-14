@@ -456,3 +456,67 @@ fn command_exporter_reports_nonzero_exit() {
     };
     assert!(bad.export(&req).is_err());
 }
+
+#[test]
+fn a_present_export_with_a_skip_reason_is_not_requested_and_reported_as_out_of_scope() {
+    let repo = repo();
+    let manifest = repo.root().join("tests/golden/parity/site-a/manifest.toml");
+    let mut text = std::fs::read_to_string(&manifest).unwrap();
+    text.push_str("\n[[export]]\nsf_file = \"chains.csv\"\nos = \"report:Redirects:Redirects to Errors\"\nmapping = \"internal_all\"\nstatus = \"present\"\nskip = \"OUT-084 ist P1\"\n");
+    write(&manifest, &text);
+    write(
+        &repo.root().join("tests/golden/parity/site-a/sf/chains.csv"),
+        "Address\nhttp://x/\n",
+    );
+    let seen = std::sync::Mutex::new(None);
+    let inner = fake("Start");
+    let exporter = |req: &ExportRequest| {
+        *seen.lock().unwrap() = Some(req.clone());
+        inner(req)
+    };
+    let s = run_sites(&repo.opts(&["site-a"], false), &exporter).unwrap();
+    assert!(s.passed, "{:?}", s.failures);
+    let req = seen.lock().unwrap().clone().unwrap();
+    assert!(
+        req.reports.is_empty(),
+        "übersprungene Exporte werden nicht angefordert: {req:?}"
+    );
+    let skipped = s.sites[0]
+        .exports
+        .iter()
+        .find(|e| e.sf_file == "chains.csv")
+        .unwrap();
+    let Outcome::Skipped { reason } = &skipped.outcome else {
+        panic!("{:?}", skipped.outcome);
+    };
+    assert!(
+        reason.contains("außerhalb des M1-Umfangs") && reason.contains("OUT-084"),
+        "{reason}"
+    );
+}
+
+#[test]
+fn the_markdown_summary_lists_deviations_and_free_restrictions_separately() {
+    let repo = repo();
+    write(
+        &repo.root().join("tests/parity/deviations.toml"),
+        "[[deviation]]\nid = \"DEV-1\"\nspec = \"ONPAGE-001\"\nkind = \"Annahme\"\ncolumn = \"Title 1\"\nreason = \"Titel weicht ab\"\n[[deviation]]\nid = \"SF-FREE-01\"\nspec = \"TECH-210\"\nkind = \"Annahme\"\ncolumn = \"Status Code\"\nreason = \"SF-Free-Einschränkung (Spider-Konfiguration gesperrt): Test\"\n",
+    );
+    // Titel und Statuscode weichen ab: beide Abweichungen greifen.
+    let exporter = |req: &ExportRequest| {
+        let base = req.base_url.trim_end_matches('/');
+        std::fs::create_dir_all(&req.out_dir)?;
+        std::fs::write(
+            req.out_dir.join("internal_all.csv"),
+            format!("Address,Status Code,Title 1\n{base}/,201,Anders\n{base}/a.html,404,\n"),
+        )?;
+        Ok(())
+    };
+    let s = run_sites(&repo.opts(&["site-a"], false), &exporter).unwrap();
+    let md = os_parity::run::summary_markdown(&s);
+    let plain = md.find("## Begründete Paritätsabweichungen").expect(&md);
+    let free = md.find("## Referenzeinschränkungen SF Free").expect(&md);
+    assert!(plain < free);
+    assert!(md[plain..free].contains("DEV-1") && !md[plain..free].contains("SF-FREE-01"));
+    assert!(md[free..].contains("SF-FREE-01"));
+}

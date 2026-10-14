@@ -44,6 +44,8 @@ fn run_with(packages: &Path, strict: bool) -> Outcome {
         write: Some(write.clone()),
         root: dir.path().to_path_buf(),
         strict,
+        parity_report: None,
+        evidence: None,
     })
     .unwrap();
     let json: Value = serde_json::from_str(&std::fs::read_to_string(write).unwrap()).unwrap();
@@ -186,6 +188,8 @@ fn extra_ids_do_not_count_for_summary_exit_code_or_strict() {
         write: None,
         root: ws.to_path_buf(),
         strict: true,
+        parity_report: None,
+        evidence: None,
     })
     .unwrap());
 }

@@ -103,6 +103,16 @@ pub struct CellRules {
     pub empty_equals_null: bool,
     /// Wertabbildung Referenz → OpenSpider.
     pub map: BTreeMap<String, String>,
+    /// Groß-/Kleinschreibung beim Textvergleich ignorieren.
+    pub ignore_case: bool,
+    /// Leer und `0` sind gleich (Referenz schreibt `0`, wo OpenSpider keinen Wert hat).
+    pub zero_as_empty: bool,
+    /// Nur die Elementfolge eines XPath vergleichen (Positionsindizes und Wurzelschreibweise ignorieren).
+    pub xpath_tags: bool,
+    /// Führende Nullen einer Hexadezimalkette sind unerheblich.
+    pub hex_trim_zeros: bool,
+    /// Die Referenz schreibt Dezimalzahlen mit Komma und Prozentwerte mit `%` (`91,67%`).
+    pub decimal_comma: bool,
 }
 
 impl CellRules {
@@ -118,10 +128,12 @@ impl CellRules {
 
     /// Wendet die Wertabbildung auf den (aufbereiteten) Referenzwert an.
     pub fn map_reference(&self, prepared: &str) -> String {
-        self.map
-            .get(prepared)
-            .cloned()
-            .unwrap_or_else(|| prepared.to_string())
+        let prepared = if self.decimal_comma {
+            normalize_decimal_comma(prepared)
+        } else {
+            prepared.to_string()
+        };
+        self.map.get(prepared.as_str()).cloned().unwrap_or(prepared)
     }
 
     /// Vergleicht zwei aufbereitete Werte (Referenz schon abgebildet).
@@ -130,6 +142,25 @@ impl CellRules {
             return true;
         }
         if reference == actual {
+            return true;
+        }
+        if self.zero_as_empty
+            && ((reference.is_empty() && is_zero(actual))
+                || (actual.is_empty() && is_zero(reference)))
+        {
+            return true;
+        }
+        if self.ignore_case && reference.to_lowercase() == actual.to_lowercase() {
+            return true;
+        }
+        if self.hex_trim_zeros
+            && !reference.is_empty()
+            && !actual.is_empty()
+            && reference.trim_start_matches('0') == actual.trim_start_matches('0')
+        {
+            return true;
+        }
+        if self.xpath_tags && xpath_tag_sequence(reference) == xpath_tag_sequence(actual) {
             return true;
         }
         if self.bool_mode != BoolMode::Off {
@@ -153,6 +184,48 @@ impl CellRules {
         }
         false
     }
+}
+
+fn is_zero(v: &str) -> bool {
+    parse_number(v).is_some_and(|n| n == 0.0)
+}
+
+/// `91,67%` → `91.67`, `20,768` → `20.768`; alles andere bleibt unverändert. Nur Werte der Form
+/// Ziffern, ein Komma, Ziffern (optional mit Vorzeichen und `%`) gelten als Dezimalzahl.
+pub fn normalize_decimal_comma(v: &str) -> String {
+    let t = v.trim();
+    let body = t.strip_suffix('%').unwrap_or(t);
+    let digits = body.strip_prefix(['-', '+']).unwrap_or(body);
+    let ok = match digits.split_once(',') {
+        Some((i, f)) => {
+            !i.is_empty()
+                && !f.is_empty()
+                && i.chars().all(|c| c.is_ascii_digit())
+                && f.chars().all(|c| c.is_ascii_digit())
+        }
+        None => false,
+    };
+    if ok {
+        body.replace(',', ".")
+    } else if t.ends_with('%') && parse_number(body).is_some() {
+        body.to_string()
+    } else {
+        v.to_string()
+    }
+}
+
+/// Elementfolge eines XPath ohne Positionsindizes: `//body/nav/a[2]` und `/html[1]/body[1]/nav[1]/a[2]`
+/// ergeben beide `body/nav/a` (`html` am Anfang entfällt).
+pub fn xpath_tag_sequence(path: &str) -> Vec<String> {
+    let mut tags: Vec<String> = path
+        .split('/')
+        .filter(|s| !s.is_empty())
+        .map(|s| s.split('[').next().unwrap_or(s).to_string())
+        .collect();
+    if tags.first().is_some_and(|t| t == "html") {
+        tags.remove(0);
+    }
+    tags
 }
 
 fn is_nullish(v: &str) -> bool {

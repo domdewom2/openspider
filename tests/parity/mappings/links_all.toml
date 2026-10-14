@@ -1,19 +1,19 @@
 # Spaltenmapping SF -> OpenSpider fuer den Export "Links:All" (Format: docs/plan/M1.md 5.2).
-# Spaltennamen rechts sind die kanonischen OpenSpider-Namen aus der Spec; Annahme: die Referenz nutzt dieselben
-# funktionalen Bezeichner. Abweichungen klaert M1-P29 anhand der echten Exporte.
+# Stand M1-P29 (Welle 5): an die echten Kopfzeilen der Referenz (SF 24.3 Free, englische Oberflaeche) angepasst.
+# Nur Spaltennamen der Kopfzeile; Beschreibungsspalten werden beim Einlesen verworfen (Clean-Room, A8).
 key = ["Address"]
 drop_sf_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Referenz nie einlesen
 
 [columns]
 "Address" = "Address"
 "Indexability" = "Indexability"
-"Indexability Status" = "Indexability Status"
+"Indexability Status" = { os = "Indexability Status", transform = ["ignore_case"] }
 "Crawl Depth" = "Crawl Depth"
-"Link Score" = { ignore = true, reason = "nicht in M1 (P1/P2)" }
-"Inlinks" = { ignore = true, reason = "Spalte steht nicht in der Referenz-Spaltenliste des Links-Tabs (TECH-130)" }
+"Link Score" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2) (TECH-145)" }
+"Inlinks" = { ignore = true, reason = "TECH-130: Zusatzspalte, in OpenSpider im Links-Tab standardmaessig ausgeblendet und daher nicht im Export (Paritaetstests ignorieren sie); die Referenz exportiert sie, siehe Abnahmebericht" }
 "Unique Inlinks" = "Unique Inlinks"
 "Unique JS Inlinks" = { ignore = true, reason = "nur mit JavaScript-Rendering (M2)" }
-"% of Total" = "% of Total"
+"% of Total" = { os = "% of Total", transform = ["decimal_comma"] }
 "Outlinks" = "Outlinks"
 "Unique Outlinks" = "Unique Outlinks"
 "Unique JS Outlinks" = { ignore = true, reason = "nur mit JavaScript-Rendering (M2)" }

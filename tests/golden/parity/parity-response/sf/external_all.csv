@@ -1,0 +1,6 @@
+﻿"Address","Content Type","Status Code","Status","Crawl Depth","Inlinks"
+"http://localhost:1/","","0","Connection Timeout","1","1"
+"http://localhost:8904/ok.html","text/html; charset=utf-8","200","OK","1","1"
+"http://localhost:8904/e404","text/html; charset=utf-8","404","Not Found","1","1"
+"http://localhost:8904/e500","text/html; charset=utf-8","500","Internal Server Error","1","1"
+"http://localhost:8904/r301","","301","Moved Permanently","1","1"
