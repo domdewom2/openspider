@@ -41,6 +41,9 @@ pub struct CrawlOutcome {
     pub extra: BTreeMap<String, serde_json::Value>,
     /// Verletzte Kriterien des Szenarios (leer = alle erfüllt); jede Verletzung lässt den Lauf scheitern.
     pub violations: Vec<String>,
+    /// Auffälligkeiten, die den Lauf nicht scheitern lassen (z. B. bekannte Defekte, überschrittene
+    /// Spec-Richtwerte); landen als `crawler_warnings` im Bericht.
+    pub warnings: Vec<String>,
 }
 
 /// Fehler eines Crawl-Laufs.

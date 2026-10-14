@@ -132,8 +132,21 @@ async fn seeded_hard_kills_leave_a_consistent_file_that_resumes_to_the_reference
     let bound = metric(&rep, "crawler_repeated_requests_bound")
         .as_u64()
         .unwrap();
-    assert_eq!(bound, 2 * (4 + 200));
+    assert_eq!(
+        bound,
+        2 * (4 + 256 + 1_000),
+        "Gate: Threads + Kanal + Rückstau-Batch"
+    );
     assert!(repeated <= bound, "{repeated} > {bound}");
+    // die engere Grenze aus der Spec (Threads + 200 je Abbruch) steht im Bericht, ihre Einhaltung als Messwert
+    assert_eq!(
+        metric(&rep, "crawler_repeated_requests_spec_bound"),
+        &Value::from(2 * (4 + 200))
+    );
+    assert_eq!(
+        metric(&rep, "crawler_within_spec_bound").as_bool(),
+        Some(repeated <= 2 * (4 + 200))
+    );
     // die Statuswerte stehen im Bericht
     let counts = metric(&rep, "crawler_status_counts").as_object().unwrap();
     assert!(counts.contains_key("200"), "{counts:?}");

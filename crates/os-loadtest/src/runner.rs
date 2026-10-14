@@ -226,6 +226,7 @@ pub async fn run(
                 metrics.insert(format!("crawler_{k}"), v);
             }
             metrics.insert("crawler_violations".into(), json!(outcome.violations));
+            metrics.insert("crawler_warnings".into(), json!(outcome.warnings));
             crawler_ok = outcome.urls_crawled >= model.pages() && outcome.violations.is_empty();
         }
         Err(CrawlerError::NotImplemented) => {

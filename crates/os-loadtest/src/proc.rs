@@ -34,6 +34,7 @@ pub struct Proc {
     lines: mpsc::Receiver<String>,
     started: Instant,
     stall_timeout: Duration,
+    last_crawled: Option<u64>,
 }
 
 /// Wert von `key=` in einer Protokollzeile.
@@ -69,6 +70,7 @@ impl Proc {
             lines: rx,
             started: Instant::now(),
             stall_timeout,
+            last_crawled: None,
         })
     }
 
@@ -93,6 +95,7 @@ impl Proc {
     pub fn wait_until_crawled(&mut self, target: u64) -> Result<Option<u64>, String> {
         while let Some(line) = self.next_line()? {
             if let Some(n) = progress_crawled(&line) {
+                self.last_crawled = Some(n);
                 if n >= target {
                     return Ok(Some(n));
                 }
@@ -101,10 +104,17 @@ impl Proc {
         Ok(None)
     }
 
-    /// Beendet das Kind hart (`SIGKILL` bzw. `TerminateProcess`) und wartet darauf.
-    pub fn kill(mut self) -> std::io::Result<()> {
+    /// Beendet das Kind hart (`SIGKILL` bzw. `TerminateProcess`), wartet darauf und liefert den letzten gemeldeten
+    /// Stand von `crawled` (auch aus Zeilen, die erst nach dem Abbruchbefehl eintrafen).
+    pub fn kill(mut self) -> std::io::Result<Option<u64>> {
         self.child.kill()?;
-        self.child.wait().map(|_| ())
+        self.child.wait()?;
+        while let Ok(line) = self.lines.recv() {
+            if let Some(n) = progress_crawled(&line) {
+                self.last_crawled = Some(n);
+            }
+        }
+        Ok(self.last_crawled)
     }
 
     /// Liest bis zum Ende der Ausgabe, wartet auf den Exit und misst den Spitzen-RSS.
