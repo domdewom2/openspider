@@ -107,7 +107,7 @@ reason = "Follow=False auch bei Meta/X-Robots nofollow der Quellseite (OUT-031);
 id = "DEV-009"
 spec = "OUT-031"
 kind = "Paritaetsabweichung"
-export = "all_inlinks"
+export = "all_inlinks|all_error_inlinks"
 site = "*"
 column = "Link Origin"
 sf = "HTTP"
@@ -294,9 +294,9 @@ spec = "OUT-081"
 kind = "OS-Festlegung"
 export = "redirect_chains"
 site = "*"
-column = "Final Address|Final Indexability|Final Indexability Status|Final Status Code|Final Status"
-key_prefix = "{BASE}/loop1"
-reason = "Bei einer Weiterleitungsschleife ist Final Address leer und Final Status = Redirect Loop (OUT-081); die Referenz nennt die letzte Station der Schleife samt ihrem Status."
+column = "Final Address|Final Indexability|Final Indexability Status|Final Content Type|Final Status Code|Final Status"
+key_prefixes = ["{BASE}/loop1", "{BASE}/meta-refresh-self.html", "{BASE}/dir/refresh-bare.html"]
+reason = "Bei einer Weiterleitungsschleife ist Final Address leer und Final Status = Redirect Loop (OUT-081); die Referenz nennt die letzte Station der Schleife samt ihrem Status. Das gilt auch fuer den Selbst-Refresh (Weiterleitung auf sich selbst, K-57): die Referenz nennt die Seite selbst mit 200/OK."
 
 [[deviation]]
 id = "DEV-031"
