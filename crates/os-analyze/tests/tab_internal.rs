@@ -928,6 +928,15 @@ async fn hash_is_empty_for_non_html_responses_and_redirects() {
     for path in ["/doc.pdf", "/chunked.pdf", "/r", "/blocked/x.html"] {
         assert!(t.is_empty_cell(path, "Hash"), "{path}");
     }
+    // Fehlerseiten mit HTML-Körper: kein Hash (die Referenz schreibt ihn nur für 2xx)
+    let rc = crawl_fixture("onpage-rc", CrawlConfig::default()).await;
+    let rt = all_columns(&rc, "All");
+    for path in ["/e400", "/e404", "/e500", "/s999"] {
+        assert!(rt.is_empty_cell(path, "Hash"), "{path}");
+    }
+    assert_eq!(rt.text("/ok", "Hash").len(), 32);
+    // 204 ohne Content-Type: Hash des leeren Körpers
+    assert_eq!(rt.text("/s204", "Hash"), "d41d8cd98f00b204e9800998ecf8427e");
     assert_eq!(t.text("/elements.html", "Hash").len(), 32);
 }
 

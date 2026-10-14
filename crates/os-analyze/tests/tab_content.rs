@@ -464,17 +464,19 @@ async fn exact_duplicates_compare_the_hash_of_indexable_pages() {
     assert!(!dupes.contains(&"/noidx.html".to_string()));
     assert!(!dupes.contains(&"/unique.html".to_string()));
     assert!(dupes.iter().all(|a| !a.contains("gone")));
-    // Die 404-Seiten tragen tatsächlich denselben Hash (sonst bewiese der Test nichts).
-    let gone: i64 = fx
+    // Die 404-Seiten haben denselben Inhalt, aber keinen Hash (Hash nur für HTML mit 2xx, ONPAGE-018, K-60); die
+    // Grundmenge schließt sie unabhängig davon aus.
+    let (gone_pages, gone_hashes): (i64, i64) = fx
         .file
         .conn()
         .query_row(
-            "SELECT COUNT(DISTINCT hash_md5) FROM urls WHERE address LIKE '%/gone%.html' AND status_code = 404",
+            "SELECT COUNT(*), COUNT(hash_md5) FROM urls WHERE address LIKE '%/gone%.html' AND status_code = 404",
             [],
-            |r| r.get(0),
+            |r| Ok((r.get(0)?, r.get(1)?)),
         )
         .unwrap();
-    assert_eq!(gone, 1);
+    assert!(gone_pages >= 2, "{gone_pages}");
+    assert_eq!(gone_hashes, 0);
     assert_view_golden(&fx, &cfg, DUPES, TAB, "Exact Duplicates");
     assert_view_golden(&fx, &cfg, DUPES, TAB, "All");
 }
