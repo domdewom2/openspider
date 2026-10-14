@@ -35,8 +35,11 @@ pub enum StorageProfile {
 /// Obergrenze des Caches im Profil „Maximale Geschwindigkeit“: 4 GiB in KiB (K-16, PERF-001).
 pub const MAX_SPEED_CACHE_CAP_KIB: i64 = 4 * 1024 * 1024;
 
-/// Untergrenze des automatischen WAL-Checkpoints in Seiten: 16 384 Seiten (64 MiB bei 4 KiB Seitengröße).
-pub const WAL_CHECKPOINT_MIN_PAGES: i64 = 16_384;
+/// Untergrenze des automatischen WAL-Checkpoints in Seiten: 65 536 Seiten (256 MiB bei 4 KiB Seitengröße). Ein
+/// Crawl bis zu dieser WAL-Größe (rund 10 000 Seiten mit 30 Links in vier Gruppen-Commits) wird erst am Ende
+/// zurückgeführt: ein Checkpoint mitten im Crawl schreibt und synchronisiert die Hauptdatei ein zweites Mal, und der
+/// Echtzeitscan unter Windows prüft die Datei danach erneut (CI-Messung: 7,5 s zusätzlich bei 59 MB).
+pub const WAL_CHECKPOINT_MIN_PAGES: i64 = 65_536;
 
 /// Obergrenze des automatischen WAL-Checkpoints in Seiten: 131 072 Seiten (512 MiB bei 4 KiB Seitengröße). Das
 /// WAL kann sich bis dahin füllen, ehe es zurückgeführt wird; größere Werte kosten Plattenplatz und
@@ -46,7 +49,12 @@ pub const WAL_CHECKPOINT_MAX_PAGES: i64 = 131_072;
 /// Schwelle für `PRAGMA wal_autocheckpoint` bei einer Datei mit `db_pages` Seiten: die Dateigröße, begrenzt auf
 /// [`WAL_CHECKPOINT_MIN_PAGES`] bis [`WAL_CHECKPOINT_MAX_PAGES`].
 pub fn wal_checkpoint_pages(db_pages: i64) -> i64 {
-    db_pages.clamp(WAL_CHECKPOINT_MIN_PAGES, WAL_CHECKPOINT_MAX_PAGES)
+    wal_checkpoint_pages_between(db_pages, WAL_CHECKPOINT_MIN_PAGES, WAL_CHECKPOINT_MAX_PAGES)
+}
+
+/// Wie [`wal_checkpoint_pages`] mit eigenen Grenzen (Tests).
+pub fn wal_checkpoint_pages_between(db_pages: i64, min_pages: i64, max_pages: i64) -> i64 {
+    db_pages.clamp(min_pages, max_pages.max(min_pages))
 }
 
 /// Untergrenze des Caches im Profil „Maximale Geschwindigkeit“: der Wert von „Ausgewogen“ (nur relevant auf
@@ -192,7 +200,7 @@ mod tests {
     #[test]
     fn the_checkpoint_threshold_follows_the_file_size_within_its_bounds() {
         assert_eq!(wal_checkpoint_pages(0), WAL_CHECKPOINT_MIN_PAGES);
-        assert_eq!(wal_checkpoint_pages(20_000), 20_000);
+        assert_eq!(wal_checkpoint_pages(100_000), 100_000);
         assert_eq!(wal_checkpoint_pages(i64::MAX), WAL_CHECKPOINT_MAX_PAGES);
     }
 }

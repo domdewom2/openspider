@@ -603,19 +603,25 @@ fn wal_autocheckpoint_of(sink: &os_store::SqliteSink) -> i64 {
 
 // Infrastruktur (M1-P30, Windows-Durchsatz), kein Spec-Tag.
 #[test]
-fn the_checkpoint_threshold_starts_at_64_mib_and_grows_with_the_file() {
+fn the_checkpoint_threshold_starts_at_256_mib_and_grows_with_the_file() {
     use os_store::profile::{WAL_CHECKPOINT_MAX_PAGES, WAL_CHECKPOINT_MIN_PAGES};
     let dir = tempfile::tempdir().unwrap();
     let path = new_crawl(dir.path(), "wal.ospider", StorageProfile::Balanced);
-    let mut sink = sink(&path, StorageProfile::Balanced);
-    assert_eq!(wal_autocheckpoint_of(&sink), WAL_CHECKPOINT_MIN_PAGES);
+    let sink0 = sink(&path, StorageProfile::Balanced);
+    assert_eq!(wal_autocheckpoint_of(&sink0), WAL_CHECKPOINT_MIN_PAGES);
+    assert_eq!(WAL_CHECKPOINT_MIN_PAGES * 4096, 256 * 1024 * 1024);
+    drop(sink0);
 
-    // Datei auf rund 24 000 Seiten bringen (je Zeile eine Seite): über 125 % der Untergrenze
+    // Mit kleinen Grenzen (2 000 bis 6 000 Seiten) lässt sich das Mitwachsen mit einer kleinen Datei prüfen.
+    let mut sink = sink(&path, StorageProfile::Balanced)
+        .with_checkpoint_bounds(2_000, 6_000)
+        .unwrap();
+    assert_eq!(wal_autocheckpoint_of(&sink), 2_000);
     {
         let conn = sink.file().conn();
         conn.execute_batch("CREATE TABLE filler (a BLOB)").unwrap();
         let tx = conn.unchecked_transaction().unwrap();
-        for _ in 0..24_000 {
+        for _ in 0..4_000 {
             tx.execute("INSERT INTO filler VALUES (zeroblob(4000))", [])
                 .unwrap();
         }
@@ -624,9 +630,21 @@ fn the_checkpoint_threshold_starts_at_64_mib_and_grows_with_the_file() {
     sink.write(batch_with_urls([(1, true)])).unwrap();
     let grown = wal_autocheckpoint_of(&sink);
     assert!(
-        grown > WAL_CHECKPOINT_MIN_PAGES && grown <= WAL_CHECKPOINT_MAX_PAGES,
-        "Schwelle {grown} Seiten"
+        (4_000..=6_000).contains(&grown),
+        "Schwelle {grown} Seiten bei rund 4 000 Seiten Dateigröße"
     );
+    // Über der Obergrenze bleibt sie dort.
+    {
+        let tx = sink.file().conn().unchecked_transaction().unwrap();
+        for _ in 0..4_000 {
+            tx.execute("INSERT INTO filler VALUES (zeroblob(4000))", [])
+                .unwrap();
+        }
+        tx.commit().unwrap();
+    }
+    sink.write(batch_with_urls([(2, true)])).unwrap();
+    assert_eq!(wal_autocheckpoint_of(&sink), 6_000);
+    assert!(WAL_CHECKPOINT_MAX_PAGES >= WAL_CHECKPOINT_MIN_PAGES);
 }
 
 // Infrastruktur (M1-P30, Windows-Durchsatz), kein Spec-Tag.

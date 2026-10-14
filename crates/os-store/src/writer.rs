@@ -48,6 +48,9 @@ pub struct SqliteSink {
     /// Zuletzt gesetzte Schwelle von `PRAGMA wal_autocheckpoint` (Seiten); `None`, sobald jemand anderes sie
     /// geändert hat (dann stellt der Sink sie nicht mehr um).
     checkpoint_pages: Option<i64>,
+    /// Grenzen der Checkpoint-Schwelle in Seiten (Standard: [`profile::WAL_CHECKPOINT_MIN_PAGES`] bis
+    /// [`profile::WAL_CHECKPOINT_MAX_PAGES`]).
+    checkpoint_bounds: (i64, i64),
 }
 
 impl SqliteSink {
@@ -64,7 +67,27 @@ impl SqliteSink {
             profile,
             clock: Arc::new(SystemClock),
             checkpoint_pages: Some(profile::WAL_CHECKPOINT_MIN_PAGES),
+            checkpoint_bounds: (
+                profile::WAL_CHECKPOINT_MIN_PAGES,
+                profile::WAL_CHECKPOINT_MAX_PAGES,
+            ),
         })
+    }
+
+    /// Setzt die Grenzen der Checkpoint-Schwelle (Seiten) und die Schwelle auf die Untergrenze; sie wächst danach
+    /// mit der Datei bis zur Obergrenze. Für Tests und Messläufe mit kleinen Dateien.
+    pub fn with_checkpoint_bounds(
+        mut self,
+        min_pages: i64,
+        max_pages: i64,
+    ) -> Result<Self, StoreError> {
+        let min_pages = min_pages.max(1);
+        self.file
+            .conn()
+            .pragma_update(None, "wal_autocheckpoint", min_pages)?;
+        self.checkpoint_bounds = (min_pages, max_pages.max(min_pages));
+        self.checkpoint_pages = Some(min_pages);
+        Ok(self)
     }
 
     /// Ersetzt die Zeitquelle (Regel 2.8): sie liefert `robots_files.fetched_at`.
@@ -88,7 +111,8 @@ impl SqliteSink {
         let Ok(pages) = conn.pragma_query_value(None, "page_count", |r| r.get::<_, i64>(0)) else {
             return;
         };
-        let want = profile::wal_checkpoint_pages(pages);
+        let (min_pages, max_pages) = self.checkpoint_bounds;
+        let want = profile::wal_checkpoint_pages_between(pages, min_pages, max_pages);
         // erst ab 25 % Zuwachs umstellen (die Datei wächst nur)
         if want > current + current / 4
             && conn.pragma_update(None, "wal_autocheckpoint", want).is_ok()
@@ -124,8 +148,11 @@ impl Drop for SqliteSink {
 
 fn wal_checkpoint(conn: &Connection) -> Result<(), StoreError> {
     let t = std::time::Instant::now();
-    let result = conn.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |_| Ok(()));
-    crate::sink::diag::record_checkpoint(t);
+    // Antwort: (busy, Frames im WAL, davon zurückgeführt)
+    let result = conn.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |r| {
+        r.get::<_, i64>(1)
+    });
+    crate::sink::diag::record_checkpoint(t, result.as_ref().map_or(0, |n| (*n).max(0) as u64));
     result?;
     Ok(())
 }

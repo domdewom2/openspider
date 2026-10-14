@@ -26,7 +26,7 @@ pub trait CrawlSink: Send {
 /// | `build_ns` | Zeit von `BEGIN` bis vor `COMMIT` (Einfügen und Ändern der Zeilen) |
 /// | `commit_ns` / `commit_max_ns` | Summe/Maximum von `COMMIT` (enthält den automatischen WAL-Checkpoint) |
 /// | `commit_slow` | Commits ab [`SLOW_COMMIT_NS`] |
-/// | `checkpoint_ns` / `checkpoints` / `checkpoint_max_ns` | ausdrückliche `wal_checkpoint`-Aufrufe |
+/// | `checkpoint_ns` / `checkpoints` / `checkpoint_max_ns` / `checkpoint_frames` | ausdrückliche `wal_checkpoint`-Aufrufe, `frames` = Frames im WAL zu Beginn (je 4 KiB) |
 pub mod diag {
 
     use std::sync::atomic::{AtomicU64, Ordering};
@@ -60,6 +60,7 @@ pub mod diag {
         checkpoints,
         checkpoint_ns,
         checkpoint_max_ns,
+        checkpoint_frames,
     );
 
     /// Die Zähler dieses Prozesses.
@@ -96,7 +97,8 @@ pub mod diag {
     }
 
     /// Verbucht einen ausdrücklichen WAL-Checkpoint.
-    pub(crate) fn record_checkpoint(t: Instant) {
+    pub(crate) fn record_checkpoint(t: Instant, frames: u64) {
+        STATS.checkpoint_frames.fetch_add(frames, Ordering::Relaxed);
         let ns = nanos(t);
         STATS.checkpoints.fetch_add(1, Ordering::Relaxed);
         STATS.checkpoint_ns.fetch_add(ns, Ordering::Relaxed);
