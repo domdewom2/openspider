@@ -474,8 +474,14 @@ pub(crate) fn facts_from_result(res: &FetchResult, cfg: &CrawlConfig) -> FetchFa
                 f.last_modified_raw = header(&r.headers, "last-modified").map(str::to_string);
                 f.last_modified = f.last_modified_raw.as_deref().and_then(parse_http_date);
             }
-            // ONPAGE-018 (K-60): MD5 nur für HTML-Antworten (Inhaltsklasse HTML), sonst leer.
-            if cfg.extraction.hash && f.content_class == ContentClass::Html {
+            // ONPAGE-018 (K-60): MD5 nur für HTML-Antworten (Inhaltsklasse HTML) mit Status 2xx, sonst leer. Die
+            // Referenz hasht außerdem 2xx-Antworten ohne Content-Type (z. B. 204: Hash des leeren Körpers);
+            // Fehlerseiten, Weiterleitungen, Bilder, CSS, JS, PDF und Text bleiben leer.
+            let ok = (200..300).contains(&r.status);
+            if cfg.extraction.hash
+                && ok
+                && (f.content_class == ContentClass::Html || f.content_type.is_none())
+            {
                 f.hash_md5 = Some(r.md5_hex.clone());
             }
         }
@@ -1619,7 +1625,7 @@ mod tests {
 
     // spec: ONPAGE-018
     #[test]
-    fn hash_is_only_set_for_html_responses() {
+    fn hash_is_only_set_for_html_2xx_responses() {
         let cfg = CrawlConfig::default();
         let html = response(200, &[("content-type", "text/html")], "<html></html>");
         assert_eq!(
@@ -1629,15 +1635,21 @@ mod tests {
                 .map(str::len),
             Some(32)
         );
-        // 404 mit HTML-Körper trägt einen Hash, Bilder, CSS, Text und Antworten ohne Content-Type nicht (K-60)
+        // Fehlerseiten mit HTML-Körper, Bilder, CSS, Text und Weiterleitungen haben keinen Hash (K-60)
         let error = response(404, &[("content-type", "text/html")], "<html></html>");
-        assert!(facts_from_result(&error, &cfg).hash_md5.is_some());
+        assert_eq!(facts_from_result(&error, &cfg).hash_md5, None);
         for ct in ["image/png", "text/css", "text/plain", "application/json"] {
             let res = response(200, &[("content-type", ct)], "abc");
             assert_eq!(facts_from_result(&res, &cfg).hash_md5, None, "{ct}");
         }
         let redirect = response(301, &[("location", "/x")], "");
         assert_eq!(facts_from_result(&redirect, &cfg).hash_md5, None);
+        // 2xx ohne Content-Type (204): Hash des leeren Körpers wie in der Referenz
+        let no_content = response(204, &[], "");
+        assert_eq!(
+            facts_from_result(&no_content, &cfg).hash_md5.as_deref(),
+            Some("d41d8cd98f00b204e9800998ecf8427e")
+        );
     }
 
     // spec: CRAWL-022
