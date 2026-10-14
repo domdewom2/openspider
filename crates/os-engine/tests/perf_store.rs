@@ -11,6 +11,16 @@
 //!   Seiten ist für `SqliteSink` ein Batch mit 200·K Seiten; gemessen werden 200, 1 000 (= `BATCH_PAGES_BACKLOG` der
 //!   Engine) und 5 000 Seiten je Batch auf derselben Last.
 //!
+//! Messwerte (M1-P30, Apple M2, 100 000 Seiten x 30 Links, gleichverteilte Ziele):
+//!
+//! | Seiten je Transaktion | vorher (Checkpoint alle 1 000 Seiten) | nachher (Schwelle 256 MiB bis 512 MiB) |
+//! |---:|---:|---:|
+//! | 200 | 62,7 s | 40,7 s (−35 %) |
+//! | 1 000 | 35,1 s (−44 %) | 27,7 s (−32 % gegenüber 200) |
+//! | 5 000 | 21,4 s (−66 %) | 19,9 s (−51 % gegenüber 200) |
+//!
+//! Die Engine fasst bei Rückstau bis zu `BATCH_PAGES_BACKLOG` (5 000) Seiten zusammen (`writer_thread`).
+//!
 //! Die Datei baut die Daten selbst (kein Zugriff auf die Hilfen der os-store-Tests).
 
 use std::path::Path;

@@ -40,14 +40,16 @@ use tokio::sync::{mpsc, oneshot};
 /// Seiten je Batch im Normalbetrieb (M1-Plan 3.7).
 pub const BATCH_PAGES: usize = 200;
 /// Größter Batch (Seiten) bei Rückstau, der Gruppen-Commit (M1-P30). Begrenzt auch, was bei einem harten Abbruch
-/// ungeschrieben bleiben kann (K-49).
-pub const BATCH_PAGES_BACKLOG: usize = 5_000;
+/// ungeschrieben bleiben kann (K-49) und den Speicher des Writers (rund 12 KiB je Seite): 5 000 Seiten ließen den
+/// Spitzen-RSS des Kindprozesses bei 10 000 Seiten um rund 40 MB steigen, ohne den Durchsatz messbar zu erhöhen
+/// (ein Gruppen-Commit ist meist durch die Sammelzeit [`BATCH_MAX_WAIT_BACKLOG`] begrenzt, nicht durch die Seitenzahl).
+pub const BATCH_PAGES_BACKLOG: usize = 2_000;
 /// Längste Wartezeit, bis ein nicht voller Batch im Normalbetrieb geschrieben wird.
 pub const BATCH_MAX_WAIT: Duration = Duration::from_millis(100);
 /// Längste Wartezeit beim Sammeln eines Gruppen-Commits (Rückstau).
 pub const BATCH_MAX_WAIT_BACKLOG: Duration = Duration::from_millis(500);
 /// Nachrichten, die im Kanal warten dürfen, bevor die Worker blockieren.
-pub const CHANNEL_CAPACITY: usize = 2_048;
+pub const CHANNEL_CAPACITY: usize = 256;
 
 enum Msg {
     Batch(Box<WriteBatch>),

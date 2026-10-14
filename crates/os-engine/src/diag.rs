@@ -11,7 +11,7 @@
 //! |---|---|
 //! | Worker | `items`, `item_ns` (gesamt), `host_wait_ns`, `robots_ns`, `fetch_ns`/`fetch_max_ns`/`fetch_slow` (Abrufe ab 250 ms), `analyze_ns`, `assemble_ns` (einschließlich `reserve_ns`), `reserve_ns`/`reserve_max_ns` (Platz im Kanal), `send_ns`/`send_max_ns` (Senden mit Gegendruck) |
 //! | Steuerschleife | `run_loops`, `run_pops` |
-//! | Writer-Thread | `w_batches`, `w_pages`, `w_write_ns`/`w_write_max_ns`, `w_idle_ns` (wartet auf Arbeit), `w_poll_sleeps`/`w_poll_sleep_ns` (Abfragen mit Schlafen), `w_queue_max`, `w_b_le50`, `w_b_le200`, `w_b_le1000`, `w_b_gt1000` (Batchgrößen in Seiten) |
+//! | Writer-Thread | `w_batches`, `w_pages`, `w_write_ns`/`w_write_max_ns`, `w_idle_ns` (wartet auf Arbeit), `w_poll_sleeps`/`w_poll_sleep_ns` (Warten mit Zeitgrenze auf weitere Nachrichten, Sammelzeit des Gruppen-Commits), `w_queue_max`, `w_b_le50`, `w_b_le200`, `w_b_le1000`, `w_b_gt1000` (Batchgrößen in Seiten) |
 
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Instant;
