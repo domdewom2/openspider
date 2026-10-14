@@ -1,0 +1,4 @@
+Type,Source,Destination,Size (Bytes),Alt Text,Anchor,Status Code,Status,Follow,Target,Rel,Path Type,Link Path,Link Position,Link Origin
+Hyperlink,http://www.site.test/,http://external.test/ext500,89,,Extern 500,500,Internal Server Error,True,,,Absolute,/html[1]/body[1]/main[1]/p[5]/a[2],Content,HTML
+Hyperlink,http://www.site.test/,http://www.site.test/e500,93,,500,500,Internal Server Error,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[3]/a[4],Content,HTML
+Hyperlink,http://www.site.test/,http://www.site.test/e503,101,,503,503,Service Unavailable,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[3]/a[5],Content,HTML

@@ -1,0 +1,8 @@
+﻿Address,Occurrences,Indexability,Indexability Status,Canonical Link Element 1,HTTP Canonical 1,Meta Robots 1,X-Robots-Tag 1,"rel=""next"" 1","rel=""prev"" 1"
+{BASE}/,0,Indexable,,,,,,,
+{BASE}/ok.html,0,Indexable,,,,,,,
+{BASE}/no-title.html,0,Indexable,,,,,,,
+{BASE}/dup-a.html,0,Indexable,,,,,,,
+{BASE}/dup-b.html,0,Indexable,,,,,,,
+{BASE}/long-title.html,0,Indexable,,,,,,,
+{BASE}/no-h1.html,0,Indexable,,,,,,,

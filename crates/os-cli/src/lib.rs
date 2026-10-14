@@ -115,7 +115,7 @@ fn check_option_names(args: &[String]) -> Result<(), CliError> {
             continue;
         };
         let name = format!("--{}", rest.split('=').next().unwrap_or(rest));
-        if known.iter().any(|k| *k == name) {
+        if known.contains(&name) {
             continue;
         }
         let mut near: Vec<(usize, &String)> = known
@@ -134,6 +134,34 @@ fn check_option_names(args: &[String]) -> Result<(), CliError> {
     Ok(())
 }
 
+/// Parser des Unterbefehls `mcp` (ohne die Sonderbehandlung von `--help` im Hauptprogramm).
+#[derive(Debug, Parser)]
+#[command(name = "openspider mcp", version = VERSION, about = "Startet den MCP-Server (STDIO) für KI-Agenten")]
+struct McpCli {
+    #[command(flatten)]
+    args: os_mcp::cli::McpArgs,
+}
+
+fn run_mcp(rest: &[String]) -> i32 {
+    let mut full = vec!["openspider mcp".to_string()];
+    full.extend(rest.iter().cloned());
+    match McpCli::try_parse_from(full) {
+        Ok(cli) => os_mcp::cli::run(cli.args),
+        Err(e) => {
+            let ok = matches!(
+                e.kind(),
+                clap::error::ErrorKind::DisplayHelp | clap::error::ErrorKind::DisplayVersion
+            );
+            let _ = e.print();
+            if ok {
+                0
+            } else {
+                Exit::Usage.code()
+            }
+        }
+    }
+}
+
 /// Einstieg für `main`: liest die Argumente, führt den Befehl aus und liefert den Exit-Code.
 pub fn main_entry<I, T>(argv: I) -> i32
 where
@@ -148,6 +176,10 @@ where
         Some((p, r)) => (p.clone(), r.to_vec()),
         None => ("openspider".to_string(), Vec::new()),
     };
+    // `openspider mcp …` ist eine reine Durchreichung an os-mcp (eigene Hilfe, eigene Fehlermeldungen).
+    if rest.first().map(String::as_str) == Some("mcp") {
+        return run_mcp(&rest[1..]);
+    }
     let (rest, touched) = args::fix_trailing_backslash_quote(rest);
     for option in &touched {
         eprintln!(

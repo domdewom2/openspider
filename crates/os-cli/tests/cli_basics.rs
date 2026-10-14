@@ -9,6 +9,9 @@ use std::time::{Duration, Instant};
 use common::{column, file_names, read_csv, resolve, site, Env};
 use os_testsite::golden::assert_golden;
 
+/// Kein Warten auf Wiederholungen der robots.txt für den externen Link `localhost:8900` der Fixture.
+const FAST: &str = "robots.retries=0";
+
 fn golden(name: &str) -> std::path::PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../tests/golden/out-cli")
@@ -157,6 +160,8 @@ async fn invalid_names_are_rejected_before_any_request_in_under_a_second() {
         v
     };
 
+    // Aufwärmen: der erste Start eines frisch gebauten Programms kann auf manchen Systemen länger dauern.
+    assert_eq!(env.run(&["--version"]).code, 0);
     let started = Instant::now();
     let run = env.run_async(base(&["--export-tabs", "Internal:Al"])).await;
     assert!(
@@ -235,6 +240,8 @@ async fn csv_is_the_default_and_xlsx_is_supported() {
             "http://site.test/",
             "--resolve",
             &resolve(&site),
+            "--set",
+            FAST,
             "--export-tabs",
             "Internal:All",
             "--output-folder",
@@ -295,6 +302,8 @@ async fn headless_changes_nothing() {
             "http://site.test/",
             "--resolve",
             &resolve(&site),
+            "--set",
+            FAST,
             "--export-tabs",
             "Internal:All",
             "--output-folder",
@@ -333,6 +342,8 @@ async fn exit_code_0_with_a_summary_as_the_last_stderr_line() {
             "http://site.test/".into(),
             "--resolve".into(),
             resolve(&site),
+            "--set".into(),
+            FAST.into(),
         ])
         .await;
     assert_eq!(run.code, 0, "{}", run.dump());
@@ -443,6 +454,8 @@ async fn exit_code_4_when_an_export_fails_but_the_crawl_succeeded() {
             "http://site.test/".into(),
             "--resolve".into(),
             resolve(&site),
+            "--set".into(),
+            FAST.into(),
             "--export-tabs".into(),
             "Internal:All,Response Codes:Client Error (4xx)".into(),
             "--output-folder".into(),

@@ -1,0 +1,3 @@
+Type,Source,Destination,Size (Bytes),Alt Text,Anchor,Status Code,Status,Follow,Target,Rel,Path Type,Link Path,Link Position,Link Origin
+Hyperlink,http://www.site.test/,http://www.site.test/r301,0,,301 auf 404,301,Moved Permanently,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[1]/a[2],Content,HTML
+Hyperlink,http://www.site.test/,http://www.site.test/r302,0,,302,302,Found,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[1]/a[3],Content,HTML

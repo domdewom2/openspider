@@ -1,0 +1,210 @@
+﻿Section,Item,URLs,% of Total
+Summary,Start URL,{BASE}/,
+Summary,Mode,Spider,
+Summary,Crawl Start,<TS>,
+Summary,Crawl End,<TS>,
+Summary,Elapsed Time,00:00:00,
+Summary,Total URLs Encountered,14,
+Summary,Total URLs Crawled,13,
+Summary,Total Internal Blocked by robots.txt,1,
+Summary,Total External Blocked by robots.txt,0,
+Summary,URLs Remaining In Queue,0,
+Summary,Average Response Time (ms),<N>,
+Summary,Average URLs/s,<N>,
+Summary,OpenSpider Version,0.1.0,
+Summary,Skipped By Exclude,0,
+Summary,Skipped Not In Include,0,
+Summary,Skipped By Depth Limit,0,
+Summary,Skipped By Redirect Limit,0,
+Crawl Data – Internal,All,12,100.00
+Crawl Data – Internal,HTML,10,83.33
+Crawl Data – Internal,JavaScript,0,0.00
+Crawl Data – Internal,CSS,0,0.00
+Crawl Data – Internal,Images,0,0.00
+Crawl Data – Internal,PDF,0,0.00
+Crawl Data – Internal,Plugins,0,0.00
+Crawl Data – Internal,Media,0,0.00
+Crawl Data – Internal,Fonts,0,0.00
+Crawl Data – Internal,XML,0,0.00
+Crawl Data – Internal,Other,1,8.33
+Crawl Data – Internal,Unknown,1,8.33
+Crawl Data – External,All,2,100.00
+Crawl Data – External,HTML,2,100.00
+Crawl Data – External,JavaScript,0,0.00
+Crawl Data – External,CSS,0,0.00
+Crawl Data – External,Images,0,0.00
+Crawl Data – External,PDF,0,0.00
+Crawl Data – External,Plugins,0,0.00
+Crawl Data – External,Media,0,0.00
+Crawl Data – External,Fonts,0,0.00
+Crawl Data – External,XML,0,0.00
+Crawl Data – External,Other,0,0.00
+Crawl Data – External,Unknown,0,0.00
+Response Codes – Internal,Blocked by Robots.txt,1,8.33
+Response Codes – Internal,Blocked Resource,,
+Response Codes – Internal,No Response,0,0.00
+Response Codes – Internal,Success (2xx),8,66.67
+Response Codes – Internal,Redirection (3xx),0,0.00
+Response Codes – Internal,Redirection (JavaScript),,
+Response Codes – Internal,Redirection (Meta Refresh),0,0.00
+Response Codes – Internal,Redirection (HTTP Refresh),0,0.00
+Response Codes – Internal,Redirect Chain,0,0.00
+Response Codes – Internal,Redirect Loop,0,0.00
+Response Codes – Internal,Client Error (4xx),2,16.67
+Response Codes – Internal,Server Error (5xx),1,8.33
+Response Codes – Internal,All Errors,3,25.00
+Response Codes – External,Blocked by Robots.txt,0,0.00
+Response Codes – External,Blocked Resource,,
+Response Codes – External,No Response,0,0.00
+Response Codes – External,Success (2xx),1,50.00
+Response Codes – External,Redirection (3xx),0,0.00
+Response Codes – External,Redirection (JavaScript),,
+Response Codes – External,Redirection (Meta Refresh),0,0.00
+Response Codes – External,Redirection (HTTP Refresh),0,0.00
+Response Codes – External,Redirect Chain,0,0.00
+Response Codes – External,Redirect Loop,0,0.00
+Response Codes – External,Client Error (4xx),1,50.00
+Response Codes – External,Server Error (5xx),0,0.00
+Response Codes – External,All Errors,1,50.00
+Internal,All,12,100.00
+Internal,HTML,10,83.33
+Internal,JavaScript,0,0.00
+Internal,CSS,0,0.00
+Internal,Images,0,0.00
+Internal,PDF,0,0.00
+Internal,Unknown,1,8.33
+External,All,2,100.00
+External,HTML,2,100.00
+External,JavaScript,0,0.00
+External,CSS,0,0.00
+External,Images,0,0.00
+External,PDF,0,0.00
+External,Flash,0,0.00
+External,Other,0,0.00
+External,Unknown,0,0.00
+Security,All,12,100.00
+Security,HTTP URLs,12,100.00
+Security,HTTPS URLs,0,0.00
+Response Codes,All,14,100.00
+Response Codes,Blocked by Robots.txt,1,7.14
+Response Codes,No Response,0,0.00
+Response Codes,Success (2XX),9,64.29
+Response Codes,Redirection (3XX),0,0.00
+Response Codes,Redirection (Meta Refresh),0,0.00
+Response Codes,Redirect Chain,0,0.00
+Response Codes,Redirect Loop,0,0.00
+Response Codes,Client Error (4XX),3,21.43
+Response Codes,Server Error (5XX),1,7.14
+Response Codes,Other,0,0.00
+Response Codes,Internal All,12,85.71
+Response Codes,Internal Blocked by Robots.txt,1,7.14
+Response Codes,Internal No Response,0,0.00
+Response Codes,Internal Success (2XX),8,57.14
+Response Codes,Internal Redirection (3XX),0,0.00
+Response Codes,Internal Redirection (Meta Refresh),0,0.00
+Response Codes,Internal Redirect Chain,0,0.00
+Response Codes,Internal Redirect Loop,0,0.00
+Response Codes,Internal Client Error (4XX),2,14.29
+Response Codes,Internal Server Error (5XX),1,7.14
+Response Codes,Internal Other,0,0.00
+Response Codes,External All,2,14.29
+Response Codes,External Blocked by Robots.txt,0,0.00
+Response Codes,External No Response,0,0.00
+Response Codes,External Success (2XX),1,7.14
+Response Codes,External Redirection (3XX),0,0.00
+Response Codes,External Redirection (Meta Refresh),0,0.00
+Response Codes,External Redirect Chain,0,0.00
+Response Codes,External Redirect Loop,0,0.00
+Response Codes,External Client Error (4XX),1,7.14
+Response Codes,External Server Error (5XX),0,0.00
+Response Codes,External Other,0,0.00
+URL,All,12,100.00
+URL,Non ASCII Characters,0,0.00
+URL,Underscores,0,0.00
+URL,Uppercase,0,0.00
+URL,Multiple Slashes,0,0.00
+URL,Contains A Space,0,0.00
+URL,Parameters,0,0.00
+URL,Over 115 Characters,0,0.00
+Page Titles,All,7,100.00
+Page Titles,Missing,1,14.29
+Page Titles,Duplicate,2,28.57
+Page Titles,Over 60 Characters,1,14.29
+Page Titles,Below 30 Characters,1,14.29
+Page Titles,Multiple,0,0.00
+Meta Description,All,7,100.00
+Meta Description,Missing,7,100.00
+Meta Description,Duplicate,0,0.00
+Meta Description,Over 155 Characters,0,0.00
+Meta Description,Below 70 Characters,0,0.00
+Meta Description,Multiple,0,0.00
+H1,All,7,100.00
+H1,Missing,1,14.29
+H1,Duplicate,0,0.00
+H1,Over 70 Characters,0,0.00
+H1,Multiple,0,0.00
+H2,All,7,100.00
+H2,Missing,6,85.71
+H2,Duplicate,0,0.00
+H2,Over 70 Characters,0,0.00
+H2,Multiple,0,0.00
+Content,All,7,100.00
+Content,Exact Duplicates,0,0.00
+Content,Low Content Pages,7,100.00
+Images,All,0,
+Images,Over 100 KB,0,
+Images,Missing Alt Text,0,
+Images,Missing Alt Attribute,0,
+Images,Alt Text Over 100 Characters,0,
+Canonicals,All,7,100.00
+Canonicals,Contains Canonical,0,0.00
+Canonicals,Self Referencing,0,0.00
+Canonicals,Canonicalised,0,0.00
+Canonicals,Missing,7,100.00
+Canonicals,Multiple,0,0.00
+Canonicals,Multiple Conflicting,0,0.00
+Canonicals,Non-Indexable Canonical,,
+Directives,All,11,100.00
+Directives,Index,0,0.00
+Directives,Noindex,0,0.00
+Directives,Follow,0,0.00
+Directives,Nofollow,0,0.00
+Directives,None,0,0.00
+Directives,Refresh,0,0.00
+Hreflang,All,7,100.00
+Hreflang,Contains Hreflang,0,0.00
+Hreflang,Non-200 Hreflang URLs,0,0.00
+Hreflang,Missing Return Links,0,0.00
+Hreflang,Incorrect Language & Region Codes,0,0.00
+Hreflang,Missing,7,100.00
+Links,All,7,100.00
+Links,Pages With High Crawl Depth,0,0.00
+Links,Pages Without Internal Outlinks,6,85.71
+Links,Internal Nofollow Outlinks,0,0.00
+Links,Internal Outlinks With No Anchor Text,0,0.00
+Sitemaps,All,0,
+Sitemaps,URLs In Sitemap,,
+Sitemaps,URLs Not In Sitemap,,
+Sitemaps,Orphan URLs,,
+Sitemaps,Non-Indexable URLs In Sitemap,,
+Crawl Depth,0,1,9.09
+Crawl Depth,1,10,90.91
+Crawl Depth,2,0,0.00
+Crawl Depth,3,0,0.00
+Crawl Depth,4,0,0.00
+Crawl Depth,5,0,0.00
+Crawl Depth,6,0,0.00
+Crawl Depth,7,0,0.00
+Crawl Depth,8,0,0.00
+Crawl Depth,9,0,0.00
+Crawl Depth,10,0,0.00
+Crawl Depth,10+,0,0.00
+Issues,Issues (High),4,
+Issues,Issues (Medium),1,
+Issues,Issues (Low),0,
+Issues,Warnings (High),2,
+Issues,Warnings (Medium),1,
+Issues,Warnings (Low),2,
+Issues,Opportunities (High),0,
+Issues,Opportunities (Medium),4,
+Issues,Opportunities (Low),1,

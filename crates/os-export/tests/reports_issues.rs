@@ -1,8 +1,8 @@
 //! Tests des Issues-Exports (OUT-063): Ordner `issues/`, eine Datei je Issue, `issues_overview`.
 //!
 //! Die Tab-Pakete (P20–P25) liefern die echten Filter erst später; die Tests laufen gegen Test-Tabs mit den
-//! Katalog-Namen (`reports_common::issue_tabs`) und strukturell gegen die Platzhalter-Tabs. Goldens mit den
-//! echten Zählern stehen als `#[ignore = "M1-P26"]` bereit.
+//! Katalog-Namen (`reports_common::issue_tabs`) und strukturell gegen die echten Tabs; der Golden mit den echten
+//! Zählern liegt unter `tests/golden/out-issues/issues/` (M1-P26).
 
 #[path = "reports_common.rs"]
 mod common;
@@ -301,35 +301,86 @@ async fn ignore_non_indexable_acts_on_panel_and_export_alike() {
 
 // spec: OUT-063
 #[tokio::test]
-async fn link_related_issues_get_an_inlinks_variant_or_a_warning() {
+async fn link_related_issues_get_an_inlinks_variant() {
     let cfg = base_config();
     let fx = crawl(&cfg).await;
     let tabs = issue_tabs();
     let (tmp, out) = export(&fx, &cfg, &tabs, Format::Csv);
-    // Nur die Issues des Tabs „Response Codes“ sind linkbezogen.
+    // Nur die Issues des Tabs „Response Codes“ sind linkbezogen; ihre Inlinks-Datei schreibt `export_detail`.
     let inlinks: Vec<String> = names(&out.files)
         .into_iter()
         .filter(|n| n.ends_with("_inlinks.csv"))
         .collect();
-    let skipped = out
-        .warnings
+    assert_eq!(
+        inlinks,
+        vec!["issue_response_codes_internal_client_error_4xx_inlinks.csv"]
+    );
+    let file = tmp.path().join("issues").join(&inlinks[0]);
+    assert!(file.is_file());
+    // Die Datei nennt die Quellseiten der beiden fehlerhaften Ziele.
+    let t = Table::read(&file);
+    assert!(!t.rows.is_empty(), "Inlinks der 4xx-Ziele erwartet");
+    assert!(t
+        .column("Destination")
         .iter()
-        .any(|w| w.contains("Response Codes") && w.contains("inlinks file skipped"));
-    // Die Inlinks-Datei schreibt `export_detail` (M1-P16). Bis dahin meldet der Export den Verzicht.
-    if inlinks.is_empty() {
-        assert!(
-            skipped,
-            "weder Inlinks-Datei noch Hinweis: {:?}",
-            out.warnings
-        );
-    } else {
-        assert_eq!(
-            inlinks,
-            vec!["issue_response_codes_internal_client_error_4xx_inlinks.csv"]
-        );
-        assert!(tmp.path().join("issues").join(&inlinks[0]).is_file());
-        assert!(!skipped);
-    }
+        .all(|d| d.ends_with("/missing.html") || d.ends_with("/gone")));
+    // Keine Verzichtswarnung mehr.
+    assert!(
+        !out.warnings
+            .iter()
+            .any(|w| w.contains("inlinks file skipped")),
+        "{:?}",
+        out.warnings
+    );
+}
+
+// spec: OUT-063
+#[tokio::test]
+async fn a_crawl_without_issues_exports_only_the_overview_with_its_header() {
+    // Issue-freie Mini-Site: eine 200-Seite mit Titel, Beschreibung und H1 ohne jeden Befund.
+    let site_dir = tempfile::tempdir().unwrap();
+    std::fs::write(
+        site_dir.path().join("scenario.toml"),
+        r#"[[route]]
+path = "/robots.txt"
+content_type = "text/plain"
+body = "User-agent: *\nAllow: /\n"
+
+[[route]]
+path = "/"
+content_type = "text/html; charset=utf-8"
+body = """<!doctype html><html><head><meta charset="utf-8"><title>Eine ordentliche Seite ohne Befund</title><meta name="description" content="Beschreibung der Seite."></head><body><h1>Alles in Ordnung</h1><p>Text.</p></body></html>"""
+"#,
+    )
+    .unwrap();
+    let cfg = base_config();
+    let fx = os_engine::testing::crawl_dir_with(
+        site_dir.path(),
+        "/",
+        cfg.clone(),
+        os_engine::testing::test_deps(),
+    )
+    .await;
+    let tabs = issue_tabs();
+    let counts = filter_counts_in(&tabs, &fx.file, &cfg).unwrap();
+    assert!(
+        issues::issues_from_counts(&counts).is_empty(),
+        "Gegenprobe: kein Issue: {counts:?}"
+    );
+
+    let (tmp, out) = export(&fx, &cfg, &tabs, Format::Csv);
+    assert_eq!(names(&out.files), ["issues_overview.csv"]);
+    let dir = tmp.path().join("issues");
+    assert_eq!(
+        std::fs::read_dir(&dir).unwrap().count(),
+        1,
+        "nur die Übersicht"
+    );
+    let t = Table::read(&dir.join("issues_overview.csv"));
+    assert_eq!(t.header.len(), 8);
+    assert_eq!(t.header[0], "Issue Name");
+    assert!(t.rows.is_empty(), "0 Zeilen, nur die Kopfzeile");
+    assert_eq!(out.files[0].rows, 0);
 }
 
 // spec: OUT-063
@@ -497,6 +548,55 @@ async fn issue_files_match_the_regression_golden_with_test_tabs() {
     }
 }
 
+/// Maskiert die Spalten `Hash` (MD5 des Bodys: die HTML-Seiten der Testsite enthalten ihre Basis-URL samt
+/// zufälligem Port) und `Response Time` (Messwert) durch `<VAR>`; andere Dateien bleiben unverändert.
+fn mask_volatile(text: &str) -> String {
+    const VOLATILE: [&str; 2] = ["Hash", "Response Time"];
+    let bom = text.starts_with('\u{feff}');
+    let body = text.strip_prefix('\u{feff}').unwrap_or(text);
+    let mut rdr = csv::ReaderBuilder::new()
+        .has_headers(false)
+        .flexible(true)
+        .from_reader(body.as_bytes());
+    let records: Vec<csv::StringRecord> = rdr.records().map(|r| r.unwrap()).collect();
+    let Some(header) = records.first() else {
+        return text.to_string();
+    };
+    let masked: Vec<usize> = header
+        .iter()
+        .enumerate()
+        .filter(|(_, h)| VOLATILE.contains(h))
+        .map(|(i, _)| i)
+        .collect();
+    if masked.is_empty() {
+        return text.to_string();
+    }
+    let mut wtr = csv::WriterBuilder::new()
+        .terminator(csv::Terminator::Any(b'\n'))
+        .flexible(true)
+        .from_writer(Vec::new());
+    for (n, rec) in records.iter().enumerate() {
+        let fields: Vec<&str> = rec
+            .iter()
+            .enumerate()
+            .map(|(c, f)| {
+                if n > 0 && masked.contains(&c) {
+                    "<VAR>"
+                } else {
+                    f
+                }
+            })
+            .collect();
+        wtr.write_record(&fields).unwrap();
+    }
+    let out = String::from_utf8(wtr.into_inner().unwrap()).unwrap();
+    if bom {
+        format!("\u{feff}{out}")
+    } else {
+        out
+    }
+}
+
 /// Ersetzt die drei Textspalten der Übersicht durch einen Platzhalter: die Texte pflegt der Katalog (P12),
 /// ihr Wortlaut gehört nicht in dieses Regressions-Golden (der Test oben prüft sie gegen `issues::texts`).
 fn mask_texts(text: &str) -> String {
@@ -527,24 +627,41 @@ fn mask_texts(text: &str) -> String {
 
 // spec: OUT-063
 #[tokio::test]
-#[ignore = "M1-P26"]
 async fn issues_golden_with_the_real_tab_counters() {
-    // P26 schaltet den Test scharf und erzeugt `tests/golden/out-issues/issues/*.csv`, sobald die Tabs P20–P25
-    // echte Zähler und Filter liefern.
+    // Goldens `tests/golden/out-issues/issues/*.csv` (M1-P26): Dateien und Zähler der echten Tabs P20–P25 auf
+    // dem Fixture `out-issues`.
     let cfg = base_config();
     let fx = crawl(&cfg).await;
     let tmp = tempfile::tempdir().unwrap();
     bulk_issues::export(&fx.file, &cfg, tmp.path(), Format::Csv).unwrap();
-    let bases = fx.site.golden_bases();
+    // Externe Links der Fixture zeigen über `localhost` auf die Testsite.
+    let mut bases = fx.site.golden_bases();
+    for port in [fx.site.port(), fx.site.port2()] {
+        bases.push(format!("http://localhost:{port}"));
+    }
     let bases: Vec<&str> = bases.iter().map(String::as_str).collect();
     let golden_dir =
         Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/golden/out-issues/issues");
-    for entry in std::fs::read_dir(tmp.path().join("issues")).unwrap() {
-        let entry = entry.unwrap();
+    let mut exported: Vec<_> = std::fs::read_dir(tmp.path().join("issues"))
+        .unwrap()
+        .map(|e| e.unwrap())
+        .collect();
+    exported.sort_by_key(|e| e.file_name());
+    // Der Export schreibt genau die Dateien des Goldens (Aufräumen bei UPDATE_GOLDEN: Ordner vorher leeren).
+    if std::env::var_os("UPDATE_GOLDEN").is_none() {
+        let mut expected: Vec<_> = std::fs::read_dir(&golden_dir)
+            .unwrap()
+            .map(|e| e.unwrap().file_name())
+            .collect();
+        expected.sort();
+        let actual: Vec<_> = exported.iter().map(|e| e.file_name()).collect();
+        assert_eq!(actual, expected, "Dateimenge des Issues-Exports");
+    }
+    for entry in exported {
         let text = std::fs::read_to_string(entry.path()).unwrap();
         assert_golden(
             golden_dir.join(entry.file_name()),
-            &normalize(&text, &bases),
+            &mask_volatile(&normalize(&text, &bases)),
         );
     }
 }

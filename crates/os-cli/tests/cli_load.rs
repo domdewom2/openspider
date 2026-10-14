@@ -269,6 +269,7 @@ mod signals {
         if !send_sigint(&child) {
             eprintln!("Signal nicht zustellbar (keine Konsole) – Test übersprungen");
             let _ = child.kill();
+            let _ = child.wait();
             return;
         }
         let out = tokio::task::spawn_blocking(move || child.wait_with_output().unwrap())
@@ -343,6 +344,7 @@ mod signals {
         if !send_sigint(&child) {
             eprintln!("Signal nicht zustellbar (keine Konsole) – Test übersprungen");
             let _ = child.kill();
+            let _ = child.wait();
             return;
         }
         tokio::time::sleep(Duration::from_millis(300)).await;

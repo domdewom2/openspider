@@ -34,7 +34,6 @@ pub struct Cli {
 #[derive(Debug, Subcommand)]
 pub enum Sub {
     /// Startet den MCP-Server (STDIO) für KI-Agenten.
-    #[command(disable_help_flag = false)]
     Mcp(os_mcp::cli::McpArgs),
 }
 

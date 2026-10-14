@@ -450,3 +450,90 @@ async fn json_progress_writes_json_lines_to_stderr_and_nothing_to_stdout() {
     }
     assert_eq!(phases.last().map(String::as_str), Some("done"));
 }
+
+fn analysis_state(path: &Path) -> os_analyze::analysis::persist::RunState {
+    let file = CrawlFile::open(path, OpenMode::ReadOnly).unwrap();
+    os_analyze::analysis::persist::read_run_state(&file).unwrap()
+}
+
+// spec: CRAWL-135
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn the_crawl_analysis_runs_at_the_end_of_the_crawl_and_before_dependent_exports() {
+    use os_analyze::analysis::persist::RunState;
+    let site = site("out-basic-site").await;
+    let base = site.base_url();
+
+    // Hook am Crawl-Ende (CRAWL-141): Die Analyse ist fertig, noch bevor ein Export läuft.
+    let env = Env::new();
+    let run = env.run_async(crawl_args(&base, &[])).await;
+    assert_eq!(run.code, 0, "{}", run.dump());
+    let path = env.crawl_files().remove(0);
+    assert_eq!(analysis_state(&path), RunState::Completed);
+
+    // Ohne automatische Analyse am Ende: nicht gelaufen; ein analyseabhängiger Export holt sie mit Hinweis nach.
+    let env = Env::new();
+    let run = env
+        .run_async(crawl_args(&base, &["--set", "analysis.auto_at_end=false"]))
+        .await;
+    assert_eq!(run.code, 0, "{}", run.dump());
+    let path = env.crawl_files().remove(0);
+    assert_ne!(analysis_state(&path), RunState::Completed);
+    let id = path.file_stem().unwrap().to_string_lossy().into_owned();
+    let run = env
+        .run_async(vec![
+            "--load-crawl".to_string(),
+            id,
+            "--export-tabs".into(),
+            "Canonicals:Missing".into(),
+            "--output-folder".into(),
+            env.out().to_string_lossy().into_owned(),
+        ])
+        .await;
+    assert_eq!(run.code, 0, "{}", run.dump());
+    assert!(
+        run.stderr.contains("Crawl-Analyse ist nicht aktuell"),
+        "{}",
+        run.dump()
+    );
+    assert_eq!(analysis_state(&path), RunState::Completed);
+    assert!(env.out().join("canonicals_missing.csv").is_file());
+}
+
+// spec: OUT-182
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_url_without_a_scheme_gets_http_and_a_hint_and_an_invalid_url_stops_before_the_crawl() {
+    let site = site("out-basic-site").await;
+    let env = Env::new();
+    let run = env
+        .run_async(vec![
+            "--crawl".to_string(),
+            "site.test".into(),
+            "--resolve".into(),
+            resolve(&site),
+            "--set".into(),
+            "robots.retries=0".into(),
+        ])
+        .await;
+    assert_eq!(run.code, 0, "{}", run.dump());
+    assert!(
+        run.stderr.contains("'http://' wird ergänzt"),
+        "{}",
+        run.dump()
+    );
+    assert!(site.count("site.test", "/") >= 1);
+    let list = env.run(&["--list-crawls", "--json"]);
+    let v: serde_json::Value = serde_json::from_str(&list.stdout).unwrap();
+    assert_eq!(v[0]["start_url"], "http://site.test/");
+    assert_eq!(v[0]["name"], "site.test");
+
+    let before = site.total_requests();
+    let run = env
+        .run_async(vec!["--crawl".to_string(), "ftp://site.test/".into()])
+        .await;
+    assert_eq!(run.code, 2, "{}", run.dump());
+    let run = env
+        .run_async(vec!["--crawl".to_string(), "http://".into()])
+        .await;
+    assert_eq!(run.code, 2, "{}", run.dump());
+    assert_eq!(site.total_requests(), before);
+}

@@ -1,0 +1,6 @@
+Type,Source,Destination,Size (Bytes),Alt Text,Anchor,Status Code,Status,Follow,Target,Rel,Path Type,Link Path,Link Position,Link Origin
+Hyperlink,http://www.site.test/,http://www.site.test/e403,85,,403,403,Forbidden,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[3]/a[1],Content,HTML
+Hyperlink,http://www.site.test/,http://www.site.test/e404,97,,404,404,Not Found,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[3]/a[2],Content,HTML
+Hyperlink,http://www.site.test/second.html,http://www.site.test/e404,97,,404 von der zweiten Seite,404,Not Found,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[1]/a[1],Content,HTML
+Hyperlink,http://www.site.test/,http://www.site.test/e410,85,,410,410,Gone,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[3]/a[3],Content,HTML
+HTTP Redirect,http://www.site.test/r301,http://www.site.test/gone404,75,,,404,Not Found,True,,,Root-Relative,,,HTML

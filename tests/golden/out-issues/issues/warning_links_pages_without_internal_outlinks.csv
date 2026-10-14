@@ -1,0 +1,7 @@
+﻿Address,Indexability,Indexability Status,Crawl Depth,Link Score,Unique Inlinks,Unique JS Inlinks,% of Total,Outlinks,Unique Outlinks,Unique JS Outlinks,External Outlinks,Unique External Outlinks,Unique External JS Outlinks
+{BASE}/dup-a.html,Indexable,,1,,1,,14.29,0,0,,0,0,
+{BASE}/dup-b.html,Indexable,,1,,1,,14.29,0,0,,0,0,
+{BASE}/long-title.html,Indexable,,1,,1,,14.29,0,0,,0,0,
+{BASE}/no-h1.html,Indexable,,1,,1,,14.29,0,0,,0,0,
+{BASE}/no-title.html,Indexable,,1,,1,,14.29,0,0,,0,0,
+{BASE}/ok.html,Indexable,,1,,1,,14.29,0,0,,0,0,

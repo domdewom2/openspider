@@ -1,0 +1,91 @@
+Type,Source,Destination,Size (Bytes),Alt Text,Anchor,Status Code,Status,Follow,Target,Rel,Path Type,Link Path,Link Position,Link Origin
+CSS,{BASE}/,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[2],Content,HTML
+CSS,{BASE}/about.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[2],Content,HTML
+CSS,{BASE}/blog/,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[1],Content,HTML
+CSS,{BASE}/blog/post-1.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[1],Content,HTML
+CSS,{BASE}/contact.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[1],Content,HTML
+CSS,{BASE}/faq.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[1],Content,HTML
+CSS,{BASE}/imprint.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[1],Content,HTML
+CSS,{BASE}/orphan.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[1],Content,HTML
+CSS,{BASE}/privat/intern.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[1],Content,HTML
+CSS,{BASE}/products.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[2],Content,HTML
+CSS,{BASE}/products/widget.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[1],Content,HTML
+CSS,{BASE}/services.html,{BASE}/assets/site.css,65,,,200,OK,True,,stylesheet,Root-Relative,/html[1]/head[1]/link[1],Content,HTML
+Canonical,{BASE}/,{BASE}/,964,,,200,OK,True,,,Absolute,,,HTML
+Canonical,{BASE}/about.html,{BASE}/about.html,611,,,200,OK,True,,,Absolute,,,HTML
+Canonical,{BASE}/products.html,{BASE}/products.html,630,,,200,OK,True,,,Absolute,,,HTML
+HTTP Redirect,{BASE}/old-page,{BASE}/about.html,611,,,200,OK,True,,,Root-Relative,,,HTML
+Hyperlink,{BASE}/,{BASE}/about.html,611,,About,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[1],Navigation,HTML
+Hyperlink,{BASE}/,{BASE}/blog/,488,,Blog,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[5],Navigation,HTML
+Hyperlink,{BASE}/,{BASE}/contact.html,544,,Contact,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[4],Navigation,HTML
+Hyperlink,{BASE}/,{BASE}/faq.html,472,,FAQ,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[6],Navigation,HTML
+Hyperlink,{BASE}/,{BASE}/imprint.html,533,,Imprint,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[7],Navigation,HTML
+Hyperlink,{BASE}/,{BASE}/missing.html,90,,Missing page (404),404,Not Found,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[9],Navigation,HTML
+Hyperlink,{BASE}/,{BASE}/old-page,0,,Old page (redirects),301,Moved Permanently,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[8],Navigation,HTML
+Hyperlink,{BASE}/,{BASE}/products.html,630,,Products,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[2],Navigation,HTML
+Hyperlink,{BASE}/,{BASE}/services.html,542,,Services,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[3],Navigation,HTML
+Hyperlink,{BASE}/,http://localhost:8900/about.html,0,,Partner site (external host),,Blocked by Robots.txt (robots.txt unreachable),True,,,Absolute,/html[1]/body[1]/p[2]/a[1],Content,HTML
+Hyperlink,{BASE}/about.html,{BASE}/,964,,Home,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[1],Navigation,HTML
+Hyperlink,{BASE}/about.html,{BASE}/,964,,Home,200,OK,True,,,Root-Relative,/html[1]/body[1]/p[2]/a[1],Content,HTML
+Hyperlink,{BASE}/about.html,{BASE}/contact.html,544,,Contact,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[3],Navigation,HTML
+Hyperlink,{BASE}/about.html,{BASE}/contact.html,544,,Contact,200,OK,True,,,Root-Relative,/html[1]/body[1]/p[2]/a[3],Content,HTML
+Hyperlink,{BASE}/about.html,{BASE}/products.html,630,,Products,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[2],Navigation,HTML
+Hyperlink,{BASE}/about.html,{BASE}/products.html,630,,Products,200,OK,True,,,Root-Relative,/html[1]/body[1]/p[2]/a[2],Content,HTML
+Hyperlink,{BASE}/blog/,{BASE}/,964,,Home,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[1],Navigation,HTML
+Hyperlink,{BASE}/blog/,{BASE}/blog/post-1.html,469,,First post,200,OK,True,,,Root-Relative,/html[1]/body[1]/p[2]/a[1],Content,HTML
+Hyperlink,{BASE}/blog/,{BASE}/contact.html,544,,Contact,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[3],Navigation,HTML
+Hyperlink,{BASE}/blog/,{BASE}/products.html,630,,Products,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[2],Navigation,HTML
+Hyperlink,{BASE}/blog/post-1.html,{BASE}/,964,,Home,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[1],Navigation,HTML
+Hyperlink,{BASE}/blog/post-1.html,{BASE}/blog/,488,,Back to the blog,200,OK,True,,,Root-Relative,/html[1]/body[1]/p[2]/a[1],Content,HTML
+Hyperlink,{BASE}/blog/post-1.html,{BASE}/contact.html,544,,Contact,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[3],Navigation,HTML
+Hyperlink,{BASE}/blog/post-1.html,{BASE}/products.html,630,,Products,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[2],Navigation,HTML
+Hyperlink,{BASE}/contact.html,{BASE}/,964,,Home,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[1],Navigation,HTML
+Hyperlink,{BASE}/contact.html,{BASE}/contact.html,544,,Contact,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[3],Navigation,HTML
+Hyperlink,{BASE}/contact.html,{BASE}/imprint.html,533,,Imprint,200,OK,True,,,Root-Relative,/html[1]/body[1]/p[2]/a[2],Content,HTML
+Hyperlink,{BASE}/contact.html,{BASE}/privat/intern.html,490,,Internal area,200,OK,True,,,Root-Relative,/html[1]/body[1]/p[2]/a[1],Content,HTML
+Hyperlink,{BASE}/contact.html,{BASE}/products.html,630,,Products,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[2],Navigation,HTML
+Hyperlink,{BASE}/faq.html,{BASE}/,964,,Home,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[1],Navigation,HTML
+Hyperlink,{BASE}/faq.html,{BASE}/contact.html,544,,Contact,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[3],Navigation,HTML
+Hyperlink,{BASE}/faq.html,{BASE}/products.html,630,,Products,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[2],Navigation,HTML
+Hyperlink,{BASE}/faq.html,{BASE}/services.html,542,,Services,200,OK,True,,,Root-Relative,/html[1]/body[1]/p[2]/a[1],Content,HTML
+Hyperlink,{BASE}/imprint.html,{BASE}/,964,,Home,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[1],Navigation,HTML
+Hyperlink,{BASE}/imprint.html,{BASE}/contact.html,544,,Contact,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[3],Navigation,HTML
+Hyperlink,{BASE}/imprint.html,{BASE}/orphan.html,501,,Orphan,200,OK,True,,,Root-Relative,/html[1]/body[1]/p[2]/a[2],Content,HTML
+Hyperlink,{BASE}/imprint.html,{BASE}/privat/intern.html,490,,Internal area,200,OK,True,,,Root-Relative,/html[1]/body[1]/p[2]/a[1],Content,HTML
+Hyperlink,{BASE}/imprint.html,{BASE}/products.html,630,,Products,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[2],Navigation,HTML
+Hyperlink,{BASE}/orphan.html,{BASE}/,964,,Home,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[1],Navigation,HTML
+Hyperlink,{BASE}/orphan.html,{BASE}/contact.html,544,,Contact,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[3],Navigation,HTML
+Hyperlink,{BASE}/orphan.html,{BASE}/products.html,630,,Products,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[2],Navigation,HTML
+Hyperlink,{BASE}/privat/intern.html,{BASE}/,964,,Home,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[1],Navigation,HTML
+Hyperlink,{BASE}/privat/intern.html,{BASE}/,964,,Home,200,OK,True,,,Root-Relative,/html[1]/body[1]/p[2]/a[1],Content,HTML
+Hyperlink,{BASE}/privat/intern.html,{BASE}/contact.html,544,,Contact,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[3],Navigation,HTML
+Hyperlink,{BASE}/privat/intern.html,{BASE}/products.html,630,,Products,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[2],Navigation,HTML
+Hyperlink,{BASE}/products.html,{BASE}/,964,,Home,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[1],Navigation,HTML
+Hyperlink,{BASE}/products.html,{BASE}/,964,,Home,200,OK,True,,,Root-Relative,/html[1]/body[1]/p[2]/a[2],Content,HTML
+Hyperlink,{BASE}/products.html,{BASE}/about.html,611,,About,200,OK,True,,,Root-Relative,/html[1]/body[1]/p[2]/a[3],Content,HTML
+Hyperlink,{BASE}/products.html,{BASE}/contact.html,544,,Contact,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[3],Navigation,HTML
+Hyperlink,{BASE}/products.html,{BASE}/products.html,630,,Products,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[2],Navigation,HTML
+Hyperlink,{BASE}/products.html,{BASE}/products/widget.html,550,,Widget,200,OK,True,,,Root-Relative,/html[1]/body[1]/p[2]/a[1],Content,HTML
+Hyperlink,{BASE}/products/widget.html,{BASE}/,964,,Home,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[1],Navigation,HTML
+Hyperlink,{BASE}/products/widget.html,{BASE}/contact.html,544,,Contact,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[3],Navigation,HTML
+Hyperlink,{BASE}/products/widget.html,{BASE}/products.html,630,,Back to products,200,OK,True,,,Root-Relative,/html[1]/body[1]/p[2]/a[1],Content,HTML
+Hyperlink,{BASE}/products/widget.html,{BASE}/products.html,630,,Products,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[2],Navigation,HTML
+Hyperlink,{BASE}/services.html,{BASE}/,964,,Home,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[1],Navigation,HTML
+Hyperlink,{BASE}/services.html,{BASE}/contact.html,544,,Contact,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[3],Navigation,HTML
+Hyperlink,{BASE}/services.html,{BASE}/contact.html,544,,Contact us,200,OK,True,,,Root-Relative,/html[1]/body[1]/p[2]/a[1],Content,HTML
+Hyperlink,{BASE}/services.html,{BASE}/faq.html,472,,FAQ,200,OK,True,,,Root-Relative,/html[1]/body[1]/p[2]/a[2],Content,HTML
+Hyperlink,{BASE}/services.html,{BASE}/products.html,630,,Products,200,OK,True,,,Root-Relative,/html[1]/body[1]/nav[1]/a[2],Navigation,HTML
+Image,{BASE}/,{BASE}/assets/logo.png,74,Basic Site logo,,200,OK,True,,,Root-Relative,/html[1]/body[1]/img[1],Content,HTML
+Image,{BASE}/products/widget.html,{BASE}/assets/widget.png,74,Widget,,200,OK,True,,,Root-Relative,/html[1]/body[1]/img[1],Content,HTML
+JavaScript,{BASE}/,{BASE}/assets/site.js,56,,,200,OK,True,,,Root-Relative,/html[1]/body[1]/script[1],Content,HTML
+JavaScript,{BASE}/about.html,{BASE}/assets/site.js,56,,,200,OK,True,,,Root-Relative,/html[1]/body[1]/script[1],Content,HTML
+JavaScript,{BASE}/blog/,{BASE}/assets/site.js,56,,,200,OK,True,,,Root-Relative,/html[1]/body[1]/script[1],Content,HTML
+JavaScript,{BASE}/blog/post-1.html,{BASE}/assets/site.js,56,,,200,OK,True,,,Root-Relative,/html[1]/body[1]/script[1],Content,HTML
+JavaScript,{BASE}/contact.html,{BASE}/assets/site.js,56,,,200,OK,True,,,Root-Relative,/html[1]/body[1]/script[1],Content,HTML
+JavaScript,{BASE}/faq.html,{BASE}/assets/site.js,56,,,200,OK,True,,,Root-Relative,/html[1]/body[1]/script[1],Content,HTML
+JavaScript,{BASE}/imprint.html,{BASE}/assets/site.js,56,,,200,OK,True,,,Root-Relative,/html[1]/body[1]/script[1],Content,HTML
+JavaScript,{BASE}/orphan.html,{BASE}/assets/site.js,56,,,200,OK,True,,,Root-Relative,/html[1]/body[1]/script[1],Content,HTML
+JavaScript,{BASE}/privat/intern.html,{BASE}/assets/site.js,56,,,200,OK,True,,,Root-Relative,/html[1]/body[1]/script[1],Content,HTML
+JavaScript,{BASE}/products.html,{BASE}/assets/site.js,56,,,200,OK,True,,,Root-Relative,/html[1]/body[1]/script[1],Content,HTML
+JavaScript,{BASE}/products/widget.html,{BASE}/assets/site.js,56,,,200,OK,True,,,Root-Relative,/html[1]/body[1]/script[1],Content,HTML
+JavaScript,{BASE}/services.html,{BASE}/assets/site.js,56,,,200,OK,True,,,Root-Relative,/html[1]/body[1]/script[1],Content,HTML

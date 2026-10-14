@@ -275,6 +275,30 @@ mod tests {
         assert!(names(Kind::Bulk).contains(&"Issues:All Issues".to_string()));
     }
 
+    // spec: OUT-050, OUT-193
+    #[test]
+    fn every_bulk_name_resolves_including_the_three_level_response_codes_names() {
+        for name in names(Kind::Bulk) {
+            assert!(resolve(Kind::Bulk, &name).is_ok(), "{name}");
+        }
+        // 12 Einträge × 3 Bereiche (Internal & External, Internal, External)
+        let response_codes = names(Kind::Bulk)
+            .into_iter()
+            .filter(|n| n.starts_with("Response Codes:"))
+            .count();
+        assert_eq!(response_codes, 36);
+        assert_eq!(
+            resolve(
+                Kind::Bulk,
+                "Response Codes:Internal:Redirection (HTTP Refresh) Inlinks"
+            ),
+            Ok(Resolved::Bulk(
+                "Response Codes:Internal:Redirection (HTTP Refresh) Inlinks".to_string()
+            ))
+        );
+        assert!(resolve(Kind::Bulk, "Links:All Inlinks").is_ok());
+    }
+
     #[test]
     fn issues_export_resolves_to_its_own_variant() {
         assert_eq!(
