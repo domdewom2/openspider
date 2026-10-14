@@ -47,7 +47,7 @@ pub const BATCH_MAX_WAIT: Duration = Duration::from_millis(100);
 /// Längste Wartezeit beim Sammeln eines Gruppen-Commits (Rückstau).
 pub const BATCH_MAX_WAIT_BACKLOG: Duration = Duration::from_millis(500);
 /// Nachrichten, die im Kanal warten dürfen, bevor die Worker blockieren.
-pub const CHANNEL_CAPACITY: usize = 256;
+pub const CHANNEL_CAPACITY: usize = 2_048;
 
 enum Msg {
     Batch(Box<WriteBatch>),

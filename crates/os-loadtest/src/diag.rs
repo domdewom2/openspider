@@ -401,6 +401,13 @@ async fn probe_http(site: &TestSite, opts: &DiagOptions) -> Value {
         "parallel_localhost".into(),
         http_run(site, &f, &localhost, 4_000, workers, pages).await,
     );
+    // `localhost` gegen einen Server, der nur auf 127.0.0.1 lauscht (wie die meisten Entwicklungsserver): der
+    // Client versucht ::1 zuerst; unter Windows kostet der Fehlschlag auf einem geschlossenen Port bis zu ~2 s
+    // (SYN-Wiederholungen), Happy Eyeballs fängt es nach 300 ms ab. Jede Messung mit frischem Client (neue Verbindung).
+    out.insert(
+        "first_request_localhost_v4_only_server".into(),
+        probe_v4_only_localhost().await,
+    );
     if let Some(a6) = site.addr6() {
         let v6 = format!("http://[::1]:{}", a6.port());
         out.insert(
@@ -409,6 +416,47 @@ async fn probe_http(site: &TestSite, opts: &DiagOptions) -> Value {
         );
     }
     Value::Object(out)
+}
+
+/// Minimaler Server nur auf 127.0.0.1: antwortet auf jede Anfrage mit `200 OK` und schließt die Verbindung.
+fn v4_only_server() -> std::io::Result<u16> {
+    let listener = std::net::TcpListener::bind("127.0.0.1:0")?;
+    let port = listener.local_addr()?.port();
+    std::thread::spawn(move || {
+        use std::io::Read as _;
+        for stream in listener.incoming().flatten() {
+            let mut stream = stream;
+            let mut buf = [0u8; 2048];
+            let _ = stream.read(&mut buf);
+            let _ = stream.write_all(
+                b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok",
+            );
+        }
+    });
+    Ok(port)
+}
+
+async fn probe_v4_only_localhost() -> Value {
+    let Ok(port) = v4_only_server() else {
+        return json!({ "error": "Server startet nicht" });
+    };
+    let mut named = Vec::new();
+    let mut literal = Vec::new();
+    for _ in 0..5 {
+        for (base, into) in [
+            (format!("http://localhost:{port}"), &mut named),
+            (format!("http://127.0.0.1:{port}"), &mut literal),
+        ] {
+            let Ok(f) = fetcher() else {
+                return json!({ "error": "Client" });
+            };
+            let (t, ok) = get(&f, &base, 0).await;
+            if ok {
+                into.push(t);
+            }
+        }
+    }
+    json!({ "localhost": dist(named), "literal_127_0_0_1": dist(literal) })
 }
 
 // ---- crawl ---------------------------------------------------------------------------------------------------
