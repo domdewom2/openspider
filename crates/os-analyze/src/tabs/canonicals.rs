@@ -1,7 +1,7 @@
 //! Tab „Canonicals“ (TECH-011 bis TECH-018).
 //!
-//! **Grundmenge (TECH-011):** interne Tabellenzeilen mit Status 200 und HTML-Inhalt, dazu interne
-//! Nicht-HTML-200-URLs mit mindestens einer HTTP-Canonical. Ist `spider.canonicals.store` aus (CRAWL-046),
+//! **Grundmenge (TECH-011):** interne Tabellenzeilen mit Status 2xx (K-56) und HTML-Inhalt, dazu interne
+//! Nicht-HTML-2xx-URLs mit mindestens einer HTTP-Canonical. Ist `spider.canonicals.store` aus (CRAWL-046),
 //! bleibt die Grundmenge leer: es gibt weder Detailzeilen noch Spaltenwerte, und es entsteht kein
 //! `Canonicalised`.
 //!
@@ -21,8 +21,9 @@ use crate::defs::{ColumnDef, ColumnKind, ColumnSql, FilterDef, FilterKind, TabDe
 /// Name der Markierung in `url_flags` (TECH-018), vom Schritt `analysis::steps::canonicals` gesetzt.
 pub const FLAG_NON_INDEXABLE_CANONICAL: &str = "non_indexable_canonical";
 
-/// Grundmenge: interne HTML-200-Zeilen und interne Nicht-HTML-200-URLs mit HTTP-Canonical.
-const POPULATION: &str = "u.is_internal = 1 AND u.in_tables = 1 AND u.status_code = 200 \
+/// Grundmenge: interne HTML-2xx-Zeilen und interne Nicht-HTML-2xx-URLs mit HTTP-Canonical (K-56).
+const POPULATION: &str =
+    "u.is_internal = 1 AND u.in_tables = 1 AND u.status_code BETWEEN 200 AND 299 \
      AND :canon_store = 1 \
      AND (u.content_class = 'HTML' \
           OR EXISTS (SELECT 1 FROM canonicals c WHERE c.url_id = u.id AND c.source = 'http'))";
@@ -162,14 +163,14 @@ fn params(cfg: &CrawlConfig) -> Vec<(&'static str, Value)> {
     )]
 }
 
-fn filter(id: &'static str, predicate: &'static str) -> FilterDef {
+fn filter(id: &'static str, predicate: &'static str, ignore_non_indexable: bool) -> FilterDef {
     FilterDef {
         id,
         predicate,
         kind: FilterKind::Live,
         requires: Vec::new(),
-        // TECH-009/CRAWL-089: Die Canonical-Filter schränkt die Option nie ein.
-        ignore_non_indexable: false,
+        // CRAWL-089/TECH-015 (K-56): Nur „Missing“ schließt bei der Option nicht indexierbare Seiten aus.
+        ignore_non_indexable,
     }
 }
 
@@ -210,22 +211,25 @@ pub fn tab() -> TabDef {
             extension_column("Canonical URL", "u.canonical_url", ColumnKind::Url),
         ],
         filters: vec![
-            filter("All", "1"),
-            filter("Contains Canonical", "u.canonical_count >= 1"),
+            filter("All", "1", false),
+            filter("Contains Canonical", "u.canonical_count >= 1", false),
             filter(
                 "Self Referencing",
                 "u.canonical_count >= 1 AND u.canonical_self = 1",
+                false,
             ),
             filter(
                 "Canonicalised",
                 "u.canonical_count >= 1 AND u.canonical_self = 0",
+                false,
             ),
             filter(
                 "Missing",
                 "u.content_class = 'HTML' AND u.canonical_count = 0",
+                true,
             ),
-            filter("Multiple", "u.canonical_count >= 2"),
-            filter("Multiple Conflicting", conflicting_predicate()),
+            filter("Multiple", "u.canonical_count >= 2", false),
+            filter("Multiple Conflicting", conflicting_predicate(), false),
             FilterDef {
                 id: "Non-Indexable Canonical",
                 predicate: "EXISTS (SELECT 1 FROM url_flags f \

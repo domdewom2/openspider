@@ -27,7 +27,7 @@ use crate::tabs::canonicals::FLAG_NON_INDEXABLE_CANONICAL;
 /// Seiten, deren Canonical auf ein nicht indexierbares, bewertetes Ziel zeigt.
 const SELECT_FLAGGED: &str = "SELECT u.id FROM urls u \
      JOIN urls t ON t.id = u.canonical_target_id \
-     WHERE u.is_internal = 1 AND u.status_code = 200 \
+     WHERE u.is_internal = 1 AND u.status_code BETWEEN 200 AND 299 \
        AND u.canonical_count >= 1 AND u.canonical_self = 0 \
        AND t.indexability = 'Non-Indexable' \
      ORDER BY u.id";

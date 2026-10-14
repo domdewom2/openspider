@@ -3,3 +3,11 @@
 # Selbstlink; /attrs.html mit nofollow/ugc/sponsored/noopener; /meta-nofollow.html mit Seiten-nofollow;
 # /anchors.html -> 7 Seiten mit Ankertext-Sonderfällen. Teilbaum ab "/menu10/": 10 Seiten, alle mit Menülink
 # auf /menu10/ (% of Total = 90.00).
+
+# M1-N16 (K-56, K-56/B-05): Teilbaum /n16/ (Start /n16/): /n16/created.html mit Status 201 und ohne Links,
+# /n16/noindex-deadend.html (noindex, ohne Links), /n16/plain-deadend.html (indexierbar, ohne Links).
+[[route]]
+path = "/n16/created.html"
+status = 201
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>n16/created.html</title>\n</head>\n<body>\n<h1>n16/created.html</h1>\n<p>Keine Links.</p>\n</body>\n</html>\n"

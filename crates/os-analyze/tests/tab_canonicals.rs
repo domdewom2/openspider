@@ -11,7 +11,7 @@ use std::path::PathBuf;
 use os_analyze::analysis::{run, CancelToken};
 use os_analyze::defs::SortKey;
 use os_analyze::views::{filter_counts, query_view, ColumnSelection, ViewPage, ViewQuery};
-use os_engine::testing::{crawl_fixture, FixtureCrawl};
+use os_engine::testing::{crawl_fixture, crawl_fixture_from, FixtureCrawl};
 use os_model::{AnalysisStep, CrawlConfig, FilterState, StepState, Value};
 use os_store::queries;
 
@@ -32,6 +32,14 @@ async fn crawl(scenario: &str, cfg: CrawlConfig, analyse: bool) -> Crawled {
     if analyse {
         analyse_now(&c);
     }
+    c
+}
+
+/// Wie `crawl`, aber ab einem Startpfad (Teilbaum `/n16/` von `tech/canonical-basic`).
+async fn crawl_from(scenario: &str, start: &str, cfg: CrawlConfig) -> Crawled {
+    let fx = crawl_fixture_from(scenario, start, cfg.clone()).await;
+    let c = Crawled { fx, cfg };
+    analyse_now(&c);
     c
 }
 
@@ -895,4 +903,77 @@ async fn numbered_canonical_columns_reach_the_maximum_of_the_view() {
     assert_eq!(stored("/c510.html"), 500);
     assert_eq!(stored("/d500.html"), 500);
     golden(&c, "multi-columns", FILTERS);
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// M1-N16: 2xx statt 200 (K-56) und `issues.ignore_non_indexable` für Missing (CRAWL-089, B-05)
+
+/// Teilbaum `/n16/` von `tech/canonical-basic`: zwei Seiten mit Status 201, eine noindex-Seite ohne Canonical,
+/// eine indexierbare Seite ohne Canonical, die Startseite mit Self-Canonical.
+const N16_ALL: &[&str] = &[
+    "/n16/created-canon.html",
+    "/n16/created.html",
+    "/n16/index.html",
+    "/n16/noindex-nocanon.html",
+    "/n16/plain.html",
+];
+
+// spec: TECH-011
+#[tokio::test]
+async fn population_and_canonicalised_step_cover_status_2xx() {
+    let c = crawl_from(
+        "tech/canonical-basic",
+        "/n16/index.html",
+        CrawlConfig::default(),
+    )
+    .await;
+    // Die 201-Seiten stehen in Canonicals › All (Status 2xx statt nur 200).
+    assert_eq!(c.set("All"), set(N16_ALL));
+    assert!(c
+        .set("Contains Canonical")
+        .contains("/n16/created-canon.html"));
+    // 201 mit Canonical auf eine andere URL: Canonicalised; das Ziel ist noindex, also Non-Indexable Canonical
+    // (Schritt „Kanonisierungen“ bewertet Quellen mit Status 2xx).
+    assert!(c.set("Canonicalised").contains("/n16/created-canon.html"));
+    assert_eq!(
+        c.set("Non-Indexable Canonical"),
+        set(&["/n16/created-canon.html"])
+    );
+}
+
+// spec: TECH-015
+#[tokio::test]
+async fn missing_lists_2xx_html_without_canonical_and_skips_non_indexable_by_default() {
+    let c = crawl_from(
+        "tech/canonical-basic",
+        "/n16/index.html",
+        CrawlConfig::default(),
+    )
+    .await;
+    // Standard: `issues.ignore_non_indexable` an → die noindex-Seite fehlt, die 201-Seite steht drin.
+    assert!(c.cfg.issues.ignore_non_indexable);
+    assert_eq!(
+        c.set("Missing"),
+        set(&["/n16/created.html", "/n16/plain.html"])
+    );
+    // „All“ ist von der Option nie betroffen.
+    assert!(c.set("All").contains("/n16/noindex-nocanon.html"));
+}
+
+// spec: TECH-015, CRAWL-089
+#[tokio::test]
+async fn missing_lists_non_indexable_pages_when_the_option_is_off() {
+    let mut cfg = CrawlConfig::default();
+    cfg.issues.ignore_non_indexable = false;
+    let c = crawl_from("tech/canonical-basic", "/n16/index.html", cfg).await;
+    assert_eq!(
+        c.set("Missing"),
+        set(&[
+            "/n16/created.html",
+            "/n16/noindex-nocanon.html",
+            "/n16/plain.html"
+        ])
+    );
+    // Die Option ändert nur Missing; die übrigen Canonical-Filter bleiben gleich.
+    assert_eq!(c.set("Self Referencing"), set(&["/n16/index.html"]));
 }

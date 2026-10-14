@@ -7,6 +7,7 @@ fn depth(u: &str) -> u32 {
     folder_depth(&Url::parse(u).unwrap())
 }
 
+// spec: ONPAGE-014
 #[test]
 fn folder_depth_follows_assumption_a8() {
     assert_eq!(depth("https://site.test/"), 0);
@@ -20,8 +21,11 @@ fn folder_depth_follows_assumption_a8() {
     assert_eq!(depth("https://site.test/a/?x=1"), 1);
     assert_eq!(depth("https://site.test/a?x=/b/c/"), 0);
     assert_eq!(depth("https://site.test/a/#x/y/"), 1);
-    // `//` bleibt erhalten und zählt
-    assert_eq!(depth("https://site.test/a//b"), 2);
+    // leere Segmente (`//`) zählen nicht (K-60): `/urls/a//b.html` → 2
+    assert_eq!(depth("https://site.test/urls/a//b.html"), 2);
+    assert_eq!(depth("https://site.test/a//b"), 1);
+    assert_eq!(depth("https://site.test/a//"), 1);
+    assert_eq!(depth("https://site.test//"), 0);
 }
 
 #[test]
