@@ -1,0 +1,34 @@
+# OpenSpider – Roadmap nach Release 1.0
+
+Sammelstelle für Funktionen, die bewusst **nach 1.0** kommen. Ausspezifiziert wird jeweils erst bei der Planung des Meilensteins (Opus), Abnahme durch Fable.
+
+| # | Thema | Quelle | Spec / Stand |
+|---|---|---|---|
+| R1 | KI-Funktionen (Klassifizierung, Optimierungsvorschläge, Frag den Crawl, AI-Search-Sichtbarkeit) | Nutzer 13.10. | `docs/spec/08-ai.md` – M4 |
+| R2 | DataForSEO (Keywords, Backlinks, SERP, LLM Mentions) | Nutzer 13.10. | `docs/spec/09-dataforseo.md` – M5 |
+| R3 | Fokussierter Crawl nach Seitentyp („nur Produktseiten“) | Nutzer 16.10. | `docs/spec/10-agent-interface.md` AGENT-060–062 – mit M4 |
+| R4 | Server-/Cloud-Betrieb und Anbindung an evnxt.de und autonomo | Nutzer 14.10. | Konzept offen – ganz am Schluss |
+| R5 | Mobile App als Viewer/Steuerung für Crawls auf Desktop/Server (Tauri iOS/Android) | Nutzer 15.10. | setzt R4 voraus |
+| R6 | Monitoring-Modus (siehe Abschnitt Audisto) | Abgleich Audisto 16.10. | setzt R4 voraus |
+| R7 | Erweiterte Struktur- und Linkanalysen (siehe Abschnitt Audisto) | Abgleich Audisto 16.10. | Kandidat für 1.x |
+
+## Abgleich mit Audisto (16.10.2026)
+
+Audisto ist ein Cloud-Crawler mit Schwerpunkt Monitoring und Linkgraph-Analyse. Was OpenSpider bereits abdeckt: Indexierbarkeit/Direktiven-Konflikte, hreflang-Gruppen, Canonical-Analyse, Sitemap-Validierung, Redirect-Ketten, Rendering-Vergleich (Original vs. gerendert), Web Vitals (PSI), Link Score, Segmente, Duplikate/Thin Content, inkonsistente nofollow-Verlinkung (TECH-139), Crawl-Vergleich, geplante Crawls, Custom Search/Extraction (Regex/XPath), URL-Umschreibung, API über MCP.
+
+### Lücken → R6 Monitoring-Modus (größter Unterschied)
+- Regelbasierte Tests je Seitentyp/Bereich (UND/ODER, Regex/XPath/Header/Inhalt), auch für neu entstehende Seiten; No-Code-Editor plus Konfigurationsdatei.
+- Alarme mit Schwellen und Routing je Test: E-Mail, Slack, Microsoft Teams, Jira, Webhook; kritisch sofort, sonst Zusammenfassung.
+- KPI-Verlauf über viele Crawls (nicht nur Zweier-Vergleich) mit Vorfalls-Dashboard und Drilldown.
+- Datei-Fingerprints im Zeitverlauf (robots.txt, Sitemaps, JS, Bilder) und Archiv von HTML/Ressourcen je Crawl zur Fehlersuche im Nachhinein.
+- Läufe nach Deployments (CI/CD-Auslöser) – die CLI kann das bereits, es fehlen Auswertung/Alarm.
+- Sinnvoll nur mit Server-Betrieb (R4); lokal als „Monitoring light“ über geplante Crawls + Regeln + Benachrichtigung denkbar.
+
+### Lücken → R7 Analysen (lokal umsetzbar, Kandidaten für 1.x)
+- CheiRank (Hub-Wert) zusätzlich zum PageRank-artigen Link Score, kombinierter 2D-Rank und „Link-Potenziale“ (wo interne Links fehlen).
+- Navigationsebenen Bot vs. Nutzer (über welche Links Menschen eine Seite erreichen vs. Crawler), Inhaltsverteilung je Klicktiefe.
+- Isolationsrisiko: Seiten, die nur über langfristig noindex/canonicalisierte Seiten erreichbar sind.
+- Ähnliche URLs / Crawl-Pfad-Duplikate durch Facetten, unsortierte Parameter, fehlertolerante URLs (Cluster statt Einzelfilter).
+- Sitemap-`lastmod`-Plausibilität (lastmod gegen Last-Modified/Inhaltsänderung).
+- Mustergestützte Seitentyp-Segmentierung mit Strukturvergleich je Typ (überschneidet sich mit R3).
+- Web Vitals segmentiert (je Seitentyp/Segment).
