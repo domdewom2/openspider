@@ -5,9 +5,9 @@
 //!
 //! | Szenario | Ablauf | Kriterien (Spec) |
 //! |---|---|---|
-//! | `perf-001` | Referenzcrawl mit 1/10 der Seiten, dann der Hauptcrawl (je `os-loadtest crawl-child`) | RSS < 1,5 GB; RSS(Haupt)/RSS(Referenz) < 2; Cache-Grenze des Profils „Maximale Geschwindigkeit“ ≤ 25 % RAM und ≤ 4 GiB |
-//! | `perf-003` | ein Crawl mit [`SlowSink`](crate::sink::SlowSink) (100 ms je Batch) | RSS < 500 MB; der Crawl läuft weiter (kein Stillstand) und endet |
-//! | `perf-005` | Referenzcrawl; Crawl mit gesäten harten Abbrüchen (`examples/crawl_child.rs`), nach jedem Abbruch `integrity_check` und Fortsetzen | `integrity_check = ok`; URL-Menge und Status je URL wie der Referenzcrawl; keine URL doppelt; wiederholte Requests höchstens Threads + Kanal + größter Batch je Abbruch (K-49) |
+//! | `perf-001` | Referenzcrawl mit 1/10 der Seiten, dann der Hauptcrawl (je `os-loadtest crawl-child`) | RSS < 1,5 GB; RSS(Haupt)/RSS(Referenz) < 2 (beides nicht im Profil „Maximale Geschwindigkeit“, K-16); Cache-Grenze des Profils „Maximale Geschwindigkeit“ ≤ 25 % RAM und ≤ 4 GiB; kein Stillstand > 30 s (PERF-003, K-73); ab 1 000 000 Seiten PERF-002: Mittel ≥ 500 URLs/s, zehn Abschnitte zu 70 % bis 130 % des Mittels (K-72), darunter nur Bericht |
+//! | `perf-003` | ein Crawl mit [`SlowSink`](crate::sink::SlowSink) (100 ms je Batch) | RSS < 500 MB; der Crawl läuft weiter (kein Stillstand > 30 s) und endet; die zehn Abschnitte nach PERF-002 nur im Bericht |
+//! | `perf-005` | Referenzcrawl; Crawl mit gesäten harten Abbrüchen (`examples/crawl_child.rs`), nach jedem Abbruch `integrity_check` und Fortsetzen | `integrity_check = ok`; URL-Menge und Status je URL wie der Referenzcrawl; keine URL doppelt; wiederholte Requests je Abbruch höchstens Threads + Kanal + größter Batch (K-49), einzeln geprüft |
 //!
 //! Alle übrigen Szenarien liefern [`CrawlerError::NotImplemented`] (Rendering, Nachlauf-Analysen und Exporte
 //! gehören anderen Paketen).
@@ -15,6 +15,7 @@
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::Arc;
 use std::time::Duration;
 
 use os_model::time::IdSource;
@@ -27,6 +28,7 @@ use crate::child::profile_name;
 use crate::crawler::{CrawlFuture, CrawlJob, CrawlOutcome, CrawlerError, CrawlerUnderTest};
 use crate::proc::{example_binary, Proc, RunResult};
 use crate::scenario::Size;
+use crate::throughput::{self, segment_rates};
 
 /// PERF-001: Spitzen-RSS des Kernprozesses (1,5 GB).
 pub const MAX_RSS_BYTES: u64 = 1_500_000_000;
@@ -34,8 +36,13 @@ pub const MAX_RSS_BYTES: u64 = 1_500_000_000;
 pub const MAX_RSS_RATIO: f64 = 2.0;
 /// PERF-003: Spitzen-RSS bei verlangsamtem Store (500 MB).
 pub const BACKPRESSURE_RSS_BYTES: u64 = 500_000_000;
-/// PERF-003: längste erlaubte Zeit ohne Fortschritt des Crawls.
+/// Längste erlaubte Zeit ohne Fortschritt des Crawls: `docs/spec/07-performance.md` PERF-003, zweites Kriterium
+/// („nie mehr als 30 s zwischen zwei Fortschrittsmeldungen mit steigender Zahl abgerufener URLs“, K-73). Gilt für
+/// `perf-003` und für den Crawl von `perf-001`.
 pub const MAX_STALL_SECS: f64 = 30.0;
+/// Text des Berichtsfelds `rss_limits` im Profil „Maximale Geschwindigkeit“ (K-16): die RSS-Grenzen von PERF-001 gelten
+/// dort nicht, weil der Cache bis zu 25 % des RAM beträgt.
+pub const RSS_LIMITS_NOT_JUDGED: &str = "nicht bewertet (Profil max-speed, K-16)";
 /// PERF-001/K-16: Obergrenze des Caches im Profil „Maximale Geschwindigkeit“.
 pub const CACHE_CAP_BYTES: u64 = 4 * 1024 * 1024 * 1024;
 /// PERF-005/K-49: Was je Abbruch ungeschrieben bleiben darf, wenn der Writer dem Crawl nicht folgt, zusätzlich zu den
@@ -171,15 +178,6 @@ impl EngineCrawler {
 
         let mut violations = Vec::new();
         let (rss, ref_rss) = (main.peak_rss_bytes, reference.peak_rss_bytes);
-        match rss {
-            Some(r) if r >= MAX_RSS_BYTES => violations.push(format!(
-                "PERF-001: Spitzen-RSS {} MB >= 1,5 GB bei {} Seiten",
-                r / 1_000_000,
-                job.site.pages
-            )),
-            None => violations.push("PERF-001: Spitzen-RSS nicht messbar".to_string()),
-            _ => {}
-        }
         let cache_bytes = self
             .profile
             .cache_size_kib()
@@ -194,9 +192,27 @@ impl EngineCrawler {
             reference_file_bytes: ref_file_bytes,
             cache_bytes,
         });
-        if let Err(msg) = &judged.verdict {
-            violations.push(msg.clone());
-        }
+        violations.extend(rss_limit_violations(
+            self.profile,
+            job.site.pages,
+            rss,
+            &judged,
+        ));
+
+        // PERF-003 (K-73): auch der Crawl von PERF-001 steht nie länger als 30 s still
+        violations.extend(stall_violation(
+            "PERF-003 (Crawl aus PERF-001)",
+            main.max_stall_s,
+        ));
+
+        // PERF-002 (K-72): Durchsatz in zehn Abschnitten, Urteil erst ab 1 000 000 Seiten
+        let mean_urls_per_s = main.crawled as f64 / main.seconds.max(1e-9);
+        let rates = segment_rates(&main.samples, main.crawled);
+        violations.extend(throughput::judge(
+            job.site.pages,
+            mean_urls_per_s,
+            rates.as_deref().unwrap_or(&[]),
+        ));
 
         // Cache-Grenze (K-16) über die PRAGMA-Werte des Profils „Maximale Geschwindigkeit“
         let cache = max_speed_cache(scratch.path());
@@ -219,11 +235,20 @@ impl EngineCrawler {
         extra.insert("file_bytes".into(), json!(file_bytes));
         extra.insert("reference_file_bytes".into(), json!(ref_file_bytes));
         extra.insert("profile_cache_bytes".into(), json!(cache_bytes));
-        extra.insert(
-            "urls_per_s".into(),
-            json!(round(main.crawled as f64 / main.seconds.max(1e-9), 1)),
-        );
+        extra.insert("urls_per_s".into(), json!(round(mean_urls_per_s, 1)));
         extra.insert("diag".into(), json!(main.diag));
+        extra.insert("max_stall_s".into(), json!(round(main.max_stall_s, 3)));
+        for (k, v) in throughput::report_fields(rates.as_deref(), mean_urls_per_s) {
+            extra.insert(k.into(), v);
+        }
+        extra.insert(
+            "rss_limits".into(),
+            json!(if rss_limits_apply(self.profile) {
+                "bewertet"
+            } else {
+                RSS_LIMITS_NOT_JUDGED
+            }),
+        );
         extra.insert("limit_peak_rss_bytes".into(), json!(MAX_RSS_BYTES));
         extra.insert("limit_rss_ratio".into(), json!(MAX_RSS_RATIO));
         if let Ok(c) = &cache {
@@ -259,12 +284,10 @@ impl EngineCrawler {
             None => violations.push("PERF-003: Spitzen-RSS nicht messbar".to_string()),
             _ => {}
         }
-        if run.max_stall_s > MAX_STALL_SECS {
-            violations.push(format!(
-                "PERF-003: der Crawl stand {:.1} s still (Grenze {MAX_STALL_SECS} s)",
-                run.max_stall_s
-            ));
-        }
+        violations.extend(stall_violation("PERF-003", run.max_stall_s));
+        // PERF-002 nur im Bericht (K-72: das Urteil gehört zum Crawl von perf-001)
+        let mean_urls_per_s = run.crawled as f64 / run.seconds.max(1e-9);
+        let rates = segment_rates(&run.samples, run.crawled);
 
         let mut extra = BTreeMap::new();
         extra.insert("profile".into(), json!(profile_name(self.profile)));
@@ -272,10 +295,10 @@ impl EngineCrawler {
         extra.insert("sink_delay_ms".into(), json!(delay_ms));
         extra.insert("end_reason".into(), json!(run.end_reason));
         extra.insert("max_stall_s".into(), json!(round(run.max_stall_s, 3)));
-        extra.insert(
-            "urls_per_s".into(),
-            json!(round(run.crawled as f64 / run.seconds.max(1e-9), 1)),
-        );
+        extra.insert("urls_per_s".into(), json!(round(mean_urls_per_s, 1)));
+        for (k, v) in throughput::report_fields(rates.as_deref(), mean_urls_per_s) {
+            extra.insert(k.into(), v);
+        }
         extra.insert("diag".into(), json!(run.diag));
         extra.insert("limit_peak_rss_bytes".into(), json!(BACKPRESSURE_RSS_BYTES));
         Ok(CrawlOutcome {
@@ -321,25 +344,29 @@ impl EngineCrawler {
             seed: self.seed,
             stall: self.stall_timeout,
         };
-        let mut out = Self::blocking(move || run005(&plan)).await?;
+        let test_site = Arc::new(test_site);
+        let snapshot_site = Arc::clone(&test_site);
+        let mut out =
+            Self::blocking(move || run005(&plan, &|| snapshot_site.request_counts())).await?;
 
-        // wiederholte Requests am Server der abgebrochenen Läufe (robots.txt gehört zu jedem Start)
+        // wiederholte Requests am Server der abgebrochenen Läufe (robots.txt gehört zu jedem Start), je Abbruch
         let counts = test_site.request_counts();
-        let repeated: u64 = counts
-            .iter()
-            .filter(|(path, _)| path.as_str() != "/robots.txt")
-            .map(|(_, c)| c.saturating_sub(1))
-            .sum();
         let robots = counts.get("/robots.txt").copied().unwrap_or(0);
+        let phases = repeated_per_phase(&out.phase_counts);
+        let repeated: u64 = phases.iter().sum();
+        // Phase 0 liegt vor dem ersten Abbruch; Wiederholungen darin hat kein Abbruch verursacht
+        let repeated_before_first_kill = phases.first().copied().unwrap_or(0);
+        let per_kill_list: Vec<u64> = phases.iter().skip(1).copied().collect();
         let kills = out.kills_done as u64;
         let per_kill = u64::from(self.threads) + REPEAT_BUFFER_ALLOWANCE;
         let bound = kills * per_kill;
-        if repeated > bound {
-            out.violations.push(format!(
-                "PERF-005: {repeated} wiederholte Requests > {bound} ({} Abbrüche x (Threads {} + Kanal und größter Batch {REPEAT_BUFFER_ALLOWANCE}), K-49): die Engine puffert unbegrenzt viel",
-                out.kills_done, self.threads
-            ));
-        }
+        out.violations.extend(repeat_violations(
+            &per_kill_list,
+            repeated_before_first_kill,
+            per_kill,
+            self.threads,
+        ));
+        let stats = RepeatStats::of(&per_kill_list);
         out.extra.insert("threads".into(), json!(self.threads));
         out.extra.insert("seed".into(), json!(self.seed));
         out.extra
@@ -348,13 +375,16 @@ impl EngineCrawler {
             .insert("repeated_requests_bound".into(), json!(bound));
         out.extra
             .insert("repeated_bound_per_kill".into(), json!(per_kill));
+        // je Abbruch einzeln, in Abbruchreihenfolge (Abbruch 1 = erste Fortsetzung)
+        out.extra
+            .insert("repeated_per_kill".into(), json!(per_kill_list));
+        out.extra
+            .insert("repeated_per_kill_mean".into(), json!(round(stats.mean, 1)));
+        out.extra
+            .insert("repeated_per_kill_max".into(), json!(stats.max));
         out.extra.insert(
-            "repeated_per_kill".into(),
-            json!(if out.kills_done > 0 {
-                round(repeated as f64 / out.kills_done as f64, 1)
-            } else {
-                0.0
-            }),
+            "repeated_before_first_kill".into(),
+            json!(repeated_before_first_kill),
         );
         out.extra.insert("robots_fetches".into(), json!(robots));
         out.extra
@@ -391,6 +421,46 @@ impl CrawlerUnderTest for EngineCrawler {
     }
 }
 
+/// Gilt die RSS-Grenze von PERF-001 (1,5 GB, Verhältnis) im Profil? Nein im Profil „Maximale Geschwindigkeit“
+/// (K-16): der Cache beträgt dort bis zu 25 % des RAM (höchstens 4 GiB); die Grenze des Caches wird weiter geprüft.
+pub fn rss_limits_apply(profile: StorageProfile) -> bool {
+    profile != StorageProfile::MaxSpeed
+}
+
+/// PERF-001: Verletzungen der RSS-Grenzen (1,5 GB und Verhältnis zum Referenzlauf); im Profil
+/// „Maximale Geschwindigkeit“ keine ([`rss_limits_apply`]).
+pub fn rss_limit_violations(
+    profile: StorageProfile,
+    pages: u64,
+    rss: Option<u64>,
+    scaling: &ScalingVerdict,
+) -> Vec<String> {
+    let mut out = Vec::new();
+    if !rss_limits_apply(profile) {
+        return out;
+    }
+    match rss {
+        Some(r) if r >= MAX_RSS_BYTES => out.push(format!(
+            "PERF-001: Spitzen-RSS {} MB >= 1,5 GB bei {pages} Seiten",
+            r / 1_000_000
+        )),
+        None => out.push("PERF-001: Spitzen-RSS nicht messbar".to_string()),
+        _ => {}
+    }
+    if let Err(msg) = &scaling.verdict {
+        out.push(msg.clone());
+    }
+    out
+}
+
+/// PERF-003 (K-73): Verletzung, wenn der Crawl länger als [`MAX_STALL_SECS`] ohne steigende Zahl abgerufener URLs
+/// stand. `who` ist die Kennung im Text (PERF-003, auch für den Crawl von PERF-001).
+pub fn stall_violation(who: &str, max_stall_s: f64) -> Option<String> {
+    (max_stall_s > MAX_STALL_SECS).then(|| {
+        format!("{who}: der Crawl stand {max_stall_s:.1} s still (Grenze {MAX_STALL_SECS} s)")
+    })
+}
+
 // ---- PERF-005: Ablauf im blockierenden Thread ------------------------------------------------------------------
 
 struct Plan005 {
@@ -412,6 +482,90 @@ struct Out005 {
     violations: Vec<String>,
     warnings: Vec<String>,
     extra: BTreeMap<String, Value>,
+    /// Requests je Pfad (ohne `/robots.txt`), kumuliert am Ende jeder Phase: Phase 0 bis zum ersten Abbruch, Phase i
+    /// von der Fortsetzung nach Abbruch i bis zum nächsten Abbruch bzw. zum Ende.
+    phase_counts: Vec<BTreeMap<String, u64>>,
+}
+
+/// Request-Zähler je Pfad der Testsite (kumuliert seit Start).
+type Counts = BTreeMap<String, u64>;
+
+/// Wiederholte Requests je Phase aus den kumulierten Zählern am Ende jeder Phase ([`Out005::phase_counts`]): ein
+/// Request ist eine Wiederholung, wenn derselbe Pfad schon in einer früheren Phase oder früher in derselben Phase
+/// abgerufen wurde. Die Summe über alle Phasen ist `Summe(Anzahl - 1)` über alle Pfade, wie die bisherige Gesamtzahl.
+/// Phase i >= 1 gehört zu Abbruch i.
+pub fn repeated_per_phase(cumulative: &[BTreeMap<String, u64>]) -> Vec<u64> {
+    let empty = Counts::new();
+    cumulative
+        .iter()
+        .enumerate()
+        .map(|(i, now)| {
+            let before = if i == 0 { &empty } else { &cumulative[i - 1] };
+            now.iter()
+                .filter(|(path, _)| path.as_str() != "/robots.txt")
+                .map(|(path, &n)| {
+                    let seen = before.get(path).copied().unwrap_or(0);
+                    let fresh = n.saturating_sub(seen);
+                    // war der Pfad noch nie abgerufen, ist der erste Abruf keine Wiederholung
+                    if seen == 0 {
+                        fresh.saturating_sub(1)
+                    } else {
+                        fresh
+                    }
+                })
+                .sum()
+        })
+        .collect()
+}
+
+/// Mittel und Maximum der Wiederholungen je Abbruch.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct RepeatStats {
+    /// Mittelwert (0 ohne Abbrüche).
+    pub mean: f64,
+    /// Größter Wert (0 ohne Abbrüche).
+    pub max: u64,
+}
+
+impl RepeatStats {
+    /// Aus der Liste je Abbruch.
+    pub fn of(per_kill: &[u64]) -> Self {
+        Self {
+            mean: if per_kill.is_empty() {
+                0.0
+            } else {
+                per_kill.iter().sum::<u64>() as f64 / per_kill.len() as f64
+            },
+            max: per_kill.iter().copied().max().unwrap_or(0),
+        }
+    }
+}
+
+/// PERF-005/K-49: Verletzungen der Grenze für wiederholte Requests, **je Abbruch** geprüft (jeder Wert <= `bound`),
+/// nicht nur die Summe. Wiederholungen vor dem ersten Abbruch (`before_first_kill`) darf es nicht geben, sie zählen
+/// gegen keinen Abbruch, sind aber in der Gesamtzahl des Berichts enthalten und werden hier gemeldet, wenn sie allein
+/// die Grenze eines Abbruchs überschreiten.
+pub fn repeat_violations(
+    per_kill: &[u64],
+    before_first_kill: u64,
+    bound: u64,
+    threads: u32,
+) -> Vec<String> {
+    let mut out = Vec::new();
+    for (i, &n) in per_kill.iter().enumerate() {
+        if n > bound {
+            out.push(format!(
+                "PERF-005: {n} wiederholte Requests nach Abbruch {} > {bound} (Threads {threads} + Kanal und größter Batch {REPEAT_BUFFER_ALLOWANCE}, K-49): die Engine puffert unbegrenzt viel",
+                i + 1
+            ));
+        }
+    }
+    if before_first_kill > bound {
+        out.push(format!(
+            "PERF-005: {before_first_kill} wiederholte Requests vor dem ersten Abbruch > {bound} (K-49)"
+        ));
+    }
+    out
 }
 
 /// SplitMix64: kleiner, gesäter Zufallsgenerator (Regel 2.8: keine Zufallszahlen ohne Seed).
@@ -501,7 +655,7 @@ fn age_heartbeat(path: &Path) -> Result<(), String> {
         .map_err(|e| e.to_string())
 }
 
-fn run005(plan: &Plan005) -> Result<Out005, String> {
+fn run005(plan: &Plan005, snapshot: &dyn Fn() -> Counts) -> Result<Out005, String> {
     let mut violations = Vec::new();
     let warnings = Vec::new();
     let mut extra: BTreeMap<String, Value> = BTreeMap::new();
@@ -526,6 +680,7 @@ fn run005(plan: &Plan005) -> Result<Out005, String> {
     let mut kill_log = Vec::new();
     let started = std::time::Instant::now();
     let mut finished: Option<RunResult> = None;
+    let mut phase_counts: Vec<Counts> = Vec::new();
     for (i, &point) in plan.kill_points.iter().enumerate() {
         if i > 0 {
             age_heartbeat(&path)?;
@@ -539,6 +694,9 @@ fn run005(plan: &Plan005) -> Result<Out005, String> {
                 // gesäte Verzögerung: der Abbruch trifft verschiedene Stellen des Batch-Zyklus
                 std::thread::sleep(Duration::from_millis(rng.range(0, 40)));
                 let last_reported = child.kill().map_err(|e| format!("Abbruch: {e}"))?;
+                // Requests, die der Server beim Abbruch schon angenommen hatte, zählen noch zur beendeten Phase
+                std::thread::sleep(Duration::from_millis(50));
+                phase_counts.push(snapshot());
                 kills_done += 1;
                 let file = CrawlFile::open(&path, OpenMode::ReadOnly).map_err(|e| e.to_string())?;
                 let ok = file.integrity_check().map_err(|e| e.to_string())?;
@@ -588,6 +746,7 @@ fn run005(plan: &Plan005) -> Result<Out005, String> {
         }
     };
     let seconds = started.elapsed().as_secs_f64();
+    phase_counts.push(snapshot());
     if kills_done == 0 {
         violations.push(
             "PERF-005: es gab keinen harten Abbruch (Crawl zu schnell für den Abbruchpunkt)"
@@ -658,6 +817,7 @@ fn run005(plan: &Plan005) -> Result<Out005, String> {
         violations,
         warnings,
         extra,
+        phase_counts,
     })
 }
 
@@ -885,6 +1045,111 @@ mod tests {
         // gemessen im Profil „Maximale Geschwindigkeit“: 63 -> 416 MB bei 5 und 302 MB Dateigröße
         assert!(scaling(416, 63, 302, 30).verdict.is_ok());
         assert!(scaling(0, 30, 59, 6).verdict.is_err());
+    }
+
+    fn counts(pairs: &[(&str, u64)]) -> BTreeMap<String, u64> {
+        pairs.iter().map(|(p, n)| (p.to_string(), *n)).collect()
+    }
+
+    // spec: PERF-005
+    #[test]
+    fn repeated_requests_are_counted_per_kill_in_the_order_of_the_kills() {
+        // Phase 0: /a, /b, /c je einmal. Abbruch 1. Phase 1: /b und /c erneut, /d neu. Abbruch 2. Phase 2: /c zum
+        // dritten Mal, /d erneut, /e neu. robots.txt gehört zu jedem Start und zählt nie.
+        let cumulative = vec![
+            counts(&[("/a", 1), ("/b", 1), ("/c", 1), ("/robots.txt", 1)]),
+            counts(&[
+                ("/a", 1),
+                ("/b", 2),
+                ("/c", 2),
+                ("/d", 1),
+                ("/robots.txt", 2),
+            ]),
+            counts(&[
+                ("/a", 1),
+                ("/b", 2),
+                ("/c", 3),
+                ("/d", 2),
+                ("/e", 1),
+                ("/robots.txt", 3),
+            ]),
+        ];
+        let phases = repeated_per_phase(&cumulative);
+        assert_eq!(phases, vec![0, 2, 2]);
+        // die Summe entspricht der bisherigen Gesamtzahl Summe(Anzahl - 1) ohne robots.txt
+        let last = cumulative.last().unwrap();
+        let total: u64 = last
+            .iter()
+            .filter(|(p, _)| p.as_str() != "/robots.txt")
+            .map(|(_, n)| n - 1)
+            .sum();
+        assert_eq!(phases.iter().sum::<u64>(), total);
+        // doppelter Abruf innerhalb einer Phase ist ebenfalls eine Wiederholung
+        let dup = vec![counts(&[("/a", 3)]), counts(&[("/a", 3), ("/b", 1)])];
+        assert_eq!(repeated_per_phase(&dup), vec![2, 0]);
+        assert!(repeated_per_phase(&[]).is_empty());
+    }
+
+    // spec: PERF-005
+    #[test]
+    fn repeat_stats_report_mean_and_maximum_and_the_check_is_per_kill() {
+        let stats = RepeatStats::of(&[10, 40, 25]);
+        assert_eq!(stats.max, 40);
+        assert!((stats.mean - 25.0).abs() < 1e-9);
+        assert_eq!(RepeatStats::of(&[]), RepeatStats { mean: 0.0, max: 0 });
+        // Summe 75 liegt unter 3 x 30, aber ein einzelner Abbruch (40) überschreitet die Grenze
+        let v = repeat_violations(&[10, 40, 25], 0, 30, 8);
+        assert_eq!(v.len(), 1, "{v:?}");
+        assert!(
+            v[0].contains("Abbruch 2") && v[0].contains("PERF-005"),
+            "{v:?}"
+        );
+        assert!(repeat_violations(&[30, 30], 0, 30, 8).is_empty());
+        assert_eq!(repeat_violations(&[1], 31, 30, 8).len(), 1);
+    }
+
+    // spec: PERF-001
+    #[test]
+    fn max_speed_does_not_judge_the_rss_limits_but_the_other_profiles_do() {
+        let bad_ratio = ScalingVerdict {
+            ratio: Some(3.0),
+            rule: "ratio",
+            verdict: Err("PERF-001: RSS(1000000) / RSS(100000) = 3.00 >= 2".into()),
+        };
+        let huge = Some(2_000_000_000);
+        assert!(
+            rss_limit_violations(StorageProfile::MaxSpeed, 1_000_000, huge, &bad_ratio).is_empty()
+        );
+        assert!(!rss_limits_apply(StorageProfile::MaxSpeed));
+        for p in [StorageProfile::Balanced, StorageProfile::MinMemory] {
+            assert!(rss_limits_apply(p));
+            let v = rss_limit_violations(p, 1_000_000, huge, &bad_ratio);
+            assert_eq!(v.len(), 2, "{v:?}");
+            assert!(v[0].contains("1,5 GB") && v[1].contains(">= 2"));
+        }
+        // ohne Messwert ist nur ein bewertetes Profil verletzt
+        let ok = ScalingVerdict {
+            ratio: Some(1.0),
+            rule: "ratio",
+            verdict: Ok(()),
+        };
+        assert_eq!(
+            rss_limit_violations(StorageProfile::Balanced, 10, None, &ok).len(),
+            1
+        );
+        assert!(rss_limit_violations(StorageProfile::MaxSpeed, 10, None, &ok).is_empty());
+    }
+
+    // spec: PERF-003
+    #[test]
+    fn the_stall_limit_is_the_spec_value_and_applies_with_the_given_label() {
+        assert_eq!(MAX_STALL_SECS, 30.0);
+        assert!(stall_violation("PERF-003", 30.0).is_none());
+        let v = stall_violation("PERF-003 (Crawl aus PERF-001)", 31.3).unwrap();
+        assert!(
+            v.contains("31.3 s") && v.contains("PERF-001") && v.contains("30"),
+            "{v}"
+        );
     }
 
     #[test]

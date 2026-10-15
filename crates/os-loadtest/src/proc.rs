@@ -29,12 +29,15 @@ pub struct RunResult {
     pub max_stall_s: f64,
     /// Messzähler des Kindes aus den `DIAG`-Zeilen (`<gruppe>_<name>` → Wert; M1-P30).
     pub diag: BTreeMap<String, u64>,
+    /// Stützstellen des Fortschritts für PERF-002 (K-72): `(Sekunden seit READY, crawled)` je `PROGRESS`-Zeile mit
+    /// dem Zeitpunkt des Empfangs, beginnend mit `(0, 0)` bei `READY` und endend mit dem Stand der `DONE`-Zeile.
+    pub samples: Vec<crate::throughput::Sample>,
 }
 
 /// Ein laufendes Kind mit gelesenem stdout.
 pub struct Proc {
     child: Child,
-    lines: mpsc::Receiver<String>,
+    lines: mpsc::Receiver<(Instant, String)>,
     started: Instant,
     stall_timeout: Duration,
     last_crawled: Option<u64>,
@@ -80,7 +83,8 @@ impl Proc {
         let (tx, rx) = mpsc::channel();
         std::thread::spawn(move || {
             for line in BufReader::new(stdout).lines().map_while(Result::ok) {
-                if tx.send(line).is_err() {
+                // der Zeitstempel entsteht beim Empfang, nicht erst, wenn der Elternprozess die Zeile verarbeitet
+                if tx.send((Instant::now(), line)).is_err() {
                     break;
                 }
             }
@@ -97,8 +101,13 @@ impl Proc {
     /// Nächste Zeile; `Ok(None)` bei Ende der Ausgabe, `Err` bei Stillstand länger als der Timeout (das Kind wird
     /// dann hart beendet).
     pub fn next_line(&mut self) -> Result<Option<String>, String> {
+        Ok(self.next_stamped_line()?.map(|(_, line)| line))
+    }
+
+    /// Wie [`Proc::next_line`], mit dem Zeitpunkt, zu dem die Zeile eintraf.
+    pub fn next_stamped_line(&mut self) -> Result<Option<(Instant, String)>, String> {
         match self.lines.recv_timeout(self.stall_timeout) {
-            Ok(line) => Ok(Some(line)),
+            Ok(stamped) => Ok(Some(stamped)),
             Err(RecvTimeoutError::Disconnected) => Ok(None),
             Err(RecvTimeoutError::Timeout) => {
                 let _ = self.child.kill();
@@ -129,7 +138,7 @@ impl Proc {
     pub fn kill(mut self) -> std::io::Result<Option<u64>> {
         self.child.kill()?;
         self.child.wait()?;
-        while let Ok(line) = self.lines.recv() {
+        while let Ok((_, line)) = self.lines.recv() {
             if let Some(n) = progress_crawled(&line) {
                 self.last_crawled = Some(n);
             }
@@ -143,24 +152,33 @@ impl Proc {
         let mut diag = BTreeMap::new();
         let (mut last_crawled, mut last_change) = (u64::MAX, Instant::now());
         let mut max_stall = Duration::ZERO;
-        while let Some(line) = self.next_line()? {
-            if let Some(n) = progress_crawled(&line) {
+        // Ursprung der Stützstellen: READY (die Crawl-Datei existiert, der Crawl läuft); ohne READY der Prozessstart
+        let mut origin = self.started;
+        let mut samples: Vec<crate::throughput::Sample> = vec![(0.0, 0)];
+        while let Some((at, line)) = self.next_stamped_line()? {
+            if line.starts_with("READY ") {
+                origin = at;
+                samples = vec![(0.0, 0)];
+            } else if let Some(n) = progress_crawled(&line) {
                 if n != last_crawled {
                     if last_crawled != u64::MAX {
-                        max_stall = max_stall.max(last_change.elapsed());
+                        max_stall = max_stall.max(at.saturating_duration_since(last_change));
                     }
                     last_crawled = n;
-                    last_change = Instant::now();
+                    last_change = at;
                 }
+                samples.push((at.saturating_duration_since(origin).as_secs_f64(), n));
             } else if line.starts_with("DIAG ") {
                 diag.extend(parse_diag(&line));
             } else if line.starts_with("DONE ") {
+                let crawled = field(&line, "crawled")
+                    .and_then(|v| v.parse().ok())
+                    .unwrap_or(0);
+                samples.push((at.saturating_duration_since(origin).as_secs_f64(), crawled));
                 done = Some((
                     field(&line, "state").unwrap_or("?").to_string(),
                     field(&line, "end_reason").unwrap_or("?").to_string(),
-                    field(&line, "crawled")
-                        .and_then(|v| v.parse().ok())
-                        .unwrap_or(0),
+                    crawled,
                 ));
             }
         }
@@ -178,6 +196,7 @@ impl Proc {
             peak_rss_bytes: exit.peak_rss_bytes,
             max_stall_s: max_stall.as_secs_f64(),
             diag,
+            samples,
         })
     }
 }

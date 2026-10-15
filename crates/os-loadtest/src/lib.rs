@@ -17,6 +17,7 @@ pub mod rss;
 pub mod runner;
 pub mod scenario;
 pub mod sink;
+pub mod throughput;
 pub mod timers;
 
 pub use crawler::{CrawlJob, CrawlOutcome, CrawlerError, CrawlerUnderTest, NoCrawler};

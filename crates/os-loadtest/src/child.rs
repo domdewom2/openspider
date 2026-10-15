@@ -8,7 +8,7 @@
 //! * `PROGRESS crawled=<n> queued=<n> discovered=<n>` – bei jeder Änderung von `crawled`, höchstens alle 20 ms.
 //! * `DONE state=<…> end_reason=<…|-> crawled=<n>` – Abschluss oder Pause.
 //! * `DIAG <gruppe> <name>=<n> …` – Messzähler am Ende (nur dieses Kind, M1-P30): `engine` (os-engine),
-//!   `store` (os-store), bei `OS_LOADTEST_DIAG=1` zusätzlich `rt` (Verspätung des Tokio-Timers) und `os_sleep`
+//!   `store` (os-store), `loadtest` (bei `--slow-sink-ms`: Wartezeit und Aufrufe der verlangsamten Senke), bei `OS_LOADTEST_DIAG=1` zusätzlich `rt` (Verspätung des Tokio-Timers) und `os_sleep`
 //!   (Verspätung von `std::thread::sleep`). Der Elternprozess legt sie unter `diag` in den Bericht.
 //!
 //! Gegenüber `crawl_child` kann dieses Kind die Senke tauschen (`--slow-sink-ms`, PERF-003) und das
@@ -175,6 +175,12 @@ pub async fn run(args: ChildArgs) -> Result<i32, String> {
     }
     say(&diag_line("engine", &os_engine::diag::snapshot()));
     say(&diag_line("store", &os_store::sink::diag::snapshot()));
+    if args.slow_sink_ms.is_some() {
+        say(&diag_line(
+            crate::sink::DIAG_GROUP,
+            &crate::sink::diag_snapshot(),
+        ));
+    }
     report(&summary);
     Ok(0)
 }

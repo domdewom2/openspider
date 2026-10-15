@@ -313,6 +313,25 @@ fn print_summary(rep: &Report) {
     {
         println!("  Spitzen-RSS des Crawl-Prozesses: {} MB", rss / 1_000_000);
     }
+    if let Some(segs) = rep
+        .metrics
+        .get("crawler_segment_urls_per_s")
+        .and_then(|v| v.as_array())
+    {
+        let list: Vec<String> = segs
+            .iter()
+            .filter_map(|v| v.as_f64())
+            .map(|v| format!("{v:.0}"))
+            .collect();
+        println!(
+            "  PERF-002: {} URLs/s im Mittel, Abschnitte [{}] URLs/s",
+            rep.metrics
+                .get("crawler_urls_per_s")
+                .and_then(|v| v.as_f64())
+                .unwrap_or(0.0),
+            list.join(", ")
+        );
+    }
     if let Some(v) = rep
         .metrics
         .get("crawler_violations")
