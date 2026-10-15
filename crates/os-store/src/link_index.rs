@@ -30,6 +30,12 @@ pub const INDEX_NAME: &str = "links_target";
 /// Definition wie in Migration 0001.
 const CREATE_SQL: &str = "CREATE INDEX IF NOT EXISTS links_target ON links(target_id, link_type)";
 
+/// Cache-Größe (KiB) während des Indexaufbaus. Der Sortierer von `CREATE INDEX` hält bis zur Größe des Seitencaches
+/// Schlüssel im Speicher, bevor er auf die Platte ausweicht; bei 256 MiB Cache (Profil Balanced) kostete das
+/// zusätzlich rund 270 MiB Spitzen-RSS (Messung M1-P32, Schritt 1, PERF-003 verlangt unter 500 MB). Mit 32 MiB
+/// bleibt der Aufbau schnell (der Baum wird sortiert gefüllt) und der Spitzen-RSS beim Stand des Crawls.
+const BUILD_CACHE_KIB: i64 = 32 * 1024;
+
 /// Ob der Index in der Datei steht.
 pub fn present(conn: &Connection) -> Result<bool, StoreError> {
     let n: i64 = conn.query_row(
@@ -53,7 +59,16 @@ pub fn ensure(conn: &Connection) -> Result<bool, StoreError> {
         return Ok(false);
     }
     let t = std::time::Instant::now();
-    conn.execute_batch(CREATE_SQL)?;
+    let cache: i64 = conn.pragma_query_value(None, "cache_size", |r| r.get(0))?;
+    let shrink = cache >= 0 || -cache > BUILD_CACHE_KIB;
+    if shrink {
+        conn.pragma_update(None, "cache_size", -BUILD_CACHE_KIB)?;
+    }
+    let built = conn.execute_batch(CREATE_SQL);
+    if shrink {
+        conn.pragma_update(None, "cache_size", cache)?;
+    }
+    built?;
     crate::sink::diag::record_link_index(t);
     Ok(true)
 }
