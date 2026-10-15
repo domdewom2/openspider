@@ -207,3 +207,28 @@ Meilensteine (OS-Festlegung, einzige Quelle der Zuordnung): **M1** (headless, ST
   - [ ] Ein erreichtes Budget (Crawl-Budget oder Teilbudget, AI-013/D4S-013) stoppt den Lauf wie in der App; die Antwort meldet den Status des jeweiligen Bereichs (`Budget exceeded` für KI, `Budget reached` für DataForSEO).
   - [ ] Ergebnisse sind identisch mit dem gleichwertigen App-/CLI-Lauf gegen den Mock (gleiche Statuswerte nach AI-020).
 - **Testfixture:** `ai-mock` mit Request-Log; `tests/fixtures/ai/site/fields.html` (AI-018).
+
+## F. Fokussierter Crawl nach Seitentyp (Idee des Nutzers, 16.10.2026 – Meilenstein: nach 1.0, zusammen mit M4)
+
+Ziel: Ein Agent sagt „crawle nur Produktseiten“ (oder Kategorien, Ratgeber …), und OpenSpider findet selbst heraus, welche URLs das sind, und crawlt/analysiert gezielt nur diese. Bis dahin geht das bereits über AGENT-020 mit Include/Exclude-Mustern, wenn der Agent die URL-Struktur kennt (z. B. `/products/`).
+
+### AGENT-060 Seitentypen erkennen (Erkundungs-Crawl)
+- **Priorität:** P1
+- **Beschreibung:** Werkzeug `discover_page_types(url, sample = 300)` (Klasse `crawl`): kurzer Stichproben-Crawl (Breitensuche, begrenzt) plus Auswertung der Sitemaps. Jede Seite wird regelbasiert einem Seitentyp zugeordnet – Signale: strukturierte Daten (`Product`/`Offer`, `Article`, `BreadcrumbList`, `ItemList`), `og:type`, Sitemap-Herkunft (z. B. Produkt-Sitemaps gängiger Shopsysteme), URL-Muster, Ähnlichkeit der Seitenvorlage (DOM-Gerüst). Ab M4 optional ergänzt durch die KI-Frage AI-050 (Seitentyp), wenn die Regeln nicht eindeutig sind.
+- **Ausgabe:** je Seitentyp: Anzahl, Konfidenz, abgeleitete URL-Muster (Include-Regex), Belege (welche Signale), 5 Beispiel-URLs, Hinweis auf passende Sitemaps.
+- **Akzeptanzkriterien:**
+  - [ ] Fixture-Shop (Kategorien, Produkte mit `Product`-JSON-LD, Ratgeber, Rechtliches): Produkte werden mit ≥ 95 % Trefferquote erkannt, abgeleitetes Muster deckt alle Produkt-URLs der Fixture ab und keine Nicht-Produkt-URL.
+  - [ ] Shop ohne strukturierte Daten: Erkennung über Vorlagen-Ähnlichkeit + URL-Muster, Konfidenz wird ehrlich niedriger ausgewiesen.
+  - [ ] Stichprobe hält Limits ein (Seiten, Zeit, Crawl-Geschwindigkeit) und ist als eigener Crawl in der Verwaltung sichtbar.
+
+### AGENT-061 Fokussierter Crawl
+- **Priorität:** P1
+- **Beschreibung:** `start_crawl(url, focus = { page_type | include_patterns, discover_via = "links" | "sitemaps" | "both" })`. Unterscheidet **Erkunden** (Seiten nur zum Finden von Links abrufen, z. B. Kategorien/Paginierung – nicht speichern, nicht analysieren) und **Erfassen** (nur Seiten des gewählten Typs vollständig speichern und analysieren). Wo Produkt-Sitemaps existieren, werden sie bevorzugt (schnellster Weg, kein Erkundungsaufwand).
+- **Akzeptanzkriterien:**
+  - [ ] Fixture-Shop: Ergebnis enthält genau die Produktseiten; Kategorieseiten wurden abgerufen, erscheinen aber in keiner Tabelle/keinem Export; Request-Log belegt, dass Rechtliches/Ratgeber nicht abgerufen wurden (sofern nicht für die Erkundung nötig).
+  - [ ] Mit Produkt-Sitemap: Fokus-Crawl kommt ohne Erkundung aus (0 Kategorie-Abrufe).
+  - [ ] Segment „Seitentyp“ wird gesetzt, sodass auch ein normaler Crawl nachträglich nach Seitentyp gefiltert werden kann (UI, Export, MCP).
+
+### AGENT-062 MCP-Prompt „Produktseiten-Audit“
+- **Priorität:** P2
+- **Beschreibung:** Vorlage, die AGENT-060 → Bestätigung durch den Nutzer/Agent → AGENT-061 → Issues/Export verbindet (z. B. fehlende Produkt-Strukturdaten, Duplikate, Indexierbarkeit, interne Verlinkung der Produkte).
