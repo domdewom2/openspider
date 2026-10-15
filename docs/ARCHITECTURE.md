@@ -33,6 +33,29 @@ Ziel: Funktionsparität mit Screaming Frog SEO Spider 24.3, aber schneller und s
 | `os-parity` | Paritätsabgleich gegen Referenz-Exporte (`diff`, `run`) und Spec-Abdeckung aus Tags und Testergebnissen (`coverage`) | csv, toml, serde |
 | `os-loadtest` | Lasttest-Runner (Binary, PERF-009): `os-loadtest run --scenario perf-001 --size small` bzw. `--size large`, schreibt `target/loadtest/report.json`; Trait `CrawlerUnderTest`, den `os-engine` später implementiert | os-testsite, clap |
 
+## Crawl-Datei und Speicher
+
+Schreibpfad großer Crawls (M1-P32, K-74 bis K-77; Messwerte in `docs/plan/M1-acceptance/loadtest/probe-p32/README.md`). Ziel: Der Durchsatz bleibt über den ganzen Crawl konstant (PERF-002) und kein Schreibaufruf des Writers blockiert länger als einige Sekunden (PERF-003).
+
+**Schema v2.** `url_counters` (eine Zeile je URL, `WITHOUT ROWID`, rund 30 Byte) ist die einzige Quelle aller Link-Zähler: `inlinks`, `unique_inlinks`, `self_inlinks`, `inlinks_all`, `img_inlinks`, `outlinks`, `unique_outlinks`, `self_outlinks`, `external_outlinks`, `unique_external_outlinks` und die zwei Zähler, die Live-Abfragen ohne Linkindex exakt machen: `html_2xx_sources` (verschiedene interne HTML-Quellseiten mit Status 2xx und mindestens einem Hyperlink auf die URL, Grundlage von `% of Total`) und `image_link_inlinks` (Link-Instanzen vom Typ `Image` mit interner Quelle, Images-Grundmenge). Die Zählerspalten in `urls` bleiben im Schema, werden aber nicht mehr gepflegt und nicht gelesen. Ein Trigger legt die Zeile mit der `urls`-Zeile an und löscht sie mit ihr. Der Writer schreibt die Differenzen je Batch aufsteigend nach Kennung in dieselbe Transaktion und stempelt `url_counters.change_seq`; `queries::changed_since` vereinigt `urls.change_seq` und `url_counters.change_seq`. Grund: Die Zählerpflege ändert je Batch rund 60 000 zufällige Zeilen; in der breiten `urls`-Zeile passt die Tabelle bei 1 Mio. URLs nicht in den Cache, die schmale Zeile bleibt darin.
+
+**Index `links_target`.** Er fehlt während eines laufenden oder pausierten Crawls und nach einem Abbruch. Der Writer (`SqliteSink::open`) entfernt ihn beim Öffnen; beim regulären Ende (Zustand `Completed` im letzten Batch: Ende, Stopp, Limit) baut er ihn in der Transaktion dieses Batches sortiert auf (`os_store::link_index`, Ereignis `links_index_built`, Messzähler `link_index_build_ns`). `link_index::ensure_if_idle` baut ihn bei Bedarf nach; die Crawl-Analyse (`os-analyze`) und die Exporte (`os-export`) einer nicht laufenden Datei rufen es auf. Ohne Index bleibt jede Abfrage korrekt, kostet aber höchstens einen sequenziellen Lauf über `links` (nie einen je Ergebniszeile):
+
+| Abfrage (Stelle) | mit Index | ohne Index (laufender, pausierter, abgebrochener Crawl) |
+|---|---|---|
+| Zähler je URL, `Inlinks` & Co. (`os-analyze` Tabs, `os-mcp`, `os-export`) | `url_counters` | `url_counters` (unabhängig vom Index) |
+| `% of Total` (Internal) und Images-Grundmenge | `url_counters.html_2xx_sources` / `image_link_inlinks` | dasselbe |
+| Inlinks einer URL (`queries::inlinks`, MCP `url_details`, Detail-Export) | Suche im Index, Sortierung nur der Treffer | ein Lauf über `links`: Treffer, Sortierung und Gesamtzahl in einer Abfrage |
+| Bulk-Export „All Inlinks“, Response-Codes-Inlinks (`links_export`) | Suche im Index je Zielzeile | ein Lauf über `links`, Zielmenge als Hashtabelle |
+| Redirect-Reports (`reports/redirects.rs`) | Suche je Start-URL | Menge der verlinkten Ziele und Beispielquellen je ein Lauf für alle Start-URLs |
+| Zähler neu berechnen (`counters::recompute_many`, `verify_all`) | Suche im Index | ein Lauf je Zählergruppe für die ganze Menge |
+| URLs entfernen (`os-engine` `rescan::remove_urls`) | Suche im Index | je Abfrage ein Lauf für alle entfernten URLs |
+| Fortsetzen (`os-engine` `resume.rs`, Ressourcen-Links der Warteschlange) | kein Index nötig: gehört zu M1-P33 | |
+
+**WAL im Hintergrund.** Die Writer-Verbindung hat `wal_autocheckpoint = 0` (ein von außen gesetzter Wert bleibt unangetastet und schaltet den Hintergrund-Checkpoint ab). Ein Thread in `os-store` mit eigener Verbindung führt `PRAGMA wal_checkpoint(PASSIVE)` aus, sobald das WAL die Schwelle erreicht (`with_checkpoint_bounds`, wächst mit der Dateigröße) oder seit dem letzten Durchlauf fünf Sekunden vergangen sind; `journal_size_limit` kürzt die WAL-Datei nach jedem Zurücksetzen. Der Writer wartet auf keinen Checkpoint (Messzähler `wait_checkpoint_ns`, Soll 0); der Thread endet mit der Senke, seine Fehler stehen in der Diagnose, nicht im Crawl. Abschluss und Pause führen weiter den kurzen `TRUNCATE`-Checkpoint aus.
+
+**Seitengröße und mmap.** Unverändert (4 KiB, kein `mmap`): Die A/B-Messung nach K-77 steht im Bericht.
+
 ## Desktop-App
 
 `apps/desktop`: Tauri v2 + React + TypeScript + Vite; Konzept und Entscheidungen: `docs/plan/M2-ui-concept.md`.

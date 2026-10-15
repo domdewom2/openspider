@@ -4,10 +4,14 @@
 //! `queue` → `sitemaps`/`robots` → `meta`/`events`/`counters`. Alle Anweisungen sind vorbereitet und werden
 //! im Statement-Cache der Verbindung gehalten.
 //!
-//! **Änderungsfeed** (M1-Plan 3.9): Je Batch ist `n = crawl_meta.change_seq + 1`. Jede eingefügte oder
-//! geänderte `urls`-Zeile – neue URLs, `UrlUpdate`s, Seiten (auch `replace`) und alle Zielzeilen von
-//! Zähleränderungen – erhält `change_seq = n`; am Ende der Transaktion wird `crawl_meta.change_seq = n`
-//! geschrieben. Ein vollständig leerer Batch ist ein No-op und erhöht die Sequenz nicht.
+//! **Änderungsfeed** (M1-Plan 3.9, 3.14): Je Batch ist `n = crawl_meta.change_seq + 1`. Jede eingefügte oder
+//! geänderte `urls`-Zeile – neue URLs, `UrlUpdate`s, Seiten (auch `replace`) – erhält `change_seq = n`, jede
+//! Zeile von `url_counters`, deren Zähler sich ändern, ebenfalls; am Ende der Transaktion wird
+//! `crawl_meta.change_seq = n` geschrieben ([`crate::queries::changed_since`] vereinigt beide Tabellen). Ein
+//! vollständig leerer Batch ist ein No-op und erhöht die Sequenz nicht.
+//!
+//! **Zähler** (Schema v2, K-75): Die Zeile in `url_counters` legt ein Trigger zusammen mit der `urls`-Zeile an
+//! (`0002_url_counters.sql`); [`crate::counters`] pflegt die Differenzen je Batch.
 //!
 //! **Index `links_target`** (K-74): Der Writer entfernt ihn beim Öffnen und baut ihn beim regulären Ende im letzten
 //! Batch auf ([`crate::link_index`]).
@@ -29,12 +33,12 @@ use os_model::{
     PageWrite, PaginationRow, QueueOp, RefreshRow, RobotsWrite, SitemapWrite, UrlId, UrlUpdate,
     WriteBatch,
 };
-use os_model::{CrawlState, ElementPair, NewUrl};
+use os_model::{ContentClass, CrawlState, ElementPair, NewUrl};
 use rusqlite::types::Value;
 use rusqlite::{params, params_from_iter, Connection, Transaction, TransactionBehavior};
 
 use crate::collation;
-use crate::counters::{BatchCounters, Contribution};
+use crate::counters::{BatchCounters, Contribution, InternalFlags};
 use crate::error::StoreError;
 use crate::link_index;
 use crate::open::{CrawlFile, OpenMode};
@@ -49,6 +53,8 @@ pub struct SqliteSink {
     file: CrawlFile,
     profile: StorageProfile,
     clock: Arc<dyn Clock>,
+    /// Welche URL-Kennungen intern sind (für die Zähler, ohne Lesezugriff auf die breite `urls`-Zeile).
+    internal: InternalFlags,
     /// Zuletzt gesetzte Schwelle von `PRAGMA wal_autocheckpoint` (Seiten); `None`, sobald jemand anderes sie
     /// geändert hat (dann stellt der Sink sie nicht mehr um).
     checkpoint_pages: Option<i64>,
@@ -72,6 +78,7 @@ impl SqliteSink {
             file,
             profile,
             clock: Arc::new(SystemClock),
+            internal: InternalFlags::default(),
             checkpoint_pages: Some(profile::WAL_CHECKPOINT_MIN_PAGES),
             checkpoint_bounds: (
                 profile::WAL_CHECKPOINT_MIN_PAGES,
@@ -168,7 +175,12 @@ impl CrawlSink for SqliteSink {
         // Die Schwelle gilt für den nächsten Commit; sie wächst mit der Datei, bevor dieser Commit eine
         // Checkpoint-Entscheidung trifft.
         self.adapt_checkpoint_threshold();
-        write_batch(self.file.conn(), &batch, self.clock.as_ref())
+        write_batch(
+            self.file.conn(),
+            &batch,
+            self.clock.as_ref(),
+            &mut self.internal,
+        )
     }
 
     /// Dauerhafter Zeitpunkt: WAL in die Hauptdatei zurückführen. Unter „Maximale Geschwindigkeit“
@@ -212,7 +224,12 @@ fn int(v: u64) -> i64 {
 }
 
 /// Schreibt einen Batch in einer Transaktion.
-fn write_batch(conn: &Connection, batch: &WriteBatch, clock: &dyn Clock) -> Result<(), StoreError> {
+fn write_batch(
+    conn: &Connection,
+    batch: &WriteBatch,
+    clock: &dyn Clock,
+    internal: &mut InternalFlags,
+) -> Result<(), StoreError> {
     if is_empty(batch) {
         return Ok(());
     }
@@ -220,9 +237,9 @@ fn write_batch(conn: &Connection, batch: &WriteBatch, clock: &dyn Clock) -> Resu
     let tx = Transaction::new_unchecked(conn, TransactionBehavior::Immediate)?;
     let seq = read_change_seq(&tx)? + 1;
 
-    insert_new_urls(&tx, &batch.new_urls, seq)?;
+    insert_new_urls(&tx, &batch.new_urls, seq, internal)?;
     apply_url_updates(&tx, &batch.url_updates, seq)?;
-    let mut batch_counters = BatchCounters::default();
+    let mut batch_counters = BatchCounters::new(internal);
     for page in &batch.pages {
         write_page(&tx, page, seq, &mut batch_counters)?;
     }
@@ -282,7 +299,12 @@ fn read_change_seq(tx: &Transaction<'_>) -> Result<i64, StoreError> {
     Ok(value.and_then(|v| v.parse().ok()).unwrap_or(0))
 }
 
-fn insert_new_urls(tx: &Transaction<'_>, urls: &[NewUrl], seq: i64) -> Result<(), StoreError> {
+fn insert_new_urls(
+    tx: &Transaction<'_>,
+    urls: &[NewUrl],
+    seq: i64,
+    internal: &mut InternalFlags,
+) -> Result<(), StoreError> {
     if urls.is_empty() {
         return Ok(());
     }
@@ -308,7 +330,7 @@ fn insert_new_urls(tx: &Transaction<'_>, urls: &[NewUrl], seq: i64) -> Result<()
             seq
         ]);
         match inserted {
-            Ok(_) => {}
+            Ok(_) => internal.set(u.id.0, u.is_internal),
             Err(rusqlite::Error::SqliteFailure(f, _))
                 if f.code == rusqlite::ErrorCode::ConstraintViolation =>
             {
@@ -540,13 +562,31 @@ fn page_values(page: &PageWrite, seq: i64) -> Vec<Value> {
     v
 }
 
-fn source_is_internal(tx: &Transaction<'_>, id: i64) -> Result<bool, StoreError> {
-    let mut stmt = tx.prepare_cached("SELECT is_internal FROM urls WHERE id = ?1")?;
+/// Zustand der Zeile einer Seite vor dem Überschreiben: ob sie intern ist und ob sie bisher eine HTML-Seite mit
+/// Status 2xx war (Beitrag zu `html_2xx_sources` ihrer Linkziele). Ein Lesezugriff auf dieselbe Zeile, die das
+/// `UPDATE` danach ändert.
+fn source_state(tx: &Transaction<'_>, id: i64) -> Result<(bool, bool), StoreError> {
+    let mut stmt = tx
+        .prepare_cached("SELECT is_internal, content_class, status_code FROM urls WHERE id = ?1")?;
     let mut rows = stmt.query([id])?;
     Ok(match rows.next()? {
-        Some(row) => row.get::<_, i64>(0)? != 0,
-        None => false,
+        Some(row) => {
+            let internal = row.get::<_, i64>(0)? != 0;
+            let class: Option<String> = row.get(1)?;
+            let status: Option<i64> = row.get(2)?;
+            (
+                internal,
+                class.as_deref() == Some(ContentClass::Html.as_str())
+                    && status.is_some_and(|s| (200..=299).contains(&s)),
+            )
+        }
+        None => (false, false),
     })
+}
+
+/// Ob eine Seite beim Schreiben eine HTML-Seite mit Status 2xx ist.
+fn is_html_2xx(page: &PageWrite) -> bool {
+    page.fetch.content_class == ContentClass::Html && (200..=299).contains(&page.fetch.status_code)
 }
 
 fn delete_children(tx: &Transaction<'_>, id: i64) -> Result<(), StoreError> {
@@ -572,9 +612,11 @@ fn write_page(
     tx: &Transaction<'_>,
     page: &PageWrite,
     seq: i64,
-    batch_counters: &mut BatchCounters,
+    batch_counters: &mut BatchCounters<'_>,
 ) -> Result<(), StoreError> {
     let id = page.url_id.0;
+    // Der bisherige Zustand der Zeile steht vor dem Überschreiben fest (nur ein Lesezugriff auf dieselbe Zeile).
+    let (internal, old_html_2xx) = source_state(tx, id)?;
     let changed = tx
         .prepare_cached(page_update_sql())?
         .execute(params_from_iter(page_values(page, seq).iter()))?;
@@ -582,10 +624,9 @@ fn write_page(
         return Err(batch_error(format!("PageWrite: URL {id} existiert nicht")));
     }
 
-    let internal = source_is_internal(tx, id)?;
     let old = if page.replace {
         let old = if internal {
-            Contribution::load(tx, id)?
+            Contribution::load(tx, id, old_html_2xx)?
         } else {
             Contribution::default()
         };
@@ -605,7 +646,7 @@ fn write_page(
     insert_headers(tx, id, &page.headers)?;
 
     if internal {
-        let new = Contribution::from_rows(&page.links, &page.images);
+        let new = Contribution::from_rows(&page.links, &page.images, is_html_2xx(page));
         batch_counters.add_page(tx, id, &old, &new)?;
     }
     Ok(())

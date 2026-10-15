@@ -4,7 +4,9 @@
 # Aufruf: scripts/bench/run_block.sh <logdatei> <befehl> [argumente...]
 log="$1"; shift
 dir=$(dirname "$0")
-"$dir/wait_quiet.sh" 2 120 || exit 75   # 75 = Maschine blieb unruhig (Aufrufer darf wiederholen)
+# Welle 7 ist Entwicklung (Orchestrator-Entscheidung): hoechstens 10 min auf Load < 8 warten, danach messen;
+# der Load steht im Kopf der Logdatei. Absolute Abnahmewerte misst Welle 7b.
+"$dir/wait_quiet.sh" 8 10 >/dev/null 2>&1
 { echo "Start $(date -u +%FT%TZ) ($(date +%H:%M) lokal)"; uptime; } > "$log"
 caffeinate -dimsu "$@" >> "$log" 2>&1
 rc=$?

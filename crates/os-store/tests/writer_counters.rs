@@ -76,7 +76,10 @@ fn verification_detects_a_wrong_counter() {
     assert!(counters::verify_all(file.conn()).unwrap().is_empty());
     let rw = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
     rw.conn()
-        .execute("UPDATE urls SET inlinks = inlinks + 1 WHERE id = 2", [])
+        .execute(
+            "UPDATE url_counters SET inlinks = inlinks + 1 WHERE url_id = 2",
+            [],
+        )
         .unwrap();
     assert_eq!(counters::verify_all(file.conn()).unwrap(), vec![2]);
 }
@@ -299,7 +302,14 @@ fn counters_equal_full_recomputation_after_random_rewrites() {
                 continue;
             }
             let (links, images) = random_links(&mut rng, PAGES, EXTERNALS);
-            let mut p = page(id, links);
+            // Status und Klasse wechseln mit: `html_2xx_sources` folgt dem Zustand der Quelle beim Schreiben.
+            let status = [200, 200, 404, 302][usize::try_from(rng.below(4)).unwrap()];
+            let class = if rng.below(5) == 0 {
+                ContentClass::Css
+            } else {
+                ContentClass::Html
+            };
+            let mut p = html_page(id, links, status, class);
             p.images = images;
             p.replace = round > 0;
             batch.pages.push(p);
@@ -311,5 +321,185 @@ fn counters_equal_full_recomputation_after_random_rewrites() {
             bad.is_empty(),
             "Runde {round}: Zähler weichen ab bei URLs {bad:?}"
         );
+    }
+}
+
+fn html_page(id: i64, links: Vec<LinkRow>, status: u16, class: ContentClass) -> PageWrite {
+    let mut p = page(id, links);
+    p.fetch.status_code = status;
+    p.fetch.content_class = class;
+    p
+}
+
+// spec: PERF-002
+#[test]
+fn html_2xx_sources_count_distinct_internal_html_pages_with_status_2xx() {
+    // K-56: `% of Total` zählt verschiedene interne HTML-Quellseiten mit Status 2xx und mindestens einem Hyperlink.
+    let dir = tempfile::tempdir().unwrap();
+    let (path, mut sink) = setup(
+        dir.path(),
+        &[(1, true), (2, true), (3, true), (4, true), (5, false)],
+    );
+    let mut batch = WriteBatch::default();
+    // Seite 1: HTML 200, zwei Hyperlinks auf 3 (eine Quelle), einer auf 4, ein Bild-Link auf 4 (kein Hyperlink)
+    batch.pages.push(html_page(
+        1,
+        vec![
+            hyperlink(3, 0),
+            hyperlink(3, 1),
+            hyperlink(4, 2),
+            link(Some(4), LinkType::Image, 3),
+        ],
+        200,
+        ContentClass::Html,
+    ));
+    // Seite 2: HTML, aber 404; Seite 3: kein HTML (CSS 200)
+    batch
+        .pages
+        .push(html_page(2, vec![hyperlink(3, 0)], 404, ContentClass::Html));
+    batch.pages.push(html_page(
+        3,
+        vec![hyperlink(4, 0), hyperlink(3, 1)],
+        200,
+        ContentClass::Css,
+    ));
+    sink.write(batch).unwrap();
+    let file = reader(&path);
+    assert_eq!(counters_of(&file, 3).html_2xx_sources, 1, "nur Seite 1");
+    assert_eq!(
+        counters_of(&file, 3).inlinks,
+        4,
+        "alle Hyperlinks zählen als Inlinks"
+    );
+    assert_eq!(counters_of(&file, 4).html_2xx_sources, 1);
+    assert_eq!(counters_of(&file, 4).image_link_inlinks, 1);
+    assert!(counters::verify_all(file.conn()).unwrap().is_empty());
+
+    // Seite 2 wird neu abgerufen und ist jetzt 200: ihr alter Beitrag (404) entfällt, der neue zählt.
+    let mut again = html_page(2, vec![hyperlink(3, 0)], 200, ContentClass::Html);
+    again.replace = true;
+    sink.write(WriteBatch {
+        pages: vec![again],
+        ..WriteBatch::default()
+    })
+    .unwrap();
+    assert_eq!(counters_of(&file, 3).html_2xx_sources, 2);
+    // Seite 1 wird neu abgerufen und antwortet jetzt mit 500: sie zählt nicht mehr, auch ohne Änderung der Links.
+    let mut broken = html_page(
+        1,
+        vec![hyperlink(3, 0), hyperlink(3, 1), hyperlink(4, 2)],
+        500,
+        ContentClass::Html,
+    );
+    broken.replace = true;
+    sink.write(WriteBatch {
+        pages: vec![broken],
+        ..WriteBatch::default()
+    })
+    .unwrap();
+    assert_eq!(
+        counters_of(&file, 3).html_2xx_sources,
+        1,
+        "nur noch Seite 2"
+    );
+    assert_eq!(counters_of(&file, 4).html_2xx_sources, 0);
+    assert_eq!(
+        counters_of(&file, 4).image_link_inlinks,
+        0,
+        "der Bild-Link ist weg"
+    );
+    // Selbstlink einer 2xx-Seite zählt mit (A-9)
+    let mut selfish = html_page(2, vec![hyperlink(2, 0)], 200, ContentClass::Html);
+    selfish.replace = true;
+    sink.write(WriteBatch {
+        pages: vec![selfish],
+        ..WriteBatch::default()
+    })
+    .unwrap();
+    assert_eq!(counters_of(&file, 2).html_2xx_sources, 1);
+    assert_eq!(counters_of(&file, 3).html_2xx_sources, 0);
+    assert!(counters::verify_all(file.conn()).unwrap().is_empty());
+}
+
+// spec: PERF-002
+#[test]
+fn image_link_inlinks_count_image_typed_link_instances_from_internal_sources() {
+    let dir = tempfile::tempdir().unwrap();
+    let (path, mut sink) = setup(dir.path(), &[(1, true), (2, true), (3, true), (4, false)]);
+    let mut batch = WriteBatch::default();
+    batch.pages.push(page(
+        1,
+        vec![
+            link(Some(3), LinkType::Image, 0),
+            link(Some(3), LinkType::Image, 1),
+            hyperlink(3, 2),
+            link(Some(4), LinkType::Image, 3),
+        ],
+    ));
+    batch
+        .pages
+        .push(page(2, vec![link(Some(3), LinkType::Image, 0)]));
+    sink.write(batch).unwrap();
+    let file = reader(&path);
+    let r = counters_of(&file, 3);
+    assert_eq!((r.image_link_inlinks, r.inlinks, r.inlinks_all), (3, 1, 4));
+    assert_eq!(counters_of(&file, 4).image_link_inlinks, 1);
+    let mut again = page(1, vec![]);
+    again.replace = true;
+    sink.write(WriteBatch {
+        pages: vec![again],
+        ..WriteBatch::default()
+    })
+    .unwrap();
+    assert_eq!(counters_of(&file, 3).image_link_inlinks, 1);
+    assert_eq!(counters_of(&file, 4).image_link_inlinks, 0);
+    assert!(counters::verify_all(file.conn()).unwrap().is_empty());
+}
+
+// spec: PERF-002
+#[test]
+fn counters_are_exact_with_and_without_the_link_index() {
+    // `recompute_many` und `verify_all` sind mengenweise: gleiches Ergebnis mit und ohne `links_target`.
+    let dir = tempfile::tempdir().unwrap();
+    let urls: Vec<(i64, bool)> = (1..=40).map(|i| (i, i <= 30)).collect();
+    let (path, mut sink) = setup(dir.path(), &urls);
+    let mut rng = Rng(0xDEAD_BEEF_CAFE_F00D);
+    let mut batch = WriteBatch::default();
+    for id in 1..=30 {
+        let (links, images) = random_links(&mut rng, 30, 10);
+        let mut p = html_page(
+            id,
+            links,
+            [200, 200, 404, 301][usize::try_from(rng.below(4)).unwrap()],
+            if rng.below(5) == 0 {
+                ContentClass::Css
+            } else {
+                ContentClass::Html
+            },
+        );
+        p.images = images;
+        batch.pages.push(p);
+    }
+    sink.write(batch).unwrap();
+    sink.finish().unwrap();
+
+    let ids: Vec<i64> = (1..=40).collect();
+    let without = reader(&path);
+    assert!(!os_store::link_index::present(without.conn()).unwrap());
+    let a = counters::recompute_many(without.conn(), &ids).unwrap();
+    assert!(counters::verify_all(without.conn()).unwrap().is_empty());
+    {
+        let rw = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
+        assert!(os_store::link_index::ensure(rw.conn()).unwrap());
+    }
+    let with = reader(&path);
+    assert!(os_store::link_index::present(with.conn()).unwrap());
+    let b = counters::recompute_many(with.conn(), &ids).unwrap();
+    assert!(counters::verify_all(with.conn()).unwrap().is_empty());
+    assert_eq!(a, b);
+    assert_eq!(a.len(), 40);
+    for id in 1..=40 {
+        assert_eq!(a[&id], counters_of(&with, id), "URL {id}");
+        assert_eq!(counters::recompute(with.conn(), id).unwrap(), a[&id]);
     }
 }

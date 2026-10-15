@@ -507,10 +507,18 @@ pub fn change_seq(conn: &Connection) -> Result<u64, StoreError> {
     Ok(value.and_then(|v| v.parse().ok()).unwrap_or(0))
 }
 
-/// URLs mit `urls.change_seq > seq`, aufsteigend nach `(change_seq, id)`, höchstens `limit`.
+/// URLs mit `urls.change_seq > seq` oder `url_counters.change_seq > seq` (Schema v2: Zähleränderungen stempeln die
+/// Zählertabelle), aufsteigend nach `(change_seq, id)` mit dem jeweils größeren der beiden Stempel, ohne Dubletten,
+/// höchstens `limit`.
 pub fn changed_since(conn: &Connection, seq: u64, limit: u32) -> Result<Vec<UrlId>, StoreError> {
     let mut stmt = conn.prepare_cached(
-        "SELECT id FROM urls WHERE change_seq > ?1 ORDER BY change_seq, id LIMIT ?2",
+        "SELECT id FROM ( \
+           SELECT id, MAX(s) AS s FROM ( \
+             SELECT id, change_seq AS s FROM urls WHERE change_seq > ?1 \
+             UNION ALL \
+             SELECT url_id, change_seq FROM url_counters WHERE change_seq > ?1) \
+           GROUP BY id) \
+         ORDER BY s, id LIMIT ?2",
     )?;
     let ids = stmt
         .query_map(

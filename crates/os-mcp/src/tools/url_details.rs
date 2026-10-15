@@ -582,8 +582,9 @@ fn overview(crawl: &OpenCrawl, facts: &UrlFacts) -> Result<Json, ToolError> {
         })
         .collect();
     let sql = format!(
-        "SELECT json_array({}) FROM urls u WHERE u.id = ?1",
-        exprs.join(", ")
+        "SELECT json_array({}) FROM {} WHERE u.id = ?1",
+        exprs.join(", "),
+        views::URLS_FROM
     );
     let values = json_query(crawl, &sql, facts.id)?;
     let values = values.as_array().cloned().unwrap_or_default();
@@ -807,7 +808,8 @@ fn url_issues(crawl: &OpenCrawl, tab_defs: &[TabDef], id: UrlId) -> Result<UrlIs
             let plan =
                 views::plan(&ViewQuery::new(tab.id, filter.id), &crawl.cfg).map_err(view_error)?;
             let sql = format!(
-                "SELECT EXISTS(SELECT 1 FROM urls u WHERE {} AND {} AND u.id = ?1)",
+                "SELECT EXISTS(SELECT 1 FROM {} WHERE {} AND {} AND u.id = ?1)",
+                views::URLS_FROM,
                 inline_params(&plan.population_sql, &plan.params).map_err(internal)?,
                 inline_params(&plan.filter_sql, &plan.params).map_err(internal)?
             );

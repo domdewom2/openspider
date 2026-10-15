@@ -13,7 +13,7 @@
 //! # Spalten (ONPAGE-171)
 //!
 //! `Address`, `Content` (Content-Type-Header), `Size` (Bytes; die UI zeigt KB), `IMG Inlinks` (verschiedene
-//! interne Seiten mit mindestens einer Instanz; vom Writer gepflegter Zähler `urls.img_inlinks`),
+//! interne Seiten mit mindestens einer Instanz; vom Writer gepflegter Zähler `url_counters.img_inlinks`),
 //! `Indexability`, `Indexability Status`.
 //!
 //! # Größe (ONPAGE-173, Annahme A-6/A-45)
@@ -45,7 +45,7 @@ use crate::defs::{ColumnDef, ColumnKind, ColumnSql, FilterDef, FilterKind, SortK
 /// Grundmenge über dem Alias `u` (ONPAGE-170).
 const POPULATION: &str = "u.in_tables = 1 AND (u.content_class = 'Images' \
      OR EXISTS (SELECT 1 FROM image_instances i WHERE i.image_id = u.id) \
-     OR EXISTS (SELECT 1 FROM links l WHERE l.target_id = u.id AND l.link_type = 'Image'))";
+     OR c.image_link_inlinks > 0)";
 
 /// Größe in Bytes (ONPAGE-173): Körper, sonst `Content-Length`, sonst 0; nur bei 2xx.
 macro_rules! size_expr {
@@ -105,7 +105,7 @@ pub fn tab() -> TabDef {
             column("Address", "u.address", ColumnKind::Url),
             column("Content", "u.content_type", ColumnKind::Text),
             column("Size", SIZE, ColumnKind::Int),
-            column("IMG Inlinks", "u.img_inlinks", ColumnKind::Int),
+            column("IMG Inlinks", "c.img_inlinks", ColumnKind::Int),
             column("Indexability", "u.indexability", ColumnKind::Text),
             column(
                 "Indexability Status",

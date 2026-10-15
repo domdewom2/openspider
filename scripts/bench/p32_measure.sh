@@ -1,6 +1,6 @@
 #!/bin/sh
 # M1-P32: Messung M (nach jedem Schritt, Release) unter Messruhe: Store-Benchmark, perf-001 und perf-003 mit je 250 000
-# Seiten. Jeder Block laeuft unter `lockf` (bench.lock), wartet auf Load < 2 (wait_quiet.sh) und laeuft unter caffeinate
+# Seiten. Jeder Block laeuft unter `lockf` (bench.lock), wartet hoechstens 10 min auf Load < 8 (wait_quiet.sh 8 10) und laeuft unter caffeinate
 # (run_block.sh); Load und Zeiten stehen im Kopf der Logdateien.
 #
 # Aufruf:   scripts/bench/p32_measure.sh <label> [store|perf-001|perf-003 ...]   (ohne Angabe: alle drei Bloecke)
@@ -26,17 +26,9 @@ store_bin="${STORE_BIN:-}"
 mkdir -p "$out" "$work"
 want="${*:-store perf-001 perf-003}"
 
-block() { # <name> <befehl...>; wiederholt, wenn die Maschine nicht ruhig wurde (75) oder die Sperre nicht frei wurde (73)
+block() { # <name> <befehl...>: nur der Messlauf selbst steht unter der Sperre (Builds und Tests nie)
   name="$1"; shift
-  tries=0
-  while :; do
-    # Erst ausserhalb der Sperre auf Ruhe warten (andere Pakete bauen solange weiter), dann unter der Sperre messen;
-    # run_block.sh prueft die Ruhe unter der Sperre noch einmal.
-    "$dir/wait_quiet.sh" 2 240 >/dev/null 2>&1 || { sleep 60; continue; }
-    lockf -t 7200 "$lock" "$dir/run_block.sh" "$out/log-$name.txt" "$@"
-    rc=$?
-    case "$rc" in 73|75) tries=$((tries + 1)); [ "$tries" -lt 6 ] || return "$rc"; sleep 60 ;; *) return "$rc" ;; esac
-  done
+  lockf -t 7200 "$lock" "$dir/run_block.sh" "$out/log-$name.txt" "$@"
 }
 
 for b in $want; do

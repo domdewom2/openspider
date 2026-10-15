@@ -232,7 +232,8 @@ fn target_condition(
     }
     Ok(Some(TargetCondition {
         sql: format!(
-            "l.target_id IN (SELECT u.id FROM urls u WHERE {})",
+            "l.target_id IN (SELECT u.id FROM {} WHERE {})",
+            views::URLS_FROM,
             alternatives.join(" OR ")
         ),
         params,

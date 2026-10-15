@@ -27,6 +27,7 @@ pub const ALL_TABLES: &[&str] = &[
     "robots_files",
     "sitemap_entries",
     "sitemaps",
+    "url_counters",
     "url_flags",
     "urls",
 ];

@@ -37,7 +37,7 @@ macro_rules! total_pages {
 /// `Unique Inlinks` ohne Selbstlink.
 macro_rules! unique_inlinks {
     () => {
-        "(u.unique_inlinks - CASE WHEN u.self_inlinks > 0 THEN 1 ELSE 0 END)"
+        "(c.unique_inlinks - CASE WHEN c.self_inlinks > 0 THEN 1 ELSE 0 END)"
     };
 }
 
@@ -49,7 +49,7 @@ const POPULATION: &str = "u.is_internal = 1 AND u.in_tables = 1 AND u.content_cl
 const HIGH_DEPTH: &str = "u.crawl_depth >= :high_crawl_depth";
 
 /// Ohne interne Outlinks, Selbstlinks nicht gerechnet (TECH-133).
-const NO_OUTLINKS: &str = "(u.outlinks - u.self_outlinks) = 0";
+const NO_OUTLINKS: &str = "(c.outlinks - c.self_outlinks) = 0";
 
 /// Interner Hyperlink mit `rel` nofollow, ugc oder sponsored (TECH-134); `links.rel` ist kleingeschrieben und
 /// mit einem Leerzeichen zwischen den Token gespeichert. Seiten-nofollow (Meta, Header) zählt nicht.
@@ -110,7 +110,7 @@ pub fn tab() -> TabDef {
             // [OS-Erweiterung]: steht in der Referenz im Internal-Tab (TECH-130, Zusatzspalte).
             ColumnDef {
                 key: "Inlinks",
-                sql: ColumnSql::Expr("(u.inlinks - u.self_inlinks)"),
+                sql: ColumnSql::Expr("(c.inlinks - c.self_inlinks)"),
                 kind: ColumnKind::Int,
                 default_visible: false,
                 extension: true,
@@ -132,19 +132,19 @@ pub fn tab() -> TabDef {
             ),
             column(
                 "Outlinks",
-                "(u.outlinks - u.self_outlinks)",
+                "(c.outlinks - c.self_outlinks)",
                 ColumnKind::Int,
             ),
             column(
                 "Unique Outlinks",
-                "(u.unique_outlinks - CASE WHEN u.self_outlinks > 0 THEN 1 ELSE 0 END)",
+                "(c.unique_outlinks - CASE WHEN c.self_outlinks > 0 THEN 1 ELSE 0 END)",
                 ColumnKind::Int,
             ),
             column("Unique JS Outlinks", "NULL", ColumnKind::Int),
-            column("External Outlinks", "u.external_outlinks", ColumnKind::Int),
+            column("External Outlinks", "c.external_outlinks", ColumnKind::Int),
             column(
                 "Unique External Outlinks",
-                "u.unique_external_outlinks",
+                "c.unique_external_outlinks",
                 ColumnKind::Int,
             ),
             column("Unique External JS Outlinks", "NULL", ColumnKind::Int),

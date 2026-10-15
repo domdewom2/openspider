@@ -25,6 +25,11 @@ use crate::state::filter_state;
 use crate::tabs;
 
 pub use build::column_name_resolves;
+
+/// `FROM`-Quelle jeder Ansicht: die URL-Zeile `u` und ihre Zähler `c` (`url_counters`, Schema v2). Die Spalten der
+/// Tabs lesen die Link-Zähler (`Inlinks`, `Outlinks`, …) aus `c`, nie aus den Zählerspalten von `urls`. Der
+/// `LEFT JOIN` über den Primärschlüssel entfällt, wenn keine Spalte, kein Filter und keine Sortierung `c` nutzt.
+pub const URLS_FROM: &str = "urls u LEFT JOIN url_counters c ON c.url_id = u.id";
 pub use counts::percent;
 
 /// Welche Spalten geliefert werden.

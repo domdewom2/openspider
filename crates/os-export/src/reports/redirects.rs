@@ -362,10 +362,11 @@ fn start_info(
     id: i64,
     samples: Option<&std::collections::HashMap<i64, String>>,
 ) -> Result<StartInfo, ExportError> {
-    let inlinks: i64 =
-        db(file
-            .conn()
-            .query_row("SELECT inlinks FROM urls WHERE id = ?1", [id], |r| r.get(0)))?;
+    let inlinks: i64 = db(file.conn().query_row(
+        "SELECT inlinks FROM url_counters WHERE url_id = ?1",
+        [id],
+        |r| r.get(0),
+    ))?;
     if let Some(samples) = samples {
         return Ok(StartInfo {
             inlinks,

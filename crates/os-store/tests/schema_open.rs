@@ -91,7 +91,7 @@ fn newer_schema_version_is_rejected_without_touching_the_file() {
                 generator,
                 ..
             } => {
-                assert_eq!((*found, *supported), (99, 1));
+                assert_eq!((*found, *supported), (99, 2));
                 assert!(generator.starts_with("openspider "), "{generator}");
             }
             other => panic!("unerwartet: {other}"),

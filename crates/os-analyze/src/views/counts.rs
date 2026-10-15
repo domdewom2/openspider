@@ -8,7 +8,7 @@ use os_store::{queries, CrawlFile};
 
 use super::build::build;
 use super::exec::bind_named;
-use super::{FilterCount, ViewQuery};
+use super::{FilterCount, ViewQuery, URLS_FROM};
 use crate::defs::TabDef;
 use crate::error::{AnalyzeError, ViewError};
 use crate::names;
@@ -81,7 +81,10 @@ pub(super) fn counts_in(
 
         let counts: Vec<i64> = match population {
             Some(population) => {
-                let sql = format!("SELECT {} FROM urls u WHERE {population}", sums.join(", "));
+                let sql = format!(
+                    "SELECT {} FROM {URLS_FROM} WHERE {population}",
+                    sums.join(", ")
+                );
                 let mut stmt = conn.prepare(&sql)?;
                 bind_named(&mut stmt, &params, &[])?;
                 let mut rows = stmt.raw_query();

@@ -52,7 +52,7 @@ async fn robots_and_configured_sitemaps_are_each_fetched_once_and_orphans_are_cr
     let (depth, via, status, inlinks): (Option<i64>, String, i64, i64) = file
         .conn()
         .query_row(
-            "SELECT crawl_depth, discovered_via, status_code, inlinks FROM urls WHERE url = 'http://site.test/nur-in-sitemap'",
+            "SELECT u.crawl_depth, u.discovered_via, u.status_code, c.inlinks FROM urls u JOIN url_counters c ON c.url_id = u.id WHERE u.url = 'http://site.test/nur-in-sitemap'",
             [],
             |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
         )

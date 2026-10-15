@@ -281,9 +281,10 @@ const REFERENCES: &[(&str, &str)] = &[
     ("list_input", "url_id"),
 ];
 
-fn column_ids(file: &CrawlFile, sql: &str, id: i64) -> Result<Vec<i64>, EngineError> {
+/// Ergebnisspalte einer Abfrage mit der Kennungsliste als JSON-Feld in `?1`.
+fn column_ids(file: &CrawlFile, sql: &str, ids_json: &str) -> Result<Vec<i64>, EngineError> {
     let mut stmt = db(file.conn().prepare_cached(sql))?;
-    let rows = db(stmt.query_map([id], |r| r.get::<_, i64>(0)))?;
+    let rows = db(stmt.query_map([ids_json], |r| r.get::<_, i64>(0)))?;
     let mut out = Vec::new();
     for row in rows {
         out.push(db(row)?);
@@ -292,6 +293,10 @@ fn column_ids(file: &CrawlFile, sql: &str, id: i64) -> Result<Vec<i64>, EngineEr
 }
 
 /// Entfernt URLs aus der Crawl-Datei (Inlinks bleiben als Links ohne Status).
+///
+/// Jede Abfrage über `links.target_id` gilt der **ganzen** Menge der entfernten URLs und kostet damit höchstens
+/// einen Lauf über `links` – mit dem Index `links_target` über die Kennungen, ohne ihn (K-74: pausierter oder
+/// abgebrochener Crawl) sequenziell, nie ein Lauf je URL.
 pub fn remove_urls(file: &Path, urls: &[UrlId]) -> Result<(), EngineError> {
     if urls.is_empty() {
         return Ok(());
@@ -302,6 +307,15 @@ pub fn remove_urls(file: &Path, urls: &[UrlId]) -> Result<(), EngineError> {
     ensure_not_running_with(&handle, &probe)?;
     let conn = handle.conn();
     let removed: BTreeSet<i64> = urls.iter().map(|u| u.0).collect();
+    let removed_json = format!(
+        "[{}]",
+        removed
+            .iter()
+            .map(i64::to_string)
+            .collect::<Vec<_>>()
+            .join(",")
+    );
+    const IN_REMOVED: &str = "IN (SELECT value FROM json_each(?1))";
 
     db(conn.execute_batch("BEGIN IMMEDIATE"))?;
     let result = (|| -> Result<(), EngineError> {
@@ -310,64 +324,57 @@ pub fn remove_urls(file: &Path, urls: &[UrlId]) -> Result<(), EngineError> {
             .and_then(|v| v.parse().ok())
             .unwrap_or(0)
             + 1;
+        // betroffene Nachbarn merken, bevor ihre Verbindungen verschwinden
         let mut affected: BTreeSet<i64> = BTreeSet::new();
-        for &id in &removed {
-            // betroffene Nachbarn merken, bevor ihre Verbindungen verschwinden
-            affected.extend(column_ids(
-                &handle,
-                "SELECT DISTINCT target_id FROM links WHERE source_id = ?1 AND target_id IS NOT NULL",
-                id,
-            )?);
-            affected.extend(column_ids(
-                &handle,
-                "SELECT DISTINCT image_id FROM image_instances WHERE page_id = ?1 AND image_id IS NOT NULL",
-                id,
-            )?);
-            affected.extend(column_ids(
-                &handle,
-                "SELECT DISTINCT source_id FROM links WHERE target_id = ?1",
-                id,
-            )?);
-            affected.extend(column_ids(
-                &handle,
-                "SELECT DISTINCT page_id FROM image_instances WHERE image_id = ?1",
-                id,
-            )?);
-            affected.extend(column_ids(
-                &handle,
-                "SELECT id FROM urls WHERE redirect_target_id = ?1 OR canonical_target_id = ?1",
-                id,
-            )?);
+        for sql in [
+            format!("SELECT DISTINCT target_id FROM links WHERE source_id {IN_REMOVED} AND target_id IS NOT NULL"),
+            format!("SELECT DISTINCT image_id FROM image_instances WHERE page_id {IN_REMOVED} AND image_id IS NOT NULL"),
+            format!("SELECT DISTINCT source_id FROM links WHERE target_id {IN_REMOVED}"),
+            format!("SELECT DISTINCT page_id FROM image_instances WHERE image_id {IN_REMOVED}"),
+            format!("SELECT id FROM urls WHERE redirect_target_id {IN_REMOVED} OR canonical_target_id {IN_REMOVED}"),
+        ] {
+            affected.extend(column_ids(&handle, &sql, &removed_json)?);
         }
-        for &id in &removed {
-            for (table, column) in OWNED {
-                db(conn.execute(&format!("DELETE FROM {table} WHERE {column} = ?1"), [id]))?;
-            }
-            for (table, column) in REFERENCES {
-                db(conn.execute(
-                    &format!("UPDATE {table} SET {column} = NULL WHERE {column} = ?1"),
-                    [id],
-                ))?;
-            }
+        for (table, column) in OWNED {
             db(conn.execute(
-                "UPDATE urls SET redirect_target_id = NULL WHERE redirect_target_id = ?1",
-                [id],
+                &format!("DELETE FROM {table} WHERE {column} {IN_REMOVED}"),
+                [&removed_json],
             ))?;
-            db(conn.execute(
-                "UPDATE urls SET canonical_target_id = NULL WHERE canonical_target_id = ?1",
-                [id],
-            ))?;
-            db(conn.execute("DELETE FROM urls WHERE id = ?1", [id]))?;
         }
-        // Zähler der Nachbarn neu berechnen und im Änderungsfeed stempeln
-        for id in affected.difference(&removed) {
-            let c = os_store::counters::recompute(conn, *id)?;
+        for (table, column) in REFERENCES {
+            db(conn.execute(
+                &format!("UPDATE {table} SET {column} = NULL WHERE {column} {IN_REMOVED}"),
+                [&removed_json],
+            ))?;
+        }
+        db(conn.execute(
+            &format!(
+                "UPDATE urls SET redirect_target_id = NULL WHERE redirect_target_id {IN_REMOVED}"
+            ),
+            [&removed_json],
+        ))?;
+        db(conn.execute(
+            &format!(
+                "UPDATE urls SET canonical_target_id = NULL WHERE canonical_target_id {IN_REMOVED}"
+            ),
+            [&removed_json],
+        ))?;
+        // der Trigger entfernt die Zeilen von `url_counters` mit
+        db(conn.execute(
+            &format!("DELETE FROM urls WHERE id {IN_REMOVED}"),
+            [&removed_json],
+        ))?;
+        // Zähler der Nachbarn in einem Zug neu berechnen und im Änderungsfeed stempeln
+        let neighbours: Vec<i64> = affected.difference(&removed).copied().collect();
+        let recomputed = os_store::counters::recompute_many(conn, &neighbours)?;
+        for (id, c) in recomputed {
             // alles Ganzzahlen: als Literale ins SQL
             db(conn.execute(
                 &format!(
-                    "UPDATE urls SET inlinks = {}, unique_inlinks = {}, self_inlinks = {}, inlinks_all = {}, \
+                    "UPDATE url_counters SET inlinks = {}, unique_inlinks = {}, self_inlinks = {}, inlinks_all = {}, \
                      outlinks = {}, unique_outlinks = {}, self_outlinks = {}, external_outlinks = {}, \
-                     unique_external_outlinks = {}, img_inlinks = {}, change_seq = {seq} WHERE id = {id}",
+                     unique_external_outlinks = {}, img_inlinks = {}, html_2xx_sources = {}, \
+                     image_link_inlinks = {}, change_seq = {seq} WHERE url_id = {id}",
                     c.inlinks,
                     c.unique_inlinks,
                     c.self_inlinks,
@@ -377,7 +384,9 @@ pub fn remove_urls(file: &Path, urls: &[UrlId]) -> Result<(), EngineError> {
                     c.self_outlinks,
                     c.external_outlinks,
                     c.unique_external_outlinks,
-                    c.img_inlinks
+                    c.img_inlinks,
+                    c.html_2xx_sources,
+                    c.image_link_inlinks
                 ),
                 [],
             ))?;

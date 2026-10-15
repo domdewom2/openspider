@@ -53,7 +53,7 @@ async fn start_records_owner_and_process_and_the_pages_carry_titles_and_links() 
         .file
         .conn()
         .query_row(
-            "SELECT title_1, h1_1, outlinks FROM urls WHERE url LIKE '%/page-1.html'",
+            "SELECT u.title_1, u.h1_1, c.outlinks FROM urls u JOIN url_counters c ON c.url_id = u.id WHERE u.url LIKE '%/page-1.html'",
             [],
             |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
         )

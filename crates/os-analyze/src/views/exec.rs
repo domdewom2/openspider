@@ -16,7 +16,7 @@ use serde_json::Value as Json;
 use super::build::{
     multi_nth_expr, numbered_name, series_parts, where_sql, Built, Pick, SelectedColumn, SortTerm,
 };
-use super::{PageStart, ViewPage, ViewQuery};
+use super::{PageStart, ViewPage, ViewQuery, URLS_FROM};
 use crate::cursor::Cursor;
 use crate::defs::{ColumnKind, ColumnSql, PairedPart};
 use crate::error::ViewError;
@@ -201,7 +201,7 @@ fn multi_count(
         let correlated = part.list_sql.replace("?1", "u.id");
         let sql = format!(
             "SELECT COALESCE(MAX(c), 0) FROM (SELECT (SELECT COUNT(*) FROM ({correlated})) AS c \
-             FROM urls u WHERE {})",
+             FROM {URLS_FROM} WHERE {})",
             where_sql(&built.plan)
         );
         let mut stmt = conn.prepare(&sql)?;
@@ -415,7 +415,9 @@ pub(super) fn query_page(
 
     let where_base = where_sql(&built.plan);
     let total: i64 = {
-        let mut stmt = conn.prepare(&format!("SELECT COUNT(*) FROM urls u WHERE {where_base}"))?;
+        let mut stmt = conn.prepare(&format!(
+            "SELECT COUNT(*) FROM {URLS_FROM} WHERE {where_base}"
+        ))?;
         bind_named(&mut stmt, &built.plan.params, &[])?;
         let mut rows = stmt.raw_query();
         match rows.next()? {
@@ -439,7 +441,7 @@ pub(super) fn query_page(
         PageStart::Cursor(_) => 0,
     };
     let sql = format!(
-        "SELECT {} FROM urls u WHERE {where_page} {} LIMIT {} OFFSET {offset}",
+        "SELECT {} FROM {URLS_FROM} WHERE {where_page} {} LIMIT {} OFFSET {offset}",
         prepared.select_list,
         built.plan.order_by,
         u64::from(q.limit) + 1
@@ -508,7 +510,7 @@ pub(super) fn stream_rows(
         return Ok(columns);
     }
     let sql = format!(
-        "SELECT {} FROM urls u WHERE {} {}",
+        "SELECT {} FROM {URLS_FROM} WHERE {} {}",
         prepared.select_list,
         where_sql(&built.plan),
         built.plan.order_by
