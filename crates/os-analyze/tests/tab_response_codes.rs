@@ -517,8 +517,7 @@ fn a_closed_loopback_port_is_connection_refused() {
     .expect("index.html");
     let mut cfg = config();
     cfg.advanced.response_timeout_s = 5;
-    let started = std::time::Instant::now();
-    let (addresses, status, code) = std::thread::spawn({
+    let (addresses, status, code, crawl_time) = std::thread::spawn({
         let refused = refused.clone();
         let cfg = cfg.clone();
         let path = dir.path().to_path_buf();
@@ -528,13 +527,38 @@ fn a_closed_loopback_port_is_connection_refused() {
                 .build()
                 .expect("Runtime")
                 .block_on(async move {
-                    let fx = os_engine::testing::crawl_dir_with(
-                        &path,
-                        "http://site.test/",
-                        cfg.clone(),
-                        os_engine::testing::test_deps(),
-                    )
-                    .await;
+                    // Aufbau (Testsite, Abrufer, Crawl-Datei) zählt nicht zur Zeitgrenze: sie belegt nur, dass
+                    // der abgelehnte Verbindungsaufbau im Crawl nicht auf das Antwort-Timeout wartet.
+                    let site = os_testsite::TestSite::start_dir(&path, 0)
+                        .await
+                        .expect("Testsite");
+                    let deps = os_engine::testing::test_deps();
+                    let fetcher = os_engine::testing::site_fetcher(&site, &cfg, &deps);
+                    let mut crawl_cfg = cfg.clone();
+                    crawl_cfg
+                        .network
+                        .resolve
+                        .push(format!("*.test={}", site.addr()));
+                    let work = tempfile::tempdir().expect("Arbeitsverzeichnis");
+                    let file_path = work.path().join("crawl.ospider");
+                    let request = os_engine::CrawlRequest {
+                        config: crawl_cfg,
+                        source: os_engine::CrawlSource::Spider {
+                            start_url: "http://site.test/".to_string(),
+                        },
+                        file: file_path.clone(),
+                        project: "test".to_string(),
+                        name: "closed-port".to_string(),
+                    };
+                    // Messung: unmittelbar vor dem Start des Crawls bis zu dessen Ende.
+                    let started = std::time::Instant::now();
+                    let handle = os_engine::start_crawl(fetcher, request, deps)
+                        .await
+                        .expect("Crawl startet");
+                    handle.wait().await.expect("Crawl endet");
+                    let crawl_time = started.elapsed();
+                    let file = os_store::CrawlFile::open(&file_path, os_store::OpenMode::ReadWrite)
+                        .expect("Crawl-Datei öffnen");
                     let mut q = ViewQuery::new(TAB, "External No Response");
                     q.limit = 50;
                     q.sort = by_address();
@@ -543,7 +567,7 @@ fn a_closed_loopback_port_is_connection_refused() {
                             .map(str::to_string)
                             .to_vec(),
                     );
-                    let page = views::query_view(&fx.file, &cfg, &q).expect("Ansicht");
+                    let page = views::query_view(&file, &cfg, &q).expect("Ansicht");
                     let addresses: Vec<String> = page
                         .rows
                         .iter()
@@ -554,7 +578,12 @@ fn a_closed_loopback_port_is_connection_refused() {
                         .iter()
                         .find(|r| text(&r[0]) == Some(refused.as_str()))
                         .expect("geschlossener Port in External No Response");
-                    (addresses, text(&row[2]).map(str::to_string), row[1].clone())
+                    (
+                        addresses,
+                        text(&row[2]).map(str::to_string),
+                        row[1].clone(),
+                        crawl_time,
+                    )
                 })
         }
     })
@@ -564,9 +593,8 @@ fn a_closed_loopback_port_is_connection_refused() {
     assert_eq!(code, Value::Int(0));
     assert_eq!(status.as_deref(), Some("Connection Refused"));
     assert!(
-        started.elapsed() < std::time::Duration::from_secs(10),
-        "kein Warten über 10 s: {:?}",
-        started.elapsed()
+        crawl_time < std::time::Duration::from_secs(10),
+        "kein Warten über 10 s: {crawl_time:?}"
     );
 }
 
