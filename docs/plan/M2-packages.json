@@ -578,7 +578,8 @@
    "OUT-270",
    "INTEG-016",
    "CRAWL-145",
-   "CRAWL-146"
+   "CRAWL-146",
+   "CRAWL-147"
   ],
   "owns": [
    "crates/os-fetch/** (ohne src/robots/** und tests/robots_*.rs)",
@@ -593,7 +594,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). HSTS: Speicher im Client, synthetische 307 mit Redirect Type HSTS Policy (ONPAGE-064 wertet M2-D12 aus). os-testsite lernt HTTP/2 (ALPN h2) für ONPAGE-010. Wiederholungen mit Clock (simulierte Zeit). Backlog M2-B01/Hinweis 4: Windows-localhost gegen IPv4-only-Server (Happy Eyeballs) prüfen; eigener Connector nur bei Messbeleg. Proxy/Zertifikate auch für API-Verbindungen (INTEG-016). NACHTRAG 16.10.: CRAWL-145 (Crawl-delay beachten, OS-Default an, Paritätsprofil aus) und CRAWL-146 (adaptive Drosselung je Host) gehören zur Wiederholungs-/Tempo-Logik dieses Pakets."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). HSTS: Speicher im Client, synthetische 307 mit Redirect Type HSTS Policy (ONPAGE-064 wertet M2-D12 aus). os-testsite lernt HTTP/2 (ALPN h2) für ONPAGE-010. Wiederholungen mit Clock (simulierte Zeit). Backlog M2-B01/Hinweis 4: Windows-localhost gegen IPv4-only-Server (Happy Eyeballs) prüfen; eigener Connector nur bei Messbeleg. Proxy/Zertifikate auch für API-Verbindungen (INTEG-016). NACHTRAG 16.10.: CRAWL-145 (Crawl-delay beachten, OS-Default an, Paritätsprofil aus) und CRAWL-146 (adaptive Drosselung je Host) gehören zur Wiederholungs-/Tempo-Logik dieses Pakets. CRAWL-147 Auto-Tempo (AIMD-Regler je Host) ebenfalls hier."
  },
  {
   "id": "M2-E04",

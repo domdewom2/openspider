@@ -2087,6 +2087,20 @@ Normative Fremdstandards: RFC 9309 (robots.txt), RFC 6265 (Cookies), RFC 6797 (H
   - [ ] CLI `--set speed.respect_crawl_delay=false` und MCP-Overrides (AGENT-020) können die Option nur abschalten, wenn der Nutzer es ausdrücklich setzt.
 - **Testfixture:** `crawl-robots` um Host mit `Crawl-delay: 2` erweitern.
 
+### CRAWL-147 Auto-Tempo (dynamisch ermittelte Crawl-Geschwindigkeit)
+- **Priorität:** P1
+- **Beschreibung:** OS-Erweiterung (Nutzerwunsch 16.10.2026): Statt fester Threads/Rate ermittelt OpenSpider je Host selbst, wie schnell er crawlen kann, ohne den Server zu belasten – nach dem Prinzip der TCP-Staukontrolle (AIMD): langsam beginnen, Parallelität schrittweise erhöhen, solange die Antwortzeit nahe am Ausgangswert bleibt und keine Fehler auftreten; bei steigender Antwortzeit oder Fehlern sofort deutlich zurückgehen. CRAWL-146 ist der Bremsteil dieses Reglers und gilt auch ohne Auto-Tempo.
+- **Eingaben/Konfiguration:** Geschwindigkeit › Modus ∈ {Fest (Threads/Rate wie konfiguriert), **Auto (OS-Default für neue Konfigurationen; Paritätsprofil: Fest)**}. Auto-Parameter: Start 2 gleichzeitige Anfragen je Host; Obergrenze = „Max. Threads“ und „Max. URLs/s“ (Standard im Auto-Modus 10 bzw. unbegrenzt); Ausgangswert = Median der Antwortzeit der ersten 30 Anfragen (nur HTML, ohne Weiterleitungen); Erhöhung +1 je 50 Anfragen, solange der gleitende Median ≤ 1,5 × Ausgangswert und Fehlerquote < 2 %; Absenkung × 0,5 bei Median > 2 × Ausgangswert, Fehlerquote ≥ 5 %, 429 oder 503. `Crawl-delay` (CRAWL-145) und robots.txt haben immer Vorrang.
+- **Ausgabe:** Statusleiste „Auto-Tempo: n parallel, x URLs/s“; Verlauf (Parallelität, Antwortzeit) im Crawl-Protokoll und im Report „Crawl Overview“; MCP `crawl_status` liefert dieselben Werte.
+- **Akzeptanzkriterien:**
+  - [ ] Fixture „belastbar“ (Antwortzeit konstant bis 8 parallele Anfragen, darüber linear steigend): Regler pendelt sich innerhalb von 500 Anfragen bei 7–9 parallelen Anfragen ein.
+  - [ ] Fixture „empfindlich“ (ab 3 parallelen Anfragen 503): Regler bleibt bei 1–2, Fehlerquote über den Crawl < 3 %.
+  - [ ] Fixture mit schwankender Antwortzeit (Rauschen ±30 %) führt nicht zu ständigem Auf und Ab (höchstens 1 Absenkung je 200 Anfragen ohne echte Laständerung).
+  - [ ] Überschreitet nie die konfigurierten Obergrenzen; Modus „Fest“ verhält sich exakt wie bisher.
+- **Hinweis:** Bei Seiten hinter CDN/Cache misst die Antwortzeit vor allem den Cache; der Regler kann den Ursprungsserver dann unterschätzt belasten. Deshalb bleibt die Obergrenze im Auto-Modus standardmäßig bei 10 parallelen Anfragen; höhere Werte setzt der Nutzer bewusst.
+- **Testfixture:** `os-testsite`-Route mit lastabhängiger Verzögerung (`load_model = {knee = 8, slope_ms = 40}`) und Fehlerrate je Parallelität.
+
+
 ### CRAWL-146 Adaptive Drosselung bei Serverlast
 - **Priorität:** P1
 - **Beschreibung:** OS-Erweiterung: OpenSpider senkt das Tempo je Host automatisch, wenn der Server Anzeichen von Überlast zeigt – zusätzlich zu 429/`Retry-After` (CRAWL-097) und 503 (CRAWL-096). Signale: Median der Antwortzeit der letzten 50 Anfragen steigt auf mehr als das Dreifache des Medians der ersten 50; Anteil 5xx/Timeouts in den letzten 50 Anfragen > 10 %.
