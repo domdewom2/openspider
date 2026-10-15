@@ -1,0 +1,16 @@
+Start 2026-10-15T01:41:12Z (03:41 lokal)
+ 3:41  up 34 days, 16:59, 16 users, load averages: 1.61 2.33 2.67
+cargo test --release --locked -p os-store --test bench_writer -- --ignored --nocapture --test-threads=1
+     Running tests/bench_writer.rs (<wt>/target-m1-n14/release/deps/bench_writer-7c25a483be996f7f)
+test inlinks_paging_with_one_million_inlinks ... Inlinks 1 Mio.: erste Seite 134 ms, Offset 500000 377 ms, Offset 500000 nach Anchor 1270 ms
+ok
+test writer_100k_pages_uniform_targets_report ... Writer Balanced/Uniform: 100000 Seiten x 30 Links in 28.5 s (3513 Seiten/s, 105396 Links/s), Datei 321 MiB
+ok
+test writer_100k_pages_with_30_links_under_60_seconds ... Writer Balanced/SiteLike: 100000 Seiten x 30 Links in 6.9 s (14562 Seiten/s, 436870 Links/s), Datei 315 MiB
+Writer MaxSpeed/SiteLike: 100000 Seiten x 30 Links in 6.9 s (14583 Seiten/s, 437488 Links/s), Datei 315 MiB
+Writer MinMemory/SiteLike: 100000 Seiten x 30 Links in 6.7 s (15024 Seiten/s, 450707 Links/s), Datei 315 MiB
+ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 55.12s
+Ende 2026-10-15T01:42:23Z (03:42 lokal), Exit 0, Laufzeit 71 s (inkl. Warten auf Load)
+ 3:42  up 34 days, 17 hrs, 16 users, load averages: 3.71 3.09 2.94

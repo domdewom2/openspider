@@ -1,0 +1,20 @@
+Start 2026-10-15T01:34:23Z (03:34 lokal)
+ 3:34  up 34 days, 16:52, 16 users, load averages: 1.64 2.94 2.97
+cargo test --release --locked -p os-engine --test perf_store -- --ignored --nocapture --test-threads=1
+     Running tests/perf_store.rs (<wt>/target-m1-n14/release/deps/perf_store-b7b5402bdc05d15b)
+test group_commit_versus_small_batches_with_uniform_targets ... Writer, gleichverteilte Ziele: 100000 Seiten x 30 Links, 200 Seiten je Batch: 27.9 s (3581 Seiten/s), Datei 321 MiB
+Writer, gleichverteilte Ziele: 100000 Seiten x 30 Links, 1000 Seiten je Batch: 20.6 s (4862 Seiten/s), Datei 321 MiB
+Writer, gleichverteilte Ziele: 100000 Seiten x 30 Links, 5000 Seiten je Batch: 14.6 s (6869 Seiten/s), Datei 321 MiB
+Gruppen-Commit   200 Seiten je Transaktion: 27.9 s (+0 % gegenüber 200)
+Gruppen-Commit  1000 Seiten je Transaktion: 20.6 s (-26 % gegenüber 200)
+Gruppen-Commit  5000 Seiten je Transaktion: 14.6 s (-48 % gegenüber 200)
+ok
+test opening_a_million_urls_takes_under_3_seconds_and_saving_under_60 ... CRAWL-127: 1 Mio. abgerufene URLs (3 Links je Seite) geschrieben in 27 s, Datei 687 MiB
+CRAWL-127: Öffnen 4 ms, + erste 100 Zeilen 8 ms (Ziel < 3000 ms, warmer Dateicache)
+CRAWL-127: COUNT(*) über urls 1122 ms (Vollscan, nicht Teil des Kriteriums)
+CRAWL-127: Speichern unter 5.7 s (Ziel < 60 s), Kopie 635 MiB
+ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 97.35s
+Ende 2026-10-15T01:36:02Z (03:36 lokal), Exit 0, Laufzeit 99 s (inkl. Warten auf Load)
+ 3:36  up 34 days, 16:54, 16 users, load averages: 1.94 2.65 2.84

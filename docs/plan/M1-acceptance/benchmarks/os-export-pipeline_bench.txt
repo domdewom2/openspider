@@ -1,0 +1,13 @@
+Start 2026-10-15T01:37:38Z (03:37 lokal)
+ 3:37  up 34 days, 16:56, 16 users, load averages: 1.91 2.56 2.79
+cargo test --release --locked -p os-export --test pipeline_bench -- --ignored --nocapture --test-threads=1
+     Running tests/pipeline_bench.rs (<wt>/target-m1-n14/release/deps/pipeline_bench-f2acbf7b93b2c54a)
+test one_million_rows_by_sixty_columns_stay_within_300_mb_of_extra_memory ... 1000000 URLs angelegt in 3.401752041s
+Export in 7.077068625s
+Datei: 336 MiB
+RSS vorher 329 MiB, Spitze 329 MiB, Zuwachs 1 MiB
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.55s
+Ende 2026-10-15T01:37:56Z (03:37 lokal), Exit 0, Laufzeit 18 s (inkl. Warten auf Load)
+ 3:37  up 34 days, 16:56, 16 users, load averages: 4.06 3.03 2.96
