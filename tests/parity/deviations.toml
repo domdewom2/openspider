@@ -1,4 +1,4 @@
-# Dokumentierte Paritaetsabweichungen (docs/plan/M1.md 5.3, Schritt 4). Stand M1-P31 (Welle 6).
+# Dokumentierte Paritaetsabweichungen (docs/plan/M1.md 5.3, Schritt 4). Stand M1-N18 (Welle 6b).
 #
 # Jede Abweichung zwischen OpenSpider und den Referenz-Exporten (SF 24.3 Free) ist entweder ein Fehler (-> Nachbesserungs-
 # auftrag im Abnahmebericht docs/plan/M1-acceptance/checklist.md, ohne Eintrag hier) oder steht hier mit Spec-ID und
@@ -51,13 +51,13 @@ reason = "Nicht-HTML-URLs sowie Weiterleitungen, Fehlerseiten (4xx/5xx) und URLs
 [[deviation]]
 id = "DEV-005"
 spec = "ONPAGE-065"
-kind = "Paritaetsabweichung"
+kind = "OS-Festlegung"
 export = "*"
 site = "*"
 column = "Status"
 sf = "Connection Timeout"
 os = "Connection Refused"
-reason = "OS-Festlegung ONPAGE-065 unterscheidet Connection Refused (abgelehnte Verbindung) von Connection Timeout; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout."
+reason = "ONPAGE-065 (K-67): OpenSpider meldet die tatsaechliche Ursache, Connection Refused bei abgelehntem Verbindungsaufbau und Connection Timeout bei ausbleibender Antwort; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout."
 
 [[deviation]]
 id = "DEV-006"
@@ -196,26 +196,6 @@ os = "1"
 reason = "IMG Inlinks (OpenSpider-Erweiterung) zaehlt auch Hyperlinks auf Bilder (ONPAGE-170 Nr. 2); die Referenz zaehlt nur eingebettete Bilder."
 
 [[deviation]]
-id = "DEV-021"
-spec = "TECH-011"
-kind = "OS-Festlegung"
-export = "crawl_overview"
-site = "*"
-column = "URLs"
-key_prefixes = ["canonicals | all", "links | all"]
-reason = "Die Tabs Canonicals und Links fuehren interne HTML-Seiten mit Status 200 (TECH-011/-130); die Referenz zaehlt alle 2xx (Fixture /s201, Status 201). Entfaellt mit M1-N16 (K-56); der Hreflang-Teil entfiel mit M1-P31."
-
-[[deviation]]
-id = "DEV-022"
-spec = "CRAWL-089"
-kind = "OS-Festlegung"
-export = "crawl_overview"
-site = "*"
-column = "URLs"
-key_prefixes = ["canonicals | missing", "links | pages without internal outlinks"]
-reason = "Der Wirkungsbereich von issues.ignore_non_indexable ist in CRAWL-089 abschliessend auf die Element-Tabs und Low Content Pages begrenzt; die Referenz schliesst nicht indexierbare URLs auch in Canonicals/Missing und Links/Pages Without Internal Outlinks aus."
-
-[[deviation]]
 id = "DEV-023"
 spec = "TECH-064"
 kind = "OS-Festlegung"
@@ -311,17 +291,6 @@ os = "False"
 reason = "Meta Refresh und Refresh-Header gelten nur mit Verzoegerung > 0 als temporaer (OUT-081); die Referenz wertet den Meta Refresh ohne Verzoegerung als temporaer."
 
 [[deviation]]
-id = "DEV-033"
-spec = "ONPAGE-060"
-kind = "Annahme"
-export = "crawl_overview"
-site = "parity-response"
-column = "URLs"
-key_prefixes = ["response codes | internal redirect chain"]
-delta = -2
-reason = "Annahme A-19 (Ketten, die in einer Schleife enden, gehoeren nur zu Redirect Loop, ONPAGE-060/-061) wird von der Referenz nicht geteilt: Die Mitglieder der Schleife /loop1 -> /loop2 -> /loop1 zaehlt sie zusaetzlich zu Redirect Chain (9 statt 7); der Selbst-Refresh (eine Weiterleitung, kein Hop-Paar) zaehlt dort nicht. Offen fuer den Planer (Spec-Klaerung A-19)."
-
-[[deviation]]
 id = "DEV-034"
 spec = "TECH-071"
 kind = "OS-Festlegung"
@@ -330,7 +299,29 @@ site = "parity-technical"
 column = "URLs"
 key_prefixes = ["hreflang | all"]
 delta = 1
-reason = "wie DEV-027: Die Population des Hreflang-Tabs enthaelt auch gecrawlte hreflang-Ziele (TECH-071), hier das umgeleitete Ziel /hl/es-old/ (301); die Referenz zaehlt nur interne Seiten mit 2xx. Der Hreflang-Teil von DEV-021 (200 statt 2xx) entfiel mit K-56."
+reason = "wie DEV-027: Die Population des Hreflang-Tabs enthaelt auch gecrawlte hreflang-Ziele (TECH-071), hier das umgeleitete Ziel /hl/es-old/ (301); die Referenz zaehlt nur interne Seiten mit 2xx."
+
+[[deviation]]
+id = "DEV-035"
+spec = "TECH-015"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "parity-onpage"
+column = "URLs"
+key_prefixes = ["canonicals | all", "canonicals | missing"]
+delta = -1
+reason = "K-71: Die Grundgesamtheit der Referenz heisst 'Internal HTML or PDF pages with 2xx response' und enthaelt jede PDF; die Canonicals-Grundmenge von OpenSpider fuehrt Nicht-HTML-Ressourcen nur mit mindestens einer HTTP-Canonical (TECH-011) und nimmt eine PDF ohne Link-Header nicht in Missing auf (TECH-015). PDFs als Seiten sind P1 (ONPAGE-166). parity-onpage hat eine PDF ohne Canonical (/ctype/t-pdf.pdf): Referenz 85/81, OpenSpider 84/80."
+
+[[deviation]]
+id = "DEV-036"
+spec = "TECH-133"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "parity-technical"
+column = "URLs"
+key_prefixes = ["links | pages without internal outlinks"]
+delta = 1
+reason = "K-07/K-71 (wie DEV-010): Selbstlinks zaehlen im Links-Tab nicht, eine Seite nur mit Selbstlink hat 0 Outlinks (TECH-130, TECH-133); die Referenz zaehlt sie mit. Betrifft /links/self-only.html: Referenz 1, OpenSpider 2."
 
 [[deviation]]
 id = "SF-FREE-01"

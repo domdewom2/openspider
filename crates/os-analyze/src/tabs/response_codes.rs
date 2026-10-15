@@ -14,10 +14,11 @@
 //! * **Redirection (Meta Refresh)** – Weiterleitungsart `meta_refresh`; die Engine setzt sie nur, wenn das
 //!   Refresh-Ziel nicht die eigene URL ist.
 //! * **Redirect Chain** – interne URL, die auf eine URL weiterleitet, die selbst weiterleitet (≥ 2 Hops, jede
-//!   Weiterleitungsart zählt); Ketten, die in einer Schleife enden, gehören zu **Redirect Loop**
-//!   (Flag `redirect_loop`, gesetzt bei den Zyklus-Mitgliedern; der Filter enthält auch die URLs davor,
-//!   deren Kette in den Zyklus führt, A-20). Beide Filter betreffen nur interne Start-URLs (ONPAGE-060: „Externe Ketten
-//!   erscheinen nicht im Filter“); die `External …`-Sichten sind daher immer leer.
+//!   Weiterleitungsart zählt). Ketten, die in einer Schleife enden, zählen mit (K-66, A-19 revidiert); eine
+//!   Selbst-Weiterleitung oder ein Selbst-Refresh hat 1 Hop und zählt nicht. **Redirect Loop** enthält die
+//!   Zyklus-Mitglieder (Flag `redirect_loop`) und die URLs davor, deren Kette in den Zyklus führt (A-20);
+//!   eine URL kann also in beiden Filtern stehen. Beide Filter betreffen nur interne Start-URLs (ONPAGE-060:
+//!   „Externe Ketten erscheinen nicht im Filter“); die `External …`-Sichten sind daher immer leer.
 //! * **Other** – Codes außerhalb 100–599 (CRAWL-012, OS-Erweiterung); die Oberfläche zeigt den Filter nur
 //!   bei Treffern.
 
@@ -82,17 +83,15 @@ macro_rules! reaches_loop {
     };
 }
 
-/// Die URL leitet weiter und ihr Ziel leitet ebenfalls weiter; ihre Kette endet nicht in einer Schleife.
+/// Die URL leitet weiter und ihr Ziel leitet ebenfalls weiter (≥ 2 Hops). Ketten, die in einer Schleife enden,
+/// zählen mit (K-66); eine Selbst-Weiterleitung oder ein Selbst-Refresh hat 1 Hop (`redirect_target_id = id`)
+/// und zählt nicht.
 macro_rules! redirect_chain {
     () => {
-        concat!(
-            "(u.is_internal = 1 AND u.redirect_url IS NOT NULL AND u.redirect_target_id IS NOT NULL \
-              AND EXISTS (SELECT 1 FROM urls t WHERE t.id = u.redirect_target_id \
-                          AND t.redirect_url IS NOT NULL) \
-              AND NOT ",
-            reaches_loop!(),
-            ")"
-        )
+        "(u.is_internal = 1 AND u.redirect_url IS NOT NULL AND u.redirect_target_id IS NOT NULL \
+          AND u.redirect_target_id <> u.id \
+          AND EXISTS (SELECT 1 FROM urls t WHERE t.id = u.redirect_target_id \
+                      AND t.redirect_url IS NOT NULL))"
     };
 }
 
