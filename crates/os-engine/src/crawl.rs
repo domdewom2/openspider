@@ -581,7 +581,7 @@ pub(crate) fn launch<F: Fetch>(setup: Setup<F>) -> CrawlHandle {
         deps,
         file,
         crawl_id,
-        core,
+        mut core,
         scope,
         start_encoded,
         writer,
@@ -592,6 +592,11 @@ pub(crate) fn launch<F: Fetch>(setup: Setup<F>) -> CrawlHandle {
         primed_origins,
         seeds,
     } = setup;
+    // RAM-Fenster der Warteschlange (K-78 b); beim Fortsetzen hat `resume::restore` es schon eingeschaltet
+    if !core.frontier.spill_enabled() {
+        core.frontier
+            .enable_spill(crate::queue::queue_window(), file.clone());
+    }
     let tracker = make_tracker(
         &cfg,
         &*deps.clock,
@@ -729,6 +734,10 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
     );
     disk_tick.set_missed_tick_behavior(MissedTickBehavior::Delay);
 
+    // Hintergrundarbeit für das RAM-Fenster der Warteschlange (Auslagern, Nachladen), höchstens eine zugleich
+    let mut maint: JoinSet<()> = JoinSet::new();
+    let queue_failures = Arc::new(AtomicU32::new(0));
+
     let end = loop {
         diag::inc(&diag::STATS.run_loops);
         if sh.abort.load(Ordering::SeqCst) || sh.writer.failed() {
@@ -749,7 +758,7 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
                 } else {
                     match core.try_pop() {
                         Pop::Item(item) => Some(item),
-                        Pop::Empty | Pop::LimitBlocked => None,
+                        Pop::Empty | Pop::LimitBlocked | Pop::NeedRefill => None,
                     }
                 }
             };
@@ -761,9 +770,16 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
                 None => break,
             }
         }
-        // Ende?
+        // Ende? Außerdem: ist Auslagern oder Nachladen der Warteschlange fällig?
         {
-            let core = sh.core.lock().unwrap_or_else(|p| p.into_inner());
+            let mut core = sh.core.lock().unwrap_or_else(|p| p.into_inner());
+            if let Some(plan) = core.next_queue_job() {
+                maint.spawn(crate::queue_maint::run(
+                    Arc::clone(&sh),
+                    plan,
+                    Arc::clone(&queue_failures),
+                ));
+            }
             if core.active == 0 {
                 if core.frontier.is_empty() {
                     break End::QueueEmpty;
@@ -812,6 +828,9 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
             }
         }
     }
+
+    // Die Hintergrundarbeit hält einen Verweis auf den gemeinsamen Zustand und damit den Writer offen: abwarten.
+    while maint.join_next().await.is_some() {}
 
     // Endzustand
     let (state, reason) = match end {

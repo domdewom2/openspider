@@ -6,9 +6,13 @@
 //!   und abgerufene URLs tragen `F_QUEUED`; Zeilen im Zustand `discovered` tragen keine Regel-Markierung, ihre
 //!   Include/Exclude-Entscheidung wird beim nächsten Fund neu getroffen (die Regeln dürfen sich in der Pause
 //!   ändern).
-//! * **Warteschlange:** Tabelle `queue` (Priorität, Tiefe, `seq`), verbunden mit `urls` für die Adresse.
-//!   Zweck (Seite/Ressource/extern) und Weiterleitungszähler stehen nicht in der Warteschlange; sie werden aus
-//!   den eingehenden Links (Ressourcen-Linktypen) bzw. den abgerufenen Weiterleitungen abgeleitet.
+//! * **Warteschlange:** Tabelle `queue` (Priorität, Tiefe, `seq`), verbunden mit `urls` für die Adresse. Eine große
+//!   Warteschlange wird nicht ganz geladen: Nur das RAM-Fenster (die kleinsten Schlüssel,
+//!   [`crate::queue::QUEUE_WINDOW`]) und die nicht auslagerbaren Einträge kommen ins RAM, der Rest bleibt in der
+//!   Tabelle und wird beim Crawlen nachgeladen (K-78 b). Zweck (Seite/Ressource/extern) und Weiterleitungszähler
+//!   stehen nicht in der Warteschlange; sie werden aus den eingehenden Links (Ressourcen-Linktypen, **ein**
+//!   sequenzieller Lauf über `links`, ohne den Index `links_target`, K-74) bzw. den abgerufenen Weiterleitungen
+//!   abgeleitet.
 //! * **Zähler:** Kennungen und `seq` aus den Metadaten bzw. den größten Werten der Tabellen; „gecrawlt“ und
 //!   „gestartet“ (URL-Limit) aus den abgerufenen URLs (ohne robots.txt und Sitemap-Dateien; von robots.txt
 //!   gesperrte URLs zählen zu „gecrawlt“, aber nicht zu „gestartet“ – wie im laufenden Crawl).
@@ -31,7 +35,7 @@ use os_model::{CrawlConfig, CrawlMode, Timestamp, UrlId};
 use os_store::{CrawlFile, StoreError};
 
 use crate::error::EngineError;
-use crate::frontier::{Core, Purpose, QueueItem, F_IN_TABLES, F_QUEUED, F_RULE_OK};
+use crate::frontier::{Core, F_IN_TABLES, F_QUEUED, F_RULE_OK};
 
 /// Gespeicherte robots.txt eines Origins, mit der [`PrimedFetch`] den Abruf ersetzt.
 #[derive(Debug, Clone)]
@@ -268,6 +272,8 @@ pub(crate) fn restore(
     core.next_seq = u64::try_from(next_seq).unwrap_or(1);
 
     if load_queue {
+        core.frontier
+            .enable_spill(crate::queue::queue_window(), file.path().to_path_buf());
         load_queue_into(file, &mut core, &redirect_edges)?;
     }
 
@@ -376,25 +382,13 @@ pub(crate) fn restore(
     })
 }
 
-/// Lädt die Warteschlange in `core.frontier`.
+/// Lädt die Warteschlange in `core.frontier`: das RAM-Fenster und die nicht auslagerbaren Einträge, der Rest bleibt
+/// in der Tabelle `queue` (siehe [`crate::queue_disk::load_queue`]).
 fn load_queue_into(
     file: &CrawlFile,
     core: &mut Core,
     redirect_edges: &[(i64, i64)],
 ) -> Result<(), EngineError> {
-    let conn = file.conn();
-    // Ressourcen: wer von einem Ressourcen-Link eingeplant wurde, wird mit `Accept: */*` abgerufen
-    let mut resources: HashSet<i64> = HashSet::new();
-    {
-        let mut stmt = sql(conn.prepare(
-            "SELECT DISTINCT l.target_id FROM links l JOIN queue q ON q.url_id = l.target_id \
-             WHERE l.link_type IN ('Image', 'CSS', 'JavaScript', 'Media', 'Iframe')",
-        ))?;
-        let rows = sql(stmt.query_map([], |r| r.get::<_, i64>(0)))?;
-        for row in rows {
-            resources.insert(sql(row)?);
-        }
-    }
     // Weiterleitungsketten: Quelle je Ziel
     let mut source_of: HashMap<i64, i64> = HashMap::new();
     for (from, to) in redirect_edges {
@@ -412,39 +406,7 @@ fn load_queue_into(
         }
         hops
     };
-
-    let mut stmt = sql(conn.prepare(
-        "SELECT q.url_id, q.seq, q.depth, q.priority, u.url, u.is_internal, u.discovered_via \
-         FROM queue q JOIN urls u ON u.id = q.url_id",
-    ))?;
-    let mut rows = sql(stmt.query([]))?;
-    while let Some(row) = sql(rows.next())? {
-        let id: i64 = sql(row.get(0))?;
-        let seq: i64 = sql(row.get(1))?;
-        let depth: Option<i64> = sql(row.get(2))?;
-        let priority: i64 = sql(row.get(3))?;
-        let url: String = sql(row.get(4))?;
-        let internal: i64 = sql(row.get(5))?;
-        let via: String = sql(row.get(6))?;
-        let purpose = if internal == 0 {
-            Purpose::External
-        } else if resources.contains(&id) {
-            Purpose::Resource
-        } else {
-            Purpose::Page
-        };
-        let hops = if via == "redirect" { hops_of(id) } else { 0 };
-        core.frontier.push(QueueItem {
-            id: UrlId(id),
-            url: url.into_boxed_str(),
-            depth: depth.and_then(|d| u32::try_from(d).ok()),
-            priority: u8::try_from(priority).unwrap_or(u8::MAX),
-            seq: u64::try_from(seq).unwrap_or(0),
-            purpose,
-            hops,
-            session: 0,
-            replace: false,
-        });
-    }
-    Ok(())
+    let targets: HashSet<i64> = source_of.keys().copied().collect();
+    crate::queue_disk::load_queue(file, core, &targets, &hops_of, crate::queue::queue_window())
+        .map_err(EngineError::Join)
 }
