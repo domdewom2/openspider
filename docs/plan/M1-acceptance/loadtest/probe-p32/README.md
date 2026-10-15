@@ -196,6 +196,11 @@ Die Inlinks einer URL während des Crawls kosten damit einen Lauf über 7,5 Mio.
 `cargo test --workspace --exclude openspider-desktop --locked --no-fail-fast` (210 Testprogramme) sind grün. `cargo deny check`: bans, licenses, sources ok;
 **advisories meldet RUSTSEC-2026-0346 für `rustls 0.23.45`** (Cargo.lock, nicht im Besitz dieses Pakets) – Bedarf an den Orchestrator.
 
+CI-Lauf per `workflow_dispatch` auf `m1/m1-p32` (Commit vor diesem Bericht-Nachtrag): [38770592004](https://github.com/domdewom2/openspider/actions/runs/38770592004),
+alle 16 Jobs grün (build auf macos-arm64, macos-x64, windows-x64; parity; spec-coverage; loadtest-small; crawlfile create/load; cargo-deny; rustfmt). Zwei frühere
+Läufe scheiterten nur auf windows-x64: ein Test des Hintergrund-Checkpoints erwartete eine WAL-Größenschranke (194 MiB, siehe Befund 3), und ein leerer Batch dauerte
+durch das Entfernen des Triggers 40 ms (der Trigger wird jetzt nur vor Batches mit neuen URLs entfernt).
+
 ## Dateien
 
 `step*/log-*.txt` Rohprotokolle mit Load je Block, `store.json`, `perf-00?.json` Berichte des Lasttests, `perf-00?-segments.{txt,json}` Abschnitte
