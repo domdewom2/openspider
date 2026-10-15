@@ -424,7 +424,8 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 - **Ausgabe:** Weiterleitungstyp „Meta Refresh“ bzw. „HTTP Refresh“; Filter „Weiterleitung (Meta Refresh)“ und „Weiterleitung (HTTP Refresh)“; der Statuscode der Seite bleibt (meist 200).
 - **Akzeptanzkriterien:**
   - [ ] Varianten werden erkannt: `0;url=/x`, `0; URL='/x'`, `5;url="/x"`, ohne Leerzeichen, mit Großbuchstaben im `http-equiv`.
-  - [ ] Ein Refresh ohne URL (`content="30"`) oder mit der eigenen URL als Ziel ist ein Selbst-Refresh. Er wird wie eine Weiterleitung auf die eigene URL geführt: `Weiterleitungs-URL` = eigene Adresse, Linkzeile Meta Refresh bzw. HTTP Refresh mit Quelle = Ziel, Kette mit Schleife (OUT-081). Die URL wird nicht erneut angefragt. Die Indexierbarkeit richtet sich allein nach TECH-068 (Paritätsbefund M1 vom 14.10.2026, K-57; ersetzt „keine Weiterleitung“).
+  - [ ] Ein Meta Refresh ohne URL (`content="30"`) oder ein Refresh (Meta oder Header) mit der eigenen URL als Ziel ist ein Selbst-Refresh. Er wird wie eine Weiterleitung auf die eigene URL geführt: `Weiterleitungs-URL` = eigene Adresse, Linkzeile Meta Refresh bzw. HTTP Refresh mit Quelle = Ziel, Kette mit Schleife (OUT-081). Die URL wird nicht erneut angefragt. Die Indexierbarkeit richtet sich allein nach TECH-068 (Paritätsbefund M1 vom 14.10.2026, K-57; ersetzt „keine Weiterleitung“).
+  - [ ] Ein `Refresh`-Header ohne URL (`Refresh: 10`) ist keine Weiterleitung: keine Weiterleitungs-URL, kein Weiterleitungstyp, keine Linkzeile, kein Eintrag in Redirect Loop (Paritätsbefund M1-P31, `parity-response` `/http-refresh-nourl.html`, K-69). Er bleibt ein Refresh im Sinne von TECH-064.
   - [ ] Nur das erste Meta-Refresh-Tag im Dokument zählt.
   - [ ] Bei gleichzeitiger HTTP-3xx-Antwort hat die HTTP-Weiterleitung Vorrang.
   - [ ] HTTP-Refresh-Header wird mit derselben Syntax geparst.

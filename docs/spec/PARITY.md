@@ -1146,7 +1146,7 @@ Herleitung (Abzüge vom Vollwert 100):
 
 ## 7 Black-Box-Befunde des Paritätslaufs M1 (SF 24.3 Free, 14.10.2026)
 
-Quelle: `docs/plan/M1-acceptance/checklist.md` (Abschnitt A3) und `docs/plan/M1-acceptance/parity/report.md`. Der Planer hat am 14.10.2026 nach dem Grundsatz entschieden: **Parität mit der Referenz, außer die Spec enthält eine bewusste, begründete OS-Festlegung.** Die Klärungen stehen als K-54 bis K-64 in `docs/plan/M1.md` Abschnitt 8.
+Quelle: `docs/plan/M1-acceptance/checklist.md` (Abschnitt A3) und `docs/plan/M1-acceptance/parity/report.md`. Der Planer hat am 14.10.2026 nach dem Grundsatz entschieden: **Parität mit der Referenz, außer die Spec enthält eine bewusste, begründete OS-Festlegung.** Die Klärungen stehen als K-54 bis K-64 und (Nachträge aus Welle 6 und dem Fable-Recheck vom 15.10.2026) K-66 bis K-71 in `docs/plan/M1.md` Abschnitt 8.
 
 | Befund | Spec | Entscheidung | Spec-Änderung |
 |---|---|---|---|
@@ -1158,12 +1158,18 @@ Quelle: `docs/plan/M1-acceptance/checklist.md` (Abschnitt A3) und `docs/plan/M1-
 | A-4 Duplikate case-sensitiv | ONPAGE-005 | widerlegt: ohne Groß-/Kleinschreibung | ONPAGE-005 (K-58) |
 | A-23 Underscores nur im Pfad | ONPAGE-072 | widerlegt: Pfad und Query | ONPAGE-072 (K-58) |
 | Crawl Depth ab Zeile 1, alle URLs | OUT-080, OUT-025 | widerlegt: ab Zeile 0, interne HTML 2xx | OUT-080, OUT-025 (K-58) |
-| A-35 Wortzählung (N-03) | ONPAGE-141 | ergänzt: je `<a href>` im Inhaltsbereich +1 (A-35b) | ONPAGE-141 (K-59) |
+| A-35 Wortzählung (N-03) | ONPAGE-141 | ergänzt: je `<li>` im Inhaltsbereich +1 (A-35b; erste Fassung „je `<a href>`“ von M1-P31 widerlegt) | ONPAGE-141 (K-59, K-68) |
 | N-01/N-02/N-05/N-06 | ONPAGE-011/-013/-014/-018/-090/-100 | Implementierungsfehler bzw. Präzisierung | dort (K-60) |
 | N-07 Selbst-Refresh als Weiterleitung auf sich selbst | CRAWL-015, ONPAGE-018/-058/-061, OUT-081 | Parität | dort (K-57) |
 | N-08 nur per hreflang bekannte URLs bei `crawl = false` | TECH-071 | Parität: keine Tabellenzeile, keine Linkzeile | TECH-071 (K-62) |
 | N-09 Link Position/Path im `<head>` | OUT-031, TECH-131 | Parität: Position `Head`, Pfad `//head/…` | OUT-031, TECH-131 (K-63) |
 | N-10 externe Inlinks | ONPAGE-025 | Parität: nur Hyperlinks | ONPAGE-025 (K-61) |
 | N-04 Pixelbreiten | UI-038 | Kalibrierung (≤ 3 %) | UI-038 (K-64) |
+| A-19 Schleifenmitglieder als Redirect Chain (DEV-033) | ONPAGE-060/-061 | Parität: Redirect Chain = ≥ 2 Hops, auch in Schleifen; Selbst-Weiterleitung nicht; DEV-033 entfällt | ONPAGE-060/-061 (K-66) |
+| Connection Refused vs. Connection Timeout (DEV-005) | ONPAGE-065 | OS-Festlegung bleibt (tatsächliche Ursache); Kennzeichen „OS-Festlegung“ | ONPAGE-065 (K-67) |
+| K-57 Header-Fall: `Refresh`-Header ohne URL | CRAWL-015, ONPAGE-018/-061, TECH-064, OUT-081 | Parität: keine Weiterleitung; nur Meta ohne URL bzw. Refresh auf die eigene URL ist Selbst-Weiterleitung | dort (K-69) |
+| A-4 Vergleichsfunktion | ONPAGE-005 | Kollation `OS_TEXT` (Secondary) statt `to_lowercase`; Randfälle als Annahme A-4b | ONPAGE-005 (K-70) |
+| Canonicals: PDF ohne Canonical (DEV-021/-022 → DEV-035) | TECH-011/-015 | OS-Festlegung für M1 (PDF-Seiten P1, ONPAGE-166); Angleichung in M2 | TECH-015 (K-71) |
+| Links: Seite nur mit Selbstlink (DEV-022 → DEV-036) | TECH-133, K-07 | OS-Festlegung K-07 bestätigt | TECH-133 (K-71) |
 
 Bestätigt (keine Änderung): K-02 (`Transferred` ohne Header), K-44/K-45 bis auf B-01/N-07, K-50, N09-Mehrfachspalten. Spec-Lücken TECH-051/TECH-071 (`Indexability`-Spalten im Directives-/Hreflang-Export) und TECH-130 (`Inlinks` im Links-Export der Referenz) → M2 (`docs/plan/M2-backlog.md`).

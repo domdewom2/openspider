@@ -1,6 +1,6 @@
 # M2-Merkzettel (Backlog aus M1)
 
-Stand: 2026-10-14 · Planer: Opus · Quelle: Fable-Gate M1 (needs_work, 70/100) und Fable-Gate Welle 5. Fables Empfehlungen sind übernommen (Nutzerentscheidung). Der Merkzettel sammelt Punkte, die Fable nach M2 verschoben hat. Keiner davon ist ein M1-Abnahmekriterium. Der M2-Plan übernimmt sie mit Spec-ID in seine Pakete. Querverweis: `docs/plan/M1.md` Abschnitt 7.3 (Nachtrag M1-Abnahme-Gate).
+Stand: 2026-10-15 (Nachtrag M2-S04 … M2-S06 aus K-66 … K-71) · Planer: Opus · Quelle: Fable-Gate M1 (needs_work, 70/100) und Fable-Gate Welle 5. Fables Empfehlungen sind übernommen (Nutzerentscheidung). Der Merkzettel sammelt Punkte, die Fable nach M2 verschoben hat. Keiner davon ist ein M1-Abnahmekriterium. Der M2-Plan übernimmt sie mit Spec-ID in seine Pakete. Querverweis: `docs/plan/M1.md` Abschnitt 7.3 (Nachtrag M1-Abnahme-Gate).
 
 ## 1 Beobachtungen und Messgrößen
 
@@ -22,6 +22,9 @@ Stand: 2026-10-14 · Planer: Opus · Quelle: Fable-Gate M1 (needs_work, 70/100) 
 | M2-S01 | TECH-051 (Directives) | Die Referenz exportiert `Indexability` und `Indexability Status` auch im Tab Directives; die Spaltenliste der Spec nennt sie nicht. Das Paritäts-Mapping ignoriert sie mit Grund. | Spaltenliste von TECH-051 um beide Spalten ergänzen (Position wie in der Referenz-Kopfzeile), `os-analyze` `tabs/directives.rs` nachziehen, Mapping-Ausnahme entfernen. |
 | M2-S02 | TECH-071 (Hreflang) | Wie M2-S01 für den Tab Hreflang. | Spaltenliste von TECH-071 ergänzen, `tabs/hreflang.rs` nachziehen, Mapping-Ausnahme entfernen. |
 | M2-S03 | TECH-130 (Links) | Die Spec sagt, `Inlinks` stehe nicht in der Referenz-Spaltenliste des Links-Tabs. Der Referenz-Export enthält die Spalte aber. OpenSpider blendet sie im Export aus. | Kriterium „Zusatzspalte, standardmäßig ausgeblendet“ in TECH-130 streichen und `Inlinks` sichtbar an der Position der Referenz führen. Mapping-Ausnahme entfernen; Self-Link-Zählung (K-07, DEV-010/-011) bleibt eine OS-Festlegung. |
+| M2-S04 | ONPAGE-005 (Duplikate, A-4b) | M1-P31 vergleicht mit der Kollation `OS_TEXT` (ICU-Root, Secondary) statt `str::to_lowercase`, weil `os-mcp` den Filterplan auf Verbindungen ausführt, die nur `OS_TEXT` kennen; die Gruppierung läuft als unkorrelierte Unterabfrage ohne Index (K-70). Gegen die Referenz belegt ist nur reine Groß-/Kleinschreibung. | Verifikationsauftrag: Paritäts-Fixture mit „Straße“/„STRASSE“, NFC-/NFD-„é“ und Sigma-Formen; danach A-4b bestätigen oder auf `to_lowercase` umstellen. Für große Crawls eine gefaltete Schlüsselspalte mit Index (Migration `os-store`) oder die Kollation `OS_FOLD` in `os-store` `open.rs` registrieren, damit jede Verbindung sie kennt. |
+| M2-S05 | TECH-011/TECH-015 (Canonicals, DEV-035) | Die Referenz führt in Canonicals „Internal HTML or PDF pages with 2xx“ und zählt PDFs ohne Canonical als Missing; OpenSpider führt Nicht-HTML nur mit HTTP-Canonical (OS-Festlegung für M1, K-71). | Mit ONPAGE-166 (PDF als Seite) Grundmenge und Missing an die Referenz angleichen, DEV-035 streichen. |
+| M2-S06 | ONPAGE-060 (A-19b), ONPAGE-141 (A-35b) | Unbelegt gegen die Referenz: Vorlauf einer Schleife als Redirect Chain (A-19b, K-66) und `<li>` ohne Link im Word Count (A-35b, K-68). | Paritäts-Sites um je einen Fall erweitern (Vorlauf `/tail` → Schleife; Liste ohne Links im Inhaltsbereich), Annahmen bestätigen oder korrigieren. |
 
 ## 4 Hinweise aus früheren Gates (zur Erinnerung)
 

@@ -428,7 +428,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Akzeptanzkriterien:**
   - [ ] Bedingung: HTML-Seite mit Status 2xx und `Occurrences = 0` (K-56).
   - [ ] Bei „Ignore Non-Indexable URLs for Issues“ an (CRAWL-089, Standard) werden nur indexierbare Seiten gelistet (Paritätsbefund M1, Befund B-05, K-56).
-  - [ ] Nicht-HTML-Ressourcen ohne HTTP-Canonical erscheinen **nicht** in Missing.
+  - [ ] Nicht-HTML-Ressourcen ohne HTTP-Canonical erscheinen **nicht** in Missing. **OS-Festlegung für M1** (Paritätsbefund M1-N16, Entscheidung K-71 vom 15.10.2026, DEV-035): Die Referenz führt in Canonicals die Grundmenge „Internal HTML or PDF pages with 2xx“ und zählt eine PDF ohne Canonical als Missing (`parity-onpage` `/ctype/t-pdf.pdf`: Referenz All 85/Missing 81, OpenSpider 84/80). PDFs als Seiten sind in M1 nur mit Titel und Keywords aus den Dokumenteigenschaften umgesetzt (ONPAGE-166 P1, wie DEV-016/DEV-024); die Angleichung der Grundmenge an die Referenz folgt mit ONPAGE-166 in M2 (M2-S05).
   - [ ] Canonical nur per JS gesetzt: im Text-only-Modus Missing, im JS-Modus nicht (TECH-006).
 - **Testfixture:** `canonical-basic/none.html`, eine PDF ohne Header.
 
@@ -837,7 +837,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Akzeptanzkriterien:**
   - [ ] Bedingung: mindestens ein Meta-Refresh-Element (Head oder Body) oder ein `Refresh`-Header.
   - [ ] Refresh mit Ziel ≠ eigener URL → Indexierbarkeit `Redirected` (TECH-001); Ziel-URL wird gecrawlt.
-  - [ ] Refresh auf sich selbst oder ohne Ziel → im Filter, keine Weiterleitung, kein neuer Abruf. Indexierbarkeit bei Standard: `Non-Indexable` / `Self Referencing Meta Refresh`. Bei abgeschalteter Option TECH-068 bleibt die Seite indexierbar (sofern kein anderer Grund vorliegt).
+  - [ ] Refresh auf sich selbst oder ohne Ziel → im Filter, kein neuer Abruf. Weiterleitung auf sich selbst nach CRAWL-015 (Meta Refresh ohne Ziel oder auf sich selbst, `Refresh`-Header auf sich selbst); ein `Refresh`-Header ohne Ziel ist keine Weiterleitung (K-57, K-69). Indexierbarkeit nach TECH-068: bei Standard (Option aus) indexierbar, sofern kein anderer Grund vorliegt; mit Option an `Non-Indexable` / `Self Referencing Meta Refresh`.
 - **Testfixture:** `directives/refresh-0.html` (`0; url=/target` → Redirected), `/refresh-5-self.html` (→ Self Referencing Meta Refresh), `/refresh-bare.html` (`content="10"` → Self Referencing Meta Refresh), `/refresh-header` (Header `Refresh: 0; url=/target`).
 
 ### TECH-065 Filter „Outside \<head>“ (Meta Robots)
@@ -1307,7 +1307,7 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
 - **Ausgabe (Spalten/Filter/Export):** Filter „Pages Without Internal Outlinks“; Einstufung: Warnung / Hoch.
 - **Akzeptanzkriterien:**
   - [ ] Bedingung: `Outlinks = 0` (interne Hyperlinks im ausgewerteten HTML; im JS-Modus das gerenderte).
-  - [ ] Eine Seite mit nur einem Self-Link gilt als ohne interne Outlinks (Festlegung).
+  - [ ] Eine Seite mit nur einem Self-Link gilt als ohne interne Outlinks (Festlegung K-07; die Referenz zählt den Selbstlink, `parity-technical` `/links/self-only.html`; bestätigt durch K-71, DEV-036).
   - [ ] Eine Seite mit nur nofollow-Links hat Outlinks > 0 und wird nicht gelistet.
   - [ ] Bei „Ignore Non-Indexable URLs for Issues“ an (CRAWL-089, Standard) werden nur indexierbare Seiten gelistet (Paritätsbefund M1, Befund B-05, K-56).
 - **Testfixture:** `links/deadend.html`, `links/self-only.html`, dazu eine `noindex`-Sackgasse.

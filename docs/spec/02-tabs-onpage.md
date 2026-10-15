@@ -306,7 +306,7 @@ Gilt für Titel, Meta-Description, Meta-Keywords, Überschriften, Alt-Texte:
 
 ### ONPAGE-005 Duplikat-Gruppierung (Wertgleichheit über Seiten)
 - **Priorität:** P0
-- **Beschreibung:** Gemeinsame Logik für die Filter „Duplicate“ in Page Titles, Meta Description, Meta Keywords, H1, H2: Eine Seite ist Duplikat, wenn ihr erster Wert (…1) nach Normalisierung N(x) nicht leer ist und mindestens eine andere Seite der Vergleichsmenge denselben Wert hat. Vergleichsmenge = Grundmenge des Tabs, eingeschränkt auf indexierbare Seiten, solange `duplicates.only_indexable = true` (Default). Vergleich nach N(x) **ohne Beachtung der Groß-/Kleinschreibung**: verglichen werden die Unicode-Kleinschreibungen (`str::to_lowercase`), sonst zeichengenau (**Annahme A-4, revidiert nach Paritätslauf M1 vom 14.10.2026, K-58**: die Referenz zählt Werte, die sich nur in der Schreibweise unterscheiden, als Duplikat; Fixture `parity-onpage` `dup-case.html`).
+- **Beschreibung:** Gemeinsame Logik für die Filter „Duplicate“ in Page Titles, Meta Description, Meta Keywords, H1, H2: Eine Seite ist Duplikat, wenn ihr erster Wert (…1) nach Normalisierung N(x) nicht leer ist und mindestens eine andere Seite der Vergleichsmenge denselben Wert hat. Vergleichsmenge = Grundmenge des Tabs, eingeschränkt auf indexierbare Seiten, solange `duplicates.only_indexable = true` (Default). Vergleich nach N(x) **ohne Beachtung der Groß-/Kleinschreibung** (**Annahme A-4, revidiert nach Paritätslauf M1 vom 14.10.2026, K-58**: die Referenz zählt Werte, die sich nur in der Schreibweise unterscheiden, als Duplikat; Fixture `parity-onpage` `dup-case.html`). Verglichen wird mit der Kollation `OS_TEXT` (ICU-Root, Stärke Secondary), mit der OpenSpider auch alle Textspalten sortiert: Unterschiede der Groß-/Kleinschreibung und andere tertiäre Unterschiede zählen nicht, Akzente zählen, kanonisch äquivalente Schreibungen (NFC/NFD) sind gleich (**Annahme A-4b**, Entscheidung K-70 vom 15.10.2026; ersetzt `str::to_lowercase` aus K-58). Gegenüber `str::to_lowercase` unterscheidet sich das Ergebnis nur bei kanonischer Äquivalenz, ß/ss und Sigma-Formen; belegt ist gegen die Referenz nur der Fall reiner Groß-/Kleinschreibung. Die Randfälle prüft ein Verifikationsauftrag in M2 (`docs/plan/M2-backlog.md`, M2-S04).
   - **Paginierte Seiten:** Ist `duplicates.ignore_paginated = true` (Referenz: Option unter Spider-Konfiguration → Advanced), werden Seiten, die ein `<link rel="prev">` (im `<head>`, Wert nicht leer) oder einen HTTP-`Link`-Header mit `rel="prev"` tragen, aus der Vergleichsmenge aller fünf Duplicate-Filter (Page Titles, Meta Description, Meta Keywords, H1, H2) entfernt. Die erste Seite einer Serie (nur `rel="next"`) bleibt in der Vergleichsmenge. Der Schalter wirkt nicht auf Content → Exact/Near Duplicates. Die Default-Stellung ist in der öffentlichen Doku nicht angegeben (**Annahme A-50**: an).
 - **Eingaben/Konfiguration:** `duplicates.only_indexable`, `duplicates.ignore_paginated`.
 - **Ausgabe:** Filter „Duplicate“ je Element-Tab; zusätzlich Gruppen-ID (intern) zur Anzeige „gleicher Wert wie …“.
@@ -490,7 +490,7 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
   - `Hash`: MD5 (hex, 32 Zeichen, Kleinbuchstaben) über den vollständigen, dekomprimierten Antwortkörper der HTML-Seite (Bytes wie empfangen). **Nur für HTML-Antworten** (Inhaltsklasse HTML, ONPAGE-020); Bilder, CSS, JavaScript, Text, JSON, SVG und Antworten ohne Inhaltstyp (z. B. 301 mit leerem Körper) haben einen leeren `Hash` (Paritätsbefund M1, Befund N-06, K-60). Ist der Speicher-Schalter „Hash“ aus, entfällt auch die Erkennung exakter Duplikate (ONPAGE-143).
   - `Response Time`: Sekunden vom Senden der Anfrage bis zum vollständigen Empfang des Körpers, drei Nachkommastellen.
   - `Last-Modified`: Rohwert des Headers, sonst leer.
-  - `Redirect URL`: absolut aufgelöstes Ziel einer Weiterleitung (HTTP-Location, Meta-Refresh-URL, HTTP-Refresh-URL, JS-Ziel), sonst leer. Bei einem Selbst-Refresh (ohne URL oder auf die eigene URL, CRAWL-015) steht hier die eigene Adresse und in `Redirect Type` `Meta Refresh Redirect` bzw. `HTTP Refresh Redirect` (Paritätsbefund M1, Befund N-07, K-57).
+  - `Redirect URL`: absolut aufgelöstes Ziel einer Weiterleitung (HTTP-Location, Meta-Refresh-URL, HTTP-Refresh-URL, JS-Ziel), sonst leer. Bei einem Selbst-Refresh (Meta Refresh ohne URL oder auf die eigene URL, `Refresh`-Header auf die eigene URL; CRAWL-015) steht hier die eigene Adresse und in `Redirect Type` `Meta Refresh Redirect` bzw. `HTTP Refresh Redirect` (Paritätsbefund M1, Befund N-07, K-57). Ein `Refresh`-Header **ohne** URL ist keine Weiterleitung: `Redirect URL` und `Redirect Type` bleiben leer (Paritätsbefund M1-P31, Fixture `parity-response` `/http-refresh-nourl.html`, K-69).
   - `Redirect Type`: `HTTP Redirect`, `HSTS Policy`, `JavaScript Redirect`, `Meta Refresh Redirect`, `HTTP Refresh Redirect` (Letzteres als eigene Ausprägung, **Annahme A-10**).
   - `HTTP Version`: z. B. `1.1` oder `2`, wie ausgehandelt.
   - `URL Encoded Address`: die tatsächlich angefragte URL, Non-ASCII-Zeichen prozentkodiert (UTF-8, Großbuchstaben-Hex).
@@ -918,16 +918,19 @@ Grundmenge („All“): alle internen und externen URLs mit Antwort- oder Blocki
 
 ### ONPAGE-060 Filter Redirect Chain
 - **Priorität:** P1
-- **Beschreibung:** Interne URLs, die auf eine URL weiterleiten, die selbst wieder weiterleitet (≥ 2 Hops). Jede Weiterleitungsart (HTTP, Meta Refresh, HTTP Refresh, JS, HSTS) zählt als Hop. Der Filter listet die **Start-URL** der Kette. Ketten, die in einer Schleife enden, gehören zu ONPAGE-061, nicht hierher. Vollständige Ketten werden im Report „Redirects > Redirect Chains“ (Export-Spec) mit Spalten `Number of Redirects`, Zwischen-URLs, `Final Address`, `Final Status Code`, `Loop` ausgegeben.
+- **Beschreibung:** Interne URLs, die auf eine URL weiterleiten, die selbst wieder weiterleitet (≥ 2 Hops). Jede Weiterleitungsart (HTTP, Meta Refresh, HTTP Refresh, JS, HSTS) zählt als Hop. Der Filter listet die **Start-URL** der Kette. Maßgeblich ist die Hop-Zahl `Number of Redirects` ≥ 2 (jede URL der Kette einmal gezählt). Ketten, die in einer Schleife enden, zählen ebenfalls, sobald sie mindestens 2 Hops haben, und stehen zusätzlich in ONPAGE-061 (**Annahme A-19 revidiert**, Paritätsbefund M1: die Referenz zählt die Mitglieder der Schleife `/loop1` ↔ `/loop2` auch als Redirect Chain, `parity-response` Internal Redirect Chain 9; Entscheidung K-66 vom 15.10.2026, ersetzt „Ketten, die in einer Schleife enden, gehören nur zu ONPAGE-061“). Eine Selbst-Weiterleitung (Ziel = eigene URL, auch Selbst-Refresh) hat 1 Hop und steht nur in ONPAGE-061. Vollständige Ketten werden im Report „Redirects > Redirect Chains“ (Export-Spec) mit Spalten `Number of Redirects`, Zwischen-URLs, `Final Address`, `Final Status Code`, `Loop` ausgegeben.
 - **Eingaben/Konfiguration:** Maximale Anzahl verfolgter Redirects (Crawl-Spec, Default 5).
 - **Ausgabe:** Filter `Redirect Chain`; Spalte `Number of Redirects` (Erweiterung im Filter).
 - **Akzeptanzkriterien:**
   - [ ] `/chain1` → `/chain2` → `/ok`: `/chain1` im Filter mit 2 Hops; `/chain2` selbst nicht (eigene Kette hat nur 1 Hop) (**Annahme A-19**).
   - [ ] `/r301` → `/ok` (1 Hop) → nicht im Filter.
   - [ ] Meta-Refresh-Seite → 301 → `/ok` → im Filter (gemischte Arten).
+  - [ ] `/loop1` → `/loop2` → `/loop1`: beide URLs im Filter (je 2 Hops) und zusätzlich im Filter Redirect Loop (A-19 revidiert, K-66; Beleg `parity-response`).
+  - [ ] Selbst-Weiterleitung `/self` → `/self` und Selbst-Refresh (je 1 Hop) → nicht im Filter, nur in Redirect Loop (Beleg `parity-response` `/meta-refresh-self.html`).
+  - [ ] Kette, die in eine Schleife führt (`/tail` → `/loop1` → …), und `/qloop` → `/qloop?x=1` → `/qloop?x=1` → im Filter (3 bzw. 2 Hops; **Annahme A-19b**, in den Paritäts-Sites nicht belegt).
   - [ ] Kette länger als Redirect-Limit: Start-URL im Filter, Final Status Code „Max Redirects“ im Report.
   - [ ] Externe Ketten erscheinen nicht im Filter (nur „interne URLs“). Die Sicht `External Redirect Chain` (ONPAGE-051) ist deshalb immer leer; dasselbe gilt für `External Redirect Loop` (ONPAGE-061; OS-Festlegung 14.10.2026, K-44, Prüfung im Paritätslauf).
-- **Testfixture:** `onpage-rc/` Routen `/chain1`, `/chain2`, `/mixed-chain.html` (meta refresh → `/r301`), `/long1`…`/long7`.
+- **Testfixture:** `onpage-rc/` Routen `/chain1`, `/chain2`, `/mixed-chain.html` (meta refresh → `/r301`), `/long1`…`/long7`, `/loop1`, `/loop2`, `/tail`, `/qloop`, `/self`.
 
 ### ONPAGE-061 Filter Redirect Loop
 - **Priorität:** P1
@@ -937,7 +940,9 @@ Grundmenge („All“): alle internen und externen URLs mit Antwort- oder Blocki
 - **Akzeptanzkriterien:**
   - [ ] `/loop1` → `/loop2` → `/loop1` → beide URLs im Filter (**Annahme A-20**: alle Kettenmitglieder, die in die Schleife führen).
   - [ ] Selbst-Weiterleitung `/self` → `/self` → im Filter.
-  - [ ] Selbst-Refresh (Meta oder Header, ohne URL oder auf die eigene URL) → im Filter (K-57).
+  - [ ] Selbst-Refresh (Meta Refresh ohne URL oder auf die eigene URL, `Refresh`-Header auf die eigene URL) → im Filter (K-57, K-69).
+  - [ ] `Refresh`-Header ohne URL (`parity-response` `/http-refresh-nourl.html`) → keine Weiterleitung, nicht im Filter (Parität, K-69).
+  - [ ] `/loop1` und `/loop2` stehen zusätzlich in Redirect Chain (ONPAGE-060, K-66); `/self` nicht.
   - [ ] Weiterleitung `/a?x=1` → `/a` → `/a?x=1` wird als Schleife erkannt (URL-Vergleich nach Normalisierung).
   - [ ] Crawler terminiert (keine Endlosschleife).
 - **Testfixture:** `onpage-rc/` Routen `/loop1`, `/loop2`, `/self`, `/a` mit Query-Weiche.
@@ -975,7 +980,7 @@ Grundmenge („All“): alle internen und externen URLs mit Antwort- oder Blocki
 
 ### ONPAGE-065 Status-Texte für Fehlerfälle ohne Antwort
 - **Priorität:** P0
-- **Beschreibung:** Feste Status-Texte bei Status Code 0: `Blocked by Robots.txt`, `Connection Timeout`, `Connection Refused`, `Connection Error` (Abbruch/Reset), `DNS Lookup Failed`, `Malformed` (ungültige URL), `TLS Error` (Zertifikat/Handshake; Erweiterung), `Blocked by Exclude` nicht hier (ausgeschlossene URLs werden nicht gelistet – Crawl-Spec).
+- **Beschreibung:** Feste Status-Texte bei Status Code 0: `Blocked by Robots.txt`, `Connection Timeout`, `Connection Refused`, `Connection Error` (Abbruch/Reset), `DNS Lookup Failed`, `Malformed` (ungültige URL), `TLS Error` (Zertifikat/Handshake; Erweiterung), `Blocked by Exclude` nicht hier (ausgeschlossene URLs werden nicht gelistet – Crawl-Spec). Die Trennung von `Connection Refused` (Verbindung aktiv abgelehnt, z. B. geschlossener Port) und `Connection Timeout` (keine Antwort innerhalb der Frist) ist eine **OS-Festlegung** (Paritätsbefund M1, Entscheidung K-67 vom 15.10.2026, DEV-005): Die Referenz meldet für den geschlossenen Port `localhost:1` `Connection Timeout`. OpenSpider meldet die tatsächliche Ursache, weil beide Fälle verschiedene Abhilfen verlangen (Dienst/Port/Firewall prüfen bzw. Last oder Timeout-Einstellung) und ein abgelehnter Verbindungsaufbau sofort feststeht.
 - **Eingaben/Konfiguration:** keine.
 - **Ausgabe:** Wert der Spalte `Status`.
 - **Akzeptanzkriterien:**
@@ -1572,7 +1577,7 @@ Grundmenge: ONPAGE-009 (interne HTML-Seiten mit Status 2xx; zusätzlich interne 
 
 ### ONPAGE-141 Wortzählung
 - **Priorität:** P0
-- **Beschreibung:** `Word Count` = Anzahl Token des Inhaltsbereich-Textes, getrennt an Unicode-Leerraum. Jedes nicht-leere Token zählt, auch reine Satzzeichen-Token wie „–“ (**Annahme A-35**). **Dazu kommt je Link-Element `<a>` mit `href` im Inhaltsbereich ein Token** (**Annahme A-35b**, Paritätsbefund M1 vom 14.10.2026, Befund N-03, K-59). Die Referenz zählt auf jeder geprüften Seite genau so viele Wörter mehr, wie Link-Elemente im Inhaltsbereich stehen, unabhängig von der Wortzahl des Ankertexts. Links in ausgeschlossenen Bereichen (`nav`, `footer`, Exclude-Regeln) zählen nicht. Belege: `parity-synthetic` `/s1/p1.html` 112 + 10 = 122, `parity-technical` `/dir/` 81 + 13 = 94. Keine Sprachsegmentierung (CJK-Text ohne Leerzeichen zählt als ein Wort pro Block – bekannte Einschränkung, dokumentieren).
+- **Beschreibung:** `Word Count` = Anzahl Token des Inhaltsbereich-Textes, getrennt an Unicode-Leerraum. Jedes nicht-leere Token zählt, auch reine Satzzeichen-Token wie „–“ (**Annahme A-35**). **Dazu kommt je Listenelement `<li>` im Inhaltsbereich ein Token** (**Annahme A-35b**, Paritätsbefund M1 vom 14.10.2026, Befund N-03, K-59, präzisiert durch K-68 vom 15.10.2026). M1-P31 hat die Regel zellgenau geprüft: Token + Anzahl `<li>` im Inhaltsbereich trifft `Word Count` auf allen 211 HTML-Seiten der Paritäts-Sites (0 Abweichungen). Die vorherige Fassung „+ 1 je `<a href>`“ ist widerlegt: Links in `<p>` zählen in der Referenz nicht (`out-basic-site`, `parity-technical` `/links/*`). `<li>` in ausgeschlossenen Bereichen (`nav`, `footer`, Exclude-Regeln) zählen nicht, Include-Regeln gelten. Auf allen Fixture-Seiten enthält jedes `<li>` genau einen Link; ein `<li>` ohne Link ist gegen die Referenz nicht belegt und zählt nach der Regel ebenfalls (Annahme, M2-S06). Keine Sprachsegmentierung (CJK-Text ohne Leerzeichen zählt als ein Wort pro Block – bekannte Einschränkung, dokumentieren).
 - **Eingaben/Konfiguration:** Inhaltsbereich.
 - **Ausgabe:** Spalte `Word Count` (Internal, Content).
 - **Akzeptanzkriterien:**
@@ -1581,8 +1586,10 @@ Grundmenge: ONPAGE-009 (interne HTML-Seiten mit Status 2xx; zusätzlich interne 
   - [ ] „E-Mail-Adresse“ → 1.
   - [ ] `a&nbsp;b` → 2 (NBSP trennt).
   - [ ] Leerer Body → 0.
-  - [ ] `area.html` aus ONPAGE-140 → 5 + 100 + 15 + 30 + 10 + 3 = 163 (nur nav/footer ausgeschlossen; die Fixture enthält im Inhaltsbereich keine Links).
-  - [ ] `<main><p>eins zwei</p><ul><li><a href="/a">Seite 1</a></li><li><a href="/b">Seite 2</a></li></ul></main><nav><a href="/c">Menü</a></nav>` → 2 + 4 + 2 = 8 (A-35b; der Link in `nav` zählt nicht).
+  - [ ] `area.html` aus ONPAGE-140 → 5 + 100 + 15 + 30 + 10 + 3 = 163 (nur nav/footer ausgeschlossen; die Fixture enthält im Inhaltsbereich keine Listenelemente `<li>`).
+  - [ ] `<main><p>eins zwei</p><ul><li><a href="/a">Seite 1</a></li><li><a href="/b">Seite 2</a></li></ul></main><nav><a href="/c">Menü</a></nav>` → 2 + 4 + 2 = 8 (A-35b: zwei `<li>`; `nav` ist ausgeschlossen).
+  - [ ] `<main><p>Mehr <a href="/x">hier lesen</a></p></main>` → 3 (ein Link im Absatz zählt nicht zusätzlich; K-68).
+  - [ ] `<main><ul><li>eins</li><li>zwei</li></ul></main>` → 4 (`<li>` ohne Link zählt ebenfalls; Annahme A-35b, unbelegt).
 - **Testfixture:** `onpage-content/wordcount-*.html`, `area.html`.
 
 ### ONPAGE-142 Content: Spalten
@@ -2139,6 +2146,7 @@ Jede Annahme wird mit einer Paritätsfixture gegen die Referenz (Free-Version, �
 | A-2 | Länge in Codepoints | 003 | Titel mit 3 Emoji: Length-Spalte vergleichen |
 | A-3 | Pixelbreite: 20 px Titel / 14 px Description, Arial-Metrik | 004 → UI-038 (führend; dort weiterzuführen) | 20 Golden-Titel, Abweichung ≤ 3 % |
 | A-4 | ~~Duplikatvergleich case-sensitiv~~ **widerlegt (Paritätslauf M1, 14.10.2026):** Vergleich ohne Groß-/Kleinschreibung (K-58) | 005 | „Kontakt“ vs. „kontakt“ |
+| A-4b | Duplikatvergleich mit Kollation `OS_TEXT` (ICU-Root, Secondary): NFC/NFD gleich, ß/ss und Sigma-Formen nach ICU (K-70) | 005 | „Straße“ vs. „STRASSE“, NFC- vs. NFD-„é“ (M2-S04) |
 | A-5 | Element-Tabs nur interne HTML 2xx | 009 | 404-Seite mit Titel im Page-Titles-All? |
 | A-5b | PDFs erscheinen nicht in den Tabs Page Titles / Meta Keywords (nur Title-/Keywords-Spalte im Internal-Tab) | 009, 166 | `doc.pdf` mit Titel crawlen, Page Titles → All prüfen (V-2) |
 | A-6 | Size ohne Content-Length = 0 (außer Bilder) | 012, 173 | chunked PDF |
@@ -2154,7 +2162,8 @@ Jede Annahme wird mit einer Paritätsfixture gegen die Referenz (Free-Version, �
 | A-16 | frame-ancestors ersetzt XFO nicht | 041 | CSP mit frame-ancestors, ohne XFO |
 | A-17 | „Ignore robots but report“ erscheint in Blocked by Robots.txt | 052 | Modus umschalten |
 | A-18 | Blocked Resource umfasst HTTP-Fehler beim Rendern | 053 | CSS mit 500 |
-| A-19 | Redirect Chain listet nur Start-URL | 060 | `/chain1`, `/chain2` |
+| A-19 | Redirect Chain listet nur Start-URL; revidiert (K-66): Schleifenmitglieder mit ≥ 2 Hops zählen auch als Redirect Chain | 060 | `/chain1`, `/chain2`; `parity-response` `/loop1`, `/loop2` (belegt) |
+| A-19b | Vorlauf einer Schleife (`/tail` → `/loop1` …) zählt ab 2 Hops als Redirect Chain | 060 | Paritäts-Site mit Vorlauf vor einer Schleife (M2-S06) |
 | A-20 | Redirect Loop listet alle Mitglieder | 061 | `/loop1`, `/loop2` |
 | A-21 | HSTS-Weiterleitung als 307 mit Status „HSTS Policy“ | 064 | HTTPS-Fixture mit HSTS |
 | A-22 | Prozentkodiertes UTF-8 zählt als Non-ASCII | 071 | `/%C3%BCber` |
@@ -2171,7 +2180,7 @@ Jede Annahme wird mit einer Paritätsfixture gegen die Referenz (Free-Version, �
 | A-33 | Leere Überschriften zählen in der Reihenfolge | 126 | leeres `<h3>` vor H1 |
 | A-34 | H2 Non-sequential: h3–h6 vor erstem H2; ohne H1 kein Treffer | 135 | 6 Sequenz-Fixtures |
 | A-35 | Wortzählung zählt Satzzeichen-Token | 141 | „Preis: 10 € – jetzt!“ |
-| A-35b | Je Link-Element `<a href>` im Inhaltsbereich ein zusätzliches Token (Paritätsbefund M1, K-59) | 141 | `parity-synthetic` `/s1/p1.html`: 10 Links → +10 |
+| A-35b | Je Listenelement `<li>` im Inhaltsbereich ein zusätzliches Token (Paritätsbefund M1, K-59, präzisiert K-68; vorher „je `<a href>`“, widerlegt) | 141 | 211 HTML-Seiten der Paritäts-Sites, 0 Abweichungen (M1-P31); `<li>` ohne Link offen (M2-S06) |
 | A-36 | Near-Duplicates: Wort-3-Gramme, exakte Jaccard | 144 | Golden-Paare 95/91/89/80 %; Kalibrierung von n bei Abweichung > 2 Prozentpunkte |
 | A-37 | Near-Duplicate-Export enthält beide Richtungen | 145 | Bulk-Export zählen |
 | A-38 | Low Content unabhängig von Indexierbarkeit (solange `issues.ignore_non_indexable` aus) | 146 | `noindex`-Seite mit 50 Wörtern, Option an/aus |
