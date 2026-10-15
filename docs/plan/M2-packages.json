@@ -1,0 +1,3274 @@
+[
+ {
+  "id": "M2-F01",
+  "kind": "package",
+  "model": "opus",
+  "title": "Fundament Kern I: Manifeste aller M2-Abhängigkeiten, os-model (Konfiguration v2, Schreib-/Parse-Modell M2, Erweiterungsschlüssel, AppSettings), os-app-Gerüst mit allen DTOs, Command-Katalog und ts-rs-Ausgabe, Cloud-Setup",
+  "wave": "0a",
+  "spec_ids": [
+   "OUT-226"
+  ],
+  "owns": [
+   "Cargo.toml",
+   "Cargo.lock",
+   "crates/*/Cargo.toml",
+   "apps/desktop/src-tauri/Cargo.toml",
+   "deny.toml (nur Positivliste, mit Begründung im Commit)",
+   "crates/os-model/**",
+   "crates/os-app/Cargo.toml",
+   "crates/os-app/src/lib.rs",
+   "crates/os-app/src/dto/**",
+   "crates/os-app/src/registry.rs",
+   "crates/os-app/src/commands/mod.rs",
+   "crates/os-app/src/commands/*.rs (nur als STUB(M2-xx) angelegt)",
+   "crates/os-app/src/*.rs und */mod.rs (nur Modul-Deklarationen und STUB-Dateien laut M2.md 3.6)",
+   "crates/os-app/src/bin/os-app-manifest.rs",
+   "crates/os-app/tests/{dto,manifest}_*.rs",
+   "apps/desktop/src/ipc/gen/**",
+   "apps/desktop/src/ipc/commands.json",
+   "apps/desktop/src/ipc/__fixtures__/**",
+   "crates/os-sched/** (nur Gerüst, falls Klärung K2-07 bestätigt)",
+   "tests/fixtures/config/**",
+   "scripts/cloud/**",
+   "rust-toolchain.toml"
+  ],
+  "depends_on": [
+   "M1-P32",
+   "M1-P33",
+   "M1-N19",
+   "M1-N20"
+  ],
+  "size": "XL",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Startbedingung: Welle 7 von M1 gemergt (`git log --oneline origin/main -i --grep='Merge p32'` usw. je ein Treffer) und M2-Plan-Gate (Fable) bestanden. Inhalt exakt nach M2.md 3.1 (Workspace-Abhängigkeiten, Lizenzprüfung cargo deny + npm-Positivliste vorbereiten), 3.2 (Crate-Abhängigkeiten inkl. neuem Crate os-app; os-sched nur bei bestätigter Klärung K2-07), 3.3 (Konfiguration v2: alle M2-Sektionen aus 01 C–O, 02/03 P1, 04 A–J ohne KI, 06 mit Defaults der Spec, schemars, TOML-Rundreise, Migration v1→v2 = OUT-226, eingechecktes JSON-Schema neu per UPDATE_GOLDEN=1; Schreibmodell: WriteBatch-/ParsedPage-Erweiterungen und Erweiterungsschlüssel `ext` laut Tabelle 3.3; os_model::settings::AppSettings = settings.toml, OUT-222) und 3.6 (os-app-Gerüst: alle DTOs aus M2-ui-concept 4.3/4.4 plus Domänen api, tasks, viz, detail_ext mit serde camelCase + ts-rs, je Typ eine Datei in apps/desktop/src/ipc/gen/; Registry/CommandMeta/Handler-Typ; jede Command-Domäne als Datei commands/<domäne>.rs mit STUB(M2-<Besitzer>) laut Tabelle 3.6, Stubs liefern CmdError Unsupported; bin os-app-manifest schreibt commands.json, Vertragstest vergleicht; handgeschriebene DTO-Beispiele unter __fixtures__). scripts/cloud/setup.sh nach 2a C3 (Rust, Node 22, npm ci, Playwright chromium+webkit mit --with-deps, optional libwebkit2gtk-4.1-dev, Chromium-Pfad OPENSPIDER_CHROMIUM). Keine Fachlogik über 3.3/3.6 hinaus. DoD: M2.md 3.10 (F01)."
+ },
+ {
+  "id": "M2-F02",
+  "kind": "package",
+  "model": "opus",
+  "title": "Fundament Kern II: Schema v3 und Writer, os-store-Abfragemodule, Register (M2-filters.toml, Issue-Katalog je Tab, Export-/Report-Katalog, Analyse-Schritte), Stubs in os-parse/os-analyze/os-export/os-engine/os-render/os-integrations/os-testsite/os-mcp",
+  "wave": "0b",
+  "spec_ids": [],
+  "owns": [
+   "crates/os-store/migrations/0003_m2.sql",
+   "crates/os-store/src/{lib,schema,writer,sink}.rs",
+   "crates/os-store/src/queries.rs → crates/os-store/src/queries/mod.rs (Umzug) und crates/os-store/src/queries/*.rs (Stubs)",
+   "crates/os-store/src/{view_cache,readonly_sql,auth_profiles}.rs (Stubs)",
+   "crates/os-store/tests/{schema_v3,writer_m2}_*.rs",
+   "crates/os-parse/src/lib.rs",
+   "crates/os-parse/src/links.rs (nur LinkRef.target und Aufruf link_position)",
+   "crates/os-parse/src/{security,validation,readability,custom_search,link_position}.rs (Stubs)",
+   "crates/os-parse/src/{sd,custom_extract,spelling}/** (Stubs)",
+   "crates/os-analyze/src/{lib,defs,views}.rs",
+   "crates/os-analyze/src/tabs/mod.rs",
+   "crates/os-analyze/src/tabs/<neue Tabs>.rs (Stubs laut M2-filters.toml)",
+   "crates/os-analyze/src/analysis/steps/mod.rs",
+   "crates/os-analyze/src/analysis/steps/<neue Schritte>.rs (Stubs)",
+   "crates/os-analyze/src/{views/session,search,aggregates,graph,segments,compare,minhash}/mod.rs (Stubs)",
+   "crates/os-analyze/src/issues/catalog.rs (nur Loader je Tab)",
+   "crates/os-analyze/tests/{filters_registry,framework_state,catalog_split}.rs",
+   "core/issues/** (Aufteilung je Tab, Inhalte M1 unverändert)",
+   "crates/os-export/src/catalog/mod.rs",
+   "crates/os-export/src/catalog/bulk_*.rs (nur neue Stub-Dateien)",
+   "crates/os-export/src/reports/mod.rs",
+   "crates/os-export/src/reports/<neue>.rs und reports/hreflang/** (Stubs)",
+   "crates/os-export/src/reports/overview.rs (nur generische Abschnitte aus tabs::all())",
+   "crates/os-export/src/{timeseries,segment,compare,target_gsheet}.rs bzw. /** (Stubs)",
+   "crates/os-engine/src/lib.rs",
+   "crates/os-engine/src/render_glue.rs (Stub)",
+   "crates/os-render/src/** (Gerüst mit Stub-Modulen axe/, snippets/, login.rs)",
+   "crates/os-integrations/src/** (Gerüst mit Stub-Modulen)",
+   "crates/os-testsite/src/lib.rs",
+   "crates/os-testsite/src/mocks/** (Stubs)",
+   "crates/os-mcp/src/{lib,tool,session}.rs (nur ToolContext.session und Trait SessionAccess)",
+   "docs/plan/M2-filters.toml (nur Felder issue/requires nach UI-064)"
+  ],
+  "depends_on": [
+   "M2-F01"
+  ],
+  "size": "XL",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Inhalt exakt nach M2.md 3.4 (Schema v3 in einer Migration 0003_m2.sql; Writer schreibt alle neuen WriteBatch-Teile in derselben Transaktion und stempelt change_seq; Rundreise-Tests je Tabelle; M1-Dateien v1/v2 migrieren mit Backup) und 3.5 (Register: alle Tabs/Filter/Spalten aus docs/plan/M2-filters.toml als Stub-TabDefs mit Prädikat '0' bzw. Population, ColumnDef-Metadaten K-4 für alle bestehenden und neuen Spalten, dynamische Spaltenquellen als Trait; Issue-Katalog ab M2 je Tab in core/issues/catalog.d/<tab>.toml und texts/{de,en}.d/<tab>.toml, Loader liest M1-Datei plus .d-Dateien, CI-Längen-/Platzhalterprüfung unverändert; Export-/Report-Katalog: alle M2-Bulk-Exporte und Reports als Einträge mit Stub-Implementierung je Datei (nur Kopfzeile, K-14); Analyse-Schritte als Stubs; parse_html ruft die neuen Module über Konfigurationsschalter auf; LinkRef.target befüllt; os-testsite registriert Mock-Module; os-mcp: ToolContext.session: Option<Arc<dyn SessionAccess>>). Crawl Overview (OUT-080) erzeugt Abschnitte generisch aus tabs::all(), damit Fachpakete reports/overview.rs nicht anfassen. Alle M1-Tests bleiben grün; M1-Goldens unverändert (außer begründete Schema-Goldens). Parallel zu M2-F03 und M2-F04 (keine Überschneidung). DoD: M2.md 3.10 (F02)."
+ },
+ {
+  "id": "M2-F03",
+  "kind": "package",
+  "model": "opus",
+  "title": "Tauri-Hülle und os-app-Laufzeit: Dispatcher, Lese-Pool, Schreibwarteschlange, Operationen/Abbruch, Ereignis-Gerüst, Einstellungen (OUT-222), Einzelinstanz/Dateizuordnung, E2E-Bridge",
+  "wave": "0b",
+  "spec_ids": [
+   "OUT-222",
+   "OUT-232",
+   "OUT-272"
+  ],
+  "owns": [
+   "crates/os-app/src/runtime/**",
+   "crates/os-app/src/{pool,write_queue,ops,settings_store,uistate}.rs",
+   "crates/os-app/src/events/{mod,sink,tick}.rs",
+   "crates/os-app/src/commands/{app,settings,uistate,op,events}.rs",
+   "crates/os-app/src/bin/os-app-bridge.rs",
+   "crates/os-app/clippy.toml",
+   "crates/os-app/tests/{runtime,pool,write_queue,ops,bridge,settings}_*.rs",
+   "apps/desktop/src-tauri/src/**",
+   "apps/desktop/src-tauri/tauri.conf.json",
+   "apps/desktop/src-tauri/capabilities/**",
+   "apps/desktop/src-tauri/build.rs",
+   "apps/desktop/src-tauri/tests/**"
+  ],
+  "depends_on": [
+   "M2-F01"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Inhalt nach M2.md 3.6 (Laufzeit: App::dispatch, CallCtx, CancelToken mit rusqlite-Interrupt, ReadPool mit collation::ensure je Verbindung, WriteQueue als eigener Thread mit busy_timeout 5 s, Ops mit OpHandle und Fortschritt über Tick, EventSink-Trait, Tick-Zusammenbau ohne Coalescer-Logik (die liefert M2-K04), settings.get/set mit atomarem Schreiben von settings.toml und Ereignis settingsChanged, uistate.load/save mit .bak; Lint 2.3 Regel 1 über clippy.toml disallowed_methods/types mit Ausnahme nur in pool.rs/write_queue.rs; os-app-bridge (Feature e2e-bridge, WebSocket auf 127.0.0.1, Zufallstoken, Protokoll 3.6)) und 3.7 (Tauri-Hülle: je Command-Domäne ein internes Plugin, mechanisch aus commands.json per Makro, lib.rs danach eingefroren; ein Ereigniskanal je Fenster; Sichtbarkeit aus WindowEvent/Occlusion an events.setVisibility; Schließpfad F-11 an app.requestQuit; Plugins dialog, clipboard-manager, notification, os, single-instance (OUT-232: Dateiöffnen an laufende Instanz), deep-link/Dateizuordnung .ospider (OUT-272); optional tauri-plugin-wdio-webdriver nur mit Feature e2e-webdriver; URI-Schema ospider:// an os-app::assets (Stub); tauri.conf.json: Fenster main/settings/viz, minWidth 1024, minHeight 640, bundle.macOS.minimumSystemVersion 13.0, CSP ohne externe Quellen, fileAssociations). Bau: cargo test -p os-app --locked in der Cloud; cargo check -p openspider-desktop nur mit installiertem webkit2gtk, sonst über die CI-Matrix (C4). DoD: M2.md 3.10 (F03)."
+ },
+ {
+  "id": "M2-F04",
+  "kind": "package",
+  "model": "opus",
+  "title": "Frontend-Fundament: Abhängigkeiten (Glide 6.0.4-alpha24 exakt gepinnt), Ordnerstruktur, Design-Tokens und Primitive, i18n de/en mit Sprachwechsel ohne Neustart, IPC-Client mit drei Transporten, Event-Bus, Stores, Kürzelregister, Menüaufbau, Einstellungsfenster-Gerüst, Harness, CI-Jobs",
+  "wave": "0b",
+  "spec_ids": [
+   "UI-016",
+   "UI-120",
+   "UI-121",
+   "CRAWL-137",
+   "OUT-271"
+  ],
+  "owns": [
+   "package.json",
+   "package-lock.json",
+   "apps/desktop/package.json",
+   "apps/desktop/{vite.config.ts,tsconfig.json,index.html,settings.html,viz.html,playwright.config.ts,vitest.config.ts}",
+   "apps/desktop/src/{main.tsx,App.tsx,App.test.tsx,test-setup.ts}",
+   "apps/desktop/src/app/**",
+   "apps/desktop/src/ipc/{client,errors,events}.ts",
+   "apps/desktop/src/ipc/transport/**",
+   "apps/desktop/src/ipc/<domäne>.ts (generiert)",
+   "apps/desktop/src/ui/**",
+   "apps/desktop/src/i18n/**",
+   "apps/desktop/src/state/{prefs,session}.ts (Gerüst)",
+   "apps/desktop/src/harness/**",
+   "apps/desktop/src/features/settings/{window,frame}/**",
+   "apps/desktop/src/features/settings/sections/{general,appearance}/**",
+   "apps/desktop/e2e/{support,fixtures,settings,i18n}/**",
+   "apps/desktop/scripts/**",
+   ".github/workflows/ci.yml",
+   ".github/workflows/ui-e2e.yml"
+  ],
+  "depends_on": [
+   "M2-F01"
+  ],
+  "size": "XL",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Inhalt nach M2.md 3.8 und M2-ui-concept.md 2.1–2.10, 5, 7.1, 8.1: Abhängigkeiten exakt gepinnt (Glide \"6.0.4-alpha24\" ohne ^/~; React Aria Components, Zustand, TanStack Query, zod, @fluent/bundle+langneg, lucide-react, CodeMirror 6, Playwright, @axe-core/playwright, vitest-canvas-mock); npm-Lizenzprüfung gegen die Positivliste von deny.toml; Tokens aus src/ui/tokens/tokens.ts (CSS Custom Properties + Canvas-Theme) mit Kontrast-Unit-Test (UI-120), Theme hell/dunkel/System, Akzentfarbe mit Kontrastwarnung, Zoom über Webview.setZoom, Dichte kompakt 22 px (F-12); Design-System-Primitive aus 5.4 inkl. EmptyState mit data-empty-state und Voraussetzungsregister-Prüfung (UI-016) und DialogFooter je Plattform; i18n: Fluent je Feature (features/<f>/i18n/{de,en}.ftl, import.meta.glob), useT, Kanon-Rückfall auf englische Schlüssel, Intl-Formatierer, Sprachwechsel ohne Neustart inkl. Menüneuaufbau (UI-121, CRAWL-137, OUT-271), CI-Vollständigkeit de/en + Platzhalter; IPC-Client: Tauri-invoke/Channel, Bridge-WebSocket (VITE_E2E_BRIDGE) und Mock (vitest) hinter einer Schnittstelle, CmdError-Umsetzung, Versionsverwerfen, AbortSignal→op.cancel; Wrapper je Domäne generiert aus commands.json (npm run gen:ipc, Vertragstest); Event-Bus (ein Kanal je Fenster), Store-Gerüste, Kürzelregister src/ui/shortcuts.ts mit allen Zeilen aus UI-113 und Aktions-IDs + zentraler keydown-Dispatcher mit Scopes, Menüaufbau aus Beiträgen (ui/menu, features/<f>/menu.ts) inkl. macOS-Bearbeiten-Menü (PredefinedMenuItems) und Windows ohne Edit-Accelerators (F-5); Einstellungsfenster (eigenes Fenster settings, Seitennavigation, Abschnitte Allgemein und Oberfläche fertig, übrige Abschnitte als Platzhalter-Module für spätere Besitzer); Harness für visuelle Tests; CI: Jobs frontend (typecheck, vitest, Lizenz, statische Prüfungen aus 7.1) auf allen drei Plattformen und ui-e2e.yml (E2E-A-Gerüst: Playwright WebKit auf macOS-14, Chromium auf windows-latest, beide gegen os-app-bridge; in der Cloud Linux mit beiden Engines). DoD: M2.md 3.10 (F04)."
+ },
+ {
+  "id": "M2-S01",
+  "kind": "spike",
+  "model": "opus",
+  "title": "Grid-Gate (Spike S-1 und S-2): Glide-Adapter, ViewDataSource, Auswahlmodell, Zellarten und Kopieren-Anbindung als Produktcode; Messung 5 Mio. × 65 auf WKWebView und WebView2; Rückfallempfehlung",
+  "wave": "0c",
+  "spec_ids": [
+   "UI-007",
+   "UI-012",
+   "UI-140"
+  ],
+  "owns": [
+   "apps/desktop/src/grid/**",
+   "apps/desktop/src/data/**",
+   "apps/desktop/src/state/selection.ts",
+   "apps/desktop/e2e/grid/**",
+   "crates/os-app/src/stub/**",
+   "crates/os-app/tests/stub_*.rs",
+   ".github/workflows/spike-grid.yml",
+   "docs/plan/M2-spikes/S-1.md",
+   "docs/plan/M2-spikes/S-2.md",
+   "apps/desktop/vendor/glide-data-grid/** (nur bei Fallback 0)"
+  ],
+  "depends_on": [
+   "M2-F03",
+   "M2-F04"
+  ],
+  "size": "L",
+  "runner": "cloud+ci+local-mac",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Ziel: der Adapter src/grid/ (DataGridProps nach M2-ui-concept 3.3) und die ViewDataSource (2.4: Blöcke à 200, LRU 20 000, Versionsverwerfen, Anker, Tail-Modus, locate) sind Produktcode und gegen den Stub-Vertrag fertig; os-app Feature stub-views liefert view.open/rows/locate synthetisch (5 000 000 × 65, deterministisch). Glide-eigenes Kopieren/Editieren aus; Mod+C ruft view.copy. MESSUNG Gate S-1 (Kriterien M2-ui-concept 3.3 (1)–(6)) und S-2 (Zoom/devicePixelRatio): Teil A in der Cloud mit Playwright (Chromium und WebKit, headless, nur Funktionskriterien 1, 4, 5, 6); Teil B echte App über spike-grid.yml auf macos-14 und windows-latest (Frame-Recorder aus 7.4, Bericht als Artefakt; Werte gelten als Indiz, Klärung K2-12); Teil C lokal auf der Referenzmaschine A durch den Orchestrator (tauri dev --features stub-views, Recorder-Seite, VoiceOver-Ansage aria-rowcount 5 000 001). Ergebnis docs/plan/M2-spikes/S-1.md mit Messwerten je Kriterium und Plattform und Empfehlung nach der Rückfalltabelle M2.md 3.9 (Stufe 0/A/B). Kein Fallback selbst umsetzen außer Fallback 0 (Vendoring), wenn das npm-Paket nicht installierbar ist."
+ },
+ {
+  "id": "M2-S02",
+  "kind": "spike",
+  "model": "opus",
+  "title": "Plattform-Spikes S-3 (Menü-Kürzel), S-4 (ts-rs vs. tauri-specta), S-5 (Playwright-WebKit mit Bridge), S-5b (WebdriverIO + tauri-plugin-wdio-webdriver auf macOS, tauri-driver auf Windows), S-6 (Sichtbarkeitsdrosselung)",
+  "wave": "0c",
+  "spec_ids": [],
+  "owns": [
+   "apps/desktop/spikes/**",
+   "apps/desktop/e2e-b/**",
+   ".github/workflows/spike-platform.yml",
+   ".github/workflows/ui-e2e-b.yml",
+   "docs/plan/M2-spikes/{S-3,S-4,S-5,S-5b,S-6}.md"
+  ],
+  "depends_on": [
+   "M2-F03",
+   "M2-F04"
+  ],
+  "size": "M",
+  "runner": "cloud+ci+local-mac",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Je Spike ein Protokoll mit Befehlen, Plattform, Ergebnis und Entscheidungsvorschlag. S-3: Cmd/Strg+C/V/X/A/Z in Textfeldern und Tabelle bei aufgebautem Menü (macOS mit PredefinedMenuItems, Windows ohne Accelerators), Pflicht beide Plattformen. S-4: ts-rs bleibt, außer tauri-specta erzeugt Commands und Typen stabil für Tauri v2 (nur Bewertung, keine Umstellung). S-5: Playwright-WebKit gegen Vite + os-app-bridge auf macOS und Linux. S-5b: E2E-B-Gerüst apps/desktop/e2e-b (WebdriverIO) gegen die echte App: Windows über tauri-driver, macOS über eingebetteten Server (Feature e2e-webdriver); ein Smoke (Fenster öffnet, Einstellungen-Fenster, Schließen-Rückfrage); scheitert macOS, Fallback E2E-C dokumentieren. S-6: Tick-Frequenz bei minimiertem/verdecktem Fenster ≤ 1 Hz auf macOS (beide Quellen aus 2.5). ui-e2e-b.yml als nightly- und workflow_dispatch-Job."
+ },
+ {
+  "id": "M2-G0",
+  "kind": "gate",
+  "model": "fable",
+  "title": "Gate Welle 0: Fable prüft Fundament und Spike-Berichte; Planer trägt die Rückfallentscheidung (Grid-Stufe 0/A/B, E2E-B macOS ja/nein, ts-rs) als Nachtrag in M2.md 3.9 ein; Spec-Nachträge aus Klärungen K2-01 … K2-04",
+  "wave": "0d",
+  "spec_ids": [],
+  "owns": [
+   "docs/plan/M2.md (Abschnitt 3.9 Nachtrag)",
+   "docs/plan/M2-packages.json (nur bei Fallback A/B: Paket M2-U02A bzw. M2-U02B ergänzen)"
+  ],
+  "depends_on": [
+   "M2-F02",
+   "M2-S01",
+   "M2-S02"
+  ],
+  "size": "S",
+  "runner": "orchestrator",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Orchestrator-Schritt, kein Code. Fallback A → Paket M2-U02A (Fenster-Rebasing im Adapter, Welle 1, owns apps/desktop/src/grid/**). Fallback B → Paket M2-U02B (eigenes Canvas-Grid, Welle 1–2). Die UI-Pakete der Welle 1 hängen nur an DataGridProps und starten in jedem Fall."
+ },
+ {
+  "id": "M2-K01",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "View-Sitzungen im Kern (K-1 a, b, d–g): Filter-Bitmaps als ableitbarer Cache view_cache, Lazy-Aufbau, Invalidierung, Sortierpermutationen mit Null-Segment, Positionsliste und Umkehrabbildung, rows/locate, Speicherbudget",
+  "wave": 1,
+  "spec_ids": [
+   "UI-141",
+   "UI-142"
+  ],
+  "owns": [
+   "crates/os-analyze/src/views/session/**",
+   "crates/os-analyze/tests/view_session_*.rs",
+   "crates/os-analyze/benches/views_*.rs",
+   "crates/os-store/src/view_cache.rs",
+   "crates/os-store/tests/view_cache_*.rs"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Umsetzung M2-ui-concept 4.5 K-1 (a, b, d, e, f, g) gegen die Signaturen aus M2.md 3.5/3.6 (ViewSession::open/update/rows/locate/close, Budget-LRU). Pflege über changed_since (K-1c) liefert M2-K05 in Welle 2; hier nur die Funktion apply_changes(urlids) mit Tests. Textvergleich über os_store::collation::compare, Gleichstand nach F-3 (Address bytewise, dann UrlId). Kern-Benchmarks (criterion) gegen synthetische Crawls 100 000 (CI) und 1/5 Mio. (#[ignore = \"Benchmark (M2-U31): …\"]), Budgets UI-141/UI-142; Speicher je View im Bericht. Keine Abhängigkeit auf os-app."
+ },
+ {
+  "id": "M2-K02",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Suchgrammatik und Regelauswertung (K-6): Textsyntax ↔ Regelbaum, Operatoren UI-011, Regex mit Schrittlimit, Gesamtabbruch 2 s, parallele Adresssuche; Commands search.*",
+  "wave": 1,
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-011",
+   "OUT-020"
+  ],
+  "owns": [
+   "crates/os-analyze/src/search/**",
+   "crates/os-analyze/tests/search_*.rs",
+   "crates/os-app/src/commands/search.rs",
+   "crates/os-app/tests/cmd_search_*.rs"
+  ],
+  "depends_on": [
+   "M2-F02",
+   "M2-F03"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). search.parse liefert RuleNode bzw. CmdError mit Position; Auswertung als SQL-Prädikat bzw. Bitmap-Filter (Schnittstelle zu K-1 über Trait aus M2-F02). Gleiche Semantik für Export (OUT-020) und MCP. Unicode-Faltung der einfachen Suche (M1 7.3: lower() nur ASCII) hier lösen."
+ },
+ {
+  "id": "M2-K03",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Vorberechnete Aggregate und Analyse-Status (K-5): Site Structure, Response-Time-Buckets, Tiefen × Indexierbarkeit/Statusklassen, Teilschritt-Invalidierung; Commands sidebar.siteStructure/responseTimes, analysis.status",
+  "wave": 1,
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-066",
+   "UI-069",
+   "UI-082",
+   "UI-145"
+  ],
+  "owns": [
+   "crates/os-analyze/src/aggregates/**",
+   "crates/os-analyze/tests/aggregates_*.rs",
+   "crates/os-app/src/commands/sidebar_ext.rs",
+   "crates/os-app/tests/cmd_sidebarext_*.rs"
+  ],
+  "depends_on": [
+   "M2-F02",
+   "M2-F03"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Budgets UI-145 (≤ 1 s bei 5 Mio., Benchmark mit Ignore-Präfix Benchmark) und UI-082 (veraltete Teilschritte nach config.set). Segment-Kennzahlen kommen mit M2-K14."
+ },
+ {
+  "id": "M2-K04",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Sitzung, Ereignisse und Crawl-Steuerung in os-app (K-2, K-3 App-Teil, K-20): Coalescer ≤ 10 Ticks/s, ≤ 1 Hz unsichtbar, Änderungsfeed eigener und fremder Crawls, crawl.*/analysis.*, Fremdprozess nur lesend (F-14), Beenden-Pfad (F-11)",
+  "wave": 1,
+  "spec_ids": [
+   "ONPAGE-193",
+   "UI-143"
+  ],
+  "extra_spec_ids": [
+   "UI-018",
+   "UI-013",
+   "CRAWL-126",
+   "AGENT-020"
+  ],
+  "owns": [
+   "crates/os-app/src/session/**",
+   "crates/os-app/src/events/coalescer.rs",
+   "crates/os-app/src/quit.rs",
+   "crates/os-app/src/commands/{crawl,analysis}.rs",
+   "crates/os-app/tests/{session,coalescer,crawl_cmd,quit}_*.rs",
+   "tests/fixtures/ui/fx-ui-basic/**"
+  ],
+  "depends_on": [
+   "M2-F02",
+   "M2-F03"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Coalescer nach M2-ui-concept 2.5 mit ManualClock (Test: 60 s bei 200 URL/s ≤ 10 Ticks/s, unsichtbar ≤ 1 Hz, kein Tick ohne Änderung). Quelle change_seq/changed_since/reset_seq (M1, inkl. url_counters seit Welle 7). crawl.start/pause/resume/stop/clear/open/saveAs/recrawl/remove, analysis.start/status über M1-APIs; owner_kind = app; Speicherstufe (CRAWL-129) und Dateigröße im Tick, sobald M2-E02 sie liefert (bis dahin None). Fixture fx-ui-basic nach 05 anlegen (Besitz hier)."
+ },
+ {
+  "id": "M2-K06",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "App-Kommandos Basis über M1-Funktionen: catalog.*, view.* naiv (Offset auf views::query_view, Version = change_seq), view.copy mit Obergrenze, detail.urlDetails/headers, sidebar.overview/issues/issueExplain, export.*; DTO-Fixtures aus fx-ui-basic",
+  "wave": 1,
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-031",
+   "UI-032",
+   "UI-033",
+   "UI-042",
+   "UI-061",
+   "UI-062",
+   "UI-065",
+   "OUT-020",
+   "OUT-021"
+  ],
+  "owns": [
+   "crates/os-app/src/commands/{catalog,view,detail,sidebar,export}.rs",
+   "crates/os-app/src/clipboard.rs",
+   "crates/os-app/tests/cmd_{catalog,view,detail,sidebar,export,copy}_*.rs",
+   "apps/desktop/src/ipc/__fixtures__/**"
+  ],
+  "depends_on": [
+   "M2-F02",
+   "M2-F03"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Zweck: die Alpha-Oberfläche läuft mit echten Daten, bevor M2-K05 die View-Sitzungen anschließt (gleiche Command-API, M2-ui-concept 2.3 Regel 3). view.copy: TSV nach 3.3, Zeilenenden je Plattform, > 1 000 000 Zellen → Unsupported err-copy-too-large; export.view/detail/bulk/report/sitemap als Ops mit Abbruch; Fixture-JSONs unter apps/desktop/src/ipc/__fixtures__ aus fx-ui-basic neu erzeugen (UPDATE_FIXTURES=1). Leerzustände über EmptyState-Codes."
+ },
+ {
+  "id": "M2-K07",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Konfiguration und Profile in der App (K-7 Rest, K-20): config.get/validate/set mit F-13-Gruppen während „Läuft“, Engine-Kopie bis Pause, speed.threads live, config.schema/testRules, profile.*",
+  "wave": 1,
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "OUT-220",
+   "CRAWL-126",
+   "ONPAGE-002",
+   "CRAWL-132"
+  ],
+  "owns": [
+   "crates/os-app/src/commands/{config,profile}.rs",
+   "crates/os-app/tests/cmd_{config,profile}_*.rs",
+   "crates/os-store/src/profile.rs",
+   "crates/os-store/tests/profile_*.rs"
+  ],
+  "depends_on": [
+   "M2-F02",
+   "M2-F03"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). config.set liefert invalidatedSteps (ONPAGE-002, UI-082) und deferred; Schreiben über die WriteQueue aus M2-F03; während „Läuft“ andere Felder → CmdError CrawlRunning mit field."
+ },
+ {
+  "id": "M2-K16",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Graphdaten für Visualisierungen (K-16): Crawl-Baum (erster Entdeckungsweg), Verzeichnisbaum, Kanten mit Knotenbudget, Metrik je Knoten, Ankertext-Wortfrequenzen, Schnappschuss je Fenster; Commands viz.*",
+  "wave": 1,
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-091",
+   "UI-092",
+   "UI-093",
+   "UI-095",
+   "UI-096",
+   "UI-099"
+  ],
+  "owns": [
+   "crates/os-analyze/src/graph/**",
+   "crates/os-analyze/tests/graph_*.rs",
+   "crates/os-app/src/commands/viz.rs",
+   "crates/os-app/tests/cmd_viz_*.rs"
+  ],
+  "depends_on": [
+   "M2-F02",
+   "M2-F03"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Budgets UI-146 (Datenseite: 10 000 Knoten ≤ 500 ms Aufbereitung). viz.exportCsv als Op."
+ },
+ {
+  "id": "M2-K19",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Generator gen-ui-large (K-19): deterministische Crawl-Datei mit 5 Mio. Zeilen, ~65 Spalten, ~20 Links/Seite, Ausreißer (1 Mio. Inlinks, 15-MB-HTML) in ≤ 10 min",
+  "wave": 1,
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-148"
+  ],
+  "owns": [
+   "crates/os-loadtest/src/bin/gen_ui_large.rs",
+   "crates/os-loadtest/src/gen_ui/**",
+   "crates/os-loadtest/tests/gen_ui_large_*.rs"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "S",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schreibt direkt über os-store (Schema v3), Seed fest; Kleinvariante 100 000 im Test, Großvariante nur als Benchmark-Ignore."
+ },
+ {
+  "id": "M2-E01",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Engine: Crawl-Schalter, Limits und Respect-Optionen (01 E, F, H, K): Fragmente, Startordner, Seiten als HTML, Medien, Pagination/Hreflang/Refresh/iframes/Mobile-Alternate, nicht crawlbare Links, Seitendetails-Schalter, Speicherung HTML, Limits, noindex/canonical/Selbst-Refresh respektieren",
+  "wave": 1,
+  "spec_ids": [
+   "CRAWL-004",
+   "CRAWL-010",
+   "CRAWL-020",
+   "CRAWL-042",
+   "CRAWL-047",
+   "CRAWL-048",
+   "CRAWL-050",
+   "CRAWL-051",
+   "CRAWL-053",
+   "CRAWL-061",
+   "CRAWL-062",
+   "CRAWL-063",
+   "CRAWL-065",
+   "CRAWL-069",
+   "CRAWL-070",
+   "CRAWL-073",
+   "CRAWL-074",
+   "CRAWL-075",
+   "CRAWL-091",
+   "CRAWL-092",
+   "CRAWL-094",
+   "TECH-024",
+   "TECH-067"
+  ],
+  "owns": [
+   "crates/os-engine/src/{decide,worker,frontier,redirect,crawl,types}.rs",
+   "crates/os-engine/tests/{decide_*,core_*}.rs",
+   "tests/fixtures/crawl-m2-switches/**",
+   "tests/fixtures/crawl-m2-limits/**",
+   "tests/fixtures/crawl-m2-respect/**"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nur Dateien der Engine aus owns; Lebenszyklus/Sitemaps/robots gehören M2-E02 (gleiche Welle). Neue Fakten nur über WriteBatch/ext aus M2-F01/F02. Matrix-Tests in decide_crawl.rs erweitern. Zurückgestellte M1-Tests TECH-011/TECH-051 (Respect) und ONPAGE-143 (gespeichertes HTML) schaltet M2-N01 in Welle 2 scharf; hier eigene Tests in neuen Dateien."
+ },
+ {
+  "id": "M2-E02",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Engine: Lebenszyklus und Ressourcenschutz (CRAWL-129, K-3), Sitemap-Erkennung und -Crawl, Sitemap-Parser-Rest, Anzeige blockierter URLs, robots.txt je Subdomain mit Tester, URLs hinzufügen [P1], Hardware-Grenzen",
+  "wave": 1,
+  "spec_ids": [
+   "CRAWL-058",
+   "CRAWL-059",
+   "CRAWL-060",
+   "CRAWL-101",
+   "CRAWL-102",
+   "CRAWL-129",
+   "OUT-267"
+  ],
+  "extra_spec_ids": [
+   "CRAWL-131",
+   "CRAWL-128"
+  ],
+  "owns": [
+   "crates/os-engine/src/{lifecycle,progress,disk_guard,sitemaps,robots_glue,diag,resume,rescan,memory}.rs",
+   "crates/os-engine/tests/lifecycle_*.rs",
+   "crates/os-fetch/src/robots/**",
+   "crates/os-fetch/tests/robots_*.rs",
+   "crates/os-app/src/commands/crawl_add.rs",
+   "crates/os-app/tests/cmd_crawl_add_*.rs",
+   "tests/fixtures/crawl-m2-lifecycle/**",
+   "tests/fixtures/crawl-m2-sitemaps/**",
+   "tests/fixtures/crawl-m2-robots/**"
+  ],
+  "depends_on": [
+   "M2-F02",
+   "M2-F03"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Speicherstufe und Dateigröße in Progress (Feld aus M2-F01), CRAWL-131 [P1] add_urls in der Engine plus Command crawl.addUrls; CRAWL-060-Rest (Fehlervermerk, changefreq/priority/image/video/news, K-27). Nur Dateien aus owns; braucht die Umsetzung decide.rs/worker.rs, als Schnittstellenbedarf an M2-E01 melden (nicht selbst ändern)."
+ },
+ {
+  "id": "M2-E03",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "HTTP-Schicht (os-fetch): HSTS, TLS/Zertifikate, HTTP/1.1 und HTTP/2, Wiederholungen bei 5xx/Netzfehlern/429, eigene Header, Accept-Language, Digest, Proxy, Host-Auflösung-Rest, vertrauenswürdige Zertifikate",
+  "wave": 1,
+  "spec_ids": [
+   "CRAWL-018",
+   "CRAWL-023",
+   "CRAWL-024",
+   "CRAWL-096",
+   "CRAWL-097",
+   "CRAWL-115",
+   "CRAWL-116",
+   "CRAWL-118",
+   "CRAWL-122",
+   "CRAWL-123",
+   "OUT-269",
+   "OUT-270",
+   "INTEG-016"
+  ],
+  "owns": [
+   "crates/os-fetch/** (ohne src/robots/** und tests/robots_*.rs)",
+   "crates/os-testsite/src/{server,tls}.rs",
+   "crates/os-testsite/tests/{server,tls}_*.rs",
+   "tests/fixtures/crawl-m2-http/**",
+   "tests/fixtures/crawl-m2-proxy/**"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). HSTS: Speicher im Client, synthetische 307 mit Redirect Type HSTS Policy (ONPAGE-064 wertet M2-D12 aus). os-testsite lernt HTTP/2 (ALPN h2) für ONPAGE-010. Wiederholungen mit Clock (simulierte Zeit). Backlog M2-B01/Hinweis 4: Windows-localhost gegen IPv4-only-Server (Happy Eyeballs) prüfen; eigener Connector nur bei Messbeleg. Proxy/Zertifikate auch für API-Verbindungen (INTEG-016)."
+ },
+ {
+  "id": "M2-E04",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "URL-Umschreibung, CDN-Liste und URL-Filter: Parameter entfernen, Regex-Ersetzung, CDNs als intern, Filter Repetitive Path, Internal Search, Broken Bookmark, GA Tracking Parameters",
+  "wave": 1,
+  "spec_ids": [
+   "CRAWL-103",
+   "CRAWL-104",
+   "CRAWL-108",
+   "ONPAGE-075",
+   "ONPAGE-077",
+   "ONPAGE-079",
+   "ONPAGE-080"
+  ],
+  "owns": [
+   "crates/os-url/**",
+   "crates/os-analyze/src/tabs/url.rs",
+   "crates/os-analyze/tests/tab_url*.rs",
+   "core/issues/catalog.d/url.toml",
+   "core/issues/texts/{de,en}.d/url.toml",
+   "tests/fixtures/onpage-m2-url/**"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). RuleSet-Trace für config.testRules (CRAWL-107/111 nutzt die UI in M2-U13)."
+ },
+ {
+  "id": "M2-R01",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "os-render: Chromium über CDP (chromiumoxide), Seitenlauf mit AJAX-Timeout, Viewport/Geräte, Screenshots, blockierte Ressourcen, Konsolen-Log, Neustart nach N Seiten/Speichergrenze, Hänger-Timeout",
+  "wave": 1,
+  "spec_ids": [
+   "CRAWL-080",
+   "CRAWL-081",
+   "CRAWL-082",
+   "CRAWL-083",
+   "CRAWL-084",
+   "PERF-006"
+  ],
+  "extra_spec_ids": [
+   "CRAWL-078"
+  ],
+  "owns": [
+   "crates/os-render/** (ohne Cargo.toml; ohne src/axe/**, src/snippets/**, src/login.rs)",
+   "tests/fixtures/ui/fx-ui-js/**",
+   "tests/fixtures/render-*/**"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Chromium-Fundort: OPENSPIDER_CHROMIUM, sonst System-Chrome/Chromium; in der Cloud aus scripts/cloud/setup.sh (Klärung K2-10 zur Bündelung in M3). API laut M2.md 3.5 (Renderer::render(url, opts) → RenderedPage {dom, console, blocked, network, screenshot?}). Tests gegen os-testsite mit requires_chromium; ohne Chromium schlagen sie fehl (kein stilles Überspringen); die CI-Runner haben Chrome. Engine-Anbindung macht M2-E05."
+ },
+ {
+  "id": "M2-D01",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Page Titles, Meta Description, Meta Keywords, H1, H2 (P1-Filter) und SERP Snippet: Pixel-Filter, Same as H1, Outside <head>, Meta-Keywords-Tab, Alt Text in h1, Non-sequential, Geräteumschaltung und gespeicherte Bearbeitungen (K-8), Report SERP Summary",
+  "wave": 1,
+  "spec_ids": [
+   "ONPAGE-095",
+   "ONPAGE-096",
+   "ONPAGE-097",
+   "ONPAGE-099",
+   "ONPAGE-105",
+   "ONPAGE-106",
+   "ONPAGE-108",
+   "ONPAGE-110",
+   "ONPAGE-111",
+   "ONPAGE-112",
+   "ONPAGE-113",
+   "ONPAGE-125",
+   "ONPAGE-126",
+   "ONPAGE-135",
+   "ONPAGE-194",
+   "OUT-098"
+  ],
+  "owns": [
+   "crates/os-parse/src/elements.rs",
+   "crates/os-parse/src/pixel/**",
+   "crates/os-parse/tests/elements_*.rs",
+   "crates/os-parse/tests/pixel_*.rs",
+   "crates/os-analyze/src/tabs/page_titles.rs",
+   "crates/os-analyze/src/tabs/meta_description.rs",
+   "crates/os-analyze/src/tabs/meta_keywords.rs",
+   "crates/os-analyze/src/tabs/h1.rs",
+   "crates/os-analyze/src/tabs/h2.rs",
+   "crates/os-analyze/tests/tab_page_titles*.rs",
+   "crates/os-analyze/tests/tab_meta_description*.rs",
+   "crates/os-analyze/tests/tab_meta_keywords*.rs",
+   "crates/os-analyze/tests/tab_h1*.rs",
+   "crates/os-analyze/tests/tab_h2*.rs",
+   "crates/os-export/src/reports/serp_summary.rs",
+   "core/issues/catalog.d/page_titles.toml",
+   "core/issues/catalog.d/meta_description.toml",
+   "core/issues/catalog.d/meta_keywords.toml",
+   "core/issues/catalog.d/h1.toml",
+   "core/issues/catalog.d/h2.toml",
+   "core/issues/texts/{de,en}.d/page_titles.toml",
+   "core/issues/texts/{de,en}.d/meta_description.toml",
+   "core/issues/texts/{de,en}.d/meta_keywords.toml",
+   "core/issues/texts/{de,en}.d/h1.toml",
+   "core/issues/texts/{de,en}.d/h2.toml",
+   "tests/fixtures/onpage-m2-elements/**",
+   "tests/fixtures/ui/fx-ui-serp/**",
+   "crates/os-store/src/queries/serp.rs",
+   "crates/os-analyze/tests/tab_meta*.rs",
+   "crates/os-analyze/tests/serp_*.rs"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Outside <head> über dom::in_head (HTML5-Tree-Builder, TECH-003), nicht über die Validierungsanalyse. truncate_at in pixel (K-8), Geräteprofile ONPAGE-194, Tabelle serp_edits aus Schema v3. M1-Test ONPAGE-090 (Titel aus gerendertem DOM) bleibt bis M2-R02 zurückgestellt."
+ },
+ {
+  "id": "M2-D02",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Content und Internal (P1): Content-Analyse-Spalten, Internal-Filter Flash/Other (+Media/Fonts/XML), Near Duplicates per MinHash/LSH mit Duplicate Details, Soft 404, Lorem Ipsum, Lesbarkeit, PDF-Inhalte und PDF-Links, Content-Bulk-Exporte",
+  "wave": 1,
+  "spec_ids": [
+   "ONPAGE-019",
+   "ONPAGE-023",
+   "ONPAGE-144",
+   "ONPAGE-145",
+   "ONPAGE-147",
+   "ONPAGE-148",
+   "ONPAGE-149",
+   "ONPAGE-150",
+   "ONPAGE-151",
+   "ONPAGE-165",
+   "ONPAGE-166",
+   "CRAWL-057",
+   "OUT-052",
+   "PERF-007"
+  ],
+  "extra_spec_ids": [
+   "ONPAGE-142"
+  ],
+  "owns": [
+   "crates/os-parse/src/content.rs",
+   "crates/os-parse/src/pdf.rs",
+   "crates/os-parse/src/readability.rs",
+   "crates/os-parse/tests/content_*.rs",
+   "crates/os-parse/tests/pdf_*.rs",
+   "crates/os-parse/tests/readability_*.rs",
+   "crates/os-analyze/src/tabs/content.rs",
+   "crates/os-analyze/src/tabs/duplicates.rs",
+   "crates/os-analyze/src/tabs/internal.rs",
+   "crates/os-analyze/tests/tab_content*.rs",
+   "crates/os-analyze/tests/tab_duplicates*.rs",
+   "crates/os-analyze/tests/tab_internal*.rs",
+   "crates/os-analyze/src/analysis/steps/near_duplicates.rs",
+   "crates/os-export/src/catalog/bulk_content.rs",
+   "core/issues/catalog.d/content.toml",
+   "core/issues/catalog.d/internal.toml",
+   "core/issues/texts/{de,en}.d/content.toml",
+   "core/issues/texts/{de,en}.d/internal.toml",
+   "tests/fixtures/onpage-m2-content/**",
+   "tests/fixtures/ui/fx-ui-dup/**",
+   "crates/os-analyze/src/minhash/**",
+   "crates/os-analyze/tests/near_dup*.rs",
+   "crates/os-analyze/benches/near_dup*.rs"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). PERF-007 Near-Duplicate-Teil: 1 Mio. Seiten < 10 min, RSS < 2 GB, abbrechbar (Benchmark-Ignore, Messung M2-Q03); Link-Score-Teil liefert M2-D08. Rechtschreib-/Grammatik-Spalten kommen mit M2-D19 (Welle 2, übernimmt dann tabs/content.rs). M1-Test ONPAGE-142 (PDF-Lesbarkeit) hier scharf schalten."
+ },
+ {
+  "id": "M2-D03",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Images (P1): Image Details, Background Images, Missing Size Attributes, Incorrectly Sized Images, srcset-Extraktion, Image-Bulk-Exporte",
+  "wave": 1,
+  "spec_ids": [
+   "ONPAGE-172",
+   "ONPAGE-178",
+   "ONPAGE-179",
+   "ONPAGE-180",
+   "ONPAGE-181",
+   "CRAWL-055",
+   "OUT-053"
+  ],
+  "extra_spec_ids": [
+   "ONPAGE-170"
+  ],
+  "owns": [
+   "crates/os-parse/src/images.rs",
+   "crates/os-parse/tests/images_*.rs",
+   "crates/os-analyze/src/tabs/images.rs",
+   "crates/os-analyze/tests/tab_images*.rs",
+   "crates/os-export/src/catalog/bulk_images.rs",
+   "core/issues/catalog.d/images.toml",
+   "core/issues/texts/{de,en}.d/images.toml",
+   "tests/fixtures/onpage-m2-images/**"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Filter, die Rendering brauchen, liefern ohne Rendering den Zustand NeedsRendering (ONPAGE-007); die gerenderte Variante testet M2-R02. M1-Test ONPAGE-170 (srcset-Teil) hier scharf schalten, Rendering-Teil bleibt."
+ },
+ {
+  "id": "M2-D04",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Canonicals (P1): Canonical Is Relative, Unlinked, Invalid Attribute In Annotation, Contains Fragment URL, Outside <head>, Ketten und Reports (Canonical Chains, Non-Indexable Canonicals, Redirect & Canonical Chains), Exporte je Filter, Grundmenge mit PDF (M2-S05)",
+  "wave": 1,
+  "spec_ids": [
+   "TECH-019",
+   "TECH-020",
+   "TECH-021",
+   "TECH-022",
+   "TECH-023",
+   "TECH-025",
+   "TECH-026",
+   "OUT-054",
+   "OUT-083",
+   "OUT-086",
+   "OUT-087"
+  ],
+  "extra_spec_ids": [
+   "TECH-011"
+  ],
+  "owns": [
+   "crates/os-parse/src/canonical.rs",
+   "crates/os-parse/tests/canonical_*.rs",
+   "crates/os-analyze/src/tabs/canonicals.rs",
+   "crates/os-analyze/tests/tab_canonicals*.rs",
+   "crates/os-analyze/src/analysis/steps/canonicals.rs",
+   "crates/os-export/src/catalog/bulk_canonicals.rs",
+   "crates/os-export/src/reports/{canonical_chains,non_indexable_canonicals,redirect_canonical_chains}.rs",
+   "core/issues/catalog.d/canonicals.toml",
+   "core/issues/texts/{de,en}.d/canonicals.toml",
+   "tests/fixtures/tech-m2-canonicals/**"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). M2-S05 (DEV-035 streichen) erst nach Spec-Nachtrag TECH-011/015 (Klärung K2-04); bis dahin unverändert."
+ },
+ {
+  "id": "M2-D05",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Pagination-Tab: Population, Spalten und Filter (Contains Pagination … Sequence Error), Analyse-Schritt Pagination",
+  "wave": 1,
+  "spec_ids": [
+   "TECH-030",
+   "TECH-031",
+   "TECH-032",
+   "TECH-033",
+   "TECH-034",
+   "TECH-035",
+   "TECH-036",
+   "TECH-037",
+   "TECH-038",
+   "TECH-039",
+   "TECH-040",
+   "TECH-041"
+  ],
+  "owns": [
+   "crates/os-parse/src/pagination.rs",
+   "crates/os-parse/tests/pagination_*.rs",
+   "crates/os-analyze/src/tabs/pagination.rs",
+   "crates/os-analyze/tests/tab_pagination*.rs",
+   "crates/os-analyze/src/analysis/steps/pagination.rs",
+   "crates/os-export/src/catalog/bulk_pagination.rs",
+   "core/issues/catalog.d/pagination.toml",
+   "core/issues/texts/{de,en}.d/pagination.toml",
+   "tests/fixtures/tech-m2-pagination/**"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Pagination-Reports OUT-088/089 sind P2 (nicht M2)."
+ },
+ {
+  "id": "M2-D06",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Directives (P1): NoArchive, NoSnippet, Max-Snippet/-Image-Preview/-Video-Preview, NoImageIndex, NoTranslate, Unavailable_After, Outside <head>, Ignore-Non-Indexable-Rest, Selbst-Refresh-Rest, Exporte je Filter, Spalten Indexability (M2-S01)",
+  "wave": 1,
+  "spec_ids": [
+   "TECH-057",
+   "TECH-058",
+   "TECH-059",
+   "TECH-061",
+   "TECH-062",
+   "TECH-063",
+   "TECH-065",
+   "TECH-009",
+   "TECH-068",
+   "CRAWL-089",
+   "OUT-055"
+  ],
+  "extra_spec_ids": [
+   "TECH-051",
+   "TECH-066"
+  ],
+  "owns": [
+   "crates/os-parse/src/directives.rs",
+   "crates/os-parse/tests/directives_*.rs",
+   "crates/os-analyze/src/tabs/directives.rs",
+   "crates/os-analyze/tests/tab_directives*.rs",
+   "crates/os-export/src/catalog/bulk_directives.rs",
+   "core/issues/catalog.d/directives.toml",
+   "core/issues/texts/{de,en}.d/directives.toml",
+   "tests/fixtures/tech-m2-directives/**"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). M2-S01 (Spalten Indexability/Indexability Status in TECH-051) erst nach Spec-Nachtrag (Klärung K2-04), dann Mapping-Ausnahme in tests/parity/mappings/directives_all.toml über Schnittstellenbedarf an M2-P01. TECH-066 kleinster max-snippet-Wert (M1 7.3) hier."
+ },
+ {
+  "id": "M2-D07",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Hreflang (P1): Unlinked, Inconsistent Language & Region, Non-Canonical/Noindex Return Links, Multiple Entries, Missing Self Reference, Not Using Canonical, Missing X-Default, Outside <head>, Reports je Problemtyp, URL Details mit Bestätigung, Spalten Indexability (M2-S02)",
+  "wave": 1,
+  "spec_ids": [
+   "TECH-075",
+   "TECH-077",
+   "TECH-078",
+   "TECH-079",
+   "TECH-081",
+   "TECH-082",
+   "TECH-083",
+   "TECH-084",
+   "TECH-086",
+   "TECH-088",
+   "TECH-089",
+   "OUT-090",
+   "OUT-091",
+   "OUT-092",
+   "OUT-093",
+   "OUT-094",
+   "OUT-095",
+   "OUT-096"
+  ],
+  "extra_spec_ids": [
+   "TECH-071"
+  ],
+  "owns": [
+   "crates/os-parse/src/hreflang.rs",
+   "crates/os-parse/tests/hreflang_*.rs",
+   "crates/os-analyze/src/tabs/hreflang.rs",
+   "crates/os-analyze/tests/tab_hreflang*.rs",
+   "crates/os-analyze/src/analysis/steps/hreflang.rs",
+   "crates/os-export/src/reports/hreflang/**",
+   "core/issues/catalog.d/hreflang.toml",
+   "core/issues/texts/{de,en}.d/hreflang.toml",
+   "tests/fixtures/tech-m2-hreflang/**"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Hreflang-Crawl über externe Domains (TECH-087) macht M2-E06. M2-S02 nach Spec-Nachtrag (K2-04)."
+ },
+ {
+  "id": "M2-D08",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Links (P1) und Link Score: Non-Descriptive Anchor Text, High External/Internal Outlinks, Follow & Nofollow Inlinks, Nofollow Inlinks Only, Outlinks To Localhost, Non-Indexable Page Inlinks Only, Uncrawlable Outlinks, % of Total und Link Score, Anchors-Ansicht, Links-Bulk-Exporte, Spalte Inlinks (M2-S03)",
+  "wave": 1,
+  "spec_ids": [
+   "TECH-136",
+   "TECH-137",
+   "TECH-138",
+   "TECH-139",
+   "TECH-140",
+   "TECH-141",
+   "TECH-142",
+   "TECH-143",
+   "TECH-145",
+   "TECH-146",
+   "ONPAGE-017",
+   "UI-081",
+   "OUT-033",
+   "OUT-034",
+   "OUT-035",
+   "OUT-036",
+   "OUT-037",
+   "OUT-038",
+   "OUT-039",
+   "OUT-040",
+   "OUT-041",
+   "OUT-068"
+  ],
+  "extra_spec_ids": [
+   "PERF-007",
+   "TECH-130"
+  ],
+  "owns": [
+   "crates/os-analyze/src/tabs/links.rs",
+   "crates/os-analyze/tests/tab_links*.rs",
+   "crates/os-analyze/src/analysis/steps/link_score.rs",
+   "crates/os-export/src/catalog/bulk_links.rs",
+   "crates/os-export/src/links_export.rs",
+   "core/issues/catalog.d/links.toml",
+   "core/issues/texts/{de,en}.d/links.toml",
+   "tests/fixtures/tech-m2-links/**",
+   "crates/os-store/src/queries/anchors.rs",
+   "crates/os-analyze/tests/link_score*.rs",
+   "crates/os-analyze/benches/link_score*.rs"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Link Score iterativ auf der Crawl-Datei, Formel UI-081/ONPAGE-017; PERF-007 Link-Score-Teil (30 Mio. Kanten < 5 min) als Benchmark-Ignore. M2-S03 nach Spec-Nachtrag (K2-04)."
+ },
+ {
+  "id": "M2-D09",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Strukturierte Daten I: Extraktion JSON-LD, Microdata, RDFa, Tab Structured Data, Filter Contains/Missing, Formatfilter, Parse Errors, Structured Data Details, RDF-Export",
+  "wave": 1,
+  "spec_ids": [
+   "TECH-180",
+   "TECH-181",
+   "TECH-182",
+   "TECH-183",
+   "TECH-184",
+   "TECH-185",
+   "TECH-186",
+   "TECH-189",
+   "OUT-056"
+  ],
+  "owns": [
+   "crates/os-parse/src/sd/{mod,jsonld,microdata,rdfa,model}.rs",
+   "crates/os-parse/tests/sdmod,jsonld,microdata,rdfa,model_*.rs",
+   "crates/os-analyze/src/tabs/structured_data.rs",
+   "crates/os-analyze/tests/tab_structured_data*.rs",
+   "crates/os-export/src/catalog/bulk_sd.rs",
+   "core/issues/catalog.d/structured_data.toml",
+   "core/issues/texts/{de,en}.d/structured_data.toml",
+   "tests/fixtures/ui/fx-ui-sd/**",
+   "tests/fixtures/tech-m2-sd/**",
+   "crates/os-parse/tests/sd_*.rs",
+   "crates/os-store/src/queries/structured_data.rs"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Validierung (schema.org, Rich Results) folgt in M2-D19b (Welle 2) mit Besitz von tabs/structured_data.rs."
+ },
+ {
+  "id": "M2-D10",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Validation-Tab und HTML-Strukturanalyse auf Token-Ebene: Option Perform HTML Validation, Filter für <head>/<body>-Fehler, Dokument/Ressource über 2 MB",
+  "wave": 1,
+  "spec_ids": [
+   "TECH-008",
+   "CRAWL-138",
+   "TECH-280",
+   "TECH-281",
+   "TECH-282",
+   "TECH-283",
+   "TECH-284",
+   "TECH-285",
+   "TECH-286",
+   "TECH-287",
+   "TECH-288",
+   "TECH-289",
+   "TECH-290"
+  ],
+  "owns": [
+   "crates/os-parse/src/validation.rs",
+   "crates/os-parse/tests/validation_*.rs",
+   "crates/os-analyze/src/tabs/validation.rs",
+   "crates/os-analyze/tests/tab_validation*.rs",
+   "core/issues/catalog.d/validation.toml",
+   "core/issues/texts/{de,en}.d/validation.toml",
+   "tests/fixtures/tech-m2-validation/**"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). M1-Test TECH-008 in tab_directives.rs schaltet M2-N01 scharf."
+ },
+ {
+  "id": "M2-D11",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Security (P1): Spalten, Mixed Content, Formulare, Unsafe Cross-Origin Links, Protocol-Relative Links, fehlende Sicherheits-Header, Bad Content Type, Exporte je Filter, Report Insecure Content",
+  "wave": 1,
+  "spec_ids": [
+   "ONPAGE-030",
+   "ONPAGE-033",
+   "ONPAGE-034",
+   "ONPAGE-035",
+   "ONPAGE-036",
+   "ONPAGE-037",
+   "ONPAGE-038",
+   "ONPAGE-039",
+   "ONPAGE-040",
+   "ONPAGE-041",
+   "ONPAGE-042",
+   "ONPAGE-043",
+   "OUT-051",
+   "OUT-097"
+  ],
+  "owns": [
+   "crates/os-parse/src/security.rs",
+   "crates/os-parse/tests/security_*.rs",
+   "crates/os-analyze/src/tabs/security.rs",
+   "crates/os-analyze/tests/tab_security*.rs",
+   "crates/os-export/src/catalog/bulk_security.rs",
+   "crates/os-export/src/reports/insecure_content.rs",
+   "core/issues/catalog.d/security.toml",
+   "core/issues/texts/{de,en}.d/security.toml",
+   "tests/fixtures/onpage-m2-security/**"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). HTTPS-Fälle über die Test-CA von os-testsite (F-TLS). Header-Fakten aus den Antwort-Headern im Parse-Schritt (security.rs), nicht in der Engine."
+ },
+ {
+  "id": "M2-D12",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Response Codes und Weiterleitungen (P1): Redirection (HTTP Refresh), Redirect Chain/Loop-Rest, Redirect Type HSTS Policy, All Error Inlinks, Redirects to Errors, Ketten-Reports im Listenmodus",
+  "wave": 1,
+  "spec_ids": [
+   "ONPAGE-059",
+   "ONPAGE-060",
+   "ONPAGE-061",
+   "ONPAGE-064",
+   "ONPAGE-067",
+   "OUT-067",
+   "OUT-084",
+   "OUT-085"
+  ],
+  "extra_spec_ids": [
+   "CRAWL-018"
+  ],
+  "owns": [
+   "crates/os-analyze/src/tabs/response_codes.rs",
+   "crates/os-analyze/tests/tab_response_codes*.rs",
+   "crates/os-export/src/reports/redirects.rs",
+   "crates/os-export/src/catalog/bulk_response_codes.rs",
+   "core/issues/catalog.d/response_codes.toml",
+   "core/issues/texts/{de,en}.d/response_codes.toml",
+   "tests/fixtures/onpage-m2-rc/**",
+   "crates/os-export/tests/reports_redirects*.rs"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). HSTS-Fall testet gegen M2-E03 (gleiche Welle): Test mit #[ignore = \"wartet auf M2-E03\"] ist erlaubt (C9), M2-N01 schaltet ihn scharf. ONPAGE-054 Malformed: Ignore-Grund auf \"P2: CRAWL-054\" umstellen."
+ },
+ {
+  "id": "M2-D13",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Sitemaps (P1): URLs In Multiple Sitemaps, Sitemap über 50k URLs bzw. 50 MB, Sitemap-Inlinks und Exporte, Report Orphan Pages",
+  "wave": 1,
+  "spec_ids": [
+   "TECH-216",
+   "TECH-217",
+   "TECH-218",
+   "TECH-219",
+   "OUT-057",
+   "OUT-099"
+  ],
+  "owns": [
+   "crates/os-analyze/src/tabs/sitemaps.rs",
+   "crates/os-analyze/tests/tab_sitemaps*.rs",
+   "crates/os-analyze/src/analysis/steps/sitemaps.rs",
+   "crates/os-export/src/catalog/bulk_sitemaps.rs",
+   "crates/os-export/src/reports/orphan_pages.rs",
+   "core/issues/catalog.d/sitemaps.toml",
+   "core/issues/texts/{de,en}.d/sitemaps.toml",
+   "tests/fixtures/tech-m2-sitemaps/**"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Orphan Pages aus GA4/GSC ergänzt M2-I06 (Welle 3) über die Quellen-Schnittstelle aus M2-F02."
+ },
+ {
+  "id": "M2-D14",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Custom Search: Suchfilter, Bereiche HTML/Page Text/No Anchors/Head/Body/XPath/Content Area, Regex-Semantik, Groß-/Kleinschreibung, Tab und Spalten, Bulk Add, Inlinks-Export, Geltungsbereich, Exporte",
+  "wave": 1,
+  "spec_ids": [
+   "INTEG-020",
+   "INTEG-021",
+   "INTEG-022",
+   "INTEG-023",
+   "INTEG-024",
+   "INTEG-025",
+   "INTEG-026",
+   "INTEG-027",
+   "INTEG-028",
+   "INTEG-029",
+   "INTEG-031",
+   "INTEG-032",
+   "INTEG-034",
+   "INTEG-035",
+   "OUT-060"
+  ],
+  "owns": [
+   "crates/os-parse/src/custom_search.rs",
+   "crates/os-parse/tests/custom_search_*.rs",
+   "crates/os-analyze/src/tabs/custom_search.rs",
+   "crates/os-analyze/tests/tab_custom_search*.rs",
+   "crates/os-export/src/catalog/bulk_custom_search.rs",
+   "tests/fixtures/integ-custom-search/**"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Dynamische Spalten/Filter je Suchfilter über die Spaltenquelle aus M2-F02. Gerenderte Quelle (INTEG-030) schließt M2-E05 an."
+ },
+ {
+  "id": "M2-D15",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Custom Extraction: Extraktoren mit XPath 1.0 und 2.0–3.1, CSS-Selektor, Regex, Ausgabearten, Mehrfachtreffer, Union, Syntaxprüfung, Geltungsbereich, Tab und Exporte",
+  "wave": 1,
+  "spec_ids": [
+   "INTEG-040",
+   "INTEG-041",
+   "INTEG-042",
+   "INTEG-043",
+   "INTEG-044",
+   "INTEG-045",
+   "INTEG-046",
+   "INTEG-047",
+   "INTEG-048",
+   "INTEG-049",
+   "INTEG-050",
+   "INTEG-051",
+   "INTEG-052",
+   "INTEG-053",
+   "OUT-061"
+  ],
+  "extra_spec_ids": [
+   "AGENT-004"
+  ],
+  "owns": [
+   "crates/os-parse/src/custom_extract/**",
+   "crates/os-parse/tests/custom_extract_*.rs",
+   "crates/os-analyze/src/tabs/custom_extraction.rs",
+   "crates/os-analyze/tests/tab_custom_extraction*.rs",
+   "crates/os-export/src/catalog/bulk_custom_extraction.rs",
+   "tests/fixtures/integ-custom-extraction/**",
+   "crates/os-parse/tests/custom_extract_*.rs"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). XPath-2.0–3.1-Bibliothek nach Klärung K2-05 (Vorschlag xee-xpath, Lizenz prüfen); bis zur Entscheidung nur XPath 1.0 und die Tests für 2.0+ mit #[ignore = \"Klärung K2-05\"]. Syntaxprüfung als Funktion für config.validate."
+ },
+ {
+  "id": "M2-D16",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Benutzerdefinierte Linkpositionen: Klassifikation, Standardregeln, eigene Regeln mit Reihenfolge, Ausgabe in Inlinks/Outlinks",
+  "wave": 1,
+  "spec_ids": [
+   "INTEG-080",
+   "INTEG-081",
+   "INTEG-082",
+   "INTEG-084"
+  ],
+  "owns": [
+   "crates/os-parse/src/link_position.rs",
+   "crates/os-parse/tests/link_position_*.rs",
+   "tests/fixtures/integ-link-positions/**"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "S",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). links.rs ruft link_position::classify (Aufruf legt M2-F02 an); Standardregeln reproduzieren die M1-Positionen exakt (Regressionstest gegen out-links)."
+ },
+ {
+  "id": "M2-D17",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Reports und Ansichtsexporte: Crawl-Path-Report (K-11), Export der Seitenleisten-Panels, Queued URLs, Zeitreihen-Export mit Metrikkatalog und Spaltenstabilität",
+  "wave": 1,
+  "spec_ids": [
+   "OUT-023",
+   "OUT-025",
+   "OUT-030",
+   "OUT-210",
+   "OUT-211",
+   "OUT-212"
+  ],
+  "owns": [
+   "crates/os-store/src/queries/crawl_path.rs",
+   "crates/os-export/src/reports/{crawl_path,queued_urls,sidebar}.rs",
+   "crates/os-export/src/timeseries/**",
+   "crates/os-export/tests/{crawl_path,queued,sidebar,timeseries}_*.rs",
+   "tests/fixtures/out-m2-reports/**"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). crawl.path-Command liefert M2-K09 auf Basis von queries::crawl_path."
+ },
+ {
+  "id": "M2-X01",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Export-Engine P1: Konsolidierung in einer Arbeitsmappe, Spaltenauswahl/-reihenfolge, Fortschritt und Abbruch, leere Exporte überspringen, Listenmodus-Reihenfolge, Mehrfachauswahl-Export, generische Tab-Bulk-Exporte, Multi-Export-Vorlagen, große Exporte",
+  "wave": 1,
+  "spec_ids": [
+   "OUT-007",
+   "OUT-009",
+   "OUT-010",
+   "OUT-012",
+   "OUT-015",
+   "OUT-022",
+   "OUT-066",
+   "OUT-075",
+   "PERF-008"
+  ],
+  "extra_spec_ids": [
+   "OUT-196"
+  ],
+  "owns": [
+   "crates/os-export/src/{pipeline,tab_export,detail,types,csv,xlsx,output}.rs",
+   "crates/os-export/src/catalog/bulk_generic.rs",
+   "crates/os-export/tests/{pipeline,export,xlsx,csv,detail}_*.rs",
+   "tests/fixtures/out-m2-export/**"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Segment-Einschränkung (OUT-011) bereitet die Pipeline über den Trait SegmentScope vor; Umsetzung M2-K14. PERF-008: CSV 1 Mio. < 60 s konstanter Speicher (Benchmark-Ignore), XLSX-Aufteilung."
+ },
+ {
+  "id": "M2-X02",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Sitemap-Generator P1: Einschlussoptionen, Ausschluss einzelner URLs, lastmod, priority, changefreq, Bilder, Bild-Sitemap, hreflang",
+  "wave": 1,
+  "spec_ids": [
+   "OUT-121",
+   "OUT-122",
+   "OUT-123",
+   "OUT-124",
+   "OUT-125",
+   "OUT-126",
+   "OUT-127",
+   "OUT-128"
+  ],
+  "owns": [
+   "crates/os-export/src/sitemap_gen/**",
+   "crates/os-export/tests/sitemap_gen_*.rs",
+   "tests/fixtures/out-m2-sitemap-gen/**",
+   "tests/golden/out-m2-sitemap-gen/**"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Optionen in der Konfiguration v2 (M2-F01). Paritätsvergleich der erzeugten XML gegen die SF-Referenz in M2-Q02."
+ },
+ {
+  "id": "M2-I01",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "API-Rahmen (04 A): Zugangsdaten im Schlüsselbund, Google-OAuth mit PKCE und Loopback, Token-Lebenszyklus, Ratenbegrenzung/Wiederholung, Kontingente, Warteschlange und Fortschritt, nachträglicher Abruf, Einzel-URL, Invalidierung, URL-Abgleich, Datenschutz, Mock-Server; Commands api.*",
+  "wave": 1,
+  "spec_ids": [
+   "INTEG-001",
+   "INTEG-002",
+   "INTEG-003",
+   "INTEG-004",
+   "INTEG-005",
+   "INTEG-006",
+   "INTEG-007",
+   "INTEG-008",
+   "INTEG-009",
+   "INTEG-010",
+   "INTEG-014",
+   "INTEG-018",
+   "INTEG-019"
+  ],
+  "extra_spec_ids": [
+   "UI-070"
+  ],
+  "owns": [
+   "crates/os-integrations/** (ohne Cargo.toml; ohne src/{ga4,gsc,psi,linkmetrics,drive,crawl_glue}/**)",
+   "crates/os-testsite/src/mocks/{mod,oauth,common}.rs",
+   "crates/os-store/src/queries/api.rs",
+   "crates/os-app/src/commands/api.rs",
+   "crates/os-app/tests/cmd_api_*.rs"
+  ],
+  "depends_on": [
+   "M2-F02",
+   "M2-F03"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Keine echten API-Aufrufe in Tests, nur Mock-Server (INTEG-019) mit überschreibbaren Basis-URLs. OAuth-Client-Registrierung: Klärung K2-06 (bis dahin Platzhalter-Client-ID aus Konfiguration). Quellen-Trait für M2-I02 … I05 (Welle 2) und K-13 (API-Status für UI-070)."
+ },
+ {
+  "id": "M2-O01",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Betrieb: Logdateien, Log-Level, Rotation, Diagnosepaket mit Redaktion, Authentifizierungsprofile (verschlüsselt)",
+  "wave": 1,
+  "spec_ids": [
+   "OUT-240",
+   "OUT-241",
+   "OUT-242",
+   "OUT-244",
+   "OUT-223",
+   "CRAWL-121"
+  ],
+  "extra_spec_ids": [
+   "OUT-243",
+   "OUT-227"
+  ],
+  "owns": [
+   "crates/os-app/src/{logging,diag}.rs",
+   "crates/os-app/src/commands/diag.rs",
+   "crates/os-app/tests/{logging,diag}_*.rs",
+   "crates/os-store/src/auth_profiles.rs",
+   "crates/os-store/tests/auth_profiles_*.rs",
+   "crates/os-cli/src/{logging,main}.rs"
+  ],
+  "depends_on": [
+   "M2-F02",
+   "M2-F03"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Redaktion nach OUT-243 (M1-Funktion). Diagnosepaket als Op. --auth-config (OUT-187) verdrahtet M2-L01."
+ },
+ {
+  "id": "M2-O02",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Crawl-Verwaltung im Kern (K-12): Metadaten-Index mit Invalidierung über (mtime, Größe), Projekte, Sperren, Duplizieren, Import/Export, Aufbewahrung, Kontextmenü-Wirkung auf den Crawl-Zustand; Commands crawls.*/projects.*",
+  "wave": 1,
+  "spec_ids": [
+   "OUT-228",
+   "OUT-229",
+   "CRAWL-128",
+   "CRAWL-143"
+  ],
+  "extra_spec_ids": [
+   "UI-124",
+   "UI-147",
+   "CRAWL-127"
+  ],
+  "owns": [
+   "crates/os-store/src/{registry,files}.rs",
+   "crates/os-store/src/registry/**",
+   "crates/os-store/tests/registry_*.rs",
+   "crates/os-app/src/commands/{crawls,projects}.rs",
+   "crates/os-app/tests/cmd_crawls_*.rs"
+  ],
+  "depends_on": [
+   "M2-F02",
+   "M2-F03"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). API registry::list_crawls bleibt (M1); 1 000 Crawls < 500 ms. Import 1 Mio. URLs ≤ 60 s mit Fortschritt (UI-147, Benchmark-Ignore)."
+ },
+ {
+  "id": "M2-M01",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "MCP-Server M2: Streamable HTTP mit Token und Origin-Prüfung, Werkzeugklasse crawl (start/status/stop/resume, Zielschutz), read-only SQL (os-store readonly_sql), Exporte und Reports, MCP-Prompts, --crawl-dir (M2-T01)",
+  "wave": 1,
+  "spec_ids": [
+   "AGENT-002",
+   "AGENT-014",
+   "AGENT-020",
+   "AGENT-021",
+   "AGENT-040",
+   "OUT-285"
+  ],
+  "extra_spec_ids": [
+   "AGENT-003",
+   "AGENT-001"
+  ],
+  "owns": [
+   "crates/os-mcp/** (ohne Cargo.toml)",
+   "crates/os-store/src/readonly_sql.rs",
+   "crates/os-store/tests/readonly_sql_*.rs",
+   "tests/fixtures/agent-m2-*/**"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Zielschutz auch nach DNS-Auflösung (M1 7.3, K-38). Backlog M2-T01: Hilfetext und Ordner mit *.ospider ohne Registry. In-App-Betrieb und compare_crawls folgen in M2-K17 (Welle 3)."
+ },
+ {
+  "id": "M2-Q01",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Spec-Abdeckung M2: os-parity coverage für M2-packages.json, TypeScript-Tags (vitest/Playwright-JUnit), Ignore-Gründe M3:/M4:/M5:/P2:/Klärung, M2-status.json; CI-Job spec-coverage-m2",
+  "wave": 1,
+  "spec_ids": [],
+  "owns": [
+   "crates/os-parity/src/coverage/**",
+   "crates/os-parity/tests/coverage_*.rs",
+   "crates/os-parity/tests/data/coverage_m2/**",
+   "docs/plan/M2-status.json",
+   ".github/workflows/spec-coverage-m2.yml"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Erweiterung M1 5.4: --milestone M2 wertet nur IDs aus M2-packages.json (spec_ids); TS-Tag-Form `// spec: UI-001` direkt über test()/it(); Testergebnisse aus vitest --reporter=junit und Playwright junit; gültige Ignore-Gründe in M2: `M3:`, `M4:`, `M5:`, `P2:`, `Klärung K2-xx`, `Benchmark`, Platzhalter `wartet auf M2-xx` nur laut Plan (C9). M1-IDs bleiben über --milestone M1 prüfbar (Regression)."
+ },
+ {
+  "id": "M2-P01",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Paritäts-Sites M2 und Golden-Rahmen: neue Sites parity-m2-onpage, parity-m2-technical, parity-m2-links, parity-m2-security, Listen-Eingaben, Manifeste (pending), Mappings, Schwellen, Anleitung für den SF-Export",
+  "wave": 1,
+  "spec_ids": [],
+  "owns": [
+   "tests/fixtures/parity-m2-*/**",
+   "tests/golden/parity/parity-m2-*/** (ohne */sf/*)",
+   "tests/golden/parity/README.md",
+   "tests/parity/mappings/*.toml (nur neue Dateien und crawl_overview.toml)",
+   "tests/parity/thresholds.toml",
+   "tests/parity/fixtures_check.rs",
+   "tests/parity/gen/**"
+  ],
+  "depends_on": [
+   "M2-F02"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Inhalt und Exportliste exakt nach M2.md Abschnitt 6. Bestehende Sites (out-basic-site, parity-*) NICHT ändern (Referenz exportiert). Jede Site ≤ 500 URLs, 127.0.0.1 + localhost, feste Ports 8906–8910, kein JavaScript, TLS nur in parity-m2-security (eigener Port, Hinweis K2-11). Nach dem Merge exportiert der Orchestrator per Bildschirmsteuerung (M2.md 6.3)."
+ },
+ {
+  "id": "M2-U01",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Shell und Layout: Hauptfenster mit drei Bereichen, Trenner, Einklappen, Mindestmaße, Persistenz des UI-Zustands, Spaltenlayout-Zurücksetzen (Zustandsteil)",
+  "wave": 1,
+  "spec_ids": [
+   "UI-001",
+   "UI-125",
+   "UI-021"
+  ],
+  "owns": [
+   "apps/desktop/src/features/shell/**",
+   "apps/desktop/src/state/layout.ts",
+   "apps/desktop/e2e/shell/**"
+  ],
+  "depends_on": [
+   "M2-F04",
+   "M2-S01",
+   "M2-G0"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Layout-Mathematik als reine Funktion mit vitest (Prüfwerte 1 440 × 900), Layout-Kollisionstest 1 024 × 640 in E2E-A; Neustart-Persistenz über uistate.*. Landmarks nach M2-ui-concept 1.2."
+ },
+ {
+  "id": "M2-U03",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Kopf- und Statusleiste, Benachrichtigungen und Fehlerdialoge: URL-Feld mit Validierung/Vorschlägen, Modus/Bereich, Start/Pause/Fortsetzen/Leeren, Fortschritt, Statusfelder, Startfehler",
+  "wave": 1,
+  "spec_ids": [
+   "UI-003",
+   "UI-013",
+   "UI-019"
+  ],
+  "extra_spec_ids": [
+   "CRAWL-001",
+   "CRAWL-009",
+   "CRAWL-026",
+   "CRAWL-112",
+   "CRAWL-117",
+   "CRAWL-130"
+  ],
+  "owns": [
+   "apps/desktop/src/features/{header,statusbar,notifications}/**",
+   "apps/desktop/src/state/session.ts",
+   "apps/desktop/e2e/{header,statusbar}/**"
+  ],
+  "depends_on": [
+   "M2-F04",
+   "M2-S01",
+   "M2-G0"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Zurückgestellte M1-UI-Kriterien aus M1.md 7.3 hier: CRAWL-001 Autovervollständigung und Pause-vor-Neustart, CRAWL-009 Hinweis Schrägstrich, CRAWL-026 Rückfrage Moduswechsel, CRAWL-112 Hinweis ab 20 Threads, CRAWL-117 Dialog, CRAWL-130 UI-Aktualisierungsrate (Tests mit Spec-Tag über extra_spec_ids)."
+ },
+ {
+  "id": "M2-U04",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Menüs und Tastaturkürzel: alle Menüs aus UI-002 mit Aktivierungslogik, Hilfe → Tastaturkürzel, Über, Zuletzt geöffnet; Register ↔ Hilfe ↔ Menü aus einer Quelle",
+  "wave": 1,
+  "spec_ids": [
+   "UI-002",
+   "UI-113"
+  ],
+  "extra_spec_ids": [
+   "CRAWL-127",
+   "OUT-227"
+  ],
+  "owns": [
+   "apps/desktop/src/features/help/**",
+   "apps/desktop/src/ui/menu/contributions/**",
+   "apps/desktop/e2e/{menu,keyboard}/**"
+  ],
+  "depends_on": [
+   "M2-F04",
+   "M2-S01",
+   "M2-G0"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). CI-Test UI-113 (Register, Hilfe-Dialog, Menü, Kollision mit Systemkürzeln). Bulk-Export-/Berichte-/Sitemaps-Untermenüs aus export.catalog."
+ },
+ {
+  "id": "M2-U10",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Top-Tabs und obere Tabelle: Tab-Leiste mit Überlauf, Filter-Dropdown mit Zählern, einfache Suche, Sortierung, „+“-Spaltenmenü, Zähler, Live-Aktualisierung (Anker, Tail), Kontextmenü (P0), Erneut crawlen/Entfernen",
+  "wave": 1,
+  "spec_ids": [
+   "UI-004",
+   "UI-006",
+   "UI-008",
+   "UI-010",
+   "UI-014",
+   "UI-018",
+   "UI-110",
+   "UI-114"
+  ],
+  "owns": [
+   "apps/desktop/src/features/{toptabs,table}/**",
+   "apps/desktop/src/state/{tabs,columns}.ts",
+   "apps/desktop/e2e/table/**"
+  ],
+  "depends_on": [
+   "M2-F04",
+   "M2-S01",
+   "M2-G0"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nur über DataGridProps und ViewDataSource (M2-S01). Tabs/Filter ausschließlich aus catalog.tabs (keine Tab-Liste im Code)."
+ },
+ {
+  "id": "M2-U11",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Detailfenster Basis: Rahmen, Lazy Loading, Entprellung, URL Details, Inlinks/Outlinks (inkl. Link Crawlability), Anchors-Ansicht, Image Details, Resources, HTTP Headers, Cookies, Crawl-Pfad, Detail-Kontextmenü",
+  "wave": 1,
+  "spec_ids": [
+   "UI-030",
+   "UI-031",
+   "UI-032",
+   "UI-033",
+   "UI-034",
+   "UI-035",
+   "UI-036",
+   "UI-042",
+   "UI-043",
+   "UI-050",
+   "UI-111",
+   "UI-145"
+  ],
+  "owns": [
+   "apps/desktop/src/features/detail/{frame,url-details,inlinks,outlinks,anchors,images,resources,headers,cookies,crawl-path}/**",
+   "apps/desktop/e2e/detail/**"
+  ],
+  "depends_on": [
+   "M2-F04",
+   "M2-S01",
+   "M2-G0"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Tabellarische Detail-Tabs über dieselbe Grid-Komponente und view.* mit ViewSpec::Inlinks/Outlinks/Resources/Images/Detail."
+ },
+ {
+  "id": "M2-U12",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Seitenleiste Basis: Rahmen, Overview-Baum, Issues mit Typ/Priorität/Suche, Erklärungen aus dem Kern, Navigation in die Tabelle, Crawl-Analyse-Hinweise und -Status",
+  "wave": 1,
+  "spec_ids": [
+   "UI-060",
+   "UI-061",
+   "UI-062",
+   "UI-065",
+   "UI-080",
+   "UI-082"
+  ],
+  "owns": [
+   "apps/desktop/src/features/sidebar/{frame,overview,issues,analysis}/**",
+   "apps/desktop/e2e/sidebar/**"
+  ],
+  "depends_on": [
+   "M2-F04",
+   "M2-S01",
+   "M2-G0"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Issue-Texte nur aus sidebar.issueExplain (F-4), nie in Fluent-Dateien."
+ },
+ {
+  "id": "M2-U16",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Export-Dialoge: Optionsdialog, nativer Speichern-Dialog, Export der Ansicht/Details/Seitenleiste, Bulk-/Berichte-/Sitemap-Aufrufe, Fortschritt mit Abbruch, „Ordner öffnen“",
+  "wave": 1,
+  "spec_ids": [
+   "OUT-006",
+   "UI-015"
+  ],
+  "extra_spec_ids": [
+   "OUT-020",
+   "OUT-021",
+   "OUT-007"
+  ],
+  "owns": [
+   "apps/desktop/src/features/export/**",
+   "apps/desktop/e2e/export/**"
+  ],
+  "depends_on": [
+   "M2-F04",
+   "M2-S01",
+   "M2-G0"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Datei-Dialog im Testmodus mit vorgegebenem Pfad (E2E-B). Sitemap-Optionen-Dialog für M2-X02."
+ },
+ {
+  "id": "M2-N01",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Nacharbeit Welle 1 (E8): Platzhalter-Ignores scharf schalten (wartet auf M2-xx) und zurückgestellte M1-Tests, deren Voraussetzung jetzt gemergt ist; Schnittstellenbedarf und Manifeste der Runde bündeln",
+  "wave": 2,
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "ONPAGE-010",
+   "ONPAGE-063",
+   "ONPAGE-143"
+  ],
+  "owns": [
+   "Cargo.toml, Cargo.lock, crates/*/Cargo.toml (nur gebündelter Schnittstellenbedarf)",
+   "crates/os-analyze/tests/tab_{response_codes,internal,directives,canonicals}.rs",
+   "crates/os-export/tests/reports_redirects.rs",
+   "crates/os-model/** (nur gebündelte additive Nachträge)",
+   ".github/workflows/ci.yml (nur gebündelter Bedarf)",
+   "apps/desktop/src-tauri/src/** und apps/desktop/src/ipc/{commands.json,gen/**,<domäne>.ts} (nur Neuerzeugung bei neuen Commands)"
+  ],
+  "depends_on": [
+   "M2-K01",
+   "M2-E01",
+   "M2-E03",
+   "M2-D02",
+   "M2-D04",
+   "M2-D06",
+   "M2-D10",
+   "M2-D12"
+  ],
+  "size": "S",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Tabelle M2.md 5.1 Zeilen „N01“: ONPAGE-063 (Retry), ONPAGE-010 (HTTP/2), TECH-011/TECH-051 (Respect), TECH-008 (Outside <head>), ONPAGE-143 (gespeichertes HTML), CRAWL-018 HSTS und der D12-Platzhalter. Rote Tests → Befund an den Planer, kein Fachfix außerhalb dieser Dateien. Merge vor den übrigen Welle-2-Paketen."
+ },
+ {
+  "id": "M2-K05",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "View-Sitzungen in der App: view.* auf K-1 umstellen (gleiche API), Pflege über changed_since (K-1c), Doppelpuffer, Abbruch ≤ 100 ms, Freigabe nach 60 s, Detail-Views mit 1 Mio. Inlinks, Suche/Segment-Schnittstelle",
+  "wave": 2,
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-140",
+   "UI-141",
+   "UI-142",
+   "UI-018"
+  ],
+  "owns": [
+   "crates/os-app/src/commands/view.rs",
+   "crates/os-app/src/views/**",
+   "crates/os-app/tests/cmd_view_*.rs",
+   "crates/os-app/benches/**"
+  ],
+  "depends_on": [
+   "M2-K01",
+   "M2-K02",
+   "M2-K04",
+   "M2-K06"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Budgets UI-141/142 über os-app gemessen (IPC-Anteil in M2-U31). Nach dem Merge laufen alle UI-Tabellen auf den echten Sitzungen; Alpha-Suite M2-A01 muss grün bleiben."
+ },
+ {
+  "id": "M2-A01",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Alpha-Integration (M2-α): E2E-A-Alpha-Suite über die Bridge – Crawl starten (fx-ui-basic), Haupttabelle, Tabs/Filter, Detailbereich, Live-Fortschritt, Export; Smoke der echten App auf macOS und Windows; Befundliste",
+  "wave": 2,
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-001",
+   "UI-003",
+   "UI-004",
+   "UI-007",
+   "UI-013",
+   "UI-018",
+   "UI-030",
+   "OUT-006"
+  ],
+  "owns": [
+   "apps/desktop/e2e/alpha/**",
+   "docs/plan/M2-acceptance/alpha/**"
+  ],
+  "depends_on": [
+   "M2-K04",
+   "M2-K06",
+   "M2-U01",
+   "M2-U03",
+   "M2-U04",
+   "M2-U10",
+   "M2-U11",
+   "M2-U12",
+   "M2-U16",
+   "M2-X01"
+  ],
+  "size": "M",
+  "runner": "cloud+ci+local-mac",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Kriterien M2.md 4.3 „Alpha-Gate“. Befunde nur melden (Datei, Repro, Spec-ID), keine Fixes außerhalb owns; daraus plant der Planer N-Pakete der Welle 3. Läuft in der Cloud (Linux, WebKit+Chromium) und per ui-e2e.yml auf macOS/Windows; Smoke der echten App lokal durch den Orchestrator."
+ },
+ {
+  "id": "M2-E05",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Rendering in der Engine: Rendering-Modus JavaScript, Link-Herkunft roh/gerendert, JS-Weiterleitungen, rohes vs. gerendertes HTML als Datenquelle, Original-vs.-gerendert-Vergleich, JS-Link-Spalten, gerenderte Quelle für Custom Search",
+  "wave": 2,
+  "spec_ids": [
+   "CRAWL-016",
+   "CRAWL-078",
+   "CRAWL-079",
+   "TECH-006",
+   "TECH-100",
+   "ONPAGE-016",
+   "INTEG-030"
+  ],
+  "extra_spec_ids": [
+   "CRAWL-022",
+   "ONPAGE-012"
+  ],
+  "owns": [
+   "crates/os-engine/src/{decide,worker,frontier,redirect,crawl,types,render_glue}.rs",
+   "crates/os-engine/tests/render_*.rs",
+   "crates/os-render/src/{lib,api}.rs",
+   "tests/fixtures/crawl-m2-render/**"
+  ],
+  "depends_on": [
+   "M2-E01",
+   "M2-E02",
+   "M2-R01",
+   "M2-D14"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). PERF-006 bleibt bei M2-R01 belegt; hier Engine-Last mit Rendering (Tabs = Threads, gedeckelt). Zurückgestellte M1-Tests CRAWL-022/ONPAGE-012 (Total Transferred mit Ressourcen) in eigenen neuen Tests belegen."
+ },
+ {
+  "id": "M2-D18",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Web-Daten-Exporte: All Page Source, All Page Text, HTTP Request/Response Headers, Cookies, Reports HTTP Header Summary und Cookie Summary",
+  "wave": 2,
+  "spec_ids": [
+   "OUT-045",
+   "OUT-046",
+   "OUT-048",
+   "OUT-049",
+   "OUT-110",
+   "OUT-111"
+  ],
+  "extra_spec_ids": [
+   "CRAWL-062",
+   "CRAWL-063",
+   "OUT-112"
+  ],
+  "owns": [
+   "crates/os-export/src/catalog/bulk_web.rs",
+   "crates/os-export/src/reports/{http_headers,cookies}.rs",
+   "crates/os-export/tests/{bulk_web,report_headers,report_cookies}_*.rs",
+   "tests/fixtures/ui/fx-ui-headers/**"
+  ],
+  "depends_on": [
+   "M2-E01",
+   "M2-X01"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Datenbasis aus CRAWL-062/063 (M2-E01). OUT-112 Cookie-Rest aus M1 7.3 hier."
+ },
+ {
+  "id": "M2-D19",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Rechtschreibung und Grammatik: Engine und Sprachwahl, Grammatikregeln, Filter Spelling/Grammar Errors, Detaildaten mit Ignorieren und Wörterbuch",
+  "wave": 2,
+  "spec_ids": [
+   "ONPAGE-153",
+   "ONPAGE-154",
+   "ONPAGE-155",
+   "ONPAGE-156",
+   "ONPAGE-157"
+  ],
+  "owns": [
+   "crates/os-parse/src/spelling/**",
+   "crates/os-parse/resources/dictionaries/**",
+   "crates/os-analyze/src/tabs/content.rs",
+   "crates/os-analyze/tests/tab_content_spelling*.rs",
+   "crates/os-app/src/commands/detail_spelling.rs",
+   "tests/fixtures/ui/fx-ui-spell/**"
+  ],
+  "depends_on": [
+   "M2-D02",
+   "M2-F03"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Start erst nach Entscheidung Klärung K2-03 (Engine/Wörterbuch-Lizenzen; kein GPL/LGPL im Bundle). Grammatik-Option b (externer Server) nur als Konfigurationspunkt mit Mock."
+ },
+ {
+  "id": "M2-D20",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Strukturierte Daten II: schema.org-Validierung (versionierte Vokabulardatei), Google-Rich-Result-Validierung (eigene Regeldatei), Filter Validation/Rich Result Errors/Warnings, Reports und Summaries",
+  "wave": 2,
+  "spec_ids": [
+   "TECH-187",
+   "TECH-188",
+   "TECH-190",
+   "OUT-100",
+   "OUT-101",
+   "OUT-102",
+   "OUT-103"
+  ],
+  "owns": [
+   "crates/os-parse/src/sd/validate/**",
+   "crates/os-parse/resources/{schemaorg,rich-results}/**",
+   "crates/os-analyze/src/tabs/structured_data.rs",
+   "crates/os-analyze/tests/tab_structured_data_validation*.rs",
+   "crates/os-export/src/reports/structured_data*.rs",
+   "core/issues/catalog.d/structured_data.toml",
+   "core/issues/texts/{de,en}.d/structured_data.toml"
+  ],
+  "depends_on": [
+   "M2-D09"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Regeldateien in eigenen Worten aus öffentlicher Dokumentation (Clean-Room); Lizenz der schema.org-Vokabulardatei (CC BY-SA) in NOTICE über Schnittstellenbedarf."
+ },
+ {
+  "id": "M2-K14",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Segmente (K-14): Regeln, Validierung, Neuzuordnung ohne Neu-Crawl, Vorschauzähler, Segmentfilter in Views, Segment-Einschränkung von Exporten; Commands segment.*",
+  "wave": 2,
+  "spec_ids": [
+   "CRAWL-134",
+   "OUT-011"
+  ],
+  "extra_spec_ids": [
+   "UI-020",
+   "UI-067",
+   "UI-068"
+  ],
+  "owns": [
+   "crates/os-analyze/src/segments/**",
+   "crates/os-analyze/tests/segments_*.rs",
+   "crates/os-export/src/segment.rs",
+   "crates/os-export/tests/segment_*.rs",
+   "crates/os-app/src/commands/segment.rs",
+   "crates/os-app/tests/cmd_segment_*.rs"
+  ],
+  "depends_on": [
+   "M2-K01",
+   "M2-X01",
+   "M2-F03"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Segment-Bitmaps als Filterquelle für K-1 über den Trait aus M2-F02; Segment-Kennzahlen für die Seitenleiste (UI-067)."
+ },
+ {
+  "id": "M2-C01",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Vergleichsmodus im Kern (K-15): Crawls wählen, tauschen, URL-Mapping mit Test, Klassifikation Added/New/Removed/Missing je Filter, Vergleich in Issues, Crawl-Overview- und Tab-Exporte im Vergleich, Inlinks/Outlinks-Vergleich, Reports im Vergleichskontext; Commands compare.*",
+  "wave": 2,
+  "spec_ids": [
+   "OUT-140",
+   "OUT-141",
+   "OUT-142",
+   "OUT-143",
+   "OUT-146",
+   "OUT-147",
+   "OUT-149",
+   "OUT-151",
+   "OUT-113",
+   "CRAWL-032",
+   "CRAWL-033",
+   "CRAWL-034",
+   "TECH-306"
+  ],
+  "owns": [
+   "crates/os-analyze/src/compare/** (ohne compare/change/**)",
+   "crates/os-analyze/tests/compare_*.rs",
+   "crates/os-export/src/compare.rs",
+   "crates/os-export/tests/compare_*.rs",
+   "crates/os-app/src/commands/compare.rs",
+   "crates/os-app/tests/cmd_compare_*.rs",
+   "tests/fixtures/out-m2-compare/**"
+  ],
+  "depends_on": [
+   "M2-K01",
+   "M2-X01",
+   "M2-F03"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Klassifikation über Bitmaps je Crawl (K-1). Change Detection folgt in M2-C02."
+ },
+ {
+  "id": "M2-I02",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Google Analytics 4: Verbindung, Zeitraum, Metriken, Seitendimension, Filter, Abgleich, Paginierung, Analytics-Tab und -Filter, Kontingente, Segmente/Reports, Kompatibilitätsprüfung",
+  "wave": 2,
+  "spec_ids": [
+   "INTEG-090",
+   "INTEG-091",
+   "INTEG-092",
+   "INTEG-093",
+   "INTEG-094",
+   "INTEG-095",
+   "INTEG-096",
+   "INTEG-097",
+   "INTEG-098",
+   "INTEG-099",
+   "INTEG-100",
+   "INTEG-101"
+  ],
+  "owns": [
+   "crates/os-integrations/src/ga4/**",
+   "crates/os-integrations/tests/ga4_*.rs",
+   "crates/os-testsite/src/mocks/ga4.rs",
+   "crates/os-analyze/src/tabs/analytics.rs",
+   "crates/os-analyze/tests/tab_analytics*.rs",
+   "core/issues/catalog.d/analytics.toml",
+   "core/issues/texts/{de,en}.d/analytics.toml"
+  ],
+  "depends_on": [
+   "M2-I01"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nur Mock-Server (INTEG-019)."
+ },
+ {
+  "id": "M2-I03",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Google Search Console: Verbindung, Zeitraum, Suchtyp, Dimensionsfilter, Paginierung, Tab/Spalten/Filter, Aggregation, URL Inspection mit Kontingent, mehreren Properties, Spalten, Summary, Filtern, Fehlerbehandlung, Read-Timeout",
+  "wave": 2,
+  "spec_ids": [
+   "INTEG-110",
+   "INTEG-111",
+   "INTEG-112",
+   "INTEG-113",
+   "INTEG-114",
+   "INTEG-115",
+   "INTEG-116",
+   "INTEG-117",
+   "INTEG-120",
+   "INTEG-121",
+   "INTEG-122",
+   "INTEG-123",
+   "INTEG-124",
+   "INTEG-125",
+   "INTEG-127",
+   "INTEG-128"
+  ],
+  "owns": [
+   "crates/os-integrations/src/gsc/**",
+   "crates/os-integrations/tests/gsc_*.rs",
+   "crates/os-testsite/src/mocks/gsc.rs",
+   "crates/os-analyze/src/tabs/search_console.rs",
+   "crates/os-analyze/tests/tab_search_console*.rs",
+   "core/issues/catalog.d/search_console.toml",
+   "core/issues/texts/{de,en}.d/search_console.toml"
+  ],
+  "depends_on": [
+   "M2-I01"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nur Mock-Server."
+ },
+ {
+  "id": "M2-I04",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "PageSpeed Insights und Lighthouse: Verbindung/Quelle, Gerätetyp, lokaler Lauf, Metrikgruppen, Overview/CrUX/Lab/Insights/Diagnostics-Spalten, PageSpeed-Filter, Ratenbegrenzung, Fehlerbehandlung",
+  "wave": 2,
+  "spec_ids": [
+   "INTEG-130",
+   "INTEG-131",
+   "INTEG-132",
+   "INTEG-133",
+   "INTEG-134",
+   "INTEG-135",
+   "INTEG-136",
+   "INTEG-137",
+   "INTEG-138",
+   "INTEG-139",
+   "INTEG-142",
+   "INTEG-143"
+  ],
+  "owns": [
+   "crates/os-integrations/src/psi/** (ohne psi/mobile.rs)",
+   "crates/os-integrations/tests/psi_*.rs",
+   "crates/os-testsite/src/mocks/psi.rs",
+   "crates/os-analyze/src/tabs/pagespeed.rs",
+   "crates/os-analyze/tests/tab_pagespeed*.rs",
+   "core/issues/catalog.d/pagespeed.toml",
+   "core/issues/texts/{de,en}.d/pagespeed.toml"
+  ],
+  "depends_on": [
+   "M2-I01"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Lokaler Lighthouse-Lauf (INTEG-132) nach Klärung K2-09; bis dahin Remote-PSI über Mock und Test für lokal mit #[ignore = \"Klärung K2-09\"]."
+ },
+ {
+  "id": "M2-I05",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Linkmetriken: Ebenen, Link-Metrics-Tab, Majestic, Ahrefs (API v3, OAuth), Moz (API v3), Ahrefs-Optionen",
+  "wave": 2,
+  "spec_ids": [
+   "INTEG-150",
+   "INTEG-151",
+   "INTEG-152",
+   "INTEG-153",
+   "INTEG-154",
+   "INTEG-157"
+  ],
+  "owns": [
+   "crates/os-integrations/src/linkmetrics/**",
+   "crates/os-integrations/tests/linkmetrics_*.rs",
+   "crates/os-testsite/src/mocks/{majestic,ahrefs,moz}.rs",
+   "crates/os-analyze/src/tabs/link_metrics.rs",
+   "crates/os-analyze/tests/tab_link_metrics*.rs"
+  ],
+  "depends_on": [
+   "M2-I01"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Kostenpflichtige Abrufe bilden die erste MCP-Werkzeugklasse cost (AGENT-003, Klärung K2-08); Kostenschätzung als Funktion für M2-K17."
+ },
+ {
+  "id": "M2-X03",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Google-Sheets-Export über Google Drive (Scope drive.file, Ordnerstruktur OpenSpider/<Projekt>/<Crawl>)",
+  "wave": 2,
+  "spec_ids": [
+   "OUT-005"
+  ],
+  "extra_spec_ids": [
+   "OUT-183"
+  ],
+  "owns": [
+   "crates/os-integrations/src/drive/**",
+   "crates/os-integrations/tests/drive_*.rs",
+   "crates/os-testsite/src/mocks/drive.rs",
+   "crates/os-export/src/target_gsheet.rs",
+   "crates/os-export/tests/target_gsheet_*.rs"
+  ],
+  "depends_on": [
+   "M2-I01",
+   "M2-X01"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nur Mock. OUT-183 Google-Sheet-Listenquelle aus M1 7.3 hier (Bibliotheksteil)."
+ },
+ {
+  "id": "M2-K09",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Detaildaten der Fach-Tabs in der App (K-9, K-10, K-11): SERP-Daten/-Messung/-Bearbeitung, Quelltext mit Zeilenindex und Diff als Op, Screenshot-Kacheln und Bildvorschau über ospider://, strukturierte Daten, Duplikat-Partner, Crawl-Pfad",
+  "wave": 2,
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-037",
+   "UI-039",
+   "UI-041",
+   "UI-044",
+   "UI-045",
+   "UI-050"
+  ],
+  "owns": [
+   "crates/os-app/src/commands/detail_ext.rs",
+   "crates/os-app/src/source/**",
+   "crates/os-app/src/assets.rs",
+   "crates/os-app/tests/cmd_detail_ext_*.rs"
+  ],
+  "depends_on": [
+   "M2-D01",
+   "M2-D02",
+   "M2-D09",
+   "M2-D17",
+   "M2-R01",
+   "M2-F03"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Budgets UI-145 (View Source 1 MB ≤ 300 ms, Diff ≤ 1 s); Diff im Kern mit similar. Accessibility- und Rechtschreib-Details liefern M2-D21 bzw. M2-D19 in eigenen Dateien."
+ },
+ {
+  "id": "M2-M02",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Agent Skill „openspider“ und Claude-Code-Plugin mit Marketplace-Eintrag, Slash-Befehlen und MCP-Konfiguration",
+  "wave": 2,
+  "spec_ids": [
+   "AGENT-041",
+   "AGENT-042"
+  ],
+  "owns": [
+   "integrations/**"
+  ],
+  "depends_on": [
+   "M2-M01"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Werkzeugnamen und Klassen aus os-mcp tools::all(); Prüfung per Skript (Schema der Plugin-Manifeste, Verweise im SKILL.md) in der CI-Datei des Pakets integrations/ci/ (eigene Workflow-Datei .github/workflows/integrations.yml über Schnittstellenbedarf)."
+ },
+ {
+  "id": "M2-T01",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Aufgabenplanung (Scheduling): Aufgaben mit Name/Projekt/Zeitplan, Crawl-Einstellungen, headless, API-Quellen, Exporte, Registrierung beim OS-Planer (launchd/Aufgabenplanung), Parallelität, Gültigkeitsprüfung, Historie, Export/Import, Abbruch, --run-task",
+  "wave": 2,
+  "spec_ids": [
+   "OUT-161",
+   "OUT-162",
+   "OUT-163",
+   "OUT-164",
+   "OUT-165",
+   "OUT-166",
+   "OUT-167",
+   "OUT-168",
+   "OUT-169",
+   "OUT-170",
+   "OUT-171",
+   "OUT-209",
+   "CRAWL-136"
+  ],
+  "extra_spec_ids": [
+   "INTEG-017"
+  ],
+  "owns": [
+   "crates/os-sched/** (ohne Cargo.toml; ohne src/mail/**) bzw. crates/os-store/src/tasks/** laut K2-07",
+   "crates/os-cli/** (ohne Cargo.toml und src/logging.rs)",
+   "crates/os-app/src/commands/tasks.rs",
+   "crates/os-app/tests/cmd_tasks_*.rs",
+   "tests/fixtures/out-m2-tasks/**"
+  ],
+  "depends_on": [
+   "M2-O01",
+   "M2-O02",
+   "M2-X01",
+   "M2-F03"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). OS-Planer hinter Trait mit Dry-Run-Backend für Tests (golden plist/XML), echte Registrierung nur in E2E-B bzw. manuell (Klärung K2-07). Start erst nach Entscheidung K2-07 (Crate-Ort)."
+ },
+ {
+  "id": "M2-U13",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Konfigurationsdialog I: Rahmen mit Seitennavigation und Suche, Validierung über den Kern, Regex-Tester und Umschreibungs-Testfeld, Profile, Sprungziele, Seiten Spider/Limits/Rendering/Erweitert/robots/Umschreibung/Include-Exclude/Geschwindigkeit/User-Agent/Header/Authentifizierung",
+  "wave": 2,
+  "spec_ids": [
+   "CRAWL-107",
+   "CRAWL-111"
+  ],
+  "extra_spec_ids": [
+   "OUT-220",
+   "CRAWL-102",
+   "CRAWL-126"
+  ],
+  "owns": [
+   "apps/desktop/src/features/config/{frame,pages/spider,pages/robots,pages/rewrite,pages/include-exclude,pages/speed,pages/user-agent,pages/headers,pages/auth,pages/profiles}/**",
+   "apps/desktop/e2e/config/**"
+  ],
+  "depends_on": [
+   "M2-U01",
+   "M2-F04"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). F-13: während „Läuft“ nur die freigegebenen Gruppen editierbar, Rest mit Tooltip und „Pausieren und bearbeiten“; fremd gestartete Crawls schreibgeschützt."
+ },
+ {
+  "id": "M2-U14",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Einstellungen-Abschnitte: Speicher (Speichermodus, Grenzen), Crawls (Aufbewahrung), Exporte, Netzwerk (Proxy, Zertifikate), Konten, MCP-Verweis",
+  "wave": 2,
+  "spec_ids": [
+   "UI-122",
+   "UI-123"
+  ],
+  "extra_spec_ids": [
+   "OUT-222",
+   "OUT-229",
+   "OUT-270"
+  ],
+  "owns": [
+   "apps/desktop/src/features/settings/sections/{storage,crawls,exports,network,accounts,mcp}/**",
+   "apps/desktop/e2e/settings-sections/**"
+  ],
+  "depends_on": [
+   "M2-F04",
+   "M2-O02"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Neustartpflichtige Einträge markiert (OUT-222)."
+ },
+ {
+  "id": "M2-U15",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Crawl-Verwaltung (Dialog): Projektbaum, Crawl-Tabelle, Aktionen, Mehrfachauswahl, Import/Export, Öffnen/Speichern unter, Zuletzt geöffnet, Zum Vergleich wählen",
+  "wave": 2,
+  "spec_ids": [
+   "UI-124"
+  ],
+  "extra_spec_ids": [
+   "OUT-228",
+   "CRAWL-127",
+   "CRAWL-143"
+  ],
+  "owns": [
+   "apps/desktop/src/features/crawls/**",
+   "apps/desktop/e2e/crawls/**"
+  ],
+  "depends_on": [
+   "M2-F04",
+   "M2-S01",
+   "M2-O02"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). "
+ },
+ {
+  "id": "M2-U20",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Erweiterte Tabellenbedienung: Regelbaum + Textsyntax + Verlauf, Spalten-Konfigurator + Vorlagen, Tabs konfigurieren, Tab-Kontextmenüs, Mehrfachsortierung, Segmentspalte und -filter, Kontextmenü P1",
+  "wave": 2,
+  "spec_ids": [
+   "UI-009",
+   "UI-011",
+   "UI-020",
+   "UI-112"
+  ],
+  "extra_spec_ids": [
+   "UI-004",
+   "UI-008",
+   "UI-010",
+   "UI-021",
+   "UI-110"
+  ],
+  "owns": [
+   "apps/desktop/src/features/{toptabs,table,table-advanced}/**",
+   "apps/desktop/src/state/{tabs,columns}.ts",
+   "apps/desktop/e2e/table-advanced/**"
+  ],
+  "depends_on": [
+   "M2-U10"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Übernimmt den Besitz von features/toptabs und features/table aus M2-U10."
+ },
+ {
+  "id": "M2-U21",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Detail-Fachtabs: SERP Snippet mit Geräten und Bearbeitung, Rendered Page, Chrome Console Log, View Source mit Diff (CodeMirror), Duplicate Details, Structured Data Details, Spelling & Grammar Details, Accessibility Details",
+  "wave": 2,
+  "spec_ids": [
+   "UI-037",
+   "UI-039",
+   "UI-040",
+   "UI-041",
+   "UI-044",
+   "UI-045",
+   "UI-047",
+   "UI-048"
+  ],
+  "owns": [
+   "apps/desktop/src/features/detail/{serp,rendered,console,source,duplicates,structured-data,spelling,a11y}/**",
+   "apps/desktop/e2e/detail-fach/**"
+  ],
+  "depends_on": [
+   "M2-U11"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Gegen den Vertrag und die DTO-Fixtures; echte Daten für Accessibility/Rechtschreibung folgen in Welle 2/3 (Abnahme in M2-U32)."
+ },
+ {
+  "id": "M2-U22",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Seitenleiste Fach: Site Structure, Segments mit Segment-Dialog, Response Times, API-Tab",
+  "wave": 2,
+  "spec_ids": [
+   "UI-066",
+   "UI-067",
+   "UI-068",
+   "UI-069",
+   "UI-070"
+  ],
+  "owns": [
+   "apps/desktop/src/features/sidebar/{site-structure,segments,response-times,api}/**",
+   "apps/desktop/src/features/segments-dialog/**",
+   "apps/desktop/e2e/sidebar-fach/**"
+  ],
+  "depends_on": [
+   "M2-U12"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). "
+ },
+ {
+  "id": "M2-U24",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Visualisierungen: Fensterrahmen (nicht modal, ≥ 4 gleichzeitig), Crawl-Baum und Verzeichnisbaum (d3-hierarchy + Canvas), kraftgerichteter Graph (sigma.js/graphology, Layout im Worker), Knotenfarbe/-größe nach Metrik, Knotenbudget/Teilbaum/Wurzel, Ankertext-Wortwolke (d3-cloud), Exporte",
+  "wave": 2,
+  "spec_ids": [
+   "UI-090",
+   "UI-091",
+   "UI-092",
+   "UI-093",
+   "UI-095",
+   "UI-096",
+   "UI-099",
+   "UI-146"
+  ],
+  "owns": [
+   "apps/desktop/src/features/viz/**",
+   "apps/desktop/e2e/viz/**"
+  ],
+  "depends_on": [
+   "M2-F04"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Budgets UI-146 im Frame-Recorder; UI-144 (+300 MB je Fenster, Freigabe beim Schließen) in E2E-B."
+ },
+ {
+  "id": "M2-U25",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "MCP-Dialog und -Menü: Server (Start/Stopp, Port, Auto-Start), Werkzeuge (Klassen, Einzelschalter, Markdown), Zugang (Token), Clients (Claude Desktop/Code, Codex mit Diff-Vorschau und Sicherung), Protokoll",
+  "wave": 2,
+  "spec_ids": [
+   "UI-129",
+   "AGENT-043"
+  ],
+  "extra_spec_ids": [
+   "OUT-285",
+   "AGENT-003"
+  ],
+  "owns": [
+   "apps/desktop/src/features/mcp/**",
+   "apps/desktop/e2e/mcp/**"
+  ],
+  "depends_on": [
+   "M2-F04"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Token nie im DOM ohne „Anzeigen“; Protokoll ohne Geheimnisse."
+ },
+ {
+  "id": "M2-U26",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Integrationen-UI: API-Zugangsdialog mit Verbindungsstatus, Verbindungsdialoge GA4/GSC/PSI/Majestic/Ahrefs/Moz, APIs-Modus in der Kopfleiste (Variante), Zahnräder je Quelle",
+  "wave": 2,
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "INTEG-001",
+   "INTEG-007",
+   "INTEG-090",
+   "INTEG-110",
+   "INTEG-130",
+   "INTEG-150",
+   "INTEG-012"
+  ],
+  "owns": [
+   "apps/desktop/src/features/integrations/**",
+   "apps/desktop/e2e/integrations/**"
+  ],
+  "depends_on": [
+   "M2-F04"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). OAuth im Systembrowser mit Loopback-Rückruf (api.connect)."
+ },
+ {
+  "id": "M2-U27",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Aufgaben-UI: Aufgabenverwaltung (Liste, Anlegen/Bearbeiten in Reitern, Historie, Export/Import, Abbrechen), E-Mail-Konten in den Einstellungen",
+  "wave": 2,
+  "spec_ids": [
+   "OUT-160"
+  ],
+  "extra_spec_ids": [
+   "OUT-161",
+   "OUT-169",
+   "OUT-280"
+  ],
+  "owns": [
+   "apps/desktop/src/features/tasks/**",
+   "apps/desktop/src/features/settings/sections/email/**",
+   "apps/desktop/e2e/tasks/**"
+  ],
+  "depends_on": [
+   "M2-F04"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). "
+ },
+ {
+  "id": "M2-N02",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Nacharbeit Welle 2 (E8): Befunde der Alpha-Suite (M2-A01) und Schnittstellenbedarf bündeln, Platzhalter-Ignores scharf schalten, Manifeste der Runde",
+  "wave": 3,
+  "spec_ids": [],
+  "owns": [
+   "laut Befundliste docs/plan/M2-acceptance/alpha/ und Planer-Nachtrag (owns wird vor dem Start festgelegt)"
+  ],
+  "depends_on": [
+   "M2-A01",
+   "M2-K05"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Der Planer schneidet nach der Welle-2-Sichtung ggf. mehrere N-Pakete (N02a, N02b …) ohne Besitzüberschneidung; dieses Paket ist der Platzhalter dafür."
+ },
+ {
+  "id": "M2-R02",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "JavaScript-Tab: Population, Spalten und alle P1-Filter (Blocked Resources, JS-Links, JS-Content, Noindex/Nofollow nur im Original, Canonical gerendert/Mismatch, Titel/MD/H1 gerendert bzw. geändert, JS-Fehler mit Konsolen-Log), Response-Codes-Filter Blocked Resource und Redirection (JavaScript), Screenshot-Export",
+  "wave": 3,
+  "spec_ids": [
+   "TECH-101",
+   "TECH-102",
+   "TECH-103",
+   "TECH-104",
+   "TECH-105",
+   "TECH-106",
+   "TECH-107",
+   "TECH-108",
+   "TECH-109",
+   "TECH-110",
+   "TECH-111",
+   "TECH-114",
+   "ONPAGE-053",
+   "ONPAGE-057",
+   "OUT-043"
+  ],
+  "extra_spec_ids": [
+   "ONPAGE-090",
+   "ONPAGE-170"
+  ],
+  "owns": [
+   "crates/os-analyze/src/tabs/{javascript,response_codes}.rs",
+   "crates/os-analyze/tests/tab_javascript*.rs",
+   "crates/os-analyze/tests/tab_titles.rs",
+   "crates/os-analyze/tests/tab_images.rs",
+   "crates/os-export/src/catalog/{bulk_javascript,bulk_screenshots}.rs",
+   "crates/os-export/tests/reports_redirects.rs",
+   "core/issues/catalog.d/javascript.toml",
+   "core/issues/texts/{de,en}.d/javascript.toml",
+   "tests/fixtures/tech-m2-javascript/**"
+  ],
+  "depends_on": [
+   "M2-E05",
+   "M2-D12",
+   "M2-N01"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Zurückgestellte M1-Tests ONPAGE-090 (tab_titles.rs), ONPAGE-170 Rendering-Teil (tab_images.rs) und ONPAGE-057 (reports_redirects.rs) hier scharf schalten."
+ },
+ {
+  "id": "M2-D21",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Accessibility: axe-core gebündelt und injiziert, Tab mit Spalten, Filtergruppen Best Practice und WCAG 2.0 A/AA/AAA, 2.1 AA, 2.2 AA, Accessibility Details und Exporte, Violations Summary",
+  "wave": 3,
+  "spec_ids": [
+   "TECH-250",
+   "TECH-251",
+   "TECH-252",
+   "TECH-253",
+   "TECH-254",
+   "TECH-255",
+   "TECH-256",
+   "TECH-257",
+   "TECH-259",
+   "OUT-062",
+   "OUT-109"
+  ],
+  "owns": [
+   "crates/os-render/src/axe/**",
+   "crates/os-render/resources/axe/**",
+   "crates/os-analyze/src/tabs/accessibility.rs",
+   "crates/os-analyze/tests/tab_accessibility*.rs",
+   "crates/os-export/src/catalog/bulk_a11y.rs",
+   "crates/os-export/src/reports/a11y_summary.rs",
+   "crates/os-app/src/commands/detail_a11y.rs",
+   "core/issues/catalog.d/accessibility.toml",
+   "core/issues/texts/{de,en}.d/accessibility.toml",
+   "tests/fixtures/ui/fx-ui-a11y/**"
+  ],
+  "depends_on": [
+   "M2-E05"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). axe-core 4.11.x (MPL-2.0) mit Attribution in NOTICE über Schnittstellenbedarf; Regelkurztexte eigenständig (TECH-252 ff.)."
+ },
+ {
+  "id": "M2-D22",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Custom JavaScript: Snippet-Verwaltung, Extraktions- und Aktions-Snippets, Laufzeit-API, Tab, Sicherheitsgrenzen",
+  "wave": 3,
+  "spec_ids": [
+   "INTEG-060",
+   "INTEG-061",
+   "INTEG-062",
+   "INTEG-063",
+   "INTEG-071",
+   "INTEG-072"
+  ],
+  "owns": [
+   "crates/os-render/src/snippets/**",
+   "crates/os-analyze/src/tabs/custom_js.rs",
+   "crates/os-analyze/tests/tab_custom_js*.rs",
+   "tests/fixtures/integ-custom-js/**"
+  ],
+  "depends_on": [
+   "M2-E05"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Bibliotheksvorlagen ohne KI (INTEG-069 KI-Vorlagen sind M4)."
+ },
+ {
+  "id": "M2-D23",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Mobile: Ausführungsweg lokal/PSI, Tab Mobile mit Spalten und Filtern (Viewport, Target Size, Content Width, Font Size, Plugins, Mobile Alternate Link), Lighthouse-Mobile-Prüfungen",
+  "wave": 3,
+  "spec_ids": [
+   "TECH-230",
+   "TECH-231",
+   "TECH-232",
+   "TECH-233",
+   "TECH-234",
+   "TECH-235",
+   "TECH-236",
+   "TECH-237",
+   "INTEG-140",
+   "INTEG-146",
+   "INTEG-147"
+  ],
+  "owns": [
+   "crates/os-analyze/src/tabs/mobile.rs",
+   "crates/os-analyze/tests/tab_mobile*.rs",
+   "crates/os-integrations/src/psi/mobile.rs",
+   "core/issues/catalog.d/mobile.toml",
+   "core/issues/texts/{de,en}.d/mobile.toml",
+   "tests/fixtures/tech-m2-mobile/**"
+  ],
+  "depends_on": [
+   "M2-I04",
+   "M2-E05"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Lokaler Weg nach Klärung K2-09."
+ },
+ {
+  "id": "M2-C02",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Change Detection und Auto-Vergleich: Konfiguration, Tab Change Detection, Elementfilter Text/Zahlen/Indexability/Content (MinHash), Changed/Not Changed, automatischer Vergleich für geplante und CLI-Crawls",
+  "wave": 3,
+  "spec_ids": [
+   "TECH-300",
+   "TECH-301",
+   "TECH-302",
+   "TECH-303",
+   "TECH-304",
+   "TECH-305",
+   "TECH-307",
+   "TECH-308",
+   "OUT-144",
+   "OUT-145",
+   "OUT-152",
+   "CRAWL-036"
+  ],
+  "owns": [
+   "crates/os-analyze/src/compare/change/**",
+   "crates/os-analyze/src/tabs/change_detection.rs",
+   "crates/os-analyze/tests/{change_detection,tab_change_detection}*.rs",
+   "crates/os-app/src/commands/compare.rs"
+  ],
+  "depends_on": [
+   "M2-C01",
+   "M2-D02",
+   "M2-T01"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Content-Ähnlichkeit über MinHash aus M2-D02."
+ },
+ {
+  "id": "M2-E06",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Engine-Rest: Listenmodus-Export in Upload-Reihenfolge, Weiterleitungen/Canonicals im Listenmodus immer folgen, SERP-Modus, Hreflang crawlen über externe Domains (CDN-Liste)",
+  "wave": 3,
+  "spec_ids": [
+   "CRAWL-029",
+   "CRAWL-030",
+   "CRAWL-031",
+   "TECH-087"
+  ],
+  "owns": [
+   "crates/os-engine/src/{decide,worker,frontier,crawl,types,list_input}.rs",
+   "crates/os-engine/tests/{list_*,serp_*,hreflang_crawl_*}.rs",
+   "tests/fixtures/crawl-m2-list/**"
+  ],
+  "depends_on": [
+   "M2-E05"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). "
+ },
+ {
+  "id": "M2-I06",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "API-Daten im Crawl: APIs-Modus, Integrationsspalten im Internal-Tab, neue URLs aus API-Quellen (Orphans), API-Integrationen in Zeitplanung und CLI, API-Modus-Verweis",
+  "wave": 3,
+  "spec_ids": [
+   "INTEG-012",
+   "INTEG-013",
+   "INTEG-015",
+   "INTEG-017",
+   "CRAWL-037"
+  ],
+  "extra_spec_ids": [
+   "OUT-201",
+   "OUT-099"
+  ],
+  "owns": [
+   "crates/os-integrations/src/crawl_glue/**",
+   "crates/os-integrations/tests/crawl_glue_*.rs",
+   "crates/os-analyze/src/tabs/dynamic_api.rs",
+   "crates/os-analyze/tests/tab_internal_api*.rs",
+   "crates/os-export/src/reports/orphan_pages.rs"
+  ],
+  "depends_on": [
+   "M2-I02",
+   "M2-I03",
+   "M2-I04",
+   "M2-I05",
+   "M2-D13",
+   "M2-T01"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Orphan-Report um GA4/GSC-Quellen erweitern."
+ },
+ {
+  "id": "M2-K17",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "MCP in der App (K-17): HTTP-Server im App-Prozess mit Sitzungszähler, Werkzeugfreigaben persistent, Client-Konfigurationen schreiben (Diff + Sicherung), Aufrufprotokoll, SessionAccess-Implementierung, compare_crawls, Werkzeugklasse cost",
+  "wave": 3,
+  "spec_ids": [
+   "AGENT-015"
+  ],
+  "extra_spec_ids": [
+   "AGENT-043",
+   "AGENT-001",
+   "AGENT-003",
+   "AGENT-004",
+   "OUT-285",
+   "UI-129"
+  ],
+  "owns": [
+   "crates/os-mcp/** (ohne Cargo.toml)",
+   "crates/os-app/src/mcp/**",
+   "crates/os-app/src/commands/mcp.rs",
+   "crates/os-app/tests/{mcp,cmd_mcp}_*.rs",
+   "tests/fixtures/agent-injection/**"
+  ],
+  "depends_on": [
+   "M2-M01",
+   "M2-C01",
+   "M2-D15",
+   "M2-I05"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Zurückgestellte M1-Tests AGENT-001 (App-Konfigurationsschreiben), AGENT-003 (cost gegen Mock) und Injection-Fixture mit Custom-Extraction-Wert (AGENT-004) hier scharf schalten."
+ },
+ {
+  "id": "M2-L01",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "CLI-Erweiterung I: --auth-config, zusätzliche Export-Optionen, --create-sitemap/--create-images-sitemap, Sitemaps in CLI/Scheduling, Fortschritt maschinenlesbar, Abbruch per Signal, JS-Rendering headless, Upload-Reihenfolge",
+  "wave": 3,
+  "spec_ids": [
+   "OUT-187",
+   "OUT-196",
+   "OUT-197",
+   "OUT-133",
+   "OUT-205",
+   "OUT-206",
+   "OUT-207"
+  ],
+  "extra_spec_ids": [
+   "OUT-183",
+   "OUT-015"
+  ],
+  "owns": [
+   "crates/os-cli/** (ohne Cargo.toml)",
+   "tests/fixtures/out-m2-cli/**"
+  ],
+  "depends_on": [
+   "M2-T01",
+   "M2-X02",
+   "M2-E05",
+   "M2-O01"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). M1-Test OUT-183 (Upload-Reihenfolge, cli_list.rs) hier scharf schalten."
+ },
+ {
+  "id": "M2-T02",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "E-Mail-Benachrichtigung: Konten (Schlüsselbund), Mail bei Crawl-Ende global und je Aufgabe, Inhalt der Abschlussmail",
+  "wave": 3,
+  "spec_ids": [
+   "OUT-280",
+   "OUT-281",
+   "OUT-282"
+  ],
+  "owns": [
+   "crates/os-sched/src/mail/** bzw. Ort laut K2-07",
+   "crates/os-testsite/src/mocks/smtp.rs",
+   "tests/fixtures/out-m2-mail/**"
+  ],
+  "depends_on": [
+   "M2-T01"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nur SMTP-Mock."
+ },
+ {
+  "id": "M2-U13B",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Konfigurationsdialog II: Seiten Benutzerdefiniert (Suche, Extraktion mit Syntaxprüfung, JavaScript-Snippets mit Editor, Linkpositionen), API-Zugänge, Segmente, Crawl-Analyse, Change Detection",
+  "wave": 3,
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "INTEG-020",
+   "INTEG-040",
+   "INTEG-051",
+   "INTEG-060",
+   "INTEG-080",
+   "CRAWL-134",
+   "TECH-300"
+  ],
+  "owns": [
+   "apps/desktop/src/features/config/pages/{custom-search,custom-extraction,custom-js,link-positions,api-access,segments,analysis,change-detection}/**",
+   "apps/desktop/e2e/config-fach/**"
+  ],
+  "depends_on": [
+   "M2-U13"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). "
+ },
+ {
+  "id": "M2-U17",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Formularbasierte Anmeldung: Chromium-Fenster (os-render login, sichtbar), Übernahme von Cookies sowie Local/Session Storage, Sitzungsschutz-Muster; Auth-Profile in der Konfiguration",
+  "wave": 3,
+  "spec_ids": [
+   "CRAWL-120"
+  ],
+  "extra_spec_ids": [
+   "OUT-223"
+  ],
+  "owns": [
+   "crates/os-render/src/login.rs",
+   "crates/os-render/tests/login_*.rs",
+   "crates/os-app/src/commands/auth.rs",
+   "apps/desktop/src/features/config/pages/auth-forms/**",
+   "apps/desktop/e2e/auth/**"
+  ],
+  "depends_on": [
+   "M2-E05",
+   "M2-U13"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Eingebetteter Browser = sichtbares Chromium über CDP (keine Tauri-Webview, keine src-tauri-Änderung)."
+ },
+ {
+  "id": "M2-U23",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Vergleichsmodus-UI: Auswahl Current/Previous mit Tausch, URL-Mapping mit Test, Vergleichsspalten und Unterfilter in Overview/Issues/Tabellen, Tab Change Detection, Inlinks/Outlinks-Vergleich, Detailansichten im Vergleich",
+  "wave": 3,
+  "spec_ids": [
+   "CRAWL-144"
+  ],
+  "extra_spec_ids": [
+   "OUT-140",
+   "OUT-141",
+   "OUT-142",
+   "OUT-143",
+   "OUT-146",
+   "OUT-149",
+   "TECH-301"
+  ],
+  "owns": [
+   "apps/desktop/src/features/compare/**",
+   "apps/desktop/src/features/{toptabs,table,table-advanced}/**",
+   "apps/desktop/src/features/sidebar/{overview,issues}/**",
+   "apps/desktop/src/features/detail/{inlinks,outlinks}/**",
+   "apps/desktop/e2e/compare/**"
+  ],
+  "depends_on": [
+   "M2-U20",
+   "M2-U21",
+   "M2-U22",
+   "M2-C01"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Übernimmt den Besitz der genannten Feature-Ordner für Welle 3."
+ },
+ {
+  "id": "M2-L02",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "CLI-Erweiterung II: --google-drive-account, API-Optionen, --crawl-comparison/--project-crawl-comparison",
+  "wave": 4,
+  "spec_ids": [
+   "OUT-198",
+   "OUT-201",
+   "OUT-202"
+  ],
+  "owns": [
+   "crates/os-cli/** (ohne Cargo.toml)"
+  ],
+  "depends_on": [
+   "M2-L01",
+   "M2-C02",
+   "M2-I06",
+   "M2-X03"
+  ],
+  "size": "S",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). "
+ },
+ {
+  "id": "M2-U30",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Barrierefreiheit: axe-Läufe ohne critical/serious auf allen Hauptansichten, Tastatur-Vollabdeckung, Kontrastmodi (forced-colors, prefers-contrast), Screenreader-Prüfplan VoiceOver/NVDA",
+  "wave": 4,
+  "spec_ids": [
+   "UI-126"
+  ],
+  "owns": [
+   "apps/desktop/src/ui/primitives/**",
+   "apps/desktop/src/grid/a11y/**",
+   "apps/desktop/e2e/a11y/**",
+   "docs/plan/M2-acceptance/a11y/**"
+  ],
+  "depends_on": [
+   "M2-U23",
+   "M2-U13B",
+   "M2-U17",
+   "M2-U24",
+   "M2-U25",
+   "M2-U26",
+   "M2-U27"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Fehler in Feature-Code als Befund (N-Paket Welle 5), Fixes nur in owns."
+ },
+ {
+  "id": "M2-U31",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Performance der Oberfläche: Benchmarks M2-ui-concept 7.4 gegen gen-ui-large, Frame-Recorder, IPC-Rundreise und Nutzlast, Soak 30 min, Kaltstart/Öffnen, nightly-Job mit Historie und Regressionsgrenze",
+  "wave": 4,
+  "spec_ids": [
+   "PERF-004",
+   "UI-144",
+   "UI-147",
+   "UI-148"
+  ],
+  "extra_spec_ids": [
+   "UI-140",
+   "UI-141",
+   "UI-142",
+   "UI-143",
+   "UI-145",
+   "UI-146"
+  ],
+  "owns": [
+   "apps/desktop/e2e/perf/**",
+   "apps/desktop/e2e-b/perf/**",
+   ".github/workflows/ui-nightly.yml",
+   "docs/plan/M2-acceptance/ui-perf/**"
+  ],
+  "depends_on": [
+   "M2-K05",
+   "M2-K19",
+   "M2-U23",
+   "M2-U24"
+  ],
+  "size": "M",
+  "runner": "cloud+ci+local-mac",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Bericht target/loadtest/ui-report.json (Format PERF-009). Messung auf Referenzhardware A lokal durch den Orchestrator; Windows-Werte aus CI (Klärung K2-12)."
+ },
+ {
+  "id": "M2-U32",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "E2E- und Visual-Suite: Tastatursuite je Plattform, Screenshot-Baselines je Plattform/Theme/Sprache/Dichte, Layout-Kollision 1 024 × 640 bei vier Skalierungen, Menü-Snapshots, E2E-B (Zwischenablage, Dateidialoge, Mehrfachfenster, Benachrichtigungen, Beenden-Rückfrage, HiDPI), E2E-C Menü-Smoke",
+  "wave": 4,
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-001",
+   "UI-002",
+   "UI-016",
+   "UI-113",
+   "UI-120",
+   "UI-121"
+  ],
+  "owns": [
+   "apps/desktop/e2e/{visual,keyboard-suite}/**",
+   "apps/desktop/e2e-b/** (ohne perf/**)",
+   "apps/desktop/e2e-c/**",
+   "apps/desktop/src/harness/**",
+   "docs/plan/M2-acceptance/e2e/**"
+  ],
+  "depends_on": [
+   "M2-U23",
+   "M2-U13B",
+   "M2-U17",
+   "M2-U24",
+   "M2-U25",
+   "M2-U26",
+   "M2-U27"
+  ],
+  "size": "L",
+  "runner": "cloud+ci+local-mac",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). "
+ },
+ {
+  "id": "M2-U33",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Sprache: Vollständigkeit de/en aller Features, sprachliche Durchsicht, Kürzung bei 1 024 × 640, Exporte sprachunabhängig",
+  "wave": 4,
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-121",
+   "CRAWL-137",
+   "OUT-271"
+  ],
+  "owns": [
+   "apps/desktop/src/features/*/i18n/**",
+   "apps/desktop/src/i18n/**",
+   "apps/desktop/e2e/i18n/**"
+  ],
+  "depends_on": [
+   "M2-U23",
+   "M2-U13B",
+   "M2-U17",
+   "M2-U24",
+   "M2-U25",
+   "M2-U26",
+   "M2-U27"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). "
+ },
+ {
+  "id": "M2-Q02",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Paritätslauf M2: os-parity run --all über alte und neue Sites, Klassifizierung jeder Abweichung, SF-FREE-Einträge, evidence.toml (M2-B02), Verifikation M2-S04/M2-S06, Bericht",
+  "wave": 4,
+  "spec_ids": [],
+  "owns": [
+   "tests/parity/deviations.toml",
+   "tests/parity/evidence.toml",
+   "crates/os-parity/src/{diff,run,report}*/** (nur Formatanpassungen, additiv)",
+   "docs/plan/M2-acceptance/parity/**"
+  ],
+  "depends_on": [
+   "M2-P01",
+   "M2-R02",
+   "M2-D20",
+   "M2-D21",
+   "M2-E06",
+   "M2-I06",
+   "M2-C02",
+   "M2-L01"
+  ],
+  "size": "L",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Startbedingung zusätzlich: SF-Referenzexporte der neuen Sites liegen unter tests/golden/parity/parity-m2-*/sf/ (Orchestrator, M2.md 6.3). Implementierungsfehler → Nachbesserungsauftrag; kein Fix außerhalb owns."
+ },
+ {
+  "id": "M2-Q03",
+  "kind": "measurement",
+  "model": "sonnet",
+  "title": "Großläufe und Benchmarks M2 (lokal, ruhige Maschine): PERF-001/002/003/005 Regression auf dem M2-Stand, PERF-006 bis PERF-008 groß, alle Benchmark-Ignores, PERF-009-Bericht",
+  "wave": 4,
+  "spec_ids": [
+   "PERF-001",
+   "PERF-002",
+   "PERF-003",
+   "PERF-005",
+   "PERF-009"
+  ],
+  "extra_spec_ids": [
+   "PERF-006",
+   "PERF-007",
+   "PERF-008"
+  ],
+  "owns": [
+   "docs/plan/M2-acceptance/loadtest/**",
+   "docs/plan/M2-acceptance/benchmarks/**",
+   "scripts/bench/** (nur Aufrufhilfen)"
+  ],
+  "depends_on": [
+   "M2-R02",
+   "M2-D21",
+   "M2-E06",
+   "M2-K05",
+   "M2-L01"
+  ],
+  "size": "M",
+  "runner": "local-mac",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Keine Codeänderung; Messblöcke nach M1-N21 (wait_quiet, caffeinate, Berichte je Block)."
+ },
+ {
+  "id": "M2-Q04",
+  "kind": "measurement",
+  "model": "sonnet",
+  "title": "Abnahmebericht M2: M2-status.json, checklist.md B1–B12 mit Belegen, Gate-Vorlage für Fable",
+  "wave": "4b",
+  "spec_ids": [],
+  "owns": [
+   "docs/plan/M2-acceptance/checklist.md",
+   "docs/plan/M2-status.json"
+  ],
+  "depends_on": [
+   "M2-Q02",
+   "M2-Q03",
+   "M2-U30",
+   "M2-U31",
+   "M2-U32",
+   "M2-U33",
+   "M2-L02"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). "
+ }
+]

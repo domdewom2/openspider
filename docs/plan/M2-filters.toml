@@ -1,0 +1,481 @@
+# Kanonische Filter-Kennungen M2 (Anhang A zu docs/plan/M2.md) – ergänzt docs/plan/M1-filters.toml
+#
+# Maßgeblich für:
+#   M2-F02   Registrierung aller Tabs/Filter in tabs::all() als Stubs (Prädikat "0" bzw. Population), Issue-Katalog je Tab,
+#            CI-Test filters_registry.rs (M1- und M2-Datei gemeinsam), Abgleich Katalog ↔ Register
+#   Fachpakete (Spalte package bzw. pkg am Filter) übernehmen FilterDef.id exakt; keine eigenen Schreibweisen
+#   M2-K02/K06, M2-M01, os-export: Namensauflösung "Tab:Filter" case-insensitiv (K-08)
+#
+# Änderungen nur über den Orchestrator bzw. Planer (Rückmeldung „Schnittstellenbedarf“). Einzige Ausnahme: M2-F02 setzt
+# die Felder issue/requires nach UI-064 bzw. Spec, wo hier „Planannahme“ steht, und begründet jede Änderung im Commit.
+#
+# Regeln wie M1-filters.toml:
+#   - Schreibweise nach 02/03/04; Anzeige mit Platzhaltern {config.pfad} für Schwellen (ONPAGE-002).
+#   - Reihenfolge der neuen Tabs = UI-004; neue Filter bestehender Tabs werden hinter die M1-Filter gehängt, außer die Spec
+#     legt eine andere Anzeigereihenfolge fest (dann gilt die Spec; M2-F02 ordnet).
+#   - kind: "live" | "post_crawl:<Teilschritt>" (abschließende Liste TECH-005; ONPAGE-144 Teilschritt NearDuplicates).
+#   - issue = true: Befund-Filter laut UI-064 (Typ/Priorität dort); hier automatisch abgeglichen, Groß-/Kleinschreibung egal.
+#   - requires: Konfigurationsschalter bzw. Bedingungen (Zustand NeedsConfig/NeedsRendering, ONPAGE-007, UI-016).
+#   - extension = true: [OS-Erweiterung], im Paritätsprofil ausgeblendet.
+#   - <…> in spitzen Klammern: dynamische Filter (je Suchfilter/Extraktor/Snippet/axe-Regel), Kennung zur Laufzeit.
+#   - M4/M5-Tabs (AI, AI Decisions, AI Suggestions, AI Search, Organic Keywords, Rankings, LLM Mentions) und AMP (P2) fehlen
+#     bewusst; die UI kennt keine Tab-Liste im Code (M2-ui-concept 1.3).
+
+schema = 1
+extends = "docs/plan/M1-filters.toml"
+
+[[tab]]
+id = "Internal"
+module = "internal"
+package = "M2-D02"
+new = false
+filters = [
+  { id = "Flash", spec = "ONPAGE-023", kind = "live" },
+  { id = "Other", spec = "ONPAGE-023", kind = "live" },
+  { id = "Media", spec = "ONPAGE-023", kind = "live", requires = ["ui.parity_filters=false"], extension = true },
+  { id = "Fonts", spec = "ONPAGE-023", kind = "live", requires = ["ui.parity_filters=false"], extension = true },
+  { id = "XML", spec = "ONPAGE-023", kind = "live", requires = ["ui.parity_filters=false"], extension = true },
+]
+
+[[tab]]
+id = "Security"
+module = "security"
+package = "M2-D11"
+new = false
+filters = [
+  { id = "Mixed Content", spec = "ONPAGE-033", kind = "live", issue = true },
+  { id = "Form URL Insecure", spec = "ONPAGE-034", kind = "live", issue = true },
+  { id = "Form on HTTP URL", spec = "ONPAGE-035", kind = "live", issue = true },
+  { id = "Unsafe Cross-Origin Links", spec = "ONPAGE-036", kind = "live", issue = true },
+  { id = "Protocol-Relative Resource Links", spec = "ONPAGE-037", kind = "live", issue = true },
+  { id = "Missing HSTS Header", spec = "ONPAGE-038", kind = "live", issue = true },
+  { id = "Missing Content-Security-Policy Header", spec = "ONPAGE-039", kind = "live", issue = true },
+  { id = "Missing X-Content-Type-Options Header", spec = "ONPAGE-040", kind = "live", issue = true },
+  { id = "Missing X-Frame-Options Header", spec = "ONPAGE-041", kind = "live", issue = true },
+  { id = "Missing Secure Referrer-Policy Header", spec = "ONPAGE-042", kind = "live", issue = true },
+  { id = "Bad Content Type", spec = "ONPAGE-043", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "Response Codes"
+module = "response_codes"
+package = "M2-D12 / M2-R02"
+new = false
+note = "Plain/Internal/External wie M1-Anhang A; Issue-Kennzeichen nach UI-064 (Internal-Varianten und External Blocked Resource)."
+filters = [
+  { id = "Blocked Resource", spec = "ONPAGE-053", kind = "live", package = "M2-R02", requires = ["rendering.mode=javascript"] },
+  { id = "Internal Blocked Resource", spec = "ONPAGE-053", kind = "live", package = "M2-R02", issue = true, requires = ["rendering.mode=javascript"] },
+  { id = "External Blocked Resource", spec = "ONPAGE-053", kind = "live", package = "M2-R02", issue = true, requires = ["rendering.mode=javascript"] },
+  { id = "Redirection (JavaScript)", spec = "ONPAGE-057", kind = "live", package = "M2-R02", requires = ["rendering.mode=javascript"] },
+  { id = "Internal Redirection (JavaScript)", spec = "ONPAGE-057", kind = "live", package = "M2-R02", issue = true, requires = ["rendering.mode=javascript"] },
+  { id = "External Redirection (JavaScript)", spec = "ONPAGE-057", kind = "live", package = "M2-R02", requires = ["rendering.mode=javascript"] },
+  { id = "Redirection (HTTP Refresh)", spec = "ONPAGE-059", kind = "live", package = "M2-D12" },
+  { id = "Internal Redirection (HTTP Refresh)", spec = "ONPAGE-059", kind = "live", package = "M2-D12", issue = true },
+  { id = "External Redirection (HTTP Refresh)", spec = "ONPAGE-059", kind = "live", package = "M2-D12" },
+]
+
+[[tab]]
+id = "URL"
+module = "url"
+package = "M2-E04"
+new = false
+filters = [
+  { id = "Repetitive Path", spec = "ONPAGE-075", kind = "live", issue = true },
+  { id = "Internal Search", spec = "ONPAGE-077", kind = "live", issue = true },
+  { id = "Broken Bookmark", spec = "ONPAGE-079", kind = "live", issue = true },
+  { id = "GA Tracking Parameters", spec = "ONPAGE-080", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "Page Titles"
+module = "page_titles"
+package = "M2-D01"
+new = false
+note = "Anzeige mit Standardwerten: Over 561 Pixels, Below 200 Pixels (Schlüsselnamen der Schwellen legt M2-F01 in der Konfiguration v2 fest)."
+filters = [
+  { id = "Over {title.max_px} Pixels", spec = "ONPAGE-095", kind = "live" },
+  { id = "Below {title.min_px} Pixels", spec = "ONPAGE-096", kind = "live" },
+  { id = "Same as H1", spec = "ONPAGE-097", kind = "live", issue = true },
+  { id = "Outside <head>", spec = "ONPAGE-099", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "Meta Description"
+module = "meta_description"
+package = "M2-D01"
+new = false
+note = "Standard: Over 985 Pixels, Below 400 Pixels."
+filters = [
+  { id = "Over {meta_description.max_px} Pixels", spec = "ONPAGE-105", kind = "live" },
+  { id = "Below {meta_description.min_px} Pixels", spec = "ONPAGE-106", kind = "live" },
+  { id = "Outside <head>", spec = "ONPAGE-108", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "H1"
+module = "h1"
+package = "M2-D01"
+new = false
+filters = [
+  { id = "Alt Text in h1", spec = "ONPAGE-125", kind = "live", issue = true },
+  { id = "Non-sequential", spec = "ONPAGE-126", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "H2"
+module = "h2"
+package = "M2-D01"
+new = false
+filters = [
+  { id = "Non-sequential", spec = "ONPAGE-135", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "Content"
+module = "content"
+package = "M2-D02 / M2-D19"
+new = false
+filters = [
+  { id = "Near Duplicates", spec = "ONPAGE-144", kind = "post_crawl:NearDuplicates", issue = true, requires = ["duplicates.near_enabled"] },
+  { id = "Soft 404 Pages", spec = "ONPAGE-147", kind = "live", issue = true },
+  { id = "Lorem Ipsum Placeholder", spec = "ONPAGE-148", kind = "live", issue = true },
+  { id = "Readability Difficult", spec = "ONPAGE-150", kind = "live", issue = true },
+  { id = "Readability Very Difficult", spec = "ONPAGE-151", kind = "live", issue = true },
+  { id = "Spelling Errors", spec = "ONPAGE-155", kind = "live", package = "M2-D19", issue = true, requires = ["spelling.enabled"] },
+  { id = "Grammar Errors", spec = "ONPAGE-156", kind = "live", package = "M2-D19", issue = true, requires = ["grammar.enabled"] },
+]
+
+[[tab]]
+id = "Images"
+module = "images"
+package = "M2-D03"
+new = false
+note = "requires bei ONPAGE-178/180 ist eine Planannahme; maßgeblich ist die Spec (M2-D03 prüft und meldet Abweichungen)."
+filters = [
+  { id = "Background Images", spec = "ONPAGE-178", kind = "live", issue = true, requires = ["rendering.mode=javascript"] },
+  { id = "Missing Size Attributes", spec = "ONPAGE-179", kind = "live", issue = true },
+  { id = "Incorrectly Sized Images", spec = "ONPAGE-180", kind = "live", issue = true, requires = ["rendering.mode=javascript"] },
+]
+
+[[tab]]
+id = "Canonicals"
+module = "canonicals"
+package = "M2-D04"
+new = false
+filters = [
+  { id = "Canonical Is Relative", spec = "TECH-019", kind = "live", issue = true },
+  { id = "Unlinked", spec = "TECH-020", kind = "post_crawl:Canonicals", issue = true },
+  { id = "Invalid Attribute In Annotation", spec = "TECH-021", kind = "live", issue = true },
+  { id = "Contains Fragment URL", spec = "TECH-022", kind = "live", issue = true },
+  { id = "Outside <head>", spec = "TECH-023", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "Directives"
+module = "directives"
+package = "M2-D06"
+new = false
+filters = [
+  { id = "NoArchive", spec = "TECH-057", kind = "live" },
+  { id = "NoSnippet", spec = "TECH-058", kind = "live", issue = true },
+  { id = "Max-Snippet", spec = "TECH-059", kind = "live" },
+  { id = "Max-Image-Preview", spec = "TECH-059", kind = "live" },
+  { id = "Max-Video-Preview", spec = "TECH-059", kind = "live" },
+  { id = "NoImageIndex", spec = "TECH-061", kind = "live", issue = true },
+  { id = "NoTranslate", spec = "TECH-062", kind = "live", issue = true },
+  { id = "Unavailable_After", spec = "TECH-063", kind = "live", issue = true },
+  { id = "Outside <head>", spec = "TECH-065", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "Hreflang"
+module = "hreflang"
+package = "M2-D07"
+new = false
+filters = [
+  { id = "Unlinked Hreflang URLs", spec = "TECH-075", kind = "post_crawl:Hreflang", issue = true },
+  { id = "Inconsistent Language & Region Return Links", spec = "TECH-077", kind = "live", issue = true },
+  { id = "Non-Canonical Return Links", spec = "TECH-078", kind = "live", issue = true },
+  { id = "Noindex Return Links", spec = "TECH-079", kind = "live", issue = true },
+  { id = "Multiple Entries", spec = "TECH-081", kind = "live", issue = true },
+  { id = "Missing Self Reference", spec = "TECH-082", kind = "live", issue = true },
+  { id = "Not Using Canonical", spec = "TECH-083", kind = "live", issue = true },
+  { id = "Missing X-Default", spec = "TECH-084", kind = "live", issue = true },
+  { id = "Outside <head>", spec = "TECH-086", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "Links"
+module = "links"
+package = "M2-D08"
+new = false
+filters = [
+  { id = "Non-Descriptive Anchor Text In Internal Outlinks", spec = "TECH-136", kind = "live", issue = true },
+  { id = "Pages With High External Outlinks", spec = "TECH-137", kind = "live", issue = true },
+  { id = "Pages With High Internal Outlinks", spec = "TECH-138", kind = "live", issue = true },
+  { id = "Follow & Nofollow Internal Inlinks To Page", spec = "TECH-139", kind = "post_crawl:Links", issue = true },
+  { id = "Internal Nofollow Inlinks Only", spec = "TECH-140", kind = "post_crawl:Links", issue = true },
+  { id = "Outlinks To Localhost", spec = "TECH-141", kind = "live", issue = true },
+  { id = "Non-Indexable Page Inlinks Only", spec = "TECH-142", kind = "post_crawl:Links", issue = true },
+  { id = "Pages With Uncrawlable Internal Outlinks", spec = "TECH-143", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "Sitemaps"
+module = "sitemaps"
+package = "M2-D13"
+new = false
+note = "UI-064 schreibt „XML Sitemap Over 50MB“; maßgeblich ist TECH-218 („With“), Abgleich case-insensitiv und über den Katalogtest (Klärung K2-15)."
+filters = [
+  { id = "URLs In Multiple Sitemaps", spec = "TECH-216", kind = "post_crawl:Sitemaps", issue = true },
+  { id = "XML Sitemap With Over 50k URLs", spec = "TECH-217", kind = "live", issue = true },
+  { id = "XML Sitemap With Over 50MB", spec = "TECH-218", kind = "live" },
+]
+
+[[tab]]
+id = "Meta Keywords"
+module = "meta_keywords"
+package = "M2-D01"
+new = true
+filters = [
+  { id = "All", spec = "ONPAGE-110", kind = "live" },
+  { id = "Missing", spec = "ONPAGE-111", kind = "live", issue = true },
+  { id = "Duplicate", spec = "ONPAGE-112", kind = "live", issue = true },
+  { id = "Multiple", spec = "ONPAGE-113", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "Pagination"
+module = "pagination"
+package = "M2-D05"
+new = true
+filters = [
+  { id = "All", spec = "TECH-031", kind = "live" },
+  { id = "Contains Pagination", spec = "TECH-032", kind = "live" },
+  { id = "First Page", spec = "TECH-033", kind = "live" },
+  { id = "Paginated 2+ Pages", spec = "TECH-034", kind = "live" },
+  { id = "Pagination URL Not In Anchor Tag", spec = "TECH-035", kind = "live", issue = true },
+  { id = "Non-200 Pagination URLs", spec = "TECH-036", kind = "live", issue = true },
+  { id = "Unlinked Pagination URLs", spec = "TECH-037", kind = "post_crawl:Pagination", issue = true },
+  { id = "Non-Indexable", spec = "TECH-038", kind = "live", issue = true },
+  { id = "Multiple Pagination URLs", spec = "TECH-039", kind = "live", issue = true },
+  { id = "Pagination Loop", spec = "TECH-040", kind = "post_crawl:Pagination", issue = true },
+  { id = "Sequence Error", spec = "TECH-041", kind = "post_crawl:Pagination", issue = true },
+]
+
+[[tab]]
+id = "JavaScript"
+module = "javascript"
+package = "M2-R02"
+new = true
+filters = [
+  { id = "All", spec = "TECH-101", kind = "live", requires = ["rendering.mode=javascript"] },
+  { id = "Pages With Blocked Resources", spec = "TECH-102", kind = "live", issue = true, requires = ["rendering.mode=javascript"] },
+  { id = "Contains JavaScript Links", spec = "TECH-103", kind = "live", issue = true, requires = ["rendering.mode=javascript"] },
+  { id = "Contains JavaScript Content", spec = "TECH-104", kind = "live", issue = true, requires = ["rendering.mode=javascript"] },
+  { id = "Noindex Only In Original HTML", spec = "TECH-105", kind = "live", issue = true, requires = ["rendering.mode=javascript"] },
+  { id = "Nofollow Only In Original HTML", spec = "TECH-106", kind = "live", issue = true, requires = ["rendering.mode=javascript"] },
+  { id = "Canonical Only In Rendered HTML", spec = "TECH-107", kind = "live", issue = true, requires = ["rendering.mode=javascript"] },
+  { id = "Canonical Mismatch", spec = "TECH-108", kind = "live", issue = true, requires = ["rendering.mode=javascript"] },
+  { id = "Page Title Only In Rendered HTML", spec = "TECH-109", kind = "live", issue = true, requires = ["rendering.mode=javascript"] },
+  { id = "Page Title Updated By JavaScript", spec = "TECH-109", kind = "live", issue = true, requires = ["rendering.mode=javascript"] },
+  { id = "Meta Description Only In Rendered HTML", spec = "TECH-110", kind = "live", issue = true, requires = ["rendering.mode=javascript"] },
+  { id = "Meta Description Updated By JavaScript", spec = "TECH-110", kind = "live", issue = true, requires = ["rendering.mode=javascript"] },
+  { id = "H1 Only In Rendered HTML", spec = "TECH-111", kind = "live", issue = true, requires = ["rendering.mode=javascript"] },
+  { id = "H1 Updated By JavaScript", spec = "TECH-111", kind = "live", issue = true, requires = ["rendering.mode=javascript"] },
+  { id = "Pages With JavaScript Errors", spec = "TECH-114", kind = "live", issue = true, requires = ["rendering.mode=javascript"] },
+]
+
+[[tab]]
+id = "Structured Data"
+module = "structured_data"
+package = "M2-D09 / M2-D20"
+new = true
+note = "requires: mindestens ein Format in extraction.structured_data.* aktiv (Zustand NeedsConfig, ONPAGE-007). UI-064 führt „Missing“ statt „Missing Structured Data“ (Klärung K2-15)."
+filters = [
+  { id = "All", spec = "TECH-183", kind = "live" },
+  { id = "Contains Structured Data", spec = "TECH-184", kind = "live" },
+  { id = "Missing Structured Data", spec = "TECH-184", kind = "live" },
+  { id = "JSON-LD URLs", spec = "TECH-185", kind = "live" },
+  { id = "Microdata URLs", spec = "TECH-185", kind = "live" },
+  { id = "RDFa URLs", spec = "TECH-185", kind = "live" },
+  { id = "Parse Errors", spec = "TECH-186", kind = "live", issue = true },
+  { id = "Validation Errors", spec = "TECH-187", kind = "live", package = "M2-D20", issue = true },
+  { id = "Validation Warnings", spec = "TECH-187", kind = "live", package = "M2-D20", issue = true },
+  { id = "Rich Result Validation Errors", spec = "TECH-188", kind = "live", package = "M2-D20", issue = true },
+  { id = "Rich Result Validation Warnings", spec = "TECH-188", kind = "live", package = "M2-D20", issue = true },
+]
+
+[[tab]]
+id = "PageSpeed"
+module = "pagespeed"
+package = "M2-I04"
+new = true
+note = "Reihenfolge der 19 Filter nach INTEG-139 (hier alphabetisch erfasst; M2-I04 übernimmt die Spec-Reihenfolge)."
+filters = [
+  { id = "All", spec = "INTEG-134", kind = "live" },
+  { id = "Avoid Enormous Network Payloads", spec = "INTEG-139", kind = "live", requires = ["api.psi.enabled"] },
+  { id = "Document Request Latency", spec = "INTEG-139", kind = "live", requires = ["api.psi.enabled"] },
+  { id = "Duplicated JavaScript", spec = "INTEG-139", kind = "live", requires = ["api.psi.enabled"] },
+  { id = "Font Display", spec = "INTEG-139", kind = "live", requires = ["api.psi.enabled"] },
+  { id = "Forced Reflow", spec = "INTEG-139", kind = "live", requires = ["api.psi.enabled"] },
+  { id = "Improve Image Delivery", spec = "INTEG-139", kind = "live", requires = ["api.psi.enabled"] },
+  { id = "LCP Request Discovery", spec = "INTEG-139", kind = "live", requires = ["api.psi.enabled"] },
+  { id = "Layout Shift Culprits", spec = "INTEG-139", kind = "live", requires = ["api.psi.enabled"] },
+  { id = "Legacy JavaScript", spec = "INTEG-139", kind = "live", requires = ["api.psi.enabled"] },
+  { id = "Minify CSS", spec = "INTEG-139", kind = "live", requires = ["api.psi.enabled"] },
+  { id = "Minify JavaScript", spec = "INTEG-139", kind = "live", requires = ["api.psi.enabled"] },
+  { id = "Minimize Main-Thread Work", spec = "INTEG-139", kind = "live", requires = ["api.psi.enabled"] },
+  { id = "Network Dependency Tree", spec = "INTEG-139", kind = "live", requires = ["api.psi.enabled"] },
+  { id = "Optimize DOM Size", spec = "INTEG-139", kind = "live", requires = ["api.psi.enabled"] },
+  { id = "Reduce JavaScript Execution Time", spec = "INTEG-139", kind = "live", requires = ["api.psi.enabled"] },
+  { id = "Reduce Unused CSS", spec = "INTEG-139", kind = "live", requires = ["api.psi.enabled"] },
+  { id = "Reduce Unused JavaScript", spec = "INTEG-139", kind = "live", requires = ["api.psi.enabled"] },
+  { id = "Render Blocking Requests", spec = "INTEG-139", kind = "live", requires = ["api.psi.enabled"] },
+  { id = "Use Efficient Cache Lifetimes", spec = "INTEG-139", kind = "live", requires = ["api.psi.enabled"] },
+]
+
+[[tab]]
+id = "Mobile"
+module = "mobile"
+package = "M2-D23"
+new = true
+note = "requires: Ausführungsweg lokal oder PSI (TECH-230)."
+filters = [
+  { id = "All", spec = "TECH-231", kind = "live" },
+  { id = "Viewport Not Set", spec = "TECH-232", kind = "live", issue = true },
+  { id = "Target Size", spec = "TECH-233", kind = "live", issue = true },
+  { id = "Content Not Sized Correctly", spec = "TECH-234", kind = "live", issue = true },
+  { id = "Illegible Font Size", spec = "TECH-235", kind = "live", issue = true },
+  { id = "Unsupported Plugins", spec = "TECH-236", kind = "live", issue = true },
+  { id = "Mobile Alternate Link", spec = "TECH-237", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "Accessibility"
+module = "accessibility"
+package = "M2-D21"
+new = true
+note = "Regel-Filter werden aus der gebündelten axe-Regelliste erzeugt (Schlüssel = axe-Regel-ID, Anzeige = eigene Kurzbezeichnung, TECH-251/252 ff.); Einstufung durchgehend Warnung (UI-064). Score-Filter TECH-258 sind P2."
+filters = [
+  { id = "All", spec = "TECH-251", kind = "live", requires = ["extraction.accessibility", "rendering.mode=javascript"] },
+  { id = "<axe-Regel-ID> (je Regel ein Filter, Gruppen Best Practice, WCAG 2.0 A/AA/AAA, WCAG 2.1 AA, WCAG 2.2 AA)", spec = "TECH-252", kind = "live", issue = true, requires = ["extraction.accessibility", "rendering.mode=javascript"] },
+]
+
+[[tab]]
+id = "Custom Search"
+module = "custom_search"
+package = "M2-D14"
+new = true
+filters = [
+  { id = "All", spec = "INTEG-031", kind = "live" },
+  { id = "<Filtername> (je Suchfilter, dynamisch)", spec = "INTEG-031", kind = "live" },
+]
+
+[[tab]]
+id = "Custom Extraction"
+module = "custom_extraction"
+package = "M2-D15"
+new = true
+filters = [
+  { id = "All", spec = "INTEG-053", kind = "live" },
+  { id = "<Extraktorname> (je Extraktor, dynamisch)", spec = "INTEG-053", kind = "live" },
+]
+
+[[tab]]
+id = "Custom JavaScript"
+module = "custom_js"
+package = "M2-D22"
+new = true
+filters = [
+  { id = "All", spec = "INTEG-071", kind = "live", requires = ["rendering.mode=javascript"] },
+  { id = "<Snippetname> (je Extraktions-Snippet, dynamisch)", spec = "INTEG-071", kind = "live", requires = ["rendering.mode=javascript"] },
+]
+
+[[tab]]
+id = "Analytics"
+module = "analytics"
+package = "M2-I02"
+new = true
+filters = [
+  { id = "All", spec = "INTEG-097", kind = "live" },
+  { id = "Sessions Above 0", spec = "INTEG-098", kind = "live", requires = ["api.ga4.enabled"] },
+  { id = "Bounce Rate Above 70%", spec = "INTEG-098", kind = "live", issue = true, requires = ["api.ga4.enabled"] },
+  { id = "No GA Data", spec = "INTEG-098", kind = "live", issue = true, requires = ["api.ga4.enabled"] },
+  { id = "Non-Indexable with GA Data", spec = "INTEG-098", kind = "live", issue = true, requires = ["api.ga4.enabled"] },
+  { id = "Orphan URLs", spec = "INTEG-098", kind = "live", issue = true, requires = ["api.ga4.enabled"] },
+]
+
+[[tab]]
+id = "Search Console"
+module = "search_console"
+package = "M2-I03"
+new = true
+note = "UI-064 schreibt „Rich Result Is Invalid“; maßgeblich INTEG-125 (Klärung K2-15)."
+filters = [
+  { id = "All", spec = "INTEG-115", kind = "live" },
+  { id = "Clicks Above 0", spec = "INTEG-116", kind = "live", requires = ["api.gsc.enabled"] },
+  { id = "No Search Analytics Data", spec = "INTEG-116", kind = "live", issue = true, requires = ["api.gsc.enabled"] },
+  { id = "Non-Indexable with Search Analytics Data", spec = "INTEG-116", kind = "live", issue = true, requires = ["api.gsc.enabled"] },
+  { id = "Orphan URLs", spec = "INTEG-116", kind = "live", issue = true, requires = ["api.gsc.enabled"] },
+  { id = "URL Is Not on Google", spec = "INTEG-125", kind = "live", issue = true, requires = ["api.gsc.url_inspection"] },
+  { id = "Indexable URL Not Indexed", spec = "INTEG-125", kind = "live", issue = true, requires = ["api.gsc.url_inspection"] },
+  { id = "URL is on Google, But Has Issues", spec = "INTEG-125", kind = "live", issue = true, requires = ["api.gsc.url_inspection"] },
+  { id = "User-Declared Canonical Not Selected", spec = "INTEG-125", kind = "live", issue = true, requires = ["api.gsc.url_inspection"] },
+  { id = "Page Is Not Mobile Friendly", spec = "INTEG-125", kind = "live", issue = true, requires = ["api.gsc.url_inspection"] },
+  { id = "AMP URL Is Invalid", spec = "INTEG-125", kind = "live", issue = true, requires = ["api.gsc.url_inspection"] },
+  { id = "Rich Result Invalid", spec = "INTEG-125", kind = "live", requires = ["api.gsc.url_inspection"] },
+]
+
+[[tab]]
+id = "Validation"
+module = "validation"
+package = "M2-D10"
+new = true
+note = "requires: advanced.html_validation (TECH-008)."
+filters = [
+  { id = "All", spec = "TECH-281", kind = "live" },
+  { id = "Invalid HTML Elements In <head>", spec = "TECH-282", kind = "live", issue = true },
+  { id = "<head> Not First In <html> Element", spec = "TECH-283", kind = "live", issue = true },
+  { id = "Missing <head> Tag", spec = "TECH-284", kind = "live", issue = true },
+  { id = "Multiple <head> Tags", spec = "TECH-285", kind = "live", issue = true },
+  { id = "Missing <body> Tag", spec = "TECH-286", kind = "live", issue = true },
+  { id = "Multiple <body> Tags", spec = "TECH-287", kind = "live", issue = true },
+  { id = "<body> Element Preceding <html>", spec = "TECH-288", kind = "live", issue = true },
+  { id = "HTML Document Over 2MB", spec = "TECH-289", kind = "live", issue = true },
+  { id = "Resource Over 2MB", spec = "TECH-290", kind = "live", issue = true },
+]
+
+[[tab]]
+id = "Link Metrics"
+module = "link_metrics"
+package = "M2-I05"
+new = true
+note = "Spalten je Anbieter/Metrik/Ebene dynamisch (INTEG-150)."
+filters = [
+  { id = "All", spec = "INTEG-151", kind = "live" },
+]
+
+[[tab]]
+id = "Change Detection"
+module = "change_detection"
+package = "M2-C02"
+new = true
+note = "Nur im Vergleichsmodus sichtbar (UI-004)."
+filters = [
+  { id = "All", spec = "TECH-301", kind = "live" },
+  { id = "Page Titles", spec = "TECH-302", kind = "live" },
+  { id = "Meta Description", spec = "TECH-302", kind = "live" },
+  { id = "H1", spec = "TECH-302", kind = "live" },
+  { id = "Word Count", spec = "TECH-303", kind = "live" },
+  { id = "Crawl Depth", spec = "TECH-303", kind = "live" },
+  { id = "Inlinks", spec = "TECH-303", kind = "live" },
+  { id = "Unique Inlinks", spec = "TECH-303", kind = "live" },
+  { id = "Internal Outlinks", spec = "TECH-303", kind = "live" },
+  { id = "Unique Internal Outlinks", spec = "TECH-303", kind = "live" },
+  { id = "External Outlinks", spec = "TECH-303", kind = "live" },
+  { id = "Unique External Outlinks", spec = "TECH-303", kind = "live" },
+  { id = "Structured Data Unique Types", spec = "TECH-303", kind = "live" },
+  { id = "Indexability", spec = "TECH-304", kind = "live" },
+  { id = "Content", spec = "TECH-305", kind = "live" },
+]
