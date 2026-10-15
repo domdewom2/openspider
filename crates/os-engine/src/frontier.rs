@@ -150,6 +150,13 @@ struct Key {
 pub struct Frontier {
     heap: BinaryHeap<Reverse<Key>>,
     items: HashMap<i64, QueueItem>,
+    /// Heap-Bytes der Adressen im RAM (auf 16 Byte gerundet, Schätzung für die Speicherzähler).
+    url_bytes: usize,
+}
+
+/// Heap-Anteil einer Adresse: Länge, auf die Allokator-Granularität (16 Byte) aufgerundet.
+fn heap_bytes_of(url: &str) -> usize {
+    url.len().div_ceil(16) * 16
 }
 
 impl Frontier {
@@ -165,14 +172,21 @@ impl Frontier {
     /// Plant eine URL ein.
     pub fn push(&mut self, item: QueueItem) {
         self.heap.push(Reverse(Self::key_of(&item)));
-        self.items.insert(item.id.0, item);
+        self.url_bytes += heap_bytes_of(&item.url);
+        if let Some(old) = self.items.insert(item.id.0, item) {
+            self.url_bytes = self.url_bytes.saturating_sub(heap_bytes_of(&old.url));
+        }
     }
 
     /// Nimmt die nächste URL.
     pub fn pop(&mut self) -> Option<QueueItem> {
         while let Some(Reverse(key)) = self.heap.pop() {
             if self.items.get(&key.id).is_some_and(|i| i.seq == key.seq) {
-                return self.items.remove(&key.id);
+                let item = self.items.remove(&key.id);
+                if let Some(i) = &item {
+                    self.url_bytes = self.url_bytes.saturating_sub(heap_bytes_of(&i.url));
+                }
+                return item;
             }
         }
         None
@@ -215,6 +229,20 @@ impl Frontier {
     /// Ob die URL wartet.
     pub fn contains(&self, id: UrlId) -> bool {
         self.items.contains_key(&id.0)
+    }
+
+    /// Geschätzte Größe für die Speicherzähler: `(Einträge im RAM, Bytes der Einträge samt Adressen,
+    /// Einträge der Sortierstruktur, Bytes der Sortierstruktur)`.
+    pub fn memory(&self) -> (u64, u64, u64, u64) {
+        let slot = std::mem::size_of::<(i64, QueueItem)>() + 1;
+        let items_bytes = self.items.capacity() * slot + self.url_bytes;
+        let heap_bytes = self.heap.capacity() * std::mem::size_of::<Reverse<Key>>();
+        (
+            self.items.len() as u64,
+            items_bytes as u64,
+            self.heap.len() as u64,
+            heap_bytes as u64,
+        )
     }
 }
 
@@ -430,6 +458,36 @@ impl Core {
     /// Anzahl bekannter URLs.
     pub fn discovered(&self) -> u64 {
         self.seen.len() as u64
+    }
+
+    /// Geschätzte Größe der Kernstrukturen für die Speicherzähler (`diag`, M1-P33).
+    pub fn memory(&self) -> crate::diag::CoreMemory {
+        let (queue_items, queue_bytes, heap_entries, heap_bytes) = self.frontier.memory();
+        let (redirect_entries, redirect_bytes) = self.redirects.memory();
+        let seen_slot = std::mem::size_of::<(u64, Seen)>() + 1;
+        let sitemap_key_bytes: usize = self
+            .sitemap_keys
+            .iter()
+            .map(|k| k.len().div_ceil(16) * 16 + 24)
+            .sum();
+        let sitemap_bytes = sitemap_key_bytes
+            + self.sitemap_keys.capacity() * 8
+            + self.sitemap_hreflang_next.capacity() * (std::mem::size_of::<(UrlId, u32)>() + 1);
+        crate::diag::CoreMemory {
+            seen_entries: self.seen.len() as u64,
+            seen_bytes: (self.seen.capacity() * seen_slot) as u64,
+            seen_overflow: 0,
+            queue_items,
+            queue_bytes,
+            queue_disk: 0,
+            queue_pinned: 0,
+            heap_entries,
+            heap_bytes,
+            redirect_entries,
+            redirect_bytes,
+            sitemap_entries: (self.sitemap_keys.len() + self.sitemap_hreflang_next.len()) as u64,
+            sitemap_bytes: sitemap_bytes as u64,
+        }
     }
 
     fn admit(
@@ -780,6 +838,29 @@ mod tests {
         let order = pop_ids(&mut core);
         assert_eq!(order.last(), Some(&id.0));
         assert!(b.url_updates.contains(&UrlUpdate::Depth { id, depth: 5 }));
+    }
+
+    // Messzähler (M1-P33), kein Spec-Tag: die Schätzung zählt Einträge der Seen-Menge und der Warteschlange.
+    #[test]
+    fn memory_estimate_counts_seen_and_queued_entries() {
+        let mut core = Core::new(0, None);
+        let r = rules(&[], &[]);
+        let mut b = WriteBatch::default();
+        for i in 0..10 {
+            let n = norm(&format!("https://site.test/{i}"));
+            core.discover(&cand(&n), Some(1), 0, 0, &r, &mut b);
+        }
+        let m = core.memory();
+        assert_eq!(m.seen_entries, 10);
+        assert_eq!(m.queue_items, 10);
+        assert!(m.seen_bytes >= 10 * 24 && m.queue_bytes > m.queue_items * 48);
+        assert_eq!(m.queue_disk, 0);
+        assert!(matches!(core.try_pop(), Pop::Item(_)));
+        assert_eq!(core.memory().queue_items, 9);
+        assert_eq!(
+            m.total_bytes(),
+            m.seen_bytes + m.queue_bytes + m.heap_bytes + m.redirect_bytes + m.sitemap_bytes
+        );
     }
 
     // spec: CRAWL-003

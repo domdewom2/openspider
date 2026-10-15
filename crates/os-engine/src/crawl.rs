@@ -662,14 +662,16 @@ enum End {
 }
 
 fn publish<F: Fetch>(sh: &Shared<F>, tx: &watch::Sender<Progress>) {
-    let (queued, discovered, active) = {
+    let (queued, discovered, active, memory) = {
         let core = sh.core.lock().unwrap_or_else(|p| p.into_inner());
         (
             core.frontier.len() as u64,
             core.discovered(),
             core.active as u32,
+            core.memory(),
         )
     };
+    diag::record_core_memory(&memory);
     let snapshot = sh
         .progress
         .lock()

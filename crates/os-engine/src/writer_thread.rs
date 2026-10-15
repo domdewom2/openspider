@@ -291,6 +291,37 @@ fn merge(into: &mut WriteBatch, from: WriteBatch) {
     into.url_flags.extend(from.url_flags);
 }
 
+/// Grobe Schätzung des Speichers eines Batches für den Zähler `mem_writer_batch_bytes_max` (M1-P33): Größe der
+/// Strukturen plus die Kapazität der Zeichenketten der neuen URLs und der Linkzeilen (der Rest ist klein).
+fn estimate_bytes(b: &WriteBatch) -> u64 {
+    use std::mem::size_of;
+    let opt = |s: &Option<String>| s.as_ref().map_or(0, String::capacity);
+    let mut bytes = b.new_urls.capacity() * size_of::<os_model::NewUrl>()
+        + b.url_updates.capacity() * size_of::<os_model::UrlUpdate>()
+        + b.pages.capacity() * size_of::<os_model::PageWrite>()
+        + b.queue.capacity() * size_of::<os_model::QueueOp>();
+    for u in &b.new_urls {
+        bytes += u.url.capacity() + u.address.capacity() + u.origin.capacity();
+    }
+    for p in &b.pages {
+        bytes += p.links.capacity() * size_of::<os_model::LinkRow>()
+            + p.images.capacity() * size_of::<os_model::ImageRow>()
+            + p.headers.capacity() * size_of::<os_model::HeaderRow>();
+        for l in &p.links {
+            bytes += l.target_raw.capacity()
+                + opt(&l.anchor)
+                + opt(&l.alt_text)
+                + opt(&l.rel)
+                + opt(&l.target_attr)
+                + opt(&l.link_path);
+        }
+        for h in &p.headers {
+            bytes += h.name.capacity() + h.value.capacity();
+        }
+    }
+    bytes as u64
+}
+
 fn record_error(shared: &Shared, e: StoreError) {
     let mut slot = shared.error.lock().unwrap_or_else(|p| p.into_inner());
     if slot.is_none() {
@@ -314,6 +345,11 @@ fn write_out(
     if shared.failed.load(Ordering::SeqCst) {
         return; // nach einem Fehler nur noch verwerfen
     }
+    diag::peak(&diag::STATS.w_pages_max, n as u64);
+    diag::peak(
+        &diag::STATS.mem_writer_batch_bytes_max,
+        estimate_bytes(&taken),
+    );
     let t = Instant::now();
     let written = sink.write(taken);
     diag::add_max(&diag::STATS.w_write_ns, &diag::STATS.w_write_max_ns, t);
@@ -661,6 +697,23 @@ mod tests {
         assert!(start.elapsed() < BATCH_MAX_WAIT_BACKLOG + Duration::from_secs(3));
         drop(tx);
         w.finish().unwrap();
+    }
+
+    // Messzähler (M1-P33, Fable-Nacharbeit c), kein Spec-Tag: der größte Batch in Seiten und der Speicher des
+    // größten Batches stehen im DIAG-Block. Die Prozess-Zähler teilen sich parallel laufende Tests: nur `>=`.
+    #[tokio::test]
+    async fn the_largest_batch_in_pages_is_counted_in_the_diag_block() {
+        let (s, _log) = sink(Duration::ZERO, None);
+        let w = WriterThread::spawn(s);
+        let tx = w.sender();
+        tx.send(page_batch(37)).await.unwrap();
+        tx.flush().await.unwrap();
+        drop(tx);
+        w.finish().unwrap();
+        let snap = diag::snapshot();
+        let get = |name: &str| snap.iter().find(|(n, _)| *n == name).map(|(_, v)| *v);
+        assert!(get("w_pages_max").unwrap() >= 37);
+        assert!(get("mem_writer_batch_bytes_max").unwrap() >= 37 * 100);
     }
 
     // spec: PERF-005
