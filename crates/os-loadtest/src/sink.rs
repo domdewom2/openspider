@@ -7,7 +7,7 @@
 use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use os_engine::SinkFactory;
 use os_model::{Clock, WriteBatch};
@@ -15,6 +15,24 @@ use os_store::{CrawlSink, SqliteSink, StorageProfile, StoreError};
 
 /// Verzögerung je Batch laut PERF-003.
 pub const SPEC_DELAY: Duration = Duration::from_millis(100);
+
+/// DIAG-Zähler dieses Kindes (Gruppe `loadtest`): Summe der tatsächlich gewarteten Zeit in Nanosekunden.
+static SLOW_WAIT_NS: AtomicU64 = AtomicU64::new(0);
+/// DIAG-Zähler: Zahl der verlangsamten Schreibaufrufe.
+static SLOW_CALLS: AtomicU64 = AtomicU64::new(0);
+
+/// Name der DIAG-Gruppe der Lasttest-eigenen Zähler (`DIAG loadtest …`, im Bericht `loadtest_<name>`).
+pub const DIAG_GROUP: &str = "loadtest";
+
+/// Stand der Zähler der Senke als `(name, wert)` für eine `DIAG`-Zeile: `slow_wait_ns` (Summe der Wartezeit aller
+/// Aufrufe, gemessen mit der Uhr, nicht die nominelle Verzögerung) und `slow_calls`. So lässt sich die Wartezeit
+/// des künstlich verlangsamten Stores von der Arbeit der Engine trennen (Fable-Gate N14).
+pub fn diag_snapshot() -> Vec<(&'static str, u64)> {
+    vec![
+        ("slow_wait_ns", SLOW_WAIT_NS.load(Ordering::Relaxed)),
+        ("slow_calls", SLOW_CALLS.load(Ordering::Relaxed)),
+    ]
+}
 
 /// Senke, die jeden Batch um `delay` verzögert und dann an die innere Senke weiterreicht.
 pub struct SlowSink {
@@ -42,7 +60,11 @@ impl SlowSink {
 impl CrawlSink for SlowSink {
     fn write(&mut self, batch: WriteBatch) -> Result<(), StoreError> {
         // Der Writer-Thread ist ein Betriebssystem-Thread (kein Tokio-Worker): Schlafen blockiert nur ihn.
+        let waited = Instant::now();
         std::thread::sleep(self.delay);
+        let ns = u64::try_from(waited.elapsed().as_nanos()).unwrap_or(u64::MAX);
+        SLOW_WAIT_NS.fetch_add(ns, Ordering::Relaxed);
+        SLOW_CALLS.fetch_add(1, Ordering::Relaxed);
         self.batches.fetch_add(1, Ordering::Relaxed);
         self.inner.write(batch)
     }
@@ -85,7 +107,6 @@ pub fn tuned_sink_factory(
 mod tests {
     use super::*;
     use std::sync::Mutex;
-    use std::time::Instant;
 
     #[derive(Default)]
     struct Count(Arc<Mutex<usize>>);
@@ -109,9 +130,17 @@ mod tests {
         let mut slow = SlowSink::new(Box::new(inner), Duration::from_millis(30));
         let counter = slow.batch_counter();
         let started = Instant::now();
+        let before = diag_snapshot();
         for _ in 0..4 {
             slow.write(WriteBatch::default()).unwrap();
         }
+        // DIAG-Zähler: Aufrufe und gewartete Zeit (andere Tests dürfen parallel dazuzählen, daher mindestens)
+        let after = diag_snapshot();
+        assert!(after[1].1 >= before[1].1 + 4, "{before:?} {after:?}");
+        assert!(
+            after[0].1 >= before[0].1 + 4 * 30_000_000,
+            "{before:?} {after:?}"
+        );
         assert!(
             started.elapsed() >= Duration::from_millis(120),
             "{:?}",
