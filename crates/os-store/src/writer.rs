@@ -9,6 +9,9 @@
 //! Zähleränderungen – erhält `change_seq = n`; am Ende der Transaktion wird `crawl_meta.change_seq = n`
 //! geschrieben. Ein vollständig leerer Batch ist ein No-op und erhöht die Sequenz nicht.
 //!
+//! **Index `links_target`** (K-74): Der Writer entfernt ihn beim Öffnen und baut ihn beim regulären Ende im letzten
+//! Batch auf ([`crate::link_index`]).
+//!
 //! **Kennungen:** Nach dem Schreiben gelten `next_url_id > max(NewUrl.id)` und `next_seq > max(Push.seq)`
 //! in `crawl_meta` (unabhängig davon, was die Engine in `meta` übergibt), damit ein Fortsetzen nie
 //! Kennungen doppelt vergibt.
@@ -26,13 +29,14 @@ use os_model::{
     PageWrite, PaginationRow, QueueOp, RefreshRow, RobotsWrite, SitemapWrite, UrlId, UrlUpdate,
     WriteBatch,
 };
-use os_model::{ElementPair, NewUrl};
+use os_model::{CrawlState, ElementPair, NewUrl};
 use rusqlite::types::Value;
 use rusqlite::{params, params_from_iter, Connection, Transaction, TransactionBehavior};
 
 use crate::collation;
 use crate::counters::{BatchCounters, Contribution};
 use crate::error::StoreError;
+use crate::link_index;
 use crate::open::{CrawlFile, OpenMode};
 use crate::profile::{self, StorageProfile};
 use crate::sink::CrawlSink;
@@ -55,11 +59,13 @@ pub struct SqliteSink {
 
 impl SqliteSink {
     /// Öffnet die Crawl-Datei zum Schreiben: registriert die Kollation `OS_TEXT`, setzt die PRAGMAs des
-    /// Profils (CRAWL-124) und dimensioniert den Statement-Cache.
+    /// Profils (CRAWL-124), entfernt den Index `links_target` (K-74, er entsteht erst beim regulären Ende, siehe
+    /// [`crate::link_index`]) und dimensioniert den Statement-Cache.
     pub fn open(path: &Path, profile: StorageProfile) -> Result<Self, StoreError> {
         let file = CrawlFile::open(path, OpenMode::ReadWrite)?;
         collation::ensure(file.conn())?;
         profile::apply(file.conn(), profile)?;
+        link_index::drop_index(file.conn())?;
         file.conn()
             .set_prepared_statement_cache_capacity(STATEMENT_CACHE);
         Ok(SqliteSink {
@@ -232,11 +238,35 @@ fn write_batch(conn: &Connection, batch: &WriteBatch, clock: &dyn Clock) -> Resu
     write_meta(&tx, batch, seq)?;
     write_events_and_counters(&tx, batch)?;
     crate::sink::diag::record_build(built);
+    // K-74: Der Index entsteht mit dem regulären Ende, im letzten Batch und derselben Transaktion – ein
+    // Fehlschlag lässt den Crawl dann nicht als beendet erscheinen.
+    if completes_crawl(batch) && link_index::ensure(&tx)? {
+        // Das Ereignis (ohne Dauer, deterministisch) macht den Aufbau in der Ereignisliste sichtbar; die Dauer steht in
+        // den Messzählern (`link_index_build_ns`).
+        tx.prepare_cached(
+            "INSERT INTO crawl_events (at, kind, code, message) VALUES (?1, 'info', 'links_index_built', ?2)",
+        )?
+        .execute(params![
+            clock.now().to_db(),
+            "Index links_target für die Listen nach Linkziel aufgebaut"
+        ])?;
+    }
 
     let committing = std::time::Instant::now();
     tx.commit()?;
     crate::sink::diag::record_commit(committing);
     Ok(())
+}
+
+/// Ob der Batch den Crawl regulär beendet (Zustand `Completed` als letzter `state`-Eintrag der Metadaten:
+/// Ende, Stopp oder Limit; nicht Pause oder Fehler).
+fn completes_crawl(batch: &WriteBatch) -> bool {
+    batch
+        .meta
+        .iter()
+        .rev()
+        .find(|(key, _)| key == "state")
+        .is_some_and(|(_, value)| value == CrawlState::Completed.as_str())
 }
 
 fn read_change_seq(tx: &Transaction<'_>) -> Result<i64, StoreError> {

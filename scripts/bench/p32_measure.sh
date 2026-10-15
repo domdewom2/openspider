@@ -26,9 +26,17 @@ store_bin="${STORE_BIN:-}"
 mkdir -p "$out" "$work"
 want="${*:-store perf-001 perf-003}"
 
-block() { # <name> <befehl...>
+block() { # <name> <befehl...>; wiederholt, wenn die Maschine nicht ruhig wurde (75) oder die Sperre nicht frei wurde (73)
   name="$1"; shift
-  lockf -t 7200 "$lock" "$dir/run_block.sh" "$out/log-$name.txt" "$@"
+  tries=0
+  while :; do
+    # Erst ausserhalb der Sperre auf Ruhe warten (andere Pakete bauen solange weiter), dann unter der Sperre messen;
+    # run_block.sh prueft die Ruhe unter der Sperre noch einmal.
+    "$dir/wait_quiet.sh" 2 240 >/dev/null 2>&1 || { sleep 60; continue; }
+    lockf -t 7200 "$lock" "$dir/run_block.sh" "$out/log-$name.txt" "$@"
+    rc=$?
+    case "$rc" in 73|75) tries=$((tries + 1)); [ "$tries" -lt 6 ] || return "$rc"; sleep 60 ;; *) return "$rc" ;; esac
+  done
 }
 
 for b in $want; do

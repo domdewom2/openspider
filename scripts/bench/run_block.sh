@@ -4,7 +4,7 @@
 # Aufruf: scripts/bench/run_block.sh <logdatei> <befehl> [argumente...]
 log="$1"; shift
 dir=$(dirname "$0")
-"$dir/wait_quiet.sh" 2 120 || exit 1
+"$dir/wait_quiet.sh" 2 120 || exit 75   # 75 = Maschine blieb unruhig (Aufrufer darf wiederholen)
 { echo "Start $(date -u +%FT%TZ) ($(date +%H:%M) lokal)"; uptime; } > "$log"
 caffeinate -dimsu "$@" >> "$log" 2>&1
 rc=$?

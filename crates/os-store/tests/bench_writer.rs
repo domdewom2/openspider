@@ -300,7 +300,7 @@ fn writer_1m_uniform_segments() {
 
     // Crawl-Ende: `state = completed` im letzten Batch (ab K-74 baut der Writer hier `links_target`).
     let mut last = WriteBatch::default();
-    last.meta.push(("state".into(), "completed".into()));
+    last.meta.push(("state".into(), "Completed".into()));
     let t_end = Instant::now();
     sink.write(last).unwrap();
     let end_batch_s = t_end.elapsed().as_secs_f64();
@@ -375,5 +375,101 @@ fn writer_1m_uniform_segments() {
                 r * 100.0
             );
         }
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// M1-P32: Abfragen nach Linkziel ohne und mit Index `links_target` (K-74)
+// ---------------------------------------------------------------------------------------------------------
+
+// spec: PERF-002
+#[test]
+#[ignore = "Benchmark (P32): links_page In ohne Index bei 250 000 Seiten x 30 Links, Hochrechnung 1 Mio. (OS_BENCH_PAGES, OS_BENCH_DIR)"]
+fn inlinks_without_index_250k_pages() {
+    let pages: i64 = std::env::var("OS_BENCH_PAGES")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(250_000);
+    let profile = StorageProfile::Balanced;
+    let dir = tempfile::tempdir_in(
+        std::env::var_os("OS_BENCH_DIR").unwrap_or_else(|| std::env::temp_dir().into()),
+    )
+    .unwrap();
+    let path = new_crawl(dir.path(), "inlinks.ospider", profile);
+    let mut sink = sink(&path, profile);
+    let mut first = 1;
+    while first <= pages {
+        let last = (first + 4_999).min(pages);
+        sink.write(batch_with_urls((first..=last).map(|i| (i, true))))
+            .unwrap();
+        first = last + 1;
+    }
+    let mut first = 1;
+    while first <= pages {
+        let last = (first + BACKLOG_PAGES - 1).min(pages);
+        let mut batch = WriteBatch::default();
+        for id in first..=last {
+            let links = (0..LINKS_PER_PAGE)
+                .map(|k| hyperlink(spread_target(pages, id, k), u32::try_from(k).unwrap()))
+                .collect();
+            batch.pages.push(page(id, links));
+        }
+        sink.write(batch).unwrap();
+        first = last + 1;
+    }
+    sink.finish().unwrap();
+    drop(sink);
+
+    let file = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
+    assert!(!os_store::link_index::present(file.conn()).unwrap());
+    let targets = [1, pages / 3, pages / 2, pages - 1];
+    let time_inlinks = |file: &CrawlFile| -> Vec<f64> {
+        targets
+            .iter()
+            .map(|&t| {
+                let start = Instant::now();
+                let page =
+                    queries::inlinks(file.conn(), os_model::UrlId(t), PageReq::new(0, 50)).unwrap();
+                assert!(page.total > 0);
+                start.elapsed().as_secs_f64()
+            })
+            .collect()
+    };
+    let _ = time_inlinks(&file); // Kaltstart des Seiten-Caches nicht mitzählen
+    let without = time_inlinks(&file);
+    drop(file);
+
+    let rw = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
+    let start = Instant::now();
+    assert!(os_store::link_index::ensure(rw.conn()).unwrap());
+    let build_s = start.elapsed().as_secs_f64();
+    drop(rw);
+    let file = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
+    let with = time_inlinks(&file);
+    let mean = |v: &[f64]| v.iter().sum::<f64>() / v.len() as f64;
+    println!(
+        "inlinks_without_index_250k_pages: {pages} Seiten x {LINKS_PER_PAGE} Links; links_page In (50 Zeilen) ohne Index {:.2} s (Mittel aus {} Zielen, einzeln {:?}), \
+         mit Index {:.4} s; Indexaufbau {build_s:.1} s; Hochrechnung 1 Mio. Seiten (x{:.1}): ohne Index {:.1} s, Aufbau {:.0} s",
+        mean(&without),
+        targets.len(),
+        without.iter().map(|s| (s * 100.0).round() / 100.0).collect::<Vec<_>>(),
+        mean(&with),
+        1_000_000.0 / pages as f64,
+        mean(&without) * 1_000_000.0 / pages as f64,
+        build_s * 1_000_000.0 / pages as f64,
+    );
+    if let Some(out) = std::env::var_os("OS_BENCH_OUT") {
+        let json = serde_json::json!({
+            "benchmark": "inlinks_without_index_250k_pages",
+            "pages": pages,
+            "links": pages * LINKS_PER_PAGE,
+            "inlinks_page_without_index_s": without,
+            "inlinks_page_without_index_mean_s": mean(&without),
+            "inlinks_page_with_index_s": with,
+            "index_build_s": build_s,
+            "extrapolated_1m_without_index_s": mean(&without) * 1_000_000.0 / pages as f64,
+            "extrapolated_1m_index_build_s": build_s * 1_000_000.0 / pages as f64,
+        });
+        std::fs::write(out, serde_json::to_string_pretty(&json).unwrap()).unwrap();
     }
 }

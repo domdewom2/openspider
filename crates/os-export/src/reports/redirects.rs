@@ -288,8 +288,21 @@ fn collect_ids(file: &CrawlFile, sql: &str) -> Result<Vec<i64>, ExportError> {
 }
 
 /// Start-URLs der Zeilen in Crawl-Reihenfolge (ohne Zwischenglieder, die nur über die Kette erreicht wurden).
+///
+/// „Von einer Seite verlinkt“ heißt: mindestens eine Linkzeile mit einem anderen Typ als den Weiterleitungstypen
+/// zeigt auf die URL. Mit dem Index `links_target` ist das eine Suche je Kandidat; ohne ihn (K-74: pausierter oder
+/// abgebrochener Crawl) eine Teilabfrage, die `links` einmal für alle Kandidaten liest – nie ein Lauf je Zeile.
 fn start_ids(file: &CrawlFile) -> Result<Vec<i64>, ExportError> {
     let types = redirect_link_types();
+    let linked = if db(os_store::link_index::present(file.conn()))? {
+        format!(
+            "EXISTS (SELECT 1 FROM links l WHERE l.target_id = u.id AND l.link_type NOT IN ({types}))"
+        )
+    } else {
+        format!(
+            "u.id IN (SELECT target_id FROM links WHERE target_id IS NOT NULL AND link_type NOT IN ({types}))"
+        )
+    };
     collect_ids(
         file,
         &format!(
@@ -298,7 +311,7 @@ fn start_ids(file: &CrawlFile) -> Result<Vec<i64>, ExportError> {
              AND NOT ( \
                u.discovered_via = 'redirect' \
                AND EXISTS (SELECT 1 FROM urls p WHERE p.redirect_target_id = u.id AND p.id <> u.id) \
-               AND NOT EXISTS (SELECT 1 FROM links l WHERE l.target_id = u.id AND l.link_type NOT IN ({types})) \
+               AND NOT {linked} \
              ) \
              ORDER BY u.id"
         ),
@@ -311,11 +324,54 @@ struct StartInfo {
     sample_source: Option<String>,
 }
 
-fn start_info(file: &CrawlFile, id: i64) -> Result<StartInfo, ExportError> {
+/// `Sample Source` je Start-URL für alle `ids` in **einem** Lauf über `links` (kleinste Quell-Kennung unter den
+/// Nicht-Weiterleitungs-Links). `None`, wenn der Index `links_target` vorhanden ist: dann genügt die Suche je Zeile.
+fn sample_sources(
+    file: &CrawlFile,
+    ids: &[i64],
+) -> Result<Option<std::collections::HashMap<i64, String>>, ExportError> {
+    if ids.is_empty() || db(os_store::link_index::present(file.conn()))? {
+        return Ok(None);
+    }
+    let types = redirect_link_types();
+    let json = format!(
+        "[{}]",
+        ids.iter().map(i64::to_string).collect::<Vec<_>>().join(",")
+    );
+    let sql = format!(
+        "SELECT m.target_id, s.address FROM \
+           (SELECT target_id, MIN(source_id) AS source_id FROM links \
+             WHERE target_id IN (SELECT value FROM json_each(?1)) AND link_type NOT IN ({types}) \
+             GROUP BY target_id) m \
+         JOIN urls s ON s.id = m.source_id"
+    );
+    let mut stmt = db(file.conn().prepare(&sql))?;
+    let rows = db(stmt.query_map([json], |r| {
+        Ok((r.get::<_, i64>(0)?, r.get::<_, String>(1)?))
+    }))?;
+    let mut map = std::collections::HashMap::with_capacity(ids.len());
+    for row in rows {
+        let (id, address) = db(row)?;
+        map.insert(id, address);
+    }
+    Ok(Some(map))
+}
+
+fn start_info(
+    file: &CrawlFile,
+    id: i64,
+    samples: Option<&std::collections::HashMap<i64, String>>,
+) -> Result<StartInfo, ExportError> {
     let inlinks: i64 =
         db(file
             .conn()
             .query_row("SELECT inlinks FROM urls WHERE id = ?1", [id], |r| r.get(0)))?;
+    if let Some(samples) = samples {
+        return Ok(StartInfo {
+            inlinks,
+            sample_source: samples.get(&id).cloned(),
+        });
+    }
     let types = redirect_link_types();
     let sql = format!(
         "SELECT s.address FROM links l JOIN urls s ON s.id = l.source_id \
@@ -473,10 +529,12 @@ pub(crate) fn write_report(
     }
     let mut writer = crate::output::open_writer(path, format, sheet, &writer_options(cfg))?;
     writer.header(&columns)?;
-    // Durchgang 2: Zeilen schreiben (konstanter Speicher).
+    // Durchgang 2: Zeilen schreiben (konstanter Speicher). Ohne Index `links_target` liest ein Lauf über `links`
+    // die Beispielquellen aller Zeilen (eine Adresse je Zeile im Speicher).
+    let samples = sample_sources(file, &included)?;
     for id in included {
         let chain = chain_for(file, id)?;
-        let info = start_info(file, id)?;
+        let info = start_info(file, id, samples.as_ref())?;
         let start = load_node(file, id)?;
         let (kinds, values) = row_values(&chain, &start, &info, max_hops);
         writer.row(&kinds, &values)?;

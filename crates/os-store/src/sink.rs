@@ -27,6 +27,7 @@ pub trait CrawlSink: Send {
 /// | `commit_ns` / `commit_max_ns` | Summe/Maximum von `COMMIT` (enthält den automatischen WAL-Checkpoint) |
 /// | `commit_slow` | Commits ab [`SLOW_COMMIT_NS`] |
 /// | `checkpoint_ns` / `checkpoints` / `checkpoint_max_ns` / `checkpoint_frames` | ausdrückliche `wal_checkpoint`-Aufrufe, `frames` = Frames im WAL zu Beginn (je 4 KiB) |
+/// | `link_index_builds` / `link_index_build_ns` | Aufbau des Index `links_target` (K-74, am regulären Crawl-Ende bzw. durch `link_index::ensure`) |
 pub mod diag {
 
     use std::sync::atomic::{AtomicU64, Ordering};
@@ -61,6 +62,8 @@ pub mod diag {
         checkpoint_ns,
         checkpoint_max_ns,
         checkpoint_frames,
+        link_index_builds,
+        link_index_build_ns,
     );
 
     /// Die Zähler dieses Prozesses.
@@ -94,6 +97,14 @@ pub mod diag {
         if ns >= SLOW_COMMIT_NS {
             STATS.commit_slow.fetch_add(1, Ordering::Relaxed);
         }
+    }
+
+    /// Verbucht den Aufbau des Index `links_target`.
+    pub(crate) fn record_link_index(t: Instant) {
+        STATS.link_index_builds.fetch_add(1, Ordering::Relaxed);
+        STATS
+            .link_index_build_ns
+            .fetch_add(nanos(t), Ordering::Relaxed);
     }
 
     /// Verbucht einen ausdrücklichen WAL-Checkpoint.

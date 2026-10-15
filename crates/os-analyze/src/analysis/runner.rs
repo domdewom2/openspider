@@ -133,6 +133,10 @@ pub fn run_with(
         .filter(|s| opts.only.is_none_or(|only| only.contains(s)))
         .collect();
 
+    // K-74: `links_target` fehlt während des Crawls und nach einem Abbruch; die Analyse einer nicht laufenden Datei
+    // baut ihn bei Bedarf auf (ein regulär beendeter Crawl hat ihn schon).
+    os_store::link_index::ensure_if_idle(file)?;
+
     persist::write_run_state(file, RunState::Running, None)?;
 
     let mut results: Vec<(AnalysisStep, StepState)> = Vec::new();

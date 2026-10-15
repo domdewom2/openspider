@@ -10,6 +10,7 @@ pub mod collation;
 pub mod counters;
 pub mod error;
 pub mod files;
+pub mod link_index;
 pub mod meta;
 pub mod open;
 pub mod paths;
