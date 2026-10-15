@@ -1,0 +1,23 @@
+# Block B2: PERF-003 large (SlowSink 100 ms je Schreibaufruf)
+Load-Stichproben waehrend des Laufs (lokal, 1/5/15 min):
+00:36 2.59 2.30 2.16
+00:46 1.48 1.95 2.07
+00:56 2.18 2.05 2.02
+01:06 1.91 2.19 2.13
+01:16 2.02 1.65 1.79
+01:26 2.03 2.11 2.00
+01:36 1.42 1.60 1.77
+01:46 2.35 2.18 1.99
+01:56 1.73 1.76 1.87
+02:06 2.19 2.14 1.99
+02:16 1.85 1.86 1.90
+
+Start 2026-10-14T22:25:05Z (00:25 lokal)
+ 0:25  up 34 days, 13:43, 16 users, load averages: 1.68 2.23 2.09
+perf-003 (large): 125110 Requests/s, Crawler ja, passed = false
+  Spitzen-RSS des Crawl-Prozesses: 707 MB
+  VERLETZT: "PERF-003: Spitzen-RSS 707 MB >= 500 MB bei verlangsamtem Store"
+  VERLETZT: "PERF-003: der Crawl stand 31.3 s still (Grenze 30 s)"
+Bericht: <wt>/m1-n14/docs/plan/M1-acceptance/loadtest/report-perf-003-large.json
+Ende 2026-10-15T00:20:55Z (02:20 lokal), Exit 1
+ 2:20  up 34 days, 15:39, 16 users, load averages: 1.95 2.26 2.12
