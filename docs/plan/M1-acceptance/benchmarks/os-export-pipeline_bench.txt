@@ -1,13 +1,20 @@
-Start 2026-10-15T01:37:38Z (03:37 lokal)
- 3:37  up 34 days, 16:56, 16 users, load averages: 1.91 2.56 2.79
-cargo test --release --locked -p os-export --test pipeline_bench -- --ignored --nocapture --test-threads=1
-     Running tests/pipeline_bench.rs (<wt>/target-m1-n14/release/deps/pipeline_bench-f2acbf7b93b2c54a)
-test one_million_rows_by_sixty_columns_stay_within_300_mb_of_extra_memory ... 1000000 URLs angelegt in 3.401752041s
-Export in 7.077068625s
+Start 2026-10-15T20:33:55Z (22:33 lokal)
+wait_quiet: load1=1.82 (< 2), frei: 78 GB
+22:33  up 35 days, 11:52, 16 users, load averages: 1.82 2.77 4.02
+Befehl: cargo test --release --locked -p os-export --test pipeline_bench -- --ignored --nocapture --test-threads=1
+   Compiling os-analyze v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n21/crates/os-analyze)
+   Compiling os-export v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n21/crates/os-export)
+    Finished `release` profile [optimized] target(s) in 7.05s
+     Running tests/pipeline_bench.rs (/Users/dominikwojcik/Projects/openspider-wt/target-m1-n21/release/deps/pipeline_bench-f2acbf7b93b2c54a)
+
+running 1 test
+test one_million_rows_by_sixty_columns_stay_within_300_mb_of_extra_memory ... 1000000 URLs angelegt in 4.0879125s
+Export in 6.916925208s
 Datei: 336 MiB
-RSS vorher 329 MiB, Spitze 329 MiB, Zuwachs 1 MiB
+RSS vorher 334 MiB, Spitze 334 MiB, Zuwachs 1 MiB
 ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.55s
-Ende 2026-10-15T01:37:56Z (03:37 lokal), Exit 0, Laufzeit 18 s (inkl. Warten auf Load)
- 3:37  up 34 days, 16:56, 16 users, load averages: 4.06 3.03 2.96
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.08s
+
+Ende 2026-10-15T20:34:14Z (22:34 lokal), Exit 0
+22:34  up 35 days, 11:52, 16 users, load averages: 3.24 3.06 4.10

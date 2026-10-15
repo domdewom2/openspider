@@ -1,9 +1,15 @@
-Start 2026-10-15T01:40:02Z (03:40 lokal)
- 3:40  up 34 days, 16:58, 16 users, load averages: 1.83 2.49 2.75
-cargo test --release --locked -p os-export --test sitemap_gen -- --ignored --nocapture --test-threads=1
-     Running tests/sitemap_gen.rs (<wt>/target-m1-n14/release/deps/sitemap_gen-8628eaadeb0cae17)
+Start 2026-10-15T20:54:54Z (22:54 lokal)
+wait_quiet: load1=1.89 (< 2), frei: 78 GB
+22:54  up 35 days, 12:13, 16 users, load averages: 1.89 2.50 2.93
+Befehl: cargo test --release --locked -p os-export --test sitemap_gen -- --ignored --nocapture --test-threads=1
+   Compiling os-export v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n21/crates/os-export)
+    Finished `release` profile [optimized] target(s) in 3.66s
+     Running tests/sitemap_gen.rs (/Users/dominikwojcik/Projects/openspider-wt/target-m1-n21/release/deps/sitemap_gen-8628eaadeb0cae17)
+
+running 1 test
 test default_byte_limit_of_50_mib_splits_files_with_very_long_urls ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 18 filtered out; finished in 1.05s
-Ende 2026-10-15T01:40:07Z (03:40 lokal), Exit 0, Laufzeit 5 s (inkl. Warten auf Load)
- 3:40  up 34 days, 16:58, 16 users, load averages: 1.84 2.48 2.74
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 18 filtered out; finished in 1.29s
+
+Ende 2026-10-15T20:54:59Z (22:54 lokal), Exit 0
+22:54  up 35 days, 12:13, 16 users, load averages: 2.54 2.62 2.97
