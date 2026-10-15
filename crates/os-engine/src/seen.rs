@@ -14,8 +14,12 @@
 //! * **Überlaufmenge** nimmt außerdem Einträge auf, die nicht in 28 Bit Tiefe bzw. 32 Bit Kennung passen oder
 //!   deren Kennung weit hinter der letzten liegt (dünn besetzte Kennungen). Im Normalbetrieb ist sie leer; dann kostet
 //!   ein Fehlschlag in der Haupttabelle keinen weiteren Nachschlag.
-//! * **Teiltabellen:** 256 Teiltabellen nach Schlüsselbits 24 bis 31. Das Vergrößern einer Tabelle verdoppelt nur
-//!   1/256 des Speichers (die Spitze beim Wachsen bleibt klein), und die Tabellen wachsen zeitlich versetzt.
+//! * **Teiltabellen:** 16 Teiltabellen nach Schlüsselbits 24 bis 27. Das Vergrößern einer Tabelle verdoppelt nur
+//!   1/16 des Speichers (bei 1 Mio. Einträgen rund 2 MB Spitze). Mehr Teiltabellen sind schlechter: Mit 256 Tabellen
+//!   liegt jede nur wenige zehn KB groß im kleinen Bereich des Allokators; ihre freigegebenen Vorgänger fragmentieren
+//!   ihn, und der Spitzen-RSS von `perf-003` stieg bei 250 000 bis 500 000 Seiten um 80 bis 160 MB (Messung
+//!   `docs/plan/M1-acceptance/loadtest/probe-p33/`). Mit 16 Tabellen sind die Tabellen ab etwa 100 000 Einträgen groß
+//!   genug, um außerhalb davon zu liegen und beim Vergrößern an das Betriebssystem zurückzugehen.
 //! * **Injizierbare Hashfunktion:** [`SeenSet::with_key_fn`] ersetzt Schlüssel und Fingerabdruck (Test mit erzwungener
 //!   Kollision).
 
@@ -67,7 +71,7 @@ pub fn set_key_fn_override(f: Option<KeyFn>) {
 }
 
 /// Zahl der Teiltabellen.
-const SHARDS: usize = 256;
+const SHARDS: usize = 16;
 /// Tiefe „unbekannt“ im gepackten Feld.
 const PACKED_NO_DEPTH: u32 = 0x0FFF_FFFF;
 /// Ab dieser Tiefe passt der Wert nicht mehr in 28 Bit (Überlaufmenge).
@@ -127,7 +131,7 @@ fn unpack(meta: u32) -> (u32, u8) {
 }
 
 fn shard_of(key: u64) -> usize {
-    ((key >> 24) & 0xFF) as usize
+    ((key >> 24) & (SHARDS as u64 - 1)) as usize
 }
 
 impl SeenSet {
