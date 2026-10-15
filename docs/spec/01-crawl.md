@@ -1398,7 +1398,7 @@ Gemeinsame Regeln: Ein Limit von 0 oder leer bedeutet „unbegrenzt“, sofern n
   - [ ] Regelvorrang: längste passende Regel (nach Zeichenzahl des Musters) gewinnt; bei Gleichstand gewinnt `Allow`.
   - [ ] Platzhalter `*` und Ende-Anker `$` werden unterstützt; Vergleich auf dem prozentkodierten Pfad inklusive Query.
   - [ ] `Disallow:` (leer) erlaubt alles.
-  - [ ] Unbekannte Direktiven werden ignoriert; `Crawl-delay` wird gelesen und als Hinweis angezeigt, aber nicht angewandt (OS-Festlegung; Tempo steuert CRAWL-113). Der Hinweis steht als Text „Crawl-delay: <n> s (nicht angewandt)“ im Hinweisfeld der robots.txt-Zeile (`robots_files.note`); die Anzeige ist M2 (K-29).
+  - [ ] Unbekannte Direktiven werden ignoriert; `Crawl-delay` wird gelesen und als Hinweis angezeigt; angewandt wird er nach CRAWL-145 (Option, OS-Default an; im Paritätsprofil aus). Der Hinweis steht als Text „Crawl-delay: <n> s (nicht angewandt)“ im Hinweisfeld der robots.txt-Zeile (`robots_files.note`); die Anzeige ist M2 (K-29).
   - [ ] BOM, CRLF/LF/CR-Zeilenenden, Kommentare (`#`) und Leerzeichen vor dem Doppelpunkt werden toleriert.
   - [ ] Nur die ersten 500 KiB werden ausgewertet (RFC 9309).
   - [ ] Weiterleitungen beim robots.txt-Abruf werden bis zu 5 Hops verfolgt.
@@ -2075,3 +2075,25 @@ Diese Punkte sind in der öffentlichen Doku nicht eindeutig. Sie werden per Blac
 - Release-Notes: https://www.screamingfrog.co.uk/seo-spider-18/, …-19/, …-20/, …-21/, …-22/, …-23/, …-24/ (23.1: Voreinstellung der Shopify-Bot-Authentifizierungs-Header, CRAWL-115; abgerufen 2026-10-13)
 
 Normative Fremdstandards: RFC 9309 (robots.txt), RFC 6265 (Cookies), RFC 6797 (HSTS), RFC 7616 (Digest), RFC 9421 (HTTP Message Signatures, Header-Namen CRAWL-115), RFC 9110 (HTTP-Semantik), WHATWG URL- und Encoding-Standard, sitemaps.org-Protokoll, Public Suffix List.
+
+### CRAWL-145 Crawl-delay aus robots.txt beachten
+- **Priorität:** P1
+- **Beschreibung:** OS-Erweiterung (Schonung fremder Server, Nutzerwunsch 16.10.2026). Die Referenz liest `Crawl-delay` nicht aus; OpenSpider beachtet ihn optional als Mindestabstand zwischen zwei Anfragen an denselben Host. Ändert CRAWL-098 „gelesen und als Hinweis angezeigt, aber nicht angewandt“ zu: angewandt, wenn diese Option an ist.
+- **Eingaben/Konfiguration:** Geschwindigkeit › „Crawl-delay aus robots.txt beachten“ (OS-Default: **an**; im Paritätsprofil aus); Obergrenze 30 s (größere Werte werden auf 30 s gedeckelt, Hinweis in der Statusleiste). Gilt je Host und für die passende User-Agent-Gruppe (CRAWL-114-Token).
+- **Akzeptanzkriterien:**
+  - [ ] `Crawl-delay: 2` → Request-Log zeigt zwischen zwei Anfragen an diesen Host ≥ 2,0 s, unabhängig von Threads und CRAWL-113; andere Hosts sind nicht gebremst.
+  - [ ] Option aus → Verhalten wie bisher (nur Hinweis), Paritätslauf unverändert.
+  - [ ] `Crawl-delay: 120` → effektiv 30 s mit sichtbarem Hinweis; ungültige Werte werden ignoriert.
+  - [ ] CLI `--set speed.respect_crawl_delay=false` und MCP-Overrides (AGENT-020) können die Option nur abschalten, wenn der Nutzer es ausdrücklich setzt.
+- **Testfixture:** `crawl-robots` um Host mit `Crawl-delay: 2` erweitern.
+
+### CRAWL-146 Adaptive Drosselung bei Serverlast
+- **Priorität:** P1
+- **Beschreibung:** OS-Erweiterung: OpenSpider senkt das Tempo je Host automatisch, wenn der Server Anzeichen von Überlast zeigt – zusätzlich zu 429/`Retry-After` (CRAWL-097) und 503 (CRAWL-096). Signale: Median der Antwortzeit der letzten 50 Anfragen steigt auf mehr als das Dreifache des Medians der ersten 50; Anteil 5xx/Timeouts in den letzten 50 Anfragen > 10 %.
+- **Eingaben/Konfiguration:** Geschwindigkeit › „Bei Serverlast automatisch drosseln“ (OS-Default: an). Reaktion: Threads je Host halbieren (mindestens 1) und Rate halbieren; nach 2 min ohne Signal schrittweise zurück bis zur Konfiguration.
+- **Akzeptanzkriterien:**
+  - [ ] Fixture-Route mit wachsender Antwortzeit (Verzögerung steigt mit der Parallelität) → Drosselung greift innerhalb von 100 Anfragen, Statusleiste „Gedrosselt (Serverlast)“, Antwortzeiten stabilisieren sich.
+  - [ ] Fixture mit 20 % 503 → Drosselung + Wiederholung nach CRAWL-096; nach Ende der Fehler Rückkehr zur konfigurierten Rate.
+  - [ ] Abschalten der Option → kein automatisches Bremsen (nur 429/Retry-After nach CRAWL-097).
+  - [ ] Ereignisse stehen im Crawl-Protokoll und im Report „Crawl Overview“ (Anzahl/Zeitraum der Drosselungen).
+- **Testfixture:** `crawl-retries` um `/slow-under-load` und `/flaky-503-20` erweitern.
