@@ -1,8 +1,15 @@
 //! Kompakte Menge der bekannten URLs („Seen-Menge“, K-78 a).
 //!
-//! Jeder Eintrag der Haupttabelle ist **16 Byte** groß (Schlüssel 8 + Fingerabdruck 4 + Kennung 4), dazu kommt ein
-//! Kontrollbyte der Hash-Tabelle. Tiefe (28 Bit) und Flags (4 Bit) stehen kompakt in `meta`, einem Feld mit 4 Byte
-//! je Kennung (Kennungen werden fortlaufend vergeben). Die alte Fassung brauchte 24 Byte je Eintrag.
+//! Je Eintrag **16 Byte in Feldern, die nach der Kennung der URL indiziert sind** (Schlüssel 8, Fingerabdruck 4,
+//! Tiefe und Flags 4), dazu ein Platz von 4 Byte in einer Tabelle mit offener Adressierung, die nur Kennungen
+//! enthält (Belegung höchstens 3/4, Verdoppeln beim Überschreiten). Die Kennungen werden fortlaufend vergeben, die
+//! Felder wachsen deshalb dicht und in festen Schritten (kein Verdoppeln des Vektors); die Tabelle ist ein einziger
+//! großer Block, dessen Vorgänger beim Vergrößern an das Betriebssystem zurückgeht. Die erste Fassung (ein
+//! `HashMap<u64, Seen>`) brauchte 24 Byte plus Kontrollbyte je Eintrag bei höchstens 7/8 Belegung, eine zweite mit
+//! 16 oder 256 `HashMap`-Teiltabellen immer noch 17 Byte je Platz und bei 1 Mio. Einträgen (kurz nach dem Verdoppeln
+//! nur zur Hälfte belegt) rund 40 MB; mit 256 Teiltabellen fragmentierte der kleine Bereich des Allokators außerdem so,
+//! dass der Spitzen-RSS von `perf-003` bei 250 000 bis 500 000 Seiten um 80 bis 160 MB stieg (Messung
+//! `docs/plan/M1-acceptance/loadtest/probe-p33/`).
 //!
 //! * **Schlüssel und Fingerabdruck:** Der 64-Bit-Schlüssel ist der Hash der URL Encoded Address
 //!   ([`url_key`]); der **unabhängige** 32-Bit-Fingerabdruck stammt aus einem anderen Hash-Verfahren (FNV-1a). Zwei
@@ -14,24 +21,18 @@
 //! * **Überlaufmenge** nimmt außerdem Einträge auf, die nicht in 28 Bit Tiefe bzw. 32 Bit Kennung passen oder
 //!   deren Kennung weit hinter der letzten liegt (dünn besetzte Kennungen). Im Normalbetrieb ist sie leer; dann kostet
 //!   ein Fehlschlag in der Haupttabelle keinen weiteren Nachschlag.
-//! * **Teiltabellen:** 16 Teiltabellen nach Schlüsselbits 24 bis 27. Das Vergrößern einer Tabelle verdoppelt nur
-//!   1/16 des Speichers (bei 1 Mio. Einträgen rund 2 MB Spitze). Mehr Teiltabellen sind schlechter: Mit 256 Tabellen
-//!   liegt jede nur wenige zehn KB groß im kleinen Bereich des Allokators; ihre freigegebenen Vorgänger fragmentieren
-//!   ihn, und der Spitzen-RSS von `perf-003` stieg bei 250 000 bis 500 000 Seiten um 80 bis 160 MB (Messung
-//!   `docs/plan/M1-acceptance/loadtest/probe-p33/`). Mit 16 Tabellen sind die Tabellen ab etwa 100 000 Einträgen groß
-//!   genug, um außerhalb davon zu liegen und beim Vergrößern an das Betriebssystem zurückzugehen.
 //! * **Injizierbare Hashfunktion:** [`SeenSet::with_key_fn`] ersetzt Schlüssel und Fingerabdruck (Test mit erzwungener
 //!   Kollision).
 
 use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
-use std::hash::{BuildHasherDefault, Hash, Hasher};
+use std::hash::{Hash, Hasher};
 use std::sync::Mutex;
 
 use os_model::UrlId;
 
 use crate::diag;
-use crate::frontier::{IdentityHasher, Seen, NO_DEPTH};
+use crate::frontier::{Seen, NO_DEPTH};
 
 /// Schlüssel und Fingerabdruck einer Adresse.
 pub type KeyFp = (u64, u32);
@@ -70,33 +71,39 @@ pub fn set_key_fn_override(f: Option<KeyFn>) {
     *KEY_FN_OVERRIDE.lock().unwrap_or_else(|p| p.into_inner()) = f;
 }
 
-/// Zahl der Teiltabellen.
-const SHARDS: usize = 16;
 /// Tiefe „unbekannt“ im gepackten Feld.
 const PACKED_NO_DEPTH: u32 = 0x0FFF_FFFF;
 /// Ab dieser Tiefe passt der Wert nicht mehr in 28 Bit (Überlaufmenge).
 const MAX_PACKED_DEPTH: u32 = PACKED_NO_DEPTH - 1;
 /// Alle vier Flags `F_*` liegen in den unteren Bits.
 const FLAG_MASK: u8 = 0x0F;
-/// Eine Kennung höchstens so weit hinter dem Ende von `meta` gilt noch als dicht (sonst Überlaufmenge).
+/// Eine Kennung höchstens so weit hinter dem Ende der Felder gilt noch als dicht (sonst Überlaufmenge).
 const MAX_ID_GAP: usize = 1 << 20;
-
-#[derive(Debug, Clone, Copy)]
-struct Slot {
-    fp: u32,
-    id: u32,
-}
-
-type Shard = HashMap<u64, Slot, BuildHasherDefault<IdentityHasher>>;
+/// Die Felder je Kennung wachsen in diesen Schritten (Einträge), nicht durch Verdoppeln.
+const FIELD_STEP: usize = 1 << 15;
+/// Kleinste Größe der Tabelle (Plätze, Zweierpotenz).
+const MIN_SLOTS: usize = 1 << 10;
+/// Freier Platz der Tabelle.
+const EMPTY: u32 = 0;
+/// Gelöschter Platz (nur wenn ein Eintrag in die Überlaufmenge wandert; selten).
+const TOMB: u32 = u32::MAX;
 
 /// Die Menge der bekannten URLs (siehe Moduldoku).
 pub struct SeenSet {
-    shards: Vec<Shard>,
+    /// Offene Adressierung mit linearem Sondieren; enthält Kennungen (`EMPTY`, `TOMB` sind keine). Länge 0 oder
+    /// Zweierpotenz.
+    slots: Vec<u32>,
+    /// Belegte Plätze samt Grabsteinen.
+    used: usize,
+    /// Je Kennung: 64-Bit-Schlüssel.
+    keys: Vec<u64>,
+    /// Je Kennung: 32-Bit-Fingerabdruck.
+    fps: Vec<u32>,
     /// Je Kennung: Tiefe (obere 28 Bit) und Flags (untere 4 Bit).
     meta: Vec<u32>,
     overflow: HashMap<Box<str>, Seen>,
     overflow_bytes: usize,
-    /// Einträge in den Teiltabellen.
+    /// Einträge der Haupttabelle.
     in_tables: usize,
     key_fn: KeyFn,
 }
@@ -130,15 +137,14 @@ fn unpack(meta: u32) -> (u32, u8) {
     )
 }
 
-fn shard_of(key: u64) -> usize {
-    ((key >> 24) & (SHARDS as u64 - 1)) as usize
-}
-
 impl SeenSet {
     /// Leere Menge mit eigener Hashfunktion.
     pub fn with_key_fn(key_fn: KeyFn) -> Self {
         SeenSet {
-            shards: (0..SHARDS).map(|_| Shard::default()).collect(),
+            slots: Vec::new(),
+            used: 0,
+            keys: Vec::new(),
+            fps: Vec::new(),
             meta: Vec::new(),
             overflow: HashMap::new(),
             overflow_bytes: 0,
@@ -167,6 +173,25 @@ impl SeenSet {
         self.overflow.len()
     }
 
+    /// Platz und Kennung des Eintrags mit diesem Schlüssel.
+    fn find(&self, key: u64) -> Option<(usize, u32)> {
+        if self.slots.is_empty() {
+            return None;
+        }
+        let mask = self.slots.len() - 1;
+        let mut i = (key as usize) & mask;
+        loop {
+            let s = self.slots[i];
+            if s == EMPTY {
+                return None;
+            }
+            if s != TOMB && self.keys[s as usize] == key {
+                return Some((i, s));
+            }
+            i = (i + 1) & mask;
+        }
+    }
+
     /// Schlägt eine Adresse nach.
     pub fn get(&self, encoded: &str) -> Option<Seen> {
         self.get_hashed(self.key_fp(encoded), encoded)
@@ -175,8 +200,8 @@ impl SeenSet {
     /// Schlägt eine Adresse mit bereits berechnetem Schlüssel nach.
     pub fn get_hashed(&self, kf: KeyFp, encoded: &str) -> Option<Seen> {
         let (key, fp) = kf;
-        match self.shards[shard_of(key)].get(&key) {
-            Some(slot) if slot.fp == fp => Some(self.assemble(*slot)),
+        match self.find(key) {
+            Some((_, id)) if self.fps[id as usize] == fp => Some(self.assemble(id)),
             // gleicher Schlüssel, anderer Fingerabdruck: echte Kollision, die Adresse steht (falls bekannt) in der
             // Überlaufmenge
             Some(_) => self.overflow.get(encoded).copied(),
@@ -185,10 +210,10 @@ impl SeenSet {
         }
     }
 
-    fn assemble(&self, slot: Slot) -> Seen {
-        let (depth, flags) = unpack(self.meta[slot.id as usize]);
+    fn assemble(&self, id: u32) -> Seen {
+        let (depth, flags) = unpack(self.meta[id as usize]);
         Seen {
-            id: UrlId(i64::from(slot.id)),
+            id: UrlId(i64::from(id)),
             depth,
             flags,
         }
@@ -205,8 +230,10 @@ impl SeenSet {
         let (key, fp) = kf;
         let packed = pack(seen.depth, seen.flags);
         let id32 = u32::try_from(seen.id.0).ok().filter(|id| {
-            // dicht: nicht weit hinter dem bisherigen Ende von `meta`
-            (*id as usize) < self.meta.len().saturating_add(MAX_ID_GAP)
+            // dicht: nicht weit hinter dem bisherigen Ende der Felder; 0 und `TOMB` sind keine Kennungen
+            *id != EMPTY
+                && *id != TOMB
+                && (*id as usize) < self.keys.len().saturating_add(MAX_ID_GAP)
         });
         if !self.overflow.is_empty() {
             if let Some(e) = self.overflow.get_mut(encoded) {
@@ -214,18 +241,19 @@ impl SeenSet {
                 return;
             }
         }
-        let shard = shard_of(key);
-        match self.shards[shard].get(&key).copied() {
-            Some(slot) if slot.fp == fp => match (packed, id32) {
+        match self.find(key) {
+            Some((slot, old)) if self.fps[old as usize] == fp => match (packed, id32) {
                 (Some(m), Some(id)) => {
-                    if slot.id != id {
-                        self.shards[shard].insert(key, Slot { fp, id });
+                    if old != id {
+                        self.slots[slot] = id;
+                        self.set_fields(id, key, fp, m);
+                    } else {
+                        self.meta[id as usize] = m;
                     }
-                    self.set_meta(id, m);
                 }
                 _ => {
                     // passt nicht mehr in die Haupttabelle
-                    self.shards[shard].remove(&key);
+                    self.slots[slot] = TOMB;
                     self.in_tables -= 1;
                     self.put_overflow(encoded, seen);
                 }
@@ -236,21 +264,62 @@ impl SeenSet {
             }
             None => match (packed, id32) {
                 (Some(m), Some(id)) => {
-                    self.shards[shard].insert(key, Slot { fp, id });
+                    self.set_fields(id, key, fp, m);
+                    self.insert_slot(key, id);
                     self.in_tables += 1;
-                    self.set_meta(id, m);
                 }
                 _ => self.put_overflow(encoded, seen),
             },
         }
     }
 
-    fn set_meta(&mut self, id: u32, m: u32) {
+    /// Schreibt die Felder der Kennung (vergrößert sie bei Bedarf in festen Schritten).
+    fn set_fields(&mut self, id: u32, key: u64, fp: u32, meta: u32) {
         let i = id as usize;
-        if self.meta.len() <= i {
-            self.meta.resize(i + 1, pack(NO_DEPTH, 0).unwrap_or(0));
+        if self.keys.len() <= i {
+            let target = (i + 1).next_multiple_of(FIELD_STEP);
+            let add = target - self.keys.len();
+            self.keys.reserve_exact(add);
+            self.fps.reserve_exact(add);
+            self.meta.reserve_exact(add);
+            self.keys.resize(target, 0);
+            self.fps.resize(target, 0);
+            self.meta.resize(target, pack(NO_DEPTH, 0).unwrap_or(0));
         }
-        self.meta[i] = m;
+        self.keys[i] = key;
+        self.fps[i] = fp;
+        self.meta[i] = meta;
+    }
+
+    /// Setzt die Kennung auf den ersten freien Platz ihrer Sondierungsfolge (der Schlüssel ist noch nicht enthalten).
+    fn insert_slot(&mut self, key: u64, id: u32) {
+        if (self.used + 1) * 4 > self.slots.len() * 3 {
+            self.grow();
+        }
+        let mask = self.slots.len() - 1;
+        let mut i = (key as usize) & mask;
+        while self.slots[i] != EMPTY {
+            i = (i + 1) & mask;
+        }
+        self.slots[i] = id;
+        self.used += 1;
+    }
+
+    /// Verdoppelt die Tabelle und setzt alle Kennungen neu (Grabsteine entfallen).
+    fn grow(&mut self) {
+        let new_len = (self.slots.len() * 2).max(MIN_SLOTS);
+        let old = std::mem::replace(&mut self.slots, vec![EMPTY; new_len]);
+        let mask = new_len - 1;
+        let mut used = 0;
+        for id in old.into_iter().filter(|s| *s != EMPTY && *s != TOMB) {
+            let mut i = (self.keys[id as usize] as usize) & mask;
+            while self.slots[i] != EMPTY {
+                i = (i + 1) & mask;
+            }
+            self.slots[i] = id;
+            used += 1;
+        }
+        self.used = used;
     }
 
     fn put_overflow(&mut self, encoded: &str, seen: Seen) {
@@ -261,18 +330,15 @@ impl SeenSet {
 
     /// Geschätzte Größe `(Einträge, Bytes, Einträge der Überlaufmenge)` für die Speicherzähler.
     pub fn memory(&self) -> (u64, u64, u64) {
-        let slot = std::mem::size_of::<(u64, Slot)>() + 1;
-        // `capacity()` ist die nutzbare Kapazität (7/8 der Buckets)
-        let table: usize = self
-            .shards
-            .iter()
-            .map(|s| s.capacity().div_ceil(7) * 8 * slot)
-            .sum();
+        let table = self.slots.capacity() * 4
+            + self.keys.capacity() * 8
+            + self.fps.capacity() * 4
+            + self.meta.capacity() * 4;
         let overflow = self.overflow.capacity() * (std::mem::size_of::<(Box<str>, Seen)>() + 1)
             + self.overflow_bytes;
         (
             self.len() as u64,
-            (table + self.meta.capacity() * 4 + overflow) as u64,
+            (table + overflow) as u64,
             self.overflow.len() as u64,
         )
     }
@@ -373,7 +439,7 @@ mod tests {
     }
 
     #[test]
-    fn the_main_table_needs_16_bytes_per_entry_plus_the_control_byte() {
+    fn a_main_table_entry_needs_20_to_32_bytes_including_the_reserve() {
         let mut s = SeenSet::default();
         for i in 0..200_000i64 {
             s.insert(
@@ -383,12 +449,72 @@ mod tests {
         }
         let (entries, bytes, overflow) = s.memory();
         assert_eq!((entries, overflow), (200_000, 0));
-        // Tabelle: 17 Byte je Bucket bei höchstens 7/8 Füllung der Teiltabellen, dazu 4 Byte je Kennung
+        // 16 Byte in den Feldern je Kennung (plus der Rest des letzten Schritts), dazu 4 Byte je Platz der Tabelle bei
+        // einer Belegung von 3/8 bis 3/4; die Zahl hier steht kurz nach einer Verdoppelung (ungünstig)
         let per_entry = bytes as f64 / entries as f64;
+        assert!(per_entry >= 20.0, "{per_entry} Byte je Eintrag");
         assert!(
-            per_entry < 17.0 / 0.4 + 4.0,
+            per_entry < 32.0,
             "{per_entry} Byte je Eintrag (Tabellenreserve eingeschlossen)"
         );
-        assert!(per_entry >= 16.0 + 4.0, "{per_entry}");
+    }
+
+    #[test]
+    fn a_random_workload_behaves_like_a_plain_map() {
+        // Einfügen, Aktualisieren (auch mit Werten, die nicht mehr in die Haupttabelle passen), Kollisionen und
+        // dünn besetzte Kennungen gegen eine einfache Abbildung als Referenz.
+        fn few_keys(encoded: &str) -> KeyFp {
+            let (key, fp) = default_key_fp(encoded);
+            (key % 7_919, fp)
+        }
+        for key_fn in [default_key_fp as KeyFn, few_keys as KeyFn] {
+            let mut s = SeenSet::with_key_fn(key_fn);
+            let mut oracle: HashMap<String, Seen> = HashMap::new();
+            let mut state = 0x2545_F491_4F6C_DD1Du64;
+            let mut rnd = move |n: u64| {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                state % n
+            };
+            let mut next_id = 1i64;
+            for step in 0..60_000u32 {
+                let n = rnd(8_000);
+                let url = format!("https://site.test/{n}");
+                match oracle.get(&url).copied() {
+                    None => {
+                        let id = match rnd(100) {
+                            0 => next_id + 5_000_000, // weit hinter dem Ende: Überlaufmenge
+                            _ => next_id,
+                        };
+                        next_id += 1;
+                        let e = seen(id, rnd(6) as u32, (rnd(16)) as u8);
+                        s.insert(&url, e);
+                        oracle.insert(url.clone(), e);
+                    }
+                    Some(old) => {
+                        // Aktualisieren: manchmal mit einer Tiefe, die nicht in 28 Bit passt
+                        let depth = if rnd(50) == 0 {
+                            0x2000_0000
+                        } else {
+                            rnd(6) as u32
+                        };
+                        let e = seen(old.id.0, depth, (rnd(16)) as u8);
+                        s.insert(&url, e);
+                        oracle.insert(url.clone(), e);
+                    }
+                }
+                if step % 97 == 0 {
+                    for (u, e) in oracle.iter().take(50) {
+                        assert_eq!(s.get(u), Some(*e), "{u}");
+                    }
+                }
+            }
+            assert_eq!(s.len(), oracle.len());
+            for (u, e) in &oracle {
+                assert_eq!(s.get(u), Some(*e), "{u}");
+            }
+            assert!(s.get("https://site.test/unbekannt").is_none());
+        }
     }
 }

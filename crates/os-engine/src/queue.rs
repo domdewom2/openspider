@@ -45,11 +45,14 @@ use crate::frontier::{Purpose, QueueItem, NO_DEPTH};
 
 /// Größe des RAM-Fensters W der Warteschlange (K-78 b): Zahl der Einträge mit den kleinsten Schlüsseln, die im RAM
 /// stehen. Begründung (Messung `perf-003`, `docs/plan/M1-acceptance/loadtest/probe-p33/README.md`): Ein Eintrag im
-/// RAM kostet rund 250 Byte (Eintrag, Adresse, Tabellenplatz, Sortierschlüssel), das Fenster samt Nachladeblock
-/// also etwa 10 MB. Bei 3 000 Abrufen je Sekunde wird ein Block von 20 000 Zeilen nur alle paar Sekunden gelesen
-/// (einige zehn Millisekunden im Hintergrund, kein Einfluss auf den Durchsatz). Kleiner erhöht die Zahl der Aufträge
-/// und das Risiko, dass die Steuerschleife auf den Writer wartet; größer verschenkt Speicher.
-pub const QUEUE_WINDOW: usize = 20_000;
+/// RAM kostet rund 200 Byte (Eintrag, Adresse, Tabellenplatz, Sortierschlüssel). Die Auslagerung beginnt bei `2 W`
+/// Einträgen, die Spitze im RAM liegt also bei rund `2 W` (mit W = 20 000 gemessen: 42 000 Einträge, 8,9 MB samt
+/// Sortierstruktur 10,5 MB), danach pendelt sie zwischen `W / 2` und `3 W / 2`. Bei 3 000 Abrufen je Sekunde wird mit
+/// W = 10 000 alle zwei bis drei Sekunden ein Block von 10 000 Zeilen gelesen (einige zehn Millisekunden im
+/// Hintergrund, ein Auftrag je Block: `flush` des Writers und eine Abfrage `queue JOIN urls` über den Index
+/// `queue_order`); der Durchsatz ändert sich dadurch nicht messbar. Kleiner erhöht die Zahl der Aufträge, größer
+/// verschenkt Speicher (K-78 nennt die Größenordnung 20 000).
+pub const QUEUE_WINDOW: usize = 10_000;
 
 /// Kennungen ab diesem Wert werden nicht ausgelagert (die Bitmengen bleiben klein: 16 MiB je Menge im Höchstfall).
 pub const MAX_SPILL_ID: i64 = 1 << 27;
