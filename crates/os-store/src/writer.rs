@@ -62,6 +62,9 @@ pub struct SqliteSink {
     clock: Arc<dyn Clock>,
     /// Welche URL-Kennungen intern sind (für die Zähler, ohne Lesezugriff auf die breite `urls`-Zeile).
     internal: InternalFlags,
+    /// Der Einfüge-Trigger für die Zählerzeilen ist entfernt (der Writer legt die Zeilen selbst an); Ende, Pause und
+    /// Schließen stellen ihn wieder her, der nächste Schreibaufruf entfernt ihn erneut.
+    insert_trigger_dropped: bool,
     /// Jemand anderes hat `PRAGMA wal_autocheckpoint` gesetzt: der Sink stellt nichts mehr um und startet keinen
     /// Hintergrund-Checkpoint.
     external_autocheckpoint: bool,
@@ -97,6 +100,7 @@ impl SqliteSink {
             profile,
             clock: Arc::new(SystemClock),
             internal: InternalFlags::default(),
+            insert_trigger_dropped: false,
             external_autocheckpoint: false,
             background_failed: false,
             checkpoint_bounds: (
@@ -187,6 +191,24 @@ impl SqliteSink {
         }
     }
 
+    /// Entfernt den Einfüge-Trigger vor dem ersten Schreiben (einmal je Lauf zwischen zwei Wiederherstellungen).
+    fn drop_insert_trigger(&mut self) -> Result<(), StoreError> {
+        if !self.insert_trigger_dropped {
+            crate::counters::drop_insert_trigger(self.file.conn())?;
+            self.insert_trigger_dropped = true;
+        }
+        Ok(())
+    }
+
+    /// Stellt den Einfüge-Trigger wieder her, wenn er entfernt war.
+    fn restore_insert_trigger(&mut self) -> Result<(), StoreError> {
+        if self.insert_trigger_dropped {
+            crate::counters::restore_insert_trigger(self.file.conn())?;
+            self.insert_trigger_dropped = false;
+        }
+        Ok(())
+    }
+
     /// Hält den Hintergrund-Thread an und wartet auf ihn.
     fn stop_background(&mut self) {
         if let Some(mut thread) = self.background.take() {
@@ -227,6 +249,7 @@ impl SqliteSink {
     /// führt das WAL vollständig in die Hauptdatei zurück (CRAWL-124).
     pub fn finish(&mut self) -> Result<(), StoreError> {
         self.stop_background();
+        self.restore_insert_trigger()?;
         profile::settle(self.file.conn(), self.profile)?;
         wal_checkpoint(self.file.conn())
     }
@@ -235,6 +258,7 @@ impl SqliteSink {
 impl Drop for SqliteSink {
     fn drop(&mut self) {
         self.stop_background();
+        let _ = self.restore_insert_trigger();
         // Der Abschluss-Checkpoint beim Schließen der Verbindung soll mit `synchronous = NORMAL` laufen.
         let _ = profile::settle(self.file.conn(), self.profile);
     }
@@ -253,6 +277,7 @@ fn wal_checkpoint(conn: &Connection) -> Result<(), StoreError> {
 
 impl CrawlSink for SqliteSink {
     fn write(&mut self, batch: WriteBatch) -> Result<(), StoreError> {
+        self.drop_insert_trigger()?;
         self.drive_background();
         self.throttle();
         write_batch(
@@ -269,6 +294,7 @@ impl CrawlSink for SqliteSink {
     fn checkpoint(&mut self) -> Result<(), StoreError> {
         // Kein Durchlauf des Hintergrund-Threads neben dem `TRUNCATE`; der nächste Schreibaufruf startet ihn neu.
         self.stop_background();
+        self.restore_insert_trigger()?;
         let conn = self.file.conn();
         let relaxed =
             self.profile.synchronous_during_crawl() != self.profile.synchronous_after_crawl();
@@ -395,6 +421,8 @@ fn insert_new_urls(
          discovered_via, crawl_depth, folder_depth, url_length, change_seq) \
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
     )?;
+    let mut counters_row =
+        tx.prepare_cached("INSERT OR IGNORE INTO url_counters (url_id) VALUES (?1)")?;
     for u in urls {
         let inserted = stmt.execute(params![
             u.id.0,
@@ -412,7 +440,10 @@ fn insert_new_urls(
             seq
         ]);
         match inserted {
-            Ok(_) => internal.set(u.id.0, u.is_internal),
+            Ok(_) => {
+                counters_row.execute([u.id.0])?;
+                internal.set(u.id.0, u.is_internal);
+            }
             Err(rusqlite::Error::SqliteFailure(f, _))
                 if f.code == rusqlite::ErrorCode::ConstraintViolation =>
             {

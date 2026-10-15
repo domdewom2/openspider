@@ -334,6 +334,26 @@ impl<'a> BatchCounters<'a> {
     }
 }
 
+/// Der Trigger aus Migration 0002, der jeder neuen `urls`-Zeile ihre Zählerzeile gibt.
+pub(crate) const INSERT_TRIGGER_SQL: &str =
+    "CREATE TRIGGER IF NOT EXISTS urls_counters_insert AFTER INSERT ON urls \
+     BEGIN INSERT OR IGNORE INTO url_counters (url_id) VALUES (new.id); END";
+
+/// Entfernt den Einfüge-Trigger. Der Writer legt die Zählerzeile selbst an: Ein Trigger zwingt SQLite zu einem
+/// Statement-Journal je eingefügter `urls`-Zeile (Messung M1-P32: 50 µs statt 7 µs je Zeile, bei 1 Mio. URLs rund
+/// 50 s).
+pub(crate) fn drop_insert_trigger(conn: &Connection) -> Result<(), StoreError> {
+    conn.execute_batch("DROP TRIGGER IF EXISTS urls_counters_insert")?;
+    Ok(())
+}
+
+/// Legt den Einfüge-Trigger wieder an (Ende, Pause, Schließen der Senke), damit die Datei im Ruhezustand das volle
+/// Schema hat und direkte Einfügungen durch Werkzeuge und Tests weiter eine Zählerzeile bekommen.
+pub(crate) fn restore_insert_trigger(conn: &Connection) -> Result<(), StoreError> {
+    conn.execute_batch(INSERT_TRIGGER_SQL)?;
+    Ok(())
+}
+
 /// Zähler einer Zeile, wie sie sich aus den Tabellen `links`/`image_instances` ergeben (Gegenprobe für Tests,
 /// Prüfwerkzeuge und das Neu-Crawlen; kostet je Aufruf höchstens einen Durchlauf über die Linktabelle, auch ohne den
 /// Index `links_target`).

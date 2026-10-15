@@ -503,3 +503,58 @@ fn counters_are_exact_with_and_without_the_link_index() {
         assert_eq!(counters::recompute(with.conn(), id).unwrap(), a[&id]);
     }
 }
+
+fn trigger_present(file: &CrawlFile) -> bool {
+    count(
+        file,
+        "SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = 'urls_counters_insert'",
+    ) == 1
+}
+
+// spec: PERF-002
+#[test]
+fn the_writer_creates_the_counter_rows_itself_and_restores_the_insert_trigger_at_rest() {
+    // Der Trigger kostet je eingefügter URL ein Statement-Journal (50 µs statt 7 µs, Messung M1-P32): Während des
+    // Schreibens fehlt er, jede neue URL bekommt ihre Zählerzeile trotzdem; Pause, Ende und Schließen stellen ihn her.
+    let dir = tempfile::tempdir().unwrap();
+    let path = new_crawl(dir.path(), "t.ospider", StorageProfile::Balanced);
+    assert!(trigger_present(&reader(&path)));
+    let mut sink = sink(&path, StorageProfile::Balanced);
+    assert!(
+        trigger_present(sink.file()),
+        "vor dem ersten Schreiben unverändert"
+    );
+    sink.write(batch_with_urls([(1, true), (2, true), (3, false)]))
+        .unwrap();
+    assert!(
+        !trigger_present(sink.file()),
+        "während des Schreibens entfernt"
+    );
+    assert_eq!(
+        count(sink.file(), "SELECT COUNT(*) FROM url_counters"),
+        3,
+        "eine Zählerzeile je neue URL"
+    );
+    sink.checkpoint().unwrap();
+    assert!(trigger_present(sink.file()), "Pause stellt ihn her");
+    sink.write(batch_with_urls([(4, true)])).unwrap();
+    assert!(
+        !trigger_present(sink.file()),
+        "der nächste Batch entfernt ihn wieder"
+    );
+    assert_eq!(count(sink.file(), "SELECT COUNT(*) FROM url_counters"), 4);
+    sink.finish().unwrap();
+    assert!(trigger_present(sink.file()), "Ende stellt ihn her");
+    sink.write(batch_with_urls([(5, true)])).unwrap();
+    drop(sink);
+    let file = reader(&path);
+    assert!(trigger_present(&file), "Schließen stellt ihn her");
+    assert_eq!(count(&file, "SELECT COUNT(*) FROM url_counters"), 5);
+    assert_eq!(
+        count(
+            &file,
+            "SELECT COUNT(*) FROM urls u LEFT JOIN url_counters c ON c.url_id = u.id WHERE c.url_id IS NULL"
+        ),
+        0
+    );
+}
