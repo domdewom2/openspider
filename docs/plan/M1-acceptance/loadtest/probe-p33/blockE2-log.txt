@@ -1,0 +1,8 @@
+Block blockE2 Start 2026-10-15T13:14:18Z (15:14 lokal), Ruhe (Load1 < 8) erreicht: ja
+15:14  up 35 days,  4:32, 16 users, load averages: 5.08 4.51 3.69
+/dev/disk3s1s1       926   11        24    33%  458732 260201040    0%   /
+--- s2-example perf-005 --pages 100000 Start 15:14:18
+15:14  up 35 days,  4:32, 16 users, load averages: 5.08 4.51 3.69
+--- s2-example perf-005 --pages 100000 Ende 15:15:57 Exit 0
+15:15  up 35 days,  4:34, 16 users, load averages: 4.08 4.38 3.73
+Block blockE2 Ende 2026-10-15T13:15:57Z

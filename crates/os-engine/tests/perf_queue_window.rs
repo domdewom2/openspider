@@ -107,7 +107,7 @@ async fn crawl_once(window: Option<usize>) -> Run {
     }
 }
 
-// spec: CRAWL-005, PERF-005
+// spec: CRAWL-005, PERF-005, PERF-003
 #[tokio::test]
 async fn a_small_window_changes_neither_the_request_order_nor_the_result_and_bounds_the_ram() {
     let _serial = SERIAL.lock().await;

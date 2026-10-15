@@ -1,0 +1,2 @@
+perf-005 (large): 136016 Requests/s, Crawler ja, passed = true
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/m1-p33/docs/plan/M1-acceptance/loadtest/probe-p33/s4-example/report-perf-005-100000.json

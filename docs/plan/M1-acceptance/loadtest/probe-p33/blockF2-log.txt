@@ -1,0 +1,8 @@
+Block blockF2 Start 2026-10-15T13:19:38Z (15:19 lokal), Ruhe (Load1 < 8) erreicht: ja
+15:19  up 35 days,  4:38, 16 users, load averages: 3.42 4.06 3.75
+/dev/disk3s1s1       926   11        24    33%  458732 260617600    0%   /
+--- s1b-seen16 perf-003 --pages 250000 Start 15:19:38
+15:19  up 35 days,  4:38, 16 users, load averages: 3.42 4.06 3.75
+--- s1b-seen16 perf-003 --pages 250000 Ende 15:22:45 Exit 0
+15:22  up 35 days,  4:41, 16 users, load averages: 3.38 3.91 3.76
+Block blockF2 Ende 2026-10-15T13:22:45Z

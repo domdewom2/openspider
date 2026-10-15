@@ -1,0 +1,119 @@
+Block G2 Start 17:47:55
+17:47  up 35 days,  7:06, 16 users, load averages: 2.92 2.64 3.14
+--- s1 Runde 1 Start 17:47:55
+17:47  up 35 days,  7:06, 16 users, load averages: 2.92 2.64 3.14
+
+running 1 test
+Fortsetzen (Aufbau aus der Datei): 1.159252333s, Pausieren: 75.420917ms
+test pausing_with_a_million_queue_entries_takes_under_three_seconds ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 6.23s
+
+        6.26 real         3.83 user         0.86 sys
+           703807488  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+               44938  page reclaims
+                 368  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+                3111  voluntary context switches
+                1637  involuntary context switches
+         68208037774  instructions retired
+         16043980967  cycles elapsed
+           563250184  peak memory footprint
+--- s1 Runde 1 Ende 17:48:01
+17:48  up 35 days,  7:06, 16 users, load averages: 2.92 2.65 3.14
+--- s4 Runde 1 Start 17:48:01
+17:48  up 35 days,  7:06, 16 users, load averages: 2.92 2.65 3.14
+
+running 1 test
+Fortsetzen (Aufbau aus der Datei): 662.719875ms, Pausieren: 9.956125ms
+test pausing_with_a_million_queue_entries_takes_under_three_seconds ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 5.30s
+
+        5.92 real         3.32 user         0.87 sys
+           387514368  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+               24584  page reclaims
+                   1  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+                2876  voluntary context switches
+                2273  involuntary context switches
+         62301017421  instructions retired
+         14278892587  cycles elapsed
+           338412216  peak memory footprint
+--- s4 Runde 1 Ende 17:48:07
+17:48  up 35 days,  7:06, 16 users, load averages: 2.85 2.64 3.13
+--- s1 Runde 2 Start 17:48:07
+17:48  up 35 days,  7:06, 16 users, load averages: 2.85 2.64 3.13
+
+running 1 test
+Fortsetzen (Aufbau aus der Datei): 1.133662042s, Pausieren: 71.421959ms
+test pausing_with_a_million_queue_entries_takes_under_three_seconds ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 5.64s
+
+        5.65 real         3.82 user         0.84 sys
+           703823872  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+               45304  page reclaims
+                   1  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+                2612  voluntary context switches
+                1625  involuntary context switches
+         68110100865  instructions retired
+         15966932869  cycles elapsed
+           563250160  peak memory footprint
+--- s1 Runde 2 Ende 17:48:13
+17:48  up 35 days,  7:06, 16 users, load averages: 3.10 2.69 3.15
+--- s4 Runde 2 Start 17:48:13
+17:48  up 35 days,  7:06, 16 users, load averages: 3.10 2.69 3.15
+
+running 1 test
+Fortsetzen (Aufbau aus der Datei): 667.645917ms, Pausieren: 11.499125ms
+test pausing_with_a_million_queue_entries_takes_under_three_seconds ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 5.11s
+
+        5.12 real         3.30 user         0.85 sys
+           387465216  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+               24580  page reclaims
+                   1  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+                2457  voluntary context switches
+                2004  involuntary context switches
+         62301934252  instructions retired
+         14268422222  cycles elapsed
+           338395832  peak memory footprint
+--- s4 Runde 2 Ende 17:48:18
+17:48  up 35 days,  7:06, 16 users, load averages: 3.01 2.68 3.14
+Block G2 Ende

@@ -1,0 +1,12 @@
+Block blockH2 Start 2026-10-15T14:20:27Z (16:20 lokal), Ruhe (Load1 < 8) erreicht: ja
+16:20  up 35 days,  5:38, 16 users, load averages: 3.53 3.78 3.65
+/dev/disk3s1s1       926   11        24    33%  458732 259138920    0%   /
+--- s3-final perf-001 --pages 250000 Start 16:20:27
+16:20  up 35 days,  5:38, 16 users, load averages: 3.53 3.78 3.65
+--- s3-final perf-001 --pages 250000 Ende 16:23:28 Exit 0
+16:23  up 35 days,  5:42, 16 users, load averages: 4.31 4.03 3.77
+--- s0-baseline perf-001 --pages 250000 Start 16:23:28
+16:23  up 35 days,  5:42, 16 users, load averages: 4.31 4.03 3.77
+--- s0-baseline perf-001 --pages 250000 Ende 16:26:25 Exit 0
+16:26  up 35 days,  5:44, 16 users, load averages: 3.19 3.66 3.67
+Block blockH2 Ende 2026-10-15T14:26:25Z

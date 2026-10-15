@@ -1,0 +1,4 @@
+perf-003 (large): 122842 Requests/s, Crawler ja, passed = false
+  Spitzen-RSS des Crawl-Prozesses: 537 MB
+  VERLETZT: "PERF-003: Spitzen-RSS 537 MB >= 500 MB bei verlangsamtem Store"
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/m1-p33/docs/plan/M1-acceptance/loadtest/probe-p33/s0-baseline/report-perf-003-500000.json
