@@ -336,7 +336,10 @@ fn wal_checkpoint(conn: &Connection) -> Result<(), StoreError> {
 
 impl CrawlSink for SqliteSink {
     fn write(&mut self, batch: WriteBatch) -> Result<(), StoreError> {
-        self.drop_insert_trigger()?;
+        // Nur Batches mit neuen URLs brauchen den Trigger nicht (ein leerer Batch bleibt ein No-op ohne Schreibzugriff).
+        if !batch.new_urls.is_empty() {
+            self.drop_insert_trigger()?;
+        }
         if self.background_enabled {
             self.drive_background();
             self.throttle();
