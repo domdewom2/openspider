@@ -1,0 +1,42 @@
+{
+  "dir": "step5a-1m-final",
+  "store": {
+    "pages": 1000000,
+    "pages_per_s": 4169.7,
+    "segment_s": [
+      24.2,
+      29.3,
+      25.3,
+      24.0,
+      22.6,
+      22.0,
+      23.2,
+      23.8,
+      22.6,
+      22.8
+    ],
+    "segment_rel_to_mean_pct": [
+      101,
+      122,
+      105,
+      100,
+      94,
+      92,
+      97,
+      99,
+      94,
+      95
+    ],
+    "min_max_pct": [
+      92,
+      122
+    ],
+    "commit_max_s": 2.78,
+    "checkpoint_max_s": 0.0,
+    "end_batch_s": 33.9,
+    "finish_s": 3.7,
+    "file_mib": 3341,
+    "peak_rss_mib": 391,
+    "load_at_start": "3.38 3.91 3.76"
+  }
+}

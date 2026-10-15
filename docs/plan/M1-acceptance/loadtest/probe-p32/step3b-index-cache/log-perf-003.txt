@@ -1,0 +1,7 @@
+Start 2026-10-15T11:48:40Z (13:48 lokal)
+13:48  up 35 days,  3:07, 16 users, load averages: 3.81 3.88 4.28
+perf-003 (large): 134970 Requests/s, Crawler ja, passed = true
+  Spitzen-RSS des Crawl-Prozesses: 491 MB
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/m1-p32/docs/plan/M1-acceptance/loadtest/probe-p32/step3b-index-cache/perf-003.json
+Ende 2026-10-15T11:50:18Z (13:50 lokal), Exit 0
+13:50  up 35 days,  3:08, 16 users, load averages: 4.51 4.05 4.29

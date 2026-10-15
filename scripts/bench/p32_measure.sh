@@ -8,6 +8,8 @@
 #           WORK  Arbeitsordner fuer Crawl-Dateien AUSSERHALB des Repos (Standard ../p32-work), wird danach geleert
 #           PAGES Seiten der Kurzproben (Standard 250000), STORE_PAGES Seiten des Store-Benchmarks (Standard 1000000)
 #           EXTRA zusaetzliche Argumente fuer os-loadtest run (z. B. "--profile max-speed")
+#           P32_LOCKED=1  der Aufrufer haelt bench.lock schon (z. B. `lockf -t 7200 bench.lock env P32_LOCKED=1 ...`), die Bloecke
+#                         sperren dann nicht noch einmal
 #           LOADTEST, STORE_BIN  fertig gebaute Programme (Pfad zu os-loadtest bzw. zur Testdatei bench_writer-<hash>), damit
 #           ein spaeter geaenderter Quellstand die Ausgangsmessung nicht neu baut
 # Voraussetzung: cargo build --release --locked -p os-loadtest und cargo test --release --locked -p os-store --test
@@ -28,7 +30,11 @@ want="${*:-store perf-001 perf-003}"
 
 block() { # <name> <befehl...>: nur der Messlauf selbst steht unter der Sperre (Builds und Tests nie)
   name="$1"; shift
-  lockf -t 7200 "$lock" "$dir/run_block.sh" "$out/log-$name.txt" "$@"
+  if [ -n "$P32_LOCKED" ]; then # der Aufrufer haelt bench.lock bereits fuer mehrere Bloecke (A/B-Reihe unter gleicher Last)
+    "$dir/run_block.sh" "$out/log-$name.txt" "$@"
+  else
+    lockf -t 7200 "$lock" "$dir/run_block.sh" "$out/log-$name.txt" "$@"
+  fi
 }
 
 for b in $want; do

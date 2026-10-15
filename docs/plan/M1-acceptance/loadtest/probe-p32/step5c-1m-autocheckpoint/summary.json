@@ -1,0 +1,42 @@
+{
+  "dir": "step5c-1m-autocheckpoint",
+  "store": {
+    "pages": 1000000,
+    "pages_per_s": 5739.8,
+    "segment_s": [
+      18.9,
+      16.6,
+      16.0,
+      16.9,
+      16.0,
+      18.5,
+      17.4,
+      17.4,
+      17.8,
+      18.6
+    ],
+    "segment_rel_to_mean_pct": [
+      109,
+      95,
+      92,
+      97,
+      92,
+      106,
+      100,
+      100,
+      102,
+      107
+    ],
+    "min_max_pct": [
+      92,
+      109
+    ],
+    "commit_max_s": 0.98,
+    "checkpoint_max_s": 0.0,
+    "end_batch_s": 35.8,
+    "finish_s": 0.8,
+    "file_mib": 3341,
+    "peak_rss_mib": 387,
+    "load_at_start": "3.34 3.54 3.64"
+  }
+}

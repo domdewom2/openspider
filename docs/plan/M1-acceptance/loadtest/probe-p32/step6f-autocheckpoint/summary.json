@@ -1,0 +1,45 @@
+{
+  "dir": "step6f-autocheckpoint",
+  "perf-003": {
+    "passed": false,
+    "urls_per_s": 3348.8,
+    "seconds": 74.653,
+    "peak_rss_mb": 584.0,
+    "max_stall_s": 0.88,
+    "file_bytes": null,
+    "violations": [
+      "PERF-003: Spitzen-RSS 584 MB >= 500 MB bei verlangsamtem Store"
+    ],
+    "load_at_start": "5.44 5.97 4.90",
+    "store_commit_max_ns": 907612167,
+    "store_commit_ns": 12575981835,
+    "store_checkpoint_max_ns": 16800250,
+    "store_checkpoint_ns": 16824375,
+    "store_checkpoints": 2,
+    "store_bg_checkpoints": 0,
+    "store_bg_checkpoint_max_ns": 0,
+    "store_wait_checkpoint_ns": 0,
+    "store_link_index_build_ns": 5727495167,
+    "engine_w_write_max_ns": 6930206041,
+    "engine_send_ns": 32082567894,
+    "segments": {
+      "complete": 9,
+      "mean_pages_per_s": 3744.1,
+      "rel_pct": [
+        94,
+        101,
+        101,
+        108,
+        101,
+        105,
+        102,
+        95,
+        95
+      ],
+      "min_max_pct": [
+        94,
+        108
+      ]
+    }
+  }
+}

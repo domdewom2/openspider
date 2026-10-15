@@ -1,0 +1,22 @@
+Start 2026-10-15T15:48:18Z (17:48 lokal)
+17:48  up 35 days,  7:06, 16 users, load averages: 3.01 2.68 3.14
+
+running 1 test
+Abschnitt  1/10:     14.6 s (  6845 Seiten/s), groesster Commit 0.72 s, groesster Checkpoint 0.00 s
+Abschnitt  2/10:     14.5 s (  6901 Seiten/s), groesster Commit 0.59 s, groesster Checkpoint 0.00 s
+Abschnitt  3/10:     14.5 s (  6898 Seiten/s), groesster Commit 0.62 s, groesster Checkpoint 0.00 s
+test writer_1m_uniform_segments has been running for over 60 seconds
+Abschnitt  4/10:     14.8 s (  6740 Seiten/s), groesster Commit 0.63 s, groesster Checkpoint 0.00 s
+Abschnitt  5/10:     15.2 s (  6561 Seiten/s), groesster Commit 0.61 s, groesster Checkpoint 0.00 s
+Abschnitt  6/10:     14.8 s (  6763 Seiten/s), groesster Commit 0.48 s, groesster Checkpoint 0.00 s
+Abschnitt  7/10:     15.0 s (  6653 Seiten/s), groesster Commit 0.55 s, groesster Checkpoint 0.00 s
+Abschnitt  8/10:     14.9 s (  6690 Seiten/s), groesster Commit 0.54 s, groesster Checkpoint 0.00 s
+Abschnitt  9/10:     14.8 s (  6756 Seiten/s), groesster Commit 0.53 s, groesster Checkpoint 0.00 s
+Abschnitt 10/10:     14.8 s (  6748 Seiten/s), groesster Commit 0.43 s, groesster Checkpoint 0.00 s
+writer_1m_uniform_segments: 1000000 Seiten x 30 Links; URLs anlegen 7.3 s; Seiten schreiben 148.1 s (Wanduhr 150.5 s), 6754 Seiten/s; Abschnitt min/max zum Mittel 97 % / 102 %; groesster Commit 0.72 s; groesster Checkpoint 0.00 s; Endbatch (Indexaufbau) 33.1 s; finish 0.8 s; Datei 3341 MiB; Spitzen-RSS 359 MiB
+test writer_1m_uniform_segments ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 214.33s
+
+Ende 2026-10-15T15:51:53Z (17:51 lokal), Exit 0
+17:51  up 35 days,  7:10, 16 users, load averages: 3.40 2.95 3.14

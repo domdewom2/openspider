@@ -1,0 +1,119 @@
+{
+  "dir": "step2-url-counters",
+  "store": {
+    "pages": 250000,
+    "pages_per_s": 9259.0,
+    "segment_s": [
+      3.2,
+      2.8,
+      2.5,
+      2.7,
+      2.8,
+      2.6,
+      3.0,
+      2.5,
+      3.3,
+      1.6
+    ],
+    "segment_rel_to_mean_pct": [
+      118,
+      103,
+      93,
+      100,
+      105,
+      95,
+      112,
+      94,
+      123,
+      58
+    ],
+    "min_max_pct": [
+      58,
+      123
+    ],
+    "commit_max_s": 0.57,
+    "checkpoint_max_s": 0.0,
+    "end_batch_s": 6.2,
+    "finish_s": 0.7,
+    "file_mib": 813,
+    "peak_rss_mib": 609,
+    "load_at_start": "3.41 3.97 4.57"
+  },
+  "perf-001": {
+    "passed": true,
+    "urls_per_s": 3175.6,
+    "seconds": 78.725,
+    "peak_rss_mb": 724.8,
+    "max_stall_s": null,
+    "file_bytes": 1544531968,
+    "violations": [],
+    "load_at_start": "4.45 4.05 4.47",
+    "store_commit_max_ns": 916913959,
+    "store_commit_ns": 10574471957,
+    "store_checkpoint_max_ns": 1195259334,
+    "store_checkpoint_ns": 1195288459,
+    "store_checkpoints": 2,
+    "store_link_index_build_ns": 9531610875,
+    "engine_w_write_max_ns": 9959644292,
+    "engine_send_ns": 28356904960,
+    "segments": {
+      "complete": 10,
+      "mean_pages_per_s": 3730.8,
+      "rel_pct": [
+        37,
+        109,
+        131,
+        123,
+        131,
+        151,
+        126,
+        127,
+        125,
+        102
+      ],
+      "min_max_pct": [
+        37,
+        151
+      ]
+    }
+  },
+  "perf-003": {
+    "passed": false,
+    "urls_per_s": 2886.8,
+    "seconds": 86.602,
+    "peak_rss_mb": 726.9,
+    "max_stall_s": 2.278,
+    "file_bytes": null,
+    "violations": [
+      "PERF-003: Spitzen-RSS 726 MB >= 500 MB bei verlangsamtem Store"
+    ],
+    "load_at_start": "3.53 3.81 4.30",
+    "store_commit_max_ns": 737372167,
+    "store_commit_ns": 10416945542,
+    "store_checkpoint_max_ns": 1104777875,
+    "store_checkpoint_ns": 1104807541,
+    "store_checkpoints": 2,
+    "store_link_index_build_ns": 5907727875,
+    "engine_w_write_max_ns": 6435156041,
+    "engine_send_ns": 42491970848,
+    "segments": {
+      "complete": 9,
+      "mean_pages_per_s": 3130.6,
+      "rel_pct": [
+        41,
+        104,
+        124,
+        126,
+        124,
+        126,
+        131,
+        122,
+        117
+      ],
+      "min_max_pct": [
+        41,
+        131
+      ]
+    }
+  }
+}

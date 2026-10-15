@@ -1,0 +1,42 @@
+{
+  "dir": "step7d-final-1m-repeat",
+  "store": {
+    "pages": 1000000,
+    "pages_per_s": 6753.9,
+    "segment_s": [
+      14.6,
+      14.5,
+      14.5,
+      14.8,
+      15.2,
+      14.8,
+      15.0,
+      14.9,
+      14.8,
+      14.8
+    ],
+    "segment_rel_to_mean_pct": [
+      101,
+      102,
+      102,
+      100,
+      97,
+      100,
+      99,
+      99,
+      100,
+      100
+    ],
+    "min_max_pct": [
+      97,
+      102
+    ],
+    "commit_max_s": 0.72,
+    "checkpoint_max_s": 0.0,
+    "end_batch_s": 33.1,
+    "finish_s": 0.8,
+    "file_mib": 3341,
+    "peak_rss_mib": 359,
+    "load_at_start": "3.01 2.68 3.14"
+  }
+}

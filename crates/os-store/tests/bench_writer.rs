@@ -265,6 +265,7 @@ fn writer_1m_uniform_segments() {
     os_store::sink::diag::reset();
     let wall = Instant::now();
     let mut segment_s = [0f64; SEGMENTS];
+    let mut segment_pages = [0i64; SEGMENTS];
     let mut segment_diag = Vec::new();
     let mut commit_max_ns = 0u64;
     let mut checkpoint_max_ns = 0u64;
@@ -285,6 +286,7 @@ fn writer_1m_uniform_segments() {
         let spent = t.elapsed().as_secs_f64();
         let seg = segment.min(SEGMENTS - 1);
         segment_s[seg] += spent;
+        segment_pages[seg] += last - first + 1;
         written_in_segment += last - first + 1;
         first = last + 1;
         if written_in_segment >= per_segment && segment < SEGMENTS - 1 || first > pages {
@@ -320,8 +322,20 @@ fn writer_1m_uniform_segments() {
     let finish_s = t_finish.elapsed().as_secs_f64();
     drop(sink);
 
-    let mean = pages_s / SEGMENTS as f64;
-    let rel: Vec<f64> = segment_s.iter().map(|s| s / mean).collect();
+    // Durchsatz je Abschnitt im Verhältnis zum Mittel (die Abschnitte enden an Batch-Grenzen und können bei Seitenzahlen,
+    // die kein Vielfaches von 20 000 sind, verschieden viele Seiten haben).
+    let mean_rate = pages as f64 / pages_s;
+    let rel: Vec<f64> = segment_s
+        .iter()
+        .zip(segment_pages)
+        .map(|(s, n)| {
+            if *s > 0.0 {
+                (n as f64 / s) / mean_rate
+            } else {
+                1.0
+            }
+        })
+        .collect();
     let file_bytes = std::fs::metadata(&path).unwrap().len();
     let rss = peak_rss_bytes();
     println!(
@@ -351,6 +365,7 @@ fn writer_1m_uniform_segments() {
             "wall_s": wall_s,
             "pages_per_s": pages as f64 / pages_s,
             "segment_s": segment_s,
+            "segment_pages": segment_pages,
             "segment_rel_to_mean": rel,
             "segment_diag": segment_diag,
             "commit_max_s": commit_max_ns as f64 / 1e9,

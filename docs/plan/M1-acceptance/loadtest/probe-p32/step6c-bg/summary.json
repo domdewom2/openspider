@@ -1,0 +1,44 @@
+{
+  "dir": "step6c-bg",
+  "perf-001": {
+    "passed": true,
+    "urls_per_s": 3342.8,
+    "seconds": 74.788,
+    "peak_rss_mb": 483.8,
+    "max_stall_s": null,
+    "file_bytes": 1544839168,
+    "violations": [],
+    "load_at_start": "5.03 3.96 3.77",
+    "store_commit_max_ns": 555089834,
+    "store_commit_ns": 11180781285,
+    "store_checkpoint_max_ns": 2640115125,
+    "store_checkpoint_ns": 2640143500,
+    "store_checkpoints": 2,
+    "store_bg_checkpoints": 263,
+    "store_bg_checkpoint_max_ns": 1074269042,
+    "store_wait_checkpoint_ns": 0,
+    "store_link_index_build_ns": 10173268416,
+    "engine_w_write_max_ns": 10603109167,
+    "engine_send_ns": 21507306779,
+    "segments": {
+      "complete": 10,
+      "mean_pages_per_s": 4204.2,
+      "rel_pct": [
+        107,
+        109,
+        111,
+        103,
+        89,
+        120,
+        100,
+        116,
+        87,
+        76
+      ],
+      "min_max_pct": [
+        76,
+        120
+      ]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+Start 2026-10-15T15:51:53Z (17:51 lokal)
+17:51  up 35 days,  7:10, 16 users, load averages: 3.40 2.95 3.14
+
+running 1 test
+inlinks_without_index_250k_pages: 250000 Seiten x 30 Links; links_page In (50 Zeilen) ohne Index 0.24 s (Mittel aus 4 Zielen, einzeln [0.22, 0.24, 0.26, 0.22]), mit Index 0.0003 s; Indexaufbau 3.2 s; Hochrechnung 1 Mio. Seiten (x4.0): ohne Index 0.9 s, Aufbau 13 s
+test inlinks_without_index_250k_pages ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 34.13s
+
+Ende 2026-10-15T15:52:27Z (17:52 lokal), Exit 0
+17:52  up 35 days,  7:10, 16 users, load averages: 2.96 2.91 3.12
