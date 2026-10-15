@@ -22,14 +22,21 @@ pub struct Migration {
 }
 
 /// Alle Migrationen in Reihenfolge.
-pub const MIGRATIONS: &[Migration] = &[Migration {
-    version: 1,
-    name: "init",
-    sql: include_str!("../migrations/0001_init.sql"),
-}];
+pub const MIGRATIONS: &[Migration] = &[
+    Migration {
+        version: 1,
+        name: "init",
+        sql: include_str!("../migrations/0001_init.sql"),
+    },
+    Migration {
+        version: 2,
+        name: "url_counters",
+        sql: include_str!("../migrations/0002_url_counters.sql"),
+    },
+];
 
 /// Aktuelle Schemaversion dieses Programmstands.
-pub const SCHEMA_VERSION: u32 = 1;
+pub const SCHEMA_VERSION: u32 = 2;
 
 /// Neueste Version einer Migrationsliste (0 bei leerer Liste).
 pub fn latest_version(migrations: &[Migration]) -> u32 {

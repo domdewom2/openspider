@@ -851,6 +851,16 @@ fn pct_of_total_counts_every_2xx_html_page_in_numerator_and_denominator() {
             )
             .unwrap();
     }
+    // Die Zeilen wurden direkt eingefügt: die Zähler (Schema v2, `url_counters`) aus den Links berechnen.
+    let ids: Vec<i64> = (1..=4).collect();
+    for (id, c) in os_store::counters::recompute_many(file.conn(), &ids).unwrap() {
+        file.conn()
+            .execute(
+                "UPDATE url_counters SET html_2xx_sources = ?1, inlinks = ?2 WHERE url_id = ?3",
+                rusqlite::params![c.html_2xx_sources, c.inlinks, id],
+            )
+            .unwrap();
+    }
     let mut q = ViewQuery::new("Internal", "All");
     q.columns = ColumnSelection::Named(vec!["Address".into(), "% of Total".into()]);
     q.limit = 500;

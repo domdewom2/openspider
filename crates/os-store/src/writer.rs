@@ -4,10 +4,17 @@
 //! `queue` → `sitemaps`/`robots` → `meta`/`events`/`counters`. Alle Anweisungen sind vorbereitet und werden
 //! im Statement-Cache der Verbindung gehalten.
 //!
-//! **Änderungsfeed** (M1-Plan 3.9): Je Batch ist `n = crawl_meta.change_seq + 1`. Jede eingefügte oder
-//! geänderte `urls`-Zeile – neue URLs, `UrlUpdate`s, Seiten (auch `replace`) und alle Zielzeilen von
-//! Zähleränderungen – erhält `change_seq = n`; am Ende der Transaktion wird `crawl_meta.change_seq = n`
-//! geschrieben. Ein vollständig leerer Batch ist ein No-op und erhöht die Sequenz nicht.
+//! **Änderungsfeed** (M1-Plan 3.9, 3.14): Je Batch ist `n = crawl_meta.change_seq + 1`. Jede eingefügte oder
+//! geänderte `urls`-Zeile – neue URLs, `UrlUpdate`s, Seiten (auch `replace`) – erhält `change_seq = n`, jede
+//! Zeile von `url_counters`, deren Zähler sich ändern, ebenfalls; am Ende der Transaktion wird
+//! `crawl_meta.change_seq = n` geschrieben ([`crate::queries::changed_since`] vereinigt beide Tabellen). Ein
+//! vollständig leerer Batch ist ein No-op und erhöht die Sequenz nicht.
+//!
+//! **Zähler** (Schema v2, K-75): Die Zeile in `url_counters` legt ein Trigger zusammen mit der `urls`-Zeile an
+//! (`0002_url_counters.sql`); [`crate::counters`] pflegt die Differenzen je Batch.
+//!
+//! **Index `links_target`** (K-74): Der Writer entfernt ihn beim Öffnen und baut ihn beim regulären Ende im letzten
+//! Batch auf ([`crate::link_index`]).
 //!
 //! **Kennungen:** Nach dem Schreiben gelten `next_url_id > max(NewUrl.id)` und `next_seq > max(Push.seq)`
 //! in `crawl_meta` (unabhängig davon, was die Engine in `meta` übergibt), damit ein Fortsetzen nie
@@ -26,13 +33,15 @@ use os_model::{
     PageWrite, PaginationRow, QueueOp, RefreshRow, RobotsWrite, SitemapWrite, UrlId, UrlUpdate,
     WriteBatch,
 };
-use os_model::{ElementPair, NewUrl};
+use os_model::{ContentClass, CrawlState, ElementPair, NewUrl};
 use rusqlite::types::Value;
 use rusqlite::{params, params_from_iter, Connection, Transaction, TransactionBehavior};
 
+use crate::checkpointer::Checkpointer;
 use crate::collation;
-use crate::counters::{BatchCounters, Contribution};
+use crate::counters::{BatchCounters, Contribution, InternalFlags};
 use crate::error::StoreError;
+use crate::link_index;
 use crate::open::{CrawlFile, OpenMode};
 use crate::profile::{self, StorageProfile};
 use crate::sink::CrawlSink;
@@ -41,52 +50,114 @@ use crate::sink::CrawlSink;
 const STATEMENT_CACHE: usize = 128;
 
 /// Standard-Senke der Engine.
+///
+/// **WAL:** Standardmäßig checkpointet SQLite im `COMMIT` (`wal_autocheckpoint`); die Schwelle wächst mit der
+/// Datei von 256 bis 512 MiB. Ein von außen gesetzter Wert bleibt unangetastet.
+///
+/// **Hintergrund-Checkpoint (K-76, optional):** [`SqliteSink::with_background_checkpoint`] stellt
+/// `wal_autocheckpoint` auf 0; ein eigener Thread ([`crate::checkpointer`]) führt `PASSIVE`-Checkpoints aus.
+/// Er ist **nicht** der Standard: Die Messung M1-P32 (Store-Benchmark mit 1 Mio. Seiten und Kurzprobe mit 250 000
+/// Seiten) zeigt ihn langsamer als den Checkpoint im Commit, weil SQLite das WAL nur zurücksetzt, wenn der nächste
+/// Schreibvorgang nach dem Ende eines Durchlaufs beginnt (siehe `probe-p32/README.md`).
+/// [`SqliteSink::finish`] und [`CrawlSink::checkpoint`] halten den Thread an und führen den kurzen
+/// `TRUNCATE`-Checkpoint aus (Pause, Ende); der nächste Schreibaufruf startet ihn wieder.
 pub struct SqliteSink {
     file: CrawlFile,
     profile: StorageProfile,
     clock: Arc<dyn Clock>,
+    /// Welche URL-Kennungen intern sind (für die Zähler, ohne Lesezugriff auf die breite `urls`-Zeile).
+    internal: InternalFlags,
+    /// Der Einfüge-Trigger für die Zählerzeilen ist entfernt (der Writer legt die Zeilen selbst an); Ende, Pause und
+    /// Schließen stellen ihn wieder her, der nächste Schreibaufruf entfernt ihn erneut.
+    insert_trigger_dropped: bool,
     /// Zuletzt gesetzte Schwelle von `PRAGMA wal_autocheckpoint` (Seiten); `None`, sobald jemand anderes sie
-    /// geändert hat (dann stellt der Sink sie nicht mehr um).
+    /// geändert hat (dann stellt der Sink sie nicht mehr um) oder der Hintergrund-Checkpoint sie auf 0 gestellt hat.
     checkpoint_pages: Option<i64>,
-    /// Grenzen der Checkpoint-Schwelle in Seiten (Standard: [`profile::WAL_CHECKPOINT_MIN_PAGES`] bis
+    /// Der Hintergrund-Checkpoint ist eingeschaltet ([`SqliteSink::with_background_checkpoint`]).
+    background_enabled: bool,
+    /// Jemand anderes hat `PRAGMA wal_autocheckpoint` gesetzt: der Sink startet keinen Hintergrund-Checkpoint.
+    external_autocheckpoint: bool,
+    /// Der Hintergrund-Thread ließ sich nicht starten (Diagnose-Zähler); der Sink versucht es nicht noch einmal.
+    background_failed: bool,
+    /// Grenzen des Auslösers in Seiten (Standard: [`profile::WAL_CHECKPOINT_MIN_PAGES`] bis
     /// [`profile::WAL_CHECKPOINT_MAX_PAGES`]).
     checkpoint_bounds: (i64, i64),
+    background: Option<Checkpointer>,
 }
+
+/// Obergrenze der WAL-Größe in Seiten, ab der der Writer kurz auf den Hintergrund-Checkpoint wartet (1 GiB bei 4 KiB
+/// Seitengröße, mindestens das Vierfache des Auslösers). Im Normalbetrieb wird sie nie erreicht (`wait_checkpoint_n` = 0).
+const WAL_THROTTLE_MIN_PAGES: i64 = 262_144;
+/// Längste Wartezeit des Writers auf einen Durchlauf des Hintergrund-Checkpoints je Schreibaufruf.
+const WAL_THROTTLE_WAIT: std::time::Duration = std::time::Duration::from_secs(2);
 
 impl SqliteSink {
     /// Öffnet die Crawl-Datei zum Schreiben: registriert die Kollation `OS_TEXT`, setzt die PRAGMAs des
-    /// Profils (CRAWL-124) und dimensioniert den Statement-Cache.
+    /// Profils (CRAWL-124), entfernt den Index `links_target` (K-74, er entsteht erst beim regulären Ende, siehe
+    /// [`crate::link_index`]) und dimensioniert den Statement-Cache.
     pub fn open(path: &Path, profile: StorageProfile) -> Result<Self, StoreError> {
         let file = CrawlFile::open(path, OpenMode::ReadWrite)?;
         collation::ensure(file.conn())?;
         profile::apply(file.conn(), profile)?;
+        link_index::drop_index(file.conn())?;
         file.conn()
             .set_prepared_statement_cache_capacity(STATEMENT_CACHE);
-        Ok(SqliteSink {
+        let sink = SqliteSink {
             file,
             profile,
             clock: Arc::new(SystemClock),
+            internal: InternalFlags::default(),
+            insert_trigger_dropped: false,
             checkpoint_pages: Some(profile::WAL_CHECKPOINT_MIN_PAGES),
+            background_enabled: false,
+            external_autocheckpoint: false,
+            background_failed: false,
             checkpoint_bounds: (
                 profile::WAL_CHECKPOINT_MIN_PAGES,
                 profile::WAL_CHECKPOINT_MAX_PAGES,
             ),
-        })
+            background: None,
+        };
+        // Diagnoseschalter für Großläufe (N21): ohne Codeänderung zwischen beiden Verfahren vergleichen.
+        if std::env::var_os("OS_STORE_BACKGROUND_CHECKPOINT").is_some_and(|v| v == "1") {
+            return sink.with_background_checkpoint();
+        }
+        Ok(sink)
+    }
+
+    /// Schaltet den Hintergrund-Checkpoint (K-76) ein: `wal_autocheckpoint = 0`, ein Thread führt `PASSIVE`-Checkpoints
+    /// aus, sobald das WAL den Auslöser erreicht (siehe [`SqliteSink::with_checkpoint_bounds`]). Nicht der Standard,
+    /// siehe die Beschreibung der Senke.
+    pub fn with_background_checkpoint(mut self) -> Result<Self, StoreError> {
+        self.file
+            .conn()
+            .pragma_update(None, "wal_autocheckpoint", 0)?;
+        self.checkpoint_pages = None;
+        self.background_enabled = true;
+        self.limit_wal_file()?;
+        Ok(self)
     }
 
     /// Setzt die Grenzen der Checkpoint-Schwelle (Seiten) und die Schwelle auf die Untergrenze; sie wächst danach
-    /// mit der Datei bis zur Obergrenze. Für Tests und Messläufe mit kleinen Dateien.
+    /// mit der Datei bis zur Obergrenze (Checkpoint im Commit bzw. Auslöser des Hintergrund-Checkpoints). Für Tests und
+    /// Messläufe mit kleinen Dateien.
     pub fn with_checkpoint_bounds(
         mut self,
         min_pages: i64,
         max_pages: i64,
     ) -> Result<Self, StoreError> {
         let min_pages = min_pages.max(1);
-        self.file
-            .conn()
-            .pragma_update(None, "wal_autocheckpoint", min_pages)?;
         self.checkpoint_bounds = (min_pages, max_pages.max(min_pages));
-        self.checkpoint_pages = Some(min_pages);
+        if self.background_enabled {
+            // ein laufender Thread startet mit den neuen Grenzen beim nächsten Schreiben neu
+            self.stop_background();
+            self.limit_wal_file()?;
+        } else {
+            self.file
+                .conn()
+                .pragma_update(None, "wal_autocheckpoint", min_pages)?;
+            self.checkpoint_pages = Some(min_pages);
+        }
         Ok(self)
     }
 
@@ -96,8 +167,8 @@ impl SqliteSink {
         self
     }
 
-    /// Lässt die Checkpoint-Schwelle mit der Datei wachsen ([`profile::wal_checkpoint_pages`]); ein von außen
-    /// gesetzter Wert (z. B. im Lasttest) bleibt unangetastet. Fehler sind unkritisch: die Schwelle bleibt dann.
+    /// Lässt die Checkpoint-Schwelle im Commit mit der Datei wachsen ([`profile::wal_checkpoint_pages`]); ein von
+    /// außen gesetzter Wert (z. B. im Lasttest) bleibt unangetastet. Fehler sind unkritisch: die Schwelle bleibt dann.
     fn adapt_checkpoint_threshold(&mut self) {
         let Some(current) = self.checkpoint_pages else {
             return;
@@ -121,6 +192,108 @@ impl SqliteSink {
         }
     }
 
+    /// `journal_size_limit`: Nach einem Zurücksetzen des WAL kürzt SQLite die Datei auf diese Größe (ein Viertel des
+    /// kleinsten Auslösers, 1 bis 64 MiB), damit die Dateilänge der Zahl der Frames entspricht, auf die der Thread
+    /// seine Auslöser stützt.
+    fn limit_wal_file(&self) -> Result<(), StoreError> {
+        let conn = self.file.conn();
+        let page_size: i64 = conn.pragma_query_value(None, "page_size", |r| r.get(0))?;
+        let limit = (self.checkpoint_bounds.0.saturating_mul(page_size) / 4)
+            .clamp(1024 * 1024, 64 * 1024 * 1024);
+        conn.pragma_update(None, "journal_size_limit", limit)?;
+        Ok(())
+    }
+
+    /// Hält den Hintergrund-Checkpoint am Laufen: erkennt einen von außen gesetzten `wal_autocheckpoint` (dann
+    /// bleibt es dabei) und startet den Thread beim ersten Schreiben nach dem Öffnen, nach einer Pause oder
+    /// nach geänderten Grenzen.
+    fn drive_background(&mut self) {
+        if self.external_autocheckpoint {
+            return;
+        }
+        let set: Result<i64, _> =
+            self.file
+                .conn()
+                .pragma_query_value(None, "wal_autocheckpoint", |r| r.get(0));
+        if matches!(set, Ok(n) if n != 0) {
+            self.external_autocheckpoint = true;
+            self.stop_background();
+            return;
+        }
+        if self.background.is_none() && !self.background_failed {
+            match Checkpointer::start(
+                self.file.path(),
+                self.profile.synchronous_during_crawl(),
+                self.checkpoint_bounds,
+            ) {
+                Ok(thread) => self.background = Some(thread),
+                Err(_) => {
+                    // Der Crawl läuft ohne Hintergrund-Checkpoint weiter; der Abschluss-Checkpoint bleibt.
+                    self.background_failed = true;
+                    crate::sink::diag::record_background_error();
+                }
+            }
+        }
+    }
+
+    /// Wartet kurz auf den Hintergrund-Checkpoint, wenn das WAL weit über den Auslöser hinaus gewachsen ist.
+    fn throttle(&self) {
+        let Some(background) = &self.background else {
+            return;
+        };
+        let cap = (4 * background.trigger_pages()).max(WAL_THROTTLE_MIN_PAGES);
+        if background.wal_frames() > cap {
+            let t = std::time::Instant::now();
+            background.wait_for_pass(WAL_THROTTLE_WAIT);
+            crate::sink::diag::record_checkpoint_wait(t);
+        }
+    }
+
+    /// Entfernt den Einfüge-Trigger vor dem ersten Schreiben (einmal je Lauf zwischen zwei Wiederherstellungen).
+    fn drop_insert_trigger(&mut self) -> Result<(), StoreError> {
+        if !self.insert_trigger_dropped {
+            crate::counters::drop_insert_trigger(self.file.conn())?;
+            self.insert_trigger_dropped = true;
+        }
+        Ok(())
+    }
+
+    /// Stellt den Einfüge-Trigger wieder her, wenn er entfernt war.
+    fn restore_insert_trigger(&mut self) -> Result<(), StoreError> {
+        if self.insert_trigger_dropped {
+            crate::counters::restore_insert_trigger(self.file.conn())?;
+            self.insert_trigger_dropped = false;
+        }
+        Ok(())
+    }
+
+    /// Hält den Hintergrund-Thread an und wartet auf ihn.
+    fn stop_background(&mut self) {
+        if let Some(mut thread) = self.background.take() {
+            thread.stop();
+        }
+    }
+
+    /// Aktuelle Schwelle des Checkpoints in Seiten (WAL-Frames): bei laufendem Hintergrund-Thread dessen Auslöser, der mit
+    /// der Dateigröße mitwächst, sonst die Schwelle von `wal_autocheckpoint` bzw. die Untergrenze.
+    pub fn checkpoint_trigger_pages(&self) -> i64 {
+        match &self.background {
+            Some(thread) => thread.trigger_pages(),
+            None => self.checkpoint_pages.unwrap_or(self.checkpoint_bounds.0),
+        }
+    }
+
+    /// Ob ein Hintergrund-Checkpoint läuft (nicht bei von außen gesetztem `wal_autocheckpoint`, nicht vor dem ersten
+    /// Schreiben, nicht zwischen Pause und dem nächsten Schreiben).
+    pub fn background_checkpoint_running(&self) -> bool {
+        self.background.is_some()
+    }
+
+    /// Der erste Fehler des Hintergrund-Threads (Diagnose; der Crawl läuft weiter).
+    pub fn background_checkpoint_error(&self) -> Option<String> {
+        self.background.as_ref().and_then(Checkpointer::last_error)
+    }
+
     /// Die geöffnete Crawl-Datei (Lesezugriff, z. B. für Diagnose und Tests).
     pub fn file(&self) -> &CrawlFile {
         &self.file
@@ -131,9 +304,11 @@ impl SqliteSink {
         self.profile
     }
 
-    /// Schließt den Crawl ab: stellt `synchronous` auf den Wert nach dem Crawl und führt das WAL vollständig
-    /// in die Hauptdatei zurück (CRAWL-124).
+    /// Schließt den Crawl ab: hält den Hintergrund-Checkpoint an, stellt `synchronous` auf den Wert nach dem Crawl und
+    /// führt das WAL vollständig in die Hauptdatei zurück (CRAWL-124).
     pub fn finish(&mut self) -> Result<(), StoreError> {
+        self.stop_background();
+        self.restore_insert_trigger()?;
         profile::settle(self.file.conn(), self.profile)?;
         wal_checkpoint(self.file.conn())
     }
@@ -141,6 +316,8 @@ impl SqliteSink {
 
 impl Drop for SqliteSink {
     fn drop(&mut self) {
+        self.stop_background();
+        let _ = self.restore_insert_trigger();
         // Der Abschluss-Checkpoint beim Schließen der Verbindung soll mit `synchronous = NORMAL` laufen.
         let _ = profile::settle(self.file.conn(), self.profile);
     }
@@ -159,16 +336,33 @@ fn wal_checkpoint(conn: &Connection) -> Result<(), StoreError> {
 
 impl CrawlSink for SqliteSink {
     fn write(&mut self, batch: WriteBatch) -> Result<(), StoreError> {
-        // Die Schwelle gilt für den nächsten Commit; sie wächst mit der Datei, bevor dieser Commit eine
-        // Checkpoint-Entscheidung trifft.
-        self.adapt_checkpoint_threshold();
-        write_batch(self.file.conn(), &batch, self.clock.as_ref())
+        // Nur Batches mit neuen URLs brauchen den Trigger nicht (ein leerer Batch bleibt ein No-op ohne Schreibzugriff).
+        if !batch.new_urls.is_empty() {
+            self.drop_insert_trigger()?;
+        }
+        if self.background_enabled {
+            self.drive_background();
+            self.throttle();
+        } else {
+            // Die Schwelle gilt für den nächsten Commit; sie wächst mit der Datei, bevor dieser Commit eine
+            // Checkpoint-Entscheidung trifft.
+            self.adapt_checkpoint_threshold();
+        }
+        write_batch(
+            self.file.conn(),
+            &batch,
+            self.clock.as_ref(),
+            &mut self.internal,
+        )
     }
 
     /// Dauerhafter Zeitpunkt: WAL in die Hauptdatei zurückführen. Unter „Maximale Geschwindigkeit“
     /// (`synchronous = OFF`) wird dafür kurz auf `NORMAL` geschaltet, damit der Checkpoint wirklich auf den
     /// Datenträger gelangt.
     fn checkpoint(&mut self) -> Result<(), StoreError> {
+        // Kein Durchlauf des Hintergrund-Threads neben dem `TRUNCATE`; der nächste Schreibaufruf startet ihn neu.
+        self.stop_background();
+        self.restore_insert_trigger()?;
         let conn = self.file.conn();
         let relaxed =
             self.profile.synchronous_during_crawl() != self.profile.synchronous_after_crawl();
@@ -206,7 +400,12 @@ fn int(v: u64) -> i64 {
 }
 
 /// Schreibt einen Batch in einer Transaktion.
-fn write_batch(conn: &Connection, batch: &WriteBatch, clock: &dyn Clock) -> Result<(), StoreError> {
+fn write_batch(
+    conn: &Connection,
+    batch: &WriteBatch,
+    clock: &dyn Clock,
+    internal: &mut InternalFlags,
+) -> Result<(), StoreError> {
     if is_empty(batch) {
         return Ok(());
     }
@@ -214,9 +413,9 @@ fn write_batch(conn: &Connection, batch: &WriteBatch, clock: &dyn Clock) -> Resu
     let tx = Transaction::new_unchecked(conn, TransactionBehavior::Immediate)?;
     let seq = read_change_seq(&tx)? + 1;
 
-    insert_new_urls(&tx, &batch.new_urls, seq)?;
+    insert_new_urls(&tx, &batch.new_urls, seq, internal)?;
     apply_url_updates(&tx, &batch.url_updates, seq)?;
-    let mut batch_counters = BatchCounters::default();
+    let mut batch_counters = BatchCounters::new(internal);
     for page in &batch.pages {
         write_page(&tx, page, seq, &mut batch_counters)?;
     }
@@ -232,11 +431,35 @@ fn write_batch(conn: &Connection, batch: &WriteBatch, clock: &dyn Clock) -> Resu
     write_meta(&tx, batch, seq)?;
     write_events_and_counters(&tx, batch)?;
     crate::sink::diag::record_build(built);
+    // K-74: Der Index entsteht mit dem regulären Ende, im letzten Batch und derselben Transaktion – ein
+    // Fehlschlag lässt den Crawl dann nicht als beendet erscheinen.
+    if completes_crawl(batch) && link_index::ensure(&tx)? {
+        // Das Ereignis (ohne Dauer, deterministisch) macht den Aufbau in der Ereignisliste sichtbar; die Dauer steht in
+        // den Messzählern (`link_index_build_ns`).
+        tx.prepare_cached(
+            "INSERT INTO crawl_events (at, kind, code, message) VALUES (?1, 'info', 'links_index_built', ?2)",
+        )?
+        .execute(params![
+            clock.now().to_db(),
+            "Index links_target für die Listen nach Linkziel aufgebaut"
+        ])?;
+    }
 
     let committing = std::time::Instant::now();
     tx.commit()?;
     crate::sink::diag::record_commit(committing);
     Ok(())
+}
+
+/// Ob der Batch den Crawl regulär beendet (Zustand `Completed` als letzter `state`-Eintrag der Metadaten:
+/// Ende, Stopp oder Limit; nicht Pause oder Fehler).
+fn completes_crawl(batch: &WriteBatch) -> bool {
+    batch
+        .meta
+        .iter()
+        .rev()
+        .find(|(key, _)| key == "state")
+        .is_some_and(|(_, value)| value == CrawlState::Completed.as_str())
 }
 
 fn read_change_seq(tx: &Transaction<'_>) -> Result<i64, StoreError> {
@@ -252,7 +475,12 @@ fn read_change_seq(tx: &Transaction<'_>) -> Result<i64, StoreError> {
     Ok(value.and_then(|v| v.parse().ok()).unwrap_or(0))
 }
 
-fn insert_new_urls(tx: &Transaction<'_>, urls: &[NewUrl], seq: i64) -> Result<(), StoreError> {
+fn insert_new_urls(
+    tx: &Transaction<'_>,
+    urls: &[NewUrl],
+    seq: i64,
+    internal: &mut InternalFlags,
+) -> Result<(), StoreError> {
     if urls.is_empty() {
         return Ok(());
     }
@@ -261,6 +489,8 @@ fn insert_new_urls(tx: &Transaction<'_>, urls: &[NewUrl], seq: i64) -> Result<()
          discovered_via, crawl_depth, folder_depth, url_length, change_seq) \
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
     )?;
+    let mut counters_row =
+        tx.prepare_cached("INSERT OR IGNORE INTO url_counters (url_id) VALUES (?1)")?;
     for u in urls {
         let inserted = stmt.execute(params![
             u.id.0,
@@ -278,7 +508,10 @@ fn insert_new_urls(tx: &Transaction<'_>, urls: &[NewUrl], seq: i64) -> Result<()
             seq
         ]);
         match inserted {
-            Ok(_) => {}
+            Ok(_) => {
+                counters_row.execute([u.id.0])?;
+                internal.set(u.id.0, u.is_internal);
+            }
             Err(rusqlite::Error::SqliteFailure(f, _))
                 if f.code == rusqlite::ErrorCode::ConstraintViolation =>
             {
@@ -510,13 +743,31 @@ fn page_values(page: &PageWrite, seq: i64) -> Vec<Value> {
     v
 }
 
-fn source_is_internal(tx: &Transaction<'_>, id: i64) -> Result<bool, StoreError> {
-    let mut stmt = tx.prepare_cached("SELECT is_internal FROM urls WHERE id = ?1")?;
+/// Zustand der Zeile einer Seite vor dem Überschreiben: ob sie intern ist und ob sie bisher eine HTML-Seite mit
+/// Status 2xx war (Beitrag zu `html_2xx_sources` ihrer Linkziele). Ein Lesezugriff auf dieselbe Zeile, die das
+/// `UPDATE` danach ändert.
+fn source_state(tx: &Transaction<'_>, id: i64) -> Result<(bool, bool), StoreError> {
+    let mut stmt = tx
+        .prepare_cached("SELECT is_internal, content_class, status_code FROM urls WHERE id = ?1")?;
     let mut rows = stmt.query([id])?;
     Ok(match rows.next()? {
-        Some(row) => row.get::<_, i64>(0)? != 0,
-        None => false,
+        Some(row) => {
+            let internal = row.get::<_, i64>(0)? != 0;
+            let class: Option<String> = row.get(1)?;
+            let status: Option<i64> = row.get(2)?;
+            (
+                internal,
+                class.as_deref() == Some(ContentClass::Html.as_str())
+                    && status.is_some_and(|s| (200..=299).contains(&s)),
+            )
+        }
+        None => (false, false),
     })
+}
+
+/// Ob eine Seite beim Schreiben eine HTML-Seite mit Status 2xx ist.
+fn is_html_2xx(page: &PageWrite) -> bool {
+    page.fetch.content_class == ContentClass::Html && (200..=299).contains(&page.fetch.status_code)
 }
 
 fn delete_children(tx: &Transaction<'_>, id: i64) -> Result<(), StoreError> {
@@ -542,9 +793,11 @@ fn write_page(
     tx: &Transaction<'_>,
     page: &PageWrite,
     seq: i64,
-    batch_counters: &mut BatchCounters,
+    batch_counters: &mut BatchCounters<'_>,
 ) -> Result<(), StoreError> {
     let id = page.url_id.0;
+    // Der bisherige Zustand der Zeile steht vor dem Überschreiben fest (nur ein Lesezugriff auf dieselbe Zeile).
+    let (internal, old_html_2xx) = source_state(tx, id)?;
     let changed = tx
         .prepare_cached(page_update_sql())?
         .execute(params_from_iter(page_values(page, seq).iter()))?;
@@ -552,10 +805,9 @@ fn write_page(
         return Err(batch_error(format!("PageWrite: URL {id} existiert nicht")));
     }
 
-    let internal = source_is_internal(tx, id)?;
     let old = if page.replace {
         let old = if internal {
-            Contribution::load(tx, id)?
+            Contribution::load(tx, id, old_html_2xx)?
         } else {
             Contribution::default()
         };
@@ -575,7 +827,7 @@ fn write_page(
     insert_headers(tx, id, &page.headers)?;
 
     if internal {
-        let new = Contribution::from_rows(&page.links, &page.images);
+        let new = Contribution::from_rows(&page.links, &page.images, is_html_2xx(page));
         batch_counters.add_page(tx, id, &old, &new)?;
     }
     Ok(())

@@ -305,12 +305,74 @@ fn link_view(row: &Row<'_>) -> Result<LinkView, StoreError> {
     })
 }
 
+/// Schritt 2 einer Link-Abfrage: die Zeilen zu den Kennungen der Seite, in die Reihenfolge von Schritt 1 gebracht.
+fn link_views_by_ids(conn: &Connection, ids: &[i64]) -> Result<Vec<LinkView>, StoreError> {
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+    let placeholders = vec!["?"; ids.len()].join(",");
+    let rows_sql = format!(
+        "SELECT l.link_type, l.source_id, s.address, l.target_id, COALESCE(t.address, l.target_raw), \
+                l.anchor, l.alt_text, l.follow, t.status_code, {STATUS_EXPR}, l.id \
+         FROM links l JOIN urls s ON s.id = l.source_id LEFT JOIN urls t ON t.id = l.target_id \
+         WHERE l.id IN ({placeholders})"
+    );
+    let mut stmt = conn.prepare_cached(&rows_sql)?;
+    let mut rows = stmt.query(rusqlite::params_from_iter(ids.iter()))?;
+    let mut by_id: std::collections::HashMap<i64, LinkView> =
+        std::collections::HashMap::with_capacity(ids.len());
+    while let Some(row) = rows.next()? {
+        by_id.insert(row.get(10)?, link_view(row)?);
+    }
+    Ok(ids.iter().filter_map(|i| by_id.remove(i)).collect())
+}
+
+/// Eingehende Links ohne den Index `links_target` (K-74): **ein** sequenzieller Lauf über `links` liefert Treffer,
+/// Sortierung und Gesamtzahl zugleich; die Seite wird aus dem sortierten Strom geschnitten. Nur die Kennungen
+/// (8 Byte je Treffer) laufen durch Rust, nie die breiten Zeilen. Mit Index gilt der Pfad in [`links_page`].
+fn inlinks_without_index(
+    conn: &Connection,
+    id: UrlId,
+    page: PageReq,
+) -> Result<Page<LinkView>, StoreError> {
+    let (order, needs_target) = order_by(Direction::In, &page.sort)?;
+    let join_target = if needs_target {
+        "LEFT JOIN urls t ON t.id = l.target_id"
+    } else {
+        ""
+    };
+    let limit = u64::from(page.limit.clamp(1, MAX_PAGE_LIMIT));
+    let sql = format!(
+        "SELECT l.id FROM links l JOIN urls s ON s.id = l.source_id {join_target} \
+         WHERE l.target_id = ?1 ORDER BY {order}"
+    );
+    let mut stmt = conn.prepare_cached(&sql)?;
+    let mut rows = stmt.query([id.0])?;
+    let mut ids: Vec<i64> = Vec::new();
+    let mut total = 0u64;
+    while let Some(row) = rows.next()? {
+        if total >= page.offset && total < page.offset.saturating_add(limit) {
+            ids.push(row.get(0)?);
+        }
+        total += 1;
+    }
+    drop(rows);
+    drop(stmt);
+    Ok(Page {
+        items: link_views_by_ids(conn, &ids)?,
+        total,
+    })
+}
+
 fn links_page(
     conn: &Connection,
     direction: Direction,
     id: UrlId,
     page: PageReq,
 ) -> Result<Page<LinkView>, StoreError> {
+    if matches!(direction, Direction::In) && !crate::link_index::present(conn)? {
+        return inlinks_without_index(conn, id, page);
+    }
     let (filter, count_sql) = match direction {
         Direction::In => (
             "l.target_id = ?1",
@@ -350,23 +412,8 @@ fn links_page(
     }
 
     // Schritt 2: die Zeilen zu diesen Kennungen, danach in die Reihenfolge von Schritt 1 gebracht.
-    let placeholders = vec!["?"; ids.len()].join(",");
-    let rows_sql = format!(
-        "SELECT l.link_type, l.source_id, s.address, l.target_id, COALESCE(t.address, l.target_raw), \
-                l.anchor, l.alt_text, l.follow, t.status_code, {STATUS_EXPR}, l.id \
-         FROM links l JOIN urls s ON s.id = l.source_id LEFT JOIN urls t ON t.id = l.target_id \
-         WHERE l.id IN ({placeholders})"
-    );
-    let mut stmt = conn.prepare_cached(&rows_sql)?;
-    let mut rows = stmt.query(rusqlite::params_from_iter(ids.iter()))?;
-    let mut by_id: std::collections::HashMap<i64, LinkView> =
-        std::collections::HashMap::with_capacity(ids.len());
-    while let Some(row) = rows.next()? {
-        by_id.insert(row.get(10)?, link_view(row)?);
-    }
-    let items = ids.iter().filter_map(|i| by_id.remove(i)).collect();
     Ok(Page {
-        items,
+        items: link_views_by_ids(conn, &ids)?,
         total: u64::try_from(total).unwrap_or(0),
     })
 }
@@ -460,10 +507,18 @@ pub fn change_seq(conn: &Connection) -> Result<u64, StoreError> {
     Ok(value.and_then(|v| v.parse().ok()).unwrap_or(0))
 }
 
-/// URLs mit `urls.change_seq > seq`, aufsteigend nach `(change_seq, id)`, höchstens `limit`.
+/// URLs mit `urls.change_seq > seq` oder `url_counters.change_seq > seq` (Schema v2: Zähleränderungen stempeln die
+/// Zählertabelle), aufsteigend nach `(change_seq, id)` mit dem jeweils größeren der beiden Stempel, ohne Dubletten,
+/// höchstens `limit`.
 pub fn changed_since(conn: &Connection, seq: u64, limit: u32) -> Result<Vec<UrlId>, StoreError> {
     let mut stmt = conn.prepare_cached(
-        "SELECT id FROM urls WHERE change_seq > ?1 ORDER BY change_seq, id LIMIT ?2",
+        "SELECT id FROM ( \
+           SELECT id, MAX(s) AS s FROM ( \
+             SELECT id, change_seq AS s FROM urls WHERE change_seq > ?1 \
+             UNION ALL \
+             SELECT url_id, change_seq FROM url_counters WHERE change_seq > ?1) \
+           GROUP BY id) \
+         ORDER BY s, id LIMIT ?2",
     )?;
     let ids = stmt
         .query_map(

@@ -203,24 +203,26 @@ pub const PNG_BYTES: [u8; 70] = [
     0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
 ];
 
-/// Erzeugt die vier Fixtures in `out` aus `build_paused_crawl`.
+/// Erzeugt die Fixtures in `out` aus `build_paused_crawl`: `schema-v2` (aktuelles Schema), davon abgeleitet `schema-v99`
+/// und `corrupt`, dazu `not-a-crawl`. `schema-v1.ospider` (echte Datei der Version vor M1-P32, Eingabe des
+/// Migrationstests) wird nicht neu erzeugt.
 pub fn write_crawl_file_fixtures(out: &Path) {
     std::fs::create_dir_all(out).unwrap();
     let work = tempfile::tempdir().unwrap();
     let source = work.path().join("source.ospider");
     build_paused_crawl(&source);
 
-    // schema-v1: eigenständige Kopie (VACUUM INTO), ohne Begleitdateien.
-    let v1 = out.join("schema-v1.ospider");
-    let _ = std::fs::remove_file(&v1);
+    // schema-v2: eigenständige Kopie (VACUUM INTO), ohne Begleitdateien.
+    let v2 = out.join("schema-v2.ospider");
+    let _ = std::fs::remove_file(&v2);
     CrawlFile::open(&source, os_store::OpenMode::ReadOnly)
         .unwrap()
-        .save_as(&v1)
+        .save_as(&v2)
         .unwrap();
 
     // schema-v99: künstlich hohe Version.
     let v99 = out.join("schema-v99.ospider");
-    std::fs::copy(&v1, &v99).unwrap();
+    std::fs::copy(&v2, &v99).unwrap();
     {
         let conn = rusqlite::Connection::open(&v99).unwrap();
         conn.pragma_update(None, "user_version", 99).unwrap();
@@ -239,7 +241,7 @@ pub fn write_crawl_file_fixtures(out: &Path) {
     }
 
     // corrupt: nach 50 % abgeschnitten.
-    let bytes = std::fs::read(&v1).unwrap();
+    let bytes = std::fs::read(&v2).unwrap();
     std::fs::write(out.join("corrupt.ospider"), &bytes[..bytes.len() / 2]).unwrap();
 
     // not-a-crawl: PNG-Inhalt unter der Endung .ospider.

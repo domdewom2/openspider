@@ -1,0 +1,115 @@
+{
+  "dir": "step0-main",
+  "store": {
+    "pages": 250000,
+    "pages_per_s": 2253.9,
+    "segment_s": [
+      6.8,
+      7.8,
+      9.1,
+      9.7,
+      10.4,
+      11.7,
+      12.8,
+      13.9,
+      18.0,
+      10.8
+    ],
+    "segment_rel_to_mean_pct": [
+      62,
+      70,
+      82,
+      87,
+      94,
+      105,
+      115,
+      125,
+      162,
+      97
+    ],
+    "min_max_pct": [
+      62,
+      162
+    ],
+    "commit_max_s": 2.69,
+    "checkpoint_max_s": 0.0,
+    "end_batch_s": 0.0,
+    "finish_s": 3.2,
+    "file_mib": 820,
+    "peak_rss_mib": 349,
+    "load_at_start": "6.68 28.70 43.64"
+  },
+  "perf-001": {
+    "passed": true,
+    "urls_per_s": 444.0,
+    "seconds": 563.111,
+    "peak_rss_mb": 450.2,
+    "max_stall_s": null,
+    "file_bytes": 1563152384,
+    "violations": [],
+    "load_at_start": "7.73 21.48 32.42",
+    "store_commit_max_ns": 10271392375,
+    "store_commit_ns": 273389935087,
+    "store_checkpoint_max_ns": 5164745208,
+    "store_checkpoint_ns": 5164801917,
+    "store_checkpoints": 2,
+    "engine_w_write_max_ns": 14013076750,
+    "engine_send_ns": 366569538053,
+    "segments": {
+      "complete": 10,
+      "mean_pages_per_s": 476.5,
+      "rel_pct": [
+        425,
+        385,
+        385,
+        200,
+        90,
+        85,
+        72,
+        55,
+        66,
+        58
+      ],
+      "min_max_pct": [
+        55,
+        425
+      ]
+    }
+  },
+  "perf-003": {
+    "passed": true,
+    "urls_per_s": 1300.3,
+    "seconds": 192.269,
+    "peak_rss_mb": 472.4,
+    "max_stall_s": 5.682,
+    "file_bytes": null,
+    "violations": [],
+    "load_at_start": "6.36 13.96 24.42",
+    "store_commit_max_ns": 4768283292,
+    "store_commit_ns": 97029946706,
+    "store_checkpoint_max_ns": 1066518583,
+    "store_checkpoint_ns": 1066586916,
+    "store_checkpoints": 2,
+    "engine_w_write_max_ns": 5726718708,
+    "engine_send_ns": 84952642366,
+    "segments": {
+      "complete": 9,
+      "mean_pages_per_s": 1352.6,
+      "rel_pct": [
+        182,
+        163,
+        151,
+        139,
+        118,
+        103,
+        91,
+        68,
+        48
+      ],
+      "min_max_pct": [
+        48,
+        182
+      ]
+    }
+  }
+}

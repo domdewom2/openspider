@@ -1,0 +1,83 @@
+{
+  "dir": "step5d-ab-background",
+  "store": {
+    "pages": 250000,
+    "pages_per_s": 8012.5,
+    "segment_s": [
+      2.6,
+      3.0,
+      3.3,
+      3.1,
+      3.0,
+      3.2,
+      3.3,
+      3.1,
+      3.3,
+      3.5
+    ],
+    "segment_rel_to_mean_pct": [
+      82,
+      95,
+      105,
+      100,
+      97,
+      101,
+      105,
+      99,
+      105,
+      112
+    ],
+    "min_max_pct": [
+      82,
+      112
+    ],
+    "commit_max_s": 1.36,
+    "checkpoint_max_s": 0.0,
+    "end_batch_s": 4.9,
+    "finish_s": 0.2,
+    "file_mib": 813,
+    "peak_rss_mib": 388,
+    "load_at_start": "3.39 3.73 3.72"
+  },
+  "perf-001": {
+    "passed": true,
+    "urls_per_s": 3665.2,
+    "seconds": 68.209,
+    "peak_rss_mb": 520.9,
+    "max_stall_s": null,
+    "file_bytes": 1544634368,
+    "violations": [],
+    "load_at_start": "3.05 3.58 3.66",
+    "store_commit_max_ns": 1163019208,
+    "store_commit_ns": 12374220326,
+    "store_checkpoint_max_ns": 903217834,
+    "store_checkpoint_ns": 903243626,
+    "store_checkpoints": 2,
+    "store_bg_checkpoints": 197,
+    "store_bg_checkpoint_max_ns": 548370958,
+    "store_wait_checkpoint_ns": 311229958,
+    "store_link_index_build_ns": 7982815834,
+    "engine_w_write_max_ns": 8311099459,
+    "engine_send_ns": 21129630745,
+    "segments": {
+      "complete": 10,
+      "mean_pages_per_s": 4349.3,
+      "rel_pct": [
+        126,
+        102,
+        117,
+        117,
+        96,
+        123,
+        101,
+        97,
+        100,
+        61
+      ],
+      "min_max_pct": [
+        61,
+        126
+      ]
+    }
+  }
+}

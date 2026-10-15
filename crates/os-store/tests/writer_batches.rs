@@ -664,3 +664,5 @@ fn an_externally_set_checkpoint_threshold_is_left_alone() {
     sink.write(batch_with_urls([(2, true)])).unwrap();
     assert_eq!(wal_autocheckpoint_of(&sink), 5_000);
 }
+
+// Die Tests des optionalen Hintergrund-Checkpoints (K-76) stehen in `bg_checkpoint.rs`.

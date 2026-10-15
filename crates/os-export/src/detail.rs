@@ -30,6 +30,8 @@ pub fn export_detail(
     format: Format,
 ) -> Result<ExportFileInfo, ExportError> {
     let cfg = file.config()?;
+    // K-74: Inlinks je URL brauchen `links_target` (sonst ein Lauf über `links` je angefragter URL).
+    os_store::link_index::ensure_if_idle(file)?;
     let (sheet, where_sql) = match detail {
         DetailKind::Inlinks => ("Inlinks", "l.target_id = :url_id"),
         DetailKind::Outlinks => ("Outlinks", "l.source_id = :url_id"),

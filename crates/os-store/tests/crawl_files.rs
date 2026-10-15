@@ -2,7 +2,8 @@
 //!
 //! Die Fixtures liegen in `tests/fixtures/crawl-files/`; mit `UPDATE_FIXTURES=1 cargo test -p os-store
 //! --test crawl_files regenerate_fixtures` werden sie neu erzeugt (danach `git add -f`, `*.ospider` steht in
-//! `.gitignore`).
+//! `.gitignore`). `schema-v1.ospider` ist eine echte Datei im Schema v1 (von der Version vor M1-P32 geschrieben)
+//! und wird **nicht** neu erzeugt: sie ist die Eingabe des Migrationstests (v1 → v2).
 
 mod store_common;
 
@@ -40,15 +41,15 @@ fn regenerate_fixtures() {
 fn committed_fixtures_match_the_generator() {
     let work = tempfile::tempdir().unwrap();
     write_crawl_file_fixtures(work.path());
-    let generated = work.path().join("schema-v1.ospider");
+    let generated = work.path().join("schema-v2.ospider");
     let committed_dir = tempfile::tempdir().unwrap();
-    let committed = copy_fixture("schema-v1.ospider", committed_dir.path());
+    let committed = copy_fixture("schema-v2.ospider", committed_dir.path());
     let a = CrawlFile::open(&generated, OpenMode::ReadOnly).unwrap();
     let b = CrawlFile::open(&committed, OpenMode::ReadOnly).unwrap();
     assert_eq!(
         dump(&a),
         dump(&b),
-        "Fixture schema-v1.ospider veraltet (UPDATE_FIXTURES=1)"
+        "Fixture schema-v2.ospider veraltet (UPDATE_FIXTURES=1)"
     );
     for name in ["corrupt.ospider", "not-a-crawl.ospider"] {
         assert_eq!(
@@ -61,9 +62,9 @@ fn committed_fixtures_match_the_generator() {
 
 // spec: OUT-230
 #[test]
-fn schema_v1_fixture_is_a_valid_crawl_file_with_embedded_config() {
+fn schema_v2_fixture_is_a_valid_crawl_file_with_embedded_config() {
     let dir = tempfile::tempdir().unwrap();
-    let path = copy_fixture("schema-v1.ospider", dir.path());
+    let path = copy_fixture("schema-v2.ospider", dir.path());
     let file = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
     assert_eq!(
         schema::application_id(file.conn()).unwrap(),
@@ -102,7 +103,7 @@ fn newer_schema_version_is_rejected_and_file_stays_byte_identical() {
                 generator,
                 ..
             } => {
-                assert_eq!((*found, *supported), (99, 1));
+                assert_eq!((*found, *supported), (99, 2));
                 assert!(
                     generator.contains("9.9.0"),
                     "Erzeuger in der Meldung: {generator}"
@@ -172,7 +173,7 @@ fn truncated_file_is_reported_as_corrupt_with_file_name() {
     let dir = tempfile::tempdir().unwrap();
     let path = copy_fixture("corrupt.ospider", dir.path());
     let before = checksum(&path);
-    let full = std::fs::metadata(fixture_dir().join("schema-v1.ospider"))
+    let full = std::fs::metadata(fixture_dir().join("schema-v2.ospider"))
         .unwrap()
         .len();
     assert_eq!(
@@ -272,7 +273,7 @@ fn save_as_is_self_contained_and_contents_are_identical() {
 #[test]
 fn paused_crawl_with_15_queued_urls_resumes_exactly_those() {
     let dir = tempfile::tempdir().unwrap();
-    let path = copy_fixture("schema-v1.ospider", dir.path());
+    let path = copy_fixture("schema-v2.ospider", dir.path());
     let saved = dir.path().join("gespeichert.ospider");
     CrawlFile::open(&path, OpenMode::ReadWrite)
         .unwrap()
@@ -420,7 +421,7 @@ fn damaged_file_is_detected_and_repaired_into_a_new_copy() {
 fn import_copies_into_the_crawl_folder_and_assigns_a_new_id_on_clash() {
     let work = tempfile::tempdir().unwrap();
     let crawls = work.path().join("crawls");
-    let src = copy_fixture("schema-v1.ospider", work.path());
+    let src = copy_fixture("schema-v2.ospider", work.path());
     let original_id = CrawlFile::open(&src, OpenMode::ReadOnly)
         .unwrap()
         .meta()
@@ -558,7 +559,7 @@ fn effective_state_marks_crawls_without_heartbeat_as_incomplete() {
 #[test]
 fn url_key_iteration_covers_all_urls_in_order() {
     let dir = tempfile::tempdir().unwrap();
-    let path = copy_fixture("schema-v1.ospider", dir.path());
+    let path = copy_fixture("schema-v2.ospider", dir.path());
     let file = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
     let mut seen = Vec::new();
     let n = file
@@ -576,4 +577,90 @@ fn url_key_iteration_covers_all_urls_in_order() {
         vec![41, 42]
     );
     assert_eq!(file.url_keys_page(None, 5).unwrap().len(), 5);
+}
+
+// spec: PERF-002
+#[test]
+fn a_schema_v1_file_migrates_to_v2_with_identical_counters() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = copy_fixture("schema-v1.ospider", dir.path());
+    let before = std::fs::read(&path).unwrap();
+
+    // Nur lesen: die Migration ist nötig, die Datei bleibt unverändert.
+    match CrawlFile::open(&path, OpenMode::ReadOnly) {
+        Err(StoreError::MigrationRequired {
+            found, supported, ..
+        }) => assert_eq!((found, supported), (1, 2)),
+        other => panic!("MigrationRequired erwartet: {:?}", other.err()),
+    }
+    assert_eq!(std::fs::read(&path).unwrap(), before);
+
+    let file = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
+    assert_eq!(schema::user_version(file.conn()).unwrap(), 2);
+    // Sicherungskopie in der alten Version
+    let backup = os_store::backup_path(&path, 1);
+    assert!(backup.exists());
+    {
+        // die Sicherung bleibt ein Schema-v1-Crawl (der Dateikopf unterscheidet sich vom Original: WAL-Modus)
+        let old = rusqlite::Connection::open(&backup).unwrap();
+        assert_eq!(schema::user_version(&old).unwrap(), 1);
+        let urls: i64 = old
+            .query_row("SELECT COUNT(*) FROM urls", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(urls, 42);
+        assert!(old
+            .query_row(
+                "SELECT 1 FROM sqlite_master WHERE name = 'url_counters'",
+                [],
+                |r| r.get::<_, i64>(0)
+            )
+            .is_err());
+    }
+
+    // Die zehn bisherigen Zähler stehen unverändert in der neuen Tabelle ...
+    let differing = count(
+        &file,
+        "SELECT COUNT(*) FROM urls u JOIN url_counters c ON c.url_id = u.id WHERE \
+         u.inlinks <> c.inlinks OR u.unique_inlinks <> c.unique_inlinks OR u.self_inlinks <> c.self_inlinks \
+         OR u.inlinks_all <> c.inlinks_all OR u.img_inlinks <> c.img_inlinks OR u.outlinks <> c.outlinks \
+         OR u.unique_outlinks <> c.unique_outlinks OR u.self_outlinks <> c.self_outlinks \
+         OR u.external_outlinks <> c.external_outlinks OR u.unique_external_outlinks <> c.unique_external_outlinks",
+    );
+    assert_eq!(differing, 0);
+    assert_eq!(
+        count(&file, "SELECT COUNT(*) FROM url_counters"),
+        count(&file, "SELECT COUNT(*) FROM urls")
+    );
+    assert!(count(&file, "SELECT SUM(inlinks) FROM url_counters") > 0);
+    // ... die zwei neuen Zähler sind aus den Links berechnet: alle 25 abgerufenen Seiten verlinken die Startseite.
+    assert_eq!(
+        count(
+            &file,
+            "SELECT html_2xx_sources FROM url_counters WHERE url_id = 1"
+        ),
+        25
+    );
+    assert_eq!(
+        count(&file, "SELECT SUM(image_link_inlinks) FROM url_counters"),
+        0
+    );
+    // Gegenprobe über die vollständige Neuberechnung
+    assert!(os_store::counters::verify_all(file.conn())
+        .unwrap()
+        .is_empty());
+    // Trigger: neue URLs erhalten ihre Zeile
+    file.conn()
+        .execute(
+            "INSERT INTO urls (id, url, address, origin, is_internal, state, discovered_via, folder_depth, url_length) \
+             VALUES (500, 'https://neu.test/', 'https://neu.test/', 'https://neu.test', 1, 'queued', 'link', 0, 17)",
+            [],
+        )
+        .unwrap();
+    assert_eq!(
+        count(
+            &file,
+            "SELECT COUNT(*) FROM url_counters WHERE url_id = 500"
+        ),
+        1
+    );
 }

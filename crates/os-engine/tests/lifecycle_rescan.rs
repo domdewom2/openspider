@@ -112,14 +112,17 @@ async fn recrawl_replaces_status_content_and_outlinks_and_corrects_the_inlink_co
     let inl = |file: &CrawlFile, id: UrlId| {
         scalar(
             file,
-            &format!("SELECT inlinks FROM urls WHERE id = {}", id.0),
+            &format!("SELECT inlinks FROM url_counters WHERE url_id = {}", id.0),
         )
     };
     let (a_before, p1_before) = (inl(&file, neu_a), inl(&file, page1));
     assert_eq!(
         scalar(
             &file,
-            &format!("SELECT outlinks FROM urls WHERE id = {}", wechsel.0)
+            &format!(
+                "SELECT outlinks FROM url_counters WHERE url_id = {}",
+                wechsel.0
+            )
         ),
         3
     );
@@ -142,7 +145,10 @@ async fn recrawl_replaces_status_content_and_outlinks_and_corrects_the_inlink_co
     assert_eq!(
         scalar(
             &file,
-            &format!("SELECT outlinks FROM urls WHERE id = {}", wechsel.0)
+            &format!(
+                "SELECT outlinks FROM url_counters WHERE url_id = {}",
+                wechsel.0
+            )
         ),
         1,
         "nur noch /neu-c"
@@ -231,7 +237,7 @@ async fn recrawl_of_a_page_that_now_answers_404_drops_its_links() {
         .conn()
         .query_row(
             &format!(
-                "SELECT status_code, outlinks, title_1 FROM urls WHERE id = {}",
+                "SELECT u.status_code, c.outlinks, u.title_1 FROM urls u JOIN url_counters c ON c.url_id = u.id WHERE u.id = {}",
                 wechsel.0
             ),
             [],
@@ -301,11 +307,17 @@ async fn remove_deletes_the_url_and_its_outlinks_and_leaves_inlinks_without_a_ta
     let root = id_of(&file, "/");
     let child_inlinks = scalar(
         &file,
-        &format!("SELECT inlinks FROM urls WHERE id = {}", child.0),
+        &format!(
+            "SELECT inlinks FROM url_counters WHERE url_id = {}",
+            child.0
+        ),
     );
     let root_outlinks = scalar(
         &file,
-        &format!("SELECT outlinks FROM urls WHERE id = {}", root.0),
+        &format!(
+            "SELECT outlinks FROM url_counters WHERE url_id = {}",
+            root.0
+        ),
     );
     let inlinks_to_page1 = scalar(
         &file,
@@ -350,14 +362,20 @@ async fn remove_deletes_the_url_and_its_outlinks_and_leaves_inlinks_without_a_ta
     assert_eq!(
         scalar(
             &file,
-            &format!("SELECT inlinks FROM urls WHERE id = {}", child.0)
+            &format!(
+                "SELECT inlinks FROM url_counters WHERE url_id = {}",
+                child.0
+            )
         ),
         child_inlinks - 1
     );
     assert_eq!(
         scalar(
             &file,
-            &format!("SELECT outlinks FROM urls WHERE id = {}", root.0)
+            &format!(
+                "SELECT outlinks FROM url_counters WHERE url_id = {}",
+                root.0
+            )
         ),
         root_outlinks - 1
     );

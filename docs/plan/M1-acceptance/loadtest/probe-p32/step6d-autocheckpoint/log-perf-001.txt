@@ -1,0 +1,7 @@
+Start 2026-10-15T14:57:53Z (16:57 lokal)
+16:57  up 35 days,  6:16, 16 users, load averages: 7.32 5.68 4.50
+perf-001 (large): 114648 Requests/s, Crawler ja, passed = true
+  Spitzen-RSS des Crawl-Prozesses: 496 MB
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/m1-p32/docs/plan/M1-acceptance/loadtest/probe-p32/step6d-autocheckpoint/perf-001.json
+Ende 2026-10-15T14:59:20Z (16:59 lokal), Exit 0
+16:59  up 35 days,  6:17, 16 users, load averages: 8.44 6.47 4.92

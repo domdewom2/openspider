@@ -1,6 +1,8 @@
-//! Pflege der Zähler in `urls` (Inlinks, Outlinks, …) durch den Writer.
+//! Pflege der Zähler in `url_counters` (Inlinks, Outlinks, …) durch den Writer (Schema v2, K-75).
 //!
-//! Zähler zählen nur Links mit **interner Quelle** (ONPAGE-015, Annahme A-9):
+//! Zähler zählen nur Links mit **interner Quelle** (ONPAGE-015, Annahme A-9). Die Tabelle `url_counters`
+//! (eine Zeile je URL, `WITHOUT ROWID`) ist die einzige Quelle; die gleichnamigen Spalten in `urls` bleiben aus
+//! Gründen der Rückwärtsverträglichkeit im Schema, werden aber ab v2 weder gepflegt noch gelesen.
 //!
 //! | Spalte (Zeile des Ziels, falls nicht anders genannt) | Bedeutung |
 //! |---|---|
@@ -12,13 +14,16 @@
 //! | `outlinks`, `unique_outlinks` (Zeile der Quelle) | Hyperlink-Instanzen / verschiedene Ziele auf **interne** Ziele |
 //! | `self_outlinks` (Quelle) | Hyperlink-Instanzen auf sich selbst |
 //! | `external_outlinks`, `unique_external_outlinks` (Quelle) | wie `outlinks`, aber auf **externe** Ziele |
+//! | `html_2xx_sources` | verschiedene interne HTML-Quellseiten mit Status 2xx und mindestens einem Hyperlink (`% of Total`, K-56) |
+//! | `image_link_inlinks` | Link-Instanzen vom Typ `Image` (Images-Grundmenge, ONPAGE-170) |
 //!
-//! Der Writer arbeitet mit Differenzen: Der Beitrag einer Seite (je Ziel: Hyperlink- und Gesamtzahl; die
-//! Menge der Bild-Ziele) wird vor (aus den bisherigen Kindzeilen, nur bei `replace`) und nach dem Schreiben
-//! bestimmt, die Differenz auf die betroffenen `urls`-Zeilen addiert. Jede betroffene Zeile erhält dabei die
-//! Sequenz des Änderungsfeeds.
+//! Der Writer arbeitet mit Differenzen: Der Beitrag einer Seite (je Ziel: Hyperlink-, Bild- und Gesamtzahl; die
+//! Menge der Bild-Ziele; ob die Seite eine interne HTML-Seite mit Status 2xx ist) wird vor (aus den bisherigen
+//! Kindzeilen und der bisherigen Zeile der Seite, nur bei `replace`) und nach dem Schreiben bestimmt, die Differenz
+//! auf die betroffenen Zeilen von `url_counters` addiert (aufsteigend nach Kennung, alles in der Transaktion des
+//! Batches). Jede betroffene Zeile erhält dabei die Sequenz des Änderungsfeeds (`url_counters.change_seq`).
 
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet};
 
 use os_model::{ImageRow, LinkRow, LinkType};
 use rusqlite::{params, Connection};
@@ -32,6 +37,8 @@ pub(crate) struct TargetCount {
     pub hyper: i64,
     /// Instanzen aller Linktypen.
     pub all: i64,
+    /// Instanzen vom Typ `Image`.
+    pub image: i64,
 }
 
 /// Beitrag einer Seite zu den Zählern.
@@ -41,18 +48,26 @@ pub(crate) struct Contribution {
     pub targets: BTreeMap<i64, TargetCount>,
     /// Verschiedene Bild-Ziele (`image_instances.image_id`).
     pub images: BTreeSet<i64>,
+    /// Die Quellseite ist eine HTML-Seite mit Status 2xx (zählt für `html_2xx_sources` ihrer Ziele).
+    pub html_2xx: bool,
 }
 
 impl Contribution {
-    /// Beitrag aus den Link- und Bildzeilen eines `PageWrite`. Links ohne Ziel-ID zählen nicht.
-    pub fn from_rows(links: &[LinkRow], images: &[ImageRow]) -> Self {
-        let mut c = Contribution::default();
+    /// Beitrag aus den Link- und Bildzeilen eines `PageWrite`. Links ohne Ziel-ID zählen nicht. `html_2xx`: die
+    /// Seite ist eine HTML-Seite mit Status 2xx.
+    pub fn from_rows(links: &[LinkRow], images: &[ImageRow], html_2xx: bool) -> Self {
+        let mut c = Contribution {
+            html_2xx,
+            ..Contribution::default()
+        };
         for link in links {
             if let Some(target) = link.target_id {
                 let entry = c.targets.entry(target.0).or_default();
                 entry.all += 1;
-                if link.link_type == LinkType::Hyperlink {
-                    entry.hyper += 1;
+                match link.link_type {
+                    LinkType::Hyperlink => entry.hyper += 1,
+                    LinkType::Image => entry.image += 1,
+                    _ => {}
                 }
             }
         }
@@ -64,11 +79,15 @@ impl Contribution {
         c
     }
 
-    /// Bisheriger Beitrag aus den gespeicherten Kindzeilen der Seite.
-    pub fn load(conn: &Connection, page_id: i64) -> Result<Self, StoreError> {
-        let mut c = Contribution::default();
+    /// Bisheriger Beitrag aus den gespeicherten Kindzeilen der Seite; `html_2xx` ist der bisherige Zustand der Seite
+    /// (Status und Klasse stehen vor dem Überschreiben durch das neue `PageWrite` fest).
+    pub fn load(conn: &Connection, page_id: i64, html_2xx: bool) -> Result<Self, StoreError> {
+        let mut c = Contribution {
+            html_2xx,
+            ..Contribution::default()
+        };
         let mut stmt = conn.prepare_cached(
-            "SELECT target_id, COUNT(*), SUM(link_type = 'Hyperlink') FROM links \
+            "SELECT target_id, COUNT(*), SUM(link_type = 'Hyperlink'), SUM(link_type = 'Image') FROM links \
              WHERE source_id = ?1 AND target_id IS NOT NULL GROUP BY target_id",
         )?;
         let mut rows = stmt.query([page_id])?;
@@ -78,6 +97,7 @@ impl Contribution {
                 TargetCount {
                     all: row.get(1)?,
                     hyper: row.get(2)?,
+                    image: row.get(3)?,
                 },
             );
         }
@@ -97,7 +117,7 @@ impl Contribution {
     }
 }
 
-/// Differenz der Zähler einer `urls`-Zeile.
+/// Differenz der Zähler einer `url_counters`-Zeile.
 #[derive(Debug, Clone, Copy, Default)]
 struct Delta {
     inlinks: i64,
@@ -110,26 +130,75 @@ struct Delta {
     self_outlinks: i64,
     external_outlinks: i64,
     unique_external_outlinks: i64,
+    html_2xx_sources: i64,
+    image_link_inlinks: i64,
+}
+
+/// Merkt je URL-Kennung, ob die URL intern ist. Die Zähler brauchen es für jedes Linkziel (interner oder externer
+/// Outlink der Quelle); die Auskunft aus der breiten `urls`-Zeile kostet bei gleichverteilten Zielen je Batch rund
+/// 60 000 zufällige Lesezugriffe auf eine Tabelle, die bei 1 Mio. URLs nicht mehr im Cache liegt. Der Writer trägt die
+/// Auskunft beim Anlegen der URLs ein (`NewUrl.is_internal`, ändert sich nie; Kennungen werden nicht wiederverwendet),
+/// URLs aus früheren Läufen werden beim ersten Bedarf einmal gelesen. Ein Byte je Kennung (1 MB je 1 Mio. URLs);
+/// Kennungen ab [`InternalFlags::MAX_ID`] werden nicht gemerkt, sondern jedes Mal gelesen.
+#[derive(Debug, Default)]
+pub(crate) struct InternalFlags {
+    /// 0 unbekannt, 1 extern, 2 intern.
+    flags: Vec<u8>,
+}
+
+impl InternalFlags {
+    /// Größte Kennung, die gemerkt wird (16 Mio. Kennungen = 16 MB).
+    pub const MAX_ID: i64 = 16 << 20;
+
+    pub fn get(&self, id: i64) -> Option<bool> {
+        let slot = usize::try_from(id).ok()?;
+        match self.flags.get(slot).copied() {
+            Some(1) => Some(false),
+            Some(2) => Some(true),
+            _ => None,
+        }
+    }
+
+    pub fn set(&mut self, id: i64, internal: bool) {
+        if !(0..Self::MAX_ID).contains(&id) {
+            return;
+        }
+        let slot = id as usize;
+        if self.flags.len() <= slot {
+            // geometrisch wachsen: höchstens ein Umkopieren je Verdopplung
+            let new_len = (slot + 1).max(self.flags.len() * 2).max(1024);
+            self.flags.resize(new_len, 0);
+        }
+        self.flags[slot] = if internal { 2 } else { 1 };
+    }
 }
 
 /// Sammelt die Zählerdifferenzen aller Seiten eines Batches und schreibt sie am Ende mit einem `UPDATE` je
-/// betroffener Zeile. Das spart bei Seiten, die viele Seiten gemeinsam verlinken (Navigation, Fußzeile), den
-/// größten Teil der Schreibzugriffe auf `urls`.
+/// betroffener Zeile von `url_counters`. Das spart bei Seiten, die viele Seiten gemeinsam verlinken (Navigation,
+/// Fußzeile), den größten Teil der Schreibzugriffe.
 ///
 /// Ziele müssen zum Zeitpunkt des Schreibens in `urls` stehen (in diesem oder einem früheren Batch angelegt,
 /// `new_urls` wird zuerst verarbeitet); ein unbekanntes Ziel erhält keinen Zähler, und der Link zählt
 /// nicht als interner oder externer Outlink der Quelle.
-#[derive(Debug, Default)]
-pub(crate) struct BatchCounters {
+#[derive(Debug)]
+pub(crate) struct BatchCounters<'a> {
     deltas: BTreeMap<i64, Delta>,
-    internal: HashMap<i64, Option<bool>>,
+    internal: &'a mut InternalFlags,
 }
 
-impl BatchCounters {
+impl<'a> BatchCounters<'a> {
+    /// Leere Sammlung; `internal` ist das Gedächtnis des Writers über Batches hinweg.
+    pub fn new(internal: &'a mut InternalFlags) -> Self {
+        BatchCounters {
+            deltas: BTreeMap::new(),
+            internal,
+        }
+    }
+
     /// Ob eine Zeile intern (`Some(true)`), extern (`Some(false)`) oder unbekannt (`None`) ist.
     fn is_internal(&mut self, conn: &Connection, id: i64) -> Result<Option<bool>, StoreError> {
-        if let Some(v) = self.internal.get(&id) {
-            return Ok(*v);
+        if let Some(v) = self.internal.get(id) {
+            return Ok(Some(v));
         }
         let mut stmt = conn.prepare_cached("SELECT is_internal FROM urls WHERE id = ?1")?;
         let mut rows = stmt.query([id])?;
@@ -138,8 +207,8 @@ impl BatchCounters {
             None => None,
         };
         // Unbekannte Ziele nicht merken: sie können im selben Batch später angelegt werden.
-        if value.is_some() {
-            self.internal.insert(id, value);
+        if let Some(v) = value {
+            self.internal.set(id, v);
         }
         Ok(value)
     }
@@ -205,6 +274,9 @@ impl BatchCounters {
             d.inlinks += n.hyper - o.hyper;
             d.unique_inlinks += i64::from(n.hyper > 0) - i64::from(o.hyper > 0);
             d.inlinks_all += n.all - o.all;
+            d.image_link_inlinks += n.image - o.image;
+            d.html_2xx_sources +=
+                i64::from(new.html_2xx && n.hyper > 0) - i64::from(old.html_2xx && o.hyper > 0);
             if target == page_id {
                 d.self_inlinks += n.hyper - o.hyper;
             }
@@ -233,11 +305,12 @@ impl BatchCounters {
             return Ok(());
         }
         let mut stmt = conn.prepare_cached(
-            "UPDATE urls SET inlinks = inlinks + ?1, unique_inlinks = unique_inlinks + ?2, \
+            "UPDATE url_counters SET inlinks = inlinks + ?1, unique_inlinks = unique_inlinks + ?2, \
              self_inlinks = self_inlinks + ?3, inlinks_all = inlinks_all + ?4, img_inlinks = img_inlinks + ?5, \
              outlinks = outlinks + ?6, unique_outlinks = unique_outlinks + ?7, self_outlinks = self_outlinks + ?8, \
              external_outlinks = external_outlinks + ?9, unique_external_outlinks = unique_external_outlinks + ?10, \
-             change_seq = ?11 WHERE id = ?12",
+             html_2xx_sources = html_2xx_sources + ?11, image_link_inlinks = image_link_inlinks + ?12, \
+             change_seq = ?13 WHERE url_id = ?14",
         )?;
         for (id, d) in self.deltas {
             stmt.execute(params![
@@ -251,6 +324,8 @@ impl BatchCounters {
                 d.self_outlinks,
                 d.external_outlinks,
                 d.unique_external_outlinks,
+                d.html_2xx_sources,
+                d.image_link_inlinks,
                 seq,
                 id
             ])?;
@@ -259,8 +334,29 @@ impl BatchCounters {
     }
 }
 
-/// Zähler einer Zeile, wie sie sich aus den Tabellen `links`/`image_instances` ergeben (Gegenprobe für Tests
-/// und Prüfwerkzeuge; kostet einen Durchlauf über die Linktabelle).
+/// Der Trigger aus Migration 0002, der jeder neuen `urls`-Zeile ihre Zählerzeile gibt.
+pub(crate) const INSERT_TRIGGER_SQL: &str =
+    "CREATE TRIGGER IF NOT EXISTS urls_counters_insert AFTER INSERT ON urls \
+     BEGIN INSERT OR IGNORE INTO url_counters (url_id) VALUES (new.id); END";
+
+/// Entfernt den Einfüge-Trigger. Der Writer legt die Zählerzeile selbst an: Ein Trigger zwingt SQLite zu einem
+/// Statement-Journal je eingefügter `urls`-Zeile (Messung M1-P32: 50 µs statt 7 µs je Zeile, bei 1 Mio. URLs rund
+/// 50 s).
+pub(crate) fn drop_insert_trigger(conn: &Connection) -> Result<(), StoreError> {
+    conn.execute_batch("DROP TRIGGER IF EXISTS urls_counters_insert")?;
+    Ok(())
+}
+
+/// Legt den Einfüge-Trigger wieder an (Ende, Pause, Schließen der Senke), damit die Datei im Ruhezustand das volle
+/// Schema hat und direkte Einfügungen durch Werkzeuge und Tests weiter eine Zählerzeile bekommen.
+pub(crate) fn restore_insert_trigger(conn: &Connection) -> Result<(), StoreError> {
+    conn.execute_batch(INSERT_TRIGGER_SQL)?;
+    Ok(())
+}
+
+/// Zähler einer Zeile, wie sie sich aus den Tabellen `links`/`image_instances` ergeben (Gegenprobe für Tests,
+/// Prüfwerkzeuge und das Neu-Crawlen; kostet je Aufruf höchstens einen Durchlauf über die Linktabelle, auch ohne den
+/// Index `links_target`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct RecomputedCounters {
     /// `inlinks`.
@@ -283,86 +379,168 @@ pub struct RecomputedCounters {
     pub unique_external_outlinks: i64,
     /// `img_inlinks`.
     pub img_inlinks: i64,
+    /// `html_2xx_sources`.
+    pub html_2xx_sources: i64,
+    /// `image_link_inlinks`.
+    pub image_link_inlinks: i64,
+}
+
+/// Spalten von `url_counters` in der Reihenfolge von [`RecomputedCounters`].
+const COUNTER_COLUMNS: [&str; 12] = [
+    "inlinks",
+    "unique_inlinks",
+    "self_inlinks",
+    "inlinks_all",
+    "outlinks",
+    "unique_outlinks",
+    "self_outlinks",
+    "external_outlinks",
+    "unique_external_outlinks",
+    "img_inlinks",
+    "html_2xx_sources",
+    "image_link_inlinks",
+];
+
+fn recomputed_from_row(
+    row: &rusqlite::Row<'_>,
+    first: usize,
+) -> rusqlite::Result<RecomputedCounters> {
+    Ok(RecomputedCounters {
+        inlinks: row.get(first)?,
+        unique_inlinks: row.get(first + 1)?,
+        self_inlinks: row.get(first + 2)?,
+        inlinks_all: row.get(first + 3)?,
+        outlinks: row.get(first + 4)?,
+        unique_outlinks: row.get(first + 5)?,
+        self_outlinks: row.get(first + 6)?,
+        external_outlinks: row.get(first + 7)?,
+        unique_external_outlinks: row.get(first + 8)?,
+        img_inlinks: row.get(first + 9)?,
+        html_2xx_sources: row.get(first + 10)?,
+        image_link_inlinks: row.get(first + 11)?,
+    })
+}
+
+/// SQL der Neuberechnung: eine Zeile je betrachteter URL mit den zwölf Zählern in der Reihenfolge von
+/// [`COUNTER_COLUMNS`] (erste Spalte `id`). `filtered`: nur die URLs aus dem JSON-Array in `?1`, sonst alle (nach
+/// Kennung geordnet, dahinter die zwölf gespeicherten Zähler aus `url_counters`, `NULL` ohne Zeile).
+///
+/// Jede Gruppe liest `links` höchstens einmal, mit dem Index `links_target` über die Kennungen, ohne ihn in einem
+/// sequenziellen Lauf (nie ein Lauf je URL): Die Aufrufer fragen deshalb immer die ganze Menge auf einmal ab.
+fn recompute_sql(filtered: bool) -> String {
+    let stored_columns = COUNTER_COLUMNS
+        .iter()
+        .map(|c| format!("c.{c}"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let (ids_cte, in_filter, out_filter, img_filter, from, tail_select, tail_join) = if filtered {
+        (
+            "ids(id) AS (SELECT value FROM json_each(?1)), ",
+            "AND l.target_id IN (SELECT id FROM ids)",
+            "AND l.source_id IN (SELECT id FROM ids)",
+            "AND i.image_id IN (SELECT id FROM ids)",
+            "ids",
+            String::new(),
+            String::new(),
+        )
+    } else {
+        (
+            "",
+            "",
+            "",
+            "",
+            "urls",
+            format!(", {stored_columns}"),
+            " LEFT JOIN url_counters c ON c.url_id = urls.id ORDER BY urls.id".to_string(),
+        )
+    };
+    format!(
+        "WITH {ids_cte}\
+         inl AS (SELECT l.target_id AS id, \
+                 SUM(l.link_type = 'Hyperlink') AS inlinks, \
+                 COUNT(DISTINCT CASE WHEN l.link_type = 'Hyperlink' THEN l.source_id END) AS unique_inlinks, \
+                 SUM(l.link_type = 'Hyperlink' AND l.source_id = l.target_id) AS self_inlinks, \
+                 COUNT(*) AS inlinks_all, \
+                 COUNT(DISTINCT CASE WHEN l.link_type = 'Hyperlink' AND s.content_class = 'HTML' \
+                       AND s.status_code BETWEEN 200 AND 299 THEN l.source_id END) AS html_2xx_sources, \
+                 SUM(l.link_type = 'Image') AS image_link_inlinks \
+                 FROM links l JOIN urls s ON s.id = l.source_id \
+                 WHERE l.target_id IS NOT NULL AND s.is_internal = 1 {in_filter} GROUP BY l.target_id), \
+         outl AS (SELECT l.source_id AS id, \
+                 SUM(t.is_internal = 1) AS outlinks, \
+                 COUNT(DISTINCT CASE WHEN t.is_internal = 1 THEN l.target_id END) AS unique_outlinks, \
+                 SUM(l.target_id = l.source_id) AS self_outlinks, \
+                 SUM(t.is_internal = 0) AS external_outlinks, \
+                 COUNT(DISTINCT CASE WHEN t.is_internal = 0 THEN l.target_id END) AS unique_external_outlinks \
+                 FROM links l JOIN urls t ON t.id = l.target_id JOIN urls s ON s.id = l.source_id \
+                 WHERE l.link_type = 'Hyperlink' AND s.is_internal = 1 {out_filter} GROUP BY l.source_id), \
+         img AS (SELECT i.image_id AS id, COUNT(DISTINCT i.page_id) AS n \
+                 FROM image_instances i JOIN urls s ON s.id = i.page_id \
+                 WHERE i.image_id IS NOT NULL AND s.is_internal = 1 {img_filter} GROUP BY i.image_id) \
+         SELECT {from}.id, \
+                COALESCE(inl.inlinks, 0), COALESCE(inl.unique_inlinks, 0), COALESCE(inl.self_inlinks, 0), \
+                COALESCE(inl.inlinks_all, 0), \
+                COALESCE(outl.outlinks, 0), COALESCE(outl.unique_outlinks, 0), COALESCE(outl.self_outlinks, 0), \
+                COALESCE(outl.external_outlinks, 0), COALESCE(outl.unique_external_outlinks, 0), \
+                COALESCE(img.n, 0), COALESCE(inl.html_2xx_sources, 0), COALESCE(inl.image_link_inlinks, 0) \
+                {tail_select} \
+         FROM {from} LEFT JOIN inl ON inl.id = {from}.id LEFT JOIN outl ON outl.id = {from}.id \
+              LEFT JOIN img ON img.id = {from}.id{tail_join}",
+    )
+}
+
+/// Berechnet die Zähler der URLs `ids` vollständig neu aus `links` und `image_instances` (nur interne Quellen):
+/// ein Durchlauf je Gruppe für die **ganze** Menge – mit dem Index `links_target` über die Kennungen, ohne ihn
+/// in einem sequenziellen Lauf über `links`. Kennungen ohne `urls`-Zeile liefern Nullen.
+pub fn recompute_many(
+    conn: &Connection,
+    ids: &[i64],
+) -> Result<BTreeMap<i64, RecomputedCounters>, StoreError> {
+    let mut out = BTreeMap::new();
+    if ids.is_empty() {
+        return Ok(out);
+    }
+    let json = format!(
+        "[{}]",
+        ids.iter().map(i64::to_string).collect::<Vec<_>>().join(",")
+    );
+    let mut stmt = conn.prepare_cached(&recompute_sql(true))?;
+    let mut rows = stmt.query([json])?;
+    while let Some(row) = rows.next()? {
+        out.insert(row.get(0)?, recomputed_from_row(row, 1)?);
+    }
+    Ok(out)
 }
 
 /// Berechnet die Zähler der URL `id` vollständig neu aus `links` und `image_instances` (nur interne Quellen).
 pub fn recompute(conn: &Connection, id: i64) -> Result<RecomputedCounters, StoreError> {
-    let inl = conn.query_row(
-        "SELECT COALESCE(SUM(l.link_type = 'Hyperlink'), 0), \
-                COUNT(DISTINCT CASE WHEN l.link_type = 'Hyperlink' THEN l.source_id END), \
-                COALESCE(SUM(l.link_type = 'Hyperlink' AND l.source_id = l.target_id), 0), \
-                COUNT(*) \
-         FROM links l JOIN urls s ON s.id = l.source_id \
-         WHERE l.target_id = ?1 AND s.is_internal = 1",
-        [id],
-        |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
-    )?;
-    let out = conn.query_row(
-        "SELECT COALESCE(SUM(t.is_internal = 1), 0), \
-                COUNT(DISTINCT CASE WHEN t.is_internal = 1 THEN l.target_id END), \
-                COALESCE(SUM(l.target_id = l.source_id), 0), \
-                COALESCE(SUM(t.is_internal = 0), 0), \
-                COUNT(DISTINCT CASE WHEN t.is_internal = 0 THEN l.target_id END) \
-         FROM links l JOIN urls t ON t.id = l.target_id \
-         JOIN urls s ON s.id = l.source_id \
-         WHERE l.source_id = ?1 AND l.link_type = 'Hyperlink' AND s.is_internal = 1",
-        [id],
-        |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?)),
-    )?;
-    let img: i64 = conn.query_row(
-        "SELECT COUNT(DISTINCT i.page_id) FROM image_instances i JOIN urls s ON s.id = i.page_id \
-         WHERE i.image_id = ?1 AND s.is_internal = 1",
-        [id],
-        |r| r.get(0),
-    )?;
-    Ok(RecomputedCounters {
-        inlinks: inl.0,
-        unique_inlinks: inl.1,
-        self_inlinks: inl.2,
-        inlinks_all: inl.3,
-        outlinks: out.0,
-        unique_outlinks: out.1,
-        self_outlinks: out.2,
-        external_outlinks: out.3,
-        unique_external_outlinks: out.4,
-        img_inlinks: img,
-    })
+    Ok(recompute_many(conn, &[id])?.remove(&id).unwrap_or_default())
 }
 
-/// Gespeicherte Zähler der URL `id`.
+/// Gespeicherte Zähler der URL `id` (Tabelle `url_counters`).
 pub fn stored(conn: &Connection, id: i64) -> Result<RecomputedCounters, StoreError> {
-    Ok(conn.query_row(
-        "SELECT inlinks, unique_inlinks, self_inlinks, inlinks_all, outlinks, unique_outlinks, \
-                self_outlinks, external_outlinks, unique_external_outlinks, img_inlinks \
-         FROM urls WHERE id = ?1",
-        [id],
-        |r| {
-            Ok(RecomputedCounters {
-                inlinks: r.get(0)?,
-                unique_inlinks: r.get(1)?,
-                self_inlinks: r.get(2)?,
-                inlinks_all: r.get(3)?,
-                outlinks: r.get(4)?,
-                unique_outlinks: r.get(5)?,
-                self_outlinks: r.get(6)?,
-                external_outlinks: r.get(7)?,
-                unique_external_outlinks: r.get(8)?,
-                img_inlinks: r.get(9)?,
-            })
-        },
-    )?)
+    let sql = format!(
+        "SELECT {} FROM url_counters WHERE url_id = ?1",
+        COUNTER_COLUMNS.join(", ")
+    );
+    Ok(conn.query_row(&sql, [id], |r| recomputed_from_row(r, 0))?)
 }
 
-/// Prüft alle URLs: Liefert die Kennungen, deren gespeicherte Zähler von der Neuberechnung abweichen.
+/// Prüft alle URLs: Liefert die Kennungen (aufsteigend), deren gespeicherte Zähler von der Neuberechnung abweichen
+/// oder die keine Zeile in `url_counters` haben. Ein Durchlauf je Gruppe über die ganze Datei, kein Lauf je URL;
+/// die Zeilen werden gestreamt.
 pub fn verify_all(conn: &Connection) -> Result<Vec<i64>, StoreError> {
-    let ids: Vec<i64> = conn
-        .prepare("SELECT id FROM urls ORDER BY id")?
-        .query_map([], |r| r.get(0))?
-        .collect::<Result<_, _>>()?;
+    let mut stmt = conn.prepare(&recompute_sql(false))?;
+    let mut rows = stmt.query([])?;
     let mut bad = Vec::new();
-    for id in ids {
-        if stored(conn, id)? != recompute(conn, id)? {
-            bad.push(id);
+    while let Some(row) = rows.next()? {
+        let expected = recomputed_from_row(row, 1)?;
+        let stored = match row.get::<_, Option<i64>>(13)? {
+            None => None,
+            Some(_) => Some(recomputed_from_row(row, 13)?),
+        };
+        if stored != Some(expected) {
+            bad.push(row.get(0)?);
         }
     }
     Ok(bad)

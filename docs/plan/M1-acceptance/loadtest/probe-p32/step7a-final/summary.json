@@ -1,0 +1,123 @@
+{
+  "dir": "step7a-final",
+  "store": {
+    "pages": 250000,
+    "pages_per_s": 9508.6,
+    "segment_s": [
+      2.8,
+      2.7,
+      2.5,
+      2.6,
+      2.9,
+      2.5,
+      2.9,
+      2.5,
+      3.4,
+      1.5
+    ],
+    "segment_rel_to_mean_pct": [
+      105,
+      101,
+      93,
+      100,
+      112,
+      95,
+      111,
+      95,
+      129,
+      59
+    ],
+    "min_max_pct": [
+      59,
+      129
+    ],
+    "commit_max_s": 0.74,
+    "checkpoint_max_s": 0.0,
+    "end_batch_s": 3.5,
+    "finish_s": 0.9,
+    "file_mib": 813,
+    "peak_rss_mib": 356,
+    "load_at_start": "5.45 5.81 4.93"
+  },
+  "perf-001": {
+    "passed": true,
+    "urls_per_s": 3863.1,
+    "seconds": 64.716,
+    "peak_rss_mb": 453.9,
+    "max_stall_s": null,
+    "file_bytes": 1544404992,
+    "violations": [],
+    "load_at_start": "4.55 5.54 4.87",
+    "store_commit_max_ns": 902858333,
+    "store_commit_ns": 10593645287,
+    "store_checkpoint_max_ns": 1550938125,
+    "store_checkpoint_ns": 1550986500,
+    "store_checkpoints": 2,
+    "store_bg_checkpoints": 0,
+    "store_bg_checkpoint_max_ns": 0,
+    "store_wait_checkpoint_ns": 0,
+    "store_link_index_build_ns": 8047344959,
+    "engine_w_write_max_ns": 8257074209,
+    "engine_send_ns": 22106684667,
+    "segments": {
+      "complete": 10,
+      "mean_pages_per_s": 4740.7,
+      "rel_pct": [
+        108,
+        99,
+        108,
+        99,
+        97,
+        109,
+        105,
+        102,
+        97,
+        81
+      ],
+      "min_max_pct": [
+        81,
+        109
+      ]
+    }
+  },
+  "perf-003": {
+    "passed": true,
+    "urls_per_s": 3279.2,
+    "seconds": 76.239,
+    "peak_rss_mb": 456.6,
+    "max_stall_s": 1.149,
+    "file_bytes": null,
+    "violations": [],
+    "load_at_start": "5.02 5.51 4.91",
+    "store_commit_max_ns": 897837666,
+    "store_commit_ns": 10921950214,
+    "store_checkpoint_max_ns": 1411208625,
+    "store_checkpoint_ns": 1411238542,
+    "store_checkpoints": 2,
+    "store_bg_checkpoints": 0,
+    "store_bg_checkpoint_max_ns": 0,
+    "store_wait_checkpoint_ns": 0,
+    "store_link_index_build_ns": 7635809708,
+    "engine_w_write_max_ns": 7955655875,
+    "engine_send_ns": 27745218724,
+    "segments": {
+      "complete": 9,
+      "mean_pages_per_s": 3786.0,
+      "rel_pct": [
+        93,
+        100,
+        100,
+        108,
+        96,
+        108,
+        103,
+        99,
+        98
+      ],
+      "min_max_pct": [
+        93,
+        108
+      ]
+    }
+  }
+}

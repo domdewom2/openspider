@@ -1,0 +1,44 @@
+{
+  "dir": "step5f-ab-background2",
+  "perf-001": {
+    "passed": true,
+    "urls_per_s": 2517.8,
+    "seconds": 99.292,
+    "peak_rss_mb": 487.6,
+    "max_stall_s": null,
+    "file_bytes": 1544769536,
+    "violations": [],
+    "load_at_start": "3.22 2.88 2.94",
+    "store_commit_max_ns": 2309037500,
+    "store_commit_ns": 21052792956,
+    "store_checkpoint_max_ns": 2596377167,
+    "store_checkpoint_ns": 2596404167,
+    "store_checkpoints": 2,
+    "store_bg_checkpoints": 365,
+    "store_bg_checkpoint_max_ns": 1351615125,
+    "store_wait_checkpoint_ns": 49194125,
+    "store_link_index_build_ns": 15765396417,
+    "engine_w_write_max_ns": 16526440375,
+    "engine_send_ns": 37447589129,
+    "segments": {
+      "complete": 10,
+      "mean_pages_per_s": 3255.8,
+      "rel_pct": [
+        102,
+        91,
+        91,
+        129,
+        109,
+        115,
+        105,
+        106,
+        86,
+        84
+      ],
+      "min_max_pct": [
+        84,
+        129
+      ]
+    }
+  }
+}

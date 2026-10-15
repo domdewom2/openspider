@@ -183,6 +183,8 @@ pub fn export_bulk_in(
     out_dir: &Path,
     format: Format,
 ) -> Result<Vec<ExportFileInfo>, ExportError> {
+    // K-74: Exporte einer nicht laufenden Datei bauen `links_target` bei Bedarf (Listen nach Linkziel).
+    os_store::link_index::ensure_if_idle(file)?;
     // Auflösung über den gemeinsamen Katalog: Vorschläge bei Tippfehlern stammen aus allen Bulk-Namen.
     let canonical = match catalog::resolve(ExportKind::Bulk, name)? {
         ExportRef::Bulk(canonical) => canonical,
@@ -234,6 +236,8 @@ pub fn export_report_in(
     out_dir: &Path,
     format: Format,
 ) -> Result<ReportResult, ExportError> {
+    // K-74: wie beim Bulk-Export (Redirect-Report: Quellen je Weiterleitungsziel).
+    os_store::link_index::ensure_if_idle(file)?;
     fs_paths::create_dir_all(out_dir).map_err(|source| ExportError::Io {
         path: out_dir.to_path_buf(),
         source,

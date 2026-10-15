@@ -263,6 +263,8 @@ const REPAIR_TABLES: &[(&str, Option<&str>)] = &[
     ("crawl_meta", None),
     ("crawl_config", Some("id")),
     ("urls", Some("id")),
+    // nach `urls`: der Trigger legt die Zeilen an, die gerettete Tabelle ersetzt sie
+    ("url_counters", Some("url_id")),
     ("links", Some("id")),
     ("image_instances", Some("id")),
     ("canonicals", Some("url_id")),

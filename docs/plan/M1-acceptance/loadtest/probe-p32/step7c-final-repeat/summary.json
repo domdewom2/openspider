@@ -1,0 +1,84 @@
+{
+  "dir": "step7c-final-repeat",
+  "perf-001": {
+    "passed": true,
+    "urls_per_s": 4179.8,
+    "seconds": 59.811,
+    "peak_rss_mb": 454.6,
+    "max_stall_s": null,
+    "file_bytes": 1544474624,
+    "violations": [],
+    "load_at_start": "3.41 4.27 4.51",
+    "store_commit_max_ns": 841233333,
+    "store_commit_ns": 9896368760,
+    "store_checkpoint_max_ns": 1309246500,
+    "store_checkpoint_ns": 1309275875,
+    "store_checkpoints": 2,
+    "store_bg_checkpoints": 0,
+    "store_bg_checkpoint_max_ns": 0,
+    "store_wait_checkpoint_ns": 0,
+    "store_link_index_build_ns": 3972102083,
+    "engine_w_write_max_ns": 4182284166,
+    "engine_send_ns": 22205782124,
+    "segments": {
+      "complete": 10,
+      "mean_pages_per_s": 4683.4,
+      "rel_pct": [
+        82,
+        109,
+        109,
+        107,
+        100,
+        115,
+        101,
+        101,
+        100,
+        86
+      ],
+      "min_max_pct": [
+        82,
+        115
+      ]
+    }
+  },
+  "perf-003": {
+    "passed": true,
+    "urls_per_s": 3510.3,
+    "seconds": 71.219,
+    "peak_rss_mb": 455.3,
+    "max_stall_s": 1.199,
+    "file_bytes": null,
+    "violations": [],
+    "load_at_start": "5.31 4.66 4.64",
+    "store_commit_max_ns": 898941708,
+    "store_commit_ns": 10304218466,
+    "store_checkpoint_max_ns": 1206404083,
+    "store_checkpoint_ns": 1206432750,
+    "store_checkpoints": 2,
+    "store_bg_checkpoints": 0,
+    "store_bg_checkpoint_max_ns": 0,
+    "store_wait_checkpoint_ns": 0,
+    "store_link_index_build_ns": 3758463625,
+    "engine_w_write_max_ns": 4072606792,
+    "engine_send_ns": 28314607173,
+    "segments": {
+      "complete": 9,
+      "mean_pages_per_s": 3835.0,
+      "rel_pct": [
+        92,
+        106,
+        103,
+        101,
+        96,
+        107,
+        104,
+        97,
+        97
+      ],
+      "min_max_pct": [
+        92,
+        107
+      ]
+    }
+  }
+}

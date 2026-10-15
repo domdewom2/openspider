@@ -171,7 +171,7 @@ fn columns() -> Vec<ColumnDef> {
             ColumnKind::Text,
             true,
         ),
-        column("Inlinks", "u.inlinks", ColumnKind::Int, true),
+        column("Inlinks", "c.inlinks", ColumnKind::Int, true),
         column(
             "Response Time",
             "u.response_time_ms",

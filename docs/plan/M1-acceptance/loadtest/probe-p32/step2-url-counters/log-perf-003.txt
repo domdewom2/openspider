@@ -1,0 +1,8 @@
+Start 2026-10-15T11:47:12Z (13:47 lokal)
+13:47  up 35 days,  3:05, 16 users, load averages: 3.53 3.81 4.30
+perf-003 (large): 135599 Requests/s, Crawler ja, passed = false
+  Spitzen-RSS des Crawl-Prozesses: 726 MB
+  VERLETZT: "PERF-003: Spitzen-RSS 726 MB >= 500 MB bei verlangsamtem Store"
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/m1-p32/docs/plan/M1-acceptance/loadtest/probe-p32/step2-url-counters/perf-003.json
+Ende 2026-10-15T11:48:40Z (13:48 lokal), Exit 1
+13:48  up 35 days,  3:07, 16 users, load averages: 3.81 3.88 4.28

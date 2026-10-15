@@ -1,0 +1,13 @@
+Seiten (Ziel): 250000, Abschnitte vollstaendig: 10, Stichproben: 49
+Abschnitt    Dauer s     Seiten/s   zum Mittel
+1                6.7         3705         +23%
+2                7.5         3342         +11%
+3                6.8         3650         +21%
+4                7.5         3328         +11%
+5                8.2         3054          +2%
+6                8.2         3060          +2%
+7                8.9         2817          -6%
+8               10.4         2397         -20%
+9               10.0         2493         -17%
+10               8.9         2796          -7%
+Mittel: 3004 Seiten/s ueber 83 s; kleinster/groesster Abschnitt: 80% / 123% des Mittels

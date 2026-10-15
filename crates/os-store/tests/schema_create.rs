@@ -22,7 +22,7 @@ fn create_sets_identity_wal_and_all_tables() {
         .pragma_query_value(None, "user_version", |r| r.get(0))
         .unwrap();
     assert_eq!(uv, i64::from(SCHEMA_VERSION));
-    assert_eq!(SCHEMA_VERSION, 1);
+    assert_eq!(SCHEMA_VERSION, 2);
     let jm: String = file
         .conn()
         .pragma_query_value(None, "journal_mode", |r| r.get(0))
@@ -62,6 +62,7 @@ fn schema_has_expected_indexes_and_columns() {
         "queue_order",
         "url_flags_flag",
         "urls_change_seq",
+        "url_counters_change_seq",
     ] {
         assert!(idx.iter().any(|i| i == name), "Index {name} fehlt");
     }
@@ -120,7 +121,7 @@ fn reopen_reads_meta_and_config() {
         let m = f.meta().unwrap();
         assert_eq!(m.crawl_id, created.crawl_id);
         assert_eq!(m.state, CrawlState::Running);
-        assert_eq!(m.schema_version, 1);
+        assert_eq!(m.schema_version, 2);
     }
     for mode in [OpenMode::ReadOnly, OpenMode::ReadWrite] {
         let f = CrawlFile::open(&path, mode).unwrap();
@@ -322,4 +323,79 @@ fn change_seq_column_index_and_meta_start_at_zero() {
     assert!(os_store::queries::changed_since(f2.conn(), 0, 10)
         .unwrap()
         .is_empty());
+}
+
+// spec: PERF-002
+#[test]
+fn url_counters_is_a_narrow_table_with_one_row_per_url() {
+    let dir = tempfile::tempdir().unwrap();
+    let (_, file) = create(dir.path(), "a.ospider");
+    let conn = file.conn();
+    let cols: Vec<String> = conn
+        .prepare("SELECT name FROM pragma_table_info('url_counters')")
+        .unwrap()
+        .query_map([], |r| r.get(0))
+        .unwrap()
+        .collect::<Result<_, _>>()
+        .unwrap();
+    assert_eq!(
+        cols,
+        [
+            "url_id",
+            "inlinks",
+            "unique_inlinks",
+            "self_inlinks",
+            "inlinks_all",
+            "img_inlinks",
+            "outlinks",
+            "unique_outlinks",
+            "self_outlinks",
+            "external_outlinks",
+            "unique_external_outlinks",
+            "html_2xx_sources",
+            "image_link_inlinks",
+            "change_seq",
+        ]
+    );
+    let without_rowid: i64 = conn
+        .query_row(
+            "SELECT wr FROM pragma_table_list('url_counters')",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(without_rowid, 1, "WITHOUT ROWID");
+    // Jede URL erhält ihre Zeile in derselben Transaktion; sie verschwindet mit der URL.
+    let tx = conn.unchecked_transaction().unwrap();
+    for id in 1..=3 {
+        tx.execute(
+            "INSERT INTO urls (id, url, address, origin, is_internal, state, discovered_via, folder_depth, url_length) \
+             VALUES (?1, ?2, ?2, 'https://a.test', 1, 'queued', 'link', 0, 15)",
+            rusqlite::params![id, format!("https://a.test/{id}")],
+        )
+        .unwrap();
+    }
+    let rows: i64 = tx
+        .query_row("SELECT COUNT(*) FROM url_counters", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(rows, 3, "innerhalb derselben Transaktion");
+    tx.commit().unwrap();
+    let zero: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM url_counters WHERE inlinks = 0 AND outlinks = 0 AND html_2xx_sources = 0 \
+             AND image_link_inlinks = 0 AND change_seq = 0",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(zero, 3);
+    conn.execute("DELETE FROM urls WHERE id = 2", []).unwrap();
+    let left: Vec<i64> = conn
+        .prepare("SELECT url_id FROM url_counters ORDER BY url_id")
+        .unwrap()
+        .query_map([], |r| r.get(0))
+        .unwrap()
+        .collect::<Result<_, _>>()
+        .unwrap();
+    assert_eq!(left, [1, 3]);
 }

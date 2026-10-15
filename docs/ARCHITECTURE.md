@@ -34,6 +34,29 @@ Ziel: Funktionsparität mit Screaming Frog SEO Spider 24.3, aber schneller und s
 | `os-parity` | Paritätsabgleich gegen Referenz-Exporte (`diff`, `run`) und Spec-Abdeckung aus Tags und Testergebnissen (`coverage`) | csv, toml, serde |
 | `os-loadtest` | Lasttest-Runner (Binary, PERF-009): `os-loadtest run --scenario perf-001 --size small` bzw. `--size large`, schreibt `target/loadtest/report.json`; Trait `CrawlerUnderTest`, den `os-engine` später implementiert | os-testsite, clap |
 
+## Crawl-Datei und Speicher
+
+Schreibpfad großer Crawls (M1-P32, K-74 bis K-77; Messwerte in `docs/plan/M1-acceptance/loadtest/probe-p32/README.md`). Ziel: Der Durchsatz bleibt über den ganzen Crawl konstant (PERF-002) und kein Schreibaufruf des Writers blockiert länger als einige Sekunden (PERF-003).
+
+**Schema v2.** `url_counters` (eine Zeile je URL, `WITHOUT ROWID`, rund 30 Byte) ist die einzige Quelle aller Link-Zähler: `inlinks`, `unique_inlinks`, `self_inlinks`, `inlinks_all`, `img_inlinks`, `outlinks`, `unique_outlinks`, `self_outlinks`, `external_outlinks`, `unique_external_outlinks` und die zwei Zähler, die Live-Abfragen ohne Linkindex exakt machen: `html_2xx_sources` (verschiedene interne HTML-Quellseiten mit Status 2xx und mindestens einem Hyperlink auf die URL, Grundlage von `% of Total`) und `image_link_inlinks` (Link-Instanzen vom Typ `Image` mit interner Quelle, Images-Grundmenge). Die Zählerspalten in `urls` bleiben im Schema, werden aber nicht mehr gepflegt und nicht gelesen. Ein Trigger legt die Zeile mit der `urls`-Zeile an und löscht sie mit ihr; während eines Schreiblaufs fehlt der Einfüge-Trigger (er zwingt SQLite je eingefügter `urls`-Zeile zu einem Statement-Journal, 50 µs statt 7 µs), der Writer legt die Zeile selbst an, und Pause, Ende und Schließen der Senke stellen den Trigger wieder her. Der Writer schreibt die Differenzen je Batch aufsteigend nach Kennung in dieselbe Transaktion und stempelt `url_counters.change_seq`; `queries::changed_since` vereinigt `urls.change_seq` und `url_counters.change_seq`. Grund: Die Zählerpflege ändert je Batch rund 60 000 zufällige Zeilen; in der breiten `urls`-Zeile passt die Tabelle bei 1 Mio. URLs nicht in den Cache, die schmale Zeile bleibt darin.
+
+**Index `links_target`.** Er fehlt während eines laufenden oder pausierten Crawls und nach einem Abbruch. Der Writer (`SqliteSink::open`) entfernt ihn beim Öffnen; beim regulären Ende (Zustand `Completed` im letzten Batch: Ende, Stopp, Limit) baut er ihn in der Transaktion dieses Batches sortiert auf (`os_store::link_index`, Ereignis `links_index_built`, Messzähler `link_index_build_ns`); der Aufbau läuft mit 4 MiB Seitencache, weil der Sortierer sonst bis zur Cachegröße (256 MiB) zusätzlichen Speicher belegt. `link_index::ensure_if_idle` baut ihn bei Bedarf nach; die Crawl-Analyse (`os-analyze`) und die Exporte (`os-export`) einer nicht laufenden Datei rufen es auf. Ohne Index bleibt jede Abfrage korrekt, kostet aber höchstens einen sequenziellen Lauf über `links` (nie einen je Ergebniszeile; Inlinks einer URL bei 250 000 Seiten x 30 Links: 0,24 s ohne Index gegen 0,3 ms mit Index, hochgerechnet auf 1 Mio. Seiten rund 0,9 s):
+
+| Abfrage (Stelle) | mit Index | ohne Index (laufender, pausierter, abgebrochener Crawl) |
+|---|---|---|
+| Zähler je URL, `Inlinks` & Co. (`os-analyze` Tabs, `os-mcp`, `os-export`) | `url_counters` | `url_counters` (unabhängig vom Index) |
+| `% of Total` (Internal) und Images-Grundmenge | `url_counters.html_2xx_sources` / `image_link_inlinks` | dasselbe |
+| Inlinks einer URL (`queries::inlinks`, MCP `url_details`, Detail-Export) | Suche im Index, Sortierung nur der Treffer | ein Lauf über `links`: Treffer, Sortierung und Gesamtzahl in einer Abfrage |
+| Bulk-Export „All Inlinks“, Response-Codes-Inlinks (`links_export`) | Suche im Index je Zielzeile | ein Lauf über `links`, Zielmenge als Hashtabelle |
+| Redirect-Reports (`reports/redirects.rs`) | Suche je Start-URL | Menge der verlinkten Ziele und Beispielquellen je ein Lauf für alle Start-URLs |
+| Zähler neu berechnen (`counters::recompute_many`, `verify_all`) | Suche im Index | ein Lauf je Zählergruppe für die ganze Menge |
+| URLs entfernen (`os-engine` `rescan::remove_urls`) | Suche im Index | je Abfrage ein Lauf für alle entfernten URLs |
+| Fortsetzen (`os-engine` `resume.rs`, Ressourcen-Links der Warteschlange) | kein Index nötig: gehört zu M1-P33 | |
+
+**WAL.** Standard ist der Checkpoint im `COMMIT` (`wal_autocheckpoint`, Schwelle 256 MiB, wächst mit der Datei bis 512 MiB; ein von außen gesetzter Wert bleibt unangetastet); Abschluss und Pause führen den kurzen `TRUNCATE`-Checkpoint aus. Nach K-74/K-75 kostet er bei 1 Mio. Seiten höchstens 1 s (größter Commit 0,79 s). Der Hintergrund-Checkpoint (K-76: `SqliteSink::with_background_checkpoint` oder `OS_STORE_BACKGROUND_CHECKPOINT=1`; Thread mit eigener Verbindung, `PRAGMA wal_checkpoint(PASSIVE)` nach WAL-Größe oder fünf Sekunden, `journal_size_limit`, Messzähler `bg_checkpoint_*`, `wait_checkpoint_*`) ist **nicht** der Standard: SQLite setzt das WAL nur zurück, wenn der nächste Schreibvorgang nach dem Ende eines Durchlaufs beginnt, der Writer beginnt aber unmittelbar nach dem Commit. Das WAL wächst dann auf 1 GiB, der Store-Benchmark mit 1 Mio. Seiten wird um 27 % langsamer (4 170 gegen 5 740 Seiten/s, größter Commit 2,8 gegen 1,0 s).
+
+**Seitengröße und mmap.** Unverändert (4 KiB, kein `mmap`). A/B nach K-77 (Store-Benchmark und Kurzprobe mit 250 000 Seiten): 16 KiB bringt +8 % bzw. +18 % Durchsatz, aber 65 MB mehr Spitzen-RSS; `mmap_size` 1 GiB liegt im Rauschen (+3 % / +8 %) bei 15 MB mehr. Übernommen wird nur ein Gewinn von mindestens 10 % ohne höheren Spitzen-RSS (Bericht: `docs/plan/M1-acceptance/loadtest/probe-p32/README.md`).
+
 ## Desktop-App
 
 `apps/desktop`: Tauri v2 + React + TypeScript + Vite; Konzept und Entscheidungen: `docs/plan/M2-ui-concept.md`.

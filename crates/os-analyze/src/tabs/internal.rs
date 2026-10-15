@@ -16,12 +16,11 @@ pub(crate) const POPULATION: &str = "u.is_internal = 1 AND u.in_tables = 1";
 
 /// `% of Total` (ONPAGE-015, K-56): verschiedene interne HTML-Quellseiten mit Status 2xx und mindestens einem
 /// Hyperlink auf die URL (Selbstlinks zählen mit, A-9) ÷ Anzahl interner HTML-Seiten mit 2xx × 100. Ohne solche
-/// Seiten leer.
+/// Seiten leer. Der Zähler der URL steht in `url_counters.html_2xx_sources` (K-74/K-75): live, exakt und ohne den
+/// Index `links_target`; die Gesamtzahl ist eine unkorrelierte Teilabfrage und wird einmal je Abfrage berechnet.
 const PCT_OF_TOTAL: &str = "CASE WHEN (SELECT COUNT(*) FROM urls h WHERE h.is_internal = 1 AND \
      h.content_class = 'HTML' AND h.status_code BETWEEN 200 AND 299) = 0 THEN NULL ELSE \
-     100.0 * (SELECT COUNT(DISTINCT l.source_id) FROM links l JOIN urls h ON h.id = l.source_id \
-     WHERE l.target_id = u.id AND l.link_type = 'Hyperlink' AND h.is_internal = 1 AND \
-     h.content_class = 'HTML' AND h.status_code BETWEEN 200 AND 299) / \
+     100.0 * c.html_2xx_sources / \
      (SELECT COUNT(*) FROM urls h WHERE h.is_internal = 1 AND h.content_class = 'HTML' AND \
      h.status_code BETWEEN 200 AND 299) END";
 
@@ -262,25 +261,25 @@ pub fn tab() -> TabDef {
         col("Crawl Depth", "u.crawl_depth", ColumnKind::Int, true),
         col("Folder Depth", "u.folder_depth", ColumnKind::Int, true),
         // ONPAGE-015: Selbstlinks zählen mit (A-9, K-07)
-        col("Inlinks", "u.inlinks", ColumnKind::Int, true),
-        col("Unique Inlinks", "u.unique_inlinks", ColumnKind::Int, true),
+        col("Inlinks", "c.inlinks", ColumnKind::Int, true),
+        col("Unique Inlinks", "c.unique_inlinks", ColumnKind::Int, true),
         col(
             "% of Total",
             PCT_OF_TOTAL,
             ColumnKind::Float { decimals: 2 },
             true,
         ),
-        col("Outlinks", "u.outlinks", ColumnKind::Int, true),
-        col("Unique Outlinks", "u.unique_outlinks", ColumnKind::Int, true),
+        col("Outlinks", "c.outlinks", ColumnKind::Int, true),
+        col("Unique Outlinks", "c.unique_outlinks", ColumnKind::Int, true),
         col(
             "External Outlinks",
-            "u.external_outlinks",
+            "c.external_outlinks",
             ColumnKind::Int,
             true,
         ),
         col(
             "Unique External Outlinks",
-            "u.unique_external_outlinks",
+            "c.unique_external_outlinks",
             ColumnKind::Int,
             true,
         ),

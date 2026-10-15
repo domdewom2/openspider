@@ -92,12 +92,12 @@ fn default_crawl_folder_is_the_one_defined_in_out_227() {
     );
 }
 
-/// Kopiert die Fixture `schema-v1.ospider` (pausierter Crawl, 42 URLs) unter dem Namen der Verwaltung
+/// Kopiert die Fixture `schema-v2.ospider` (pausierter Crawl, 42 URLs) unter dem Namen der Verwaltung
 /// (`<crawl_id>.ospider`) in `dir`.
 fn fixture_crawl_in(dir: &Path) -> (CrawlId, std::path::PathBuf) {
     std::fs::create_dir_all(dir).unwrap();
     let staged = tempfile::tempdir().unwrap();
-    let source = copy_fixture("schema-v1.ospider", staged.path());
+    let source = copy_fixture("schema-v2.ospider", staged.path());
     let id = CrawlFile::open(&source, OpenMode::ReadOnly)
         .unwrap()
         .meta()

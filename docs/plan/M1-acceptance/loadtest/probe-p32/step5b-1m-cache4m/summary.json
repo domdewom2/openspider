@@ -1,0 +1,42 @@
+{
+  "dir": "step5b-1m-cache4m",
+  "store": {
+    "pages": 1000000,
+    "pages_per_s": 4505.9,
+    "segment_s": [
+      21.4,
+      23.5,
+      21.7,
+      22.2,
+      22.4,
+      21.5,
+      23.1,
+      21.2,
+      21.5,
+      23.6
+    ],
+    "segment_rel_to_mean_pct": [
+      96,
+      106,
+      98,
+      100,
+      101,
+      97,
+      104,
+      96,
+      97,
+      106
+    ],
+    "min_max_pct": [
+      96,
+      106
+    ],
+    "commit_max_s": 1.6,
+    "checkpoint_max_s": 0.0,
+    "end_batch_s": 30.6,
+    "finish_s": 3.5,
+    "file_mib": 3341,
+    "peak_rss_mib": 364,
+    "load_at_start": "3.54 3.73 3.73"
+  }
+}
