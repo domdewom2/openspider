@@ -18,6 +18,7 @@ pub mod redirect;
 pub mod rescan;
 pub mod resume;
 pub mod robots_glue;
+pub mod seen;
 pub mod sitemaps;
 pub mod types;
 pub mod worker;

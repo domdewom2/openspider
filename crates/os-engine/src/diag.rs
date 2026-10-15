@@ -12,7 +12,7 @@
 //! | Worker | `items`, `item_ns` (gesamt), `host_wait_ns`, `robots_ns`, `fetch_ns`/`fetch_max_ns`/`fetch_slow` (Abrufe ab 250 ms), `analyze_ns`, `assemble_ns` (einschließlich `reserve_ns`), `reserve_ns`/`reserve_max_ns` (Platz im Kanal), `send_ns`/`send_max_ns` (Senden mit Gegendruck) |
 //! | Steuerschleife | `run_loops`, `run_pops` |
 //! | Writer-Thread | `w_batches`, `w_pages`, `w_pages_max` (größter geschriebener Batch in Seiten, M1-P33), `w_write_ns`/`w_write_max_ns`, `w_idle_ns` (wartet auf Arbeit), `w_poll_sleeps`/`w_poll_sleep_ns` (Warten mit Zeitgrenze auf weitere Nachrichten, Sammelzeit des Gruppen-Commits), `w_queue_max`, `w_b_le50`, `w_b_le200`, `w_b_le1000`, `w_b_gt1000` (Batchgrößen in Seiten) |
-//! | Speicher (M1-P33) | Spitzenwerte der geschätzten Größe der Kernstrukturen, abgetastet bei jedem Fortschrittstakt (100 ms) und am Ende; Bytes = Zahl der Einträge bzw. Kapazität mal Elementgröße plus Heap-Anteil der Adressen (Schätzung, keine Messung des Allokators): `mem_seen_entries`/`mem_seen_bytes`/`mem_seen_overflow` (Seen-Menge, Überlaufmenge), `mem_queue_items`/`mem_queue_bytes` (Einträge der Warteschlange im RAM samt Adressen), `mem_queue_disk` (nur in der Tabelle `queue` stehende Einträge), `mem_queue_pinned` (Einträge, die nicht ausgelagert werden dürfen), `mem_heap_entries`/`mem_heap_bytes` (Sortierstruktur), `mem_redirect_entries`/`mem_redirect_bytes`, `mem_sitemap_entries`/`mem_sitemap_bytes` (`sitemap_keys`, hreflang-Zähler), `mem_core_bytes` (Summe), `mem_writer_batch_bytes_max` (größter zusammengefasster Batch des Writer-Threads), `q_spilled`/`q_loaded`/`q_refills`/`q_trims`/`q_improved_disk` (Auslagern und Nachladen der Warteschlange), `seen_collisions` (echte Schlüsselkollisionen) |
+//! | Speicher (M1-P33) | Spitzenwerte der geschätzten Größe der Kernstrukturen, abgetastet bei jedem Fortschrittstakt (100 ms) und am Ende; Bytes = Zahl der Einträge bzw. Kapazität mal Elementgröße plus Heap-Anteil der Adressen (Schätzung, keine Messung des Allokators): `mem_seen_entries`/`mem_seen_bytes`/`mem_seen_overflow` (Seen-Menge, Überlaufmenge), `mem_queue_items`/`mem_queue_bytes` (Einträge der Warteschlange im RAM samt Adressen), `mem_queue_disk` (nur in der Tabelle `queue` stehende Einträge), `mem_queue_pinned` (Einträge, die nicht ausgelagert werden dürfen), `mem_heap_entries`/`mem_heap_bytes` (Sortierstruktur), `mem_redirect_entries`/`mem_redirect_bytes`, `mem_sitemap_entries`/`mem_sitemap_bytes` (`sitemap_keys`, hreflang-Zähler), `mem_core_bytes` (Summe), `mem_writer_batch_bytes_max` (größter zusammengefasster Batch des Writer-Threads), `q_spilled`/`q_loaded`/`q_refills`/`q_trims`/`q_improved_disk` (Auslagern und Nachladen der Warteschlange), `q_spill_off` (Auslagerung wegen fehlender Zeilen in `queue` abgeschaltet), `q_lost` (Einträge, die die Datei nicht mehr kannte), `seen_collisions` (echte Schlüsselkollisionen) |
 
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Instant;
@@ -85,6 +85,8 @@ counters!(
     q_refills,
     q_trims,
     q_improved_disk,
+    q_spill_off,
+    q_lost,
     seen_collisions,
 );
 

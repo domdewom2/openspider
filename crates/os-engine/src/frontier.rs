@@ -3,9 +3,10 @@
 //! * **Reihenfolge:** `(Priorität, Tiefe, seq)` aufsteigend. Priorität 0 = über Links erreichbar, 1 = nur über
 //!   eine Sitemap (ohne Tiefe, hinter allen Link-URLs, CRAWL-005). Es wird immer der kleinste Schlüssel
 //!   gestartet, also beginnt keine URL der Tiefe n+1, solange eine bekannte URL der Tiefe n noch wartet.
-//! * **Seen-Set:** 64-Bit-Hash der URL Encoded Address im RAM (je URL 16 Bytes Nutzlast), SQLite-`UNIQUE` ist
-//!   die Wahrheit in der Datei. Die Entdeckung ist atomar: Nachschlagen, Kennung vergeben und Einplanen
-//!   geschehen unter derselben Sperre, damit eine URL auch bei 200 Threads nie zweimal eingeplant wird.
+//! * **Seen-Set:** kompakte Menge im RAM (`seen::SeenSet`, K-78 a: 64-Bit-Schlüssel plus unabhängiger 32-Bit-
+//!   Fingerabdruck, 16 Byte je Eintrag, echte Kollisionen in einer Überlaufmenge mit voller Adresse), SQLite-
+//!   `UNIQUE` ist die Wahrheit in der Datei. Die Entdeckung ist atomar: Nachschlagen, Kennung vergeben und
+//!   Einplanen geschehen unter derselben Sperre, damit eine URL auch bei 200 Threads nie zweimal eingeplant wird.
 //! * **Mindesttiefe:** Wird eine bekannte URL über einen kürzeren Weg erneut gefunden, sinkt ihre Tiefe
 //!   (`UrlUpdate::Depth`); wartet sie noch, wird sie neu einsortiert. Bereits abgerufene Seiten geben die
 //!   neue Tiefe nicht an ihre Kinder weiter.
@@ -13,9 +14,8 @@
 //!   Abrufe überschreitet das Limit nie. Abgerufene robots.txt-Dateien zählen nicht (sie reservieren nichts).
 
 use std::cmp::Reverse;
-use std::collections::hash_map::DefaultHasher;
 use std::collections::{BinaryHeap, HashMap};
-use std::hash::{BuildHasherDefault, Hash, Hasher};
+use std::hash::Hasher;
 use std::sync::Arc;
 
 use os_fetch::{CookieJar, FetchPurpose};
@@ -25,6 +25,8 @@ use os_model::{
 use os_url::{NormUrl, RuleDecision, RuleSet, Scope, ScopeClass};
 
 use crate::redirect::RedirectGraph;
+pub use crate::seen::url_key;
+use crate::seen::SeenSet;
 
 /// Tiefe „unbekannt“ im Seen-Set und im Schlüssel (sortiert hinter jeder echten Tiefe).
 pub const NO_DEPTH: u32 = u32::MAX;
@@ -266,13 +268,6 @@ impl Hasher for IdentityHasher {
     }
 }
 
-/// 64-Bit-Schlüssel einer URL Encoded Address (stabil innerhalb einer Rust-Version, nur im RAM benutzt).
-pub fn url_key(encoded: &str) -> u64 {
-    let mut h = DefaultHasher::new();
-    encoded.hash(&mut h);
-    h.finish()
-}
-
 /// Die URL steht in der Warteschlange oder ist abgerufen.
 pub const F_QUEUED: u8 = 1;
 /// Die URL erscheint in den Tabellen.
@@ -283,7 +278,7 @@ pub const F_RULE_BLOCKED: u8 = 4;
 pub const F_RULE_OK: u8 = 8;
 
 /// Eintrag im Seen-Set.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Seen {
     /// Kennung.
     pub id: UrlId,
@@ -345,7 +340,7 @@ pub enum Pop {
 /// Gemeinsamer Zustand aller Worker (hinter einer Sperre).
 pub struct Core {
     /// Seen-Set.
-    pub seen: HashMap<u64, Seen, BuildHasherDefault<IdentityHasher>>,
+    pub seen: SeenSet,
     /// Warteschlange.
     pub frontier: Frontier,
     /// Nächste freie URL-Kennung.
@@ -380,7 +375,7 @@ impl Core {
     /// Leerer Zustand.
     pub fn new(max_urls: u64, max_depth: Option<u32>) -> Self {
         Core {
-            seen: HashMap::default(),
+            seen: SeenSet::default(),
             frontier: Frontier::default(),
             next_url_id: 1,
             next_seq: 1,
@@ -413,7 +408,7 @@ impl Core {
 
     /// Schlägt eine URL nach.
     pub fn lookup(&self, encoded: &str) -> Option<Seen> {
-        self.seen.get(&url_key(encoded)).copied()
+        self.seen.get(encoded)
     }
 
     /// Nimmt die nächste URL und reserviert den Abruf.
@@ -464,7 +459,7 @@ impl Core {
     pub fn memory(&self) -> crate::diag::CoreMemory {
         let (queue_items, queue_bytes, heap_entries, heap_bytes) = self.frontier.memory();
         let (redirect_entries, redirect_bytes) = self.redirects.memory();
-        let seen_slot = std::mem::size_of::<(u64, Seen)>() + 1;
+        let (seen_entries, seen_bytes, seen_overflow) = self.seen.memory();
         let sitemap_key_bytes: usize = self
             .sitemap_keys
             .iter()
@@ -474,9 +469,9 @@ impl Core {
             + self.sitemap_keys.capacity() * 8
             + self.sitemap_hreflang_next.capacity() * (std::mem::size_of::<(UrlId, u32)>() + 1);
         crate::diag::CoreMemory {
-            seen_entries: self.seen.len() as u64,
-            seen_bytes: (self.seen.capacity() * seen_slot) as u64,
-            seen_overflow: 0,
+            seen_entries,
+            seen_bytes,
+            seen_overflow,
             queue_items,
             queue_bytes,
             queue_disk: 0,
@@ -574,10 +569,11 @@ impl Core {
         rules: &RuleSet,
         batch: &mut WriteBatch,
     ) -> UrlId {
-        let key = url_key(&c.norm.encoded);
+        let kf = self.seen.key_fp(&c.norm.encoded);
         // Ohne Tiefe (nur über eine Sitemap erreichbar) gilt Priorität 1: hinter allen Link-URLs.
         let priority = u8::from(depth.is_none());
-        if let Some(mut e) = self.seen.get(&key).copied() {
+        if let Some(known) = self.seen.get_hashed(kf, &c.norm.encoded) {
+            let mut e = known;
             let id = e.id;
             // kürzerer Weg → Mindesttiefe
             if let Some(d) = depth {
@@ -649,7 +645,9 @@ impl Core {
                         .push(UrlUpdate::InTables { id, value: true });
                 }
             }
-            self.seen.insert(key, e);
+            if e != known {
+                self.seen.insert_hashed(kf, &c.norm.encoded, e);
+            }
             return id;
         }
 
@@ -711,8 +709,9 @@ impl Core {
                 priority,
             });
         }
-        self.seen.insert(
-            key,
+        self.seen.insert_hashed(
+            kf,
+            &c.norm.encoded,
             Seen {
                 id,
                 depth: depth.unwrap_or(NO_DEPTH),
@@ -725,7 +724,7 @@ impl Core {
     /// Trägt eine URL ohne Prüfung ein (robots.txt-Zeile, Start-URL beim Fortsetzen).
     pub fn register(&mut self, encoded: &str, id: UrlId, depth: Option<u32>, flags: u8) {
         self.seen.insert(
-            url_key(encoded),
+            encoded,
             Seen {
                 id,
                 depth: depth.unwrap_or(NO_DEPTH),
@@ -861,6 +860,48 @@ mod tests {
             m.total_bytes(),
             m.seen_bytes + m.queue_bytes + m.heap_bytes + m.redirect_bytes + m.sitemap_bytes
         );
+    }
+
+    // spec: PERF-001
+    #[test]
+    fn urls_with_a_forced_hash_collision_are_both_discovered_and_fetched() {
+        use crate::seen::{default_key_fp, KeyFp, SeenSet};
+        // gleicher 64-Bit-Schlüssel für alle URLs unter /c/, die Fingerabdrücke bleiben verschieden
+        fn colliding(encoded: &str) -> KeyFp {
+            let (key, fp) = default_key_fp(encoded);
+            if encoded.contains("/c/") {
+                (7, fp)
+            } else {
+                (key, fp)
+            }
+        }
+        let mut core = Core::new(0, None);
+        core.seen = SeenSet::with_key_fn(colliding);
+        let r = rules(&[], &[]);
+        let mut b = WriteBatch::default();
+        let a = norm("https://site.test/c/a");
+        let bb = norm("https://site.test/c/b");
+        let cc = norm("https://site.test/c/c");
+        let id_a = core.discover(&cand(&a), Some(1), 0, 0, &r, &mut b);
+        let id_b = core.discover(&cand(&bb), Some(1), 0, 0, &r, &mut b);
+        let id_c = core.discover(&cand(&cc), Some(2), 0, 0, &r, &mut b);
+        assert!(
+            id_a != id_b && id_b != id_c && id_a != id_c,
+            "drei Kennungen"
+        );
+        assert_eq!(b.new_urls.len(), 3, "alle drei URLs sind neu");
+        assert_eq!(
+            core.seen.overflow_len(),
+            2,
+            "zwei Adressen in der Überlaufmenge"
+        );
+        // erneut gefunden: dieselbe Kennung, keine zweite Einplanung
+        let again_b = core.discover(&cand(&bb), Some(1), 0, 0, &r, &mut b);
+        let again_c = core.discover(&cand(&cc), Some(2), 0, 0, &r, &mut b);
+        assert_eq!((again_b, again_c), (id_b, id_c));
+        assert_eq!(b.new_urls.len(), 3);
+        assert_eq!(core.lookup(&bb.encoded).map(|s| s.id), Some(id_b));
+        assert_eq!(pop_ids(&mut core), vec![id_a.0, id_b.0, id_c.0]);
     }
 
     // spec: CRAWL-003
