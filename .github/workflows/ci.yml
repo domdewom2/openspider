@@ -134,10 +134,9 @@ jobs:
           if-no-files-found: warn
 
   # Paritätslauf gegen die Referenzexporte (SF 24.3 Free, docs/plan/M1.md 5; Abnahmekriterium A3). Läuft nur, wenn unter
-  # tests/golden/parity/*/sf/ Referenzdateien liegen. Solange die Nachbesserungen aus dem Abnahmebericht
-  # (docs/plan/M1-acceptance/checklist.md, Abschnitt A3) nicht gemergt sind, endet der Lauf mit Exit-Code 1: der Schritt
-  # ist dann `continue-on-error`; den Bericht (report.md/report.json) gibt es immer als Artefakt und in der Job-Zusammenfassung.
-  # Nach den Nachbesserungen `continue-on-error` entfernen (A3 wird dann erzwungen).
+  # tests/golden/parity/*/sf/ Referenzdateien liegen. Seit M1-N18 (Welle 6b) endet der Lauf mit Exit-Code 0 (5/5 Sites,
+  # 38/38 Vergleiche, docs/plan/M1-acceptance/parity/report.md); der Schritt ist nicht mehr `continue-on-error`, A3 wird
+  # damit in der CI erzwungen. Den Bericht (report.md/report.json) gibt es immer als Artefakt und in der Job-Zusammenfassung.
   parity:
     name: parity (macos-arm64)
     runs-on: macos-14
@@ -168,7 +167,6 @@ jobs:
 
       - name: Paritätslauf (os-parity run --all)
         if: steps.reference.outputs.present == 'true'
-        continue-on-error: true
         run: |
           status=0
           target/debug/os-parity run --all --openspider target/debug/openspider --out target/parity || status=$?

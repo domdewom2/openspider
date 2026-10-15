@@ -104,6 +104,36 @@ impl Crawled {
     fn text_cell(&self, filter: &str, address: &str, column: &str) -> String {
         self.norm(&text(&self.cell(filter, address, column)))
     }
+
+    /// Diagnoseausgabe für Assert-Meldungen (TECH-012-Flake): Endzustand des Crawls, Zeilen des Filters „All“ mit
+    /// Indexierbarkeit und Occurrences sowie die Abrufe der Testsite je Pfad. Der Fehlertext eines gescheiterten
+    /// Abrufs (`FetchOutcome::NoResponse.detail`) wird nicht gespeichert und ist hier nicht erreichbar.
+    fn diagnostics(&self) -> String {
+        let mut out = format!(
+            "Crawl: state={:?} end_reason={:?} crawled={}\n",
+            self.fx.summary.state, self.fx.summary.end_reason, self.fx.summary.crawled
+        );
+        let page = self.page(
+            "All",
+            &[
+                "Address",
+                "Occurrences",
+                "Indexability",
+                "Indexability Status",
+            ],
+        );
+        for r in &page.rows {
+            let cells: Vec<String> = r.iter().map(|v| self.norm(&text(v))).collect();
+            out.push_str(&format!("  Zeile: {}\n", cells.join(" | ")));
+        }
+        for r in self.fx.site.requests() {
+            out.push_str(&format!(
+                "  Abruf {}: {} {} (Verbindung {})\n",
+                r.seq, r.method, r.path_and_query, r.conn_id
+            ));
+        }
+        out
+    }
 }
 
 fn text(v: &Value) -> String {
@@ -363,10 +393,17 @@ async fn contains_canonical_counts_html_and_header_canonicals() {
         .into_iter()
         .filter(|a| a != "/none.html")
         .collect();
-    assert_eq!(contains, expected);
+    assert_eq!(
+        contains,
+        expected,
+        "Contains Canonical weicht ab; fehlend: {:?}, zusätzlich: {:?}\n{}",
+        expected.difference(&contains).collect::<Vec<_>>(),
+        contains.difference(&expected).collect::<Vec<_>>(),
+        c.diagnostics()
+    );
     // nur per HTTP-Header (HTML-Seite und PDF) sowie außerhalb des Heads: enthalten
     for a in ["/header-only.html", "/doc.pdf", "/body-only.html"] {
-        assert!(contains.contains(a), "{a}");
+        assert!(contains.contains(a), "{a}\n{}", c.diagnostics());
     }
     assert_eq!(
         c.cell("Contains Canonical", "/header-only.html", "Occurrences"),

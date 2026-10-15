@@ -26,13 +26,13 @@ crawl = false
 
 [robots]
 mode = "respect"
-unreachable_policy = "allow_all"   # Referenz crawlt URLs hinter nicht erreichbarer robots.txt trotzdem (CRAWL-100, Q30)
+unreachable_policy = "allow_all"   # bewusste OS-Festlegung (K-55): OpenSpider sperrt den Host (RFC 9309), das Profil stellt die Referenz nach, die trotzdem crawlt (CRAWL-100, Q30)
 
 [advanced]
 cookies = "session_only"
 response_timeout_s = 20
 assume_html = false
-respect_self_ref_meta_refresh = false   # Referenz (Free-Standard) wertet Selbst-Refresh nicht als nicht indexierbar (TECH-068)
+respect_self_ref_meta_refresh = false   # seit K-57 Standard (TECH-068): ein Selbst-Refresh wirkt nur mit dieser Option auf die Indexierbarkeit, wie in der Referenz; die Zeile bleibt zur Klarheit
 
 [sitemaps]                 # TECH-210: Referenz (Free) ruft keine Sitemap ab; OpenSpider ruft ohne crawl_linked keine ab
 crawl_linked = false

@@ -15,13 +15,13 @@
             "export": "internal_all",
             "site": "out-basic-site",
             "sf_rows": 18,
-            "os_rows": 19,
+            "os_rows": 18,
             "matched": 18,
             "missing_in_os": [],
             "extra_in_os": [],
-            "cells_compared": 899,
-            "cells_equal": 885,
-            "agreement_pct": 98.443,
+            "cells_compared": 894,
+            "cells_equal": 894,
+            "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "Content Type",
@@ -62,45 +62,22 @@
                 "sf_column": "Title 1",
                 "os_column": "Title 1",
                 "compared": 18,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{BASE}/missing.html",
-                    "sf": "",
-                    "os": "Not Found"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Title 1 Length",
                 "os_column": "Title 1 Length",
-                "compared": 13,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{BASE}/missing.html",
-                    "sf": "0",
-                    "os": "9"
-                  }
-                ]
+                "compared": 12,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Title 1 Pixel Width",
                 "os_column": "Title 1 Pixel Width",
-                "compared": 13,
-                "errors": 2,
-                "examples": [
-                  {
-                    "key": "{BASE}/missing.html",
-                    "sf": "0",
-                    "os": "93"
-                  },
-                  {
-                    "key": "{BASE}/faq.html",
-                    "sf": "142",
-                    "os": "148"
-                  }
-                ]
+                "compared": 12,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Meta Description 1",
@@ -141,27 +118,15 @@
                 "sf_column": "H1-1",
                 "os_column": "H1-1",
                 "compared": 18,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{BASE}/missing.html",
-                    "sf": "",
-                    "os": "404"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "H1-1 Length",
                 "os_column": "H1-1 Length",
-                "compared": 13,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{BASE}/missing.html",
-                    "sf": "0",
-                    "os": "3"
-                  }
-                ]
+                "compared": 12,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "H2-1",
@@ -257,28 +222,16 @@
               {
                 "sf_column": "Word Count",
                 "os_column": "Word Count",
-                "compared": 13,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{BASE}/missing.html",
-                    "sf": "0",
-                    "os": "1"
-                  }
-                ]
+                "compared": 12,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Text Ratio",
                 "os_column": "Text Ratio",
-                "compared": 13,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{BASE}/missing.html",
-                    "sf": "0.000",
-                    "os": "3.3"
-                  }
-                ]
+                "compared": 12,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Crawl Depth",
@@ -347,39 +300,8 @@
                 "sf_column": "Hash",
                 "os_column": "Hash",
                 "compared": 18,
-                "errors": 6,
-                "examples": [
-                  {
-                    "key": "{BASE}/assets/logo.png",
-                    "sf": "",
-                    "os": "c3fb39f9e97bac1b390c81585a3f7a01"
-                  },
-                  {
-                    "key": "{BASE}/assets/site.css",
-                    "sf": "",
-                    "os": "b7bcf29995b0a078ad76116ffe73a4f4"
-                  },
-                  {
-                    "key": "{BASE}/missing.html",
-                    "sf": "",
-                    "os": "5d310c8f1ba4589b33ca2e3331b4cf9b"
-                  },
-                  {
-                    "key": "{BASE}/assets/site.js",
-                    "sf": "",
-                    "os": "4ad8fac01d7f0aaccc36c4ae8ae9a78d"
-                  },
-                  {
-                    "key": "{BASE}/old-page",
-                    "sf": "",
-                    "os": "d41d8cd98f00b204e9800998ecf8427e"
-                  },
-                  {
-                    "key": "{BASE}/assets/widget.png",
-                    "sf": "",
-                    "os": "5c2715fb082021ed5adbb7caa10348dc"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Last Modified",
@@ -482,23 +404,12 @@
             ],
             "applied_deviations": [
               {
-                "id": "DEV-001",
-                "spec": "CRAWL-098",
-                "kind": "OS-Festlegung",
-                "note": "K-40: Die robots.txt eines internen Hosts erscheint als eigene URL-Zeile in den Tabellen (200, text/plain). Die Referenz listet sie nicht. Offene Planerentscheidung: Festlegung beibehalten oder in_tables=0 fuer interne robots.txt (siehe Abnahmebericht, Befund B-01).",
-                "scope": "extra_in_os",
-                "count": 1,
-                "keys": [
-                  "{BASE}/robots.txt"
-                ]
-              },
-              {
                 "id": "DEV-003",
                 "spec": "ONPAGE-011",
                 "kind": "OS-Festlegung",
-                "note": "Nicht-HTML-URLs haben leere Element-Spalten (ONPAGE-011) und eine Seite ohne Element leere Wertspalten (ONPAGE-008); die Referenz schreibt 0.",
+                "note": "Nicht-HTML-URLs sowie Weiterleitungen, Fehlerseiten (4xx/5xx) und URLs ohne Antwort haben leere Element-, Laengen- und Pixelspalten, auch wenn ihr Koerper <title>/<h1> enthaelt (ONPAGE-011, A-5, K-60, Befund N-01), und eine Seite ohne Element leere Wertspalten (ONPAGE-008); die Referenz schreibt 0.",
                 "scope": "cell",
-                "count": 68,
+                "count": 72,
                 "keys": [
                   "{BASE}/",
                   "{BASE}/",
@@ -516,14 +427,15 @@
                 "id": "DEV-004",
                 "spec": "ONPAGE-013",
                 "kind": "OS-Festlegung",
-                "note": "Nicht-HTML-URLs: Word Count und Text Ratio leer (ONPAGE-013); die Referenz schreibt 0.",
+                "note": "Nicht-HTML-URLs sowie Weiterleitungen, Fehlerseiten (4xx/5xx) und URLs ohne Antwort: Word Count und Text Ratio leer (ONPAGE-013, K-60, Befund N-01); die Referenz schreibt 0.",
                 "scope": "cell",
-                "count": 5,
+                "count": 6,
                 "keys": [
                   "{BASE}/assets/logo.png",
                   "{BASE}/assets/site.css",
                   "{BASE}/assets/site.js",
                   "{BASE}/assets/widget.png",
+                  "{BASE}/missing.html",
                   "{BASE}/old-page"
                 ]
               }
@@ -650,10 +562,8 @@
             "os_only_rows": [],
             "threshold_pct": 99.0,
             "url_set_identical": true,
-            "passed": false,
-            "failures": [
-              "Zellübereinstimmung 98.443 % liegt unter 99.000 %"
-            ]
+            "passed": true,
+            "failures": []
           }
         },
         {
@@ -738,7 +648,7 @@
             "export": "response_codes_all",
             "site": "out-basic-site",
             "sf_rows": 19,
-            "os_rows": 20,
+            "os_rows": 19,
             "matched": 19,
             "missing_in_os": [],
             "extra_in_os": [],
@@ -803,19 +713,7 @@
                 "examples": []
               }
             ],
-            "applied_deviations": [
-              {
-                "id": "DEV-001",
-                "spec": "CRAWL-098",
-                "kind": "OS-Festlegung",
-                "note": "K-40: Die robots.txt eines internen Hosts erscheint als eigene URL-Zeile in den Tabellen (200, text/plain). Die Referenz listet sie nicht. Offene Planerentscheidung: Festlegung beibehalten oder in_tables=0 fuer interne robots.txt (siehe Abnahmebericht, Befund B-01).",
-                "scope": "extra_in_os",
-                "count": 1,
-                "keys": [
-                  "{BASE}/robots.txt"
-                ]
-              }
-            ],
+            "applied_deviations": [],
             "dropped_sf_columns": [],
             "ignored_columns": [
               {
@@ -987,8 +885,8 @@
             "missing_in_os": [],
             "extra_in_os": [],
             "cells_compared": 1067,
-            "cells_equal": 1049,
-            "agreement_pct": 98.313,
+            "cells_equal": 1067,
+            "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "Size (Bytes)",
@@ -1057,82 +955,15 @@
                 "sf_column": "Link Path",
                 "os_column": "Link Path",
                 "compared": 90,
-                "errors": 3,
-                "examples": [
-                  {
-                    "key": "Canonical | {BASE}/ | {BASE}/ | #1",
-                    "sf": "//head/link[1]",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/about.html | {BASE}/about.html | #1",
-                    "sf": "//head/link[1]",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/products.html | {BASE}/products.html | #1",
-                    "sf": "//head/link[1]",
-                    "os": ""
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Link Position",
                 "os_column": "Link Position",
                 "compared": 90,
-                "errors": 15,
-                "examples": [
-                  {
-                    "key": "Canonical | {BASE}/ | {BASE}/ | #1",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "CSS | {BASE}/ | {BASE}/assets/site.css | #1",
-                    "sf": "Head",
-                    "os": "Content"
-                  },
-                  {
-                    "key": "CSS | {BASE}/contact.html | {BASE}/assets/site.css | #1",
-                    "sf": "Head",
-                    "os": "Content"
-                  },
-                  {
-                    "key": "CSS | {BASE}/services.html | {BASE}/assets/site.css | #1",
-                    "sf": "Head",
-                    "os": "Content"
-                  },
-                  {
-                    "key": "CSS | {BASE}/imprint.html | {BASE}/assets/site.css | #1",
-                    "sf": "Head",
-                    "os": "Content"
-                  },
-                  {
-                    "key": "CSS | {BASE}/about.html | {BASE}/assets/site.css | #1",
-                    "sf": "Head",
-                    "os": "Content"
-                  },
-                  {
-                    "key": "CSS | {BASE}/faq.html | {BASE}/assets/site.css | #1",
-                    "sf": "Head",
-                    "os": "Content"
-                  },
-                  {
-                    "key": "CSS | {BASE}/blog/ | {BASE}/assets/site.css | #1",
-                    "sf": "Head",
-                    "os": "Content"
-                  },
-                  {
-                    "key": "CSS | {BASE}/products.html | {BASE}/assets/site.css | #1",
-                    "sf": "Head",
-                    "os": "Content"
-                  },
-                  {
-                    "key": "CSS | {BASE}/orphan.html | {BASE}/assets/site.css | #1",
-                    "sf": "Head",
-                    "os": "Content"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Link Origin",
@@ -1697,39 +1528,19 @@
             "matched": 127,
             "missing_in_os": [],
             "extra_in_os": [],
-            "cells_compared": 112,
-            "cells_equal": 112,
+            "cells_compared": 124,
+            "cells_equal": 124,
             "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "URLs",
                 "os_column": "URLs",
-                "compared": 112,
+                "compared": 124,
                 "errors": 0,
                 "examples": []
               }
             ],
             "applied_deviations": [
-              {
-                "id": "DEV-002",
-                "spec": "CRAWL-098",
-                "kind": "OS-Festlegung",
-                "note": "Folge von DEV-001: Die robots.txt-Zeile zaehlt in allen Zaehlern, deren Grundgesamtheit alle internen URLs mit Antwort ist, um genau 1 hoeher als in der Referenz.",
-                "scope": "cell",
-                "count": 11,
-                "keys": [
-                  "internal | all",
-                  "internal | unknown",
-                  "response codes | all",
-                  "response codes | internal all",
-                  "response codes | internal success (2xx)",
-                  "response codes | success (2xx)",
-                  "security | all",
-                  "security | http urls",
-                  "summary | total urls crawled",
-                  "summary | total urls encountered"
-                ]
-              },
               {
                 "id": "DEV-013",
                 "spec": "TECH-051",
@@ -1742,15 +1553,14 @@
                 ]
               },
               {
-                "id": "DEV-015",
-                "spec": "OUT-080",
-                "kind": "Paritaetsabweichung",
-                "note": "Die Crawl-Depth-Zeilen der Referenz zaehlen nur interne HTML-Seiten mit 2xx (Zeile 0 = Start-URL); OpenSpider zaehlt alle internen URLs mit bekannter Tiefe (OUT-025 Site Structure, Summe = interne URLs).",
+                "id": "DEV-014",
+                "spec": "ONPAGE-024",
+                "kind": "OS-Festlegung",
+                "note": "Klassifizierung ONPAGE-024: fehlender Content-Type, keine Antwort und robots.txt-Sperre sind Unknown; die Referenz fuehrt Antworten ohne Content-Type (z. B. Weiterleitungen) unter Other. Der Filter Other ist P1 (M1.md 7.2).",
                 "scope": "cell",
-                "count": 2,
+                "count": 1,
                 "keys": [
-                  "crawl depth | 1",
-                  "crawl depth | 3"
+                  "internal | unknown"
                 ]
               },
               {
@@ -2227,13 +2037,13 @@
             "export": "internal_all",
             "site": "parity-onpage",
             "sf_rows": 105,
-            "os_rows": 106,
+            "os_rows": 105,
             "matched": 105,
             "missing_in_os": [],
             "extra_in_os": [],
             "cells_compared": 4761,
-            "cells_equal": 4727,
-            "agreement_pct": 99.286,
+            "cells_equal": 4761,
+            "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "Content Type",
@@ -2288,19 +2098,8 @@
                 "sf_column": "Title 1 Pixel Width",
                 "os_column": "Title 1 Pixel Width",
                 "compared": 83,
-                "errors": 2,
-                "examples": [
-                  {
-                    "key": "{BASE}/titles/pixel-i70.html",
-                    "sf": "350",
-                    "os": "311"
-                  },
-                  {
-                    "key": "{BASE}/titles/pixel-W60.html",
-                    "sf": "1080",
-                    "os": "1133"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Title 2",
@@ -2341,14 +2140,8 @@
                 "sf_column": "Meta Description 1 Pixel Width",
                 "os_column": "Meta Description 1 Pixel Width",
                 "compared": 80,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{BASE}/meta/dup-case.html",
-                    "sf": "735",
-                    "os": "802"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Meta Description 2",
@@ -2522,54 +2315,8 @@
                 "sf_column": "Word Count",
                 "os_column": "Word Count",
                 "compared": 84,
-                "errors": 9,
-                "examples": [
-                  {
-                    "key": "{BASE}/",
-                    "sf": "87",
-                    "os": "79"
-                  },
-                  {
-                    "key": "{BASE}/urls/",
-                    "sf": "103",
-                    "os": "91"
-                  },
-                  {
-                    "key": "{BASE}/titles/",
-                    "sf": "102",
-                    "os": "85"
-                  },
-                  {
-                    "key": "{BASE}/meta/",
-                    "sf": "96",
-                    "os": "82"
-                  },
-                  {
-                    "key": "{BASE}/h2/",
-                    "sf": "87",
-                    "os": "78"
-                  },
-                  {
-                    "key": "{BASE}/h1/",
-                    "sf": "87",
-                    "os": "78"
-                  },
-                  {
-                    "key": "{BASE}/images/",
-                    "sf": "73",
-                    "os": "71"
-                  },
-                  {
-                    "key": "{BASE}/ctype/",
-                    "sf": "122",
-                    "os": "100"
-                  },
-                  {
-                    "key": "{BASE}/content/",
-                    "sf": "93",
-                    "os": "83"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Text Ratio",
@@ -2589,14 +2336,8 @@
                 "sf_column": "Folder Depth",
                 "os_column": "Folder Depth",
                 "compared": 105,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{BASE}/urls/a//b.html",
-                    "sf": "2",
-                    "os": "3"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Inlinks",
@@ -2651,59 +2392,8 @@
                 "sf_column": "Hash",
                 "os_column": "Hash",
                 "compared": 105,
-                "errors": 21,
-                "examples": [
-                  {
-                    "key": "{BASE}/ctype/t-txt.txt",
-                    "sf": "",
-                    "os": "358686f3a032a6bb5bef032ba097e434"
-                  },
-                  {
-                    "key": "{BASE}/ctype/t-svg.svg",
-                    "sf": "",
-                    "os": "76efbe8a916d712f8694f84a05698a35"
-                  },
-                  {
-                    "key": "{BASE}/ctype/t-mp4",
-                    "sf": "",
-                    "os": "b9edefc9905560d03effdb013dd36c3f"
-                  },
-                  {
-                    "key": "{BASE}/ctype/t-xml.xml",
-                    "sf": "",
-                    "os": "bf48039ac2e8d8ddbb205b83309f7be2"
-                  },
-                  {
-                    "key": "{BASE}/ctype/t-json.json",
-                    "sf": "",
-                    "os": "68de5ff569ed48c54ba2a622b6aa0709"
-                  },
-                  {
-                    "key": "{BASE}/ctype/t-png.png",
-                    "sf": "",
-                    "os": "3cacb324dfc8a1bb652d593a5c4667a0"
-                  },
-                  {
-                    "key": "{BASE}/ctype/t-pdf.pdf",
-                    "sf": "",
-                    "os": "38c462010eab7bc66867cd5377d00680"
-                  },
-                  {
-                    "key": "{BASE}/ctype/t-woff2",
-                    "sf": "",
-                    "os": "7d14fb6e79fe998c2d8173032d082edb"
-                  },
-                  {
-                    "key": "{BASE}/ctype/t-swf",
-                    "sf": "",
-                    "os": "874ddf92fa0328ce88aee07c8518a08a"
-                  },
-                  {
-                    "key": "{BASE}/ctype/t-js.js",
-                    "sf": "",
-                    "os": "b06cf3059a06cee6e2c210e98c9fe2a2"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Last Modified",
@@ -2736,21 +2426,10 @@
             ],
             "applied_deviations": [
               {
-                "id": "DEV-001",
-                "spec": "CRAWL-098",
-                "kind": "OS-Festlegung",
-                "note": "K-40: Die robots.txt eines internen Hosts erscheint als eigene URL-Zeile in den Tabellen (200, text/plain). Die Referenz listet sie nicht. Offene Planerentscheidung: Festlegung beibehalten oder in_tables=0 fuer interne robots.txt (siehe Abnahmebericht, Befund B-01).",
-                "scope": "extra_in_os",
-                "count": 1,
-                "keys": [
-                  "{BASE}/robots.txt"
-                ]
-              },
-              {
                 "id": "DEV-003",
                 "spec": "ONPAGE-011",
                 "kind": "OS-Festlegung",
-                "note": "Nicht-HTML-URLs haben leere Element-Spalten (ONPAGE-011) und eine Seite ohne Element leere Wertspalten (ONPAGE-008); die Referenz schreibt 0.",
+                "note": "Nicht-HTML-URLs sowie Weiterleitungen, Fehlerseiten (4xx/5xx) und URLs ohne Antwort haben leere Element-, Laengen- und Pixelspalten, auch wenn ihr Koerper <title>/<h1> enthaelt (ONPAGE-011, A-5, K-60, Befund N-01), und eine Seite ohne Element leere Wertspalten (ONPAGE-008); die Referenz schreibt 0.",
                 "scope": "cell",
                 "count": 888,
                 "keys": [
@@ -2770,7 +2449,7 @@
                 "id": "DEV-004",
                 "spec": "ONPAGE-013",
                 "kind": "OS-Festlegung",
-                "note": "Nicht-HTML-URLs: Word Count und Text Ratio leer (ONPAGE-013); die Referenz schreibt 0.",
+                "note": "Nicht-HTML-URLs sowie Weiterleitungen, Fehlerseiten (4xx/5xx) und URLs ohne Antwort: Word Count und Text Ratio leer (ONPAGE-013, K-60, Befund N-01); die Referenz schreibt 0.",
                 "scope": "cell",
                 "count": 21,
                 "keys": [
@@ -2928,8 +2607,8 @@
             "missing_in_os": [],
             "extra_in_os": [],
             "cells_compared": 44,
-            "cells_equal": 43,
-            "agreement_pct": 97.727,
+            "cells_equal": 44,
+            "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "Content Type",
@@ -2963,22 +2642,16 @@
                 "sf_column": "Inlinks",
                 "os_column": "Inlinks",
                 "compared": 9,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{EXT}/img/size-102401.png",
-                    "sf": "0",
-                    "os": "1"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               }
             ],
             "applied_deviations": [
               {
                 "id": "DEV-005",
                 "spec": "ONPAGE-065",
-                "kind": "Paritaetsabweichung",
-                "note": "OS-Festlegung ONPAGE-065 unterscheidet Connection Refused (abgelehnte Verbindung) von Connection Timeout; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout.",
+                "kind": "OS-Festlegung",
+                "note": "ONPAGE-065 (K-67): OpenSpider meldet die tatsaechliche Ursache, Connection Refused bei abgelehntem Verbindungsaufbau und Connection Timeout bei ausbleibender Antwort; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout.",
                 "scope": "cell",
                 "count": 1,
                 "keys": [
@@ -3013,7 +2686,7 @@
             "export": "response_codes_all",
             "site": "parity-onpage",
             "sf_rows": 114,
-            "os_rows": 115,
+            "os_rows": 114,
             "matched": 114,
             "missing_in_os": [],
             "extra_in_os": [],
@@ -3080,21 +2753,10 @@
             ],
             "applied_deviations": [
               {
-                "id": "DEV-001",
-                "spec": "CRAWL-098",
-                "kind": "OS-Festlegung",
-                "note": "K-40: Die robots.txt eines internen Hosts erscheint als eigene URL-Zeile in den Tabellen (200, text/plain). Die Referenz listet sie nicht. Offene Planerentscheidung: Festlegung beibehalten oder in_tables=0 fuer interne robots.txt (siehe Abnahmebericht, Befund B-01).",
-                "scope": "extra_in_os",
-                "count": 1,
-                "keys": [
-                  "{BASE}/robots.txt"
-                ]
-              },
-              {
                 "id": "DEV-005",
                 "spec": "ONPAGE-065",
-                "kind": "Paritaetsabweichung",
-                "note": "OS-Festlegung ONPAGE-065 unterscheidet Connection Refused (abgelehnte Verbindung) von Connection Timeout; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout.",
+                "kind": "OS-Festlegung",
+                "note": "ONPAGE-065 (K-67): OpenSpider meldet die tatsaechliche Ursache, Connection Refused bei abgelehntem Verbindungsaufbau und Connection Timeout bei ausbleibender Antwort; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout.",
                 "scope": "cell",
                 "count": 1,
                 "keys": [
@@ -3131,13 +2793,13 @@
             "export": "url_all",
             "site": "parity-onpage",
             "sf_rows": 105,
-            "os_rows": 106,
+            "os_rows": 105,
             "matched": 105,
             "missing_in_os": [],
             "extra_in_os": [],
             "cells_compared": 945,
-            "cells_equal": 924,
-            "agreement_pct": 97.778,
+            "cells_equal": 945,
+            "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "Content Type",
@@ -3178,59 +2840,8 @@
                 "sf_column": "Hash",
                 "os_column": "Hash",
                 "compared": 105,
-                "errors": 21,
-                "examples": [
-                  {
-                    "key": "{BASE}/ctype/t-txt.txt",
-                    "sf": "",
-                    "os": "358686f3a032a6bb5bef032ba097e434"
-                  },
-                  {
-                    "key": "{BASE}/ctype/t-svg.svg",
-                    "sf": "",
-                    "os": "76efbe8a916d712f8694f84a05698a35"
-                  },
-                  {
-                    "key": "{BASE}/ctype/t-mp4",
-                    "sf": "",
-                    "os": "b9edefc9905560d03effdb013dd36c3f"
-                  },
-                  {
-                    "key": "{BASE}/ctype/t-xml.xml",
-                    "sf": "",
-                    "os": "bf48039ac2e8d8ddbb205b83309f7be2"
-                  },
-                  {
-                    "key": "{BASE}/ctype/t-json.json",
-                    "sf": "",
-                    "os": "68de5ff569ed48c54ba2a622b6aa0709"
-                  },
-                  {
-                    "key": "{BASE}/ctype/t-png.png",
-                    "sf": "",
-                    "os": "3cacb324dfc8a1bb652d593a5c4667a0"
-                  },
-                  {
-                    "key": "{BASE}/ctype/t-pdf.pdf",
-                    "sf": "",
-                    "os": "38c462010eab7bc66867cd5377d00680"
-                  },
-                  {
-                    "key": "{BASE}/ctype/t-woff2",
-                    "sf": "",
-                    "os": "7d14fb6e79fe998c2d8173032d082edb"
-                  },
-                  {
-                    "key": "{BASE}/ctype/t-swf",
-                    "sf": "",
-                    "os": "874ddf92fa0328ce88aee07c8518a08a"
-                  },
-                  {
-                    "key": "{BASE}/ctype/t-js.js",
-                    "sf": "",
-                    "os": "b06cf3059a06cee6e2c210e98c9fe2a2"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Length",
@@ -3254,19 +2865,7 @@
                 "examples": []
               }
             ],
-            "applied_deviations": [
-              {
-                "id": "DEV-001",
-                "spec": "CRAWL-098",
-                "kind": "OS-Festlegung",
-                "note": "K-40: Die robots.txt eines internen Hosts erscheint als eigene URL-Zeile in den Tabellen (200, text/plain). Die Referenz listet sie nicht. Offene Planerentscheidung: Festlegung beibehalten oder in_tables=0 fuer interne robots.txt (siehe Abnahmebericht, Befund B-01).",
-                "scope": "extra_in_os",
-                "count": 1,
-                "keys": [
-                  "{BASE}/robots.txt"
-                ]
-              }
-            ],
+            "applied_deviations": [],
             "dropped_sf_columns": [],
             "ignored_columns": [],
             "unmapped_sf_columns": [],
@@ -3296,8 +2895,8 @@
             "missing_in_os": [],
             "extra_in_os": [],
             "cells_compared": 756,
-            "cells_equal": 588,
-            "agreement_pct": 77.778,
+            "cells_equal": 756,
+            "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "Occurrences",
@@ -3324,59 +2923,8 @@
                 "sf_column": "Title 1 Pixel Width",
                 "os_column": "Title 1 Pixel Width",
                 "compared": 84,
-                "errors": 84,
-                "examples": [
-                  {
-                    "key": "{BASE}/",
-                    "sf": "332",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/urls/",
-                    "sf": "346",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/titles/",
-                    "sf": "343",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/meta/",
-                    "sf": "347",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/h2/",
-                    "sf": "335",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/h1/",
-                    "sf": "386",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/images/",
-                    "sf": "354",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/ctype/",
-                    "sf": "316",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/content/",
-                    "sf": "340",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/h2/dup-b.html",
-                    "sf": "338",
-                    "os": ""
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Title 2",
@@ -3396,59 +2944,8 @@
                 "sf_column": "Title 2 Pixel Width",
                 "os_column": "Title 2 Pixel Width",
                 "compared": 84,
-                "errors": 84,
-                "examples": [
-                  {
-                    "key": "{BASE}/",
-                    "sf": "0",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/urls/",
-                    "sf": "0",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/titles/",
-                    "sf": "0",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/meta/",
-                    "sf": "0",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/h2/",
-                    "sf": "0",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/h1/",
-                    "sf": "0",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/images/",
-                    "sf": "0",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/ctype/",
-                    "sf": "0",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/content/",
-                    "sf": "0",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/h2/dup-b.html",
-                    "sf": "0",
-                    "os": ""
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Indexability",
@@ -3471,18 +2968,13 @@
             "unmapped_sf_columns": [],
             "unmapped_os_columns": [],
             "missing_sf_columns": [],
-            "missing_os_columns": [
-              "Title 1 Pixel Width",
-              "Title 2 Pixel Width"
-            ],
+            "missing_os_columns": [],
             "ignored_sf_rows": [],
             "os_only_rows": [],
             "threshold_pct": 99.0,
             "url_set_identical": true,
-            "passed": false,
-            "failures": [
-              "Zellübereinstimmung 77.778 % liegt unter 99.000 %"
-            ]
+            "passed": true,
+            "failures": []
           }
         },
         {
@@ -3500,8 +2992,8 @@
             "missing_in_os": [],
             "extra_in_os": [],
             "cells_compared": 756,
-            "cells_equal": 588,
-            "agreement_pct": 77.778,
+            "cells_equal": 756,
+            "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "Occurrences",
@@ -3528,59 +3020,8 @@
                 "sf_column": "Meta Description 1 Pixel Width",
                 "os_column": "Meta Description 1 Pixel Width",
                 "compared": 84,
-                "errors": 84,
-                "examples": [
-                  {
-                    "key": "{BASE}/",
-                    "sf": "560",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/urls/",
-                    "sf": "595",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/titles/",
-                    "sf": "567",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/meta/",
-                    "sf": "604",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/h2/",
-                    "sf": "588",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/h1/",
-                    "sf": "610",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/images/",
-                    "sf": "625",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/ctype/",
-                    "sf": "594",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/content/",
-                    "sf": "551",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/h2/dup-b.html",
-                    "sf": "570",
-                    "os": ""
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Meta Description 2",
@@ -3600,59 +3041,8 @@
                 "sf_column": "Meta Description 2 Pixel Width",
                 "os_column": "Meta Description 2 Pixel Width",
                 "compared": 84,
-                "errors": 84,
-                "examples": [
-                  {
-                    "key": "{BASE}/",
-                    "sf": "0",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/urls/",
-                    "sf": "0",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/titles/",
-                    "sf": "0",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/meta/",
-                    "sf": "0",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/h2/",
-                    "sf": "0",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/h1/",
-                    "sf": "0",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/images/",
-                    "sf": "0",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/ctype/",
-                    "sf": "0",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/content/",
-                    "sf": "0",
-                    "os": ""
-                  },
-                  {
-                    "key": "{BASE}/h2/dup-b.html",
-                    "sf": "0",
-                    "os": ""
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Indexability",
@@ -3675,18 +3065,13 @@
             "unmapped_sf_columns": [],
             "unmapped_os_columns": [],
             "missing_sf_columns": [],
-            "missing_os_columns": [
-              "Meta Description 1 Pixel Width",
-              "Meta Description 2 Pixel Width"
-            ],
+            "missing_os_columns": [],
             "ignored_sf_rows": [],
             "os_only_rows": [],
             "threshold_pct": 99.0,
             "url_set_identical": true,
-            "passed": false,
-            "failures": [
-              "Zellübereinstimmung 77.778 % liegt unter 99.000 %"
-            ]
+            "passed": true,
+            "failures": []
           }
         },
         {
@@ -3870,61 +3255,15 @@
             "missing_in_os": [],
             "extra_in_os": [],
             "cells_compared": 336,
-            "cells_equal": 327,
-            "agreement_pct": 97.321,
+            "cells_equal": 336,
+            "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "Word Count",
                 "os_column": "Word Count",
                 "compared": 84,
-                "errors": 9,
-                "examples": [
-                  {
-                    "key": "{BASE}/",
-                    "sf": "87",
-                    "os": "79"
-                  },
-                  {
-                    "key": "{BASE}/urls/",
-                    "sf": "103",
-                    "os": "91"
-                  },
-                  {
-                    "key": "{BASE}/titles/",
-                    "sf": "102",
-                    "os": "85"
-                  },
-                  {
-                    "key": "{BASE}/meta/",
-                    "sf": "96",
-                    "os": "82"
-                  },
-                  {
-                    "key": "{BASE}/h2/",
-                    "sf": "87",
-                    "os": "78"
-                  },
-                  {
-                    "key": "{BASE}/h1/",
-                    "sf": "87",
-                    "os": "78"
-                  },
-                  {
-                    "key": "{BASE}/images/",
-                    "sf": "73",
-                    "os": "71"
-                  },
-                  {
-                    "key": "{BASE}/ctype/",
-                    "sf": "122",
-                    "os": "100"
-                  },
-                  {
-                    "key": "{BASE}/content/",
-                    "sf": "93",
-                    "os": "83"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Hash",
@@ -4146,8 +3485,8 @@
             "missing_in_os": [],
             "extra_in_os": [],
             "cells_compared": 3322,
-            "cells_equal": 3318,
-            "agreement_pct": 99.88,
+            "cells_equal": 3322,
+            "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "Size (Bytes)",
@@ -4216,37 +3555,15 @@
                 "sf_column": "Link Path",
                 "os_column": "Link Path",
                 "compared": 277,
-                "errors": 2,
-                "examples": [
-                  {
-                    "key": "Canonical | {BASE}/meta/dup-canonical.html | {BASE}/meta/dup-a.html | #1",
-                    "sf": "//head/link",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/titles/dup-canonical.html | {BASE}/titles/dup-a.html | #1",
-                    "sf": "//head/link",
-                    "os": ""
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Link Position",
                 "os_column": "Link Position",
                 "compared": 277,
-                "errors": 2,
-                "examples": [
-                  {
-                    "key": "Canonical | {BASE}/meta/dup-canonical.html | {BASE}/meta/dup-a.html | #1",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/titles/dup-canonical.html | {BASE}/titles/dup-a.html | #1",
-                    "sf": "Head",
-                    "os": ""
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Link Origin",
@@ -4260,8 +3577,8 @@
               {
                 "id": "DEV-005",
                 "spec": "ONPAGE-065",
-                "kind": "Paritaetsabweichung",
-                "note": "OS-Festlegung ONPAGE-065 unterscheidet Connection Refused (abgelehnte Verbindung) von Connection Timeout; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout.",
+                "kind": "OS-Festlegung",
+                "note": "ONPAGE-065 (K-67): OpenSpider meldet die tatsaechliche Ursache, Connection Refused bei abgelehntem Verbindungsaufbau und Connection Timeout bei ausbleibender Antwort; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout.",
                 "scope": "cell",
                 "count": 1,
                 "keys": [
@@ -4313,39 +3630,19 @@
             "matched": 127,
             "missing_in_os": [],
             "extra_in_os": [],
-            "cells_compared": 103,
-            "cells_equal": 103,
+            "cells_compared": 118,
+            "cells_equal": 118,
             "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "URLs",
                 "os_column": "URLs",
-                "compared": 103,
+                "compared": 118,
                 "errors": 0,
                 "examples": []
               }
             ],
             "applied_deviations": [
-              {
-                "id": "DEV-002",
-                "spec": "CRAWL-098",
-                "kind": "OS-Festlegung",
-                "note": "Folge von DEV-001: Die robots.txt-Zeile zaehlt in allen Zaehlern, deren Grundgesamtheit alle internen URLs mit Antwort ist, um genau 1 hoeher als in der Referenz.",
-                "scope": "cell",
-                "count": 11,
-                "keys": [
-                  "internal | all",
-                  "internal | unknown",
-                  "response codes | all",
-                  "response codes | internal all",
-                  "response codes | internal success (2xx)",
-                  "response codes | success (2xx)",
-                  "security | all",
-                  "security | http urls",
-                  "summary | total urls crawled",
-                  "summary | total urls encountered"
-                ]
-              },
               {
                 "id": "DEV-013",
                 "spec": "TECH-051",
@@ -4363,67 +3660,11 @@
                 "kind": "OS-Festlegung",
                 "note": "Klassifizierung ONPAGE-024: fehlender Content-Type, keine Antwort und robots.txt-Sperre sind Unknown; die Referenz fuehrt Antworten ohne Content-Type (z. B. Weiterleitungen) unter Other. Der Filter Other ist P1 (M1.md 7.2).",
                 "scope": "cell",
-                "count": 2,
+                "count": 3,
                 "keys": [
                   "external | other",
-                  "external | unknown"
-                ]
-              },
-              {
-                "id": "DEV-015",
-                "spec": "OUT-080",
-                "kind": "Paritaetsabweichung",
-                "note": "Die Crawl-Depth-Zeilen der Referenz zaehlen nur interne HTML-Seiten mit 2xx (Zeile 0 = Start-URL); OpenSpider zaehlt alle internen URLs mit bekannter Tiefe (OUT-025 Site Structure, Summe = interne URLs).",
-                "scope": "cell",
-                "count": 2,
-                "keys": [
-                  "crawl depth | 2",
-                  "crawl depth | 3"
-                ]
-              },
-              {
-                "id": "DEV-019",
-                "spec": "ONPAGE-005",
-                "kind": "Annahme",
-                "note": "Annahme A-4 (Duplikate exakt, Gross-/Kleinschreibung sensitiv) ist durch die Referenz widerlegt: Titel/Meta Description die sich nur in der Schreibweise unterscheiden zaehlen dort als Duplikat (Fixture dup-case.html). Spec-Korrektur offen (Abnahmebericht).",
-                "scope": "cell",
-                "count": 2,
-                "keys": [
-                  "meta description | duplicate",
-                  "page titles | duplicate"
-                ]
-              },
-              {
-                "id": "DEV-020",
-                "spec": "ONPAGE-072",
-                "kind": "Annahme",
-                "note": "Annahme A-23 (Underscore nur im Pfad) ist durch die Referenz widerlegt: sort_by in der Query zaehlt dort mit. Spec-Korrektur offen (Abnahmebericht).",
-                "scope": "cell",
-                "count": 1,
-                "keys": [
-                  "url | underscores"
-                ]
-              },
-              {
-                "id": "DEV-021",
-                "spec": "TECH-011",
-                "kind": "OS-Festlegung",
-                "note": "Die Tabs Canonicals, Links und Hreflang fuehren interne HTML-Seiten mit Status 200 (TECH-011/-071/-130); die Referenz zaehlt alle 2xx (Fixture /s201, Status 201).",
-                "scope": "cell",
-                "count": 1,
-                "keys": [
-                  "canonicals | all"
-                ]
-              },
-              {
-                "id": "DEV-022",
-                "spec": "CRAWL-089",
-                "kind": "OS-Festlegung",
-                "note": "Der Wirkungsbereich von issues.ignore_non_indexable ist in CRAWL-089 abschliessend auf die Element-Tabs und Low Content Pages begrenzt; die Referenz schliesst nicht indexierbare URLs auch in Canonicals/Missing und Links/Pages Without Internal Outlinks aus.",
-                "scope": "cell",
-                "count": 1,
-                "keys": [
-                  "canonicals | missing"
+                  "external | unknown",
+                  "internal | unknown"
                 ]
               },
               {
@@ -4446,6 +3687,18 @@
                 "count": 1,
                 "keys": [
                   "images | all"
+                ]
+              },
+              {
+                "id": "DEV-035",
+                "spec": "TECH-015",
+                "kind": "OS-Festlegung",
+                "note": "K-71: Die Grundgesamtheit der Referenz heisst 'Internal HTML or PDF pages with 2xx response' und enthaelt jede PDF; die Canonicals-Grundmenge von OpenSpider fuehrt Nicht-HTML-Ressourcen nur mit mindestens einer HTTP-Canonical (TECH-011) und nimmt eine PDF ohne Link-Header nicht in Missing auf (TECH-015). PDFs als Seiten sind P1 (ONPAGE-166). parity-onpage hat eine PDF ohne Canonical (/ctype/t-pdf.pdf): Referenz 85/81, OpenSpider 84/80.",
+                "scope": "cell",
+                "count": 2,
+                "keys": [
+                  "canonicals | all",
+                  "canonicals | missing"
                 ]
               },
               {
@@ -4930,13 +4183,13 @@
             "export": "internal_all",
             "site": "parity-response",
             "sf_rows": 46,
-            "os_rows": 47,
+            "os_rows": 46,
             "matched": 46,
             "missing_in_os": [],
             "extra_in_os": [],
-            "cells_compared": 2159,
-            "cells_equal": 2066,
-            "agreement_pct": 95.692,
+            "cells_compared": 2158,
+            "cells_equal": 2158,
+            "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "Content Type",
@@ -4977,150 +4230,22 @@
                 "sf_column": "Title 1",
                 "os_column": "Title 1",
                 "compared": 46,
-                "errors": 8,
-                "examples": [
-                  {
-                    "key": "{BASE}/s999",
-                    "sf": "",
-                    "os": "Status 999"
-                  },
-                  {
-                    "key": "{BASE}/e410",
-                    "sf": "",
-                    "os": "Error 410"
-                  },
-                  {
-                    "key": "{BASE}/e429",
-                    "sf": "",
-                    "os": "Error 429"
-                  },
-                  {
-                    "key": "{BASE}/e400",
-                    "sf": "",
-                    "os": "Error 400"
-                  },
-                  {
-                    "key": "{BASE}/e500",
-                    "sf": "",
-                    "os": "Error 500"
-                  },
-                  {
-                    "key": "{BASE}/e403",
-                    "sf": "",
-                    "os": "Error 403"
-                  },
-                  {
-                    "key": "{BASE}/e503",
-                    "sf": "",
-                    "os": "Error 503"
-                  },
-                  {
-                    "key": "{BASE}/e404",
-                    "sf": "",
-                    "os": "Error 404"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Title 1 Length",
                 "os_column": "Title 1 Length",
-                "compared": 22,
-                "errors": 8,
-                "examples": [
-                  {
-                    "key": "{BASE}/s999",
-                    "sf": "0",
-                    "os": "10"
-                  },
-                  {
-                    "key": "{BASE}/e410",
-                    "sf": "0",
-                    "os": "9"
-                  },
-                  {
-                    "key": "{BASE}/e429",
-                    "sf": "0",
-                    "os": "9"
-                  },
-                  {
-                    "key": "{BASE}/e400",
-                    "sf": "0",
-                    "os": "9"
-                  },
-                  {
-                    "key": "{BASE}/e500",
-                    "sf": "0",
-                    "os": "9"
-                  },
-                  {
-                    "key": "{BASE}/e403",
-                    "sf": "0",
-                    "os": "9"
-                  },
-                  {
-                    "key": "{BASE}/e503",
-                    "sf": "0",
-                    "os": "9"
-                  },
-                  {
-                    "key": "{BASE}/e404",
-                    "sf": "0",
-                    "os": "9"
-                  }
-                ]
+                "compared": 14,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Title 1 Pixel Width",
                 "os_column": "Title 1 Pixel Width",
-                "compared": 22,
-                "errors": 9,
-                "examples": [
-                  {
-                    "key": "{BASE}/s999",
-                    "sf": "0",
-                    "os": "96"
-                  },
-                  {
-                    "key": "{BASE}/e410",
-                    "sf": "0",
-                    "os": "83"
-                  },
-                  {
-                    "key": "{BASE}/e429",
-                    "sf": "0",
-                    "os": "83"
-                  },
-                  {
-                    "key": "{BASE}/e400",
-                    "sf": "0",
-                    "os": "83"
-                  },
-                  {
-                    "key": "{BASE}/e500",
-                    "sf": "0",
-                    "os": "83"
-                  },
-                  {
-                    "key": "{BASE}/e403",
-                    "sf": "0",
-                    "os": "83"
-                  },
-                  {
-                    "key": "{BASE}/e503",
-                    "sf": "0",
-                    "os": "83"
-                  },
-                  {
-                    "key": "{BASE}/e404",
-                    "sf": "0",
-                    "os": "83"
-                  },
-                  {
-                    "key": "{BASE}/meta-refresh-self.html",
-                    "sf": "246",
-                    "os": "238"
-                  }
-                ]
+                "compared": 14,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Meta Description 1",
@@ -5161,97 +4286,15 @@
                 "sf_column": "H1-1",
                 "os_column": "H1-1",
                 "compared": 46,
-                "errors": 8,
-                "examples": [
-                  {
-                    "key": "{BASE}/s999",
-                    "sf": "",
-                    "os": "Status 999"
-                  },
-                  {
-                    "key": "{BASE}/e410",
-                    "sf": "",
-                    "os": "Error 410"
-                  },
-                  {
-                    "key": "{BASE}/e429",
-                    "sf": "",
-                    "os": "Error 429"
-                  },
-                  {
-                    "key": "{BASE}/e400",
-                    "sf": "",
-                    "os": "Error 400"
-                  },
-                  {
-                    "key": "{BASE}/e500",
-                    "sf": "",
-                    "os": "Error 500"
-                  },
-                  {
-                    "key": "{BASE}/e403",
-                    "sf": "",
-                    "os": "Error 403"
-                  },
-                  {
-                    "key": "{BASE}/e503",
-                    "sf": "",
-                    "os": "Error 503"
-                  },
-                  {
-                    "key": "{BASE}/e404",
-                    "sf": "",
-                    "os": "Error 404"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "H1-1 Length",
                 "os_column": "H1-1 Length",
-                "compared": 22,
-                "errors": 8,
-                "examples": [
-                  {
-                    "key": "{BASE}/s999",
-                    "sf": "0",
-                    "os": "10"
-                  },
-                  {
-                    "key": "{BASE}/e410",
-                    "sf": "0",
-                    "os": "9"
-                  },
-                  {
-                    "key": "{BASE}/e429",
-                    "sf": "0",
-                    "os": "9"
-                  },
-                  {
-                    "key": "{BASE}/e400",
-                    "sf": "0",
-                    "os": "9"
-                  },
-                  {
-                    "key": "{BASE}/e500",
-                    "sf": "0",
-                    "os": "9"
-                  },
-                  {
-                    "key": "{BASE}/e403",
-                    "sf": "0",
-                    "os": "9"
-                  },
-                  {
-                    "key": "{BASE}/e503",
-                    "sf": "0",
-                    "os": "9"
-                  },
-                  {
-                    "key": "{BASE}/e404",
-                    "sf": "0",
-                    "os": "9"
-                  }
-                ]
+                "compared": 14,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "H2-1",
@@ -5347,108 +4390,16 @@
               {
                 "sf_column": "Word Count",
                 "os_column": "Word Count",
-                "compared": 22,
-                "errors": 13,
-                "examples": [
-                  {
-                    "key": "{BASE}/",
-                    "sf": "234",
-                    "os": "191"
-                  },
-                  {
-                    "key": "{BASE}/s999",
-                    "sf": "0",
-                    "os": "2"
-                  },
-                  {
-                    "key": "{BASE}/e410",
-                    "sf": "0",
-                    "os": "2"
-                  },
-                  {
-                    "key": "{BASE}/pages/p2.html",
-                    "sf": "117",
-                    "os": "114"
-                  },
-                  {
-                    "key": "{BASE}/e429",
-                    "sf": "0",
-                    "os": "2"
-                  },
-                  {
-                    "key": "{BASE}/pages/p3.html",
-                    "sf": "117",
-                    "os": "114"
-                  },
-                  {
-                    "key": "{BASE}/pages/p4.html",
-                    "sf": "117",
-                    "os": "114"
-                  },
-                  {
-                    "key": "{BASE}/e400",
-                    "sf": "0",
-                    "os": "2"
-                  },
-                  {
-                    "key": "{BASE}/pages/p1.html",
-                    "sf": "117",
-                    "os": "114"
-                  },
-                  {
-                    "key": "{BASE}/e500",
-                    "sf": "0",
-                    "os": "2"
-                  }
-                ]
+                "compared": 14,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Text Ratio",
                 "os_column": "Text Ratio",
-                "compared": 22,
-                "errors": 8,
-                "examples": [
-                  {
-                    "key": "{BASE}/s999",
-                    "sf": "0.000",
-                    "os": "7.6"
-                  },
-                  {
-                    "key": "{BASE}/e410",
-                    "sf": "0.000",
-                    "os": "6.9"
-                  },
-                  {
-                    "key": "{BASE}/e429",
-                    "sf": "0.000",
-                    "os": "6.9"
-                  },
-                  {
-                    "key": "{BASE}/e400",
-                    "sf": "0.000",
-                    "os": "6.9"
-                  },
-                  {
-                    "key": "{BASE}/e500",
-                    "sf": "0.000",
-                    "os": "6.9"
-                  },
-                  {
-                    "key": "{BASE}/e403",
-                    "sf": "0.000",
-                    "os": "6.9"
-                  },
-                  {
-                    "key": "{BASE}/e503",
-                    "sf": "0.000",
-                    "os": "6.9"
-                  },
-                  {
-                    "key": "{BASE}/e404",
-                    "sf": "0.000",
-                    "os": "6.9"
-                  }
-                ]
+                "compared": 14,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Crawl Depth",
@@ -5481,7 +4432,7 @@
               {
                 "sf_column": "% of Total",
                 "os_column": "% of Total",
-                "compared": 7,
+                "compared": 46,
                 "errors": 0,
                 "examples": []
               },
@@ -5517,59 +4468,8 @@
                 "sf_column": "Hash",
                 "os_column": "Hash",
                 "compared": 46,
-                "errors": 29,
-                "examples": [
-                  {
-                    "key": "{BASE}/r-to-404",
-                    "sf": "",
-                    "os": "d41d8cd98f00b204e9800998ecf8427e"
-                  },
-                  {
-                    "key": "{BASE}/s999",
-                    "sf": "",
-                    "os": "8779067d1b59a97031c50831f0ac1d91"
-                  },
-                  {
-                    "key": "{BASE}/e410",
-                    "sf": "",
-                    "os": "228f384e89bfae67d4115330ef975323"
-                  },
-                  {
-                    "key": "{BASE}/r307",
-                    "sf": "",
-                    "os": "d41d8cd98f00b204e9800998ecf8427e"
-                  },
-                  {
-                    "key": "{BASE}/r304",
-                    "sf": "",
-                    "os": "d41d8cd98f00b204e9800998ecf8427e"
-                  },
-                  {
-                    "key": "{BASE}/r308",
-                    "sf": "",
-                    "os": "d41d8cd98f00b204e9800998ecf8427e"
-                  },
-                  {
-                    "key": "{BASE}/r-to-dead",
-                    "sf": "",
-                    "os": "d41d8cd98f00b204e9800998ecf8427e"
-                  },
-                  {
-                    "key": "{BASE}/loop1",
-                    "sf": "",
-                    "os": "d41d8cd98f00b204e9800998ecf8427e"
-                  },
-                  {
-                    "key": "{BASE}/chain1",
-                    "sf": "",
-                    "os": "d41d8cd98f00b204e9800998ecf8427e"
-                  },
-                  {
-                    "key": "{BASE}/r301-noloc",
-                    "sf": "",
-                    "os": "d41d8cd98f00b204e9800998ecf8427e"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Last Modified",
@@ -5582,27 +4482,15 @@
                 "sf_column": "Redirect URL",
                 "os_column": "Redirect URL",
                 "compared": 46,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{BASE}/meta-refresh-self.html",
-                    "sf": "{BASE}/meta-refresh-self.html",
-                    "os": ""
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Redirect Type",
                 "os_column": "Redirect Type",
                 "compared": 46,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{BASE}/meta-refresh-self.html",
-                    "sf": "Meta Refresh Redirect",
-                    "os": ""
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "URL Encoded Address",
@@ -5684,23 +4572,12 @@
             ],
             "applied_deviations": [
               {
-                "id": "DEV-001",
-                "spec": "CRAWL-098",
-                "kind": "OS-Festlegung",
-                "note": "K-40: Die robots.txt eines internen Hosts erscheint als eigene URL-Zeile in den Tabellen (200, text/plain). Die Referenz listet sie nicht. Offene Planerentscheidung: Festlegung beibehalten oder in_tables=0 fuer interne robots.txt (siehe Abnahmebericht, Befund B-01).",
-                "scope": "extra_in_os",
-                "count": 1,
-                "keys": [
-                  "{BASE}/robots.txt"
-                ]
-              },
-              {
                 "id": "DEV-003",
                 "spec": "ONPAGE-011",
                 "kind": "OS-Festlegung",
-                "note": "Nicht-HTML-URLs haben leere Element-Spalten (ONPAGE-011) und eine Seite ohne Element leere Wertspalten (ONPAGE-008); die Referenz schreibt 0.",
+                "note": "Nicht-HTML-URLs sowie Weiterleitungen, Fehlerseiten (4xx/5xx) und URLs ohne Antwort haben leere Element-, Laengen- und Pixelspalten, auch wenn ihr Koerper <title>/<h1> enthaelt (ONPAGE-011, A-5, K-60, Befund N-01), und eine Seite ohne Element leere Wertspalten (ONPAGE-008); die Referenz schreibt 0.",
                 "scope": "cell",
-                "count": 262,
+                "count": 294,
                 "keys": [
                   "{BASE}/",
                   "{BASE}/blocked/b.html",
@@ -5718,38 +4595,18 @@
                 "id": "DEV-004",
                 "spec": "ONPAGE-013",
                 "kind": "OS-Festlegung",
-                "note": "Nicht-HTML-URLs: Word Count und Text Ratio leer (ONPAGE-013); die Referenz schreibt 0.",
+                "note": "Nicht-HTML-URLs sowie Weiterleitungen, Fehlerseiten (4xx/5xx) und URLs ohne Antwort: Word Count und Text Ratio leer (ONPAGE-013, K-60, Befund N-01); die Referenz schreibt 0.",
                 "scope": "cell",
-                "count": 24,
+                "count": 32,
                 "keys": [
                   "{BASE}/blocked/b.html",
-                  "{BASE}/chain1",
+                  "{BASE}/e410",
                   "{BASE}/loop1",
                   "{BASE}/r-to-404",
                   "{BASE}/r-to-dead",
-                  "{BASE}/r301-noloc",
                   "{BASE}/r304",
                   "{BASE}/r307",
                   "{BASE}/r308",
-                  "{BASE}/s204"
-                ]
-              },
-              {
-                "id": "DEV-032",
-                "spec": "ONPAGE-015",
-                "kind": "OS-Festlegung",
-                "note": "% of Total teilt durch alle gecrawlten internen HTML-Seiten mit Status 200 (ONPAGE-015); die Referenz teilt durch alle HTML-Seiten mit 2xx (Fixture /s201, Status 201: 14 statt 13 Seiten).",
-                "scope": "cell",
-                "count": 39,
-                "keys": [
-                  "{BASE}/",
-                  "{BASE}/blocked/b.html",
-                  "{BASE}/e410",
-                  "{BASE}/http-refresh.html",
-                  "{BASE}/meta-refresh.html",
-                  "{BASE}/r-to-404",
-                  "{BASE}/r307",
-                  "{BASE}/s201",
                   "{BASE}/s204",
                   "{BASE}/s999"
                 ]
@@ -5877,10 +4734,8 @@
             "os_only_rows": [],
             "threshold_pct": 99.0,
             "url_set_identical": true,
-            "passed": false,
-            "failures": [
-              "Zellübereinstimmung 95.692 % liegt unter 99.000 %"
-            ]
+            "passed": true,
+            "failures": []
           }
         },
         {
@@ -5898,8 +4753,8 @@
             "missing_in_os": [],
             "extra_in_os": [],
             "cells_compared": 24,
-            "cells_equal": 23,
-            "agreement_pct": 95.833,
+            "cells_equal": 24,
+            "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "Content Type",
@@ -5933,22 +4788,16 @@
                 "sf_column": "Inlinks",
                 "os_column": "Inlinks",
                 "compared": 5,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "http://localhost:1/",
-                    "sf": "1",
-                    "os": "2"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               }
             ],
             "applied_deviations": [
               {
                 "id": "DEV-005",
                 "spec": "ONPAGE-065",
-                "kind": "Paritaetsabweichung",
-                "note": "OS-Festlegung ONPAGE-065 unterscheidet Connection Refused (abgelehnte Verbindung) von Connection Timeout; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout.",
+                "kind": "OS-Festlegung",
+                "note": "ONPAGE-065 (K-67): OpenSpider meldet die tatsaechliche Ursache, Connection Refused bei abgelehntem Verbindungsaufbau und Connection Timeout bei ausbleibender Antwort; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout.",
                 "scope": "cell",
                 "count": 1,
                 "keys": [
@@ -5969,10 +4818,8 @@
             "os_only_rows": [],
             "threshold_pct": 97.0,
             "url_set_identical": true,
-            "passed": false,
-            "failures": [
-              "Zellübereinstimmung 95.833 % liegt unter 97.000 %"
-            ]
+            "passed": true,
+            "failures": []
           }
         },
         {
@@ -5985,13 +4832,13 @@
             "export": "response_codes_all",
             "site": "parity-response",
             "sf_rows": 51,
-            "os_rows": 52,
+            "os_rows": 51,
             "matched": 51,
             "missing_in_os": [],
             "extra_in_os": [],
             "cells_compared": 407,
-            "cells_equal": 405,
-            "agreement_pct": 99.509,
+            "cells_equal": 407,
+            "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "Content Type",
@@ -6039,46 +4886,23 @@
                 "sf_column": "Redirect URL",
                 "os_column": "Redirect URL",
                 "compared": 51,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{BASE}/meta-refresh-self.html",
-                    "sf": "{BASE}/meta-refresh-self.html",
-                    "os": ""
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Redirect Type",
                 "os_column": "Redirect Type",
                 "compared": 51,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{BASE}/meta-refresh-self.html",
-                    "sf": "Meta Refresh Redirect",
-                    "os": ""
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               }
             ],
             "applied_deviations": [
               {
-                "id": "DEV-001",
-                "spec": "CRAWL-098",
-                "kind": "OS-Festlegung",
-                "note": "K-40: Die robots.txt eines internen Hosts erscheint als eigene URL-Zeile in den Tabellen (200, text/plain). Die Referenz listet sie nicht. Offene Planerentscheidung: Festlegung beibehalten oder in_tables=0 fuer interne robots.txt (siehe Abnahmebericht, Befund B-01).",
-                "scope": "extra_in_os",
-                "count": 1,
-                "keys": [
-                  "{BASE}/robots.txt"
-                ]
-              },
-              {
                 "id": "DEV-005",
                 "spec": "ONPAGE-065",
-                "kind": "Paritaetsabweichung",
-                "note": "OS-Festlegung ONPAGE-065 unterscheidet Connection Refused (abgelehnte Verbindung) von Connection Timeout; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout.",
+                "kind": "OS-Festlegung",
+                "note": "ONPAGE-065 (K-67): OpenSpider meldet die tatsaechliche Ursache, Connection Refused bei abgelehntem Verbindungsaufbau und Connection Timeout bei ausbleibender Antwort; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout.",
                 "scope": "cell",
                 "count": 1,
                 "keys": [
@@ -6115,139 +4939,95 @@
             "export": "all_inlinks",
             "site": "parity-response",
             "sf_rows": 91,
-            "os_rows": 90,
-            "matched": 90,
-            "missing_in_os": [
-              "Meta Refresh | {BASE}/meta-refresh-self.html | {BASE}/meta-refresh-self.html | #1"
-            ],
+            "os_rows": 91,
+            "matched": 91,
+            "missing_in_os": [],
             "extra_in_os": [],
-            "cells_compared": 1052,
-            "cells_equal": 1044,
-            "agreement_pct": 99.24,
+            "cells_compared": 1064,
+            "cells_equal": 1064,
+            "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "Size (Bytes)",
                 "os_column": "Size (Bytes)",
-                "compared": 90,
+                "compared": 91,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Alt Text",
                 "os_column": "Alt Text",
-                "compared": 90,
+                "compared": 91,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Anchor",
                 "os_column": "Anchor",
-                "compared": 90,
+                "compared": 91,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status Code",
                 "os_column": "Status Code",
-                "compared": 85,
+                "compared": 86,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status",
                 "os_column": "Status",
-                "compared": 88,
+                "compared": 89,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Follow",
                 "os_column": "Follow",
-                "compared": 90,
+                "compared": 91,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Target",
                 "os_column": "Target",
-                "compared": 90,
+                "compared": 91,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Rel",
                 "os_column": "Rel",
-                "compared": 90,
+                "compared": 91,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Path Type",
                 "os_column": "Path Type",
-                "compared": 90,
+                "compared": 91,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Link Path",
                 "os_column": "Link Path",
-                "compared": 90,
-                "errors": 4,
-                "examples": [
-                  {
-                    "key": "Meta Refresh | {BASE}/mixed-chain.html | {BASE}/r301 | #1",
-                    "sf": "//head/meta[2]",
-                    "os": ""
-                  },
-                  {
-                    "key": "Meta Refresh | {BASE}/r-meta-to-404.html | {BASE}/e404 | #1",
-                    "sf": "//head/meta[2]",
-                    "os": ""
-                  },
-                  {
-                    "key": "Meta Refresh | {BASE}/meta-refresh.html | {BASE}/ok.html | #1",
-                    "sf": "//head/meta[2]",
-                    "os": ""
-                  },
-                  {
-                    "key": "Meta Refresh | {BASE}/meta-refresh-5.html | {BASE}/ok.html | #1",
-                    "sf": "//head/meta[2]",
-                    "os": ""
-                  }
-                ]
+                "compared": 91,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Link Position",
                 "os_column": "Link Position",
-                "compared": 90,
-                "errors": 4,
-                "examples": [
-                  {
-                    "key": "Meta Refresh | {BASE}/mixed-chain.html | {BASE}/r301 | #1",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Meta Refresh | {BASE}/r-meta-to-404.html | {BASE}/e404 | #1",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Meta Refresh | {BASE}/meta-refresh.html | {BASE}/ok.html | #1",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Meta Refresh | {BASE}/meta-refresh-5.html | {BASE}/ok.html | #1",
-                    "sf": "Head",
-                    "os": ""
-                  }
-                ]
+                "compared": 91,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Link Origin",
                 "os_column": "Link Origin",
-                "compared": 69,
+                "compared": 70,
                 "errors": 0,
                 "examples": []
               }
@@ -6256,8 +5036,8 @@
               {
                 "id": "DEV-005",
                 "spec": "ONPAGE-065",
-                "kind": "Paritaetsabweichung",
-                "note": "OS-Festlegung ONPAGE-065 unterscheidet Connection Refused (abgelehnte Verbindung) von Connection Timeout; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout.",
+                "kind": "OS-Festlegung",
+                "note": "ONPAGE-065 (K-67): OpenSpider meldet die tatsaechliche Ursache, Connection Refused bei abgelehntem Verbindungsaufbau und Connection Timeout bei ausbleibender Antwort; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout.",
                 "scope": "cell",
                 "count": 2,
                 "keys": [
@@ -6315,11 +5095,9 @@
             "ignored_sf_rows": [],
             "os_only_rows": [],
             "threshold_pct": 97.0,
-            "url_set_identical": false,
-            "passed": false,
-            "failures": [
-              "URL-Menge nicht identisch: 1 fehlen in OpenSpider, 0 zusätzlich"
-            ]
+            "url_set_identical": true,
+            "passed": true,
+            "failures": []
           }
         },
         {
@@ -6336,9 +5114,9 @@
             "matched": 18,
             "missing_in_os": [],
             "extra_in_os": [],
-            "cells_compared": 212,
-            "cells_equal": 207,
-            "agreement_pct": 97.642,
+            "cells_compared": 209,
+            "cells_equal": 209,
+            "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "Size (Bytes)",
@@ -6407,58 +5185,30 @@
                 "sf_column": "Link Path",
                 "os_column": "Link Path",
                 "compared": 18,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "Meta Refresh | {BASE}/r-meta-to-404.html | {BASE}/e404 | #1",
-                    "sf": "//head/meta[2]",
-                    "os": ""
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Link Position",
                 "os_column": "Link Position",
                 "compared": 18,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "Meta Refresh | {BASE}/r-meta-to-404.html | {BASE}/e404 | #1",
-                    "sf": "Head",
-                    "os": ""
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Link Origin",
                 "os_column": "Link Origin",
-                "compared": 18,
-                "errors": 3,
-                "examples": [
-                  {
-                    "key": "HTTP Redirect | {BASE}/r-to-dead | http://localhost:1/ | #1",
-                    "sf": "HTTP",
-                    "os": "HTML"
-                  },
-                  {
-                    "key": "HTTP Redirect | {BASE}/r-chain-500b | {BASE}/e500 | #1",
-                    "sf": "HTTP",
-                    "os": "HTML"
-                  },
-                  {
-                    "key": "HTTP Redirect | {BASE}/r-to-404 | {BASE}/e404 | #1",
-                    "sf": "HTTP",
-                    "os": "HTML"
-                  }
-                ]
+                "compared": 15,
+                "errors": 0,
+                "examples": []
               }
             ],
             "applied_deviations": [
               {
                 "id": "DEV-005",
                 "spec": "ONPAGE-065",
-                "kind": "Paritaetsabweichung",
-                "note": "OS-Festlegung ONPAGE-065 unterscheidet Connection Refused (abgelehnte Verbindung) von Connection Timeout; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout.",
+                "kind": "OS-Festlegung",
+                "note": "ONPAGE-065 (K-67): OpenSpider meldet die tatsaechliche Ursache, Connection Refused bei abgelehntem Verbindungsaufbau und Connection Timeout bei ausbleibender Antwort; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout.",
                 "scope": "cell",
                 "count": 2,
                 "keys": [
@@ -6476,6 +5226,19 @@
                 "keys": [
                   "HTTP Redirect | {BASE}/r-to-dead | http://localhost:1/ | #1",
                   "Hyperlink | {BASE}/ | http://localhost:1/ | #1"
+                ]
+              },
+              {
+                "id": "DEV-009",
+                "spec": "OUT-031",
+                "kind": "Paritaetsabweichung",
+                "note": "Die Spec kennt Link Origin nur HTML/Rendered HTML (OUT-031); die Referenz schreibt HTTP fuer Links aus Antwort-Headern und Weiterleitungen.",
+                "scope": "cell",
+                "count": 3,
+                "keys": [
+                  "HTTP Redirect | {BASE}/r-chain-500b | {BASE}/e500 | #1",
+                  "HTTP Redirect | {BASE}/r-to-404 | {BASE}/e404 | #1",
+                  "HTTP Redirect | {BASE}/r-to-dead | http://localhost:1/ | #1"
                 ]
               }
             ],
@@ -6508,41 +5271,39 @@
             "export": "redirect_chains",
             "site": "parity-response",
             "sf_rows": 8,
-            "os_rows": 5,
-            "matched": 5,
-            "missing_in_os": [
-              "{BASE}/meta-refresh-self.html"
-            ],
+            "os_rows": 6,
+            "matched": 6,
+            "missing_in_os": [],
             "extra_in_os": [],
-            "cells_compared": 236,
-            "cells_equal": 236,
+            "cells_compared": 281,
+            "cells_equal": 281,
             "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "Chain Type",
                 "os_column": "Chain Type",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Number of Redirects",
                 "os_column": "Number of Redirects",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Loop",
                 "os_column": "Redirect Loop",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Temp Redirect in Chain",
                 "os_column": "Temp Redirect in Chain",
-                "compared": 4,
+                "compared": 5,
                 "errors": 0,
                 "examples": []
               },
@@ -6563,7 +5324,7 @@
               {
                 "sf_column": "Final Indexability Status",
                 "os_column": "Final Indexability Status",
-                "compared": 4,
+                "compared": 5,
                 "errors": 0,
                 "examples": []
               },
@@ -6591,280 +5352,280 @@
               {
                 "sf_column": "Status Code 1",
                 "os_column": "Status Code 1",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status 1",
                 "os_column": "Status 1",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Redirect Type 1",
                 "os_column": "Redirect Type 1",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Redirect URL 1",
                 "os_column": "Redirect URL 1",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status Code 2",
                 "os_column": "Status Code 2",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status 2",
                 "os_column": "Status 2",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Redirect Type 2",
                 "os_column": "Redirect Type 2",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Redirect URL 2",
                 "os_column": "Redirect URL 2",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status Code 3",
                 "os_column": "Status Code 3",
-                "compared": 2,
+                "compared": 3,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status 3",
                 "os_column": "Status 3",
-                "compared": 2,
+                "compared": 3,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Redirect Type 3",
                 "os_column": "Redirect Type 3",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Redirect URL 3",
                 "os_column": "Redirect URL 3",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status Code 4",
                 "os_column": "Status Code 4",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status 4",
                 "os_column": "Status 4",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Redirect Type 4",
                 "os_column": "Redirect Type 4",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Redirect URL 4",
                 "os_column": "Redirect URL 4",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status Code 5",
                 "os_column": "Status Code 5",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status 5",
                 "os_column": "Status 5",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Redirect Type 5",
                 "os_column": "Redirect Type 5",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Redirect URL 5",
                 "os_column": "Redirect URL 5",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status Code 6",
                 "os_column": "Status Code 6",
-                "compared": 4,
+                "compared": 5,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status 6",
                 "os_column": "Status 6",
-                "compared": 4,
+                "compared": 5,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Redirect Type 6",
                 "os_column": "Redirect Type 6",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Redirect URL 6",
                 "os_column": "Redirect URL 6",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status Code 7",
                 "os_column": "Status Code 7",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status 7",
                 "os_column": "Status 7",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Redirect Type 7",
                 "os_column": "Redirect Type 7",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Redirect URL 7",
                 "os_column": "Redirect URL 7",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status Code 8",
                 "os_column": "Status Code 8",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status 8",
                 "os_column": "Status 8",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Redirect Type 8",
                 "os_column": "Redirect Type 8",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Redirect URL 8",
                 "os_column": "Redirect URL 8",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status Code 9",
                 "os_column": "Status Code 9",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status 9",
                 "os_column": "Status 9",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Redirect Type 9",
                 "os_column": "Redirect Type 9",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Redirect URL 9",
                 "os_column": "Redirect URL 9",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status Code 10",
                 "os_column": "Status Code 10",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status 10",
                 "os_column": "Status 10",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Redirect Type 10",
                 "os_column": "Redirect Type 10",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Redirect URL 10",
                 "os_column": "Redirect URL 10",
-                "compared": 5,
+                "compared": 6,
                 "errors": 0,
                 "examples": []
               }
@@ -6892,15 +5653,20 @@
                 "id": "DEV-030",
                 "spec": "OUT-081",
                 "kind": "OS-Festlegung",
-                "note": "Bei einer Weiterleitungsschleife ist Final Address leer und Final Status = Redirect Loop (OUT-081); die Referenz nennt die letzte Station der Schleife samt ihrem Status.",
+                "note": "Bei einer Weiterleitungsschleife ist Final Address leer und Final Status = Redirect Loop (OUT-081); die Referenz nennt die letzte Station der Schleife samt ihrem Status. Das gilt auch fuer den Selbst-Refresh (Weiterleitung auf sich selbst, K-57): die Referenz nennt die Seite selbst mit 200/OK.",
                 "scope": "cell",
-                "count": 5,
+                "count": 10,
                 "keys": [
                   "{BASE}/loop1",
                   "{BASE}/loop1",
                   "{BASE}/loop1",
                   "{BASE}/loop1",
-                  "{BASE}/loop1"
+                  "{BASE}/loop1",
+                  "{BASE}/meta-refresh-self.html",
+                  "{BASE}/meta-refresh-self.html",
+                  "{BASE}/meta-refresh-self.html",
+                  "{BASE}/meta-refresh-self.html",
+                  "{BASE}/meta-refresh-self.html"
                 ]
               },
               {
@@ -7009,11 +5775,9 @@
             "ignored_sf_rows": [],
             "os_only_rows": [],
             "threshold_pct": 97.0,
-            "url_set_identical": false,
-            "passed": false,
-            "failures": [
-              "URL-Menge nicht identisch: 1 fehlen in OpenSpider, 0 zusätzlich"
-            ]
+            "url_set_identical": true,
+            "passed": true,
+            "failures": []
           }
         },
         {
@@ -7038,65 +5802,19 @@
             "matched": 127,
             "missing_in_os": [],
             "extra_in_os": [],
-            "cells_compared": 100,
-            "cells_equal": 95,
-            "agreement_pct": 95.0,
+            "cells_compared": 121,
+            "cells_equal": 121,
+            "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "URLs",
                 "os_column": "URLs",
-                "compared": 100,
-                "errors": 5,
-                "examples": [
-                  {
-                    "key": "response codes | redirection (meta refresh)",
-                    "sf": "5",
-                    "os": "4"
-                  },
-                  {
-                    "key": "response codes | internal redirection (meta refresh)",
-                    "sf": "5",
-                    "os": "4"
-                  },
-                  {
-                    "key": "response codes | internal redirect chain",
-                    "sf": "9",
-                    "os": "7"
-                  },
-                  {
-                    "key": "response codes | internal redirect loop",
-                    "sf": "3",
-                    "os": "2"
-                  },
-                  {
-                    "key": "content | low content pages",
-                    "sf": "8",
-                    "os": "9"
-                  }
-                ]
+                "compared": 121,
+                "errors": 0,
+                "examples": []
               }
             ],
             "applied_deviations": [
-              {
-                "id": "DEV-002",
-                "spec": "CRAWL-098",
-                "kind": "OS-Festlegung",
-                "note": "Folge von DEV-001: Die robots.txt-Zeile zaehlt in allen Zaehlern, deren Grundgesamtheit alle internen URLs mit Antwort ist, um genau 1 hoeher als in der Referenz.",
-                "scope": "cell",
-                "count": 10,
-                "keys": [
-                  "internal | all",
-                  "response codes | all",
-                  "response codes | internal all",
-                  "response codes | internal success (2xx)",
-                  "response codes | success (2xx)",
-                  "security | all",
-                  "security | http urls",
-                  "summary | total urls crawled",
-                  "summary | total urls encountered",
-                  "url | all"
-                ]
-              },
               {
                 "id": "DEV-013",
                 "spec": "TECH-051",
@@ -7119,47 +5837,6 @@
                   "external | other",
                   "external | unknown",
                   "internal | unknown"
-                ]
-              },
-              {
-                "id": "DEV-015",
-                "spec": "OUT-080",
-                "kind": "Paritaetsabweichung",
-                "note": "Die Crawl-Depth-Zeilen der Referenz zaehlen nur interne HTML-Seiten mit 2xx (Zeile 0 = Start-URL); OpenSpider zaehlt alle internen URLs mit bekannter Tiefe (OUT-025 Site Structure, Summe = interne URLs).",
-                "scope": "cell",
-                "count": 5,
-                "keys": [
-                  "crawl depth | 1",
-                  "crawl depth | 2",
-                  "crawl depth | 3",
-                  "crawl depth | 4",
-                  "crawl depth | 5"
-                ]
-              },
-              {
-                "id": "DEV-021",
-                "spec": "TECH-011",
-                "kind": "OS-Festlegung",
-                "note": "Die Tabs Canonicals, Links und Hreflang fuehren interne HTML-Seiten mit Status 200 (TECH-011/-071/-130); die Referenz zaehlt alle 2xx (Fixture /s201, Status 201).",
-                "scope": "cell",
-                "count": 4,
-                "keys": [
-                  "canonicals | all",
-                  "hreflang | all",
-                  "hreflang | missing",
-                  "links | all"
-                ]
-              },
-              {
-                "id": "DEV-022",
-                "spec": "CRAWL-089",
-                "kind": "OS-Festlegung",
-                "note": "Der Wirkungsbereich von issues.ignore_non_indexable ist in CRAWL-089 abschliessend auf die Element-Tabs und Low Content Pages begrenzt; die Referenz schliesst nicht indexierbare URLs auch in Canonicals/Missing und Links/Pages Without Internal Outlinks aus.",
-                "scope": "cell",
-                "count": 2,
-                "keys": [
-                  "canonicals | missing",
-                  "links | pages without internal outlinks"
                 ]
               },
               {
@@ -7628,10 +6305,8 @@
             ],
             "threshold_pct": 100.0,
             "url_set_identical": true,
-            "passed": false,
-            "failures": [
-              "Zellübereinstimmung 95.000 % liegt unter 100.000 %"
-            ]
+            "passed": true,
+            "failures": []
           }
         }
       ]
@@ -7651,13 +6326,13 @@
             "export": "internal_all",
             "site": "parity-synthetic",
             "sf_rows": 400,
-            "os_rows": 401,
+            "os_rows": 400,
             "matched": 400,
             "missing_in_os": [],
             "extra_in_os": [],
-            "cells_compared": 20722,
-            "cells_equal": 20214,
-            "agreement_pct": 97.548,
+            "cells_compared": 20652,
+            "cells_equal": 20652,
+            "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "Content Type",
@@ -7698,175 +6373,22 @@
                 "sf_column": "Title 1",
                 "os_column": "Title 1",
                 "compared": 400,
-                "errors": 14,
-                "examples": [
-                  {
-                    "key": "{BASE}/s67/p167.html",
-                    "sf": "",
-                    "os": "Nicht gefunden"
-                  },
-                  {
-                    "key": "{BASE}/s99/p199.html",
-                    "sf": "",
-                    "os": "Serverfehler"
-                  },
-                  {
-                    "key": "{BASE}/s40/p240.html",
-                    "sf": "",
-                    "os": "Serverfehler"
-                  },
-                  {
-                    "key": "{BASE}/s58/p358.html",
-                    "sf": "",
-                    "os": "Nicht gefunden"
-                  },
-                  {
-                    "key": "{BASE}/s29/p229.html",
-                    "sf": "",
-                    "os": "Nicht gefunden"
-                  },
-                  {
-                    "key": "{BASE}/s17/p217.html",
-                    "sf": "",
-                    "os": "Nicht gefunden"
-                  },
-                  {
-                    "key": "{BASE}/s82/p182.html",
-                    "sf": "",
-                    "os": "Serverfehler"
-                  },
-                  {
-                    "key": "{BASE}/s33/p233.html",
-                    "sf": "",
-                    "os": "Nicht gefunden"
-                  },
-                  {
-                    "key": "{BASE}/s76/p176.html",
-                    "sf": "",
-                    "os": "Serverfehler"
-                  },
-                  {
-                    "key": "{BASE}/s43/p243.html",
-                    "sf": "",
-                    "os": "Nicht gefunden"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Title 1 Length",
                 "os_column": "Title 1 Length",
-                "compared": 393,
-                "errors": 14,
-                "examples": [
-                  {
-                    "key": "{BASE}/s67/p167.html",
-                    "sf": "0",
-                    "os": "14"
-                  },
-                  {
-                    "key": "{BASE}/s99/p199.html",
-                    "sf": "0",
-                    "os": "12"
-                  },
-                  {
-                    "key": "{BASE}/s40/p240.html",
-                    "sf": "0",
-                    "os": "12"
-                  },
-                  {
-                    "key": "{BASE}/s58/p358.html",
-                    "sf": "0",
-                    "os": "14"
-                  },
-                  {
-                    "key": "{BASE}/s29/p229.html",
-                    "sf": "0",
-                    "os": "14"
-                  },
-                  {
-                    "key": "{BASE}/s17/p217.html",
-                    "sf": "0",
-                    "os": "14"
-                  },
-                  {
-                    "key": "{BASE}/s82/p182.html",
-                    "sf": "0",
-                    "os": "12"
-                  },
-                  {
-                    "key": "{BASE}/s33/p233.html",
-                    "sf": "0",
-                    "os": "14"
-                  },
-                  {
-                    "key": "{BASE}/s76/p176.html",
-                    "sf": "0",
-                    "os": "12"
-                  },
-                  {
-                    "key": "{BASE}/s43/p243.html",
-                    "sf": "0",
-                    "os": "14"
-                  }
-                ]
+                "compared": 379,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Title 1 Pixel Width",
                 "os_column": "Title 1 Pixel Width",
-                "compared": 393,
-                "errors": 14,
-                "examples": [
-                  {
-                    "key": "{BASE}/s67/p167.html",
-                    "sf": "0",
-                    "os": "135"
-                  },
-                  {
-                    "key": "{BASE}/s99/p199.html",
-                    "sf": "0",
-                    "os": "109"
-                  },
-                  {
-                    "key": "{BASE}/s40/p240.html",
-                    "sf": "0",
-                    "os": "109"
-                  },
-                  {
-                    "key": "{BASE}/s58/p358.html",
-                    "sf": "0",
-                    "os": "135"
-                  },
-                  {
-                    "key": "{BASE}/s29/p229.html",
-                    "sf": "0",
-                    "os": "135"
-                  },
-                  {
-                    "key": "{BASE}/s17/p217.html",
-                    "sf": "0",
-                    "os": "135"
-                  },
-                  {
-                    "key": "{BASE}/s82/p182.html",
-                    "sf": "0",
-                    "os": "109"
-                  },
-                  {
-                    "key": "{BASE}/s33/p233.html",
-                    "sf": "0",
-                    "os": "135"
-                  },
-                  {
-                    "key": "{BASE}/s76/p176.html",
-                    "sf": "0",
-                    "os": "109"
-                  },
-                  {
-                    "key": "{BASE}/s43/p243.html",
-                    "sf": "0",
-                    "os": "135"
-                  }
-                ]
+                "compared": 379,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Meta Description 1",
@@ -7886,59 +6408,8 @@
                 "sf_column": "Meta Description 1 Pixel Width",
                 "os_column": "Meta Description 1 Pixel Width",
                 "compared": 379,
-                "errors": 10,
-                "examples": [
-                  {
-                    "key": "{BASE}/",
-                    "sf": "151",
-                    "os": "156"
-                  },
-                  {
-                    "key": "{BASE}/s2/p2.html",
-                    "sf": "151",
-                    "os": "156"
-                  },
-                  {
-                    "key": "{BASE}/s3/p3.html",
-                    "sf": "151",
-                    "os": "156"
-                  },
-                  {
-                    "key": "{BASE}/s1/p1.html",
-                    "sf": "151",
-                    "os": "156"
-                  },
-                  {
-                    "key": "{BASE}/s7/p7.html",
-                    "sf": "151",
-                    "os": "156"
-                  },
-                  {
-                    "key": "{BASE}/s5/p5.html",
-                    "sf": "151",
-                    "os": "156"
-                  },
-                  {
-                    "key": "{BASE}/s9/p9.html",
-                    "sf": "151",
-                    "os": "156"
-                  },
-                  {
-                    "key": "{BASE}/s8/p8.html",
-                    "sf": "151",
-                    "os": "156"
-                  },
-                  {
-                    "key": "{BASE}/s6/p6.html",
-                    "sf": "151",
-                    "os": "156"
-                  },
-                  {
-                    "key": "{BASE}/s4/p4.html",
-                    "sf": "151",
-                    "os": "156"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Meta Keywords 1",
@@ -7958,117 +6429,15 @@
                 "sf_column": "H1-1",
                 "os_column": "H1-1",
                 "compared": 400,
-                "errors": 14,
-                "examples": [
-                  {
-                    "key": "{BASE}/s67/p167.html",
-                    "sf": "",
-                    "os": "404"
-                  },
-                  {
-                    "key": "{BASE}/s99/p199.html",
-                    "sf": "",
-                    "os": "Serverfehler"
-                  },
-                  {
-                    "key": "{BASE}/s40/p240.html",
-                    "sf": "",
-                    "os": "Serverfehler"
-                  },
-                  {
-                    "key": "{BASE}/s58/p358.html",
-                    "sf": "",
-                    "os": "404"
-                  },
-                  {
-                    "key": "{BASE}/s29/p229.html",
-                    "sf": "",
-                    "os": "404"
-                  },
-                  {
-                    "key": "{BASE}/s17/p217.html",
-                    "sf": "",
-                    "os": "404"
-                  },
-                  {
-                    "key": "{BASE}/s82/p182.html",
-                    "sf": "",
-                    "os": "Serverfehler"
-                  },
-                  {
-                    "key": "{BASE}/s33/p233.html",
-                    "sf": "",
-                    "os": "404"
-                  },
-                  {
-                    "key": "{BASE}/s76/p176.html",
-                    "sf": "",
-                    "os": "Serverfehler"
-                  },
-                  {
-                    "key": "{BASE}/s43/p243.html",
-                    "sf": "",
-                    "os": "404"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "H1-1 Length",
                 "os_column": "H1-1 Length",
-                "compared": 393,
-                "errors": 14,
-                "examples": [
-                  {
-                    "key": "{BASE}/s67/p167.html",
-                    "sf": "0",
-                    "os": "3"
-                  },
-                  {
-                    "key": "{BASE}/s99/p199.html",
-                    "sf": "0",
-                    "os": "12"
-                  },
-                  {
-                    "key": "{BASE}/s40/p240.html",
-                    "sf": "0",
-                    "os": "12"
-                  },
-                  {
-                    "key": "{BASE}/s58/p358.html",
-                    "sf": "0",
-                    "os": "3"
-                  },
-                  {
-                    "key": "{BASE}/s29/p229.html",
-                    "sf": "0",
-                    "os": "3"
-                  },
-                  {
-                    "key": "{BASE}/s17/p217.html",
-                    "sf": "0",
-                    "os": "3"
-                  },
-                  {
-                    "key": "{BASE}/s82/p182.html",
-                    "sf": "0",
-                    "os": "12"
-                  },
-                  {
-                    "key": "{BASE}/s33/p233.html",
-                    "sf": "0",
-                    "os": "3"
-                  },
-                  {
-                    "key": "{BASE}/s76/p176.html",
-                    "sf": "0",
-                    "os": "12"
-                  },
-                  {
-                    "key": "{BASE}/s43/p243.html",
-                    "sf": "0",
-                    "os": "3"
-                  }
-                ]
+                "compared": 379,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "H2-1",
@@ -8164,118 +6533,16 @@
               {
                 "sf_column": "Word Count",
                 "os_column": "Word Count",
-                "compared": 393,
-                "errors": 393,
-                "examples": [
-                  {
-                    "key": "{BASE}/",
-                    "sf": "122",
-                    "os": "112"
-                  },
-                  {
-                    "key": "{BASE}/s2/p2.html",
-                    "sf": "122",
-                    "os": "112"
-                  },
-                  {
-                    "key": "{BASE}/s3/p3.html",
-                    "sf": "122",
-                    "os": "112"
-                  },
-                  {
-                    "key": "{BASE}/s1/p1.html",
-                    "sf": "122",
-                    "os": "112"
-                  },
-                  {
-                    "key": "{BASE}/s12/p12.html",
-                    "sf": "122",
-                    "os": "112"
-                  },
-                  {
-                    "key": "{BASE}/s7/p7.html",
-                    "sf": "122",
-                    "os": "112"
-                  },
-                  {
-                    "key": "{BASE}/s5/p5.html",
-                    "sf": "122",
-                    "os": "112"
-                  },
-                  {
-                    "key": "{BASE}/s9/p9.html",
-                    "sf": "122",
-                    "os": "112"
-                  },
-                  {
-                    "key": "{BASE}/s11/p11.html",
-                    "sf": "122",
-                    "os": "112"
-                  },
-                  {
-                    "key": "{BASE}/s8/p8.html",
-                    "sf": "122",
-                    "os": "112"
-                  }
-                ]
+                "compared": 379,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Text Ratio",
                 "os_column": "Text Ratio",
-                "compared": 393,
-                "errors": 14,
-                "examples": [
-                  {
-                    "key": "{BASE}/s67/p167.html",
-                    "sf": "0.000",
-                    "os": "3.2"
-                  },
-                  {
-                    "key": "{BASE}/s99/p199.html",
-                    "sf": "0.000",
-                    "os": "11.8"
-                  },
-                  {
-                    "key": "{BASE}/s40/p240.html",
-                    "sf": "0.000",
-                    "os": "11.8"
-                  },
-                  {
-                    "key": "{BASE}/s58/p358.html",
-                    "sf": "0.000",
-                    "os": "3.2"
-                  },
-                  {
-                    "key": "{BASE}/s29/p229.html",
-                    "sf": "0.000",
-                    "os": "3.2"
-                  },
-                  {
-                    "key": "{BASE}/s17/p217.html",
-                    "sf": "0.000",
-                    "os": "3.2"
-                  },
-                  {
-                    "key": "{BASE}/s82/p182.html",
-                    "sf": "0.000",
-                    "os": "11.8"
-                  },
-                  {
-                    "key": "{BASE}/s33/p233.html",
-                    "sf": "0.000",
-                    "os": "3.2"
-                  },
-                  {
-                    "key": "{BASE}/s76/p176.html",
-                    "sf": "0.000",
-                    "os": "11.8"
-                  },
-                  {
-                    "key": "{BASE}/s43/p243.html",
-                    "sf": "0.000",
-                    "os": "3.2"
-                  }
-                ]
+                "compared": 379,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Crawl Depth",
@@ -8344,59 +6611,8 @@
                 "sf_column": "Hash",
                 "os_column": "Hash",
                 "compared": 400,
-                "errors": 21,
-                "examples": [
-                  {
-                    "key": "{BASE}/s67/p167.html",
-                    "sf": "",
-                    "os": "86d3018671a21e0f2916f267c65f5042"
-                  },
-                  {
-                    "key": "{BASE}/s99/p199.html",
-                    "sf": "",
-                    "os": "887858d5c1d5ac4f062f93689f7980c2"
-                  },
-                  {
-                    "key": "{BASE}/s40/p240.html",
-                    "sf": "",
-                    "os": "887858d5c1d5ac4f062f93689f7980c2"
-                  },
-                  {
-                    "key": "{BASE}/s60/p260.html",
-                    "sf": "",
-                    "os": "efe2b16de9a0bcf3093950ca3afd4e3e"
-                  },
-                  {
-                    "key": "{BASE}/s58/p358.html",
-                    "sf": "",
-                    "os": "86d3018671a21e0f2916f267c65f5042"
-                  },
-                  {
-                    "key": "{BASE}/s29/p229.html",
-                    "sf": "",
-                    "os": "86d3018671a21e0f2916f267c65f5042"
-                  },
-                  {
-                    "key": "{BASE}/s17/p217.html",
-                    "sf": "",
-                    "os": "86d3018671a21e0f2916f267c65f5042"
-                  },
-                  {
-                    "key": "{BASE}/s19/p219.html",
-                    "sf": "",
-                    "os": "efe2b16de9a0bcf3093950ca3afd4e3e"
-                  },
-                  {
-                    "key": "{BASE}/s73/p173.html",
-                    "sf": "",
-                    "os": "efe2b16de9a0bcf3093950ca3afd4e3e"
-                  },
-                  {
-                    "key": "{BASE}/s82/p182.html",
-                    "sf": "",
-                    "os": "887858d5c1d5ac4f062f93689f7980c2"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Last Modified",
@@ -8499,23 +6715,12 @@
             ],
             "applied_deviations": [
               {
-                "id": "DEV-001",
-                "spec": "CRAWL-098",
-                "kind": "OS-Festlegung",
-                "note": "K-40: Die robots.txt eines internen Hosts erscheint als eigene URL-Zeile in den Tabellen (200, text/plain). Die Referenz listet sie nicht. Offene Planerentscheidung: Festlegung beibehalten oder in_tables=0 fuer interne robots.txt (siehe Abnahmebericht, Befund B-01).",
-                "scope": "extra_in_os",
-                "count": 1,
-                "keys": [
-                  "{BASE}/robots.txt"
-                ]
-              },
-              {
                 "id": "DEV-003",
                 "spec": "ONPAGE-011",
                 "kind": "OS-Festlegung",
-                "note": "Nicht-HTML-URLs haben leere Element-Spalten (ONPAGE-011) und eine Seite ohne Element leere Wertspalten (ONPAGE-008); die Referenz schreibt 0.",
+                "note": "Nicht-HTML-URLs sowie Weiterleitungen, Fehlerseiten (4xx/5xx) und URLs ohne Antwort haben leere Element-, Laengen- und Pixelspalten, auch wenn ihr Koerper <title>/<h1> enthaelt (ONPAGE-011, A-5, K-60, Befund N-01), und eine Seite ohne Element leere Wertspalten (ONPAGE-008); die Referenz schreibt 0.",
                 "scope": "cell",
-                "count": 870,
+                "count": 926,
                 "keys": [
                   "{BASE}/",
                   "{BASE}/",
@@ -8533,17 +6738,20 @@
                 "id": "DEV-004",
                 "spec": "ONPAGE-013",
                 "kind": "OS-Festlegung",
-                "note": "Nicht-HTML-URLs: Word Count und Text Ratio leer (ONPAGE-013); die Referenz schreibt 0.",
+                "note": "Nicht-HTML-URLs sowie Weiterleitungen, Fehlerseiten (4xx/5xx) und URLs ohne Antwort: Word Count und Text Ratio leer (ONPAGE-013, K-60, Befund N-01); die Referenz schreibt 0.",
                 "scope": "cell",
-                "count": 7,
+                "count": 21,
                 "keys": [
-                  "{BASE}/s13/p313.html",
+                  "{BASE}/s17/p217.html",
                   "{BASE}/s19/p219.html",
+                  "{BASE}/s29/p229.html",
+                  "{BASE}/s40/p240.html",
+                  "{BASE}/s58/p358.html",
                   "{BASE}/s60/p260.html",
-                  "{BASE}/s71/p171.html",
+                  "{BASE}/s67/p167.html",
                   "{BASE}/s73/p173.html",
-                  "{BASE}/s90/p390.html",
-                  "{BASE}/s94/p394.html"
+                  "{BASE}/s82/p182.html",
+                  "{BASE}/s99/p199.html"
                 ]
               },
               {
@@ -8680,10 +6888,8 @@
             "os_only_rows": [],
             "threshold_pct": 99.0,
             "url_set_identical": true,
-            "passed": false,
-            "failures": [
-              "Zellübereinstimmung 97.548 % liegt unter 99.000 %"
-            ]
+            "passed": true,
+            "failures": []
           }
         },
         {
@@ -8831,8 +7037,8 @@
             "missing_in_os": [],
             "extra_in_os": [],
             "cells_compared": 50105,
-            "cells_equal": 49347,
-            "agreement_pct": 98.487,
+            "cells_equal": 50105,
+            "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "Size (Bytes)",
@@ -8901,117 +7107,15 @@
                 "sf_column": "Link Path",
                 "os_column": "Link Path",
                 "compared": 4176,
-                "errors": 379,
-                "examples": [
-                  {
-                    "key": "Canonical | {BASE}/ | {BASE}/ | #1",
-                    "sf": "//head/link",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/s2/p2.html | {BASE}/s2/p2.html | #1",
-                    "sf": "//head/link",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/s3/p3.html | {BASE}/s3/p3.html | #1",
-                    "sf": "//head/link",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/s1/p1.html | {BASE}/s1/p1.html | #1",
-                    "sf": "//head/link",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/s12/p12.html | {BASE}/s12/p12.html | #1",
-                    "sf": "//head/link",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/s7/p7.html | {BASE}/s7/p7.html | #1",
-                    "sf": "//head/link",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/s5/p5.html | {BASE}/s5/p5.html | #1",
-                    "sf": "//head/link",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/s9/p9.html | {BASE}/s9/p9.html | #1",
-                    "sf": "//head/link",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/s11/p11.html | {BASE}/s11/p11.html | #1",
-                    "sf": "//head/link",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/s8/p8.html | {BASE}/s8/p8.html | #1",
-                    "sf": "//head/link",
-                    "os": ""
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Link Position",
                 "os_column": "Link Position",
                 "compared": 4176,
-                "errors": 379,
-                "examples": [
-                  {
-                    "key": "Canonical | {BASE}/ | {BASE}/ | #1",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/s2/p2.html | {BASE}/s2/p2.html | #1",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/s3/p3.html | {BASE}/s3/p3.html | #1",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/s1/p1.html | {BASE}/s1/p1.html | #1",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/s12/p12.html | {BASE}/s12/p12.html | #1",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/s7/p7.html | {BASE}/s7/p7.html | #1",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/s5/p5.html | {BASE}/s5/p5.html | #1",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/s9/p9.html | {BASE}/s9/p9.html | #1",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/s11/p11.html | {BASE}/s11/p11.html | #1",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Canonical | {BASE}/s8/p8.html | {BASE}/s8/p8.html | #1",
-                    "sf": "Head",
-                    "os": ""
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Link Origin",
@@ -9073,39 +7177,19 @@
             "matched": 127,
             "missing_in_os": [],
             "extra_in_os": [],
-            "cells_compared": 113,
-            "cells_equal": 113,
+            "cells_compared": 125,
+            "cells_equal": 125,
             "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "URLs",
                 "os_column": "URLs",
-                "compared": 113,
+                "compared": 125,
                 "errors": 0,
                 "examples": []
               }
             ],
             "applied_deviations": [
-              {
-                "id": "DEV-002",
-                "spec": "CRAWL-098",
-                "kind": "OS-Festlegung",
-                "note": "Folge von DEV-001: Die robots.txt-Zeile zaehlt in allen Zaehlern, deren Grundgesamtheit alle internen URLs mit Antwort ist, um genau 1 hoeher als in der Referenz.",
-                "scope": "cell",
-                "count": 10,
-                "keys": [
-                  "internal | all",
-                  "response codes | all",
-                  "response codes | internal all",
-                  "response codes | internal success (2xx)",
-                  "response codes | success (2xx)",
-                  "security | all",
-                  "security | http urls",
-                  "summary | total urls crawled",
-                  "summary | total urls encountered",
-                  "url | all"
-                ]
-              },
               {
                 "id": "DEV-013",
                 "spec": "TECH-051",
@@ -9115,18 +7199,6 @@
                 "count": 1,
                 "keys": [
                   "directives | all"
-                ]
-              },
-              {
-                "id": "DEV-015",
-                "spec": "OUT-080",
-                "kind": "Paritaetsabweichung",
-                "note": "Die Crawl-Depth-Zeilen der Referenz zaehlen nur interne HTML-Seiten mit 2xx (Zeile 0 = Start-URL); OpenSpider zaehlt alle internen URLs mit bekannter Tiefe (OUT-025 Site Structure, Summe = interne URLs).",
-                "scope": "cell",
-                "count": 2,
-                "keys": [
-                  "crawl depth | 5",
-                  "crawl depth | 6"
                 ]
               },
               {
@@ -9611,15 +7683,13 @@
             "export": "internal_all",
             "site": "parity-technical",
             "sf_rows": 111,
-            "os_rows": 113,
+            "os_rows": 111,
             "matched": 111,
             "missing_in_os": [],
-            "extra_in_os": [
-              "{BASE}/hl/it/"
-            ],
-            "cells_compared": 6070,
-            "cells_equal": 6044,
-            "agreement_pct": 99.572,
+            "extra_in_os": [],
+            "cells_compared": 6065,
+            "cells_equal": 6065,
+            "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "Content Type",
@@ -9660,40 +7730,22 @@
                 "sf_column": "Title 1",
                 "os_column": "Title 1",
                 "compared": 111,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{BASE}/canon/gone-404.html",
-                    "sf": "",
-                    "os": "Canonical target gone"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Title 1 Length",
                 "os_column": "Title 1 Length",
-                "compared": 107,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{BASE}/canon/gone-404.html",
-                    "sf": "0",
-                    "os": "21"
-                  }
-                ]
+                "compared": 106,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Title 1 Pixel Width",
                 "os_column": "Title 1 Pixel Width",
-                "compared": 107,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{BASE}/canon/gone-404.html",
-                    "sf": "0",
-                    "os": "196"
-                  }
-                ]
+                "compared": 106,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Meta Description 1",
@@ -9734,27 +7786,15 @@
                 "sf_column": "H1-1",
                 "os_column": "H1-1",
                 "compared": 111,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{BASE}/canon/gone-404.html",
-                    "sf": "",
-                    "os": "Canonical target gone"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "H1-1 Length",
                 "os_column": "H1-1 Length",
-                "compared": 107,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{BASE}/canon/gone-404.html",
-                    "sf": "0",
-                    "os": "21"
-                  }
-                ]
+                "compared": 106,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "H2-1",
@@ -9864,73 +7904,16 @@
               {
                 "sf_column": "Word Count",
                 "os_column": "Word Count",
-                "compared": 107,
-                "errors": 14,
-                "examples": [
-                  {
-                    "key": "{BASE}/",
-                    "sf": "93",
-                    "os": "85"
-                  },
-                  {
-                    "key": "{BASE}/dir/",
-                    "sf": "94",
-                    "os": "81"
-                  },
-                  {
-                    "key": "{BASE}/tree/",
-                    "sf": "86",
-                    "os": "80"
-                  },
-                  {
-                    "key": "{BASE}/links/",
-                    "sf": "110",
-                    "os": "96"
-                  },
-                  {
-                    "key": "{BASE}/map/",
-                    "sf": "93",
-                    "os": "85"
-                  },
-                  {
-                    "key": "{BASE}/canon/",
-                    "sf": "94",
-                    "os": "81"
-                  },
-                  {
-                    "key": "{BASE}/hl/",
-                    "sf": "82",
-                    "os": "76"
-                  },
-                  {
-                    "key": "{BASE}/tree/c6/",
-                    "sf": "108",
-                    "os": "102"
-                  },
-                  {
-                    "key": "{BASE}/tree/c1/",
-                    "sf": "108",
-                    "os": "102"
-                  },
-                  {
-                    "key": "{BASE}/tree/c4/",
-                    "sf": "108",
-                    "os": "102"
-                  }
-                ]
+                "compared": 106,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Text Ratio",
                 "os_column": "Text Ratio",
-                "compared": 107,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{BASE}/canon/gone-404.html",
-                    "sf": "0.000",
-                    "os": "13.6"
-                  }
-                ]
+                "compared": 106,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Crawl Depth",
@@ -9999,29 +7982,8 @@
                 "sf_column": "Hash",
                 "os_column": "Hash",
                 "compared": 111,
-                "errors": 4,
-                "examples": [
-                  {
-                    "key": "{BASE}/hl/es-old/",
-                    "sf": "",
-                    "os": "d41d8cd98f00b204e9800998ecf8427e"
-                  },
-                  {
-                    "key": "{BASE}/img/small.png",
-                    "sf": "",
-                    "os": "ceafb7558b76063e445e773b12aaeaca"
-                  },
-                  {
-                    "key": "{BASE}/canon/gone-404.html",
-                    "sf": "",
-                    "os": "3ac01b92326fab8a6ae50922bda1b2f0"
-                  },
-                  {
-                    "key": "{BASE}/canon/moved-301",
-                    "sf": "",
-                    "os": "d41d8cd98f00b204e9800998ecf8427e"
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Last Modified",
@@ -10034,27 +7996,15 @@
                 "sf_column": "Redirect URL",
                 "os_column": "Redirect URL",
                 "compared": 111,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{BASE}/dir/refresh-bare.html",
-                    "sf": "{BASE}/dir/refresh-bare.html",
-                    "os": ""
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Redirect Type",
                 "os_column": "Redirect Type",
                 "compared": 111,
-                "errors": 1,
-                "examples": [
-                  {
-                    "key": "{BASE}/dir/refresh-bare.html",
-                    "sf": "Meta Refresh Redirect",
-                    "os": ""
-                  }
-                ]
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "URL Encoded Address",
@@ -10136,23 +8086,12 @@
             ],
             "applied_deviations": [
               {
-                "id": "DEV-001",
-                "spec": "CRAWL-098",
-                "kind": "OS-Festlegung",
-                "note": "K-40: Die robots.txt eines internen Hosts erscheint als eigene URL-Zeile in den Tabellen (200, text/plain). Die Referenz listet sie nicht. Offene Planerentscheidung: Festlegung beibehalten oder in_tables=0 fuer interne robots.txt (siehe Abnahmebericht, Befund B-01).",
-                "scope": "extra_in_os",
-                "count": 1,
-                "keys": [
-                  "{BASE}/robots.txt"
-                ]
-              },
-              {
                 "id": "DEV-003",
                 "spec": "ONPAGE-011",
                 "kind": "OS-Festlegung",
-                "note": "Nicht-HTML-URLs haben leere Element-Spalten (ONPAGE-011) und eine Seite ohne Element leere Wertspalten (ONPAGE-008); die Referenz schreibt 0.",
+                "note": "Nicht-HTML-URLs sowie Weiterleitungen, Fehlerseiten (4xx/5xx) und URLs ohne Antwort haben leere Element-, Laengen- und Pixelspalten, auch wenn ihr Koerper <title>/<h1> enthaelt (ONPAGE-011, A-5, K-60, Befund N-01), und eine Seite ohne Element leere Wertspalten (ONPAGE-008); die Referenz schreibt 0.",
                 "scope": "cell",
-                "count": 142,
+                "count": 146,
                 "keys": [
                   "{BASE}/",
                   "{BASE}/canon/",
@@ -10170,11 +8109,12 @@
                 "id": "DEV-004",
                 "spec": "ONPAGE-013",
                 "kind": "OS-Festlegung",
-                "note": "Nicht-HTML-URLs: Word Count und Text Ratio leer (ONPAGE-013); die Referenz schreibt 0.",
+                "note": "Nicht-HTML-URLs sowie Weiterleitungen, Fehlerseiten (4xx/5xx) und URLs ohne Antwort: Word Count und Text Ratio leer (ONPAGE-013, K-60, Befund N-01); die Referenz schreibt 0.",
                 "scope": "cell",
-                "count": 4,
+                "count": 5,
                 "keys": [
                   "{BASE}/blocked/page.html",
+                  "{BASE}/canon/gone-404.html",
                   "{BASE}/canon/moved-301",
                   "{BASE}/hl/es-old/",
                   "{BASE}/img/small.png"
@@ -10300,11 +8240,9 @@
             "ignored_sf_rows": [],
             "os_only_rows": [],
             "threshold_pct": 99.0,
-            "url_set_identical": false,
-            "passed": false,
-            "failures": [
-              "URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich"
-            ]
+            "url_set_identical": true,
+            "passed": true,
+            "failures": []
           }
         },
         {
@@ -10440,7 +8378,7 @@
             "export": "directives_all",
             "site": "parity-technical",
             "sf_rows": 107,
-            "os_rows": 111,
+            "os_rows": 110,
             "matched": 107,
             "missing_in_os": [],
             "extra_in_os": [],
@@ -10506,17 +8444,6 @@
               }
             ],
             "applied_deviations": [
-              {
-                "id": "DEV-001",
-                "spec": "CRAWL-098",
-                "kind": "OS-Festlegung",
-                "note": "K-40: Die robots.txt eines internen Hosts erscheint als eigene URL-Zeile in den Tabellen (200, text/plain). Die Referenz listet sie nicht. Offene Planerentscheidung: Festlegung beibehalten oder in_tables=0 fuer interne robots.txt (siehe Abnahmebericht, Befund B-01).",
-                "scope": "extra_in_os",
-                "count": 1,
-                "keys": [
-                  "{BASE}/robots.txt"
-                ]
-              },
               {
                 "id": "DEV-012",
                 "spec": "TECH-051",
@@ -10987,200 +8914,94 @@
             "site": "parity-technical",
             "sf_rows": 405,
             "os_rows": 405,
-            "matched": 404,
-            "missing_in_os": [
-              "Meta Refresh | {BASE}/dir/refresh-bare.html | {BASE}/dir/refresh-bare.html | #1"
-            ],
-            "extra_in_os": [
-              "Hreflang | {BASE}/hl/en/ | {BASE}/hl/it/ | #1"
-            ],
-            "cells_compared": 4837,
-            "cells_equal": 4785,
-            "agreement_pct": 98.925,
+            "matched": 405,
+            "missing_in_os": [],
+            "extra_in_os": [],
+            "cells_compared": 4849,
+            "cells_equal": 4849,
+            "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "Size (Bytes)",
                 "os_column": "Size (Bytes)",
-                "compared": 404,
+                "compared": 405,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Alt Text",
                 "os_column": "Alt Text",
-                "compared": 404,
+                "compared": 405,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Anchor",
                 "os_column": "Anchor",
-                "compared": 404,
+                "compared": 405,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status Code",
                 "os_column": "Status Code",
-                "compared": 403,
+                "compared": 404,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Status",
                 "os_column": "Status",
-                "compared": 404,
+                "compared": 405,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Follow",
                 "os_column": "Follow",
-                "compared": 399,
+                "compared": 400,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Target",
                 "os_column": "Target",
-                "compared": 404,
+                "compared": 405,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Rel",
                 "os_column": "Rel",
-                "compared": 404,
+                "compared": 405,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Path Type",
                 "os_column": "Path Type",
-                "compared": 404,
+                "compared": 405,
                 "errors": 0,
                 "examples": []
               },
               {
                 "sf_column": "Link Path",
                 "os_column": "Link Path",
-                "compared": 404,
-                "errors": 26,
-                "examples": [
-                  {
-                    "key": "Hreflang | {BASE}/hl/de/ | {BASE}/hl/de/ | #1",
-                    "sf": "//head/link[1]",
-                    "os": ""
-                  },
-                  {
-                    "key": "Hreflang | {BASE}/hl/en/ | {BASE}/hl/de/ | #1",
-                    "sf": "//head/link[2]",
-                    "os": ""
-                  },
-                  {
-                    "key": "Hreflang | {BASE}/hl/en/ | {BASE}/hl/es-old/ | #1",
-                    "sf": "//head/link[4]",
-                    "os": ""
-                  },
-                  {
-                    "key": "Hreflang | {BASE}/hl/en/ | {BASE}/hl/fr/ | #1",
-                    "sf": "//head/link[3]",
-                    "os": ""
-                  },
-                  {
-                    "key": "Hreflang | {BASE}/hl/de/ | {BASE}/hl/en/ | #1",
-                    "sf": "//head/link[2]",
-                    "os": ""
-                  },
-                  {
-                    "key": "Hreflang | {BASE}/hl/bad-codes.html | {BASE}/hl/en/ | #1",
-                    "sf": "//head/link[1]",
-                    "os": ""
-                  },
-                  {
-                    "key": "Hreflang | {BASE}/hl/bad-codes.html | {BASE}/hl/en/ | #2",
-                    "sf": "//head/link[2]",
-                    "os": ""
-                  },
-                  {
-                    "key": "Hreflang | {BASE}/hl/bad-codes.html | {BASE}/hl/en/ | #3",
-                    "sf": "//head/link[3]",
-                    "os": ""
-                  },
-                  {
-                    "key": "Hreflang | {BASE}/hl/bad-codes.html | {BASE}/hl/en/ | #4",
-                    "sf": "//head/link[4]",
-                    "os": ""
-                  },
-                  {
-                    "key": "Hreflang | {BASE}/hl/bad-codes.html | {BASE}/hl/en/ | #5",
-                    "sf": "//head/link[5]",
-                    "os": ""
-                  }
-                ]
+                "compared": 405,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Link Position",
                 "os_column": "Link Position",
-                "compared": 404,
-                "errors": 26,
-                "examples": [
-                  {
-                    "key": "Hreflang | {BASE}/hl/de/ | {BASE}/hl/de/ | #1",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Hreflang | {BASE}/hl/en/ | {BASE}/hl/de/ | #1",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Hreflang | {BASE}/hl/en/ | {BASE}/hl/es-old/ | #1",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Hreflang | {BASE}/hl/en/ | {BASE}/hl/fr/ | #1",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Hreflang | {BASE}/hl/de/ | {BASE}/hl/en/ | #1",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Hreflang | {BASE}/hl/bad-codes.html | {BASE}/hl/en/ | #1",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Hreflang | {BASE}/hl/bad-codes.html | {BASE}/hl/en/ | #2",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Hreflang | {BASE}/hl/bad-codes.html | {BASE}/hl/en/ | #3",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Hreflang | {BASE}/hl/bad-codes.html | {BASE}/hl/en/ | #4",
-                    "sf": "Head",
-                    "os": ""
-                  },
-                  {
-                    "key": "Hreflang | {BASE}/hl/bad-codes.html | {BASE}/hl/en/ | #5",
-                    "sf": "Head",
-                    "os": ""
-                  }
-                ]
+                "compared": 405,
+                "errors": 0,
+                "examples": []
               },
               {
                 "sf_column": "Link Origin",
                 "os_column": "Link Origin",
-                "compared": 399,
+                "compared": 400,
                 "errors": 0,
                 "examples": []
               }
@@ -11242,11 +9063,9 @@
             "ignored_sf_rows": [],
             "os_only_rows": [],
             "threshold_pct": 97.0,
-            "url_set_identical": false,
-            "passed": false,
-            "failures": [
-              "URL-Menge nicht identisch: 1 fehlen in OpenSpider, 1 zusätzlich"
-            ]
+            "url_set_identical": true,
+            "passed": true,
+            "failures": []
           }
         },
         {
@@ -11263,71 +9082,19 @@
             "matched": 127,
             "missing_in_os": [],
             "extra_in_os": [],
-            "cells_compared": 112,
-            "cells_equal": 105,
-            "agreement_pct": 93.75,
+            "cells_compared": 121,
+            "cells_equal": 121,
+            "agreement_pct": 100.0,
             "columns": [
               {
                 "sf_column": "URLs",
                 "os_column": "URLs",
-                "compared": 112,
-                "errors": 7,
-                "examples": [
-                  {
-                    "key": "summary | total urls encountered",
-                    "sf": "116",
-                    "os": "118"
-                  },
-                  {
-                    "key": "internal | all",
-                    "sf": "111",
-                    "os": "113"
-                  },
-                  {
-                    "key": "security | all",
-                    "sf": "111",
-                    "os": "113"
-                  },
-                  {
-                    "key": "security | http urls",
-                    "sf": "111",
-                    "os": "113"
-                  },
-                  {
-                    "key": "response codes | redirection (meta refresh)",
-                    "sf": "2",
-                    "os": "1"
-                  },
-                  {
-                    "key": "response codes | internal redirection (meta refresh)",
-                    "sf": "2",
-                    "os": "1"
-                  },
-                  {
-                    "key": "response codes | internal redirect loop",
-                    "sf": "1",
-                    "os": "0"
-                  }
-                ]
+                "compared": 121,
+                "errors": 0,
+                "examples": []
               }
             ],
             "applied_deviations": [
-              {
-                "id": "DEV-002",
-                "spec": "CRAWL-098",
-                "kind": "OS-Festlegung",
-                "note": "Folge von DEV-001: Die robots.txt-Zeile zaehlt in allen Zaehlern, deren Grundgesamtheit alle internen URLs mit Antwort ist, um genau 1 hoeher als in der Referenz.",
-                "scope": "cell",
-                "count": 6,
-                "keys": [
-                  "response codes | all",
-                  "response codes | internal all",
-                  "response codes | internal success (2xx)",
-                  "response codes | success (2xx)",
-                  "summary | total urls crawled",
-                  "url | all"
-                ]
-              },
               {
                 "id": "DEV-013",
                 "spec": "TECH-051",
@@ -11351,41 +9118,6 @@
                 ]
               },
               {
-                "id": "DEV-015",
-                "spec": "OUT-080",
-                "kind": "Paritaetsabweichung",
-                "note": "Die Crawl-Depth-Zeilen der Referenz zaehlen nur interne HTML-Seiten mit 2xx (Zeile 0 = Start-URL); OpenSpider zaehlt alle internen URLs mit bekannter Tiefe (OUT-025 Site Structure, Summe = interne URLs).",
-                "scope": "cell",
-                "count": 2,
-                "keys": [
-                  "crawl depth | 2",
-                  "crawl depth | 3"
-                ]
-              },
-              {
-                "id": "DEV-021",
-                "spec": "TECH-011",
-                "kind": "OS-Festlegung",
-                "note": "Die Tabs Canonicals, Links und Hreflang fuehren interne HTML-Seiten mit Status 200 (TECH-011/-071/-130); die Referenz zaehlt alle 2xx (Fixture /s201, Status 201).",
-                "scope": "cell",
-                "count": 1,
-                "keys": [
-                  "hreflang | all"
-                ]
-              },
-              {
-                "id": "DEV-022",
-                "spec": "CRAWL-089",
-                "kind": "OS-Festlegung",
-                "note": "Der Wirkungsbereich von issues.ignore_non_indexable ist in CRAWL-089 abschliessend auf die Element-Tabs und Low Content Pages begrenzt; die Referenz schliesst nicht indexierbare URLs auch in Canonicals/Missing und Links/Pages Without Internal Outlinks aus.",
-                "scope": "cell",
-                "count": 2,
-                "keys": [
-                  "canonicals | missing",
-                  "links | pages without internal outlinks"
-                ]
-              },
-              {
                 "id": "DEV-023",
                 "spec": "TECH-064",
                 "kind": "OS-Festlegung",
@@ -11394,6 +9126,28 @@
                 "count": 1,
                 "keys": [
                   "directives | refresh"
+                ]
+              },
+              {
+                "id": "DEV-034",
+                "spec": "TECH-071",
+                "kind": "OS-Festlegung",
+                "note": "wie DEV-027: Die Population des Hreflang-Tabs enthaelt auch gecrawlte hreflang-Ziele (TECH-071), hier das umgeleitete Ziel /hl/es-old/ (301); die Referenz zaehlt nur interne Seiten mit 2xx.",
+                "scope": "cell",
+                "count": 1,
+                "keys": [
+                  "hreflang | all"
+                ]
+              },
+              {
+                "id": "DEV-036",
+                "spec": "TECH-133",
+                "kind": "OS-Festlegung",
+                "note": "K-07/K-71 (wie DEV-010): Selbstlinks zaehlen im Links-Tab nicht, eine Seite nur mit Selbstlink hat 0 Outlinks (TECH-130, TECH-133); die Referenz zaehlt sie mit. Betrifft /links/self-only.html: Referenz 1, OpenSpider 2.",
+                "scope": "cell",
+                "count": 1,
+                "keys": [
+                  "links | pages without internal outlinks"
                 ]
               },
               {
@@ -11857,10 +9611,8 @@
             ],
             "threshold_pct": 100.0,
             "url_set_identical": true,
-            "passed": false,
-            "failures": [
-              "Zellübereinstimmung 93.750 % liegt unter 100.000 %"
-            ]
+            "passed": true,
+            "failures": []
           }
         }
       ]
@@ -11868,20 +9620,7 @@
   ],
   "sites_present": 5,
   "min_sites_present": 4,
-  "passed": false,
-  "failures": [
-    "out-basic-site/internal_all.csv: Zellübereinstimmung 98.443 % liegt unter 99.000 %",
-    "parity-onpage/page_titles_all.csv: Zellübereinstimmung 77.778 % liegt unter 99.000 %",
-    "parity-onpage/meta_description_all.csv: Zellübereinstimmung 77.778 % liegt unter 99.000 %",
-    "parity-response/internal_all.csv: Zellübereinstimmung 95.692 % liegt unter 99.000 %",
-    "parity-response/external_all.csv: Zellübereinstimmung 95.833 % liegt unter 97.000 %",
-    "parity-response/all_inlinks.csv: URL-Menge nicht identisch: 1 fehlen in OpenSpider, 0 zusätzlich",
-    "parity-response/redirect_chains.csv: URL-Menge nicht identisch: 1 fehlen in OpenSpider, 0 zusätzlich",
-    "parity-response/crawl_overview.csv: Zellübereinstimmung 95.000 % liegt unter 100.000 %",
-    "parity-synthetic/internal_all.csv: Zellübereinstimmung 97.548 % liegt unter 99.000 %",
-    "parity-technical/internal_all.csv: URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich",
-    "parity-technical/all_inlinks.csv: URL-Menge nicht identisch: 1 fehlen in OpenSpider, 1 zusätzlich",
-    "parity-technical/crawl_overview.csv: Zellübereinstimmung 93.750 % liegt unter 100.000 %"
-  ],
+  "passed": true,
+  "failures": [],
   "warnings": []
 }

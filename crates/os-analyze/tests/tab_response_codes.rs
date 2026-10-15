@@ -858,11 +858,53 @@ fn external_chains_do_not_appear_in_the_filter() {
         list(d, "Internal Redirect Chain"),
         golden("Internal Redirect Chain")
     );
-    // Ketten, die in einer Schleife enden, gehören zu Redirect Loop
+    // Ketten, die in einer Schleife enden, zählen als Redirect Chain mit (K-66)
     for p in ["tail", "qloop", "loop1"] {
         let url = format!("{{BASE}}/{p}");
-        assert!(!contains(d, "Redirect Chain", &url), "{p}");
+        assert!(contains(d, "Redirect Chain", &url), "{p}");
     }
+}
+
+// spec: ONPAGE-060
+#[test]
+fn chains_ending_in_a_loop_count_but_self_redirects_do_not() {
+    let d = dump();
+    // /loop1 → /loop2 → /loop1: beide mit je 2 Hops in Redirect Chain und Internal Redirect Chain und
+    // zugleich in Redirect Loop (A-19 revidiert, K-66)
+    for p in ["loop1", "loop2"] {
+        let url = format!("{{BASE}}/{p}");
+        assert!(contains(d, "Redirect Chain", &url), "{p} in Redirect Chain");
+        assert!(
+            contains(d, "Internal Redirect Chain", &url),
+            "{p} in Internal Redirect Chain"
+        );
+        assert!(contains(d, "Redirect Loop", &url), "{p} in Redirect Loop");
+    }
+    assert_eq!(
+        cell(d, "{BASE}/loop1", "Number of Redirects"),
+        &Value::Int(2)
+    );
+    // /tail → /loop1 → …: Kette in die Schleife (A-19b); /qloop → /qloop?x=1 → /qloop?x=1
+    assert!(contains(d, "Redirect Chain", "{BASE}/tail"));
+    assert!(contains(d, "Redirect Chain", "{BASE}/qloop"));
+    // Selbst-Weiterleitung und Selbst-Refresh haben 1 Hop: nur in Redirect Loop
+    for url in ["{BASE}/self", "{BASE}/qloop?x=1"] {
+        assert!(!contains(d, "Redirect Chain", url), "{url}");
+        assert!(!contains(d, "Internal Redirect Chain", url), "{url}");
+        assert!(contains(d, "Redirect Loop", url), "{url}");
+    }
+    assert!(!contains(
+        d,
+        "Redirect Chain",
+        "{BASE}/meta-refresh-self.html"
+    ));
+    // Die Hop-Zahl bleibt unverändert
+    assert_eq!(
+        cell(d, "{BASE}/self", "Number of Redirects"),
+        &Value::Int(1)
+    );
+    // Externe Sicht bleibt leer
+    assert!(list(d, "External Redirect Chain").is_empty());
 }
 
 // ---------------------------------------------------------------------------------------------------

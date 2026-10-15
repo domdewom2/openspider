@@ -720,6 +720,21 @@
       "status": "implemented",
       "tests": [
         {
+          "file": "crates/os-analyze/src/views/build.rs",
+          "result": "ok",
+          "test": "tests::numbered_names_resolve_for_multi_and_paired_columns"
+        },
+        {
+          "file": "crates/os-analyze/src/views/build.rs",
+          "result": "ok",
+          "test": "tests::invalid_numbered_names_do_not_resolve"
+        },
+        {
+          "file": "crates/os-analyze/src/views/build.rs",
+          "result": "ok",
+          "test": "tests::parse_numbered_reads_base_number_and_suffix"
+        },
+        {
           "file": "crates/os-mcp/src/tools/common.rs",
           "result": "ok",
           "test": "tests::placeholders_become_x"
@@ -743,6 +758,16 @@
           "file": "crates/os-mcp/src/tools/mod.rs",
           "result": "ok",
           "test": "tests::the_five_reading_tools_are_registered_with_class_read"
+        },
+        {
+          "file": "crates/os-mcp/tests/tools_columns.rs",
+          "result": "ok",
+          "test": "numbered_and_mixed_case_column_names_are_accepted"
+        },
+        {
+          "file": "crates/os-mcp/tests/tools_columns.rs",
+          "result": "ok",
+          "test": "invalid_numbered_names_are_rejected_with_the_list_of_valid_forms"
         },
         {
           "file": "crates/os-mcp/tests/tools_process.rs",
@@ -1612,6 +1637,11 @@
         {
           "file": "crates/os-engine/tests/core_redirects.rs",
           "result": "ok",
+          "test": "a_refresh_header_to_itself_is_an_http_refresh_to_itself_but_one_without_url_is_no_redirect"
+        },
+        {
+          "file": "crates/os-engine/tests/core_redirects.rs",
+          "result": "ok",
           "test": "http_refresh_header_is_parsed_like_a_meta_refresh"
         },
         {
@@ -1623,6 +1653,11 @@
           "file": "crates/os-engine/tests/core_redirects.rs",
           "result": "ok",
           "test": "disabling_meta_refresh_crawling_stores_the_redirect_but_does_not_request_the_target"
+        },
+        {
+          "file": "crates/os-engine/tests/core_redirects.rs",
+          "result": "ok",
+          "test": "synthetic_link_rows_of_head_elements_carry_position_head_and_the_head_path"
         }
       ]
     },
@@ -2381,7 +2416,7 @@
         {
           "file": "crates/os-parse/tests/links_sources.rs",
           "result": "ok",
-          "test": "xpath_is_absolute_with_position_indices"
+          "test": "xpath_is_absolute_in_the_body_and_head_relative_in_the_head"
         },
         {
           "file": "crates/os-parse/tests/links_sources.rs",
@@ -2799,6 +2834,11 @@
       "status": "implemented",
       "tests": [
         {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "missing_lists_non_indexable_pages_when_the_option_is_off"
+        },
+        {
           "file": "crates/os-analyze/tests/tab_duplicates.rs",
           "result": "ok",
           "test": "ignore_non_indexable_applies_to_every_problem_filter_but_not_to_all"
@@ -2851,6 +2891,11 @@
       "status": "implemented",
       "tests": [
         {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "internal_all_lists_the_internal_urls_in_tables_and_no_external_ones"
+        },
+        {
           "file": "crates/os-engine/src/robots_glue.rs",
           "result": "ok",
           "test": "tests::blocked_facts_have_status_zero_and_blocked_text"
@@ -2883,7 +2928,12 @@
         {
           "file": "crates/os-engine/tests/decide_crawl.rs",
           "result": "ok",
-          "test": "robots_txt_of_internal_hosts_is_listed_in_the_tables_external_ones_are_not"
+          "test": "robots_txt_of_every_host_has_a_row_but_no_table_visibility"
+        },
+        {
+          "file": "crates/os-engine/tests/lifecycle_pause.rs",
+          "result": "ok",
+          "test": "resuming_after_a_restart_equals_the_uninterrupted_crawl_without_repeating_a_request"
         },
         {
           "file": "crates/os-fetch/src/robots/gate.rs",
@@ -4786,7 +4836,7 @@
         {
           "file": "crates/os-analyze/tests/tab_duplicates.rs",
           "result": "ok",
-          "test": "comparison_is_case_sensitive_on_normalized_values"
+          "test": "comparison_ignores_case_on_normalized_values"
         },
         {
           "file": "crates/os-analyze/tests/tab_duplicates.rs",
@@ -4836,7 +4886,12 @@
         {
           "file": "crates/os-analyze/tests/tab_duplicates.rs",
           "result": "ok",
-          "test": "groups_are_found_through_an_index_on_the_value_column"
+          "test": "the_grouping_is_one_uncorrelated_subquery_not_a_lookup_per_row"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_duplicates.rs",
+          "result": "ok",
+          "test": "comparison_ignores_case_of_non_ascii_letters_but_not_accents"
         }
       ]
     },
@@ -5031,6 +5086,11 @@
           "test": "base_set_and_filters_are_consistent"
         },
         {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "error_and_redirect_pages_have_empty_element_columns_even_with_a_body"
+        },
+        {
           "file": "crates/os-analyze/tests/tab_meta.rs",
           "result": "ok",
           "test": "base_set_and_filters_are_consistent"
@@ -5112,6 +5172,11 @@
           "file": "crates/os-analyze/tests/tab_internal.rs",
           "result": "ok",
           "test": "non_html_urls_have_empty_element_columns_and_pdfs_use_document_properties"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "error_and_redirect_pages_have_empty_element_columns_even_with_a_body"
         },
         {
           "file": "crates/os-analyze/tests/tab_internal.rs",
@@ -5230,6 +5295,11 @@
         {
           "file": "crates/os-analyze/tests/tab_internal.rs",
           "result": "ok",
+          "test": "error_and_redirect_pages_have_empty_element_columns_even_with_a_body"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
           "test": "word_count_counts_only_the_content_area"
         },
         {
@@ -5264,6 +5334,11 @@
           "file": "crates/os-analyze/tests/tab_internal.rs",
           "result": "ok",
           "test": "folder_depth_counts_segments_followed_by_a_slash_and_ignores_the_query"
+        },
+        {
+          "file": "crates/os-url/tests/url_metrics.rs",
+          "result": "ok",
+          "test": "folder_depth_follows_assumption_a8"
         }
       ]
     },
@@ -5296,6 +5371,11 @@
         {
           "file": "crates/os-analyze/tests/tab_internal.rs",
           "result": "ok",
+          "test": "pct_of_total_counts_every_2xx_html_page_in_numerator_and_denominator"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
           "test": "pct_of_total_is_rounded_to_two_decimals"
         }
       ]
@@ -5310,6 +5390,11 @@
           "file": "crates/os-analyze/tests/tab_internal.rs",
           "result": "ok",
           "test": "hash_is_md5_of_the_decoded_body"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_internal.rs",
+          "result": "ok",
+          "test": "hash_is_empty_for_non_html_responses_and_redirects"
         },
         {
           "file": "crates/os-analyze/tests/tab_internal.rs",
@@ -5330,6 +5415,11 @@
           "file": "crates/os-analyze/tests/tab_internal.rs",
           "result": "ok",
           "test": "http_version_url_encoded_address_and_crawl_timestamp"
+        },
+        {
+          "file": "crates/os-engine/src/worker.rs",
+          "result": "ok",
+          "test": "tests::hash_is_only_set_for_html_2xx_responses"
         },
         {
           "file": "crates/os-model/tests/model_enums.rs",
@@ -5515,6 +5605,11 @@
           "file": "crates/os-analyze/tests/tab_external.rs",
           "result": "ok",
           "test": "with_external_checks_off_the_urls_are_listed_but_not_requested"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_external.rs",
+          "result": "ok",
+          "test": "inlinks_count_only_hyperlinks_not_redirects_or_resource_references"
         }
       ]
     },
@@ -5746,7 +5841,7 @@
         {
           "file": "crates/os-analyze/tests/tab_response_codes.rs",
           "result": "ok",
-          "test": "meta_refresh_without_target_or_to_itself_is_not_a_redirect"
+          "test": "meta_refresh_without_target_or_to_itself_is_a_redirect_to_itself"
         },
         {
           "file": "crates/os-analyze/tests/tab_response_codes.rs",
@@ -5780,6 +5875,11 @@
           "file": "crates/os-analyze/tests/tab_response_codes.rs",
           "result": "ok",
           "test": "external_chains_do_not_appear_in_the_filter"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_response_codes.rs",
+          "result": "ok",
+          "test": "chains_ending_in_a_loop_count_but_self_redirects_do_not"
         }
       ]
     },
@@ -5977,12 +6077,12 @@
         {
           "file": "crates/os-analyze/tests/tab_url.rs",
           "result": "ok",
-          "test": "underscores_count_in_the_path_only"
+          "test": "underscores_count_in_path_and_query"
         },
         {
           "file": "crates/os-analyze/tests/tab_url.rs",
           "result": "ok",
-          "test": "underscores_ignore_host_query_and_fragment"
+          "test": "underscores_ignore_host_and_fragment"
         }
       ]
     },
@@ -6504,6 +6604,16 @@
           "file": "crates/os-parse/tests/content_area.rs",
           "result": "ok",
           "test": "block_boundaries_create_whitespace_inline_elements_do_not"
+        },
+        {
+          "file": "crates/os-parse/tests/content_area.rs",
+          "result": "ok",
+          "test": "every_list_item_in_the_content_area_adds_one_word"
+        },
+        {
+          "file": "crates/os-parse/tests/content_area.rs",
+          "result": "ok",
+          "test": "list_items_in_excluded_areas_do_not_add_words"
         },
         {
           "file": "crates/os-parse/tests/content_area.rs",
@@ -7280,6 +7390,11 @@
           "test": "tests::path_type_distinguishes_the_four_forms"
         },
         {
+          "file": "crates/os-engine/tests/core_redirects.rs",
+          "result": "ok",
+          "test": "synthetic_link_rows_of_head_elements_carry_position_head_and_the_head_path"
+        },
+        {
           "file": "crates/os-engine/tests/decide_crawl.rs",
           "result": "ok",
           "test": "target_raw_is_the_markup_value_and_every_stored_link_has_a_target_row"
@@ -7319,6 +7434,11 @@
           "file": "crates/os-export/tests/links_format.rs",
           "result": "ok",
           "test": "target_without_fetch_is_not_crawled_and_has_no_status_code"
+        },
+        {
+          "file": "crates/os-export/tests/links_format.rs",
+          "result": "ok",
+          "test": "hreflang_only_targets_have_no_link_row_unless_hreflang_crawl_is_on"
         },
         {
           "file": "crates/os-export/tests/links_format.rs",
@@ -7374,6 +7494,21 @@
           "file": "crates/os-parse/tests/dom_head.rs",
           "result": "ok",
           "test": "xpath_is_stable_and_counts_only_same_name_siblings"
+        },
+        {
+          "file": "crates/os-parse/tests/head_paths.rs",
+          "result": "ok",
+          "test": "links_in_the_head_have_position_head_and_head_relative_paths"
+        },
+        {
+          "file": "crates/os-parse/tests/head_paths.rs",
+          "result": "ok",
+          "test": "head_references_carry_the_path_of_their_element"
+        },
+        {
+          "file": "crates/os-parse/tests/head_paths.rs",
+          "result": "ok",
+          "test": "header_sources_have_no_path"
         }
       ]
     },
@@ -9814,6 +9949,11 @@
           "file": "crates/os-analyze/tests/tab_canonicals.rs",
           "result": "ok",
           "test": "goldens_canonical_basic"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "population_and_canonicalised_step_cover_status_2xx"
         }
       ]
     },
@@ -9827,6 +9967,16 @@
           "file": "crates/os-analyze/tests/tab_canonicals.rs",
           "result": "ok",
           "test": "contains_canonical_counts_html_and_header_canonicals"
+        },
+        {
+          "file": "crates/os-engine/tests/core_canonical_targets.rs",
+          "result": "ok",
+          "test": "case_variants_of_a_canonical_target_are_two_urls_in_every_response_order"
+        },
+        {
+          "file": "crates/os-engine/tests/core_canonical_targets.rs",
+          "result": "ok",
+          "test": "both_case_variants_are_discovered_before_either_is_fetched"
         }
       ]
     },
@@ -9866,6 +10016,16 @@
           "file": "crates/os-analyze/tests/tab_canonicals.rs",
           "result": "ok",
           "test": "missing_lists_only_html_pages_without_any_canonical"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "missing_lists_2xx_html_without_canonical_and_skips_non_indexable_by_default"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_canonicals.rs",
+          "result": "ok",
+          "test": "missing_lists_non_indexable_pages_when_the_option_is_off"
         }
       ]
     },
@@ -10341,12 +10501,32 @@
         {
           "file": "crates/os-analyze/tests/tab_hreflang.rs",
           "result": "ok",
+          "test": "population_and_missing_use_the_status_class_2xx"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_hreflang.rs",
+          "result": "ok",
           "test": "store_off_leaves_the_tab_and_all_filters_empty"
         },
         {
           "file": "crates/os-analyze/tests/tab_hreflang.rs",
           "result": "ok",
           "test": "store_on_crawl_off_fills_the_tab_with_the_filters_that_need_only_the_own_page"
+        },
+        {
+          "file": "crates/os-engine/src/decide.rs",
+          "result": "ok",
+          "test": "tests::only_hreflang_types_with_store_on_and_crawl_off_are_hidden_from_the_tables"
+        },
+        {
+          "file": "crates/os-engine/tests/decide_crawl.rs",
+          "result": "ok",
+          "test": "hreflang_only_targets_have_no_table_visibility_and_no_link_row_when_hreflang_crawl_is_off"
+        },
+        {
+          "file": "crates/os-export/tests/links_format.rs",
+          "result": "ok",
+          "test": "hreflang_only_targets_have_no_link_row_unless_hreflang_crawl_is_on"
         }
       ]
     },
@@ -10490,6 +10670,11 @@
           "file": "crates/os-analyze/tests/tab_hreflang.rs",
           "result": "ok",
           "test": "missing_lists_internal_html_200_pages_without_any_annotation"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_hreflang.rs",
+          "result": "ok",
+          "test": "population_and_missing_use_the_status_class_2xx"
         }
       ]
     },
@@ -10508,6 +10693,11 @@
           "file": "crates/os-analyze/tests/tab_links.rs",
           "result": "ok",
           "test": "percent_of_total_of_a_menu_page_is_ninety"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_links.rs",
+          "result": "ok",
+          "test": "population_and_percent_of_total_cover_status_2xx"
         }
       ]
     },
@@ -10517,6 +10707,26 @@
       ],
       "status": "implemented",
       "tests": [
+        {
+          "file": "crates/os-engine/tests/core_redirects.rs",
+          "result": "ok",
+          "test": "synthetic_link_rows_of_head_elements_carry_position_head_and_the_head_path"
+        },
+        {
+          "file": "crates/os-parse/tests/head_paths.rs",
+          "result": "ok",
+          "test": "links_in_the_head_have_position_head_and_head_relative_paths"
+        },
+        {
+          "file": "crates/os-parse/tests/head_paths.rs",
+          "result": "ok",
+          "test": "head_references_carry_the_path_of_their_element"
+        },
+        {
+          "file": "crates/os-parse/tests/head_paths.rs",
+          "result": "ok",
+          "test": "header_sources_have_no_path"
+        },
         {
           "file": "crates/os-parse/tests/links_attrs.rs",
           "result": "ok",
@@ -10567,6 +10777,11 @@
           "file": "crates/os-analyze/tests/tab_links.rs",
           "result": "ok",
           "test": "pages_without_internal_outlinks_count_only_non_self_links"
+        },
+        {
+          "file": "crates/os-analyze/tests/tab_links.rs",
+          "result": "ok",
+          "test": "dead_ends_skip_non_indexable_pages_by_default_and_list_them_when_the_option_is_off"
         }
       ]
     },
@@ -10934,6 +11149,11 @@
       "status": "implemented",
       "tests": [
         {
+          "file": "crates/os-parse/src/pixel/calibrated.rs",
+          "result": "ok",
+          "test": "tests::tables_are_sorted_unique_and_plausible"
+        },
+        {
           "file": "crates/os-parse/tests/elements_parse_html.rs",
           "result": "ok",
           "test": "parse_html_fills_elements_word_count_and_pixels"
@@ -10992,6 +11212,11 @@
           "file": "crates/os-parse/tests/pixel_width.rs",
           "result": "ok",
           "test": "description_vectors_14px_regular"
+        },
+        {
+          "file": "crates/os-parse/tests/pixel_width.rs",
+          "result": "ok",
+          "test": "calibrated_profiles_add_integer_character_widths_without_final_rounding"
         },
         {
           "file": "crates/os-parse/tests/pixel_width.rs",
