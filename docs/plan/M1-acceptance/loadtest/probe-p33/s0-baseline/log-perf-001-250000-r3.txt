@@ -1,0 +1,3 @@
+perf-001 (large): 135367 Requests/s, Crawler ja, passed = true
+  Spitzen-RSS des Crawl-Prozesses: 480 MB
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/m1-p33/docs/plan/M1-acceptance/loadtest/probe-p33/s0-baseline/report-perf-001-250000-r3.json

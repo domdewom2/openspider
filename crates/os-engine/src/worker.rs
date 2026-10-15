@@ -1075,8 +1075,11 @@ async fn assemble<F: Fetch>(
                 }
             }
         }
+        // Der Batch mit den neuen Warteschlangeneinträgen liegt im Kanal, bevor die Sperre fällt: Das RAM-Fenster der
+        // Warteschlange (K-78 b) verlässt sich darauf, dass jeder eingeplante Eintrag nach einem `flush` in der Datei
+        // steht. `Slot::send` wartet nie.
+        slot.send(disc);
     }
-    slot.send(disc);
     sh.ctl.notify.notify_one();
 
     // Schreibmodell
@@ -1401,7 +1404,7 @@ pub(crate) async fn ingest_sitemaps<F: Fetch>(
         }
     }
     let slot = sh.writer.reserve().await?;
-    let batch = {
+    {
         let mut core = sh.lock_core();
         let mut batch = build_sitemap_batch(
             &mut core,
@@ -1412,9 +1415,9 @@ pub(crate) async fn ingest_sitemaps<F: Fetch>(
             sh.clock.now(),
         );
         batch.events.extend(events);
-        batch
-    };
-    slot.send(batch);
+        // unter der Sperre senden (siehe Entdeckung in `process`, K-78 b)
+        slot.send(batch);
+    }
     sh.ctl.notify.notify_one();
     Ok(())
 }

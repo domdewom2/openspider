@@ -182,6 +182,16 @@ impl RedirectGraph {
     pub fn is_loop(&self, id: UrlId) -> bool {
         self.loops.contains(&id)
     }
+
+    /// Geschätzte Größe `(Einträge, Bytes)` für die Speicherzähler (`diag`, M1-P33): Kanten (Kapazität der
+    /// Tabelle mal Elementgröße) und je Markierung ein B-Baum-Eintrag (Schlüssel plus rund 8 Byte Verwaltung).
+    pub fn memory(&self) -> (u64, u64) {
+        let entries = self.next.len() + self.loops.len() + self.limits.len();
+        let edge = std::mem::size_of::<(UrlId, UrlId)>() + 1;
+        let node = std::mem::size_of::<UrlId>() + 8;
+        let bytes = self.next.capacity() * edge + (self.loops.len() + self.limits.len()) * node;
+        (entries as u64, bytes as u64)
+    }
 }
 
 #[cfg(test)]

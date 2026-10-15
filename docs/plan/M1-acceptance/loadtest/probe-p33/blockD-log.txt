@@ -1,0 +1,16 @@
+Block blockD Start 2026-10-15T11:57:46Z (13:57 lokal), Ruhe (Load1 < 8) erreicht: ja
+13:57  up 35 days,  3:16, 16 users, load averages: 7.81 13.11 9.12
+/dev/disk3s1s1       926   11        25    32%  458732 268763760    0%   /
+--- s0-baseline perf-003 --pages 500000 Start 13:57:46
+13:57  up 35 days,  3:16, 16 users, load averages: 7.81 13.11 9.12
+--- s0-baseline perf-003 --pages 500000 Ende 14:22:05 Exit 1
+14:22  up 35 days,  3:40, 16 users, load averages: 2.59 2.58 3.71
+--- s1-seen perf-003 --pages 500000 Start 14:22:05
+14:22  up 35 days,  3:40, 16 users, load averages: 2.59 2.58 3.71
+--- s1-seen perf-003 --pages 500000 Ende 14:46:34 Exit 1
+14:46  up 35 days,  4:05, 16 users, load averages: 2.46 2.06 2.43
+--- s2-window perf-003 --pages 500000 Start 14:46:34
+14:46  up 35 days,  4:05, 16 users, load averages: 2.46 2.06 2.43
+--- s2-window perf-003 --pages 500000 Ende 15:04:51 Exit 0
+15:04  up 35 days,  4:23, 16 users, load averages: 2.20 2.30 2.48
+Block blockD Ende 2026-10-15T13:04:51Z
