@@ -32,9 +32,10 @@ const CREATE_SQL: &str = "CREATE INDEX IF NOT EXISTS links_target ON links(targe
 
 /// Cache-Größe (KiB) während des Indexaufbaus. Der Sortierer von `CREATE INDEX` hält bis zur Größe des Seitencaches
 /// Schlüssel im Speicher, bevor er auf die Platte ausweicht; bei 256 MiB Cache (Profil Balanced) kostete das
-/// zusätzlich rund 270 MiB Spitzen-RSS (Messung M1-P32, Schritt 1, PERF-003 verlangt unter 500 MB). Mit 32 MiB
-/// bleibt der Aufbau schnell (der Baum wird sortiert gefüllt) und der Spitzen-RSS beim Stand des Crawls.
-const BUILD_CACHE_KIB: i64 = 32 * 1024;
+/// zusätzlich rund 270 MiB Spitzen-RSS (Messung M1-P32, Schritt 1, PERF-003 verlangt unter 500 MB). Mit 4 MiB
+/// bleibt der Aufbau schnell (1 Mio. Seiten x 30 Links: 31 s gegen 34 s bei 32 MiB; der Baum wird sortiert gefüllt) und der
+/// Spitzen-RSS beim Stand des Crawls (364 gegen 391 MiB).
+const BUILD_CACHE_KIB: i64 = 4 * 1024;
 
 /// Ob der Index in der Datei steht.
 pub fn present(conn: &Connection) -> Result<bool, StoreError> {

@@ -225,7 +225,7 @@ fn diag_map(snapshot: Vec<(&'static str, u64)>) -> serde_json::Value {
 
 // spec: PERF-001, PERF-002, PERF-003
 #[test]
-#[ignore = "Benchmark (P32): 1 Mio. Seiten x 30 gleichverteilte Linkziele, zehn Abschnitte (OS_BENCH_PAGES, OS_BENCH_OUT)"]
+#[ignore = "Benchmark (P32): 1 Mio. Seiten x 30 gleichverteilte Linkziele, zehn Abschnitte (OS_BENCH_PAGES, OS_BENCH_OUT, OS_BENCH_DIR, OS_BENCH_AUTOCHECKPOINT)"]
 fn writer_1m_uniform_segments() {
     let pages: i64 = std::env::var("OS_BENCH_PAGES")
         .ok()
@@ -239,6 +239,17 @@ fn writer_1m_uniform_segments() {
     .unwrap();
     let path = new_crawl(dir.path(), "segments.ospider", profile);
     let mut sink = sink(&path, profile);
+    // A/B zum Hintergrund-Checkpoint (K-76): Mit OS_BENCH_AUTOCHECKPOINT=<Seiten> setzt der Benchmark den Wert von
+    // außen; der Sink lässt ihn unangetastet, es läuft kein Hintergrund-Thread, SQLite checkpointet im COMMIT.
+    if let Some(pages) = std::env::var("OS_BENCH_AUTOCHECKPOINT")
+        .ok()
+        .and_then(|v| v.parse::<i64>().ok())
+    {
+        sink.file()
+            .conn()
+            .pragma_update(None, "wal_autocheckpoint", pages)
+            .unwrap();
+    }
 
     // Alle URLs vorab als NewUrl bekannt (wie in der Vorprüfung des Planers).
     let t_urls = Instant::now();

@@ -1,6 +1,7 @@
-//! Hintergrund-Checkpoint des Writers (K-76, M1-P32): `wal_autocheckpoint = 0` auf der Writer-Verbindung, ein Thread mit
-//! eigener Verbindung führt `PASSIVE`-Checkpoints aus, der Writer wartet nie darauf. Abschluss und Pause führen weiter
-//! den kurzen `TRUNCATE`-Checkpoint aus; ein von außen gesetzter `wal_autocheckpoint` bleibt unangetastet.
+//! Optionaler Hintergrund-Checkpoint des Writers (K-76, M1-P32, `SqliteSink::with_background_checkpoint`):
+//! `wal_autocheckpoint = 0` auf der Writer-Verbindung, ein Thread mit eigener Verbindung führt `PASSIVE`-Checkpoints aus,
+//! der Writer wartet nie darauf. Abschluss und Pause führen weiter den kurzen `TRUNCATE`-Checkpoint aus; ein von außen
+//! gesetzter `wal_autocheckpoint` bleibt unangetastet. Standard ist der Checkpoint im Commit (letzter Test).
 
 mod store_common;
 
@@ -53,7 +54,9 @@ fn the_writer_connection_has_no_automatic_checkpoint_and_a_thread_starts_with_th
     let _serial = DIAG.lock().unwrap_or_else(|p| p.into_inner());
     let dir = tempfile::tempdir().unwrap();
     let path = new_crawl(dir.path(), "a.ospider", StorageProfile::Balanced);
-    let mut sink = sink(&path, StorageProfile::Balanced);
+    let mut sink = sink(&path, StorageProfile::Balanced)
+        .with_background_checkpoint()
+        .unwrap();
     let auto: i64 = sink
         .file()
         .conn()
@@ -78,6 +81,8 @@ fn the_wal_stays_bounded_and_the_writer_never_waits_for_a_checkpoint() {
     let path = new_crawl(dir.path(), "b.ospider", StorageProfile::Balanced);
     // Auslöser bei 2 000 Frames (8 MiB); insgesamt wandern rund 200 MiB durch das WAL.
     let mut sink = sink(&path, StorageProfile::Balanced)
+        .with_background_checkpoint()
+        .unwrap()
         .with_checkpoint_bounds(2_000, 2_000)
         .unwrap();
     diag::reset();
@@ -128,7 +133,9 @@ fn pause_checkpoint_stops_the_thread_and_the_next_write_restarts_it() {
     let _serial = DIAG.lock().unwrap_or_else(|p| p.into_inner());
     let dir = tempfile::tempdir().unwrap();
     let path = new_crawl(dir.path(), "c.ospider", StorageProfile::Balanced);
-    let mut sink = sink(&path, StorageProfile::Balanced);
+    let mut sink = sink(&path, StorageProfile::Balanced)
+        .with_background_checkpoint()
+        .unwrap();
     sink.write(batch_with_urls([(1, true), (2, true)])).unwrap();
     assert!(sink.background_checkpoint_running());
     sink.checkpoint().unwrap();
@@ -147,7 +154,9 @@ fn an_externally_set_threshold_is_left_alone_and_no_thread_runs() {
     let _serial = DIAG.lock().unwrap_or_else(|p| p.into_inner());
     let dir = tempfile::tempdir().unwrap();
     let path = new_crawl(dir.path(), "d.ospider", StorageProfile::Balanced);
-    let mut sink = sink(&path, StorageProfile::Balanced);
+    let mut sink = sink(&path, StorageProfile::Balanced)
+        .with_background_checkpoint()
+        .unwrap();
     sink.file()
         .conn()
         .pragma_update(None, "wal_autocheckpoint", 5_000)
@@ -182,6 +191,8 @@ fn the_trigger_starts_at_256_mib_and_grows_with_the_file_within_its_bounds() {
 
     // Mit kleinen Grenzen (2 000 bis 6 000 Seiten) lässt sich das Mitwachsen mit einer kleinen Datei prüfen.
     let mut sink = sink(&path, StorageProfile::Balanced)
+        .with_background_checkpoint()
+        .unwrap()
         .with_checkpoint_bounds(2_000, 6_000)
         .unwrap();
     assert_eq!(sink.checkpoint_trigger_pages(), 2_000);
@@ -195,4 +206,23 @@ fn the_trigger_starts_at_256_mib_and_grows_with_the_file_within_its_bounds() {
     wait_until("Auslöser an der Obergrenze", || {
         sink.checkpoint_trigger_pages() == 6_000
     });
+}
+
+// spec: CRAWL-125
+#[test]
+fn by_default_sqlite_checkpoints_in_the_commit_and_no_thread_runs() {
+    let _serial = DIAG.lock().unwrap_or_else(|p| p.into_inner());
+    let dir = tempfile::tempdir().unwrap();
+    let path = new_crawl(dir.path(), "f.ospider", StorageProfile::Balanced);
+    let mut sink = sink(&path, StorageProfile::Balanced);
+    let auto: i64 = sink
+        .file()
+        .conn()
+        .pragma_query_value(None, "wal_autocheckpoint", |r| r.get(0))
+        .unwrap();
+    assert_eq!(auto, os_store::profile::WAL_CHECKPOINT_MIN_PAGES);
+    sink.write(batch_with_urls([(1, true), (2, true)])).unwrap();
+    assert!(!sink.background_checkpoint_running());
+    sink.finish().unwrap();
+    assert_eq!(wal_len(&path), 0);
 }
