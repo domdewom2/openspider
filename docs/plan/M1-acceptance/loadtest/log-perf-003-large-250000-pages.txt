@@ -1,0 +1,10 @@
+Start 2026-10-15T19:31:54Z (21:31 lokal)
+wait_quiet: load1=1.81 (< 2), frei: 79 GB
+21:31  up 35 days, 10:50, 16 users, load averages: 1.81 2.72 3.39
+Befehl: /Users/dominikwojcik/Projects/openspider-wt/target-m1-n21/release/os-loadtest run --scenario perf-003 --size large --pages 250000 --work-dir /Users/dominikwojcik/Projects/openspider-wt/n21-work --out docs/plan/M1-acceptance/loadtest/report-perf-003-large-250000-pages.json
+perf-003 (large): 129976 Requests/s, Crawler ja, passed = true
+  Spitzen-RSS des Crawl-Prozesses: 426 MB
+  PERF-002: 3748.4 URLs/s im Mittel, Abschnitte [3188, 3881, 4078, 4147, 4238, 4156, 4266, 4200, 4081, 4165] URLs/s
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/m1-n21/docs/plan/M1-acceptance/loadtest/report-perf-003-large-250000-pages.json
+Ende 2026-10-15T19:33:01Z (21:33 lokal), Exit 0
+21:33  up 35 days, 10:51, 16 users, load averages: 2.89 2.89 3.40
