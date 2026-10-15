@@ -167,3 +167,213 @@ fn inlinks_paging_with_one_million_inlinks() {
         "Inlinks 1 Mio.: erste Seite {first_page:.0} ms, Offset 500000 {deep_page:.0} ms, Offset 500000 nach Anchor {deep_sorted:.0} ms"
     );
 }
+
+// ---------------------------------------------------------------------------------------------------------
+// M1-P32: 1 Mio. Seiten x 30 gleichverteilte Linkziele in zehn Abschnitten (PERF-002, K-72/K-74/K-75)
+// ---------------------------------------------------------------------------------------------------------
+
+/// Seiten je Transaktion wie `os_engine::writer_thread::BATCH_PAGES_BACKLOG` (os-store hängt nicht an os-engine).
+const BACKLOG_PAGES: i64 = 2_000;
+/// Abschnitte zu je 10 % der Seiten.
+const SEGMENTS: usize = 10;
+
+/// SplitMix64: gleichverteilte, vom Zufall der Reihenfolge unabhängige Linkziele (die Formel des älteren
+/// `Targets::Uniform` ist eine Folge mit festem Abstand und trifft je Batch dicht beieinanderliegende Zeilen).
+fn mix(mut x: u64) -> u64 {
+    x = x.wrapping_add(0x9E37_79B9_7F4A_7C15);
+    x = (x ^ (x >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+    x = (x ^ (x >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+    x ^ (x >> 31)
+}
+
+fn spread_target(pages: i64, id: i64, k: i64) -> i64 {
+    let h = mix(((id as u64) << 8) | (k as u64));
+    i64::try_from(h % (pages as u64)).unwrap() + 1
+}
+
+/// Höchster Speicherverbrauch des Prozesses in Bytes (0, wenn nicht ermittelbar).
+fn peak_rss_bytes() -> u64 {
+    #[cfg(unix)]
+    {
+        // SAFETY: `getrusage` schreibt in eine ausreichend große, nullinitialisierte Struktur.
+        let mut usage: libc::rusage = unsafe { std::mem::zeroed() };
+        if unsafe { libc::getrusage(libc::RUSAGE_SELF, &mut usage) } != 0 {
+            return 0;
+        }
+        let max = u64::try_from(usage.ru_maxrss).unwrap_or(0);
+        // macOS meldet Bytes, Linux Kibibytes.
+        if cfg!(target_os = "macos") {
+            max
+        } else {
+            max * 1024
+        }
+    }
+    #[cfg(not(unix))]
+    {
+        0
+    }
+}
+
+fn diag_map(snapshot: Vec<(&'static str, u64)>) -> serde_json::Value {
+    serde_json::Value::Object(
+        snapshot
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), serde_json::Value::from(v)))
+            .collect(),
+    )
+}
+
+// spec: PERF-002
+#[test]
+#[ignore = "Benchmark (P32): 1 Mio. Seiten x 30 gleichverteilte Linkziele, zehn Abschnitte (OS_BENCH_PAGES, OS_BENCH_OUT)"]
+fn writer_1m_uniform_segments() {
+    let pages: i64 = std::env::var("OS_BENCH_PAGES")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(1_000_000);
+    let per_segment = pages / SEGMENTS as i64;
+    let profile = StorageProfile::Balanced;
+    let dir = tempfile::tempdir_in(
+        std::env::var_os("OS_BENCH_DIR").unwrap_or_else(|| std::env::temp_dir().into()),
+    )
+    .unwrap();
+    let path = new_crawl(dir.path(), "segments.ospider", profile);
+    let mut sink = sink(&path, profile);
+
+    // Alle URLs vorab als NewUrl bekannt (wie in der Vorprüfung des Planers).
+    let t_urls = Instant::now();
+    let mut first = 1;
+    while first <= pages {
+        let last = (first + 4_999).min(pages);
+        sink.write(batch_with_urls((first..=last).map(|i| (i, true))))
+            .unwrap();
+        first = last + 1;
+    }
+    let urls_insert_s = t_urls.elapsed().as_secs_f64();
+
+    os_store::sink::diag::reset();
+    let wall = Instant::now();
+    let mut segment_s = [0f64; SEGMENTS];
+    let mut segment_diag = Vec::new();
+    let mut commit_max_ns = 0u64;
+    let mut checkpoint_max_ns = 0u64;
+    let mut written_in_segment = 0i64;
+    let mut segment = 0usize;
+    let mut first = 1;
+    while first <= pages {
+        let last = (first + BACKLOG_PAGES - 1).min(pages);
+        let mut batch = WriteBatch::default();
+        for id in first..=last {
+            let links = (0..LINKS_PER_PAGE)
+                .map(|k| hyperlink(spread_target(pages, id, k), u32::try_from(k).unwrap()))
+                .collect();
+            batch.pages.push(page(id, links));
+        }
+        let t = Instant::now();
+        sink.write(batch).unwrap();
+        let spent = t.elapsed().as_secs_f64();
+        let seg = segment.min(SEGMENTS - 1);
+        segment_s[seg] += spent;
+        written_in_segment += last - first + 1;
+        first = last + 1;
+        if written_in_segment >= per_segment && segment < SEGMENTS - 1 || first > pages {
+            let snap = os_store::sink::diag::snapshot();
+            let get = |name: &str| snap.iter().find(|(k, _)| *k == name).map_or(0, |(_, v)| *v);
+            commit_max_ns = commit_max_ns.max(get("commit_max_ns"));
+            checkpoint_max_ns = checkpoint_max_ns.max(get("checkpoint_max_ns"));
+            println!(
+                "Abschnitt {:>2}/{SEGMENTS}: {:>8.1} s ({:>6.0} Seiten/s), groesster Commit {:.2} s, groesster Checkpoint {:.2} s",
+                seg + 1,
+                segment_s[seg],
+                written_in_segment as f64 / segment_s[seg],
+                get("commit_max_ns") as f64 / 1e9,
+                get("checkpoint_max_ns") as f64 / 1e9,
+            );
+            segment_diag.push(diag_map(snap));
+            os_store::sink::diag::reset();
+            written_in_segment = 0;
+            segment += 1;
+        }
+    }
+    let pages_s: f64 = segment_s.iter().sum();
+    let wall_s = wall.elapsed().as_secs_f64();
+
+    // Crawl-Ende: `state = completed` im letzten Batch (ab K-74 baut der Writer hier `links_target`).
+    let mut last = WriteBatch::default();
+    last.meta.push(("state".into(), "completed".into()));
+    let t_end = Instant::now();
+    sink.write(last).unwrap();
+    let end_batch_s = t_end.elapsed().as_secs_f64();
+    let t_finish = Instant::now();
+    sink.finish().unwrap();
+    let finish_s = t_finish.elapsed().as_secs_f64();
+    drop(sink);
+
+    let mean = pages_s / SEGMENTS as f64;
+    let rel: Vec<f64> = segment_s.iter().map(|s| s / mean).collect();
+    let file_bytes = std::fs::metadata(&path).unwrap().len();
+    let rss = peak_rss_bytes();
+    println!(
+        "writer_1m_uniform_segments: {pages} Seiten x {LINKS_PER_PAGE} Links; URLs anlegen {urls_insert_s:.1} s; \
+         Seiten schreiben {pages_s:.1} s (Wanduhr {wall_s:.1} s), {:.0} Seiten/s; Abschnitt min/max zum Mittel {:.0} % / {:.0} %; \
+         groesster Commit {:.2} s; groesster Checkpoint {:.2} s; Endbatch (Indexaufbau) {end_batch_s:.1} s; finish {finish_s:.1} s; \
+         Datei {} MiB; Spitzen-RSS {} MiB",
+        pages as f64 / pages_s,
+        rel.iter().cloned().fold(f64::MAX, f64::min) * 100.0,
+        rel.iter().cloned().fold(0.0, f64::max) * 100.0,
+        commit_max_ns as f64 / 1e9,
+        checkpoint_max_ns as f64 / 1e9,
+        file_bytes / (1024 * 1024),
+        rss / (1024 * 1024),
+    );
+
+    if let Some(out) = std::env::var_os("OS_BENCH_OUT") {
+        let json = serde_json::json!({
+            "benchmark": "writer_1m_uniform_segments",
+            "schema_version": os_store::SCHEMA_VERSION,
+            "pages": pages,
+            "links_per_page": LINKS_PER_PAGE,
+            "pages_per_transaction": BACKLOG_PAGES,
+            "profile": "balanced",
+            "urls_insert_s": urls_insert_s,
+            "pages_write_s": pages_s,
+            "wall_s": wall_s,
+            "pages_per_s": pages as f64 / pages_s,
+            "segment_s": segment_s,
+            "segment_rel_to_mean": rel,
+            "segment_diag": segment_diag,
+            "commit_max_s": commit_max_ns as f64 / 1e9,
+            "checkpoint_max_s": checkpoint_max_ns as f64 / 1e9,
+            "end_batch_s": end_batch_s,
+            "finish_s": finish_s,
+            "file_bytes": file_bytes,
+            "peak_rss_bytes": rss,
+        });
+        std::fs::write(out, serde_json::to_string_pretty(&json).unwrap()).unwrap();
+    }
+
+    let file = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
+    assert_eq!(count(&file, "SELECT COUNT(*) FROM urls"), pages);
+    assert_eq!(
+        count(&file, "SELECT COUNT(*) FROM links"),
+        pages * LINKS_PER_PAGE
+    );
+    for id in [1, 5, 777, pages / 2, pages] {
+        assert_eq!(
+            counters::stored(file.conn(), id).unwrap(),
+            counters::recompute(file.conn(), id).unwrap(),
+            "URL {id}"
+        );
+    }
+    // Zusicherung ab Schema v2 (K-74/K-75): jeder Abschnitt zwischen 70 % und 130 % des Mittels.
+    if os_store::SCHEMA_VERSION >= 2 && pages >= 1_000_000 {
+        for (i, r) in rel.iter().enumerate() {
+            assert!(
+                (0.7..=1.3).contains(r),
+                "Abschnitt {} liegt bei {:.0} % des Mittels",
+                i + 1,
+                r * 100.0
+            );
+        }
+    }
+}
