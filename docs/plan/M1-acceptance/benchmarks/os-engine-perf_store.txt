@@ -1,20 +1,26 @@
-Start 2026-10-15T01:34:23Z (03:34 lokal)
- 3:34  up 34 days, 16:52, 16 users, load averages: 1.64 2.94 2.97
-cargo test --release --locked -p os-engine --test perf_store -- --ignored --nocapture --test-threads=1
-     Running tests/perf_store.rs (<wt>/target-m1-n14/release/deps/perf_store-b7b5402bdc05d15b)
-test group_commit_versus_small_batches_with_uniform_targets ... Writer, gleichverteilte Ziele: 100000 Seiten x 30 Links, 200 Seiten je Batch: 27.9 s (3581 Seiten/s), Datei 321 MiB
-Writer, gleichverteilte Ziele: 100000 Seiten x 30 Links, 1000 Seiten je Batch: 20.6 s (4862 Seiten/s), Datei 321 MiB
-Writer, gleichverteilte Ziele: 100000 Seiten x 30 Links, 5000 Seiten je Batch: 14.6 s (6869 Seiten/s), Datei 321 MiB
-Gruppen-Commit   200 Seiten je Transaktion: 27.9 s (+0 % gegenüber 200)
-Gruppen-Commit  1000 Seiten je Transaktion: 20.6 s (-26 % gegenüber 200)
-Gruppen-Commit  5000 Seiten je Transaktion: 14.6 s (-48 % gegenüber 200)
+Start 2026-10-15T20:27:08Z (22:27 lokal)
+wait_quiet: load1=1.85 (< 2), frei: 78 GB
+22:27  up 35 days, 11:45, 16 users, load averages: 1.85 2.88 4.69
+Befehl: cargo test --release --locked -p os-engine --test perf_store -- --ignored --nocapture --test-threads=1
+   Compiling os-engine v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n21/crates/os-engine)
+    Finished `release` profile [optimized] target(s) in 1.21s
+     Running tests/perf_store.rs (/Users/dominikwojcik/Projects/openspider-wt/target-m1-n21/release/deps/perf_store-b7b5402bdc05d15b)
+
+running 2 tests
+test group_commit_versus_small_batches_with_uniform_targets ... Writer, gleichverteilte Ziele: 100000 Seiten x 30 Links, 200 Seiten je Batch: 10.4 s (9643 Seiten/s), Datei 256 MiB
+Writer, gleichverteilte Ziele: 100000 Seiten x 30 Links, 1000 Seiten je Batch: 9.7 s (10304 Seiten/s), Datei 256 MiB
+Writer, gleichverteilte Ziele: 100000 Seiten x 30 Links, 5000 Seiten je Batch: 8.1 s (12402 Seiten/s), Datei 256 MiB
+Gruppen-Commit   200 Seiten je Transaktion: 10.4 s (+0 % gegenüber 200)
+Gruppen-Commit  1000 Seiten je Transaktion: 9.7 s (-6 % gegenüber 200)
+Gruppen-Commit  5000 Seiten je Transaktion: 8.1 s (-22 % gegenüber 200)
 ok
-test opening_a_million_urls_takes_under_3_seconds_and_saving_under_60 ... CRAWL-127: 1 Mio. abgerufene URLs (3 Links je Seite) geschrieben in 27 s, Datei 687 MiB
-CRAWL-127: Öffnen 4 ms, + erste 100 Zeilen 8 ms (Ziel < 3000 ms, warmer Dateicache)
-CRAWL-127: COUNT(*) über urls 1122 ms (Vollscan, nicht Teil des Kriteriums)
-CRAWL-127: Speichern unter 5.7 s (Ziel < 60 s), Kopie 635 MiB
+test opening_a_million_urls_takes_under_3_seconds_and_saving_under_60 ... CRAWL-127: 1 Mio. abgerufene URLs (3 Links je Seite) geschrieben in 25 s, Datei 663 MiB
+CRAWL-127: Öffnen 1 ms, + erste 100 Zeilen 3 ms (Ziel < 3000 ms, warmer Dateicache)
+CRAWL-127: COUNT(*) über urls 929 ms (Vollscan, nicht Teil des Kriteriums)
+CRAWL-127: Speichern unter 4.8 s (Ziel < 60 s), Kopie 612 MiB
 ok
 
-test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 97.35s
-Ende 2026-10-15T01:36:02Z (03:36 lokal), Exit 0, Laufzeit 99 s (inkl. Warten auf Load)
- 3:36  up 34 days, 16:54, 16 users, load averages: 1.94 2.65 2.84
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 59.15s
+
+Ende 2026-10-15T20:28:09Z (22:28 lokal), Exit 0
+22:28  up 35 days, 11:46, 16 users, load averages: 2.16 2.76 4.52

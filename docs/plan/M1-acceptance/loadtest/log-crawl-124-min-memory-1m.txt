@@ -1,0 +1,13 @@
+Start 2026-10-15T19:50:57Z (21:50 lokal)
+wait_quiet: load1=1.80 (< 2), frei: 79 GB
+21:50  up 35 days, 11:09, 16 users, load averages: 1.80 2.42 2.74
+Befehl: /Users/dominikwojcik/Projects/openspider-wt/target-m1-n21/release/os-loadtest run --scenario perf-001 --size large --profile min-memory --work-dir /Users/dominikwojcik/Projects/openspider-wt/n21-work --out docs/plan/M1-acceptance/loadtest/report-crawl-124-min-memory-1m.json
+perf-001 (large): 127336 Requests/s, Crawler ja, passed = false
+  Spitzen-RSS des Crawl-Prozesses: 217 MB
+  PERF-002: 2324 URLs/s im Mittel, Abschnitte [2908, 3928, 3616, 3572, 2895, 2542, 2261, 2052, 1846, 1735] URLs/s
+  VERLETZT: "PERF-002: Abschnitt 2 (10 % bis 20 %) mit 3928 URLs/s = 169 % des Mittelwerts 2324 URLs/s, erlaubt 70 % bis 130 %"
+  VERLETZT: "PERF-002: Abschnitt 3 (20 % bis 30 %) mit 3617 URLs/s = 156 % des Mittelwerts 2324 URLs/s, erlaubt 70 % bis 130 %"
+  VERLETZT: "PERF-002: Abschnitt 4 (30 % bis 40 %) mit 3572 URLs/s = 154 % des Mittelwerts 2324 URLs/s, erlaubt 70 % bis 130 %"
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/m1-n21/docs/plan/M1-acceptance/loadtest/report-crawl-124-min-memory-1m.json
+Ende 2026-10-15T19:58:27Z (21:58 lokal), Exit 1
+21:58  up 35 days, 11:16, 16 users, load averages: 2.49 2.87 2.95

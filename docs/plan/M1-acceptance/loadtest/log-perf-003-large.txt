@@ -1,23 +1,10 @@
-# Block B2: PERF-003 large (SlowSink 100 ms je Schreibaufruf)
-Load-Stichproben waehrend des Laufs (lokal, 1/5/15 min):
-00:36 2.59 2.30 2.16
-00:46 1.48 1.95 2.07
-00:56 2.18 2.05 2.02
-01:06 1.91 2.19 2.13
-01:16 2.02 1.65 1.79
-01:26 2.03 2.11 2.00
-01:36 1.42 1.60 1.77
-01:46 2.35 2.18 1.99
-01:56 1.73 1.76 1.87
-02:06 2.19 2.14 1.99
-02:16 1.85 1.86 1.90
-
-Start 2026-10-14T22:25:05Z (00:25 lokal)
- 0:25  up 34 days, 13:43, 16 users, load averages: 1.68 2.23 2.09
-perf-003 (large): 125110 Requests/s, Crawler ja, passed = false
-  Spitzen-RSS des Crawl-Prozesses: 707 MB
-  VERLETZT: "PERF-003: Spitzen-RSS 707 MB >= 500 MB bei verlangsamtem Store"
-  VERLETZT: "PERF-003: der Crawl stand 31.3 s still (Grenze 30 s)"
-Bericht: <wt>/m1-n14/docs/plan/M1-acceptance/loadtest/report-perf-003-large.json
-Ende 2026-10-15T00:20:55Z (02:20 lokal), Exit 1
- 2:20  up 34 days, 15:39, 16 users, load averages: 1.95 2.26 2.12
+Start 2026-10-15T19:21:39Z (21:21 lokal)
+wait_quiet: load1=1.64 (< 2), frei: 79 GB
+21:21  up 35 days, 10:40, 16 users, load averages: 1.64 3.68 4.00
+Befehl: /Users/dominikwojcik/Projects/openspider-wt/target-m1-n21/release/os-loadtest run --scenario perf-003 --size large --work-dir /Users/dominikwojcik/Projects/openspider-wt/n21-work --out docs/plan/M1-acceptance/loadtest/report-perf-003-large.json
+perf-003 (large): 129397 Requests/s, Crawler ja, passed = true
+  Spitzen-RSS des Crawl-Prozesses: 468 MB
+  PERF-002: 2101.1 URLs/s im Mittel, Abschnitte [2683, 3389, 3270, 3078, 2816, 2387, 2111, 1981, 1660, 1476] URLs/s
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/m1-n21/docs/plan/M1-acceptance/loadtest/report-perf-003-large.json
+Ende 2026-10-15T19:29:36Z (21:29 lokal), Exit 0
+21:29  up 35 days, 10:48, 16 users, load averages: 2.61 3.24 3.66

@@ -1,10 +1,30 @@
-Start 2026-10-15T01:46:21Z (03:46 lokal)
- 3:46  up 34 days, 17:04, 16 users, load averages: 1.81 3.21 3.10
-cargo test --release --locked -p os-testsite --test synthetic -- --ignored --nocapture --test-threads=1
-     Running tests/synthetic.rs (<wt>/target-m1-n14/release/deps/synthetic-600237e991009ac5)
-test benchmark_20k_requests_over_5000_per_second ... benchmark: 20000 Requests in 0.16 s = 125978 Requests/s, 52.7 MB
+Start 2026-10-15T21:15:28Z (23:15 lokal)
+wait_quiet: load1=1.96 (< 2), frei: 77 GB
+23:15  up 35 days, 12:34, 16 users, load averages: 1.96 2.79 3.12
+Befehl: cargo test --release --locked -p os-testsite --test synthetic -- --ignored --nocapture --test-threads=1
+   Compiling syn v3.0.9
+   Compiling serde v1.0.229
+   Compiling serde_json v1.0.154
+   Compiling tokio-macros v2.7.2
+   Compiling futures-macro v0.3.34
+   Compiling serde_derive v1.0.229
+   Compiling tokio v1.53.2
+   Compiling futures-util v0.3.34
+   Compiling serde_urlencoded v0.7.1
+   Compiling hyper v1.12.0
+   Compiling tower v0.5.3
+   Compiling tokio-rustls v0.26.6
+   Compiling hyper-util v0.1.21
+   Compiling axum v0.8.9
+   Compiling os-testsite v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n21/crates/os-testsite)
+    Finished `release` profile [optimized] target(s) in 13.07s
+     Running tests/synthetic.rs (/Users/dominikwojcik/Projects/openspider-wt/target-m1-n21/release/deps/synthetic-600237e991009ac5)
+
+running 1 test
+test benchmark_20k_requests_over_5000_per_second ... benchmark: 20000 Requests in 0.16 s = 125801 Requests/s, 52.7 MB
 ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.16s
-Ende 2026-10-15T01:46:35Z (03:46 lokal), Exit 0, Laufzeit 14 s (inkl. Warten auf Load)
- 3:46  up 34 days, 17:05, 16 users, load averages: 1.98 3.20 3.10
+
+Ende 2026-10-15T21:15:42Z (23:15 lokal), Exit 0
+23:15  up 35 days, 12:34, 16 users, load averages: 3.33 3.05 3.21

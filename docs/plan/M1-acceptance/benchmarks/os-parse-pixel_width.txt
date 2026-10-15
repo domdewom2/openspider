@@ -1,10 +1,16 @@
-Start 2026-10-15T01:46:18Z (03:46 lokal)
- 3:46  up 34 days, 17:04, 16 users, load averages: 1.88 3.24 3.11
-cargo test --release --locked -p os-parse --test pixel_width -- --ignored --nocapture --test-threads=1
-     Running tests/pixel_width.rs (<wt>/target-m1-n14/release/deps/pixel_width-720543c302be63e2)
-test throughput_report ... 42.8 Mio. Titel/min (591580000 px Summe)
+Start 2026-10-15T21:15:25Z (23:15 lokal)
+wait_quiet: load1=1.87 (< 2), frei: 77 GB
+23:15  up 35 days, 12:33, 16 users, load averages: 1.87 2.79 3.13
+Befehl: cargo test --release --locked -p os-parse --test pixel_width -- --ignored --nocapture --test-threads=1
+   Compiling os-parse v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n21/crates/os-parse)
+    Finished `release` profile [optimized] target(s) in 1.26s
+     Running tests/pixel_width.rs (/Users/dominikwojcik/Projects/openspider-wt/target-m1-n21/release/deps/pixel_width-720543c302be63e2)
+
+running 1 test
+test throughput_report ... 43.0 Mio. Titel/min (591580000 px Summe)
 ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 1.40s
-Ende 2026-10-15T01:46:21Z (03:46 lokal), Exit 0, Laufzeit 3 s (inkl. Warten auf Load)
- 3:46  up 34 days, 17:04, 16 users, load averages: 1.81 3.21 3.10
+
+Ende 2026-10-15T21:15:28Z (23:15 lokal), Exit 0
+23:15  up 35 days, 12:34, 16 users, load averages: 1.96 2.79 3.12

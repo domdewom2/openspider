@@ -12,18 +12,18 @@ Stand Welle 6b, nach dem Fable-Recheck Welle 6 (**needs_work, 84/100**, vorher F
 | A1 | Build/Qualität | **erfüllt** | CI-Lauf [38680316333](https://github.com/domdewom2/openspider/actions/runs/38680316333) auf dem Branch, alle Jobs grün, `parity` ohne `continue-on-error`; Abschnitt A1 |
 | A2 | Spec-Abdeckung | **erfüllt** (242/242, 0 open, 0 ungültige Ignores) | `docs/plan/M1-status.json`, Abschnitt A2 |
 | A3 | Parität (SF Free) | **erfüllt** – 5 von 5 Sites, 38 von 38 Vergleichen erfüllen die Schwelle, `os-parity run --all` endet mit Exit 0; in der CI erzwungen | `docs/plan/M1-acceptance/parity/`, Abschnitt A3 |
-| A4 | Performance | **nicht erfüllt (PERF-003 large)** – Spitzen-RSS 707 641 344 B >= 500 MB bei 1 Mio. URLs; Planerentscheidung zu PERF-003 steht aus. Alle übrigen Großläufe und Benchmarks bestanden | Abschnitt A4, `loadtest/README.md`, `benchmarks/README.md` |
+| A4 | Performance | **nicht erfüllt (PERF-002 Abschnitte)** – 1-Mio.-Crawl PERF-001: Mittel 2 098,8 URLs/s (>= 500), aber die zehn 10-%-Abschnitte liegen bei 68 % bis 186 % des Mittelwerts (erlaubt 70 % bis 130 %, K-72); Nachbesserungsauftrag in `loadtest/README.md`. Alle übrigen Kriterien der Großläufe nach Welle 7 erfüllt (PERF-001 RSS 471,1 MB, PERF-003 RSS 468,1 MB, Stillstand 6,1 s / 4,3 s, PERF-005, CRAWL-124, 18 von 18 Benchmark-Ignores) | Abschnitt A4, `loadtest/README.md`, `benchmarks/README.md` (M1-N21) |
 | A5 | CLI | **erfüllt** | Abschnitt A5 |
 | A6 | Crawl-Datei | **erfüllt** | Abschnitt A6 |
 | A7 | MCP | **erfüllt** | Abschnitt A7 |
 | A8 | Clean-Room | **erfüllt (mechanische Prüfung)**; Textstichprobe: Fable | Abschnitt A8 |
 | A9 | Statusbericht | **erfüllt** (keine ID `open`) | `docs/plan/M1-status.json` |
 
-**Gate-Weg:** Nach dem Merge von M1-N18 folgt das erneute Fable-Gate M1 zusammen mit M1-N14 (Großläufe). Die drei aufeinanderfolgenden grünen main-Läufe nach dem Merge (A1) trägt der Orchestrator nach. Offen für den Planer ist allein PERF-003 large (A4).
+**Gate-Weg:** Nach dem Merge von M1-N18 folgte das Fable-Gate M1; die Großläufe liefen nach Welle 7 als M1-N21 (15.10.2026, Commit `88fd424`). Das erneute Fable-Gate M1 folgt, sobald das Nachbesserungspaket zu PERF-002 (siehe A4) gemergt und die Abschnittsmessung wiederholt ist (`os-loadtest run --scenario perf-001 --size large`, rund 8 Minuten, `crawler_violations` leer). Die drei aufeinanderfolgenden grünen main-Läufe nach dem Merge (A1) trägt der Orchestrator nach. Offen ist allein PERF-002 (A4).
 
 Offene Punkte für Orchestrator/Planer:
-- **A4, PERF-003 large:** Grenze 500 MB bei 1 Mio. URLs verletzt (707,6 MB); bei 100 000 Seiten 426,5 MB und bei 250 000 Seiten 470,8 MB bestanden. `docs/spec/07-performance.md` und A4 nennen für PERF-003 keine URL-Zahl. Entscheidung: Grenze für 1 Mio. anpassen oder die Engine nachbessern (Nachbesserungsauftrag in `loadtest/README.md`). Zusätzlich: längster Stillstand 31,3 s gegen die Lasttest-Konstante 30 s (`MAX_STALL_SECS`).
-- **Lasttest `--profile max-speed`:** kann die PERF-001-RSS-Grenzen prinzipbedingt nicht bestehen (Cache bis 4 GiB, K-16); Hinweis aus N14, kein Kriterium.
+- **A4, PERF-002 Abschnitte:** Im 1-Mio.-Crawl von PERF-001 fällt der Durchsatz stetig von rund 3 900 auf rund 1 400 URLs/s (Abschnitte 149, 186, 173, 164, 139, 116, 100, 75, 72, 68 % des Mittelwerts 2 098,8 URLs/s; zweiter Lauf: 138 bis 172 % in den Abschnitten 1 bis 4). Nachbesserungsauftrag mit Spec-ID, Crates, Messwerten und Befehl in `loadtest/README.md`. PERF-003 large ist mit Welle 7 erfüllt (468,1 MB, Stillstand 4,3 s).
+- **Lasttest `--profile max-speed`:** wird seit N19 nicht mehr mit den PERF-001-RSS-Grenzen bewertet (K-16); bei 1 Mio. Seiten 5 437 MB RSS und kein Geschwindigkeitsvorteil gegen Balanced (-9,3 %), siehe `loadtest/README.md`, Beobachtungen. Kein Kriterium.
 - **Windows-Durchsatz:** Quote in A4 (Tabelle) weiter beobachten.
 - **Aufräumen:** Der Branch `parity/sf-reference` existiert nicht mehr auf dem Remote; die Testsite-Ports 8902–8905 sind frei.
 - **Annahmen ohne Beleg in den Paritäts-Sites (M2):** A-19b (Vorlauf einer Schleife, `/tail`; K-66), A-35b (`<li>` ohne Link, K-68), `HTTP Refresh Redirect` auf die eigene URL (K-69), Randfälle der Kollation `OS_TEXT` (K-70). Siehe `docs/plan/M2-backlog.md`.
@@ -259,29 +259,34 @@ Status: **erledigt durch M1-P31** (K-60: `Hash` nur für HTML-Antworten).
 
 ## A4 Performance
 
-**Status A4: nicht erfüllt (PERF-003 large).** Alle übrigen Kriterien sind erfüllt. Die Planerentscheidung zu PERF-003 steht aus. Quellen: `docs/plan/M1-acceptance/loadtest/README.md` und `docs/plan/M1-acceptance/benchmarks/README.md` (M1-N14, Commit `43caf19`, Apple M2, 8 Kerne, 16 GB RAM, 14./15.10.2026; hier nur gelesen, nicht geändert).
+**Status A4: nicht erfüllt (PERF-002, Abschnittsgrenzen).** Alle übrigen Kriterien sind erfüllt. Quellen: `docs/plan/M1-acceptance/loadtest/README.md` und `docs/plan/M1-acceptance/benchmarks/README.md` (M1-N21, Commit `88fd424` = origin/main nach Welle 7, Apple M2, 8 Kerne, 16 GB RAM, 15.10.2026, jeder Block nach `wait_quiet.sh 2` unter `caffeinate -dimsu`; hier nur gelesen, nicht geändert). Die Messung N14 (vor Welle 7, Commit `43caf19`) liegt als `n14-*` im Ordner `loadtest/`.
 
-### Großläufe und Benchmarks (M1-N14)
+### Großläufe und Benchmarks (M1-N21)
 
 | Kriterium | Grenze | Messwert | Ergebnis |
 |---|---|---|---|
-| PERF-001 large: Spitzen-RSS bei 1 Mio. URLs x 30 Links | < 1,5 GB | 720,8 MB | erfüllt |
-| PERF-001 large: RSS(1 Mio.) / RSS(100 k) | < 2 | 1,69 (720,8 MB / 425,9 MB) | erfüllt |
+| PERF-001 large: Spitzen-RSS bei 1 Mio. URLs x 30 Links | < 1,5 GB | 471,1 MB (N14: 720,8 MB) | erfüllt |
+| PERF-001 large: RSS(1 Mio.) / RSS(100 k) | < 2 | 1,134 (471,1 MB / 415,4 MB) | erfüllt |
 | PERF-001: Cache-Grenze über die PRAGMA-Werte (K-16) | Balanced 256 MiB; MaxSpeed <= min(25 % RAM, 4 GiB) | Balanced 268 435 456 B; MaxSpeed 4 GiB (= 25 % von 16 GiB) | erfüllt |
-| **PERF-003 large: Spitzen-RSS bei SlowSink 100 ms (K-52)** | < 500 MB | **707 641 344 B (707,6 MB)** | **nicht erfüllt** |
-| PERF-003 large: Crawl läuft weiter und endet regulär | `queue_empty`, 1 Mio. URLs | ja | erfüllt |
-| PERF-003 large: längster Stillstand (Lasttest-Konstante `MAX_STALL_SECS`, nicht Spec) | <= 30 s | 31,3 s | knapp überschritten (Befund, keine Spec-Grenze) |
+| PERF-001 large: längster Stillstand (K-73) | <= 30 s | 6,1 s | erfüllt |
+| PERF-002 (K-72): Mittelwert abgerufene URLs ÷ Crawl-Dauer | >= 500 URLs/s | 2 098,8 URLs/s (N14: 133,1) | erfüllt |
+| **PERF-002 (K-72): jeder der zehn 10-%-Abschnitte zwischen 70 % und 130 % des Mittelwerts** | 70 % bis 130 % | **149, 186, 173, 164, 139, 116, 100, 75, 72, 68 %** (3 118, 3 904, 3 635, 3 440, 2 926, 2 429, 2 106, 1 577, 1 515, 1 421 URLs/s); zweiter Lauf Balanced 138, 172, 160, 157, 127, 109, 97, 86, 79, 71 % | **nicht erfüllt** (Abschnitte 1 bis 5 und 10) |
+| PERF-003 large: Spitzen-RSS bei SlowSink 100 ms (K-52), 1 Mio. URLs (K-73) | < 500 MB | 468,1 MB (N14: 707,6 MB) | erfüllt |
+| PERF-003 large: Crawl endet regulär | `queue_empty`, 1 Mio. URLs | ja | erfüllt |
+| PERF-003 large: längster Stillstand (K-73) | <= 30 s | 4,3 s (N14: 31,3 s) | erfüllt |
 | PERF-005 large: 10 harte Abbrüche, danach `integrity_check` | ok | 10 von 10 ok | erfüllt |
 | PERF-005 large: URL-Menge und Status = Referenz, Dubletten in `urls` | identisch, 0 | identisch (100 001 URLs), 0 Dubletten | erfüllt |
-| PERF-005 large: wiederholte Requests je Abbruch (K-49) | <= 2 264 (8 + 256 + 2 000) | Mittel 2 171,1; Maximum 2 264 (Einzelabbrüche) | erfüllt |
-| CRAWL-124: MinMemory-RSS mindestens 20 % unter Balanced (250 000 Seiten, Ersatzgröße: 1-Mio.-Lauf > 90 min) | <= 80 % | -53,8 % (216,4 MB gegen 468,5 MB) | erfüllt |
-| B5: CRAWL-126 Pausieren mit 1 Mio. Warteschlangeneinträgen | < 3 s | 71 ms (Fortsetzen: Wiederaufbau 1,23 s) | erfüllt |
-| B5: CRAWL-127 Öffnen von 1 Mio. URLs / Speichern unter | < 3 s / < 60 s | 4 ms / 5,7 s | erfüllt |
-| B6: Benchmark-Ignores (16 Tests in 12 Dateien, darunter OUT-001: Export 1 Mio. x 60 Spalten, Zuwachs <= 300 MB, gemessen 1 MiB) | alle Zusicherungen | **16 von 16 bestanden** | erfüllt |
+| PERF-005 large: wiederholte Requests je Abbruch (K-49) | <= 2 264 (8 + 256 + 2 000) | `[2264 x 9, 2263]`, Maximum 2 264 | erfüllt (an der Grenze) |
+| CRAWL-124: MinMemory-RSS mindestens 20 % unter Balanced (1 Mio. Seiten, alle drei Profile) | <= 80 % | -53,7 % (217,4 MB gegen 469,9 MB); MaxSpeed 5 437 MB | erfüllt |
+| CRAWL-126 Pausieren / Fortsetzen mit 1 Mio. Warteschlangeneinträgen | < 3 s | 10,9 ms / 648 ms | erfüllt |
+| CRAWL-127 Öffnen von 1 Mio. URLs / Speichern unter | < 3 s / < 60 s | 1 ms / 4,8 s | erfüllt |
+| OUT-001 Export 1 Mio. x 60 Spalten | Speicherzuwachs <= 300 MB | 1 MiB | erfüllt |
+| Benchmark-Ignores (18 Tests in 12 Dateien, `grep -rn 'ignore = "Benchmark' crates --include='*.rs'` ohne `crates/os-parity/tests/data`) | alle Zusicherungen | **18 von 18 bestanden** | erfüllt |
+| `cargo test --workspace --exclude openspider-desktop --locked`, clippy `-D warnings`, `cargo fmt --all --check` | grün | 2 037 bestanden, 0 fehlgeschlagen, 36 ignoriert; clippy und fmt ohne Befund | erfüllt |
 
-**PERF-003 large (Nachbesserungsauftrag in `loadtest/README.md`, keine Codeänderung in N14/N18):** Der RSS wächst mit der URL-Zahl, nicht mit der SlowSink-Verzögerung: bei gleicher Konfiguration 426,5 MB bei 100 000 Seiten und 470,8 MB bei 250 000 Seiten (beide innerhalb der Grenze), 707,6 MB bei 1 Mio.; PERF-001 ohne SlowSink erreicht bei 1 Mio. 720,8 MB. Die Grundlast liegt bei rund 400 MB, ab etwa 0,5 Mio. URLs wirken mit der URL-Zahl wachsende Strukturen (Vermutung: Seen-Menge und Warteschlange im Arbeitsspeicher, nicht gemessen). Die Spec (`docs/spec/07-performance.md` PERF-003) und A4 nennen keine URL-Zahl; das Szenario `perf-003` wählt für `large` 1 Mio. **Entscheidung des Planers steht aus:** Grenze 500 MB nur für kleinere Crawls verstehen (dann erfüllt) oder den Speicherbedarf der Engine bei 1 Mio. URLs senken (`os-engine` `writer_thread.rs`, `os-store` `profile.rs`/`writer.rs`). Der Stillstand von 31,3 s stammt von einem einzelnen Schreibaufruf (Commit 20,4 s, WAL-Checkpoint 16,0 s) und tritt auch ohne SlowSink auf (PERF-001: 31,95 s).
+**PERF-002 (Nachbesserungsauftrag in `loadtest/README.md`, keine Codeänderung in N21):** Der Mittelwert ist mit 2 099 URLs/s weit über der Grenze, aber der Durchsatz fällt im 1-Mio.-Crawl stetig (Faktor 2,7 zwischen Abschnitt 2 und 10; in zwei unabhängigen Läufen gleich). Bis 500 000 Seiten gelten die Abschnittsgrenzen (96 % bis 126 % bei 500 000, 85 % bis 114 % bei 250 000). Eingrenzung: Writer 87 % der Laufzeit (Commit 248,5 s, Aufbau 131,9 s), Checkpoints ohne Einfluss, die Cache-Größe ist nicht der Hebel (MinMemory 64 MiB gleich schnell, MaxSpeed 4 GiB langsamer und steiler), das reine Store-Benchmark `writer_1m_uniform_segments` bleibt flach (98 % bis 103 %). Die Ursache ist nicht gemessen. Nachbesserung: `os-engine` (`writer_thread.rs`, Warteschlange `engine_q_*`) und `os-store` (`writer.rs`); Prüfung: `os-loadtest run --scenario perf-001 --size large` (rund 8 Minuten) mit leerem `crawler_violations`.
 
-Zur Einordnung (N14, kein Kriterium): Der Durchsatz fällt mit der Crawl-Größe überproportional ab (rund 1 260 URLs/s bei 250 000 Seiten, 133 bis 144 URLs/s bei 1 Mio.); Ursache vermutet in der Indexpflege der Tabelle `links` bei gleichverteilten Zielen (`bench_writer`: 28,5 s gegen 6,9 s). Der Lasttest bewertet `--profile max-speed` mit den PERF-001-Grenzen und meldet für MaxSpeed (2 108 MB) „VERLETZT“; das ist prinzipbedingt (Cache bis 4 GiB, K-16) und kein Befund.
+Zur Einordnung (N21, kein Kriterium): Gegenüber N14 ist der 1-Mio.-Crawl von 125 Minuten auf 8 Minuten gefallen (133 auf 2 099 URLs/s), die RSS-Spitze von 721 auf 471 MB (PERF-001) bzw. von 708 auf 468 MB (PERF-003). Der Lasttest bewertet `--profile max-speed` seit N19 nicht mehr mit den PERF-001-RSS-Grenzen (K-16); bei 1 Mio. Seiten belegt MaxSpeed 5 437 MB und ist 9,3 % langsamer als Balanced, MinMemory 3,6 % schneller (alle drei Läufe wegen der PERF-002-Abschnitte mit Exit 1, die Abschnittsregel gilt für das Standardprofil).
 
 ### Klein-Varianten (10 000 URLs), grün in jeder CI
 

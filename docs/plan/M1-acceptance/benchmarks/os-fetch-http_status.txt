@@ -1,10 +1,57 @@
-Start 2026-10-15T01:46:35Z (03:46 lokal)
- 3:46  up 34 days, 17:05, 16 users, load averages: 1.98 3.20 3.10
-cargo test --release --locked -p os-fetch --test http_status -- --ignored --nocapture --test-threads=1
-     Running tests/http_status.rs (<wt>/target-m1-n14/release/deps/http_status-3e4bdf74f913450c)
+Start 2026-10-15T21:02:06Z (23:02 lokal)
+wait_quiet: load1=1.97 (< 2), frei: 78 GB
+23:02  up 35 days, 12:20, 16 users, load averages: 1.97 2.70 2.93
+Befehl: cargo test --release --locked -p os-fetch --test http_status -- --ignored --nocapture --test-threads=1
+   Compiling stable_deref_trait v1.2.1
+   Compiling smallvec v1.16.3
+   Compiling syn v2.0.119
+   Compiling zerofrom v0.1.8
+   Compiling writeable v0.6.4
+   Compiling litemap v0.8.3
+   Compiling crc32fast v1.5.2
+   Compiling simd-adler32 v0.3.10
+   Compiling uuid v1.28.0
+   Compiling yoke v0.8.3
+   Compiling tempfile v3.27.0
+   Compiling zerovec v0.11.8
+   Compiling zerotrie v0.2.5
+   Compiling os-model v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n21/crates/os-model)
+   Compiling tinystr v0.8.4
+   Compiling potential_utf v0.1.6
+   Compiling miniz_oxide v0.9.1
+   Compiling icu_collections v2.3.0
+   Compiling icu_locale_core v2.3.0
+   Compiling flate2 v1.1.10
+   Compiling icu_provider v2.3.1
+   Compiling tracing-attributes v0.1.31
+   Compiling icu_normalizer v2.3.0
+   Compiling icu_properties v2.3.0
+   Compiling tracing v0.1.44
+   Compiling idna_adapter v1.2.2
+   Compiling idna v1.1.0
+   Compiling h2 v0.4.20
+   Compiling tower v0.5.3
+   Compiling axum-core v0.5.6
+   Compiling url v2.5.8
+   Compiling publicsuffix v2.3.0
+   Compiling tower-http v0.6.11
+   Compiling os-url v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n21/crates/os-url)
+   Compiling cookie_store v0.22.1
+   Compiling hyper v1.12.0
+   Compiling hyper-util v0.1.21
+   Compiling hyper-rustls v0.27.10
+   Compiling axum v0.8.9
+   Compiling reqwest v0.13.5
+   Compiling os-testsite v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n21/crates/os-testsite)
+   Compiling os-fetch v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n21/crates/os-fetch)
+    Finished `release` profile [optimized] target(s) in 19.95s
+     Running tests/http_status.rs (/Users/dominikwojcik/Projects/openspider-wt/target-m1-n21/release/deps/http_status-3e4bdf74f913450c)
+
+running 2 tests
 test slow_route_response_time_is_between_800_and_1000_ms ... ok
 test timeout_two_seconds_against_three_second_route ... ok
 
 test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 3.91s
-Ende 2026-10-15T01:46:58Z (03:46 lokal), Exit 0, Laufzeit 23 s (inkl. Warten auf Load)
- 3:46  up 34 days, 17:05, 16 users, load averages: 3.90 3.54 3.22
+
+Ende 2026-10-15T21:02:30Z (23:02 lokal), Exit 0
+23:02  up 35 days, 12:21, 16 users, load averages: 2.67 2.83 2.97

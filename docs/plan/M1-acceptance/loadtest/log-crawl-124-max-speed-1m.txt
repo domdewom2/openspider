@@ -1,0 +1,17 @@
+Start 2026-10-15T19:59:57Z (21:59 lokal)
+wait_quiet: load1=1.69 (< 2), frei: 79 GB
+21:59  up 35 days, 11:18, 16 users, load averages: 1.69 2.58 2.83
+Befehl: /Users/dominikwojcik/Projects/openspider-wt/target-m1-n21/release/os-loadtest run --scenario perf-001 --size large --profile max-speed --work-dir /Users/dominikwojcik/Projects/openspider-wt/n21-work --out docs/plan/M1-acceptance/loadtest/report-crawl-124-max-speed-1m.json
+perf-001 (large): 127846 Requests/s, Crawler ja, passed = false
+  Spitzen-RSS des Crawl-Prozesses: 5437 MB
+  PERF-002: 2034.8 URLs/s im Mittel, Abschnitte [3293, 4155, 4139, 3930, 3141, 2385, 1901, 1508, 1339, 1227] URLs/s
+  VERLETZT: "PERF-002: Abschnitt 1 (0 % bis 10 %) mit 3293 URLs/s = 162 % des Mittelwerts 2035 URLs/s, erlaubt 70 % bis 130 %"
+  VERLETZT: "PERF-002: Abschnitt 2 (10 % bis 20 %) mit 4155 URLs/s = 204 % des Mittelwerts 2035 URLs/s, erlaubt 70 % bis 130 %"
+  VERLETZT: "PERF-002: Abschnitt 3 (20 % bis 30 %) mit 4139 URLs/s = 203 % des Mittelwerts 2035 URLs/s, erlaubt 70 % bis 130 %"
+  VERLETZT: "PERF-002: Abschnitt 4 (30 % bis 40 %) mit 3929 URLs/s = 193 % des Mittelwerts 2035 URLs/s, erlaubt 70 % bis 130 %"
+  VERLETZT: "PERF-002: Abschnitt 5 (40 % bis 50 %) mit 3141 URLs/s = 154 % des Mittelwerts 2035 URLs/s, erlaubt 70 % bis 130 %"
+  VERLETZT: "PERF-002: Abschnitt 9 (80 % bis 90 %) mit 1339 URLs/s = 66 % des Mittelwerts 2035 URLs/s, erlaubt 70 % bis 130 %"
+  VERLETZT: "PERF-002: Abschnitt 10 (90 % bis 100 %) mit 1227 URLs/s = 60 % des Mittelwerts 2035 URLs/s, erlaubt 70 % bis 130 %"
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/m1-n21/docs/plan/M1-acceptance/loadtest/report-crawl-124-max-speed-1m.json
+Ende 2026-10-15T20:08:29Z (22:08 lokal), Exit 1
+22:08  up 35 days, 11:27, 16 users, load averages: 2.20 2.55 2.78

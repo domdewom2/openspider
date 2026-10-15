@@ -1,9 +1,15 @@
-Start 2026-10-15T01:36:02Z (03:36 lokal)
- 3:36  up 34 days, 16:54, 16 users, load averages: 1.94 2.65 2.84
-cargo test --release --locked -p os-engine --test lifecycle_list -- --ignored --nocapture --test-threads=1
-     Running tests/lifecycle_list.rs (<wt>/target-m1-n14/release/deps/lifecycle_list-4e761918e05ff341)
+Start 2026-10-15T20:28:39Z (22:28 lokal)
+wait_quiet: load1=1.70 (< 2), frei: 78 GB
+22:28  up 35 days, 11:47, 16 users, load averages: 1.70 2.59 4.40
+Befehl: cargo test --release --locked -p os-engine --test lifecycle_list -- --ignored --nocapture --test-threads=1
+   Compiling os-engine v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n21/crates/os-engine)
+    Finished `release` profile [optimized] target(s) in 5.10s
+     Running tests/lifecycle_list.rs (/Users/dominikwojcik/Projects/openspider-wt/target-m1-n21/release/deps/lifecycle_list-4e761918e05ff341)
+
+running 1 test
 test a_list_of_one_hundred_thousand_urls_is_read_in_under_ten_seconds ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.15s
-Ende 2026-10-15T01:36:08Z (03:36 lokal), Exit 0, Laufzeit 6 s (inkl. Warten auf Load)
- 3:36  up 34 days, 16:54, 16 users, load averages: 3.22 2.90 2.93
+
+Ende 2026-10-15T20:28:45Z (22:28 lokal), Exit 0
+22:28  up 35 days, 11:47, 16 users, load averages: 2.13 2.67 4.41

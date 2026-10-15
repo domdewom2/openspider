@@ -1,12 +1,8 @@
-# Block B3: PERF-005 large (100 000 Seiten, --kills 10)
-Load-Stichproben waehrend des Laufs (lokal, 1/5/15 min):
-02:22 3.26 3.00 2.45
-02:27 2.98 2.88 2.54
-02:32 3.64 2.88 2.61
-
-Start 2026-10-15T00:31:55Z (02:31 lokal)
- 2:31  up 34 days, 15:50, 16 users, load averages: 1.98 2.55 2.49
-perf-005 (large): 122966 Requests/s, Crawler ja, passed = true
-Bericht: <wt>/m1-n14/docs/plan/M1-acceptance/loadtest/report-perf-005-large.json
-Ende 2026-10-15T00:33:37Z (02:33 lokal), Exit 0
- 2:33  up 34 days, 15:52, 16 users, load averages: 3.09 2.84 2.61
+Start 2026-10-15T19:38:45Z (21:38 lokal)
+wait_quiet: load1=1.90 (< 2), frei: 79 GB
+21:38  up 35 days, 10:57, 16 users, load averages: 1.90 2.35 2.97
+Befehl: /Users/dominikwojcik/Projects/openspider-wt/target-m1-n21/release/os-loadtest run --scenario perf-005 --size large --kills 10 --work-dir /Users/dominikwojcik/Projects/openspider-wt/n21-work --out docs/plan/M1-acceptance/loadtest/report-perf-005-large.json
+perf-005 (large): 128715 Requests/s, Crawler ja, passed = true
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/m1-n21/docs/plan/M1-acceptance/loadtest/report-perf-005-large.json
+Ende 2026-10-15T19:39:45Z (21:39 lokal), Exit 0
+21:39  up 35 days, 10:58, 16 users, load averages: 3.53 2.76 3.08
