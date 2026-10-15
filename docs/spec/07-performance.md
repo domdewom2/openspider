@@ -12,16 +12,18 @@ Ziel: Große Crawls dürfen weder an Arbeitsspeicher scheitern noch die Oberflä
 - **Testfixture:** `os-testsite` Generator `synthetic:n=1000000,links=30`
 
 ### PERF-002 Durchsatz
-- **Priorität:** P1
+- **Priorität:** P1 (Abnahmekriterium ab M1, Entscheidung K-72 im M1-Plan)
 - **Akzeptanzkriterien:**
-  - [ ] Lokal (keine Netzwerklatenz, Textmodus): ≥ 500 URLs/s auf Referenzhardware.
+  - [ ] Lokal (keine Netzwerklatenz, Textmodus): ≥ 500 URLs/s auf Referenzhardware, gemessen als Mittelwert über den gesamten 1-Mio-Crawl der PERF-001-Fixture (abgerufene URLs ÷ Crawl-Dauer, Standardprofil, 8 Threads).
   - [ ] Durchsatz bleibt über den gesamten 1-Mio-Crawl innerhalb ±30 % des Mittelwerts (kein Einbruch durch Speicherdruck).
+- **Messung der Konstanz:** Der Crawl wird in zehn Abschnitte zu je 10 % der abgerufenen URLs geteilt (Grenzen bei 100.000, 200.000 … 1.000.000 abgerufenen URLs). Durchsatz eines Abschnitts = URLs des Abschnitts ÷ Dauer des Abschnitts. Jeder der zehn Abschnittswerte liegt zwischen 70 % und 130 % des Mittelwerts aus dem ersten Kriterium. Der Lasttest-Bericht nennt alle zehn Werte.
 
 ### PERF-003 Gegendruck (Backpressure)
 - **Priorität:** P0
 - **Beschreibung:** Alle Warteschlangen zwischen Fetch, Parse, Render und Store sind begrenzt. Ist eine Stufe langsamer, drosseln die vorherigen.
 - **Akzeptanzkriterien:**
-  - [ ] Test mit künstlich verlangsamtem Store (100 ms je Batch): RSS bleibt unter 500 MB, Crawl läuft weiter.
+  - [ ] Test mit künstlich verlangsamtem Store (100 ms je Batch) bei einem Crawl von 1.000.000 URLs (Fixture wie PERF-001): Spitzen-RSS des Kernprozesses bleibt unter 500 MB, Crawl läuft weiter und endet regulär.
+  - [ ] „Läuft weiter“: Zwischen zwei Fortschrittsmeldungen mit steigender Zahl abgerufener URLs liegen nie mehr als 30 s (kein Stillstand > 30 s, auch nicht durch einen einzelnen Commit oder WAL-Checkpoint). Dasselbe gilt für den 1-Mio-Crawl aus PERF-001.
 
 ### PERF-004 Reaktionsfähigkeit der Oberfläche
 - **Priorität:** P0
