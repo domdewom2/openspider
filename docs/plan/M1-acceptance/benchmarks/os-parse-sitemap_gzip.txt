@@ -1,0 +1,9 @@
+Start 2026-10-15T01:43:23Z (03:43 lokal)
+ 3:43  up 34 days, 17:01, 16 users, load averages: 1.96 2.69 2.80
+cargo test --release --locked -p os-parse --test sitemap_gzip -- --ignored --nocapture --test-threads=1
+     Running tests/sitemap_gzip.rs (<wt>/target-m1-n14/release/deps/sitemap_gzip-817a52ec6379aab5)
+test over_50_mib_unpacked_is_read_completely_by_streaming ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.06s
+Ende 2026-10-15T01:43:48Z (03:43 lokal), Exit 0, Laufzeit 25 s (inkl. Warten auf Load)
+ 3:43  up 34 days, 17:02, 16 users, load averages: 9.98 4.60 3.49

@@ -1,0 +1,9 @@
+Start 2026-10-15T01:40:07Z (03:40 lokal)
+ 3:40  up 34 days, 16:58, 16 users, load averages: 1.84 2.48 2.74
+cargo test --release --locked -p os-export --test xlsx_cells -- --ignored --nocapture --test-threads=1
+     Running tests/xlsx_cells.rs (<wt>/target-m1-n14/release/deps/xlsx_cells-900d0ac3f9263451)
+test default_limit_overflows_after_1048575_rows ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 2.32s
+Ende 2026-10-15T01:40:12Z (03:40 lokal), Exit 0, Laufzeit 5 s (inkl. Warten auf Load)
+ 3:40  up 34 days, 16:58, 16 users, load averages: 2.26 2.55 2.77

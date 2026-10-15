@@ -1,0 +1,131 @@
+{
+ "scenario": "perf-005",
+ "size": "large",
+ "pages": 100000,
+ "kills_per_run": 1,
+ "purpose": "ergaenzend: wiederholte Requests je einzelnem Abbruch (der Bericht des 10-Abbrueche-Laufs nennt nur Summe und Mittel)",
+ "runs": [
+  {
+   "seed": 1,
+   "passed": true,
+   "kill_point": 79465,
+   "repeated": 2264,
+   "bound": 2264,
+   "integrity_ok": true,
+   "duplicate_urls": 0,
+   "lost_in_pipeline": 2142,
+   "status_identical": true,
+   "seconds": 38.39
+  },
+  {
+   "seed": 2,
+   "passed": true,
+   "kill_point": 79110,
+   "repeated": 2264,
+   "bound": 2264,
+   "integrity_ok": true,
+   "duplicate_urls": 0,
+   "lost_in_pipeline": 2255,
+   "status_identical": true,
+   "seconds": 38.022
+  },
+  {
+   "seed": 3,
+   "passed": true,
+   "kill_point": 24053,
+   "repeated": 2264,
+   "bound": 2264,
+   "integrity_ok": true,
+   "duplicate_urls": 0,
+   "lost_in_pipeline": 2255,
+   "status_identical": true,
+   "seconds": 31.785
+  },
+  {
+   "seed": 4,
+   "passed": true,
+   "kill_point": 63978,
+   "repeated": 2264,
+   "bound": 2264,
+   "integrity_ok": true,
+   "duplicate_urls": 0,
+   "lost_in_pipeline": 2217,
+   "status_identical": true,
+   "seconds": 31.764
+  },
+  {
+   "seed": 5,
+   "passed": true,
+   "kill_point": 42618,
+   "repeated": 1291,
+   "bound": 2264,
+   "integrity_ok": true,
+   "duplicate_urls": 0,
+   "lost_in_pipeline": 658,
+   "status_identical": true,
+   "seconds": 31.418
+  },
+  {
+   "seed": 6,
+   "passed": true,
+   "kill_point": 16592,
+   "repeated": 2264,
+   "bound": 2264,
+   "integrity_ok": true,
+   "duplicate_urls": 0,
+   "lost_in_pipeline": 1974,
+   "status_identical": true,
+   "seconds": 29.501
+  },
+  {
+   "seed": 7,
+   "passed": true,
+   "kill_point": 31487,
+   "repeated": 2043,
+   "bound": 2264,
+   "integrity_ok": true,
+   "duplicate_urls": 0,
+   "lost_in_pipeline": 1728,
+   "status_identical": true,
+   "seconds": 30.51
+  },
+  {
+   "seed": 8,
+   "passed": true,
+   "kill_point": 66622,
+   "repeated": 1576,
+   "bound": 2264,
+   "integrity_ok": true,
+   "duplicate_urls": 0,
+   "lost_in_pipeline": 1196,
+   "status_identical": true,
+   "seconds": 32.187
+  },
+  {
+   "seed": 9,
+   "passed": true,
+   "kill_point": 80228,
+   "repeated": 2264,
+   "bound": 2264,
+   "integrity_ok": true,
+   "duplicate_urls": 0,
+   "lost_in_pipeline": 2255,
+   "status_identical": true,
+   "seconds": 36.74
+  },
+  {
+   "seed": 10,
+   "passed": true,
+   "kill_point": 67466,
+   "repeated": 2264,
+   "bound": 2264,
+   "integrity_ok": true,
+   "duplicate_urls": 0,
+   "lost_in_pipeline": 2255,
+   "status_identical": true,
+   "seconds": 32.446
+  }
+ ],
+ "max_repeated_per_kill": 2264,
+ "bound_per_kill": 2264
+}

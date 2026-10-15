@@ -1,0 +1,10 @@
+Start 2026-10-15T01:31:26Z (03:31 lokal)
+ 3:31  up 34 days, 16:49, 16 users, load averages: 1.93 3.52 3.11
+cargo test --release --locked -p os-engine --test lifecycle_pause -- --ignored --nocapture --test-threads=1
+     Running tests/lifecycle_pause.rs (<wt>/target-m1-n14/release/deps/lifecycle_pause-05f809fe3e746dfd)
+test pausing_with_a_million_queue_entries_takes_under_three_seconds ... Fortsetzen (Aufbau aus der Datei): 1.227069917s, Pausieren: 71.209542ms
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 5.74s
+Ende 2026-10-15T01:31:38Z (03:31 lokal), Exit 0, Laufzeit 12 s (inkl. Warten auf Load)
+ 3:31  up 34 days, 16:50, 16 users, load averages: 2.60 3.62 3.15
