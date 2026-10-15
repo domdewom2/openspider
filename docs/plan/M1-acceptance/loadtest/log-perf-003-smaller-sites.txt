@@ -1,0 +1,19 @@
+# Block B2 ergaenzend: PERF-003 bei kleineren Seitenzahlen (Einordnung des Grenzverstosses bei 1 Mio.)
+
+## --pages 100000
+Start 2026-10-15T01:56:56Z (03:56 lokal)
+ 3:56  up 34 days, 17:15, 16 users, load averages: 1.76 4.97 5.06
+perf-003 (large): 123370 Requests/s, Crawler ja, passed = true
+  Spitzen-RSS des Crawl-Prozesses: 426 MB
+Bericht: <wt>/m1-n14/docs/plan/M1-acceptance/loadtest/report-perf-003-large-100000-pages.json
+Ende 2026-10-15T01:57:34Z (03:57 lokal), Exit 0
+ 3:57  up 34 days, 17:16, 16 users, load averages: 2.05 4.69 4.95
+
+## --pages 250000
+Start 2026-10-15T01:58:04Z (03:58 lokal)
+ 3:58  up 34 days, 17:16, 16 users, load averages: 1.88 4.40 4.83
+perf-003 (large): 127858 Requests/s, Crawler ja, passed = true
+  Spitzen-RSS des Crawl-Prozesses: 470 MB
+Bericht: <wt>/m1-n14/docs/plan/M1-acceptance/loadtest/report-perf-003-large-250000-pages.json
+Ende 2026-10-15T02:01:22Z (04:01 lokal), Exit 0
+ 4:01  up 34 days, 17:19, 16 users, load averages: 2.14 3.68 4.47
