@@ -6,6 +6,7 @@
 //! Kern (P00a): `error`, `meta`, `open`, `profile`, `schema`, `sink`. Stubs (P00b): `writer`, `counters`,
 //! `files`, `resume`, `registry`, `paths`, `queries` – umgesetzt von M1-P07.
 
+pub(crate) mod checkpointer;
 pub mod collation;
 pub mod counters;
 pub mod error;

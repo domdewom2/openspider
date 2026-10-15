@@ -37,6 +37,7 @@ use os_model::{ContentClass, CrawlState, ElementPair, NewUrl};
 use rusqlite::types::Value;
 use rusqlite::{params, params_from_iter, Connection, Transaction, TransactionBehavior};
 
+use crate::checkpointer::Checkpointer;
 use crate::collation;
 use crate::counters::{BatchCounters, Contribution, InternalFlags};
 use crate::error::StoreError;
@@ -49,57 +50,77 @@ use crate::sink::CrawlSink;
 const STATEMENT_CACHE: usize = 128;
 
 /// Standard-Senke der Engine.
+///
+/// **WAL (K-76):** Die Verbindung des Writers hat `wal_autocheckpoint = 0`; ein eigener Thread
+/// ([`crate::checkpointer`]) führt `PASSIVE`-Checkpoints im Hintergrund aus, sodass der Writer nie auf einen
+/// Checkpoint wartet. Setzt jemand anderes `wal_autocheckpoint` (Lasttest, Diagnose), bleibt dieser Wert unangetastet
+/// und es läuft kein Hintergrund-Thread. [`SqliteSink::finish`] und [`CrawlSink::checkpoint`] halten den Thread an und
+/// führen den kurzen `TRUNCATE`-Checkpoint aus (Pause, Ende); der nächste Schreibaufruf startet ihn wieder.
 pub struct SqliteSink {
     file: CrawlFile,
     profile: StorageProfile,
     clock: Arc<dyn Clock>,
     /// Welche URL-Kennungen intern sind (für die Zähler, ohne Lesezugriff auf die breite `urls`-Zeile).
     internal: InternalFlags,
-    /// Zuletzt gesetzte Schwelle von `PRAGMA wal_autocheckpoint` (Seiten); `None`, sobald jemand anderes sie
-    /// geändert hat (dann stellt der Sink sie nicht mehr um).
-    checkpoint_pages: Option<i64>,
-    /// Grenzen der Checkpoint-Schwelle in Seiten (Standard: [`profile::WAL_CHECKPOINT_MIN_PAGES`] bis
+    /// Jemand anderes hat `PRAGMA wal_autocheckpoint` gesetzt: der Sink stellt nichts mehr um und startet keinen
+    /// Hintergrund-Checkpoint.
+    external_autocheckpoint: bool,
+    /// Der Hintergrund-Thread ließ sich nicht starten (Diagnose-Zähler); der Sink versucht es nicht noch einmal.
+    background_failed: bool,
+    /// Grenzen des Auslösers in Seiten (Standard: [`profile::WAL_CHECKPOINT_MIN_PAGES`] bis
     /// [`profile::WAL_CHECKPOINT_MAX_PAGES`]).
     checkpoint_bounds: (i64, i64),
+    background: Option<Checkpointer>,
 }
+
+/// Obergrenze der WAL-Größe in Seiten, ab der der Writer kurz auf den Hintergrund-Checkpoint wartet (1 GiB bei 4 KiB
+/// Seitengröße, mindestens das Vierfache des Auslösers). Im Normalbetrieb wird sie nie erreicht (`wait_checkpoint_n` = 0).
+const WAL_THROTTLE_MIN_PAGES: i64 = 262_144;
+/// Längste Wartezeit des Writers auf einen Durchlauf des Hintergrund-Checkpoints je Schreibaufruf.
+const WAL_THROTTLE_WAIT: std::time::Duration = std::time::Duration::from_secs(2);
 
 impl SqliteSink {
     /// Öffnet die Crawl-Datei zum Schreiben: registriert die Kollation `OS_TEXT`, setzt die PRAGMAs des
-    /// Profils (CRAWL-124), entfernt den Index `links_target` (K-74, er entsteht erst beim regulären Ende, siehe
+    /// Profils (CRAWL-124), schaltet den automatischen Checkpoint im Commit ab (der Hintergrund-Thread übernimmt,
+    /// K-76), entfernt den Index `links_target` (K-74, er entsteht erst beim regulären Ende, siehe
     /// [`crate::link_index`]) und dimensioniert den Statement-Cache.
     pub fn open(path: &Path, profile: StorageProfile) -> Result<Self, StoreError> {
         let file = CrawlFile::open(path, OpenMode::ReadWrite)?;
         collation::ensure(file.conn())?;
         profile::apply(file.conn(), profile)?;
+        file.conn().pragma_update(None, "wal_autocheckpoint", 0)?;
         link_index::drop_index(file.conn())?;
         file.conn()
             .set_prepared_statement_cache_capacity(STATEMENT_CACHE);
-        Ok(SqliteSink {
+        let sink = SqliteSink {
             file,
             profile,
             clock: Arc::new(SystemClock),
             internal: InternalFlags::default(),
-            checkpoint_pages: Some(profile::WAL_CHECKPOINT_MIN_PAGES),
+            external_autocheckpoint: false,
+            background_failed: false,
             checkpoint_bounds: (
                 profile::WAL_CHECKPOINT_MIN_PAGES,
                 profile::WAL_CHECKPOINT_MAX_PAGES,
             ),
-        })
+            background: None,
+        };
+        sink.limit_wal_file()?;
+        Ok(sink)
     }
 
-    /// Setzt die Grenzen der Checkpoint-Schwelle (Seiten) und die Schwelle auf die Untergrenze; sie wächst danach
-    /// mit der Datei bis zur Obergrenze. Für Tests und Messläufe mit kleinen Dateien.
+    /// Setzt die Grenzen des Auslösers für den Hintergrund-Checkpoint (Seiten); er wächst danach mit der Datei bis zur
+    /// Obergrenze. Für Tests und Messläufe mit kleinen Dateien.
     pub fn with_checkpoint_bounds(
         mut self,
         min_pages: i64,
         max_pages: i64,
     ) -> Result<Self, StoreError> {
         let min_pages = min_pages.max(1);
-        self.file
-            .conn()
-            .pragma_update(None, "wal_autocheckpoint", min_pages)?;
         self.checkpoint_bounds = (min_pages, max_pages.max(min_pages));
-        self.checkpoint_pages = Some(min_pages);
+        // ein laufender Thread startet mit den neuen Grenzen beim nächsten Schreiben neu
+        self.stop_background();
+        self.limit_wal_file()?;
         Ok(self)
     }
 
@@ -109,29 +130,87 @@ impl SqliteSink {
         self
     }
 
-    /// Lässt die Checkpoint-Schwelle mit der Datei wachsen ([`profile::wal_checkpoint_pages`]); ein von außen
-    /// gesetzter Wert (z. B. im Lasttest) bleibt unangetastet. Fehler sind unkritisch: die Schwelle bleibt dann.
-    fn adapt_checkpoint_threshold(&mut self) {
-        let Some(current) = self.checkpoint_pages else {
-            return;
-        };
+    /// `journal_size_limit`: Nach einem Zurücksetzen des WAL kürzt SQLite die Datei auf diese Größe (ein Viertel des
+    /// kleinsten Auslösers, 1 bis 64 MiB), damit die Dateilänge der Zahl der Frames entspricht, auf die der Thread
+    /// seine Auslöser stützt.
+    fn limit_wal_file(&self) -> Result<(), StoreError> {
         let conn = self.file.conn();
-        let set: Result<i64, _> = conn.pragma_query_value(None, "wal_autocheckpoint", |r| r.get(0));
-        if set.ok() != Some(current) {
-            self.checkpoint_pages = None;
+        let page_size: i64 = conn.pragma_query_value(None, "page_size", |r| r.get(0))?;
+        let limit = (self.checkpoint_bounds.0.saturating_mul(page_size) / 4)
+            .clamp(1024 * 1024, 64 * 1024 * 1024);
+        conn.pragma_update(None, "journal_size_limit", limit)?;
+        Ok(())
+    }
+
+    /// Hält den Hintergrund-Checkpoint am Laufen: erkennt einen von außen gesetzten `wal_autocheckpoint` (dann
+    /// bleibt es dabei) und startet den Thread beim ersten Schreiben nach dem Öffnen, nach einer Pause oder
+    /// nach geänderten Grenzen.
+    fn drive_background(&mut self) {
+        if self.external_autocheckpoint {
             return;
         }
-        let Ok(pages) = conn.pragma_query_value(None, "page_count", |r| r.get::<_, i64>(0)) else {
+        let set: Result<i64, _> =
+            self.file
+                .conn()
+                .pragma_query_value(None, "wal_autocheckpoint", |r| r.get(0));
+        if matches!(set, Ok(n) if n != 0) {
+            self.external_autocheckpoint = true;
+            self.stop_background();
+            return;
+        }
+        if self.background.is_none() && !self.background_failed {
+            match Checkpointer::start(
+                self.file.path(),
+                self.profile.synchronous_during_crawl(),
+                self.checkpoint_bounds,
+            ) {
+                Ok(thread) => self.background = Some(thread),
+                Err(_) => {
+                    // Der Crawl läuft ohne Hintergrund-Checkpoint weiter; der Abschluss-Checkpoint bleibt.
+                    self.background_failed = true;
+                    crate::sink::diag::record_background_error();
+                }
+            }
+        }
+    }
+
+    /// Wartet kurz auf den Hintergrund-Checkpoint, wenn das WAL weit über den Auslöser hinaus gewachsen ist.
+    fn throttle(&self) {
+        let Some(background) = &self.background else {
             return;
         };
-        let (min_pages, max_pages) = self.checkpoint_bounds;
-        let want = profile::wal_checkpoint_pages_between(pages, min_pages, max_pages);
-        // erst ab 25 % Zuwachs umstellen (die Datei wächst nur)
-        if want > current + current / 4
-            && conn.pragma_update(None, "wal_autocheckpoint", want).is_ok()
-        {
-            self.checkpoint_pages = Some(want);
+        let cap = (4 * background.trigger_pages()).max(WAL_THROTTLE_MIN_PAGES);
+        if background.wal_frames() > cap {
+            let t = std::time::Instant::now();
+            background.wait_for_pass(WAL_THROTTLE_WAIT);
+            crate::sink::diag::record_checkpoint_wait(t);
         }
+    }
+
+    /// Hält den Hintergrund-Thread an und wartet auf ihn.
+    fn stop_background(&mut self) {
+        if let Some(mut thread) = self.background.take() {
+            thread.stop();
+        }
+    }
+
+    /// Aktueller Auslöser des Hintergrund-Checkpoints in Seiten (WAL-Frames): bei laufendem Thread der Wert, der mit
+    /// der Dateigröße mitwächst, sonst die Untergrenze.
+    pub fn checkpoint_trigger_pages(&self) -> i64 {
+        self.background
+            .as_ref()
+            .map_or(self.checkpoint_bounds.0, Checkpointer::trigger_pages)
+    }
+
+    /// Ob ein Hintergrund-Checkpoint läuft (nicht bei von außen gesetztem `wal_autocheckpoint`, nicht vor dem ersten
+    /// Schreiben, nicht zwischen Pause und dem nächsten Schreiben).
+    pub fn background_checkpoint_running(&self) -> bool {
+        self.background.is_some()
+    }
+
+    /// Der erste Fehler des Hintergrund-Threads (Diagnose; der Crawl läuft weiter).
+    pub fn background_checkpoint_error(&self) -> Option<String> {
+        self.background.as_ref().and_then(Checkpointer::last_error)
     }
 
     /// Die geöffnete Crawl-Datei (Lesezugriff, z. B. für Diagnose und Tests).
@@ -144,9 +223,10 @@ impl SqliteSink {
         self.profile
     }
 
-    /// Schließt den Crawl ab: stellt `synchronous` auf den Wert nach dem Crawl und führt das WAL vollständig
-    /// in die Hauptdatei zurück (CRAWL-124).
+    /// Schließt den Crawl ab: hält den Hintergrund-Checkpoint an, stellt `synchronous` auf den Wert nach dem Crawl und
+    /// führt das WAL vollständig in die Hauptdatei zurück (CRAWL-124).
     pub fn finish(&mut self) -> Result<(), StoreError> {
+        self.stop_background();
         profile::settle(self.file.conn(), self.profile)?;
         wal_checkpoint(self.file.conn())
     }
@@ -154,6 +234,7 @@ impl SqliteSink {
 
 impl Drop for SqliteSink {
     fn drop(&mut self) {
+        self.stop_background();
         // Der Abschluss-Checkpoint beim Schließen der Verbindung soll mit `synchronous = NORMAL` laufen.
         let _ = profile::settle(self.file.conn(), self.profile);
     }
@@ -172,9 +253,8 @@ fn wal_checkpoint(conn: &Connection) -> Result<(), StoreError> {
 
 impl CrawlSink for SqliteSink {
     fn write(&mut self, batch: WriteBatch) -> Result<(), StoreError> {
-        // Die Schwelle gilt für den nächsten Commit; sie wächst mit der Datei, bevor dieser Commit eine
-        // Checkpoint-Entscheidung trifft.
-        self.adapt_checkpoint_threshold();
+        self.drive_background();
+        self.throttle();
         write_batch(
             self.file.conn(),
             &batch,
@@ -187,6 +267,8 @@ impl CrawlSink for SqliteSink {
     /// (`synchronous = OFF`) wird dafür kurz auf `NORMAL` geschaltet, damit der Checkpoint wirklich auf den
     /// Datenträger gelangt.
     fn checkpoint(&mut self) -> Result<(), StoreError> {
+        // Kein Durchlauf des Hintergrund-Threads neben dem `TRUNCATE`; der nächste Schreibaufruf startet ihn neu.
+        self.stop_background();
         let conn = self.file.conn();
         let relaxed =
             self.profile.synchronous_during_crawl() != self.profile.synchronous_after_crawl();

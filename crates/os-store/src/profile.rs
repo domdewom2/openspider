@@ -15,6 +15,12 @@
 //! macOS-arm64). Der Schwellwert wächst deshalb mit der Datei ([`wal_checkpoint_pages`]): Der Aufwand je Checkpoint
 //! wächst mit der Dateigröße, die Zahl der Checkpoints sinkt im gleichen Maß, der Gesamtaufwand bleibt linear.
 //! [`read`] liefert die tatsächlich gesetzten Werte (Hilfe › Diagnose, Test der Akzeptanzkriterien).
+//!
+//! **Hintergrund-Checkpoint (M1-P32, K-76):** Für den schreibenden Crawl (`SqliteSink`) gilt das nicht mehr: Die
+//! Writer-Verbindung stellt `wal_autocheckpoint` auf 0, ein eigener Thread führt `PASSIVE`-Checkpoints aus, sobald das
+//! WAL die Schwelle erreicht ([`wal_checkpoint_pages`] bestimmt sie weiter nach der Dateigröße, mit den Grenzen von
+//! `with_checkpoint_bounds`). Der Writer wartet nie auf einen Checkpoint (siehe `checkpointer`). Die hier gesetzte
+//! Schwelle gilt nur noch für sonstige Verbindungen mit Schreibzugriff (Analyse, Reparatur).
 
 use rusqlite::Connection;
 

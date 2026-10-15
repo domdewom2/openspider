@@ -27,6 +27,9 @@ pub trait CrawlSink: Send {
 /// | `commit_ns` / `commit_max_ns` | Summe/Maximum von `COMMIT` (enthält den automatischen WAL-Checkpoint) |
 /// | `commit_slow` | Commits ab [`SLOW_COMMIT_NS`] |
 /// | `checkpoint_ns` / `checkpoints` / `checkpoint_max_ns` / `checkpoint_frames` | ausdrückliche `wal_checkpoint`-Aufrufe, `frames` = Frames im WAL zu Beginn (je 4 KiB) |
+/// | `bg_checkpoints` / `bg_checkpoint_ns` / `bg_checkpoint_max_ns` / `bg_checkpoint_frames` | Durchläufe des Hintergrund-Checkpoints (K-76): Zahl, Summe, Maximum, Frames im WAL zu Beginn |
+/// | `bg_checkpoint_errors` | Fehler des Hintergrund-Threads (Diagnose; der Crawl läuft weiter) |
+/// | `wait_checkpoint_ns` / `wait_checkpoint_n` | Zeit und Zahl der Wartepausen des Writers auf den Hintergrund-Checkpoint (Soll 0) |
 /// | `link_index_builds` / `link_index_build_ns` | Aufbau des Index `links_target` (K-74, am regulären Crawl-Ende bzw. durch `link_index::ensure`) |
 pub mod diag {
 
@@ -64,6 +67,13 @@ pub mod diag {
         checkpoint_frames,
         link_index_builds,
         link_index_build_ns,
+        bg_checkpoints,
+        bg_checkpoint_ns,
+        bg_checkpoint_max_ns,
+        bg_checkpoint_frames,
+        bg_checkpoint_errors,
+        wait_checkpoint_ns,
+        wait_checkpoint_n,
     );
 
     /// Die Zähler dieses Prozesses.
@@ -97,6 +107,30 @@ pub mod diag {
         if ns >= SLOW_COMMIT_NS {
             STATS.commit_slow.fetch_add(1, Ordering::Relaxed);
         }
+    }
+
+    /// Verbucht einen Durchlauf des Hintergrund-Checkpoints.
+    pub(crate) fn record_background_checkpoint(t: Instant, frames: u64) {
+        let ns = nanos(t);
+        STATS.bg_checkpoints.fetch_add(1, Ordering::Relaxed);
+        STATS.bg_checkpoint_ns.fetch_add(ns, Ordering::Relaxed);
+        STATS.bg_checkpoint_max_ns.fetch_max(ns, Ordering::Relaxed);
+        STATS
+            .bg_checkpoint_frames
+            .fetch_add(frames, Ordering::Relaxed);
+    }
+
+    /// Verbucht einen Fehler des Hintergrund-Threads.
+    pub(crate) fn record_background_error() {
+        STATS.bg_checkpoint_errors.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// Verbucht eine Wartepause des Writers auf den Hintergrund-Checkpoint.
+    pub(crate) fn record_checkpoint_wait(t: Instant) {
+        STATS.wait_checkpoint_n.fetch_add(1, Ordering::Relaxed);
+        STATS
+            .wait_checkpoint_ns
+            .fetch_add(nanos(t), Ordering::Relaxed);
     }
 
     /// Verbucht den Aufbau des Index `links_target`.

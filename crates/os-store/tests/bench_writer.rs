@@ -223,7 +223,7 @@ fn diag_map(snapshot: Vec<(&'static str, u64)>) -> serde_json::Value {
     )
 }
 
-// spec: PERF-002
+// spec: PERF-001, PERF-002, PERF-003
 #[test]
 #[ignore = "Benchmark (P32): 1 Mio. Seiten x 30 gleichverteilte Linkziele, zehn Abschnitte (OS_BENCH_PAGES, OS_BENCH_OUT)"]
 fn writer_1m_uniform_segments() {
@@ -365,6 +365,17 @@ fn writer_1m_uniform_segments() {
             "URL {id}"
         );
     }
+    // PERF-003: kein einzelner Commit oder Checkpoint des Writers nähert sich dem Stillstand von 30 s;
+    // PERF-001: der Spitzen-RSS des Writers bleibt weit unter 1,5 GB.
+    assert!(
+        commit_max_ns.max(checkpoint_max_ns) < 30_000_000_000,
+        "Commit/Checkpoint über 30 s"
+    );
+    assert!(
+        rss < 1_500_000_000,
+        "Spitzen-RSS {} MiB",
+        rss / (1024 * 1024)
+    );
     // Zusicherung ab Schema v2 (K-74/K-75): jeder Abschnitt zwischen 70 % und 130 % des Mittels.
     if os_store::SCHEMA_VERSION >= 2 && pages >= 1_000_000 {
         for (i, r) in rel.iter().enumerate() {
