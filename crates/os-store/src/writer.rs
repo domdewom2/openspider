@@ -83,6 +83,19 @@ pub struct SqliteSink {
     /// [`profile::WAL_CHECKPOINT_MAX_PAGES`]).
     checkpoint_bounds: (i64, i64),
     background: Option<Checkpointer>,
+    /// Diagnoseschalter `OS_STORE_WAL_EXPLICIT=1` (N22): `wal_autocheckpoint` steht auf 0, der Writer führt das WAL
+    /// nach dem Commit selbst zurück (`PASSIVE`, dieselbe Schwelle wie der Auslöser im Commit), damit Commit und
+    /// Rückführung getrennt gemessen werden. Standard aus.
+    wal_explicit: bool,
+    /// Geschätzte Frames im WAL (Summe der vom Cache geschriebenen Seiten seit der letzten vollständigen
+    /// Rückführung); nur mit `wal_explicit`.
+    wal_frames: u64,
+    /// Größte URL-Kennung, ab der die Indizes von `urls` mit zufälligen Schlüsseln ([`crate::url_index`]) entfallen.
+    url_index_drop_at: i64,
+    /// Größte bisher gesehene URL-Kennung (aus der Datei beim ersten Schreiben und den neuen URLs).
+    max_url_id: Option<i64>,
+    /// Die Indizes sind in diesem Lauf schon entfernt.
+    url_indexes_dropped: bool,
 }
 
 /// Obergrenze der WAL-Größe in Seiten, ab der der Writer kurz auf den Hintergrund-Checkpoint wartet (1 GiB bei 4 KiB
@@ -117,12 +130,119 @@ impl SqliteSink {
                 profile::WAL_CHECKPOINT_MAX_PAGES,
             ),
             background: None,
+            wal_explicit: false,
+            wal_frames: 0,
+            url_index_drop_at: crate::url_index::drop_threshold(),
+            max_url_id: None,
+            url_indexes_dropped: false,
+        };
+        // Diagnoseschalter für Großläufe (N22): Grenzen der Checkpoint-Schwelle in Seiten, `min:max`.
+        let sink = match std::env::var("OS_STORE_WAL_BOUNDS").ok().and_then(|v| {
+            let (a, b) = v.split_once(':')?;
+            Some((a.trim().parse::<i64>().ok()?, b.trim().parse::<i64>().ok()?))
+        }) {
+            Some((min, max)) => sink.with_checkpoint_bounds(min, max)?,
+            None => sink,
         };
         // Diagnoseschalter für Großläufe (N21): ohne Codeänderung zwischen beiden Verfahren vergleichen.
         if std::env::var_os("OS_STORE_BACKGROUND_CHECKPOINT").is_some_and(|v| v == "1") {
             return sink.with_background_checkpoint();
         }
+        if std::env::var_os("OS_STORE_WAL_EXPLICIT").is_some_and(|v| v == "1") {
+            return sink.with_explicit_wal_return();
+        }
         Ok(sink)
+    }
+
+    /// Lässt die Indizes von `urls` mit zufälligen Schlüsseln ([`crate::url_index`]) auch in einem großen Crawl
+    /// stehen (Vergleichsläufe).
+    pub fn keep_url_indexes(mut self) -> Self {
+        self.url_index_drop_at = i64::MAX;
+        self
+    }
+
+    /// Setzt die Schwelle (größte URL-Kennung), ab der die Indizes von `urls` entfallen (Standard
+    /// [`crate::url_index::DROP_FROM_URLS`]); für Tests mit kleinen Dateien.
+    pub fn with_url_index_drop_at(mut self, urls: i64) -> Self {
+        self.url_index_drop_at = urls;
+        self
+    }
+
+    /// Entfernt die Indizes von `urls` vor dem Schreiben des Batches, der die Schwelle erreicht (einmal je Lauf).
+    fn drop_url_indexes_when_large(&mut self, batch: &WriteBatch) -> Result<(), StoreError> {
+        if self.url_indexes_dropped || self.url_index_drop_at == i64::MAX {
+            return Ok(());
+        }
+        let known =
+            match self.max_url_id {
+                Some(m) => m,
+                None => self.file.conn().query_row(
+                    "SELECT COALESCE(MAX(id), 0) FROM urls",
+                    [],
+                    |r| r.get::<_, i64>(0),
+                )?,
+            };
+        let max = batch.new_urls.iter().map(|u| u.id.0).fold(known, i64::max);
+        self.max_url_id = Some(max);
+        if max >= self.url_index_drop_at {
+            crate::url_index::drop_indexes(self.file.conn())?;
+            self.url_indexes_dropped = true;
+        }
+        Ok(())
+    }
+
+    /// Diagnose (N22): Rückführung des WAL durch den Writer selbst, getrennt vom `COMMIT` gemessen
+    /// (`wal_cp_*`). Gleiche Arbeit und gleicher Auslöser wie `wal_autocheckpoint`, nur als eigener Aufruf nach dem
+    /// Commit. Nicht der Standard.
+    pub fn with_explicit_wal_return(mut self) -> Result<Self, StoreError> {
+        self.file
+            .conn()
+            .pragma_update(None, "wal_autocheckpoint", 0)?;
+        self.checkpoint_pages = None;
+        self.wal_explicit = true;
+        Ok(self)
+    }
+
+    /// Verbucht die Länge der `-wal`-Datei und führt im Diagnosemodus das WAL nach dem Commit zurück.
+    fn after_commit(&mut self, written: &Written) {
+        let mut wal = self.file.path().as_os_str().to_owned();
+        wal.push("-wal");
+        if let Ok(meta) = std::fs::metadata(&wal) {
+            crate::sink::diag::record_wal_bytes(written.bucket, meta.len());
+        }
+        if !self.wal_explicit {
+            return;
+        }
+        self.wal_frames = self.wal_frames.saturating_add(written.cache_write);
+        let conn = self.file.conn();
+        let (min_pages, max_pages) = self.checkpoint_bounds;
+        let pages = conn
+            .pragma_query_value(None, "page_count", |r| r.get::<_, i64>(0))
+            .unwrap_or(0);
+        let trigger = profile::wal_checkpoint_pages_between(pages, min_pages, max_pages);
+        if i64::try_from(self.wal_frames).unwrap_or(i64::MAX) < trigger {
+            return;
+        }
+        let t = std::time::Instant::now();
+        // Antwort: (busy, Frames im WAL, davon zurückgeführt)
+        let result = conn.query_row("PRAGMA wal_checkpoint(PASSIVE)", [], |r| {
+            Ok((r.get::<_, i64>(1)?, r.get::<_, i64>(2)?))
+        });
+        match result {
+            Ok((log, done)) => {
+                let (log, done) = (log.max(0) as u64, done.max(0) as u64);
+                crate::sink::diag::record_wal_return(
+                    t,
+                    written.bucket,
+                    log,
+                    log.saturating_sub(done),
+                );
+                if done >= log {
+                    self.wal_frames = 0;
+                }
+            }
+            Err(_) => crate::sink::diag::record_background_error(),
+        }
     }
 
     /// Schaltet den Hintergrund-Checkpoint (K-76) ein: `wal_autocheckpoint = 0`, ein Thread führt `PASSIVE`-Checkpoints
@@ -152,7 +272,7 @@ impl SqliteSink {
             // ein laufender Thread startet mit den neuen Grenzen beim nächsten Schreiben neu
             self.stop_background();
             self.limit_wal_file()?;
-        } else {
+        } else if !self.wal_explicit {
             self.file
                 .conn()
                 .pragma_update(None, "wal_autocheckpoint", min_pages)?;
@@ -340,6 +460,9 @@ impl CrawlSink for SqliteSink {
         if !batch.new_urls.is_empty() {
             self.drop_insert_trigger()?;
         }
+        if !is_empty(&batch) {
+            self.drop_url_indexes_when_large(&batch)?;
+        }
         if self.background_enabled {
             self.drive_background();
             self.throttle();
@@ -348,12 +471,22 @@ impl CrawlSink for SqliteSink {
             // Checkpoint-Entscheidung trifft.
             self.adapt_checkpoint_threshold();
         }
-        write_batch(
+        // Das reguläre Ende baut die Indizes über `urls` auf (K-80): die Leser wärmen den Dateicache dafür vor.
+        let prefetch = (self.url_indexes_dropped && completes_crawl(&batch))
+            .then(|| crate::url_index::Prefetch::start(self.file.path()))
+            .flatten();
+        let written = write_batch(
             self.file.conn(),
             &batch,
             self.clock.as_ref(),
             &mut self.internal,
-        )
+        );
+        drop(prefetch);
+        let written = written?;
+        if let Some(written) = written {
+            self.after_commit(&written);
+        }
+        Ok(())
     }
 
     /// Dauerhafter Zeitpunkt: WAL in die Hauptdatei zurückführen. Unter „Maximale Geschwindigkeit“
@@ -399,29 +532,44 @@ fn int(v: u64) -> i64 {
     i64::try_from(v).unwrap_or(i64::MAX)
 }
 
-/// Schreibt einen Batch in einer Transaktion.
+/// Was `write_batch` für die Messzähler zurückgibt: der Eimer des Batches und die Seiten, die der Cache in das WAL
+/// schrieb.
+struct Written {
+    bucket: usize,
+    cache_write: u64,
+}
+
+/// Schreibt einen Batch in einer Transaktion. `None`: leerer Batch (No-op).
 fn write_batch(
     conn: &Connection,
     batch: &WriteBatch,
     clock: &dyn Clock,
     internal: &mut InternalFlags,
-) -> Result<(), StoreError> {
+) -> Result<Option<Written>, StoreError> {
+    use crate::sink::diag;
     if is_empty(batch) {
-        return Ok(());
+        return Ok(None);
     }
     let built = std::time::Instant::now();
+    let mut g = diag::Groups::default();
     let tx = Transaction::new_unchecked(conn, TransactionBehavior::Immediate)?;
     let seq = read_change_seq(&tx)? + 1;
 
-    insert_new_urls(&tx, &batch.new_urls, seq, internal)?;
-    apply_url_updates(&tx, &batch.url_updates, seq)?;
+    g.time(
+        |g| &mut g.urls_ins,
+        || insert_new_urls(&tx, &batch.new_urls, seq, internal),
+    )?;
+    g.time(
+        |g| &mut g.urls_upd,
+        || apply_url_updates(&tx, &batch.url_updates, seq),
+    )?;
     let mut batch_counters = BatchCounters::new(internal);
     for page in &batch.pages {
-        write_page(&tx, page, seq, &mut batch_counters)?;
+        write_page(&tx, page, seq, &mut batch_counters, &mut g)?;
     }
-    batch_counters.flush(&tx, seq)?;
+    g.time(|g| &mut g.counters, || batch_counters.flush(&tx, seq))?;
     write_url_flags(&tx, &batch.url_flags, seq)?;
-    apply_queue(&tx, &batch.queue)?;
+    g.time(|g| &mut g.queue, || apply_queue(&tx, &batch.queue))?;
     for sitemap in &batch.sitemaps {
         write_sitemap(&tx, sitemap)?;
     }
@@ -430,9 +578,14 @@ fn write_batch(
     }
     write_meta(&tx, batch, seq)?;
     write_events_and_counters(&tx, batch)?;
-    crate::sink::diag::record_build(built);
+    // Die Bauzeit endet vor dem Aufbau des Index `links_target` (Endbatch, `link_index_build_ns` gesondert).
+    let bucket = diag::record_build(built, &g);
     // K-74: Der Index entsteht mit dem regulären Ende, im letzten Batch und derselben Transaktion – ein
     // Fehlschlag lässt den Crawl dann nicht als beendet erscheinen.
+    if completes_crawl(batch) {
+        // Sekundärindizes über `urls` (N22): nur nachbauen, wenn der Writer sie entfernt hatte.
+        crate::url_index::ensure(&tx)?;
+    }
     if completes_crawl(batch) && link_index::ensure(&tx)? {
         // Das Ereignis (ohne Dauer, deterministisch) macht den Aufbau in der Ereignisliste sichtbar; die Dauer steht in
         // den Messzählern (`link_index_build_ns`).
@@ -447,8 +600,13 @@ fn write_batch(
 
     let committing = std::time::Instant::now();
     tx.commit()?;
-    crate::sink::diag::record_commit(committing);
-    Ok(())
+    diag::record_commit(committing, bucket);
+    let cache = diag::cache_delta(conn);
+    diag::record_cache(bucket, &cache);
+    Ok(Some(Written {
+        bucket,
+        cache_write: cache.write,
+    }))
 }
 
 /// Ob der Batch den Crawl regulär beendet (Zustand `Completed` als letzter `state`-Eintrag der Metadaten:
@@ -794,13 +952,19 @@ fn write_page(
     page: &PageWrite,
     seq: i64,
     batch_counters: &mut BatchCounters<'_>,
+    g: &mut crate::sink::diag::Groups,
 ) -> Result<(), StoreError> {
     let id = page.url_id.0;
     // Der bisherige Zustand der Zeile steht vor dem Überschreiben fest (nur ein Lesezugriff auf dieselbe Zeile).
     let (internal, old_html_2xx) = source_state(tx, id)?;
-    let changed = tx
-        .prepare_cached(page_update_sql())?
-        .execute(params_from_iter(page_values(page, seq).iter()))?;
+    let changed = g.time(
+        |g| &mut g.urls_upd,
+        || -> Result<usize, StoreError> {
+            Ok(tx
+                .prepare_cached(page_update_sql())?
+                .execute(params_from_iter(page_values(page, seq).iter()))?)
+        },
+    )?;
     if changed == 0 {
         return Err(batch_error(format!("PageWrite: URL {id} existiert nicht")));
     }
@@ -817,7 +981,7 @@ fn write_page(
         Contribution::default()
     };
 
-    insert_links(tx, id, &page.links)?;
+    g.time(|g| &mut g.links, || insert_links(tx, id, &page.links))?;
     insert_images(tx, id, &page.images)?;
     insert_canonicals(tx, id, &page.canonicals)?;
     insert_directives(tx, id, &page.directives)?;
@@ -828,7 +992,10 @@ fn write_page(
 
     if internal {
         let new = Contribution::from_rows(&page.links, &page.images, is_html_2xx(page));
-        batch_counters.add_page(tx, id, &old, &new)?;
+        g.time(
+            |g| &mut g.counters,
+            || batch_counters.add_page(tx, id, &old, &new),
+        )?;
     }
     Ok(())
 }

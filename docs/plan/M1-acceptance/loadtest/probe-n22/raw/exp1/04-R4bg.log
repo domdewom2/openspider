@@ -1,0 +1,10 @@
+Lauf 04-R4bg: Start 2026-10-16T02:27:43Z (04:27 lokal)
+wait_quiet: ruhig (load1=4.77 (< 8), frei: 62 GB )
+Load beim Start:  4:27  up 35 days, 17:46, 16 users, load averages: 4.77 5.36 7.53
+Binaerordner: /Users/dominikwojcik/Projects/openspider-wt/n22-bexp; Umgebung: OS_STORE_BACKGROUND_CHECKPOINT=1
+perf-001 (large): 135849 Requests/s, Crawler ja, passed = true
+  Spitzen-RSS des Crawl-Prozesses: 451 MB
+  PERF-002: 3339.8 URLs/s im Mittel, Abschnitte [3366, 4032, 4364, 4117, 4039, 3835, 3842, 3902, 3354, 3535] URLs/s
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/n22-raw/exp1/04-R4bg.json
+Ende 2026-10-16T02:30:24Z (04:30 lokal), Exit 0
+ 4:30  up 35 days, 17:48, 16 users, load averages: 4.32 5.05 7.03

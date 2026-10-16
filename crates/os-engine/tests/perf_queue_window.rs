@@ -137,6 +137,20 @@ async fn a_small_window_changes_neither_the_request_order_nor_the_result_and_bou
         "{c:?}"
     );
     assert!(c["mem_queue_disk"] >= 50, "{c:?}");
+    // M1-N22 (PERF-002): Dauer, Zeilen und Wartezeit je Nachladevorgang stehen in den Zählern; die Reihen je zehn
+    // Nachladevorgänge addieren sich zu den Gesamtwerten
+    assert_eq!(c["q_refill_jobs"], c["q_refills"], "{c:?}");
+    assert!(c["q_refill_rows"] >= c["q_loaded"], "{c:?}");
+    assert!(c["q_refill_ns"] >= c["q_refill_wait_ns"], "{c:?}");
+    assert!(c["q_refill_wait_ns"] >= c["q_refill_wait_max_ns"], "{c:?}");
+    let sum = |prefix: &str| {
+        (0..16)
+            .map(|i| c[format!("{prefix}_r{i:02}").as_str()])
+            .sum::<u64>()
+    };
+    assert_eq!(sum("q_refill_n"), c["q_refill_jobs"], "{c:?}");
+    assert_eq!(sum("q_refill_wait_ns"), c["q_refill_wait_ns"], "{c:?}");
+    assert_eq!(sum("q_refill_rows"), c["q_refill_rows"], "{c:?}");
     // Der RAM-Anteil bleibt klein gegen die Warteschlange (die genaue Grenze prüft der deterministische Test in
     // `queue.rs`; hier hängt sie vom Takt des Writers ab).
     assert!(

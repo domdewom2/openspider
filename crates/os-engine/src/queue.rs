@@ -255,6 +255,8 @@ struct Spill {
     pinned: usize,
     /// Ein Pop fand nur Einträge hinter der Grenze: sofort nachladen.
     starved: bool,
+    /// Beginn der Zeit, in der Pops wegen fehlendem Block leer ausgingen (Messzähler `q_starved_*`).
+    starved_at: Option<Instant>,
     job: Option<Job>,
     /// Ab dieser Größe des RAM-Anteils lohnt sich das Auslagern (erst).
     activate_at: usize,
@@ -331,6 +333,7 @@ impl Frontier {
             poppable: 0,
             pinned: self.items.values().filter(|i| !spillable_item(i)).count(),
             starved: false,
+            starved_at: None,
             job: None,
             activate_at: 2 * window,
             disabled: false,
@@ -449,6 +452,7 @@ impl Frontier {
     fn starve(&mut self) -> Popped {
         if let Some(s) = self.spill.as_mut() {
             s.starved = true;
+            s.starved_at.get_or_insert_with(Instant::now);
         }
         Popped::NeedRefill
     }
@@ -656,6 +660,15 @@ impl Frontier {
         if let Some(s) = self.spill.as_mut() {
             s.starved = false;
             s.retry_at = None;
+            if let Some(since) = s.starved_at.take() {
+                diag::record_starved(
+                    diag::STATS
+                        .q_refill_jobs
+                        .load(Ordering::Relaxed)
+                        .saturating_sub(1),
+                    diag::nanos(since),
+                );
+            }
         }
     }
 
