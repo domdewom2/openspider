@@ -1,0 +1,11 @@
+Lauf 01-B5: Start 2026-10-16T16:53:42Z (18:53 lokal)
+wait_quiet: ruhig (load1=6.54 (< 8), frei: 65 GB )
+Load beim Start: 18:53  up 36 days,  8:12, 17 users, load averages: 6.54 10.69 10.31
+Binaerordner: /Users/dominikwojcik/Projects/openspider-wt/n27-bin; Umgebung: keine
+perf-003 (large): 119602 Requests/s, Crawler ja, passed = false
+  Spitzen-RSS des Crawl-Prozesses: 500 MB
+  PERF-002: 2708 URLs/s im Mittel, Abschnitte [2367, 2953, 3094, 2936, 3282, 3317, 2564, 2273, 3482, 3198] URLs/s
+  VERLETZT: "PERF-003: Spitzen-RSS 500 MB >= 500 MB bei verlangsamtem Store"
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/m1-n27/docs/plan/M1-acceptance/loadtest/probe-n27/raw/final-perf003b/01-B5.json
+Ende 2026-10-16T16:59:53Z (18:59 lokal), Exit 1
+18:59  up 36 days,  8:18, 17 users, load averages: 8.07 9.89 9.99

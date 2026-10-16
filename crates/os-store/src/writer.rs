@@ -471,8 +471,11 @@ impl CrawlSink for SqliteSink {
             // Checkpoint-Entscheidung trifft.
             self.adapt_checkpoint_threshold();
         }
-        // Das reguläre Ende baut die Indizes über `urls` auf (K-80): die Leser wärmen den Dateicache dafür vor.
-        let prefetch = (self.url_indexes_dropped && completes_crawl(&batch))
+        // Das reguläre Ende baut die Indizes über `urls` nur in einer Datei, die sie behalten hat (K-83): in einem
+        // großen Crawl fehlen sie danach (kein Leser braucht sie), und es gibt nichts vorzuwärmen. Fehlt in einer
+        // kleinen Datei ausnahmsweise einer, wärmen die Leser den Dateicache für den Aufbau vor (K-80).
+        let build_url_indexes = !self.url_indexes_dropped && completes_crawl(&batch);
+        let prefetch = (build_url_indexes && !crate::url_index::present(self.file.conn())?)
             .then(|| crate::url_index::Prefetch::start(self.file.path()))
             .flatten();
         let written = write_batch(
@@ -480,6 +483,7 @@ impl CrawlSink for SqliteSink {
             &batch,
             self.clock.as_ref(),
             &mut self.internal,
+            build_url_indexes,
         );
         drop(prefetch);
         let written = written?;
@@ -545,6 +549,7 @@ fn write_batch(
     batch: &WriteBatch,
     clock: &dyn Clock,
     internal: &mut InternalFlags,
+    build_url_indexes: bool,
 ) -> Result<Option<Written>, StoreError> {
     use crate::sink::diag;
     if is_empty(batch) {
@@ -580,10 +585,12 @@ fn write_batch(
     write_events_and_counters(&tx, batch)?;
     // Die Bauzeit endet vor dem Aufbau des Index `links_target` (Endbatch, `link_index_build_ns` gesondert).
     let bucket = diag::record_build(built, &g);
+    let data = built.elapsed();
     // K-74: Der Index entsteht mit dem regulären Ende, im letzten Batch und derselben Transaktion – ein
     // Fehlschlag lässt den Crawl dann nicht als beendet erscheinen.
-    if completes_crawl(batch) {
-        // Sekundärindizes über `urls` (N22): nur nachbauen, wenn der Writer sie entfernt hatte.
+    if build_url_indexes {
+        // Sekundärindizes über `urls` (N22): nur eine Datei, die sie behalten hat, prüft sie (K-83: der Writer
+        // baut entfernte Indizes nicht mehr auf, `url_index::ensure` bleibt für Leser, die sie brauchen).
         crate::url_index::ensure(&tx)?;
     }
     if completes_crawl(batch) && link_index::ensure(&tx)? {
@@ -601,6 +608,9 @@ fn write_batch(
     let committing = std::time::Instant::now();
     tx.commit()?;
     diag::record_commit(committing, bucket);
+    if completes_crawl(batch) {
+        diag::record_end_batch(data, committing.elapsed());
+    }
     let cache = diag::cache_delta(conn);
     diag::record_cache(bucket, &cache);
     Ok(Some(Written {

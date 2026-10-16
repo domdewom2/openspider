@@ -322,6 +322,16 @@ fn estimate_bytes(b: &WriteBatch) -> u64 {
     bytes as u64
 }
 
+/// Ob der Batch den Crawl regulär beendet (letzter `state`-Eintrag der Metadaten ist `Completed`).
+fn completes_crawl(batch: &WriteBatch) -> bool {
+    batch
+        .meta
+        .iter()
+        .rev()
+        .find(|(key, _)| key == "state")
+        .is_some_and(|(_, value)| value == os_model::CrawlState::Completed.as_str())
+}
+
 fn record_error(shared: &Shared, e: StoreError) {
     let mut slot = shared.error.lock().unwrap_or_else(|p| p.into_inner());
     if slot.is_none() {
@@ -350,9 +360,17 @@ fn write_out(
         &diag::STATS.mem_writer_batch_bytes_max,
         estimate_bytes(&taken),
     );
+    let completes = completes_crawl(&taken);
     let t = Instant::now();
     let written = sink.write(taken);
-    diag::add_max(&diag::STATS.w_write_ns, &diag::STATS.w_write_max_ns, t);
+    let write_ns = diag::add_max(&diag::STATS.w_write_ns, &diag::STATS.w_write_max_ns, t);
+    if completes {
+        // Der Schreibaufruf mit `Completed` (Endbatch, K-80): Daten, Indexaufbau und Commit.
+        diag::STATS
+            .w_end_batch_ns
+            .fetch_add(write_ns, Ordering::Relaxed);
+        diag::inc(&diag::STATS.w_end_batches);
+    }
     diag::inc(&diag::STATS.w_batches);
     diag::STATS.w_pages.fetch_add(n as u64, Ordering::Relaxed);
     diag::record_batch_pages(n);

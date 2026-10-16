@@ -1,0 +1,8 @@
+Lauf 01-B7: Start 2026-10-16T18:01:35Z (20:01 lokal)
+wait_quiet: ruhig (load1=6.42 (< 8), frei: 49 GB )
+Load beim Start: 20:01  up 36 days,  9:20, 17 users, load averages: 6.42 6.71 6.24
+Binaerordner: /Users/dominikwojcik/Projects/openspider-wt/n27-bin-t2; Umgebung: keine
+perf-005 (large): 126706 Requests/s, Crawler ja, passed = true
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/m1-n27/docs/plan/M1-acceptance/loadtest/probe-n27/raw/final-perf005/01-B7.json
+Ende 2026-10-16T18:03:43Z (20:03 lokal), Exit 0
+20:03  up 36 days,  9:22, 17 users, load averages: 4.86 6.02 6.02

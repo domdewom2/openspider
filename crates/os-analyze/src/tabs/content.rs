@@ -19,11 +19,19 @@
 //! Eine Seite steht im Filter, wenn ihr `Hash` nicht leer ist und mindestens eine *andere* Seite der
 //! Vergleichsmenge denselben Hash hat. Die Vergleichsmenge ist die Grundmenge ohne PDFs, bei
 //! `duplicates.only_indexable` (Standard) eingeschränkt auf indexierbare Seiten. Die Prüfung ist eine
-//! korrelierte `EXISTS`-Abfrage auf dem Index `urls_hash` und deshalb **live**: Duplikate erscheinen schon
-//! während des Crawls, und das Umschalten von `only_indexable` wirkt ohne neue Abrufe. Der Filter verlangt
+//! **unkorrelierte Gruppierung** (K-83, M1-N27): `hash_md5 IN (SELECT hash_md5 FROM <Vergleichsmenge> GROUP BY
+//! hash_md5 HAVING COUNT(*) > 1)`. SQLite wertet die Unterabfrage je Anweisung einmal aus (ein Lauf über `urls`
+//! mit einem Sortierer, O(n log n)), das Prädikat braucht keinen Index über `hash_md5`. Der frühere Weg, ein
+//! korreliertes `EXISTS` auf dem Index `urls_hash`, wurde ohne den Index quadratisch (der Planer legt für
+//! korreliertes `EXISTS` keinen automatischen Index an) und hielt den Aufbau von `urls_hash` im Endbatch großer
+//! Crawls am Leben. Die Treffermenge ist unverändert, auch für eine Seite, die selbst nicht zur Vergleichsmenge
+//! gehört: Dann genügt ein Treffer in der Vergleichsmenge (`HAVING COUNT(*) > 0`, zweiter Zweig des Prädikats),
+//! sonst braucht es zwei, weil die Seite sich selbst mitzählt. Das Prädikat bleibt **live**: Duplikate erscheinen
+//! schon während des Crawls, und das Umschalten von `only_indexable` wirkt ohne neue Abrufe. Der Filter verlangt
 //! `extraction.hash` (sonst steht kein Hash in der Datei) und `duplicates.exact_enabled`; fehlt eines von
 //! beiden, meldet der Filterzustand `NeedsConfig` statt Treffern. `issues.ignore_non_indexable` wirkt hier
-//! nicht: Die Indexierbarkeit regelt allein `duplicates.only_indexable`.
+//! nicht: Die Indexierbarkeit regelt allein `duplicates.only_indexable`. Der Hash wird mit `=` (BINARY)
+//! verglichen, NULL und leere Hashes zählen nie als Treffer.
 //!
 //! # Low Content Pages (ONPAGE-146)
 //!
@@ -71,16 +79,34 @@ macro_rules! comparison_member {
     };
 }
 
-/// Prädikat „Exact Duplicates“ (ONPAGE-143). Die Vergleichszeilen (`d`) sind interne 2xx-HTML-Seiten; das
-/// unäre Plus verbietet dem Planer die Indizes auf Klasse und Status, damit er sie über `urls_hash` sucht.
+/// Die Vergleichsmenge der Exact Duplicates über dem Alias `d`: interne 2xx-HTML-Seiten in den Tabellen mit
+/// nicht leerem Hash, bei `duplicates.only_indexable` nur indexierbare. Das unäre Plus verbietet dem Planer die
+/// Indizes auf Klasse, Status und Hash: Er liest `urls` einmal sequenziell und gruppiert mit einem Sortierer, statt
+/// über einen Index zufällig auf die Zeilen zuzugreifen (K-83, Bericht `probe-n27`).
+macro_rules! comparison_set {
+    () => {
+        concat!(
+            "SELECT +d.hash_md5 FROM urls d WHERE +d.is_internal = 1 AND +d.in_tables = 1 AND ",
+            "+d.status_code BETWEEN 200 AND 299 AND +d.content_class = 'HTML' AND ",
+            "d.hash_md5 IS NOT NULL AND +d.hash_md5 <> '' AND ",
+            comparison_member!("d")
+        )
+    };
+}
+
+/// Prädikat „Exact Duplicates“ (ONPAGE-143, K-83): unkorrelierte Gruppierung der Vergleichsmenge. Der erste Zweig
+/// gilt für Seiten, die selbst zur Vergleichsmenge gehören (zwei Treffer, einer davon die Seite selbst); der zweite
+/// für Seiten außerhalb (ein Treffer genügt). Die Zugehörigkeit von `u` prüft nur Spalten der eigenen Zeile.
 const EXACT_DUPLICATES: &str = concat!(
     "(u.content_class = 'HTML' AND u.hash_md5 IS NOT NULL AND u.hash_md5 <> '' AND ",
     comparison_member!("u"),
-    " AND EXISTS (SELECT 1 FROM urls d WHERE d.hash_md5 = u.hash_md5 AND d.id <> u.id AND ",
-    "+d.is_internal = 1 AND +d.in_tables = 1 AND +d.status_code BETWEEN 200 AND 299 AND ",
-    "+d.content_class = 'HTML' AND ",
-    comparison_member!("d"),
-    "))"
+    " AND (u.hash_md5 IN (",
+    comparison_set!(),
+    " GROUP BY +d.hash_md5 HAVING COUNT(*) > 1) OR (NOT (COALESCE(u.is_internal, 0) = 1 AND ",
+    "COALESCE(u.in_tables, 0) = 1 AND COALESCE(u.status_code, 0) BETWEEN 200 AND 299) AND ",
+    "u.hash_md5 IN (",
+    comparison_set!(),
+    "))))"
 );
 
 /// Prädikat „Low Content Pages“ (ONPAGE-146): nur HTML, `Word Count` < Schwelle.

@@ -1,0 +1,10 @@
+Lauf 02-B0: Start 2026-10-16T15:15:29Z (17:15 lokal)
+wait_quiet: ruhig (load1=3.90 (< 8), frei: 101 GB )
+Load beim Start: 17:15  up 36 days,  6:34, 17 users, load averages: 3.90 7.17 8.61
+Binaerordner: /Users/dominikwojcik/Projects/openspider-wt/n27-bin; Umgebung: keine
+perf-001 (large): 116991 Requests/s, Crawler ja, passed = true
+  Spitzen-RSS des Crawl-Prozesses: 460 MB
+  PERF-002: 3132.9 URLs/s im Mittel, Abschnitte [2896, 3716, 3423, 3806, 3952, 3340, 3406, 3124, 3252, 3753] URLs/s
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/m1-n27/docs/plan/M1-acceptance/loadtest/probe-n27/raw/k83/02-B0.json
+Ende 2026-10-16T15:21:11Z (17:21 lokal), Exit 0
+17:21  up 36 days,  6:39, 17 users, load averages: 7.94 8.40 8.71
