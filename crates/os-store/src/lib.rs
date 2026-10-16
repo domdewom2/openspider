@@ -21,6 +21,7 @@ pub mod registry;
 pub mod resume;
 pub mod schema;
 pub mod sink;
+pub mod url_index;
 pub mod writer;
 
 pub use error::StoreError;
