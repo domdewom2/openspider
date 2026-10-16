@@ -1,0 +1,10 @@
+Lauf 03-R3wal: Start 2026-10-16T02:25:15Z (04:25 lokal)
+wait_quiet: ruhig (load1=4.44 (< 8), frei: 62 GB )
+Load beim Start:  4:25  up 35 days, 17:43, 16 users, load averages: 4.44 5.88 8.10
+Binaerordner: /Users/dominikwojcik/Projects/openspider-wt/n22-bexp; Umgebung: OS_STORE_WAL_BOUNDS=131072:262144
+perf-001 (large): 137093 Requests/s, Crawler ja, passed = true
+  Spitzen-RSS des Crawl-Prozesses: 445 MB
+  PERF-002: 3648.2 URLs/s im Mittel, Abschnitte [3338, 4354, 4724, 4644, 4653, 4303, 4534, 4378, 4121, 4234] URLs/s
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/n22-raw/exp1/03-R3wal.json
+Ende 2026-10-16T02:27:43Z (04:27 lokal), Exit 0
+ 4:27  up 35 days, 17:46, 16 users, load averages: 4.77 5.36 7.53

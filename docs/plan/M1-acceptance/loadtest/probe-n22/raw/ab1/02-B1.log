@@ -1,0 +1,10 @@
+Lauf 02-B1: Start 2026-10-16T02:55:53Z (04:55 lokal)
+wait_quiet: ruhig (load1=3.43 (< 8), frei: 49 GB )
+Load beim Start:  4:55  up 35 days, 18:14, 16 users, load averages: 3.43 5.17 7.51
+Binaerordner: /Users/dominikwojcik/Projects/openspider-wt/n22-b2; Umgebung: keine
+perf-001 (large): 127272 Requests/s, Crawler ja, passed = true
+  Spitzen-RSS des Crawl-Prozesses: 438 MB
+  PERF-002: 3978.4 URLs/s im Mittel, Abschnitte [3741, 4772, 4826, 4913, 4895, 4817, 4810, 4964, 4723, 4805] URLs/s
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/n22-raw/ab1/02-B1.json
+Ende 2026-10-16T02:58:10Z (04:58 lokal), Exit 0
+ 4:58  up 35 days, 18:16, 16 users, load averages: 3.64 4.72 6.99

@@ -1,0 +1,10 @@
+Lauf 02-R1drop: Start 2026-10-16T02:23:01Z (04:23 lokal)
+wait_quiet: ruhig (load1=3.14 (< 8), frei: 62 GB )
+Load beim Start:  4:23  up 35 days, 17:41, 16 users, load averages: 3.14 6.31 8.60
+Binaerordner: /Users/dominikwojcik/Projects/openspider-wt/n22-bexp; Umgebung: OS_STORE_DROP_URL_INDEXES=1
+perf-001 (large): 134913 Requests/s, Crawler ja, passed = true
+  Spitzen-RSS des Crawl-Prozesses: 438 MB
+  PERF-002: 4069.4 URLs/s im Mittel, Abschnitte [3704, 4703, 5025, 5126, 5069, 5001, 5015, 5182, 4968, 5029] URLs/s
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/n22-raw/exp1/02-R1drop.json
+Ende 2026-10-16T02:25:15Z (04:25 lokal), Exit 0
+ 4:25  up 35 days, 17:43, 16 users, load averages: 4.44 5.88 8.10

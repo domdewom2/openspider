@@ -1,0 +1,8 @@
+Lauf 01-G3: Start 2026-10-16T04:36:50Z (06:36 lokal)
+wait_quiet: ruhig (load1=2.78 (< 8), frei: 44 GB )
+Load beim Start:  6:36  up 35 days, 19:55, 16 users, load averages: 2.78 3.56 4.08
+Binaerordner: /Users/dominikwojcik/Projects/openspider-wt/n22-b6; Umgebung: keine
+perf-005 (large): 137998 Requests/s, Crawler ja, passed = true
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/n22-raw/final3/perf005/01-G3.json
+Ende 2026-10-16T04:37:51Z (06:37 lokal), Exit 0
+ 6:37  up 35 days, 19:56, 16 users, load averages: 3.42 3.59 4.06
