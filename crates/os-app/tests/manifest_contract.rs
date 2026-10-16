@@ -378,6 +378,7 @@ async fn unknown_commands_are_not_found() {
 }
 
 // Modulkarte 3.6: jede Domäne liegt in einer Datei commands/<name>.rs mit Besitzer-Marke
+// spec: UI-140
 #[test]
 fn every_command_file_is_a_marked_stub_with_a_known_owner() {
     let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src/commands");

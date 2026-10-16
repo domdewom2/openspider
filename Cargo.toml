@@ -128,8 +128,10 @@ similar = "3"
 tokio-tungstenite = "0.30"
 # os-integrations (INTEG-003): nur die Protokollschicht, der HTTP-Client kommt über reqwest 0.13 (kein zweites reqwest im Baum)
 oauth2 = { version = "5", default-features = false }
-# OUT-223 laut Plan 3.1; die Spec legt als Authentifizierungsprofil-Format XChaCha20-Poly1305 + Argon2id fest (Befund im Bericht)
-aes-gcm = "0.11"
+# os-app (OUT-223): Authentifizierungsprofile (.osauth) = XChaCha20-Poly1305 + Argon2id, so legt es die Spec fest (Entscheidung
+# der Nachbesserungsrunde; ersetzt das im Plan 3.1 genannte aes-gcm). Beide MIT OR Apache-2.0.
+chacha20poly1305 = "0.11"
+argon2 = "0.6"
 # os-sched (OUT-280): SMTP über rustls/ring (kein OpenSSL)
 lettre = { version = "0.11", default-features = false, features = ["builder", "smtp-transport", "tokio1", "tokio1-rustls", "ring", "rustls-platform-verifier"] }
 # dev: Benchmarks der Kern- und App-Crates (`[[bench]] harness = false`)
@@ -138,7 +140,9 @@ criterion = { version = "0.8", default-features = false }
 whatlang = "0.18"
 # os-parse (INTEG-042, Klärung K2-05): `xee-xpath` 0.1.5 (MIT) ist bewusst NICHT eingebunden. Der Lizenz- und Reifetest
 # von M2-F01 (`cargo deny check advisories`) scheitert: xee-interpreter → json 0.12 (RUSTSEC-2022-0081, unmaintained) und
-# xot → genawaiter → proc-macro-error 0.4 (RUSTSEC-2024-0370, unmaintained). Entscheidung G0/Planer: Ignore-Einträge in
-# deny.toml (gehört nicht zu M2-F01) oder der Rückfall XPath 1.0 + Funktionsmenge aus INTEG-042 als eigene Erweiterung.
+# xot → genawaiter → proc-macro-error 0.4 (RUSTSEC-2024-0370, unmaintained). Entscheidung G0/Planer (vor Welle 1, D15):
+# Variante A = diese zwei Ignore-Einträge in deny.toml mit Begründung + `xee-xpath = "0.1"` hier und in os-parse (als Patch
+# vorbereitet und geprüft: cargo check -p os-parse, cargo deny check grün) oder Variante B = XPath 1.0 + Funktionsmenge aus
+# INTEG-042 als eigene Erweiterung (kein Manifesteintrag nötig).
 # os-parse (ONPAGE-153, Klärung K2-03): Hunspell-kompatible Rechtschreibung, MPL-2.0
 spellbook = "0.4"

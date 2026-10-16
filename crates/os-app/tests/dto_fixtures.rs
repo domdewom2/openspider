@@ -134,6 +134,7 @@ fn search_rules_nest_two_levels() {
     assert_eq!(back, tree);
 }
 
+// spec: UI-140
 #[test]
 fn cmd_error_builders_fill_the_documented_fields() {
     let e = CmdError::unsupported("view.rows", "M2-K06");

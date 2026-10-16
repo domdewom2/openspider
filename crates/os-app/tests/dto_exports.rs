@@ -126,6 +126,7 @@ fn optional_fields_are_optional_and_nullable_in_typescript() {
     assert!(err.contains("field?: string | null"), "{err}");
 }
 
+// spec: UI-140
 #[test]
 fn every_derive_ts_type_in_the_sources_is_in_the_export_list() {
     let src = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src/dto");
