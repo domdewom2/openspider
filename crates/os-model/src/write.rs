@@ -4,11 +4,16 @@ use crate::enums::{
     ContentClass, DiscoveryKind, Indexability, IndexabilityStatus, LinkOrigin, LinkPosition,
     LinkType, NoResponseReason, NotCrawledReason, PathType, RedirectType, SitemapKind, UrlState,
 };
+use crate::ext::ExtWrite;
 use crate::ids::{SitemapId, UrlId};
 use crate::parse::{
     CanonicalRef, Directive, ExtractedText, HreflangRef, ImageInstance, PaginationRef, RefreshRef,
 };
 use crate::time::Timestamp;
+use crate::write_m2::{
+    A11yWrite, ApiValueWrite, CustomExtractionWrite, CustomJsWrite, CustomSearchWrite, FormWrite,
+    RenderWrite, SdIssueWrite, SdItemWrite, SpellingWrite,
+};
 
 /// Alles, was die Engine in einer Transaktion schreibt.
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -34,6 +39,30 @@ pub struct WriteBatch {
     /// URL-Flags `(URL, Flag, Wert)` (`url_flags`, z. B. `redirect_loop`, `redirect_limit_reached`); der Writer
     /// schreibt sie in derselben Transaktion und stempelt `change_seq` der URL (M1.md 3.11).
     pub url_flags: Vec<(UrlId, String, Option<String>)>,
+    /// Skalare Zusatzfakten je URL → `url_ext` (ab M2, Namensräume laut [`crate::ext::NAMESPACES`]).
+    pub ext: Vec<ExtWrite>,
+    /// Strukturierte Datenelemente → `sd_items` (ab M2).
+    pub structured_data: Vec<SdItemWrite>,
+    /// Befunde der strukturierten Daten → `sd_issues` (ab M2).
+    pub sd_issues: Vec<SdIssueWrite>,
+    /// Gerenderte Seiten: HTML, Konsole, blockierte Ressourcen, Netzwerk, Screenshot-Kacheln (ab M2).
+    pub render: Vec<RenderWrite>,
+    /// Barrierefreiheit (axe-core) → `a11y_rules`, `a11y_nodes` (ab M2).
+    pub a11y: Vec<A11yWrite>,
+    /// Rechtschreib- und Grammatikbefunde → `spelling_findings` (ab M2).
+    pub spelling: Vec<SpellingWrite>,
+    /// Custom Search → `custom_search_hits` (ab M2).
+    pub custom_search: Vec<CustomSearchWrite>,
+    /// Custom Extraction → `custom_extraction_values` (ab M2).
+    pub custom_extraction: Vec<CustomExtractionWrite>,
+    /// Custom JavaScript → `custom_js_values` (ab M2).
+    pub custom_js: Vec<CustomJsWrite>,
+    /// Formulare → `forms` (ab M2).
+    pub forms: Vec<FormWrite>,
+    /// MinHash-Signaturen → `minhash` (ab M2).
+    pub minhash: Vec<(UrlId, Vec<u32>)>,
+    /// Werte der API-Quellen → `api_values`; nur vom Integrationspfad (ab M2).
+    pub api_values: Vec<ApiValueWrite>,
 }
 
 /// Eine neue URL.

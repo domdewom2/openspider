@@ -4,6 +4,9 @@ use crate::enums::{
     DirectiveSource, HintSource, ImageSource, LinkPosition, LinkType, PathType, RefreshSource,
     SitemapKind,
 };
+use crate::ext::ExtKey;
+use crate::parse_m2::{ExtractedValue, FormRef, SdItem, SearchHit, ValidationFacts};
+use crate::value::Value;
 
 /// Ein extrahierter Text, bereits mit N(x) normalisiert (ONPAGE-003).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -220,6 +223,20 @@ pub struct ParsedPage {
     pub effective_index: bool,
     /// Wirksames follow (TECH-066).
     pub effective_follow: bool,
+    /// Skalare Zusatzfakten (Schlüssel in den Namensräumen von [`crate::ext::NAMESPACES`], ab M2).
+    pub ext: Vec<(ExtKey, Value)>,
+    /// Strukturierte Daten (ab M2).
+    pub structured_data: Vec<SdItem>,
+    /// Formulare (ab M2).
+    pub forms: Vec<FormRef>,
+    /// Ergebnis der HTML-Validierung, wenn `advanced.html_validation` an ist (ab M2).
+    pub validation: Option<ValidationFacts>,
+    /// Treffer der Custom-Search-Filter (ab M2).
+    pub custom_search: Vec<SearchHit>,
+    /// Werte der Custom-Extractors (ab M2).
+    pub custom_extraction: Vec<ExtractedValue>,
+    /// MinHash-Signatur des Inhaltsbereichs (ab M2; Nahezu-Duplikate).
+    pub minhash: Option<Vec<u32>>,
 }
 
 /// Angaben aus HTTP-Headern (auch für Nicht-HTML).

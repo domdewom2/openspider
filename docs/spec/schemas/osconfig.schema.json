@@ -13,6 +13,31 @@
           "default": "session_only",
           "description": "Cookie-Verhalten."
         },
+        "crawl_fragments": {
+          "default": false,
+          "description": "Fragment-Bezeichner (`#…`) als eigene URLs crawlen (CRAWL-004, ab v2).",
+          "type": "boolean"
+        },
+        "green_hosting": {
+          "default": false,
+          "description": "Alle internen URLs liegen auf grünem Hosting (CRAWL-139, `advanced.green_hosting`, ab v2).",
+          "type": "boolean"
+        },
+        "html_validation": {
+          "default": true,
+          "description": "HTML-Validierung auf Token-Ebene durchführen (TECH-008, `advanced.html_validation`, ab v2).",
+          "type": "boolean"
+        },
+        "respect_canonical": {
+          "default": false,
+          "description": "Canonical respektieren: kanonisierte Seiten nicht speichern (CRAWL-092, ab v2).",
+          "type": "boolean"
+        },
+        "respect_noindex": {
+          "default": false,
+          "description": "`noindex` respektieren: solche Seiten nicht speichern (CRAWL-091, ab v2).",
+          "type": "boolean"
+        },
         "respect_self_ref_meta_refresh": {
           "default": false,
           "description": "Selbstverweisenden Meta Refresh berücksichtigen (Indexierbarkeit „Self Referencing Meta Refresh“,\nTECH-068). Standard aus wie die Referenz (K-57); der Selbst-Refresh wird unabhängig davon als\nWeiterleitung auf sich selbst geführt.",
@@ -82,6 +107,11 @@
           "description": "Links.",
           "type": "boolean"
         },
+        "near_duplicates": {
+          "default": true,
+          "description": "Nahezu-Duplikate per MinHash (K2-19, ab v2; wirkt nur mit `duplicates.near_enabled`).",
+          "type": "boolean"
+        },
         "pagination": {
           "default": true,
           "description": "Paginierung.",
@@ -100,14 +130,136 @@
       },
       "type": "object"
     },
+    "ApiConfig": {
+      "description": "Alle API-Quellen einer Konfiguration; Zugangsdaten stehen im Schlüsselbund (INTEG-002, OUT-225).",
+      "properties": {
+        "ahrefs": {
+          "$ref": "#/$defs/LinkMetricsConfig",
+          "default": {
+            "base_url": null,
+            "enabled": false,
+            "levels": [],
+            "metrics": []
+          },
+          "description": "Ahrefs."
+        },
+        "drive": {
+          "$ref": "#/$defs/DriveConfig",
+          "default": {
+            "base_url": null,
+            "enabled": false,
+            "root_folder": null
+          },
+          "description": "Google Drive."
+        },
+        "ga4": {
+          "$ref": "#/$defs/Ga4Config",
+          "default": {
+            "base_url": null,
+            "date_range": {
+              "from": null,
+              "preset": "last_30_days",
+              "to": null
+            },
+            "enabled": false,
+            "filter": null,
+            "metrics": [],
+            "page_dimension": null,
+            "property": null
+          },
+          "description": "Google Analytics 4."
+        },
+        "gsc": {
+          "$ref": "#/$defs/GscConfig",
+          "default": {
+            "base_url": null,
+            "date_range": {
+              "from": null,
+              "preset": "last_30_days",
+              "to": null
+            },
+            "enabled": false,
+            "filter": null,
+            "search_type": "web",
+            "site": null,
+            "url_inspection": false
+          },
+          "description": "Google Search Console."
+        },
+        "majestic": {
+          "$ref": "#/$defs/LinkMetricsConfig",
+          "default": {
+            "base_url": null,
+            "enabled": false,
+            "levels": [],
+            "metrics": []
+          },
+          "description": "Majestic."
+        },
+        "moz": {
+          "$ref": "#/$defs/LinkMetricsConfig",
+          "default": {
+            "base_url": null,
+            "enabled": false,
+            "levels": [],
+            "metrics": []
+          },
+          "description": "Moz."
+        },
+        "psi": {
+          "$ref": "#/$defs/PsiConfig",
+          "default": {
+            "base_url": null,
+            "device": "mobile",
+            "enabled": false,
+            "local": false,
+            "metric_groups": []
+          },
+          "description": "PageSpeed Insights."
+        }
+      },
+      "type": "object"
+    },
+    "ApiLevel": {
+      "enum": [
+        "url",
+        "subdomain",
+        "domain"
+      ],
+      "type": "string"
+    },
     "AuthConfig": {
       "description": "Authentifizierung (CRAWL-117, OUT-225). Passwörter stehen nie hier, nur der Verweis in den Schlüsselbund.",
       "properties": {
         "basic": {
           "default": [],
-          "description": "Basic-Auth-Einträge.",
+          "description": "Basic-Auth-Einträge (Digest wird aus der Server-Challenge erkannt, CRAWL-118).",
           "items": {
             "$ref": "#/$defs/BasicAuth"
+          },
+          "type": "array"
+        },
+        "form": {
+          "default": [],
+          "description": "Formularbasierte Anmeldungen (CRAWL-120, ab v2).",
+          "items": {
+            "$ref": "#/$defs/FormLogin"
+          },
+          "type": "array"
+        },
+        "profile_refs": {
+          "default": [],
+          "description": "Verweise auf Authentifizierungsprofile (OUT-223, ab v2); die Profile selbst liegen verschlüsselt im Profilordner.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "session_guard": {
+          "default": [],
+          "description": "Sitzungsschutz-Muster: URLs, die nie abgerufen werden, damit die Sitzung nicht endet (z. B. Logout; ab v2).",
+          "items": {
+            "type": "string"
           },
           "type": "array"
         }
@@ -135,6 +287,116 @@
         "username",
         "secret_ref"
       ],
+      "type": "object"
+    },
+    "ChangeDetectionConfig": {
+      "description": "Change Detection (TECH-300): Elementauswahl in Filterreihenfolge und Schwelle für Inhaltsänderungen.",
+      "properties": {
+        "content_threshold_pct": {
+          "default": 10,
+          "description": "Schwelle für Inhaltsänderungen in Prozent (0 – 100, Standard 10).",
+          "format": "uint8",
+          "maximum": 100,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "elements": {
+          "default": [
+            "indexability",
+            "page_titles",
+            "meta_description",
+            "h1",
+            "word_count",
+            "crawl_depth",
+            "inlinks",
+            "unique_inlinks",
+            "internal_outlinks",
+            "unique_internal_outlinks",
+            "external_outlinks",
+            "unique_external_outlinks",
+            "structured_data_unique_types"
+          ],
+          "description": "Aktive Elemente; Standard: die Elemente 1 – 13, `content` aus.",
+          "items": {
+            "$ref": "#/$defs/ChangeElement"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "ChangeElement": {
+      "enum": [
+        "indexability",
+        "page_titles",
+        "meta_description",
+        "h1",
+        "word_count",
+        "crawl_depth",
+        "inlinks",
+        "unique_inlinks",
+        "internal_outlinks",
+        "unique_internal_outlinks",
+        "external_outlinks",
+        "unique_external_outlinks",
+        "structured_data_unique_types",
+        "content"
+      ],
+      "type": "string"
+    },
+    "ChangeFreq": {
+      "enum": [
+        "always",
+        "hourly",
+        "daily",
+        "weekly",
+        "monthly",
+        "yearly",
+        "never"
+      ],
+      "type": "string"
+    },
+    "ChangeFreqBasis": {
+      "enum": [
+        "last_modified",
+        "depth"
+      ],
+      "type": "string"
+    },
+    "CompareConfig": {
+      "description": "Vergleich zweier Crawls (OUT-140 ff.).",
+      "properties": {
+        "change_detection": {
+          "$ref": "#/$defs/ChangeDetectionConfig",
+          "default": {
+            "content_threshold_pct": 10,
+            "elements": [
+              "indexability",
+              "page_titles",
+              "meta_description",
+              "h1",
+              "word_count",
+              "crawl_depth",
+              "inlinks",
+              "unique_inlinks",
+              "internal_outlinks",
+              "unique_internal_outlinks",
+              "external_outlinks",
+              "unique_external_outlinks",
+              "structured_data_unique_types"
+            ]
+          },
+          "description": "Change Detection."
+        },
+        "mapping": {
+          "default": [],
+          "description": "URL-Mapping, nacheinander angewendet.",
+          "items": {
+            "$ref": "#/$defs/MappingRule"
+          },
+          "type": "array"
+        }
+      },
       "type": "object"
     },
     "ContentAreaConfig": {
@@ -219,6 +481,13 @@
           "minimum": 0,
           "type": "integer"
         },
+        "readability": {
+          "$ref": "#/$defs/ReadabilityConfig",
+          "default": {
+            "language_aware": false
+          },
+          "description": "Lesbarkeit (ONPAGE-152, ab v2)."
+        },
         "soft404_phrases": {
           "default": [
             "page not found",
@@ -260,6 +529,112 @@
         "list"
       ],
       "type": "string"
+    },
+    "CustomExtractionConfig": {
+      "description": "Custom Extraction: bis zu 100 Extraktoren (INTEG-040).",
+      "properties": {
+        "extractors": {
+          "default": [],
+          "description": "Extraktoren in Spaltenreihenfolge.",
+          "items": {
+            "$ref": "#/$defs/Extractor"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "CustomJsConfig": {
+      "description": "Custom JavaScript: bis zu 100 Snippets (INTEG-060).",
+      "properties": {
+        "snippets": {
+          "default": [],
+          "description": "Snippets in Ausführungs- und Spaltenreihenfolge.",
+          "items": {
+            "$ref": "#/$defs/JsSnippet"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "CustomSearchConfig": {
+      "description": "Custom Search: bis zu 100 Filter (INTEG-020).",
+      "properties": {
+        "filters": {
+          "default": [],
+          "description": "Filter in Spaltenreihenfolge.",
+          "items": {
+            "$ref": "#/$defs/SearchFilter"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "DateRangeConfig": {
+      "description": "Zeitraum einer Abfrage (GA4, GSC).",
+      "properties": {
+        "from": {
+          "default": null,
+          "description": "Beginn bei `custom` (`YYYY-MM-DD`).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "preset": {
+          "$ref": "#/$defs/DateRangePreset",
+          "default": "last_30_days",
+          "description": "Voreinstellung."
+        },
+        "to": {
+          "default": null,
+          "description": "Ende bei `custom` (`YYYY-MM-DD`).",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "DateRangePreset": {
+      "enum": [
+        "last_7_days",
+        "last_28_days",
+        "last_30_days",
+        "last_90_days",
+        "custom"
+      ],
+      "type": "string"
+    },
+    "DriveConfig": {
+      "description": "Google Drive für den Sheets-Export (M2-X03).",
+      "properties": {
+        "base_url": {
+          "default": null,
+          "description": "Alternative Basis-URL (INTEG-019).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "enabled": {
+          "default": false,
+          "description": "Export nach Google Sheets einschalten.",
+          "type": "boolean"
+        },
+        "root_folder": {
+          "default": null,
+          "description": "Wurzelordner (Standard `OpenSpider`).",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
     },
     "DuplicatesConfig": {
       "description": "Duplikaterkennung (ONPAGE-005/143/144).",
@@ -314,6 +689,21 @@
     "ExtractionConfig": {
       "description": "Was aus einer Seite extrahiert wird (ONPAGE-018/090 ff., ONPAGE-140).",
       "properties": {
+        "accessibility": {
+          "default": false,
+          "description": "Barrierefreiheit mit axe-core (TECH-250, erfordert JavaScript-Rendering; Standard aus; ab v2).",
+          "type": "boolean"
+        },
+        "cookies": {
+          "default": false,
+          "description": "Cookies speichern (CRAWL-062, OS-Default aus; ab v2).",
+          "type": "boolean"
+        },
+        "forms": {
+          "default": true,
+          "description": "Formulare (CRAWL-061, ab v2).",
+          "type": "boolean"
+        },
         "h1": {
           "default": true,
           "description": "H1.",
@@ -334,6 +724,11 @@
           "description": "HTTP-Header speichern.",
           "type": "boolean"
         },
+        "indexability": {
+          "default": true,
+          "description": "Indexierbarkeit (CRAWL-061, ab v2).",
+          "type": "boolean"
+        },
         "last_modified": {
           "default": true,
           "description": "Last-Modified.",
@@ -349,9 +744,24 @@
           "description": "Meta Keywords.",
           "type": "boolean"
         },
+        "meta_robots": {
+          "default": true,
+          "description": "Meta Robots (CRAWL-065, ab v2).",
+          "type": "boolean"
+        },
+        "page_size": {
+          "default": true,
+          "description": "Seitengröße (CRAWL-061, ab v2).",
+          "type": "boolean"
+        },
         "page_titles": {
           "default": true,
           "description": "Page Titles.",
+          "type": "boolean"
+        },
+        "readability": {
+          "default": true,
+          "description": "Lesbarkeit (ONPAGE-149, ab v2).",
           "type": "boolean"
         },
         "response_time": {
@@ -359,10 +769,289 @@
           "description": "Antwortzeit.",
           "type": "boolean"
         },
+        "srcset": {
+          "default": false,
+          "description": "Bilder aus `srcset` extrahieren (CRAWL-055, Standard aus; ab v2).",
+          "type": "boolean"
+        },
         "store_html": {
           "default": false,
           "description": "Roh-HTML speichern (Vorhalt, CRAWL-063).",
           "type": "boolean"
+        },
+        "store_rendered_html": {
+          "default": false,
+          "description": "Gerendertes HTML speichern (CRAWL-063, nur mit JavaScript-Rendering; ab v2).",
+          "type": "boolean"
+        },
+        "structured_data": {
+          "$ref": "#/$defs/StructuredDataConfig",
+          "default": {
+            "case_sensitive": false,
+            "json_ld": false,
+            "microdata": false,
+            "rdfa": false,
+            "rich_results_validation": false,
+            "schema_org_validation": false
+          },
+          "description": "Strukturierte Daten (CRAWL-065, ab v2)."
+        },
+        "text_ratio": {
+          "default": true,
+          "description": "Text-zu-Code-Verhältnis (CRAWL-061, ab v2).",
+          "type": "boolean"
+        },
+        "word_count": {
+          "default": true,
+          "description": "Wortanzahl (CRAWL-061, ab v2).",
+          "type": "boolean"
+        },
+        "x_robots_tag": {
+          "default": true,
+          "description": "X-Robots-Tag (CRAWL-065, ab v2).",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "Extractor": {
+      "description": "Ein Extraktor (INTEG-040 … 043).",
+      "properties": {
+        "attribute": {
+          "default": null,
+          "description": "Attribut (nur CSS).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "expression": {
+          "default": "",
+          "description": "Ausdruck (XPath, CSS-Selektor oder Regex).",
+          "type": "string"
+        },
+        "mode": {
+          "$ref": "#/$defs/ExtractorMode",
+          "default": "xpath",
+          "description": "Modus."
+        },
+        "name": {
+          "default": "",
+          "description": "Name (Spaltenkopf); leer = `Extractor <n>`.",
+          "type": "string"
+        },
+        "output": {
+          "$ref": "#/$defs/ExtractorOutput",
+          "default": "text",
+          "description": "Ausgabeart (nur XPath/CSS)."
+        }
+      },
+      "type": "object"
+    },
+    "ExtractorMode": {
+      "enum": [
+        "xpath",
+        "css",
+        "regex"
+      ],
+      "type": "string"
+    },
+    "ExtractorOutput": {
+      "enum": [
+        "text",
+        "inner_html",
+        "html_element",
+        "function_value"
+      ],
+      "type": "string"
+    },
+    "FormLogin": {
+      "description": "Ein formularbasierter Login (CRAWL-120). Cookies und Speicherinhalte liegen verschlüsselt im Profil.",
+      "properties": {
+        "captured_at": {
+          "default": null,
+          "description": "Zeitpunkt der Anmeldung (ISO 8601 UTC).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "cookie_count": {
+          "default": 0,
+          "description": "Anzahl gespeicherter Cookies.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "login_url": {
+          "default": "",
+          "description": "Login-URL.",
+          "type": "string"
+        },
+        "profile": {
+          "default": null,
+          "description": "Name des Authentifizierungsprofils (`auth.listProfiles`), das die Sitzung hält.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "Ga4Config": {
+      "description": "Google Analytics 4 (INTEG-0xx, M2-I02).",
+      "properties": {
+        "base_url": {
+          "default": null,
+          "description": "Alternative Basis-URL (nur Debug-/Testbuilds oder `--allow-api-override`, INTEG-019).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "date_range": {
+          "$ref": "#/$defs/DateRangeConfig",
+          "default": {
+            "from": null,
+            "preset": "last_30_days",
+            "to": null
+          },
+          "description": "Zeitraum."
+        },
+        "enabled": {
+          "default": false,
+          "description": "Quelle beim Crawl abfragen.",
+          "type": "boolean"
+        },
+        "filter": {
+          "default": null,
+          "description": "Dimensionsfilter als Ausdruck.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "metrics": {
+          "default": [],
+          "description": "Metriken.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "page_dimension": {
+          "default": null,
+          "description": "Seitendimension (z. B. `landingPage`).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "property": {
+          "default": null,
+          "description": "Property-Kennung.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "GrammarConfig": {
+      "description": "Grammatikprüfung (ONPAGE-154).",
+      "properties": {
+        "disabled_rules": {
+          "default": [],
+          "description": "Abgeschaltete Regel-Kennungen.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "enabled": {
+          "default": false,
+          "description": "Prüfung einschalten (Standard aus).",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "GscConfig": {
+      "description": "Google Search Console (M2-I03).",
+      "properties": {
+        "base_url": {
+          "default": null,
+          "description": "Alternative Basis-URL (INTEG-019).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "date_range": {
+          "$ref": "#/$defs/DateRangeConfig",
+          "default": {
+            "from": null,
+            "preset": "last_30_days",
+            "to": null
+          },
+          "description": "Zeitraum."
+        },
+        "enabled": {
+          "default": false,
+          "description": "Quelle beim Crawl abfragen.",
+          "type": "boolean"
+        },
+        "filter": {
+          "default": null,
+          "description": "Dimensionsfilter als Ausdruck.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "search_type": {
+          "$ref": "#/$defs/SearchType",
+          "default": "web",
+          "description": "Suchtyp."
+        },
+        "site": {
+          "default": null,
+          "description": "Website-Kennung der Search Console.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "url_inspection": {
+          "default": false,
+          "description": "URL Inspection abfragen (Tageskontingent).",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "HeaderEntry": {
+      "description": "Ein eigener Request-Header (CRAWL-115).",
+      "properties": {
+        "host": {
+          "default": null,
+          "description": "Nur für diesen Host senden; nicht gesetzt = alle Hosts der Crawl-Domain (extern: nie).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "default": "",
+          "description": "Name.",
+          "type": "string"
+        },
+        "value": {
+          "default": "",
+          "description": "Wert.",
+          "type": "string"
         }
       },
       "type": "object"
@@ -403,6 +1092,72 @@
       ],
       "type": "string"
     },
+    "HttpConfig": {
+      "description": "HTTP-Verhalten. Proxy und vertrauenswürdige Zertifikate sind App-Einstellungen (CRAWL-122, OUT-222).",
+      "properties": {
+        "accept_language": {
+          "default": null,
+          "description": "`Accept-Language`, z. B. `de-DE,de;q=0.9`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "headers": {
+          "default": [],
+          "description": "Eigene Request-Header.",
+          "items": {
+            "$ref": "#/$defs/HeaderEntry"
+          },
+          "type": "array"
+        },
+        "ignore_certificate_errors": {
+          "default": false,
+          "description": "Zertifikatsfehler ignorieren (CRAWL-023, OS-Erweiterung, Standard aus).",
+          "type": "boolean"
+        },
+        "respect_hsts": {
+          "default": true,
+          "description": "HSTS-Richtlinie respektieren (CRAWL-018, Standard an).",
+          "type": "boolean"
+        },
+        "retries_5xx": {
+          "default": 0,
+          "description": "Wiederholungen bei 5xx (CRAWL-096, OS-Default 0).",
+          "format": "uint32",
+          "maximum": 10,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "retries_network": {
+          "default": 1,
+          "description": "Wiederholungen bei Verbindungsfehlern (CRAWL-097, OS-Default 1).",
+          "format": "uint32",
+          "maximum": 10,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "throttle_on_429": {
+          "default": true,
+          "description": "Bei 429 automatisch drosseln (CRAWL-097, OS-Default an).",
+          "type": "boolean"
+        },
+        "version": {
+          "$ref": "#/$defs/HttpVersion",
+          "default": "auto",
+          "description": "HTTP-Version (CRAWL-024)."
+        }
+      },
+      "type": "object"
+    },
+    "HttpVersion": {
+      "enum": [
+        "auto",
+        "http1",
+        "http2_preferred"
+      ],
+      "type": "string"
+    },
     "ImageLimits": {
       "description": "Schwellen für Bilder (ONPAGE-174/177).",
       "properties": {
@@ -434,6 +1189,58 @@
       },
       "type": "object"
     },
+    "JsSnippet": {
+      "description": "Ein JavaScript-Snippet (INTEG-060 … 062).",
+      "properties": {
+        "code": {
+          "default": "",
+          "description": "JavaScript-Code.",
+          "type": "string"
+        },
+        "content_types": {
+          "default": [
+            "text/html"
+          ],
+          "description": "Inhaltstypen (MIME ohne Parameter; `*` = alle außer PDF).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "$ref": "#/$defs/JsSnippetKind",
+          "default": "extraction",
+          "description": "Art."
+        },
+        "name": {
+          "default": "",
+          "description": "Name (Spaltenkopf); leer = `Snippet <n>`.",
+          "type": "string"
+        },
+        "timeout_s": {
+          "default": 10,
+          "description": "Zeitlimit in Sekunden (Aktion: Pflicht, 1–120).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "JsSnippetKind": {
+      "enum": [
+        "extraction",
+        "action"
+      ],
+      "type": "string"
+    },
+    "LastmodSource": {
+      "enum": [
+        "server",
+        "custom"
+      ],
+      "type": "string"
+    },
     "LimitsConfig": {
       "description": "Limits (CRAWL-066/067/072/075).",
       "properties": {
@@ -447,6 +1254,24 @@
             "null"
           ]
         },
+        "max_folder_depth": {
+          "default": null,
+          "description": "Höchste Ordnertiefe einer URL; nicht gesetzt = unbegrenzt (CRAWL-069, ab v2).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "max_links_per_url": {
+          "default": 10000,
+          "description": "Höchstzahl Links je URL (CRAWL-074, ab v2).",
+          "format": "uint32",
+          "maximum": 1073741824,
+          "minimum": 1,
+          "type": "integer"
+        },
         "max_page_kb": {
           "default": 51200,
           "description": "Höchste Seitengröße in KB.",
@@ -455,11 +1280,29 @@
           "minimum": 1,
           "type": "integer"
         },
+        "max_query_params": {
+          "default": null,
+          "description": "Höchstzahl Query-Parameter einer URL; nicht gesetzt = unbegrenzt (CRAWL-070, ab v2).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
         "max_redirects": {
           "default": 10,
           "description": "Höchstzahl gefolgter Weiterleitungen.",
           "format": "uint32",
           "minimum": 0,
+          "type": "integer"
+        },
+        "max_url_length": {
+          "default": 10000,
+          "description": "Höchste URL-Länge in Zeichen (CRAWL-073, ab v2).",
+          "format": "uint32",
+          "maximum": 16777216,
+          "minimum": 1,
           "type": "integer"
         },
         "max_urls": {
@@ -469,6 +1312,17 @@
           "maximum": 9223372036854775807,
           "minimum": 1,
           "type": "integer"
+        },
+        "max_urls_per_subdomain": {
+          "default": null,
+          "description": "Höchstzahl URLs je Subdomain; nicht gesetzt = unbegrenzt (CRAWL-071, ab v2).",
+          "format": "uint64",
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": [
+            "integer",
+            "null"
+          ]
         }
       },
       "type": "object"
@@ -479,6 +1333,107 @@
         "lf"
       ],
       "type": "string"
+    },
+    "LinkMetricsConfig": {
+      "description": "Eine Linkmetrik-Quelle (Majestic, Ahrefs, Moz; M2-I05).",
+      "properties": {
+        "base_url": {
+          "default": null,
+          "description": "Alternative Basis-URL (INTEG-019).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "enabled": {
+          "default": false,
+          "description": "Quelle beim Crawl abfragen.",
+          "type": "boolean"
+        },
+        "levels": {
+          "default": [],
+          "description": "Ebenen (URL, Subdomain, Domain).",
+          "items": {
+            "$ref": "#/$defs/ApiLevel"
+          },
+          "type": "array"
+        },
+        "metrics": {
+          "default": [],
+          "description": "Ausgewählte Metriken.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "LinkPositionRule": {
+      "description": "Eine Regel der Link-Positions-Klassifikation (INTEG-080 … 082).",
+      "properties": {
+        "contains": {
+          "default": [],
+          "description": "Teilstrings des gespeicherten Pfades (case-sensitiv); der leere Teilstring passt immer.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "position": {
+          "default": "",
+          "description": "Positionsname, z. B. `Navigation`.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "LinkPositionsConfig": {
+      "description": "Link-Positionen: geordnete Regelliste, die erste passende gewinnt (INTEG-081: Standardregeln).",
+      "properties": {
+        "rules": {
+          "default": [
+            {
+              "contains": [
+                "nav",
+                "menu"
+              ],
+              "position": "Navigation"
+            },
+            {
+              "contains": [
+                "header"
+              ],
+              "position": "Header"
+            },
+            {
+              "contains": [
+                "aside",
+                "sidebar"
+              ],
+              "position": "Sidebar"
+            },
+            {
+              "contains": [
+                "footer"
+              ],
+              "position": "Footer"
+            },
+            {
+              "contains": [
+                ""
+              ],
+              "position": "Content"
+            }
+          ],
+          "description": "Regeln von oben nach unten; `Content` (leerer Teilstring) steht als Auffangregel zuletzt.",
+          "items": {
+            "$ref": "#/$defs/LinkPositionRule"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
     },
     "LinksConfig": {
       "description": "Links-Tab (TECH-144).",
@@ -542,6 +1497,22 @@
       },
       "type": "object"
     },
+    "MappingRule": {
+      "description": "Eine Regel des URL-Mappings zwischen Crawls (OUT-146): Suche, nicht Vollübereinstimmung.",
+      "properties": {
+        "pattern": {
+          "default": "",
+          "description": "Suchmuster (Regex).",
+          "type": "string"
+        },
+        "replacement": {
+          "default": "",
+          "description": "Ersetzung mit `$1`-Gruppen.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "NetworkConfig": {
       "description": "Netzwerk (CRAWL-123).",
       "properties": {
@@ -559,6 +1530,16 @@
     "PdfConfig": {
       "description": "PDF (ONPAGE-009/166).",
       "properties": {
+        "extract_link_text": {
+          "default": false,
+          "description": "Linktext aus PDF extrahieren (CRAWL-064, ab v2; speicher- und zeitintensiv).",
+          "type": "boolean"
+        },
+        "extract_properties": {
+          "default": false,
+          "description": "PDF-Eigenschaften extrahieren (CRAWL-064, ab v2; Titel und Schlüsselwörter werden immer gelesen).",
+          "type": "boolean"
+        },
         "store": {
           "default": false,
           "description": "PDF-Dateien speichern.",
@@ -567,13 +1548,165 @@
       },
       "type": "object"
     },
+    "PsiConfig": {
+      "description": "PageSpeed Insights und Lighthouse (M2-I04).",
+      "properties": {
+        "base_url": {
+          "default": null,
+          "description": "Alternative Basis-URL (INTEG-019).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "device": {
+          "$ref": "#/$defs/PsiDevice",
+          "default": "mobile",
+          "description": "Gerätetyp."
+        },
+        "enabled": {
+          "default": false,
+          "description": "Quelle beim Crawl abfragen.",
+          "type": "boolean"
+        },
+        "local": {
+          "default": false,
+          "description": "Lighthouse lokal ausführen statt über die PSI-API.",
+          "type": "boolean"
+        },
+        "metric_groups": {
+          "default": [],
+          "description": "Ausgewählte Metrikgruppen.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "PsiDevice": {
+      "enum": [
+        "mobile",
+        "desktop"
+      ],
+      "type": "string"
+    },
+    "ReadabilityConfig": {
+      "description": "Lesbarkeit (ONPAGE-149, ONPAGE-152).",
+      "properties": {
+        "language_aware": {
+          "default": false,
+          "description": "Formeln für weitere Sprachen als Englisch verwenden (`content.readability.language_aware`, Standard aus).",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "RegexReplace": {
+      "description": "Eine Regex-Ersetzung (CRAWL-104).",
+      "properties": {
+        "pattern": {
+          "default": "",
+          "description": "Regulärer Ausdruck (Suche).",
+          "type": "string"
+        },
+        "replacement": {
+          "default": "",
+          "description": "Ersetzung mit `$1`-Gruppen.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "RenderingConfig": {
       "description": "Rendering (CRAWL-077).",
       "properties": {
+        "ajax_timeout_s": {
+          "default": 5,
+          "description": "AJAX-Timeout in Sekunden, 0 – 60 (CRAWL-080, ab v2).",
+          "format": "uint32",
+          "maximum": 60,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "chromium_path": {
+          "default": null,
+          "description": "Pfad zu Chromium; nicht gesetzt = gefundene oder mitgelieferte Installation (ab v2).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "js_error_reporting": {
+          "default": true,
+          "description": "JavaScript-Fehlerberichte und Konsolen-Log mitschneiden (CRAWL-084, `rendering.js_error_reporting`, ab v2).",
+          "type": "boolean"
+        },
         "mode": {
           "$ref": "#/$defs/RenderingMode",
           "default": "text",
-          "description": "Modus; M1 nur `text`."
+          "description": "Modus (`text` oder `javascript`, CRAWL-077)."
+        },
+        "page_timeout_s": {
+          "default": 60,
+          "description": "Zeitlimit je Seite in Sekunden; danach Fehler `Rendering fehlgeschlagen` (PERF-006, ab v2).",
+          "format": "uint32",
+          "maximum": 3600,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "restart_after_pages": {
+          "default": 500,
+          "description": "Browser nach so vielen Seiten neu starten (PERF-006, ab v2).",
+          "format": "uint32",
+          "maximum": 1073741824,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "restart_memory_mb": {
+          "default": 1500,
+          "description": "Browser bei diesem Speicherverbrauch in MB neu starten (PERF-006, ab v2).",
+          "format": "uint32",
+          "maximum": 1048576,
+          "minimum": 64,
+          "type": "integer"
+        },
+        "screenshots": {
+          "$ref": "#/$defs/ScreenshotConfig",
+          "default": {
+            "enabled": true,
+            "fit_to_content": false,
+            "format": "png",
+            "height": null,
+            "jpeg_quality": 80,
+            "wait_ms": 300,
+            "width": null
+          },
+          "description": "Screenshots (CRAWL-082, ab v2)."
+        },
+        "tabs": {
+          "default": null,
+          "description": "Anzahl paralleler Browser-Tabs; nicht gesetzt = Threads, gedeckelt auf die CPU-Kerne (CRAWL-078, ab v2).",
+          "format": "uint32",
+          "maximum": 64,
+          "minimum": 1,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "viewport": {
+          "$ref": "#/$defs/ViewportConfig",
+          "default": {
+            "height": 731,
+            "mobile": true,
+            "preset": "googlebot_mobile",
+            "scale_factor": 1.0,
+            "touch": true,
+            "width": 411
+          },
+          "description": "Fenstergröße und Gerät (CRAWL-081, ab v2)."
         }
       },
       "type": "object"
@@ -584,6 +1717,33 @@
         "javascript"
       ],
       "type": "string"
+    },
+    "RewriteConfig": {
+      "description": "URL-Umschreibung (CRAWL-103/104).",
+      "properties": {
+        "regex_replace": {
+          "default": [],
+          "description": "Regex-Ersetzungen in Reihenfolge.",
+          "items": {
+            "$ref": "#/$defs/RegexReplace"
+          },
+          "type": "array"
+        },
+        "remove_all_parameters": {
+          "default": false,
+          "description": "Gesamten Query-String entfernen.",
+          "type": "boolean"
+        },
+        "remove_parameters": {
+          "default": [],
+          "description": "Query-Parameter, die entfernt werden (exakter Name, case-sensitiv).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
     },
     "RobotsConfig": {
       "description": "robots.txt (CRAWL-099/100).",
@@ -674,6 +1834,484 @@
       },
       "type": "object"
     },
+    "ScreenshotConfig": {
+      "description": "Gerenderte Seiten-Screenshots (CRAWL-082).",
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Screenshots aufnehmen (wirksam nur im JavaScript-Modus; OS-Default: an).",
+          "type": "boolean"
+        },
+        "fit_to_content": {
+          "default": false,
+          "description": "Höhe an den Inhalt anpassen (höchstens 8 192 px).",
+          "type": "boolean"
+        },
+        "format": {
+          "$ref": "#/$defs/ScreenshotFormat",
+          "default": "png",
+          "description": "Bildformat."
+        },
+        "height": {
+          "default": null,
+          "description": "Höhe in Pixeln; nicht gesetzt = Höhe des Viewports.",
+          "format": "uint32",
+          "maximum": 16384,
+          "minimum": 1,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "jpeg_quality": {
+          "default": 80,
+          "description": "JPEG-Qualität (1–100).",
+          "format": "uint8",
+          "maximum": 100,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "wait_ms": {
+          "default": 300,
+          "description": "Wartezeit nach der Größenänderung in ms (0–10 000).",
+          "format": "uint32",
+          "maximum": 10000,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "width": {
+          "default": null,
+          "description": "Breite in Pixeln; nicht gesetzt = Breite des Viewports.",
+          "format": "uint32",
+          "maximum": 16384,
+          "minimum": 1,
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "ScreenshotFormat": {
+      "enum": [
+        "png",
+        "jpeg"
+      ],
+      "type": "string"
+    },
+    "SearchFilter": {
+      "description": "Ein Custom-Search-Filter (INTEG-020 … 024).",
+      "properties": {
+        "case_sensitive": {
+          "default": false,
+          "description": "Groß-/Kleinschreibung beachten (nur Typ Text).",
+          "type": "boolean"
+        },
+        "contains": {
+          "default": true,
+          "description": "`true` = „enthält“, `false` = „enthält nicht“.",
+          "type": "boolean"
+        },
+        "expression": {
+          "default": "",
+          "description": "Suchausdruck (darf mehrzeilig sein).",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/SearchKind",
+          "default": "text",
+          "description": "Abfragetyp."
+        },
+        "name": {
+          "default": "",
+          "description": "Name (Spaltenkopf); leer = `Filter <n>`.",
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/$defs/SearchScope",
+          "default": "html",
+          "description": "Suchbereich."
+        },
+        "xpath": {
+          "default": null,
+          "description": "XPath bei `scope = \"xpath\"`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "SearchKind": {
+      "enum": [
+        "text",
+        "regex"
+      ],
+      "type": "string"
+    },
+    "SearchScope": {
+      "enum": [
+        "html",
+        "page_text",
+        "page_text_no_anchors",
+        "html_head",
+        "html_body",
+        "xpath",
+        "content_area"
+      ],
+      "type": "string"
+    },
+    "SearchType": {
+      "enum": [
+        "web",
+        "image",
+        "video",
+        "news",
+        "discover",
+        "google_news"
+      ],
+      "type": "string"
+    },
+    "SegmentCondition": {
+      "description": "Eine Bedingung einer Segmentregel.",
+      "properties": {
+        "field": {
+          "default": "",
+          "description": "Feld (beliebige Spalte des Crawls, Kanon-Name).",
+          "type": "string"
+        },
+        "op": {
+          "$ref": "#/$defs/SegmentOp",
+          "default": "contains",
+          "description": "Operator."
+        },
+        "value": {
+          "default": "",
+          "description": "Wert (leer bei Operatoren ohne Wert).",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "SegmentConfig": {
+      "description": "Ein Segment: benannt, farbig, Gruppen ODER-verknüpft; die Listenreihenfolge ist die Priorität.",
+      "properties": {
+        "color": {
+          "default": "",
+          "description": "Farbe als `#rrggbb`.",
+          "type": "string"
+        },
+        "groups": {
+          "default": [],
+          "description": "Regelgruppen.",
+          "items": {
+            "$ref": "#/$defs/SegmentGroup"
+          },
+          "type": "array"
+        },
+        "name": {
+          "default": "",
+          "description": "Name (1 – 64 Zeichen, ohne Beachtung der Groß-/Kleinschreibung eindeutig).",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "SegmentGroup": {
+      "description": "Eine Regelgruppe: Bedingungen UND-verknüpft.",
+      "properties": {
+        "conditions": {
+          "default": [],
+          "description": "Bedingungen der Gruppe.",
+          "items": {
+            "$ref": "#/$defs/SegmentCondition"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "SegmentOp": {
+      "enum": [
+        "contains",
+        "not_contains",
+        "equals",
+        "not_equals",
+        "starts_with",
+        "ends_with",
+        "regex_matches",
+        "regex_not_matches",
+        "greater_than",
+        "less_than",
+        "greater_or_equal",
+        "less_or_equal",
+        "is_empty",
+        "is_not_empty",
+        "has_issue",
+        "has_no_issue",
+        "in_segment",
+        "in_no_segment"
+      ],
+      "type": "string"
+    },
+    "SegmentsConfig": {
+      "description": "Segmente einer Konfiguration.",
+      "properties": {
+        "list": {
+          "default": [],
+          "description": "Segmente in Prüfreihenfolge.",
+          "items": {
+            "$ref": "#/$defs/SegmentConfig"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "SitemapChangefreq": {
+      "description": "`changefreq` im Sitemap-Generator (OUT-125).",
+      "properties": {
+        "basis": {
+          "$ref": "#/$defs/ChangeFreqBasis",
+          "default": "last_modified",
+          "description": "Basis."
+        },
+        "by_depth": {
+          "default": [
+            "daily",
+            "daily",
+            "weekly",
+            "weekly",
+            "monthly"
+          ],
+          "description": "Wert je Tiefe (Index = Tiefe, der letzte Wert gilt für alle größeren Tiefen).",
+          "items": {
+            "$ref": "#/$defs/ChangeFreq"
+          },
+          "type": "array"
+        },
+        "enabled": {
+          "default": true,
+          "description": "`changefreq` aufnehmen.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "SitemapGenConfig": {
+      "description": "Sitemap-Generator (OUT-120 … 128): alle Einschlussoptionen standardmäßig aus.",
+      "properties": {
+        "changefreq": {
+          "$ref": "#/$defs/SitemapChangefreq",
+          "default": {
+            "basis": "last_modified",
+            "by_depth": [
+              "daily",
+              "daily",
+              "weekly",
+              "weekly",
+              "monthly"
+            ],
+            "enabled": true
+          },
+          "description": "`changefreq`."
+        },
+        "exclude_patterns": {
+          "default": [],
+          "description": "Ausgeschlossene URLs (Regex, eine pro Eintrag).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "hreflang": {
+          "$ref": "#/$defs/SitemapHreflang",
+          "default": {
+            "enabled": false,
+            "only_valid_targets": true
+          },
+          "description": "hreflang."
+        },
+        "images": {
+          "$ref": "#/$defs/SitemapImages",
+          "default": {
+            "enabled": false,
+            "exclude_noindex": false,
+            "external_regex": [],
+            "max_inlinks": null
+          },
+          "description": "Bilder."
+        },
+        "include_3xx": {
+          "default": false,
+          "description": "3xx einschließen.",
+          "type": "boolean"
+        },
+        "include_4xx": {
+          "default": false,
+          "description": "4xx einschließen.",
+          "type": "boolean"
+        },
+        "include_5xx": {
+          "default": false,
+          "description": "5xx einschließen.",
+          "type": "boolean"
+        },
+        "include_canonicalised": {
+          "default": false,
+          "description": "Kanonisierte Seiten einschließen.",
+          "type": "boolean"
+        },
+        "include_no_response": {
+          "default": false,
+          "description": "Keine Antwort einschließen.",
+          "type": "boolean"
+        },
+        "include_noindex": {
+          "default": false,
+          "description": "Noindex-Seiten einschließen.",
+          "type": "boolean"
+        },
+        "include_paginated": {
+          "default": false,
+          "description": "Paginierte URLs (`rel=prev`) einschließen.",
+          "type": "boolean"
+        },
+        "include_pdfs": {
+          "default": false,
+          "description": "PDFs einschließen.",
+          "type": "boolean"
+        },
+        "lastmod": {
+          "$ref": "#/$defs/SitemapLastmod",
+          "default": {
+            "custom_date": null,
+            "enabled": true,
+            "source": "server"
+          },
+          "description": "`lastmod`."
+        },
+        "priority": {
+          "$ref": "#/$defs/SitemapPriority",
+          "default": {
+            "by_depth": [
+              1.0,
+              0.9,
+              0.8,
+              0.7,
+              0.6,
+              0.5
+            ],
+            "enabled": true
+          },
+          "description": "`priority`."
+        }
+      },
+      "type": "object"
+    },
+    "SitemapHreflang": {
+      "description": "hreflang im Sitemap-Generator (OUT-128).",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "description": "hreflang aufnehmen (Standard aus).",
+          "type": "boolean"
+        },
+        "only_valid_targets": {
+          "default": true,
+          "description": "Nur Ziele mit Status 200 und indexierbar (Standard an).",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "SitemapImages": {
+      "description": "Bilder im Sitemap-Generator (OUT-126/127).",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "description": "Bilder aufnehmen (Standard aus).",
+          "type": "boolean"
+        },
+        "exclude_noindex": {
+          "default": false,
+          "description": "noindex-Bilder ausschließen ([P2]).",
+          "type": "boolean"
+        },
+        "external_regex": {
+          "default": [],
+          "description": "Regex für externe Bilder (CDN); leer = keine externen.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "max_inlinks": {
+          "default": null,
+          "description": "Nur Bilder mit höchstens so vielen IMG-Inlinks (inklusive Obergrenze); nicht gesetzt = deaktiviert.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "SitemapLastmod": {
+      "description": "`lastmod` im Sitemap-Generator (OUT-123).",
+      "properties": {
+        "custom_date": {
+          "default": null,
+          "description": "Datum bei `source = \"custom\"` (`YYYY-MM-DD`).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "enabled": {
+          "default": true,
+          "description": "`lastmod` aufnehmen.",
+          "type": "boolean"
+        },
+        "source": {
+          "$ref": "#/$defs/LastmodSource",
+          "default": "server",
+          "description": "Quelle."
+        }
+      },
+      "type": "object"
+    },
+    "SitemapPriority": {
+      "description": "`priority` im Sitemap-Generator (OUT-124).",
+      "properties": {
+        "by_depth": {
+          "default": [
+            1.0,
+            0.9,
+            0.8,
+            0.7,
+            0.6,
+            0.5
+          ],
+          "description": "Wert je Tiefe (Index = Tiefe, der letzte Wert gilt für alle größeren Tiefen), 0.0 – 1.0.",
+          "items": {
+            "format": "double",
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "enabled": {
+          "default": true,
+          "description": "`priority` aufnehmen.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
     "SitemapsConfig": {
       "description": "Sitemaps (TECH-210).",
       "properties": {
@@ -732,6 +2370,53 @@
         }
       },
       "type": "object"
+    },
+    "SpellingConfig": {
+      "description": "Rechtschreibprüfung (ONPAGE-153).",
+      "properties": {
+        "default_language": {
+          "default": "en",
+          "description": "Sprache, wenn die Erkennung scheitert.",
+          "type": "string"
+        },
+        "default_variants": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {
+            "de": "de-DE",
+            "en": "en-US",
+            "es": "es-ES",
+            "fr": "fr-FR",
+            "it": "it-IT"
+          },
+          "description": "Abbildung Sprache → Variante, z. B. `en = \"en-US\"`.",
+          "type": "object"
+        },
+        "enabled": {
+          "default": false,
+          "description": "Prüfung einschalten (Standard aus).",
+          "type": "boolean"
+        },
+        "manual_language": {
+          "default": "en-US",
+          "description": "Feste Sprache bei `mode = \"manual\"`, z. B. `de-DE`.",
+          "type": "string"
+        },
+        "mode": {
+          "$ref": "#/$defs/SpellingMode",
+          "default": "auto",
+          "description": "Sprache automatisch erkennen oder fest vorgeben."
+        }
+      },
+      "type": "object"
+    },
+    "SpellingMode": {
+      "enum": [
+        "auto",
+        "manual"
+      ],
+      "type": "string"
     },
     "SpiderConfig": {
       "description": "Spider-Einstellungen (CRAWL-038 ff.).",
@@ -869,6 +2554,42 @@
       },
       "type": "object"
     },
+    "StructuredDataConfig": {
+      "description": "Strukturierte Daten (CRAWL-065): Formate und Validierung. Alle Schalter sind OS-Defaults und standardmäßig aus.",
+      "properties": {
+        "case_sensitive": {
+          "default": false,
+          "description": "Groß-/Kleinschreibung der Typen und Eigenschaften beachten.",
+          "type": "boolean"
+        },
+        "json_ld": {
+          "default": false,
+          "description": "JSON-LD extrahieren.",
+          "type": "boolean"
+        },
+        "microdata": {
+          "default": false,
+          "description": "Microdata extrahieren.",
+          "type": "boolean"
+        },
+        "rdfa": {
+          "default": false,
+          "description": "RDFa extrahieren.",
+          "type": "boolean"
+        },
+        "rich_results_validation": {
+          "default": false,
+          "description": "Validierung gegen die Google-Rich-Result-Regeln.",
+          "type": "boolean"
+        },
+        "schema_org_validation": {
+          "default": false,
+          "description": "Validierung gegen schema.org.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
     "TextLimits": {
       "description": "Schwellen für Zeichen und Pixel (Titel, Meta-Description; 02 §0.3).",
       "properties": {
@@ -964,6 +2685,49 @@
         }
       },
       "type": "object"
+    },
+    "ViewportConfig": {
+      "description": "Fenstergröße und Gerät des Browsers (CRAWL-081). Standard: Googlebot Mobil 411 × 731.",
+      "properties": {
+        "height": {
+          "default": 731,
+          "description": "Höhe in CSS-Pixeln.",
+          "format": "uint32",
+          "maximum": 16384,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "mobile": {
+          "default": true,
+          "description": "Mobil-Flag.",
+          "type": "boolean"
+        },
+        "preset": {
+          "default": "googlebot_mobile",
+          "description": "Voreinstellung (`googlebot_mobile`, `googlebot_desktop`, Gerätename oder `custom`).",
+          "type": "string"
+        },
+        "scale_factor": {
+          "default": 1.0,
+          "description": "Skalierungsfaktor (Device Pixel Ratio).",
+          "format": "double",
+          "type": "number"
+        },
+        "touch": {
+          "default": true,
+          "description": "Touch-Flag.",
+          "type": "boolean"
+        },
+        "width": {
+          "default": 411,
+          "description": "Breite in CSS-Pixeln.",
+          "format": "uint32",
+          "maximum": 16384,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
     }
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -974,6 +2738,11 @@
       "default": {
         "assume_html": false,
         "cookies": "session_only",
+        "crawl_fragments": false,
+        "green_hosting": false,
+        "html_validation": true,
+        "respect_canonical": false,
+        "respect_noindex": false,
         "respect_self_ref_meta_refresh": false,
         "response_timeout_s": 20
       },
@@ -992,18 +2761,117 @@
         "link_metrics": true,
         "link_score": true,
         "links": true,
+        "near_duplicates": true,
         "pagination": true,
         "search_console": true,
         "sitemaps": true
       },
       "description": "Crawl-Analyse."
     },
+    "api": {
+      "$ref": "#/$defs/ApiConfig",
+      "default": {
+        "ahrefs": {
+          "base_url": null,
+          "enabled": false,
+          "levels": [],
+          "metrics": []
+        },
+        "drive": {
+          "base_url": null,
+          "enabled": false,
+          "root_folder": null
+        },
+        "ga4": {
+          "base_url": null,
+          "date_range": {
+            "from": null,
+            "preset": "last_30_days",
+            "to": null
+          },
+          "enabled": false,
+          "filter": null,
+          "metrics": [],
+          "page_dimension": null,
+          "property": null
+        },
+        "gsc": {
+          "base_url": null,
+          "date_range": {
+            "from": null,
+            "preset": "last_30_days",
+            "to": null
+          },
+          "enabled": false,
+          "filter": null,
+          "search_type": "web",
+          "site": null,
+          "url_inspection": false
+        },
+        "majestic": {
+          "base_url": null,
+          "enabled": false,
+          "levels": [],
+          "metrics": []
+        },
+        "moz": {
+          "base_url": null,
+          "enabled": false,
+          "levels": [],
+          "metrics": []
+        },
+        "psi": {
+          "base_url": null,
+          "device": "mobile",
+          "enabled": false,
+          "local": false,
+          "metric_groups": []
+        }
+      },
+      "description": "API-Quellen (ab v2)."
+    },
     "auth": {
       "$ref": "#/$defs/AuthConfig",
       "default": {
-        "basic": []
+        "basic": [],
+        "form": [],
+        "profile_refs": [],
+        "session_guard": []
       },
       "description": "Authentifizierung."
+    },
+    "cdns": {
+      "default": [],
+      "description": "CDN-Einträge, die als intern behandelt werden (CRAWL-108, ab v2): `cdn.other.test` oder `other.test/assets/`.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "compare": {
+      "$ref": "#/$defs/CompareConfig",
+      "default": {
+        "change_detection": {
+          "content_threshold_pct": 10,
+          "elements": [
+            "indexability",
+            "page_titles",
+            "meta_description",
+            "h1",
+            "word_count",
+            "crawl_depth",
+            "inlinks",
+            "unique_inlinks",
+            "internal_outlinks",
+            "unique_internal_outlinks",
+            "external_outlinks",
+            "unique_external_outlinks",
+            "structured_data_unique_types"
+          ]
+        },
+        "mapping": []
+      },
+      "description": "Vergleich zweier Crawls (ab v2)."
     },
     "content": {
       "$ref": "#/$defs/ContentConfig",
@@ -1020,6 +2888,9 @@
           "include_ids": []
         },
         "low_word_count": 200,
+        "readability": {
+          "language_aware": false
+        },
         "soft404_phrases": [
           "page not found",
           "404 not found",
@@ -1039,6 +2910,27 @@
         ]
       },
       "description": "Inhaltsbereich und Content-Filter."
+    },
+    "custom_extraction": {
+      "$ref": "#/$defs/CustomExtractionConfig",
+      "default": {
+        "extractors": []
+      },
+      "description": "Custom Extraction (ab v2)."
+    },
+    "custom_js": {
+      "$ref": "#/$defs/CustomJsConfig",
+      "default": {
+        "snippets": []
+      },
+      "description": "Custom JavaScript (ab v2)."
+    },
+    "custom_search": {
+      "$ref": "#/$defs/CustomSearchConfig",
+      "default": {
+        "filters": []
+      },
+      "description": "Custom Search (ab v2)."
     },
     "duplicates": {
       "$ref": "#/$defs/DuplicatesConfig",
@@ -1062,16 +2954,36 @@
     "extraction": {
       "$ref": "#/$defs/ExtractionConfig",
       "default": {
+        "accessibility": false,
+        "cookies": false,
+        "forms": true,
         "h1": true,
         "h2": true,
         "hash": true,
         "http_headers": true,
+        "indexability": true,
         "last_modified": true,
         "meta_description": true,
         "meta_keywords": true,
+        "meta_robots": true,
+        "page_size": true,
         "page_titles": true,
+        "readability": true,
         "response_time": true,
-        "store_html": false
+        "srcset": false,
+        "store_html": false,
+        "store_rendered_html": false,
+        "structured_data": {
+          "case_sensitive": false,
+          "json_ld": false,
+          "microdata": false,
+          "rdfa": false,
+          "rich_results_validation": false,
+          "schema_org_validation": false
+        },
+        "text_ratio": true,
+        "word_count": true,
+        "x_robots_tag": true
       },
       "description": "Extraktion."
     },
@@ -1079,6 +2991,14 @@
       "default": "openspider 0.1.0",
       "description": "Erzeuger, z. B. `openspider 0.1.0`.",
       "type": "string"
+    },
+    "grammar": {
+      "$ref": "#/$defs/GrammarConfig",
+      "default": {
+        "disabled_rules": [],
+        "enabled": false
+      },
+      "description": "Grammatikprüfung (ab v2)."
     },
     "h1": {
       "$ref": "#/$defs/HeadingLimits",
@@ -1102,6 +3022,20 @@
       },
       "description": "hreflang."
     },
+    "http": {
+      "$ref": "#/$defs/HttpConfig",
+      "default": {
+        "accept_language": null,
+        "headers": [],
+        "ignore_certificate_errors": false,
+        "respect_hsts": true,
+        "retries_5xx": 0,
+        "retries_network": 1,
+        "throttle_on_429": true,
+        "version": "auto"
+      },
+      "description": "HTTP-Verhalten (ab v2)."
+    },
     "image": {
       "$ref": "#/$defs/ImageLimits",
       "default": {
@@ -1121,11 +3055,56 @@
       "$ref": "#/$defs/LimitsConfig",
       "default": {
         "max_depth": null,
+        "max_folder_depth": null,
+        "max_links_per_url": 10000,
         "max_page_kb": 51200,
+        "max_query_params": null,
         "max_redirects": 10,
-        "max_urls": 5000000
+        "max_url_length": 10000,
+        "max_urls": 5000000,
+        "max_urls_per_subdomain": null
       },
       "description": "Limits."
+    },
+    "link_positions": {
+      "$ref": "#/$defs/LinkPositionsConfig",
+      "default": {
+        "rules": [
+          {
+            "contains": [
+              "nav",
+              "menu"
+            ],
+            "position": "Navigation"
+          },
+          {
+            "contains": [
+              "header"
+            ],
+            "position": "Header"
+          },
+          {
+            "contains": [
+              "aside",
+              "sidebar"
+            ],
+            "position": "Sidebar"
+          },
+          {
+            "contains": [
+              "footer"
+            ],
+            "position": "Footer"
+          },
+          {
+            "contains": [
+              ""
+            ],
+            "position": "Content"
+          }
+        ]
+      },
+      "description": "Link-Positionen (ab v2)."
     },
     "links": {
       "$ref": "#/$defs/LinksConfig",
@@ -1189,6 +3168,8 @@
     "pdf": {
       "$ref": "#/$defs/PdfConfig",
       "default": {
+        "extract_link_text": false,
+        "extract_properties": false,
         "store": false
       },
       "description": "PDF."
@@ -1196,9 +3177,42 @@
     "rendering": {
       "$ref": "#/$defs/RenderingConfig",
       "default": {
-        "mode": "text"
+        "ajax_timeout_s": 5,
+        "chromium_path": null,
+        "js_error_reporting": true,
+        "mode": "text",
+        "page_timeout_s": 60,
+        "restart_after_pages": 500,
+        "restart_memory_mb": 1500,
+        "screenshots": {
+          "enabled": true,
+          "fit_to_content": false,
+          "format": "png",
+          "height": null,
+          "jpeg_quality": 80,
+          "wait_ms": 300,
+          "width": null
+        },
+        "tabs": null,
+        "viewport": {
+          "height": 731,
+          "mobile": true,
+          "preset": "googlebot_mobile",
+          "scale_factor": 1.0,
+          "touch": true,
+          "width": 411
+        }
       },
       "description": "Rendering."
+    },
+    "rewrite": {
+      "$ref": "#/$defs/RewriteConfig",
+      "default": {
+        "regex_replace": [],
+        "remove_all_parameters": false,
+        "remove_parameters": []
+      },
+      "description": "URL-Umschreibung (ab v2)."
     },
     "robots": {
       "$ref": "#/$defs/RobotsConfig",
@@ -1211,7 +3225,7 @@
       "description": "robots.txt."
     },
     "schema_version": {
-      "default": 1,
+      "default": 2,
       "description": "Version des Dateiformats (OUT-221).",
       "format": "uint32",
       "maximum": 4294967295,
@@ -1230,6 +3244,65 @@
       },
       "description": "Bereich und Include/Exclude."
     },
+    "segments": {
+      "$ref": "#/$defs/SegmentsConfig",
+      "default": {
+        "list": []
+      },
+      "description": "Segmente (ab v2)."
+    },
+    "sitemap_gen": {
+      "$ref": "#/$defs/SitemapGenConfig",
+      "default": {
+        "changefreq": {
+          "basis": "last_modified",
+          "by_depth": [
+            "daily",
+            "daily",
+            "weekly",
+            "weekly",
+            "monthly"
+          ],
+          "enabled": true
+        },
+        "exclude_patterns": [],
+        "hreflang": {
+          "enabled": false,
+          "only_valid_targets": true
+        },
+        "images": {
+          "enabled": false,
+          "exclude_noindex": false,
+          "external_regex": [],
+          "max_inlinks": null
+        },
+        "include_3xx": false,
+        "include_4xx": false,
+        "include_5xx": false,
+        "include_canonicalised": false,
+        "include_no_response": false,
+        "include_noindex": false,
+        "include_paginated": false,
+        "include_pdfs": false,
+        "lastmod": {
+          "custom_date": null,
+          "enabled": true,
+          "source": "server"
+        },
+        "priority": {
+          "by_depth": [
+            1.0,
+            0.9,
+            0.8,
+            0.7,
+            0.6,
+            0.5
+          ],
+          "enabled": true
+        }
+      },
+      "description": "Sitemap-Generator (ab v2)."
+    },
     "sitemaps": {
       "$ref": "#/$defs/SitemapsConfig",
       "default": {
@@ -1247,6 +3320,23 @@
         "threads": 5
       },
       "description": "Geschwindigkeit."
+    },
+    "spelling": {
+      "$ref": "#/$defs/SpellingConfig",
+      "default": {
+        "default_language": "en",
+        "default_variants": {
+          "de": "de-DE",
+          "en": "en-US",
+          "es": "es-ES",
+          "fr": "fr-FR",
+          "it": "it-IT"
+        },
+        "enabled": false,
+        "manual_language": "en-US",
+        "mode": "auto"
+      },
+      "description": "Rechtschreibprüfung (ab v2)."
     },
     "spider": {
       "$ref": "#/$defs/SpiderConfig",

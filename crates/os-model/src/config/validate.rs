@@ -141,7 +141,32 @@ pub(crate) const INT_RANGES: &[IntRange] = &[
     r("duplicates.near_threshold_pct", 50, Some(100)),
     r("validation.html_doc_max_bytes", 1, Some(TOML_INT_MAX)),
     r("validation.resource_max_bytes", 1, Some(TOML_INT_MAX)),
+    // Konfiguration v2 (M2-F01)
+    r("limits.max_url_length", 1, Some(1 << 24)),
+    r("limits.max_links_per_url", 1, Some(1 << 30)),
+    r("limits.max_urls_per_subdomain", 1, Some(TOML_INT_MAX)),
+    r("rendering.ajax_timeout_s", 0, Some(60)),
+    r("rendering.tabs", 1, Some(64)),
+    r("rendering.restart_after_pages", 1, Some(1 << 30)),
+    r("rendering.restart_memory_mb", 64, Some(1 << 20)),
+    r("rendering.page_timeout_s", 1, Some(3600)),
+    r("rendering.viewport.width", 1, Some(16_384)),
+    r("rendering.viewport.height", 1, Some(16_384)),
+    r("rendering.screenshots.width", 1, Some(16_384)),
+    r("rendering.screenshots.height", 1, Some(16_384)),
+    r("rendering.screenshots.wait_ms", 0, Some(10_000)),
+    r("rendering.screenshots.jpeg_quality", 1, Some(100)),
+    r("http.retries_5xx", 0, Some(10)),
+    r("http.retries_network", 0, Some(10)),
+    r(
+        "compare.change_detection.content_threshold_pct",
+        0,
+        Some(100),
+    ),
 ];
+
+/// Obergrenze der Einträge in Custom Search, Custom Extraction und Custom JavaScript (INTEG-020/040/060).
+pub(crate) const MAX_CUSTOM_ENTRIES: usize = 100;
 
 /// Grenzen der Ganzzahl-Option `path`, falls eingeschränkt.
 pub(crate) fn int_range(path: &str) -> Option<IntRange> {
@@ -260,6 +285,8 @@ impl CrawlConfig {
             }
         }
 
+        self.validate_v2(&mut rep);
+
         // CRAWL-140 [P1]: Annehmen, aber warnen – ein Grenzwert über der Seitengröße ist nie erkennbar.
         let page_bytes = i128::from(self.limits.max_page_kb).saturating_mul(1024);
         for (path, value) in [
@@ -357,5 +384,412 @@ fn check_resolve(entry: &str) -> Result<(), String> {
         Err(format!(
             "{entry:?}: IP-Adresse (optional mit :Port) erwartet (ungültig: {target:?})"
         ))
+    }
+}
+
+fn bad(rep: &mut ValidationReport, path: impl Into<String>, message: impl Into<String>) {
+    rep.errors.push(ConfigIssue::new(
+        ConfigIssueKind::InvalidValue,
+        path,
+        message,
+    ));
+}
+
+fn warn(rep: &mut ValidationReport, path: impl Into<String>, message: impl Into<String>) {
+    rep.warnings
+        .push(ConfigIssue::new(ConfigIssueKind::Warning, path, message));
+}
+
+fn check_regex_list<'a>(
+    path: &str,
+    patterns: impl IntoIterator<Item = &'a String>,
+    rep: &mut ValidationReport,
+) {
+    for (i, p) in patterns.into_iter().enumerate() {
+        if let Err(e) = fancy_regex::Regex::new(p) {
+            bad(
+                rep,
+                format!("{path}[{i}]"),
+                format!("ungültiger regulärer Ausdruck: {e}"),
+            );
+        }
+    }
+}
+
+fn is_hex_color(s: &str) -> bool {
+    s.len() == 7 && s.starts_with('#') && s[1..].chars().all(|c| c.is_ascii_hexdigit())
+}
+
+impl CrawlConfig {
+    /// Prüfungen der Abschnitte ab Konfiguration v2.
+    fn validate_v2(&self, rep: &mut ValidationReport) {
+        use crate::enums::RenderingMode;
+        use crate::enums_m2::{
+            ExtractorMode, JsSnippetKind, LastmodSource, SearchKind, SearchScope, SegmentOp,
+            SpellingMode,
+        };
+
+        // Rendering: Optionen, die den JavaScript-Modus voraussetzen, sind im Textmodus wirkungslos (Hinweis).
+        if self.rendering.mode == RenderingMode::Text {
+            for (path, on) in [
+                ("extraction.accessibility", self.extraction.accessibility),
+                (
+                    "extraction.store_rendered_html",
+                    self.extraction.store_rendered_html,
+                ),
+            ] {
+                if on {
+                    warn(rep, path, "wirkt nur mit rendering.mode = \"javascript\"");
+                }
+            }
+            if !self.custom_js.snippets.is_empty() {
+                warn(
+                    rep,
+                    "custom_js.snippets",
+                    "Snippets laufen nur mit rendering.mode = \"javascript\"",
+                );
+            }
+        }
+
+        // Spelling
+        if self.spelling.mode == SpellingMode::Manual
+            && self.spelling.manual_language.trim().is_empty()
+        {
+            bad(
+                rep,
+                "spelling.manual_language",
+                "darf bei mode = \"manual\" nicht leer sein",
+            );
+        }
+
+        // Custom Search (INTEG-020)
+        if self.custom_search.filters.len() > MAX_CUSTOM_ENTRIES {
+            bad(rep, "custom_search.filters", "Maximal 100 Suchfilter");
+        }
+        let mut names = std::collections::BTreeSet::new();
+        for (i, f) in self.custom_search.filters.iter().enumerate() {
+            let name = if f.name.trim().is_empty() {
+                format!("Filter {}", i + 1)
+            } else {
+                f.name.trim().to_string()
+            };
+            if !names.insert(name.to_lowercase()) {
+                bad(
+                    rep,
+                    format!("custom_search.filters[{i}].name"),
+                    "Name ist nicht eindeutig",
+                );
+            }
+            if f.expression.trim().is_empty() {
+                bad(
+                    rep,
+                    format!("custom_search.filters[{i}].expression"),
+                    "darf nicht leer sein",
+                );
+            } else if f.kind == SearchKind::Regex {
+                if let Err(e) = fancy_regex::Regex::new(&f.expression) {
+                    bad(
+                        rep,
+                        format!("custom_search.filters[{i}].expression"),
+                        format!("ungültiger regulärer Ausdruck: {e}"),
+                    );
+                }
+            }
+            if f.scope == SearchScope::XPath
+                && f.xpath.as_deref().is_none_or(|x| x.trim().is_empty())
+            {
+                bad(
+                    rep,
+                    format!("custom_search.filters[{i}].xpath"),
+                    "bei scope = \"xpath\" erforderlich",
+                );
+            }
+        }
+
+        // Custom Extraction (INTEG-040)
+        if self.custom_extraction.extractors.len() > MAX_CUSTOM_ENTRIES {
+            bad(
+                rep,
+                "custom_extraction.extractors",
+                "Maximal 100 Extraktoren",
+            );
+        }
+        let mut names = std::collections::BTreeSet::new();
+        for (i, e) in self.custom_extraction.extractors.iter().enumerate() {
+            let name = if e.name.trim().is_empty() {
+                format!("Extractor {}", i + 1)
+            } else {
+                e.name.trim().to_string()
+            };
+            if !names.insert(name.to_lowercase()) {
+                bad(
+                    rep,
+                    format!("custom_extraction.extractors[{i}].name"),
+                    "Name ist nicht eindeutig",
+                );
+            }
+            if e.expression.trim().is_empty() {
+                bad(
+                    rep,
+                    format!("custom_extraction.extractors[{i}].expression"),
+                    "darf nicht leer sein",
+                );
+            } else if e.mode == ExtractorMode::Regex {
+                if let Err(err) = fancy_regex::Regex::new(&e.expression) {
+                    bad(
+                        rep,
+                        format!("custom_extraction.extractors[{i}].expression"),
+                        format!("ungültiger regulärer Ausdruck: {err}"),
+                    );
+                }
+            }
+        }
+
+        // Custom JavaScript (INTEG-060, INTEG-062)
+        if self.custom_js.snippets.len() > MAX_CUSTOM_ENTRIES {
+            bad(rep, "custom_js.snippets", "Maximal 100 Snippets");
+        }
+        let mut names = std::collections::BTreeSet::new();
+        for (i, sn) in self.custom_js.snippets.iter().enumerate() {
+            let name = if sn.name.trim().is_empty() {
+                format!("Snippet {}", i + 1)
+            } else {
+                sn.name.trim().to_string()
+            };
+            if !names.insert(name.to_lowercase()) {
+                bad(
+                    rep,
+                    format!("custom_js.snippets[{i}].name"),
+                    "Name ist nicht eindeutig",
+                );
+            }
+            if sn.kind == JsSnippetKind::Action && !(1..=120).contains(&sn.timeout_s) {
+                bad(
+                    rep,
+                    format!("custom_js.snippets[{i}].timeout_s"),
+                    format!(
+                        "Aktions-Snippets brauchen ein Zeitlimit von 1 bis 120 Sekunden (ist {})",
+                        sn.timeout_s
+                    ),
+                );
+            }
+        }
+
+        // Link-Positionen (INTEG-081): Auffangregel zuletzt
+        match self.link_positions.rules.last() {
+            None => bad(
+                rep,
+                "link_positions.rules",
+                "mindestens die Auffangregel \"Content\" erforderlich",
+            ),
+            Some(last) => {
+                if !last.contains.iter().any(String::is_empty) {
+                    bad(
+                        rep,
+                        "link_positions.rules",
+                        "die letzte Regel muss eine Auffangregel sein (leerer Teilstring)",
+                    );
+                }
+            }
+        }
+        for (i, r) in self.link_positions.rules.iter().enumerate() {
+            if r.position.trim().is_empty() {
+                bad(
+                    rep,
+                    format!("link_positions.rules[{i}].position"),
+                    "darf nicht leer sein",
+                );
+            }
+        }
+
+        // Umschreibung, CDNs, Mapping, Sitemap-Ausschlüsse
+        for (i, r) in self.rewrite.regex_replace.iter().enumerate() {
+            if let Err(e) = fancy_regex::Regex::new(&r.pattern) {
+                bad(
+                    rep,
+                    format!("rewrite.regex_replace[{i}].pattern"),
+                    format!("ungültiger regulärer Ausdruck: {e}"),
+                );
+            }
+        }
+        for (i, r) in self.compare.mapping.iter().enumerate() {
+            if let Err(e) = fancy_regex::Regex::new(&r.pattern) {
+                bad(
+                    rep,
+                    format!("compare.mapping[{i}].pattern"),
+                    format!("ungültiger regulärer Ausdruck: {e}"),
+                );
+            }
+        }
+        check_regex_list(
+            "sitemap_gen.exclude_patterns",
+            &self.sitemap_gen.exclude_patterns,
+            rep,
+        );
+        check_regex_list(
+            "sitemap_gen.images.external_regex",
+            &self.sitemap_gen.images.external_regex,
+            rep,
+        );
+        for (i, c) in self.cdns.iter().enumerate() {
+            if c.trim().is_empty() || c.chars().any(|ch| ch.is_whitespace() || ch.is_control()) {
+                bad(
+                    rep,
+                    format!("cdns[{i}]"),
+                    "Host oder Host/Pfad ohne Leerzeichen erwartet",
+                );
+            }
+        }
+
+        // HTTP
+        for (i, h) in self.http.headers.iter().enumerate() {
+            let token_ok = !h.name.is_empty()
+                && h.name
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || "!#$%&'*+-.^_`|~".contains(c));
+            if !token_ok {
+                bad(
+                    rep,
+                    format!("http.headers[{i}].name"),
+                    "ungültiger Header-Name",
+                );
+            }
+            if h.value.chars().any(|c| c == '\r' || c == '\n' || c == '\0') {
+                bad(
+                    rep,
+                    format!("http.headers[{i}].value"),
+                    "darf keine Zeilenumbrüche enthalten",
+                );
+            }
+        }
+        if let Some(al) = &self.http.accept_language {
+            if al.trim().is_empty() || al.chars().any(char::is_control) {
+                bad(
+                    rep,
+                    "http.accept_language",
+                    "darf nicht leer sein und keine Steuerzeichen enthalten",
+                );
+            }
+        }
+
+        // Segmente (CRAWL-134)
+        let mut seen: Vec<String> = Vec::new();
+        for (i, seg) in self.segments.list.iter().enumerate() {
+            let n = seg.name.chars().count();
+            if !(1..=64).contains(&n) {
+                bad(
+                    rep,
+                    format!("segments.list[{i}].name"),
+                    "1 bis 64 Zeichen erwartet",
+                );
+            }
+            let lower = seg.name.to_lowercase();
+            if seen.contains(&lower) {
+                bad(
+                    rep,
+                    format!("segments.list[{i}].name"),
+                    "Name ist ohne Beachtung der Groß-/Kleinschreibung nicht eindeutig",
+                );
+            }
+            if !seg.color.is_empty() && !is_hex_color(&seg.color) {
+                bad(
+                    rep,
+                    format!("segments.list[{i}].color"),
+                    "Farbe als #rrggbb erwartet",
+                );
+            }
+            for (g, group) in seg.groups.iter().enumerate() {
+                for (c, cond) in group.conditions.iter().enumerate() {
+                    let path = format!("segments.list[{i}].groups[{g}].conditions[{c}]");
+                    match cond.op {
+                        SegmentOp::RegexMatches | SegmentOp::RegexNotMatches => {
+                            if let Err(e) = fancy_regex::Regex::new(&cond.value) {
+                                bad(
+                                    rep,
+                                    format!("{path}.value"),
+                                    format!("ungültiger regulärer Ausdruck: {e}"),
+                                );
+                            }
+                        }
+                        SegmentOp::InSegment if !seen.contains(&cond.value.to_lowercase()) => {
+                            bad(
+                                rep,
+                                format!("{path}.value"),
+                                "\"ist in Segment\" darf nur auf weiter oben stehende Segmente verweisen",
+                            );
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            seen.push(lower);
+        }
+
+        // Sitemap-Generator (OUT-123 … 125)
+        let sg = &self.sitemap_gen;
+        if sg.lastmod.source == LastmodSource::Custom
+            && sg.lastmod.enabled
+            && sg
+                .lastmod
+                .custom_date
+                .as_deref()
+                .is_none_or(|d| d.trim().is_empty())
+        {
+            bad(
+                rep,
+                "sitemap_gen.lastmod.custom_date",
+                "bei source = \"custom\" erforderlich",
+            );
+        }
+        if sg.priority.by_depth.is_empty()
+            || sg
+                .priority
+                .by_depth
+                .iter()
+                .any(|v| !v.is_finite() || !(0.0..=1.0).contains(v))
+        {
+            bad(
+                rep,
+                "sitemap_gen.priority.by_depth",
+                "mindestens ein Wert, alle zwischen 0.0 und 1.0",
+            );
+        }
+        if sg.changefreq.by_depth.is_empty() {
+            bad(
+                rep,
+                "sitemap_gen.changefreq.by_depth",
+                "mindestens ein Wert erforderlich",
+            );
+        }
+
+        // Change Detection (TECH-300): jedes Element höchstens einmal, in Filterreihenfolge
+        let order: Vec<_> = self
+            .compare
+            .change_detection
+            .elements
+            .iter()
+            .map(|e| {
+                crate::enums_m2::ChangeElement::ALL
+                    .iter()
+                    .position(|x| x == e)
+            })
+            .collect();
+        if order.windows(2).any(|w| w[0] >= w[1]) {
+            bad(
+                rep,
+                "compare.change_detection.elements",
+                "Elemente höchstens einmal und in der Reihenfolge von TECH-300",
+            );
+        }
+        if self.rendering.screenshots.fit_to_content {
+            // Höhe an den Inhalt anpassen: feste Höhe wirkungslos, kein Fehler
+            if self.rendering.screenshots.height.is_some() {
+                warn(
+                    rep,
+                    "rendering.screenshots.height",
+                    "bei fit_to_content = true bestimmt der Inhalt die Höhe (höchstens 8 192 px)",
+                );
+            }
+        }
     }
 }

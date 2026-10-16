@@ -150,14 +150,14 @@ fn newer_schema_version_loads_with_warning() {
             (ConfigIssueKind::UnknownField, "ai"),
         ]
     );
-    assert!(l.warnings[0].message.contains("schema_version 2"));
+    assert!(l.warnings[0].message.contains("schema_version 3"));
     assert_eq!(l.warnings[0].line, Some(2));
     assert_eq!(l.config.mode, CrawlMode::List);
     assert_eq!(l.config.speed.threads, 12);
-    assert_eq!(l.config.schema_version, 2);
+    assert_eq!(l.config.schema_version, 3);
     // Gespeichert wird im Format dieser Version.
     let text = l.config.to_osconfig_string().unwrap();
-    assert!(text.starts_with("schema_version = 1\n"), "{text}");
+    assert!(text.starts_with("schema_version = 2\n"), "{text}");
 }
 
 // spec: OUT-221
@@ -238,7 +238,7 @@ fn default_fixture_matches_written_defaults() {
     // Alle Werte stehen drin (nicht nur Abweichungen) – und die Datei lädt zu den Standardwerten.
     assert!(on_disk.contains("threads = 5"));
     assert!(on_disk.contains("[spider.amp]"));
-    assert!(on_disk.starts_with("schema_version = 1\ngenerator = \"openspider "));
+    assert!(on_disk.starts_with("schema_version = 2\ngenerator = \"openspider "));
     assert_eq!(
         load("config/default.osconfig").config,
         CrawlConfig::default()
@@ -438,7 +438,7 @@ fn random_config(
     }
 
     CrawlConfig {
-        schema_version: 1,
+        schema_version: 2,
         generator: s!(),
         mode: pick!(CrawlMode::Spider, CrawlMode::List),
         scope: ScopeConfig {
@@ -471,6 +471,11 @@ fn random_config(
             max_depth: opt!(n!()),
             max_redirects: n!(),
             max_page_kb: g!(),
+            max_folder_depth: opt!(n!()),
+            max_query_params: opt!(n!()),
+            max_urls_per_subdomain: opt!(g!()),
+            max_url_length: n!(),
+            max_links_per_url: n!(),
         },
         speed: SpeedConfig {
             threads: n!(),
@@ -504,6 +509,11 @@ fn random_config(
             response_timeout_s: n!(),
             assume_html: b!(),
             respect_self_ref_meta_refresh: b!(),
+            crawl_fragments: b!(),
+            respect_noindex: b!(),
+            respect_canonical: b!(),
+            html_validation: b!(),
+            green_hosting: b!(),
         },
         auth: AuthConfig {
             basic: (0..(l.next().unwrap() % 3))
@@ -513,10 +523,44 @@ fn random_config(
                     secret_ref: s!(),
                 })
                 .collect(),
+            form: (0..(l.next().unwrap() % 3))
+                .map(|_| FormLogin {
+                    login_url: s!(),
+                    profile: opt!(s!()),
+                    captured_at: opt!(s!()),
+                    cookie_count: n!(),
+                })
+                .collect(),
+            session_guard: list!(),
+            profile_refs: list!(),
         },
         network: NetworkConfig { resolve: list!() },
         rendering: RenderingConfig {
             mode: pick!(RenderingMode::Text, RenderingMode::JavaScript),
+            ajax_timeout_s: n!(),
+            js_error_reporting: b!(),
+            viewport: ViewportConfig {
+                preset: s!(),
+                width: n!(),
+                height: n!(),
+                scale_factor: f.next().unwrap(),
+                mobile: b!(),
+                touch: b!(),
+            },
+            screenshots: ScreenshotConfig {
+                enabled: b!(),
+                width: opt!(n!()),
+                height: opt!(n!()),
+                fit_to_content: b!(),
+                wait_ms: n!(),
+                format: pick!(ScreenshotFormat::Png, ScreenshotFormat::Jpeg),
+                jpeg_quality: n!() as u8,
+            },
+            tabs: opt!(n!()),
+            restart_after_pages: n!(),
+            restart_memory_mb: n!(),
+            page_timeout_s: n!(),
+            chromium_path: opt!(s!()),
         },
         extraction: ExtractionConfig {
             page_titles: b!(),
@@ -529,6 +573,26 @@ fn random_config(
             last_modified: b!(),
             http_headers: b!(),
             store_html: b!(),
+            store_rendered_html: b!(),
+            indexability: b!(),
+            word_count: b!(),
+            readability: b!(),
+            text_ratio: b!(),
+            page_size: b!(),
+            forms: b!(),
+            accessibility: b!(),
+            cookies: b!(),
+            meta_robots: b!(),
+            x_robots_tag: b!(),
+            srcset: b!(),
+            structured_data: StructuredDataConfig {
+                json_ld: b!(),
+                microdata: b!(),
+                rdfa: b!(),
+                schema_org_validation: b!(),
+                rich_results_validation: b!(),
+                case_sensitive: b!(),
+            },
         },
         content: ContentConfig {
             area: ContentAreaConfig {
@@ -541,6 +605,9 @@ fn random_config(
             },
             low_word_count: n!(),
             soft404_phrases: list!(),
+            readability: ReadabilityConfig {
+                language_aware: b!(),
+            },
         },
         title: TextLimits {
             max_chars: n!(),
@@ -571,7 +638,11 @@ fn random_config(
         issues: IssuesConfig {
             ignore_non_indexable: b!(),
         },
-        pdf: PdfConfig { store: b!() },
+        pdf: PdfConfig {
+            store: b!(),
+            extract_properties: b!(),
+            extract_link_text: b!(),
+        },
         links: LinksConfig {
             high_crawl_depth: n!(),
             high_internal_outlinks: n!(),
@@ -601,6 +672,7 @@ fn random_config(
             search_console: b!(),
             link_metrics: b!(),
             amp: b!(),
+            near_duplicates: b!(),
         },
         validation: ValidationConfig {
             html_doc_max_bytes: g!(),
@@ -609,6 +681,239 @@ fn random_config(
         export: ExportConfig {
             utf8_bom: b!(),
             line_ending: pick!(LineEnding::Crlf, LineEnding::Lf),
+        },
+        spelling: SpellingConfig {
+            enabled: b!(),
+            mode: pick!(SpellingMode::Auto, SpellingMode::Manual),
+            manual_language: s!(),
+            default_variants: (0..(l.next().unwrap() % 3)).map(|_| (s!(), s!())).collect(),
+            default_language: s!(),
+        },
+        grammar: GrammarConfig {
+            enabled: b!(),
+            disabled_rules: list!(),
+        },
+        custom_search: CustomSearchConfig {
+            filters: (0..(l.next().unwrap() % 3))
+                .map(|_| SearchFilter {
+                    name: s!(),
+                    contains: b!(),
+                    kind: pick!(SearchKind::Text, SearchKind::Regex),
+                    expression: s!(),
+                    scope: pick!(
+                        SearchScope::Html,
+                        SearchScope::XPath,
+                        SearchScope::ContentArea
+                    ),
+                    xpath: opt!(s!()),
+                    case_sensitive: b!(),
+                })
+                .collect(),
+        },
+        custom_extraction: CustomExtractionConfig {
+            extractors: (0..(l.next().unwrap() % 3))
+                .map(|_| Extractor {
+                    name: s!(),
+                    mode: pick!(
+                        ExtractorMode::XPath,
+                        ExtractorMode::Css,
+                        ExtractorMode::Regex
+                    ),
+                    expression: s!(),
+                    attribute: opt!(s!()),
+                    output: pick!(ExtractorOutput::Text, ExtractorOutput::InnerHtml),
+                })
+                .collect(),
+        },
+        custom_js: CustomJsConfig {
+            snippets: (0..(l.next().unwrap() % 3))
+                .map(|_| JsSnippet {
+                    name: s!(),
+                    kind: pick!(JsSnippetKind::Extraction, JsSnippetKind::Action),
+                    content_types: list!(),
+                    timeout_s: n!(),
+                    code: s!(),
+                })
+                .collect(),
+        },
+        link_positions: LinkPositionsConfig {
+            rules: (0..(l.next().unwrap() % 3))
+                .map(|_| LinkPositionRule {
+                    position: s!(),
+                    contains: list!(),
+                })
+                .collect(),
+        },
+        rewrite: RewriteConfig {
+            remove_parameters: list!(),
+            remove_all_parameters: b!(),
+            regex_replace: (0..(l.next().unwrap() % 3))
+                .map(|_| RegexReplace {
+                    pattern: s!(),
+                    replacement: s!(),
+                })
+                .collect(),
+        },
+        cdns: list!(),
+        http: HttpConfig {
+            headers: (0..(l.next().unwrap() % 3))
+                .map(|_| HeaderEntry {
+                    name: s!(),
+                    value: s!(),
+                    host: opt!(s!()),
+                })
+                .collect(),
+            accept_language: opt!(s!()),
+            version: pick!(
+                HttpVersion::Auto,
+                HttpVersion::Http1,
+                HttpVersion::Http2Preferred
+            ),
+            retries_5xx: n!(),
+            retries_network: n!(),
+            throttle_on_429: b!(),
+            respect_hsts: b!(),
+            ignore_certificate_errors: b!(),
+        },
+        api: ApiConfig {
+            ga4: Ga4Config {
+                enabled: b!(),
+                base_url: opt!(s!()),
+                property: opt!(s!()),
+                date_range: DateRangeConfig {
+                    preset: pick!(DateRangePreset::Last7Days, DateRangePreset::Custom),
+                    from: opt!(s!()),
+                    to: opt!(s!()),
+                },
+                metrics: list!(),
+                page_dimension: opt!(s!()),
+                filter: opt!(s!()),
+            },
+            gsc: GscConfig {
+                enabled: b!(),
+                base_url: opt!(s!()),
+                site: opt!(s!()),
+                date_range: DateRangeConfig {
+                    preset: pick!(DateRangePreset::Last28Days, DateRangePreset::Last90Days),
+                    from: opt!(s!()),
+                    to: opt!(s!()),
+                },
+                search_type: pick!(SearchType::Web, SearchType::Image, SearchType::Discover),
+                filter: opt!(s!()),
+                url_inspection: b!(),
+            },
+            psi: PsiConfig {
+                enabled: b!(),
+                base_url: opt!(s!()),
+                device: pick!(PsiDevice::Mobile, PsiDevice::Desktop),
+                local: b!(),
+                metric_groups: list!(),
+            },
+            majestic: LinkMetricsConfig {
+                enabled: b!(),
+                base_url: opt!(s!()),
+                levels: vec![pick!(ApiLevel::Url, ApiLevel::Subdomain, ApiLevel::Domain)],
+                metrics: list!(),
+            },
+            ahrefs: LinkMetricsConfig {
+                enabled: b!(),
+                base_url: opt!(s!()),
+                levels: vec![],
+                metrics: list!(),
+            },
+            moz: LinkMetricsConfig {
+                enabled: b!(),
+                base_url: opt!(s!()),
+                levels: vec![ApiLevel::Domain, ApiLevel::Url],
+                metrics: list!(),
+            },
+            drive: DriveConfig {
+                enabled: b!(),
+                base_url: opt!(s!()),
+                root_folder: opt!(s!()),
+            },
+        },
+        segments: SegmentsConfig {
+            list: (0..(l.next().unwrap() % 3))
+                .map(|_| SegmentConfig {
+                    name: s!(),
+                    color: s!(),
+                    groups: (0..(l.next().unwrap() % 3))
+                        .map(|_| SegmentGroup {
+                            conditions: (0..(l.next().unwrap() % 3))
+                                .map(|_| SegmentCondition {
+                                    field: s!(),
+                                    op: pick!(
+                                        SegmentOp::Contains,
+                                        SegmentOp::InSegment,
+                                        SegmentOp::IsEmpty
+                                    ),
+                                    value: s!(),
+                                })
+                                .collect(),
+                        })
+                        .collect(),
+                })
+                .collect(),
+        },
+        compare: CompareConfig {
+            mapping: (0..(l.next().unwrap() % 3))
+                .map(|_| MappingRule {
+                    pattern: s!(),
+                    replacement: s!(),
+                })
+                .collect(),
+            change_detection: ChangeDetectionConfig {
+                elements: (0..(l.next().unwrap() % 4))
+                    .map(|_| {
+                        pick!(
+                            ChangeElement::Indexability,
+                            ChangeElement::H1,
+                            ChangeElement::Content
+                        )
+                    })
+                    .collect(),
+                content_threshold_pct: n!() as u8,
+            },
+        },
+        sitemap_gen: SitemapGenConfig {
+            include_noindex: b!(),
+            include_canonicalised: b!(),
+            include_paginated: b!(),
+            include_pdfs: b!(),
+            include_3xx: b!(),
+            include_4xx: b!(),
+            include_5xx: b!(),
+            include_no_response: b!(),
+            exclude_patterns: list!(),
+            lastmod: SitemapLastmod {
+                enabled: b!(),
+                source: pick!(LastmodSource::Server, LastmodSource::Custom),
+                custom_date: opt!(s!()),
+            },
+            priority: SitemapPriority {
+                enabled: b!(),
+                by_depth: (0..(l.next().unwrap() % 4))
+                    .map(|_| f.next().unwrap())
+                    .collect(),
+            },
+            changefreq: SitemapChangefreq {
+                enabled: b!(),
+                basis: pick!(ChangeFreqBasis::LastModified, ChangeFreqBasis::Depth),
+                by_depth: (0..(l.next().unwrap() % 4))
+                    .map(|_| pick!(ChangeFreq::Daily, ChangeFreq::Never, ChangeFreq::Yearly))
+                    .collect(),
+            },
+            images: SitemapImages {
+                enabled: b!(),
+                external_regex: list!(),
+                max_inlinks: opt!(n!()),
+                exclude_noindex: b!(),
+            },
+            hreflang: SitemapHreflang {
+                enabled: b!(),
+                only_valid_targets: b!(),
+            },
         },
     }
 }
@@ -635,7 +940,7 @@ proptest! {
         let again = loaded.config.to_osconfig_string().unwrap();
         prop_assert_eq!(&again, &text);
         // und die Datei auf der Platte verhält sich genauso
-        prop_assert!(text.starts_with("schema_version = 1\ngenerator = "));
+        prop_assert!(text.starts_with("schema_version = 2\ngenerator = "));
         prop_assert!(!text.to_lowercase().contains("password"));
     }
 }

@@ -12,13 +12,17 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 mod io;
+mod migrate;
 mod schema;
 mod set;
+mod v2;
 mod validate;
 
 pub use io::{ConfigLoadError, LoadedConfig, DEFAULT_PROFILE_FILE};
+pub use migrate::{migrate_toml, MigrationReport};
 pub use schema::{json_schema, json_schema_string};
 pub use set::{settable_keys, suggest_key, PresetGroup, SetError, SHORT_KEYS};
+pub use v2::*;
 pub use validate::{ConfigIssue, ConfigIssueKind, ValidationReport};
 
 use crate::enums::{
@@ -27,8 +31,12 @@ use crate::enums::{
 };
 use crate::error::ModelError;
 
-/// Aktuelle Version des `.osconfig`-Formats.
-pub const CONFIG_SCHEMA_VERSION: u32 = 1;
+/// Aktuelle Version des `.osconfig`-Formats. Version 2 (M2-F01) ergänzt die Abschnitte `rendering`, `extraction`,
+/// `limits`, `advanced`, `content`, `spelling`, `grammar`, `custom_search`, `custom_extraction`, `custom_js`,
+/// `link_positions`, `rewrite`, `cdns`, `http`, `auth`, `api`, `segments`, `compare` und `sitemap_gen`; Dateien der
+/// Version 1 lädt [`CrawlConfig::load_str`] unverändert (fehlende Schlüssel = Standardwert), [`migrate_toml`] hebt sie
+/// samt Sicherungskopie auf Version 2 (OUT-226).
+pub const CONFIG_SCHEMA_VERSION: u32 = 2;
 
 /// Die gesamte Konfiguration eines Crawls.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -94,6 +102,32 @@ pub struct CrawlConfig {
     pub validation: ValidationConfig,
     /// Export.
     pub export: ExportConfig,
+    /// Rechtschreibprüfung (ab v2).
+    pub spelling: SpellingConfig,
+    /// Grammatikprüfung (ab v2).
+    pub grammar: GrammarConfig,
+    /// Custom Search (ab v2).
+    pub custom_search: CustomSearchConfig,
+    /// Custom Extraction (ab v2).
+    pub custom_extraction: CustomExtractionConfig,
+    /// Custom JavaScript (ab v2).
+    pub custom_js: CustomJsConfig,
+    /// Link-Positionen (ab v2).
+    pub link_positions: LinkPositionsConfig,
+    /// URL-Umschreibung (ab v2).
+    pub rewrite: RewriteConfig,
+    /// CDN-Einträge, die als intern behandelt werden (CRAWL-108, ab v2): `cdn.other.test` oder `other.test/assets/`.
+    pub cdns: Vec<String>,
+    /// HTTP-Verhalten (ab v2).
+    pub http: HttpConfig,
+    /// API-Quellen (ab v2).
+    pub api: ApiConfig,
+    /// Segmente (ab v2).
+    pub segments: SegmentsConfig,
+    /// Vergleich zweier Crawls (ab v2).
+    pub compare: CompareConfig,
+    /// Sitemap-Generator (ab v2).
+    pub sitemap_gen: SitemapGenConfig,
 }
 
 impl Default for CrawlConfig {
@@ -139,6 +173,19 @@ impl Default for CrawlConfig {
             analysis: AnalysisConfig::default(),
             validation: ValidationConfig::default(),
             export: ExportConfig::default(),
+            spelling: SpellingConfig::default(),
+            grammar: GrammarConfig::default(),
+            custom_search: CustomSearchConfig::default(),
+            custom_extraction: CustomExtractionConfig::default(),
+            custom_js: CustomJsConfig::default(),
+            link_positions: LinkPositionsConfig::default(),
+            rewrite: RewriteConfig::default(),
+            cdns: Vec::new(),
+            http: HttpConfig::default(),
+            api: ApiConfig::default(),
+            segments: SegmentsConfig::default(),
+            compare: CompareConfig::default(),
+            sitemap_gen: SitemapGenConfig::default(),
         }
     }
 }
@@ -278,6 +325,16 @@ pub struct LimitsConfig {
     pub max_redirects: u32,
     /// Höchste Seitengröße in KB.
     pub max_page_kb: u64,
+    /// Höchste Ordnertiefe einer URL; nicht gesetzt = unbegrenzt (CRAWL-069, ab v2).
+    pub max_folder_depth: Option<u32>,
+    /// Höchstzahl Query-Parameter einer URL; nicht gesetzt = unbegrenzt (CRAWL-070, ab v2).
+    pub max_query_params: Option<u32>,
+    /// Höchstzahl URLs je Subdomain; nicht gesetzt = unbegrenzt (CRAWL-071, ab v2).
+    pub max_urls_per_subdomain: Option<u64>,
+    /// Höchste URL-Länge in Zeichen (CRAWL-073, ab v2).
+    pub max_url_length: u32,
+    /// Höchstzahl Links je URL (CRAWL-074, ab v2).
+    pub max_links_per_url: u32,
 }
 
 impl Default for LimitsConfig {
@@ -287,6 +344,11 @@ impl Default for LimitsConfig {
             max_depth: None,
             max_redirects: 10,
             max_page_kb: 51_200,
+            max_folder_depth: None,
+            max_query_params: None,
+            max_urls_per_subdomain: None,
+            max_url_length: 10_000,
+            max_links_per_url: 10_000,
         }
     }
 }
@@ -374,6 +436,16 @@ pub struct AdvancedConfig {
     /// TECH-068). Standard aus wie die Referenz (K-57); der Selbst-Refresh wird unabhängig davon als
     /// Weiterleitung auf sich selbst geführt.
     pub respect_self_ref_meta_refresh: bool,
+    /// Fragment-Bezeichner (`#…`) als eigene URLs crawlen (CRAWL-004, ab v2).
+    pub crawl_fragments: bool,
+    /// `noindex` respektieren: solche Seiten nicht speichern (CRAWL-091, ab v2).
+    pub respect_noindex: bool,
+    /// Canonical respektieren: kanonisierte Seiten nicht speichern (CRAWL-092, ab v2).
+    pub respect_canonical: bool,
+    /// HTML-Validierung auf Token-Ebene durchführen (TECH-008, `advanced.html_validation`, ab v2).
+    pub html_validation: bool,
+    /// Alle internen URLs liegen auf grünem Hosting (CRAWL-139, `advanced.green_hosting`, ab v2).
+    pub green_hosting: bool,
 }
 
 impl Default for AdvancedConfig {
@@ -383,6 +455,11 @@ impl Default for AdvancedConfig {
             response_timeout_s: 20,
             assume_html: false,
             respect_self_ref_meta_refresh: false,
+            crawl_fragments: false,
+            respect_noindex: false,
+            respect_canonical: false,
+            html_validation: true,
+            green_hosting: false,
         }
     }
 }
@@ -391,8 +468,14 @@ impl Default for AdvancedConfig {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(default)]
 pub struct AuthConfig {
-    /// Basic-Auth-Einträge.
+    /// Basic-Auth-Einträge (Digest wird aus der Server-Challenge erkannt, CRAWL-118).
     pub basic: Vec<BasicAuth>,
+    /// Formularbasierte Anmeldungen (CRAWL-120, ab v2).
+    pub form: Vec<FormLogin>,
+    /// Sitzungsschutz-Muster: URLs, die nie abgerufen werden, damit die Sitzung nicht endet (z. B. Logout; ab v2).
+    pub session_guard: Vec<String>,
+    /// Verweise auf Authentifizierungsprofile (OUT-223, ab v2); die Profile selbst liegen verschlüsselt im Profilordner.
+    pub profile_refs: Vec<String>,
 }
 
 /// Ein Basic-Auth-Eintrag.
@@ -415,11 +498,46 @@ pub struct NetworkConfig {
 }
 
 /// Rendering (CRAWL-077).
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct RenderingConfig {
-    /// Modus; M1 nur `text`.
+    /// Modus (`text` oder `javascript`, CRAWL-077).
     pub mode: RenderingMode,
+    /// AJAX-Timeout in Sekunden, 0 – 60 (CRAWL-080, ab v2).
+    pub ajax_timeout_s: u32,
+    /// JavaScript-Fehlerberichte und Konsolen-Log mitschneiden (CRAWL-084, `rendering.js_error_reporting`, ab v2).
+    pub js_error_reporting: bool,
+    /// Fenstergröße und Gerät (CRAWL-081, ab v2).
+    pub viewport: ViewportConfig,
+    /// Screenshots (CRAWL-082, ab v2).
+    pub screenshots: ScreenshotConfig,
+    /// Anzahl paralleler Browser-Tabs; nicht gesetzt = Threads, gedeckelt auf die CPU-Kerne (CRAWL-078, ab v2).
+    pub tabs: Option<u32>,
+    /// Browser nach so vielen Seiten neu starten (PERF-006, ab v2).
+    pub restart_after_pages: u32,
+    /// Browser bei diesem Speicherverbrauch in MB neu starten (PERF-006, ab v2).
+    pub restart_memory_mb: u32,
+    /// Zeitlimit je Seite in Sekunden; danach Fehler `Rendering fehlgeschlagen` (PERF-006, ab v2).
+    pub page_timeout_s: u32,
+    /// Pfad zu Chromium; nicht gesetzt = gefundene oder mitgelieferte Installation (ab v2).
+    pub chromium_path: Option<String>,
+}
+
+impl Default for RenderingConfig {
+    fn default() -> Self {
+        RenderingConfig {
+            mode: RenderingMode::Text,
+            ajax_timeout_s: 5,
+            js_error_reporting: true,
+            viewport: ViewportConfig::default(),
+            screenshots: ScreenshotConfig::default(),
+            tabs: None,
+            restart_after_pages: 500,
+            restart_memory_mb: 1500,
+            page_timeout_s: 60,
+            chromium_path: None,
+        }
+    }
 }
 
 /// Was aus einer Seite extrahiert wird (ONPAGE-018/090 ff., ONPAGE-140).
@@ -446,6 +564,32 @@ pub struct ExtractionConfig {
     pub http_headers: bool,
     /// Roh-HTML speichern (Vorhalt, CRAWL-063).
     pub store_html: bool,
+    /// Gerendertes HTML speichern (CRAWL-063, nur mit JavaScript-Rendering; ab v2).
+    pub store_rendered_html: bool,
+    /// Indexierbarkeit (CRAWL-061, ab v2).
+    pub indexability: bool,
+    /// Wortanzahl (CRAWL-061, ab v2).
+    pub word_count: bool,
+    /// Lesbarkeit (ONPAGE-149, ab v2).
+    pub readability: bool,
+    /// Text-zu-Code-Verhältnis (CRAWL-061, ab v2).
+    pub text_ratio: bool,
+    /// Seitengröße (CRAWL-061, ab v2).
+    pub page_size: bool,
+    /// Formulare (CRAWL-061, ab v2).
+    pub forms: bool,
+    /// Barrierefreiheit mit axe-core (TECH-250, erfordert JavaScript-Rendering; Standard aus; ab v2).
+    pub accessibility: bool,
+    /// Cookies speichern (CRAWL-062, OS-Default aus; ab v2).
+    pub cookies: bool,
+    /// Meta Robots (CRAWL-065, ab v2).
+    pub meta_robots: bool,
+    /// X-Robots-Tag (CRAWL-065, ab v2).
+    pub x_robots_tag: bool,
+    /// Bilder aus `srcset` extrahieren (CRAWL-055, Standard aus; ab v2).
+    pub srcset: bool,
+    /// Strukturierte Daten (CRAWL-065, ab v2).
+    pub structured_data: StructuredDataConfig,
 }
 
 impl Default for ExtractionConfig {
@@ -461,6 +605,19 @@ impl Default for ExtractionConfig {
             last_modified: true,
             http_headers: true,
             store_html: false,
+            store_rendered_html: false,
+            indexability: true,
+            word_count: true,
+            readability: true,
+            text_ratio: true,
+            page_size: true,
+            forms: true,
+            accessibility: false,
+            cookies: false,
+            meta_robots: true,
+            x_robots_tag: true,
+            srcset: false,
+            structured_data: StructuredDataConfig::default(),
         }
     }
 }
@@ -506,6 +663,8 @@ pub struct ContentConfig {
     pub low_word_count: u32,
     /// Soft-404-Phrasen (leer = Filter aus).
     pub soft404_phrases: Vec<String>,
+    /// Lesbarkeit (ONPAGE-152, ab v2).
+    pub readability: ReadabilityConfig,
 }
 
 impl Default for ContentConfig {
@@ -513,6 +672,7 @@ impl Default for ContentConfig {
         ContentConfig {
             area: ContentAreaConfig::default(),
             low_word_count: 200,
+            readability: ReadabilityConfig::default(),
             soft404_phrases: [
                 "page not found",
                 "404 not found",
@@ -659,6 +819,10 @@ impl Default for IssuesConfig {
 pub struct PdfConfig {
     /// PDF-Dateien speichern.
     pub store: bool,
+    /// PDF-Eigenschaften extrahieren (CRAWL-064, ab v2; Titel und Schlüsselwörter werden immer gelesen).
+    pub extract_properties: bool,
+    /// Linktext aus PDF extrahieren (CRAWL-064, ab v2; speicher- und zeitintensiv).
+    pub extract_link_text: bool,
 }
 
 /// Links-Tab (TECH-144).
@@ -787,6 +951,8 @@ pub struct AnalysisConfig {
     pub link_metrics: bool,
     /// AMP.
     pub amp: bool,
+    /// Nahezu-Duplikate per MinHash (K2-19, ab v2; wirkt nur mit `duplicates.near_enabled`).
+    pub near_duplicates: bool,
 }
 
 impl Default for AnalysisConfig {
@@ -805,6 +971,7 @@ impl Default for AnalysisConfig {
             search_console: true,
             link_metrics: true,
             amp: true,
+            near_duplicates: true,
         }
     }
 }

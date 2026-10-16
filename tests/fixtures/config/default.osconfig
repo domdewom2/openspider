@@ -1,6 +1,7 @@
-schema_version = 1
+schema_version = 2
 generator = "openspider 0.1.0"
 mode = "spider"
+cdns = []
 
 [scope]
 all_subdomains = false
@@ -70,6 +71,8 @@ crawl = false
 max_urls = 5000000
 max_redirects = 10
 max_page_kb = 51200
+max_url_length = 10000
+max_links_per_url = 10000
 
 [speed]
 threads = 5
@@ -88,15 +91,43 @@ cookies = "session_only"
 response_timeout_s = 20
 assume_html = false
 respect_self_ref_meta_refresh = false
+crawl_fragments = false
+respect_noindex = false
+respect_canonical = false
+html_validation = true
+green_hosting = false
 
 [auth]
 basic = []
+form = []
+session_guard = []
+profile_refs = []
 
 [network]
 resolve = []
 
 [rendering]
 mode = "text"
+ajax_timeout_s = 5
+js_error_reporting = true
+restart_after_pages = 500
+restart_memory_mb = 1500
+page_timeout_s = 60
+
+[rendering.viewport]
+preset = "googlebot_mobile"
+width = 411
+height = 731
+scale_factor = 1.0
+mobile = true
+touch = true
+
+[rendering.screenshots]
+enabled = true
+fit_to_content = false
+wait_ms = 300
+format = "png"
+jpeg_quality = 80
 
 [extraction]
 page_titles = true
@@ -109,6 +140,26 @@ response_time = true
 last_modified = true
 http_headers = true
 store_html = false
+store_rendered_html = false
+indexability = true
+word_count = true
+readability = true
+text_ratio = true
+page_size = true
+forms = true
+accessibility = false
+cookies = false
+meta_robots = true
+x_robots_tag = true
+srcset = false
+
+[extraction.structured_data]
+json_ld = false
+microdata = false
+rdfa = false
+schema_org_validation = false
+rich_results_validation = false
+case_sensitive = false
 
 [content]
 low_word_count = 200
@@ -140,6 +191,9 @@ exclude_elements = [
 ]
 exclude_classes = []
 exclude_ids = []
+
+[content.readability]
+language_aware = false
 
 [title]
 max_chars = 60
@@ -178,6 +232,8 @@ ignore_non_indexable = true
 
 [pdf]
 store = false
+extract_properties = false
+extract_link_text = false
 
 [links]
 high_crawl_depth = 4
@@ -235,6 +291,7 @@ analytics = true
 search_console = true
 link_metrics = true
 amp = true
+near_duplicates = true
 
 [validation]
 html_doc_max_bytes = 2097152
@@ -243,3 +300,178 @@ resource_max_bytes = 2097152
 [export]
 utf8_bom = true
 line_ending = "crlf"
+
+[spelling]
+enabled = false
+mode = "auto"
+manual_language = "en-US"
+default_language = "en"
+
+[spelling.default_variants]
+de = "de-DE"
+en = "en-US"
+es = "es-ES"
+fr = "fr-FR"
+it = "it-IT"
+
+[grammar]
+enabled = false
+disabled_rules = []
+
+[custom_search]
+filters = []
+
+[custom_extraction]
+extractors = []
+
+[custom_js]
+snippets = []
+
+[[link_positions.rules]]
+position = "Navigation"
+contains = [
+    "nav",
+    "menu",
+]
+
+[[link_positions.rules]]
+position = "Header"
+contains = ["header"]
+
+[[link_positions.rules]]
+position = "Sidebar"
+contains = [
+    "aside",
+    "sidebar",
+]
+
+[[link_positions.rules]]
+position = "Footer"
+contains = ["footer"]
+
+[[link_positions.rules]]
+position = "Content"
+contains = [""]
+
+[rewrite]
+remove_parameters = []
+remove_all_parameters = false
+regex_replace = []
+
+[http]
+headers = []
+version = "auto"
+retries_5xx = 0
+retries_network = 1
+throttle_on_429 = true
+respect_hsts = true
+ignore_certificate_errors = false
+
+[api.ga4]
+enabled = false
+metrics = []
+
+[api.ga4.date_range]
+preset = "last_30_days"
+
+[api.gsc]
+enabled = false
+search_type = "web"
+url_inspection = false
+
+[api.gsc.date_range]
+preset = "last_30_days"
+
+[api.psi]
+enabled = false
+device = "mobile"
+local = false
+metric_groups = []
+
+[api.majestic]
+enabled = false
+levels = []
+metrics = []
+
+[api.ahrefs]
+enabled = false
+levels = []
+metrics = []
+
+[api.moz]
+enabled = false
+levels = []
+metrics = []
+
+[api.drive]
+enabled = false
+
+[segments]
+list = []
+
+[compare]
+mapping = []
+
+[compare.change_detection]
+elements = [
+    "indexability",
+    "page_titles",
+    "meta_description",
+    "h1",
+    "word_count",
+    "crawl_depth",
+    "inlinks",
+    "unique_inlinks",
+    "internal_outlinks",
+    "unique_internal_outlinks",
+    "external_outlinks",
+    "unique_external_outlinks",
+    "structured_data_unique_types",
+]
+content_threshold_pct = 10
+
+[sitemap_gen]
+include_noindex = false
+include_canonicalised = false
+include_paginated = false
+include_pdfs = false
+include_3xx = false
+include_4xx = false
+include_5xx = false
+include_no_response = false
+exclude_patterns = []
+
+[sitemap_gen.lastmod]
+enabled = true
+source = "server"
+
+[sitemap_gen.priority]
+enabled = true
+by_depth = [
+    1.0,
+    0.9,
+    0.8,
+    0.7,
+    0.6,
+    0.5,
+]
+
+[sitemap_gen.changefreq]
+enabled = true
+basis = "last_modified"
+by_depth = [
+    "daily",
+    "daily",
+    "weekly",
+    "weekly",
+    "monthly",
+]
+
+[sitemap_gen.images]
+enabled = false
+external_regex = []
+exclude_noindex = false
+
+[sitemap_gen.hreflang]
+enabled = false
+only_valid_targets = true

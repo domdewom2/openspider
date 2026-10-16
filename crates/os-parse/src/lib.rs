@@ -138,6 +138,7 @@ pub fn parse_html(input: &ParseInput) -> ParsedPage {
         text_ratio: Some(stats.text_ratio),
         effective_index: true,
         effective_follow: true,
+        ..Default::default()
     };
 
     headers::merge(&mut page, headers::hints(input.url, input.headers, cfg));

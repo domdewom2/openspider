@@ -3,11 +3,13 @@
 use os_model::*;
 use proptest::prelude::*;
 
+mod v2_support;
+
 // spec: CRAWL-132, ONPAGE-002
 #[test]
 fn defaults_match_table_3_4() {
     let c = CrawlConfig::default();
-    assert_eq!(c.schema_version, 1);
+    assert_eq!(c.schema_version, 2);
     assert!(c.generator.starts_with("openspider "));
     assert_eq!(c.mode, CrawlMode::Spider);
 
@@ -155,8 +157,8 @@ fn defaults_match_table_3_4() {
 }
 
 fn all_fields_changed() -> CrawlConfig {
-    CrawlConfig {
-        schema_version: 1,
+    let mut c = CrawlConfig {
+        schema_version: 2,
         generator: "openspider 9.9.9".into(),
         mode: CrawlMode::List,
         scope: ScopeConfig {
@@ -189,6 +191,7 @@ fn all_fields_changed() -> CrawlConfig {
             max_depth: Some(3),
             max_redirects: 4,
             max_page_kb: 77,
+            ..LimitsConfig::default()
         },
         speed: SpeedConfig {
             threads: 11,
@@ -211,6 +214,7 @@ fn all_fields_changed() -> CrawlConfig {
             response_timeout_s: 3,
             assume_html: true,
             respect_self_ref_meta_refresh: false,
+            ..AdvancedConfig::default()
         },
         auth: AuthConfig {
             basic: vec![
@@ -225,12 +229,14 @@ fn all_fields_changed() -> CrawlConfig {
                     secret_ref: "auth/b".into(),
                 },
             ],
+            ..AuthConfig::default()
         },
         network: NetworkConfig {
             resolve: vec!["*.site.test=127.0.0.1:8080".into(), "x.test=::1".into()],
         },
         rendering: RenderingConfig {
             mode: RenderingMode::JavaScript,
+            ..RenderingConfig::default()
         },
         extraction: ExtractionConfig {
             page_titles: false,
@@ -243,6 +249,7 @@ fn all_fields_changed() -> CrawlConfig {
             last_modified: false,
             http_headers: false,
             store_html: true,
+            ..ExtractionConfig::default()
         },
         content: ContentConfig {
             area: ContentAreaConfig {
@@ -255,6 +262,7 @@ fn all_fields_changed() -> CrawlConfig {
             },
             low_word_count: 50,
             soft404_phrases: vec!["weg".into(), "nicht da".into()],
+            ..ContentConfig::default()
         },
         title: TextLimits {
             max_chars: 50,
@@ -285,7 +293,10 @@ fn all_fields_changed() -> CrawlConfig {
         issues: IssuesConfig {
             ignore_non_indexable: false,
         },
-        pdf: PdfConfig { store: true },
+        pdf: PdfConfig {
+            store: true,
+            ..PdfConfig::default()
+        },
         links: LinksConfig {
             high_crawl_depth: 6,
             high_internal_outlinks: 10,
@@ -315,6 +326,7 @@ fn all_fields_changed() -> CrawlConfig {
             search_console: false,
             link_metrics: false,
             amp: false,
+            ..AnalysisConfig::default()
         },
         validation: ValidationConfig {
             html_doc_max_bytes: 1000,
@@ -324,7 +336,10 @@ fn all_fields_changed() -> CrawlConfig {
             utf8_bom: false,
             line_ending: LineEnding::Lf,
         },
-    }
+        ..CrawlConfig::default()
+    };
+    v2_support::change_all_v2_fields(&mut c);
+    c
 }
 
 // spec: CRAWL-132
