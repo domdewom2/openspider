@@ -101,6 +101,48 @@ pub fn judge(pages: u64, mean: f64, rates: &[f64]) -> Vec<String> {
     out
 }
 
+/// K-80 (M1-N22, ausgewertet seit M1-N27/K-84): Grenze für den Endbatch, den Schreibaufruf mit dem Zustand `Completed`
+/// einschließlich Indexaufbau und Commit, bei 1 000 000 Seiten (Sekunden). Auswertung einer bestehenden Grenze, keine
+/// neue Regel; der Entwicklungsrichtwert liegt bei 45 s, damit PERF-002 (K-72) mit dem Endbatch im Mittel besteht.
+pub const MAX_END_BATCH_S: f64 = 60.0;
+/// Ab dieser Seitenzahl gilt [`MAX_END_BATCH_S`] (der 1-Mio.-Crawl von PERF-001, wie [`JUDGED_FROM_PAGES`]).
+pub const END_BATCH_JUDGED_FROM_PAGES: u64 = 1_000_000;
+
+/// Dauer des Endbatchs in Sekunden aus den Messzählern des Kindes (`diag`, Schlüssel `engine_w_end_batch_ns`); ohne
+/// den Zähler oder bei 0 (kein Schreibaufruf mit `Completed`) nicht messbar.
+pub fn end_batch_seconds(diag: Option<&serde_json::Value>) -> Option<f64> {
+    let ns = diag?.get("engine_w_end_batch_ns")?.as_u64()?;
+    (ns > 0).then(|| ns as f64 / 1e9)
+}
+
+/// Zeit zwischen der letzten abgerufenen URL und dem Ende des Crawls in Sekunden (`crawler_tail_s`): Crawl-Dauer minus
+/// die Zeit, zu der die letzte URL abgerufen war. Die Zeit bis zur letzten URL ist die Summe der zehn
+/// Abschnittsdauern `total / 10 / Rate`; ohne Abschnittswerte nicht messbar.
+pub fn tail_seconds(duration_s: f64, total: u64, rates: &[f64]) -> Option<f64> {
+    if total == 0 || rates.len() != SEGMENTS || rates.iter().any(|r| r.is_nan() || *r <= 0.0) {
+        return None;
+    }
+    let per_segment = total as f64 / SEGMENTS as f64;
+    let to_last_url: f64 = rates.iter().map(|r| per_segment / r).sum();
+    Some((duration_s - to_last_url).max(0.0))
+}
+
+/// K-80: Verletzung, wenn der Endbatch im `PERF-001`-Lauf mit mindestens 1 000 000 Seiten länger als
+/// [`MAX_END_BATCH_S`] dauerte. Ein nicht messbarer Endbatch ist bei einem beurteilten Lauf selbst eine Verletzung;
+/// andere Szenarien und kleinere Läufe berichten nur.
+pub fn end_batch_violation(perf_id: &str, pages: u64, end_batch_s: Option<f64>) -> Option<String> {
+    if perf_id != "PERF-001" || pages < END_BATCH_JUDGED_FROM_PAGES {
+        return None;
+    }
+    match end_batch_s {
+        None => Some("K-80: Endbatch nicht messbar".to_string()),
+        Some(s) if s > MAX_END_BATCH_S => {
+            Some(format!("K-80: Endbatch {s:.1} s > {MAX_END_BATCH_S:.0} s"))
+        }
+        Some(_) => None,
+    }
+}
+
 fn round(v: f64, digits: i32) -> f64 {
     let f = 10f64.powi(digits);
     (v * f).round() / f
@@ -237,5 +279,57 @@ mod tests {
         assert!(segment_rates(&[(0.0, 0), (1.0, 0)], 0).is_none());
         let f = report_fields(None, 0.0);
         assert!(f.iter().all(|(_, v)| v.is_null()));
+    }
+
+    // spec: PERF-002
+    #[test]
+    fn the_end_batch_is_judged_against_k80_only_in_the_one_million_page_perf_001_run() {
+        // K-80: Eintrag „Endbatch <x> s > 60 s“ ab 1 000 000 Seiten, nur PERF-001
+        assert_eq!(
+            end_batch_violation("PERF-001", 1_000_000, Some(61.2)).as_deref(),
+            Some("K-80: Endbatch 61.2 s > 60 s")
+        );
+        assert!(end_batch_violation("PERF-001", 1_000_000, Some(60.0)).is_none());
+        assert!(end_batch_violation("PERF-001", 1_000_000, Some(44.9)).is_none());
+        assert!(end_batch_violation("PERF-001", 999_999, Some(500.0)).is_none());
+        assert!(end_batch_violation("PERF-003", 1_000_000, Some(500.0)).is_none());
+        assert!(end_batch_violation("PERF-005", 100_000, None).is_none());
+        // ein nicht messbarer Endbatch ist bei einem beurteilten Lauf eine Verletzung, sonst nicht
+        assert_eq!(
+            end_batch_violation("PERF-001", 1_000_000, None).as_deref(),
+            Some("K-80: Endbatch nicht messbar")
+        );
+        assert!(end_batch_violation("PERF-001", 10_000, None).is_none());
+    }
+
+    // spec: PERF-002
+    #[test]
+    fn the_end_batch_comes_from_the_store_and_engine_counters_of_the_child() {
+        let diag = serde_json::json!({ "engine_w_end_batch_ns": 61_234_000_000u64, "engine_w_write_max_ns": 1 });
+        assert!((end_batch_seconds(Some(&diag)).unwrap() - 61.234).abs() < 1e-9);
+        assert!(
+            end_batch_seconds(Some(&serde_json::json!({ "engine_w_end_batch_ns": 0 }))).is_none()
+        );
+        assert!(end_batch_seconds(Some(&serde_json::json!({ "engine_items": 5 }))).is_none());
+        assert!(end_batch_seconds(None).is_none());
+    }
+
+    // spec: PERF-002
+    #[test]
+    fn the_tail_is_the_crawl_duration_minus_the_time_to_the_last_url() {
+        // 1 Mio. URLs mit 4 000 URLs/s: 250 s bis zur letzten URL; Crawl-Dauer 300 s → Nachlauf 50 s
+        let rates = [4_000.0; SEGMENTS];
+        assert!((tail_seconds(300.0, 1_000_000, &rates).unwrap() - 50.0).abs() < 1e-9);
+        // ungleichmäßig: fünf Abschnitte mit 2 000, fünf mit 8 000 URLs/s: 5 x 5 s + 5 x 1,25 s = 31,25 s
+        let mixed: Vec<f64> = (0..SEGMENTS)
+            .map(|i| if i < 5 { 2_000.0 } else { 8_000.0 })
+            .collect();
+        assert!((tail_seconds(100.0, 100_000, &mixed).unwrap() - (100.0 - 31.25)).abs() < 1e-9);
+        // nicht messbar
+        assert!(tail_seconds(10.0, 0, &rates).is_none());
+        assert!(tail_seconds(10.0, 100, &[1.0, 2.0]).is_none());
+        assert!(tail_seconds(10.0, 100, &[0.0; SEGMENTS]).is_none());
+        // nie negativ
+        assert_eq!(tail_seconds(1.0, 1_000_000, &rates), Some(0.0));
     }
 }

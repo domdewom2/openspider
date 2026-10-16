@@ -11,7 +11,7 @@
 //! |---|---|
 //! | Worker | `items`, `item_ns` (gesamt), `host_wait_ns`, `robots_ns`, `fetch_ns`/`fetch_max_ns`/`fetch_slow` (Abrufe ab 250 ms), `analyze_ns`, `assemble_ns` (einschließlich `reserve_ns`), `reserve_ns`/`reserve_max_ns` (Platz im Kanal), `send_ns`/`send_max_ns` (Senden mit Gegendruck) |
 //! | Steuerschleife | `run_loops`, `run_pops` |
-//! | Writer-Thread | `w_batches`, `w_pages`, `w_pages_max` (größter geschriebener Batch in Seiten, M1-P33), `w_write_ns`/`w_write_max_ns`, `w_idle_ns` (wartet auf Arbeit), `w_poll_sleeps`/`w_poll_sleep_ns` (Warten mit Zeitgrenze auf weitere Nachrichten, Sammelzeit des Gruppen-Commits), `w_queue_max`, `w_b_le50`, `w_b_le200`, `w_b_le1000`, `w_b_gt1000` (Batchgrößen in Seiten) |
+//! | Writer-Thread | `w_batches`, `w_pages`, `w_pages_max` (größter geschriebener Batch in Seiten, M1-P33), `w_write_ns`/`w_write_max_ns`, `w_end_batch_ns`/`w_end_batches` (Schreibaufruf mit dem Zustand `Completed`: Dauer einschließlich Indexaufbau und Commit, Zahl; M1-N27, K-80/K-84), `w_idle_ns` (wartet auf Arbeit), `w_poll_sleeps`/`w_poll_sleep_ns` (Warten mit Zeitgrenze auf weitere Nachrichten, Sammelzeit des Gruppen-Commits), `w_queue_max`, `w_b_le50`, `w_b_le200`, `w_b_le1000`, `w_b_gt1000` (Batchgrößen in Seiten) |
 //! | Speicher (M1-P33) | Spitzenwerte der geschätzten Größe der Kernstrukturen, abgetastet bei jedem Fortschrittstakt (100 ms) und am Ende; Bytes = Zahl der Einträge bzw. Kapazität mal Elementgröße plus Heap-Anteil der Adressen (Schätzung, keine Messung des Allokators): `mem_seen_entries`/`mem_seen_bytes`/`mem_seen_overflow` (Seen-Menge, Überlaufmenge), `mem_queue_items`/`mem_queue_bytes` (Einträge der Warteschlange im RAM samt Adressen), `mem_queue_disk` (nur in der Tabelle `queue` stehende Einträge), `mem_queue_pinned` (Einträge, die nicht ausgelagert werden dürfen), `mem_heap_entries`/`mem_heap_bytes` (Sortierstruktur), `mem_redirect_entries`/`mem_redirect_bytes`, `mem_sitemap_entries`/`mem_sitemap_bytes` (`sitemap_keys`, hreflang-Zähler), `mem_core_bytes` (Summe), `mem_writer_batch_bytes_max` (größter zusammengefasster Batch des Writer-Threads), `q_spilled`/`q_loaded`/`q_refills`/`q_trims`/`q_improved_disk` (Auslagern und Nachladen der Warteschlange), `q_spill_off` (Auslagerung wegen fehlender Zeilen in `queue` abgeschaltet), `q_lost` (Einträge, die die Datei nicht mehr kannte), `seen_collisions` (echte Schlüsselkollisionen) |
 //! | Nachladen (M1-N22) | `q_refill_jobs`/`q_refill_ns`/`q_refill_max_ns` (Aufträge und Gesamtdauer des Nachladens, Auftrag von der Planung bis zum Block), `q_refill_wait_ns`/`q_refill_wait_max_ns` (davon Wartezeit auf `writer.flush()`), `q_refill_read_ns`/`q_refill_read_max_ns` (Leseabfrage auf der eigenen Verbindung), `q_refill_rows`, `q_activate_n`/`q_activate_ns`/`q_activate_wait_ns` (Auslagern), `q_starved_n`/`q_starved_ns`/`q_starved_max_ns` (Zeit, in der der Pop wegen fehlendem Block leer ausging); Verlauf je 10 Nachladevorgänge: `q_refill_n_rNN`, `q_refill_wait_ns_rNN`, `q_refill_read_ns_rNN`, `q_refill_rows_rNN`, `q_starved_ns_rNN` (der letzte Eimer `r15` sammelt den Rest) |
 
@@ -122,6 +122,8 @@ counters!(
     w_pages_max,
     w_write_ns,
     w_write_max_ns,
+    w_end_batch_ns,
+    w_end_batches,
     w_idle_ns,
     w_poll_sleeps,
     w_poll_sleep_ns,

@@ -1,0 +1,36 @@
+{
+  "benchmark": "five_duplicate_filters_on_one_million_rows_without_the_indexes",
+  "filters": [
+    {
+      "filter": "Duplicate",
+      "hits": 300000,
+      "seconds": 11.463823917,
+      "tab": "Page Titles"
+    },
+    {
+      "filter": "Duplicate",
+      "hits": 300000,
+      "seconds": 11.695964541,
+      "tab": "Meta Description"
+    },
+    {
+      "filter": "Duplicate",
+      "hits": 300000,
+      "seconds": 11.997524125,
+      "tab": "H1"
+    },
+    {
+      "filter": "Duplicate",
+      "hits": 300000,
+      "seconds": 13.422169125,
+      "tab": "H2"
+    },
+    {
+      "filter": "Exact Duplicates",
+      "hits": 300000,
+      "seconds": 4.093614458,
+      "tab": "Content"
+    }
+  ],
+  "rows": 1000000
+}

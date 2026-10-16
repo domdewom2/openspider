@@ -34,7 +34,8 @@ const CREATE_SQL: &str = "CREATE INDEX IF NOT EXISTS links_target ON links(targe
 /// Schlüssel im Speicher, bevor er auf die Platte ausweicht; bei 256 MiB Cache (Profil Balanced) kostete das
 /// zusätzlich rund 270 MiB Spitzen-RSS (Messung M1-P32, Schritt 1, PERF-003 verlangt unter 500 MB). Mit 4 MiB
 /// bleibt der Aufbau schnell (1 Mio. Seiten x 30 Links: 31 s gegen 34 s bei 32 MiB; der Baum wird sortiert gefüllt) und der
-/// Spitzen-RSS beim Stand des Crawls (364 gegen 391 MiB).
+/// Spitzen-RSS beim Stand des Crawls (364 gegen 391 MiB). Größere Sortierpuffer sind nicht schneller (N27, sqlite3-Shell, 15 Mio.
+/// Links, 4 Threads: 4 MiB 15,9 s, 64 MiB 18,6 s; die In-Memory-Listen des Sortierers sind klein cachefreundlicher).
 const BUILD_CACHE_KIB: i64 = 4 * 1024;
 
 /// Ob der Index in der Datei steht.
@@ -65,10 +66,13 @@ pub fn ensure(conn: &Connection) -> Result<bool, StoreError> {
     Ok(true)
 }
 
-/// Hilfsthreads des Sortierers beim Indexaufbau (`PRAGMA threads`, N22): Sortieren und Mischen der Läufe überlappen mit dem
-/// Lesen der Tabelle. Gemessen (6 Mio. Links, 4 MiB Cache, Mikrobenchmark): 2,9 s mit 0, 1,2 s mit 4 Threads; im Crawl mit 500 000
-/// Seiten 14,5 s gegen 9,4 s (4 Threads). Zwei Threads halten den Zusatzspeicher bei rund 8 MB (je Thread ein
-/// Sortierpuffer des kleinen Caches, Spitzen-RSS gegen `origin/main` höchstens +10 MB).
+/// Hilfsthreads des Sortierers beim Indexaufbau (`PRAGMA threads`, N22): Sortieren und Mischen der Läufe überlappen mit
+/// dem Lesen der Tabelle. Zwei Threads halten den Zusatzspeicher bei rund 8 MB (je Thread ein Sortierpuffer des kleinen
+/// Caches). **Vier Threads** (N27/K-84 geprüft, verworfen): im Mikrobenchmark (`crates/os-store/tests/bench_links_build.rs`,
+/// 1 Mio. Seiten x 30 Links mit breiten Zeilen) 18 bis 21 s statt 20 bis 22 s, im Crawl `links_target` 18,5 statt 20 s,
+/// aber der Spitzen-RSS von `perf-003 --size large` stieg in drei von vier Läufen auf 500, 577 und 590 MB (mit zwei Threads
+/// 462, 466, 478 MB; Grenze 500 MB, Reserve 10 MB). Mehr Threads helfen ohnehin nicht, weil die Hauptlinie
+/// (Schlussmischen, Füllen des Baums, rund 15 s Benutzerzeit) den Aufbau bestimmt.
 const BUILD_THREADS: i64 = 2;
 
 /// Führt einen Indexaufbau mit dem kleinen Cache ([`BUILD_CACHE_KIB`]) und den Hilfsthreads des Sortierers aus und stellt
@@ -98,19 +102,32 @@ pub(crate) fn with_build_settings<T>(
 /// Wie [`ensure`], aber nur für eine Datei mit Schreibzugriff, die nicht läuft (gespeicherter Zustand nicht
 /// `Running`, oder ein `Running` mit ausgebliebenem Heartbeat). Ein laufender Crawl baut den Index selbst am
 /// Ende; eine gerade gesperrte Datei (`SQLITE_BUSY`) bleibt unverändert und liefert `false`.
+///
+/// Die Indizes über `urls` ([`crate::url_index`]) zieht die Funktion nur für eine **kleine** Datei nach (K-83): In
+/// einer Datei ab der Schwelle ([`crate::url_index::is_large`]) braucht sie kein Leser, und ihr Aufbau kostet bei
+/// 1 Mio. URLs rund 50 s.
 pub fn ensure_if_idle(file: &CrawlFile) -> Result<bool, StoreError> {
     let conn = file.conn();
-    if conn.is_readonly("main")? || (present(conn)? && crate::url_index::present(conn)?) {
+    if conn.is_readonly("main")? {
+        return Ok(false);
+    }
+    let want_url_indexes = !crate::url_index::is_large(conn)?;
+    if present(conn)? && (!want_url_indexes || crate::url_index::present(conn)?) {
         return Ok(false);
     }
     if file.effective_state(&SystemClock)? == CrawlState::Running {
         return Ok(false);
     }
-    // Zuerst die Indizes über `urls` (N22), dann `links_target`; beides sortiert.
-    match crate::url_index::ensure(conn)
-        .map(|n| n > 0)
-        .and_then(|a| ensure(conn).map(|b| a || b))
-    {
+    // Zuerst die Indizes über `urls` einer kleinen Datei (N22), dann `links_target`; beides sortiert.
+    let built = (|| -> Result<bool, StoreError> {
+        let urls = if want_url_indexes {
+            crate::url_index::ensure(conn)? > 0
+        } else {
+            false
+        };
+        Ok(ensure(conn)? || urls)
+    })();
+    match built {
         Err(StoreError::Sqlite(rusqlite::Error::SqliteFailure(f, _)))
             if matches!(
                 f.code,

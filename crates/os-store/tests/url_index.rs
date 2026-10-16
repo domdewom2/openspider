@@ -136,49 +136,163 @@ fn a_small_crawl_keeps_every_index_and_the_threshold_drops_them_in_the_batch_tha
     );
 }
 
-// spec: PERF-002
-#[test]
-fn the_regular_end_builds_them_in_the_last_batch_with_the_original_definitions() {
-    let dir = tempfile::tempdir().unwrap();
-    let reference = new_crawl(dir.path(), "ref.ospider", StorageProfile::Balanced);
-    let definitions = |path: &std::path::Path| -> Vec<(String, String)> {
-        let file = CrawlFile::open(path, OpenMode::ReadOnly).unwrap();
-        let mut stmt = file
-            .conn()
-            .prepare(
-                "SELECT name, sql FROM sqlite_master WHERE type = 'index' AND name IN \
-                 ('urls_title1', 'urls_md1', 'urls_h1', 'urls_h2', 'urls_hash') ORDER BY name",
-            )
-            .unwrap();
-        stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?)))
-            .unwrap()
-            .map(Result::unwrap)
-            .collect()
-    };
-    let original = definitions(&reference);
-    assert_eq!(original.len(), 5);
-
-    let (path, mut sink) = small_crawl(dir.path());
-    let before = os_store::sink::diag::snapshot()
-        .into_iter()
-        .find(|(k, _)| *k == "url_index_builds")
+/// Definitionen der fünf Indizes in der Datei (Name, SQL), nach Name sortiert.
+fn definitions(path: &std::path::Path) -> Vec<(String, String)> {
+    let file = CrawlFile::open(path, OpenMode::ReadOnly).unwrap();
+    let mut stmt = file
+        .conn()
+        .prepare(
+            "SELECT name, sql FROM sqlite_master WHERE type = 'index' AND name IN \
+             ('urls_title1', 'urls_md1', 'urls_h1', 'urls_h2', 'urls_hash') ORDER BY name",
+        )
+        .unwrap();
+    stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?)))
         .unwrap()
-        .1;
+        .map(Result::unwrap)
+        .collect()
+}
+
+fn completed_batch() -> WriteBatch {
     let mut last = state_batch("Completed");
     last.meta.push(("end_reason".into(), "queue_empty".into()));
-    sink.write(last).unwrap();
-    assert_eq!(dropped_present(&path).len(), 5);
+    last
+}
+
+// spec: PERF-002
+#[test]
+fn k83_a_large_file_does_not_get_the_five_indexes_back_at_the_regular_end_but_links_target_stands()
+{
+    let dir = tempfile::tempdir().unwrap();
+    let (path, mut sink) = small_crawl(dir.path()); // Schwelle 1: die sechs URLs gelten als „groß“
+    assert!(dropped_present(&path).is_empty());
+    sink.write(completed_batch()).unwrap();
+    assert!(
+        dropped_present(&path).is_empty(),
+        "kein Aufbau der fünf Indizes im Endbatch (K-83)"
+    );
+    let file = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
+    assert!(
+        link_index::present(file.conn()).unwrap(),
+        "links_target entsteht weiterhin im Endbatch (K-74)"
+    );
+    assert_eq!(count(&file, "SELECT COUNT(*) FROM links"), 5);
+    // alle übrigen Indizes bleiben
+    let rest = names(&path);
+    for keep in [
+        "urls_change_seq",
+        "urls_status",
+        "urls_class",
+        "urls_redirect",
+    ] {
+        assert!(rest.iter().any(|n| n == keep), "{keep}: {rest:?}");
+    }
+}
+
+// spec: PERF-002
+#[test]
+fn k83_a_small_file_keeps_all_five_indexes_through_the_regular_end() {
+    let dir = tempfile::tempdir().unwrap();
+    let original = definitions(&new_crawl(
+        dir.path(),
+        "ref.ospider",
+        StorageProfile::Balanced,
+    ));
+    assert_eq!(original.len(), 5);
+    let path = new_crawl(dir.path(), "small-end.ospider", StorageProfile::Balanced);
+    let mut sink = sink(&path, StorageProfile::Balanced); // Standardschwelle 250 000
+    let mut batch = batch_with_urls((1..=6).map(|i| (i, true)));
+    for i in 1..=5 {
+        batch.pages.push(page(i, vec![hyperlink(i + 1, 0)]));
+    }
+    sink.write(batch).unwrap();
+    sink.write(completed_batch()).unwrap();
     assert_eq!(
         definitions(&path),
         original,
-        "gleiche Definition wie in Migration 0001"
+        "alle fünf stehen mit der Definition aus Migration 0001"
     );
-    let after = os_store::sink::diag::snapshot()
-        .into_iter()
-        .find(|(k, _)| *k == "url_index_builds")
-        .unwrap()
-        .1;
-    assert!(after >= before + 5, "der Aufbau steht in den Messzählern");
+    let file = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
+    assert!(link_index::present(file.conn()).unwrap());
+    // fehlt in einer kleinen Datei ausnahmsweise einer, baut sie das Ende wieder auf (wie bisher)
+    drop(file);
+    let rw = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
+    rw.conn().execute_batch("DROP INDEX urls_h1").unwrap();
+    drop(rw);
+    let mut again = sink_again(&path);
+    again.write(completed_batch()).unwrap();
+    assert_eq!(definitions(&path), original);
+}
+
+/// Eine Datei, deren größte URL-Kennung die Standardschwelle erreicht (ohne Test-Hook des Writers).
+fn large_by_id(dir: &std::path::Path) -> (std::path::PathBuf, os_store::SqliteSink) {
+    let path = new_crawl(dir, "large.ospider", StorageProfile::Balanced);
+    let mut sink = sink(&path, StorageProfile::Balanced);
+    let mut ids: Vec<(i64, bool)> = (1..=6).map(|i| (i, true)).collect();
+    ids.push((url_index::DROP_FROM_URLS, true));
+    let mut batch = batch_with_urls(ids);
+    for i in 1..=5 {
+        batch.pages.push(page(i, vec![hyperlink(i + 1, 0)]));
+    }
+    sink.write(batch).unwrap();
+    (path, sink)
+}
+
+// spec: PERF-002
+#[test]
+fn k83_ensure_if_idle_builds_links_target_but_not_the_five_indexes_of_a_large_file() {
+    let dir = tempfile::tempdir().unwrap();
+    let (path, sink) = large_by_id(dir.path());
+    drop(sink); // Abbruch ohne Ende
+    assert!(
+        dropped_present(&path).is_empty(),
+        "Schwelle erreicht: entfernt"
+    );
+    let rw = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
+    assert!(url_index::is_large(rw.conn()).unwrap());
+    assert!(!link_index::present(rw.conn()).unwrap());
+    assert!(
+        link_index::ensure_if_idle(&rw).unwrap(),
+        "links_target wird nachgezogen"
+    );
+    assert!(link_index::present(rw.conn()).unwrap());
+    assert!(
+        !url_index::present(rw.conn()).unwrap(),
+        "die fünf Indizes nicht (K-83)"
+    );
+    assert!(
+        !link_index::ensure_if_idle(&rw).unwrap(),
+        "zweiter Aufruf: nichts zu tun, auch ohne die fünf Indizes"
+    );
+    // ensure bleibt öffentlich für künftige Leser
+    assert_eq!(url_index::ensure(rw.conn()).unwrap(), 5);
+    assert!(url_index::present(rw.conn()).unwrap());
+}
+
+// spec: PERF-002
+#[test]
+fn k83_the_regular_end_of_a_large_file_by_the_default_threshold_builds_only_links_target() {
+    let dir = tempfile::tempdir().unwrap();
+    let (path, mut sink) = large_by_id(dir.path());
+    sink.write(completed_batch()).unwrap();
+    let file = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
+    assert!(link_index::present(file.conn()).unwrap());
+    assert!(dropped_present(&path).is_empty());
+    assert!(url_index::is_large(file.conn()).unwrap());
+}
+
+// spec: PERF-002
+#[test]
+fn k83_a_small_file_is_not_large_and_is_completed_by_ensure_if_idle() {
+    let dir = tempfile::tempdir().unwrap();
+    let (path, sink) = small_crawl(dir.path()); // vom Test-Hook entfernt, aber nur sechs URLs
+    drop(sink);
+    let rw = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
+    assert!(!url_index::is_large(rw.conn()).unwrap());
+    assert!(link_index::ensure_if_idle(&rw).unwrap());
+    assert!(
+        url_index::present(rw.conn()).unwrap(),
+        "kleine Datei: alle stehen"
+    );
 }
 
 // spec: PERF-002

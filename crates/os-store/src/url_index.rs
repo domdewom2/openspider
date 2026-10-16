@@ -1,16 +1,19 @@
-//! Sekundärindizes von `urls` mit zufälligen Schlüsseln und ihr Lebenszyklus (M1-N22, K-80; Vorbild: [`crate::link_index`]).
+//! Sekundärindizes von `urls` mit zufälligen Schlüsseln und ihr Lebenszyklus (M1-N22, K-80; geändert durch M1-N27, K-83).
 //!
 //! Der Index über eine Textspalte, deren Werte zur Einfügereihenfolge nichts mit der Sortierung zu tun haben
 //! (`title_1`, `meta_desc_1`, `h1_1`, `h2_1`, `hash_md5`), verteilt die Änderungen eines Batches auf beliebige Blätter:
 //! 2 000 Seiten ändern 2 000 verschiedene Seiten je Index. Jede dieser Seiten wandert ins WAL und beim Checkpoint
-//! einzeln in die Hauptdatei. Deshalb gilt wie für `links_target`:
+//! einzeln in die Hauptdatei. Deshalb gilt:
 //!
 //! * Die Indizes **fehlen** in einem großen laufenden oder pausierten Crawl und nach einem Abbruch: Der Writer entfernt
 //!   sie vor dem ersten Schreiben, sobald die Datei [`DROP_FROM_URLS`] URLs hat (mitten im Crawl, wenn er die Schwelle
 //!   überschreitet; beim Fortsetzen sofort). Kleine Crawls behalten sie.
-//! * Beim **regulären Ende** (Zustand `Completed` im letzten Batch) baut der Writer sie in der Transaktion dieses
-//!   Batches sortiert auf (`CREATE INDEX` sortiert die Schlüssel und füllt den Baum in einem Zug).
-//! * [`ensure`] baut sie bei Bedarf nach; [`crate::link_index::ensure_if_idle`] ruft es für Dateien auf, die nicht laufen.
+//! * Sie **entstehen nicht wieder**, weder beim regulären Ende noch über [`crate::link_index::ensure_if_idle`]
+//!   (K-83): Kein M1-Leser sucht über diese Spalten (die Filter „Duplicate“ und „Exact Duplicates“ gruppieren in einem
+//!   Lauf über `urls`, Inventur in `docs/ARCHITECTURE.md`). Der Aufbau kostete im Endbatch bei 1 Mio. URLs 52 bis 58 s.
+//!   Eine kleine Datei behält die Indizes oder bekommt sie über [`ensure_if_idle`](crate::link_index::ensure_if_idle) zurück.
+//! * [`ensure`] baut sie weiterhin auf, jeden sortiert (`CREATE INDEX` sortiert die Schlüssel und füllt den Baum in
+//!   einem Zug). Ein Leser, der eine Suche über eine dieser Spalten braucht (M2), ruft es selbst auf.
 //!
 //! Ohne die Indizes bleibt jede Abfrage korrekt, kostet aber einen sequenziellen Lauf über `urls` statt einer Suche
 //! (Inventur der Leser: `docs/ARCHITECTURE.md`, Abschnitt Crawl-Datei). Nicht betroffen sind `UNIQUE(url)` (Dublettenschutz
@@ -62,8 +65,7 @@ const PREFETCH_MIN_ID: i64 = 100_000;
 
 /// Ab dieser größten URL-Kennung entfernt der Writer die Indizes während des Schreibens. Darunter passen die Indizes
 /// mit allen Blättern in den Seitencache (250 000 URLs: rund 125 MB von 256 MiB), ihre Pflege kostet nichts Messbares
-/// (Kurzprobe 250 000 Seiten: Abschnitte 85 % bis 114 %), und die Tabellen-Filter „Duplicate“ der laufenden Datei
-/// (korreliertes `EXISTS`, `os-analyze`) behalten ihre Indizes.
+/// (Kurzprobe 250 000 Seiten: Abschnitte 85 % bis 114 %). Von dieser Größe an werden sie nicht mehr aufgebaut (K-83).
 pub const DROP_FROM_URLS: i64 = 250_000;
 
 /// Schwelle des Writers (größte URL-Kennung) für das Entfernen der Indizes. Diagnoseschalter
@@ -74,6 +76,18 @@ pub fn drop_threshold() -> i64 {
         Some("0") => i64::MAX,
         _ => DROP_FROM_URLS,
     }
+}
+
+/// Ob die Datei „groß“ im Sinn von [`drop_threshold`] ist (größte URL-Kennung mindestens so hoch wie die Schwelle):
+/// Der Writer hat die Indizes entfernt oder entfernt sie mit dem ersten Schreiben, und sie werden nicht wieder aufgebaut
+/// (K-83; [`crate::link_index::ensure_if_idle`]). Dieselbe Entscheidung wie die des Writers, nur ohne dessen Zustand.
+pub fn is_large(conn: &Connection) -> Result<bool, StoreError> {
+    let threshold = drop_threshold();
+    if threshold == i64::MAX {
+        return Ok(false);
+    }
+    let max: i64 = conn.query_row("SELECT COALESCE(MAX(id), 0) FROM urls", [], |r| r.get(0))?;
+    Ok(max >= threshold)
 }
 
 /// Ob der Index in der Datei steht.
@@ -104,7 +118,8 @@ pub fn drop_indexes(conn: &Connection) -> Result<(), StoreError> {
     Ok(())
 }
 
-/// Wärmt den Dateicache des Betriebssystems für den Aufbau vor (Endbatch, N22).
+/// Wärmt den Dateicache des Betriebssystems für den Aufbau vor (N22). Seit K-83 nur noch für eine kleine Datei, der ausnahmsweise
+/// ein Index fehlt: in einem großen Crawl wird nichts aufgebaut.
 ///
 /// Die Seiten von `urls` liegen nach dem Crawl verstreut in der Datei (Zeilen wachsen beim Eintragen der Seitendaten,
 /// die Blätter teilen sich und landen zwischen den Seiten von `links`). Jeder der fünf Aufbauten liest sie in einem

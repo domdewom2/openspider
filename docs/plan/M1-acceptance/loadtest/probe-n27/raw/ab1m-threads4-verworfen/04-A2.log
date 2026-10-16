@@ -1,0 +1,14 @@
+Lauf 04-A2: Start 2026-10-16T16:20:57Z (18:20 lokal)
+wait_quiet: ruhig (load1=5.53 (< 8), frei: 80 GB )
+Load beim Start: 18:20  up 36 days,  7:39, 17 users, load averages: 5.53 5.35 6.58
+Binaerordner: /Users/dominikwojcik/Projects/openspider-wt/n27-base; Umgebung: keine
+perf-001 (large): 132928 Requests/s, Crawler ja, passed = false
+  Spitzen-RSS des Crawl-Prozesses: 474 MB
+  PERF-002: 3273.4 URLs/s im Mittel, Abschnitte [3357, 4502, 4492, 4389, 4236, 3517, 4017, 4155, 4285, 4207] URLs/s
+  VERLETZT: "PERF-002: Abschnitt 2 (10 % bis 20 %) mit 4502 URLs/s = 138 % des Mittelwerts 3273 URLs/s, erlaubt 70 % bis 130 %"
+  VERLETZT: "PERF-002: Abschnitt 3 (20 % bis 30 %) mit 4492 URLs/s = 137 % des Mittelwerts 3273 URLs/s, erlaubt 70 % bis 130 %"
+  VERLETZT: "PERF-002: Abschnitt 4 (30 % bis 40 %) mit 4389 URLs/s = 134 % des Mittelwerts 3273 URLs/s, erlaubt 70 % bis 130 %"
+  VERLETZT: "PERF-002: Abschnitt 9 (80 % bis 90 %) mit 4285 URLs/s = 131 % des Mittelwerts 3273 URLs/s, erlaubt 70 % bis 130 %"
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/m1-n27/docs/plan/M1-acceptance/loadtest/probe-n27/raw/ab1m/04-A2.json
+Ende 2026-10-16T16:26:23Z (18:26 lokal), Exit 1
+18:26  up 36 days,  7:44, 17 users, load averages: 3.99 5.75 6.45

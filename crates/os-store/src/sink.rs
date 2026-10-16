@@ -32,6 +32,7 @@ pub trait CrawlSink: Send {
 /// | `wait_checkpoint_ns` / `wait_checkpoint_n` | Zeit und Zahl der Wartepausen des Writers auf den Hintergrund-Checkpoint (Soll 0) |
 /// | `link_index_builds` / `link_index_build_ns` | Aufbau des Index `links_target` (K-74, am regulären Crawl-Ende bzw. durch `link_index::ensure`) |
 /// | `url_index_builds` / `url_index_build_ns` / `url_index_build_max_ns` | Aufbau der Indizes mit zufälligen Schlüsseln über `urls` (N22, `url_index::ensure`): Zahl der Indizes, Gesamtdauer, längster einzelner Aufbau |
+/// | `end_data_ns` / `end_commit_ns` | Endbatch (Schreibaufruf mit `Completed`, M1-N27): Dauer der Datenanweisungen vor dem Indexaufbau und des `COMMIT` (mit dem WAL-Checkpoint im Commit); dazwischen liegen `link_index_build_ns` und, nur in einer kleinen Datei, `url_index_build_ns` |
 /// | `url_index_prefetch_ns` / `_max_ns` / `_rows` | Vorwärmen des Dateicaches für den Aufbau (Leser-Threads): Summe, längster Thread, gelesene Zeilen |
 ///
 /// **Verlauf je 100 Batches (M1-N22, PERF-002):** Die Reihen `<name>_h00` … `<name>_h15` fassen je 100 Batches in
@@ -173,6 +174,8 @@ pub mod diag {
         url_index_prefetch_ns,
         url_index_prefetch_rows,
         url_index_prefetch_max_ns,
+        end_data_ns,
+        end_commit_ns,
         bg_checkpoints,
         bg_checkpoint_ns,
         bg_checkpoint_max_ns,
@@ -392,6 +395,13 @@ pub mod diag {
         STATS
             .link_index_build_ns
             .fetch_add(nanos(t), Ordering::Relaxed);
+    }
+
+    /// Verbucht die Teile des Endbatchs (M1-N27): Daten vor dem Indexaufbau und `COMMIT`.
+    pub(crate) fn record_end_batch(data: std::time::Duration, commit: std::time::Duration) {
+        let ns = |d: std::time::Duration| u64::try_from(d.as_nanos()).unwrap_or(u64::MAX);
+        STATS.end_data_ns.store(ns(data), Ordering::Relaxed);
+        STATS.end_commit_ns.store(ns(commit), Ordering::Relaxed);
     }
 
     /// Verbucht einen ausdrücklichen WAL-Checkpoint.

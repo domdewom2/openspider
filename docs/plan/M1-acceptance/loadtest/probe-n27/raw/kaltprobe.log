@@ -1,0 +1,11 @@
+Vorlage /Users/dominikwojcik/Projects/openspider-wt/n27-work/master1m.ospider: 1000000 Seiten x 30 Links in 207 s, 5476 MiB
+load1=2.70 (< 8), frei: 43 GB
+Load: 20:09  up 36 days,  9:28, 17 users, load averages: 2.70 3.90 4.98
+== warm 2:4096 2.70 3.90 4.98
+links_target threads=2 cache=4096 KiB: Aufbau 24.8 s, mit Commit 27.8 s, CPU Benutzer 15.1 s System 5.9 s, Spitzen-RSS 23 MiB (Zuwachs 19 MiB), inblock 0, oublock 0, Seiteneinlesungen des Systems (vm_stat pageins) 328094
+== cold 2:4096 3.18 3.91 4.96
+links_target threads=2 cache=4096 KiB: Aufbau 27.2 s, mit Commit 30.0 s, CPU Benutzer 15.4 s System 5.7 s, Spitzen-RSS 24 MiB (Zuwachs 19 MiB), inblock 0, oublock 0, Seiteneinlesungen des Systems (vm_stat pageins) 340752
+== cold 2:4096 2.02 3.29 4.60
+links_target threads=2 cache=4096 KiB: Aufbau 25.3 s, mit Commit 28.7 s, CPU Benutzer 15.2 s System 5.7 s, Spitzen-RSS 24 MiB (Zuwachs 19 MiB), inblock 0, oublock 0, Seiteneinlesungen des Systems (vm_stat pageins) 333493
+== cold 4:4096 2.50 3.07 4.34
+links_target threads=4 cache=4096 KiB: Aufbau 22.5 s, mit Commit 25.5 s, CPU Benutzer 16.0 s System 6.3 s, Spitzen-RSS 32 MiB (Zuwachs 27 MiB), inblock 0, oublock 0, Seiteneinlesungen des Systems (vm_stat pageins) 331836

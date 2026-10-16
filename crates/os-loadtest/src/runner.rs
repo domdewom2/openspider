@@ -11,6 +11,7 @@ use serde_json::{json, Value};
 use crate::crawler::{CrawlJob, CrawlerError, CrawlerUnderTest};
 use crate::report::{now_rfc3339, Report};
 use crate::scenario::{ScenarioDef, Size};
+use crate::throughput;
 
 /// Mindestdurchsatz des Testservers (Requests/s), nur im Release-Build bewertet.
 pub const MIN_SERVER_RPS: f64 = 5000.0;
@@ -212,7 +213,7 @@ pub async fn run(
         site: model.config().clone(),
     };
     match crawler.crawl(job).await {
-        Ok(outcome) => {
+        Ok(mut outcome) => {
             metrics.insert("crawler_available".into(), json!(true));
             metrics.insert("crawler_urls_crawled".into(), json!(outcome.urls_crawled));
             metrics.insert(
@@ -222,6 +223,26 @@ pub async fn run(
             if let Some(rss) = outcome.peak_rss_bytes {
                 metrics.insert("crawler_peak_rss_bytes".into(), json!(rss));
             }
+            // M1-N27 (K-84): Endbatch und Nachlauf stehen in jedem Szenario im Bericht (`null`, wenn der Crawler sie nicht
+            // liefert); der Endbatch wird bei PERF-001 ab 1 000 000 Seiten gegen die Grenze von K-80 gehalten.
+            let end_batch_s = throughput::end_batch_seconds(outcome.extra.get("diag"));
+            let tail_s = segment_rates_of(&outcome.extra).and_then(|rates| {
+                throughput::tail_seconds(
+                    outcome.duration.as_secs_f64(),
+                    outcome.urls_crawled,
+                    &rates,
+                )
+            });
+            outcome.violations.extend(throughput::end_batch_violation(
+                def.perf_id,
+                model.pages(),
+                end_batch_s,
+            ));
+            metrics.insert(
+                "crawler_end_batch_s".into(),
+                json!(end_batch_s.map(|v| round(v, 3))),
+            );
+            metrics.insert("crawler_tail_s".into(), json!(tail_s.map(|v| round(v, 3))));
             for (k, v) in outcome.extra {
                 metrics.insert(format!("crawler_{k}"), v);
             }
@@ -246,6 +267,16 @@ pub async fn run(
         metrics,
         passed: server_ok && crawler_ok,
     })
+}
+
+/// Abschnittswerte (`segment_urls_per_s`) aus den Zusatzwerten des Crawlers, falls vorhanden.
+fn segment_rates_of(extra: &BTreeMap<String, Value>) -> Option<Vec<f64>> {
+    extra
+        .get("segment_urls_per_s")?
+        .as_array()?
+        .iter()
+        .map(Value::as_f64)
+        .collect()
 }
 
 fn round(v: f64, digits: i32) -> f64 {
