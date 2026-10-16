@@ -7,9 +7,12 @@ Sammelstelle für Funktionen, die bewusst **nach 1.0** kommen. Ausspezifiziert w
 | R1 | KI-Funktionen (Klassifizierung, Optimierungsvorschläge, Frag den Crawl, AI-Search-Sichtbarkeit) | Nutzer 13.10. | `docs/spec/08-ai.md` – M4 |
 | R2 | DataForSEO (Keywords, Backlinks, SERP, LLM Mentions) | Nutzer 13.10. | `docs/spec/09-dataforseo.md` – M5 |
 | R3 | Fokussierter Crawl nach Seitentyp („nur Produktseiten“) | Nutzer 16.10. | `docs/spec/10-agent-interface.md` AGENT-060–062 – mit M4 |
-| R4 | Server-/Cloud-Betrieb und Anbindung an evnxt.de und autonomo | Nutzer 14.10. | Konzept offen – ganz am Schluss |
-| R5 | Mobile App als Viewer/Steuerung für Crawls auf Desktop/Server (Tauri iOS/Android) | Nutzer 15.10. | setzt R4 voraus |
-| R6 | Monitoring-Modus (siehe Abschnitt Audisto) | Abgleich Audisto 16.10. | setzt R4 voraus |
+| R4a | Server-Betrieb: OpenSpider als Crawl-Engine von Autonomo SEO (Cloud-Variante unter evnxt), Etappen E0–E3 | Nutzer 14./16.10. | `docs/plan/autonomo-abgleich.md` – **parallel zu M2/M3** (Go 16.10.) |
+| R4b | Verbindung Desktop ↔ Cloud (E4) | Nutzer 14.10. | nach 1.0 |
+| R5 | Mobile App als Viewer/Steuerung für Crawls auf Desktop/Server (Tauri iOS/Android) | Nutzer 15.10. | setzt R4a/R4b voraus |
+| R6 | Monitoring-Modus (siehe Abschnitt Audisto) | Abgleich Audisto 16.10. | in evnxt/Autonomo (E5), setzt R4a voraus |
+| R8 | Logfile-Analyse lokal (Bot-Verifizierung, Abgleich mit Crawl) | Abgleich Autonomo 16.10. | Kandidat für 1.x; Server-Zulauf bleibt Cloud |
+| R9 | Crawl-Qualität aus Autonomo: Indexierungsregeln mit „gewollt“-Ausnahmen, Fallenwächter, Soft-404-Probe | Abgleich Autonomo 16.10. | Kandidat für 1.x |
 | R7 | Erweiterte Struktur- und Linkanalysen (siehe Abschnitt Audisto) | Abgleich Audisto 16.10. | Kandidat für 1.x |
 
 ## Abgleich mit Audisto (16.10.2026)
