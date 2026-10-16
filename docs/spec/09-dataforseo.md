@@ -1247,3 +1247,12 @@ Gesammelt am 13.10.2026: API-Details, die sich aus Doku und Preisseiten nicht ei
 **Entscheidung (Fable-Empfehlung)** vom 13.10.2026: Vor Freigabe von M5 ist im Release-Check folgender Punkt abzuhaken. Er läuft manuell bzw. mit `OPENSPIDER_LIVE_API_TESTS=1` und ist kein Teil der CI-Akzeptanz.
 
 1. **Golden-Test SERP-Zuschläge (V-D3, Q3):** SERP-Requests mit `depth` 10 und 20, je ein Keyword mit und ohne AI Overview, Modi Standard, Priority und Live, gegen die Sandbox; meldet die Sandbox `cost = 0`, wird derselbe Test mit dem Produktivkonto wiederholt. Bestanden, wenn jede gemeldete `cost` zwischen `Cost Min` und `Cost Max` aus D4S-012 liegt. Fällt der Test durch (z. B. weil der Zuschlag mit `depth` skaliert), werden Preiskatalog (D4S-011), Formeln (D4S-012) und Reservierung (D4S-013) angepasst und der Test wiederholt, bevor M5 freigegeben wird. Ergebnis mit Datum in V-D3 eintragen.
+
+### D4S-200 DataForSEO über evnxt-Credits
+- **Priorität:** P1
+- **Beschreibung:** Alternativ zum eigenen DataForSEO-Konto bezieht OpenSpider Labs-, Backlink-, SERP- und LLM-Mentions-Daten über den evnxt-Account (gleiche Anmeldung wie AI-200); evnxt rechnet über Credits ab und nutzt seinen bestehenden DataForSEO-Adapter mit Cache. Spaltenschema und Ergebnisse identisch zum direkten Weg.
+- **Akzeptanzkriterien:**
+  - [ ] Gleiche Abfrage über eigenes Konto und über evnxt liefert identische Spalten und (bei gleicher Datenlage) identische Werte.
+  - [ ] Kostenschätzung in Credits vor dem Lauf, gemeinsames Budget mit KI (BudgetLedger).
+  - [ ] Ohne evnxt-Anmeldung bleibt der direkte Weg mit eigenem Konto vollständig nutzbar.
+

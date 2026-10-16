@@ -15,6 +15,15 @@ Sammelstelle für Funktionen, die bewusst **nach 1.0** kommen. Ausspezifiziert w
 | R9 | Crawl-Qualität aus Autonomo: Indexierungsregeln mit „gewollt“-Ausnahmen, Fallenwächter, Soft-404-Probe | Abgleich Autonomo 16.10. | Kandidat für 1.x |
 | R7 | Erweiterte Struktur- und Linkanalysen (siehe Abschnitt Audisto) | Abgleich Audisto 16.10. | Kandidat für 1.x |
 
+## Geschäftsmodell (Entscheidung Nutzer 16.10.2026): Open Core
+
+- **OpenSpider bleibt vollständig autark und frei** (Apache-2.0): kein Account, kein Online-Zwang außer zum Crawlen, keine Pflicht-Telemetrie, keine künstlichen Sperren. Alle Crawl-, Analyse-, Export-, CLI- und MCP-Funktionen sind ohne evnxt nutzbar.
+- **KI und externe Daten über zwei gleichwertige Bezugswege:**
+  1. *Eigene Schlüssel / lokal* – Claude, OpenAI, OpenRouter mit eigenem API-Schlüssel oder Ollama lokal; DataForSEO mit eigenem Konto. Kostenlos in OpenSpider, Abrechnung direkt beim Anbieter.
+  2. *evnxt-Account* – Anmeldung in OpenSpider, KI und DataForSEO ohne eigene Schlüssel, Abrechnung über evnxt-Credits oder Abo (Marge auf Modell- und Datenkosten). Budget und Kostenschätzung von OpenSpider gelten unverändert.
+- **evnxt verdient an Komfort und Cloud, nicht an Sperren:** Cloud-Crawls über Autonomo (auch bei ausgeschaltetem Rechner), Monitoring und Alarme (R6), Archiv/Historie, Team-Zugang, Laien-Audit mit KI-Maßnahmenplan, Desktop↔Cloud-Abgleich (R4b).
+- Folge für die Spec: evnxt ist ein weiterer Anbieter in `os-ai` bzw. Datenquelle in `os-integrations` (08-ai.md Abschnitt „Bezugsweg evnxt“, 09-dataforseo.md D4S-200), kein Sonderpfad im Kern.
+
 ## Abgleich mit Audisto (16.10.2026)
 
 Audisto ist ein Cloud-Crawler mit Schwerpunkt Monitoring und Linkgraph-Analyse. Was OpenSpider bereits abdeckt: Indexierbarkeit/Direktiven-Konflikte, hreflang-Gruppen, Canonical-Analyse, Sitemap-Validierung, Redirect-Ketten, Rendering-Vergleich (Original vs. gerendert), Web Vitals (PSI), Link Score, Segmente, Duplikate/Thin Content, inkonsistente nofollow-Verlinkung (TECH-139), Crawl-Vergleich, geplante Crawls, Custom Search/Extraction (Regex/XPath), URL-Umschreibung, API über MCP.
