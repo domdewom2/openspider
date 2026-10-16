@@ -1,0 +1,69 @@
+name: cloud-setup
+
+# M2-F01 (docs/plan/M2.md 2a C3): scripts/cloud/setup.sh richtet Rust, Node 22, npm ci, Playwright und die
+# Umgebungsvariablen für Cloud-Sessions ein. Dieser Job läuft das Skript auf einem frischen Ubuntu-Runner durch,
+# wiederholt es (Idempotenz) und prüft, dass weder ein Secret Service noch gnome-keyring nötig ist (C13).
+
+on:
+  push:
+    paths:
+      - "scripts/cloud/**"
+      - "rust-toolchain.toml"
+      - "package.json"
+      - "package-lock.json"
+      - "apps/desktop/package.json"
+      - ".github/workflows/cloud-setup.yml"
+  pull_request:
+    paths:
+      - "scripts/cloud/**"
+      - "rust-toolchain.toml"
+      - "package.json"
+      - "package-lock.json"
+      - "apps/desktop/package.json"
+      - ".github/workflows/cloud-setup.yml"
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  setup:
+    name: setup.sh (ubuntu, frisch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ausgangszustand protokollieren
+        run: |
+          dpkg -l | grep -Ei 'gnome-keyring|libsecret' || echo "kein gnome-keyring/libsecret-Paket installiert"
+          echo "XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-}"; echo "DBUS_SESSION_BUS_ADDRESS=${DBUS_SESSION_BUS_ADDRESS:-}"
+
+      - name: setup.sh (erster Lauf)
+        run: bash scripts/cloud/setup.sh
+
+      - name: setup.sh --check
+        run: bash scripts/cloud/setup.sh --check
+
+      - name: setup.sh (zweiter Lauf, idempotent)
+        run: bash scripts/cloud/setup.sh
+
+      - name: Umgebung prüfen
+        run: |
+          set -euo pipefail
+          # shellcheck disable=SC1091
+          source "$HOME/.openspider-cloud-env"
+          rustc --version && cargo --version
+          node --version | grep -E '^v22\.'
+          test "$OPENSPIDER_SECRET_STORE" = memory
+          if [ -d node_modules/@playwright/test ]; then
+            test -n "${OPENSPIDER_CHROMIUM:-}" && test -e "$OPENSPIDER_CHROMIUM"
+          fi
+          # C13: kein Secret Service, kein gnome-keyring
+          if dpkg -s gnome-keyring >/dev/null 2>&1; then echo "gnome-keyring darf nicht installiert werden"; exit 1; fi
+
+      - name: Kern kompiliert ohne D-Bus (Smoke)
+        run: |
+          set -euo pipefail
+          source "$HOME/.openspider-cloud-env"
+          env -u DBUS_SESSION_BUS_ADDRESS -u XDG_RUNTIME_DIR cargo test -p os-model --locked
