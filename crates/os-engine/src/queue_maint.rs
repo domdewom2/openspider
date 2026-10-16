@@ -15,6 +15,7 @@ use std::time::Instant;
 
 use os_fetch::Fetch;
 
+use crate::diag;
 use crate::error::EngineError;
 use crate::queue::{JobData, JobKind, JobPlan};
 use crate::queue_disk;
@@ -71,10 +72,46 @@ pub(crate) async fn run<F: Fetch>(sh: Arc<Shared<F>>, plan: JobPlan, failures: A
     sh.ctl.notify.notify_one();
 }
 
+/// Diagnoseschalter `OS_ENGINE_REFILL_NOFLUSH=1` (N22): das Nachladen wartet nicht auf `writer.flush()`.
+fn skip_refill_flush() -> bool {
+    static SKIP: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *SKIP.get_or_init(|| std::env::var_os("OS_ENGINE_REFILL_NOFLUSH").is_some_and(|v| v == "1"))
+}
+
 async fn work<F: Fetch>(sh: &Arc<Shared<F>>, plan: JobPlan) -> Result<JobData, String> {
+    let started = Instant::now();
+    let kind = plan.kind;
     // Alles, was vor dem Start des Auftrags eingeplant wurde, muss in der Datei stehen.
-    sh.writer.flush().await.map_err(|e| e.to_string())?;
-    tokio::task::spawn_blocking(move || read(&plan))
+    if !(kind == JobKind::Refill && skip_refill_flush()) {
+        sh.writer.flush().await.map_err(|e| e.to_string())?;
+    }
+    let wait_ns = diag::nanos(started);
+    let read_started = Instant::now();
+    let data = tokio::task::spawn_blocking(move || read(&plan))
         .await
-        .map_err(|e| e.to_string())?
+        .map_err(|e| e.to_string())??;
+    let read_ns = diag::nanos(read_started);
+    match (&data, kind) {
+        (JobData::Block(rows), JobKind::Refill) => {
+            let index = diag::STATS.q_refill_jobs.fetch_add(1, Ordering::Relaxed);
+            diag::record_refill(
+                index,
+                diag::nanos(started),
+                wait_ns,
+                read_ns,
+                rows.len() as u64,
+            );
+        }
+        (_, JobKind::Activate) => {
+            diag::inc(&diag::STATS.q_activate_n);
+            diag::STATS
+                .q_activate_ns
+                .fetch_add(diag::nanos(started), Ordering::Relaxed);
+            diag::STATS
+                .q_activate_wait_ns
+                .fetch_add(wait_ns, Ordering::Relaxed);
+        }
+        _ => {}
+    }
+    Ok(data)
 }
