@@ -16,6 +16,8 @@ members = [
     "crates/os-cli",
     "crates/os-testsite",
     "crates/os-loadtest",
+    "crates/os-app",
+    "crates/os-sched",
     "apps/desktop/src-tauri",
 ]
 
@@ -23,6 +25,8 @@ members = [
 version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
+# M2-F01: kleinste Rust-Version, die alle Abhängigkeiten zulassen (roaring 0.11 verlangt 1.90); rust-toolchain.toml nimmt den Kanal stable
+rust-version = "1.90"
 repository = "https://github.com/domdewom2/openspider"
 authors = ["OpenSpider contributors"]
 
@@ -41,6 +45,9 @@ os-integrations = { path = "crates/os-integrations" }
 os-mcp = { path = "crates/os-mcp" }
 os-parity = { path = "crates/os-parity" }
 os-testsite = { path = "crates/os-testsite" }
+# M2 (docs/plan/M2.md 3.1/3.2)
+os-app = { path = "crates/os-app" }
+os-sched = { path = "crates/os-sched" }
 
 # extern
 serde = { version = "1", features = ["derive"] }
@@ -107,3 +114,31 @@ windows-sys = { version = "0.61", features = ["Win32_System_ProcessStatus", "Win
 # dev-Abhängigkeiten (Property-Rundreise P13, Schriftgenerator UI-038)
 proptest = "1"
 ttf-parser = "0.25"
+
+# M2 (docs/plan/M2.md 3.1) – von den Paketen über `workspace = true` eingebunden; Lizenzen gegen deny.toml geprüft (M2-F01)
+# os-analyze (Bitmaps/Permutationen der View-Sitzungen, K-1) und os-app (Segment-/Vergleichsfilter); os-store speichert den view_cache-BLOB opak
+roaring = "0.11"
+# os-app: DTOs → apps/desktop/src/ipc/gen/<Typ>.ts; große Ganzzahlen werden als `number` ausgegeben (UrlId < 2^53), siehe os-app dto::export_all
+ts-rs = { version = "12", features = ["serde-json-impl", "no-serde-warnings"] }
+# os-render (R01): Chromium über das DevTools-Protokoll
+chromiumoxide = "0.9"
+# os-app (K09): Zeilen-/Wortdiff des Quelltexts
+similar = "3"
+# os-app (Bridge, Feature e2e-bridge)
+tokio-tungstenite = "0.30"
+# os-integrations (INTEG-003): nur die Protokollschicht, der HTTP-Client kommt über reqwest 0.13 (kein zweites reqwest im Baum)
+oauth2 = { version = "5", default-features = false }
+# OUT-223 laut Plan 3.1; die Spec legt als Authentifizierungsprofil-Format XChaCha20-Poly1305 + Argon2id fest (Befund im Bericht)
+aes-gcm = "0.11"
+# os-sched (OUT-280): SMTP über rustls/ring (kein OpenSSL)
+lettre = { version = "0.11", default-features = false, features = ["builder", "smtp-transport", "tokio1", "tokio1-rustls", "ring", "rustls-platform-verifier"] }
+# dev: Benchmarks der Kern- und App-Crates (`[[bench]] harness = false`)
+criterion = { version = "0.8", default-features = false }
+# os-parse (ONPAGE-153): Spracherkennung der Rechtschreibprüfung
+whatlang = "0.18"
+# os-parse (INTEG-042, Klärung K2-05): `xee-xpath` 0.1.5 (MIT) ist bewusst NICHT eingebunden. Der Lizenz- und Reifetest
+# von M2-F01 (`cargo deny check advisories`) scheitert: xee-interpreter → json 0.12 (RUSTSEC-2022-0081, unmaintained) und
+# xot → genawaiter → proc-macro-error 0.4 (RUSTSEC-2024-0370, unmaintained). Entscheidung G0/Planer: Ignore-Einträge in
+# deny.toml (gehört nicht zu M2-F01) oder der Rückfall XPath 1.0 + Funktionsmenge aus INTEG-042 als eigene Erweiterung.
+# os-parse (ONPAGE-153, Klärung K2-03): Hunspell-kompatible Rechtschreibung, MPL-2.0
+spellbook = "0.4"

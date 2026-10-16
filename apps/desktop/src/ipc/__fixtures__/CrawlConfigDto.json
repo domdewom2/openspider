@@ -1,0 +1,5 @@
+{
+  "schemaVersion": 2,
+  "generator": "openspider 0.1.0",
+  "config": { "mode": "spider", "speed": { "threads": 5 }, "rendering": { "mode": "text", "ajax_timeout_s": 5 } }
+}

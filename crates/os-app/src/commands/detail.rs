@@ -1,0 +1,13 @@
+//! detail.urlDetails, detail.headers (UI-031, UI-042).
+//!
+//! STUB(M2-K06): Gerüst von M2-F01. Name, Argument- und Rückgabetyp sowie `long_running` stehen im Katalog
+//! (`docs/plan/M2.md` 3.6a, `M2-ui-concept.md` 4.4) und ändert M2-K06 nicht; es ersetzt diese Datei durch die
+//! Umsetzung. Bis dahin antwortet jeder Command mit `CmdError::Unsupported`.
+
+stub_commands!(
+    "M2-K06",
+    [
+        ("detail.urlDetails", "UrlIdArgs", "NameValue[]", false),
+        ("detail.headers", "UrlIdArgs", "HeadersDto", false),
+    ]
+);

@@ -1,0 +1,34 @@
+{
+  "seq": 17,
+  "at": "2026-10-16T08:00:00Z",
+  "crawl": {
+    "crawlId": "0198f3a0-7b5e-7cc2-9d11-5f2a2f0c1a11",
+    "phase": "running",
+    "mode": "spider",
+    "endReason": null,
+    "crawled": 1200,
+    "queued": 800,
+    "discovered": 2000,
+    "percent": 60,
+    "rate": 42.5,
+    "avgRate": 40.1,
+    "avgResponseTime": 0.231,
+    "elapsedS": 30,
+    "pausedS": 0,
+    "etaS": 20,
+    "activeThreads": 5,
+    "memoryStage": "normal",
+    "fileBytes": 12582912,
+    "owner": { "kind": "app", "pid": 4242, "live": true, "controllable": true }
+  },
+  "analysis": null,
+  "views": [{ "viewId": "v1", "version": 43, "total": null }],
+  "countsVersion": 9,
+  "issuesVersion": 9,
+  "sidebarVersion": 8,
+  "ops": [
+    { "opId": "op-1", "labelKey": "op-export", "done": 10, "total": 100, "state": "running", "result": null, "error": null }
+  ],
+  "mcp": { "kind": "connected", "port": 8765, "clients": 1 },
+  "notices": [{ "level": "warning", "code": "low-disk", "args": { "freeBytes": 900000000 } }]
+}

@@ -1,0 +1,938 @@
+[
+  {
+    "name": "app.info",
+    "args": "void",
+    "ret": "AppInfo",
+    "longRunning": false
+  },
+  {
+    "name": "settings.get",
+    "args": "void",
+    "ret": "AppSettingsDto",
+    "longRunning": false
+  },
+  {
+    "name": "settings.set",
+    "args": "SettingsPatch",
+    "ret": "AppSettingsDto",
+    "longRunning": false
+  },
+  {
+    "name": "uistate.load",
+    "args": "void",
+    "ret": "UiStateJson",
+    "longRunning": false
+  },
+  {
+    "name": "uistate.save",
+    "args": "UiStateJson",
+    "ret": "UiStateJson",
+    "longRunning": false
+  },
+  {
+    "name": "op.cancel",
+    "args": "OpCancelArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "events.subscribe",
+    "args": "SubscribeArgs",
+    "ret": "SubscriptionId",
+    "longRunning": false
+  },
+  {
+    "name": "events.setVisibility",
+    "args": "SetVisibilityArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "events.setInterval",
+    "args": "SetIntervalArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "diag.debugInfo",
+    "args": "void",
+    "ret": "DebugInfo",
+    "longRunning": false
+  },
+  {
+    "name": "diag.bundle",
+    "args": "BundleArgs",
+    "ret": "FileResult",
+    "longRunning": true
+  },
+  {
+    "name": "diag.logFrontend",
+    "args": "LogFrontendArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "diag.openLogs",
+    "args": "void",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "diag.usageStats",
+    "args": "UsageStatsArgs",
+    "ret": "UsageStats",
+    "longRunning": false
+  },
+  {
+    "name": "crawl.validateStartUrl",
+    "args": "ValidateStartUrlArgs",
+    "ret": "NormalizedUrl",
+    "longRunning": false
+  },
+  {
+    "name": "crawl.parseList",
+    "args": "ListSource",
+    "ret": "ListPreview",
+    "longRunning": false
+  },
+  {
+    "name": "crawl.start",
+    "args": "StartRequest",
+    "ret": "CrawlRef",
+    "longRunning": false
+  },
+  {
+    "name": "crawl.pause",
+    "args": "void",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "crawl.resume",
+    "args": "void",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "crawl.stop",
+    "args": "void",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "crawl.clear",
+    "args": "void",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "crawl.open",
+    "args": "OpenCrawlArgs",
+    "ret": "CrawlSummaryDto",
+    "longRunning": false
+  },
+  {
+    "name": "crawl.saveAs",
+    "args": "SaveAsArgs",
+    "ret": "FileResult",
+    "longRunning": true
+  },
+  {
+    "name": "crawl.recrawl",
+    "args": "SelectionArgs",
+    "ret": "CountResult",
+    "longRunning": true
+  },
+  {
+    "name": "crawl.remove",
+    "args": "SelectionArgs",
+    "ret": "CountResult",
+    "longRunning": true
+  },
+  {
+    "name": "analysis.start",
+    "args": "AnalysisStartArgs",
+    "ret": "AnalysisStatus",
+    "longRunning": true
+  },
+  {
+    "name": "analysis.status",
+    "args": "void",
+    "ret": "AnalysisStatus",
+    "longRunning": false
+  },
+  {
+    "name": "crawl.addUrls",
+    "args": "AddUrlsArgs",
+    "ret": "AddUrlsResult",
+    "longRunning": true
+  },
+  {
+    "name": "catalog.tabs",
+    "args": "void",
+    "ret": "TabInfo[]",
+    "longRunning": false
+  },
+  {
+    "name": "catalog.columns",
+    "args": "ColumnsArgs",
+    "ret": "ColumnMeta[]",
+    "longRunning": false
+  },
+  {
+    "name": "catalog.filterCounts",
+    "args": "ScopeArgs",
+    "ret": "FilterCounts",
+    "longRunning": false
+  },
+  {
+    "name": "view.open",
+    "args": "ViewOpenArgs",
+    "ret": "ViewHandle",
+    "longRunning": false
+  },
+  {
+    "name": "view.update",
+    "args": "ViewUpdateArgs",
+    "ret": "ViewHandle",
+    "longRunning": false
+  },
+  {
+    "name": "view.rows",
+    "args": "RowsArgs",
+    "ret": "RowWindow",
+    "longRunning": false
+  },
+  {
+    "name": "view.locate",
+    "args": "LocateArgs",
+    "ret": "number | null",
+    "longRunning": false
+  },
+  {
+    "name": "view.copy",
+    "args": "CopyArgs",
+    "ret": "CopyResult",
+    "longRunning": false
+  },
+  {
+    "name": "view.close",
+    "args": "ViewCloseArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "search.parse",
+    "args": "SearchParseArgs",
+    "ret": "RuleNode",
+    "longRunning": false
+  },
+  {
+    "name": "search.validateRegex",
+    "args": "ValidateRegexArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "detail.urlDetails",
+    "args": "UrlIdArgs",
+    "ret": "NameValue[]",
+    "longRunning": false
+  },
+  {
+    "name": "detail.headers",
+    "args": "UrlIdArgs",
+    "ret": "HeadersDto",
+    "longRunning": false
+  },
+  {
+    "name": "detail.serp",
+    "args": "SerpArgs",
+    "ret": "SerpData",
+    "longRunning": false
+  },
+  {
+    "name": "detail.serpMeasure",
+    "args": "SerpMeasureArgs",
+    "ret": "SerpMeasure",
+    "longRunning": false
+  },
+  {
+    "name": "detail.serpSaveEdit",
+    "args": "SerpEditArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "detail.serpReset",
+    "args": "SerpEditArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "detail.sourceOpen",
+    "args": "SourceOpenArgs",
+    "ret": "SourceDoc",
+    "longRunning": false
+  },
+  {
+    "name": "detail.sourceLines",
+    "args": "SourceLinesArgs",
+    "ret": "string[]",
+    "longRunning": false
+  },
+  {
+    "name": "detail.sourceDiff",
+    "args": "SourceDiffArgs",
+    "ret": "DiffHunks",
+    "longRunning": true
+  },
+  {
+    "name": "detail.screenshot",
+    "args": "UrlIdArgs",
+    "ret": "ScreenshotInfo",
+    "longRunning": false
+  },
+  {
+    "name": "detail.imagePreview",
+    "args": "UrlIdArgs",
+    "ret": "ImagePreview",
+    "longRunning": false
+  },
+  {
+    "name": "detail.structuredData",
+    "args": "UrlIdArgs",
+    "ret": "SdTree",
+    "longRunning": false
+  },
+  {
+    "name": "detail.duplicates",
+    "args": "DuplicatesArgs",
+    "ret": "DuplicatesResult",
+    "longRunning": false
+  },
+  {
+    "name": "detail.lighthouse",
+    "args": "LighthouseArgs",
+    "ret": "LighthouseDto",
+    "longRunning": false
+  },
+  {
+    "name": "crawl.path",
+    "args": "UrlIdArgs",
+    "ret": "CrawlPathDto[]",
+    "longRunning": false
+  },
+  {
+    "name": "detail.spellingContext",
+    "args": "SpellingContextArgs",
+    "ret": "SpellingContext",
+    "longRunning": false
+  },
+  {
+    "name": "detail.a11yNode",
+    "args": "A11yNodeArgs",
+    "ret": "A11yNodeDetail",
+    "longRunning": false
+  },
+  {
+    "name": "sidebar.overview",
+    "args": "ScopeArgs",
+    "ret": "OverviewDto",
+    "longRunning": false
+  },
+  {
+    "name": "sidebar.issues",
+    "args": "IssuesArgs",
+    "ret": "IssueRow[]",
+    "longRunning": false
+  },
+  {
+    "name": "sidebar.issueExplain",
+    "args": "IssueExplainArgs",
+    "ret": "IssueText",
+    "longRunning": false
+  },
+  {
+    "name": "sidebar.siteStructure",
+    "args": "SiteStructureArgs",
+    "ret": "SiteStructure",
+    "longRunning": false
+  },
+  {
+    "name": "sidebar.responseTimes",
+    "args": "ResponseTimesArgs",
+    "ret": "ResponseTimes",
+    "longRunning": false
+  },
+  {
+    "name": "sidebar.segments",
+    "args": "SegmentsViewArgs",
+    "ret": "SegmentRow[]",
+    "longRunning": false
+  },
+  {
+    "name": "config.get",
+    "args": "void",
+    "ret": "CrawlConfigDto",
+    "longRunning": false
+  },
+  {
+    "name": "config.validate",
+    "args": "CrawlConfigDto",
+    "ret": "ValidationIssue[]",
+    "longRunning": false
+  },
+  {
+    "name": "config.set",
+    "args": "CrawlConfigDto",
+    "ret": "ConfigSetResult",
+    "longRunning": false
+  },
+  {
+    "name": "config.schema",
+    "args": "void",
+    "ret": "JsonValue",
+    "longRunning": false
+  },
+  {
+    "name": "config.diff",
+    "args": "ConfigDiffArgs",
+    "ret": "DiffRow[]",
+    "longRunning": false
+  },
+  {
+    "name": "config.testRules",
+    "args": "TestRulesArgs",
+    "ret": "RuleTrace",
+    "longRunning": false
+  },
+  {
+    "name": "profile.list",
+    "args": "void",
+    "ret": "ConfigProfileInfo[]",
+    "longRunning": false
+  },
+  {
+    "name": "profile.load",
+    "args": "NameArgs",
+    "ret": "CrawlConfigDto",
+    "longRunning": false
+  },
+  {
+    "name": "profile.save",
+    "args": "ProfileSaveArgs",
+    "ret": "ConfigProfileInfo",
+    "longRunning": false
+  },
+  {
+    "name": "profile.delete",
+    "args": "NameArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "profile.setDefault",
+    "args": "SetDefaultProfileArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "profile.import",
+    "args": "PathArgs",
+    "ret": "ConfigProfileInfo",
+    "longRunning": false
+  },
+  {
+    "name": "profile.export",
+    "args": "ProfileExportArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "segment.list",
+    "args": "void",
+    "ret": "SegmentDef[]",
+    "longRunning": false
+  },
+  {
+    "name": "segment.save",
+    "args": "SegmentSaveArgs",
+    "ret": "SegmentSaveResult",
+    "longRunning": false
+  },
+  {
+    "name": "segment.delete",
+    "args": "IdArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "segment.validate",
+    "args": "SegmentValidateArgs",
+    "ret": "ValidationIssue[]",
+    "longRunning": false
+  },
+  {
+    "name": "segment.preview",
+    "args": "SegmentPreviewArgs",
+    "ret": "SegmentPreview",
+    "longRunning": true
+  },
+  {
+    "name": "segment.reassign",
+    "args": "void",
+    "ret": "CountResult",
+    "longRunning": true
+  },
+  {
+    "name": "crawls.list",
+    "args": "CrawlListQuery",
+    "ret": "CrawlListing[]",
+    "longRunning": false
+  },
+  {
+    "name": "crawls.rename",
+    "args": "CrawlRenameArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "crawls.move",
+    "args": "CrawlMoveArgs",
+    "ret": "CountResult",
+    "longRunning": true
+  },
+  {
+    "name": "crawls.lock",
+    "args": "IdsArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "crawls.unlock",
+    "args": "IdsArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "crawls.duplicate",
+    "args": "IdsArgs",
+    "ret": "CountResult",
+    "longRunning": true
+  },
+  {
+    "name": "crawls.delete",
+    "args": "IdsArgs",
+    "ret": "CountResult",
+    "longRunning": true
+  },
+  {
+    "name": "crawls.import",
+    "args": "CrawlsImportArgs",
+    "ret": "ImportResult",
+    "longRunning": true
+  },
+  {
+    "name": "crawls.export",
+    "args": "CrawlsExportArgs",
+    "ret": "CountResult",
+    "longRunning": true
+  },
+  {
+    "name": "crawls.reveal",
+    "args": "IdsArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "crawls.copyIds",
+    "args": "IdsArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "projects.create",
+    "args": "ProjectCreateArgs",
+    "ret": "ProjectInfo",
+    "longRunning": false
+  },
+  {
+    "name": "projects.rename",
+    "args": "ProjectRenameArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "projects.lock",
+    "args": "ProjectLockArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "export.catalog",
+    "args": "void",
+    "ret": "ExportCatalog",
+    "longRunning": false
+  },
+  {
+    "name": "export.suggestName",
+    "args": "SuggestNameArgs",
+    "ret": "string",
+    "longRunning": false
+  },
+  {
+    "name": "export.view",
+    "args": "ExportViewArgs",
+    "ret": "FileResult",
+    "longRunning": true
+  },
+  {
+    "name": "export.detail",
+    "args": "ExportDetailArgs",
+    "ret": "FileResult",
+    "longRunning": true
+  },
+  {
+    "name": "export.bulk",
+    "args": "ExportBulkArgs",
+    "ret": "FileResult",
+    "longRunning": true
+  },
+  {
+    "name": "export.report",
+    "args": "ExportBulkArgs",
+    "ret": "FileResult",
+    "longRunning": true
+  },
+  {
+    "name": "export.sitemap",
+    "args": "ExportSitemapArgs",
+    "ret": "FileResult",
+    "longRunning": true
+  },
+  {
+    "name": "export.issues",
+    "args": "ExportPanelArgs",
+    "ret": "FileResult",
+    "longRunning": true
+  },
+  {
+    "name": "export.sidebar",
+    "args": "ExportPanelArgs",
+    "ret": "FileResult",
+    "longRunning": true
+  },
+  {
+    "name": "compare.open",
+    "args": "CompareOpenArgs",
+    "ret": "CompareSession",
+    "longRunning": false
+  },
+  {
+    "name": "compare.swap",
+    "args": "void",
+    "ret": "CompareSession",
+    "longRunning": false
+  },
+  {
+    "name": "compare.testMapping",
+    "args": "TestMappingArgs",
+    "ret": "RuleTrace",
+    "longRunning": false
+  },
+  {
+    "name": "compare.close",
+    "args": "void",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "viz.open",
+    "args": "VizOpenArgs",
+    "ret": "VizOpenResult",
+    "longRunning": false
+  },
+  {
+    "name": "viz.graph",
+    "args": "VizGraphArgs",
+    "ret": "GraphDto",
+    "longRunning": false
+  },
+  {
+    "name": "viz.words",
+    "args": "VizWordsArgs",
+    "ret": "WordFreq[]",
+    "longRunning": false
+  },
+  {
+    "name": "viz.exportCsv",
+    "args": "VizExportArgs",
+    "ret": "FileResult",
+    "longRunning": true
+  },
+  {
+    "name": "viz.focusInMain",
+    "args": "UrlIdArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "mcp.status",
+    "args": "void",
+    "ret": "McpStatus",
+    "longRunning": false
+  },
+  {
+    "name": "mcp.start",
+    "args": "McpStartArgs",
+    "ret": "McpStatus",
+    "longRunning": false
+  },
+  {
+    "name": "mcp.stop",
+    "args": "void",
+    "ret": "McpStatus",
+    "longRunning": false
+  },
+  {
+    "name": "mcp.tools",
+    "args": "void",
+    "ret": "ToolInfo[]",
+    "longRunning": false
+  },
+  {
+    "name": "mcp.setToolEnabled",
+    "args": "SetToolEnabledArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "mcp.setClasses",
+    "args": "SetClassesArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "mcp.token",
+    "args": "McpTokenArgs",
+    "ret": "McpToken",
+    "longRunning": false
+  },
+  {
+    "name": "mcp.regenerateToken",
+    "args": "McpTokenArgs",
+    "ret": "McpToken",
+    "longRunning": false
+  },
+  {
+    "name": "mcp.setAutostart",
+    "args": "BoolArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "mcp.saveToolsMarkdown",
+    "args": "PathArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "mcp.clientConfigPreview",
+    "args": "McpClientArgs",
+    "ret": "McpClientPreview",
+    "longRunning": false
+  },
+  {
+    "name": "mcp.clientConfigWrite",
+    "args": "McpClientArgs",
+    "ret": "McpClientWritten",
+    "longRunning": false
+  },
+  {
+    "name": "mcp.callLog",
+    "args": "PageArgs",
+    "ret": "CallLogRow[]",
+    "longRunning": false
+  },
+  {
+    "name": "api.list",
+    "args": "void",
+    "ret": "ApiSourceInfo[]",
+    "longRunning": false
+  },
+  {
+    "name": "api.connect",
+    "args": "ApiConnectArgs",
+    "ret": "ApiAccount",
+    "longRunning": true
+  },
+  {
+    "name": "api.disconnect",
+    "args": "ApiKindArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "api.testConnection",
+    "args": "ApiKindArgs",
+    "ret": "ApiTestResult",
+    "longRunning": false
+  },
+  {
+    "name": "api.getSettings",
+    "args": "ApiKindArgs",
+    "ret": "ApiSourceSettings",
+    "longRunning": false
+  },
+  {
+    "name": "api.setSettings",
+    "args": "ApiSetSettingsArgs",
+    "ret": "ApiSettingsResult",
+    "longRunning": false
+  },
+  {
+    "name": "api.status",
+    "args": "void",
+    "ret": "ApiRow[]",
+    "longRunning": false
+  },
+  {
+    "name": "api.fetch",
+    "args": "ApiFetchArgs",
+    "ret": "ApiFetchSummary",
+    "longRunning": true
+  },
+  {
+    "name": "api.errors",
+    "args": "ApiErrorsArgs",
+    "ret": "ApiErrorRow[]",
+    "longRunning": false
+  },
+  {
+    "name": "sidebar.apiStatus",
+    "args": "void",
+    "ret": "ApiRow[]",
+    "longRunning": false
+  },
+  {
+    "name": "tasks.list",
+    "args": "void",
+    "ret": "TaskInfo[]",
+    "longRunning": false
+  },
+  {
+    "name": "tasks.get",
+    "args": "IdArgs",
+    "ret": "TaskDef",
+    "longRunning": false
+  },
+  {
+    "name": "tasks.validate",
+    "args": "TaskArgs",
+    "ret": "ValidationIssue[]",
+    "longRunning": false
+  },
+  {
+    "name": "tasks.save",
+    "args": "TaskArgs",
+    "ret": "TaskInfo",
+    "longRunning": false
+  },
+  {
+    "name": "tasks.delete",
+    "args": "IdArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "tasks.run",
+    "args": "IdArgs",
+    "ret": "TaskRunRow",
+    "longRunning": true
+  },
+  {
+    "name": "tasks.history",
+    "args": "TasksHistoryArgs",
+    "ret": "TaskRunRow[]",
+    "longRunning": false
+  },
+  {
+    "name": "tasks.register",
+    "args": "TaskRegisterArgs",
+    "ret": "PlannerPreview",
+    "longRunning": false
+  },
+  {
+    "name": "tasks.unregister",
+    "args": "IdArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "tasks.export",
+    "args": "TasksExportArgs",
+    "ret": "FileResult",
+    "longRunning": true
+  },
+  {
+    "name": "tasks.import",
+    "args": "PathArgs",
+    "ret": "TaskInfo[]",
+    "longRunning": true
+  },
+  {
+    "name": "auth.listProfiles",
+    "args": "void",
+    "ret": "AuthProfileInfo[]",
+    "longRunning": false
+  },
+  {
+    "name": "auth.saveProfile",
+    "args": "AuthSaveProfileArgs",
+    "ret": "AuthProfileInfo",
+    "longRunning": false
+  },
+  {
+    "name": "auth.deleteProfile",
+    "args": "NameArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "auth.openLogin",
+    "args": "AuthOpenLoginArgs",
+    "ret": "LoginCapture",
+    "longRunning": true
+  },
+  {
+    "name": "auth.finishLogin",
+    "args": "AuthFinishLoginArgs",
+    "ret": "AuthProfileInfo | null",
+    "longRunning": false
+  },
+  {
+    "name": "mail.listAccounts",
+    "args": "void",
+    "ret": "MailAccountInfo[]",
+    "longRunning": false
+  },
+  {
+    "name": "mail.saveAccount",
+    "args": "MailSaveAccountArgs",
+    "ret": "MailAccountInfo",
+    "longRunning": false
+  },
+  {
+    "name": "mail.deleteAccount",
+    "args": "IdArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "mail.testAccount",
+    "args": "MailTestArgs",
+    "ret": "MailTestResult",
+    "longRunning": true
+  }
+]

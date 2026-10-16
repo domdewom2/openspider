@@ -1,0 +1,5 @@
+{
+  "source": { "kind": "list", "items": ["https://example.test/", "https://example.test/a"], "label": "urls.txt" },
+  "scope": "subdomains",
+  "profile": null
+}

@@ -4,6 +4,7 @@ description = "OpenSpider: HTML-Extraktion"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+rust-version.workspace = true
 repository.workspace = true
 authors.workspace = true
 
@@ -19,9 +20,16 @@ quick-xml.workspace = true
 lopdf.workspace = true
 unicode-segmentation.workspace = true
 flate2.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+fancy-regex.workspace = true
+# M2-F01 (3.1): Rechtschreibung und Spracherkennung (D19, K2-03); XPath 2.0 – 3.1 (D15, K2-05) siehe Kommentar in Cargo.toml
+spellbook.workspace = true
+whatlang.workspace = true
 
 [dev-dependencies]
 os-testsite.workspace = true
 tokio.workspace = true
 ttf-parser.workspace = true
 proptest.workspace = true
+criterion.workspace = true

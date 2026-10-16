@@ -4,8 +4,25 @@ description = "OpenSpider: JS-Rendering ueber Chromium (CDP)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+rust-version.workspace = true
 repository.workspace = true
 authors.workspace = true
 
 [dependencies]
 os-model.workspace = true
+# M2-F01 (3.2): Chromium über das DevTools-Protokoll; Rendering, Screenshots, Konsole, blockierte Ressourcen (M2-R01)
+chromiumoxide.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tokio.workspace = true
+futures-util.workspace = true
+base64.workspace = true
+dirs.workspace = true
+
+[dev-dependencies]
+os-testsite.workspace = true
+tempfile.workspace = true
+criterion.workspace = true
+tokio = { workspace = true, features = ["test-util"] }

@@ -1,0 +1,7 @@
+{
+  "kind": "detail",
+  "detail": "consoleLog",
+  "urlIds": [7],
+  "params": { "level": "error" },
+  "sort": [{ "column": "Level", "dir": "asc" }]
+}

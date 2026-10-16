@@ -1,0 +1,31 @@
+[package]
+name = "os-sched"
+description = "OpenSpider: Aufgabenplanung (Aufgaben, Laufhistorie, OS-Planer-Backends, E-Mail-Benachrichtigung)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+os-model.workspace = true
+os-store.workspace = true
+# Zugangsdaten der Mail-Konten nur über os_fetch::secrets::SecretStoreMut (C13, M2-T02)
+os-fetch.workspace = true
+# M2-F01 (3.1/3.2): SMTP für die Abschlussmail (OUT-280, M2-T02)
+lettre.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tokio.workspace = true
+time.workspace = true
+uuid.workspace = true
+dirs.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+criterion.workspace = true
+tokio = { workspace = true, features = ["test-util"] }

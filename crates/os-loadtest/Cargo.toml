@@ -4,6 +4,7 @@ description = "OpenSpider: Lasttest-Runner (PERF-009) gegen synthetische os-test
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+rust-version.workspace = true
 repository.workspace = true
 authors.workspace = true
 

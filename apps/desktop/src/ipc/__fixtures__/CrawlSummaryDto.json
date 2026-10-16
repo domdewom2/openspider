@@ -1,0 +1,13 @@
+{
+  "crawlId": "0198f3a0-7b5e-7cc2-9d11-5f2a2f0c1a11",
+  "file": "/Users/me/Library/Application Support/OpenSpider/crawls/example.ospider",
+  "name": "https://example.test/",
+  "phase": "completed",
+  "mode": "spider",
+  "startedAt": "2026-10-16T07:00:00Z",
+  "finishedAt": "2026-10-16T07:10:00Z",
+  "urls": 2000,
+  "fileBytes": 12582912,
+  "schemaVersion": 3,
+  "owner": { "kind": "cli", "pid": null, "live": false, "controllable": false }
+}

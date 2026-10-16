@@ -1,0 +1,6 @@
+{
+  "rows": [
+    { "chars": 58, "px": 540.5, "maxPx": 561.0, "remaining": 20.5, "truncated": false, "cutAt": null },
+    { "chars": 190, "px": 1100.0, "maxPx": 985.0, "remaining": -115.0, "truncated": true, "cutAt": 152 }
+  ]
+}

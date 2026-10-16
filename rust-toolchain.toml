@@ -1,0 +1,8 @@
+# Rust-Toolchain des Workspaces (M2-F01, docs/plan/M2.md 2a C3). Der Kanal `stable` folgt den CI-Jobs
+# (`dtolnay/rust-toolchain@stable`); die kleinste unterstützte Version steht in `workspace.package.rust-version`
+# (Cargo.toml) und bricht den Build ab, wenn eine ältere Toolchain benutzt wird. Eine genaue Version festzuschreiben
+# braucht eine gleichzeitige Änderung der Workflows (ci.yml gehört nicht zu M2-F01).
+[toolchain]
+channel = "stable"
+profile = "minimal"
+components = ["rustfmt", "clippy"]
