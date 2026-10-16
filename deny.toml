@@ -1,4 +1,4 @@
-# cargo-deny: `cargo deny check licenses bans sources` (siehe docs/ARCHITECTURE.md, Qualitätssicherung)
+# cargo-deny: `cargo deny check licenses bans sources advisories` (siehe docs/ARCHITECTURE.md, Qualitätssicherung)
 #
 # Lizenzpolitik: OpenSpider steht unter Apache-2.0. Erlaubt sind ausschließlich
 # freizügige, mit Apache-2.0 kompatible Lizenzen (OSI-approved bzw. gleichwertig) plus
@@ -30,6 +30,13 @@ allow = [
     "BSL-1.0",
     "Unicode-3.0",
     "MPL-2.0",
+]
+
+[advisories]
+# Ein neues Advisory macht den CI-Job `deny` rot und wird als Nacharbeitspaket behandelt (K-82);
+# ignoriert wird nur, wofür es keinen Fix im SemVer-Bereich gibt, jeweils mit Pfad, Erreichbarkeit und Grund.
+ignore = [
+    { id = "RUSTSEC-2026-0192", reason = "ttf-parser 0.25.1 ist unmaintained (Hinweis, keine Schwachstelle); es gibt keine behobene Version. Pfad: nur dev-dependency von os-parse (Tests pixel_license, pixel_font_tables und Beispiel-Generator gen_pixel_metrics). Erreichbarkeit: nicht in ausgelieferten Binaries (Bibliothek, CLI, Desktop-App), liest ausschließlich die im Repo eingecheckten Schriftdateien, kein Netz- oder Nutzereingang. Nachfolger skrifa (fontations) wird bei einer Überarbeitung des Generators geprüft; ein Wechsel braucht Cargo.toml-Änderungen und gehört nicht in dieses Paket." },
 ]
 
 [bans]
