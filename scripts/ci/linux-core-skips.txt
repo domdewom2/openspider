@@ -1,0 +1,8 @@
+# Unter Linux übersprungene Tests (OUT-273, Etappe E0). Ziel: diese Liste ist leer.
+#
+# Eine Zeile je Eintrag:   <Testname oder Teil des Testpfads> | <Befund: Datei, Test, Fehlermeldung, Meldung an den Planer>
+#
+# - Der Teil vor dem `|` wird an libtest als `--skip <teil>` übergeben (Teilzeichenfolge des vollen Testpfads).
+# - Der Grund hinter dem `|` ist Pflicht; scripts/ci/linux-core.sh bricht bei einem Eintrag ohne Grund ab.
+# - Rote Tests unter Linux werden nicht im Fachcode behoben, sondern hier mit Befund eingetragen und dem Planer gemeldet.
+# - Leerzeilen und Zeilen mit `#` am Anfang werden ignoriert.
