@@ -1,4 +1,4 @@
-//! `os-parity diff`: vergleicht einen Referenz-Export (Screaming Frog Free) mit dem OpenSpider-Export
+//! `os-parity diff`: vergleicht einen Referenz-Export (Referenzprodukt, Free-Version) mit dem OpenSpider-Export
 //! anhand eines Spaltenmappings (Abschnitt 5.2/5.4).
 //!
 //! Ablauf: beide CSVs tolerant einlesen (Beschreibungsspalten der Referenz verwerfen), Basis-URLs zu

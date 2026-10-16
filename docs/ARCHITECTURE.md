@@ -1,6 +1,6 @@
 # OpenSpider – Architektur
 
-Ziel: Funktionsparität mit Screaming Frog SEO Spider 24.3, aber schneller und sparsamer im Speicher. Plattformen: macOS (arm64, x64) und Windows (x64). Lizenz: Apache-2.0.
+Ziel: das beste Crawling-Werkzeug für die Agentic Ära – gebaut für AI Agents und Menschen gleichermaßen. Mindestens Funktionsparität mit den führenden Desktop-Crawlern (Referenzstand 24.3), dabei schneller, sparsamer im Speicher und vollständig über MCP steuerbar. Plattformen: macOS (arm64, x64) und Windows (x64). Lizenz: Apache-2.0.
 
 **Mindestplattformen** (Entscheidung (Fable-Empfehlung) vom 13.10.2026): macOS 13.0 oder neuer (arm64/x64; WKWebView ab Safari 16.2 für `color-mix(in oklch)`, `forced-colors`, Canvas-DPR), Windows 10 ab 1809 bzw. Windows 11, x64, mit WebView2-Evergreen-Runtime. Festgeschrieben in `apps/desktop/src-tauri/tauri.conf.json` (`bundle.macOS.minimumSystemVersion = "13.0"`, M2-F03) und im M3-Installerplan (OUT-260 … 262).
 
@@ -115,7 +115,7 @@ Abhängigkeitsrichtung: `os-engine` kennt `os-analyze` nicht; `os-app` (ab M2) s
 ## Qualitätssicherung
 
 - `cargo test --workspace`, `cargo clippy -- -D warnings`, `cargo fmt --check`, `cargo deny check licenses bans sources` (Lizenzpolitik in `deny.toml`: nur permissive Lizenzen und MPL-2.0, kein GPL/LGPL/AGPL).
-- Paritätstests: Fixtures in `tests/fixtures/<szenario>/` + Golden-Exporte in `tests/golden/`. Referenzwerte aus Screaming Frog Free (≤500 URLs) werden manuell exportiert und abgelegt.
+- Paritätstests: Fixtures in `tests/fixtures/<szenario>/` + Golden-Exporte in `tests/golden/`. Referenzwerte aus der Free-Version des Referenzprodukts (≤500 URLs) werden manuell exportiert und abgelegt.
 - CI: GitHub Actions Matrix `macos-14` (arm64), `macos-13` (x64), `windows-latest`. Zusätzlich die Jobs `rustfmt` und `cargo-deny` (ubuntu).
 - Desktop-UI (ab M2): vitest (Logik, Komponenten), Playwright gegen Frontend + Kern-Bridge in WebKit und Chromium (Hauptlast der E2E-Tests), WebDriver gegen die echte App auf beiden Plattformen (Windows `tauri-driver`, macOS WebdriverIO-Service mit eingebettetem Server `tauri-plugin-wdio-webdriver`), Bedienungshilfen-Smoke nur für native macOS-Menüs; Stufenmodell in `docs/plan/M2-ui-concept.md` 7.3.
 - Fortschritt: `docs/spec/PARITY.md` – Status je Funktions-ID (offen / in Arbeit / implementiert / verifiziert).

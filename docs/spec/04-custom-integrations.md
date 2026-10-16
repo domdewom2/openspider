@@ -2,7 +2,7 @@
 
 Bereich: benutzerdefinierte Suche und Extraktion, benutzerdefiniertes JavaScript, Link-Positionen, Google Analytics 4, Google Search Console (Search Analytics + URL Inspection), PageSpeed Insights / Lighthouse / CrUX, Linkmetriken (Majestic, Ahrefs, Moz), KI-Anbieter (OpenAI, Gemini, Anthropic, Ollama, OpenAI-kompatible Endpunkte) für Prompts und Embeddings, API-Authentifizierung und Kontingentverwaltung.
 
-Referenzstand: Screaming Frog SEO Spider 24.3 (Verhalten laut öffentlicher Doku, FAQ, Tutorials und Release-Notes 18.0–24.x). Alle Beschreibungen sind eigenständig formuliert; es wurde kein Code des Referenzprodukts betrachtet. Wo die öffentliche Doku keine Details nennt (z. B. GSC-Suchtyp, Dimensionsfilter), leitet die Spezifikation das Verhalten aus den öffentlich dokumentierten Fähigkeiten der jeweiligen Anbieter-API ab und markiert das mit **(abgeleitet)**.
+Referenzstand: Referenzprodukt Version 24.3 (Verhalten laut öffentlicher Doku, FAQ, Tutorials und Release-Notes 18.0–24.x). Alle Beschreibungen sind eigenständig formuliert; es wurde kein Code des Referenzprodukts betrachtet. Wo die öffentliche Doku keine Details nennt (z. B. GSC-Suchtyp, Dimensionsfilter), leitet die Spezifikation das Verhalten aus den öffentlich dokumentierten Fähigkeiten der jeweiligen Anbieter-API ab und markiert das mit **(abgeleitet)**.
 
 ---
 

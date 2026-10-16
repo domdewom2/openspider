@@ -1,4 +1,4 @@
-//! Kommandozeilen-Syntax (OUT-180 ff.): Screaming-Frog-kompatible Flags plus markierte OS-Erweiterungen.
+//! Kommandozeilen-Syntax (OUT-180 ff.): zum Referenzprodukt kompatible Flags plus markierte OS-Erweiterungen.
 //!
 //! Optionen, die die Referenz kennt, die diese Version aber noch nicht umsetzt (Google-Anbindung,
 //! Vergleiche, API-Integrationen …), sind trotzdem deklariert: Sie erscheinen in `--help`, und ein Aufruf

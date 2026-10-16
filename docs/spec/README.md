@@ -1,6 +1,6 @@
 # OpenSpider – Funktionsspezifikation (Clean-Room)
 
-Quelle: öffentliche Dokumentation, Release-Notes und beobachtbares Verhalten des Referenzprodukts (Screaming Frog SEO Spider 24.3).
+Quelle: öffentliche Dokumentation, Release-Notes und beobachtbares Verhalten des Referenzprodukts (Version 24.3).
 Regeln:
 - Verhalten in eigenen Worten beschreiben, keine Textpassagen kopieren, kein Code/Bytecode des Referenzprodukts.
 - Jede Funktion hat eine ID `<BEREICH>-<NNN>` (z. B. `CRAWL-001`), Priorität P0 (MVP) / P1 (Parität) / P2 (später) und prüfbare Akzeptanzkriterien. Meilensteine (M1…M5, `docs/ARCHITECTURE.md`) werden unabhängig davon geschnitten: P beschreibt die Bedeutung einer Funktion, M den Zeitplan – ein P0-Eintrag aus 08 kommt z. B. erst mit M4, ein P1-Tab bereits mit M2 (Zuordnung siehe „Meilensteinzuordnung“ unten).

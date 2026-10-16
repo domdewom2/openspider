@@ -1,6 +1,6 @@
 # 09 – DataForSEO-Anbindung (D4S)
 
-Bereich: Anbindung der kostenpflichtigen DataForSEO-API v3 als Datenquelle **über die Screaming-Frog-Parität hinaus**: Verbindung/Konto, gemeinsame Kostenkontrolle und Ergebnis-Cache, Module **Labs Ranked Keywords**, **Backlinks**, **SERP API** (inkl. AI-Overview-Präsenz) und **AI Optimization / LLM Mentions**, Verknüpfung mit Crawl-Daten (neue Filter und Issues), Bulk-Exporte, CLI und Scheduling.
+Bereich: Anbindung der kostenpflichtigen DataForSEO-API v3 als Datenquelle **über die Parität mit dem Referenzprodukt hinaus**: Verbindung/Konto, gemeinsame Kostenkontrolle und Ergebnis-Cache, Module **Labs Ranked Keywords**, **Backlinks**, **SERP API** (inkl. AI-Overview-Präsenz) und **AI Optimization / LLM Mentions**, Verknüpfung mit Crawl-Daten (neue Filter und Issues), Bulk-Exporte, CLI und Scheduling.
 
 Einordnung: Gebaut wird nach Release 1.0 und nach den KI-Funktionen als **Meilenstein M5** (`docs/ARCHITECTURE.md`; Zuordnung in `README.md`, „Meilensteinzuordnung“). Prioritäten innerhalb dieses Bereichs: **P0** = erste Ausbaustufe von M5, **P1** = vollständiger Ausbau, **P2** = später. Der gemeinsame `BudgetLedger` (AI-013) und der gemeinsame Kostenvoranschlag (AI-012) entstehen bereits mit M4; M5 meldet DataForSEO dort an. Umsetzung im Crate `os-integrations` (Modul `dataforseo`); Speicherung über `os-store`, Filter/Issues über `os-analyze`, Exporte über `os-export`, CLI über `os-cli`. Mock-Server in `os-testsite`.
 

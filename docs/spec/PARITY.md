@@ -1,4 +1,4 @@
-# PARITY – Paritätsprüfung der OpenSpider-Spezifikation gegen Screaming Frog SEO Spider 24.3
+# PARITY – Paritätsprüfung der OpenSpider-Spezifikation gegen das Referenzprodukt (Version 24.3)
 
 Stand: 2026-10-13 · Prüfer: Fable (Fortschrittskontrolle) · Geprüft: `docs/spec/01-crawl.md` … `07-performance.md` (Revision 2) · Referenz: öffentliche Doku (User Guide „Configuration“, „Tabs“, „General“), Release History und Release-Notes 18.0–24.3 des Referenzprodukts.
 

@@ -1,6 +1,6 @@
 # 02 – Analyse-Tabs I: Onpage (ID-Präfix `ONPAGE`)
 
-Clean-Room-Funktionsspezifikation für OpenSpider. Referenz: Screaming Frog SEO Spider 24.3, beschrieben ausschließlich anhand öffentlicher Dokumentation (User Guide „Tabs“ und „Configuration“, SEO-Issues-Bibliothek, Tutorials zu Duplicate Content, Lesbarkeit, Rechtschreibung/Grammatik, Release-Notes 18.0–24.3). Alle Texte sind eigene Formulierungen. Wo die öffentliche Doku ein Verhalten nicht festlegt, trifft diese Spec eine **Annahme (A-n)**; alle Annahmen sind in Abschnitt 15 gesammelt und müssen per Paritätstest gegen die Referenz (Free-Version, ≤500 URLs) verifiziert und ggf. korrigiert werden.
+Clean-Room-Funktionsspezifikation für OpenSpider. Referenz: Referenzprodukt Version 24.3, beschrieben ausschließlich anhand öffentlicher Dokumentation (User Guide „Tabs“ und „Configuration“, SEO-Issues-Bibliothek, Tutorials zu Duplicate Content, Lesbarkeit, Rechtschreibung/Grammatik, Release-Notes 18.0–24.3). Alle Texte sind eigene Formulierungen. Wo die öffentliche Doku ein Verhalten nicht festlegt, trifft diese Spec eine **Annahme (A-n)**; alle Annahmen sind in Abschnitt 15 gesammelt und müssen per Paritätstest gegen die Referenz (Free-Version, ≤500 URLs) verifiziert und ggf. korrigiert werden.
 
 ## Inhaltsverzeichnis
 
