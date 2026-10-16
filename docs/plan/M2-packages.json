@@ -11,10 +11,11 @@
   "owns": [
    "Cargo.toml",
    "Cargo.lock",
-   "crates/*/Cargo.toml",
+   "crates/*/Cargo.toml (ohne crates/{os-store,os-engine,os-analyze}/Cargo.toml; diese trägt M2-F02 nach, C14)",
    "apps/desktop/src-tauri/Cargo.toml",
    "deny.toml (nur Positivliste, mit Begründung im Commit)",
    "crates/os-model/**",
+   "crates/os-parse/src/lib.rs (nur `..Default::default()` im ParsedPage-Literal, damit neue ParsedPage-Felder kompilieren)",
    "crates/os-app/Cargo.toml",
    "crates/os-app/src/lib.rs",
    "crates/os-app/src/dto/**",
@@ -27,8 +28,9 @@
    "apps/desktop/src/ipc/gen/**",
    "apps/desktop/src/ipc/commands.json",
    "apps/desktop/src/ipc/__fixtures__/**",
-   "crates/os-sched/** (nur Gerüst, falls Klärung K2-07 bestätigt)",
+   "crates/os-sched/** (nur Gerüst: Manifest, lib.rs, Stub-Module tasks/history/planner/mail; K2-07 entschieden)",
    "tests/fixtures/config/**",
+   "docs/spec/schemas/osconfig.schema.json (nur per UPDATE_GOLDEN=1 aus os-model erzeugt)",
    "scripts/cloud/**",
    "rust-toolchain.toml",
    ".github/workflows/cloud-setup.yml"
@@ -41,15 +43,38 @@
   ],
   "size": "XL",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Startbedingung: Welle 7 von M1 gemergt (`git log --oneline origin/main -i --grep='Merge p32'` usw. je ein Treffer) und M2-Plan-Gate (Fable) bestanden. Inhalt exakt nach M2.md 3.1 (Workspace-Abhängigkeiten, Lizenzprüfung cargo deny + npm-Positivliste vorbereiten), 3.2 (Crate-Abhängigkeiten inkl. neuem Crate os-app; os-sched nur bei bestätigter Klärung K2-07), 3.3 (Konfiguration v2: alle M2-Sektionen aus 01 C–O, 02/03 P1, 04 A–J ohne KI, 06 mit Defaults der Spec, schemars, TOML-Rundreise, Migration v1→v2 = OUT-226, eingechecktes JSON-Schema neu per UPDATE_GOLDEN=1; Schreibmodell: WriteBatch-/ParsedPage-Erweiterungen und Erweiterungsschlüssel `ext` laut Tabelle 3.3; os_model::settings::AppSettings = settings.toml, OUT-222) und 3.6 (os-app-Gerüst: alle DTOs aus M2-ui-concept 4.3/4.4 plus Domänen api, tasks, viz, detail_ext mit serde camelCase + ts-rs, je Typ eine Datei in apps/desktop/src/ipc/gen/; Registry/CommandMeta/Handler-Typ; jede Command-Domäne als Datei commands/<domäne>.rs mit STUB(M2-<Besitzer>) laut Tabelle 3.6, Stubs liefern CmdError Unsupported; bin os-app-manifest schreibt commands.json, Vertragstest vergleicht; handgeschriebene DTO-Beispiele unter __fixtures__). scripts/cloud/setup.sh nach 2a C3 (Rust, Node 22, npm ci, Playwright chromium+webkit mit --with-deps, optional libwebkit2gtk-4.1-dev, Chromium-Pfad OPENSPIDER_CHROMIUM). Keine Fachlogik über 3.3/3.6 hinaus. DoD: M2.md 3.10 (F01). Command-Verträge: zusätzlich zu M2-ui-concept 4.4 exakt die Tabelle M2.md 3.6a (api.*, tasks.*, segment.*, auth.*, profile.*, mail.*, detail-Ergänzungen) mit den dort genannten Namen, Argument-/Rückgabetypen und longRunning; Stub-Dateien und Besitzer laut Modulkarte 3.6 (commands/auth.rs → M2-O01, commands/auth_login.rs → M2-U17, commands/mail.rs → M2-T02). roaring als Abhängigkeit von os-analyze und os-app (3.2). S-4 entscheidet erst G0; F01 baut mit ts-rs. scripts/cloud/setup.sh setzt OPENSPIDER_SECRET_STORE=memory und installiert keinen Secret Service (C3, C13). DoD setup.sh: läuft in einer frischen Cloud-Session und im eigenen ubuntu-Job .github/workflows/cloud-setup.yml (gehört F01)."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Startbedingung: Welle 7 von M1 gemergt (`git log --oneline origin/main -i --grep='Merge p32'` usw. je ein Treffer) und M2-Plan-Gate (Fable) bestanden. Inhalt exakt nach M2.md 3.1 (Workspace-Abhängigkeiten, Lizenzprüfung cargo deny + npm-Positivliste vorbereiten), 3.2 (Crate-Abhängigkeiten inkl. neuem Crate os-app; os-sched als neues Crate, K2-07 entschieden), 3.3 (Konfiguration v2: alle M2-Sektionen aus 01 C–O, 02/03 P1, 04 A–J ohne KI, 06 mit Defaults der Spec, schemars, TOML-Rundreise, Migration v1→v2 = OUT-226, eingechecktes JSON-Schema neu per UPDATE_GOLDEN=1; Schreibmodell: WriteBatch-/ParsedPage-Erweiterungen und Erweiterungsschlüssel `ext` laut Tabelle 3.3; os_model::settings::AppSettings = settings.toml, OUT-222) und 3.6 (os-app-Gerüst: alle DTOs aus M2-ui-concept 4.3/4.4 plus Domänen api, tasks, viz, detail_ext mit serde camelCase + ts-rs, je Typ eine Datei in apps/desktop/src/ipc/gen/; Registry/CommandMeta/Handler-Typ; jede Command-Domäne als Datei commands/<domäne>.rs mit STUB(M2-<Besitzer>) laut Tabelle 3.6, Stubs liefern CmdError Unsupported; bin os-app-manifest schreibt commands.json, Vertragstest vergleicht; handgeschriebene DTO-Beispiele unter __fixtures__). scripts/cloud/setup.sh nach 2a C3 (Rust, Node 22, npm ci, Playwright chromium+webkit mit --with-deps, optional libwebkit2gtk-4.1-dev, Chromium-Pfad OPENSPIDER_CHROMIUM). Keine Fachlogik über 3.3/3.6 hinaus. DoD: M2.md 3.10 (F01). Command-Verträge: zusätzlich zu M2-ui-concept 4.4 exakt die Tabelle M2.md 3.6a (api.*, tasks.*, segment.*, auth.*, profile.*, mail.*, detail-Ergänzungen) mit den dort genannten Namen, Argument-/Rückgabetypen und longRunning; Stub-Dateien und Besitzer laut Modulkarte 3.6 (commands/auth.rs → M2-O01, commands/auth_login.rs → M2-U17, commands/mail.rs → M2-T02). roaring als Abhängigkeit von os-analyze und os-app (3.2). S-4 entscheidet erst G0; F01 baut mit ts-rs. scripts/cloud/setup.sh setzt OPENSPIDER_SECRET_STORE=memory und installiert keinen Secret Service (C3, C13). DoD setup.sh: läuft in einer frischen Cloud-Session und im eigenen ubuntu-Job .github/workflows/cloud-setup.yml (gehört F01). M1-Sperrbereich (M2.md 2a C14): F01 ändert keine Datei unter crates/os-store/**, crates/os-engine/**, crates/os-analyze/** (dort läuft M1-N27); Lesen und Kompilieren ist erlaubt. os-model nur so erweitern, dass diese drei Crates unverändert kompilieren und ihre Tests grün bleiben (neue Typen/Module; neue Felder nur an Typen mit Default, die dort ausschließlich mit `..Default::default()` gebaut werden, z. B. WriteBatch, ParsedPage). Erweiterungen, die dort Änderungen erzwingen, gehören M2-F02 (Liste M2.md 3.3a: Progress.memory_stage/file_bytes, AnalysisStep::NearDuplicates, neue Felder an LinkRow, SitemapWrite, PageWrite); F01 legt dafür nur die neuen Typen an (z. B. MemoryStage). Abhängigkeiten der drei Crates (roaring in os-analyze, os-render/os-integrations in os-engine, Bench-Ziele views/near_dup/link_score) trägt F02 in deren Cargo.toml ein; F01 legt die Workspace-Einträge an. Nachweis im Bericht: `git diff --name-only origin/main...HEAD -- crates/os-store crates/os-engine crates/os-analyze` ist leer. Wird M1-N27 vor F01 gemergt, führt F01 `git merge origin/main` aus und wiederholt C4; bricht dabei etwas in den drei Crates, wandert die auslösende Erweiterung nach F02 (Befund an den Planer), F01 repariert dort nichts."
+ },
+ {
+  "id": "M2-V01",
+  "kind": "package",
+  "model": "opus",
+  "title": "Etappe E0 Linux-Serverbetrieb: CI-Job linux-core auf ubuntu-latest für Kern, CLI und MCP-STDIO ohne Desktop-App, CLI-Golden-Smoke mit Release-Binärdatei, headless Chromium, Lauf ohne D-Bus/Secret Service",
+  "wave": "0a",
+  "spec_ids": [
+   "OUT-273"
+  ],
+  "owns": [
+   ".github/workflows/linux-core.yml",
+   "scripts/ci/linux-core.sh",
+   "scripts/ci/linux-core-skips.txt",
+   "crates/os-cli/tests/linux_server.rs"
+  ],
+  "depends_on": [],
+  "size": "S",
+  "runner": "cloud+ci",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). M1-Sperrbereich (C14): keine Datei unter crates/os-store/**, crates/os-engine/**, crates/os-analyze/** ändern; keine Manifeste (C7), kein ci.yml (gehört M2-F04 in Welle 0b), keine Überschneidung mit M2-F01 (scripts/cloud/**, cloud-setup.yml bleiben dort). Inhalt nach M2.md 3.11 und docs/spec/06-output-ops.md OUT-273: eigener Workflow .github/workflows/linux-core.yml (on: push, pull_request, workflow_dispatch; runs-on: ubuntu-latest; Rust laut rust-toolchain.toml, Cargo-Cache, Umgebung nach C5) ruft scripts/ci/linux-core.sh auf: cargo fmt --all --check; cargo clippy --workspace --exclude openspider-desktop --all-targets --locked -- -D warnings; cargo test --workspace --exclude openspider-desktop --locked (nextest nach .config/nextest.toml zulässig) mit OPENSPIDER_SECRET_STORE=memory und ohne DBUS_SESSION_BUS_ADDRESS; danach cargo build --release -p os-cli --locked und Upload der Binärdatei als Artefakt (7 Tage). Chromium: das auf ubuntu-latest vorinstallierte Chrome, sonst Playwright-Chromium in der Version aus C3; Pfad als OPENSPIDER_CHROMIUM exportieren und per Smoke `--headless=new --dump-dom` auf eine lokale Datei ohne DISPLAY und ohne xvfb prüfen; spätere Rendering-Tests (M2-E05) laufen dadurch ohne Änderung am Workflow mit. Neuer Test crates/os-cli/tests/linux_server.rs (`// spec: OUT-273`, ohne cfg, läuft auf allen Plattformen; den Linux-Nachweis liefert der Job): CLI crawlt out-basic-site über os-testsite headless, `--export-tabs \"Internal:All\"` gleich dem vorhandenen Golden (nur lesen); `openspider mcp` (STDIO) beantwortet initialize und tools/list ohne DBUS_SESSION_BUS_ADDRESS; ein Befehl mit Geheimnis meldet ohne Schlüsselbund einen Fehler innerhalb von 5 s statt zu hängen. Unter Linux rote Tests werden nicht im Fachcode behoben: Befund (Datei, Test, Fehlermeldung) an den Planer und Eintrag mit Grund in scripts/ci/linux-core-skips.txt, die linux-core.sh als Skip-Liste liest (Ziel leer). Kein Docker, keine Linux-Pakete, kein Build von openspider-desktop. DoD: M2.md 3.10 (V01)."
  },
  {
   "id": "M2-F02",
   "kind": "package",
   "model": "opus",
-  "title": "Fundament Kern II: Schema v3 und Writer, os-store-Abfragemodule, Register (M2-filters.toml, Issue-Katalog je Tab, Export-/Report-Katalog, Analyse-Schritte), Stubs in os-parse/os-analyze/os-export/os-engine/os-render/os-integrations/os-testsite/os-mcp",
+  "title": "Fundament Kern II: Schema v3 und Writer, os-store-Abfragemodule, Register (M2-filters.toml, Issue-Katalog je Tab, Export-/Report-Katalog, Analyse-Schritte), Stubs in os-parse/os-analyze/os-export/os-engine/os-render/os-integrations/os-testsite/os-mcp; Leseschnittstelle der Crawl-Datei (Manifest, q_-Sichten)",
   "wave": "0b",
-  "spec_ids": [],
+  "spec_ids": [
+   "OUT-233",
+   "OUT-234"
+  ],
   "owns": [
    "crates/os-store/migrations/0003_m2.sql",
    "crates/os-store/src/{lib,schema,writer,sink}.rs",
@@ -85,14 +110,32 @@
    "docs/plan/M2-filters.toml (nur Felder issue/requires nach UI-064)",
    "crates/os-fetch/src/secrets.rs (additiv: SecretStoreMut, SecretBackend, secret_store_from_env)",
    "crates/os-fetch/src/lib.rs (nur Re-Export)",
-   "crates/os-fetch/tests/secrets_*.rs"
+   "crates/os-fetch/tests/secrets_*.rs",
+   "crates/{os-store,os-engine,os-analyze}/Cargo.toml (nur Abhängigkeiten, Features und Bench-Ziele nach M2.md 3.1/3.2; Workspace-Einträge aus F01)",
+   "Cargo.lock (nur die Einträge der Pakete os-store, os-engine, os-analyze)",
+   "crates/os-analyze/benches/{views,near_dup,link_score}.rs (Stubs)",
+   "crates/os-model/src/{progress,write,enums}.rs (nur Nachträge M2.md 3.3a)",
+   "crates/os-model/tests/{progress_roundtrip,model_indexability}.rs (nur neue Progress-Felder)",
+   "crates/os-engine/src/{progress,worker}.rs (nur Initialisierung der Felder aus 3.3a)",
+   "crates/os-engine/tests/perf_store.rs (nur Felder aus 3.3a)",
+   "crates/os-analyze/src/state.rs (nur match-Arme aus 3.3a)",
+   "crates/os-analyze/src/analysis/runner.rs (nur match-Arme aus 3.3a)",
+   "crates/os-store/tests/{writer_flags,writer_batches}.rs (nur Felder aus 3.3a)",
+   "crates/os-store/tests/store_common/** (nur Felder aus 3.3a)",
+   "crates/os-store/src/{meta,read_api}.rs",
+   "crates/os-store/tests/read_api_*.rs",
+   "crates/os-cli/tests/read_api_export.rs",
+   "tests/golden/out-m2-read-api/**",
+   "scripts/ci/read_api_smoke.py",
+   ".github/workflows/linux-core.yml (nur Schritt read-api-smoke)"
   ],
   "depends_on": [
-   "M2-F01"
+   "M2-F01",
+   "M1-N27"
   ],
   "size": "XL",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Inhalt exakt nach M2.md 3.4 (Schema v3 in einer Migration 0003_m2.sql; Writer schreibt alle neuen WriteBatch-Teile in derselben Transaktion und stempelt change_seq; Rundreise-Tests je Tabelle; M1-Dateien v1/v2 migrieren mit Backup) und 3.5 (Register: alle Tabs/Filter/Spalten aus docs/plan/M2-filters.toml als Stub-TabDefs mit Prädikat '0' bzw. Population, ColumnDef-Metadaten K-4 für alle bestehenden und neuen Spalten, dynamische Spaltenquellen als Trait; Issue-Katalog ab M2 je Tab in core/issues/catalog.d/<tab>.toml und texts/{de,en}.d/<tab>.toml, Loader liest M1-Datei plus .d-Dateien, CI-Längen-/Platzhalterprüfung unverändert; Export-/Report-Katalog: alle M2-Bulk-Exporte und Reports als Einträge mit Stub-Implementierung je Datei (nur Kopfzeile, K-14); Analyse-Schritte als Stubs; parse_html ruft die neuen Module über Konfigurationsschalter auf; LinkRef.target befüllt; os-testsite registriert Mock-Module; os-mcp: ToolContext.session: Option<Arc<dyn SessionAccess>>). Crawl Overview (OUT-080) erzeugt Abschnitte generisch aus tabs::all(), damit Fachpakete reports/overview.rs nicht anfassen. Alle M1-Tests bleiben grün; M1-Goldens unverändert (außer begründete Schema-Goldens). Parallel zu M2-F03 und M2-F04 (keine Überschneidung). DoD: M2.md 3.10 (F02). OUT-184 (M1 7.3): Migration älterer Schemaversionen (v1, v2 → v3) als Kopie bei unverändertem Original (Byte-Vergleich des Originals im Test). SecretStore (M2.md 3.6b): os_fetch::secrets additiv um SecretStoreMut (set/delete/backend) für MemorySecretStore und KeyringSecretStore sowie secret_store_from_env() (OPENSPIDER_SECRET_STORE=memory → prozessweiter MemorySecretStore, sonst Keyring); bestehende Signaturen unverändert. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Inhalt exakt nach M2.md 3.4 (Schema v3 in einer Migration 0003_m2.sql; Writer schreibt alle neuen WriteBatch-Teile in derselben Transaktion und stempelt change_seq; Rundreise-Tests je Tabelle; M1-Dateien v1/v2 migrieren mit Backup) und 3.5 (Register: alle Tabs/Filter/Spalten aus docs/plan/M2-filters.toml als Stub-TabDefs mit Prädikat '0' bzw. Population, ColumnDef-Metadaten K-4 für alle bestehenden und neuen Spalten, dynamische Spaltenquellen als Trait; Issue-Katalog ab M2 je Tab in core/issues/catalog.d/<tab>.toml und texts/{de,en}.d/<tab>.toml, Loader liest M1-Datei plus .d-Dateien, CI-Längen-/Platzhalterprüfung unverändert; Export-/Report-Katalog: alle M2-Bulk-Exporte und Reports als Einträge mit Stub-Implementierung je Datei (nur Kopfzeile, K-14); Analyse-Schritte als Stubs; parse_html ruft die neuen Module über Konfigurationsschalter auf; LinkRef.target befüllt; os-testsite registriert Mock-Module; os-mcp: ToolContext.session: Option<Arc<dyn SessionAccess>>). Crawl Overview (OUT-080) erzeugt Abschnitte generisch aus tabs::all(), damit Fachpakete reports/overview.rs nicht anfassen. Alle M1-Tests bleiben grün; M1-Goldens unverändert (außer begründete Schema-Goldens). Parallel zu M2-F03 und M2-F04 (keine Überschneidung). DoD: M2.md 3.10 (F02). OUT-184 (M1 7.3): Migration älterer Schemaversionen (v1, v2 → v3) als Kopie bei unverändertem Original (Byte-Vergleich des Originals im Test). SecretStore (M2.md 3.6b): os_fetch::secrets additiv um SecretStoreMut (set/delete/backend) für MemorySecretStore und KeyringSecretStore sowie secret_store_from_env() (OPENSPIDER_SECRET_STORE=memory → prozessweiter MemorySecretStore, sonst Keyring); bestehende Signaturen unverändert. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. M1-Sperrbereich (C14): Start erst nach dem Merge von M1-N27 (depends_on; `git log --oneline origin/main -i --grep='Merge m1-n27'` bzw. `--grep='Merge N27'` mit genau einem Treffer). F02 trägt die Nachträge aus M2.md 3.3a nach (os-model-Felder und -Varianten, die F01 wegen C14 nicht anlegen durfte, samt der Literal-/match-Stellen in os-store, os-engine, os-analyze; keine Logik, neue Felder mit None/leer, NearDuplicates als Stub-Schritt) und die Abhängigkeiten der drei Crates in deren Cargo.toml (roaring in os-analyze, os-render/os-integrations in os-engine, Bench-Ziele mit Stub-Dateien). Leseschnittstelle (M2.md 3.4a, docs/spec/06-output-ops.md OUT-233/OUT-234): Sichten q_manifest, q_config, q_urls, q_links, q_sitemap_urls, q_columns exakt nach OUT-234, in der Datei gespeichert, ohne eigene Kollationen oder Funktionen (Ort: Migration 0003_m2.sql oder read_api::install beim Öffnen zum Schreiben; Entscheidung und Grund im Bericht); Manifest-Schlüssel nach OUT-233, openspider_version und last_writer_version schreibt os-store beim Anlegen bzw. Öffnen zum Schreiben (meta.rs). Tests: read_api_*.rs (Schlüssel, completeness-Regel, q_columns ohne Lücken, Golden tests/golden/out-m2-read-api/ für neue und aus v2 migrierte Datei gleich), read_api_export.rs in os-cli (q_urls ↔ Internal:All, q_links ↔ All Inlinks für out-basic-site), scripts/ci/read_api_smoke.py (Python sqlite3, mode=ro, ohne OpenSpider-Code) als zusätzlicher Schritt read-api-smoke im Job linux-core (Workflow von M2-V01).",
   "extra_spec_ids": [
    "OUT-184"
   ]
@@ -127,7 +170,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Inhalt nach M2.md 3.6 (Laufzeit: App::dispatch, CallCtx, CancelToken mit rusqlite-Interrupt, ReadPool mit collation::ensure je Verbindung, WriteQueue als eigener Thread mit busy_timeout 5 s, Ops mit OpHandle und Fortschritt über Tick, EventSink-Trait, Tick-Zusammenbau ohne Coalescer-Logik (die liefert M2-K04), settings.get/set mit atomarem Schreiben von settings.toml und Ereignis settingsChanged, uistate.load/save mit .bak; Lint 2.3 Regel 1 über clippy.toml disallowed_methods/types mit Ausnahme nur in pool.rs/write_queue.rs; os-app-bridge (Feature e2e-bridge, WebSocket auf 127.0.0.1, Zufallstoken, Protokoll 3.6)) und 3.7 (Tauri-Hülle: je Command-Domäne ein internes Plugin, mechanisch aus commands.json per Makro, lib.rs danach eingefroren; ein Ereigniskanal je Fenster; Sichtbarkeit aus WindowEvent/Occlusion an events.setVisibility; Schließpfad F-11 an app.requestQuit; Plugins dialog, clipboard-manager, notification, os, single-instance (OUT-232: Dateiöffnen an laufende Instanz), deep-link/Dateizuordnung .ospider (OUT-272); optional tauri-plugin-wdio-webdriver nur mit Feature e2e-webdriver; URI-Schema ospider:// an os-app::assets (Stub); tauri.conf.json: Fenster main/settings/viz, minWidth 1024, minHeight 640, bundle.macOS.minimumSystemVersion 13.0, CSP ohne externe Quellen, fileAssociations). Bau: cargo test -p os-app --locked in der Cloud; cargo check -p openspider-desktop nur mit installiertem webkit2gtk, sonst über die CI-Matrix (C4). DoD: M2.md 3.10 (F03). AppConfig enthält secrets: Arc<dyn SecretStoreMut> (M2.md 3.6b); os-app-bridge und alle os-app-Tests verwenden immer MemorySecretStore."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Inhalt nach M2.md 3.6 (Laufzeit: App::dispatch, CallCtx, CancelToken mit rusqlite-Interrupt, ReadPool mit collation::ensure je Verbindung, WriteQueue als eigener Thread mit busy_timeout 5 s, Ops mit OpHandle und Fortschritt über Tick, EventSink-Trait, Tick-Zusammenbau ohne Coalescer-Logik (die liefert M2-K04), settings.get/set mit atomarem Schreiben von settings.toml und Ereignis settingsChanged, uistate.load/save mit .bak; Lint 2.3 Regel 1 über clippy.toml disallowed_methods/types mit Ausnahme nur in pool.rs/write_queue.rs; os-app-bridge (Feature e2e-bridge, WebSocket auf 127.0.0.1, Zufallstoken, Protokoll 3.6)) und 3.7 (Tauri-Hülle: je Command-Domäne ein internes Plugin, mechanisch aus commands.json per Makro, lib.rs danach eingefroren; ein Ereigniskanal je Fenster; Sichtbarkeit aus WindowEvent/Occlusion an events.setVisibility; Schließpfad F-11 an app.requestQuit; Plugins dialog, clipboard-manager, notification, os, single-instance (OUT-232: Dateiöffnen an laufende Instanz), deep-link/Dateizuordnung .ospider (OUT-272); optional tauri-plugin-wdio-webdriver nur mit Feature e2e-webdriver; URI-Schema ospider:// an os-app::assets (Stub); tauri.conf.json: Fenster main/settings/viz, minWidth 1024, minHeight 640, bundle.macOS.minimumSystemVersion 13.0, CSP ohne externe Quellen, fileAssociations). Bau: cargo test -p os-app --locked in der Cloud; cargo check -p openspider-desktop nur mit installiertem webkit2gtk, sonst über die CI-Matrix (C4). DoD: M2.md 3.10 (F03). AppConfig enthält secrets: Arc<dyn SecretStoreMut> (M2.md 3.6b); os-app-bridge und alle os-app-Tests verwenden immer MemorySecretStore."
  },
  {
   "id": "M2-F04",
@@ -168,7 +211,7 @@
   ],
   "size": "XL",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Inhalt nach M2.md 3.8 und M2-ui-concept.md 2.1–2.10, 5, 7.1, 8.1: Abhängigkeiten exakt gepinnt (Glide \"6.0.4-alpha24\" ohne ^/~; React Aria Components, Zustand, TanStack Query, zod, @fluent/bundle+langneg, lucide-react, CodeMirror 6, Playwright, @axe-core/playwright, vitest-canvas-mock); npm-Lizenzprüfung gegen die Positivliste von deny.toml; Tokens aus src/ui/tokens/tokens.ts (CSS Custom Properties + Canvas-Theme) mit Kontrast-Unit-Test (UI-120), Theme hell/dunkel/System, Akzentfarbe mit Kontrastwarnung, Zoom über Webview.setZoom, Dichte kompakt 22 px (F-12); Design-System-Primitive aus 5.4 inkl. EmptyState mit data-empty-state und Voraussetzungsregister-Prüfung (UI-016) und DialogFooter je Plattform; i18n: Fluent je Feature (features/<f>/i18n/{de,en}.ftl, import.meta.glob), useT, Kanon-Rückfall auf englische Schlüssel, Intl-Formatierer, Sprachwechsel ohne Neustart inkl. Menüneuaufbau (UI-121, CRAWL-137, OUT-271), CI-Vollständigkeit de/en + Platzhalter; IPC-Client: Tauri-invoke/Channel, Bridge-WebSocket (VITE_E2E_BRIDGE) und Mock (vitest) hinter einer Schnittstelle, CmdError-Umsetzung, Versionsverwerfen, AbortSignal→op.cancel; Wrapper je Domäne generiert aus commands.json (npm run gen:ipc, Vertragstest); Event-Bus (ein Kanal je Fenster), Store-Gerüste, Kürzelregister src/ui/shortcuts.ts mit allen Zeilen aus UI-113 und Aktions-IDs + zentraler keydown-Dispatcher mit Scopes, Menüaufbau aus Beiträgen (ui/menu, features/<f>/menu.ts) inkl. macOS-Bearbeiten-Menü (PredefinedMenuItems) und Windows ohne Edit-Accelerators (F-5); Einstellungsfenster (eigenes Fenster settings, Seitennavigation, Abschnitte Allgemein und Oberfläche fertig, übrige Abschnitte als Platzhalter-Module für spätere Besitzer); Harness für visuelle Tests; CI: Jobs frontend (typecheck, vitest, Lizenz, statische Prüfungen aus 7.1) auf allen drei Plattformen und ui-e2e.yml (E2E-A-Gerüst: Playwright WebKit auf macOS-14, Chromium auf windows-latest, beide gegen os-app-bridge; in der Cloud Linux mit beiden Engines). DoD: M2.md 3.10 (F04)."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Inhalt nach M2.md 3.8 und M2-ui-concept.md 2.1–2.10, 5, 7.1, 8.1: Abhängigkeiten exakt gepinnt (Glide \"6.0.4-alpha24\" ohne ^/~; React Aria Components, Zustand, TanStack Query, zod, @fluent/bundle+langneg, lucide-react, CodeMirror 6, Playwright, @axe-core/playwright, vitest-canvas-mock); npm-Lizenzprüfung gegen die Positivliste von deny.toml; Tokens aus src/ui/tokens/tokens.ts (CSS Custom Properties + Canvas-Theme) mit Kontrast-Unit-Test (UI-120), Theme hell/dunkel/System, Akzentfarbe mit Kontrastwarnung, Zoom über Webview.setZoom, Dichte kompakt 22 px (F-12); Design-System-Primitive aus 5.4 inkl. EmptyState mit data-empty-state und Voraussetzungsregister-Prüfung (UI-016) und DialogFooter je Plattform; i18n: Fluent je Feature (features/<f>/i18n/{de,en}.ftl, import.meta.glob), useT, Kanon-Rückfall auf englische Schlüssel, Intl-Formatierer, Sprachwechsel ohne Neustart inkl. Menüneuaufbau (UI-121, CRAWL-137, OUT-271), CI-Vollständigkeit de/en + Platzhalter; IPC-Client: Tauri-invoke/Channel, Bridge-WebSocket (VITE_E2E_BRIDGE) und Mock (vitest) hinter einer Schnittstelle, CmdError-Umsetzung, Versionsverwerfen, AbortSignal→op.cancel; Wrapper je Domäne generiert aus commands.json (npm run gen:ipc, Vertragstest); Event-Bus (ein Kanal je Fenster), Store-Gerüste, Kürzelregister src/ui/shortcuts.ts mit allen Zeilen aus UI-113 und Aktions-IDs + zentraler keydown-Dispatcher mit Scopes, Menüaufbau aus Beiträgen (ui/menu, features/<f>/menu.ts) inkl. macOS-Bearbeiten-Menü (PredefinedMenuItems) und Windows ohne Edit-Accelerators (F-5); Einstellungsfenster (eigenes Fenster settings, Seitennavigation, Abschnitte Allgemein und Oberfläche fertig, übrige Abschnitte als Platzhalter-Module für spätere Besitzer); Harness für visuelle Tests; CI: Jobs frontend (typecheck, vitest, Lizenz, statische Prüfungen aus 7.1) auf allen drei Plattformen und ui-e2e.yml (E2E-A-Gerüst: Playwright WebKit auf macOS-14, Chromium auf windows-latest, beide gegen os-app-bridge; in der Cloud Linux mit beiden Engines). DoD: M2.md 3.10 (F04)."
  },
  {
   "id": "M2-S01",
@@ -199,7 +242,7 @@
   ],
   "size": "L",
   "runner": "cloud+ci+local-mac",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Ziel: der Adapter src/grid/ (DataGridProps nach M2-ui-concept 3.3) und die ViewDataSource (2.4: Blöcke à 200, LRU 20 000, Versionsverwerfen, Anker, Tail-Modus, locate) sind Produktcode und gegen den Stub-Vertrag fertig; os-app Feature stub-views liefert view.open/rows/locate synthetisch (5 000 000 × 65, deterministisch). Glide-eigenes Kopieren/Editieren aus; Mod+C ruft view.copy. MESSUNG Gate S-1 (Kriterien M2-ui-concept 3.3 (1)–(6)) und S-2 (Zoom/devicePixelRatio): Teil A in der Cloud mit Playwright (Chromium und WebKit, headless, nur Funktionskriterien 1, 4, 5, 6); Teil B echte App über spike-grid.yml auf macos-14 und windows-latest (Frame-Recorder aus 7.4, Bericht als Artefakt; Werte gelten als Indiz, Klärung K2-12); Teil C lokal auf der Referenzmaschine A durch den Orchestrator (tauri dev --features stub-views, Recorder-Seite, VoiceOver-Ansage aria-rowcount 5 000 001). Ergebnis docs/plan/M2-spikes/S-1.md mit Messwerten je Kriterium und Plattform und Empfehlung nach der Rückfalltabelle M2.md 3.9 (Stufe 0/A/B). Kein Fallback selbst umsetzen außer Fallback 0 (Vendoring), wenn das npm-Paket nicht installierbar ist. S-2 Kriterien (M2.md 3.9): Zoomstufen 80/100/125/150/200 % × DPR 1/2 (WebKit, WKWebView lokal) bzw. 100/125/150/200 % Skalierung (WebView2, CI) und DPR 3 emuliert (Playwright deviceScaleFactor): (a) Canvas-Backing-Store = CSS-Größe × devicePixelRatio (± 1 px), (b) Zellbreiten = Sollbreite × Zoom (± 1 px), (c) kein Layout-Sprung: erste sichtbare Zeile und Auswahl nach Zoomwechsel unverändert, keine Überlappung Kopf/Zellen, (d) Hit-Test: Klick in die Zellmitte trifft die Zelle auf allen Stufen; Messwerte je Plattform in S-2.md. Abbruch/Rückfall: verfehlt WKWebView (a) oder (d), wirkt der App-Zoom (UI-120) über Token-Skalierung statt WebView-Zoom (Entscheidung G0); verfehlt auch das, gilt Rückfall B der Tabelle 3.9."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Ziel: der Adapter src/grid/ (DataGridProps nach M2-ui-concept 3.3) und die ViewDataSource (2.4: Blöcke à 200, LRU 20 000, Versionsverwerfen, Anker, Tail-Modus, locate) sind Produktcode und gegen den Stub-Vertrag fertig; os-app Feature stub-views liefert view.open/rows/locate synthetisch (5 000 000 × 65, deterministisch). Glide-eigenes Kopieren/Editieren aus; Mod+C ruft view.copy. MESSUNG Gate S-1 (Kriterien M2-ui-concept 3.3 (1)–(6)) und S-2 (Zoom/devicePixelRatio): Teil A in der Cloud mit Playwright (Chromium und WebKit, headless, nur Funktionskriterien 1, 4, 5, 6); Teil B echte App über spike-grid.yml auf macos-14 und windows-latest (Frame-Recorder aus 7.4, Bericht als Artefakt; Werte gelten als Indiz, Klärung K2-12); Teil C lokal auf der Referenzmaschine A durch den Orchestrator (tauri dev --features stub-views, Recorder-Seite, VoiceOver-Ansage aria-rowcount 5 000 001). Ergebnis docs/plan/M2-spikes/S-1.md mit Messwerten je Kriterium und Plattform und Empfehlung nach der Rückfalltabelle M2.md 3.9 (Stufe 0/A/B). Kein Fallback selbst umsetzen außer Fallback 0 (Vendoring), wenn das npm-Paket nicht installierbar ist. S-2 Kriterien (M2.md 3.9): Zoomstufen 80/100/125/150/200 % × DPR 1/2 (WebKit, WKWebView lokal) bzw. 100/125/150/200 % Skalierung (WebView2, CI) und DPR 3 emuliert (Playwright deviceScaleFactor): (a) Canvas-Backing-Store = CSS-Größe × devicePixelRatio (± 1 px), (b) Zellbreiten = Sollbreite × Zoom (± 1 px), (c) kein Layout-Sprung: erste sichtbare Zeile und Auswahl nach Zoomwechsel unverändert, keine Überlappung Kopf/Zellen, (d) Hit-Test: Klick in die Zellmitte trifft die Zelle auf allen Stufen; Messwerte je Plattform in S-2.md. Abbruch/Rückfall: verfehlt WKWebView (a) oder (d), wirkt der App-Zoom (UI-120) über Token-Skalierung statt WebView-Zoom (Entscheidung G0); verfehlt auch das, gilt Rückfall B der Tabelle 3.9."
  },
  {
   "id": "M2-S02",
@@ -221,7 +264,7 @@
   ],
   "size": "M",
   "runner": "cloud+ci+local-mac",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Je Spike ein Protokoll mit Befehlen, Plattform, Ergebnis und Entscheidungsvorschlag. S-3: Cmd/Strg+C/V/X/A/Z in Textfeldern und Tabelle bei aufgebautem Menü (macOS mit PredefinedMenuItems, Windows ohne Accelerators), Pflicht beide Plattformen. S-4 (Ja/Nein, M2.md 3.9): Wechsel zu tauri-specta genau dann, wenn alle drei gelten: (1) eine stabile Version (kein RC/Beta) ist mit der in F01 gepinnten Tauri-2-Version kompatibel, (2) sie erzeugt das Manifest (Name, Argument-, Rückgabetyp, longRunning) und die TS-Typen für alle Domänen aus 3.6/3.6a ohne Tauri-Abhängigkeit in os-app, (3) ohne Patch oder Fork. Sonst bleibt ts-rs (nur Bewertung, keine Umstellung; ein Ja plant G0 als eigenes Paket vor den Welle-1-UI-Paketen). S-5: Playwright-WebKit gegen Vite + os-app-bridge auf macOS und Linux. S-5b: E2E-B-Gerüst apps/desktop/e2e-b (WebdriverIO) gegen die echte App: Windows über tauri-driver, macOS über eingebetteten Server (Feature e2e-webdriver); ein Smoke (Fenster öffnet, Einstellungen-Fenster, Schließen-Rückfrage); scheitert macOS, Fallback E2E-C dokumentieren. S-6: Tick-Frequenz bei minimiertem/verdecktem Fenster ≤ 1 Hz auf macOS (beide Quellen aus 2.5). ui-e2e-b.yml als nightly- und workflow_dispatch-Job."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Je Spike ein Protokoll mit Befehlen, Plattform, Ergebnis und Entscheidungsvorschlag. S-3: Cmd/Strg+C/V/X/A/Z in Textfeldern und Tabelle bei aufgebautem Menü (macOS mit PredefinedMenuItems, Windows ohne Accelerators), Pflicht beide Plattformen. S-4 (Ja/Nein, M2.md 3.9): Wechsel zu tauri-specta genau dann, wenn alle drei gelten: (1) eine stabile Version (kein RC/Beta) ist mit der in F01 gepinnten Tauri-2-Version kompatibel, (2) sie erzeugt das Manifest (Name, Argument-, Rückgabetyp, longRunning) und die TS-Typen für alle Domänen aus 3.6/3.6a ohne Tauri-Abhängigkeit in os-app, (3) ohne Patch oder Fork. Sonst bleibt ts-rs (nur Bewertung, keine Umstellung; ein Ja plant G0 als eigenes Paket vor den Welle-1-UI-Paketen). S-5: Playwright-WebKit gegen Vite + os-app-bridge auf macOS und Linux. S-5b: E2E-B-Gerüst apps/desktop/e2e-b (WebdriverIO) gegen die echte App: Windows über tauri-driver, macOS über eingebetteten Server (Feature e2e-webdriver); ein Smoke (Fenster öffnet, Einstellungen-Fenster, Schließen-Rückfrage); scheitert macOS, Fallback E2E-C dokumentieren. S-6: Tick-Frequenz bei minimiertem/verdecktem Fenster ≤ 1 Hz auf macOS (beide Quellen aus 2.5). ui-e2e-b.yml als nightly- und workflow_dispatch-Job."
  },
  {
   "id": "M2-G0",
@@ -237,11 +280,12 @@
   "depends_on": [
    "M2-F02",
    "M2-S01",
-   "M2-S02"
+   "M2-S02",
+   "M2-V01"
   ],
   "size": "S",
   "runner": "orchestrator",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Orchestrator-Schritt, kein Code. Fallback A → Paket M2-U02A (Fenster-Rebasing im Adapter, Welle 1, owns apps/desktop/src/grid/**). Fallback B → Paket M2-U02B (eigenes Canvas-Grid, Welle 1–2). Die UI-Pakete der Welle 1 hängen nur an DataGridProps und starten in jedem Fall."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Orchestrator-Schritt, kein Code. Fallback A → Paket M2-U02A (Fenster-Rebasing im Adapter, Welle 1, owns apps/desktop/src/grid/**). Fallback B → Paket M2-U02B (eigenes Canvas-Grid, Welle 1–2). Die UI-Pakete der Welle 1 hängen nur an DataGridProps und starten in jedem Fall. Prüft zusätzlich M2-V01: Job linux-core grün auf main, Skip-Liste mit Befunden (Ziel leer) – Welle-1-Pakete erben den Job als Pflichtcheck."
  },
  {
   "id": "M2-K01",
@@ -266,7 +310,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Umsetzung M2-ui-concept 4.5 K-1 (a, b, d, e, f, g) gegen die Signaturen aus M2.md 3.5/3.6 (ViewSession::open/update/rows/locate/close, Budget-LRU). Pflege über changed_since (K-1c) liefert M2-K05 in Welle 2; hier nur die Funktion apply_changes(urlids) mit Tests. Textvergleich über os_store::collation::compare, Gleichstand nach F-3 (Address bytewise, dann UrlId). Kern-Benchmarks (criterion) gegen synthetische Crawls 100 000 (CI) und 1/5 Mio. (#[ignore = \"Benchmark (M2-U31): …\"]), Budgets UI-141/UI-142; Speicher je View im Bericht. Keine Abhängigkeit auf os-app."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Umsetzung M2-ui-concept 4.5 K-1 (a, b, d, e, f, g) gegen die Signaturen aus M2.md 3.5/3.6 (ViewSession::open/update/rows/locate/close, Budget-LRU). Pflege über changed_since (K-1c) liefert M2-K05 in Welle 2; hier nur die Funktion apply_changes(urlids) mit Tests. Textvergleich über os_store::collation::compare, Gleichstand nach F-3 (Address bytewise, dann UrlId). Kern-Benchmarks (criterion) gegen synthetische Crawls 100 000 (CI) und 1/5 Mio. (#[ignore = \"Benchmark (M2-U31): …\"]), Budgets UI-141/UI-142; Speicher je View im Bericht. Keine Abhängigkeit auf os-app."
  },
  {
   "id": "M2-K02",
@@ -292,7 +336,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). search.parse liefert RuleNode bzw. CmdError mit Position; Auswertung als SQL-Prädikat bzw. Bitmap-Filter (Schnittstelle zu K-1 über Trait aus M2-F02). Gleiche Semantik für Export (OUT-020) und MCP. Unicode-Faltung der einfachen Suche (M1 7.3: lower() nur ASCII) hier lösen. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). search.parse liefert RuleNode bzw. CmdError mit Position; Auswertung als SQL-Prädikat bzw. Bitmap-Filter (Schnittstelle zu K-1 über Trait aus M2-F02). Gleiche Semantik für Export (OUT-020) und MCP. Unicode-Faltung der einfachen Suche (M1 7.3: lower() nur ASCII) hier lösen. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-K03",
@@ -321,7 +365,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Budgets UI-145 (≤ 1 s bei 5 Mio., Benchmark mit Ignore-Präfix Benchmark) und UI-082 (veraltete Teilschritte nach config.set). Segment-Kennzahlen kommen mit M2-K14. ONPAGE-140 (M1 7.3): analysis.status meldet für Content-Schritte bei geändertem Inhaltsbereich ohne gespeichertes HTML den Zustand needsRecrawl (Hinweiszustand statt Neuanalyse). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Budgets UI-145 (≤ 1 s bei 5 Mio., Benchmark mit Ignore-Präfix Benchmark) und UI-082 (veraltete Teilschritte nach config.set). Segment-Kennzahlen kommen mit M2-K14. ONPAGE-140 (M1 7.3): analysis.status meldet für Content-Schritte bei geändertem Inhaltsbereich ohne gespeichertes HTML den Zustand needsRecrawl (Hinweiszustand statt Neuanalyse). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-K04",
@@ -354,7 +398,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Coalescer nach M2-ui-concept 2.5 mit ManualClock (Test: 60 s bei 200 URL/s ≤ 10 Ticks/s, unsichtbar ≤ 1 Hz, kein Tick ohne Änderung). Quelle change_seq/changed_since/reset_seq (M1, inkl. url_counters seit Welle 7). crawl.start/pause/resume/stop/clear/open/saveAs/recrawl/remove, analysis.start/status über M1-APIs; owner_kind = app; Speicherstufe (CRAWL-129) und Dateigröße im Tick, sobald M2-E02 sie liefert (bis dahin None). Fixture fx-ui-basic nach 05 anlegen (Besitz hier). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Coalescer nach M2-ui-concept 2.5 mit ManualClock (Test: 60 s bei 200 URL/s ≤ 10 Ticks/s, unsichtbar ≤ 1 Hz, kein Tick ohne Änderung). Quelle change_seq/changed_since/reset_seq (M1, inkl. url_counters seit Welle 7). crawl.start/pause/resume/stop/clear/open/saveAs/recrawl/remove, analysis.start/status über M1-APIs; owner_kind = app; Speicherstufe (CRAWL-129) und Dateigröße im Tick, sobald M2-E02 sie liefert (bis dahin None). Fixture fx-ui-basic nach 05 anlegen (Besitz hier). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-K06",
@@ -388,7 +432,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Zweck: die Alpha-Oberfläche läuft mit echten Daten, bevor M2-K05 die View-Sitzungen anschließt (gleiche Command-API, M2-ui-concept 2.3 Regel 3). view.copy: TSV nach 3.3, Zeilenenden je Plattform, > 1 000 000 Zellen → Unsupported err-copy-too-large; export.view/detail/bulk/report/sitemap als Ops mit Abbruch; Fixture-JSONs unter apps/desktop/src/ipc/__fixtures__ aus fx-ui-basic neu erzeugen (UPDATE_FIXTURES=1). Leerzustände über EmptyState-Codes. ONPAGE-011 (M1 7.3): catalog.columns blendet Spalten abgeschalteter Elemente (Konfiguration Seitendetails/Extraktion) aus bzw. markiert sie mit needs = NeedsConfig; Hash-Spalte (ONPAGE-142) nur bei aktivem Hash. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Zweck: die Alpha-Oberfläche läuft mit echten Daten, bevor M2-K05 die View-Sitzungen anschließt (gleiche Command-API, M2-ui-concept 2.3 Regel 3). view.copy: TSV nach 3.3, Zeilenenden je Plattform, > 1 000 000 Zellen → Unsupported err-copy-too-large; export.view/detail/bulk/report/sitemap als Ops mit Abbruch; Fixture-JSONs unter apps/desktop/src/ipc/__fixtures__ aus fx-ui-basic neu erzeugen (UPDATE_FIXTURES=1). Leerzustände über EmptyState-Codes. ONPAGE-011 (M1 7.3): catalog.columns blendet Spalten abgeschalteter Elemente (Konfiguration Seitendetails/Extraktion) aus bzw. markiert sie mit needs = NeedsConfig; Hash-Spalte (ONPAGE-142) nur bei aktivem Hash. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-K07",
@@ -416,7 +460,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). config.set liefert invalidatedSteps (ONPAGE-002, UI-082) und deferred; Schreiben über die WriteQueue aus M2-F03; während „Läuft“ andere Felder → CmdError CrawlRunning mit field. Commands profile.* exakt nach M2.md 3.6a (list, load, save, delete, setDefault, import, export). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). config.set liefert invalidatedSteps (ONPAGE-002, UI-082) und deferred; Schreiben über die WriteQueue aus M2-F03; während „Läuft“ andere Felder → CmdError CrawlRunning mit field. Commands profile.* exakt nach M2.md 3.6a (list, load, save, delete, setDefault, import, export). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-K16",
@@ -446,7 +490,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Budgets UI-146 (Datenseite: 10 000 Knoten ≤ 500 ms Aufbereitung). viz.exportCsv als Op. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Budgets UI-146 (Datenseite: 10 000 Knoten ≤ 500 ms Aufbereitung). viz.exportCsv als Op. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-K19",
@@ -469,7 +513,7 @@
   ],
   "size": "S",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schreibt direkt über os-store (Schema v3), Seed fest; Kleinvariante 100 000 im Test, Großvariante nur als Benchmark-Ignore. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schreibt direkt über os-store (Schema v3), Seed fest; Kleinvariante 100 000 im Test, Großvariante nur als Benchmark-Ignore. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-E01",
@@ -515,7 +559,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nur Dateien der Engine aus owns; Lebenszyklus/Sitemaps/robots gehören M2-E02 (gleiche Welle). Neue Fakten nur über WriteBatch/ext aus M2-F01/F02. Matrix-Tests in decide_crawl.rs erweitern. Zurückgestellte M1-Tests TECH-011/TECH-051 (Respect) und ONPAGE-143 (gespeichertes HTML) schaltet M2-N01 in Welle 2 scharf; hier eigene Tests in neuen Dateien."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nur Dateien der Engine aus owns; Lebenszyklus/Sitemaps/robots gehören M2-E02 (gleiche Welle). Neue Fakten nur über WriteBatch/ext aus M2-F01/F02. Matrix-Tests in decide_crawl.rs erweitern. Zurückgestellte M1-Tests TECH-011/TECH-051 (Respect) und ONPAGE-143 (gespeichertes HTML) schaltet M2-N01 in Welle 2 scharf; hier eigene Tests in neuen Dateien."
  },
  {
   "id": "M2-E02",
@@ -555,7 +599,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Speicherstufe und Dateigröße in Progress (Feld aus M2-F01), CRAWL-131 [P1] add_urls in der Engine plus Command crawl.addUrls; CRAWL-060-Rest (Fehlervermerk, changefreq/priority/image/video/news, K-27). Nur Dateien aus owns; braucht die Umsetzung decide.rs/worker.rs, als Schnittstellenbedarf an M2-E01 melden (nicht selbst ändern). TECH-210 (M1 7.3): Sitemap-Einträge fremder Hosts über robots.txt-Cross-Submission (K-41d) einbinden; fremde Schemata/Ports bleiben ausgeschlossen. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Speicherstufe und Dateigröße in Progress (Feld aus M2-F01), CRAWL-131 [P1] add_urls in der Engine plus Command crawl.addUrls; CRAWL-060-Rest (Fehlervermerk, changefreq/priority/image/video/news, K-27). Nur Dateien aus owns; braucht die Umsetzung decide.rs/worker.rs, als Schnittstellenbedarf an M2-E01 melden (nicht selbst ändern). TECH-210 (M1 7.3): Sitemap-Einträge fremder Hosts über robots.txt-Cross-Submission (K-41d) einbinden; fremde Schemata/Ports bleiben ausgeschlossen. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-E03",
@@ -594,7 +638,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). HSTS: Speicher im Client, synthetische 307 mit Redirect Type HSTS Policy (ONPAGE-064 wertet M2-D12 aus). os-testsite lernt HTTP/2 (ALPN h2) für ONPAGE-010. Wiederholungen mit Clock (simulierte Zeit). Backlog M2-B01/Hinweis 4: Windows-localhost gegen IPv4-only-Server (Happy Eyeballs) prüfen; eigener Connector nur bei Messbeleg. Proxy/Zertifikate auch für API-Verbindungen (INTEG-016). NACHTRAG 16.10.: CRAWL-145 (Crawl-delay beachten, OS-Default an, Paritätsprofil aus) und CRAWL-146 (adaptive Drosselung je Host) gehören zur Wiederholungs-/Tempo-Logik dieses Pakets. CRAWL-147 Auto-Tempo (AIMD-Regler je Host) ebenfalls hier."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). HSTS: Speicher im Client, synthetische 307 mit Redirect Type HSTS Policy (ONPAGE-064 wertet M2-D12 aus). os-testsite lernt HTTP/2 (ALPN h2) für ONPAGE-010. Wiederholungen mit Clock (simulierte Zeit). Backlog M2-B01/Hinweis 4: Windows-localhost gegen IPv4-only-Server (Happy Eyeballs) prüfen; eigener Connector nur bei Messbeleg. Proxy/Zertifikate auch für API-Verbindungen (INTEG-016). NACHTRAG 16.10.: CRAWL-145 (Crawl-delay beachten, OS-Default an, Paritätsprofil aus) und CRAWL-146 (adaptive Drosselung je Host) gehören zur Wiederholungs-/Tempo-Logik dieses Pakets. CRAWL-147 Auto-Tempo (AIMD-Regler je Host) ebenfalls hier."
  },
  {
   "id": "M2-E04",
@@ -625,7 +669,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). RuleSet-Trace für config.testRules (CRAWL-107/111 nutzt die UI in M2-U13)."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). RuleSet-Trace für config.testRules (CRAWL-107/111 nutzt die UI in M2-U13)."
  },
  {
   "id": "M2-R01",
@@ -656,7 +700,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Chromium-Fundort: OPENSPIDER_CHROMIUM, sonst System-Chrome/Chromium; in der Cloud aus scripts/cloud/setup.sh (Klärung K2-10 zur Bündelung in M3). API laut M2.md 3.5 (Renderer::render(url, opts) → RenderedPage {dom, console, blocked, network, screenshot?}). Tests gegen os-testsite mit requires_chromium; ohne Chromium schlagen sie fehl (kein stilles Überspringen); die CI-Runner haben Chrome. Engine-Anbindung macht M2-E05. CRAWL-077 [P1]: verständliche Fehlermeldung ohne Chromium (Schlüssel err-chromium-missing mit Pfadhinweis, Klärung K2-10); Test mit OPENSPIDER_CHROMIUM auf nicht vorhandenen Pfad. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Chromium-Fundort: OPENSPIDER_CHROMIUM, sonst System-Chrome/Chromium; in der Cloud aus scripts/cloud/setup.sh (Klärung K2-10 zur Bündelung in M3). API laut M2.md 3.5 (Renderer::render(url, opts) → RenderedPage {dom, console, blocked, network, screenshot?}). Tests gegen os-testsite mit requires_chromium; ohne Chromium schlagen sie fehl (kein stilles Überspringen); die CI-Runner haben Chrome. Engine-Anbindung macht M2-E05. CRAWL-077 [P1]: verständliche Fehlermeldung ohne Chromium (Schlüssel err-chromium-missing mit Pfadhinweis, Klärung K2-10); Test mit OPENSPIDER_CHROMIUM auf nicht vorhandenen Pfad. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-D01",
@@ -720,7 +764,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Outside <head> über dom::in_head (HTML5-Tree-Builder, TECH-003), nicht über die Validierungsanalyse. truncate_at in pixel (K-8), Geräteprofile ONPAGE-194, Tabelle serp_edits aus Schema v3. M1-Test ONPAGE-090 (Titel aus gerendertem DOM) bleibt bis M2-R02 zurückgestellt."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Outside <head> über dom::in_head (HTML5-Tree-Builder, TECH-003), nicht über die Validierungsanalyse. truncate_at in pixel (K-8), Geräteprofile ONPAGE-194, Tabelle serp_edits aus Schema v3. M1-Test ONPAGE-090 (Titel aus gerendertem DOM) bleibt bis M2-R02 zurückgestellt."
  },
  {
   "id": "M2-D02",
@@ -778,7 +822,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). PERF-007 Near-Duplicate-Teil: 1 Mio. Seiten < 10 min, RSS < 2 GB, abbrechbar (Benchmark-Ignore, Messung M2-Q03); Link-Score-Teil liefert M2-D08. Rechtschreib-/Grammatik-Spalten kommen mit M2-D19 (Welle 2, übernimmt dann tabs/content.rs). M1-Test ONPAGE-142 (PDF-Lesbarkeit) hier scharf schalten. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). PERF-007 Near-Duplicate-Teil: 1 Mio. Seiten < 10 min, RSS < 2 GB, abbrechbar (Benchmark-Ignore, Messung M2-Q03); Link-Score-Teil liefert M2-D08. Rechtschreib-/Grammatik-Spalten kommen mit M2-D19 (Welle 2, übernimmt dann tabs/content.rs). M1-Test ONPAGE-142 (PDF-Lesbarkeit) hier scharf schalten. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-D03",
@@ -814,7 +858,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Filter, die Rendering brauchen, liefern ohne Rendering den Zustand NeedsRendering (ONPAGE-007); die gerenderte Variante testet M2-R02. M1-Test ONPAGE-170 (srcset-Teil) hier scharf schalten, Rendering-Teil bleibt. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Filter, die Rendering brauchen, liefern ohne Rendering den Zustand NeedsRendering (ONPAGE-007); die gerenderte Variante testet M2-R02. M1-Test ONPAGE-170 (srcset-Teil) hier scharf schalten, Rendering-Teil bleibt. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-D04",
@@ -856,7 +900,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). M2-S05 (DEV-035 streichen) erst nach Spec-Nachtrag TECH-011/015 (Klärung K2-04); bis dahin unverändert. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). M2-S05 (DEV-035 streichen) erst nach Spec-Nachtrag TECH-011/015 (Klärung K2-04); bis dahin unverändert. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-D05",
@@ -895,7 +939,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Pagination-Reports OUT-088/089 sind P2 (nicht M2)."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Pagination-Reports OUT-088/089 sind P2 (nicht M2)."
  },
  {
   "id": "M2-D06",
@@ -936,7 +980,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). M2-S01 (Spalten Indexability/Indexability Status in TECH-051) erst nach Spec-Nachtrag (Klärung K2-04), dann Mapping-Ausnahme in tests/parity/mappings/directives_all.toml über Schnittstellenbedarf an M2-P01. TECH-066 kleinster max-snippet-Wert (M1 7.3) hier. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). M2-S01 (Spalten Indexability/Indexability Status in TECH-051) erst nach Spec-Nachtrag (Klärung K2-04), dann Mapping-Ausnahme in tests/parity/mappings/directives_all.toml über Schnittstellenbedarf an M2-P01. TECH-066 kleinster max-snippet-Wert (M1 7.3) hier. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-D07",
@@ -984,7 +1028,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Hreflang-Crawl über externe Domains (TECH-087) macht M2-E06. M2-S02 nach Spec-Nachtrag (K2-04). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Hreflang-Crawl über externe Domains (TECH-087) macht M2-E06. M2-S02 nach Spec-Nachtrag (K2-04). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-D08",
@@ -1041,7 +1085,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Link Score iterativ auf der Crawl-Datei, Formel UI-081/ONPAGE-017; PERF-007 Link-Score-Teil (30 Mio. Kanten < 5 min) als Benchmark-Ignore. M2-S03 nach Spec-Nachtrag (K2-04). OUT-031 [P1]: Zeile mit Rohwert für mailto:/tel:-Links (setzt CRAWL-053 voraus; Test über eine WriteBatch-Fixture mit LinkRef nach dem os-model-Vertrag von CRAWL-053, unabhängig von M2-E01) in crates/os-export/tests/bulk_links_m2*.rs. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Link Score iterativ auf der Crawl-Datei, Formel UI-081/ONPAGE-017; PERF-007 Link-Score-Teil (30 Mio. Kanten < 5 min) als Benchmark-Ignore. M2-S03 nach Spec-Nachtrag (K2-04). OUT-031 [P1]: Zeile mit Rohwert für mailto:/tel:-Links (setzt CRAWL-053 voraus; Test über eine WriteBatch-Fixture mit LinkRef nach dem os-model-Vertrag von CRAWL-053, unabhängig von M2-E01) in crates/os-export/tests/bulk_links_m2*.rs. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-D09",
@@ -1079,7 +1123,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Validierung (schema.org, Rich Results) folgt in M2-D19b (Welle 2) mit Besitz von tabs/structured_data.rs."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Validierung (schema.org, Rich Results) folgt in M2-D19b (Welle 2) mit Besitz von tabs/structured_data.rs."
  },
  {
   "id": "M2-D10",
@@ -1118,7 +1162,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). M1-Test TECH-008 in tab_directives.rs schaltet M2-N01 scharf. CRAWL-140 [P1]: Grenzwert validation.html_doc_max_bytes (Default 2 MB) und Ressourcen-Grenzwert wirken auf die Filter „HTML Document Over 2MB“ bzw. „Resource Over 2MB“, konfigurierbar, Name ändert sich mit dem Wert. TECH-003 (M1 7.3): Kriterien „Outside <head>“ zusammen mit TECH-008 (Validierung). UI-064 [P1]: Benchmark-Test der Kategorie Validation in issue_catalog_validation.rs. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). M1-Test TECH-008 in tab_directives.rs schaltet M2-N01 scharf. CRAWL-140 [P1]: Grenzwert validation.html_doc_max_bytes (Default 2 MB) und Ressourcen-Grenzwert wirken auf die Filter „HTML Document Over 2MB“ bzw. „Resource Over 2MB“, konfigurierbar, Name ändert sich mit dem Wert. TECH-003 (M1 7.3): Kriterien „Outside <head>“ zusammen mit TECH-008 (Validierung). UI-064 [P1]: Benchmark-Test der Kategorie Validation in issue_catalog_validation.rs. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
   "extra_spec_ids": [
    "CRAWL-140",
    "TECH-003",
@@ -1164,7 +1208,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). HTTPS-Fälle über die Test-CA von os-testsite (F-TLS). Header-Fakten aus den Antwort-Headern im Parse-Schritt (security.rs), nicht in der Engine."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). HTTPS-Fälle über die Test-CA von os-testsite (F-TLS). Header-Fakten aus den Antwort-Headern im Parse-Schritt (security.rs), nicht in der Engine."
  },
  {
   "id": "M2-D12",
@@ -1202,7 +1246,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). HSTS-Fall testet gegen M2-E03 (gleiche Welle): Test mit #[ignore = \"wartet auf M2-E03\"] ist erlaubt (C9), M2-N01 schaltet ihn scharf. ONPAGE-054 Malformed: Ignore-Grund auf \"P2: CRAWL-054\" umstellen. ONPAGE-054 (M1 7.3): Ignore-Grund des Malformed-Tests auf `P2: CRAWL-054` umstellen (M2.md 5.1). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). HSTS-Fall testet gegen M2-E03 (gleiche Welle): Test mit #[ignore = \"wartet auf M2-E03\"] ist erlaubt (C9), M2-N01 schaltet ihn scharf. ONPAGE-054 Malformed: Ignore-Grund auf \"P2: CRAWL-054\" umstellen. ONPAGE-054 (M1 7.3): Ignore-Grund des Malformed-Tests auf `P2: CRAWL-054` umstellen (M2.md 5.1). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-D13",
@@ -1235,7 +1279,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Orphan Pages aus GA4/GSC ergänzt M2-I06 (Welle 3) über die Quellen-Schnittstelle aus M2-F02. UI-064 [P1]: Benchmark-Test des Issue-Katalogs für die eigene Kategorie in issue_catalog_sitemaps.rs. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Orphan Pages aus GA4/GSC ergänzt M2-I06 (Welle 3) über die Quellen-Schnittstelle aus M2-F02. UI-064 [P1]: Benchmark-Test des Issue-Katalogs für die eigene Kategorie in issue_catalog_sitemaps.rs. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
   "extra_spec_ids": [
    "UI-064"
   ]
@@ -1277,7 +1321,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Dynamische Spalten/Filter je Suchfilter über die Spaltenquelle aus M2-F02. Gerenderte Quelle (INTEG-030) schließt M2-E05 an."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Dynamische Spalten/Filter je Suchfilter über die Spaltenquelle aus M2-F02. Gerenderte Quelle (INTEG-030) schließt M2-E05 an."
  },
  {
   "id": "M2-D15",
@@ -1320,7 +1364,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). XPath-2.0–3.1-Bibliothek nach Klärung K2-05 (Vorschlag xee-xpath, Lizenz prüfen); bis zur Entscheidung nur XPath 1.0 und die Tests für 2.0+ mit #[ignore = \"Klärung K2-05\"]. Syntaxprüfung als Funktion für config.validate. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). XPath-2.0–3.1-Bibliothek nach Klärung K2-05 (Vorschlag xee-xpath, Lizenz prüfen); bis zur Entscheidung nur XPath 1.0 und die Tests für 2.0+ mit #[ignore = \"Klärung K2-05\"]. Syntaxprüfung als Funktion für config.validate. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-D16",
@@ -1345,7 +1389,7 @@
   ],
   "size": "S",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). links.rs ruft link_position::classify (Aufruf legt M2-F02 an); Standardregeln reproduzieren die M1-Positionen exakt (Regressionstest gegen out-links)."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). links.rs ruft link_position::classify (Aufruf legt M2-F02 an); Standardregeln reproduzieren die M1-Positionen exakt (Regressionstest gegen out-links)."
  },
  {
   "id": "M2-D17",
@@ -1374,7 +1418,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). crawl.path-Command liefert M2-K09 auf Basis von queries::crawl_path."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). crawl.path-Command liefert M2-K09 auf Basis von queries::crawl_path."
  },
  {
   "id": "M2-X01",
@@ -1408,7 +1452,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Segment-Einschränkung (OUT-011) bereitet die Pipeline über den Trait SegmentScope vor; Umsetzung M2-K14. PERF-008: CSV 1 Mio. < 60 s konstanter Speicher (Benchmark-Ignore), XLSX-Aufteilung. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Segment-Einschränkung (OUT-011) bereitet die Pipeline über den Trait SegmentScope vor; Umsetzung M2-K14. PERF-008: CSV 1 Mio. < 60 s konstanter Speicher (Benchmark-Ignore), XLSX-Aufteilung. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-X02",
@@ -1438,7 +1482,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Optionen in der Konfiguration v2 (M2-F01). Paritätsvergleich der erzeugten XML gegen die SF-Referenz in M2-Q02."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Optionen in der Konfiguration v2 (M2-F01). Paritätsvergleich der erzeugten XML gegen die SF-Referenz in M2-Q02."
  },
  {
   "id": "M2-I01",
@@ -1478,7 +1522,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Keine echten API-Aufrufe in Tests, nur Mock-Server (INTEG-019) mit überschreibbaren Basis-URLs. OAuth-Client-Registrierung: Klärung K2-06 (bis dahin Platzhalter-Client-ID aus Konfiguration). Quellen-Trait für M2-I02 … I05 (Welle 2) und K-13 (API-Status für UI-070). Commands api.* exakt nach M2.md 3.6a (api.list, connect, disconnect, testConnection, getSettings, setSettings, status, fetch, errors); api.fetch delegiert je ApiKind an die Quellen aus M2-I02 … I05 (bis dahin CmdError Unsupported). Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Keine echten API-Aufrufe in Tests, nur Mock-Server (INTEG-019) mit überschreibbaren Basis-URLs. OAuth-Client-Registrierung: Klärung K2-06 (bis dahin Platzhalter-Client-ID aus Konfiguration). Quellen-Trait für M2-I02 … I05 (Welle 2) und K-13 (API-Status für UI-070). Commands api.* exakt nach M2.md 3.6a (api.list, connect, disconnect, testConnection, getSettings, setSettings, status, fetch, errors); api.fetch delegiert je ApiKind an die Quellen aus M2-I02 … I05 (bis dahin CmdError Unsupported). Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-O01",
@@ -1515,7 +1559,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Redaktion nach OUT-243 (M1-Funktion). Diagnosepaket als Op. --auth-config (OUT-187) verdrahtet M2-L01. Commands auth.listProfiles/saveProfile/deleteProfile exakt nach M2.md 3.6a in commands/auth.rs (Profile verschlüsselt in os-store, Schlüssel im SecretStore). Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Redaktion nach OUT-243 (M1-Funktion). Diagnosepaket als Op. --auth-config (OUT-187) verdrahtet M2-L01. Commands auth.listProfiles/saveProfile/deleteProfile exakt nach M2.md 3.6a in commands/auth.rs (Profile verschlüsselt in os-store, Schlüssel im SecretStore). Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-O02",
@@ -1549,7 +1593,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). API registry::list_crawls bleibt (M1); 1 000 Crawls < 500 ms. Import 1 Mio. URLs ≤ 60 s mit Fortschritt (UI-147, Benchmark-Ignore). CRAWL-124 (M1 7.3): Speicherort-Umzug der Crawl-Ablage im Kern (crawls.move bzw. settings-Änderung des Speicherorts: Dateien kopieren, prüfen, Registry umschreiben, Original erst nach Erfolg löschen) und Erkennung Netzlaufwerk/Sync-Ordner (Pfad-Heuristik + Dateisystemtyp, liefert Warnstufe für die UI). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). API registry::list_crawls bleibt (M1); 1 000 Crawls < 500 ms. Import 1 Mio. URLs ≤ 60 s mit Fortschritt (UI-147, Benchmark-Ignore). CRAWL-124 (M1 7.3): Speicherort-Umzug der Crawl-Ablage im Kern (crawls.move bzw. settings-Änderung des Speicherorts: Dateien kopieren, prüfen, Registry umschreiben, Original erst nach Erfolg löschen) und Erkennung Netzlaufwerk/Sync-Ordner (Pfad-Heuristik + Dateisystemtyp, liefert Warnstufe für die UI). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-M01",
@@ -1581,7 +1625,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Zielschutz auch nach DNS-Auflösung (M1 7.3, K-38). Backlog M2-T01: Hilfetext und Ordner mit *.ospider ohne Registry. In-App-Betrieb und compare_crawls folgen in M2-K17 (Welle 3). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Zielschutz auch nach DNS-Auflösung (M1 7.3, K-38). Backlog M2-T01: Hilfetext und Ordner mit *.ospider ohne Registry. In-App-Betrieb und compare_crawls folgen in M2-K17 (Welle 3). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-Q01",
@@ -1603,7 +1647,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Erweiterung M1 5.4: --milestone M2 wertet nur IDs aus M2-packages.json (spec_ids); TS-Tag-Form `// spec: UI-001` direkt über test()/it(); Testergebnisse aus vitest --reporter=junit und Playwright junit; gültige Ignore-Gründe in M2: `M3:`, `M4:`, `M5:`, `P2:`, `Klärung K2-xx`, `Benchmark`, Platzhalter `wartet auf M2-xx` nur laut Plan (C9). M1-IDs bleiben über --milestone M1 prüfbar (Regression). B2-Erweiterung: os-parity coverage --milestone M2 meldet zusätzlich je extra_spec_id aus M2.md Anhang B, ob ≥ 1 Test mit Tag `// spec: <ID> [P1]` bzw. `[M2]` und Ergebnis ok existiert (Abschnitt „Anhang B“ im Bericht; offene Einträge machen den Lauf rot)."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Erweiterung M1 5.4: --milestone M2 wertet nur IDs aus M2-packages.json (spec_ids); TS-Tag-Form `// spec: UI-001` direkt über test()/it(); Testergebnisse aus vitest --reporter=junit und Playwright junit; gültige Ignore-Gründe in M2: `M3:`, `M4:`, `M5:`, `P2:`, `Klärung K2-xx`, `Benchmark`, Platzhalter `wartet auf M2-xx` nur laut Plan (C9). M1-IDs bleiben über --milestone M1 prüfbar (Regression). B2-Erweiterung: os-parity coverage --milestone M2 meldet zusätzlich je extra_spec_id aus M2.md Anhang B, ob ≥ 1 Test mit Tag `// spec: <ID> [P1]` bzw. `[M2]` und Ergebnis ok existiert (Abschnitt „Anhang B“ im Bericht; offene Einträge machen den Lauf rot)."
  },
  {
   "id": "M2-P01",
@@ -1627,7 +1671,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Inhalt und Exportliste exakt nach M2.md Abschnitt 6. Bestehende Sites (out-basic-site, parity-*) NICHT ändern (Referenz exportiert). Jede Site ≤ 500 URLs, 127.0.0.1 + localhost, feste Ports 8906–8910, kein JavaScript, TLS nur in parity-m2-security (eigener Port, Hinweis K2-11). Nach dem Merge exportiert der Orchestrator per Bildschirmsteuerung (M2.md 6.3)."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Inhalt und Exportliste exakt nach M2.md Abschnitt 6. Bestehende Sites (out-basic-site, parity-*) NICHT ändern (Referenz exportiert). Jede Site ≤ 500 URLs, 127.0.0.1 + localhost, feste Ports 8906–8910, kein JavaScript, TLS nur in parity-m2-security (eigener Port, Hinweis K2-11). Nach dem Merge exportiert der Orchestrator per Bildschirmsteuerung (M2.md 6.3)."
  },
  {
   "id": "M2-U01",
@@ -1652,7 +1696,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Layout-Mathematik als reine Funktion mit vitest (Prüfwerte 1 440 × 900), Layout-Kollisionstest 1 024 × 640 in E2E-A; Neustart-Persistenz über uistate.*. Landmarks nach M2-ui-concept 1.2."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Layout-Mathematik als reine Funktion mit vitest (Prüfwerte 1 440 × 900), Layout-Kollisionstest 1 024 × 640 in E2E-A; Neustart-Persistenz über uistate.*. Landmarks nach M2-ui-concept 1.2."
  },
  {
   "id": "M2-U03",
@@ -1685,7 +1729,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Zurückgestellte M1-UI-Kriterien aus M1.md 7.3 hier: CRAWL-001 Autovervollständigung und Pause-vor-Neustart, CRAWL-009 Hinweis Schrägstrich, CRAWL-026 Rückfrage Moduswechsel, CRAWL-112 Hinweis ab 20 Threads, CRAWL-117 Dialog, CRAWL-130 UI-Aktualisierungsrate (Tests mit Spec-Tag über extra_spec_ids). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Zurückgestellte M1-UI-Kriterien aus M1.md 7.3 hier: CRAWL-001 Autovervollständigung und Pause-vor-Neustart, CRAWL-009 Hinweis Schrägstrich, CRAWL-026 Rückfrage Moduswechsel, CRAWL-112 Hinweis ab 20 Threads, CRAWL-117 Dialog, CRAWL-130 UI-Aktualisierungsrate (Tests mit Spec-Tag über extra_spec_ids). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-U04",
@@ -1713,7 +1757,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). CI-Test UI-113 (Register, Hilfe-Dialog, Menü, Kollision mit Systemkürzeln). Bulk-Export-/Berichte-/Sitemaps-Untermenüs aus export.catalog. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). CI-Test UI-113 (Register, Hilfe-Dialog, Menü, Kollision mit Systemkürzeln). Bulk-Export-/Berichte-/Sitemaps-Untermenüs aus export.catalog. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-U10",
@@ -1743,7 +1787,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nur über DataGridProps und ViewDataSource (M2-S01). Tabs/Filter ausschließlich aus catalog.tabs (keine Tab-Liste im Code)."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nur über DataGridProps und ViewDataSource (M2-S01). Tabs/Filter ausschließlich aus catalog.tabs (keine Tab-Liste im Code)."
  },
  {
   "id": "M2-U11",
@@ -1776,7 +1820,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Tabellarische Detail-Tabs über dieselbe Grid-Komponente und view.* mit ViewSpec::Inlinks/Outlinks/Resources/Images/Detail. ONPAGE-192 (M1 7.3): Lower-Tab-Verknüpfung – Auswahl in jedem Top-Tab lädt Inlinks/Outlinks/URL Details der gewählten URL; Detailtabs ohne Bezug zeigen den Leerzustand. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Tabellarische Detail-Tabs über dieselbe Grid-Komponente und view.* mit ViewSpec::Inlinks/Outlinks/Resources/Images/Detail. ONPAGE-192 (M1 7.3): Lower-Tab-Verknüpfung – Auswahl in jedem Top-Tab lädt Inlinks/Outlinks/URL Details der gewählten URL; Detailtabs ohne Bezug zeigen den Leerzustand. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
   "extra_spec_ids": [
    "ONPAGE-192"
   ]
@@ -1806,7 +1850,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Issue-Texte nur aus sidebar.issueExplain (F-4), nie in Fluent-Dateien. ONPAGE-140 (M1 7.3): Hinweiszustand „Neuanalyse braucht gespeichertes HTML“ in der Analyse-Ansicht (UI-082) mit Verweis auf die Einstellung. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Issue-Texte nur aus sidebar.issueExplain (F-4), nie in Fluent-Dateien. ONPAGE-140 (M1 7.3): Hinweiszustand „Neuanalyse braucht gespeichertes HTML“ in der Analyse-Ansicht (UI-082) mit Verweis auf die Einstellung. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
   "extra_spec_ids": [
    "ONPAGE-140"
   ]
@@ -1837,7 +1881,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Datei-Dialog im Testmodus mit vorgegebenem Pfad (E2E-B). Sitemap-Optionen-Dialog für M2-X02. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Datei-Dialog im Testmodus mit vorgegebenem Pfad (E2E-B). Sitemap-Optionen-Dialog für M2-X02. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-N01",
@@ -1866,21 +1910,43 @@
   ],
   "depends_on": [
    "M2-K01",
-   "M2-E01",
-   "M2-E03",
-   "M2-D02",
-   "M2-D04",
-   "M2-D06",
-   "M2-D10",
-   "M2-D12",
    "M2-K02",
    "M2-K03",
    "M2-K04",
    "M2-K06",
    "M2-K07",
+   "M2-K16",
+   "M2-K19",
+   "M2-E01",
+   "M2-E02",
+   "M2-E03",
+   "M2-E04",
+   "M2-R01",
+   "M2-D01",
+   "M2-D02",
+   "M2-D03",
+   "M2-D04",
+   "M2-D05",
+   "M2-D06",
+   "M2-D07",
+   "M2-D08",
+   "M2-D09",
+   "M2-D10",
+   "M2-D11",
+   "M2-D12",
+   "M2-D13",
+   "M2-D14",
+   "M2-D15",
+   "M2-D16",
+   "M2-D17",
+   "M2-X01",
+   "M2-X02",
+   "M2-I01",
    "M2-O01",
    "M2-O02",
-   "M2-X01",
+   "M2-M01",
+   "M2-Q01",
+   "M2-P01",
    "M2-U01",
    "M2-U03",
    "M2-U04",
@@ -1891,7 +1957,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Tabelle M2.md 5.1 Zeilen „N01“: ONPAGE-063 (Retry), ONPAGE-010 (HTTP/2), TECH-011/TECH-051 (Respect), TECH-008 (Outside <head>), ONPAGE-143 (gespeichertes HTML), CRAWL-018 HSTS und der D12-Platzhalter. Rote Tests → Befund an den Planer, kein Fachfix außerhalb dieser Dateien. Merge vor den übrigen Welle-2-Paketen. OUT-081 (M1 7.3): HSTS-Zeile im Report All Redirects nach M2-E03 scharf schalten (reports_redirects.rs). TECH-003 (M1 7.3): Outside-<head>-Kriterien mit Respect-Schaltern nach M2-E01. C9: löst alle Platzhalter `wartet auf M2-xx` der Welle 1 auf – Rust in crates/*/tests/pending_w1_*.rs, E2E-A in apps/desktop/e2e/{table,detail,sidebar,header,statusbar,menu,keyboard,shell,export}/**; nur das Ignore/test.fixme entfernen, Testinhalt unverändert; danach `grep -rn 'wartet auf M2' crates apps` ohne Treffer aus Welle 1. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Tabelle M2.md 5.1 Zeilen „N01“: ONPAGE-063 (Retry), ONPAGE-010 (HTTP/2), TECH-011/TECH-051 (Respect), TECH-008 (Outside <head>), ONPAGE-143 (gespeichertes HTML), CRAWL-018 HSTS und der D12-Platzhalter. Rote Tests → Befund an den Planer, kein Fachfix außerhalb dieser Dateien. Merge vor den übrigen Welle-2-Paketen. OUT-081 (M1 7.3): HSTS-Zeile im Report All Redirects nach M2-E03 scharf schalten (reports_redirects.rs). TECH-003 (M1 7.3): Outside-<head>-Kriterien mit Respect-Schaltern nach M2-E01. C9: löst alle Platzhalter `wartet auf M2-xx` der Welle 1 auf – Rust in crates/*/tests/pending_w1_*.rs, E2E-A in apps/desktop/e2e/{table,detail,sidebar,header,statusbar,menu,keyboard,shell,export}/**; nur das Ignore/test.fixme entfernen, Testinhalt unverändert; danach `grep -rn 'wartet auf M2' crates apps` ohne Treffer aus Welle 1. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. Start erst, wenn alle Pakete der Welle 1 gemergt sind (C1, depends_on vollständig, Prüfskript P11)."
  },
  {
   "id": "M2-K05",
@@ -1920,7 +1986,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Budgets UI-141/142 über os-app gemessen (IPC-Anteil in M2-U31). Nach dem Merge laufen alle UI-Tabellen auf den echten Sitzungen; Alpha-Suite M2-A01 muss grün bleiben. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Budgets UI-141/142 über os-app gemessen (IPC-Anteil in M2-U31). Nach dem Merge laufen alle UI-Tabellen auf den echten Sitzungen; Alpha-Suite M2-A01 muss grün bleiben. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-A01",
@@ -1959,7 +2025,7 @@
   ],
   "size": "M",
   "runner": "cloud+ci+local-mac",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Kriterien M2.md 4.3 „Alpha-Gate“. Befunde nur melden (Datei, Repro, Spec-ID), keine Fixes außerhalb owns; daraus plant der Planer N-Pakete der Welle 3. Läuft in der Cloud (Linux, WebKit+Chromium) und per ui-e2e.yml auf macOS/Windows; Smoke der echten App lokal durch den Orchestrator. OUT-001/OUT-182 (M1 7.3): „UI = CLI“ – derselbe Crawl über crawl.start (Bridge) und über `openspider --crawl` derselben Fixture ergibt nach Normalisierung identische Tab-Exporte, Bulk-Export und Report (Vergleich per os-parity diff im Test). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Kriterien M2.md 4.3 „Alpha-Gate“. Befunde nur melden (Datei, Repro, Spec-ID), keine Fixes außerhalb owns; daraus plant der Planer N-Pakete der Welle 3. Läuft in der Cloud (Linux, WebKit+Chromium) und per ui-e2e.yml auf macOS/Windows; Smoke der echten App lokal durch den Orchestrator. OUT-001/OUT-182 (M1 7.3): „UI = CLI“ – derselbe Crawl über crawl.start (Bridge) und über `openspider --crawl` derselben Fixture ergibt nach Normalisierung identische Tab-Exporte, Bulk-Export und Report (Vergleich per os-parity diff im Test). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-E05",
@@ -1980,7 +2046,8 @@
    "CRAWL-022",
    "ONPAGE-012",
    "CRAWL-039",
-   "CRAWL-077"
+   "CRAWL-077",
+   "OUT-273"
   ],
   "owns": [
    "crates/os-engine/src/{decide,worker,frontier,redirect,crawl,types,render_glue}.rs",
@@ -1997,7 +2064,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). PERF-006 bleibt bei M2-R01 belegt; hier Engine-Last mit Rendering (Tabs = Threads, gedeckelt). Zurückgestellte M1-Tests CRAWL-022/ONPAGE-012 (Total Transferred mit Ressourcen) in eigenen neuen Tests belegen. CRAWL-039 (M1 7.3): Rendering-Kriterien für Bilder (im gerenderten DOM gefundene Bilder, Lazy-Load). CRAWL-077 [P1]: Wechsel Text ↔ JavaScript während eines laufenden Crawls wird verweigert (CmdError CrawlRunning mit field rendering.mode); fehlt Chromium, bricht der Start mit der Fehlermeldung aus M2-R01 ab statt still im Textmodus zu crawlen. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). PERF-006 bleibt bei M2-R01 belegt; hier Engine-Last mit Rendering (Tabs = Threads, gedeckelt). Zurückgestellte M1-Tests CRAWL-022/ONPAGE-012 (Total Transferred mit Ressourcen) in eigenen neuen Tests belegen. CRAWL-039 (M1 7.3): Rendering-Kriterien für Bilder (im gerenderten DOM gefundene Bilder, Lazy-Load). CRAWL-077 [P1]: Wechsel Text ↔ JavaScript während eines laufenden Crawls wird verweigert (CmdError CrawlRunning mit field rendering.mode); fehlt Chromium, bricht der Start mit der Fehlermeldung aus M2-R01 ab statt still im Textmodus zu crawlen. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. OUT-273 (nur mitprüfen): die Rendering-Tests laufen im Job linux-core (ubuntu-latest, headless, ohne Display) mit OPENSPIDER_CHROMIUM aus dem Job unverändert mit; Workflow nicht ändern, Linux-Befunde an den Planer."
  },
  {
   "id": "M2-D18",
@@ -2030,7 +2097,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Datenbasis aus CRAWL-062/063 (M2-E01). OUT-112 Cookie-Rest aus M1 7.3 hier. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Datenbasis aus CRAWL-062/063 (M2-E01). OUT-112 Cookie-Rest aus M1 7.3 hier. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-D19",
@@ -2059,7 +2126,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Start erst nach Entscheidung Klärung K2-03 (Engine/Wörterbuch-Lizenzen; kein GPL/LGPL im Bundle). Grammatik-Option b (externer Server) nur als Konfigurationspunkt mit Mock."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Start erst nach Entscheidung Klärung K2-03 (Engine/Wörterbuch-Lizenzen; kein GPL/LGPL im Bundle). Grammatik-Option b (externer Server) nur als Konfigurationspunkt mit Mock."
  },
  {
   "id": "M2-D20",
@@ -2091,7 +2158,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Regeldateien in eigenen Worten aus öffentlicher Dokumentation (Clean-Room); Lizenz der schema.org-Vokabulardatei (CC BY-SA) in NOTICE über Schnittstellenbedarf. UI-064 [P1]: Benchmark-Test des Issue-Katalogs für die eigene Kategorie in issue_catalog_structured_data.rs. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Regeldateien in eigenen Worten aus öffentlicher Dokumentation (Clean-Room); Lizenz der schema.org-Vokabulardatei (CC BY-SA) in NOTICE über Schnittstellenbedarf. UI-064 [P1]: Benchmark-Test des Issue-Katalogs für die eigene Kategorie in issue_catalog_structured_data.rs. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
   "extra_spec_ids": [
    "UI-064"
   ]
@@ -2126,7 +2193,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Segment-Bitmaps als Filterquelle für K-1 über den Trait aus M2-F02; Segment-Kennzahlen für die Seitenleiste (UI-067). Commands segment.* exakt nach M2.md 3.6a (list, save, delete, validate, preview, reassign); ersetzt die Kurzzeile segment.get/set/validate/previewCounts aus M2-ui-concept 4.4. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Segment-Bitmaps als Filterquelle für K-1 über den Trait aus M2-F02; Segment-Kennzahlen für die Seitenleiste (UI-067). Commands segment.* exakt nach M2.md 3.6a (list, save, delete, validate, preview, reassign); ersetzt die Kurzzeile segment.get/set/validate/previewCounts aus M2-ui-concept 4.4. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-C01",
@@ -2165,7 +2232,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Klassifikation über Bitmaps je Crawl (K-1). Change Detection folgt in M2-C02."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Klassifikation über Bitmaps je Crawl (K-1). Change Detection folgt in M2-C02."
  },
  {
   "id": "M2-I02",
@@ -2202,7 +2269,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nur Mock-Server (INTEG-019). UI-064 [P1]: Benchmark-Test des Issue-Katalogs für die eigene Kategorie in issue_catalog_analytics.rs. Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nur Mock-Server (INTEG-019). UI-064 [P1]: Benchmark-Test des Issue-Katalogs für die eigene Kategorie in issue_catalog_analytics.rs. Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
   "extra_spec_ids": [
    "UI-064"
   ]
@@ -2246,7 +2313,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nur Mock-Server. UI-064 [P1]: Benchmark-Test des Issue-Katalogs für die eigene Kategorie in issue_catalog_search_console.rs. Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nur Mock-Server. UI-064 [P1]: Benchmark-Test des Issue-Katalogs für die eigene Kategorie in issue_catalog_search_console.rs. Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
   "extra_spec_ids": [
    "UI-064"
   ]
@@ -2286,7 +2353,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Lokaler Lighthouse-Lauf (INTEG-132) nach Klärung K2-09; bis dahin Remote-PSI über Mock und Test für lokal mit #[ignore = \"Klärung K2-09\"]. UI-064 [P1]: Benchmark-Test des Issue-Katalogs für die eigene Kategorie in issue_catalog_pagespeed.rs. Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Lokaler Lighthouse-Lauf (INTEG-132) nach Klärung K2-09; bis dahin Remote-PSI über Mock und Test für lokal mit #[ignore = \"Klärung K2-09\"]. UI-064 [P1]: Benchmark-Test des Issue-Katalogs für die eigene Kategorie in issue_catalog_pagespeed.rs. Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
   "extra_spec_ids": [
    "UI-064"
   ]
@@ -2317,7 +2384,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Kostenpflichtige Abrufe bilden die erste MCP-Werkzeugklasse cost (AGENT-003, Klärung K2-08); Kostenschätzung als Funktion für M2-K17. Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Kostenpflichtige Abrufe bilden die erste MCP-Werkzeugklasse cost (AGENT-003, Klärung K2-08); Kostenschätzung als Funktion für M2-K17. Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig."
  },
  {
   "id": "M2-X03",
@@ -2344,7 +2411,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nur Mock. OUT-183 Google-Sheet-Listenquelle aus M1 7.3 hier (Bibliotheksteil). Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nur Mock. OUT-183 Google-Sheet-Listenquelle aus M1 7.3 hier (Bibliotheksteil). Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-K09",
@@ -2377,7 +2444,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Budgets UI-145 (View Source 1 MB ≤ 300 ms, Diff ≤ 1 s); Diff im Kern mit similar. Accessibility- und Rechtschreib-Details liefern M2-D21 bzw. M2-D19 in eigenen Dateien. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Budgets UI-145 (View Source 1 MB ≤ 300 ms, Diff ≤ 1 s); Diff im Kern mit similar. Accessibility- und Rechtschreib-Details liefern M2-D21 bzw. M2-D19 in eigenen Dateien. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-M02",
@@ -2398,7 +2465,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Werkzeugnamen und Klassen aus os-mcp tools::all(); Prüfung per Skript (Schema der Plugin-Manifeste, Verweise im SKILL.md) im eigenen Workflow .github/workflows/integrations.yml (gehört M2-M02, keine Überschneidung)."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Werkzeugnamen und Klassen aus os-mcp tools::all(); Prüfung per Skript (Schema der Plugin-Manifeste, Verweise im SKILL.md) im eigenen Workflow .github/workflows/integrations.yml (gehört M2-M02, keine Überschneidung)."
  },
  {
   "id": "M2-T01",
@@ -2425,7 +2492,7 @@
    "INTEG-017"
   ],
   "owns": [
-   "crates/os-sched/** (ohne Cargo.toml; ohne src/mail/**) bzw. crates/os-store/src/tasks/** laut K2-07",
+   "crates/os-sched/** (ohne Cargo.toml; ohne src/mail/**)",
    "crates/os-cli/** (ohne Cargo.toml und src/logging.rs)",
    "crates/os-app/src/commands/tasks.rs",
    "crates/os-app/tests/cmd_tasks_*.rs",
@@ -2439,7 +2506,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). OS-Planer hinter Trait mit Dry-Run-Backend für Tests (golden plist/XML), echte Registrierung nur in E2E-B bzw. manuell (Klärung K2-07). Start erst nach Entscheidung K2-07 (Crate-Ort). Commands tasks.* exakt nach M2.md 3.6a (list, get, save, validate, delete, run, history, register, unregister, export, import); Abbruch laufender Aufgaben über op.cancel (OUT-171). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). OS-Planer hinter Trait mit Dry-Run-Backend für Tests (golden plist/XML), echte Registrierung nur in E2E-B bzw. manuell (K2-07). Crate-Ort: os-sched (K2-07 entschieden, Gerüst aus M2-F01). Commands tasks.* exakt nach M2.md 3.6a (list, get, save, validate, delete, run, history, register, unregister, export, import); Abbruch laufender Aufgaben über op.cancel (OUT-171). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-U13",
@@ -2467,7 +2534,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). F-13: während „Läuft“ nur die freigegebenen Gruppen editierbar, Rest mit Tooltip und „Pausieren und bearbeiten“; fremd gestartete Crawls schreibgeschützt. CRAWL-077 [P1]: Rendering-Umschalter im Dialog während „Läuft“ deaktiviert mit Hinweis; Chromium-Fehler als Dialogmeldung (vitest gegen Vertrag, E2E-A gegen die Bridge). Vertrag der Commands: M2.md 3.6a (nicht frei erfinden; fehlt etwas, Schnittstellenbedarf melden). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). F-13: während „Läuft“ nur die freigegebenen Gruppen editierbar, Rest mit Tooltip und „Pausieren und bearbeiten“; fremd gestartete Crawls schreibgeschützt. CRAWL-077 [P1]: Rendering-Umschalter im Dialog während „Läuft“ deaktiviert mit Hinweis; Chromium-Fehler als Dialogmeldung (vitest gegen Vertrag, E2E-A gegen die Bridge). Vertrag der Commands: M2.md 3.6a (nicht frei erfinden; fehlt etwas, Schnittstellenbedarf melden). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-U14",
@@ -2495,7 +2562,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Neustartpflichtige Einträge markiert (OUT-222). CRAWL-124 (M1 7.3): Netzlaufwerk-/Sync-Ordner-Warndialog und Umzugsdialog des Speicherorts (Fortschritt über OpHandle). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Neustartpflichtige Einträge markiert (OUT-222). CRAWL-124 (M1 7.3): Netzlaufwerk-/Sync-Ordner-Warndialog und Umzugsdialog des Speicherorts (Fortschritt über OpHandle). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-U15",
@@ -2524,7 +2591,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). OUT-191 (M1 7.3): Projekt-/Aufgabenname in der Crawl-Verwaltung (Spalten, Filter, Umbenennen). OUT-230 (M1 7.3): Reparatur-UI für beschädigte Crawl-Dateien (integrity_check, Reparaturversuch als OpHandle, Ergebnisdialog). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). OUT-191 (M1 7.3): Projekt-/Aufgabenname in der Crawl-Verwaltung (Spalten, Filter, Umbenennen). OUT-230 (M1 7.3): Reparatur-UI für beschädigte Crawl-Dateien (integrity_check, Reparaturversuch als OpHandle, Ergebnisdialog). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-U20",
@@ -2556,7 +2623,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Übernimmt den Besitz von features/toptabs und features/table aus M2-U10. ONPAGE-011 (M1 7.3): Spaltenauswahl zeigt ausgeblendete Spalten abgeschalteter Elemente nicht bzw. mit Hinweis auf die Einstellung. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Übernimmt den Besitz von features/toptabs und features/table aus M2-U10. ONPAGE-011 (M1 7.3): Spaltenauswahl zeigt ausgeblendete Spalten abgeschalteter Elemente nicht bzw. mit Hinweis auf die Einstellung. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-U21",
@@ -2583,7 +2650,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Gegen den Vertrag und die DTO-Fixtures; echte Daten für Accessibility/Rechtschreibung folgen in Welle 2/3 (Abnahme in M2-U32). ONPAGE-192 (M1 7.3): SERP-Snippet-Detailtab als Lower-Tab-Darstellung der Titles/Meta-Description-Tabs. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Gegen den Vertrag und die DTO-Fixtures; echte Daten für Accessibility/Rechtschreibung folgen in Welle 2/3 (Abnahme in M2-U32). ONPAGE-192 (M1 7.3): SERP-Snippet-Detailtab als Lower-Tab-Darstellung der Titles/Meta-Description-Tabs. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
   "extra_spec_ids": [
    "ONPAGE-192"
   ]
@@ -2611,7 +2678,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Vertrag der Commands: M2.md 3.6a (nicht frei erfinden; fehlt etwas, Schnittstellenbedarf melden)."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Vertrag der Commands: M2.md 3.6a (nicht frei erfinden; fehlt etwas, Schnittstellenbedarf melden)."
  },
  {
   "id": "M2-U24",
@@ -2638,7 +2705,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Budgets UI-146 im Frame-Recorder; UI-144 (+300 MB je Fenster, Freigabe beim Schließen) in E2E-B."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Budgets UI-146 im Frame-Recorder; UI-144 (+300 MB je Fenster, Freigabe beim Schließen) in E2E-B."
  },
  {
   "id": "M2-U25",
@@ -2663,7 +2730,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Token nie im DOM ohne „Anzeigen“; Protokoll ohne Geheimnisse. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Token nie im DOM ohne „Anzeigen“; Protokoll ohne Geheimnisse. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-U26",
@@ -2690,7 +2757,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). OAuth im Systembrowser mit Loopback-Rückruf (api.connect). Vertrag der Commands: M2.md 3.6a (nicht frei erfinden; fehlt etwas, Schnittstellenbedarf melden). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). OAuth im Systembrowser mit Loopback-Rückruf (api.connect). Vertrag der Commands: M2.md 3.6a (nicht frei erfinden; fehlt etwas, Schnittstellenbedarf melden). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-U27",
@@ -2716,7 +2783,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Vertrag der Commands: M2.md 3.6a (nicht frei erfinden; fehlt etwas, Schnittstellenbedarf melden). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Vertrag der Commands: M2.md 3.6a (nicht frei erfinden; fehlt etwas, Schnittstellenbedarf melden). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-N02",
@@ -2734,8 +2801,9 @@
    "crates/os-analyze/tests/tab_internal.rs (nur alter ONPAGE-012-Test, M2.md 5.1)"
   ],
   "depends_on": [
-   "M2-A01",
+   "M2-N01",
    "M2-K05",
+   "M2-A01",
    "M2-E05",
    "M2-D18",
    "M2-D19",
@@ -2763,7 +2831,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Der Planer schneidet nach der Welle-2-Sichtung ggf. mehrere N-Pakete (N02a, N02b …) ohne Besitzüberschneidung; dieses Paket ist der Platzhalter dafür. C9: löst alle Platzhalter `wartet auf M2-xx` der Welle 2 auf (nur Ignore/test.fixme entfernen, Testinhalt unverändert). Die Grundbesitzliste oben ist fest; Dateien aus der Alpha-Befundliste trägt der Planer vor dem Start nach (Besitzprüfung mit docs/plan/M2-check.py, keine Überschneidung mit Welle 3)."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Der Planer schneidet nach der Welle-2-Sichtung ggf. mehrere N-Pakete (N02a, N02b …) ohne Besitzüberschneidung; dieses Paket ist der Platzhalter dafür. C9: löst alle Platzhalter `wartet auf M2-xx` der Welle 2 auf (nur Ignore/test.fixme entfernen, Testinhalt unverändert). Die Grundbesitzliste oben ist fest; Dateien aus der Alpha-Befundliste trägt der Planer vor dem Start nach (Besitzprüfung mit docs/plan/M2-check.py, keine Überschneidung mit Welle 3). Start erst, wenn alle Pakete der Welle 2 gemergt sind (C1, depends_on vollständig, Prüfskript P11)."
  },
  {
   "id": "M2-R02",
@@ -2811,7 +2879,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Zurückgestellte M1-Tests ONPAGE-090 (tab_titles.rs), ONPAGE-170 Rendering-Teil (tab_images.rs) und ONPAGE-057 (reports_redirects.rs) hier scharf schalten. TECH-015 (M1 7.3): JS-Canonical (Canonical nur im gerenderten DOM) – Filter Missing berücksichtigt rel=canonical aus dem gerenderten HTML. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Zurückgestellte M1-Tests ONPAGE-090 (tab_titles.rs), ONPAGE-170 Rendering-Teil (tab_images.rs) und ONPAGE-057 (reports_redirects.rs) hier scharf schalten. TECH-015 (M1 7.3): JS-Canonical (Canonical nur im gerenderten DOM) – Filter Missing berücksichtigt rel=canonical aus dem gerenderten HTML. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-D21",
@@ -2850,7 +2918,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). axe-core 4.11.x (MPL-2.0) mit Attribution in NOTICE über Schnittstellenbedarf; Regelkurztexte eigenständig (TECH-252 ff.). UI-064 [P1]: Benchmark-Test des Issue-Katalogs für die eigene Kategorie in issue_catalog_accessibility.rs sowie Prioritäten je axe-Regel-ID nach TECH-252 … 257 (93 Einträge) und Stichproben mit fx-ui-a11y (image-alt Warning/High, heading-order Warning/Medium, empty-heading Warning/Low). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). axe-core 4.11.x (MPL-2.0) mit Attribution in NOTICE über Schnittstellenbedarf; Regelkurztexte eigenständig (TECH-252 ff.). UI-064 [P1]: Benchmark-Test des Issue-Katalogs für die eigene Kategorie in issue_catalog_accessibility.rs sowie Prioritäten je axe-Regel-ID nach TECH-252 … 257 (93 Einträge) und Stichproben mit fx-ui-a11y (image-alt Warning/High, heading-order Warning/Medium, empty-heading Warning/Low). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
   "extra_spec_ids": [
    "UI-064"
   ]
@@ -2880,7 +2948,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Bibliotheksvorlagen ohne KI (INTEG-069 KI-Vorlagen sind M4)."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Keine Snippet-Bibliothek: INTEG-069 ist P2 (K2-21, Abschnitt 9), deren KI-Vorlagen M4; „Aus Bibliothek hinzufügen“ bleibt ausgeblendet."
  },
  {
   "id": "M2-D23",
@@ -2916,7 +2984,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Lokaler Weg nach Klärung K2-09. UI-064 [P1]: Benchmark-Test des Issue-Katalogs für die eigene Kategorie in issue_catalog_mobile.rs. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Lokaler Weg nach Klärung K2-09. UI-064 [P1]: Benchmark-Test des Issue-Katalogs für die eigene Kategorie in issue_catalog_mobile.rs. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
   "extra_spec_ids": [
    "UI-064"
   ]
@@ -2954,7 +3022,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Content-Ähnlichkeit über MinHash aus M2-D02."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Content-Ähnlichkeit über MinHash aus M2-D02."
  },
  {
   "id": "M2-E06",
@@ -2978,7 +3046,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). "
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). "
  },
  {
   "id": "M2-I06",
@@ -3014,7 +3082,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Orphan-Report um GA4/GSC-Quellen erweitern. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Orphan-Report um GA4/GSC-Quellen erweitern. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-K17",
@@ -3051,7 +3119,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Zurückgestellte M1-Tests AGENT-001 (App-Konfigurationsschreiben), AGENT-003 (cost gegen Mock) und Injection-Fixture mit Custom-Extraction-Wert (AGENT-004) hier scharf schalten. AGENT-012 (M1 7.3): Abschnitte strukturierte Daten und Rendering im Werkzeug url_details gegen Fixtures aus M2-D20/M2-E05 (Test in crates/os-mcp/tests/, Tag `// spec: AGENT-012 [M2]`). Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Zurückgestellte M1-Tests AGENT-001 (App-Konfigurationsschreiben), AGENT-003 (cost gegen Mock) und Injection-Fixture mit Custom-Extraction-Wert (AGENT-004) hier scharf schalten. AGENT-012 (M1 7.3): Abschnitte strukturierte Daten und Rendering im Werkzeug url_details gegen Fixtures aus M2-D20/M2-E05 (Test in crates/os-mcp/tests/, Tag `// spec: AGENT-012 [M2]`). Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-L01",
@@ -3086,7 +3154,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). M1-Test OUT-183 (Upload-Reihenfolge, cli_list.rs) hier scharf schalten. OUT-195 (M1 7.3): xls/gsheet werden unterstützt; Exit 2 „nicht unterstützt“ nur noch für gsheet ohne verbundenes Google-Konto (Meldung mit Hinweis). OUT-203 [P1]: --list-exports und --list-reports listen alle gültigen Namen (sortiert, eine Zeile je Name, Exit 0); bei ungültigem Namen zusätzlich der Hinweis auf diese Optionen. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). M1-Test OUT-183 (Upload-Reihenfolge, cli_list.rs) hier scharf schalten. OUT-195 (M1 7.3): xls/gsheet werden unterstützt; Exit 2 „nicht unterstützt“ nur noch für gsheet ohne verbundenes Google-Konto (Meldung mit Hinweis). OUT-203 [P1]: --list-exports und --list-reports listen alle gültigen Namen (sortiert, eine Zeile je Name, Exit 0); bei ungültigem Namen zusätzlich der Hinweis auf diese Optionen. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-T02",
@@ -3100,7 +3168,7 @@
    "OUT-282"
   ],
   "owns": [
-   "crates/os-sched/src/mail/** bzw. Ort laut K2-07",
+   "crates/os-sched/src/mail/**",
    "crates/os-testsite/src/mocks/smtp.rs",
    "tests/fixtures/out-m2-mail/**",
    "crates/os-app/src/commands/mail.rs",
@@ -3111,7 +3179,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nur SMTP-Mock. Commands mail.* exakt nach M2.md 3.6a (listAccounts, saveAccount, deleteAccount, testAccount) in commands/mail.rs. Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nur SMTP-Mock. Commands mail.* exakt nach M2.md 3.6a (listAccounts, saveAccount, deleteAccount, testAccount) in commands/mail.rs. Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig."
  },
  {
   "id": "M2-U13B",
@@ -3138,7 +3206,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Vertrag der Commands: M2.md 3.6a (nicht frei erfinden; fehlt etwas, Schnittstellenbedarf melden). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Vertrag der Commands: M2.md 3.6a (nicht frei erfinden; fehlt etwas, Schnittstellenbedarf melden). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-U17",
@@ -3166,7 +3234,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Eingebetteter Browser = sichtbares Chromium über CDP (keine Tauri-Webview, keine src-tauri-Änderung). Commands auth.openLogin/finishLogin exakt nach M2.md 3.6a in commands/auth_login.rs (auth.listProfiles/saveProfile kommen aus M2-O01). Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig. Testaufteilung: Der Anmeldefluss (Formular ausfüllen, absenden, Cookies sowie Local/Session Storage übernehmen, Sitzungsschutz-Muster) wird in crates/os-render/tests/login_*.rs gegen ein os-testsite-Login-Formular mit headless Chromium über CDP getestet (LoginOpts.headless = true, Formularbedienung per CDP statt Nutzer); nur der Fensterteil (sichtbares Chromium öffnet, Nutzer schließt, Übernahme) liegt in E2E-B (M2-U32) bzw. im lokalen Smoke des Orchestrators. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Eingebetteter Browser = sichtbares Chromium über CDP (keine Tauri-Webview, keine src-tauri-Änderung). Commands auth.openLogin/finishLogin exakt nach M2.md 3.6a in commands/auth_login.rs (auth.listProfiles/saveProfile kommen aus M2-O01). Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig. Testaufteilung: Der Anmeldefluss (Formular ausfüllen, absenden, Cookies sowie Local/Session Storage übernehmen, Sitzungsschutz-Muster) wird in crates/os-render/tests/login_*.rs gegen ein os-testsite-Login-Formular mit headless Chromium über CDP getestet (LoginOpts.headless = true, Formularbedienung per CDP statt Nutzer); nur der Fensterteil (sichtbares Chromium öffnet, Nutzer schließt, Übernahme) liegt in E2E-B (M2-U32) bzw. im lokalen Smoke des Orchestrators. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-U23",
@@ -3201,7 +3269,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Übernimmt den Besitz der genannten Feature-Ordner für Welle 3. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Übernimmt den Besitz der genannten Feature-Ordner für Welle 3. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-L02",
@@ -3225,7 +3293,7 @@
   ],
   "size": "S",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). OUT-190 (M1 7.3): Ausgabe nach Google Drive (gegen Drive-Mock). Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). OUT-190 (M1 7.3): Ausgabe nach Google Drive (gegen Drive-Mock). Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
   "extra_spec_ids": [
    "OUT-190"
   ]
@@ -3256,7 +3324,7 @@
   ],
   "size": "M",
   "runner": "cloud+ci+local-mac",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Fehler in Feature-Code als Befund (N-Paket Welle 5), Fixes nur in owns. Lokaler Teil (C11, Orchestrator): manueller Prüfplan VoiceOver (macOS, Referenz A) nach docs/plan/M2-acceptance/a11y/screenreader-plan.md (legt dieses Paket an: Hauptfenster, Tabelle mit aria-rowcount, Filter, Detailbereich, Seitenleiste, Konfigurations- und Exportdialog, Einstellungen; je Schritt erwartete Ansage); Ergebnis als docs/plan/M2-acceptance/a11y/voiceover-<datum>.md. NVDA: auf einem Windows-Rechner des Nutzers (K2-01), sonst Indiz aus der CI (windows-latest, axe + UIA-Baum per WebDriver) mit Vermerk in docs/plan/M2-acceptance/a11y/nvda-<datum>.md."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Fehler in Feature-Code als Befund (N-Paket Welle 5), Fixes nur in owns. Lokaler Teil (C11, Orchestrator): manueller Prüfplan VoiceOver (macOS, Referenz A) nach docs/plan/M2-acceptance/a11y/screenreader-plan.md (legt dieses Paket an: Hauptfenster, Tabelle mit aria-rowcount, Filter, Detailbereich, Seitenleiste, Konfigurations- und Exportdialog, Einstellungen; je Schritt erwartete Ansage); Ergebnis als docs/plan/M2-acceptance/a11y/voiceover-<datum>.md. NVDA: auf einem Windows-Rechner des Nutzers (K2-01), sonst Indiz aus der CI (windows-latest, axe + UIA-Baum per WebDriver) mit Vermerk in docs/plan/M2-acceptance/a11y/nvda-<datum>.md."
  },
  {
   "id": "M2-U31",
@@ -3292,7 +3360,7 @@
   ],
   "size": "M",
   "runner": "cloud+ci+local-mac",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Bericht target/loadtest/ui-report.json (Format PERF-009). Messung auf Referenzhardware A lokal durch den Orchestrator; Windows-Werte aus CI (Klärung K2-12). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Bericht target/loadtest/ui-report.json (Format PERF-009). Messung auf Referenzhardware A lokal durch den Orchestrator; Windows-Werte aus CI (Klärung K2-12). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-U32",
@@ -3327,7 +3395,7 @@
   ],
   "size": "L",
   "runner": "cloud+ci+local-mac",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-U33",
@@ -3357,7 +3425,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-Q02",
@@ -3384,7 +3452,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Startbedingung zusätzlich: SF-Referenzexporte der neuen Sites liegen unter tests/golden/parity/parity-m2-*/sf/ (Orchestrator, M2.md 6.3). Implementierungsfehler → Nachbesserungsauftrag; kein Fix außerhalb owns."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Startbedingung zusätzlich: SF-Referenzexporte der neuen Sites liegen unter tests/golden/parity/parity-m2-*/sf/ (Orchestrator, M2.md 6.3). Implementierungsfehler → Nachbesserungsauftrag; kein Fix außerhalb owns."
  },
  {
   "id": "M2-Q03",
@@ -3419,7 +3487,7 @@
   ],
   "size": "M",
   "runner": "local-mac",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Keine Codeänderung; Messblöcke nach M1-N21 (wait_quiet, caffeinate, Berichte je Block). CRAWL-124 (M1 7.3): 1-Mio.-Profilbenchmarks (A4-Profile) auf dem M2-Stand mitlaufen lassen und im Bericht ausweisen. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Keine Codeänderung; Messblöcke nach M1-N21 (wait_quiet, caffeinate, Berichte je Block). CRAWL-124 (M1 7.3): 1-Mio.-Profilbenchmarks (A4-Profile) auf dem M2-Stand mitlaufen lassen und im Bericht ausweisen. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-Q04",
@@ -3443,6 +3511,6 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C12) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). "
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). "
  }
 ]

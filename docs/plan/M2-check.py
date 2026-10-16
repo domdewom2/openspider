@@ -14,6 +14,9 @@ Prüft:
   P7  C9: Jeder Platzhalter-Ort einer Welle hat in der Folgewelle genau einen Besitzer (N01 bzw. N02).
   P8  Pakete mit extra_spec_ids tragen den B2-Hinweis „je [P1]-/7.3-Kriterium ein getaggter Test“ in prompt_notes.
   P9  Jede Testdatei aus M2.md 5.1 (zurückgestellte M1-Tests) gehört dem dort genannten Paket (owns).
+  P10 C14 M1-Sperrbereich: Pakete der Wellen in SPERR_WELLEN besitzen nichts unter crates/{os-store,os-engine,os-analyze};
+      jedes andere Paket mit Besitz dort hängt (transitiv) an M1_SPERRE_BIS.
+  P11 C1: N-Pakete (C9) hängen an allen Paketen ihrer Quellwelle.
 
 Das Skript ist Teil der Planpflege: Wer M2-packages.json ändert, führt es vor dem Commit aus.
 """
@@ -28,7 +31,13 @@ ROOT = Path(__file__).resolve().parents[2]
 PLAN = ROOT / "docs" / "plan"
 SPEC = ROOT / "docs" / "spec"
 
-ERWARTETE_SPEC_IDS = 580
+ERWARTETE_SPEC_IDS = 586  # Rev. 3: +CRAWL-145 … 147 (E03), +OUT-233/234 (F02), +OUT-273 (V01)
+
+# C14: Bis zum Merge von M1_SPERRE_BIS kein M2-Besitz in diesen Crates.
+M1_SPERRE = ("crates/os-store", "crates/os-engine", "crates/os-analyze")
+M1_SPERRE_BIS = "M1-N27"
+SPERR_WELLEN = ["0a"]
+SPERR_PROBEN = ("Cargo.toml", "src/lib.rs", "src/q.rs", "src/q/z.rs", "tests/q.rs", "migrations/q.sql", "benches/q.rs")
 WELLEN = ["0a", "0b", "0c", "0d", "1", "2", "3", "4", "4b", "5"]
 ID_RE = r"\b(?:CRAWL|ONPAGE|TECH|OUT|AGENT|UI|INTEG|PERF)-\d{3}\b"
 
@@ -226,6 +235,41 @@ def main():
     for p in pk:
         if p.get("extra_spec_ids") and B2_HINWEIS not in p["prompt_notes"]:
             errs.append(f"P8 {p['id']}: B2-Hinweis fehlt in prompt_notes")
+    def sperr_treffer(entries):
+        for e in entries:
+            pats, x = parse_owns(e)
+            for gl in pats:
+                if any(sample(gl).startswith(c + "/") for c in M1_SPERRE) and not excluded(sample(gl), gl, x):
+                    return e
+                for c in M1_SPERRE:
+                    for probe in SPERR_PROBEN:
+                        path = f"{c}/{probe}"
+                        if to_regex(gl).match(path) and not excluded(path, gl, x):
+                            return e
+        return None
+
+    def alle_deps(pid, acc=None):
+        acc = set() if acc is None else acc
+        for d in byid.get(pid, {"depends_on": []})["depends_on"]:
+            if d not in acc:
+                acc.add(d)
+                alle_deps(d, acc)
+        return acc
+
+    for p in pk:
+        hit = sperr_treffer(p["owns"])
+        if not hit:
+            continue
+        if p["wave"] in SPERR_WELLEN:
+            errs.append(f"P10 {p['id']} (W{p['wave']}) besitzt im M1-Sperrbereich: {hit}")
+        elif M1_SPERRE_BIS not in alle_deps(p["id"]):
+            errs.append(f"P10 {p['id']} besitzt im M1-Sperrbereich ({hit}), hängt aber nicht an {M1_SPERRE_BIS}")
+    for nid, c in C9.items():
+        if nid not in byid:
+            continue
+        fehlt = [p["id"] for p in pk if p["wave"] == c["quelle"] and p["id"] != nid and p["id"] not in byid[nid]["depends_on"]]
+        if fehlt:
+            errs.append(f"P11 {nid} hängt nicht an allen Paketen der Welle {c['quelle']}: {', '.join(fehlt)}")
     m2md = (PLAN / "M2.md").read_text(encoding="utf-8")
     sec = m2md[m2md.index("### 5.1 "): m2md.index("### 5.2 ")]
     for line in sec.splitlines():
