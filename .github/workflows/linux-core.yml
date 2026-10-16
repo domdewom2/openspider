@@ -1,0 +1,83 @@
+name: linux-core
+
+# OUT-273 / M2-V01 (Etappe E0): Kern, CLI und MCP-STDIO auf Linux x86_64 (glibc) ohne Desktop-App.
+# Alle Befehle stehen in scripts/ci/linux-core.sh; Skip-Liste (Ziel: leer): scripts/ci/linux-core-skips.txt.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linux-core-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  # M2.md C5
+  CARGO_INCREMENTAL: "0"
+  CARGO_PROFILE_DEV_DEBUG: line-tables-only
+  CARGO_PROFILE_TEST_DEBUG: line-tables-only
+  # M2.md C13: kein Schlüsselbund, kein Secret Service; D-Bus-Sitzung wird im Skript entfernt
+  OPENSPIDER_SECRET_STORE: memory
+  # Nur für den Fallback, wenn der Runner kein Chrome mitbringt: Playwright-Version wie in M2.md C3 (F04 pinnt sie im Lockfile)
+  PLAYWRIGHT_VERSION: "1.56.1"
+
+jobs:
+  linux-core:
+    name: linux-core (ubuntu-latest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      # Rust laut rust-toolchain.toml (legt M2-F01 an); bis dahin die aktuelle stabile Version wie in ci.yml.
+      - name: Rust-Toolchain
+        run: |
+          if [ -f rust-toolchain.toml ]; then
+            rustup toolchain install
+          else
+            rustup toolchain install stable --profile minimal
+            rustup default stable
+          fi
+          rustup component add rustfmt clippy
+          rustc --version
+          cargo --version
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: linux-core
+
+      - name: rustfmt
+        run: scripts/ci/linux-core.sh fmt
+
+      - name: clippy (ohne openspider-desktop)
+        run: scripts/ci/linux-core.sh clippy
+
+      # Setzt OPENSPIDER_CHROMIUM für die folgenden Schritte (Rendering-Tests von M2-E05 laufen ohne Änderung mit).
+      - name: Chromium headless (ohne Display, ohne xvfb)
+        run: scripts/ci/linux-core.sh chromium
+
+      - name: Tests (ohne openspider-desktop, ohne D-Bus)
+        run: scripts/ci/linux-core.sh test
+
+      - name: Release-Build openspider
+        run: scripts/ci/linux-core.sh release
+
+      - name: CLI-Golden-Smoke mit der Release-Binärdatei
+        run: scripts/ci/linux-core.sh golden
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openspider-linux-x86_64
+          path: |
+            target/linux-core/openspider
+            target/linux-core/openspider.sha256
+          retention-days: 7
+          if-no-files-found: error
