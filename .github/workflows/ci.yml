@@ -23,14 +23,14 @@ jobs:
       - run: cargo fmt --all --check
 
   deny:
-    name: cargo-deny (licenses, bans, sources)
+    name: cargo-deny (licenses, bans, sources, advisories)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: EmbarkStudios/cargo-deny-action@v2
         with:
-          command: check licenses bans sources
+          command: check licenses bans sources advisories
 
   build:
     name: build (${{ matrix.name }})
