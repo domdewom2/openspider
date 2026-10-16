@@ -5,7 +5,7 @@
 # Aufruf: scripts/bench/run_acceptance.sh <logdatei> <befehl> [argumente...]
 log="$1"; shift
 dir=$(dirname "$0")
-"$dir/wait_quiet.sh" 2 180 > "$log.wait" 2>&1 || { cat "$log.wait" >&2; exit 99; }
+"$dir/wait_quiet.sh" 2 120 > "$log.wait" 2>&1 || { cat "$log.wait" >&2; exit 99; }
 { echo "Start $(date -u +%FT%TZ) ($(date +%H:%M) lokal)"; echo "wait_quiet: $(cat "$log.wait")"; uptime; echo "Befehl: $*"; } > "$log"
 rm -f "$log.wait"
 : > "$log.load"

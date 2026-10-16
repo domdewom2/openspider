@@ -68,7 +68,9 @@
       "packages": [
         "M1-P32",
         "M1-N19",
-        "M1-N21"
+        "M1-N21",
+        "M1-N22",
+        "M1-N26"
       ],
       "status": "implemented",
       "tests": [
@@ -125,6 +127,16 @@
           "test": "a_schema_v1_file_migrates_to_v2_with_identical_counters"
         },
         {
+          "file": "crates/os-store/tests/diag_series.rs",
+          "result": "ok",
+          "test": "batches_fall_into_buckets_of_one_hundred_and_the_groups_add_up_to_the_build_time"
+        },
+        {
+          "file": "crates/os-store/tests/diag_series.rs",
+          "result": "ok",
+          "test": "the_last_bucket_collects_everything_after_the_fifteenth"
+        },
+        {
           "file": "crates/os-store/tests/link_index.rs",
           "result": "ok",
           "test": "a_new_file_has_the_index_until_a_writer_opens_it"
@@ -163,6 +175,41 @@
           "file": "crates/os-store/tests/schema_create.rs",
           "result": "ok",
           "test": "url_counters_is_a_narrow_table_with_one_row_per_url"
+        },
+        {
+          "file": "crates/os-store/tests/url_index.rs",
+          "result": "ok",
+          "test": "the_random_key_indexes_are_absent_while_writing_and_the_others_stay"
+        },
+        {
+          "file": "crates/os-store/tests/url_index.rs",
+          "result": "ok",
+          "test": "a_small_crawl_keeps_every_index_and_the_threshold_drops_them_in_the_batch_that_reaches_it"
+        },
+        {
+          "file": "crates/os-store/tests/url_index.rs",
+          "result": "ok",
+          "test": "the_regular_end_builds_them_in_the_last_batch_with_the_original_definitions"
+        },
+        {
+          "file": "crates/os-store/tests/url_index.rs",
+          "result": "ok",
+          "test": "ensure_if_idle_rebuilds_after_an_abort_and_a_new_writer_drops_them_again"
+        },
+        {
+          "file": "crates/os-store/tests/url_index.rs",
+          "result": "ok",
+          "test": "ensure_builds_only_the_missing_indexes"
+        },
+        {
+          "file": "crates/os-store/tests/url_index.rs",
+          "result": "ok",
+          "test": "duplicate_queries_give_the_same_rows_without_the_indexes"
+        },
+        {
+          "file": "crates/os-store/tests/url_index.rs",
+          "result": "ok",
+          "test": "the_prefetch_readers_cover_every_row_and_small_files_skip_it"
         },
         {
           "file": "crates/os-store/tests/writer_counters.rs",
@@ -9280,7 +9327,9 @@
         "M1-P32",
         "M1-P33",
         "M1-N19",
-        "M1-N21"
+        "M1-N21",
+        "M1-N22",
+        "M1-N26"
       ],
       "status": "implemented",
       "tests": [
@@ -9379,7 +9428,9 @@
         "M1-P32",
         "M1-P33",
         "M1-N19",
-        "M1-N21"
+        "M1-N21",
+        "M1-N22",
+        "M1-N26"
       ],
       "status": "implemented",
       "tests": [
@@ -9447,7 +9498,8 @@
         "M1-N14",
         "M1-P33",
         "M1-N19",
-        "M1-N21"
+        "M1-N21",
+        "M1-N26"
       ],
       "status": "implemented",
       "tests": [
