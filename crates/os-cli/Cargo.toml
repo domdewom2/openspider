@@ -4,6 +4,7 @@ description = "OpenSpider: Kommandozeile (Binary openspider)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+rust-version.workspace = true
 repository.workspace = true
 authors.workspace = true
 
@@ -16,6 +17,10 @@ os-engine.workspace = true
 os-analyze.workspace = true
 os-export.workspace = true
 os-mcp.workspace = true
+# M2-F01 (3.2): Aufgabenplanung (os-sched, K2-07), API-Quellen und Rendering im CLI; nie os-app
+os-sched.workspace = true
+os-integrations.workspace = true
+os-render.workspace = true
 clap.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true

@@ -317,8 +317,24 @@ fn every_settable_key_exists_in_the_configuration() {
             "Null-Werte gehören dazu: {key}"
         );
     }
+    // Listen von Tabellen bzw. Zahlen und Zuordnungen lassen sich nur in der Datei bearbeiten (NotSettable)
+    const STRUCTURED: [&str; 10] = [
+        "auth.basic",
+        "auth.form",
+        "custom_search.filters",
+        "custom_extraction.extractors",
+        "custom_js.snippets",
+        "link_positions.rules",
+        "rewrite.regex_replace",
+        "http.headers",
+        "segments.list",
+        "compare.mapping",
+    ];
     for key in all {
-        if key == "auth.basic" {
+        if STRUCTURED.contains(&key.as_str())
+            || key.starts_with("spelling.default_variants.")
+            || key == "sitemap_gen.priority.by_depth"
+        {
             continue;
         }
         assert!(keys.contains(&key), "{key} fehlt in settable_keys()");

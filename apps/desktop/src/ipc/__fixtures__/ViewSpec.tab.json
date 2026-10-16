@@ -1,0 +1,9 @@
+{
+  "kind": "tab",
+  "tab": "Internal",
+  "filter": "All",
+  "search": { "kind": "simple", "text": "blog" },
+  "sort": [{ "column": "Word Count", "dir": "desc" }],
+  "segment": { "kind": "segment", "name": "Shop" },
+  "compare": "added"
+}

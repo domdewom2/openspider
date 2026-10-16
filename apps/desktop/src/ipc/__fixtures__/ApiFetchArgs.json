@@ -1,0 +1,1 @@
+{ "kinds": ["gsc", "ga4"], "scope": { "kind": "selection", "selection": { "kind": "ids", "ids": [1, 2] } } }

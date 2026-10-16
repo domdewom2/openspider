@@ -36,6 +36,10 @@ pub struct LoadedConfig {
     pub config: CrawlConfig,
     /// Warnungen: unbekannte Schlüssel (mit Feldpfad und Zeile), neuere `schema_version`.
     pub warnings: Vec<ConfigIssue>,
+    /// Version der Datei, wenn sie älter war als [`CONFIG_SCHEMA_VERSION`] (OUT-226): die Konfiguration im Speicher
+    /// trägt dann bereits die aktuelle Version, neue Abschnitte haben ihre Standardwerte. Die Datei selbst bleibt
+    /// unverändert, bis [`CrawlConfig::migrate_file`] sie umschreibt.
+    pub migrated_from: Option<u32>,
     locations: BTreeMap<String, (u32, u32)>,
 }
 
@@ -45,6 +49,7 @@ impl LoadedConfig {
         LoadedConfig {
             config,
             warnings: Vec::new(),
+            migrated_from: None,
             locations: BTreeMap::new(),
         }
     }
@@ -125,7 +130,7 @@ impl CrawlConfig {
             ));
         }
 
-        let config = toml::de::Deserializer::parse(src)
+        let mut config = toml::de::Deserializer::parse(src)
             .and_then(CrawlConfig::deserialize)
             .map_err(|e| {
                 let mut err = load_error(src, Some(&doc), &e);
@@ -151,9 +156,17 @@ impl CrawlConfig {
         walk.unknown.sort_by_key(|w| (w.line, w.column));
         warnings.append(&mut walk.unknown);
 
+        let migrated_from = file_version
+            .filter(|v| (1..i64::from(CONFIG_SCHEMA_VERSION)).contains(v))
+            .and_then(|v| u32::try_from(v).ok());
+        if migrated_from.is_some() {
+            config.schema_version = CONFIG_SCHEMA_VERSION;
+        }
+
         Ok(LoadedConfig {
             config,
             warnings,
+            migrated_from,
             locations: walk.locations,
         })
     }

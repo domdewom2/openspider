@@ -1,0 +1,8 @@
+{
+  "kind": "inlinks",
+  "urlIds": [1, 2],
+  "filter": { "id": "Hyperlinks" },
+  "search": null,
+  "sort": [],
+  "compare": null
+}
