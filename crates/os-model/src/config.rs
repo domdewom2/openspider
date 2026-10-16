@@ -191,9 +191,16 @@ impl Default for CrawlConfig {
 }
 
 impl CrawlConfig {
-    /// Liest eine `.osconfig`; fehlende Schlüssel erhalten Standardwerte.
+    /// Liest eine `.osconfig`; fehlende Schlüssel erhalten Standardwerte. Eine Datei älterer Version (OUT-226) ergibt
+    /// im Speicher eine Konfiguration der aktuellen Version: die neuen Abschnitte tragen ihre Standardwerte
+    /// (`LoadedConfig::migrated_from` meldet das beim Laden mit [`CrawlConfig::load_str`]).
     pub fn from_toml_str(s: &str) -> Result<Self, ModelError> {
-        toml::from_str(s).map_err(|e| ModelError::Config(e.to_string()))
+        let mut config: CrawlConfig =
+            toml::from_str(s).map_err(|e| ModelError::Config(e.to_string()))?;
+        if (1..CONFIG_SCHEMA_VERSION).contains(&config.schema_version) {
+            config.schema_version = CONFIG_SCHEMA_VERSION;
+        }
+        Ok(config)
     }
 
     /// Schreibt alle Werte (Reihenfolge = Felddeklaration, daher stabil). Nicht gesetzte optionale Werte

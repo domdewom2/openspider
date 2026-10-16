@@ -7,7 +7,7 @@ import type { Tick } from "./Tick";
  */
 export type UiEvent = { "kind": "tick", 
 /**
- * Inhalt.
+ * Inhalt (in einer Box, weil der Tick die übrigen Varianten um ein Vielfaches übertrifft).
  */
 tick: Tick, } | { "kind": "settingsChanged", 
 /**
