@@ -1743,5 +1743,66 @@
     ],
     "size": "M",
     "prompt_notes": "Entscheidung Opus-Planer 16.10.2026 (Welle 7d, K-72/K-73/K-80). KEINE Codeänderung an crates/** oder Tests; ein Verstoß ist ein Nachbesserungsauftrag (Spec-ID, Datei/Crate, Messwert, Befehl) im Ergebnis. STARTBEDINGUNGEN (Orchestrator prüft): je ein Treffer für `git log --oneline origin/main -i --grep='Merge N22 (Welle 7c)'` (ebenso N23, N24, N25; die Merge-Commits heißen 'm1: Merge Nxx (Welle 7c)', ohne 'M1-'; alternativ `git branch -r --merged origin/main` bzw. `git merge-base --is-ancestor m1/m1-nxx origin/main`), danach drei grüne main-Läufe; `git worktree list` zeigt nur main; keine anderen Builds oder Läufe auf der Maschine. Worktree/Branch nach E1, Target nach E2; Release-Build einmal VOR den Messblöcken: `cargo build --release --locked -p os-loadtest` und `-p os-engine --example crawl_child`. MESSREGEL ABNAHME: vor jedem Block `scripts/bench/wait_quiet.sh 2 120` (Load 1 min < 2, bis 120 min warten; run_acceptance.sh auf 120 min umstellen), Block unter `caffeinate -dimsu`, Load beim Start und Proben im Lauf je Block im Bericht (wie N21), >= 20 GB frei, Arbeitsordner außerhalb des Repos, Crawl-Dateien nach jedem Lauf löschen; während der Blöcke nichts bauen oder testen. Bleibt die Load 120 min >= 2: Block nicht werten, im Bericht vermerken, später wiederholen. BLÖCKE nacheinander, je Block ein Zwischencommit `acceptance: ...` mit Push des Branches: B1 und B2 `os-loadtest run --scenario perf-001 --size large --work-dir <ordner> --out docs/plan/M1-acceptance/loadtest/report-perf-001-large-run<1|2>.json`: je crawler_violations leer (Spitzen-RSS < 1,5 GB, RSS-Verhältnis < 2, PERF-002 nach K-72: Mittel >= 500 URLs/s und alle zehn Abschnitte 70-130 %, Stillstand <= 30 s nach K-73); alle zehn Abschnittswerte, Commit-Verlauf je 100 Batches (diag, M1-N22) und Endbatch-Dauer berichten. B3 `--scenario perf-003 --size large`: Spitzen-RSS < 500 MB, end_reason queue_empty, Stillstand <= 30 s, diag wie N21. B4 `--scenario perf-005 --size large --kills 10` als Regressionsprobe (K-49: je Abbruch integrity_check ok, 0 Dubletten, Status identisch, repeated_per_kill <= Grenze). DANACH LOKALE GEGENPROBE (Fable-Empfehlung, nach den Messblöcken): `cargo test --workspace --exclude openspider-desktop --locked` in frischem CARGO_TARGET_DIR ohne RUSTC_WRAPPER; `os-parity run --all --openspider <release-binary>` mit Exit 0 und `os-parity coverage --strict` (Testausgabe des Laufs, 0 open); CLI-E2E mit dem Zielbild-Befehl aus M1.md 1.2 an out-basic-site (Exit 0, Exporte vorhanden); MCP-E2E (initialize, tools/list nur read, tools/call aller 5 Werkzeuge, query_urls-Seitenvereinigung = Tab-Export ohne Dubletten). Aufrufhilfen dafür unter scripts/gate/. BERICHTE: docs/plan/M1-acceptance/loadtest/README.md neu (Maschine, macOS, Commit, Befehle, Laufzeiten, Load je Block, Ergebnis je Kriterium aus M1.md 6 A4, Vergleich mit N21); die bisherigen report-*/log-*-Dateien von N21 per git mv als n21-* behalten; n14-* bleiben. checklist.md: Kurzfassung (A1, A2, A4, A9), Abschnitt A1 (Dauer 'Rust tests'/'Rust tests (build)' je Plattform der main-Läufe nach Welle 7c, Bewertung nach K-81, cargo-deny mit advisories nach K-82), A2/A9 (M1-status.json aus dem Artefakt spec-coverage des jüngsten grünen main-Laufs nach Welle 7c), Abschnitt A4, Gate-Weg, Abschnitt mit der lokalen Gegenprobe, Offene Punkte. Commit-Präfix acceptance:. Danach folgt das erneute Fable-Gate M1."
+  },
+  {
+    "id": "M1-N27",
+    "kind": "package",
+    "model": "sonnet",
+    "title": "Endbatch bei 1 Mio. deterministisch <= 45 s (K-84) und Duplicate-Filter ohne Indexbedarf (K-83): Exact Duplicates als GROUP BY, fünf urls-Indizes ohne Aufbau im Endbatch, links_target-Aufbau verkürzt, K-80-Auswertung in os-loadtest",
+    "wave": "7e",
+    "spec_ids": [],
+    "extra_spec_ids": [
+      "PERF-001",
+      "PERF-002",
+      "PERF-003",
+      "ONPAGE-143"
+    ],
+    "owns": [
+      "crates/os-store/** (ohne Cargo.toml, migrations/**, src/lib.rs, src/schema.rs)",
+      "crates/os-engine/** (ohne Cargo.toml, src/lib.rs)",
+      "crates/os-analyze/src/tabs/content.rs",
+      "crates/os-analyze/tests/tab_content.rs",
+      "crates/os-analyze/tests/k83_duplicate_plans.rs (neu)",
+      "crates/os-analyze/tests/bench_duplicates.rs (neu)",
+      "crates/os-loadtest/src/{runner,diag,report,throughput}.rs",
+      "crates/os-loadtest/tests/run.rs",
+      "docs/ARCHITECTURE.md (nur Abschnitt Crawl-Datei/Speicher)",
+      "docs/plan/M1-acceptance/loadtest/probe-n27/**",
+      "scripts/bench/ab_probe.sh"
+    ],
+    "depends_on": [],
+    "size": "L",
+    "prompt_notes": "Entscheidung Opus-Planer 16.10.2026 nach Fable-Gate M1 87/100 auf bc65311 (Welle 7e, K-83, K-84; Text in docs/plan/M1.md Welle 7e). Grundlage docs/plan/M1-acceptance/loadtest/README.md (N26): Endbatch 98,8/96,1/92,3 s = fünf urls-Indexaufbauten 57,6/53,8/51,9 s (Vorwärmen 14,8/10,1/10,0 s) + links_target 33,7/35,2/33,1 s + Commit letzter Eimer ~7 s; Ziel <= 45 s, deterministisch (warm und kalt). KEINE REGELÄNDERUNG: K-72/K-80 unverändert, keine Golden-/Paritätsänderung, keine Migration/Schemaspalte, CHANNEL_CAPACITY/BATCH_PAGES_BACKLOG/Threads (K-49) und CRAWL-125 unverändert, öffentliche Signaturen nur additiv. NICHT ANFASSEN (M2-Fundament parallel): crates/os-app/**, apps/desktop/**, Cargo.toml (Workspace und crates/*), Cargo.lock, crates/os-model/**, .github/workflows/**, os-store src/lib.rs/schema.rs, os-engine src/lib.rs; Bedarf dort = Schnittstellenbedarf an den Orchestrator. SCHRITTE: (0) Ausgangsmessung A (origin/main): Endbatch-Bestandteile; Kaltprobe links_target-Aufbau auf Store-Datei 1 Mio. x 30 Links ohne Index (Dateicache per `sudo -n /usr/sbin/purge` verdrängen, falls ohne Passwort; sonst im Bericht begründen und Lesezähler belegen, dass sequenziell gelesen wird). (1) K-83 os-analyze tabs/content.rs: EXACT_DUPLICATES als unkorrelierte Gruppierung (hash_md5 IN (SELECT ... GROUP BY hash_md5 HAVING COUNT(*) > ...)) statt korreliertem EXISTS; identische Treffermenge auch für Seiten u ausserhalb der Vergleichsmenge d (dann genügt 1 Treffer in d, sonst 2), NULL-Behandlung wie bisher, weiter live; Moduldoku nachführen. Die vier Duplicate-Filter (title_1, meta_desc_1, h1_1, h2_1; duplicates.rs duplicate_predicate) sind seit bf521c1 bereits unkorreliert und bleiben. (2) K-83 os-store: per EXPLAIN QUERY PLAN aller Filter aller Tabs (tabs::all()) auf einer Datei ohne die fünf Indizes belegen, dass kein Leser sie braucht; dann ab url_index::DROP_FROM_URLS kein Aufbau im Endbatch (writer.rs completes_crawl) und kein Nachziehen in link_index::ensure_if_idle; Prefetch nur, wenn etwas aufzubauen ist; kleine Crawls behalten die Indizes; url_index::ensure bleibt öffentlich. (3) K-84 links_target-Aufbau verkürzen im Crawl: PRAGMA threads bis 4, Cache/Sortierpuffer des Aufbaus im RSS-Budget (PERF-003 < 500 MB mit >= 10 MB Reserve), Ablage der Sortierläufe, sequenzielles Lesen; zulässig auch Aufbau ausserhalb der Datentransaktion des letzten Batches, aber vor Completed (Stillstand <= 30 s K-73, K-49, CRAWL-125). NICHT zulässig: Aufbau hinter das Crawl-Ende, in den Analyse-Hook oder auf das erste Öffnen verschieben. (4) os-loadtest: Metriken crawler_end_batch_s (neuer diag-Zähler für den Schreibaufruf mit Completed, inkl. Indexaufbau und Commit) und crawler_tail_s (Crawl-Dauer minus Zeit bis zur letzten abgerufenen URL) in allen Szenarien; in perf-001 ab 1 000 000 Seiten Eintrag 'K-80: Endbatch <x> s > 60 s' in crawler_violations. MESSREGEL ENTWICKLUNG: cargo build|clippy|test NIE unter bench.lock; nur Messblöcke unter `lockf -t 7200 /Users/dominikwojcik/Projects/openspider-wt/bench.lock <befehl>`, davor `scripts/bench/wait_quiet.sh 8 10` (Exit 1 nach 10 min: trotzdem starten, Load notieren), caffeinate -dimsu; A/B-Kurzprobe `--pages 1000000` (Zwischenstände `--pages 500000`), Reihenfolge A,B,B,A, Load je Lauf; absolute Werte gelten nicht für A4. ZIEL AUF DEM BRANCH (A/B 1 Mio.): Endbatch <= 45 s in beiden B-Läufen; crawler_violations leer in beiden B-Läufen (inkl. K-80); Mittel nicht unter A, Spitzen-RSS <= A + 10 MB, Stillstand <= 10 s; Kaltprobe links_target <= 35 s. ABSCHLUSSPROBE: perf-003 --size large (RSS < 490 MB, queue_empty) und perf-005 --size large --kills 10 grün (K-49). Verfehlt: nicht abgeben, Befund mit Diagnosewerten an den Planer (keine Regeländerung). TESTS: Gleichheit alt/neu Exact Duplicates (zwei 2xx gleicher Hash, Nicht-2xx-HTML mit Hash einer 2xx-Seite, Einzelseite, only_indexable an/aus); EXPLAIN QUERY PLAN der fünf Duplicate-Filter ohne korrelierte Unterabfrage über urls; grosse Datei (Schwelle per Test-Hook): nach Completed fehlen die fünf Indizes, links_target steht, ensure_if_idle baut die fünf nicht; kleine Datei: alle stehen; os-loadtest Einheitstest K-80; Benchmark-Ignore `#[ignore = \"Benchmark (N27): ...\"]` fünf Duplicate-Filter auf 1 Mio. Zeilen ohne Indizes (nur Bericht). Neue Tests > 1 s nur als Benchmark-Ignore (K-81). DoD: cargo build|clippy|test --workspace --exclude openspider-desktop --locked grün, os-parity run --all Exit 0, Goldens unverändert; docs/ARCHITECTURE.md (Inventur der Leser, Endbatch) nachgeführt; Bericht docs/plan/M1-acceptance/loadtest/probe-n27/README.md (A/B-Tabelle, Endbatch-Bestandteile, Load je Lauf, Kaltprobe). Worktree/Target nach E1/E2. Commit-Präfixe store:/engine:/analyze:/loadtest:. Merge vor Start von M2-F02 (Orchestrator)."
+  },
+  {
+    "id": "M1-N28",
+    "kind": "package",
+    "model": "sonnet",
+    "title": "Nachweis A4 nach M1-N27 auf ruhiger Maschine: perf-001 large zweimal passed mit leerem crawler_violations und Endbatch <= 60 s (Ziel 45), perf-003/005 large, CRAWL-124 bei 1 Mio., alle Benchmark-Ignores (CRAWL-126/127, OUT-001), lokale Gegenprobe; M1-status.json byte-gleich, checklist.md auf main-Stand",
+    "wave": "7f",
+    "spec_ids": [
+      "PERF-001",
+      "PERF-003",
+      "PERF-005"
+    ],
+    "extra_spec_ids": [
+      "PERF-002",
+      "CRAWL-124",
+      "CRAWL-126",
+      "CRAWL-127",
+      "OUT-001"
+    ],
+    "owns": [
+      "docs/plan/M1-acceptance/** (ohne probe-*/)",
+      "docs/plan/M1-status.json",
+      "scripts/bench/run_acceptance.sh",
+      "scripts/bench/run_ignored_benchmarks.sh",
+      "scripts/gate/** (nur Aufrufhilfen)"
+    ],
+    "depends_on": [
+      "M1-N27"
+    ],
+    "size": "M",
+    "prompt_notes": "Entscheidung Opus-Planer 16.10.2026 (Welle 7f, K-83/K-84; Text in docs/plan/M1.md Welle 7f). KEINE Codeänderung an crates/** oder Tests, nichts an .github/workflows/** (CI-Läufe nur lesen, Artefakte laden, bei Bedarf workflow_dispatch). Ein Verstoss ist ein Nachbesserungsauftrag (Spec-ID, Datei/Crate, Messwert, Befehl). STARTBEDINGUNGEN (Orchestrator prüft): `m1: Merge m1-n27 (Welle 7e)` auf origin/main und ein grüner main-Lauf darauf (alle Jobs); kein anderer M1-Worktree; Orchestrator hält Builds/Tests/Läufe der M2-Worktrees während der Messblöcke an; >= 20 GB frei. Release-Build einmal vor den Blöcken (`cargo build --release --locked -p os-loadtest` und `-p os-engine --example crawl_child`). MESSREGEL ABNAHME: vor jedem Block `scripts/bench/wait_quiet.sh 2 120`, Block unter caffeinate -dimsu (scripts/bench/run_acceptance.sh), Load beim Start und Proben im Lauf je Block im Bericht, Arbeitsordner ausserhalb des Repos, Crawl-Dateien nach jedem Lauf löschen; während der Blöcke nichts bauen oder testen; Load 120 min >= 2: Block nicht werten, später wiederholen. BLÖCKE (je Block Zwischencommit `acceptance: ...` mit Push): B1/B2 `os-loadtest run --scenario perf-001 --size large --work-dir <ordner> --out docs/plan/M1-acceptance/loadtest/report-perf-001-large-run<1|2>.json`: je passed=true, crawler_violations leer (inkl. K-80), Endbatch (crawler_end_batch_s) <= 60 s, Ziel 45 s; zehn Abschnitte, crawler_tail_s, Endbatch-Bestandteile, Commit-Verlauf je 100 Batches berichten. B3 perf-003 large (< 500 MB, queue_empty, Stillstand <= 30 s). B4 perf-005 large --kills 10 (K-49 wie N26). B5 CRAWL-124-Profilvergleich bei 1 Mio. (alle drei Profile wie N21, n21-report-crawl-124-*). B6 `scripts/bench/run_ignored_benchmarks.sh <ordner>` mit allen Benchmark-Ignores laut `grep -rn 'ignore = \"Benchmark' crates --include='*.rs'` (ohne crates/os-parity/tests/data), Liste im Skript um die N27-Dateien ergänzen; darin CRAWL-126, CRAWL-127, OUT-001. LOKALE GEGENPROBE danach (scripts/gate/*, weil N27 os-analyze berührt): Workspace-Tests in frischem CARGO_TARGET_DIR ohne RUSTC_WRAPPER, os-parity run --all Exit 0 und coverage --strict, CLI-E2E, MCP-E2E. BERICHTE: loadtest/README.md neu (N26-Dateien per git mv als n26-*), benchmarks/README.md neu (N21 als Vergleichsspalte); docs/plan/M1-status.json BYTE-GLEICH aus dem Artefakt spec-coverage des main-Laufs auf dem Abnahme-Commit (origin/main beim Start von N28; gh run download, Nachweis per cmp im Bericht); checklist.md auf main-Stand: Kopf, Kurzfassung, A1 (main-Läufe nach N27, K-81), A2/A9, A4, Gate-Weg (Fable-Gate 87/100 -> N27 -> N28 -> Fable-Gate), lokale Gegenprobe, offene Punkte. Commit-Präfix acceptance:. Danach erneutes Fable-Gate M1."
   }
 ]
