@@ -76,7 +76,14 @@ jobs:
       - name: Clippy
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
 
+      # A1 / K-81: die Grenze von 15 min gilt der reinen Testausführung. Kompilieren steht deshalb in einem eigenen Schritt
+      # (Dauer hängt am Cache-Treffer und an der Runner-Hardware; Obergrenze ist das Job-Timeout).
+      - name: Rust tests (build)
+        run: cargo test --workspace --locked --no-run
+
       - name: Rust tests
+        # Erzwingt A1 (< 15 min je Plattform, Ziel < 12 min); alle Workspace-Tests einschließlich Doctests.
+        timeout-minutes: 15
         run: cargo test --workspace --locked
 
       - name: Tauri build check (debug, no bundle)
