@@ -18,10 +18,10 @@ Zuständige Crates (siehe `docs/ARCHITECTURE.md`): `os-export` (Formate, Bulk-Ex
 | [7 Geplante Crawls](#7-geplante-crawls-scheduling) | OUT-160 – OUT-171 | Aufgaben, Intervalle, OS-Integration, Exporte, Historie, Benachrichtigungen, Import/Export |
 | [8 Kommandozeile / Headless](#8-kommandozeile--headless) | OUT-180 – OUT-209 | alle Optionen, Exit-Codes, Fehlerverhalten |
 | [9 Looker-Studio-Export](#9-looker-studio-export-custom-crawl-overview) | OUT-210 – OUT-214 | Zeitreihen-Zeile je Crawl, Metrikkatalog, Segmente |
-| [10 Konfigurationsdateien & Crawl-Dateien](#10-konfigurationsdateien--crawl-dateien) | OUT-220 – OUT-232 | Profile, Standardkonfiguration, Auth-Profile, Einstellungen, Crawl-Verwaltung, Aufbewahrung |
+| [10 Konfigurationsdateien & Crawl-Dateien](#10-konfigurationsdateien--crawl-dateien) | OUT-220 – OUT-234 | Profile, Standardkonfiguration, Auth-Profile, Einstellungen, Crawl-Verwaltung, Aufbewahrung, Manifest und Leseschnittstelle der Crawl-Datei |
 | [11 Logging & Diagnose](#11-logging--diagnose) | OUT-240 – OUT-245 | Logdateien, Level, Rotation, Log-Paket, Nutzungsstatistik |
 | [12 Update-Mechanismus](#12-update-mechanismus) | OUT-250 – OUT-255 | Prüfen, Herunterladen, Signatur, Abschalten |
-| [13 Plattformanforderungen](#13-plattformanforderungen) | OUT-260 – OUT-272 | macOS arm64/x64, Windows x64, Installer, Signatur, Pfade, Ressourcen, Zertifikate |
+| [13 Plattformanforderungen](#13-plattformanforderungen) | OUT-260 – OUT-273 | macOS arm64/x64, Windows x64, Installer, Signatur, Pfade, Ressourcen, Zertifikate, Linux-Serverbetrieb (Kern und CLI) |
 | [14 Benachrichtigungen & Automatisierungs-Schnittstellen](#14-benachrichtigungen--automatisierungs-schnittstellen) | OUT-280 – OUT-285 | E-Mail-Konten, Abschlussmail, Anhänge, Desktop-Benachrichtigung, MCP-Server |
 
 Prioritäten: **P0** = MVP-Kern, **P1** = für Parität nötig, **P2** = später/Nische.
@@ -2201,6 +2201,63 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - [ ] Öffnen eines Crawls bei laufendem Crawl fragt, ob der aktuelle pausiert werden soll.
 - **Testfixture:** manueller Test je OS.
 
+### OUT-233 Manifest der Crawl-Datei
+- **Priorität:** P1
+- **Beschreibung:** **(OS-Festlegung,** Austausch mit fremden Lesern wie Skripten, BI-Werkzeugen und der Cloud-Variante; Grundlage `docs/plan/autonomo-abgleich.md` 5.2) Jede Crawl-Datei (`*.ospider`, OUT-230) beschreibt sich selbst über ein Manifest. Ein Leser erkennt daran ohne Kenntnis interner Tabellen, welches Programm die Datei geschrieben hat, wie weit der Crawl gekommen ist, mit welcher Konfiguration und welche Version der Leseschnittstelle (OUT-234) gilt. Das Manifest ist Teil der Leseschnittstelle und wird als Sicht `q_manifest(key TEXT, value TEXT)` bereitgestellt, eine Zeile je Schlüssel. Jeder Schlüssel der Tabelle ist immer vorhanden; ein unbekannter oder nicht zutreffender Wert ist `NULL`. Neue Schlüssel kommen nur additiv hinzu.
+- **Eingaben/Konfiguration:** keine; die Werte stammen aus den Crawl-Metadaten, der eingebetteten Konfiguration und den Zählern der Datei.
+- **Ausgabe:** Schlüssel des Manifests, Version 1:
+
+  | Schlüssel | Wert |
+  |---|---|
+  | `format` | immer `ospider` |
+  | `manifest_version` | `1` |
+  | `read_api_version` | Hauptversion der Leseschnittstelle (OUT-234), zunächst `1` |
+  | `schema_version` | interne Schemaversion (`user_version`), nur informativ; Leser werten sie nicht aus |
+  | `openspider_version` | Version des Programms, das die Datei angelegt hat (SemVer, z. B. `0.2.0`) |
+  | `last_writer_version` | Version des Programms, das zuletzt geschrieben hat |
+  | `writer_kind` | `app`, `cli` oder `mcp-stdio` (Prozess, der den Crawl führt bzw. zuletzt geführt hat) |
+  | `crawl_id`, `name`, `project` | Kennung, Name und Projekt laut Crawl-Verwaltung (OUT-228) |
+  | `mode` | `spider` oder `list` |
+  | `start_url` | Start-URL im Spider-Modus, sonst `NULL` |
+  | `list_source` | Quelle im Listenmodus (Dateiname bzw. `paste`), sonst `NULL` |
+  | `started_at`, `ended_at` | ISO 8601 mit Zeitzonenoffset; `ended_at` ist `NULL`, solange der Crawl läuft oder pausiert |
+  | `state` | Crawl-Zustand wie OUT-228: `Running`, `Paused`, `Completed`, `Incomplete`, `Failed` |
+  | `end_reason` | `queue_empty`, `limit_reached`, `stopped` oder `NULL` |
+  | `completeness` | abgeleitete Vollständigkeit, Regel unten |
+  | `user_agent` | wirksamer User-Agent-String des Crawls |
+  | `config_sha256` | SHA-256 (hex, Kleinbuchstaben) der eingebetteten `.osconfig` (`q_config.osconfig`) |
+  | `urls_total`, `urls_crawled` | Zeilen in `q_urls` bzw. davon abgerufene URLs |
+  | `analysis_state` | Zustand der Crawl-Analyse (CRAWL-141): `done`, `stale`, `pending` oder `off` |
+
+  Regel `completeness`: `Completed` mit `queue_empty` → `complete`; `Completed` mit `limit_reached` → `limited`; Ende mit `stopped` → `stopped`; `Paused` → `paused`; `Running` mit aktuellem Heartbeat → `running`; `Running` ohne aktuellen Heartbeat (Absturz, Regel der Crawl-Verwaltung OUT-228) und `Incomplete` → `interrupted`; `Failed` → `failed`.
+- **Akzeptanzkriterien:**
+  - [ ] Für einen abgeschlossenen Crawl von `out-basic-site` liefert `SELECT key, value FROM q_manifest ORDER BY key` genau die Schlüssel der Tabelle mit den erwarteten Werten (Golden nach Normalisierung von Zeiten, IDs und Versionen).
+  - [ ] Jede Zeile der Regel `completeness` ist durch einen Test belegt (abgeschlossen, Limit erreicht, gestoppt, pausiert, laufend, verwaister Crawl ohne Heartbeat, fehlgeschlagen).
+  - [ ] `config_sha256` stimmt mit dem SHA-256 der über „Konfiguration aus Crawl übernehmen“ (OUT-230) extrahierten `.osconfig` überein.
+  - [ ] `user_agent` entspricht dem User-Agent, den `os-testsite` im Request-Log für die Start-URL protokolliert.
+  - [ ] Eine aus Schema v1 oder v2 migrierte Datei hat ein vollständiges Manifest; Werte, die die alte Datei nicht kennt (z. B. `openspider_version`), sind `NULL`.
+  - [ ] Das Manifest enthält keine Geheimnisse (Volltextsuche wie OUT-230 → 0 Treffer).
+- **Testfixture:** `out-basic-site`; pausierter Crawl aus `out-queue`; M1-Dateien (Schema v1/v2) aus `tests/fixtures/crawl-files`.
+
+### OUT-234 Stabile Leseschnittstelle der Crawl-Datei (`q_`-Sichten)
+- **Priorität:** P1
+- **Beschreibung:** **(OS-Festlegung)** Fremde Leser greifen auf eine Crawl-Datei nur über dokumentierte, nur-lesende Sichten mit Präfix `q_` zu, nie auf interne Tabellen. Interne Tabellen und Migrationen dürfen sich ändern; die Sichten bleiben innerhalb einer Hauptversion (`read_api_version`, OUT-233) stabil. Dieser Eintrag ist führend für die Grundsichten; AI-100 (M4) ergänzt weitere `q_`-Sichten und Spalten nach denselben Regeln, das MCP-Werkzeug `sql_query` (AGENT-014) sieht die Sichten wie jede andere Abfrage.
+  - **Sichten, Version 1:** `q_manifest` (OUT-233); `q_config(osconfig, updated_at)` – eingebettete Konfiguration ohne Geheimnisse; `q_urls` – eine Zeile je URL, die in den Tabellen erscheint (intern und extern); `q_links` – eine Zeile je Link-Instanz (Hyperlinks und Ressourcen-Referenzen); `q_sitemap_urls` – eine Zeile je Eintrag einer gelesenen XML-Sitemap; `q_columns(view, column, type, description)` – Selbstbeschreibung aller `q_`-Sichten.
+  - **`q_urls`, Pflichtspalten:** `url_id` (Schlüssel, stabil innerhalb der Datei, nicht über Crawls hinweg), `address`, `is_internal`, `crawled` (1 = abgerufen), `content_type`, `status_code`, `status`, `indexability`, `indexability_status`, `title_1`, `meta_description_1`, `h1_1`, `h2_1`, `canonical_link_element_1`, `word_count`, `size_bytes`, `transferred_bytes`, `response_time`, `crawl_depth`, `folder_depth`, `inlinks`, `unique_inlinks`, `outlinks`, `unique_outlinks`, `external_outlinks`, `redirect_url`, `redirect_type`, `http_version`, `hash`, `last_modified`, `crawl_timestamp`.
+  - **`q_links`, Pflichtspalten:** `source_url_id`, `target_url_id` (`NULL`, wenn das Ziel keine URL der Datei ist), `source_address`, `target_address`, `type`, `anchor`, `alt_text`, `follow`, `rel`, `target`, `path_type`, `link_path`, `link_position`, `link_origin`, `target_status_code`.
+  - **`q_sitemap_urls`, Pflichtspalten:** `sitemap_url`, `url_id`, `address`, `lastmod`.
+  - **Benennung und Werte:** Spaltennamen sind snake_case-Ableitungen der kanonischen Spaltennamen (Kleinbuchstaben, Einheiten als Suffix: `Size (bytes)` → `size_bytes`). Werte entsprechen dem CSV-Export derselben Datei: `q_urls` dem Export `Internal:All` bzw. `External:All`, `q_links` dem Export `All Inlinks` (OUT-031), jeweils mit denselben Einheiten (z. B. `response_time` in Sekunden) und Aufzählungswerten; Zahlen sind `INTEGER`/`REAL`, Wahrheitswerte `0`/`1`, Zeitpunkte ISO 8601 mit Offset, fehlende Werte `NULL`.
+  - **Stabilität:** Innerhalb einer Hauptversion sind nur additive Änderungen erlaubt (neue Sichten, neue Spalten am Ende); Bedeutung, Typ und Einheit bestehender Spalten ändern sich nicht. Eine inkompatible Änderung erhöht `read_api_version` und steht in den Release-Notes. Ein Leser prüft `format` und `read_api_version` und bricht bei unbekannter Hauptversion mit einer klaren Meldung ab.
+  - **Zugriff:** Die Sichten sind in der Datei gespeichert und brauchen weder OpenSpider-Code noch eigene Kollationen oder Funktionen; jede Abfrage einschließlich `WHERE` und `ORDER BY` läuft mit Standard-SQLite. Abgeschlossene Dateien lassen sich mit `file:<pfad>?mode=ro` öffnen; liegt die Datei in einem schreibgeschützten Verzeichnis, öffnet der Leser sie mit `immutable=1`. Während eines laufenden Crawls liest ein Leser einen konsistenten WAL-Schnappschuss; dafür braucht er nach den SQLite-Regeln Schreibrecht im Verzeichnis der Datei (für `-shm`).
+- **Akzeptanzkriterien:**
+  - [ ] Jede Pflichtspalte der drei Datensichten ist vorhanden und in `q_columns` mit Typ und nicht leerer Beschreibung geführt; `q_columns` beschreibt jede Spalte jeder `q_`-Sicht (CI-Test, keine Lücken).
+  - [ ] Für `out-basic-site` stimmen `q_urls` (interne Zeilen) mit dem CSV-Export `Internal:All` und `q_links` mit `All Inlinks` derselben Datei in allen Pflichtspalten überein (Abgleich nach kanonischem Spaltennamen, gleiche Zeilenmenge).
+  - [ ] Ein Golden aller `q_`-Sichten für `out-basic-site` ist für eine neu erzeugte Datei und für eine aus Schema v2 migrierte Datei identisch (Migrationen brechen die Leseschnittstelle nicht).
+  - [ ] Ein Leser ohne OpenSpider-Code (Python `sqlite3`, Verbindung `mode=ro`) liest alle `q_`-Sichten einer abgeschlossenen Datei, filtert und sortiert auf jeder Textspalte ohne Fehler; derselbe Leser liest eine Datei während eines laufenden Crawls ohne Sperrfehler für den Crawl.
+  - [ ] Die Sichten enthalten keine Geheimnisse (Volltextsuche wie OUT-230 über alle Sichtausgaben → 0 Treffer).
+  - [ ] `read_api_version` in `q_manifest` ist `1`; eine Testdatei mit `read_api_version = 99` lässt der mitgelieferte Beispielleser mit der Meldung „unbekannte Version der Leseschnittstelle“ fallen.
+- **Testfixture:** `out-basic-site`; M1-Datei (Schema v2) aus `tests/fixtures/crawl-files`; Beispielleser `scripts/ci/read_api_smoke.py`.
+
 ---
 
 ## 11 Logging & Diagnose
@@ -2380,11 +2437,9 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 
 ### OUT-264 Linux
 - **Priorität:** P2
-- **Beschreibung:** Nicht Zielplattform des Projekts (Zielplattformen: macOS arm64/x64, Windows x64). **Bewusste Paritätslücke:** Die Referenz liefert Linux-Pakete für Ubuntu (`.deb`) und Fedora (`.rpm`) und seit Version 24.0 zusätzlich Arm64-Linux-Pakete (Ubuntu arm64, Fedora aarch64). OpenSpider bietet bis auf Weiteres keine Linux-Pakete und keine Linux-Desktop-App an; diese Lücke wird in der Paritätsmatrix (README/Website) ausdrücklich als „nicht unterstützt“ geführt. Der Kern und das CLI bleiben aber Linux-kompilierbar (x86_64, aarch64), damit Headless-Crawls auf Servern aus dem Quellcode möglich sind. Pakete `.deb`/`.rpm` (x86_64 und arm64) sind Kandidaten für eine spätere Version.
+- **Beschreibung:** Nicht Zielplattform des Projekts (Zielplattformen: macOS arm64/x64, Windows x64). **Bewusste Paritätslücke:** Die Referenz liefert Linux-Pakete für Ubuntu (`.deb`) und Fedora (`.rpm`) und seit Version 24.0 zusätzlich Arm64-Linux-Pakete (Ubuntu arm64, Fedora aarch64). OpenSpider bietet bis auf Weiteres keine Linux-Pakete und keine Linux-Desktop-App an; diese Lücke wird in der Paritätsmatrix (README/Website) ausdrücklich als „nicht unterstützt“ geführt. Kern und CLI unter Linux x86_64 sind seit dem Abgleich mit der Cloud-Variante (16.10.2026) als OUT-273 (P1) geprüft; dieser Eintrag behält aarch64, Pakete und die Desktop-App. Pakete `.deb`/`.rpm` (x86_64 und arm64) sind Kandidaten für eine spätere Version.
 - **Akzeptanzkriterien:**
-  - [ ] `cargo build -p os-cli` gelingt in CI auf `ubuntu-latest` (x86_64) und einem aarch64-Linux-Runner bzw. per Cross-Build (Build-Check, keine Release-Pflicht).
-  - [ ] `openspider --crawl {BASE} --export-tabs "Internal:All"` auf Linux x86_64 liefert denselben Export wie auf macOS (CI-Job, Golden-Vergleich).
-  - [ ] JS-Rendering ohne Display funktioniert mit Chromium headless (kein virtueller Framebuffer nötig).
+  - [ ] `cargo build -p os-cli` gelingt in CI auf einem aarch64-Linux-Runner bzw. per Cross-Build (Build-Check, keine Release-Pflicht). x86_64 einschließlich Golden-Vergleich und headless Chromium: siehe OUT-273.
   - [ ] Die Paritätsmatrix in der Doku listet Linux-Desktop und Linux-Pakete (x64/arm64) als bewusste Lücke mit Verweis auf diesen Eintrag.
 - **Testfixture:** CI-Build-Job; `out-basic-site`.
 
@@ -2451,6 +2506,19 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - [ ] Doppelklick auf `.ospider` öffnet die App mit dem Crawl (OUT-232).
   - [ ] [P2] Während eines Crawls zeigt das Dock-/Taskleisten-Symbol den Fortschritt (Prozent der bekannten URLs) und entfernt ihn bei Crawl-Ende.
 - **Testfixture:** manueller Test je OS.
+
+### OUT-273 Linux-Serverbetrieb: Kern und CLI (x86_64)
+- **Priorität:** P1
+- **Beschreibung:** **(OS-Festlegung,** Grundlage `docs/plan/autonomo-abgleich.md` 5.4, Etappe E0) OpenSpider läuft als Crawl-Arbeiter auf Linux-Servern: Kern-Crates, das CLI `openspider` und der MCP-Server über STDIO werden unter Linux x86_64 (glibc, `ubuntu-latest`) gebaut und mit der vollständigen Testsuite geprüft. Die Desktop-App (`openspider-desktop`) und Linux-Pakete sind nicht Teil dieses Eintrags (bleiben OUT-264, P2). Linux ist damit eine geprüfte Zusage für Kommandozeile und Kern, keine Zielplattform der App.
+- **Eingaben/Konfiguration:** keine neuen Optionen; Chromium für JS-Rendering über den konfigurierten Pfad bzw. `OPENSPIDER_CHROMIUM` (K2-10 in `docs/plan/M2.md`).
+- **Akzeptanzkriterien:**
+  - [ ] CI-Job `linux-core` auf `ubuntu-latest` bei jedem Push und Pull Request: `cargo fmt --check`, `cargo clippy` mit `-D warnings` und `cargo test` für den Workspace ohne `openspider-desktop`, jeweils mit `--locked`, grün.
+  - [ ] Die CLI-Golden-Tests (`tests/golden/out-cli`, `tests/golden/out-basic-site`) laufen im Job und sind byte-gleich mit den Ergebnissen auf macOS und Windows (Normalisierung nach Abschnitt 0).
+  - [ ] Ein Release-Build von `openspider` (Binärdatei als Job-Artefakt) crawlt `out-basic-site` über `os-testsite` headless und liefert für `--export-tabs "Internal:All"` den Golden-Export.
+  - [ ] Ohne D-Bus-Sitzung und ohne Secret Service starten CLI und MCP-STDIO; Befehle ohne Geheimnisse laufen uneingeschränkt, Befehle mit Geheimnis melden einen klaren Fehler statt zu hängen.
+  - [ ] JS-Rendering (CRAWL-078 ff.) läuft im Job headless ohne Display und ohne virtuellen Framebuffer mit dem über `OPENSPIDER_CHROMIUM` angegebenen Chromium; nachgewiesen durch die Rendering-Tests, die im Job unverändert mitlaufen.
+  - [ ] Unter Linux übersprungene Tests stehen mit Grund in einer Liste im Repo; Ziel der Liste ist leer.
+- **Testfixture:** CI-Job `linux-core`; `out-basic-site`.
 
 ---
 
@@ -2590,3 +2658,4 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - OUT-223 führend für Auth-Profile (`.osauth`, XChaCha20-Poly1305, P1), CRAWL-121 verweist hierher.
   - OUT-285: Standardfreigabe der MCP-Werkzeuge nach AGENT-003 (nur lesend); STDIO-Kern als AGENT-001 (P0) vorgezogen.
   - Stubs OUT-144, OUT-231, OUT-271 auf das strikte Format normiert.
+- Nachtrag Abgleich Cloud-Variante, Etappe E0 (16.10.2026, Planer; `docs/plan/autonomo-abgleich.md` 5.2/5.4): neu OUT-233 (Manifest der Crawl-Datei), OUT-234 (stabile Leseschnittstelle, `q_`-Sichten, führend für die Grundsichten von AI-100) und OUT-273 (Linux-Serverbetrieb von Kern und CLI, P1). OUT-264 behält aarch64, Pakete und Desktop (P2). Befund-Zuordnungstabelle, gemeinsame Datendateien (Bot-Katalog, Lastprofile) und ein Secret-Store für Server sind noch nicht spezifiziert.
