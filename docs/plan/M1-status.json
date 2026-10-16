@@ -64,6 +64,128 @@
         }
       ]
     },
+    "PERF-002": {
+      "packages": [
+        "M1-P32",
+        "M1-N19",
+        "M1-N21"
+      ],
+      "status": "implemented",
+      "tests": [
+        {
+          "file": "crates/os-loadtest/src/throughput.rs",
+          "result": "ok",
+          "test": "tests::a_steady_crawl_has_ten_equal_segments_at_the_mean"
+        },
+        {
+          "file": "crates/os-loadtest/src/throughput.rs",
+          "result": "ok",
+          "test": "tests::a_collapse_in_the_last_segment_is_a_violation_naming_the_section"
+        },
+        {
+          "file": "crates/os-loadtest/src/throughput.rs",
+          "result": "ok",
+          "test": "tests::a_slow_mean_fails_even_when_the_sections_are_even"
+        },
+        {
+          "file": "crates/os-loadtest/src/throughput.rs",
+          "result": "ok",
+          "test": "tests::smaller_runs_are_reported_but_not_judged"
+        },
+        {
+          "file": "crates/os-loadtest/src/throughput.rs",
+          "result": "ok",
+          "test": "tests::boundaries_fall_between_two_progress_lines_by_linear_interpolation"
+        },
+        {
+          "file": "crates/os-loadtest/src/throughput.rs",
+          "result": "ok",
+          "test": "tests::without_urls_or_samples_there_are_no_segments"
+        },
+        {
+          "file": "crates/os-loadtest/tests/engine_adapter.rs",
+          "result": "ok",
+          "test": "the_throughput_sections_are_reported_but_small_runs_are_not_judged"
+        },
+        {
+          "file": "crates/os-store/tests/bench_writer.rs",
+          "ignore_reason": "Benchmark (P32): 1 Mio. Seiten x 30 gleichverteilte Linkziele, zehn Abschnitte (OS_BENCH_PAGES, OS_BENCH_OUT, OS_BENCH_DIR, OS_BENCH_AUTOCHECKPOINT)",
+          "result": "ignored",
+          "test": "writer_1m_uniform_segments"
+        },
+        {
+          "file": "crates/os-store/tests/bench_writer.rs",
+          "ignore_reason": "Benchmark (P32): links_page In ohne Index bei 250 000 Seiten x 30 Links, Hochrechnung 1 Mio. (OS_BENCH_PAGES, OS_BENCH_DIR)",
+          "result": "ignored",
+          "test": "inlinks_without_index_250k_pages"
+        },
+        {
+          "file": "crates/os-store/tests/crawl_files.rs",
+          "result": "ok",
+          "test": "a_schema_v1_file_migrates_to_v2_with_identical_counters"
+        },
+        {
+          "file": "crates/os-store/tests/link_index.rs",
+          "result": "ok",
+          "test": "a_new_file_has_the_index_until_a_writer_opens_it"
+        },
+        {
+          "file": "crates/os-store/tests/link_index.rs",
+          "result": "ok",
+          "test": "the_index_is_absent_while_running_and_after_a_pause"
+        },
+        {
+          "file": "crates/os-store/tests/link_index.rs",
+          "result": "ok",
+          "test": "the_regular_end_builds_the_index_in_the_last_batch"
+        },
+        {
+          "file": "crates/os-store/tests/link_index.rs",
+          "result": "ok",
+          "test": "only_the_last_state_entry_of_a_merged_batch_counts"
+        },
+        {
+          "file": "crates/os-store/tests/link_index.rs",
+          "result": "ok",
+          "test": "reopening_for_writing_removes_the_index_again"
+        },
+        {
+          "file": "crates/os-store/tests/link_index.rs",
+          "result": "ok",
+          "test": "ensure_builds_the_index_on_demand_and_only_for_idle_files"
+        },
+        {
+          "file": "crates/os-store/tests/link_index.rs",
+          "result": "ok",
+          "test": "inlinks_are_the_same_with_and_without_the_index"
+        },
+        {
+          "file": "crates/os-store/tests/schema_create.rs",
+          "result": "ok",
+          "test": "url_counters_is_a_narrow_table_with_one_row_per_url"
+        },
+        {
+          "file": "crates/os-store/tests/writer_counters.rs",
+          "result": "ok",
+          "test": "html_2xx_sources_count_distinct_internal_html_pages_with_status_2xx"
+        },
+        {
+          "file": "crates/os-store/tests/writer_counters.rs",
+          "result": "ok",
+          "test": "image_link_inlinks_count_image_typed_link_instances_from_internal_sources"
+        },
+        {
+          "file": "crates/os-store/tests/writer_counters.rs",
+          "result": "ok",
+          "test": "counters_are_exact_with_and_without_the_link_index"
+        },
+        {
+          "file": "crates/os-store/tests/writer_counters.rs",
+          "result": "ok",
+          "test": "the_writer_creates_the_counter_rows_itself_and_restores_the_insert_trigger_at_rest"
+        }
+      ]
+    },
     "TECH-008": {
       "packages": [
         "M1-P00a"
@@ -175,7 +297,7 @@
         },
         {
           "file": "crates/os-mcp/src/error.rs",
-          "result": "ok",
+          "result": "no_result",
           "test": "tests::usage_errors_exit_with_two_everything_else_with_one"
         },
         {
@@ -1138,7 +1260,8 @@
     },
     "CRAWL-005": {
       "packages": [
-        "M1-P15"
+        "M1-P15",
+        "M1-P33"
       ],
       "status": "implemented",
       "tests": [
@@ -1156,6 +1279,36 @@
           "file": "crates/os-engine/src/frontier.rs",
           "result": "ok",
           "test": "tests::a_sitemap_only_url_found_by_link_gets_depth_and_priority_zero"
+        },
+        {
+          "file": "crates/os-engine/src/queue.rs",
+          "result": "ok",
+          "test": "tests::a_small_window_pops_in_the_same_order_as_an_unbounded_queue"
+        },
+        {
+          "file": "crates/os-engine/src/queue.rs",
+          "result": "ok",
+          "test": "tests::the_ram_part_stays_near_the_window_and_the_rest_waits_in_the_file"
+        },
+        {
+          "file": "crates/os-engine/src/queue.rs",
+          "result": "ok",
+          "test": "tests::a_shorter_path_moves_a_spilled_entry_forward"
+        },
+        {
+          "file": "crates/os-engine/src/queue.rs",
+          "result": "ok",
+          "test": "tests::an_improvement_during_a_job_is_not_overwritten_by_the_stale_block"
+        },
+        {
+          "file": "crates/os-engine/src/queue.rs",
+          "result": "ok",
+          "test": "tests::non_spillable_entries_stay_in_ram_and_keep_their_order"
+        },
+        {
+          "file": "crates/os-engine/src/queue.rs",
+          "result": "ok",
+          "test": "tests::sitemap_only_entries_come_last_and_survive_spilling"
         },
         {
           "file": "crates/os-engine/src/worker.rs",
@@ -1186,6 +1339,16 @@
           "file": "crates/os-engine/tests/core_sitemap.rs",
           "result": "ok",
           "test": "urls_found_only_in_a_sitemap_have_no_depth_and_are_crawled_after_all_linked_urls"
+        },
+        {
+          "file": "crates/os-engine/tests/perf_queue_window.rs",
+          "result": "ok",
+          "test": "a_small_window_changes_neither_the_request_order_nor_the_result_and_bounds_the_ram"
+        },
+        {
+          "file": "crates/os-engine/tests/perf_queue_window.rs",
+          "result": "ok",
+          "test": "a_resumed_large_queue_runs_in_file_order_with_purposes_and_redirect_targets"
         }
       ]
     },
@@ -3792,7 +3955,8 @@
     "CRAWL-124": {
       "packages": [
         "M1-P07",
-        "M1-N14"
+        "M1-N14",
+        "M1-N21"
       ],
       "status": "implemented",
       "tests": [
@@ -3876,7 +4040,8 @@
     },
     "CRAWL-125": {
       "packages": [
-        "M1-P19"
+        "M1-P19",
+        "M1-P32"
       ],
       "status": "implemented",
       "tests": [
@@ -3889,6 +4054,31 @@
           "file": "crates/os-engine/tests/lifecycle_pause.rs",
           "result": "ok",
           "test": "resuming_after_a_restart_equals_the_uninterrupted_crawl_without_repeating_a_request"
+        },
+        {
+          "file": "crates/os-store/tests/bg_checkpoint.rs",
+          "result": "ok",
+          "test": "the_writer_connection_has_no_automatic_checkpoint_and_a_thread_starts_with_the_first_write"
+        },
+        {
+          "file": "crates/os-store/tests/bg_checkpoint.rs",
+          "result": "ok",
+          "test": "pause_checkpoint_stops_the_thread_and_the_next_write_restarts_it"
+        },
+        {
+          "file": "crates/os-store/tests/bg_checkpoint.rs",
+          "result": "ok",
+          "test": "an_externally_set_threshold_is_left_alone_and_no_thread_runs"
+        },
+        {
+          "file": "crates/os-store/tests/bg_checkpoint.rs",
+          "result": "ok",
+          "test": "the_trigger_starts_at_256_mib_and_grows_with_the_file_within_its_bounds"
+        },
+        {
+          "file": "crates/os-store/tests/bg_checkpoint.rs",
+          "result": "ok",
+          "test": "by_default_sqlite_checkpoints_in_the_commit_and_no_thread_runs"
         },
         {
           "file": "crates/os-store/tests/schema_open.rs",
@@ -3915,7 +4105,9 @@
     "CRAWL-126": {
       "packages": [
         "M1-P19",
-        "M1-N14"
+        "M1-N14",
+        "M1-P33",
+        "M1-N21"
       ],
       "status": "implemented",
       "tests": [
@@ -3984,13 +4176,34 @@
           "ignore_reason": "Benchmark (P28): Pausieren mit 1 Mio. Warteschlangeneinträgen in unter 3 s (Wanduhr, Referenzmaschine)",
           "result": "ignored",
           "test": "pausing_with_a_million_queue_entries_takes_under_three_seconds"
+        },
+        {
+          "file": "crates/os-engine/tests/perf_queue_window.rs",
+          "result": "ok",
+          "test": "resuming_loads_only_the_window_and_needs_no_link_target_index"
+        },
+        {
+          "file": "crates/os-engine/tests/perf_queue_window.rs",
+          "result": "ok",
+          "test": "queued_resources_are_still_fetched_as_resources_after_a_resume_without_the_index"
+        },
+        {
+          "file": "crates/os-engine/tests/perf_queue_window.rs",
+          "result": "ok",
+          "test": "a_resumed_large_queue_runs_in_file_order_with_purposes_and_redirect_targets"
+        },
+        {
+          "file": "crates/os-engine/tests/perf_seen_collision.rs",
+          "result": "ok",
+          "test": "a_resumed_crawl_with_colliding_keys_equals_the_uninterrupted_one"
         }
       ]
     },
     "CRAWL-127": {
       "packages": [
         "M1-P07",
-        "M1-N14"
+        "M1-N14",
+        "M1-N21"
       ],
       "status": "implemented",
       "tests": [
@@ -6992,7 +7205,8 @@
     "OUT-001": {
       "packages": [
         "M1-P16",
-        "M1-N14"
+        "M1-N14",
+        "M1-N21"
       ],
       "status": "implemented",
       "tests": [
@@ -8861,7 +9075,7 @@
         {
           "file": "crates/os-store/tests/crawl_files.rs",
           "result": "ok",
-          "test": "schema_v1_fixture_is_a_valid_crawl_file_with_embedded_config"
+          "test": "schema_v2_fixture_is_a_valid_crawl_file_with_embedded_config"
         },
         {
           "file": "crates/os-store/tests/crawl_files.rs",
@@ -9062,10 +9276,34 @@
     "PERF-001": {
       "packages": [
         "M1-P28",
-        "M1-N14"
+        "M1-N14",
+        "M1-P32",
+        "M1-P33",
+        "M1-N19",
+        "M1-N21"
       ],
       "status": "implemented",
       "tests": [
+        {
+          "file": "crates/os-engine/src/frontier.rs",
+          "result": "ok",
+          "test": "tests::urls_with_a_forced_hash_collision_are_both_discovered_and_fetched"
+        },
+        {
+          "file": "crates/os-engine/src/queue.rs",
+          "result": "ok",
+          "test": "tests::a_random_workload_matches_the_unbounded_queue_for_any_window"
+        },
+        {
+          "file": "crates/os-engine/src/seen.rs",
+          "result": "ok",
+          "test": "tests::entries_are_found_updated_and_counted"
+        },
+        {
+          "file": "crates/os-engine/src/seen.rs",
+          "result": "ok",
+          "test": "tests::a_key_collision_with_another_fingerprint_keeps_both_urls"
+        },
         {
           "file": "crates/os-engine/tests/perf_memory.rs",
           "result": "ok",
@@ -9077,6 +9315,11 @@
           "test": "the_other_profiles_stay_far_below_the_cap"
         },
         {
+          "file": "crates/os-engine/tests/perf_seen_collision.rs",
+          "result": "ok",
+          "test": "urls_with_colliding_keys_are_all_discovered_and_fetched_exactly_once"
+        },
+        {
           "file": "crates/os-loadtest/src/engine.rs",
           "result": "ok",
           "test": "tests::rss_scaling_uses_the_ratio_once_the_cache_is_full"
@@ -9085,6 +9328,11 @@
           "file": "crates/os-loadtest/src/engine.rs",
           "result": "ok",
           "test": "tests::rss_scaling_of_small_runs_may_grow_with_the_cache_but_not_beyond_the_data"
+        },
+        {
+          "file": "crates/os-loadtest/src/engine.rs",
+          "result": "ok",
+          "test": "tests::max_speed_does_not_judge_the_rss_limits_but_the_other_profiles_do"
         },
         {
           "file": "crates/os-loadtest/src/engine.rs",
@@ -9109,17 +9357,37 @@
         {
           "file": "crates/os-loadtest/tests/engine_adapter.rs",
           "result": "ok",
+          "test": "the_max_speed_profile_skips_the_rss_limits_and_keeps_the_cache_limit"
+        },
+        {
+          "file": "crates/os-loadtest/tests/engine_adapter.rs",
+          "result": "ok",
           "test": "a_child_process_reports_its_peak_rss_to_the_parent"
+        },
+        {
+          "file": "crates/os-store/tests/bench_writer.rs",
+          "ignore_reason": "Benchmark (P32): 1 Mio. Seiten x 30 gleichverteilte Linkziele, zehn Abschnitte (OS_BENCH_PAGES, OS_BENCH_OUT, OS_BENCH_DIR, OS_BENCH_AUTOCHECKPOINT)",
+          "result": "ignored",
+          "test": "writer_1m_uniform_segments"
         }
       ]
     },
     "PERF-003": {
       "packages": [
         "M1-P28",
-        "M1-N14"
+        "M1-N14",
+        "M1-P32",
+        "M1-P33",
+        "M1-N19",
+        "M1-N21"
       ],
       "status": "implemented",
       "tests": [
+        {
+          "file": "crates/os-engine/src/queue.rs",
+          "result": "ok",
+          "test": "tests::the_ram_part_stays_near_the_window_and_the_rest_waits_in_the_file"
+        },
         {
           "file": "crates/os-engine/src/writer_thread.rs",
           "result": "ok",
@@ -9129,6 +9397,16 @@
           "file": "crates/os-engine/tests/perf_backpressure.rs",
           "result": "ok",
           "test": "a_slow_store_throttles_the_crawl_but_it_continues_loses_nothing_and_ends"
+        },
+        {
+          "file": "crates/os-engine/tests/perf_queue_window.rs",
+          "result": "ok",
+          "test": "a_small_window_changes_neither_the_request_order_nor_the_result_and_bounds_the_ram"
+        },
+        {
+          "file": "crates/os-loadtest/src/engine.rs",
+          "result": "ok",
+          "test": "tests::the_stall_limit_is_the_spec_value_and_applies_with_the_given_label"
         },
         {
           "file": "crates/os-loadtest/src/sink.rs",
@@ -9146,6 +9424,17 @@
           "test": "a_slow_store_keeps_the_crawl_going_under_the_memory_limit"
         },
         {
+          "file": "crates/os-store/tests/bench_writer.rs",
+          "ignore_reason": "Benchmark (P32): 1 Mio. Seiten x 30 gleichverteilte Linkziele, zehn Abschnitte (OS_BENCH_PAGES, OS_BENCH_OUT, OS_BENCH_DIR, OS_BENCH_AUTOCHECKPOINT)",
+          "result": "ignored",
+          "test": "writer_1m_uniform_segments"
+        },
+        {
+          "file": "crates/os-store/tests/bg_checkpoint.rs",
+          "result": "ok",
+          "test": "the_background_checkpoint_runs_without_errors_and_the_writer_never_waits_for_it"
+        },
+        {
           "file": "crates/os-store/tests/schema_sink.rs",
           "result": "ok",
           "test": "sink_can_be_used_as_boxed_trait_object"
@@ -9155,10 +9444,23 @@
     "PERF-005": {
       "packages": [
         "M1-P28",
-        "M1-N14"
+        "M1-N14",
+        "M1-P33",
+        "M1-N19",
+        "M1-N21"
       ],
       "status": "implemented",
       "tests": [
+        {
+          "file": "crates/os-engine/src/queue.rs",
+          "result": "ok",
+          "test": "tests::entries_pushed_while_a_job_runs_are_neither_lost_nor_duplicated"
+        },
+        {
+          "file": "crates/os-engine/src/queue.rs",
+          "result": "ok",
+          "test": "tests::a_sink_that_does_not_write_the_queue_disables_spilling_and_loses_nothing"
+        },
         {
           "file": "crates/os-engine/src/writer_thread.rs",
           "result": "ok",
@@ -9188,6 +9490,21 @@
           "file": "crates/os-engine/src/writer_thread.rs",
           "result": "ok",
           "test": "tests::full_channel_blocks_the_sender_until_the_writer_catches_up"
+        },
+        {
+          "file": "crates/os-engine/tests/perf_queue_window.rs",
+          "result": "ok",
+          "test": "a_small_window_changes_neither_the_request_order_nor_the_result_and_bounds_the_ram"
+        },
+        {
+          "file": "crates/os-loadtest/src/engine.rs",
+          "result": "ok",
+          "test": "tests::repeated_requests_are_counted_per_kill_in_the_order_of_the_kills"
+        },
+        {
+          "file": "crates/os-loadtest/src/engine.rs",
+          "result": "ok",
+          "test": "tests::repeat_stats_report_mean_and_maximum_and_the_check_is_per_kill"
         },
         {
           "file": "crates/os-loadtest/tests/engine_adapter.rs",
