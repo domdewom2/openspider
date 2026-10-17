@@ -181,3 +181,19 @@ Dienst-Stubs (synchron, Rückgabe `()`):
 | M2-O02 | `crates/os-app/src/commands/crawls.rs` | `pub fn start_retention(_app: &crate::App)` |
 | M2-O02 | `crates/os-app/src/commands/crawls.rs` | `pub fn on_settings_changed(_app: &crate::App)` |
 | M2-K03 | `crates/os-app/src/commands/sidebar_ext.rs` | `pub fn on_config_changed( _app: &crate::App, _key: &crate::pool::CrawlKey, _old: &std::sync::Arc<os_model::CrawlConfig>, _new: &std::sync::Arc<os_model::CrawlConfig>, )` |
+
+## Prüfnachweis (17.10.2026, macOS arm64)
+
+- `cargo fmt --all --check`: grün.
+- `cargo clippy --workspace --exclude openspider-desktop --all-targets --locked -- -D warnings`: grün.
+- `cargo clippy -p openspider-desktop --locked -- -D warnings`: grün.
+- `cargo test --workspace --exclude openspider-desktop --locked`: grün, 2.266 bestanden, 39 bestehende Ignores, keine neuen Ignores.
+- `npm ci`, Desktop-Typecheck und Vitest: grün (133 Tests); `check:static` inklusive IPC-Generator und npm-Lizenzen: grün.
+- `cargo deny check licenses bans sources`: grün (temporär installiertes cargo-deny 0.20.2).
+- `python3 -I docs/plan/M2-check.py` und `scripts/check-neutral.sh`: grün.
+
+Umgebungshinweis: Der unveränderte CLI-Test `a_python_reader_reads_a_finished_file_and_rejects_an_unknown_read_api_version` (OUT-234, `crates/os-cli/tests/read_api_export.rs:457`) scheitert mit dem System-Python / SQLite 3.51.0 beim Lesen von `q_manifest` mit „unable to open database file“. Derselbe Test besteht mit dem vorhandenen Homebrew-Python 3.10 / SQLite 3.43.2. Der vollständige grüne Workspace-Lauf verwendet diesen Interpreter als `python3` über einen temporären PATH-Eintrag. Keine Änderung an CLI, Python-Leser oder Tests außerhalb des Paketbesitzes.
+
+Keine eigenen `spec_ids` im Paketmanifest: Die Tests prüfen Infrastruktur für UI-140, UI-143, CRAWL-141, OUT-184, OUT-225, OUT-241, OUT-242 und OUT-267; Fachabnahme bleibt bei den jeweiligen Besitzerpaketen. Ohne F05a ist Schema v3 aktuell; der vorbereitete Migrationstest prüft diesen Fall wie in 3.14.12 vorgesehen.
+
+Kein Push, Merge oder PR; deshalb keine CI-Lauf-ID und kein Windows-Nachweis. Offene fachliche Fragen: keine.
