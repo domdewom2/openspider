@@ -24,4 +24,12 @@ format: ExportFormatDto,
 /**
  * Auch ausgeblendete Spalten exportieren.
  */
-allColumns: boolean, };
+allColumns: boolean, 
+/**
+ * Für die Ausgabe ausgewählte Spalten.
+ */
+columns?: Array<string> | null, 
+/**
+ * URL-Reihenfolge der hochgeladenen Liste beibehalten; Standard true.
+ */
+preserveUploadOrder?: boolean, };

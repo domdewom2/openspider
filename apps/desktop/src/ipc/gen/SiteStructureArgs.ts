@@ -13,4 +13,16 @@ view: SiteStructureView,
 /**
  * Segment.
  */
-segment?: SegmentFilter | null, };
+segment?: SegmentFilter | null, 
+/**
+ * Verzeichnispfad, dessen direkte Kinder nachgeladen werden; leer für die Wurzel.
+ */
+path?: string | null, 
+/**
+ * Anzahl der vor der Ergebnisseite übersprungenen Einträge.
+ */
+offset: number, 
+/**
+ * Maximale Anzahl der zurückgegebenen Einträge.
+ */
+limit: number, };

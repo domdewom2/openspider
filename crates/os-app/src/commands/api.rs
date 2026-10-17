@@ -7,6 +7,7 @@
 stub_commands!(
     "M2-I01",
     [
+        ("api.removeAccount", "ApiAccountArgs", "void", false),
         ("api.list", "void", "ApiSourceInfo[]", false),
         ("api.connect", "ApiConnectArgs", "ApiAccount", true),
         ("api.disconnect", "ApiKindArgs", "void", false),
@@ -24,3 +25,15 @@ stub_commands!(
         ("sidebar.apiStatus", "void", "ApiRow[]", false),
     ]
 );
+
+// STUB(M2-I01)
+pub fn on_startup(_app: &crate::App) {}
+
+// STUB(M2-I01)
+pub fn on_config_changed(
+    _app: &crate::App,
+    _key: &crate::pool::CrawlKey,
+    _old: &std::sync::Arc<os_model::CrawlConfig>,
+    _new: &std::sync::Arc<os_model::CrawlConfig>,
+) {
+}

@@ -20,6 +20,10 @@ pub enum CrawlShow {
     Incomplete,
     /// Nur gesperrte.
     Locked,
+    /// Crawl-Dateien anzeigen.
+    Crawls,
+    /// Vergleichsdateien anzeigen.
+    Comparisons,
 }
 
 /// Sortierung der Crawl-Liste.
@@ -58,6 +62,18 @@ pub struct CrawlListing {
     pub project: Option<String>,
     /// Gesperrt (von der Aufbewahrung ausgenommen).
     pub locked: bool,
+    /// Start-URL des Crawls.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub start_url: Option<String>,
+
+    /// Bisherige Laufzeit in Millisekunden.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub duration_ms: Option<u64>,
+
+    /// Ob der Crawl fortgesetzt werden kann.
+    pub can_resume: bool,
 }
 
 /// Argument von `crawls.rename`.
@@ -79,6 +95,10 @@ pub struct CrawlMoveArgs {
     pub ids: Vec<String>,
     /// Zielprojekt; `null` = ohne Projekt.
     pub project: Option<String>,
+    /// Zielverzeichnis für die Crawl-Datei.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub destination_dir: Option<String>,
 }
 
 /// Argument von `crawls.export`.

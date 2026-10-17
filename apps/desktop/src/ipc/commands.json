@@ -6,6 +6,18 @@
     "longRunning": false
   },
   {
+    "name": "app.requestQuit",
+    "args": "void",
+    "ret": "QuitDecision",
+    "longRunning": false
+  },
+  {
+    "name": "app.confirmQuit",
+    "args": "BoolArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
     "name": "settings.get",
     "args": "void",
     "ret": "AppSettingsDto",
@@ -15,6 +27,18 @@
     "name": "settings.set",
     "args": "SettingsPatch",
     "ret": "AppSettingsDto",
+    "longRunning": false
+  },
+  {
+    "name": "settings.probeCertificates",
+    "args": "CertificateProbeArgs",
+    "ret": "CertificateChainDto",
+    "longRunning": false
+  },
+  {
+    "name": "settings.setProxyPassword",
+    "args": "ProxyPasswordArgs",
+    "ret": "void",
     "longRunning": false
   },
   {
@@ -51,6 +75,12 @@
     "name": "events.setInterval",
     "args": "SetIntervalArgs",
     "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "diag.previewBundle",
+    "args": "void",
+    "ret": "BundlePreview",
     "longRunning": false
   },
   {
@@ -366,12 +396,6 @@
     "longRunning": false
   },
   {
-    "name": "sidebar.segments",
-    "args": "SegmentsViewArgs",
-    "ret": "SegmentRow[]",
-    "longRunning": false
-  },
-  {
     "name": "config.get",
     "args": "void",
     "ret": "CrawlConfigDto",
@@ -405,6 +429,18 @@
     "name": "config.testRules",
     "args": "TestRulesArgs",
     "ret": "RuleTrace",
+    "longRunning": false
+  },
+  {
+    "name": "config.testRobots",
+    "args": "RobotsTestArgs",
+    "ret": "RobotsTestResult",
+    "longRunning": false
+  },
+  {
+    "name": "config.loadRobots",
+    "args": "RobotsLoadArgs",
+    "ret": "string",
     "longRunning": false
   },
   {
@@ -450,6 +486,12 @@
     "longRunning": false
   },
   {
+    "name": "sidebar.segments",
+    "args": "SegmentsViewArgs",
+    "ret": "SegmentRow[]",
+    "longRunning": false
+  },
+  {
     "name": "segment.list",
     "args": "void",
     "ret": "SegmentDef[]",
@@ -484,6 +526,12 @@
     "args": "void",
     "ret": "CountResult",
     "longRunning": true
+  },
+  {
+    "name": "crawls.checkLocation",
+    "args": "PathArgs",
+    "ret": "string[]",
+    "longRunning": false
   },
   {
     "name": "crawls.list",
@@ -549,6 +597,12 @@
     "name": "crawls.copyIds",
     "args": "IdsArgs",
     "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "projects.list",
+    "args": "void",
+    "ret": "ProjectInfo[]",
     "longRunning": false
   },
   {
@@ -620,6 +674,42 @@
   {
     "name": "export.sidebar",
     "args": "ExportPanelArgs",
+    "ret": "FileResult",
+    "longRunning": true
+  },
+  {
+    "name": "export.multi",
+    "args": "ExportMultiArgs",
+    "ret": "ExportBatchResult",
+    "longRunning": true
+  },
+  {
+    "name": "export.presetList",
+    "args": "void",
+    "ret": "ExportPreset[]",
+    "longRunning": false
+  },
+  {
+    "name": "export.presetSave",
+    "args": "ExportPresetArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "export.presetDelete",
+    "args": "ExportPresetArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "export.customSummaryMetrics",
+    "args": "void",
+    "ret": "CustomSummaryMetric[]",
+    "longRunning": false
+  },
+  {
+    "name": "export.customSummary",
+    "args": "CustomSummaryArgs",
     "ret": "FileResult",
     "longRunning": true
   },
@@ -756,6 +846,12 @@
     "longRunning": false
   },
   {
+    "name": "api.removeAccount",
+    "args": "ApiAccountArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
     "name": "api.list",
     "args": "void",
     "ret": "ApiSourceInfo[]",
@@ -880,6 +976,18 @@
     "args": "PathArgs",
     "ret": "TaskInfo[]",
     "longRunning": true
+  },
+  {
+    "name": "auth.importProfile",
+    "args": "AuthImportArgs",
+    "ret": "AuthProfileInfo",
+    "longRunning": false
+  },
+  {
+    "name": "auth.exportProfile",
+    "args": "AuthExportArgs",
+    "ret": "FileResult",
+    "longRunning": false
   },
   {
     "name": "auth.listProfiles",

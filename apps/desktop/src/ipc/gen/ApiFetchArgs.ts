@@ -9,7 +9,7 @@ export type ApiFetchArgs = {
 /**
  * Quellen; leer = alle verbundenen.
  */
-kinds: Array<ApiKind>, 
+kinds?: Array<ApiKind> | null, 
 /**
  * Umfang.
  */

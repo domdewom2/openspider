@@ -7,4 +7,12 @@ export type ApiSettingsResult = {
 /**
  * Gespeicherte Daten dieser Quelle wurden ungültig (INTEG-010).
  */
-invalidated: boolean, };
+invalidated: boolean, 
+/**
+ * Ob vor dem Abruf eine Bestätigung erforderlich ist.
+ */
+confirmationRequired: boolean, 
+/**
+ * Ob die gespeicherten API-Daten veraltet sind.
+ */
+dataStale: boolean, };

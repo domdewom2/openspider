@@ -20,4 +20,12 @@ scopes: Array<string>,
 /**
  * Ablauf des Tokens (ISO 8601 UTC).
  */
-expiresAt?: string | null, };
+expiresAt?: string | null, 
+/**
+ * Kennung des API-Kontos.
+ */
+accountId: string, 
+/**
+ * Zur Identifizierung sichtbare Endzeichen des API-Schlüssels.
+ */
+keySuffix?: string | null, };

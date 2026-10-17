@@ -23,4 +23,8 @@ byClass: { [key in string]: number },
 /**
  * Kindknoten (Tiefe begrenzt, der Rest über weitere Aufrufe).
  */
-children: Array<PathNode>, };
+children: Array<PathNode>, 
+/**
+ * Weitere Kinder können nachgeladen werden.
+ */
+hasMoreChildren: boolean, };

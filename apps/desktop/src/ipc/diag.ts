@@ -1,5 +1,6 @@
 // Generiert von scripts/gen-ipc.mjs aus src/ipc/commands.json – nicht von Hand ändern (npm run gen:ipc).
 import type { BundleArgs } from "./gen/BundleArgs";
+import type { BundlePreview } from "./gen/BundlePreview";
 import type { DebugInfo } from "./gen/DebugInfo";
 import type { LogFrontendArgs } from "./gen/LogFrontendArgs";
 import type { OpHandle } from "./gen/OpHandle";
@@ -8,6 +9,8 @@ import type { UsageStatsArgs } from "./gen/UsageStatsArgs";
 import { client } from "./client";
 
 export const diag = {
+  /** `diag.previewBundle` */
+  previewBundle: (signal?: AbortSignal) => client.invoke<BundlePreview>("diag.previewBundle", undefined, signal),
   /** `diag.debugInfo` */
   debugInfo: (signal?: AbortSignal) => client.invoke<DebugInfo>("diag.debugInfo", undefined, signal),
   /** `diag.bundle` – lang laufend: liefert sofort `OpHandle`, Ergebnis (FileResult) über `Tick.ops[].result`. */

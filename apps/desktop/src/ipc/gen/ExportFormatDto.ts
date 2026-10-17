@@ -3,4 +3,4 @@
 /**
  * Ausgabeformat.
  */
-export type ExportFormatDto = "csv" | "xlsx";
+export type ExportFormatDto = "csv" | "xlsx" | "json";

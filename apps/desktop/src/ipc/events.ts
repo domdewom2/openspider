@@ -11,6 +11,7 @@ type Handlers = {
   tick: (tick: Tick) => void;
   settingsChanged: (keys: string[]) => void;
   notice: (notice: Notice) => void;
+  focusUrl: (event: Extract<UiEvent, { kind: "focusUrl" }>) => void;
 };
 
 export interface EventBus {
@@ -25,6 +26,7 @@ export function createEventBus(): EventBus {
     tick: new Set(),
     settingsChanged: new Set(),
     notice: new Set(),
+    focusUrl: new Set(),
   };
   return {
     on(kind, cb) {
@@ -35,6 +37,9 @@ export function createEventBus(): EventBus {
     },
     emit(event) {
       switch (event.kind) {
+        case "focusUrl":
+          for (const cb of [...sets.focusUrl]) cb(event);
+          break;
         case "tick":
           for (const cb of [...sets.tick]) cb(event.tick);
           break;
@@ -47,7 +52,7 @@ export function createEventBus(): EventBus {
       }
     },
     listenerCount(kind) {
-      return kind ? sets[kind].size : sets.tick.size + sets.settingsChanged.size + sets.notice.size;
+      return kind ? sets[kind].size : sets.tick.size + sets.settingsChanged.size + sets.notice.size + sets.focusUrl.size;
     },
   };
 }

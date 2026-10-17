@@ -17,4 +17,16 @@ rules: Array<RuleDef>,
 /**
  * Eingabe-URL.
  */
-input: string, };
+input: string, 
+/**
+ * Namen der aus URLs zu entfernenden Parameter.
+ */
+removeParameters?: Array<string> | null, 
+/**
+ * Alle URL-Parameter entfernen.
+ */
+removeAllParameters?: boolean | null, 
+/**
+ * Reguläre Ausdrücke auch auf Teiltreffer anwenden.
+ */
+regexPartialMatch?: boolean | null, };

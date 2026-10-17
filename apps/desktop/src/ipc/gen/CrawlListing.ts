@@ -16,4 +16,16 @@ project?: string | null,
 /**
  * Gesperrt (von der Aufbewahrung ausgenommen).
  */
-locked: boolean, };
+locked: boolean, 
+/**
+ * Start-URL des Crawls.
+ */
+startUrl?: string | null, 
+/**
+ * Bisherige Laufzeit in Millisekunden.
+ */
+durationMs?: number | null, 
+/**
+ * Ob der Crawl fortgesetzt werden kann.
+ */
+canResume: boolean, };

@@ -1,7 +1,12 @@
 {
   "code": "InvalidInput",
   "messageKey": "err-invalid-regex",
-  "args": { "position": 4, "suggestions": ["^/blog/"] },
+  "args": {
+    "position": 4,
+    "suggestions": [
+      "^/blog/"
+    ]
+  },
   "field": "scope.include[0]",
   "detail": "unclosed group",
   "retryable": false

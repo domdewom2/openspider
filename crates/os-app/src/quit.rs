@@ -1,10 +1,2 @@
-//! Beenden und Schließen mit laufendem Crawl (F-11).
-//!
-//! STUB(M2-K04): `QuitDecision` ist nur ein Platzhalter, M2-K04 setzt die Rückfrage-Logik um.
-
-/// Entscheidung beim Beenden.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum QuitDecision {
-    /// Sofort beenden.
-    Quit,
-}
+//! Entscheidung beim Beenden; Sitzungslogik: M2-K04.
+pub use crate::dto::QuitDecision;

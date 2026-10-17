@@ -1,1 +1,8 @@
-{ "kind": "all", "viewId": "v1", "version": 42, "except": [9] }
+{
+  "kind": "all",
+  "viewId": "v1",
+  "version": 42,
+  "except": [
+    9
+  ]
+}

@@ -147,6 +147,30 @@ pub enum CompareClass {
 pub struct LinkFilter {
     /// Kennung des Filters.
     pub id: String,
+    /// Filter für die Position des Links im Dokument.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub position: Option<String>,
+
+    /// Links auf dieselbe URL ausschließen.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub exclude_self: Option<bool>,
+
+    /// Links mit nofollow ausschließen.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub exclude_nofollow: Option<bool>,
+
+    /// Filter für den Ankertext des Links.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub anchor: Option<String>,
+
+    /// Ausgewählter Auswertungsmodus.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub mode: Option<LinkMode>,
 }
 
 /// Filter der Ressourcen-Ansicht (kanonische Kennung).
@@ -199,6 +223,12 @@ pub enum DetailTable {
     ApiValues,
     /// Formulare.
     Forms,
+    /// Hreflang-Verknüpfungen.
+    Hreflang,
+    /// Pfad der Entdeckung im Crawl.
+    CrawlPath,
+    /// Ankertexte der Links.
+    Anchors,
 }
 
 /// Beschreibung einer View (`view.open`, `view.update`).
@@ -554,4 +584,12 @@ pub struct SearchParseArgs {
 pub struct ValidateRegexArgs {
     /// Regulärer Ausdruck.
     pub pattern: String,
+}
+
+/// Vertrag M2-F05b.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub enum LinkMode {
+    Links,
+    Anchors,
 }
