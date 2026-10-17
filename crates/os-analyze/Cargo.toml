@@ -8,6 +8,8 @@ repository.workspace = true
 authors.workspace = true
 
 [dependencies]
+fancy-regex.workspace = true
+
 os-model.workspace = true
 os-store.workspace = true
 rusqlite.workspace = true

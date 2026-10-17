@@ -16,6 +16,10 @@ e2e-bridge = ["dep:tokio-tungstenite"]
 stub-views = []
 
 [dependencies]
+tracing-subscriber.workspace = true
+zip.workspace = true
+sysinfo.workspace = true
+
 os-model.workspace = true
 os-url.workspace = true
 os-fetch.workspace = true

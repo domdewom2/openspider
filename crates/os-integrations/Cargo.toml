@@ -9,6 +9,9 @@ repository.workspace = true
 authors.workspace = true
 
 [dependencies]
+aes-gcm.workspace = true
+webbrowser.workspace = true
+
 os-model.workspace = true
 os-store.workspace = true
 # Geheimnisse (Tokens, Schlüssel) nur über os_fetch::secrets (C13, 3.6b)

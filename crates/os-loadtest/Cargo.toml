@@ -34,3 +34,7 @@ path = "src/main.rs"
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["test-util"] }
+
+[[bin]]
+name = "gen-ui-large"
+path = "src/bin/gen-ui-large.rs"

@@ -9,6 +9,10 @@ repository.workspace = true
 authors.workspace = true
 
 [dependencies]
+time.workspace = true
+zip.workspace = true
+sysinfo.workspace = true
+
 os-model.workspace = true
 os-url.workspace = true
 os-fetch.workspace = true
