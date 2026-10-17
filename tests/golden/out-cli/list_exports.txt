@@ -5,6 +5,11 @@ Internal:CSS
 Internal:Images
 Internal:PDF
 Internal:Unknown
+Internal:Flash
+Internal:Other
+Internal:Media
+Internal:Fonts
+Internal:XML
 External:All
 External:HTML
 External:JavaScript
@@ -17,6 +22,17 @@ External:Unknown
 Security:All
 Security:HTTP URLs
 Security:HTTPS URLs
+Security:Mixed Content
+Security:Form URL Insecure
+Security:Form on HTTP URL
+Security:Unsafe Cross-Origin Links
+Security:Protocol-Relative Resource Links
+Security:Missing HSTS Header
+Security:Missing Content-Security-Policy Header
+Security:Missing X-Content-Type-Options Header
+Security:Missing X-Frame-Options Header
+Security:Missing Secure Referrer-Policy Header
+Security:Bad Content Type
 Response Codes:All
 Response Codes:Blocked by Robots.txt
 Response Codes:No Response
@@ -50,6 +66,15 @@ Response Codes:External Redirect Loop
 Response Codes:External Client Error (4XX)
 Response Codes:External Server Error (5XX)
 Response Codes:External Other
+Response Codes:Blocked Resource
+Response Codes:Internal Blocked Resource
+Response Codes:External Blocked Resource
+Response Codes:Redirection (JavaScript)
+Response Codes:Internal Redirection (JavaScript)
+Response Codes:External Redirection (JavaScript)
+Response Codes:Redirection (HTTP Refresh)
+Response Codes:Internal Redirection (HTTP Refresh)
+Response Codes:External Redirection (HTTP Refresh)
 URL:All
 URL:Non ASCII Characters
 URL:Underscores
@@ -58,36 +83,64 @@ URL:Multiple Slashes
 URL:Contains A Space
 URL:Parameters
 URL:Over X Characters
+URL:Repetitive Path
+URL:Internal Search
+URL:Broken Bookmark
+URL:GA Tracking Parameters
 Page Titles:All
 Page Titles:Missing
 Page Titles:Duplicate
 Page Titles:Over X Characters
 Page Titles:Below X Characters
 Page Titles:Multiple
+Page Titles:Over X Pixels
+Page Titles:Below X Pixels
+Page Titles:Same as H1
+Page Titles:Outside <head>
 Meta Description:All
 Meta Description:Missing
 Meta Description:Duplicate
 Meta Description:Over X Characters
 Meta Description:Below X Characters
 Meta Description:Multiple
+Meta Description:Over X Pixels
+Meta Description:Below X Pixels
+Meta Description:Outside <head>
+Meta Keywords:All
+Meta Keywords:Missing
+Meta Keywords:Duplicate
+Meta Keywords:Multiple
 H1:All
 H1:Missing
 H1:Duplicate
 H1:Over X Characters
 H1:Multiple
+H1:Alt Text in h1
+H1:Non-sequential
 H2:All
 H2:Missing
 H2:Duplicate
 H2:Over X Characters
 H2:Multiple
+H2:Non-sequential
 Content:All
 Content:Exact Duplicates
 Content:Low Content Pages
+Content:Near Duplicates
+Content:Soft 404 Pages
+Content:Lorem Ipsum Placeholder
+Content:Readability Difficult
+Content:Readability Very Difficult
+Content:Spelling Errors
+Content:Grammar Errors
 Images:All
 Images:Over X KB
 Images:Missing Alt Text
 Images:Missing Alt Attribute
 Images:Alt Text Over X Characters
+Images:Background Images
+Images:Missing Size Attributes
+Images:Incorrectly Sized Images
 Canonicals:All
 Canonicals:Contains Canonical
 Canonicals:Self Referencing
@@ -96,6 +149,22 @@ Canonicals:Missing
 Canonicals:Multiple
 Canonicals:Multiple Conflicting
 Canonicals:Non-Indexable Canonical
+Canonicals:Canonical Is Relative
+Canonicals:Unlinked
+Canonicals:Invalid Attribute In Annotation
+Canonicals:Contains Fragment URL
+Canonicals:Outside <head>
+Pagination:All
+Pagination:Contains Pagination
+Pagination:First Page
+Pagination:Paginated 2+ Pages
+Pagination:Pagination URL Not In Anchor Tag
+Pagination:Non-200 Pagination URLs
+Pagination:Unlinked Pagination URLs
+Pagination:Non-Indexable
+Pagination:Multiple Pagination URLs
+Pagination:Pagination Loop
+Pagination:Sequence Error
 Directives:All
 Directives:Index
 Directives:Noindex
@@ -103,22 +172,150 @@ Directives:Follow
 Directives:Nofollow
 Directives:None
 Directives:Refresh
+Directives:NoArchive
+Directives:NoSnippet
+Directives:Max-Snippet
+Directives:Max-Image-Preview
+Directives:Max-Video-Preview
+Directives:NoImageIndex
+Directives:NoTranslate
+Directives:Unavailable_After
+Directives:Outside <head>
 Hreflang:All
 Hreflang:Contains Hreflang
 Hreflang:Non-200 Hreflang URLs
 Hreflang:Missing Return Links
 Hreflang:Incorrect Language & Region Codes
 Hreflang:Missing
+Hreflang:Unlinked Hreflang URLs
+Hreflang:Inconsistent Language & Region Return Links
+Hreflang:Non-Canonical Return Links
+Hreflang:Noindex Return Links
+Hreflang:Multiple Entries
+Hreflang:Missing Self Reference
+Hreflang:Not Using Canonical
+Hreflang:Missing X-Default
+Hreflang:Outside <head>
+JavaScript:All
+JavaScript:Pages With Blocked Resources
+JavaScript:Contains JavaScript Links
+JavaScript:Contains JavaScript Content
+JavaScript:Noindex Only In Original HTML
+JavaScript:Nofollow Only In Original HTML
+JavaScript:Canonical Only In Rendered HTML
+JavaScript:Canonical Mismatch
+JavaScript:Page Title Only In Rendered HTML
+JavaScript:Page Title Updated By JavaScript
+JavaScript:Meta Description Only In Rendered HTML
+JavaScript:Meta Description Updated By JavaScript
+JavaScript:H1 Only In Rendered HTML
+JavaScript:H1 Updated By JavaScript
+JavaScript:Pages With JavaScript Errors
 Links:All
 Links:Pages With High Crawl Depth
 Links:Pages Without Internal Outlinks
 Links:Internal Nofollow Outlinks
 Links:Internal Outlinks With No Anchor Text
+Links:Non-Descriptive Anchor Text In Internal Outlinks
+Links:Pages With High External Outlinks
+Links:Pages With High Internal Outlinks
+Links:Follow & Nofollow Internal Inlinks To Page
+Links:Internal Nofollow Inlinks Only
+Links:Outlinks To Localhost
+Links:Non-Indexable Page Inlinks Only
+Links:Pages With Uncrawlable Internal Outlinks
+Structured Data:All
+Structured Data:Contains Structured Data
+Structured Data:Missing Structured Data
+Structured Data:JSON-LD URLs
+Structured Data:Microdata URLs
+Structured Data:RDFa URLs
+Structured Data:Parse Errors
+Structured Data:Validation Errors
+Structured Data:Validation Warnings
+Structured Data:Rich Result Validation Errors
+Structured Data:Rich Result Validation Warnings
 Sitemaps:All
 Sitemaps:URLs In Sitemap
 Sitemaps:URLs Not In Sitemap
 Sitemaps:Orphan URLs
 Sitemaps:Non-Indexable URLs In Sitemap
+Sitemaps:URLs In Multiple Sitemaps
+Sitemaps:XML Sitemap With Over 50k URLs
+Sitemaps:XML Sitemap With Over 50MB
+PageSpeed:All
+PageSpeed:Avoid Enormous Network Payloads
+PageSpeed:Document Request Latency
+PageSpeed:Duplicated JavaScript
+PageSpeed:Font Display
+PageSpeed:Forced Reflow
+PageSpeed:Improve Image Delivery
+PageSpeed:LCP Request Discovery
+PageSpeed:Layout Shift Culprits
+PageSpeed:Legacy JavaScript
+PageSpeed:Minify CSS
+PageSpeed:Minify JavaScript
+PageSpeed:Minimize Main-Thread Work
+PageSpeed:Network Dependency Tree
+PageSpeed:Optimize DOM Size
+PageSpeed:Reduce JavaScript Execution Time
+PageSpeed:Reduce Unused CSS
+PageSpeed:Reduce Unused JavaScript
+PageSpeed:Render Blocking Requests
+PageSpeed:Use Efficient Cache Lifetimes
+Mobile:All
+Mobile:Viewport Not Set
+Mobile:Target Size
+Mobile:Content Not Sized Correctly
+Mobile:Illegible Font Size
+Mobile:Unsupported Plugins
+Mobile:Mobile Alternate Link
+Accessibility:All
+Custom Search:All
+Custom Extraction:All
+Custom JavaScript:All
+Analytics:All
+Analytics:Sessions Above 0
+Analytics:Bounce Rate Above 70%
+Analytics:No GA Data
+Analytics:Non-Indexable with GA Data
+Analytics:Orphan URLs
+Search Console:All
+Search Console:Clicks Above 0
+Search Console:No Search Analytics Data
+Search Console:Non-Indexable with Search Analytics Data
+Search Console:Orphan URLs
+Search Console:URL Is Not on Google
+Search Console:Indexable URL Not Indexed
+Search Console:URL is on Google, But Has Issues
+Search Console:User-Declared Canonical Not Selected
+Search Console:Page Is Not Mobile Friendly
+Search Console:AMP URL Is Invalid
+Search Console:Rich Result Invalid
+Validation:All
+Validation:Invalid HTML Elements In <head>
+Validation:Missing <head> Tag
+Validation:Multiple <head> Tags
+Validation:Missing <body> Tag
+Validation:Multiple <body> Tags
+Validation:HTML Document Over 2MB
+Validation:Resource Over 2MB
+Link Metrics:All
+Change Detection:All
+Change Detection:Page Titles
+Change Detection:Meta Description
+Change Detection:H1
+Change Detection:Word Count
+Change Detection:Crawl Depth
+Change Detection:Inlinks
+Change Detection:Unique Inlinks
+Change Detection:Internal Outlinks
+Change Detection:Unique Internal Outlinks
+Change Detection:External Outlinks
+Change Detection:Unique External Outlinks
+Change Detection:Structured Data Unique Types
+Change Detection:Indexability
+Change Detection:Content
 Links:All Inlinks
 Links:All Outlinks
 Response Codes:Internal & External:All Inlinks
@@ -158,3 +355,209 @@ Response Codes:External:Client Error (4xx) Inlinks
 Response Codes:External:Server Error (5xx) Inlinks
 Response Codes:External:All Error Inlinks
 Issues:All Issues
+Security:HTTP URLs Inlinks
+Security:Mixed Content Inlinks
+Security:Form URL Insecure Inlinks
+Security:Form On HTTP URL Inlinks
+Security:Unsafe Cross-Origin Links Inlinks
+Security:Protocol-Relative Resource Links Inlinks
+Canonicals:Contains Canonical Inlinks
+Canonicals:Self Referencing Inlinks
+Canonicals:Canonicalised Inlinks
+Canonicals:Missing Inlinks
+Canonicals:Multiple Inlinks
+Canonicals:Multiple Conflicting Inlinks
+Canonicals:Non-Indexable Canonical Inlinks
+Canonicals:Canonical Is Relative Inlinks
+Canonicals:Unlinked Inlinks
+Canonicals:Invalid Attribute In Annotation Inlinks
+Canonicals:Contains Fragment URL Inlinks
+Canonicals:Outside <head> Inlinks
+Directives:Index Inlinks
+Directives:Noindex Inlinks
+Directives:Follow Inlinks
+Directives:Nofollow Inlinks
+Directives:None Inlinks
+Directives:NoArchive Inlinks
+Directives:NoSnippet Inlinks
+Directives:Max-Snippet Inlinks
+Directives:Max-Image-Preview Inlinks
+Directives:Max-Video-Preview Inlinks
+Directives:NoODP Inlinks
+Directives:NoYDIR Inlinks
+Directives:NoImageIndex Inlinks
+Directives:NoTranslate Inlinks
+Directives:Unavailable_After Inlinks
+Directives:Refresh Inlinks
+Directives:Outside <head> Inlinks
+Images:All Image Inlinks
+Images:Images Missing Alt Text Inlinks
+Images:Images Missing Alt Attribute Inlinks
+Images:Images With Alt Text Over X Characters Inlinks
+Images:Images Over X KB Inlinks
+Images:Images Missing Size Attributes Inlinks
+Images:Incorrectly Sized Images Inlinks
+Images:Background Images Inlinks
+Content:Exact Duplicates Pairs
+Content:Near Duplicates Pairs
+Content:Spelling Errors Details
+Content:Grammar Errors Details
+Content:Spelling & Grammar Errors
+Content:Spelling & Grammar Errors Summary
+Content:Soft 404 Inlinks
+Pagination:Contains Pagination Inlinks
+Pagination:First Page Inlinks
+Pagination:Paginated 2+ Pages Inlinks
+Pagination:Pagination URL Not In Anchor Tag Inlinks
+Pagination:Non-200 Pagination URLs Inlinks
+Pagination:Unlinked Pagination URLs Inlinks
+Pagination:Non-Indexable Inlinks
+Pagination:Multiple Pagination URLs Inlinks
+Pagination:Pagination Loop Inlinks
+Pagination:Sequence Error Inlinks
+Structured Data:Contains Structured Data Triples
+Structured Data:Validation Errors Triples
+Structured Data:Validation Warnings Triples
+Structured Data:Parse Errors Triples
+Structured Data:Microdata URLs Triples
+Structured Data:JSON-LD URLs Triples
+Structured Data:RDFa URLs Triples
+Structured Data:Rich Result Feature Detected Triples
+Sitemaps:URLs In Sitemap Details
+Sitemaps:URLs Not In Sitemap Details
+Sitemaps:Non-Indexable URLs In Sitemap Details
+Sitemaps:URLs In Multiple Sitemaps Details
+Sitemaps:XML Sitemap With Over 50k URLs Details
+Sitemaps:XML Sitemap Over 50MB Details
+Sitemaps:Orphan URLs Details
+JavaScript:Blocked Resource Inlinks
+JavaScript:Contains JavaScript Links Inlinks
+JavaScript:Contains JavaScript Content Inlinks
+JavaScript:Noindex Only In Original HTML Inlinks
+JavaScript:Nofollow Only In Original HTML Inlinks
+JavaScript:Canonical Only In Rendered HTML Inlinks
+JavaScript:Canonical Mismatch Inlinks
+JavaScript:Page Title Only In Rendered HTML Inlinks
+JavaScript:Pages With JavaScript Errors Inlinks
+JavaScript:All Console Messages
+Web:Screenshots
+Custom Search:All Filters
+Custom Extraction:All Extractions
+Accessibility:All Violations
+Accessibility:WCAG 2.0 A
+Accessibility:WCAG 2.0 AA
+Accessibility:WCAG 2.0 AAA
+Accessibility:WCAG 2.1 AA
+Accessibility:WCAG 2.2 AA
+Accessibility:Best Practice
+Accessibility:Incomplete
+Web:All Page Source
+Web:All Page Text
+Web:All HTTP Request Headers
+Web:All HTTP Response Headers
+Web:All Cookies
+Page Titles:All Inlinks
+Page Titles:Missing Inlinks
+Page Titles:Duplicate Inlinks
+Page Titles:Over X Characters Inlinks
+Page Titles:Below X Characters Inlinks
+Page Titles:Multiple Inlinks
+Page Titles:Over X Pixels Inlinks
+Page Titles:Below X Pixels Inlinks
+Page Titles:Same as H1 Inlinks
+Page Titles:Outside <head> Inlinks
+Meta Description:All Inlinks
+Meta Description:Missing Inlinks
+Meta Description:Duplicate Inlinks
+Meta Description:Over X Characters Inlinks
+Meta Description:Below X Characters Inlinks
+Meta Description:Multiple Inlinks
+Meta Description:Over X Pixels Inlinks
+Meta Description:Below X Pixels Inlinks
+Meta Description:Outside <head> Inlinks
+Meta Keywords:All Inlinks
+Meta Keywords:Missing Inlinks
+Meta Keywords:Duplicate Inlinks
+Meta Keywords:Multiple Inlinks
+H1:All Inlinks
+H1:Missing Inlinks
+H1:Duplicate Inlinks
+H1:Over X Characters Inlinks
+H1:Multiple Inlinks
+H1:Alt Text in h1 Inlinks
+H1:Non-sequential Inlinks
+H2:All Inlinks
+H2:Missing Inlinks
+H2:Duplicate Inlinks
+H2:Over X Characters Inlinks
+H2:Multiple Inlinks
+H2:Non-sequential Inlinks
+Hreflang:All Inlinks
+Hreflang:Contains Hreflang Inlinks
+Hreflang:Non-200 Hreflang URLs Inlinks
+Hreflang:Missing Return Links Inlinks
+Hreflang:Incorrect Language & Region Codes Inlinks
+Hreflang:Missing Inlinks
+Hreflang:Unlinked Hreflang URLs Inlinks
+Hreflang:Inconsistent Language & Region Return Links Inlinks
+Hreflang:Non-Canonical Return Links Inlinks
+Hreflang:Noindex Return Links Inlinks
+Hreflang:Multiple Entries Inlinks
+Hreflang:Missing Self Reference Inlinks
+Hreflang:Not Using Canonical Inlinks
+Hreflang:Missing X-Default Inlinks
+Hreflang:Outside <head> Inlinks
+PageSpeed:All Inlinks
+PageSpeed:Avoid Enormous Network Payloads Inlinks
+PageSpeed:Document Request Latency Inlinks
+PageSpeed:Duplicated JavaScript Inlinks
+PageSpeed:Font Display Inlinks
+PageSpeed:Forced Reflow Inlinks
+PageSpeed:Improve Image Delivery Inlinks
+PageSpeed:LCP Request Discovery Inlinks
+PageSpeed:Layout Shift Culprits Inlinks
+PageSpeed:Legacy JavaScript Inlinks
+PageSpeed:Minify CSS Inlinks
+PageSpeed:Minify JavaScript Inlinks
+PageSpeed:Minimize Main-Thread Work Inlinks
+PageSpeed:Network Dependency Tree Inlinks
+PageSpeed:Optimize DOM Size Inlinks
+PageSpeed:Reduce JavaScript Execution Time Inlinks
+PageSpeed:Reduce Unused CSS Inlinks
+PageSpeed:Reduce Unused JavaScript Inlinks
+PageSpeed:Render Blocking Requests Inlinks
+PageSpeed:Use Efficient Cache Lifetimes Inlinks
+Mobile:All Inlinks
+Mobile:Viewport Not Set Inlinks
+Mobile:Target Size Inlinks
+Mobile:Content Not Sized Correctly Inlinks
+Mobile:Illegible Font Size Inlinks
+Mobile:Unsupported Plugins Inlinks
+Mobile:Mobile Alternate Link Inlinks
+Analytics:All Inlinks
+Analytics:Sessions Above 0 Inlinks
+Analytics:Bounce Rate Above 70% Inlinks
+Analytics:No GA Data Inlinks
+Analytics:Non-Indexable with GA Data Inlinks
+Analytics:Orphan URLs Inlinks
+Search Console:All Inlinks
+Search Console:Clicks Above 0 Inlinks
+Search Console:No Search Analytics Data Inlinks
+Search Console:Non-Indexable with Search Analytics Data Inlinks
+Search Console:Orphan URLs Inlinks
+Search Console:URL Is Not on Google Inlinks
+Search Console:Indexable URL Not Indexed Inlinks
+Search Console:URL is on Google, But Has Issues Inlinks
+Search Console:User-Declared Canonical Not Selected Inlinks
+Search Console:Page Is Not Mobile Friendly Inlinks
+Search Console:AMP URL Is Invalid Inlinks
+Search Console:Rich Result Invalid Inlinks
+Validation:All Inlinks
+Validation:Invalid HTML Elements In <head> Inlinks
+Validation:Missing <head> Tag Inlinks
+Validation:Multiple <head> Tags Inlinks
+Validation:Missing <body> Tag Inlinks
+Validation:Multiple <body> Tags Inlinks
+Validation:HTML Document Over 2MB Inlinks
+Validation:Resource Over 2MB Inlinks
+Link Metrics:All Inlinks

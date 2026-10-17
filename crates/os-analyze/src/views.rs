@@ -15,6 +15,7 @@
 mod build;
 mod counts;
 mod exec;
+pub mod session;
 
 use os_model::{CrawlConfig, FilterState, UrlId, Value};
 use os_store::CrawlFile;
@@ -90,12 +91,20 @@ impl Default for ViewQuery {
     }
 }
 
-/// Suchangabe einer Abfrage. M2 ergänzt `Rules { … }`.
+/// Suchangabe einer Abfrage.
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SearchSpec {
     /// Teilstring, ohne Beachtung der Groß-/Kleinschreibung, über die Adresse.
     Simple(String),
+    /// Regelbaum über Spalten (UI-011, K-6; ab M2). Die Auswertung liefert M2-K02 (`search::compile`); bis dahin
+    /// schränkt diese Angabe die Ansicht nicht ein.
+    Rules {
+        /// Der Regelbaum.
+        tree: crate::search::RuleNode,
+        /// Groß-/Kleinschreibung beachten.
+        case_sensitive: bool,
+    },
 }
 
 /// Beginn einer Seite.
@@ -253,7 +262,7 @@ fn is_ready(
 
 /// Zähler aller Filter aller Tabs: Trefferzahl und Prozent nur bei `Ready`, sonst der Zustand.
 pub fn filter_counts(file: &CrawlFile, cfg: &CrawlConfig) -> Result<Vec<FilterCount>, ViewError> {
-    counts::counts_in(&tabs::all(), file, cfg)
+    filter_counts_in(&tabs::all(), file, cfg)
 }
 
 /// Wie [`filter_counts`], gegen eine eigene Tab-Liste.
@@ -262,7 +271,15 @@ pub fn filter_counts_in(
     file: &CrawlFile,
     cfg: &CrawlConfig,
 ) -> Result<Vec<FilterCount>, ViewError> {
-    counts::counts_in(tabs, file, cfg)
+    let mut counts = counts::counts_in(tabs, file, cfg)?;
+    // Stub-Tabs und Stub-Filter (M2, `TabDef::is_stub`/`FilterDef::is_stub`) liefern keine Zähler, bis ihr Paket sie
+    // umsetzt: Berichte und Übersichten zeigen nur Befüllbares (Crawl Overview bleibt für M1-Crawls unverändert).
+    counts.retain(|c| {
+        tabs.iter().find(|t| t.id == c.tab).is_none_or(|t| {
+            !t.is_stub() && !t.filters.iter().any(|f| f.id == c.filter && f.is_stub())
+        })
+    });
+    Ok(counts)
 }
 
 /// Löst `"Tab:Filter"` auf (Vorschläge bei Fehlern).

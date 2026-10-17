@@ -20,4 +20,7 @@ pub use content_type::content_class;
 pub use cookies::CookieJar;
 pub use error::FetchError;
 pub use http::{Fetch, FetchOutcome, FetchPurpose, FetchRequest, FetchResult, HttpResponse};
-pub use secrets::{MemorySecretStore, SecretStore};
+pub use secrets::{
+    secret_store_from_env, MemorySecretStore, SecretBackend, SecretError, SecretStore,
+    SecretStoreMut,
+};

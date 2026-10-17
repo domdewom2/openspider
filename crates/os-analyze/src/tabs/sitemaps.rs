@@ -42,6 +42,7 @@ fn column(key: &'static str, sql: &'static str, kind: ColumnKind) -> ColumnDef {
         kind,
         default_visible: true,
         extension: false,
+        ..ColumnDef::META
     }
 }
 
@@ -52,6 +53,7 @@ fn extension(key: &'static str, sql: &'static str, kind: ColumnKind) -> ColumnDe
         kind,
         default_visible: false,
         extension: true,
+        ..ColumnDef::META
     }
 }
 

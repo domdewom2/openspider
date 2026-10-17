@@ -482,6 +482,7 @@ async fn probe_crawl(opts: &DiagOptions, scratch: &Path) -> Value {
         sink_factory: None,
         on_finished: None,
         owner_kind: "cli",
+        renderer: None,
     };
     if opts.wal_autocheckpoint.is_some() {
         deps.sink_factory = Some(tuned_sink_factory(

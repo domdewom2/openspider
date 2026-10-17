@@ -354,10 +354,12 @@ async fn crawled_counter_equals_the_rows_with_a_status_code_and_the_final_progre
 // spec: CRAWL-077
 #[tokio::test]
 async fn text_mode_needs_no_browser_and_javascript_mode_is_refused_without_a_silent_fallback() {
-    // Die Engine hängt nicht an os-render: im Textmodus kann kein Browserprozess entstehen.
+    // Die Engine hängt nicht direkt an der Browser-Bibliothek; ab M2 kennt sie `os-render` nur hinter dem Trait
+    // `Renderer` (`EngineDeps.renderer`, M2-F02). Ohne Renderer (Textmodus) kann kein Browserprozess entstehen.
     let manifest =
         std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.toml")).unwrap();
-    assert!(!manifest.contains("os-render") && !manifest.contains("chromiumoxide"));
+    assert!(!manifest.contains("chromiumoxide"));
+    assert!(os_engine::testing::test_deps().renderer.is_none());
 
     let dir = tempfile::tempdir().unwrap();
     let file = dir.path().join("crawl.ospider");

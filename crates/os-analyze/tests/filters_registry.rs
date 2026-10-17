@@ -1,16 +1,60 @@
-//! `tabs::all()` stimmt mit `docs/plan/M1-filters.toml` überein (Tabs, Filter-Kennungen, Reihenfolge, Art,
-//! Voraussetzungen). Der Test bleibt dauerhaft aktiv: Kennungen ändern sich nur mit der Registry.
+//! `tabs::all()` stimmt mit `docs/plan/M1-filters.toml` und `docs/plan/M2-filters.toml` überein (Tabs, Filter-Kennungen,
+//! Reihenfolge, Art, Voraussetzungen). Der Test bleibt dauerhaft aktiv: Kennungen ändern sich nur mit den Registerdateien.
 //! Infrastrukturtest ohne Spec-Tag.
+//!
+//! Reihenfolge der Tabs: UI-004. Reihenfolge der Filter: erst die Filter von M1, dann die von M2 in der Reihenfolge der
+//! Datei (die Spec legt keine andere Anzeigereihenfolge fest). Dynamische Filter (`<Filtername> …`) stehen nicht im
+//! Register von `tabs::all()`; sie entstehen zur Laufzeit.
 
+use std::collections::BTreeSet;
 use std::path::Path;
 
-use os_analyze::tabs;
-use os_analyze::{FilterKind, Requirement};
+use os_analyze::defs::{apply_meta_defaults, intern, Align, SearchOps};
+use os_analyze::tabs::{self, M2_FILTERS};
+use os_analyze::{ColumnDef, ColumnKind, FilterKind, Requirement};
+use os_model::{AnalysisStep, CrawlConfig};
 
-fn registry() -> toml::Table {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../docs/plan/M1-filters.toml");
-    let text = std::fs::read_to_string(&path).expect("M1-filters.toml lesbar");
-    text.parse().expect("M1-filters.toml ist gültiges TOML")
+/// UI-004 (ohne AMP, AI und die Tabs von M4/M5): Reihenfolge der Tabs im Produkt.
+const UI_ORDER: [&str; 31] = [
+    "Internal",
+    "External",
+    "Security",
+    "Response Codes",
+    "URL",
+    "Page Titles",
+    "Meta Description",
+    "Meta Keywords",
+    "H1",
+    "H2",
+    "Content",
+    "Images",
+    "Canonicals",
+    "Pagination",
+    "Directives",
+    "Hreflang",
+    "JavaScript",
+    "Links",
+    "Structured Data",
+    "Sitemaps",
+    "PageSpeed",
+    "Mobile",
+    "Accessibility",
+    "Custom Search",
+    "Custom Extraction",
+    "Custom JavaScript",
+    "Analytics",
+    "Search Console",
+    "Validation",
+    "Link Metrics",
+    "Change Detection",
+];
+
+fn read(name: &str) -> toml::Table {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../docs/plan")
+        .join(name);
+    let text = std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{name}: {e}"));
+    text.parse().unwrap_or_else(|e| panic!("{name}: {e}"))
 }
 
 fn kind_name(kind: FilterKind) -> String {
@@ -20,58 +64,168 @@ fn kind_name(kind: FilterKind) -> String {
     }
 }
 
+/// Erwartete Filter eines Tabs: M1-Filter, dann M2-Filter ohne dynamische Platzhalter.
+/// `(id, kind, requires)`; `requires` in der Schreibweise der Dateien.
+fn expected_filters(tab_id: &str) -> Vec<(String, String, Vec<String>)> {
+    let mut out = Vec::new();
+    for file in ["M1-filters.toml", "M2-filters.toml"] {
+        let reg = read(file);
+        for tab in reg["tab"].as_array().unwrap() {
+            if tab["id"].as_str() != Some(tab_id) {
+                continue;
+            }
+            for f in tab["filters"].as_array().unwrap() {
+                let id = f["id"].as_str().unwrap();
+                if id.starts_with('<') {
+                    continue;
+                }
+                let requires = f
+                    .get("requires")
+                    .and_then(|r| r.as_array())
+                    .map(|r| r.iter().map(|k| k.as_str().unwrap().to_string()).collect())
+                    .unwrap_or_default();
+                out.push((
+                    id.to_string(),
+                    f["kind"].as_str().unwrap().to_string(),
+                    requires,
+                ));
+            }
+        }
+    }
+    out
+}
+
+/// Wie `Requirement`s aus den Schlüsseln der Registerdatei entstehen: `rendering.mode=javascript` → Rendering,
+/// Schlüssel ohne `=` → Konfiguration; andere Bedingungen (`ui.parity_filters=false`) sind Profilschalter der Oberfläche,
+/// kein Konfigurationsschlüssel des Crawls, und gehören dem Paket, das den Filter umsetzt.
+fn expected_requirements(requires: &[String]) -> (Vec<String>, bool) {
+    let config: Vec<String> = requires
+        .iter()
+        .filter(|r| !r.contains('='))
+        .cloned()
+        .collect();
+    let rendering = requires.iter().any(|r| r == "rendering.mode=javascript");
+    (config, rendering)
+}
+
 #[test]
-fn tabs_match_filter_registry() {
-    let reg = registry();
-    let expected = reg["tab"].as_array().expect("[[tab]]-Liste");
-    let actual = tabs::all();
+fn tab_ids_follow_the_ui_order_and_cover_both_registry_files() {
+    let ids: Vec<&str> = tabs::all().iter().map(|t| t.id).collect();
+    assert_eq!(ids, UI_ORDER, "UI-004");
 
-    assert_eq!(expected.len(), 16, "M1 hat 16 Tabs");
-    assert_eq!(actual.len(), expected.len(), "Anzahl der Tabs");
-
-    for (exp, tab) in expected.iter().zip(&actual) {
-        let tab_id = exp["id"].as_str().unwrap();
-        assert_eq!(tab.id, tab_id, "Tab-Reihenfolge");
-
-        let exp_filters = exp["filters"].as_array().unwrap();
-        let ids: Vec<&str> = tab.filters.iter().map(|f| f.id).collect();
-        let exp_ids: Vec<&str> = exp_filters
+    let mut registry_tabs: BTreeSet<String> = BTreeSet::new();
+    for file in ["M1-filters.toml", "M2-filters.toml"] {
+        for tab in read(file)["tab"].as_array().unwrap() {
+            registry_tabs.insert(tab["id"].as_str().unwrap().to_string());
+        }
+    }
+    let ours: BTreeSet<String> = UI_ORDER.iter().map(|s| (*s).to_string()).collect();
+    assert_eq!(registry_tabs, ours, "Tabs der Registerdateien");
+    assert_eq!(
+        read("M1-filters.toml")["tab"].as_array().unwrap().len(),
+        16,
+        "M1 hat 16 Tabs"
+    );
+    assert_eq!(
+        read("M2-filters.toml")["tab"]
+            .as_array()
+            .unwrap()
             .iter()
-            .map(|f| f["id"].as_str().unwrap())
-            .collect();
+            .filter(|t| t["new"].as_bool() == Some(true))
+            .count(),
+        15,
+        "M2 ergänzt 15 neue Tabs"
+    );
+}
+
+#[test]
+fn filters_match_the_registry_files_in_id_order_kind_and_requirements() {
+    for tab in tabs::all() {
+        let expected = expected_filters(tab.id);
+        let ids: Vec<&str> = tab.filters.iter().map(|f| f.id).collect();
+        let exp_ids: Vec<&str> = expected.iter().map(|e| e.0.as_str()).collect();
         assert_eq!(
             ids, exp_ids,
-            "Filter-Kennungen und -Reihenfolge von {tab_id}"
+            "Filter-Kennungen und -Reihenfolge von {}",
+            tab.id
         );
-
-        for (ef, f) in exp_filters.iter().zip(&tab.filters) {
-            let id = ef["id"].as_str().unwrap();
-            assert_eq!(
-                kind_name(f.kind),
-                ef["kind"].as_str().unwrap(),
-                "Art von {tab_id}:{id}"
-            );
-            let exp_requires: Vec<&str> = ef
-                .get("requires")
-                .and_then(|r| r.as_array())
-                .map(|r| r.iter().map(|k| k.as_str().unwrap()).collect())
-                .unwrap_or_default();
-            let requires: Vec<&str> = f
+        for (exp, f) in expected.iter().zip(&tab.filters) {
+            assert_eq!(kind_name(f.kind), exp.1, "Art von {}:{}", tab.id, f.id);
+            let (config, rendering) = expected_requirements(&exp.2);
+            let actual_config: Vec<String> = f
                 .requires
                 .iter()
-                .map(|r| match r {
-                    Requirement::Config(key) => *key,
-                    Requirement::Rendering => "rendering",
+                .filter_map(|r| match r {
+                    Requirement::Config(key) => Some((*key).to_string()),
+                    Requirement::Rendering => None,
                 })
                 .collect();
-            assert_eq!(requires, exp_requires, "Voraussetzungen von {tab_id}:{id}");
+            let actual_rendering = f.requires.contains(&Requirement::Rendering);
+            assert_eq!(
+                actual_config, config,
+                "Konfigurationsschlüssel von {}:{}",
+                tab.id, f.id
+            );
+            assert_eq!(
+                actual_rendering, rendering,
+                "Rendering-Voraussetzung von {}:{}",
+                tab.id, f.id
+            );
         }
     }
 }
 
 #[test]
-fn every_tab_is_a_real_definition_starting_with_the_address_column() {
-    // Seit Welle 3 sind alle 16 Tabs echte Definitionen (keine Platzhalter mit einer Spalte und Grundmenge "1").
+fn the_stub_table_is_the_m2_registry_file() {
+    let reg = read("M2-filters.toml");
+    let mut expected: Vec<(String, String, String, Vec<String>, bool)> = Vec::new();
+    for tab in reg["tab"].as_array().unwrap() {
+        for f in tab["filters"].as_array().unwrap() {
+            let id = f["id"].as_str().unwrap();
+            if id.starts_with('<') {
+                continue;
+            }
+            let requires: Vec<String> = f
+                .get("requires")
+                .and_then(|r| r.as_array())
+                .map(|r| r.iter().map(|k| k.as_str().unwrap().to_string()).collect())
+                .unwrap_or_default();
+            let (config, rendering) = expected_requirements(&requires);
+            expected.push((
+                tab["id"].as_str().unwrap().to_string(),
+                id.to_string(),
+                f["kind"].as_str().unwrap().to_string(),
+                config,
+                rendering,
+            ));
+        }
+    }
+    let actual: Vec<(String, String, String, Vec<String>, bool)> = M2_FILTERS
+        .iter()
+        .map(|(tab, id, step, config, rendering)| {
+            (
+                (*tab).to_string(),
+                (*id).to_string(),
+                step.map_or("live".to_string(), |s| format!("post_crawl:{s:?}")),
+                config.iter().map(|c| (*c).to_string()).collect(),
+                *rendering,
+            )
+        })
+        .collect();
+    assert_eq!(
+        actual, expected,
+        "tabs::M2_FILTERS weicht von M2-filters.toml ab"
+    );
+    assert_eq!(
+        M2_FILTERS.len(),
+        197,
+        "197 statische Filter von M2 (203 Einträge abzüglich 6 dynamischer Platzhalter)"
+    );
+}
+
+#[test]
+fn every_tab_is_a_real_definition_or_a_marked_stub() {
+    let mut stubs = 0;
     for tab in tabs::all() {
         assert_eq!(
             tab.columns.first().map(|c| c.key),
@@ -79,34 +233,190 @@ fn every_tab_is_a_real_definition_starting_with_the_address_column() {
             "Address ist die erste Spalte von {}",
             tab.id
         );
-        assert!(
-            tab.columns.len() > 1,
-            "{} hat nur eine Spalte (Platzhalter)",
-            tab.id
-        );
         assert!(!tab.population.is_empty(), "Grundmenge von {}", tab.id);
-        assert_ne!(
-            tab.population, "1",
-            "{} hat noch die Grundmenge des Platzhalters",
-            tab.id
-        );
-        let all: Vec<_> = tab.filters.iter().filter(|f| f.id == "All").collect();
-        assert_eq!(all.len(), 1, "genau ein Filter All in {}", tab.id);
-        assert!(
-            !all[0].predicate.is_empty(),
-            "Filter All von {} hat ein Prädikat",
-            tab.id
-        );
+        let all: Vec<_> = tab
+            .filters
+            .iter()
+            .filter(|f| f.id.eq_ignore_ascii_case("All") || f.id == "All Issues")
+            .collect();
+        assert!(all.len() <= 1, "höchstens ein Filter All in {}", tab.id);
+        if tab.is_stub() {
+            // Stub: leerer Platzhalter, bis das Paket den Tab umsetzt.
+            stubs += 1;
+            assert_eq!(tab.population, "0", "{}: Grundmenge des Stubs", tab.id);
+            assert_eq!(tab.columns.len(), 1, "{}: nur die Spalte Address", tab.id);
+            assert!(
+                tab.filters
+                    .iter()
+                    .any(|f| f.id == "All" && f.predicate == "1"),
+                "{}: Filter All",
+                tab.id
+            );
+        } else {
+            assert!(
+                tab.columns.len() > 1,
+                "{} hat nur eine Spalte (Platzhalter)",
+                tab.id
+            );
+            assert_ne!(
+                tab.population, "1",
+                "{} hat noch die Grundmenge des Platzhalters",
+                tab.id
+            );
+            let all: Vec<_> = tab.filters.iter().filter(|f| f.id == "All").collect();
+            assert_eq!(all.len(), 1, "genau ein Filter All in {}", tab.id);
+            assert!(
+                !all[0].predicate.is_empty(),
+                "Filter All von {} hat ein Prädikat",
+                tab.id
+            );
+        }
     }
+    // Alle 15 neuen Tabs sind in M2-F02 Stubs; die 16 Tabs von M1 sind echte Definitionen.
+    assert_eq!(stubs, 15, "Stub-Tabs");
 }
 
 #[test]
-fn filter_ids_are_unique_per_tab() {
+fn stub_filters_are_marked_by_predicate_zero_and_never_all() {
+    let mut stub_filters = 0;
+    let mut real_new = 0;
     for tab in tabs::all() {
-        let mut ids: Vec<&str> = tab.filters.iter().map(|f| f.id).collect();
+        for f in &tab.filters {
+            if f.is_stub() {
+                stub_filters += 1;
+                assert_eq!(f.predicate, "0");
+                assert!(!f.id.eq_ignore_ascii_case("All"));
+            } else if !f.id.eq_ignore_ascii_case("All")
+                && M2_FILTERS
+                    .iter()
+                    .any(|(t, id, ..)| *t == tab.id && id.eq_ignore_ascii_case(f.id))
+            {
+                real_new += 1;
+            }
+        }
+    }
+    // Bis ein Fachpaket einen Filter umsetzt, ist jeder M2-Filter außer `All` ein Stub.
+    let m2_without_all = M2_FILTERS
+        .iter()
+        .filter(|(_, id, ..)| !id.eq_ignore_ascii_case("All"))
+        .count();
+    assert_eq!(stub_filters + real_new, m2_without_all);
+    assert!(stub_filters > 0);
+}
+
+#[test]
+fn filter_ids_are_unique_per_tab_ignoring_case() {
+    for tab in tabs::all() {
+        let mut ids: Vec<String> = tab.filters.iter().map(|f| f.id.to_lowercase()).collect();
         let n = ids.len();
         ids.sort_unstable();
         ids.dedup();
         assert_eq!(ids.len(), n, "doppelte Filter-Kennung in {}", tab.id);
+    }
+}
+
+#[test]
+fn requirement_keys_and_placeholders_resolve_in_the_default_configuration() {
+    let json = serde_json::to_value(CrawlConfig::default()).unwrap();
+    for tab in tabs::all() {
+        for f in &tab.filters {
+            for r in &f.requires {
+                if let Requirement::Config(key) = r {
+                    assert!(
+                        matches!(
+                            os_analyze::names::config_value(&json, key),
+                            Some(serde_json::Value::Bool(_))
+                        ),
+                        "{}:{}: Konfigurationsschlüssel {key} ist kein Wahrheitswert der Konfiguration",
+                        tab.id,
+                        f.id
+                    );
+                }
+            }
+            let label = os_analyze::names::label(f.id, &CrawlConfig::default());
+            assert!(
+                !label.contains('{'),
+                "{}:{}: Platzhalter nicht auflösbar ({label})",
+                tab.id,
+                f.id
+            );
+        }
+    }
+}
+
+#[test]
+fn every_column_has_ui_metadata_derived_from_its_kind() {
+    for tab in tabs::all() {
+        for c in &tab.columns {
+            assert!(c.default_width > 0, "{}.{}: Breite", tab.id, c.key);
+            assert!(!c.search_ops.is_none(), "{}.{}: Operatoren", tab.id, c.key);
+            let numeric = matches!(
+                c.kind,
+                ColumnKind::Int | ColumnKind::Float { .. } | ColumnKind::Seconds3
+            );
+            if numeric {
+                assert_eq!(
+                    c.align,
+                    Align::Right,
+                    "{}.{}: Zahlen rechtsbündig",
+                    tab.id,
+                    c.key
+                );
+                assert!(c.search_ops.has(SearchOps::COMPARE), "{}.{}", tab.id, c.key);
+            }
+            if matches!(c.kind, ColumnKind::Bool) {
+                assert!(c.search_ops.has(SearchOps::BOOL));
+            }
+            if matches!(c.kind, ColumnKind::Text | ColumnKind::Url) {
+                assert!(c.search_ops.has(SearchOps::CONTAINS | SearchOps::REGEX));
+            }
+            assert!(c.sortable, "{}.{}: sortierbar", tab.id, c.key);
+        }
+    }
+    // Eigene Werte bleiben erhalten; nur Spalten ohne Breite werden ergänzt.
+    let mut cols = vec![
+        ColumnDef {
+            default_width: 500,
+            align: Align::Center,
+            ..ColumnDef::new("Eigene", "u.address", ColumnKind::Int, true)
+        },
+        ColumnDef::new("Zahl", "u.depth", ColumnKind::Int, true),
+    ];
+    apply_meta_defaults(&mut cols);
+    assert_eq!((cols[0].default_width, cols[0].align), (500, Align::Center));
+    assert_eq!((cols[1].default_width, cols[1].align), (96, Align::Right));
+}
+
+#[test]
+fn dynamic_column_sources_are_registered_per_tab_and_names_are_interned() {
+    // M2-F02: noch keine Quelle gemeldet (die Pakete D14, D15, D22, I05, I06 liefern sie), aber alle Einstiege existieren.
+    let cfg = CrawlConfig::default();
+    for tab in [
+        "Custom Search",
+        "Custom Extraction",
+        "Custom JavaScript",
+        "Link Metrics",
+        "Internal",
+    ] {
+        assert!(tabs::dynamic_columns(tab, &cfg).is_empty(), "{tab}");
+    }
+    assert!(tabs::column_sources().is_empty());
+    // Namen zur Laufzeit: gleicher Text, dieselbe Referenz.
+    let a = intern("Preis (Extraktor 1)");
+    let b = intern(&String::from("Preis (Extraktor 1)"));
+    assert!(std::ptr::eq(a, b));
+    let col = ColumnDef::dynamic("Preis (Extraktor 1)", "u.address", ColumnKind::Text, true);
+    assert_eq!(col.key, "Preis (Extraktor 1)");
+}
+
+#[test]
+fn analysis_steps_named_by_post_crawl_filters_exist() {
+    let steps: BTreeSet<String> = AnalysisStep::ALL.iter().map(|s| format!("{s:?}")).collect();
+    for tab in tabs::all() {
+        for f in &tab.filters {
+            if let FilterKind::PostCrawl(step) = f.kind {
+                assert!(steps.contains(&format!("{step:?}")), "{}:{}", tab.id, f.id);
+            }
+        }
     }
 }

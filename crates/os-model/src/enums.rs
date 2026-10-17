@@ -435,6 +435,7 @@ string_enum! {
         SearchConsole => "search_console",
         LinkMetrics => "link_metrics",
         Amp => "amp",
+        NearDuplicates => "near_duplicates",
     }
 }
 

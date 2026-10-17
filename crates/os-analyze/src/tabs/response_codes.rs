@@ -132,6 +132,7 @@ fn column(key: &'static str, sql: &'static str, kind: ColumnKind, visible: bool)
         kind,
         default_visible: visible,
         extension: false,
+        ..ColumnDef::META
     }
 }
 

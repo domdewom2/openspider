@@ -203,7 +203,7 @@ fn type_for_as(as_value: Option<&str>) -> LinkType {
 }
 
 /// Extrahiert alle Links in Dokumentreihenfolge.
-pub fn extract(doc: &Document, base: &url::Url, _cfg: &ParseConfig) -> Vec<ExtractedLink> {
+pub fn extract(doc: &Document, base: &url::Url, cfg: &ParseConfig) -> Vec<ExtractedLink> {
     let builder = Builder { base };
     let mut out: Vec<ExtractedLink> = Vec::new();
     walk(doc, |el, ordinal, position| {
@@ -361,6 +361,12 @@ pub fn extract(doc: &Document, base: &url::Url, _cfg: &ParseConfig) -> Vec<Extra
             _ => {}
         }
     });
+    // Ab M2 (INTEG-080): die konfigurierten Regeln bestimmen die Position; die Standardregeln liefern die Position der
+    // Vorfahrensuche von M1 unverändert (M2-D16 füllt `link_position::classify`).
+    for link in &mut out {
+        link.position =
+            crate::link_position::classify(&link.xpath, link.position, &cfg.link_positions);
+    }
     out
 }
 

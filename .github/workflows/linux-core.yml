@@ -73,6 +73,16 @@ jobs:
       - name: CLI-Golden-Smoke mit der Release-Binärdatei
         run: scripts/ci/linux-core.sh golden
 
+      # M2-F02 (OUT-233/OUT-234): stabile Leseschnittstelle der Crawl-Datei. Der Beispielleser scripts/ci/read_api_smoke.py
+      # benutzt nur Python-sqlite3 (mode=ro, ohne OpenSpider-Code): abgeschlossene Datei, Datei neben einem laufenden Crawl,
+      # unbekannte Version der Leseschnittstelle. Der Test crawlt out-basic-site/out-queue und ruft den Leser auf.
+      - name: read-api-smoke (Python sqlite3, ohne OpenSpider-Code)
+        env:
+          OPENSPIDER_REQUIRE_PYTHON: "1"
+        run: |
+          python3 --version
+          cargo test -p os-cli --test read_api_export --locked -- --nocapture
+
       - uses: actions/upload-artifact@v4
         with:
           name: openspider-linux-x86_64

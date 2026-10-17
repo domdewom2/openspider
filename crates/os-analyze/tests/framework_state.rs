@@ -533,3 +533,67 @@ fn already_cancelled_token_runs_nothing() {
     let rows = persist::read_steps(&file).unwrap();
     assert_eq!(rows[&AnalysisStep::Canonicals].state, StepState::Pending);
 }
+
+// Infrastruktur (M2-F02, K2-19): `NearDuplicates` ist ein Teilschritt der Crawl-Analyse mit eigenem Schalter und
+// eigenem Konfigurations-Hash; als Stub ist er angemeldet und ohne Umsetzung `NotApplicable`.
+#[test]
+fn near_duplicates_is_a_registered_step_with_its_own_switch_and_config_hash() {
+    assert!(AnalysisStep::ALL.contains(&AnalysisStep::NearDuplicates));
+    assert_eq!(AnalysisStep::NearDuplicates.as_str(), "near_duplicates");
+    assert_eq!(
+        "near_duplicates".parse::<AnalysisStep>().unwrap(),
+        AnalysisStep::NearDuplicates
+    );
+
+    let dir = tempfile::tempdir().unwrap();
+    let (_path, file) = crawl(dir.path(), "nd.ospider");
+    let outcome = run_with(
+        &file,
+        &CrawlConfig::default(),
+        &CancelToken::new(),
+        &|_, _| {},
+        &RunOptions::default(),
+    )
+    .unwrap();
+    let states: std::collections::BTreeMap<_, _> = outcome.steps.iter().cloned().collect();
+    assert_eq!(
+        states[&AnalysisStep::NearDuplicates],
+        StepState::NotApplicable
+    );
+    for step in [
+        AnalysisStep::LinkScore,
+        AnalysisStep::Pagination,
+        AnalysisStep::Hreflang,
+        AnalysisStep::Links,
+    ] {
+        assert_eq!(states[&step], StepState::NotApplicable, "{step:?}");
+    }
+
+    let mut off = CrawlConfig::default();
+    off.analysis.near_duplicates = false;
+    let outcome = run_with(
+        &file,
+        &off,
+        &CancelToken::new(),
+        &|_, _| {},
+        &RunOptions::default(),
+    )
+    .unwrap();
+    let states: std::collections::BTreeMap<_, _> = outcome.steps.iter().cloned().collect();
+    assert_eq!(states[&AnalysisStep::NearDuplicates], StepState::Skipped);
+
+    // Der Hash hängt an `duplicates.*` und `content.*`, nicht an fremden Abschnitten.
+    let base = CrawlConfig::default();
+    let mut threshold = base.clone();
+    threshold.duplicates.near_threshold_pct = 80;
+    let mut unrelated = base.clone();
+    unrelated.speed.threads = 9;
+    assert_ne!(
+        step_config_hash(AnalysisStep::NearDuplicates, &base),
+        step_config_hash(AnalysisStep::NearDuplicates, &threshold)
+    );
+    assert_eq!(
+        step_config_hash(AnalysisStep::NearDuplicates, &base),
+        step_config_hash(AnalysisStep::NearDuplicates, &unrelated)
+    );
+}

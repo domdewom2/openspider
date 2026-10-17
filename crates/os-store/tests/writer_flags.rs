@@ -65,6 +65,8 @@ fn sitemap(id: i64, hreflang: Vec<(UrlId, HreflangRow)>) -> SitemapWrite {
         found_via: "config".into(),
         entry_urls: vec![(UrlId(1), "/p1".into(), None)],
         hreflang,
+        error: None,
+        entry_meta: vec![],
     }
 }
 

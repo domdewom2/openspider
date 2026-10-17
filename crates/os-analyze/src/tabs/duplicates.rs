@@ -178,6 +178,7 @@ pub(crate) fn column(
         kind,
         default_visible,
         extension: false,
+        ..ColumnDef::META
     }
 }
 

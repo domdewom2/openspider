@@ -1,6 +1,6 @@
 //! Serde-Rundreise von `Progress` mit den Zusatzfeldern aus M1-P00c (docs/plan/M1.md 3.9).
 
-use os_model::{CrawlState, EndReason, Progress, Timestamp};
+use os_model::{CrawlState, EndReason, MemoryStage, Progress, Timestamp};
 
 fn sample() -> Progress {
     Progress {
@@ -18,6 +18,8 @@ fn sample() -> Progress {
         avg_rate: 4.0,
         paused_s: 30,
         discovered: 140,
+        memory_stage: None,
+        file_bytes: None,
     }
 }
 
@@ -60,4 +62,25 @@ fn progress_without_additional_fields_still_deserializes() {
     }
     let back: Progress = serde_json::from_value(v).unwrap();
     assert_eq!((back.avg_rate, back.paused_s, back.discovered), (0.0, 0, 0));
+}
+
+// spec: CRAWL-129
+#[test]
+fn progress_memory_stage_and_file_bytes_roundtrip_and_default_to_none() {
+    let mut p = sample();
+    p.memory_stage = Some(MemoryStage::Warning);
+    p.file_bytes = Some(123_456_789);
+    let json = serde_json::to_string(&p).unwrap();
+    let v: serde_json::Value = serde_json::from_str(&json).unwrap();
+    assert_eq!(v["memory_stage"], "warning");
+    assert_eq!(v["file_bytes"], 123_456_789u64);
+    assert_eq!(serde_json::from_str::<Progress>(&json).unwrap(), p);
+
+    // Ältere Ausgaben (vor M2) ohne die beiden Felder bleiben lesbar.
+    let mut old = serde_json::to_value(sample()).unwrap();
+    let obj = old.as_object_mut().unwrap();
+    obj.remove("memory_stage");
+    obj.remove("file_bytes");
+    let back: Progress = serde_json::from_value(old).unwrap();
+    assert_eq!((back.memory_stage, back.file_bytes), (None, None));
 }

@@ -3,6 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::enums::{CrawlState, EndReason};
+use crate::enums_m2::MemoryStage;
 use crate::time::Timestamp;
 
 /// Fortschrittsstand. Die JSON-Feldnamen `crawled`, `queued`, `percent`, `rate`, `avg_response_time`,
@@ -42,4 +43,12 @@ pub struct Progress {
     /// Bekannte URLs gesamt. Zusatzfeld (M1-P00c).
     #[serde(default)]
     pub discovered: u64,
+    /// Speicherstufe des Ressourcenschutzes (CRAWL-129, ab M2); `None`, solange die Engine sie nicht ermittelt.
+    /// Zusatzfeld (M2-F02, `docs/plan/M2.md` 3.3a); befüllt von M2-E02.
+    #[serde(default)]
+    pub memory_stage: Option<MemoryStage>,
+    /// Größe der Crawl-Datei in Byte (CRAWL-129, ab M2); `None`, solange die Engine sie nicht misst.
+    /// Zusatzfeld (M2-F02); befüllt von M2-E02.
+    #[serde(default)]
+    pub file_bytes: Option<u64>,
 }

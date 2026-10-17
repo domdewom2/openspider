@@ -22,7 +22,7 @@ fn create_sets_identity_wal_and_all_tables() {
         .pragma_query_value(None, "user_version", |r| r.get(0))
         .unwrap();
     assert_eq!(uv, i64::from(SCHEMA_VERSION));
-    assert_eq!(SCHEMA_VERSION, 2);
+    assert_eq!(SCHEMA_VERSION, 3);
     let jm: String = file
         .conn()
         .pragma_query_value(None, "journal_mode", |r| r.get(0))
@@ -121,7 +121,7 @@ fn reopen_reads_meta_and_config() {
         let m = f.meta().unwrap();
         assert_eq!(m.crawl_id, created.crawl_id);
         assert_eq!(m.state, CrawlState::Running);
-        assert_eq!(m.schema_version, 2);
+        assert_eq!(m.schema_version, 3);
     }
     for mode in [OpenMode::ReadOnly, OpenMode::ReadWrite] {
         let f = CrawlFile::open(&path, mode).unwrap();

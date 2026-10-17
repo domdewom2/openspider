@@ -140,6 +140,7 @@ fn col(key: &'static str, sql: &'static str, kind: ColumnKind, default_visible: 
         kind,
         default_visible,
         extension: false,
+        ..ColumnDef::META
     }
 }
 
@@ -188,6 +189,7 @@ pub fn test_tab() -> TabDef {
                 kind: ColumnKind::Text,
                 default_visible: true,
                 extension: false,
+                ..ColumnDef::META
             },
             ColumnDef {
                 key: "Ext Spalte",
@@ -195,6 +197,7 @@ pub fn test_tab() -> TabDef {
                 kind: ColumnKind::Int,
                 default_visible: false,
                 extension: true,
+                ..ColumnDef::META
             },
         ],
         filters: vec![

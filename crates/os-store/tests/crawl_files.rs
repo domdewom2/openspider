@@ -1,9 +1,10 @@
 //! Crawl-Dateien (CRAWL-127, OUT-230): Fixtures, Fehlerbilder, `save_as`, Fortsetzen, Reparatur, Import.
 //!
-//! Die Fixtures liegen in `tests/fixtures/crawl-files/`; mit `UPDATE_FIXTURES=1 cargo test -p os-store
-//! --test crawl_files regenerate_fixtures` werden sie neu erzeugt (danach `git add -f`, `*.ospider` steht in
-//! `.gitignore`). `schema-v1.ospider` ist eine echte Datei im Schema v1 (von der Version vor M1-P32 geschrieben)
-//! und wird **nicht** neu erzeugt: sie ist die Eingabe des Migrationstests (v1 → v2).
+//! Die Fixtures liegen in `tests/fixtures/crawl-files/` (`*.ospider` steht in `.gitignore`, eingecheckt mit
+//! `git add -f`). `schema-v1.ospider` und `schema-v2.ospider` sind echte Dateien der älteren Schemas (v1 vor M1-P32,
+//! v2 bis M2-F02) und werden **nicht** neu erzeugt: sie sind die Eingaben der Migrationstests (v1/v2 → v3).
+//! `schema-v99.ospider` und `corrupt.ospider` sind aus der v2-Datei abgeleitet und bleiben ebenfalls unverändert.
+//! Tests, die eine Datei im **aktuellen** Schema brauchen, erzeugen sie mit [`current_fixture`].
 
 mod store_common;
 
@@ -28,43 +29,82 @@ fn companions(path: &Path) -> Vec<String> {
         .collect()
 }
 
-#[test]
-fn regenerate_fixtures() {
-    if std::env::var_os("UPDATE_FIXTURES").is_none() {
-        return;
-    }
-    write_crawl_file_fixtures(&fixture_dir());
+/// Eine eigenständige Datei im aktuellen Schema (pausierter Crawl mit 42 URLs, `build_paused_crawl`) in `dir`.
+fn current_fixture(dir: &Path) -> std::path::PathBuf {
+    let src = dir.join("source.ospider");
+    build_paused_crawl(&src);
+    let dest = dir.join("schema-current.ospider");
+    CrawlFile::open(&src, OpenMode::ReadOnly)
+        .unwrap()
+        .save_as(&dest)
+        .unwrap();
+    dest
 }
 
-/// Die eingecheckten Fixtures stimmen mit dem Generator überein (Inhalt, nicht Bytes).
+/// Tabellen, deren Inhalt eine migrierte v2-Datei und eine neu geschriebene Datei gleich haben müssen.
+const M1_TABLES: &[&str] = &[
+    "urls",
+    "links",
+    "url_counters",
+    "queue",
+    "canonicals",
+    "directives",
+    "hreflang",
+];
+
+fn table_dump(file: &CrawlFile, table: &str) -> String {
+    let conn = file.conn();
+    let mut stmt = conn
+        .prepare(&format!("SELECT * FROM {table} ORDER BY 1, 2, 3"))
+        .unwrap();
+    let columns = stmt.column_count();
+    let rows: Vec<String> = stmt
+        .query_map([], |r| {
+            let mut cells = Vec::new();
+            for i in 0..columns {
+                let v: rusqlite::types::Value = r.get(i)?;
+                cells.push(format!("{v:?}"));
+            }
+            Ok(cells.join("|"))
+        })
+        .unwrap()
+        .collect::<Result<_, _>>()
+        .unwrap();
+    rows.join("\n")
+}
+
+/// Die eingecheckte v2-Fixture ist dieselbe Datei, die der Generator heute schreibt, nach der Migration auf v3
+/// (Inhalt der M1-Tabellen; Manifest-Werte, die die alte Datei nicht kennt, fehlen).
 #[test]
-fn committed_fixtures_match_the_generator() {
+fn committed_v2_fixture_migrates_to_the_content_the_generator_writes_today() {
     let work = tempfile::tempdir().unwrap();
-    write_crawl_file_fixtures(work.path());
-    let generated = work.path().join("schema-v2.ospider");
+    let generated = current_fixture(work.path());
     let committed_dir = tempfile::tempdir().unwrap();
     let committed = copy_fixture("schema-v2.ospider", committed_dir.path());
-    let a = CrawlFile::open(&generated, OpenMode::ReadOnly).unwrap();
-    let b = CrawlFile::open(&committed, OpenMode::ReadOnly).unwrap();
     assert_eq!(
-        dump(&a),
-        dump(&b),
-        "Fixture schema-v2.ospider veraltet (UPDATE_FIXTURES=1)"
+        schema::user_version(&rusqlite::Connection::open(&committed).unwrap()).unwrap(),
+        2,
+        "die eingecheckte Fixture ist eine echte v2-Datei"
     );
-    for name in ["corrupt.ospider", "not-a-crawl.ospider"] {
+    let a = CrawlFile::open(&generated, OpenMode::ReadOnly).unwrap();
+    let b = CrawlFile::open(&committed, OpenMode::ReadWrite).unwrap();
+    for table in M1_TABLES {
         assert_eq!(
-            checksum(&work.path().join(name)),
-            checksum(&fixture_dir().join(name)),
-            "Fixture {name} veraltet"
+            table_dump(&a, table),
+            table_dump(&b, table),
+            "Tabelle {table}"
         );
+    }
+    for name in ["corrupt.ospider", "not-a-crawl.ospider"] {
+        assert!(fixture_dir().join(name).exists(), "Fixture {name} fehlt");
     }
 }
 
 // spec: OUT-230
 #[test]
-fn schema_v2_fixture_is_a_valid_crawl_file_with_embedded_config() {
+fn current_schema_file_is_a_valid_crawl_file_with_embedded_config() {
     let dir = tempfile::tempdir().unwrap();
-    let path = copy_fixture("schema-v2.ospider", dir.path());
+    let path = current_fixture(dir.path());
     let file = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
     assert_eq!(
         schema::application_id(file.conn()).unwrap(),
@@ -103,7 +143,7 @@ fn newer_schema_version_is_rejected_and_file_stays_byte_identical() {
                 generator,
                 ..
             } => {
-                assert_eq!((*found, *supported), (99, 2));
+                assert_eq!((*found, *supported), (99, schema::SCHEMA_VERSION));
                 assert!(
                     generator.contains("9.9.0"),
                     "Erzeuger in der Meldung: {generator}"
@@ -273,7 +313,7 @@ fn save_as_is_self_contained_and_contents_are_identical() {
 #[test]
 fn paused_crawl_with_15_queued_urls_resumes_exactly_those() {
     let dir = tempfile::tempdir().unwrap();
-    let path = copy_fixture("schema-v2.ospider", dir.path());
+    let path = current_fixture(dir.path());
     let saved = dir.path().join("gespeichert.ospider");
     CrawlFile::open(&path, OpenMode::ReadWrite)
         .unwrap()
@@ -421,7 +461,7 @@ fn damaged_file_is_detected_and_repaired_into_a_new_copy() {
 fn import_copies_into_the_crawl_folder_and_assigns_a_new_id_on_clash() {
     let work = tempfile::tempdir().unwrap();
     let crawls = work.path().join("crawls");
-    let src = copy_fixture("schema-v2.ospider", work.path());
+    let src = current_fixture(work.path());
     let original_id = CrawlFile::open(&src, OpenMode::ReadOnly)
         .unwrap()
         .meta()
@@ -559,7 +599,7 @@ fn effective_state_marks_crawls_without_heartbeat_as_incomplete() {
 #[test]
 fn url_key_iteration_covers_all_urls_in_order() {
     let dir = tempfile::tempdir().unwrap();
-    let path = copy_fixture("schema-v2.ospider", dir.path());
+    let path = current_fixture(dir.path());
     let file = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
     let mut seen = Vec::new();
     let n = file
@@ -581,7 +621,7 @@ fn url_key_iteration_covers_all_urls_in_order() {
 
 // spec: PERF-002
 #[test]
-fn a_schema_v1_file_migrates_to_v2_with_identical_counters() {
+fn a_schema_v1_file_migrates_to_the_current_schema_with_identical_counters() {
     let dir = tempfile::tempdir().unwrap();
     let path = copy_fixture("schema-v1.ospider", dir.path());
     let before = std::fs::read(&path).unwrap();
@@ -590,13 +630,16 @@ fn a_schema_v1_file_migrates_to_v2_with_identical_counters() {
     match CrawlFile::open(&path, OpenMode::ReadOnly) {
         Err(StoreError::MigrationRequired {
             found, supported, ..
-        }) => assert_eq!((found, supported), (1, 2)),
+        }) => assert_eq!((found, supported), (1, schema::SCHEMA_VERSION)),
         other => panic!("MigrationRequired erwartet: {:?}", other.err()),
     }
     assert_eq!(std::fs::read(&path).unwrap(), before);
 
     let file = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
-    assert_eq!(schema::user_version(file.conn()).unwrap(), 2);
+    assert_eq!(
+        schema::user_version(file.conn()).unwrap(),
+        schema::SCHEMA_VERSION
+    );
     // Sicherungskopie in der alten Version
     let backup = os_store::backup_path(&path, 1);
     assert!(backup.exists());

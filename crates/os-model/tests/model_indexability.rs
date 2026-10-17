@@ -82,6 +82,8 @@ fn progress_json_field_names_are_fixed() {
         avg_rate: 6.0,
         paused_s: 0,
         discovered: 42,
+        memory_stage: None,
+        file_bytes: None,
     };
     let v = serde_json::to_value(&p).unwrap();
     for key in [

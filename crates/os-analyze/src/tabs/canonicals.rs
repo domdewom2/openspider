@@ -84,6 +84,7 @@ pub(crate) fn column(
         kind,
         default_visible,
         extension: false,
+        ..ColumnDef::META
     }
 }
 
@@ -99,6 +100,7 @@ pub(crate) fn extension_column(
         kind,
         default_visible: false,
         extension: true,
+        ..ColumnDef::META
     }
 }
 
@@ -113,6 +115,7 @@ pub(crate) fn multi_column(
         kind,
         default_visible: true,
         extension: false,
+        ..ColumnDef::META
     }
 }
 

@@ -79,6 +79,7 @@ pub(crate) fn col(
         kind,
         default_visible,
         extension: false,
+        ..ColumnDef::META
     }
 }
 
@@ -90,6 +91,7 @@ pub(crate) fn ext_col(key: &'static str, sql: &'static str, kind: ColumnKind) ->
         kind,
         default_visible: false,
         extension: true,
+        ..ColumnDef::META
     }
 }
 
@@ -101,6 +103,7 @@ pub(crate) fn multi(base: &'static str, list_sql: &'static str, kind: ColumnKind
         kind,
         default_visible: true,
         extension: false,
+        ..ColumnDef::META
     }
 }
 

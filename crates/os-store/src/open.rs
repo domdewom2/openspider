@@ -200,6 +200,15 @@ impl CrawlFile {
                 ("analysis_stale", "0".to_string()),
                 // Änderungsfeed (P00c, 3.9): der Writer erhöht den Wert je Batch.
                 ("change_seq", "0".to_string()),
+                // Manifest (OUT-233, M2-F02): anlegendes und zuletzt schreibendes Programm.
+                (
+                    "openspider_version",
+                    crate::meta::OPENSPIDER_VERSION.to_string(),
+                ),
+                (
+                    "last_writer_version",
+                    crate::meta::OPENSPIDER_VERSION.to_string(),
+                ),
             ];
             if let Some(u) = &init.start_url {
                 rows.push(("start_url", u.clone()));
@@ -211,10 +220,12 @@ impl CrawlFile {
                 put.execute([k, v.as_str()])?;
             }
         }
+        let osconfig = init.config.to_toml_string()?;
         tx.execute(
             "INSERT INTO crawl_config (id, osconfig, updated_at) VALUES (1, ?1, ?2)",
-            [&init.config.to_toml_string()?, &init.created_at.to_db()],
+            [&osconfig, &init.created_at.to_db()],
         )?;
+        crate::meta::stamp_config(&tx, &osconfig)?;
         tx.commit()?;
         // Kennung und Schema stehen damit auch ohne WAL-Datei im Dateikopf (z. B. nach einem Absturz).
         conn.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |_| Ok(()))?;
@@ -237,6 +248,83 @@ impl CrawlFile {
         mode: OpenMode,
         migrations: &[Migration],
     ) -> Result<Self, StoreError> {
+        Self::open_inner(path, mode, migrations, true)
+    }
+
+    /// Migriert eine ältere Crawl-Datei **als Kopie**: `src` bleibt Byte für Byte unverändert (auch ihre `-wal`-Datei
+    /// wird nicht angefasst), `dst` ist eine eigenständige Datei im aktuellen Schema (OUT-184, OS-Festlegung:
+    /// `--load-crawl` einer Datei älterer Schemaversion). Eine Sicherungskopie `<name>.v<alt>.bak.ospider` entsteht nicht,
+    /// weil das Original selbst die Sicherung ist. Ist `src` bereits aktuell, ist `dst` eine einfache Kopie.
+    /// `dst` darf nicht existieren.
+    pub fn migrate_copy(src: &Path, dst: &Path) -> Result<Self, StoreError> {
+        if dst.exists() {
+            return Err(StoreError::AlreadyExists(dst.to_path_buf()));
+        }
+        if !src.exists() {
+            return Err(StoreError::NotFound(src.to_path_buf()));
+        }
+        if !check_sqlite_header(src)? {
+            return Err(StoreError::NotACrawlFile {
+                path: src.to_path_buf(),
+            });
+        }
+        if let Some(parent) = dst.parent().filter(|p| !p.as_os_str().is_empty()) {
+            std::fs::create_dir_all(parent).map_err(|e| StoreError::io(parent, e))?;
+        }
+        let copy = (|| -> Result<(), StoreError> {
+            let probe = Connection::open_with_flags(
+                src,
+                OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
+            )
+            .map_err(|e| classify(src, e))?;
+            probe.busy_timeout(std::time::Duration::from_secs(5))?;
+            let app_id = schema::application_id(&probe).map_err(|e| match e {
+                StoreError::Sqlite(e) => classify(src, e),
+                other => other,
+            })?;
+            if app_id != APPLICATION_ID {
+                return Err(StoreError::NotACrawlFile {
+                    path: src.to_path_buf(),
+                });
+            }
+            let found = schema::user_version(&probe)?;
+            let latest = schema::latest_version(MIGRATIONS);
+            if found > latest {
+                return Err(StoreError::NewerVersion {
+                    path: src.to_path_buf(),
+                    found,
+                    supported: latest,
+                    generator: read_generator(&probe),
+                });
+            }
+            // `VACUUM INTO` liest einen konsistenten Schnappschuss (auch aus dem WAL) und schreibt nur `dst`.
+            let target = dst.to_string_lossy().into_owned();
+            probe.execute("VACUUM INTO ?1", [target.as_str()])?;
+            Ok(())
+        })();
+        if let Err(e) = copy {
+            let _ = std::fs::remove_file(dst);
+            return Err(e);
+        }
+        match Self::open_inner(dst, OpenMode::ReadWrite, MIGRATIONS, false) {
+            Ok(f) => Ok(f),
+            Err(e) => {
+                for suffix in ["", "-wal", "-shm"] {
+                    let mut p = dst.as_os_str().to_owned();
+                    p.push(suffix);
+                    let _ = std::fs::remove_file(PathBuf::from(p));
+                }
+                Err(e)
+            }
+        }
+    }
+
+    fn open_inner(
+        path: &Path,
+        mode: OpenMode,
+        migrations: &[Migration],
+        backup: bool,
+    ) -> Result<Self, StoreError> {
         if !path.exists() {
             return Err(StoreError::NotFound(path.to_path_buf()));
         }
@@ -246,6 +334,8 @@ impl CrawlFile {
             });
         }
         let latest = schema::latest_version(migrations);
+        // Die Manifest-Werte (OUT-233) pflegt nur die Produktionsliste; Tests mit eigenen Listen haben kein `crawl_meta`.
+        let production = std::ptr::eq(migrations, MIGRATIONS);
 
         // Prüfen, ohne die Datei zu verändern.
         let (found, generator) = {
@@ -288,6 +378,16 @@ impl CrawlFile {
             });
         }
 
+        // Die Sicherungskopie entsteht vor der ersten Änderung der Datei (auch vor `PRAGMA journal_mode`), damit sie
+        // dem Original Byte für Byte entspricht (OUT-184). Liegen noch Frames in einer `-wal`-Datei, ist die Hauptdatei
+        // allein unvollständig; dann entsteht die Kopie nach dem Zusammenführen (weiter unten).
+        let mut backed_up = false;
+        if found < latest && mode == OpenMode::ReadWrite && backup && !wal_has_frames(path) {
+            let target = backup_path(path, found);
+            std::fs::copy(path, &target).map_err(|e| StoreError::io(&target, e))?;
+            backed_up = true;
+        }
+
         let flags = match mode {
             OpenMode::ReadOnly => OpenFlags::SQLITE_OPEN_READ_ONLY,
             OpenMode::ReadWrite => OpenFlags::SQLITE_OPEN_READ_WRITE,
@@ -303,14 +403,26 @@ impl CrawlFile {
         if found < latest {
             // Sicherungskopie als eigenständige Datei (WAL zusammenführen), dann migrieren.
             conn.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |_| Ok(()))?;
-            let backup = backup_path(path, found);
-            std::fs::copy(path, &backup).map_err(|e| StoreError::io(&backup, e))?;
+            if backup && !backed_up {
+                let target = backup_path(path, found);
+                std::fs::copy(path, &target).map_err(|e| StoreError::io(&target, e))?;
+            }
             schema::migrate(&mut conn, found, migrations)?;
             conn.execute(
                 "INSERT INTO crawl_meta (key, value) VALUES ('schema_version', ?1) \
                  ON CONFLICT(key) DO UPDATE SET value = excluded.value",
                 [latest.to_string()],
             )?;
+            // Manifest (OUT-233): was die alte Datei nicht kennt (`openspider_version`), bleibt unbekannt (NULL);
+            // abgeleitet werden nur Werte aus der eingebetteten Konfiguration.
+            if production {
+                if let Some(osconfig) = crate::meta::raw_config(&conn)? {
+                    crate::meta::stamp_config(&conn, &osconfig)?;
+                }
+            }
+        }
+        if mode == OpenMode::ReadWrite && production {
+            crate::meta::stamp_writer(&conn)?;
         }
         Ok(CrawlFile {
             path: path.to_path_buf(),
@@ -358,11 +470,13 @@ impl CrawlFile {
         c: &CrawlConfig,
         clock: &dyn Clock,
     ) -> Result<(), StoreError> {
+        let osconfig = c.to_toml_string()?;
         self.conn.execute(
             "INSERT INTO crawl_config (id, osconfig, updated_at) VALUES (1, ?1, ?2) \
              ON CONFLICT(id) DO UPDATE SET osconfig = excluded.osconfig, updated_at = excluded.updated_at",
-            [&c.to_toml_string()?, &clock.now().to_db()],
+            [&osconfig, &clock.now().to_db()],
         )?;
+        crate::meta::stamp_config(&self.conn, &osconfig)?;
         Ok(())
     }
 }

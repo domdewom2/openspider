@@ -109,6 +109,7 @@ pub fn page(id: i64, links: Vec<LinkRow>) -> PageWrite {
         hreflang: vec![],
         pagination: vec![],
         headers: vec![],
+        html: None,
     }
 }
 

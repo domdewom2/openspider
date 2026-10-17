@@ -50,8 +50,14 @@ fn issues_bulk_and_all_reports_are_listed() {
     assert!(bulk.iter().any(|n| n == "Issues:All Issues"), "{bulk:?}");
     assert!(bulk.iter().any(|n| n == "Links:All Inlinks"), "{bulk:?}");
     let report_names = list(ExportKind::Report);
-    assert_eq!(report_names, reports::names());
-    assert_eq!(report_names.len(), REPORTS.len());
+    // Die Reports von M1 stehen vorn, dahinter die Tabellen-Einträge von M2 (Stubs, M2-F02).
+    let m1 = reports::names();
+    assert_eq!(report_names[..m1.len()], m1[..]);
+    assert_eq!(m1.len(), REPORTS.len());
+    assert_eq!(
+        report_names.len(),
+        REPORTS.len() + os_export::reports::report_tables().len()
+    );
     for expected in [
         "Crawl Overview",
         "Redirects:All Redirects",

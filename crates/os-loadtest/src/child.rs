@@ -121,6 +121,7 @@ pub async fn run(args: ChildArgs) -> Result<i32, String> {
         sink_factory: None,
         on_finished: None,
         owner_kind: "cli",
+        renderer: None,
     };
     if args.slow_sink_ms.is_some() || args.wal_autocheckpoint.is_some() {
         deps.sink_factory = Some(tuned_sink_factory(

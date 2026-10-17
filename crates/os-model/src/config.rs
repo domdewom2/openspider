@@ -1000,6 +1000,7 @@ impl AnalysisConfig {
             S::SearchConsole => self.search_console,
             S::LinkMetrics => self.link_metrics,
             S::Amp => self.amp,
+            S::NearDuplicates => self.near_duplicates,
         }
     }
 }

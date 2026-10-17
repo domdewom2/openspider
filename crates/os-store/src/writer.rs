@@ -530,6 +530,7 @@ fn is_empty(batch: &WriteBatch) -> bool {
         && batch.events.is_empty()
         && batch.counters.is_empty()
         && batch.url_flags.is_empty()
+        && crate::writer_m2::parts_empty(batch)
 }
 
 fn int(v: u64) -> i64 {
@@ -574,6 +575,8 @@ fn write_batch(
     }
     g.time(|g| &mut g.counters, || batch_counters.flush(&tx, seq))?;
     write_url_flags(&tx, &batch.url_flags, seq)?;
+    // Schema v3: die M2-Teile in derselben Transaktion (ext, strukturierte Daten, Rendering, …).
+    crate::writer_m2::write(&tx, batch, seq)?;
     g.time(|g| &mut g.queue, || apply_queue(&tx, &batch.queue))?;
     for sitemap in &batch.sitemaps {
         write_sitemap(&tx, sitemap)?;
@@ -986,6 +989,7 @@ fn write_page(
             Contribution::default()
         };
         delete_children(tx, id)?;
+        crate::writer_m2::clear_page_children(tx, id)?;
         old
     } else {
         Contribution::default()
@@ -999,6 +1003,9 @@ fn write_page(
     insert_hreflang(tx, id, &page.hreflang)?;
     insert_pagination(tx, id, &page.pagination)?;
     insert_headers(tx, id, &page.headers)?;
+    if let Some(html) = &page.html {
+        crate::writer_m2::write_page_html(tx, id, html)?;
+    }
 
     if internal {
         let new = Contribution::from_rows(&page.links, &page.images, is_html_2xx(page));
@@ -1286,7 +1293,8 @@ fn write_url_flags(
 fn write_sitemap(tx: &Transaction<'_>, s: &SitemapWrite) -> Result<(), StoreError> {
     tx.prepare_cached(
         "INSERT OR REPLACE INTO sitemaps (id, url, url_id, parent_id, kind, entries, invalid_entries, \
-         size_bytes, status_code, depth, found_via) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+         size_bytes, status_code, depth, found_via, error) \
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
     )?
     .execute(params![
         s.id.0,
@@ -1299,7 +1307,8 @@ fn write_sitemap(tx: &Transaction<'_>, s: &SitemapWrite) -> Result<(), StoreErro
         int(s.size_bytes),
         s.status_code,
         s.depth,
-        s.found_via
+        s.found_via,
+        s.error
     ])?;
     tx.prepare_cached("DELETE FROM sitemap_entries WHERE sitemap_id = ?1")?
         .execute([s.id.0])?;
@@ -1310,6 +1319,30 @@ fn write_sitemap(tx: &Transaction<'_>, s: &SitemapWrite) -> Result<(), StoreErro
         )?;
         for (url_id, loc_raw, lastmod) in &s.entry_urls {
             stmt.execute(params![s.id.0, url_id.0, loc_raw, lastmod])?;
+        }
+    }
+    // Zusatzangaben der Einträge (CRAWL-060-Rest, Schema v3).
+    if !s.entry_meta.is_empty() {
+        let mut stmt = tx.prepare_cached(
+            "UPDATE sitemap_entries SET changefreq = ?1, priority = ?2, images = ?3, videos = ?4, news = ?5 \
+             WHERE sitemap_id = ?6 AND url_id = ?7",
+        )?;
+        for m in &s.entry_meta {
+            let changed = stmt.execute(params![
+                m.changefreq,
+                m.priority,
+                m.images,
+                m.videos,
+                m.news,
+                s.id.0,
+                m.url.0
+            ])?;
+            if changed == 0 {
+                return Err(batch_error(format!(
+                    "SitemapWrite {}: entry_meta für URL {} ohne Eintrag in entry_urls",
+                    s.id.0, m.url
+                )));
+            }
         }
     }
     // Eine erneute Übergabe derselben Sitemap ersetzt auch deren hreflang-Angaben.

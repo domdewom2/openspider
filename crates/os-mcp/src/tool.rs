@@ -1,8 +1,11 @@
 //! Werkzeug-Schnittstelle des MCP-Servers (AGENT-001 ff.).
 
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
+
+use crate::session::SessionAccess;
 
 /// Klasse eines Werkzeugs; der Nutzer gibt Klassen frei (AGENT-010 ff.). In den Einstellungsdateien
 /// kleingeschrieben (`read`, `crawl`, `write`, `cost`).
@@ -20,7 +23,8 @@ pub enum ToolClass {
 }
 
 /// Umgebung eines Werkzeugaufrufs. Neue Felder (M2: optionales Sitzungs-Trait-Objekt, das `os-app`
-/// bereitstellt) kommen ohne Umbau der Aufrufer hinzu: Konstruktion nur über [`ToolContext::new`].
+/// bereitstellt) kommen ohne Umbau der Aufrufer hinzu: Konstruktion nur über [`ToolContext::new`] und
+/// [`ToolContext::with_session`].
 #[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct ToolContext {
@@ -28,15 +32,25 @@ pub struct ToolContext {
     pub crawl_dir: PathBuf,
     /// Höchstzahl Zeichen einer Antwort (Standard 50 000).
     pub max_chars: usize,
+    /// Zugriff auf die Sitzung der App (ab M2, K-17): Crawl-Liste, Start/Stopp und Live-Status im App-Prozess. `None` im
+    /// STDIO-Server (`openspider mcp`), der nur Crawl-Dateien liest.
+    pub session: Option<Arc<dyn SessionAccess>>,
 }
 
 impl ToolContext {
-    /// Kontext mit der Standard-Antwortgrenze von 50 000 Zeichen.
+    /// Kontext mit der Standard-Antwortgrenze von 50 000 Zeichen und ohne Sitzung.
     pub fn new(crawl_dir: PathBuf) -> Self {
         ToolContext {
             crawl_dir,
             max_chars: 50_000,
+            session: None,
         }
+    }
+
+    /// Derselbe Kontext mit dem Sitzungszugriff der App.
+    pub fn with_session(mut self, session: Arc<dyn SessionAccess>) -> Self {
+        self.session = Some(session);
+        self
     }
 }
 
@@ -79,4 +93,46 @@ pub trait Tool: Send + Sync {
     fn input_schema(&self) -> serde_json::Value;
     /// Führt das Werkzeug aus.
     fn call(&self, ctx: &ToolContext, args: serde_json::Value) -> Result<ToolOutput, ToolError>;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::session::{SessionCrawl, SessionError, SessionStart, SessionStatus};
+
+    #[derive(Debug)]
+    struct NoSession;
+
+    impl SessionAccess for NoSession {
+        fn crawls(&self) -> Vec<SessionCrawl> {
+            Vec::new()
+        }
+        fn status(&self, _crawl_id: &str) -> Option<SessionStatus> {
+            None
+        }
+        fn start_crawl(&self, _start: SessionStart) -> Result<SessionCrawl, SessionError> {
+            Err(SessionError::Invalid("test".into()))
+        }
+        fn stop_crawl(&self, crawl_id: &str) -> Result<(), SessionError> {
+            Err(SessionError::NotFound(crawl_id.to_string()))
+        }
+    }
+
+    // Infrastruktur (M2-F02): der Kontext hat standardmäßig keine Sitzung (STDIO-Server) und nimmt die der App auf.
+    #[test]
+    fn the_context_has_no_session_unless_the_app_provides_one() {
+        let ctx = ToolContext::new(PathBuf::from("crawls"));
+        assert!(ctx.session.is_none());
+        assert_eq!(ctx.max_chars, 50_000);
+        let ctx = ctx.with_session(Arc::new(NoSession));
+        let session = ctx.session.as_ref().expect("Sitzung gesetzt");
+        assert!(session.crawls().is_empty());
+        assert_eq!(
+            session.stop_crawl("x"),
+            Err(SessionError::NotFound("x".to_string()))
+        );
+        // Der Kontext bleibt klonbar und ausgebbar (Debug) wie zuvor.
+        let copy = ctx.clone();
+        assert!(format!("{copy:?}").contains("NoSession"));
+    }
 }

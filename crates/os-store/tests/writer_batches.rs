@@ -356,6 +356,8 @@ fn url_updates_queue_sitemaps_robots_meta_events_counters() {
                 (UrlId(2), "/p2".into(), None),
             ],
             hreflang: vec![],
+            error: None,
+            entry_meta: vec![],
         }],
         robots: vec![RobotsWrite {
             origin: "https://site.test".into(),
@@ -460,6 +462,8 @@ fn url_updates_queue_sitemaps_robots_meta_events_counters() {
             found_via: "robots".into(),
             entry_urls: vec![(UrlId(3), "/p3".into(), None)],
             hreflang: vec![],
+            error: None,
+            entry_meta: vec![],
         }],
         ..WriteBatch::default()
     };

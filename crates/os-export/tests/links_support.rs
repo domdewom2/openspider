@@ -202,6 +202,7 @@ fn col(key: &'static str, sql: &'static str, kind: ColumnKind, visible: bool) ->
         kind,
         default_visible: visible,
         extension: false,
+        ..ColumnDef::META
     }
 }
 
@@ -232,6 +233,7 @@ pub fn page_titles_tab() -> TabDef {
                 kind: ColumnKind::Int,
                 default_visible: false,
                 extension: true,
+                ..ColumnDef::META
             },
             col(
                 "Title 1 Pixel Width",
@@ -261,6 +263,7 @@ pub fn page_titles_tab() -> TabDef {
                 kind: ColumnKind::Text,
                 default_visible: false,
                 extension: false,
+                ..ColumnDef::META
             },
         ],
         filters: vec![

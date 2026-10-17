@@ -1,0 +1,216 @@
+## q_manifest
+key|value
+analysis_state|pending
+completeness|paused
+config_sha256|<SHA256>
+crawl_id|<ID>
+end_reason|NULL
+ended_at|NULL
+format|ospider
+last_writer_version|<VERSION>
+list_source|NULL
+manifest_version|1
+mode|spider
+name|Pausierter Crawl
+openspider_version|<VERSION>
+project|Projekt
+read_api_version|1
+schema_version|3
+start_url|https://site.test/
+started_at|<TS>
+state|Paused
+urls_crawled|25
+urls_total|42
+user_agent|Mozilla/5.0 (compatible; OpenSpider/<VERSION>; +https://openspider.de)
+writer_kind|NULL
+## q_config
+osconfig|updated_at
+<OSCONFIG>|<TS>
+## q_urls
+url_id|address|is_internal|crawled|content_type|status_code|status|indexability|indexability_status|title_1|meta_description_1|h1_1|h2_1|canonical_link_element_1|word_count|size_bytes|transferred_bytes|response_time|crawl_depth|folder_depth|inlinks|unique_inlinks|outlinks|unique_outlinks|external_outlinks|redirect_url|redirect_type|http_version|hash|last_modified|crawl_timestamp
+1|https://site.test/p1|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|25|25|3|3|0|NULL|NULL|NULL|NULL|NULL|<TS>
+2|https://site.test/p2|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|1|1|3|3|0|NULL|NULL|NULL|NULL|NULL|<TS>
+3|https://site.test/p3|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|0|NULL|NULL|NULL|NULL|NULL|<TS>
+4|https://site.test/p4|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|0|NULL|NULL|NULL|NULL|NULL|<TS>
+5|https://site.test/p5|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|1|NULL|NULL|NULL|NULL|NULL|<TS>
+6|https://site.test/p6|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|0|NULL|NULL|NULL|NULL|NULL|<TS>
+7|https://site.test/p7|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|0|NULL|NULL|NULL|NULL|NULL|<TS>
+8|https://site.test/p8|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|0|NULL|NULL|NULL|NULL|NULL|<TS>
+9|https://site.test/p9|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|0|NULL|NULL|NULL|NULL|NULL|<TS>
+10|https://site.test/p10|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|1|NULL|NULL|NULL|NULL|NULL|<TS>
+11|https://site.test/p11|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|0|NULL|NULL|NULL|NULL|NULL|<TS>
+12|https://site.test/p12|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|0|NULL|NULL|NULL|NULL|NULL|<TS>
+13|https://site.test/p13|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|0|NULL|NULL|NULL|NULL|NULL|<TS>
+14|https://site.test/p14|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|0|NULL|NULL|NULL|NULL|NULL|<TS>
+15|https://site.test/p15|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|1|NULL|NULL|NULL|NULL|NULL|<TS>
+16|https://site.test/p16|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|0|NULL|NULL|NULL|NULL|NULL|<TS>
+17|https://site.test/p17|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|0|NULL|NULL|NULL|NULL|NULL|<TS>
+18|https://site.test/p18|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|0|NULL|NULL|NULL|NULL|NULL|<TS>
+19|https://site.test/p19|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|0|NULL|NULL|NULL|NULL|NULL|<TS>
+20|https://site.test/p20|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|1|NULL|NULL|NULL|NULL|NULL|<TS>
+21|https://site.test/p21|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|0|NULL|NULL|NULL|NULL|NULL|<TS>
+22|https://site.test/p22|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|0|NULL|NULL|NULL|NULL|NULL|<TS>
+23|https://site.test/p23|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|0|NULL|NULL|NULL|NULL|NULL|<TS>
+24|https://site.test/p24|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|0|NULL|NULL|NULL|NULL|NULL|<TS>
+25|https://site.test/p25|1|1|text/html|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1000|0|NULL|1|0|2|2|3|3|1|NULL|NULL|NULL|NULL|NULL|<TS>
+26|https://site.test/p26|1|0|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1|0|2|2|0|0|0|NULL|NULL|NULL|NULL|NULL|NULL
+27|https://site.test/p27|1|0|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1|0|1|1|0|0|0|NULL|NULL|NULL|NULL|NULL|NULL
+28|https://site.test/p28|1|0|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1|0|0|0|0|0|0|NULL|NULL|NULL|NULL|NULL|NULL
+29|https://site.test/p29|1|0|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1|0|0|0|0|0|0|NULL|NULL|NULL|NULL|NULL|NULL
+30|https://site.test/p30|1|0|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1|0|0|0|0|0|0|NULL|NULL|NULL|NULL|NULL|NULL
+31|https://site.test/p31|1|0|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1|0|0|0|0|0|0|NULL|NULL|NULL|NULL|NULL|NULL
+32|https://site.test/p32|1|0|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1|0|0|0|0|0|0|NULL|NULL|NULL|NULL|NULL|NULL
+33|https://site.test/p33|1|0|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1|0|0|0|0|0|0|NULL|NULL|NULL|NULL|NULL|NULL
+34|https://site.test/p34|1|0|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1|0|0|0|0|0|0|NULL|NULL|NULL|NULL|NULL|NULL
+35|https://site.test/p35|1|0|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1|0|0|0|0|0|0|NULL|NULL|NULL|NULL|NULL|NULL
+36|https://site.test/p36|1|0|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1|0|0|0|0|0|0|NULL|NULL|NULL|NULL|NULL|NULL
+37|https://site.test/p37|1|0|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1|0|0|0|0|0|0|NULL|NULL|NULL|NULL|NULL|NULL
+38|https://site.test/p38|1|0|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1|0|0|0|0|0|0|NULL|NULL|NULL|NULL|NULL|NULL
+39|https://site.test/p39|1|0|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1|0|0|0|0|0|0|NULL|NULL|NULL|NULL|NULL|NULL
+40|https://site.test/p40|1|0|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1|0|0|0|0|0|0|NULL|NULL|NULL|NULL|NULL|NULL
+41|https://other.test/p41|0|0|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1|0|2|2|0|0|0|NULL|NULL|NULL|NULL|NULL|NULL
+42|https://other.test/p42|0|0|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|1|0|3|3|0|0|0|NULL|NULL|NULL|NULL|NULL|NULL
+## q_links
+source_url_id|target_url_id|source_address|target_address|type|anchor|alt_text|follow|rel|target|path_type|link_path|link_position|link_origin|target_status_code
+1|1|https://site.test/p1|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+1|2|https://site.test/p1|https://site.test/p2|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+1|3|https://site.test/p1|https://site.test/p3|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+2|1|https://site.test/p2|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+2|3|https://site.test/p2|https://site.test/p3|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+2|4|https://site.test/p2|https://site.test/p4|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+3|1|https://site.test/p3|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+3|4|https://site.test/p3|https://site.test/p4|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+3|5|https://site.test/p3|https://site.test/p5|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+4|1|https://site.test/p4|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+4|5|https://site.test/p4|https://site.test/p5|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+4|6|https://site.test/p4|https://site.test/p6|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+5|42|https://site.test/p5|https://other.test/p42|Hyperlink|Anker 3|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|NULL
+5|1|https://site.test/p5|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+5|6|https://site.test/p5|https://site.test/p6|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+5|7|https://site.test/p5|https://site.test/p7|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+6|1|https://site.test/p6|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+6|7|https://site.test/p6|https://site.test/p7|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+6|8|https://site.test/p6|https://site.test/p8|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+7|1|https://site.test/p7|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+7|8|https://site.test/p7|https://site.test/p8|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+7|9|https://site.test/p7|https://site.test/p9|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+8|1|https://site.test/p8|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+8|10|https://site.test/p8|https://site.test/p10|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+8|9|https://site.test/p8|https://site.test/p9|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+9|1|https://site.test/p9|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+9|10|https://site.test/p9|https://site.test/p10|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+9|11|https://site.test/p9|https://site.test/p11|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+10|41|https://site.test/p10|https://other.test/p41|Hyperlink|Anker 3|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|NULL
+10|1|https://site.test/p10|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+10|11|https://site.test/p10|https://site.test/p11|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+10|12|https://site.test/p10|https://site.test/p12|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+11|1|https://site.test/p11|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+11|12|https://site.test/p11|https://site.test/p12|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+11|13|https://site.test/p11|https://site.test/p13|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+12|1|https://site.test/p12|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+12|13|https://site.test/p12|https://site.test/p13|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+12|14|https://site.test/p12|https://site.test/p14|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+13|1|https://site.test/p13|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+13|14|https://site.test/p13|https://site.test/p14|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+13|15|https://site.test/p13|https://site.test/p15|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+14|1|https://site.test/p14|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+14|15|https://site.test/p14|https://site.test/p15|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+14|16|https://site.test/p14|https://site.test/p16|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+15|42|https://site.test/p15|https://other.test/p42|Hyperlink|Anker 3|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|NULL
+15|1|https://site.test/p15|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+15|16|https://site.test/p15|https://site.test/p16|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+15|17|https://site.test/p15|https://site.test/p17|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+16|1|https://site.test/p16|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+16|17|https://site.test/p16|https://site.test/p17|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+16|18|https://site.test/p16|https://site.test/p18|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+17|1|https://site.test/p17|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+17|18|https://site.test/p17|https://site.test/p18|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+17|19|https://site.test/p17|https://site.test/p19|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+18|1|https://site.test/p18|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+18|19|https://site.test/p18|https://site.test/p19|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+18|20|https://site.test/p18|https://site.test/p20|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+19|1|https://site.test/p19|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+19|20|https://site.test/p19|https://site.test/p20|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+19|21|https://site.test/p19|https://site.test/p21|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+20|41|https://site.test/p20|https://other.test/p41|Hyperlink|Anker 3|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|NULL
+20|1|https://site.test/p20|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+20|21|https://site.test/p20|https://site.test/p21|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+20|22|https://site.test/p20|https://site.test/p22|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+21|1|https://site.test/p21|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+21|22|https://site.test/p21|https://site.test/p22|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+21|23|https://site.test/p21|https://site.test/p23|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+22|1|https://site.test/p22|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+22|23|https://site.test/p22|https://site.test/p23|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+22|24|https://site.test/p22|https://site.test/p24|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+23|1|https://site.test/p23|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+23|24|https://site.test/p23|https://site.test/p24|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+23|25|https://site.test/p23|https://site.test/p25|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+24|1|https://site.test/p24|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+24|25|https://site.test/p24|https://site.test/p25|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+24|26|https://site.test/p24|https://site.test/p26|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|NULL
+25|42|https://site.test/p25|https://other.test/p42|Hyperlink|Anker 3|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|NULL
+25|1|https://site.test/p25|https://site.test/p1|Hyperlink|Anker 2|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|200
+25|26|https://site.test/p25|https://site.test/p26|Hyperlink|Anker 0|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|NULL
+25|27|https://site.test/p25|https://site.test/p27|Hyperlink|Anker 1|NULL|1|NULL|NULL|NULL|NULL|NULL|HTML|NULL
+## q_sitemap_urls
+sitemap_url|url_id|address|lastmod
+## q_columns
+view|column|type|description
+q_manifest|key|TEXT|Schlüssel des Manifests (OUT-233); jeder Schlüssel der Tabelle ist immer vorhanden.
+q_manifest|value|TEXT|Wert als Text; unbekannt oder nicht zutreffend ist NULL.
+q_config|osconfig|TEXT|Eingebettete Konfiguration des Crawls (TOML, .osconfig) ohne Geheimnisse.
+q_config|updated_at|TEXT|Zeitpunkt der letzten Änderung der Konfiguration (ISO 8601 mit Offset).
+q_urls|url_id|INTEGER|Schlüssel der URL, stabil innerhalb der Datei, nicht über Crawls hinweg.
+q_urls|address|TEXT|Adresse der URL in Anzeigeform (Spalte Address).
+q_urls|is_internal|INTEGER|1 = interne URL, 0 = externe URL.
+q_urls|crawled|INTEGER|1 = die URL wurde abgerufen, 0 = entdeckt oder eingeplant.
+q_urls|content_type|TEXT|Wert des Content-Type-Headers der Antwort.
+q_urls|status_code|INTEGER|HTTP-Statuscode; 0 = keine Antwort.
+q_urls|status|TEXT|Statustext der Antwort oder Grund einer fehlenden Antwort.
+q_urls|indexability|TEXT|Indexable oder Non-Indexable.
+q_urls|indexability_status|TEXT|Begründung der Nicht-Indexierbarkeit.
+q_urls|title_1|TEXT|Erster Seitentitel (HTML und PDF mit Status 2xx).
+q_urls|meta_description_1|TEXT|Erste Meta-Description (HTML mit Status 2xx).
+q_urls|h1_1|TEXT|Erste H1-Überschrift (HTML mit Status 2xx).
+q_urls|h2_1|TEXT|Erste H2-Überschrift (HTML mit Status 2xx).
+q_urls|canonical_link_element_1|TEXT|Erstes Canonical-Element im HTML, absolut aufgelöst.
+q_urls|word_count|INTEGER|Wortanzahl im Inhaltsbereich (HTML mit Status 2xx).
+q_urls|size_bytes|INTEGER|Größe der Antwort in Byte (Spalte Size (bytes)).
+q_urls|transferred_bytes|INTEGER|Übertragene Bytes des Bodys.
+q_urls|response_time|REAL|Antwortzeit in Sekunden.
+q_urls|crawl_depth|INTEGER|Klicktiefe ab der Start-URL.
+q_urls|folder_depth|INTEGER|Anzahl der Ordnerebenen im Pfad.
+q_urls|inlinks|INTEGER|Hyperlink-Instanzen interner Quellseiten auf die URL (Selbstlinks eingeschlossen).
+q_urls|unique_inlinks|INTEGER|Verschiedene interne Quellseiten mit einem Hyperlink auf die URL.
+q_urls|outlinks|INTEGER|Hyperlink-Instanzen der Seite auf andere URLs.
+q_urls|unique_outlinks|INTEGER|Verschiedene Ziele der Hyperlinks der Seite.
+q_urls|external_outlinks|INTEGER|Hyperlink-Instanzen der Seite auf externe URLs.
+q_urls|redirect_url|TEXT|Ziel der Weiterleitung.
+q_urls|redirect_type|TEXT|Art der Weiterleitung (HTTP Redirect, Meta Refresh Redirect, …).
+q_urls|http_version|TEXT|HTTP-Version der Antwort ohne Präfix (1.1, 2).
+q_urls|hash|TEXT|MD5 des Bodys (Hex, Kleinbuchstaben).
+q_urls|last_modified|TEXT|Last-Modified der Antwort (ISO 8601 mit Offset); NULL, wenn nicht lesbar.
+q_urls|crawl_timestamp|TEXT|Zeitpunkt des Abrufs (ISO 8601 mit Offset).
+q_links|source_url_id|INTEGER|url_id der Quellseite des Links.
+q_links|target_url_id|INTEGER|url_id des Ziels; NULL, wenn das Ziel keine URL der Datei ist.
+q_links|source_address|TEXT|Adresse der Quellseite.
+q_links|target_address|TEXT|Adresse des Ziels; ohne auflösbares Ziel der Rohwert aus dem Quelltext.
+q_links|type|TEXT|Linktyp (Hyperlink, Image, JavaScript, CSS, …).
+q_links|anchor|TEXT|Ankertext.
+q_links|alt_text|TEXT|Alt-Text eines Bildes im Link.
+q_links|follow|INTEGER|1 = der Link ist follow, 0 = nofollow.
+q_links|rel|TEXT|Wert des rel-Attributs.
+q_links|target|TEXT|Wert des target-Attributs.
+q_links|path_type|TEXT|Pfadart des Links (Absolute, Root-Relative, …).
+q_links|link_path|TEXT|XPath des Link-Elements im Dokument.
+q_links|link_position|TEXT|Position im Dokument (Navigation, Content, Footer, …).
+q_links|link_origin|TEXT|Herkunft des Links (HTML oder gerendertes HTML).
+q_links|target_status_code|INTEGER|Statuscode des Ziels; NULL ohne Abruf oder Antwort.
+q_sitemap_urls|sitemap_url|TEXT|Adresse der Sitemap-Datei, in der der Eintrag steht.
+q_sitemap_urls|url_id|INTEGER|url_id der URL des Eintrags.
+q_sitemap_urls|address|TEXT|Adresse der URL des Eintrags.
+q_sitemap_urls|lastmod|TEXT|Wert von lastmod aus der Sitemap (roh).
+q_columns|view|TEXT|Name der Sicht.
+q_columns|column|TEXT|Name der Spalte.
+q_columns|type|TEXT|Typ der Spalte: INTEGER, REAL oder TEXT.
+q_columns|description|TEXT|Bedeutung der Spalte in einem Satz.

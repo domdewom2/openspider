@@ -1,3 +1,28 @@
 Crawl Overview
 Redirects:All Redirects
 Redirects:Redirect Chains
+SERP Summary
+Canonicals:Canonical Chains
+Canonicals:Non-Indexable Canonicals
+Redirects:Redirects to Errors
+Redirects:Redirect & Canonical Chains
+Hreflang:All Hreflang URLs
+Hreflang:Non-200 Hreflang URLs
+Hreflang:Unlinked Hreflang URLs
+Hreflang:Missing Return Links
+Hreflang:Inconsistent Language & Region Return Links
+Hreflang:Non Canonical Return Links
+Hreflang:Noindex Return Links
+Insecure Content
+Orphan Pages
+Structured Data:Validation Errors & Warnings Summary
+Structured Data:Validation Errors & Warnings
+Structured Data:Google Rich Results Features Summary
+Structured Data:Google Rich Results Features
+Accessibility:Violations Summary
+HTTP Header Summary
+Cookie Summary
+Crawl Path Report
+Queued URLs
+Sidebar:Site Structure
+Sidebar:Response Times

@@ -1,0 +1,8 @@
+# OpenSpider – Issue-Katalog ab M2, Tab „Internal“ (UI-063/UI-064).
+#
+# Einträge wie in core/issues/catalog.toml (`[[issue]]` mit id, tab, filter, type, priority, type_rule, priority_rule,
+# doc_key, optional override_reason/needs_crawl_analysis/text_params); `tab` ist hier immer "Internal". Der Loader liest die
+# M1-Datei und alle Dateien dieses Ordners. Texte: core/issues/texts/{de,en}.d/internal.toml (Schlüssel issues.<id>).
+# M2-F02 legt nur die Datei an; die Einträge liefert das Paket des Tabs.
+
+schema = 1

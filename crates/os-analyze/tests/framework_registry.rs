@@ -52,16 +52,22 @@ fn every_filter_is_a_subset_of_all_and_counts_match_the_views() {
     let (_dir, file) = populated();
     let cfg = CrawlConfig::default();
     let counts = filter_counts(&file, &cfg).unwrap();
-    let registered: usize = tabs::all().iter().map(|t| t.filters.len()).sum();
+    // Stub-Tabs und Stub-Filter von M2 (M2-F02) haben noch keine Zähler (`views::filter_counts_in`).
+    let all_tabs = tabs::all();
+    let registered: usize = all_tabs
+        .iter()
+        .filter(|t| !t.is_stub())
+        .map(|t| t.filters.iter().filter(|f| !f.is_stub()).count())
+        .sum();
     assert_eq!(
         counts.len(),
         registered,
         "ein Zähler je registriertem Filter"
     );
 
-    for tab in tabs::all() {
+    for tab in all_tabs.iter().filter(|t| !t.is_stub()) {
         let all = all_ids(&file, &cfg, tab.id, "All");
-        for f in &tab.filters {
+        for f in tab.filters.iter().filter(|f| !f.is_stub()) {
             let c = counts
                 .iter()
                 .find(|c| c.tab == tab.id && c.filter == f.id)

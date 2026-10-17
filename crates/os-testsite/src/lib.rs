@@ -130,6 +130,7 @@ pub mod client;
 pub mod golden;
 mod log;
 mod media;
+pub mod mocks;
 mod respond;
 mod server;
 pub mod synthetic;

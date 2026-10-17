@@ -4115,10 +4115,12 @@ name = "os-analyze"
 version = "0.1.0"
 dependencies = [
  "base64 0.23.1",
+ "criterion",
  "os-engine",
  "os-model",
  "os-store",
  "os-testsite",
+ "roaring",
  "rusqlite",
  "serde",
  "serde_json",
@@ -4207,8 +4209,10 @@ dependencies = [
  "futures-util",
  "os-engine",
  "os-fetch",
+ "os-integrations",
  "os-model",
  "os-parse",
+ "os-render",
  "os-store",
  "os-testsite",
  "os-url",
@@ -4441,11 +4445,14 @@ name = "os-store"
 version = "0.1.0"
 dependencies = [
  "dirs",
+ "hex",
  "icu_collator",
  "libc",
  "os-model",
+ "os-testsite",
  "rusqlite",
  "serde_json",
+ "sha2 0.11.1",
  "tempfile",
  "thiserror 2.0.21",
  "windows-sys 0.61.2",

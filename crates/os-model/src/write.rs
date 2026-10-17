@@ -250,6 +250,18 @@ pub struct PageWrite {
     pub pagination: Vec<PaginationRow>,
     /// HTTP-Header.
     pub headers: Vec<HeaderRow>,
+    /// Gespeicherter Quelltext (`page_html`, CRAWL-063, ab M2); `None` = nicht speichern bzw. unverändert lassen.
+    /// Nachtrag M2-F02 (`docs/plan/M2.md` 3.3a); befüllt von M2-E01.
+    pub html: Option<PageHtml>,
+}
+
+/// Der gespeicherte Quelltext einer Seite (`page_html`, CRAWL-063).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PageHtml {
+    /// Zeichensatz, mit dem `body` zu lesen ist (z. B. `utf-8`).
+    pub encoding: Option<String>,
+    /// Der Quelltext (dekomprimiert, nicht umkodiert).
+    pub body: Vec<u8>,
 }
 
 /// Eine Linkzeile.
@@ -371,7 +383,7 @@ pub enum QueueOp {
 }
 
 /// Eine Sitemap-Datei samt Einträgen.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SitemapWrite {
     /// Kennung.
     pub id: SitemapId,
@@ -400,6 +412,29 @@ pub struct SitemapWrite {
     /// hreflang-Angaben aus den `<url>`-Blöcken, zugeordnet der `loc`-URL. Der Writer speichert sie mit
     /// `source = 'sitemap'`, `sitemap_id` = Kennung dieser Sitemap und `position` = `r.order` (M1.md 3.11).
     pub hreflang: Vec<(UrlId, HreflangRow)>,
+    /// Fehlervermerk bei ungültigem XML (CRAWL-060, K-27): alle bis zum Fehler gelesenen Einträge gelten, der Fehler
+    /// steht an der Sitemap (`sitemaps.error`). Nachtrag M2-F02 (3.3a); befüllt von M2-E02.
+    pub error: Option<String>,
+    /// Zusatzangaben zu Einträgen (`sitemap_entries.changefreq` … `news`, CRAWL-060-Rest). Je URL höchstens ein Eintrag;
+    /// URLs ohne Eintrag behalten `NULL`. Nachtrag M2-F02 (3.3a); befüllt von M2-E02/M2-D13.
+    pub entry_meta: Vec<SitemapEntryMeta>,
+}
+
+/// Zusatzangaben eines Sitemap-Eintrags (CRAWL-060: `changefreq`, `priority`, Bild-/Video-/News-Erweiterungen).
+#[derive(Debug, Clone, PartialEq)]
+pub struct SitemapEntryMeta {
+    /// URL des Eintrags (muss in `SitemapWrite.entry_urls` stehen).
+    pub url: UrlId,
+    /// `<changefreq>` roh, klein geschrieben.
+    pub changefreq: Option<String>,
+    /// `<priority>`.
+    pub priority: Option<f64>,
+    /// Anzahl `image:image`-Erweiterungen.
+    pub images: u32,
+    /// Anzahl `video:video`-Erweiterungen.
+    pub videos: u32,
+    /// Anzahl `news:news`-Erweiterungen.
+    pub news: u32,
 }
 
 /// Eine robots.txt-Datei.

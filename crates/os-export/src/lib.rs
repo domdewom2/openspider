@@ -4,6 +4,7 @@
 //! Detail-Export, Links-Bulk-Exporte: P16; Reports, Issues-Export, Sitemap-Generator: P17.
 
 pub mod catalog;
+pub mod compare;
 pub mod csv;
 pub mod detail;
 pub mod error;
@@ -13,8 +14,11 @@ pub mod naming;
 pub mod output;
 pub mod pipeline;
 pub mod reports;
+pub mod segment;
 pub mod sitemap_gen;
 pub mod tab_export;
+pub mod target_gsheet;
+pub mod timeseries;
 pub mod types;
 pub mod xlsx;
 
