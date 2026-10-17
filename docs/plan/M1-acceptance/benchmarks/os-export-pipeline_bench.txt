@@ -1,20 +1,20 @@
-Start 2026-10-15T20:33:55Z (22:33 lokal)
-wait_quiet: load1=1.82 (< 2), frei: 78 GB
-22:33  up 35 days, 11:52, 16 users, load averages: 1.82 2.77 4.02
-Befehl: cargo test --release --locked -p os-export --test pipeline_bench -- --ignored --nocapture --test-threads=1
-   Compiling os-analyze v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n21/crates/os-analyze)
-   Compiling os-export v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n21/crates/os-export)
-    Finished `release` profile [optimized] target(s) in 7.05s
-     Running tests/pipeline_bench.rs (/Users/dominikwojcik/Projects/openspider-wt/target-m1-n21/release/deps/pipeline_bench-f2acbf7b93b2c54a)
+Start 2026-10-17T03:53:36Z (05:53 lokal)
+wait_quiet: load1=1.94 (< 2), frei: 78 GB
+ 5:53  up 36 days, 19:12, 17 users, load averages: 1.94 2.23 2.51
+Befehl: env OS_BENCH_DIR=/Users/dominikwojcik/Projects/openspider-wt/n28-work/b6 OS_BENCH_MASTER=/Users/dominikwojcik/Projects/openspider-wt/n28-work/b6/n28-links-master.ospider cargo test --release --locked -p os-export --test pipeline_bench -- --ignored --nocapture --test-threads=1
+   Compiling os-analyze v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n28/crates/os-analyze)
+   Compiling os-export v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n28/crates/os-export)
+    Finished `release` profile [optimized] target(s) in 8.41s
+     Running tests/pipeline_bench.rs (/Users/dominikwojcik/Projects/openspider-wt/target-m1-n28/release/deps/pipeline_bench-f1f5d290831bc4c2)
 
 running 1 test
-test one_million_rows_by_sixty_columns_stay_within_300_mb_of_extra_memory ... 1000000 URLs angelegt in 4.0879125s
-Export in 6.916925208s
+test one_million_rows_by_sixty_columns_stay_within_300_mb_of_extra_memory ... 1000000 URLs angelegt in 3.992057084s
+Export in 6.912202708s
 Datei: 336 MiB
 RSS vorher 334 MiB, Spitze 334 MiB, Zuwachs 1 MiB
 ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.08s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.97s
 
-Ende 2026-10-15T20:34:14Z (22:34 lokal), Exit 0
-22:34  up 35 days, 11:52, 16 users, load averages: 3.24 3.06 4.10
+Ende 2026-10-17T03:53:56Z (05:53 lokal), Exit 0
+ 5:53  up 36 days, 19:12, 17 users, load averages: 3.71 2.64 2.66

@@ -1,15 +1,15 @@
-Start 2026-10-15T21:02:00Z (23:02 lokal)
-wait_quiet: load1=1.89 (< 2), frei: 78 GB
-23:02  up 35 days, 12:20, 16 users, load averages: 1.89 2.71 2.94
-Befehl: cargo test --release --locked -p os-export --test xlsx_cells -- --ignored --nocapture --test-threads=1
-   Compiling os-export v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n21/crates/os-export)
-    Finished `release` profile [optimized] target(s) in 3.34s
-     Running tests/xlsx_cells.rs (/Users/dominikwojcik/Projects/openspider-wt/target-m1-n21/release/deps/xlsx_cells-900d0ac3f9263451)
+Start 2026-10-17T03:57:37Z (05:57 lokal)
+wait_quiet: load1=1.62 (< 2), frei: 78 GB
+ 5:57  up 36 days, 19:16, 17 users, load averages: 1.62 2.42 2.59
+Befehl: env OS_BENCH_DIR=/Users/dominikwojcik/Projects/openspider-wt/n28-work/b6 OS_BENCH_MASTER=/Users/dominikwojcik/Projects/openspider-wt/n28-work/b6/n28-links-master.ospider cargo test --release --locked -p os-export --test xlsx_cells -- --ignored --nocapture --test-threads=1
+   Compiling os-export v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n28/crates/os-export)
+    Finished `release` profile [optimized] target(s) in 1.84s
+     Running tests/xlsx_cells.rs (/Users/dominikwojcik/Projects/openspider-wt/target-m1-n28/release/deps/xlsx_cells-7a00257f9ebd64dd)
 
 running 1 test
 test default_limit_overflows_after_1048575_rows ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 2.32s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 2.31s
 
-Ende 2026-10-15T21:02:06Z (23:02 lokal), Exit 0
-23:02  up 35 days, 12:20, 16 users, load averages: 1.97 2.70 2.93
+Ende 2026-10-17T03:57:42Z (05:57 lokal), Exit 0
+ 5:57  up 36 days, 19:16, 17 users, load averages: 1.73 2.43 2.59

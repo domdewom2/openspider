@@ -70,7 +70,9 @@
         "M1-N19",
         "M1-N21",
         "M1-N22",
-        "M1-N26"
+        "M1-N26",
+        "M1-N27",
+        "M1-N28"
       ],
       "status": "implemented",
       "tests": [
@@ -105,9 +107,39 @@
           "test": "tests::without_urls_or_samples_there_are_no_segments"
         },
         {
+          "file": "crates/os-loadtest/src/throughput.rs",
+          "result": "ok",
+          "test": "tests::the_end_batch_is_judged_against_k80_only_in_the_one_million_page_perf_001_run"
+        },
+        {
+          "file": "crates/os-loadtest/src/throughput.rs",
+          "result": "ok",
+          "test": "tests::the_end_batch_comes_from_the_store_and_engine_counters_of_the_child"
+        },
+        {
+          "file": "crates/os-loadtest/src/throughput.rs",
+          "result": "ok",
+          "test": "tests::the_tail_is_the_crawl_duration_minus_the_time_to_the_last_url"
+        },
+        {
           "file": "crates/os-loadtest/tests/engine_adapter.rs",
           "result": "ok",
           "test": "the_throughput_sections_are_reported_but_small_runs_are_not_judged"
+        },
+        {
+          "file": "crates/os-loadtest/tests/run.rs",
+          "result": "ok",
+          "test": "k80_the_end_batch_over_60_s_fails_perf_001_with_one_million_pages"
+        },
+        {
+          "file": "crates/os-loadtest/tests/run.rs",
+          "result": "ok",
+          "test": "k80_an_end_batch_within_the_limit_passes_and_both_values_are_reported"
+        },
+        {
+          "file": "crates/os-loadtest/tests/run.rs",
+          "result": "ok",
+          "test": "k80_applies_neither_to_small_runs_nor_to_other_scenarios_but_both_values_are_always_reported"
         },
         {
           "file": "crates/os-store/tests/bench_writer.rs",
@@ -189,7 +221,27 @@
         {
           "file": "crates/os-store/tests/url_index.rs",
           "result": "ok",
-          "test": "the_regular_end_builds_them_in_the_last_batch_with_the_original_definitions"
+          "test": "k83_a_large_file_does_not_get_the_five_indexes_back_at_the_regular_end_but_links_target_stands"
+        },
+        {
+          "file": "crates/os-store/tests/url_index.rs",
+          "result": "ok",
+          "test": "k83_a_small_file_keeps_all_five_indexes_through_the_regular_end"
+        },
+        {
+          "file": "crates/os-store/tests/url_index.rs",
+          "result": "ok",
+          "test": "k83_ensure_if_idle_builds_links_target_but_not_the_five_indexes_of_a_large_file"
+        },
+        {
+          "file": "crates/os-store/tests/url_index.rs",
+          "result": "ok",
+          "test": "k83_the_regular_end_of_a_large_file_by_the_default_threshold_builds_only_links_target"
+        },
+        {
+          "file": "crates/os-store/tests/url_index.rs",
+          "result": "ok",
+          "test": "k83_a_small_file_is_not_large_and_is_completed_by_ensure_if_idle"
         },
         {
           "file": "crates/os-store/tests/url_index.rs",
@@ -239,6 +291,11 @@
       ],
       "status": "implemented",
       "tests": [
+        {
+          "file": "crates/os-model/tests/config_v2.rs",
+          "result": "ok",
+          "test": "advanced_defaults_follow_the_spec"
+        },
         {
           "file": "crates/os-parse/tests/dom_head.rs",
           "result": "ok",
@@ -344,7 +401,7 @@
         },
         {
           "file": "crates/os-mcp/src/error.rs",
-          "result": "no_result",
+          "result": "ok",
           "test": "tests::usage_errors_exit_with_two_everything_else_with_one"
         },
         {
@@ -2930,6 +2987,11 @@
           "test": "redirect_flags_are_in_the_file_after_a_stop"
         },
         {
+          "file": "crates/os-model/tests/config_v2.rs",
+          "result": "ok",
+          "test": "limits_defaults_follow_the_spec"
+        },
+        {
           "file": "crates/os-store/tests/writer_flags.rs",
           "result": "ok",
           "test": "url_flags_are_written_in_the_batch_transaction_and_stamp_change_seq"
@@ -2946,6 +3008,11 @@
           "file": "crates/os-engine/tests/core_limits.rs",
           "result": "ok",
           "test": "text_mode_needs_no_browser_and_javascript_mode_is_refused_without_a_silent_fallback"
+        },
+        {
+          "file": "crates/os-model/tests/config_v2.rs",
+          "result": "ok",
+          "test": "javascript_only_options_warn_in_text_mode"
         }
       ]
     },
@@ -4034,6 +4101,11 @@
           "test": "group_commit_versus_small_batches_with_uniform_targets"
         },
         {
+          "file": "crates/os-model/tests/settings_split.rs",
+          "result": "ok",
+          "test": "defaults_follow_the_spec"
+        },
+        {
           "file": "crates/os-store/tests/crawl_files.rs",
           "result": "ok",
           "test": "set_config_with_clock_stamps_the_time_from_the_clock"
@@ -4679,6 +4751,11 @@
           "file": "crates/os-model/tests/config_set.rs",
           "result": "ok",
           "test": "resetting_a_preset_group_leaves_everything_else_alone"
+        },
+        {
+          "file": "crates/os-model/tests/config_v2.rs",
+          "result": "ok",
+          "test": "default_and_fully_changed_configs_validate"
         },
         {
           "file": "crates/os-model/tests/config_validate.rs",
@@ -6953,6 +7030,37 @@
       "status": "implemented",
       "tests": [
         {
+          "file": "crates/os-analyze/tests/bench_duplicates.rs",
+          "ignore_reason": "Benchmark (N27): fünf Duplicate-Filter auf 1 Mio. Zeilen ohne Indizes (OS_BENCH_ROWS, OS_BENCH_DIR, OS_BENCH_OUT)",
+          "result": "ignored",
+          "test": "five_duplicate_filters_on_one_million_rows_without_the_indexes"
+        },
+        {
+          "file": "crates/os-analyze/tests/k83_duplicate_plans.rs",
+          "result": "ok",
+          "test": "the_grouping_gives_the_same_hits_as_the_correlated_exists_for_every_row"
+        },
+        {
+          "file": "crates/os-analyze/tests/k83_duplicate_plans.rs",
+          "result": "ok",
+          "test": "the_view_lists_the_same_pages_as_before_with_only_indexable_on_and_off"
+        },
+        {
+          "file": "crates/os-analyze/tests/k83_duplicate_plans.rs",
+          "result": "ok",
+          "test": "the_five_duplicate_filters_have_no_correlated_subquery_over_urls_with_and_without_the_indexes"
+        },
+        {
+          "file": "crates/os-analyze/tests/k83_duplicate_plans.rs",
+          "result": "ok",
+          "test": "no_filter_of_any_tab_searches_one_of_the_five_indexes_or_scans_urls_per_row"
+        },
+        {
+          "file": "crates/os-analyze/tests/k83_duplicate_plans.rs",
+          "result": "ok",
+          "test": "the_check_would_have_caught_the_old_formulation"
+        },
+        {
           "file": "crates/os-analyze/tests/tab_content.rs",
           "result": "ok",
           "test": "exact_duplicates_compare_the_hash_of_indexable_pages"
@@ -8976,6 +9084,16 @@
           "file": "crates/os-model/tests/config_io.rs",
           "result": "ok",
           "test": "random_configs_round_trip_byte_identically"
+        },
+        {
+          "file": "crates/os-model/tests/config_v2.rs",
+          "result": "ok",
+          "test": "every_schema_leaf_is_covered_by_the_all_fields_changed_config"
+        },
+        {
+          "file": "crates/os-model/tests/config_v2.rs",
+          "result": "ok",
+          "test": "all_fields_changed_round_trips_byte_identically"
         }
       ]
     },
@@ -9046,6 +9164,26 @@
           "test": "schema_covers_every_key_the_writer_emits"
         },
         {
+          "file": "crates/os-model/tests/config_v2.rs",
+          "result": "ok",
+          "test": "every_schema_leaf_is_covered_by_the_all_fields_changed_config"
+        },
+        {
+          "file": "crates/os-model/tests/config_v2.rs",
+          "result": "ok",
+          "test": "all_fields_changed_round_trips_byte_identically"
+        },
+        {
+          "file": "crates/os-model/tests/config_v2.rs",
+          "result": "ok",
+          "test": "schema_lists_the_new_sections_and_ranges"
+        },
+        {
+          "file": "crates/os-model/tests/config_v2.rs",
+          "result": "ok",
+          "test": "default_and_fully_changed_configs_validate"
+        },
+        {
           "file": "crates/os-model/tests/config_validate.rs",
           "result": "ok",
           "test": "invalid_fixture_reports_errors_with_line_numbers"
@@ -9087,6 +9225,11 @@
           "file": "crates/os-fetch/tests/http_session.rs",
           "result": "ok",
           "test": "no_secret_reaches_the_logs_or_the_stored_headers"
+        },
+        {
+          "file": "crates/os-model/tests/config_v2.rs",
+          "result": "ok",
+          "test": "api_section_has_no_secrets_and_all_seven_sources"
         }
       ]
     },
@@ -9329,7 +9472,8 @@
         "M1-N19",
         "M1-N21",
         "M1-N22",
-        "M1-N26"
+        "M1-N26",
+        "M1-N28"
       ],
       "status": "implemented",
       "tests": [
@@ -9430,7 +9574,8 @@
         "M1-N19",
         "M1-N21",
         "M1-N22",
-        "M1-N26"
+        "M1-N26",
+        "M1-N28"
       ],
       "status": "implemented",
       "tests": [
@@ -9499,7 +9644,8 @@
         "M1-P33",
         "M1-N19",
         "M1-N21",
-        "M1-N26"
+        "M1-N26",
+        "M1-N28"
       ],
       "status": "implemented",
       "tests": [
@@ -11804,5 +11950,7 @@
     "total": 242,
     "verified": 5
   },
-  "warnings": []
+  "warnings": [
+    "Tags mit IDs, die in keinem Paket stehen: CRAWL-004, CRAWL-018, CRAWL-020, CRAWL-023, CRAWL-024, CRAWL-055, CRAWL-061, CRAWL-062, CRAWL-063, CRAWL-064, CRAWL-065, CRAWL-069, CRAWL-070, CRAWL-071, CRAWL-073, CRAWL-074, CRAWL-080, CRAWL-081, CRAWL-082, CRAWL-084, CRAWL-091, CRAWL-092, CRAWL-094, CRAWL-096, CRAWL-097, CRAWL-104, CRAWL-115, CRAWL-122, CRAWL-129, CRAWL-134, CRAWL-139, INTEG-020, INTEG-040, INTEG-060, INTEG-081, ONPAGE-144, ONPAGE-149, ONPAGE-152, ONPAGE-153, ONPAGE-154, OUT-121, OUT-123, OUT-124, OUT-125, OUT-126, OUT-128, OUT-146, OUT-222, OUT-226, OUT-229, OUT-273, PERF-006, TECH-250, TECH-300, UI-011, UI-016, UI-018, UI-120, UI-121, UI-140, UI-141"
+  ]
 }

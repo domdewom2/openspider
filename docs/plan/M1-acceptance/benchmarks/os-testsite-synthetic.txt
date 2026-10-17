@@ -1,7 +1,7 @@
-Start 2026-10-15T21:15:28Z (23:15 lokal)
-wait_quiet: load1=1.96 (< 2), frei: 77 GB
-23:15  up 35 days, 12:34, 16 users, load averages: 1.96 2.79 3.12
-Befehl: cargo test --release --locked -p os-testsite --test synthetic -- --ignored --nocapture --test-threads=1
+Start 2026-10-17T04:05:14Z (06:05 lokal)
+wait_quiet: load1=1.97 (< 2), frei: 78 GB
+ 6:05  up 36 days, 19:23, 17 users, load averages: 1.97 3.24 3.07
+Befehl: env OS_BENCH_DIR=/Users/dominikwojcik/Projects/openspider-wt/n28-work/b6 OS_BENCH_MASTER=/Users/dominikwojcik/Projects/openspider-wt/n28-work/b6/n28-links-master.ospider cargo test --release --locked -p os-testsite --test synthetic -- --ignored --nocapture --test-threads=1
    Compiling syn v3.0.9
    Compiling serde v1.0.229
    Compiling serde_json v1.0.154
@@ -16,15 +16,15 @@ Befehl: cargo test --release --locked -p os-testsite --test synthetic -- --ignor
    Compiling tokio-rustls v0.26.6
    Compiling hyper-util v0.1.21
    Compiling axum v0.8.9
-   Compiling os-testsite v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n21/crates/os-testsite)
-    Finished `release` profile [optimized] target(s) in 13.07s
-     Running tests/synthetic.rs (/Users/dominikwojcik/Projects/openspider-wt/target-m1-n21/release/deps/synthetic-600237e991009ac5)
+   Compiling os-testsite v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n28/crates/os-testsite)
+    Finished `release` profile [optimized] target(s) in 12.73s
+     Running tests/synthetic.rs (/Users/dominikwojcik/Projects/openspider-wt/target-m1-n28/release/deps/synthetic-19e9b98f7dff07fb)
 
 running 1 test
-test benchmark_20k_requests_over_5000_per_second ... benchmark: 20000 Requests in 0.16 s = 125801 Requests/s, 52.7 MB
+test benchmark_20k_requests_over_5000_per_second ... benchmark: 20000 Requests in 0.17 s = 118873 Requests/s, 52.7 MB
 ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.16s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.17s
 
-Ende 2026-10-15T21:15:42Z (23:15 lokal), Exit 0
-23:15  up 35 days, 12:34, 16 users, load averages: 3.33 3.05 3.21
+Ende 2026-10-17T04:05:28Z (06:05 lokal), Exit 0
+ 6:05  up 36 days, 19:23, 17 users, load averages: 3.41 3.50 3.16

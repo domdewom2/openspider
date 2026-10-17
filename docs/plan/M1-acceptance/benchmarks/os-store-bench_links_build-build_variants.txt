@@ -1,0 +1,16 @@
+Start 2026-10-17T04:16:45Z (06:16 lokal)
+wait_quiet: load1=1.72 (< 2), frei: 73 GB
+ 6:16  up 36 days, 19:35, 17 users, load averages: 1.72 2.13 2.50
+Befehl: env OS_BENCH_DIR=/Users/dominikwojcik/Projects/openspider-wt/n28-work/b6 OS_BENCH_MASTER=/Users/dominikwojcik/Projects/openspider-wt/n28-work/b6/n28-links-master.ospider OS_BENCH_VARIANTS=2:4096,4:4096 cargo test --release --locked -p os-store --test bench_links_build -- --ignored --nocapture --test-threads=1 build_variants
+    Finished `release` profile [optimized] target(s) in 0.33s
+     Running tests/bench_links_build.rs (/Users/dominikwojcik/Projects/openspider-wt/target-m1-n28/release/deps/bench_links_build-3855a54cd99b7de5)
+
+running 1 test
+test build_variants ... links_target threads=2 cache=4096 KiB: Aufbau 19.3 s, mit Commit 21.1 s, CPU Benutzer 14.4 s System 4.8 s, Spitzen-RSS 23 MiB (Zuwachs 19 MiB), inblock 0, oublock 0, Seiteneinlesungen des Systems (vm_stat pageins) 326125
+links_target threads=4 cache=4096 KiB: Aufbau 17.7 s, mit Commit 19.2 s, CPU Benutzer 14.8 s System 5.0 s, Spitzen-RSS 33 MiB (Zuwachs 10 MiB), inblock 0, oublock 0, Seiteneinlesungen des Systems (vm_stat pageins) 332143
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 40.65s
+
+Ende 2026-10-17T04:17:26Z (06:17 lokal), Exit 0
+ 6:17  up 36 days, 19:35, 17 users, load averages: 4.40 2.67 2.67

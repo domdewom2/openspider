@@ -1,0 +1,21 @@
+Start 2026-10-17T04:06:28Z (06:06 lokal)
+wait_quiet: load1=1.96 (< 2), frei: 78 GB
+ 6:06  up 36 days, 19:24, 17 users, load averages: 1.96 3.07 3.02
+Befehl: env OS_BENCH_DIR=/Users/dominikwojcik/Projects/openspider-wt/n28-work/b6 OS_BENCH_MASTER=/Users/dominikwojcik/Projects/openspider-wt/n28-work/b6/n28-links-master.ospider OS_BENCH_ROWS=1000000 cargo test --release --locked -p os-analyze --test bench_duplicates -- --ignored --nocapture --test-threads=1
+   Compiling os-analyze v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n28/crates/os-analyze)
+    Finished `release` profile [optimized] target(s) in 0.88s
+     Running tests/bench_duplicates.rs (/Users/dominikwojcik/Projects/openspider-wt/target-m1-n28/release/deps/bench_duplicates-0a4a9043351cf736)
+
+running 1 test
+test five_duplicate_filters_on_one_million_rows_without_the_indexes ... Page Titles:Duplicate: 1000000 Zeilen ohne Indizes, 300000 Treffer, 9.04 s
+Meta Description:Duplicate: 1000000 Zeilen ohne Indizes, 300000 Treffer, 10.14 s
+H1:Duplicate: 1000000 Zeilen ohne Indizes, 300000 Treffer, 10.63 s
+H2:Duplicate: 1000000 Zeilen ohne Indizes, 300000 Treffer, 11.20 s
+Content:Exact Duplicates: 1000000 Zeilen ohne Indizes, 300000 Treffer, 3.33 s
+befüllt in 41.1 s, Datei 469 MiB
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 85.59s
+
+Ende 2026-10-17T04:07:55Z (06:07 lokal), Exit 0
+ 6:07  up 36 days, 19:26, 17 users, load averages: 2.16 2.85 2.94

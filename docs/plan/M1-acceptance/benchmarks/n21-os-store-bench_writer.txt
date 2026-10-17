@@ -1,0 +1,86 @@
+Start 2026-10-15T20:29:15Z (22:29 lokal)
+wait_quiet: load1=1.99 (< 2), frei: 78 GB
+22:29  up 35 days, 11:47, 16 users, load averages: 1.99 2.58 4.32
+Befehl: cargo test --release --locked -p os-store --test bench_writer -- --ignored --nocapture --test-threads=1
+   Compiling stable_deref_trait v1.2.1
+   Compiling serde_core v1.0.229
+   Compiling memchr v2.8.3
+   Compiling getrandom v0.4.3
+   Compiling syn v3.0.9
+   Compiling cc v1.8.0
+   Compiling serde_json v1.0.154
+   Compiling errno v0.3.14
+   Compiling once_cell v1.21.4
+   Compiling rustix v1.1.5
+   Compiling aho-corasick v1.1.5
+   Compiling libsqlite3-sys v0.35.0
+   Compiling tempfile v3.27.0
+   Compiling synstructure v0.14.0
+   Compiling serde_derive_internals v0.30.0
+   Compiling zerovec-derive v0.11.6
+   Compiling displaydoc v0.2.7
+   Compiling serde_derive v1.0.229
+   Compiling ref-cast-impl v1.0.27
+   Compiling thiserror-impl v2.0.21
+   Compiling zerofrom-derive v0.1.8
+   Compiling yoke-derive v0.8.4
+   Compiling schemars_derive v1.2.3
+   Compiling ref-cast v1.0.27
+   Compiling regex-automata v0.4.18
+   Compiling zerofrom v0.1.8
+   Compiling thiserror v2.0.21
+   Compiling rusqlite v0.37.0
+   Compiling yoke v0.8.3
+   Compiling toml_datetime v0.7.5+spec-1.1.0
+   Compiling serde_spanned v1.1.2
+   Compiling deranged v0.5.9
+   Compiling uuid v1.28.0
+   Compiling toml v0.9.12+spec-1.1.0
+   Compiling zerovec v0.11.8
+   Compiling zerotrie v0.2.5
+   Compiling serde v1.0.229
+   Compiling time v0.3.55
+   Compiling schemars v1.2.3
+   Compiling tinystr v0.8.4
+   Compiling potential_utf v0.1.6
+   Compiling icu_locale_core v2.3.0
+   Compiling icu_collections v2.3.0
+   Compiling fancy-regex v0.19.2
+   Compiling icu_provider v2.3.1
+   Compiling os-model v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n21/crates/os-model)
+   Compiling icu_properties v2.3.0
+   Compiling icu_normalizer v2.3.0
+   Compiling icu_locale_fallback v2.3.0
+   Compiling icu_collator v2.3.1
+   Compiling os-store v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n21/crates/os-store)
+    Finished `release` profile [optimized] target(s) in 15.74s
+     Running tests/bench_writer.rs (/Users/dominikwojcik/Projects/openspider-wt/target-m1-n21/release/deps/bench_writer-7c25a483be996f7f)
+
+running 5 tests
+test inlinks_paging_with_one_million_inlinks ... Inlinks 1 Mio.: erste Seite 353 ms, Offset 500000 342 ms, Offset 500000 nach Anchor 1534 ms
+ok
+test inlinks_without_index_250k_pages ... inlinks_without_index_250k_pages: 250000 Seiten x 30 Links; links_page In (50 Zeilen) ohne Index 0.24 s (Mittel aus 4 Zielen, einzeln [0.22, 0.24, 0.26, 0.22]), mit Index 0.0118 s; Indexaufbau 3.2 s; Hochrechnung 1 Mio. Seiten (x4.0): ohne Index 0.9 s, Aufbau 13 s
+ok
+test writer_100k_pages_uniform_targets_report ... Writer Balanced/Uniform: 100000 Seiten x 30 Links in 10.5 s (9526 Seiten/s, 285776 Links/s), Datei 256 MiB
+ok
+test writer_100k_pages_with_30_links_under_60_seconds ... Writer Balanced/SiteLike: 100000 Seiten x 30 Links in 5.4 s (18436 Seiten/s, 553090 Links/s), Datei 250 MiB
+Writer MaxSpeed/SiteLike: 100000 Seiten x 30 Links in 5.6 s (17884 Seiten/s, 536508 Links/s), Datei 250 MiB
+Writer MinMemory/SiteLike: 100000 Seiten x 30 Links in 5.4 s (18626 Seiten/s, 558766 Links/s), Datei 250 MiB
+ok
+test writer_1m_uniform_segments ... Abschnitt  1/10:     13.8 s (  7229 Seiten/s), groesster Commit 0.52 s, groesster Checkpoint 0.00 s
+Abschnitt  2/10:     14.3 s (  7010 Seiten/s), groesster Commit 0.57 s, groesster Checkpoint 0.00 s
+Abschnitt  3/10:     13.8 s (  7228 Seiten/s), groesster Commit 0.43 s, groesster Checkpoint 0.00 s
+Abschnitt  4/10:     13.9 s (  7194 Seiten/s), groesster Commit 0.41 s, groesster Checkpoint 0.00 s
+Abschnitt  5/10:     14.0 s (  7153 Seiten/s), groesster Commit 0.38 s, groesster Checkpoint 0.00 s
+Abschnitt  6/10:     14.2 s (  7040 Seiten/s), groesster Commit 0.38 s, groesster Checkpoint 0.00 s
+Abschnitt  7/10:     14.5 s (  6896 Seiten/s), groesster Commit 0.58 s, groesster Checkpoint 0.00 s
+Abschnitt  8/10:     14.5 s (  6920 Seiten/s), groesster Commit 0.50 s, groesster Checkpoint 0.00 s
+Abschnitt  9/10:     14.4 s (  6926 Seiten/s), groesster Commit 0.49 s, groesster Checkpoint 0.00 s
+Abschnitt 10/10:     14.6 s (  6873 Seiten/s), groesster Commit 0.49 s, groesster Checkpoint 0.00 s
+writer_1m_uniform_segments: 1000000 Seiten x 30 Links; URLs anlegen 7.2 s; Seiten schreiben 142.0 s (Wanduhr 144.4 s), 7044 Seiten/s; Abschnitt min/max zum Mittel 98 % / 103 %; groesster Commit 0.58 s; groesster Checkpoint 0.00 s; Endbatch (Indexaufbau) 25.5 s; finish 0.3 s; Datei 3341 MiB; Spitzen-RSS 371 MiB
+ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 264.31s
+
+Ende 2026-10-15T20:33:55Z (22:33 lokal), Exit 0
+22:33  up 35 days, 11:52, 16 users, load averages: 1.82 2.77 4.02

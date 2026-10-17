@@ -1,0 +1,10 @@
+Start 2026-10-17T03:08:12Z (05:08 lokal)
+wait_quiet: load1=1.87 (< 2), frei: 80 GB
+ 5:08  up 36 days, 18:26, 17 users, load averages: 1.87 2.33 2.68
+Befehl: /Users/dominikwojcik/Projects/openspider-wt/target-m1-n28/release/os-loadtest run --scenario perf-001 --size large --profile balanced --work-dir /Users/dominikwojcik/Projects/openspider-wt/n28-work/b5-balanced --out docs/plan/M1-acceptance/loadtest/report-crawl-124-balanced-1m.json
+perf-001 (large): 124157 Requests/s, Crawler ja, passed = true
+  Spitzen-RSS des Crawl-Prozesses: 481 MB
+  PERF-002: 3984.4 URLs/s im Mittel, Abschnitte [3444, 4539, 4541, 4496, 4538, 4492, 4492, 4494, 4498, 4528] URLs/s
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/m1-n28/docs/plan/M1-acceptance/loadtest/report-crawl-124-balanced-1m.json
+Ende 2026-10-17T03:12:44Z (05:12 lokal), Exit 0
+ 5:12  up 36 days, 18:31, 17 users, load averages: 4.05 3.65 3.19
