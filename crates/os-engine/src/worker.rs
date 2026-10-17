@@ -510,6 +510,9 @@ async fn analyze<F: Fetch>(
     }
     // 3xx: nur Location auswerten, der Body wird nie geparst (Q5)
     if redirect::is_redirect_status(resp.status) {
+        // ONPAGE-059: Header-Fakten auch neben Location behalten; das Weiterleitungsziel bleibt unverändert.
+        a.refresh
+            .extend(os_parse::parse_headers(url, &resp.headers, &sh.pcfg).refresh);
         if item.purpose != Purpose::External && a.facts.content_class == ContentClass::Html {
             let hits = os_parse::custom_search::run_on_body(&ParseInput {
                 url,

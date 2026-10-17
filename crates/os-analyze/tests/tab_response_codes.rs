@@ -328,7 +328,8 @@ fn every_class_is_the_disjoint_union_of_internal_and_external() {
     let d = dump();
     let tab = tabs::response_codes::tab();
     let ids: Vec<_> = tab.filters.iter().map(|f| f.id).collect();
-    assert_eq!(ids.len(), 33);
+    // M1-Klassen plus drei Sichten für HTTP Refresh (M2-D12).
+    assert_eq!(ids.len(), 36);
     for class in CLASSES {
         let all = list(d, class);
         let internal = list(d, &format!("Internal {class}"));

@@ -66,3 +66,116 @@ status = 200
 content_type = "image/png"
 body = "PNG"
 headers = { Refresh = "0; url=/error" }
+
+# Separate Starts halten die bisherigen F05-Vertragsfälle stabil.
+[[route]]
+path = "/refresh-cases"
+content_type = "text/html"
+body = '<a href="/refresh-self">self</a><a href="/nourl">no URL</a><a href="/refresh-invalid">invalid</a><a href="/refresh-priority">HTTP and Refresh</a><a href="/refresh-meta">meta and Refresh</a><a href="/refresh-delay">delay</a>'
+
+[[route]]
+path = "/refresh-self"
+content_type = "text/html"
+headers = { Refresh = "0; url=/refresh-self" }
+body = "Self"
+
+[[route]]
+path = "/refresh-invalid"
+content_type = "text/html"
+headers = { Refresh = "not a refresh" }
+body = "Invalid"
+
+[[route]]
+path = "/refresh-priority"
+status = 301
+location = "/ok"
+headers = { Refresh = "0; url=/error" }
+
+[[route]]
+path = "/refresh-meta"
+content_type = "text/html"
+headers = { Refresh = "0; url=/error" }
+body = '<meta http-equiv="refresh" content="0; url=/ok">'
+
+[[route]]
+path = "/refresh-delay"
+content_type = "text/html"
+headers = { Refresh = "5; URL='/redirect'" }
+body = "Delayed"
+
+[[route]]
+path = "/mixed-loops"
+content_type = "text/html"
+body = '<a href="/mixed-tail">tail</a><a href="/refresh-self">self</a><a href="http://other.test/mixed-tail">external</a>'
+
+[[route]]
+path = "/mixed-tail"
+status = 301
+location = "/mixed-header"
+
+[[route]]
+path = "/mixed-header"
+content_type = "text/html"
+headers = { Refresh = "0; url=/mixed-meta" }
+body = "Header hop"
+
+[[route]]
+path = "/mixed-meta"
+content_type = "text/html"
+body = '<meta http-equiv="refresh" content="0; url=/mixed-header">'
+
+[[route]]
+path = "/errors-root"
+content_type = "text/html"
+body = '<a href="/r-to-404">404</a><a href="/r-to-blocked">blocked</a><a href="/r-chain-500">500 chain</a><a href="/r-to-drop">no response</a><a href="/r-to-ok">success</a><a href="/loop">loop</a>'
+
+[[route]]
+path = "/robots.txt"
+content_type = "text/plain"
+body = "User-agent: *\nDisallow: /blocked/\n"
+
+[[route]]
+path = "/r-to-404"
+status = 301
+location = "/error"
+
+[[route]]
+path = "/r-to-blocked"
+status = 302
+location = "/blocked/a"
+
+[[route]]
+path = "/r-chain-500"
+content_type = "text/html"
+headers = { Refresh = "0; url=/r-to-500" }
+body = "Server error chain"
+
+[[route]]
+path = "/r-to-500"
+status = 301
+location = "/e500"
+
+[[route]]
+path = "/e500"
+status = 500
+body = "Server error"
+
+[[route]]
+path = "/r-to-drop"
+status = 301
+location = "/drop"
+
+[[route]]
+path = "/drop"
+abort_after_headers = true
+body = "Dropped"
+
+[[route]]
+path = "/r-to-ok"
+status = 301
+location = "/ok"
+
+[[route]]
+path = "/hsts-no-policy"
+content_type = "text/html"
+body = '<a href="http://site.test/hsts-target">HTTP target</a>'

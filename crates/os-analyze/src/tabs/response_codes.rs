@@ -1,4 +1,4 @@
-//! Tab „Response Codes“ (ONPAGE-050 … 063, CRAWL-012).
+//! Tab „Response Codes“ (ONPAGE-050 … 064, CRAWL-012).
 //!
 //! Grundmenge: alle URLs mit Antwort- oder Blockierungsstatus, die in den Tabellen stehen (intern und
 //! extern; Sitemap-Dateien und die robots.txt jedes Hosts sind `in_tables = 0`, K-40/K-54). Jede Statusklasse
@@ -11,8 +11,9 @@
 //! * **No Response** – Status 0 ohne robots.txt-Sperre.
 //! * **Success (2XX)**, **Redirection (3XX)** (auch ohne `Location`), **Client Error (4XX)**,
 //!   **Server Error (5XX)** – nach Statuscode.
-//! * **Redirection (Meta Refresh)** – Weiterleitungsart `meta_refresh`; die Engine setzt sie nur, wenn das
-//!   Refresh-Ziel nicht die eigene URL ist.
+//! * **Redirection (Meta Refresh)** – Weiterleitungsart `meta_refresh`, auch bei Selbst-Reload (K-57).
+//! * **Redirection (HTTP Refresh)** – gültiges Header-Ziel verschieden von der eigenen URL, auch wenn
+//!   eine höher priorisierte Weiterleitung vorhanden ist.
 //! * **Redirect Chain** – interne URL, die auf eine URL weiterleitet, die selbst weiterleitet (≥ 2 Hops, jede
 //!   Weiterleitungsart zählt). Ketten, die in einer Schleife enden, zählen mit (K-66, A-19 revidiert); eine
 //!   Selbst-Weiterleitung oder ein Selbst-Refresh hat 1 Hop und zählt nicht. **Redirect Loop** enthält die
@@ -50,6 +51,11 @@ macro_rules! redirection {
 macro_rules! meta_refresh {
     () => {
         "u.redirect_type = 'meta_refresh'"
+    };
+}
+macro_rules! http_refresh {
+    () => {
+        "EXISTS (SELECT 1 FROM refresh r WHERE r.url_id = u.id AND r.source = 'header' AND r.target_url IS NOT NULL AND r.target_url <> u.url)"
     };
 }
 macro_rules! client_error {
@@ -207,6 +213,7 @@ pub fn tab() -> TabDef {
     let success = views!(success!());
     let redirection = views!(redirection!());
     let meta_refresh = views!(meta_refresh!());
+    let http_refresh = views!(http_refresh!());
     let chain = views!(redirect_chain!());
     let looped = views!(redirect_loop!());
     let client_error = views!(client_error!());
@@ -224,6 +231,7 @@ pub fn tab() -> TabDef {
             filter("Success (2XX)", success.0),
             filter("Redirection (3XX)", redirection.0),
             filter("Redirection (Meta Refresh)", meta_refresh.0),
+            filter("Redirection (HTTP Refresh)", http_refresh.0),
             filter("Redirect Chain", chain.0),
             filter("Redirect Loop", looped.0),
             filter("Client Error (4XX)", client_error.0),
@@ -235,6 +243,7 @@ pub fn tab() -> TabDef {
             filter("Internal Success (2XX)", success.1),
             filter("Internal Redirection (3XX)", redirection.1),
             filter("Internal Redirection (Meta Refresh)", meta_refresh.1),
+            filter("Internal Redirection (HTTP Refresh)", http_refresh.1),
             filter("Internal Redirect Chain", chain.1),
             filter("Internal Redirect Loop", looped.1),
             filter("Internal Client Error (4XX)", client_error.1),
@@ -246,6 +255,7 @@ pub fn tab() -> TabDef {
             filter("External Success (2XX)", success.2),
             filter("External Redirection (3XX)", redirection.2),
             filter("External Redirection (Meta Refresh)", meta_refresh.2),
+            filter("External Redirection (HTTP Refresh)", http_refresh.2),
             filter("External Redirect Chain", chain.2),
             filter("External Redirect Loop", looped.2),
             filter("External Client Error (4XX)", client_error.2),
@@ -310,17 +320,27 @@ pub fn redirect_details(
 /// Header mit gültigem, von der eigenen URL verschiedenem Ziel. Auch Header, die neben einer
 /// höher priorisierten Weiterleitung vorkommen, bleiben für diesen Filter sichtbar.
 pub fn http_refresh_filter() -> &'static str {
-    "EXISTS (SELECT 1 FROM refresh r WHERE r.url_id = u.id AND r.source = 'header' AND r.target_url IS NOT NULL AND r.target_url <> u.url)"
+    http_refresh!()
 }
 
+/// Hält den F05-Registrierungsaufruf auch für ergänzte Tab-Definitionen idempotent.
 pub fn configure_filters(tab: &mut TabDef) {
+    // M1-Filter zuerst, dann die M2-Ergänzungen in Registry-Reihenfolge. Die zentrale
+    // Registrierung ergänzt dazwischen noch die Rendering-Filter von M2-R02.
+    tab.filters.sort_by_key(|filter| {
+        matches!(
+            filter.id,
+            "Redirection (HTTP Refresh)"
+                | "Internal Redirection (HTTP Refresh)"
+                | "External Redirection (HTTP Refresh)"
+        )
+    });
+    let predicates = views!(http_refresh!());
     for filter in &mut tab.filters {
         filter.predicate = match filter.id {
-            "Redirection (HTTP Refresh)" => http_refresh_filter(),
-            "Internal Redirection (HTTP Refresh)" =>
-                "u.is_internal = 1 AND EXISTS (SELECT 1 FROM refresh r WHERE r.url_id = u.id AND r.source = 'header' AND r.target_url IS NOT NULL AND r.target_url <> u.url)",
-            "External Redirection (HTTP Refresh)" =>
-                "u.is_internal = 0 AND EXISTS (SELECT 1 FROM refresh r WHERE r.url_id = u.id AND r.source = 'header' AND r.target_url IS NOT NULL AND r.target_url <> u.url)",
+            "Redirection (HTTP Refresh)" => predicates.0,
+            "Internal Redirection (HTTP Refresh)" => predicates.1,
+            "External Redirection (HTTP Refresh)" => predicates.2,
             _ => continue,
         };
     }

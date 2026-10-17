@@ -83,3 +83,129 @@ async fn refresh_filter_includes_internal_and_external_non_html_headers() {
         assert_eq!(page.total, count, "{filter}");
     }
 }
+
+fn addresses(file: &os_store::CrawlFile, cfg: &CrawlConfig, filter: &str) -> Vec<String> {
+    let mut q = ViewQuery::new("Response Codes", filter);
+    q.columns = os_analyze::views::ColumnSelection::Named(vec!["Address".into()]);
+    q.sort = vec![os_analyze::SortKey {
+        column: "Address".into(),
+        descending: false,
+    }];
+    query_view(file, cfg, &q)
+        .unwrap()
+        .rows
+        .into_iter()
+        .map(|r| match &r[0] {
+            Value::Text(address) => address.clone(),
+            other => panic!("Address: {other:?}"),
+        })
+        .collect()
+}
+
+// spec: ONPAGE-059
+#[tokio::test]
+async fn refresh_filter_keeps_header_facts_beside_http_and_meta_redirects() {
+    let cfg = CrawlConfig::default();
+    let fx = crawl_fixture_from(
+        "onpage-m2-rc",
+        "http://site.test/refresh-cases",
+        cfg.clone(),
+    )
+    .await;
+    assert_eq!(
+        addresses(&fx.file, &cfg, "Redirection (HTTP Refresh)"),
+        [
+            "http://site.test/refresh-delay",
+            "http://site.test/refresh-meta",
+            "http://site.test/refresh-priority",
+        ]
+    );
+    assert_eq!(
+        addresses(&fx.file, &cfg, "Internal Redirection (HTTP Refresh)"),
+        addresses(&fx.file, &cfg, "Redirection (HTTP Refresh)")
+    );
+    assert!(addresses(&fx.file, &cfg, "External Redirection (HTTP Refresh)").is_empty());
+    // Auch tab() selbst liefert echte Prädikate, unabhängig von der zentralen Stub-Ergänzung.
+    let direct = os_analyze::tabs::response_codes::tab();
+    let f = direct
+        .filters
+        .iter()
+        .find(|f| f.id == "Internal Redirection (HTTP Refresh)")
+        .unwrap();
+    let count: i64 = fx
+        .file
+        .conn()
+        .query_row(
+            &format!(
+                "SELECT COUNT(*) FROM urls u WHERE {} AND ({})",
+                direct.population, f.predicate
+            ),
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(count, 3);
+    for path in ["/redirect", "/error"] {
+        assert!(
+            fx.site.requests().iter().any(|r| r.path_and_query == path),
+            "{path} fetched"
+        );
+    }
+}
+
+// spec: ONPAGE-060
+// spec: ONPAGE-061
+#[tokio::test]
+async fn mixed_refresh_cycles_count_each_hop_once_and_keep_external_views_empty() {
+    let cfg = CrawlConfig::default();
+    let fx = crawl_fixture_from("onpage-m2-rc", "http://site.test/mixed-loops", cfg.clone()).await;
+    let expected = [
+        "http://site.test/mixed-header",
+        "http://site.test/mixed-meta",
+        "http://site.test/mixed-tail",
+    ];
+    assert_eq!(addresses(&fx.file, &cfg, "Redirect Chain"), expected);
+    let mut loops = expected.to_vec();
+    loops.push("http://site.test/refresh-self");
+    assert_eq!(addresses(&fx.file, &cfg, "Redirect Loop"), loops);
+    for filter in ["External Redirect Chain", "External Redirect Loop"] {
+        assert!(addresses(&fx.file, &cfg, filter).is_empty());
+    }
+    let mut q = ViewQuery::new("Response Codes", "Internal Redirect Loop");
+    q.columns = os_analyze::views::ColumnSelection::Named(vec![
+        "Address".into(),
+        "Number of Redirects".into(),
+    ]);
+    for row in query_view(&fx.file, &cfg, &q).unwrap().rows {
+        let Value::Text(address) = &row[0] else {
+            panic!("address")
+        };
+        let hops = match address.as_str() {
+            "http://site.test/mixed-tail" => 3,
+            "http://site.test/refresh-self" => 1,
+            _ => 2,
+        };
+        assert_eq!(row[1], Value::Int(hops), "{address}");
+    }
+    assert!(fx.site.duplicate_requests().is_empty());
+}
+
+// spec: ONPAGE-054 [M2]
+#[tokio::test]
+async fn no_response_keeps_transport_failure_separate_from_robots_blocking() {
+    let cfg = CrawlConfig::default();
+    let fx = crawl_fixture_from("onpage-m2-rc", "http://site.test/errors-root", cfg.clone()).await;
+    assert_eq!(
+        addresses(&fx.file, &cfg, "No Response"),
+        ["http://site.test/drop"]
+    );
+    assert_eq!(
+        addresses(&fx.file, &cfg, "Blocked by Robots.txt"),
+        ["http://site.test/blocked/a"]
+    );
+    assert!(!fx
+        .site
+        .requests()
+        .iter()
+        .any(|r| r.path_and_query == "/blocked/a"));
+}
