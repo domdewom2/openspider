@@ -1,0 +1,38 @@
+[[route]]
+path = "/"
+body = "<html><title>HTTP Fixture</title><body>local fixture</body></html>"
+[[route]]
+path = "/hsts"
+body = "HSTS"
+[route.headers]
+Strict-Transport-Security = "max-age=60; includeSubDomains"
+[[route]]
+path = "/remove-hsts"
+body = "HSTS removed"
+[route.headers]
+Strict-Transport-Security = "max-age=0"
+[[route]]
+path = "/echo"
+echo = "headers"
+[[route]]
+path = "/flaky"
+fail_first_n = 2
+fail_status = 503
+body = "success"
+[[route]]
+path = "/always500"
+status = 500
+body = "failure"
+[[route]]
+path = "/retry-after"
+fail_first_n = 1
+fail_status = 503
+body = "success"
+[route.headers]
+Retry-After = "2"
+[[route]]
+path = "/frontier"
+body = '<html><a href="/flaky">Retry</a><a href="/steady">Steady</a></html>'
+[[route]]
+path = "/steady"
+body = "steady"

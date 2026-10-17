@@ -266,6 +266,16 @@ pub(crate) fn head_len(
     (n + 2) as u64
 }
 
+impl HttpResponse {
+    /// Erster Wert eines Antwort-Headers, unabhängig von der Schreibweise.
+    pub fn header(&self, name: &str) -> Option<&str> {
+        self.headers
+            .iter()
+            .find(|(n, _)| n.eq_ignore_ascii_case(name))
+            .map(|(_, v)| v.as_str())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
