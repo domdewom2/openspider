@@ -151,6 +151,7 @@ pub(crate) fn all_filter() -> FilterDef {
         kind: FilterKind::Live,
         requires: Vec::new(),
         ignore_non_indexable: false,
+        default_columns: &[],
     }
 }
 
@@ -162,6 +163,7 @@ pub(crate) fn problem_filter(id: &'static str, predicate: &'static str) -> Filte
         kind: FilterKind::Live,
         requires: Vec::new(),
         ignore_non_indexable: true,
+        default_columns: &[],
     }
 }
 
@@ -217,4 +219,23 @@ pub(crate) fn element_params(
             Value::Int(i64::from(cfg.duplicates.ignore_paginated)),
         ),
     ]
+}
+
+/// Detail-Erweiterungspunkt für M2-D02.
+// STUB(M2-D02)
+pub fn detail_rows(
+    _: &os_store::CrawlFile,
+    _: &os_model::CrawlConfig,
+    _: &crate::details::DetailReq<'_>,
+) -> Result<crate::details::DetailRows, crate::ViewError> {
+    Err(crate::ViewError::NotImplemented("M2-D02"))
+}
+
+// STUB(M2-D02)
+pub fn ngram_details(
+    _: &os_store::CrawlFile,
+    _: &os_model::CrawlConfig,
+    _: &crate::details::DetailReq<'_>,
+) -> Result<crate::details::DetailRows, crate::ViewError> {
+    Err(crate::ViewError::NotImplemented("M2-D02"))
 }

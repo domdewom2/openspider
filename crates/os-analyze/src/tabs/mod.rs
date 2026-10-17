@@ -27,6 +27,7 @@ pub mod h2;
 pub mod hreflang;
 pub mod images;
 pub mod internal;
+pub mod internal_crawl;
 pub mod javascript;
 pub mod link_metrics;
 pub mod links;
@@ -91,6 +92,9 @@ pub fn all() -> Vec<TabDef> {
     ];
     for tab in &mut tabs {
         add_stub_filters(tab);
+        if tab.id == "Response Codes" {
+            response_codes::configure_filters(tab);
+        }
         apply_meta_defaults(&mut tab.columns);
     }
     tabs
@@ -128,6 +132,25 @@ fn add_stub_filters(tab: &mut TabDef) {
         // CRAWL-089: Problemfilter (alle außer `All`) der Element-Tabs ignorieren nicht indexierbare URLs.
         filter.ignore_non_indexable =
             ELEMENT_TABS.contains(&tab.id) && !filter_id.eq_ignore_ascii_case("All");
+        filter.requires = filter
+            .requires
+            .into_iter()
+            .map(|r| match r {
+                Requirement::Config("extraction.structured_data") => Requirement::AnyConfig(&[
+                    "extraction.structured_data.json_ld",
+                    "extraction.structured_data.microdata",
+                    "extraction.structured_data.rdfa",
+                ]),
+                Requirement::Config("advanced.html_validation") => Requirement::Coverage {
+                    config: "advanced.html_validation",
+                    marker: "validation.checked",
+                },
+                Requirement::Config("images.parse_inline_css_backgrounds") => {
+                    Requirement::RenderingOrConfig("images.parse_inline_css_backgrounds")
+                }
+                other => other,
+            })
+            .collect();
         tab.filters.push(filter);
     }
     // „All“ eines Stub-Tabs: auch dann vorhanden, wenn die Tabelle ihn nicht nennt.
@@ -151,6 +174,8 @@ pub fn column_sources() -> Vec<(&'static str, Box<dyn ColumnSource>)> {
     add("Custom JavaScript", custom_js::column_source());
     add("Link Metrics", link_metrics::column_source());
     add("Internal", dynamic_api::column_source());
+    add("Internal", links::column_source());
+    add("Internal", internal_crawl::column_source());
     out
 }
 
@@ -179,13 +204,11 @@ pub type M2FilterRow = (
 /// `(Tab, Filterkennung, Nachlaufschritt, Konfigurationsschlüssel die `true` sein müssen, braucht JavaScript-Rendering)`.
 /// Reihenfolge der Datei. Der Test `filters_registry.rs` hält die Tabelle gleich der Datei.
 pub const M2_FILTERS: &[M2FilterRow] = &[
-    // Internal
     ("Internal", "Flash", None, &[], false),
     ("Internal", "Other", None, &[], false),
     ("Internal", "Media", None, &[], false),
     ("Internal", "Fonts", None, &[], false),
     ("Internal", "XML", None, &[], false),
-    // Security
     ("Security", "Mixed Content", None, &[], false),
     ("Security", "Form URL Insecure", None, &[], false),
     ("Security", "Form on HTTP URL", None, &[], false),
@@ -227,7 +250,6 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
         false,
     ),
     ("Security", "Bad Content Type", None, &[], false),
-    // Response Codes
     ("Response Codes", "Blocked Resource", None, &[], true),
     (
         "Response Codes",
@@ -285,12 +307,16 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
         &[],
         false,
     ),
-    // URL
     ("URL", "Repetitive Path", None, &[], false),
     ("URL", "Internal Search", None, &[], false),
-    ("URL", "Broken Bookmark", None, &[], false),
+    (
+        "URL",
+        "Broken Bookmark",
+        None,
+        &["advanced.crawl_fragments"],
+        false,
+    ),
     ("URL", "GA Tracking Parameters", None, &[], false),
-    // Page Titles
     (
         "Page Titles",
         "Over {title.max_px} Pixels",
@@ -306,8 +332,13 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
         false,
     ),
     ("Page Titles", "Same as H1", None, &[], false),
-    ("Page Titles", "Outside <head>", None, &[], false),
-    // Meta Description
+    (
+        "Page Titles",
+        "Outside <head>",
+        None,
+        &["advanced.html_validation"],
+        false,
+    ),
     (
         "Meta Description",
         "Over {meta_description.max_px} Pixels",
@@ -322,13 +353,16 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
         &[],
         false,
     ),
-    ("Meta Description", "Outside <head>", None, &[], false),
-    // H1
+    (
+        "Meta Description",
+        "Outside <head>",
+        None,
+        &["advanced.html_validation"],
+        false,
+    ),
     ("H1", "Alt Text in h1", None, &[], false),
     ("H1", "Non-sequential", None, &[], false),
-    // H2
     ("H2", "Non-sequential", None, &[], false),
-    // Content
     (
         "Content",
         "Near Duplicates",
@@ -354,11 +388,27 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
         &["grammar.enabled"],
         false,
     ),
-    // Images
-    ("Images", "Background Images", None, &[], true),
-    ("Images", "Missing Size Attributes", None, &[], false),
-    ("Images", "Incorrectly Sized Images", None, &[], true),
-    // Canonicals
+    (
+        "Images",
+        "Background Images",
+        Some(AnalysisStep::Images),
+        &["images.parse_inline_css_backgrounds"],
+        false,
+    ),
+    (
+        "Images",
+        "Missing Size Attributes",
+        Some(AnalysisStep::Images),
+        &["images.parse_inline_css_backgrounds"],
+        false,
+    ),
+    (
+        "Images",
+        "Incorrectly Sized Images",
+        Some(AnalysisStep::Images),
+        &[],
+        true,
+    ),
     ("Canonicals", "Canonical Is Relative", None, &[], false),
     (
         "Canonicals",
@@ -375,8 +425,13 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
         false,
     ),
     ("Canonicals", "Contains Fragment URL", None, &[], false),
-    ("Canonicals", "Outside <head>", None, &[], false),
-    // Directives
+    (
+        "Canonicals",
+        "Outside <head>",
+        None,
+        &["advanced.html_validation"],
+        false,
+    ),
     ("Directives", "NoArchive", None, &[], false),
     ("Directives", "NoSnippet", None, &[], false),
     ("Directives", "Max-Snippet", None, &[], false),
@@ -385,8 +440,13 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
     ("Directives", "NoImageIndex", None, &[], false),
     ("Directives", "NoTranslate", None, &[], false),
     ("Directives", "Unavailable_After", None, &[], false),
-    ("Directives", "Outside <head>", None, &[], false),
-    // Hreflang
+    (
+        "Directives",
+        "Outside <head>",
+        None,
+        &["advanced.html_validation"],
+        false,
+    ),
     (
         "Hreflang",
         "Unlinked Hreflang URLs",
@@ -407,8 +467,13 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
     ("Hreflang", "Missing Self Reference", None, &[], false),
     ("Hreflang", "Not Using Canonical", None, &[], false),
     ("Hreflang", "Missing X-Default", None, &[], false),
-    ("Hreflang", "Outside <head>", None, &[], false),
-    // Links
+    (
+        "Hreflang",
+        "Outside <head>",
+        None,
+        &["advanced.html_validation"],
+        false,
+    ),
     (
         "Links",
         "Non-Descriptive Anchor Text In Internal Outlinks",
@@ -459,7 +524,6 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
         &[],
         false,
     ),
-    // Sitemaps
     (
         "Sitemaps",
         "URLs In Multiple Sitemaps",
@@ -475,12 +539,10 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
         false,
     ),
     ("Sitemaps", "XML Sitemap With Over 50MB", None, &[], false),
-    // Meta Keywords
     ("Meta Keywords", "All", None, &[], false),
     ("Meta Keywords", "Missing", None, &[], false),
     ("Meta Keywords", "Duplicate", None, &[], false),
     ("Meta Keywords", "Multiple", None, &[], false),
-    // Pagination
     ("Pagination", "All", None, &[], false),
     ("Pagination", "Contains Pagination", None, &[], false),
     ("Pagination", "First Page", None, &[], false),
@@ -516,7 +578,6 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
         &[],
         false,
     ),
-    // JavaScript
     ("JavaScript", "All", None, &[], true),
     (
         "JavaScript",
@@ -586,43 +647,83 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
         &[],
         true,
     ),
-    // Structured Data
-    ("Structured Data", "All", None, &[], false),
+    (
+        "Structured Data",
+        "All",
+        None,
+        &["extraction.structured_data"],
+        false,
+    ),
     (
         "Structured Data",
         "Contains Structured Data",
         None,
-        &[],
+        &["extraction.structured_data"],
         false,
     ),
     (
         "Structured Data",
         "Missing Structured Data",
         None,
-        &[],
+        &["extraction.structured_data"],
         false,
     ),
-    ("Structured Data", "JSON-LD URLs", None, &[], false),
-    ("Structured Data", "Microdata URLs", None, &[], false),
-    ("Structured Data", "RDFa URLs", None, &[], false),
-    ("Structured Data", "Parse Errors", None, &[], false),
-    ("Structured Data", "Validation Errors", None, &[], false),
-    ("Structured Data", "Validation Warnings", None, &[], false),
+    (
+        "Structured Data",
+        "JSON-LD URLs",
+        None,
+        &["extraction.structured_data"],
+        false,
+    ),
+    (
+        "Structured Data",
+        "Microdata URLs",
+        None,
+        &["extraction.structured_data"],
+        false,
+    ),
+    (
+        "Structured Data",
+        "RDFa URLs",
+        None,
+        &["extraction.structured_data"],
+        false,
+    ),
+    (
+        "Structured Data",
+        "Parse Errors",
+        None,
+        &["extraction.structured_data"],
+        false,
+    ),
+    (
+        "Structured Data",
+        "Validation Errors",
+        None,
+        &["extraction.structured_data"],
+        false,
+    ),
+    (
+        "Structured Data",
+        "Validation Warnings",
+        None,
+        &["extraction.structured_data"],
+        false,
+    ),
     (
         "Structured Data",
         "Rich Result Validation Errors",
         None,
-        &[],
+        &["extraction.structured_data"],
         false,
     ),
     (
         "Structured Data",
         "Rich Result Validation Warnings",
         None,
-        &[],
+        &["extraction.structured_data"],
         false,
     ),
-    // PageSpeed
     ("PageSpeed", "All", None, &[], false),
     (
         "PageSpeed",
@@ -751,7 +852,6 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
         &["api.psi.enabled"],
         false,
     ),
-    // Mobile
     ("Mobile", "All", None, &[], false),
     ("Mobile", "Viewport Not Set", None, &[], false),
     ("Mobile", "Target Size", None, &[], false),
@@ -759,7 +859,6 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
     ("Mobile", "Illegible Font Size", None, &[], false),
     ("Mobile", "Unsupported Plugins", None, &[], false),
     ("Mobile", "Mobile Alternate Link", None, &[], false),
-    // Accessibility
     (
         "Accessibility",
         "All",
@@ -767,13 +866,9 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
         &["extraction.accessibility"],
         true,
     ),
-    // Custom Search
     ("Custom Search", "All", None, &[], false),
-    // Custom Extraction
     ("Custom Extraction", "All", None, &[], false),
-    // Custom JavaScript
     ("Custom JavaScript", "All", None, &[], true),
-    // Analytics
     ("Analytics", "All", None, &[], false),
     (
         "Analytics",
@@ -804,7 +899,6 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
         &["api.ga4.enabled"],
         false,
     ),
-    // Search Console
     ("Search Console", "All", None, &[], false),
     (
         "Search Console",
@@ -883,24 +977,57 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
         &["api.gsc.url_inspection"],
         false,
     ),
-    // Validation
     ("Validation", "All", None, &[], false),
     (
         "Validation",
         "Invalid HTML Elements In <head>",
         None,
+        &["advanced.html_validation"],
+        false,
+    ),
+    (
+        "Validation",
+        "Missing <head> Tag",
+        None,
+        &["advanced.html_validation"],
+        false,
+    ),
+    (
+        "Validation",
+        "Multiple <head> Tags",
+        None,
+        &["advanced.html_validation"],
+        false,
+    ),
+    (
+        "Validation",
+        "Missing <body> Tag",
+        None,
+        &["advanced.html_validation"],
+        false,
+    ),
+    (
+        "Validation",
+        "Multiple <body> Tags",
+        None,
+        &["advanced.html_validation"],
+        false,
+    ),
+    (
+        "Validation",
+        "HTML Document Over {validation.html_doc_max_bytes}MB",
+        None,
         &[],
         false,
     ),
-    ("Validation", "Missing <head> Tag", None, &[], false),
-    ("Validation", "Multiple <head> Tags", None, &[], false),
-    ("Validation", "Missing <body> Tag", None, &[], false),
-    ("Validation", "Multiple <body> Tags", None, &[], false),
-    ("Validation", "HTML Document Over 2MB", None, &[], false),
-    ("Validation", "Resource Over 2MB", None, &[], false),
-    // Link Metrics
+    (
+        "Validation",
+        "Resource Over {validation.resource_max_bytes}MB",
+        None,
+        &[],
+        false,
+    ),
     ("Link Metrics", "All", None, &[], false),
-    // Change Detection
     ("Change Detection", "All", None, &[], false),
     ("Change Detection", "Page Titles", None, &[], false),
     ("Change Detection", "Meta Description", None, &[], false),
@@ -937,11 +1064,12 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
 ];
 
 /// Spalte, nach der der Filter `Duplicate` der Element-Tabs gruppiert (ONPAGE-092, -102, -122, -132).
-const DUPLICATE_GROUP_COLUMN: [(&str, &str); 4] = [
+pub const DUPLICATE_GROUP_COLUMN: [(&str, &str); 5] = [
     ("Page Titles", "Title 1"),
     ("Meta Description", "Meta Description 1"),
     ("H1", "H1-1"),
     ("H2", "H2-1"),
+    ("Meta Keywords", "Meta Keywords 1"),
 ];
 
 /// Standardsortierung eines einzelnen Filters (ONPAGE-001). Die Ansicht fragt sie ab, wenn die Abfrage keine
@@ -964,4 +1092,115 @@ pub fn filter_default_sort(tab_id: &str, filter_id: &str) -> Option<Vec<SortKey>
                 descending: false,
             }]
         })
+}
+
+/// Registry mit den konfigurierten Spalten und Filtern (OUT-009, INTEG-020).
+pub fn configured(cfg: &os_model::CrawlConfig) -> Vec<TabDef> {
+    configure(cfg, None)
+}
+pub fn configured_for_file(cfg: &os_model::CrawlConfig, file: &os_store::CrawlFile) -> Vec<TabDef> {
+    configure(cfg, Some(file))
+}
+fn configure(cfg: &os_model::CrawlConfig, file: Option<&os_store::CrawlFile>) -> Vec<TabDef> {
+    configure_sources(cfg, file, column_sources())
+}
+fn configure_sources(
+    cfg: &os_model::CrawlConfig,
+    file: Option<&os_store::CrawlFile>,
+    sources: Vec<(&'static str, Box<dyn ColumnSource>)>,
+) -> Vec<TabDef> {
+    let mut tabs = all();
+    for (id, source) in sources {
+        if let Some(tab) = tabs.iter_mut().find(|t| t.id == id) {
+            tab.columns.extend(match file {
+                Some(f) => source.columns_for_file(cfg, f),
+                None => source.columns(cfg),
+            });
+            for filter in source.filters(cfg) {
+                if let Some(slot) = tab.filters.iter_mut().find(|f| f.id == filter.id) {
+                    *slot = filter;
+                } else {
+                    tab.filters.push(filter);
+                }
+            }
+            apply_meta_defaults(&mut tab.columns);
+        }
+    }
+    if cfg.ui.parity_filters {
+        for tab in &mut tabs {
+            if tab.id == "Internal" {
+                tab.filters
+                    .retain(|f| !matches!(f.id, "Media" | "Fonts" | "XML"));
+            }
+        }
+    }
+    tabs
+}
+
+#[cfg(test)]
+mod w1_contracts {
+    use super::*;
+    struct FixtureSource;
+    impl ColumnSource for FixtureSource {
+        fn columns(&self, _: &os_model::CrawlConfig) -> Vec<ColumnDef> {
+            Vec::new()
+        }
+        fn filters(&self, _: &os_model::CrawlConfig) -> Vec<FilterDef> {
+            let mut filter = FilterDef::placeholder("Fixture Filter", FilterKind::Live, &[]);
+            filter.predicate = "u.id = 1";
+            vec![filter]
+        }
+    }
+
+    // spec: INTEG-020
+    // Infrastruktur (M2-F05a) für INTEG-020; Fachprüfung M2-D14.
+    #[test]
+    fn configured_sources_contribute_resolvable_live_filters() {
+        let cfg = os_model::CrawlConfig::from_toml_str(include_str!(
+            "../../../../tests/fixtures/config/default.osconfig"
+        ))
+        .unwrap();
+        let tabs = configure_sources(&cfg, None, vec![("Internal", Box::new(FixtureSource))]);
+        let (tab, filter) = crate::names::resolve_in(&tabs, "Internal:Fixture Filter").unwrap();
+        assert_eq!(tab, "Internal");
+        assert_eq!(filter, "Fixture Filter");
+        let tab = tabs.iter().find(|tab| tab.id == "Internal").unwrap();
+        let filter = tab
+            .filters
+            .iter()
+            .find(|filter| filter.id == "Fixture Filter")
+            .unwrap();
+        assert!(!filter.is_stub());
+        assert_eq!(filter.predicate, "u.id = 1");
+        use os_model::{IdSource, SeededIds, Timestamp};
+        let at = Timestamp::UNIX_EPOCH;
+        let dir = tempfile::tempdir().unwrap();
+        let file = os_store::CrawlFile::create(
+            &dir.path().join("source.ospider"),
+            &os_store::CrawlInit {
+                config: cfg.clone(),
+                crawl_id: SeededIds::new(42).new_crawl_id(at),
+                mode: os_model::CrawlMode::Spider,
+                start_url: Some("https://site.test/".into()),
+                list_source: None,
+                project: "fixture".into(),
+                name: "source".into(),
+                created_at: at,
+            },
+            os_store::StorageProfile::Balanced,
+        )
+        .unwrap();
+        file.conn().execute("INSERT INTO urls(id,url,address,origin,is_internal,in_tables,state,discovered_via,folder_depth,url_length) VALUES(1,'https://site.test/','https://site.test/','https://site.test',1,1,'done','link',0,18)", []).unwrap();
+        let query = crate::views::ViewQuery::new("Internal", "Fixture Filter");
+        assert_eq!(
+            crate::views::query_view_in(&tabs, &file, &cfg, &query)
+                .unwrap()
+                .total,
+            1
+        );
+        let counts = crate::views::filter_counts_in(&tabs, &file, &cfg).unwrap();
+        assert!(counts.iter().any(|count| count.tab == "Internal"
+            && count.filter == "Fixture Filter"
+            && count.count == Some(1)));
+    }
 }

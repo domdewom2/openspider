@@ -471,7 +471,9 @@ async fn size_is_body_bytes_then_content_length_then_zero() {
 // spec: ONPAGE-173
 #[tokio::test]
 async fn size_falls_back_to_content_length_header_when_no_body_was_stored() {
-    let fx = crawl(SCENARIO, CrawlConfig::default()).await;
+    let mut cfg = CrawlConfig::default();
+    cfg.extraction.http_headers = true;
+    let fx = crawl(SCENARIO, cfg).await;
     let cfg = fx.file.config().unwrap();
     // Simuliert eine nicht geladene Antwort mit bekanntem Header (gekürzter Download, zulässige
     // Optimierung): Körpergröße unbekannt, Content-Length vorhanden.

@@ -144,6 +144,7 @@ fn class_filter(id: &'static str, predicate: &'static str) -> FilterDef {
         kind: FilterKind::Live,
         requires: Vec::new(),
         ignore_non_indexable: false,
+        default_columns: &[],
     }
 }
 
@@ -356,5 +357,6 @@ pub fn tab() -> TabDef {
         filters,
         default_sort: Vec::new(),
         params: |_| Vec::new(),
+        hidden_population: None,
     }
 }

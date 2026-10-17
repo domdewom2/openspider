@@ -94,6 +94,7 @@ fn filter(id: &'static str, predicate: &'static str) -> FilterDef {
         kind: FilterKind::Live,
         requires: Vec::new(),
         ignore_non_indexable: false,
+        default_columns: &[],
     }
 }
 
@@ -147,5 +148,16 @@ pub fn tab() -> TabDef {
                 ),
             ]
         },
+        hidden_population: None,
     }
+}
+
+/// Detail-Erweiterungspunkt für M2-D03.
+// STUB(M2-D03)
+pub fn detail_rows(
+    _: &os_store::CrawlFile,
+    _: &os_model::CrawlConfig,
+    _: &crate::details::DetailReq<'_>,
+) -> Result<crate::details::DetailRows, crate::ViewError> {
+    Err(crate::ViewError::NotImplemented("M2-D03"))
 }

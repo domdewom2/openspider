@@ -8,3 +8,5 @@ pub mod links;
 pub mod near_duplicates;
 pub mod pagination;
 pub mod sitemaps;
+
+pub mod images;

@@ -17,7 +17,7 @@ mod render;
 
 use std::sync::OnceLock;
 
-use os_model::{FilterState, IssuePriority, IssueType, Value};
+use os_model::{IssuePriority, IssueType, Value};
 
 use crate::views::FilterCount;
 
@@ -172,7 +172,7 @@ fn priority_order(p: IssuePriority) -> u8 {
 pub fn issues_from_counts(counts: &[FilterCount]) -> Vec<IssueRow> {
     let mut rows: Vec<IssueRow> = counts
         .iter()
-        .filter(|c| c.state == FilterState::Ready)
+        .filter(|c| c.state.yields_rows())
         .filter_map(|c| {
             let n = c.count.filter(|n| *n > 0)?;
             let entry = entry_for(&c.tab, &c.filter).or_else(|| entry_for(&c.tab, &c.label))?;

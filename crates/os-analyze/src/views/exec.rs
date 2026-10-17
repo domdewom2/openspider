@@ -195,14 +195,16 @@ fn multi_count(
     conn: &Connection,
     built: &Built<'_>,
     parts: &[PairedPart],
+    crawl_wide: bool,
 ) -> Result<usize, ViewError> {
     let mut max_count: i64 = 0;
     for part in parts {
         let correlated = part.list_sql.replace("?1", "u.id");
-        let sql = format!(
+        let sql =
+            format!(
             "SELECT COALESCE(MAX(c), 0) FROM (SELECT (SELECT COUNT(*) FROM ({correlated})) AS c \
              FROM {URLS_FROM} WHERE {})",
-            where_sql(&built.plan)
+            if crawl_wide { "1".to_owned() } else { where_sql(&built.plan) }
         );
         let mut stmt = conn.prepare(&sql)?;
         bind_named(&mut stmt, &built.plan.params, &[])?;
@@ -256,7 +258,12 @@ fn prepare_columns(
             (Pick::Whole, _) => {
                 let (base, parts) = series_parts(def).ok_or_else(no_series)?;
                 let count = if count_multi {
-                    multi_count(conn, built, &parts)?
+                    multi_count(
+                        conn,
+                        built,
+                        &parts,
+                        matches!(col.def.sql, ColumnSql::MultiCrawlWide { .. }),
+                    )?
                 } else {
                     1
                 };
@@ -387,7 +394,10 @@ pub(super) fn query_page(
     }
     let conn = file.conn();
     // Lesetransaktion: Zähler, Seite und Version stammen aus demselben Stand.
-    let tx = conn.unchecked_transaction()?;
+    let tx = conn
+        .is_autocommit()
+        .then(|| conn.unchecked_transaction())
+        .transpose()?;
     let version = queries::change_seq(conn)?;
 
     let cursor = match &q.start {
@@ -502,7 +512,10 @@ pub(super) fn stream_rows(
     sink: &mut dyn FnMut(&[Value]) -> Result<(), ViewError>,
 ) -> Result<Vec<String>, ViewError> {
     let conn = file.conn();
-    let tx = conn.unchecked_transaction()?;
+    let tx = conn
+        .is_autocommit()
+        .then(|| conn.unchecked_transaction())
+        .transpose()?;
     let prepared = prepare_columns(conn, built, ready)?;
     let columns = header(&built.columns, &prepared.plans);
     if !ready {

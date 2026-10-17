@@ -174,12 +174,14 @@ fn filter(id: &'static str, predicate: &'static str, ignore_non_indexable: bool)
         requires: Vec::new(),
         // CRAWL-089/TECH-015 (K-56): Nur „Missing“ schließt bei der Option nicht indexierbare Seiten aus.
         ignore_non_indexable,
+        default_columns: &[],
     }
 }
 
 /// Definition des Tabs „Canonicals“.
 pub fn tab() -> TabDef {
     TabDef {
+        hidden_population: None,
         id: "Canonicals",
         population: POPULATION,
         columns: vec![
@@ -240,6 +242,7 @@ pub fn tab() -> TabDef {
                 kind: FilterKind::PostCrawl(AnalysisStep::Canonicals),
                 requires: Vec::new(),
                 ignore_non_indexable: false,
+                default_columns: &[],
             },
         ],
         default_sort: Vec::new(),
