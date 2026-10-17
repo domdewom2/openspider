@@ -139,6 +139,7 @@ pub(super) fn build<'t>(
                 visible: &visible,
             },
         )?;
+        let compiled = crate::search::compile_visible(compiled, spec, q, tab)?;
         params.extend(compiled.params);
         Some(compiled.sql)
     } else {
@@ -176,6 +177,8 @@ pub(super) fn build<'t>(
         &sort_sig,
         search_text.unwrap_or_default(),
     ]);
+
+    let query_hash = crate::search::extend_query_hash(query_hash, q, tab);
 
     Ok(Built {
         tab,

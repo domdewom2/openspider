@@ -60,6 +60,8 @@ pub struct ViewQuery {
     pub sort: Vec<SortKey>,
     /// Suche (M1: einfacher Teilstring über die Adresse).
     pub search: Option<SearchSpec>,
+    /// Tatsächlich sichtbare Suchspalten; unabhängig von den Export-/Ausgabespalten.
+    pub search_visible: Option<Vec<String>>,
     /// Zeilen je Seite (1–500).
     pub limit: u32,
     /// Wo die Seite beginnt.
@@ -85,6 +87,7 @@ impl Default for ViewQuery {
             columns: ColumnSelection::Default,
             sort: Vec::new(),
             search: None,
+            search_visible: None,
             limit: 50,
             start: PageStart::Offset(0),
         }
@@ -197,6 +200,8 @@ pub fn query_view_in(
     cfg: &CrawlConfig,
     q: &ViewQuery,
 ) -> Result<ViewPage, ViewError> {
+    let _search = crate::search::prepare_view(tabs, file, cfg, q)?;
+    let q = &crate::search::prepared_query(q);
     let built = build::build(tabs, q, cfg)?;
     let ready = is_ready(file, cfg, &built)?;
     exec::query_page(file, &built, q, ready)
@@ -221,6 +226,8 @@ pub fn stream_view_in(
     q: &ViewQuery,
     sink: &mut dyn FnMut(&[Value]) -> Result<(), ViewError>,
 ) -> Result<Vec<String>, ViewError> {
+    let _search = crate::search::prepare_view(tabs, file, cfg, q)?;
+    let q = &crate::search::prepared_query(q);
     let built = build::build(tabs, q, cfg)?;
     let ready = is_ready(file, cfg, &built)?;
     exec::stream_rows(file, &built, ready, sink)

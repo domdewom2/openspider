@@ -807,24 +807,6 @@ function = "open"
 signature = "pub fn open( _file: &CrawlFile, _cfg: &CrawlConfig, spec: SessionSpec, budget: Budget, ) -> Result<ViewSession, ViewError>"
 
 [[stub]]
-owner = "M2-K02"
-file = "crates/os-analyze/src/search/mod.rs"
-function = "compile"
-signature = "pub fn compile(_tree: &RuleNode, _case_sensitive: bool) -> Result<CompiledSearch, ViewError>"
-
-[[stub]]
-owner = "M2-K02"
-file = "crates/os-analyze/src/search/mod.rs"
-function = "compile_ctx"
-signature = "pub fn compile_ctx( spec: &crate::views::SearchSpec, _ctx: &SearchCtx<'_>, ) -> Result<CompiledSearch, SearchError>"
-
-[[stub]]
-owner = "M2-K02"
-file = "crates/os-analyze/src/search/mod.rs"
-function = "parse"
-signature = "pub fn parse(_text: &str) -> Result<RuleNode, ParseError>"
-
-[[stub]]
 owner = "M2-K03"
 file = "crates/os-analyze/src/aggregates/live.rs"
 function = "apply_changes"
