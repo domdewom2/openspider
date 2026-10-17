@@ -514,7 +514,7 @@ fn inlinks_without_index_250k_pages() {
 // spec: TECH-005, PERF-003
 // Infrastruktur (M2-F05a) für TECH-005; Fachprüfung M2-D04/D05/D07.
 #[test]
-#[ignore = "Writer-Benchmark mit 100k Canonicals und Pagination-Zielen"]
+#[ignore = "Benchmark (TECH-005): 100k Canonicals und Pagination-Ziele"]
 fn writer_100k_canonical_dependants() {
     use os_model::{CanonicalRef, CanonicalRow, HintSource, UrlId};
     let dir = tempfile::tempdir().unwrap();

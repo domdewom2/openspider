@@ -223,7 +223,7 @@ pub async fn recrawl_urls<F: Fetch>(
             let Some(item) = pending.next() else { break };
             {
                 let mut core = sh.core.lock().unwrap_or_else(|p| p.into_inner());
-                core.active += 1;
+                core.start_worker(item.priority == 0);
             }
             set.spawn(worker::process(Arc::clone(&sh), item));
         }

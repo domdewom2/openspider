@@ -371,8 +371,7 @@ impl Core {
         match self.frontier.pop_checked_while(self.active_pages != 0) {
             Popped::Item(item) => {
                 self.started += 1;
-                self.active += 1;
-                self.active_pages += usize::from(item.priority == 0);
+                self.start_worker(item.priority == 0);
                 Pop::Item(item)
             }
             Popped::Empty => Pop::Empty,
@@ -383,6 +382,12 @@ impl Core {
     /// Gibt eine Reservierung zurück (der Abruf fand nicht statt, z. B. durch robots.txt gesperrt).
     pub fn refund(&mut self) {
         self.started = self.started.saturating_sub(1);
+    }
+
+    /// Reserviert einen Worker und zählt aktive Seiten für die Prioritätssteuerung.
+    pub fn start_worker(&mut self, page: bool) {
+        self.active += 1;
+        self.active_pages += usize::from(page);
     }
 
     /// Ein Worker ist fertig.
@@ -738,6 +743,27 @@ mod tests {
             core.finish_worker(i.priority == 0);
         }
         out
+    }
+
+    // spec: CRAWL-131, CRAWL-005
+    #[test]
+    fn manually_started_workers_track_pages_and_resources_until_finished() {
+        let mut core = Core::new(0, None);
+        // Fixture: zwei Recrawl-Seiten und eine Ressource sind gleichzeitig aktiv.
+        for page in [true, false, true] {
+            core.start_worker(page);
+        }
+        assert_eq!((core.active, core.active_pages), (3, 2));
+        core.finish_worker(false);
+        assert_eq!((core.active, core.active_pages), (2, 2));
+        core.finish_worker(true);
+        assert_eq!((core.active, core.active_pages), (1, 1));
+        core.finish_worker(true);
+        assert_eq!((core.active, core.active_pages), (0, 0));
+        assert_eq!(
+            core.started, 0,
+            "Recrawl verbraucht kein Frontier-URL-Limit"
+        );
     }
 
     // spec: CRAWL-005

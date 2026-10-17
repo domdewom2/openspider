@@ -282,6 +282,8 @@ mod tests {
 }
 
 /// K2-52: je Kennung höchstens ein Zugriff auf den alten Dienst, auch bei parallelen Lesern.
+/// Der Mutex bleibt während des Keyring-I/O in `migrate` gesperrt. Die Kennung wird vor
+/// dem Aufruf als versucht markiert; auch ein Fehlschlag wird im Prozess nicht erneut versucht.
 fn migrate_legacy_once(
     id: &str,
     migrate: impl FnOnce() -> Result<Option<String>, SecretError>,
