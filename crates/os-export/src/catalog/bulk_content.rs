@@ -219,7 +219,7 @@ fn language_findings(
     let spelling = job.cfg.spelling.enabled && !name.contains("content:grammar");
     let grammar = job.cfg.grammar.enabled && !name.contains("content:spelling errors");
     let select = if summary {
-        "SELECT f.text,f.kind,COUNT(DISTINCT f.url_id),COUNT(*) FROM spelling_findings f JOIN urls u ON u.id=f.url_id WHERE u.is_internal=1 AND u.in_tables=1 AND u.status_code BETWEEN 200 AND 299 AND (u.content_class='HTML' OR (u.content_class='PDF' AND ?3)) AND ((LOWER(f.kind)='spelling' AND ?1) OR (LOWER(f.kind)='grammar' AND ?2)) GROUP BY f.text,f.kind ORDER BY f.text COLLATE BINARY,f.kind"
+        "SELECT f.text,f.kind,COUNT(DISTINCT f.url_id),COUNT(*) FROM spelling_findings f JOIN urls u ON u.id=f.url_id WHERE u.is_internal=1 AND u.in_tables=1 AND u.status_code BETWEEN 200 AND 299 AND (u.content_class='HTML' OR (u.content_class='PDF' AND ?3)) AND ((LOWER(f.kind)='spelling' AND ?1) OR (LOWER(f.kind)='grammar' AND ?2)) GROUP BY f.text,f.kind ORDER BY COUNT(DISTINCT f.url_id) DESC,f.text COLLATE BINARY,f.kind LIMIT 100"
     } else {
         "SELECT u.address,f.language,f.kind,f.text,f.detail,f.suggestion,f.section,f.rule_id FROM spelling_findings f JOIN urls u ON u.id=f.url_id WHERE u.is_internal=1 AND u.in_tables=1 AND u.status_code BETWEEN 200 AND 299 AND (u.content_class='HTML' OR (u.content_class='PDF' AND ?3)) AND ((LOWER(f.kind)='spelling' AND ?1) OR (LOWER(f.kind)='grammar' AND ?2)) ORDER BY u.address COLLATE BINARY,f.id"
     };
@@ -278,15 +278,20 @@ mod tests {
         )
         .unwrap();
         let dir = tempfile::tempdir().unwrap();
-        for (name, minimum) in [
-            ("Content:Exact Duplicates", 2),
-            ("Content:Near Duplicates", 6),
-            ("Content:Soft 404 Inlinks", 1),
+        for (name, expected_rows, golden) in [
+            ("Content:Exact Duplicates", 2, "exact-pairs.csv"),
+            ("Content:Near Duplicates", 6, "near-pairs.csv"),
+            ("Content:Soft 404 Inlinks", 1, "soft404-inlinks.csv"),
         ] {
             let files =
                 crate::export_bulk(&fx.file, &cfg, name, dir.path(), crate::Format::Csv).unwrap();
             let text = std::fs::read_to_string(&files[0].path).unwrap();
-            assert!(text.lines().count() > minimum, "{name}: {text}");
+            assert_eq!(text.lines().count(), expected_rows + 1, "{name}: {text}");
+            let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../../tests/fixtures/onpage-m2-content/golden/bulk")
+                .join(golden);
+            let normalized = os_testsite::golden::normalize(&text, &[&fx.site.base_url()]);
+            os_testsite::golden::assert_golden(path, &normalized);
             if name.contains("Near") {
                 assert!(text.contains("near-a.html"));
                 assert!(text.contains("near-b.html"));
@@ -295,5 +300,41 @@ mod tests {
                 assert!(text.contains("area.html"));
             }
         }
+    }
+    // spec: OUT-052
+    // spec: ONPAGE-165
+    #[tokio::test]
+    async fn language_summary_ranks_urls_caps_one_hundred_and_filters_disabled_checks() {
+        let fx = os_engine::testing::crawl_fixture(
+            "onpage-m2-content",
+            os_model::CrawlConfig::default(),
+        )
+        .await;
+        let mut cfg = fx.file.config().unwrap();
+        cfg.spelling.enabled = true;
+        let ids: Vec<i64> = fx.file.conn().prepare("SELECT id FROM urls WHERE content_class='HTML' AND status_code=200 ORDER BY id LIMIT 2").unwrap()
+            .query_map([], |r| r.get(0)).unwrap().collect::<Result<_, _>>().unwrap();
+        for n in 0..150 {
+            fx.file.conn().execute("INSERT INTO spelling_findings(url_id,kind,language,section,text) VALUES (?1,'Spelling','en-GB','Body',?2)", (ids[0], format!("error{n:03}"))).unwrap();
+        }
+        for id in [ids[0], ids[0], ids[1]] {
+            fx.file.conn().execute("INSERT INTO spelling_findings(url_id,kind,language,section,text) VALUES (?1,'Spelling','en-GB','Body','shared')", [id]).unwrap();
+        }
+        fx.file.conn().execute("INSERT INTO spelling_findings(url_id,kind,language,section,text) VALUES (?1,'Grammar','en-GB','Body','disabled')", [ids[0]]).unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let files = crate::export_bulk(
+            &fx.file,
+            &cfg,
+            "Content:Spelling & Grammar Errors Summary",
+            dir.path(),
+            crate::Format::Csv,
+        )
+        .unwrap();
+        let csv = std::fs::read_to_string(&files[0].path).unwrap();
+        let lines = csv.lines().collect::<Vec<_>>();
+        assert_eq!(lines.len(), 101);
+        assert_eq!(lines[1], "shared,Spelling,2,3");
+        assert_eq!(lines[2], "error000,Spelling,1,1");
+        assert!(!csv.contains("disabled"));
     }
 }
