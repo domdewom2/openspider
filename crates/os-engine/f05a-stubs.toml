@@ -321,30 +321,6 @@ function = "run"
 signature = "pub fn run(_ctx: &PageCtx<'_>, _page: &mut ParsedPage)"
 
 [[stub]]
-owner = "M2-D12"
-file = "crates/os-analyze/src/tabs/response_codes.rs"
-function = "http_refresh_filter"
-signature = "pub fn http_refresh_filter() -> &'static str"
-
-[[stub]]
-owner = "M2-D12"
-file = "crates/os-analyze/src/tabs/response_codes.rs"
-function = "redirect_details"
-signature = "pub fn redirect_details( _: &os_store::CrawlFile, _: &os_model::CrawlConfig, _: &crate::details::DetailReq<'_>, ) -> Result<crate::details::DetailRows, crate::ViewError>"
-
-[[stub]]
-owner = "M2-D12"
-file = "crates/os-export/src/catalog/bulk_response_codes.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
-owner = "M2-D12"
-file = "crates/os-export/src/reports/redirects.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
 owner = "M2-D13"
 file = "crates/os-export/src/catalog/bulk_sitemaps.rs"
 function = "entries"
@@ -871,12 +847,6 @@ owner = "M2-X01"
 file = "crates/os-export/src/catalog/bulk_generic.rs"
 function = "entries"
 signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
-owner = "M2-D12"
-file = "crates/os-analyze/src/tabs/response_codes.rs"
-function = "configure_filters"
-signature = "pub fn configure_filters(tab: &mut TabDef)"
 
 [[stub]]
 owner = "M2-E01"

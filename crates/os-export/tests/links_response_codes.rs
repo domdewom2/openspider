@@ -297,38 +297,39 @@ async fn refresh_targets_are_classified_by_their_refresh_and_not_as_success() {
     assert!(d.contains(&u("/refresh-target.html")));
 }
 
-// spec: OUT-050
+// spec: ONPAGE-067
+// spec: OUT-067
 #[tokio::test]
 async fn all_error_inlinks_are_the_union_of_no_response_4xx_and_5xx() {
     let fx = crawl_codes().await;
     let dir = tempfile::tempdir().unwrap();
-    let key = |rows: &[Vec<String>]| -> BTreeSet<(String, String, String, String)> {
-        rows.iter()
-            .map(|r| (r[2].clone(), r[1].clone(), r[0].clone(), r[12].clone()))
-            .collect()
+    let multiset = |rows: &[Vec<String>]| {
+        let mut counts = std::collections::BTreeMap::new();
+        for row in rows {
+            *counts.entry(row.clone()).or_insert(0usize) += 1;
+        }
+        counts
     };
-    let (_, all) = export(
-        &fx.file,
-        &names("Internal & External", "All Error Inlinks"),
-        dir.path(),
-    );
-    let mut union = BTreeSet::new();
-    for entry in [
-        "No Response Inlinks",
-        "Client Error (4xx) Inlinks",
-        "Server Error (5xx) Inlinks",
-    ] {
-        let (_, rows) = export(&fx.file, &names("Internal & External", entry), dir.path());
-        assert!(!rows.is_empty(), "{entry}");
-        union.extend(key(&rows));
+    for scope in SCOPES {
+        let (_, all) = export(&fx.file, &names(scope, "All Error Inlinks"), dir.path());
+        let mut union = Vec::new();
+        for entry in [
+            "No Response Inlinks",
+            "Client Error (4xx) Inlinks",
+            "Server Error (5xx) Inlinks",
+        ] {
+            let (_, rows) = export(&fx.file, &names(scope, entry), dir.path());
+            union.extend(rows);
+        }
+        assert_eq!(multiset(&all), multiset(&union), "{scope}");
+        let order: Vec<(u16, &str, &str)> = all
+            .iter()
+            .map(|r| (r[6].parse().unwrap_or(0), r[2].as_str(), r[1].as_str()))
+            .collect();
+        let mut sorted = order.clone();
+        sorted.sort();
+        assert_eq!(order, sorted, "{scope}");
     }
-    assert_eq!(key(&all), union);
-    assert_eq!(all.len(), union.len(), "keine Zeile doppelt");
-    // sortiert nach Destination, Source, Dokumentreihenfolge (OUT-031)
-    let order: Vec<(&str, &str)> = all.iter().map(|r| (r[2].as_str(), r[1].as_str())).collect();
-    let mut sorted = order.clone();
-    sorted.sort();
-    assert_eq!(order, sorted);
 }
 
 // spec: OUT-050
