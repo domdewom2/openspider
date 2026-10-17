@@ -1,0 +1,32 @@
+# Lint 2.3 Regel 1 (docs/plan/M2-ui-concept.md 2.3, docs/plan/M2.md 3.6): Datenbankarbeit der App läuft ausschließlich
+# im Lese-Pool (`pool.rs`) und in der Schreibwarteschlange (`write_queue.rs`), nie direkt in einem Command oder einer
+# `async fn` (ein blockierender SQLite-Aufruf würde einen Tokio-Worker und damit Ticks und andere Commands blockieren).
+#
+# Verboten sind in `crates/os-app` das Benennen der Verbindungstypen, das Öffnen von Verbindungen und rohes SQL auf einer
+# Verbindung. Erlaubt bleibt, was Funktionen aus `os-store`/`os-analyze` auf der Verbindung tun, die der Pool in
+# `ReadPool::run(…, |file, cancel| …)` bzw. `WriteQueue::submit(…, |conn| …)` herausgibt: Die Closure steht in `os-app`,
+# läuft aber auf dem Pool-Thread, und die Parameter werden nicht benannt.
+#
+# Ausnahme-Attribut `#![allow(clippy::disallowed_types, clippy::disallowed_methods)]` nur in `src/pool.rs` und
+# `src/write_queue.rs`. Tests, die Crawl-Dateien anlegen, tragen es am Dateikopf (Testcode ist keine `async fn` eines
+# Commands); `runtime_lint_*.rs` prüft, dass kein weiterer Quellcode die Ausnahme beansprucht.
+
+disallowed-types = [
+    { path = "rusqlite::Connection", reason = "Datenbankzugriff nur über ReadPool/WriteQueue (M2-ui-concept 2.3 Regel 1)" },
+    { path = "rusqlite::Statement", reason = "Datenbankzugriff nur über ReadPool/WriteQueue (M2-ui-concept 2.3 Regel 1)" },
+    { path = "os_store::CrawlFile", reason = "Crawl-Dateien öffnet nur der ReadPool (M2-ui-concept 2.3 Regel 1)" },
+]
+
+disallowed-methods = [
+    { path = "rusqlite::Connection::open", reason = "Verbindungen öffnen nur ReadPool/WriteQueue" },
+    { path = "rusqlite::Connection::open_with_flags", reason = "Verbindungen öffnen nur ReadPool/WriteQueue" },
+    { path = "rusqlite::Connection::open_in_memory", reason = "Verbindungen öffnen nur ReadPool/WriteQueue" },
+    { path = "rusqlite::Connection::execute", reason = "rohes SQL nur in os-store/os-analyze, aufgerufen im Pool" },
+    { path = "rusqlite::Connection::execute_batch", reason = "rohes SQL nur in os-store/os-analyze, aufgerufen im Pool" },
+    { path = "rusqlite::Connection::prepare", reason = "rohes SQL nur in os-store/os-analyze, aufgerufen im Pool" },
+    { path = "rusqlite::Connection::prepare_cached", reason = "rohes SQL nur in os-store/os-analyze, aufgerufen im Pool" },
+    { path = "rusqlite::Connection::query_row", reason = "rohes SQL nur in os-store/os-analyze, aufgerufen im Pool" },
+    { path = "os_store::CrawlFile::open", reason = "Crawl-Dateien öffnet nur der ReadPool" },
+    { path = "os_store::CrawlFile::open_with", reason = "Crawl-Dateien öffnet nur der ReadPool" },
+    { path = "os_store::CrawlFile::create", reason = "Crawl-Dateien legt die Engine an (M2-K04), nie ein Command direkt" },
+]

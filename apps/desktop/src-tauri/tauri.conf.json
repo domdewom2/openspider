@@ -9,16 +9,30 @@
     "frontendDist": "../dist"
   },
   "app": {
+    "withGlobalTauri": false,
     "windows": [
       {
         "label": "main",
         "title": "OpenSpider",
         "width": 1280,
-        "height": 800
+        "height": 800,
+        "minWidth": 1024,
+        "minHeight": 640
+      },
+      {
+        "label": "settings",
+        "title": "OpenSpider",
+        "create": false,
+        "width": 760,
+        "height": 560,
+        "minWidth": 640,
+        "minHeight": 420,
+        "visible": false
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: ospider: http://ospider.localhost; font-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "devCsp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: ospider: http://ospider.localhost; font-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost http://localhost:1420 ws://localhost:1420; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
     }
   },
   "bundle": {
@@ -30,6 +44,46 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "13.0"
+    },
+    "fileAssociations": [
+      {
+        "ext": ["ospider"],
+        "name": "OpenSpider Crawl",
+        "description": "OpenSpider Crawl",
+        "mimeType": "application/vnd.openspider.crawl",
+        "role": "Editor"
+      },
+      {
+        "ext": ["osconfig"],
+        "name": "OpenSpider Konfiguration",
+        "description": "OpenSpider Konfiguration",
+        "mimeType": "application/vnd.openspider.config",
+        "role": "Editor"
+      },
+      {
+        "ext": ["osauth"],
+        "name": "OpenSpider Authentifizierungsprofile",
+        "description": "OpenSpider Authentifizierungsprofile",
+        "mimeType": "application/vnd.openspider.auth",
+        "role": "Editor"
+      },
+      {
+        "ext": ["ospreset"],
+        "name": "OpenSpider Vorgabe",
+        "description": "OpenSpider Vorgabe",
+        "mimeType": "application/vnd.openspider.preset",
+        "role": "Editor"
+      },
+      {
+        "ext": ["ostask"],
+        "name": "OpenSpider Aufgabe",
+        "description": "OpenSpider Aufgabe",
+        "mimeType": "application/vnd.openspider.task",
+        "role": "Editor"
+      }
     ]
   }
 }

@@ -1,7 +1,28 @@
-//! app.info.
+//! app.info (UI-127, OUT-227).
 //!
-//! STUB(M2-F03): Gerüst von M2-F01. Name, Argument- und Rückgabetyp sowie `long_running` stehen im Katalog
-//! (`docs/plan/M2.md` 3.6a, `M2-ui-concept.md` 4.4) und ändert M2-F03 nicht; es ersetzt diese Datei durch die
-//! Umsetzung. Bis dahin antwortet jeder Command mit `CmdError::Unsupported`.
+//! Version, Build, Plattform und die wirksamen Pfade. Der Exportordner folgt der Einstellung `export.directory`,
+//! sonst `<Dokumente>/OpenSpider/Exports` (OUT-222); eine Änderung gilt ohne Neustart.
 
-stub_commands!("M2-F03", [("app.info", "void", "AppInfo", false),]);
+use futures_util::future::BoxFuture;
+
+use crate::registry::{CmdResult, CommandMeta, Registry};
+use crate::runtime::error::to_json;
+use crate::runtime::info::app_info;
+use crate::runtime::{App, CallCtx};
+
+fn info<'a>(app: &'a App, _ctx: CallCtx, _args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move { to_json(&app_info(app.config(), &app.settings_snapshot())) })
+}
+
+/// Trägt die Commands dieser Domäne in die Registry ein.
+pub fn register(r: &mut Registry) {
+    r.register(
+        CommandMeta {
+            name: "app.info",
+            args: "void",
+            ret: "AppInfo",
+            long_running: false,
+        },
+        info,
+    );
+}
