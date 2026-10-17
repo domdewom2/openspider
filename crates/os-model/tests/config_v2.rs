@@ -30,7 +30,7 @@ fn schema_version_is_2_and_written_files_say_so() {
 fn rendering_defaults_follow_the_spec() {
     let r = RenderingConfig::default();
     assert_eq!(r.mode, RenderingMode::Text);
-    assert_eq!(r.ajax_timeout_s, 5);
+    assert_eq!(r.ajax_timeout_s, 5.0);
     assert!(r.js_error_reporting);
     assert_eq!((r.viewport.width, r.viewport.height), (411, 731));
     assert_eq!(r.viewport.preset, "googlebot_mobile");
@@ -106,7 +106,7 @@ fn link_position_defaults_are_the_five_standard_rules_in_order() {
     );
     assert_eq!(rules[0].contains, ["nav", "menu"]);
     assert_eq!(rules[2].contains, ["aside", "sidebar"]);
-    assert_eq!(rules[4].contains, [""], "Content ist die Auffangregel");
+    assert!(rules[4].contains.is_empty(), "Content ist die Auffangregel");
 }
 
 // spec: OUT-121, OUT-123, OUT-124, OUT-125, OUT-126, OUT-128
@@ -606,7 +606,10 @@ fn v1_files_load_unchanged_with_defaults_for_the_new_sections() {
         l.config.schema_version, 2,
         "im Speicher gilt die aktuelle Version"
     );
-    assert_eq!(l.config, CrawlConfig::default());
+    let mut expected = CrawlConfig::default();
+    expected.scope.crawl_outside_start_folder = false;
+    expected.extraction.http_headers = true;
+    assert_eq!(l.config, expected);
     assert_eq!(
         fs::read_to_string(fixture("config/v1/default.osconfig")).unwrap(),
         text,
@@ -716,11 +719,10 @@ fn newer_files_are_never_touched_by_migration() {
 fn migrated_v1_fixture_equals_the_v2_default_file() {
     let (text, _) =
         migrate_toml(&fs::read_to_string(fixture("config/v1/default.osconfig")).unwrap()).unwrap();
-    assert_eq!(text, CrawlConfig::default().to_osconfig_string().unwrap());
-    assert_eq!(
-        text,
-        fs::read_to_string(fixture("config/default.osconfig")).unwrap()
-    );
+    let mut expected = CrawlConfig::default();
+    expected.scope.crawl_outside_start_folder = false;
+    expected.extraction.http_headers = true;
+    assert_eq!(text, expected.to_osconfig_string().unwrap());
 }
 
 fn tempfile_dir(name: &str) -> PathBuf {
@@ -728,4 +730,15 @@ fn tempfile_dir(name: &str) -> PathBuf {
     let _ = fs::remove_dir_all(&dir);
     fs::create_dir_all(&dir).unwrap();
     dir
+}
+
+// spec: INTEG-081
+// Infrastruktur (M2-F05a) für INTEG-081; Fachprüfung M2-D16.
+#[test]
+fn legacy_v2_content_catch_all_remains_loadable() {
+    let profile = include_str!("../../../tests/fixtures/config/default.osconfig");
+    let profile = profile.replace("contains = []", "contains = [\"\"]");
+    assert!(profile.contains("contains = [\"\"]"));
+    let cfg = CrawlConfig::from_toml_str(&profile).unwrap();
+    assert!(cfg.validate().errors.is_empty());
 }

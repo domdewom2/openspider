@@ -201,8 +201,11 @@ impl Clock for TokioClock {
 }
 
 /// Eine Seite der simulierten Website.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct SimPage {
+    pub synthetic: Option<os_fetch::http::SyntheticResponse>,
+    pub untruncated_bytes: Option<u64>,
+    pub set_cookies: Vec<String>,
     /// Statuscode.
     pub status: u16,
     /// Antwort-Header (Namen klein).
@@ -251,6 +254,9 @@ impl SimSite {
         self.with(
             url,
             SimPage {
+                synthetic: None,
+                untruncated_bytes: None,
+                set_cookies: Vec::new(),
                 status: 200,
                 headers: vec![("content-type".to_string(), content_type.to_string())],
                 body: body.to_string(),
@@ -264,6 +270,9 @@ impl SimSite {
         self.with(
             url,
             SimPage {
+                synthetic: None,
+                untruncated_bytes: None,
+                set_cookies: Vec::new(),
                 status,
                 headers: vec![("location".to_string(), location.to_string())],
                 body: String::new(),
@@ -414,6 +423,12 @@ impl Fetch for SimFetcher {
                 seq
             };
             let page = self.site.pages.get(req.url.as_str()).cloned();
+            let synthetic = page.as_ref().and_then(|p| p.synthetic);
+            let untruncated_bytes = page.as_ref().and_then(|p| p.untruncated_bytes);
+            let set_cookies = page
+                .as_ref()
+                .map(|p| p.set_cookies.clone())
+                .unwrap_or_default();
             let (status, headers, body, own_delay) = match page {
                 Some(p) => (p.status, p.headers, p.body, p.delay),
                 None => (
@@ -452,6 +467,12 @@ impl Fetch for SimFetcher {
                     truncated: false,
                     decode_error: None,
                     md5_hex: "0".repeat(32),
+                    request_headers: Vec::new(),
+                    set_cookies,
+                    content_length: None,
+                    untruncated_bytes,
+                    synthetic,
+                    attempts: 1,
                 }),
             }
         })
@@ -569,17 +590,7 @@ impl CoalescingSink {
 
 impl CrawlSink for CoalescingSink {
     fn write(&mut self, batch: WriteBatch) -> Result<(), StoreError> {
-        let p = &mut self.pending;
-        p.new_urls.extend(batch.new_urls);
-        p.url_updates.extend(batch.url_updates);
-        p.pages.extend(batch.pages);
-        p.queue.extend(batch.queue);
-        p.sitemaps.extend(batch.sitemaps);
-        p.robots.extend(batch.robots);
-        p.meta.extend(batch.meta);
-        p.events.extend(batch.events);
-        p.counters.extend(batch.counters);
-        p.url_flags.extend(batch.url_flags);
+        crate::writer_thread::merge(&mut self.pending, batch);
         Ok(())
     }
 

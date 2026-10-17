@@ -68,6 +68,8 @@ fn robots_block_wins_over_no_response() {
 #[test]
 fn progress_json_field_names_are_fixed() {
     let p = Progress {
+        memory_used_bytes: None,
+        memory_limit_bytes: None,
         state: CrawlState::Running,
         end_reason: None,
         crawled: 12,

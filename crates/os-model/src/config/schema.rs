@@ -12,7 +12,7 @@ use std::sync::OnceLock;
 
 use serde_json::{json, Map, Value};
 
-use crate::config::validate::{int_range, INT_RANGES};
+use crate::config::validate::{int_range, FLOAT_RANGES, INT_RANGES};
 use crate::config::CrawlConfig;
 
 static SCHEMA: OnceLock<Value> = OnceLock::new();
@@ -48,6 +48,15 @@ fn build() -> Value {
                 Some(max) => node.insert("maximum".into(), json!(max)),
                 None => node.remove("maximum"),
             };
+        }
+    }
+    for range in FLOAT_RANGES {
+        if let Some(node) = property_node_mut(&mut v, range.path) {
+            node.insert("minimum".into(), json!(range.min));
+            node.insert("maximum".into(), json!(range.max));
+            if let Some(multiple) = range.multiple {
+                node.insert("multipleOf".into(), json!(multiple));
+            }
         }
     }
     if let Some(node) = property_node_mut(&mut v, "speed.max_urls_per_sec") {

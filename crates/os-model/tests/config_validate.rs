@@ -90,7 +90,6 @@ fn counts_below_their_minimum_are_rejected() {
         [
             "advanced.response_timeout_s",
             "image.max_kb",
-            "limits.max_page_kb",
             "limits.max_urls",
             "schema_version",
             "url.max_chars",

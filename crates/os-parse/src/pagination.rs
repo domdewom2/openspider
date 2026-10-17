@@ -42,3 +42,10 @@ pub fn extract(doc: &Document, base: &url::Url) -> Vec<PaginationRef> {
     }
     out
 }
+
+// STUB(M2-D05)
+pub fn response_facts(
+    _input: &crate::ResponseInput<'_>,
+) -> Vec<(os_model::ExtKey, os_model::Value)> {
+    Vec::new()
+}

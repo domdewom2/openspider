@@ -33,7 +33,14 @@ pub fn export_tab(
     out_dir: &Path,
     format: Format,
 ) -> Result<ExportFileInfo, ExportError> {
-    export_tab_in(&tabs::all(), file, cfg, q, out_dir, format)
+    export_tab_in(
+        &tabs::configured_for_file(cfg, file),
+        file,
+        cfg,
+        q,
+        out_dir,
+        format,
+    )
 }
 
 /// Wie [`export_tab`], gegen eine eigene Tab-Liste.
@@ -113,7 +120,7 @@ pub fn suggest_tab_file_name(
     format: Format,
 ) -> Result<String, ExportError> {
     suggest_tab_file_name_in(
-        &tabs::all(),
+        &tabs::configured_for_file(cfg, file),
         file,
         cfg,
         tab,

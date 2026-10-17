@@ -134,3 +134,23 @@ pub struct SitemapReport {
     /// Wegen Überlänge (> 2 048 Zeichen) ausgelassene URLs.
     pub skipped_too_long: Vec<String>,
 }
+
+/// Ziel für einzelne Blätter eines gemeinsamen Workbooks (OUT-075).
+pub trait WorkbookTarget {
+    fn sheet(&mut self, name: &str) -> Result<&mut dyn TableWriter, ExportError>;
+}
+/// Gemeinsame Steuerung aller Exportpfade (OUT-010).
+pub struct ExportCtx<'a> {
+    pub cancel: &'a os_model::CancelToken,
+    pub progress: &'a dyn Fn(u64),
+    pub skip_empty: bool,
+    pub workbook: Option<&'a mut dyn WorkbookTarget>,
+    pub skipped: Vec<String>,
+}
+impl ExportCtx<'_> {
+    pub fn checkpoint(&self) -> Result<(), ExportError> {
+        self.cancel
+            .checkpoint()
+            .map_err(|_| ExportError::Write("Export abgebrochen".into()))
+    }
+}

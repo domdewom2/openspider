@@ -104,3 +104,76 @@ pub trait FilterSource: Send + Sync {
     /// Die URL-Kennungen, die die Quelle zulässt.
     fn bitmap(&self, file: &os_store::CrawlFile) -> Result<RoaringBitmap, ViewError>;
 }
+
+/// Kontext der Spaltensuche (UI-011), Fachumsetzung M2-K02.
+pub struct SearchCtx<'a> {
+    pub tab: &'a crate::TabDef,
+    pub columns: &'a [crate::ColumnDef],
+    pub visible: &'a [&'a str],
+}
+#[derive(Debug, thiserror::Error)]
+pub enum SearchError {
+    #[error("nicht implementiert: {0}")]
+    NotImplemented(&'static str),
+    #[error("Suche abgebrochen")]
+    Cancelled,
+    #[error("Zeitlimit der Suche erreicht")]
+    Deadline,
+    #[error(transparent)]
+    Store(#[from] os_store::StoreError),
+    #[error(transparent)]
+    Sql(#[from] rusqlite::Error),
+}
+// STUB(M2-K02)
+pub fn compile_ctx(
+    spec: &crate::views::SearchSpec,
+    _ctx: &SearchCtx<'_>,
+) -> Result<CompiledSearch, SearchError> {
+    match spec {
+        crate::views::SearchSpec::Simple(text) => Ok(CompiledSearch {
+            sql: "instr(lower(u.address), lower(:q)) > 0".into(),
+            params: vec![(":q".into(), os_model::Value::Text(text.clone()))],
+        }),
+        crate::views::SearchSpec::Rules { .. } => Err(SearchError::NotImplemented("M2-K02")),
+    }
+}
+impl CompiledSearch {
+    pub fn matches_bitmap(
+        &self,
+        file: &os_store::CrawlFile,
+        deadline: std::time::Instant,
+        cancel: &os_model::CancelToken,
+    ) -> Result<RoaringBitmap, SearchError> {
+        cancel.checkpoint().map_err(|_| SearchError::Cancelled)?;
+        if std::time::Instant::now() >= deadline {
+            return Err(SearchError::Deadline);
+        }
+        let mut stmt = file
+            .conn()
+            .prepare(&format!("SELECT u.id FROM urls u WHERE {}", self.sql))?;
+        for (name, value) in &self.params {
+            if let Some(index) = stmt.parameter_index(name)? {
+                let value = match value {
+                    os_model::Value::Null => rusqlite::types::Value::Null,
+                    os_model::Value::Bool(v) => rusqlite::types::Value::Integer(i64::from(*v)),
+                    os_model::Value::Int(v) => rusqlite::types::Value::Integer(*v),
+                    os_model::Value::Float(v) => rusqlite::types::Value::Real(*v),
+                    os_model::Value::Text(v) => rusqlite::types::Value::Text(v.clone()),
+                };
+                stmt.raw_bind_parameter(index, value)?;
+            }
+        }
+        let mut rows = stmt.raw_query();
+        let mut result = RoaringBitmap::new();
+        while let Some(row) = rows.next()? {
+            cancel.checkpoint().map_err(|_| SearchError::Cancelled)?;
+            if std::time::Instant::now() >= deadline {
+                return Err(SearchError::Deadline);
+            }
+            if let Ok(id) = u32::try_from(row.get::<_, i64>(0)?) {
+                result.insert(id);
+            }
+        }
+        Ok(result)
+    }
+}

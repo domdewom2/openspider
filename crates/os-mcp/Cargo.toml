@@ -9,6 +9,11 @@ repository.workspace = true
 authors.workspace = true
 
 [dependencies]
+os-engine.workspace = true
+os-fetch.workspace = true
+axum.workspace = true
+getrandom.workspace = true
+
 os-model.workspace = true
 os-store.workspace = true
 os-analyze.workspace = true
@@ -34,6 +39,7 @@ name = "openspider-mcp"
 path = "src/main.rs"
 
 [dev-dependencies]
+os-analyze = { workspace = true, features = ["testing"] }
 os-engine = { workspace = true, features = ["testing"] }
 os-testsite.workspace = true
 tempfile.workspace = true

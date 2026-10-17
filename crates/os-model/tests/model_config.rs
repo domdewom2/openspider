@@ -14,7 +14,7 @@ fn defaults_match_table_3_4() {
     assert_eq!(c.mode, CrawlMode::Spider);
 
     assert!(!c.scope.all_subdomains && !c.scope.subfolder_only);
-    assert!(!c.scope.crawl_outside_start_folder && !c.scope.regex_partial_match);
+    assert!(c.scope.crawl_outside_start_folder && !c.scope.regex_partial_match);
     assert!(c.scope.include.is_empty() && c.scope.exclude.is_empty());
 
     for t in [
@@ -100,7 +100,7 @@ fn defaults_match_table_3_4() {
 
     let x = &c.extraction;
     assert!(x.page_titles && x.meta_description && x.meta_keywords && x.h1 && x.h2);
-    assert!(x.hash && x.response_time && x.last_modified && x.http_headers);
+    assert!(x.hash && x.response_time && x.last_modified && !x.http_headers);
     assert!(!x.store_html);
 
     assert_eq!(c.content.area.exclude_elements, ["nav", "footer"]);
@@ -185,6 +185,7 @@ fn all_fields_changed() -> CrawlConfig {
             mobile_alternate: StoreCrawl::ON,
             follow_internal_nofollow: true,
             follow_external_nofollow: true,
+            ..Default::default()
         },
         limits: LimitsConfig {
             max_urls: 1234,
@@ -197,6 +198,7 @@ fn all_fields_changed() -> CrawlConfig {
             threads: 11,
             max_per_host: Some(2),
             max_urls_per_sec: Some(7.5),
+            ..Default::default()
         },
         user_agent: UserAgentConfig {
             preset: "custom".into(),
@@ -208,6 +210,7 @@ fn all_fields_changed() -> CrawlConfig {
             unreachable_policy: RobotsUnreachablePolicy::AllowAll,
             retries: 0,
             retry_delay_s: 1,
+            ..Default::default()
         },
         advanced: AdvancedConfig {
             cookies: CookieMode::Persistent,
@@ -276,7 +279,10 @@ fn all_fields_changed() -> CrawlConfig {
             max_px: 900,
             min_px: 300,
         },
-        url: UrlLimits { max_chars: 100 },
+        url: UrlLimits {
+            max_chars: 100,
+            ..Default::default()
+        },
         h1: HeadingLimits { max_chars: 60 },
         h2: HeadingLimits { max_chars: 65 },
         image: ImageLimits {
@@ -335,6 +341,7 @@ fn all_fields_changed() -> CrawlConfig {
         export: ExportConfig {
             utf8_bom: false,
             line_ending: LineEnding::Lf,
+            ..Default::default()
         },
         ..CrawlConfig::default()
     };

@@ -17,7 +17,18 @@ const ENTRIES: &[TableEntry] = &[TableEntry {
     aliases: &[],
     file_stem: "Crawl Path Report",
     header: &["Address", "Depth", "Path"],
+    header_fn: None,
     requires: &[],
     owner: "M2-D17",
     run: stub_run,
 }];
+
+// STUB(M2-D17)
+pub fn export_detail(
+    _: &crate::catalog::TableJob<'_>,
+    _: &os_analyze::details::DetailReq<'_>,
+    _: &std::path::Path,
+    _: crate::types::Format,
+) -> Result<crate::types::ExportFileInfo, crate::error::ExportError> {
+    Err(crate::error::ExportError::NotImplemented("M2-D17"))
+}

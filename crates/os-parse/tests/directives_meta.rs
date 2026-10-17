@@ -137,6 +137,7 @@ fn parse_html_uses_the_robots_token_plus_googlebot() {
     let url = url::Url::parse("https://site.test/").unwrap();
     let body = br#"<head><meta name="openspider" content="noindex"><meta name="googlebot" content="nofollow"><meta name="yandex" content="noindex"></head>"#;
     let page = os_parse::parse_html(&os_parse::ParseInput {
+        status: 200,
         url: &url,
         body,
         content_type: Some("text/html"),

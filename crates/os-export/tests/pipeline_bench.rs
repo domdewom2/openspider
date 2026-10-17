@@ -62,9 +62,11 @@ fn wide_tab() -> TabDef {
             kind: FilterKind::Live,
             requires: Vec::new(),
             ignore_non_indexable: false,
+            default_columns: &[],
         }],
         default_sort: Vec::new(),
         params: |_| Vec::new(),
+        hidden_population: None,
     }
 }
 

@@ -124,12 +124,21 @@ fn suggestions(kind: Kind, input: &str) -> Vec<String> {
 
 /// Löst einen Namen auf (Groß-/Kleinschreibung und Leerräume um `:` spielen keine Rolle).
 pub fn resolve(kind: Kind, input: &str) -> Result<Resolved, Unknown> {
+    resolve_with(kind, input, &os_model::CrawlConfig::default())
+}
+
+/// Auflösung nach Laden der Konfiguration.
+pub fn resolve_with(
+    kind: Kind,
+    input: &str,
+    cfg: &os_model::CrawlConfig,
+) -> Result<Resolved, Unknown> {
     let unknown = || Unknown {
         input: input.to_string(),
         suggestions: suggestions(kind, input),
     };
     match kind {
-        Kind::Tab => match catalog::resolve(ExportKind::Tab, input) {
+        Kind::Tab => match catalog::resolve_with(ExportKind::Tab, input, cfg) {
             Ok(catalog::ExportRef::Tab { tab, filter }) => Ok(Resolved::Tab { tab, filter }),
             _ => Err(unknown()),
         },
@@ -137,7 +146,7 @@ pub fn resolve(kind: Kind, input: &str) -> Result<Resolved, Unknown> {
             if bulk_issues::resolve(input).is_ok() {
                 return Ok(Resolved::Issues);
             }
-            match catalog::resolve(ExportKind::Bulk, input) {
+            match catalog::resolve_with(ExportKind::Bulk, input, cfg) {
                 Ok(catalog::ExportRef::Bulk(name)) => Ok(Resolved::Bulk(name)),
                 _ => Err(unknown()),
             }
@@ -266,7 +275,7 @@ mod tests {
     // spec: OUT-181
     #[test]
     fn the_registry_lists_every_filter_of_the_tab_registry() {
-        let expected: usize = os_analyze::tabs::all()
+        let expected: usize = os_analyze::tabs::configured(&os_model::CrawlConfig::default())
             .iter()
             .map(|t| t.filters.len())
             .sum();
@@ -305,5 +314,29 @@ mod tests {
             resolve(Kind::Bulk, "issues : all issues"),
             Ok(Resolved::Issues)
         );
+    }
+}
+
+#[cfg(test)]
+mod w1_contracts {
+    // spec: INTEG-020
+    // Infrastruktur (M2-F05a) für INTEG-020; Fachprüfung M2-D14.
+    #[test]
+    fn cli_resolves_filters_from_a_configured_column_source() {
+        os_analyze::tabs::testing::with_fixture_source(|| {
+            assert_eq!(
+                super::resolve_with(
+                    super::Kind::Tab,
+                    "Internal:Fixture Filter",
+                    &os_model::CrawlConfig::default()
+                )
+                .unwrap(),
+                super::Resolved::Tab {
+                    tab: "Internal".into(),
+                    filter: "Fixture Filter".into()
+                }
+            );
+        });
+        assert!(super::resolve(super::Kind::Tab, "Internal:Fixture Filter").is_err());
     }
 }

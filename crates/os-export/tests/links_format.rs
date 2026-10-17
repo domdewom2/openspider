@@ -255,7 +255,7 @@ async fn link_position_follows_the_enclosing_element() {
     let pos = |dest: &str| find(&all, HOME, &u(dest), "Hyperlink")[13].clone();
     assert_eq!(pos("/nav.html"), "Navigation");
     assert_eq!(pos("/header.html"), "Header");
-    assert_eq!(pos("/aside.html"), "Aside");
+    assert_eq!(pos("/aside.html"), "Sidebar");
     assert_eq!(pos("/footer.html"), "Footer");
     assert_eq!(pos("/dup.html"), "Content");
     // Link Path: absoluter XPath mit Positionsindizes in jedem Schritt
@@ -532,4 +532,52 @@ async fn catalog_names_resolve_without_regard_to_case() {
     let from_bulk = all.iter().filter(|r| r[2] == HOME).count();
     assert_eq!(page.total as usize, from_bulk);
     let _ = UrlId(0);
+}
+
+// spec: OUT-050
+// Infrastruktur (M2-F05a) für OUT-050; Fachprüfung M2-D12.
+#[tokio::test]
+async fn error_inlinks_writer_orders_missing_status_first_then_status_destination_and_source() {
+    use os_export::types::{ExportCtx, TableWriter, WriterOptions};
+    let fx = crawl_links().await;
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("ordered.csv");
+    let cfg = links_config();
+    let tabs = os_analyze::tabs::configured(&cfg);
+    let mut entry = bulk_links::entries()
+        .iter()
+        .find(|e| e.name == INLINKS)
+        .unwrap()
+        .clone();
+    entry.order = os_export::links_export::LinkOrder::ErrorInlinks;
+    let job = os_export::catalog::TableJob {
+        entry_name: &entry.name,
+        tabs: &tabs,
+        file: &fx.file,
+        cfg: &cfg,
+    };
+    let token = os_model::CancelToken::default();
+    let progress = std::cell::Cell::new(0);
+    let report = |n| progress.set(n);
+    let mut ctx = ExportCtx {
+        cancel: &token,
+        progress: &report,
+        skip_empty: false,
+        workbook: None,
+        skipped: vec![],
+    };
+    let mut writer = os_export::csv::CsvWriter::create(&path, &WriterOptions::default()).unwrap();
+    let n =
+        os_export::links_export::export_link_entry_to(&entry, &job, &mut writer, &mut ctx).unwrap();
+    Box::new(writer).finish().unwrap();
+    assert_eq!(progress.get(), n);
+    let rows = rows(&read_csv(&path));
+    assert_eq!(rows.len() as u64, n);
+    let keys: Vec<_> = rows
+        .iter()
+        .map(|r| (r[6].parse::<u16>().ok(), r[2].as_str(), r[1].as_str()))
+        .collect();
+    assert!(keys.windows(2).all(|w| w[0] <= w[1]));
+    assert!(keys.first().unwrap().0.is_none());
+    assert!(keys.last().unwrap().0.is_some());
 }

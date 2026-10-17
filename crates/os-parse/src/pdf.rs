@@ -34,3 +34,11 @@ pub fn meta(body: &[u8]) -> PdfMeta {
         _ => PdfMeta::default(),
     }
 }
+
+// STUB(M2-D02)
+pub fn parse(body: &[u8], _cfg: &crate::ParseConfig) -> os_model::PdfResult {
+    os_model::PdfResult {
+        meta: meta(body),
+        ..Default::default()
+    }
+}

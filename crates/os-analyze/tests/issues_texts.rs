@@ -51,15 +51,30 @@ fn every_catalog_entry_has_what_why_fix_in_de_and_en() {
 fn text_files_have_no_orphan_entries() {
     for lang in Lang::ALL {
         let name = format!("core/issues/texts/{}.toml", lang.code());
-        let table: toml::Table = std::fs::read_to_string(repo_root().join(&name))
-            .unwrap()
-            .parse()
-            .unwrap();
-        let ids: Vec<&String> = table["issues"].as_table().unwrap().keys().collect();
+        let mut paths = vec![repo_root().join(&name)];
+        let extra = repo_root().join(format!("core/issues/texts/{}.d", lang.code()));
+        if extra.exists() {
+            paths.extend(
+                std::fs::read_dir(extra)
+                    .unwrap()
+                    .map(|e| e.unwrap().path())
+                    .filter(|p| p.extension().is_some_and(|e| e == "toml")),
+            );
+        }
+        let mut ids = std::collections::BTreeSet::new();
+        for path in paths {
+            let table: toml::Table = std::fs::read_to_string(path).unwrap().parse().unwrap();
+            let Some(issues) = table.get("issues").and_then(toml::Value::as_table) else {
+                continue;
+            };
+            for id in issues.keys() {
+                assert!(ids.insert(id.clone()), "doppelter Text: {id}");
+            }
+        }
         assert_eq!(ids.len(), catalog().len(), "{name}: Anzahl der Einträge");
         for id in ids {
             assert!(
-                catalog().iter().any(|e| &e.id == id),
+                catalog().iter().any(|e| e.id == id),
                 "{name}: Text ohne Katalogeintrag {id}"
             );
         }

@@ -70,12 +70,27 @@ pub enum ExportRef {
 
 /// Löst einen Namen (case-insensitiv) auf.
 pub fn resolve(kind: ExportKind, name: &str) -> Result<ExportRef, NameError> {
+    resolve_with(kind, name, &CrawlConfig::default())
+}
+
+/// Auflösung mit der wirksamen Crawl-Konfiguration.
+pub fn resolve_with(
+    kind: ExportKind,
+    name: &str,
+    cfg: &CrawlConfig,
+) -> Result<ExportRef, NameError> {
     match kind {
         ExportKind::Tab => {
-            let (tab, filter) = os_analyze::views::resolve_name(name)?;
+            let (tab, filter) = os_analyze::names::resolve_in(&tabs::configured(cfg), name)?;
             Ok(ExportRef::Tab { tab, filter })
         }
         ExportKind::Bulk => {
+            if let Some(entry) = dynamic_entries(cfg)
+                .into_iter()
+                .find(|e| normalize_name(&e.name) == normalize_name(name))
+            {
+                return Ok(ExportRef::Bulk(entry.name));
+            }
             if let Some(entry) = bulk_links::find(name) {
                 return Ok(ExportRef::Bulk(entry.name.clone()));
             }
@@ -103,8 +118,13 @@ pub fn resolve(kind: ExportKind, name: &str) -> Result<ExportRef, NameError> {
 /// Alle gültigen Namen der Art, für Hilfetexte und Vorschläge. Tab-Namen tragen für Schwellen ein `X`
 /// (`Page Titles:Over X Characters`).
 pub fn list(kind: ExportKind) -> Vec<String> {
+    list_with(kind, &CrawlConfig::default())
+}
+
+/// Namen der konfigurierten Registry.
+pub fn list_with(kind: ExportKind, cfg: &CrawlConfig) -> Vec<String> {
     match kind {
-        ExportKind::Tab => tabs::all()
+        ExportKind::Tab => tabs::configured(cfg)
             .iter()
             .flat_map(|tab| {
                 tab.filters
@@ -116,6 +136,7 @@ pub fn list(kind: ExportKind) -> Vec<String> {
         ExportKind::Bulk => {
             let mut names = bulk_links::names();
             names.extend(bulk_issues::names());
+            names.extend(dynamic_entries(cfg).into_iter().map(|e| e.name));
             names.extend(bulk_tables().iter().map(|e| e.name.to_string()));
             names
         }
@@ -251,6 +272,8 @@ pub const CHAIN_HEADER: &[&str] = &[
 
 /// Eingabe eines Tabellen-Eintrags: Tab-Definitionen, Crawl-Datei und Konfiguration.
 pub struct TableJob<'a> {
+    /// Aufgerufener Exportname.
+    pub entry_name: &'a str,
     /// Tab-Definitionen (`tabs::all()` oder eine eigene Liste).
     pub tabs: &'a [TabDef],
     /// Die Crawl-Datei.
@@ -273,6 +296,8 @@ pub struct TableEntry {
     pub file_stem: &'static str,
     /// Kopfzeile der Datei.
     pub header: &'static [&'static str],
+    /// Datenabhängige Kopfzeile.
+    pub header_fn: Option<HeaderFn>,
     /// Voraussetzungen (OUT-112).
     pub requires: &'static [ReportRequirement],
     /// Paket, das den Eintrag umsetzt (`M2-D11`).
@@ -295,7 +320,7 @@ pub fn stub_run(_job: &TableJob<'_>, _writer: &mut dyn TableWriter) -> Result<u6
 
 /// Alle Bulk-Tabelleneinträge der M2-Gruppen in Katalogreihenfolge.
 pub fn bulk_tables() -> Vec<&'static TableEntry> {
-    let groups: [&'static [TableEntry]; 16] = [
+    let groups: [&'static [TableEntry]; 17] = [
         bulk_security::entries(),
         bulk_response_codes::entries(),
         bulk_canonicals::entries(),
@@ -312,6 +337,7 @@ pub fn bulk_tables() -> Vec<&'static TableEntry> {
         bulk_a11y::entries(),
         bulk_web::entries(),
         bulk_generic::entries(),
+        crate::reports::queued_urls::entries(),
     ];
     groups.iter().flat_map(|g| g.iter()).collect()
 }
@@ -342,7 +368,10 @@ pub fn export_table(
 ) -> Result<ExportFileInfo, ExportError> {
     let options = crate::pipeline::writer_options(job.cfg);
     let mut writer = open_writer(path, format, entry.file_stem, &options)?;
-    let header: Vec<String> = entry.header.iter().map(|h| (*h).to_string()).collect();
+    let header = match entry.header_fn {
+        Some(make) => make(job)?,
+        None => entry.header.iter().map(|h| (*h).to_string()).collect(),
+    };
     writer.header(&header)?;
     (entry.run)(job, &mut *writer)?;
     let mut info = writer.finish()?;
@@ -353,4 +382,23 @@ pub fn export_table(
     }
     info.warnings.extend(warnings);
     Ok(info)
+}
+
+/// Erzeugt eine datenabhängige Kopfzeile.
+pub type HeaderFn = fn(&TableJob<'_>) -> Result<Vec<String>, ExportError>;
+/// Dynamischer Tabellenexport einer konfigurierten Suche oder Extraktion.
+pub struct DynamicEntry {
+    pub name: String,
+    pub file_stem: String,
+    pub header: Vec<String>,
+    pub run: Box<DynamicRun>,
+}
+/// Schreibt Daten eines dynamischen Exports.
+pub type DynamicRun =
+    dyn Fn(&TableJob<'_>, &mut dyn TableWriter) -> Result<u64, ExportError> + Send + Sync;
+/// Konfigurationsabhängige Exporte.
+pub fn dynamic_entries(cfg: &CrawlConfig) -> Vec<DynamicEntry> {
+    let mut entries = bulk_custom_search::dynamic_entries(cfg);
+    entries.extend(bulk_custom_extraction::dynamic_entries(cfg));
+    entries
 }

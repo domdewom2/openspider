@@ -18,6 +18,7 @@ const ENTRIES: &[TableEntry] = &[TableEntry {
     aliases: &[],
     file_stem: "Orphan Pages",
     header: &["Address", "Source", "Status Code", "Indexability"],
+    header_fn: None,
     requires: &[ReportRequirement::CrawlAnalysis],
     owner: "M2-D13",
     run: stub_run,

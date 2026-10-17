@@ -323,6 +323,7 @@ fn render_results_roundtrip_with_children_and_replace_per_url() {
                 text: format!("Fehler {i}"),
                 source: Some("https://site.test/app.js".into()),
                 line: Some(i as u32 + 1),
+                ..Default::default()
             })
             .collect(),
         blocked: vec![BlockedResource {
@@ -351,6 +352,7 @@ fn render_results_roundtrip_with_children_and_replace_per_url() {
                 height: 5,
             },
         ],
+        console_dropped: 0,
     };
     sink.write(WriteBatch {
         render: vec![render("ok", 3)],
@@ -647,19 +649,12 @@ fn page_html_is_stored_with_the_page_and_replaced_or_cleared_on_recrawl() {
     })
     .unwrap();
     let file = reader(&path);
-    let (enc, body): (String, Vec<u8>) = file
-        .conn()
-        .query_row(
-            "SELECT encoding, body FROM page_html WHERE url_id = 1",
-            [],
-            |r| Ok((r.get(0)?, r.get(1)?)),
-        )
-        .unwrap();
-    assert_eq!(enc, "utf-8");
-    assert_eq!(body, b"<html>Quelltext</html>");
+    let stored = queries::stored_html(&file, UrlId(1)).unwrap().unwrap();
+    assert_eq!(stored.charset.as_deref(), Some("utf-8"));
+    assert_eq!(stored.bytes, b"<html>Quelltext</html>");
 
     // Neuer Abruf (replace) ohne Quelltext: der alte Quelltext und die M2-Kindzeilen der URL verschwinden,
-    // Zusatzfakten (url_ext) bleiben.
+    // Abrufgebundene Zusatzfakten (url_ext) verschwinden ebenfalls.
     sink.write(WriteBatch {
         ext: vec![ext(1, "head.a", Value::Int(1))],
         forms: vec![FormWrite {
@@ -680,7 +675,7 @@ fn page_html_is_stored_with_the_page_and_replaced_or_cleared_on_recrawl() {
     .unwrap();
     assert_eq!(count(&file, "SELECT COUNT(*) FROM page_html"), 0);
     assert_eq!(count(&file, "SELECT COUNT(*) FROM forms"), 0);
-    assert_eq!(count(&file, "SELECT COUNT(*) FROM url_ext"), 1);
+    assert_eq!(count(&file, "SELECT COUNT(*) FROM url_ext"), 0);
 }
 
 #[test]
@@ -711,6 +706,7 @@ fn sitemap_error_and_entry_extras_roundtrip() {
             images: 2,
             videos: 0,
             news: 1,
+            extensions: Vec::new(),
         }],
     };
     sink.write(WriteBatch {

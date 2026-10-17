@@ -38,6 +38,20 @@ pub fn peak_rss_self() -> Option<u64> {
     imp::peak_rss_self()
 }
 
+/// Liest die Linux-Speicherspitze solange das Kind noch lebt. Nach EOF kann es bereits
+/// ein Zombie ohne VmHWM sein; andere Plattformen liefern ihren Wert beim Warten.
+pub(crate) fn sample_child(child: &Child) -> Option<u64> {
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        imp::vm_hwm_of(&child.id().to_string())
+    }
+    #[cfg(not(all(unix, not(target_os = "macos"))))]
+    {
+        let _ = child;
+        None
+    }
+}
+
 /// Wandelt `KB`-Angaben aus `/proc/<pid>/status` (`VmHWM:   1234 kB`) in Bytes.
 #[cfg_attr(not(all(unix, not(target_os = "macos"))), allow(dead_code))]
 fn parse_vm_hwm(status: &str) -> Option<u64> {
@@ -101,7 +115,7 @@ mod imp {
     use std::process::Child;
     use std::time::Duration;
 
-    fn vm_hwm_of(pid: &str) -> Option<u64> {
+    pub(super) fn vm_hwm_of(pid: &str) -> Option<u64> {
         parse_vm_hwm(&std::fs::read_to_string(format!("/proc/{pid}/status")).ok()?)
     }
 

@@ -10,3 +10,10 @@ use crate::PageCtx;
 
 /// Trägt Sicherheitsfakten in `page.ext` und `page.forms` ein.
 pub fn run(_ctx: &PageCtx<'_>, _page: &mut ParsedPage) {}
+
+// STUB(M2-D11)
+pub fn response_facts(
+    _input: &crate::ResponseInput<'_>,
+) -> Vec<(os_model::ExtKey, os_model::Value)> {
+    Vec::new()
+}

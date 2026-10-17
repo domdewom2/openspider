@@ -26,4 +26,11 @@ const ENTRIES: &[TableEntry] = &[TableEntry {
     requires: &[],
     owner: "M2-D14",
     run: stub_run,
+    header_fn: None,
 }];
+
+/// Erweiterungspunkt für M2-D14.
+// STUB(M2-D14)
+pub fn dynamic_entries(_cfg: &os_model::CrawlConfig) -> Vec<super::DynamicEntry> {
+    Vec::new()
+}

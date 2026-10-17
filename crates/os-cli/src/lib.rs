@@ -18,6 +18,7 @@ pub mod exec;
 pub mod exit;
 pub mod help;
 pub mod listing;
+pub mod logging;
 pub mod plan;
 pub mod registry;
 pub mod reporter;
@@ -62,7 +63,7 @@ fn fail(error: &CliError) -> i32 {
 /// Verbindet das Protokoll (`tracing`) mit stderr; jede Zeile läuft durch `os_fetch::redact::text`, damit
 /// weder Zugangsdaten noch Tokens im Log landen. Stufe über `OPENSPIDER_LOG` (Standard `error`: Warnungen
 /// der Bibliotheken meldet der Lauf selbst über seine Ergebnisse, damit nichts doppelt erscheint).
-fn init_logging() {
+pub(crate) fn init_logging() {
     use tracing_subscriber::fmt::MakeWriter;
     use tracing_subscriber::EnvFilter;
 
@@ -249,7 +250,7 @@ pub fn run(cli: Cli) -> i32 {
         return 0;
     }
 
-    init_logging();
+    logging::init(&args);
     let paths = app_paths();
 
     if args.list_crawls {

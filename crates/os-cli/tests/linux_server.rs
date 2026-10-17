@@ -97,6 +97,8 @@ async fn headless_crawl_of_the_basic_site_matches_the_internal_all_golden() {
         "--set",
         "threads=1",
         "--set",
+        "extraction.http_headers=true",
+        "--set",
         "robots.retries=0",
         "--export-tabs",
         "Internal:All",

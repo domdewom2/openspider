@@ -156,7 +156,10 @@ fn filters_match_the_registry_files_in_id_order_kind_and_requirements() {
                 .requires
                 .iter()
                 .filter_map(|r| match r {
-                    Requirement::Config(key) => Some((*key).to_string()),
+                    Requirement::Config(key)
+                    | Requirement::RenderingOrConfig(key)
+                    | Requirement::Coverage { config: key, .. } => Some((*key).to_string()),
+                    Requirement::AnyConfig(_) => Some("extraction.structured_data".into()),
                     Requirement::Rendering => None,
                 })
                 .collect();

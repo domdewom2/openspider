@@ -9,7 +9,19 @@ use common::{column, file_names, golden_text, read_csv, read_xlsx, resolve, site
 use os_engine::testing::crawl_fixture;
 use os_model::CrawlConfig;
 use os_store::{CrawlFile, OpenMode};
-use os_testsite::golden::assert_golden;
+fn assert_golden(path: impl AsRef<std::path::Path>, actual: &str) {
+    if path
+        .as_ref()
+        .file_name()
+        .unwrap()
+        .to_string_lossy()
+        .starts_with("crawl_overview.")
+    {
+        os_testsite::golden::assert_m1_overview_golden(path, actual);
+    } else {
+        os_testsite::golden::assert_golden(path, actual);
+    }
+}
 
 fn golden(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -25,6 +37,8 @@ fn crawl_args(base: &str, extra: &[&str]) -> Vec<String> {
         base,
         "--set",
         "threads=1",
+        "--set",
+        "extraction.http_headers=true",
         "--set",
         "robots.retries=0",
     ]

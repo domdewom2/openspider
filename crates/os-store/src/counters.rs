@@ -61,6 +61,9 @@ impl Contribution {
             ..Contribution::default()
         };
         for link in links {
+            if !link.crawlable {
+                continue;
+            }
             if let Some(target) = link.target_id {
                 let entry = c.targets.entry(target.0).or_default();
                 entry.all += 1;
@@ -87,8 +90,8 @@ impl Contribution {
             ..Contribution::default()
         };
         let mut stmt = conn.prepare_cached(
-            "SELECT target_id, COUNT(*), SUM(link_type = 'Hyperlink'), SUM(link_type = 'Image') FROM links \
-             WHERE source_id = ?1 AND target_id IS NOT NULL GROUP BY target_id",
+            "SELECT target_id, COUNT(*), SUM(link_type = 'Hyperlink' AND crawlable = 1), SUM(link_type = 'Image') FROM links \
+             WHERE source_id = ?1 AND crawlable = 1 AND target_id IS NOT NULL GROUP BY target_id",
         )?;
         let mut rows = stmt.query([page_id])?;
         while let Some(row) = rows.next()? {
@@ -457,11 +460,11 @@ fn recompute_sql(filtered: bool) -> String {
     format!(
         "WITH {ids_cte}\
          inl AS (SELECT l.target_id AS id, \
-                 SUM(l.link_type = 'Hyperlink') AS inlinks, \
-                 COUNT(DISTINCT CASE WHEN l.link_type = 'Hyperlink' THEN l.source_id END) AS unique_inlinks, \
-                 SUM(l.link_type = 'Hyperlink' AND l.source_id = l.target_id) AS self_inlinks, \
+                 SUM(l.link_type = 'Hyperlink' AND l.crawlable = 1) AS inlinks, \
+                 COUNT(DISTINCT CASE WHEN l.link_type = 'Hyperlink' AND l.crawlable = 1 THEN l.source_id END) AS unique_inlinks, \
+                 SUM(l.link_type = 'Hyperlink' AND l.crawlable = 1 AND l.source_id = l.target_id) AS self_inlinks, \
                  COUNT(*) AS inlinks_all, \
-                 COUNT(DISTINCT CASE WHEN l.link_type = 'Hyperlink' AND s.content_class = 'HTML' \
+                 COUNT(DISTINCT CASE WHEN l.link_type = 'Hyperlink' AND l.crawlable = 1 AND s.content_class = 'HTML' \
                        AND s.status_code BETWEEN 200 AND 299 THEN l.source_id END) AS html_2xx_sources, \
                  SUM(l.link_type = 'Image') AS image_link_inlinks \
                  FROM links l JOIN urls s ON s.id = l.source_id \
@@ -473,7 +476,7 @@ fn recompute_sql(filtered: bool) -> String {
                  SUM(t.is_internal = 0) AS external_outlinks, \
                  COUNT(DISTINCT CASE WHEN t.is_internal = 0 THEN l.target_id END) AS unique_external_outlinks \
                  FROM links l JOIN urls t ON t.id = l.target_id JOIN urls s ON s.id = l.source_id \
-                 WHERE l.link_type = 'Hyperlink' AND s.is_internal = 1 {out_filter} GROUP BY l.source_id), \
+                 WHERE l.link_type = 'Hyperlink' AND l.crawlable = 1 AND s.is_internal = 1 {out_filter} GROUP BY l.source_id), \
          img AS (SELECT i.image_id AS id, COUNT(DISTINCT i.page_id) AS n \
                  FROM image_instances i JOIN urls s ON s.id = i.page_id \
                  WHERE i.image_id IS NOT NULL AND s.is_internal = 1 {img_filter} GROUP BY i.image_id) \

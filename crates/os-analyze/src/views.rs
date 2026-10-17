@@ -22,7 +22,7 @@ use os_store::CrawlFile;
 
 use crate::defs::{SortKey, TabDef};
 use crate::error::{NameError, ViewError};
-use crate::state::filter_state;
+use crate::state::filter_state_for_file;
 use crate::tabs;
 
 pub use build::column_name_resolves;
@@ -172,7 +172,7 @@ pub struct ViewPlan {
 
 /// Baut den SQL-Plan zu einer Abfrage.
 pub fn plan(q: &ViewQuery, cfg: &CrawlConfig) -> Result<ViewPlan, ViewError> {
-    plan_in(&tabs::all(), q, cfg)
+    plan_in(&tabs::configured(cfg), q, cfg)
 }
 
 /// Wie [`plan`], gegen eine eigene Tab-Liste.
@@ -187,7 +187,7 @@ pub fn query_view(
     cfg: &CrawlConfig,
     q: &ViewQuery,
 ) -> Result<ViewPage, ViewError> {
-    query_view_in(&tabs::all(), file, cfg, q)
+    query_view_in(&tabs::configured_for_file(cfg, file), file, cfg, q)
 }
 
 /// Wie [`query_view`], gegen eine eigene Tab-Liste.
@@ -210,7 +210,7 @@ pub fn stream_view(
     q: &ViewQuery,
     sink: &mut dyn FnMut(&[Value]) -> Result<(), ViewError>,
 ) -> Result<Vec<String>, ViewError> {
-    stream_view_in(&tabs::all(), file, cfg, q, sink)
+    stream_view_in(&tabs::configured_for_file(cfg, file), file, cfg, q, sink)
 }
 
 /// Wie [`stream_view`], gegen eine eigene Tab-Liste.
@@ -233,7 +233,13 @@ pub fn state_of(
     tab: &str,
     filter: &str,
 ) -> Result<FilterState, ViewError> {
-    state_of_in(&tabs::all(), file, cfg, tab, filter)
+    state_of_in(
+        &tabs::configured_for_file(cfg, file),
+        file,
+        cfg,
+        tab,
+        filter,
+    )
 }
 
 /// Wie [`state_of`], gegen eine eigene Tab-Liste.
@@ -247,7 +253,7 @@ pub fn state_of_in(
     let built = build::build(tabs, &ViewQuery::new(tab, filter), cfg)?;
     let cfg_json = serde_json::to_value(cfg).unwrap_or(serde_json::Value::Null);
     let snapshot = counts::analysis_snapshot(file)?;
-    Ok(filter_state(built.filter, cfg, &cfg_json, &snapshot))
+    filter_state_for_file(built.filter, built.tab, file, cfg, &cfg_json, &snapshot)
 }
 
 fn is_ready(
@@ -257,12 +263,15 @@ fn is_ready(
 ) -> Result<bool, ViewError> {
     let cfg_json = serde_json::to_value(cfg).unwrap_or(serde_json::Value::Null);
     let snapshot = counts::analysis_snapshot(file)?;
-    Ok(filter_state(built.filter, cfg, &cfg_json, &snapshot) == FilterState::Ready)
+    Ok(
+        filter_state_for_file(built.filter, built.tab, file, cfg, &cfg_json, &snapshot)?
+            .yields_rows(),
+    )
 }
 
 /// Zähler aller Filter aller Tabs: Trefferzahl und Prozent nur bei `Ready`, sonst der Zustand.
 pub fn filter_counts(file: &CrawlFile, cfg: &CrawlConfig) -> Result<Vec<FilterCount>, ViewError> {
-    filter_counts_in(&tabs::all(), file, cfg)
+    filter_counts_in(&tabs::configured_for_file(cfg, file), file, cfg)
 }
 
 /// Wie [`filter_counts`], gegen eine eigene Tab-Liste.

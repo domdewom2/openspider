@@ -130,20 +130,7 @@ fn response_code_entries() -> Vec<BulkLinkEntry> {
             "Server Error (5xx) Inlinks",
             "Server Error (5XX)",
         ));
-        out.push(BulkLinkEntry {
-            name: name("All Error Inlinks"),
-            aliases: Vec::new(),
-            selection: Selection::Filters {
-                tab: RESPONSE_CODES_TAB.to_string(),
-                filters: vec![
-                    filter(prefix, "No Response"),
-                    filter(prefix, "Client Error (4XX)"),
-                    filter(prefix, "Server Error (5XX)"),
-                ],
-            },
-            order: LinkOrder::Inlinks,
-            requires_rendering: false,
-        });
+        out.push(super::bulk_response_codes::error_inlinks(scope, prefix));
     }
     out
 }

@@ -17,6 +17,7 @@ const ENTRIES: &[TableEntry] = &[TableEntry {
     aliases: &[],
     file_stem: "Insecure Content",
     header: crate::catalog::LINK_INTERNAL_HEADER,
+    header_fn: None,
     requires: &[],
     owner: "M2-D11",
     run: stub_run,

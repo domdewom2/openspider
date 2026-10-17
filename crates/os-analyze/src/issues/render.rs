@@ -69,6 +69,12 @@ pub(crate) fn default_value(path: &str) -> Option<String> {
     for p in parts {
         cur = cur.as_table()?.get(p)?;
     }
+    if matches!(
+        path,
+        "validation.html_doc_max_bytes" | "validation.resource_max_bytes"
+    ) {
+        return cur.as_integer().map(|v| float_text(v as f64 / 1_048_576.0));
+    }
     scalar_text(cur)
 }
 
@@ -90,6 +96,14 @@ fn resolve(path: &str, params: &[(&str, Value)]) -> Option<String> {
     for (name, value) in params {
         if norm(name) == want {
             match value {
+                Value::Int(i)
+                    if matches!(
+                        path,
+                        "validation.html_doc_max_bytes" | "validation.resource_max_bytes"
+                    ) =>
+                {
+                    return Some(float_text(*i as f64 / 1_048_576.0))
+                }
                 Value::Int(i) => return Some(i.to_string()),
                 Value::Float(f) => return Some(float_text(*f)),
                 Value::Text(s) => return Some(s.clone()),

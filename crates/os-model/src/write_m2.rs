@@ -40,8 +40,10 @@ pub struct SdIssueWrite {
 }
 
 /// Konsolenmeldung beim Rendern (CRAWL-084).
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct ConsoleEntry {
+    pub column: Option<u32>,
+    pub timestamp_ms: Option<u64>,
     /// Stufe: `error`, `warning`, `info`, `log`.
     pub level: String,
     /// Text.
@@ -105,6 +107,7 @@ pub struct RenderTimings {
 /// Ergebnis des Renderns einer Seite (`render_pages`, `render_console`, `render_blocked`, `render_network`, `screenshots`).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RenderWrite {
+    pub console_dropped: u64,
     /// URL.
     pub url_id: UrlId,
     /// Status: `ok`, `timeout`, `crashed` oder `failed`.
@@ -256,4 +259,22 @@ pub struct ApiValueWrite {
     pub v_text: Option<String>,
     /// Abrufzeitpunkt.
     pub fetched_at: Timestamp,
+}
+
+/// Cookie vor Redigierung (CRAWL-062, UI-043).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CookieWrite {
+    pub url_id: UrlId,
+    pub origin: crate::CookieOrigin,
+    pub position: u32,
+    pub name: String,
+    pub value: String,
+    pub domain: Option<String>,
+    pub path: Option<String>,
+    pub expires: Option<String>,
+    pub max_age: Option<i64>,
+    pub secure: bool,
+    pub http_only: bool,
+    pub same_site: Option<String>,
+    pub raw: String,
 }

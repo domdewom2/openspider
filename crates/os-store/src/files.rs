@@ -260,6 +260,9 @@ pub fn repaired_path(path: &Path) -> PathBuf {
 
 /// Tabellen mit Schlüsselspalte für das Retten in Bereichen (`None` = ganze Tabelle in einem Durchlauf).
 const REPAIR_TABLES: &[(&str, Option<&str>)] = &[
+    ("cookies", None),
+    ("discovery_edges", Some("seq")),
+    ("sitemap_entry_ext", None),
     ("crawl_meta", None),
     ("crawl_config", Some("id")),
     ("urls", Some("id")),

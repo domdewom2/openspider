@@ -55,7 +55,7 @@ impl Tool for CrawlOverview {
     fn call(&self, ctx: &ToolContext, args: Json) -> Result<ToolOutput, ToolError> {
         reject_unknown(&args, &["crawl_id"])?;
         let crawl = open_crawl(ctx, &args)?;
-        let tab_defs = tabs::all();
+        let tab_defs = tabs::configured_for_file(&crawl.cfg, &crawl.file);
         let report = overview::build(&crawl.file, &crawl.cfg, &tab_defs).map_err(internal)?;
         let counts = views::filter_counts(&crawl.file, &crawl.cfg).map_err(view_error)?;
 

@@ -8,6 +8,7 @@ use os_model::{AnalysisStep, CrawlConfig, Value};
 
 /// Ein Tab der Ansicht, z. B. „Internal“.
 pub struct TabDef {
+    pub hidden_population: Option<&'static str>,
     /// Kanonischer Name, z. B. `"Internal"`.
     pub id: &'static str,
     /// SQL-Bedingung über den Alias `u` (Tabelle `urls`), die die Grundmenge des Tabs bestimmt.
@@ -224,10 +225,20 @@ pub fn apply_meta_defaults(columns: &mut [ColumnDef]) {
 pub trait ColumnSource: Send + Sync {
     /// Die Spalten für die Konfiguration `cfg` (leer, wenn nichts konfiguriert ist).
     fn columns(&self, cfg: &CrawlConfig) -> Vec<ColumnDef>;
+    fn columns_for_file(&self, cfg: &CrawlConfig, _file: &os_store::CrawlFile) -> Vec<ColumnDef> {
+        self.columns(cfg)
+    }
+    fn filters(&self, _cfg: &CrawlConfig) -> Vec<FilterDef> {
+        Vec::new()
+    }
 }
 
 /// Wie eine Spalte berechnet wird.
 pub enum ColumnSql {
+    MultiCrawlWide {
+        base: &'static str,
+        list_sql: &'static str,
+    },
     /// Ein SQL-Ausdruck über `u`.
     Expr(&'static str),
     /// Mehrfachspalte (TECH-004): `base` ist der Spaltenname ohne Nummer; `list_sql` liefert die Werte
@@ -297,6 +308,7 @@ impl TabDef {
 
 /// Ein Filter eines Tabs.
 pub struct FilterDef {
+    pub default_columns: &'static [&'static str],
     /// Kanonische Kennung; Schwellen als Platzhalter, z. B. `"Over {title.max_chars} Characters"`.
     pub id: &'static str,
     /// SQL-Prädikat über `u` mit benannten Parametern.
@@ -323,6 +335,7 @@ impl FilterDef {
             kind,
             requires: requires.iter().map(|k| Requirement::Config(k)).collect(),
             ignore_non_indexable: false,
+            default_columns: &[],
         }
     }
 }
@@ -339,6 +352,12 @@ pub enum FilterKind {
 /// Voraussetzung eines Filters.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Requirement {
+    AnyConfig(&'static [&'static str]),
+    RenderingOrConfig(&'static str),
+    Coverage {
+        config: &'static str,
+        marker: &'static str,
+    },
     /// Konfigurationsschlüssel, der `true` sein muss.
     Config(&'static str),
     /// JavaScript-Rendering.
@@ -371,5 +390,6 @@ pub fn placeholder_tab(id: &'static str, filters: Vec<FilterDef>) -> TabDef {
             descending: false,
         }],
         params: |_| Vec::new(),
+        hidden_population: None,
     }
 }

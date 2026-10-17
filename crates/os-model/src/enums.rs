@@ -113,6 +113,7 @@ string_enum! {
         BlockedByRobots => "blocked_by_robots",
         BlockedByRobotsUnreachable => "blocked_by_robots_unreachable",
         TooManyRedirects => "too_many_redirects",
+        BlockedPrivateTarget => "blocked_private_target",
     }
 }
 
@@ -133,6 +134,7 @@ impl NoResponseReason {
                 "Blocked by Robots.txt (robots.txt unreachable)"
             }
             NoResponseReason::TooManyRedirects => "Too Many Redirects",
+            NoResponseReason::BlockedPrivateTarget => "Blocked (private target)",
         }
     }
 }
@@ -171,7 +173,9 @@ impl RedirectType {
 
 string_enum! {
     /// Linktyp (OUT-031). `as_str()` ist der Wert der Spalte `Type`.
+    #[derive(Default)]
     pub enum LinkType {
+        #[default]
         Hyperlink => "Hyperlink",
         Image => "Image",
         Css => "CSS",
@@ -219,7 +223,9 @@ impl LinkType {
 
 string_enum! {
     /// Pfadart eines Links (OUT-031).
+    #[derive(Default)]
     pub enum PathType {
+        #[default]
         Absolute => "Absolute",
         ProtocolRelative => "Protocol-Relative",
         RootRelative => "Root-Relative",
@@ -227,16 +233,79 @@ string_enum! {
     }
 }
 
-string_enum! {
-    /// Position eines Links im Dokument (OUT-031); `Head` für Elemente im `<head>` (TECH-131, K-63).
-    pub enum LinkPosition {
-        Navigation => "Navigation",
-        Header => "Header",
-        Content => "Content",
-        Sidebar => "Sidebar",
-        Aside => "Aside",
-        Footer => "Footer",
-        Head => "Head",
+/// Offene Linkposition (INTEG-082); unbekannte Namen bleiben erhalten.
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+    schemars::JsonSchema,
+)]
+#[serde(from = "String", into = "String")]
+#[schemars(with = "String")]
+pub enum LinkPosition {
+    Navigation,
+    Header,
+    #[default]
+    Content,
+    Sidebar,
+    Aside,
+    Footer,
+    Head,
+    Custom(String),
+}
+impl LinkPosition {
+    pub const ALL: &'static [Self] = &[
+        Self::Navigation,
+        Self::Header,
+        Self::Content,
+        Self::Sidebar,
+        Self::Aside,
+        Self::Footer,
+        Self::Head,
+    ];
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Navigation => "Navigation",
+            Self::Header => "Header",
+            Self::Content => "Content",
+            Self::Sidebar => "Sidebar",
+            Self::Aside => "Aside",
+            Self::Footer => "Footer",
+            Self::Head => "Head",
+            Self::Custom(s) => s,
+        }
+    }
+}
+impl From<String> for LinkPosition {
+    fn from(s: String) -> Self {
+        Self::ALL
+            .iter()
+            .find(|v| v.as_str() == s)
+            .cloned()
+            .unwrap_or(Self::Custom(s))
+    }
+}
+impl From<LinkPosition> for String {
+    fn from(p: LinkPosition) -> Self {
+        p.as_str().to_owned()
+    }
+}
+impl std::str::FromStr for LinkPosition {
+    type Err = crate::error::ModelError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(s.to_owned().into())
+    }
+}
+impl std::fmt::Display for LinkPosition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
     }
 }
 
@@ -248,6 +317,7 @@ string_enum! {
         Html => "HTML",
         RenderedHtml => "Rendered HTML",
         Both => "HTML & Rendered HTML",
+        DynamicallyLoaded => "Dynamically Loaded",
     }
 }
 
@@ -385,7 +455,9 @@ string_enum! {
 
 string_enum! {
     /// Herkunft von Canonical/Hreflang/Pagination-Angaben.
+    #[derive(Default)]
     pub enum HintSource {
+        #[default]
         Html => "html",
         Http => "http",
         Sitemap => "sitemap",
@@ -410,7 +482,9 @@ string_enum! {
 
 string_enum! {
     /// Quelle einer Bildinstanz.
+    #[derive(Default)]
     pub enum ImageSource {
+        #[default]
         Img => "img",
         A => "a",
         Srcset => "srcset",
@@ -492,9 +566,16 @@ pub enum FilterState {
     NeedsRendering,
     /// Analyse veraltet (nach „Neu crawlen“/Entfernen).
     Stale,
+    NeedsRecrawl,
+    Incomplete {
+        unchecked: u64,
+    },
 }
 
 impl FilterState {
+    pub fn yields_rows(&self) -> bool {
+        matches!(self, Self::Ready | Self::Incomplete { .. })
+    }
     /// Kurzname des Zustands (ohne Nutzdaten).
     pub fn as_str(&self) -> &'static str {
         match self {
@@ -503,6 +584,41 @@ impl FilterState {
             FilterState::NeedsConfig(_) => "needs_config",
             FilterState::NeedsRendering => "needs_rendering",
             FilterState::Stale => "stale",
+            FilterState::NeedsRecrawl => "needs_recrawl",
+            FilterState::Incomplete { .. } => "incomplete",
         }
     }
+}
+
+string_enum! {
+    /// Grund eines gespeicherten, nicht crawlbaren Verweises (CRAWL-053).
+    pub enum UncrawlableReason {
+        NonAnchorHref => "non_anchor_href", AnchorOnclickNavigation => "anchor_onclick_navigation",
+        JavascriptHref => "javascript_href", AnchorReturnFalse => "anchor_return_false",
+        AnchorMissingHref => "anchor_missing_href", AnchorEmptyHref => "anchor_empty_href", AnchorFragmentOnly => "anchor_fragment_only",
+    }
+}
+string_enum! {
+    /// Herkunft eines Cookies (CRAWL-062).
+    #[derive(Default)]
+    pub enum CookieOrigin { #[default] Http => "http", JavaScript => "javascript" }
+}
+string_enum! {
+    /// Art einer Sitemap-Erweiterung (CRAWL-060).
+    pub enum SitemapExtKind { Image => "image", Video => "video", News => "news" }
+}
+
+/// Zweck des Abrufs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FetchPurpose {
+    /// HTML-Seite oder andere URL.
+    Page,
+    /// Ressource einer Seite (Bild, CSS, JavaScript …).
+    Resource,
+    /// Externe URL (Statusprüfung).
+    External,
+    /// robots.txt.
+    RobotsTxt,
+    /// XML-Sitemap.
+    Sitemap,
 }

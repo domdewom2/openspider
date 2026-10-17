@@ -228,7 +228,7 @@ fn every_tab_and_filter_of_the_registry_exports_without_error() {
     let dir = tempfile::tempdir().unwrap();
     let file = titles_file(dir.path());
     let cfg = CrawlConfig::default();
-    let all = tabs::all();
+    let all = tabs::configured(&cfg);
     let mut expected = 0usize;
     let mut names = Vec::new();
     for tab in &all {
@@ -342,4 +342,28 @@ fn write_error_in_the_middle_of_the_row_stream_aborts_the_export_with_that_error
         2,
         "nach dem Fehler wird nicht weitergeschrieben"
     );
+}
+
+// spec: INTEG-020, OUT-001
+// Infrastruktur (M2-F05a) für INTEG-020; Fachprüfung M2-D14.
+#[test]
+fn configured_column_source_filter_reaches_catalog_and_export() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = titles_file(dir.path());
+    let cfg = file.config().unwrap();
+    os_analyze::tabs::testing::with_fixture_source(|| {
+        assert!(catalog::resolve_with(ExportKind::Tab, "Internal:Fixture Filter", &cfg).is_ok());
+        let info = export_tab(
+            &file,
+            &cfg,
+            &ViewQuery::new("Internal", "Fixture Filter"),
+            &dir.path().join("export"),
+            Format::Csv,
+        )
+        .unwrap();
+        assert_eq!(info.rows, 1);
+        let text = std::fs::read_to_string(info.path).unwrap();
+        assert!(text.contains("https://site.test/z"));
+        assert!(!text.contains("https://site.test/a"));
+    });
 }

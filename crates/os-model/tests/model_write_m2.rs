@@ -53,6 +53,7 @@ fn m2_write_parts_hold_the_fields_of_schema_v3() {
                 text: "x".into(),
                 source: None,
                 line: None,
+                ..Default::default()
             }],
             blocked: vec![BlockedResource {
                 url: "https://a.test/x.js".into(),
@@ -72,6 +73,7 @@ fn m2_write_parts_hold_the_fields_of_schema_v3() {
                 width: 10,
                 height: 20,
             }],
+            console_dropped: 0,
         }],
         a11y: vec![A11yWrite {
             url_id: UrlId(1),

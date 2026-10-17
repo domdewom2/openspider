@@ -88,7 +88,9 @@ async fn with_the_standard_writer_only_the_batch_sequence_depends_on_timing() {
         crawl_file_in(&work, "b.ospider"),
     );
     for path in [&a, &b] {
-        run_to_end(start(deterministic_config(&site), path, fixed_deps()).await).await;
+        let mut cfg = deterministic_config(&site);
+        cfg.extraction.http_headers = true;
+        run_to_end(start(cfg, path, fixed_deps()).await).await;
     }
     // Inhalt wie in der Datei, aber ohne die Batch-Sequenz des Änderungsfeeds
     let dump = |path: &std::path::Path| -> Vec<String> {

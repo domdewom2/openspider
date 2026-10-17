@@ -18,6 +18,9 @@ pub enum NameError {
 /// Fehler in Ansichten (`views`).
 #[derive(Debug, thiserror::Error)]
 pub enum ViewError {
+    /// Fehler der kontextbezogenen Suche.
+    #[error(transparent)]
+    Search(#[from] crate::search::SearchError),
     /// Fehler der Crawl-Datei.
     #[error(transparent)]
     Store(#[from] StoreError),

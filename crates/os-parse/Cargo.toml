@@ -9,6 +9,8 @@ repository.workspace = true
 authors.workspace = true
 
 [dependencies]
+xee-xpath.workspace = true
+
 os-model.workspace = true
 os-url.workspace = true
 url.workspace = true

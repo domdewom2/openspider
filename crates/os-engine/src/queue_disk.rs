@@ -158,6 +158,7 @@ pub(crate) fn load_queue(
         session: 0,
         replace: false,
         url: row.url.into_boxed_str(),
+        attempt: 0,
     };
 
     // 2. Form der Schlüssel: nur „Priorität 0 mit Tiefe“ und „Priorität 1 ohne Tiefe“ lassen sich auslagern

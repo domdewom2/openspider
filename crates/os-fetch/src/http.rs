@@ -16,24 +16,13 @@ pub trait Fetch: Send + Sync + 'static {
     fn fetch(&self, req: FetchRequest) -> Pin<Box<dyn Future<Output = FetchResult> + Send + '_>>;
 }
 
-/// Zweck des Abrufs.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FetchPurpose {
-    /// HTML-Seite oder andere URL.
-    Page,
-    /// Ressource einer Seite (Bild, CSS, JavaScript …).
-    Resource,
-    /// Externe URL (Statusprüfung).
-    External,
-    /// robots.txt.
-    RobotsTxt,
-    /// XML-Sitemap.
-    Sitemap,
-}
+pub use os_model::FetchPurpose;
 
 /// Anfrage.
 #[derive(Debug, Clone)]
 pub struct FetchRequest {
+    pub attempt: u32,
+    pub body_limit: BodyLimit,
     /// Abzurufende URL.
     pub url: url::Url,
     /// Zweck.
@@ -57,6 +46,8 @@ pub struct FetchResult {
 
 /// Antwort oder Fehlschlag.
 #[derive(Debug, Clone)]
+// Keep the additive response contract compatible with existing Fetch implementations.
+#[allow(clippy::large_enum_variant)]
 pub enum FetchOutcome {
     /// HTTP-Antwort.
     Response(HttpResponse),
@@ -72,8 +63,14 @@ pub enum FetchOutcome {
 }
 
 /// HTTP-Antwort.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct HttpResponse {
+    pub request_headers: Vec<(String, String)>,
+    pub set_cookies: Vec<String>,
+    pub content_length: Option<u64>,
+    pub untruncated_bytes: Option<u64>,
+    pub synthetic: Option<SyntheticResponse>,
+    pub attempts: u32,
     /// Statuscode.
     pub status: u16,
     /// Reason-Phrase der Antwort, nur gesetzt, wenn die gesendete Phrase vom IANA-Standardtext des Statuscodes
@@ -105,6 +102,21 @@ pub struct HttpResponse {
     pub decode_error: Option<String>,
     /// MD5 des Bodys (hex).
     pub md5_hex: String,
+}
+
+// Roh-Cookies bleiben für den Transport verfügbar, erscheinen aber nie in Diagnoseausgaben.
+impl std::fmt::Debug for HttpResponse {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("HttpResponse")
+            .field("status", &self.status)
+            .field("attempts", &self.attempts)
+            .field("content_length", &self.content_length)
+            .field("size_bytes", &self.size_bytes)
+            .field("truncated", &self.truncated)
+            .field("synthetic", &self.synthetic)
+            .field("set_cookies", &"<redacted>")
+            .finish_non_exhaustive()
+    }
 }
 
 /// Anzeigetext zum Statuscode: die gesendete Reason-Phrase, sonst der IANA-Standardtext, für
@@ -320,4 +332,16 @@ mod tests {
             "HTTP/2 218\r\n\r\n".len() as u64
         );
     }
+}
+
+/// Empfangsgrenzen (CRAWL-042/075); Durchsetzung durch M2-E03.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct BodyLimit {
+    pub max_decoded_bytes: u64,
+    pub abort_media_after: Option<u64>,
+}
+/// Synthetische Antwort des Transports (CRAWL-029).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SyntheticResponse {
+    Hsts,
 }
