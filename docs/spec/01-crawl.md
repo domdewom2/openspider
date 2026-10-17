@@ -1398,7 +1398,7 @@ Gemeinsame Regeln: Ein Limit von 0 oder leer bedeutet „unbegrenzt“, sofern n
   - [ ] Regelvorrang: längste passende Regel (nach Zeichenzahl des Musters) gewinnt; bei Gleichstand gewinnt `Allow`.
   - [ ] Platzhalter `*` und Ende-Anker `$` werden unterstützt; Vergleich auf dem prozentkodierten Pfad inklusive Query.
   - [ ] `Disallow:` (leer) erlaubt alles.
-  - [ ] Unbekannte Direktiven werden ignoriert; `Crawl-delay` wird gelesen und als Hinweis angezeigt; angewandt wird er nach CRAWL-145 (Option, OS-Default an; im Paritätsprofil aus). Der Hinweis steht als Text „Crawl-delay: <n> s (nicht angewandt)“ im Hinweisfeld der robots.txt-Zeile (`robots_files.note`); die Anzeige ist M2 (K-29).
+  - [ ] Unbekannte Direktiven werden ignoriert; `Crawl-delay` wird gelesen und als Hinweis angezeigt; angewandt wird er nach CRAWL-145 (Option, OS-Default an; im Paritätsprofil aus). Der Hinweis steht je nach `robots.respect_crawl_delay` als Text „Crawl-delay: <n> s (angewandt)“ bzw. „Crawl-delay: <n> s (nicht angewandt)“ im Hinweisfeld der robots.txt-Zeile (`robots_files.note`); die Anzeige ist M2 (K-29).
   - [ ] BOM, CRLF/LF/CR-Zeilenenden, Kommentare (`#`) und Leerzeichen vor dem Doppelpunkt werden toleriert.
   - [ ] Nur die ersten 500 KiB werden ausgewertet (RFC 9309).
   - [ ] Weiterleitungen beim robots.txt-Abruf werden bis zu 5 Hops verfolgt.
@@ -2062,3 +2062,20 @@ Diese Punkte sind in der öffentlichen Doku nicht eindeutig. Sie werden per Blac
 ## R. Quellen
 
 Öffentliche Benutzerdokumentation, Tutorials und Release-Notes des Referenzprodukts (Version 18–24.3). Die vollständige Quellenliste ist als Nachweis der Clean-Room-Erstellung außerhalb des öffentlichen Repositorys archiviert.
+
+## Robots/Tempo
+
+### CRAWL-145  Crawl-delay beachten
+- **Priorität:** P1
+- **Beschreibung:**  Crawl-delay beachten – `robots.respect_crawl_delay` (OS-Default an, Paritätsprofil aus); nennt die robots.txt des Hosts für den wirksamen robots-UA `Crawl-delay: n` (Dezimal, gekappt auf 0 … 60 s, Kappung als Ereignis), liegen zwischen zwei Anfragebeginnen an denselben Host:Port ≥ n s; gilt zusätzlich zu `max_urls_per_sec`/`max_per_host` (das strengere gewinnt); Hinweis „Crawl-delay: n s (angewandt)“ bzw. „(nicht angewandt)“; Akzeptanz mit simulierter Uhr.
+- **Testfixture:** lokale Host-Antworten mit simulierter Uhr.
+
+### CRAWL-146  adaptive Drosselung je Host
+- **Priorität:** P1
+- **Beschreibung:**  adaptive Drosselung je Host – `speed.adaptive_throttle` (Default an): 429/503 mit `Retry-After` (Sekunden oder HTTP-Datum, gekappt auf 300 s) → Host pausiert mindestens so lange; ohne `Retry-After` verdoppelt sich der Mindestabstand des Hosts (Start 1 s, höchstens 60 s), nach 20 erfolgreichen Antworten halbiert er sich bis 0; Zustand „Gedrosselt“ als Notice im Tick.
+- **Testfixture:** lokale Host-Antworten mit simulierter Uhr.
+
+### CRAWL-147  Auto-Tempo
+- **Priorität:** P1
+- **Beschreibung:**  Auto-Tempo – `speed.auto` (Default aus): AIMD je Host über die Parallelität, Start 1, +1 je 10 erfolgreiche Antworten mit Antwortzeit < 1,5 × gleitender Median (höchstens `min(threads, max_per_host)`), Halbierung bei 429/503/Timeout oder Antwortzeit > 3 × Median; wirkt nicht, wenn `max_urls_per_sec` gesetzt ist. Vorrang des Abstands: max(Crawl-delay, Retry-After, adaptiver Abstand, 1/`max_urls_per_sec`).
+- **Testfixture:** lokale Host-Antworten mit simulierter Uhr.
