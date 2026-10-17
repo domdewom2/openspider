@@ -11,7 +11,8 @@ name: ui-e2e
 
 on:
   push:
-    branches: [main]
+    # Paketbranches (m2/<kurz-id>) laufen ohne Pull-Request mit (Definition of Done: CI-Matrix des Branches grün)
+    branches: [main, "m2/**"]
     paths:
       - "apps/desktop/**"
       - "crates/os-app/**"
