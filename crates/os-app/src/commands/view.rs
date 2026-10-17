@@ -60,7 +60,7 @@ fn registry(app: &App) -> std::sync::Arc<Views> {
     }
     views
 }
-pub(crate) fn get(app: &App, ctx: &CallCtx, id: &str) -> Result<OpenView, CmdError> {
+fn get_owned(app: &App, ctx: &CallCtx, id: &str) -> Result<OpenView, CmdError> {
     let v = registry(app)
         .entries
         .lock()
@@ -69,10 +69,17 @@ pub(crate) fn get(app: &App, ctx: &CallCtx, id: &str) -> Result<OpenView, CmdErr
         .cloned()
         .filter(|v| v.owner == ctx.window)
         .ok_or_else(|| CmdError::new(ErrorCode::NotFound, "err-view-not-found"))?;
-    if session(app, ctx)?.key != v.session.key || session(app, ctx)?.config != v.session.config {
+    if session(app, ctx)?.key != v.session.key {
         return Err(CmdError::new(ErrorCode::Stale, "err-view-stale"));
     }
     Ok(v)
+}
+pub(crate) fn get(app: &App, ctx: &CallCtx, id: &str) -> Result<OpenView, CmdError> {
+    let view = get_owned(app, ctx, id)?;
+    if session(app, ctx)?.config != view.session.config {
+        return Err(stale());
+    }
+    Ok(view)
 }
 pub(crate) fn stale() -> CmdError {
     CmdError::new(ErrorCode::Stale, "err-view-stale")
@@ -656,7 +663,7 @@ fn handle(view_id: String, p: DataPage) -> ViewHandle {
 fn update<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
         let args: ViewUpdateArgs = parse_args(args)?;
-        let mut v = get(app, &ctx, &args.view_id)?;
+        let mut v = get_owned(app, &ctx, &args.view_id)?;
         v.session = session(app, &ctx)?;
         let p = page(
             app,

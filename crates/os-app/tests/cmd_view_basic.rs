@@ -206,3 +206,38 @@ async fn fach_details_route_to_their_registered_owner_instead_of_fabricating_row
         }
     }
 }
+
+// spec: UI-140
+// spec: ONPAGE-011 [M2]
+#[tokio::test]
+async fn update_refreshes_config_while_old_rows_remain_stale() {
+    let fx = Fx::new();
+    let h = fx.open(tab(), json!(["Address", "Title 1"])).await;
+    let mut cfg = os_model::CrawlConfig::default();
+    cfg.extraction.http_headers = true;
+    cfg.extraction.page_titles = false;
+    fx.app.sessions().update_config(
+        &os_app::pool::CrawlKey("fx-ui-basic".into()),
+        std::sync::Arc::new(cfg),
+    );
+    let e = fx
+        .app
+        .dispatch(
+            CallCtx::for_window("main"),
+            "view.rows",
+            json!({"viewId":h["viewId"],"version":42,"offset":0,"limit":1,"columns":[]}),
+        )
+        .await
+        .unwrap_err();
+    assert_eq!(e.code, ErrorCode::Stale);
+    let refreshed = fx
+        .call("view.update", json!({"viewId":h["viewId"],"spec":tab()}))
+        .await;
+    assert_eq!(refreshed["viewId"], h["viewId"]);
+    assert_eq!(
+        refreshed["columns"][1]["needs"]["arg"],
+        "extraction.page_titles"
+    );
+    let rows = fx.rows(&refreshed, 0, 1, json!([])).await;
+    assert!(rows["cells"][0][1].is_null());
+}
