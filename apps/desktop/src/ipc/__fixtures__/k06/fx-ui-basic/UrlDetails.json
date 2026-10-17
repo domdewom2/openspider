@@ -1,0 +1,102 @@
+[
+  {
+    "name": "Address",
+    "value": "https://site.test/"
+  },
+  {
+    "name": "URL Encoded Address",
+    "value": "https://site.test/"
+  },
+  {
+    "name": "Content Type",
+    "value": null
+  },
+  {
+    "name": "Status Code",
+    "value": 200
+  },
+  {
+    "name": "Status",
+    "value": "OK"
+  },
+  {
+    "name": "Indexability",
+    "value": "Indexable"
+  },
+  {
+    "name": "Indexability Status",
+    "value": null
+  },
+  {
+    "name": "Size",
+    "value": null
+  },
+  {
+    "name": "Transferred",
+    "value": null
+  },
+  {
+    "name": "Response Time",
+    "value": 0.512
+  },
+  {
+    "name": "Crawl Depth",
+    "value": 0
+  },
+  {
+    "name": "Link Score",
+    "value": null
+  },
+  {
+    "name": "Inlinks",
+    "value": 0
+  },
+  {
+    "name": "Unique Inlinks",
+    "value": 0
+  },
+  {
+    "name": "Outlinks",
+    "value": 4
+  },
+  {
+    "name": "Unique Outlinks",
+    "value": 2
+  },
+  {
+    "name": "External Outlinks",
+    "value": 1
+  },
+  {
+    "name": "Redirect URL",
+    "value": null
+  },
+  {
+    "name": "Redirect Type",
+    "value": null
+  },
+  {
+    "name": "Canonical Link Element 1",
+    "value": ""
+  },
+  {
+    "name": "Meta Robots 1",
+    "value": "max-snippet:50"
+  },
+  {
+    "name": "X-Robots-Tag 1",
+    "value": ""
+  },
+  {
+    "name": "Last Modified",
+    "value": null
+  },
+  {
+    "name": "Crawl Timestamp",
+    "value": null
+  },
+  {
+    "name": "Segment",
+    "value": null
+  }
+]

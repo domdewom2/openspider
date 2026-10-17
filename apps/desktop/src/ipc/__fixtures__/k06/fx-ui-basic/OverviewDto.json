@@ -1,0 +1,140 @@
+{
+  "summary": [
+    {
+      "count": 8,
+      "key": "Total URLs Encountered",
+      "pct": 100.0
+    },
+    {
+      "count": 6,
+      "key": "Total URLs Crawled",
+      "pct": 75.0
+    },
+    {
+      "count": 1,
+      "key": "Total Internal Blocked by robots.txt",
+      "pct": 12.5
+    },
+    {
+      "count": 0,
+      "key": "Total External Blocked by robots.txt",
+      "pct": 0.0
+    },
+    {
+      "count": 7,
+      "key": "Total URLs Displayed",
+      "pct": 87.5
+    },
+    {
+      "count": 6,
+      "key": "Total Internal URLs",
+      "pct": 75.0
+    },
+    {
+      "count": 1,
+      "key": "Total External URLs",
+      "pct": 12.5
+    },
+    {
+      "count": 2,
+      "key": "Total Internal Indexable URLs",
+      "pct": 25.0
+    },
+    {
+      "count": 3,
+      "key": "Total Internal Non-Indexable URLs",
+      "pct": 37.5
+    }
+  ],
+  "tabs": [
+    {
+      "filters": [
+        {
+          "analysisStep": null,
+          "count": 6,
+          "id": "All",
+          "issue": null,
+          "labelTemplate": "All",
+          "params": {},
+          "pct": 100.0,
+          "state": {
+            "kind": "ready"
+          }
+        },
+        {
+          "analysisStep": null,
+          "count": 5,
+          "id": "HTML",
+          "issue": null,
+          "labelTemplate": "HTML",
+          "params": {},
+          "pct": 83.3,
+          "state": {
+            "kind": "ready"
+          }
+        },
+        {
+          "analysisStep": null,
+          "count": 0,
+          "id": "JavaScript",
+          "issue": null,
+          "labelTemplate": "JavaScript",
+          "params": {},
+          "pct": 0.0,
+          "state": {
+            "kind": "ready"
+          }
+        },
+        {
+          "analysisStep": null,
+          "count": 0,
+          "id": "CSS",
+          "issue": null,
+          "labelTemplate": "CSS",
+          "params": {},
+          "pct": 0.0,
+          "state": {
+            "kind": "ready"
+          }
+        },
+        {
+          "analysisStep": null,
+          "count": 1,
+          "id": "Images",
+          "issue": null,
+          "labelTemplate": "Images",
+          "params": {},
+          "pct": 16.7,
+          "state": {
+            "kind": "ready"
+          }
+        },
+        {
+          "analysisStep": null,
+          "count": 0,
+          "id": "PDF",
+          "issue": null,
+          "labelTemplate": "PDF",
+          "params": {},
+          "pct": 0.0,
+          "state": {
+            "kind": "ready"
+          }
+        },
+        {
+          "analysisStep": null,
+          "count": 0,
+          "id": "Unknown",
+          "issue": null,
+          "labelTemplate": "Unknown",
+          "params": {},
+          "pct": 0.0,
+          "state": {
+            "kind": "ready"
+          }
+        }
+      ],
+      "tab": "Internal"
+    }
+  ]
+}

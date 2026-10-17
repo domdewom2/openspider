@@ -1,0 +1,57 @@
+{
+  "cells": [
+    [
+      " Alpha ",
+      200,
+      "OK",
+      "Crawlable"
+    ],
+    [
+      "Alpha",
+      200,
+      "OK",
+      "Crawlable"
+    ],
+    [
+      "Beta",
+      200,
+      "OK",
+      "Crawlable"
+    ],
+    [
+      "Missing",
+      404,
+      "Not Found",
+      "Crawlable"
+    ],
+    [
+      "External",
+      null,
+      "Not Crawled",
+      "Crawlable"
+    ],
+    [
+      "Script",
+      null,
+      "Uncrawlable",
+      "Uncrawlable"
+    ]
+  ],
+  "columns": [
+    "Anchor Text",
+    "Status Code",
+    "Status",
+    "Link Crawlability"
+  ],
+  "offset": 0,
+  "rowKeys": [
+    1,
+    2,
+    3,
+    5,
+    6,
+    8
+  ],
+  "version": 42,
+  "viewId": "00000000-0000-7716-9a39-cba275b2f7a9"
+}

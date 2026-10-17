@@ -1,0 +1,23 @@
+{
+  "request": [
+    {
+      "name": "Authorization",
+      "value": "<redacted>"
+    }
+  ],
+  "response": [
+    {
+      "name": "Set-Cookie",
+      "value": "<redacted>"
+    },
+    {
+      "name": "Set-Cookie",
+      "value": "<redacted>"
+    },
+    {
+      "name": "X-Fixture",
+      "value": "ok"
+    }
+  ],
+  "statusLine": "HTTP/2 200"
+}

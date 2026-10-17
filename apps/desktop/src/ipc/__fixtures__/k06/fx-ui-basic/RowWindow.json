@@ -1,0 +1,18 @@
+{
+  "cells": [
+    [
+      "https://site.test/blog/a",
+      200
+    ]
+  ],
+  "columns": [
+    "Address",
+    "Word Count"
+  ],
+  "offset": 0,
+  "rowKeys": [
+    2
+  ],
+  "version": 42,
+  "viewId": "00000000-0000-74bf-a1b5-12ffabe74e6c"
+}
