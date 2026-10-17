@@ -467,6 +467,31 @@ fn configured_numeric_threshold_inlink_names_resolve_to_the_registered_filter() 
     assert!(rows[1..].iter().all(|r| r[2] == "https://site.test/b"));
 }
 
+// spec: OUT-066
+#[test]
+fn disabled_direct_generic_inlinks_return_an_explicit_error_without_output() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = fixture(dir.path());
+    let mut cfg = CrawlConfig::default();
+    cfg.export.inlinks_for_all_filters = false;
+    let output = dir.path().join("disabled");
+    for name in [
+        "Page Titles:Missing Inlinks",
+        "Pagination:Contains Pagination Inlinks",
+    ] {
+        let error = os_export::export_bulk(&file, &cfg, name, &output, Format::Csv).unwrap_err();
+        assert!(matches!(&error, os_export::ExportError::Unsupported(_)));
+        assert!(error.to_string().contains("export.inlinks_for_all_filters"));
+        assert!(error.to_string().contains(name));
+        assert!(!output.exists());
+    }
+    // The switch applies only to generic filter inlinks; ordinary exports still work.
+    let files =
+        os_export::export_bulk(&file, &cfg, "Links:All Inlinks", &output, Format::Csv).unwrap();
+    assert_eq!(files.len(), 1);
+    assert_eq!(files[0].rows, 6);
+}
+
 // spec: OUT-075
 #[test]
 fn missing_prerequisites_are_named_and_skipped_while_other_exports_run() {

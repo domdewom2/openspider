@@ -48,6 +48,12 @@ fn invalid(field: &str) -> CmdError {
 fn failure(error: impl std::fmt::Display) -> CmdError {
     CmdError::new(ErrorCode::Io, "err-io").with_detail(error.to_string())
 }
+fn preset_failure(error: os_export::ExportError) -> CmdError {
+    match error {
+        os_export::ExportError::Write(detail) => invalid("preset").with_detail(detail),
+        other => failure(other),
+    }
+}
 fn preset_path(home: &Path, name: &str) -> Result<PathBuf, CmdError> {
     if name.is_empty()
         || name.len() > 100
@@ -185,7 +191,7 @@ fn multi<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdResult
                             let preset = match preset {
                                 Some(path) => match CorePreset::load(&path) {
                                     Ok(p) => Some(p),
-                                    Err(e) => return Ok(Err(failure(e))),
+                                    Err(e) => return Ok(Err(preset_failure(e))),
                                 },
                                 None => None,
                             };

@@ -422,8 +422,9 @@ fn export_bulk_in_snapshot(
         other => unreachable!("Bulk-Auflösung lieferte {other:?}"),
     };
     if !cfg.export.inlinks_for_all_filters && catalog::bulk_generic::is_generic_name(&canonical) {
-        tracing::warn!("{canonical}: generic inlink exports disabled");
-        return Ok(Vec::new());
+        return Err(ExportError::Unsupported(format!(
+            "{canonical}: enable export.inlinks_for_all_filters to export generic inlinks"
+        )));
     }
     if canonical == bulk_issues::BULK_NAME {
         let mut result = bulk_issues::export_in(tabs, file, cfg, out_dir, format)?;
@@ -558,8 +559,21 @@ pub fn export_batch(
     ctx: &mut crate::types::ExportCtx<'_>,
 ) -> Result<crate::types::BatchResult, ExportError> {
     snapshot(file, || {
-        use crate::types::WorkbookTarget;
         let tabs = os_analyze::tabs::configured_for_file(cfg, file);
+        export_batch_in(&tabs, file, cfg, selections, options, ctx)
+    })
+}
+
+fn export_batch_in(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    selections: &[crate::types::ExportSelection],
+    options: &BatchOptions<'_>,
+    ctx: &mut crate::types::ExportCtx<'_>,
+) -> Result<crate::types::BatchResult, ExportError> {
+    snapshot(file, || {
+        use crate::types::WorkbookTarget;
         let mut result = crate::types::BatchResult::default();
         let consolidate = options.single_workbook && options.format == Format::Xlsx;
         if options.single_workbook && options.format == Format::Csv {
@@ -651,7 +665,15 @@ pub fn export_batch(
                 _ => None,
             };
             if let Some((tab, filter)) = filter_state {
-                let state = views::state_of_in(&tabs, file, cfg, tab, filter)?;
+                let state = match views::state_of_in(tabs, file, cfg, tab, filter) {
+                    Ok(state) => state,
+                    Err(ViewError::Name(e)) => {
+                        result.warnings.push(e.to_string());
+                        result.skipped.push(selection.name.clone());
+                        continue;
+                    }
+                    Err(e) => return Err(e.into()),
+                };
                 if state != FilterState::Ready {
                     result.warnings.push(filter_warning(tab, filter, &state));
                     result.skipped.push(name);
@@ -703,7 +725,7 @@ pub fn export_batch(
             };
             let uses_workbook = table_ctx.workbook.is_some();
             let job = catalog::TableJob {
-                tabs: &tabs,
+                tabs,
                 file,
                 cfg,
                 entry_name: &name,
@@ -726,7 +748,7 @@ pub fn export_batch(
                     match &resolved {
                         ExportRef::Tab { tab, filter } => {
                             warnings.extend(write_view_to(
-                                &tabs,
+                                tabs,
                                 file,
                                 cfg,
                                 &ViewQuery::new(tab, filter),
@@ -933,6 +955,71 @@ mod query_plan_fixture;
 #[cfg(test)]
 mod query_plan_tests {
     use super::*;
+
+    // spec: OUT-075
+    #[test]
+    fn unresolved_view_names_are_skipped_after_catalogue_resolution() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = query_plan_fixture::new_file(dir.path(), "fixture.ospider");
+        query_plan_fixture::exec(
+            &file,
+            include_str!("../../../tests/fixtures/out-m2-export/crawl.sql"),
+        );
+        let cfg = CrawlConfig::default();
+        let mut tabs = os_analyze::tabs::configured_for_file(&cfg, &file);
+        // Simulate a saved catalogue entry absent from this crawl's view registry.
+        tabs.retain(|tab| tab.id != "Page Titles");
+        let selections = [
+            crate::types::ExportSelection {
+                kind: "tab".into(),
+                name: "Page Titles:All".into(),
+            },
+            crate::types::ExportSelection {
+                kind: "bulk".into(),
+                name: "Page Titles:Missing Inlinks".into(),
+            },
+            crate::types::ExportSelection {
+                kind: "tab".into(),
+                name: "Internal:All".into(),
+            },
+        ];
+        let cancel = os_model::CancelToken::new();
+        let mut ctx = crate::types::ExportCtx {
+            cancel: &cancel,
+            progress: &|_| {},
+            skip_empty: false,
+            workbook: None,
+            skipped: Vec::new(),
+        };
+        let result = export_batch_in(
+            &tabs,
+            &file,
+            &cfg,
+            &selections,
+            &BatchOptions {
+                format: Format::Csv,
+                directory: dir.path(),
+                crawl_name: "fixture",
+                single_workbook: false,
+            },
+            &mut ctx,
+        )
+        .unwrap();
+        assert_eq!(
+            result.skipped,
+            ["Page Titles:All", "Page Titles:Missing Inlinks"]
+        );
+        assert_eq!(result.warnings.len(), 2);
+        assert!(result
+            .warnings
+            .iter()
+            .all(|warning| warning.contains("Page Titles")));
+        assert_eq!(result.files.len(), 1);
+        assert_eq!(result.files[0].rows, 3);
+        assert_eq!(ctx.skipped, result.skipped);
+        assert!(!dir.path().join("page_titles_all.csv").exists());
+        assert!(!dir.path().join("page_titles_missing_inlinks.csv").exists());
+    }
 
     // spec: PERF-008 [M2]
     #[test]

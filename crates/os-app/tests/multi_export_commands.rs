@@ -168,3 +168,40 @@ async fn preset_names_cannot_escape_the_settings_directory() {
         assert_eq!(error.code, os_app::dto::ErrorCode::InvalidInput);
     }
 }
+
+// spec: OUT-075
+#[tokio::test]
+async fn malformed_presets_are_invalid_input_and_missing_files_are_io_errors() {
+    use os_app::dto::ErrorCode;
+    let dir = tempfile::tempdir().unwrap();
+    let app = app(dir.path());
+    attach(&app, dir.path());
+    let malformed = dir.path().join("malformed.ospreset");
+    std::fs::write(&malformed, "items = [").unwrap();
+    for (path, code, field) in [
+        (malformed, ErrorCode::InvalidInput, Some("preset")),
+        (dir.path().join("missing.ospreset"), ErrorCode::Io, None),
+    ] {
+        let output = dir.path().join("out");
+        let handle: OpHandle = serde_json::from_value(
+            call(
+                &app,
+                "export.multi",
+                json!({
+                    "items":[], "format":"csv", "dir":output,
+                    "singleWorkbook":false, "skipEmpty":false, "preset":path
+                }),
+            )
+            .await,
+        )
+        .unwrap();
+        let status = app.ops().wait(&handle.op_id).await.unwrap();
+        assert_ne!(status.state, OpState::Done);
+        let error = status.error.unwrap();
+        assert_eq!(error.code, code);
+        assert_eq!(error.field.as_deref(), field);
+        assert!(error.detail.is_some());
+        assert!(status.result.is_none());
+        assert!(!output.exists());
+    }
+}
