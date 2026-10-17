@@ -17,4 +17,16 @@ rules: Array<RuleDef>,
 /**
  * Eingabe-URL.
  */
-input: string, };
+input: string, 
+/**
+ * Vertragserweiterung M2-F05b: remove_parameters.
+ */
+removeParameters?: Array<string> | null, 
+/**
+ * Vertragserweiterung M2-F05b: remove_all_parameters.
+ */
+removeAllParameters?: boolean | null, 
+/**
+ * Vertragserweiterung M2-F05b: regex_partial_match.
+ */
+regexPartialMatch?: boolean | null, };

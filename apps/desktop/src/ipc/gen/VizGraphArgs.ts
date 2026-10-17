@@ -24,4 +24,24 @@ budget: number,
 /**
  * Spalte, nach der Farbe und Größe bestimmt werden (UI-095).
  */
-metric: string, };
+metric: string, 
+/**
+ * Vertragserweiterung M2-F05b: include_non_html.
+ */
+includeNonHtml?: boolean | null, 
+/**
+ * Vertragserweiterung M2-F05b: include_non_indexable.
+ */
+includeNonIndexable?: boolean | null, 
+/**
+ * Vertragserweiterung M2-F05b: expand_depth.
+ */
+expandDepth?: number | null, 
+/**
+ * Vertragserweiterung M2-F05b: explore_node.
+ */
+exploreNode?: number | null, 
+/**
+ * Vertragserweiterung M2-F05b: color_metric.
+ */
+colorMetric?: string | null, };

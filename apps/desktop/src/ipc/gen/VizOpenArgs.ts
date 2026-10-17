@@ -12,4 +12,8 @@ kind: VizKind,
 /**
  * Wurzel; `null` = Start-URL bzw. Wurzelverzeichnis.
  */
-rootUrlId?: number | null, };
+rootUrlId?: number | null, 
+/**
+ * Vertragserweiterung M2-F05b: refresh_snapshot_id.
+ */
+refreshSnapshotId?: string | null, };

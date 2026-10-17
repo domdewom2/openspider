@@ -23,4 +23,28 @@ property?: string | null,
 /**
  * Maschinenlesbarer Code.
  */
-code: string, };
+code: string, 
+/**
+ * Vertragserweiterung M2-F05b: message.
+ */
+message: string, 
+/**
+ * Vertragserweiterung M2-F05b: path.
+ */
+path: string, 
+/**
+ * Vertragserweiterung M2-F05b: line.
+ */
+line?: number | null, 
+/**
+ * Vertragserweiterung M2-F05b: col.
+ */
+col?: number | null, 
+/**
+ * Vertragserweiterung M2-F05b: snippet.
+ */
+snippet?: string | null, 
+/**
+ * Vertragserweiterung M2-F05b: doc_url.
+ */
+docUrl?: string | null, };

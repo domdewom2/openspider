@@ -16,4 +16,16 @@ project?: string | null,
 /**
  * Gesperrt (von der Aufbewahrung ausgenommen).
  */
-locked: boolean, };
+locked: boolean, 
+/**
+ * Vertragserweiterung M2-F05b: start_url.
+ */
+startUrl?: string | null, 
+/**
+ * Vertragserweiterung M2-F05b: duration_ms.
+ */
+durationMs?: number | null, 
+/**
+ * Vertragserweiterung M2-F05b: can_resume.
+ */
+canResume: boolean, };

@@ -16,4 +16,28 @@ kind: WordSource,
 /**
  * URL.
  */
-urlId: number, };
+urlId: number, 
+/**
+ * Vertragserweiterung M2-F05b: mode.
+ */
+mode?: string | null, 
+/**
+ * Vertragserweiterung M2-F05b: remove_stopwords.
+ */
+removeStopwords?: boolean | null, 
+/**
+ * Vertragserweiterung M2-F05b: language.
+ */
+language?: string | null, 
+/**
+ * Vertragserweiterung M2-F05b: max_terms.
+ */
+maxTerms?: number | null, 
+/**
+ * Vertragserweiterung M2-F05b: include_nofollow.
+ */
+includeNofollow?: boolean | null, 
+/**
+ * Vertragserweiterung M2-F05b: exclude_self_links.
+ */
+excludeSelfLinks?: boolean | null, };

@@ -11,4 +11,8 @@ ids: Array<string>,
 /**
  * Zielprojekt; `null` = ohne Projekt.
  */
-project?: string | null, };
+project?: string | null, 
+/**
+ * Vertragserweiterung M2-F05b: destination_dir.
+ */
+destinationDir?: string | null, };

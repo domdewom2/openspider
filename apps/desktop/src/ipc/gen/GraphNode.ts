@@ -27,4 +27,36 @@ metric?: number | null,
 /**
  * Knoten hat weitere Kinder außerhalb des Budgets.
  */
-hasMore: boolean, };
+hasMore: boolean, 
+/**
+ * Vertragserweiterung M2-F05b: status_code.
+ */
+statusCode?: number | null, 
+/**
+ * Vertragserweiterung M2-F05b: indexability.
+ */
+indexability?: string | null, 
+/**
+ * Vertragserweiterung M2-F05b: unique_inlinks.
+ */
+uniqueInlinks?: number | null, 
+/**
+ * Vertragserweiterung M2-F05b: link_score.
+ */
+linkScore?: number | null, 
+/**
+ * Vertragserweiterung M2-F05b: segment_id.
+ */
+segmentId?: string | null, 
+/**
+ * Vertragserweiterung M2-F05b: segment_color.
+ */
+segmentColor?: string | null, 
+/**
+ * Vertragserweiterung M2-F05b: hidden_children.
+ */
+hiddenChildren: number, 
+/**
+ * Vertragserweiterung M2-F05b: hidden_descendants.
+ */
+hiddenDescendants: number, };

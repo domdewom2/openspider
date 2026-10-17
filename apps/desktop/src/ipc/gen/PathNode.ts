@@ -23,4 +23,8 @@ byClass: { [key in string]: number },
 /**
  * Kindknoten (Tiefe begrenzt, der Rest über weitere Aufrufe).
  */
-children: Array<PathNode>, };
+children: Array<PathNode>, 
+/**
+ * Vertragserweiterung M2-F05b: has_more_children.
+ */
+hasMoreChildren: boolean, };

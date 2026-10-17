@@ -3,6 +3,7 @@ import type { AccountSettingsDto } from "./AccountSettingsDto";
 import type { AppearanceSettingsDto } from "./AppearanceSettingsDto";
 import type { ExportSettingsDto } from "./ExportSettingsDto";
 import type { GeneralSettingsDto } from "./GeneralSettingsDto";
+import type { LoggingSettingsDto } from "./LoggingSettingsDto";
 import type { McpSettingsDto } from "./McpSettingsDto";
 import type { NetworkSettingsDto } from "./NetworkSettingsDto";
 import type { RetentionSettingsDto } from "./RetentionSettingsDto";
@@ -47,4 +48,8 @@ mcp: McpSettingsDto,
 /**
  * Schlüssel (TOML-Pfade), deren Änderung durch diesen Aufruf einen Neustart erfordert.
  */
-restartRequired: Array<string>, };
+restartRequired: Array<string>, 
+/**
+ * Vertragserweiterung M2-F05b: logging.
+ */
+logging: LoggingSettingsDto, };

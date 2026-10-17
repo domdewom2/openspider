@@ -11,4 +11,12 @@ name: string,
 /**
  * Zieldatei (`.osconfig`).
  */
-path: string, };
+path: string, 
+/**
+ * Vertragserweiterung M2-F05b: include_secrets.
+ */
+includeSecrets?: boolean | null, 
+/**
+ * Vertragserweiterung M2-F05b: password.
+ */
+password?: string | null, };

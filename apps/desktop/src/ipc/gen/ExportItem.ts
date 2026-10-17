@@ -11,4 +11,12 @@ name: string,
 /**
  * i18n-Schlüssel des Anzeigenamens.
  */
-labelKey: string, };
+labelKey: string, 
+/**
+ * Vertragserweiterung M2-F05b: enabled.
+ */
+enabled: boolean, 
+/**
+ * Vertragserweiterung M2-F05b: disabled_reason.
+ */
+disabledReason?: string | null, };

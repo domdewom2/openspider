@@ -5,25 +5,44 @@
   "columns": [
     {
       "key": "Address",
-      "kind": { "kind": "url" },
+      "kind": {
+        "kind": "url"
+      },
       "defaultVisible": true,
       "defaultWidth": 360,
       "align": "left",
       "sortable": true,
-      "searchable": ["contains", "equals", "regex"],
+      "searchable": [
+        "contains",
+        "equals",
+        "regex"
+      ],
       "extension": false,
       "needs": null
     },
     {
       "key": "Response Time",
-      "kind": { "kind": "float", "decimals": 3 },
+      "kind": {
+        "kind": "float",
+        "decimals": 3
+      },
       "defaultVisible": true,
       "defaultWidth": 110,
       "align": "right",
       "sortable": true,
-      "searchable": ["greaterThan", "lessThan"],
+      "searchable": [
+        "greaterThan",
+        "lessThan"
+      ],
       "extension": false,
-      "needs": { "code": "NEEDS_JS_RENDERING", "arg": null, "action": { "kind": "openSetting", "anchor": "rendering.mode" } }
+      "needs": {
+        "code": "NEEDS_JS_RENDERING",
+        "arg": null,
+        "action": {
+          "kind": "openSetting",
+          "anchor": "rendering.mode"
+        }
+      }
     }
   ],
   "state": "ready",

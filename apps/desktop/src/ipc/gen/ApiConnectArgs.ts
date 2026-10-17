@@ -12,4 +12,16 @@ kind: ApiKind,
 /**
  * API-Schlüssel (nur bei Quellen mit Schlüssel; Ablage im Schlüsselbund).
  */
-apiKey?: string | null, };
+apiKey?: string | null, 
+/**
+ * Vertragserweiterung M2-F05b: remember.
+ */
+remember?: boolean | null, 
+/**
+ * Vertragserweiterung M2-F05b: account_id.
+ */
+accountId?: string | null, 
+/**
+ * Vertragserweiterung M2-F05b: client_secret.
+ */
+clientSecret?: string | null, };

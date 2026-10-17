@@ -15,4 +15,12 @@ performanceProfile: string,
 /**
  * RAM-Obergrenze in GB.
  */
-ramLimitGb?: number | null, };
+ramLimitGb?: number | null, 
+/**
+ * Vertragserweiterung M2-F05b: cache_limit_mb.
+ */
+cacheLimitMb?: number | null, 
+/**
+ * Vertragserweiterung M2-F05b: render_process_limit.
+ */
+renderProcessLimit?: number | null, };

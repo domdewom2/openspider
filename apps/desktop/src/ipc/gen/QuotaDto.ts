@@ -15,4 +15,8 @@ limit?: number | null,
 /**
  * Zurücksetzung (ISO 8601 UTC).
  */
-resetsAt?: string | null, };
+resetsAt?: string | null, 
+/**
+ * Vertragserweiterung M2-F05b: dimension.
+ */
+dimension?: string | null, };

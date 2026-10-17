@@ -24,4 +24,12 @@ format: ExportFormatDto,
 /**
  * Auch ausgeblendete Spalten exportieren.
  */
-allColumns: boolean, };
+allColumns: boolean, 
+/**
+ * Vertragserweiterung M2-F05b: columns.
+ */
+columns?: Array<string> | null, 
+/**
+ * Vertragserweiterung M2-F05b: preserve_upload_order.
+ */
+preserveUploadOrder: boolean, };

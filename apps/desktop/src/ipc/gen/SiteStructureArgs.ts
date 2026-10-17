@@ -13,4 +13,16 @@ view: SiteStructureView,
 /**
  * Segment.
  */
-segment?: SegmentFilter | null, };
+segment?: SegmentFilter | null, 
+/**
+ * Vertragserweiterung M2-F05b: path.
+ */
+path?: string | null, 
+/**
+ * Vertragserweiterung M2-F05b: offset.
+ */
+offset: number, 
+/**
+ * Vertragserweiterung M2-F05b: limit.
+ */
+limit: number, };

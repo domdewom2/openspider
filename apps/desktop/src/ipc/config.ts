@@ -4,12 +4,19 @@ import type { ConfigSetResult } from "./gen/ConfigSetResult";
 import type { CrawlConfigDto } from "./gen/CrawlConfigDto";
 import type { DiffRow } from "./gen/DiffRow";
 import type { JsonValue } from "./gen/serde_json/JsonValue";
+import type { RobotsLoadArgs } from "./gen/RobotsLoadArgs";
+import type { RobotsTestArgs } from "./gen/RobotsTestArgs";
+import type { RobotsTestResult } from "./gen/RobotsTestResult";
 import type { RuleTrace } from "./gen/RuleTrace";
 import type { TestRulesArgs } from "./gen/TestRulesArgs";
 import type { ValidationIssue } from "./gen/ValidationIssue";
 import { client } from "./client";
 
 export const config = {
+  /** `config.testRobots` */
+  testRobots: (args: RobotsTestArgs, signal?: AbortSignal) => client.invoke<RobotsTestResult>("config.testRobots", args, signal),
+  /** `config.loadRobots` */
+  loadRobots: (args: RobotsLoadArgs, signal?: AbortSignal) => client.invoke<string>("config.loadRobots", args, signal),
   /** `config.get` */
   get: (signal?: AbortSignal) => client.invoke<CrawlConfigDto>("config.get", undefined, signal),
   /** `config.validate` */

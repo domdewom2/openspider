@@ -32,4 +32,16 @@ errors: number,
 /**
  * Verbleibendes Kontingent.
  */
-quotaLeft?: number | null, };
+quotaLeft?: number | null, 
+/**
+ * Vertragserweiterung M2-F05b: running.
+ */
+running: boolean, 
+/**
+ * Vertragserweiterung M2-F05b: completed.
+ */
+completed: number, 
+/**
+ * Vertragserweiterung M2-F05b: reset_at.
+ */
+resetAt?: string | null, };

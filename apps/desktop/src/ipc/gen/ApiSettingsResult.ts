@@ -7,4 +7,12 @@ export type ApiSettingsResult = {
 /**
  * Gespeicherte Daten dieser Quelle wurden ungültig (INTEG-010).
  */
-invalidated: boolean, };
+invalidated: boolean, 
+/**
+ * Vertragserweiterung M2-F05b: confirmation_required.
+ */
+confirmationRequired: boolean, 
+/**
+ * Vertragserweiterung M2-F05b: data_stale.
+ */
+dataStale: boolean, };

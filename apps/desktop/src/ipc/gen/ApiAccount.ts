@@ -20,4 +20,12 @@ scopes: Array<string>,
 /**
  * Ablauf des Tokens (ISO 8601 UTC).
  */
-expiresAt?: string | null, };
+expiresAt?: string | null, 
+/**
+ * Vertragserweiterung M2-F05b: account_id.
+ */
+accountId: string, 
+/**
+ * Vertragserweiterung M2-F05b: key_suffix.
+ */
+keySuffix?: string | null, };

@@ -29,4 +29,20 @@ children: Array<SdNode>,
 /**
  * Befunde.
  */
-issues: Array<SdIssueDto>, };
+issues: Array<SdIssueDto>, 
+/**
+ * Vertragserweiterung M2-F05b: path.
+ */
+path: string, 
+/**
+ * Vertragserweiterung M2-F05b: source_line.
+ */
+sourceLine?: number | null, 
+/**
+ * Vertragserweiterung M2-F05b: source_col.
+ */
+sourceCol?: number | null, 
+/**
+ * Vertragserweiterung M2-F05b: property_order.
+ */
+propertyOrder: Array<string>, };

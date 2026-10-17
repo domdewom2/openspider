@@ -4,9 +4,24 @@
     "kind": "group",
     "op": "or",
     "children": [
-      { "kind": "cond", "column": "Word Count", "op": "lessThan", "value": "50" },
-      { "kind": "cond", "column": "Status Code", "op": "equals", "value": "404" },
-      { "kind": "cond", "column": null, "op": "isEmpty", "value": null }
+      {
+        "kind": "cond",
+        "column": "Word Count",
+        "op": "lessThan",
+        "value": "50"
+      },
+      {
+        "kind": "cond",
+        "column": "Status Code",
+        "op": "equals",
+        "value": "404"
+      },
+      {
+        "kind": "cond",
+        "column": null,
+        "op": "isEmpty",
+        "value": null
+      }
     ]
   },
   "caseSensitive": false

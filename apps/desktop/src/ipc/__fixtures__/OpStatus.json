@@ -4,6 +4,11 @@
   "done": 100,
   "total": 100,
   "state": "done",
-  "result": { "requested": 100, "fetched": 98, "failed": 2, "quotaLeft": 1500 },
+  "result": {
+    "requested": 100,
+    "fetched": 98,
+    "failed": 2,
+    "quotaLeft": 1500
+  },
   "error": null
 }

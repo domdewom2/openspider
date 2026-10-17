@@ -3,4 +3,4 @@
 /**
  * Tabellarische Detail-Tabs (laufen über `view.*` mit `ViewSpec::Detail`).
  */
-export type DetailTable = "headers" | "cookies" | "consoleLog" | "blockedResources" | "network" | "spelling" | "a11yRules" | "a11yNodes" | "duplicates" | "nGrams" | "structuredDataItems" | "structuredDataIssues" | "redirectChain" | "sitemapMembership" | "customSearch" | "customExtraction" | "customJs" | "apiValues" | "forms";
+export type DetailTable = "headers" | "cookies" | "consoleLog" | "blockedResources" | "network" | "spelling" | "a11yRules" | "a11yNodes" | "duplicates" | "nGrams" | "structuredDataItems" | "structuredDataIssues" | "redirectChain" | "sitemapMembership" | "customSearch" | "customExtraction" | "customJs" | "apiValues" | "forms" | "hreflang" | "crawlPath" | "anchors";
