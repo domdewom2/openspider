@@ -35,7 +35,9 @@ use os_model::{
 };
 use os_model::{ContentClass, CrawlState, ElementPair, NewUrl};
 use rusqlite::types::Value;
-use rusqlite::{params, params_from_iter, Connection, Transaction, TransactionBehavior};
+use rusqlite::{
+    params, params_from_iter, Connection, OptionalExtension, Transaction, TransactionBehavior,
+};
 
 use crate::checkpointer::Checkpointer;
 use crate::collation;
@@ -970,6 +972,14 @@ fn write_page(
     let id = page.url_id.0;
     // Der bisherige Zustand der Zeile steht vor dem Überschreiben fest (nur ein Lesezugriff auf dieselbe Zeile).
     let (internal, old_html_2xx) = source_state(tx, id)?;
+    let old_status: (Option<u16>, Option<String>) = tx
+        .query_row(
+            "SELECT status_code, indexability FROM urls WHERE id = ?1",
+            [id],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .optional()?
+        .ok_or_else(|| StoreError::InvalidInput(format!("unbekannte URL {id}")))?;
     let changed = g.time(
         |g| &mut g.urls_upd,
         || -> Result<usize, StoreError> {
@@ -982,6 +992,14 @@ fn write_page(
         return Err(batch_error(format!("PageWrite: URL {id} existiert nicht")));
     }
 
+    if old_status
+        != (
+            Some(page.fetch.status_code),
+            Some(page.indexability.as_str().to_owned()),
+        )
+    {
+        stamp_dependants(tx, id, seq)?;
+    }
     let old = if page.replace {
         let old = if internal {
             Contribution::load(tx, id, old_html_2xx)?
@@ -1023,8 +1041,8 @@ fn insert_links(tx: &Transaction<'_>, id: i64, links: &[LinkRow]) -> Result<(), 
     }
     let mut stmt = tx.prepare_cached(
         "INSERT INTO links (source_id, target_id, target_raw, link_type, position, anchor, alt_text, follow, \
-         rel, target_attr, path_type, link_path, link_position, link_origin, in_head) \
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+         rel, target_attr, path_type, link_path, link_position, link_origin, in_head, crawlable, uncrawlable_reason, pdf_page) \
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)",
     )?;
     for l in links {
         stmt.execute(params![
@@ -1040,9 +1058,12 @@ fn insert_links(tx: &Transaction<'_>, id: i64, links: &[LinkRow]) -> Result<(), 
             l.target_attr,
             l.path_type.map(|p| p.as_str()),
             l.link_path,
-            l.link_position.map(|p| p.as_str()),
+            l.link_position.as_ref().map(|p| p.as_str()),
             l.link_origin.as_str(),
-            l.in_head
+            l.in_head,
+            l.crawlable,
+            l.uncrawlable_reason.map(|r| r.as_str()),
+            l.pdf_page
         ])?;
     }
     Ok(())
@@ -1054,7 +1075,7 @@ fn insert_images(tx: &Transaction<'_>, id: i64, images: &[ImageRow]) -> Result<(
     }
     let mut stmt = tx.prepare_cached(
         "INSERT INTO image_instances (page_id, image_id, src_raw, source, alt_present, alt, alt_len, \
-         width_attr, height_attr, link_path, position) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+         width_attr, height_attr, link_path, position, resolved, link_position, origin, real_w, real_h, display_w, display_h, in_viewport, bytes) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20)",
     )?;
     for i in images {
         let m = &i.instance;
@@ -1069,7 +1090,16 @@ fn insert_images(tx: &Transaction<'_>, id: i64, images: &[ImageRow]) -> Result<(
             m.width_attr,
             m.height_attr,
             m.xpath,
-            m.doc_order
+            m.doc_order,
+            m.resolved,
+            m.link_position.as_ref().map(|p| p.as_str()),
+            m.origin.as_str(),
+            m.render.as_ref().and_then(|r| r.real_w),
+            m.render.as_ref().and_then(|r| r.real_h),
+            m.render.as_ref().and_then(|r| r.display_w),
+            m.render.as_ref().and_then(|r| r.display_h),
+            m.render.as_ref().and_then(|r| r.in_viewport),
+            m.render.as_ref().and_then(|r| r.bytes)
         ])?;
     }
     Ok(())
@@ -1322,6 +1352,15 @@ fn write_sitemap(tx: &Transaction<'_>, s: &SitemapWrite) -> Result<(), StoreErro
         }
     }
     // Zusatzangaben der Einträge (CRAWL-060-Rest, Schema v3).
+    tx.execute(
+        "DELETE FROM sitemap_entry_ext WHERE sitemap_id = ?1",
+        [s.id.0],
+    )?;
+    for m in &s.entry_meta {
+        for (position, ext) in m.extensions.iter().enumerate() {
+            tx.execute("INSERT INTO sitemap_entry_ext (sitemap_id, url_id, position, kind, json) VALUES (?1, ?2, ?3, ?4, ?5)", params![s.id.0, m.url.0, position as i64, ext.kind.as_str(), ext.json])?;
+        }
+    }
     if !s.entry_meta.is_empty() {
         let mut stmt = tx.prepare_cached(
             "UPDATE sitemap_entries SET changefreq = ?1, priority = ?2, images = ?3, videos = ?4, news = ?5 \
@@ -1437,4 +1476,78 @@ fn write_events_and_counters(tx: &Transaction<'_>, batch: &WriteBatch) -> Result
         }
     }
     Ok(())
+}
+
+fn stamp_dependants(tx: &Transaction<'_>, id: i64, seq: i64) -> Result<(), StoreError> {
+    tx.execute("UPDATE urls SET change_seq = ?1 WHERE id IN (SELECT url_id FROM pagination WHERE target_id = ?2 UNION SELECT url_id FROM canonicals WHERE target_id = ?2 UNION SELECT url_id FROM hreflang WHERE target_id = ?2)", params![seq, id])?;
+    Ok(())
+}
+/// Atomare Neuberechnung gespeicherter Fakten ohne Recrawl (K2-43).
+#[derive(Debug, Default)]
+pub struct FactUpdates {
+    pub ext: Vec<os_model::ExtWrite>,
+    pub link_positions: Vec<(i64, Option<String>)>,
+    pub indexability: Vec<(UrlId, os_model::Indexability, Option<String>)>,
+    pub hash: Vec<(UrlId, Option<String>)>,
+    pub word_count: Vec<(UrlId, Option<u32>)>,
+}
+pub fn apply_fact_updates(
+    file: &mut crate::CrawlFile,
+    updates: &FactUpdates,
+) -> Result<Vec<UrlId>, StoreError> {
+    let tx = file.conn().unchecked_transaction()?;
+    let seq = read_change_seq(&tx)? + 1;
+    let mut changed = std::collections::BTreeSet::new();
+    for (id, position) in &updates.link_positions {
+        let source: i64 = tx.query_row("SELECT source_id FROM links WHERE id = ?1", [id], |r| {
+            r.get(0)
+        })?;
+        tx.execute(
+            "UPDATE links SET link_position = ?1 WHERE id = ?2",
+            params![position, id],
+        )?;
+        changed.insert(UrlId(source));
+    }
+    for (id, value, status) in &updates.indexability {
+        tx.execute(
+            "UPDATE urls SET indexability = ?1, indexability_status = ?2 WHERE id = ?3",
+            params![value.as_str(), status, id.0],
+        )?;
+        stamp_dependants(&tx, id.0, seq)?;
+        changed.insert(*id);
+    }
+    for (id, hash) in &updates.hash {
+        tx.execute(
+            "UPDATE urls SET hash_md5 = ?1 WHERE id = ?2",
+            params![hash, id.0],
+        )?;
+        changed.insert(*id);
+    }
+    for (id, count) in &updates.word_count {
+        tx.execute(
+            "UPDATE urls SET word_count = ?1 WHERE id = ?2",
+            params![count, id.0],
+        )?;
+        changed.insert(*id);
+    }
+    let batch = WriteBatch {
+        ext: updates.ext.clone(),
+        ..Default::default()
+    };
+    crate::writer_m2::write(&tx, &batch, seq)?;
+    changed.extend(updates.ext.iter().map(|e| e.url));
+    for id in &changed {
+        if tx.execute(
+            "UPDATE urls SET change_seq = ?1 WHERE id = ?2",
+            params![seq, id.0],
+        )? == 0
+        {
+            return Err(StoreError::InvalidInput(format!("Unbekannte URL {id}")));
+        }
+    }
+    if !changed.is_empty() {
+        write_meta(&tx, &batch, seq)?;
+    }
+    tx.commit()?;
+    Ok(changed.into_iter().collect())
 }
