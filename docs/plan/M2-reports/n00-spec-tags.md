@@ -105,4 +105,7 @@ ist berührt. `cargo deny` ist nicht gelaufen: Es gibt keine Änderung an Manife
 
 Größe des Target-Verzeichnisses: 30 GB beim Abbruch des Workspace-Laufs (Debug-Profil mit Debuginfo). Nach Abschluss gelöscht.
 
-CI-Lauf-ID: wird nach dem Push nachgetragen.
+CI-Lauf-ID: `linux-core` 39080882190 für Commit `5bb032d`
+(https://github.com/domdewom2/openspider/actions/runs/39080882190). Ergebnis stand beim Eintragen noch aus. Andere Workflows
+starten bei diesem Push nicht: `ci.yml` (macOS-/Windows-Matrix) und `parity.yml` laufen bei Push nur auf `main`, `ui-e2e.yml`
+nur bei Änderungen unter `apps/desktop/**`, `crates/os-app/**` oder `crates/os-model/**`.
