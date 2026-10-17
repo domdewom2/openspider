@@ -38,3 +38,23 @@ fn stored_text_has_word_count_and_flesch() {
         .error
         .is_some());
 }
+
+// spec: ONPAGE-166
+#[test]
+fn image_only_pdf_has_zero_words_and_no_readability() {
+    let mut doc = lopdf::Document::load_mem(PDF).unwrap();
+    for id in doc.get_pages().values() {
+        doc.get_dictionary_mut(*id).unwrap().remove(b"Contents");
+    }
+    let mut bytes = Vec::new();
+    doc.save_to(&mut bytes).unwrap();
+    let mut cfg = CrawlConfig::default();
+    cfg.pdf.store = true;
+    let result = pdf::parse(&bytes, &ParseConfig::from_crawl_config(&cfg));
+    assert_eq!(result.word_count, Some(0));
+    assert_eq!(result.meta.title.as_deref(), Some("Test document"));
+    assert!(!result
+        .ext
+        .iter()
+        .any(|(key, _)| key.as_str().starts_with("readability.")));
+}
