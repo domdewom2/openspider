@@ -37,25 +37,30 @@ pub fn run(
                 os_model::UrlId(id),
                 Some(os_parse::content::word_count(&doc, &new.content.area)),
             ));
-            let heading: String = file
+            let address: String = file
                 .conn()
-                .query_row(
-                    "SELECT COALESCE(title_1,'') || ' ' || COALESCE(h1_1,'') FROM urls WHERE id=?1",
-                    [id],
-                    |r| r.get(0),
-                )
+                .query_row("SELECT url FROM urls WHERE id=?1", [id], |r| r.get(0))
                 .map_err(sql_error)?;
-            let soft = os_parse::text::normalize(&format!("{heading} {area}")).to_lowercase();
-            updates.ext.push(os_model::ExtWrite {
-                url: os_model::UrlId(id),
-                key: os_model::ExtKey::from_static("content.soft404_text"),
-                value: os_model::Value::Text(soft),
-            });
-            updates.ext.push(os_model::ExtWrite {
-                url: os_model::UrlId(id),
-                key: os_model::ExtKey::from_static("content.text"),
-                value: os_model::Value::Text(area.clone()),
-            });
+            let url = url::Url::parse(&address)
+                .map_err(|e| crate::EngineError::Invalid(e.to_string()))?;
+            let pcfg = os_parse::ParseConfig::from_crawl_config(new);
+            let ctx = os_parse::PageCtx {
+                url: &url,
+                base: &url,
+                doc: &doc,
+                html: &text,
+                headers: &[],
+                cfg: &pcfg,
+            };
+            let mut page = os_model::ParsedPage::default();
+            os_parse::content::run(&ctx, &mut page);
+            updates
+                .ext
+                .extend(page.ext.into_iter().map(|(key, value)| os_model::ExtWrite {
+                    url: os_model::UrlId(id),
+                    key,
+                    value,
+                }));
             let facts = if new.extraction.readability {
                 os_parse::readability::facts(&area)
             } else {
