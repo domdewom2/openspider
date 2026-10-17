@@ -65,3 +65,41 @@ fn detail_cancellation_cleans_up_output() {
     .is_err());
     assert!(!path.exists());
 }
+
+// spec: OUT-022
+// spec: OUT-010
+#[test]
+fn live_selection_without_target_index_matches_indexed_rows_and_selection_order() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = new_file(dir.path(), "live-details.ospider");
+    exec(
+        &file,
+        include_str!("../../../tests/fixtures/out-m2-export/crawl.sql"),
+    );
+    let ids = [UrlId(2), UrlId(1), UrlId(2), UrlId(3)];
+    let indexed = export_detail(
+        &file,
+        DetailKind::Inlinks,
+        &ids,
+        &dir.path().join("indexed.csv"),
+        Format::Csv,
+    )
+    .unwrap();
+    exec(&file, "DROP INDEX links_target");
+    let reader = os_store::CrawlFile::open(file.path(), os_store::OpenMode::ReadOnly).unwrap();
+    assert!(!os_store::link_index::present(reader.conn()).unwrap());
+    let unindexed = export_detail(
+        &reader,
+        DetailKind::Inlinks,
+        &ids,
+        &dir.path().join("unindexed.csv"),
+        Format::Csv,
+    )
+    .unwrap();
+    assert_eq!(unindexed.rows, indexed.rows);
+    assert_eq!(
+        std::fs::read(unindexed.path).unwrap(),
+        std::fs::read(indexed.path).unwrap()
+    );
+    assert!(!os_store::link_index::present(reader.conn()).unwrap());
+}
