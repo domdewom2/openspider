@@ -10,8 +10,20 @@ use os_model::{NoResponseReason, Timestamp};
 
 use crate::cookies::CookieJar;
 
+/// URL type used by optional fetcher policy hooks.
+pub use url::Url as FetchUrl;
+
 /// Abruf eines einzelnen URL-Objekts. Redirects verfolgt der Aufrufer (die Engine), nicht der Fetcher.
 pub trait Fetch: Send + Sync + 'static {
+    /// Optional policy denial before and after robots checks (AGENT-020).
+    /// Default leaves existing fetchers unchanged. A denial contains no network response.
+    fn target_denial<'a>(
+        &'a self,
+        _url: &'a url::Url,
+    ) -> Pin<Box<dyn Future<Output = Option<FetchResult>> + Send + 'a>> {
+        Box::pin(async { None })
+    }
+
     /// Ruft die URL ab.
     fn fetch(&self, req: FetchRequest) -> Pin<Box<dyn Future<Output = FetchResult> + Send + '_>>;
 }

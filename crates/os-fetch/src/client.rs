@@ -239,6 +239,54 @@ impl HttpFetcher {
         })
     }
 
+    /// Fetch using addresses already resolved and approved by the caller (AGENT-020).
+    /// The client is pinned to that exact address set: no second DNS lookup, redirects or proxy.
+    /// Existing fetch paths are unchanged. Rate limiting and persistent cookies remain shared.
+    pub async fn fetch_pinned(
+        &self,
+        req: FetchRequest,
+        addresses: &[std::net::SocketAddr],
+    ) -> Result<FetchResult, FetchError> {
+        let host = req
+            .url
+            .host_str()
+            .ok_or_else(|| FetchError::Config("missing host".into()))?;
+        if addresses.is_empty() {
+            return Err(FetchError::Config("empty resolved address set".into()));
+        }
+        let mut builder = reqwest::Client::builder()
+            .user_agent(&self.cfg.user_agent)
+            .redirect(reqwest::redirect::Policy::none())
+            .no_proxy()
+            .connect_timeout(self.connect_timeout)
+            .tcp_nodelay(true)
+            .resolve_to_addrs(host, addresses);
+        let mut certs = Vec::new();
+        for pem in &self.cfg.extra_root_certs {
+            certs.extend(
+                reqwest::Certificate::from_pem_bundle(pem)
+                    .map_err(|e| FetchError::Config(format!("invalid certificate: {e}")))?,
+            );
+        }
+        if !certs.is_empty() {
+            builder = builder.tls_certs_merge(certs);
+        }
+        let pinned = Self {
+            cfg: self.cfg.clone(),
+            connect_timeout: self.connect_timeout,
+            client: builder
+                .build()
+                .map_err(|e| FetchError::Config(redact::text(&e.to_string())))?,
+            auth: AuthMatcher::new(&self.cfg.basic_auth).map_err(FetchError::Config)?,
+            limiter: None,
+            global_jar: self.global_jar.clone(),
+        };
+        if let Some(limiter) = &self.limiter {
+            limiter.acquire().await;
+        }
+        Ok(pinned.fetch_impl(req).await)
+    }
+
     /// Die wirksame Konfiguration.
     pub fn config(&self) -> &FetchConfig {
         &self.cfg
