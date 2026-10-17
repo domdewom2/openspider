@@ -149,6 +149,10 @@ async fn serve(tcp: TcpStream, state: Arc<AppState>) {
         let acceptor = TlsAcceptor::from(Arc::clone(&material.server_config));
         match acceptor.accept(tcp).await {
             Ok(stream) => {
+                if stream.get_ref().1.alpn_protocol() == Some(b"h2") {
+                    serve_h2(stream, state, conn_id).await;
+                    return;
+                }
                 // SNI aus dem ClientHello; fehlt er (Verbindung per IP-Adresse), bleibt es `None`.
                 let sni = stream.get_ref().1.server_name().map(str::to_string);
                 (Conn::new(Stream::Tls(Box::new(stream))), true, sni)
@@ -604,6 +608,54 @@ fn trickle_plan(rate: u64) -> (usize, Duration) {
         )
     } else {
         (1, Duration::from_millis(1000 / rate.max(1)))
+    }
+}
+
+/// Dieselben Fixture-Routen über h2, ausschließlich nach ALPN im TLS-Pfad.
+async fn serve_h2(stream: TlsStream<TcpStream>, state: Arc<AppState>, conn_id: u64) {
+    let sni = stream.get_ref().1.server_name().map(str::to_string);
+    let Ok(mut connection) = h2::server::handshake(stream).await else {
+        return;
+    };
+    let mut tasks = JoinSet::new();
+    loop {
+        tokio::select! {
+            incoming = connection.accept() => {
+                let Some(Ok((request, mut respond))) = incoming else { break; };
+                let state = state.clone();
+                let sni = sni.clone();
+                tasks.spawn(async move {
+                    let _inflight = state.log.begin();
+                    let req = Request {
+                        method: request.method().to_string(), target: request.uri().path_and_query().map_or("/", |p| p.as_str()).into(),
+                        path: request.uri().path().into(), host: request.uri().host().unwrap_or("").to_ascii_lowercase(),
+                        headers: request.headers().iter().map(|(n,v)| (n.to_string(), String::from_utf8_lossy(v.as_bytes()).into_owned())).collect(), tls: true,
+                    };
+                    if let Some(counts) = &state.counts { *lock(counts).entry(req.path.clone()).or_insert(0) += 1; }
+                    let token = state.detailed_log.then(|| state.log.push(RequestRecord { seq: 0, ts: crate::log::now_ts(), conn_id, method: req.method.clone(), host: req.host.clone(), path_and_query: req.target.clone(), headers: req.headers.clone(), tls: true, sni, sent_bytes: 0, sent_framing_bytes: 0, sent_interim_bytes: 0, sent_body_bytes: 0 }));
+                    let reply = build_reply(&state, &req).await;
+                    if reply.mode == Mode::Hang { std::future::pending::<()>().await; }
+                    let mut response = axum::http::Response::builder().status(reply.status);
+                    for (name, value) in &reply.headers {
+                        if !["connection", "transfer-encoding", "keep-alive"].iter().any(|n| name.eq_ignore_ascii_case(n)) { response = response.header(name, value); }
+                    }
+                    let Ok(response) = response.body(()) else { return; };
+                    let empty = req.method == "HEAD" || reply.body.is_empty();
+                    let Ok(mut send) = respond.send_response(response, empty) else { return; };
+                    if !empty {
+                        let mut body = bytes::Bytes::from(reply.body);
+                        while !body.is_empty() {
+                            send.reserve_capacity(body.len().min(16 * 1024));
+                            let Some(Ok(capacity)) = futures_util::future::poll_fn(|cx| send.poll_capacity(cx)).await else { return; };
+                            let n = capacity.min(body.len());
+                            if send.send_data(body.split_to(n), body.is_empty()).is_err() { return; }
+                            if let Some(token) = token { state.log.set_sent(token, Sent { body: n as u64, ..Sent::default() }); }
+                        }
+                    }
+                });
+            },
+            Some(_) = tasks.join_next(), if !tasks.is_empty() => {}
+        }
     }
 }
 

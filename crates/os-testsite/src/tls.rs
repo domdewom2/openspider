@@ -67,8 +67,8 @@ impl TlsMaterial {
             .map_err(tls_err)?
             .with_no_client_auth()
             .with_cert_resolver(resolver);
-        // Nur HTTP/1.1: die Testsite spricht kein HTTP/2.
-        server_config.alpn_protocols = vec![b"http/1.1".to_vec()];
+        // HTTP/2 wird ausschließlich über TLS/ALPN ausgehandelt.
+        server_config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
         Ok(Self {
             ca_pem,
             ca_der,
@@ -103,7 +103,11 @@ impl HostCerts {
         let sans: Vec<String> = if no_sni {
             vec!["localhost".into(), "127.0.0.1".into(), "::1".into()]
         } else {
-            vec![name.to_string()]
+            vec![if name.starts_with("wronghost.") {
+                "other.test".to_string()
+            } else {
+                name.to_string()
+            }]
         };
         let mut params = CertificateParams::new(sans).map_err(tls_err)?;
         params.is_ca = IsCa::NoCa;
