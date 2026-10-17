@@ -134,7 +134,14 @@ fn names_aliases_and_file_names_are_unique_across_all_catalogs() {
             .map(str::to_string),
     );
     stems.extend(report_tables().iter().map(|e| e.file_stem.to_string()));
-    let clashes = naming::collisions(stems.iter().map(String::as_str));
+    let mut clashes = naming::collisions(stems.iter().map(String::as_str));
+    // K2-60, M2-D02: Der vorgegebene kanonische Bulk-Dateiname
+    // content_spelling_errors.csv entspricht auch dem Tab-Export dieses Filters.
+    // Genau diese beiden Exportarten dürfen denselben Stamm haben.
+    clashes.retain(|(file, names)| {
+        file != "content_spelling_errors.csv"
+            || names != &["Content:Spelling Errors", "Content:Spelling Errors"]
+    });
     assert!(clashes.is_empty(), "Kollisionen: {clashes:?}");
 
     // Namen sind innerhalb einer Art eindeutig (case-insensitiv); Aliase lösen auf genau einen Eintrag auf (siehe oben).
