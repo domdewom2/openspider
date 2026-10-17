@@ -271,6 +271,20 @@ impl Drop for Inner {
 #[derive(Clone)]
 pub struct App(Arc<Inner>);
 
+/// Weak app reference for background services; it never prolongs shutdown.
+#[derive(Clone)]
+pub struct WeakApp(std::sync::Weak<Inner>);
+impl WeakApp {
+    pub fn upgrade(&self) -> Option<App> {
+        self.0.upgrade().map(App)
+    }
+}
+impl App {
+    pub fn downgrade(&self) -> WeakApp {
+        WeakApp(Arc::downgrade(&self.0))
+    }
+}
+
 fn clamp_interval(ms: u32) -> u32 {
     ms.clamp(LIVE_INTERVAL_RANGE_MS.0, LIVE_INTERVAL_RANGE_MS.1)
 }

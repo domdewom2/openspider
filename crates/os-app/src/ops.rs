@@ -302,6 +302,16 @@ impl Ops {
         updates
     }
 
+    /// Snapshot of active operations, without consuming their tick updates.
+    pub fn active_statuses(&self) -> Vec<OpStatus> {
+        self.shared
+            .lock()
+            .iter()
+            .filter(|e| !e.finished())
+            .map(Entry::status)
+            .collect()
+    }
+
     /// Anzahl der laufenden Operationen.
     pub fn running(&self) -> usize {
         self.shared.lock().iter().filter(|e| !e.finished()).count()

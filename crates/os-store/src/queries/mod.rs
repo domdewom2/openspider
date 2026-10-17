@@ -670,3 +670,22 @@ pub struct DetailData {
     pub rows: Vec<Vec<os_model::Value>>,
     pub total: u64,
 }
+
+/// Durable session counters for opening files without a progress snapshot and
+/// reconciling the final state of an externally owned crawl (M2-K04).
+/// Call inside the same read transaction as change_seq and the metadata.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SessionCounts {
+    pub discovered: u64,
+    pub queued: u64,
+    pub crawled: u64,
+}
+pub fn session_counts(conn: &Connection) -> Result<SessionCounts, StoreError> {
+    Ok(SessionCounts {
+        discovered: conn.query_row("SELECT COUNT(*) FROM urls", [], |r| r.get(0))?,
+        queued: conn.query_row("SELECT COUNT(*) FROM queue", [], |r| r.get(0))?,
+        crawled: conn.query_row("SELECT COUNT(*) FROM urls WHERE state = 'done'", [], |r| {
+            r.get(0)
+        })?,
+    })
+}
