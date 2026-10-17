@@ -27,6 +27,12 @@ function = "annotate_facts"
 signature = "pub fn annotate_facts( _doc: &crate::dom::Document, _cfg: &crate::ParseConfig, _page: &mut os_model::ParsedPage, )"
 
 [[stub]]
+owner = "M2-D02"
+file = "crates/os-analyze/src/tabs/duplicates.rs"
+function = "ngram_details"
+signature = "pub fn ngram_details( _: &os_store::CrawlFile, _: &os_model::CrawlConfig, _: &crate::details::DetailReq<'_>, ) -> Result<crate::details::DetailRows, crate::ViewError>"
+
+[[stub]]
 owner = "M2-D03"
 file = "crates/os-analyze/src/analysis/steps/images.rs"
 function = "run"

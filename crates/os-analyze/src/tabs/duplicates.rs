@@ -290,39 +290,12 @@ pub fn detail_rows(
     Ok(out)
 }
 
-/// Häufigkeit der normalisierten Dreier-Shingles der ausgewählten URLs.
+/// UI-049 ist P2 und gehört nicht zum Content-P1-Paket.
+// STUB(M2-D02)
 pub fn ngram_details(
-    file: &os_store::CrawlFile,
-    _: &CrawlConfig,
-    req: &crate::details::DetailReq<'_>,
+    _: &os_store::CrawlFile,
+    _: &os_model::CrawlConfig,
+    _: &crate::details::DetailReq<'_>,
 ) -> Result<crate::details::DetailRows, crate::ViewError> {
-    let mut counts = std::collections::BTreeMap::<String, i64>::new();
-    for id in req.url_ids {
-        let text = file
-            .conn()
-            .query_row(
-                "SELECT v_text FROM url_ext WHERE url_id=?1 AND key='content.text'",
-                [id.0],
-                |r| r.get::<_, String>(0),
-            )
-            .unwrap_or_default();
-        for shingle in crate::minhash::shingles(&text) {
-            *counts.entry(shingle).or_default() += 1;
-        }
-    }
-    let total = counts.len() as u64;
-    Ok(crate::details::DetailRows {
-        columns: vec![
-            ("N-Gram".into(), ColumnKind::Text),
-            ("Count".into(), ColumnKind::Int),
-        ],
-        rows: counts
-            .into_iter()
-            .skip(req.offset.min(usize::MAX as u64) as usize)
-            .take(req.limit.min(500) as usize)
-            .map(|(s, n)| vec![Value::Text(s), Value::Int(n)])
-            .collect(),
-        total,
-        notes: Vec::new(),
-    })
+    Err(crate::ViewError::NotImplemented("M2-D02"))
 }
