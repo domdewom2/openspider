@@ -32,6 +32,7 @@ pub const DEFAULT_READ_CONNECTIONS: usize = 4;
 pub struct CrawlKey(pub String);
 
 struct Slot {
+    pinned: Mutex<HashMap<&'static str, Arc<Slot>>>,
     path: PathBuf,
     idle: Mutex<Vec<CrawlFile>>,
     permits: Arc<Semaphore>,
@@ -83,6 +84,15 @@ impl ReadPool {
             Some(slot) => {
                 let guard = slot.access.clone().write_owned().await;
                 slot.idle.lock().unwrap_or_else(|p| p.into_inner()).clear();
+                let mut pinned = slot.pinned.lock().unwrap_or_else(|p| p.into_inner());
+                for cached in pinned.values() {
+                    cached
+                        .idle
+                        .lock()
+                        .unwrap_or_else(|p| p.into_inner())
+                        .clear();
+                }
+                pinned.clear();
                 Some(guard)
             }
             None => None,
@@ -121,6 +131,7 @@ impl ReadPool {
     /// (leerlaufende Verbindungen werden geschlossen, laufende Arbeiten beenden ihre Verbindung).
     pub fn register(&self, key: CrawlKey, path: impl Into<PathBuf>) {
         let slot = Arc::new(Slot {
+            pinned: Mutex::new(HashMap::new()),
             path: path.into(),
             idle: Mutex::new(Vec::new()),
             permits: Arc::new(Semaphore::new(self.inner.capacity)),
@@ -160,6 +171,47 @@ impl ReadPool {
     ) -> Result<T, CmdError> {
         let token = crate::runtime::current_cancel();
         self.run_with(crawl, token, f).await
+    }
+
+    /// Verbindungsgebundener Cache (z. B. Sidebar-Temp-Tabellen): je Name eine
+    /// serialisierte Leseverbindung. Nutzt dieselben Abbruch- und Exklusivsperren
+    /// wie `run_with`; Registerwechsel und Schließen verwerfen auch diesen Cache.
+    pub async fn run_cached<T: Send + 'static>(
+        &self,
+        crawl: CrawlKey,
+        cache: &'static str,
+        token: CancelToken,
+        f: impl FnOnce(&CrawlFile, &CancelToken) -> Result<T, StoreError> + Send + 'static,
+    ) -> Result<T, CmdError> {
+        let slot = self
+            .inner
+            .lock()
+            .get(&crawl)
+            .cloned()
+            .ok_or_else(|| no_crawl(&crawl.0))?;
+        let cached = slot
+            .pinned
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .entry(cache)
+            .or_insert_with(|| {
+                Arc::new(Slot {
+                    pinned: Mutex::new(HashMap::new()),
+                    path: slot.path.clone(),
+                    idle: Mutex::new(Vec::new()),
+                    permits: Arc::new(Semaphore::new(1)),
+                    access: slot.access.clone(),
+                })
+            })
+            .clone();
+        let pool = ReadPool {
+            inner: Arc::new(Inner {
+                crawls: Mutex::new(HashMap::from([(crawl.clone(), cached)])),
+                hub: self.inner.hub.clone(),
+                capacity: 1,
+            }),
+        };
+        pool.run_with(crawl, token, f).await
     }
 
     /// Wie [`run`](Self::run) mit ausdrücklicher Marke.
