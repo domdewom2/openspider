@@ -1,0 +1,135 @@
+[[route]]
+path = "/"
+delay_ms = 50
+
+[[route]]
+path = "/page-1.html"
+delay_ms = 50
+body = '''<!doctype html><html><head><title>Shared title</title><meta name="description" content="A synthetic fixture page."></head><body><h1>Page 1</h1><a href="/">Home</a></body></html>'''
+
+[[route]]
+path = "/page-2.html"
+delay_ms = 50
+body = '''<!doctype html><html><head><title>Shared title</title><meta name="description" content="A synthetic fixture page."></head><body><h1>Page 2</h1><a href="/">Home</a></body></html>'''
+
+[[route]]
+path = "/page-3.html"
+delay_ms = 50
+body = '''<!doctype html><html><head><title>Fixture page 3</title><meta name="description" content="A synthetic fixture page."></head><body><h1>Page 3</h1><a href="/">Home</a></body></html>'''
+
+[[route]]
+path = "/page-4.html"
+delay_ms = 50
+body = '''<!doctype html><html><head><title>Fixture page 4</title><meta name="description" content="A synthetic fixture page."></head><body><h1>Page 4</h1><a href="/">Home</a></body></html>'''
+
+[[route]]
+path = "/page-5.html"
+delay_ms = 50
+body = '''<!doctype html><html><head><title>Fixture page 5</title><meta name="description" content="A synthetic fixture page."></head><body><h1>Page 5</h1><a href="/">Home</a></body></html>'''
+
+[[route]]
+path = "/page-6.html"
+delay_ms = 50
+body = '''<!doctype html><html><head><title>Fixture page 6</title><meta name="description" content="A synthetic fixture page."></head><body><h1>Page 6</h1><a href="/">Home</a></body></html>'''
+
+[[route]]
+path = "/page-7.html"
+delay_ms = 50
+body = '''<!doctype html><html><head><title>Fixture page 7</title><meta name="description" content="A synthetic fixture page."></head><body><h1>Page 7</h1><a href="/">Home</a></body></html>'''
+
+[[route]]
+path = "/page-8.html"
+delay_ms = 50
+body = '''<!doctype html><html><head><title>Fixture page 8</title><meta name="description" content="A synthetic fixture page."></head><body><h1>Page 8</h1><a href="/">Home</a></body></html>'''
+
+[[route]]
+path = "/page-9.html"
+delay_ms = 50
+body = '''<!doctype html><html><head><title>Fixture page 9</title><meta name="description" content="A synthetic fixture page."></head><body><h1>Page 9</h1><a href="/">Home</a></body></html>'''
+
+[[route]]
+path = "/page-10.html"
+delay_ms = 50
+body = '''<!doctype html><html><head><title>Fixture page 10</title><meta name="description" content="A synthetic fixture page."></head><body><h1>Page 10</h1><a href="/">Home</a></body></html>'''
+
+[[route]]
+path = "/page-11.html"
+delay_ms = 50
+body = '''<!doctype html><html><head><title>Fixture page 11</title><meta name="description" content="A synthetic fixture page."></head><body><h1>Page 11</h1><a href="/">Home</a></body></html>'''
+
+[[route]]
+path = "/page-12.html"
+delay_ms = 50
+body = '''<!doctype html><html><head><title>Fixture page 12</title><meta name="description" content="A synthetic fixture page."></head><body><h1>Page 12</h1><a href="/">Home</a></body></html>'''
+
+[[route]]
+path = "/page-13.html"
+delay_ms = 50
+body = '''<!doctype html><html><head><title>Fixture page 13</title><meta name="description" content="A synthetic fixture page."></head><body><h1>Page 13</h1><a href="/">Home</a></body></html>'''
+
+[[route]]
+path = "/page-14.html"
+delay_ms = 50
+body = '''<!doctype html><html><head><title>Fixture page 14</title><meta name="description" content="A synthetic fixture page."></head><body><h1>Page 14</h1><a href="/">Home</a></body></html>'''
+
+[[route]]
+path = "/page-15.html"
+delay_ms = 50
+body = '''<!doctype html><html><head><title>Fixture page 15</title><meta name="description" content="A synthetic fixture page."></head><body><h1>Page 15</h1><a href="/">Home</a></body></html>'''
+
+[[route]]
+path = "/page-16.html"
+delay_ms = 50
+body = '''<!doctype html><html><head><title>Fixture page 16</title><meta name="description" content="A synthetic fixture page."></head><body><h1>Page 16</h1><a href="/">Home</a></body></html>'''
+
+[[route]]
+path = "/page-17.html"
+delay_ms = 50
+body = '''<!doctype html><html><head><title>Fixture page 17</title><meta name="description" content="A synthetic fixture page."></head><body><h1>Page 17</h1><a href="/">Home</a></body></html>'''
+
+[[route]]
+path = "/page-18.html"
+delay_ms = 50
+body = '''<!doctype html><html><head><title>Fixture page 18</title><meta name="description" content="A synthetic fixture page."></head><body><h1>Page 18</h1><a href="/">Home</a></body></html>'''
+
+[[route]]
+path = "/page-19.html"
+delay_ms = 50
+body = '''<!doctype html><html><head><title>Fixture page 19</title><meta name="description" content="A synthetic fixture page."></head><body><h1>Page 19</h1><a href="/">Home</a></body></html>'''
+
+[[route]]
+path = "/page-20.html"
+delay_ms = 50
+body = '''<!doctype html><html><head><title>Fixture page 20</title><meta name="description" content="A synthetic fixture page."></head><body><h1>Page 20</h1><a href="/">Home</a></body></html>'''
+
+[[route]]
+path = "/redirect"
+status = 301
+location = "/page-1.html"
+
+[[route]]
+path = "/missing"
+status = 404
+body = "Missing fixture page"
+
+[[route]]
+path = "/noindex"
+body = '<html><head><title>Noindex fixture</title><meta name="robots" content="noindex"></head><body>Noindex</body></html>'
+
+[[route]]
+path = "/pixel.svg"
+content_type = "image/svg+xml"
+body = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10"/></svg>'
+
+[[route]]
+path = "/out-a"
+body = "External fixture page"
+
+[[route]]
+path = "/out-b"
+body = "External fixture page"
+
+[[route]]
+path = "/robots.txt"
+content_type = "text/plain"
+body = "User-agent: *\nAllow: /\n"

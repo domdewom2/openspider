@@ -1,0 +1,206 @@
+M2-K04 – Implementierungsbericht
+Stand: 2026-10-17; macOS; Branch m2/k04; Clean-Room ausschließlich anhand Repository-Specs.
+
+Umgesetzter Paketumfang und Spec-IDs
+- ONPAGE-193, UI-018 [M2]: begrenzter Änderungsfeed über change_seq,
+  changed_since einschließlich url_counters und reset_seq; bei Überlauf/Entfernen
+  Reset statt unbegrenzter ID-Liste. Zählerfrist <= 1 s auch bei 5 s Tabellenintervall.
+- UI-143 (Kernanteil): Coalescer pro Fenster; sichtbare Fenster <= 10 Ticks/s,
+  verdeckte <= 1 Hz, Standard 500 ms, keine Ticks ohne Änderungen.
+- UI-013 [M2], AGENT-020 [M2]: eigene und externe Sessions, progress_snapshot,
+  Heartbeat/Owner-Prüfung; laufende fremde Crawls ohne Schreibregistrierung.
+  Speicherstatus und Dateigröße werden aus dem vorhandenen Progress durchgereicht.
+- CRAWL-126 [M2], CRAWL-128, CRAWL-143: Start, Pause, Resume, Stop, Clear,
+  Open einschließlich Migration auf Kopie und SaveAs; Pause wartet auf laufende
+  Requests und den dauerhaften Engine-Abschluss. Resume verwendet die M1-Regeln
+  für Paused, Incomplete und Completed mit verbleibender Queue.
+- Zusätzlich: URL-/Listenvalidierung, Recrawl/Remove mit Auswahl, Fortschritt und
+  Abbruch; Analyse mit ausgewählten Schritten und automatischer Abschlussbarriere;
+  gemeinsamer Quit-Pfad wartet auf Operationen, eigene Engines und Writer.
+  Zusätzliche Test-Tags: CRAWL-027, CRAWL-127, CRAWL-131, CRAWL-141,
+  UI-001, UI-003, INTEG-012.
+- F05-Verträge bleiben erhalten: SessionRegistry, Lifecycle-Bus, TickPolicy,
+  QuitHook, ReadPool::prepare_open und WriteQueue::submit_file.
+- fx-ui-basic ist synthetisch: 25 interne URLs, zwei externe localhost-URLs,
+  Redirect, 404, noindex, doppelte Titel, Bild ohne Alt-Text, verzögerte Antworten.
+
+Tests
+Ergebnis: alle unten aufgeführten Prüfungen erfolgreich (Exitcode 0).
+Abschließender Workspace-Lauf: 2323 bestanden, 0 fehlgeschlagen, 43 ignoriert
+(davon drei neu gemäß C9); 265 Test-/Doc-Test-Suiten.
+
+- cargo fmt --all --check
+- cargo clippy --locked --workspace --exclude openspider-desktop --all-targets -- -D warnings
+- cargo test --locked --workspace --exclude openspider-desktop
+- cargo deny check bans licenses sources
+- bash scripts/check-neutral.sh
+- git diff --check
+- 17 neue aktive Pakettests; drei vollständige, planmäßig ignorierte
+  Integrationstests in pending_w1_k04.rs.
+- ManualClock-Test: 60 s bei 200 URL/s, mehrere Live-Intervalle, sichtbare und
+  verdeckte Fenster; kein Tick im anschließenden Leerlauf.
+- Lokaler Fixture-Server: Pause -> SaveAs -> Clear -> Open -> Resume hat dasselbe
+  sichtbare URL-/Status-/Tiefenergebnis wie ein ununterbrochener Crawl.
+- Weitere Fälle: abgeschlossener Limit-Crawl mit Restqueue, fehlerhafte/neue
+  Dateischemata, Migration ohne Änderung des Originals, existierendes SaveAs-Ziel,
+  fremder lebender Prozess, Heartbeat-Ablauf, Feed-Überlauf, Löschung,
+  automatische Analysebarriere, Quit-Abbruch und wartender Quit-Abschluss.
+- Keine Änderung unter apps/desktop/src; deshalb keine npm-Prüfungen erforderlich.
+- Neutralitätsprüfung: erfolgreich, vier bereits bestehende verwaiste Ausnahmen
+  für .github/workflows/ci.yml gemeldet; fremde Allowlist unverändert.
+
+Abweichungen und verbleibende Integration
+- Keine nicht-additive Fremdänderung erforderlich.
+- pending_w1_k04.rs: vollständige Integration für Analyse-Status (M2-K03),
+  versionierte View-Auswahl (M2-K06) und benannte Profile (M2-K07) wartet gemäß C9
+  auf diese Implementierungen. Die eigene Fachlogik wird ohne Ignore geprüft.
+- StartSource::Apis ruft den vorgesehenen I06-Einstieg auf. Dessen aktueller
+  F05-Stub liefert Unsupported mit Besitzer M2-I06; die Delegation ist getestet.
+- UI-FPS/CPU-Messungen zu UI-143 gehören gemäß Paketplan zu M2-U31.
+- Keine regenerierten fremden Goldens/Fixtures, keine Dependency-/Lockfile-Änderung.
+
+Offene Fragen
+- Keine blockierende Spec- oder Besitzfrage. Die oben genannten Integrationen
+  benötigen die Implementierungen ihrer jeweiligen Besitzer.
+
+Stub-Ablösung (K2-60)
+crates/os-app/tests/manifest_contract.rs: ausschließlich M2-K04 aus der Liste
+verbleibender Stub-Besitzer und app.requestQuit/app.confirmQuit aus der Liste
+von F05-Commands mit Unsupported-Erwartung entfernt (plus rustfmt-Zeilenumbruch).
+Alle anderen Stub-Erwartungen bleiben bestehen.
+
+Fremdergänzungen (K2-61)
+1. crates/os-app/src/runtime/mod.rs: WeakApp und App::downgrade für den
+   Hintergrunddienst ohne dauerhaften Arc-Zyklus.
+2. crates/os-app/src/runtime/services.rs: zusätzlicher session::init-Aufruf.
+3. crates/os-app/src/runtime/sessions.rs: update_state für Fenster derselben Session.
+4. crates/os-app/src/ops.rs: nicht konsumierender Snapshot aktiver Operationen
+   für Quit-Gründe und das Abwarten vor Prozessende.
+5. crates/os-app/src/write_queue.rs: create_file für API-only-Dateien samt
+   initialem WriteBatch auf dem serialisierten Writer-Thread.
+6. crates/os-store/src/queries/mod.rs: SessionCounts/session_counts als
+   Store-Abfrage für dauerhafte Session-Zähler ohne SQL in os-app.
+Alle Ergänzungen sind additiv; bestehende Signaturen und Methodenrümpfe bleiben
+unverändert, abgesehen vom ausdrücklich erlaubten zusätzlichen Init-Aufruf.
+Vollständige Diffs gegenüber dem Paket-Ausgangspunkt:
+
+diff --git a/crates/os-app/src/ops.rs b/crates/os-app/src/ops.rs
+index 8e14896..a574d46 100644
+--- a/crates/os-app/src/ops.rs
++++ b/crates/os-app/src/ops.rs
+@@ -304,0 +305,10 @@ impl Ops {
++    /// Snapshot of active operations, without consuming their tick updates.
++    pub fn active_statuses(&self) -> Vec<OpStatus> {
++        self.shared
++            .lock()
++            .iter()
++            .filter(|e| !e.finished())
++            .map(Entry::status)
++            .collect()
++    }
++
+diff --git a/crates/os-app/src/runtime/mod.rs b/crates/os-app/src/runtime/mod.rs
+index dfa87a3..5a135d5 100644
+--- a/crates/os-app/src/runtime/mod.rs
++++ b/crates/os-app/src/runtime/mod.rs
+@@ -273,0 +274,14 @@ pub struct App(Arc<Inner>);
++/// Weak app reference for background services; it never prolongs shutdown.
++#[derive(Clone)]
++pub struct WeakApp(std::sync::Weak<Inner>);
++impl WeakApp {
++    pub fn upgrade(&self) -> Option<App> {
++        self.0.upgrade().map(App)
++    }
++}
++impl App {
++    pub fn downgrade(&self) -> WeakApp {
++        WeakApp(Arc::downgrade(&self.0))
++    }
++}
++
+diff --git a/crates/os-app/src/runtime/services.rs b/crates/os-app/src/runtime/services.rs
+index 63135d6..af38247 100644
+--- a/crates/os-app/src/runtime/services.rs
++++ b/crates/os-app/src/runtime/services.rs
+@@ -3,0 +4 @@ pub fn start(app: &App) {
++    crate::session::init(app);
+diff --git a/crates/os-app/src/runtime/sessions.rs b/crates/os-app/src/runtime/sessions.rs
+index e032a08..c2910d4 100644
+--- a/crates/os-app/src/runtime/sessions.rs
++++ b/crates/os-app/src/runtime/sessions.rs
+@@ -28,0 +29,13 @@ impl SessionRegistry {
++    /// Publish an engine transition to all windows sharing this crawl.
++    pub fn update_state(&self, key: &CrawlKey, state: CrawlState) {
++        for s in self
++            .0
++            .lock()
++            .unwrap_or_else(|p| p.into_inner())
++            .values_mut()
++            .filter(|s| &s.key == key)
++        {
++            s.state = state;
++        }
++    }
++
+diff --git a/crates/os-app/src/write_queue.rs b/crates/os-app/src/write_queue.rs
+index 90f2ea5..8ee4fe5 100644
+--- a/crates/os-app/src/write_queue.rs
++++ b/crates/os-app/src/write_queue.rs
+@@ -117,0 +118,33 @@ impl WriteQueue {
++    /// Create a new crawl on the serialized writer thread (API-only sessions).
++    pub async fn create_file(
++        &self,
++        key: CrawlKey,
++        path: PathBuf,
++        init: os_store::CrawlInit,
++        initial: os_model::WriteBatch,
++    ) -> Result<(), CmdError> {
++        let (tx, rx) = tokio::sync::oneshot::channel();
++        let dest = path.clone();
++        if !self.send(Msg::Job(Box::new(move |_| {
++            let result = (|| -> Result<(), StoreError> {
++                drop(os_store::CrawlFile::create(
++                    &dest,
++                    &init,
++                    os_store::StorageProfile::Balanced,
++                )?);
++                let mut sink =
++                    os_store::SqliteSink::open(&dest, os_store::StorageProfile::Balanced)?;
++                os_store::CrawlSink::write(&mut sink, initial)?;
++                sink.finish()
++            })()
++            .map_err(|e| store_error(&e));
++            let _ = tx.send(result);
++        }))) {
++            return Err(internal("WriteQueue::create_file", "Writer closed"));
++        }
++        rx.await
++            .map_err(|e| internal("WriteQueue::create_file", e.to_string()))??;
++        self.register(key, path);
++        Ok(())
++    }
++
+diff --git a/crates/os-store/src/queries/mod.rs b/crates/os-store/src/queries/mod.rs
+index 8de393e..52780f5 100644
+--- a/crates/os-store/src/queries/mod.rs
++++ b/crates/os-store/src/queries/mod.rs
+@@ -672,0 +673,19 @@ pub struct DetailData {
++
++/// Durable session counters for opening files without a progress snapshot and
++/// reconciling the final state of an externally owned crawl (M2-K04).
++/// Call inside the same read transaction as change_seq and the metadata.
++#[derive(Debug, Clone, Copy, PartialEq, Eq)]
++pub struct SessionCounts {
++    pub discovered: u64,
++    pub queued: u64,
++    pub crawled: u64,
++}
++pub fn session_counts(conn: &Connection) -> Result<SessionCounts, StoreError> {
++    Ok(SessionCounts {
++        discovered: conn.query_row("SELECT COUNT(*) FROM urls", [], |r| r.get(0))?,
++        queued: conn.query_row("SELECT COUNT(*) FROM queue", [], |r| r.get(0))?,
++        crawled: conn.query_row("SELECT COUNT(*) FROM urls WHERE state = 'done'", [], |r| {
++            r.get(0)
++        })?,
++    })
++}
