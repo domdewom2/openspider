@@ -1,0 +1,26 @@
+Start 2026-10-17T03:38:44Z (05:38 lokal)
+wait_quiet: load1=1.85 (< 2), frei: 79 GB
+ 5:38  up 36 days, 18:57, 17 users, load averages: 1.85 2.67 2.80
+Befehl: env OS_BENCH_DIR=/Users/dominikwojcik/Projects/openspider-wt/n28-work/b6 OS_BENCH_MASTER=/Users/dominikwojcik/Projects/openspider-wt/n28-work/b6/n28-links-master.ospider cargo test --release --locked -p os-engine --test perf_store -- --ignored --nocapture --test-threads=1
+   Compiling os-engine v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n28/crates/os-engine)
+    Finished `release` profile [optimized] target(s) in 0.83s
+     Running tests/perf_store.rs (/Users/dominikwojcik/Projects/openspider-wt/target-m1-n28/release/deps/perf_store-7b12cfdadc1c263b)
+
+running 2 tests
+test group_commit_versus_small_batches_with_uniform_targets ... Writer, gleichverteilte Ziele: 100000 Seiten x 30 Links, 200 Seiten je Batch: 10.3 s (9672 Seiten/s), Datei 256 MiB
+Writer, gleichverteilte Ziele: 100000 Seiten x 30 Links, 1000 Seiten je Batch: 9.7 s (10267 Seiten/s), Datei 256 MiB
+Writer, gleichverteilte Ziele: 100000 Seiten x 30 Links, 5000 Seiten je Batch: 8.1 s (12293 Seiten/s), Datei 256 MiB
+Gruppen-Commit   200 Seiten je Transaktion: 10.3 s (+0 % gegenüber 200)
+Gruppen-Commit  1000 Seiten je Transaktion: 9.7 s (-6 % gegenüber 200)
+Gruppen-Commit  5000 Seiten je Transaktion: 8.1 s (-21 % gegenüber 200)
+ok
+test opening_a_million_urls_takes_under_3_seconds_and_saving_under_60 ... CRAWL-127: 1 Mio. abgerufene URLs (3 Links je Seite) geschrieben in 22 s, Datei 614 MiB
+CRAWL-127: Öffnen 1 ms, + erste 100 Zeilen 1 ms (Ziel < 3000 ms, warmer Dateicache)
+CRAWL-127: COUNT(*) über urls 67 ms (Vollscan, nicht Teil des Kriteriums)
+CRAWL-127: Speichern unter 1.4 s (Ziel < 60 s), Kopie 569 MiB
+ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 51.78s
+
+Ende 2026-10-17T03:39:37Z (05:39 lokal), Exit 0
+ 5:39  up 36 days, 18:58, 17 users, load averages: 2.09 2.61 2.77

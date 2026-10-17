@@ -1,0 +1,17 @@
+Start 2026-10-17T03:56:56Z (05:56 lokal)
+wait_quiet: load1=1.67 (< 2), frei: 78 GB
+ 5:56  up 36 days, 19:15, 17 users, load averages: 1.67 2.52 2.63
+Befehl: env OS_BENCH_DIR=/Users/dominikwojcik/Projects/openspider-wt/n28-work/b6 OS_BENCH_MASTER=/Users/dominikwojcik/Projects/openspider-wt/n28-work/b6/n28-links-master.ospider cargo test --release --locked -p os-export --test links_bench -- --ignored --nocapture --test-threads=1
+   Compiling os-export v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n28/crates/os-export)
+    Finished `release` profile [optimized] target(s) in 1.71s
+     Running tests/links_bench.rs (/Users/dominikwojcik/Projects/openspider-wt/target-m1-n28/release/deps/links_bench-af0cf63567dba6c2)
+
+running 1 test
+test one_million_links_are_written_as_csv_in_under_60_seconds ... 1000000 Links in 2.199438958s, 150 MiB
+RSS vorher 259 MiB, Spitze 436 MiB
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.06s
+
+Ende 2026-10-17T03:57:02Z (05:57 lokal), Exit 0
+ 5:57  up 36 days, 19:15, 17 users, load averages: 1.85 2.54 2.64

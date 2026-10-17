@@ -1,0 +1,15 @@
+Start 2026-10-17T03:40:07Z (05:40 lokal)
+wait_quiet: load1=1.77 (< 2), frei: 79 GB
+ 5:40  up 36 days, 18:58, 17 users, load averages: 1.77 2.49 2.72
+Befehl: env OS_BENCH_DIR=/Users/dominikwojcik/Projects/openspider-wt/n28-work/b6 OS_BENCH_MASTER=/Users/dominikwojcik/Projects/openspider-wt/n28-work/b6/n28-links-master.ospider cargo test --release --locked -p os-engine --test lifecycle_list -- --ignored --nocapture --test-threads=1
+   Compiling os-engine v0.1.0 (/Users/dominikwojcik/Projects/openspider-wt/m1-n28/crates/os-engine)
+    Finished `release` profile [optimized] target(s) in 4.48s
+     Running tests/lifecycle_list.rs (/Users/dominikwojcik/Projects/openspider-wt/target-m1-n28/release/deps/lifecycle_list-71e6bba03a76682b)
+
+running 1 test
+test a_list_of_one_hundred_thousand_urls_is_read_in_under_ten_seconds ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.15s
+
+Ende 2026-10-17T03:40:13Z (05:40 lokal), Exit 0
+ 5:40  up 36 days, 18:58, 17 users, load averages: 1.71 2.46 2.71
