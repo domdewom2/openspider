@@ -14,9 +14,8 @@ use os_store::CrawlFile;
 
 use crate::error::ExportError;
 use crate::links_export::{link_header, link_kinds, stream_links, LinkOrder};
-use crate::output::open_writer;
 use crate::pipeline::writer_options;
-use crate::types::{DetailKind, ExportFileInfo, Format};
+use crate::types::{DetailKind, ExportCtx, ExportFileInfo, Format};
 
 /// Exportiert Inlinks bzw. Outlinks der angegebenen URLs im Standard-Linkformat (ONPAGE-192).
 ///
@@ -29,30 +28,55 @@ pub fn export_detail(
     out: &Path,
     format: Format,
 ) -> Result<ExportFileInfo, ExportError> {
-    let cfg = file.config()?;
-    // K-74: Inlinks je URL brauchen `links_target` (sonst ein Lauf über `links` je angefragter URL).
-    os_store::link_index::ensure_if_idle(file)?;
-    let (sheet, where_sql) = match detail {
-        DetailKind::Inlinks => ("Inlinks", "l.target_id = :url_id"),
-        DetailKind::Outlinks => ("Outlinks", "l.source_id = :url_id"),
+    let cancel = os_model::CancelToken::new();
+    let mut ctx = ExportCtx {
+        cancel: &cancel,
+        progress: &|_| {},
+        skip_empty: false,
+        workbook: None,
+        skipped: Vec::new(),
     };
-    let kinds = link_kinds();
-    let mut writer = open_writer(out, format, sheet, &writer_options(&cfg))?;
-    writer.header(&link_header())?;
-    let mut seen: HashSet<i64> = HashSet::new();
-    for id in urls {
-        if !seen.insert(id.0) {
-            continue;
-        }
-        let params = [(":url_id".to_string(), Value::Int(id.0))];
-        stream_links(
-            file,
-            where_sql,
-            &params,
-            LinkOrder::Outlinks,
-            &kinds,
-            &mut *writer,
-        )?;
+    export_detail_with(file, detail, urls, out, format, &mut ctx)?
+        .ok_or_else(|| ExportError::Write("Missing detail output".into()))
+}
+
+/// Multi-selection detail export with the same control and workbook support as tab exports.
+pub fn export_detail_with(
+    file: &CrawlFile,
+    detail: DetailKind,
+    urls: &[UrlId],
+    out: &Path,
+    format: Format,
+    ctx: &mut ExportCtx<'_>,
+) -> Result<Option<ExportFileInfo>, ExportError> {
+    if file.conn().is_autocommit() {
+        os_store::link_index::ensure_if_idle(file)?;
     }
-    writer.finish()
+    crate::pipeline::snapshot(file, || {
+        let cfg = file.config()?;
+        let (sheet, where_sql) = match detail {
+            DetailKind::Inlinks => ("Inlinks", "l.target_id = :url_id"),
+            DetailKind::Outlinks => ("Outlinks", "l.source_id = :url_id"),
+        };
+        crate::output::write_table(out, format, sheet, &writer_options(&cfg), ctx, |writer| {
+            let kinds = link_kinds();
+            writer.header(&link_header())?;
+            let mut seen = HashSet::new();
+            for id in urls {
+                if !seen.insert(id.0) {
+                    continue;
+                }
+                let params = [(":url_id".to_string(), Value::Int(id.0))];
+                stream_links(
+                    file,
+                    where_sql,
+                    &params,
+                    LinkOrder::Outlinks,
+                    &kinds,
+                    writer,
+                )?;
+            }
+            Ok(())
+        })
+    })
 }

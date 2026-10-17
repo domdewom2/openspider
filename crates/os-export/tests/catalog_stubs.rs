@@ -183,7 +183,17 @@ fn there_is_one_generic_inlinks_export_per_registered_filter_of_the_listed_tabs(
         .filter(|t| bulk_generic::TABS.contains(&t.id))
         .map(|t| t.filters.len())
         .sum();
-    assert_eq!(bulk_generic::entries().len(), registered);
+    // Pagination's existing D05 entries share the generic registry without duplicate names.
+    let generic_count = bulk_tables()
+        .iter()
+        .filter(|entry| {
+            entry
+                .name
+                .rsplit_once(':')
+                .is_some_and(|(tab, _)| bulk_generic::TABS.contains(&tab))
+        })
+        .count();
+    assert_eq!(generic_count, registered);
     let names: BTreeSet<&str> = bulk_generic::entries().iter().map(|e| e.name).collect();
     assert!(names.contains("Page Titles:Missing Inlinks"));
     assert!(names.contains("Page Titles:Over X Characters Inlinks"));
