@@ -1,4 +1,5 @@
-//! Redirect-Reports „All Redirects“ (OUT-081) und „Redirect Chains“ (OUT-082).
+//! Redirect-Reports „All Redirects“ (OUT-081), „Redirect Chains“ (OUT-082) und
+//! „Redirects to Errors“ (OUT-084), auch im Listenmodus (OUT-085).
 //!
 //! Eine Zeile je Start-URL einer Weiterleitung mit allen Sprüngen bis zum Endziel. Die Kette ermittelt
 //! `os_store::queries::redirect_chain`; die Flags `redirect_loop` und `redirect_limit_reached` stehen live in
@@ -544,7 +545,34 @@ fn error_target(file: &CrawlFile, chain: &Chain) -> Result<bool, ExportError> {
     let Some(id) = chain.nodes.last().and_then(|n| n.id) else {
         return Ok(false);
     };
-    db(file.conn().query_row("SELECT in_tables = 1 AND status_code IS NOT NULL AND (robots_blocked = 1 OR (status_code = 0 AND robots_blocked = 0) OR status_code BETWEEN 400 AND 599) FROM urls WHERE id = ?1", [id], |r| r.get(0)))
+    // Die Fachfilter bleiben die einzige Quelle der Fehlerzuordnung (OUT-084).
+    // Insbesondere ist ein nicht abgerufenes Ziel kein Fehler und eine reine Schleife kein Fehlerziel.
+    static SQL: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    let sql = SQL.get_or_init(|| {
+        let tab = os_analyze::tabs::response_codes::tab();
+        let predicates = [
+            "Blocked by Robots.txt",
+            "No Response",
+            "Client Error (4XX)",
+            "Server Error (5XX)",
+        ]
+        .iter()
+        .map(|id| {
+            let filter = tab
+                .filters
+                .iter()
+                .find(|f| f.id == *id)
+                .expect("Response Codes error filter");
+            format!("({})", filter.predicate)
+        })
+        .collect::<Vec<_>>()
+        .join(" OR ");
+        format!(
+            "SELECT COALESCE(({}) AND ({predicates}), 0) FROM urls u WHERE u.id = ?1",
+            tab.population
+        )
+    });
+    db(file.conn().query_row(sql, [id], |r| r.get(0)))
 }
 
 fn write_rows(
