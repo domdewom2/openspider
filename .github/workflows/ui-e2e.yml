@@ -1,7 +1,7 @@
 name: ui-e2e
 
 # E2E-A „Frontend + Kern“ (docs/plan/M2.md 3.8, M2-ui-concept 7.3): Playwright gegen das Vite-Frontend, IPC über die
-# E2E-Bridge `os-app-bridge` (Feature `e2e-bridge`). WebKit (≈ WKWebView) auf macOS-14, Chromium (≈ WebView2) auf
+# E2E-Bridge `os-app-bridge` (Feature `e2e-bridge`). WebKit (≈ WKWebView) auf macOS (macos-15, siehe Matrix), Chromium (≈ WebView2) auf
 # windows-latest, beide Engines auf ubuntu-latest (Cloud-Variante, Linux).
 #
 # OS_E2E_TRANSPORT: `bridge` verlangt die echte Bridge, `mock` läuft ohne Kern, `auto` nimmt die Bridge, wenn sie startet.
@@ -44,8 +44,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # macos-15 statt macos-14: der für macOS 14 eingefrorene Playwright-WebKit-Build meldet
+          # „Page.overrideSetting: Unknown setting: PushAPIEnabled“ und startet keine Seite (Lauf 39024277294).
           - name: macos-webkit
-            os: macos-14
+            os: macos-15
             projects: webkit
             browsers: webkit
           - name: windows-chromium
