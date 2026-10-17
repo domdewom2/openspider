@@ -825,18 +825,6 @@ function = "parse"
 signature = "pub fn parse(_text: &str) -> Result<RuleNode, ParseError>"
 
 [[stub]]
-owner = "M2-K03"
-file = "crates/os-analyze/src/aggregates/live.rs"
-function = "apply_changes"
-signature = "pub fn apply_changes( _: &os_store::CrawlFile, _: &os_model::CrawlConfig, _: &[os_model::UrlId], ) -> Result<(), crate::AnalyzeError>"
-
-[[stub]]
-owner = "M2-K03"
-file = "crates/os-analyze/src/aggregates/status.rs"
-function = "analysis_status"
-signature = "pub fn analysis_status(_: &os_store::CrawlFile, _: &os_model::CrawlConfig) -> AnalysisStatusData"
-
-[[stub]]
 owner = "M2-K05"
 file = "crates/os-loadtest/src/bin/gen-ui-large.rs"
 function = "main"
