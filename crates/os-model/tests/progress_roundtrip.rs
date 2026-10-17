@@ -4,6 +4,8 @@ use os_model::{CrawlState, EndReason, MemoryStage, Progress, Timestamp};
 
 fn sample() -> Progress {
     Progress {
+        memory_used_bytes: None,
+        memory_limit_bytes: None,
         state: CrawlState::Completed,
         end_reason: Some(EndReason::QueueEmpty),
         crawled: 120,

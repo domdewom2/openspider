@@ -17,6 +17,7 @@ mod schema;
 mod set;
 mod v2;
 mod validate;
+mod w1;
 
 pub use io::{ConfigLoadError, LoadedConfig, DEFAULT_PROFILE_FILE};
 pub use migrate::{migrate_toml, MigrationReport};
@@ -24,6 +25,7 @@ pub use schema::{json_schema, json_schema_string};
 pub use set::{settable_keys, suggest_key, PresetGroup, SetError, SHORT_KEYS};
 pub use v2::*;
 pub use validate::{ConfigIssue, ConfigIssueKind, ValidationReport};
+pub use w1::*;
 
 use crate::enums::{
     CookieMode, CrawlMode, HreflangOverLimit, LineEnding, RenderingMode, RobotsMode,
@@ -42,6 +44,15 @@ pub const CONFIG_SCHEMA_VERSION: u32 = 2;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct CrawlConfig {
+    /// Welle-1-Konfiguration (serp).
+    pub serp: SerpConfig,
+    /// Welle-1-Konfiguration (ui).
+    pub ui: CrawlUiConfig,
+    /// Welle-1-Konfiguration (images).
+    pub images: ImagesConfig,
+    /// Welle-1-Konfiguration (security).
+    pub security: SecurityConfig,
+
     /// Version des Dateiformats (OUT-221).
     pub schema_version: u32,
     /// Erzeuger, z. B. `openspider 0.1.0`.
@@ -133,6 +144,11 @@ pub struct CrawlConfig {
 impl Default for CrawlConfig {
     fn default() -> Self {
         CrawlConfig {
+            serp: SerpConfig::default(),
+            ui: CrawlUiConfig::default(),
+            images: ImagesConfig::default(),
+            security: SecurityConfig::default(),
+
             schema_version: CONFIG_SCHEMA_VERSION,
             generator: format!("openspider {}", env!("CARGO_PKG_VERSION")),
             mode: CrawlMode::Spider,
@@ -211,7 +227,7 @@ impl CrawlConfig {
 }
 
 /// Bereich des Crawls und Include/Exclude (CRAWL-007/009/109/110).
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct ScopeConfig {
     /// Alle Subdomains der Start-Domain crawlen.
@@ -266,6 +282,9 @@ impl Default for StoreCrawl {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct SpiderConfig {
+    /// Welle-1-Konfiguration (store_uncrawlable_links).
+    pub store_uncrawlable_links: bool,
+
     /// Bilder.
     pub images: StoreCrawl,
     /// CSS.
@@ -301,6 +320,8 @@ pub struct SpiderConfig {
 impl Default for SpiderConfig {
     fn default() -> Self {
         SpiderConfig {
+            store_uncrawlable_links: false,
+
             images: StoreCrawl::ON,
             css: StoreCrawl::ON,
             javascript: StoreCrawl::ON,
@@ -364,6 +385,11 @@ impl Default for LimitsConfig {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct SpeedConfig {
+    /// Welle-1-Konfiguration (adaptive_throttle).
+    pub adaptive_throttle: bool,
+    /// Welle-1-Konfiguration (auto).
+    pub auto: bool,
+
     /// Parallele Threads.
     pub threads: u32,
     /// Höchstzahl paralleler Abrufe je Host.
@@ -375,6 +401,9 @@ pub struct SpeedConfig {
 impl Default for SpeedConfig {
     fn default() -> Self {
         SpeedConfig {
+            adaptive_throttle: true,
+            auto: false,
+
             threads: 5,
             max_per_host: None,
             max_urls_per_sec: None,
@@ -408,6 +437,15 @@ impl Default for UserAgentConfig {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct RobotsConfig {
+    /// Welle-1-Konfiguration (show_blocked_internal).
+    pub show_blocked_internal: bool,
+    /// Welle-1-Konfiguration (show_blocked_external).
+    pub show_blocked_external: bool,
+    /// Welle-1-Konfiguration (custom_files).
+    pub custom_files: std::collections::BTreeMap<String, String>,
+    /// Welle-1-Konfiguration (respect_crawl_delay).
+    pub respect_crawl_delay: bool,
+
     /// Umgang mit robots.txt (Listenmodus: die Engine wendet `ignore` an).
     pub mode: RobotsMode,
     /// Verhalten bei nicht erreichbarer robots.txt.
@@ -421,6 +459,11 @@ pub struct RobotsConfig {
 impl Default for RobotsConfig {
     fn default() -> Self {
         RobotsConfig {
+            show_blocked_internal: true,
+            show_blocked_external: false,
+            custom_files: Default::default(),
+            respect_crawl_delay: true,
+
             mode: RobotsMode::Respect,
             unreachable_policy: RobotsUnreachablePolicy::BlockHost,
             retries: 2,
@@ -433,6 +476,11 @@ impl Default for RobotsConfig {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct AdvancedConfig {
+    /// Welle-1-Konfiguration (always_follow_redirects).
+    pub always_follow_redirects: bool,
+    /// Welle-1-Konfiguration (always_follow_canonicals).
+    pub always_follow_canonicals: bool,
+
     /// Cookie-Verhalten.
     pub cookies: CookieMode,
     /// Antwort-Timeout in Sekunden.
@@ -458,6 +506,9 @@ pub struct AdvancedConfig {
 impl Default for AdvancedConfig {
     fn default() -> Self {
         AdvancedConfig {
+            always_follow_redirects: false,
+            always_follow_canonicals: false,
+
             cookies: CookieMode::SessionOnly,
             response_timeout_s: 20,
             assume_html: false,
@@ -511,7 +562,7 @@ pub struct RenderingConfig {
     /// Modus (`text` oder `javascript`, CRAWL-077).
     pub mode: RenderingMode,
     /// AJAX-Timeout in Sekunden, 0 – 60 (CRAWL-080, ab v2).
-    pub ajax_timeout_s: u32,
+    pub ajax_timeout_s: f64,
     /// JavaScript-Fehlerberichte und Konsolen-Log mitschneiden (CRAWL-084, `rendering.js_error_reporting`, ab v2).
     pub js_error_reporting: bool,
     /// Fenstergröße und Gerät (CRAWL-081, ab v2).
@@ -534,7 +585,7 @@ impl Default for RenderingConfig {
     fn default() -> Self {
         RenderingConfig {
             mode: RenderingMode::Text,
-            ajax_timeout_s: 5,
+            ajax_timeout_s: 5.0,
             js_error_reporting: true,
             viewport: ViewportConfig::default(),
             screenshots: ScreenshotConfig::default(),
@@ -610,7 +661,7 @@ impl Default for ExtractionConfig {
             hash: true,
             response_time: true,
             last_modified: true,
-            http_headers: true,
+            http_headers: false,
             store_html: false,
             store_rendered_html: false,
             indexability: true,
@@ -730,16 +781,52 @@ impl Default for TextLimits {
 }
 
 /// Schwelle für URLs (ONPAGE-081).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct UrlLimits {
+    /// Welle-1-Konfiguration (internal_search_segments).
+    pub internal_search_segments: Vec<String>,
+    /// Welle-1-Konfiguration (internal_search_params).
+    pub internal_search_params: Vec<String>,
+
     /// Höchstzahl Zeichen.
     pub max_chars: u32,
 }
 
 impl Default for UrlLimits {
     fn default() -> Self {
-        UrlLimits { max_chars: 115 }
+        UrlLimits {
+            internal_search_segments: [
+                "search",
+                "suche",
+                "recherche",
+                "buscar",
+                "busca",
+                "cerca",
+                "zoeken",
+                "szukaj",
+                "sok",
+                "haku",
+                "catalogsearch",
+            ]
+            .map(String::from)
+            .to_vec(),
+            internal_search_params: [
+                "s",
+                "q",
+                "query",
+                "search",
+                "search_query",
+                "searchterm",
+                "keyword",
+                "keywords",
+                "k",
+                "term",
+            ]
+            .map(String::from)
+            .to_vec(),
+            max_chars: 115,
+        }
     }
 }
 
@@ -1028,6 +1115,9 @@ impl Default for ValidationConfig {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct ExportConfig {
+    /// Welle-1-Konfiguration (inlinks_for_all_filters).
+    pub inlinks_for_all_filters: bool,
+
     /// UTF-8-BOM in CSV-Dateien.
     pub utf8_bom: bool,
     /// Zeilenende in CSV-Dateien.
@@ -1037,8 +1127,23 @@ pub struct ExportConfig {
 impl Default for ExportConfig {
     fn default() -> Self {
         ExportConfig {
+            inlinks_for_all_filters: true,
+
             utf8_bom: true,
             line_ending: LineEnding::Crlf,
+        }
+    }
+}
+
+impl Default for ScopeConfig {
+    fn default() -> Self {
+        Self {
+            all_subdomains: false,
+            subfolder_only: false,
+            crawl_outside_start_folder: true,
+            regex_partial_match: false,
+            include: Vec::new(),
+            exclude: Vec::new(),
         }
     }
 }

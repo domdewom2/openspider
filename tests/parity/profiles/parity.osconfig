@@ -25,6 +25,7 @@ store = true
 crawl = false
 
 [robots]
+respect_crawl_delay = false
 mode = "respect"
 unreachable_policy = "allow_all"   # bewusste OS-Festlegung (K-55): OpenSpider sperrt den Host (RFC 9309), das Profil stellt die Referenz nach, die trotzdem crawlt (CRAWL-100, Q30)
 

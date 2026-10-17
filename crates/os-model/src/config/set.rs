@@ -103,8 +103,14 @@ impl std::error::Error for SetError {}
 
 enum Kind {
     Bool,
-    Int { min: i64, max: Option<i64> },
-    Float { positive: bool },
+    Int {
+        min: i64,
+        max: Option<i64>,
+    },
+    Float {
+        positive: bool,
+        range: Option<super::validate::FloatRange>,
+    },
     Str,
     Enum(Vec<String>),
     StrList,
@@ -137,6 +143,10 @@ fn classify(path: &str, node: &Value) -> Resolved {
     } else if has_type(node, "number") {
         Kind::Float {
             positive: node.get("exclusiveMinimum").is_some(),
+            range: super::validate::FLOAT_RANGES
+                .iter()
+                .find(|r| r.path == path)
+                .copied(),
         }
     } else if has_type(node, "string") {
         Kind::Str
@@ -284,7 +294,7 @@ fn parse_value(leaf: &Leaf, raw: &str) -> Result<Value, String> {
                 .map(|n| Value::Number(n.into()))
                 .map_err(|_| expected())
         }
-        Kind::Float { positive } => {
+        Kind::Float { positive, range } => {
             let expected = || {
                 let what = if *positive {
                     "Dezimalzahl > 0"
@@ -294,7 +304,7 @@ fn parse_value(leaf: &Leaf, raw: &str) -> Result<Value, String> {
                 format!("{what}{or_none}")
             };
             let f = parse_float(raw).ok_or_else(expected)?;
-            if *positive && f <= 0.0 {
+            if (*positive && f <= 0.0) || range.is_some_and(|r| !r.accepts(f)) {
                 return Err(expected());
             }
             Number::from_f64(f).map(Value::Number).ok_or_else(expected)

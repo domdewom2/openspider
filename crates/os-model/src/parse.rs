@@ -24,6 +24,9 @@ pub struct ExtractedText {
 /// Ein Link aus dem Dokument.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExtractedLink {
+    pub crawlable: bool,
+    pub uncrawlable_reason: Option<crate::UncrawlableReason>,
+    pub pdf_page: Option<u32>,
     /// Linktyp.
     pub link_type: LinkType,
     /// Rohwert des Attributs.
@@ -53,8 +56,11 @@ pub struct ExtractedLink {
 }
 
 /// Eine Bildinstanz.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct ImageInstance {
+    pub link_position: Option<LinkPosition>,
+    pub origin: crate::LinkOrigin,
+    pub render: Option<ImageRenderFacts>,
     /// Rohwert der Bildquelle.
     pub src_raw: String,
     /// Aufgelöste absolute URL.
@@ -78,8 +84,9 @@ pub struct ImageInstance {
 }
 
 /// Eine Canonical-Angabe.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct CanonicalRef {
+    pub invalid_attribute: bool,
     /// Herkunft (HTML oder HTTP-Header).
     pub source: HintSource,
     /// Rohwert.
@@ -242,6 +249,8 @@ pub struct ParsedPage {
 /// Angaben aus HTTP-Headern (auch für Nicht-HTML).
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct HeaderHints {
+    pub hreflang_truncated: u32,
+    pub mobile_alternates: Vec<ExtractedLink>,
     /// Canonicals aus `Link`-Headern.
     pub canonicals: Vec<CanonicalRef>,
     /// `X-Robots-Tag`.
@@ -255,7 +264,7 @@ pub struct HeaderHints {
 }
 
 /// Eine ausgewertete Sitemap-Datei.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SitemapDoc {
     /// Art der Datei.
     pub kind: SitemapKind,
@@ -268,8 +277,12 @@ pub struct SitemapDoc {
 }
 
 /// Ein Eintrag einer Sitemap.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct SitemapLoc {
+    pub hreflang_truncated: u32,
+    pub changefreq: Option<String>,
+    pub priority: Option<f64>,
+    pub extensions: Vec<SitemapExtension>,
     /// `<loc>` roh.
     pub loc_raw: String,
     /// Aufgelöste URL.
@@ -287,4 +300,53 @@ pub struct PdfMeta {
     pub title: Option<String>,
     /// Schlüsselwörter.
     pub keywords: Option<String>,
+}
+
+/// Bildabmessungen aus Header und Rendering (ONPAGE-172).
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct ImageRenderFacts {
+    pub real_w: Option<u32>,
+    pub real_h: Option<u32>,
+    pub display_w: Option<u32>,
+    pub display_h: Option<u32>,
+    pub in_viewport: Option<bool>,
+    pub bytes: Option<u64>,
+}
+/// Verlustfrei gespeicherte Sitemap-Erweiterung (CRAWL-060).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SitemapExtension {
+    pub kind: crate::SitemapExtKind,
+    pub json: String,
+}
+/// PDF-Fakten und Verweise (ONPAGE-166).
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct PdfResult {
+    pub meta: PdfMeta,
+    pub links: Vec<ExtractedLink>,
+    pub word_count: Option<u32>,
+    pub text: Option<String>,
+    pub ext: Vec<(ExtKey, Value)>,
+    pub error: Option<String>,
+}
+impl Default for ExtractedLink {
+    fn default() -> Self {
+        Self {
+            link_type: Default::default(),
+            href_raw: String::new(),
+            resolved: None,
+            anchor: None,
+            alt_text: None,
+            rel: None,
+            nofollow_rel: false,
+            target: None,
+            path_type: Default::default(),
+            xpath: String::new(),
+            position: Default::default(),
+            in_head: false,
+            doc_order: 0,
+            crawlable: true,
+            uncrawlable_reason: None,
+            pdf_page: None,
+        }
+    }
 }

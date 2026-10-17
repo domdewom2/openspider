@@ -3,15 +3,48 @@ generator = "openspider 0.1.0"
 mode = "spider"
 cdns = []
 
+[serp.desktop]
+title_font_px = 20.0
+description_font_px = 14.0
+
+[serp.mobile]
+title_max_px = 561
+description_max_px = 680
+title_font_px = 20.0
+description_font_px = 14.0
+
+[serp.tablet]
+title_max_px = 561
+description_max_px = 680
+title_font_px = 20.0
+description_font_px = 14.0
+
+[ui]
+parity_filters = true
+
+[ui.columns]
+
+[images]
+real_dimensions_from_header = false
+parse_inline_css_backgrounds = false
+incorrect_size_min_saving_kb = 4
+
+[security]
+obsolete_mime_types = [
+    "text/javascript",
+    "application/x-javascript",
+]
+
 [scope]
 all_subdomains = false
 subfolder_only = false
-crawl_outside_start_folder = false
+crawl_outside_start_folder = true
 regex_partial_match = false
 include = []
 exclude = []
 
 [spider]
+store_uncrawlable_links = false
 follow_internal_nofollow = false
 follow_external_nofollow = false
 
@@ -75,18 +108,27 @@ max_url_length = 10000
 max_links_per_url = 10000
 
 [speed]
+adaptive_throttle = true
+auto = false
 threads = 5
 
 [user_agent]
 preset = "openspider"
 
 [robots]
+show_blocked_internal = true
+show_blocked_external = false
+respect_crawl_delay = true
 mode = "respect"
 unreachable_policy = "block_host"
 retries = 2
 retry_delay_s = 5
 
+[robots.custom_files]
+
 [advanced]
+always_follow_redirects = false
+always_follow_canonicals = false
 cookies = "session_only"
 response_timeout_s = 20
 assume_html = false
@@ -108,7 +150,7 @@ resolve = []
 
 [rendering]
 mode = "text"
-ajax_timeout_s = 5
+ajax_timeout_s = 5.0
 js_error_reporting = true
 restart_after_pages = 500
 restart_memory_mb = 1500
@@ -138,7 +180,7 @@ h2 = true
 hash = true
 response_time = true
 last_modified = true
-http_headers = true
+http_headers = false
 store_html = false
 store_rendered_html = false
 indexability = true
@@ -157,8 +199,8 @@ srcset = false
 json_ld = false
 microdata = false
 rdfa = false
-schema_org_validation = false
-rich_results_validation = false
+schema_org_validation = true
+rich_results_validation = true
 case_sensitive = false
 
 [content]
@@ -208,6 +250,31 @@ max_px = 985
 min_px = 400
 
 [url]
+internal_search_segments = [
+    "search",
+    "suche",
+    "recherche",
+    "buscar",
+    "busca",
+    "cerca",
+    "zoeken",
+    "szukaj",
+    "sok",
+    "haku",
+    "catalogsearch",
+]
+internal_search_params = [
+    "s",
+    "q",
+    "query",
+    "search",
+    "search_query",
+    "searchterm",
+    "keyword",
+    "keywords",
+    "k",
+    "term",
+]
 max_chars = 115
 
 [h1]
@@ -298,6 +365,7 @@ html_doc_max_bytes = 2097152
 resource_max_bytes = 2097152
 
 [export]
+inlinks_for_all_filters = true
 utf8_bom = true
 line_ending = "crlf"
 
@@ -319,6 +387,7 @@ enabled = false
 disabled_rules = []
 
 [custom_search]
+regex_timeout_ms = 2000
 filters = []
 
 [custom_extraction]
@@ -351,7 +420,7 @@ contains = ["footer"]
 
 [[link_positions.rules]]
 position = "Content"
-contains = [""]
+contains = []
 
 [rewrite]
 remove_parameters = []
@@ -371,6 +440,15 @@ ignore_certificate_errors = false
 enabled = false
 metrics = []
 
+[api.ga4.limits]
+retries = 5
+concurrency = 5
+window_s = 60
+
+[api.ga4.url_match]
+ignore_trailing_slash = true
+ignore_case = true
+
 [api.ga4.date_range]
 preset = "last_30_days"
 
@@ -378,6 +456,15 @@ preset = "last_30_days"
 enabled = false
 search_type = "web"
 url_inspection = false
+
+[api.gsc.limits]
+retries = 5
+concurrency = 5
+window_s = 60
+
+[api.gsc.url_match]
+ignore_trailing_slash = true
+ignore_case = true
 
 [api.gsc.date_range]
 preset = "last_30_days"
@@ -388,23 +475,48 @@ device = "mobile"
 local = false
 metric_groups = []
 
+[api.psi.limits]
+retries = 5
+concurrency = 5
+window_s = 60
+
 [api.majestic]
 enabled = false
 levels = []
 metrics = []
+
+[api.majestic.limits]
+retries = 5
+concurrency = 5
+window_s = 60
 
 [api.ahrefs]
 enabled = false
 levels = []
 metrics = []
 
+[api.ahrefs.limits]
+retries = 5
+concurrency = 5
+window_s = 60
+
 [api.moz]
 enabled = false
 levels = []
 metrics = []
 
+[api.moz.limits]
+retries = 5
+concurrency = 5
+window_s = 60
+
 [api.drive]
 enabled = false
+
+[api.drive.limits]
+retries = 5
+concurrency = 5
+window_s = 60
 
 [segments]
 list = []
