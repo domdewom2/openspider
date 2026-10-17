@@ -19,14 +19,14 @@ rules: Array<RuleDef>,
  */
 input: string, 
 /**
- * Vertragserweiterung M2-F05b: remove_parameters.
+ * Namen der aus URLs zu entfernenden Parameter.
  */
 removeParameters?: Array<string> | null, 
 /**
- * Vertragserweiterung M2-F05b: remove_all_parameters.
+ * Alle URL-Parameter entfernen.
  */
 removeAllParameters?: boolean | null, 
 /**
- * Vertragserweiterung M2-F05b: regex_partial_match.
+ * Reguläre Ausdrücke auch auf Teiltreffer anwenden.
  */
 regexPartialMatch?: boolean | null, };

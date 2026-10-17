@@ -5,10 +5,10 @@
  */
 export type CertificateChainDto = { 
 /**
- * Vertragserweiterung M2-F05b: certificates.
+ * Zertifikate der vom Server gelieferten Kette.
  */
 certificates: Array<string>, 
 /**
- * Vertragserweiterung M2-F05b: trusted.
+ * Ob die Zertifikatskette vertrauenswürdig ist.
  */
 trusted: boolean, };

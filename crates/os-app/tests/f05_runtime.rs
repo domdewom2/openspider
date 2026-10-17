@@ -273,3 +273,153 @@ fn tick_policy_can_defer_without_losing_pending_notices() {
         .iter()
         .any(|n| n.code == "fixture"));
 }
+
+// spec: UI-001
+#[tokio::test]
+async fn quit_hook_can_request_confirmation_and_host_can_exit() {
+    use os_app::{
+        dto::{CmdError, QuitDecision, QuitReason},
+        runtime::hooks::{QuitHook, WindowHost},
+    };
+    struct Confirm;
+    impl QuitHook for Confirm {
+        fn request_quit(&self, _: App) -> BoxFuture<'static, QuitDecision> {
+            Box::pin(async {
+                QuitDecision::Confirm {
+                    reasons: vec![QuitReason::Crawl],
+                }
+            })
+        }
+    }
+    #[derive(Default)]
+    struct Host(std::sync::atomic::AtomicBool);
+    impl WindowHost for Host {
+        fn open_viz(&self, _: &str) -> Result<(), CmdError> {
+            Ok(())
+        }
+        fn focus_main(&self) {}
+        fn exit(&self) {
+            self.0.store(true, std::sync::atomic::Ordering::SeqCst);
+        }
+    }
+    let dir = tempfile::tempdir().unwrap();
+    let app = common::new_app(dir.path());
+    let host = Arc::new(Host::default());
+    app.set_window_host(host.clone());
+    app.set_quit_hook(Arc::new(Confirm));
+    let fixture: QuitDecision = serde_json::from_str(include_str!(
+        "../../../apps/desktop/src/ipc/__fixtures__/QuitDecision.confirm.json"
+    ))
+    .unwrap();
+    assert!(matches!(fixture, QuitDecision::Confirm { .. }));
+    assert_eq!(
+        app.request_quit().await,
+        QuitDecision::Confirm {
+            reasons: vec![QuitReason::Crawl]
+        }
+    );
+    assert!(!host.0.load(std::sync::atomic::Ordering::SeqCst));
+    app.window_host().unwrap().exit();
+    assert!(host.0.load(std::sync::atomic::Ordering::SeqCst));
+}
+
+// spec: UI-143
+#[tokio::test]
+async fn deferred_window_receives_merged_notices_and_latest_operations() {
+    use os_app::{
+        dto::{Notice, NoticeLevel, UiEvent},
+        events::{EventSink, SinkClosed},
+        runtime::hooks::TickPolicy,
+    };
+    struct Policy(Arc<Mutex<Vec<WindowId>>>);
+    impl TickPolicy for Policy {
+        fn due_windows(&self, _: &App) -> Vec<WindowId> {
+            self.0.lock().unwrap().clone()
+        }
+    }
+    #[derive(Default)]
+    struct Sink(Mutex<Vec<os_app::dto::Tick>>);
+    impl EventSink for Sink {
+        fn send(&self, event: UiEvent) -> Result<(), SinkClosed> {
+            if let UiEvent::Tick { tick } = event {
+                self.0.lock().unwrap().push(*tick);
+            }
+            Ok(())
+        }
+    }
+    let dir = tempfile::tempdir().unwrap();
+    let app = common::new_app(dir.path());
+    let first = WindowId("main".into());
+    let second = WindowId("hidden".into());
+    let a = Arc::new(Sink::default());
+    let b = Arc::new(Sink::default());
+    app.subscribe(first.clone(), a.clone());
+    app.subscribe(second.clone(), b.clone());
+    let due = Arc::new(Mutex::new(vec![first.clone()]));
+    app.set_tick_policy(Arc::new(Policy(due.clone())));
+    let fixture: os_app::dto::Tick = serde_json::from_str(include_str!(
+        "../../../apps/desktop/src/ipc/__fixtures__/Tick.json"
+    ))
+    .unwrap();
+    for notice in fixture.notices.clone() {
+        app.push_notice(notice);
+    }
+    let (release_tx, release_rx) = tokio::sync::oneshot::channel();
+    let operation = app.ops().spawn("fixture-operation", false, |_, _| {
+        Box::pin(async move {
+            release_rx.await.unwrap();
+            Ok(serde_json::json!({"fixture": true}))
+        })
+    });
+    for code in ["first", "second"] {
+        app.push_notice(Notice {
+            code: code.into(),
+            level: NoticeLevel::Info,
+            args: Default::default(),
+        });
+        assert_eq!(app.flush_tick(), 1);
+    }
+    release_tx.send(()).unwrap();
+    while app
+        .ops()
+        .status(&operation.op_id)
+        .is_some_and(|s| s.state == os_app::dto::OpState::Running)
+    {
+        tokio::task::yield_now().await;
+    }
+    assert_eq!(app.flush_tick(), 1);
+    assert!(b.0.lock().unwrap().is_empty());
+    *due.lock().unwrap() = vec![first, second];
+    assert_eq!(app.flush_tick(), 1);
+    let received = b.0.lock().unwrap();
+    assert_eq!(received.len(), 1);
+    assert_eq!(
+        received[0]
+            .notices
+            .iter()
+            .map(|n| n.code.as_str())
+            .filter(|c| ["first", "second"].contains(c))
+            .collect::<Vec<_>>(),
+        vec!["first", "second"]
+    );
+    assert!(received[0].seq > 0);
+    assert_eq!(
+        received[0]
+            .ops
+            .iter()
+            .filter(|o| o.op_id == operation.op_id)
+            .count(),
+        1
+    );
+    assert_eq!(
+        received[0]
+            .ops
+            .iter()
+            .find(|o| o.op_id == operation.op_id)
+            .unwrap()
+            .state,
+        os_app::dto::OpState::Done
+    );
+    drop(received);
+    assert_eq!(app.flush_tick(), 0);
+}

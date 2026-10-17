@@ -37,6 +37,7 @@ fn check(file: &str, text: &str) -> bool {
         };
     }
     types!(
+        QuitDecision,
         CmdError,
         ViewSpec,
         SearchSpec,
@@ -149,4 +150,13 @@ fn cmd_error_builders_fill_the_documented_fields() {
     assert_eq!(e.field.as_deref(), Some("scope.include[0]"));
     assert!(e.retryable && e.detail.is_some());
     assert!(e.to_string().contains("InvalidInput"));
+}
+
+// spec: OUT-183
+#[test]
+fn omitted_upload_order_defaults_to_true() {
+    let args: ExportViewArgs = serde_json::from_value(serde_json::json!({
+        "viewId": "fixture", "version": 1, "path": "fixture.csv", "format": "csv", "allColumns": false
+    })).unwrap();
+    assert!(args.preserve_upload_order);
 }

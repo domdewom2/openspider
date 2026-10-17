@@ -6,10 +6,10 @@ import type { ApiKind } from "./ApiKind";
  */
 export type ApiAccountArgs = { 
 /**
- * Vertragserweiterung M2-F05b: kind.
+ * Art des Eintrags.
  */
 kind: ApiKind, 
 /**
- * Vertragserweiterung M2-F05b: account_id.
+ * Kennung des API-Kontos.
  */
 accountId: string, };

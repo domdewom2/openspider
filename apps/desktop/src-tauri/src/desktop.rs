@@ -8,7 +8,7 @@ use std::{path::PathBuf, sync::Arc};
 use tauri::{AppHandle, Runtime, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
-struct Host<R: Runtime>(AppHandle<R>);
+struct Host<R: Runtime>(AppHandle<R>, crate::window::Quitting, std::thread::ThreadId);
 fn failure(e: impl std::fmt::Display) -> CmdError {
     CmdError::new(ErrorCode::Io, "err-desktop-action").with_detail(e.to_string())
 }
@@ -35,6 +35,10 @@ impl<R: Runtime> WindowHost for Host<R> {
         .map_err(failure)?;
         window.set_focus().map_err(failure)
     }
+    fn exit(&self) {
+        self.1.set();
+        self.0.exit(0);
+    }
     fn focus_main(&self) {
         crate::window::focus_main(&self.0);
     }
@@ -44,6 +48,10 @@ impl<R: Runtime> DesktopActions for Host<R> {
         self.0.clipboard().write_text(text).map_err(failure)
     }
     fn reveal_paths(&self, paths: &[PathBuf]) -> Result<(), CmdError> {
+        // Tauri setup records the main thread; never wait for ourselves.
+        if std::thread::current().id() == self.2 {
+            return reveal(paths);
+        }
         let paths = paths.to_vec();
         let (tx, rx) = std::sync::mpsc::sync_channel(1);
         self.0
@@ -55,8 +63,8 @@ impl<R: Runtime> DesktopActions for Host<R> {
     }
 }
 /// Registriert die Hooks erst, sobald Tauri seine Plugins und Fenster angelegt hat.
-pub fn install<R: Runtime>(app: &App, handle: &AppHandle<R>) {
-    let host = Arc::new(Host(handle.clone()));
+pub fn install<R: Runtime>(app: &App, handle: &AppHandle<R>, quitting: crate::window::Quitting) {
+    let host = Arc::new(Host(handle.clone(), quitting, std::thread::current().id()));
     app.set_window_host(host.clone());
     app.set_desktop_actions(host);
 }
@@ -153,7 +161,23 @@ fn reveal(paths: &[PathBuf]) -> Result<(), CmdError> {
     #[link(name = "ole32")]
     unsafe extern "system" {
         fn CoTaskMemFree(p: *mut c_void);
+        fn CoInitializeEx(reserved: *mut c_void, flags: u32) -> i32;
+        fn CoUninitialize();
     }
+    // Balance successful COM initialization, including early error returns.
+    struct Apartment;
+    impl Drop for Apartment {
+        fn drop(&mut self) {
+            // SAFETY: this guard exists only after successful initialization on this thread.
+            unsafe { CoUninitialize() };
+        }
+    }
+    // SAFETY: null reserved pointer and COINIT_APARTMENTTHREADED (2).
+    let initialized = unsafe { CoInitializeEx(ptr::null_mut(), 2) };
+    if initialized < 0 {
+        return Err(failure(format!("CoInitializeEx: {initialized:#x}")));
+    }
+    let _apartment = Apartment;
     for path in paths {
         let mut wide: Vec<u16> = path.as_os_str().encode_wide().collect();
         if wide.contains(&0) {
@@ -188,4 +212,27 @@ fn reveal(_paths: &[PathBuf]) -> Result<(), CmdError> {
         ErrorCode::Unsupported,
         "err-desktop-platform",
     ))
+}
+
+#[cfg(all(test, target_os = "windows"))]
+mod windows_tests {
+    use super::*;
+
+    // spec: UI-001
+    #[test]
+    fn reveal_rejects_nul_path_after_com_initialization() {
+        let error = reveal(&[PathBuf::from("invalid\0path")]).unwrap_err();
+        assert_eq!(error.code, ErrorCode::Io);
+    }
+}
+
+#[cfg(all(test, not(any(target_os = "macos", target_os = "windows"))))]
+mod linux_tests {
+    use super::*;
+
+    // spec: UI-001
+    #[test]
+    fn reveal_is_explicitly_unsupported() {
+        assert_eq!(reveal(&[]).unwrap_err().code, ErrorCode::Unsupported);
+    }
 }

@@ -20,9 +20,9 @@ pub enum CrawlShow {
     Incomplete,
     /// Nur gesperrte.
     Locked,
-    /// Vertragserweiterung M2-F05b.
+    /// Crawl-Dateien anzeigen.
     Crawls,
-    /// Vertragserweiterung M2-F05b.
+    /// Vergleichsdateien anzeigen.
     Comparisons,
 }
 
@@ -62,17 +62,17 @@ pub struct CrawlListing {
     pub project: Option<String>,
     /// Gesperrt (von der Aufbewahrung ausgenommen).
     pub locked: bool,
-    /// Vertragserweiterung M2-F05b: start_url.
+    /// Start-URL des Crawls.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub start_url: Option<String>,
 
-    /// Vertragserweiterung M2-F05b: duration_ms.
+    /// Bisherige Laufzeit in Millisekunden.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub duration_ms: Option<u64>,
 
-    /// Vertragserweiterung M2-F05b: can_resume.
+    /// Ob der Crawl fortgesetzt werden kann.
     pub can_resume: bool,
 }
 
@@ -95,7 +95,7 @@ pub struct CrawlMoveArgs {
     pub ids: Vec<String>,
     /// Zielprojekt; `null` = ohne Projekt.
     pub project: Option<String>,
-    /// Vertragserweiterung M2-F05b: destination_dir.
+    /// Zielverzeichnis für die Crawl-Datei.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub destination_dir: Option<String>,

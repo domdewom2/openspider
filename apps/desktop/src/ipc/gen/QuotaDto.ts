@@ -17,6 +17,6 @@ limit?: number | null,
  */
 resetsAt?: string | null, 
 /**
- * Vertragserweiterung M2-F05b: dimension.
+ * Dimension für die API-Datenabfrage.
  */
 dimension?: string | null, };

@@ -468,3 +468,20 @@ async fn every_f05_command_reports_its_exact_owner() {
         }
     }
 }
+
+// spec: UI-140
+#[test]
+fn service_extensions_follow_their_command_domains() {
+    let manifest = default_registry().manifest();
+    let pos = |name| manifest.iter().position(|m| m.name == name).unwrap();
+    assert!(pos("settings.get") < pos("config.testRobots"));
+    assert!(pos("export.catalog") < pos("export.multi"));
+    assert_eq!(
+        manifest
+            .iter()
+            .find(|m| m.name == "app.requestQuit")
+            .unwrap()
+            .ret,
+        "QuitDecision"
+    );
+}

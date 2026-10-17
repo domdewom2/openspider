@@ -235,6 +235,7 @@ struct Inner {
     uistate: UiStateStore,
     windows: Windows,
     assembler: Mutex<TickAssembler>,
+    pending_ticks: Mutex<HashMap<WindowId, Tick>>,
     tick_sources: Mutex<Vec<Arc<dyn TickSource>>>,
     notices: Mutex<Vec<Notice>>,
     live_interval_ms: AtomicU32,
@@ -303,6 +304,7 @@ impl App {
             settings,
             windows: Windows::default(),
             assembler: Mutex::new(TickAssembler::new()),
+            pending_ticks: Mutex::new(HashMap::new()),
             tick_sources: Mutex::new(Vec::new()),
             notices: Mutex::new(notices),
             live_interval_ms: AtomicU32::new(interval),
@@ -472,6 +474,11 @@ impl App {
         for listener in listeners {
             listener(self, window);
         }
+        self.0
+            .pending_ticks
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .remove(window);
         self.0.sessions.clear(window);
         self.0.windows.forget(window);
     }
@@ -571,20 +578,65 @@ impl App {
         if due.is_empty() {
             return 0;
         }
-        match self.assemble_tick() {
-            Some(tick) => due
-                .iter()
-                .filter(|w| {
-                    self.send_event(
-                        w,
-                        UiEvent::Tick {
-                            tick: Box::new(tick.clone()),
-                        },
-                    )
-                })
-                .count(),
-            None => 0,
+        let windows = self.subscribed_windows();
+        if windows.is_empty() {
+            return 0;
         }
+        let mut pending = self
+            .0
+            .pending_ticks
+            .lock()
+            .unwrap_or_else(|p| p.into_inner());
+        pending.retain(|w, _| windows.contains(w));
+        if let Some(tick) = self.assemble_tick() {
+            for window in windows {
+                if let Some(old) = pending.get_mut(&window) {
+                    let mut merged = tick.clone();
+                    if merged.crawl.is_none() {
+                        merged.crawl = old.crawl.clone();
+                    }
+                    if merged.analysis.is_none() {
+                        merged.analysis = old.analysis.clone();
+                    }
+                    if merged.mcp.is_none() {
+                        merged.mcp = old.mcp.clone();
+                    }
+                    for view in &old.views {
+                        if !merged.views.iter().any(|v| v.view_id == view.view_id) {
+                            merged.views.push(view.clone());
+                        }
+                    }
+                    for op in &old.ops {
+                        if !merged.ops.iter().any(|o| o.op_id == op.op_id) {
+                            merged.ops.push(op.clone());
+                        }
+                    }
+                    let mut notices = std::mem::take(&mut old.notices);
+                    notices.extend(merged.notices);
+                    merged.notices = notices;
+                    *old = merged;
+                } else {
+                    pending.insert(window, tick.clone());
+                }
+            }
+        }
+        // Release the buffer lock before invoking external sinks.
+        let ready: Vec<_> = due
+            .iter()
+            .filter_map(|w| pending.remove(w).map(|t| (w.clone(), t)))
+            .collect();
+        drop(pending);
+        ready
+            .into_iter()
+            .filter(|(w, tick)| {
+                self.send_event(
+                    w,
+                    UiEvent::Tick {
+                        tick: Box::new(tick.clone()),
+                    },
+                )
+            })
+            .count()
     }
 
     /// Wendet einen Merge-Patch auf die Einstellungen an (`settings.set`), meldet `settingsChanged` an alle Fenster

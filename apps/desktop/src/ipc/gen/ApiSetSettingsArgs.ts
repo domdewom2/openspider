@@ -16,6 +16,6 @@ kind: ApiKind,
  */
 settings: ApiSourceSettings, 
 /**
- * Vertragserweiterung M2-F05b: decision.
+ * Entscheidung über den nächsten API-Abruf.
  */
 decision?: ApiSettingsDecision | null, };

@@ -5,10 +5,10 @@
  */
 export type LoggingSettingsDto = { 
 /**
- * Vertragserweiterung M2-F05b: level.
+ * Schweregrad der zu protokollierenden Meldungen.
  */
 level: string, 
 /**
- * Vertragserweiterung M2-F05b: retention_days.
+ * Aufbewahrungsdauer der Protokolle in Tagen.
  */
 retentionDays: number, };

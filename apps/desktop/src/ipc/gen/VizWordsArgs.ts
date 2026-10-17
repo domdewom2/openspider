@@ -18,26 +18,26 @@ kind: WordSource,
  */
 urlId: number, 
 /**
- * Vertragserweiterung M2-F05b: mode.
+ * Ausgewählter Auswertungsmodus.
  */
 mode?: string | null, 
 /**
- * Vertragserweiterung M2-F05b: remove_stopwords.
+ * Stoppwörter aus der Wortauswertung entfernen.
  */
 removeStopwords?: boolean | null, 
 /**
- * Vertragserweiterung M2-F05b: language.
+ * Sprache für die Wortauswertung.
  */
 language?: string | null, 
 /**
- * Vertragserweiterung M2-F05b: max_terms.
+ * Maximale Anzahl ausgegebener Begriffe.
  */
 maxTerms?: number | null, 
 /**
- * Vertragserweiterung M2-F05b: include_nofollow.
+ * Auch Links mit nofollow einbeziehen.
  */
 includeNofollow?: boolean | null, 
 /**
- * Vertragserweiterung M2-F05b: exclude_self_links.
+ * Links auf dieselbe URL ausschließen.
  */
 excludeSelfLinks?: boolean | null, };

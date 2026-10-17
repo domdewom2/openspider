@@ -5,6 +5,6 @@
  */
 export type RobotsLoadArgs = { 
 /**
- * Vertragserweiterung M2-F05b: host.
+ * Host für die Netzwerkprüfung.
  */
 host: string, };

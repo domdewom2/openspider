@@ -13,6 +13,6 @@ ids: Array<string>,
  */
 project?: string | null, 
 /**
- * Vertragserweiterung M2-F05b: destination_dir.
+ * Zielverzeichnis für die Crawl-Datei.
  */
 destinationDir?: string | null, };

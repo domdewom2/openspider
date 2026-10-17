@@ -5,14 +5,14 @@
  */
 export type RobotsTestArgs = { 
 /**
- * Vertragserweiterung M2-F05b: url.
+ * Zu prüfende URL.
  */
 url: string, 
 /**
- * Vertragserweiterung M2-F05b: content.
+ * Inhalt der zu prüfenden robots.txt.
  */
 content?: string | null, 
 /**
- * Vertragserweiterung M2-F05b: subdomain.
+ * Für die Prüfung verwendete Subdomain.
  */
 subdomain?: string | null, };

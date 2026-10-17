@@ -5,6 +5,6 @@
  */
 export type CertificateProbeArgs = { 
 /**
- * Vertragserweiterung M2-F05b: url.
+ * Zu prüfende URL.
  */
 url: string, };

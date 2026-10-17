@@ -50,6 +50,6 @@ mcp: McpSettingsDto,
  */
 restartRequired: Array<string>, 
 /**
- * Vertragserweiterung M2-F05b: logging.
+ * Einstellungen für die Protokollierung.
  */
 logging: LoggingSettingsDto, };

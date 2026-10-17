@@ -14,14 +14,14 @@ kind: ApiKind,
  */
 apiKey?: string | null, 
 /**
- * Vertragserweiterung M2-F05b: remember.
+ * Zugangsdaten dauerhaft im Secret Store speichern.
  */
 remember?: boolean | null, 
 /**
- * Vertragserweiterung M2-F05b: account_id.
+ * Kennung des API-Kontos.
  */
 accountId?: string | null, 
 /**
- * Vertragserweiterung M2-F05b: client_secret.
+ * OAuth-Client-Geheimnis; nur Eingabe.
  */
 clientSecret?: string | null, };

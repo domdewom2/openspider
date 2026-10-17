@@ -87,6 +87,7 @@ pub fn run() {
     let setup_app = app.clone();
     let run_app = app.clone();
     let run_quitting = quitting.clone();
+    let setup_quitting = quitting.clone();
 
     builder
         .manage(app)
@@ -101,7 +102,7 @@ pub fn run() {
         )
         .invoke_handler(tauri::generate_handler![app_version])
         .setup(move |tauri_app| {
-            desktop::install(&setup_app, tauri_app.handle());
+            desktop::install(&setup_app, tauri_app.handle(), setup_quitting.clone());
             // Dateien, die den Start auslösen: Argumente (Windows/Linux) und geöffnete URLs (macOS)
             let args: Vec<String> = std::env::args().collect();
             let cwd = std::env::current_dir().ok();

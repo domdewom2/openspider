@@ -13,10 +13,10 @@ name: string,
  */
 path: string, 
 /**
- * Vertragserweiterung M2-F05b: include_secrets.
+ * Geheimnisse in die verschlüsselte Ausgabe aufnehmen.
  */
 includeSecrets?: boolean | null, 
 /**
- * Vertragserweiterung M2-F05b: password.
+ * Passwort für den angefragten Vorgang; nur Eingabe.
  */
 password?: string | null, };

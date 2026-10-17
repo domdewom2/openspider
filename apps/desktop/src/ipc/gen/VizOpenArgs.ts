@@ -14,6 +14,6 @@ kind: VizKind,
  */
 rootUrlId?: number | null, 
 /**
- * Vertragserweiterung M2-F05b: refresh_snapshot_id.
+ * Kennung des zu erneuernden Visualisierungs-Snapshots.
  */
 refreshSnapshotId?: string | null, };

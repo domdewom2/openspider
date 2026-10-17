@@ -15,14 +15,14 @@ snapshotId: string,
  */
 dir: string, 
 /**
- * Vertragserweiterung M2-F05b: nodes.
+ * Knoten des Graphen.
  */
 nodes: Array<GraphNode>, 
 /**
- * Vertragserweiterung M2-F05b: edges.
+ * Kanten des Graphen.
  */
 edges: Array<GraphEdge>, 
 /**
- * Vertragserweiterung M2-F05b: layout.
+ * Anordnung der Knoten im Graphen.
  */
 layout?: string | null, };

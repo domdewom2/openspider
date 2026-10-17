@@ -5,14 +5,14 @@
  */
 export type CustomSummaryArgs = { 
 /**
- * Vertragserweiterung M2-F05b: account.
+ * Kennung des verwendeten API-Kontos.
  */
 account: string, 
 /**
- * Vertragserweiterung M2-F05b: target.
+ * Ziel der Zusammenfassung.
  */
 target: string, 
 /**
- * Vertragserweiterung M2-F05b: metrics.
+ * Ausgewählte Kennzahlen der Zusammenfassung.
  */
 metrics: Array<string>, };

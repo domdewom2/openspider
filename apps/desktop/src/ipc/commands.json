@@ -18,15 +18,15 @@
     "longRunning": false
   },
   {
-    "name": "config.testRobots",
-    "args": "RobotsTestArgs",
-    "ret": "RobotsTestResult",
+    "name": "settings.get",
+    "args": "void",
+    "ret": "AppSettingsDto",
     "longRunning": false
   },
   {
-    "name": "config.loadRobots",
-    "args": "RobotsLoadArgs",
-    "ret": "string",
+    "name": "settings.set",
+    "args": "SettingsPatch",
+    "ret": "AppSettingsDto",
     "longRunning": false
   },
   {
@@ -39,54 +39,6 @@
     "name": "settings.setProxyPassword",
     "args": "ProxyPasswordArgs",
     "ret": "void",
-    "longRunning": false
-  },
-  {
-    "name": "export.multi",
-    "args": "ExportMultiArgs",
-    "ret": "ExportBatchResult",
-    "longRunning": true
-  },
-  {
-    "name": "export.presetList",
-    "args": "void",
-    "ret": "ExportPreset[]",
-    "longRunning": false
-  },
-  {
-    "name": "export.presetSave",
-    "args": "ExportPresetArgs",
-    "ret": "void",
-    "longRunning": false
-  },
-  {
-    "name": "export.presetDelete",
-    "args": "ExportPresetArgs",
-    "ret": "void",
-    "longRunning": false
-  },
-  {
-    "name": "export.customSummaryMetrics",
-    "args": "void",
-    "ret": "CustomSummaryMetric[]",
-    "longRunning": false
-  },
-  {
-    "name": "export.customSummary",
-    "args": "CustomSummaryArgs",
-    "ret": "FileResult",
-    "longRunning": true
-  },
-  {
-    "name": "settings.get",
-    "args": "void",
-    "ret": "AppSettingsDto",
-    "longRunning": false
-  },
-  {
-    "name": "settings.set",
-    "args": "SettingsPatch",
-    "ret": "AppSettingsDto",
     "longRunning": false
   },
   {
@@ -480,6 +432,18 @@
     "longRunning": false
   },
   {
+    "name": "config.testRobots",
+    "args": "RobotsTestArgs",
+    "ret": "RobotsTestResult",
+    "longRunning": false
+  },
+  {
+    "name": "config.loadRobots",
+    "args": "RobotsLoadArgs",
+    "ret": "string",
+    "longRunning": false
+  },
+  {
     "name": "profile.list",
     "args": "void",
     "ret": "ConfigProfileInfo[]",
@@ -710,6 +674,42 @@
   {
     "name": "export.sidebar",
     "args": "ExportPanelArgs",
+    "ret": "FileResult",
+    "longRunning": true
+  },
+  {
+    "name": "export.multi",
+    "args": "ExportMultiArgs",
+    "ret": "ExportBatchResult",
+    "longRunning": true
+  },
+  {
+    "name": "export.presetList",
+    "args": "void",
+    "ret": "ExportPreset[]",
+    "longRunning": false
+  },
+  {
+    "name": "export.presetSave",
+    "args": "ExportPresetArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "export.presetDelete",
+    "args": "ExportPresetArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "export.customSummaryMetrics",
+    "args": "void",
+    "ret": "CustomSummaryMetric[]",
+    "longRunning": false
+  },
+  {
+    "name": "export.customSummary",
+    "args": "CustomSummaryArgs",
     "ret": "FileResult",
     "longRunning": true
   },

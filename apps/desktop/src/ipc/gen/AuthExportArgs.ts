@@ -5,18 +5,18 @@
  */
 export type AuthExportArgs = { 
 /**
- * Vertragserweiterung M2-F05b: name.
+ * Name des Eintrags.
  */
 name: string, 
 /**
- * Vertragserweiterung M2-F05b: path.
+ * Pfad der verschlüsselten Authentifizierungsprofil-Datei.
  */
 path: string, 
 /**
- * Vertragserweiterung M2-F05b: passphrase.
+ * Passphrase zur Dateiverschlüsselung; nur Eingabe.
  */
 passphrase?: string | null, 
 /**
- * Vertragserweiterung M2-F05b: bind_to_machine.
+ * Authentifizierungsprofil an diesen Rechner binden.
  */
 bindToMachine: boolean, };

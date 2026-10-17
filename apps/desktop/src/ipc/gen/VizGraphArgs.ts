@@ -26,22 +26,22 @@ budget: number,
  */
 metric: string, 
 /**
- * Vertragserweiterung M2-F05b: include_non_html.
+ * Auch URLs ohne HTML-Inhalt einbeziehen.
  */
 includeNonHtml?: boolean | null, 
 /**
- * Vertragserweiterung M2-F05b: include_non_indexable.
+ * Auch nicht indexierbare URLs einbeziehen.
  */
 includeNonIndexable?: boolean | null, 
 /**
- * Vertragserweiterung M2-F05b: expand_depth.
+ * Anzahl der beim Öffnen aufzuklappenden Ebenen.
  */
 expandDepth?: number | null, 
 /**
- * Vertragserweiterung M2-F05b: explore_node.
+ * Kennung des zu erkundenden Knotens.
  */
 exploreNode?: number | null, 
 /**
- * Vertragserweiterung M2-F05b: color_metric.
+ * Kennzahl für die Färbung der Knoten.
  */
 colorMetric?: string | null, };

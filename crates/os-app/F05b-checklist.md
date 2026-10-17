@@ -197,3 +197,17 @@ Umgebungshinweis: Der unveränderte CLI-Test `a_python_reader_reads_a_finished_f
 Keine eigenen `spec_ids` im Paketmanifest: Die Tests prüfen Infrastruktur für UI-140, UI-143, CRAWL-141, OUT-184, OUT-225, OUT-241, OUT-242 und OUT-267; Fachabnahme bleibt bei den jeweiligen Besitzerpaketen. Ohne F05a ist Schema v3 aktuell; der vorbereitete Migrationstest prüft diesen Fall wie in 3.14.12 vorgesehen.
 
 Kein Push, Merge oder PR; deshalb keine CI-Lauf-ID und kein Windows-Nachweis. Offene fachliche Fragen: keine.
+
+## Review-Runde 1 (Fable)
+
+- `window_closed` ruft zuerst die registrierten Hörer auf und führt danach `sessions.clear` aus. Hörer können damit noch auf die Sitzung zugreifen; `sessions_extensions_and_window_cleanup` prüft diese Reihenfolge.
+- Linux-Dateimanager-Reveal liefert bewusst `Unsupported` (`err-desktop-platform`). Eine native Linux-Anbindung folgt erst mit einer gesonderten Plattformentscheidung.
+- Die ursprüngliche Paketänderung hat 26 vorhandene JSON-Fixtures unter `apps/desktop/src/ipc/__fixtures__/` umformatiert. Die Umformatierung ändert keine Vertragswerte.
+- F-11: `QuitDecision` ist mit `kind` getaggt und unterstützt `quit` sowie `confirm` mit Gründen für Crawl, Analyse, Export und HTTP-MCP-Sitzungen (UI-001). K04 übernimmt weiterhin die Entscheidungslogik; `WindowHost::exit` markiert kontrolliertes Beenden und beendet die Desktop-Hülle.
+- Tick-Änderungen werden je abonniertem Fenster gepuffert. Beim nächsten fälligen Versand werden Zustände je Operation/View zusammengeführt und Meldungen in Reihenfolge zugestellt.
+- Windows-Reveal initialisiert ein STA-COM-Apartment und räumt es auch bei Fehlern auf. Auf dem in Tauri-Setup erfassten Hauptthread wird Reveal direkt ausgeführt, damit kein synchrones Warten auf denselben Thread entsteht.
+- Befund 4 (Draft-PR/CI-Matrix) bleibt laut Review beim Orchestrator nach dessen Push; diese Fix-Runde erzeugt weder Push noch PR.
+
+Lokale Prüfumgebung der Fix-Runde: macOS, vollständiger Workspace einschließlich `openspider-desktop`. Für den Python-Beispielleser wird das vorhandene Homebrew-Python 3.10 verwendet (über einen temporären PATH-Eintrag, ohne Repository-Änderung). Apples Python 3.9 aus den Command Line Tools scheitert reproduzierbar in `os-cli::read_api_export::a_python_reader_reads_a_finished_file_and_rejects_an_unknown_read_api_version` beim Öffnen der Datenbank mit `unable to open database file`; dieselbe Test-Binärdatei besteht mit Homebrew-Python. Die Windows-/Linux-spezifischen Reveal-Tests sind hier nicht ausführbar und bleiben der Plattformmatrix des Orchestrators vorbehalten.
+
+Abschlussprüfung der Fix-Runde: `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace` (Homebrew-Python 3.10 wie oben), `npm ci`, `npm run -w apps/desktop typecheck` und `npm run -w apps/desktop test` sind grün (133 Desktop-Tests). Zusätzlich grün: `os-app-manifest --check` und `git diff --check`. Die neuen Regressionstests für Quit-Hook/Exit-Vertrag, beide Quit-Fixtures, TS-Export, verzögertes zweites Fenster mit Meldungen und finalem Operationszustand, Command-Reihenfolge und Upload-Reihenfolge-Default bestehen. Keine Änderungen außerhalb des Paketbesitzes.

@@ -34,14 +34,14 @@ errors: number,
  */
 quotaLeft?: number | null, 
 /**
- * Vertragserweiterung M2-F05b: running.
+ * Anzahl laufender API-Aufträge.
  */
 running: boolean, 
 /**
- * Vertragserweiterung M2-F05b: completed.
+ * Anzahl abgeschlossener API-Aufträge.
  */
 completed: number, 
 /**
- * Vertragserweiterung M2-F05b: reset_at.
+ * Zeitpunkt der nächsten Kontingentrücksetzung (ISO 8601 UTC).
  */
 resetAt?: string | null, };

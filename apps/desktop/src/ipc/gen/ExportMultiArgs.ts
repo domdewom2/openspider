@@ -7,26 +7,26 @@ import type { ExportSel } from "./ExportSel";
  */
 export type ExportMultiArgs = { 
 /**
- * Vertragserweiterung M2-F05b: items.
+ * Ausgewählte Exportaufträge.
  */
 items: Array<ExportSel>, 
 /**
- * Vertragserweiterung M2-F05b: format.
+ * Ausgabeformat der Exportdateien.
  */
 format: ExportFormatDto, 
 /**
- * Vertragserweiterung M2-F05b: dir.
+ * Zielverzeichnis der Exportdateien.
  */
 dir: string, 
 /**
- * Vertragserweiterung M2-F05b: single_workbook.
+ * Alle Exporte in einer Arbeitsmappe zusammenfassen.
  */
 singleWorkbook: boolean, 
 /**
- * Vertragserweiterung M2-F05b: skip_empty.
+ * Exporte ohne Datenzeilen überspringen.
  */
 skipEmpty: boolean, 
 /**
- * Vertragserweiterung M2-F05b: preset.
+ * Benannte Exportvorlage.
  */
 preset?: string | null, };

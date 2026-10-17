@@ -25,26 +25,26 @@ property?: string | null,
  */
 code: string, 
 /**
- * Vertragserweiterung M2-F05b: message.
+ * Beschreibung des Befunds.
  */
 message: string, 
 /**
- * Vertragserweiterung M2-F05b: path.
+ * Pfad zur betroffenen Eigenschaft in den strukturierten Daten.
  */
 path: string, 
 /**
- * Vertragserweiterung M2-F05b: line.
+ * Zeilennummer im Quelldokument.
  */
 line?: number | null, 
 /**
- * Vertragserweiterung M2-F05b: col.
+ * Spaltennummer im Quelldokument.
  */
 col?: number | null, 
 /**
- * Vertragserweiterung M2-F05b: snippet.
+ * Quelltextausschnitt zum Befund.
  */
 snippet?: string | null, 
 /**
- * Vertragserweiterung M2-F05b: doc_url.
+ * URL der weiterführenden Dokumentation.
  */
 docUrl?: string | null, };

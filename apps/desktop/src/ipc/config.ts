@@ -13,10 +13,6 @@ import type { ValidationIssue } from "./gen/ValidationIssue";
 import { client } from "./client";
 
 export const config = {
-  /** `config.testRobots` */
-  testRobots: (args: RobotsTestArgs, signal?: AbortSignal) => client.invoke<RobotsTestResult>("config.testRobots", args, signal),
-  /** `config.loadRobots` */
-  loadRobots: (args: RobotsLoadArgs, signal?: AbortSignal) => client.invoke<string>("config.loadRobots", args, signal),
   /** `config.get` */
   get: (signal?: AbortSignal) => client.invoke<CrawlConfigDto>("config.get", undefined, signal),
   /** `config.validate` */
@@ -29,4 +25,8 @@ export const config = {
   diff: (args: ConfigDiffArgs, signal?: AbortSignal) => client.invoke<DiffRow[]>("config.diff", args, signal),
   /** `config.testRules` */
   testRules: (args: TestRulesArgs, signal?: AbortSignal) => client.invoke<RuleTrace>("config.testRules", args, signal),
+  /** `config.testRobots` */
+  testRobots: (args: RobotsTestArgs, signal?: AbortSignal) => client.invoke<RobotsTestResult>("config.testRobots", args, signal),
+  /** `config.loadRobots` */
+  loadRobots: (args: RobotsLoadArgs, signal?: AbortSignal) => client.invoke<string>("config.loadRobots", args, signal),
 } as const;

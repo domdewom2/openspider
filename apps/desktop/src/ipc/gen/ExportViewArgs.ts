@@ -26,10 +26,10 @@ format: ExportFormatDto,
  */
 allColumns: boolean, 
 /**
- * Vertragserweiterung M2-F05b: columns.
+ * Für die Ausgabe ausgewählte Spalten.
  */
 columns?: Array<string> | null, 
 /**
- * Vertragserweiterung M2-F05b: preserve_upload_order.
+ * URL-Reihenfolge der hochgeladenen Liste beibehalten; Standard true.
  */
-preserveUploadOrder: boolean, };
+preserveUploadOrder?: boolean, };

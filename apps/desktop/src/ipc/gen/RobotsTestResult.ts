@@ -5,14 +5,14 @@
  */
 export type RobotsTestResult = { 
 /**
- * Vertragserweiterung M2-F05b: allowed.
+ * Ob robots.txt den Abruf erlaubt.
  */
 allowed: boolean, 
 /**
- * Vertragserweiterung M2-F05b: matched_line.
+ * Zeilennummer der zutreffenden robots.txt-Regel.
  */
 matchedLine?: number | null, 
 /**
- * Vertragserweiterung M2-F05b: user_agent.
+ * User-Agent für die robots.txt-Prüfung.
  */
 userAgent: string, };

@@ -10,22 +10,22 @@ export type LinkFilter = {
  */
 id: string, 
 /**
- * Vertragserweiterung M2-F05b: position.
+ * Filter für die Position des Links im Dokument.
  */
 position?: string | null, 
 /**
- * Vertragserweiterung M2-F05b: exclude_self.
+ * Links auf dieselbe URL ausschließen.
  */
 excludeSelf?: boolean | null, 
 /**
- * Vertragserweiterung M2-F05b: exclude_nofollow.
+ * Links mit nofollow ausschließen.
  */
 excludeNofollow?: boolean | null, 
 /**
- * Vertragserweiterung M2-F05b: anchor.
+ * Filter für den Ankertext des Links.
  */
 anchor?: string | null, 
 /**
- * Vertragserweiterung M2-F05b: mode.
+ * Ausgewählter Auswertungsmodus.
  */
 mode?: LinkMode | null, };

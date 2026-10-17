@@ -53,14 +53,14 @@ exports: Array<TaskExport>,
  */
 notify: TaskNotify, 
 /**
- * Vertragserweiterung M2-F05b: export_options.
+ * Exportoptionen der geplanten Aufgabe.
  */
 exportOptions?: ExportMultiArgs | null, 
 /**
- * Vertragserweiterung M2-F05b: export_preset.
+ * Name der für die Aufgabe verwendeten Exportvorlage.
  */
 exportPreset?: string | null, 
 /**
- * Vertragserweiterung M2-F05b: custom_summary.
+ * Konfiguration der benutzerdefinierten Zusammenfassung.
  */
 customSummary?: CustomSummaryArgs | null, };

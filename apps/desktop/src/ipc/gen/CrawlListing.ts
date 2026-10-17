@@ -18,14 +18,14 @@ project?: string | null,
  */
 locked: boolean, 
 /**
- * Vertragserweiterung M2-F05b: start_url.
+ * Start-URL des Crawls.
  */
 startUrl?: string | null, 
 /**
- * Vertragserweiterung M2-F05b: duration_ms.
+ * Bisherige Laufzeit in Millisekunden.
  */
 durationMs?: number | null, 
 /**
- * Vertragserweiterung M2-F05b: can_resume.
+ * Ob der Crawl fortgesetzt werden kann.
  */
 canResume: boolean, };

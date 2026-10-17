@@ -9,10 +9,10 @@ export type ApiSettingsResult = {
  */
 invalidated: boolean, 
 /**
- * Vertragserweiterung M2-F05b: confirmation_required.
+ * Ob vor dem Abruf eine Bestätigung erforderlich ist.
  */
 confirmationRequired: boolean, 
 /**
- * Vertragserweiterung M2-F05b: data_stale.
+ * Ob die gespeicherten API-Daten veraltet sind.
  */
 dataStale: boolean, };

@@ -17,10 +17,10 @@ performanceProfile: string,
  */
 ramLimitGb?: number | null, 
 /**
- * Vertragserweiterung M2-F05b: cache_limit_mb.
+ * Obergrenze des Caches in Megabyte.
  */
 cacheLimitMb?: number | null, 
 /**
- * Vertragserweiterung M2-F05b: render_process_limit.
+ * Maximale Anzahl paralleler Rendering-Prozesse.
  */
 renderProcessLimit?: number | null, };

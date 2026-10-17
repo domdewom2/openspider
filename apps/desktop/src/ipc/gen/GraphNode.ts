@@ -29,34 +29,34 @@ metric?: number | null,
  */
 hasMore: boolean, 
 /**
- * Vertragserweiterung M2-F05b: status_code.
+ * HTTP-Statuscode der URL.
  */
 statusCode?: number | null, 
 /**
- * Vertragserweiterung M2-F05b: indexability.
+ * Indexierbarkeitsstatus der URL.
  */
 indexability?: string | null, 
 /**
- * Vertragserweiterung M2-F05b: unique_inlinks.
+ * Anzahl eindeutiger eingehender Links.
  */
 uniqueInlinks?: number | null, 
 /**
- * Vertragserweiterung M2-F05b: link_score.
+ * Berechneter Link-Score der URL.
  */
 linkScore?: number | null, 
 /**
- * Vertragserweiterung M2-F05b: segment_id.
+ * Kennung des zugeordneten Segments.
  */
 segmentId?: string | null, 
 /**
- * Vertragserweiterung M2-F05b: segment_color.
+ * Anzeigefarbe des zugeordneten Segments.
  */
 segmentColor?: string | null, 
 /**
- * Vertragserweiterung M2-F05b: hidden_children.
+ * Anzahl der ausgeblendeten direkten Kinder.
  */
 hiddenChildren: number, 
 /**
- * Vertragserweiterung M2-F05b: hidden_descendants.
+ * Anzahl aller ausgeblendeten Nachfahren.
  */
 hiddenDescendants: number, };

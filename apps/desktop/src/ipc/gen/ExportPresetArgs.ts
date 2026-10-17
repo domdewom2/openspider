@@ -6,10 +6,10 @@ import type { ExportPreset } from "./ExportPreset";
  */
 export type ExportPresetArgs = { 
 /**
- * Vertragserweiterung M2-F05b: name.
+ * Name des Eintrags.
  */
 name: string, 
 /**
- * Vertragserweiterung M2-F05b: preset.
+ * Benannte Exportvorlage.
  */
 preset?: ExportPreset | null, };

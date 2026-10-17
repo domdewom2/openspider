@@ -5,10 +5,10 @@
  */
 export type BundlePreview = { 
 /**
- * Vertragserweiterung M2-F05b: files.
+ * Pfade der erzeugten Dateien.
  */
 files: Array<string>, 
 /**
- * Vertragserweiterung M2-F05b: warnings.
+ * Warnungen bei der Ausführung.
  */
 warnings: Array<string>, };

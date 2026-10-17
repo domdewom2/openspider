@@ -5,10 +5,10 @@
  */
 export type ExportSel = { 
 /**
- * Vertragserweiterung M2-F05b: kind.
+ * Art des Eintrags.
  */
 kind: string, 
 /**
- * Vertragserweiterung M2-F05b: name.
+ * Name des Eintrags.
  */
 name: string, };

@@ -45,6 +45,8 @@ pub trait AssetResolver: Send + Sync {
 pub trait WindowHost: Send + Sync {
     fn open_viz(&self, snapshot_id: &str) -> Result<(), crate::dto::CmdError>;
     fn focus_main(&self);
+    /// Beendet den Prozess nach bestätigtem und abgeschlossenem Aufräumen.
+    fn exit(&self);
 }
 /// Betriebssystemaktionen ohne Abhängigkeit auf Tauri.
 pub trait DesktopActions: Send + Sync {

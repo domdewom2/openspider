@@ -108,17 +108,17 @@ pub struct TestRulesArgs {
     pub rules: Vec<RuleDef>,
     /// Eingabe-URL.
     pub input: String,
-    /// Vertragserweiterung M2-F05b: remove_parameters.
+    /// Namen der aus URLs zu entfernenden Parameter.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub remove_parameters: Option<Vec<String>>,
 
-    /// Vertragserweiterung M2-F05b: remove_all_parameters.
+    /// Alle URL-Parameter entfernen.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub remove_all_parameters: Option<bool>,
 
-    /// Vertragserweiterung M2-F05b: regex_partial_match.
+    /// Reguläre Ausdrücke auch auf Teiltreffer anwenden.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub regex_partial_match: Option<bool>,
@@ -197,12 +197,12 @@ pub struct ProfileExportArgs {
     pub name: String,
     /// Zieldatei (`.osconfig`).
     pub path: String,
-    /// Vertragserweiterung M2-F05b: include_secrets.
+    /// Geheimnisse in die verschlüsselte Ausgabe aufnehmen.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub include_secrets: Option<bool>,
 
-    /// Vertragserweiterung M2-F05b: password.
+    /// Passwort für den angefragten Vorgang; nur Eingabe.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub password: Option<String>,
@@ -281,15 +281,15 @@ pub struct SegmentPreview {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct RobotsTestArgs {
-    /// Vertragserweiterung M2-F05b: url.
+    /// Zu prüfende URL.
     pub url: String,
 
-    /// Vertragserweiterung M2-F05b: content.
+    /// Inhalt der zu prüfenden robots.txt.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub content: Option<String>,
 
-    /// Vertragserweiterung M2-F05b: subdomain.
+    /// Für die Prüfung verwendete Subdomain.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub subdomain: Option<String>,
@@ -299,15 +299,15 @@ pub struct RobotsTestArgs {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct RobotsTestResult {
-    /// Vertragserweiterung M2-F05b: allowed.
+    /// Ob robots.txt den Abruf erlaubt.
     pub allowed: bool,
 
-    /// Vertragserweiterung M2-F05b: matched_line.
+    /// Zeilennummer der zutreffenden robots.txt-Regel.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub matched_line: Option<u32>,
 
-    /// Vertragserweiterung M2-F05b: user_agent.
+    /// User-Agent für die robots.txt-Prüfung.
     pub user_agent: String,
 }
 
@@ -315,6 +315,6 @@ pub struct RobotsTestResult {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct RobotsLoadArgs {
-    /// Vertragserweiterung M2-F05b: host.
+    /// Host für die Netzwerkprüfung.
     pub host: String,
 }

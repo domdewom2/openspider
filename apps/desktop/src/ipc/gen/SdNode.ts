@@ -31,18 +31,18 @@ children: Array<SdNode>,
  */
 issues: Array<SdIssueDto>, 
 /**
- * Vertragserweiterung M2-F05b: path.
+ * Pfad zur betroffenen Eigenschaft in den strukturierten Daten.
  */
 path: string, 
 /**
- * Vertragserweiterung M2-F05b: source_line.
+ * Zeilennummer der Fundstelle im Quelltext.
  */
 sourceLine?: number | null, 
 /**
- * Vertragserweiterung M2-F05b: source_col.
+ * Spaltennummer der Fundstelle im Quelltext.
  */
 sourceCol?: number | null, 
 /**
- * Vertragserweiterung M2-F05b: property_order.
+ * Reihenfolge der Eigenschaften im Quelldokument.
  */
 propertyOrder: Array<string>, };

@@ -79,12 +79,12 @@ pub struct StorageSettingsDto {
     pub performance_profile: String,
     /// RAM-Obergrenze in GB.
     pub ram_limit_gb: Option<f64>,
-    /// Vertragserweiterung M2-F05b: cache_limit_mb.
+    /// Obergrenze des Caches in Megabyte.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub cache_limit_mb: Option<u32>,
 
-    /// Vertragserweiterung M2-F05b: render_process_limit.
+    /// Maximale Anzahl paralleler Rendering-Prozesse.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub render_process_limit: Option<u32>,
@@ -186,7 +186,7 @@ pub struct AppSettingsDto {
     pub mcp: McpSettingsDto,
     /// Schlüssel (TOML-Pfade), deren Änderung durch diesen Aufruf einen Neustart erfordert.
     pub restart_required: Vec<String>,
-    /// Vertragserweiterung M2-F05b: logging.
+    /// Einstellungen für die Protokollierung.
     pub logging: LoggingSettingsDto,
 }
 
@@ -353,10 +353,10 @@ pub struct OpCancelArgs {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct LoggingSettingsDto {
-    /// Vertragserweiterung M2-F05b: level.
+    /// Schweregrad der zu protokollierenden Meldungen.
     pub level: String,
 
-    /// Vertragserweiterung M2-F05b: retention_days.
+    /// Aufbewahrungsdauer der Protokolle in Tagen.
     pub retention_days: u32,
 }
 
@@ -364,10 +364,10 @@ pub struct LoggingSettingsDto {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct BundlePreview {
-    /// Vertragserweiterung M2-F05b: files.
+    /// Pfade der erzeugten Dateien.
     pub files: Vec<String>,
 
-    /// Vertragserweiterung M2-F05b: warnings.
+    /// Warnungen bei der Ausführung.
     pub warnings: Vec<String>,
 }
 
@@ -375,7 +375,7 @@ pub struct BundlePreview {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct CertificateProbeArgs {
-    /// Vertragserweiterung M2-F05b: url.
+    /// Zu prüfende URL.
     pub url: String,
 }
 
@@ -383,10 +383,10 @@ pub struct CertificateProbeArgs {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct CertificateChainDto {
-    /// Vertragserweiterung M2-F05b: certificates.
+    /// Zertifikate der vom Server gelieferten Kette.
     pub certificates: Vec<String>,
 
-    /// Vertragserweiterung M2-F05b: trusted.
+    /// Ob die Zertifikatskette vertrauenswürdig ist.
     pub trusted: bool,
 }
 
@@ -394,15 +394,32 @@ pub struct CertificateChainDto {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct ProxyPasswordArgs {
-    /// Vertragserweiterung M2-F05b: password.
+    /// Passwort für den angefragten Vorgang; nur Eingabe.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub password: Option<String>,
 }
 
 /// Entscheidung beim Beenden; die Sitzungslogik liefert M2-K04.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+pub enum QuitDecision {
+    /// Ohne weitere Rückfrage beenden.
+    Quit,
+    /// Aktive Arbeit erfordert eine Bestätigung durch den Benutzer.
+    Confirm { reasons: Vec<QuitReason> },
+}
+
+/// Aktive Arbeit, die vor dem Beenden gesichert oder beendet werden muss (UI-001).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
-pub enum QuitDecision {
-    Quit,
+pub enum QuitReason {
+    /// Ein Crawl läuft.
+    Crawl,
+    /// Eine Crawl-Analyse läuft.
+    Analysis,
+    /// Ein Export läuft.
+    Export,
+    /// HTTP-MCP-Sitzungen sind aktiv.
+    McpSessions,
 }

@@ -39,14 +39,14 @@ quota?: QuotaDto | null,
  */
 autoConnect: boolean, 
 /**
- * Vertragserweiterung M2-F05b: state.
+ * Aktueller Verbindungszustand des API-Anbieters.
  */
 state: ApiConnState, 
 /**
- * Vertragserweiterung M2-F05b: error.
+ * Fehler der letzten API-Verbindung.
  */
 error?: CmdError | null, 
 /**
- * Vertragserweiterung M2-F05b: accounts.
+ * Verfügbare API-Konten.
  */
 accounts: Array<ApiAccount>, };

@@ -13,10 +13,10 @@ name: string,
  */
 labelKey: string, 
 /**
- * Vertragserweiterung M2-F05b: enabled.
+ * Ob der Export im aktuellen Kontext verfügbar ist.
  */
 enabled: boolean, 
 /**
- * Vertragserweiterung M2-F05b: disabled_reason.
+ * Grund für einen deaktivierten Export (i18n-Schlüssel).
  */
 disabledReason?: string | null, };

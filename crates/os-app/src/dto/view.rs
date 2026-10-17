@@ -147,27 +147,27 @@ pub enum CompareClass {
 pub struct LinkFilter {
     /// Kennung des Filters.
     pub id: String,
-    /// Vertragserweiterung M2-F05b: position.
+    /// Filter für die Position des Links im Dokument.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub position: Option<String>,
 
-    /// Vertragserweiterung M2-F05b: exclude_self.
+    /// Links auf dieselbe URL ausschließen.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub exclude_self: Option<bool>,
 
-    /// Vertragserweiterung M2-F05b: exclude_nofollow.
+    /// Links mit nofollow ausschließen.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub exclude_nofollow: Option<bool>,
 
-    /// Vertragserweiterung M2-F05b: anchor.
+    /// Filter für den Ankertext des Links.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub anchor: Option<String>,
 
-    /// Vertragserweiterung M2-F05b: mode.
+    /// Ausgewählter Auswertungsmodus.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub mode: Option<LinkMode>,
@@ -223,11 +223,11 @@ pub enum DetailTable {
     ApiValues,
     /// Formulare.
     Forms,
-    /// Vertragserweiterung M2-F05b.
+    /// Hreflang-Verknüpfungen.
     Hreflang,
-    /// Vertragserweiterung M2-F05b.
+    /// Pfad der Entdeckung im Crawl.
     CrawlPath,
-    /// Vertragserweiterung M2-F05b.
+    /// Ankertexte der Links.
     Anchors,
 }
 

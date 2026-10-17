@@ -6,18 +6,18 @@ import type { ExportSel } from "./ExportSel";
  */
 export type ExportPreset = { 
 /**
- * Vertragserweiterung M2-F05b: name.
+ * Name des Eintrags.
  */
 name: string, 
 /**
- * Vertragserweiterung M2-F05b: items.
+ * Ausgewählte Exportaufträge.
  */
 items: Array<ExportSel>, 
 /**
- * Vertragserweiterung M2-F05b: single_workbook.
+ * Alle Exporte in einer Arbeitsmappe zusammenfassen.
  */
 singleWorkbook: boolean, 
 /**
- * Vertragserweiterung M2-F05b: skip_empty.
+ * Exporte ohne Datenzeilen überspringen.
  */
 skipEmpty: boolean, };

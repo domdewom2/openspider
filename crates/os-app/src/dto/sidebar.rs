@@ -145,15 +145,15 @@ pub struct SiteStructureArgs {
     pub view: SiteStructureView,
     /// Segment.
     pub segment: Option<SegmentFilter>,
-    /// Vertragserweiterung M2-F05b: path.
+    /// Verzeichnispfad, dessen direkte Kinder nachgeladen werden; leer für die Wurzel.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub path: Option<String>,
 
-    /// Vertragserweiterung M2-F05b: offset.
+    /// Anzahl der vor der Ergebnisseite übersprungenen Einträge.
     pub offset: u64,
 
-    /// Vertragserweiterung M2-F05b: limit.
+    /// Maximale Anzahl der zurückgegebenen Einträge.
     pub limit: u32,
 }
 
@@ -171,7 +171,7 @@ pub struct PathNode {
     pub by_class: BTreeMap<String, u64>,
     /// Kindknoten (Tiefe begrenzt, der Rest über weitere Aufrufe).
     pub children: Vec<PathNode>,
-    /// Vertragserweiterung M2-F05b: has_more_children.
+    /// Weitere Kinder können nachgeladen werden.
     pub has_more_children: bool,
 }
 

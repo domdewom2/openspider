@@ -15,14 +15,14 @@ view: SiteStructureView,
  */
 segment?: SegmentFilter | null, 
 /**
- * Vertragserweiterung M2-F05b: path.
+ * Verzeichnispfad, dessen direkte Kinder nachgeladen werden; leer für die Wurzel.
  */
 path?: string | null, 
 /**
- * Vertragserweiterung M2-F05b: offset.
+ * Anzahl der vor der Ergebnisseite übersprungenen Einträge.
  */
 offset: number, 
 /**
- * Vertragserweiterung M2-F05b: limit.
+ * Maximale Anzahl der zurückgegebenen Einträge.
  */
 limit: number, };

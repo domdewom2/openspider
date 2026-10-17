@@ -25,6 +25,6 @@ byClass: { [key in string]: number },
  */
 children: Array<PathNode>, 
 /**
- * Vertragserweiterung M2-F05b: has_more_children.
+ * Weitere Kinder können nachgeladen werden.
  */
 hasMoreChildren: boolean, };

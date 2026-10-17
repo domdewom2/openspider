@@ -49,7 +49,7 @@ pub struct QuotaDto {
     pub limit: Option<u64>,
     /// Zurücksetzung (ISO 8601 UTC).
     pub resets_at: Option<String>,
-    /// Vertragserweiterung M2-F05b: dimension.
+    /// Dimension für die API-Datenabfrage.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub dimension: Option<String>,
@@ -74,15 +74,15 @@ pub struct ApiSourceInfo {
     pub quota: Option<QuotaDto>,
     /// Beim Start automatisch verbinden (INTEG-011).
     pub auto_connect: bool,
-    /// Vertragserweiterung M2-F05b: state.
+    /// Aktueller Verbindungszustand des API-Anbieters.
     pub state: ApiConnState,
 
-    /// Vertragserweiterung M2-F05b: error.
+    /// Fehler der letzten API-Verbindung.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub error: Option<CmdError>,
 
-    /// Vertragserweiterung M2-F05b: accounts.
+    /// Verfügbare API-Konten.
     pub accounts: Vec<ApiAccount>,
 }
 
@@ -95,17 +95,17 @@ pub struct ApiConnectArgs {
     pub kind: ApiKind,
     /// API-Schlüssel (nur bei Quellen mit Schlüssel; Ablage im Schlüsselbund).
     pub api_key: Option<String>,
-    /// Vertragserweiterung M2-F05b: remember.
+    /// Zugangsdaten dauerhaft im Secret Store speichern.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub remember: Option<bool>,
 
-    /// Vertragserweiterung M2-F05b: account_id.
+    /// Kennung des API-Kontos.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub account_id: Option<String>,
 
-    /// Vertragserweiterung M2-F05b: client_secret.
+    /// OAuth-Client-Geheimnis; nur Eingabe.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub client_secret: Option<String>,
@@ -124,10 +124,10 @@ pub struct ApiAccount {
     pub scopes: Vec<String>,
     /// Ablauf des Tokens (ISO 8601 UTC).
     pub expires_at: Option<String>,
-    /// Vertragserweiterung M2-F05b: account_id.
+    /// Kennung des API-Kontos.
     pub account_id: String,
 
-    /// Vertragserweiterung M2-F05b: key_suffix.
+    /// Zur Identifizierung sichtbare Endzeichen des API-Schlüssels.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub key_suffix: Option<String>,
@@ -175,7 +175,7 @@ pub struct ApiSetSettingsArgs {
     pub kind: ApiKind,
     /// Neue Einstellungen.
     pub settings: ApiSourceSettings,
-    /// Vertragserweiterung M2-F05b: decision.
+    /// Entscheidung über den nächsten API-Abruf.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub decision: Option<ApiSettingsDecision>,
@@ -187,10 +187,10 @@ pub struct ApiSetSettingsArgs {
 pub struct ApiSettingsResult {
     /// Gespeicherte Daten dieser Quelle wurden ungültig (INTEG-010).
     pub invalidated: bool,
-    /// Vertragserweiterung M2-F05b: confirmation_required.
+    /// Ob vor dem Abruf eine Bestätigung erforderlich ist.
     pub confirmation_required: bool,
 
-    /// Vertragserweiterung M2-F05b: data_stale.
+    /// Ob die gespeicherten API-Daten veraltet sind.
     pub data_stale: bool,
 }
 
@@ -283,13 +283,13 @@ pub struct ApiRow {
     pub errors: u64,
     /// Verbleibendes Kontingent.
     pub quota_left: Option<u64>,
-    /// Vertragserweiterung M2-F05b: running.
+    /// Anzahl laufender API-Aufträge.
     pub running: bool,
 
-    /// Vertragserweiterung M2-F05b: completed.
+    /// Anzahl abgeschlossener API-Aufträge.
     pub completed: u64,
 
-    /// Vertragserweiterung M2-F05b: reset_at.
+    /// Zeitpunkt der nächsten Kontingentrücksetzung (ISO 8601 UTC).
     #[serde(default)]
     #[ts(optional = nullable)]
     pub reset_at: Option<String>,
@@ -299,10 +299,10 @@ pub struct ApiRow {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiAccountArgs {
-    /// Vertragserweiterung M2-F05b: kind.
+    /// Art des Eintrags.
     pub kind: ApiKind,
 
-    /// Vertragserweiterung M2-F05b: account_id.
+    /// Kennung des API-Kontos.
     pub account_id: String,
 }
 

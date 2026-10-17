@@ -5,10 +5,10 @@
  */
 export type CustomSummaryMetric = { 
 /**
- * Vertragserweiterung M2-F05b: id.
+ * Eindeutige Kennung.
  */
 id: string, 
 /**
- * Vertragserweiterung M2-F05b: label_key.
+ * Übersetzungsschlüssel der Bezeichnung.
  */
 labelKey: string, };

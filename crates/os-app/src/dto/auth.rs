@@ -110,15 +110,15 @@ pub struct AuthFinishLoginArgs {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct AuthImportArgs {
-    /// Vertragserweiterung M2-F05b: path.
+    /// Pfad der verschlüsselten Authentifizierungsprofil-Datei.
     pub path: String,
 
-    /// Vertragserweiterung M2-F05b: passphrase.
+    /// Passphrase zur Dateiverschlüsselung; nur Eingabe.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub passphrase: Option<String>,
 
-    /// Vertragserweiterung M2-F05b: bind_to_machine.
+    /// Authentifizierungsprofil an diesen Rechner binden.
     pub bind_to_machine: bool,
 }
 
@@ -126,17 +126,17 @@ pub struct AuthImportArgs {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct AuthExportArgs {
-    /// Vertragserweiterung M2-F05b: name.
+    /// Name des Eintrags.
     pub name: String,
 
-    /// Vertragserweiterung M2-F05b: path.
+    /// Pfad der verschlüsselten Authentifizierungsprofil-Datei.
     pub path: String,
 
-    /// Vertragserweiterung M2-F05b: passphrase.
+    /// Passphrase zur Dateiverschlüsselung; nur Eingabe.
     #[serde(default)]
     #[ts(optional = nullable)]
     pub passphrase: Option<String>,
 
-    /// Vertragserweiterung M2-F05b: bind_to_machine.
+    /// Authentifizierungsprofil an diesen Rechner binden.
     pub bind_to_machine: bool,
 }

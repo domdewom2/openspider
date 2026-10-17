@@ -5,6 +5,6 @@
  */
 export type ProxyPasswordArgs = { 
 /**
- * Vertragserweiterung M2-F05b: password.
+ * Passwort für den angefragten Vorgang; nur Eingabe.
  */
 password?: string | null, };

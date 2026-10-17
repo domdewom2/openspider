@@ -233,6 +233,8 @@ impl WriteQueue {
             .map_err(|_| internal("WriteQueue::submit_admin", "Auftrag verworfen"))?
     }
 
+    /// Die Closure muss jede selbst eröffnete Transaktion vor der Rückkehr committen oder zurückrollen;
+    /// sie darf keine Transaktion offen lassen (auch nicht im Fehlerfall).
     /// Datei-Auftrag, strikt mit SQL- und Verwaltungsaufträgen serialisiert, ohne implizite Migration.
     pub async fn submit_file<T: Send + 'static>(
         &self,

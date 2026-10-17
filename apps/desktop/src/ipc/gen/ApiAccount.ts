@@ -22,10 +22,10 @@ scopes: Array<string>,
  */
 expiresAt?: string | null, 
 /**
- * Vertragserweiterung M2-F05b: account_id.
+ * Kennung des API-Kontos.
  */
 accountId: string, 
 /**
- * Vertragserweiterung M2-F05b: key_suffix.
+ * Zur Identifizierung sichtbare Endzeichen des API-Schlüssels.
  */
 keySuffix?: string | null, };
