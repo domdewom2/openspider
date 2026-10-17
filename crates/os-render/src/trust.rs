@@ -103,7 +103,7 @@ pub async fn fetch(
         }
         req
     };
-    let mut response = build_request().send().await.map_err(protocol)?;
+    let mut response = build_request().send().await.map_err(network_error)?;
     if response.status() == reqwest::StatusCode::UNAUTHORIZED
         && url.origin().ascii_serialization() == origin
     {
@@ -112,7 +112,7 @@ pub async fn fetch(
                 .basic_auth(&c.username, Some(&c.password))
                 .send()
                 .await
-                .map_err(protocol)?;
+                .map_err(network_error)?;
         }
     }
     let status = response.status().as_u16();
@@ -144,4 +144,21 @@ pub fn needs_bridge(launch: &LaunchOpts, url: &str) -> bool {
             && launch.network.proxy.mode == ProxyMode::Manual
             && launch.network.proxy.kind == ProxyKind::Socks5
             && launch.proxy_credentials.is_some())
+}
+
+// CONNECT failures have no HTTP response object. Preserve the proxy's 407
+// classification from the transport's error chain instead of returning a generic
+// resource failure. Do not include credentials or proxy URLs in this error.
+fn network_error(error: reqwest::Error) -> RenderError {
+    let mut source: Option<&(dyn std::error::Error + 'static)> = Some(&error);
+    while let Some(current) = source {
+        if matches!(
+            current.to_string().as_str(),
+            "proxy authorization required" | "tunnel error: proxy authorization required"
+        ) {
+            return RenderError::ProxyAuthentication;
+        }
+        source = current.source();
+    }
+    protocol(error)
 }

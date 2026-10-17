@@ -1,0 +1,610 @@
+use os_render::api::{Credentials, MainResponse, ResourcePolicy, ScreenshotFormat};
+use os_render::{LaunchOpts, RenderError, RenderOpts, Renderer};
+use os_testsite::TestSite;
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
+
+// Real browser tests are mandatory; missing Chromium is a failure, never a skip.
+static CHROMIUM: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+async fn requires_chromium(opts: LaunchOpts) -> Renderer {
+    Renderer::launch(opts)
+        .await
+        .expect("requires_chromium: install Chrome or set OPENSPIDER_CHROMIUM")
+}
+fn quick() -> RenderOpts {
+    RenderOpts {
+        ajax_timeout_ms: 100,
+        screenshots: false,
+        ..RenderOpts::default()
+    }
+}
+fn png_size(bytes: &[u8]) -> (u32, u32) {
+    assert_eq!(&bytes[..8], b"\x89PNG\r\n\x1a\n");
+    (
+        u32::from_be_bytes(bytes[16..20].try_into().unwrap()),
+        u32::from_be_bytes(bytes[20..24].try_into().unwrap()),
+    )
+}
+
+#[tokio::test]
+// spec: CRAWL-077 [P1]
+async fn missing_chromium_is_actionable() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("missing-chromium");
+    let error = Renderer::launch(LaunchOpts {
+        chromium_path: Some(path.clone()),
+        ..Default::default()
+    })
+    .await
+    .unwrap_err();
+    assert!(matches!(error, RenderError::ChromiumMissing { .. }));
+    assert!(error.to_string().contains("err-chromium-missing"));
+    assert!(error.to_string().contains(path.to_str().unwrap()));
+    assert!(error.to_string().contains("OPENSPIDER_CHROMIUM"));
+}
+
+#[tokio::test]
+// spec: CRAWL-078 [M2]
+async fn requires_chromium_renders_and_reuses_engine_response() {
+    let _lock = CHROMIUM.lock().await;
+    let site = TestSite::start("render-r01").await.unwrap();
+    let renderer = requires_chromium(LaunchOpts::default()).await;
+    let mut opts = quick();
+    opts.user_agent = Some("OpenSpider-Fixture".into());
+    opts.headers.insert("X-Fixture".into(), "render".into());
+    opts.cookies.push(
+        chromiumoxide::cdp::browser_protocol::network::CookieParam::builder()
+            .name("session")
+            .value("fixture")
+            .url(site.base_url())
+            .build()
+            .unwrap(),
+    );
+    let result = renderer
+        .render(&site.url("/csr.html"), &opts)
+        .await
+        .unwrap();
+    assert!(result.dom_html.contains("<title>rendered</title>"));
+    assert!(result.dom_html.contains("href=\"/generated\""));
+    let req = site
+        .requests()
+        .into_iter()
+        .find(|r| r.path_and_query == "/csr.html")
+        .unwrap();
+    assert_eq!(req.header("user-agent").unwrap(), "OpenSpider-Fixture");
+    assert_eq!(req.header("x-fixture").unwrap(), "render");
+    assert!(req.header("cookie").unwrap().contains("session=fixture"));
+    opts.main_response = Some(MainResponse {
+        status: 200,
+        headers: vec![("Content-Type".into(), "text/html".into())],
+        body: include_bytes!("../../../tests/fixtures/render-r01/csr.html").to_vec(),
+    });
+    let replay = renderer
+        .render(&site.url("/reuse.html"), &opts)
+        .await
+        .unwrap();
+    assert!(replay.dom_html.contains("<title>rendered</title>"));
+    assert!(!site
+        .requests()
+        .iter()
+        .any(|r| r.path_and_query == "/reuse.html"));
+    assert!(replay
+        .network
+        .iter()
+        .any(|r| r.url.ends_with("/reuse.html") && r.status == 200));
+    let security = renderer
+        .render(&site.url("/security.html"), &quick())
+        .await
+        .unwrap();
+    assert!(
+        security
+            .dom_html
+            .contains("geo=denied,notifications=denied,worker=blocked"),
+        "{}",
+        security.dom_html
+    );
+    renderer.close().await;
+}
+
+#[tokio::test]
+// spec: CRAWL-080
+async fn requires_chromium_waits_after_load_and_preserves_partial_dom() {
+    let _lock = CHROMIUM.lock().await;
+    let site = TestSite::start("render-r01").await.unwrap();
+    let renderer = requires_chromium(LaunchOpts::default()).await;
+    let mut opts = quick();
+    opts.ajax_timeout_ms = 1000;
+    let early = renderer
+        .render(&site.url("/delayed.html"), &opts)
+        .await
+        .unwrap();
+    assert!(early.dom_html.contains("id=\"status\">waiting"));
+    opts.ajax_timeout_ms = 5000;
+    let late = renderer
+        .render(&site.url("/delayed.html"), &opts)
+        .await
+        .unwrap();
+    assert!(late.dom_html.contains("id=\"status\">arrived"));
+    assert!(late.timings.load_ms >= 650);
+    opts.ajax_timeout_ms = 100;
+    opts.response_timeout_ms = 500;
+    let partial = renderer
+        .render(&site.url("/never-load.html"), &opts)
+        .await
+        .unwrap();
+    assert!(partial.load_timed_out);
+    assert!(partial.dom_html.contains("partial DOM"));
+    assert!(partial.dom_html.contains("data-ran=\"yes\""));
+    assert!(partial.timings.total_ms >= 600);
+    opts.ajax_timeout_ms = 1;
+    assert!(renderer
+        .render(&site.url("/csr.html"), &opts)
+        .await
+        .is_err());
+    renderer.close().await;
+}
+
+#[tokio::test]
+// spec: CRAWL-081
+async fn requires_chromium_emulates_devices_and_expands_google_viewport() {
+    let _lock = CHROMIUM.lock().await;
+    let site = TestSite::start("render-r01").await.unwrap();
+    let renderer = requires_chromium(LaunchOpts::default()).await;
+    let mut opts = quick();
+    opts.ajax_timeout_ms = 500;
+    let mobile = renderer
+        .render(&site.url("/viewport.html"), &opts)
+        .await
+        .unwrap();
+    assert!(
+        mobile.dom_html.contains("411x731 touch=1"),
+        "{}",
+        mobile.dom_html
+    );
+    assert!(mobile.dom_html.contains("data-height=\"6000\""));
+    assert!(mobile.images[0].1.real_w.is_some());
+    site.reset_request_log();
+    let fixed = RenderOpts {
+        ajax_timeout_ms: 500,
+        screenshots: false,
+        ..RenderOpts::fixed_viewport(375, 667)
+    };
+    let page = renderer
+        .render(&site.url("/viewport.html"), &fixed)
+        .await
+        .unwrap();
+    assert!(page.dom_html.contains("375x667 touch=0"));
+    assert!(!site
+        .requests()
+        .iter()
+        .any(|r| r.path_and_query == "/pixel.png"));
+    assert_eq!(page.images[0].1.in_viewport, Some(false));
+    let desktop = RenderOpts {
+        ajax_timeout_ms: 100,
+        screenshots: false,
+        ..RenderOpts::googlebot_desktop()
+    };
+    let page = renderer
+        .render(&site.url("/viewport.html"), &desktop)
+        .await
+        .unwrap();
+    assert!(page.dom_html.contains("1024x768 touch=0"));
+    renderer.close().await;
+}
+
+#[tokio::test]
+// spec: CRAWL-082
+async fn requires_chromium_captures_sized_png_jpeg_and_content_cap() {
+    let _lock = CHROMIUM.lock().await;
+    let site = TestSite::start("render-r01").await.unwrap();
+    let renderer = requires_chromium(LaunchOpts::default()).await;
+    let mut opts = RenderOpts {
+        ajax_timeout_ms: 0,
+        ..RenderOpts::fixed_viewport(800, 600)
+    };
+    opts.screenshot.size = Some((1024, 768));
+    let result = renderer
+        .render(&site.url("/tall.html"), &opts)
+        .await
+        .unwrap();
+    assert_eq!(png_size(&result.screenshot_tiles[0].data), (1024, 768));
+    opts.device_scale_factor = 2.0;
+    let result = renderer
+        .render(&site.url("/tall.html"), &opts)
+        .await
+        .unwrap();
+    assert_eq!(png_size(&result.screenshot_tiles[0].data), (2048, 1536));
+    opts.device_scale_factor = 1.0;
+    opts.screenshot.fit_content = true;
+    for height in [3000, 20000] {
+        let result = renderer
+            .render(&site.url(&format!("/tall.html?height={height}")), &opts)
+            .await
+            .unwrap();
+        assert_eq!(
+            png_size(&result.screenshot_tiles[0].data),
+            (1024, height.min(8192))
+        );
+    }
+    opts.screenshot.format = ScreenshotFormat::Jpeg;
+    opts.screenshot.fit_content = false;
+    let result = renderer
+        .render(&site.url("/tall.html"), &opts)
+        .await
+        .unwrap();
+    assert_eq!(&result.screenshot_tiles[0].data[..3], &[0xff, 0xd8, 0xff]);
+    opts.screenshots = false;
+    assert!(renderer
+        .render(&site.url("/tall.html"), &opts)
+        .await
+        .unwrap()
+        .screenshot_tiles
+        .is_empty());
+    renderer.close().await;
+}
+
+#[derive(Debug)]
+struct Robots;
+impl ResourcePolicy for Robots {
+    fn allowed<'a>(
+        &'a self,
+        url: &'a str,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = bool> + Send + 'a>> {
+        Box::pin(async move { !url.contains("/private-js/") })
+    }
+}
+#[tokio::test]
+// spec: CRAWL-083
+async fn requires_chromium_blocks_before_network_and_records_http_errors() {
+    let _lock = CHROMIUM.lock().await;
+    let site = TestSite::start("render-r01").await.unwrap();
+    let renderer = requires_chromium(LaunchOpts::default()).await;
+    let mut opts = quick();
+    opts.resource_policy = Some(Arc::new(Robots));
+    let result = renderer
+        .render(&site.url("/blocked.html"), &opts)
+        .await
+        .unwrap();
+    assert!(result
+        .blocked
+        .iter()
+        .any(|b| b.reason == "robots" && b.url.ends_with("/private-js/app.js")));
+    for status in [404, 500] {
+        assert!(
+            result.blocked.iter().any(|b| b.status == Some(status)),
+            "{:?}",
+            result.blocked
+        );
+    }
+    assert!(!site
+        .requests()
+        .iter()
+        .any(|r| r.path_and_query == "/private-js/app.js"));
+    opts.resource_policy = None; // Engine's ignore/custom robots policy releases it.
+    let result = renderer
+        .render(&site.url("/blocked.html"), &opts)
+        .await
+        .unwrap();
+    assert!(!result.blocked.iter().any(|b| b.reason == "robots"));
+    assert!(result.dom_html.contains("data-private-script=\"loaded\""));
+    renderer.close().await;
+}
+
+#[tokio::test]
+// spec: CRAWL-084
+async fn requires_chromium_bounds_console_with_locations_and_cutoff() {
+    let _lock = CHROMIUM.lock().await;
+    let site = TestSite::start("render-r01").await.unwrap();
+    let renderer = requires_chromium(LaunchOpts::default()).await;
+    let mut opts = quick();
+    opts.ajax_timeout_ms = 100;
+    // Screenshot wait crosses the late message; it must not enter the console.
+    opts.screenshots = true;
+    opts.screenshot.resize_wait_ms = 1200;
+    let result = renderer
+        .render(&site.url("/errors.html"), &opts)
+        .await
+        .unwrap();
+    assert_eq!(result.console.len(), 3, "{:?}", result.console);
+    let exception = result
+        .console
+        .iter()
+        .find(|c| c.text.contains("fixture exception"))
+        .unwrap();
+    assert_eq!(exception.level, "error");
+    assert!(exception.source.as_ref().unwrap().ends_with("/errors.html"));
+    assert!(exception.line.unwrap() > 0 && exception.column.unwrap() > 0);
+    assert!(exception.timestamp_ms.is_some());
+    opts.screenshots = false;
+    let flood = renderer
+        .render(&site.url("/flood.html"), &opts)
+        .await
+        .unwrap();
+    assert_eq!(flood.console.len(), 500);
+    assert_eq!(flood.console_dropped, 20);
+    opts.js_error_reporting = false;
+    let disabled = renderer
+        .render(&site.url("/flood.html"), &opts)
+        .await
+        .unwrap();
+    assert!(disabled.console.is_empty());
+    assert_eq!(disabled.console_dropped, 0);
+    renderer.close().await;
+}
+
+#[tokio::test]
+// spec: PERF-006
+async fn requires_chromium_recycles_and_recovers_after_hanging_js() {
+    let _lock = CHROMIUM.lock().await;
+    let site = TestSite::start("render-r01").await.unwrap();
+    let renderer = requires_chromium(LaunchOpts {
+        restart_after_pages: 2,
+        max_tabs: 2,
+        ..Default::default()
+    })
+    .await;
+    for _ in 0..3 {
+        renderer
+            .render(&site.url("/csr.html"), &quick())
+            .await
+            .unwrap();
+    }
+    assert_eq!(renderer.generation(), 2);
+    let opts = RenderOpts {
+        response_timeout_ms: 300,
+        page_timeout_ms: 900,
+        ..quick()
+    };
+    let start = Instant::now();
+    assert!(matches!(
+        renderer.render(&site.url("/hang.html"), &opts).await,
+        Err(RenderError::Timeout(_))
+    ));
+    assert!(start.elapsed() < Duration::from_secs(4));
+    assert!(renderer
+        .render(&site.url("/csr.html"), &quick())
+        .await
+        .unwrap()
+        .dom_html
+        .contains("<title>rendered</title>"));
+    assert_eq!(renderer.generation(), 3);
+    renderer.close().await;
+    let memory = requires_chromium(LaunchOpts {
+        memory_limit_mb: 1,
+        ..Default::default()
+    })
+    .await;
+    memory
+        .render(&site.url("/csr.html"), &quick())
+        .await
+        .unwrap();
+    memory
+        .render(&site.url("/csr.html"), &quick())
+        .await
+        .unwrap();
+    assert_eq!(memory.generation(), 2);
+    memory.close().await;
+}
+
+#[tokio::test]
+// spec: CRAWL-122
+async fn requires_chromium_uses_additional_ca_without_disabling_tls_checks() {
+    let _lock = CHROMIUM.lock().await;
+    let site = TestSite::start("render-r01").await.unwrap();
+    let dir = tempfile::tempdir().unwrap();
+    let cert = dir.path().join("ca.pem");
+    std::fs::write(&cert, site.ca_cert_pem()).unwrap();
+    let mut launch = LaunchOpts::default();
+    launch
+        .network
+        .trusted_certificates
+        .push(cert.to_string_lossy().into());
+    launch.network.proxy.mode = os_model::ProxyMode::None;
+    launch.host_resolver_rules.push(format!(
+        "MAP expired.fixture.test 127.0.0.1:{}",
+        site.port()
+    ));
+    let renderer = requires_chromium(launch).await;
+    let result = renderer
+        .render(&format!("{}/csr.html", site.https_base_url()), &quick())
+        .await
+        .unwrap();
+    assert!(result.dom_html.contains("<title>rendered</title>"));
+    assert!(renderer
+        .render(
+            &format!("https://expired.fixture.test:{}/csr.html", site.port()),
+            &quick()
+        )
+        .await
+        .is_err());
+    renderer.close().await;
+    let untrusted = requires_chromium(LaunchOpts::default()).await;
+    assert!(untrusted
+        .render(&format!("{}/csr.html", site.https_base_url()), &quick())
+        .await
+        .is_err());
+    untrusted.close().await;
+}
+
+#[tokio::test]
+// spec: CRAWL-078 [M2]
+async fn requires_chromium_uses_http_auth_credentials() {
+    let _lock = CHROMIUM.lock().await;
+    let site = TestSite::start("render-r01").await.unwrap();
+    let renderer = requires_chromium(LaunchOpts::default()).await;
+    let opts = RenderOpts {
+        credentials: Some(Credentials {
+            username: "fixture".into(),
+            password: "password".into(),
+        }),
+        ..quick()
+    };
+    let result = renderer.render(&site.url("/auth"), &opts).await.unwrap();
+    assert!(result.dom_html.contains("authenticated"));
+    assert!(site.requests().iter().any(|r| r
+        .header("authorization")
+        .is_some_and(|v| v == "Basic Zml4dHVyZTpwYXNzd29yZA==")));
+    renderer.close().await;
+}
+
+#[tokio::test]
+// spec: PERF-006
+async fn requires_chromium_limits_tabs_and_recovers_from_cancellation() {
+    let _lock = CHROMIUM.lock().await;
+    let site = TestSite::start("render-r01").await.unwrap();
+    let renderer = Arc::new(
+        requires_chromium(LaunchOpts {
+            max_tabs: 2,
+            restart_after_pages: 0,
+            memory_limit_mb: 0,
+            ..Default::default()
+        })
+        .await,
+    );
+    let mut tasks = tokio::task::JoinSet::new();
+    for _ in 0..4 {
+        let renderer = renderer.clone();
+        let url = site.url("/tab-limit");
+        tasks.spawn(async move { renderer.render(&url, &quick()).await.unwrap() });
+    }
+    while let Some(result) = tasks.join_next().await {
+        result.unwrap();
+    }
+    assert_eq!(site.max_concurrency(), 2);
+    let r = renderer.clone();
+    let url = site.url("/hang.html");
+    let task = tokio::spawn(async move { r.render(&url, &quick()).await });
+    tokio::time::timeout(Duration::from_secs(5), async {
+        while !site
+            .requests()
+            .iter()
+            .any(|r| r.path_and_query == "/hang.html")
+        {
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+    })
+    .await
+    .unwrap();
+    task.abort();
+    let _ = task.await;
+    renderer
+        .render(&site.url("/csr.html"), &quick())
+        .await
+        .unwrap();
+    assert_eq!(renderer.generation(), 2);
+    renderer.close().await;
+}
+
+#[tokio::test]
+// spec: CRAWL-077 [P1]
+async fn missing_environment_path_does_not_fall_back_to_system_chrome() {
+    const CHILD: &str = "OPENSPIDER_R01_MISSING_PATH_CHILD";
+    if std::env::var_os(CHILD).is_some() {
+        let error = Renderer::launch(LaunchOpts::default()).await.unwrap_err();
+        assert!(matches!(error, RenderError::ChromiumMissing { .. }));
+        assert!(error.to_string().contains("err-chromium-missing"));
+        return;
+    }
+    let dir = tempfile::tempdir().unwrap();
+    let result = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "missing_environment_path_does_not_fall_back_to_system_chrome",
+        ])
+        .env(CHILD, "1")
+        .env("OPENSPIDER_CHROMIUM", dir.path().join("absent-chrome"))
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+}
+
+#[tokio::test]
+// spec: CRAWL-082
+async fn requires_chromium_screenshot_wait_captures_late_paint_pixels() {
+    use base64::{prelude::BASE64_STANDARD, Engine};
+    let _lock = CHROMIUM.lock().await;
+    let site = TestSite::start("render-r01").await.unwrap();
+    let renderer = requires_chromium(LaunchOpts::default()).await;
+    let mut opts = RenderOpts {
+        ajax_timeout_ms: 0,
+        ..RenderOpts::fixed_viewport(800, 600)
+    };
+    opts.screenshot.size = Some((200, 200));
+    for (wait, color) in [(0, "0,0,255,255"), (300, "255,0,0,255")] {
+        opts.screenshot.resize_wait_ms = wait;
+        let rendered = renderer
+            .render(&site.url("/late-paint.html"), &opts)
+            .await
+            .unwrap();
+        let png = BASE64_STANDARD.encode(&rendered.screenshot_tiles[0].data);
+        // Decode with Chromium's PNG implementation and inspect the actual pixel,
+        // not the DOM color or a screenshot byte inequality.
+        let html=format!("<!doctype html><body><script>const img=new Image();img.onload=()=>{{const c=document.createElement('canvas');c.width=c.height=1;const ctx=c.getContext('2d');ctx.drawImage(img,0,0);document.body.dataset.pixel=Array.from(ctx.getImageData(0,0,1,1).data).join(',')}};img.src='data:image/png;base64,{png}';</script></body>");
+        let readback = RenderOpts {
+            main_response: Some(MainResponse {
+                status: 200,
+                headers: vec![("Content-Type".into(), "text/html".into())],
+                body: html.into_bytes(),
+            }),
+            ..quick()
+        };
+        let page = renderer
+            .render(&site.url("/pixel-readback"), &readback)
+            .await
+            .unwrap();
+        assert!(
+            page.dom_html.contains(&format!("data-pixel=\"{color}\"")),
+            "{}",
+            page.dom_html.chars().take(200).collect::<String>()
+        );
+    }
+    renderer.close().await;
+}
+
+#[tokio::test]
+#[ignore = "Benchmark: 100 pages with/without screenshots, run on a quiet machine"]
+// spec: CRAWL-082
+async fn requires_chromium_screenshot_overhead_100_pages() {
+    let site = TestSite::start("render-r01").await.unwrap();
+    let renderer = requires_chromium(LaunchOpts {
+        restart_after_pages: 0,
+        memory_limit_mb: 0,
+        ..Default::default()
+    })
+    .await;
+    let mut totals = [Duration::ZERO; 2];
+    for (i, screenshots) in [false, true].into_iter().enumerate() {
+        let opts = RenderOpts {
+            screenshots,
+            ajax_timeout_ms: 0,
+            ..Default::default()
+        };
+        let start = Instant::now();
+        for _ in 0..100 {
+            renderer
+                .render(&site.url("/csr.html"), &opts)
+                .await
+                .unwrap();
+        }
+        totals[i] = start.elapsed();
+    }
+    renderer.close().await;
+    eprintln!(
+        "100 pages: screenshots off={:?}, on={:?}, reduction={:.1}%",
+        totals[0],
+        totals[1],
+        (1.0 - totals[0].as_secs_f64() / totals[1].as_secs_f64()) * 100.0
+    );
+    assert!(
+        totals[0].as_secs_f64() <= totals[1].as_secs_f64() * 0.9,
+        "without={:?}, with={:?}",
+        totals[0],
+        totals[1]
+    );
+}

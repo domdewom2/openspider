@@ -4,24 +4,21 @@ use super::{
 };
 use base64::{prelude::BASE64_STANDARD, Engine};
 use chromiumoxide::{
-    cdp::{
-        browser_protocol::{
-            browser::{
-                PermissionDescriptor, PermissionSetting, SetDownloadBehaviorBehavior,
-                SetDownloadBehaviorParams, SetPermissionParams,
-            },
-            emulation::{SetDeviceMetricsOverrideParams, SetTouchEmulationEnabledParams},
-            inspector::EventTargetCrashed,
-            network::{
-                Headers, SetBypassServiceWorkerParams, SetCookiesParams, SetExtraHttpHeadersParams,
-            },
-            page::{
-                CaptureScreenshotFormat, CaptureScreenshotParams, EventLoadEventFired,
-                NavigateParams, StopLoadingParams,
-            },
-            target::{CreateBrowserContextParams, CreateTargetParams},
+    cdp::browser_protocol::{
+        browser::{
+            PermissionDescriptor, PermissionSetting, SetDownloadBehaviorBehavior,
+            SetDownloadBehaviorParams, SetPermissionParams,
         },
-        js_protocol::runtime::TerminateExecutionParams,
+        emulation::{SetDeviceMetricsOverrideParams, SetTouchEmulationEnabledParams},
+        inspector::EventTargetCrashed,
+        network::{
+            Headers, SetBypassServiceWorkerParams, SetCookiesParams, SetExtraHttpHeadersParams,
+        },
+        page::{
+            CaptureScreenshotFormat, CaptureScreenshotParams, EventLoadEventFired, NavigateParams,
+            StopLoadingParams,
+        },
+        target::{CreateBrowserContextParams, CreateTargetParams},
     },
     Browser, Page,
 };
@@ -30,21 +27,26 @@ use os_model::{ImageRenderFacts, RenderTimings, ScreenshotTile};
 use serde_json::{json, Value};
 use std::time::{Duration, Instant};
 
-// A caller can cancel the render future without rendering another page. Stop
-// JavaScript and close the target even then; generation retirement alone would
-// leave an infinite script running until the next render or explicit close.
-struct PageCleanup(Option<Page>);
-impl Drop for PageCleanup {
+// A separate control connection can dispose a context even when its JavaScript
+// thread is unresponsive. Dropping a render future must stop it immediately,
+// without waiting for another render to retire the browser generation.
+struct ContextCleanup {
+    websocket: String,
+    context: Option<chromiumoxide::cdp::browser_protocol::browser::BrowserContextId>,
+    target: Option<chromiumoxide::cdp::browser_protocol::target::TargetId>,
+}
+impl Drop for ContextCleanup {
     fn drop(&mut self) {
-        if let Some(page) = self.0.take() {
+        if let Some(context) = self.context.take() {
             if let Ok(runtime) = tokio::runtime::Handle::try_current() {
+                let websocket = self.websocket.clone();
+                let target = self.target.take();
                 runtime.spawn(async move {
                     let _ = tokio::time::timeout(
-                        Duration::from_millis(500),
-                        page.execute(TerminateExecutionParams::default()),
+                        Duration::from_secs(2),
+                        super::intercept::dispose_context(&websocket, context, target),
                     )
                     .await;
-                    let _ = tokio::time::timeout(Duration::from_secs(1), page.close()).await;
                 });
             }
         }
@@ -70,6 +72,11 @@ pub async fn render(
     .await
     .map_err(|_| RenderError::Crashed("Browser antwortet nicht".into()))?
     .map_err(|e| RenderError::Crashed(e.to_string()))?;
+    let mut cleanup = ContextCleanup {
+        websocket: browser.websocket_address().clone(),
+        context: Some(context.clone()),
+        target: None,
+    };
     let budget = if opts.page_timeout_ms > 0 {
         opts.page_timeout_ms as u64
     } else {
@@ -113,7 +120,7 @@ pub async fn render(
             )
             .await
             .map_err(|e| RenderError::Crashed(e.to_string()))?;
-        let mut cleanup = PageCleanup(Some(page.clone()));
+        cleanup.target = Some(page.target_id().clone());
         let mut crashed = page
             .event_listener::<EventTargetCrashed>()
             .await
@@ -122,25 +129,22 @@ pub async fn render(
             result = run(&page, browser.websocket_address(), url, opts, launch) => result,
             _ = crashed.next() => Err(RenderError::Crashed(url.into())),
         };
-        if matches!(result, Err(RenderError::Timeout(_))) {
-            let _ = page.execute(TerminateExecutionParams::default()).await;
-        }
-        if matches!(
-            tokio::time::timeout(Duration::from_millis(300), page.close()).await,
-            Ok(Ok(()))
-        ) {
-            cleanup.0 = None;
-        }
+        let _ = tokio::time::timeout(Duration::from_millis(300), page.close()).await;
         result
     };
     let result = tokio::time::timeout(Duration::from_millis(budget), work)
         .await
         .unwrap_or_else(|_| Err(RenderError::Timeout(url.into())));
-    let _ = tokio::time::timeout(
-        Duration::from_secs(1),
-        browser.dispose_browser_context(context),
-    )
-    .await;
+    if matches!(
+        tokio::time::timeout(
+            Duration::from_secs(1),
+            browser.dispose_browser_context(context)
+        )
+        .await,
+        Ok(Ok(()))
+    ) {
+        cleanup.context = None;
+    }
     result
 }
 

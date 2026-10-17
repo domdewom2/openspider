@@ -215,3 +215,30 @@ impl Intercept {
         Ok(Self(task))
     }
 }
+
+pub async fn dispose_context(
+    websocket: &str,
+    context: chromiumoxide::cdp::browser_protocol::browser::BrowserContextId,
+    target: Option<chromiumoxide::cdp::browser_protocol::target::TargetId>,
+) -> Result<(), RenderError> {
+    let mut conn = Connection::<CdpJsonEventMessage>::connect(websocket)
+        .await
+        .map_err(protocol)?;
+    if let Some(target) = target {
+        command(
+            &mut conn,
+            None,
+            "Target.closeTarget",
+            json!({"targetId":target}),
+        )
+        .await?;
+    }
+    command(
+        &mut conn,
+        None,
+        "Target.disposeBrowserContext",
+        json!({"browserContextId":context}),
+    )
+    .await?;
+    Ok(())
+}

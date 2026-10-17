@@ -572,26 +572,23 @@ mod tests {
             .await
             .expect("requires_chromium"),
         );
-        let initial_targets = renderer
-            .session
-            .read()
-            .await
-            .as_ref()
-            .unwrap()
-            .browser
-            .pages()
-            .await
-            .unwrap()
-            .len();
         let r = renderer.clone();
         let url = site.url("/hang.html");
         let task = tokio::spawn(async move { r.render(&url, &RenderOpts::default()).await });
-        tokio::time::timeout(Duration::from_secs(5), async {
-            while !site
-                .requests()
-                .iter()
-                .any(|r| r.path_and_query == "/hang.html")
-            {
+        let target = tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                let guard = renderer.session.read().await;
+                for page in guard.as_ref().unwrap().browser.pages().await.unwrap() {
+                    if page
+                        .url()
+                        .await
+                        .unwrap()
+                        .is_some_and(|u| u.ends_with("/hang.html"))
+                    {
+                        return page.target_id().clone();
+                    }
+                }
+                drop(guard);
                 tokio::time::sleep(Duration::from_millis(10)).await;
             }
         })
@@ -602,7 +599,16 @@ mod tests {
         tokio::time::timeout(Duration::from_secs(3), async {
             loop {
                 let guard = renderer.session.read().await;
-                if guard.as_ref().unwrap().browser.pages().await.unwrap().len() <= initial_targets {
+                if !guard
+                    .as_ref()
+                    .unwrap()
+                    .browser
+                    .pages()
+                    .await
+                    .unwrap()
+                    .iter()
+                    .any(|page| page.target_id() == &target)
+                {
                     break;
                 }
                 drop(guard);
