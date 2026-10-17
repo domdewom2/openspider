@@ -15,7 +15,8 @@ Sicherheitsregeln (docs/plan/M2.md 3.13):
     kopiert, nie geloggt, nie in Argumenten oder Fehlermeldungen genannt; Ziel nur Loopback.
   * Kein POST/PUT/PATCH/DELETE; die Postgres-Lesesitzung läuft mit default_transaction_read_only=on und
     akzeptiert ausschließlich eine einzelne SELECT-Anweisung.
-  * Geschrieben wird nur in das mit --out angegebene Verzeichnis (unter /opt/openspider-shadow/var).
+  * Geschrieben wird nur in das mit --out angegebene Verzeichnis (unter /opt/openspider-shadow/var; mit --base
+    erzwungen). Site-Kennungen werden vor jeder Pfadbildung auf Hostname-Zeichen geprüft.
   * Aus Autonomo-Beständen werden nur Kennungen (rule_id) und URLs übernommen, keine Texte.
 
 URL-Normalisierung (identisch für beide Seiten, siehe normalize_url):
@@ -36,6 +37,7 @@ import re
 import string
 import subprocess
 import sys
+import tempfile
 import tomllib
 import urllib.error
 import urllib.parse
@@ -45,7 +47,7 @@ CLASSES = ("gleichwertig", "teilweise", "ohne Gegenstück")
 EXAMPLES = 5
 SCHEMA = 1
 MAX_PAGES = 10000
-LOOPBACK_HOSTS = {"127.0.0.1", "::1", "localhost"}
+LOOPBACK_HOSTS = {"127.0.0.1", "::1"}
 
 # --------------------------------------------------------------------------------------------------
 # URL-Normalisierung
@@ -387,6 +389,10 @@ def render_markdown(result: dict) -> str:
     lines.append(f"- OpenSpider-Crawl beendet: {result.get('openspider_finished_at') or '?'}")
     gap = result.get("time_gap_s")
     lines.append(f"- Zeitabstand der Crawls: {'?' if gap is None else f'{gap} s ({gap / 3600:.1f} h)'}")
+    metrics = result.get("metrics") or {}
+    if "urls_total" in metrics:
+        lines.append(f"- URLs gecrawlt (Zeilen Internal:All): {metrics['urls_total']}"
+                     f" (laut Fortschrittsdatei: {metrics.get('urls_crawled', '?')})")
     lines.append("")
     lines.append("| Regel | Klasse | OpenSpider | Autonomo | OS | Schnitt | nur A | nur OS | Jaccard |")
     lines.append("|---|---|---|---|---|---|---|---|---|")
@@ -733,11 +739,46 @@ def fetch_via_psql(site: str, near: str, cfg: dict) -> dict:
 # --------------------------------------------------------------------------------------------------
 # Befehle
 
+_SAFE_SITE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.-]*$")
+
+
+def check_site(site: str) -> str:
+    """Site-Kennung wird zu Pfaden: nur Hostname-Zeichen, kein '..' (compare.sh ruft das als root auf)."""
+    if not _SAFE_SITE.match(site) or ".." in site:
+        raise SystemExit(f"Abbruch: ungültige Site-Kennung {site!r}")
+    return site
+
+
+def check_inside(path: str, base: str | None, what: str) -> str:
+    """Mit --base: der aufgelöste Pfad (Symlinks, '..') muss unterhalb des Basisordners liegen."""
+    if base is None:
+        return path
+    real_base = os.path.realpath(base)
+    real = os.path.realpath(path)
+    if real != real_base and not real.startswith(real_base + os.sep):
+        raise SystemExit(f"Abbruch: {what} liegt außerhalb von {base}")
+    return path
+
+
 def _write_json(path: str, obj) -> None:
-    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as fh:
-        json.dump(obj, fh, ensure_ascii=False, indent=1, sort_keys=True)
-        fh.write("\n")
+    """Atomar über eine neue Datei im selben Ordner: ein dort abgelegter Symlink wird ersetzt, nie befolgt."""
+    directory = os.path.dirname(os.path.abspath(path))
+    os.makedirs(directory, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=directory, prefix=".tmp-", suffix=".json")
+    try:
+        umask = os.umask(0)
+        os.umask(umask)
+        os.fchmod(fd, 0o666 & ~umask)
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(obj, fh, ensure_ascii=False, indent=1, sort_keys=True)
+            fh.write("\n")
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 def cmd_exports(args) -> int:
@@ -757,6 +798,8 @@ def cmd_validate(args) -> int:
 
 
 def cmd_fetch(args) -> int:
+    check_site(args.site)
+    check_inside(args.out, args.base, "--out")
     cfg = _load_source_config(args.config) if args.config and os.path.isfile(args.config) else {}
     if args.source == "file":
         with open(args.file, encoding="utf-8") as fh:
@@ -783,6 +826,8 @@ def cmd_discover(args) -> int:
 
 
 def cmd_compare(args) -> int:
+    check_site(args.site)
+    check_inside(args.out, args.base, "--out")
     rule_map = load_rule_map(args.rule_map)
     problems = validate_rule_map(rule_map)
     if problems:
@@ -802,6 +847,11 @@ def cmd_compare(args) -> int:
     if args.progress and os.path.isfile(args.progress):
         with open(args.progress, encoding="utf-8", errors="replace") as fh:
             result["metrics"] = compute_metrics(fh.read().splitlines(), meta)
+    # "URLs gecrawlt" im Bericht = Zeilen von Internal:All (enthält auch robots-gesperrte URLs mit Status 0);
+    # urls_crawled aus der Fortschrittsdatei bleibt als Vergleichswert.
+    internal = next((v for k, v in os_data.items() if k.lower() == "internal:all"), None)
+    if internal is not None:
+        result.setdefault("metrics", {})["urls_total"] = len(internal)
     _write_json(os.path.join(args.out, f"{args.site}.json"), result)
     with open(os.path.join(args.out, f"{args.site}.md"), "w", encoding="utf-8") as fh:
         fh.write(render_markdown(result))
@@ -839,6 +889,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--config", help="etc/autonomo-source.toml")
     s.add_argument("--file", help="bei --source file: bereits normalisierte Datei")
     s.add_argument("--out", required=True)
+    s.add_argument("--base", help="Basisordner (var): --out muss darunter liegen (compare.sh setzt es immer)")
     s.set_defaults(fn=cmd_fetch)
 
     s = sub.add_parser("discover", help="Struktur einer Autonomo-Antwort anzeigen (ohne Werte)")
@@ -855,6 +906,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--osconfig", help="Konfiguration des Laufs (Schwellen für Platzhalter in Filternamen; Standard: Standardwerte)")
     s.add_argument("--progress", help="Fortschrittsdatei des Laufs (JSON-Zeilen)")
     s.add_argument("--out", required=True)
+    s.add_argument("--base", help="Basisordner (var): --out muss darunter liegen")
     s.set_defaults(fn=cmd_compare)
 
     s = sub.add_parser("metrics", help="Rate und Spitzen-RSS eines Laufs")

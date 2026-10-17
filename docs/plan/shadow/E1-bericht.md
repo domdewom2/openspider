@@ -37,7 +37,7 @@ Sites nacheinander. Unit: `Type=oneshot`, `Nice=15`, `IOSchedulingClass=idle`, `
 
 | | caloone.de | rotweine.org |
 |---|---|---|
-| URLs gecrawlt | offen | offen |
+| URLs gecrawlt (`metrics.urls_total`, Zeilen Internal:All) | offen | offen |
 | Dauer | offen | offen |
 | mittlere / höchste Rate (URL/s, Vorgabe ≤ 2) | offen | offen |
 | Spitzen-RSS | offen | offen |

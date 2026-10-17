@@ -263,7 +263,74 @@ class CompareTests(unittest.TestCase):
             with open(os.path.join(tmp, "example.com.json"), encoding="utf-8") as fh:
                 out = json.load(fh)
             self.assertEqual(out["metrics"]["peak_rss_kb"], 123456)
+            # "URLs gecrawlt" = Zeilen von Internal:All; urls_crawled (Fortschrittsdatei) bleibt als Vergleichswert.
+            with open(os.path.join(DATA, "os", "internal_all.csv"), encoding="utf-8-sig") as fh:
+                rows = len(fh.read().splitlines()) - 1
+            self.assertEqual(out["metrics"]["urls_total"], rows)
+            self.assertEqual(out["metrics"]["urls_crawled"], 60)
+            with open(os.path.join(tmp, "example.com.md"), encoding="utf-8") as fh:
+                self.assertIn(f"URLs gecrawlt (Zeilen Internal:All): {rows} (laut Fortschrittsdatei: 60)", fh.read())
             self.assertTrue(os.path.isfile(os.path.join(tmp, "example.com.md")))
+
+
+class PathSafetyTests(unittest.TestCase):
+    """compare.sh läuft als root mit Werten aus einer Datei des Crawler-Benutzers: keine Pfade außerhalb von var."""
+
+    def test_site_names_are_host_characters_only(self):
+        for good in ("caloone.de", "rotweine.org", "a-b.c1"):
+            self.assertEqual(c.check_site(good), good)
+        for bad in ("../x", "..", "a/b", "a..b", ".hidden", "a b", "", "a;b", "-x/../y"):
+            with self.assertRaises(SystemExit, msg=bad):
+                c.check_site(bad)
+
+    def test_fetch_and_compare_refuse_a_traversing_site_without_creating_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = os.path.join(tmp, "var")
+            os.makedirs(base)
+            out = os.path.join(base, "reports", "autonomo-..%2Fx.json")
+            for argv in (
+                ["fetch-autonomo", "--site", "../evil", "--near", "2026-10-17T02:05:00Z", "--source", "file",
+                 "--file", os.path.join(DATA, "autonomo.json"), "--base", base, "--out", out],
+                ["compare", "--site", "../evil", "--exports", os.path.join(DATA, "os"),
+                 "--autonomo", os.path.join(DATA, "autonomo.json"), "--rule-map", os.path.join(DATA, "map.toml"),
+                 "--base", base, "--out", os.path.join(base, "reports")],
+            ):
+                with self.assertRaises(SystemExit):
+                    c.main(argv)
+            self.assertEqual(os.listdir(base), [])
+
+    def test_out_must_stay_below_the_base_folder(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = os.path.join(tmp, "var")
+            outside = os.path.join(tmp, "outside")
+            os.makedirs(os.path.join(base, "reports"))
+            os.makedirs(outside)
+            os.symlink(outside, os.path.join(base, "reports", "link"))
+            for out in (os.path.join(outside, "a.json"), os.path.join(base, "..", "outside", "a.json"),
+                        os.path.join(base, "reports", "link", "a.json")):
+                with self.assertRaises(SystemExit, msg=out):
+                    c.main(["fetch-autonomo", "--site", "one.test", "--near", "2026-10-17T02:05:00Z", "--source", "file",
+                            "--file", os.path.join(DATA, "autonomo.json"), "--base", base, "--out", out])
+            self.assertEqual(os.listdir(outside), [])
+            ok = os.path.join(base, "reports", "a.json")
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(c.main(["fetch-autonomo", "--site", "one.test", "--near", "2026-10-17T02:05:00Z",
+                                         "--source", "file", "--file", os.path.join(DATA, "autonomo.json"),
+                                         "--base", base, "--out", ok]), 0)
+            self.assertTrue(os.path.isfile(ok))
+
+    def test_write_replaces_a_planted_symlink_instead_of_following_it(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = os.path.join(tmp, "target.txt")
+            with open(target, "w", encoding="utf-8") as fh:
+                fh.write("unberührt")
+            link = os.path.join(tmp, "out.json")
+            os.symlink(target, link)
+            c._write_json(link, {"a": 1})
+            with open(target, encoding="utf-8") as fh:
+                self.assertEqual(fh.read(), "unberührt")
+            self.assertFalse(os.path.islink(link))
+            self.assertEqual(sorted(os.listdir(tmp)), ["out.json", "target.txt"])
 
 
 class MetricsTests(unittest.TestCase):
@@ -343,6 +410,8 @@ class AutonomoReadTests(unittest.TestCase):
     def test_remote_hosts_are_refused(self):
         with self.assertRaises(SystemExit):
             c._api_get("http://example.com/api", "x", "t", 1)
+        with self.assertRaises(SystemExit):
+            c._api_get("http://localhost:1/api", "x", "t", 1)  # Auflösung hinge an /etc/hosts: nur numerisch
 
 
 class _Redirecting(http.server.BaseHTTPRequestHandler):

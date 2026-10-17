@@ -18,9 +18,17 @@ json_get() { python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))[sys
 
 STAMP="$(json_get "$BASE/var/latest-run.json" stamp)"
 SITES="$(python3 -c 'import json,sys; print(" ".join(json.load(open(sys.argv[1]))["sites"]))' "$BASE/var/latest-run.json")"
+# latest-run.json schreibt der Crawler-Benutzer, dieses Skript läuft als root: Stempel und Sites werden zu Pfaden
+# und Eigentümerwechseln, also vor jeder Verwendung streng prüfen.
+if ! [[ "$STAMP" =~ ^[0-9]{8}T[0-9]{6}Z$ ]]; then log "ungültiger Stempel in latest-run.json, Abbruch"; exit 1; fi
+for site in $SITES; do
+  if ! [[ "$site" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*$ ]] || [[ "$site" == *..* ]]; then
+    log "ungültige Site-Kennung in latest-run.json, Abbruch"; exit 1
+  fi
+done
 REP="$BASE/var/reports/$(date -u +%Y-%m-%d)"
 mkdir -p "$REP"
-if [ "$(id -u)" = 0 ]; then chown "$SHADOW_USER": "$REP"; fi
+if [ "$(id -u)" = 0 ]; then chown -h "$SHADOW_USER": "$REP"; fi
 
 as_shadow() {
   if [ "$(id -u)" = 0 ]; then
@@ -46,15 +54,15 @@ for site in $SITES; do
   # SHADOW_AUTONOMO_SOURCE=file: bereits normalisierte Datei (SHADOW_AUTONOMO_FILE) statt Lesezugang, z. B. zum Wiederholen
   if [ "$SOURCE" = file ]; then extra=(--file "${SHADOW_AUTONOMO_FILE:?SHADOW_AUTONOMO_FILE fehlt}"); fi
   if ! ( umask 027; python3 "$PY" fetch-autonomo --site "$site" --near "$finished" --source "$SOURCE" \
-           --config "$BASE/etc/autonomo-source.toml" ${extra[@]+"${extra[@]}"} --out "$auto" ); then
+           --config "$BASE/etc/autonomo-source.toml" ${extra[@]+"${extra[@]}"} --base "$BASE/var" --out "$auto" ); then
     log "$site: Autonomo-Befunde nicht lesbar"
     fail=1
     continue
   fi
-  if [ "$(id -u)" = 0 ]; then chown "$SHADOW_USER": "$auto"; fi
+  if [ "$(id -u)" = 0 ]; then chown -h "$SHADOW_USER": "$auto"; fi
   if ! as_shadow python3 "$PY" compare --site "$site" --exports "$dir" --autonomo "$auto" \
          --rule-map "$BASE/etc/rule-map.toml" --run-meta "$meta" --osconfig "$BASE/etc/shadow.osconfig" \
-         --progress "$BASE/var/crawls/$site/$STAMP.progress.log" --out "$REP"; then
+         --progress "$BASE/var/crawls/$site/$STAMP.progress.log" --base "$BASE/var" --out "$REP"; then
     log "$site: Vergleich fehlgeschlagen"
     fail=1
   fi

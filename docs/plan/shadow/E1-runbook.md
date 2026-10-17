@@ -86,7 +86,7 @@ Nur den Vergleich wiederholen (ohne neuen Crawl), z. B. nach einer ergänzten Zu
 
 ## 6. Messwerte und Bericht
 
-Je Site in `var/reports/<datum>/<site>.json` unter `metrics`: URLs, Dauer, mittlere Rate, Höchstrate (gemeldet und im
+Je Site in `var/reports/<datum>/<site>.json` unter `metrics`: URLs (`urls_total` = Zeilen von `Internal:All`, das ist "URLs gecrawlt" im Bericht; `urls_crawled` aus der Fortschrittsdatei nur als Vergleichswert, ohne robots-gesperrte URLs), Dauer, mittlere Rate, Höchstrate (gemeldet und im
 10-s-Fenster), Spitzen-RSS (`VmHWM` aus `run.json`). Vorgabe: ≤ 2 URL/s. Fehler und robots-Sperren aus
 `var/exports/<site>/<stempel>/response_codes_*.csv` (Zeilenzahlen) und der Fortschrittsdatei
 `var/crawls/<site>/<stempel>.progress.log`. Ergebnisse in `docs/plan/shadow/E1-bericht.md` eintragen (Auszüge, Rohdaten bleiben auf

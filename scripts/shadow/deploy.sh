@@ -107,7 +107,7 @@ chown -R root:root "$BASE/bin" "$BASE/etc" "$BASE/systemd"
 chmod 0600 "$BASE/etc/autonomo-source.toml" "$BASE/etc/autonomo-source.toml.dist"
 systemctl link "$BASE/systemd/openspider-shadow.service" "$BASE/systemd/openspider-shadow.timer"
 systemctl daemon-reload
-cat "$BASE/bin/VERSION"' 
+cat "$BASE/bin/VERSION"'
 
 # 4. Nachher
 snapshot nachher.txt

@@ -141,10 +141,32 @@ class ShadowScriptTests(unittest.TestCase):
             result = json.load(fh)
         self.assertEqual(result["autonomo_unmapped"], {"irgendeine_regel": 1})
         self.assertEqual(result["metrics"]["urls_crawled"], 4)
+        self.assertEqual(result["metrics"]["urls_total"], 1)  # Zeilen von Internal:All, nicht der Fortschrittszähler
         # Alle exportierten Filter, auch die mit Platzhaltern im Namen, wurden gefunden (nichts "Export fehlt").
         self.assertGreaterEqual(len(result["openspider_unmapped"]), 60)
         self.assertNotIn(None, result["openspider_unmapped"].values())
         self.assertEqual(result["unreadable_exports"], {})
+
+
+    def test_compare_refuses_forged_latest_run_values_before_touching_anything(self):
+        self.assertEqual(self.run_script("run.sh").returncode, 0)
+        latest = os.path.join(self.base, "var", "latest-run.json")
+        with open(latest) as fh:
+            good = json.load(fh)
+        outside = os.path.join(self.tmp, "outside")
+        os.makedirs(outside)
+        for forged in ({**good, "stamp": "../../../outside"}, {**good, "stamp": "20260101T000000Z/.."},
+                       {**good, "sites": ["../../outside"]}, {**good, "sites": ["one.test", "a/b"]},
+                       {**good, "sites": [".."]}):
+            with open(latest, "w") as fh:
+                json.dump(forged, fh)
+            before = sorted(os.listdir(os.path.join(self.base, "var")))
+            proc = self.run_script("compare.sh", SHADOW_AUTONOMO_SOURCE="file",
+                                   SHADOW_AUTONOMO_FILE=os.path.join(self.tmp, "gibt-es-nicht.json"))
+            self.assertNotEqual(proc.returncode, 0, forged)
+            self.assertIn("ungültig", proc.stderr)
+            self.assertEqual(sorted(os.listdir(os.path.join(self.base, "var"))), before)
+            self.assertEqual(os.listdir(outside), [])
 
 
 class DeployGuardTests(unittest.TestCase):
