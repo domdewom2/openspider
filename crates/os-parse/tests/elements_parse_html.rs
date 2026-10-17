@@ -8,6 +8,7 @@ fn parse(html: &str, pixel: bool) -> os_model::ParsedPage {
     let mut cfg = ParseConfig::from_crawl_config(&CrawlConfig::default());
     cfg.pixel = pixel;
     parse_html(&ParseInput {
+        status: 200,
         url: &url,
         body: html.as_bytes(),
         content_type: Some("text/html; charset=utf-8"),

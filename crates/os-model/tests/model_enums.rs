@@ -6,7 +6,7 @@ use os_model::*;
 
 fn round_trip<T>(all: &[T])
 where
-    T: Copy
+    T: Clone
         + PartialEq
         + std::fmt::Debug
         + FromStr
@@ -64,7 +64,7 @@ fn all_string_enums_round_trip() {
 
 #[test]
 fn as_str_values_are_unique_per_enum() {
-    fn unique<T: Copy>(all: &[T], f: impl Fn(&T) -> &'static str) {
+    fn unique<T: Clone>(all: &[T], f: impl Fn(&T) -> &'static str) {
         let mut seen = std::collections::HashSet::new();
         for v in all {
             assert!(seen.insert(f(v)), "doppelter Wert {}", f(v));

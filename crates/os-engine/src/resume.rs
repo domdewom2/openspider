@@ -91,6 +91,12 @@ impl<F: Fetch> Fetch for PrimedFetch<F> {
                             truncated: false,
                             decode_error: None,
                             md5_hex: String::new(),
+                            request_headers: Vec::new(),
+                            set_cookies: Vec::new(),
+                            content_length: None,
+                            untruncated_bytes: None,
+                            synthetic: None,
+                            attempts: 1,
                         }),
                     }
                 });
@@ -270,6 +276,12 @@ pub(crate) fn restore(
         .max(1);
     core.next_url_id = next_id;
     core.next_seq = u64::try_from(next_seq).unwrap_or(1);
+    let discovery_seq: u64 = sql(file.conn().query_row(
+        "SELECT COALESCE(MAX(seq), 0) FROM discovery_edges",
+        [],
+        |r| r.get(0),
+    ))?;
+    core.next_seq = core.next_seq.max(discovery_seq.saturating_add(1));
 
     if load_queue {
         core.frontier

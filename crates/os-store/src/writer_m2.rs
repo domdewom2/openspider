@@ -35,7 +35,9 @@ fn bad(message: String) -> StoreError {
 
 /// Ob der Batch keinen der M2-Teile trägt (für die No-op-Prüfung von `write_batch`).
 pub(crate) fn parts_empty(batch: &WriteBatch) -> bool {
-    batch.ext.is_empty()
+    batch.cookies.is_empty()
+        && batch.discoveries.is_empty()
+        && batch.ext.is_empty()
         && batch.structured_data.is_empty()
         && batch.sd_issues.is_empty()
         && batch.render.is_empty()
@@ -51,7 +53,17 @@ pub(crate) fn parts_empty(batch: &WriteBatch) -> bool {
 
 /// Löscht die seitenbezogenen M2-Zeilen einer URL (`PageWrite.replace`).
 pub(crate) fn clear_page_children(tx: &Transaction<'_>, id: i64) -> Result<(), StoreError> {
+    let namespaces = os_model::ext::NAMESPACES
+        .iter()
+        .filter(|(ns, _)| os_model::ext::is_fetch_scoped(ns))
+        .map(|(ns, _)| format!("'{ns}'"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    tx.prepare_cached(&format!(
+        "DELETE FROM url_ext WHERE url_id = ?1 AND substr(key, 1, instr(key, '.') - 1) IN ({namespaces})"
+    ))?.execute([id])?;
     for sql in [
+        "DELETE FROM cookies WHERE url_id = ?1",
         "DELETE FROM sd_items WHERE url_id = ?1",
         "DELETE FROM sd_issues WHERE url_id = ?1",
         "DELETE FROM forms WHERE url_id = ?1",
@@ -81,9 +93,9 @@ pub(crate) fn write_page_html(
     html: &os_model::PageHtml,
 ) -> Result<(), StoreError> {
     tx.prepare_cached(
-        "INSERT OR REPLACE INTO page_html (url_id, encoding, body) VALUES (?1, ?2, ?3)",
+        "INSERT OR REPLACE INTO page_html (url_id, encoding, body, compression) VALUES (?1, ?2, ?3, 'zstd')",
     )?
-    .execute(params![id, html.encoding, html.body])?;
+    .execute(params![id, html.encoding, compress(&html.body)?])?;
     Ok(())
 }
 
@@ -111,6 +123,7 @@ fn stamp_urls(tx: &Transaction<'_>, part: &str, ids: &[i64], seq: i64) -> Result
 
 /// Schreibt alle M2-Teile des Batches (nach den Seiten, damit die URL-Zeilen existieren).
 pub(crate) fn write(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
+    write_w1(tx, batch, seq)?;
     write_ext(tx, batch, seq)?;
     write_structured_data(tx, batch, seq)?;
     write_render(tx, batch, seq)?;
@@ -281,23 +294,33 @@ fn write_render(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<()
             tx.prepare_cached(sql)?.execute([id])?;
         }
         tx.prepare_cached(
-            "INSERT OR REPLACE INTO render_pages (url_id, status, html, word_count, load_ms, wait_ms, total_ms) \
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            "INSERT OR REPLACE INTO render_pages (url_id, status, html, word_count, load_ms, wait_ms, total_ms, compression, console_dropped) \
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'zstd', ?8)",
         )?
         .execute(params![
             id,
             r.status,
-            r.html,
+            r.html.as_deref().map(compress).transpose()?,
             r.word_count,
             r.timings.load_ms,
             r.timings.wait_ms,
-            r.timings.total_ms
+            r.timings.total_ms,
+            r.console_dropped
         ])?;
         let mut console = tx.prepare_cached(
-            "INSERT INTO render_console (url_id, position, level, text, source, line) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            "INSERT INTO render_console (url_id, position, level, text, source, line, col, timestamp_ms) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
         )?;
         for (i, c) in r.console.iter().enumerate() {
-            console.execute(params![id, i as i64, c.level, c.text, c.source, c.line])?;
+            console.execute(params![
+                id,
+                i as i64,
+                c.level,
+                c.text,
+                c.source,
+                c.line,
+                c.column,
+                c.timestamp_ms
+            ])?;
         }
         let mut blocked = tx.prepare_cached(
             "INSERT INTO render_blocked (url_id, position, url, reason, status) VALUES (?1, ?2, ?3, ?4, ?5)",
@@ -546,6 +569,54 @@ fn write_api_values(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Resul
                 unknown.execute(params![v.url, v.source, v.fetched_at.to_db()])?;
             }
         }
+    }
+    Ok(())
+}
+
+pub(crate) fn compress(bytes: &[u8]) -> Result<Vec<u8>, StoreError> {
+    zstd::stream::encode_all(bytes, 3)
+        .map_err(|e| StoreError::InvalidInput(format!("HTML-Kompression: {e}")))
+}
+fn write_w1(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
+    let mut stamp = tx.prepare_cached("UPDATE urls SET change_seq = ?1 WHERE id = ?2")?;
+    for id in distinct(batch.cookies.iter().map(|c| c.url_id.0)) {
+        if stamp.execute(params![seq, id])? == 0 {
+            return Err(bad(format!("cookies: URL {id} existiert nicht")));
+        }
+        tx.execute("DELETE FROM cookies WHERE url_id = ?1", [id])?;
+    }
+    let mut cookie = tx.prepare_cached("INSERT INTO cookies (url_id, position, origin, name, value, domain, path, expires, max_age, secure, http_only, same_site, raw) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)")?;
+    for c in &batch.cookies {
+        cookie.execute(params![
+            c.url_id.0,
+            c.position,
+            c.origin.as_str(),
+            c.name,
+            c.value,
+            c.domain,
+            c.path,
+            c.expires,
+            c.max_age,
+            c.secure,
+            c.http_only,
+            c.same_site,
+            c.raw
+        ])?;
+    }
+    let mut discovery = tx.prepare_cached("INSERT INTO discovery_edges (seq, target_id, source_id, kind, link_type, anchor, depth) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)")?;
+    for d in &batch.discoveries {
+        if stamp.execute(params![seq, d.target.0])? == 0 {
+            return Err(bad(format!("discovery: URL {} existiert nicht", d.target)));
+        }
+        discovery.execute(params![
+            d.seq,
+            d.target.0,
+            d.source.map(|s| s.0),
+            d.kind.as_str(),
+            d.link_type.map(|t| t.as_str()),
+            d.anchor,
+            d.depth
+        ])?;
     }
     Ok(())
 }

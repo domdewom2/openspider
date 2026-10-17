@@ -318,6 +318,8 @@ async fn get(f: &HttpFetcher, base: &str, id: u64) -> (f64, bool) {
             purpose: FetchPurpose::Page,
             cookies: None,
             max_body_bytes: 10 * 1024 * 1024,
+            attempt: 0,
+            body_limit: Default::default(),
         })
         .await;
     (

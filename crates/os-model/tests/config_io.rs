@@ -465,6 +465,7 @@ fn random_config(
             mobile_alternate: sc!(),
             follow_internal_nofollow: b!(),
             follow_external_nofollow: b!(),
+            ..Default::default()
         },
         limits: LimitsConfig {
             max_urls: g!(),
@@ -481,6 +482,7 @@ fn random_config(
             threads: n!(),
             max_per_host: opt!(n!()),
             max_urls_per_sec: opt!(f.next().unwrap()),
+            ..Default::default()
         },
         user_agent: UserAgentConfig {
             preset: s!(),
@@ -499,6 +501,7 @@ fn random_config(
             ),
             retries: n!(),
             retry_delay_s: n!(),
+            ..Default::default()
         },
         advanced: AdvancedConfig {
             cookies: pick!(
@@ -514,6 +517,7 @@ fn random_config(
             respect_canonical: b!(),
             html_validation: b!(),
             green_hosting: b!(),
+            ..Default::default()
         },
         auth: AuthConfig {
             basic: (0..(l.next().unwrap() % 3))
@@ -537,7 +541,7 @@ fn random_config(
         network: NetworkConfig { resolve: list!() },
         rendering: RenderingConfig {
             mode: pick!(RenderingMode::Text, RenderingMode::JavaScript),
-            ajax_timeout_s: n!(),
+            ajax_timeout_s: f64::from(n!()),
             js_error_reporting: b!(),
             viewport: ViewportConfig {
                 preset: s!(),
@@ -621,7 +625,10 @@ fn random_config(
             max_px: n!(),
             min_px: n!(),
         },
-        url: UrlLimits { max_chars: n!() },
+        url: UrlLimits {
+            max_chars: n!(),
+            ..Default::default()
+        },
         h1: HeadingLimits { max_chars: n!() },
         h2: HeadingLimits { max_chars: n!() },
         image: ImageLimits {
@@ -681,6 +688,7 @@ fn random_config(
         export: ExportConfig {
             utf8_bom: b!(),
             line_ending: pick!(LineEnding::Crlf, LineEnding::Lf),
+            ..Default::default()
         },
         spelling: SpellingConfig {
             enabled: b!(),
@@ -709,6 +717,7 @@ fn random_config(
                     case_sensitive: b!(),
                 })
                 .collect(),
+            ..Default::default()
         },
         custom_extraction: CustomExtractionConfig {
             extractors: (0..(l.next().unwrap() % 3))
@@ -788,6 +797,7 @@ fn random_config(
                 metrics: list!(),
                 page_dimension: opt!(s!()),
                 filter: opt!(s!()),
+                ..Default::default()
             },
             gsc: GscConfig {
                 enabled: b!(),
@@ -801,6 +811,7 @@ fn random_config(
                 search_type: pick!(SearchType::Web, SearchType::Image, SearchType::Discover),
                 filter: opt!(s!()),
                 url_inspection: b!(),
+                ..Default::default()
             },
             psi: PsiConfig {
                 enabled: b!(),
@@ -808,29 +819,34 @@ fn random_config(
                 device: pick!(PsiDevice::Mobile, PsiDevice::Desktop),
                 local: b!(),
                 metric_groups: list!(),
+                ..Default::default()
             },
             majestic: LinkMetricsConfig {
                 enabled: b!(),
                 base_url: opt!(s!()),
                 levels: vec![pick!(ApiLevel::Url, ApiLevel::Subdomain, ApiLevel::Domain)],
                 metrics: list!(),
+                ..Default::default()
             },
             ahrefs: LinkMetricsConfig {
                 enabled: b!(),
                 base_url: opt!(s!()),
                 levels: vec![],
                 metrics: list!(),
+                ..Default::default()
             },
             moz: LinkMetricsConfig {
                 enabled: b!(),
                 base_url: opt!(s!()),
                 levels: vec![ApiLevel::Domain, ApiLevel::Url],
                 metrics: list!(),
+                ..Default::default()
             },
             drive: DriveConfig {
                 enabled: b!(),
                 base_url: opt!(s!()),
                 root_folder: opt!(s!()),
+                ..Default::default()
             },
         },
         segments: SegmentsConfig {
@@ -915,6 +931,7 @@ fn random_config(
                 only_valid_targets: b!(),
             },
         },
+        ..Default::default()
     }
 }
 

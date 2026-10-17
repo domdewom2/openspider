@@ -32,6 +32,10 @@ pub struct Scope {
 }
 
 impl Scope {
+    // STUB(M2-E04)
+    pub fn with_cdns(self, _cdns: &[String]) -> Self {
+        self
+    }
     /// Legt den Bereich fest.
     pub fn new(start: &NormUrl, cfg: &ScopeConfig) -> Scope {
         let start_host = start.url.host_str().map(|h| h.to_ascii_lowercase());

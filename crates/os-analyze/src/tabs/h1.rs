@@ -63,5 +63,6 @@ pub fn tab() -> TabDef {
             p.push(("h1_max_chars", Value::Int(i64::from(cfg.h1.max_chars))));
             p
         },
+        hidden_population: None,
     }
 }

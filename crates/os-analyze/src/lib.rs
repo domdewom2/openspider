@@ -14,6 +14,7 @@ pub mod analysis;
 pub mod compare;
 pub mod cursor;
 pub mod defs;
+pub mod details;
 pub mod error;
 pub mod graph;
 pub mod issues;

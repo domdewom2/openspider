@@ -88,5 +88,6 @@ pub fn tab() -> TabDef {
             ));
             p
         },
+        hidden_population: None,
     }
 }

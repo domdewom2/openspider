@@ -263,7 +263,7 @@ fn output_mode(args: &RunArgs, rep: &Reporter) -> OutputMode {
     }
 }
 
-fn resolve_exports(args: &RunArgs) -> Result<Vec<Resolved>, CliError> {
+fn resolve_exports(args: &RunArgs, cfg: &os_model::CrawlConfig) -> Result<Vec<Resolved>, CliError> {
     let mut exports: Vec<Resolved> = Vec::new();
     let mut problems: Vec<String> = Vec::new();
     for (kind, lists) in [
@@ -273,7 +273,7 @@ fn resolve_exports(args: &RunArgs) -> Result<Vec<Resolved>, CliError> {
     ] {
         for list in lists {
             for name in names::split_list(list) {
-                match names::resolve(kind, &name) {
+                match names::resolve_with(kind, &name, cfg) {
                     Ok(resolved) => {
                         if !exports.iter().any(|e| e.key() == resolved.key()) {
                             exports.push(resolved);
@@ -302,7 +302,6 @@ pub fn build(args: &RunArgs, paths: AppPaths, rep: &Reporter) -> Result<Plan, Cl
     }
 
     let format = parse_format(args)?;
-    let exports = resolve_exports(args)?;
 
     // Quelle
     let list_sources: Vec<String> = args
@@ -413,6 +412,8 @@ pub fn build(args: &RunArgs, paths: AppPaths, rep: &Reporter) -> Result<Plan, Cl
             )
         }
     };
+
+    let exports = resolve_exports(args, &config)?;
 
     // Ausgabeordner (nur, wenn Dateien entstehen)
     let output = if !exports.is_empty() || args.save_crawl {

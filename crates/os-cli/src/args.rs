@@ -40,6 +40,16 @@ pub enum Sub {
 /// Optionen des Headless-Betriebs.
 #[derive(Debug, Clone, Default, clap::Args)]
 pub struct RunArgs {
+    /// Protokollformat (OUT-240).
+    #[arg(long, value_parser = ["text", "json"])]
+    pub log_format: Option<String>,
+    /// Protokollstufe (OUT-241).
+    #[arg(long, value_parser = ["error", "warn", "info", "debug", "trace"])]
+    pub log_level: Option<String>,
+    /// Diagnoseordner (OUT-244).
+    #[arg(long, value_name = "ORDNER")]
+    pub diagnostics: Option<PathBuf>,
+
     /// Zeigt die Hilfe; `--help export-tabs|bulk-export|save-report|export-custom-summary|set` listet die
     /// gültigen Namen der Kategorie (mit `--json` maschinenlesbar).
     #[arg(

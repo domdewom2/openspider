@@ -78,6 +78,7 @@ pub fn link(target: Option<i64>, link_type: LinkType, position: u32) -> LinkRow 
         link_position: None,
         link_origin: LinkOrigin::Html,
         in_head: Some(false),
+        ..Default::default()
     }
 }
 

@@ -64,6 +64,7 @@ fn post_crawl(id: &'static str, predicate: &'static str, ignore_non_indexable: b
         kind: FilterKind::PostCrawl(AnalysisStep::Sitemaps),
         requires: Vec::new(),
         ignore_non_indexable,
+        default_columns: &[],
     }
 }
 
@@ -74,6 +75,7 @@ fn no_params(_: &CrawlConfig) -> Vec<(&'static str, Value)> {
 /// Definition des Tabs „Sitemaps“.
 pub fn tab() -> TabDef {
     TabDef {
+        hidden_population: None,
         id: "Sitemaps",
         population: POPULATION,
         columns: vec![
@@ -108,6 +110,7 @@ pub fn tab() -> TabDef {
                 kind: FilterKind::Live,
                 requires: Vec::new(),
                 ignore_non_indexable: false,
+                default_columns: &[],
             },
             post_crawl("URLs In Sitemap", IN_SITEMAP, false),
             post_crawl("URLs Not In Sitemap", NOT_IN_SITEMAP, false),

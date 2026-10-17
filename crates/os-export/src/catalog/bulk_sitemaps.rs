@@ -28,12 +28,14 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D13",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Sitemaps:URLs Not In Sitemap Details",
         aliases: &["Sitemaps:URLs Not In Sitemap Inlinks"],
         file_stem: "Sitemaps:URLs Not In Sitemap Details",
         header: &["Address"],
+        header_fn: None,
         requires: &[],
         owner: "M2-D13",
         run: stub_run,
@@ -52,6 +54,7 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D13",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Sitemaps:URLs In Multiple Sitemaps Details",
@@ -67,6 +70,7 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[ReportRequirement::CrawlAnalysis],
         owner: "M2-D13",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Sitemaps:XML Sitemap With Over 50k URLs Details",
@@ -82,6 +86,7 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D13",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Sitemaps:XML Sitemap Over 50MB Details",
@@ -97,6 +102,7 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D13",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Sitemaps:Orphan URLs Details",
@@ -113,5 +119,6 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[ReportRequirement::CrawlAnalysis],
         owner: "M2-D13",
         run: stub_run,
+        header_fn: None,
     },
 ];

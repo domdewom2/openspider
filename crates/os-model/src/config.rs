@@ -17,6 +17,7 @@ mod schema;
 mod set;
 mod v2;
 mod validate;
+mod w1;
 
 pub use io::{ConfigLoadError, LoadedConfig, DEFAULT_PROFILE_FILE};
 pub use migrate::{migrate_toml, MigrationReport};
@@ -24,6 +25,7 @@ pub use schema::{json_schema, json_schema_string};
 pub use set::{settable_keys, suggest_key, PresetGroup, SetError, SHORT_KEYS};
 pub use v2::*;
 pub use validate::{ConfigIssue, ConfigIssueKind, ValidationReport};
+pub use w1::*;
 
 use crate::enums::{
     CookieMode, CrawlMode, HreflangOverLimit, LineEnding, RenderingMode, RobotsMode,
@@ -128,11 +130,24 @@ pub struct CrawlConfig {
     pub compare: CompareConfig,
     /// Sitemap-Generator (ab v2).
     pub sitemap_gen: SitemapGenConfig,
+    /// Gerätespezifische SERP-Pixelgrenzen und Schriften (ONPAGE-194).
+    pub serp: SerpConfig,
+    /// Profilgebundene Filter und sichtbare Tabellenspalten (ONPAGE-023, OUT-009, OUT-220).
+    pub ui: CrawlUiConfig,
+    /// Zusätzliche Bildmessungen und Einsparschwelle (ONPAGE-172, ONPAGE-178, ONPAGE-180).
+    pub images: ImagesConfig,
+    /// Als veraltet zu meldende MIME-Typen (ONPAGE-043).
+    pub security: SecurityConfig,
 }
 
 impl Default for CrawlConfig {
     fn default() -> Self {
         CrawlConfig {
+            serp: SerpConfig::default(),
+            ui: CrawlUiConfig::default(),
+            images: ImagesConfig::default(),
+            security: SecurityConfig::default(),
+
             schema_version: CONFIG_SCHEMA_VERSION,
             generator: format!("openspider {}", env!("CARGO_PKG_VERSION")),
             mode: CrawlMode::Spider,
@@ -211,14 +226,14 @@ impl CrawlConfig {
 }
 
 /// Bereich des Crawls und Include/Exclude (CRAWL-007/009/109/110).
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct ScopeConfig {
     /// Alle Subdomains der Start-Domain crawlen.
     pub all_subdomains: bool,
     /// Nur den Ordner der Start-URL crawlen.
     pub subfolder_only: bool,
-    /// Ordner verlassen, wenn ein Link darauf zeigt.
+    /// Ordner der Start-URL bei verlinkten Zielen verlassen (CRAWL-010).
     pub crawl_outside_start_folder: bool,
     /// Regex-Regeln treffen auch Teilstrings.
     pub regex_partial_match: bool,
@@ -296,11 +311,15 @@ pub struct SpiderConfig {
     pub follow_internal_nofollow: bool,
     /// Externe nofollow-Links folgen.
     pub follow_external_nofollow: bool,
+    /// Nicht abrufbare Links als Zeilen speichern (CRAWL-053, TECH-143, OUT-041).
+    pub store_uncrawlable_links: bool,
 }
 
 impl Default for SpiderConfig {
     fn default() -> Self {
         SpiderConfig {
+            store_uncrawlable_links: false,
+
             images: StoreCrawl::ON,
             css: StoreCrawl::ON,
             javascript: StoreCrawl::ON,
@@ -370,11 +389,18 @@ pub struct SpeedConfig {
     pub max_per_host: Option<u32>,
     /// Höchstzahl Abrufe pro Sekunde.
     pub max_urls_per_sec: Option<f64>,
+    /// Abrufrate bei Überlastung automatisch senken (CRAWL-146).
+    pub adaptive_throttle: bool,
+    /// Threadzahl automatisch anpassen (CRAWL-147).
+    pub auto: bool,
 }
 
 impl Default for SpeedConfig {
     fn default() -> Self {
         SpeedConfig {
+            adaptive_throttle: true,
+            auto: false,
+
             threads: 5,
             max_per_host: None,
             max_urls_per_sec: None,
@@ -416,11 +442,24 @@ pub struct RobotsConfig {
     pub retries: u32,
     /// Wartezeit zwischen Wiederholungen in Sekunden.
     pub retry_delay_s: u32,
+    /// Durch robots.txt gesperrte interne URLs anzeigen (CRAWL-101).
+    pub show_blocked_internal: bool,
+    /// Durch robots.txt gesperrte externe URLs anzeigen (CRAWL-101).
+    pub show_blocked_external: bool,
+    /// Eigene robots.txt je Host ohne Schema, höchstens 512 KiB je Inhalt (CRAWL-102, CRAWL-132).
+    pub custom_files: std::collections::BTreeMap<String, String>,
+    /// Crawl-delay aus robots.txt beachten (CRAWL-145).
+    pub respect_crawl_delay: bool,
 }
 
 impl Default for RobotsConfig {
     fn default() -> Self {
         RobotsConfig {
+            show_blocked_internal: true,
+            show_blocked_external: false,
+            custom_files: Default::default(),
+            respect_crawl_delay: true,
+
             mode: RobotsMode::Respect,
             unreachable_policy: RobotsUnreachablePolicy::BlockHost,
             retries: 2,
@@ -453,11 +492,18 @@ pub struct AdvancedConfig {
     pub html_validation: bool,
     /// Alle internen URLs liegen auf grünem Hosting (CRAWL-139, `advanced.green_hosting`, ab v2).
     pub green_hosting: bool,
+    /// Weiterleitungsziele auch außerhalb des Crawl-Bereichs verfolgen (CRAWL-030, OUT-085).
+    pub always_follow_redirects: bool,
+    /// Canonical-Ziele auch außerhalb des Crawl-Bereichs verfolgen (CRAWL-030, OUT-085).
+    pub always_follow_canonicals: bool,
 }
 
 impl Default for AdvancedConfig {
     fn default() -> Self {
         AdvancedConfig {
+            always_follow_redirects: false,
+            always_follow_canonicals: false,
+
             cookies: CookieMode::SessionOnly,
             response_timeout_s: 20,
             assume_html: false,
@@ -511,7 +557,7 @@ pub struct RenderingConfig {
     /// Modus (`text` oder `javascript`, CRAWL-077).
     pub mode: RenderingMode,
     /// AJAX-Timeout in Sekunden, 0 – 60 (CRAWL-080, ab v2).
-    pub ajax_timeout_s: u32,
+    pub ajax_timeout_s: f64,
     /// JavaScript-Fehlerberichte und Konsolen-Log mitschneiden (CRAWL-084, `rendering.js_error_reporting`, ab v2).
     pub js_error_reporting: bool,
     /// Fenstergröße und Gerät (CRAWL-081, ab v2).
@@ -534,7 +580,7 @@ impl Default for RenderingConfig {
     fn default() -> Self {
         RenderingConfig {
             mode: RenderingMode::Text,
-            ajax_timeout_s: 5,
+            ajax_timeout_s: 5.0,
             js_error_reporting: true,
             viewport: ViewportConfig::default(),
             screenshots: ScreenshotConfig::default(),
@@ -610,7 +656,7 @@ impl Default for ExtractionConfig {
             hash: true,
             response_time: true,
             last_modified: true,
-            http_headers: true,
+            http_headers: false,
             store_html: false,
             store_rendered_html: false,
             indexability: true,
@@ -730,16 +776,51 @@ impl Default for TextLimits {
 }
 
 /// Schwelle für URLs (ONPAGE-081).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct UrlLimits {
     /// Höchstzahl Zeichen.
     pub max_chars: u32,
+    /// Pfadsegmente zur Erkennung interner Suchseiten (ONPAGE-077).
+    pub internal_search_segments: Vec<String>,
+    /// Query-Parameter zur Erkennung interner Suchseiten (ONPAGE-077).
+    pub internal_search_params: Vec<String>,
 }
 
 impl Default for UrlLimits {
     fn default() -> Self {
-        UrlLimits { max_chars: 115 }
+        UrlLimits {
+            internal_search_segments: [
+                "search",
+                "suche",
+                "recherche",
+                "buscar",
+                "busca",
+                "cerca",
+                "zoeken",
+                "szukaj",
+                "sok",
+                "haku",
+                "catalogsearch",
+            ]
+            .map(String::from)
+            .to_vec(),
+            internal_search_params: [
+                "s",
+                "q",
+                "query",
+                "search",
+                "search_query",
+                "searchterm",
+                "keyword",
+                "keywords",
+                "k",
+                "term",
+            ]
+            .map(String::from)
+            .to_vec(),
+            max_chars: 115,
+        }
     }
 }
 
@@ -1032,13 +1113,30 @@ pub struct ExportConfig {
     pub utf8_bom: bool,
     /// Zeilenende in CSV-Dateien.
     pub line_ending: LineEnding,
+    /// Inlink-Exporte für alle Filter anbieten (OUT-066).
+    pub inlinks_for_all_filters: bool,
 }
 
 impl Default for ExportConfig {
     fn default() -> Self {
         ExportConfig {
+            inlinks_for_all_filters: true,
+
             utf8_bom: true,
             line_ending: LineEnding::Crlf,
+        }
+    }
+}
+
+impl Default for ScopeConfig {
+    fn default() -> Self {
+        Self {
+            all_subdomains: false,
+            subfolder_only: false,
+            crawl_outside_start_folder: true,
+            regex_partial_match: false,
+            include: Vec::new(),
+            exclude: Vec::new(),
         }
     }
 }

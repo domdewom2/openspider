@@ -81,6 +81,7 @@ fn filter(id: &'static str, predicate: &'static str, ignore_non_indexable: bool)
         kind: FilterKind::Live,
         requires: Vec::new(),
         ignore_non_indexable,
+        default_columns: &[],
     }
 }
 
@@ -163,5 +164,21 @@ pub fn tab() -> TabDef {
             descending: false,
         }],
         params,
+        hidden_population: None,
     }
+}
+
+// STUB(M2-D08)
+pub fn column_source() -> Option<Box<dyn crate::defs::ColumnSource>> {
+    None
+}
+
+/// URL-Beiträge des Fachpakets M2-D08.
+// STUB(M2-D08)
+pub fn url_details(
+    _: &os_store::CrawlFile,
+    _: &os_model::CrawlConfig,
+    _: os_model::UrlId,
+) -> Result<Vec<(String, String)>, crate::ViewError> {
+    Ok(Vec::new())
 }

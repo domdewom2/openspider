@@ -30,6 +30,7 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D07",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Hreflang:Non-200 Hreflang URLs",
@@ -48,6 +49,7 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D07",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Hreflang:Unlinked Hreflang URLs",
@@ -65,6 +67,7 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[ReportRequirement::CrawlAnalysis],
         owner: "M2-D07",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Hreflang:Missing Return Links",
@@ -81,6 +84,7 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D07",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Hreflang:Inconsistent Language & Region Return Links",
@@ -95,6 +99,7 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D07",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Hreflang:Non Canonical Return Links",
@@ -109,6 +114,7 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D07",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Hreflang:Noindex Return Links",
@@ -123,5 +129,16 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D07",
         run: stub_run,
+        header_fn: None,
     },
 ];
+
+// STUB(M2-D07)
+pub fn export_detail(
+    _: &crate::catalog::TableJob<'_>,
+    _: &os_analyze::details::DetailReq<'_>,
+    _: &std::path::Path,
+    _: crate::types::Format,
+) -> Result<crate::types::ExportFileInfo, crate::error::ExportError> {
+    Err(crate::error::ExportError::NotImplemented("M2-D07"))
+}

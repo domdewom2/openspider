@@ -60,9 +60,17 @@ pub fn extract(doc: &Document, base: &url::Url) -> Vec<CanonicalRef> {
             in_head: dom::in_head(el),
             order: out.len() as u32,
             xpath: Some(dom::xpath(el)),
+            ..Default::default()
         });
     }
     out
+}
+
+// STUB(M2-D04)
+pub fn response_facts(
+    _input: &crate::ResponseInput<'_>,
+) -> Vec<(os_model::ExtKey, os_model::Value)> {
+    Vec::new()
 }
 
 #[cfg(test)]

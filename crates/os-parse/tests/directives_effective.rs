@@ -16,6 +16,7 @@ fn page(html: &str, hdrs: &[(&str, &str)]) -> os_model::ParsedPage {
         .collect();
     let cfg = cfg();
     os_parse::parse_html(&os_parse::ParseInput {
+        status: 200,
         url: &url,
         body: html.as_bytes(),
         content_type: Some("text/html"),

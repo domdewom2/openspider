@@ -75,6 +75,7 @@ fn batch_writes_urls_page_facts_and_children() {
             in_head: true,
             order: 0,
             xpath: None,
+            ..Default::default()
         },
     });
     page.directives.push(DirectiveRow(Directive {
@@ -140,6 +141,7 @@ fn batch_writes_urls_page_facts_and_children() {
             height_attr: None,
             xpath: "/html[1]/body[1]/img[1]".into(),
             doc_order: 7,
+            ..Default::default()
         },
     });
     page.headers = vec![

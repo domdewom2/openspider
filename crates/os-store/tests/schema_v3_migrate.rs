@@ -27,6 +27,41 @@ fn version_of(path: &Path) -> u32 {
     schema::user_version(&conn).unwrap()
 }
 
+// spec: CRAWL-127
+// Infrastruktur (M2-F05a) für CRAWL-127; Fachprüfung M2-K04.
+#[test]
+fn v3_to_v4_migrates_as_copy_or_with_a_byte_identical_backup() {
+    let dir = tempfile::tempdir().unwrap();
+    let src = copy_fixture("schema-v2.ospider", dir.path());
+    {
+        let mut conn = rusqlite::Connection::open(&src).unwrap();
+        schema::migrate(&mut conn, 2, &os_store::MIGRATIONS[..3]).unwrap();
+        conn.execute(
+            "UPDATE crawl_meta SET value='3' WHERE key='schema_version'",
+            [],
+        )
+        .unwrap();
+    }
+    let original = bytes(&src);
+    assert_eq!(version_of(&src), 3);
+    let dst = dir.path().join("v4-copy.ospider");
+    let copy = CrawlFile::migrate_copy(&src, &dst).unwrap();
+    assert_eq!(version_of(&dst), SCHEMA_VERSION);
+    assert_eq!(bytes(&src), original);
+    assert_eq!(count(&copy, "SELECT COUNT(*) FROM urls"), 42);
+    for table in ["cookies", "discovery_edges", "sitemap_entry_ext"] {
+        assert_eq!(count(&copy, &format!("SELECT COUNT(*) FROM {table}")), 0);
+    }
+    copy.check_read_api().unwrap();
+    drop(copy);
+    let migrated = CrawlFile::open(&src, OpenMode::ReadWrite).unwrap();
+    assert_eq!(
+        schema::user_version(migrated.conn()).unwrap(),
+        SCHEMA_VERSION
+    );
+    assert_eq!(bytes(&backup_path(&src, 3)), original);
+}
+
 // spec: OUT-184 [M2]
 // spec: CRAWL-127
 #[test]

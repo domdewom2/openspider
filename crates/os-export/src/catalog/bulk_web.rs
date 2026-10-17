@@ -19,6 +19,7 @@ const ENTRIES: &[TableEntry] = &[
         aliases: &[],
         file_stem: "Web:All Page Source",
         header: &["Address", "File", "Source Type"],
+        header_fn: None,
         requires: &[ReportRequirement::Config {
             key: "extraction.store_html",
             what: "HTML storage",
@@ -31,6 +32,7 @@ const ENTRIES: &[TableEntry] = &[
         aliases: &[],
         file_stem: "Web:All Page Text",
         header: &["Address", "File"],
+        header_fn: None,
         requires: &[ReportRequirement::Config {
             key: "extraction.store_html",
             what: "HTML storage",
@@ -43,6 +45,7 @@ const ENTRIES: &[TableEntry] = &[
         aliases: &[],
         file_stem: "Web:All HTTP Request Headers",
         header: &["Address", "Header Name", "Header Value"],
+        header_fn: None,
         requires: &[ReportRequirement::Config {
             key: "extraction.http_headers",
             what: "HTTP header extraction",
@@ -55,6 +58,7 @@ const ENTRIES: &[TableEntry] = &[
         aliases: &[],
         file_stem: "Web:All HTTP Response Headers",
         header: &["Address", "Header Name", "Header Value"],
+        header_fn: None,
         requires: &[ReportRequirement::Config {
             key: "extraction.http_headers",
             what: "HTTP header extraction",
@@ -87,5 +91,6 @@ const ENTRIES: &[TableEntry] = &[
         }],
         owner: "M2-D18",
         run: stub_run,
+        header_fn: None,
     },
 ];

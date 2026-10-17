@@ -154,3 +154,11 @@ enum Kind {
     H1,
     H2,
 }
+
+// STUB(M2-D01)
+pub fn annotate_facts(
+    _doc: &crate::dom::Document,
+    _cfg: &crate::ParseConfig,
+    _page: &mut os_model::ParsedPage,
+) {
+}

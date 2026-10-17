@@ -17,3 +17,8 @@ pub fn classify(
 ) -> LinkPosition {
     landmark
 }
+
+// STUB(M2-D16)
+pub fn element_path(_doc: &crate::dom::Document, node: scraper::ElementRef<'_>) -> String {
+    crate::dom::xpath(node)
+}

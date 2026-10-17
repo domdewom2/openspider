@@ -89,11 +89,11 @@ impl Tool for QueryUrls {
         let page = PageArgs::from_args(&args)?;
         let tab_arg = req_str(&args, "tab")?;
         let filter_arg = opt_str(&args, "filter")?;
-        let tab_defs = tabs::all();
+        let crawl = open_crawl(ctx, &args)?;
+        let tab_defs = tabs::configured_for_file(&crawl.cfg, &crawl.file);
         let (tab, filter) = resolve_view(&tab_defs, tab_arg, filter_arg)?;
         let columns = parse_columns(&args, tab)?;
         let sort = parse_sort(&args, tab)?;
-        let crawl = open_crawl(ctx, &args)?;
 
         let mut query = ViewQuery::new(tab.id, filter.id);
         query.columns = columns;
@@ -141,6 +141,8 @@ impl Tool for QueryUrls {
 fn state_note(state: &FilterState) -> Option<String> {
     match state {
         FilterState::Ready => None,
+        FilterState::NeedsRecrawl => Some("Neu crawlen erforderlich".into()),
+        FilterState::Incomplete { unchecked } => Some(format!("Unvollständig: {unchecked} ungeprüfte Seiten")),
         FilterState::NeedsCrawlAnalysis => Some(
             "Der Filter braucht die Crawl-Analyse, die für diesen Crawl nicht gelaufen ist; total und rows sind \
              deshalb 0, aber keine echte Null."
@@ -232,7 +234,10 @@ fn valid_column_forms(tab: &TabDef) -> String {
     for c in &tab.columns {
         match &c.sql {
             os_analyze::ColumnSql::Expr(_) => forms.push(c.key.to_string()),
-            os_analyze::ColumnSql::Multi { base, .. } => forms.push(format!("{base} 1…n")),
+            os_analyze::ColumnSql::Multi { base, .. }
+            | os_analyze::ColumnSql::MultiCrawlWide { base, .. } => {
+                forms.push(format!("{base} 1…n"))
+            }
             os_analyze::ColumnSql::MultiPaired { base, parts } => {
                 for part in parts.iter() {
                     if part.suffix.is_empty() {

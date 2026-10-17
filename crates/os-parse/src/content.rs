@@ -343,3 +343,6 @@ pub fn analyze_with_source(
         text_ratio: text_ratio(doc, source_chars),
     }
 }
+
+// STUB(M2-D02)
+pub fn run(_ctx: &crate::PageCtx<'_>, _page: &mut os_model::ParsedPage) {}

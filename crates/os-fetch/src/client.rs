@@ -380,6 +380,15 @@ impl HttpFetcher {
             );
         }
 
+        let request_headers = headers
+            .iter()
+            .map(|(n, v)| {
+                (
+                    n.to_string(),
+                    redact::header_value(n.as_str(), &String::from_utf8_lossy(v.as_bytes())),
+                )
+            })
+            .collect();
         let response = self
             .client
             .get(url.clone())
@@ -453,6 +462,7 @@ impl HttpFetcher {
         }
 
         Ok(Exchange {
+            request_headers,
             status,
             reason_phrase,
             version,
@@ -468,6 +478,7 @@ impl HttpFetcher {
 
 /// Rohergebnis eines Abrufs vor der Dekompression.
 struct Exchange {
+    request_headers: Vec<(String, String)>,
     status: u16,
     /// Vom Server gesendete Reason-Phrase (nur wenn sie vom IANA-Text abweicht).
     reason_phrase: Option<String>,
@@ -484,6 +495,7 @@ struct Exchange {
 /// Dekomprimiert, zählt Bytes, bildet den MD5 und redigiert Header.
 async fn finish_response(ex: Exchange, max_body: u64, response_time_ms: u32) -> HttpResponse {
     let Exchange {
+        request_headers,
         status,
         reason_phrase,
         version,
@@ -521,6 +533,15 @@ async fn finish_response(ex: Exchange, max_body: u64, response_time_ms: u32) -> 
     } else {
         wire_text
     };
+    let set_cookies = headers
+        .iter()
+        .filter(|(n, _)| n.eq_ignore_ascii_case("set-cookie"))
+        .map(|(_, v)| v.clone())
+        .collect();
+    let content_length = headers
+        .iter()
+        .find(|(n, _)| n.eq_ignore_ascii_case("content-length"))
+        .and_then(|(_, v)| v.parse().ok());
     let headers = headers
         .into_iter()
         .map(|(n, v)| {
@@ -529,6 +550,12 @@ async fn finish_response(ex: Exchange, max_body: u64, response_time_ms: u32) -> 
         })
         .collect();
     HttpResponse {
+        request_headers,
+        set_cookies,
+        content_length,
+        untruncated_bytes: (!decoded.truncated && !input_truncated).then_some(body.len() as u64),
+        synthetic: None,
+        attempts: 1,
         status,
         reason_phrase,
         status_text: shown_text,

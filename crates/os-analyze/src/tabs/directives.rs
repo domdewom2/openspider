@@ -39,6 +39,7 @@ fn filter(id: &'static str, predicate: &'static str) -> FilterDef {
         requires: Vec::new(),
         // CRAWL-089: Die Directives-Filter schränkt die Option nie ein (TECH-053 u. a.).
         ignore_non_indexable: false,
+        default_columns: &[],
     }
 }
 
@@ -94,5 +95,16 @@ pub fn tab() -> TabDef {
         ],
         default_sort: Vec::new(),
         params: |_| Vec::new(),
+        hidden_population: None,
     }
+}
+
+/// URL-Beiträge des Fachpakets M2-D06.
+// STUB(M2-D06)
+pub fn url_details(
+    _: &os_store::CrawlFile,
+    _: &os_model::CrawlConfig,
+    _: os_model::UrlId,
+) -> Result<Vec<(String, String)>, crate::ViewError> {
+    Ok(Vec::new())
 }

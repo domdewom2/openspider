@@ -7,6 +7,7 @@ pub mod catalog;
 pub mod compare;
 pub mod csv;
 pub mod detail;
+pub mod detail_export;
 pub mod error;
 pub mod fs_paths;
 pub mod links_export;

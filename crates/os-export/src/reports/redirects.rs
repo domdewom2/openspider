@@ -26,6 +26,7 @@ use os_model::{LinkType, RedirectType, UrlId};
 use os_store::{queries, CrawlFile};
 
 use super::common::{db, writer_options};
+use crate::catalog::{stub_run, TableEntry};
 use crate::error::ExportError;
 use crate::types::{ExportFileInfo, Format};
 use os_analyze::ColumnKind;
@@ -506,6 +507,25 @@ pub(crate) fn write_report(
     sheet: &str,
     format: Format,
 ) -> Result<ExportFileInfo, ExportError> {
+    let mut writer = crate::output::open_writer(path, format, sheet, &writer_options(cfg))?;
+    let cancel = os_model::CancelToken::default();
+    let mut ctx = crate::types::ExportCtx {
+        cancel: &cancel,
+        progress: &|_| {},
+        skip_empty: false,
+        workbook: None,
+        skipped: Vec::new(),
+    };
+    write_report_to(file, which, writer.as_mut(), &mut ctx)?;
+    writer.finish()
+}
+
+pub fn write_report_to(
+    file: &CrawlFile,
+    which: RedirectReport,
+    writer: &mut dyn crate::types::TableWriter,
+    ctx: &mut crate::types::ExportCtx<'_>,
+) -> Result<u64, ExportError> {
     // Durchgang 1: Zeilenmenge und längste Kette.
     let mut included: Vec<i64> = Vec::new();
     let mut max_hops = 0usize;
@@ -528,17 +548,37 @@ pub(crate) fn write_report(
         columns.push(format!("Status Code {n}"));
         columns.push(format!("Status {n}"));
     }
-    let mut writer = crate::output::open_writer(path, format, sheet, &writer_options(cfg))?;
     writer.header(&columns)?;
     // Durchgang 2: Zeilen schreiben (konstanter Speicher). Ohne Index `links_target` liest ein Lauf über `links`
     // die Beispielquellen aller Zeilen (eine Adresse je Zeile im Speicher).
     let samples = sample_sources(file, &included)?;
+    let mut count = 0;
     for id in included {
+        ctx.checkpoint()?;
         let chain = chain_for(file, id)?;
         let info = start_info(file, id, samples.as_ref())?;
         let start = load_node(file, id)?;
         let (kinds, values) = row_values(&chain, &start, &info, max_hops);
         writer.row(&kinds, &values)?;
+        count += 1;
+        (ctx.progress)(count);
     }
-    writer.finish()
+    Ok(count)
+}
+
+/// Redirects: Redirects to Errors (OUT-084, M2-D12): Kettenformat wie OUT-081, nur Ketten mit Fehlerziel.
+// STUB(M2-D12)
+static REDIRECTS_TO_ERRORS: TableEntry = TableEntry {
+    name: "Redirects:Redirects to Errors",
+    aliases: &[],
+    file_stem: "Redirects to Errors",
+    header: crate::catalog::CHAIN_HEADER,
+    header_fn: None,
+    requires: &[],
+    owner: "M2-D12",
+    run: stub_run,
+};
+
+pub fn entries() -> &'static [TableEntry] {
+    std::slice::from_ref(&REDIRECTS_TO_ERRORS)
 }

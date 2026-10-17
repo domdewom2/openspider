@@ -220,6 +220,40 @@ fn scan_ms(b: &[u8], i: usize) -> Option<usize> {
     None
 }
 
+/// Vergleicht nur die M1-Tab-/Filterkennungen; neue M2-Zeilen verändern den M1-Vertrag nicht.
+/// Summary und Spezialabschnitte werden separat durch ihre Struktur-/Zählertests geprüft.
+pub fn assert_m1_overview_golden(path: impl AsRef<Path>, actual: &str) {
+    let registry: toml::Value =
+        toml::from_str(include_str!("../../../docs/plan/M1-filters.toml")).unwrap();
+    let mut keys = std::collections::BTreeSet::new();
+    for tab in registry["tab"].as_array().unwrap() {
+        let name = tab["id"].as_str().unwrap();
+        for filter in tab["filters"].as_array().unwrap() {
+            let label = filter
+                .get("default_label")
+                .unwrap_or(&filter["id"])
+                .as_str()
+                .unwrap();
+            keys.insert((name.to_string(), label.to_string()));
+        }
+    }
+    let select = |text: &str| {
+        let mut rows = csv::Reader::from_reader(text.trim_start_matches('\u{feff}').as_bytes());
+        rows.records()
+            .map(Result::unwrap)
+            .filter(|r| keys.contains(&(r[0].to_string(), r[1].to_string())))
+            .map(|r| r.iter().map(str::to_string).collect::<Vec<_>>())
+            .collect::<Vec<_>>()
+    };
+    let expected = fs::read_to_string(path.as_ref()).unwrap();
+    assert_eq!(
+        select(&expected),
+        select(actual),
+        "M1 Overview: {}",
+        path.as_ref().display()
+    );
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

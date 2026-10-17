@@ -126,7 +126,14 @@ pub fn export(
     out_dir: &Path,
     format: Format,
 ) -> Result<Vec<ExportFileInfo>, ExportError> {
-    Ok(export_in(&tabs::all(), file, cfg, out_dir, format)?.files)
+    Ok(export_in(
+        &tabs::configured_for_file(cfg, file),
+        file,
+        cfg,
+        out_dir,
+        format,
+    )?
+    .files)
 }
 
 fn abort_marker() -> ViewError {
@@ -143,7 +150,8 @@ fn kinds_for(tab: &TabDef, columns: &[String]) -> Vec<ColumnKind> {
                 .find(|c| c.key == name)
                 .or_else(|| {
                     tab.columns.iter().find(|c| match &c.sql {
-                        os_analyze::ColumnSql::Multi { base, .. } => name
+                        os_analyze::ColumnSql::Multi { base, .. }
+                        | os_analyze::ColumnSql::MultiCrawlWide { base, .. } => name
                             .strip_prefix(*base)
                             .is_some_and(|rest| rest.trim().parse::<u32>().is_ok()),
                         // Verschränkte Teilspalten: `<Basis> <n>` bzw. `<Basis> <n> <Suffix>` (nur Übersetzbarkeit;
@@ -386,4 +394,84 @@ pub fn export_in(
     out.warnings.splice(0..0, prereq);
     out.files.push(info);
     Ok(out)
+}
+
+/// Issues-Übersicht in einem vorhandenen Writer (OUT-063/075).
+pub fn export_to(
+    job: &crate::catalog::TableJob<'_>,
+    writer: &mut dyn crate::types::TableWriter,
+    ctx: &mut crate::types::ExportCtx<'_>,
+) -> Result<u64, ExportError> {
+    ctx.checkpoint()?;
+    let counts = filter_counts_in(job.tabs, job.file, job.cfg)?;
+    let rows = issues::issues_from_counts(&counts);
+    let cfg_json = serde_json::to_value(job.cfg).unwrap_or_default();
+    writer.header(
+        &OVERVIEW_HEADER
+            .iter()
+            .map(|s| (*s).to_owned())
+            .collect::<Vec<_>>(),
+    )?;
+    let kinds = [
+        ColumnKind::Text,
+        ColumnKind::Text,
+        ColumnKind::Text,
+        ColumnKind::Int,
+        ColumnKind::Float { decimals: 2 },
+        ColumnKind::Text,
+        ColumnKind::Text,
+        ColumnKind::Text,
+    ];
+    let mut written = 0;
+    for row in rows {
+        ctx.checkpoint()?;
+        let Some(entry) = issues::catalog().iter().find(|e| e.id == row.id) else {
+            continue;
+        };
+        let Some(tab) = job.tabs.iter().find(|t| t.id == row.tab) else {
+            continue;
+        };
+        let params = text_params(entry, tab, job.cfg, &cfg_json);
+        let texts = issues::texts(
+            &entry.doc_key,
+            Lang::En,
+            &params
+                .iter()
+                .map(|(k, v)| (k.as_str(), v.clone()))
+                .collect::<Vec<_>>(),
+        );
+        let texts = texts.unwrap_or(issues::IssueTexts {
+            what: String::new(),
+            why: String::new(),
+            fix: String::new(),
+        });
+        let label = counts
+            .iter()
+            .find(|c| c.tab == row.tab && c.filter == row.filter)
+            .map_or(&row.filter, |c| &c.label);
+        let base = counts
+            .iter()
+            .find(|c| c.tab == row.tab && c.filter == "All")
+            .and_then(|c| c.count);
+        writer.row(
+            &kinds,
+            &[
+                Value::Text(format!("{}: {}", row.tab, label)),
+                Value::Text(row.issue_type.as_str().into()),
+                Value::Text(row.priority.as_str().into()),
+                Value::Int(i64::try_from(row.count).unwrap_or(i64::MAX)),
+                base.and_then(|b| pct2(row.count, b))
+                    .map_or(Value::Null, Value::Float),
+                Value::Text(texts.what),
+                Value::Text(texts.fix),
+                Value::Text(texts.why),
+            ],
+        )?;
+        written += 1;
+        (ctx.progress)(written);
+    }
+    if written == 0 && ctx.skip_empty {
+        ctx.skipped.push(job.entry_name.into());
+    }
+    Ok(written)
 }

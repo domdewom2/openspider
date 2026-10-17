@@ -6,7 +6,7 @@ HTTP Canonical,http://www.site.test/headers.html,http://www.site.test/,1545,,,20
 Hyperlink,http://www.site.test/second.html,http://www.site.test/,1545,,Start,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[1]/a[2],Content,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/abs.html,147,,Absolut,200,OK,True,,,Absolute,/html[1]/body[1]/main[1]/p[8]/a[2],Content,HTML
 JavaScript,http://www.site.test/,http://www.site.test/app.js,20,,,200,OK,True,,,Root-Relative,//head/script[1],Head,HTML
-Hyperlink,http://www.site.test/,http://www.site.test/aside.html,143,,Aside,200,OK,True,,,Root-Relative,/html[1]/body[1]/aside[1]/a[1],Aside,HTML
+Hyperlink,http://www.site.test/,http://www.site.test/aside.html,143,,Aside,200,OK,True,,,Root-Relative,/html[1]/body[1]/aside[1]/a[1],Sidebar,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/bild.html,141,Hund,,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[5]/a[1],Content,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/dup.html,149,,Duplikat,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[3]/a[1],Content,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/dup.html,149,,Duplikat,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[3]/a[2],Content,HTML

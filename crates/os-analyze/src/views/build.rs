@@ -65,6 +65,7 @@ pub(super) struct SelectedColumn<'t> {
 
 /// Ein aufgelöster Plan samt der Teile, die Ausführung und Cursor brauchen.
 pub(super) struct Built<'t> {
+    pub tab: &'t TabDef,
     pub filter: &'t FilterDef,
     pub plan: ViewPlan,
     pub columns: Vec<SelectedColumn<'t>>,
@@ -103,8 +104,16 @@ pub(super) fn build<'t>(
         )
     })?;
 
-    let population_sql = format!("({})", tab.population);
-    let filter_sql = filter_sql(filter, cfg);
+    let population_sql = match tab.hidden_population {
+        Some(hidden) => format!("(({}) OR ({}))", tab.population, hidden),
+        None => format!("({})", tab.population),
+    };
+    let mut filter_sql = filter_sql(filter, cfg);
+    for requirement in &filter.requires {
+        if let crate::Requirement::Coverage { marker, .. } = requirement {
+            filter_sql = format!("({filter_sql}) AND EXISTS (SELECT 1 FROM url_ext checked WHERE checked.url_id = u.id AND checked.key = '{}' AND checked.v_int = 1)", marker.replace(char::from(39), "''"));
+        }
+    }
 
     let mut params: Vec<(String, Value)> = (tab.params)(cfg)
         .into_iter()
@@ -115,12 +124,44 @@ pub(super) fn build<'t>(
         Some(SearchSpec::Simple(s)) if !s.is_empty() => Some(s.as_str()),
         _ => None,
     };
-    let search_sql = search_text.map(|s| {
-        params.push((":q".to_string(), Value::Text(s.to_string())));
-        "instr(lower(u.address), lower(:q)) > 0".to_string()
-    });
+    let search_sql = if let Some(spec) = &q.search {
+        let visible: Vec<&str> = tab
+            .columns
+            .iter()
+            .filter(|c| c.default_visible)
+            .map(|c| c.key)
+            .collect();
+        let compiled = crate::search::compile_ctx(
+            spec,
+            &crate::search::SearchCtx {
+                tab,
+                columns: &tab.columns,
+                visible: &visible,
+            },
+        )?;
+        params.extend(compiled.params);
+        Some(compiled.sql)
+    } else {
+        None
+    };
 
-    let columns = select_columns(tab, &q.columns)?;
+    let defaults = super::ColumnSelection::Named(
+        filter
+            .default_columns
+            .iter()
+            .map(|s| (*s).to_owned())
+            .collect(),
+    );
+    let columns = select_columns(
+        tab,
+        if matches!(q.columns, super::ColumnSelection::Default)
+            && !filter.default_columns.is_empty()
+        {
+            &defaults
+        } else {
+            &q.columns
+        },
+    )?;
     let sort = sort_terms(tab, filter, &q.sort)?;
     let order_by = order_by(&sort);
 
@@ -137,6 +178,7 @@ pub(super) fn build<'t>(
     ]);
 
     Ok(Built {
+        tab,
         filter,
         plan: ViewPlan {
             population_sql,
@@ -228,7 +270,7 @@ fn resolve_column<'t>(tab: &'t TabDef, name: &str) -> Option<Resolved<'t>> {
     for def in &tab.columns {
         match &def.sql {
             ColumnSql::Expr(_) => {}
-            ColumnSql::Multi { base, .. } => {
+            ColumnSql::Multi { base, .. } | ColumnSql::MultiCrawlWide { base, .. } => {
                 if let Some(n) = parse_numbered(wanted, base, "") {
                     return Some(Resolved::Numbered { def, n, part: 0 });
                 }
@@ -269,14 +311,16 @@ pub(super) fn numbered_name(base: &str, n: usize, suffix: &str) -> String {
 pub(super) fn series_parts(def: &ColumnDef) -> Option<(&'static str, Vec<PairedPart>)> {
     match &def.sql {
         ColumnSql::Expr(_) => None,
-        ColumnSql::Multi { base, list_sql } => Some((
-            *base,
-            vec![PairedPart {
-                suffix: "",
-                list_sql,
-                kind: def.kind,
-            }],
-        )),
+        ColumnSql::Multi { base, list_sql } | ColumnSql::MultiCrawlWide { base, list_sql } => {
+            Some((
+                *base,
+                vec![PairedPart {
+                    suffix: "",
+                    list_sql,
+                    kind: def.kind,
+                }],
+            ))
+        }
         ColumnSql::MultiPaired { base, parts } => Some((*base, parts.to_vec())),
     }
 }
@@ -386,7 +430,10 @@ fn sort_terms(
     let registry;
     let keys: &[SortKey] = if !requested.is_empty() {
         requested
-    } else if let Some(keys) = tabs::filter_default_sort(tab.id, filter.id) {
+    } else if let Some(keys) = tabs::filter_default_sort(tab.id, filter.id).filter(|keys| {
+        keys.iter()
+            .all(|k| resolve_column(tab, &k.column).is_some())
+    }) {
         registry = keys;
         &registry
     } else {

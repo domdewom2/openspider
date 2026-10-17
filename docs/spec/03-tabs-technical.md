@@ -379,7 +379,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Eingaben/Konfiguration:** –
 - **Ausgabe (Spalten/Filter/Export):** Spalten in dieser Reihenfolge: `Address`, `Occurrences` (Anzahl Canonical-Angaben über beide Quellen), `Indexability`, `Indexability Status`, `Canonical Link Element 1..n`, `HTTP Canonical 1..n`, `Meta Robots 1..n`, `X-Robots-Tag 1..n`, `rel="next" 1`, `rel="prev" 1`. Filter: TECH-012 bis TECH-023 plus „All“.
 - **Akzeptanzkriterien:**
-  - [ ] Population: interne URLs mit Status 2xx und HTML-Inhalt, plus interne Nicht-HTML-2xx-URLs mit HTTP-Canonical. URLs ohne 2xx erscheinen nicht. (Paritätsbefund M1 vom 14.10.2026, Befund B-04, K-56: die Referenz führt alle 2xx, Fixture `/s201`; vorher „Status 200“.)
+  - [ ] Population: interne HTML- oder PDF-Seiten mit 2xx, plus interne Nicht-HTML-2xx-URLs mit HTTP-Canonical. URLs ohne 2xx erscheinen nicht. (Paritätsbefund M1 vom 14.10.2026, Befund B-04, K-56: die Referenz führt alle 2xx, Fixture `/s201`; vorher „Status 200“.)
   - [ ] Filter „All“ = Population; jede URL kann in mehreren Filtern zugleich stehen.
   - [ ] Export „Canonicals > All“ und jeder Einzelfilter als CSV/XLSX mit obigen Spalten.
   - [ ] Canonicals speichern aus (CRAWL-046) → Tab Canonicals leer, und es wird kein Indexierbarkeitsstatus `Canonicalised` gesetzt (Festlegung).
@@ -426,9 +426,9 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Eingaben/Konfiguration:** –
 - **Ausgabe (Spalten/Filter/Export):** Filter „Missing“; Einstufung: Warnung / Mittel.
 - **Akzeptanzkriterien:**
-  - [ ] Bedingung: HTML-Seite mit Status 2xx und `Occurrences = 0` (K-56).
+  - [ ] Bedingung: interne HTML- oder PDF-Seite mit Status 2xx und `Occurrences = 0`.
   - [ ] Bei „Ignore Non-Indexable URLs for Issues“ an (CRAWL-089, Standard) werden nur indexierbare Seiten gelistet (Paritätsbefund M1, Befund B-05, K-56).
-  - [ ] Nicht-HTML-Ressourcen ohne HTTP-Canonical erscheinen **nicht** in Missing. **OS-Festlegung für M1** (Paritätsbefund M1-N16, Entscheidung K-71 vom 15.10.2026, DEV-035): Die Referenz führt in Canonicals die Grundmenge „Internal HTML or PDF pages with 2xx“ und zählt eine PDF ohne Canonical als Missing (`parity-onpage` `/ctype/t-pdf.pdf`: Referenz All 85/Missing 81, OpenSpider 84/80). PDFs als Seiten sind in M1 nur mit Titel und Keywords aus den Dokumenteigenschaften umgesetzt (ONPAGE-166 P1, wie DEV-016/DEV-024); die Angleichung der Grundmenge an die Referenz folgt mit ONPAGE-166 in M2 (M2-S05).
+  - [ ] PDFs ohne HTTP-Canonical erscheinen in Missing; andere Nicht-HTML-Ressourcen ohne HTTP-Canonical nicht.
   - [ ] Canonical nur per JS gesetzt: im Text-only-Modus Missing, im JS-Modus nicht (TECH-006).
 - **Testfixture:** `canonical-basic/none.html`, eine PDF ohne Header.
 
@@ -701,7 +701,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Priorität:** P0
 - **Beschreibung:** Übersicht der Robots-Anweisungen je interner URL.
 - **Eingaben/Konfiguration:** –
-- **Ausgabe (Spalten/Filter/Export):** `Address`, `Occurrences` (Anzahl Meta-Robots + X-Robots-Tag-Werte), `Meta Robots 1..n`, `X-Robots-Tag 1..n`, `Meta Refresh 1..n`, `Canonical Link Element 1..n`, `HTTP Canonical 1..n`. Filter TECH-052 bis TECH-065 plus „All“.
+- **Ausgabe (Spalten/Filter/Export):** `Address`, `Occurrences` (Anzahl Meta-Robots + X-Robots-Tag-Werte), `Meta Robots 1..n`, `X-Robots-Tag 1..n`, `Meta Refresh 1..n`, `Canonical Link Element 1..n`, `HTTP Canonical 1..n`. Filter TECH-052 bis TECH-065 plus „All“. Standardspalten am Ende: `Indexability`, `Indexability Status`.
 - **Akzeptanzkriterien:**
   - [ ] Population: alle internen URLs mit einer HTTP-Antwort (jeder Status), da X-Robots-Tag auch an Nicht-HTML und Nicht-200-Antworten hängen kann.
   - [ ] Spaltenwert `Meta Robots n` enthält den Rohinhalt des Attributs `content`; bei spezifischem Agent mit Präfix, z. B. `googlebot: noindex`.
@@ -902,7 +902,7 @@ Begriffe: Eine **Annotation** ist ein Paar (Code, URL) auf Seite P. Die **Annota
 - **Priorität:** P0
 - **Beschreibung:** Übersicht aller URLs mit hreflang-Bezug.
 - **Eingaben/Konfiguration:** „Store Hreflang“ (TECH-070), „Crawl Hreflang“ (TECH-087), für Sitemap-hreflang zusätzlich „Crawl Linked XML Sitemaps“ (TECH-210) oder eine direkt angegebene Sitemap.
-- **Ausgabe (Spalten/Filter/Export):** `Address`, `Title 1`, `Occurrences` (Anzahl Annotationen gesamt), `HTML hreflang 1..n` (Code), `HTML hreflang 1..n URL`, `HTTP hreflang 1..n`, `HTTP hreflang 1..n URL`, `Sitemap hreflang 1..n`, `Sitemap hreflang 1..n URL`. Spaltenreihenfolge pro Index: Code, dann URL. Filter TECH-073 bis TECH-086 plus „All“ (14 Filter + All). Untere Detailansicht TECH-089.
+- **Ausgabe (Spalten/Filter/Export):** `Address`, `Title 1`, `Occurrences` (Anzahl Annotationen gesamt), `HTML hreflang 1..n` (Code), `HTML hreflang 1..n URL`, `HTTP hreflang 1..n`, `HTTP hreflang 1..n URL`, `Sitemap hreflang 1..n`, `Sitemap hreflang 1..n URL`. Spaltenreihenfolge pro Index: Code, dann URL. Filter TECH-073 bis TECH-086 plus „All“ (14 Filter + All). Untere Detailansicht TECH-089. Standardspalten am Ende: `Indexability`, `Indexability Status`.
 - **Akzeptanzkriterien:**
   - [ ] Population: interne HTML-2xx-Seiten (K-56, vorher 200), interne Nicht-HTML-URLs mit HTTP-hreflang, URLs mit Sitemap-hreflang sowie gecrawlte hreflang-Ziele (für TECH-074).
   - [ ] Abhängigkeit von der Konfiguration:
@@ -1271,7 +1271,7 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
 - **Akzeptanzkriterien:**
   - [ ] Population: interne HTML-Seiten mit Status 2xx (K-56, vorher 200; `% of Total` mit demselben Nenner wie ONPAGE-015).
   - [ ] `Inlinks` = Anzahl aller eingehenden Hyperlinks (inkl. Mehrfachlinks derselben Quelle); `Unique Inlinks` = Anzahl verschiedener Quellseiten. Self-Links zählen nicht (Festlegung, entspricht Standardanzeige).
-  - [ ] **Zusatzspalte:** `Inlinks` steht nicht in der Referenz-Spaltenliste des Links-Tabs (dort beginnt der Inlink-Block mit `Unique Inlinks`); in der Referenz gehört sie zum Internal-Tab. OpenSpider zeigt sie hier zusätzlich, standardmäßig **ausgeblendet** (per Spaltenauswahl einblendbar), damit die Standardansicht und der Standardexport genau der Referenz-Spaltenfolge entsprechen. Paritätstests ignorieren `Inlinks` in diesem Tab.
+  - [ ] `Inlinks` ist eine Standardspalte und erscheint in der Standardansicht und im Standardexport.
   - [ ] `Outlinks`/`Unique Outlinks` = interne ausgehende Hyperlinks gesamt/verschiedene Ziele; `External Outlinks`/`Unique External Outlinks` analog extern.
   - [ ] Nur Hyperlinks (`<a href>`, `<area href>`) zählen hier; Ressourcen-Links (img, script, link) nicht.
   - [ ] `Crawl Depth` = Definition der Crawl-Spec (Startseite 0); unerreichbare (z. B. nur Sitemap) Seiten haben leere Tiefe.

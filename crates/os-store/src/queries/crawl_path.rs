@@ -4,3 +4,13 @@
 //! eingefroren ist.
 
 // STUB(M2-D17)
+
+// STUB(M2-D17)
+pub fn detail_rows(
+    _: &crate::CrawlFile,
+    _: &[os_model::UrlId],
+    _: u64,
+    _: u64,
+) -> Result<super::DetailData, crate::StoreError> {
+    Err(crate::StoreError::NotImplemented("M2-D17"))
+}

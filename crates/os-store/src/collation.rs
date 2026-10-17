@@ -41,6 +41,7 @@ pub fn ensure(conn: &Connection) -> Result<(), StoreError> {
         )));
     }
     conn.create_collation(OS_TEXT, compare)?;
+    crate::queries::anchors::register_collations(conn)?;
     Ok(())
 }
 

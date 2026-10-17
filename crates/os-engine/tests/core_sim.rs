@@ -476,3 +476,113 @@ async fn start_writes_owner_state_and_the_start_url_first() {
     assert_eq!(first.new_urls[0].url, "https://site.test/");
     assert_eq!(first.new_urls[0].crawl_depth, Some(0));
 }
+
+// spec: CRAWL-127, CRAWL-130
+// Infrastruktur (M2-F05a) für CRAWL-127/130; Fachprüfung M2-E02.
+#[tokio::test(start_paused = true)]
+async fn added_urls_reach_the_owner_stub_and_progress_is_persisted_during_a_crawl() {
+    let sink = MemorySink::new();
+    let site = SimSite::new()
+        .page("https://site.test/", "<title>fixture</title>")
+        .delay(Duration::from_millis(2500));
+    let (_, handle, _dir) = start(site, threads(1), &sink).await;
+    assert!(matches!(
+        handle
+            .add_urls(vec!["https://site.test/added".into()])
+            .await,
+        Err(os_engine::EngineError::NotImplemented("M2-E02"))
+    ));
+    handle.wait().await.unwrap();
+    let snapshots: Vec<_> = sink
+        .batches()
+        .into_iter()
+        .flat_map(|b| b.meta)
+        .filter(|(key, _)| key == "progress_snapshot")
+        .collect();
+    assert!(!snapshots.is_empty());
+    for (_, json) in snapshots {
+        let _: os_model::Progress = serde_json::from_str(&json).unwrap();
+    }
+}
+
+// spec: CRAWL-011, CRAWL-027
+// Infrastruktur (M2-F05a) für Antworttransport; Fachprüfung M2-E01/E03.
+#[tokio::test(start_paused = true)]
+async fn every_response_class_transports_attempts_and_discovery_provenance() {
+    let sink = MemorySink::new();
+    let site = SimSite::new()
+        .page("https://site.test/", "<a href='/redirect'>r</a><a href='https://other.test/'>e</a><link rel='stylesheet' href='/style.css'>")
+        .redirect("https://site.test/redirect", 301, "/end")
+        .page("https://site.test/end", "<title>end</title>")
+        .asset("https://site.test/style.css", "text/css", "body {}")
+        .asset("https://other.test/", "text/plain", "external");
+    struct AttemptFixture(Arc<SimFetcher>);
+    impl os_fetch::Fetch for AttemptFixture {
+        fn fetch(
+            &self,
+            req: os_fetch::FetchRequest,
+        ) -> std::pin::Pin<Box<dyn std::future::Future<Output = os_fetch::FetchResult> + Send + '_>>
+        {
+            Box::pin(async move {
+                let mut result = os_fetch::Fetch::fetch(&*self.0, req).await;
+                let attempts = if result.url.path() == "/end" { 1 } else { 3 };
+                if let os_fetch::FetchOutcome::Response(response) = &mut result.outcome {
+                    response.attempts = attempts;
+                }
+                result
+            })
+        }
+    }
+    let dir = tempfile::tempdir().unwrap();
+    let handle = start_crawl(
+        Arc::new(AttemptFixture(SimFetcher::new(site))),
+        request(threads(1), "https://site.test/", &dir),
+        sim_deps(&sink),
+    )
+    .await
+    .unwrap();
+    handle.wait().await.unwrap();
+    let batches = sink.batches();
+    let attempts = batches
+        .iter()
+        .flat_map(|b| &b.ext)
+        .filter(|e| e.key.as_str() == "http.attempts")
+        .map(|e| (e.url, e.value.clone()))
+        .collect::<std::collections::HashMap<_, _>>();
+    let robots: HashSet<_> = sink
+        .new_urls()
+        .iter()
+        .filter(|u| u.url.ends_with("/robots.txt"))
+        .map(|u| u.id)
+        .collect();
+    for page in sink
+        .pages()
+        .into_iter()
+        .filter(|p| p.fetch.status_code > 0 && !robots.contains(&p.url_id))
+    {
+        let url = sink
+            .new_urls()
+            .into_iter()
+            .find(|u| u.id == page.url_id)
+            .unwrap();
+        if url.url.ends_with("/end") {
+            assert!(
+                !attempts.contains_key(&page.url_id),
+                "single attempt is implicit"
+            );
+        } else {
+            assert_eq!(
+                attempts.get(&page.url_id),
+                Some(&os_model::Value::Int(3)),
+                "{}",
+                url.url
+            );
+        }
+    }
+    let edges: Vec<_> = batches.iter().flat_map(|b| &b.discoveries).collect();
+    assert!(edges
+        .iter()
+        .any(|e| e.source.is_some() && e.link_type == Some(os_model::LinkType::Hyperlink)));
+    let seqs: HashSet<_> = edges.iter().map(|e| e.seq).collect();
+    assert_eq!(seqs.len(), edges.len());
+}

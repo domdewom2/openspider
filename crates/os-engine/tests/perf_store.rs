@@ -88,6 +88,7 @@ fn hyperlink(target: i64, position: u32) -> LinkRow {
         link_position: None,
         link_origin: LinkOrigin::Html,
         in_head: Some(false),
+        ..Default::default()
     }
 }
 

@@ -8,6 +8,7 @@
 //! Ab M2 (M2-F02): Rendering-Hook ([`Renderer`], `EngineDeps.renderer`, `render_glue`), [`add_urls`] und `memory`
 //! (Ressourcenschutz, CRAWL-129) als Stubs der Pakete E02/E05.
 
+pub mod config_check;
 pub mod crawl;
 pub mod decide;
 pub mod diag;
@@ -21,6 +22,7 @@ pub mod progress;
 pub mod queue;
 pub(crate) mod queue_disk;
 pub(crate) mod queue_maint;
+pub mod recompute;
 pub mod redirect;
 pub mod render_glue;
 pub mod rescan;
@@ -58,6 +60,16 @@ pub struct AddUrlsSummary {
 /// Fügt einem laufenden oder pausierten Crawl URLs hinzu (CRAWL-131 [P1], Command `crawl.addUrls`).
 ///
 /// STUB(M2-E02): liefert bis zur Umsetzung `EngineError::NotImplemented`.
-pub fn add_urls(_handle: &CrawlHandle, _urls: &[String]) -> Result<AddUrlsSummary, EngineError> {
-    Err(EngineError::NotImplemented("add_urls (M2-E02)"))
+pub async fn add_urls(
+    handle: &CrawlHandle,
+    urls: &[String],
+) -> Result<AddUrlsSummary, EngineError> {
+    handle.add_urls(urls.to_vec()).await
 }
+
+pub mod cookies;
+pub mod fragments;
+pub mod host_pace;
+pub mod retry;
+
+mod sitemap_ingest;

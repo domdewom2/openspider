@@ -146,3 +146,37 @@ pub fn owner_of(namespace: &str) -> Option<&'static str> {
 pub fn key_allowed_for(package: &str, key: &ExtKey) -> bool {
     key.owner() == Some(package)
 }
+
+/// URL-Flag für respektbedingt verborgene Seiten (CRAWL-091/092).
+pub const FLAG_RESPECT_HIDDEN: &str = "respect_hidden";
+/// Abrufbezogene Namensräume werden beim Neuabruf ersetzt; Analyse/API-Fakten bleiben erhalten.
+pub fn is_fetch_scoped(namespace: &str) -> bool {
+    matches!(
+        namespace,
+        "crawl"
+            | "http"
+            | "urlfilter"
+            | "render"
+            | "js"
+            | "head"
+            | "serp"
+            | "content"
+            | "readability"
+            | "image"
+            | "canonical"
+            | "pagination"
+            | "directive"
+            | "hreflang"
+            | "link"
+            | "sd"
+            | "validation"
+            | "security"
+            | "response"
+            | "custom_search"
+            | "custom_extract"
+            | "linkpos"
+            | "webdata"
+            | "custom_js"
+            | "mobile"
+    )
+}

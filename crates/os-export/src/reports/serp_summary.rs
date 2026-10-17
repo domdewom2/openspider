@@ -28,4 +28,5 @@ const ENTRIES: &[TableEntry] = &[TableEntry {
     requires: &[],
     owner: "M2-D01",
     run: stub_run,
+    header_fn: None,
 }];

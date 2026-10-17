@@ -202,6 +202,7 @@ fn filter(id: &'static str, predicate: &'static str) -> FilterDef {
         kind: FilterKind::Live,
         requires: Vec::new(),
         ignore_non_indexable: false,
+        default_columns: &[],
     }
 }
 
@@ -245,5 +246,6 @@ pub fn tab() -> TabDef {
         ],
         default_sort: Vec::new(),
         params: |cfg| vec![("max", os_model::Value::Int(i64::from(cfg.url.max_chars)))],
+        hidden_population: None,
     }
 }

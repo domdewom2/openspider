@@ -11,6 +11,10 @@ use crate::time::Timestamp;
 /// JSON-Zusatzfelder (M1-P00c, docs/plan/M1.md 3.9).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Progress {
+    #[serde(default)]
+    pub memory_used_bytes: Option<u64>,
+    #[serde(default)]
+    pub memory_limit_bytes: Option<u64>,
     /// Zustand des Crawls.
     pub state: CrawlState,
     /// Grund des Endes (nur bei beendetem Crawl).

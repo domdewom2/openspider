@@ -124,6 +124,7 @@ fn filter(id: &'static str, predicate: &'static str) -> FilterDef {
         kind: FilterKind::Live,
         requires: Vec::new(),
         ignore_non_indexable: false,
+        default_columns: &[],
     }
 }
 
@@ -189,5 +190,26 @@ pub fn tab() -> TabDef {
             descending: false,
         }],
         params,
+        hidden_population: None,
     }
+}
+
+/// Detail-Erweiterungspunkt für M2-D07.
+// STUB(M2-D07)
+pub fn detail_rows(
+    _: &os_store::CrawlFile,
+    _: &os_model::CrawlConfig,
+    _: &crate::details::DetailReq<'_>,
+) -> Result<crate::details::DetailRows, crate::ViewError> {
+    Err(crate::ViewError::NotImplemented("M2-D07"))
+}
+
+/// URL-Beiträge des Fachpakets M2-D07.
+// STUB(M2-D07)
+pub fn url_details(
+    _: &os_store::CrawlFile,
+    _: &os_model::CrawlConfig,
+    _: os_model::UrlId,
+) -> Result<Vec<(String, String)>, crate::ViewError> {
+    Ok(Vec::new())
 }
