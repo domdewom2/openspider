@@ -332,27 +332,29 @@ fn commands_json_matches_the_registry() {
 #[tokio::test]
 async fn stubs_answer_unsupported_with_command_and_owner() {
     let dir = std::env::temp_dir().join(format!("os-app-manifest-{}", std::process::id()));
-    let app = App::new(AppConfig { home: dir }).unwrap();
+    let app = App::new(AppConfig::new(dir)).unwrap();
     let mut owners = BTreeSet::new();
     for m in app.registry().manifest() {
         let ctx = CallCtx {
             window: WindowId("main".into()),
             cancel: Default::default(),
         };
-        let err = app
-            .dispatch(ctx, m.name, serde_json::json!({}))
-            .await
-            .unwrap_err();
+        // M2-F03 hat die Laufzeit-Domänen (app, settings, uistate, op, events) umgesetzt: sie sind keine Stubs mehr
+        let Err(err) = app.dispatch(ctx, m.name, serde_json::json!({})).await else {
+            continue;
+        };
+        if err.message_key != "err-not-implemented" {
+            continue;
+        }
         assert_eq!(err.code, ErrorCode::Unsupported, "{}", m.name);
-        assert_eq!(err.message_key, "err-not-implemented");
         assert_eq!(err.args["command"], m.name);
         owners.insert(err.args["owner"].as_str().unwrap().to_string());
     }
     // Besitzer laut Modulkarte 3.6
     for o in [
-        "M2-F03", "M2-K04", "M2-K06", "M2-K02", "M2-K03", "M2-K07", "M2-K14", "M2-K16", "M2-K09",
-        "M2-K17", "M2-E02", "M2-I01", "M2-O01", "M2-O02", "M2-C01", "M2-D19", "M2-D21", "M2-T01",
-        "M2-T02", "M2-U17",
+        "M2-K04", "M2-K06", "M2-K02", "M2-K03", "M2-K07", "M2-K14", "M2-K16", "M2-K09", "M2-K17",
+        "M2-E02", "M2-I01", "M2-O01", "M2-O02", "M2-C01", "M2-D19", "M2-D21", "M2-T01", "M2-T02",
+        "M2-U17",
     ] {
         assert!(owners.contains(o), "kein Stub mit Besitzer {o}");
     }
@@ -361,10 +363,7 @@ async fn stubs_answer_unsupported_with_command_and_owner() {
 // spec: UI-140
 #[tokio::test]
 async fn unknown_commands_are_not_found() {
-    let app = App::new(AppConfig {
-        home: std::env::temp_dir().join("os-app-unknown"),
-    })
-    .unwrap();
+    let app = App::new(AppConfig::new(std::env::temp_dir().join("os-app-unknown"))).unwrap();
     let ctx = CallCtx {
         window: WindowId("main".into()),
         cancel: Default::default(),

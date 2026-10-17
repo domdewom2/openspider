@@ -1,11 +1,34 @@
-//! OpenSpider Desktop: Tauri-Shell um die Rust-Kern-Crates.
+//! OpenSpider Desktop: Tauri-Hülle um die Service-Schicht `os-app` (`docs/plan/M2.md` 3.7).
+//!
+//! Die Hülle enthält keine Fachlogik und greift nie auf Datenbank oder Kern zu (Test `tests/no_core_access.rs`):
+//!
+//! * [`commands`]: je Command-Domäne ein internes Plugin, alles geht an `App::dispatch`;
+//! * [`events`]: ein Ereigniskanal je Fenster (Tauri-`Channel` → `EventSink`);
+//! * [`window`]: Sichtbarkeit (UI-143) und Schließen/Beenden (F-11);
+//! * [`open`]: Einzelinstanz und Dateizuordnung (OUT-232, OUT-272);
+//! * [`assets`]: URI-Schema `ospider://`.
+//!
+//! Plugins: dialog, clipboard-manager, notification, os, single-instance, deep-link; mit dem Feature `e2e-webdriver`
+//! zusätzlich der WebDriver-Server für E2E-B. Nach M2-F03 ist diese Datei eingefroren: neue Commands brauchen nur den
+//! Registry-Eintrag in `os-app`.
+
+pub mod assets;
+pub mod commands;
+pub mod events;
+pub mod open;
+pub mod plugin_names;
+pub mod window;
+
+use os_app::{App, AppConfig};
+use tauri::RunEvent;
+use tauri_plugin_deep_link::DeepLinkExt;
 
 /// Version der Anwendung (aus `Cargo.toml`).
 fn version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
-/// Tauri-Command: liefert die App-Version an die UI.
+/// Tauri-Command: liefert die App-Version an die UI (Platzhalter des Gerüsts, bis das Frontend `app.info` nutzt).
 #[tauri::command]
 fn app_version() -> String {
     version().to_string()
@@ -14,10 +37,95 @@ fn app_version() -> String {
 /// Startet die Tauri-Anwendung.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let app = match App::new(AppConfig::from_env()) {
+        Ok(app) => app,
+        Err(e) => {
+            eprintln!("OpenSpider konnte nicht starten: {e}");
+            std::process::exit(1);
+        }
+    };
+    let quitting = window::Quitting::default();
+
+    let mut builder = tauri::Builder::default();
+
+    // Einzelinstanz zuerst: eine zweite Instanz übergibt ihre Argumente und beendet sich (OUT-232)
+    #[cfg(desktop)]
+    {
+        let open_app = app.clone();
+        builder = builder.plugin(tauri_plugin_single_instance::init(
+            move |handle, argv, cwd| {
+                let cwd = std::path::PathBuf::from(cwd);
+                open::forward(
+                    &open_app,
+                    &open::requests_from_args(&argv, Some(cwd.as_path())),
+                );
+                window::focus_main(handle);
+            },
+        ));
+    }
+
+    builder = builder
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_deep_link::init());
+
+    #[cfg(feature = "e2e-webdriver")]
+    {
+        builder = builder.plugin(tauri_plugin_wdio_webdriver::init());
+    }
+
+    for plugin in commands::plugins(&app) {
+        builder = builder.plugin(plugin);
+    }
+
+    let events_app = app.clone();
+    let events_quitting = quitting.clone();
+    let scheme_app = app.clone();
+    let setup_app = app.clone();
+    let run_app = app.clone();
+    let run_quitting = quitting.clone();
+
+    builder
+        .manage(app)
+        .on_window_event(move |window, event| {
+            window::on_window_event(&events_app, &events_quitting, window, event);
+        })
+        .register_asynchronous_uri_scheme_protocol(
+            assets::SCHEME,
+            move |ctx, request, responder| {
+                assets::handle(&scheme_app, ctx, request, responder);
+            },
+        )
         .invoke_handler(tauri::generate_handler![app_version])
-        .run(tauri::generate_context!())
-        .expect("Fehler beim Starten von OpenSpider");
+        .setup(move |tauri_app| {
+            // Dateien, die den Start auslösen: Argumente (Windows/Linux) und geöffnete URLs (macOS)
+            let args: Vec<String> = std::env::args().collect();
+            let cwd = std::env::current_dir().ok();
+            open::forward(&setup_app, &open::requests_from_args(&args, cwd.as_deref()));
+            if let Ok(Some(urls)) = tauri_app.deep_link().get_current() {
+                open::forward(&setup_app, &open::requests_from_urls(&urls));
+            }
+            let url_app = setup_app.clone();
+            let url_handle = tauri_app.handle().clone();
+            tauri_app.deep_link().on_open_url(move |event| {
+                open::forward(&url_app, &open::requests_from_urls(&event.urls()));
+                window::focus_main(&url_handle);
+            });
+            Ok(())
+        })
+        .build(tauri::generate_context!())
+        .expect("Fehler beim Starten von OpenSpider")
+        .run(move |handle, event| {
+            if let RunEvent::ExitRequested { api, code, .. } = event {
+                // vom Nutzer ausgelöst (Cmd/Strg+Q): erst den Kern fragen
+                if code.is_none() && !run_quitting.is_set() {
+                    api.prevent_exit();
+                    window::request_quit(run_app.clone(), handle.clone(), run_quitting.clone());
+                }
+            }
+        });
 }
 
 #[cfg(test)]

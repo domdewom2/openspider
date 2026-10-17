@@ -1,14 +1,72 @@
 //! events.* (UI-018, UI-143).
 //!
-//! STUB(M2-F03): Gerüst von M2-F01. Name, Argument- und Rückgabetyp sowie `long_running` stehen im Katalog
-//! (`docs/plan/M2.md` 3.6a, `M2-ui-concept.md` 4.4) und ändert M2-F03 nicht; es ersetzt diese Datei durch die
-//! Umsetzung. Bis dahin antwortet jeder Command mit `CmdError::Unsupported`.
+//! * `events.subscribe`: braucht einen Kanal (Tauri `Channel`, Bridge-WebSocket) und läuft deshalb nicht über
+//!   `App::dispatch`, sondern über `App::subscribe` (Hülle bzw. Bridge). Über `dispatch` antwortet der Command mit
+//!   `Unsupported`/`err-events-subscribe-needs-channel`.
+//! * `events.setVisibility`: Sichtbarkeit aus dem Frontend (`visibilitychange`); die Hülle meldet ihre Quelle über
+//!   `App::set_visibility`. Sichtbar ist ein Fenster nur, wenn beide sichtbar melden (≤ 1 Hz sonst).
+//! * `events.setInterval`: Live-Intervall 250 – 5000 ms.
 
-stub_commands!(
-    "M2-F03",
-    [
-        ("events.subscribe", "SubscribeArgs", "SubscriptionId", false),
-        ("events.setVisibility", "SetVisibilityArgs", "void", false),
-        ("events.setInterval", "SetIntervalArgs", "void", false),
-    ]
-);
+use futures_util::future::BoxFuture;
+use serde_json::Value;
+
+use crate::dto::{CmdError, ErrorCode, SetIntervalArgs, SetVisibilityArgs};
+use crate::registry::{CmdResult, CommandMeta, Registry};
+use crate::runtime::error::parse_args;
+use crate::runtime::{App, CallCtx, WindowId};
+
+fn subscribe<'a>(_app: &'a App, _ctx: CallCtx, _args: Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async {
+        Err(CmdError::new(
+            ErrorCode::Unsupported,
+            "err-events-subscribe-needs-channel",
+        ))
+    })
+}
+
+fn set_visibility<'a>(app: &'a App, _ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let a: SetVisibilityArgs = parse_args(args)?;
+        app.set_frontend_visibility(WindowId(a.window), a.visible);
+        Ok(Value::Null)
+    })
+}
+
+fn set_interval<'a>(app: &'a App, _ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let a: SetIntervalArgs = parse_args(args)?;
+        app.set_live_interval_ms(a.ms)?;
+        Ok(Value::Null)
+    })
+}
+
+/// Trägt die Commands dieser Domäne in die Registry ein.
+pub fn register(r: &mut Registry) {
+    r.register(
+        CommandMeta {
+            name: "events.subscribe",
+            args: "SubscribeArgs",
+            ret: "SubscriptionId",
+            long_running: false,
+        },
+        subscribe,
+    );
+    r.register(
+        CommandMeta {
+            name: "events.setVisibility",
+            args: "SetVisibilityArgs",
+            ret: "void",
+            long_running: false,
+        },
+        set_visibility,
+    );
+    r.register(
+        CommandMeta {
+            name: "events.setInterval",
+            args: "SetIntervalArgs",
+            ret: "void",
+            long_running: false,
+        },
+        set_interval,
+    );
+}
