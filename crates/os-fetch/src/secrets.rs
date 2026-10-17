@@ -7,7 +7,7 @@
 //! seiner `Debug`-Ausgabe.
 
 use std::collections::HashMap;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex, OnceLock};
 
 /// Quelle für Geheimnisse, die nie in Konfigurationsdateien stehen (`secret_ref`).
 pub trait SecretStore: Send + Sync {
@@ -111,6 +111,111 @@ impl SecretStore for KeyringSecretStore {
                 None
             }
         }
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Schreibende Schnittstelle (M2-F02, docs/plan/M2.md 3.6b)
+
+/// Welche Ablage hinter einem [`SecretStoreMut`] steht (Diagnose und Hinweis in der Oberfläche).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum SecretBackend {
+    /// Betriebssystem-Schlüsselbund (macOS Keychain, Windows Credential Manager, Secret Service).
+    Keyring,
+    /// Speicher im Arbeitsspeicher (Tests und Serverbetrieb ohne Schlüsselbund, `OPENSPIDER_SECRET_STORE=memory`).
+    Memory,
+}
+
+/// Fehler beim Schreiben oder Löschen eines Geheimnisses. Die Meldung enthält nie den Wert.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SecretError(String);
+
+impl SecretError {
+    /// Fehler mit Meldung (ohne Geheimnis).
+    pub fn new(message: impl Into<String>) -> Self {
+        SecretError(message.into())
+    }
+
+    /// Die Meldung.
+    pub fn message(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::fmt::Display for SecretError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+impl std::error::Error for SecretError {}
+
+/// Beschreibbare Quelle für Geheimnisse: API-Schlüssel, OAuth-Token, Profilschlüssel, SMTP-Passwörter, MCP-Token
+/// (Regel C13). Kennungen haben die Form `openspider/<bereich>/<name>`, z. B. `api/gsc/refresh-token`.
+///
+/// Die bestehenden Typen behalten ihre Signaturen: `MemorySecretStore::set` (ohne Ergebnis) und
+/// `KeyringSecretStore::set` (mit `Result<(), String>`) bleiben die inhärenten Methoden; dieses Trait ruft man über
+/// `dyn SecretStoreMut` oder mit `SecretStoreMut::set(&store, …)`.
+pub trait SecretStoreMut: SecretStore {
+    /// Legt ein Geheimnis ab oder ersetzt es.
+    fn set(&self, id: &str, value: &str) -> Result<(), SecretError>;
+
+    /// Entfernt ein Geheimnis; ein fehlender Eintrag ist kein Fehler.
+    fn delete(&self, id: &str) -> Result<(), SecretError>;
+
+    /// Die Ablage hinter dem Store.
+    fn backend(&self) -> SecretBackend;
+}
+
+impl SecretStoreMut for MemorySecretStore {
+    fn set(&self, id: &str, value: &str) -> Result<(), SecretError> {
+        MemorySecretStore::set(self, id, value);
+        Ok(())
+    }
+
+    fn delete(&self, id: &str) -> Result<(), SecretError> {
+        self.values
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .remove(id);
+        Ok(())
+    }
+
+    fn backend(&self) -> SecretBackend {
+        SecretBackend::Memory
+    }
+}
+
+impl SecretStoreMut for KeyringSecretStore {
+    fn set(&self, id: &str, value: &str) -> Result<(), SecretError> {
+        KeyringSecretStore::set(self, id, value).map_err(SecretError)
+    }
+
+    fn delete(&self, id: &str) -> Result<(), SecretError> {
+        KeyringSecretStore::delete(self, id).map_err(SecretError)
+    }
+
+    fn backend(&self) -> SecretBackend {
+        SecretBackend::Keyring
+    }
+}
+
+/// Umgebungsvariable, die den Speicher-Store wählt (`memory`).
+pub const SECRET_STORE_ENV: &str = "OPENSPIDER_SECRET_STORE";
+
+/// Der Store für diesen Prozess: mit `OPENSPIDER_SECRET_STORE=memory` ein **prozessweiter** [`MemorySecretStore`]
+/// (alle Aufrufe teilen ihn; kein Schlüsselbund, kein Secret Service, kein D-Bus – Server und Tests), sonst der
+/// [`KeyringSecretStore`] mit dem Standard-Dienstnamen. Das Erzeugen berührt den Schlüsselbund nicht.
+pub fn secret_store_from_env() -> Arc<dyn SecretStoreMut> {
+    static MEMORY: OnceLock<Arc<MemorySecretStore>> = OnceLock::new();
+    let memory = std::env::var(SECRET_STORE_ENV)
+        .is_ok_and(|v| v.trim().eq_ignore_ascii_case("memory"));
+    if memory {
+        MEMORY
+            .get_or_init(|| Arc::new(MemorySecretStore::new()))
+            .clone()
+    } else {
+        Arc::new(KeyringSecretStore::new())
     }
 }
 

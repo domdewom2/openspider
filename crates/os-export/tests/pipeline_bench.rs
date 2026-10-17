@@ -31,6 +31,7 @@ fn wide_tab() -> TabDef {
         kind: ColumnKind::Url,
         default_visible: true,
         extension: false,
+        ..ColumnDef::META
     }];
     for i in 1..60 {
         let (sql, kind) = match i % 4 {
@@ -48,6 +49,7 @@ fn wide_tab() -> TabDef {
             kind,
             default_visible: true,
             extension: false,
+            ..ColumnDef::META
         });
     }
     TabDef {

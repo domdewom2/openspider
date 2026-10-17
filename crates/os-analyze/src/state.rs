@@ -28,7 +28,8 @@ fn relevant_sections(step: AnalysisStep) -> &'static [&'static str] {
         AnalysisStep::Canonicals | AnalysisStep::Pagination | AnalysisStep::Amp => &["spider"],
         AnalysisStep::Hreflang => &["hreflang"],
         AnalysisStep::Sitemaps => &["sitemaps", "spider"],
-        AnalysisStep::Content => &["content", "duplicates"],
+        // NearDuplicates (K2-19, M2-D02): Schwelle und Schalter stehen in `duplicates`, der Inhaltsbereich in `content`
+        AnalysisStep::Content | AnalysisStep::NearDuplicates => &["content", "duplicates"],
         AnalysisStep::Images => &["image", "rendering"],
         AnalysisStep::Analytics | AnalysisStep::SearchConsole | AnalysisStep::LinkMetrics => &[],
     }

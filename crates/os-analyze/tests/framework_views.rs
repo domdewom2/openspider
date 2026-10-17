@@ -581,6 +581,7 @@ fn paired_tab() -> os_analyze::TabDef {
         kind: ColumnKind::Text,
         default_visible: false,
         extension: false,
+        ..os_analyze::ColumnDef::META
     });
     tab
 }

@@ -26,11 +26,17 @@ use crate::state::step_config_hash;
 /// Signatur eines Teilschritts (`steps::<name>::run`).
 pub type StepFn = fn(&CrawlFile, &CrawlConfig, &CancelToken) -> Result<StepState, AnalyzeError>;
 
-/// Standardzuordnung Teilschritt → Funktion. Schritte ohne eigene Umsetzung sind in M1 `NotApplicable`.
+/// Standardzuordnung Teilschritt → Funktion. Schritte ohne eigene Umsetzung sind `NotApplicable`.
 pub fn default_registry(step: AnalysisStep) -> StepFn {
     match step {
         AnalysisStep::Canonicals => super::steps::canonicals::run,
         AnalysisStep::Sitemaps => super::steps::sitemaps::run,
+        // Stubs von M2 (M2-F02); die Fachpakete ersetzen die Funktion in ihrer Datei, diese Zeile bleibt.
+        AnalysisStep::NearDuplicates => super::steps::near_duplicates::run,
+        AnalysisStep::LinkScore => super::steps::link_score::run,
+        AnalysisStep::Pagination => super::steps::pagination::run,
+        AnalysisStep::Hreflang => super::steps::hreflang::run,
+        AnalysisStep::Links => super::steps::links::run,
         _ => not_applicable,
     }
 }

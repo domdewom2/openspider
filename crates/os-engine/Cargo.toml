@@ -13,6 +13,9 @@ os-url.workspace = true
 os-fetch.workspace = true
 os-parse.workspace = true
 os-store.workspace = true
+# M2-F02 (3.2): Rendering-Hook und API-Abruf hinter Traits; os-engine kennt os-analyze weiterhin nicht
+os-render.workspace = true
+os-integrations.workspace = true
 url.workspace = true
 thiserror.workspace = true
 tracing.workspace = true

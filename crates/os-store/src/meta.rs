@@ -128,3 +128,87 @@ impl CrawlFile {
         Ok(())
     }
 }
+
+// ---------------------------------------------------------------------------------------------------------------
+// Manifest-Hilfswerte (OUT-233, M2-F02)
+//
+// `q_manifest` (Schema v3) liest einige Werte aus `crawl_meta`, die SQLite selbst nicht berechnen kann: den SHA-256 der
+// eingebetteten Konfiguration, die Versionen des anlegenden und des zuletzt schreibenden Programms. os-store pflegt sie
+// beim Anlegen, bei jeder Änderung der Konfiguration und beim Öffnen zum Schreiben (nur wenn sich der Wert ändert,
+// damit ein Öffnen keine unnötige Schreibtransaktion gegen einen laufenden Crawl erzeugt).
+
+/// Version dieses Programmstands (SemVer), Wert von `openspider_version` und `last_writer_version`.
+pub const OPENSPIDER_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+/// SHA-256 (hex, Kleinbuchstaben) eines Textes; für `config_sha256` der eingebetteten `.osconfig`.
+pub fn sha256_hex(text: &str) -> String {
+    use sha2::{Digest, Sha256};
+    hex::encode(Sha256::digest(text.as_bytes()))
+}
+
+/// Setzt einen `crawl_meta`-Schlüssel, ohne zu schreiben, wenn der Wert schon so dasteht.
+pub(crate) fn put_if_changed(
+    conn: &rusqlite::Connection,
+    key: &str,
+    value: &str,
+) -> Result<(), StoreError> {
+    conn.execute(
+        "INSERT INTO crawl_meta (key, value) VALUES (?1, ?2) \
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value WHERE value <> excluded.value",
+        [key, value],
+    )?;
+    Ok(())
+}
+
+/// Wirksamer HTTP-User-Agent laut Konfiguration, soweit os-store ihn ohne die Voreinstellungsliste von os-fetch kennt:
+/// ein ausdrücklich gesetzter String oder der Standard-User-Agent. Die Engine überschreibt den Wert über `WriteBatch.meta`
+/// mit dem aufgelösten String, wenn die Voreinstellung eine andere ist.
+pub fn derived_user_agent(cfg: &os_model::CrawlConfig) -> Option<String> {
+    let explicit = cfg
+        .user_agent
+        .http
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty());
+    if let Some(ua) = explicit {
+        return Some(ua.to_string());
+    }
+    cfg.user_agent
+        .preset
+        .eq_ignore_ascii_case("openspider")
+        .then(|| {
+            format!("Mozilla/5.0 (compatible; OpenSpider/{OPENSPIDER_VERSION}; +https://openspider.de)")
+        })
+}
+
+/// Pflegt die aus der eingebetteten Konfiguration abgeleiteten Manifest-Werte (`config_sha256`, `user_agent`,
+/// `analysis_auto`). `osconfig` ist der gespeicherte Konfigurationstext; ist er nicht lesbar, bleibt es beim SHA-256.
+pub(crate) fn stamp_config(conn: &rusqlite::Connection, osconfig: &str) -> Result<(), StoreError> {
+    put_if_changed(conn, "config_sha256", &sha256_hex(osconfig))?;
+    if let Ok(cfg) = os_model::CrawlConfig::from_toml_str(osconfig) {
+        if let Some(ua) = derived_user_agent(&cfg) {
+            put_if_changed(conn, "user_agent", &ua)?;
+        }
+        put_if_changed(
+            conn,
+            "analysis_auto",
+            if cfg.analysis.auto_at_end { "1" } else { "0" },
+        )?;
+    }
+    Ok(())
+}
+
+/// Hält `last_writer_version` auf dem Stand dieses Programms (Öffnen zum Schreiben).
+pub(crate) fn stamp_writer(conn: &rusqlite::Connection) -> Result<(), StoreError> {
+    put_if_changed(conn, "last_writer_version", OPENSPIDER_VERSION)
+}
+
+/// Liest `crawl_config.osconfig` roh (für die Manifest-Werte nach einer Migration).
+pub(crate) fn raw_config(conn: &rusqlite::Connection) -> Result<Option<String>, StoreError> {
+    use rusqlite::OptionalExtension;
+    Ok(conn
+        .query_row("SELECT osconfig FROM crawl_config WHERE id = 1", [], |r| {
+            r.get::<_, String>(0)
+        })
+        .optional()?)
+}

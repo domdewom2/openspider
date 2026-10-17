@@ -574,6 +574,7 @@ mod tests {
                 hreflang: vec![],
                 pagination: vec![],
                 headers: vec![],
+                html: None,
             });
         }
         b

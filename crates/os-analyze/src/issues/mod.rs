@@ -1,9 +1,10 @@
 //! Issue-Katalog (UI-063/UI-064): Klassifizierung, eigene Texte (de/en) und Issue-Zeilen aus Filterzählern.
 //!
 //! Quellen (alle im Repo, per `include_str!` eingebettet):
-//! - `core/issues/catalog.toml` – die einzige Klassifizierungsdatei (Typ/Priorität mit Regelcodes),
+//! - `core/issues/catalog.toml` – die Klassifizierungsdatei von M1 (Typ/Priorität mit Regelcodes); ab M2 kommt je Tab
+//!   eine Datei `core/issues/catalog.d/<tab>.toml` hinzu (`catalog::SPLIT_FILES`, Loader in `catalog.rs`),
 //! - `core/issues/texts/{de,en}.toml` – die drei Texte `what`/`why`/`fix` je Issue (Schlüssel
-//!   `issues.<id>.what|why|fix`),
+//!   `issues.<id>.what|why|fix`); ab M2 je Tab `core/issues/texts/{de,en}.d/<tab>.toml`,
 //! - `docs/issues/<doc_key>.md` – Doku-Seite je Eintrag (erzeugt aus Katalog und Texten, siehe [`doc_page`]).
 //!
 //! Platzhalter der Texte (`{max}`, `{min}`, `{unit}`, `{threshold}`) ersetzt [`texts`] mit den Werten aus
@@ -21,8 +22,9 @@ use os_model::{FilterState, IssuePriority, IssueType, Value};
 use crate::views::FilterCount;
 
 pub use catalog::{
-    override_share, parse_catalog, validate, CatalogError, CatalogProblem, ALLOWED_PLACEHOLDERS,
-    OVERRIDE_REASON_PREFIXES, PRIORITY_RULES, TYPE_RULES,
+    m1_source, override_share, parse_catalog, texts_m1_source, validate, CatalogError,
+    CatalogProblem, SplitFiles, ALLOWED_PLACEHOLDERS, OVERRIDE_REASON_PREFIXES, PRIORITY_RULES,
+    SPLIT_FILES, TYPE_RULES,
 };
 pub use render::{doc_page, filter_label, matches_filter};
 
@@ -106,19 +108,16 @@ pub struct IssueRow {
     pub pct: Option<f64>,
 }
 
-const CATALOG_SRC: &str = include_str!("../../../../core/issues/catalog.toml");
-const TEXTS_DE_SRC: &str = include_str!("../../../../core/issues/texts/de.toml");
-const TEXTS_EN_SRC: &str = include_str!("../../../../core/issues/texts/en.toml");
-
-/// Der Katalog (`core/issues/catalog.toml`).
+/// Der Katalog: `core/issues/catalog.toml` (M1) plus je Tab `core/issues/catalog.d/<tab>.toml` (ab M2).
 ///
 /// # Panics
-/// Wenn die eingebettete Katalogdatei nicht lesbar ist (Build-Fehler; `tests/issues_catalog.rs` fängt das ab).
+/// Wenn eine eingebettete Katalogdatei nicht lesbar ist (Build-Fehler; `tests/issues_catalog.rs` und
+/// `tests/catalog_split.rs` fangen das ab).
 pub fn catalog() -> &'static [CatalogEntry] {
     static CATALOG: OnceLock<Vec<CatalogEntry>> = OnceLock::new();
-    CATALOG.get_or_init(|| match parse_catalog(CATALOG_SRC) {
+    CATALOG.get_or_init(|| match catalog::load_all() {
         Ok(entries) => entries,
-        Err(e) => panic!("core/issues/catalog.toml ist ungültig: {e}"),
+        Err(e) => panic!("Issue-Katalog ist ungültig: {e}"),
     })
 }
 
@@ -199,8 +198,5 @@ pub fn issues_from_counts(counts: &[FilterCount]) -> Vec<IssueRow> {
 }
 
 pub(crate) fn texts_source(lang: Lang) -> &'static str {
-    match lang {
-        Lang::De => TEXTS_DE_SRC,
-        Lang::En => TEXTS_EN_SRC,
-    }
+    catalog::texts_all(lang)
 }

@@ -92,19 +92,17 @@ fn default_crawl_folder_is_the_one_defined_in_out_227() {
     );
 }
 
-/// Kopiert die Fixture `schema-v2.ospider` (pausierter Crawl, 42 URLs) unter dem Namen der Verwaltung
+/// Legt die Fixture `schema-v2.ospider` (pausierter Crawl, 42 URLs, migriert) unter dem Namen der Verwaltung
 /// (`<crawl_id>.ospider`) in `dir`.
 fn fixture_crawl_in(dir: &Path) -> (CrawlId, std::path::PathBuf) {
     std::fs::create_dir_all(dir).unwrap();
     let staged = tempfile::tempdir().unwrap();
+    // Die eingecheckte Datei ist Schema v2: erst migrieren, dann als eigenständige Kopie unter dem Verwaltungsnamen ablegen.
     let source = copy_fixture("schema-v2.ospider", staged.path());
-    let id = CrawlFile::open(&source, OpenMode::ReadOnly)
-        .unwrap()
-        .meta()
-        .unwrap()
-        .crawl_id;
+    let file = CrawlFile::open(&source, OpenMode::ReadWrite).unwrap();
+    let id = file.meta().unwrap().crawl_id;
     let target = registry::path_for(dir, &id);
-    std::fs::copy(&source, &target).unwrap();
+    file.save_as(&target).unwrap();
     (id, target)
 }
 

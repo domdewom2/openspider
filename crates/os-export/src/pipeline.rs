@@ -204,6 +204,16 @@ pub fn export_bulk_in(
         }
         return Ok(result.files);
     }
+    // M2: Tabellen-Einträge der Gruppen `catalog/bulk_<gruppe>.rs` (Stub: nur Kopfzeile, K-14).
+    if let Some(entry) = catalog::find_table(&catalog::bulk_tables(), &canonical) {
+        fs_paths::create_dir_all(out_dir).map_err(|source| ExportError::Io {
+            path: out_dir.to_path_buf(),
+            source,
+        })?;
+        let path = out_dir.join(entry.file_name(format.extension()));
+        let job = catalog::TableJob { tabs, file, cfg };
+        return Ok(vec![catalog::export_table(entry, &job, &path, format)?]);
+    }
     let entry = bulk_links::resolve(&canonical)?;
     fs_paths::create_dir_all(out_dir).map_err(|source| ExportError::Io {
         path: out_dir.to_path_buf(),

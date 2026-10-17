@@ -33,10 +33,19 @@ pub const MIGRATIONS: &[Migration] = &[
         name: "url_counters",
         sql: include_str!("../migrations/0002_url_counters.sql"),
     },
+    Migration {
+        version: 3,
+        name: "m2",
+        sql: include_str!("../migrations/0003_m2.sql"),
+    },
 ];
 
 /// Aktuelle Schemaversion dieses Programmstands.
-pub const SCHEMA_VERSION: u32 = 2;
+pub const SCHEMA_VERSION: u32 = 3;
+
+/// Hauptversion der öffentlichen Leseschnittstelle (`q_`-Sichten, OUT-233/OUT-234); Wert von
+/// `q_manifest.read_api_version`. Inkompatible Änderungen der Sichten erhöhen sie.
+pub const READ_API_VERSION: u32 = 1;
 
 /// Neueste Version einer Migrationsliste (0 bei leerer Liste).
 pub fn latest_version(migrations: &[Migration]) -> u32 {

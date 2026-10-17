@@ -70,6 +70,7 @@ fn column(key: &'static str, sql: &'static str, kind: ColumnKind) -> ColumnDef {
         kind,
         default_visible: true,
         extension: false,
+        ..ColumnDef::META
     }
 }
 
@@ -114,6 +115,7 @@ pub fn tab() -> TabDef {
                 kind: ColumnKind::Int,
                 default_visible: false,
                 extension: true,
+                ..ColumnDef::META
             },
             column("Unique Inlinks", unique_inlinks!(), ColumnKind::Int),
             column("Unique JS Inlinks", "NULL", ColumnKind::Int),

@@ -9,11 +9,15 @@ pub mod paging;
 pub mod permissions;
 pub mod print_config;
 pub mod server;
+pub mod session;
 pub mod settings;
 pub mod tool;
 pub mod tools;
 pub mod transport;
 
 pub use error::McpError;
+pub use session::{
+    SessionAccess, SessionCrawl, SessionError, SessionSource, SessionStart, SessionStatus,
+};
 pub use settings::{HttpSettings, McpSettings};
 pub use tool::{Tool, ToolClass, ToolContext, ToolError, ToolOutput};

@@ -231,6 +231,7 @@ fn deps(id: Option<CrawlId>, hook: FinishedHook) -> EngineDeps {
         sink_factory: None,
         on_finished: Some(hook),
         owner_kind: "cli",
+        renderer: None,
     }
 }
 

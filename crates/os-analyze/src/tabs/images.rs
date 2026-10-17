@@ -83,6 +83,7 @@ fn column(key: &'static str, sql: &'static str, kind: ColumnKind) -> ColumnDef {
         kind,
         default_visible: true,
         extension: false,
+        ..ColumnDef::META
     }
 }
 

@@ -204,6 +204,9 @@ impl ProgressTracker {
             avg_rate,
             paused_s: paused.as_secs(),
             discovered,
+            // M2-E02 (CRAWL-129): Speicherstufe und Dateigröße
+            memory_stage: None,
+            file_bytes: None,
         }
     }
 

@@ -216,6 +216,7 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
                 hreflang: vec![],
                 pagination: vec![],
                 headers: vec![],
+                html: None,
             });
             let page = &mut batch.pages[0];
             let (ind, status) = os_model::evaluate(&IndexabilityInput {
@@ -399,6 +400,7 @@ fn plain_page(id: UrlId, result: &FetchResult, cfg: &CrawlConfig) -> PageWrite {
         hreflang: vec![],
         pagination: vec![],
         headers: vec![],
+        html: None,
     }
 }
 
@@ -1343,6 +1345,7 @@ async fn assemble<F: Fetch>(
         hreflang: hreflang_rows,
         pagination: pagination_rows,
         headers,
+        html: None,
     });
     batch.queue.push(QueueOp::Pop { id: item.id });
     batch.url_flags = url_flags;
@@ -1575,6 +1578,8 @@ pub(crate) fn build_sitemap_batch(
             found_via: fs.found_via.clone(),
             entry_urls,
             hreflang: hreflang_rows,
+            error: None,
+            entry_meta: Vec::new(),
         });
     }
     batch

@@ -14,6 +14,9 @@ thiserror.workspace = true
 dirs.workspace = true
 serde_json.workspace = true
 icu_collator.workspace = true
+# M2-F02 (OUT-233): config_sha256 im Manifest; sha2 ist über oauth2/rustls-Abhängigkeiten schon im Lock (kein neuer Crate)
+sha2 = "0.11"
+hex.workspace = true
 
 # physischer RAM und freier Speicherplatz (CRAWL-124, P07)
 [target.'cfg(unix)'.dependencies]
@@ -24,3 +27,5 @@ windows-sys.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
+# M2-F02: Golden-Helfer (assert_golden, normalize) für die Tests der Leseschnittstelle; os-testsite hängt an keinem Kern-Crate
+os-testsite.workspace = true

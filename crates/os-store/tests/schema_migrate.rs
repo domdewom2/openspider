@@ -40,7 +40,7 @@ fn production_migration_list_is_consecutive_and_matches_schema_version() {
     assert_eq!(schema::latest_version(MIGRATIONS), os_store::SCHEMA_VERSION);
     let mut conn = Connection::open_in_memory().unwrap();
     schema::migrate(&mut conn, 0, MIGRATIONS).unwrap();
-    assert_eq!(schema::user_version(&conn).unwrap(), 2);
+    assert_eq!(schema::user_version(&conn).unwrap(), 3);
 }
 
 // spec: CRAWL-127
@@ -92,19 +92,20 @@ fn older_file_is_backed_up_then_migrated() {
     drop(f);
     let before = fs::read(&path).unwrap();
 
-    // Das aktuelle Produktionsschema (Version 2) gilt als Ausgangspunkt; es kommt eine Testversion 3 hinzu.
+    // Das aktuelle Produktionsschema (Version 3) gilt als Ausgangspunkt; es kommt eine Testversion 4 hinzu.
     let migrations = [
         MIGRATIONS[0],
         MIGRATIONS[1],
+        MIGRATIONS[2],
         Migration {
-            version: 3,
+            version: 4,
             ..TEST_V2
         },
     ];
     let f = CrawlFile::open_with(&path, OpenMode::ReadWrite, &migrations).unwrap();
 
-    let backup = dir.path().join("crawl.v2.bak.ospider");
-    assert_eq!(backup, backup_path(&path, 2));
+    let backup = dir.path().join("crawl.v3.bak.ospider");
+    assert_eq!(backup, backup_path(&path, 3));
     assert!(backup.exists(), "Sicherungskopie fehlt");
     assert_eq!(
         fs::read(&backup).unwrap(),
@@ -113,8 +114,8 @@ fn older_file_is_backed_up_then_migrated() {
     );
 
     // Datei ist migriert, Metadaten behalten.
-    assert_eq!(schema::user_version(f.conn()).unwrap(), 3);
-    assert_eq!(f.get_meta("schema_version").unwrap().as_deref(), Some("3"));
+    assert_eq!(schema::user_version(f.conn()).unwrap(), 4);
+    assert_eq!(f.get_meta("schema_version").unwrap().as_deref(), Some("4"));
     assert_eq!(f.meta().unwrap().name, "Alt");
     let n: i64 = f
         .conn()
@@ -123,9 +124,9 @@ fn older_file_is_backed_up_then_migrated() {
     assert_eq!(n, 0);
     drop(f);
 
-    // Die Sicherung ist selbst eine gültige v2-Datei.
+    // Die Sicherung ist selbst eine gültige v3-Datei.
     let old = CrawlFile::open(&backup, OpenMode::ReadOnly).unwrap();
-    assert_eq!(old.meta().unwrap().schema_version, 2);
+    assert_eq!(old.meta().unwrap().schema_version, 3);
     assert!(old
         .conn()
         .query_row("SELECT count(*) FROM b", [], |r| r.get::<_, i64>(0))
@@ -142,8 +143,9 @@ fn read_only_open_of_older_file_does_not_migrate() {
     let migrations = [
         MIGRATIONS[0],
         MIGRATIONS[1],
+        MIGRATIONS[2],
         Migration {
-            version: 3,
+            version: 4,
             ..TEST_V2
         },
     ];
@@ -154,15 +156,15 @@ fn read_only_open_of_older_file_does_not_migrate() {
         matches!(
             err,
             StoreError::MigrationRequired {
-                found: 2,
-                supported: 3,
+                found: 3,
+                supported: 4,
                 ..
             }
         ),
         "{err}"
     );
     assert_eq!(fs::read(&path).unwrap(), before);
-    assert!(!backup_path(&path, 2).exists());
+    assert!(!backup_path(&path, 3).exists());
 }
 
 // spec: CRAWL-127

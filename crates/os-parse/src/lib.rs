@@ -11,6 +11,8 @@ pub mod canonical;
 pub mod charset;
 pub mod content;
 pub mod css;
+pub mod custom_extract;
+pub mod custom_search;
 pub mod directives;
 pub mod dom;
 pub mod effective;
@@ -18,17 +20,25 @@ pub mod elements;
 pub mod headers;
 pub mod hreflang;
 pub mod images;
+pub mod link_position;
 pub mod links;
 pub mod pagination;
 pub mod pdf;
 pub mod pixel;
+pub mod readability;
 pub mod refresh;
+pub mod sd;
+pub mod security;
 pub mod sitemap;
+pub mod spelling;
 pub mod text;
+pub mod validation;
 
 use os_model::{
-    ContentAreaConfig, CrawlConfig, Directive, DirectiveSource, ExtractedLink, ExtractionConfig,
-    HeaderHints, HreflangOverLimit, ParsedPage, PdfMeta, SitemapDoc,
+    ContentAreaConfig, CrawlConfig, CustomExtractionConfig, CustomSearchConfig, Directive,
+    DirectiveSource, ExtractedLink, ExtractionConfig, GrammarConfig, HeaderHints,
+    HreflangOverLimit, LinkPositionsConfig, ParsedPage, PdfMeta, SitemapDoc, SpellingConfig,
+    StructuredDataConfig,
 };
 
 /// Einstellungen der Auswertung einer Seite.
@@ -46,6 +56,26 @@ pub struct ParseConfig {
     pub allow_script_subtag: bool,
     /// Pixelbreiten berechnen (UI-038).
     pub pixel: bool,
+    /// HTML-Validierung auf Token-Ebene (`advanced.html_validation`, TECH-008; ab M2).
+    pub html_validation: bool,
+    /// Lesbarkeit berechnen (`extraction.readability`, ONPAGE-149; ab M2).
+    pub readability: bool,
+    /// Lesbarkeitsformeln für weitere Sprachen als Englisch (`content.readability.language_aware`; ab M2).
+    pub readability_language_aware: bool,
+    /// MinHash-Signatur für Nahezu-Duplikate berechnen (`duplicates.near_enabled`, ONPAGE-144; ab M2).
+    pub minhash: bool,
+    /// Strukturierte Daten: Formate und Groß-/Kleinschreibung (`extraction.structured_data`, ab M2).
+    pub structured_data: StructuredDataConfig,
+    /// Rechtschreibprüfung (`spelling`, ONPAGE-153; ab M2).
+    pub spelling: SpellingConfig,
+    /// Grammatikprüfung (`grammar`, ONPAGE-154; ab M2).
+    pub grammar: GrammarConfig,
+    /// Custom-Search-Filter (`custom_search.filters`, INTEG-020 ff.; ab M2).
+    pub custom_search: CustomSearchConfig,
+    /// Custom-Extraction-Extraktoren (`custom_extraction.extractors`, INTEG-040 ff.; ab M2).
+    pub custom_extraction: CustomExtractionConfig,
+    /// Regeln der Linkpositionen (`link_positions.rules`, INTEG-080 ff.; ab M2).
+    pub link_positions: LinkPositionsConfig,
 }
 
 impl ParseConfig {
@@ -62,8 +92,43 @@ impl ParseConfig {
             hreflang_over_limit: cfg.hreflang.over_limit,
             allow_script_subtag: cfg.hreflang.allow_script_subtag,
             pixel: false,
+            html_validation: cfg.advanced.html_validation,
+            readability: cfg.extraction.readability,
+            readability_language_aware: cfg.content.readability.language_aware,
+            minhash: cfg.duplicates.near_enabled,
+            structured_data: cfg.extraction.structured_data,
+            spelling: cfg.spelling.clone(),
+            grammar: cfg.grammar.clone(),
+            custom_search: cfg.custom_search.clone(),
+            custom_extraction: cfg.custom_extraction.clone(),
+            link_positions: cfg.link_positions.clone(),
         }
     }
+
+    /// Ist mindestens ein Format der strukturierten Daten eingeschaltet?
+    pub fn structured_data_enabled(&self) -> bool {
+        let sd = &self.structured_data;
+        sd.json_ld || sd.microdata || sd.rdfa
+    }
+}
+
+/// Eingabe der Auswertungsmodule ab M2 (`security`, `validation`, `readability`, `custom_search`, `custom_extract`,
+/// `sd`, `spelling`): alles, was `parse_html` nach dem Aufbau des Baums kennt. Die Module lesen daraus und tragen ihre
+/// Ergebnisse in die `ParsedPage` ein (`ext`, `forms`, `validation`, `structured_data`, `custom_search`,
+/// `custom_extraction`, `minhash`).
+pub struct PageCtx<'a> {
+    /// URL der Antwort.
+    pub url: &'a url::Url,
+    /// Basis-URL nach `<base href>`.
+    pub base: &'a url::Url,
+    /// Der HTML-Baum dieser Seite (Architekturgrundsatz 3).
+    pub doc: &'a dom::Document,
+    /// Der dekodierte Quelltext.
+    pub html: &'a str,
+    /// Antwort-Header.
+    pub headers: &'a [(String, String)],
+    /// Einstellungen.
+    pub cfg: &'a ParseConfig,
 }
 
 /// Eingabe der Auswertung einer HTML-Antwort.
@@ -86,7 +151,9 @@ pub struct ParseInput<'a> {
 /// 5 `elements::extract`, `content::analyze_with_source` (Quelltextlänge = `html.chars().count()`, A-7), `pixel::annotate` (Titel 20 px, Meta-Descriptions 14 px, Regular;
 /// nur bei `cfg.pixel`) → 6 `directives::extract` (Token `[robots_token, "googlebot"]`, K-12),
 /// `canonical::extract`, `hreflang::extract`, `refresh::extract`, `pagination::extract` →
-/// 7 `headers::merge(headers::hints(…))` → 8 `effective::compute`.
+/// 7 `headers::merge(headers::hints(…))` → 8 `effective::compute` → 9 (ab M2) die Auswertungsmodule über
+/// [`PageCtx`], jeweils nur bei eingeschaltetem Schalter: `security` (immer), `validation`, `readability`
+/// (Lesbarkeit und MinHash), `custom_search`, `custom_extract`, `sd`, `spelling`.
 pub fn parse_html(input: &ParseInput) -> ParsedPage {
     let cfg = input.cfg;
 
@@ -154,6 +221,35 @@ pub fn parse_html(input: &ParseInput) -> ParsedPage {
     let header_directives = by_source(DirectiveSource::XRobotsTag);
     (page.effective_index, page.effective_follow) =
         effective::compute(&html_directives, &header_directives);
+
+    // Ab M2: weitere Auswertungen über Konfigurationsschalter (M2-F02 legt die Aufrufe an, die Fachpakete füllen sie).
+    let ctx = PageCtx {
+        url: input.url,
+        base: &base,
+        doc: &doc,
+        html: &html,
+        headers: input.headers,
+        cfg,
+    };
+    security::run(&ctx, &mut page);
+    if cfg.html_validation {
+        validation::run(&ctx, &mut page);
+    }
+    if cfg.readability || cfg.minhash {
+        readability::run(&ctx, &mut page);
+    }
+    if !cfg.custom_search.filters.is_empty() {
+        custom_search::run(&ctx, &mut page);
+    }
+    if !cfg.custom_extraction.extractors.is_empty() {
+        custom_extract::run(&ctx, &mut page);
+    }
+    if cfg.structured_data_enabled() {
+        sd::run(&ctx, &mut page);
+    }
+    if cfg.spelling.enabled || cfg.grammar.enabled {
+        spelling::run(&ctx, &mut page);
+    }
     page
 }
 
@@ -212,6 +308,75 @@ mod tests {
             parse_sitemap(&url, b"<html/>", None).kind,
             os_model::SitemapKind::Invalid
         );
+    }
+
+    fn page_with(cfg: &CrawlConfig, body: &str) -> ParsedPage {
+        let url = url::Url::parse("https://site.test/a").unwrap();
+        let cfg = ParseConfig::from_crawl_config(cfg);
+        parse_html(&ParseInput {
+            url: &url,
+            body: body.as_bytes(),
+            content_type: Some("text/html"),
+            headers: &[],
+            cfg: &cfg,
+        })
+    }
+
+    const M2_HTML: &str = "<html><head><title>T</title></head><body><nav><a href=\"/n\" target=\"_blank\">n</a></nav>\
+        <main><a href=\"/c\">c</a></main><footer><a href=\"/f\" target=\"_self\">f</a></footer></body></html>";
+
+    // Infrastruktur (M2-F02): `LinkRef.target`; die Fachprüfung (ONPAGE-036) gehört M2-D11.
+    #[test]
+    fn link_target_attribute_is_part_of_every_extracted_link() {
+        let page = page_with(&CrawlConfig::default(), M2_HTML);
+        let targets: Vec<(&str, Option<&str>)> = page
+            .links
+            .iter()
+            .map(|l| (l.href_raw.as_str(), l.target.as_deref()))
+            .collect();
+        assert_eq!(
+            targets,
+            [("/n", Some("_blank")), ("/c", None), ("/f", Some("_self"))]
+        );
+    }
+
+    // Infrastruktur (M2-F02): Aufrufe der Stub-Module; die Fachprüfungen gehören den Paketen D02, D09, D10, D14 – D16, D19.
+    #[test]
+    fn the_m2_modules_are_called_through_switches_and_keep_the_m1_output_with_default_rules() {
+        let plain = page_with(&CrawlConfig::default(), M2_HTML);
+        // Alle Schalter an: die Stub-Module (M2-F02) verändern die Ausgabe von M1 nicht.
+        let mut all_on = CrawlConfig::default();
+        all_on.advanced.html_validation = true;
+        all_on.extraction.readability = true;
+        all_on.duplicates.near_enabled = true;
+        all_on.extraction.structured_data.json_ld = true;
+        all_on.extraction.structured_data.microdata = true;
+        all_on.extraction.structured_data.rdfa = true;
+        all_on.spelling.enabled = true;
+        all_on.grammar.enabled = true;
+        all_on
+            .custom_search
+            .filters
+            .push(os_model::SearchFilter::default());
+        all_on
+            .custom_extraction
+            .extractors
+            .push(os_model::Extractor::default());
+        let switched = page_with(&all_on, M2_HTML);
+        assert_eq!(plain, switched);
+        // Standardregeln = Positionen von M1.
+        let positions: Vec<os_model::LinkPosition> = plain.links.iter().map(|l| l.position).collect();
+        assert_eq!(
+            positions,
+            [
+                os_model::LinkPosition::Navigation,
+                os_model::LinkPosition::Content,
+                os_model::LinkPosition::Footer
+            ]
+        );
+        let cfg = ParseConfig::from_crawl_config(&all_on);
+        assert!(cfg.html_validation && cfg.readability && cfg.minhash && cfg.structured_data_enabled());
+        assert!(!ParseConfig::from_crawl_config(&CrawlConfig::default()).structured_data_enabled());
     }
 
     #[test]

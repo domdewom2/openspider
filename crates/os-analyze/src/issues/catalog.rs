@@ -227,3 +227,263 @@ pub fn override_share(entries: &[CatalogEntry]) -> f64 {
         .count();
     n as f64 / entries.len() as f64
 }
+
+// ---------------------------------------------------------------------------------------------------------------
+// Loader (M2-F02): M1-Datei plus je Tab eine Datei in `catalog.d/` und `texts/{de,en}.d/`
+
+const CATALOG_M1: &str = include_str!("../../../../core/issues/catalog.toml");
+const TEXTS_DE_M1: &str = include_str!("../../../../core/issues/texts/de.toml");
+const TEXTS_EN_M1: &str = include_str!("../../../../core/issues/texts/en.toml");
+
+/// Die Dateien eines Tabs ab M2: Katalog und Texte (de, en). Der Name `module` ist der Modulname des Tabs in
+/// `tabs/` (`page_titles`) und der Dateiname ohne Endung.
+#[derive(Debug, Clone, Copy)]
+pub struct SplitFiles {
+    /// Modulname des Tabs.
+    pub module: &'static str,
+    /// Inhalt von `core/issues/catalog.d/<module>.toml`.
+    pub catalog: &'static str,
+    /// Inhalt von `core/issues/texts/de.d/<module>.toml`.
+    pub de: &'static str,
+    /// Inhalt von `core/issues/texts/en.d/<module>.toml`.
+    pub en: &'static str,
+}
+
+/// Alle Dateien ab M2, ein Eintrag je Tab in der Reihenfolge von `tabs::all()`. Eine neue Datei in einem der Ordner
+/// braucht einen Eintrag hier (der Test `catalog_split.rs` prüft Ordner und Liste gegeneinander).
+pub const SPLIT_FILES: &[SplitFiles] = &[
+    SplitFiles {
+        module: "internal",
+        catalog: include_str!("../../../../core/issues/catalog.d/internal.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/internal.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/internal.toml"),
+    },
+    SplitFiles {
+        module: "external",
+        catalog: include_str!("../../../../core/issues/catalog.d/external.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/external.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/external.toml"),
+    },
+    SplitFiles {
+        module: "security",
+        catalog: include_str!("../../../../core/issues/catalog.d/security.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/security.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/security.toml"),
+    },
+    SplitFiles {
+        module: "response_codes",
+        catalog: include_str!("../../../../core/issues/catalog.d/response_codes.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/response_codes.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/response_codes.toml"),
+    },
+    SplitFiles {
+        module: "url",
+        catalog: include_str!("../../../../core/issues/catalog.d/url.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/url.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/url.toml"),
+    },
+    SplitFiles {
+        module: "page_titles",
+        catalog: include_str!("../../../../core/issues/catalog.d/page_titles.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/page_titles.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/page_titles.toml"),
+    },
+    SplitFiles {
+        module: "meta_description",
+        catalog: include_str!("../../../../core/issues/catalog.d/meta_description.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/meta_description.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/meta_description.toml"),
+    },
+    SplitFiles {
+        module: "meta_keywords",
+        catalog: include_str!("../../../../core/issues/catalog.d/meta_keywords.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/meta_keywords.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/meta_keywords.toml"),
+    },
+    SplitFiles {
+        module: "h1",
+        catalog: include_str!("../../../../core/issues/catalog.d/h1.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/h1.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/h1.toml"),
+    },
+    SplitFiles {
+        module: "h2",
+        catalog: include_str!("../../../../core/issues/catalog.d/h2.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/h2.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/h2.toml"),
+    },
+    SplitFiles {
+        module: "content",
+        catalog: include_str!("../../../../core/issues/catalog.d/content.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/content.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/content.toml"),
+    },
+    SplitFiles {
+        module: "images",
+        catalog: include_str!("../../../../core/issues/catalog.d/images.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/images.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/images.toml"),
+    },
+    SplitFiles {
+        module: "canonicals",
+        catalog: include_str!("../../../../core/issues/catalog.d/canonicals.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/canonicals.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/canonicals.toml"),
+    },
+    SplitFiles {
+        module: "pagination",
+        catalog: include_str!("../../../../core/issues/catalog.d/pagination.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/pagination.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/pagination.toml"),
+    },
+    SplitFiles {
+        module: "directives",
+        catalog: include_str!("../../../../core/issues/catalog.d/directives.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/directives.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/directives.toml"),
+    },
+    SplitFiles {
+        module: "hreflang",
+        catalog: include_str!("../../../../core/issues/catalog.d/hreflang.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/hreflang.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/hreflang.toml"),
+    },
+    SplitFiles {
+        module: "javascript",
+        catalog: include_str!("../../../../core/issues/catalog.d/javascript.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/javascript.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/javascript.toml"),
+    },
+    SplitFiles {
+        module: "links",
+        catalog: include_str!("../../../../core/issues/catalog.d/links.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/links.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/links.toml"),
+    },
+    SplitFiles {
+        module: "structured_data",
+        catalog: include_str!("../../../../core/issues/catalog.d/structured_data.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/structured_data.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/structured_data.toml"),
+    },
+    SplitFiles {
+        module: "sitemaps",
+        catalog: include_str!("../../../../core/issues/catalog.d/sitemaps.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/sitemaps.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/sitemaps.toml"),
+    },
+    SplitFiles {
+        module: "pagespeed",
+        catalog: include_str!("../../../../core/issues/catalog.d/pagespeed.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/pagespeed.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/pagespeed.toml"),
+    },
+    SplitFiles {
+        module: "mobile",
+        catalog: include_str!("../../../../core/issues/catalog.d/mobile.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/mobile.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/mobile.toml"),
+    },
+    SplitFiles {
+        module: "accessibility",
+        catalog: include_str!("../../../../core/issues/catalog.d/accessibility.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/accessibility.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/accessibility.toml"),
+    },
+    SplitFiles {
+        module: "custom_search",
+        catalog: include_str!("../../../../core/issues/catalog.d/custom_search.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/custom_search.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/custom_search.toml"),
+    },
+    SplitFiles {
+        module: "custom_extraction",
+        catalog: include_str!("../../../../core/issues/catalog.d/custom_extraction.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/custom_extraction.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/custom_extraction.toml"),
+    },
+    SplitFiles {
+        module: "custom_js",
+        catalog: include_str!("../../../../core/issues/catalog.d/custom_js.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/custom_js.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/custom_js.toml"),
+    },
+    SplitFiles {
+        module: "analytics",
+        catalog: include_str!("../../../../core/issues/catalog.d/analytics.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/analytics.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/analytics.toml"),
+    },
+    SplitFiles {
+        module: "search_console",
+        catalog: include_str!("../../../../core/issues/catalog.d/search_console.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/search_console.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/search_console.toml"),
+    },
+    SplitFiles {
+        module: "validation",
+        catalog: include_str!("../../../../core/issues/catalog.d/validation.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/validation.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/validation.toml"),
+    },
+    SplitFiles {
+        module: "link_metrics",
+        catalog: include_str!("../../../../core/issues/catalog.d/link_metrics.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/link_metrics.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/link_metrics.toml"),
+    },
+    SplitFiles {
+        module: "change_detection",
+        catalog: include_str!("../../../../core/issues/catalog.d/change_detection.toml"),
+        de: include_str!("../../../../core/issues/texts/de.d/change_detection.toml"),
+        en: include_str!("../../../../core/issues/texts/en.d/change_detection.toml"),
+    },
+];
+
+/// Liest den ganzen Katalog: zuerst die M1-Datei, dann die Dateien je Tab in der Reihenfolge von [`SPLIT_FILES`].
+pub(crate) fn load_all() -> Result<Vec<CatalogEntry>, CatalogError> {
+    let mut entries = parse_catalog(CATALOG_M1)?;
+    for f in SPLIT_FILES {
+        entries.extend(
+            parse_catalog(f.catalog)
+                .map_err(|e| CatalogError::Parse(format!("catalog.d/{}.toml: {e}", f.module)))?,
+        );
+    }
+    Ok(entries)
+}
+
+/// Die M1-Datei des Katalogs allein (für Tests der Aufteilung).
+pub fn m1_source() -> &'static str {
+    CATALOG_M1
+}
+
+/// Texte einer Sprache als ein TOML-Dokument: M1-Datei, dann die Dateien je Tab. Die Dateien enthalten nur Tabellen
+/// `[issues.<id>]`; zusammenhängend gelesen ergibt das ein gültiges Dokument (doppelte Kennungen scheitern beim Parsen).
+pub(crate) fn texts_all(lang: super::Lang) -> &'static str {
+    use std::sync::OnceLock;
+    static DE: OnceLock<String> = OnceLock::new();
+    static EN: OnceLock<String> = OnceLock::new();
+    let (cell, m1) = match lang {
+        super::Lang::De => (&DE, TEXTS_DE_M1),
+        super::Lang::En => (&EN, TEXTS_EN_M1),
+    };
+    cell.get_or_init(|| {
+        let mut out = String::from(m1);
+        for f in SPLIT_FILES {
+            out.push('\n');
+            out.push_str(match lang {
+                super::Lang::De => f.de,
+                super::Lang::En => f.en,
+            });
+        }
+        out
+    })
+}
+
+/// Die Rohtexte der M1-Datei einer Sprache (für Tests der Aufteilung).
+pub fn texts_m1_source(lang: super::Lang) -> &'static str {
+    match lang {
+        super::Lang::De => TEXTS_DE_M1,
+        super::Lang::En => TEXTS_EN_M1,
+    }
+}

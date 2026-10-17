@@ -113,6 +113,7 @@ fn paired(base: &'static str, parts: &'static [PairedPart]) -> ColumnDef {
         kind: ColumnKind::Text,
         default_visible: true,
         extension: false,
+        ..ColumnDef::META
     }
 }
 
@@ -153,6 +154,7 @@ pub fn tab() -> TabDef {
                 kind: ColumnKind::Url,
                 default_visible: true,
                 extension: false,
+                ..ColumnDef::META
             },
             ColumnDef {
                 key: "Title 1",
@@ -160,6 +162,7 @@ pub fn tab() -> TabDef {
                 kind: ColumnKind::Text,
                 default_visible: true,
                 extension: false,
+                ..ColumnDef::META
             },
             ColumnDef {
                 key: "Occurrences",
@@ -167,6 +170,7 @@ pub fn tab() -> TabDef {
                 kind: ColumnKind::Int,
                 default_visible: true,
                 extension: false,
+                ..ColumnDef::META
             },
             paired("HTML hreflang", paired_parts!("html")),
             paired("HTTP hreflang", paired_parts!("http")),
