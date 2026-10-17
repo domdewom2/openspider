@@ -145,6 +145,7 @@ fn parse_html_reports_the_detected_charset() {
     let url = url::Url::parse("https://site.test/meta-sjis").unwrap();
     let cfg = os_parse::ParseConfig::from_crawl_config(&os_model::CrawlConfig::default());
     let page = os_parse::parse_html(&os_parse::ParseInput {
+        status: 200,
         url: &url,
         body: &body,
         content_type: Some("text/html"),

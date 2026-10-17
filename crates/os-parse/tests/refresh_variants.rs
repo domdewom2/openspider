@@ -141,6 +141,7 @@ fn parse_html_puts_header_refresh_after_meta_refresh() {
     let headers = vec![("Refresh".to_string(), "0; url=/h".to_string())];
     let u = base();
     let page = os_parse::parse_html(&os_parse::ParseInput {
+        status: 200,
         url: &u,
         body: br#"<head><meta http-equiv="refresh" content="3; url=/m"></head>"#,
         content_type: Some("text/html"),

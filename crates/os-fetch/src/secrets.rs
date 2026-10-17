@@ -13,6 +13,9 @@ use std::sync::{Arc, Mutex, OnceLock};
 pub trait SecretStore: Send + Sync {
     /// Liefert das Geheimnis zur Kennung.
     fn get(&self, id: &str) -> Option<String>;
+    fn try_get(&self, id: &str) -> Result<Option<String>, SecretError> {
+        Ok(self.get(id))
+    }
 }
 
 /// Speicher im Arbeitsspeicher für Tests (Mock-Schlüsselbund).
@@ -65,7 +68,7 @@ pub struct KeyringSecretStore {
 
 impl KeyringSecretStore {
     /// Dienstname, unter dem OpenSpider seine Einträge ablegt.
-    pub const DEFAULT_SERVICE: &'static str = "openspider";
+    pub const DEFAULT_SERVICE: &'static str = "OpenSpider";
 
     /// Store für den Standard-Dienstnamen.
     pub fn new() -> Self {
@@ -103,13 +106,32 @@ impl Default for KeyringSecretStore {
 
 impl SecretStore for KeyringSecretStore {
     fn get(&self, id: &str) -> Option<String> {
-        match keyring::Entry::new(&self.service, id).and_then(|e| e.get_password()) {
-            Ok(v) => Some(v),
-            Err(keyring::Error::NoEntry) => None,
-            Err(e) => {
-                tracing::warn!(secret_ref = id, error = %e, "Schlüsselbund nicht lesbar");
-                None
+        self.try_get(id).ok().flatten()
+    }
+    fn try_get(&self, id: &str) -> Result<Option<String>, SecretError> {
+        let entry = keyring::Entry::new(&self.service, id)
+            .map_err(|_| SecretError::new("Schlüsselbund nicht erreichbar"))?;
+        match entry.get_password() {
+            Ok(v) => Ok(Some(v)),
+            Err(keyring::Error::NoEntry) if self.service == Self::DEFAULT_SERVICE => {
+                let old = keyring::Entry::new("openspider", id)
+                    .map_err(|_| SecretError::new("Alter Schlüsselbund nicht erreichbar"))?;
+                match old.get_password() {
+                    Ok(v) => {
+                        entry.set_password(&v).map_err(|_| {
+                            SecretError::new("Schlüsselbundmigration nicht schreibbar")
+                        })?;
+                        old.delete_credential().map_err(|_| {
+                            SecretError::new("Alter Schlüsselbundeintrag nicht löschbar")
+                        })?;
+                        Ok(Some(v))
+                    }
+                    Err(keyring::Error::NoEntry) => Ok(None),
+                    Err(_) => Err(SecretError::new("Alter Schlüsselbund nicht lesbar")),
+                }
             }
+            Err(keyring::Error::NoEntry) => Ok(None),
+            Err(_) => Err(SecretError::new("Schlüsselbund nicht lesbar")),
         }
     }
 }

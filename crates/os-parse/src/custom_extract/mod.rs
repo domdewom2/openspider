@@ -11,3 +11,8 @@ use crate::PageCtx;
 
 /// Wertet jeden Extraktor aus und setzt `page.custom_extraction`.
 pub fn run(_ctx: &PageCtx<'_>, _page: &mut ParsedPage) {}
+
+// STUB(M2-D15)
+pub fn validate(_cfg: &os_model::CustomExtractionConfig) -> Vec<os_model::ConfigIssue> {
+    Vec::new()
+}

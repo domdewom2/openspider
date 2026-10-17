@@ -249,3 +249,24 @@ impl RuleSet {
         }
     }
 }
+
+/// Regeln für den Konfigurations-Test (CRAWL-109/110).
+#[derive(Debug, Clone, Default)]
+pub struct RuleTraceInput {
+    pub include: Vec<String>,
+    pub exclude: Vec<String>,
+    pub partial_match: bool,
+}
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct RuleTrace {
+    pub matched: Vec<String>,
+    pub warnings: Vec<String>,
+}
+// STUB(M2-E04)
+pub fn trace(_rules: &RuleTraceInput, _url: &str) -> RuleTrace {
+    RuleTrace::default()
+}
+// STUB(M2-E04)
+pub fn validate(_cfg: &os_model::CrawlConfig) -> Vec<os_model::ConfigIssue> {
+    Vec::new()
+}

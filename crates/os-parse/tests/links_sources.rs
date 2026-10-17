@@ -150,12 +150,12 @@ fn rel_attribute_is_normalised_and_drives_nofollow() {
 #[test]
 fn link_position_follows_the_nearest_landmark_ancestor() {
     let links = extract("index.html");
-    let pos = |href: &str| find(&links, href).position;
+    let pos = |href: &str| find(&links, href).position.clone();
     assert_eq!(pos("/header-link"), LinkPosition::Header);
     assert_eq!(pos("/nav-link"), LinkPosition::Navigation);
     assert_eq!(pos("/hyperlink"), LinkPosition::Content);
     assert_eq!(pos("/img/pic.png"), LinkPosition::Content);
-    assert_eq!(pos("/aside-link"), LinkPosition::Aside);
+    assert_eq!(pos("/aside-link"), LinkPosition::Sidebar);
     assert_eq!(pos("/footer-link"), LinkPosition::Footer);
     // Ressourcen im Head: Position Head (OUT-031, K-63)
     let css = find(&links, "/css/main.css");

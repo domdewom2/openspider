@@ -113,6 +113,7 @@ fn html_and_header_annotations_are_merged_by_parse_html() {
     let c = cfg();
     let u = base();
     let page = os_parse::parse_html(&os_parse::ParseInput {
+        status: 200,
         url: &u,
         body: br#"<head><link rel="alternate" hreflang="de" href="/de/"></head>"#,
         content_type: Some("text/html"),
@@ -172,6 +173,7 @@ fn parse_html_reports_the_truncated_counter() {
     let u = base();
     let body = many(503);
     let page = os_parse::parse_html(&os_parse::ParseInput {
+        status: 200,
         url: &u,
         body: body.as_bytes(),
         content_type: Some("text/html"),

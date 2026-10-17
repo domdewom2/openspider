@@ -27,6 +27,7 @@ fn parse() -> os_model::ParsedPage {
     let url = url::Url::parse("https://site.test/p").unwrap();
     let cfg = ParseConfig::from_crawl_config(&CrawlConfig::default());
     parse_html(&ParseInput {
+        status: 200,
         url: &url,
         body: PAGE.as_bytes(),
         content_type: Some("text/html"),

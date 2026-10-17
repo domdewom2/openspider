@@ -145,6 +145,9 @@ pub fn hints(url: &url::Url, headers: &[(String, String)], cfg: &ParseConfig) ->
                 let (raw, resolved) = raw_and_resolved(url, &entry.target);
                 if has_rel_token(rel, "canonical") {
                     out.canonicals.push(CanonicalRef {
+                        invalid_attribute: ["hreflang", "lang", "media", "type"]
+                            .iter()
+                            .any(|p| entry.param(p).is_some()),
                         source: HintSource::Http,
                         raw: raw.clone(),
                         resolved: resolved.clone(),
@@ -207,7 +210,9 @@ pub fn hints(url: &url::Url, headers: &[(String, String)], cfg: &ParseConfig) ->
         }
     }
 
-    out.hreflang = hreflang::apply_limit(hreflang_refs, cfg.hreflang_over_limit).0;
+    (out.hreflang, out.hreflang_truncated) =
+        hreflang::apply_limit(hreflang_refs, cfg.hreflang_over_limit);
+    out.mobile_alternates = crate::alternates::from_headers(url, headers, cfg);
     out
 }
 

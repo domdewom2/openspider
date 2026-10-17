@@ -176,6 +176,7 @@ fn make_loc(
         url,
         lastmod: lastmod.filter(|l| !l.is_empty()),
         hreflang,
+        ..Default::default()
     }
 }
 
@@ -438,13 +439,15 @@ fn close_element(
     }
     if entry.as_ref().is_some_and(|e| e.depth == depth) && is_entry_name(name) {
         if let Some(done) = entry.take() {
-            let (hreflang, _) = apply_limit(done.hreflang, os_model::HreflangOverLimit::Truncate);
-            let loc = make_loc(
+            let (hreflang, truncated) =
+                apply_limit(done.hreflang, os_model::HreflangOverLimit::Truncate);
+            let mut loc = make_loc(
                 done.loc.unwrap_or_default(),
                 done.lastmod,
                 hreflang,
                 &mut parsed.invalid,
             );
+            loc.hreflang_truncated = truncated;
             parsed.locs.push(loc);
         }
     }

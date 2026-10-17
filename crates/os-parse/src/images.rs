@@ -124,6 +124,7 @@ pub fn extract(doc: &Document, base: &url::Url) -> Vec<ImageInstance> {
             height_attr: attrs.height.clone(),
             xpath: dom::xpath(el),
             doc_order: ordinal,
+            ..Default::default()
         });
     };
 
@@ -211,6 +212,22 @@ pub fn extract(doc: &Document, base: &url::Url) -> Vec<ImageInstance> {
         }
     });
     out
+}
+
+// STUB(M2-D03)
+pub fn response_facts(
+    _input: &crate::ResponseInput<'_>,
+) -> Vec<(os_model::ExtKey, os_model::Value)> {
+    Vec::new()
+}
+
+// STUB(M2-D03)
+pub fn extract_with(
+    doc: &crate::dom::Document,
+    base: &url::Url,
+    _cfg: &crate::ParseConfig,
+) -> (Vec<os_model::ImageInstance>, Vec<os_model::ExtractedLink>) {
+    (extract(doc, base), Vec::new())
 }
 
 #[cfg(test)]

@@ -41,8 +41,8 @@ pub fn extract_inline(doc: &Document, base: &url::Url) -> Vec<ExtractedLink> {
                     base,
                     kind,
                     &raw,
-                    dom::xpath(el),
-                    position,
+                    crate::link_position::element_path(doc, el),
+                    position.clone(),
                     dom::in_head(el),
                     ordinal,
                 ));
@@ -103,6 +103,7 @@ fn link(
         position,
         in_head,
         doc_order,
+        ..Default::default()
     }
 }
 

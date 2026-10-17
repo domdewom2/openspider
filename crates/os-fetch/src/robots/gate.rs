@@ -119,6 +119,14 @@ enum Final {
 }
 
 impl RobotsGate {
+    /// Bereits gelesene Crawl-delay-Angabe für den wirksamen Agenten.
+    pub fn crawl_delay(&self, origin: &str) -> Option<f64> {
+        let map = self.origins.lock().unwrap_or_else(|e| e.into_inner());
+        match &map.get(origin)?.get()?.rules {
+            OriginRules::Rules(txt) => txt.crawl_delay(&self.cfg.token),
+            OriginRules::Unreachable => None,
+        }
+    }
     /// Legt das Gate an.
     pub fn new(cfg: RobotsGateConfig) -> Self {
         RobotsGate {
@@ -274,6 +282,8 @@ impl RobotsGate {
                     purpose: FetchPurpose::RobotsTxt,
                     cookies: None,
                     max_body_bytes: MAX_BYTES as u64,
+                    attempt: 0,
+                    body_limit: Default::default(),
                 })
                 .await;
             let step = classify(&result, &current);
@@ -548,6 +558,12 @@ mod tests {
             truncated: false,
             decode_error: None,
             md5_hex: String::new(),
+            request_headers: Vec::new(),
+            set_cookies: Vec::new(),
+            content_length: None,
+            untruncated_bytes: None,
+            synthetic: None,
+            attempts: 1,
         }
     }
 

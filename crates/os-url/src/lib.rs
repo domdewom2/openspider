@@ -5,6 +5,7 @@
 pub mod compare;
 pub mod metrics;
 pub mod normalize;
+pub mod rewrite;
 pub mod rules;
 pub mod scope;
 

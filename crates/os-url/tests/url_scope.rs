@@ -22,6 +22,7 @@ fn all_subdomains() -> ScopeConfig {
 fn subfolder() -> ScopeConfig {
     ScopeConfig {
         subfolder_only: true,
+        crawl_outside_start_folder: false,
         ..ScopeConfig::default()
     }
 }
@@ -269,6 +270,7 @@ fn subfolder_combined_with_all_subdomains_applies_on_every_subdomain() {
     let cfg = ScopeConfig {
         all_subdomains: true,
         subfolder_only: true,
+        crawl_outside_start_folder: false,
         ..ScopeConfig::default()
     };
     let s = scope("https://www.site.test/blog/", cfg);
