@@ -1,0 +1,23 @@
+[
+  "INSERT INTO urls VALUES (4,'x',200)",
+  "UPDATE urls SET status_code=200",
+  "DELETE FROM urls",
+  "CREATE TABLE x(a)",
+  "DROP TABLE urls",
+  "ATTACH ':memory:' AS x",
+  "DETACH main",
+  "PRAGMA table_info(urls)",
+  "SELECT * FROM pragma_table_info('urls')",
+  "CREATE TEMP TABLE t(a)",
+  "BEGIN",
+  "COMMIT",
+  "ROLLBACK",
+  "SAVEPOINT x",
+  "VACUUM",
+  "ANALYZE",
+  "REINDEX",
+  "SELECT load_extension('x')",
+  "SELECT 1; SELECT 2",
+  "SELECT 1; DELETE FROM urls",
+  "EXPLAIN DELETE FROM urls"
+]
