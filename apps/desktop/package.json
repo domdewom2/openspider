@@ -10,24 +10,60 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "gen:ipc": "node scripts/gen-ipc.mjs",
+    "check:static": "node scripts/check-static.mjs",
+    "check:licenses": "node scripts/check-licenses.mjs",
+    "e2e": "playwright test",
+    "e2e:install": "playwright install --with-deps chromium webkit",
     "tauri": "tauri"
   },
   "dependencies": {
+    "@codemirror/commands": "6.11.1",
+    "@codemirror/language": "6.13.1",
+    "@codemirror/search": "6.7.2",
+    "@codemirror/state": "6.7.6",
+    "@codemirror/view": "6.43.14",
+    "@fluent/bundle": "0.19.1",
+    "@fluent/langneg": "0.7.0",
+    "@glideapps/glide-data-grid": "6.0.4-alpha24",
+    "@tanstack/react-query": "5.104.3",
     "@tauri-apps/api": "^2.12.3",
+    "d3-cloud": "1.2.9",
+    "d3-hierarchy": "3.1.2",
+    "graphology": "0.26.0",
+    "lodash": "4.18.1",
+    "lucide-react": "1.59.0",
+    "marked": "16.4.2",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-aria-components": "1.22.1",
+    "react-dom": "^19.3.0",
+    "react-responsive-carousel": "3.2.23",
+    "sigma": "4.0.3",
+    "zod": "4.6.7",
+    "zustand": "5.0.15"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@fluent/syntax": "0.19.0",
+    "@playwright/test": "1.64.1",
     "@tauri-apps/cli": "^2.12.2",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
+    "@types/d3-cloud": "1.2.9",
+    "@types/d3-hierarchy": "3.1.7",
+    "@types/lodash": "4.17.26",
+    "@types/node": "22.20.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
     "jsdom": "^30.1.2",
     "typescript": "^7.0.2",
     "vite": "^8.3.4",
-    "vitest": "^5.0.4"
+    "vitest": "^5.0.4",
+    "vitest-canvas-mock": "1.2.0"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }
