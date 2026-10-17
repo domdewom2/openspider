@@ -19,3 +19,17 @@ pub fn detail_rows(
 ) -> Result<super::DetailData, crate::StoreError> {
     Err(crate::StoreError::NotImplemented("M2-D08"))
 }
+
+/// Parameter-aware extension missing from the original F05 anchor contract (K2-61).
+/// M2-D08 fills direction, self/nofollow/position/search and sorting together.
+// STUB(M2-D08)
+pub fn selected_detail_rows(
+    _file: &crate::CrawlFile,
+    _urls: &[os_model::UrlId],
+    _params: &serde_json::Value,
+    _sort: &[super::LinkSortKey],
+    _offset: u64,
+    _limit: u64,
+) -> Result<super::DetailData, crate::StoreError> {
+    Err(crate::StoreError::NotImplemented("M2-D08"))
+}

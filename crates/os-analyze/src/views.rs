@@ -295,3 +295,37 @@ pub fn filter_counts_in(
 pub fn resolve_name(input: &str) -> Result<(String, String), NameError> {
     crate::names::resolve(input)
 }
+
+/// Offset page restricted to explicit URL IDs, bound as one JSON parameter (K2-61).
+/// `outside_population` supports URL Details for hidden and external URLs using Internal columns.
+/// This variant never creates persistent SQL strings or reusable cursors for a transient selection.
+pub fn query_url_ids_in(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    query: &ViewQuery,
+    ids: &[UrlId],
+    outside_population: bool,
+) -> Result<ViewPage, ViewError> {
+    if matches!(query.start, PageStart::Cursor(_)) {
+        return Err(ViewError::ForeignCursor);
+    }
+    let mut built = build::build(tabs, query, cfg)?;
+    let selection = "u.id IN (SELECT value FROM json_each(:os_selected_url_ids))";
+    built.plan.population_sql = if outside_population {
+        selection.into()
+    } else {
+        format!("({}) AND ({selection})", built.plan.population_sql)
+    };
+    built.plan.params.push((
+        ":os_selected_url_ids".into(),
+        Value::Text(
+            serde_json::to_string(&ids.iter().map(|id| id.0).collect::<Vec<_>>())
+                .expect("integer IDs"),
+        ),
+    ));
+    let ready = is_ready(file, cfg, &built)?;
+    let mut page = exec::query_page(file, &built, query, ready)?;
+    page.next_cursor = None;
+    Ok(page)
+}

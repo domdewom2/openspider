@@ -162,6 +162,28 @@ impl ReadPool {
         self.run_with(crawl, token, f).await
     }
 
+    /// Runs all reads in one SQLite snapshot, rolling back even when the callback fails.
+    /// Additive K2-61 extension for versioned app views and exports.
+    pub async fn run_snapshot<T: Send + 'static>(
+        &self,
+        crawl: CrawlKey,
+        f: impl FnOnce(&CrawlFile, &CancelToken) -> Result<T, StoreError> + Send + 'static,
+    ) -> Result<T, CmdError> {
+        self.run(crawl, move |file, cancel| {
+            file.conn().execute_batch("BEGIN DEFERRED")?;
+            let result = std::panic::catch_unwind(AssertUnwindSafe(|| f(file, cancel)));
+            let rollback = file.conn().execute_batch("ROLLBACK");
+            match result {
+                Ok(result) => result.and_then(|value| {
+                    rollback?;
+                    Ok(value)
+                }),
+                Err(panic) => std::panic::resume_unwind(panic),
+            }
+        })
+        .await
+    }
+
     /// Wie [`run`](Self::run) mit ausdrücklicher Marke.
     pub async fn run_with<T: Send + 'static>(
         &self,

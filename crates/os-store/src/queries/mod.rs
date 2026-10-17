@@ -670,3 +670,6 @@ pub struct DetailData {
     pub rows: Vec<Vec<os_model::Value>>,
     pub total: u64,
 }
+
+/// App read helpers (additive K2-61 extension).
+pub mod app_support;

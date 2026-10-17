@@ -1,0 +1,164 @@
+//! Additive read helpers for the app's paged link tables and overview (K2-61).
+use super::*;
+use os_model::Value;
+
+/// Restrictions applied before counting and paging. Empty URL selections match no links.
+#[derive(Debug, Clone, Default)]
+pub struct LinkSelection {
+    pub url_ids: Vec<UrlId>,
+    pub incoming: bool,
+    pub resources: bool,
+    pub exclude_resources: bool,
+    pub link_type: Option<String>,
+    pub exclude_self: bool,
+    pub exclude_nofollow: bool,
+    pub internal: Option<bool>,
+    pub uncrawlable_only: bool,
+    pub include_uncrawlable: bool,
+    pub anchor: Option<String>,
+    pub search: Option<String>,
+}
+
+/// One page, including stable link IDs and the complete standard link format.
+pub struct LinkTablePage {
+    pub keys: Vec<i64>,
+    pub rows: Vec<Vec<Value>>,
+    pub total: u64,
+}
+
+/// All predicates precede both COUNT and LIMIT; duplicate selected URLs never duplicate links.
+pub fn selected_links(
+    conn: &Connection,
+    selection: &LinkSelection,
+    page: &PageReq,
+) -> Result<LinkTablePage, StoreError> {
+    let ids = serde_json::to_string(&selection.url_ids.iter().map(|id| id.0).collect::<Vec<_>>())
+        .expect("integer IDs");
+    let direction = if selection.incoming {
+        Direction::In
+    } else {
+        Direction::Out
+    };
+    let (order, _) = order_by(direction, &page.sort)?;
+    let side = if selection.incoming {
+        "l.target_id"
+    } else {
+        "l.source_id"
+    };
+    let resource = "l.link_type IN ('Image','CSS','JavaScript','Iframe','Media')";
+    let base = format!("FROM links l JOIN urls s ON s.id=l.source_id LEFT JOIN urls t ON t.id=l.target_id
+        WHERE {side} IN (SELECT value FROM json_each(?1))
+        AND (?2 IS NULL OR l.link_position=?2)
+        AND (?3 IS NULL OR l.link_type=?3)
+        AND (?4=0 OR l.source_id IS NOT l.target_id)
+        AND (?5=0 OR l.follow=1)
+        AND (?6 IS NULL OR t.is_internal=?6)
+        AND (?7=0 OR l.crawlable=0)
+        AND (?8=1 OR l.crawlable=1)
+        AND (?9 IS NULL OR COALESCE(l.anchor,l.alt_text,'')=?9)
+        AND (?10 IS NULL OR instr(lower(s.address || ' ' || COALESCE(t.address,l.target_raw) || ' ' || COALESCE(l.anchor,'') || ' ' || COALESCE(l.alt_text,'')),lower(?10))>0)
+        AND (?11=0 OR {resource}) AND (?12=0 OR NOT ({resource}))");
+    let params = params![
+        ids,
+        page.position,
+        selection.link_type,
+        selection.exclude_self,
+        selection.exclude_nofollow,
+        selection.internal,
+        selection.uncrawlable_only,
+        selection.include_uncrawlable && !selection.incoming,
+        selection.anchor,
+        selection.search,
+        selection.resources,
+        selection.exclude_resources
+    ];
+    let total = conn.query_row(&format!("SELECT COUNT(*) {base}"), params, |r| r.get(0))?;
+    let mut stmt = conn.prepare(&format!(
+        "SELECT l.id {base} ORDER BY {order} LIMIT {} OFFSET {}",
+        page.limit.clamp(1, 500),
+        page.offset.min(i64::MAX as u64)
+    ))?;
+    let keys = stmt
+        .query_map(params, |r| r.get(0))?
+        .collect::<Result<Vec<i64>, _>>()?;
+    let views = link_views_by_ids(conn, &keys)?;
+    let mut extras = conn.prepare("SELECT t.size_bytes,l.rel,l.path_type,l.link_origin FROM links l LEFT JOIN urls t ON t.id=l.target_id WHERE l.id=?1")?;
+    let mut rows = Vec::with_capacity(keys.len());
+    for (id, link) in keys.iter().zip(views) {
+        let (size, rel, path, origin): (Option<i64>, Option<String>, Option<String>, String) =
+            extras.query_row([id], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)))?;
+        let crawlability = if selection.include_uncrawlable {
+            Value::from(if link.crawlable {
+                "Crawlable"
+            } else {
+                "Uncrawlable"
+            })
+        } else {
+            Value::Null
+        };
+        rows.push(vec![
+            Value::from(link.link_type.as_str()),
+            Value::from(link.source_address),
+            Value::from(link.target_address),
+            size.into(),
+            link.alt_text.into(),
+            link.anchor.into(),
+            if link.crawlable {
+                link.status_code.map(i64::from).into()
+            } else {
+                Value::Null
+            },
+            if link.crawlable {
+                link.status.into()
+            } else {
+                Value::from("Uncrawlable")
+            },
+            link.follow.into(),
+            link.target_attr.into(),
+            rel.into(),
+            path.into(),
+            link.link_path.into(),
+            link.link_position.into(),
+            origin.into(),
+            crawlability,
+            link.uncrawlable_reason.into(),
+            link.original_url.into(),
+            link.pdf_page.map(i64::from).into(),
+        ]);
+    }
+    Ok(LinkTablePage { keys, rows, total })
+}
+
+/// The nine stable UI-061 summary counters, including hidden encountered URLs.
+pub fn overview_summary(conn: &Connection) -> Result<Vec<(String, u64)>, StoreError> {
+    let definitions = [
+        ("Total URLs Encountered", "1"),
+        ("Total URLs Crawled", "state='done' AND robots_blocked=0"),
+        ("Total Internal Blocked by robots.txt", "is_internal=1 AND robots_blocked=1"),
+        ("Total External Blocked by robots.txt", "is_internal=0 AND robots_blocked=1"),
+        ("Total URLs Displayed", "in_tables=1"),
+        ("Total Internal URLs", "is_internal=1 AND in_tables=1"),
+        ("Total External URLs", "is_internal=0 AND in_tables=1"),
+        ("Total Internal Indexable URLs", "is_internal=1 AND content_class='HTML' AND status_code>0 AND indexability='Indexable'"),
+        ("Total Internal Non-Indexable URLs", "is_internal=1 AND content_class='HTML' AND status_code>0 AND indexability='Non-Indexable'"),
+    ];
+    let expressions = definitions
+        .iter()
+        .map(|(_, p)| format!("COALESCE(SUM(CASE WHEN {p} THEN 1 ELSE 0 END),0)"))
+        .collect::<Vec<_>>()
+        .join(",");
+    Ok(
+        conn.query_row(&format!("SELECT {expressions} FROM urls"), [], |r| {
+            definitions
+                .iter()
+                .enumerate()
+                .map(|(i, (name, _))| Ok((name.to_string(), r.get(i)?)))
+                .collect()
+        })?,
+    )
+}
+
+/// HTTP version of this response, including redirects. No request is performed.
+pub fn http_status_line(conn: &Connection, id: UrlId) -> Result<String, StoreError> {
+    Ok(conn.query_row("SELECT COALESCE(http_version,'') || CASE WHEN status_code IS NULL THEN '' ELSE ' ' || status_code END FROM urls WHERE id=?1", [id.0], |r| r.get(0)).optional()?.unwrap_or_default())
+}
