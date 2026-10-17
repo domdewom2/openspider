@@ -123,13 +123,9 @@ A Cargo workspace of focused crates (`os-fetch`, `os-parse`, `os-render`, `os-st
 
 OpenSpider stays fully usable without any account. AI and external data features will work with your own API keys or local models. More: [roadmap after 1.0](docs/plan/ROADMAP-nach-1.0.md).
 
-## Built with AI agents
-
-OpenSpider is developed by a team of AI agents: Claude Opus plans the architecture and work packages, Claude Sonnet and OpenAI Codex implement them, and Claude Fable reviews every package and accepts each milestone against the specification. Every function references its spec ID in tests (`// spec: ONPAGE-012`), and parity and performance are measured continuously in CI on macOS, Windows and Linux.
-
 ## Contributing
 
-Issues and ideas are welcome. Please read [CLAUDE.md](CLAUDE.md) first – it contains the rules every contributor (human or agent) follows: work from the specification in [`docs/spec`](docs/spec), tests with spec IDs, green `fmt`/`clippy`/tests before every commit, and only permissively licensed dependencies.
+Issues and ideas are welcome. Contributions follow a few simple rules: work from the specification in [`docs/spec`](docs/spec), reference spec IDs in tests, keep `fmt`/`clippy`/tests green before every commit, and use only permissively licensed dependencies.
 
 ## License
 
