@@ -614,6 +614,13 @@ fn trickle_plan(rate: u64) -> (usize, Duration) {
 /// Dieselben Fixture-Routen über h2, ausschließlich nach ALPN im TLS-Pfad.
 async fn serve_h2(stream: TlsStream<TcpStream>, state: Arc<AppState>, conn_id: u64) {
     let sni = stream.get_ref().1.server_name().map(str::to_string);
+    let records = Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
+    let stream = H2Logged {
+        stream,
+        state: state.clone(),
+        records: records.clone(),
+        pending: BytesMut::new(),
+    };
     let Ok(mut connection) = h2::server::handshake(stream).await else {
         return;
     };
@@ -624,6 +631,8 @@ async fn serve_h2(stream: TlsStream<TcpStream>, state: Arc<AppState>, conn_id: u
                 let Some(Ok((request, mut respond))) = incoming else { break; };
                 let state = state.clone();
                 let sni = sni.clone();
+                let records = records.clone();
+                let stream_id = respond.stream_id().as_u32();
                 tasks.spawn(async move {
                     let _inflight = state.log.begin();
                     let req = Request {
@@ -633,6 +642,7 @@ async fn serve_h2(stream: TlsStream<TcpStream>, state: Arc<AppState>, conn_id: u
                     };
                     if let Some(counts) = &state.counts { *lock(counts).entry(req.path.clone()).or_insert(0) += 1; }
                     let token = state.detailed_log.then(|| state.log.push(RequestRecord { seq: 0, ts: crate::log::now_ts(), conn_id, method: req.method.clone(), host: req.host.clone(), path_and_query: req.target.clone(), headers: req.headers.clone(), tls: true, sni, sent_bytes: 0, sent_framing_bytes: 0, sent_interim_bytes: 0, sent_body_bytes: 0 }));
+                    if let Some(token) = token { records.lock().unwrap_or_else(|p| p.into_inner()).insert(stream_id, (token, Sent::default())); }
                     let reply = build_reply(&state, &req).await;
                     if reply.mode == Mode::Hang { std::future::pending::<()>().await; }
                     let mut response = axum::http::Response::builder().status(reply.status);
@@ -649,13 +659,73 @@ async fn serve_h2(stream: TlsStream<TcpStream>, state: Arc<AppState>, conn_id: u
                             let Some(Ok(capacity)) = futures_util::future::poll_fn(|cx| send.poll_capacity(cx)).await else { return; };
                             let n = capacity.min(body.len());
                             if send.send_data(body.split_to(n), body.is_empty()).is_err() { return; }
-                            if let Some(token) = token { state.log.set_sent(token, Sent { body: n as u64, ..Sent::default() }); }
                         }
                     }
                 });
             },
             Some(_) = tasks.join_next(), if !tasks.is_empty() => {}
         }
+    }
+}
+
+type H2Records = std::sync::Mutex<std::collections::HashMap<u32, (crate::log::LogToken, Sent)>>;
+
+/// Zählt tatsächlich geschriebene HTTP/2-Frames vor TLS, getrennt je Stream.
+struct H2Logged {
+    stream: TlsStream<TcpStream>,
+    state: Arc<AppState>,
+    records: Arc<H2Records>,
+    pending: BytesMut,
+}
+impl AsyncRead for H2Logged {
+    fn poll_read(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &mut ReadBuf<'_>,
+    ) -> Poll<io::Result<()>> {
+        Pin::new(&mut self.stream).poll_read(cx, buf)
+    }
+}
+impl AsyncWrite for H2Logged {
+    fn poll_write(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        bytes: &[u8],
+    ) -> Poll<io::Result<usize>> {
+        let result = Pin::new(&mut self.stream).poll_write(cx, bytes);
+        if let Poll::Ready(Ok(n)) = result {
+            self.pending.extend_from_slice(&bytes[..n]);
+            while self.pending.len() >= 9 {
+                let length = (usize::from(self.pending[0]) << 16)
+                    | (usize::from(self.pending[1]) << 8)
+                    | usize::from(self.pending[2]);
+                if self.pending.len() < length + 9 {
+                    break;
+                }
+                let frame = self.pending.split_to(length + 9);
+                let stream = u32::from_be_bytes(frame[5..9].try_into().unwrap()) & 0x7fff_ffff;
+                if let Some((token, sent)) = self
+                    .records
+                    .lock()
+                    .unwrap_or_else(|p| p.into_inner())
+                    .get_mut(&stream)
+                {
+                    sent.total += (length + 9) as u64;
+                    sent.framing += 9;
+                    if frame[3] == 0 {
+                        sent.body += length as u64;
+                    }
+                    self.state.log.set_sent(*token, *sent);
+                }
+            }
+        }
+        result
+    }
+    fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
+        Pin::new(&mut self.stream).poll_flush(cx)
+    }
+    fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
+        Pin::new(&mut self.stream).poll_shutdown(cx)
     }
 }
 
