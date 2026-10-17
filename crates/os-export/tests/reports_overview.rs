@@ -700,6 +700,12 @@ async fn placeholder_tabs_give_every_tab_with_all_filters_in_ui_order() {
             .filters
             .iter()
             .filter(|f| !f.is_stub())
+            // K2-60: Die implementierten D02-Zusatzfilter sind im Paritätsmodus verborgen.
+            .filter(|f| {
+                tab.id != "Internal"
+                    || !cfg.ui.parity_filters
+                    || !matches!(f.id, "Media" | "Fonts" | "XML")
+            })
             .map(|f| os_analyze::names::label(f.id, &cfg))
             .collect();
         let got: Vec<&str> = section_items(&t, tab.id);
