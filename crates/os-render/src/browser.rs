@@ -63,6 +63,7 @@ impl Profile {
                 std::process::id(),
                 NEXT.fetch_add(1, Ordering::Relaxed)
             ));
+            #[cfg_attr(not(unix), allow(unused_mut))] // Unix-only permission configuration below.
             let mut builder = std::fs::DirBuilder::new();
             #[cfg(unix)]
             {
