@@ -120,8 +120,15 @@ fn stdout_carries_only_json_rpc_and_logs_go_to_stderr() {
     assert_eq!(by_id.len(), 6, "{responses:?}");
     assert_eq!(by_id["1"]["result"]["serverInfo"]["name"], "openspider");
     assert!(by_id["2"]["result"]["tools"].is_array());
-    assert_eq!(by_id["3"]["result"]["resources"], json!([]));
-    assert_eq!(by_id["4"]["result"]["prompts"], json!([]));
+    let resources = by_id["3"]["result"]["resources"].as_array().unwrap();
+    assert_eq!(
+        resources
+            .iter()
+            .map(|r| r["uri"].as_str().unwrap())
+            .collect::<Vec<_>>(),
+        ["openspider://schema", "openspider://tools"]
+    );
+    assert_eq!(by_id["4"]["result"]["prompts"].as_array().unwrap().len(), 6);
     assert_eq!(by_id["5"]["result"]["isError"], true);
 
     let log = drain(&stderr).join("\n");
