@@ -641,12 +641,12 @@ Spalte „Quelle“: **M1** = existiert laut M1 3.6 (Funktion in Klammern), **K-
 
 | Rolle | macOS | Windows | Größe / Zeilenhöhe |
 |---|---|---|---|
-| UI-Text | `-apple-system` (SF Pro) | `"Segoe UI Variable Text", "Segoe UI"` | 13 px / 18 px |
+| UI-Text | `system-ui, -apple-system` (Systemschrift) | `"Segoe UI Variable Text", "Segoe UI"` | 13 px / 18 px |
 | Tabelle kompakt / normal | wie UI | wie UI | 12 px in 22-px-Zeile / 13 px in 26-px-Zeile (UI-120) |
 | Statusleiste, Hinweise, Badges | wie UI | wie UI | 11 px / 14 px |
 | Abschnittstitel (Seitenleiste, Dialogseiten) | wie UI, 600 | wie UI, 600 | 13 px |
 | Dialogtitel | wie UI, 600 | wie UI, 600 | 17 px |
-| Monospace (Quelltext, Header, Regex) | `ui-monospace, "SF Mono", Menlo` | `Consolas, "Cascadia Mono"` | 12 px / 17 px |
+| Monospace (Quelltext, Header, Regex) | `ui-monospace, Menlo` (Systemschrift für Monospace) | `Consolas, "Cascadia Mono"` | 12 px / 17 px |
 
 Zahlen in Tabellen und Statusleiste mit `font-variant-numeric: tabular-nums`; rechtsbündig (UI-007). Das Canvas-Grid nutzt dieselben Schriftstapel (`system-ui` funktioniert in WKWebView und WebView2 auch im Canvas).
 
@@ -732,7 +732,7 @@ Button (primär/sekundär/Werkzeug), IconButton, TextField (mit Inline-Fehler), 
 | Dialog-Fußleiste | Abbrechen links von OK, OK rechts | OK, dann Abbrechen (rechtsbündig) | `DialogFooter` ordnet je Plattform |
 | Kontextmenü auslösen | Rechtsklick, Ctrl+Klick | Rechtsklick, Shift+F10, Kontextmenütaste | Grid + Dispatcher |
 | Scrollbalken | Overlay-Stil | klassisch | Grid-Theme; eigener Balken (Fallback A) in beiden Stilen |
-| Schriften | SF Pro, SF Mono | Segoe UI Variable, Consolas | 5.1 |
+| Schriften | Systemschrift (`system-ui`, `ui-monospace`) | Segoe UI Variable, Consolas | 5.1 |
 | Benachrichtigungen | Mitteilungszentrale | Toasts | `tauri-plugin-notification` (UI-019) |
 | Datei-Dialoge | nativ | nativ | `tauri-plugin-dialog` |
 | Hauptfenster schließen | App beenden (keine Hintergrundinstanz, F-11) | App beenden | gemeinsamer Pfad für Fenster schließen, Cmd+Q/Alt+F4, Datei → Beenden; bei laufendem Crawl/Analyse/Export/HTTP-MCP modale Rückfrage „Pausieren und beenden“ (Standard) / „Abbrechen“ |

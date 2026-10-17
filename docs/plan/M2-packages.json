@@ -211,7 +211,52 @@
   ],
   "size": "XL",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Inhalt nach M2.md 3.8 und M2-ui-concept.md 2.1–2.10, 5, 7.1, 8.1: Abhängigkeiten exakt gepinnt (Glide \"6.0.4-alpha24\" ohne ^/~; React Aria Components, Zustand, TanStack Query, zod, @fluent/bundle+langneg, lucide-react, CodeMirror 6, Playwright, @axe-core/playwright, vitest-canvas-mock); npm-Lizenzprüfung gegen die Positivliste von deny.toml; Tokens aus src/ui/tokens/tokens.ts (CSS Custom Properties + Canvas-Theme) mit Kontrast-Unit-Test (UI-120), Theme hell/dunkel/System, Akzentfarbe mit Kontrastwarnung, Zoom über Webview.setZoom, Dichte kompakt 22 px (F-12); Design-System-Primitive aus 5.4 inkl. EmptyState mit data-empty-state und Voraussetzungsregister-Prüfung (UI-016) und DialogFooter je Plattform; i18n: Fluent je Feature (features/<f>/i18n/{de,en}.ftl, import.meta.glob), useT, Kanon-Rückfall auf englische Schlüssel, Intl-Formatierer, Sprachwechsel ohne Neustart inkl. Menüneuaufbau (UI-121, CRAWL-137, OUT-271), CI-Vollständigkeit de/en + Platzhalter; IPC-Client: Tauri-invoke/Channel, Bridge-WebSocket (VITE_E2E_BRIDGE) und Mock (vitest) hinter einer Schnittstelle, CmdError-Umsetzung, Versionsverwerfen, AbortSignal→op.cancel; Wrapper je Domäne generiert aus commands.json (npm run gen:ipc, Vertragstest); Event-Bus (ein Kanal je Fenster), Store-Gerüste, Kürzelregister src/ui/shortcuts.ts mit allen Zeilen aus UI-113 und Aktions-IDs + zentraler keydown-Dispatcher mit Scopes, Menüaufbau aus Beiträgen (ui/menu, features/<f>/menu.ts) inkl. macOS-Bearbeiten-Menü (PredefinedMenuItems) und Windows ohne Edit-Accelerators (F-5); Einstellungsfenster (eigenes Fenster settings, Seitennavigation, Abschnitte Allgemein und Oberfläche fertig, übrige Abschnitte als Platzhalter-Module für spätere Besitzer); Harness für visuelle Tests; CI: Jobs frontend (typecheck, vitest, Lizenz, statische Prüfungen aus 7.1) auf allen drei Plattformen und ui-e2e.yml (E2E-A-Gerüst: Playwright WebKit auf macOS-14, Chromium auf windows-latest, beide gegen os-app-bridge; in der Cloud Linux mit beiden Engines). DoD: M2.md 3.10 (F04)."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Inhalt nach M2.md 3.8 und M2-ui-concept.md 2.1–2.10, 5, 7.1, 8.1: Abhängigkeiten exakt gepinnt (Glide \"6.0.4-alpha24\" ohne ^/~; React Aria Components, Zustand, TanStack Query, zod, @fluent/bundle+langneg, lucide-react, CodeMirror 6, Playwright, @axe-core/playwright, vitest-canvas-mock); npm-Lizenzprüfung gegen die Positivliste von deny.toml; Tokens aus src/ui/tokens/tokens.ts (CSS Custom Properties + Canvas-Theme) mit Kontrast-Unit-Test (UI-120), Theme hell/dunkel/System, Akzentfarbe mit Kontrastwarnung, Zoom über Webview.setZoom, Dichte kompakt 22 px (F-12); Design-System-Primitive aus 5.4 inkl. EmptyState mit data-empty-state und Voraussetzungsregister-Prüfung (UI-016) und DialogFooter je Plattform; i18n: Fluent je Feature (features/<f>/i18n/{de,en}.ftl, import.meta.glob), useT, Kanon-Rückfall auf englische Schlüssel, Intl-Formatierer, Sprachwechsel ohne Neustart inkl. Menüneuaufbau (UI-121, CRAWL-137, OUT-271), CI-Vollständigkeit de/en + Platzhalter; IPC-Client: Tauri-invoke/Channel, Bridge-WebSocket (VITE_E2E_BRIDGE) und Mock (vitest) hinter einer Schnittstelle, CmdError-Umsetzung, Versionsverwerfen, AbortSignal→op.cancel; Wrapper je Domäne generiert aus commands.json (npm run gen:ipc, Vertragstest); Event-Bus (ein Kanal je Fenster), Store-Gerüste, Kürzelregister src/ui/shortcuts.ts mit allen Zeilen aus UI-113 und Aktions-IDs + zentraler keydown-Dispatcher mit Scopes, Menüaufbau aus Beiträgen (ui/menu, features/<f>/menu.ts) inkl. macOS-Bearbeiten-Menü (PredefinedMenuItems) und Windows ohne Edit-Accelerators (F-5); Einstellungsfenster (eigenes Fenster settings, Seitennavigation, Abschnitte Allgemein und Oberfläche fertig, übrige Abschnitte als Platzhalter-Module für spätere Besitzer); Harness für visuelle Tests; CI: Jobs frontend (typecheck, vitest, Lizenz, statische Prüfungen aus 7.1) auf allen drei Plattformen und ui-e2e.yml (E2E-A-Gerüst: Playwright WebKit auf macOS-14, Chromium auf windows-latest, beide gegen os-app-bridge; in der Cloud Linux mit beiden Engines). DoD: M2.md 3.10 (F04). Rev. 4 (M2-H01, M2.md 3.12): den Job parity samt Kommentarblock aus .github/workflows/ci.yml entfernen – er lebt ab M2-H01 in .github/workflows/parity.yml (der Orchestrator merged H01 vor F04); sonst keine Änderung an Paritätsschritten. Schriftstapel ohne Produktnamen der Systemschrift (M2-ui-concept.md 5.1: system-ui/-apple-system, ui-monospace, Menlo bzw. Segoe UI Variable, Consolas). Neutralität (M2-H01, M2.md 2 Regel 1): das Referenzprodukt in neuen oder geänderten Dateien nie mit Namen, Hersteller oder Kürzel nennen, nur „Referenzprodukt“/„Referenz“; scripts/check-neutral.sh muss grün bleiben."
+ },
+ {
+  "id": "M2-H01",
+  "kind": "package",
+  "model": "opus",
+  "title": "Neutralisierung (Nutzerentscheidung 16.10.2026): kein namentlicher Bezug auf das Referenzprodukt – Texte in M1-Plan, M1-Abnahme, Spec, ARCHITECTURE, autonomo-abgleich und Paritätsdateien auf „Referenzprodukt“, Referenzordner ref/, Manifest-Schlüssel ref_*, Kennungen REF-FREE-nn, eigener Workflow parity.yml, Prüfskript check-neutral",
+  "wave": "0b",
+  "spec_ids": [],
+  "owns": [
+   "docs/plan/M1.md (nur Text)",
+   "docs/plan/M1-packages.json (nur Text in title/prompt_notes/owns)",
+   "docs/plan/M1-acceptance/**",
+   "docs/plan/autonomo-abgleich.md (nur Text)",
+   "docs/ARCHITECTURE.md (nur Text)",
+   "docs/spec/{01-crawl,03-tabs-technical,05-ui,PARITY}.md (nur Text; IDs, [P1]-Marken und Überschriften unverändert)",
+   "crates/os-parity/src/**",
+   "crates/os-parity/tests/**",
+   "tests/parity/**",
+   "tests/golden/parity/** (Ordner je Site umbenennen nach ref/, CSV byte-gleich; manifest.toml und README)",
+   ".github/workflows/parity.yml (neu)",
+   "scripts/check-neutral.sh",
+   "scripts/check-neutral.allow"
+  ],
+  "depends_on": [],
+  "size": "M",
+  "runner": "cloud+ci",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nutzerentscheidung 16.10.2026: öffentlich kein namentlicher Bezug auf das Referenzprodukt. Inhalt nach M2.md 3.12 (Tabelle ist verbindlich). (1) Texte: Produktname, Herstellername und Kürzel (auch in Wendungen wie „<Kürzel> Free“, „<Kürzel>-Export“, „<Kürzel> 24.3“) in allen owns-Dateien durch „Referenzprodukt“ bzw. „Referenzexport“/„Referenz“ ersetzen; Versionsangabe 24.3 und Free-Hinweis bleiben; Spec-IDs, [P1]-Marken, Überschriften und Tabellenstruktur unverändert, da M2-check.py M1.md 7.3 und docs/spec/*.md auswertet. (2) Referenzordner aller fünf Sites unter tests/golden/parity/<site>/ per git mv nach ref/ umbenennen; die CSV-Dateien bleiben byte-gleich (Messdaten; sha256-Liste vorher/nachher im Bericht, git diff -M zeigt 100 % Umbenennung). (3) Manifest-Schlüssel mit Kürzel-Präfix → ref_file/ref_version/ref_settings in allen manifest.toml, in os-parity (manifest.rs, run.rs, diff.rs, report.rs, mapping.rs, deviations.rs, coverage/evidence.rs) und in den Tests (crates/os-parity/tests/**, tests/parity/fixtures_check.rs, Golden crates/os-parity/tests/data/golden/example-report.json); Bezeichner, Kommentare, Fehlermeldungen und JSON-Schlüssel des Berichts entsprechend; kein serde-alias auf die alten Namen. (4) Kennungen der Free-Einschränkungen (bisher Kürzel-FREE-nn) → REF-FREE-nn in tests/parity/deviations.toml, in der Präfixprüfung von report.rs und in den Tests; im M1-Abnahmebericht (docs/plan/M1-acceptance/checklist.md, parity/report.json, parity/report.md) nur Textersetzung, Inhalte sonst unverändert, plus Hinweiszeile in checklist.md „Bezeichnungen am 17.10.2026 neutralisiert, Messergebnis unverändert“. (5) CI: neuer Workflow .github/workflows/parity.yml mit dem bisherigen Job parity aus ci.yml (gleicher Name „parity (macos-arm64)“, runs-on macos-14, Prüfung auf tests/golden/parity/*/ref/*.csv, Build os-cli + os-parity, os-parity run --all, Bericht als Artefakt und Job-Zusammenfassung wie bisher) und vorgeschaltetem Schritt scripts/check-neutral.sh; Auslöser wie ci.yml. ci.yml NICHT ändern (Besitz M2-F04 in 0b; F04 entfernt den alten Job, der Orchestrator merged H01 vor F04; bis dahin überspringt der alte Job mangels Dateien im alten Ordner). (6) scripts/check-neutral.sh (bash, set -euo pipefail): git grep -n -I -P -i über alle versionierten Dateien mit den Alternativen erstes Wort des Herstellernamens mit negativem Lookahead für _snake_case (serde-Konstante SCREAMING_SNAKE_CASE in crates/os-app/src/dto/view.rs bleibt), Produktname aus zwei Wörtern, Kürzel als ganzes Wort, Kürzel mit folgendem Unterstrich, Kürzel mit -free; das Muster im Skript aus Teilstrings zusammensetzen, damit Skript und Ausnahmedatei nicht treffen (beide zusätzlich per Pfad ausgenommen); ausgenommen tests/golden/parity/*/ref/*.csv. Ausnahmen nur über scripts/check-neutral.allow (Zeilen Pfad<TAB>Teiltext<TAB>Grund); Startbestand: Test-Sprachcode im hreflang-Attribut und Linkziel in tests/fixtures/tech/multi-columns/{c510,d500}.html (Goldens hängen daran) sowie die Zeilen des alten Jobs parity in .github/workflows/ci.yml mit Grund „vorübergehend bis zum Merge von M2-F04“. Verwaiste Ausnahmen nur als Warnung (Entfernen: M2-N01), jeder andere Treffer Exit 1 mit Liste Datei:Zeile. Die docs/plan/M2*-Dateien hat der Planer in Rev. 4 neutralisiert; ein Treffer dort ist ein Befund an den Planer, kein Fix. Git-Historie wird nicht umgeschrieben. Akzeptanz: scripts/check-neutral.sh Exit 0; cargo test -p os-parity --locked und der Test aus tests/parity/fixtures_check.rs grün; os-parity run --all Exit 0 mit unverändertem Ergebnis (5/5 Sites, 38/38 Vergleiche; report.json vor/nach bis auf Pfade, Schlüssel und Kennungen gleich, Vergleich im Bericht); C4 grün; CI grün einschließlich parity.yml; python3 -I docs/plan/M2-check.py grün. DoD: M2.md 3.10 (H01)."
+ },
+ {
+  "id": "M2-V02",
+  "kind": "package",
+  "model": "opus",
+  "title": "Etappe E1 Schattenbetrieb: OpenSpider-CLI (Linux-Artefakt aus linux-core) auf dem VPS unter /opt/openspider-shadow, schonende Schattencrawls caloone.de und rotweine.org per systemd-Timer (wöchentlich + sofort), Vergleich je Regel mit den Autonomo-Befunden (nur lesend), Bericht E1",
+  "wave": "0b",
+  "spec_ids": [],
+  "owns": [
+   "scripts/shadow/**",
+   "docs/plan/shadow/**"
+  ],
+  "depends_on": [
+   "M2-V01"
+  ],
+  "size": "M",
+  "runner": "local-mac",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 und 2a gehen vor, soweit sie auf ein Betriebspaket passen; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Ausführung lokal durch den Orchestrator (C11; Cloud-Sessions erreichen das Tailnet nicht), Branch m2/v02, Abschluss nach C6. Grundlage: docs/plan/autonomo-abgleich.md 5.4 (E1) und M2.md 3.13 (verbindlich); Nutzer-Go 16.10.2026. Zuschnitt: E1 ohne Importer. Autonomo, evnxt, Caddy, Docker und alle bestehenden Dienste, Units, Timer und Konfigurationen bleiben unverändert; Autonomo wird nur gelesen. Zugang: ssh -o BatchMode=yes root@100.67.209.49; vor jeder Änderung Bestandsaufnahme (systemctl list-unit-files, systemctl list-timers, ss -ltn, df -h /) als Vorher-Liste im Bericht, danach Nachher-Liste. (1) Binärdatei: Artefakt openspider-linux-x86_64 des letzten grünen linux-core-Laufs auf main per gh run download, sha256 gegen openspider.sha256 prüfen (VPS Ubuntu 24.04/glibc 2.39 wie ubuntu-latest); .github/workflows/linux-core.yml wird nicht geändert (Upload besteht seit M2-V01; die Datei gehört in 0b M2-F02). scripts/shadow/deploy.sh überträgt Binärdatei, Konfiguration, Skripte und Units und schreibt bin/VERSION (Commit-SHA, Lauf-ID, Datum); kein Auto-Update, neue Version nur per erneutem deploy.sh. (2) Ablage ausschließlich unter /opt/openspider-shadow/ (bin/, etc/, systemd/, var/crawls/<site>/, var/exports/, var/reports/, var/home als OPENSPIDER_HOME); Systembenutzer openspider-shadow (useradd --system, nologin, Home /opt/openspider-shadow); Units openspider-shadow.service und openspider-shadow.timer als Dateien in /opt/openspider-shadow/systemd/, eingebunden per systemctl link (nur Symlinks in /etc/systemd/system); kein offener Port, kein Caddy-, Docker-, Firewall- oder Cron-Eintrag. (3) Crawl: scripts/shadow/shadow.osconfig mit speed.threads = 2, speed.max_urls_per_sec = 2.0, robots respektieren (Standardregel bei unerreichbarer robots.txt), User-Agent exakt „OpenSpider-Shadow“ (auch als robots-Token), kein JS-Rendering, limits.max_urls = 20000 als Schutz; Start-URLs https://caloone.de/ und https://rotweine.org/ nacheinander, nie parallel. Unit: Type=oneshot, User=openspider-shadow, Nice=15, IOSchedulingClass=idle, CPUQuota=200%, MemoryMax=2G, RuntimeMaxSec=6h, NoNewPrivileges, ProtectSystem=strict, ReadWritePaths=/opt/openspider-shadow/var, PrivateTmp, ProtectHome; ExecStart=scripts/shadow/run.sh (auf dem VPS unter bin/): Abbruch mit Meldung bei weniger als 8 GB frei auf /, je Site openspider --crawl <url> --config etc/shadow.osconfig --headless mit Ausgabeordner unter var/ und --export-tabs für alle in rule-map.toml zugeordneten Tab:Filter (CSV); Aufbewahrung je Site die letzten 4 Crawl-Dateien und Exporte. Timer: OnCalendar=Sun *-*-* 02:30:00 UTC, RandomizedDelaySec=15min, Persistent=true; nach dem Einrichten einmal sofort starten (systemctl start openspider-shadow.service) und bis zum Ende beobachten; gemessene Rate (≤ 2 URL/s) und Spitzen-RSS in den Bericht. (4) Vergleich: scripts/shadow/compare.py (Python 3.12, nur Standardbibliothek, mit Unit-Tests unter scripts/shadow/tests/ gegen kleine Beispieldaten) und scripts/shadow/rule-map.toml (Zuordnung Autonomo-rule_id ↔ OpenSpider-Tab:Filter-Kennung aus docs/plan/M1-filters.toml; Klassen gleichwertig / teilweise / ohne Gegenstück, je Eintrag eine eigene kurze Begründung; nur Kennungen, keine Texte aus Autonomo). Autonomo-Befunde desselben Projekts nur lesend aus dem zeitlich nächsten abgeschlossenen Autonomo-Crawl: vorrangig per GET über /api/extern (Loopback 127.0.0.1:7781, vorhandener Bearer-Token wird zur Laufzeit aus der bestehenden Autonomo-Konfiguration gelesen, nie kopiert, nie geloggt); nur falls die Projekte dort nicht erreichbar sind, eine Postgres-Lesesitzung in der bestehenden Datenbank mit PGOPTIONS='-c default_transaction_read_only=on' und ausschließlich SELECT (keine neue Rolle, kein Schema-Objekt, keine temporäre Tabelle). Kein POST/PUT/PATCH/DELETE, kein Auslösen von Autonomo-Crawls, Rechecks oder Nachläufen. URL-Abgleich mit dokumentierter Normalisierung (Schema und Host klein, Fragment entfernt, Standardport entfernt, Slash-Regel); je Regel: Anzahl Autonomo, Anzahl OpenSpider, Schnittmenge, nur Autonomo, nur OpenSpider, Jaccard, bis zu 5 Beispiel-URLs je Richtung, Zeitabstand der beiden Crawls; Ausgabe JSON und Markdown unter var/reports/<datum>/. Der Vergleich läuft als ExecStartPost (mit erhöhten Rechten nur, soweit der Lesezugang es erfordert; Schreiben nur nach /opt/openspider-shadow/var). (5) Clean-Room: keine Texte, Regelbeschreibungen oder Listen aus Autonomo-Dokumenten übernehmen; Autonomo-Unterlagen mit Recherche zum Referenzprodukt nicht lesen (autonomo-abgleich.md 5.6). (6) Bericht docs/plan/shadow/E1-bericht.md nach dem Sofortlauf: Aufbau auf dem VPS (Pfade, Units, Version, Vorher/Nachher-Listen), Laufdaten je Site (URLs, Dauer, mittlere und höchste Rate, Spitzen-RSS, Fehler, robots-Sperren), Regelzuordnung (Tabelle), Übereinstimmung je Regel, Abweichungen mit Beispiel-URLs und Ursachenvermutung (URL-Normalisierung, Weiterleitungen, Indexierbarkeit, robots, Seitenlimit, Zeitversatz), Liste offener Punkte für den Planer (Spec-Befund oder Autonomo-Eigenheit), Hinweis, dass die Schattencrawls in der Logfile-Analyse von Autonomo als unbekannter Bot „OpenSpider-Shadow“ erscheinen (Bot-Katalog wird nicht geändert). Rohdaten bleiben auf dem VPS, im Repo nur Auszüge. (7) scripts/shadow/uninstall.sh (Timer stoppen, Units entlinken, Benutzer und /opt/openspider-shadow nur nach Rückfrage entfernen) nur ausliefern, nicht ausführen. Neutralität (M2-H01, M2.md 2 Regel 1): das Referenzprodukt in neuen oder geänderten Dateien nie mit Namen, Hersteller oder Kürzel nennen, nur „Referenzprodukt“/„Referenz“; scripts/check-neutral.sh muss grün bleiben. DoD: M2.md 3.10 (V02)."
  },
  {
   "id": "M2-S01",
@@ -281,7 +326,8 @@
    "M2-F02",
    "M2-S01",
    "M2-S02",
-   "M2-V01"
+   "M2-V01",
+   "M2-H01"
   ],
   "size": "S",
   "runner": "orchestrator",
@@ -1482,7 +1528,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Optionen in der Konfiguration v2 (M2-F01). Paritätsvergleich der erzeugten XML gegen die SF-Referenz in M2-Q02."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Optionen in der Konfiguration v2 (M2-F01). Paritätsvergleich der erzeugten XML gegen den Referenzexport in M2-Q02."
  },
  {
   "id": "M2-I01",
@@ -1643,7 +1689,8 @@
    "crates/*/tests/pending_w1_q01.rs (nur Platzhalter nach C9, nur in Crates, deren Tests das Paket besitzt)"
   ],
   "depends_on": [
-   "M2-F02"
+   "M2-F02",
+   "M2-H01"
   ],
   "size": "M",
   "runner": "cloud",
@@ -1653,12 +1700,12 @@
   "id": "M2-P01",
   "kind": "package",
   "model": "sonnet",
-  "title": "Paritäts-Sites M2 und Golden-Rahmen: neue Sites parity-m2-onpage, parity-m2-technical, parity-m2-links, parity-m2-security, Listen-Eingaben, Manifeste (pending), Mappings, Schwellen, Anleitung für den SF-Export",
+  "title": "Paritäts-Sites M2 und Golden-Rahmen: neue Sites parity-m2-onpage, parity-m2-technical, parity-m2-links, parity-m2-security, Listen-Eingaben, Manifeste (pending), Mappings, Schwellen, Anleitung für den Referenzexport",
   "wave": 1,
   "spec_ids": [],
   "owns": [
    "tests/fixtures/parity-m2-*/**",
-   "tests/golden/parity/parity-m2-*/** (ohne */sf/*)",
+   "tests/golden/parity/parity-m2-*/** (ohne */ref/*)",
    "tests/golden/parity/README.md",
    "tests/parity/mappings/*.toml (nur neue Dateien und crawl_overview.toml)",
    "tests/parity/thresholds.toml",
@@ -1667,11 +1714,12 @@
    "crates/*/tests/pending_w1_p01.rs (nur Platzhalter nach C9, nur in Crates, deren Tests das Paket besitzt)"
   ],
   "depends_on": [
-   "M2-F02"
+   "M2-F02",
+   "M2-H01"
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Inhalt und Exportliste exakt nach M2.md Abschnitt 6. Bestehende Sites (out-basic-site, parity-*) NICHT ändern (Referenz exportiert). Jede Site ≤ 500 URLs, 127.0.0.1 + localhost, feste Ports 8906–8910, kein JavaScript, TLS nur in parity-m2-security (eigener Port, Hinweis K2-11). Nach dem Merge exportiert der Orchestrator per Bildschirmsteuerung (M2.md 6.3)."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Inhalt und Exportliste exakt nach M2.md Abschnitt 6. Bestehende Sites (out-basic-site, parity-*) NICHT ändern (Referenz exportiert). Jede Site ≤ 500 URLs, 127.0.0.1 + localhost, feste Ports 8906–8910, kein JavaScript, TLS nur in parity-m2-security (eigener Port, Hinweis K2-11). Nach dem Merge exportiert der Orchestrator per Bildschirmsteuerung (M2.md 6.3). Manifeste der neuen Sites mit den Schlüsseln ref_file/ref_version/ref_settings und Referenzordner ref/ (Stand nach M2-H01). Neutralität (M2-H01, M2.md 2 Regel 1): das Referenzprodukt in neuen oder geänderten Dateien nie mit Namen, Hersteller oder Kürzel nennen, nur „Referenzprodukt“/„Referenz“; scripts/check-neutral.sh muss grün bleiben."
  },
  {
   "id": "M2-U01",
@@ -1906,7 +1954,8 @@
    "apps/desktop/src-tauri/src/** und apps/desktop/src/ipc/{commands.json,gen/**,<domäne>.ts} (nur Neuerzeugung bei neuen Commands)",
    "crates/*/tests/pending_w1_*.rs (nur Platzhalter-Ignores entfernen; rote Tests → Befund)",
    "apps/desktop/e2e/{table,detail,sidebar,header,statusbar,menu,keyboard,shell,export}/** (nur Platzhalter-Ignores entfernen; rote Tests → Befund)",
-   "crates/os-analyze/tests/tab_content.rs (nur ONPAGE-143-Ignore scharf schalten)"
+   "crates/os-analyze/tests/tab_content.rs (nur ONPAGE-143-Ignore scharf schalten)",
+   "scripts/check-neutral.allow (nur verwaiste Ausnahmen entfernen, z. B. den ci.yml-Eintrag nach dem Merge von M2-F04)"
   ],
   "depends_on": [
    "M2-K01",
@@ -1957,7 +2006,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Tabelle M2.md 5.1 Zeilen „N01“: ONPAGE-063 (Retry), ONPAGE-010 (HTTP/2), TECH-011/TECH-051 (Respect), TECH-008 (Outside <head>), ONPAGE-143 (gespeichertes HTML), CRAWL-018 HSTS und der D12-Platzhalter. Rote Tests → Befund an den Planer, kein Fachfix außerhalb dieser Dateien. Merge vor den übrigen Welle-2-Paketen. OUT-081 (M1 7.3): HSTS-Zeile im Report All Redirects nach M2-E03 scharf schalten (reports_redirects.rs). TECH-003 (M1 7.3): Outside-<head>-Kriterien mit Respect-Schaltern nach M2-E01. C9: löst alle Platzhalter `wartet auf M2-xx` der Welle 1 auf – Rust in crates/*/tests/pending_w1_*.rs, E2E-A in apps/desktop/e2e/{table,detail,sidebar,header,statusbar,menu,keyboard,shell,export}/**; nur das Ignore/test.fixme entfernen, Testinhalt unverändert; danach `grep -rn 'wartet auf M2' crates apps` ohne Treffer aus Welle 1. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. Start erst, wenn alle Pakete der Welle 1 gemergt sind (C1, depends_on vollständig, Prüfskript P11)."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Tabelle M2.md 5.1 Zeilen „N01“: ONPAGE-063 (Retry), ONPAGE-010 (HTTP/2), TECH-011/TECH-051 (Respect), TECH-008 (Outside <head>), ONPAGE-143 (gespeichertes HTML), CRAWL-018 HSTS und der D12-Platzhalter. Rote Tests → Befund an den Planer, kein Fachfix außerhalb dieser Dateien. Merge vor den übrigen Welle-2-Paketen. OUT-081 (M1 7.3): HSTS-Zeile im Report All Redirects nach M2-E03 scharf schalten (reports_redirects.rs). TECH-003 (M1 7.3): Outside-<head>-Kriterien mit Respect-Schaltern nach M2-E01. C9: löst alle Platzhalter `wartet auf M2-xx` der Welle 1 auf – Rust in crates/*/tests/pending_w1_*.rs, E2E-A in apps/desktop/e2e/{table,detail,sidebar,header,statusbar,menu,keyboard,shell,export}/**; nur das Ignore/test.fixme entfernen, Testinhalt unverändert; danach `grep -rn 'wartet auf M2' crates apps` ohne Treffer aus Welle 1. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. Start erst, wenn alle Pakete der Welle 1 gemergt sind (C1, depends_on vollständig, Prüfskript P11). Rev. 4: verwaiste Einträge in scripts/check-neutral.allow (Warnungen des Skripts) entfernen; keine neuen Ausnahmen."
  },
  {
   "id": "M2-K05",
@@ -3431,7 +3480,7 @@
   "id": "M2-Q02",
   "kind": "package",
   "model": "sonnet",
-  "title": "Paritätslauf M2: os-parity run --all über alte und neue Sites, Klassifizierung jeder Abweichung, SF-FREE-Einträge, evidence.toml (M2-B02), Verifikation M2-S04/M2-S06, Bericht",
+  "title": "Paritätslauf M2: os-parity run --all über alte und neue Sites, Klassifizierung jeder Abweichung, REF-FREE-Einträge, evidence.toml (M2-B02), Verifikation M2-S04/M2-S06, Bericht",
   "wave": 4,
   "spec_ids": [],
   "owns": [
@@ -3452,7 +3501,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Startbedingung zusätzlich: SF-Referenzexporte der neuen Sites liegen unter tests/golden/parity/parity-m2-*/sf/ (Orchestrator, M2.md 6.3). Implementierungsfehler → Nachbesserungsauftrag; kein Fix außerhalb owns."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Startbedingung zusätzlich: Referenzexporte der neuen Sites liegen unter tests/golden/parity/parity-m2-*/ref/ (Orchestrator, M2.md 6.3). Implementierungsfehler → Nachbesserungsauftrag; kein Fix außerhalb owns. Neutralität (M2-H01, M2.md 2 Regel 1): das Referenzprodukt in neuen oder geänderten Dateien nie mit Namen, Hersteller oder Kürzel nennen, nur „Referenzprodukt“/„Referenz“; scripts/check-neutral.sh muss grün bleiben."
  },
  {
   "id": "M2-Q03",
