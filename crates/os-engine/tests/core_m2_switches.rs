@@ -4,6 +4,31 @@ use os_engine::testing::{crawl_fixture, crawl_fixture_from};
 use os_model::CrawlConfig;
 use support::*;
 
+// spec: CRAWL-051
+// spec: CRAWL-074
+#[tokio::test]
+async fn mobile_metadata_preserves_raw_link_positions_but_link_caps_use_document_order() {
+    for limit in [0, 1] {
+        let mut cfg = CrawlConfig::default();
+        cfg.limits.max_links_per_url = limit;
+        let fx = crawl_fixture_from("crawl-m2-switches/crawl-resources", "/order.html", cfg).await;
+        let mut stmt = fx.file.conn().prepare("SELECT link_type FROM links WHERE source_id = (SELECT id FROM urls WHERE url LIKE '%/order.html') ORDER BY position").unwrap();
+        let types = stmt
+            .query_map([], |r| r.get::<_, String>(0))
+            .unwrap()
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        assert_eq!(
+            types,
+            if limit == 0 {
+                vec!["CSS", "JavaScript", "Hyperlink", "Mobile Alternate"]
+            } else {
+                vec!["Mobile Alternate"]
+            }
+        );
+    }
+}
+
 // spec: CRAWL-053 [M2]
 #[tokio::test]
 async fn shared_uncrawlable_catalog_keeps_non_anchor_handlers_out_of_the_frontier() {

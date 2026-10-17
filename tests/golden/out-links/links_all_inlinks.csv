@@ -15,6 +15,7 @@ Hyperlink,http://www.site.test/,http://www.site.test/footer.html,141,,Fuß,200,O
 Iframe,http://www.site.test/,http://www.site.test/frame.html,143,,,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/iframe[1],Content,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/header.html,141,,Kopf,200,OK,True,,,Root-Relative,/html[1]/body[1]/header[1]/a[1],Header,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/headers.html,141,,Header,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[9]/a[2],Content,HTML
+Mobile Alternate,http://www.site.test/,http://www.site.test/m.html,,,,,Not Crawled,True,,,Root-Relative,//head/link[7],Head,HTML
 Meta Refresh,http://www.site.test/meta.html,http://www.site.test/meta-target.html,151,,,200,OK,True,,,Root-Relative,//head/meta[2],Head,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/meta.html,212,,Meta,200,OK,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[9]/a[4],Content,HTML
 Hyperlink,http://www.site.test/,http://www.site.test/missing.html,13,,Fehlt,404,Not Found,True,,,Root-Relative,/html[1]/body[1]/main[1]/p[9]/a[1],Content,HTML

@@ -1284,7 +1284,18 @@ async fn assemble<F: Fetch>(
         });
         position += 1;
     };
-    for &i in &map.links {
+    // Mobile Alternates ergänzen die Seitenmetadaten, ohne die Positionen bestehender Rohlinks
+    // zu verschieben. Die Limit-Auswahl erfolgte bereits in Dokumentreihenfolge in `parse_now`.
+    let ordered_links = map
+        .links
+        .iter()
+        .filter(|&&i| refs[i].ext.link_type != LinkType::MobileAlternate)
+        .chain(
+            map.links
+                .iter()
+                .filter(|&&i| refs[i].ext.link_type == LinkType::MobileAlternate),
+        );
+    for &i in ordered_links {
         let r = &refs[i];
         if r.row && r.decision.store && !hidden_rows[i] {
             push_row(&mut links, r, ids[i], page_follow && !r.ext.nofollow_rel);
