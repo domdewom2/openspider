@@ -8,6 +8,7 @@ pub mod content_type;
 pub mod cookies;
 pub mod error;
 pub mod http;
+pub mod net;
 pub mod rate;
 pub mod redact;
 pub mod resolve;
@@ -19,7 +20,10 @@ pub use client::{BasicAuthEntry, FetchConfig, HttpFetcher};
 pub use content_type::content_class;
 pub use cookies::CookieJar;
 pub use error::FetchError;
-pub use http::{Fetch, FetchOutcome, FetchPurpose, FetchRequest, FetchResult, HttpResponse};
+pub use http::{
+    BodyLimit, Fetch, FetchOutcome, FetchPurpose, FetchRequest, FetchResult, HttpResponse,
+    SyntheticResponse,
+};
 pub use secrets::{
     secret_store_from_env, MemorySecretStore, SecretBackend, SecretError, SecretStore,
     SecretStoreMut,

@@ -84,7 +84,7 @@ impl Default for ScreenshotConfig {
 // --- Extraktion (CRAWL-055, 061 … 065, TECH-180 ff., TECH-250) ----------------------------------------------
 
 /// Strukturierte Daten (CRAWL-065): Formate und Validierung. Alle Schalter sind OS-Defaults und standardmäßig aus.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct StructuredDataConfig {
     /// JSON-LD extrahieren.
@@ -197,11 +197,13 @@ impl Default for SearchFilter {
 }
 
 /// Custom Search: bis zu 100 Filter (INTEG-020).
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct CustomSearchConfig {
     /// Filter in Spaltenreihenfolge.
     pub filters: Vec<SearchFilter>,
+    /// Zeitbudget je Regex (INTEG-028).
+    pub regex_timeout_ms: u32,
 }
 
 /// Ein Extraktor (INTEG-040 … 043).
@@ -294,7 +296,7 @@ impl Default for LinkPositionsConfig {
                 rule("Header", &["header"]),
                 rule("Sidebar", &["aside", "sidebar"]),
                 rule("Footer", &["footer"]),
-                rule("Content", &[""]),
+                rule("Content", &[]),
             ],
         }
     }
@@ -648,6 +650,14 @@ pub struct Ga4Config {
     pub page_dimension: Option<String>,
     /// Dimensionsfilter als Ausdruck.
     pub filter: Option<String>,
+    /// Konto-Kennung ohne Geheimnis (INTEG-003).
+    pub account: Option<String>,
+    /// Anfragegrenzen (INTEG-005/006).
+    pub limits: super::ApiLimitsConfig,
+    /// OAuth-Client-Kennung des Nutzers (INTEG-003).
+    pub oauth_client_id: Option<String>,
+    /// URL-Abgleich (INTEG-014).
+    pub url_match: super::UrlMatchConfig,
 }
 
 /// Google Search Console (M2-I03).
@@ -668,6 +678,14 @@ pub struct GscConfig {
     pub filter: Option<String>,
     /// URL Inspection abfragen (Tageskontingent).
     pub url_inspection: bool,
+    /// Konto-Kennung ohne Geheimnis (INTEG-003).
+    pub account: Option<String>,
+    /// Anfragegrenzen (INTEG-005/006).
+    pub limits: super::ApiLimitsConfig,
+    /// OAuth-Client-Kennung des Nutzers (INTEG-003).
+    pub oauth_client_id: Option<String>,
+    /// URL-Abgleich (INTEG-014).
+    pub url_match: super::UrlMatchConfig,
 }
 
 /// PageSpeed Insights und Lighthouse (M2-I04).
@@ -684,6 +702,10 @@ pub struct PsiConfig {
     pub local: bool,
     /// Ausgewählte Metrikgruppen.
     pub metric_groups: Vec<String>,
+    /// Konto-Kennung ohne Geheimnis (INTEG-003).
+    pub account: Option<String>,
+    /// Anfragegrenzen (INTEG-005/006).
+    pub limits: super::ApiLimitsConfig,
 }
 
 /// Eine Linkmetrik-Quelle (Majestic, Ahrefs, Moz; M2-I05).
@@ -698,6 +720,10 @@ pub struct LinkMetricsConfig {
     pub levels: Vec<ApiLevel>,
     /// Ausgewählte Metriken.
     pub metrics: Vec<String>,
+    /// Konto-Kennung ohne Geheimnis (INTEG-003).
+    pub account: Option<String>,
+    /// Anfragegrenzen (INTEG-005/006).
+    pub limits: super::ApiLimitsConfig,
 }
 
 /// Google Drive für den Sheets-Export (M2-X03).
@@ -710,6 +736,10 @@ pub struct DriveConfig {
     pub base_url: Option<String>,
     /// Wurzelordner (Standard `OpenSpider`).
     pub root_folder: Option<String>,
+    /// Konto-Kennung ohne Geheimnis (INTEG-003).
+    pub account: Option<String>,
+    /// Anfragegrenzen (INTEG-005/006).
+    pub limits: super::ApiLimitsConfig,
 }
 
 /// Alle API-Quellen einer Konfiguration; Zugangsdaten stehen im Schlüsselbund (INTEG-002, OUT-225).
@@ -730,4 +760,25 @@ pub struct ApiConfig {
     pub moz: LinkMetricsConfig,
     /// Google Drive.
     pub drive: DriveConfig,
+}
+
+impl Default for CustomSearchConfig {
+    fn default() -> Self {
+        Self {
+            filters: Vec::new(),
+            regex_timeout_ms: 2000,
+        }
+    }
+}
+impl Default for StructuredDataConfig {
+    fn default() -> Self {
+        Self {
+            json_ld: false,
+            microdata: false,
+            rdfa: false,
+            schema_org_validation: true,
+            rich_results_validation: true,
+            case_sensitive: false,
+        }
+    }
 }

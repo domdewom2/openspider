@@ -212,7 +212,8 @@ fn the_view_lists_the_same_pages_as_before_with_only_indexable_on_and_off() {
 
 /// Zeilen des `EXPLAIN QUERY PLAN`: (id, parent, detail).
 fn explain(file: &CrawlFile, tab: &str, filter: &str) -> Vec<(i64, i64, String)> {
-    let cfg = CrawlConfig::default();
+    let mut cfg = CrawlConfig::default();
+    cfg.ui.parity_filters = false;
     let p = plan(&ViewQuery::new(tab, filter), &cfg).unwrap();
     let sql = format!(
         "EXPLAIN QUERY PLAN SELECT u.id FROM {} WHERE {} AND {}",

@@ -66,6 +66,8 @@ impl Fixture {
                 purpose: FetchPurpose::Page,
                 cookies: None,
                 max_body_bytes: 0,
+                attempt: 0,
+                body_limit: Default::default(),
             })
             .await;
         let FetchOutcome::Response(r) = result.outcome else {
@@ -79,6 +81,7 @@ impl Fixture {
             .map(|(_, v)| v.clone());
         let cfg = ParseConfig::from_crawl_config(&self.cfg);
         parse_html(&ParseInput {
+            status: 200,
             url: &url,
             body: &r.body,
             content_type: content_type.as_deref(),
@@ -153,6 +156,7 @@ fn synth(link_type: LinkType, raw: &str, resolved: Option<&str>, order: u32) -> 
         position: LinkPosition::Content,
         in_head: true,
         doc_order: order,
+        ..Default::default()
     }
 }
 

@@ -17,7 +17,14 @@ const ENTRIES: &[TableEntry] = &[TableEntry {
     aliases: &[],
     file_stem: "Custom Extraction:All Extractions",
     header: &["Address", "Extractor", "Index", "Value"],
+    header_fn: None,
     requires: &[],
     owner: "M2-D15",
     run: stub_run,
 }];
+
+/// Erweiterungspunkt für M2-D15.
+// STUB(M2-D15)
+pub fn dynamic_entries(_cfg: &os_model::CrawlConfig) -> Vec<super::DynamicEntry> {
+    Vec::new()
+}

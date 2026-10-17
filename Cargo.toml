@@ -71,7 +71,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 bytes = "1"
 futures-util = "0.3"
 # Keine automatische Dekompression (gzip/brotli/deflate-Features bewusst aus): Transfer-Bytes werden selbst gezählt.
-reqwest = { version = "0.13", default-features = false, features = ["rustls", "http2", "stream"] }
+reqwest = { version = "0.13", default-features = false, features = ["rustls", "http2", "stream", "socks", "system-proxy"] }
 flate2 = "1"
 # os-fetch: Reason-Phrase der Statuszeile (hyper::ext::ReasonPhrase); Version aus dem Lock
 hyper = { version = "1", default-features = false, features = ["http1"] }
@@ -98,7 +98,7 @@ rust_xlsxwriter = { version = "0.99", features = ["constant_memory"] }
 calamine = "0.36"
 base64 = "0.23"
 # STDIO-Server (P18/P27) und Client (Tests): Kindprozess- und In-Process-Transport für die Integrationstests
-rmcp = { version = "3", default-features = false, features = ["server", "client", "transport-io", "transport-child-process"] }
+rmcp = { version = "3", default-features = false, features = ["server", "client", "transport-io", "transport-child-process", "transport-streamable-http-server"] }
 strsim = "0.11"
 dirs = "7"
 rustls = "0.23"
@@ -138,11 +138,17 @@ lettre = { version = "0.11", default-features = false, features = ["builder", "s
 criterion = { version = "0.8", default-features = false }
 # os-parse (ONPAGE-153): Spracherkennung der Rechtschreibprüfung
 whatlang = "0.18"
-# os-parse (INTEG-042, Klärung K2-05): `xee-xpath` 0.1.5 (MIT) ist bewusst NICHT eingebunden. Der Lizenz- und Reifetest
-# von M2-F01 (`cargo deny check advisories`) scheitert: xee-interpreter → json 0.12 (RUSTSEC-2022-0081, unmaintained) und
-# xot → genawaiter → proc-macro-error 0.4 (RUSTSEC-2024-0370, unmaintained). Entscheidung G0/Planer (vor Welle 1, D15):
-# Variante A = diese zwei Ignore-Einträge in deny.toml mit Begründung + `xee-xpath = "0.1"` hier und in os-parse (als Patch
-# vorbereitet und geprüft: cargo check -p os-parse, cargo deny check grün) oder Variante B = XPath 1.0 + Funktionsmenge aus
-# INTEG-042 als eigene Erweiterung (kein Manifesteintrag nötig).
 # os-parse (ONPAGE-153, Klärung K2-03): Hunspell-kompatible Rechtschreibung, MPL-2.0
 spellbook = "0.4"
+
+# M2-F05a: komprimierte HTML-Ablage.
+zstd = "0.13"
+
+# Welle-1-Vorbau (K2-57; MIT/Apache-2.0).
+xee-xpath = "0.1"
+sha2 = "0.11"
+aes-gcm = "0.10"
+webbrowser = "1"
+zip = { version = "9", default-features = false, features = ["deflate"] }
+sysinfo = "0.37"
+getrandom = "0.4"

@@ -192,6 +192,7 @@ pub fn tab() -> TabDef {
                 kind: FilterKind::Live,
                 requires: Vec::new(),
                 ignore_non_indexable: false,
+                default_columns: &[],
             },
             FilterDef {
                 id: "Exact Duplicates",
@@ -202,6 +203,7 @@ pub fn tab() -> TabDef {
                     Requirement::Config("duplicates.exact_enabled"),
                 ],
                 ignore_non_indexable: false,
+                default_columns: &[],
             },
             FilterDef {
                 id: "Low Content Pages",
@@ -209,6 +211,7 @@ pub fn tab() -> TabDef {
                 kind: FilterKind::Live,
                 requires: Vec::new(),
                 ignore_non_indexable: true,
+                default_columns: &[],
             },
         ],
         default_sort: vec![SortKey {
@@ -228,5 +231,6 @@ pub fn tab() -> TabDef {
                 ),
             ]
         },
+        hidden_population: None,
     }
 }

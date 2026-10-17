@@ -24,6 +24,8 @@ pub enum ReportRequirement {
     },
     /// JavaScript-Rendering.
     Rendering,
+    SitemapProcessed,
+    OrphanSourceAvailable,
 }
 
 /// Art des Reports (Zuordnung zur Umsetzung).

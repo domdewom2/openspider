@@ -29,6 +29,7 @@ pub type StepFn = fn(&CrawlFile, &CrawlConfig, &CancelToken) -> Result<StepState
 /// Standardzuordnung Teilschritt → Funktion. Schritte ohne eigene Umsetzung sind `NotApplicable`.
 pub fn default_registry(step: AnalysisStep) -> StepFn {
     match step {
+        AnalysisStep::Images => super::steps::images::run,
         AnalysisStep::Canonicals => super::steps::canonicals::run,
         AnalysisStep::Sitemaps => super::steps::sitemaps::run,
         // Stubs von M2 (M2-F02); die Fachpakete ersetzen die Funktion in ihrer Datei, diese Zeile bleibt.
@@ -104,7 +105,7 @@ pub fn run_only(
 pub fn predetermined_state(step: AnalysisStep, cfg: &CrawlConfig) -> Option<StepState> {
     let js = cfg.rendering.mode == RenderingMode::JavaScript;
     // Bilder sind ohne JS-Rendering nicht wählbar (CRAWL-141): nicht anwendbar, auch bei gesetztem Schalter.
-    if step == AnalysisStep::Images && !js {
+    if step == AnalysisStep::Images && !js && !cfg.images.parse_inline_css_backgrounds {
         return Some(StepState::NotApplicable);
     }
     if !cfg.analysis.step_enabled(step) {
@@ -189,7 +190,7 @@ pub fn run_with(
                     let conn =
                         CrawlFile::open(path, OpenMode::ReadWrite).map_err(|e| e.to_string());
                     loop {
-                        if cancel.is_cancelled() {
+                        if cancel.checkpoint().is_err() {
                             break;
                         }
                         let i = next.fetch_add(1, Ordering::SeqCst);
@@ -212,6 +213,13 @@ pub fn run_with(
                         match settle(file, cfg, opts.clock, step, outcome) {
                             Ok(state) => {
                                 set_result(&mut results, step, state);
+                                cancel.set_progress(
+                                    results
+                                        .iter()
+                                        .filter(|(_, s)| *s != StepState::Pending)
+                                        .count() as f32
+                                        / results.len().max(1) as f32,
+                                );
                                 if state != StepState::Pending {
                                     progress(step, 1.0);
                                 }
@@ -226,6 +234,13 @@ pub fn run_with(
         });
     }
 
+    cancel.set_progress(
+        results
+            .iter()
+            .filter(|(_, s)| *s != StepState::Pending)
+            .count() as f32
+            / results.len().max(1) as f32,
+    );
     let complete = results.iter().all(|(_, s)| *s != StepState::Pending);
     let final_state = overall_state(file)?;
     persist::write_run_state(file, final_state, Some(&opts.clock.now()))?;

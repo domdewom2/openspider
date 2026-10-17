@@ -347,6 +347,8 @@ pub fn page_request(url: Url) -> FetchRequest {
         purpose: FetchPurpose::Page,
         cookies: None,
         max_body_bytes: 50 * 1024 * 1024,
+        attempt: 0,
+        body_limit: Default::default(),
     }
 }
 

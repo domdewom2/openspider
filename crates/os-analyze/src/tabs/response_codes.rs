@@ -143,6 +143,7 @@ fn filter(id: &'static str, predicate: &'static str) -> FilterDef {
         kind: FilterKind::Live,
         requires: Vec::new(),
         ignore_non_indexable: false,
+        default_columns: &[],
     }
 }
 
@@ -253,5 +254,36 @@ pub fn tab() -> TabDef {
         ],
         default_sort: Vec::new(),
         params: |_| Vec::new(),
+        hidden_population: None,
+    }
+}
+
+// STUB(M2-D12)
+pub fn redirect_details(
+    _: &os_store::CrawlFile,
+    _: &os_model::CrawlConfig,
+    _: &crate::details::DetailReq<'_>,
+) -> Result<crate::details::DetailRows, crate::ViewError> {
+    Err(crate::ViewError::NotImplemented("M2-D12"))
+}
+
+// STUB(M2-D12): bisheriger Overview-Zähler, Fachpaket erweitert auf alle Refresh-Header.
+pub fn http_refresh_filter() -> &'static str {
+    "u.redirect_type = 'http_refresh'"
+}
+
+// STUB(M2-D12): bewahrt die bisherige Overview-Semantik, bis alle Header-Fälle ausgewertet werden.
+pub fn configure_filters(tab: &mut TabDef) {
+    for filter in &mut tab.filters {
+        filter.predicate = match filter.id {
+            "Redirection (HTTP Refresh)" => http_refresh_filter(),
+            "Internal Redirection (HTTP Refresh)" => {
+                "u.is_internal = 1 AND u.redirect_type = 'http_refresh'"
+            }
+            "External Redirection (HTTP Refresh)" => {
+                "u.is_internal = 0 AND u.redirect_type = 'http_refresh'"
+            }
+            _ => continue,
+        };
     }
 }

@@ -51,6 +51,7 @@ pub fn entries() -> &'static [TableEntry] {
                     aliases: &[],
                     file_stem: name,
                     header: super::LINK_HEADER,
+                    header_fn: None,
                     requires: &[],
                     owner: "M2-X01",
                     run: stub_run,

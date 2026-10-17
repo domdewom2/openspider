@@ -29,6 +29,10 @@ pub enum ConfigIssueKind {
 /// Eine Meldung mit Feldpfad und – bei geladenen Dateien – Zeile/Spalte des Schlüssels.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConfigIssue {
+    /// Maschinenlesbarer Fehlercode.
+    pub code: String,
+    /// Position im geprüften Ausdruck.
+    pub position: Option<u32>,
     /// Art der Meldung.
     pub kind: ConfigIssueKind,
     /// Feldpfad, z. B. `speed.threads` oder `auth.basic[0].prefix`.
@@ -48,6 +52,8 @@ impl ConfigIssue {
         message: impl Into<String>,
     ) -> Self {
         ConfigIssue {
+            code: format!("{kind:?}"),
+            position: None,
             kind,
             path: path.into(),
             line: None,
@@ -123,9 +129,38 @@ pub(crate) const TOML_INT_MAX: i64 = i64::MAX;
 
 /// Wertebereiche aller Ganzzahl-Optionen mit Einschränkung (CRAWL-112: Threads 1–200; ONPAGE-144: 50–100 %).
 pub(crate) const INT_RANGES: &[IntRange] = &[
+    r("images.incorrect_size_min_saving_kb", 0, Some(1_000_000)),
+    r("custom_search.regex_timeout_ms", 1, Some(u32::MAX as i64)),
+    r("serp.desktop.title_max_px", 1, Some(4000)),
+    r("serp.desktop.description_max_px", 1, Some(4000)),
+    r("serp.mobile.title_max_px", 1, Some(4000)),
+    r("serp.mobile.description_max_px", 1, Some(4000)),
+    r("serp.tablet.title_max_px", 1, Some(4000)),
+    r("serp.tablet.description_max_px", 1, Some(4000)),
+    r("api.ga4.limits.retries", 0, Some(20)),
+    r("api.ga4.limits.concurrency", 1, Some(50)),
+    r("api.ga4.limits.window_s", 1, Some(4294967295)),
+    r("api.gsc.limits.retries", 0, Some(20)),
+    r("api.gsc.limits.concurrency", 1, Some(50)),
+    r("api.gsc.limits.window_s", 1, Some(4294967295)),
+    r("api.psi.limits.retries", 0, Some(20)),
+    r("api.psi.limits.concurrency", 1, Some(50)),
+    r("api.psi.limits.window_s", 1, Some(4294967295)),
+    r("api.majestic.limits.retries", 0, Some(20)),
+    r("api.majestic.limits.concurrency", 1, Some(50)),
+    r("api.majestic.limits.window_s", 1, Some(4294967295)),
+    r("api.ahrefs.limits.retries", 0, Some(20)),
+    r("api.ahrefs.limits.concurrency", 1, Some(50)),
+    r("api.ahrefs.limits.window_s", 1, Some(4294967295)),
+    r("api.moz.limits.retries", 0, Some(20)),
+    r("api.moz.limits.concurrency", 1, Some(50)),
+    r("api.moz.limits.window_s", 1, Some(4294967295)),
+    r("api.drive.limits.retries", 0, Some(20)),
+    r("api.drive.limits.concurrency", 1, Some(50)),
+    r("api.drive.limits.window_s", 1, Some(4294967295)),
     r("schema_version", 1, Some(u32::MAX as i64)),
     r("limits.max_urls", 1, Some(TOML_INT_MAX)),
-    r("limits.max_page_kb", 1, Some(1 << 30)),
+    r("limits.max_page_kb", 0, Some(1 << 30)),
     r("speed.threads", 1, Some(200)),
     r("speed.max_per_host", 1, Some(200)),
     r("advanced.response_timeout_s", 1, Some(3600)),
@@ -142,10 +177,9 @@ pub(crate) const INT_RANGES: &[IntRange] = &[
     r("validation.html_doc_max_bytes", 1, Some(TOML_INT_MAX)),
     r("validation.resource_max_bytes", 1, Some(TOML_INT_MAX)),
     // Konfiguration v2 (M2-F01)
-    r("limits.max_url_length", 1, Some(1 << 24)),
-    r("limits.max_links_per_url", 1, Some(1 << 30)),
+    r("limits.max_url_length", 0, Some(1 << 24)),
+    r("limits.max_links_per_url", 0, Some(1 << 30)),
     r("limits.max_urls_per_subdomain", 1, Some(TOML_INT_MAX)),
-    r("rendering.ajax_timeout_s", 0, Some(60)),
     r("rendering.tabs", 1, Some(64)),
     r("rendering.restart_after_pages", 1, Some(1 << 30)),
     r("rendering.restart_memory_mb", 64, Some(1 << 20)),
@@ -213,6 +247,61 @@ impl CrawlConfig {
                     ConfigIssueKind::InvalidValue,
                     range.path,
                     message,
+                ));
+            }
+        }
+
+        for range in FLOAT_RANGES {
+            let ptr = format!("/{}", range.path.replace('.', "/"));
+            if !json
+                .pointer(&ptr)
+                .and_then(Value::as_f64)
+                .is_some_and(|n| range.accepts(n))
+            {
+                rep.errors.push(ConfigIssue::new(
+                    ConfigIssueKind::InvalidValue,
+                    range.path,
+                    "ungültiger Dezimalwert",
+                ));
+            }
+        }
+        for (path, entries) in [
+            (
+                "url.internal_search_segments",
+                &self.url.internal_search_segments,
+            ),
+            (
+                "url.internal_search_params",
+                &self.url.internal_search_params,
+            ),
+        ] {
+            for (i, entry) in entries.iter().enumerate() {
+                if entry.trim().is_empty() {
+                    rep.errors.push(ConfigIssue::new(
+                        ConfigIssueKind::InvalidValue,
+                        format!("{path}[{i}]"),
+                        "darf nicht leer sein",
+                    ));
+                }
+            }
+        }
+        for (host, content) in &self.robots.custom_files {
+            let valid = !host.is_empty()
+                && host.len() <= 253
+                && host.split('.').all(|label| {
+                    !label.is_empty()
+                        && label.len() <= 63
+                        && !label.starts_with('-')
+                        && !label.ends_with('-')
+                        && label
+                            .bytes()
+                            .all(|c| c.is_ascii_alphanumeric() || c == b'-')
+                });
+            if !valid || content.len() > 512 * 1024 {
+                rep.errors.push(ConfigIssue::new(
+                    ConfigIssueKind::InvalidValue,
+                    format!("robots.custom_files.{host}"),
+                    "gültiger Hostname und höchstens 512 KiB erforderlich",
                 ));
             }
         }
@@ -299,7 +388,7 @@ impl CrawlConfig {
                 self.validation.resource_max_bytes,
             ),
         ] {
-            if i128::from(value) > page_bytes {
+            if self.limits.max_page_kb != 0 && i128::from(value) > page_bytes {
                 rep.warnings.push(ConfigIssue::new(
                     ConfigIssueKind::Warning,
                     path,
@@ -583,16 +672,27 @@ impl CrawlConfig {
                 "mindestens die Auffangregel \"Content\" erforderlich",
             ),
             Some(last) => {
-                if !last.contains.iter().any(String::is_empty) {
+                if last.position != "Content" || !last.contains.iter().all(String::is_empty) {
                     bad(
                         rep,
                         "link_positions.rules",
-                        "die letzte Regel muss eine Auffangregel sein (leerer Teilstring)",
+                        "die letzte Regel muss Content mit leerer Teilstringliste sein",
                     );
                 }
             }
         }
         for (i, r) in self.link_positions.rules.iter().enumerate() {
+            if i + 1 < self.link_positions.rules.len()
+                && (r.position == "Content"
+                    || r.contains.is_empty()
+                    || r.contains.iter().any(String::is_empty))
+            {
+                bad(
+                    rep,
+                    format!("link_positions.rules[{i}]"),
+                    "vor der Auffangregel sind Content und leere Teilstrings unzulässig",
+                );
+            }
             if r.position.trim().is_empty() {
                 bad(
                     rep,
@@ -793,3 +893,66 @@ impl CrawlConfig {
         }
     }
 }
+
+/// Gemeinsame Grenzen für Schema, --set und Validierung.
+#[derive(Clone, Copy)]
+pub(crate) struct FloatRange {
+    pub path: &'static str,
+    pub min: f64,
+    pub max: f64,
+    pub multiple: Option<f64>,
+}
+impl FloatRange {
+    pub fn accepts(self, n: f64) -> bool {
+        n.is_finite()
+            && n >= self.min
+            && n <= self.max
+            && self
+                .multiple
+                .is_none_or(|m| (n / m - (n / m).round()).abs() <= 1e-9)
+    }
+}
+pub(crate) const FLOAT_RANGES: &[FloatRange] = &[
+    FloatRange {
+        path: "rendering.ajax_timeout_s",
+        min: 0.0,
+        max: 60.0,
+        multiple: Some(0.1),
+    },
+    FloatRange {
+        path: "serp.desktop.title_font_px",
+        min: 6.0,
+        max: 64.0,
+        multiple: None,
+    },
+    FloatRange {
+        path: "serp.desktop.description_font_px",
+        min: 6.0,
+        max: 64.0,
+        multiple: None,
+    },
+    FloatRange {
+        path: "serp.mobile.title_font_px",
+        min: 6.0,
+        max: 64.0,
+        multiple: None,
+    },
+    FloatRange {
+        path: "serp.mobile.description_font_px",
+        min: 6.0,
+        max: 64.0,
+        multiple: None,
+    },
+    FloatRange {
+        path: "serp.tablet.title_font_px",
+        min: 6.0,
+        max: 64.0,
+        multiple: None,
+    },
+    FloatRange {
+        path: "serp.tablet.description_font_px",
+        min: 6.0,
+        max: 64.0,
+        multiple: None,
+    },
+];

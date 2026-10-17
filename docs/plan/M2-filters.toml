@@ -82,7 +82,7 @@ new = false
 filters = [
   { id = "Repetitive Path", spec = "ONPAGE-075", kind = "live", issue = true },
   { id = "Internal Search", spec = "ONPAGE-077", kind = "live", issue = true },
-  { id = "Broken Bookmark", spec = "ONPAGE-079", kind = "live", issue = true },
+  { id = "Broken Bookmark", spec = "ONPAGE-079", kind = "live", issue = true, requires = ["advanced.crawl_fragments"] },
   { id = "GA Tracking Parameters", spec = "ONPAGE-080", kind = "live", issue = true },
 ]
 
@@ -96,7 +96,7 @@ filters = [
   { id = "Over {title.max_px} Pixels", spec = "ONPAGE-095", kind = "live" },
   { id = "Below {title.min_px} Pixels", spec = "ONPAGE-096", kind = "live" },
   { id = "Same as H1", spec = "ONPAGE-097", kind = "live", issue = true },
-  { id = "Outside <head>", spec = "ONPAGE-099", kind = "live", issue = true },
+  { id = "Outside <head>", spec = "ONPAGE-099", kind = "live", issue = true, requires = ["advanced.html_validation"] },
 ]
 
 [[tab]]
@@ -108,7 +108,7 @@ note = "Standard: Over 985 Pixels, Below 400 Pixels."
 filters = [
   { id = "Over {meta_description.max_px} Pixels", spec = "ONPAGE-105", kind = "live" },
   { id = "Below {meta_description.min_px} Pixels", spec = "ONPAGE-106", kind = "live" },
-  { id = "Outside <head>", spec = "ONPAGE-108", kind = "live", issue = true },
+  { id = "Outside <head>", spec = "ONPAGE-108", kind = "live", issue = true, requires = ["advanced.html_validation"] },
 ]
 
 [[tab]]
@@ -152,9 +152,9 @@ package = "M2-D03"
 new = false
 note = "requires bei ONPAGE-178/180 ist eine Planannahme; maßgeblich ist die Spec (M2-D03 prüft und meldet Abweichungen)."
 filters = [
-  { id = "Background Images", spec = "ONPAGE-178", kind = "live", issue = true, requires = ["rendering.mode=javascript"] },
-  { id = "Missing Size Attributes", spec = "ONPAGE-179", kind = "live", issue = true },
-  { id = "Incorrectly Sized Images", spec = "ONPAGE-180", kind = "live", issue = true, requires = ["rendering.mode=javascript"] },
+  { id = "Background Images", spec = "ONPAGE-178", kind = "post_crawl:Images", issue = true, requires = ["images.parse_inline_css_backgrounds"] },
+  { id = "Missing Size Attributes", spec = "ONPAGE-179", kind = "post_crawl:Images", issue = true, requires = ["images.parse_inline_css_backgrounds"] },
+  { id = "Incorrectly Sized Images", spec = "ONPAGE-180", kind = "post_crawl:Images", issue = true, requires = ["rendering.mode=javascript"] },
 ]
 
 [[tab]]
@@ -167,7 +167,7 @@ filters = [
   { id = "Unlinked", spec = "TECH-020", kind = "post_crawl:Canonicals", issue = true },
   { id = "Invalid Attribute In Annotation", spec = "TECH-021", kind = "live", issue = true },
   { id = "Contains Fragment URL", spec = "TECH-022", kind = "live", issue = true },
-  { id = "Outside <head>", spec = "TECH-023", kind = "live", issue = true },
+  { id = "Outside <head>", spec = "TECH-023", kind = "live", issue = true, requires = ["advanced.html_validation"] },
 ]
 
 [[tab]]
@@ -184,7 +184,7 @@ filters = [
   { id = "NoImageIndex", spec = "TECH-061", kind = "live", issue = true },
   { id = "NoTranslate", spec = "TECH-062", kind = "live", issue = true },
   { id = "Unavailable_After", spec = "TECH-063", kind = "live", issue = true },
-  { id = "Outside <head>", spec = "TECH-065", kind = "live", issue = true },
+  { id = "Outside <head>", spec = "TECH-065", kind = "live", issue = true, requires = ["advanced.html_validation"] },
 ]
 
 [[tab]]
@@ -201,7 +201,7 @@ filters = [
   { id = "Missing Self Reference", spec = "TECH-082", kind = "live", issue = true },
   { id = "Not Using Canonical", spec = "TECH-083", kind = "live", issue = true },
   { id = "Missing X-Default", spec = "TECH-084", kind = "live", issue = true },
-  { id = "Outside <head>", spec = "TECH-086", kind = "live", issue = true },
+  { id = "Outside <head>", spec = "TECH-086", kind = "live", issue = true, requires = ["advanced.html_validation"] },
 ]
 
 [[tab]]
@@ -293,17 +293,17 @@ package = "M2-D09 / M2-D20"
 new = true
 note = "requires: mindestens ein Format in extraction.structured_data.* aktiv (Zustand NeedsConfig, ONPAGE-007). UI-064 führt „Missing“ statt „Missing Structured Data“ (Klärung K2-15)."
 filters = [
-  { id = "All", spec = "TECH-183", kind = "live" },
-  { id = "Contains Structured Data", spec = "TECH-184", kind = "live" },
-  { id = "Missing Structured Data", spec = "TECH-184", kind = "live" },
-  { id = "JSON-LD URLs", spec = "TECH-185", kind = "live" },
-  { id = "Microdata URLs", spec = "TECH-185", kind = "live" },
-  { id = "RDFa URLs", spec = "TECH-185", kind = "live" },
-  { id = "Parse Errors", spec = "TECH-186", kind = "live", issue = true },
-  { id = "Validation Errors", spec = "TECH-187", kind = "live", package = "M2-D20", issue = true },
-  { id = "Validation Warnings", spec = "TECH-187", kind = "live", package = "M2-D20", issue = true },
-  { id = "Rich Result Validation Errors", spec = "TECH-188", kind = "live", package = "M2-D20", issue = true },
-  { id = "Rich Result Validation Warnings", spec = "TECH-188", kind = "live", package = "M2-D20", issue = true },
+  { id = "All", spec = "TECH-183", kind = "live", requires = ["extraction.structured_data"] },
+  { id = "Contains Structured Data", spec = "TECH-184", kind = "live", requires = ["extraction.structured_data"] },
+  { id = "Missing Structured Data", spec = "TECH-184", kind = "live", issue = true, requires = ["extraction.structured_data"] },
+  { id = "JSON-LD URLs", spec = "TECH-185", kind = "live", requires = ["extraction.structured_data"] },
+  { id = "Microdata URLs", spec = "TECH-185", kind = "live", requires = ["extraction.structured_data"] },
+  { id = "RDFa URLs", spec = "TECH-185", kind = "live", requires = ["extraction.structured_data"] },
+  { id = "Parse Errors", spec = "TECH-186", kind = "live", issue = true, requires = ["extraction.structured_data"] },
+  { id = "Validation Errors", spec = "TECH-187", kind = "live", package = "M2-D20", issue = true, requires = ["extraction.structured_data"] },
+  { id = "Validation Warnings", spec = "TECH-187", kind = "live", package = "M2-D20", issue = true, requires = ["extraction.structured_data"] },
+  { id = "Rich Result Validation Errors", spec = "TECH-188", kind = "live", package = "M2-D20", issue = true, requires = ["extraction.structured_data"] },
+  { id = "Rich Result Validation Warnings", spec = "TECH-188", kind = "live", package = "M2-D20", issue = true, requires = ["extraction.structured_data"] },
 ]
 
 [[tab]]
@@ -435,15 +435,15 @@ new = true
 note = "requires: advanced.html_validation (TECH-008)."
 filters = [
   { id = "All", spec = "TECH-281", kind = "live" },
-  { id = "Invalid HTML Elements In <head>", spec = "TECH-282", kind = "live", issue = true },
-  { id = "<head> Not First In <html> Element", spec = "TECH-283", kind = "live", issue = true },
-  { id = "Missing <head> Tag", spec = "TECH-284", kind = "live", issue = true },
-  { id = "Multiple <head> Tags", spec = "TECH-285", kind = "live", issue = true },
-  { id = "Missing <body> Tag", spec = "TECH-286", kind = "live", issue = true },
-  { id = "Multiple <body> Tags", spec = "TECH-287", kind = "live", issue = true },
-  { id = "<body> Element Preceding <html>", spec = "TECH-288", kind = "live", issue = true },
-  { id = "HTML Document Over 2MB", spec = "TECH-289", kind = "live", issue = true },
-  { id = "Resource Over 2MB", spec = "TECH-290", kind = "live", issue = true },
+  { id = "Invalid HTML Elements In <head>", spec = "TECH-282", kind = "live", issue = true, requires = ["advanced.html_validation"] },
+  { id = "<head> Not First In <html> Element", spec = "TECH-283", kind = "live", issue = true, requires = ["advanced.html_validation"] },
+  { id = "Missing <head> Tag", spec = "TECH-284", kind = "live", issue = true, requires = ["advanced.html_validation"] },
+  { id = "Multiple <head> Tags", spec = "TECH-285", kind = "live", issue = true, requires = ["advanced.html_validation"] },
+  { id = "Missing <body> Tag", spec = "TECH-286", kind = "live", issue = true, requires = ["advanced.html_validation"] },
+  { id = "Multiple <body> Tags", spec = "TECH-287", kind = "live", issue = true, requires = ["advanced.html_validation"] },
+  { id = "<body> Element Preceding <html>", spec = "TECH-288", kind = "live", issue = true, requires = ["advanced.html_validation"] },
+  { id = "HTML Document Over {validation.html_doc_max_bytes}MB", spec = "TECH-289", kind = "live", issue = true },
+  { id = "Resource Over {validation.resource_max_bytes}MB", spec = "TECH-290", kind = "live", issue = true },
 ]
 
 [[tab]]

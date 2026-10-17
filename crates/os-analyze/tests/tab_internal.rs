@@ -157,7 +157,9 @@ fn assert_address_golden(fx: &FixtureCrawl, scenario: &str, tab: &str, filter: &
 }
 
 async fn internal_site() -> FixtureCrawl {
-    crawl_fixture("onpage-internal", CrawlConfig::default()).await
+    let mut cfg = CrawlConfig::default();
+    cfg.extraction.http_headers = true;
+    crawl_fixture("onpage-internal", cfg).await
 }
 
 /// Crawl der Inhaltstypen-Fixture mit kurzem Antwort-Timeout (die Route `/timeout` antwortet erst nach 3 s).

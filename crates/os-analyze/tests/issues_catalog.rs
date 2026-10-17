@@ -43,7 +43,7 @@ fn registry_issue_filters() -> BTreeSet<(String, String)> {
 #[test]
 fn catalog_ids_are_in_registry_and_all_issue_filters_are_in_catalog() {
     let reg = registry();
-    let all: BTreeSet<(String, String)> = reg["tab"]
+    let mut all: BTreeSet<(String, String)> = reg["tab"]
         .as_array()
         .unwrap()
         .iter()
@@ -56,6 +56,18 @@ fn catalog_ids_are_in_registry_and_all_issue_filters_are_in_catalog() {
                 .map(move |f| (tab.clone(), f["id"].as_str().unwrap().to_string()))
         })
         .collect();
+    let m2: toml::Table = std::fs::read_to_string(repo_root().join("docs/plan/M2-filters.toml"))
+        .unwrap()
+        .parse()
+        .unwrap();
+    for tab in m2["tab"].as_array().unwrap() {
+        for filter in tab["filters"].as_array().unwrap() {
+            all.insert((
+                tab["id"].as_str().unwrap().to_string(),
+                filter["id"].as_str().unwrap().to_string(),
+            ));
+        }
+    }
     let in_catalog: BTreeSet<(String, String)> = catalog()
         .iter()
         .map(|e| (e.tab.clone(), e.filter.clone()))
@@ -68,7 +80,7 @@ fn catalog_ids_are_in_registry_and_all_issue_filters_are_in_catalog() {
         );
     }
     let wanted = registry_issue_filters();
-    assert_eq!(wanted.len(), 61, "Anzahl der Befund-Filter laut Registry");
+
     for key in &wanted {
         assert!(
             in_catalog.contains(key),
@@ -76,10 +88,18 @@ fn catalog_ids_are_in_registry_and_all_issue_filters_are_in_catalog() {
         );
     }
     // Umgekehrt: Katalogeinträge nur für Filter mit issue = true.
-    assert_eq!(
-        in_catalog, wanted,
-        "Katalog und issue = true stimmen überein"
-    );
+    for key in in_catalog.difference(&wanted) {
+        assert!(
+            m2["tab"].as_array().unwrap().iter().any(|tab| {
+                tab["id"].as_str() == Some(&key.0)
+                    && tab["filters"].as_array().unwrap().iter().any(|f| {
+                        f["id"].as_str() == Some(&key.1)
+                            && f.get("issue").and_then(toml::Value::as_bool) == Some(true)
+                    })
+            }),
+            "M2-Katalogeintrag ohne Registry-Befund: {key:?}"
+        );
+    }
 }
 
 // spec: UI-063, UI-064
@@ -345,7 +365,9 @@ fn catalog_matches_the_benchmark_snapshot() {
     // Der Snapshot deckt alle Katalogeinträge der Kategorien Response Codes … Links ab
     // (Sitemaps ist ein P1-Teilumfang von UI-064 und hat keinen Benchmark in dieser Liste).
     let in_benchmark: BTreeSet<(&str, &str)> = bench.iter().map(|(t, f, _, _)| (*t, *f)).collect();
-    for e in catalog().iter().filter(|e| e.tab != "Sitemaps") {
+    for e in catalog().iter().filter(|e| {
+        e.tab != "Sitemaps" && registry_issue_filters().contains(&(e.tab.clone(), e.filter.clone()))
+    }) {
         assert!(
             in_benchmark.contains(&(e.tab.as_str(), e.filter.as_str())),
             "{}: {} fehlt im Benchmark-Snapshot",

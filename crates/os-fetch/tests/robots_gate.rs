@@ -59,6 +59,12 @@ impl Fetch for Loopback {
                         truncated: false,
                         decode_error: None,
                         md5_hex: String::new(),
+                        request_headers: Vec::new(),
+                        set_cookies: Vec::new(),
+                        content_length: None,
+                        untruncated_bytes: None,
+                        synthetic: None,
+                        attempts: 1,
                     })
                 }
                 Err(e) => FetchOutcome::NoResponse {

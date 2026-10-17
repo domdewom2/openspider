@@ -18,6 +18,9 @@ pub enum EngineError {
     /// Ungültige Eingabe (Start-URL, Konfiguration).
     #[error("ungültige Eingabe: {0}")]
     Invalid(String),
+    /// Neuberechnung wurde abgebrochen.
+    #[error("Neuberechnung abgebrochen")]
+    Cancelled,
     /// Ein Hintergrund-Task ist abgebrochen oder in Panik geraten.
     #[error("interner Fehler: {0}")]
     Join(String),

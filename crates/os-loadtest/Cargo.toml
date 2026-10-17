@@ -1,5 +1,6 @@
 [package]
 name = "os-loadtest"
+default-run = "os-loadtest"
 description = "OpenSpider: Lasttest-Runner (PERF-009) gegen synthetische os-testsite-Sites"
 version.workspace = true
 edition.workspace = true
@@ -34,3 +35,7 @@ path = "src/main.rs"
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["test-util"] }
+
+[[bin]]
+name = "gen-ui-large"
+path = "src/bin/gen-ui-large.rs"

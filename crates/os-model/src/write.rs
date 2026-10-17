@@ -18,6 +18,8 @@ use crate::write_m2::{
 /// Alles, was die Engine in einer Transaktion schreibt.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct WriteBatch {
+    pub cookies: Vec<crate::CookieWrite>,
+    pub discoveries: Vec<DiscoveryWrite>,
     /// Neu entdeckte URLs.
     pub new_urls: Vec<NewUrl>,
     /// Änderungen an vorhandenen URLs.
@@ -267,6 +269,9 @@ pub struct PageHtml {
 /// Eine Linkzeile.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LinkRow {
+    pub crawlable: bool,
+    pub uncrawlable_reason: Option<crate::UncrawlableReason>,
+    pub pdf_page: Option<u32>,
     /// Ziel (falls bekannt).
     pub target_id: Option<UrlId>,
     /// Rohziel.
@@ -423,6 +428,7 @@ pub struct SitemapWrite {
 /// Zusatzangaben eines Sitemap-Eintrags (CRAWL-060: `changefreq`, `priority`, Bild-/Video-/News-Erweiterungen).
 #[derive(Debug, Clone, PartialEq)]
 pub struct SitemapEntryMeta {
+    pub extensions: Vec<crate::SitemapExtension>,
     /// URL des Eintrags (muss in `SitemapWrite.entry_urls` stehen).
     pub url: UrlId,
     /// `<changefreq>` roh, klein geschrieben.
@@ -467,4 +473,39 @@ pub struct CrawlEvent {
     pub code: String,
     /// Text.
     pub message: String,
+}
+
+/// Erstentdeckung oder Tiefenverbesserung (K2-42).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DiscoveryWrite {
+    pub seq: u64,
+    pub target: UrlId,
+    pub source: Option<UrlId>,
+    pub kind: DiscoveryKind,
+    pub link_type: Option<LinkType>,
+    pub anchor: Option<String>,
+    pub depth: Option<u32>,
+}
+impl Default for LinkRow {
+    fn default() -> Self {
+        Self {
+            target_id: None,
+            target_raw: String::new(),
+            link_type: Default::default(),
+            position: 0,
+            anchor: None,
+            alt_text: None,
+            follow: true,
+            rel: None,
+            target_attr: None,
+            path_type: None,
+            link_path: None,
+            link_position: None,
+            link_origin: Default::default(),
+            in_head: None,
+            crawlable: true,
+            uncrawlable_reason: None,
+            pdf_page: None,
+        }
+    }
 }

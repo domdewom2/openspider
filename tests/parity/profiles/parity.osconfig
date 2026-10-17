@@ -25,6 +25,7 @@ store = true
 crawl = false
 
 [robots]
+respect_crawl_delay = false
 mode = "respect"
 unreachable_policy = "allow_all"   # bewusste OS-Festlegung (K-55): OpenSpider sperrt den Host (RFC 9309), das Profil stellt die Referenz nach, die trotzdem crawlt (CRAWL-100, Q30)
 
@@ -40,3 +41,10 @@ auto_discover_robots = true
 
 [analysis]                 # Nachlauf (Canonicals, Sitemaps, Links) am Crawl-Ende
 auto_at_end = true
+
+# Defaults des bestehenden Paritätsprofils bewahren (CRAWL-010, CRAWL-062; K2-29).
+[scope]
+crawl_outside_start_folder = false
+
+[extraction]
+http_headers = true

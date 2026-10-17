@@ -99,6 +99,14 @@ pub fn decide(
     cfg: &CrawlConfig,
     page_follow: bool,
 ) -> LinkDecision {
+    if !link.crawlable {
+        return LinkDecision {
+            store: cfg.spider.store_uncrawlable_links,
+            crawl: false,
+            reason: None,
+        };
+    }
+
     if !has_http_target(link) {
         return LinkDecision::DROPPED;
     }
@@ -209,6 +217,7 @@ mod tests {
             position: LinkPosition::Content,
             in_head: false,
             doc_order: 0,
+            ..Default::default()
         }
     }
 

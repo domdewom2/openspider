@@ -1,0 +1,903 @@
+# M2-F05a: Startcheckliste der Welle 1. Fachlogik bleibt beim angegebenen Besitzer.
+# Signaturen der mit STUB markierten Erweiterungspunkte; generated from the owned source files.
+package = "M2-F05a"
+
+[[stub]]
+owner = "M2-C02"
+file = "crates/os-analyze/src/tabs/change_detection.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-D01"
+file = "crates/os-analyze/src/tabs/meta_keywords.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-D01"
+file = "crates/os-export/src/reports/serp_summary.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D01"
+file = "crates/os-parse/src/elements.rs"
+function = "annotate_facts"
+signature = "pub fn annotate_facts( _doc: &crate::dom::Document, _cfg: &crate::ParseConfig, _page: &mut os_model::ParsedPage, )"
+
+[[stub]]
+owner = "M2-D02"
+file = "crates/os-analyze/src/analysis/steps/near_duplicates.rs"
+function = "run"
+signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
+
+[[stub]]
+owner = "M2-D02"
+file = "crates/os-analyze/src/tabs/duplicates.rs"
+function = "detail_rows"
+signature = "pub fn detail_rows( _: &os_store::CrawlFile, _: &os_model::CrawlConfig, _: &crate::details::DetailReq<'_>, ) -> Result<crate::details::DetailRows, crate::ViewError>"
+
+[[stub]]
+owner = "M2-D02"
+file = "crates/os-analyze/src/tabs/duplicates.rs"
+function = "ngram_details"
+signature = "pub fn ngram_details( _: &os_store::CrawlFile, _: &os_model::CrawlConfig, _: &crate::details::DetailReq<'_>, ) -> Result<crate::details::DetailRows, crate::ViewError>"
+
+[[stub]]
+owner = "M2-D02"
+file = "crates/os-engine/src/recompute/d02.rs"
+function = "run"
+signature = "pub fn run( _file: &mut os_store::CrawlFile, _old: &os_model::CrawlConfig, _new: &os_model::CrawlConfig, _cancel: &os_model::CancelToken, ) -> Result<Vec<os_model::UrlId>, crate::EngineError>"
+
+[[stub]]
+owner = "M2-D02"
+file = "crates/os-export/src/catalog/bulk_content.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D02"
+file = "crates/os-parse/src/content.rs"
+function = "run"
+signature = "pub fn run(_ctx: &crate::PageCtx<'_>, _page: &mut os_model::ParsedPage)"
+
+[[stub]]
+owner = "M2-D02"
+file = "crates/os-parse/src/pdf.rs"
+function = "parse"
+signature = "pub fn parse(body: &[u8], _cfg: &crate::ParseConfig) -> os_model::PdfResult"
+
+[[stub]]
+owner = "M2-D02"
+file = "crates/os-parse/src/readability.rs"
+function = "run"
+signature = "pub fn run(_ctx: &PageCtx<'_>, _page: &mut ParsedPage)"
+
+[[stub]]
+owner = "M2-D03"
+file = "crates/os-analyze/src/analysis/steps/images.rs"
+function = "run"
+signature = "pub fn run( _: &os_store::CrawlFile, _: &os_model::CrawlConfig, _: &crate::analysis::CancelToken, ) -> Result<os_model::StepState, crate::AnalyzeError>"
+
+[[stub]]
+owner = "M2-D03"
+file = "crates/os-analyze/src/tabs/images.rs"
+function = "detail_rows"
+signature = "pub fn detail_rows( _: &os_store::CrawlFile, _: &os_model::CrawlConfig, _: &crate::details::DetailReq<'_>, ) -> Result<crate::details::DetailRows, crate::ViewError>"
+
+[[stub]]
+owner = "M2-D03"
+file = "crates/os-export/src/catalog/bulk_images.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D03"
+file = "crates/os-parse/src/images.rs"
+function = "extract_with"
+signature = "pub fn extract_with( doc: &crate::dom::Document, base: &url::Url, _cfg: &crate::ParseConfig, ) -> (Vec<os_model::ImageInstance>, Vec<os_model::ExtractedLink>)"
+
+[[stub]]
+owner = "M2-D03"
+file = "crates/os-parse/src/images.rs"
+function = "response_facts"
+signature = "pub fn response_facts( _input: &crate::ResponseInput<'_>, ) -> Vec<(os_model::ExtKey, os_model::Value)>"
+
+[[stub]]
+owner = "M2-D04"
+file = "crates/os-export/src/catalog/bulk_canonicals.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D04"
+file = "crates/os-export/src/reports/canonical_chains.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D04"
+file = "crates/os-export/src/reports/non_indexable_canonicals.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D04"
+file = "crates/os-export/src/reports/redirect_canonical_chains.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D04"
+file = "crates/os-parse/src/canonical.rs"
+function = "response_facts"
+signature = "pub fn response_facts( _input: &crate::ResponseInput<'_>, ) -> Vec<(os_model::ExtKey, os_model::Value)>"
+
+[[stub]]
+owner = "M2-D05"
+file = "crates/os-analyze/src/analysis/steps/pagination.rs"
+function = "run"
+signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
+
+[[stub]]
+owner = "M2-D05"
+file = "crates/os-analyze/src/tabs/pagination.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-D05"
+file = "crates/os-export/src/catalog/bulk_pagination.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D05"
+file = "crates/os-parse/src/pagination.rs"
+function = "response_facts"
+signature = "pub fn response_facts( _input: &crate::ResponseInput<'_>, ) -> Vec<(os_model::ExtKey, os_model::Value)>"
+
+[[stub]]
+owner = "M2-D06"
+file = "crates/os-analyze/src/tabs/directives.rs"
+function = "url_details"
+signature = "pub fn url_details( _: &os_store::CrawlFile, _: &os_model::CrawlConfig, _: os_model::UrlId, ) -> Result<Vec<(String, String)>, crate::ViewError>"
+
+[[stub]]
+owner = "M2-D06"
+file = "crates/os-engine/src/recompute/d06.rs"
+function = "run"
+signature = "pub fn run( _file: &mut os_store::CrawlFile, _old: &os_model::CrawlConfig, _new: &os_model::CrawlConfig, _cancel: &os_model::CancelToken, ) -> Result<Vec<os_model::UrlId>, crate::EngineError>"
+
+[[stub]]
+owner = "M2-D06"
+file = "crates/os-export/src/catalog/bulk_directives.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D07"
+file = "crates/os-analyze/src/analysis/steps/hreflang.rs"
+function = "run"
+signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
+
+[[stub]]
+owner = "M2-D07"
+file = "crates/os-analyze/src/tabs/hreflang.rs"
+function = "detail_rows"
+signature = "pub fn detail_rows( _: &os_store::CrawlFile, _: &os_model::CrawlConfig, _: &crate::details::DetailReq<'_>, ) -> Result<crate::details::DetailRows, crate::ViewError>"
+
+[[stub]]
+owner = "M2-D07"
+file = "crates/os-analyze/src/tabs/hreflang.rs"
+function = "url_details"
+signature = "pub fn url_details( _: &os_store::CrawlFile, _: &os_model::CrawlConfig, _: os_model::UrlId, ) -> Result<Vec<(String, String)>, crate::ViewError>"
+
+[[stub]]
+owner = "M2-D07"
+file = "crates/os-export/src/reports/hreflang/mod.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D07"
+file = "crates/os-export/src/reports/hreflang/mod.rs"
+function = "export_detail"
+signature = "pub fn export_detail( _: &crate::catalog::TableJob<'_>, _: &os_analyze::details::DetailReq<'_>, _: &std::path::Path, _: crate::types::Format, ) -> Result<crate::types::ExportFileInfo, crate::error::ExportError>"
+
+[[stub]]
+owner = "M2-D08"
+file = "crates/os-analyze/src/analysis/steps/link_score.rs"
+function = "run"
+signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
+
+[[stub]]
+owner = "M2-D08"
+file = "crates/os-analyze/src/analysis/steps/links.rs"
+function = "run"
+signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
+
+[[stub]]
+owner = "M2-D08"
+file = "crates/os-analyze/src/tabs/links.rs"
+function = "column_source"
+signature = "pub fn column_source() -> Option<Box<dyn crate::defs::ColumnSource>>"
+
+[[stub]]
+owner = "M2-D08"
+file = "crates/os-analyze/src/tabs/links.rs"
+function = "url_details"
+signature = "pub fn url_details( _: &os_store::CrawlFile, _: &os_model::CrawlConfig, _: os_model::UrlId, ) -> Result<Vec<(String, String)>, crate::ViewError>"
+
+[[stub]]
+owner = "M2-D08"
+file = "crates/os-store/src/queries/anchors.rs"
+function = "detail_rows"
+signature = "pub fn detail_rows( _: &crate::CrawlFile, _: &[os_model::UrlId], _: u64, _: u64, ) -> Result<super::DetailData, crate::StoreError>"
+
+[[stub]]
+owner = "M2-D08"
+file = "crates/os-store/src/queries/anchors.rs"
+function = "register_collations"
+signature = "pub fn register_collations(_conn: &rusqlite::Connection) -> Result<(), crate::StoreError>"
+
+[[stub]]
+owner = "M2-D09"
+file = "crates/os-analyze/src/tabs/structured_data.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-D09"
+file = "crates/os-export/src/catalog/bulk_sd.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D09"
+file = "crates/os-export/src/catalog/bulk_sd.rs"
+function = "export_detail"
+signature = "pub fn export_detail( _: &crate::catalog::TableJob<'_>, _: &os_analyze::details::DetailReq<'_>, _: &std::path::Path, _: crate::types::Format, ) -> Result<crate::types::ExportFileInfo, crate::error::ExportError>"
+
+[[stub]]
+owner = "M2-D09"
+file = "crates/os-parse/src/sd/mod.rs"
+function = "to_writes"
+signature = "pub fn to_writes( url: os_model::UrlId, items: &[os_model::SdItem], ) -> (Vec<os_model::SdItemWrite>, Vec<os_model::SdIssueWrite>)"
+
+[[stub]]
+owner = "M2-D09"
+file = "crates/os-store/src/queries/structured_data.rs"
+function = "detail_rows"
+signature = "pub fn detail_rows( _: &crate::CrawlFile, _: &[os_model::UrlId], _: u64, _: u64, ) -> Result<super::DetailData, crate::StoreError>"
+
+[[stub]]
+owner = "M2-D10"
+file = "crates/os-analyze/src/tabs/validation.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-D10"
+file = "crates/os-parse/src/validation.rs"
+function = "response_facts"
+signature = "pub fn response_facts( _input: &crate::ResponseInput<'_>, ) -> Vec<(os_model::ExtKey, os_model::Value)>"
+
+[[stub]]
+owner = "M2-D10"
+file = "crates/os-parse/src/validation.rs"
+function = "run"
+signature = "pub fn run(_ctx: &PageCtx<'_>, _page: &mut ParsedPage)"
+
+[[stub]]
+owner = "M2-D10"
+file = "crates/os-parse/src/validation.rs"
+function = "to_ext"
+signature = "pub fn to_ext(_facts: &os_model::ValidationFacts) -> Vec<(os_model::ExtKey, os_model::Value)>"
+
+[[stub]]
+owner = "M2-D11"
+file = "crates/os-export/src/catalog/bulk_security.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D11"
+file = "crates/os-export/src/reports/insecure_content.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D11"
+file = "crates/os-parse/src/security.rs"
+function = "response_facts"
+signature = "pub fn response_facts( _input: &crate::ResponseInput<'_>, ) -> Vec<(os_model::ExtKey, os_model::Value)>"
+
+[[stub]]
+owner = "M2-D11"
+file = "crates/os-parse/src/security.rs"
+function = "run"
+signature = "pub fn run(_ctx: &PageCtx<'_>, _page: &mut ParsedPage)"
+
+[[stub]]
+owner = "M2-D12"
+file = "crates/os-analyze/src/tabs/response_codes.rs"
+function = "http_refresh_filter"
+signature = "pub fn http_refresh_filter() -> &'static str"
+
+[[stub]]
+owner = "M2-D12"
+file = "crates/os-analyze/src/tabs/response_codes.rs"
+function = "redirect_details"
+signature = "pub fn redirect_details( _: &os_store::CrawlFile, _: &os_model::CrawlConfig, _: &crate::details::DetailReq<'_>, ) -> Result<crate::details::DetailRows, crate::ViewError>"
+
+[[stub]]
+owner = "M2-D12"
+file = "crates/os-export/src/catalog/bulk_response_codes.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D12"
+file = "crates/os-export/src/reports/redirects.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D13"
+file = "crates/os-export/src/catalog/bulk_sitemaps.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D13"
+file = "crates/os-export/src/reports/orphan_pages.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D14"
+file = "crates/os-analyze/src/tabs/custom_search.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-D14"
+file = "crates/os-export/src/catalog/bulk_custom_search.rs"
+function = "dynamic_entries"
+signature = "pub fn dynamic_entries(_cfg: &os_model::CrawlConfig) -> Vec<super::DynamicEntry>"
+
+[[stub]]
+owner = "M2-D14"
+file = "crates/os-export/src/catalog/bulk_custom_search.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D14"
+file = "crates/os-parse/src/custom_search.rs"
+function = "run"
+signature = "pub fn run(_ctx: &PageCtx<'_>, _page: &mut ParsedPage)"
+
+[[stub]]
+owner = "M2-D14"
+file = "crates/os-parse/src/custom_search.rs"
+function = "run_on_body"
+signature = "pub fn run_on_body(_input: &crate::ParseInput<'_>) -> Vec<os_model::SearchHit>"
+
+[[stub]]
+owner = "M2-D14"
+file = "crates/os-parse/src/custom_search.rs"
+function = "validate"
+signature = "pub fn validate(_cfg: &os_model::CustomSearchConfig) -> Vec<os_model::ConfigIssue>"
+
+[[stub]]
+owner = "M2-D15"
+file = "crates/os-analyze/src/tabs/custom_extraction.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-D15"
+file = "crates/os-export/src/catalog/bulk_custom_extraction.rs"
+function = "dynamic_entries"
+signature = "pub fn dynamic_entries(_cfg: &os_model::CrawlConfig) -> Vec<super::DynamicEntry>"
+
+[[stub]]
+owner = "M2-D15"
+file = "crates/os-export/src/catalog/bulk_custom_extraction.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D15"
+file = "crates/os-parse/src/custom_extract/mod.rs"
+function = "run"
+signature = "pub fn run(_ctx: &PageCtx<'_>, _page: &mut ParsedPage)"
+
+[[stub]]
+owner = "M2-D15"
+file = "crates/os-parse/src/custom_extract/mod.rs"
+function = "validate"
+signature = "pub fn validate(_cfg: &os_model::CustomExtractionConfig) -> Vec<os_model::ConfigIssue>"
+
+[[stub]]
+owner = "M2-D16"
+file = "crates/os-engine/src/recompute/d16.rs"
+function = "run"
+signature = "pub fn run( _file: &mut os_store::CrawlFile, _old: &os_model::CrawlConfig, _new: &os_model::CrawlConfig, _cancel: &os_model::CancelToken, ) -> Result<Vec<os_model::UrlId>, crate::EngineError>"
+
+[[stub]]
+owner = "M2-D16"
+file = "crates/os-parse/src/link_position.rs"
+function = "classify"
+signature = "pub fn classify( _link_path: &str, landmark: LinkPosition, _rules: &LinkPositionsConfig, ) -> LinkPosition"
+
+[[stub]]
+owner = "M2-D16"
+file = "crates/os-parse/src/link_position.rs"
+function = "element_path"
+signature = "pub fn element_path(_doc: &crate::dom::Document, node: scraper::ElementRef<'_>) -> String"
+
+[[stub]]
+owner = "M2-D17"
+file = "crates/os-export/src/reports/crawl_path.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D17"
+file = "crates/os-export/src/reports/crawl_path.rs"
+function = "export_detail"
+signature = "pub fn export_detail( _: &crate::catalog::TableJob<'_>, _: &os_analyze::details::DetailReq<'_>, _: &std::path::Path, _: crate::types::Format, ) -> Result<crate::types::ExportFileInfo, crate::error::ExportError>"
+
+[[stub]]
+owner = "M2-D17"
+file = "crates/os-export/src/reports/queued_urls.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D17"
+file = "crates/os-export/src/reports/sidebar.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D17"
+file = "crates/os-store/src/queries/crawl_path.rs"
+function = "detail_rows"
+signature = "pub fn detail_rows( _: &crate::CrawlFile, _: &[os_model::UrlId], _: u64, _: u64, ) -> Result<super::DetailData, crate::StoreError>"
+
+[[stub]]
+owner = "M2-D18"
+file = "crates/os-export/src/catalog/bulk_web.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D18"
+file = "crates/os-export/src/reports/cookies.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D18"
+file = "crates/os-export/src/reports/http_headers.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D19"
+file = "crates/os-parse/src/spelling/mod.rs"
+function = "run"
+signature = "pub fn run(_ctx: &PageCtx<'_>, _page: &mut ParsedPage)"
+
+[[stub]]
+owner = "M2-D20"
+file = "crates/os-export/src/reports/structured_data.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D21"
+file = "crates/os-analyze/src/tabs/accessibility.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-D21"
+file = "crates/os-export/src/catalog/bulk_a11y.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D21"
+file = "crates/os-export/src/reports/a11y_summary.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D22"
+file = "crates/os-analyze/src/tabs/custom_js.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-D23"
+file = "crates/os-analyze/src/tabs/mobile.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-E01"
+file = "crates/os-analyze/src/tabs/internal_crawl.rs"
+function = "column_source"
+signature = "pub fn column_source() -> Option<Box<dyn crate::defs::ColumnSource>>"
+
+[[stub]]
+owner = "M2-E01"
+file = "crates/os-engine/src/recompute/e01.rs"
+function = "run"
+signature = "pub fn run( _file: &mut os_store::CrawlFile, _old: &os_model::CrawlConfig, _new: &os_model::CrawlConfig, _cancel: &os_model::CancelToken, ) -> Result<Vec<os_model::UrlId>, crate::EngineError>"
+
+[[stub]]
+owner = "M2-E01"
+file = "crates/os-parse/src/alternates.rs"
+function = "extract"
+signature = "pub fn extract( _doc: &crate::dom::Document, _base: &url::Url, _cfg: &crate::ParseConfig, ) -> Vec<os_model::ExtractedLink>"
+
+[[stub]]
+owner = "M2-E01"
+file = "crates/os-parse/src/alternates.rs"
+function = "from_headers"
+signature = "pub fn from_headers( _url: &url::Url, _headers: &[(String, String)], _cfg: &crate::ParseConfig, ) -> Vec<os_model::ExtractedLink>"
+
+[[stub]]
+owner = "M2-E01"
+file = "crates/os-parse/src/crawlability.rs"
+function = "inspect"
+signature = "pub fn inspect( _doc: &crate::dom::Document, _base: &url::Url, _cfg: &crate::ParseConfig, ) -> Vec<os_model::ExtractedLink>"
+
+[[stub]]
+owner = "M2-E01"
+file = "crates/os-parse/src/switches.rs"
+function = "apply"
+signature = "pub fn apply(_page: &mut os_model::ParsedPage, _cfg: &crate::ParseConfig)"
+
+[[stub]]
+owner = "M2-E01"
+file = "crates/os-parse/src/switches.rs"
+function = "filter_directives"
+signature = "pub fn filter_directives(_directives: &mut Vec<os_model::Directive>, _cfg: &crate::ParseConfig)"
+
+[[stub]]
+owner = "M2-E02"
+file = "crates/os-engine/src/lib.rs"
+function = "add_urls"
+signature = "pub async fn add_urls( handle: &CrawlHandle, urls: &[String], ) -> Result<AddUrlsSummary, EngineError>"
+
+[[stub]]
+owner = "M2-E02"
+file = "crates/os-engine/src/lifecycle.rs"
+function = "add_urls_to_file"
+signature = "pub fn add_urls_to_file( _file: &mut CrawlFile, _urls: &[String], _cfg: &CrawlConfig, ) -> Result<crate::AddUrlsSummary, EngineError>"
+
+[[stub]]
+owner = "M2-E02"
+file = "crates/os-engine/src/lifecycle.rs"
+function = "admit_added"
+signature = "pub(crate) fn admit_added<F: os_fetch::Fetch>( _core: &mut crate::frontier::Core, _urls: &[String], _shared: &crate::worker::Shared<F>, ) -> Result<crate::AddUrlsSummary, EngineError>"
+
+[[stub]]
+owner = "M2-E02"
+file = "crates/os-engine/src/memory.rs"
+function = "tick"
+signature = "pub fn tick(_input: &MemoryInputs<'_>) -> MemoryAction"
+
+[[stub]]
+owner = "M2-E03"
+file = "crates/os-engine/src/host_pace.rs"
+function = "on_response"
+signature = "pub fn on_response(&self, _url: &Url, _status: u16, _retry_after: Option<Duration>)"
+
+[[stub]]
+owner = "M2-E03"
+file = "crates/os-engine/src/retry.rs"
+function = "decide"
+signature = "pub fn decide( _res: &os_fetch::FetchResult, _attempt: u32, _cfg: &os_model::CrawlConfig, ) -> RetryDecision"
+
+[[stub]]
+owner = "M2-E04"
+file = "crates/os-parse/src/bookmarks.rs"
+function = "run"
+signature = "pub fn run(_ctx: &crate::PageCtx<'_>, _page: &mut os_model::ParsedPage)"
+
+[[stub]]
+owner = "M2-E04"
+file = "crates/os-url/src/rewrite.rs"
+function = "apply_discovered"
+signature = "pub fn apply_discovered<'a>( _cfg: &os_model::RewriteConfig, raw_resolved: &'a str, ) -> Rewritten<'a>"
+
+[[stub]]
+owner = "M2-E04"
+file = "crates/os-url/src/rules.rs"
+function = "trace"
+signature = "pub fn trace(_rules: &RuleTraceInput, _url: &str) -> RuleTrace"
+
+[[stub]]
+owner = "M2-E04"
+file = "crates/os-url/src/rules.rs"
+function = "validate"
+signature = "pub fn validate(_cfg: &os_model::CrawlConfig) -> Vec<os_model::ConfigIssue>"
+
+[[stub]]
+owner = "M2-E04"
+file = "crates/os-url/src/scope.rs"
+function = "with_cdns"
+signature = "pub fn with_cdns(self, _cdns: &[String]) -> Self"
+
+[[stub]]
+owner = "M2-E05"
+file = "crates/os-engine/src/render_glue.rs"
+function = "render"
+signature = "fn render<'a>( &'a self, url: &'a str, opts: &'a RenderOpts, ) -> BoxFuture<'a, Result<RenderedPage, RenderError>>"
+
+[[stub]]
+owner = "M2-F02"
+file = "crates/os-analyze/src/analysis/steps/hreflang.rs"
+function = "run"
+signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
+
+[[stub]]
+owner = "M2-F02"
+file = "crates/os-analyze/src/analysis/steps/link_score.rs"
+function = "run"
+signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
+
+[[stub]]
+owner = "M2-F02"
+file = "crates/os-analyze/src/analysis/steps/links.rs"
+function = "run"
+signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
+
+[[stub]]
+owner = "M2-F02"
+file = "crates/os-analyze/src/analysis/steps/near_duplicates.rs"
+function = "run"
+signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
+
+[[stub]]
+owner = "M2-F02"
+file = "crates/os-analyze/src/analysis/steps/pagination.rs"
+function = "run"
+signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
+
+[[stub]]
+owner = "M2-F02"
+file = "crates/os-analyze/src/tabs/accessibility.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-F02"
+file = "crates/os-analyze/src/tabs/analytics.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-F02"
+file = "crates/os-analyze/src/tabs/change_detection.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-F02"
+file = "crates/os-analyze/src/tabs/custom_extraction.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-F02"
+file = "crates/os-analyze/src/tabs/custom_js.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-F02"
+file = "crates/os-analyze/src/tabs/custom_search.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-F02"
+file = "crates/os-analyze/src/tabs/javascript.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-F02"
+file = "crates/os-analyze/src/tabs/link_metrics.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-F02"
+file = "crates/os-analyze/src/tabs/meta_keywords.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-F02"
+file = "crates/os-analyze/src/tabs/mobile.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-F02"
+file = "crates/os-analyze/src/tabs/pagespeed.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-F02"
+file = "crates/os-analyze/src/tabs/pagination.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-F02"
+file = "crates/os-analyze/src/tabs/search_console.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-F02"
+file = "crates/os-analyze/src/tabs/structured_data.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-F02"
+file = "crates/os-analyze/src/tabs/validation.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-I02"
+file = "crates/os-analyze/src/tabs/analytics.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-I03"
+file = "crates/os-analyze/src/tabs/search_console.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-I04"
+file = "crates/os-analyze/src/tabs/pagespeed.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-I05"
+file = "crates/os-analyze/src/tabs/link_metrics.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-I06"
+file = "crates/os-analyze/src/tabs/dynamic_api.rs"
+function = "column_source"
+signature = "pub fn column_source() -> Option<Box<dyn ColumnSource>>"
+
+[[stub]]
+owner = "M2-I06"
+file = "crates/os-integrations/src/crawl_glue/mod.rs"
+function = "start_apis_mode"
+signature = "pub async fn start_apis_mode( _file: &os_store::CrawlFile, _cfg: &os_model::CrawlConfig, ) -> Result<(), crate::IntegError>"
+
+[[stub]]
+owner = "M2-K01"
+file = "crates/os-analyze/src/views/session/mod.rs"
+function = "open"
+signature = "pub fn open( _file: &CrawlFile, _cfg: &CrawlConfig, spec: SessionSpec, budget: Budget, ) -> Result<ViewSession, ViewError>"
+
+[[stub]]
+owner = "M2-K02"
+file = "crates/os-analyze/src/search/mod.rs"
+function = "compile"
+signature = "pub fn compile(_tree: &RuleNode, _case_sensitive: bool) -> Result<CompiledSearch, ViewError>"
+
+[[stub]]
+owner = "M2-K02"
+file = "crates/os-analyze/src/search/mod.rs"
+function = "compile_ctx"
+signature = "pub fn compile_ctx( spec: &crate::views::SearchSpec, _ctx: &SearchCtx<'_>, ) -> Result<CompiledSearch, SearchError>"
+
+[[stub]]
+owner = "M2-K02"
+file = "crates/os-analyze/src/search/mod.rs"
+function = "parse"
+signature = "pub fn parse(_text: &str) -> Result<RuleNode, ParseError>"
+
+[[stub]]
+owner = "M2-K03"
+file = "crates/os-analyze/src/aggregates/live.rs"
+function = "apply_changes"
+signature = "pub fn apply_changes( _: &os_store::CrawlFile, _: &os_model::CrawlConfig, _: &[os_model::UrlId], ) -> Result<(), crate::AnalyzeError>"
+
+[[stub]]
+owner = "M2-K03"
+file = "crates/os-analyze/src/aggregates/status.rs"
+function = "analysis_status"
+signature = "pub fn analysis_status(_: &os_store::CrawlFile, _: &os_model::CrawlConfig) -> AnalysisStatusData"
+
+[[stub]]
+owner = "M2-K05"
+file = "crates/os-loadtest/src/bin/gen-ui-large.rs"
+function = "main"
+signature = "fn main()"
+
+[[stub]]
+owner = "M2-O01"
+file = "crates/os-cli/src/logging.rs"
+function = "init"
+signature = "pub fn init(_args: &crate::args::RunArgs)"
+
+[[stub]]
+owner = "M2-R02"
+file = "crates/os-analyze/src/tabs/javascript.rs"
+function = "tab"
+signature = "pub fn tab() -> TabDef"
+
+[[stub]]
+owner = "M2-R02"
+file = "crates/os-export/src/catalog/bulk_javascript.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-R02"
+file = "crates/os-export/src/catalog/bulk_screenshots.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-X01"
+file = "crates/os-export/src/catalog/bulk_generic.rs"
+function = "entries"
+signature = "pub fn entries() -> &'static [TableEntry]"
+
+[[stub]]
+owner = "M2-D12"
+file = "crates/os-analyze/src/tabs/response_codes.rs"
+function = "configure_filters"
+signature = "pub fn configure_filters(tab: &mut TabDef)"
+
+[[stub]]
+owner = "M2-E01"
+file = "crates/os-engine/src/cookies.rs"
+function = "(module)"
+signature = "pub mod cookies"
+
+[[stub]]
+owner = "M2-E01"
+file = "crates/os-engine/src/fragments.rs"
+function = "(module)"
+signature = "pub mod fragments"
+
+[[stub]]
+owner = "M2-E03"
+file = "crates/os-engine/src/host_pace.rs"
+function = "before_fetch"
+signature = "pub async fn before_fetch(&self, url: &Url, crawl_delay: Option<f64>, cfg: &CrawlConfig, clock: &dyn Clock)"
+
+[[stub]]
+owner = "M2-E03"
+file = "crates/os-engine/src/host_pace.rs"
+function = "on_result"
+signature = "pub fn on_result(&self, url: &Url, result: &FetchResult, cfg: &CrawlConfig, clock: &dyn Clock)"

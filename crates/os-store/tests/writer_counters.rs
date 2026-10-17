@@ -156,6 +156,7 @@ fn image_row(image: i64, doc_order: u32) -> ImageRow {
             height_attr: None,
             xpath: format!("/html[1]/body[1]/img[{}]", doc_order + 1),
             doc_order,
+            ..Default::default()
         },
     }
 }

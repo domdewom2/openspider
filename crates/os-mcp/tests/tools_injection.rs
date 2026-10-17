@@ -93,7 +93,9 @@ async fn run_all_calls(client: &Client, id: &str) -> Collected {
 #[tokio::test]
 async fn injected_instructions_appear_only_inside_the_marked_data_block() {
     let world = World::new();
-    let stored = world.add("agent-injection", START, base_config(), 1).await;
+    let mut cfg = base_config();
+    cfg.extraction.http_headers = true;
+    let stored = world.add("agent-injection", START, cfg, 1).await;
     let client = world.client().await;
     let all = run_all_calls(&client, &stored.id).await;
 
@@ -152,7 +154,9 @@ async fn injected_instructions_appear_only_inside_the_marked_data_block() {
 #[tokio::test]
 async fn no_tool_fetches_urls_that_are_only_mentioned_in_page_text() {
     let world = World::new();
-    let stored = world.add("agent-injection", START, base_config(), 1).await;
+    let mut cfg = base_config();
+    cfg.extraction.http_headers = true;
+    let stored = world.add("agent-injection", START, cfg, 1).await;
     // Der Crawl selbst hat /geheim nie angefragt (die URL steht nur im Text) …
     let after_crawl = stored.fx.site.requests();
     assert!(

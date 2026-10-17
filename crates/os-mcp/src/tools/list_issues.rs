@@ -102,7 +102,7 @@ impl Tool for ListIssues {
             .min(rows.len());
         let end = start.saturating_add(page.limit as usize).min(rows.len());
 
-        let tab_defs = tabs::all();
+        let tab_defs = tabs::configured_for_file(&crawl.cfg, &crawl.file);
         let cfg_json = serde_json::to_value(&crawl.cfg).unwrap_or(Json::Null);
         let mut entries = Vec::with_capacity(end - start);
         let mut examples = Vec::with_capacity(end - start);

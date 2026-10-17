@@ -23,6 +23,9 @@ fn html(title: &str, head: &str) -> String {
 
 fn page(body: String, delay_ms: u64) -> SimPage {
     SimPage {
+        synthetic: None,
+        untruncated_bytes: None,
+        set_cookies: Vec::new(),
         status: 200,
         headers: vec![(
             "content-type".to_string(),

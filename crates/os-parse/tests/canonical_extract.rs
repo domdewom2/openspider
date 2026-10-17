@@ -202,6 +202,7 @@ fn parse_html_appends_header_canonicals_after_html_ones() {
         r#"<https://site.test/http>; rel="canonical""#.to_string(),
     )];
     let page = os_parse::parse_html(&os_parse::ParseInput {
+        status: 200,
         url: &url,
         body: br#"<head><link rel="canonical" href="/html"></head>"#,
         content_type: Some("text/html"),

@@ -73,6 +73,7 @@ pub fn requirement_warnings(
                     out.push(format!("report '{name}' requires {what}"));
                 }
             }
+            ReportRequirement::SitemapProcessed | ReportRequirement::OrphanSourceAvailable => {}
             ReportRequirement::Rendering => {
                 if cfg.rendering.mode != os_model::RenderingMode::JavaScript {
                     out.push(format!("report '{name}' requires JavaScript rendering"));
@@ -81,4 +82,54 @@ pub fn requirement_warnings(
         }
     }
     out
+}
+
+/// Verfügbarkeit einschließlich dateibezogener Voraussetzungen (OUT-057/099).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Availability {
+    pub enabled: bool,
+    pub reason: Option<String>,
+}
+pub fn availability(
+    name: &str,
+    requires: &[ReportRequirement],
+    file: &os_store::CrawlFile,
+    cfg: &CrawlConfig,
+) -> Availability {
+    let pending = if requires.contains(&ReportRequirement::CrawlAnalysis) {
+        os_analyze::views::filter_counts(file, cfg)
+            .map(|counts| pending_analysis_filters(&counts))
+            .unwrap_or_else(|_| vec!["analysis state unavailable".into()])
+    } else {
+        Vec::new()
+    };
+    let mut warnings = requirement_warnings(name, requires, cfg, &pending);
+    for req in requires {
+        let missing = match req {
+            ReportRequirement::SitemapProcessed => !file
+                .conn()
+                .query_row("SELECT EXISTS(SELECT 1 FROM sitemaps)", [], |r| {
+                    r.get::<_, bool>(0)
+                })
+                .unwrap_or(false),
+            ReportRequirement::OrphanSourceAvailable => {
+                !(cfg.api.ga4.enabled
+                    || cfg.api.gsc.enabled
+                    || file
+                        .conn()
+                        .query_row("SELECT EXISTS(SELECT 1 FROM sitemaps)", [], |r| {
+                            r.get::<_, bool>(0)
+                        })
+                        .unwrap_or(false))
+            }
+            _ => false,
+        };
+        if missing {
+            warnings.push(format!("report '{name}' requires {req:?}"));
+        }
+    }
+    Availability {
+        enabled: warnings.is_empty(),
+        reason: (!warnings.is_empty()).then(|| warnings.join("; ")),
+    }
 }

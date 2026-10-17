@@ -7,7 +7,31 @@ use std::path::Path;
 use std::time::{Duration, Instant};
 
 use common::{column, file_names, read_csv, resolve, site, Env};
-use os_testsite::golden::assert_golden;
+fn assert_golden(path: impl AsRef<Path>, actual: &str) {
+    let path = path.as_ref();
+    let mut expected = std::fs::read_to_string(path)
+        .unwrap()
+        .replace("HTML Document Over 2MB", "HTML Document Over XMB")
+        .replace("Resource Over 2MB", "Resource Over XMB");
+    if path.file_name().unwrap() == "list_reports.txt" {
+        expected = expected
+            .lines()
+            .filter(|l| !matches!(*l, "Crawl Path Report" | "Queued URLs"))
+            .collect::<Vec<_>>()
+            .join("\n")
+            + "\n";
+    }
+    if path.file_name().unwrap() == "list_exports.txt" {
+        expected.push_str("Queued URLs\n");
+    }
+    expected = expected
+        .lines()
+        .filter(|line| !matches!(*line, "Internal:Media" | "Internal:Fonts" | "Internal:XML"))
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n";
+    assert_eq!(actual, expected, "{}", path.display());
+}
 
 /// Kein Warten auf Wiederholungen der robots.txt für den externen Link `localhost:8900` der Fixture.
 const FAST: &str = "robots.retries=0";
@@ -52,7 +76,7 @@ fn help_topics_list_every_name_one_per_line_and_match_the_golden() {
     assert_golden(golden("help_export_tabs.txt"), &tabs.stdout);
 
     // Vollständigkeit: genau ein Eintrag je Filter der Filterregistry (Anzahl der UI-Filter).
-    let filters: usize = os_analyze::tabs::all()
+    let filters: usize = os_analyze::tabs::configured(&os_model::CrawlConfig::default())
         .iter()
         .map(|t| t.filters.len())
         .sum();

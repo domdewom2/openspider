@@ -72,6 +72,14 @@ pub fn label_with(filter_id: &str, cfg_json: &Json) -> String {
         out.push_str(&rest[..open]);
         let path = &rest[open + 1..open + close];
         match config_value(cfg_json, path) {
+            Some(Json::Number(n))
+                if matches!(
+                    path,
+                    "validation.html_doc_max_bytes" | "validation.resource_max_bytes"
+                ) =>
+            {
+                out.push_str(&(n.as_f64().unwrap_or_default() / 1_048_576.0).to_string());
+            }
             Some(Json::Number(n)) => out.push_str(&n.to_string()),
             Some(Json::String(s)) => out.push_str(s),
             Some(Json::Bool(b)) => out.push_str(&b.to_string()),
