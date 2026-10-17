@@ -1,18 +1,31 @@
-//! View-Sitzungen mit wahlfreiem Zugriff (K-1): Filter-Bitmaps als ableitbarer Cache (`view_cache`), Lazy-Aufbau,
-//! Invalidierung, Sortierpermutationen, Positionsliste samt Umkehrabbildung, `rows`/`locate`, Speicherbudget.
-//!
-//! M2-F02 stellt nur die Signaturen bereit, an die `os-app` (K05) und die Benchmarks (`benches/views.rs`) anschließen;
-//! die Umsetzung gehört M2-K01. Bis dahin liefern alle Funktionen `ViewError::NotImplemented`.
+//! Lazy, versioned view materialization. No crawl-wide cell values are retained.
+mod control;
+mod permutation;
+mod projection;
 
-use std::time::Duration;
-
-use os_model::{CrawlConfig, UrlId, Value};
-use os_store::CrawlFile;
-
-use crate::defs::SortKey;
-use crate::error::ViewError;
-use crate::search::FilterSource;
-use crate::views::{ColumnSelection, SearchSpec};
+use super::{build, exec, ColumnSelection, PageStart, SearchSpec, ViewQuery, URLS_FROM};
+use crate::{
+    defs::SortKey,
+    error::ViewError,
+    search::{FilterSource, SearchError},
+};
+use os_model::{
+    time::{Clock, SystemClock},
+    CancelToken, CrawlConfig, UrlId, Value,
+};
+use os_store::{queries, view_cache, CrawlFile, StoreError};
+use permutation::Permutation;
+use projection::Projection;
+use roaring::RoaringBitmap;
+use std::{
+    collections::HashMap,
+    path::PathBuf,
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        Arc, Mutex, MutexGuard, OnceLock, Weak,
+    },
+    time::Duration,
+};
 
 /// Was eine Sitzung zeigt: Tab, Filter, Suche, Sortierung, Spalten und optionale Einschränkungen.
 pub struct SessionSpec {
@@ -51,7 +64,7 @@ impl Default for Budget {
 /// Anfrage eines Zeilenfensters.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RowsReq {
-    /// Version, auf die sich der Aufrufer bezieht (`change_seq`); eine andere Version wird verworfen.
+    /// Monotone Sitzungsgeneration; eine andere Version wird verworfen.
     pub version: u64,
     /// Erste Zeile.
     pub offset: u64,
@@ -74,62 +87,685 @@ pub struct Rows {
     pub version: u64,
 }
 
-/// Eine offene Ansicht mit wahlfreiem Zugriff.
-pub struct ViewSession {
-    spec: SessionSpec,
-    budget: Budget,
+/// Build control shared with the caller's operation; SQLite can also be interrupted from another thread.
+#[derive(Clone, Default)]
+pub struct BuildControl {
+    pub cancel: CancelToken,
+}
+impl BuildControl {
+    fn check(&self) -> Result<(), ViewError> {
+        self.cancel
+            .checkpoint()
+            .map_err(|_| SearchError::Cancelled.into())
+    }
 }
 
-// STUB(M2-K01)
+fn invalid(message: &str) -> ViewError {
+    StoreError::InvalidInput(message.into()).into()
+}
+fn url_index(id: i64) -> Result<u32, ViewError> {
+    u32::try_from(id).map_err(|_| invalid("URL-Kennung außerhalb des Bitmap-Bereichs"))
+}
+
+struct FilterBitmap {
+    ids: RoaringBitmap,
+    seq: u64,
+    stamp: String,
+}
+enum Inverse {
+    Dense(Vec<u32>),
+    Sparse(HashMap<u32, u32>),
+}
+impl Inverse {
+    fn build(ids: &[u32]) -> Self {
+        let len = ids.iter().copied().max().map_or(0, |id| id as usize + 1);
+        if len <= ids.len().saturating_mul(4) {
+            let mut positions = vec![u32::MAX; len];
+            for (pos, id) in ids.iter().enumerate() {
+                positions[*id as usize] = pos as u32;
+            }
+            Self::Dense(positions)
+        } else {
+            Self::Sparse(
+                ids.iter()
+                    .enumerate()
+                    .map(|(p, id)| (*id, p as u32))
+                    .collect(),
+            )
+        }
+    }
+    fn locate(&self, id: u32) -> Option<u64> {
+        match self {
+            Self::Dense(v) => v.get(id as usize).copied().filter(|p| *p != u32::MAX),
+            Self::Sparse(v) => v.get(&id).copied(),
+        }
+        .map(u64::from)
+    }
+    fn bytes(&self) -> u64 {
+        match self {
+            Self::Dense(v) => v.capacity() as u64 * 4,
+            Self::Sparse(v) => v.capacity() as u64 * 16,
+        }
+    }
+}
+struct Materialized {
+    built_seq: u64,
+    ids: Vec<u32>,
+    inverse: Inverse,
+    projection: Arc<Projection>,
+}
+struct Cache {
+    filters: HashMap<String, FilterBitmap>,
+    permutations: HashMap<String, Permutation>,
+    projections: HashMap<String, (RoaringBitmap, Arc<Projection>)>,
+    view: Option<Arc<Materialized>>,
+    used: Option<Duration>,
+    recency: u64,
+    clock: Arc<dyn Clock>,
+    idle: Duration,
+}
+impl Default for Cache {
+    fn default() -> Self {
+        Self {
+            filters: HashMap::new(),
+            permutations: HashMap::new(),
+            projections: HashMap::new(),
+            view: None,
+            used: None,
+            recency: 0,
+            idle: Duration::from_secs(60),
+            clock: Arc::new(SystemClock),
+        }
+    }
+}
+impl Cache {
+    fn touch(&mut self) {
+        static ACCESS: AtomicU64 = AtomicU64::new(1);
+        self.used = Some(self.clock.monotonic());
+        self.recency = ACCESS.fetch_add(1, Ordering::Relaxed);
+    }
+    fn bytes(&self) -> u64 {
+        self.filters
+            .values()
+            .map(|f| f.ids.serialized_size() as u64)
+            .sum::<u64>()
+            + self
+                .permutations
+                .values()
+                .map(Permutation::bytes)
+                .sum::<u64>()
+            + self
+                .projections
+                .values()
+                .map(|(ids, _)| ids.serialized_size() as u64)
+                .sum::<u64>()
+            + self
+                .view
+                .as_ref()
+                .map_or(0, |v| v.ids.capacity() as u64 * 4 + v.inverse.bytes())
+    }
+    fn release(&mut self) {
+        self.filters.clear();
+        self.permutations.clear();
+        self.projections.clear();
+        self.view = None;
+    }
+}
+fn pool() -> &'static Mutex<Vec<Weak<Mutex<Cache>>>> {
+    static POOL: OnceLock<Mutex<Vec<Weak<Mutex<Cache>>>>> = OnceLock::new();
+    POOL.get_or_init(|| Mutex::new(Vec::new()))
+}
+/// Releases idle views and then least recently used views until the shared budget is met.
+/// Callers may also invoke this from their own maintenance tick.
+pub fn release_unused(max_bytes: u64) {
+    let mut pool = pool().lock().unwrap_or_else(|e| e.into_inner());
+    pool.retain(|p| p.strong_count() > 0);
+    // Never wait for a builder: one busy view must not delay another view's row window.
+    let mut live = Vec::new();
+    for weak in pool.iter() {
+        if let Some(cache) = weak.upgrade() {
+            let used = match cache.try_lock() {
+                Ok(c) => c.recency,
+                Err(_) => continue,
+            };
+            live.push((used, cache));
+        }
+    }
+    live.sort_by_key(|(used, _)| *used);
+    let mut total = 0u64;
+    for (_, c) in &live {
+        if let Ok(mut c) = c.try_lock() {
+            if c.used
+                .is_some_and(|used| c.clock.monotonic().saturating_sub(used) >= c.idle)
+            {
+                c.release();
+            }
+            total = total.saturating_add(c.bytes());
+        }
+    }
+    for (_, c) in &live {
+        if total <= max_bytes {
+            break;
+        }
+        if let Ok(mut c) = c.try_lock() {
+            total = total.saturating_sub(c.bytes());
+            c.release();
+        }
+    }
+}
+fn register(cache: &Arc<Mutex<Cache>>) {
+    pool()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .push(Arc::downgrade(cache));
+    static MAINTENANCE: OnceLock<()> = OnceLock::new();
+    MAINTENANCE.get_or_init(|| {
+        std::thread::spawn(|| loop {
+            std::thread::sleep(Duration::from_secs(1));
+            release_unused(u64::MAX);
+        });
+    });
+}
+
+/// A session generation is independent of the writer's sequence: filter/sort updates also advance it.
+pub struct ViewSession {
+    spec: SessionSpec,
+    cfg: CrawlConfig,
+    budget: Budget,
+    file: PathBuf,
+    crawl_id: String,
+    version: u64,
+    identity: u64,
+    cache: Arc<Mutex<Cache>>,
+}
 impl ViewSession {
-    /// Öffnet eine Sitzung (baut Positionsliste und Umkehrabbildung lazy beim ersten Zugriff auf).
     pub fn open(
-        _file: &CrawlFile,
-        _cfg: &CrawlConfig,
+        file: &CrawlFile,
+        cfg: &CrawlConfig,
         spec: SessionSpec,
         budget: Budget,
-    ) -> Result<ViewSession, ViewError> {
-        Ok(ViewSession { spec, budget })
+    ) -> Result<Self, ViewError> {
+        Self::open_with_clock(file, cfg, spec, budget, Arc::new(SystemClock))
     }
-
-    /// Ersetzt Filter, Suche oder Sortierung; Zählung und Positionsliste werden bei Bedarf neu aufgebaut.
+    /// Injected monotonic clock for deterministic idle expiration.
+    pub fn open_with_clock(
+        file: &CrawlFile,
+        cfg: &CrawlConfig,
+        spec: SessionSpec,
+        budget: Budget,
+        clock: Arc<dyn Clock>,
+    ) -> Result<Self, ViewError> {
+        // Validation only: no bitmap, permutation or position-list construction here.
+        let query = query(&spec);
+        build::build(&crate::tabs::configured_for_file(cfg, file), &query, cfg)?;
+        let cache = Arc::new(Mutex::new(Cache {
+            idle: budget.idle_release,
+            clock,
+            ..Cache::default()
+        }));
+        register(&cache);
+        static NEXT: AtomicU64 = AtomicU64::new(1);
+        Ok(Self {
+            identity: NEXT.fetch_add(1, Ordering::Relaxed),
+            spec,
+            cfg: cfg.clone(),
+            budget,
+            file: file.path().into(),
+            crawl_id: file.get_meta("crawl_id")?.unwrap_or_default(),
+            version: 1,
+            cache,
+        })
+    }
+    fn check_file(&self, file: &CrawlFile) -> Result<(), ViewError> {
+        if file.path() != self.file || file.get_meta("crawl_id")?.as_deref() != Some(&self.crawl_id)
+        {
+            return Err(ViewError::ForeignCursor);
+        }
+        Ok(())
+    }
+    pub fn version(&self) -> u64 {
+        self.version
+    }
+    pub fn memory_bytes(&self) -> u64 {
+        self.cache.lock().unwrap_or_else(|e| e.into_inner()).bytes()
+    }
+    pub fn built_seq(&self) -> Option<u64> {
+        self.cache
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .view
+            .as_ref()
+            .map(|v| v.built_seq)
+    }
     pub fn update(
         &mut self,
-        _file: &CrawlFile,
-        _cfg: &CrawlConfig,
+        file: &CrawlFile,
+        cfg: &CrawlConfig,
         spec: SessionSpec,
     ) -> Result<(), ViewError> {
+        self.update_controlled(file, cfg, spec, &BuildControl::default())
+    }
+    /// Builds a replacement privately. Failure or cancellation leaves the published view and generation intact.
+    pub fn update_controlled(
+        &mut self,
+        file: &CrawlFile,
+        cfg: &CrawlConfig,
+        spec: SessionSpec,
+        control: &BuildControl,
+    ) -> Result<(), ViewError> {
+        self.check_file(file)?;
+        control.check()?;
+        let mut cache = self.cache.lock().unwrap_or_else(|e| e.into_inner());
+        let replacement = materialize(file, cfg, &spec, &mut cache, control)?;
+        control.check()?;
+        cache.view = Some(Arc::new(replacement));
+        cache.touch();
+        drop(cache);
         self.spec = spec;
-        Err(ViewError::NotImplemented("ViewSession::update (M2-K01)"))
+        self.cfg = cfg.clone();
+        self.version = self
+            .version
+            .checked_add(1)
+            .ok_or_else(|| invalid("View-Version erschöpft"))?;
+        release_unused(self.budget.max_bytes);
+        Ok(())
     }
-
-    /// Liefert ein Zeilenfenster.
-    pub fn rows(&self, _file: &CrawlFile, _req: RowsReq) -> Result<Rows, ViewError> {
-        Err(ViewError::NotImplemented("ViewSession::rows (M2-K01)"))
+    fn cache_ready<'a>(
+        &'a self,
+        file: &CrawlFile,
+        control: &BuildControl,
+    ) -> Result<MutexGuard<'a, Cache>, ViewError> {
+        self.check_file(file)?;
+        let mut cache = self.cache.lock().unwrap_or_else(|e| e.into_inner());
+        if cache
+            .used
+            .is_some_and(|t| cache.clock.monotonic().saturating_sub(t) >= self.budget.idle_release)
+        {
+            cache.release();
+        }
+        if cache.view.is_none() {
+            let view = materialize(file, &self.cfg, &self.spec, &mut cache, control)?;
+            cache.view = Some(Arc::new(view));
+        }
+        cache.touch();
+        Ok(cache)
     }
-
-    /// Zeilenindex einer URL in der Ansicht, falls sie darin liegt (Anker, Tail-Modus, UI-004).
-    pub fn locate(&self, _file: &CrawlFile, _id: UrlId) -> Result<Option<u64>, ViewError> {
-        Err(ViewError::NotImplemented("ViewSession::locate (M2-K01)"))
+    pub fn prepare(&self, file: &CrawlFile, control: &BuildControl) -> Result<u64, ViewError> {
+        let cache = self.cache_ready(file, control)?;
+        let total = cache.view.as_ref().unwrap().ids.len() as u64;
+        drop(cache);
+        release_unused(self.budget.max_bytes);
+        Ok(total)
     }
-
-    /// Prüft geänderte URLs (aus `queries::changed_since`) gegen die Ansicht und führt Positionsliste und Version nach (K-1c).
-    pub fn apply_changes(&mut self, _file: &CrawlFile, _ids: &[UrlId]) -> Result<(), ViewError> {
-        Err(ViewError::NotImplemented(
-            "ViewSession::apply_changes (M2-K01)",
-        ))
+    pub fn rows(&self, file: &CrawlFile, req: RowsReq) -> Result<Rows, ViewError> {
+        if req.limit == 0 || req.limit > 500 {
+            return Err(ViewError::InvalidLimit(req.limit));
+        }
+        if req.version != self.version {
+            return Err(ViewError::ForeignCursor);
+        }
+        let snapshot = self.snapshot(file)?;
+        let result = snapshot.rows(file, req)?;
+        release_unused(self.budget.max_bytes);
+        Ok(result)
     }
-
-    /// Das Speicherbudget dieser Sitzung.
+    /// Pins the published generation while a replacement is built on a worker. Read it using a
+    /// separate read connection; release the pin when the replacement is published or cancelled.
+    pub fn snapshot(&self, file: &CrawlFile) -> Result<ViewSnapshot, ViewError> {
+        let cache = self.cache_ready(file, &BuildControl::default())?;
+        Ok(ViewSnapshot {
+            view: cache.view.as_ref().unwrap().clone(),
+            version: self.version,
+            path: self.file.clone(),
+            crawl_id: self.crawl_id.clone(),
+        })
+    }
+    pub fn locate(&self, file: &CrawlFile, id: UrlId) -> Result<Option<u64>, ViewError> {
+        let cache = self.cache_ready(file, &BuildControl::default())?;
+        let result = u32::try_from(id.0)
+            .ok()
+            .and_then(|id| cache.view.as_ref().unwrap().inverse.locate(id));
+        drop(cache);
+        release_unused(self.budget.max_bytes);
+        Ok(result)
+    }
+    /// Rechecks changed IDs against cached predicates. Permutations are invalidated because sort values may change.
+    pub fn apply_changes(&mut self, file: &CrawlFile, ids: &[UrlId]) -> Result<(), ViewError> {
+        self.check_file(file)?;
+        if ids.is_empty() {
+            return Ok(());
+        }
+        // Membership is incrementally repaired by `bitmap` using the caller-supplied IDs.
+        let mut cache = self.cache.lock().unwrap_or_else(|e| e.into_inner());
+        let q = query(&self.spec);
+        let tabs = crate::tabs::configured_for_file(&self.cfg, file);
+        let built = build::build(&tabs, &q, &self.cfg)?;
+        let key = filter_key(&built, &self.cfg);
+        if let Some(filter) = cache.filters.get_mut(&key) {
+            let reset = file
+                .get_meta("reset_seq")?
+                .and_then(|s| s.parse::<u64>().ok())
+                .unwrap_or(0);
+            if filter.seq >= reset && filter.stamp == stamp(file)? {
+                repair(file, &built, filter, ids)?;
+            }
+        }
+        cache.permutations.clear();
+        let replacement = materialize(
+            file,
+            &self.cfg,
+            &self.spec,
+            &mut cache,
+            &BuildControl::default(),
+        )?;
+        cache.view = Some(Arc::new(replacement));
+        cache.touch();
+        drop(cache);
+        self.version = self
+            .version
+            .checked_add(1)
+            .ok_or_else(|| invalid("View-Version erschöpft"))?;
+        release_unused(self.budget.max_bytes);
+        Ok(())
+    }
+    /// Cursor/offset adapter for K05; cursor is tied to this generation and session description.
+    pub fn page(
+        &self,
+        file: &CrawlFile,
+        start: &PageStart,
+        limit: u32,
+    ) -> Result<(Rows, Option<String>), ViewError> {
+        let signature = format!(
+            "{}:{}:{}:{}:{}",
+            self.identity, self.crawl_id, self.spec.tab, self.spec.filter, self.version
+        );
+        let offset = match start {
+            PageStart::Offset(n) => *n,
+            PageStart::Cursor(s) => {
+                let (prefix, offset) = s.rsplit_once('|').ok_or(ViewError::ForeignCursor)?;
+                if prefix != signature {
+                    return Err(ViewError::ForeignCursor);
+                }
+                offset.parse().map_err(|_| ViewError::ForeignCursor)?
+            }
+        };
+        let rows = self.rows(
+            file,
+            RowsReq {
+                version: self.version,
+                offset,
+                limit,
+            },
+        )?;
+        let next = offset.saturating_add(rows.rows.len() as u64);
+        let cursor = (next < rows.total).then(|| format!("{signature}|{next}"));
+        Ok((rows, cursor))
+    }
     pub fn budget(&self) -> Budget {
         self.budget
     }
-
-    /// Die aktuelle Beschreibung.
     pub fn spec(&self) -> &SessionSpec {
         &self.spec
     }
-
-    /// Gibt die Sitzung und ihren Speicher frei.
     pub fn close(self) {}
+}
+/// Immutable published positions/projection for double-buffered builds.
+#[derive(Clone)]
+pub struct ViewSnapshot {
+    view: Arc<Materialized>,
+    version: u64,
+    path: PathBuf,
+    crawl_id: String,
+}
+impl ViewSnapshot {
+    pub fn rows(&self, file: &CrawlFile, req: RowsReq) -> Result<Rows, ViewError> {
+        if req.limit == 0 || req.limit > 500 {
+            return Err(ViewError::InvalidLimit(req.limit));
+        }
+        if req.version != self.version
+            || file.path() != self.path
+            || file.get_meta("crawl_id")?.as_deref() != Some(&self.crawl_id)
+        {
+            return Err(ViewError::ForeignCursor);
+        }
+        let v = &self.view;
+        let start = req.offset.min(v.ids.len() as u64) as usize;
+        let ids = &v.ids[start..start.saturating_add(req.limit as usize).min(v.ids.len())];
+        let rows = v.projection.rows(file.conn(), ids)?;
+        if rows.len() != ids.len() {
+            return Err(ViewError::ForeignCursor);
+        }
+        Ok(Rows {
+            columns: v.projection.columns.clone(),
+            rows,
+            row_keys: ids.iter().map(|id| UrlId(i64::from(*id))).collect(),
+            total: v.ids.len() as u64,
+            version: self.version,
+        })
+    }
+    pub fn locate(&self, id: UrlId) -> Option<u64> {
+        u32::try_from(id.0)
+            .ok()
+            .and_then(|id| self.view.inverse.locate(id))
+    }
+}
+fn query(spec: &SessionSpec) -> ViewQuery {
+    let mut q = ViewQuery::new(&spec.tab, &spec.filter);
+    q.columns = spec.columns.clone();
+    q.search = spec.search.clone();
+    q.sort = spec.sort.clone();
+    q
+}
+fn filter_key(built: &build::Built<'_>, cfg: &CrawlConfig) -> String {
+    // Conservative superset of config dependencies; correctness also covers dynamic column sources.
+    crate::cursor::query_hash(&[
+        built.tab.id,
+        built.filter.id,
+        &format!(
+            "{}:{}:{:?}:{:?}",
+            built.plan.population_sql,
+            built.plan.filter_sql,
+            built.plan.search_sql,
+            built.plan.params
+        ),
+        &serde_json::to_string(cfg).unwrap_or_default(),
+    ])
+}
+fn stamp(file: &CrawlFile) -> Result<String, ViewError> {
+    let mut stmt = file.conn().prepare(
+        "SELECT step, state, finished_at, config_hash FROM analysis_steps ORDER BY step",
+    )?;
+    let rows = stmt.query_map([], |r| {
+        Ok((
+            r.get::<_, String>(0)?,
+            r.get::<_, String>(1)?,
+            r.get::<_, Option<String>>(2)?,
+            r.get::<_, Option<String>>(3)?,
+        ))
+    })?;
+    Ok(format!("{:?}", rows.collect::<Result<Vec<_>, _>>()?))
+}
+fn repair(
+    file: &CrawlFile,
+    built: &build::Built<'_>,
+    filter: &mut FilterBitmap,
+    ids: &[UrlId],
+) -> Result<(), ViewError> {
+    let sql = format!(
+        "SELECT u.id FROM {URLS_FROM} WHERE u.id = :changed_id AND {}",
+        build::where_sql(&built.plan)
+    );
+    let mut stmt = file.conn().prepare(&sql)?;
+    for id in ids {
+        let index = url_index(id.0)?;
+        filter.ids.remove(index);
+        exec::bind_named(
+            &mut stmt,
+            &built.plan.params,
+            &[(":changed_id".into(), rusqlite::types::Value::Integer(id.0))],
+        )?;
+        if stmt.raw_query().next()?.is_some() {
+            filter.ids.insert(index);
+        }
+    }
+    filter.seq = queries::change_seq(file.conn())?;
+    Ok(())
+}
+fn materialize(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    spec: &SessionSpec,
+    cache: &mut Cache,
+    control: &BuildControl,
+) -> Result<Materialized, ViewError> {
+    control.check()?;
+    let _interrupt = control::InterruptGuard::new(file, control.cancel.clone());
+    let tx = file
+        .conn()
+        .is_autocommit()
+        .then(|| file.conn().unchecked_transaction())
+        .transpose()?;
+    let q = query(spec);
+    let tabs = crate::tabs::configured_for_file(cfg, file);
+    let built = build::build(&tabs, &q, cfg)?;
+    let ready = super::is_ready(file, cfg, &built)?;
+    let seq = queries::change_seq(file.conn())?;
+    let reset = file
+        .get_meta("reset_seq")?
+        .and_then(|s| s.parse::<u64>().ok())
+        .unwrap_or(0);
+    let stamp = stamp(file)?;
+    cache
+        .permutations
+        .retain(|key, _| key.ends_with(&format!(":{seq}")));
+    cache
+        .projections
+        .retain(|key, _| key.ends_with(&format!(":{seq}")));
+    let key = filter_key(&built, cfg);
+    let disk_key = format!("{}:{}", built.tab.id, built.filter.id);
+    if !cache
+        .filters
+        .get(&key)
+        .is_some_and(|f| f.seq == seq && f.seq >= reset && f.stamp == stamp)
+    {
+        let entry = view_cache::load(file, &disk_key, &key)?;
+        let bitmap = entry
+            .filter(|e| e.built_seq == seq && e.built_seq >= reset && e.step_stamp == stamp)
+            .and_then(|e| RoaringBitmap::deserialize_from(e.data.as_slice()).ok());
+        let ids = if let Some(bitmap) = bitmap {
+            bitmap
+        } else {
+            let mut ids = RoaringBitmap::new();
+            if ready {
+                let mut stmt = file.conn().prepare(&format!(
+                    "SELECT u.id FROM {URLS_FROM} WHERE {}",
+                    build::where_sql(&built.plan)
+                ))?;
+                exec::bind_named(&mut stmt, &built.plan.params, &[])?;
+                let mut rows = stmt.raw_query();
+                while let Some(row) = rows.next()? {
+                    control.check()?;
+                    ids.insert(url_index(row.get(0)?)?);
+                }
+            }
+            ids
+        };
+        cache.filters.insert(
+            key.clone(),
+            FilterBitmap {
+                ids,
+                seq,
+                stamp: stamp.clone(),
+            },
+        );
+        if cache
+            .filters
+            .values()
+            .any(|f| f.seq != seq || f.stamp != stamp || f.seq < reset)
+        {
+            cache.permutations.clear();
+        }
+    }
+    control.cancel.set_progress(0.35);
+    let mut allowed = cache.filters[&key].ids.clone();
+    for source in &spec.restrict {
+        control.check()?;
+        allowed &= source.bitmap(file)?;
+    }
+    let mut positions = Vec::with_capacity(allowed.len() as usize);
+    if allowed.is_empty() {
+        // A filter waiting for analysis must not sort the crawl merely to return no rows.
+    } else if built.sort.len() == 1 {
+        let term = &built.sort[0];
+        let signature = format!("{}:{}:{}", term.raw, term.collate, seq);
+        if !cache.permutations.contains_key(&signature) {
+            let permutation = Permutation::build(file, term, &control.cancel)?;
+            cache.permutations.insert(signature.clone(), permutation);
+        }
+        cache.permutations[&signature].visit(term.desc, |id| {
+            if allowed.contains(id) {
+                positions.push(id);
+            }
+        });
+    } else if built.sort.is_empty() {
+        positions.extend(allowed.iter());
+    } else {
+        let mut stmt = file.conn().prepare(&format!(
+            "SELECT u.id FROM {URLS_FROM} {}",
+            built.plan.order_by
+        ))?;
+        let mut rows = stmt.query([])?;
+        while let Some(row) = rows.next()? {
+            control.check()?;
+            let id = url_index(row.get(0)?)?;
+            if allowed.contains(id) {
+                positions.push(id);
+            }
+        }
+    }
+    control.check()?;
+    control.cancel.set_progress(0.85);
+    let inverse = Inverse::build(&positions);
+    let projection_key = format!("{key}:{:?}:{stamp}:{seq}", spec.columns);
+    let projection = if let Some((previous, projection)) = cache
+        .projections
+        .get(&projection_key)
+        .filter(|(previous, _)| *previous == allowed)
+    {
+        let _ = previous;
+        projection.clone()
+    } else {
+        let projection = Arc::new(Projection::build(file.conn(), &built, ready)?);
+        cache
+            .projections
+            .insert(projection_key, (allowed, projection.clone()));
+        projection
+    };
+    control.check()?;
+    drop(tx); // Cache writes must not upgrade a WAL read snapshot.
+    let filter = &cache.filters[&key];
+    let mut data = Vec::with_capacity(filter.ids.serialized_size());
+    filter
+        .ids
+        .serialize_into(&mut data)
+        .map_err(|_| invalid("Bitmap-Serialisierung fehlgeschlagen"))?;
+    // Cache is optional: lock contention or disk exhaustion must not prevent reading a crawl.
+    let _ = view_cache::save(
+        file,
+        &disk_key,
+        &key,
+        &view_cache::Entry {
+            step_stamp: stamp,
+            built_seq: seq,
+            data,
+        },
+    );
+    control.check()?;
+    control.cancel.set_progress(1.0);
+    Ok(Materialized {
+        built_seq: seq,
+        ids: positions,
+        inverse,
+        projection,
+    })
 }
