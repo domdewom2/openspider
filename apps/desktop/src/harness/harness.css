@@ -1,0 +1,6 @@
+.harness-root { padding: 16px; background: var(--os-bg-surface); min-height: 100%; }
+.harness-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; align-items: start; }
+.harness-grid section { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.harness-empties { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.harness-segments { display: flex; gap: 4px; }
+.harness-segments span { width: 20px; height: 20px; border-radius: 3px; }

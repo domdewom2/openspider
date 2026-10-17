@@ -10,6 +10,11 @@
     "dev": "npm run -w apps/desktop tauri -- dev",
     "build": "npm run -w apps/desktop tauri -- build",
     "typecheck": "npm run -w apps/desktop typecheck",
-    "test": "npm run -w apps/desktop test"
+    "test": "npm run -w apps/desktop test",
+    "check:static": "npm run -w apps/desktop check:static",
+    "e2e": "npm run -w apps/desktop e2e"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

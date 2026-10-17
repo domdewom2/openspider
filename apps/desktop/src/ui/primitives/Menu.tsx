@@ -1,0 +1,41 @@
+import type { ReactNode } from "react";
+import { Menu as RacMenu, MenuItem, MenuTrigger, Popover, Separator } from "react-aria-components";
+import { cx } from "./cx";
+
+export interface MenuEntry {
+  id: string;
+  label: string;
+  onAction?: () => void;
+  isDisabled?: boolean;
+  /** Grund für „deaktiviert“ (UI-002/UI-110: ausgegraut mit Begründung). */
+  disabledReason?: string;
+  /** Anzeige des Kürzels (KeyHint-Text). */
+  shortcut?: string;
+  separatorBefore?: boolean;
+}
+
+/** Menü mit Auslöser (Schaltfläche) – ausgegraute Einträge nennen ihren Grund über `title`. */
+export function Menu({ trigger, entries, label, className }: { trigger: ReactNode; entries: readonly MenuEntry[]; label: string; className?: string }) {
+  return (
+    <MenuTrigger>
+      {trigger}
+      <Popover className="os-popover">
+        <MenuBody entries={entries} label={label} className={className} />
+      </Popover>
+    </MenuTrigger>
+  );
+}
+
+export function MenuBody({ entries, label, className }: { entries: readonly MenuEntry[]; label: string; className?: string }) {
+  return (
+    <RacMenu className={cx("os-menu", className)} aria-label={label}>
+      {entries.flatMap((e) => [
+        ...(e.separatorBefore ? [<Separator key={`${e.id}-sep`} className="os-menu-sep" />] : []),
+        <MenuItem key={e.id} id={e.id} className="os-menu-item" isDisabled={e.isDisabled} onAction={e.onAction} textValue={e.label} {...(e.disabledReason ? { "aria-description": e.disabledReason, title: e.disabledReason } : {})}>
+          <span>{e.label}</span>
+          {e.shortcut && <kbd className="os-keyhint">{e.shortcut}</kbd>}
+        </MenuItem>,
+      ])}
+    </RacMenu>
+  );
+}

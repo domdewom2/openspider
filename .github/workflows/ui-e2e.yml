@@ -1,0 +1,112 @@
+name: ui-e2e
+
+# E2E-A „Frontend + Kern“ (docs/plan/M2.md 3.8, M2-ui-concept 7.3): Playwright gegen das Vite-Frontend, IPC über die
+# E2E-Bridge `os-app-bridge` (Feature `e2e-bridge`). WebKit (≈ WKWebView) auf macOS (macos-15, siehe Matrix), Chromium (≈ WebView2) auf
+# windows-latest, beide Engines auf ubuntu-latest (Cloud-Variante, Linux).
+#
+# OS_E2E_TRANSPORT: `bridge` verlangt die echte Bridge, `mock` läuft ohne Kern, `auto` nimmt die Bridge, wenn sie startet.
+# Solange `os-app-bridge` ein Stub ist (M2-F03 nicht gemergt), fällt `auto` auf den Mock zurück; der Schritt
+# „Transport“ nennt in der Zusammenfassung, was gelaufen ist. Nach dem Merge von M2-F03 stellt der Orchestrator
+# OS_E2E_TRANSPORT auf `bridge` um.
+
+on:
+  push:
+    # Paketbranches (m2/<kurz-id>) laufen ohne Pull-Request mit (Definition of Done: CI-Matrix des Branches grün)
+    branches: [main, "m2/**"]
+    paths:
+      - "apps/desktop/**"
+      - "crates/os-app/**"
+      - "crates/os-model/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/ui-e2e.yml"
+  pull_request:
+    paths:
+      - "apps/desktop/**"
+      - "crates/os-app/**"
+      - "crates/os-model/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/ui-e2e.yml"
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+  OS_E2E_TRANSPORT: auto
+
+jobs:
+  e2e-a:
+    name: e2e-a (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macos-15 statt macos-14: der für macOS 14 eingefrorene Playwright-WebKit-Build meldet
+          # „Page.overrideSetting: Unknown setting: PushAPIEnabled“ und startet keine Seite (Lauf 39024277294).
+          - name: macos-webkit
+            os: macos-15
+            projects: webkit
+            browsers: webkit
+          - name: windows-chromium
+            os: windows-latest
+            projects: chromium
+            browsers: chromium
+          - name: linux-both
+            os: ubuntu-latest
+            projects: chromium,webkit
+            browsers: chromium webkit
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ui-e2e
+
+      - uses: actions/setup-node@v4
+        timeout-minutes: 10
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: npm ci
+        run: npm ci
+
+      - name: Playwright-Browser installieren
+        run: |
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            npx playwright install --with-deps ${{ matrix.browsers }}
+          else
+            npx playwright install ${{ matrix.browsers }}
+          fi
+
+      - name: os-app-bridge bauen
+        run: cargo build --locked -p os-app --features e2e-bridge --bin os-app-bridge
+
+      - name: E2E-A
+        env:
+          OS_E2E_PROJECTS: ${{ matrix.projects }}
+          CI: "true"
+          # Die Bridge-Binärdatei liegt im Workspace-Zielordner; der Pfad wird von e2e/support/bridge.ts gefunden.
+        run: npm run -w apps/desktop e2e 2>&1 | tee e2e.log
+
+      - name: Transport
+        if: always()
+        run: |
+          used=$(grep -h '^\[e2e\] Transport:' e2e.log | sort -u | tr '\n' ' ')
+          echo "E2E-A (${{ matrix.name }}): ${used:-kein Lauf}" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ matrix.name }}
+          path: |
+            apps/desktop/playwright-report/
+            apps/desktop/test-results/
+          if-no-files-found: ignore

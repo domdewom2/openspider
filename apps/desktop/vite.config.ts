@@ -1,8 +1,9 @@
-/// <reference types="vitest/config" />
+import { resolve } from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// Tauri erwartet einen festen Dev-Port (siehe src-tauri/tauri.conf.json).
+// Tauri erwartet einen festen Dev-Port (siehe src-tauri/tauri.conf.json). Drei Einstiegsseiten: Hauptfenster,
+// Einstellungen (Fenster `settings`) und Visualisierungen (Fenster `viz-*`).
 export default defineConfig({
   plugins: [react()],
   clearScreen: false,
@@ -10,9 +11,13 @@ export default defineConfig({
     port: 1420,
     strictPort: true,
   },
-  test: {
-    environment: "jsdom",
-    setupFiles: ["./src/test-setup.ts"],
-    globals: false,
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(import.meta.dirname, "index.html"),
+        settings: resolve(import.meta.dirname, "settings.html"),
+        viz: resolve(import.meta.dirname, "viz.html"),
+      },
+    },
   },
 });
