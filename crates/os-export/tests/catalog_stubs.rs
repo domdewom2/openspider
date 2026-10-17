@@ -209,7 +209,7 @@ fn missing_prerequisites_of_a_stub_export_are_reported_not_fatal() {
     );
     assert_eq!(
         files[0].path.file_name().unwrap().to_string_lossy(),
-        "content_spelling_errors_details.csv"
+        "content_spelling_errors.csv"
     );
 }
 
