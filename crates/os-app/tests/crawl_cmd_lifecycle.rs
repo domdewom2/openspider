@@ -12,7 +12,7 @@ use std::{
 // spec: CRAWL-126 [M2]
 // spec: CRAWL-128
 // spec: CRAWL-143
-// spec: UI-018 [M2]
+// spec: UI-018
 #[tokio::test]
 async fn fixture_pause_copy_reopen_resume_matches_uninterrupted_crawl() {
     let site = os_testsite::TestSite::start_dir(fixture(), 0)

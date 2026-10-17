@@ -19,7 +19,7 @@ impl TickSource for Changes {
 
 // spec: UI-143
 // spec: ONPAGE-193
-// spec: UI-018 [M2]
+// spec: UI-018
 #[tokio::test]
 async fn sixty_seconds_at_200_urls_per_second_obeys_every_window_budget() {
     let trace: serde_json::Value =

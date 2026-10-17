@@ -27,7 +27,7 @@ impl CompletionBarrier for SharedBarrier {
     }
 }
 
-// spec: UI-013 [M2]
+// spec: UI-013
 // spec: CRAWL-141
 #[tokio::test]
 async fn analysis_operation_runs_selected_steps_and_publishes_completion() {

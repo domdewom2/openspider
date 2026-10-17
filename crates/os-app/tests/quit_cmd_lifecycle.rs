@@ -109,3 +109,35 @@ async fn quit_request_does_not_cancel_work_and_confirmation_waits_for_cancellati
     assert_eq!(app.ops().running(), 0);
     assert_eq!(host.0.load(Ordering::SeqCst), 1);
 }
+
+// spec: UI-001
+#[tokio::test]
+async fn quit_reasons_distinguish_crawl_operations_from_exports_and_analysis() {
+    for (label, reason) in [
+        ("op-save-crawl", QuitReason::Crawl),
+        ("op-remove", QuitReason::Crawl),
+        ("op-recrawl", QuitReason::Crawl),
+        ("op-export", QuitReason::Export),
+        ("op-analysis", QuitReason::Analysis),
+    ] {
+        let dir = tempfile::tempdir().unwrap();
+        let app = app(dir.path());
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        let op = app.ops().spawn(label, false, move |_, _| {
+            Box::pin(async move {
+                rx.await.unwrap();
+                Ok(json!(null))
+            })
+        });
+        assert_eq!(
+            app.request_quit().await,
+            QuitDecision::Confirm {
+                reasons: vec![reason]
+            },
+            "{label}"
+        );
+        tx.send(()).unwrap();
+        app.ops().wait(&op.op_id).await.unwrap();
+        assert_eq!(app.request_quit().await, QuitDecision::Quit);
+    }
+}

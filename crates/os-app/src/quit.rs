@@ -21,12 +21,15 @@ impl QuitHook for SessionQuit {
             }) {
                 reasons.push(QuitReason::Crawl);
             }
-            let active = app.ops().active_statuses();
-            if active.iter().any(|s| s.label_key.contains("analysis")) {
-                reasons.push(QuitReason::Analysis);
-            }
-            if active.iter().any(|s| !s.label_key.contains("analysis")) {
-                reasons.push(QuitReason::Export);
+            for op in app.ops().active_statuses() {
+                let reason = match op.label_key.as_str() {
+                    "op-analysis" => QuitReason::Analysis,
+                    "op-export" => QuitReason::Export,
+                    _ => QuitReason::Crawl,
+                };
+                if !reasons.contains(&reason) {
+                    reasons.push(reason);
+                }
             }
             if mcp_connected(&app).await {
                 reasons.push(QuitReason::McpSessions);

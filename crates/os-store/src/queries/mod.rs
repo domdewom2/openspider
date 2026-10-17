@@ -684,8 +684,10 @@ pub fn session_counts(conn: &Connection) -> Result<SessionCounts, StoreError> {
     Ok(SessionCounts {
         discovered: conn.query_row("SELECT COUNT(*) FROM urls", [], |r| r.get(0))?,
         queued: conn.query_row("SELECT COUNT(*) FROM queue", [], |r| r.get(0))?,
-        crawled: conn.query_row("SELECT COUNT(*) FROM urls WHERE state = 'done'", [], |r| {
-            r.get(0)
-        })?,
+        crawled: conn.query_row(
+            "SELECT COUNT(*) FROM urls WHERE in_tables = 1 AND state = 'done'",
+            [],
+            |r| r.get(0),
+        )?,
     })
 }

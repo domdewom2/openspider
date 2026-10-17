@@ -4,7 +4,7 @@ mod common;
 use common::*;
 use serde_json::json;
 
-// spec: UI-013 [M2]
+// spec: UI-013
 #[tokio::test]
 #[ignore = "wartet auf M2-K03"]
 async fn analysis_status_lists_all_step_states_after_a_real_run() {

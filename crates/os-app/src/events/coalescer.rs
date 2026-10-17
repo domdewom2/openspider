@@ -2,6 +2,10 @@
 use crate::{runtime::hooks::TickPolicy, App, WindowId};
 use std::{collections::HashMap, sync::Mutex, time::Duration};
 
+/// Tick budget for counters and status, capped at one second (K2-39).
+/// Unlike `App::window_period`, this deadline does not follow table intervals
+/// above one second. The session feed independently debounces row updates at
+/// the configured live interval; hidden windows receive at most one tick/s.
 #[derive(Default)]
 pub struct Coalescer {
     last: Mutex<HashMap<WindowId, Duration>>,
@@ -15,8 +19,6 @@ impl TickPolicy for Coalescer {
         windows
             .into_iter()
             .filter(|w| {
-                // K2-39: counters/status have their own <= 1 s deadline; row updates
-                // are debounced separately by the session feed.
                 let period = if app.is_visible(w) {
                     Duration::from_millis(u64::from(app.live_interval_ms().clamp(100, 1000)))
                 } else {

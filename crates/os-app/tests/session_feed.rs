@@ -8,8 +8,46 @@ use std::{
     time::Duration,
 };
 
+// spec: UI-013
+#[tokio::test]
+async fn durable_crawled_count_matches_visible_completed_urls_without_progress_snapshot() {
+    let dir = tempfile::tempdir().unwrap();
+    let (app, _) = manual_app(dir.path());
+    let f = create(&dir.path().join("counts.ospider"), cfg());
+    f.set_meta("state", "Paused").unwrap();
+    for id in 1..=4 {
+        insert(&f, id, 1);
+    }
+    f.conn()
+        .execute_batch(
+            "UPDATE urls SET in_tables = 0 WHERE id IN (2, 4);
+             UPDATE urls SET state = 'queued' WHERE id IN (3, 4);
+             INSERT INTO queue (url_id, seq) VALUES (3, 1), (4, 2);",
+        )
+        .unwrap();
+    let counts = os_store::queries::session_counts(f.conn()).unwrap();
+    let crawled: u64 = f
+        .conn()
+        .query_row(
+            "SELECT CAST(value AS INTEGER) FROM q_manifest WHERE key = 'urls_crawled'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(crawled, 1);
+    assert_eq!(counts.crawled, crawled);
+    assert_eq!(counts.discovered, 4);
+    assert_eq!(counts.queued, 2);
+    open(&app, f.path()).await;
+    os_app::session::poll(&app).await.unwrap();
+    let status = app.assemble_tick().unwrap().crawl.unwrap();
+    assert_eq!(status.crawled, crawled);
+    assert_eq!(status.discovered, 4);
+    assert_eq!(status.queued, 2);
+}
+
 // spec: ONPAGE-193
-// spec: UI-018 [M2]
+// spec: UI-018
 #[tokio::test]
 async fn feed_includes_counter_only_changes_and_reset_without_unbounded_id_lists() {
     let dir = tempfile::tempdir().unwrap();
@@ -61,7 +99,7 @@ async fn feed_includes_counter_only_changes_and_reset_without_unbounded_id_lists
 }
 
 // spec: AGENT-020 [M2]
-// spec: UI-013 [M2]
+// spec: UI-013
 #[tokio::test]
 async fn live_foreign_crawl_is_read_only_and_uses_persisted_progress() {
     let dir = tempfile::tempdir().unwrap();
@@ -127,7 +165,7 @@ async fn live_foreign_crawl_is_read_only_and_uses_persisted_progress() {
     );
 }
 
-// spec: UI-018 [M2]
+// spec: UI-018
 // spec: ONPAGE-193
 #[tokio::test]
 async fn counters_have_a_one_second_deadline_even_with_five_second_rows() {
