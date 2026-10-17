@@ -105,3 +105,38 @@ pub struct AuthFinishLoginArgs {
     /// Als Profil speichern.
     pub save_as: Option<String>,
 }
+
+/// Command-Vertrag AuthImportArgs (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct AuthImportArgs {
+    /// Pfad der verschlüsselten Authentifizierungsprofil-Datei.
+    pub path: String,
+
+    /// Passphrase zur Dateiverschlüsselung; nur Eingabe.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub passphrase: Option<String>,
+
+    /// Authentifizierungsprofil an diesen Rechner binden.
+    pub bind_to_machine: bool,
+}
+
+/// Command-Vertrag AuthExportArgs (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct AuthExportArgs {
+    /// Name des Eintrags.
+    pub name: String,
+
+    /// Pfad der verschlüsselten Authentifizierungsprofil-Datei.
+    pub path: String,
+
+    /// Passphrase zur Dateiverschlüsselung; nur Eingabe.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub passphrase: Option<String>,
+
+    /// Authentifizierungsprofil an diesen Rechner binden.
+    pub bind_to_machine: bool,
+}

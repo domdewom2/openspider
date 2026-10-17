@@ -28,7 +28,7 @@ impl Quitting {
         self.0.load(Ordering::SeqCst)
     }
 
-    fn set(&self) {
+    pub(crate) fn set(&self) {
         self.0.store(true, Ordering::SeqCst);
     }
 }

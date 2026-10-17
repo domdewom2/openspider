@@ -11,4 +11,12 @@ name: string,
 /**
  * Zieldatei (`.osconfig`).
  */
-path: string, };
+path: string, 
+/**
+ * Geheimnisse in die verschlüsselte Ausgabe aufnehmen.
+ */
+includeSecrets?: boolean | null, 
+/**
+ * Passwort für den angefragten Vorgang; nur Eingabe.
+ */
+password?: string | null, };

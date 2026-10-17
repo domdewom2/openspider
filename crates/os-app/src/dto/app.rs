@@ -79,6 +79,15 @@ pub struct StorageSettingsDto {
     pub performance_profile: String,
     /// RAM-Obergrenze in GB.
     pub ram_limit_gb: Option<f64>,
+    /// Obergrenze des Caches in Megabyte.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub cache_limit_mb: Option<u32>,
+
+    /// Maximale Anzahl paralleler Rendering-Prozesse.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub render_process_limit: Option<u32>,
 }
 
 /// Aufbewahrung (Spiegel von `RetentionSettings`).
@@ -177,6 +186,8 @@ pub struct AppSettingsDto {
     pub mcp: McpSettingsDto,
     /// Schlüssel (TOML-Pfade), deren Änderung durch diesen Aufruf einen Neustart erfordert.
     pub restart_required: Vec<String>,
+    /// Einstellungen für die Protokollierung.
+    pub logging: LoggingSettingsDto,
 }
 
 /// Argument von `settings.set`: JSON-Merge-Patch (RFC 7396) über `AppSettingsDto` in camelCase; `null` setzt einen
@@ -336,4 +347,79 @@ pub struct SetIntervalArgs {
 pub struct OpCancelArgs {
     /// Operation.
     pub op_id: String,
+}
+
+/// Command-Vertrag LoggingSettingsDto (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct LoggingSettingsDto {
+    /// Schweregrad der zu protokollierenden Meldungen.
+    pub level: String,
+
+    /// Aufbewahrungsdauer der Protokolle in Tagen.
+    pub retention_days: u32,
+}
+
+/// Command-Vertrag BundlePreview (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct BundlePreview {
+    /// Pfade der erzeugten Dateien.
+    pub files: Vec<String>,
+
+    /// Warnungen bei der Ausführung.
+    pub warnings: Vec<String>,
+}
+
+/// Command-Vertrag CertificateProbeArgs (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct CertificateProbeArgs {
+    /// Zu prüfende URL.
+    pub url: String,
+}
+
+/// Command-Vertrag CertificateChainDto (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct CertificateChainDto {
+    /// Zertifikate der vom Server gelieferten Kette.
+    pub certificates: Vec<String>,
+
+    /// Ob die Zertifikatskette vertrauenswürdig ist.
+    pub trusted: bool,
+}
+
+/// Command-Vertrag ProxyPasswordArgs (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct ProxyPasswordArgs {
+    /// Passwort für den angefragten Vorgang; nur Eingabe.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub password: Option<String>,
+}
+
+/// Entscheidung beim Beenden; die Sitzungslogik liefert M2-K04.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+pub enum QuitDecision {
+    /// Ohne weitere Rückfrage beenden.
+    Quit,
+    /// Aktive Arbeit erfordert eine Bestätigung durch den Benutzer.
+    Confirm { reasons: Vec<QuitReason> },
+}
+
+/// Aktive Arbeit, die vor dem Beenden gesichert oder beendet werden muss (UI-001).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub enum QuitReason {
+    /// Ein Crawl läuft.
+    Crawl,
+    /// Eine Crawl-Analyse läuft.
+    Analysis,
+    /// Ein Export läuft.
+    Export,
+    /// HTTP-MCP-Sitzungen sind aktiv.
+    McpSessions,
 }

@@ -71,7 +71,7 @@ activeThreads: number,
 /**
  * Speicherstufe.
  */
-memoryStage: MemoryStageDto, 
+memoryStage?: MemoryStageDto | null, 
 /**
  * Größe der Crawl-Datei in Byte.
  */
@@ -79,4 +79,12 @@ fileBytes?: number | null,
 /**
  * Besitzer.
  */
-owner: CrawlOwner, };
+owner: CrawlOwner, 
+/**
+ * Vertragserweiterung M2-F05b: memory_used_bytes.
+ */
+memoryUsedBytes?: number | null, 
+/**
+ * Vertragserweiterung M2-F05b: memory_limit_bytes.
+ */
+memoryLimitBytes?: number | null, };

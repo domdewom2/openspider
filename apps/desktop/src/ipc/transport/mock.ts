@@ -10,7 +10,7 @@ export type MockHandler = (args: unknown, ctx: { window: string; core: MockCore 
 export const DEFAULT_MOCK_SETTINGS: AppSettingsDto = {
   general: { language: "system", notifications: true },
   appearance: { theme: "system", accent: "#2f855a", zoomPct: 100, rowDensity: "compact", zebra: true, liveIntervalMs: 500 },
-  storage: { crawlsDir: null, performanceProfile: "balanced", ramLimitGb: null },
+  storage: { crawlsDir: null, performanceProfile: "balanced", ramLimitGb: null, cacheLimitMb: null, renderProcessLimit: null },
   retention: { policy: "never", customDays: 30, keepLast: null },
   export: { directory: null, format: "csv" },
   network: {
@@ -19,6 +19,7 @@ export const DEFAULT_MOCK_SETTINGS: AppSettingsDto = {
   },
   accounts: { mailAccounts: [], notifyAccount: null, autoConnect: [] },
   mcp: { autostart: false },
+  logging: { level: "info", retentionDays: 30 },
   restartRequired: [],
 } as unknown as AppSettingsDto;
 

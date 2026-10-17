@@ -15,4 +15,8 @@ limit?: number | null,
 /**
  * Zurücksetzung (ISO 8601 UTC).
  */
-resetsAt?: string | null, };
+resetsAt?: string | null, 
+/**
+ * Dimension für die API-Datenabfrage.
+ */
+dimension?: string | null, };

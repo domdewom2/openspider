@@ -7,6 +7,7 @@
 stub_commands!(
     "M2-O01",
     [
+        ("diag.previewBundle", "void", "BundlePreview", false),
         ("diag.debugInfo", "void", "DebugInfo", false),
         ("diag.bundle", "BundleArgs", "FileResult", true),
         ("diag.logFrontend", "LogFrontendArgs", "void", false),

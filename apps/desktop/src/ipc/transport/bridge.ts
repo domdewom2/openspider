@@ -102,6 +102,8 @@ export function createBridgeTransport(opts: BridgeOptions): Transport {
 /** Bridge-Ereignisname + Nutzdaten → `UiEvent` (gleiche Form wie der Tauri-Channel). */
 export function toUiEvent(event: string, data: unknown): UiEvent | null {
   switch (event) {
+    case "focusUrl":
+      return { ...(data as Omit<Extract<UiEvent, { kind: "focusUrl" }>, "kind">), kind: "focusUrl" };
     case "tick":
       return { kind: "tick", tick: data as never };
     case "settingsChanged": {

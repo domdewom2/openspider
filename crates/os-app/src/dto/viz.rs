@@ -34,6 +34,10 @@ pub struct VizOpenArgs {
     pub kind: VizKind,
     /// Wurzel; `null` = Start-URL bzw. Wurzelverzeichnis.
     pub root_url_id: Option<i64>,
+    /// Kennung des zu erneuernden Visualisierungs-Snapshots.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub refresh_snapshot_id: Option<String>,
 }
 
 /// Antwort von `viz.open`: das Fenster arbeitet auf einem Schnappschuss (K-16).
@@ -61,6 +65,30 @@ pub struct VizGraphArgs {
     pub budget: u32,
     /// Spalte, nach der Farbe und Größe bestimmt werden (UI-095).
     pub metric: String,
+    /// Auch URLs ohne HTML-Inhalt einbeziehen.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub include_non_html: Option<bool>,
+
+    /// Auch nicht indexierbare URLs einbeziehen.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub include_non_indexable: Option<bool>,
+
+    /// Anzahl der beim Öffnen aufzuklappenden Ebenen.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub expand_depth: Option<u32>,
+
+    /// Kennung des zu erkundenden Knotens.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub explore_node: Option<i64>,
+
+    /// Kennzahl für die Färbung der Knoten.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub color_metric: Option<String>,
 }
 
 /// Ein Knoten.
@@ -80,6 +108,41 @@ pub struct GraphNode {
     pub metric: Option<f64>,
     /// Knoten hat weitere Kinder außerhalb des Budgets.
     pub has_more: bool,
+    /// HTTP-Statuscode der URL.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub status_code: Option<u16>,
+
+    /// Indexierbarkeitsstatus der URL.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub indexability: Option<String>,
+
+    /// Anzahl eindeutiger eingehender Links.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub unique_inlinks: Option<u64>,
+
+    /// Berechneter Link-Score der URL.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub link_score: Option<f64>,
+
+    /// Kennung des zugeordneten Segments.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub segment_id: Option<String>,
+
+    /// Anzeigefarbe des zugeordneten Segments.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub segment_color: Option<String>,
+
+    /// Anzahl der ausgeblendeten direkten Kinder.
+    pub hidden_children: u64,
+
+    /// Anzahl aller ausgeblendeten Nachfahren.
+    pub hidden_descendants: u64,
 }
 
 /// Eine Kante.
@@ -124,6 +187,35 @@ pub struct VizWordsArgs {
     pub kind: WordSource,
     /// URL.
     pub url_id: i64,
+    /// Ausgewählter Auswertungsmodus.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub mode: Option<String>,
+
+    /// Stoppwörter aus der Wortauswertung entfernen.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub remove_stopwords: Option<bool>,
+
+    /// Sprache für die Wortauswertung.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub language: Option<String>,
+
+    /// Maximale Anzahl ausgegebener Begriffe.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub max_terms: Option<u32>,
+
+    /// Auch Links mit nofollow einbeziehen.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub include_nofollow: Option<bool>,
+
+    /// Links auf dieselbe URL ausschließen.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub exclude_self_links: Option<bool>,
 }
 
 /// Wort und Häufigkeit.
@@ -137,11 +229,21 @@ pub struct WordFreq {
 }
 
 /// Argument von `viz.exportCsv`.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct VizExportArgs {
     /// Schnappschuss.
     pub snapshot_id: String,
     /// Zielordner (`nodes.csv`, `edges.csv`).
     pub dir: String,
+    /// Knoten des Graphen.
+    pub nodes: Vec<GraphNode>,
+
+    /// Kanten des Graphen.
+    pub edges: Vec<GraphEdge>,
+
+    /// Anordnung der Knoten im Graphen.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub layout: Option<String>,
 }

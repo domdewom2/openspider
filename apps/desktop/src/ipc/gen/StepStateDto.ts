@@ -3,4 +3,4 @@
 /**
  * Zustand eines Analyse-Teilschritts.
  */
-export type StepStateDto = "pending" | "running" | "done" | "skipped" | "notApplicable";
+export type StepStateDto = "pending" | "running" | "done" | "skipped" | "notApplicable" | "needsRecrawl";

@@ -3,4 +3,4 @@
 /**
  * Filter der Crawl-Liste.
  */
-export type CrawlShow = "all" | "running" | "completed" | "incomplete" | "locked";
+export type CrawlShow = "all" | "running" | "completed" | "incomplete" | "locked" | "crawls" | "comparisons";

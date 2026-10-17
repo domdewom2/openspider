@@ -18,7 +18,7 @@ use std::sync::{Arc, Mutex};
 
 use os_analyze::analysis::CancelToken;
 use os_store::{CrawlFile, OpenMode, StoreError};
-use tokio::sync::Semaphore;
+use tokio::sync::{OwnedRwLockWriteGuard, RwLock, Semaphore};
 
 use crate::dto::{CmdError, ErrorCode};
 use crate::runtime::error::{internal, no_crawl, panic_text, store_error};
@@ -35,6 +35,7 @@ struct Slot {
     path: PathBuf,
     idle: Mutex<Vec<CrawlFile>>,
     permits: Arc<Semaphore>,
+    access: Arc<RwLock<()>>,
 }
 
 struct Inner {
@@ -75,6 +76,47 @@ impl ReadPool {
         }
     }
 
+    /// Sperrt neue Leser und wartet bestehende Leser ab. Unbekannte Schlüssel liefern einen leeren Wächter.
+    pub async fn exclusive(&self, key: &CrawlKey) -> ExclusiveGuard {
+        let slot = self.inner.lock().get(key).cloned();
+        let guard = match slot {
+            Some(slot) => {
+                let guard = slot.access.clone().write_owned().await;
+                slot.idle.lock().unwrap_or_else(|p| p.into_inner()).clear();
+                Some(guard)
+            }
+            None => None,
+        };
+        ExclusiveGuard { _guard: guard }
+    }
+
+    /// Prüft das Schema vor der Registrierung. Alte Dateien werden als eigenständige Kopie migriert.
+    pub async fn prepare_open(&self, key: CrawlKey, path: PathBuf) -> Result<OpenReport, CmdError> {
+        let report =
+            tokio::task::spawn_blocking(move || match CrawlFile::open(&path, OpenMode::ReadOnly) {
+                Ok(_) => Ok(OpenReport {
+                    path,
+                    migrated: false,
+                    original: None,
+                }),
+                Err(StoreError::MigrationRequired { .. }) => {
+                    let name = path.file_stem().unwrap_or_default().to_string_lossy();
+                    let dest = path.with_file_name(format!("{name}.migrated.ospider"));
+                    CrawlFile::migrate_copy(&path, &dest).map_err(|e| store_error(&e))?;
+                    Ok(OpenReport {
+                        path: dest,
+                        migrated: true,
+                        original: Some(path),
+                    })
+                }
+                Err(e) => Err(store_error(&e)),
+            })
+            .await
+            .map_err(|e| internal("ReadPool::prepare_open", e.to_string()))??;
+        self.register(key, report.path.clone());
+        Ok(report)
+    }
+
     /// Macht eine Crawl-Datei unter `key` lesbar. Ein vorhandener Eintrag mit demselben Schlüssel wird ersetzt
     /// (leerlaufende Verbindungen werden geschlossen, laufende Arbeiten beenden ihre Verbindung).
     pub fn register(&self, key: CrawlKey, path: impl Into<PathBuf>) {
@@ -82,6 +124,7 @@ impl ReadPool {
             path: path.into(),
             idle: Mutex::new(Vec::new()),
             permits: Arc::new(Semaphore::new(self.inner.capacity)),
+            access: Arc::new(RwLock::new(())),
         });
         self.inner.lock().insert(key, slot);
     }
@@ -135,6 +178,7 @@ impl ReadPool {
         if token.is_cancelled() {
             return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"));
         }
+        let access = slot.access.clone().read_owned().await;
         let permit = Arc::clone(&slot.permits)
             .acquire_owned()
             .await
@@ -142,6 +186,7 @@ impl ReadPool {
         let hub = Arc::clone(&self.inner.hub);
         let joined = tokio::task::spawn_blocking(move || {
             let _permit = permit;
+            let _access = access;
             run_blocking(&slot, &hub, &token, f)
         })
         .await;
@@ -194,4 +239,16 @@ fn run_blocking<T>(
         }
         Err(panic) => Err(internal("ReadPool::run", panic_text(panic.as_ref()))),
     }
+}
+
+/// Exklusiver Zugriff; Freigabe beim Verwerfen, auch nach Abbruch.
+pub struct ExclusiveGuard {
+    _guard: Option<OwnedRwLockWriteGuard<()>>,
+}
+/// Ergebnis der Versionsprüfung; das Original bleibt bei Migration erhalten.
+#[derive(Debug, Clone)]
+pub struct OpenReport {
+    pub path: PathBuf,
+    pub migrated: bool,
+    pub original: Option<PathBuf>,
 }

@@ -15,4 +15,12 @@ performanceProfile: string,
 /**
  * RAM-Obergrenze in GB.
  */
-ramLimitGb?: number | null, };
+ramLimitGb?: number | null, 
+/**
+ * Obergrenze des Caches in Megabyte.
+ */
+cacheLimitMb?: number | null, 
+/**
+ * Maximale Anzahl paralleler Rendering-Prozesse.
+ */
+renderProcessLimit?: number | null, };

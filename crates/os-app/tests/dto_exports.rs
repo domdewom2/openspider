@@ -178,3 +178,17 @@ fn every_derive_ts_type_in_the_sources_is_in_the_export_list() {
         "Liste und Quelltext weichen ab"
     );
 }
+
+// spec: UI-001
+#[test]
+fn quit_decision_is_tagged_and_preserve_upload_order_is_optional() {
+    let files = fresh();
+    let decision = &files["QuitDecision.ts"];
+    assert!(decision.contains("\"kind\": \"quit\""), "{decision}");
+    assert!(decision.contains("\"kind\": \"confirm\""), "{decision}");
+    assert!(
+        decision.contains("reasons: Array<QuitReason>"),
+        "{decision}"
+    );
+    assert!(files["ExportViewArgs.ts"].contains("preserveUploadOrder?: boolean"));
+}

@@ -7,4 +7,4 @@ export type FilterStateDto = { "kind": "ready" } | { "kind": "needsCrawlAnalysis
 /**
  * Schlüssel.
  */
-key: string, } | { "kind": "needsRendering" } | { "kind": "stale" };
+key: string, } | { "kind": "needsRendering" } | { "kind": "stale" } | { "kind": "needsRecrawl" } | { "kind": "incomplete", unchecked: number, };

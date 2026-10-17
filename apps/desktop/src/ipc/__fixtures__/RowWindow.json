@@ -2,10 +2,25 @@
   "viewId": "v1",
   "version": 42,
   "offset": 4999990,
-  "rowKeys": [4999991, 4999992],
-  "columns": ["Address", "Status Code", "Indexability"],
+  "rowKeys": [
+    4999991,
+    4999992
+  ],
+  "columns": [
+    "Address",
+    "Status Code",
+    "Indexability"
+  ],
   "cells": [
-    ["https://example.test/a", 200, "Indexable"],
-    ["https://example.test/b", null, null]
+    [
+      "https://example.test/a",
+      200,
+      "Indexable"
+    ],
+    [
+      "https://example.test/b",
+      null,
+      null
+    ]
   ]
 }
