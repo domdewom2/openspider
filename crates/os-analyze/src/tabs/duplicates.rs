@@ -255,10 +255,25 @@ pub fn detail_rows(
             "Nahezu-Duplikate benötigen eine aktuelle Crawl-Analyse".into(),
         ));
     }
-    let mut stmt=file.conn().prepare("SELECT address,score,kind FROM (SELECT d.address,100 AS score,'Exact' AS kind FROM urls u JOIN urls d ON d.hash_md5=u.hash_md5 WHERE u.id=?1 AND d.id<>u.id AND u.hash_md5<>'' AND d.is_internal=1 AND d.in_tables=1 AND d.content_class='HTML' AND d.status_code BETWEEN 200 AND 299 AND (?2=0 OR (COALESCE(d.indexability,'')<>'Non-Indexable' AND COALESCE(u.indexability,'')<>'Non-Indexable')) AND ?3 UNION ALL SELECT d.address,CAST(ROUND(n.similarity*100) AS INTEGER),'Near' FROM near_duplicates n JOIN urls d ON d.id=n.other_id WHERE n.url_id=?1 AND ?4) ORDER BY score DESC,address COLLATE BINARY,kind")?;
-    let rows = stmt
+    let sql = "SELECT d.address,100 AS score,'Exact' AS kind FROM urls u JOIN urls d ON d.hash_md5=u.hash_md5 WHERE u.id=?1 AND d.id<>u.id AND u.hash_md5<>'' AND u.is_internal=1 AND u.in_tables=1 AND u.content_class='HTML' AND u.status_code BETWEEN 200 AND 299 AND d.is_internal=1 AND d.in_tables=1 AND d.content_class='HTML' AND d.status_code BETWEEN 200 AND 299 AND (?2=0 OR (COALESCE(d.indexability,'')<>'Non-Indexable' AND COALESCE(u.indexability,'')<>'Non-Indexable')) AND ?3 UNION ALL SELECT d.address,CAST(ROUND(n.similarity*100) AS INTEGER),'Near' FROM near_duplicates n JOIN urls d ON d.id=n.other_id WHERE n.url_id=?1 AND ?4";
+    out.total = file.conn().query_row(
+        &format!("SELECT COUNT(*) FROM ({sql})"),
+        rusqlite::params![id.0, cfg.duplicates.only_indexable, exact, near],
+        |r| r.get(0),
+    )?;
+    let mut stmt = file.conn().prepare(&format!(
+        "SELECT address,score,kind FROM ({sql}) ORDER BY score DESC,address COLLATE BINARY,kind LIMIT ?5 OFFSET ?6"
+    ))?;
+    out.rows = stmt
         .query_map(
-            rusqlite::params![id.0, cfg.duplicates.only_indexable, exact, near],
+            rusqlite::params![
+                id.0,
+                cfg.duplicates.only_indexable,
+                exact,
+                near,
+                req.limit.min(500) as i64,
+                req.offset.min(i64::MAX as u64) as i64,
+            ],
             |r| {
                 Ok(vec![
                     Value::Text(r.get(0)?),
@@ -267,13 +282,7 @@ pub fn detail_rows(
                 ])
             },
         )?
-        .collect::<Result<Vec<_>, _>>()?;
-    out.total = rows.len() as u64;
-    out.rows = rows
-        .into_iter()
-        .skip(req.offset.min(usize::MAX as u64) as usize)
-        .take(req.limit.min(500) as usize)
-        .collect();
+        .collect::<Result<_, _>>()?;
     if out.total == 0 {
         out.notes
             .push(("empty".into(), "Keine Duplikate gefunden".into()));
