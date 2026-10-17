@@ -1,0 +1,8 @@
+Start 2026-10-17T02:56:32Z (04:56 lokal)
+wait_quiet: load1=1.95 (< 2), frei: 79 GB
+ 4:56  up 36 days, 18:15, 17 users, load averages: 1.95 2.56 3.00
+Befehl: /Users/dominikwojcik/Projects/openspider-wt/target-m1-n28/release/os-loadtest run --scenario perf-005 --size large --kills 10 --work-dir /Users/dominikwojcik/Projects/openspider-wt/n28-work/b4 --out docs/plan/M1-acceptance/loadtest/report-perf-005-large.json
+perf-005 (large): 120180 Requests/s, Crawler ja, passed = true
+Bericht: /Users/dominikwojcik/Projects/openspider-wt/m1-n28/docs/plan/M1-acceptance/loadtest/report-perf-005-large.json
+Ende 2026-10-17T02:57:33Z (04:57 lokal), Exit 0
+ 4:57  up 36 days, 18:16, 17 users, load averages: 3.16 2.78 3.05
