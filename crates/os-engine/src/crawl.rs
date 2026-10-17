@@ -54,6 +54,8 @@ pub const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(2);
 
 /// Steuerung eines laufenden Crawls.
 pub struct CrawlHandle {
+    network_waits: Arc<crate::host_pace::PaceCancellation>,
+    network_notices: Arc<Mutex<Vec<String>>>,
     crawl_id: CrawlId,
     progress: watch::Receiver<Progress>,
     control: Arc<Control>,
@@ -61,6 +63,15 @@ pub struct CrawlHandle {
 }
 
 impl CrawlHandle {
+    /// Neue Meldungen der Host-Steuerung, einmalig für den nächsten UI-Tick.
+    pub fn take_network_notices(&self) -> Vec<String> {
+        std::mem::take(
+            &mut *self
+                .network_notices
+                .lock()
+                .unwrap_or_else(|p| p.into_inner()),
+        )
+    }
     /// Sendet zusätzliche Eingaben an die Steuerschleife (CRAWL-131).
     pub async fn add_urls(&self, urls: Vec<String>) -> Result<crate::AddUrlsSummary, EngineError> {
         let (tx, rx) = tokio::sync::oneshot::channel();
@@ -91,12 +102,14 @@ impl CrawlHandle {
     /// Warteschlange bleibt in der Datei. `wait()` liefert danach die Zusammenfassung (kein Abschluss-Hook).
     pub fn pause(&self) {
         self.control.stop.store(STOP_PAUSE, Ordering::SeqCst);
+        self.network_waits.cancel();
         self.control.notify.notify_one();
     }
 
     /// Beendet den Crawl; die Warteschlange bleibt erhalten. Laufende Abrufe werden noch gespeichert.
     pub fn stop(&self) {
         self.control.stop.store(STOP_STOP, Ordering::SeqCst);
+        self.network_waits.cancel();
         self.control.notify.notify_one();
     }
 
@@ -644,6 +657,8 @@ pub(crate) fn launch<F: Fetch>(setup: Setup<F>) -> CrawlHandle {
         .unwrap_or_else(|p| p.into_inner())
         .snapshot(deps.clock.monotonic(), queued, discovered, 0);
     let (progress_tx, progress_rx) = watch::channel(initial);
+    let network_notices = sh.host_pacer.notices();
+    let network_waits = sh.host_pacer.cancellation();
     let task = tokio::spawn(run(RunParts {
         sh,
         writer,
@@ -655,6 +670,8 @@ pub(crate) fn launch<F: Fetch>(setup: Setup<F>) -> CrawlHandle {
         clock: deps.clock.clone(),
     }));
     CrawlHandle {
+        network_waits,
+        network_notices,
         crawl_id,
         progress: progress_rx,
         control,

@@ -597,18 +597,6 @@ function = "tick"
 signature = "pub fn tick(_input: &MemoryInputs<'_>) -> MemoryAction"
 
 [[stub]]
-owner = "M2-E03"
-file = "crates/os-engine/src/host_pace.rs"
-function = "on_response"
-signature = "pub fn on_response(&self, _url: &Url, _status: u16, _retry_after: Option<Duration>)"
-
-[[stub]]
-owner = "M2-E03"
-file = "crates/os-engine/src/retry.rs"
-function = "decide"
-signature = "pub fn decide( _res: &os_fetch::FetchResult, _attempt: u32, _cfg: &os_model::CrawlConfig, ) -> RetryDecision"
-
-[[stub]]
 owner = "M2-E04"
 file = "crates/os-parse/src/bookmarks.rs"
 function = "run"
@@ -889,15 +877,3 @@ owner = "M2-E01"
 file = "crates/os-engine/src/fragments.rs"
 function = "(module)"
 signature = "pub mod fragments"
-
-[[stub]]
-owner = "M2-E03"
-file = "crates/os-engine/src/host_pace.rs"
-function = "before_fetch"
-signature = "pub async fn before_fetch(&self, url: &Url, crawl_delay: Option<f64>, cfg: &CrawlConfig, clock: &dyn Clock)"
-
-[[stub]]
-owner = "M2-E03"
-file = "crates/os-engine/src/host_pace.rs"
-function = "on_result"
-signature = "pub fn on_result(&self, url: &Url, result: &FetchResult, cfg: &CrawlConfig, clock: &dyn Clock)"
