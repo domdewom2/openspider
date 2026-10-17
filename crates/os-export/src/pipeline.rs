@@ -259,9 +259,7 @@ pub fn write_view_to(
             plan.filter_sql,
             plan.search_sql.as_deref().unwrap_or("1")
         );
-        let query = format!("SELECT i.original, i.outcome, {} FROM list_input i \
-            LEFT JOIN (urls u LEFT JOIN url_counters c ON c.url_id = u.id) ON u.id = i.url_id AND ({condition}) \
-            WHERE i.outcome NOT IN ('ignored_line', 'sitemap') ORDER BY i.position", expressions.join(", "));
+        let query = upload_order_sql(&expressions, &condition);
         let mut stmt = crate::links_export::sql(file.conn().prepare(&query))?;
         for (name, value) in &plan.params {
             if let Some(index) = crate::links_export::sql(stmt.parameter_index(name))? {
@@ -796,6 +794,22 @@ pub fn export_batch(
     })
 }
 
+/// Keep the two primary-key joins separate: a parenthesized right-hand join
+/// causes SQLite to materialize all URLs before it can emit an uploaded row.
+fn upload_order_sql(expressions: &[String], condition: &str) -> String {
+    let columns = expressions
+        .iter()
+        .map(|expr| format!("CASE WHEN ({condition}) THEN ({expr}) END"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    format!(
+        "SELECT i.original, i.outcome, {columns} FROM list_input i \
+        LEFT JOIN urls u ON u.id = i.url_id \
+        LEFT JOIN url_counters c ON c.url_id = u.id \
+        WHERE i.outcome NOT IN ('ignored_line', 'sitemap') ORDER BY i.position"
+    )
+}
+
 /// SQL for an already resolved output column in upload order. Multi-value names
 /// come from the view header, so the list export uses exactly the same expansion.
 fn list_column_expr(tab: &TabDef, name: &str) -> Result<String, ExportError> {
@@ -910,4 +924,47 @@ pub fn scoped_tabs(
             os_analyze::defs::intern(&format!("({}) AND ({condition})", tab.population));
     }
     tabs
+}
+
+#[cfg(test)]
+#[path = "../tests/links_support.rs"]
+mod query_plan_fixture;
+
+#[cfg(test)]
+mod query_plan_tests {
+    use super::*;
+
+    // spec: PERF-008 [M2]
+    #[test]
+    fn upload_order_streams_without_materializing_the_crawl() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = query_plan_fixture::new_file(dir.path(), "plan.ospider");
+        let query = upload_order_sql(
+            &["u.address".into(), "c.inlinks".into()],
+            "u.is_internal = 1",
+        );
+        let mut stmt = file
+            .conn()
+            .prepare(&format!("EXPLAIN QUERY PLAN {query}"))
+            .unwrap();
+        let plan = stmt
+            .query_map([], |row| row.get::<_, String>(3))
+            .unwrap()
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        assert!(
+            !plan
+                .iter()
+                .any(|line| line.contains("MATERIALIZE") || line.starts_with("SCAN u")),
+            "{plan:?}"
+        );
+        for alias in ["u", "c"] {
+            assert!(
+                plan.iter()
+                    .any(|line| line.starts_with(&format!("SEARCH {alias} "))
+                        && line.contains("PRIMARY KEY")),
+                "{plan:?}"
+            );
+        }
+    }
 }
