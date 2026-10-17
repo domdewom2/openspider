@@ -1,0 +1,9 @@
+{"phase":"validate"}
+{"phase":"crawl"}
+{"crawled":0,"elapsed_s":0,"phase":"crawl","rate":0.0,"state":"Running"}
+{"crawled":10,"elapsed_s":5,"phase":"crawl","rate":2.0,"state":"Running"}
+{"crawled":30,"elapsed_s":10,"phase":"crawl","rate":2.0,"state":"Running"}
+{"crawled":40,"elapsed_s":20,"phase":"crawl","rate":1.5,"state":"Running"}
+{"crawled":60,"elapsed_s":30,"phase":"crawl","rate":2.0,"state":"Running"}
+Warnung: irgendein Text
+{"phase":"export"}

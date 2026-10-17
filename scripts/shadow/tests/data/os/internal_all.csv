@@ -1,0 +1,4 @@
+﻿Address,Content,Status Code
+https://Example.com/,text/html,200
+https://example.com/a,text/html,200
+https://example.com/b/,text/html,404

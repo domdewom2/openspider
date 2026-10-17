@@ -1,0 +1,27 @@
+# OpenSpider-Schattenbetrieb (M2-V02, Etappe E1): schonende Crawl-Konfiguration für den geteilten VPS.
+# Festlegungen aus docs/plan/M2.md 3.13: 2 Threads, höchstens 2 URL/s, robots.txt respektieren,
+# User-Agent und robots-Token exakt "OpenSpider-Shadow", kein JavaScript-Rendering, 20 000 URLs als Schutz.
+# Alle übrigen Schlüssel behalten ihre Standardwerte (fehlende Schlüssel = Standard, Format Version 2).
+
+schema_version = 2
+generator = "openspider-shadow E1"
+
+[speed]
+threads = 2
+max_urls_per_sec = 2.0
+
+[user_agent]
+preset = "custom"
+http = "OpenSpider-Shadow"
+robots_token = "OpenSpider-Shadow"
+
+[robots]
+# Standardregel: robots.txt beachten; ist sie nicht erreichbar, wird der Host gesperrt (nicht "allow_all").
+mode = "respect"
+unreachable_policy = "block_host"
+
+[rendering]
+mode = "text"
+
+[limits]
+max_urls = 20000

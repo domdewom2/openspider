@@ -1,0 +1,30 @@
+# Beispiel-Zuordnung nur für die Tests (erfundene Kennungen "demo_*").
+schema = 1
+
+[export]
+base = ["Internal:All"]
+extra = ["Page Titles:Missing"]
+
+[[rule]]
+autonomo = "demo_status_4xx"
+openspider = ["Response Codes:Internal Client Error (4xx)"]
+class = "gleichwertig"
+reason = "beide zählen interne URLs mit Antwortcode 400 bis 499"
+
+[[rule]]
+autonomo = "demo_title_fehlt"
+openspider = ["Page Titles:Missing"]
+class = "teilweise"
+reason = "Autonomo zählt nur indexierbare Seiten, OpenSpider alle HTML-Seiten"
+
+[[rule]]
+autonomo = "demo_nur_autonomo"
+openspider = []
+class = "ohne Gegenstück"
+reason = "die Prüfung gibt es nur im anderen System"
+
+[[rule]]
+autonomo = "demo_export_fehlt"
+openspider = ["Security:HTTP URLs"]
+class = "gleichwertig"
+reason = "Export dieses Filters liegt im Beispielordner nicht vor"

@@ -1,0 +1,8 @@
+﻿Address,Content,Status Code,Status
+https://example.com/b/,text/html,404,Not Found
+https://example.com/gone,text/html,404,Not Found
+https://example.com/x1,text/html,404,Not Found
+https://example.com/x2,text/html,404,Not Found
+https://example.com/x3,text/html,404,Not Found
+https://example.com/x4,text/html,404,Not Found
+https://example.com/x5,text/html,404,Not Found

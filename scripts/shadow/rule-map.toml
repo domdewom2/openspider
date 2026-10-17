@@ -1,0 +1,93 @@
+# Zuordnung Autonomo-rule_id <-> OpenSpider-Tab:Filter (M2-V02, Etappe E1).
+# Nur Kennungen und eigene Kurzbegründungen, keine Texte aus Autonomo oder aus Unterlagen zum Referenzprodukt.
+# Die OpenSpider-Kennungen müssen in docs/plan/M1-filters.toml (bzw. M2-filters.toml) stehen:
+#   python3 scripts/shadow/compare.py validate --rule-map scripts/shadow/rule-map.toml \
+#       --filters docs/plan/M1-filters.toml docs/plan/M2-filters.toml
+#
+# STAND: Die [[rule]]-Einträge sind noch leer. Die rule_id-Kennungen von Autonomo sind nur auf dem VPS
+# lesbar (Befundtabelle bzw. /api/extern) und wurden bei der Erstellung nicht eingesehen; erfunden werden sie
+# nicht. Sie werden nach dem ersten lesenden Zugriff ergänzt (docs/plan/shadow/E1-runbook.md, Schritt 6).
+# Bis dahin exportiert der Schattenlauf alle unter [export] genannten Filter, und compare.py führt jede
+# Autonomo-Regel unter "ohne Zuordnung" auf.
+#
+# Eintragsformat:
+#
+#   [[rule]]
+#   autonomo   = "<rule_id>"                     # Kennung aus Autonomo, genau einmal
+#   openspider = ["Tab:Filter", ...]              # leer nur bei class = "ohne Gegenstück"
+#   class      = "gleichwertig"                   # gleichwertig | teilweise | ohne Gegenstück
+#   reason     = "eigene kurze Begründung"       # je Eintrag verschieden
+
+schema = 1
+
+[export]
+# Immer exportiert: Zählbasis für alle Vergleiche.
+base = [
+  "Internal:All",
+  "Internal:HTML",
+]
+# Alle Befund-Filter (issue = true in docs/plan/M1-filters.toml), damit der Sofortlauf unabhängig vom Stand der
+# Zuordnung vollständige Daten liefert. Zugeordnete Filter aus [[rule]] kommen automatisch dazu.
+extra = [
+  "Security:HTTP URLs",
+  "Response Codes:Internal Blocked by Robots.txt",
+  "Response Codes:Internal No Response",
+  "Response Codes:Internal Redirection (3XX)",
+  "Response Codes:Internal Redirection (Meta Refresh)",
+  "Response Codes:Internal Redirect Chain",
+  "Response Codes:Internal Redirect Loop",
+  "Response Codes:Internal Client Error (4XX)",
+  "Response Codes:Internal Server Error (5XX)",
+  "Response Codes:External No Response",
+  "Response Codes:External Client Error (4XX)",
+  "Response Codes:External Server Error (5XX)",
+  "URL:Non ASCII Characters",
+  "URL:Underscores",
+  "URL:Uppercase",
+  "URL:Multiple Slashes",
+  "URL:Contains A Space",
+  "URL:Parameters",
+  "URL:Over {url.max_chars} Characters",
+  "Page Titles:Missing",
+  "Page Titles:Duplicate",
+  "Page Titles:Over {title.max_chars} Characters",
+  "Page Titles:Below {title.min_chars} Characters",
+  "Page Titles:Multiple",
+  "Meta Description:Missing",
+  "Meta Description:Duplicate",
+  "Meta Description:Over {meta_description.max_chars} Characters",
+  "Meta Description:Below {meta_description.min_chars} Characters",
+  "Meta Description:Multiple",
+  "H1:Missing",
+  "H1:Duplicate",
+  "H1:Over {h1.max_chars} Characters",
+  "H1:Multiple",
+  "H2:Missing",
+  "H2:Duplicate",
+  "H2:Over {h2.max_chars} Characters",
+  "H2:Multiple",
+  "Content:Exact Duplicates",
+  "Content:Low Content Pages",
+  "Images:Over {image.max_kb} KB",
+  "Images:Missing Alt Text",
+  "Images:Missing Alt Attribute",
+  "Images:Alt Text Over {image.alt_max_chars} Characters",
+  "Canonicals:Canonicalised",
+  "Canonicals:Missing",
+  "Canonicals:Multiple",
+  "Canonicals:Multiple Conflicting",
+  "Canonicals:Non-Indexable Canonical",
+  "Directives:Noindex",
+  "Directives:Nofollow",
+  "Directives:None",
+  "Hreflang:Non-200 Hreflang URLs",
+  "Hreflang:Missing Return Links",
+  "Hreflang:Incorrect Language & Region Codes",
+  "Links:Pages With High Crawl Depth",
+  "Links:Pages Without Internal Outlinks",
+  "Links:Internal Nofollow Outlinks",
+  "Links:Internal Outlinks With No Anchor Text",
+  "Sitemaps:URLs Not In Sitemap",
+  "Sitemaps:Orphan URLs",
+  "Sitemaps:Non-Indexable URLs In Sitemap",
+]

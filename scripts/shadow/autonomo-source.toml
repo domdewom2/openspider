@@ -1,0 +1,33 @@
+# Lesezugang zu den Autonomo-Befunden (M2-V02). Nur Lesen: GET bzw. SELECT, nie POST/PUT/PATCH/DELETE.
+# Der Token steht NICHT hier; compare.py liest ihn zur Laufzeit aus der bestehenden Autonomo-Konfiguration
+# (env_path, token_var) und gibt ihn nie aus.
+#
+# STAND: Pfade, Feldnamen und Abfragen sind Annahmen und wurden bei der Erstellung nicht gegen die laufende
+# Installation geprüft. Solange verified = false, bricht fetch-autonomo ab. Vor dem ersten Lauf lesend prüfen:
+#   compare.py discover --config etc/autonomo-source.toml            (Struktur der Crawl-Liste, ohne Werte)
+#   compare.py discover --config etc/autonomo-source.toml --path <Befund-Pfad>
+# danach Pfade/Felder anpassen und verified = true setzen. Ablauf: docs/plan/shadow/E1-runbook.md.
+
+[api]
+verified = false
+base_url = "http://127.0.0.1:7781/api/extern"   # nur Loopback wird akzeptiert
+env_path = "/etc/autonomo-seo"                  # Datei oder Ordner mit KEY=WERT-Zeilen
+token_var = "AUTONOMO_EXTERN_TOKEN"
+crawl_list_path = "onpage/crawls"
+findings_path = "onpage/crawls/{crawl}/befunde"
+page_size = 0                                   # 0 = keine Seitenweise-Abfrage; sonst limit/offset
+timeout_s = 60
+
+# Rückfall, nur wenn die Projekte über die API nicht erreichbar sind (SHADOW_AUTONOMO_SOURCE=psql).
+# Keine neue Rolle, kein Schema-Objekt, keine temporäre Tabelle: eine Lesesitzung mit
+# PGOPTIONS='-c default_transaction_read_only=on'; erlaubt ist je Abfrage genau ein SELECT.
+[psql]
+verified = false
+env_path = "/etc/autonomo-seo"
+# password_var = "..."          # Name der Variable in env_path, falls ein Passwort nötig ist
+# argv: Aufruf von psql (Verbindung der bestehenden Datenbank); {query} wird durch die Abfrage ersetzt
+argv = ["psql", "-X", "-A", "-t", "-F", "\t", "-v", "ON_ERROR_STOP=1", "-c", "{query}"]
+# crawl_sql liefert je abgeschlossenem Crawl der Site: id, started_at, finished_at ({site} wird eingesetzt)
+crawl_sql = "SELECT 'AUSFUELLEN'"
+# findings_sql liefert je Befund: rule_id, url ({crawl} wird eingesetzt)
+findings_sql = "SELECT 'AUSFUELLEN'"

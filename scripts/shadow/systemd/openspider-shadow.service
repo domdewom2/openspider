@@ -1,0 +1,35 @@
+[Unit]
+Description=OpenSpider Schattenbetrieb E1 (Crawls caloone.de und rotweine.org, Vergleich mit Autonomo nur lesend)
+Documentation=https://github.com/domdewom2/openspider/blob/main/docs/plan/M2.md
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/opt/openspider-shadow/bin/openspider
+
+[Service]
+Type=oneshot
+User=openspider-shadow
+Group=openspider-shadow
+WorkingDirectory=/opt/openspider-shadow
+EnvironmentFile=/opt/openspider-shadow/etc/shadow.env
+Environment=OPENSPIDER_HOME=/opt/openspider-shadow/var/home
+Environment=OPENSPIDER_SECRET_STORE=memory
+Environment=SHADOW_BASE=/opt/openspider-shadow
+
+# Schonen: niedrige CPU- und I/O-Priorität, harte Grenzen, Laufzeitdeckel
+Nice=15
+IOSchedulingClass=idle
+CPUQuota=200%
+MemoryMax=2G
+RuntimeMaxSec=6h
+
+# Härtung: schreiben nur unter var/, keine Rechteerweiterung
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/openspider-shadow/var
+PrivateTmp=true
+ProtectHome=true
+
+ExecStart=/opt/openspider-shadow/bin/run.sh
+# Mit "+" ohne die Einschränkungen oben und als root: nur der lesende Autonomo-Zugang braucht das
+# (compare.sh stuft für den Vergleich selbst wieder auf openspider-shadow herunter).
+ExecStartPost=+/opt/openspider-shadow/bin/compare.sh
