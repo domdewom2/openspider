@@ -387,6 +387,7 @@
   "wave": "0e",
   "spec_ids": [],
   "owns": [
+   "apps/desktop/e2e/support/fake-bridge.ts",
    "crates/os-app/** (ohne Cargo.toml)",
    "crates/os-model/src/settings.rs",
    "crates/os-model/tests/settings_split.rs",
