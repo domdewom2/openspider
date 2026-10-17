@@ -31,7 +31,10 @@ pub struct SettingsChange {
 }
 
 /// Die Einstellungen im Speicher und ihre Datei.
+type SettingsValidator = fn(&AppSettings) -> Result<(), CmdError>;
+
 pub struct SettingsStore {
+    validators: Mutex<Vec<SettingsValidator>>,
     dir: PathBuf,
     current: RwLock<AppSettings>,
     write: Mutex<()>,
@@ -100,12 +103,21 @@ impl SettingsStore {
         };
         (
             SettingsStore {
+                validators: Mutex::new(Vec::new()),
                 dir,
                 current: RwLock::new(settings),
                 write: Mutex::new(()),
             },
             notice,
         )
+    }
+
+    /// Additive Fachprüfung vor dem Schreiben; ohne Registrierung unverändertes Verhalten.
+    pub fn add_validator(&self, validator: SettingsValidator) {
+        self.validators
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .push(validator);
     }
 
     /// Ordner der Datei.
@@ -169,6 +181,14 @@ impl SettingsStore {
             );
         }
 
+        for validate in self
+            .validators
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .iter()
+        {
+            validate(&new)?;
+        }
         let changed = old.changed_keys(&new);
         if !changed.is_empty() {
             new.save(&self.dir).map_err(|e| {

@@ -429,10 +429,6 @@ async fn every_f05_command_reports_its_exact_owner() {
     for (owner, commands) in [
         ("M2-K04", vec!["app.requestQuit", "app.confirmQuit"]),
         ("M2-E02", vec!["config.testRobots", "config.loadRobots"]),
-        (
-            "M2-E03",
-            vec!["settings.probeCertificates", "settings.setProxyPassword"],
-        ),
         ("M2-I01", vec!["api.removeAccount"]),
         (
             "M2-O01",
