@@ -221,21 +221,99 @@ pub(crate) fn element_params(
     ]
 }
 
-/// Detail-Erweiterungspunkt für M2-D02.
-// STUB(M2-D02)
+/// Duplikate der gewählten URL, vor dem Paging nach Ähnlichkeit/Adresse geordnet.
 pub fn detail_rows(
-    _: &os_store::CrawlFile,
-    _: &os_model::CrawlConfig,
-    _: &crate::details::DetailReq<'_>,
+    file: &os_store::CrawlFile,
+    cfg: &CrawlConfig,
+    req: &crate::details::DetailReq<'_>,
 ) -> Result<crate::details::DetailRows, crate::ViewError> {
-    Err(crate::ViewError::NotImplemented("M2-D02"))
+    use os_model::Value;
+    let mut out = crate::details::DetailRows {
+        columns: vec![
+            ("Address".into(), ColumnKind::Url),
+            ("Similarity".into(), ColumnKind::Int),
+            ("Match Type".into(), ColumnKind::Text),
+        ],
+        rows: Vec::new(),
+        total: 0,
+        notes: Vec::new(),
+    };
+    let Some(id) = req.url_ids.first() else {
+        return Ok(out);
+    };
+    let mode = req
+        .params
+        .get("filter")
+        .and_then(|v| v.as_str())
+        .unwrap_or("All");
+    let exact = mode != "Near" && cfg.extraction.hash && cfg.duplicates.exact_enabled;
+    let state = crate::views::state_of(file, cfg, "Content", "Near Duplicates")?;
+    let near = mode != "Exact" && state == os_model::FilterState::Ready;
+    if mode == "Near" && !near {
+        out.notes.push((
+            "needs_crawl_analysis".into(),
+            "Nahezu-Duplikate benötigen eine aktuelle Crawl-Analyse".into(),
+        ));
+    }
+    let mut stmt=file.conn().prepare("SELECT address,score,kind FROM (SELECT d.address,100 AS score,'Exact' AS kind FROM urls u JOIN urls d ON d.hash_md5=u.hash_md5 WHERE u.id=?1 AND d.id<>u.id AND u.hash_md5<>'' AND d.is_internal=1 AND d.in_tables=1 AND d.content_class='HTML' AND d.status_code BETWEEN 200 AND 299 AND (?2=0 OR (COALESCE(d.indexability,'')<>'Non-Indexable' AND COALESCE(u.indexability,'')<>'Non-Indexable')) AND ?3 UNION ALL SELECT d.address,CAST(ROUND(n.similarity*100) AS INTEGER),'Near' FROM near_duplicates n JOIN urls d ON d.id=n.other_id WHERE n.url_id=?1 AND ?4) ORDER BY score DESC,address COLLATE BINARY,kind")?;
+    let rows = stmt
+        .query_map(
+            rusqlite::params![id.0, cfg.duplicates.only_indexable, exact, near],
+            |r| {
+                Ok(vec![
+                    Value::Text(r.get(0)?),
+                    Value::Int(r.get(1)?),
+                    Value::Text(r.get(2)?),
+                ])
+            },
+        )?
+        .collect::<Result<Vec<_>, _>>()?;
+    out.total = rows.len() as u64;
+    out.rows = rows
+        .into_iter()
+        .skip(req.offset.min(usize::MAX as u64) as usize)
+        .take(req.limit.min(500) as usize)
+        .collect();
+    if out.total == 0 {
+        out.notes
+            .push(("empty".into(), "Keine Duplikate gefunden".into()));
+    }
+    Ok(out)
 }
 
-// STUB(M2-D02)
+/// Häufigkeit der normalisierten Dreier-Shingles der ausgewählten URLs.
 pub fn ngram_details(
-    _: &os_store::CrawlFile,
-    _: &os_model::CrawlConfig,
-    _: &crate::details::DetailReq<'_>,
+    file: &os_store::CrawlFile,
+    _: &CrawlConfig,
+    req: &crate::details::DetailReq<'_>,
 ) -> Result<crate::details::DetailRows, crate::ViewError> {
-    Err(crate::ViewError::NotImplemented("M2-D02"))
+    let mut counts = std::collections::BTreeMap::<String, i64>::new();
+    for id in req.url_ids {
+        let text = file
+            .conn()
+            .query_row(
+                "SELECT v_text FROM url_ext WHERE url_id=?1 AND key='content.text'",
+                [id.0],
+                |r| r.get::<_, String>(0),
+            )
+            .unwrap_or_default();
+        for shingle in crate::minhash::shingles(&text) {
+            *counts.entry(shingle).or_default() += 1;
+        }
+    }
+    let total = counts.len() as u64;
+    Ok(crate::details::DetailRows {
+        columns: vec![
+            ("N-Gram".into(), ColumnKind::Text),
+            ("Count".into(), ColumnKind::Int),
+        ],
+        rows: counts
+            .into_iter()
+            .skip(req.offset.min(usize::MAX as u64) as usize)
+            .take(req.limit.min(500) as usize)
+            .map(|(s, n)| vec![Value::Text(s), Value::Int(n)])
+            .collect(),
+        total,
+        notes: Vec::new(),
+    })
 }

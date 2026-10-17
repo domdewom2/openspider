@@ -1,2 +1,25 @@
-# OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „Content“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.content-near-duplicates]
+what = "Seiten enthalten ähnliche Texte im konfigurierten Inhaltsbereich."
+why = "Ähnliche Seiten können Aufmerksamkeit auf mehrere URLs verteilen."
+fix = "Vergleiche die Inhalte und führe Seiten mit demselben Zweck zusammen."
+
+[issues.content-soft-404-pages]
+what = "Eine Seite mit Status 200 enthält eine konfigurierte Fehlerphrase."
+why = "Ein Erfolgsstatus kann eine fehlende Seite verdecken. Die Textprüfung kann auch Artikel über Fehler treffen."
+fix = "Prüfe die gefundene Phrase. Liefere für entfernte Inhalte 404 oder 410 oder korrigiere den Seitentext."
+
+[issues.content-lorem-ipsum-placeholder]
+what = "Die Seite enthält den Platzhaltertext lorem ipsum."
+why = "Platzhalter können unfertige Inhalte für Besucher und Crawler sichtbar machen."
+fix = "Ersetze den Platzhalter durch geprüfte Inhalte."
+
+[issues.content-readability-difficult]
+what = "Der englische Flesch-Wert liegt bei mindestens 30 und unter 50."
+why = "Lange Sätze und komplexe Wörter können das Lesen erschweren. Die Formel ist für Englisch ausgelegt."
+fix = "Prüfe Satzlänge und Wortwahl für die Zielgruppe."
+
+[issues.content-readability-very-difficult]
+what = "Der englische Flesch-Wert liegt unter 30."
+why = "Der Text kann Fachwissen voraussetzen. Die Formel bewertet keine inhaltliche Qualität."
+fix = "Erwäge kürzere Sätze und Erläuterungen von Fachbegriffen."

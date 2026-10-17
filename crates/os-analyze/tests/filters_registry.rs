@@ -151,7 +151,13 @@ fn filters_match_the_registry_files_in_id_order_kind_and_requirements() {
         );
         for (exp, f) in expected.iter().zip(&tab.filters) {
             assert_eq!(kind_name(f.kind), exp.1, "Art von {}:{}", tab.id, f.id);
-            let (config, rendering) = expected_requirements(&exp.2);
+            let (mut config, rendering) = expected_requirements(&exp.2);
+            // K2-60: M2-D02 ersetzt die beiden Lesbarkeits-Stubs mit echter Erhebungsvoraussetzung.
+            if tab.id == "Content"
+                && matches!(f.id, "Readability Difficult" | "Readability Very Difficult")
+            {
+                config.push("extraction.readability".to_string());
+            }
             let actual_config: Vec<String> = f
                 .requires
                 .iter()

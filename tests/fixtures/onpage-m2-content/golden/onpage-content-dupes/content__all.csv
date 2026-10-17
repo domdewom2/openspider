@@ -1,0 +1,10 @@
+﻿Address,Word Count,Sentence Count,Average Words Per Sentence,Flesch Reading Ease Score,Readability,Closest Similarity Match,No. Near Duplicates,Closest Semantically Similar Address,Semantic Similarity Score,No. Semantically Similar,Semantic Relevance Score,Total Language Errors,Spelling Errors,Grammar Errors,Language,Hash,Indexability,Indexability Status,Matched Phrase
+{BASE}/,30,1,30,91.8,Very Easy,,,,,,,,,,,fc827d9f040196a3a0ab3657a5c724ac,Indexable,,
+{BASE}/a.html,42,2,21,100,Very Easy,,,,,,,,,,,4061f6a97e80d8fd980c13a496cc515d,Indexable,,
+{BASE}/a.html?ref=x,42,2,21,100,Very Easy,,,,,,,,,,,4061f6a97e80d8fd980c13a496cc515d,Indexable,,
+{BASE}/b.html,42,2,21,100,Very Easy,,,,,,,,,,,4061f6a97e80d8fd980c13a496cc515d,Indexable,,
+{BASE}/c.html,42,2,21,100,Very Easy,,,,,,,,,,,c907037681534ab9d8d66910ce270a45,Indexable,,
+{BASE}/noidx.html,42,2,21,100,Very Easy,,,,,,,,,,,4061f6a97e80d8fd980c13a496cc515d,Non-Indexable,noindex,
+{BASE}/short-a.html,3,1,3,100,Very Easy,,,,,,,,,,,5bfaa7f3baf15e7150848a116fbf8004,Indexable,,
+{BASE}/short-b.html,3,1,3,100,Very Easy,,,,,,,,,,,5bfaa7f3baf15e7150848a116fbf8004,Indexable,,
+{BASE}/unique.html,40,1,40,0,Very Difficult,,,,,,,,,,,ecfb9d8f2b9e85dbc1bc319fd7d8c84b,Indexable,,

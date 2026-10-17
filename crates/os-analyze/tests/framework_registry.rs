@@ -53,7 +53,12 @@ fn every_filter_is_a_subset_of_all_and_counts_match_the_views() {
     let cfg = CrawlConfig::default();
     let counts = filter_counts(&file, &cfg).unwrap();
     // Stub-Tabs und Stub-Filter von M2 (M2-F02) haben noch keine Zähler (`views::filter_counts_in`).
-    let all_tabs = tabs::all();
+    let mut all_tabs = tabs::all();
+    // K2-60: Die drei implementierten D02-Erweiterungsfilter sind im Default-Paritätsmodus verborgen.
+    for tab in all_tabs.iter_mut().filter(|t| t.id == "Internal") {
+        tab.filters
+            .retain(|f| !matches!(f.id, "Media" | "Fonts" | "XML"));
+    }
     let registered: usize = all_tabs
         .iter()
         .filter(|t| !t.is_stub())

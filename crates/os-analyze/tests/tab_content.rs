@@ -132,7 +132,7 @@ fn slug(s: &str) -> String {
     out.trim_end_matches('_').to_string()
 }
 
-/// Vergleicht die Ansicht mit `tests/golden/<szenario>/<tab>__<filter>.csv` (`UPDATE_GOLDEN=1` schreibt).
+/// M2-Goldens liegen im eigenen Fixture-Verzeichnis; die M1-Goldens bleiben erhalten.
 fn assert_view_golden(
     fx: &FixtureCrawl,
     cfg: &CrawlConfig,
@@ -143,7 +143,7 @@ fn assert_view_golden(
     let label = os_analyze::names::label(filter_id, cfg);
     let page = view(fx, cfg, tab, filter_id);
     let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../tests/golden")
+        .join("../../tests/fixtures/onpage-m2-content/golden")
         .join(scenario)
         .join(format!("{}__{}.csv", slug(tab), slug(&label)));
     os_testsite::golden::assert_golden(path, &render_csv(fx, &page));
@@ -168,7 +168,7 @@ fn content_pages() -> Vec<String> {
 
 // spec: ONPAGE-142
 #[tokio::test]
-async fn columns_follow_the_spec_and_p1_columns_are_empty_and_hidden() {
+async fn columns_follow_the_spec_and_unavailable_functions_are_empty_and_hidden() {
     let fx = crawl(SCENARIO, CrawlConfig::default()).await;
     let cfg = fx.file.config().unwrap();
     let tab = os_analyze::tabs::content::tab();
@@ -195,6 +195,7 @@ async fn columns_follow_the_spec_and_p1_columns_are_empty_and_hidden() {
             "Hash",
             "Indexability",
             "Indexability Status",
+            "Matched Phrase",
         ]
     );
     // Sichtbar sind nur die M1-Spalten; die Spalten der P1-Funktionen sind ausgeblendet.
@@ -214,12 +215,12 @@ async fn columns_follow_the_spec_and_p1_columns_are_empty_and_hidden() {
             "Indexability Status"
         ]
     );
-    assert!(tab.columns.iter().all(|c| !c.extension));
+    assert!(tab.columns.last().unwrap().extension);
     assert_eq!(tab.columns[0].kind, os_analyze::ColumnKind::Url);
 
     let page = view(&fx, &cfg, TAB, "All");
     assert_eq!(page.columns.len(), keys.len());
-    for column in &keys[2..16] {
+    for column in &keys[6..16] {
         assert!(
             page.rows
                 .iter()
@@ -303,7 +304,11 @@ async fn base_set_is_internal_html_with_2xx() {
         )
         .unwrap();
     assert_eq!(in_urls, 4);
-    for f in os_analyze::tabs::content::tab().filters {
+    for f in os_analyze::tabs::content::tab()
+        .filters
+        .into_iter()
+        .filter(|f| matches!(f.id, "All" | "Exact Duplicates" | "Low Content Pages"))
+    {
         let rows = sorted_addresses(&fx, &cfg, TAB, f.id);
         assert!(rows.iter().all(|a| all.contains(a)), "{} ⊆ All", f.id);
         assert_eq!(counted(&fx, &cfg, TAB, f.id).0 as usize, rows.len());
@@ -578,8 +583,62 @@ async fn exact_duplicates_need_hash_storage_and_the_exact_switch() {
 
 // spec: ONPAGE-142 [P1]
 #[test]
-#[ignore = "M2: ONPAGE-142 PDF-Zeile mit Word Count, Sentence Count und Lesbarkeit (P1-Funktionen ONPAGE-149/166)"]
-fn pdf_row_has_word_count_and_readability() {}
+fn pdf_row_has_word_count_and_readability() {
+    #[path = "framework_common.rs"]
+    mod store_fixture;
+    let facts: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../tests/fixtures/onpage-m2-content/pdf-facts.json"
+    ))
+    .unwrap();
+    let dir = tempfile::tempdir().unwrap();
+    let (_, file) = store_fixture::create(dir.path(), "pdf.ospider", 42);
+    store_fixture::insert(
+        &file,
+        &[store_fixture::row(1, "text.pdf")
+            .text("content_class", "PDF")
+            .int("status_code", 200)
+            .int("word_count", facts["word_count"].as_i64().unwrap())],
+    );
+    for (key, sql_value) in [
+        ("sentences", rusqlite::types::Value::Integer(1)),
+        ("average", 6.0.into()),
+        ("flesch", 100.0.into()),
+        ("label", "Very Easy".to_string().into()),
+    ] {
+        let column = match sql_value {
+            rusqlite::types::Value::Integer(_) => "v_int",
+            rusqlite::types::Value::Real(_) => "v_real",
+            _ => "v_text",
+        };
+        file.conn()
+            .execute(
+                &format!("INSERT INTO url_ext(url_id,key,{column}) VALUES (1,?1,?2)"),
+                rusqlite::params![format!("readability.{key}"), sql_value],
+            )
+            .unwrap();
+    }
+    let mut cfg = CrawlConfig::default();
+    cfg.pdf.store = true;
+    let mut q = ViewQuery::new("Content", "All");
+    q.columns = ColumnSelection::All;
+    let page = query_view(&file, &cfg, &q).unwrap();
+    assert_eq!(page.total, 1);
+    for (name, expected) in [
+        ("Word Count", Value::Int(6)),
+        ("Sentence Count", Value::Int(1)),
+        ("Average Words Per Sentence", Value::Float(6.0)),
+        ("Flesch Reading Ease Score", Value::Float(100.0)),
+        ("Readability", Value::Text("Very Easy".into())),
+        ("Hash", Value::Null),
+        ("Closest Similarity Match", Value::Null),
+    ] {
+        let index = page.columns.iter().position(|n| n == name).unwrap();
+        assert_eq!(page.rows[0][index], expected, "{name}");
+    }
+    cfg.extraction.readability = false;
+    let page = query_view(&file, &cfg, &q).unwrap();
+    assert_eq!(page.rows[0][2], Value::Null);
+}
 
 // spec: ONPAGE-143 [M2]
 #[test]

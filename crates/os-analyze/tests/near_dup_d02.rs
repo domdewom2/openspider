@@ -1,0 +1,238 @@
+#[path = "framework_common.rs"]
+mod common;
+use common::*;
+use os_analyze::{
+    analysis::{steps::near_duplicates, CancelToken},
+    minhash,
+};
+use os_model::{CrawlConfig, StepState};
+fn fixture() -> (tempfile::TempDir, os_store::CrawlFile) {
+    let dir = tempfile::tempdir().unwrap();
+    let (_, file) = create(dir.path(), "dups.ospider", 42);
+    for (id, text, hash) in [
+        (1, "The cat sat on the mat.", "a"),
+        (2, "The cat sat on the mat.", "b"),
+        (3, "The cat sat on the mat.", "a"),
+        (4, "unrelated different words and material", "c"),
+    ] {
+        insert(
+            &file,
+            &[row(id, &format!("{id}.html"))
+                .text("content_class", "HTML")
+                .int("status_code", 200)
+                .text("hash_md5", hash)
+                .text("indexability", "Indexable")],
+        );
+        file.conn()
+            .execute(
+                "INSERT INTO url_ext(url_id,key,v_text) VALUES (?1,'content.text',?2)",
+                rusqlite::params![id, text],
+            )
+            .unwrap();
+        file.conn()
+            .execute(
+                "INSERT INTO minhash VALUES (?1,?2)",
+                rusqlite::params![
+                    id,
+                    os_store::encode_minhash(&minhash::signature(&minhash::shingles(text)))
+                ],
+            )
+            .unwrap();
+    }
+    (dir, file)
+}
+// spec: ONPAGE-144
+#[test]
+fn shingling_jaccard_and_candidate_probability() {
+    assert_eq!(
+        minhash::shingles("Der Hund bellt laut.")
+            .into_iter()
+            .collect::<Vec<_>>(),
+        ["der hund bellt", "hund bellt laut"]
+    );
+    assert_eq!(minhash::shingles("Hund bellt").len(), 1);
+    let a = (0..9).map(|n| n.to_string()).collect();
+    let b = (0..10).map(|n| n.to_string()).collect();
+    assert_eq!(minhash::jaccard(&a, &b), 0.9);
+    for threshold in 50..=100 {
+        let r = minhash::band_rows(threshold);
+        assert!(
+            1.0 - (1.0 - (f64::from(threshold) / 100.0).powi(r as i32)).powi((128 / r) as i32)
+                >= 0.999
+        );
+    }
+}
+// spec: ONPAGE-144
+#[test]
+fn analysis_is_deterministic_excludes_exact_pairs_and_can_cancel() {
+    let (_dir, file) = fixture();
+    let mut cfg = CrawlConfig::default();
+    cfg.duplicates.near_enabled = true;
+    let cancel = CancelToken::new();
+    assert_eq!(
+        near_duplicates::run(&file, &cfg, &cancel).unwrap(),
+        StepState::Done
+    );
+    let dump = || {
+        file.conn()
+            .prepare("SELECT url_id,other_id,similarity FROM near_duplicates ORDER BY 1,2")
+            .unwrap()
+            .query_map([], |r| {
+                Ok((
+                    r.get::<_, i64>(0)?,
+                    r.get::<_, i64>(1)?,
+                    r.get::<_, f64>(2)?,
+                ))
+            })
+            .unwrap()
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap()
+    };
+    let before = dump();
+    assert_eq!(before, [(1, 2, 1.0), (2, 1, 1.0), (2, 3, 1.0), (3, 2, 1.0)]);
+    assert_eq!(cancel.progress(), 1.0);
+    near_duplicates::run(&file, &cfg, &cancel).unwrap();
+    assert_eq!(dump(), before);
+    cancel.cancel();
+    assert_eq!(
+        near_duplicates::run(&file, &cfg, &cancel).unwrap(),
+        StepState::Pending
+    );
+    assert_eq!(dump(), before);
+}
+// spec: ONPAGE-145
+#[test]
+fn duplicate_details_and_word_diff() {
+    let (_dir, file) = fixture();
+    let cfg = CrawlConfig::default();
+    let params = serde_json::json!({"filter":"Exact"});
+    let req = os_analyze::details::DetailReq {
+        url_ids: &[os_model::UrlId(1)],
+        params: &params,
+        sort: &[],
+        offset: 0,
+        limit: 10,
+    };
+    let rows = os_analyze::tabs::duplicates::detail_rows(&file, &cfg, &req).unwrap();
+    assert_eq!(rows.total, 1);
+    assert_eq!(rows.rows[0][2], os_model::Value::Text("Exact".into()));
+    let mut cfg = cfg.clone();
+    cfg.duplicates.near_enabled = true;
+    near_duplicates::run(&file, &cfg, &CancelToken::new()).unwrap();
+    os_analyze::analysis::persist::write_step(
+        &file,
+        os_model::AnalysisStep::NearDuplicates,
+        StepState::Done,
+        None,
+        Some(&os_analyze::state::step_config_hash(
+            os_model::AnalysisStep::NearDuplicates,
+            &cfg,
+        )),
+    )
+    .unwrap();
+    let near_params = serde_json::json!({"filter":"Near"});
+    let near_req = os_analyze::details::DetailReq {
+        params: &near_params,
+        ..req
+    };
+    let near = os_analyze::tabs::duplicates::detail_rows(&file, &cfg, &near_req).unwrap();
+    assert_eq!(near.total, 1);
+    assert_eq!(near.rows[0][1], os_model::Value::Int(100));
+    assert_eq!(
+        minhash::word_diff("one two three", "one four three"),
+        (vec![1], vec![1])
+    );
+    assert_eq!(minhash::word_diff("a a b", "a b"), (vec![1], vec![]));
+}
+// spec: ONPAGE-144
+#[test]
+fn lsh_recall_on_two_thousand_seeded_documents() {
+    use std::collections::{HashMap, HashSet};
+    let mut buckets = HashMap::<(usize, Vec<u32>), Vec<usize>>::new();
+    let mut pairs = HashSet::new();
+    let mut docs = Vec::new();
+    for id in 0..2000usize {
+        let group = if id < 600 { id / 2 } else { id };
+        let mut words = (0..120)
+            .map(|n| format!("word{group}x{n}"))
+            .collect::<Vec<_>>();
+        if id < 600 && id % 2 == 1 {
+            for n in 0..(group % 3) {
+                words[20 + n * 45] = format!("changed{group}x{n}");
+            }
+        }
+        let shingles = minhash::shingles(&words.join(" "));
+        let sig = minhash::signature(&shingles);
+        for (band, part) in sig.chunks(minhash::band_rows(90)).enumerate() {
+            let bucket = buckets.entry((band, part.to_vec())).or_default();
+            for &candidate in bucket.iter() {
+                pairs.insert((candidate, id));
+            }
+            bucket.push(id);
+        }
+        docs.push(shingles);
+    }
+    let mut found = 0;
+    for n in 0..300 {
+        let (a, b) = (n * 2, n * 2 + 1);
+        assert!(minhash::jaccard(&docs[a], &docs[b]) >= 0.9);
+        if pairs.contains(&(a, b)) {
+            found += 1;
+        }
+    }
+    assert!(found >= 299, "recall {found}/300");
+    for (a, b) in pairs {
+        if minhash::jaccard(&docs[a], &docs[b]) >= 0.9 {
+            assert_eq!(a / 2, b / 2);
+        }
+    }
+}
+// spec: ONPAGE-144
+#[test]
+fn non_indexable_documents_do_not_change_counts_when_excluded() {
+    let (_dir, file) = fixture();
+    file.conn()
+        .execute(
+            "UPDATE urls SET indexability='Non-Indexable' WHERE id=2",
+            [],
+        )
+        .unwrap();
+    let mut cfg = CrawlConfig::default();
+    cfg.duplicates.near_enabled = true;
+    near_duplicates::run(&file, &cfg, &CancelToken::new()).unwrap();
+    let count = || {
+        file.conn()
+            .query_row("SELECT COUNT(*) FROM near_duplicates", [], |r| {
+                r.get::<_, i64>(0)
+            })
+            .unwrap()
+    };
+    assert_eq!(count(), 0);
+    cfg.duplicates.only_indexable = false;
+    near_duplicates::run(&file, &cfg, &CancelToken::new()).unwrap();
+    assert_eq!(count(), 4);
+}
+// spec: ONPAGE-144
+#[tokio::test]
+async fn parser_signatures_match_analysis_contract_on_fixture() {
+    let mut cfg = CrawlConfig::default();
+    cfg.duplicates.near_enabled = true;
+    cfg.pdf.store = true;
+    let fx = os_engine::testing::crawl_fixture("onpage-m2-content", cfg).await;
+    let mut stmt=fx.file.conn().prepare("SELECT m.sig,e.v_text FROM minhash m JOIN url_ext e ON e.url_id=m.url_id AND e.key='content.text'").unwrap();
+    let rows = stmt
+        .query_map([], |r| {
+            Ok((r.get::<_, Vec<u8>>(0)?, r.get::<_, String>(1)?))
+        })
+        .unwrap();
+    let mut count = 0;
+    for row in rows {
+        let (sig, text) = row.unwrap();
+        assert_eq!(
+            os_store::decode_minhash(&sig).unwrap(),
+            minhash::signature(&minhash::shingles(&text))
+        );
+        count += 1;
+    }
+    assert!(count >= 5);
+}

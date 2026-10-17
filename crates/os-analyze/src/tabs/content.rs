@@ -11,7 +11,7 @@
 //!
 //! Alle Spalten der Spec in Spec-Reihenfolge. Die Spalten der P1-Funktionen (Satzanzahl und Lesbarkeit
 //! ONPAGE-149, Near Duplicates ONPAGE-144, Embeddings INTEG-181/182, Rechtschreibung/Grammatik ONPAGE-153 ff.,
-//! Sprache) sind vorhanden, aber leer (`NULL`) und standardmäßig ausgeblendet. `Hash` ist für PDFs leer
+//! Sprache) sind vorhanden; nicht aktivierte oder noch ausstehende Funktionen bleiben leer. `Hash` ist für PDFs leer
 //! (Annahme A-53) und sonst `urls.hash_md5` wie im Internal-Tab.
 //!
 //! # Exact Duplicates (ONPAGE-143)
@@ -43,6 +43,7 @@
 //!
 //! `:pdf_store`, `:dup_only_indexable`, `:low_word_count`.
 
+use os_model::AnalysisStep;
 use os_model::Value;
 
 use crate::defs::{
@@ -128,9 +129,47 @@ fn column(
     }
 }
 
-/// Spalte einer P1-Funktion: leer und standardmäßig ausgeblendet (ONPAGE-142).
+/// Spalten der Teilanalysen mit expliziten Voraussetzungen (ONPAGE-142).
 fn p1_column(key: &'static str, kind: ColumnKind) -> ColumnDef {
-    column(key, "NULL", kind, false)
+    let (sql, needs) = match key {
+        "Sentence Count" => (
+            "(SELECT v_int FROM url_ext WHERE url_id=u.id AND key='readability.sentences')",
+            Some(crate::defs::Needs::Config("extraction.readability")),
+        ),
+        "Average Words Per Sentence" => (
+            "(SELECT v_real FROM url_ext WHERE url_id=u.id AND key='readability.average')",
+            Some(crate::defs::Needs::Config("extraction.readability")),
+        ),
+        "Flesch Reading Ease Score" => (
+            "(SELECT v_real FROM url_ext WHERE url_id=u.id AND key='readability.flesch')",
+            Some(crate::defs::Needs::Config("extraction.readability")),
+        ),
+        "Readability" => (
+            "(SELECT v_text FROM url_ext WHERE url_id=u.id AND key='readability.label')",
+            Some(crate::defs::Needs::Config("extraction.readability")),
+        ),
+        "Closest Similarity Match" => (
+            "(SELECT ROUND(MAX(similarity)*100) FROM near_duplicates WHERE url_id=u.id)",
+            Some(crate::defs::Needs::CrawlAnalysis(
+                AnalysisStep::NearDuplicates,
+            )),
+        ),
+        "No. Near Duplicates" => (
+            "(SELECT NULLIF(COUNT(*),0) FROM near_duplicates WHERE url_id=u.id)",
+            Some(crate::defs::Needs::CrawlAnalysis(
+                AnalysisStep::NearDuplicates,
+            )),
+        ),
+        _ => ("NULL", None),
+    };
+    let sql = match needs {
+        Some(crate::defs::Needs::Config("extraction.readability")) => crate::defs::intern(&format!("CASE WHEN :readability_enabled=1 THEN {sql} END")),
+        Some(crate::defs::Needs::CrawlAnalysis(_)) => crate::defs::intern(&format!("CASE WHEN :near_enabled=1 AND EXISTS (SELECT 1 FROM analysis_steps WHERE step='near_duplicates' AND state='done' AND config_hash=:near_config_hash) THEN {sql} END")),
+        _ => sql,
+    };
+    let mut out = column(key, sql, kind, false);
+    out.needs = needs;
+    out
 }
 
 /// Definition des Tabs „Content“.
@@ -184,6 +223,7 @@ pub fn tab() -> TabDef {
                 ColumnKind::Text,
                 true,
             ),
+            column("Matched Phrase", MATCHED_PHRASE, ColumnKind::Text, false).into_extension(),
         ],
         filters: vec![
             FilterDef {
@@ -213,13 +253,20 @@ pub fn tab() -> TabDef {
                 ignore_non_indexable: true,
                 default_columns: &[],
             },
+            near_filter(),
+            content_filter("Soft 404 Pages", SOFT404, &[], &["Matched Phrase"]),
+            content_filter("Lorem Ipsum Placeholder", "u.content_class='HTML' AND EXISTS (SELECT 1 FROM url_ext WHERE url_id=u.id AND key='content.lorem' AND v_int=1)", &[], &[]),
+            content_filter("Readability Difficult", "(SELECT v_real FROM url_ext WHERE url_id=u.id AND key='readability.flesch') >= 30 AND (SELECT v_real FROM url_ext WHERE url_id=u.id AND key='readability.flesch') < 50", &["extraction.readability"], &[]),
+            content_filter("Readability Very Difficult", "(SELECT v_real FROM url_ext WHERE url_id=u.id AND key='readability.flesch') < 30", &["extraction.readability"], &[]),
         ],
         default_sort: vec![SortKey {
             column: "Address".to_string(),
             descending: false,
         }],
         params: |cfg| {
-            vec![
+            let mut params=analysis_params(cfg);
+            params.extend(vec![
+                ("soft404_phrases", Value::Text(serde_json::to_string(&cfg.content.soft404_phrases.iter().map(|s| s.split_whitespace().collect::<Vec<_>>().join(" ").to_lowercase()).collect::<Vec<_>>()).expect("phrases"))),
                 ("pdf_store", Value::Int(i64::from(cfg.pdf.store))),
                 (
                     "dup_only_indexable",
@@ -229,8 +276,80 @@ pub fn tab() -> TabDef {
                     "low_word_count",
                     Value::Int(i64::from(cfg.content.low_word_count)),
                 ),
-            ]
+            ]);
+            params
         },
         hidden_population: None,
     }
+}
+
+/// Live, konfigurationsabhängige Phrase auf gespeichertem normalisiertem Text.
+pub const SOFT404: &str = "u.content_class='HTML' AND u.status_code=200 AND EXISTS (SELECT 1 FROM url_ext e,json_each(:soft404_phrases) p WHERE e.url_id=u.id AND e.key='content.soft404_text' AND p.value <> '' AND instr(e.v_text,p.value)>0)";
+const MATCHED_PHRASE: &str = "(SELECT p.value FROM url_ext e,json_each(:soft404_phrases) p WHERE e.url_id=u.id AND e.key='content.soft404_text' AND p.value <> '' AND instr(e.v_text,p.value)>0 ORDER BY CAST(p.key AS INTEGER) LIMIT 1)";
+fn content_filter(
+    id: &'static str,
+    predicate: &'static str,
+    keys: &[&'static str],
+    columns: &'static [&'static str],
+) -> FilterDef {
+    FilterDef {
+        id,
+        predicate,
+        kind: FilterKind::Live,
+        requires: keys.iter().map(|k| Requirement::Config(k)).collect(),
+        ignore_non_indexable: true,
+        default_columns: columns,
+    }
+}
+fn near_filter() -> FilterDef {
+    let mut f = content_filter(
+        "Near Duplicates",
+        "u.content_class='HTML' AND EXISTS (SELECT 1 FROM near_duplicates WHERE url_id=u.id)",
+        &["duplicates.near_enabled"],
+        &[],
+    );
+    f.kind = FilterKind::PostCrawl(AnalysisStep::NearDuplicates);
+    f.ignore_non_indexable = false;
+    f
+}
+/// Gemeinsame Spalten für Internal und Content.
+pub fn analysis_columns() -> Vec<ColumnDef> {
+    tab()
+        .columns
+        .into_iter()
+        .filter(|c| {
+            matches!(
+                c.key,
+                "Closest Similarity Match"
+                    | "No. Near Duplicates"
+                    | "Flesch Reading Ease Score"
+                    | "Readability"
+                    | "Spelling Errors"
+                    | "Grammar Errors"
+                    | "Language"
+                    | "Closest Semantically Similar Address"
+                    | "Semantic Similarity Score"
+                    | "No. Semantically Similar"
+                    | "Semantic Relevance Score"
+            )
+        })
+        .collect()
+}
+
+/// Parameter der gemeinsam genutzten Analysespalten.
+pub fn analysis_params(cfg: &os_model::CrawlConfig) -> Vec<(&'static str, Value)> {
+    vec![
+        (
+            "readability_enabled",
+            Value::Bool(cfg.extraction.readability),
+        ),
+        ("near_enabled", Value::Bool(cfg.duplicates.near_enabled)),
+        (
+            "near_config_hash",
+            Value::Text(crate::state::step_config_hash(
+                AnalysisStep::NearDuplicates,
+                cfg,
+            )),
+        ),
+    ]
 }
