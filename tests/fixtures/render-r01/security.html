@@ -1,0 +1,7 @@
+<!doctype html><body><script>
+Promise.all([
+ navigator.permissions.query({name:'geolocation'}).then(p=>'geo='+p.state),
+ navigator.permissions.query({name:'notifications'}).then(p=>'notifications='+p.state),
+ navigator.serviceWorker.register('/worker.js').then(()=> 'worker=allowed',()=> 'worker=blocked')
+]).then(values=>document.body.dataset.security=values.join(','));
+</script></body>

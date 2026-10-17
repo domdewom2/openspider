@@ -1,0 +1,5 @@
+<!doctype html><body><script>
+console.info('fixture info');console.warn('fixture warning');
+setTimeout(()=>{throw new Error('fixture exception')},10);
+setTimeout(()=>console.error('after cutoff'),1000);
+</script></body>

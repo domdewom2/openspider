@@ -1,9 +1,9 @@
 //! `os-render` – JS-Rendering über Chromium (CDP), Screenshots und gerendertes DOM (CRAWL-078 ff.).
 //!
-//! Gerüst von M2-F02 (`docs/plan/M2.md` 3.5): Die öffentliche Oberfläche steht in [`api`] ([`Renderer::launch`],
-//! [`Renderer::render`], [`RenderedPage`]); die Module `axe/` (Barrierefreiheit, M2-D21), `snippets/` (Custom JavaScript,
-//! M2-D22) und `login` (formularbasierte Anmeldung, M2-U17) sind Stubs der Fachpakete. Seitenlauf, Screenshots, Konsole
-//! und blockierte Ressourcen setzt M2-R01 um.
+//! Chromium/CDP-Seitenlauf, Ressourcenrichtlinien, Screenshots und begrenzte
+//! Konsolenerfassung stehen in [`api`]. Die Engine übergibt Netzwerkidentität,
+//! robots-Freigaben und bereits abgerufene Hauptdokumente. Die Module `axe/`,
+//! `snippets/` und `login` bleiben Erweiterungspunkte ihrer Fachpakete.
 
 pub mod api;
 pub mod axe;
