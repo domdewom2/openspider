@@ -17,6 +17,7 @@ pub mod oauth;
 pub mod psi;
 pub mod queue;
 
+pub use core::ApiError as IntegError;
 pub use core::{ApiCtx, ApiError, ApiSource, ApiState, ApiStatus, BoxFuture, UrlRef};
 
 /// Name dieses Crates.

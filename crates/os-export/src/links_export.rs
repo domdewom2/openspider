@@ -80,6 +80,8 @@ pub fn link_header() -> Vec<String> {
 pub enum LinkOrder {
     /// `Destination`, `Source`, Dokumentreihenfolge (OUT-031).
     Inlinks,
+    /// Fehler nach Status, Ziel und Quelle (OUT-050).
+    ErrorInlinks,
     /// `Source`, Dokumentreihenfolge (OUT-032).
     Outlinks,
 }
@@ -90,6 +92,7 @@ impl LinkOrder {
             LinkOrder::Inlinks => {
                 "COALESCE(t.address, l.target_raw) ASC, s.address ASC, l.position ASC, l.id ASC"
             }
+            LinkOrder::ErrorInlinks => "CASE WHEN t.state = 'done' AND t.status_code > 0 THEN t.status_code END ASC, COALESCE(t.address, l.target_raw) ASC, s.address ASC, l.position ASC, l.id ASC",
             LinkOrder::Outlinks => "s.address ASC, l.position ASC, l.id ASC",
         }
     }
@@ -153,6 +156,18 @@ pub(crate) fn stream_links(
     kinds: &[ColumnKind],
     writer: &mut dyn TableWriter,
 ) -> Result<u64, ExportError> {
+    stream_links_with(file, where_sql, params, order, kinds, writer, None)
+}
+
+fn stream_links_with(
+    file: &CrawlFile,
+    where_sql: &str,
+    params: &[(String, Value)],
+    order: LinkOrder,
+    kinds: &[ColumnKind],
+    writer: &mut dyn TableWriter,
+    mut ctx: Option<&mut crate::types::ExportCtx<'_>>,
+) -> Result<u64, ExportError> {
     let conn = file.conn();
     let mut stmt = sql(conn.prepare_cached(&select_sql(where_sql, order)))?;
     bind_named!(stmt, params);
@@ -160,6 +175,10 @@ pub(crate) fn stream_links(
     let mut count = 0u64;
     let mut values: Vec<Value> = Vec::with_capacity(LINK_COLUMNS.len());
     while let Some(row) = sql(rows.next())? {
+        if let Some(ctx) = ctx.as_deref_mut() {
+            ctx.checkpoint()?;
+            (ctx.progress)(count);
+        }
         values.clear();
         for i in 0..LINK_COLUMNS.len() {
             let v = match i {
@@ -273,4 +292,35 @@ pub(crate) fn export_link_entry(
     }
     info.warnings.extend(warnings);
     Ok(info)
+}
+
+/// Schreibt einen Linkexport in einen vorhandenen Writer (OUT-031/050).
+pub fn export_link_entry_to(
+    entry: &BulkLinkEntry,
+    job: &crate::catalog::TableJob<'_>,
+    writer: &mut dyn crate::types::TableWriter,
+    ctx: &mut crate::types::ExportCtx<'_>,
+) -> Result<u64, ExportError> {
+    ctx.checkpoint()?;
+    let mut warnings = Vec::new();
+    let condition = target_condition(job.tabs, job.file, job.cfg, &entry.selection, &mut warnings)?;
+    writer.header(&link_header())?;
+    let count = match condition {
+        Some(c) => stream_links_with(
+            job.file,
+            &c.sql,
+            &c.params,
+            entry.order,
+            &link_kinds(),
+            writer,
+            Some(ctx),
+        )?,
+        None => 0,
+    };
+    ctx.checkpoint()?;
+    (ctx.progress)(count);
+    if count == 0 && ctx.skip_empty {
+        ctx.skipped.push(entry.name.clone());
+    }
+    Ok(count)
 }

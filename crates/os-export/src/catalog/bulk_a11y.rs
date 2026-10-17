@@ -38,6 +38,7 @@ const ENTRIES: &[TableEntry] = &[
         ],
         owner: "M2-D21",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Accessibility:WCAG 2.0 A",
@@ -63,6 +64,7 @@ const ENTRIES: &[TableEntry] = &[
         ],
         owner: "M2-D21",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Accessibility:WCAG 2.0 AA",
@@ -88,6 +90,7 @@ const ENTRIES: &[TableEntry] = &[
         ],
         owner: "M2-D21",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Accessibility:WCAG 2.0 AAA",
@@ -113,6 +116,7 @@ const ENTRIES: &[TableEntry] = &[
         ],
         owner: "M2-D21",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Accessibility:WCAG 2.1 AA",
@@ -138,6 +142,7 @@ const ENTRIES: &[TableEntry] = &[
         ],
         owner: "M2-D21",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Accessibility:WCAG 2.2 AA",
@@ -163,6 +168,7 @@ const ENTRIES: &[TableEntry] = &[
         ],
         owner: "M2-D21",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Accessibility:Best Practice",
@@ -188,6 +194,7 @@ const ENTRIES: &[TableEntry] = &[
         ],
         owner: "M2-D21",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Accessibility:Incomplete",
@@ -213,5 +220,6 @@ const ENTRIES: &[TableEntry] = &[
         ],
         owner: "M2-D21",
         run: stub_run,
+        header_fn: None,
     },
 ];

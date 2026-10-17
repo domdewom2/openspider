@@ -17,6 +17,7 @@ const ENTRIES: &[TableEntry] = &[TableEntry {
     aliases: &[],
     file_stem: "Queued URLs",
     header: &["Address", "Depth", "Priority"],
+    header_fn: None,
     requires: &[],
     owner: "M2-D17",
     run: stub_run,

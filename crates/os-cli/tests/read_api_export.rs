@@ -37,6 +37,8 @@ async fn crawl_with_exports(env: &Env, site: &os_testsite::TestSite) -> PathBuf 
             "--set".into(),
             "threads=1".into(),
             "--set".into(),
+            "extraction.http_headers=true".into(),
+            "--set".into(),
             "robots.retries=0".into(),
             "--export-tabs".into(),
             "Internal:All".into(),
@@ -392,7 +394,10 @@ async fn the_golden_of_all_views_is_identical_for_a_new_crawl_and_a_file_migrate
         migrated_manifest["openspider_version"], None,
         "unbekannt = NULL"
     );
-    assert_eq!(migrated_manifest["schema_version"].as_deref(), Some("3"));
+    assert_eq!(
+        migrated_manifest["schema_version"].as_deref(),
+        Some(os_store::SCHEMA_VERSION.to_string().as_str())
+    );
     let migrated_dump = dump_views(&migrated);
 
     assert_eq!(

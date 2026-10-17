@@ -42,6 +42,10 @@ pub fn writer_options(cfg: &CrawlConfig) -> WriterOptions {
 pub(crate) fn filter_warning(tab: &str, filter: &str, state: &FilterState) -> String {
     let reason = match state {
         FilterState::Ready => return String::new(),
+        FilterState::NeedsRecrawl => "Neu crawlen erforderlich".into(),
+        FilterState::Incomplete { unchecked } => {
+            format!("Unvollständig: {unchecked} ungeprüfte Seiten")
+        }
         FilterState::NeedsCrawlAnalysis => "Crawl-Analyse ausführen".to_string(),
         FilterState::Stale => "Crawl-Analyse veraltet, erneut ausführen".to_string(),
         FilterState::NeedsConfig(key) => format!("Einstellung {key} einschalten"),
@@ -171,7 +175,14 @@ pub fn export_bulk(
     out_dir: &Path,
     format: Format,
 ) -> Result<Vec<ExportFileInfo>, ExportError> {
-    export_bulk_in(&os_analyze::tabs::all(), file, cfg, name, out_dir, format)
+    export_bulk_in(
+        &os_analyze::tabs::configured_for_file(cfg, file),
+        file,
+        cfg,
+        name,
+        out_dir,
+        format,
+    )
 }
 
 /// Wie [`export_bulk`], gegen eine eigene Tab-Liste.
@@ -186,7 +197,7 @@ pub fn export_bulk_in(
     // K-74: Exporte einer nicht laufenden Datei bauen `links_target` bei Bedarf (Listen nach Linkziel).
     os_store::link_index::ensure_if_idle(file)?;
     // Auflösung über den gemeinsamen Katalog: Vorschläge bei Tippfehlern stammen aus allen Bulk-Namen.
-    let canonical = match catalog::resolve(ExportKind::Bulk, name)? {
+    let canonical = match catalog::resolve_with(ExportKind::Bulk, name, cfg)? {
         ExportRef::Bulk(canonical) => canonical,
         other => unreachable!("Bulk-Auflösung lieferte {other:?}"),
     };
@@ -204,6 +215,31 @@ pub fn export_bulk_in(
         }
         return Ok(result.files);
     }
+    if let Some(entry) = catalog::dynamic_entries(cfg)
+        .into_iter()
+        .find(|e| e.name == canonical)
+    {
+        fs_paths::create_dir_all(out_dir).map_err(|source| ExportError::Io {
+            path: out_dir.into(),
+            source,
+        })?;
+        let path = out_dir.join(naming::file_name(
+            &entry.file_stem,
+            None,
+            format.extension(),
+        ));
+        let job = catalog::TableJob {
+            tabs,
+            file,
+            cfg,
+            entry_name: &canonical,
+        };
+        let mut writer =
+            crate::output::open_writer(&path, format, &entry.name, &writer_options(cfg))?;
+        writer.header(&entry.header)?;
+        (entry.run)(&job, writer.as_mut())?;
+        return Ok(vec![writer.finish()?]);
+    }
     // M2: Tabellen-Einträge der Gruppen `catalog/bulk_<gruppe>.rs` (Stub: nur Kopfzeile, K-14).
     if let Some(entry) = catalog::find_table(&catalog::bulk_tables(), &canonical) {
         fs_paths::create_dir_all(out_dir).map_err(|source| ExportError::Io {
@@ -211,7 +247,12 @@ pub fn export_bulk_in(
             source,
         })?;
         let path = out_dir.join(entry.file_name(format.extension()));
-        let job = catalog::TableJob { tabs, file, cfg };
+        let job = catalog::TableJob {
+            tabs,
+            file,
+            cfg,
+            entry_name: name,
+        };
         return Ok(vec![catalog::export_table(entry, &job, &path, format)?]);
     }
     let entry = bulk_links::resolve(&canonical)?;
@@ -234,7 +275,14 @@ pub fn export_report(
     out_dir: &Path,
     format: Format,
 ) -> Result<ReportResult, ExportError> {
-    export_report_in(&os_analyze::tabs::all(), file, cfg, name, out_dir, format)
+    export_report_in(
+        &os_analyze::tabs::configured_for_file(cfg, file),
+        file,
+        cfg,
+        name,
+        out_dir,
+        format,
+    )
 }
 
 /// Wie [`export_report`], gegen eine eigene Tab-Liste.

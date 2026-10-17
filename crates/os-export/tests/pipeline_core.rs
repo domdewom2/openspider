@@ -228,7 +228,7 @@ fn every_tab_and_filter_of_the_registry_exports_without_error() {
     let dir = tempfile::tempdir().unwrap();
     let file = titles_file(dir.path());
     let cfg = CrawlConfig::default();
-    let all = tabs::all();
+    let all = tabs::configured(&cfg);
     let mut expected = 0usize;
     let mut names = Vec::new();
     for tab in &all {

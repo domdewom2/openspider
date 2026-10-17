@@ -30,6 +30,7 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D09",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Structured Data:Validation Errors Triples",
@@ -48,6 +49,7 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D09",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Structured Data:Validation Warnings Triples",
@@ -66,6 +68,7 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D09",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Structured Data:Parse Errors Triples",
@@ -84,6 +87,7 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D09",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Structured Data:Microdata URLs Triples",
@@ -102,6 +106,7 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D09",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Structured Data:JSON-LD URLs Triples",
@@ -120,6 +125,7 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D09",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Structured Data:RDFa URLs Triples",
@@ -138,6 +144,7 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D09",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Structured Data:Rich Result Feature Detected Triples",
@@ -156,5 +163,16 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D09",
         run: stub_run,
+        header_fn: None,
     },
 ];
+
+// STUB(M2-D09)
+pub fn export_detail(
+    _: &crate::catalog::TableJob<'_>,
+    _: &os_analyze::details::DetailReq<'_>,
+    _: &std::path::Path,
+    _: crate::types::Format,
+) -> Result<crate::types::ExportFileInfo, crate::error::ExportError> {
+    Err(crate::error::ExportError::NotImplemented("M2-D09"))
+}

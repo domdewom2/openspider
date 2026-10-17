@@ -29,4 +29,5 @@ const ENTRIES: &[TableEntry] = &[TableEntry {
     requires: &[ReportRequirement::CrawlAnalysis],
     owner: "M2-D04",
     run: stub_run,
+    header_fn: None,
 }];
