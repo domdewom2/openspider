@@ -41,7 +41,7 @@ unsafe extern "C" fn authorize(
     // SAFETY: policy outlives the connection and every prepared statement.
     let policy = unsafe { &*data.cast::<Policy>() };
     match action {
-        ffi::SQLITE_SELECT | ffi::SQLITE_RECURSIVE => ffi::SQLITE_OK,
+        ffi::SQLITE_SELECT => ffi::SQLITE_OK,
         ffi::SQLITE_FUNCTION => {
             let name = unsafe { ctext(b) }.to_ascii_lowercase();
             if policy.functions.contains(&name) && name != "load_extension" {
@@ -74,7 +74,12 @@ unsafe extern "C" fn progress(data: *mut c_void) -> c_int {
 }
 
 fn err(e: impl std::fmt::Display) -> String {
-    format!("SQL sandbox: {e}; time, memory or result limit may have been exceeded. Use a smaller query.")
+    let diagnostic = e.to_string();
+    let mut short = diagnostic.chars().take(2048).collect::<String>();
+    if diagnostic.chars().count() > 2048 {
+        short.push_str(" [diagnostic truncated]");
+    }
+    format!("SQL sandbox: {short}; time, memory or result limit may have been exceeded. Use a smaller query.")
 }
 
 fn open(path: &Path) -> Result<Connection, String> {
@@ -457,6 +462,10 @@ mod tests {
                 "accepted: {attack}"
             );
         }
+        let huge_error =
+            evaluate(&path, &format!("SELECT {}", "x".repeat(60_000)), &json!({})).unwrap_err();
+        assert!(huge_error.chars().count() < 4096);
+        assert!(huge_error.contains("truncated"));
         assert_eq!(before, std::fs::read(&path).unwrap());
         let denied = evaluate(&path, "ATTACH ':memory:' AS x", &json!({})).unwrap_err();
         assert!(denied.contains("not authorized"), "{denied}");
@@ -502,12 +511,20 @@ mod tests {
     #[test]
     fn progress_and_result_limits_return_errors_without_a_panic() {
         let (_dir, path) = fixture();
-        assert!(evaluate(
+        let joins = (0..20)
+            .map(|i| format!("urls t{i}"))
+            .collect::<Vec<_>>()
+            .join(" CROSS JOIN ");
+        let error = evaluate(
             &path,
-            "WITH RECURSIVE x(n) AS (VALUES(1) UNION ALL SELECT n+1 FROM x) SELECT sum(n) FROM x",
-            &json!({"timeout_ms":2})
+            &format!("SELECT count(*) FROM {joins}"),
+            &json!({"timeout_ms":2}),
         )
-        .is_err());
+        .unwrap_err();
+        assert!(
+            error.contains("interrupted") || error.contains("time limit"),
+            "{error}"
+        );
         assert!(evaluate(&path, "SELECT hex(zeroblob(50000))", &json!({}))
             .unwrap_err()
             .contains("limit"));

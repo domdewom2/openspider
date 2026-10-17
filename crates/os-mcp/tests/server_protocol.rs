@@ -225,8 +225,8 @@ async fn standard_client_can_run_the_five_basic_requests() {
     assert_eq!(envelope(&result)["summary"], json!({"tool": "dummy_read"}));
 
     // resources/list, prompts/list (leer bis M2)
-    assert!(client.list_all_resources().await.unwrap().is_empty());
-    assert!(client.list_all_prompts().await.unwrap().is_empty());
+    assert_eq!(client.list_all_resources().await.unwrap().len(), 2);
+    assert_eq!(client.list_all_prompts().await.unwrap().len(), 6);
 
     client.cancel().await.unwrap();
 }

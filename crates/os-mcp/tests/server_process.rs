@@ -292,8 +292,8 @@ async fn rmcp_client_talks_to_the_binary_over_stdio() {
     assert!(tools
         .iter()
         .all(|t| { t.annotations.as_ref().and_then(|a| a.read_only_hint) == Some(true) }));
-    assert!(client.list_all_resources().await.unwrap().is_empty());
-    assert!(client.list_all_prompts().await.unwrap().is_empty());
+    assert_eq!(client.list_all_resources().await.unwrap().len(), 2);
+    assert_eq!(client.list_all_prompts().await.unwrap().len(), 6);
     let result = client
         .call_tool(CallToolRequestParams::new("gibt_es_nicht"))
         .await

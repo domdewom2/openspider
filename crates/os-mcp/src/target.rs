@@ -156,7 +156,11 @@ mod tests {
     #[tokio::test]
     async fn dns_overrides_and_every_fetch_purpose_are_guarded_before_any_request() {
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../tests/fixtures/agent-m2-crawl");
+            .join("..")
+            .join("..")
+            .join("tests")
+            .join("fixtures")
+            .join("agent-m2-crawl");
         let site = os_testsite::TestSite::start_dir(path, 0).await.unwrap();
         let mut cfg = CrawlConfig::default();
         cfg.network.resolve = vec![format!("public.test={}", site.addr())];
@@ -263,7 +267,11 @@ mod tests {
         }
         let dir = tempfile::tempdir().unwrap();
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../tests/fixtures/agent-m2-crawl");
+            .join("..")
+            .join("..")
+            .join("tests")
+            .join("fixtures")
+            .join("agent-m2-crawl");
         let site = os_testsite::TestSite::start_dir(path, 0).await.unwrap();
         let mut cfg = CrawlConfig::default();
         cfg.network.resolve = vec![format!("public.test={}", site.addr())];

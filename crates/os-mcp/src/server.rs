@@ -198,7 +198,12 @@ fn describe(tool: &dyn Tool) -> McpTool {
 }
 
 fn tool_error(message: String) -> CallToolResult {
-    CallToolResult::error(vec![ContentBlock::text(message)])
+    let shaped = paging::shape(message, None, 0, 50_000, false);
+    let mut content = vec![ContentBlock::text(shaped.summary)];
+    if let Some(notice) = shaped.notice {
+        content.push(ContentBlock::text(notice));
+    }
+    CallToolResult::error(content)
 }
 
 fn tool_error_text(e: &ToolError) -> String {
@@ -465,5 +470,10 @@ mod tests {
             v["next_cursor"], "n",
             "Zusammenfassung bleibt gültiges JSON"
         );
+        let failure = tool_error("ä".repeat(80_000));
+        assert_eq!(failure.is_error, Some(true));
+        let failure = texts(&failure);
+        assert!(failure.iter().map(|s| s.chars().count()).sum::<usize>() <= 50_000);
+        assert!(failure.last().unwrap().contains("gekürzt"));
     }
 }
