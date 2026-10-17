@@ -1,4 +1,4 @@
-# Aufrufhilfen für die lokale Gate-Gegenprobe (M1-N26)
+# Aufrufhilfen für die lokale Gate-Gegenprobe (M1-N26, genutzt in M1-N28)
 
 Nur Aufrufhilfen, kein Produktcode. Reihenfolge nach den Messblöcken B1 bis B4 (`scripts/bench/run_acceptance.sh`):
 
