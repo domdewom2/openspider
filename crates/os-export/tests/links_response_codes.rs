@@ -54,11 +54,7 @@ fn export(
 }
 
 fn names(prefix_scope: &str, entry: &str) -> String {
-    if prefix_scope == "Internal & External" && entry == "All Error Inlinks" {
-        "Response Codes:All Error Inlinks".into()
-    } else {
-        format!("Response Codes:{prefix_scope}:{entry}")
-    }
+    format!("Response Codes:{prefix_scope}:{entry}")
 }
 
 fn dests(rows: &[Vec<String>]) -> BTreeSet<String> {
@@ -427,12 +423,9 @@ async fn golden_inlinks_exports_with_the_real_response_codes_filters() {
 
 // spec: OUT-067
 #[test]
-fn combined_error_export_accepts_the_spec_path_and_legacy_scoped_alias() {
-    let canonical = "Response Codes:All Error Inlinks";
-    for name in [
-        canonical,
-        "Response Codes:Internal & External:All Error Inlinks",
-    ] {
+fn combined_error_export_accepts_the_spec_path_and_existing_catalog_name() {
+    let canonical = "Response Codes:Internal & External:All Error Inlinks";
+    for name in [canonical, "Response Codes:All Error Inlinks"] {
         assert_eq!(
             catalog::resolve(ExportKind::Bulk, name).unwrap(),
             ExportRef::Bulk(canonical.into())

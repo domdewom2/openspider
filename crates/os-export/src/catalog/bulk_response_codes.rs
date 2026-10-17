@@ -15,15 +15,12 @@ const ENTRIES: &[TableEntry] = &[
 
 /// Vereinigung der drei Fehlerfilter mit der Sortierung nach Code, Ziel und Quelle (OUT-067).
 pub fn error_inlinks(scope: &str, prefix: &str) -> super::bulk_links::BulkLinkEntry {
+    // Spec-Kurzpfad zusätzlich anbieten; Katalogname und Dateiname bleiben kompatibel.
     let combined = scope == "Internal & External";
     super::bulk_links::BulkLinkEntry {
-        name: if combined {
-            "Response Codes:All Error Inlinks".into()
-        } else {
-            format!("Response Codes:{scope}:All Error Inlinks")
-        },
+        name: format!("Response Codes:{scope}:All Error Inlinks"),
         aliases: if combined {
-            vec![format!("Response Codes:{scope}:All Error Inlinks")]
+            vec!["Response Codes:All Error Inlinks".into()]
         } else {
             Vec::new()
         },
