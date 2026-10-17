@@ -9,6 +9,12 @@ async fn configured_columns_include_extraction_gates_and_parity_filters() {
     let mut cfg = os_model::CrawlConfig::default();
     cfg.extraction.page_titles = false;
     cfg.extraction.hash = false;
+    cfg.extraction.meta_robots = false;
+    cfg.extraction.x_robots_tag = false;
+    cfg.extraction.indexability = false;
+    cfg.spider.canonicals.store = false;
+    cfg.spider.meta_refresh.store = false;
+    cfg.spider.pagination.store = false;
     cfg.ui.parity_filters = true;
     let fx = Fx::config(cfg);
     let columns = fx.call("catalog.columns", json!({"tab":"Internal"})).await;
@@ -26,6 +32,23 @@ async fn configured_columns_include_extraction_gates_and_parity_filters() {
         .find(|c| c["key"] == "Hash")
         .unwrap();
     assert_eq!(hash["needs"]["arg"], "extraction.hash");
+    for (name, key) in [
+        ("Meta Robots 1", "extraction.meta_robots"),
+        ("X-Robots-Tag 1", "extraction.x_robots_tag"),
+        ("Indexability", "extraction.indexability"),
+        ("Canonical Link Element 1", "spider.canonicals.store"),
+        ("Meta Refresh 1", "spider.meta_refresh.store"),
+        ("rel=\"next\" 1", "spider.pagination.store"),
+    ] {
+        let column = columns
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|c| c["key"] == name)
+            .unwrap();
+        assert_eq!(column["needs"]["code"], "FEATURE_DISABLED");
+        assert_eq!(column["needs"]["arg"], key);
+    }
     let tabs = fx.call("catalog.tabs", json!(null)).await;
     let internal = tabs
         .as_array()

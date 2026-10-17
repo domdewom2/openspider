@@ -170,9 +170,24 @@ pub(crate) fn extraction_key(name: &str) -> Option<&'static str> {
         Some("extraction.h1")
     } else if name.starts_with("H2-") {
         Some("extraction.h2")
+    } else if name.starts_with("Meta Robots ") {
+        Some("extraction.meta_robots")
+    } else if name.starts_with("X-Robots-Tag ") {
+        Some("extraction.x_robots_tag")
+    } else if name.starts_with("Canonical Link Element ") {
+        Some("spider.canonicals.store")
+    } else if name.starts_with("Meta Refresh ") {
+        Some("spider.meta_refresh.store")
+    } else if name.starts_with("rel=\"next\" ")
+        || name.starts_with("rel=\"prev\" ")
+        || name.starts_with("HTTP rel=\"next\" ")
+        || name.starts_with("HTTP rel=\"prev\" ")
+    {
+        Some("spider.pagination.store")
     } else {
         match name {
             "Hash" => Some("extraction.hash"),
+            "Indexability" | "Indexability Status" => Some("extraction.indexability"),
             "Response Time" => Some("extraction.response_time"),
             "Last-Modified" => Some("extraction.last_modified"),
             "Word Count" => Some("extraction.word_count"),
