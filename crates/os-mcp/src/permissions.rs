@@ -231,6 +231,11 @@ impl DomainPolicy {
         }
     }
 
+    /// Whether connection-time private-target checks are disabled by configuration.
+    pub fn allows_private_targets(&self) -> bool {
+        self.allow_private
+    }
+
     /// Ist eine Domain-Liste gesetzt?
     pub fn is_restricted(&self) -> bool {
         !self.allowed.is_empty()
@@ -247,7 +252,7 @@ impl DomainPolicy {
                 self.check_url(url)?;
             }
         }
-        if let Some(Value::Array(urls)) = args.get("urls") {
+        if let Some(Value::Array(urls)) = args.get("urls").or_else(|| args.get("url_list")) {
             for url in urls.iter().filter_map(Value::as_str) {
                 self.check_url(url)?;
             }
@@ -348,7 +353,7 @@ fn is_private_host(host: &str) -> bool {
     last.starts_with("0x") || (!last.is_empty() && last.bytes().all(|b| b.is_ascii_digit()))
 }
 
-fn is_private_ip(ip: IpAddr) -> bool {
+pub(crate) fn is_private_ip(ip: IpAddr) -> bool {
     match ip {
         IpAddr::V4(v4) => is_private_v4(v4),
         IpAddr::V6(v6) => {

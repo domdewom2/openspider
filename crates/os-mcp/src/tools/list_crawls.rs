@@ -6,7 +6,7 @@
 //! Crawl erscheint mit dem Zustand „Paused“ (CRAWL-126).
 
 use os_model::{CrawlMode, CrawlState, SystemClock};
-use os_store::registry::{self, CrawlListing};
+use os_store::registry::CrawlListing;
 use os_store::{CrawlFile, OpenMode};
 use serde_json::{json, Value as Json};
 
@@ -58,7 +58,7 @@ impl Tool for ListCrawls {
             Some(c) => paging::decode_cursor(c, CURSOR_BINDING)?,
             None => 0,
         };
-        let report = registry::list_crawls_report(&ctx.crawl_dir).map_err(internal)?;
+        let report = super::common::discover(&ctx.crawl_dir).map_err(internal)?;
         // Dateinamen sind UUID v7: aufsteigend = Anlegereihenfolge; neueste zuerst.
         let mut crawls = report.crawls;
         crawls.reverse();

@@ -1,0 +1,27 @@
+[[route]]
+path = "/robots.txt"
+content_type = "text/plain"
+body = "User-agent: *\nAllow: /\n"
+
+[[route]]
+path = "/"
+body = '<!doctype html><html><head><title>MCP fixture</title></head><body><h1>Start</h1><a href="/page">Page</a></body></html>'
+
+[[route]]
+path = "/page"
+body = '<!doctype html><html><head><title>Page</title></head><body><h1>Page</h1></body></html>'
+
+[[route]]
+path = "/redirect"
+status = 302
+location = "http://169.254.169.254/latest/meta-data/"
+
+[[route]]
+path = "/slow"
+delay_ms = 100
+body = '<html><head><title>Slow</title></head><body><a href="/slow/2">Next</a></body></html>'
+
+[[route]]
+path = "/slow/2"
+delay_ms = 100
+body = '<html><head><title>Slow two</title></head><body>Done</body></html>'

@@ -3,7 +3,7 @@
 //! Der Streamable-HTTP-Server der App sieht dieselben Crawls wie die Oberfläche: Welche Crawls die Sitzung hält, ob einer
 //! läuft und wie weit er ist, kennt `os-app`. Damit `os-mcp` nie von `os-app` abhängt (3.2: „Nie: os-mcp → os-app“),
 //! reicht die App ein Trait-Objekt in den [`crate::ToolContext`]: `ToolContext.session: Option<Arc<dyn SessionAccess>>`.
-//! Der STDIO-Server (`openspider mcp`) hat keine Sitzung (`None`) und liest nur Dateien.
+//! Der STDIO-Server (`openspider mcp`) hat keine App-Sitzung (`None`); M01 verwaltet eigene Engine-Handles.
 //!
 //! STUB(M2-K17): M2-F02 legt Trait und Typen an; die Umsetzung in der App (und die Werkzeuge, die sie nutzen) liefern
 //! M2-K17 und M2-M01.

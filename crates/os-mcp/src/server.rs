@@ -69,7 +69,8 @@ impl McpServer {
     /// Baut den Server aus Werkzeugen (z. B. `tools::all()`), den aufgelösten Freigaben und der
     /// Aufrufumgebung. Nicht freigegebene Werkzeuge bleiben im Server, erscheinen aber weder in `tools/list`
     /// noch sind sie aufrufbar.
-    pub fn new(tools: Vec<Box<dyn Tool>>, permissions: Permissions, ctx: ToolContext) -> Self {
+    pub fn new(tools: Vec<Box<dyn Tool>>, permissions: Permissions, mut ctx: ToolContext) -> Self {
+        ctx.target_policy = permissions.domains().clone();
         let tools: Vec<Arc<dyn Tool>> = tools.into_iter().map(Arc::from).collect();
         for name in permissions.disabled_tools() {
             if !tools.iter().any(|t| t.name() == name) {
@@ -149,6 +150,33 @@ impl McpServer {
                 ))
             }
         }
+    }
+
+    /// Downloadable API description generated from the same enabled tool schemas as tools/list.
+    pub fn markdown(&self) -> String {
+        let mut text = String::from("# OpenSpider MCP tools\n\n");
+        for tool in self.list() {
+            text.push_str(&format!(
+                "## {}\n\n{}\n\n| Parameter | Schema |\n| --- | --- |\n",
+                tool.name,
+                tool.description.as_deref().unwrap_or("")
+            ));
+            if let Some(properties) = tool
+                .input_schema
+                .get("properties")
+                .and_then(Value::as_object)
+            {
+                for (name, schema) in properties {
+                    text.push_str(&format!(
+                        "| {} | `{}` |\n",
+                        name,
+                        schema.to_string().replace('|', "\\|")
+                    ));
+                }
+            }
+            text.push('\n');
+        }
+        text
     }
 
     /// Wandelt ein Werkzeugergebnis in Antwortblöcke um (Format siehe Moduldoku), kürzt zu lange Antworten.
@@ -259,16 +287,66 @@ impl ServerHandler for McpServer {
         _request: Option<PaginatedRequestParams>,
         _context: RequestContext<RoleServer>,
     ) -> Result<ListResourcesResult, ErrorData> {
-        Ok(ListResourcesResult::with_all_items(Vec::new()))
+        Ok(ListResourcesResult::with_all_items(vec![
+            rmcp::model::Resource::new("openspider://schema", "Crawl SQL schema")
+                .with_description("Actual tables, views and columns, grouped by crawl_id")
+                .with_mime_type("application/json"),
+            rmcp::model::Resource::new("openspider://tools", "openspider-mcp-tools.md")
+                .with_description("Enabled tools and parameter schemas")
+                .with_mime_type("text/markdown"),
+        ]))
     }
 
-    // Prompts bleiben bis M2 leer.
+    async fn read_resource(
+        &self,
+        request: rmcp::model::ReadResourceRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<rmcp::model::ReadResourceResponse, ErrorData> {
+        let text = match request.uri.as_str() {
+            "openspider://tools" => self.markdown(),
+            "openspider://schema" => {
+                let crawls = crate::tools::common::discover(&self.inner.ctx.crawl_dir)
+                    .map_err(|e| ErrorData::internal_error(e.to_string(), None))?
+                    .crawls;
+                let mut schemas = Vec::new();
+                for crawl in crawls {
+                    let schema = os_store::readonly_sql::schema(&crawl.path)
+                        .map_err(|e| ErrorData::internal_error(e, None))?;
+                    schemas
+                        .push(json!({"crawl_id":crawl.meta.crawl_id.to_string(),"schema":schema}));
+                }
+                json!({"crawls":schemas}).to_string()
+            }
+            _ => {
+                return Err(ErrorData::invalid_params(
+                    "Unknown resource; use resources/list",
+                    None,
+                ))
+            }
+        };
+        Ok(
+            rmcp::model::ReadResourceResult::new(vec![rmcp::model::ResourceContents::text(
+                text,
+                request.uri,
+            )])
+            .into(),
+        )
+    }
+
+    async fn get_prompt(
+        &self,
+        request: rmcp::model::GetPromptRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<rmcp::model::GetPromptResponse, ErrorData> {
+        crate::prompts::get(request).map(Into::into)
+    }
+
     async fn list_prompts(
         &self,
         _request: Option<PaginatedRequestParams>,
         _context: RequestContext<RoleServer>,
     ) -> Result<ListPromptsResult, ErrorData> {
-        Ok(ListPromptsResult::with_all_items(Vec::new()))
+        Ok(ListPromptsResult::with_all_items(crate::prompts::list()))
     }
 }
 

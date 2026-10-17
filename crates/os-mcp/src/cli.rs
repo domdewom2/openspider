@@ -20,9 +20,21 @@ use crate::{tools, transport};
 /// Argumente von `openspider mcp`.
 #[derive(Debug, Clone, Default, clap::Args)]
 pub struct McpArgs {
-    /// Ordner mit den Crawl-Dateien (Standard: der Crawl-Ordner der Anwendung).
+    /// Ordner mit *.ospider-Dateien; keine Registry nötig (Standard: Crawl-Ordner der Anwendung).
     #[arg(long, value_name = "ORDNER")]
     pub crawl_dir: Option<PathBuf>,
+
+    /// Internal disposable SQL sandbox process.
+    #[arg(long, hide = true)]
+    pub sql_worker: bool,
+
+    /// Streamable HTTP on IPv4/IPv6 loopback instead of STDIO (token in the secret store).
+    #[arg(long)]
+    pub http: bool,
+
+    /// Loopback HTTP port (0 selects a free port).
+    #[arg(long, requires = "http")]
+    pub port: Option<u16>,
 
     /// Freigegebene Werkzeugklassen (read, crawl, write, cost), kommagetrennt.
     #[arg(long, value_delimiter = ',', value_name = "KLASSEN")]
@@ -55,6 +67,9 @@ pub fn run(args: McpArgs) -> i32 {
 }
 
 fn execute(args: McpArgs) -> Result<(), McpError> {
+    if args.sql_worker {
+        return os_store::readonly_sql::worker_main().map_err(McpError::Transport);
+    }
     check_switches(&args)?;
     if let Some(name) = &args.print_config {
         return print_config_command(name, &args);
@@ -63,7 +78,12 @@ fn execute(args: McpArgs) -> Result<(), McpError> {
     let server = build_server(&args, &paths, tools::all())?;
     transport::init_logging();
     log_start(&server, &args, &paths);
-    run_blocking(server)
+    run_blocking(
+        server,
+        args.http,
+        args.port
+            .or(settings::load(&settings::path_in(&paths))?.http.port),
+    )
 }
 
 /// Baut den Server: liest `mcp.toml` aus `paths.settings`, löst die Freigaben auf (`--read-only` überstimmt
@@ -84,11 +104,10 @@ pub fn build_server(
         .crawl_dir
         .clone()
         .unwrap_or_else(|| paths.crawls.clone());
-    Ok(McpServer::new(
-        tools,
-        permissions,
-        ToolContext::new(crawl_dir),
-    ))
+    let mut ctx = ToolContext::new(crawl_dir);
+    ctx.settings_dir = paths.settings.clone();
+    ctx.settings = settings;
+    Ok(McpServer::new(tools, permissions, ctx))
 }
 
 /// Meldet Widersprüche und unbekannte Klassen in den Schaltern, bevor irgendeine Datei gelesen wird.
@@ -111,13 +130,14 @@ fn log_start(server: &McpServer, args: &McpArgs, paths: &AppPaths) {
         classes = ?classes,
         tools = server.exposed_tool_names().len(),
         crawl_dir = %crawl_dir.display(),
-        "openspider mcp gestartet (STDIO)"
+        transport = if args.http { "HTTP" } else { "STDIO" },
+        "openspider mcp gestartet"
     );
 }
 
 /// Führt den Server auf einem eigenen Thread mit eigener Laufzeit aus (so auch aus einer bestehenden
 /// Laufzeit heraus aufrufbar).
-fn run_blocking(server: McpServer) -> Result<(), McpError> {
+fn run_blocking(server: McpServer, http: bool, port: Option<u16>) -> Result<(), McpError> {
     let worker = std::thread::Builder::new()
         .name("openspider-mcp".into())
         .spawn(move || -> Result<(), McpError> {
@@ -125,7 +145,22 @@ fn run_blocking(server: McpServer) -> Result<(), McpError> {
                 .enable_all()
                 .build()
                 .map_err(|e| McpError::Transport(format!("Laufzeit nicht startbar: {e}")))?;
-            rt.block_on(transport::serve_stdio(server))
+            rt.block_on(async move {
+                if http {
+                    let token =
+                        crate::http::TokenStore::open(os_fetch::secrets::secret_store_from_env())?;
+                    let listener =
+                        crate::http::HttpServer::bind(server, port.unwrap_or(0), token).await?;
+                    tracing::info!(port = listener.port(), "MCP HTTP ready on loopback");
+                    tokio::signal::ctrl_c()
+                        .await
+                        .map_err(|e| McpError::Transport(e.to_string()))?;
+                    listener.stop().await;
+                    Ok(())
+                } else {
+                    transport::serve_stdio(server).await
+                }
+            })
         })
         .map_err(|e| McpError::Transport(format!("Thread nicht startbar: {e}")))?;
     worker
@@ -143,6 +178,13 @@ pub fn launch_args(args: &McpArgs, with_subcommand: bool) -> Vec<String> {
     if let Some(dir) = &args.crawl_dir {
         out.push("--crawl-dir".into());
         out.push(print_config::path_string(dir));
+    }
+    if args.http {
+        out.push("--http".into());
+        if let Some(port) = args.port {
+            out.push("--port".into());
+            out.push(port.to_string());
+        }
     }
     if args.read_only {
         out.push("--read-only".into());
