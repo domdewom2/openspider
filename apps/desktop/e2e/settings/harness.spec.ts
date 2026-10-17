@@ -59,7 +59,7 @@ test.describe("Harness und Design-System", () => {
       document.addEventListener("os:action", (e) => (window as unknown as { __actions: string[] }).__actions.push((e as CustomEvent).detail.id));
     });
     // Mod richtet sich nach der Plattform-Erkennung des Browsers (macOS: Cmd, sonst Strg)
-    const isMac = await page.evaluate(() => /mac/i.test(navigator.platform));
+    const isMac = (await page.locator("html").getAttribute("data-platform")) === "mac";
     const key = isMac ? "Meta" : "Control";
     await page.keyboard.press(`${key}+P`);
     await page.keyboard.press(`${key}+Shift+A`);
@@ -69,7 +69,7 @@ test.describe("Harness und Design-System", () => {
   // spec: UI-113
   test("Mod+, öffnet das Einstellungsfenster als eigenes Fenster (nicht modal)", async ({ page, app }) => {
     await app.open(page, "main");
-    const isMac = await page.evaluate(() => /mac/i.test(navigator.platform));
+    const isMac = (await page.locator("html").getAttribute("data-platform")) === "mac";
     const [popup] = await Promise.all([page.waitForEvent("popup"), page.keyboard.press(`${isMac ? "Meta" : "Control"}+,`)]);
     await popup.waitForLoadState();
     await expect(popup.getByRole("tablist", { name: /Settings sections|Einstellungsbereiche/ })).toBeVisible();

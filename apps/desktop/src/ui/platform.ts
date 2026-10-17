@@ -12,8 +12,9 @@ export function setPlatformOverride(p: Platform | null): void {
 
 export function detectPlatform(nav: { platform?: string; userAgent?: string; userAgentData?: { platform?: string } } = navigator): Platform {
   if (override) return override;
-  const source = `${nav.userAgentData?.platform ?? ""} ${nav.platform ?? ""} ${nav.userAgent ?? ""}`.toLowerCase();
-  return /mac|iphone|ipad/.test(source) ? "mac" : "win";
+  // Erste verlässliche Quelle zählt; der User-Agent nur als Notnagel (Playwright-WebKit unter Linux meldet "Macintosh").
+  const source = nav.userAgentData?.platform || nav.platform || nav.userAgent || "";
+  return /mac|iphone|ipad/i.test(source) ? "mac" : "win";
 }
 
 export function currentPlatform(): Platform {
