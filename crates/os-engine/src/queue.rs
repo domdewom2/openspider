@@ -524,6 +524,7 @@ impl Frontier {
             hops: 0,
             session: 0,
             replace: false,
+            attempt: 0,
         };
         // Im Fenster (oder während eines Auftrags, dessen Block die neue Zeile vielleicht nicht enthält) kommt der
         // Eintrag ins RAM; sonst bleibt er in der Datei, der neue Push ersetzt die Zeile.
@@ -741,6 +742,7 @@ impl Frontier {
                 hops: 0,
                 session: 0,
                 replace: false,
+                attempt: 0,
             };
             self.insert_ram(item);
             loaded += 1;
@@ -835,6 +837,7 @@ mod tests {
             hops: 0,
             session: 0,
             replace: false,
+            attempt: 0,
         }
     }
 

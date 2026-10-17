@@ -61,6 +61,17 @@ pub struct CrawlHandle {
 }
 
 impl CrawlHandle {
+    /// Sendet zusätzliche Eingaben an die Steuerschleife (CRAWL-131).
+    pub async fn add_urls(&self, urls: Vec<String>) -> Result<crate::AddUrlsSummary, EngineError> {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        self.control
+            .add_urls
+            .send((urls, tx))
+            .map_err(|_| EngineError::Invalid("Crawl nicht mehr aktiv".into()))?;
+        rx.await
+            .map_err(|_| EngineError::Invalid("Crawl wurde beendet".into()))?
+    }
+
     /// Kennung des Crawls.
     pub fn crawl_id(&self) -> CrawlId {
         self.crawl_id
@@ -259,7 +270,7 @@ async fn start_spider<F: Fetch>(
     if cfg.advanced.cookies == os_model::CookieMode::SessionOnly {
         core.sessions[0] = Some(Arc::new(CookieJar::new()));
     }
-    let scope = CrawlScope::new(Scope::new(&start, &cfg.scope));
+    let scope = CrawlScope::new(Scope::new(&start, &cfg.scope).with_cdns(&cfg.cdns));
 
     // Start-URL und Metadaten. Ist die Start-URL eine Sitemap-Datei, holt sie ausschließlich der Sitemap-Ingest
     // (K-41a); ihre URL-Zeile entsteht mit dem Ergebnis des Abrufs, nicht als Crawl-URL.
@@ -278,6 +289,7 @@ async fn start_spider<F: Fetch>(
                 resource_like: false,
                 apply_rules: false,
                 purpose: Purpose::Page,
+                source: None,
             },
             Some(0),
             0,
@@ -364,7 +376,7 @@ async fn start_list<F: Fetch>(
     if cfg.advanced.cookies == os_model::CookieMode::SessionOnly {
         core.sessions[0] = Some(Arc::new(CookieJar::new()));
     }
-    let mut scope = CrawlScope::new(Scope::new(&anchor, &cfg.scope));
+    let mut scope = CrawlScope::new(Scope::new(&anchor, &cfg.scope).with_cdns(&cfg.cdns));
     for e in &plan.entries {
         if let Some(u) = &e.url {
             if let Some(host) = u.url.host_str() {
@@ -400,6 +412,7 @@ async fn start_list<F: Fetch>(
                             resource_like: false,
                             apply_rules: true,
                             purpose: Purpose::Page,
+                            source: None,
                         },
                         Some(0),
                         0,
@@ -527,13 +540,16 @@ pub(crate) struct SharedInit<F: Fetch> {
 
 /// Gemeinsamer Zustand aus den Bausteinen; liefert auch die Steuerung (`Control`).
 pub(crate) fn make_shared<F: Fetch>(init: SharedInit<F>) -> (Arc<Shared<F>>, Arc<Control>) {
+    let (add_urls, add_rx) = tokio::sync::mpsc::unbounded_channel();
     let control = Arc::new(Control {
+        add_urls,
         notify: tokio::sync::Notify::new(),
         threads: AtomicU32::new(init.cfg.speed.threads),
         stop: AtomicU8::new(STOP_NONE),
         reason: Mutex::new(None),
     });
     let sh = Arc::new(Shared {
+        add_rx: tokio::sync::Mutex::new(add_rx),
         fetcher: init.fetcher,
         gate: build_gate(&init.cfg),
         pcfg: parse_config(&init.cfg),
@@ -546,8 +562,7 @@ pub(crate) fn make_shared<F: Fetch>(init: SharedInit<F>) -> (Arc<Shared<F>>, Arc
         progress: Mutex::new(init.tracker),
         abort: AtomicBool::new(false),
         error: Mutex::new(None),
-        host_gates: Mutex::new(std::collections::HashMap::new()),
-        max_per_host: init.cfg.speed.max_per_host.filter(|n| *n > 0),
+        host_pacer: crate::host_pace::HostPacer::new(init.cfg.speed.max_per_host),
         start_url: init.start_encoded,
         cfg: init.cfg,
         primed_origins: init.primed_origins,
@@ -592,6 +607,8 @@ pub(crate) fn launch<F: Fetch>(setup: Setup<F>) -> CrawlHandle {
         primed_origins,
         seeds,
     } = setup;
+    // Nur Kennung und Betriebsparameter loggen: URLs und Konfiguration können Geheimnisse enthalten.
+    tracing::info!(%crawl_id, threads = cfg.speed.threads, "Crawl gestartet");
     // RAM-Fenster der Warteschlange (K-78 b); beim Fortsetzen hat `resume::restore` es schon eingeschaltet
     if !core.frontier.spill_enabled() {
         core.frontier
@@ -718,7 +735,9 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
 
     // Sitemaps aus Konfiguration bzw. Start-URL bzw. Liste
     if !seeds.is_empty() {
-        if let Err(worker::Failure::Engine(e)) = worker::ingest_sitemaps(&sh, seeds).await {
+        if let Err(worker::Failure::Engine(e)) =
+            crate::sitemap_ingest::ingest_sitemaps(&sh, seeds).await
+        {
             sh.fail(e);
         }
     }
@@ -738,6 +757,8 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
     let mut maint: JoinSet<()> = JoinSet::new();
     let queue_failures = Arc::new(AtomicU32::new(0));
 
+    let mut last_snapshot = clock.monotonic();
+    let mut added = sh.add_rx.lock().await;
     let end = loop {
         diag::inc(&diag::STATS.run_loops);
         if sh.abort.load(Ordering::SeqCst) || sh.writer.failed() {
@@ -748,6 +769,7 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
             STOP_PAUSE => break End::Paused,
             _ => {}
         }
+        sh.lock_core().wake_deferred(clock.monotonic());
         // freie Plätze mit Arbeit füllen
         let target = ctl.threads.load(Ordering::SeqCst) as usize;
         loop {
@@ -781,7 +803,7 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
                 ));
             }
             if core.active == 0 {
-                if core.frontier.is_empty() {
+                if core.frontier.is_empty() && core.deferred.is_empty() {
                     break End::QueueEmpty;
                 }
                 if core.started >= core.max_urls {
@@ -789,7 +811,16 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
                 }
             }
         }
+        let due = sh
+            .lock_core()
+            .next_due()
+            .map(|due| due.saturating_sub(clock.monotonic()));
         tokio::select! {
+            _ = tokio::time::sleep(due.unwrap_or(Duration::from_secs(3600))), if due.is_some() => {},
+            Some((urls, reply)) = added.recv() => {
+                let result = crate::lifecycle::admit_added(&mut sh.lock_core(), &urls, &sh);
+                let _ = reply.send(result);
+            }
             _ = ctl.notify.notified() => {}
             Some(joined) = set.join_next(), if !set.is_empty() => {
                 if let Err(e) = joined {
@@ -798,7 +829,25 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
                     }
                 }
             }
-            _ = progress_tick.tick() => publish(&sh, &progress_tx),
+            _ = progress_tick.tick() => {
+                publish(&sh, &progress_tx);
+                let now = clock.monotonic();
+                if now.saturating_sub(last_snapshot) >= Duration::from_secs(1) {
+                    last_snapshot = now;
+                    let snapshot = progress_tx.borrow().clone();
+                    match crate::memory::tick(&crate::memory::MemoryInputs { progress: &snapshot, config: &sh.cfg }) {
+                        crate::memory::MemoryAction::None => {},
+                        crate::memory::MemoryAction::Throttle(n) => { ctl.threads.store(n.max(1), Ordering::SeqCst); },
+                        crate::memory::MemoryAction::Pause(reason) => {
+                            *ctl.reason.lock().unwrap_or_else(|p| p.into_inner()) = Some(("memory", reason));
+                            ctl.stop.store(STOP_PAUSE, Ordering::SeqCst);
+                        }
+                    }
+                    let mut batch = WriteBatch::default();
+                    batch.meta.push(("progress_snapshot".into(), serde_json::to_string(&snapshot).map_err(|e| EngineError::Invalid(e.to_string()))?));
+                    if sh.writer.send(batch).await.is_err() { sh.abort.store(true, Ordering::SeqCst); }
+                }
+            },
             _ = heartbeat.tick() => {
                 let mut b = WriteBatch::default();
                 b.meta.push(("heartbeat_at".to_string(), clock.now().to_db()));
@@ -819,6 +868,7 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
             }
         }
     };
+    drop(added);
 
     // laufende Worker zu Ende bringen
     while let Some(joined) = set.join_next().await {
@@ -828,6 +878,8 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
             }
         }
     }
+    // Auch ein beim Pausieren noch laufender Abruf kann eine Wiederholung zurückstellen.
+    sh.lock_core().restore_deferred();
 
     // Die Hintergrundarbeit hält einen Verweis auf den gemeinsamen Zustand und damit den Writer offen: abwarten.
     while maint.join_next().await.is_some() {}
@@ -847,6 +899,7 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
         tracker.crawled()
     };
     publish(&sh, &progress_tx);
+    tracing::info!(%crawl_id, state = state.as_str(), crawled, "Crawl beendet");
 
     let mut last = WriteBatch::default();
     last.meta

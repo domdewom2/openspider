@@ -280,7 +280,7 @@ fn prepare(
             let norm = os_url::parse_start_url(&enc)
                 .map_err(|e| EngineError::Invalid(format!("Start-URL: {e}")))?;
             (
-                CrawlScope::new(Scope::new(&norm, &cfg.scope)),
+                CrawlScope::new(Scope::new(&norm, &cfg.scope).with_cdns(&cfg.cdns)),
                 norm.encoded.clone(),
                 Some(norm.url),
             )
@@ -295,7 +295,7 @@ fn prepare(
                 })?;
             let hosts = std::mem::take(&mut restored.list_hosts);
             (
-                CrawlScope::with_hosts(Scope::new(&anchor, &cfg.scope), hosts),
+                CrawlScope::with_hosts(Scope::new(&anchor, &cfg.scope).with_cdns(&cfg.cdns), hosts),
                 String::new(),
                 None,
             )
@@ -441,4 +441,21 @@ pub async fn resume_crawl<F: Fetch>(
         primed_origins,
         seeds,
     }))
+}
+
+// STUB(M2-E02)
+pub(crate) fn admit_added<F: os_fetch::Fetch>(
+    _core: &mut crate::frontier::Core,
+    _urls: &[String],
+    _shared: &crate::worker::Shared<F>,
+) -> Result<crate::AddUrlsSummary, EngineError> {
+    Err(EngineError::NotImplemented("M2-E02"))
+}
+// STUB(M2-E02)
+pub fn add_urls_to_file(
+    _file: &mut CrawlFile,
+    _urls: &[String],
+    _cfg: &CrawlConfig,
+) -> Result<crate::AddUrlsSummary, EngineError> {
+    Err(EngineError::NotImplemented("M2-E02"))
 }

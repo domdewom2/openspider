@@ -127,6 +127,88 @@ pub fn annotate_report_only(facts: &mut FetchFacts, decision: &RobotsDecision) {
     }
 }
 
+use crate::{
+    frontier::{F_QUEUED, F_RULE_OK},
+    worker::{header_rows, plain_page, Shared},
+    writer_thread::WriterGone,
+};
+use os_fetch::{Fetch, FetchResult};
+use os_model::{DiscoveryKind, UrlState, WriteBatch};
+use os_url::ScopeClass;
+use std::sync::Arc;
+use url::Url;
+pub(crate) async fn record_robots<F: Fetch>(
+    sh: &Arc<Shared<F>>,
+    result: FetchResult,
+    write: os_model::RobotsWrite,
+) -> Result<Vec<SitemapSeed>, WriterGone> {
+    let cfg = &*sh.cfg;
+    let parsed_robots = Url::parse(&write.robots_url).ok();
+    let norm_robots = parsed_robots.as_ref().map(os_url::normalize);
+    let internal = norm_robots
+        .as_ref()
+        .is_some_and(|n| sh.scope.classify(n) == ScopeClass::Internal);
+    // `Sitemap:`-Zeilen gelten nur für interne Hosts: die Sitemaps fremder Hosts gehören nicht zu diesem Crawl.
+    let seeds = if internal {
+        write
+            .body
+            .as_deref()
+            .map(|body| {
+                let listed: Vec<String> = os_fetch::robots::parse(body).sitemaps().to_vec();
+                // relative Angaben (`Sitemap: /sitemap_index.xml`) löst die URL der robots.txt auf (CRAWL-058)
+                match &parsed_robots {
+                    Some(base) => crate::robots_glue::sitemap_seeds_at(base, &listed, cfg),
+                    None => crate::robots_glue::sitemap_seeds(&listed, cfg),
+                }
+            })
+            .unwrap_or_default()
+    } else {
+        Vec::new()
+    };
+
+    // Fortsetzen: die robots.txt dieses Origins stammt aus der Crawl-Datei; Zeile und Eintrag bleiben unverändert.
+    if sh.primed_origins.contains(&write.origin) {
+        return Ok(seeds);
+    }
+
+    let mut batch = WriteBatch::default();
+    if let Some(norm) = norm_robots {
+        let slot = sh.writer.reserve().await?;
+        let mut core = sh.lock_core();
+        if core.lookup(&norm.encoded).is_none() {
+            let id = core.alloc_id();
+            // K-54 (CRAWL-098): die robots.txt jedes Hosts, intern wie extern, wird als URL-Zeile ohne
+            // Tabellen-Sichtbarkeit gespeichert; sie erscheint in keinem Tab, Filter, Zähler oder Export.
+            let flags = F_QUEUED | F_RULE_OK;
+            core.register(&norm.encoded, id, None, flags);
+            batch.new_urls.push(os_model::NewUrl {
+                id,
+                url: norm.encoded.clone(),
+                address: norm.display.clone(),
+                origin: norm.origin.clone(),
+                is_internal: internal,
+                in_tables: false,
+                discovered_via: DiscoveryKind::RobotsTxt,
+                crawl_depth: None,
+                folder_depth: os_url::folder_depth(&norm.url),
+                url_length: os_url::url_length(&norm.display),
+                state: UrlState::Done,
+                not_crawled_reason: None,
+            });
+            let mut page = plain_page(id, &result, cfg);
+            page.headers = header_rows(&result, cfg);
+            batch.pages.push(page);
+        }
+        batch.robots.push(write);
+        slot.send(batch);
+        drop(core);
+    } else {
+        batch.robots.push(write);
+        sh.writer.send(batch).await?;
+    }
+    Ok(seeds)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

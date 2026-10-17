@@ -207,6 +207,8 @@ impl ProgressTracker {
             // M2-E02 (CRAWL-129): Speicherstufe und Dateigröße
             memory_stage: None,
             file_bytes: None,
+            memory_used_bytes: None,
+            memory_limit_bytes: None,
         }
     }
 

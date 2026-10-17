@@ -138,6 +138,23 @@ pub async fn ingest_with_known<F: Fetch + ?Sized>(
     max_index_depth: u32,
     known: &HashSet<String>,
 ) -> SitemapIngest {
+    ingest_configured(
+        fetcher,
+        seeds,
+        max_index_depth,
+        known,
+        &os_model::RewriteConfig::default(),
+    )
+    .await
+}
+
+pub async fn ingest_configured<F: Fetch + ?Sized>(
+    fetcher: &F,
+    seeds: Vec<SitemapSeed>,
+    max_index_depth: u32,
+    known: &HashSet<String>,
+    rewrite: &os_model::RewriteConfig,
+) -> SitemapIngest {
     struct Todo {
         url: url::Url,
         parent: Option<usize>,
@@ -174,7 +191,7 @@ pub async fn ingest_with_known<F: Fetch + ?Sized>(
             });
             continue;
         }
-        let fetch = fetch_following_redirects(fetcher, &todo.url).await;
+        let fetch = fetch_following_redirects(fetcher, &todo.url, rewrite).await;
         let end_key = key(&fetch.url);
         if end_key != requested_key {
             if done.contains(&end_key) {
@@ -213,6 +230,10 @@ pub async fn ingest_with_known<F: Fetch + ?Sized>(
                     });
                     break;
                 }
+                let child = url::Url::parse(
+                    &os_url::rewrite::apply_discovered(rewrite, child.as_str()).url,
+                )
+                .unwrap_or(child);
                 if seen.insert(key(&child)) {
                     queue.push_back(Todo {
                         url: child,
@@ -253,6 +274,7 @@ fn key(u: &url::Url) -> String {
 async fn fetch_following_redirects<F: Fetch + ?Sized>(
     fetcher: &F,
     start: &url::Url,
+    rewrite: &os_model::RewriteConfig,
 ) -> FetchResult {
     let mut url = start.clone();
     let mut hops = 0;
@@ -263,6 +285,8 @@ async fn fetch_following_redirects<F: Fetch + ?Sized>(
                 purpose: FetchPurpose::Sitemap,
                 cookies: None,
                 max_body_bytes: MAX_BODY_BYTES,
+                attempt: 0,
+                body_limit: Default::default(),
             })
             .await;
         let next = match &result.outcome {
@@ -277,7 +301,9 @@ async fn fetch_following_redirects<F: Fetch + ?Sized>(
         match next {
             Some(next) if hops < MAX_REDIRECTS => {
                 hops += 1;
-                url = next;
+                url =
+                    url::Url::parse(&os_url::rewrite::apply_discovered(rewrite, next.as_str()).url)
+                        .unwrap_or(next);
             }
             _ => return result,
         }

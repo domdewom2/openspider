@@ -24,34 +24,41 @@ use os_fetch::robots::{RobotsDecision, RobotsGate};
 use os_fetch::{content_class, Fetch, FetchOutcome, FetchRequest, FetchResult, HttpResponse};
 use os_model::{
     CanonicalRow, Clock, ContentClass, CrawlConfig, DirectiveRow, DiscoveryKind, ElementPair,
-    ExtractedLink, ExtractedText, FetchFacts, HeaderHints, HeaderRow, HintSource, HreflangRef,
-    HreflangRow, ImageRow, Indexability, IndexabilityInput, LinkOrigin, LinkPosition, LinkRow,
-    LinkType, NoResponseReason, NotCrawledReason, PageFacts, PageWrite, PaginationRow, ParsedPage,
-    PathType, PdfMeta, QueueOp, RedirectType, RefreshRow, RefreshSource, SitemapId, SitemapKind,
-    SitemapWrite, Timestamp, UrlId, UrlState, WriteBatch,
+    ExtractedLink, ExtractedText, FetchFacts, HeaderHints, HeaderRow, HintSource, HreflangRow,
+    ImageRow, Indexability, IndexabilityInput, LinkOrigin, LinkPosition, LinkRow, LinkType,
+    NoResponseReason, NotCrawledReason, PageFacts, PageWrite, PaginationRow, ParsedPage, PathType,
+    PdfMeta, QueueOp, RedirectType, RefreshRow, RefreshSource, Timestamp, UrlId, WriteBatch,
 };
 use os_parse::{ParseConfig, ParseInput};
 use os_url::{NormUrl, ScopeClass};
-use tokio::sync::{Notify, OwnedSemaphorePermit, Semaphore};
+use tokio::sync::Notify;
 use url::Url;
 
 use crate::decide::{self, LinkDecision};
 use crate::diag;
 use crate::error::EngineError;
 use crate::frontier::{
-    Cand, Classify, Core, CrawlScope, Purpose, QueueItem, COUNTER_REDIRECT_LIMIT, F_IN_TABLES,
-    F_QUEUED, F_RULE_OK,
+    Cand, Core, CrawlScope, Purpose, QueueItem, COUNTER_REDIRECT_LIMIT, F_IN_TABLES,
 };
 use crate::progress::ProgressTracker;
 use crate::redirect::{self, RedirectTarget};
-use crate::sitemaps::{self, FetchedSitemap, SitemapSeed};
+use crate::robots_glue::record_robots;
+#[cfg(test)]
+use crate::sitemap_ingest::build_sitemap_batch;
+use crate::sitemap_ingest::ingest_sitemaps;
 use crate::writer_thread::{WriterGone, WriterSender};
 
 /// Ab dieser Body-Größe wird auf einem Blocking-Thread geparst.
 const BLOCKING_PARSE_THRESHOLD: usize = 1024 * 1024;
 
 /// Steuerung von außen (`CrawlHandle`) und zwischen Worker und Steuerschleife.
+pub(crate) type AddRequest = (
+    Vec<String>,
+    tokio::sync::oneshot::Sender<Result<crate::AddUrlsSummary, EngineError>>,
+);
+
 pub(crate) struct Control {
+    pub add_urls: tokio::sync::mpsc::UnboundedSender<AddRequest>,
     /// Weckt die Steuerschleife (neue Arbeit, Worker fertig, Einstellung geändert).
     pub notify: Notify,
     /// Gewünschte Zahl paralleler Threads.
@@ -71,6 +78,7 @@ pub(crate) const STOP_PAUSE: u8 = 2;
 
 /// Zustand, den alle Worker und die Steuerschleife teilen.
 pub(crate) struct Shared<F: Fetch> {
+    pub add_rx: tokio::sync::Mutex<tokio::sync::mpsc::UnboundedReceiver<AddRequest>>,
     pub fetcher: Arc<F>,
     pub cfg: Arc<CrawlConfig>,
     pub clock: Arc<dyn Clock>,
@@ -85,8 +93,7 @@ pub(crate) struct Shared<F: Fetch> {
     /// Ein Worker hat einen nicht behebbaren Fehler gemeldet (oder der Writer ist ausgefallen).
     pub abort: AtomicBool,
     pub error: Mutex<Option<EngineError>>,
-    pub host_gates: Mutex<HashMap<String, Arc<Semaphore>>>,
-    pub max_per_host: Option<u32>,
+    pub host_pacer: crate::host_pace::HostPacer,
     /// URL Encoded Address der Start-URL (von Include/Exclude ausgenommen; im Listenmodus leer).
     pub start_url: String,
     /// Origins, deren robots.txt aus der Crawl-Datei übernommen wurde (Fortsetzen): kein erneuter Abruf, kein
@@ -105,26 +112,8 @@ impl<F: Fetch> Shared<F> {
         self.ctl.notify.notify_one();
     }
 
-    fn lock_core(&self) -> std::sync::MutexGuard<'_, Core> {
+    pub(crate) fn lock_core(&self) -> std::sync::MutexGuard<'_, Core> {
         self.core.lock().unwrap_or_else(|p| p.into_inner())
-    }
-
-    async fn host_permit(&self, url: &Url) -> Option<OwnedSemaphorePermit> {
-        let cap = self.max_per_host?;
-        let key = format!(
-            "{}:{}",
-            url.host_str().unwrap_or(""),
-            url.port_or_known_default().unwrap_or(0)
-        );
-        let sem = {
-            let mut gates = self.host_gates.lock().unwrap_or_else(|p| p.into_inner());
-            Arc::clone(
-                gates
-                    .entry(key)
-                    .or_insert_with(|| Arc::new(Semaphore::new(cap.max(1) as usize))),
-            )
-        };
-        sem.acquire_owned().await.ok()
     }
 
     pub(crate) fn clock_mono(&self) -> std::time::Duration {
@@ -178,9 +167,13 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
         .map_err(|e| Failure::Engine(EngineError::Invalid(format!("{}: {e}", item.url))))?;
     let cfg = &*sh.cfg;
     let t = std::time::Instant::now();
-    let _host = sh.host_permit(&url).await;
+    let _host = sh.host_pacer.acquire(&url).await;
     diag::add(&diag::STATS.host_wait_ns, t);
 
+    if sh.ctl.stop.load(Ordering::SeqCst) != STOP_NONE {
+        sh.lock_core().requeue(item.clone());
+        return Ok(());
+    }
     // 1. robots.txt
     let t = std::time::Instant::now();
     let check = sh.gate.check(&*sh.fetcher, &url).await;
@@ -188,6 +181,10 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
     let mut sitemap_seeds = Vec::new();
     if let Some((fetch_result, write)) = check.robots_fetch {
         sitemap_seeds = record_robots(sh, fetch_result, write).await?;
+    }
+    if sh.ctl.stop.load(Ordering::SeqCst) != STOP_NONE {
+        sh.lock_core().requeue(item.clone());
+        return Ok(());
     }
     let internal = item.purpose != Purpose::External;
     match &check.decision {
@@ -241,7 +238,19 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
         RobotsDecision::Allowed | RobotsDecision::ReportOnly { .. } => {}
     }
 
-    // 2. Abruf
+    // 2. Abruf: Tempo-Fachmodul erhält die inzwischen geladene robots.txt sowie die injizierte Uhr.
+    sh.host_pacer
+        .before_fetch(
+            &url,
+            sh.gate.crawl_delay(&url.origin().ascii_serialization()),
+            cfg,
+            &*sh.clock,
+        )
+        .await;
+    if sh.ctl.stop.load(Ordering::SeqCst) != STOP_NONE {
+        sh.lock_core().requeue(item.clone());
+        return Ok(());
+    }
     let cookies = sh.lock_core().session_jar(item.session);
     let t = std::time::Instant::now();
     let result = sh
@@ -251,6 +260,11 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
             purpose: item.purpose.fetch_purpose(),
             cookies,
             max_body_bytes: cfg.limits.max_page_kb.saturating_mul(1024),
+            attempt: item.attempt,
+            body_limit: os_fetch::BodyLimit {
+                max_decoded_bytes: cfg.limits.max_page_kb.saturating_mul(1024),
+                abort_media_after: None,
+            },
         })
         .await;
     let fetched = diag::add_max(&diag::STATS.fetch_ns, &diag::STATS.fetch_max_ns, t);
@@ -258,6 +272,17 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
         diag::inc(&diag::STATS.fetch_slow);
     }
 
+    sh.host_pacer.on_result(&url, &result, cfg, &*sh.clock);
+    if let crate::retry::RetryDecision::RetryAfter(delay) =
+        crate::retry::decide(&result, item.attempt, cfg)
+    {
+        let mut retry = item.clone();
+        retry.attempt = retry.attempt.saturating_add(1);
+        sh.lock_core()
+            .defer(retry, sh.clock_mono().saturating_add(delay));
+        sh.ctl.notify.notify_one();
+        return Ok(());
+    }
     // 3. Auswertung
     let t = std::time::Instant::now();
     let mut analysis = analyze(sh, item, &url, &result).await;
@@ -302,80 +327,8 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
 // robots.txt
 
 /// Legt die URL-Zeile der robots.txt an und gibt die `Sitemap:`-Ausgangspunkte zurück.
-async fn record_robots<F: Fetch>(
-    sh: &Arc<Shared<F>>,
-    result: FetchResult,
-    write: os_model::RobotsWrite,
-) -> Result<Vec<SitemapSeed>, WriterGone> {
-    let cfg = &*sh.cfg;
-    let parsed_robots = Url::parse(&write.robots_url).ok();
-    let norm_robots = parsed_robots.as_ref().map(os_url::normalize);
-    let internal = norm_robots
-        .as_ref()
-        .is_some_and(|n| sh.scope.classify(n) == ScopeClass::Internal);
-    // `Sitemap:`-Zeilen gelten nur für interne Hosts: die Sitemaps fremder Hosts gehören nicht zu diesem Crawl.
-    let seeds = if internal {
-        write
-            .body
-            .as_deref()
-            .map(|body| {
-                let listed: Vec<String> = os_fetch::robots::parse(body).sitemaps().to_vec();
-                // relative Angaben (`Sitemap: /sitemap_index.xml`) löst die URL der robots.txt auf (CRAWL-058)
-                match &parsed_robots {
-                    Some(base) => crate::robots_glue::sitemap_seeds_at(base, &listed, cfg),
-                    None => crate::robots_glue::sitemap_seeds(&listed, cfg),
-                }
-            })
-            .unwrap_or_default()
-    } else {
-        Vec::new()
-    };
-
-    // Fortsetzen: die robots.txt dieses Origins stammt aus der Crawl-Datei; Zeile und Eintrag bleiben unverändert.
-    if sh.primed_origins.contains(&write.origin) {
-        return Ok(seeds);
-    }
-
-    let mut batch = WriteBatch::default();
-    if let Some(norm) = norm_robots {
-        let slot = sh.writer.reserve().await?;
-        let mut core = sh.lock_core();
-        if core.lookup(&norm.encoded).is_none() {
-            let id = core.alloc_id();
-            // K-54 (CRAWL-098): die robots.txt jedes Hosts, intern wie extern, wird als URL-Zeile ohne
-            // Tabellen-Sichtbarkeit gespeichert; sie erscheint in keinem Tab, Filter, Zähler oder Export.
-            let flags = F_QUEUED | F_RULE_OK;
-            core.register(&norm.encoded, id, None, flags);
-            batch.new_urls.push(os_model::NewUrl {
-                id,
-                url: norm.encoded.clone(),
-                address: norm.display.clone(),
-                origin: norm.origin.clone(),
-                is_internal: internal,
-                in_tables: false,
-                discovered_via: DiscoveryKind::RobotsTxt,
-                crawl_depth: None,
-                folder_depth: os_url::folder_depth(&norm.url),
-                url_length: os_url::url_length(&norm.display),
-                state: UrlState::Done,
-                not_crawled_reason: None,
-            });
-            let mut page = plain_page(id, &result, cfg);
-            page.headers = header_rows(&result, cfg);
-            batch.pages.push(page);
-        }
-        batch.robots.push(write);
-        slot.send(batch);
-        drop(core);
-    } else {
-        batch.robots.push(write);
-        sh.writer.send(batch).await?;
-    }
-    Ok(seeds)
-}
-
 /// `PageWrite` ohne Auswertung (robots.txt, Sitemap-Datei).
-fn plain_page(id: UrlId, result: &FetchResult, cfg: &CrawlConfig) -> PageWrite {
+pub(crate) fn plain_page(id: UrlId, result: &FetchResult, cfg: &CrawlConfig) -> PageWrite {
     let fetch = facts_from_result(result, cfg);
     let (indexability, indexability_status) = os_model::evaluate(&IndexabilityInput {
         fetch: &fetch,
@@ -404,20 +357,23 @@ fn plain_page(id: UrlId, result: &FetchResult, cfg: &CrawlConfig) -> PageWrite {
     }
 }
 
-fn header_rows(result: &FetchResult, cfg: &CrawlConfig) -> Vec<HeaderRow> {
+pub(crate) fn header_rows(result: &FetchResult, cfg: &CrawlConfig) -> Vec<HeaderRow> {
     if !cfg.extraction.http_headers {
         return Vec::new();
     }
     match &result.outcome {
-        FetchOutcome::Response(r) => r
-            .headers
-            .iter()
-            .enumerate()
-            .map(|(i, (name, value))| HeaderRow {
-                request: false,
-                position: i as u32,
-                name: name.clone(),
-                value: value.clone(),
+        FetchOutcome::Response(r) => [(true, &r.request_headers), (false, &r.headers)]
+            .into_iter()
+            .flat_map(|(request, headers)| {
+                headers
+                    .iter()
+                    .enumerate()
+                    .map(move |(i, (name, value))| HeaderRow {
+                        request,
+                        position: i as u32,
+                        name: name.clone(),
+                        value: value.clone(),
+                    })
             })
             .collect(),
         FetchOutcome::NoResponse { .. } => Vec::new(),
@@ -496,6 +452,8 @@ pub(crate) fn facts_from_result(res: &FetchResult, cfg: &CrawlConfig) -> FetchFa
 
 #[derive(Default)]
 struct Analysis {
+    extra: WriteBatch,
+    pdf_word_count: Option<u32>,
     facts: FetchFacts,
     headers: Vec<HeaderRow>,
     parsed: Option<ParsedPage>,
@@ -521,9 +479,57 @@ async fn analyze<F: Fetch>(
     let FetchOutcome::Response(resp) = &result.outcome else {
         return a;
     };
+    a.extra.ext.extend(
+        os_parse::response_ext(&os_parse::ResponseInput {
+            url,
+            internal: item.purpose != Purpose::External,
+            purpose: item.purpose.fetch_purpose(),
+            status: resp.status,
+            headers: &resp.headers,
+            body: &resp.body,
+            content_length: resp.content_length,
+            untruncated_bytes: resp.untruncated_bytes,
+            truncated: resp.truncated,
+            cfg: &sh.pcfg,
+        })
+        .into_iter()
+        .map(|(key, value)| os_model::ExtWrite {
+            url: item.id,
+            key,
+            value,
+        }),
+    );
+    a.extra.ext.push(os_model::ExtWrite {
+        url: item.id,
+        key: os_model::ExtKey::from_static("http.attempts"),
+        value: os_model::Value::Int(i64::from(resp.attempts)),
+    });
     // 3xx: nur Location auswerten, der Body wird nie geparst (Q5)
     if redirect::is_redirect_status(resp.status) {
+        if item.purpose != Purpose::External && a.facts.content_class == ContentClass::Html {
+            let hits = os_parse::custom_search::run_on_body(&ParseInput {
+                url,
+                body: &resp.body,
+                status: resp.status,
+                content_type: header(&resp.headers, "content-type"),
+                headers: &resp.headers,
+                cfg: &sh.pcfg,
+            });
+            a.extra
+                .custom_search
+                .extend(hits.into_iter().map(|hit| os_model::CustomSearchWrite {
+                    url_id: item.id,
+                    def_index: hit.def_index,
+                    count: hit.count,
+                    error: hit.error,
+                }));
+        }
         a.redirect = redirect::http_target(url, &resp.headers);
+        if resp.synthetic == Some(os_fetch::SyntheticResponse::Hsts) {
+            if let Some(target) = &mut a.redirect {
+                target.kind = os_model::RedirectType::HstsPolicy;
+            }
+        }
         return a;
     }
     // defekte Kompression liefert keinen verlässlichen Inhalt
@@ -536,6 +542,10 @@ async fn analyze<F: Fetch>(
     if item.purpose == Purpose::External {
         if a.facts.content_class == ContentClass::Html {
             let refs = external_refresh(sh, url, resp).await;
+            a.refresh = refs.clone();
+            parsed_refresh(&mut a, url, &refs);
+        } else {
+            let refs = os_parse::parse_headers(url, &resp.headers, &sh.pcfg).refresh;
             a.refresh = refs.clone();
             parsed_refresh(&mut a, url, &refs);
         }
@@ -555,7 +565,19 @@ async fn analyze<F: Fetch>(
             parsed_refresh(&mut a, url, &hints.refresh);
             match other {
                 ContentClass::Css => a.css_links = os_parse::parse_css(url, &resp.body),
-                ContentClass::Pdf => a.pdf = Some(os_parse::parse_pdf_meta(&resp.body)),
+                ContentClass::Pdf => {
+                    let pdf = os_parse::pdf::parse(&resp.body, &sh.pcfg);
+                    a.pdf_word_count = pdf.word_count;
+                    a.pdf = Some(pdf.meta);
+                    a.css_links.extend(pdf.links);
+                    a.extra.ext.extend(pdf.ext.into_iter().map(|(key, value)| {
+                        os_model::ExtWrite {
+                            url: item.id,
+                            key,
+                            value,
+                        }
+                    }));
+                }
                 _ => {}
             }
             a.hints = Some(hints);
@@ -622,6 +644,7 @@ async fn parse_html_page<F: Fetch>(
         return parse_now(
             url,
             &resp.body,
+            resp.status,
             content_type.as_deref(),
             &resp.headers,
             &sh.pcfg,
@@ -631,8 +654,16 @@ async fn parse_html_page<F: Fetch>(
     let body: Bytes = resp.body.clone();
     let headers = resp.headers.clone();
     let pcfg = sh.pcfg.clone();
+    let status = resp.status;
     tokio::task::spawn_blocking(move || {
-        parse_now(&url, &body, content_type.as_deref(), &headers, &pcfg)
+        parse_now(
+            &url,
+            &body,
+            status,
+            content_type.as_deref(),
+            &headers,
+            &pcfg,
+        )
     })
     .await
     .unwrap_or_default()
@@ -641,11 +672,13 @@ async fn parse_html_page<F: Fetch>(
 fn parse_now(
     url: &Url,
     body: &[u8],
+    status: u16,
     content_type: Option<&str>,
     headers: &[(String, String)],
     cfg: &ParseConfig,
 ) -> ParsedPage {
     os_parse::parse_html(&ParseInput {
+        status,
         url,
         body,
         content_type,
@@ -683,7 +716,8 @@ impl Targets {
         if let Some(i) = self.index.get(resolved) {
             return Some(*i);
         }
-        let url = Url::parse(resolved).ok()?;
+        let rewritten = os_url::rewrite::apply_discovered(&sh.cfg.rewrite, resolved);
+        let url = Url::parse(&rewritten.url).ok()?;
         if !matches!(url.scheme(), "http" | "https") || url.host_str().is_none() {
             return None;
         }
@@ -709,7 +743,7 @@ fn path_type_of(raw: &str) -> PathType {
     }
 }
 
-fn synth_link(link_type: LinkType, raw: &str, resolved: Option<&str>) -> ExtractedLink {
+pub(crate) fn synth_link(link_type: LinkType, raw: &str, resolved: Option<&str>) -> ExtractedLink {
     synth_link_at(link_type, raw, resolved, None, true)
 }
 
@@ -741,6 +775,7 @@ fn synth_link_at(
         },
         in_head,
         doc_order: 0,
+        ..Default::default()
     }
 }
 
@@ -807,15 +842,26 @@ async fn assemble<F: Fetch>(
 ) -> Result<WriteBatch, Failure> {
     let cfg = &*sh.cfg;
     let Analysis {
+        mut extra,
+        pdf_word_count,
         mut facts,
         headers,
         parsed,
         hints,
         css_links,
         pdf,
-        redirect,
+        mut redirect,
         refresh,
     } = a;
+    if let Some(page) = &parsed {
+        transport_page(item.id, page, &mut extra);
+    }
+    if let Some(target) = &mut redirect {
+        let rewritten = os_url::rewrite::apply_discovered(&cfg.rewrite, &target.target.encoded);
+        if let Ok(url) = Url::parse(&rewritten.url) {
+            target.target = os_url::normalize(&url);
+        }
+    }
     let page_follow = parsed.as_ref().is_none_or(|p| p.effective_follow);
 
     let mut targets = Targets::new();
@@ -976,6 +1022,7 @@ async fn assemble<F: Fetch>(
                 resource_like,
                 apply_rules: norm.encoded != sh.start_url,
                 purpose,
+                source: Some((item.id, lt, r.ext.anchor.clone())),
             };
             let id = core.discover(&cand, depth, 0, item.session, &sh.rules, &mut disc);
             if hreflang_only
@@ -1057,6 +1104,7 @@ async fn assemble<F: Fetch>(
                         } else {
                             Purpose::External
                         },
+                        source: None,
                     };
                     let id = core.discover(
                         &cand,
@@ -1090,7 +1138,7 @@ async fn assemble<F: Fetch>(
         facts.redirect_type = Some(r.kind);
         facts.redirect_target = redirect_id;
     }
-    let mut batch = WriteBatch::default();
+    let mut batch = extra;
     let own = item.url.as_ref();
     let mut links: Vec<LinkRow> = Vec::new();
     let mut position = 0u32;
@@ -1109,9 +1157,12 @@ async fn assemble<F: Fetch>(
             target_attr: e.target.clone(),
             path_type: Some(e.path_type),
             link_path: (!e.xpath.is_empty()).then(|| e.xpath.clone()),
-            link_position: (!e.xpath.is_empty()).then_some(e.position),
+            link_position: (!e.xpath.is_empty()).then(|| e.position.clone()),
             link_origin: LinkOrigin::Html,
             in_head: Some(e.in_head),
+            crawlable: e.crawlable,
+            uncrawlable_reason: e.uncrawlable_reason,
+            pdf_page: e.pdf_page,
         });
         position += 1;
     };
@@ -1162,6 +1213,7 @@ async fn assemble<F: Fetch>(
             }),
             link_origin: LinkOrigin::Html,
             in_head: r.xpath.as_ref().map(|x| x.starts_with("//head/")),
+            ..Default::default()
         });
     }
 
@@ -1307,7 +1359,7 @@ async fn assemble<F: Fetch>(
                 meta_keywords: keywords,
                 h1: ElementPair::default(),
                 h2: ElementPair::default(),
-                word_count: None,
+                word_count: pdf_word_count,
                 text_ratio: None,
                 canonical_count,
                 canonical_url,
@@ -1353,321 +1405,67 @@ async fn assemble<F: Fetch>(
 }
 
 // ---------------------------------------------------------------------------------------------------
-// Sitemaps
-
-/// Ruft Sitemaps ab und überträgt ihre URLs in die Warteschlange.
-///
-/// K-41a: Sitemap-Dateien holt ausschließlich dieser Weg, und zwar je Crawl genau einmal. Die Schlüssel der
-/// angefragten und der End-URL stehen in `Core::sitemap_keys`; Seeds, die dort schon stehen (z. B. dieselbe
-/// `Sitemap:`-Zeile in der robots.txt eines zweiten Hosts), entfallen.
-pub(crate) async fn ingest_sitemaps<F: Fetch>(
-    sh: &Arc<Shared<F>>,
-    seeds: Vec<SitemapSeed>,
-) -> Result<(), Failure> {
-    if seeds.is_empty() {
-        return Ok(());
+/// Transportiert alle Parser-Fakten in den Schreibbatch.
+fn transport_page(url: UrlId, page: &ParsedPage, batch: &mut WriteBatch) {
+    let mut facts = page.ext.clone();
+    if let Some(validation) = &page.validation {
+        facts.extend(os_parse::validation::to_ext(validation));
     }
-    let (fresh, known) = {
-        let mut core = sh.lock_core();
-        let known = core.sitemap_keys.clone();
-        let mut fresh = Vec::new();
-        for seed in seeds {
-            if core.sitemap_keys.insert(sitemaps::sitemap_key(&seed.url)) {
-                fresh.push(seed);
-            }
-        }
-        (fresh, known)
-    };
-    if fresh.is_empty() {
-        return Ok(());
-    }
-    let out = sitemaps::ingest_with_known(&*sh.fetcher, fresh, 3, &known).await;
-    let fetched = out.sitemaps;
-    if fetched.is_empty() && out.warnings.is_empty() {
-        return Ok(());
-    }
-    let events: Vec<os_model::CrawlEvent> = out
-        .warnings
-        .iter()
-        .map(|w| os_model::CrawlEvent {
-            at: sh.clock.now(),
-            kind: "warn".to_string(),
-            code: w.code.to_string(),
-            message: w.message.clone(),
-        })
-        .collect();
-    {
-        let mut core = sh.lock_core();
-        for fs in &fetched {
-            if let Ok(u) = Url::parse(&fs.url) {
-                core.sitemap_keys.insert(sitemaps::sitemap_key(&u));
-            }
-            core.sitemap_keys
-                .insert(sitemaps::sitemap_key(&fs.fetch.url));
-        }
-    }
-    let slot = sh.writer.reserve().await?;
-    {
-        let mut core = sh.lock_core();
-        let mut batch = build_sitemap_batch(
-            &mut core,
-            &sh.cfg,
-            &sh.scope,
-            &sh.rules,
-            &fetched,
-            sh.clock.now(),
-        );
-        batch.events.extend(events);
-        // unter der Sperre senden (siehe Entdeckung in `process`, K-78 b)
-        slot.send(batch);
-    }
-    sh.ctl.notify.notify_one();
-    Ok(())
-}
-
-/// Bildet das Schreibmodell der abgerufenen Sitemaps: URL-Zeile der Datei, `SitemapWrite` und die URLs der
-/// Einträge als Warteschlangeneinträge ohne Tiefe (Priorität 1, TECH-210/CRAWL-005).
-///
-/// K-41d (Sitemap-Protokoll): Ein `<loc>` gilt nur, wenn Schema, Host und Port mit der Sitemap-Datei
-/// übereinstimmen. Andere Einträge zählen wie ungültige (`invalid_entries`), bekommen keine URL-Zeile und
-/// keinen Warteschlangeneintrag; je Datei meldet ein `CrawlEvent` (warn) ihre Anzahl. Cross-Submission per
-/// robots.txt ist M2.
-pub(crate) fn build_sitemap_batch(
-    core: &mut Core,
-    cfg: &CrawlConfig,
-    scope: &impl Classify,
-    rules: &os_url::RuleSet,
-    fetched: &[FetchedSitemap],
-    now: Timestamp,
-) -> WriteBatch {
-    let mut batch = WriteBatch::default();
-    let base = core.next_sitemap_id;
-    core.next_sitemap_id += fetched.len() as i64;
-    for (i, fs) in fetched.iter().enumerate() {
-        let sid = SitemapId(base + i as i64);
-        let parent = fs.parent.map(|p| SitemapId(base + p as i64));
-        let mut url_id = None;
-        let mut status_code = None;
-        if let Ok(parsed) = Url::parse(&fs.url) {
-            let norm = os_url::normalize(&parsed);
-            let internal = scope.classify(&norm) == ScopeClass::Internal;
-            match core.lookup(&norm.encoded) {
-                Some(seen) => url_id = Some(seen.id),
-                None => {
-                    let id = core.alloc_id();
-                    core.register(&norm.encoded, id, None, F_QUEUED | F_RULE_OK);
-                    // Die Start-URL einer Sitemap-Datei ist Tiefe 0; alle anderen Dateien haben keine Tiefe.
-                    let is_start = fs.found_via == "start" && fs.parent.is_none();
-                    batch.new_urls.push(os_model::NewUrl {
-                        id,
-                        url: norm.encoded.clone(),
-                        address: norm.display.clone(),
-                        origin: norm.origin.clone(),
-                        is_internal: internal,
-                        in_tables: false,
-                        discovered_via: if is_start {
-                            DiscoveryKind::Start
-                        } else {
-                            DiscoveryKind::Sitemap
-                        },
-                        crawl_depth: is_start.then_some(0),
-                        folder_depth: os_url::folder_depth(&norm.url),
-                        url_length: os_url::url_length(&norm.display),
-                        state: UrlState::Done,
-                        not_crawled_reason: None,
-                    });
-                    let mut page = plain_page(id, &fs.fetch, cfg);
-                    page.headers = header_rows(&fs.fetch, cfg);
-                    batch.pages.push(page);
-                    url_id = Some(id);
-                }
-            }
-        }
-        if let FetchOutcome::Response(r) = &fs.fetch.outcome {
-            status_code = Some(r.status);
-        }
-        let sitemap_origins: Vec<Url> = [Url::parse(&fs.url).ok(), Some(fs.fetch.url.clone())]
+    facts.push((
+        os_model::ExtKey::from_static("hreflang.truncated"),
+        os_model::Value::Int(i64::from(page.hreflang_truncated)),
+    ));
+    batch.ext.extend(
+        facts
             .into_iter()
-            .flatten()
-            .collect();
-        let (kind, entries, invalid, size) = match &fs.doc {
-            Some(d) => (d.kind, d.locs.len() as u32, d.invalid_entries, d.size_bytes),
-            None => (SitemapKind::Invalid, 0, 0, 0),
-        };
-        let mut entry_urls = Vec::new();
-        let mut hreflang_rows: Vec<(UrlId, HreflangRow)> = Vec::new();
-        // Spider-Modus: Einträge ohne Tiefe (Priorität 1, nur über die Sitemap erreicht). Listenmodus: die
-        // Einträge sind Listen-URLs der Tiefe 0 (CRAWL-027).
-        let (entry_kind, entry_depth) = if core.list_mode {
-            (DiscoveryKind::ListInput, Some(0))
-        } else {
-            (DiscoveryKind::Sitemap, None)
-        };
-        let mut foreign = 0u32;
-        if let (Some(doc), SitemapKind::Urlset) = (&fs.doc, kind) {
-            for loc in &doc.locs {
-                let Some(u) = loc.url.as_deref() else {
-                    continue;
-                };
-                let Ok(parsed) = Url::parse(u) else {
-                    continue;
-                };
-                if !matches!(parsed.scheme(), "http" | "https") || parsed.host_str().is_none() {
-                    continue;
-                }
-                if !same_origin(&parsed, &sitemap_origins) {
-                    foreign += 1;
-                    continue;
-                }
-                let norm = os_url::normalize(&parsed);
-                if scope.classify(&norm) != ScopeClass::Internal {
-                    continue;
-                }
-                let cand = Cand {
-                    norm: &norm,
-                    internal: true,
-                    kind: entry_kind,
-                    store: true,
-                    crawl: true,
-                    reason: None,
-                    resource_like: false,
-                    apply_rules: true,
-                    purpose: Purpose::Page,
-                };
-                let id = core.discover(&cand, entry_depth, 0, 0, rules, &mut batch);
-                entry_urls.push((id, loc.loc_raw.clone(), loc.lastmod.clone()));
-                // Auch bei `store = false, crawl = true` durchlaufen: die Ziele laufen über `decide` und
-                // `discover`, nur die hreflang-Zeilen entfallen (CRAWL-038).
-                if cfg.spider.hreflang.store || cfg.spider.hreflang.crawl {
-                    sitemap_hreflang(
-                        core,
-                        cfg,
-                        scope,
-                        rules,
-                        &mut batch,
-                        sid,
-                        id,
-                        &loc.hreflang,
-                        &mut hreflang_rows,
-                    );
-                }
-            }
-        }
-        if foreign > 0 {
-            batch.events.push(os_model::CrawlEvent {
-                at: now,
-                kind: "warn".to_string(),
-                code: "sitemap_foreign_entries".to_string(),
-                message: format!(
-                    "{foreign} Einträge in {} verworfen: anderes Schema, anderer Host oder anderer Port als die Sitemap-Datei",
-                    fs.url
-                ),
-            });
-        }
-        batch.sitemaps.push(SitemapWrite {
-            id: sid,
-            url: fs.url.clone(),
-            url_id,
-            parent,
-            kind,
-            entries,
-            invalid_entries: invalid + foreign,
-            size_bytes: size,
-            status_code,
-            depth: fs.depth,
-            found_via: fs.found_via.clone(),
-            entry_urls,
-            hreflang: hreflang_rows,
-            error: None,
-            entry_meta: Vec::new(),
-        });
-    }
+            .map(|(key, value)| os_model::ExtWrite { url, key, value }),
+    );
+    let (items, issues) = os_parse::sd::to_writes(url, &page.structured_data);
+    batch.structured_data.extend(items);
+    batch.sd_issues.extend(issues);
     batch
-}
-
-/// Gleiches Schema, gleicher Host und gleicher Port wie eine der Adressen der Sitemap-Datei (K-41d).
-fn same_origin(loc: &Url, files: &[Url]) -> bool {
-    files.iter().any(|f| {
-        f.scheme() == loc.scheme()
-            && f.host_str() == loc.host_str()
-            && f.port_or_known_default() == loc.port_or_known_default()
-    })
-}
-
-/// hreflang-Angaben eines `<url>`-Blocks (TECH-210, K-41e): Ziele laufen über `decide` wie HTML-hreflang
-/// (`LinkType::Hreflang`, `spider.hreflang`); `order` zählt je `loc`-URL fortlaufend über alle Sitemaps, damit
-/// mehrfach gelistete URLs nichts überschreiben. `target_id` gilt, sobald eine Zielzeile existiert. Bei
-/// `spider.hreflang.store = false` entstehen keine Zeilen, die Ziele werden trotzdem eingeplant.
-#[allow(clippy::too_many_arguments)]
-fn sitemap_hreflang(
-    core: &mut Core,
-    cfg: &CrawlConfig,
-    scope: &impl Classify,
-    rules: &os_url::RuleSet,
-    batch: &mut WriteBatch,
-    sitemap: SitemapId,
-    loc_id: UrlId,
-    refs: &[HreflangRef],
-    out: &mut Vec<(UrlId, HreflangRow)>,
-) {
-    for h in refs {
-        let ext = synth_link(LinkType::Hreflang, &h.href_raw, h.resolved.as_deref());
-        let target = h
-            .resolved
-            .as_deref()
-            .and_then(|r| Url::parse(r).ok())
-            .filter(|u| matches!(u.scheme(), "http" | "https") && u.host_str().is_some())
-            .map(|u| os_url::normalize(&u));
-        let target_id = target.and_then(|norm| {
-            let class = scope.classify(&norm);
-            let internal = class == ScopeClass::Internal;
-            let d = decide::decide(&ext, class, cfg, true);
-            if !d.store && !d.crawl {
-                return core.lookup(&norm.encoded).map(|s| s.id);
+        .forms
+        .extend(page.forms.iter().cloned().map(|form| os_model::FormWrite {
+            url_id: url,
+            idx: form.idx,
+            action: form.action,
+            method: form.method,
+        }));
+    batch
+        .custom_search
+        .extend(
+            page.custom_search
+                .iter()
+                .cloned()
+                .map(|hit| os_model::CustomSearchWrite {
+                    url_id: url,
+                    def_index: hit.def_index,
+                    count: hit.count,
+                    error: hit.error,
+                }),
+        );
+    batch
+        .custom_extraction
+        .extend(page.custom_extraction.iter().cloned().map(|value| {
+            os_model::CustomExtractionWrite {
+                url_id: url,
+                def_index: value.def_index,
+                number: value.number,
+                value: value.value,
+                error: value.error,
             }
-            let cand = Cand {
-                norm: &norm,
-                internal,
-                kind: DiscoveryKind::Sitemap,
-                // K-62: nur per hreflang bekannt = keine Tabellen-Sichtbarkeit
-                store: d.store && !decide::is_hreflang_store_only(LinkType::Hreflang, &d),
-                crawl: d.crawl,
-                reason: d.reason,
-                resource_like: false,
-                apply_rules: true,
-                purpose: if internal {
-                    Purpose::Page
-                } else {
-                    Purpose::External
-                },
-            };
-            // Listenmodus: Alternativen sind Links der Listenseite (Tiefe 1) und fallen unter das Tiefenlimit.
-            let depth = core.list_mode.then_some(1);
-            Some(core.discover(&cand, depth, 0, 0, rules, batch))
-        });
-        if !cfg.spider.hreflang.store {
-            continue;
-        }
-        let next = core.sitemap_hreflang_next.entry(loc_id).or_insert(0);
-        let mut r = h.clone();
-        r.order = *next;
-        r.source = HintSource::Sitemap;
-        *next += 1;
-        out.push((
-            loc_id,
-            HreflangRow {
-                target_id,
-                sitemap_id: Some(sitemap),
-                r,
-            },
-        ));
+        }));
+    if let Some(signature) = &page.minhash {
+        batch.minhash.push((url, signature.clone()));
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::sitemaps::FetchedSitemap;
     use os_model::{CanonicalRef, SitemapDoc, SitemapLoc};
+    use os_model::{HreflangRef, SitemapKind, UrlState};
     use os_url::Scope;
 
     fn response(status: u16, headers: &[(&str, &str)], body: &str) -> FetchResult {
@@ -1690,8 +1488,67 @@ mod tests {
                 truncated: false,
                 decode_error: None,
                 md5_hex: "d41d8cd98f00b204e9800998ecf8427e".to_string(),
+                request_headers: Vec::new(),
+                set_cookies: Vec::new(),
+                content_length: None,
+                untruncated_bytes: None,
+                synthetic: None,
+                attempts: 1,
             }),
         }
+    }
+
+    // spec: INTEG-020, INTEG-040, ONPAGE-034
+    // Infrastruktur (M2-F05a); Fachprüfung M2-D09/D11/D14/D15.
+    #[test]
+    fn parser_extension_payloads_keep_their_url_and_values() {
+        let fixture = include_str!("../../../tests/fixtures/config/default.osconfig");
+        let page = ParsedPage {
+            ext: vec![(
+                os_model::ExtKey::from_static("content.fixture"),
+                os_model::Value::Text(fixture.into()),
+            )],
+            forms: vec![os_model::FormRef {
+                idx: 3,
+                action: Some("/submit".into()),
+                action_resolved: None,
+                method: "post".into(),
+            }],
+            custom_search: vec![os_model::SearchHit {
+                def_index: 2,
+                count: 7,
+                error: None,
+            }],
+            custom_extraction: vec![os_model::ExtractedValue {
+                def_index: 1,
+                number: 4,
+                value: "fixture".into(),
+                error: None,
+            }],
+            minhash: Some(vec![7, 8, 9]),
+            structured_data: vec![os_model::SdItem {
+                format: "json-ld".into(),
+                type_path: "Thing".into(),
+                json: "{}".into(),
+                parse_error: Some("fixture-parse-error".into()),
+            }],
+            hreflang_truncated: 12,
+            ..Default::default()
+        };
+        let mut batch = WriteBatch::default();
+        transport_page(UrlId(42), &page, &mut batch);
+        assert_eq!(batch.ext[0].url, UrlId(42));
+        assert_eq!(batch.ext[0].value, page.ext[0].1);
+        assert_eq!(batch.forms[0].idx, 3);
+        assert_eq!(batch.forms[0].url_id, UrlId(42));
+        assert_eq!(batch.custom_search[0].count, 7);
+        assert_eq!(batch.custom_extraction[0].number, 4);
+        assert_eq!(batch.minhash, vec![(UrlId(42), vec![7, 8, 9])]);
+        assert_eq!(batch.structured_data[0].url_id, UrlId(42));
+        assert_eq!(batch.structured_data[0].json, "{}");
+        assert_eq!(batch.sd_issues[0].url_id, UrlId(42));
+        assert_eq!(batch.sd_issues[0].code, "fixture-parse-error");
+        assert_eq!(batch.ext[1].value, os_model::Value::Int(12));
     }
 
     // spec: CRAWL-022
@@ -1820,6 +1677,7 @@ mod tests {
             in_head,
             order: 0,
             xpath: None,
+            ..Default::default()
         }
     }
 
@@ -1859,6 +1717,7 @@ mod tests {
                     url: Some(l.to_string()),
                     lastmod: Some("2026-01-01".to_string()),
                     hreflang: vec![],
+                    ..Default::default()
                 })
                 .collect(),
             invalid_entries: 1,
@@ -1982,6 +1841,7 @@ mod tests {
             url: Some("https://site.test/a".to_string()),
             lastmod: None,
             hreflang: alts,
+            ..Default::default()
         };
         let fetched = vec![
             urlset_fetch(
@@ -2080,6 +1940,7 @@ mod tests {
                 url: Some("https://site.test/a".to_string()),
                 lastmod: None,
                 hreflang: vec![alt("fr", "https://site.test/fr/a")],
+                ..Default::default()
             }],
         )];
         let batch = build_sitemap_batch(
