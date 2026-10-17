@@ -236,3 +236,26 @@ async fn parser_signatures_match_analysis_contract_on_fixture() {
     }
     assert!(count >= 5);
 }
+// spec: ONPAGE-145
+#[test]
+fn duplicate_details_fixture_has_exact_near_and_below_threshold_pages() {
+    let fixture: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../tests/fixtures/ui/fx-ui-dup/expected.json"
+    ))
+    .unwrap();
+    let pages = fixture["pages"].as_array().unwrap();
+    assert_eq!(pages[0]["hash"], pages[1]["hash"]);
+    let c = minhash::shingles(pages[2]["text"].as_str().unwrap());
+    let d = minhash::shingles(pages[3]["text"].as_str().unwrap());
+    let e = minhash::shingles(pages[4]["text"].as_str().unwrap());
+    assert!(minhash::jaccard(&c, &d) >= 0.9);
+    assert!(minhash::jaccard(&c, &e) < 0.9);
+    assert_eq!(
+        (minhash::jaccard(&c, &d) * 100.0).round() as i64,
+        fixture["display_similarity_C_D"].as_i64().unwrap()
+    );
+    assert_eq!(
+        (minhash::jaccard(&c, &e) * 100.0).round() as i64,
+        fixture["display_similarity_C_E"].as_i64().unwrap()
+    );
+}
