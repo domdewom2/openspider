@@ -12,6 +12,8 @@
 #      VERSION), etc/, systemd/. Systembenutzer openspider-shadow (nologin) anlegen, Units per
 #      "systemctl link" einbinden (nur Symlinks), Timer bleibt aus (siehe Runbook). Kein offener Port, kein Caddy-, Docker-,
 #      Firewall- oder Cron-Eintrag. Eine vorhandene etc/autonomo-source.toml bleibt erhalten.
+#      Läuft openspider-shadow.service gerade (systemctl is-active), bricht deploy.sh vor jeder Änderung ab; die
+#      Dateien in bin/ werden per Kopie neben das Ziel und mv atomar ersetzt.
 #   4. Nachher-Liste holen und beide Listen unter --out ablegen. Den Timer aktiviert das Runbook erst nach dem
 #      beobachteten Sofortlauf; danach eine weitere Liste mit --snapshot holen.
 # Kein Auto-Update: eine neue Version entsteht nur durch einen erneuten Aufruf. Der Sofortlauf
@@ -31,7 +33,7 @@ while [ $# -gt 0 ]; do
     --out) OUT="$2"; shift 2 ;;
     --dry-run) DRY=1; shift ;;
     --snapshot) SNAPSHOT="$2"; shift 2 ;;
-    -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
     *) echo "Unbekannte Option: $1" >&2; exit 2 ;;
   esac
 done
@@ -75,6 +77,14 @@ if [ "$DRY" = 1 ]; then
   echo "Trockenlauf: Inhalt von /opt/openspider-shadow wäre:"; ( cd "$STAGE/pkg" && find . -type f | sort ); exit 0
 fi
 
+# Ein laufender Schattenlauf wird nicht überschrieben: Binärdatei und Skripte sind dann in Benutzung (ETXTBSY).
+state="$("${SSH[@]}" 'systemctl is-active openspider-shadow.service 2>/dev/null || true' | head -n1)"
+case "$state" in
+  active|activating|deactivating|reloading)
+    echo "Abbruch: openspider-shadow.service läuft ($state). Erst das Ende abwarten (journalctl -fu openspider-shadow.service) und deploy.sh danach erneut starten." >&2
+    exit 1 ;;
+esac
+
 # 2. Vorher
 snapshot vorher.txt
 echo "Vorher-Liste: $OUT/vorher.txt"
@@ -87,7 +97,8 @@ tar --no-same-owner -C "$TMP" -xf -
 id openspider-shadow >/dev/null 2>&1 || useradd --system --shell /usr/sbin/nologin --home-dir "$BASE" --no-create-home openspider-shadow
 install -d -o root -g root -m 0755 "$BASE" "$BASE/bin" "$BASE/etc" "$BASE/systemd"
 install -d -o openspider-shadow -g openspider-shadow -m 0750 "$BASE/var" "$BASE/var/crawls" "$BASE/var/exports" "$BASE/var/reports" "$BASE/var/home"
-cp -a "$TMP/bin/." "$BASE/bin/"
+# Atomar ersetzen (Kopie neben das Ziel, dann mv): überschreibt nie eine Datei, die gerade ausgeführt wird.
+for f in "$TMP"/bin/*; do n="$(basename "$f")"; cp -a "$f" "$BASE/bin/.$n.new"; mv -f "$BASE/bin/.$n.new" "$BASE/bin/$n"; done
 cp -a "$TMP/systemd/." "$BASE/systemd/"
 for f in shadow.osconfig shadow.env rule-map.toml; do cp -a "$TMP/etc/$f" "$BASE/etc/$f"; done
 cp -a "$TMP/etc/autonomo-source.toml.dist" "$BASE/etc/autonomo-source.toml.dist"

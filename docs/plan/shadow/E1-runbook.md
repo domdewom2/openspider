@@ -10,7 +10,7 @@ Autonomo wird nur gelesen (GET bzw. SELECT, kein POST/PUT/PATCH/DELETE, kein Aus
 ## 1. Vorbereitung lokal
 
 ```
-python3 -I -m unittest discover -s scripts/shadow/tests          # 44 Tests, kein Netz
+python3 -I -m unittest discover -s scripts/shadow/tests          # Python-Tests, kein Netz
 scripts/shadow/deploy.sh --dry-run                               # lädt das Artefakt, prüft sha256, zeigt den Inhalt
 ```
 
@@ -22,6 +22,11 @@ Das Artefakt `openspider-linux-x86_64` stammt aus dem letzten grünen Lauf von `
 ```
 scripts/shadow/deploy.sh --out ~/shadow-e1          # schreibt vorher.txt, nachher.txt, unterschied.diff
 ```
+
+Vor jedem (auch jedem erneuten) Aufruf prüft `deploy.sh` selbst `systemctl is-active openspider-shadow.service` und bricht ohne
+Änderung ab, solange der Dienst läuft (sonst wäre die Binärdatei in Benutzung). Dann das Ende des Laufs abwarten
+(`journalctl -fu openspider-shadow.service`) und erneut starten. Dateien in `bin/` werden per Kopie neben das Ziel und `mv`
+atomar ersetzt.
 
 `deploy.sh` holt die Vorher-Liste (`systemctl list-unit-files`, `list-timers`, `ss -ltn`, `df -h /`), legt Benutzer, Ordner,
 Binärdatei (`bin/VERSION` mit Commit, Lauf-ID, sha256, Datum), Konfiguration und Units an, bindet die Units per
@@ -56,7 +61,8 @@ python3 scripts/shadow/compare.py validate --rule-map scripts/shadow/rule-map.to
 ```
 
 Keine Texte, Beschreibungen oder Listen aus Autonomo-Dokumenten übernehmen; Autonomo-Unterlagen mit Recherche zum
-Referenzprodukt nicht lesen. Danach `deploy.sh` erneut ausführen (gleiche oder neue Artefakt-Version).
+Referenzprodukt nicht lesen. Danach `deploy.sh` erneut ausführen (gleiche oder neue Artefakt-Version); vorher mit `systemctl is-active
+openspider-shadow.service` sicherstellen, dass kein Lauf aktiv ist (`deploy.sh` bricht sonst selbst ab).
 
 ## 5. Sofortlauf, beobachtet, danach Timer
 

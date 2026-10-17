@@ -57,6 +57,60 @@ class NamesTests(unittest.TestCase):
         )
         self.assertEqual(c.export_file_name("Internal:All"), "internal_all.csv")
 
+    def test_placeholders_are_resolved_with_the_default_limits(self):
+        expected = {
+            "URL:Over {url.max_chars} Characters": "url_over_115_characters.csv",
+            "Page Titles:Over {title.max_chars} Characters": "page_titles_over_60_characters.csv",
+            "Page Titles:Below {title.min_chars} Characters": "page_titles_below_30_characters.csv",
+            "Meta Description:Over {meta_description.max_chars} Characters": "meta_description_over_155_characters.csv",
+            "Meta Description:Below {meta_description.min_chars} Characters": "meta_description_below_70_characters.csv",
+            "H1:Over {h1.max_chars} Characters": "h1_over_70_characters.csv",
+            "H2:Over {h2.max_chars} Characters": "h2_over_70_characters.csv",
+            "Images:Over {image.max_kb} KB": "images_over_100_kb.csv",
+            "Images:Alt Text Over {image.alt_max_chars} Characters": "images_alt_text_over_100_characters.csv",
+            "Page Titles:Over {title.max_px} Pixels": "page_titles_over_561_pixels.csv",
+        }
+        for name, file in expected.items():
+            self.assertEqual(c.export_file_name(name), file, name)
+
+    def test_placeholders_use_the_values_of_the_osconfig(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "x.osconfig")
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write("schema_version = 2\n[title]\nmax_chars = 55\n[image]\nmax_kb = 250\n")
+            limits = c.load_limits(path)
+        self.assertEqual(c.export_file_name("Page Titles:Over {title.max_chars} Characters", limits=limits),
+                         "page_titles_over_55_characters.csv")
+        self.assertEqual(c.export_file_name("Images:Over {image.max_kb} KB", limits=limits), "images_over_250_kb.csv")
+        self.assertEqual(c.export_file_name("Page Titles:Below {title.min_chars} Characters", limits=limits),
+                         "page_titles_below_30_characters.csv")
+
+    def test_shipped_osconfig_keeps_the_default_thresholds(self):
+        # shadow.osconfig setzt keine eigenen Schwellen; sonst müssten die Dateinamen daraus berechnet werden.
+        self.assertEqual(c.load_limits(os.path.join(SHADOW, "shadow.osconfig")), c.DEFAULT_LIMITS)
+
+    def test_every_export_name_matches_the_files_of_a_real_export(self):
+        # real-export-names.txt: CSV-Dateinamen eines echten Exports (Release-Build 2f38c4a, Loopback-Crawl) mit
+        # genau der Namensliste aus rule-map.toml; jede Kennung muss auf eine dieser Dateien abgebildet werden.
+        with open(os.path.join(DATA, "real-export-names.txt"), encoding="utf-8") as fh:
+            recorded = {line.strip() for line in fh if line.strip()}
+        names = c.export_filters(c.load_rule_map(os.path.join(SHADOW, "rule-map.toml")))
+        self.assertEqual(len(recorded), len(names))
+        computed = {c.export_file_name(n) for n in names}
+        self.assertEqual(computed, recorded)
+
+    def test_pattern_search_finds_a_single_export_when_the_thresholds_differ(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with open(os.path.join(tmp, "page_titles_over_72_characters.csv"), "w", encoding="utf-8") as fh:
+                fh.write("Address\nhttps://e.test/\n")
+            found = c.find_export_file(tmp, "Page Titles:Over {title.max_chars} Characters")
+            self.assertEqual(os.path.basename(found), "page_titles_over_72_characters.csv")
+            # zweideutig: kein Treffer statt Raten
+            with open(os.path.join(tmp, "page_titles_over_80_characters.csv"), "w", encoding="utf-8") as fh:
+                fh.write("Address\n")
+            self.assertIsNone(c.find_export_file(tmp, "Page Titles:Over {title.max_chars} Characters"))
+            self.assertIsNone(c.find_export_file(tmp, "Page Titles:Missing"))
+
     def test_overlong_names_are_rejected(self):
         with self.assertRaises(ValueError):
             c.export_file_name("Tab:" + "x" * 130)
@@ -151,6 +205,38 @@ class CompareTests(unittest.TestCase):
         self.assertEqual(self.result["autonomo_unmapped"], {"demo_unbekannt": 2})
         self.assertEqual(self.result["openspider_unmapped"], {"Internal:All": 3})
 
+    def test_placeholder_filters_are_found_and_compared(self):
+        rule_map = {"schema": 1, "rule": [{"autonomo": "t60", "class": "gleichwertig", "reason": "r",
+                                           "openspider": ["Page Titles:Over {title.max_chars} Characters"]}]}
+        with tempfile.TemporaryDirectory() as tmp:
+            with open(os.path.join(tmp, "page_titles_over_60_characters.csv"), "w", encoding="utf-8-sig") as fh:
+                fh.write("Address,Title 1\nhttps://e.test/a,x\nhttps://e.test/b,y\n")
+            data = c.load_os_exports(tmp, c.export_filters(rule_map))
+        result = c.compare_site("e.test", data, {"findings": {"t60": ["https://e.test/a", "https://e.test/c"]}}, rule_map, None)
+        r = result["rules"][0]
+        self.assertTrue(r["comparable"])
+        self.assertEqual((r["count_openspider"], r["intersection"]), (2, 1))
+
+    def test_export_without_address_column_is_a_problem_not_an_empty_set(self):
+        rule_map = {"schema": 1, "rule": [{"autonomo": "r", "class": "gleichwertig", "reason": "r",
+                                           "openspider": ["Page Titles:Missing"]}]}
+        with tempfile.TemporaryDirectory() as tmp:
+            with open(os.path.join(tmp, "page_titles_missing.csv"), "w", encoding="utf-8") as fh:
+                fh.write("Adresse,Titel\nhttps://e.test/a,x\n")
+            data = c.load_os_exports(tmp, c.export_filters(rule_map))
+        self.assertIsNone(data["Page Titles:Missing"])
+        self.assertIn("Page Titles:Missing", data.unreadable)
+        result = c.compare_site("e.test", data, {"findings": {"r": ["https://e.test/a"]}}, rule_map, None)
+        r = result["rules"][0]
+        self.assertFalse(r["comparable"])
+        self.assertEqual(r["unreadable_exports"], ["Page Titles:Missing"])
+        self.assertEqual(r["missing_exports"], [])
+        self.assertIn("Page Titles:Missing", result["unreadable_exports"])
+        self.assertNotIn("Page Titles:Missing", result["openspider_unmapped"])
+        md = c.render_markdown(result)
+        self.assertIn("Export unlesbar: Page Titles:Missing", md)
+        self.assertIn("Unlesbare Exporte", md)
+
     def test_time_gap_between_the_crawls(self):
         self.assertEqual(self.result["time_gap_s"], 300)
 
@@ -189,6 +275,16 @@ class MetricsTests(unittest.TestCase):
         self.assertEqual(m["max_rate_reported"], 2.0)
         self.assertEqual(m["max_rate_window"], 3.0)
         self.assertEqual(m["peak_rss_kb"], 123456)
+
+    def test_short_runs_report_the_bounds_of_the_mean_rate(self):
+        lines = ['{"phase":"crawl","crawled":4,"elapsed_s":1,"rate":2.0}']
+        m = c.compute_metrics(lines, {})
+        self.assertEqual((m["mean_rate"], m["mean_rate_low"]), (4.0, 2.0))
+        self.assertTrue(m["mean_rate_coarse"])
+        with open(os.path.join(DATA, "progress.log"), encoding="utf-8") as fh:
+            long_run = c.compute_metrics(fh.read().splitlines(), {})
+        self.assertLess(long_run["mean_rate_low"], long_run["mean_rate"])
+        self.assertTrue(long_run["mean_rate_coarse"])  # 30 s < 60 s
 
     def test_no_progress_lines(self):
         m = c.compute_metrics(["kein JSON"], {})
@@ -249,6 +345,48 @@ class AutonomoReadTests(unittest.TestCase):
             c._api_get("http://example.com/api", "x", "t", 1)
 
 
+class _Redirecting(http.server.BaseHTTPRequestHandler):
+    target = ""
+    seen = []
+
+    def do_GET(self):
+        _Redirecting.seen.append(self.headers.get("Authorization"))
+        self.send_response(302)
+        self.send_header("Location", _Redirecting.target)
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    def log_message(self, *args):
+        pass
+
+
+class _Ignoring(http.server.BaseHTTPRequestHandler):
+    """Antwortet auf jede Anfrage mit derselben Seite, ignoriert also limit/offset."""
+
+    hits = 0
+
+    def do_GET(self):
+        _Ignoring.hits += 1
+        if self.path.endswith("/onpage/crawls"):
+            body = [{"id": "7", "domain": "caloone.de", "status": "fertig", "finished_at": "2026-10-17T03:00:00Z"}]
+        else:
+            body = {"befunde": [{"regel": "r1", "url": f"https://caloone.de/{i}"} for i in range(2)]}
+        data = json.dumps(body).encode()
+        self.send_response(200)
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def log_message(self, *args):
+        pass
+
+
+def _serve(handler):
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    return server
+
+
 class _Recorder(http.server.BaseHTTPRequestHandler):
     seen = []
 
@@ -301,6 +439,43 @@ class ApiFetchTests(unittest.TestCase):
                 self.assertEqual(saved["crawl"]["id"], "7")
                 self.assertEqual({m for m, _, _ in _Recorder.seen}, {"GET"})
                 self.assertTrue(all(auth == "Bearer geheimer-testwert" for _, _, auth in _Recorder.seen))
+        finally:
+            server.shutdown()
+            server.server_close()
+
+    def test_redirects_are_refused_and_the_token_never_follows(self):
+        other = _serve(_Recorder)
+        first = _serve(_Redirecting)
+        try:
+            _Recorder.seen.clear()
+            _Redirecting.seen.clear()
+            _Redirecting.target = f"http://127.0.0.1:{other.server_address[1]}/fremd"
+            with self.assertRaises(SystemExit) as ctx:
+                c._api_get(f"http://127.0.0.1:{first.server_address[1]}/api", "x", "geheimer-testwert", 5)
+            self.assertIn("302", str(ctx.exception))
+            self.assertNotIn("geheimer-testwert", str(ctx.exception))
+            self.assertEqual(len(_Redirecting.seen), 1)
+            self.assertEqual(_Recorder.seen, [])  # das Ziel der Weiterleitung wurde nie angefragt
+        finally:
+            for srv in (other, first):
+                srv.shutdown()
+                srv.server_close()
+
+    def test_paging_stops_when_the_api_ignores_limit_and_offset(self):
+        server = _serve(_Ignoring)
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                env = os.path.join(tmp, "autonomo.env")
+                with open(env, "w", encoding="utf-8") as fh:
+                    fh.write("AUTONOMO_EXTERN_TOKEN=t\n")
+                cfg = {"api": {"verified": True, "base_url": f"http://127.0.0.1:{server.server_address[1]}/api/extern",
+                               "env_path": env, "page_size": 2}}
+                _Ignoring.hits = 0
+                with contextlib.redirect_stderr(io.StringIO()) as err:
+                    result = c.fetch_via_api("caloone.de", "2026-10-17T02:05:00Z", cfg)
+            self.assertEqual(result["findings"], {"r1": ["https://caloone.de/0", "https://caloone.de/1"]})
+            self.assertEqual(_Ignoring.hits, 3)  # Liste, Seite 1, identische Seite 2
+            self.assertIn("identische Antwort", err.getvalue())
         finally:
             server.shutdown()
             server.server_close()

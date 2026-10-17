@@ -44,6 +44,7 @@ import urllib.request
 CLASSES = ("gleichwertig", "teilweise", "ohne Gegenstück")
 EXAMPLES = 5
 SCHEMA = 1
+MAX_PAGES = 10000
 LOOPBACK_HOSTS = {"127.0.0.1", "::1", "localhost"}
 
 # --------------------------------------------------------------------------------------------------
@@ -97,12 +98,72 @@ def sanitize_name(text: str) -> str:
     return "".join(out).strip("_.-")
 
 
-def export_file_name(tab_filter: str, ext: str = "csv") -> str:
-    """Dateiname eines Tab-Exports; Namen über 120 Zeichen werden nicht unterstützt (Hash-Kürzung)."""
-    stem = sanitize_name(tab_filter) or "export"
+# Standardschwellen (os-model, CrawlConfig::default); Werte aus der Konfigurationsdatei überschreiben sie.
+DEFAULT_LIMITS: dict[str, dict[str, int]] = {
+    "title": {"max_chars": 60, "min_chars": 30, "max_px": 561, "min_px": 200},
+    "meta_description": {"max_chars": 155, "min_chars": 70, "max_px": 985, "min_px": 400},
+    "url": {"max_chars": 115},
+    "h1": {"max_chars": 70},
+    "h2": {"max_chars": 70},
+    "image": {"max_kb": 100, "alt_max_chars": 100},
+}
+_PLACEHOLDER = re.compile(r"\{([^{}]*)\}")
+
+
+def load_limits(osconfig_path: str | None = None) -> dict[str, dict[str, int]]:
+    """Standardschwellen, überlagert mit den Abschnitten title, meta_description, url, h1, h2, image der osconfig."""
+    limits = {section: dict(values) for section, values in DEFAULT_LIMITS.items()}
+    if osconfig_path:
+        with open(osconfig_path, "rb") as fh:
+            doc = tomllib.load(fh)
+        for section, values in limits.items():
+            over = doc.get(section)
+            if isinstance(over, dict):
+                for key in values:
+                    if isinstance(over.get(key), int) and not isinstance(over.get(key), bool):
+                        values[key] = over[key]
+    return limits
+
+
+def resolve_placeholders(text: str, limits: dict[str, dict[str, int]] | None = None) -> str:
+    """Ersetzt {abschnitt.schluessel} durch den wirksamen Wert, wie die Binärdatei beim Dateinamen; Unbekanntes bleibt stehen."""
+    limits = DEFAULT_LIMITS if limits is None else limits
+
+    def repl(m: re.Match[str]) -> str:
+        section, _, key = m.group(1).partition(".")
+        value = limits.get(section, {}).get(key)
+        return m.group(0) if value is None else str(value)
+
+    return _PLACEHOLDER.sub(repl, text)
+
+
+def export_file_name(tab_filter: str, ext: str = "csv", limits: dict[str, dict[str, int]] | None = None) -> str:
+    """Dateiname eines Tab-Exports; Platzhalter werden mit den wirksamen Schwellen aufgelöst.
+
+    Namen über 120 Zeichen werden nicht unterstützt (Hash-Kürzung)."""
+    stem = sanitize_name(resolve_placeholders(tab_filter, limits)) or "export"
     if len(stem) > MAX_STEM_LEN:
         raise ValueError(f"Exportname zu lang für die einfache Zuordnung: {tab_filter}")
     return f"{stem}.{ext}"
+
+
+def find_export_file(export_dir: str, tab_filter: str, limits: dict[str, dict[str, int]] | None = None) -> str | None:
+    """Pfad der Exportdatei: erst der berechnete Name, sonst bei Platzhaltern eine eindeutige Mustersuche im Ordner."""
+    path = os.path.join(export_dir, export_file_name(tab_filter, limits=limits))
+    if os.path.isfile(path):
+        return path
+    if not _PLACEHOLDER.search(tab_filter):
+        return None
+    # Rückfall: jeder Platzhalter steht für eine beliebige Zahl; nur ein einziger Treffer gilt.
+    marker = "placeholderx"
+    stem = sanitize_name(_PLACEHOLDER.sub(marker, tab_filter))
+    pattern = re.compile("^" + re.escape(stem).replace(marker, "[0-9]+") + r"\.csv$")
+    try:
+        names = sorted(os.listdir(export_dir))
+    except OSError:
+        return None
+    hits = [n for n in names if pattern.match(n)]
+    return os.path.join(export_dir, hits[0]) if len(hits) == 1 else None
 
 
 # --------------------------------------------------------------------------------------------------
@@ -192,20 +253,36 @@ def known_filter_ids(*toml_paths: str) -> set[str]:
 # --------------------------------------------------------------------------------------------------
 # Daten laden
 
-def load_os_exports(export_dir: str, filters: list[str]) -> dict[str, list[str] | None]:
-    """Normalisierte Adressen je Tab:Filter aus den CSV-Dateien; None = Datei fehlt."""
-    result: dict[str, list[str] | None] = {}
+class ExportSet(dict):
+    """Normalisierte Adressen je Tab:Filter; unreadable nennt Exporte, die vorhanden, aber nicht lesbar sind."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.unreadable: dict[str, str] = {}
+
+
+def load_os_exports(export_dir: str, filters: list[str], limits: dict[str, dict[str, int]] | None = None) -> ExportSet:
+    """Normalisierte Adressen je Tab:Filter aus den CSV-Dateien.
+
+    None = Datei fehlt; None mit Eintrag in .unreadable = Datei da, aber ohne Spalte 'Address' oder nicht lesbar
+    (wird als Problem gemeldet und nie als leere Menge gezählt)."""
+    result = ExportSet()
     for tf in filters:
-        path = os.path.join(export_dir, export_file_name(tf))
-        if not os.path.isfile(path):
+        path = find_export_file(export_dir, tf, limits)
+        if path is None:
             result[tf] = None
             continue
-        with open(path, newline="", encoding="utf-8-sig") as fh:
-            reader = csv.DictReader(fh)
-            if reader.fieldnames is None or "Address" not in reader.fieldnames:
-                result[tf] = []
-                continue
-            result[tf] = [normalize_url(row["Address"]) for row in reader if row.get("Address")]
+        try:
+            with open(path, newline="", encoding="utf-8-sig") as fh:
+                reader = csv.DictReader(fh)
+                if reader.fieldnames is None or "Address" not in reader.fieldnames:
+                    result[tf] = None
+                    result.unreadable[tf] = "Spalte 'Address' fehlt"
+                    continue
+                result[tf] = [normalize_url(row["Address"]) for row in reader if row.get("Address")]
+        except (OSError, UnicodeDecodeError, csv.Error) as e:
+            result[tf] = None
+            result.unreadable[tf] = f"nicht lesbar ({type(e).__name__})"
     return result
 
 
@@ -272,12 +349,14 @@ def compare_site(
             entry.update({"comparable": False, "count_autonomo": len(a)})
             rules_out.append(entry)
             continue
-        missing = [f for f in rule["openspider"] if os_data.get(f) is None]
+        unreadable = getattr(os_data, "unreadable", {})
+        bad = [f for f in rule["openspider"] if f in unreadable]
+        missing = [f for f in rule["openspider"] if os_data.get(f) is None and f not in unreadable]
         o: set[str] = set()
         for f in rule["openspider"]:
             mapped_os.add(f.lower())
             o.update(os_data.get(f) or [])
-        entry.update({"comparable": not missing, "missing_exports": missing})
+        entry.update({"comparable": not missing and not bad, "missing_exports": missing, "unreadable_exports": bad})
         entry.update(_stats(a, o))
         rules_out.append(entry)
 
@@ -288,6 +367,7 @@ def compare_site(
         "autonomo_source": autonomo.get("source"),
         "openspider_finished_at": os_finished,
         "time_gap_s": gap,
+        "unreadable_exports": dict(sorted(getattr(os_data, "unreadable", {}).items())),
         "rules": rules_out,
         "autonomo_unmapped": {
             rid: len(urls) for rid, urls in sorted(findings.items()) if rid not in mapped_rules
@@ -295,7 +375,7 @@ def compare_site(
         "openspider_unmapped": {
             tf: (None if urls is None else len(set(urls)))
             for tf, urls in sorted(os_data.items())
-            if tf.lower() not in mapped_os
+            if tf.lower() not in mapped_os and tf not in getattr(os_data, "unreadable", {})
         },
     }
 
@@ -312,7 +392,12 @@ def render_markdown(result: dict) -> str:
     lines.append("|---|---|---|---|---|---|---|---|---|")
     for r in result["rules"]:
         if not r.get("comparable", True) and r["class"] != "ohne Gegenstück":
-            lines.append(f"| {r['autonomo']} | {r['class']} | {', '.join(r['openspider'])} | – | – | – | – | – | Export fehlt: {', '.join(r['missing_exports'])} |")
+            reason = []
+            if r.get("missing_exports"):
+                reason.append(f"Export fehlt: {', '.join(r['missing_exports'])}")
+            if r.get("unreadable_exports"):
+                reason.append(f"Export unlesbar: {', '.join(r['unreadable_exports'])}")
+            lines.append(f"| {r['autonomo']} | {r['class']} | {', '.join(r['openspider'])} | – | – | – | – | – | {'; '.join(reason)} |")
         elif r["class"] == "ohne Gegenstück":
             lines.append(f"| {r['autonomo']} | {r['class']} | – | {r['count_autonomo']} | – | – | – | – | – |")
         else:
@@ -320,6 +405,9 @@ def render_markdown(result: dict) -> str:
                 f"| {r['autonomo']} | {r['class']} | {', '.join(r['openspider'])} | {r['count_autonomo']} | "
                 f"{r['count_openspider']} | {r['intersection']} | {r['only_autonomo']} | {r['only_openspider']} | {r['jaccard']:.4f} |"
             )
+    if result.get("unreadable_exports"):
+        lines += ["", "## Unlesbare Exporte (Problem, nicht vergleichbar)", ""]
+        lines += [f"- {tf}: {why}" for tf, why in result["unreadable_exports"].items()]
     deviations = [r for r in result["rules"] if r.get("comparable") and r.get("jaccard", 1.0) < 1.0]
     lines += ["", "## Abweichungen", ""]
     if not deviations:
@@ -365,10 +453,13 @@ def compute_metrics(progress_lines: list[str], run_meta: dict, window_s: float =
         points.append((float(obj["elapsed_s"]), int(obj["crawled"])))
         reported_max = max(reported_max, float(obj.get("rate") or 0.0))
     mean = 0.0
+    mean_low = 0.0
     window_max = 0.0
     if points:
         elapsed, crawled = points[-1]
         mean = crawled / elapsed if elapsed > 0 else 0.0
+        # elapsed_s kommt in ganzen Sekunden (abgeschnitten): die wahre Dauer liegt in [elapsed, elapsed + 1).
+        mean_low = crawled / (elapsed + 1.0)
         i = 0
         for j in range(len(points)):
             while i < j and points[j][0] - points[i + 1][0] >= window_s:
@@ -380,6 +471,8 @@ def compute_metrics(progress_lines: list[str], run_meta: dict, window_s: float =
         "urls_crawled": points[-1][1] if points else 0,
         "crawl_elapsed_s": points[-1][0] if points else 0,
         "mean_rate": round(mean, 3),
+        "mean_rate_low": round(mean_low, 3),
+        "mean_rate_coarse": bool(points) and points[-1][0] < 60,
         "max_rate_reported": round(reported_max, 3),
         "max_rate_window": round(window_max, 3),
         "window_s": window_s,
@@ -520,6 +613,18 @@ FIELD_DEFAULTS = {
 }
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Lehnt jede Weiterleitung ab, damit der Bearer-Token nie an ein anderes Ziel als die geprüfte Loopback-URL geht."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: D401, ARG002
+        raise urllib.error.HTTPError(req.full_url, code, "Weiterleitung abgelehnt", headers, fp)
+
+
+def _opener() -> urllib.request.OpenerDirector:
+    # build_opener() mit eigener Redirect-Klasse ersetzt den Standard-HTTPRedirectHandler.
+    return urllib.request.build_opener(_NoRedirect)
+
+
 def _api_get(base: str, path: str, token: str, timeout: int, query: dict | None = None):
     url = base.rstrip("/") + "/" + path.lstrip("/")
     if query:
@@ -529,7 +634,7 @@ def _api_get(base: str, path: str, token: str, timeout: int, query: dict | None 
         raise SystemExit("Abbruch: der Autonomo-Zugang ist nur über Loopback erlaubt")
     req = urllib.request.Request(url, method="GET", headers={"Authorization": f"Bearer {token}", "Accept": "application/json"})
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 (nur Loopback, geprüft)
+        with _opener().open(req, timeout=timeout) as resp:  # nur Loopback, geprüft; keine Weiterleitungen
             return json.load(resp)
     except urllib.error.HTTPError as e:
         raise SystemExit(f"Autonomo-API: HTTP {e.code} für {path}") from None
@@ -556,16 +661,24 @@ def fetch_via_api(site: str, near: str, cfg: dict) -> dict:
         raise SystemExit(f"Abbruch: kein abgeschlossener Autonomo-Crawl für {site} über die API erreichbar")
     findings: dict[str, list[str]] = {}
     page, offset = int(api["page_size"]), 0
-    while True:
+    previous: dict[str, list[str]] | None = None
+    for _ in range(MAX_PAGES):
         query = {"limit": page, "offset": offset} if page else None
         payload = _api_get(api["base_url"], api["findings_path"].format(crawl=urllib.parse.quote(crawl["id"], safe="")), token, api["timeout_s"], query)
         chunk = extract_findings(payload, fields["rule"], fields["url"])
+        if previous is not None and chunk == previous:
+            # Die Schnittstelle ignoriert limit/offset und liefert dieselbe Seite erneut: nicht vervielfachen.
+            print("Warnung: identische Antwort auf die Folgeseite, Blättern abgebrochen (limit/offset wirkungslos?)", file=sys.stderr)
+            break
+        previous = chunk
         for rid, urls in chunk.items():
             findings.setdefault(rid, []).extend(urls)
         rows = sum(len(v) for v in chunk.values())
         if not page or rows < page:
             break
         offset += page
+    else:
+        raise SystemExit(f"Abbruch: mehr als {MAX_PAGES} Seiten Befunde, Schnittstelle prüfen")
     return {"schema": SCHEMA, "site": site, "source": "api", "crawl": crawl, "findings": findings}
 
 
@@ -683,7 +796,8 @@ def cmd_compare(args) -> int:
     with open(args.autonomo, encoding="utf-8") as fh:
         autonomo = json.load(fh)
     filters = export_filters(rule_map)
-    os_data = load_os_exports(args.exports, filters)
+    limits = load_limits(args.osconfig)
+    os_data = load_os_exports(args.exports, filters, limits)
     result = compare_site(args.site, os_data, autonomo, rule_map, meta.get("finished_at"))
     if args.progress and os.path.isfile(args.progress):
         with open(args.progress, encoding="utf-8", errors="replace") as fh:
@@ -738,6 +852,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--autonomo", required=True, help="normalisierte Autonomo-Datei")
     s.add_argument("--rule-map", required=True)
     s.add_argument("--run-meta", help="run.json des Laufs")
+    s.add_argument("--osconfig", help="Konfiguration des Laufs (Schwellen für Platzhalter in Filternamen; Standard: Standardwerte)")
     s.add_argument("--progress", help="Fortschrittsdatei des Laufs (JSON-Zeilen)")
     s.add_argument("--out", required=True)
     s.set_defaults(fn=cmd_compare)

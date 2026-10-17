@@ -73,9 +73,12 @@ Indexierbarkeit, robots, Seitenlimit (20 000), Zeitversatz zwischen den Crawls.
 4. **Logfile-Analyse in Autonomo:** Die Schattencrawls erscheinen dort als unbekannter Bot „OpenSpider-Shadow“. Der Bot-Katalog
    wird nicht geändert (Vorgabe); die Zahlen der Logauswertung für die beiden Sites sind in den Lauffenstern daher leicht erhöht.
 5. **Spec-/Autonomo-Befunde:** nach dem Vergleich (noch keine).
-6. Das Verzeichnis `scripts/shadow/tests` (44 Python-Tests) läuft in keinem CI-Job; die Workflows gehören anderen Paketen
+6. Das Verzeichnis `scripts/shadow/tests` (57 Python-Tests) läuft in keinem CI-Job; die Workflows gehören anderen Paketen
    (`linux-core.yml`: M2-F02). Vorschlag an den Planer: einen Schritt `python3 -I -m unittest discover -s scripts/shadow/tests`
    in einen bestehenden Linux-Job aufnehmen.
+7. **Branchname:** Der Branch heißt `m2/m2-v02` (wie die übrigen Pakete der Welle 0b, Schema `m2/m2-xxx`); M2.md 3.13 und die
+   `prompt_notes` in `M2-packages.json` nennen `m2/v02`. Beide Stellen liegen außerhalb dieses Pakets und sind im Plan
+   anzugleichen.
 
 ## 7. Lokale Prüfung der Auslieferung (17.10.2026, macOS arm64, Release-Build von `2f38c4a`)
 
@@ -89,3 +92,24 @@ Indexierbarkeit, robots, Seitenlimit (20 000), Zeitversatz zwischen den Crawls.
 - `compare.sh`/`compare.py`: Vergleich, JSON und Markdown, Rate/RSS-Auswertung, Token wird weder ausgegeben noch gespeichert,
   nur GET gegen Loopback (Test mit Aufzeichnungsserver), SELECT-Prüfung, `verified = false` verhindert jeden Abruf.
 - Nicht lokal prüfbar (macOS): `VmHWM`-Messung, `setpriv`, systemd-Eigenschaften der Unit, `deploy.sh` (nicht ausgeführt).
+
+## 8. Korrekturen nach der Prüfung (17.10.2026)
+
+Behoben in `scripts/shadow/` (Ausführung auf dem VPS bleibt offen, siehe Kopf):
+
+- **Dateinamen mit Platzhaltern:** `compare.py` löst `{abschnitt.schluessel}` in Filter-Kennungen jetzt mit den wirksamen
+  Schwellen auf (Standardwerte, überlagert mit den Abschnitten `title`, `meta_description`, `url`, `h1`, `h2`, `image` der
+  Konfiguration; `compare.sh` übergibt `--osconfig etc/shadow.osconfig`). Ist die berechnete Datei nicht da, sucht
+  `find_export_file` ein eindeutiges Muster im Exportordner (jeder Platzhalter = Zahl). Ein Test vergleicht alle 63 Namen aus
+  `rule-map.toml` mit der Dateiliste eines echten Exports (`tests/data/real-export-names.txt`, Release-Build `2f38c4a`).
+- **Export ohne Spalte `Address`:** wird als „unlesbar“ gemeldet (`unreadable_exports` in JSON und Markdown, Regel
+  nicht vergleichbar), nicht mehr als leere Menge gezählt.
+- **Bearer-Token:** `_api_get` lehnt jede Weiterleitung ab (eigener Opener ohne Redirect-Folgen); der Token geht nur an die
+  geprüfte Loopback-URL.
+- **Blättern:** `fetch_via_api` bricht bei einer Folgeseite mit identischer Antwort ab (Warnung auf stderr, keine
+  Verdopplung) und nach höchstens 10 000 Seiten.
+- **`deploy.sh`:** prüft vor jeder Änderung `systemctl is-active openspider-shadow.service` und bricht ab, solange der Dienst
+  läuft; Dateien in `bin/` werden per Kopie neben das Ziel und `mv -f` atomar ersetzt (kein ETXTBSY). Runbook Schritte 2 und 4
+  verweisen darauf.
+- **Mittlere Rate:** `metrics` enthält zusätzlich `mean_rate_low` (Dauer + 1 s, da `elapsed_s` in ganzen Sekunden kommt) und
+  `mean_rate_coarse` (Messdauer unter 60 s). `mean_rate` ist die obere, `mean_rate_low` die untere Schranke.

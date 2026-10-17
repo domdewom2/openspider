@@ -53,7 +53,7 @@ for site in $SITES; do
   fi
   if [ "$(id -u)" = 0 ]; then chown "$SHADOW_USER": "$auto"; fi
   if ! as_shadow python3 "$PY" compare --site "$site" --exports "$dir" --autonomo "$auto" \
-         --rule-map "$BASE/etc/rule-map.toml" --run-meta "$meta" \
+         --rule-map "$BASE/etc/rule-map.toml" --run-meta "$meta" --osconfig "$BASE/etc/shadow.osconfig" \
          --progress "$BASE/var/crawls/$site/$STAMP.progress.log" --out "$REP"; then
     log "$site: Vergleich fehlgeschlagen"
     fail=1
