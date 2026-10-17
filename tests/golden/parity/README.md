@@ -1,6 +1,6 @@
 # Paritäts-Golden: Referenz-Exporte erzeugen
 
-Diese Anleitung ist für den **Nutzer**. Agents bedienen Screaming Frog nie und legen nichts unter `sf/` ab
+Diese Anleitung ist für den **Nutzer**. Agents bedienen das Referenzprodukt nie und legen nichts unter `ref/` ab
 (Clean-Room, `docs/plan/M1.md` Abschnitt 2 Regel 1 und Abschnitt 5). Die Roh-Exporte aus der Referenz sind
 Messdaten: unverändert ablegen, nicht bearbeiten, nicht umbenennen (außer im Manifest nachgetragen).
 
@@ -36,7 +36,7 @@ Wichtig:
    (Name und Port aus der Tabelle einsetzen.) Die Ausgabe nennt `http://127.0.0.1:8902`. Kurz prüfen, z. B. im
    Browser oder mit `curl -i http://127.0.0.1:8902/` (erwartet: `200`). Beenden mit `Ctrl+C`, erst wenn alle Exporte fertig sind.
    Für `parity-synthetic` genügt derselbe Aufruf (`... -- parity-synthetic 8905`).
-2. **Screaming Frog Free öffnen**, Modus *Spider*, Konfiguration auf Standard (Datei → Konfiguration → Standardkonfiguration,
+2. **Referenzprodukt öffnen** (Free-Version), Modus *Spider*, Konfiguration auf Standard (Datei → Konfiguration → Standardkonfiguration,
    falls zuvor etwas geändert wurde). Folgende Optionen sollen gelten – was die Free-Version sperrt, bleibt aus und wird in
    Schritt 6 vermerkt:
    - *robots.txt beachten* (Standard), kein JavaScript-Rendering, kein Wechsel des User-Agents.
@@ -50,14 +50,14 @@ Wichtig:
 4. **Exporte erzeugen** laut Exportliste der Site (unten). Jeder Export als **CSV**, Dateiname wie von der Referenz vorgeschlagen.
    - Tab-Exporte: Tab wählen, Filter *All*, *Export*.
    - Bulk-Exporte: Menü *Bulk Export*; Reports: Menü *Reports*.
-5. **Dateien ablegen**: nach `tests/golden/parity/<site>/sf/` kopieren (Ordner anlegen; unverändert, nicht öffnen und neu speichern).
-   Weicht ein Dateiname von `sf_file` im Manifest ab, trägst du den **tatsächlichen** Namen im Manifest ein.
+5. **Dateien ablegen**: nach `tests/golden/parity/<site>/ref/` kopieren (Ordner anlegen; unverändert, nicht öffnen und neu speichern).
+   Weicht ein Dateiname von `ref_file` im Manifest ab, trägst du den **tatsächlichen** Namen im Manifest ein.
 6. **Manifest aktualisieren** (`tests/golden/parity/<site>/manifest.toml`):
-   - `sf_version` (Menü *Hilfe → Über*, z. B. `"24.3"`) und `exported_at` (Datum, `"JJJJ-MM-TT"`) eintragen;
+   - `ref_version` (Menü *Hilfe → Über*, z. B. `"24.3"`) und `exported_at` (Datum, `"JJJJ-MM-TT"`) eintragen;
    - je Export `status = "present"` setzen, wenn die Datei abgelegt ist; `status = "unavailable"`, wenn der Export in der
-     Free-Version nicht möglich ist (Menüpunkt gesperrt) – dann in `sf_settings` einen kurzen Hinweis ergänzen;
+     Free-Version nicht möglich ist (Menüpunkt gesperrt) – dann in `ref_settings` einen kurzen Hinweis ergänzen;
    - sonst bleibt `status = "pending"`.
-7. **Einchecken**: nur `tests/golden/parity/<site>/` (also `sf/` und `manifest.toml`). Der Abnahmetest verlangt mindestens
+7. **Einchecken**: nur `tests/golden/parity/<site>/` (also `ref/` und `manifest.toml`). Der Abnahmetest verlangt mindestens
    4 von 5 Sites mit Status `present`.
 
 ## Exportlisten
@@ -66,7 +66,7 @@ Die Zeile nennt Menüpfad und erwarteten Dateinamen; maßgeblich ist immer die `
 Die Spalten jedes Exports bildet die Mapping-Datei `tests/parity/mappings/<mapping>.toml` ab; die Spalten *Description*
 und *How To Fix* werden beim Einlesen verworfen.
 
-| Export | Menüpfad | Datei (`sf_file`) | Mapping |
+| Export | Menüpfad | Datei (`ref_file`) | Mapping |
 |---|---|---|---|
 | Internal:All | Tab *Internal*, Filter *All*, Export | `internal_all.csv` | `internal_all` |
 | External:All | Tab *External*, Filter *All*, Export | `external_all.csv` | `external_all` |

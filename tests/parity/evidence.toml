@@ -1,7 +1,7 @@
 # Paritaetsbelege fuer den Status `verified` (docs/plan/M1.md 5.4 Punkt 3, A9). Format und Regeln: crates/os-parity/src/coverage/evidence.rs.
 #
 # Eine ID wird `verified`, wenn jeder Eintrag, der sie nennt, im Paritaetslauf (report.json) fehlerfrei ist: URL-Menge identisch,
-# keine Abweichung in den genannten Spalten, keine Referenzeinschraenkung SF Free (K-53). Aufgenommen sind nur IDs, deren Spec-
+# keine Abweichung in den genannten Spalten, keine Referenzeinschraenkung (Free) (K-53). Aufgenommen sind nur IDs, deren Spec-
 # Umfang die verglichenen Spalten vollstaendig abdecken; alles andere bleibt `implemented` (Beleg: Fixture-Test, A2).
 
 # Internal: Size, Transferred, Total Transferred (K-02: die Referenz zaehlt keine Header-Bytes in Transferred)

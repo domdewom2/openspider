@@ -398,10 +398,10 @@ fn parity_evidence_sets_verified_only_for_clean_implemented_ids() {
     // ALPHA-001: sauberer Export. ALPHA-002: Spaltenfehler. ALPHA-003 ist offen und bleibt es.
     let clean = serde_json::json!({"outcome": "compared", "report": {
         "export": "good", "url_set_identical": true, "cells_compared": 40, "agreement_pct": 100.0,
-        "columns": [{"sf_column": "A", "errors": 0}], "applied_deviations": [{"id": "DEV-001"}]}});
+        "columns": [{"ref_column": "A", "errors": 0}], "applied_deviations": [{"id": "DEV-001"}]}});
     let bad = serde_json::json!({"outcome": "compared", "report": {
         "export": "bad", "url_set_identical": true, "cells_compared": 40, "agreement_pct": 90.0,
-        "columns": [{"sf_column": "A", "errors": 4}], "applied_deviations": []}});
+        "columns": [{"ref_column": "A", "errors": 4}], "applied_deviations": []}});
     std::fs::write(
         &report,
         serde_json::json!({"sites": [{"site": "s", "exports": [clean, bad]}]}).to_string(),

@@ -1,5 +1,5 @@
 # OpenSpider-Konfiguration fuer Paritaetslaeufe gegen die Referenz-Exporte (docs/plan/M1.md 5.3).
-# Entspricht der tatsaechlichen Referenzkonfiguration (SF 24.3 Free, K-53): In der Free-Version ist die
+# Entspricht der tatsaechlichen Referenzkonfiguration (Referenzprodukt 24.3 Free, K-53): In der Free-Version ist die
 # Spider-Konfiguration gesperrt, gecrawlt wurde mit den Standardwerten. Hreflang und Pagination wurden nur
 # gespeichert, nicht gecrawlt; verlinkte XML-Sitemaps wurden nicht gecrawlt (Erkennung ueber robots.txt an,
 # aber ohne Abruf). Beide Seiten vergleichen so dieselbe Konfiguration. Alle nicht genannten Schluessel

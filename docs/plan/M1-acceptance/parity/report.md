@@ -78,10 +78,10 @@ Sites mit Status present: 5
 | DEV-035 | TECH-015 | OS-Festlegung | 2 | parity-onpage | K-71: Die Grundgesamtheit der Referenz heisst 'Internal HTML or PDF pages with 2xx response' und enthaelt jede PDF; die Canonicals-Grundmenge von OpenSpider fuehrt Nicht-HTML-Ressourcen nur mit mindestens einer HTTP-Canonical (TECH-011) und nimmt eine PDF ohne Link-Header nicht in Missing auf (TECH-015). PDFs als Seiten sind P1 (ONPAGE-166). parity-onpage hat eine PDF ohne Canonical (/ctype/t-pdf.pdf): Referenz 85/81, OpenSpider 84/80. |
 | DEV-036 | TECH-133 | OS-Festlegung | 1 | parity-technical | K-07/K-71 (wie DEV-010): Selbstlinks zaehlen im Links-Tab nicht, eine Seite nur mit Selbstlink hat 0 Outlinks (TECH-130, TECH-133); die Referenz zaehlt sie mit. Betrifft /links/self-only.html: Referenz 1, OpenSpider 2. |
 
-## Referenzeinschränkungen SF Free
+## Referenzeinschränkungen (Free)
 
 | Kennung | Spec | Kennzeichen | Zellen/Zeilen | Sites | Begründung |
 |---|---|---|---:|---|---|
-| SF-FREE-01 | TECH-210 | Annahme | 110 | parity-technical | SF-Free-Einschraenkung (Spider-Konfiguration gesperrt): verlinkte XML-Sitemaps und robots.txt-Sitemaps werden nicht abgerufen; die Referenz listet im Tab Sitemaps dennoch alle internen URLs, OpenSpider ohne verarbeitete Sitemap keine (TECH-211: Tab leer). |
-| SF-FREE-02 | TECH-210 | Annahme | 5 | out-basic-site, parity-onpage, parity-response, parity-synthetic, parity-technical | SF-Free-Einschraenkung (Spider-Konfiguration gesperrt): ohne Sitemap-Crawl zaehlt die Referenz alle URLs im Abschnitt Sitemaps, OpenSpider 0 (TECH-211). |
+| REF-FREE-01 | TECH-210 | Annahme | 110 | parity-technical | Referenz-Free-Einschraenkung (Spider-Konfiguration gesperrt): verlinkte XML-Sitemaps und robots.txt-Sitemaps werden nicht abgerufen; die Referenz listet im Tab Sitemaps dennoch alle internen URLs, OpenSpider ohne verarbeitete Sitemap keine (TECH-211: Tab leer). |
+| REF-FREE-02 | TECH-210 | Annahme | 5 | out-basic-site, parity-onpage, parity-response, parity-synthetic, parity-technical | Referenz-Free-Einschraenkung (Spider-Konfiguration gesperrt): ohne Sitemap-Crawl zaehlt die Referenz alle URLs im Abschnitt Sitemaps, OpenSpider 0 (TECH-211). |
 

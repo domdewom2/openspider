@@ -15,7 +15,7 @@
 //! * in jedem verglichenen Bericht die URL-Menge identisch ist (nach dokumentierten Abweichungen; `url_set = false`
 //!   hebt das für Belege über einzelne Spalten auf),
 //! * die genannten Spalten (ohne Angabe: alle verglichenen) keine Abweichung zeigen und
-//! * keine Referenzeinschränkung der Free-Version (`SF-FREE-nn`, K-53) auf den Bericht gewirkt hat – solche
+//! * keine Referenzeinschränkung der Free-Version (`REF-FREE-nn`, K-53) auf den Bericht gewirkt hat – solche
 //!   Filter bleiben `implemented`, ihr Beleg ist der spec-abgeleitete Fixture-Test.
 
 use std::collections::BTreeMap;
@@ -119,7 +119,7 @@ fn check(ev: &Evidence, compared: &[Compared<'_>]) -> Result<Vec<Value>, String>
                 .into_iter()
                 .flatten()
             {
-                let name = col.get("sf_column").and_then(|s| s.as_str()).unwrap_or("");
+                let name = col.get("ref_column").and_then(|s| s.as_str()).unwrap_or("");
                 if !ev.columns.is_empty() && !ev.columns.iter().any(|c| c == name) {
                     continue;
                 }
@@ -137,11 +137,11 @@ fn check(ev: &Evidence, compared: &[Compared<'_>]) -> Result<Vec<Value>, String>
                 .into_iter()
                 .flatten()
                 .filter_map(|d| d.get("id").and_then(|i| i.as_str()))
-                .filter(|id| crate::report::is_sf_free(id))
+                .filter(|id| crate::report::is_ref_free(id))
                 .collect();
             if !free.is_empty() {
                 return Err(format!(
-                    "{}/{slug}: Referenzeinschränkung SF Free wirkt ({})",
+                    "{}/{slug}: Referenzeinschränkung (Free) wirkt ({})",
                     c.site,
                     free.join(", ")
                 ));
@@ -200,8 +200,8 @@ mod tests {
     fn parity(errors: u64, same: bool, free: bool) -> Value {
         json!({"sites":[{"site":"s1","exports":[{"outcome":"compared","report":{
             "export":"h1_all","url_set_identical":same,"cells_compared":10,"agreement_pct":100.0,
-            "columns":[{"sf_column":"H1-1","errors":errors},{"sf_column":"H1-2","errors":0}],
-            "applied_deviations": if free { json!([{"id":"SF-FREE-01"}]) } else { json!([{"id":"DEV-001"}]) }
+            "columns":[{"ref_column":"H1-1","errors":errors},{"ref_column":"H1-2","errors":0}],
+            "applied_deviations": if free { json!([{"id":"REF-FREE-01"}]) } else { json!([{"id":"DEV-001"}]) }
         }}]}]})
     }
 
@@ -230,7 +230,10 @@ mod tests {
         columns_only[0].url_set = false;
         assert!(evaluate(&columns_only, &parity(0, false, false))["ONPAGE-120"].is_ok());
         let free = evaluate(&ev(&[]), &parity(0, true, true));
-        assert!(free["ONPAGE-120"].as_ref().unwrap_err().contains("SF Free"));
+        assert!(free["ONPAGE-120"]
+            .as_ref()
+            .unwrap_err()
+            .contains("Referenzeinschränkung (Free)"));
         let missing = evaluate(
             &[Evidence {
                 specs: vec!["X-1".into()],

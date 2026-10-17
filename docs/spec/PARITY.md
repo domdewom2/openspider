@@ -1144,7 +1144,7 @@ Herleitung (Abzüge vom Vollwert 100):
 
 **Empfohlene nächste Schritte für den Planer (Opus):** (1) Konflikte K-1 … K-17 auflösen, indem je Thema genau ein Bereichsdokument die Vollspezifikation trägt und die übrigen auf Verweis gekürzt werden; (2) G-1 und G-2 als neue IDs aufnehmen, G-3 … G-5 als Akzeptanzkriterien; (3) Mischprioritäten (Abschnitt 5) in eindeutige Einzelprioritäten oder getrennte IDs auflösen, damit die Meilensteinzählung stabil ist.
 
-## 7 Black-Box-Befunde des Paritätslaufs M1 (SF 24.3 Free, 14.10.2026)
+## 7 Black-Box-Befunde des Paritätslaufs M1 (Referenzprodukt 24.3 Free, 14.10.2026)
 
 Quelle: `docs/plan/M1-acceptance/checklist.md` (Abschnitt A3) und `docs/plan/M1-acceptance/parity/report.md`. Der Planer hat am 14.10.2026 nach dem Grundsatz entschieden: **Parität mit der Referenz, außer die Spec enthält eine bewusste, begründete OS-Festlegung.** Die Klärungen stehen als K-54 bis K-64 und (Nachträge aus Welle 6 und dem Fable-Recheck vom 15.10.2026) K-66 bis K-71 in `docs/plan/M1.md` Abschnitt 8.
 

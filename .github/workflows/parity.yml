@@ -1,0 +1,63 @@
+name: Parity
+
+# Paritätslauf gegen die Referenzexporte (Referenzprodukt 24.3 Free, docs/plan/M1.md 5; Abnahmekriterium A3) und
+# Neutralitätsprüfung (M2-H01, docs/plan/M2.md 3.12). Der Job ersetzt den bisherigen Job `parity` aus ci.yml (den entfernt
+# M2-F04). Der Paritätslauf läuft nur, wenn unter tests/golden/parity/*/ref/ Referenzdateien liegen. Er endet mit
+# Exit-Code 0 (5/5 Sites, 38/38 Vergleiche, docs/plan/M1-acceptance/parity/report.md); A3 wird damit in der CI erzwungen.
+# Den Bericht (report.md/report.json) gibt es immer als Artefakt und in der Job-Zusammenfassung.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  parity:
+    name: parity (macos-arm64)
+    runs-on: macos-14
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Neutralitätsprüfung (kein namentlicher Bezug auf das Referenzprodukt)
+        run: scripts/check-neutral.sh
+
+      - name: Referenzexporte vorhanden?
+        id: reference
+        run: |
+          if ls tests/golden/parity/*/ref/*.csv >/dev/null 2>&1; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "Keine Referenzexporte unter tests/golden/parity/*/ref/ – Paritätslauf übersprungen." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: dtolnay/rust-toolchain@stable
+        if: steps.reference.outputs.present == 'true'
+      - uses: Swatinem/rust-cache@v2
+        if: steps.reference.outputs.present == 'true'
+        with:
+          key: parity
+
+      - name: Build (openspider, os-parity)
+        if: steps.reference.outputs.present == 'true'
+        run: cargo build --locked -p os-cli -p os-parity
+
+      - name: Paritätslauf (os-parity run --all)
+        if: steps.reference.outputs.present == 'true'
+        run: |
+          status=0
+          target/debug/os-parity run --all --openspider target/debug/openspider --out target/parity || status=$?
+          if [ -f target/parity/report.md ]; then cat target/parity/report.md >> "$GITHUB_STEP_SUMMARY"; fi
+          exit $status
+
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.reference.outputs.present == 'true'
+        with:
+          name: parity-report
+          path: target/parity/
+          if-no-files-found: warn

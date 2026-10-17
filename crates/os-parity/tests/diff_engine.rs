@@ -10,7 +10,7 @@ use os_parity::thresholds::Thresholds;
 
 const MAPPING: &str = r#"
 key = ["Address"]
-drop_sf_columns = ["Description", "How To Fix"]
+drop_ref_columns = ["Description", "How To Fix"]
 [columns]
 "Address" = "Address"
 "Status Code" = "Status Code"
@@ -30,7 +30,7 @@ empty_equals_null = true
 "#;
 
 // Referenz: BOM, CRLF, Semikolon; Beschreibungsspalten mit "geheimen" Texten; Port 8902.
-fn sf_csv() -> Vec<u8> {
+fn ref_csv() -> Vec<u8> {
     let mut v = vec![0xEF, 0xBB, 0xBF];
     v.extend_from_slice(
         concat!(
@@ -60,17 +60,17 @@ fn os_csv() -> &'static str {
 
 fn report_with(
     mapping: &Mapping,
-    sf: &Table,
+    reference: &Table,
     os: &Table,
     devs: &[os_parity::deviations::Deviation],
 ) -> Report {
     compare(&CompareInput {
         export: "internal_all",
         site: Some("parity-onpage"),
-        sf,
+        reference,
         os,
         mapping,
-        sf_bases: &BaseUrls::from_base("http://127.0.0.1:8902/"),
+        ref_bases: &BaseUrls::from_base("http://127.0.0.1:8902/"),
         os_bases: &BaseUrls::from_base("http://127.0.0.1:41234"),
         deviations: devs,
     })
@@ -79,16 +79,16 @@ fn report_with(
 
 fn scenario() -> (Mapping, Table, Table) {
     let mapping = Mapping::parse(MAPPING).unwrap();
-    let sf = parse_csv(&sf_csv(), &mapping.drop_sf_columns).unwrap();
+    let reference = parse_csv(&ref_csv(), &mapping.drop_ref_columns).unwrap();
     let os = parse_csv(os_csv().as_bytes(), &[]).unwrap();
-    (mapping, sf, os)
+    (mapping, reference, os)
 }
 
 #[test]
 fn key_matching_reports_missing_and_extra_rows() {
-    let (m, sf, os) = scenario();
-    let r = report_with(&m, &sf, &os, &[]);
-    assert_eq!(r.sf_rows, 5);
+    let (m, reference, os) = scenario();
+    let r = report_with(&m, &reference, &os, &[]);
+    assert_eq!(r.ref_rows, 5);
     assert_eq!(r.os_rows, 5);
     assert_eq!(r.matched, 4);
     assert_eq!(r.missing_in_os, ["{BASE}/gone"]);
@@ -98,16 +98,16 @@ fn key_matching_reports_missing_and_extra_rows() {
 
 #[test]
 fn cell_rules_apply_per_column() {
-    let (m, sf, os) = scenario();
-    let r = report_with(&m, &sf, &os, &[]);
-    let col = |name: &str| r.columns.iter().find(|c| c.sf_column == name).unwrap();
+    let (m, reference, os) = scenario();
+    let r = report_with(&m, &reference, &os, &[]);
+    let col = |name: &str| r.columns.iter().find(|c| c.ref_column == name).unwrap();
     // Toleranz 3 %: 300 vs 309 (3,0 %) ok, 200 vs 205 (2,5 %) ok.
     assert_eq!(col("Title 1 Pixel Width").errors, 0);
     // Titel: "Seite B" vs "Seite B anders" -> genau ein Fehler mit Beispiel.
     assert_eq!(col("Title 1").errors, 1);
     let ex = &col("Title 1").examples[0];
     assert_eq!(ex.key, "{BASE}/b");
-    assert_eq!(ex.sf, "Seite B");
+    assert_eq!(ex.reference, "Seite B");
     assert_eq!(ex.os, "Seite B anders");
     // Bool: Yes/TRUE, yes/true, No/false gleich.
     assert_eq!(col("Indexable").errors, 0);
@@ -124,8 +124,8 @@ fn cell_rules_apply_per_column() {
 
 #[test]
 fn counts_agreement_and_percentage() {
-    let (m, sf, os) = scenario();
-    let r = report_with(&m, &sf, &os, &[]);
+    let (m, reference, os) = scenario();
+    let r = report_with(&m, &reference, &os, &[]);
     // 7 verglichene Spalten x 4 zugeordnete Zeilen; ein Fehler (Titel von Seite B).
     assert_eq!(r.cells_compared, 28);
     assert_eq!(r.cells_equal, 27);
@@ -134,25 +134,25 @@ fn counts_agreement_and_percentage() {
 
 #[test]
 fn unmapped_ignored_and_dropped_columns_are_listed_not_compared() {
-    let (m, sf, os) = scenario();
-    let r = report_with(&m, &sf, &os, &[]);
+    let (m, reference, os) = scenario();
+    let r = report_with(&m, &reference, &os, &[]);
     assert_eq!(r.unmapped_os_columns, ["Why It Matters"]);
-    assert_eq!(r.unmapped_sf_columns, ["Meta Robots 1"]);
-    assert_eq!(r.dropped_sf_columns, ["Description", "How To Fix"]);
+    assert_eq!(r.unmapped_ref_columns, ["Meta Robots 1"]);
+    assert_eq!(r.dropped_ref_columns, ["Description", "How To Fix"]);
     assert_eq!(r.ignored_columns.len(), 1);
     assert_eq!(r.ignored_columns[0].column, "Response Time");
     assert_eq!(
         r.ignored_columns[0].reason.as_deref(),
         Some("nicht deterministisch")
     );
-    assert!(r.columns.iter().all(|c| c.sf_column != "Response Time"));
+    assert!(r.columns.iter().all(|c| c.ref_column != "Response Time"));
     assert!(r.columns.iter().all(|c| c.os_column != "Why It Matters"));
 }
 
 #[test]
 fn reference_description_texts_never_reach_the_report() {
-    let (m, sf, os) = scenario();
-    let r = report_with(&m, &sf, &os, &[]);
+    let (m, reference, os) = scenario();
+    let r = report_with(&m, &reference, &os, &[]);
     let json = serde_json::to_string(&r).unwrap();
     let md = render_markdown(&r);
     assert!(!json.contains("geheimer"));
@@ -165,7 +165,7 @@ fn composite_key_with_running_number_matches_duplicates() {
         "key = [\"Source\", \"Destination\", \"Type\", \"#\"]\n[columns]\n\"Anchor\" = \"Anchor\"\n",
     )
     .unwrap();
-    let sf = parse_csv(
+    let reference = parse_csv(
         b"Type,Source,Destination,Anchor\nHyperlink,http://127.0.0.1:1/a,http://127.0.0.1:1/b,eins\nHyperlink,http://127.0.0.1:1/a,http://127.0.0.1:1/b,zwei\nImage,http://127.0.0.1:1/a,http://127.0.0.1:1/i.png,\n",
         &[],
     )
@@ -179,10 +179,10 @@ fn composite_key_with_running_number_matches_duplicates() {
         compare(&CompareInput {
             export: "all_inlinks",
             site: None,
-            sf: &sf,
+            reference: &reference,
             os,
             mapping: &mapping,
-            sf_bases: &BaseUrls::from_base("http://127.0.0.1:1"),
+            ref_bases: &BaseUrls::from_base("http://127.0.0.1:1"),
             os_bases: &BaseUrls::from_base("http://127.0.0.1:2"),
             deviations: &[],
         })
@@ -209,7 +209,7 @@ fn composite_key_with_running_number_matches_duplicates() {
 
 #[test]
 fn deviations_remove_cells_and_rows_from_the_comparison() {
-    let (m, sf, os) = scenario();
+    let (m, reference, os) = scenario();
     let devs = Deviations::parse(
         r#"
 [[deviation]]
@@ -244,7 +244,7 @@ note = "wird nie ausgelöst"
     )
     .unwrap();
     let items = devs.for_export(Some("parity-onpage"), "internal_all");
-    let r = report_with(&m, &sf, &os, &items);
+    let r = report_with(&m, &reference, &os, &items);
     assert!(r.missing_in_os.is_empty());
     assert!(r.extra_in_os.is_empty());
     assert!(r.url_set_identical);
@@ -260,8 +260,8 @@ note = "wird nie ausgelöst"
 
 #[test]
 fn thresholds_decide_pass_or_fail() {
-    let (m, sf, os) = scenario();
-    let mut r = report_with(&m, &sf, &os, &[]);
+    let (m, reference, os) = scenario();
+    let mut r = report_with(&m, &reference, &os, &[]);
     evaluate(&mut r, &Thresholds::builtin());
     assert!(!r.passed);
     assert_eq!(r.threshold_pct, 99.0);
@@ -272,7 +272,7 @@ fn thresholds_decide_pass_or_fail() {
     let t =
         Thresholds::parse("url_set_identical = false\n[agreement_pct]\n\"internal_*\" = 96.0\n")
             .unwrap();
-    let mut r = report_with(&m, &sf, &os, &[]);
+    let mut r = report_with(&m, &reference, &os, &[]);
     evaluate(&mut r, &t);
     assert!(r.passed, "{:?}", r.failures);
     assert_eq!(r.threshold_pct, 96.0);
@@ -282,7 +282,7 @@ fn thresholds_decide_pass_or_fail() {
         "url_set_identical = false\n[agreement_pct]\n\"internal_*\" = 96.42857142857143\n",
     )
     .unwrap();
-    let mut r = report_with(&m, &sf, &os, &[]);
+    let mut r = report_with(&m, &reference, &os, &[]);
     evaluate(&mut r, &t);
     assert!(r.passed);
 }
@@ -290,24 +290,24 @@ fn thresholds_decide_pass_or_fail() {
 #[test]
 fn missing_os_column_counts_as_empty_values() {
     let mapping = Mapping::parse(
-        "key = [\"Address\"]\n[columns]\n\"Title 1\" = \"Title 1\"\n\"Meta 1\" = \"Meta 1\"\n\"Nur SF\" = \"Nur SF\"\n",
+        "key = [\"Address\"]\n[columns]\n\"Title 1\" = \"Title 1\"\n\"Meta 1\" = \"Meta 1\"\n\"Nur Referenz\" = \"Nur Referenz\"\n",
     )
     .unwrap();
-    let sf = parse_csv(b"Address,Title 1,Meta 1\nhttp://127.0.0.1:1/,T,\n", &[]).unwrap();
+    let reference = parse_csv(b"Address,Title 1,Meta 1\nhttp://127.0.0.1:1/,T,\n", &[]).unwrap();
     let os = parse_csv(b"Address,Title 1\nhttp://127.0.0.1:1/,T\n", &[]).unwrap();
     let r = compare(&CompareInput {
         export: "x",
         site: None,
-        sf: &sf,
+        reference: &reference,
         os: &os,
         mapping: &mapping,
-        sf_bases: &BaseUrls::from_base("http://127.0.0.1:1"),
+        ref_bases: &BaseUrls::from_base("http://127.0.0.1:1"),
         os_bases: &BaseUrls::from_base("http://127.0.0.1:1"),
         deviations: &[],
     })
     .unwrap();
     assert_eq!(r.missing_os_columns, ["Meta 1"]);
-    assert_eq!(r.missing_sf_columns, ["Nur SF"]);
+    assert_eq!(r.missing_ref_columns, ["Nur Referenz"]);
     assert_eq!(r.cells_compared, 2);
     assert_eq!(r.cells_equal, 2, "leer gegen fehlende Spalte ist gleich");
 }
@@ -319,14 +319,14 @@ fn missing_key_column_and_empty_files_are_errors() {
     let no_key = parse_csv(b"Url\nx\n", &[]).unwrap();
     let empty = Table::default();
     let b = BaseUrls::from_base("http://127.0.0.1:1");
-    let run = |sf: &Table, os: &Table| {
+    let run = |reference: &Table, os: &Table| {
         compare(&CompareInput {
             export: "x",
             site: None,
-            sf,
+            reference,
             os,
             mapping: &mapping,
-            sf_bases: &b,
+            ref_bases: &b,
             os_bases: &b,
             deviations: &[],
         })
@@ -345,10 +345,10 @@ fn identical_files_give_full_agreement_and_pass() {
     let mut r = compare(&CompareInput {
         export: "crawl_overview",
         site: None,
-        sf: &t,
+        reference: &t,
         os: &t,
         mapping: &mapping,
-        sf_bases: &b,
+        ref_bases: &b,
         os_bases: &b,
         deviations: &[],
     })
@@ -364,8 +364,8 @@ fn identical_files_give_full_agreement_and_pass() {
 
 #[test]
 fn example_report_matches_golden() {
-    let (m, sf, os) = scenario();
-    let mut r = report_with(&m, &sf, &os, &[]);
+    let (m, reference, os) = scenario();
+    let mut r = report_with(&m, &reference, &os, &[]);
     evaluate(&mut r, &Thresholds::builtin());
     let json = serde_json::to_string_pretty(&r).unwrap() + "\n";
     let md = render_markdown(&r);

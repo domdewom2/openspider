@@ -1,12 +1,12 @@
 # Dokumentierte Paritaetsabweichungen (docs/plan/M1.md 5.3, Schritt 4). Stand M1-N18 (Welle 6b).
 #
-# Jede Abweichung zwischen OpenSpider und den Referenz-Exporten (SF 24.3 Free) ist entweder ein Fehler (-> Nachbesserungs-
+# Jede Abweichung zwischen OpenSpider und den Referenz-Exporten (Referenzprodukt 24.3 Free) ist entweder ein Fehler (-> Nachbesserungs-
 # auftrag im Abnahmebericht docs/plan/M1-acceptance/checklist.md, ohne Eintrag hier) oder steht hier mit Spec-ID und
 # Kennzeichen. Der Runner `os-parity` wendet die Eintraege beim Vergleich an und weist sie im Bericht aus.
 #
 # Abschnitt 1: begruendete Paritaetsabweichungen (DEV-nnn): die OpenSpider-Spec legt das Verhalten fest (OS-Festlegung,
 #              Annahme) oder weicht bewusst von der Referenz ab (Paritaetsabweichung).
-# Abschnitt 2: Referenzeinschraenkungen SF Free (SF-FREE-nn, K-53): die Spider-Konfiguration der Free-Version ist gesperrt;
+# Abschnitt 2: Referenzeinschraenkungen (Free) (REF-FREE-nn, K-53): die Spider-Konfiguration der Free-Version ist gesperrt;
 #              diese Eintraege zaehlen NICHT als begruendete Paritaetsabweichung, die betroffenen Filter erhalten kein
 #              `verified` (Beleg bleibt der spec-abgeleitete Fixture-Test, A2).
 #
@@ -24,7 +24,7 @@
 #
 # Weitere optionale Felder (M1-P29): export/site/column duerfen mehrere Werte nennen, getrennt durch "|"; key_prefix
 # (Zeilen, deren Schluessel so beginnt), key_prefixes (Liste), scope ("cell" Standard | "missing_in_os" | "extra_in_os"),
-# sf / os (nur bei diesem Referenz- bzw. OpenSpider-Wert), delta (nur wenn OpenSpider-Wert minus Referenzwert so gross ist).
+# ref / os (nur bei diesem Referenz- bzw. OpenSpider-Wert), delta (nur wenn OpenSpider-Wert minus Referenzwert so gross ist).
 
 [[deviation]]
 id = "DEV-003"
@@ -33,7 +33,7 @@ kind = "OS-Festlegung"
 export = "internal_all"
 site = "*"
 column = "Title 1 Length|Title 1 Pixel Width|Title 2 Length|Title 2 Pixel Width|Meta Description 1 Length|Meta Description 1 Pixel Width|Meta Description 2 Length|Meta Description 2 Pixel Width|Meta Keywords 1 Length|H1-1 Length|H1-2 Length|H2-1 Length|H2-2 Length|Word Count"
-sf = "0"
+ref = "0"
 os = ""
 reason = "Nicht-HTML-URLs sowie Weiterleitungen, Fehlerseiten (4xx/5xx) und URLs ohne Antwort haben leere Element-, Laengen- und Pixelspalten, auch wenn ihr Koerper <title>/<h1> enthaelt (ONPAGE-011, A-5, K-60, Befund N-01), und eine Seite ohne Element leere Wertspalten (ONPAGE-008); die Referenz schreibt 0."
 
@@ -44,7 +44,7 @@ kind = "OS-Festlegung"
 export = "internal_all"
 site = "*"
 column = "Text Ratio"
-sf = "0.000"
+ref = "0.000"
 os = ""
 reason = "Nicht-HTML-URLs sowie Weiterleitungen, Fehlerseiten (4xx/5xx) und URLs ohne Antwort: Word Count und Text Ratio leer (ONPAGE-013, K-60, Befund N-01); die Referenz schreibt 0."
 
@@ -55,7 +55,7 @@ kind = "OS-Festlegung"
 export = "*"
 site = "*"
 column = "Status"
-sf = "Connection Timeout"
+ref = "Connection Timeout"
 os = "Connection Refused"
 reason = "ONPAGE-065 (K-67): OpenSpider meldet die tatsaechliche Ursache, Connection Refused bei abgelehntem Verbindungsaufbau und Connection Timeout bei ausbleibender Antwort; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout."
 
@@ -66,7 +66,7 @@ kind = "Paritaetsabweichung"
 export = "all_inlinks"
 site = "*"
 column = "Status Code"
-sf = "0"
+ref = "0"
 os = ""
 reason = "Status Code ist in den Link-Exporten leer, wenn das Ziel nicht abgerufen wurde (OUT-031, Not Crawled); die Referenz schreibt 0 fuer robots.txt-blockierte Ziele."
 
@@ -77,7 +77,7 @@ kind = "Paritaetsabweichung"
 export = "all_error_inlinks"
 site = "*"
 column = "Status Code"
-sf = "0"
+ref = "0"
 os = ""
 reason = "wie DEV-006 (Fehler-Inlinks auf nicht abgerufene Ziele)."
 
@@ -88,7 +88,7 @@ kind = "Paritaetsabweichung"
 export = "all_inlinks|all_error_inlinks"
 site = "*"
 column = "Rel"
-sf = ""
+ref = ""
 os = "stylesheet"
 reason = "Rel = alle rel-Werte des Elements in Originalreihenfolge (OUT-031); die Referenz laesst rel=\"stylesheet\" leer."
 
@@ -99,7 +99,7 @@ kind = "OS-Festlegung"
 export = "all_inlinks"
 site = "*"
 column = "Follow"
-sf = "true"
+ref = "true"
 os = "False"
 reason = "Follow=False auch bei Meta/X-Robots nofollow der Quellseite (OUT-031); die Referenz bewertet nur das Link-Attribut."
 
@@ -110,7 +110,7 @@ kind = "Paritaetsabweichung"
 export = "all_inlinks|all_error_inlinks"
 site = "*"
 column = "Link Origin"
-sf = "HTTP"
+ref = "HTTP"
 os = "HTML"
 reason = "Die Spec kennt Link Origin nur HTML/Rendered HTML (OUT-031); die Referenz schreibt HTTP fuer Links aus Antwort-Headern und Weiterleitungen."
 
@@ -191,7 +191,7 @@ kind = "OS-Festlegung"
 export = "images_all"
 site = "*"
 column = "IMG Inlinks"
-sf = "0"
+ref = "0"
 os = "1"
 reason = "IMG Inlinks (OpenSpider-Erweiterung) zaehlt auch Hyperlinks auf Bilder (ONPAGE-170 Nr. 2); die Referenz zaehlt nur eingebettete Bilder."
 
@@ -223,7 +223,7 @@ kind = "OS-Festlegung"
 export = "internal_all|links_all"
 site = "*"
 column = "Indexability Status"
-sf = "Canonicalised,noindex"
+ref = "Canonicalised,noindex"
 os = "noindex"
 reason = "Indexability Status nennt genau den ersten zutreffenden Grund in der Pruefreihenfolge (TECH-001); die Referenz nennt bei noindex und fremdem Canonical beide, kommagetrennt."
 
@@ -234,7 +234,7 @@ kind = "OS-Festlegung"
 export = "directives_all"
 site = "*"
 column = "Meta Refresh 1"
-sf = ""
+ref = ""
 reason = "Die Spalte Meta Refresh im Directives-Tab zeigt auch den Wert des Refresh-Headers (TECH-064: Refresh umfasst Meta und Header); die Referenz laesst sie bei reinem Header-Refresh leer."
 
 [[deviation]]
@@ -286,7 +286,7 @@ export = "redirect_chains"
 site = "*"
 column = "Temp Redirect in Chain"
 key_prefix = "{BASE}/mixed-chain.html"
-sf = "true"
+ref = "true"
 os = "False"
 reason = "Meta Refresh und Refresh-Header gelten nur mit Verzoegerung > 0 als temporaer (OUT-081); die Referenz wertet den Meta Refresh ohne Verzoegerung als temporaer."
 
@@ -324,21 +324,21 @@ delta = 1
 reason = "K-07/K-71 (wie DEV-010): Selbstlinks zaehlen im Links-Tab nicht, eine Seite nur mit Selbstlink hat 0 Outlinks (TECH-130, TECH-133); die Referenz zaehlt sie mit. Betrifft /links/self-only.html: Referenz 1, OpenSpider 2."
 
 [[deviation]]
-id = "SF-FREE-01"
+id = "REF-FREE-01"
 spec = "TECH-210"
 kind = "Annahme"
 export = "sitemaps_all"
 site = "*"
 key_prefix = "{BASE}/"
 scope = "missing_in_os"
-reason = "SF-Free-Einschraenkung (Spider-Konfiguration gesperrt): verlinkte XML-Sitemaps und robots.txt-Sitemaps werden nicht abgerufen; die Referenz listet im Tab Sitemaps dennoch alle internen URLs, OpenSpider ohne verarbeitete Sitemap keine (TECH-211: Tab leer)."
+reason = "Referenz-Free-Einschraenkung (Spider-Konfiguration gesperrt): verlinkte XML-Sitemaps und robots.txt-Sitemaps werden nicht abgerufen; die Referenz listet im Tab Sitemaps dennoch alle internen URLs, OpenSpider ohne verarbeitete Sitemap keine (TECH-211: Tab leer)."
 
 [[deviation]]
-id = "SF-FREE-02"
+id = "REF-FREE-02"
 spec = "TECH-210"
 kind = "Annahme"
 export = "crawl_overview"
 site = "*"
 column = "URLs"
 key_prefixes = ["sitemaps | "]
-reason = "SF-Free-Einschraenkung (Spider-Konfiguration gesperrt): ohne Sitemap-Crawl zaehlt die Referenz alle URLs im Abschnitt Sitemaps, OpenSpider 0 (TECH-211)."
+reason = "Referenz-Free-Einschraenkung (Spider-Konfiguration gesperrt): ohne Sitemap-Crawl zaehlt die Referenz alle URLs im Abschnitt Sitemaps, OpenSpider 0 (TECH-211)."
