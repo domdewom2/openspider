@@ -94,7 +94,7 @@ Schreibpfad großer Crawls (M1-P32, K-74 bis K-77; Messwerte in `docs/plan/M1-ac
 
 | M | Inhalt | Abnahme durch Fable |
 |---|---|---|
-| M1 | Crawl-Kern, Speicher, CLI, Basis-Tabs (P0 aus 01/02/03/06), MCP headless lesend (10: AGENT P0), Lasttests klein | Paritätstests gegen SF-Free-Exporte, PERF-001/003/005 |
+| M1 | Crawl-Kern, Speicher, CLI, Basis-Tabs (P0 aus 01/02/03/06), MCP headless lesend (10: AGENT P0), Lasttests klein | Paritätstests gegen Free-Referenzexporte, PERF-001/003/005 |
 | M2 | Desktop-UI, alle P0/P1-Tabs und Filter, Reports/Exporte, JS-Rendering, Google-APIs (GSC, GA4, PSI) und Linkmetriken (04 ohne KI), MCP-Menü, Skill + Plugin | volle Paritätsmatrix P0+P1 (ohne KI), PERF komplett |
 | M3 | Signierte Installer (dmg/exe/msi), Auto-Update, Homebrew/winget → **Release 1.0** | Installationstest macOS arm64/x64, Windows |
 | M4 | KI-Funktionen: 08-ai, KI-Teile aus 04 (Anbieter, Prompts, Embeddings, semantische Ähnlichkeit), AGENT-030 → Release 1.x | Mock-Tests + Stichprobe mit echten Schlüsseln |

@@ -1,4 +1,4 @@
-//! Spaltenmapping SF → OS (`tests/parity/mappings/<export-slug>.toml`, Abschnitt 5.2).
+//! Spaltenmapping Referenz → OS (`tests/parity/mappings/<export-slug>.toml`, Abschnitt 5.2).
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
@@ -119,7 +119,7 @@ struct RawMapping {
     #[serde(default)]
     key: Vec<String>,
     #[serde(default)]
-    drop_sf_columns: Vec<String>,
+    drop_ref_columns: Vec<String>,
     #[serde(default)]
     columns: BTreeMap<String, RawColumn>,
     #[serde(default)]
@@ -160,7 +160,7 @@ pub struct BlocksOpts {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ColumnMap {
     /// Spaltenname in der Referenz.
-    pub sf: String,
+    pub reference: String,
     /// Spaltenname in OpenSpider (bei `ignore` ohne Bedeutung).
     pub os: String,
     /// Spalte wird nicht verglichen.
@@ -177,7 +177,7 @@ pub struct Mapping {
     /// Schlüsselspalten (Referenznamen); `"#"` = laufende Nummer.
     pub key: Vec<String>,
     /// Zu verwerfende Referenzspalten.
-    pub drop_sf_columns: Vec<String>,
+    pub drop_ref_columns: Vec<String>,
     /// Spalten in alphabetischer Reihenfolge der Referenznamen.
     pub columns: Vec<ColumnMap>,
     /// Regeln für Schlüsselspalten und nicht explizit aufgeführte Spalten.
@@ -298,10 +298,10 @@ impl Mapping {
         let mut defaults = defaults;
         apply_transforms(&mut defaults, &n.transform)?;
         let mut columns = Vec::new();
-        for (sf, col) in raw.columns {
+        for (reference, col) in raw.columns {
             let cm = match col {
                 RawColumn::Name(os) => ColumnMap {
-                    sf,
+                    reference,
                     os,
                     ignore: false,
                     reason: None,
@@ -325,8 +325,8 @@ impl Mapping {
                     rules.map = o.map;
                     apply_transforms(&mut rules, &o.transform)?;
                     ColumnMap {
-                        os: o.os.unwrap_or_else(|| sf.clone()),
-                        sf,
+                        os: o.os.unwrap_or_else(|| reference.clone()),
+                        reference,
                         ignore: o.ignore,
                         reason: o.reason,
                         rules,
@@ -357,7 +357,7 @@ impl Mapping {
         };
         Ok(Self {
             key: raw.key,
-            drop_sf_columns: raw.drop_sf_columns,
+            drop_ref_columns: raw.drop_ref_columns,
             columns,
             defaults,
             format,
@@ -368,8 +368,8 @@ impl Mapping {
     }
 
     /// Spalte für einen Referenznamen.
-    pub fn column(&self, sf: &str) -> Option<&ColumnMap> {
-        self.columns.iter().find(|c| c.sf == sf)
+    pub fn column(&self, reference: &str) -> Option<&ColumnMap> {
+        self.columns.iter().find(|c| c.reference == reference)
     }
 
     /// OpenSpider-Name einer Schlüsselspalte (ohne Eintrag unverändert).
@@ -393,7 +393,7 @@ mod tests {
 
     const SAMPLE: &str = r#"
 key = ["Address"]
-drop_sf_columns = ["Description", "How To Fix"]
+drop_ref_columns = ["Description", "How To Fix"]
 [columns]
 "Address" = "Address"
 "Status Code" = "Status Code"
@@ -413,7 +413,7 @@ empty_equals_null = true
     fn parses_columns_options_and_defaults() {
         let m = Mapping::parse(SAMPLE).unwrap();
         assert_eq!(m.key, ["Address"]);
-        assert_eq!(m.drop_sf_columns, ["Description", "How To Fix"]);
+        assert_eq!(m.drop_ref_columns, ["Description", "How To Fix"]);
         assert_eq!(m.columns.len(), 6);
         let w = m.column("Title 1 Pixel Width").unwrap();
         assert_eq!(w.rules.tolerance_pct, Some(3.0));

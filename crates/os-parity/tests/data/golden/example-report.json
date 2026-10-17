@@ -1,7 +1,7 @@
 {
   "export": "internal_all",
   "site": "parity-onpage",
-  "sf_rows": 5,
+  "ref_rows": 5,
   "os_rows": 5,
   "matched": 4,
   "missing_in_os": [
@@ -15,55 +15,55 @@
   "agreement_pct": 96.429,
   "columns": [
     {
-      "sf_column": "Status Code",
+      "ref_column": "Status Code",
       "os_column": "Status Code",
       "compared": 4,
       "errors": 0,
       "examples": []
     },
     {
-      "sf_column": "Title 1",
+      "ref_column": "Title 1",
       "os_column": "Title 1",
       "compared": 4,
       "errors": 1,
       "examples": [
         {
           "key": "{BASE}/b",
-          "sf": "Seite B",
+          "ref": "Seite B",
           "os": "Seite B anders"
         }
       ]
     },
     {
-      "sf_column": "Title 1 Pixel Width",
+      "ref_column": "Title 1 Pixel Width",
       "os_column": "Title 1 Pixel Width",
       "compared": 4,
       "errors": 0,
       "examples": []
     },
     {
-      "sf_column": "Indexable",
+      "ref_column": "Indexable",
       "os_column": "Indexability",
       "compared": 4,
       "errors": 0,
       "examples": []
     },
     {
-      "sf_column": "Indexability Status",
+      "ref_column": "Indexability Status",
       "os_column": "Indexability Status",
       "compared": 4,
       "errors": 0,
       "examples": []
     },
     {
-      "sf_column": "Size (bytes)",
+      "ref_column": "Size (bytes)",
       "os_column": "Size",
       "compared": 4,
       "errors": 0,
       "examples": []
     },
     {
-      "sf_column": "Canonical Link Element 1",
+      "ref_column": "Canonical Link Element 1",
       "os_column": "Canonical Link Element 1",
       "compared": 4,
       "errors": 0,
@@ -71,7 +71,7 @@
     }
   ],
   "applied_deviations": [],
-  "dropped_sf_columns": [
+  "dropped_ref_columns": [
     "Description",
     "How To Fix"
   ],
@@ -81,15 +81,15 @@
       "reason": "nicht deterministisch"
     }
   ],
-  "unmapped_sf_columns": [
+  "unmapped_ref_columns": [
     "Meta Robots 1"
   ],
   "unmapped_os_columns": [
     "Why It Matters"
   ],
-  "missing_sf_columns": [],
+  "missing_ref_columns": [],
   "missing_os_columns": [],
-  "ignored_sf_rows": [],
+  "ignored_ref_rows": [],
   "os_only_rows": [],
   "threshold_pct": 99.0,
   "url_set_identical": false,

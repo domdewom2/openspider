@@ -15,7 +15,7 @@
 //! key = "{BASE}/a.html"          # optional: genau diese Zeile (normalisierter Schlüssel)
 //! key_prefix = "{BASE}/robots"   # optional: alle Zeilen mit diesem Präfix
 //! scope = "cell"                 # cell (Standard) | missing_in_os | extra_in_os
-//! sf = "100"                     # optional: nur wenn der Referenzwert so lautet
+//! ref = "100"                    # optional: nur wenn der Referenzwert so lautet
 //! os = "99"                      # optional: nur wenn der OpenSpider-Wert so lautet
 //! delta = 1                       # optional: nur wenn OpenSpider-Wert − Referenzwert genau so groß ist
 //! key_prefixes = ["Internal | All", "Security | "]   # optional: Zeilen, deren Schlüssel mit einem davon beginnt
@@ -82,8 +82,8 @@ pub struct Deviation {
     #[serde(default)]
     pub scope: Scope,
     /// Nur bei diesem Referenzwert.
-    #[serde(default)]
-    pub sf: Option<String>,
+    #[serde(default, rename = "ref")]
+    pub reference: Option<String>,
     /// Nur bei diesem OpenSpider-Wert.
     #[serde(default)]
     pub os: Option<String>,
@@ -130,18 +130,18 @@ impl Deviation {
     }
 
     /// Entschuldigt die Abweichung eine abweichende Zelle?
-    pub fn excuses_cell(&self, key: &str, column: &str, sf: &str, os: &str) -> bool {
+    pub fn excuses_cell(&self, key: &str, column: &str, reference: &str, os: &str) -> bool {
         self.scope == Scope::Cell
             && self.matches_key(key)
             && self
                 .column
                 .as_deref()
                 .is_none_or(|c| c == "*" || c.split('|').any(|x| x.trim() == column))
-            && self.sf.as_deref().is_none_or(|v| v == sf)
+            && self.reference.as_deref().is_none_or(|v| v == reference)
             && self.os.as_deref().is_none_or(|v| v == os)
             && self.delta.is_none_or(|d| {
                 match (
-                    crate::normalize::parse_number(sf),
+                    crate::normalize::parse_number(reference),
                     crate::normalize::parse_number(os),
                 ) {
                     (Some(a), Some(b)) => ((b - a) - d).abs() < 1e-9,
@@ -286,7 +286,7 @@ kind = "komisch"
     #[test]
     fn value_restriction_and_missing_file() {
         let d = Deviation {
-            sf: Some("100".into()),
+            reference: Some("100".into()),
             os: Some("99".into()),
             ..Default::default()
         };

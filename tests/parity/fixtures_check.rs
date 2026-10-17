@@ -1857,15 +1857,15 @@ fn manifests_mappings_and_profile_are_consistent() {
         );
         assert!(seen_ports.insert(port), "Port doppelt");
         assert!(
-            m.contains_key("sf_version")
+            m.contains_key("ref_version")
                 && m.contains_key("exported_at")
-                && m.contains_key("sf_settings")
+                && m.contains_key("ref_settings")
         );
         let exports = m["export"]
             .as_array()
             .unwrap_or_else(|| panic!("{name}: keine Exporte"));
         assert!(!exports.is_empty());
-        let mut sf_files = BTreeSet::new();
+        let mut ref_files = BTreeSet::new();
         for e in exports {
             let status = e["status"]
                 .as_str()
@@ -1874,11 +1874,11 @@ fn manifests_mappings_and_profile_are_consistent() {
                 matches!(status, "pending" | "present" | "unavailable"),
                 "{name}: unbekannter status {status}"
             );
-            let sf_file = e["sf_file"].as_str().unwrap();
-            assert!(sf_file.ends_with(".csv") && !sf_file.contains('/'));
+            let ref_file = e["ref_file"].as_str().unwrap();
+            assert!(ref_file.ends_with(".csv") && !ref_file.contains('/'));
             assert!(
-                sf_files.insert(sf_file.to_string()),
-                "{name}: {sf_file} doppelt"
+                ref_files.insert(ref_file.to_string()),
+                "{name}: {ref_file} doppelt"
             );
             let os = e["os"].as_str().unwrap();
             let mapping = e["mapping"].as_str().unwrap();
@@ -1908,37 +1908,37 @@ fn manifests_mappings_and_profile_are_consistent() {
                 "Mapping {mapping}"
             );
         }
-        // sf/ gehört dem Nutzer (A8): genau die Dateien der Einträge mit status = present – vorhanden, nicht
+        // ref/ gehört dem Nutzer (A8): genau die Dateien der Einträge mit status = present – vorhanden, nicht
         // leer, Endung .csv, keine Unterordner, nichts sonst. pending/unavailable haben keine Datei.
         let present: BTreeSet<String> = exports
             .iter()
             .filter(|e| e["status"].as_str() == Some("present"))
-            .map(|e| e["sf_file"].as_str().unwrap().to_string())
+            .map(|e| e["ref_file"].as_str().unwrap().to_string())
             .collect();
-        let sf_dir = repo_root().join(format!("tests/golden/parity/{name}/sf"));
+        let ref_dir = repo_root().join(format!("tests/golden/parity/{name}/ref"));
         let mut found = BTreeSet::new();
-        if sf_dir.exists() {
-            for entry in std::fs::read_dir(&sf_dir).unwrap() {
+        if ref_dir.exists() {
+            for entry in std::fs::read_dir(&ref_dir).unwrap() {
                 let entry = entry.unwrap();
                 let file_name = entry.file_name().to_string_lossy().into_owned();
                 assert!(
                     entry.file_type().unwrap().is_file(),
-                    "{name}: sf/{file_name} ist keine Datei (keine Unterordner erlaubt)"
+                    "{name}: ref/{file_name} ist keine Datei (keine Unterordner erlaubt)"
                 );
                 assert!(
                     file_name.ends_with(".csv"),
-                    "{name}: sf/{file_name} ist keine .csv-Datei"
+                    "{name}: ref/{file_name} ist keine .csv-Datei"
                 );
                 assert!(
                     entry.metadata().unwrap().len() > 0,
-                    "{name}: sf/{file_name} ist leer"
+                    "{name}: ref/{file_name} ist leer"
                 );
                 found.insert(file_name);
             }
         }
         assert_eq!(
             found, present,
-            "{name}: sf/ muss genau die Dateien der Einträge mit status = present enthalten"
+            "{name}: ref/ muss genau die Dateien der Einträge mit status = present enthalten"
         );
     }
     // Mappings
@@ -1962,7 +1962,7 @@ fn manifests_mappings_and_profile_are_consistent() {
             .map(|v| v.as_str().unwrap())
             .collect();
         assert!(!key.is_empty());
-        let drop: Vec<&str> = m["drop_sf_columns"]
+        let drop: Vec<&str> = m["drop_ref_columns"]
             .as_array()
             .unwrap()
             .iter()
@@ -1970,7 +1970,7 @@ fn manifests_mappings_and_profile_are_consistent() {
             .collect();
         assert!(
             drop.contains(&"Description") && drop.contains(&"How To Fix"),
-            "{slug}: drop_sf_columns"
+            "{slug}: drop_ref_columns"
         );
         let cols = m["columns"].as_table().unwrap();
         assert!(!cols.is_empty());
@@ -1983,18 +1983,18 @@ fn manifests_mappings_and_profile_are_consistent() {
                 );
             }
         }
-        for (sf, v) in cols {
+        for (reference, v) in cols {
             assert!(
-                !drop.contains(&sf.as_str()),
-                "{slug}: {sf} wird verworfen und abgebildet"
+                !drop.contains(&reference.as_str()),
+                "{slug}: {reference} wird verworfen und abgebildet"
             );
             match v {
                 toml::Value::String(_) => {}
                 toml::Value::Table(t) => assert!(
                     t.contains_key("os") || t.get("ignore").and_then(|i| i.as_bool()) == Some(true),
-                    "{slug}: {sf}"
+                    "{slug}: {reference}"
                 ),
-                _ => panic!("{slug}: {sf}"),
+                _ => panic!("{slug}: {reference}"),
             }
         }
         let n = m["normalize"].as_table().unwrap();
@@ -2006,7 +2006,7 @@ fn manifests_mappings_and_profile_are_consistent() {
     let profile = read_toml("tests/parity/profiles/parity.osconfig");
     assert_eq!(profile["schema_version"].as_integer(), Some(1));
     assert_eq!(profile["robots"]["mode"].as_str(), Some("respect"));
-    // K-53: die Referenz (SF Free) hat Hreflang und verlinkte Sitemaps nicht gecrawlt.
+    // K-53: die Referenz (Referenzprodukt Free) hat Hreflang und verlinkte Sitemaps nicht gecrawlt.
     assert_eq!(
         profile["spider"]["hreflang"]["crawl"].as_bool(),
         Some(false)

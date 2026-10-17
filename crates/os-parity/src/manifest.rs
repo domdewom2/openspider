@@ -13,17 +13,17 @@ pub enum ExportStatus {
     /// Noch nicht vom Nutzer abgelegt.
     #[default]
     Pending,
-    /// Liegt unter `sf/`.
+    /// Liegt unter `ref/`.
     Present,
-    /// In SF Free nicht exportierbar.
+    /// In der Free-Version des Referenzprodukts nicht exportierbar.
     Unavailable,
 }
 
 /// Ein Eintrag `[[export]]`.
 #[derive(Debug, Clone, Deserialize)]
 pub struct ExportEntry {
-    /// Dateiname unter `sf/`.
-    pub sf_file: String,
+    /// Dateiname unter `ref/`.
+    pub ref_file: String,
     /// OpenSpider-Seite: `tab:<Tab>:<Filter>` | `bulk:<Name>` | `report:<Name>`.
     pub os: String,
     /// Name der Mapping-Datei (ohne `.toml`).
@@ -50,13 +50,13 @@ pub struct Manifest {
     pub port: u16,
     /// Version der Referenz (vom Nutzer eingetragen).
     #[serde(default)]
-    pub sf_version: Option<String>,
+    pub ref_version: Option<String>,
     /// Exportdatum.
     #[serde(default)]
     pub exported_at: Option<String>,
     /// Einstellungen der Referenz beim Export.
     #[serde(default)]
-    pub sf_settings: Option<String>,
+    pub ref_settings: Option<String>,
     /// Exportliste.
     #[serde(default)]
     pub export: Vec<ExportEntry>,
@@ -177,20 +177,20 @@ mod tests {
     const SAMPLE: &str = r#"
 site = "parity-onpage"
 port = 8902
-sf_version = "24.3"
+ref_version = "24.3"
 exported_at = "2026-10-20"
-sf_settings = "Standard"
+ref_settings = "Standard"
 [[export]]
-sf_file = "internal_all.csv"
+ref_file = "internal_all.csv"
 os = "tab:Internal:All"
 mapping = "internal_all"
 status = "present"
 [[export]]
-sf_file = "x.csv"
+ref_file = "x.csv"
 os = "bulk:Links:All Inlinks"
 mapping = "all_inlinks"
 [[export]]
-sf_file = "y.csv"
+ref_file = "y.csv"
 os = "report:Crawl Overview"
 mapping = "crawl_overview"
 status = "unavailable"
@@ -211,9 +211,19 @@ os_file = "overview.csv"
     #[test]
     fn unknown_status_is_an_error() {
         assert!(Manifest::parse(
-            "site=\"a\"\n[[export]]\nsf_file=\"a\"\nos=\"tab:A:B\"\nmapping=\"m\"\nstatus=\"vielleicht\"\n"
+            "site=\"a\"\n[[export]]\nref_file=\"a\"\nos=\"tab:A:B\"\nmapping=\"m\"\nstatus=\"vielleicht\"\n"
         )
         .is_err());
+    }
+
+    #[test]
+    fn legacy_abbreviated_keys_are_not_accepted() {
+        // M2-H01: kein Alias auf die alten Schlüssel; ein Manifest mit dem alten Dateischlüssel ist ungültig.
+        let legacy = format!(
+            "site=\"a\"\n[[export]]\n{}_file=\"a.csv\"\nos=\"tab:A:B\"\nmapping=\"m\"\nstatus=\"present\"\n",
+            ["s", "f"].concat()
+        );
+        assert!(Manifest::parse(&legacy).is_err());
     }
 
     #[test]

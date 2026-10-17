@@ -29,7 +29,8 @@ pub struct Example {
     /// Zeilenschlüssel (normalisiert).
     pub key: String,
     /// Wert der Referenz (aufbereitet).
-    pub sf: String,
+    #[serde(rename = "ref")]
+    pub reference: String,
     /// Wert von OpenSpider (aufbereitet).
     pub os: String,
 }
@@ -38,7 +39,7 @@ pub struct Example {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ColumnReport {
     /// Spalte der Referenz.
-    pub sf_column: String,
+    pub ref_column: String,
     /// Spalte von OpenSpider.
     pub os_column: String,
     /// Verglichene Zellen (ohne entschuldigte).
@@ -85,7 +86,7 @@ pub struct Report {
     /// Site, falls bekannt.
     pub site: Option<String>,
     /// Zeilen der Referenz.
-    pub sf_rows: u64,
+    pub ref_rows: u64,
     /// Zeilen von OpenSpider.
     pub os_rows: u64,
     /// Über den Schlüssel zugeordnete Zeilen.
@@ -105,20 +106,20 @@ pub struct Report {
     /// Angewandte Abweichungen.
     pub applied_deviations: Vec<AppliedDeviation>,
     /// Beim Einlesen verworfene Referenzspalten (nur Namen).
-    pub dropped_sf_columns: Vec<String>,
+    pub dropped_ref_columns: Vec<String>,
     /// Laut Mapping ignorierte Spalten.
     pub ignored_columns: Vec<IgnoredColumn>,
     /// Referenzspalten ohne Mapping (nicht verglichen).
-    pub unmapped_sf_columns: Vec<String>,
+    pub unmapped_ref_columns: Vec<String>,
     /// OpenSpider-Spalten ohne Mapping, u. a. Erweiterungsspalten (nur aufgelistet, nicht verglichen).
     pub unmapped_os_columns: Vec<String>,
     /// Gemappte Spalten, die in der Referenzdatei fehlen (nicht verglichen).
-    pub missing_sf_columns: Vec<String>,
+    pub missing_ref_columns: Vec<String>,
     /// Gemappte Spalten, die in der OpenSpider-Datei fehlen (Werte gelten als leer).
     pub missing_os_columns: Vec<String>,
     /// Zeilen der Referenz außerhalb von M1 (Crawl-Overview: Filter, die M1 nicht umsetzt); nur gezählt.
     #[serde(default)]
-    pub ignored_sf_rows: Vec<String>,
+    pub ignored_ref_rows: Vec<String>,
     /// Zeilen, die nur OpenSpider hat und die laut Mapping kein Fehler sind (Zusatzabschnitte).
     #[serde(default)]
     pub os_only_rows: Vec<String>,
@@ -142,9 +143,9 @@ pub fn write_report(dir: &Path, report: &Report) -> Result<(), ParityError> {
     Ok(())
 }
 
-/// Kennungen `SF-FREE-nn` bezeichnen Referenzeinschränkungen der Free-Version (K-53).
-pub fn is_sf_free(id: &str) -> bool {
-    id.starts_with("SF-FREE-")
+/// Kennungen `REF-FREE-nn` bezeichnen Referenzeinschränkungen der Free-Version (K-53).
+pub fn is_ref_free(id: &str) -> bool {
+    id.starts_with("REF-FREE-")
 }
 
 fn cell(s: &str) -> String {
@@ -177,7 +178,7 @@ pub fn render_markdown(r: &Report) -> String {
         }
     );
     let _ = writeln!(s, "| Kennzahl | Wert |\n|---|---:|");
-    let _ = writeln!(s, "| Zeilen Referenz | {} |", r.sf_rows);
+    let _ = writeln!(s, "| Zeilen Referenz | {} |", r.ref_rows);
     let _ = writeln!(s, "| Zeilen OpenSpider | {} |", r.os_rows);
     let _ = writeln!(s, "| zugeordnet | {} |", r.matched);
     let _ = writeln!(s, "| fehlen in OpenSpider | {} |", r.missing_in_os.len());
@@ -197,7 +198,7 @@ pub fn render_markdown(r: &Report) -> String {
             let _ = writeln!(
                 s,
                 "| {} | {} | {} | {} |",
-                cell(&c.sf_column),
+                cell(&c.ref_column),
                 cell(&c.os_column),
                 c.compared,
                 c.errors
@@ -205,14 +206,14 @@ pub fn render_markdown(r: &Report) -> String {
         }
         s.push('\n');
         for c in r.columns.iter().filter(|c| !c.examples.is_empty()) {
-            let _ = writeln!(s, "### Beispiele `{}`\n", c.sf_column);
+            let _ = writeln!(s, "### Beispiele `{}`\n", c.ref_column);
             let _ = writeln!(s, "| Schlüssel | Referenz | OpenSpider |\n|---|---|---|");
             for e in &c.examples {
                 let _ = writeln!(
                     s,
                     "| {} | {} | {} |",
                     cell(&e.key),
-                    cell(&e.sf),
+                    cell(&e.reference),
                     cell(&e.os)
                 );
             }
@@ -224,7 +225,7 @@ pub fn render_markdown(r: &Report) -> String {
     list_section(
         &mut s,
         "Zeilen der Referenz außerhalb von M1 (nicht verglichen)",
-        &r.ignored_sf_rows,
+        &r.ignored_ref_rows,
     );
     list_section(
         &mut s,
@@ -234,12 +235,12 @@ pub fn render_markdown(r: &Report) -> String {
     // Referenzeinschränkungen der Free-Version (K-53) stehen getrennt von den begründeten Abweichungen.
     for (title, free) in [
         ("Angewandte Abweichungen", false),
-        ("Referenzeinschränkungen SF Free", true),
+        ("Referenzeinschränkungen (Free)", true),
     ] {
         let list: Vec<&AppliedDeviation> = r
             .applied_deviations
             .iter()
-            .filter(|d| is_sf_free(&d.id) == free)
+            .filter(|d| is_ref_free(&d.id) == free)
             .collect();
         if list.is_empty() {
             continue;
@@ -262,7 +263,7 @@ pub fn render_markdown(r: &Report) -> String {
         }
         s.push('\n');
     }
-    list_section(&mut s, "Verworfene Referenzspalten", &r.dropped_sf_columns);
+    list_section(&mut s, "Verworfene Referenzspalten", &r.dropped_ref_columns);
     let ignored: Vec<String> = r
         .ignored_columns
         .iter()
@@ -275,7 +276,7 @@ pub fn render_markdown(r: &Report) -> String {
     list_section(
         &mut s,
         "Referenzspalten ohne Mapping (nicht verglichen)",
-        &r.unmapped_sf_columns,
+        &r.unmapped_ref_columns,
     );
     list_section(
         &mut s,
@@ -285,7 +286,7 @@ pub fn render_markdown(r: &Report) -> String {
     list_section(
         &mut s,
         "Gemappte Spalten fehlen in der Referenz",
-        &r.missing_sf_columns,
+        &r.missing_ref_columns,
     );
     list_section(
         &mut s,

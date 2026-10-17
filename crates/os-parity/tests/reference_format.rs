@@ -113,21 +113,21 @@ fn bases() -> (BaseUrls, BaseUrls) {
 
 fn compare_with(
     mapping: &str,
-    sf: &str,
+    reference: &str,
     os: &str,
     devs: &[Deviation],
 ) -> os_parity::report::Report {
     let m = Mapping::parse(mapping).unwrap();
-    let sf = parse_csv(sf.as_bytes(), &m.drop_sf_columns).unwrap();
+    let reference = parse_csv(reference.as_bytes(), &m.drop_ref_columns).unwrap();
     let os = parse_csv(os.as_bytes(), &[]).unwrap();
-    let (sf_bases, os_bases) = bases();
+    let (ref_bases, os_bases) = bases();
     compare(&CompareInput {
         export: "demo",
         site: Some("s"),
-        sf: &sf,
+        reference: &reference,
         os: &os,
         mapping: &m,
-        sf_bases: &sf_bases,
+        ref_bases: &ref_bases,
         os_bases: &os_bases,
         deviations: devs,
     })
@@ -143,10 +143,14 @@ fn numbered_columns_the_reference_does_not_write_count_as_empty() {
     assert!(!is_numbered_column("Status Code"));
     let mapping = "key = [\"Address\"]\n[columns]\n\"Address\" = \"Address\"\n\"Title 1\" = \"Title 1\"\n\"Title 2\" = \"Title 2\"\n\"Sitemaps\" = \"Sitemaps\"\n";
     // Die Referenz hat weder `Title 2` noch `Sitemaps`; OpenSpider liefert beide.
-    let sf = "Address,Title 1\nhttp://127.0.0.1:8902/a,Eins\nhttp://127.0.0.1:8902/b,Zwei\n";
+    let reference = "Address,Title 1\nhttp://127.0.0.1:8902/a,Eins\nhttp://127.0.0.1:8902/b,Zwei\n";
     let os = "Address,Title 1,Title 2,Sitemaps\nhttp://127.0.0.1:41000/a,Eins,,3\nhttp://127.0.0.1:41000/b,Zwei,Extra,3\n";
-    let r = compare_with(mapping, sf, os, &[]);
-    let title2 = r.columns.iter().find(|c| c.sf_column == "Title 2").unwrap();
+    let r = compare_with(mapping, reference, os, &[]);
+    let title2 = r
+        .columns
+        .iter()
+        .find(|c| c.ref_column == "Title 2")
+        .unwrap();
     assert_eq!(
         (title2.compared, title2.errors),
         (2, 1),
@@ -154,33 +158,38 @@ fn numbered_columns_the_reference_does_not_write_count_as_empty() {
     );
     assert_eq!(title2.examples[0].os, "Extra");
     // Eine nicht nummerierte fehlende Spalte wird nicht verglichen, sondern gemeldet.
-    assert!(r.columns.iter().all(|c| c.sf_column != "Sitemaps"));
-    assert_eq!(r.missing_sf_columns, ["Sitemaps"]);
+    assert!(r.columns.iter().all(|c| c.ref_column != "Sitemaps"));
+    assert_eq!(r.missing_ref_columns, ["Sitemaps"]);
 }
 
 #[test]
 fn reference_rows_with_the_same_key_collapse_when_dedupe_is_on() {
-    let sf = "Address,Source,Final Status Code\nhttp://127.0.0.1:8902/r,http://127.0.0.1:8902/,200\nhttp://127.0.0.1:8902/r,http://127.0.0.1:8902/x,200\n";
+    let reference = "Address,Source,Final Status Code\nhttp://127.0.0.1:8902/r,http://127.0.0.1:8902/,200\nhttp://127.0.0.1:8902/r,http://127.0.0.1:8902/x,200\n";
     let os = "Address,Final Status Code\nhttp://127.0.0.1:41000/r,200\n";
     let columns = "[columns]\n\"Address\" = \"Address\"\n\"Source\" = { ignore = true, reason = \"Quelle\" }\n\"Final Status Code\" = \"Final Status Code\"\n";
     let on = compare_with(
         &format!("key = [\"Address\"]\ndedupe_reference = true\n{columns}"),
-        sf,
+        reference,
         os,
         &[],
     );
     assert!(on.url_set_identical, "{:?}", on.missing_in_os);
     assert_eq!(on.matched, 1);
-    let off = compare_with(&format!("key = [\"Address\"]\n{columns}"), sf, os, &[]);
+    let off = compare_with(
+        &format!("key = [\"Address\"]\n{columns}"),
+        reference,
+        os,
+        &[],
+    );
     assert!(!off.url_set_identical, "ohne dedupe fehlt die zweite Zeile");
 }
 
 #[test]
 fn cell_transforms_cover_case_zero_hex_and_paths() {
     let mapping = "key = [\"Address\"]\n[columns]\n\"Address\" = \"Address\"\n\"Status\" = { os = \"Status\", transform = [\"ignore_case\"] }\n\"Len\" = { os = \"Len\", transform = [\"zero_as_empty\"] }\n\"Hash\" = { os = \"Hash\", transform = [\"hex_trim_zeros\"] }\n\"Path\" = { os = \"Path\", transform = [\"xpath_tags\"] }\n\"Share\" = { os = \"Share\", transform = [\"decimal_comma\"] }\n";
-    let sf = "Address,Status,Len,Hash,Path,Share\nhttp://127.0.0.1:8902/a,Blocked by robots.txt,0,886e,//body/nav/a[1],\"91,670\"\n";
+    let reference = "Address,Status,Len,Hash,Path,Share\nhttp://127.0.0.1:8902/a,Blocked by robots.txt,0,886e,//body/nav/a[1],\"91,670\"\n";
     let os = "Address,Status,Len,Hash,Path,Share\nhttp://127.0.0.1:41000/a,Blocked by Robots.txt,,0886e,/html[1]/body[1]/nav[1]/a[1],91.67\n";
-    let r = compare_with(mapping, sf, os, &[]);
+    let r = compare_with(mapping, reference, os, &[]);
     assert_eq!((r.cells_compared, r.cells_equal), (5, 5), "{r:?}");
     assert!(Mapping::parse(
         "key = [\"A\"]\n[columns]\n\"A\" = { os = \"A\", transform = [\"unbekannt\"] }\n"
@@ -191,9 +200,9 @@ fn cell_transforms_cover_case_zero_hex_and_paths() {
 #[test]
 fn keys_can_be_compared_case_insensitively() {
     let mapping = "key = [\"Section\", \"Item\"]\n[columns]\n\"Section\" = { os = \"Section\", transform = [\"ignore_case\"] }\n\"Item\" = { os = \"Item\", transform = [\"ignore_case\"] }\n\"URLs\" = \"URLs\"\n";
-    let sf = "Section,Item,URLs\nResponse Codes,Success (2xx),4\n";
+    let reference = "Section,Item,URLs\nResponse Codes,Success (2xx),4\n";
     let os = "Section,Item,URLs\nResponse Codes,Success (2XX),4\n";
-    let r = compare_with(mapping, sf, os, &[]);
+    let r = compare_with(mapping, reference, os, &[]);
     assert!(
         r.url_set_identical,
         "{:?} {:?}",
@@ -226,21 +235,21 @@ fn the_overview_compares_only_m1_filters_and_tolerates_os_only_rows() {
         .as_ref()
         .unwrap()
         .contains(&("internal".to_string(), "html".to_string())));
-    let sf = parse_blocks(OVERVIEW.as_bytes(), &BTreeMap::new()).unwrap();
+    let reference = parse_blocks(OVERVIEW.as_bytes(), &BTreeMap::new()).unwrap();
     // OpenSpider kennt Internal/All, aber nicht Internal/HTML (M1-Filter fehlt) und hat eine eigene Programmzeile.
     let os = parse_csv(
         b"Section,Item,URLs,% of Total\nInternal,All,18,100.00\nSummary,OpenSpider Version,0.1.0,\n",
         &[],
     )
     .unwrap();
-    let (sf_bases, os_bases) = bases();
+    let (ref_bases, os_bases) = bases();
     let r = compare(&CompareInput {
         export: "crawl_overview",
         site: None,
-        sf: &sf,
+        reference: &reference,
         os: &os,
         mapping: &m,
-        sf_bases: &sf_bases,
+        ref_bases: &ref_bases,
         os_bases: &os_bases,
         deviations: &[],
     })
@@ -249,7 +258,7 @@ fn the_overview_compares_only_m1_filters_and_tolerates_os_only_rows() {
     // Response Time ...) sind kein M1-Filter und werden nur gezählt.
     assert_eq!(r.missing_in_os, ["internal | html"]);
     assert!(r
-        .ignored_sf_rows
+        .ignored_ref_rows
         .iter()
         .any(|k| k == "summary | total urls encountered"));
     assert_eq!(r.os_only_rows, ["summary | openspider version"]);
@@ -300,26 +309,26 @@ fn applied_deviations_are_reported_and_free_restrictions_are_kept_apart() {
     let mapping =
         "key = [\"Address\"]\n[columns]\n\"Address\" = \"Address\"\n\"URLs\" = \"URLs\"\n";
     let devs = Deviations::parse(
-        "[[deviation]]\nid=\"DEV-001\"\nspec=\"CRAWL-098\"\nkind=\"OS-Festlegung\"\nscope=\"extra_in_os\"\nkey_prefix=\"{BASE}/robots\"\n[[deviation]]\nid=\"SF-FREE-01\"\nspec=\"TECH-210\"\nkind=\"Annahme\"\ncolumn=\"URLs\"\nreason=\"SF-Free-Einschränkung (Spider-Konfiguration gesperrt): ohne Sitemap\"\n",
+        "[[deviation]]\nid=\"DEV-001\"\nspec=\"CRAWL-098\"\nkind=\"OS-Festlegung\"\nscope=\"extra_in_os\"\nkey_prefix=\"{BASE}/robots\"\n[[deviation]]\nid=\"REF-FREE-01\"\nspec=\"TECH-210\"\nkind=\"Annahme\"\ncolumn=\"URLs\"\nreason=\"Referenz-Free-Einschränkung (Spider-Konfiguration gesperrt): ohne Sitemap\"\n",
     )
     .unwrap();
-    let sf = "Address,URLs\nhttp://127.0.0.1:8902/a,5\n";
+    let reference = "Address,URLs\nhttp://127.0.0.1:8902/a,5\n";
     let os = "Address,URLs\nhttp://127.0.0.1:41000/a,0\nhttp://127.0.0.1:41000/robots.txt,1\n";
-    let r = compare_with(mapping, sf, os, &devs.items);
+    let r = compare_with(mapping, reference, os, &devs.items);
     assert!(r.url_set_identical);
     assert_eq!(r.cells_compared, 0, "entschuldigte Zellen zählen nicht");
     let ids: Vec<&str> = r.applied_deviations.iter().map(|d| d.id.as_str()).collect();
-    assert_eq!(ids, ["DEV-001", "SF-FREE-01"]);
+    assert_eq!(ids, ["DEV-001", "REF-FREE-01"]);
     let md = os_parity::report::render_markdown(&r);
     let free_at = md
-        .find("## Referenzeinschränkungen SF Free")
+        .find("## Referenzeinschränkungen (Free)")
         .expect("eigener Abschnitt");
     let plain_at = md
         .find("## Angewandte Abweichungen")
         .expect("begründete Abweichungen");
     assert!(plain_at < free_at);
     let free_part = &md[free_at..];
-    assert!(free_part.contains("SF-FREE-01") && !free_part.contains("DEV-001"));
+    assert!(free_part.contains("REF-FREE-01") && !free_part.contains("DEV-001"));
     assert!(md[plain_at..free_at].contains("DEV-001"));
 }
 
@@ -327,7 +336,7 @@ fn applied_deviations_are_reported_and_free_restrictions_are_kept_apart() {
 fn an_export_with_a_skip_reason_is_reported_as_out_of_scope() {
     use os_parity::manifest::Manifest;
     let m = Manifest::parse(
-        "site=\"a\"\n[[export]]\nsf_file=\"x.csv\"\nos=\"report:Redirects:Redirects to Errors\"\nmapping=\"m\"\nstatus=\"present\"\nskip=\"OUT-084 ist P1\"\n",
+        "site=\"a\"\n[[export]]\nref_file=\"x.csv\"\nos=\"report:Redirects:Redirects to Errors\"\nmapping=\"m\"\nstatus=\"present\"\nskip=\"OUT-084 ist P1\"\n",
     )
     .unwrap();
     assert_eq!(m.export[0].skip.as_deref(), Some("OUT-084 ist P1"));

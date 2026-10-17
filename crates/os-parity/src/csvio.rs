@@ -110,7 +110,7 @@ pub const BLOCK_COLUMNS: [&str; 4] = ["Section", "Item", "URLs", "% of Total"];
 /// Liest die Referenzdatei nach dem Layout des Mappings (Tabelle oder Blockformat).
 pub fn read_reference(path: &Path, mapping: &Mapping) -> Result<Table, ParityError> {
     match mapping.format {
-        RefFormat::Table => read_csv(path, &mapping.drop_sf_columns),
+        RefFormat::Table => read_csv(path, &mapping.drop_ref_columns),
         RefFormat::Blocks => {
             let bytes = std::fs::read(path).map_err(|e| {
                 ParityError::Invalid(format!("{} kann nicht gelesen werden: {e}", path.display()))

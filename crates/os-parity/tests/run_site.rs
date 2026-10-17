@@ -47,7 +47,7 @@ fn write(path: &Path, text: &str) {
     std::fs::write(path, text).unwrap();
 }
 
-fn sf_csv(port: u16) -> String {
+fn ref_csv(port: u16) -> String {
     format!(
         "Address,Status Code,Title 1\nhttp://127.0.0.1:{port}/,200,Start\nhttp://127.0.0.1:{port}/a.html,404,\n"
     )
@@ -65,12 +65,12 @@ fn repo() -> Repo {
     write(
         &r.join("tests/golden/parity/site-a/manifest.toml"),
         &format!(
-            "site = \"site-a\"\nport = {port}\n\n[[export]]\nsf_file = \"internal_all.csv\"\nos = \"tab:Internal:All\"\nmapping = \"internal_all\"\nstatus = \"present\"\n\n[[export]]\nsf_file = \"links.csv\"\nos = \"bulk:Links:All Inlinks\"\nmapping = \"internal_all\"\nstatus = \"pending\"\n\n[[export]]\nsf_file = \"psi.csv\"\nos = \"report:PageSpeed:Opportunities\"\nmapping = \"internal_all\"\nstatus = \"unavailable\"\n"
+            "site = \"site-a\"\nport = {port}\n\n[[export]]\nref_file = \"internal_all.csv\"\nos = \"tab:Internal:All\"\nmapping = \"internal_all\"\nstatus = \"present\"\n\n[[export]]\nref_file = \"links.csv\"\nos = \"bulk:Links:All Inlinks\"\nmapping = \"internal_all\"\nstatus = \"pending\"\n\n[[export]]\nref_file = \"psi.csv\"\nos = \"report:PageSpeed:Opportunities\"\nmapping = \"internal_all\"\nstatus = \"unavailable\"\n"
         ),
     );
     write(
-        &r.join("tests/golden/parity/site-a/sf/internal_all.csv"),
-        &sf_csv(port),
+        &r.join("tests/golden/parity/site-a/ref/internal_all.csv"),
+        &ref_csv(port),
     );
     write(&r.join("tests/parity/mappings/internal_all.toml"), MAPPING);
     write(
@@ -171,7 +171,7 @@ fn differing_export_fails_the_run() {
         report
             .columns
             .iter()
-            .find(|c| c.sf_column == "Title 1")
+            .find(|c| c.ref_column == "Title 1")
             .unwrap()
             .errors,
         1
@@ -270,7 +270,7 @@ fn missing_output_file_is_an_error_and_stale_files_do_not_count() {
     let repo = repo();
     // Veraltete Datei früherer Läufe, die zufällig passen würde.
     let stale = repo.out().join("site-a/os/internal_all.csv");
-    write(&stale, &sf_csv(repo.port));
+    write(&stale, &ref_csv(repo.port));
     let exporter = |_: &ExportRequest| Ok(());
     let s = run_sites(&repo.opts(&["site-a"], false), &exporter).unwrap();
     assert!(!s.passed);
@@ -404,7 +404,7 @@ fn command_exporter_runs_the_binary_end_to_end() {
     let repo = repo();
     let fake_bin = PathBuf::from(env!("CARGO_BIN_EXE_os-parity"));
     let src = repo.root().join("fake-src");
-    write(&src.join("internal_all.csv"), &sf_csv(repo.port));
+    write(&src.join("internal_all.csv"), &ref_csv(repo.port));
     let mut exporter = CommandExporter::new(fake_bin);
     exporter
         .prefix_args
@@ -462,10 +462,12 @@ fn a_present_export_with_a_skip_reason_is_not_requested_and_reported_as_out_of_s
     let repo = repo();
     let manifest = repo.root().join("tests/golden/parity/site-a/manifest.toml");
     let mut text = std::fs::read_to_string(&manifest).unwrap();
-    text.push_str("\n[[export]]\nsf_file = \"chains.csv\"\nos = \"report:Redirects:Redirects to Errors\"\nmapping = \"internal_all\"\nstatus = \"present\"\nskip = \"OUT-084 ist P1\"\n");
+    text.push_str("\n[[export]]\nref_file = \"chains.csv\"\nos = \"report:Redirects:Redirects to Errors\"\nmapping = \"internal_all\"\nstatus = \"present\"\nskip = \"OUT-084 ist P1\"\n");
     write(&manifest, &text);
     write(
-        &repo.root().join("tests/golden/parity/site-a/sf/chains.csv"),
+        &repo
+            .root()
+            .join("tests/golden/parity/site-a/ref/chains.csv"),
         "Address\nhttp://x/\n",
     );
     let seen = std::sync::Mutex::new(None);
@@ -484,7 +486,7 @@ fn a_present_export_with_a_skip_reason_is_not_requested_and_reported_as_out_of_s
     let skipped = s.sites[0]
         .exports
         .iter()
-        .find(|e| e.sf_file == "chains.csv")
+        .find(|e| e.ref_file == "chains.csv")
         .unwrap();
     let Outcome::Skipped { reason } = &skipped.outcome else {
         panic!("{:?}", skipped.outcome);
@@ -500,7 +502,7 @@ fn the_markdown_summary_lists_deviations_and_free_restrictions_separately() {
     let repo = repo();
     write(
         &repo.root().join("tests/parity/deviations.toml"),
-        "[[deviation]]\nid = \"DEV-1\"\nspec = \"ONPAGE-001\"\nkind = \"Annahme\"\ncolumn = \"Title 1\"\nreason = \"Titel weicht ab\"\n[[deviation]]\nid = \"SF-FREE-01\"\nspec = \"TECH-210\"\nkind = \"Annahme\"\ncolumn = \"Status Code\"\nreason = \"SF-Free-Einschränkung (Spider-Konfiguration gesperrt): Test\"\n",
+        "[[deviation]]\nid = \"DEV-1\"\nspec = \"ONPAGE-001\"\nkind = \"Annahme\"\ncolumn = \"Title 1\"\nreason = \"Titel weicht ab\"\n[[deviation]]\nid = \"REF-FREE-01\"\nspec = \"TECH-210\"\nkind = \"Annahme\"\ncolumn = \"Status Code\"\nreason = \"Referenz-Free-Einschränkung (Spider-Konfiguration gesperrt): Test\"\n",
     );
     // Titel und Statuscode weichen ab: beide Abweichungen greifen.
     let exporter = |req: &ExportRequest| {
@@ -515,8 +517,8 @@ fn the_markdown_summary_lists_deviations_and_free_restrictions_separately() {
     let s = run_sites(&repo.opts(&["site-a"], false), &exporter).unwrap();
     let md = os_parity::run::summary_markdown(&s);
     let plain = md.find("## Begründete Paritätsabweichungen").expect(&md);
-    let free = md.find("## Referenzeinschränkungen SF Free").expect(&md);
+    let free = md.find("## Referenzeinschränkungen (Free)").expect(&md);
     assert!(plain < free);
-    assert!(md[plain..free].contains("DEV-1") && !md[plain..free].contains("SF-FREE-01"));
-    assert!(md[free..].contains("SF-FREE-01"));
+    assert!(md[plain..free].contains("DEV-1") && !md[plain..free].contains("REF-FREE-01"));
+    assert!(md[free..].contains("REF-FREE-01"));
 }

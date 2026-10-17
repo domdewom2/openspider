@@ -6,7 +6,7 @@
 //! ```text
 //! tests/fixtures/<site>/                    Fixture (os-testsite)
 //! tests/golden/parity/<site>/manifest.toml  Manifest
-//! tests/golden/parity/<site>/sf/<datei>.csv Referenz-Exporte (vom Nutzer abgelegt)
+//! tests/golden/parity/<site>/ref/<datei>.csv Referenz-Exporte (vom Nutzer abgelegt)
 //! tests/parity/mappings/<mapping>.toml      Spaltenmappings
 //! tests/parity/deviations.toml              dokumentierte Abweichungen (optional)
 //! tests/parity/thresholds.toml              Schwellen (optional, sonst Standardwerte im Code)
@@ -201,7 +201,7 @@ pub enum Outcome {
 #[derive(Debug, Clone, Serialize)]
 pub struct ExportResult {
     /// Dateiname der Referenz.
-    pub sf_file: String,
+    pub ref_file: String,
     /// Mapping-Name.
     pub mapping: String,
     /// OpenSpider-Seite laut Manifest.
@@ -304,7 +304,7 @@ fn in_manifest_order(mut results: Vec<ExportResult>, manifest: &Manifest) -> Vec
         manifest
             .export
             .iter()
-            .position(|e| e.sf_file == r.sf_file)
+            .position(|e| e.ref_file == r.ref_file)
             .unwrap_or(usize::MAX)
     });
     results
@@ -382,7 +382,7 @@ pub fn run_sites(opts: &RunOptions, exporter: &dyn Exporter) -> Result<RunSummar
                 Outcome::Error { message } => message.clone(),
                 Outcome::Skipped { .. } => String::new(),
             };
-            failures.push(format!("{}/{}: {why}", s.site, x.sf_file));
+            failures.push(format!("{}/{}: {why}", s.site, x.ref_file));
         }
         if !s.present && !opts.require_min_sites {
             failures.push(format!(
@@ -428,7 +428,7 @@ fn run_site(
     let mut results: Vec<ExportResult> = Vec::new();
     let mut prepared: Vec<Prepared> = Vec::new();
     let result_of = |e: &ExportEntry, outcome: Outcome| ExportResult {
-        sf_file: e.sf_file.clone(),
+        ref_file: e.ref_file.clone(),
         mapping: e.mapping.clone(),
         os: e.os.clone(),
         status: e.status,
@@ -472,7 +472,7 @@ fn run_site(
             ExportStatus::Pending => {
                 warnings.push(format!(
                     "{site}/{}: Referenz-Export noch nicht abgelegt (pending)",
-                    e.sf_file
+                    e.ref_file
                 ));
                 results.push(result_of(
                     e,
@@ -540,7 +540,7 @@ fn run_site(
         }
     };
     let os_base = test_site.base_url();
-    let sf_base = if manifest.port != 0 {
+    let ref_base = if manifest.port != 0 {
         format!("http://127.0.0.1:{}", manifest.port)
     } else {
         os_base.clone()
@@ -578,11 +578,11 @@ fn run_site(
     }
     drop(test_site);
 
-    let sf_bases = BaseUrls::from_base(&sf_base);
+    let ref_bases = BaseUrls::from_base(&ref_base);
     let os_bases = BaseUrls::from_base(&os_base);
     for p in &prepared {
         let outcome = compare_one(
-            opts, site, p, &os_dir, &sf_bases, &os_bases, thresholds, deviations,
+            opts, site, p, &os_dir, &ref_bases, &os_bases, thresholds, deviations,
         );
         let outcome = match outcome {
             Ok(report) => Outcome::Compared {
@@ -593,7 +593,7 @@ fn run_site(
             },
         };
         if let Outcome::Compared { report } = &outcome {
-            let stem = Path::new(&p.entry.sf_file)
+            let stem = Path::new(&p.entry.ref_file)
                 .file_stem()
                 .map(|s| s.to_string_lossy().into_owned())
                 .unwrap_or_else(|| p.entry.mapping.clone());
@@ -615,7 +615,7 @@ fn compare_one(
     site: &str,
     p: &Prepared,
     os_dir: &Path,
-    sf_bases: &BaseUrls,
+    ref_bases: &BaseUrls,
     os_bases: &BaseUrls,
     thresholds: &Thresholds,
     deviations: &Deviations,
@@ -631,17 +631,17 @@ fn compare_one(
                 names.join(", ")
             ))
         })?;
-    let sf_path = opts.golden_dir(site).join("sf").join(&p.entry.sf_file);
-    let sf = read_reference(&sf_path, &p.mapping)?;
+    let ref_path = opts.golden_dir(site).join("ref").join(&p.entry.ref_file);
+    let reference = read_reference(&ref_path, &p.mapping)?;
     let os = read_csv(&os_path, &[])?;
     let devs = deviations.for_export(Some(site), &p.entry.mapping);
     let mut report = compare(&CompareInput {
         export: &p.entry.mapping,
         site: Some(site),
-        sf: &sf,
+        reference: &reference,
         os: &os,
         mapping: &p.mapping,
-        sf_bases,
+        ref_bases,
         os_bases,
         deviations: &devs,
     })?;
@@ -695,11 +695,11 @@ fn summary_deviations(m: &mut String, s: &RunSummary) {
     }
     for (title, free) in [
         ("Begründete Paritätsabweichungen", false),
-        ("Referenzeinschränkungen SF Free", true),
+        ("Referenzeinschränkungen (Free)", true),
     ] {
         let list: Vec<_> = agg
             .iter()
-            .filter(|(id, _)| crate::report::is_sf_free(id) == free)
+            .filter(|(id, _)| crate::report::is_ref_free(id) == free)
             .collect();
         if list.is_empty() {
             continue;
@@ -769,7 +769,7 @@ pub fn summary_markdown(s: &RunSummary) -> String {
                 m,
                 "| {} | {} | {} | {} | {} | {} | {} |",
                 site.site,
-                x.sf_file,
+                x.ref_file,
                 x.mapping,
                 cells,
                 agree,

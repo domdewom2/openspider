@@ -23,8 +23,8 @@ use crate::thresholds::Thresholds;
 #[derive(Debug, Clone, clap::Args)]
 pub struct DiffArgs {
     /// CSV der Referenz.
-    #[arg(long)]
-    pub sf: PathBuf,
+    #[arg(long = "ref")]
+    pub reference: PathBuf,
     /// CSV von OpenSpider.
     #[arg(long)]
     pub os: PathBuf,
@@ -33,7 +33,7 @@ pub struct DiffArgs {
     pub mapping: PathBuf,
     /// Basis-URL der Referenz-Site (wird zu `{BASE}` normalisiert).
     #[arg(long)]
-    pub sf_base: String,
+    pub ref_base: String,
     /// Basis-URL der OpenSpider-Site.
     #[arg(long)]
     pub os_base: String,
@@ -58,13 +58,13 @@ pub struct CompareInput<'a> {
     /// Site.
     pub site: Option<&'a str>,
     /// Tabelle der Referenz (Beschreibungsspalten bereits verworfen).
-    pub sf: &'a Table,
+    pub reference: &'a Table,
     /// Tabelle von OpenSpider.
     pub os: &'a Table,
     /// Mapping.
     pub mapping: &'a Mapping,
     /// Basis-URLs der Referenz.
-    pub sf_bases: &'a BaseUrls,
+    pub ref_bases: &'a BaseUrls,
     /// Basis-URLs von OpenSpider.
     pub os_bases: &'a BaseUrls,
     /// Für diesen Export geltende Abweichungen.
@@ -85,7 +85,7 @@ struct KeyedRow {
 struct ColumnPlan<'a> {
     map: &'a crate::mapping::ColumnMap,
     /// `None`: nummerierte Spalte, die die Referenz nur bei vorhandenen Daten schreibt – gilt als leer.
-    sf_idx: Option<usize>,
+    ref_idx: Option<usize>,
     os_idx: Option<usize>,
     report: ColumnReport,
 }
@@ -177,15 +177,15 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
     let CompareInput {
         export,
         site,
-        sf,
+        reference,
         os,
         mapping,
-        sf_bases,
+        ref_bases,
         os_bases,
         deviations,
     } = input;
 
-    if sf.columns.is_empty() {
+    if reference.columns.is_empty() {
         return Err(ParityError::Invalid(
             "Referenz-Export ist leer (keine Kopfzeile)".into(),
         ));
@@ -198,11 +198,11 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
 
     // Schlüsselspalten auflösen.
     let has_ordinal = mapping.key.iter().any(|k| k == ORDINAL_KEY);
-    let mut sf_keys = Vec::new();
+    let mut ref_keys = Vec::new();
     let mut os_keys = Vec::new();
-    let mut key_sf_names: Vec<&str> = Vec::new();
+    let mut key_ref_names: Vec<&str> = Vec::new();
     for k in mapping.key.iter().filter(|k| k.as_str() != ORDINAL_KEY) {
-        let sf_i = sf.index_of(k).ok_or_else(|| {
+        let ref_i = reference.index_of(k).ok_or_else(|| {
             ParityError::Invalid(format!("Schlüsselspalte {k:?} fehlt in der Referenz"))
         })?;
         let os_name = mapping.os_name_of_key(k);
@@ -212,36 +212,36 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
             ))
         })?;
         let rules = mapping.key_rules(k);
-        sf_keys.push((sf_i, rules.clone()));
+        ref_keys.push((ref_i, rules.clone()));
         os_keys.push((os_i, rules));
-        key_sf_names.push(k);
+        key_ref_names.push(k);
     }
-    if sf_keys.is_empty() {
+    if ref_keys.is_empty() {
         return Err(ParityError::Invalid(
             "Schlüssel enthält keine Spalte (nur \"#\")".into(),
         ));
     }
 
-    let sf_rows = key_rows(sf, &sf_keys, has_ordinal, sf_bases, true);
+    let ref_rows = key_rows(reference, &ref_keys, has_ordinal, ref_bases, true);
     let os_rows = key_rows(os, &os_keys, has_ordinal, os_bases, false);
     let os_index: HashMap<&str, usize> = os_rows
         .iter()
         .enumerate()
         .map(|(i, r)| (r.id.as_str(), i))
         .collect();
-    let sf_ids: std::collections::HashSet<&str> = sf_rows.iter().map(|r| r.id.as_str()).collect();
+    let ref_ids: std::collections::HashSet<&str> = ref_rows.iter().map(|r| r.id.as_str()).collect();
 
     // Spaltenplan in Dateireihenfolge der Referenz.
     let mut plans: Vec<ColumnPlan> = Vec::new();
     let mut ignored_columns = Vec::new();
-    let mut unmapped_sf_columns = Vec::new();
+    let mut unmapped_ref_columns = Vec::new();
     let mut missing_os_columns = Vec::new();
-    for (sf_idx, name) in sf.columns.iter().enumerate() {
-        if key_sf_names.contains(&name.as_str()) {
+    for (ref_idx, name) in reference.columns.iter().enumerate() {
+        if key_ref_names.contains(&name.as_str()) {
             continue;
         }
         match mapping.column(name) {
-            None => unmapped_sf_columns.push(name.clone()),
+            None => unmapped_ref_columns.push(name.clone()),
             Some(cm) if cm.ignore => ignored_columns.push(IgnoredColumn {
                 column: name.clone(),
                 reason: cm.reason.clone(),
@@ -253,10 +253,10 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
                 }
                 plans.push(ColumnPlan {
                     map: cm,
-                    sf_idx: Some(sf_idx),
+                    ref_idx: Some(ref_idx),
                     os_idx,
                     report: ColumnReport {
-                        sf_column: cm.sf.clone(),
+                        ref_column: cm.reference.clone(),
                         os_column: cm.os.clone(),
                         compared: 0,
                         errors: 0,
@@ -269,17 +269,17 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
     // Nummerierte Spalten, die die Referenz nicht schreibt, die OpenSpider aber liefert: Referenz = leer.
     for cm in mapping.columns.iter().filter(|c| {
         !c.ignore
-            && !key_sf_names.contains(&c.sf.as_str())
-            && sf.index_of(&c.sf).is_none()
-            && is_numbered_column(&c.sf)
+            && !key_ref_names.contains(&c.reference.as_str())
+            && reference.index_of(&c.reference).is_none()
+            && is_numbered_column(&c.reference)
             && os.index_of(&c.os).is_some()
     }) {
         plans.push(ColumnPlan {
             map: cm,
-            sf_idx: None,
+            ref_idx: None,
             os_idx: os.index_of(&cm.os),
             report: ColumnReport {
-                sf_column: cm.sf.clone(),
+                ref_column: cm.reference.clone(),
                 os_column: cm.os.clone(),
                 compared: 0,
                 errors: 0,
@@ -287,26 +287,26 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
             },
         });
     }
-    let missing_sf_columns: Vec<String> = mapping
+    let missing_ref_columns: Vec<String> = mapping
         .columns
         .iter()
         .filter(|c| {
             !c.ignore
-                && !key_sf_names.contains(&c.sf.as_str())
-                && sf.index_of(&c.sf).is_none()
-                && !plans.iter().any(|p| p.map.sf == c.sf)
+                && !key_ref_names.contains(&c.reference.as_str())
+                && reference.index_of(&c.reference).is_none()
+                && !plans.iter().any(|p| p.map.reference == c.reference)
                 && !mapping
-                    .drop_sf_columns
+                    .drop_ref_columns
                     .iter()
-                    .any(|d| d.eq_ignore_ascii_case(&c.sf))
+                    .any(|d| d.eq_ignore_ascii_case(&c.reference))
         })
-        .map(|c| c.sf.clone())
+        .map(|c| c.reference.clone())
         .collect();
     let mapped_os_names: Vec<String> = mapping
         .columns
         .iter()
         .map(|c| c.os.clone())
-        .chain(key_sf_names.iter().map(|k| mapping.os_name_of_key(k)))
+        .chain(key_ref_names.iter().map(|k| mapping.os_name_of_key(k)))
         .collect();
     let unmapped_os_columns: Vec<String> = os
         .columns
@@ -330,15 +330,15 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
     let mut cells_compared = 0u64;
     let mut cells_equal = 0u64;
     let mut missing_in_os = Vec::new();
-    let mut ignored_sf_rows = Vec::new();
+    let mut ignored_ref_rows = Vec::new();
     let mut os_only_rows = Vec::new();
-    for (ri, srow) in sf_rows.iter().enumerate() {
+    for (ri, srow) in ref_rows.iter().enumerate() {
         if mapping.dedupe_reference && srow.ordinal > 0 {
             continue;
         }
         let Some(&oi) = os_index.get(srow.id.as_str()) else {
             if blocks_outside_m1(mapping, &srow.tuple) {
-                ignored_sf_rows.push(srow.display.clone());
+                ignored_ref_rows.push(srow.display.clone());
                 continue;
             }
             match deviations
@@ -351,26 +351,25 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
             continue;
         };
         matched += 1;
-        let sf_cells = &sf.rows[ri];
+        let ref_cells = &reference.rows[ri];
         let os_cells = &os.rows[oi];
         for plan in plans.iter_mut() {
             let rules = &plan.map.rules;
-            let sf_raw = plan.sf_idx.map_or("", |i| sf_cells[i].as_str());
-            let sf_value = rules.map_reference(&rules.prepare(sf_raw, sf_bases));
+            let ref_raw = plan.ref_idx.map_or("", |i| ref_cells[i].as_str());
+            let ref_value = rules.map_reference(&rules.prepare(ref_raw, ref_bases));
             let os_value = match plan.os_idx {
                 Some(i) => rules.prepare(&os_cells[i], os_bases),
                 None => String::new(),
             };
-            if rules.equal(&sf_value, &os_value) {
+            if rules.equal(&ref_value, &os_value) {
                 plan.report.compared += 1;
                 cells_compared += 1;
                 cells_equal += 1;
                 continue;
             }
-            if let Some(d) = deviations
-                .iter()
-                .position(|d| d.excuses_cell(&srow.tuple, &plan.map.sf, &sf_value, &os_value))
-            {
+            if let Some(d) = deviations.iter().position(|d| {
+                d.excuses_cell(&srow.tuple, &plan.map.reference, &ref_value, &os_value)
+            }) {
                 hit(d, &srow.display);
                 continue;
             }
@@ -380,14 +379,14 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
             if plan.report.examples.len() < max_n {
                 plan.report.examples.push(Example {
                     key: srow.display.clone(),
-                    sf: clip(&sf_value),
+                    reference: clip(&ref_value),
                     os: clip(&os_value),
                 });
             }
         }
     }
     let mut extra_in_os = Vec::new();
-    for orow in os_rows.iter().filter(|r| !sf_ids.contains(r.id.as_str())) {
+    for orow in os_rows.iter().filter(|r| !ref_ids.contains(r.id.as_str())) {
         if mapping.blocks.os_only_rows_ok {
             os_only_rows.push(orow.display.clone());
             continue;
@@ -435,7 +434,7 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
     Ok(Report {
         export: (*export).to_string(),
         site: site.map(str::to_string),
-        sf_rows: sf.rows.len() as u64,
+        ref_rows: reference.rows.len() as u64,
         os_rows: os.rows.len() as u64,
         matched,
         url_set_identical: missing_in_os.is_empty() && extra_in_os.is_empty(),
@@ -446,13 +445,13 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
         agreement_pct: (agreement * 1000.0).round() / 1000.0,
         columns: plans.into_iter().map(|p| p.report).collect(),
         applied_deviations,
-        dropped_sf_columns: sf.dropped.clone(),
+        dropped_ref_columns: reference.dropped.clone(),
         ignored_columns,
-        unmapped_sf_columns,
+        unmapped_ref_columns,
         unmapped_os_columns,
-        missing_sf_columns,
+        missing_ref_columns,
         missing_os_columns,
-        ignored_sf_rows,
+        ignored_ref_rows,
         os_only_rows,
         threshold_pct: 0.0,
         passed: false,
@@ -498,7 +497,7 @@ pub fn export_name_of(mapping_path: &Path) -> String {
 /// Führt den Vergleich aus; `Ok(true)` = alle Schwellen erfüllt.
 pub fn run(args: &DiffArgs) -> Result<bool, ParityError> {
     let mapping = Mapping::load(&args.mapping)?;
-    let sf = read_reference(&args.sf, &mapping)?;
+    let reference = read_reference(&args.reference, &mapping)?;
     let os = read_csv(&args.os, &[])?;
     let deviations = match &args.deviations {
         Some(p) => Deviations::load(p)?,
@@ -516,10 +515,10 @@ pub fn run(args: &DiffArgs) -> Result<bool, ParityError> {
     let mut report = compare(&CompareInput {
         export: &export,
         site: args.site.as_deref(),
-        sf: &sf,
+        reference: &reference,
         os: &os,
         mapping: &mapping,
-        sf_bases: &BaseUrls::from_base(&args.sf_base),
+        ref_bases: &BaseUrls::from_base(&args.ref_base),
         os_bases: &BaseUrls::from_base(&args.os_base),
         deviations: &devs,
     })?;

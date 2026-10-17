@@ -3,15 +3,15 @@
 use std::path::Path;
 use std::process::Command;
 
-const MAPPING: &str = "key = [\"Address\"]\ndrop_sf_columns = [\"Description\"]\n[columns]\n\"Address\" = \"Address\"\n\"Status Code\" = \"Status Code\"\n";
+const MAPPING: &str = "key = [\"Address\"]\ndrop_ref_columns = [\"Description\"]\n[columns]\n\"Address\" = \"Address\"\n\"Status Code\" = \"Status Code\"\n";
 
 fn bin() -> Command {
     Command::new(env!("CARGO_BIN_EXE_os-parity"))
 }
 
-fn setup(sf: &str, os: &str) -> tempfile::TempDir {
+fn setup(reference: &str, os: &str) -> tempfile::TempDir {
     let d = tempfile::tempdir().unwrap();
-    std::fs::write(d.path().join("sf.csv"), sf).unwrap();
+    std::fs::write(d.path().join("ref.csv"), reference).unwrap();
     std::fs::write(d.path().join("os.csv"), os).unwrap();
     std::fs::write(d.path().join("internal_all.toml"), MAPPING).unwrap();
     d
@@ -19,14 +19,14 @@ fn setup(sf: &str, os: &str) -> tempfile::TempDir {
 
 fn diff(d: &Path, extra: &[&str]) -> std::process::Output {
     bin()
-        .args(["diff", "--sf"])
-        .arg(d.join("sf.csv"))
+        .args(["diff", "--ref"])
+        .arg(d.join("ref.csv"))
         .arg("--os")
         .arg(d.join("os.csv"))
         .arg("--mapping")
         .arg(d.join("internal_all.toml"))
         .args([
-            "--sf-base",
+            "--ref-base",
             "http://127.0.0.1:8902/",
             "--os-base",
             "http://127.0.0.1:5555",

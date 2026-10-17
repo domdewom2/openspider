@@ -1,50 +1,50 @@
 # Paritaets-Golden fuer "out-basic-site": Metadaten und Exportliste (Format: docs/plan/M1.md 5.2).
-# Vom Nutzer auszufuellen: sf_version, exported_at, je Export status (pending -> present | unavailable) und ggf. sf_file.
-# Die Roh-Exporte der Referenz liegen unveraendert in sf/ (siehe ../README.md); Agents legen dort nichts an.
+# Vom Nutzer auszufuellen: ref_version, exported_at, je Export status (pending -> present | unavailable) und ggf. ref_file.
+# Die Roh-Exporte der Referenz liegen unveraendert in ref/ (siehe ../README.md); Agents legen dort nichts an.
 site = "out-basic-site"
-port = 8900                       # Port beim SF-Export (wird beim Vergleich zu {BASE} normalisiert)
-sf_version = "24.3"
+port = 8900                       # Port beim Referenzexport (wird beim Vergleich zu {BASE} normalisiert)
+ref_version = "24.3"
 exported_at = "2026-10-14"
-sf_settings = "SF Free 24.3 (macOS arm64), Oberflächensprache für den Export auf English (UK) gestellt (Spaltennamen englisch), sonst Standardkonfiguration. In der Free-Version ist die Spider-Konfiguration gesperrt; daher galten die Standards: Hreflang speichern=an/crawlen=aus, Pagination speichern=an/crawlen=aus, verlinkte XML-Sitemaps crawlen=aus, XML-Sitemaps über robots.txt automatisch erkennen=an (Crawl aber aus), robots.txt respektieren, kein JS-Rendering. Crawl-Analyse wurde nach jedem Crawl ausgeführt. Exportiert per Bildschirmsteuerung durch den Orchestrator am 2026-10-14."
+ref_settings = "Referenzprodukt Free 24.3 (macOS arm64), Oberflächensprache für den Export auf English (UK) gestellt (Spaltennamen englisch), sonst Standardkonfiguration. In der Free-Version ist die Spider-Konfiguration gesperrt; daher galten die Standards: Hreflang speichern=an/crawlen=aus, Pagination speichern=an/crawlen=aus, verlinkte XML-Sitemaps crawlen=aus, XML-Sitemaps über robots.txt automatisch erkennen=an (Crawl aber aus), robots.txt respektieren, kein JS-Rendering. Crawl-Analyse wurde nach jedem Crawl ausgeführt. Exportiert per Bildschirmsteuerung durch den Orchestrator am 2026-10-14."
 
 [[export]]
-sf_file = "internal_all.csv"
+ref_file = "internal_all.csv"
 os = "tab:Internal:All"
 mapping = "internal_all"
 status = "present"               # pending | present | unavailable
 
 [[export]]
-sf_file = "external_all.csv"
+ref_file = "external_all.csv"
 os = "tab:External:All"
 mapping = "external_all"
 status = "present"               # pending | present | unavailable
 
 [[export]]
-sf_file = "response_codes_all.csv"
+ref_file = "response_codes_all.csv"
 os = "tab:Response Codes:All"
 mapping = "response_codes_all"
 status = "present"               # pending | present | unavailable
 
 [[export]]
-sf_file = "links_all.csv"
+ref_file = "links_all.csv"
 os = "tab:Links:All"
 mapping = "links_all"
 status = "present"               # pending | present | unavailable
 
 [[export]]
-sf_file = "all_inlinks.csv"
+ref_file = "all_inlinks.csv"
 os = "bulk:Links:All Inlinks"
 mapping = "all_inlinks"
 status = "present"               # pending | present | unavailable
 
 [[export]]
-sf_file = "redirect_chains.csv"
+ref_file = "redirect_chains.csv"
 os = "report:Redirects:Redirect Chains"
 mapping = "redirect_chains"
 status = "present"               # pending | present | unavailable
 
 [[export]]
-sf_file = "crawl_overview.csv"
+ref_file = "crawl_overview.csv"
 os = "report:Crawl Overview"
 mapping = "crawl_overview"
 status = "present"               # pending | present | unavailable
