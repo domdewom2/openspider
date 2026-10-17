@@ -13,14 +13,20 @@ pub fn entries() -> &'static [TableEntry] {
 }
 
 // STUB(M2-D04)
-const ENTRIES: &[TableEntry] = &[
-    TableEntry {
-        name: "Canonicals:Non-Indexable Canonicals",
-        aliases: &[],
-        file_stem: "Canonicals:Non-Indexable Canonicals",
-        header: &["Source", "Canonical", "Status Code", "Status", "Indexability", "Indexability Status", "Unlinked"],
-        requires: &[ReportRequirement::CrawlAnalysis],
-        owner: "M2-D04",
-        run: stub_run,
-    },
-];
+const ENTRIES: &[TableEntry] = &[TableEntry {
+    name: "Canonicals:Non-Indexable Canonicals",
+    aliases: &[],
+    file_stem: "Canonicals:Non-Indexable Canonicals",
+    header: &[
+        "Source",
+        "Canonical",
+        "Status Code",
+        "Status",
+        "Indexability",
+        "Indexability Status",
+        "Unlinked",
+    ],
+    requires: &[ReportRequirement::CrawlAnalysis],
+    owner: "M2-D04",
+    run: stub_run,
+}];

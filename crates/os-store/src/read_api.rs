@@ -84,7 +84,9 @@ pub struct ColumnDoc {
 pub fn manifest(conn: &Connection) -> Result<Vec<(String, Option<String>)>, StoreError> {
     let mut stmt = conn.prepare("SELECT key, value FROM q_manifest ORDER BY key")?;
     let rows = stmt
-        .query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, Option<String>>(1)?)))?
+        .query_map([], |r| {
+            Ok((r.get::<_, String>(0)?, r.get::<_, Option<String>>(1)?))
+        })?
         .collect::<Result<Vec<_>, _>>()?;
     Ok(rows)
 }
@@ -93,11 +95,11 @@ pub fn manifest(conn: &Connection) -> Result<Vec<(String, Option<String>)>, Stor
 /// ergibt eine klare Meldung.
 pub fn check(conn: &Connection) -> Result<(), StoreError> {
     let get = |key: &str| -> Result<Option<String>, StoreError> {
-        Ok(conn.query_row(
-            "SELECT value FROM q_manifest WHERE key = ?1",
-            [key],
-            |r| r.get::<_, Option<String>>(0),
-        )?)
+        Ok(
+            conn.query_row("SELECT value FROM q_manifest WHERE key = ?1", [key], |r| {
+                r.get::<_, Option<String>>(0)
+            })?,
+        )
     };
     match get("format")? {
         Some(f) if f == FORMAT => {}
@@ -146,7 +148,11 @@ pub fn describe_gaps(conn: &Connection) -> Result<Vec<(String, String, String)>,
             .query_map([], |r| r.get::<_, String>(1))?
             .collect::<Result<Vec<_>, _>>()?;
         if cols.is_empty() {
-            problems.push(((*view).to_string(), String::new(), "Sicht fehlt".to_string()));
+            problems.push((
+                (*view).to_string(),
+                String::new(),
+                "Sicht fehlt".to_string(),
+            ));
         }
         for c in cols {
             real.insert(((*view).to_string(), c));
@@ -167,7 +173,11 @@ pub fn describe_gaps(conn: &Connection) -> Result<Vec<(String, String, String)>,
     }
     for d in &docs {
         if !real.contains(&(d.view.clone(), d.column.clone())) {
-            problems.push((d.view.clone(), d.column.clone(), "Spalte existiert nicht".into()));
+            problems.push((
+                d.view.clone(),
+                d.column.clone(),
+                "Spalte existiert nicht".into(),
+            ));
         }
     }
     Ok(problems)

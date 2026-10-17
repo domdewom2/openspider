@@ -148,7 +148,8 @@ fn names_aliases_and_file_names_are_unique_across_all_catalogs() {
 
 #[test]
 fn every_entry_names_an_existing_m2_package_as_its_owner() {
-    let path: PathBuf = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../docs/plan/M2-packages.json");
+    let path: PathBuf =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../../docs/plan/M2-packages.json");
     let json: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
     let ids: BTreeSet<String> = json
@@ -158,7 +159,12 @@ fn every_entry_names_an_existing_m2_package_as_its_owner() {
         .map(|p| p["id"].as_str().unwrap().to_string())
         .collect();
     for e in bulk_tables().iter().chain(report_tables().iter()) {
-        assert!(ids.contains(e.owner), "{}: Paket {} unbekannt", e.name, e.owner);
+        assert!(
+            ids.contains(e.owner),
+            "{}: Paket {} unbekannt",
+            e.name,
+            e.owner
+        );
         assert!(!e.header.is_empty(), "{}: Kopfzeile", e.name);
     }
 }

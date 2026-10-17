@@ -246,7 +246,14 @@ fn q_links_mirrors_links_with_resolved_targets_and_target_status() {
     let path = new_crawl(dir.path(), "l.ospider", StorageProfile::Balanced);
     let mut sink = sink(&path, StorageProfile::Balanced);
     let mut b = batch_with_urls([(1, true), (2, true), (3, false)]);
-    let mut p1 = page(1, vec![hyperlink(2, 0), hyperlink(3, 1), link(None, LinkType::Hyperlink, 2)]);
+    let mut p1 = page(
+        1,
+        vec![
+            hyperlink(2, 0),
+            hyperlink(3, 1),
+            link(None, LinkType::Hyperlink, 2),
+        ],
+    );
     p1.links[0].follow = false;
     p1.links[0].rel = Some("nofollow".into());
     p1.links[0].target_attr = Some("_blank".into());
@@ -263,7 +270,14 @@ fn q_links_mirrors_links_with_resolved_targets_and_target_status() {
             .unwrap(),
         3
     );
-    let row = |target: &str| -> (Option<i64>, String, i64, Option<String>, Option<String>, Option<i64>) {
+    let row = |target: &str| -> (
+        Option<i64>,
+        String,
+        i64,
+        Option<String>,
+        Option<String>,
+        Option<i64>,
+    ) {
         conn.query_row(
             "SELECT target_url_id, source_address, follow, target, link_position, target_status_code \
              FROM q_links WHERE target_address = ?1",

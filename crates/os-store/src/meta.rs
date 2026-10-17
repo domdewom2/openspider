@@ -177,7 +177,9 @@ pub fn derived_user_agent(cfg: &os_model::CrawlConfig) -> Option<String> {
         .preset
         .eq_ignore_ascii_case("openspider")
         .then(|| {
-            format!("Mozilla/5.0 (compatible; OpenSpider/{OPENSPIDER_VERSION}; +https://openspider.de)")
+            format!(
+                "Mozilla/5.0 (compatible; OpenSpider/{OPENSPIDER_VERSION}; +https://openspider.de)"
+            )
         })
 }
 

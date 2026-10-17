@@ -10,6 +10,10 @@ use os_model::{LinkPosition, LinkPositionsConfig};
 
 /// Position eines Links. `link_path` ist der absolute XPath des Elements, `landmark` die Position, die die
 /// Vorfahrensuche von M1 ergeben hat, `rules` die konfigurierten Regeln.
-pub fn classify(_link_path: &str, landmark: LinkPosition, _rules: &LinkPositionsConfig) -> LinkPosition {
+pub fn classify(
+    _link_path: &str,
+    landmark: LinkPosition,
+    _rules: &LinkPositionsConfig,
+) -> LinkPosition {
     landmark
 }

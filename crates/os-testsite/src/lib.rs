@@ -129,8 +129,8 @@
 pub mod client;
 pub mod golden;
 mod log;
-pub mod mocks;
 mod media;
+pub mod mocks;
 mod respond;
 mod server;
 pub mod synthetic;

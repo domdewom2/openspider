@@ -208,8 +208,8 @@ pub const SECRET_STORE_ENV: &str = "OPENSPIDER_SECRET_STORE";
 /// [`KeyringSecretStore`] mit dem Standard-Dienstnamen. Das Erzeugen berührt den Schlüsselbund nicht.
 pub fn secret_store_from_env() -> Arc<dyn SecretStoreMut> {
     static MEMORY: OnceLock<Arc<MemorySecretStore>> = OnceLock::new();
-    let memory = std::env::var(SECRET_STORE_ENV)
-        .is_ok_and(|v| v.trim().eq_ignore_ascii_case("memory"));
+    let memory =
+        std::env::var(SECRET_STORE_ENV).is_ok_and(|v| v.trim().eq_ignore_ascii_case("memory"));
     if memory {
         MEMORY
             .get_or_init(|| Arc::new(MemorySecretStore::new()))

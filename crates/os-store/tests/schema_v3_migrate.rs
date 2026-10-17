@@ -21,8 +21,9 @@ fn companions(path: &Path) -> Vec<String> {
 }
 
 fn version_of(path: &Path) -> u32 {
-    let conn = rusqlite::Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
-        .unwrap();
+    let conn =
+        rusqlite::Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+            .unwrap();
     schema::user_version(&conn).unwrap()
 }
 
@@ -48,7 +49,9 @@ fn v1_and_v2_files_migrate_in_place_with_a_byte_identical_backup() {
         assert_eq!(bytes(&backup), original, "{fixture}: Sicherung = Original");
         assert_eq!(version_of(&backup), old);
         // Die Zähler stimmen nach der Migration mit der Neuberechnung überein.
-        assert!(os_store::counters::verify_all(file.conn()).unwrap().is_empty());
+        assert!(os_store::counters::verify_all(file.conn())
+            .unwrap()
+            .is_empty());
     }
 }
 
@@ -65,12 +68,17 @@ fn migrating_as_a_copy_leaves_the_original_unchanged_byte_for_byte() {
         assert_eq!(schema::user_version(copy.conn()).unwrap(), SCHEMA_VERSION);
         assert_eq!(count(&copy, "SELECT COUNT(*) FROM urls"), 42);
         assert_eq!(count(&copy, "SELECT COUNT(*) FROM queue"), 15);
-        assert!(os_store::counters::verify_all(copy.conn()).unwrap().is_empty());
+        assert!(os_store::counters::verify_all(copy.conn())
+            .unwrap()
+            .is_empty());
         drop(copy);
 
         assert_eq!(bytes(&src), original, "{fixture}: Original unverändert");
         assert_eq!(version_of(&src), old);
-        assert!(companions(&src).is_empty(), "keine Begleitdateien am Original");
+        assert!(
+            companions(&src).is_empty(),
+            "keine Begleitdateien am Original"
+        );
         assert!(
             !backup_path(&dst, old).exists() && !backup_path(&src, old).exists(),
             "bei einer Kopie braucht es keine Sicherung: das Original ist sie"

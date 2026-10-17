@@ -94,7 +94,11 @@ impl Renderer {
     }
 
     /// Rendert eine Seite.
-    pub async fn render(&self, _url: &str, _opts: &RenderOpts) -> Result<RenderedPage, RenderError> {
+    pub async fn render(
+        &self,
+        _url: &str,
+        _opts: &RenderOpts,
+    ) -> Result<RenderedPage, RenderError> {
         Err(RenderError::NotImplemented("Renderer::render (M2-R01)"))
     }
 }

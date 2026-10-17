@@ -201,8 +201,14 @@ impl CrawlFile {
                 // Änderungsfeed (P00c, 3.9): der Writer erhöht den Wert je Batch.
                 ("change_seq", "0".to_string()),
                 // Manifest (OUT-233, M2-F02): anlegendes und zuletzt schreibendes Programm.
-                ("openspider_version", crate::meta::OPENSPIDER_VERSION.to_string()),
-                ("last_writer_version", crate::meta::OPENSPIDER_VERSION.to_string()),
+                (
+                    "openspider_version",
+                    crate::meta::OPENSPIDER_VERSION.to_string(),
+                ),
+                (
+                    "last_writer_version",
+                    crate::meta::OPENSPIDER_VERSION.to_string(),
+                ),
             ];
             if let Some(u) = &init.start_url {
                 rows.push(("start_url", u.clone()));

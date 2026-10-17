@@ -121,7 +121,11 @@ fn tab_ids_follow_the_ui_order_and_cover_both_registry_files() {
     }
     let ours: BTreeSet<String> = UI_ORDER.iter().map(|s| (*s).to_string()).collect();
     assert_eq!(registry_tabs, ours, "Tabs der Registerdateien");
-    assert_eq!(read("M1-filters.toml")["tab"].as_array().unwrap().len(), 16, "M1 hat 16 Tabs");
+    assert_eq!(
+        read("M1-filters.toml")["tab"].as_array().unwrap().len(),
+        16,
+        "M1 hat 16 Tabs"
+    );
     assert_eq!(
         read("M2-filters.toml")["tab"]
             .as_array()
@@ -146,13 +150,7 @@ fn filters_match_the_registry_files_in_id_order_kind_and_requirements() {
             tab.id
         );
         for (exp, f) in expected.iter().zip(&tab.filters) {
-            assert_eq!(
-                kind_name(f.kind),
-                exp.1,
-                "Art von {}:{}",
-                tab.id,
-                f.id
-            );
+            assert_eq!(kind_name(f.kind), exp.1, "Art von {}:{}", tab.id, f.id);
             let (config, rendering) = expected_requirements(&exp.2);
             let actual_config: Vec<String> = f
                 .requires
@@ -214,8 +212,15 @@ fn the_stub_table_is_the_m2_registry_file() {
             )
         })
         .collect();
-    assert_eq!(actual, expected, "tabs::M2_FILTERS weicht von M2-filters.toml ab");
-    assert_eq!(M2_FILTERS.len(), 197, "197 statische Filter von M2 (203 Einträge abzüglich 6 dynamischer Platzhalter)");
+    assert_eq!(
+        actual, expected,
+        "tabs::M2_FILTERS weicht von M2-filters.toml ab"
+    );
+    assert_eq!(
+        M2_FILTERS.len(),
+        197,
+        "197 statische Filter von M2 (203 Einträge abzüglich 6 dynamischer Platzhalter)"
+    );
 }
 
 #[test]
@@ -241,7 +246,9 @@ fn every_tab_is_a_real_definition_or_a_marked_stub() {
             assert_eq!(tab.population, "0", "{}: Grundmenge des Stubs", tab.id);
             assert_eq!(tab.columns.len(), 1, "{}: nur die Spalte Address", tab.id);
             assert!(
-                tab.filters.iter().any(|f| f.id == "All" && f.predicate == "1"),
+                tab.filters
+                    .iter()
+                    .any(|f| f.id == "All" && f.predicate == "1"),
                 "{}: Filter All",
                 tab.id
             );
@@ -348,7 +355,13 @@ fn every_column_has_ui_metadata_derived_from_its_kind() {
                 ColumnKind::Int | ColumnKind::Float { .. } | ColumnKind::Seconds3
             );
             if numeric {
-                assert_eq!(c.align, Align::Right, "{}.{}: Zahlen rechtsbündig", tab.id, c.key);
+                assert_eq!(
+                    c.align,
+                    Align::Right,
+                    "{}.{}: Zahlen rechtsbündig",
+                    tab.id,
+                    c.key
+                );
                 assert!(c.search_ops.has(SearchOps::COMPARE), "{}.{}", tab.id, c.key);
             }
             if matches!(c.kind, ColumnKind::Bool) {
@@ -378,7 +391,13 @@ fn every_column_has_ui_metadata_derived_from_its_kind() {
 fn dynamic_column_sources_are_registered_per_tab_and_names_are_interned() {
     // M2-F02: noch keine Quelle gemeldet (die Pakete D14, D15, D22, I05, I06 liefern sie), aber alle Einstiege existieren.
     let cfg = CrawlConfig::default();
-    for tab in ["Custom Search", "Custom Extraction", "Custom JavaScript", "Link Metrics", "Internal"] {
+    for tab in [
+        "Custom Search",
+        "Custom Extraction",
+        "Custom JavaScript",
+        "Link Metrics",
+        "Internal",
+    ] {
         assert!(tabs::dynamic_columns(tab, &cfg).is_empty(), "{tab}");
     }
     assert!(tabs::column_sources().is_empty());

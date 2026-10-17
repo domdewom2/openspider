@@ -13,14 +13,27 @@ pub fn entries() -> &'static [TableEntry] {
 }
 
 // STUB(M2-D18)
-const ENTRIES: &[TableEntry] = &[
-    TableEntry {
-        name: "Cookie Summary",
-        aliases: &[],
-        file_stem: "Cookie Summary",
-        header: &["Cookie Name", "Domain", "Path", "Persistence", "Secure", "HttpOnly", "SameSite", "Type", "First-Party", "URLs", "Sample URL"],
-        requires: &[ReportRequirement::Config { key: "extraction.cookies", what: "cookie extraction" }],
-        owner: "M2-D18",
-        run: stub_run,
-    },
-];
+const ENTRIES: &[TableEntry] = &[TableEntry {
+    name: "Cookie Summary",
+    aliases: &[],
+    file_stem: "Cookie Summary",
+    header: &[
+        "Cookie Name",
+        "Domain",
+        "Path",
+        "Persistence",
+        "Secure",
+        "HttpOnly",
+        "SameSite",
+        "Type",
+        "First-Party",
+        "URLs",
+        "Sample URL",
+    ],
+    requires: &[ReportRequirement::Config {
+        key: "extraction.cookies",
+        what: "cookie extraction",
+    }],
+    owner: "M2-D18",
+    run: stub_run,
+}];

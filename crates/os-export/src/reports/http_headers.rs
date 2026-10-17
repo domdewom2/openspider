@@ -13,14 +13,21 @@ pub fn entries() -> &'static [TableEntry] {
 }
 
 // STUB(M2-D18)
-const ENTRIES: &[TableEntry] = &[
-    TableEntry {
-        name: "HTTP Header Summary",
-        aliases: &[],
-        file_stem: "HTTP Header Summary",
-        header: &["Header Name", "URLs", "% of Total", "Distinct Values", "Most Common Value"],
-        requires: &[ReportRequirement::Config { key: "extraction.http_headers", what: "HTTP header extraction" }],
-        owner: "M2-D18",
-        run: stub_run,
-    },
-];
+const ENTRIES: &[TableEntry] = &[TableEntry {
+    name: "HTTP Header Summary",
+    aliases: &[],
+    file_stem: "HTTP Header Summary",
+    header: &[
+        "Header Name",
+        "URLs",
+        "% of Total",
+        "Distinct Values",
+        "Most Common Value",
+    ],
+    requires: &[ReportRequirement::Config {
+        key: "extraction.http_headers",
+        what: "HTTP header extraction",
+    }],
+    owner: "M2-D18",
+    run: stub_run,
+}];

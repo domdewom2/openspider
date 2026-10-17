@@ -38,8 +38,8 @@ pub mod testing;
 pub use crawl::{start_crawl, CrawlHandle};
 pub use error::EngineError;
 pub use lifecycle::resume_crawl;
-pub use rescan::{recrawl_urls, remove_urls};
 pub use render_glue::Renderer;
+pub use rescan::{recrawl_urls, remove_urls};
 pub use types::{CrawlRequest, CrawlSource, CrawlSummary, EngineDeps, FinishedHook, SinkFactory};
 
 /// Ergebnis von [`add_urls`]: was aus den übergebenen Adressen geworden ist (CRAWL-131).

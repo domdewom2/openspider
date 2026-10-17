@@ -12,14 +12,12 @@ pub fn entries() -> &'static [TableEntry] {
 }
 
 // STUB(M2-D11)
-const ENTRIES: &[TableEntry] = &[
-    TableEntry {
-        name: "Insecure Content",
-        aliases: &[],
-        file_stem: "Insecure Content",
-        header: crate::catalog::LINK_INTERNAL_HEADER,
-        requires: &[],
-        owner: "M2-D11",
-        run: stub_run,
-    },
-];
+const ENTRIES: &[TableEntry] = &[TableEntry {
+    name: "Insecure Content",
+    aliases: &[],
+    file_stem: "Insecure Content",
+    header: crate::catalog::LINK_INTERNAL_HEADER,
+    requires: &[],
+    owner: "M2-D11",
+    run: stub_run,
+}];

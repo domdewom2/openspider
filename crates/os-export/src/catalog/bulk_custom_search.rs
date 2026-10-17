@@ -12,14 +12,18 @@ pub fn entries() -> &'static [TableEntry] {
 }
 
 // STUB(M2-D14)
-const ENTRIES: &[TableEntry] = &[
-    TableEntry {
-        name: "Custom Search:All Filters",
-        aliases: &[],
-        file_stem: "Custom Search:All Filters",
-        header: &["Address", "Filter", "Occurrences", "Status Code", "Indexability"],
-        requires: &[],
-        owner: "M2-D14",
-        run: stub_run,
-    },
-];
+const ENTRIES: &[TableEntry] = &[TableEntry {
+    name: "Custom Search:All Filters",
+    aliases: &[],
+    file_stem: "Custom Search:All Filters",
+    header: &[
+        "Address",
+        "Filter",
+        "Occurrences",
+        "Status Code",
+        "Indexability",
+    ],
+    requires: &[],
+    owner: "M2-D14",
+    run: stub_run,
+}];

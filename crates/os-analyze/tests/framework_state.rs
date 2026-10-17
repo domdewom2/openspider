@@ -556,7 +556,10 @@ fn near_duplicates_is_a_registered_step_with_its_own_switch_and_config_hash() {
     )
     .unwrap();
     let states: std::collections::BTreeMap<_, _> = outcome.steps.iter().cloned().collect();
-    assert_eq!(states[&AnalysisStep::NearDuplicates], StepState::NotApplicable);
+    assert_eq!(
+        states[&AnalysisStep::NearDuplicates],
+        StepState::NotApplicable
+    );
     for step in [
         AnalysisStep::LinkScore,
         AnalysisStep::Pagination,

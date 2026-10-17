@@ -89,7 +89,11 @@ fn committed_v2_fixture_migrates_to_the_content_the_generator_writes_today() {
     let a = CrawlFile::open(&generated, OpenMode::ReadOnly).unwrap();
     let b = CrawlFile::open(&committed, OpenMode::ReadWrite).unwrap();
     for table in M1_TABLES {
-        assert_eq!(table_dump(&a, table), table_dump(&b, table), "Tabelle {table}");
+        assert_eq!(
+            table_dump(&a, table),
+            table_dump(&b, table),
+            "Tabelle {table}"
+        );
     }
     for name in ["corrupt.ospider", "not-a-crawl.ospider"] {
         assert!(fixture_dir().join(name).exists(), "Fixture {name} fehlt");

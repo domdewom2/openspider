@@ -1,0 +1,206 @@
+## q_manifest
+key|value
+analysis_state|done
+completeness|complete
+config_sha256|<SHA256>
+crawl_id|<ID>
+end_reason|queue_empty
+ended_at|<TS>
+format|ospider
+last_writer_version|<VERSION>
+list_source|NULL
+manifest_version|1
+mode|spider
+name|site.test
+openspider_version|<VERSION>
+project|Default
+read_api_version|1
+schema_version|3
+start_url|http://site.test/
+started_at|<TS>
+state|Completed
+urls_crawled|22
+urls_total|22
+user_agent|Mozilla/5.0 (compatible; OpenSpider/<VERSION>; +https://openspider.de)
+writer_kind|cli
+## q_config
+osconfig|updated_at
+<VAR>|<TS>
+## q_urls
+url_id|address|is_internal|crawled|content_type|status_code|status|indexability|indexability_status|title_1|meta_description_1|h1_1|h2_1|canonical_link_element_1|word_count|size_bytes|transferred_bytes|response_time|crawl_depth|folder_depth|inlinks|unique_inlinks|outlinks|unique_outlinks|external_outlinks|redirect_url|redirect_type|http_version|hash|last_modified|crawl_timestamp
+<VAR>|{BASE}/|0|1|text/html; charset=utf-8|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|964|964|<VAR>|1|0|0|0|0|0|0|NULL|NULL|1.1|<VAR>|<VAR>|<VAR>
+<VAR>|{BASE}/about.html|0|1|text/html; charset=utf-8|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|611|611|<VAR>|2|0|0|0|0|0|0|NULL|NULL|1.1|<VAR>|<VAR>|<VAR>
+<VAR>|{BASE}/products.html|0|1|text/html; charset=utf-8|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|630|630|<VAR>|2|0|0|0|0|0|0|NULL|NULL|1.1|<VAR>|<VAR>|<VAR>
+<VAR>|http://localhost:8900/about.html|0|1|NULL|0|Blocked by Robots.txt (robots.txt unreachable)|Non-Indexable|Blocked by Robots.txt|NULL|NULL|NULL|NULL|NULL|NULL|0|0|<VAR>|1|0|1|1|0|0|0|NULL|NULL|NULL|<VAR>|<VAR>|<VAR>
+<VAR>|http://site.test/|1|1|text/html; charset=utf-8|200|OK|Non-Indexable|Canonicalised|Basic Site - Home|Home page of the basic OpenSpider fixture site.|Basic Site|NULL|{BASE}/|19|964|964|<VAR>|0|0|14|11|9|9|1|NULL|NULL|1.1|<VAR>|<VAR>|<VAR>
+<VAR>|http://site.test/about.html|1|1|text/html; charset=utf-8|200|OK|Non-Indexable|Canonicalised|About - Basic Site|About the basic OpenSpider fixture site.|About|NULL|{BASE}/about.html|9|611|611|<VAR>|1|0|2|2|6|3|0|NULL|NULL|1.1|<VAR>|<VAR>|<VAR>
+<VAR>|http://site.test/assets/logo.png|1|1|image/png|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|74|74|<VAR>|1|1|0|0|0|0|0|NULL|NULL|1.1|<VAR>|<VAR>|<VAR>
+<VAR>|http://site.test/assets/site.css|1|1|text/css; charset=utf-8|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|65|65|<VAR>|1|1|0|0|0|0|0|NULL|NULL|1.1|<VAR>|<VAR>|<VAR>
+<VAR>|http://site.test/assets/site.js|1|1|application/javascript; charset=utf-8|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|56|56|<VAR>|1|1|0|0|0|0|0|NULL|NULL|1.1|<VAR>|<VAR>|<VAR>
+<VAR>|http://site.test/assets/widget.png|1|1|image/png|200|OK|Indexable|NULL|NULL|NULL|NULL|NULL|NULL|NULL|74|74|<VAR>|3|1|0|0|0|0|0|NULL|NULL|1.1|<VAR>|<VAR>|<VAR>
+<VAR>|http://site.test/blog/|1|1|text/html; charset=utf-8|200|OK|Indexable|NULL|Blog - Basic Site|Blog of the basic OpenSpider fixture site.|Blog|NULL|NULL|5|488|488|<VAR>|1|1|2|2|4|4|0|NULL|NULL|1.1|<VAR>|<VAR>|<VAR>
+<VAR>|http://site.test/blog/post-1.html|1|1|text/html; charset=utf-8|200|OK|Indexable|NULL|First post - Basic Site|The first blog post.|First post|NULL|NULL|8|469|469|<VAR>|2|1|1|1|4|4|0|NULL|NULL|1.1|<VAR>|<VAR>|<VAR>
+<VAR>|http://site.test/contact.html|1|1|text/html; charset=utf-8|200|OK|Indexable|NULL|Contact - Basic Site|Contact page of the basic OpenSpider fixture site.|Contact|NULL|NULL|8|544|544|<VAR>|1|0|14|12|5|5|0|NULL|NULL|1.1|<VAR>|<VAR>|<VAR>
+<VAR>|http://site.test/faq.html|1|1|text/html; charset=utf-8|200|OK|Indexable|NULL|FAQ - Basic Site|Frequently asked questions.|FAQ|NULL|NULL|5|472|472|<VAR>|1|0|2|2|4|4|0|NULL|NULL|1.1|<VAR>|<VAR>|<VAR>
+<VAR>|http://site.test/imprint.html|1|1|text/html; charset=utf-8|200|OK|Indexable|NULL|Imprint - Basic Site|Imprint of the basic OpenSpider fixture site.|Imprint|NULL|NULL|6|533|533|<VAR>|1|0|2|2|5|5|0|NULL|NULL|1.1|<VAR>|<VAR>|<VAR>
+<VAR>|http://site.test/missing.html|1|1|text/html; charset=utf-8|404|Not Found|Non-Indexable|Client Error|NULL|NULL|NULL|NULL|NULL|NULL|90|90|<VAR>|1|0|1|1|0|0|0|NULL|NULL|1.1|<VAR>|<VAR>|<VAR>
+<VAR>|http://site.test/old-page|1|1|NULL|301|Moved Permanently|Non-Indexable|Redirected|NULL|NULL|NULL|NULL|NULL|NULL|0|0|<VAR>|1|0|1|1|0|0|0|http://site.test/about.html|HTTP Redirect|1.1|<VAR>|<VAR>|<VAR>
+<VAR>|http://site.test/orphan.html|1|1|text/html; charset=utf-8|200|OK|Indexable|NULL|Orphan - Basic Site|A page that is linked only from the imprint.|Orphan|NULL|NULL|16|501|501|<VAR>|2|0|1|1|3|3|0|NULL|NULL|1.1|<VAR>|<VAR>|<VAR>
+<VAR>|http://site.test/privat/intern.html|1|1|text/html; charset=utf-8|200|OK|Indexable|NULL|Internal area - Basic Site|Internal area, excluded by exclude.osconfig.|Internal area|NULL|NULL|7|490|490|<VAR>|2|1|2|2|4|3|0|NULL|NULL|1.1|<VAR>|<VAR>|<VAR>
+<VAR>|http://site.test/products.html|1|1|text/html; charset=utf-8|200|OK|Non-Indexable|Canonicalised|Products - Basic Site|Products of the basic OpenSpider fixture site.|Products|NULL|{BASE}/products.html|9|630|630|<VAR>|1|0|14|12|6|5|0|NULL|NULL|1.1|<VAR>|<VAR>|<VAR>
+<VAR>|http://site.test/products/widget.html|1|1|text/html; charset=utf-8|200|OK|Indexable|NULL|Widget - Basic Site|The widget product page.|Widget|NULL|NULL|9|550|550|<VAR>|2|1|1|1|4|3|0|NULL|NULL|1.1|<VAR>|<VAR>|<VAR>
+<VAR>|http://site.test/services.html|1|1|text/html; charset=utf-8|200|OK|Indexable|NULL|Services - Basic Site|Services offered on the basic OpenSpider fixture site.|Services|NULL|NULL|8|542|542|<VAR>|1|0|2|2|5|4|0|NULL|NULL|1.1|<VAR>|<VAR>|<VAR>
+## q_links
+source_url_id|target_url_id|source_address|target_address|type|anchor|alt_text|follow|rel|target|path_type|link_path|link_position|link_origin|target_status_code
+<VAR>|<VAR>|http://site.test/|{BASE}/|Canonical|NULL|NULL|1|NULL|NULL|Absolute|//head/link[1]|Head|HTML|200
+<VAR>|<VAR>|http://site.test/|http://localhost:8900/about.html|Hyperlink|Partner site (external host)|NULL|1|NULL|NULL|Absolute|/html[1]/body[1]/p[2]/a[1]|Content|HTML|NULL
+<VAR>|<VAR>|http://site.test/|http://site.test/about.html|Hyperlink|About|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[1]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/|http://site.test/assets/logo.png|Image|NULL|Basic Site logo|1|NULL|NULL|Root-Relative|/html[1]/body[1]/img[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/|http://site.test/assets/site.css|CSS|NULL|NULL|1|stylesheet|NULL|Root-Relative|//head/link[2]|Head|HTML|200
+<VAR>|<VAR>|http://site.test/|http://site.test/assets/site.js|JavaScript|NULL|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/script[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/|http://site.test/blog/|Hyperlink|Blog|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[5]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/|http://site.test/contact.html|Hyperlink|Contact|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[4]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/|http://site.test/faq.html|Hyperlink|FAQ|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[6]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/|http://site.test/imprint.html|Hyperlink|Imprint|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[7]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/|http://site.test/missing.html|Hyperlink|Missing page (404)|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[9]|Navigation|HTML|404
+<VAR>|<VAR>|http://site.test/|http://site.test/old-page|Hyperlink|Old page (redirects)|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[8]|Navigation|HTML|301
+<VAR>|<VAR>|http://site.test/|http://site.test/products.html|Hyperlink|Products|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[2]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/|http://site.test/services.html|Hyperlink|Services|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[3]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/about.html|{BASE}/about.html|Canonical|NULL|NULL|1|NULL|NULL|Absolute|//head/link[1]|Head|HTML|200
+<VAR>|<VAR>|http://site.test/about.html|http://site.test/|Hyperlink|Home|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[1]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/about.html|http://site.test/|Hyperlink|Home|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/p[2]/a[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/about.html|http://site.test/assets/site.css|CSS|NULL|NULL|1|stylesheet|NULL|Root-Relative|//head/link[2]|Head|HTML|200
+<VAR>|<VAR>|http://site.test/about.html|http://site.test/assets/site.js|JavaScript|NULL|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/script[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/about.html|http://site.test/contact.html|Hyperlink|Contact|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[3]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/about.html|http://site.test/contact.html|Hyperlink|Contact|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/p[2]/a[3]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/about.html|http://site.test/products.html|Hyperlink|Products|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[2]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/about.html|http://site.test/products.html|Hyperlink|Products|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/p[2]/a[2]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/blog/|http://site.test/|Hyperlink|Home|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[1]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/blog/|http://site.test/assets/site.css|CSS|NULL|NULL|1|stylesheet|NULL|Root-Relative|//head/link[1]|Head|HTML|200
+<VAR>|<VAR>|http://site.test/blog/|http://site.test/assets/site.js|JavaScript|NULL|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/script[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/blog/|http://site.test/blog/post-1.html|Hyperlink|First post|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/p[2]/a[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/blog/|http://site.test/contact.html|Hyperlink|Contact|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[3]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/blog/|http://site.test/products.html|Hyperlink|Products|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[2]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/blog/post-1.html|http://site.test/|Hyperlink|Home|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[1]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/blog/post-1.html|http://site.test/assets/site.css|CSS|NULL|NULL|1|stylesheet|NULL|Root-Relative|//head/link[1]|Head|HTML|200
+<VAR>|<VAR>|http://site.test/blog/post-1.html|http://site.test/assets/site.js|JavaScript|NULL|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/script[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/blog/post-1.html|http://site.test/blog/|Hyperlink|Back to the blog|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/p[2]/a[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/blog/post-1.html|http://site.test/contact.html|Hyperlink|Contact|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[3]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/blog/post-1.html|http://site.test/products.html|Hyperlink|Products|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[2]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/contact.html|http://site.test/|Hyperlink|Home|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[1]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/contact.html|http://site.test/assets/site.css|CSS|NULL|NULL|1|stylesheet|NULL|Root-Relative|//head/link[1]|Head|HTML|200
+<VAR>|<VAR>|http://site.test/contact.html|http://site.test/assets/site.js|JavaScript|NULL|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/script[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/contact.html|http://site.test/contact.html|Hyperlink|Contact|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[3]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/contact.html|http://site.test/imprint.html|Hyperlink|Imprint|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/p[2]/a[2]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/contact.html|http://site.test/privat/intern.html|Hyperlink|Internal area|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/p[2]/a[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/contact.html|http://site.test/products.html|Hyperlink|Products|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[2]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/faq.html|http://site.test/|Hyperlink|Home|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[1]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/faq.html|http://site.test/assets/site.css|CSS|NULL|NULL|1|stylesheet|NULL|Root-Relative|//head/link[1]|Head|HTML|200
+<VAR>|<VAR>|http://site.test/faq.html|http://site.test/assets/site.js|JavaScript|NULL|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/script[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/faq.html|http://site.test/contact.html|Hyperlink|Contact|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[3]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/faq.html|http://site.test/products.html|Hyperlink|Products|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[2]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/faq.html|http://site.test/services.html|Hyperlink|Services|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/p[2]/a[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/imprint.html|http://site.test/|Hyperlink|Home|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[1]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/imprint.html|http://site.test/assets/site.css|CSS|NULL|NULL|1|stylesheet|NULL|Root-Relative|//head/link[1]|Head|HTML|200
+<VAR>|<VAR>|http://site.test/imprint.html|http://site.test/assets/site.js|JavaScript|NULL|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/script[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/imprint.html|http://site.test/contact.html|Hyperlink|Contact|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[3]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/imprint.html|http://site.test/orphan.html|Hyperlink|Orphan|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/p[2]/a[2]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/imprint.html|http://site.test/privat/intern.html|Hyperlink|Internal area|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/p[2]/a[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/imprint.html|http://site.test/products.html|Hyperlink|Products|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[2]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/old-page|http://site.test/about.html|HTTP Redirect|NULL|NULL|1|NULL|NULL|Root-Relative|NULL|NULL|HTML|200
+<VAR>|<VAR>|http://site.test/orphan.html|http://site.test/|Hyperlink|Home|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[1]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/orphan.html|http://site.test/assets/site.css|CSS|NULL|NULL|1|stylesheet|NULL|Root-Relative|//head/link[1]|Head|HTML|200
+<VAR>|<VAR>|http://site.test/orphan.html|http://site.test/assets/site.js|JavaScript|NULL|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/script[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/orphan.html|http://site.test/contact.html|Hyperlink|Contact|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[3]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/orphan.html|http://site.test/products.html|Hyperlink|Products|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[2]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/privat/intern.html|http://site.test/|Hyperlink|Home|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[1]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/privat/intern.html|http://site.test/|Hyperlink|Home|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/p[2]/a[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/privat/intern.html|http://site.test/assets/site.css|CSS|NULL|NULL|1|stylesheet|NULL|Root-Relative|//head/link[1]|Head|HTML|200
+<VAR>|<VAR>|http://site.test/privat/intern.html|http://site.test/assets/site.js|JavaScript|NULL|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/script[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/privat/intern.html|http://site.test/contact.html|Hyperlink|Contact|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[3]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/privat/intern.html|http://site.test/products.html|Hyperlink|Products|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[2]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/products.html|{BASE}/products.html|Canonical|NULL|NULL|1|NULL|NULL|Absolute|//head/link[1]|Head|HTML|200
+<VAR>|<VAR>|http://site.test/products.html|http://site.test/|Hyperlink|Home|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[1]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/products.html|http://site.test/|Hyperlink|Home|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/p[2]/a[2]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/products.html|http://site.test/about.html|Hyperlink|About|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/p[2]/a[3]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/products.html|http://site.test/assets/site.css|CSS|NULL|NULL|1|stylesheet|NULL|Root-Relative|//head/link[2]|Head|HTML|200
+<VAR>|<VAR>|http://site.test/products.html|http://site.test/assets/site.js|JavaScript|NULL|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/script[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/products.html|http://site.test/contact.html|Hyperlink|Contact|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[3]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/products.html|http://site.test/products.html|Hyperlink|Products|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[2]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/products.html|http://site.test/products/widget.html|Hyperlink|Widget|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/p[2]/a[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/products/widget.html|http://site.test/|Hyperlink|Home|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[1]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/products/widget.html|http://site.test/assets/site.css|CSS|NULL|NULL|1|stylesheet|NULL|Root-Relative|//head/link[1]|Head|HTML|200
+<VAR>|<VAR>|http://site.test/products/widget.html|http://site.test/assets/site.js|JavaScript|NULL|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/script[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/products/widget.html|http://site.test/assets/widget.png|Image|NULL|Widget|1|NULL|NULL|Root-Relative|/html[1]/body[1]/img[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/products/widget.html|http://site.test/contact.html|Hyperlink|Contact|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[3]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/products/widget.html|http://site.test/products.html|Hyperlink|Products|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[2]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/products/widget.html|http://site.test/products.html|Hyperlink|Back to products|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/p[2]/a[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/services.html|http://site.test/|Hyperlink|Home|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[1]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/services.html|http://site.test/assets/site.css|CSS|NULL|NULL|1|stylesheet|NULL|Root-Relative|//head/link[1]|Head|HTML|200
+<VAR>|<VAR>|http://site.test/services.html|http://site.test/assets/site.js|JavaScript|NULL|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/script[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/services.html|http://site.test/contact.html|Hyperlink|Contact|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[3]|Navigation|HTML|200
+<VAR>|<VAR>|http://site.test/services.html|http://site.test/contact.html|Hyperlink|Contact us|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/p[2]/a[1]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/services.html|http://site.test/faq.html|Hyperlink|FAQ|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/p[2]/a[2]|Content|HTML|200
+<VAR>|<VAR>|http://site.test/services.html|http://site.test/products.html|Hyperlink|Products|NULL|1|NULL|NULL|Root-Relative|/html[1]/body[1]/nav[1]/a[2]|Navigation|HTML|200
+## q_sitemap_urls
+sitemap_url|url_id|address|lastmod
+## q_columns
+view|column|type|description
+q_manifest|key|TEXT|Schlüssel des Manifests (OUT-233); jeder Schlüssel der Tabelle ist immer vorhanden.
+q_manifest|value|TEXT|Wert als Text; unbekannt oder nicht zutreffend ist NULL.
+q_config|osconfig|TEXT|Eingebettete Konfiguration des Crawls (TOML, .osconfig) ohne Geheimnisse.
+q_config|updated_at|TEXT|Zeitpunkt der letzten Änderung der Konfiguration (ISO 8601 mit Offset).
+q_urls|url_id|INTEGER|Schlüssel der URL, stabil innerhalb der Datei, nicht über Crawls hinweg.
+q_urls|address|TEXT|Adresse der URL in Anzeigeform (Spalte Address).
+q_urls|is_internal|INTEGER|1 = interne URL, 0 = externe URL.
+q_urls|crawled|INTEGER|1 = die URL wurde abgerufen, 0 = entdeckt oder eingeplant.
+q_urls|content_type|TEXT|Wert des Content-Type-Headers der Antwort.
+q_urls|status_code|INTEGER|HTTP-Statuscode; 0 = keine Antwort.
+q_urls|status|TEXT|Statustext der Antwort oder Grund einer fehlenden Antwort.
+q_urls|indexability|TEXT|Indexable oder Non-Indexable.
+q_urls|indexability_status|TEXT|Begründung der Nicht-Indexierbarkeit.
+q_urls|title_1|TEXT|Erster Seitentitel (HTML und PDF mit Status 2xx).
+q_urls|meta_description_1|TEXT|Erste Meta-Description (HTML mit Status 2xx).
+q_urls|h1_1|TEXT|Erste H1-Überschrift (HTML mit Status 2xx).
+q_urls|h2_1|TEXT|Erste H2-Überschrift (HTML mit Status 2xx).
+q_urls|canonical_link_element_1|TEXT|Erstes Canonical-Element im HTML, absolut aufgelöst.
+q_urls|word_count|INTEGER|Wortanzahl im Inhaltsbereich (HTML mit Status 2xx).
+q_urls|size_bytes|INTEGER|Größe der Antwort in Byte (Spalte Size (bytes)).
+q_urls|transferred_bytes|INTEGER|Übertragene Bytes des Bodys.
+q_urls|response_time|REAL|Antwortzeit in Sekunden.
+q_urls|crawl_depth|INTEGER|Klicktiefe ab der Start-URL.
+q_urls|folder_depth|INTEGER|Anzahl der Ordnerebenen im Pfad.
+q_urls|inlinks|INTEGER|Hyperlink-Instanzen interner Quellseiten auf die URL (Selbstlinks eingeschlossen).
+q_urls|unique_inlinks|INTEGER|Verschiedene interne Quellseiten mit einem Hyperlink auf die URL.
+q_urls|outlinks|INTEGER|Hyperlink-Instanzen der Seite auf andere URLs.
+q_urls|unique_outlinks|INTEGER|Verschiedene Ziele der Hyperlinks der Seite.
+q_urls|external_outlinks|INTEGER|Hyperlink-Instanzen der Seite auf externe URLs.
+q_urls|redirect_url|TEXT|Ziel der Weiterleitung.
+q_urls|redirect_type|TEXT|Art der Weiterleitung (HTTP Redirect, Meta Refresh Redirect, …).
+q_urls|http_version|TEXT|HTTP-Version der Antwort ohne Präfix (1.1, 2).
+q_urls|hash|TEXT|MD5 des Bodys (Hex, Kleinbuchstaben).
+q_urls|last_modified|TEXT|Last-Modified der Antwort (ISO 8601 mit Offset); NULL, wenn nicht lesbar.
+q_urls|crawl_timestamp|TEXT|Zeitpunkt des Abrufs (ISO 8601 mit Offset).
+q_links|source_url_id|INTEGER|url_id der Quellseite des Links.
+q_links|target_url_id|INTEGER|url_id des Ziels; NULL, wenn das Ziel keine URL der Datei ist.
+q_links|source_address|TEXT|Adresse der Quellseite.
+q_links|target_address|TEXT|Adresse des Ziels; ohne auflösbares Ziel der Rohwert aus dem Quelltext.
+q_links|type|TEXT|Linktyp (Hyperlink, Image, JavaScript, CSS, …).
+q_links|anchor|TEXT|Ankertext.
+q_links|alt_text|TEXT|Alt-Text eines Bildes im Link.
+q_links|follow|INTEGER|1 = der Link ist follow, 0 = nofollow.
+q_links|rel|TEXT|Wert des rel-Attributs.
+q_links|target|TEXT|Wert des target-Attributs.
+q_links|path_type|TEXT|Pfadart des Links (Absolute, Root-Relative, …).
+q_links|link_path|TEXT|XPath des Link-Elements im Dokument.
+q_links|link_position|TEXT|Position im Dokument (Navigation, Content, Footer, …).
+q_links|link_origin|TEXT|Herkunft des Links (HTML oder gerendertes HTML).
+q_links|target_status_code|INTEGER|Statuscode des Ziels; NULL ohne Abruf oder Antwort.
+q_sitemap_urls|sitemap_url|TEXT|Adresse der Sitemap-Datei, in der der Eintrag steht.
+q_sitemap_urls|url_id|INTEGER|url_id der URL des Eintrags.
+q_sitemap_urls|address|TEXT|Adresse der URL des Eintrags.
+q_sitemap_urls|lastmod|TEXT|Wert von lastmod aus der Sitemap (roh).
+q_columns|view|TEXT|Name der Sicht.
+q_columns|column|TEXT|Name der Spalte.
+q_columns|type|TEXT|Typ der Spalte: INTEGER, REAL oder TEXT.
+q_columns|description|TEXT|Bedeutung der Spalte in einem Satz.

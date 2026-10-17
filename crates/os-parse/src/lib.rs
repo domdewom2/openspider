@@ -365,7 +365,8 @@ mod tests {
         let switched = page_with(&all_on, M2_HTML);
         assert_eq!(plain, switched);
         // Standardregeln = Positionen von M1.
-        let positions: Vec<os_model::LinkPosition> = plain.links.iter().map(|l| l.position).collect();
+        let positions: Vec<os_model::LinkPosition> =
+            plain.links.iter().map(|l| l.position).collect();
         assert_eq!(
             positions,
             [
@@ -375,7 +376,9 @@ mod tests {
             ]
         );
         let cfg = ParseConfig::from_crawl_config(&all_on);
-        assert!(cfg.html_validation && cfg.readability && cfg.minhash && cfg.structured_data_enabled());
+        assert!(
+            cfg.html_validation && cfg.readability && cfg.minhash && cfg.structured_data_enabled()
+        );
         assert!(!ParseConfig::from_crawl_config(&CrawlConfig::default()).structured_data_enabled());
     }
 

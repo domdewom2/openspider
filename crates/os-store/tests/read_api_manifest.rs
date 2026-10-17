@@ -18,7 +18,9 @@ fn manifest(path: &Path) -> BTreeMap<String, Option<String>> {
 }
 
 fn get(m: &BTreeMap<String, Option<String>>, key: &str) -> Option<String> {
-    m.get(key).unwrap_or_else(|| panic!("Schlüssel {key} fehlt")).clone()
+    m.get(key)
+        .unwrap_or_else(|| panic!("Schlüssel {key} fehlt"))
+        .clone()
 }
 
 // spec: OUT-233
@@ -29,8 +31,10 @@ fn the_manifest_has_exactly_the_keys_of_the_spec_with_the_expected_values() {
     let file = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
     file.set_meta("state", "Completed").unwrap();
     file.set_meta("end_reason", "queue_empty").unwrap();
-    file.set_meta("started_at", "2026-10-13T07:36:00.000Z").unwrap();
-    file.set_meta("ended_at", "2026-10-13T07:41:30.250Z").unwrap();
+    file.set_meta("started_at", "2026-10-13T07:36:00.000Z")
+        .unwrap();
+    file.set_meta("ended_at", "2026-10-13T07:41:30.250Z")
+        .unwrap();
     file.set_meta("owner_kind", "cli").unwrap();
     file.set_meta("analysis_state", "completed").unwrap();
     drop(file);
@@ -44,8 +48,14 @@ fn the_manifest_has_exactly_the_keys_of_the_spec_with_the_expected_values() {
     assert_eq!(get(&m, "manifest_version").as_deref(), Some("1"));
     assert_eq!(get(&m, "read_api_version").as_deref(), Some("1"));
     assert_eq!(get(&m, "schema_version").as_deref(), Some("3"));
-    assert_eq!(get(&m, "openspider_version").as_deref(), Some(OPENSPIDER_VERSION));
-    assert_eq!(get(&m, "last_writer_version").as_deref(), Some(OPENSPIDER_VERSION));
+    assert_eq!(
+        get(&m, "openspider_version").as_deref(),
+        Some(OPENSPIDER_VERSION)
+    );
+    assert_eq!(
+        get(&m, "last_writer_version").as_deref(),
+        Some(OPENSPIDER_VERSION)
+    );
     assert_eq!(get(&m, "writer_kind").as_deref(), Some("cli"));
     assert_eq!(get(&m, "name").as_deref(), Some("Testcrawl"));
     assert_eq!(get(&m, "project").as_deref(), Some("Projekt"));
@@ -70,19 +80,44 @@ fn the_manifest_has_exactly_the_keys_of_the_spec_with_the_expected_values() {
     assert!(get(&m, "user_agent").is_some_and(|ua| ua.contains("OpenSpider/")));
     let sha = get(&m, "config_sha256").unwrap();
     assert_eq!(sha.len(), 64);
-    assert!(sha.bytes().all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b)));
+    assert!(sha
+        .bytes()
+        .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b)));
 }
+
+/// (gespeicherter Zustand, Endgrund, Heartbeat, erwartete completeness, erwarteter state, ended_at gesetzt)
+type Case<'a> = (&'a str, Option<&'a str>, &'a str, &'a str, &'a str, bool);
 
 // spec: OUT-233
 #[test]
 fn completeness_follows_the_rule_for_every_state() {
     let now = SystemClock.now().to_db();
     let stale = "2020-01-01T00:00:00.000Z";
-    // (state, end_reason, heartbeat_at, started_at, erwartete completeness, erwarteter state, ended_at gesetzt)
-    let cases: &[(&str, Option<&str>, &str, &str, &str, bool)] = &[
-        ("Completed", Some("queue_empty"), stale, "complete", "Completed", true),
-        ("Completed", Some("limit_reached"), stale, "limited", "Completed", true),
-        ("Completed", Some("stopped"), stale, "stopped", "Completed", true),
+    let cases: &[Case<'_>] = &[
+        (
+            "Completed",
+            Some("queue_empty"),
+            stale,
+            "complete",
+            "Completed",
+            true,
+        ),
+        (
+            "Completed",
+            Some("limit_reached"),
+            stale,
+            "limited",
+            "Completed",
+            true,
+        ),
+        (
+            "Completed",
+            Some("stopped"),
+            stale,
+            "stopped",
+            "Completed",
+            true,
+        ),
         ("Paused", None, stale, "paused", "Paused", false),
         ("Running", None, &now, "running", "Running", false),
         ("Running", None, stale, "interrupted", "Incomplete", false),
@@ -96,16 +131,25 @@ fn completeness_follows_the_rule_for_every_state() {
         file.set_meta("state", state).unwrap();
         file.set_meta("heartbeat_at", heartbeat).unwrap();
         file.set_meta("started_at", stale).unwrap();
-        file.set_meta("ended_at", "2026-10-13T07:41:30.000Z").unwrap();
+        file.set_meta("ended_at", "2026-10-13T07:41:30.000Z")
+            .unwrap();
         if let Some(reason) = reason {
             file.set_meta("end_reason", reason).unwrap();
         }
         drop(file);
         let m = manifest(&path);
         let label = format!("{state}/{reason:?}/{heartbeat}");
-        assert_eq!(get(&m, "completeness").as_deref(), Some(*completeness), "{label}");
+        assert_eq!(
+            get(&m, "completeness").as_deref(),
+            Some(*completeness),
+            "{label}"
+        );
         assert_eq!(get(&m, "state").as_deref(), Some(*shown_state), "{label}");
-        assert_eq!(get(&m, "ended_at").is_some(), *has_end, "ended_at bei {label}");
+        assert_eq!(
+            get(&m, "ended_at").is_some(),
+            *has_end,
+            "ended_at bei {label}"
+        );
         if !has_end {
             // Solange der Crawl läuft oder pausiert, gibt es weder Ende noch Endgrund.
             assert_eq!(get(&m, "end_reason"), None, "{label}");
@@ -154,7 +198,10 @@ fn config_sha256_matches_the_embedded_osconfig_and_follows_config_changes() {
         get(&second, "config_sha256").unwrap(),
         sha256_hex(&osconfig(&path))
     );
-    assert_eq!(get(&second, "user_agent").as_deref(), Some("MeinCrawler/1.0"));
+    assert_eq!(
+        get(&second, "user_agent").as_deref(),
+        Some("MeinCrawler/1.0")
+    );
     // Analyse nie gelaufen und nicht automatisch: `off`.
     assert_eq!(get(&second, "analysis_state").as_deref(), Some("off"));
 }
@@ -198,7 +245,11 @@ fn migrated_files_have_a_complete_manifest_and_unknown_values_are_null() {
             expected,
             "{fixture}"
         );
-        assert_eq!(get(&m, "openspider_version"), None, "{fixture}: unbekannt = NULL");
+        assert_eq!(
+            get(&m, "openspider_version"),
+            None,
+            "{fixture}: unbekannt = NULL"
+        );
         assert_eq!(get(&m, "writer_kind"), None, "{fixture}");
         assert_eq!(get(&m, "schema_version").as_deref(), Some("3"), "{fixture}");
         assert_eq!(get(&m, "read_api_version").as_deref(), Some("1"));
@@ -206,7 +257,10 @@ fn migrated_files_have_a_complete_manifest_and_unknown_values_are_null() {
         assert_eq!(get(&m, "completeness").as_deref(), Some("paused"));
         assert_eq!(get(&m, "urls_total").as_deref(), Some("42"));
         assert_eq!(get(&m, "urls_crawled").as_deref(), Some("25"));
-        assert!(get(&m, "config_sha256").is_some(), "{fixture}: aus der Konfiguration abgeleitet");
+        assert!(
+            get(&m, "config_sha256").is_some(),
+            "{fixture}: aus der Konfiguration abgeleitet"
+        );
         assert!(get(&m, "user_agent").is_some(), "{fixture}");
     }
 }
@@ -230,7 +284,10 @@ fn opening_for_writing_keeps_the_creator_version_and_updates_only_the_last_write
     drop(CrawlFile::open(&path, OpenMode::ReadWrite).unwrap());
     let m = manifest(&path);
     assert_eq!(get(&m, "openspider_version").as_deref(), Some("0.0.9"));
-    assert_eq!(get(&m, "last_writer_version").as_deref(), Some(OPENSPIDER_VERSION));
+    assert_eq!(
+        get(&m, "last_writer_version").as_deref(),
+        Some(OPENSPIDER_VERSION)
+    );
 }
 
 // spec: OUT-233
@@ -250,7 +307,10 @@ fn an_unknown_read_api_version_is_reported_clearly() {
         )
         .unwrap();
     let err = file.check_read_api().unwrap_err().to_string();
-    assert!(err.contains("unbekannte Version der Leseschnittstelle"), "{err}");
+    assert!(
+        err.contains("unbekannte Version der Leseschnittstelle"),
+        "{err}"
+    );
     assert!(err.contains("99"), "{err}");
     // Ein falsches Format wird ebenso abgewiesen.
     file.conn()
@@ -279,7 +339,10 @@ fn no_secret_appears_in_any_view_output() {
     let file = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
     let mut all = String::new();
     for view in read_api::VIEWS {
-        let mut stmt = file.conn().prepare(&format!("SELECT * FROM {view}")).unwrap();
+        let mut stmt = file
+            .conn()
+            .prepare(&format!("SELECT * FROM {view}"))
+            .unwrap();
         let n = stmt.column_count();
         let mut rows = stmt.query([]).unwrap();
         while let Some(row) = rows.next().unwrap() {

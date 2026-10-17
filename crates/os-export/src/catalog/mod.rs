@@ -9,8 +9,6 @@
 //! Alle Namen einer Art stehen in [`list`]; [`resolve`] löst sie case-insensitiv auf und liefert bei einem
 //! Tippfehler Vorschläge über alle Namen der Art (Levenshtein ≤ 3).
 
-pub mod bulk_issues;
-pub mod bulk_links;
 pub mod bulk_a11y;
 pub mod bulk_canonicals;
 pub mod bulk_content;
@@ -19,7 +17,9 @@ pub mod bulk_custom_search;
 pub mod bulk_directives;
 pub mod bulk_generic;
 pub mod bulk_images;
+pub mod bulk_issues;
 pub mod bulk_javascript;
+pub mod bulk_links;
 pub mod bulk_pagination;
 pub mod bulk_response_codes;
 pub mod bulk_screenshots;

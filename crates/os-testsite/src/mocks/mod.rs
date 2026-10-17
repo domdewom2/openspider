@@ -178,7 +178,10 @@ mod tests {
             vec![("api.hello.base_url".to_string(), base)]
         );
         let reply = get_text(server.addr(), "/hello/ping").await;
-        assert!(reply.starts_with("HTTP/1.0 200") || reply.starts_with("HTTP/1.1 200"), "{reply}");
+        assert!(
+            reply.starts_with("HTTP/1.0 200") || reply.starts_with("HTTP/1.1 200"),
+            "{reply}"
+        );
         assert!(reply.ends_with("pong"), "{reply}");
         let missing = get_text(server.addr(), "/ping").await;
         assert!(missing.contains(" 404"), "{missing}");
@@ -195,7 +198,10 @@ mod tests {
         assert_eq!(names.len(), mocks.len());
         for m in &mocks {
             if let Some(key) = m.base_url_key() {
-                assert!(key.starts_with("api.") && key.ends_with(".base_url"), "{key}");
+                assert!(
+                    key.starts_with("api.") && key.ends_with(".base_url"),
+                    "{key}"
+                );
             }
         }
     }

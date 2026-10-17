@@ -96,12 +96,7 @@ fn distinct(ids: impl Iterator<Item = i64>) -> Vec<i64> {
 }
 
 /// Stempelt `urls.change_seq` der URLs; eine unbekannte URL ist ein Fehler.
-fn stamp_urls(
-    tx: &Transaction<'_>,
-    part: &str,
-    ids: &[i64],
-    seq: i64,
-) -> Result<(), StoreError> {
+fn stamp_urls(tx: &Transaction<'_>, part: &str, ids: &[i64], seq: i64) -> Result<(), StoreError> {
     if ids.is_empty() {
         return Ok(());
     }
@@ -190,7 +185,8 @@ fn write_structured_data(
     }
     // Befunde ersetzen je (URL, Art).
     {
-        let mut del = tx.prepare_cached("DELETE FROM sd_issues WHERE url_id = ?1 AND validation = ?2")?;
+        let mut del =
+            tx.prepare_cached("DELETE FROM sd_issues WHERE url_id = ?1 AND validation = ?2")?;
         let mut seen: std::collections::HashSet<(i64, &str)> = std::collections::HashSet::new();
         for i in &batch.sd_issues {
             if seen.insert((i.url_id.0, i.validation.as_str())) {
@@ -204,7 +200,12 @@ fn write_structured_data(
     )?;
     let mut ids_by_url: std::collections::HashMap<i64, Vec<i64>> = std::collections::HashMap::new();
     for item in &batch.structured_data {
-        insert_item.execute(params![item.url_id.0, item.format, item.type_path, item.json])?;
+        insert_item.execute(params![
+            item.url_id.0,
+            item.format,
+            item.type_path,
+            item.json
+        ])?;
         ids_by_url
             .entry(item.url_id.0)
             .or_default()
@@ -371,7 +372,8 @@ fn write_spelling(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<
         &distinct(batch.spelling.iter().map(|s| s.url_id.0)),
         seq,
     )?;
-    let mut del = tx.prepare_cached("DELETE FROM spelling_findings WHERE url_id = ?1 AND kind = ?2")?;
+    let mut del =
+        tx.prepare_cached("DELETE FROM spelling_findings WHERE url_id = ?1 AND kind = ?2")?;
     let mut seen: std::collections::HashSet<(i64, &str)> = std::collections::HashSet::new();
     for s in &batch.spelling {
         if seen.insert((s.url_id.0, s.kind.as_str())) {
@@ -415,7 +417,8 @@ fn write_custom(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<()
     if !batch.custom_extraction.is_empty() {
         let ids = distinct(batch.custom_extraction.iter().map(|c| c.url_id.0));
         stamp_urls(tx, "custom_extraction", &ids, seq)?;
-        let mut del = tx.prepare_cached("DELETE FROM custom_extraction_values WHERE url_id = ?1")?;
+        let mut del =
+            tx.prepare_cached("DELETE FROM custom_extraction_values WHERE url_id = ?1")?;
         for id in &ids {
             del.execute([id])?;
         }
@@ -471,13 +474,15 @@ pub fn encode_minhash(sig: &[u32]) -> Vec<u8> {
 
 /// Umkehrung von [`encode_minhash`]; `None` bei einer Länge, die kein Vielfaches von 4 ist.
 pub fn decode_minhash(bytes: &[u8]) -> Option<Vec<u32>> {
-    if bytes.len() % 4 != 0 {
+    if !bytes.len().is_multiple_of(4) {
         return None;
     }
     Some(
         bytes
-            .chunks_exact(4)
-            .map(|c| u32::from_le_bytes([c[0], c[1], c[2], c[3]]))
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .map(|c| u32::from_le_bytes(*c))
             .collect(),
     )
 }
@@ -507,7 +512,12 @@ fn write_api_values(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Resul
     stamp_urls(
         tx,
         "api_values",
-        &distinct(batch.api_values.iter().filter_map(|v| v.url_id.map(|u| u.0))),
+        &distinct(
+            batch
+                .api_values
+                .iter()
+                .filter_map(|v| v.url_id.map(|u| u.0)),
+        ),
         seq,
     )?;
     let mut upsert = tx.prepare_cached(

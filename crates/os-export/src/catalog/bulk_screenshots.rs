@@ -13,14 +13,12 @@ pub fn entries() -> &'static [TableEntry] {
 }
 
 // STUB(M2-R02)
-const ENTRIES: &[TableEntry] = &[
-    TableEntry {
-        name: "Web:Screenshots",
-        aliases: &[],
-        file_stem: "Web:Screenshots",
-        header: &["Address", "File"],
-        requires: &[ReportRequirement::Rendering],
-        owner: "M2-R02",
-        run: stub_run,
-    },
-];
+const ENTRIES: &[TableEntry] = &[TableEntry {
+    name: "Web:Screenshots",
+    aliases: &[],
+    file_stem: "Web:Screenshots",
+    header: &["Address", "File"],
+    requires: &[ReportRequirement::Rendering],
+    owner: "M2-R02",
+    run: stub_run,
+}];

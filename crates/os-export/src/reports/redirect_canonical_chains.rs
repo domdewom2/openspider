@@ -12,14 +12,12 @@ pub fn entries() -> &'static [TableEntry] {
 }
 
 // STUB(M2-D04)
-const ENTRIES: &[TableEntry] = &[
-    TableEntry {
-        name: "Redirects:Redirect & Canonical Chains",
-        aliases: &[],
-        file_stem: "Redirects:Redirect & Canonical Chains",
-        header: crate::catalog::CHAIN_HEADER,
-        requires: &[],
-        owner: "M2-D04",
-        run: stub_run,
-    },
-];
+const ENTRIES: &[TableEntry] = &[TableEntry {
+    name: "Redirects:Redirect & Canonical Chains",
+    aliases: &[],
+    file_stem: "Redirects:Redirect & Canonical Chains",
+    header: crate::catalog::CHAIN_HEADER,
+    requires: &[],
+    owner: "M2-D04",
+    run: stub_run,
+}];

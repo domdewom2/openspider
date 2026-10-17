@@ -98,12 +98,7 @@ impl ColumnDef {
 
     /// Spalte mit zur Laufzeit bekanntem Namen (Custom Search/Extraction/JavaScript, Segmente, API-Metriken): der Name
     /// wird einmal je Wert festgehalten ([`intern`]), weil `ColumnDef.key` ein `&'static str` ist.
-    pub fn dynamic(
-        key: &str,
-        sql: &str,
-        kind: ColumnKind,
-        default_visible: bool,
-    ) -> ColumnDef {
+    pub fn dynamic(key: &str, sql: &str, kind: ColumnKind, default_visible: bool) -> ColumnDef {
         ColumnDef::new(intern(key), intern(sql), kind, default_visible)
     }
 }
@@ -364,7 +359,12 @@ pub fn placeholder_tab(id: &'static str, filters: Vec<FilterDef>) -> TabDef {
     TabDef {
         id,
         population: "1",
-        columns: vec![ColumnDef::new("Address", "u.address", ColumnKind::Text, true)],
+        columns: vec![ColumnDef::new(
+            "Address",
+            "u.address",
+            ColumnKind::Text,
+            true,
+        )],
         filters,
         default_sort: vec![SortKey {
             column: "Address".to_string(),

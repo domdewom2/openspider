@@ -113,8 +113,8 @@ fn the_loader_reads_the_m1_file_first_and_then_every_split_file_unchanged() {
 #[test]
 fn split_files_hold_only_entries_of_their_own_tab_and_their_own_texts() {
     for f in SPLIT_FILES {
-        let tab_entries = parse_catalog(f.catalog)
-            .unwrap_or_else(|e| panic!("catalog.d/{}.toml: {e}", f.module));
+        let tab_entries =
+            parse_catalog(f.catalog).unwrap_or_else(|e| panic!("catalog.d/{}.toml: {e}", f.module));
         for e in &tab_entries {
             assert_eq!(
                 module_of(&e.tab),
@@ -180,8 +180,10 @@ doc_key = "security-mixed-content"
 }
 
 /// (Tab, Filter) aller Filter mit `issue = true` in M1- und M2-Datei, M2-Filter getrennt.
-fn issue_filters() -> (BTreeSet<(String, String)>, BTreeSet<(String, String)>) {
-    let collect = |file: &str| -> BTreeSet<(String, String)> {
+type FilterKeys = BTreeSet<(String, String)>;
+
+fn issue_filters() -> (FilterKeys, FilterKeys) {
+    let collect = |file: &str| -> FilterKeys {
         let mut out = BTreeSet::new();
         for tab in registry(file)["tab"].as_array().unwrap() {
             for f in tab["filters"].as_array().unwrap() {
@@ -216,16 +218,25 @@ fn catalog_and_register_agree_through_issue_true_in_the_filter_files() {
         })
         .collect();
     for key in &in_catalog {
-        assert!(registered.contains(key), "Katalogeintrag ohne Filter: {key:?}");
+        assert!(
+            registered.contains(key),
+            "Katalogeintrag ohne Filter: {key:?}"
+        );
     }
     // … und der Filter ist in der Registerdatei als `issue = true` geführt.
     let flagged: BTreeSet<(String, String)> = m1.union(&m2).cloned().collect();
     for key in &in_catalog {
-        assert!(flagged.contains(key), "Katalogeintrag ohne issue = true: {key:?}");
+        assert!(
+            flagged.contains(key),
+            "Katalogeintrag ohne issue = true: {key:?}"
+        );
     }
     // 2. Jeder Befund-Filter von M1 hat einen Eintrag (Stand M1, unverändert).
     for key in &m1 {
-        assert!(in_catalog.contains(key), "M1: issue = true ohne Katalogeintrag: {key:?}");
+        assert!(
+            in_catalog.contains(key),
+            "M1: issue = true ohne Katalogeintrag: {key:?}"
+        );
     }
     // 3. Für M2 liefert jedes Paket seine Einträge in catalog.d/<tab>.toml; offen sind nur Filter, die M2 ergänzt.
     let pending: Vec<&(String, String)> = m2.iter().filter(|k| !in_catalog.contains(*k)).collect();
@@ -233,5 +244,9 @@ fn catalog_and_register_agree_through_issue_true_in_the_filter_files() {
         assert!(!m1.contains(*key), "{key:?}");
     }
     // Ausgabe für den Überblick (`--nocapture`): so viele Befund-Filter von M2 warten noch auf ihren Eintrag.
-    eprintln!("{} von {} Befund-Filtern von M2 ohne Katalogeintrag", pending.len(), m2.len());
+    eprintln!(
+        "{} von {} Befund-Filtern von M2 ohne Katalogeintrag",
+        pending.len(),
+        m2.len()
+    );
 }

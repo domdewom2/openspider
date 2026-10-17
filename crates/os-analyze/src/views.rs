@@ -275,9 +275,9 @@ pub fn filter_counts_in(
     // Stub-Tabs und Stub-Filter (M2, `TabDef::is_stub`/`FilterDef::is_stub`) liefern keine Zähler, bis ihr Paket sie
     // umsetzt: Berichte und Übersichten zeigen nur Befüllbares (Crawl Overview bleibt für M1-Crawls unverändert).
     counts.retain(|c| {
-        tabs.iter()
-            .find(|t| t.id == c.tab)
-            .is_none_or(|t| !t.is_stub() && !t.filters.iter().any(|f| f.id == c.filter && f.is_stub()))
+        tabs.iter().find(|t| t.id == c.tab).is_none_or(|t| {
+            !t.is_stub() && !t.filters.iter().any(|f| f.id == c.filter && f.is_stub())
+        })
     });
     Ok(counts)
 }

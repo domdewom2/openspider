@@ -98,9 +98,7 @@ pub trait Tool: Send + Sync {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::session::{
-        SessionCrawl, SessionError, SessionStart, SessionStatus,
-    };
+    use crate::session::{SessionCrawl, SessionError, SessionStart, SessionStatus};
 
     #[derive(Debug)]
     struct NoSession;

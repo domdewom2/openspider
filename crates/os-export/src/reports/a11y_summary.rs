@@ -13,14 +13,27 @@ pub fn entries() -> &'static [TableEntry] {
 }
 
 // STUB(M2-D21)
-const ENTRIES: &[TableEntry] = &[
-    TableEntry {
-        name: "Accessibility:Violations Summary",
-        aliases: &[],
-        file_stem: "Accessibility:Violations Summary",
-        header: &["Issue", "Rule ID", "Guideline", "Impact", "Priority", "URLs", "% of Total", "Sample URL"],
-        requires: &[ReportRequirement::Rendering, ReportRequirement::Config { key: "extraction.accessibility", what: "accessibility extraction" }],
-        owner: "M2-D21",
-        run: stub_run,
-    },
-];
+const ENTRIES: &[TableEntry] = &[TableEntry {
+    name: "Accessibility:Violations Summary",
+    aliases: &[],
+    file_stem: "Accessibility:Violations Summary",
+    header: &[
+        "Issue",
+        "Rule ID",
+        "Guideline",
+        "Impact",
+        "Priority",
+        "URLs",
+        "% of Total",
+        "Sample URL",
+    ],
+    requires: &[
+        ReportRequirement::Rendering,
+        ReportRequirement::Config {
+            key: "extraction.accessibility",
+            what: "accessibility extraction",
+        },
+    ],
+    owner: "M2-D21",
+    run: stub_run,
+}];

@@ -15,9 +15,15 @@ fn memory_store_sets_replaces_and_deletes_through_the_trait() {
     assert_eq!(store.backend(), SecretBackend::Memory);
     assert_eq!(store.get("api/gsc/refresh-token"), None);
     store.set("api/gsc/refresh-token", "erster-wert").unwrap();
-    assert_eq!(store.get("api/gsc/refresh-token").as_deref(), Some("erster-wert"));
+    assert_eq!(
+        store.get("api/gsc/refresh-token").as_deref(),
+        Some("erster-wert")
+    );
     store.set("api/gsc/refresh-token", "zweiter-wert").unwrap();
-    assert_eq!(store.get("api/gsc/refresh-token").as_deref(), Some("zweiter-wert"));
+    assert_eq!(
+        store.get("api/gsc/refresh-token").as_deref(),
+        Some("zweiter-wert")
+    );
     store.delete("api/gsc/refresh-token").unwrap();
     assert_eq!(store.get("api/gsc/refresh-token"), None);
     // Ein fehlender Eintrag ist kein Fehler.

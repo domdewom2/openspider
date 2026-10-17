@@ -10,7 +10,9 @@
 mod store_common;
 
 use os_model::*;
-use os_store::{decode_minhash, encode_minhash, queries, CrawlFile, CrawlSink, OpenMode, StorageProfile};
+use os_store::{
+    decode_minhash, encode_minhash, queries, CrawlFile, CrawlSink, OpenMode, StorageProfile,
+};
 use store_common::*;
 
 fn setup(urls: i64) -> (tempfile::TempDir, std::path::PathBuf, os_store::SqliteSink) {
@@ -51,24 +53,32 @@ fn ext(url: i64, key: &str, value: Value) -> ExtWrite {
 #[test]
 fn ext_values_roundtrip_in_their_columns_and_upsert_replaces() {
     let (_dir, path, mut sink) = setup(3);
-    let mut b = WriteBatch::default();
-    b.ext = vec![
-        ext(1, "security.csp_present", Value::Bool(true)),
-        ext(1, "readability.flesch", Value::Float(61.5)),
-        ext(1, "head.title_outside", Value::Int(2)),
-        ext(1, "content.lang", Value::Text("de-DE".into())),
-        ext(1, "content.nothing", Value::Null),
-        ext(2, "security.csp_present", Value::Bool(false)),
-    ];
+    let b = WriteBatch {
+        ext: vec![
+            ext(1, "security.csp_present", Value::Bool(true)),
+            ext(1, "readability.flesch", Value::Float(61.5)),
+            ext(1, "head.title_outside", Value::Int(2)),
+            ext(1, "content.lang", Value::Text("de-DE".into())),
+            ext(1, "content.nothing", Value::Null),
+            ext(2, "security.csp_present", Value::Bool(false)),
+        ],
+        ..WriteBatch::default()
+    };
     sink.write(b).unwrap();
     let file = reader(&path);
     assert_eq!(count(&file, "SELECT COUNT(*) FROM url_ext"), 6);
     assert_eq!(
-        count(&file, "SELECT v_int FROM url_ext WHERE url_id = 1 AND key = 'security.csp_present'"),
+        count(
+            &file,
+            "SELECT v_int FROM url_ext WHERE url_id = 1 AND key = 'security.csp_present'"
+        ),
         1
     );
     assert_eq!(
-        count(&file, "SELECT v_int FROM url_ext WHERE url_id = 2 AND key = 'security.csp_present'"),
+        count(
+            &file,
+            "SELECT v_int FROM url_ext WHERE url_id = 2 AND key = 'security.csp_present'"
+        ),
         0
     );
     let flesch: f64 = file
@@ -81,7 +91,10 @@ fn ext_values_roundtrip_in_their_columns_and_upsert_replaces() {
         .unwrap();
     assert_eq!(flesch, 61.5);
     assert_eq!(
-        text(&file, "SELECT v_text FROM url_ext WHERE key = 'content.lang'"),
+        text(
+            &file,
+            "SELECT v_text FROM url_ext WHERE key = 'content.lang'"
+        ),
         "de-DE"
     );
     assert_eq!(
@@ -151,14 +164,21 @@ fn invalid_ext_key_and_unknown_url_are_rejected_without_touching_the_file() {
         Err(os_store::StoreError::InvalidInput(_))
     ));
     let unknown_url = WriteBatch {
-        ext: vec![ext(1, "head.a", Value::Int(1)), ext(99, "head.a", Value::Int(1))],
+        ext: vec![
+            ext(1, "head.a", Value::Int(1)),
+            ext(99, "head.a", Value::Int(1)),
+        ],
         ..WriteBatch::default()
     };
     assert!(matches!(
         sink.write(unknown_url),
         Err(os_store::StoreError::InvalidInput(_))
     ));
-    assert_eq!(count(&file, "SELECT COUNT(*) FROM url_ext"), 0, "Transaktion zurückgerollt");
+    assert_eq!(
+        count(&file, "SELECT COUNT(*) FROM url_ext"),
+        0,
+        "Transaktion zurückgerollt"
+    );
     assert_eq!(queries::change_seq(file.conn()).unwrap(), before);
 }
 
@@ -212,7 +232,10 @@ fn structured_data_roundtrip_links_issues_to_items_and_replaces_per_url() {
         "microdata"
     );
     assert_eq!(
-        count(&file, "SELECT COUNT(*) FROM sd_issues WHERE code = 'bad-json' AND item_id IS NULL"),
+        count(
+            &file,
+            "SELECT COUNT(*) FROM sd_issues WHERE code = 'bad-json' AND item_id IS NULL"
+        ),
         1
     );
     assert!(stamp(&file, 1) > 0 && stamp(&file, 2) > 0);
@@ -224,9 +247,15 @@ fn structured_data_roundtrip_links_issues_to_items_and_replaces_per_url() {
         ..WriteBatch::default()
     };
     sink.write(later).unwrap();
-    assert_eq!(count(&file, "SELECT COUNT(*) FROM sd_items WHERE url_id = 1"), 2);
     assert_eq!(
-        count(&file, "SELECT COUNT(*) FROM sd_issues WHERE url_id = 1 AND validation = 'schema_org'"),
+        count(&file, "SELECT COUNT(*) FROM sd_items WHERE url_id = 1"),
+        2
+    );
+    assert_eq!(
+        count(
+            &file,
+            "SELECT COUNT(*) FROM sd_issues WHERE url_id = 1 AND validation = 'schema_org'"
+        ),
         1
     );
     assert_eq!(
@@ -237,7 +266,10 @@ fn structured_data_roundtrip_links_issues_to_items_and_replaces_per_url() {
         "json-ld"
     );
     assert_eq!(
-        count(&file, "SELECT COUNT(*) FROM sd_issues WHERE url_id = 1 AND validation = 'parse'"),
+        count(
+            &file,
+            "SELECT COUNT(*) FROM sd_issues WHERE url_id = 1 AND validation = 'parse'"
+        ),
         1
     );
 
@@ -251,9 +283,18 @@ fn structured_data_roundtrip_links_issues_to_items_and_replaces_per_url() {
         text(&file, "SELECT format FROM sd_items WHERE url_id = 1"),
         "rdfa"
     );
-    assert_eq!(count(&file, "SELECT COUNT(*) FROM sd_issues WHERE url_id = 1"), 0);
-    assert_eq!(count(&file, "SELECT COUNT(*) FROM sd_items WHERE url_id = 2"), 1);
-    assert_eq!(count(&file, "SELECT COUNT(*) FROM sd_issues WHERE url_id = 2"), 1);
+    assert_eq!(
+        count(&file, "SELECT COUNT(*) FROM sd_issues WHERE url_id = 1"),
+        0
+    );
+    assert_eq!(
+        count(&file, "SELECT COUNT(*) FROM sd_items WHERE url_id = 2"),
+        1
+    );
+    assert_eq!(
+        count(&file, "SELECT COUNT(*) FROM sd_issues WHERE url_id = 2"),
+        1
+    );
 
     // Index außerhalb der Elemente ist ein Fehler.
     let bad = WriteBatch {
@@ -317,7 +358,10 @@ fn render_results_roundtrip_with_children_and_replace_per_url() {
     })
     .unwrap();
     let file = reader(&path);
-    assert_eq!(text(&file, "SELECT status FROM render_pages WHERE url_id = 1"), "ok");
+    assert_eq!(
+        text(&file, "SELECT status FROM render_pages WHERE url_id = 1"),
+        "ok"
+    );
     assert_eq!(count(&file, "SELECT word_count FROM render_pages"), 42);
     assert_eq!(count(&file, "SELECT total_ms FROM render_pages"), 300);
     assert_eq!(count(&file, "SELECT COUNT(*) FROM render_console"), 3);
@@ -330,7 +374,9 @@ fn render_results_roundtrip_with_children_and_replace_per_url() {
     assert_eq!(count(&file, "SELECT COUNT(*) FROM screenshots"), 2);
     let png: Vec<u8> = file
         .conn()
-        .query_row("SELECT png FROM screenshots WHERE tile = 1", [], |r| r.get(0))
+        .query_row("SELECT png FROM screenshots WHERE tile = 1", [], |r| {
+            r.get(0)
+        })
         .unwrap();
     assert_eq!(png, vec![4, 5]);
     assert!(stamp(&file, 1) > 0);
@@ -443,21 +489,27 @@ fn accessibility_spelling_forms_and_custom_values_roundtrip() {
     assert_eq!(count(&file, "SELECT COUNT(*) FROM a11y_rules"), 2);
     assert_eq!(count(&file, "SELECT COUNT(*) FROM a11y_nodes"), 1);
     assert_eq!(
-        text(&file, "SELECT impact FROM a11y_rules WHERE rule_id = 'image-alt'"),
+        text(
+            &file,
+            "SELECT impact FROM a11y_rules WHERE rule_id = 'image-alt'"
+        ),
         "critical"
     );
     assert_eq!(count(&file, "SELECT COUNT(*) FROM spelling_findings"), 2);
     assert_eq!(
-        text(&file, "SELECT rule_id FROM spelling_findings WHERE kind = 'grammar'"),
+        text(
+            &file,
+            "SELECT rule_id FROM spelling_findings WHERE kind = 'grammar'"
+        ),
         "DE_AGREEMENT"
     );
     assert_eq!(count(&file, "SELECT COUNT(*) FROM forms"), 2);
-    assert_eq!(
-        text(&file, "SELECT method FROM forms WHERE idx = 1"),
-        "get"
-    );
+    assert_eq!(text(&file, "SELECT method FROM forms WHERE idx = 1"), "get");
     assert_eq!(count(&file, "SELECT count FROM custom_search_hits"), 4);
-    assert_eq!(count(&file, "SELECT COUNT(*) FROM custom_extraction_values"), 2);
+    assert_eq!(
+        count(&file, "SELECT COUNT(*) FROM custom_extraction_values"),
+        2
+    );
     assert_eq!(
         text(&file, "SELECT error FROM custom_js_values WHERE url_id = 3"),
         "Zeitlimit"
@@ -483,11 +535,17 @@ fn accessibility_spelling_forms_and_custom_values_roundtrip() {
     .unwrap();
     assert_eq!(count(&file, "SELECT COUNT(*) FROM spelling_findings"), 2);
     assert_eq!(
-        text(&file, "SELECT text FROM spelling_findings WHERE kind = 'spelling'"),
+        text(
+            &file,
+            "SELECT text FROM spelling_findings WHERE kind = 'spelling'"
+        ),
         "teh"
     );
     assert_eq!(
-        count(&file, "SELECT COUNT(*) FROM spelling_findings WHERE kind = 'grammar'"),
+        count(
+            &file,
+            "SELECT COUNT(*) FROM spelling_findings WHERE kind = 'grammar'"
+        ),
         1
     );
 }
@@ -666,17 +724,33 @@ fn sitemap_error_and_entry_extras_roundtrip() {
         "XML-Fehler in Zeile 12"
     );
     assert_eq!(
-        text(&file, "SELECT changefreq FROM sitemap_entries WHERE url_id = 1"),
+        text(
+            &file,
+            "SELECT changefreq FROM sitemap_entries WHERE url_id = 1"
+        ),
         "weekly"
     );
     let priority: f64 = file
         .conn()
-        .query_row("SELECT priority FROM sitemap_entries WHERE url_id = 1", [], |r| r.get(0))
+        .query_row(
+            "SELECT priority FROM sitemap_entries WHERE url_id = 1",
+            [],
+            |r| r.get(0),
+        )
         .unwrap();
     assert_eq!(priority, 0.8);
-    assert_eq!(count(&file, "SELECT images FROM sitemap_entries WHERE url_id = 1"), 2);
-    assert_eq!(count(&file, "SELECT news FROM sitemap_entries WHERE url_id = 1"), 1);
-    assert_eq!(count(&file, "SELECT images FROM sitemap_entries WHERE url_id = 2"), 0);
+    assert_eq!(
+        count(&file, "SELECT images FROM sitemap_entries WHERE url_id = 1"),
+        2
+    );
+    assert_eq!(
+        count(&file, "SELECT news FROM sitemap_entries WHERE url_id = 1"),
+        1
+    );
+    assert_eq!(
+        count(&file, "SELECT images FROM sitemap_entries WHERE url_id = 2"),
+        0
+    );
     assert_eq!(
         count(&file, "SELECT COUNT(*) FROM sitemap_entries WHERE url_id = 2 AND changefreq IS NULL AND priority IS NULL"),
         1
@@ -750,7 +824,12 @@ fn m2_parts_in_the_same_batch_as_the_page_share_one_transaction_and_sequence() {
     assert_eq!(queries::change_seq(file.conn()).unwrap(), seq + 1);
     let status: Option<i64> = file
         .conn()
-        .query_row("SELECT status_code FROM urls WHERE id = 2", [], |r| r.get(0))
+        .query_row("SELECT status_code FROM urls WHERE id = 2", [], |r| {
+            r.get(0)
+        })
         .unwrap();
-    assert_eq!(status, None, "die Seite aus dem fehlgeschlagenen Batch ist nicht geschrieben");
+    assert_eq!(
+        status, None,
+        "die Seite aus dem fehlgeschlagenen Batch ist nicht geschrieben"
+    );
 }
