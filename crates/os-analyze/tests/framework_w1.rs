@@ -62,3 +62,46 @@ fn coverage_states_count_and_return_only_checked_rows_inside_existing_transactio
         FilterState::Ready
     );
 }
+
+// spec: TECH-008
+// Infrastruktur (M2-F05a) für TECH-008; Fachprüfung M2-D10.
+#[test]
+fn overview_batches_shared_and_distinct_coverage_markers_per_tab() {
+    let dir = tempfile::tempdir().unwrap();
+    let (_, file) = create(dir.path(), "markers.ospider", 42);
+    insert(&file, &[row(1, "/a"), row(2, "/b")]);
+    let mut tab = os_analyze::defs::placeholder_tab("Fixture", Vec::new());
+    tab.population = "1";
+    tab.filters = [
+        ("Checked", "validation.checked"),
+        ("Same Marker", "validation.checked"),
+        ("Other Marker", "security.checked"),
+    ]
+    .into_iter()
+    .map(|(name, marker)| {
+        let mut f = FilterDef::placeholder(name, FilterKind::Live, &[]);
+        f.predicate = "1";
+        f.requires = vec![Requirement::Coverage {
+            config: "advanced.html_validation",
+            marker,
+        }];
+        f
+    })
+    .collect();
+    file.conn().execute_batch("INSERT INTO url_ext(url_id,key,v_int,change_seq) VALUES(1,'validation.checked',1,1), (1,'security.checked',1,1), (2,'security.checked',1,1)").unwrap();
+    let mut cfg = CrawlConfig::default();
+    cfg.advanced.html_validation = true;
+    let counts = views::filter_counts_in(&[tab], &file, &cfg).unwrap();
+    assert_eq!(
+        counts.iter().map(|c| c.count).collect::<Vec<_>>(),
+        vec![Some(1), Some(1), Some(2)]
+    );
+    assert_eq!(
+        counts.iter().map(|c| c.state.clone()).collect::<Vec<_>>(),
+        vec![
+            FilterState::Incomplete { unchecked: 1 },
+            FilterState::Incomplete { unchecked: 1 },
+            FilterState::Ready
+        ]
+    );
+}

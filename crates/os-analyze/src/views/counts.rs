@@ -12,7 +12,7 @@ use super::{FilterCount, ViewQuery, URLS_FROM};
 use crate::defs::TabDef;
 use crate::error::{AnalyzeError, ViewError};
 use crate::names;
-use crate::state::{filter_state_for_file, AnalysisSnapshot};
+use crate::state::{filter_states_for_file, AnalysisSnapshot};
 
 /// Prozent = Treffer ÷ Basis × 100, kaufmännisch auf eine Nachkommastelle; leere Basis ergibt 0,0.
 pub fn percent(hits: u64, base: u64) -> f64 {
@@ -54,11 +54,8 @@ pub(super) fn counts_in(
 
     let mut out = Vec::new();
     for tab in tabs {
-        let states: Vec<FilterState> = tab
-            .filters
-            .iter()
-            .map(|f| filter_state_for_file(f, tab, file, cfg, &cfg_json, &analysis))
-            .collect::<Result<_, _>>()?;
+        let states: Vec<FilterState> =
+            filter_states_for_file(&tab.filters, tab, file, cfg, &cfg_json, &analysis)?;
 
         // Ein Plan je zählbarem Filter; Population und Parameter sind für den ganzen Tab gleich.
         let mut sums: Vec<String> = Vec::new();

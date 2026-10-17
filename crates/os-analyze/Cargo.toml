@@ -42,3 +42,6 @@ harness = false
 [[bench]]
 name = "link_score"
 harness = false
+
+[features]
+testing = []

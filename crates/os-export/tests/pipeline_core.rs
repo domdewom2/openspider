@@ -343,3 +343,27 @@ fn write_error_in_the_middle_of_the_row_stream_aborts_the_export_with_that_error
         "nach dem Fehler wird nicht weitergeschrieben"
     );
 }
+
+// spec: INTEG-020, OUT-001
+// Infrastruktur (M2-F05a) für INTEG-020; Fachprüfung M2-D14.
+#[test]
+fn configured_column_source_filter_reaches_catalog_and_export() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = titles_file(dir.path());
+    let cfg = file.config().unwrap();
+    os_analyze::tabs::testing::with_fixture_source(|| {
+        assert!(catalog::resolve_with(ExportKind::Tab, "Internal:Fixture Filter", &cfg).is_ok());
+        let info = export_tab(
+            &file,
+            &cfg,
+            &ViewQuery::new("Internal", "Fixture Filter"),
+            &dir.path().join("export"),
+            Format::Csv,
+        )
+        .unwrap();
+        assert_eq!(info.rows, 1);
+        let text = std::fs::read_to_string(info.path).unwrap();
+        assert!(text.contains("https://site.test/z"));
+        assert!(!text.contains("https://site.test/a"));
+    });
+}

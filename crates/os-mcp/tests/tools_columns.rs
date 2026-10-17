@@ -96,3 +96,25 @@ async fn invalid_numbered_names_are_rejected_with_the_list_of_valid_forms() {
     assert!(reply.is_error);
     client.cancel().await;
 }
+
+// spec: INTEG-020, AGENT-011
+// Infrastruktur (M2-F05a) für INTEG-020; Fachprüfung M2-D14.
+#[tokio::test]
+async fn mcp_queries_filters_from_a_configured_column_source() {
+    use os_mcp::tool::ToolContext;
+    let world = World::new();
+    let stored = world.add("out-basic-site", "/", base_config(), 7).await;
+    let ctx = ToolContext::new(world.dir.path().to_path_buf());
+    let tools = os_mcp::tools::all();
+    let tool = tools.iter().find(|t| t.name() == "query_urls").unwrap();
+    os_analyze::tabs::testing::with_fixture_source(|| {
+        let result = tool
+            .call(
+                &ctx,
+                json!({"crawl_id": stored.id, "tab": "Internal", "filter": "Fixture Filter"}),
+            )
+            .unwrap();
+        assert_eq!(result.total, Some(1));
+        assert_eq!(result.summary["filter"], "Fixture Filter");
+    });
+}

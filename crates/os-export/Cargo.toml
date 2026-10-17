@@ -26,6 +26,7 @@ time.workspace = true
 url.workspace = true
 
 [dev-dependencies]
+os-analyze = { workspace = true, features = ["testing"] }
 os-engine = { workspace = true, features = ["testing"] }
 os-testsite.workspace = true
 calamine.workspace = true

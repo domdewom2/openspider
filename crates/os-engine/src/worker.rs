@@ -122,12 +122,13 @@ impl<F: Fetch> Shared<F> {
 }
 
 struct ActiveGuard<F: Fetch> {
+    page: bool,
     sh: Arc<Shared<F>>,
 }
 
 impl<F: Fetch> Drop for ActiveGuard<F> {
     fn drop(&mut self) {
-        self.sh.lock_core().finish_worker();
+        self.sh.lock_core().finish_worker(self.page);
         self.sh.ctl.notify.notify_one();
     }
 }
@@ -135,6 +136,7 @@ impl<F: Fetch> Drop for ActiveGuard<F> {
 /// Bearbeitet eine URL der Warteschlange (der Abruf ist bereits reserviert, `active` erhöht).
 pub(crate) async fn process<F: Fetch>(sh: Arc<Shared<F>>, item: QueueItem) {
     let _guard = ActiveGuard {
+        page: item.priority == 0,
         sh: Arc::clone(&sh),
     };
     let started = std::time::Instant::now();
@@ -499,11 +501,13 @@ async fn analyze<F: Fetch>(
             value,
         }),
     );
-    a.extra.ext.push(os_model::ExtWrite {
-        url: item.id,
-        key: os_model::ExtKey::from_static("http.attempts"),
-        value: os_model::Value::Int(i64::from(resp.attempts)),
-    });
+    if resp.attempts > 1 {
+        a.extra.ext.push(os_model::ExtWrite {
+            url: item.id,
+            key: os_model::ExtKey::from_static("http.attempts"),
+            value: os_model::Value::Int(i64::from(resp.attempts)),
+        });
+    }
     // 3xx: nur Location auswerten, der Body wird nie geparst (Q5)
     if redirect::is_redirect_status(resp.status) {
         if item.purpose != Purpose::External && a.facts.content_class == ContentClass::Html {
@@ -545,7 +549,15 @@ async fn analyze<F: Fetch>(
             a.refresh = refs.clone();
             parsed_refresh(&mut a, url, &refs);
         } else {
-            let refs = os_parse::parse_headers(url, &resp.headers, &sh.pcfg).refresh;
+            let hints = os_parse::parse_headers(url, &resp.headers, &sh.pcfg);
+            if hints.hreflang_truncated > 0 {
+                a.extra.ext.push(os_model::ExtWrite {
+                    url: item.id,
+                    key: os_model::ExtKey::from_static("hreflang.truncated"),
+                    value: os_model::Value::Int(i64::from(hints.hreflang_truncated)),
+                });
+            }
+            let refs = hints.refresh;
             a.refresh = refs.clone();
             parsed_refresh(&mut a, url, &refs);
         }
@@ -561,6 +573,13 @@ async fn analyze<F: Fetch>(
         }
         other => {
             let hints = os_parse::parse_headers(url, &resp.headers, &sh.pcfg);
+            if hints.hreflang_truncated > 0 {
+                a.extra.ext.push(os_model::ExtWrite {
+                    url: item.id,
+                    key: os_model::ExtKey::from_static("hreflang.truncated"),
+                    value: os_model::Value::Int(i64::from(hints.hreflang_truncated)),
+                });
+            }
             a.refresh = hints.refresh.clone();
             parsed_refresh(&mut a, url, &hints.refresh);
             match other {
@@ -677,14 +696,23 @@ fn parse_now(
     headers: &[(String, String)],
     cfg: &ParseConfig,
 ) -> ParsedPage {
-    os_parse::parse_html(&ParseInput {
+    let page = os_parse::parse_html(&ParseInput {
         status,
         url,
         body,
         content_type,
         headers,
         cfg,
-    })
+    });
+    #[cfg(test)]
+    let page = tests::PARSER_STUB.with(|stub| {
+        let mut page = page;
+        if let Some(stub) = stub.get() {
+            stub(&mut page);
+        }
+        page
+    });
+    page
 }
 
 // ---------------------------------------------------------------------------------------------------
@@ -1410,11 +1438,19 @@ fn transport_page(url: UrlId, page: &ParsedPage, batch: &mut WriteBatch) {
     let mut facts = page.ext.clone();
     if let Some(validation) = &page.validation {
         facts.extend(os_parse::validation::to_ext(validation));
+        #[cfg(test)]
+        tests::VALIDATION_STUB.with(|stub| {
+            if let Some(stub) = stub.get() {
+                facts.extend(stub(validation));
+            }
+        });
     }
-    facts.push((
-        os_model::ExtKey::from_static("hreflang.truncated"),
-        os_model::Value::Int(i64::from(page.hreflang_truncated)),
-    ));
+    if page.hreflang_truncated > 0 {
+        facts.push((
+            os_model::ExtKey::from_static("hreflang.truncated"),
+            os_model::Value::Int(i64::from(page.hreflang_truncated)),
+        ));
+    }
     batch.ext.extend(
         facts
             .into_iter()
@@ -1462,6 +1498,13 @@ fn transport_page(url: UrlId, page: &ParsedPage, batch: &mut WriteBatch) {
 
 #[cfg(test)]
 mod tests {
+    type ValidationStub =
+        fn(&os_model::ValidationFacts) -> Vec<(os_model::ExtKey, os_model::Value)>;
+    thread_local! {
+        pub(super) static PARSER_STUB: std::cell::Cell<Option<fn(&mut ParsedPage)>> = const { std::cell::Cell::new(None) };
+        pub(super) static VALIDATION_STUB: std::cell::Cell<Option<ValidationStub>> = const { std::cell::Cell::new(None) };
+    }
+
     use super::*;
     use crate::sitemaps::FetchedSitemap;
     use os_model::{CanonicalRef, SitemapDoc, SitemapLoc};
@@ -1500,10 +1543,9 @@ mod tests {
 
     // spec: INTEG-020, INTEG-040, ONPAGE-034
     // Infrastruktur (M2-F05a); Fachprüfung M2-D09/D11/D14/D15.
-    #[test]
-    fn parser_extension_payloads_keep_their_url_and_values() {
+    fn payload_fixture() -> ParsedPage {
         let fixture = include_str!("../../../tests/fixtures/config/default.osconfig");
-        let page = ParsedPage {
+        ParsedPage {
             ext: vec![(
                 os_model::ExtKey::from_static("content.fixture"),
                 os_model::Value::Text(fixture.into()),
@@ -1533,8 +1575,18 @@ mod tests {
                 parse_error: Some("fixture-parse-error".into()),
             }],
             hreflang_truncated: 12,
+            validation: Some(os_model::ValidationFacts {
+                head_errors: 7,
+                ..Default::default()
+            }),
             ..Default::default()
-        };
+        }
+    }
+
+    // spec: INTEG-020, INTEG-040, ONPAGE-034
+    #[test]
+    fn parser_extension_payloads_keep_their_url_and_values() {
+        let page = payload_fixture();
         let mut batch = WriteBatch::default();
         transport_page(UrlId(42), &page, &mut batch);
         assert_eq!(batch.ext[0].url, UrlId(42));
@@ -1549,6 +1601,86 @@ mod tests {
         assert_eq!(batch.sd_issues[0].url_id, UrlId(42));
         assert_eq!(batch.sd_issues[0].code, "fixture-parse-error");
         assert_eq!(batch.ext[1].value, os_model::Value::Int(12));
+    }
+
+    // spec: INTEG-020, INTEG-040, TECH-008
+    // Infrastruktur (M2-F05a); Fachprüfung M2-D09/D10/D14/D15.
+    #[tokio::test(start_paused = true)]
+    async fn parser_stub_payloads_reach_sqlite_through_a_simfetcher_crawl() {
+        use crate::testing::{SimFetcher, SimSite};
+        use crate::{start_crawl, CrawlRequest, CrawlSource};
+        use os_store::{CrawlFile, OpenMode};
+        PARSER_STUB.set(Some(|page| *page = payload_fixture()));
+        VALIDATION_STUB.set(Some(|facts| {
+            vec![(
+                os_model::ExtKey::from_static("validation.fixture"),
+                os_model::Value::Int(i64::from(facts.head_errors)),
+            )]
+        }));
+        struct Reset;
+        impl Drop for Reset {
+            fn drop(&mut self) {
+                PARSER_STUB.set(None);
+                VALIDATION_STUB.set(None);
+            }
+        }
+        let _reset = Reset;
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("payload.ospider");
+        let cfg = CrawlConfig::default();
+        let site = SimSite::new().page("https://site.test/", "<html><body>fixture</body></html>");
+        start_crawl(
+            SimFetcher::new(site),
+            CrawlRequest {
+                config: cfg,
+                source: CrawlSource::Spider {
+                    start_url: "https://site.test/".into(),
+                },
+                file: path.clone(),
+                project: "fixture".into(),
+                name: "payload".into(),
+            },
+            crate::testing::test_deps(),
+        )
+        .await
+        .unwrap()
+        .wait()
+        .await
+        .unwrap();
+        let file = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
+        let conn = file.conn();
+        for (sql, expected) in [
+            (
+                "SELECT v_int FROM url_ext WHERE key='validation.fixture'",
+                7,
+            ),
+            ("SELECT idx FROM forms", 3),
+            ("SELECT count FROM custom_search_hits", 7),
+            ("SELECT number FROM custom_extraction_values", 4),
+            ("SELECT COUNT(*) FROM sd_items WHERE json='{}'", 1),
+            (
+                "SELECT COUNT(*) FROM sd_issues WHERE code='fixture-parse-error'",
+                1,
+            ),
+            ("SELECT COUNT(*) FROM minhash", 1),
+        ] {
+            assert_eq!(
+                conn.query_row(sql, [], |r| r.get::<_, i64>(0)).unwrap(),
+                expected,
+                "{sql}"
+            );
+        }
+        let ext: String = conn
+            .query_row(
+                "SELECT v_text FROM url_ext WHERE key='content.fixture'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(
+            ext,
+            include_str!("../../../tests/fixtures/config/default.osconfig")
+        );
     }
 
     // spec: CRAWL-022

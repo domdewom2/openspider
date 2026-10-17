@@ -176,6 +176,8 @@ pub fn column_sources() -> Vec<(&'static str, Box<dyn ColumnSource>)> {
     add("Internal", dynamic_api::column_source());
     add("Internal", links::column_source());
     add("Internal", internal_crawl::column_source());
+    #[cfg(feature = "testing")]
+    add("Internal", testing::source());
     out
 }
 
@@ -1204,3 +1206,6 @@ mod w1_contracts {
             && count.count == Some(1)));
     }
 }
+
+#[cfg(feature = "testing")]
+pub mod testing;

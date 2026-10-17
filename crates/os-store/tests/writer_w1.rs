@@ -88,6 +88,14 @@ fn cookies_discoveries_and_compressed_html_roundtrip_and_replace() {
             .bytes,
         body
     );
+    for namespace in ["spelling", "sdval", "a11y", "analysis", "api"] {
+        file.conn()
+            .execute(
+                "INSERT INTO url_ext(url_id,key,v_int) VALUES(1,?1,1)",
+                [format!("{namespace}.fixture")],
+            )
+            .unwrap();
+    }
     let mut replacement = page(1, vec![]);
     replacement.replace = true;
     sink.write(WriteBatch {
@@ -96,6 +104,19 @@ fn cookies_discoveries_and_compressed_html_roundtrip_and_replace() {
     })
     .unwrap();
     assert_eq!(count(&file, "SELECT COUNT(*) FROM cookies"), 0);
+    for namespace in ["spelling", "sdval", "a11y", "analysis", "api"] {
+        assert_eq!(
+            file.conn()
+                .query_row(
+                    "SELECT v_int FROM url_ext WHERE url_id=1 AND key=?1",
+                    [format!("{namespace}.fixture")],
+                    |r| r.get::<_, i64>(0)
+                )
+                .unwrap(),
+            1
+        );
+    }
+
     assert_eq!(
         count(
             &file,
@@ -165,6 +186,15 @@ fn changing_a_target_stamps_dependants_and_fact_updates_are_atomic() {
     })
     .unwrap();
     let mut file = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
+    let unchanged_before = queries::change_seq(file.conn()).unwrap();
+    sink.write(WriteBatch {
+        pages: vec![page(2, vec![])],
+        ..Default::default()
+    })
+    .unwrap();
+    assert!(!queries::changed_since(file.conn(), unchanged_before, 10)
+        .unwrap()
+        .contains(&UrlId(1)));
     let previous = queries::change_seq(file.conn()).unwrap();
     let mut target = page(2, vec![]);
     target.fetch.status_code = 404;

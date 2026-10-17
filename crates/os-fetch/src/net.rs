@@ -30,7 +30,11 @@ pub fn client_builder(s: &NetworkSettings) -> reqwest::ClientBuilder {
                 builder = builder.tls_certs_merge(certificates);
             } else if let Ok(certificate) = reqwest::Certificate::from_der(&bytes) {
                 builder = builder.tls_certs_merge([certificate]);
+            } else {
+                tracing::warn!(path = %path, "Zertifikatsdatei enthält kein lesbares PEM- oder DER-Zertifikat");
             }
+        } else {
+            tracing::warn!(path = %path, "Zertifikatsdatei nicht lesbar");
         }
     }
     builder

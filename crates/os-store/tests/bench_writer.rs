@@ -510,3 +510,72 @@ fn inlinks_without_index_250k_pages() {
         std::fs::write(out, serde_json::to_string_pretty(&json).unwrap()).unwrap();
     }
 }
+
+// spec: TECH-005, PERF-003
+// Infrastruktur (M2-F05a) für TECH-005; Fachprüfung M2-D04/D05/D07.
+#[test]
+#[ignore = "Writer-Benchmark mit 100k Canonicals und Pagination-Zielen"]
+fn writer_100k_canonical_dependants() {
+    use os_model::{CanonicalRef, CanonicalRow, HintSource, UrlId};
+    let dir = tempfile::tempdir().unwrap();
+    let path = new_crawl(
+        dir.path(),
+        "canonical-bench.ospider",
+        StorageProfile::Balanced,
+    );
+    let mut sink = sink(&path, StorageProfile::Balanced);
+    for first in (1..=PAGES).step_by(1000) {
+        sink.write(batch_with_urls((first..first + 1000).map(|id| (id, true))))
+            .unwrap();
+    }
+    let start = Instant::now();
+    for first in (1..=PAGES).step_by(1000) {
+        let mut batch = WriteBatch::default();
+        for id in first..first + 1000 {
+            let mut p = page(id, vec![]);
+            p.canonicals.push(CanonicalRow {
+                target_id: Some(UrlId(id % PAGES + 1)),
+                r: CanonicalRef {
+                    source: HintSource::Html,
+                    raw: "/target".into(),
+                    ..Default::default()
+                },
+            });
+            batch.pages.push(p);
+        }
+        sink.write(batch).unwrap();
+    }
+    let initial = start.elapsed();
+    assert_eq!(count(sink.file(), "SELECT COUNT(*) FROM canonicals"), PAGES);
+    // Auch Pagination mit 100k Zeilen und dem neuen Zielindex belegen.
+    sink.file().conn().execute_batch("INSERT INTO pagination(url_id,position,rel,source,raw,in_head,target_id) SELECT url_id,0,'next','html','/target',1,target_id FROM canonicals").unwrap();
+    for (table, index) in [
+        ("canonicals", "canonicals_target"),
+        ("pagination", "pagination_target"),
+    ] {
+        let plan: String = sink
+            .file()
+            .conn()
+            .query_row(
+                &format!("EXPLAIN QUERY PLAN SELECT url_id FROM {table} WHERE target_id = 50000"),
+                [],
+                |r| r.get(3),
+            )
+            .unwrap();
+        assert!(plan.contains(index), "{plan}");
+    }
+    let start = Instant::now();
+    let mut batch = WriteBatch::default();
+    for id in 40_000..41_000 {
+        let mut p = page(id, vec![]);
+        p.fetch.status_code = 404;
+        batch.pages.push(p);
+    }
+    sink.write(batch).unwrap();
+    let changed = start.elapsed();
+    println!("100k Canonicals: initial {:.3}s ({:.3}ms/page); 1000 status changes with 100k Canonicals + 100k Pagination: {:.3}s ({:.3}ms/page)", initial.as_secs_f64(), initial.as_secs_f64() * 1000.0 / PAGES as f64, changed.as_secs_f64(), changed.as_secs_f64());
+    assert!(
+        changed < Duration::from_secs(10),
+        "indexed dependant updates: {changed:?}"
+    );
+}

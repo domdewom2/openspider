@@ -79,5 +79,8 @@ fn only_changed_trigger_paths_dispatch_and_cancel_prevents_dispatch() {
         vec!["M2-D16"]
     );
     cancel.cancel();
-    assert!(recompute::run_triggered(&mut file, &cfg, &next, &cancel).is_err());
+    assert!(matches!(
+        recompute::run_triggered(&mut file, &cfg, &next, &cancel),
+        Err(os_engine::EngineError::Cancelled)
+    ));
 }

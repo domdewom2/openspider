@@ -26,6 +26,7 @@ use os_model::{LinkType, RedirectType, UrlId};
 use os_store::{queries, CrawlFile};
 
 use super::common::{db, writer_options};
+use crate::catalog::{stub_run, TableEntry};
 use crate::error::ExportError;
 use crate::types::{ExportFileInfo, Format};
 use os_analyze::ColumnKind;
@@ -565,7 +566,6 @@ pub fn write_report_to(
     Ok(count)
 }
 
-use crate::catalog::{stub_run, TableEntry};
 /// Redirects: Redirects to Errors (OUT-084, M2-D12): Kettenformat wie OUT-081, nur Ketten mit Fehlerziel.
 // STUB(M2-D12)
 static REDIRECTS_TO_ERRORS: TableEntry = TableEntry {

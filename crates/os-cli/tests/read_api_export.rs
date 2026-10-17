@@ -426,7 +426,7 @@ fn python() -> Option<String> {
         std::env::var_os("OPENSPIDER_REQUIRE_PYTHON").is_none(),
         "Python 3 fehlt, die CI verlangt den Beispielleser (OPENSPIDER_REQUIRE_PYTHON)"
     );
-    eprintln!("Python 3 nicht gefunden: Beispielleser-Test übersprungen");
+    eprintln!("SKIP: Python 3 nicht gefunden: Beispielleser-Test übersprungen");
     None
 }
 
@@ -458,7 +458,10 @@ async fn a_python_reader_reads_a_finished_file_and_rejects_an_unknown_read_api_v
     let env = Env::new();
     let path = crawl_with_exports(&env, &site).await;
 
-    let (code, stdout, stderr) = run_reader(&python, &path, &[]);
+    // Die abgeschlossene Datei hat keine WAL/SHM-Begleitdateien mehr. Für diesen
+    // unveränderlichen Snapshot erlaubt immutable auch System-SQLite den Nur-Lese-Zugriff.
+    // Normales mode=ro neben einem Schreiber prüft der nächste Test ausdrücklich.
+    let (code, stdout, stderr) = run_reader(&python, &path, &["--immutable"]);
     assert_eq!(code, 0, "{stdout}\n{stderr}");
     assert!(stdout.starts_with("ok:"), "{stdout}");
 
@@ -489,7 +492,7 @@ async fn a_python_reader_reads_a_finished_file_and_rejects_an_unknown_read_api_v
             )
             .unwrap();
     }
-    let (code, _, stderr) = run_reader(&python, &future, &[]);
+    let (code, _, stderr) = run_reader(&python, &future, &["--immutable"]);
     assert_eq!(code, 3, "{stderr}");
     assert!(
         stderr.contains("unbekannte Version der Leseschnittstelle"),

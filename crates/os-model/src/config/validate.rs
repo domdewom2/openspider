@@ -672,7 +672,7 @@ impl CrawlConfig {
                 "mindestens die Auffangregel \"Content\" erforderlich",
             ),
             Some(last) => {
-                if last.position != "Content" || !last.contains.is_empty() {
+                if last.position != "Content" || !last.contains.iter().all(String::is_empty) {
                     bad(
                         rep,
                         "link_positions.rules",

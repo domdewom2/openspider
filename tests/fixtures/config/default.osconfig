@@ -3,38 +3,6 @@ generator = "openspider 0.1.0"
 mode = "spider"
 cdns = []
 
-[serp.desktop]
-title_font_px = 20.0
-description_font_px = 14.0
-
-[serp.mobile]
-title_max_px = 561
-description_max_px = 680
-title_font_px = 20.0
-description_font_px = 14.0
-
-[serp.tablet]
-title_max_px = 561
-description_max_px = 680
-title_font_px = 20.0
-description_font_px = 14.0
-
-[ui]
-parity_filters = true
-
-[ui.columns]
-
-[images]
-real_dimensions_from_header = false
-parse_inline_css_backgrounds = false
-incorrect_size_min_saving_kb = 4
-
-[security]
-obsolete_mime_types = [
-    "text/javascript",
-    "application/x-javascript",
-]
-
 [scope]
 all_subdomains = false
 subfolder_only = false
@@ -44,9 +12,9 @@ include = []
 exclude = []
 
 [spider]
-store_uncrawlable_links = false
 follow_internal_nofollow = false
 follow_external_nofollow = false
+store_uncrawlable_links = false
 
 [spider.images]
 store = true
@@ -108,27 +76,25 @@ max_url_length = 10000
 max_links_per_url = 10000
 
 [speed]
+threads = 5
 adaptive_throttle = true
 auto = false
-threads = 5
 
 [user_agent]
 preset = "openspider"
 
 [robots]
-show_blocked_internal = true
-show_blocked_external = false
-respect_crawl_delay = true
 mode = "respect"
 unreachable_policy = "block_host"
 retries = 2
 retry_delay_s = 5
+show_blocked_internal = true
+show_blocked_external = false
+respect_crawl_delay = true
 
 [robots.custom_files]
 
 [advanced]
-always_follow_redirects = false
-always_follow_canonicals = false
 cookies = "session_only"
 response_timeout_s = 20
 assume_html = false
@@ -138,6 +104,8 @@ respect_noindex = false
 respect_canonical = false
 html_validation = true
 green_hosting = false
+always_follow_redirects = false
+always_follow_canonicals = false
 
 [auth]
 basic = []
@@ -250,6 +218,7 @@ max_px = 985
 min_px = 400
 
 [url]
+max_chars = 115
 internal_search_segments = [
     "search",
     "suche",
@@ -275,7 +244,6 @@ internal_search_params = [
     "k",
     "term",
 ]
-max_chars = 115
 
 [h1]
 max_chars = 70
@@ -365,9 +333,9 @@ html_doc_max_bytes = 2097152
 resource_max_bytes = 2097152
 
 [export]
-inlinks_for_all_filters = true
 utf8_bom = true
 line_ending = "crlf"
+inlinks_for_all_filters = true
 
 [spelling]
 enabled = false
@@ -387,8 +355,8 @@ enabled = false
 disabled_rules = []
 
 [custom_search]
-regex_timeout_ms = 2000
 filters = []
+regex_timeout_ms = 2000
 
 [custom_extraction]
 extractors = []
@@ -440,6 +408,9 @@ ignore_certificate_errors = false
 enabled = false
 metrics = []
 
+[api.ga4.date_range]
+preset = "last_30_days"
+
 [api.ga4.limits]
 retries = 5
 concurrency = 5
@@ -449,13 +420,13 @@ window_s = 60
 ignore_trailing_slash = true
 ignore_case = true
 
-[api.ga4.date_range]
-preset = "last_30_days"
-
 [api.gsc]
 enabled = false
 search_type = "web"
 url_inspection = false
+
+[api.gsc.date_range]
+preset = "last_30_days"
 
 [api.gsc.limits]
 retries = 5
@@ -465,9 +436,6 @@ window_s = 60
 [api.gsc.url_match]
 ignore_trailing_slash = true
 ignore_case = true
-
-[api.gsc.date_range]
-preset = "last_30_days"
 
 [api.psi]
 enabled = false
@@ -587,3 +555,35 @@ exclude_noindex = false
 [sitemap_gen.hreflang]
 enabled = false
 only_valid_targets = true
+
+[serp.desktop]
+title_font_px = 20.0
+description_font_px = 14.0
+
+[serp.mobile]
+title_max_px = 561
+description_max_px = 680
+title_font_px = 20.0
+description_font_px = 14.0
+
+[serp.tablet]
+title_max_px = 561
+description_max_px = 680
+title_font_px = 20.0
+description_font_px = 14.0
+
+[ui]
+parity_filters = true
+
+[ui.columns]
+
+[images]
+real_dimensions_from_header = false
+parse_inline_css_backgrounds = false
+incorrect_size_min_saving_kb = 4
+
+[security]
+obsolete_mime_types = [
+    "text/javascript",
+    "application/x-javascript",
+]

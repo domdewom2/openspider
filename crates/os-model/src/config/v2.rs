@@ -200,10 +200,10 @@ impl Default for SearchFilter {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct CustomSearchConfig {
-    /// Zeitbudget je Regex (INTEG-028).
-    pub regex_timeout_ms: u32,
     /// Filter in Spaltenreihenfolge.
     pub filters: Vec<SearchFilter>,
+    /// Zeitbudget je Regex (INTEG-028).
+    pub regex_timeout_ms: u32,
 }
 
 /// Ein Extraktor (INTEG-040 … 043).
@@ -636,14 +636,6 @@ pub struct DateRangeConfig {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(default)]
 pub struct Ga4Config {
-    /// Konto-Kennung, ohne Geheimnis.
-    pub account: Option<String>,
-    /// Anfragegrenzen (INTEG-005/006).
-    pub limits: super::ApiLimitsConfig,
-    /// OAuth-Client des Nutzers.
-    pub oauth_client_id: Option<String>,
-    /// URL-Abgleich (INTEG-014).
-    pub url_match: super::UrlMatchConfig,
     /// Quelle beim Crawl abfragen.
     pub enabled: bool,
     /// Alternative Basis-URL (nur Debug-/Testbuilds oder `--allow-api-override`, INTEG-019).
@@ -658,20 +650,20 @@ pub struct Ga4Config {
     pub page_dimension: Option<String>,
     /// Dimensionsfilter als Ausdruck.
     pub filter: Option<String>,
+    /// Konto-Kennung ohne Geheimnis (INTEG-003).
+    pub account: Option<String>,
+    /// Anfragegrenzen (INTEG-005/006).
+    pub limits: super::ApiLimitsConfig,
+    /// OAuth-Client-Kennung des Nutzers (INTEG-003).
+    pub oauth_client_id: Option<String>,
+    /// URL-Abgleich (INTEG-014).
+    pub url_match: super::UrlMatchConfig,
 }
 
 /// Google Search Console (M2-I03).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(default)]
 pub struct GscConfig {
-    /// Konto-Kennung, ohne Geheimnis.
-    pub account: Option<String>,
-    /// Anfragegrenzen (INTEG-005/006).
-    pub limits: super::ApiLimitsConfig,
-    /// OAuth-Client des Nutzers.
-    pub oauth_client_id: Option<String>,
-    /// URL-Abgleich (INTEG-014).
-    pub url_match: super::UrlMatchConfig,
     /// Quelle beim Crawl abfragen.
     pub enabled: bool,
     /// Alternative Basis-URL (INTEG-019).
@@ -686,16 +678,20 @@ pub struct GscConfig {
     pub filter: Option<String>,
     /// URL Inspection abfragen (Tageskontingent).
     pub url_inspection: bool,
+    /// Konto-Kennung ohne Geheimnis (INTEG-003).
+    pub account: Option<String>,
+    /// Anfragegrenzen (INTEG-005/006).
+    pub limits: super::ApiLimitsConfig,
+    /// OAuth-Client-Kennung des Nutzers (INTEG-003).
+    pub oauth_client_id: Option<String>,
+    /// URL-Abgleich (INTEG-014).
+    pub url_match: super::UrlMatchConfig,
 }
 
 /// PageSpeed Insights und Lighthouse (M2-I04).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(default)]
 pub struct PsiConfig {
-    /// Konto-Kennung, ohne Geheimnis.
-    pub account: Option<String>,
-    /// Anfragegrenzen (INTEG-005/006).
-    pub limits: super::ApiLimitsConfig,
     /// Quelle beim Crawl abfragen.
     pub enabled: bool,
     /// Alternative Basis-URL (INTEG-019).
@@ -706,16 +702,16 @@ pub struct PsiConfig {
     pub local: bool,
     /// Ausgewählte Metrikgruppen.
     pub metric_groups: Vec<String>,
+    /// Konto-Kennung ohne Geheimnis (INTEG-003).
+    pub account: Option<String>,
+    /// Anfragegrenzen (INTEG-005/006).
+    pub limits: super::ApiLimitsConfig,
 }
 
 /// Eine Linkmetrik-Quelle (Majestic, Ahrefs, Moz; M2-I05).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(default)]
 pub struct LinkMetricsConfig {
-    /// Konto-Kennung, ohne Geheimnis.
-    pub account: Option<String>,
-    /// Anfragegrenzen (INTEG-005/006).
-    pub limits: super::ApiLimitsConfig,
     /// Quelle beim Crawl abfragen.
     pub enabled: bool,
     /// Alternative Basis-URL (INTEG-019).
@@ -724,22 +720,26 @@ pub struct LinkMetricsConfig {
     pub levels: Vec<ApiLevel>,
     /// Ausgewählte Metriken.
     pub metrics: Vec<String>,
+    /// Konto-Kennung ohne Geheimnis (INTEG-003).
+    pub account: Option<String>,
+    /// Anfragegrenzen (INTEG-005/006).
+    pub limits: super::ApiLimitsConfig,
 }
 
 /// Google Drive für den Sheets-Export (M2-X03).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(default)]
 pub struct DriveConfig {
-    /// Konto-Kennung, ohne Geheimnis.
-    pub account: Option<String>,
-    /// Anfragegrenzen (INTEG-005/006).
-    pub limits: super::ApiLimitsConfig,
     /// Export nach Google Sheets einschalten.
     pub enabled: bool,
     /// Alternative Basis-URL (INTEG-019).
     pub base_url: Option<String>,
     /// Wurzelordner (Standard `OpenSpider`).
     pub root_folder: Option<String>,
+    /// Konto-Kennung ohne Geheimnis (INTEG-003).
+    pub account: Option<String>,
+    /// Anfragegrenzen (INTEG-005/006).
+    pub limits: super::ApiLimitsConfig,
 }
 
 /// Alle API-Quellen einer Konfiguration; Zugangsdaten stehen im Schlüsselbund (INTEG-002, OUT-225).

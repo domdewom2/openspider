@@ -44,15 +44,6 @@ pub const CONFIG_SCHEMA_VERSION: u32 = 2;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct CrawlConfig {
-    /// Welle-1-Konfiguration (serp).
-    pub serp: SerpConfig,
-    /// Welle-1-Konfiguration (ui).
-    pub ui: CrawlUiConfig,
-    /// Welle-1-Konfiguration (images).
-    pub images: ImagesConfig,
-    /// Welle-1-Konfiguration (security).
-    pub security: SecurityConfig,
-
     /// Version des Dateiformats (OUT-221).
     pub schema_version: u32,
     /// Erzeuger, z. B. `openspider 0.1.0`.
@@ -139,6 +130,14 @@ pub struct CrawlConfig {
     pub compare: CompareConfig,
     /// Sitemap-Generator (ab v2).
     pub sitemap_gen: SitemapGenConfig,
+    /// Gerätespezifische SERP-Pixelgrenzen und Schriften (ONPAGE-194).
+    pub serp: SerpConfig,
+    /// Profilgebundene Filter und sichtbare Tabellenspalten (ONPAGE-023, OUT-009, OUT-220).
+    pub ui: CrawlUiConfig,
+    /// Zusätzliche Bildmessungen und Einsparschwelle (ONPAGE-172, ONPAGE-178, ONPAGE-180).
+    pub images: ImagesConfig,
+    /// Als veraltet zu meldende MIME-Typen (ONPAGE-043).
+    pub security: SecurityConfig,
 }
 
 impl Default for CrawlConfig {
@@ -234,7 +233,7 @@ pub struct ScopeConfig {
     pub all_subdomains: bool,
     /// Nur den Ordner der Start-URL crawlen.
     pub subfolder_only: bool,
-    /// Ordner verlassen, wenn ein Link darauf zeigt.
+    /// Ordner der Start-URL bei verlinkten Zielen verlassen (CRAWL-010).
     pub crawl_outside_start_folder: bool,
     /// Regex-Regeln treffen auch Teilstrings.
     pub regex_partial_match: bool,
@@ -282,9 +281,6 @@ impl Default for StoreCrawl {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct SpiderConfig {
-    /// Welle-1-Konfiguration (store_uncrawlable_links).
-    pub store_uncrawlable_links: bool,
-
     /// Bilder.
     pub images: StoreCrawl,
     /// CSS.
@@ -315,6 +311,8 @@ pub struct SpiderConfig {
     pub follow_internal_nofollow: bool,
     /// Externe nofollow-Links folgen.
     pub follow_external_nofollow: bool,
+    /// Nicht abrufbare Links als Zeilen speichern (CRAWL-053, TECH-143, OUT-041).
+    pub store_uncrawlable_links: bool,
 }
 
 impl Default for SpiderConfig {
@@ -385,17 +383,16 @@ impl Default for LimitsConfig {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct SpeedConfig {
-    /// Welle-1-Konfiguration (adaptive_throttle).
-    pub adaptive_throttle: bool,
-    /// Welle-1-Konfiguration (auto).
-    pub auto: bool,
-
     /// Parallele Threads.
     pub threads: u32,
     /// Höchstzahl paralleler Abrufe je Host.
     pub max_per_host: Option<u32>,
     /// Höchstzahl Abrufe pro Sekunde.
     pub max_urls_per_sec: Option<f64>,
+    /// Abrufrate bei Überlastung automatisch senken (CRAWL-146).
+    pub adaptive_throttle: bool,
+    /// Threadzahl automatisch anpassen (CRAWL-147).
+    pub auto: bool,
 }
 
 impl Default for SpeedConfig {
@@ -437,15 +434,6 @@ impl Default for UserAgentConfig {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct RobotsConfig {
-    /// Welle-1-Konfiguration (show_blocked_internal).
-    pub show_blocked_internal: bool,
-    /// Welle-1-Konfiguration (show_blocked_external).
-    pub show_blocked_external: bool,
-    /// Welle-1-Konfiguration (custom_files).
-    pub custom_files: std::collections::BTreeMap<String, String>,
-    /// Welle-1-Konfiguration (respect_crawl_delay).
-    pub respect_crawl_delay: bool,
-
     /// Umgang mit robots.txt (Listenmodus: die Engine wendet `ignore` an).
     pub mode: RobotsMode,
     /// Verhalten bei nicht erreichbarer robots.txt.
@@ -454,6 +442,14 @@ pub struct RobotsConfig {
     pub retries: u32,
     /// Wartezeit zwischen Wiederholungen in Sekunden.
     pub retry_delay_s: u32,
+    /// Durch robots.txt gesperrte interne URLs anzeigen (CRAWL-101).
+    pub show_blocked_internal: bool,
+    /// Durch robots.txt gesperrte externe URLs anzeigen (CRAWL-101).
+    pub show_blocked_external: bool,
+    /// Eigene robots.txt je Host ohne Schema, höchstens 512 KiB je Inhalt (CRAWL-102, CRAWL-132).
+    pub custom_files: std::collections::BTreeMap<String, String>,
+    /// Crawl-delay aus robots.txt beachten (CRAWL-145).
+    pub respect_crawl_delay: bool,
 }
 
 impl Default for RobotsConfig {
@@ -476,11 +472,6 @@ impl Default for RobotsConfig {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct AdvancedConfig {
-    /// Welle-1-Konfiguration (always_follow_redirects).
-    pub always_follow_redirects: bool,
-    /// Welle-1-Konfiguration (always_follow_canonicals).
-    pub always_follow_canonicals: bool,
-
     /// Cookie-Verhalten.
     pub cookies: CookieMode,
     /// Antwort-Timeout in Sekunden.
@@ -501,6 +492,10 @@ pub struct AdvancedConfig {
     pub html_validation: bool,
     /// Alle internen URLs liegen auf grünem Hosting (CRAWL-139, `advanced.green_hosting`, ab v2).
     pub green_hosting: bool,
+    /// Weiterleitungsziele auch außerhalb des Crawl-Bereichs verfolgen (CRAWL-030, OUT-085).
+    pub always_follow_redirects: bool,
+    /// Canonical-Ziele auch außerhalb des Crawl-Bereichs verfolgen (CRAWL-030, OUT-085).
+    pub always_follow_canonicals: bool,
 }
 
 impl Default for AdvancedConfig {
@@ -784,13 +779,12 @@ impl Default for TextLimits {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct UrlLimits {
-    /// Welle-1-Konfiguration (internal_search_segments).
-    pub internal_search_segments: Vec<String>,
-    /// Welle-1-Konfiguration (internal_search_params).
-    pub internal_search_params: Vec<String>,
-
     /// Höchstzahl Zeichen.
     pub max_chars: u32,
+    /// Pfadsegmente zur Erkennung interner Suchseiten (ONPAGE-077).
+    pub internal_search_segments: Vec<String>,
+    /// Query-Parameter zur Erkennung interner Suchseiten (ONPAGE-077).
+    pub internal_search_params: Vec<String>,
 }
 
 impl Default for UrlLimits {
@@ -1115,13 +1109,12 @@ impl Default for ValidationConfig {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct ExportConfig {
-    /// Welle-1-Konfiguration (inlinks_for_all_filters).
-    pub inlinks_for_all_filters: bool,
-
     /// UTF-8-BOM in CSV-Dateien.
     pub utf8_bom: bool,
     /// Zeilenende in CSV-Dateien.
     pub line_ending: LineEnding,
+    /// Inlink-Exporte für alle Filter anbieten (OUT-066).
+    pub inlinks_for_all_filters: bool,
 }
 
 impl Default for ExportConfig {

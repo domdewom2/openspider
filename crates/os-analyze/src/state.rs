@@ -177,52 +177,104 @@ pub fn filter_state_for_file(
     cfg_json: &Json,
     analysis: &AnalysisSnapshot,
 ) -> Result<FilterState, crate::error::ViewError> {
-    let state = filter_state(def, cfg, cfg_json, analysis);
-    if !state.yields_rows() {
-        return Ok(state);
+    Ok(filter_states_for_file(
+        std::slice::from_ref(def),
+        tab,
+        file,
+        cfg,
+        cfg_json,
+        analysis,
+    )?
+    .remove(0))
+}
+
+/// Ein Coverage-Durchlauf je Tab, auch wenn mehrere Filter denselben Marker verwenden.
+pub(crate) fn filter_states_for_file(
+    defs: &[FilterDef],
+    tab: &crate::defs::TabDef,
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    cfg_json: &Json,
+    analysis: &AnalysisSnapshot,
+) -> Result<Vec<FilterState>, crate::error::ViewError> {
+    let mut states: Vec<_> = defs
+        .iter()
+        .map(|def| filter_state(def, cfg, cfg_json, analysis))
+        .collect();
+    let markers: std::collections::BTreeSet<_> = defs
+        .iter()
+        .zip(&states)
+        .filter(|(_, state)| state.yields_rows())
+        .flat_map(|(def, _)| {
+            def.requires.iter().filter_map(|req| match req {
+                Requirement::Coverage { marker, .. } => Some(*marker),
+                _ => None,
+            })
+        })
+        .collect();
+    if markers.is_empty() {
+        return Ok(states);
     }
-    let mut unchecked = 0;
-    for req in &def.requires {
-        if let Requirement::Coverage { marker, .. } = req {
-            let population = match tab.hidden_population {
-                Some(hidden) => format!("({}) OR ({hidden})", tab.population),
-                None => tab.population.to_string(),
+    let markers: Vec<_> = markers.into_iter().collect();
+    let sums = markers.iter().enumerate().map(|(i, _)| format!(
+        "COALESCE(SUM(EXISTS(SELECT 1 FROM url_ext e WHERE e.url_id = u.id AND e.key = :coverage_{i} AND e.v_int = 1)), 0)"
+    )).collect::<Vec<_>>().join(", ");
+    let population = match tab.hidden_population {
+        Some(hidden) => format!("({}) OR ({hidden})", tab.population),
+        None => tab.population.to_string(),
+    };
+    let sql = format!("SELECT COUNT(*), {sums} FROM urls u WHERE ({population})");
+    let mut stmt = file.conn().prepare(&sql)?;
+    for (name, value) in (tab.params)(cfg) {
+        let name = if name.starts_with(':') {
+            name.to_owned()
+        } else {
+            format!(":{name}")
+        };
+        if let Some(i) = stmt.parameter_index(&name)? {
+            let value = match value {
+                os_model::Value::Null => rusqlite::types::Value::Null,
+                os_model::Value::Bool(v) => rusqlite::types::Value::Integer(i64::from(v)),
+                os_model::Value::Int(v) => rusqlite::types::Value::Integer(v),
+                os_model::Value::Float(v) => rusqlite::types::Value::Real(v),
+                os_model::Value::Text(v) => rusqlite::types::Value::Text(v),
             };
-            let sql = format!("SELECT COUNT(*), COALESCE(SUM(EXISTS(SELECT 1 FROM url_ext e WHERE e.url_id = u.id AND e.key = :coverage_marker AND e.v_int = 1)), 0) FROM urls u WHERE ({population})");
-            let mut stmt = file.conn().prepare(&sql)?;
-            for (name, value) in (tab.params)(cfg) {
-                let name = if name.starts_with(':') {
-                    name.to_owned()
-                } else {
-                    format!(":{name}")
-                };
-                if let Some(i) = stmt.parameter_index(&name)? {
-                    let value = match value {
-                        os_model::Value::Null => rusqlite::types::Value::Null,
-                        os_model::Value::Bool(v) => rusqlite::types::Value::Integer(i64::from(v)),
-                        os_model::Value::Int(v) => rusqlite::types::Value::Integer(v),
-                        os_model::Value::Float(v) => rusqlite::types::Value::Real(v),
-                        os_model::Value::Text(v) => rusqlite::types::Value::Text(v),
-                    };
-                    stmt.raw_bind_parameter(i, value)?;
-                }
-            }
-            stmt.raw_bind_parameter(
-                stmt.parameter_index(":coverage_marker")?.expect("marker"),
-                marker,
-            )?;
-            let mut rows = stmt.raw_query();
-            let row = rows.next()?.ok_or(rusqlite::Error::QueryReturnedNoRows)?;
-            let (total, checked): (u64, u64) = (row.get(0)?, row.get(1)?);
-            if total > 0 && checked == 0 {
-                return Ok(FilterState::NeedsRecrawl);
-            }
-            unchecked = unchecked.max(total.saturating_sub(checked));
+            stmt.raw_bind_parameter(i, value)?;
         }
     }
-    Ok(if unchecked > 0 {
-        FilterState::Incomplete { unchecked }
-    } else {
-        state
-    })
+    for (i, marker) in markers.iter().enumerate() {
+        stmt.raw_bind_parameter(
+            stmt.parameter_index(&format!(":coverage_{i}"))?
+                .expect("marker"),
+            marker,
+        )?;
+    }
+    let mut rows = stmt.raw_query();
+    let row = rows.next()?.ok_or(rusqlite::Error::QueryReturnedNoRows)?;
+    let total: u64 = row.get(0)?;
+    let checked: BTreeMap<_, u64> = markers
+        .iter()
+        .enumerate()
+        .map(|(i, marker)| Ok((*marker, row.get(i + 1)?)))
+        .collect::<Result<_, rusqlite::Error>>()?;
+    for (def, state) in defs.iter().zip(&mut states) {
+        if !state.yields_rows() {
+            continue;
+        }
+        let mut unchecked = 0;
+        for req in &def.requires {
+            if let Requirement::Coverage { marker, .. } = req {
+                let covered = checked[marker];
+                if total > 0 && covered == 0 {
+                    *state = FilterState::NeedsRecrawl;
+                    break;
+                }
+                unchecked = unchecked.max(total.saturating_sub(covered));
+            }
+        }
+        if state.yields_rows() && unchecked > 0 {
+            *state = FilterState::Incomplete { unchecked };
+        }
+    }
+    Ok(states)
 }

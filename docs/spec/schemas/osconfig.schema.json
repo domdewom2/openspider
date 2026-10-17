@@ -5,12 +5,12 @@
       "properties": {
         "always_follow_canonicals": {
           "default": false,
-          "description": "Welle-1-Konfiguration (always_follow_canonicals).",
+          "description": "Canonical-Ziele auch außerhalb des Crawl-Bereichs verfolgen (CRAWL-030, OUT-085).",
           "type": "boolean"
         },
         "always_follow_redirects": {
           "default": false,
-          "description": "Welle-1-Konfiguration (always_follow_redirects).",
+          "description": "Weiterleitungsziele auch außerhalb des Crawl-Bereichs verfolgen (CRAWL-030, OUT-085).",
           "type": "boolean"
         },
         "assume_html": {
@@ -309,6 +309,7 @@
       "properties": {
         "concurrency": {
           "default": 5,
+          "description": "Maximale parallele API-Anfragen, 1 bis 50 (INTEG-006).",
           "format": "uint32",
           "maximum": 50,
           "minimum": 1,
@@ -316,6 +317,7 @@
         },
         "quota_limit": {
           "default": null,
+          "description": "Optionales Kontingent der API-Quelle (INTEG-006).",
           "format": "uint64",
           "minimum": 0,
           "type": [
@@ -325,6 +327,7 @@
         },
         "requests_per_window": {
           "default": null,
+          "description": "Anfragelimit je Zeitfenster; None deaktiviert das Limit (INTEG-006).",
           "format": "uint32",
           "minimum": 0,
           "type": [
@@ -334,6 +337,7 @@
         },
         "retries": {
           "default": 5,
+          "description": "Maximale Anzahl API-Wiederholungen, 0 bis 20 (INTEG-005).",
           "format": "uint32",
           "maximum": 20,
           "minimum": 0,
@@ -341,6 +345,7 @@
         },
         "window_s": {
           "default": 60,
+          "description": "Dauer des API-Zeitfensters in Sekunden, mindestens 1 (INTEG-006).",
           "format": "uint32",
           "maximum": 4294967295,
           "minimum": 1,
@@ -662,10 +667,12 @@
             "type": "array"
           },
           "default": {},
+          "description": "Sichtbare Spalten je Tab in Anzeigereihenfolge; fehlend bedeutet Standard (OUT-009, OUT-220).",
           "type": "object"
         },
         "parity_filters": {
           "default": true,
+          "description": "Filter nach den Paritätsregeln darstellen (ONPAGE-023).",
           "type": "boolean"
         }
       },
@@ -763,7 +770,7 @@
       "properties": {
         "account": {
           "default": null,
-          "description": "Konto-Kennung, ohne Geheimnis.",
+          "description": "Konto-Kennung ohne Geheimnis (INTEG-003).",
           "type": [
             "string",
             "null"
@@ -843,7 +850,7 @@
       "properties": {
         "inlinks_for_all_filters": {
           "default": true,
-          "description": "Welle-1-Konfiguration (inlinks_for_all_filters).",
+          "description": "Inlink-Exporte für alle Filter anbieten (OUT-066).",
           "type": "boolean"
         },
         "line_ending": {
@@ -1077,7 +1084,7 @@
       "properties": {
         "account": {
           "default": null,
-          "description": "Konto-Kennung, ohne Geheimnis.",
+          "description": "Konto-Kennung ohne Geheimnis (INTEG-003).",
           "type": [
             "string",
             "null"
@@ -1134,7 +1141,7 @@
         },
         "oauth_client_id": {
           "default": null,
-          "description": "OAuth-Client des Nutzers.",
+          "description": "OAuth-Client-Kennung des Nutzers (INTEG-003).",
           "type": [
             "string",
             "null"
@@ -1191,7 +1198,7 @@
       "properties": {
         "account": {
           "default": null,
-          "description": "Konto-Kennung, ohne Geheimnis.",
+          "description": "Konto-Kennung ohne Geheimnis (INTEG-003).",
           "type": [
             "string",
             "null"
@@ -1240,7 +1247,7 @@
         },
         "oauth_client_id": {
           "default": null,
-          "description": "OAuth-Client des Nutzers.",
+          "description": "OAuth-Client-Kennung des Nutzers (INTEG-003).",
           "type": [
             "string",
             "null"
@@ -1426,6 +1433,7 @@
       "properties": {
         "incorrect_size_min_saving_kb": {
           "default": 4,
+          "description": "Mindesteinsparung in KiB für die Größenwarnung (ONPAGE-180).",
           "format": "uint32",
           "maximum": 1000000,
           "minimum": 0,
@@ -1433,10 +1441,12 @@
         },
         "parse_inline_css_backgrounds": {
           "default": false,
+          "description": "Inline-CSS-Hintergrundbilder extrahieren (ONPAGE-178).",
           "type": "boolean"
         },
         "real_dimensions_from_header": {
           "default": false,
+          "description": "Tatsächliche Bildmaße aus dem Dateikopf lesen (ONPAGE-172).",
           "type": "boolean"
         }
       },
@@ -1603,7 +1613,7 @@
       "properties": {
         "account": {
           "default": null,
-          "description": "Konto-Kennung, ohne Geheimnis.",
+          "description": "Konto-Kennung ohne Geheimnis (INTEG-003).",
           "type": [
             "string",
             "null"
@@ -1834,7 +1844,7 @@
       "properties": {
         "account": {
           "default": null,
-          "description": "Konto-Kennung, ohne Geheimnis.",
+          "description": "Konto-Kennung ohne Geheimnis (INTEG-003).",
           "type": [
             "string",
             "null"
@@ -2054,7 +2064,7 @@
             "type": "string"
           },
           "default": {},
-          "description": "Welle-1-Konfiguration (custom_files).",
+          "description": "Eigene robots.txt je Host ohne Schema, höchstens 512 KiB je Inhalt (CRAWL-102, CRAWL-132).",
           "type": "object"
         },
         "mode": {
@@ -2064,7 +2074,7 @@
         },
         "respect_crawl_delay": {
           "default": true,
-          "description": "Welle-1-Konfiguration (respect_crawl_delay).",
+          "description": "Crawl-delay aus robots.txt beachten (CRAWL-145).",
           "type": "boolean"
         },
         "retries": {
@@ -2085,12 +2095,12 @@
         },
         "show_blocked_external": {
           "default": false,
-          "description": "Welle-1-Konfiguration (show_blocked_external).",
+          "description": "Durch robots.txt gesperrte externe URLs anzeigen (CRAWL-101).",
           "type": "boolean"
         },
         "show_blocked_internal": {
           "default": true,
-          "description": "Welle-1-Konfiguration (show_blocked_internal).",
+          "description": "Durch robots.txt gesperrte interne URLs anzeigen (CRAWL-101).",
           "type": "boolean"
         },
         "unreachable_policy": {
@@ -2126,7 +2136,7 @@
         },
         "crawl_outside_start_folder": {
           "default": true,
-          "description": "Ordner verlassen, wenn ein Link darauf zeigt.",
+          "description": "Ordner der Start-URL bei verlinkten Zielen verlassen (CRAWL-010).",
           "type": "boolean"
         },
         "exclude": {
@@ -2306,6 +2316,7 @@
             "text/javascript",
             "application/x-javascript"
           ],
+          "description": "MIME-Typen, die als veraltet gelten sollen (ONPAGE-043).",
           "items": {
             "type": "string"
           },
@@ -2420,7 +2431,8 @@
             "description_max_px": null,
             "title_font_px": 20.0,
             "title_max_px": null
-          }
+          },
+          "description": "Desktop-Vorschau, standardmäßig an allgemeine Textgrenzen gekoppelt (ONPAGE-194)."
         },
         "mobile": {
           "$ref": "#/$defs/SerpDeviceConfig",
@@ -2429,7 +2441,8 @@
             "description_max_px": 680,
             "title_font_px": 20.0,
             "title_max_px": 561
-          }
+          },
+          "description": "Mobil-Vorschau mit eigenen Pixelgrenzen (ONPAGE-194)."
         },
         "tablet": {
           "$ref": "#/$defs/SerpDeviceConfig",
@@ -2438,7 +2451,8 @@
             "description_max_px": 680,
             "title_font_px": 20.0,
             "title_max_px": 561
-          }
+          },
+          "description": "Tablet-Vorschau mit eigenen Pixelgrenzen (ONPAGE-194)."
         }
       },
       "type": "object"
@@ -2448,6 +2462,7 @@
       "properties": {
         "description_font_px": {
           "default": 14.0,
+          "description": "Schriftgröße der Beschreibung in Pixeln, 6 bis 64 (ONPAGE-194).",
           "format": "double",
           "maximum": 64.0,
           "minimum": 6.0,
@@ -2455,6 +2470,7 @@
         },
         "description_max_px": {
           "default": null,
+          "description": "Maximale Beschreibungsbreite; None koppelt an meta_description.max_px (ONPAGE-194).",
           "format": "uint32",
           "maximum": 4000,
           "minimum": 1,
@@ -2465,6 +2481,7 @@
         },
         "title_font_px": {
           "default": 20.0,
+          "description": "Schriftgröße des Titels in Pixeln, 6 bis 64 (ONPAGE-194).",
           "format": "double",
           "maximum": 64.0,
           "minimum": 6.0,
@@ -2472,6 +2489,7 @@
         },
         "title_max_px": {
           "default": null,
+          "description": "Maximale Titelbreite; None koppelt an title.max_px (ONPAGE-194).",
           "format": "uint32",
           "maximum": 4000,
           "minimum": 1,
@@ -2754,12 +2772,12 @@
       "properties": {
         "adaptive_throttle": {
           "default": true,
-          "description": "Welle-1-Konfiguration (adaptive_throttle).",
+          "description": "Abrufrate bei Überlastung automatisch senken (CRAWL-146).",
           "type": "boolean"
         },
         "auto": {
           "default": false,
-          "description": "Welle-1-Konfiguration (auto).",
+          "description": "Threadzahl automatisch anpassen (CRAWL-147).",
           "type": "boolean"
         },
         "max_per_host": {
@@ -2960,7 +2978,7 @@
         },
         "store_uncrawlable_links": {
           "default": false,
-          "description": "Welle-1-Konfiguration (store_uncrawlable_links).",
+          "description": "Nicht abrufbare Links als Zeilen speichern (CRAWL-053, TECH-143, OUT-041).",
           "type": "boolean"
         }
       },
@@ -3068,7 +3086,7 @@
             "k",
             "term"
           ],
-          "description": "Welle-1-Konfiguration (internal_search_params).",
+          "description": "Query-Parameter zur Erkennung interner Suchseiten (ONPAGE-077).",
           "items": {
             "type": "string"
           },
@@ -3088,7 +3106,7 @@
             "haku",
             "catalogsearch"
           ],
-          "description": "Welle-1-Konfiguration (internal_search_segments).",
+          "description": "Pfadsegmente zur Erkennung interner Suchseiten (ONPAGE-077).",
           "items": {
             "type": "string"
           },
@@ -3109,10 +3127,12 @@
       "properties": {
         "ignore_case": {
           "default": true,
+          "description": "Groß- und Kleinschreibung beim URL-Abgleich ignorieren (INTEG-014).",
           "type": "boolean"
         },
         "ignore_trailing_slash": {
           "default": true,
+          "description": "Abschließenden Slash beim URL-Abgleich ignorieren (INTEG-014).",
           "type": "boolean"
         }
       },
@@ -3602,7 +3622,7 @@
         "parse_inline_css_backgrounds": false,
         "real_dimensions_from_header": false
       },
-      "description": "Welle-1-Konfiguration (images)."
+      "description": "Zusätzliche Bildmessungen und Einsparschwelle (ONPAGE-172, ONPAGE-178, ONPAGE-180)."
     },
     "issues": {
       "$ref": "#/$defs/IssuesConfig",
@@ -3814,7 +3834,7 @@
           "application/x-javascript"
         ]
       },
-      "description": "Welle-1-Konfiguration (security)."
+      "description": "Als veraltet zu meldende MIME-Typen (ONPAGE-043)."
     },
     "segments": {
       "$ref": "#/$defs/SegmentsConfig",
@@ -3845,7 +3865,7 @@
           "title_max_px": 561
         }
       },
-      "description": "Welle-1-Konfiguration (serp)."
+      "description": "Gerätespezifische SERP-Pixelgrenzen und Schriften (ONPAGE-194)."
     },
     "sitemap_gen": {
       "$ref": "#/$defs/SitemapGenConfig",
@@ -4013,7 +4033,7 @@
         "columns": {},
         "parity_filters": true
       },
-      "description": "Welle-1-Konfiguration (ui)."
+      "description": "Profilgebundene Filter und sichtbare Tabellenspalten (ONPAGE-023, OUT-009, OUT-220)."
     },
     "url": {
       "$ref": "#/$defs/UrlLimits",

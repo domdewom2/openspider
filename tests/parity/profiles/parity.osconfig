@@ -41,3 +41,10 @@ auto_discover_robots = true
 
 [analysis]                 # Nachlauf (Canonicals, Sitemaps, Links) am Crawl-Ende
 auto_at_end = true
+
+# Defaults des bestehenden Paritätsprofils bewahren (CRAWL-010, CRAWL-062; K2-29).
+[scope]
+crawl_outside_start_folder = false
+
+[extraction]
+http_headers = true

@@ -8,8 +8,18 @@
 //! Das Gate selbst (`RobotsGate`, Konfiguration über `RobotsGateConfig::from_crawl_config(&cfg)`) gehört P15;
 //! hier steckt keine Entscheidungslogik über Sperren.
 
+use crate::{
+    frontier::{F_QUEUED, F_RULE_OK},
+    worker::{header_rows, plain_page, Shared},
+    writer_thread::WriterGone,
+};
 use os_fetch::robots::RobotsDecision;
+use os_fetch::{Fetch, FetchResult};
 use os_model::{Clock, CrawlConfig, FetchFacts, NoResponseReason, RobotsMode};
+use os_model::{DiscoveryKind, UrlState, WriteBatch};
+use os_url::ScopeClass;
+use std::sync::Arc;
+use url::Url;
 
 use crate::sitemaps::SitemapSeed;
 
@@ -127,16 +137,6 @@ pub fn annotate_report_only(facts: &mut FetchFacts, decision: &RobotsDecision) {
     }
 }
 
-use crate::{
-    frontier::{F_QUEUED, F_RULE_OK},
-    worker::{header_rows, plain_page, Shared},
-    writer_thread::WriterGone,
-};
-use os_fetch::{Fetch, FetchResult};
-use os_model::{DiscoveryKind, UrlState, WriteBatch};
-use os_url::ScopeClass;
-use std::sync::Arc;
-use url::Url;
 pub(crate) async fn record_robots<F: Fetch>(
     sh: &Arc<Shared<F>>,
     result: FetchResult,

@@ -1,5 +1,6 @@
 [package]
 name = "os-loadtest"
+default-run = "os-loadtest"
 description = "OpenSpider: Lasttest-Runner (PERF-009) gegen synthetische os-testsite-Sites"
 version.workspace = true
 edition.workspace = true

@@ -316,3 +316,27 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+mod w1_contracts {
+    // spec: INTEG-020
+    // Infrastruktur (M2-F05a) für INTEG-020; Fachprüfung M2-D14.
+    #[test]
+    fn cli_resolves_filters_from_a_configured_column_source() {
+        os_analyze::tabs::testing::with_fixture_source(|| {
+            assert_eq!(
+                super::resolve_with(
+                    super::Kind::Tab,
+                    "Internal:Fixture Filter",
+                    &os_model::CrawlConfig::default()
+                )
+                .unwrap(),
+                super::Resolved::Tab {
+                    tab: "Internal".into(),
+                    filter: "Fixture Filter".into()
+                }
+            );
+        });
+        assert!(super::resolve(super::Kind::Tab, "Internal:Fixture Filter").is_err());
+    }
+}

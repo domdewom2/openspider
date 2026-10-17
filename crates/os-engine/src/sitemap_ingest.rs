@@ -191,6 +191,13 @@ pub(crate) fn build_sitemap_batch(
                 };
                 let id = core.discover(&cand, entry_depth, 0, 0, rules, &mut batch);
                 entry_urls.push((id, loc.loc_raw.clone(), loc.lastmod.clone()));
+                if loc.hreflang_truncated > 0 {
+                    batch.ext.push(os_model::ExtWrite {
+                        url: id,
+                        key: os_model::ExtKey::from_static("hreflang.truncated_sitemap"),
+                        value: os_model::Value::Int(i64::from(loc.hreflang_truncated)),
+                    });
+                }
                 // Auch bei `store = false, crawl = true` durchlaufen: die Ziele laufen über `decide` und
                 // `discover`, nur die hreflang-Zeilen entfallen (CRAWL-038).
                 if cfg.spider.hreflang.store || cfg.spider.hreflang.crawl {

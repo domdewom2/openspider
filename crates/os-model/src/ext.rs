@@ -176,9 +176,6 @@ pub fn is_fetch_scoped(namespace: &str) -> bool {
             | "custom_extract"
             | "linkpos"
             | "webdata"
-            | "spelling"
-            | "sdval"
-            | "a11y"
             | "custom_js"
             | "mobile"
     )

@@ -254,6 +254,8 @@ pub struct Core {
     pub max_urls: u64,
     /// Laufende Worker.
     pub active: usize,
+    /// Laufende Klasse-0-Worker, die vor Sitemap-URLs Vorrang haben (CRAWL-059).
+    pub active_pages: usize,
     /// Cookie-Sitzungen (Index 0 = Sitzung des Spiders).
     pub sessions: Vec<Option<Arc<CookieJar>>>,
     /// Weiterleitungsgraph und Flags.
@@ -329,6 +331,7 @@ impl Core {
             started: 0,
             max_urls: if max_urls == 0 { u64::MAX } else { max_urls },
             active: 0,
+            active_pages: 0,
             sessions: vec![None],
             redirects: RedirectGraph::default(),
             max_depth,
@@ -365,14 +368,11 @@ impl Core {
         if self.started >= self.max_urls {
             return Pop::LimitBlocked;
         }
-        match self.frontier.pop_checked() {
+        match self.frontier.pop_checked_while(self.active_pages != 0) {
             Popped::Item(item) => {
-                if item.priority == 1 && self.active != 0 {
-                    self.frontier.push(item);
-                    return Pop::Empty;
-                }
                 self.started += 1;
                 self.active += 1;
+                self.active_pages += usize::from(item.priority == 0);
                 Pop::Item(item)
             }
             Popped::Empty => Pop::Empty,
@@ -386,8 +386,9 @@ impl Core {
     }
 
     /// Ein Worker ist fertig.
-    pub fn finish_worker(&mut self) {
+    pub fn finish_worker(&mut self, page: bool) {
         self.active = self.active.saturating_sub(1);
+        self.active_pages = self.active_pages.saturating_sub(usize::from(page));
     }
 
     /// Legt eine neue Cookie-Sitzung an.
@@ -734,7 +735,7 @@ mod tests {
         let mut out = Vec::new();
         while let Pop::Item(i) = core.try_pop() {
             out.push(i.id.0);
-            core.active -= 1;
+            core.finish_worker(i.priority == 0);
         }
         out
     }
@@ -1096,7 +1097,7 @@ mod tests {
         };
         item.attempt = 1;
         core.defer(item, std::time::Duration::from_secs(2));
-        core.finish_worker(); // ActiveGuard releases the worker on return from run_item.
+        core.finish_worker(true); // ActiveGuard releases the worker on return from run_item.
         assert_eq!(core.active, 0);
         assert_eq!(core.started, 0);
         assert_eq!(core.discovered(), 1);
@@ -1125,11 +1126,48 @@ mod tests {
         core.discover(&target, None, 0, 0, &rules, &mut batch);
         assert!(matches!(core.try_pop(), Pop::Item(_)));
         assert!(matches!(core.try_pop(), Pop::Empty));
-        core.active = 0;
+        core.finish_worker(true);
         assert!(matches!(core.try_pop(), Pop::Item(_)));
         core.discover(&target, Some(2), 1, 0, &rules, &mut batch);
         assert_eq!(batch.discoveries.len(), 3);
         assert_eq!(batch.discoveries.last().unwrap().depth, Some(2));
         assert!(batch.discoveries.windows(2).all(|w| w[0].seq < w[1].seq));
+    }
+    // spec: CRAWL-059
+    #[test]
+    fn sitemap_workers_run_in_parallel_and_waiting_does_not_grow_the_heap() {
+        let mut core = Core::new(0, None);
+        let rules = rules(&[], &[]);
+        let mut batch = WriteBatch::default();
+        core.discover(
+            &cand(&norm("https://site.test/page")),
+            Some(0),
+            0,
+            0,
+            &rules,
+            &mut batch,
+        );
+        for n in 0..4 {
+            core.discover(
+                &cand(&norm(&format!("https://site.test/map-{n}"))),
+                None,
+                0,
+                0,
+                &rules,
+                &mut batch,
+            );
+        }
+        assert!(matches!(core.try_pop(), Pop::Item(_)));
+        let before = core.memory().heap_entries;
+        for _ in 0..100 {
+            assert!(matches!(core.try_pop(), Pop::Empty));
+        }
+        assert_eq!(core.memory().heap_entries, before);
+        core.finish_worker(true);
+        for _ in 0..4 {
+            assert!(matches!(core.try_pop(), Pop::Item(_)));
+        }
+        assert_eq!(core.active, 4);
+        assert_eq!(core.active_pages, 0);
     }
 }

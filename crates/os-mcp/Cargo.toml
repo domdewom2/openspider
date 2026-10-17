@@ -39,6 +39,7 @@ name = "openspider-mcp"
 path = "src/main.rs"
 
 [dev-dependencies]
+os-analyze = { workspace = true, features = ["testing"] }
 os-engine = { workspace = true, features = ["testing"] }
 os-testsite.workspace = true
 tempfile.workspace = true

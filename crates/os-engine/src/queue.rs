@@ -424,6 +424,11 @@ impl Frontier {
 
     /// Nimmt die nächste URL und meldet, ob erst aus der Datei nachgeladen werden muss.
     pub fn pop_checked(&mut self) -> Popped {
+        self.pop_checked_while(false)
+    }
+
+    /// Behält Klasse 1 im Heap, solange Klasse-0-Worker noch Links entdecken können.
+    pub fn pop_checked_while(&mut self, hold_sitemaps: bool) -> Popped {
         let gate = self.gate();
         while let Some(&Reverse(key)) = self.heap.peek() {
             if !self.items.get(&key.id).is_some_and(|i| i.seq == key.seq) {
@@ -432,6 +437,9 @@ impl Frontier {
             }
             if gate.is_some_and(|f| key > f) {
                 return self.starve();
+            }
+            if hold_sitemaps && self.items.get(&key.id).is_some_and(|i| i.priority == 1) {
+                return Popped::Empty;
             }
             self.heap.pop();
             if let Some(s) = self.spill.as_mut() {

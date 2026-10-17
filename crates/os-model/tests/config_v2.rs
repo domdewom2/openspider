@@ -731,3 +731,14 @@ fn tempfile_dir(name: &str) -> PathBuf {
     fs::create_dir_all(&dir).unwrap();
     dir
 }
+
+// spec: INTEG-081
+// Infrastruktur (M2-F05a) für INTEG-081; Fachprüfung M2-D16.
+#[test]
+fn legacy_v2_content_catch_all_remains_loadable() {
+    let profile = include_str!("../../../tests/fixtures/config/default.osconfig");
+    let profile = profile.replace("contains = []", "contains = [\"\"]");
+    assert!(profile.contains("contains = [\"\"]"));
+    let cfg = CrawlConfig::from_toml_str(&profile).unwrap();
+    assert!(cfg.validate().errors.is_empty());
+}

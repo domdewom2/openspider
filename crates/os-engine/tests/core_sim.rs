@@ -516,15 +516,39 @@ async fn every_response_class_transports_attempts_and_discovery_provenance() {
         .page("https://site.test/end", "<title>end</title>")
         .asset("https://site.test/style.css", "text/css", "body {}")
         .asset("https://other.test/", "text/plain", "external");
-    let (_, handle, _dir) = start(site, threads(1), &sink).await;
+    struct AttemptFixture(Arc<SimFetcher>);
+    impl os_fetch::Fetch for AttemptFixture {
+        fn fetch(
+            &self,
+            req: os_fetch::FetchRequest,
+        ) -> std::pin::Pin<Box<dyn std::future::Future<Output = os_fetch::FetchResult> + Send + '_>>
+        {
+            Box::pin(async move {
+                let mut result = os_fetch::Fetch::fetch(&*self.0, req).await;
+                let attempts = if result.url.path() == "/end" { 1 } else { 3 };
+                if let os_fetch::FetchOutcome::Response(response) = &mut result.outcome {
+                    response.attempts = attempts;
+                }
+                result
+            })
+        }
+    }
+    let dir = tempfile::tempdir().unwrap();
+    let handle = start_crawl(
+        Arc::new(AttemptFixture(SimFetcher::new(site))),
+        request(threads(1), "https://site.test/", &dir),
+        sim_deps(&sink),
+    )
+    .await
+    .unwrap();
     handle.wait().await.unwrap();
     let batches = sink.batches();
-    let attempts: HashSet<_> = batches
+    let attempts = batches
         .iter()
         .flat_map(|b| &b.ext)
         .filter(|e| e.key.as_str() == "http.attempts")
-        .map(|e| e.url)
-        .collect();
+        .map(|e| (e.url, e.value.clone()))
+        .collect::<std::collections::HashMap<_, _>>();
     let robots: HashSet<_> = sink
         .new_urls()
         .iter()
@@ -536,7 +560,24 @@ async fn every_response_class_transports_attempts_and_discovery_provenance() {
         .into_iter()
         .filter(|p| p.fetch.status_code > 0 && !robots.contains(&p.url_id))
     {
-        assert!(attempts.contains(&page.url_id), "{:?}", page.url_id);
+        let url = sink
+            .new_urls()
+            .into_iter()
+            .find(|u| u.id == page.url_id)
+            .unwrap();
+        if url.url.ends_with("/end") {
+            assert!(
+                !attempts.contains_key(&page.url_id),
+                "single attempt is implicit"
+            );
+        } else {
+            assert_eq!(
+                attempts.get(&page.url_id),
+                Some(&os_model::Value::Int(3)),
+                "{}",
+                url.url
+            );
+        }
     }
     let edges: Vec<_> = batches.iter().flat_map(|b| &b.discoveries).collect();
     assert!(edges

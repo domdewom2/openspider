@@ -53,11 +53,15 @@ pub(crate) fn parts_empty(batch: &WriteBatch) -> bool {
 
 /// Löscht die seitenbezogenen M2-Zeilen einer URL (`PageWrite.replace`).
 pub(crate) fn clear_page_children(tx: &Transaction<'_>, id: i64) -> Result<(), StoreError> {
-    for (namespace, _) in os_model::ext::NAMESPACES {
-        if os_model::ext::is_fetch_scoped(namespace) {
-            tx.execute("DELETE FROM url_ext WHERE url_id = ?1 AND substr(key, 1, instr(key, '.') - 1) = ?2", params![id, namespace])?;
-        }
-    }
+    let namespaces = os_model::ext::NAMESPACES
+        .iter()
+        .filter(|(ns, _)| os_model::ext::is_fetch_scoped(ns))
+        .map(|(ns, _)| format!("'{ns}'"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    tx.prepare_cached(&format!(
+        "DELETE FROM url_ext WHERE url_id = ?1 AND substr(key, 1, instr(key, '.') - 1) IN ({namespaces})"
+    ))?.execute([id])?;
     for sql in [
         "DELETE FROM cookies WHERE url_id = ?1",
         "DELETE FROM sd_items WHERE url_id = ?1",

@@ -58,9 +58,7 @@ pub fn run_triggered(
             let ptr = format!("/{}", path.replace('.', "/"));
             a.pointer(&ptr) != b.pointer(&ptr)
         }) {
-            cancel
-                .checkpoint()
-                .map_err(|_| EngineError::Invalid("Neuberechnung abgebrochen".into()))?;
+            cancel.checkpoint().map_err(|_| EngineError::Cancelled)?;
             out.changed.extend((entry.run)(file, old, new, cancel)?);
             out.ran.push(entry.owner);
         }

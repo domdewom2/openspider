@@ -75,3 +75,6 @@ SELECT
   strftime('%Y-%m-%dT%H:%M:%S+00:00', u.crawl_timestamp) AS crawl_timestamp
 FROM urls u LEFT JOIN url_counters c ON c.url_id = u.id
 WHERE u.in_tables = 1;
+
+CREATE INDEX canonicals_target ON canonicals(target_id);
+CREATE INDEX pagination_target ON pagination(target_id);

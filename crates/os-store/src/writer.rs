@@ -997,6 +997,8 @@ fn write_page(
             Some(page.fetch.status_code),
             Some(page.indexability.as_str().to_owned()),
         )
+        && tx.prepare_cached("SELECT EXISTS(SELECT 1 FROM canonicals WHERE target_id = ?1) OR EXISTS(SELECT 1 FROM pagination WHERE target_id = ?1) OR EXISTS(SELECT 1 FROM hreflang WHERE target_id = ?1)")?
+            .query_row([id], |r| r.get::<_, bool>(0))?
     {
         stamp_dependants(tx, id, seq)?;
     }
@@ -1479,7 +1481,7 @@ fn write_events_and_counters(tx: &Transaction<'_>, batch: &WriteBatch) -> Result
 }
 
 fn stamp_dependants(tx: &Transaction<'_>, id: i64, seq: i64) -> Result<(), StoreError> {
-    tx.execute("UPDATE urls SET change_seq = ?1 WHERE id IN (SELECT url_id FROM pagination WHERE target_id = ?2 UNION SELECT url_id FROM canonicals WHERE target_id = ?2 UNION SELECT url_id FROM hreflang WHERE target_id = ?2)", params![seq, id])?;
+    tx.prepare_cached("UPDATE urls SET change_seq = ?1 WHERE id IN (SELECT url_id FROM pagination WHERE target_id = ?2 UNION SELECT url_id FROM canonicals WHERE target_id = ?2 UNION SELECT url_id FROM hreflang WHERE target_id = ?2)")?.execute(params![seq, id])?;
     Ok(())
 }
 /// Atomare Neuberechnung gespeicherter Fakten ohne Recrawl (K2-43).
