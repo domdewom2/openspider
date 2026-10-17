@@ -16,4 +16,28 @@ kind: WordSource,
 /**
  * URL.
  */
-urlId: number, };
+urlId: number, 
+/**
+ * Ausgewählter Auswertungsmodus.
+ */
+mode?: string | null, 
+/**
+ * Stoppwörter aus der Wortauswertung entfernen.
+ */
+removeStopwords?: boolean | null, 
+/**
+ * Sprache für die Wortauswertung.
+ */
+language?: string | null, 
+/**
+ * Maximale Anzahl ausgegebener Begriffe.
+ */
+maxTerms?: number | null, 
+/**
+ * Auch Links mit nofollow einbeziehen.
+ */
+includeNofollow?: boolean | null, 
+/**
+ * Links auf dieselbe URL ausschließen.
+ */
+excludeSelfLinks?: boolean | null, };

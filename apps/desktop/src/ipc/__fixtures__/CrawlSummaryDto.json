@@ -9,5 +9,10 @@
   "urls": 2000,
   "fileBytes": 12582912,
   "schemaVersion": 3,
-  "owner": { "kind": "cli", "pid": null, "live": false, "controllable": false }
+  "owner": {
+    "kind": "cli",
+    "pid": null,
+    "live": false,
+    "controllable": false
+  }
 }

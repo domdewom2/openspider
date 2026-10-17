@@ -1,8 +1,13 @@
 // Generiert von scripts/gen-ipc.mjs aus src/ipc/commands.json – nicht von Hand ändern (npm run gen:ipc).
+import type { CustomSummaryArgs } from "./gen/CustomSummaryArgs";
+import type { CustomSummaryMetric } from "./gen/CustomSummaryMetric";
 import type { ExportBulkArgs } from "./gen/ExportBulkArgs";
 import type { ExportCatalog } from "./gen/ExportCatalog";
 import type { ExportDetailArgs } from "./gen/ExportDetailArgs";
+import type { ExportMultiArgs } from "./gen/ExportMultiArgs";
 import type { ExportPanelArgs } from "./gen/ExportPanelArgs";
+import type { ExportPreset } from "./gen/ExportPreset";
+import type { ExportPresetArgs } from "./gen/ExportPresetArgs";
 import type { ExportSitemapArgs } from "./gen/ExportSitemapArgs";
 import type { ExportViewArgs } from "./gen/ExportViewArgs";
 import type { OpHandle } from "./gen/OpHandle";
@@ -28,4 +33,16 @@ export const exportApi = {
   issues: (args: ExportPanelArgs, signal?: AbortSignal) => client.invoke<OpHandle>("export.issues", args, signal),
   /** `export.sidebar` – lang laufend: liefert sofort `OpHandle`, Ergebnis (FileResult) über `Tick.ops[].result`. */
   sidebar: (args: ExportPanelArgs, signal?: AbortSignal) => client.invoke<OpHandle>("export.sidebar", args, signal),
+  /** `export.multi` – lang laufend: liefert sofort `OpHandle`, Ergebnis (ExportBatchResult) über `Tick.ops[].result`. */
+  multi: (args: ExportMultiArgs, signal?: AbortSignal) => client.invoke<OpHandle>("export.multi", args, signal),
+  /** `export.presetList` */
+  presetList: (signal?: AbortSignal) => client.invoke<ExportPreset[]>("export.presetList", undefined, signal),
+  /** `export.presetSave` */
+  presetSave: (args: ExportPresetArgs, signal?: AbortSignal) => client.invoke<void>("export.presetSave", args, signal),
+  /** `export.presetDelete` */
+  presetDelete: (args: ExportPresetArgs, signal?: AbortSignal) => client.invoke<void>("export.presetDelete", args, signal),
+  /** `export.customSummaryMetrics` */
+  customSummaryMetrics: (signal?: AbortSignal) => client.invoke<CustomSummaryMetric[]>("export.customSummaryMetrics", undefined, signal),
+  /** `export.customSummary` – lang laufend: liefert sofort `OpHandle`, Ergebnis (FileResult) über `Tick.ops[].result`. */
+  customSummary: (args: CustomSummaryArgs, signal?: AbortSignal) => client.invoke<OpHandle>("export.customSummary", args, signal),
 } as const;

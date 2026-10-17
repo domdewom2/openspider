@@ -6,6 +6,11 @@
   "priority": "high",
   "count": 14,
   "pct": 0.7,
-  "segmentShares": [{ "segment": "Shop", "count": 10 }],
+  "segmentShares": [
+    {
+      "segment": "Shop",
+      "count": 10
+    }
+  ],
   "delta": -2
 }

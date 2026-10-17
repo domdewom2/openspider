@@ -3,4 +3,4 @@
 /**
  * Gerät der SERP-Vorschau (ONPAGE-194).
  */
-export type SerpDevice = "desktop" | "mobile";
+export type SerpDevice = "desktop" | "mobile" | "tablet";

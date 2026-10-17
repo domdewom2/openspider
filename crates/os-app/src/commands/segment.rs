@@ -7,6 +7,12 @@
 stub_commands!(
     "M2-K14",
     [
+        (
+            "sidebar.segments",
+            "SegmentsViewArgs",
+            "SegmentRow[]",
+            false
+        ),
         ("segment.list", "void", "SegmentDef[]", false),
         (
             "segment.save",

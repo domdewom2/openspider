@@ -29,4 +29,20 @@ children: Array<SdNode>,
 /**
  * Befunde.
  */
-issues: Array<SdIssueDto>, };
+issues: Array<SdIssueDto>, 
+/**
+ * Pfad zur betroffenen Eigenschaft in den strukturierten Daten.
+ */
+path: string, 
+/**
+ * Zeilennummer der Fundstelle im Quelltext.
+ */
+sourceLine?: number | null, 
+/**
+ * Spaltennummer der Fundstelle im Quelltext.
+ */
+sourceCol?: number | null, 
+/**
+ * Reihenfolge der Eigenschaften im Quelldokument.
+ */
+propertyOrder: Array<string>, };

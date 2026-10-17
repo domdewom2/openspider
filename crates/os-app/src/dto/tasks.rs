@@ -155,6 +155,20 @@ pub struct TaskDef {
     pub exports: Vec<TaskExport>,
     /// Benachrichtigung.
     pub notify: TaskNotify,
+    /// Exportoptionen der geplanten Aufgabe.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub export_options: Option<super::export::ExportMultiArgs>,
+
+    /// Name der für die Aufgabe verwendeten Exportvorlage.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub export_preset: Option<String>,
+
+    /// Konfiguration der benutzerdefinierten Zusammenfassung.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub custom_summary: Option<super::export::CustomSummaryArgs>,
 }
 
 /// Zustand eines Laufs.

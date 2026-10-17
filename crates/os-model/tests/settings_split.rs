@@ -204,3 +204,35 @@ fn restart_required_is_flagged_per_key() {
     assert_eq!(restart, ["storage.crawls_dir"]);
     assert!(old.changed_keys(&old).is_empty());
 }
+
+// spec: OUT-241, OUT-242, OUT-267
+#[test]
+fn logging_and_resource_settings_defaults_roundtrip_and_bounds() {
+    let mut settings = AppSettings::from_toml_str("").unwrap();
+    assert_eq!(settings.logging.level, "info");
+    assert_eq!(settings.logging.retention_days, 30);
+    assert_eq!(settings.storage.cache_limit_mb, None);
+    assert_eq!(settings.storage.render_process_limit, None);
+    let fixture = "[logging]\nlevel = 'trace'\nretention_days = 365\n[storage]\ncache_limit_mb = 256\nrender_process_limit = 32\n";
+    settings = AppSettings::from_toml_str(fixture).unwrap();
+    assert!(settings.validate().is_empty());
+    assert_eq!(
+        AppSettings::from_toml_str(&settings.to_toml_string().unwrap()).unwrap(),
+        settings
+    );
+    for level in ["error", "warn", "info", "debug", "trace"] {
+        settings.logging.level = level.into();
+        assert!(settings.validate().is_empty());
+    }
+    settings.logging.level = "verbose".into();
+    settings.logging.retention_days = 0;
+    settings.storage.cache_limit_mb = Some(255);
+    settings.storage.render_process_limit = Some(33);
+    let paths: Vec<_> = settings.validate().into_iter().map(|i| i.path).collect();
+    assert_eq!(paths.len(), 4);
+    assert!(paths.contains(&"logging.level".into()));
+    settings.logging.level = "info".into();
+    settings.logging.retention_days = 366;
+    settings.storage.render_process_limit = Some(0);
+    assert_eq!(settings.validate().len(), 3);
+}

@@ -119,11 +119,22 @@ pub struct CrawlStatus {
     /// Aktive Threads.
     pub active_threads: u32,
     /// Speicherstufe.
-    pub memory_stage: MemoryStageDto,
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub memory_stage: Option<MemoryStageDto>,
     /// Größe der Crawl-Datei in Byte.
     pub file_bytes: Option<u64>,
     /// Besitzer.
     pub owner: CrawlOwner,
+    /// Vertragserweiterung M2-F05b: memory_used_bytes.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub memory_used_bytes: Option<u64>,
+
+    /// Vertragserweiterung M2-F05b: memory_limit_bytes.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub memory_limit_bytes: Option<u64>,
 }
 
 /// Zustand eines Analyse-Teilschritts.
@@ -140,6 +151,8 @@ pub enum StepStateDto {
     Skipped,
     /// Nicht anwendbar.
     NotApplicable,
+    /// Vertragserweiterung M2-F05b.
+    NeedsRecrawl,
 }
 
 /// Ein Teilschritt der Crawl-Analyse (UI-082).
@@ -278,5 +291,12 @@ pub enum UiEvent {
     Notice {
         /// Inhalt.
         notice: Notice,
+    },
+    /// Vertragserweiterung M2-F05b.
+    #[serde(rename_all = "camelCase")]
+    FocusUrl {
+        crawl_id: String,
+        url_id: i64,
+        is_internal: bool,
     },
 }

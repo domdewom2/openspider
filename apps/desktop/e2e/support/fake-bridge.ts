@@ -73,7 +73,7 @@ export async function startFakeBridge(): Promise<FakeBridge> {
     const offs: (() => void)[] = [];
     const send = (obj: unknown) => socket.writable && socket.write(frame(JSON.stringify(obj)));
     const forward = (window: string) => (e: UiEvent) => {
-      const data = e.kind === "tick" ? e.tick : e.kind === "settingsChanged" ? { keys: e.keys } : e.notice;
+      const data = e.kind === "tick" ? e.tick : e.kind === "settingsChanged" ? { keys: e.keys } : e.kind === "notice" ? e.notice : { crawlId: e.crawlId, urlId: e.urlId, isInternal: e.isInternal };
       send({ event: e.kind, window, data });
     };
     socket.on("data", (chunk: Buffer) => {

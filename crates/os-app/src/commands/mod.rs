@@ -74,7 +74,10 @@ use crate::registry::Registry;
 /// Trägt alle Domänen in die Registry ein (Reihenfolge = Reihenfolge von `commands.json`).
 pub fn register_all(r: &mut Registry) {
     app::register(r);
+    app_quit::register(r);
+
     settings::register(r);
+    settings_network::register(r);
     uistate::register(r);
     op::register(r);
     events::register(r);
@@ -92,11 +95,14 @@ pub fn register_all(r: &mut Registry) {
     sidebar::register(r);
     sidebar_ext::register(r);
     config::register(r);
+    config_robots::register(r);
     profile::register(r);
     segment::register(r);
     crawls::register(r);
     projects::register(r);
     export::register(r);
+    export_multi::register(r);
+    export_summary::register(r);
     compare::register(r);
     viz::register(r);
     mcp::register(r);
@@ -106,3 +112,9 @@ pub fn register_all(r: &mut Registry) {
     auth_login::register(r);
     mail::register(r);
 }
+
+pub mod app_quit;
+pub mod config_robots;
+pub mod export_multi;
+pub mod export_summary;
+pub mod settings_network;

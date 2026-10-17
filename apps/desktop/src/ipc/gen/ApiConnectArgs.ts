@@ -12,4 +12,16 @@ kind: ApiKind,
 /**
  * API-Schlüssel (nur bei Quellen mit Schlüssel; Ablage im Schlüsselbund).
  */
-apiKey?: string | null, };
+apiKey?: string | null, 
+/**
+ * Zugangsdaten dauerhaft im Secret Store speichern.
+ */
+remember?: boolean | null, 
+/**
+ * Kennung des API-Kontos.
+ */
+accountId?: string | null, 
+/**
+ * OAuth-Client-Geheimnis; nur Eingabe.
+ */
+clientSecret?: string | null, };

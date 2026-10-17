@@ -7,9 +7,12 @@ import type { CrawlsExportArgs } from "./gen/CrawlsExportArgs";
 import type { CrawlsImportArgs } from "./gen/CrawlsImportArgs";
 import type { IdsArgs } from "./gen/IdsArgs";
 import type { OpHandle } from "./gen/OpHandle";
+import type { PathArgs } from "./gen/PathArgs";
 import { client } from "./client";
 
 export const crawls = {
+  /** `crawls.checkLocation` */
+  checkLocation: (args: PathArgs, signal?: AbortSignal) => client.invoke<string[]>("crawls.checkLocation", args, signal),
   /** `crawls.list` */
   list: (args: CrawlListQuery, signal?: AbortSignal) => client.invoke<CrawlListing[]>("crawls.list", args, signal),
   /** `crawls.rename` */

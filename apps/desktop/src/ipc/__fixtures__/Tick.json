@@ -19,16 +19,49 @@
     "activeThreads": 5,
     "memoryStage": "normal",
     "fileBytes": 12582912,
-    "owner": { "kind": "app", "pid": 4242, "live": true, "controllable": true }
+    "owner": {
+      "kind": "app",
+      "pid": 4242,
+      "live": true,
+      "controllable": true
+    },
+    "memoryUsedBytes": null,
+    "memoryLimitBytes": null
   },
   "analysis": null,
-  "views": [{ "viewId": "v1", "version": 43, "total": null }],
+  "views": [
+    {
+      "viewId": "v1",
+      "version": 43,
+      "total": null
+    }
+  ],
   "countsVersion": 9,
   "issuesVersion": 9,
   "sidebarVersion": 8,
   "ops": [
-    { "opId": "op-1", "labelKey": "op-export", "done": 10, "total": 100, "state": "running", "result": null, "error": null }
+    {
+      "opId": "op-1",
+      "labelKey": "op-export",
+      "done": 10,
+      "total": 100,
+      "state": "running",
+      "result": null,
+      "error": null
+    }
   ],
-  "mcp": { "kind": "connected", "port": 8765, "clients": 1 },
-  "notices": [{ "level": "warning", "code": "low-disk", "args": { "freeBytes": 900000000 } }]
+  "mcp": {
+    "kind": "connected",
+    "port": 8765,
+    "clients": 1
+  },
+  "notices": [
+    {
+      "level": "warning",
+      "code": "low-disk",
+      "args": {
+        "freeBytes": 900000000
+      }
+    }
+  ]
 }

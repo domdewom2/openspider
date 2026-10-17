@@ -11,4 +11,12 @@ name: string,
 /**
  * i18n-Schlüssel des Anzeigenamens.
  */
-labelKey: string, };
+labelKey: string, 
+/**
+ * Ob der Export im aktuellen Kontext verfügbar ist.
+ */
+enabled: boolean, 
+/**
+ * Grund für einen deaktivierten Export (i18n-Schlüssel).
+ */
+disabledReason?: string | null, };

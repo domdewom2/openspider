@@ -11,7 +11,7 @@ fromMs: number,
 /**
  * Obergrenze in ms (exklusive).
  */
-toMs: number, 
+toMs: number | null, 
 /**
  * URLs.
  */

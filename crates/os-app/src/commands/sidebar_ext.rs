@@ -19,11 +19,14 @@ stub_commands!(
             "ResponseTimes",
             false
         ),
-        (
-            "sidebar.segments",
-            "SegmentsViewArgs",
-            "SegmentRow[]",
-            false
-        ),
     ]
 );
+
+// STUB(M2-K03)
+pub fn on_config_changed(
+    _app: &crate::App,
+    _key: &crate::pool::CrawlKey,
+    _old: &std::sync::Arc<os_model::CrawlConfig>,
+    _new: &std::sync::Arc<os_model::CrawlConfig>,
+) {
+}

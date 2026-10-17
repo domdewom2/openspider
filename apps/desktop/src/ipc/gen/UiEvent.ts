@@ -17,4 +17,4 @@ keys: Array<string>, } | { "kind": "notice",
 /**
  * Inhalt.
  */
-notice: Notice, };
+notice: Notice, } | { "kind": "focusUrl", crawlId: string, urlId: number, isInternal: boolean, };

@@ -24,4 +24,24 @@ budget: number,
 /**
  * Spalte, nach der Farbe und Größe bestimmt werden (UI-095).
  */
-metric: string, };
+metric: string, 
+/**
+ * Auch URLs ohne HTML-Inhalt einbeziehen.
+ */
+includeNonHtml?: boolean | null, 
+/**
+ * Auch nicht indexierbare URLs einbeziehen.
+ */
+includeNonIndexable?: boolean | null, 
+/**
+ * Anzahl der beim Öffnen aufzuklappenden Ebenen.
+ */
+expandDepth?: number | null, 
+/**
+ * Kennung des zu erkundenden Knotens.
+ */
+exploreNode?: number | null, 
+/**
+ * Kennzahl für die Färbung der Knoten.
+ */
+colorMetric?: string | null, };
