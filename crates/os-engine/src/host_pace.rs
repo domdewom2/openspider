@@ -321,7 +321,7 @@ impl HostPacer {
                 if s.spacing.is_zero() {
                     Duration::from_secs(1)
                 } else {
-                    s.spacing * 2
+                    (s.spacing * 2).min(Duration::from_secs(60))
                 }
             })
             .min(Duration::from_secs(300));
