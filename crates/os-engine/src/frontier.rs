@@ -87,7 +87,13 @@ impl CrawlScope {
                 return ScopeClass::Internal;
             }
         }
-        self.base.classify(url)
+        if let Some(folder) = self.base.start_folder() {
+            let mut host_probe = url.clone();
+            host_probe.url.set_path(folder);
+            self.base.classify(&host_probe)
+        } else {
+            self.base.classify(url)
+        }
     }
 }
 
@@ -184,6 +190,7 @@ pub struct Seen {
 }
 
 /// Was die Entdeckung einer URL wissen muss (vom Aufrufer ohne Sperre vorbereitet).
+#[derive(Clone)]
 pub struct Cand<'a> {
     pub source: Option<(UrlId, os_model::LinkType, Option<String>)>,
     /// Normalisierte Ziel-URL.
@@ -237,6 +244,9 @@ pub enum Pop {
 
 /// Gemeinsamer Zustand aller Worker (hinter einer Sperre).
 pub struct Core {
+    pub respect_hidden: std::collections::HashSet<UrlId>,
+    pub folder_policy: Option<(String, bool)>,
+    pub limits: os_model::LimitsConfig,
     pub deferred: Vec<(std::time::Duration, QueueItem)>,
     /// Seen-Set.
     pub seen: SeenSet,
@@ -322,6 +332,9 @@ impl Core {
     /// Leerer Zustand.
     pub fn new(max_urls: u64, max_depth: Option<u32>) -> Self {
         Core {
+            respect_hidden: std::collections::HashSet::new(),
+            folder_policy: None,
+            limits: os_model::LimitsConfig::default(),
             deferred: Vec::new(),
             seen: SeenSet::default(),
             frontier: Frontier::default(),
@@ -482,6 +495,14 @@ impl Core {
                 rule_flag,
             };
         }
+        if url_limit_counter(&self.limits, c.norm).is_some() {
+            return Admission {
+                enqueue: false,
+                in_tables: false,
+                reason: Some(NotCrawledReason::UrlLimit),
+                rule_flag,
+            };
+        }
         // 2. Entscheidung der Speichern/Crawlen-Matrix
         if !c.crawl {
             return Admission {
@@ -533,6 +554,64 @@ impl Core {
         rules: &RuleSet,
         batch: &mut WriteBatch,
     ) -> UrlId {
+        let adjusted;
+        let c = if let Some((folder, check)) = &self.folder_policy {
+            if c.internal && !c.resource_like && !c.norm.url.path().starts_with(folder) {
+                adjusted = Cand {
+                    store: c.store && *check,
+                    crawl: c.crawl && *check,
+                    purpose: Purpose::External,
+                    reason: if *check {
+                        c.reason
+                    } else {
+                        Some(NotCrawledReason::OutsideScope)
+                    },
+                    ..c.clone()
+                };
+                &adjusted
+            } else {
+                c
+            }
+        } else {
+            c
+        };
+        if c.norm.url.fragment().is_some() {
+            let base = os_url::normalize(&c.norm.url);
+            let admitted = self.admit(c, depth, 0, rules);
+            let base_cand = Cand {
+                norm: &base,
+                store: c.store && admitted.in_tables,
+                crawl: c.crawl && admitted.enqueue,
+                ..c.clone()
+            };
+            self.discover_plain(&base_cand, depth, hops, session, rules, batch);
+            let fragment = Cand {
+                store: admitted.in_tables,
+                crawl: false,
+                reason: admitted.reason.or(Some(NotCrawledReason::StoreOnly)),
+                ..c.clone()
+            };
+            let id = self.discover_plain(&fragment, depth, hops, session, rules, batch);
+            batch.ext.push(os_model::ExtWrite {
+                url: id,
+                key: os_model::ExtKey::from_static("crawl.fragment_base"),
+                value: os_model::Value::Text(base.encoded),
+            });
+            return id;
+        }
+        self.discover_plain(c, depth, hops, session, rules, batch)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn discover_plain(
+        &mut self,
+        c: &Cand<'_>,
+        depth: Option<u32>,
+        hops: u32,
+        session: u32,
+        rules: &RuleSet,
+        batch: &mut WriteBatch,
+    ) -> UrlId {
         let kf = self.seen.key_fp(&c.norm.encoded);
         // Ohne Tiefe (nur über eine Sitemap erreichbar) gilt Priorität 1: hinter allen Link-URLs.
         let priority = u8::from(depth.is_none());
@@ -566,7 +645,11 @@ impl Core {
                         });
                     }
                 }
-                if c.store && e.flags & F_IN_TABLES == 0 && e.flags & F_RULE_BLOCKED == 0 {
+                if c.store
+                    && e.flags & F_IN_TABLES == 0
+                    && e.flags & F_RULE_BLOCKED == 0
+                    && !self.respect_hidden.contains(&id)
+                {
                     e.flags |= F_IN_TABLES;
                     batch
                         .url_updates
@@ -609,7 +692,8 @@ impl Core {
                     });
                     e.flags |= F_QUEUED;
                 }
-                if adm.in_tables && e.flags & F_IN_TABLES == 0 {
+                if adm.in_tables && e.flags & F_IN_TABLES == 0 && !self.respect_hidden.contains(&id)
+                {
                     e.flags |= F_IN_TABLES;
                     batch
                         .url_updates
@@ -639,6 +723,11 @@ impl Core {
             }
             Some(NotCrawledReason::DepthLimit | NotCrawledReason::ListModeDepth) => {
                 batch.counters.push((COUNTER_DEPTH_LIMIT.to_string(), 1));
+            }
+            Some(NotCrawledReason::UrlLimit) => {
+                if let Some(counter) = url_limit_counter(&self.limits, c.norm) {
+                    batch.counters.push((counter.into(), 1));
+                }
             }
             _ => {}
         }
@@ -705,6 +794,63 @@ impl Core {
             },
         );
     }
+}
+
+/// Ein eindeutiger Überspringzähler je URL; Länge wird nach Umschreibung/Normalisierung geprüft.
+fn url_limit_counter(limits: &os_model::LimitsConfig, norm: &NormUrl) -> Option<&'static str> {
+    let query_count = norm
+        .url
+        .query()
+        .map_or(0, |q| q.split('&').filter(|p| !p.is_empty()).count());
+    if limits
+        .max_folder_depth
+        .is_some_and(|max| max != 0 && os_url::folder_depth(&norm.url) > max)
+    {
+        Some("skipped_folder_depth")
+    } else if limits
+        .max_query_params
+        .is_some_and(|max| query_count > max as usize)
+    {
+        Some("skipped_query_params")
+    } else if limits.max_url_length != 0 && norm.encoded.len() > limits.max_url_length as usize {
+        Some("skipped_url_length")
+    } else {
+        None
+    }
+}
+
+/// Eine spätere Entdeckung darf beim Fortsetzen ausgeblendete Seiten nicht wieder einblenden.
+pub(crate) fn restore_hidden(
+    path: &std::path::Path,
+    cfg: &os_model::CrawlConfig,
+    core: &mut Core,
+) -> Result<(), crate::EngineError> {
+    if !(cfg.advanced.respect_noindex
+        || cfg.advanced.respect_canonical
+        || cfg.advanced.respect_self_ref_meta_refresh)
+    {
+        return Ok(());
+    }
+    let file = os_store::CrawlFile::open(path, os_store::OpenMode::ReadOnly)?;
+    let mut stmt = file
+        .conn()
+        .prepare("SELECT url_id,value FROM url_flags WHERE flag = 'respect_hidden'")
+        .map_err(os_store::StoreError::from)?;
+    let rows = stmt
+        .query_map([], |r| Ok((UrlId(r.get(0)?), r.get::<_, String>(1)?)))
+        .map_err(os_store::StoreError::from)?;
+    for row in rows {
+        let (id, reason) = row.map_err(os_store::StoreError::from)?;
+        if match reason.as_str() {
+            "noindex" => cfg.advanced.respect_noindex,
+            "canonical" => cfg.advanced.respect_canonical,
+            "self_refresh" => cfg.advanced.respect_self_ref_meta_refresh,
+            _ => false,
+        } {
+            core.respect_hidden.insert(id);
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]

@@ -265,7 +265,7 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
             attempt: item.attempt,
             body_limit: os_fetch::BodyLimit {
                 max_decoded_bytes: cfg.limits.max_page_kb.saturating_mul(1024),
-                abort_media_after: None,
+                abort_media_after: Some(64 * 1024),
             },
         })
         .await;
@@ -424,7 +424,13 @@ pub(crate) fn facts_from_result(res: &FetchResult, cfg: &CrawlConfig) -> FetchFa
             f.content_class = content_class(ct.as_deref(), cfg.advanced.assume_html);
             f.content_type = ct;
             f.http_version = Some(r.http_version.clone());
-            f.size_bytes = r.size_bytes;
+            f.size_bytes = if r.truncated {
+                r.untruncated_bytes
+                    .or(r.content_length)
+                    .unwrap_or(r.size_bytes)
+            } else {
+                r.size_bytes
+            };
             f.transferred_bytes = r.transferred_bytes;
             f.total_transferred_bytes = r.transferred_bytes;
             if cfg.extraction.response_time {
@@ -446,6 +452,9 @@ pub(crate) fn facts_from_result(res: &FetchResult, cfg: &CrawlConfig) -> FetchFa
             }
         }
     }
+    if !cfg.extraction.page_size {
+        f.size_bytes = 0;
+    }
     f
 }
 
@@ -455,6 +464,7 @@ pub(crate) fn facts_from_result(res: &FetchResult, cfg: &CrawlConfig) -> FetchFa
 #[derive(Default)]
 struct Analysis {
     extra: WriteBatch,
+    html: Option<os_model::PageHtml>,
     pdf_word_count: Option<u32>,
     facts: FetchFacts,
     headers: Vec<HeaderRow>,
@@ -501,6 +511,30 @@ async fn analyze<F: Fetch>(
             value,
         }),
     );
+    a.extra.ext.push(os_model::ExtWrite {
+        url: item.id,
+        key: os_model::ExtKey::from_static("crawl.truncated"),
+        value: os_model::Value::Bool(resp.truncated),
+    });
+    if cfg.extraction.cookies {
+        a.extra
+            .cookies
+            .extend(crate::cookies::collect(item.id, &resp.set_cookies));
+    }
+    if cfg.extraction.store_html
+        && a.facts.content_class == ContentClass::Html
+        && resp.decode_error.is_none()
+    {
+        let (_, encoding) = os_parse::charset::decode(
+            &resp.body,
+            header(&resp.headers, "content-type"),
+            &resp.headers,
+        );
+        a.html = Some(os_model::PageHtml {
+            encoding,
+            body: resp.body.to_vec(),
+        });
+    }
     if resp.attempts > 1 {
         a.extra.ext.push(os_model::ExtWrite {
             url: item.id,
@@ -549,7 +583,8 @@ async fn analyze<F: Fetch>(
             a.refresh = refs.clone();
             parsed_refresh(&mut a, url, &refs);
         } else {
-            let hints = os_parse::parse_headers(url, &resp.headers, &sh.pcfg);
+            let mut hints = os_parse::parse_headers(url, &resp.headers, &sh.pcfg);
+            os_parse::switches::filter_directives(&mut hints.directives, &sh.pcfg);
             if hints.hreflang_truncated > 0 {
                 a.extra.ext.push(os_model::ExtWrite {
                     url: item.id,
@@ -572,7 +607,8 @@ async fn analyze<F: Fetch>(
             a.parsed = Some(parsed);
         }
         other => {
-            let hints = os_parse::parse_headers(url, &resp.headers, &sh.pcfg);
+            let mut hints = os_parse::parse_headers(url, &resp.headers, &sh.pcfg);
+            os_parse::switches::filter_directives(&mut hints.directives, &sh.pcfg);
             if hints.hreflang_truncated > 0 {
                 a.extra.ext.push(os_model::ExtWrite {
                     url: item.id,
@@ -599,6 +635,7 @@ async fn analyze<F: Fetch>(
                 }
                 _ => {}
             }
+            a.css_links.extend(hints.mobile_alternates.clone());
             a.hints = Some(hints);
         }
     }
@@ -696,14 +733,47 @@ fn parse_now(
     headers: &[(String, String)],
     cfg: &ParseConfig,
 ) -> ParsedPage {
-    let page = os_parse::parse_html(&ParseInput {
+    let mut detection = cfg.clone();
+    detection.crawl.spider.store_uncrawlable_links = true;
+    let mut page = os_parse::parse_html(&ParseInput {
         status,
         url,
         body,
         content_type,
         headers,
-        cfg,
+        cfg: &detection,
     });
+    if !cfg.crawl.spider.store_uncrawlable_links {
+        for link in &mut page.links {
+            if matches!(
+                link.uncrawlable_reason,
+                Some(
+                    os_model::UncrawlableReason::AnchorEmptyHref
+                        | os_model::UncrawlableReason::AnchorFragmentOnly
+                )
+            ) {
+                link.crawlable = true;
+                link.uncrawlable_reason = None;
+            }
+        }
+    }
+    page.links
+        .retain(|l| l.crawlable || cfg.crawl.spider.store_uncrawlable_links);
+    page.links
+        .extend(os_parse::alternates::from_headers(url, headers, cfg));
+    page.links.sort_by_key(|l| l.doc_order);
+    let max = cfg.crawl.limits.max_links_per_url;
+    let total = page.links.len()
+        + page.canonicals.len()
+        + page.hreflang.len()
+        + page.pagination.len()
+        + page.refresh.len();
+    let html = if max != 0 && total > max as usize {
+        os_parse::charset::decode(body, content_type, headers).0
+    } else {
+        String::new()
+    };
+    os_parse::switches::limit(&mut page, &html, max);
     #[cfg(test)]
     let page = tests::PARSER_STUB.with(|stub| {
         let mut page = page;
@@ -749,13 +819,25 @@ impl Targets {
         if !matches!(url.scheme(), "http" | "https") || url.host_str().is_none() {
             return None;
         }
-        let norm = os_url::normalize(&url);
+        let norm = crate::fragments::normalize(&url, sh.cfg.advanced.crawl_fragments);
         let internal = sh.scope.classify(&norm) == ScopeClass::Internal;
         self.list.push((norm, internal));
         let i = self.list.len() - 1;
         self.index.insert(resolved.to_string(), i);
         Some(i)
     }
+}
+
+fn outside_start_folder<F: Fetch>(sh: &Shared<F>, norm: &NormUrl) -> bool {
+    if !sh.cfg.scope.subfolder_only || sh.start_url.is_empty() {
+        return false;
+    }
+    let Ok(start) = Url::parse(&sh.start_url) else {
+        return false;
+    };
+    let path = start.path();
+    let folder = path.rfind('/').map_or("/", |i| &path[..=i]);
+    !norm.url.path().starts_with(folder)
 }
 
 fn path_type_of(raw: &str) -> PathType {
@@ -871,6 +953,7 @@ async fn assemble<F: Fetch>(
     let cfg = &*sh.cfg;
     let Analysis {
         mut extra,
+        html,
         pdf_word_count,
         mut facts,
         headers,
@@ -1030,7 +1113,8 @@ async fn assemble<F: Fetch>(
             let (norm, internal) = &targets.list[ti];
             let lt = r.ext.link_type;
             let resource_like = lt.is_resource() || lt == LinkType::Other;
-            let purpose = if !*internal {
+            let outside_folder = *internal && !resource_like && outside_start_folder(sh, norm);
+            let purpose = if !*internal || outside_folder {
                 Purpose::External
             } else if resource_like {
                 Purpose::Resource
@@ -1044,9 +1128,15 @@ async fn assemble<F: Fetch>(
                 norm,
                 internal: *internal,
                 kind: DiscoveryKind::Link,
-                store: d.store && !hreflang_only,
-                crawl: d.crawl,
-                reason: d.reason,
+                store: d.store
+                    && !hreflang_only
+                    && (!outside_folder || cfg.scope.crawl_outside_start_folder),
+                crawl: d.crawl && (!outside_folder || cfg.scope.crawl_outside_start_folder),
+                reason: if outside_folder && !cfg.scope.crawl_outside_start_folder {
+                    Some(NotCrawledReason::OutsideScope)
+                } else {
+                    d.reason
+                },
                 resource_like,
                 apply_rules: norm.encoded != sh.start_url,
                 purpose,
@@ -1410,6 +1500,29 @@ async fn assemble<F: Fetch>(
         cfg,
         same_url: os_url::eq_for_compare,
     });
+    let hidden = if cfg.advanced.respect_noindex && !eff_index {
+        Some("noindex")
+    } else if cfg.advanced.respect_canonical
+        && page_facts
+            .as_ref()
+            .is_some_and(|p| p.canonical_self == Some(false))
+    {
+        Some("canonical")
+    } else {
+        None
+    };
+    if let Some(reason) = hidden {
+        sh.lock_core().respect_hidden.insert(item.id);
+        batch.url_updates.push(os_model::UrlUpdate::InTables {
+            id: item.id,
+            value: false,
+        });
+        url_flags.push((
+            item.id,
+            os_model::ext::FLAG_RESPECT_HIDDEN.to_string(),
+            Some(reason.to_string()),
+        ));
+    }
     batch.pages.push(PageWrite {
         url_id: item.id,
         replace: item.replace,
@@ -1425,7 +1538,7 @@ async fn assemble<F: Fetch>(
         hreflang: hreflang_rows,
         pagination: pagination_rows,
         headers,
-        html: None,
+        html,
     });
     batch.queue.push(QueueOp::Pop { id: item.id });
     batch.url_flags = url_flags;

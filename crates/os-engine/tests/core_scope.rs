@@ -116,6 +116,7 @@ async fn all_subdomains_option_makes_them_internal_even_from_www() {
 }
 
 // spec: CRAWL-026
+// spec: CRAWL-010
 #[tokio::test]
 async fn subfolder_scope_crawls_only_below_the_start_folder() {
     let mut cfg = CrawlConfig::default();
@@ -128,7 +129,12 @@ async fn subfolder_scope_crawls_only_below_the_start_folder() {
     }
     for p in ["/", "/other/c.html"] {
         let r = row_of(&fx, &url("site.test", p));
-        assert!(!r.is_internal, "{p} liegt außerhalb des Startordners");
+        assert!(r.is_internal, "{p} bleibt auf einem internen Host");
+        assert!(
+            !r.in_tables,
+            "{p} ist außerhalb des Startordners ausgeblendet"
+        );
+        assert_eq!(r.status_code, None);
     }
     // ohne die Option sind alle fünf Seiten intern
     let fx = crawl_fixture_from(
