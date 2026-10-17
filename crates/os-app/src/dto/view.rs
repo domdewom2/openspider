@@ -147,6 +147,30 @@ pub enum CompareClass {
 pub struct LinkFilter {
     /// Kennung des Filters.
     pub id: String,
+    /// Vertragserweiterung M2-F05b: position.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub position: Option<String>,
+
+    /// Vertragserweiterung M2-F05b: exclude_self.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub exclude_self: Option<bool>,
+
+    /// Vertragserweiterung M2-F05b: exclude_nofollow.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub exclude_nofollow: Option<bool>,
+
+    /// Vertragserweiterung M2-F05b: anchor.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub anchor: Option<String>,
+
+    /// Vertragserweiterung M2-F05b: mode.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub mode: Option<LinkMode>,
 }
 
 /// Filter der Ressourcen-Ansicht (kanonische Kennung).
@@ -199,6 +223,12 @@ pub enum DetailTable {
     ApiValues,
     /// Formulare.
     Forms,
+    /// Vertragserweiterung M2-F05b.
+    Hreflang,
+    /// Vertragserweiterung M2-F05b.
+    CrawlPath,
+    /// Vertragserweiterung M2-F05b.
+    Anchors,
 }
 
 /// Beschreibung einer View (`view.open`, `view.update`).
@@ -554,4 +584,12 @@ pub struct SearchParseArgs {
 pub struct ValidateRegexArgs {
     /// Regulärer Ausdruck.
     pub pattern: String,
+}
+
+/// Vertrag M2-F05b.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub enum LinkMode {
+    Links,
+    Anchors,
 }

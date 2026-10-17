@@ -155,6 +155,20 @@ pub struct TaskDef {
     pub exports: Vec<TaskExport>,
     /// Benachrichtigung.
     pub notify: TaskNotify,
+    /// Vertragserweiterung M2-F05b: export_options.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub export_options: Option<super::export::ExportMultiArgs>,
+
+    /// Vertragserweiterung M2-F05b: export_preset.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub export_preset: Option<String>,
+
+    /// Vertragserweiterung M2-F05b: custom_summary.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub custom_summary: Option<super::export::CustomSummaryArgs>,
 }
 
 /// Zustand eines Laufs.

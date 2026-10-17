@@ -105,3 +105,38 @@ pub struct AuthFinishLoginArgs {
     /// Als Profil speichern.
     pub save_as: Option<String>,
 }
+
+/// Command-Vertrag AuthImportArgs (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct AuthImportArgs {
+    /// Vertragserweiterung M2-F05b: path.
+    pub path: String,
+
+    /// Vertragserweiterung M2-F05b: passphrase.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub passphrase: Option<String>,
+
+    /// Vertragserweiterung M2-F05b: bind_to_machine.
+    pub bind_to_machine: bool,
+}
+
+/// Command-Vertrag AuthExportArgs (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct AuthExportArgs {
+    /// Vertragserweiterung M2-F05b: name.
+    pub name: String,
+
+    /// Vertragserweiterung M2-F05b: path.
+    pub path: String,
+
+    /// Vertragserweiterung M2-F05b: passphrase.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub passphrase: Option<String>,
+
+    /// Vertragserweiterung M2-F05b: bind_to_machine.
+    pub bind_to_machine: bool,
+}

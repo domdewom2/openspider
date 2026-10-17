@@ -38,6 +38,14 @@ pub fn response_message(id: &Value, result: &Result<Value, CmdError>) -> String 
 /// Nachricht für ein Ereignis an ein Fenster.
 pub fn event_message(window: &str, ev: &UiEvent) -> String {
     let (name, data) = match ev {
+        UiEvent::FocusUrl {
+            crawl_id,
+            url_id,
+            is_internal,
+        } => (
+            "focusUrl",
+            Ok(json!({"crawlId": crawl_id, "urlId": url_id, "isInternal": is_internal})),
+        ),
         UiEvent::Tick { tick } => ("tick", serde_json::to_value(tick)),
         UiEvent::SettingsChanged { keys } => ("settingsChanged", Ok(json!({ "keys": keys }))),
         UiEvent::Notice { notice } => ("notice", serde_json::to_value(notice)),

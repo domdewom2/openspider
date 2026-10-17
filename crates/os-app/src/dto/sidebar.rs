@@ -145,6 +145,16 @@ pub struct SiteStructureArgs {
     pub view: SiteStructureView,
     /// Segment.
     pub segment: Option<SegmentFilter>,
+    /// Vertragserweiterung M2-F05b: path.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub path: Option<String>,
+
+    /// Vertragserweiterung M2-F05b: offset.
+    pub offset: u64,
+
+    /// Vertragserweiterung M2-F05b: limit.
+    pub limit: u32,
 }
 
 /// Knoten des Verzeichnisbaums (UI-066).
@@ -161,6 +171,8 @@ pub struct PathNode {
     pub by_class: BTreeMap<String, u64>,
     /// Kindknoten (Tiefe begrenzt, der Rest über weitere Aufrufe).
     pub children: Vec<PathNode>,
+    /// Vertragserweiterung M2-F05b: has_more_children.
+    pub has_more_children: bool,
 }
 
 /// Zeile der Tiefenverteilung.
@@ -210,7 +222,7 @@ pub struct Bucket {
     /// Untergrenze in ms (inklusive).
     pub from_ms: u32,
     /// Obergrenze in ms (exklusive).
-    pub to_ms: u32,
+    pub to_ms: Option<u32>,
     /// URLs.
     pub count: u64,
 }

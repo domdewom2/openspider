@@ -7,6 +7,7 @@
 stub_commands!(
     "M2-O02",
     [
+        ("crawls.checkLocation", "PathArgs", "string[]", false),
         ("crawls.list", "CrawlListQuery", "CrawlListing[]", false),
         ("crawls.rename", "CrawlRenameArgs", "void", false),
         ("crawls.move", "CrawlMoveArgs", "CountResult", true),
@@ -20,3 +21,9 @@ stub_commands!(
         ("crawls.copyIds", "IdsArgs", "void", false),
     ]
 );
+
+// STUB(M2-O02)
+pub fn start_retention(_app: &crate::App) {}
+
+// STUB(M2-O02)
+pub fn on_settings_changed(_app: &crate::App) {}

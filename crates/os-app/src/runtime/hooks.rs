@@ -40,3 +40,22 @@ pub trait AssetResolver: Send + Sync {
     /// Löst `uri` (vollständig, z. B. `ospider://shot/…`) auf.
     fn resolve(&self, app: App, uri: String) -> BoxFuture<'static, AssetResponse>;
 }
+
+/// Fensteraktionen der Desktop-Hülle.
+pub trait WindowHost: Send + Sync {
+    fn open_viz(&self, snapshot_id: &str) -> Result<(), crate::dto::CmdError>;
+    fn focus_main(&self);
+}
+/// Betriebssystemaktionen ohne Abhängigkeit auf Tauri.
+pub trait DesktopActions: Send + Sync {
+    fn write_clipboard(&self, text: &str) -> Result<(), crate::dto::CmdError>;
+    fn reveal_paths(&self, p: &[std::path::PathBuf]) -> Result<(), crate::dto::CmdError>;
+}
+/// Auswahl der Fenster, deren nächster Tick fällig ist.
+pub trait TickPolicy: Send + Sync {
+    fn due_windows(&self, app: &App) -> Vec<super::WindowId>;
+}
+/// Wartet, bis ein Dienst seine Abschlussarbeit gespeichert hat.
+pub trait CompletionBarrier: Send + Sync {
+    fn wait(&self, key: crate::pool::CrawlKey) -> BoxFuture<'static, ()>;
+}

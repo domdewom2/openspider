@@ -14,6 +14,8 @@ pub enum ExportFormatDto {
     Csv,
     /// Excel.
     Xlsx,
+    /// Vertragserweiterung M2-F05b.
+    Json,
 }
 
 /// Ein Eintrag des Export-Katalogs.
@@ -24,6 +26,13 @@ pub struct ExportItem {
     pub name: String,
     /// i18n-Schlüssel des Anzeigenamens.
     pub label_key: String,
+    /// Vertragserweiterung M2-F05b: enabled.
+    pub enabled: bool,
+
+    /// Vertragserweiterung M2-F05b: disabled_reason.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub disabled_reason: Option<String>,
 }
 
 /// Gruppe von Exporten im Menü.
@@ -118,6 +127,14 @@ pub struct ExportViewArgs {
     pub format: ExportFormatDto,
     /// Auch ausgeblendete Spalten exportieren.
     pub all_columns: bool,
+    /// Vertragserweiterung M2-F05b: columns.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub columns: Option<Vec<String>>,
+
+    /// Vertragserweiterung M2-F05b: preserve_upload_order.
+    #[serde(default = "default_upload_order")]
+    pub preserve_upload_order: bool,
 }
 
 /// Argument von `export.detail` (OUT-021).
@@ -177,6 +194,8 @@ pub enum PanelKind {
     Segments,
     /// API-Status.
     Api,
+    /// Vertragserweiterung M2-F05b.
+    SpellingGrammar,
 }
 
 /// Argument von `export.issues` und `export.sidebar`.
@@ -189,4 +208,113 @@ pub struct ExportPanelArgs {
     pub path: String,
     /// Format.
     pub format: ExportFormatDto,
+}
+
+fn default_upload_order() -> bool {
+    true
+}
+
+/// Command-Vertrag ExportSel (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportSel {
+    /// Vertragserweiterung M2-F05b: kind.
+    pub kind: String,
+
+    /// Vertragserweiterung M2-F05b: name.
+    pub name: String,
+}
+
+/// Command-Vertrag ExportMultiArgs (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportMultiArgs {
+    /// Vertragserweiterung M2-F05b: items.
+    pub items: Vec<ExportSel>,
+
+    /// Vertragserweiterung M2-F05b: format.
+    pub format: ExportFormatDto,
+
+    /// Vertragserweiterung M2-F05b: dir.
+    pub dir: String,
+
+    /// Vertragserweiterung M2-F05b: single_workbook.
+    pub single_workbook: bool,
+
+    /// Vertragserweiterung M2-F05b: skip_empty.
+    pub skip_empty: bool,
+
+    /// Vertragserweiterung M2-F05b: preset.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub preset: Option<String>,
+}
+
+/// Command-Vertrag ExportBatchResult (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportBatchResult {
+    /// Vertragserweiterung M2-F05b: files.
+    pub files: Vec<super::common::FileResult>,
+
+    /// Vertragserweiterung M2-F05b: warnings.
+    pub warnings: Vec<String>,
+
+    /// Vertragserweiterung M2-F05b: skipped.
+    pub skipped: Vec<String>,
+}
+
+/// Command-Vertrag ExportPreset (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportPreset {
+    /// Vertragserweiterung M2-F05b: name.
+    pub name: String,
+
+    /// Vertragserweiterung M2-F05b: items.
+    pub items: Vec<ExportSel>,
+
+    /// Vertragserweiterung M2-F05b: single_workbook.
+    pub single_workbook: bool,
+
+    /// Vertragserweiterung M2-F05b: skip_empty.
+    pub skip_empty: bool,
+}
+
+/// Command-Vertrag ExportPresetArgs (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportPresetArgs {
+    /// Vertragserweiterung M2-F05b: name.
+    pub name: String,
+
+    /// Vertragserweiterung M2-F05b: preset.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub preset: Option<ExportPreset>,
+}
+
+/// Command-Vertrag CustomSummaryArgs (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct CustomSummaryArgs {
+    /// Vertragserweiterung M2-F05b: account.
+    pub account: String,
+
+    /// Vertragserweiterung M2-F05b: target.
+    pub target: String,
+
+    /// Vertragserweiterung M2-F05b: metrics.
+    pub metrics: Vec<String>,
+}
+
+/// Command-Vertrag CustomSummaryMetric (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct CustomSummaryMetric {
+    /// Vertragserweiterung M2-F05b: id.
+    pub id: String,
+
+    /// Vertragserweiterung M2-F05b: label_key.
+    pub label_key: String,
 }

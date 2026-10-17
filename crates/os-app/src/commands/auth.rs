@@ -7,6 +7,13 @@
 stub_commands!(
     "M2-O01",
     [
+        (
+            "auth.importProfile",
+            "AuthImportArgs",
+            "AuthProfileInfo",
+            false
+        ),
+        ("auth.exportProfile", "AuthExportArgs", "FileResult", false),
         ("auth.listProfiles", "void", "AuthProfileInfo[]", false),
         (
             "auth.saveProfile",

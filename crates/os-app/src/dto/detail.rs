@@ -13,6 +13,8 @@ pub enum SerpDevice {
     Desktop,
     /// Mobil.
     Mobile,
+    /// Vertragserweiterung M2-F05b.
+    Tablet,
 }
 
 /// Gespeicherte Bearbeitung des Snippets (K-8).
@@ -296,6 +298,31 @@ pub struct SdIssueDto {
     pub property: Option<String>,
     /// Maschinenlesbarer Code.
     pub code: String,
+    /// Vertragserweiterung M2-F05b: message.
+    pub message: String,
+
+    /// Vertragserweiterung M2-F05b: path.
+    pub path: String,
+
+    /// Vertragserweiterung M2-F05b: line.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub line: Option<u32>,
+
+    /// Vertragserweiterung M2-F05b: col.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub col: Option<u32>,
+
+    /// Vertragserweiterung M2-F05b: snippet.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub snippet: Option<String>,
+
+    /// Vertragserweiterung M2-F05b: doc_url.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub doc_url: Option<String>,
 }
 
 /// Knoten des Baums der strukturierten Daten (UI-045).
@@ -314,6 +341,21 @@ pub struct SdNode {
     pub children: Vec<SdNode>,
     /// Befunde.
     pub issues: Vec<SdIssueDto>,
+    /// Vertragserweiterung M2-F05b: path.
+    pub path: String,
+
+    /// Vertragserweiterung M2-F05b: source_line.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub source_line: Option<u32>,
+
+    /// Vertragserweiterung M2-F05b: source_col.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub source_col: Option<u32>,
+
+    /// Vertragserweiterung M2-F05b: property_order.
+    pub property_order: Vec<String>,
 }
 
 /// Antwort von `detail.structuredData`.

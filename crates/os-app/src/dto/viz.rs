@@ -34,6 +34,10 @@ pub struct VizOpenArgs {
     pub kind: VizKind,
     /// Wurzel; `null` = Start-URL bzw. Wurzelverzeichnis.
     pub root_url_id: Option<i64>,
+    /// Vertragserweiterung M2-F05b: refresh_snapshot_id.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub refresh_snapshot_id: Option<String>,
 }
 
 /// Antwort von `viz.open`: das Fenster arbeitet auf einem Schnappschuss (K-16).
@@ -61,6 +65,30 @@ pub struct VizGraphArgs {
     pub budget: u32,
     /// Spalte, nach der Farbe und Größe bestimmt werden (UI-095).
     pub metric: String,
+    /// Vertragserweiterung M2-F05b: include_non_html.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub include_non_html: Option<bool>,
+
+    /// Vertragserweiterung M2-F05b: include_non_indexable.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub include_non_indexable: Option<bool>,
+
+    /// Vertragserweiterung M2-F05b: expand_depth.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub expand_depth: Option<u32>,
+
+    /// Vertragserweiterung M2-F05b: explore_node.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub explore_node: Option<i64>,
+
+    /// Vertragserweiterung M2-F05b: color_metric.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub color_metric: Option<String>,
 }
 
 /// Ein Knoten.
@@ -80,6 +108,41 @@ pub struct GraphNode {
     pub metric: Option<f64>,
     /// Knoten hat weitere Kinder außerhalb des Budgets.
     pub has_more: bool,
+    /// Vertragserweiterung M2-F05b: status_code.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub status_code: Option<u16>,
+
+    /// Vertragserweiterung M2-F05b: indexability.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub indexability: Option<String>,
+
+    /// Vertragserweiterung M2-F05b: unique_inlinks.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub unique_inlinks: Option<u64>,
+
+    /// Vertragserweiterung M2-F05b: link_score.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub link_score: Option<f64>,
+
+    /// Vertragserweiterung M2-F05b: segment_id.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub segment_id: Option<String>,
+
+    /// Vertragserweiterung M2-F05b: segment_color.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub segment_color: Option<String>,
+
+    /// Vertragserweiterung M2-F05b: hidden_children.
+    pub hidden_children: u64,
+
+    /// Vertragserweiterung M2-F05b: hidden_descendants.
+    pub hidden_descendants: u64,
 }
 
 /// Eine Kante.
@@ -124,6 +187,35 @@ pub struct VizWordsArgs {
     pub kind: WordSource,
     /// URL.
     pub url_id: i64,
+    /// Vertragserweiterung M2-F05b: mode.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub mode: Option<String>,
+
+    /// Vertragserweiterung M2-F05b: remove_stopwords.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub remove_stopwords: Option<bool>,
+
+    /// Vertragserweiterung M2-F05b: language.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub language: Option<String>,
+
+    /// Vertragserweiterung M2-F05b: max_terms.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub max_terms: Option<u32>,
+
+    /// Vertragserweiterung M2-F05b: include_nofollow.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub include_nofollow: Option<bool>,
+
+    /// Vertragserweiterung M2-F05b: exclude_self_links.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub exclude_self_links: Option<bool>,
 }
 
 /// Wort und Häufigkeit.
@@ -137,11 +229,21 @@ pub struct WordFreq {
 }
 
 /// Argument von `viz.exportCsv`.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct VizExportArgs {
     /// Schnappschuss.
     pub snapshot_id: String,
     /// Zielordner (`nodes.csv`, `edges.csv`).
     pub dir: String,
+    /// Vertragserweiterung M2-F05b: nodes.
+    pub nodes: Vec<GraphNode>,
+
+    /// Vertragserweiterung M2-F05b: edges.
+    pub edges: Vec<GraphEdge>,
+
+    /// Vertragserweiterung M2-F05b: layout.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub layout: Option<String>,
 }

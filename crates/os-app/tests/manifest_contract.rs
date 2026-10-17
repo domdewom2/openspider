@@ -132,6 +132,24 @@ const CATALOG_4_4: &[&str] = &[
 
 /// Tabelle 3.6a (alle Zeilen) einschließlich `detail.spellingContext` und `detail.a11yNode`.
 const CATALOG_3_6A: &[&str] = &[
+    "app.requestQuit",
+    "app.confirmQuit",
+    "config.testRobots",
+    "config.loadRobots",
+    "settings.probeCertificates",
+    "settings.setProxyPassword",
+    "api.removeAccount",
+    "auth.importProfile",
+    "auth.exportProfile",
+    "diag.previewBundle",
+    "projects.list",
+    "crawls.checkLocation",
+    "export.multi",
+    "export.presetList",
+    "export.presetSave",
+    "export.presetDelete",
+    "export.customSummaryMetrics",
+    "export.customSummary",
     "api.list",
     "api.connect",
     "api.disconnect",
@@ -180,6 +198,8 @@ const CATALOG_3_6A: &[&str] = &[
 
 /// `long_running` laut den Tabellen (liefert sofort einen `OpHandle`).
 const LONG_RUNNING: &[&str] = &[
+    "export.multi",
+    "export.customSummary",
     // 3.6a
     "api.connect",
     "api.fetch",
@@ -398,4 +418,53 @@ fn every_command_file_is_a_marked_stub_with_a_known_owner() {
         n += 1;
     }
     assert!(n >= 30, "{n} Command-Dateien");
+}
+
+// Infrastruktur (M2-F05b); Fachprüfung durch die jeweiligen Besitzer.
+// spec: UI-140
+#[tokio::test]
+async fn every_f05_command_reports_its_exact_owner() {
+    let dir = tempfile::tempdir().unwrap();
+    let app = App::new(AppConfig::new(dir.path())).unwrap();
+    for (owner, commands) in [
+        ("M2-K04", vec!["app.requestQuit", "app.confirmQuit"]),
+        ("M2-E02", vec!["config.testRobots", "config.loadRobots"]),
+        (
+            "M2-E03",
+            vec!["settings.probeCertificates", "settings.setProxyPassword"],
+        ),
+        ("M2-I01", vec!["api.removeAccount"]),
+        (
+            "M2-O01",
+            vec![
+                "auth.importProfile",
+                "auth.exportProfile",
+                "diag.previewBundle",
+            ],
+        ),
+        ("M2-O02", vec!["projects.list", "crawls.checkLocation"]),
+        (
+            "M2-X01",
+            vec![
+                "export.multi",
+                "export.presetList",
+                "export.presetSave",
+                "export.presetDelete",
+            ],
+        ),
+        (
+            "M2-X03",
+            vec!["export.customSummaryMetrics", "export.customSummary"],
+        ),
+    ] {
+        for command in commands {
+            let err = app
+                .dispatch(CallCtx::for_window("main"), command, serde_json::json!({}))
+                .await
+                .unwrap_err();
+            assert_eq!(err.code, ErrorCode::Unsupported, "{command}");
+            assert_eq!(err.args["command"], command);
+            assert_eq!(err.args["owner"], owner);
+        }
+    }
 }

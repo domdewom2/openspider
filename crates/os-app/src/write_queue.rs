@@ -36,6 +36,7 @@ enum Msg {
 struct Worker {
     paths: Registry,
     conns: HashMap<CrawlKey, Connection>,
+    files: HashMap<CrawlKey, os_store::CrawlFile>,
 }
 
 impl Worker {
@@ -121,6 +122,7 @@ impl WriteQueue {
         let mut worker = Worker {
             paths: Arc::clone(&paths),
             conns: HashMap::new(),
+            files: HashMap::new(),
         };
         let thread = std::thread::Builder::new()
             .name("os-app-write-queue".into())
@@ -167,6 +169,7 @@ impl WriteQueue {
     fn drop_connection(&self, key: CrawlKey) {
         self.send(Msg::Job(Box::new(move |w: &mut Worker| {
             w.conns.remove(&key);
+            w.files.remove(&key);
         })));
     }
 
@@ -207,6 +210,74 @@ impl WriteQueue {
         done_rx
             .await
             .map_err(|_| internal("WriteQueue::submit", "Auftrag ohne Ergebnis verworfen"))?
+    }
+
+    /// Führt einen Verwaltungsauftrag auf demselben Schreib-Thread aus.
+    pub async fn submit_admin<T: Send + 'static>(
+        &self,
+        f: impl FnOnce() -> Result<T, CmdError> + Send + 'static,
+    ) -> Result<T, CmdError> {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        if !self.send(Msg::Job(Box::new(move |_| {
+            let result = std::panic::catch_unwind(AssertUnwindSafe(f)).unwrap_or_else(|p| {
+                Err(internal("WriteQueue::submit_admin", panic_text(p.as_ref())))
+            });
+            let _ = tx.send(result);
+        }))) {
+            return Err(internal(
+                "WriteQueue::submit_admin",
+                "Warteschlange geschlossen",
+            ));
+        }
+        rx.await
+            .map_err(|_| internal("WriteQueue::submit_admin", "Auftrag verworfen"))?
+    }
+
+    /// Datei-Auftrag, strikt mit SQL- und Verwaltungsaufträgen serialisiert, ohne implizite Migration.
+    pub async fn submit_file<T: Send + 'static>(
+        &self,
+        key: &CrawlKey,
+        f: impl FnOnce(&mut os_store::CrawlFile) -> Result<T, CmdError> + Send + 'static,
+    ) -> Result<T, CmdError> {
+        let key = key.clone();
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        if !self.send(Msg::Job(Box::new(move |w| {
+            let result = (|| {
+                if !w.files.contains_key(&key) {
+                    let path = w
+                        .paths
+                        .lock()
+                        .unwrap_or_else(|p| p.into_inner())
+                        .get(&key)
+                        .cloned()
+                        .ok_or_else(|| no_crawl(&key.0))?;
+                    // Prüfen ohne Migration, genau wie bei submit.
+                    drop(open_write(&path).map_err(|e| store_error(&e))?);
+                    let file = os_store::CrawlFile::open(&path, os_store::OpenMode::ReadWrite)
+                        .map_err(|e| store_error(&e))?;
+                    file.conn()
+                        .busy_timeout(BUSY_TIMEOUT)
+                        .map_err(|e| store_error(&e.into()))?;
+                    w.files.insert(key.clone(), file);
+                }
+                let file = w.files.get_mut(&key).expect("Datei gerade geöffnet");
+                match std::panic::catch_unwind(AssertUnwindSafe(|| f(file))) {
+                    Ok(result) => result,
+                    Err(p) => {
+                        w.files.remove(&key);
+                        Err(internal("WriteQueue::submit_file", panic_text(p.as_ref())))
+                    }
+                }
+            })();
+            let _ = tx.send(result);
+        }))) {
+            return Err(internal(
+                "WriteQueue::submit_file",
+                "Warteschlange geschlossen",
+            ));
+        }
+        rx.await
+            .map_err(|_| internal("WriteQueue::submit_file", "Auftrag verworfen"))?
     }
 
     /// Wartet, bis alle bisher eingereihten Aufträge gelaufen sind.

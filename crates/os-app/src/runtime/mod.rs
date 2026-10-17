@@ -18,6 +18,9 @@ pub mod error;
 pub mod hooks;
 pub mod info;
 pub mod interrupt;
+pub mod lifecycle_bus;
+pub mod services;
+pub mod sessions;
 pub mod windows;
 
 use std::future::Future;
@@ -28,9 +31,15 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use futures_util::FutureExt;
+use hooks::{DesktopActions, TickPolicy, WindowHost};
+use lifecycle_bus::CrawlEventBus;
 use os_analyze::analysis::CancelToken;
-use os_fetch::secrets::KeyringSecretStore;
-use os_fetch::{MemorySecretStore, SecretStore};
+use os_fetch::{secret_store_from_env, MemorySecretStore, SecretStoreMut};
+use sessions::SessionRegistry;
+use std::any::{Any, TypeId};
+use std::collections::HashMap;
+pub type WindowClosedCallback = dyn Fn(&App, &WindowId) + Send + Sync;
+type WindowClosedListener = Arc<WindowClosedCallback>;
 use os_model::settings::{AppSettings, LIVE_INTERVAL_RANGE_MS};
 use os_model::{Clock, IdSource, RandomIds, SystemClock};
 use os_store::paths::{app_paths, app_paths_with_home, AppPaths, HOME_ENV};
@@ -108,8 +117,7 @@ pub struct AppConfig {
     /// Quelle der Kennungen (Operationen).
     pub ids: Arc<dyn IdSource>,
     /// Geheimnisse (Schlüsselbund). Tests und die Bridge verwenden immer `MemorySecretStore` (C13).
-    /// STUB(M2-F02): wechselt auf `Arc<dyn SecretStoreMut>`, sobald M2-F02 den Typ liefert.
-    pub secrets: Arc<dyn SecretStore>,
+    pub secrets: Arc<dyn SecretStoreMut>,
     /// Synthetische 5-Mio.-View aktivieren (Feature `stub-views`, M2-S01).
     pub stub_views: bool,
     /// Leseverbindungen je Crawl im Lese-Pool.
@@ -153,12 +161,7 @@ impl AppConfig {
     pub fn from_env() -> AppConfig {
         let paths = app_paths();
         let home_override = std::env::var(HOME_ENV).ok().filter(|h| !h.is_empty());
-        let memory = std::env::var("OPENSPIDER_SECRET_STORE").is_ok_and(|v| v == "memory");
-        let secrets: Arc<dyn SecretStore> = if memory {
-            Arc::new(MemorySecretStore::new())
-        } else {
-            Arc::new(KeyringSecretStore::new())
-        };
+        let secrets = secret_store_from_env();
         AppConfig {
             home: paths.settings.clone(),
             documents_dir: home_override
@@ -187,7 +190,7 @@ impl AppConfig {
     }
 
     /// Ersetzt den Speicher für Geheimnisse.
-    pub fn with_secrets(mut self, secrets: Arc<dyn SecretStore>) -> AppConfig {
+    pub fn with_secrets(mut self, secrets: Arc<dyn SecretStoreMut>) -> AppConfig {
         self.secrets = secrets;
         self
     }
@@ -237,6 +240,13 @@ struct Inner {
     live_interval_ms: AtomicU32,
     quit_hook: Mutex<Option<Arc<dyn QuitHook>>>,
     asset_resolver: Mutex<Option<Arc<dyn AssetResolver>>>,
+    extensions: Mutex<HashMap<TypeId, Arc<dyn Any + Send + Sync>>>,
+    sessions: SessionRegistry,
+    crawl_events: CrawlEventBus,
+    window_closed: Mutex<Vec<WindowClosedListener>>,
+    window_host: Mutex<Option<Arc<dyn WindowHost>>>,
+    desktop_actions: Mutex<Option<Arc<dyn DesktopActions>>>,
+    tick_policy: Mutex<Option<Arc<dyn TickPolicy>>>,
     exec: Exec,
     // zuletzt: der Wächter-Thread endet erst, wenn Pool und Operationen weg sind
     hub: Arc<InterruptHub>,
@@ -285,7 +295,7 @@ impl App {
             ids: Arc::clone(&config.ids),
             clock: Arc::clone(&config.clock),
         });
-        Ok(App(Arc::new(Inner {
+        let app = App(Arc::new(Inner {
             read_pool: ReadPool::new(Arc::clone(&hub), config.read_connections),
             write_queue: WriteQueue::new(),
             ops,
@@ -298,11 +308,79 @@ impl App {
             live_interval_ms: AtomicU32::new(interval),
             quit_hook: Mutex::new(None),
             asset_resolver: Mutex::new(None),
+            extensions: Mutex::new(HashMap::new()),
+            sessions: SessionRegistry::default(),
+            crawl_events: CrawlEventBus::default(),
+            window_closed: Mutex::new(Vec::new()),
+            window_host: Mutex::new(None),
+            desktop_actions: Mutex::new(None),
+            tick_policy: Mutex::new(None),
             registry,
             config,
             exec,
             hub,
-        })))
+        }));
+        services::start(&app);
+        Ok(app)
+    }
+
+    /// Typgebundener Erweiterungsspeicher dieser App.
+    pub fn ext<T: Default + Send + Sync + 'static>(&self) -> Arc<T> {
+        let mut extensions = self.0.extensions.lock().unwrap_or_else(|p| p.into_inner());
+        extensions
+            .entry(TypeId::of::<T>())
+            .or_insert_with(|| Arc::new(T::default()))
+            .clone()
+            .downcast::<T>()
+            .expect("Typkennung stimmt mit Erweiterung überein")
+    }
+    /// Sitzungen je Fenster.
+    pub fn sessions(&self) -> &SessionRegistry {
+        &self.0.sessions
+    }
+    /// Ereignisse des Crawl-Lebenszyklus.
+    pub fn crawl_events(&self) -> &CrawlEventBus {
+        &self.0.crawl_events
+    }
+    /// Registriert einen Hörer für geschlossene Fenster.
+    pub fn on_window_closed(&self, f: Box<WindowClosedCallback>) {
+        self.0
+            .window_closed
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .push(Arc::from(f));
+    }
+    /// Registriert die Fensteranbindung.
+    pub fn set_window_host(&self, h: Arc<dyn WindowHost>) {
+        *self.0.window_host.lock().unwrap_or_else(|p| p.into_inner()) = Some(h);
+    }
+    /// Fensteranbindung, sofern vorhanden.
+    pub fn window_host(&self) -> Option<Arc<dyn WindowHost>> {
+        self.0
+            .window_host
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .clone()
+    }
+    /// Registriert Desktop-Aktionen.
+    pub fn set_desktop_actions(&self, d: Arc<dyn DesktopActions>) {
+        *self
+            .0
+            .desktop_actions
+            .lock()
+            .unwrap_or_else(|p| p.into_inner()) = Some(d);
+    }
+    /// Desktop-Aktionen, sofern vorhanden.
+    pub fn desktop_actions(&self) -> Option<Arc<dyn DesktopActions>> {
+        self.0
+            .desktop_actions
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .clone()
+    }
+    /// Registriert die Taktpolitik.
+    pub fn set_tick_policy(&self, p: Arc<dyn TickPolicy>) {
+        *self.0.tick_policy.lock().unwrap_or_else(|p| p.into_inner()) = Some(p);
     }
 
     /// Führt den Command `name` mit `args` aus (Tauri, Bridge, HTTP-MCP). Ein Panic im Handler wird zu `Internal`.
@@ -385,6 +463,16 @@ impl App {
 
     /// Ein Fenster wurde geschlossen: sein Abonnement und seine Sichtbarkeitsmeldungen werden vergessen.
     pub fn window_closed(&self, window: &WindowId) {
+        let listeners = self
+            .0
+            .window_closed
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .clone();
+        for listener in listeners {
+            listener(self, window);
+        }
+        self.0.sessions.clear(window);
         self.0.windows.forget(window);
     }
 
@@ -471,13 +559,30 @@ impl App {
     /// Baut einen Tick und sendet ihn an alle abonnierten Fenster; Anzahl der erreichten Fenster (0 = nichts zu
     /// melden oder kein Fenster). Ohne abonniertes Fenster bleibt alles vorgemerkt (Meldungen gehen nicht verloren).
     pub fn flush_tick(&self) -> usize {
-        if self.0.windows.subscribed().is_empty() {
+        let policy = self
+            .0
+            .tick_policy
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .clone();
+        let due = policy
+            .map(|p| p.due_windows(self))
+            .unwrap_or_else(|| self.subscribed_windows());
+        if due.is_empty() {
             return 0;
         }
         match self.assemble_tick() {
-            Some(tick) => self.broadcast(UiEvent::Tick {
-                tick: Box::new(tick),
-            }),
+            Some(tick) => due
+                .iter()
+                .filter(|w| {
+                    self.send_event(
+                        w,
+                        UiEvent::Tick {
+                            tick: Box::new(tick.clone()),
+                        },
+                    )
+                })
+                .count(),
             None => 0,
         }
     }
@@ -494,6 +599,7 @@ impl App {
                 clamp_interval(change.settings.appearance.live_interval_ms),
                 Ordering::SeqCst,
             );
+            services::settings_changed(self);
             self.broadcast(UiEvent::SettingsChanged {
                 keys: change.changed.clone(),
             });
@@ -512,6 +618,7 @@ impl App {
                 clamp_interval(self.0.settings.get().appearance.live_interval_ms),
                 Ordering::SeqCst,
             );
+            services::settings_changed(self);
             self.broadcast(UiEvent::SettingsChanged {
                 keys: changed.clone(),
             });

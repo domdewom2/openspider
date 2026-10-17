@@ -49,10 +49,14 @@ pub struct QuotaDto {
     pub limit: Option<u64>,
     /// Zurücksetzung (ISO 8601 UTC).
     pub resets_at: Option<String>,
+    /// Vertragserweiterung M2-F05b: dimension.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub dimension: Option<String>,
 }
 
 /// Eintrag von `api.list`.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(optional_fields = nullable)]
 pub struct ApiSourceInfo {
@@ -70,6 +74,16 @@ pub struct ApiSourceInfo {
     pub quota: Option<QuotaDto>,
     /// Beim Start automatisch verbinden (INTEG-011).
     pub auto_connect: bool,
+    /// Vertragserweiterung M2-F05b: state.
+    pub state: ApiConnState,
+
+    /// Vertragserweiterung M2-F05b: error.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub error: Option<CmdError>,
+
+    /// Vertragserweiterung M2-F05b: accounts.
+    pub accounts: Vec<ApiAccount>,
 }
 
 /// Argument von `api.connect`.
@@ -81,6 +95,20 @@ pub struct ApiConnectArgs {
     pub kind: ApiKind,
     /// API-Schlüssel (nur bei Quellen mit Schlüssel; Ablage im Schlüsselbund).
     pub api_key: Option<String>,
+    /// Vertragserweiterung M2-F05b: remember.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub remember: Option<bool>,
+
+    /// Vertragserweiterung M2-F05b: account_id.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub account_id: Option<String>,
+
+    /// Vertragserweiterung M2-F05b: client_secret.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub client_secret: Option<String>,
 }
 
 /// Ergebnis von `api.connect`.
@@ -96,6 +124,13 @@ pub struct ApiAccount {
     pub scopes: Vec<String>,
     /// Ablauf des Tokens (ISO 8601 UTC).
     pub expires_at: Option<String>,
+    /// Vertragserweiterung M2-F05b: account_id.
+    pub account_id: String,
+
+    /// Vertragserweiterung M2-F05b: key_suffix.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub key_suffix: Option<String>,
 }
 
 /// Argument mit einer Quelle (`api.disconnect`, `api.testConnection`, `api.getSettings`).
@@ -140,6 +175,10 @@ pub struct ApiSetSettingsArgs {
     pub kind: ApiKind,
     /// Neue Einstellungen.
     pub settings: ApiSourceSettings,
+    /// Vertragserweiterung M2-F05b: decision.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub decision: Option<ApiSettingsDecision>,
 }
 
 /// Ergebnis von `api.setSettings`.
@@ -148,6 +187,11 @@ pub struct ApiSetSettingsArgs {
 pub struct ApiSettingsResult {
     /// Gespeicherte Daten dieser Quelle wurden ungültig (INTEG-010).
     pub invalidated: bool,
+    /// Vertragserweiterung M2-F05b: confirmation_required.
+    pub confirmation_required: bool,
+
+    /// Vertragserweiterung M2-F05b: data_stale.
+    pub data_stale: bool,
 }
 
 /// Umfang von `api.fetch`.
@@ -171,7 +215,9 @@ pub enum ApiFetchScope {
 #[serde(rename_all = "camelCase")]
 pub struct ApiFetchArgs {
     /// Quellen; leer = alle verbundenen.
-    pub kinds: Vec<ApiKind>,
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub kinds: Option<Vec<ApiKind>>,
     /// Umfang.
     pub scope: ApiFetchScope,
 }
@@ -237,4 +283,44 @@ pub struct ApiRow {
     pub errors: u64,
     /// Verbleibendes Kontingent.
     pub quota_left: Option<u64>,
+    /// Vertragserweiterung M2-F05b: running.
+    pub running: bool,
+
+    /// Vertragserweiterung M2-F05b: completed.
+    pub completed: u64,
+
+    /// Vertragserweiterung M2-F05b: reset_at.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub reset_at: Option<String>,
+}
+
+/// Command-Vertrag ApiAccountArgs (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct ApiAccountArgs {
+    /// Vertragserweiterung M2-F05b: kind.
+    pub kind: ApiKind,
+
+    /// Vertragserweiterung M2-F05b: account_id.
+    pub account_id: String,
+}
+
+/// Vertrag M2-F05b.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub enum ApiConnState {
+    Disconnected,
+    Connecting,
+    Connected,
+    Error,
+}
+
+/// Vertrag M2-F05b.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub enum ApiSettingsDecision {
+    Ask,
+    Keep,
+    Reload,
 }

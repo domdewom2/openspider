@@ -79,6 +79,15 @@ pub struct StorageSettingsDto {
     pub performance_profile: String,
     /// RAM-Obergrenze in GB.
     pub ram_limit_gb: Option<f64>,
+    /// Vertragserweiterung M2-F05b: cache_limit_mb.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub cache_limit_mb: Option<u32>,
+
+    /// Vertragserweiterung M2-F05b: render_process_limit.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub render_process_limit: Option<u32>,
 }
 
 /// Aufbewahrung (Spiegel von `RetentionSettings`).
@@ -177,6 +186,8 @@ pub struct AppSettingsDto {
     pub mcp: McpSettingsDto,
     /// Schlüssel (TOML-Pfade), deren Änderung durch diesen Aufruf einen Neustart erfordert.
     pub restart_required: Vec<String>,
+    /// Vertragserweiterung M2-F05b: logging.
+    pub logging: LoggingSettingsDto,
 }
 
 /// Argument von `settings.set`: JSON-Merge-Patch (RFC 7396) über `AppSettingsDto` in camelCase; `null` setzt einen
@@ -336,4 +347,62 @@ pub struct SetIntervalArgs {
 pub struct OpCancelArgs {
     /// Operation.
     pub op_id: String,
+}
+
+/// Command-Vertrag LoggingSettingsDto (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct LoggingSettingsDto {
+    /// Vertragserweiterung M2-F05b: level.
+    pub level: String,
+
+    /// Vertragserweiterung M2-F05b: retention_days.
+    pub retention_days: u32,
+}
+
+/// Command-Vertrag BundlePreview (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct BundlePreview {
+    /// Vertragserweiterung M2-F05b: files.
+    pub files: Vec<String>,
+
+    /// Vertragserweiterung M2-F05b: warnings.
+    pub warnings: Vec<String>,
+}
+
+/// Command-Vertrag CertificateProbeArgs (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct CertificateProbeArgs {
+    /// Vertragserweiterung M2-F05b: url.
+    pub url: String,
+}
+
+/// Command-Vertrag CertificateChainDto (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct CertificateChainDto {
+    /// Vertragserweiterung M2-F05b: certificates.
+    pub certificates: Vec<String>,
+
+    /// Vertragserweiterung M2-F05b: trusted.
+    pub trusted: bool,
+}
+
+/// Command-Vertrag ProxyPasswordArgs (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct ProxyPasswordArgs {
+    /// Vertragserweiterung M2-F05b: password.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub password: Option<String>,
+}
+
+/// Entscheidung beim Beenden; die Sitzungslogik liefert M2-K04.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub enum QuitDecision {
+    Quit,
 }

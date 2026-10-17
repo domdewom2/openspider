@@ -7,6 +7,7 @@
 stub_commands!(
     "M2-O02",
     [
+        ("projects.list", "void", "ProjectInfo[]", false),
         ("projects.create", "ProjectCreateArgs", "ProjectInfo", false),
         ("projects.rename", "ProjectRenameArgs", "void", false),
         ("projects.lock", "ProjectLockArgs", "void", false),

@@ -108,6 +108,20 @@ pub struct TestRulesArgs {
     pub rules: Vec<RuleDef>,
     /// Eingabe-URL.
     pub input: String,
+    /// Vertragserweiterung M2-F05b: remove_parameters.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub remove_parameters: Option<Vec<String>>,
+
+    /// Vertragserweiterung M2-F05b: remove_all_parameters.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub remove_all_parameters: Option<bool>,
+
+    /// Vertragserweiterung M2-F05b: regex_partial_match.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub regex_partial_match: Option<bool>,
 }
 
 /// Wirkung einer Regel auf die Eingabe.
@@ -183,6 +197,15 @@ pub struct ProfileExportArgs {
     pub name: String,
     /// Zieldatei (`.osconfig`).
     pub path: String,
+    /// Vertragserweiterung M2-F05b: include_secrets.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub include_secrets: Option<bool>,
+
+    /// Vertragserweiterung M2-F05b: password.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub password: Option<String>,
 }
 
 /// Ein Segment (CRAWL-134, UI-068); `rules` ist die Oberfläche des Regelmodells der Konfiguration
@@ -252,4 +275,46 @@ pub struct SegmentPreview {
     pub counts: Vec<SegmentCount>,
     /// URLs ohne Segment.
     pub unassigned: u64,
+}
+
+/// Command-Vertrag RobotsTestArgs (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct RobotsTestArgs {
+    /// Vertragserweiterung M2-F05b: url.
+    pub url: String,
+
+    /// Vertragserweiterung M2-F05b: content.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub content: Option<String>,
+
+    /// Vertragserweiterung M2-F05b: subdomain.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub subdomain: Option<String>,
+}
+
+/// Command-Vertrag RobotsTestResult (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct RobotsTestResult {
+    /// Vertragserweiterung M2-F05b: allowed.
+    pub allowed: bool,
+
+    /// Vertragserweiterung M2-F05b: matched_line.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub matched_line: Option<u32>,
+
+    /// Vertragserweiterung M2-F05b: user_agent.
+    pub user_agent: String,
+}
+
+/// Command-Vertrag RobotsLoadArgs (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct RobotsLoadArgs {
+    /// Vertragserweiterung M2-F05b: host.
+    pub host: String,
 }
