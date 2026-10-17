@@ -1,0 +1,31 @@
+[[route]]
+path = "/noindex"
+body = "<html><head><meta name='robots' content='noindex'></head><body><a href='/from-noindex'>child</a></body></html>"
+
+[[route]]
+path = "/header-noindex"
+body = "<html><body><a href='/from-header'>child</a></body></html>"
+[route.headers]
+X-Robots-Tag = "noindex"
+
+[[route]]
+path = "/canonical"
+body = "<html><head><link rel='canonical' href='/original'></head><body><a href='/from-canonical'>child</a></body></html>"
+
+[[route]]
+path = "/self-canonical"
+body = "<html><head><link rel='canonical' href='/self-canonical'></head></html>"
+
+[[route]]
+path = "/self-refresh"
+body = "<html><head><meta http-equiv='refresh' content='300'></head><body><a href='/from-refresh'>child</a></body></html>"
+
+[[route]]
+path = "/meta-nofollow"
+body = "<html><head><meta name='robots' content='noindex,nofollow'></head><body><a href='/from-nofollow'>child</a></body></html>"
+
+[[route]]
+path = "/header-nofollow"
+body = "<html><body><a href='/from-nofollow'>child</a></body></html>"
+[route.headers]
+X-Robots-Tag = "noindex,nofollow"
