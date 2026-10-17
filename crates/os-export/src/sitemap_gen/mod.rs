@@ -336,6 +336,28 @@ pub fn sitemap_loc(stored: &str) -> Option<String> {
     Some(out)
 }
 
+/// Configuration-aware app entry point missing from F05 (additive K2-61).
+/// M2-X02 owns the P1 policy implementation; the M1 default remains usable now.
+// STUB(M2-X02): M1 default implemented; configured P1 policies belong to X02.
+pub fn generate_configured(
+    file: &CrawlFile,
+    config: &os_model::SitemapGenConfig,
+    clock: &dyn Clock,
+    out_dir: &Path,
+) -> Result<SitemapReport, ExportError> {
+    if !supports_configuration(config) {
+        return Err(ExportError::NotImplemented("M2-X02"));
+    }
+    generate_sitemap_with(file, &SitemapOptions::default(), None, clock, out_dir)
+}
+
+/// Capability paired with generate_configured so the app menu reflects its provider.
+/// M2-X02 extends both functions when the policy implementation is available.
+// STUB(M2-X02)
+pub fn supports_configuration(config: &os_model::SitemapGenConfig) -> bool {
+    config == &os_model::SitemapGenConfig::default()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
