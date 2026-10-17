@@ -154,3 +154,74 @@ impl ExportCtx<'_> {
             .map_err(|_| ExportError::Write("Export abgebrochen".into()))
     }
 }
+
+/// Extension point for the persisted segment assignment (M2-K14).
+pub trait SegmentScope {
+    /// Trusted SQL over alias `u`, reading persisted assignments rather than recomputing rules.
+    fn population_sql(&self) -> String;
+}
+
+/// One canonical selection in a reusable multi-export preset.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct ExportSelection {
+    pub kind: String,
+    pub name: String,
+}
+
+/// Portable `.ospreset` TOML document, shared by app, CLI and scheduling.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportPreset {
+    pub name: String,
+    pub items: Vec<ExportSelection>,
+    #[serde(default)]
+    pub single_workbook: bool,
+    #[serde(default)]
+    pub skip_empty: bool,
+}
+
+impl ExportPreset {
+    pub fn parse(text: &str) -> Result<Self, ExportError> {
+        toml::from_str(text).map_err(|e| ExportError::Write(e.to_string()))
+    }
+    pub fn to_toml(&self) -> Result<String, ExportError> {
+        toml::to_string_pretty(self).map_err(|e| ExportError::Write(e.to_string()))
+    }
+}
+
+/// Files, warnings and named omissions of a batch.
+#[derive(Debug, Default)]
+pub struct BatchResult {
+    pub files: Vec<ExportFileInfo>,
+    pub warnings: Vec<String>,
+    pub skipped: Vec<String>,
+}
+
+impl ExportPreset {
+    pub fn load(path: &std::path::Path) -> Result<Self, ExportError> {
+        let text = std::fs::read_to_string(crate::fs_paths::fs_path(path)).map_err(|source| {
+            ExportError::Io {
+                path: path.into(),
+                source,
+            }
+        })?;
+        Self::parse(&text)
+    }
+    pub fn save(&self, path: &std::path::Path) -> Result<(), ExportError> {
+        let text = self.to_toml()?;
+        let pending = crate::output::PendingFile::new(path)?;
+        std::fs::write(crate::fs_paths::fs_path(&pending.path), &text).map_err(|source| {
+            ExportError::Io {
+                path: path.into(),
+                source,
+            }
+        })?;
+        pending.publish(ExportFileInfo {
+            path: path.into(),
+            rows: 0,
+            bytes: text.len() as u64,
+            warnings: Vec::new(),
+        })?;
+        Ok(())
+    }
+}

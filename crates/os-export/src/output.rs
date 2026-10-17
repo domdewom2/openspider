@@ -151,3 +151,183 @@ pub fn open_writer(
         Format::Xlsx => Ok(Box::new(XlsxWriter::create(path, sheet, opts)?)),
     }
 }
+
+/// Stages an output next to its destination. Dropping it removes incomplete data.
+pub(crate) struct PendingFile {
+    pub path: PathBuf,
+    destination: PathBuf,
+}
+impl PendingFile {
+    pub fn new(destination: &Path) -> Result<Self, ExportError> {
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static NEXT: AtomicU64 = AtomicU64::new(0);
+        if let Some(parent) = destination.parent().filter(|p| !p.as_os_str().is_empty()) {
+            ensure_dir(parent)?;
+        }
+        loop {
+            let id = NEXT.fetch_add(1, Ordering::Relaxed);
+            let path = destination.with_extension(format!("{}.{}.part", std::process::id(), id));
+            match std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(fs_paths::fs_path(&path))
+            {
+                Ok(_) => {
+                    return Ok(Self {
+                        path,
+                        destination: destination.into(),
+                    })
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
+                Err(source) => return Err(ExportError::Io { path, source }),
+            }
+        }
+    }
+    pub fn publish(
+        &self,
+        mut info: crate::types::ExportFileInfo,
+    ) -> Result<crate::types::ExportFileInfo, ExportError> {
+        std::fs::rename(
+            fs_paths::fs_path(&self.path),
+            fs_paths::fs_path(&self.destination),
+        )
+        .map_err(|source| ExportError::Io {
+            path: self.destination.clone(),
+            source,
+        })?;
+        info.path = self.destination.clone();
+        Ok(info)
+    }
+}
+impl Drop for PendingFile {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(fs_paths::fs_path(&self.path));
+    }
+}
+
+/// Defers opening a file or adding a worksheet until the first data row.
+struct DeferredWriter<'a, 'target> {
+    target: Option<&'a mut (dyn crate::types::WorkbookTarget + 'target)>,
+    shared: Option<&'a mut dyn TableWriter>,
+    owned: Option<Box<dyn TableWriter>>,
+    pending: Option<PendingFile>,
+    path: &'a Path,
+    format: Format,
+    sheet: &'a str,
+    opts: &'a WriterOptions,
+    header: Option<Vec<String>>,
+    cancel: &'a os_model::CancelToken,
+    progress: &'a dyn Fn(u64),
+    rows: u64,
+}
+impl DeferredWriter<'_, '_> {
+    fn start(&mut self) -> Result<(), ExportError> {
+        if self.shared.is_some() || self.owned.is_some() {
+            return Ok(());
+        }
+        if let Some(target) = self.target.take() {
+            self.shared = Some(target.sheet(self.sheet)?);
+        } else {
+            let pending = PendingFile::new(self.path)?;
+            self.owned = Some(match self.format {
+                Format::Csv => {
+                    Box::new(CsvWriter::create(&pending.path, self.opts)?) as Box<dyn TableWriter>
+                }
+                Format::Xlsx => {
+                    let mut writer = XlsxWriter::create(&pending.path, self.sheet, self.opts)?;
+                    writer.set_cancel(self.cancel.clone());
+                    Box::new(writer)
+                }
+            });
+            self.pending = Some(pending);
+        }
+        let header = self.header.clone().unwrap_or_default();
+        self.writer().header(&header)
+    }
+    fn writer(&mut self) -> &mut dyn TableWriter {
+        match self.shared.as_mut() {
+            Some(w) => &mut **w,
+            None => self.owned.as_mut().expect("writer opened").as_mut(),
+        }
+    }
+}
+impl TableWriter for DeferredWriter<'_, '_> {
+    fn header(&mut self, columns: &[String]) -> Result<(), ExportError> {
+        if self.header.is_some() {
+            return Err(ExportError::Write("Duplicate table header".into()));
+        }
+        self.header = Some(columns.to_vec());
+        Ok(())
+    }
+    fn row(
+        &mut self,
+        kinds: &[os_analyze::ColumnKind],
+        values: &[os_model::Value],
+    ) -> Result<(), ExportError> {
+        self.cancel
+            .checkpoint()
+            .map_err(|_| ExportError::Write("Export abgebrochen".into()))?;
+        self.start()?;
+        self.writer().row(kinds, values)?;
+        self.rows += 1;
+        (self.progress)(self.rows);
+        Ok(())
+    }
+    fn finish(self: Box<Self>) -> Result<crate::types::ExportFileInfo, ExportError> {
+        Err(ExportError::Write(
+            "Deferred writer is finished by its owner".into(),
+        ))
+    }
+}
+
+/// Runs a table with cancellation, progress, empty suppression and optional workbook consolidation.
+#[allow(clippy::too_many_arguments)]
+pub fn write_table(
+    path: &Path,
+    format: Format,
+    sheet: &str,
+    opts: &WriterOptions,
+    ctx: &mut crate::types::ExportCtx<'_>,
+    run: impl FnOnce(&mut dyn TableWriter) -> Result<(), ExportError>,
+) -> Result<Option<crate::types::ExportFileInfo>, ExportError> {
+    ctx.checkpoint()?;
+    let mut writer = DeferredWriter {
+        target: ctx.workbook.as_deref_mut(),
+        shared: None,
+        owned: None,
+        pending: None,
+        path,
+        format,
+        sheet,
+        opts,
+        header: None,
+        cancel: ctx.cancel,
+        progress: ctx.progress,
+        rows: 0,
+    };
+    run(&mut writer)?;
+    writer
+        .cancel
+        .checkpoint()
+        .map_err(|_| ExportError::Write("Export abgebrochen".into()))?;
+    if writer.rows == 0 && ctx.skip_empty {
+        drop(writer);
+        ctx.skipped.push(sheet.into());
+        return Ok(None);
+    }
+    writer.start()?;
+    if let Some(owned) = writer.owned.take() {
+        let info = owned.finish()?;
+        writer
+            .cancel
+            .checkpoint()
+            .map_err(|_| ExportError::Write("Export abgebrochen".into()))?;
+        return writer
+            .pending
+            .as_ref()
+            .expect("file target")
+            .publish(info)
+            .map(Some);
+    }
+    Ok(None)
+}
