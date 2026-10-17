@@ -1,0 +1,68 @@
+# D12: Refresh, gemischte Kette und Fehlerziele.
+[[route]]
+path = "/"
+body = '<a href="/refresh">refresh</a><a href="/nourl">no target</a><a href="/ok">ok</a><a href="/loop">loop</a>'
+content_type = "text/html"
+
+[[route]]
+path = "/refresh"
+status = 200
+content_type = "text/html"
+headers = { Refresh = "0; url=/redirect" }
+body = "<p>Refresh</p>"
+
+[[route]]
+path = "/nourl"
+status = 200
+content_type = "text/html"
+headers = { Refresh = "10" }
+body = "<p>No target</p>"
+
+[[route]]
+path = "/redirect"
+status = 301
+location = "/error"
+
+[[route]]
+path = "/error"
+status = 404
+body = "Missing"
+
+[[route]]
+path = "/ok"
+status = 200
+body = "OK"
+
+[[route]]
+path = "/loop"
+status = 301
+location = "/loop"
+
+[[route]]
+path = "/hsts"
+content_type = "text/html"
+headers = { Strict-Transport-Security = "max-age=3600" }
+body = '<a href="http://site.test/hsts-target">HTTP target</a>'
+
+[[route]]
+path = "/hsts-target"
+status = 404
+body = "Missing HSTS target"
+
+[[route]]
+path = "/external-root"
+content_type = "text/html"
+body = '<a href="http://other.test/header-image">External image</a><a href="/header-image-internal">Internal image</a>'
+
+[[route]]
+path = "/header-image"
+content_type = "image/png"
+headers = { Refresh = "0; url=/error" }
+body = "PNG"
+
+[[route]]
+path = "/header-image-internal"
+status = 200
+content_type = "image/png"
+body = "PNG"
+headers = { Refresh = "0; url=/error" }

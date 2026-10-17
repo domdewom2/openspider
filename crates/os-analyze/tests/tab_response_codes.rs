@@ -610,7 +610,7 @@ fn robots_blocked_urls_are_not_in_no_response() {
 
 // spec: ONPAGE-054 [M2]
 #[test]
-#[ignore = "M2: ONPAGE-054 „Malformed“ für ungültige Links braucht die Option „Crawl Invalid Links“ (CRAWL-054, P2)"]
+#[ignore = "P2: CRAWL-054"]
 fn invalid_links_are_reported_as_malformed_with_crawl_invalid_links() {
     // Link `htps://x` mit „Crawl Invalid Links“ an → Eintrag mit Status „Malformed“ in No Response; aus →
     // kein Eintrag. Die Option und der Eintrag entstehen erst mit CRAWL-054.
