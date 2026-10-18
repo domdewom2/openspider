@@ -88,4 +88,43 @@ mod tests {
             0
         );
     }
+
+    // spec: OUT-097
+    #[tokio::test]
+    async fn stored_header_hreflang_on_non_html_is_included_once_with_or_without_crawling() {
+        for crawl in [false, true] {
+            let mut cfg = CrawlConfig::default();
+            cfg.spider.external.crawl = false;
+            cfg.spider.hreflang.crawl = crawl;
+            let fx =
+                crawl_fixture_from("onpage-m2-security", "https://site.test/", cfg.clone()).await;
+            let tabs = os_analyze::tabs::all();
+            let entry = &entries()[0];
+            let job = TableJob {
+                entry_name: entry.name,
+                tabs: &tabs,
+                file: &fx.file,
+                cfg: &cfg,
+            };
+            let path = fx.dir.path().join("header-hreflang.csv");
+            crate::catalog::export_table(entry, &job, &path, Format::Csv).unwrap();
+            let mut csv = csv::Reader::from_path(path).unwrap();
+            let rows: Vec<_> = csv.records().map(Result::unwrap).collect();
+            let headers: Vec<_> = rows
+                .iter()
+                .filter(|r| {
+                    r[1] == *"https://site.test/headers" && r[2] == *"http://site.test/header-de"
+                })
+                .collect();
+            assert_eq!(headers.len(), 1, "crawl={crawl}: {headers:?}");
+            assert_eq!(&headers[0][0], "HTTP Hreflang");
+            assert_eq!(&headers[0][15], "True");
+            assert_eq!(
+                rows.iter()
+                    .filter(|r| r[1].ends_with("report.html") && r[0] == *"Hreflang")
+                    .count(),
+                1
+            );
+        }
+    }
 }

@@ -188,6 +188,12 @@ pub(crate) fn stream_references(
             AND existing.link_path=json_extract(r.value,'$.path')
             AND existing.target_raw=json_extract(r.value,'$.raw')
             AND existing.link_type=json_extract(r.value,'$.type'))
+        UNION ALL
+        SELECT -1000000-h.position, h.url_id, h.target_id, h.href_raw, 'HTTP Hreflang',
+               h.position, NULL, NULL, 1, NULL, 'alternate', 'Absolute', NULL, NULL, 'HTML', h.url
+        FROM hreflang h WHERE h.source='http'
+          AND NOT EXISTS (SELECT 1 FROM links existing WHERE existing.source_id=h.url_id
+              AND existing.link_type='HTTP Hreflang' AND existing.target_raw=h.href_raw)
     ) SELECT l.link_type, s.address, COALESCE(t.address,l.resolved,l.target_raw), t.size_bytes, l.alt_text,
              l.anchor, CASE WHEN t.state='done' AND t.status_code>0 THEN t.status_code END,
              CASE WHEN t.state IS NULL OR t.state<>'done' OR t.status_code IS NULL THEN 'Not Crawled' ELSE t.status END,

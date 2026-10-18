@@ -17,3 +17,4 @@ Content-Security-Policy = "default-src 'self'"
 X-Content-Type-Options = "NoSniff"
 X-Frame-Options = "sameorigin"
 Referrer-Policy = "unsafe-url, strict-origin, foo"
+Link = '<http://site.test/header-de>; rel="alternate"; hreflang="de"'
