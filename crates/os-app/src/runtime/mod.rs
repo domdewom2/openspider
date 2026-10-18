@@ -741,6 +741,15 @@ impl App {
             Some(h) => h.request_quit(self.clone()).await,
             None => QuitDecision::Quit,
         };
+        if let QuitDecision::Confirm { reasons } = &decision {
+            self.broadcast(UiEvent::Notice {
+                notice: Notice {
+                    level: crate::dto::NoticeLevel::Info,
+                    code: "app-quit-confirmation".to_string(),
+                    args: [("reasons".to_string(), serde_json::json!(reasons))].into(),
+                },
+            });
+        }
         if matches!(decision, QuitDecision::Quit) {
             self.0.ops.cancel_all();
             let _ = tokio::time::timeout(Duration::from_secs(2), self.0.write_queue.flush()).await;

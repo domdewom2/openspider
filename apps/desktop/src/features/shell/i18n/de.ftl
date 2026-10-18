@@ -1,0 +1,17 @@
+shell-divider-sidebar = Seitenleiste vergrößern; Eingabe stellt sie wieder her, Pos1 klappt sie ein
+shell-divider-detail = Details vergrößern; Eingabe stellt sie wieder her, Pos1 klappt sie ein
+shell-details = Details
+shell-detail-empty = Wähle eine URL, um ihre Details zu sehen.
+shell-reset-columns = Spalten aller Tabellen zurücksetzen
+shell-reset-description = Sichtbarkeit, Reihenfolge, Breite, Anheftung und Sortierung der Spalten aller Tabellen zurücksetzen? Benannte Spaltenvorlagen bleiben erhalten.
+shell-state-error = Das Fensterlayout konnte nicht gespeichert oder wiederhergestellt werden.
+shell-retry = Erneut versuchen
+shell-quit-title = OpenSpider beenden?
+shell-quit-description = Es laufen noch Vorgänge. Vor dem Beenden pausieren und sichern?
+shell-quit-confirm = Pausieren und beenden
+shell-quit-crawl = Crawl läuft
+shell-quit-analysis = Crawl-Analyse läuft
+shell-quit-export = Export läuft
+shell-quit-mcpSessions = HTTP-MCP-Sitzungen verbunden
+shell-quit-error = OpenSpider konnte nicht beendet werden. Bitte erneut versuchen.
+notice-app-quit-confirmation = Beenden von OpenSpider bestätigen.
