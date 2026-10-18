@@ -1,0 +1,46 @@
+{
+  "urlDetails": [
+    {"name":"Address","value":"https://site.test/redirect"},
+    {"name":"Status Code","value":301},
+    {"name":"Link Score","value":73},
+    {"name":"Redirect URL","value":"https://site.test/final"},
+    {"name":"Crawl Depth","value":7}
+  ],
+  "headers": {
+    "statusLine":"HTTP/2 301",
+    "request":[{"name":"accept","value":"text/html"}],
+    "response":[{"name":"set-cookie","value":"a=1; Secure; HttpOnly; SameSite=Lax"},{"name":"set-cookie","value":"b=2; Max-Age=86400"},{"name":"set-cookie","value":"c=3"},{"name":"x-robots-tag","value":"noindex"}]
+  },
+  "inlinks": [
+    {"Type":"Hyperlink","From":"https://site.test/source","To":"https://site.test/404","Anchor Text":"Mehr","Alt Text":"","Follow":true,"Target":"","Rel":"","Status Code":404,"Status":"Not Found","Path Type":"Root-Relative","Link Path":"/html[1]/body[1]/nav[1]/a[1]","Link Position":"Nav","Link Origin":"HTML"},
+    {"Type":"Hyperlink","From":"https://site.test/source","To":"https://site.test/404","Anchor Text":"mehr","Follow":false,"Target":"_blank","Rel":"nofollow","Status Code":404,"Link Position":"Content","Link Origin":"Rendered HTML"}
+  ],
+  "outlinks": [
+    {"Type":"Hyperlink","From":"https://site.test/redirect","To":"https://outside.test/a?x=2","Anchor Text":"Visit","Follow":true,"Target":"_blank","Status Code":null,"Status":"Not Crawled","Link Path":"/html[1]/body[1]/main[1]/a[1]","Link Position":"Editorial","Original URL":"https://outside.test/a?sid=1&x=2","Link Crawlability":"Crawlable"},
+    {"Type":"Hyperlink","From":"https://site.test/redirect","To":"https://site.test/onclick","Anchor Text":"Open","Status Code":null,"Status":"Uncrawlable","Link Crawlability":"Uncrawlable"}
+  ],
+  "anchors": [
+    {"Anchor Text":"Produkte","Links":4,"Unique Sources":4,"Unique Targets":4,"% of Links":66.67},
+    {"Anchor Text":"produkte","Links":2,"Unique Sources":2,"Unique Targets":2,"% of Links":33.33}
+  ],
+  "images": [
+    {"From":"https://site.test/source","To":"https://site.test/image.svg","Alt Text":"Logo","Real Dimensions (WxH)":null,"Dimensions in Attributes (WxH)":"400x300","Display Dimensions (WxH)":null,"Potential Savings":0,"Path Type":"Root-Relative","Link Path":"/html[1]/body[1]/footer[1]/img[1]","Link Position":"Footer","Link Origin":"HTML","Source":"img","Alt Text Length":4}
+  ],
+  "resources": [
+    {"Type":"JavaScript","From":"https://site.test/source","To":"https://site.test/blocked.js","Status Code":null,"Link Origin":"Rendered HTML","Content Type":"text/javascript","Size":0,"Blocked By":"robots.txt"}
+  ],
+  "cookies": [
+    {"Address":"https://site.test/redirect","Cookie Name":"a","Cookie Value":"1","Domain":"site.test","Path":"/","Expires":null,"Max-Age":null,"Secure":true,"HttpOnly":true,"SameSite":"Lax","Type":"HTTP","Session":true,"First-Party":true},
+    {"Address":"https://site.test/redirect","Cookie Name":"b","Cookie Value":"2","Domain":"outside.test","Path":"/","Expires":null,"Max-Age":86400,"Secure":false,"HttpOnly":false,"SameSite":"None","Type":"JavaScript","Session":false,"First-Party":false}
+  ],
+  "hreflang": [
+    {"Address":"https://site.test/en/","Source":"html","Language Code":"en","Hreflang URL":"https://site.test/en/","Status Code":200,"Indexability":"Indexable","Confirmation":"Self"},
+    {"Address":"https://site.test/en/","Source":"http","Language Code":"de","Hreflang URL":"https://site.test/de/","Status Code":200,"Indexability":"Indexable","Confirmation":"Confirmed"},
+    {"Address":"https://site.test/fr/","Source":"sitemap","Language Code":"it","Hreflang URL":"https://site.test/it/","Status Code":404,"Confirmation":"Non-200"}
+  ],
+  "crawlPath": [
+    {"Target Address":"https://site.test/final","Step":0,"Address":"https://site.test/final","Status Code":200,"Link Type":"HTTP Redirect","Anchor":"","Crawl Depth":2},
+    {"Target Address":"https://site.test/final","Step":1,"Address":"https://site.test/redirect","Status Code":301,"Link Type":"Hyperlink","Anchor":"Go","Crawl Depth":1},
+    {"Target Address":"https://site.test/final","Step":2,"Address":"https://site.test/","Status Code":200,"Link Type":"","Anchor":"","Crawl Depth":0}
+  ]
+}

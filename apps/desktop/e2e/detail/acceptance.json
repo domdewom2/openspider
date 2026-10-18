@@ -1,0 +1,125 @@
+{
+  "package": "M2-U11",
+  "date": "2026-10-18",
+  "platform": "macOS arm64",
+  "branch": "m2/u11",
+  "base_commit": "ca88944",
+  "implementation_commit": "e4e18e23f4e6b998e6219e5e3650dc3681779c85",
+  "implemented_spec_ids": [
+    "UI-030",
+    "UI-031",
+    "UI-032",
+    "UI-033",
+    "UI-034",
+    "UI-035",
+    "UI-036",
+    "UI-042",
+    "UI-043",
+    "UI-050",
+    "UI-111",
+    "UI-145"
+  ],
+  "implemented_extra_spec_ids": [
+    "ONPAGE-192",
+    "TECH-089",
+    "TECH-146",
+    "UI-081",
+    "INTEG-084",
+    "ONPAGE-036",
+    "ONPAGE-172",
+    "OUT-023",
+    "CRAWL-103"
+  ],
+  "validation": [
+    {
+      "command": "cargo fmt --all --check",
+      "result": "passed"
+    },
+    {
+      "command": "cargo clippy --workspace --exclude openspider-desktop --all-targets -- -D warnings",
+      "result": "passed"
+    },
+    {
+      "command": "cargo test --workspace --exclude openspider-desktop",
+      "result": "passed",
+      "passed": 2307,
+      "failed": 0,
+      "existing_ignored": 40
+    },
+    {
+      "command": "npm ci",
+      "result": "passed",
+      "audit_vulnerabilities": 0
+    },
+    {
+      "command": "npm run -w apps/desktop typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "npm run -w apps/desktop test",
+      "result": "passed",
+      "passed": 175,
+      "failed": 0,
+      "duration_seconds": 8.86
+    },
+    {
+      "command": "npm run -w apps/desktop check:static",
+      "result": "passed",
+      "static_tests": 28
+    },
+    {
+      "command": "npm run -w apps/desktop check:licenses",
+      "result": "passed",
+      "packages": 263
+    },
+    {
+      "command": "cargo deny check licenses bans sources",
+      "result": "passed"
+    },
+    {
+      "command": "npm run -w apps/desktop e2e -- --config=e2e/detail/playwright.config.ts",
+      "result": "passed",
+      "browsers": [
+        "chromium",
+        "webkit"
+      ],
+      "passed": 14,
+      "skipped_c9": 2,
+      "duration_seconds": 10.7
+    },
+    {
+      "command": "bash scripts/check-neutral.sh",
+      "result": "passed",
+      "existing_warnings": "Four obsolete allow-list entries in the CI workflow; removal belongs to M2-N01."
+    },
+    {
+      "command": "python3 docs/plan/M2-check.py",
+      "result": "passed"
+    }
+  ],
+  "deviations": [
+    "E2E uses an isolated, ephemeral Vite port so concurrent worktrees cannot serve another package’s frontend.",
+    "The UI and transport contracts are tested with owned spec-derived fixtures. The real crawl/command integration test is complete but marked test.fixme after C9 until M2-K04/M2-K06 replace their stubs (one test in both browsers).",
+    "The million-row check verifies bounded windows and canvas virtualization with a synthetic total; it does not measure the unfinished core’s production latency budgets."
+  ],
+  "integration_handoffs": [
+    "M2-U10: publish URL ids/focus/topTab/crawlId via setDetailSelection or DetailFrame.selection. Resolve os:detail-navigate addresses using crawl metadata to select Internal/External; handle os:detail-back with selection history.",
+    "M2-U21: consume source navigation requests with the stored linkPath (XPath).",
+    "M2-N01: remove the C9 fixme once K04/K06 are merged and verify the real bridge flow."
+  ],
+  "open_questions": [],
+  "ci_run_id": null,
+  "ci_note": "No push, merge or PR was requested or performed; CI matrix/native E2E were not run.",
+  "Fremdergänzungen (K2-61)": [
+    {
+      "file": "apps/desktop/src/App.tsx",
+      "diff": "diff --git a/apps/desktop/src/App.tsx b/apps/desktop/src/App.tsx\nindex 9de7e22..20858b8 100644\n--- a/apps/desktop/src/App.tsx\n+++ b/apps/desktop/src/App.tsx\n@@ -1,4 +1,5 @@\n import { useEffect, useState } from \"react\";\n+import { DetailFrame } from \"./features/detail/frame/DetailFrame\";\n import { RegionBoundary } from \"./app/ErrorBoundary\";\n import { Providers } from \"./app/Providers\";\n import { useT } from \"./i18n\";\n@@ -39,6 +40,7 @@ export function App() {\n           <RegionBoundary name=\"table\">\n             <EmptyState state={{ code: \"NO_DATA_YET\" }} />\n           </RegionBoundary>\n+          <DetailFrame />\n         </main>\n         <aside className=\"os-app-sidebar\" aria-label={t(\"app-region-sidebar\")} />\n         <footer className=\"os-app-status\" role=\"contentinfo\" aria-label={t(\"app-region-status\")}>\n"
+    },
+    {
+      "file": "apps/desktop/src/grid/DataGrid.tsx",
+      "diff": "diff --git a/apps/desktop/src/grid/DataGrid.tsx b/apps/desktop/src/grid/DataGrid.tsx\nindex 6c4205a..5a80b73 100644\n--- a/apps/desktop/src/grid/DataGrid.tsx\n+++ b/apps/desktop/src/grid/DataGrid.tsx\n@@ -26,6 +26,9 @@ export interface DataGridProps {\n   onExportSelection: () => void;\n   rowHeight: number;\n   theme: GridTheme;\n+  /** Optional feature-specific titles and empty-cell explanations; canonical keys remain unchanged. */\n+  columnTitles?: Readonly<Record<string, string>>;\n+  columnHints?: Readonly<Record<string, string>>;\n   ariaLabel: string;\n   locale: string;\n   /** Measurement/navigation API; never exposes Glide types to consumers. */\n@@ -53,7 +56,7 @@ export function DataGrid(props: DataGridProps) {\n   const visible = useMemo(() => props.columns.filter(c => c.visible || c.key === \"Row\").sort((a, b) =>\n     a.key === \"Row\" ? -1 : b.key === \"Row\" ? 1 : Number(b.pinned) - Number(a.pinned)), [props.columns]);\n   const metadata = useMemo(() => new Map(source.columns.map((c, i) => [c.key, { column: c, index: i }])), [source]);\n-  const columns = useMemo(() => visible.map(c => ({ id: c.key, title: c.key, width: c.width, hasMenu: true })), [visible]);\n+  const columns = useMemo(() => visible.map(c => ({ id: c.key, title: props.columnTitles?.[c.key] ?? c.key, width: c.width, hasMenu: true })), [visible, props.columnTitles]);\n   const freeze = visible.findIndex(c => !c.pinned && c.key !== \"Row\");\n   const tokens = theme.tokens;\n   const canvasTheme: Partial<Theme> = { bgCell: tokens[\"bg.surface\"], bgCellMedium: tokens[\"bg.zebra\"], bgHeader: tokens[\"bg.app\"],\n@@ -158,7 +161,7 @@ export function DataGrid(props: DataGridProps) {\n         if (event.kind !== \"cell\") { setTooltip(undefined); return; }\n         const [col, row] = event.location; const meta = metadata.get(visible[col].key)!;\n         const value = source.getCell(meta.index, row);\n-        setTooltip(value === LOADING ? undefined : { text: cellTooltip(value, meta.column, props.locale), x: event.bounds.x, y: event.bounds.y + event.bounds.height });\n+        setTooltip(value === LOADING ? undefined : { text: cellTooltip(value, meta.column, props.locale) || props.columnHints?.[meta.column.key] || \"\", x: event.bounds.x, y: event.bounds.y + event.bounds.height });\n       }} />\n     {tooltip?.text && <div role=\"tooltip\" className=\"os-grid-tooltip\" style={{ left: tooltip.x, top: tooltip.y }}>{tooltip.text}</div>}\n   </div>;\n"
+    }
+  ],
+  "ownership": "All other added/changed files are within M2-U11 owns. No F05 contract tests or stub lists were changed. No external goldens were regenerated.",
+  "clean_room": "Implementation and fixtures use docs/spec and repository contracts only."
+}
