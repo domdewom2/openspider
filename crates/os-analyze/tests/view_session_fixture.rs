@@ -18,6 +18,7 @@ pub fn synthetic(count: u32) -> (tempfile::TempDir, CrawlFile) {
         [count],
     ).unwrap();
     common::set_change_seq(&file, 1);
+    file.set_meta("state", "Completed").unwrap();
     (dir, file)
 }
 pub fn specification(column: &str, descending: bool) -> SessionSpec {

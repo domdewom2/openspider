@@ -1,6 +1,6 @@
 #[path = "../tests/view_session_fixture.rs"]
 mod fixture;
-use criterion::{BenchmarkId, Criterion};
+use criterion::{BatchSize, BenchmarkId, Criterion};
 use fixture::{specification, synthetic};
 use os_analyze::{
     search::FilterSource,
@@ -57,21 +57,43 @@ pub fn run(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("locate", size), &size, |b, n| {
             b.iter(|| black_box(view.locate(&file, os_model::UrlId(i64::from(*n))).unwrap()))
         });
+        group.bench_with_input(BenchmarkId::new("open_cold", size), &size, |b, _| {
+            b.iter_batched(
+                || os_store::view_cache::clear(&file).unwrap(),
+                |_| {
+                    // Empty restriction builds bitmap + projection without a sort permutation.
+                    let mut spec = specification("Status Code", false);
+                    spec.restrict
+                        .push(Arc::new(SearchBitmap(RoaringBitmap::new())));
+                    let session = ViewSession::open(&file, &cfg, spec, Budget::default()).unwrap();
+                    black_box(session.prepare(&file, &Default::default()).unwrap());
+                },
+                BatchSize::PerIteration,
+            )
+        });
         for column in ["Status Code", "Title 1"] {
             group.bench_with_input(
                 BenchmarkId::new(format!("sort_cold_{column}"), size),
                 &size,
                 |b, _| {
-                    b.iter(|| {
-                        let session = ViewSession::open(
-                            &file,
-                            &cfg,
-                            specification(column, false),
-                            Budget::default(),
-                        )
-                        .unwrap();
-                        black_box(session.prepare(&file, &Default::default()).unwrap());
-                    })
+                    b.iter_batched(
+                        || {
+                            let mut spec = specification(column, false);
+                            spec.restrict
+                                .push(Arc::new(SearchBitmap(RoaringBitmap::new())));
+                            let session =
+                                ViewSession::open(&file, &cfg, spec, Budget::default()).unwrap();
+                            session.prepare(&file, &Default::default()).unwrap();
+                            session
+                        },
+                        |mut session| {
+                            session
+                                .update(&file, &cfg, specification(column, false))
+                                .unwrap();
+                            black_box(session.version());
+                        },
+                        BatchSize::PerIteration,
+                    )
                 },
             );
             view.update(&file, &cfg, specification(column, false))
@@ -107,6 +129,16 @@ pub fn run(c: &mut Criterion) {
                 view.update(&file, &cfg, spec).unwrap();
                 black_box(view.version());
             })
+        });
+        file.set_meta("state", "Running").unwrap();
+        group.bench_with_input(BenchmarkId::new("apply_changes_10", size), &size, |b, _| {
+            let changed = (1..=10).map(os_model::UrlId).collect::<Vec<_>>();
+            b.iter(|| {
+                file.conn().execute("UPDATE urls SET status_code=200+((status_code+1)%5) WHERE id<=10", []).unwrap();
+                file.conn().execute("UPDATE crawl_meta SET value=CAST(value AS INTEGER)+1 WHERE key='change_seq'", []).unwrap();
+                view.apply_changes(&file, &changed).unwrap();
+                black_box(view.version());
+            });
         });
         eprintln!(
             "K01 all_permutations rows={size} retained_bytes={}",

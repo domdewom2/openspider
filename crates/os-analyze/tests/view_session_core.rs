@@ -44,6 +44,7 @@ fn fixture() -> (tempfile::TempDir, CrawlFile) {
         )
         .unwrap();
     common::set_change_seq(&file, 7);
+    file.set_meta("state", "Completed").unwrap();
     (dir, file)
 }
 fn spec(column: &str, descending: bool) -> SessionSpec {
@@ -273,6 +274,9 @@ fn budget_eviction_rebuilds_and_zero_idle_releases_without_changing_version() {
     )
     .unwrap();
     let first = window(&s, &file);
+    // Maintenance now belongs to prepare/update/the host tick, never the hot rows path.
+    assert!(s.memory_bytes() > 0);
+    os_analyze::views::session::release_unused(s.budget().max_bytes);
     assert_eq!(s.memory_bytes(), 0);
     assert_eq!(window(&s, &file), first);
     let idle = ViewSession::open(
@@ -286,6 +290,7 @@ fn budget_eviction_rebuilds_and_zero_idle_releases_without_changing_version() {
     )
     .unwrap();
     assert_eq!(window(&idle, &file), first);
+    os_analyze::views::session::release_unused(idle.budget().max_bytes);
     assert_eq!(idle.memory_bytes(), 0);
 }
 
@@ -340,7 +345,10 @@ fn persistent_cache_is_disposable_and_validates_sequence_config_reset_and_step_s
         .conn()
         .query_row("SELECT COUNT(*) FROM view_cache", [], |r| r.get(0))
         .unwrap();
-    assert!(after > before, "config dependency signature changed");
+    assert_eq!(
+        after, before,
+        "unrelated config does not add a filter variant"
+    );
 }
 
 // spec: UI-142
@@ -462,4 +470,314 @@ fn old_snapshot_remains_readable_during_cancelled_worker_build() {
     resume.send(()).unwrap();
     let session = worker.join().unwrap();
     assert_eq!(window(&session, &file), before);
+}
+
+// spec: UI-141
+#[test]
+fn search_and_unrelated_config_do_not_persist_filter_variants() {
+    let _serial = SERIAL.lock().unwrap();
+    let (_dir, file) = fixture();
+    let mut cfg = CrawlConfig::default();
+    let mut s = ViewSession::open(&file, &cfg, spec("Address", false), Budget::default()).unwrap();
+    window(&s, &file);
+    let original: Vec<u8> = file
+        .conn()
+        .query_row("SELECT data FROM view_cache", [], |r| r.get(0))
+        .unwrap();
+    for search in ["/a", "/z", "/missing", ""] {
+        let mut next = spec("Address", false);
+        next.search = Some(views::SearchSpec::Simple(search.into()));
+        s.update(&file, &cfg, next).unwrap();
+        let entries: i64 = file
+            .conn()
+            .query_row("SELECT COUNT(*) FROM view_cache", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(entries, 1);
+        let data: Vec<u8> = file
+            .conn()
+            .query_row("SELECT data FROM view_cache", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(data, original);
+    }
+    cfg.issues.ignore_non_indexable = !cfg.issues.ignore_non_indexable; // irrelevant for All
+    s.update(&file, &cfg, spec("Address", false)).unwrap();
+    assert_eq!(window(&s, &file).total, 6);
+    assert_eq!(
+        file.conn()
+            .query_row("SELECT COUNT(*) FROM view_cache", [], |r| r
+                .get::<_, i64>(0))
+            .unwrap(),
+        1
+    );
+}
+
+// spec: UI-142
+#[test]
+fn deleted_rows_shorten_window_without_foreign_cursor_or_misaligned_keys() {
+    let _serial = SERIAL.lock().unwrap();
+    let (_dir, file) = fixture();
+    let s = ViewSession::open(
+        &file,
+        &CrawlConfig::default(),
+        spec("Address", false),
+        Budget::default(),
+    )
+    .unwrap();
+    let before = window(&s, &file);
+    file.conn()
+        .execute("DELETE FROM urls WHERE id=2", [])
+        .unwrap();
+    let after = window(&s, &file);
+    assert_eq!(after.total, before.total);
+    assert_eq!(after.row_keys, before.row_keys[1..]);
+    assert_eq!(after.rows, before.rows[1..]);
+    let (missing, next) = s.page(&file, &PageStart::Offset(0), 1).unwrap();
+    assert!(missing.rows.is_empty());
+    let (following, _) = s.page(&file, &PageStart::Cursor(next.unwrap()), 1).unwrap();
+    assert_eq!(following.row_keys, vec![before.row_keys[1]]);
+}
+
+// spec: UI-141
+#[test]
+fn small_live_batches_match_sql_with_ties_nulls_deletions_and_multiple_sorts() {
+    let _serial = SERIAL.lock().unwrap();
+    let (_dir, file) = fixture();
+    for id in 7..=500 {
+        common::insert(
+            &file,
+            &[common::row(id, &format!("https://s.test/{id:04}"))
+                .int("status_code", 200 + id % 3)
+                .text("title_1", if id % 2 == 0 { "apple" } else { "Zebra" })],
+        );
+    }
+    file.conn()
+        .execute("UPDATE urls SET content_class='HTML'", [])
+        .unwrap();
+    let cfg = CrawlConfig::default();
+    let mut s = ViewSession::open(&file, &cfg, spec("Title 1", false), Budget::default()).unwrap();
+    // Warm multiple permutations, then repair all of them through several live ticks.
+    for column in ["Title 1", "Status Code"] {
+        s.update(&file, &cfg, spec(column, false)).unwrap();
+    }
+    let multi = || {
+        let mut p = spec("Status Code", true);
+        p.sort.push(SortKey {
+            column: "Title 1".into(),
+            descending: true,
+        });
+        p
+    };
+    s.update(&file, &cfg, multi()).unwrap();
+    let comparisons = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let observed = comparisons.clone();
+    file.conn()
+        .create_collation("OS_TEXT", move |a, b| {
+            observed.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            os_store::collation::compare(a, b)
+        })
+        .unwrap();
+    for tick in 0..8 {
+        file.conn()
+            .execute(
+                "UPDATE urls SET title_1=?1,status_code=?2,address=?3 WHERE id=?4",
+                rusqlite::params![
+                    if tick % 2 == 0 { "" } else { "APPLE" },
+                    200 + tick % 3,
+                    format!("https://s.test/new{tick}"),
+                    1 + tick
+                ],
+            )
+            .unwrap();
+        file.conn()
+            .execute("DELETE FROM urls WHERE id=?1", [490 - tick])
+            .unwrap();
+        common::set_change_seq(&file, 8 + tick as u64);
+        comparisons.store(0, std::sync::atomic::Ordering::Relaxed);
+        s.apply_changes(&file, &[UrlId(1 + tick), UrlId(490 - tick)])
+            .unwrap();
+        assert_eq!(
+            comparisons.load(std::sync::atomic::Ordering::Relaxed),
+            0,
+            "small batch must not run a SQL sort"
+        );
+        for next in [
+            spec("Title 1", false),
+            spec("Title 1", true),
+            spec("Status Code", false),
+            spec("Status Code", true),
+            multi(),
+        ] {
+            let mut q = ViewQuery::new("Internal", "All");
+            q.sort = next.sort.clone();
+            q.columns = next.columns.clone();
+            q.limit = 500;
+            let expected = views::query_view(&file, &cfg, &q).unwrap();
+            s.update(&file, &cfg, next).unwrap();
+            assert_eq!(
+                window(&s, &file).row_keys,
+                expected.row_keys,
+                "tick={tick} sort={:?}",
+                q.sort
+            );
+        }
+    }
+    comparisons.store(0, std::sync::atomic::Ordering::Relaxed);
+    common::set_change_seq(&file, 16);
+    s.apply_changes(&file, &(20..26).map(UrlId).collect::<Vec<_>>())
+        .unwrap();
+    assert!(
+        comparisons.load(std::sync::atomic::Ordering::Relaxed) > 0,
+        "batch above one percent must rebuild"
+    );
+}
+
+// spec: UI-141
+#[test]
+fn cancellation_callbacks_interrupt_sql_and_unregister_before_connection_reuse() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    let detached = os_model::CancelToken::new();
+    let count = Arc::new(AtomicUsize::new(0));
+    let callback_count = count.clone();
+    let registration = detached.on_cancel(move || {
+        callback_count.fetch_add(1, Ordering::Relaxed);
+    });
+    drop(registration);
+    detached.cancel();
+    assert_eq!(count.load(Ordering::Relaxed), 0);
+    let callback_count = count.clone();
+    let _registration = detached.on_cancel(move || {
+        callback_count.fetch_add(1, Ordering::Relaxed);
+    });
+    detached.cancel();
+    assert_eq!(count.load(Ordering::Relaxed), 1);
+    let (_dir, file) = fixture();
+    let token = os_model::CancelToken::new();
+    let interrupt = file.conn().get_interrupt_handle();
+    let registration = token.on_cancel(move || interrupt.interrupt());
+    let worker = token.clone();
+    file.conn()
+        .create_collation("CANCEL_TEST", move |a, b| {
+            worker.cancel();
+            a.cmp(b)
+        })
+        .unwrap();
+    let result = file
+        .conn()
+        .prepare("SELECT address FROM urls ORDER BY address COLLATE CANCEL_TEST")
+        .unwrap()
+        .query_map([], |r| r.get::<_, String>(0))
+        .and_then(|rows| rows.collect::<Result<Vec<_>, _>>());
+    drop(registration);
+    assert!(result.is_err());
+    token.cancel();
+    assert_eq!(
+        file.conn()
+            .query_row("SELECT 1", [], |r| r.get::<_, i64>(0))
+            .unwrap(),
+        1
+    );
+}
+
+// spec: UI-141
+#[test]
+fn old_filter_epochs_are_released_and_multisort_cache_is_reused() {
+    let _serial = SERIAL.lock().unwrap();
+    let (_dir, file) = fixture();
+    let cfg = CrawlConfig::default();
+    let multi = || {
+        let mut p = spec("Status Code", false);
+        p.sort.push(SortKey {
+            column: "Title 1".into(),
+            descending: true,
+        });
+        p
+    };
+    let mut session = ViewSession::open(&file, &cfg, multi(), Budget::default()).unwrap();
+    session.prepare(&file, &Default::default()).unwrap();
+    let bytes = session.memory_bytes();
+    let comparisons = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let observed = comparisons.clone();
+    file.conn()
+        .create_collation("OS_TEXT", move |a, b| {
+            observed.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            os_store::collation::compare(a, b)
+        })
+        .unwrap();
+    session.update(&file, &cfg, multi()).unwrap();
+    assert_eq!(
+        comparisons.load(std::sync::atomic::Ordering::Relaxed),
+        0,
+        "multisort must reuse its cached permutation"
+    );
+    for seq in 8..28 {
+        common::set_change_seq(&file, seq);
+        session.update(&file, &cfg, multi()).unwrap();
+        assert_eq!(session.memory_bytes(), bytes);
+        let mut filtered = multi();
+        filtered.filter = "HTML".into();
+        session.update(&file, &cfg, filtered).unwrap();
+    }
+}
+
+// spec: UI-141
+#[test]
+fn filter_threshold_replaces_persisted_variant_and_rebuilds_membership() {
+    let _serial = SERIAL.lock().unwrap();
+    let (_dir, file) = fixture();
+    file.conn()
+        .execute("UPDATE urls SET title_1_len=id*10", [])
+        .unwrap();
+    let mut cfg = CrawlConfig::default();
+    cfg.title.max_chars = 30;
+    let threshold = || {
+        let mut p = spec("Address", false);
+        p.tab = "Page Titles".into();
+        p.filter = "Over {title.max_chars} Characters".into();
+        p.columns = ColumnSelection::Named(vec!["Address".into()]);
+        p
+    };
+    let mut session = ViewSession::open(&file, &cfg, threshold(), Budget::default()).unwrap();
+    let before = window(&session, &file);
+    cfg.title.max_chars = 50;
+    session.update(&file, &cfg, threshold()).unwrap();
+    let after = window(&session, &file);
+    assert!(after.total < before.total);
+    assert_eq!(
+        file.conn()
+            .query_row("SELECT COUNT(*) FROM view_cache", [], |r| r
+                .get::<_, i64>(0))
+            .unwrap(),
+        1
+    );
+}
+
+// spec: UI-141
+#[test]
+fn filter_config_readiness_is_part_of_the_bitmap_identity() {
+    let _serial = SERIAL.lock().unwrap();
+    let (_dir, file) = fixture();
+    file.conn()
+        .execute("UPDATE urls SET hash_md5='same'", [])
+        .unwrap();
+    let mut cfg = CrawlConfig::default();
+    cfg.extraction.hash = true;
+    cfg.duplicates.exact_enabled = true;
+    let duplicates = || {
+        let mut p = spec("Address", false);
+        p.tab = "Content".into();
+        p.filter = "Exact Duplicates".into();
+        p.columns = ColumnSelection::Named(vec!["Address".into()]);
+        p
+    };
+    let mut session = ViewSession::open(&file, &cfg, duplicates(), Budget::default()).unwrap();
+    assert!(window(&session, &file).total > 0);
+    cfg.duplicates.exact_enabled = false;
+    session.update(&file, &cfg, duplicates()).unwrap();
+    assert_eq!(window(&session, &file).total, 0);
+    common::set_change_seq(&file, 8);
+    session.apply_changes(&file, &[UrlId(1)]).unwrap();
+    assert_eq!(window(&session, &file).total, 0);
+    cfg.duplicates.exact_enabled = true;
+    session.update(&file, &cfg, duplicates()).unwrap();
+    assert!(window(&session, &file).total > 0);
 }

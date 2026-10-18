@@ -157,7 +157,7 @@ struct Materialized {
 struct Cache {
     filters: HashMap<String, FilterBitmap>,
     permutations: HashMap<String, Permutation>,
-    projections: HashMap<String, (RoaringBitmap, Arc<Projection>)>,
+    projections: HashMap<String, Arc<Projection>>,
     view: Option<Arc<Materialized>>,
     used: Option<Duration>,
     recency: u64,
@@ -193,11 +193,6 @@ impl Cache {
                 .permutations
                 .values()
                 .map(Permutation::bytes)
-                .sum::<u64>()
-            + self
-                .projections
-                .values()
-                .map(|(ids, _)| ids.serialized_size() as u64)
                 .sum::<u64>()
             + self
                 .view
@@ -258,12 +253,14 @@ fn register(cache: &Arc<Mutex<Cache>>) {
         .lock()
         .unwrap_or_else(|e| e.into_inner())
         .push(Arc::downgrade(cache));
-    static MAINTENANCE: OnceLock<()> = OnceLock::new();
-    MAINTENANCE.get_or_init(|| {
-        std::thread::spawn(|| loop {
-            std::thread::sleep(Duration::from_secs(1));
-            release_unused(u64::MAX);
-        });
+}
+
+/// Opt-in maintenance for hosts without their own tick. The supplied budget is global.
+/// K05 should normally call `release_unused` from its existing tick instead.
+pub fn start_maintenance(budget: Budget) {
+    std::thread::spawn(move || loop {
+        std::thread::sleep(Duration::from_secs(1));
+        release_unused(budget.max_bytes);
     });
 }
 
@@ -405,9 +402,7 @@ impl ViewSession {
             return Err(ViewError::ForeignCursor);
         }
         let snapshot = self.snapshot(file)?;
-        let result = snapshot.rows(file, req)?;
-        release_unused(self.budget.max_bytes);
-        Ok(result)
+        snapshot.rows(file, req)
     }
     /// Pins the published generation while a replacement is built on a worker. Read it using a
     /// separate read connection; release the pin when the replacement is published or cancelled.
@@ -425,23 +420,29 @@ impl ViewSession {
         let result = u32::try_from(id.0)
             .ok()
             .and_then(|id| cache.view.as_ref().unwrap().inverse.locate(id));
-        drop(cache);
-        release_unused(self.budget.max_bytes);
         Ok(result)
     }
-    /// Rechecks changed IDs against cached predicates. Permutations are invalidated because sort values may change.
+    /// Rechecks membership and repairs cached sorts for batches up to one percent of the crawl.
     pub fn apply_changes(&mut self, file: &CrawlFile, ids: &[UrlId]) -> Result<(), ViewError> {
         self.check_file(file)?;
         if ids.is_empty() {
             return Ok(());
         }
-        // Membership is incrementally repaired by `bitmap` using the caller-supplied IDs.
+        // Membership and binary sort probes must observe the same writer snapshot.
+        let _pragmas = control::BuildPragmas::new(file.conn())?;
+        let _tx = file
+            .conn()
+            .is_autocommit()
+            .then(|| file.conn().unchecked_transaction())
+            .transpose()?;
         let mut cache = self.cache.lock().unwrap_or_else(|e| e.into_inner());
-        let q = query(&self.spec);
+        let mut q = query(&self.spec);
+        q.search = None;
         let tabs = crate::tabs::configured_for_file(&self.cfg, file);
         let built = build::build(&tabs, &q, &self.cfg)?;
-        let key = filter_key(&built, &self.cfg);
-        if let Some(filter) = cache.filters.get_mut(&key) {
+        let ready = super::is_ready(file, &self.cfg, &built)?;
+        let key = filter_key(&built, ready);
+        if let Some(filter) = cache.filters.get_mut(&key).filter(|_| ready) {
             let reset = file
                 .get_meta("reset_seq")?
                 .and_then(|s| s.parse::<u64>().ok())
@@ -450,7 +451,27 @@ impl ViewSession {
                 repair(file, &built, filter, ids)?;
             }
         }
-        cache.permutations.clear();
+        let seq = queries::change_seq(file.conn())?;
+        let reset = file
+            .get_meta("reset_seq")?
+            .and_then(|s| s.parse::<u64>().ok())
+            .unwrap_or(0);
+        let current_stamp = stamp(file)?;
+        let mut repaired = HashMap::new();
+        for (key, mut permutation) in cache.permutations.drain() {
+            let previous_seq = key
+                .rsplit_once(':')
+                .and_then(|(_, seq)| seq.parse::<u64>().ok())
+                .unwrap_or(0);
+            if previous_seq >= reset
+                && key.ends_with(&format!(":{current_stamp}:{previous_seq}"))
+                && permutation.repair(file, ids)?
+            {
+                let signature = key.rsplit_once(':').unwrap().0;
+                repaired.insert(format!("{signature}:{seq}"), permutation);
+            }
+        }
+        cache.permutations = repaired;
         let replacement = materialize(
             file,
             &self.cfg,
@@ -468,7 +489,8 @@ impl ViewSession {
         release_unused(self.budget.max_bytes);
         Ok(())
     }
-    /// Cursor/offset adapter for K05; cursor is tied to this generation and session description.
+    /// Process-local cursor/offset adapter, tied to this generation and session.
+    /// K05 must retain the M1 cursor format for externally persisted cursors.
     pub fn page(
         &self,
         file: &CrawlFile,
@@ -497,7 +519,7 @@ impl ViewSession {
                 limit,
             },
         )?;
-        let next = offset.saturating_add(rows.rows.len() as u64);
+        let next = offset.saturating_add(u64::from(limit)).min(rows.total);
         let cursor = (next < rows.total).then(|| format!("{signature}|{next}"));
         Ok((rows, cursor))
     }
@@ -531,14 +553,11 @@ impl ViewSnapshot {
         let v = &self.view;
         let start = req.offset.min(v.ids.len() as u64) as usize;
         let ids = &v.ids[start..start.saturating_add(req.limit as usize).min(v.ids.len())];
-        let rows = v.projection.rows(file.conn(), ids)?;
-        if rows.len() != ids.len() {
-            return Err(ViewError::ForeignCursor);
-        }
+        let (row_keys, rows) = v.projection.rows(file.conn(), ids)?;
         Ok(Rows {
             columns: v.projection.columns.clone(),
             rows,
-            row_keys: ids.iter().map(|id| UrlId(i64::from(*id))).collect(),
+            row_keys,
             total: v.ids.len() as u64,
             version: self.version,
         })
@@ -556,21 +575,19 @@ fn query(spec: &SessionSpec) -> ViewQuery {
     q.sort = spec.sort.clone();
     q
 }
-fn filter_key(built: &build::Built<'_>, cfg: &CrawlConfig) -> String {
-    // Conservative superset of config dependencies; correctness also covers dynamic column sources.
+fn filter_key(built: &build::Built<'_>, ready: bool) -> String {
+    // Build without search: predicates encode filter-relevant configuration and params
+    // encode thresholds. Presentation, network and search configuration do not belong here.
     crate::cursor::query_hash(&[
         built.tab.id,
         built.filter.id,
-        &format!(
-            "{}:{}:{:?}:{:?}",
-            built.plan.population_sql,
-            built.plan.filter_sql,
-            built.plan.search_sql,
-            built.plan.params
-        ),
-        &serde_json::to_string(cfg).unwrap_or_default(),
+        &built.plan.population_sql,
+        &built.plan.filter_sql,
+        &format!("{:?}", built.plan.params),
+        if ready { "ready" } else { "unavailable" },
     ])
 }
+
 fn stamp(file: &CrawlFile) -> Result<String, ViewError> {
     let mut stmt = file.conn().prepare(
         "SELECT step, state, finished_at, config_hash FROM analysis_steps ORDER BY step",
@@ -619,13 +636,16 @@ fn materialize(
     control: &BuildControl,
 ) -> Result<Materialized, ViewError> {
     control.check()?;
+    let _pragmas = control::BuildPragmas::new(file.conn())?;
     let _interrupt = control::InterruptGuard::new(file, control.cancel.clone());
+    control.check()?;
     let tx = file
         .conn()
         .is_autocommit()
         .then(|| file.conn().unchecked_transaction())
         .transpose()?;
-    let q = query(spec);
+    let mut q = query(spec);
+    q.search = None;
     let tabs = crate::tabs::configured_for_file(cfg, file);
     let built = build::build(&tabs, &q, cfg)?;
     let ready = super::is_ready(file, cfg, &built)?;
@@ -637,11 +657,14 @@ fn materialize(
     let stamp = stamp(file)?;
     cache
         .permutations
-        .retain(|key, _| key.ends_with(&format!(":{seq}")));
+        .retain(|key, _| key.ends_with(&format!(":{stamp}:{seq}")));
     cache
         .projections
         .retain(|key, _| key.ends_with(&format!(":{seq}")));
-    let key = filter_key(&built, cfg);
+    cache
+        .filters
+        .retain(|_, f| f.seq == seq && f.seq >= reset && f.stamp == stamp);
+    let key = filter_key(&built, ready);
     let disk_key = format!("{}:{}", built.tab.id, built.filter.id);
     if !cache
         .filters
@@ -678,13 +701,6 @@ fn materialize(
                 stamp: stamp.clone(),
             },
         );
-        if cache
-            .filters
-            .values()
-            .any(|f| f.seq != seq || f.stamp != stamp || f.seq < reset)
-        {
-            cache.permutations.clear();
-        }
     }
     control.cancel.set_progress(0.35);
     let mut allowed = cache.filters[&key].ids.clone();
@@ -692,53 +708,47 @@ fn materialize(
         control.check()?;
         allowed &= source.bitmap(file)?;
     }
+    if spec.search.is_some() {
+        let searched = build::build(&tabs, &query(spec), cfg)?;
+        let mut stmt = file.conn().prepare(&format!(
+            "SELECT u.id FROM {URLS_FROM} WHERE {}",
+            build::where_sql(&searched.plan)
+        ))?;
+        exec::bind_named(&mut stmt, &searched.plan.params, &[])?;
+        let mut rows = stmt.raw_query();
+        let mut matches = RoaringBitmap::new();
+        while let Some(row) = rows.next()? {
+            control.check()?;
+            matches.insert(url_index(row.get(0)?)?);
+        }
+        allowed &= matches;
+    }
     let mut positions = Vec::with_capacity(allowed.len() as usize);
     if allowed.is_empty() {
         // A filter waiting for analysis must not sort the crawl merely to return no rows.
-    } else if built.sort.len() == 1 {
-        let term = &built.sort[0];
-        let signature = format!("{}:{}:{}", term.raw, term.collate, seq);
+    } else if built.sort.is_empty() {
+        positions.extend(allowed.iter());
+    } else {
+        let signature = format!("{}:{stamp}:{seq}", permutation::signature(&built.sort));
         if !cache.permutations.contains_key(&signature) {
-            let permutation = Permutation::build(file, term, &control.cancel)?;
+            let permutation = Permutation::build(file, &built.sort, &control.cancel)?;
             cache.permutations.insert(signature.clone(), permutation);
         }
-        cache.permutations[&signature].visit(term.desc, |id| {
+        cache.permutations[&signature].visit(built.sort.len() == 1 && built.sort[0].desc, |id| {
             if allowed.contains(id) {
                 positions.push(id);
             }
         });
-    } else if built.sort.is_empty() {
-        positions.extend(allowed.iter());
-    } else {
-        let mut stmt = file.conn().prepare(&format!(
-            "SELECT u.id FROM {URLS_FROM} {}",
-            built.plan.order_by
-        ))?;
-        let mut rows = stmt.query([])?;
-        while let Some(row) = rows.next()? {
-            control.check()?;
-            let id = url_index(row.get(0)?)?;
-            if allowed.contains(id) {
-                positions.push(id);
-            }
-        }
     }
     control.check()?;
     control.cancel.set_progress(0.85);
     let inverse = Inverse::build(&positions);
-    let projection_key = format!("{key}:{:?}:{stamp}:{seq}", spec.columns);
-    let projection = if let Some((previous, projection)) = cache
-        .projections
-        .get(&projection_key)
-        .filter(|(previous, _)| *previous == allowed)
-    {
-        let _ = previous;
+    let projection_key = format!("{}:{:?}:{ready}:{stamp}:{seq}", built.tab.id, spec.columns);
+    let projection = if let Some(projection) = cache.projections.get(&projection_key) {
         projection.clone()
     } else {
         let projection = Arc::new(Projection::build(file.conn(), &built, ready)?);
-        cache
-            .projections
-            .insert(projection_key, (allowed, projection.clone()));
+        cache.projections.insert(projection_key, projection.clone());
         projection
     };
     control.check()?;

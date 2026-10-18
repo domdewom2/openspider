@@ -110,3 +110,45 @@ fn synthetic_1m_windows_and_reversal() {
 fn synthetic_5m_windows_and_reversal() {
     measure(5_000_000);
 }
+
+// spec: UI-141
+#[test]
+fn text_merge_across_sort_blocks_matches_sql_with_unicode_ties_and_nulls() {
+    use os_analyze::views::{self, ViewQuery};
+    let (_dir, file) = fixture::synthetic(70_000);
+    file.conn()
+        .execute(
+            "UPDATE urls SET title_1=CASE WHEN id%26=0 THEN 'Äpfel' ELSE 'äPFEL' END WHERE id%13=0",
+            [],
+        )
+        .unwrap();
+    let cfg = CrawlConfig::default();
+    let mut session = ViewSession::open(
+        &file,
+        &cfg,
+        fixture::specification("Title 1", false),
+        Budget::default(),
+    )
+    .unwrap();
+    for descending in [false, true] {
+        let spec = fixture::specification("Title 1", descending);
+        let mut query = ViewQuery::new("Internal", "All");
+        query.sort = spec.sort.clone();
+        query.columns = spec.columns.clone();
+        query.limit = 500;
+        let expected = views::query_view(&file, &cfg, &query).unwrap();
+        session.update(&file, &cfg, spec).unwrap();
+        let actual = session
+            .rows(
+                &file,
+                RowsReq {
+                    version: session.version(),
+                    offset: 0,
+                    limit: 500,
+                },
+            )
+            .unwrap();
+        assert_eq!(actual.row_keys, expected.row_keys);
+        assert_eq!(actual.rows, expected.rows);
+    }
+}

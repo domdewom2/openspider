@@ -1,12 +1,11 @@
-//! Window projection by primary key; multi-column widths are computed once per view build.
+//! Window projection by primary key; bounded crawl-wide width cache independent of view filters.
 use super::super::build::{
-    multi_nth_expr, numbered_name, series_parts, where_sql, Built, Pick, SelectedColumn,
+    multi_nth_expr, numbered_name, series_parts, Built, Pick, SelectedColumn,
 };
-use super::super::exec::bind_named;
 use super::super::URLS_FROM;
 use crate::defs::{ColumnKind, ColumnSql, PairedPart};
 use crate::error::ViewError;
-use os_model::Value;
+use os_model::{UrlId, Value};
 use rusqlite::types::ValueRef;
 use rusqlite::{Connection, Statement};
 fn round_to(x: f64, decimals: u8) -> f64 {
@@ -80,33 +79,65 @@ fn header(cols: &[SelectedColumn<'_>], plans: &[ColExec]) -> Vec<String> {
     out
 }
 
-/// Anzahl nummerierter Spalten einer Mehrfachspalte: Maximum über die Ansicht und alle Teillisten,
+/// Anzahl nummerierter Spalten einer Mehrfachspalte: Maximum über den Crawl und alle Teillisten,
 /// mindestens 1.
-fn multi_count(
-    conn: &Connection,
-    built: &Built<'_>,
-    parts: &[PairedPart],
-    crawl_wide: bool,
-) -> Result<usize, ViewError> {
-    let mut max_count: i64 = 0;
+fn multi_count(conn: &Connection, parts: &[PairedPart]) -> Result<usize, ViewError> {
+    use std::{
+        collections::HashMap,
+        sync::{Mutex, OnceLock},
+    };
+    static WIDTHS: OnceLock<Mutex<HashMap<String, usize>>> = OnceLock::new();
+    let seq = os_store::queries::change_seq(conn)?;
+    let crawl: String = conn.query_row(
+        "SELECT value FROM crawl_meta WHERE key='crawl_id'",
+        [],
+        |r| r.get(0),
+    )?;
+    let reset: String = conn.query_row(
+        "SELECT COALESCE((SELECT value FROM crawl_meta WHERE key='reset_seq'),'0')",
+        [],
+        |r| r.get(0),
+    )?;
+    let analysis: String = conn.query_row("SELECT COALESCE(group_concat(step || ':' || state || ':' || COALESCE(finished_at,'') || ':' || COALESCE(config_hash,'')), '') FROM (SELECT * FROM analysis_steps ORDER BY step)", [], |r| r.get(0))?;
+    let mut max_count = 1;
     for part in parts {
-        let correlated = part.list_sql.replace("?1", "u.id");
-        let sql =
-            format!(
-            "SELECT COALESCE(MAX(c), 0) FROM (SELECT (SELECT COUNT(*) FROM ({correlated})) AS c \
-             FROM {URLS_FROM} WHERE {})",
-            if crawl_wide { "1".to_owned() } else { where_sql(&built.plan) }
+        let key = format!(
+            "{}:{crawl}:{seq}:{reset}:{analysis}:{}",
+            conn.path().unwrap_or_default(),
+            part.list_sql
         );
-        let mut stmt = conn.prepare(&sql)?;
-        bind_named(&mut stmt, &built.plan.params, &[])?;
-        let mut rows = stmt.raw_query();
-        let max: i64 = match rows.next()? {
-            Some(r) => r.get(0)?,
-            None => 0,
+        let cache = WIDTHS.get_or_init(|| Mutex::new(HashMap::new()));
+        if let Some(count) = cache
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .get(&key)
+            .copied()
+        {
+            max_count = max_count.max(count);
+            continue;
+        }
+        // The common series can aggregate their child table once, without probing every URL.
+        let grouped = match part.list_sql {
+            crate::tabs::internal::META_ROBOTS_LIST => Some("SELECT COUNT(*) AS n FROM directives WHERE source='meta_robots' AND applies=1 GROUP BY url_id"),
+            crate::tabs::internal::X_ROBOTS_LIST => Some("SELECT COUNT(*) AS n FROM directives WHERE source='x_robots_tag' AND applies=1 GROUP BY url_id"),
+            crate::tabs::internal::CANONICAL_LIST => Some("SELECT COUNT(*) AS n FROM canonicals WHERE source='html' GROUP BY url_id"),
+            _ => None,
         };
-        max_count = max_count.max(max);
+        let sql = if let Some(grouped) = grouped {
+            format!("SELECT COALESCE(MAX(n),0) FROM ({grouped})")
+        } else {
+            let correlated = part.list_sql.replace("?1", "u.id");
+            format!("SELECT COALESCE(MAX((SELECT COUNT(*) FROM ({correlated}))), 0) FROM urls u")
+        };
+        let count: usize = conn.query_row(&sql, [], |r| r.get(0))?;
+        let mut cache = cache.lock().unwrap_or_else(|e| e.into_inner());
+        if cache.len() >= 128 {
+            cache.clear();
+        }
+        cache.insert(key, count);
+        max_count = max_count.max(count);
     }
-    Ok((max_count.max(1)) as usize)
+    Ok(max_count)
 }
 
 fn no_series() -> ViewError {
@@ -143,12 +174,7 @@ fn prepare_columns(
             (Pick::Whole, _) => {
                 let (base, parts) = series_parts(def).ok_or_else(no_series)?;
                 let count = if count_multi {
-                    multi_count(
-                        conn,
-                        built,
-                        &parts,
-                        matches!(col.def.sql, ColumnSql::MultiCrawlWide { .. }),
-                    )?
+                    multi_count(conn, &parts)?
                 } else {
                     1
                 };
@@ -183,9 +209,13 @@ impl Projection {
         let columns = header(&built.columns, &prepared.plans);
         Ok(Self { prepared, columns })
     }
-    pub fn rows(&self, conn: &Connection, ids: &[u32]) -> Result<Vec<Vec<Value>>, ViewError> {
+    pub fn rows(
+        &self,
+        conn: &Connection,
+        ids: &[u32],
+    ) -> Result<(Vec<UrlId>, Vec<Vec<Value>>), ViewError> {
         if ids.is_empty() {
-            return Ok(Vec::new());
+            return Ok((Vec::new(), Vec::new()));
         }
         let requested = ids.iter().map(u32::to_string).collect::<Vec<_>>().join(",");
         let order = ids
@@ -200,6 +230,7 @@ impl Projection {
         ))?;
         let mut multi = multi_statements(conn, &self.prepared)?;
         let mut result = Vec::with_capacity(ids.len());
+        let mut keys = Vec::with_capacity(ids.len());
         let mut rows = stmt.query([])?;
         while let Some(row) = rows.next()? {
             let id: i64 = row.get(0)?;
@@ -239,9 +270,10 @@ impl Projection {
                     }
                 }
             }
+            keys.push(UrlId(id));
             result.push(cells);
         }
-        Ok(result)
+        Ok((keys, result))
     }
 }
 fn multi_statements<'a>(
