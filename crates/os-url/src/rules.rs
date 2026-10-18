@@ -262,11 +262,84 @@ pub struct RuleTrace {
     pub matched: Vec<String>,
     pub warnings: Vec<String>,
 }
-// STUB(M2-E04)
-pub fn trace(_rules: &RuleTraceInput, _url: &str) -> RuleTrace {
-    RuleTrace::default()
+/// Liefert alle passenden Zeilen, unabhängig von der Exclude-Priorität der Entscheidung.
+pub fn trace(rules: &RuleTraceInput, url: &str) -> RuleTrace {
+    let mut trace = RuleTrace::default();
+    for (kind, label, lines) in [
+        (RuleKind::Include, "Include", &rules.include),
+        (RuleKind::Exclude, "Exclude", &rules.exclude),
+    ] {
+        for (index, line) in lines.iter().enumerate() {
+            match compile_list(std::slice::from_ref(line), rules.partial_match, label) {
+                Ok(compiled) => {
+                    let set = RuleSet {
+                        include: Vec::new(),
+                        exclude: Vec::new(),
+                        warnings: Mutex::new(Vec::new()),
+                    };
+                    for rule in compiled {
+                        if set.matches(&rule, kind, url) {
+                            trace
+                                .matched
+                                .push(format!("{label}[{index}]: {}", rule.text));
+                        }
+                    }
+                    trace.warnings.extend(
+                        set.take_warnings()
+                            .into_iter()
+                            .map(|w| format!("{label}[{index}]: {}", w.message)),
+                    );
+                }
+                Err(error) => trace.warnings.push(format!("{label}[{index}]: {error}")),
+            }
+        }
+    }
+    trace
 }
-// STUB(M2-E04)
-pub fn validate(_cfg: &os_model::CrawlConfig) -> Vec<os_model::ConfigIssue> {
-    Vec::new()
+
+/// Alle Regex- und CDN-Fehler sammeln; beim Speichern werden sie als Feldfehler angezeigt.
+pub fn validate(cfg: &os_model::CrawlConfig) -> Vec<os_model::ConfigIssue> {
+    let mut issues = Vec::new();
+    let mut issue = |path: String, message: String| {
+        issues.push(os_model::ConfigIssue {
+            code: "InvalidValue".into(),
+            position: None,
+            kind: os_model::ConfigIssueKind::InvalidValue,
+            path,
+            line: None,
+            column: None,
+            message,
+        })
+    };
+    for (label, lines) in [
+        ("include", &cfg.scope.include),
+        ("exclude", &cfg.scope.exclude),
+    ] {
+        for (index, line) in lines.iter().enumerate() {
+            if let Err(error) = compile_list(
+                std::slice::from_ref(line),
+                cfg.scope.regex_partial_match,
+                label,
+            ) {
+                issue(format!("scope.{label}[{index}]"), error.to_string());
+            }
+        }
+    }
+    for (index, rule) in cfg.rewrite.regex_replace.iter().enumerate() {
+        if let Err(error) = crate::rewrite::compile(&rule.pattern) {
+            issue(
+                format!("rewrite.regex_replace[{index}].pattern"),
+                error.to_string(),
+            );
+        }
+    }
+    for (index, cdn) in cfg.cdns.iter().enumerate() {
+        if crate::scope::cdn_entry(cdn).is_none() {
+            issue(
+                format!("cdns[{index}]"),
+                "Erwartet: Domain oder Domain/Pfadpräfix".into(),
+            );
+        }
+    }
+    issues
 }

@@ -1,0 +1,8 @@
+https://cdn.other.test/img.png	internal
+http://CDN.Other.Test/seite.html	internal
+https://other.test/assets/a.css	internal
+http://other.test/assets/seite.html	internal
+https://other.test/Assets/a.css	external
+https://other.test/blog/	external
+https://cdn.other.test.evil.test/img.png	external
+https://sub.cdn.other.test/img.png	external

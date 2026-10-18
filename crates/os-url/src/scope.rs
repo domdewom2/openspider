@@ -29,11 +29,13 @@ pub struct Scope {
     start_domain: Option<String>,
     all_subdomains: bool,
     folder: Option<String>,
+    cdns: Vec<(String, String)>,
 }
 
 impl Scope {
-    // STUB(M2-E04)
-    pub fn with_cdns(self, _cdns: &[String]) -> Self {
+    /// CDN-Einträge erweitern den Bereich unabhängig von der Startordner-Grenze.
+    pub fn with_cdns(mut self, cdns: &[String]) -> Self {
+        self.cdns = cdns.iter().filter_map(|entry| cdn_entry(entry)).collect();
         self
     }
     /// Legt den Bereich fest.
@@ -46,6 +48,7 @@ impl Scope {
         Scope {
             all_subdomains: cfg.all_subdomains || root_start,
             folder: folder_only.then(|| start_folder(start.url.path())),
+            cdns: Vec::new(),
             start_host,
             start_domain,
         }
@@ -61,6 +64,12 @@ impl Scope {
         let Some(host) = url.url.host_str() else {
             return ScopeClass::External;
         };
+        if self.cdns.iter().any(|(cdn, prefix)| {
+            host.trim_end_matches('.').eq_ignore_ascii_case(cdn)
+                && url.url.path().starts_with(prefix)
+        }) {
+            return ScopeClass::Internal;
+        }
         if !self.host_is_internal(host) {
             return ScopeClass::External;
         }
@@ -130,4 +139,20 @@ pub fn registrable_domain(host: &str) -> Option<String> {
         return (labels.len() >= 2).then(|| labels[labels.len() - 2..].join("."));
     }
     psl::domain_str(&ascii).map(str::to_string)
+}
+
+/// Eintrag ohne Schema; Host wird wie eine URL (inkl. IDNA) normalisiert.
+pub(crate) fn cdn_entry(entry: &str) -> Option<(String, String)> {
+    let entry = entry.trim();
+    if entry.is_empty() || entry.contains("://") || entry.contains(['?', '#', '@']) {
+        return None;
+    }
+    let url = url::Url::parse(&format!("https://{entry}")).ok()?;
+    if url.port().is_some() {
+        return None;
+    }
+    Some((
+        url.host_str()?.trim_end_matches('.').to_string(),
+        url.path().to_string(),
+    ))
 }

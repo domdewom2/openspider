@@ -615,30 +615,6 @@ function = "run"
 signature = "pub fn run(_ctx: &crate::PageCtx<'_>, _page: &mut os_model::ParsedPage)"
 
 [[stub]]
-owner = "M2-E04"
-file = "crates/os-url/src/rewrite.rs"
-function = "apply_discovered"
-signature = "pub fn apply_discovered<'a>( _cfg: &os_model::RewriteConfig, raw_resolved: &'a str, ) -> Rewritten<'a>"
-
-[[stub]]
-owner = "M2-E04"
-file = "crates/os-url/src/rules.rs"
-function = "trace"
-signature = "pub fn trace(_rules: &RuleTraceInput, _url: &str) -> RuleTrace"
-
-[[stub]]
-owner = "M2-E04"
-file = "crates/os-url/src/rules.rs"
-function = "validate"
-signature = "pub fn validate(_cfg: &os_model::CrawlConfig) -> Vec<os_model::ConfigIssue>"
-
-[[stub]]
-owner = "M2-E04"
-file = "crates/os-url/src/scope.rs"
-function = "with_cdns"
-signature = "pub fn with_cdns(self, _cdns: &[String]) -> Self"
-
-[[stub]]
 owner = "M2-E05"
 file = "crates/os-engine/src/render_glue.rs"
 function = "render"

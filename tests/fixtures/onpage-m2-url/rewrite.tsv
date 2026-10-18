@@ -1,0 +1,6 @@
+https://site.test/a?sid=1&x=2	https://site.test/a?x=2
+https://site.test/a?x=2&sid=9	https://site.test/a?x=2
+https://site.test/b?sid=1	https://site.test/b
+https://site.test/a?sid=1&sid=2&SID=3#sid=4	https://site.test/a?SID=3#sid=4
+https://site.test/c?utm_source=x&utm_source2=y	https://site.test/c?utm_source2=y
+https://site.test/a?%73id=1&x=%2f+%20&x=2	https://site.test/a?x=%2f+%20&x=2
