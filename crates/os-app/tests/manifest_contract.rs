@@ -436,11 +436,7 @@ async fn every_f05_command_reports_its_exact_owner() {
         ("M2-I01", vec!["api.removeAccount"]),
         (
             "M2-O01",
-            vec![
-                "auth.importProfile",
-                "auth.exportProfile",
-                "diag.previewBundle",
-            ],
+            vec!["diag.previewBundle"],
         ),
         ("M2-O02", vec!["projects.list", "crawls.checkLocation"]),
         (
