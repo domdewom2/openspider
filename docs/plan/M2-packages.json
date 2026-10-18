@@ -290,6 +290,27 @@
   "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Ziel: der Adapter src/grid/ (DataGridProps nach M2-ui-concept 3.3) und die ViewDataSource (2.4: Blöcke à 200, LRU 20 000, Versionsverwerfen, Anker, Tail-Modus, locate) sind Produktcode und gegen den Stub-Vertrag fertig; os-app Feature stub-views liefert view.open/rows/locate synthetisch (5 000 000 × 65, deterministisch). Glide-eigenes Kopieren/Editieren aus; Mod+C ruft view.copy. MESSUNG Gate S-1 (Kriterien M2-ui-concept 3.3 (1)–(6)) und S-2 (Zoom/devicePixelRatio): Teil A in der Cloud mit Playwright (Chromium und WebKit, headless, nur Funktionskriterien 1, 4, 5, 6); Teil B echte App über spike-grid.yml auf macos-14 und windows-latest (Frame-Recorder aus 7.4, Bericht als Artefakt; Werte gelten als Indiz, Klärung K2-12); Teil C lokal auf der Referenzmaschine A durch den Orchestrator (tauri dev --features stub-views, Recorder-Seite, VoiceOver-Ansage aria-rowcount 5 000 001). Ergebnis docs/plan/M2-spikes/S-1.md mit Messwerten je Kriterium und Plattform und Empfehlung nach der Rückfalltabelle M2.md 3.9 (Stufe 0/A/B). Kein Fallback selbst umsetzen außer Fallback 0 (Vendoring), wenn das npm-Paket nicht installierbar ist. S-2 Kriterien (M2.md 3.9): Zoomstufen 80/100/125/150/200 % × DPR 1/2 (WebKit, WKWebView lokal) bzw. 100/125/150/200 % Skalierung (WebView2, CI) und DPR 3 emuliert (Playwright deviceScaleFactor): (a) Canvas-Backing-Store = CSS-Größe × devicePixelRatio (± 1 px), (b) Zellbreiten = Sollbreite × Zoom (± 1 px), (c) kein Layout-Sprung: erste sichtbare Zeile und Auswahl nach Zoomwechsel unverändert, keine Überlappung Kopf/Zellen, (d) Hit-Test: Klick in die Zellmitte trifft die Zelle auf allen Stufen; Messwerte je Plattform in S-2.md. Abbruch/Rückfall: verfehlt WKWebView (a) oder (d), wirkt der App-Zoom (UI-120) über Token-Skalierung statt WebView-Zoom (Entscheidung G0); verfehlt auch das, gilt Rückfall B der Tabelle 3.9."
  },
  {
+  "id": "M2-U02B",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Eigenes Canvas-Grid hinter DataGridProps (Fallback B nach Grid-Gate S-1)",
+  "wave": 1,
+  "spec_ids": [],
+  "owns": [
+   "apps/desktop/src/grid/**",
+   "apps/desktop/e2e/grid/**",
+   "docs/plan/M2-spikes/S-1b.md"
+  ],
+  "depends_on": [
+   "M2-S01",
+   "M2-F04",
+   "M2-F05b"
+  ],
+  "size": "L",
+  "runner": "local-mac+ci",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 und 2a gehen vor (inkl. K2-60/K2-61). Planer-Entscheidung 18.10. (vorbehaltlich Fable-Bestätigung in G0): S-1 hat Kriterium (5) verfehlt (kein ARIA-Baum unter StrictMode), dazu (1) falsche mittlere Sprungpositionen und S-2 unscharfer CSS-Zoom → Fallback B laut Rückfalltabelle 3.9. Baue ein eigenes Canvas-Grid hinter der unveränderten Schnittstelle DataGridProps und ViewDataSource aus M2-S01 (M2-ui-concept 3.3; Blöcke à 200, LRU), ohne Glide. Pflicht: alle S-1-Kriterien (1)–(6) und S-2 (scharfes Canvas: Backing-Store = CSS-Größe × devicePixelRatio × Zoom) erfüllen und mit denselben Messfällen aus apps/desktop/e2e/grid/** belegen; role=grid mit aria-rowcount und virtuellem ARIA-Baum für sichtbare Zeilen; Tastaturnavigation, Auswahl, Kopieren, Spaltenbreiten/-reihenfolge wie DataGridProps. Bericht docs/plan/M2-spikes/S-1b.md mit Messtabelle (5 Mio. Zeilen, 65 Spalten, Zoom-Raster). UI-Pakete U01–U16 bleiben unverändert gegen DataGridProps. Spec-IDs UI-007/UI-012/UI-140 gehören M2-S01; U02B liefert deren Nachweis mit dem eigenen Grid (Tests mit // spec: UI-007 usw. zulässig)."
+ },
+ {
   "id": "M2-S02",
   "kind": "spike",
   "model": "opus",
@@ -2231,6 +2252,7 @@
    "scripts/check-neutral.allow (nur verwaiste Ausnahmen entfernen, z. B. den ci.yml-Eintrag nach dem Merge von M2-F04)"
   ],
   "depends_on": [
+   "M2-U02B",
    "M2-K01",
    "M2-K02",
    "M2-K03",
