@@ -1,0 +1,10 @@
+# Lokales Szenario für Klassifikation und Persistenz benutzerdefinierter Linkpositionen.
+[[route]]
+path = "/target"
+content_type = "text/html; charset=utf-8"
+body = "<!doctype html><html><head><title>Ziel</title></head><body><p>Zielseite</p></body></html>"
+
+[[route]]
+path = "/header.js"
+content_type = "application/javascript"
+body = "// lokale Ressource"
