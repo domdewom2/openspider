@@ -10,13 +10,10 @@ pub fn match_key(address: &str, options: &UrlMatchConfig) -> Option<String> {
     // Standardports werden bereits vom URL-Parser entfernt, explizite andere Ports bleiben.
     let _ = u.set_scheme("https");
     let mut path = normalize_percent(u.path());
-    if options.ignore_case {
-        path = path.to_lowercase();
-    }
     if options.ignore_trailing_slash && path != "/" {
         path = path.trim_end_matches('/').to_string();
     }
-    Some(format!(
+    let key = format!(
         "{}{}{}{}",
         &u[url::Position::BeforeHost..url::Position::BeforePath],
         path,
@@ -26,7 +23,12 @@ pub fn match_key(address: &str, options: &UrlMatchConfig) -> Option<String> {
         u.fragment()
             .map(|q| format!("#{}", normalize_percent(q)))
             .unwrap_or_default()
-    ))
+    );
+    Some(if options.ignore_case {
+        key.to_lowercase()
+    } else {
+        key
+    })
 }
 fn normalize_percent(s: &str) -> String {
     // Unreserved ASCII and UTF-8 werden normalisiert; kodierte Trenner bleiben kodiert.

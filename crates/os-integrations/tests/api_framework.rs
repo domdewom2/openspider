@@ -377,6 +377,10 @@ fn matching_fixture_preserves_queries_fragments_and_uses_maximum() {
         matching::match_key("https://x.test/C/", &strict),
         matching::match_key("http://x.test/c", &strict)
     );
+    assert_ne!(
+        matching::match_key("https://x.test/d?Color=RED#TOP", &strict),
+        matching::match_key("https://x.test/d?color=red#top", &strict)
+    );
 }
 // spec: INTEG-018
 #[tokio::test]
