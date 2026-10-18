@@ -284,6 +284,6 @@ fn every_detail_kind_dispatches_to_a_table_or_its_declared_owner() {
             &dir.path().join("tree.csv"),
             Format::Csv
         ),
-        Err(os_export::ExportError::NotImplemented("M2-D09"))
+        Ok(info) if info.rows == 0
     ));
 }
