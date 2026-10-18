@@ -1,0 +1,101 @@
+{
+  "Contains Pagination": [
+    "blocked-source",
+    "broken",
+    "canonicalised",
+    "first",
+    "first-unknown",
+    "last",
+    "lead",
+    "loop-a",
+    "loop-b",
+    "loop-c",
+    "multiple",
+    "only-prev",
+    "orphan-source",
+    "prev-a",
+    "prev-b",
+    "redirect-source",
+    "second",
+    "self",
+    "seq-a",
+    "seq-b",
+    "third",
+    "to-document",
+    "to-external",
+    "unknown-source"
+  ],
+  "First Page": [
+    "blocked-source",
+    "broken",
+    "first",
+    "first-unknown",
+    "lead",
+    "loop-a",
+    "loop-b",
+    "loop-c",
+    "orphan-source",
+    "redirect-source",
+    "self",
+    "seq-a",
+    "to-document",
+    "to-external",
+    "unknown-source"
+  ],
+  "Paginated 2+ Pages": [
+    "canonicalised",
+    "last",
+    "multiple",
+    "only-prev",
+    "prev-a",
+    "prev-b",
+    "second",
+    "seq-b",
+    "third"
+  ],
+  "Pagination URL Not In Anchor Tag": [
+    "third"
+  ],
+  "Non-200 Pagination URLs": [
+    "blocked-source",
+    "broken",
+    "redirect-source",
+    "to-external"
+  ],
+  "Unlinked Pagination URLs": [
+    "orphan-source",
+    "to-external"
+  ],
+  "Non-Indexable": [
+    "canonicalised",
+    "second"
+  ],
+  "Multiple Pagination URLs": [
+    "first-unknown",
+    "multiple"
+  ],
+  "Pagination Loop": [
+    "loop-a",
+    "loop-b",
+    "loop-c",
+    "prev-a",
+    "prev-b",
+    "self"
+  ],
+  "Sequence Error": [
+    "canonicalised",
+    "first-unknown",
+    "lead",
+    "loop-a",
+    "loop-b",
+    "loop-c",
+    "multiple",
+    "only-prev",
+    "orphan-source",
+    "prev-a",
+    "prev-b",
+    "self",
+    "seq-a",
+    "seq-b"
+  ]
+}

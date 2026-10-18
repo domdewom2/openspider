@@ -275,8 +275,8 @@ fn every_tab_is_a_real_definition_or_a_marked_stub() {
             );
         }
     }
-    // Alle 15 neuen Tabs sind in M2-F02 Stubs; die 16 Tabs von M1 sind echte Definitionen.
-    assert_eq!(stubs, 15, "Stub-Tabs");
+    // M2-D05 ersetzt den Pagination-Stub; 14 neue Tabs bleiben Platzhalter.
+    assert_eq!(stubs, 14, "Stub-Tabs");
 }
 
 #[test]

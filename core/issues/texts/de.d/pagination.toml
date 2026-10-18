@@ -1,2 +1,35 @@
-# OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „Pagination“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.pagination-not-in-anchor-tag]
+what = "Mindestens ein Paginierungsziel fehlt als normaler Ankerlink auf dieser Seite."
+why = "Link-Elemente ersetzen keine anklickbare Navigation; weitere Inhalte können dadurch schwerer erreichbar sein."
+fix = "Ergänze für jedes next- oder prev-Ziel einen passenden a-href-Link in der Seitennavigation."
+
+[issues.pagination-non-200-urls]
+what = "Mindestens ein abgerufenes Paginierungsziel antwortet nicht mit HTTP 200."
+why = "Weiterleitungen, Fehler und gesperrte Ziele unterbrechen den direkten Zugang zu weiteren Seiten der Serie."
+fix = "Prüfe Status und Erreichbarkeit des Ziels und verweise direkt auf eine erreichbare Seite mit Status 200."
+
+[issues.pagination-unlinked-urls]
+what = "Mindestens ein abgerufenes Paginierungsziel hat keinen internen Hyperlink im Crawl."
+why = "Ohne interne Navigation ist die Folgeseite nur über die Paginierungsangabe auffindbar; der normale Linkfluss fehlt."
+fix = "Verlinke die Zielseite aus der internen Navigation und führe danach die Paginierungsanalyse erneut aus."
+
+[issues.pagination-non-indexable]
+what = "Die Seite enthält Paginierungsangaben, ist aber selbst nicht indexierbar."
+why = "Sperren, noindex oder eine abweichende kanonische URL können Folgeseiten von der Indexierung ausschließen."
+fix = "Prüfe den angezeigten Indexierbarkeitsgrund und korrigiere Sperren oder Canonicals, falls die Seite indexiert werden soll."
+
+[issues.pagination-multiple-urls]
+what = "Die Seite enthält mehr als eine next-Angabe oder mehr als eine prev-Angabe."
+why = "Mehrere Angaben derselben Richtung sind mehrdeutig, auch wenn sie derzeit auf dieselbe Adresse zeigen."
+fix = "Behalte je Richtung höchstens eine Angabe und gleiche HTML-Link-Elemente mit den HTTP-Link-Headern ab."
+
+[issues.pagination-loop]
+what = "Die Seite liegt in einem Zyklus aus next-Verweisen oder aus prev-Verweisen."
+why = "Die Serie führt zu einer bereits besuchten Seite zurück und hat in dieser Richtung keinen eindeutigen Abschluss."
+fix = "Korrigiere die Verweise im Zyklus; der Anfang braucht kein prev und das Ende kein next. Starte die Analyse erneut."
+
+[issues.pagination-sequence-error]
+what = "Eine Paginierungsangabe der Seite wird vom abgerufenen HTML-200-Ziel nicht bestätigt."
+why = "Wenn next und prev nicht wechselseitig sind, beschreiben die Seiten widersprüchliche Reihenfolgen derselben Serie."
+fix = "Gleiche die Verweise ab: auf next von A nach B muss prev von B nach A folgen; prüfe auch die Gegenrichtung."
