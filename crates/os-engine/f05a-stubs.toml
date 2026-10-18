@@ -297,18 +297,6 @@ function = "to_ext"
 signature = "pub fn to_ext(_facts: &os_model::ValidationFacts) -> Vec<(os_model::ExtKey, os_model::Value)>"
 
 [[stub]]
-owner = "M2-D11"
-file = "crates/os-export/src/catalog/bulk_security.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
-owner = "M2-D11"
-file = "crates/os-export/src/reports/insecure_content.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
 owner = "M2-D12"
 file = "crates/os-analyze/src/tabs/response_codes.rs"
 function = "http_refresh_filter"
