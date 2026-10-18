@@ -338,6 +338,9 @@ impl HttpFetcher {
         if let FetchOutcome::Response(response) = &outcome {
             tracing::debug!(url = %redact::url(url.as_str()), status = response.status, response_time_ms = response.response_time_ms, "Abruf abgeschlossen");
         }
+        if let FetchOutcome::NoResponse { elapsed_ms, .. } = &outcome {
+            tracing::debug!(url = %redact::url(url.as_str()), status = "No Response", response_time_ms = elapsed_ms, "Abruf abgeschlossen");
+        }
         FetchResult {
             url: req.url,
             started_at,

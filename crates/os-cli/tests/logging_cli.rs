@@ -99,3 +99,30 @@ fn panic_writes_a_redacted_backtrace_before_exit() {
     assert!(!raw.contains("PANIC-FIXTURE"));
     assert_eq!(raw.lines().count(), 1);
 }
+
+// spec: OUT-241
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn failed_requests_also_record_the_status_and_duration() {
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    // The fixture accepts and immediately closes one connection without sending HTTP bytes.
+    let accept = tokio::task::spawn_blocking(move || {
+        let (stream, _) = listener.accept().unwrap();
+        drop(stream);
+    });
+    let env = Env::new();
+    let _run = env
+        .run_async(vec![
+            "--crawl".into(),
+            format!("http://{address}/"),
+            "--log-level".into(),
+            "debug".into(),
+            "--set".into(),
+            "robots.retries=0".into(),
+        ])
+        .await;
+    accept.await.unwrap();
+    let logs = log_text(&env);
+    assert!(logs.contains("No Response"));
+    assert!(logs.contains("response_time_ms"));
+}
