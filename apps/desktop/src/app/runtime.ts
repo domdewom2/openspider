@@ -1,5 +1,6 @@
 // Start eines Fensters: Transport wählen, Client setzen, Einstellungen laden, Ereigniskanal, Erscheinungsbild und Sprache,
 // Kürzel-Dispatcher und Menü. Alles hängt am Fenster-Label; Aufräumen über `dispose()`.
+import { installMainMenus } from "../features/help/install";
 import { resolveLanguage, setLanguage } from "../i18n";
 import { registerAction } from "../ui/actions";
 import { installShortcutDispatcher } from "../ui/dispatcher";
@@ -107,11 +108,12 @@ export function bootWindow(opts: BootOptions): Runtime {
 
   if (isMain && (opts.menu ?? true)) {
     offs.push(registerMenuContributions("app/base", BASE_MENU));
+    offs.push(installMainMenus());
     menu = startMenuController({
       platform,
       getContext: () => {
         const crawl = useSession.getState().crawl;
-        return { hasCrawl: crawl !== null, crawlRunning: crawl?.phase === "running" };
+        return { hasCrawl: crawl !== null, crawlRunning: crawl?.phase === "running", hasData: (crawl?.crawled ?? 0) > 0, analysisRunning: useSession.getState().analysis?.running === true };
       },
       subscribeContext: (cb) => useSession.subscribe(cb),
     });

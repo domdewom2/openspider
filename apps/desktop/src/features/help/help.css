@@ -1,0 +1,9 @@
+.os-help-stack { display: grid; gap: 12px; }
+.os-help-table { width: 100%; border-collapse: collapse; text-align: start; }
+.os-help-table th, .os-help-table td { padding: 6px 12px; border-bottom: 1px solid var(--os-border); text-align: start; }
+.os-help-table kbd + kbd { margin-inline-start: 12px; }
+.os-help-properties { margin: 0; }
+.os-help-properties > div { display: grid; grid-template-columns: minmax(120px, 1fr) 2fr; gap: 12px; margin-block: 6px; }
+.os-help-properties dd { margin: 0; overflow-wrap: anywhere; }
+.os-dialog-body pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.os-help-operation { position: fixed; inset-inline: 20px; bottom: 32px; padding: 12px; background: var(--os-bg-surface); border: 1px solid var(--os-border); z-index: 20; }

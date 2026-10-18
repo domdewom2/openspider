@@ -64,7 +64,7 @@ function resolveItem(spec: MenuItemSpec, o: BuildOptions, native: Set<ActionId>)
     // Systemeinträge gibt es nur, wo das Betriebssystem sie liefert (macOS); Windows erhält sie nicht.
     return { id: spec.id, kind: "predefined", predefined: spec.predefined, label: spec.labelKey ? o.t(spec.labelKey) : "", enabled: true };
   }
-  const label = spec.labelKey ? o.t(spec.labelKey) : spec.id;
+  const label = spec.labelKey ? o.t(spec.labelKey, undefined, { fallback: spec.label }) : spec.label ?? spec.id;
   const enabled = spec.enabled ? spec.enabled(o.ctx) : true;
   const shortcutId = spec.shortcut ?? spec.action;
   const sc = shortcutId ? shortcutById(shortcutId) : undefined;
@@ -73,6 +73,7 @@ function resolveItem(spec: MenuItemSpec, o: BuildOptions, native: Set<ActionId>)
     kind: spec.items ? "submenu" : spec.checked ? "check" : "item",
     label,
     enabled,
+    ...(spec.showDisabledReason ? { showDisabledReason: true } : {}),
     ...(spec.action ? { action: spec.action } : {}),
     ...(!enabled && spec.disabledReasonKey ? { disabledReason: o.t(spec.disabledReasonKey) } : {}),
   };
@@ -80,7 +81,8 @@ function resolveItem(spec: MenuItemSpec, o: BuildOptions, native: Set<ActionId>)
   if (sc) {
     const combo = sc.keys[o.platform];
     base.shortcutText = formatShortcut(combo, o.platform, o.lang);
-    if (o.native && !isEditingCombo(canonicalCombo(combo, o.platform))) {
+    if (spec.nativeAccelerator === false) base.shortcutInLabel = true;
+    if (spec.nativeAccelerator !== false && o.native && !isEditingCombo(canonicalCombo(combo, o.platform))) {
       base.accelerator = toNativeAccelerator(combo, o.platform);
       native.add(sc.id);
     }

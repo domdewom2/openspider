@@ -21,6 +21,13 @@ const PREDEFINED: Record<PredefinedKind, Predefined> = {
   bringAllToFront: "BringAllToFront",
 };
 
+/** Additive Feature-Optionen: vorhandene Beiträge behalten ihre bisherige Beschriftung. */
+function nativeItemText(item: ResolvedItem): string {
+  return item.label
+    + (item.shortcutInLabel && item.shortcutText ? ` (${item.shortcutText})` : "")
+    + (item.showDisabledReason && !item.enabled && item.disabledReason ? ` — ${item.disabledReason}` : "");
+}
+
 async function toNative(item: ResolvedItem): Promise<MenuItem | CheckMenuItem | PredefinedMenuItem | Submenu> {
   switch (item.kind) {
     case "separator":
@@ -32,7 +39,7 @@ async function toNative(item: ResolvedItem): Promise<MenuItem | CheckMenuItem | 
     case "check":
       return CheckMenuItem.new({
         id: item.id,
-        text: item.label,
+        text: nativeItemText(item),
         enabled: item.enabled,
         checked: item.checked ?? false,
         ...(item.accelerator ? { accelerator: item.accelerator } : {}),
@@ -41,7 +48,7 @@ async function toNative(item: ResolvedItem): Promise<MenuItem | CheckMenuItem | 
     default:
       return MenuItem.new({
         id: item.id,
-        text: item.label,
+        text: nativeItemText(item),
         enabled: item.enabled,
         ...(item.accelerator ? { accelerator: item.accelerator } : {}),
         action: () => void runAction(item.action ?? item.id, { source: "menu" }),

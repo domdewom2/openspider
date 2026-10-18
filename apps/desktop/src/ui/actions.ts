@@ -12,16 +12,25 @@ export interface ActionContext {
 export type ActionHandler = (ctx: ActionContext) => boolean | void | Promise<boolean | void>;
 
 const handlers = new Map<ActionId, ActionHandler[]>();
+const registryListeners = new Set<() => void>();
+
+/** Menüaktivierung folgt auch verspätet registrierten Feature-Controllern. */
+export function onActionRegistryChanged(listener: () => void): () => void {
+  registryListeners.add(listener);
+  return () => registryListeners.delete(listener);
+}
 
 export function registerAction(id: ActionId, handler: ActionHandler): () => void {
   const list = handlers.get(id) ?? [];
   list.push(handler);
   handlers.set(id, list);
+  for (const listener of registryListeners) listener();
   return () => {
     const cur = handlers.get(id);
     if (!cur) return;
     const i = cur.indexOf(handler);
     if (i >= 0) cur.splice(i, 1);
+    for (const listener of registryListeners) listener();
   };
 }
 
