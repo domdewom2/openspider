@@ -142,14 +142,36 @@ pub fn parse_cargo_output(text: &str) -> Vec<TestResult> {
 }
 
 fn unescape_xml(s: &str) -> String {
-    if !s.contains('&') {
-        return s.to_string();
+    let mut out = String::new();
+    let mut rest = s;
+    while let Some(start) = rest.find('&') {
+        out.push_str(&rest[..start]);
+        let Some(end) = rest[start..].find(';').map(|i| start + i) else {
+            out.push_str(&rest[start..]);
+            return out;
+        };
+        let entity = &rest[start + 1..end];
+        let decoded = match entity {
+            "quot" => Some('"'),
+            "apos" => Some('\''),
+            "lt" => Some('<'),
+            "gt" => Some('>'),
+            "amp" => Some('&'),
+            _ => entity
+                .strip_prefix("#x")
+                .and_then(|n| u32::from_str_radix(n, 16).ok())
+                .or_else(|| entity.strip_prefix('#').and_then(|n| n.parse().ok()))
+                .and_then(char::from_u32),
+        };
+        if let Some(c) = decoded {
+            out.push(c);
+        } else {
+            out.push_str(&rest[start..=end]);
+        }
+        rest = &rest[end + 1..];
     }
-    s.replace("&quot;", "\"")
-        .replace("&apos;", "'")
-        .replace("&lt;", "<")
-        .replace("&gt;", ">")
-        .replace("&amp;", "&")
+    out.push_str(rest);
+    out
 }
 
 struct XmlTag {
@@ -187,6 +209,13 @@ fn parse_tag(body: &str) -> Option<XmlTag> {
     let mut rest = s[name_end..].trim_start();
     while let Some(eq) = rest.find('=') {
         let key = rest[..eq].trim().to_string();
+        if key.is_empty()
+            || !key
+                .chars()
+                .all(|c| c.is_alphanumeric() || matches!(c, '_' | ':' | '-' | '.'))
+        {
+            return None;
+        }
         let after = rest[eq + 1..].trim_start();
         let quote = after.chars().next()?;
         if quote != '"' && quote != '\'' {
@@ -195,6 +224,9 @@ fn parse_tag(body: &str) -> Option<XmlTag> {
         let close = after[1..].find(quote)?;
         attrs.push((key, unescape_xml(&after[1..1 + close])));
         rest = after[close + 2..].trim_start();
+    }
+    if !rest.is_empty() || (closing && !attrs.is_empty()) {
+        return None;
     }
     Some(XmlTag {
         name,
@@ -483,4 +515,102 @@ test src/lib.rs - parse (line 3) ... ok
         assert!(parse_junit("<foo/>").is_err());
         assert!(parse_junit("<testsuite name=\"a\"").is_err());
     }
+}
+
+/// Frontend-JUnit-Fall; Dateipfad und Titel bleiben getrennt, um gleiche Titel sicher zuzuordnen.
+#[derive(Debug, Clone)]
+pub(crate) struct FrontendCase {
+    pub file: String,
+    pub suite: String,
+    pub name: String,
+    pub outcome: Outcome,
+}
+
+/// Liest vitest-/Playwright-JUnit. Ungültiges oder abgeschnittenes XML liefert keine Gutschriften.
+pub(crate) fn frontend_cases(xml: &str) -> Result<Vec<FrontendCase>, ParityError> {
+    let invalid =
+        || ParityError::Invalid("Frontend-JUnit: ungültiges oder unvollständiges XML".into());
+    let mut rest = xml;
+    let mut stack: Vec<String> = Vec::new();
+    let mut suites: Vec<String> = Vec::new();
+    let mut cases = Vec::new();
+    let mut case: Option<FrontendCase> = None;
+    let mut seen = false;
+    while let Some(lt) = rest.find('<') {
+        rest = &rest[lt + 1..];
+        if let Some(r) = rest.strip_prefix("!--") {
+            rest = r.split_once("-->").ok_or_else(invalid)?.1;
+            continue;
+        }
+        if let Some(r) = rest.strip_prefix("![CDATA[") {
+            rest = r.split_once("]]>").ok_or_else(invalid)?.1;
+            continue;
+        }
+        let gt = find_tag_end(rest).ok_or_else(invalid)?;
+        let body = &rest[..gt];
+        rest = &rest[gt + 1..];
+        if body.starts_with('?') {
+            continue;
+        }
+        let tag = parse_tag(body).ok_or_else(invalid)?;
+        if tag.closing {
+            if stack.pop().as_deref() != Some(&tag.name) {
+                return Err(invalid());
+            }
+            if tag.name == "testcase" {
+                cases.push(case.take().ok_or_else(invalid)?);
+            } else if tag.name == "testsuite" {
+                suites.pop();
+            }
+            continue;
+        }
+        match tag.name.as_str() {
+            "testsuite" => {
+                seen = true;
+                if !tag.self_closing {
+                    suites.push(tag.attr("name").unwrap_or("").to_string());
+                }
+            }
+            "testcase" => {
+                if case.is_some() || suites.is_empty() {
+                    return Err(invalid());
+                }
+                let c = FrontendCase {
+                    file: tag
+                        .attr("file")
+                        .or_else(|| tag.attr("classname"))
+                        .unwrap_or("")
+                        .to_string(),
+                    suite: suites.last().cloned().unwrap_or_default(),
+                    name: tag.attr("name").ok_or_else(invalid)?.to_string(),
+                    outcome: Outcome::Ok,
+                };
+                if tag.self_closing {
+                    cases.push(c);
+                } else {
+                    case = Some(c);
+                }
+            }
+            "failure" | "error" => {
+                if let Some(c) = &mut case {
+                    c.outcome = Outcome::Failed;
+                }
+            }
+            "skipped" => {
+                if let Some(c) = &mut case {
+                    if c.outcome != Outcome::Failed {
+                        c.outcome = Outcome::Ignored(tag.attr("message").map(str::to_string));
+                    }
+                }
+            }
+            _ => {}
+        }
+        if !tag.self_closing {
+            stack.push(tag.name);
+        }
+    }
+    if !seen || !stack.is_empty() || case.is_some() {
+        return Err(invalid());
+    }
+    Ok(cases)
 }

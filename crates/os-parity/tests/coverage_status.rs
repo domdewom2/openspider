@@ -40,7 +40,10 @@ fn run_with(test_output: Option<&str>, junit: Option<&str>) -> Outcome {
     copy_tree(&data().join("ws"), dir.path());
     let write = dir.path().join("docs/plan/M1-status.json");
     let ok = run(&CoverageArgs {
-        packages: data().join("packages.json"),
+        milestone: os_parity::coverage::Milestone::M1,
+        gate: false,
+        frontend_junit: Vec::new(),
+        packages: Some(data().join("packages.json")),
         test_output: test_output.map(|f| data().join(f)),
         junit: junit.map(|f| data().join(f)),
         write: Some(write.clone()),
@@ -302,7 +305,10 @@ fn status_file_is_deterministic_and_verified_is_preserved() {
     doc["specs"]["ALPHA-003"]["status"] = "verified".into();
     std::fs::write(&path, serde_json::to_string_pretty(&doc).unwrap()).unwrap();
     let ok = run(&CoverageArgs {
-        packages: data().join("packages.json"),
+        milestone: os_parity::coverage::Milestone::M1,
+        gate: false,
+        frontend_junit: Vec::new(),
+        packages: Some(data().join("packages.json")),
         test_output: Some(data().join("sample-test-output.txt")),
         junit: None,
         write: Some(path.clone()),
@@ -340,7 +346,10 @@ fn strict_mode_fails_on_ignored_tests_without_reason() {
     )
     .unwrap();
     let mut args = CoverageArgs {
-        packages: dir.path().join("packages.json"),
+        milestone: os_parity::coverage::Milestone::M1,
+        gate: false,
+        frontend_junit: Vec::new(),
+        packages: Some(dir.path().join("packages.json")),
         test_output: Some(data().join("sample-test-output.txt")),
         junit: None,
         write: None,
@@ -364,7 +373,10 @@ fn strict_mode_fails_on_ignored_tests_without_reason() {
 fn invalid_inputs_are_errors() {
     let dir = tempfile::tempdir().unwrap();
     let base = CoverageArgs {
-        packages: dir.path().join("fehlt.json"),
+        milestone: os_parity::coverage::Milestone::M1,
+        gate: false,
+        frontend_junit: Vec::new(),
+        packages: Some(dir.path().join("fehlt.json")),
         test_output: None,
         junit: None,
         write: None,
@@ -376,14 +388,20 @@ fn invalid_inputs_are_errors() {
     assert!(run(&base).is_err());
     std::fs::write(dir.path().join("p.json"), "{\"nope\": 1}").unwrap();
     assert!(run(&CoverageArgs {
-        packages: dir.path().join("p.json"),
+        milestone: os_parity::coverage::Milestone::M1,
+        gate: false,
+        frontend_junit: Vec::new(),
+        packages: Some(dir.path().join("p.json")),
         ..base.clone()
     })
     .is_err());
     std::fs::write(dir.path().join("p.json"), "[]").unwrap();
     std::fs::write(dir.path().join("bad.xml"), "<foo/>").unwrap();
     assert!(run(&CoverageArgs {
-        packages: dir.path().join("p.json"),
+        milestone: os_parity::coverage::Milestone::M1,
+        gate: false,
+        frontend_junit: Vec::new(),
+        packages: Some(dir.path().join("p.json")),
         junit: Some(dir.path().join("bad.xml")),
         ..base
     })
@@ -415,7 +433,10 @@ fn parity_evidence_sets_verified_only_for_clean_implemented_ids() {
     .unwrap();
     let write = dir.join("status-with-parity.json");
     let ok = run(&CoverageArgs {
-        packages: data().join("packages.json"),
+        milestone: os_parity::coverage::Milestone::M1,
+        gate: false,
+        frontend_junit: Vec::new(),
+        packages: Some(data().join("packages.json")),
         test_output: Some(data().join("sample-test-output.txt")),
         junit: None,
         write: Some(write.clone()),

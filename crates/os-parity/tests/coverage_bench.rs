@@ -38,7 +38,10 @@ fn run_with(packages: &Path, strict: bool) -> Outcome {
     copy_tree(&data().join("ws"), dir.path());
     let write = dir.path().join("M1-status.json");
     let ok = run(&CoverageArgs {
-        packages: packages.to_path_buf(),
+        milestone: os_parity::coverage::Milestone::M1,
+        gate: false,
+        frontend_junit: Vec::new(),
+        packages: Some(packages.to_path_buf()),
         test_output: Some(data().join("test-output.txt")),
         junit: None,
         write: Some(write.clone()),
@@ -182,7 +185,10 @@ fn extra_ids_do_not_count_for_summary_exit_code_or_strict() {
         .join("\n\n");
     std::fs::write(&src, cleaned).unwrap();
     assert!(run(&CoverageArgs {
-        packages: pk.clone(),
+        milestone: os_parity::coverage::Milestone::M1,
+        gate: false,
+        frontend_junit: Vec::new(),
+        packages: Some(pk.clone()),
         test_output: Some(data().join("test-output.txt")),
         junit: None,
         write: None,

@@ -6,6 +6,7 @@
 //! zusätzlich die Moduldeklarationen `mod name;`, damit die Zuordnung von Testergebnissen
 //! (`Binär → erreichbare Dateien → Modulpfad`) eindeutig bleibt.
 
+use std::collections::BTreeMap;
 use std::path::Path;
 
 use crate::error::ParityError;
@@ -23,6 +24,10 @@ pub struct TestFn {
     pub ids: Vec<String>,
     /// `[M2]`/`[M3]` im Tag (zurückgestelltes Teilkriterium).
     pub deferred_hint: bool,
+    /// Kriterienmarkierungen je ID (Anhang B), ohne Übertragung zwischen Tags.
+    pub criteria: BTreeMap<String, Vec<String>>,
+    /// Statische Titelteile eines TS-Templates; Zwischenräume sind dynamische Ausdrücke.
+    pub title_segments: Option<Vec<String>>,
     /// `Some(grund)` bei `#[ignore = "grund"]`, `Some("")` bei `#[ignore]` ohne Grund.
     pub ignore: Option<String>,
     /// Zeile der Funktion (1-basiert).
@@ -303,8 +308,8 @@ pub fn parse_spec_comment(text: &str) -> Option<(Vec<String>, bool)> {
             continue;
         }
         let flag = tok.trim_matches(['[', ']']);
-        if matches!(flag, "M2" | "M3") && tok != flag {
-            deferred = true;
+        if matches!(flag, "P1" | "M2" | "M3") && tok != flag {
+            deferred |= flag != "P1";
             continue;
         }
         if is_spec_id(tok) {
@@ -314,6 +319,15 @@ pub fn parse_spec_comment(text: &str) -> Option<(Vec<String>, bool)> {
         }
     }
     (!ids.is_empty()).then_some((ids, deferred))
+}
+
+/// Anhang-B-Markierungen eines einzelnen Spec-Kommentars.
+pub fn criterion_markers(text: &str) -> Vec<String> {
+    ["P1", "M2"]
+        .into_iter()
+        .filter(|m| text.contains(&format!("[{m}]")))
+        .map(str::to_string)
+        .collect()
 }
 
 struct Attr {
@@ -376,13 +390,13 @@ pub fn scan_source(file: &str, src: &str) -> FileScan {
     // (Name, Tiefe innerhalb des Moduls)
     let mut mods: Vec<(String, i32)> = Vec::new();
     let mut attrs: Vec<Attr> = Vec::new();
-    let mut tags: Vec<(Vec<String>, bool)> = Vec::new();
+    let mut tags: Vec<(Vec<String>, bool, Vec<String>)> = Vec::new();
     let mut i = 0;
     while i < toks.len() {
         match &toks[i].tok {
             Tok::Comment(c) => {
                 if let Some(t) = parse_spec_comment(c) {
-                    tags.push(t);
+                    tags.push((t.0, t.1, criterion_markers(c)));
                 }
                 i += 1;
             }
@@ -443,11 +457,16 @@ pub fn scan_source(file: &str, src: &str) -> FileScan {
                         });
                         let mut ids: Vec<String> = Vec::new();
                         let mut hint = false;
-                        for (tag_ids, h) in &tags {
+                        let mut criteria = BTreeMap::new();
+                        for (tag_ids, h, markers) in &tags {
                             for id in tag_ids {
                                 if !ids.contains(id) {
                                     ids.push(id.clone());
                                 }
+                                criteria
+                                    .entry(id.clone())
+                                    .or_insert_with(Vec::new)
+                                    .extend(markers.clone());
                             }
                             hint |= *h;
                         }
@@ -457,6 +476,8 @@ pub fn scan_source(file: &str, src: &str) -> FileScan {
                             name: name.clone(),
                             ids,
                             deferred_hint: hint,
+                            criteria,
+                            title_segments: None,
                             ignore,
                             line: toks[i].line,
                         });
