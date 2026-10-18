@@ -295,11 +295,7 @@
   "model": "sonnet",
   "title": "Eigenes Canvas-Grid hinter DataGridProps (Fallback B nach Grid-Gate S-1)",
   "wave": 1,
-  "spec_ids": [
-   "UI-007",
-   "UI-012",
-   "UI-140"
-  ],
+  "spec_ids": [],
   "owns": [
    "apps/desktop/src/grid/**",
    "apps/desktop/e2e/grid/**",
@@ -312,7 +308,7 @@
   ],
   "size": "L",
   "runner": "local-mac+ci",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 und 2a gehen vor (inkl. K2-60/K2-61). Planer-Entscheidung 18.10. (vorbehaltlich Fable-Bestätigung in G0): S-1 hat Kriterium (5) verfehlt (kein ARIA-Baum unter StrictMode), dazu (1) falsche mittlere Sprungpositionen und S-2 unscharfer CSS-Zoom → Fallback B laut Rückfalltabelle 3.9. Baue ein eigenes Canvas-Grid hinter der unveränderten Schnittstelle DataGridProps und ViewDataSource aus M2-S01 (M2-ui-concept 3.3; Blöcke à 200, LRU), ohne Glide. Pflicht: alle S-1-Kriterien (1)–(6) und S-2 (scharfes Canvas: Backing-Store = CSS-Größe × devicePixelRatio × Zoom) erfüllen und mit denselben Messfällen aus apps/desktop/e2e/grid/** belegen; role=grid mit aria-rowcount und virtuellem ARIA-Baum für sichtbare Zeilen; Tastaturnavigation, Auswahl, Kopieren, Spaltenbreiten/-reihenfolge wie DataGridProps. Bericht docs/plan/M2-spikes/S-1b.md mit Messtabelle (5 Mio. Zeilen, 65 Spalten, Zoom-Raster). UI-Pakete U01–U16 bleiben unverändert gegen DataGridProps."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 und 2a gehen vor (inkl. K2-60/K2-61). Planer-Entscheidung 18.10. (vorbehaltlich Fable-Bestätigung in G0): S-1 hat Kriterium (5) verfehlt (kein ARIA-Baum unter StrictMode), dazu (1) falsche mittlere Sprungpositionen und S-2 unscharfer CSS-Zoom → Fallback B laut Rückfalltabelle 3.9. Baue ein eigenes Canvas-Grid hinter der unveränderten Schnittstelle DataGridProps und ViewDataSource aus M2-S01 (M2-ui-concept 3.3; Blöcke à 200, LRU), ohne Glide. Pflicht: alle S-1-Kriterien (1)–(6) und S-2 (scharfes Canvas: Backing-Store = CSS-Größe × devicePixelRatio × Zoom) erfüllen und mit denselben Messfällen aus apps/desktop/e2e/grid/** belegen; role=grid mit aria-rowcount und virtuellem ARIA-Baum für sichtbare Zeilen; Tastaturnavigation, Auswahl, Kopieren, Spaltenbreiten/-reihenfolge wie DataGridProps. Bericht docs/plan/M2-spikes/S-1b.md mit Messtabelle (5 Mio. Zeilen, 65 Spalten, Zoom-Raster). UI-Pakete U01–U16 bleiben unverändert gegen DataGridProps. Spec-IDs UI-007/UI-012/UI-140 gehören M2-S01; U02B liefert deren Nachweis mit dem eigenen Grid (Tests mit // spec: UI-007 usw. zulässig)."
  },
  {
   "id": "M2-S02",
