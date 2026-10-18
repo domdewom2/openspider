@@ -1,5 +1,6 @@
 //! Manifest einer Referenz-Site (`tests/golden/parity/<site>/manifest.toml`, Abschnitt 5.2).
 
+use std::collections::BTreeMap;
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
@@ -22,6 +23,12 @@ pub enum ExportStatus {
 /// Ein Eintrag `[[export]]`.
 #[derive(Debug, Clone, Deserialize)]
 pub struct ExportEntry {
+    /// Konfigurationsvariante: `--set`-Werte, getrennt vom Standardlauf.
+    #[serde(default)]
+    pub config: BTreeMap<String, String>,
+    /// Zielauswahl nach dem Export, z. B. Address beim Crawl Path Report.
+    #[serde(default)]
+    pub select: BTreeMap<String, String>,
     /// Dateiname unter `ref/`.
     pub ref_file: String,
     /// OpenSpider-Seite: `tab:<Tab>:<Filter>` | `bulk:<Name>` | `report:<Name>`.
@@ -43,6 +50,9 @@ pub struct ExportEntry {
 /// Manifest einer Site.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Manifest {
+    /// Liste relativ zum Fixture-Verzeichnis; ohne Angabe Spider-Modus.
+    #[serde(default)]
+    pub list_source: Option<String>,
     /// Name der Site (Fixture-Verzeichnis).
     pub site: String,
     /// Fester Port; `0`/fehlend = freier Port.
@@ -74,7 +84,30 @@ impl Manifest {
 
     /// Parst den TOML-Text.
     pub fn parse(text: &str) -> Result<Self, ParityError> {
-        toml::from_str(text).map_err(|e| ParityError::Invalid(e.to_string()))
+        let manifest: Self =
+            toml::from_str(text).map_err(|e| ParityError::Invalid(e.to_string()))?;
+        if let Some(list) = &manifest.list_source {
+            let path = Path::new(list);
+            if list.is_empty()
+                || path
+                    .components()
+                    .any(|c| !matches!(c, std::path::Component::Normal(_)))
+            {
+                return Err(ParityError::Invalid(
+                    "list_source muss relativ zum Fixture-Verzeichnis sein".into(),
+                ));
+            }
+        }
+        let mut files = std::collections::BTreeSet::new();
+        for e in &manifest.export {
+            if !files.insert(&e.ref_file) {
+                return Err(ParityError::Invalid(format!(
+                    "doppelter Referenzdateiname {}",
+                    e.ref_file
+                )));
+            }
+        }
+        Ok(manifest)
     }
 
     /// Einträge mit Status `present`.
@@ -99,6 +132,8 @@ pub enum OsExport {
     Bulk(String),
     /// `--save-report "<Menü>:<Report>"` bzw. `"<Report>"`.
     Report(String),
+    /// XML- oder Bilder-Sitemap: `sitemap:default` bzw. `sitemap:images`.
+    Sitemap(String),
 }
 
 impl OsExport {
@@ -113,6 +148,9 @@ impl OsExport {
         match kind.trim() {
             "tab" => {
                 let (tab, filter) = rest.split_once(':').ok_or_else(bad)?;
+                if tab.trim().is_empty() || filter.trim().is_empty() {
+                    return Err(bad());
+                }
                 Ok(Self::Tab {
                     tab: tab.trim().to_string(),
                     filter: filter.trim().to_string(),
@@ -120,6 +158,9 @@ impl OsExport {
             }
             "bulk" => Ok(Self::Bulk(rest.to_string())),
             "report" => Ok(Self::Report(rest.to_string())),
+            "sitemap" if matches!(rest, "default" | "images") => {
+                Ok(Self::Sitemap(rest.to_string()))
+            }
             _ => Err(bad()),
         }
     }
@@ -128,7 +169,7 @@ impl OsExport {
     pub fn cli_value(&self) -> String {
         let raw = match self {
             Self::Tab { tab, filter } => format!("{tab}:{filter}"),
-            Self::Bulk(n) | Self::Report(n) => n.clone(),
+            Self::Bulk(n) | Self::Report(n) | Self::Sitemap(n) => n.clone(),
         };
         raw.replace(',', "\\,")
     }
@@ -142,6 +183,14 @@ impl OsExport {
             }
         };
         match self {
+            Self::Sitemap(kind) => {
+                return vec![if kind == "images" {
+                    "images_sitemap.xml"
+                } else {
+                    "sitemap.xml"
+                }
+                .into()]
+            }
             Self::Tab { tab, filter } => push(slug(&format!("{tab} {filter}"))),
             Self::Bulk(name) | Self::Report(name) => {
                 let parts: Vec<&str> = name.split(':').map(str::trim).collect();
@@ -288,5 +337,22 @@ os_file = "overview.csv"
         assert!(OsExport::parse("foo:Bar").is_err());
         assert!(OsExport::parse("tab:").is_err());
         assert!(OsExport::parse("ohne-doppelpunkt").is_err());
+    }
+}
+
+#[cfg(test)]
+mod m2_tests {
+    use super::*;
+
+    // spec: CRAWL-029
+    #[test]
+    fn invalid_list_sources_and_duplicate_export_files_are_rejected() {
+        for path in ["", "../list.txt", "/list.txt"] {
+            assert!(Manifest::parse(&format!("site = \"s\"\nlist_source = {path:?}\n")).is_err());
+        }
+        let entry = "[[export]]\nref_file = \"same.csv\"\nos = \"tab:Internal:All\"\nmapping = \"internal_all\"\n";
+        assert!(Manifest::parse(&format!("site = \"s\"\n{entry}{entry}")).is_err());
+        assert!(OsExport::parse("tab:Internal:").is_err());
+        assert!(OsExport::parse("sitemap:unknown").is_err());
     }
 }

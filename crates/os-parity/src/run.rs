@@ -16,13 +16,14 @@
 //! Der eigentliche Export läuft über den Trait [`Exporter`]: [`CommandExporter`] ruft das
 //! `openspider`-Binär auf, Tests setzen einen Fake (Funktionszeiger oder Closure) ein.
 
+use std::collections::BTreeMap;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use serde::Serialize;
 
-use crate::csvio::{read_csv, read_reference};
+use crate::csvio::{read_output, read_reference, Table};
 use crate::deviations::Deviations;
 use crate::diff::{compare, evaluate, CompareInput};
 use crate::error::ParityError;
@@ -58,6 +59,12 @@ pub struct RunArgs {
 /// Was der Exporter erzeugen soll.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExportRequest {
+    /// Liste statt Spider-Start, absoluter Pfad zur lokalen Fixture.
+    pub list_source: Option<PathBuf>,
+    /// Konfigurationsvariante (`--set`, gleiche Werte wie im Manifest).
+    pub config: BTreeMap<String, String>,
+    /// Sitemap-Art (`default` oder `images`).
+    pub sitemap: Option<String>,
     /// Name der Site.
     pub site: String,
     /// Start-URL des Crawls (`http://127.0.0.1:<port>/`).
@@ -114,7 +121,27 @@ impl CommandExporter {
 impl CommandExporter {
     /// Kommandozeile (ohne Programmnamen) für einen Auftrag.
     pub fn args(req: &ExportRequest) -> Vec<String> {
-        let mut a = vec!["--crawl".to_string(), req.base_url.clone()];
+        let mut a = if let Some(list) = &req.list_source {
+            vec![
+                "--crawl-list".to_string(),
+                list.to_string_lossy().into_owned(),
+            ]
+        } else {
+            vec!["--crawl".to_string(), req.base_url.clone()]
+        };
+        for (key, value) in &req.config {
+            a.extend(["--set".into(), format!("{key}={value}")]);
+        }
+        if let Some(kind) = &req.sitemap {
+            a.push(
+                if kind == "images" {
+                    "--create-images-sitemap"
+                } else {
+                    "--create-sitemap"
+                }
+                .into(),
+            );
+        }
         if let Some(p) = &req.profile {
             a.push("--config".into());
             a.push(p.to_string_lossy().into_owned());
@@ -328,7 +355,12 @@ fn find_file(dir: &Path, name: &str, depth: u32) -> Option<PathBuf> {
         .ok()?
         .filter_map(|e| e.ok())
         .map(|e| e.path())
-        .filter(|p| p.is_dir())
+        .filter(|p| {
+            p.is_dir()
+                && !p
+                    .file_name()
+                    .is_some_and(|n| n.to_string_lossy().starts_with("variant-"))
+        })
         .collect();
     subdirs.sort();
     subdirs.iter().find_map(|d| find_file(d, name, depth - 1))
@@ -399,6 +431,23 @@ pub fn run_sites(opts: &RunOptions, exporter: &dyn Exporter) -> Result<RunSummar
             failures.push(format!(
                 "nur {sites_present} Sites mit Status present, gefordert sind {min}"
             ));
+        }
+    }
+    if opts.require_min_sites {
+        let m2_present = sites
+            .iter()
+            .filter(|s| s.present && s.site.starts_with("parity-m2-"))
+            .count();
+        let legacy_present = sites_present - m2_present;
+        for (group, count, need) in [
+            ("M2", m2_present, thresholds.min_m2_sites_present),
+            ("M1", legacy_present, thresholds.min_legacy_sites_present),
+        ] {
+            if count < need {
+                failures.push(format!(
+                    "nur {count} {group}-Sites mit Status present, gefordert sind {need}"
+                ));
+            }
         }
     }
     let summary = RunSummary {
@@ -500,14 +549,11 @@ fn run_site(
     }
 
     let os_dir = opts.out.join(site).join("os");
-    std::fs::create_dir_all(&os_dir)?;
-    // Veraltete Ausgaben früherer Läufe dürfen keinen Treffer vortäuschen.
-    for p in &prepared {
-        for name in candidate_names(p) {
-            let _ = std::fs::remove_file(os_dir.join(name));
-        }
+    // Vollständig frische Ausgabe: auch verschachtelte CLI-Ausgaben früherer Läufe entfernen.
+    if os_dir.exists() {
+        std::fs::remove_dir_all(&os_dir)?;
     }
-
+    std::fs::create_dir_all(&os_dir)?;
     let site_error = |results: &mut Vec<ExportResult>, prepared: &[Prepared], msg: &str| {
         for p in prepared {
             results.push(result_of(
@@ -546,44 +592,85 @@ fn run_site(
         os_base.clone()
     };
 
-    let mut req = ExportRequest {
-        site: site.to_string(),
-        base_url: format!("{os_base}/"),
-        profile: profile.map(Path::to_path_buf),
-        out_dir: os_dir.clone(),
-        tabs: Vec::new(),
-        bulk: Vec::new(),
-        reports: Vec::new(),
-    };
+    let list_source = manifest
+        .list_source
+        .as_ref()
+        .map(|rel| {
+            let path = opts.fixture_dir(site).join(rel);
+            std::fs::canonicalize(path).map_err(ParityError::from)
+        })
+        .transpose()?;
+    // Standardausgaben gemeinsam, Konfigurations-/Sitemap-Varianten getrennt: kein Überschreiben.
+    let mut requests: Vec<ExportRequest> = Vec::new();
+    let mut destinations = Vec::new();
     for p in &prepared {
-        let list = match p.os {
-            OsExport::Tab { .. } => &mut req.tabs,
-            OsExport::Bulk(_) => &mut req.bulk,
-            OsExport::Report(_) => &mut req.reports,
+        let sitemap = match &p.os {
+            OsExport::Sitemap(kind) => Some(kind.clone()),
+            _ => None,
         };
-        let v = p.os.cli_value();
-        if !list.contains(&v) {
-            list.push(v);
+        let index = requests
+            .iter()
+            .position(|r| r.config == p.entry.config && r.sitemap == sitemap)
+            .unwrap_or_else(|| {
+                let index = requests.len();
+                requests.push(ExportRequest {
+                    site: site.to_string(),
+                    base_url: format!("{os_base}/"),
+                    list_source: list_source.clone(),
+                    config: p.entry.config.clone(),
+                    sitemap,
+                    profile: profile.map(Path::to_path_buf),
+                    out_dir: if index == 0 {
+                        os_dir.clone()
+                    } else {
+                        os_dir.join(format!("variant-{index}"))
+                    },
+                    tabs: Vec::new(),
+                    bulk: Vec::new(),
+                    reports: Vec::new(),
+                });
+                index
+            });
+        destinations.push(index);
+        let req = &mut requests[index];
+        let list = match &p.os {
+            OsExport::Tab { .. } => Some(&mut req.tabs),
+            OsExport::Bulk(_) => Some(&mut req.bulk),
+            OsExport::Report(_) => Some(&mut req.reports),
+            OsExport::Sitemap(_) => None,
+        };
+        if let Some(list) = list {
+            let value = p.os.cli_value();
+            if !list.contains(&value) {
+                list.push(value);
+            }
         }
     }
-    if let Err(e) = exporter.export(&req) {
-        let msg = format!("OpenSpider-Export fehlgeschlagen: {e}");
-        site_error(&mut results, &prepared, &msg);
-        return Ok(SiteResult {
-            site: site.to_string(),
-            present,
-            error: Some(msg),
-            exports: in_manifest_order(results, &manifest),
-        });
-    }
+    let errors: Vec<_> = requests
+        .iter()
+        .map(|req| exporter.export(req).err())
+        .collect();
     drop(test_site);
 
     let ref_bases = BaseUrls::from_base(&ref_base);
     let os_bases = BaseUrls::from_base(&os_base);
-    for p in &prepared {
-        let outcome = compare_one(
-            opts, site, p, &os_dir, &ref_bases, &os_bases, thresholds, deviations,
-        );
+    for (p, index) in prepared.iter().zip(destinations) {
+        let outcome = if let Some(error) = &errors[index] {
+            Err(ParityError::Invalid(format!(
+                "OpenSpider-Export fehlgeschlagen: {error}"
+            )))
+        } else {
+            compare_one(
+                opts,
+                site,
+                p,
+                &requests[index].out_dir,
+                &ref_bases,
+                &os_bases,
+                thresholds,
+                deviations,
+            )
+        };
         let outcome = match outcome {
             Ok(report) => Outcome::Compared {
                 report: Box::new(report),
@@ -604,7 +691,11 @@ fn run_site(
     Ok(SiteResult {
         site: site.to_string(),
         present,
-        error: None,
+        error: errors
+            .iter()
+            .flatten()
+            .next()
+            .map(|e| format!("OpenSpider-Export fehlgeschlagen: {e}")),
         exports: in_manifest_order(results, &manifest),
     })
 }
@@ -632,8 +723,16 @@ fn compare_one(
             ))
         })?;
     let ref_path = opts.golden_dir(site).join("ref").join(&p.entry.ref_file);
-    let reference = read_reference(&ref_path, &p.mapping)?;
-    let os = read_csv(&os_path, &[])?;
+    let reference = select_rows(
+        read_reference(&ref_path, &p.mapping)?,
+        &p.entry.select,
+        ref_bases,
+    )?;
+    let os = select_rows(
+        read_output(&os_path, &p.mapping)?,
+        &p.entry.select,
+        os_bases,
+    )?;
     let devs = deviations.for_export(Some(site), &p.entry.mapping);
     let mut report = compare(&CompareInput {
         export: &p.entry.mapping,
@@ -835,4 +934,33 @@ pub fn run(args: &RunArgs) -> Result<bool, ParityError> {
     )?;
     print!("{}", summary_markdown(&summary));
     Ok(summary.passed)
+}
+
+/// Zielauswahl wird auf beiden Seiten vor dem Vergleich angewandt; ein fehlendes Ziel ist ein Fehler.
+fn select_rows(
+    mut table: Table,
+    select: &BTreeMap<String, String>,
+    bases: &BaseUrls,
+) -> Result<Table, ParityError> {
+    for (column, value) in select {
+        let index = table
+            .index_of(column)
+            .ok_or_else(|| ParityError::Invalid(format!("Zielspalte {column} fehlt")))?;
+        let rules = crate::normalize::CellRules {
+            base_url: true,
+            ..Default::default()
+        };
+        let expected = if value.starts_with('/') {
+            format!("{{BASE}}{value}")
+        } else {
+            rules.prepare(value, bases)
+        };
+        table
+            .rows
+            .retain(|r| rules.prepare(&r[index], bases) == expected);
+    }
+    if !select.is_empty() && table.rows.is_empty() {
+        return Err(ParityError::Invalid("Zielauswahl hat keine Zeilen".into()));
+    }
+    Ok(table)
 }

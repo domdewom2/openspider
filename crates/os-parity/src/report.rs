@@ -81,6 +81,9 @@ pub struct AppliedDeviation {
 /// Bericht eines Export-Vergleichs.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Report {
+    /// Nur bei geordneter Auswertung (OUT-015); alte Berichte bleiben unverändert.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub row_order_identical: Option<bool>,
     /// Name des Exports (Mapping-Name).
     pub export: String,
     /// Site, falls bekannt.

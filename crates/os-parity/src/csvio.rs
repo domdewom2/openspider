@@ -111,6 +111,7 @@ pub const BLOCK_COLUMNS: [&str; 4] = ["Section", "Item", "URLs", "% of Total"];
 pub fn read_reference(path: &Path, mapping: &Mapping) -> Result<Table, ParityError> {
     match mapping.format {
         RefFormat::Table => read_csv(path, &mapping.drop_ref_columns),
+        RefFormat::Xml => crate::xml::read_sitemap(path),
         RefFormat::Blocks => {
             let bytes = std::fs::read(path).map_err(|e| {
                 ParityError::Invalid(format!("{} kann nicht gelesen werden: {e}", path.display()))
@@ -120,6 +121,15 @@ pub fn read_reference(path: &Path, mapping: &Mapping) -> Result<Table, ParityErr
                 other => other,
             })
         }
+    }
+}
+
+/// Liest OpenSpider-Ausgaben; Block-Mappings beziehen sich nur auf die Referenz.
+pub fn read_output(path: &Path, mapping: &Mapping) -> Result<Table, ParityError> {
+    if mapping.format == RefFormat::Xml {
+        crate::xml::read_sitemap(path)
+    } else {
+        read_csv(path, &[])
     }
 }
 

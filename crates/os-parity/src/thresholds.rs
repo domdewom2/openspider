@@ -22,6 +22,10 @@ use crate::error::ParityError;
 /// Schwellen eines Laufs.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Thresholds {
+    /// M2 B3(d): mindestens vier der fünf neuen Sites, unabhängig von M1.
+    pub min_m2_sites_present: usize,
+    /// M1 A3 bleibt als eigenes Gruppengate bestehen.
+    pub min_legacy_sites_present: usize,
     /// Zellübereinstimmung für Exporte ohne passendes Muster.
     pub default_agreement_pct: f64,
     /// URL-Menge muss identisch sein.
@@ -34,6 +38,8 @@ pub struct Thresholds {
 
 #[derive(Deserialize, Default)]
 struct Raw {
+    min_m2_sites_present: Option<usize>,
+    min_legacy_sites_present: Option<usize>,
     default_agreement_pct: Option<f64>,
     url_set_identical: Option<bool>,
     min_sites_present: Option<usize>,
@@ -73,6 +79,8 @@ impl Thresholds {
             default_agreement_pct: 97.0,
             url_set_identical: true,
             min_sites_present: 4,
+            min_m2_sites_present: 0,
+            min_legacy_sites_present: 0,
             agreement_pct: m,
         }
     }
@@ -99,6 +107,12 @@ impl Thresholds {
         }
         if let Some(v) = raw.min_sites_present {
             t.min_sites_present = v;
+        }
+        if let Some(v) = raw.min_m2_sites_present {
+            t.min_m2_sites_present = v;
+        }
+        if let Some(v) = raw.min_legacy_sites_present {
+            t.min_legacy_sites_present = v;
         }
         t.agreement_pct.extend(raw.agreement_pct);
         Ok(t)

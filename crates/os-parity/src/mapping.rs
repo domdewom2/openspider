@@ -98,6 +98,9 @@ impl Default for RawNormalize {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RawBlocks {
+    /// Weitere Filterkataloge (M2 ergänzt M1).
+    #[serde(default)]
+    filters: Vec<String>,
     /// Abschnittsnamen der Referenz → Abschnittsnamen von OpenSpider.
     #[serde(default)]
     section_map: BTreeMap<String, String>,
@@ -116,6 +119,9 @@ fn yes() -> bool {
 
 #[derive(Debug, Clone, Deserialize)]
 struct RawMapping {
+    /// Reihenfolge der normalisierten Schlüssel muss übereinstimmen (Listenmodus).
+    #[serde(default)]
+    ordered: bool,
     #[serde(default)]
     key: Vec<String>,
     #[serde(default)]
@@ -143,6 +149,8 @@ pub enum RefFormat {
     Table,
     /// Abschnitte mit eigener Kopfzeile (Crawl Overview).
     Blocks,
+    /// XML- oder Bilder-Sitemap.
+    Xml,
 }
 
 /// Einstellungen für [`RefFormat::Blocks`].
@@ -174,6 +182,8 @@ pub struct ColumnMap {
 /// Geladenes Mapping.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Mapping {
+    /// Reihenfolge zusätzlich zum Zellvergleich prüfen.
+    pub ordered: bool,
     /// Schlüsselspalten (Referenznamen); `"#"` = laufende Nummer.
     pub key: Vec<String>,
     /// Zu verwerfende Referenzspalten.
@@ -190,6 +200,7 @@ pub struct Mapping {
     pub dedupe_reference: bool,
     /// Pfad der Filterliste, solange [`Mapping::load`] sie noch nicht gelesen hat.
     m1_filters_path: Option<String>,
+    filters_paths: Vec<String>,
 }
 
 /// Wendet Zusatzregeln (`transform`) auf Vergleichsregeln an.
@@ -234,8 +245,40 @@ fn load_m1_filters(path: &Path) -> Result<BTreeSet<(String, String)>, ParityErro
             .into_iter()
             .flatten()
         {
-            if let Some(fid) = f.get("id").and_then(|i| i.as_str()) {
-                out.insert((id.to_lowercase(), fid.to_lowercase()));
+            if f.get("extension").and_then(|v| v.as_bool()) == Some(true) {
+                continue;
+            }
+            if let Some(fid) = f
+                .get("default_label")
+                .or_else(|| f.get("id"))
+                .and_then(|i| i.as_str())
+            {
+                let mut label = fid.to_string();
+                let defaults = serde_json::to_value(os_model::CrawlConfig::default())
+                    .map_err(|e| ParityError::Invalid(e.to_string()))?;
+                while let Some(start) = label.find('{') {
+                    let Some(end) = label[start..].find('}').map(|n| start + n) else {
+                        break;
+                    };
+                    let key = &label[start + 1..end];
+                    let value = key.split('.').try_fold(&defaults, |v, k| v.get(k));
+                    let Some(value) = value else {
+                        break;
+                    };
+                    let value = if key.ends_with("_bytes") {
+                        value
+                            .as_u64()
+                            .map(|n| (n / (1024 * 1024)).to_string())
+                            .unwrap_or_else(|| value.to_string())
+                    } else {
+                        value
+                            .as_str()
+                            .map(str::to_string)
+                            .unwrap_or_else(|| value.to_string())
+                    };
+                    label.replace_range(start..=end, &value);
+                }
+                out.insert((id.to_lowercase(), label.to_lowercase()));
             }
         }
     }
@@ -268,6 +311,16 @@ impl Mapping {
                 ))
             })?;
             mapping.blocks.m1_filters = Some(load_m1_filters(&file)?);
+        }
+        for rel in std::mem::take(&mut mapping.filters_paths) {
+            let dir = std::fs::canonicalize(path.parent().unwrap_or_else(|| Path::new(".")))?;
+            let file = find_upwards(&dir, &rel)
+                .ok_or_else(|| ParityError::Invalid(format!("Filterliste {rel} nicht gefunden")))?;
+            mapping
+                .blocks
+                .m1_filters
+                .get_or_insert_with(BTreeSet::new)
+                .extend(load_m1_filters(&file)?);
         }
         Ok(mapping)
     }
@@ -338,13 +391,14 @@ impl Mapping {
         let format = match raw.format.as_deref().map(str::trim) {
             None | Some("") | Some("table") => RefFormat::Table,
             Some("blocks") => RefFormat::Blocks,
+            Some("xml") => RefFormat::Xml,
             Some(other) => {
                 return Err(ParityError::Invalid(format!(
-                    "unbekanntes format {other:?} (erlaubt: table, blocks)"
+                    "unbekanntes format {other:?} (erlaubt: table, blocks, xml)"
                 )))
             }
         };
-        let (blocks, m1_filters_path) = match raw.blocks {
+        let (blocks, m1_filters_path, filters_paths) = match raw.blocks {
             Some(b) => (
                 BlocksOpts {
                     section_map: b.section_map,
@@ -352,10 +406,13 @@ impl Mapping {
                     os_only_rows_ok: b.os_only_rows_ok,
                 },
                 b.m1_filters,
+                b.filters,
             ),
-            None => (BlocksOpts::default(), None),
+            None => (BlocksOpts::default(), None, Vec::new()),
         };
         Ok(Self {
+            ordered: raw.ordered,
+            filters_paths,
             key: raw.key,
             drop_ref_columns: raw.drop_ref_columns,
             columns,
