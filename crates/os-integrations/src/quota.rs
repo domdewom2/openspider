@@ -76,19 +76,53 @@ impl QuotaLedger {
         now: Timestamp,
         limit: u64,
     ) -> Result<bool, ApiError> {
+        self.reserve_limits(&[(
+            source.to_string(),
+            property.to_string(),
+            pacific_day(now),
+            limit,
+        )])
+    }
+    /// Reserviert mehrere Perioden atomar, z. B. Anbietertag und benutzerdefinierter Crawl-Cap.
+    pub fn reserve_limits(
+        &self,
+        limits: &[(String, String, String, u64)],
+    ) -> Result<bool, ApiError> {
         let _lock = self.lock.lock().unwrap_or_else(|p| p.into_inner());
         let _file = self.lock_file()?;
         let mut ledger = self.read()?;
-        let used = ledger
-            .counts
-            .entry(Self::key(source, property, now))
-            .or_default();
-        if *used >= limit {
+        let entries = limits
+            .iter()
+            .map(|(source, property, period, limit)| {
+                (
+                    serde_json::to_string(&(source, property, period)).expect("strings"),
+                    *limit,
+                )
+            })
+            .collect::<Vec<_>>();
+        if entries
+            .iter()
+            .any(|(key, limit)| ledger.counts.get(key).copied().unwrap_or(0) >= *limit)
+        {
             return Ok(false);
         }
-        *used += 1;
+        for (key, _) in entries {
+            *ledger.counts.entry(key).or_default() += 1;
+        }
         self.write(&ledger)?;
         Ok(true)
+    }
+    pub fn remaining_period(
+        &self,
+        source: &str,
+        property: &str,
+        period: &str,
+        limit: u64,
+    ) -> Result<u64, ApiError> {
+        let _lock = self.lock.lock().unwrap_or_else(|p| p.into_inner());
+        let _file = self.lock_file()?;
+        let key = serde_json::to_string(&(source, property, period)).expect("strings");
+        Ok(limit.saturating_sub(self.read()?.counts.get(&key).copied().unwrap_or(0)))
     }
     pub fn remaining(
         &self,

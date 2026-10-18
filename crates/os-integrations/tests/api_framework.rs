@@ -702,3 +702,42 @@ fn password_export_roundtrip_rejects_wrong_password_and_tampering() {
     );
     assert!(os_integrations::secret_export::encrypt_with_password(&secret, "").is_err());
 }
+
+// spec: INTEG-006
+#[test]
+fn crawl_caps_and_provider_periods_are_reserved_atomically() {
+    let dir = tempfile::tempdir().unwrap();
+    let ledger = quota::QuotaLedger::new(dir.path().join("quota.json"));
+    let daily = ("gsc".into(), "property".into(), "2026-10-18".into(), 10);
+    let crawl = ("gsc".into(), "property".into(), "crawl:a".into(), 2);
+    for _ in 0..2 {
+        assert!(ledger
+            .reserve_limits(&[daily.clone(), crawl.clone()])
+            .unwrap());
+    }
+    assert!(!ledger.reserve_limits(&[daily.clone(), crawl]).unwrap());
+    assert_eq!(
+        ledger
+            .remaining_period("gsc", "property", "2026-10-18", 10)
+            .unwrap(),
+        8
+    );
+    assert!(ledger
+        .reserve_limits(&[
+            daily,
+            ("gsc".into(), "property".into(), "crawl:b".into(), 2)
+        ])
+        .unwrap());
+    assert_eq!(
+        ledger
+            .remaining_period("gsc", "property", "crawl:a", 2)
+            .unwrap(),
+        0
+    );
+    assert_eq!(
+        ledger
+            .remaining_period("gsc", "property", "crawl:b", 2)
+            .unwrap(),
+        1
+    );
+}
