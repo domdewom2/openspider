@@ -12,3 +12,16 @@ All data is authored locally for these tests. No reference-product files are use
 `timeseries::catalog` derives numeric metrics from the tab/filter registry; `measure` computes a crawl measurement; `align` preserves existing headers and appends new selections. Date cells carry a numeric spreadsheet serial and the date format `yyyy-mm-dd hh:mm:ss`; the caller supplies the local UTC offset for the crawl start. Sheets, scheduling, CLI and dialogs remain with X03/T01/L01/U27 as specified by K2-48.
 
 Goldens can be regenerated with `UPDATE_D17_GOLDENS=1` on the D17 export test targets. Only `tests/golden/out-m2-reports` is written by that switch.
+
+## Fremdergänzungen (K2-61)
+
+Only `tests/golden/out-cli/list_reports.txt` changes outside the package and the K2-60 stub list. The CLI registry automatically lists the additional D17 sidebar exports; the golden receives these six lines, without changing foreign tests or removing any existing line:
+
+```diff
++Sidebar:Overview
++Sidebar:Issues
++Sidebar:Site Structure Depth
++Sidebar:Segments
++Sidebar:Spelling & Grammar
++Sidebar:API
+```
