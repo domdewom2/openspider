@@ -264,7 +264,7 @@ impl Snapshot {
             node.hidden_descendants = descendants[&id] - visible_descendants[&id];
             nodes.push(node);
         }
-        let truncated = nodes.iter().any(|n| n.hidden_children > 0);
+        let truncated = selected.len() < order.len();
         Ok(Graph {
             nodes,
             edges,

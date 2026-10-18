@@ -61,7 +61,7 @@ pub(super) fn capture(file: &CrawlFile) -> Result<Snapshot, StoreError> {
     for (sql, custom) in [
         ("SELECT url_id, key, COALESCE(v_real, v_int) FROM url_ext WHERE v_real IS NOT NULL OR v_int IS NOT NULL ORDER BY url_id, key", false),
         ("SELECT url_id, source || '.' || metric, v_real FROM api_values WHERE level = 'url' AND v_real IS NOT NULL ORDER BY url_id, source, metric", false),
-        ("SELECT url_id, 'custom_extraction.' || def_index, value FROM custom_extraction_values WHERE error IS NULL ORDER BY url_id, def_index, number", true),
+        ("SELECT url_id, 'custom_extraction.' || def_index || '.' || number, value FROM custom_extraction_values WHERE error IS NULL ORDER BY url_id, def_index, number", true),
     ] {
         let mut stmt = tx.prepare(sql)?;
         let mut rows = stmt.query([])?;
@@ -71,6 +71,13 @@ pub(super) fn capture(file: &CrawlFile) -> Result<Snapshot, StoreError> {
             let value = if custom { row.get::<_, String>(2)?.parse::<f64>().ok() } else { row.get(2)? };
             if let (Some(record), Some(value)) = (tree.nodes.get_mut(&id), value.filter(|n| n.is_finite())) {
                 record.metrics.entry(key.clone()).or_insert(value);
+                if custom {
+                    // Keep the first numeric value as the definition's short alias,
+                    // and expose every numbered extraction column independently.
+                    if let Some((definition, _)) = key.rsplit_once('.') {
+                        record.metrics.entry(definition.into()).or_insert(value);
+                    }
+                }
                 if matches!(key.as_str(), "linkscore.score" | "linkscore.link_score" | "link_score") {
                     record.node.link_score = Some(value);
                     record.metrics.insert("link_score".into(), value);

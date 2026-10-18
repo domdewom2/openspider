@@ -138,7 +138,7 @@ fn numeric_metrics_are_independent_and_missing_values_remain_missing() {
         )
         .unwrap();
     file.conn().execute("INSERT INTO api_values(url_id,source,metric,level,v_real,fetched_at) VALUES (2,'ga4','sessions','url',99,'2026-01-01')", []).unwrap();
-    file.conn().execute("INSERT INTO custom_extraction_values(url_id,def_index,number,value) VALUES (2,0,1,'2.5'),(3,0,1,'not a number')", []).unwrap();
+    file.conn().execute("INSERT INTO custom_extraction_values(url_id,def_index,number,value) VALUES (2,0,1,'2.5'),(2,0,2,'7.5'),(3,0,1,'not a number')", []).unwrap();
     let mut config = file.config().unwrap();
     config.segments.list.push(os_model::SegmentConfig {
         name: "Products".into(),
@@ -178,6 +178,19 @@ fn numeric_metrics_are_independent_and_missing_values_remain_missing() {
         .unwrap();
     assert_eq!(custom.nodes[1].metric, Some(2.5));
     assert_eq!(custom.nodes[2].metric, None);
+    let numbered = snapshot
+        .graph(&GraphOptions {
+            metric: "custom_extraction.0.2".into(),
+            ..Default::default()
+        })
+        .unwrap();
+    assert_eq!(numbered.nodes[1].metric, Some(7.5));
+    assert!(snapshot
+        .available_metrics()
+        .contains("custom_extraction.0.1"));
+    assert!(snapshot
+        .available_metrics()
+        .contains("custom_extraction.0.2"));
 }
 
 // spec: UI-096
@@ -320,4 +333,23 @@ fn same_depth_uses_global_discovery_sequence_before_parent_order() {
         .unwrap();
     assert!(graph.edges.contains(&(3, 7)));
     assert!(!graph.edges.contains(&(2, 7)));
+}
+
+// spec: UI-096
+#[test]
+fn disconnected_list_roots_also_report_budget_truncation() {
+    let (_dir, file) = fx::file();
+    for id in 1..=5 {
+        fx::url(&file, id, &format!("https://site.test/list/{id}"), true);
+    }
+    let graph = Snapshot::capture(&file)
+        .unwrap()
+        .graph(&GraphOptions {
+            budget: 2,
+            ..Default::default()
+        })
+        .unwrap();
+    assert_eq!(graph.nodes.len(), 2);
+    assert!(graph.edges.is_empty());
+    assert!(graph.truncated);
 }
