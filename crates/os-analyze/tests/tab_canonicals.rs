@@ -224,6 +224,7 @@ const BASIC_ALL: &[&str] = &[
     "/noindex-target.html",
     "/noindex-with-canonical.html",
     "/none.html",
+    "/none.pdf",
     "/pct/a~b.html",
     "/self-abs.html",
     "/self.html",
@@ -331,12 +332,11 @@ async fn population_is_internal_200_html_plus_non_html_with_http_canonical() {
     let all = c.set("All");
     assert_eq!(all, set(BASIC_ALL));
 
-    // Nicht in der Grundmenge: Nicht-200 (404, 301), robots-gesperrt, PDF ohne Canonical, robots.txt, extern.
+    // Nicht in der Grundmenge: Nicht-200 (404, 301), robots-gesperrt, robots.txt, extern.
     for gone in [
         "/gone-404",
         "/moved",
         "/blocked-target.html",
-        "/none.pdf",
         "/robots.txt",
         "{EXT}/ext-ok.html",
         "{EXT}/ext-missing.html",
@@ -391,7 +391,7 @@ async fn contains_canonical_counts_html_and_header_canonicals() {
     let contains = c.set("Contains Canonical");
     let expected: BTreeSet<String> = set(BASIC_ALL)
         .into_iter()
-        .filter(|a| a != "/none.html")
+        .filter(|a| a != "/none.html" && a != "/none.pdf")
         .collect();
     assert_eq!(
         contains,
@@ -469,9 +469,9 @@ async fn canonicalised_pages_point_elsewhere_and_become_non_indexable() {
 #[tokio::test]
 async fn missing_lists_only_html_pages_without_any_canonical() {
     let c = crawl("tech/canonical-basic", CrawlConfig::default(), true).await;
-    assert_eq!(c.set("Missing"), set(&["/none.html"]));
-    // Nicht-HTML ohne HTTP-Canonical steht gar nicht im Tab, also auch nicht in Missing.
-    assert!(!c.set("All").contains("/none.pdf"));
+    assert_eq!(c.set("Missing"), set(&["/none.html", "/none.pdf"]));
+    // M2-S05: Auch PDFs ohne HTTP-Canonical stehen in Missing.
+    assert!(c.set("All").contains("/none.pdf"));
     assert_eq!(
         c.cell("Missing", "/none.html", "Occurrences"),
         Value::Int(0)
@@ -662,7 +662,8 @@ async fn the_step_is_repeatable_and_stamps_the_change_feed() {
 
     // Die markierten Zeilen erscheinen im Änderungsfeed.
     let changed = queries::changed_since(conn, before, 500).unwrap();
-    assert_eq!(changed.len(), BASIC_NON_INDEXABLE.len());
+    let flagged: i64 = conn.query_row("SELECT COUNT(DISTINCT url_id) FROM url_flags WHERE flag IN ('non_indexable_canonical', 'unlinked_canonical')", [], |r| r.get(0)).unwrap();
+    assert_eq!(changed.len(), flagged as usize);
 
     // Zweiter Lauf: gleiche Menge, keine Änderung.
     analyse_now(&c);
@@ -742,14 +743,6 @@ async fn the_tab_is_empty_when_canonicals_are_not_stored() {
             )
             .unwrap();
     assert_eq!(canonicalised, 0, "kein Status Canonicalised");
-}
-
-// Respect-Schalter (CRAWL-092): canonicalisierte URLs ausblenden – außer im Filter „Canonicalised“.
-// spec: TECH-011 [M2]
-#[tokio::test]
-#[ignore = "M2: TECH-011 Respect Canonical (CRAWL-092) gehört nicht zu M1"]
-async fn respect_canonical_hides_canonicalised_pages_except_in_their_filter() {
-    unreachable!("M2");
 }
 
 // Golden-Dateien (TECH-007): Adresse, Occurrences, Status, maßgebliche Canonical je Filter.
@@ -868,13 +861,13 @@ async fn extraction_follows_the_rules_for_rel_tokens_headers_and_hiding_places()
     );
     assert_eq!(occurrences("/header-unquoted.html"), 1);
     assert_eq!(occurrences("/header-other-rel.html"), 0);
-    // HTTP-Canonical gilt auch für Nicht-HTML (PDF); ohne Header steht das PDF nicht im Tab.
+    // HTTP-Canonical gilt auch für Nicht-HTML (PDF); auch ohne Header steht das PDF im Tab (M2-S05).
     assert_eq!(occurrences("/header.pdf"), 1);
     assert_eq!(
         c.text_cell("All", "/header.pdf", "HTTP Canonical 1"),
         "/target.html"
     );
-    assert!(!c.set("All").contains("/plain.pdf"));
+    assert!(c.set("All").contains("/plain.pdf"));
     // Seiten ohne gültige Canonical-Angabe stehen in „Missing“ (nur HTML).
     assert_eq!(
         c.set("Missing"),
@@ -883,6 +876,7 @@ async fn extraction_follows_the_rules_for_rel_tokens_headers_and_hiding_places()
             "/in-comment.html",
             "/in-template.html",
             "/no-href.html",
+            "/plain.pdf",
             "/rel-x.html",
         ])
     );

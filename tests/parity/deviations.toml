@@ -302,17 +302,6 @@ delta = 1
 reason = "wie DEV-027: Die Population des Hreflang-Tabs enthaelt auch gecrawlte hreflang-Ziele (TECH-071), hier das umgeleitete Ziel /hl/es-old/ (301); die Referenz zaehlt nur interne Seiten mit 2xx."
 
 [[deviation]]
-id = "DEV-035"
-spec = "TECH-015"
-kind = "OS-Festlegung"
-export = "crawl_overview"
-site = "parity-onpage"
-column = "URLs"
-key_prefixes = ["canonicals | all", "canonicals | missing"]
-delta = -1
-reason = "K-71: Die Grundgesamtheit der Referenz heisst 'Internal HTML or PDF pages with 2xx response' und enthaelt jede PDF; die Canonicals-Grundmenge von OpenSpider fuehrt Nicht-HTML-Ressourcen nur mit mindestens einer HTTP-Canonical (TECH-011) und nimmt eine PDF ohne Link-Header nicht in Missing auf (TECH-015). PDFs als Seiten sind P1 (ONPAGE-166). parity-onpage hat eine PDF ohne Canonical (/ctype/t-pdf.pdf): Referenz 85/81, OpenSpider 84/80."
-
-[[deviation]]
 id = "DEV-036"
 spec = "TECH-133"
 kind = "OS-Festlegung"

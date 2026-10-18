@@ -1,2 +1,24 @@
-# OpenSpider – Issue-Texte (English) ab M2, Tab „Canonicals“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/en.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+[issues.canonicals-canonical-is-relative]
+what = "At least one canonical annotation uses a relative address."
+why = "Its destination depends on the document base; changes to that base or delivery can change the target."
+fix = "Use the complete HTTPS address of the intended canonical target."
+
+[issues.canonicals-unlinked]
+what = "The canonical target has no hyperlink from an internal page."
+why = "Search engines receive a canonical signal but cannot reach its target through normal internal navigation."
+fix = "Link directly to the preferred target from relevant internal pages and review the canonical choice."
+
+[issues.canonicals-invalid-attribute-in-annotation]
+what = "A canonical annotation contains hreflang, lang, media or type."
+why = "These attributes may cause search engines to ignore the canonical annotation."
+fix = "Remove these attributes from the canonical element or Link header; declare language alternatives separately."
+
+[issues.canonicals-contains-fragment-url]
+what = "A canonical target contains a fragment, including an empty value after #."
+why = "Fragments identify sections within a resource and can make the canonical address ambiguous."
+fix = "Remove the fragment and point to the complete preferred resource address."
+
+[issues.canonicals-outside-head]
+what = "At least one HTML canonical is outside the head in the parsed document."
+why = "Search engines may ignore a canonical annotation outside the head."
+fix = "Move the canonical element into the head and repair preceding malformed markup."

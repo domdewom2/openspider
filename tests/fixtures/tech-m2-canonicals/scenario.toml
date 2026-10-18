@@ -1,0 +1,33 @@
+# Eigene Mini-Site: Attributtransport, PDF-Population, Respect- und Validierungsverträge.
+[[route]]
+path = "/"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><head><link rel="canonical" href="/"></head><body><a href="/source">source</a><a href="/body">body</a><a href="/plain.pdf">PDF</a><a href="/header.pdf">header PDF</a></body>'''
+
+[[route]]
+path = "/source"
+body = '''<!doctype html><head><link rel="canonical" href="/target" media=""></head><body><a href="/child">child</a></body>'''
+
+[[route]]
+path = "/body"
+body = '''<!doctype html><head></head><body><link rel="canonical" href="/target#"></body>'''
+
+[[route]]
+path = "/target"
+body = '''<!doctype html><head><link rel="canonical" href="/target"></head><body>target</body>'''
+
+[[route]]
+path = "/child"
+body = '''<!doctype html><head><link rel="canonical" href="/child"></head><body>child</body>'''
+
+[[route]]
+path = "/plain.pdf"
+content_type = "application/pdf"
+body = "%PDF-1.4\n%%EOF"
+
+[[route]]
+path = "/header.pdf"
+content_type = "application/pdf"
+body = "%PDF-1.4\n%%EOF"
+[route.headers]
+Link = '</target>; rel="canonical"; type=""'

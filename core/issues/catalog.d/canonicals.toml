@@ -1,8 +1,57 @@
-# OpenSpider – Issue-Katalog ab M2, Tab „Canonicals“ (UI-063/UI-064).
-#
-# Einträge wie in core/issues/catalog.toml (`[[issue]]` mit id, tab, filter, type, priority, type_rule, priority_rule,
-# doc_key, optional override_reason/needs_crawl_analysis/text_params); `tab` ist hier immer "Canonicals". Der Loader liest die
-# M1-Datei und alle Dateien dieses Ordners. Texte: core/issues/texts/{de,en}.d/canonicals.toml (Schlüssel issues.<id>).
-# M2-F02 legt nur die Datei an; die Einträge liefert das Paket des Tabs.
-
+# M2-D04: Canonical-Issues. Eigene Texte, Klassifizierung nach Spec.
 schema = 1
+
+[[issue]]
+id = "canonicals-canonical-is-relative"
+tab = "Canonicals"
+filter = "Canonical Is Relative"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "canonicals-canonical-is-relative"
+
+[[issue]]
+id = "canonicals-unlinked"
+tab = "Canonicals"
+filter = "Unlinked"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W1"
+priority_rule = "P-M1"
+needs_crawl_analysis = true
+doc_key = "canonicals-unlinked"
+
+[[issue]]
+id = "canonicals-invalid-attribute-in-annotation"
+tab = "Canonicals"
+filter = "Invalid Attribute In Annotation"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "canonicals-invalid-attribute-in-annotation"
+
+[[issue]]
+id = "canonicals-contains-fragment-url"
+tab = "Canonicals"
+filter = "Contains Fragment URL"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "canonicals-contains-fragment-url"
+
+[[issue]]
+id = "canonicals-outside-head"
+tab = "Canonicals"
+filter = "Outside <head>"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "canonicals-outside-head"
