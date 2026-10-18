@@ -1,0 +1,9 @@
+u10-tabs = Daten-Tabs
+u10-tabs-overflow = Weitere Daten-Tabs
+u10-tabs-configure = Tabs konfigurieren
+u10-tabs-reset = Tabs zurücksetzen
+u10-tabs-internal = Internal bleibt immer sichtbar
+u10-tabs-error = Tabs konnten nicht geladen oder gespeichert werden
+u10-tabs-open = Tab anzeigen
+u10-tabs-up = { $tab } nach oben
+u10-tabs-down = { $tab } nach unten

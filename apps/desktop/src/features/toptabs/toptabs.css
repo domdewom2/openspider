@@ -1,0 +1,7 @@
+.u10-top-tabs { display: flex; height: 100%; min-width: 0; }
+.u10-top-tabs > .os-tabbar { flex: 1; min-width: 0; }
+.u10-tabs-config { position: relative; }
+.u10-tabs-config summary { cursor: pointer; padding-inline: 8px; }
+.u10-tabs-popup { position: absolute; z-index: 20; right: 0; width: min(500px, 90vw); max-height: 70vh; overflow: auto; color: var(--os-text); background: var(--os-bg-overlay); border: 1px solid var(--os-border); padding: 8px; }
+.u10-tabs-item { display: flex; align-items: center; gap: 4px; }
+.u10-tabs-item label { flex: 1; }
