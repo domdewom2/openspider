@@ -43,9 +43,68 @@ pub fn extract(doc: &Document, base: &url::Url) -> Vec<PaginationRef> {
     out
 }
 
-// STUB(M2-D05)
+/// Fakten aus dem bereits vorhandenen Seitenbaum, vor den Speicherschaltern.
+/// Der Vergleich ignoriert Fragmente und normalisiert URL-Schreibweisen (TECH-002).
+pub fn run(ctx: &crate::PageCtx<'_>, page: &mut os_model::ParsedPage) {
+    // Die meisten Seiten haben keine Paginierung: keine zweite Linkmenge aufbauen.
+    let missing = !page.pagination.is_empty() && missing_anchor(ctx, &page.pagination);
+    page.ext.extend([
+        (
+            os_model::ExtKey::from_static("pagination.has_prev"),
+            os_model::Value::Bool(page.pagination.iter().any(|p| !p.rel_next)),
+        ),
+        (
+            os_model::ExtKey::from_static("pagination.not_in_anchor"),
+            os_model::Value::Bool(missing),
+        ),
+    ]);
+}
+
+fn missing_anchor(ctx: &crate::PageCtx<'_>, refs: &[PaginationRef]) -> bool {
+    static SELECTOR: std::sync::OnceLock<scraper::Selector> = std::sync::OnceLock::new();
+    let selector =
+        SELECTOR.get_or_init(|| scraper::Selector::parse("a[href]").expect("gültiger Selektor"));
+    let anchors: std::collections::HashSet<String> = ctx
+        .doc
+        .html()
+        .select(selector)
+        .filter(|el| !dom::in_template(*el))
+        .filter_map(|el| raw_and_resolved(ctx.base, el.value().attr("href")?).1)
+        .filter_map(|url| os_url::compare_key(&url))
+        .collect();
+    refs.iter().any(|p| {
+        p.resolved
+            .as_ref()
+            .is_none_or(|url| os_url::compare_key(url).is_none_or(|key| !anchors.contains(&key)))
+    })
+}
+
+/// Header-Fakten auch für Antworten ohne HTML-Parse und bei ausgeschaltetem Speichern.
 pub fn response_facts(
-    _input: &crate::ResponseInput<'_>,
+    input: &crate::ResponseInput<'_>,
 ) -> Vec<(os_model::ExtKey, os_model::Value)> {
-    Vec::new()
+    let (mut has_next, mut has_prev) = (false, false);
+    for entry in input
+        .headers
+        .iter()
+        .filter(|(name, _)| name.eq_ignore_ascii_case("link"))
+        .flat_map(|(_, value)| crate::headers::parse_link_header(value))
+    {
+        if let Some(rel) = entry.param("rel") {
+            has_next |= has_rel_token(rel, "next");
+            has_prev |= has_rel_token(rel, "prev") || has_rel_token(rel, "previous");
+        }
+    }
+    vec![
+        (
+            os_model::ExtKey::from_static("pagination.has_prev"),
+            os_model::Value::Bool(has_prev),
+        ),
+        // Antworten ohne HTML-Parse haben keine Ankernavigation. Beim HTML-Parse
+        // ersetzt run() diesen Wert anhand des vorhandenen Baums.
+        (
+            os_model::ExtKey::from_static("pagination.not_in_anchor"),
+            os_model::Value::Bool(has_next || has_prev),
+        ),
+    ]
 }
