@@ -275,8 +275,8 @@ fn every_tab_is_a_real_definition_or_a_marked_stub() {
             );
         }
     }
-    // Alle 15 neuen Tabs sind in M2-F02 Stubs; die 16 Tabs von M1 sind echte Definitionen.
-    assert_eq!(stubs, 15, "Stub-Tabs");
+    // M2-D15 ersetzt den Custom-Extraction-Stub; 14 F02-Tabs verbleiben.
+    assert_eq!(stubs, 14, "Stub-Tabs");
 }
 
 #[test]
@@ -403,7 +403,13 @@ fn dynamic_column_sources_are_registered_per_tab_and_names_are_interned() {
     ] {
         assert!(tabs::dynamic_columns(tab, &cfg).is_empty(), "{tab}");
     }
-    assert!(tabs::column_sources().is_empty());
+    assert_eq!(
+        tabs::column_sources()
+            .iter()
+            .map(|(tab, _)| *tab)
+            .collect::<Vec<_>>(),
+        ["Custom Extraction", "Internal"]
+    );
     // Namen zur Laufzeit: gleicher Text, dieselbe Referenz.
     let a = intern("Preis (Extraktor 1)");
     let b = intern(&String::from("Preis (Extraktor 1)"));
