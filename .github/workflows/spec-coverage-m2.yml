@@ -1,0 +1,86 @@
+name: Spec coverage M2
+
+on:
+  push:
+    branches: [main, 'm2/**']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      gate:
+        description: 'M2-Abnahme über alle Wellen (Q04)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  spec-coverage-m2:
+    name: spec-coverage-m2
+    runs-on: macos-14
+    timeout-minutes: 60
+    env:
+      OPENSPIDER_SECRET_STORE: memory
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+      CARGO_PROFILE_TEST_DEBUG: line-tables-only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: spec-coverage-m2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Browser für E2E-A
+        run: npx playwright install chromium webkit
+        working-directory: apps/desktop
+      - name: Rust-Tests und echte Ergebnisdatei
+        run: |
+          status=0
+          cargo test --workspace --exclude openspider-desktop --locked --no-fail-fast > rust-tests.txt 2>&1 || status=$?
+          tail -n 40 rust-tests.txt
+          exit "$status"
+      - name: vitest-JUnit
+        if: ${{ !cancelled() }}
+        run: npm run -w apps/desktop test -- --reporter=default --reporter=junit --outputFile.junit=../../vitest-m2.xml
+      - name: E2E-Bridge bauen
+        if: ${{ !cancelled() }}
+        run: cargo build --locked -p os-app --features e2e-bridge --bin os-app-bridge
+      - name: Playwright-JUnit (E2E-A)
+        if: ${{ !cancelled() }}
+        env:
+          PLAYWRIGHT_JUNIT_OUTPUT_FILE: ../../playwright-m2.xml
+          OS_E2E_TRANSPORT: bridge
+        run: npm run -w apps/desktop e2e -- --project=chromium --project=webkit --reporter=list,junit
+      - name: Spec-Abdeckung und Anhang B
+        if: ${{ !cancelled() }}
+        env:
+          M2_GATE: ${{ inputs.gate || false }}
+        shell: bash
+        run: |
+          gate_args=()
+          if [[ "$M2_GATE" == "true" ]]; then gate_args+=(--gate); fi
+          rm -f docs/plan/M2-status.json
+          status=0
+          cargo run --locked -p os-parity -- coverage --milestone M2 \
+            --test-output rust-tests.txt \
+            --frontend-junit vitest-m2.xml --frontend-junit playwright-m2.xml \
+            --write docs/plan/M2-status.json --strict "${gate_args[@]}" > coverage-m2.txt 2>&1 || status=$?
+          cat coverage-m2.txt
+          cat coverage-m2.txt >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: spec-coverage-m2
+          path: |
+            rust-tests.txt
+            vitest-m2.xml
+            playwright-m2.xml
+            coverage-m2.txt
+            docs/plan/M2-status.json
+          if-no-files-found: warn
