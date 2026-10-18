@@ -1,0 +1,18 @@
+# M2-P01: Spec-abgeleitete Spalten; keine Referenzwerte oder Beschreibungstexte.
+key = ["Address"]
+drop_ref_columns = ["Description", "How To Fix"]
+
+[columns]
+"Address" = "Address"
+"Content Type" = "Content Type"
+"Status Code" = "Status Code"
+"Status" = "Status"
+"Indexability" = "Indexability"
+"Indexability Status" = "Indexability Status"
+
+[normalize]
+base_url = true
+trim = true
+bool = "case-insensitive"
+number_decimals = 3
+empty_equals_null = true

@@ -1,0 +1,138 @@
+# M2-P01: Exportauftrag an den Orchestrator; ref/ bleibt unberührt.
+site = "parity-m2-security"
+port = 8909
+ref_version = "24.3"
+exported_at = ""
+ref_settings = "Free, macOS, English (UK), Standardkonfiguration; Crawl Analysis ausgeführt. Hreflang/Pagination speichern, nicht crawlen. Always-Follow aus (Not Followed). Kein JavaScript, kein TLS. Gesperrte/leere Exporte als unavailable mit Grund dokumentieren."
+
+[[export]]
+ref_file = "internal_all.csv"
+os = "tab:Internal:All"
+mapping = "internal_m2"
+status = "pending"
+
+[[export]]
+ref_file = "response_codes_all.csv"
+os = "tab:Response Codes:All"
+mapping = "response_codes_all"
+status = "pending"
+
+[[export]]
+ref_file = "crawl_overview.csv"
+os = "report:Crawl Overview"
+mapping = "crawl_overview"
+status = "pending"
+
+[[export]]
+ref_file = "security_all.csv"
+os = "tab:Security:All"
+mapping = "security_all"
+status = "pending"
+
+[[export]]
+ref_file = "security_mixed_content.csv"
+os = "tab:Security:Mixed Content"
+mapping = "security_all"
+status = "pending"
+
+[[export]]
+ref_file = "security_form_url_insecure.csv"
+os = "tab:Security:Form URL Insecure"
+mapping = "security_all"
+status = "pending"
+
+[[export]]
+ref_file = "security_form_on_http_url.csv"
+os = "tab:Security:Form on HTTP URL"
+mapping = "security_all"
+status = "pending"
+
+[[export]]
+ref_file = "security_unsafe_cross_origin_links.csv"
+os = "tab:Security:Unsafe Cross-Origin Links"
+mapping = "security_all"
+status = "pending"
+
+[[export]]
+ref_file = "security_protocol_relative_resource_links.csv"
+os = "tab:Security:Protocol-Relative Resource Links"
+mapping = "security_all"
+status = "pending"
+
+[[export]]
+ref_file = "security_missing_hsts_header.csv"
+os = "tab:Security:Missing HSTS Header"
+mapping = "security_all"
+status = "pending"
+
+[[export]]
+ref_file = "security_missing_content_security_policy_header.csv"
+os = "tab:Security:Missing Content-Security-Policy Header"
+mapping = "security_all"
+status = "pending"
+
+[[export]]
+ref_file = "security_missing_x_content_type_options_header.csv"
+os = "tab:Security:Missing X-Content-Type-Options Header"
+mapping = "security_all"
+status = "pending"
+
+[[export]]
+ref_file = "security_missing_x_frame_options_header.csv"
+os = "tab:Security:Missing X-Frame-Options Header"
+mapping = "security_all"
+status = "pending"
+
+[[export]]
+ref_file = "security_missing_secure_referrer_policy_header.csv"
+os = "tab:Security:Missing Secure Referrer-Policy Header"
+mapping = "security_all"
+status = "pending"
+
+[[export]]
+ref_file = "security_bad_content_type.csv"
+os = "tab:Security:Bad Content Type"
+mapping = "security_all"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_security_http_urls_inlinks.csv"
+os = "bulk:Security:HTTP URLs Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_security_mixed_content_inlinks.csv"
+os = "bulk:Security:Mixed Content Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_security_form_url_insecure_inlinks.csv"
+os = "bulk:Security:Form URL Insecure Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_security_form_on_http_url_inlinks.csv"
+os = "bulk:Security:Form On HTTP URL Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_security_unsafe_cross_origin_links_inlinks.csv"
+os = "bulk:Security:Unsafe Cross-Origin Links Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_security_protocol_relative_resource_links_inlinks.csv"
+os = "bulk:Security:Protocol-Relative Resource Links Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "insecure_content.csv"
+os = "report:Insecure Content"
+mapping = "all_inlinks"
+status = "pending"

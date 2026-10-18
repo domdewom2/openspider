@@ -1,6 +1,8 @@
-# Schwellen fuer `os-parity run` (Abnahmekriterium A3 in docs/plan/M1.md 6). Ist die Datei nicht vorhanden,
-# gelten dieselben Werte als Standard im Code. Werte in Prozent der verglichenen Zellen.
-min_sites_present = 4          # mindestens 4 der 5 Sites mit status = "present"
+# Schwellen nach M2.md 6.4. URL-Mengen identisch; Werte in Prozent verglichener Zellen.
+# Neue Sites bleiben pending bis zum Referenzexport; Q02 prüft alle zehn Sites.
+min_sites_present = 8          # A3 + B3(d): mindestens vier je Gruppe
+min_legacy_sites_present = 4
+min_m2_sites_present = 4
 
 [agreement_pct]
 internal_all = 99.0
@@ -20,6 +22,31 @@ redirects_to_errors = 97.0     # A3: "Redirects-Reports" >= 97 % (Redirect Chain
 all_error_inlinks = 97.0       # Bulk-Export der Fehler-Inlinks, wie Links:All Inlinks bewertet
 crawl_overview = 100.0         # A3: Crawl-Overview-Zaehler aller M1-Filter identisch (kein Toleranzbereich)
 
-# Nur berichtet, nicht bewertet (keine Schwelle in A3; ein Wert hier wuerde die Abnahme verschaerfen):
-# external_all, url_all, content_all, sitemaps_all. Ihre Zellen und Abweichungen stehen im Bericht
-# (report.json / report.md); die URL-Menge von Internal:All ist ueber internal_all abgedeckt.
+
+# M2: Tabs 99 %, Bilder/Links/Bulk/Reports/Liste/XML 97 %, Overview 100 %.
+meta_keywords_all = 99.0
+pagination_all = 99.0
+validation_all = 99.0
+security_all = 99.0
+content_all = 99.0
+url_all = 99.0
+content_m2 = 99.0
+internal_m2 = 99.0
+url_m2 = 99.0
+images_m2 = 97.0
+list_internal = 97.0
+sitemap_xml = 97.0
+crawl_path = 97.0
+content_near_duplicates = 97.0
+images_missing_sizes = 97.0
+serp_summary = 97.0
+m2_redirects_redirect_canonical_chains = 97.0
+m2_canonicals_canonical_chains = 97.0
+m2_canonicals_non_indexable_canonicals = 97.0
+hreflang_urls = 97.0
+hreflang_missing_returns = 97.0
+hreflang_inconsistent_returns = 97.0
+hreflang_noncanonical_returns = 97.0
+hreflang_noindex_returns = 97.0
+links_anchor_text = 97.0
+list_chains = 97.0

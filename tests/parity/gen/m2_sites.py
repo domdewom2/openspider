@@ -147,6 +147,7 @@ def onpage():
         s.files[path] = data
         s.links.append('/' + path)
         s.routes.append(dict(path='/' + path, content_type=ctype, headers={}))
+    s.files['.gitattributes'] = b'text-links.pdf binary\n'
     s.files['text-links.pdf'] = linked_pdf(s.url('/pdf-target.html'))
     s.links.append('/text-links.pdf')
     s.add('/pdf-target.html', 'ONPAGE-166', linked=False, body='<h1>PDF link target</h1>')
@@ -214,8 +215,8 @@ def technical():
         s.add('/validation-' + name + '.html', 'TECH-' + str(282 + i), raw=raw)
     s.files['head.png'] = lib.png()
     s.add('/large.html', 'TECH-289', body='<h1>Large HTML</h1>', body_size=2 * 1024 * 1024 + 1)
-    s.routes.append(dict(path='/large.txt', content_type='text/plain', body='Large resource', body_size=2 * 1024 * 1024 + 1, headers={}))
-    s.links.append('/large.txt')
+    s.routes.append(dict(path='/large.css', content_type='text/css', body='/* Large resource */', body_size=2 * 1024 * 1024 + 1, headers={}))
+    s.links.append('/large.css')
     s.add('/refresh.html', 'ONPAGE-059', headers={'Refresh': '0; url=/canonical-target.html'})
     s.add('/refresh-self.html', 'ONPAGE-059', headers={'Refresh': '0; url=/refresh-self.html'})
     for path, location in [('/tail', '/loop-a'), ('/loop-a', '/loop-b'), ('/loop-b', '/loop-a')]:

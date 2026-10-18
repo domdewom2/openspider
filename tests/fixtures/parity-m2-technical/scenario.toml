@@ -33,9 +33,9 @@ status = 200
 body_size = 2097153
 
 [[route]]
-path = "/large.txt"
-content_type = "text/plain"
-body = "Large resource"
+path = "/large.css"
+content_type = "text/css"
+body = "/* Large resource */"
 body_size = 2097153
 
 [[route]]

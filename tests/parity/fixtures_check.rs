@@ -25,6 +25,14 @@ use os_testsite::client::get_once;
 use os_testsite::{Scenario, SiteOptions, TestSite};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
+const M2_SITES: [(&str, u16); 5] = [
+    ("parity-m2-onpage", 8906),
+    ("parity-m2-technical", 8907),
+    ("parity-m2-links", 8908),
+    ("parity-m2-security", 8909),
+    ("parity-m2-list", 8910),
+];
+
 const SITES: [(&str, u16); 5] = [
     ("out-basic-site", 8900),
     ("parity-onpage", 8902),
@@ -1381,6 +1389,7 @@ async fn start(name: &str) -> Net {
     .unwrap_or_else(|e| panic!("{name}: {e}"));
     let port = SITES
         .iter()
+        .chain(M2_SITES.iter())
         .find(|(n, _)| *n == name)
         .map(|(_, p)| *p)
         .unwrap();
@@ -1829,7 +1838,13 @@ fn manifests_mappings_and_profile_are_consistent() {
     let filters = group_filters();
     let all_filters: Vec<(String, String)> = {
         // Auch Tabs außerhalb der 15 Gruppen (z. B. Security) sind als Export gültig.
-        let doc = read_toml("docs/plan/M1-filters.toml");
+        let mut doc = read_toml("docs/plan/M1-filters.toml");
+        let more = read_toml("docs/plan/M2-filters.toml");
+        doc.get_mut("tab")
+            .unwrap()
+            .as_array_mut()
+            .unwrap()
+            .extend(more["tab"].as_array().unwrap().clone());
         let mut v = Vec::new();
         for tab in doc["tab"].as_array().unwrap() {
             for f in tab["filters"].as_array().unwrap() {
@@ -1847,7 +1862,7 @@ fn manifests_mappings_and_profile_are_consistent() {
     assert!(!filters.is_empty());
     let mut used_mappings = BTreeSet::new();
     let mut seen_ports = BTreeSet::new();
-    for (name, port) in SITES {
+    for (name, port) in SITES.into_iter().chain(M2_SITES) {
         let m = read_toml(&format!("tests/golden/parity/{name}/manifest.toml"));
         assert_eq!(m["site"].as_str(), Some(name));
         assert_eq!(
@@ -1875,7 +1890,10 @@ fn manifests_mappings_and_profile_are_consistent() {
                 "{name}: unbekannter status {status}"
             );
             let ref_file = e["ref_file"].as_str().unwrap();
-            assert!(ref_file.ends_with(".csv") && !ref_file.contains('/'));
+            assert!(
+                (ref_file.ends_with(".csv") || ref_file.ends_with(".xml"))
+                    && !ref_file.contains('/')
+            );
             assert!(
                 ref_files.insert(ref_file.to_string()),
                 "{name}: {ref_file} doppelt"
@@ -1891,14 +1909,14 @@ fn manifests_mappings_and_profile_are_consistent() {
                     let (tab, filter) =
                         rest.split_once(':').unwrap_or_else(|| panic!("tab:{rest}"));
                     assert!(
-                        all_filters
-                            .iter()
-                            .any(|(t, f)| t.eq_ignore_ascii_case(tab)
-                                && f.eq_ignore_ascii_case(filter)),
+                        all_filters.iter().any(|(t, f)| t.eq_ignore_ascii_case(tab)
+                            && (f.eq_ignore_ascii_case(filter)
+                                || f.contains('{')
+                                    && filter.starts_with(f.split('{').next().unwrap()))),
                         "{name}: unbekannter Filter {os}"
                     );
                 }
-                "bulk" | "report" => assert!(!rest.is_empty()),
+                "bulk" | "report" | "sitemap" => assert!(!rest.is_empty()),
                 _ => panic!("{name}: unbekannte os-Art {os}"),
             }
             assert!(
@@ -2013,7 +2031,7 @@ fn manifests_mappings_and_profile_are_consistent() {
     );
     assert_eq!(profile["sitemaps"]["crawl_linked"].as_bool(), Some(false));
     let readme = read("tests/golden/parity/README.md");
-    for (name, port) in SITES {
+    for (name, port) in SITES.into_iter().chain(M2_SITES) {
         assert!(
             readme.contains(name) && readme.contains(&port.to_string()),
             "README: {name}"
@@ -2036,4 +2054,241 @@ fn manifests_mappings_and_profile_are_consistent() {
     for slug in ["redirect_chains", "redirects_to_errors", "crawl_overview"] {
         assert!(pct.contains_key(slug), "A3: Schwelle für {slug} fehlt");
     }
+}
+
+// spec: CRAWL-001
+#[tokio::test]
+async fn m2_sites_are_local_bounded_and_the_declared_responses_are_served() {
+    for (name, port) in M2_SITES {
+        let net = start(name).await;
+        let crawl = crawl_site(&net, port).await;
+        println!("{name}: {} URLs", crawl.total_urls());
+        assert!(crawl.total_urls() <= 500, "{name}: {}", crawl.total_urls());
+        assert_eq!(crawl.pages["/"].status, 200);
+        let cases: serde_json::Value =
+            serde_json::from_str(&read(&format!("tests/fixtures/{name}/cases.json"))).unwrap();
+        for case in cases.as_array().unwrap() {
+            let response = fetch(&net, case["path"].as_str().unwrap()).await;
+            assert_eq!(
+                u64::from(response.status),
+                case["status"].as_u64().unwrap(),
+                "{name}: {case}"
+            );
+        }
+        let mut files = Vec::new();
+        walk(&fixture_dir(name), &mut files);
+        assert!(files.len() <= 500);
+        for path in files {
+            assert!(
+                path.metadata().unwrap().len() <= 1_000_000,
+                "{}: use body_size",
+                path.display()
+            );
+            let bytes = std::fs::read(&path).unwrap();
+            let Ok(text) = std::str::from_utf8(&bytes) else {
+                continue;
+            };
+            // javascript: is deliberately an uncrawlable link; there is no executable JS.
+            assert!(
+                !text.contains("https://") && !text.contains(".test"),
+                "{}",
+                path.display()
+            );
+            for tag in scan_tags(text) {
+                assert!(
+                    !tag.attrs.iter().any(|(name, _)| name.starts_with("on")),
+                    "event handler in {}",
+                    path.display()
+                );
+                if tag.name == "script" && !tag.closing {
+                    assert!(tag.attr("src").is_some());
+                }
+            }
+            for (i, _) in text.match_indices("http://") {
+                let tail = &text[i..];
+                assert!(
+                    [
+                        format!("http://127.0.0.1:{port}"),
+                        format!("http://localhost:{port}")
+                    ]
+                    .iter()
+                    .any(|prefix| tail.starts_with(prefix))
+                        || tail.starts_with("http://\"")
+                        || (path.ends_with("list.txt") && tail.starts_with("http://\n")),
+                    "{}: {tail:.80}",
+                    path.display()
+                );
+            }
+        }
+    }
+}
+
+// spec: ONPAGE-095
+// spec: ONPAGE-096
+// spec: ONPAGE-105
+// spec: ONPAGE-106
+// spec: ONPAGE-144
+#[test]
+fn m2_pixel_boundaries_and_exact_near_duplicate_shingles_are_constructed_as_declared() {
+    let cases: serde_json::Value =
+        serde_json::from_str(&read("tests/fixtures/parity-m2-onpage/pixels.json")).unwrap();
+    assert_eq!(cases.as_array().unwrap().len(), 12);
+    for case in cases.as_array().unwrap() {
+        let text = case["value"].as_str().unwrap();
+        let title = case["field"] == "title";
+        let width: u64 = text
+            .chars()
+            .map(|c| match (title, c) {
+                (true, 'a') => 11,
+                (true, 'i') => 5,
+                (false, 'a') => 8,
+                (false, 'i') => 3,
+                _ => panic!("unexpected glyph"),
+            })
+            .sum();
+        assert_eq!(width, case["pixels"].as_u64().unwrap());
+        let html = read(&format!(
+            "tests/fixtures/parity-m2-onpage{}",
+            case["path"].as_str().unwrap()
+        ));
+        assert!(html.contains(text));
+    }
+    let shingles = |label: &str| -> BTreeSet<String> {
+        let html = read(&format!(
+            "tests/fixtures/parity-m2-onpage/near-{label}.html"
+        ));
+        let paragraph = html
+            .split("<p>")
+            .nth(1)
+            .unwrap()
+            .split("</p>")
+            .next()
+            .unwrap();
+        paragraph
+            .split_whitespace()
+            .collect::<Vec<_>>()
+            .windows(3)
+            .map(|w| w.join(" "))
+            .collect()
+    };
+    let base = shingles("base");
+    for (label, expected) in [("95", 95.0), ("85", 85.0)] {
+        let variant = shingles(label);
+        let similarity = 100.0 * base.intersection(&variant).count() as f64
+            / base.union(&variant).count() as f64;
+        assert!((similarity - expected).abs() < 0.000001);
+    }
+}
+
+// spec: TECH-137
+// spec: TECH-138
+// spec: TECH-142
+// spec: OUT-023
+#[tokio::test]
+async fn m2_links_have_threshold_controls_exclusive_inlinks_and_eight_real_hops() {
+    let net = start("parity-m2-links").await;
+    let crawl = crawl_site(&net, 8908).await;
+    assert_eq!(crawl.depth["/deep/8.html"], 8);
+    let root = fetch(&net, "/").await.text();
+    assert!(!root.contains("/deep/8.html"));
+    assert!(!root.contains("/noindex-inlinks-only.html"));
+    for count in [999, 1001] {
+        assert_eq!(
+            fetch(&net, &format!("/internal-{count}.html"))
+                .await
+                .text()
+                .matches("<a ")
+                .count(),
+            count
+        );
+    }
+    for count in [99, 101] {
+        assert_eq!(
+            fetch(&net, &format!("/external-{count}.html"))
+                .await
+                .text()
+                .matches("<a ")
+                .count(),
+            count
+        );
+    }
+}
+
+// spec: TECH-021
+// spec: TECH-282
+// spec: TECH-289
+// spec: TECH-290
+// spec: ONPAGE-059
+#[tokio::test]
+async fn m2_technical_serves_malformed_markup_large_bodies_and_refresh_headers() {
+    let net = start("parity-m2-technical").await;
+    assert!(fetch(&net, "/canonical-invalid-attribute.html")
+        .await
+        .text()
+        .contains("hreflang=\"en\""));
+    assert!(fetch(&net, "/validation-img-head.html")
+        .await
+        .text()
+        .contains("<img src=\"/head.png\"></head>"));
+    assert_eq!(
+        fetch(&net, "/large.html").await.body.len(),
+        2 * 1024 * 1024 + 1
+    );
+    assert_eq!(
+        fetch(&net, "/large.css").await.body.len(),
+        2 * 1024 * 1024 + 1
+    );
+    let refresh = fetch(&net, "/refresh-self.html").await;
+    assert_eq!(refresh.status, 200);
+    assert_eq!(refresh.header("refresh"), Some("0; url=/refresh-self.html"));
+    assert_eq!(
+        fetch(&net, "/tail").await.header("location"),
+        Some("/loop-a")
+    );
+    assert_eq!(
+        fetch(&net, "/loop-a").await.header("location"),
+        Some("/loop-b")
+    );
+    assert_eq!(
+        fetch(&net, "/loop-b").await.header("location"),
+        Some("/loop-a")
+    );
+}
+
+// spec: ONPAGE-039
+// spec: ONPAGE-040
+// spec: ONPAGE-043
+#[tokio::test]
+async fn m2_security_is_http_only_with_positive_and_negative_header_controls() {
+    let net = start("parity-m2-security").await;
+    let positive = fetch(&net, "/headers-all.html").await;
+    let negative = fetch(&net, "/headers-none.html").await;
+    for name in [
+        "content-security-policy",
+        "x-content-type-options",
+        "x-frame-options",
+        "referrer-policy",
+    ] {
+        assert!(positive.header(name).is_some());
+        assert!(negative.header(name).is_none());
+    }
+    assert_eq!(fetch(&net, "/wrong.js").await.ctype(), "text/plain");
+    assert_eq!(fetch(&net, "/wrong.css").await.ctype(), "text/html");
+}
+
+// spec: CRAWL-029
+// spec: CRAWL-030
+// spec: OUT-015
+// spec: OUT-085
+#[test]
+fn m2_upload_fixture_retains_duplicates_invalid_lines_and_case_distinctions() {
+    let list = read("tests/fixtures/parity-m2-list/list.txt");
+    let rows: Vec<_> = list.lines().collect();
+    assert_eq!(rows.len(), 60);
+    assert_eq!(rows[0], "http://127.0.0.1:8910/item-39.html");
+    assert_eq!(rows[39], rows[40]);
+    assert!(rows.contains(&"") && rows.contains(&"not a URL"));
+    assert!(rows.contains(&"http://127.0.0.1:8910/Case.html"));
+    assert!(rows.contains(&"http://127.0.0.1:8910/case.html"));
+    assert!(rows.contains(&"http://127.0.0.1:8910/chain"));
 }

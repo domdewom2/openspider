@@ -1,0 +1,546 @@
+# M2-P01: Exportauftrag an den Orchestrator; ref/ bleibt unberührt.
+site = "parity-m2-technical"
+port = 8907
+ref_version = "24.3"
+exported_at = ""
+ref_settings = "Free, macOS, English (UK), Standardkonfiguration; Crawl Analysis ausgeführt. Hreflang/Pagination speichern, nicht crawlen. Always-Follow aus (Not Followed). Kein JavaScript, kein TLS. Gesperrte/leere Exporte als unavailable mit Grund dokumentieren."
+
+[[export]]
+ref_file = "internal_all.csv"
+os = "tab:Internal:All"
+mapping = "internal_m2"
+status = "pending"
+
+[[export]]
+ref_file = "response_codes_all.csv"
+os = "tab:Response Codes:All"
+mapping = "response_codes_all"
+status = "pending"
+
+[[export]]
+ref_file = "crawl_overview.csv"
+os = "report:Crawl Overview"
+mapping = "crawl_overview"
+status = "pending"
+
+[[export]]
+ref_file = "canonicals_all.csv"
+os = "tab:Canonicals:All"
+mapping = "canonicals_all"
+status = "pending"
+
+[[export]]
+ref_file = "pagination_all.csv"
+os = "tab:Pagination:All"
+mapping = "pagination_all"
+status = "pending"
+
+[[export]]
+ref_file = "directives_all.csv"
+os = "tab:Directives:All"
+mapping = "directives_all"
+status = "pending"
+
+[[export]]
+ref_file = "hreflang_all.csv"
+os = "tab:Hreflang:All"
+mapping = "hreflang_all"
+status = "pending"
+
+[[export]]
+ref_file = "validation_all.csv"
+os = "tab:Validation:All"
+mapping = "validation_all"
+status = "pending"
+
+[[export]]
+ref_file = "canonicals_canonical_is_relative.csv"
+os = "tab:Canonicals:Canonical Is Relative"
+mapping = "canonicals_all"
+status = "pending"
+
+[[export]]
+ref_file = "canonicals_unlinked.csv"
+os = "tab:Canonicals:Unlinked"
+mapping = "canonicals_all"
+status = "pending"
+
+[[export]]
+ref_file = "canonicals_invalid_attribute_in_annotation.csv"
+os = "tab:Canonicals:Invalid Attribute In Annotation"
+mapping = "canonicals_all"
+status = "pending"
+
+[[export]]
+ref_file = "canonicals_contains_fragment_url.csv"
+os = "tab:Canonicals:Contains Fragment URL"
+mapping = "canonicals_all"
+status = "pending"
+
+[[export]]
+ref_file = "canonicals_outside_head.csv"
+os = "tab:Canonicals:Outside <head>"
+mapping = "canonicals_all"
+status = "pending"
+
+[[export]]
+ref_file = "directives_noarchive.csv"
+os = "tab:Directives:NoArchive"
+mapping = "directives_all"
+status = "pending"
+
+[[export]]
+ref_file = "directives_nosnippet.csv"
+os = "tab:Directives:NoSnippet"
+mapping = "directives_all"
+status = "pending"
+
+[[export]]
+ref_file = "directives_max_snippet.csv"
+os = "tab:Directives:Max-Snippet"
+mapping = "directives_all"
+status = "pending"
+
+[[export]]
+ref_file = "directives_max_image_preview.csv"
+os = "tab:Directives:Max-Image-Preview"
+mapping = "directives_all"
+status = "pending"
+
+[[export]]
+ref_file = "directives_max_video_preview.csv"
+os = "tab:Directives:Max-Video-Preview"
+mapping = "directives_all"
+status = "pending"
+
+[[export]]
+ref_file = "directives_noimageindex.csv"
+os = "tab:Directives:NoImageIndex"
+mapping = "directives_all"
+status = "pending"
+
+[[export]]
+ref_file = "directives_notranslate.csv"
+os = "tab:Directives:NoTranslate"
+mapping = "directives_all"
+status = "pending"
+
+[[export]]
+ref_file = "directives_unavailable_after.csv"
+os = "tab:Directives:Unavailable_After"
+mapping = "directives_all"
+status = "pending"
+
+[[export]]
+ref_file = "directives_outside_head.csv"
+os = "tab:Directives:Outside <head>"
+mapping = "directives_all"
+status = "pending"
+
+[[export]]
+ref_file = "hreflang_unlinked_hreflang_urls.csv"
+os = "tab:Hreflang:Unlinked Hreflang URLs"
+mapping = "hreflang_all"
+status = "pending"
+
+[[export]]
+ref_file = "hreflang_inconsistent_language_region_return_links.csv"
+os = "tab:Hreflang:Inconsistent Language & Region Return Links"
+mapping = "hreflang_all"
+status = "pending"
+
+[[export]]
+ref_file = "hreflang_non_canonical_return_links.csv"
+os = "tab:Hreflang:Non-Canonical Return Links"
+mapping = "hreflang_all"
+status = "pending"
+
+[[export]]
+ref_file = "hreflang_noindex_return_links.csv"
+os = "tab:Hreflang:Noindex Return Links"
+mapping = "hreflang_all"
+status = "pending"
+
+[[export]]
+ref_file = "hreflang_multiple_entries.csv"
+os = "tab:Hreflang:Multiple Entries"
+mapping = "hreflang_all"
+status = "pending"
+
+[[export]]
+ref_file = "hreflang_missing_self_reference.csv"
+os = "tab:Hreflang:Missing Self Reference"
+mapping = "hreflang_all"
+status = "pending"
+
+[[export]]
+ref_file = "hreflang_not_using_canonical.csv"
+os = "tab:Hreflang:Not Using Canonical"
+mapping = "hreflang_all"
+status = "pending"
+
+[[export]]
+ref_file = "hreflang_missing_x_default.csv"
+os = "tab:Hreflang:Missing X-Default"
+mapping = "hreflang_all"
+status = "pending"
+
+[[export]]
+ref_file = "hreflang_outside_head.csv"
+os = "tab:Hreflang:Outside <head>"
+mapping = "hreflang_all"
+status = "pending"
+
+[[export]]
+ref_file = "pagination_contains_pagination.csv"
+os = "tab:Pagination:Contains Pagination"
+mapping = "pagination_all"
+status = "pending"
+
+[[export]]
+ref_file = "pagination_first_page.csv"
+os = "tab:Pagination:First Page"
+mapping = "pagination_all"
+status = "pending"
+
+[[export]]
+ref_file = "pagination_paginated_2_pages.csv"
+os = "tab:Pagination:Paginated 2+ Pages"
+mapping = "pagination_all"
+status = "pending"
+
+[[export]]
+ref_file = "pagination_pagination_url_not_in_anchor_tag.csv"
+os = "tab:Pagination:Pagination URL Not In Anchor Tag"
+mapping = "pagination_all"
+status = "pending"
+
+[[export]]
+ref_file = "pagination_non_200_pagination_urls.csv"
+os = "tab:Pagination:Non-200 Pagination URLs"
+mapping = "pagination_all"
+status = "pending"
+
+[[export]]
+ref_file = "pagination_unlinked_pagination_urls.csv"
+os = "tab:Pagination:Unlinked Pagination URLs"
+mapping = "pagination_all"
+status = "pending"
+
+[[export]]
+ref_file = "pagination_non_indexable.csv"
+os = "tab:Pagination:Non-Indexable"
+mapping = "pagination_all"
+status = "pending"
+
+[[export]]
+ref_file = "pagination_multiple_pagination_urls.csv"
+os = "tab:Pagination:Multiple Pagination URLs"
+mapping = "pagination_all"
+status = "pending"
+
+[[export]]
+ref_file = "pagination_pagination_loop.csv"
+os = "tab:Pagination:Pagination Loop"
+mapping = "pagination_all"
+status = "pending"
+
+[[export]]
+ref_file = "pagination_sequence_error.csv"
+os = "tab:Pagination:Sequence Error"
+mapping = "pagination_all"
+status = "pending"
+
+[[export]]
+ref_file = "validation_invalid_html_elements_in_head.csv"
+os = "tab:Validation:Invalid HTML Elements In <head>"
+mapping = "validation_all"
+status = "pending"
+
+[[export]]
+ref_file = "validation_head_not_first_in_html_element.csv"
+os = "tab:Validation:<head> Not First In <html> Element"
+mapping = "validation_all"
+status = "pending"
+
+[[export]]
+ref_file = "validation_missing_head_tag.csv"
+os = "tab:Validation:Missing <head> Tag"
+mapping = "validation_all"
+status = "pending"
+
+[[export]]
+ref_file = "validation_multiple_head_tags.csv"
+os = "tab:Validation:Multiple <head> Tags"
+mapping = "validation_all"
+status = "pending"
+
+[[export]]
+ref_file = "validation_missing_body_tag.csv"
+os = "tab:Validation:Missing <body> Tag"
+mapping = "validation_all"
+status = "pending"
+
+[[export]]
+ref_file = "validation_multiple_body_tags.csv"
+os = "tab:Validation:Multiple <body> Tags"
+mapping = "validation_all"
+status = "pending"
+
+[[export]]
+ref_file = "validation_body_element_preceding_html.csv"
+os = "tab:Validation:<body> Element Preceding <html>"
+mapping = "validation_all"
+status = "pending"
+
+[[export]]
+ref_file = "validation_html_document_over_2mb.csv"
+os = "tab:Validation:HTML Document Over 2MB"
+mapping = "validation_all"
+status = "pending"
+
+[[export]]
+ref_file = "validation_resource_over_2mb.csv"
+os = "tab:Validation:Resource Over 2MB"
+mapping = "validation_all"
+status = "pending"
+
+[[export]]
+ref_file = "response_codes_internal_redirection_http_refresh.csv"
+os = "tab:Response Codes:Internal Redirection (HTTP Refresh)"
+mapping = "response_codes_all"
+status = "pending"
+
+[[export]]
+ref_file = "redirects_redirect_canonical_chains.csv"
+os = "report:Redirects:Redirect & Canonical Chains"
+mapping = "m2_redirects_redirect_canonical_chains"
+status = "pending"
+
+[[export]]
+ref_file = "canonicals_canonical_chains.csv"
+os = "report:Canonicals:Canonical Chains"
+mapping = "m2_canonicals_canonical_chains"
+status = "pending"
+
+[[export]]
+ref_file = "canonicals_non_indexable_canonicals.csv"
+os = "report:Canonicals:Non-Indexable Canonicals"
+mapping = "m2_canonicals_non_indexable_canonicals"
+status = "pending"
+
+[[export]]
+ref_file = "report_hreflang_all_hreflang_urls.csv"
+os = "report:Hreflang:All Hreflang URLs"
+mapping = "hreflang_urls"
+status = "pending"
+
+[[export]]
+ref_file = "report_hreflang_non_200_hreflang_urls.csv"
+os = "report:Hreflang:Non-200 Hreflang URLs"
+mapping = "hreflang_urls"
+status = "pending"
+
+[[export]]
+ref_file = "report_hreflang_unlinked_hreflang_urls.csv"
+os = "report:Hreflang:Unlinked Hreflang URLs"
+mapping = "hreflang_urls"
+status = "pending"
+
+[[export]]
+ref_file = "report_hreflang_missing_return_links.csv"
+os = "report:Hreflang:Missing Return Links"
+mapping = "hreflang_missing_returns"
+status = "pending"
+
+[[export]]
+ref_file = "report_hreflang_inconsistent_language_region_return_links.csv"
+os = "report:Hreflang:Inconsistent Language & Region Return Links"
+mapping = "hreflang_inconsistent_returns"
+status = "pending"
+
+[[export]]
+ref_file = "report_hreflang_non_canonical_return_links.csv"
+os = "report:Hreflang:Non Canonical Return Links"
+mapping = "hreflang_noncanonical_returns"
+status = "pending"
+
+[[export]]
+ref_file = "report_hreflang_noindex_return_links.csv"
+os = "report:Hreflang:Noindex Return Links"
+mapping = "hreflang_noindex_returns"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_canonicals_contains_canonical_inlinks.csv"
+os = "bulk:Canonicals:Contains Canonical Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_canonicals_self_referencing_inlinks.csv"
+os = "bulk:Canonicals:Self Referencing Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_canonicals_canonicalised_inlinks.csv"
+os = "bulk:Canonicals:Canonicalised Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_canonicals_missing_inlinks.csv"
+os = "bulk:Canonicals:Missing Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_canonicals_multiple_inlinks.csv"
+os = "bulk:Canonicals:Multiple Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_canonicals_multiple_conflicting_inlinks.csv"
+os = "bulk:Canonicals:Multiple Conflicting Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_canonicals_non_indexable_canonical_inlinks.csv"
+os = "bulk:Canonicals:Non-Indexable Canonical Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_canonicals_canonical_is_relative_inlinks.csv"
+os = "bulk:Canonicals:Canonical Is Relative Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_canonicals_unlinked_inlinks.csv"
+os = "bulk:Canonicals:Unlinked Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_canonicals_invalid_attribute_in_annotation_inlinks.csv"
+os = "bulk:Canonicals:Invalid Attribute In Annotation Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_canonicals_contains_fragment_url_inlinks.csv"
+os = "bulk:Canonicals:Contains Fragment URL Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_canonicals_outside_head_inlinks.csv"
+os = "bulk:Canonicals:Outside <head> Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_directives_index_inlinks.csv"
+os = "bulk:Directives:Index Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_directives_noindex_inlinks.csv"
+os = "bulk:Directives:Noindex Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_directives_follow_inlinks.csv"
+os = "bulk:Directives:Follow Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_directives_nofollow_inlinks.csv"
+os = "bulk:Directives:Nofollow Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_directives_none_inlinks.csv"
+os = "bulk:Directives:None Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_directives_noarchive_inlinks.csv"
+os = "bulk:Directives:NoArchive Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_directives_nosnippet_inlinks.csv"
+os = "bulk:Directives:NoSnippet Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_directives_max_snippet_inlinks.csv"
+os = "bulk:Directives:Max-Snippet Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_directives_max_image_preview_inlinks.csv"
+os = "bulk:Directives:Max-Image-Preview Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_directives_max_video_preview_inlinks.csv"
+os = "bulk:Directives:Max-Video-Preview Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_directives_noodp_inlinks.csv"
+os = "bulk:Directives:NoODP Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_directives_noydir_inlinks.csv"
+os = "bulk:Directives:NoYDIR Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_directives_noimageindex_inlinks.csv"
+os = "bulk:Directives:NoImageIndex Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_directives_notranslate_inlinks.csv"
+os = "bulk:Directives:NoTranslate Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_directives_unavailable_after_inlinks.csv"
+os = "bulk:Directives:Unavailable_After Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_directives_refresh_inlinks.csv"
+os = "bulk:Directives:Refresh Inlinks"
+mapping = "all_inlinks"
+status = "pending"
+
+[[export]]
+ref_file = "bulk_directives_outside_head_inlinks.csv"
+os = "bulk:Directives:Outside <head> Inlinks"
+mapping = "all_inlinks"
+status = "pending"

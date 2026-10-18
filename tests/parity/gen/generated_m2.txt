@@ -192,6 +192,7 @@ tests/fixtures/parity-m2-list/item-39.html
 tests/fixtures/parity-m2-list/list.txt
 tests/fixtures/parity-m2-list/robots.txt
 tests/fixtures/parity-m2-list/scenario.toml
+tests/fixtures/parity-m2-onpage/.gitattributes
 tests/fixtures/parity-m2-onpage/alt-h1.html
 tests/fixtures/parity-m2-onpage/background.png
 tests/fixtures/parity-m2-onpage/bookmark-target.html

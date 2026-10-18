@@ -110,3 +110,77 @@ Welche Exporte zu welcher Site gehören:
 - Die Absicht jeder Fixture je Tab und Filter (welche Adresse Treffer sein soll, welche nicht) steht in
   `tests/parity/coverage/<site>.toml` und wird von `tests/parity/fixtures_check.rs` gegen die ausgelieferten Seiten geprüft.
   Die Fixtures entstehen aus `tests/parity/gen/` (`python3 -B tests/parity/gen/generate.py`).
+
+## M2: fünf zusätzliche Sites (P01, Plan Abschnitt 6)
+
+Die bisherigen Sites und ihre 39 CSV-Dateien bleiben unverändert. Für die neuen Sites gilt
+Standardkonfiguration der Free-Version 24.3, macOS, Oberfläche **English (UK)**. Hreflang und
+Pagination nur **speichern, nicht crawlen**; Always Follow bleibt aus (**Not Followed**),
+kein JavaScript und kein TLS. Die Hinweise oben zu eingeschaltetem Hreflang-/Sitemap-Crawl
+sind historische M1-Exportwünsche; für M2 gelten die tatsächlich verfügbaren Standards (K2-59).
+
+| Site | Port | Fälle |
+|---|---:|---|
+| `parity-m2-onpage` | 8906 | Keywords, Pixelgrenzen ±1, Unicode, Headings, URL, Content, Bilder, PDF |
+| `parity-m2-technical` | 8907 | Canonicals, Pagination, Directives, Hreflang, Validation, Refresh, Schleifenvorlauf |
+| `parity-m2-links` | 8908 | Anker, Follow/Nofollow, Outlinks, Linkpositionen, Graph und Tiefe 8 |
+| `parity-m2-security` | 8909 | HTTP-Formulare, externe Links, Header, protokollrelative Ressourcen, Content-Type |
+| `parity-m2-list` | 8910 | List-Modus mit 60 Eingabezeilen, Duplikaten, ungültigen Zeilen und Ketten |
+
+1. Je Site `cargo run -p os-testsite --release -- <site> <port>` starten. Immer
+   `http://127.0.0.1:<port>/` verwenden; `localhost` bezeichnet externe Ziele derselben Site.
+2. In der Referenz Standardkonfiguration laden, Spider-Modus wählen und crawlen. Für
+   `parity-m2-list`: **List** wählen und `tests/fixtures/parity-m2-list/list.txt` hochladen.
+   Zeilen weder sortieren noch bereinigen; auch Leerzeile und Duplikate gehören zur Eingabe.
+3. Nach Abschluss **Crawl Analysis → Start** ausführen und abwarten.
+4. **Jeden** `[[export]]`-Eintrag des Site-Manifests abarbeiten. `tab:` bedeutet Tab → Filter →
+   Export, `bulk:` bedeutet Bulk Export, `report:` bedeutet Reports. CSV-Dateien unverändert
+   unter `tests/golden/parity/<site>/ref/<ref_file>` speichern (Ordner dabei anlegen).
+   `bulk_` und `report_` im Dateinamen verhindern Kollisionen zwischen gleichnamigen Exportarten.
+   Auch leere Filter als CSV mit Kopfzeile exportieren.
+5. Besonderheiten:
+   - **Crawl Path Report** gehört zu `parity-m2-links`: `/deep/8.html` auswählen, Rechtsklick →
+     Export → Crawl Path Report → `crawl_path_deep8.csv`. `Target Address` bestimmt die Auswahl;
+     alle Schritte bleiben im Vergleich erhalten. Die CLI liefert den Report, der Runner filtert
+     den Zielblock. Ein fehlendes Ziel wird als Fehler gemeldet.
+   - `sitemap:default`: Sitemaps → XML Sitemap, Standardoptionen → `sitemap_default.xml`.
+   - Zweiter XML-Export: lastmod aus Server-Antwort, priority und changefreq nach Tiefe,
+     Bilder einschließen → `sitemap_options.xml`. Die entsprechenden `export.config`-Werte
+     stehen im Manifest; der Runner startet diese Variante separat mit `--set`.
+   - Sitemaps → Images Sitemap → `sitemap_images.xml`.
+   - Internal:All im Listenmodus in **Upload-Reihenfolge** exportieren; jede doppelte
+     Listen-URL behält ihre eigene Zeile. Der Abgleich prüft die Reihenfolge zusätzlich zur Menge.
+6. `ref_version`, `exported_at` und `ref_settings` im Manifest aktualisieren. Je Datei `present`
+   setzen. Fehlt ein Menüpunkt, ist er gesperrt oder bleibt ein konfigurationsabhängiger Export
+   leer, `unavailable` setzen und den konkreten Grund als Kommentar am Eintrag festhalten.
+   Das betrifft insbesondere Near Duplicates. Keine Konfiguration zum Freischalten ändern.
+   HTTPS-/HSTS-/Mixed-Content-Prüfungen bleiben spec-abgeleitet; sie werden hier durch HTTP
+   nicht als nachgewiesen angesehen. Alle noch offenen Einträge bleiben `pending`.
+7. Der Orchestrator übernimmt die Referenzdateien und Statusänderungen. Implementierende Agents
+   erzeugen oder öffnen keine Referenzexporte. Die fünf neuen Manifeste werden hier nur vorbereitet.
+
+Die Exportlisten enthalten die Tab-/Filter-/Bulk-/Report-Sammlung aus M2.md 6.3. Hreflang-Reports,
+Canonical-/Directives-/Security-Bulk-Exporte sind einzeln aufgeführt. Gesperrte Funktionen werden
+mit `unavailable` dokumentiert. Die Schätzwerte für URL- und Dateizahlen im Plan sind keine Mindestzahlen;
+hohe Outlink-Zahlen entstehen durch mehrere Links auf dieselben Ziele (Spec: nicht unique).
+
+Fixture-Quellen und Kontrollen:
+
+```sh
+python3 -B tests/parity/gen/m2_sites.py --check
+cargo test -p os-testsite --test parity_fixtures
+cargo test -p os-parity --test real_repo_files --test run_site
+```
+
+Nur zum Ändern der eigenen neuen Fixtures `m2_sites.py` ohne `--check` aufrufen. Das Skript
+`m2_exports.py` legt fehlende M2-Mappings/Manifeste an und überschreibt keine bestehenden Dateien.
+`cases.json` in jeder neuen Site beschreibt Pfad/Spec/Status; `pixels.json` dokumentiert die
+Breiten der eigenen kalibrierten Engine und `expected_jaccard.json` die exakten Shingle-Werte.
+Die über 2 MiB großen Antworten entstehen über `body_size` im Fixture-Server, ohne große Repo-Dateien.
+Die Tiefe-8-Kette ist nur über ihren ersten Knoten verlinkt.
+
+Der Runner entdeckt jetzt zehn Sites. `thresholds.toml` verlangt mindestens vier bisherige und vier neue Sites mit mindestens einem
+vorhandenen Export (M1 A3, M2 B3(d)), identische URL-Mengen, ≥99 % für die genannten Tabs, ≥97 % für Bilder,
+Hreflang/Links/Bulk/Reports/Listen/XML und identische Overview-Zähler aus M1 **und M2**.
+Bis die Referenzexporte vorliegen, meldet `run --all` die neuen Sites als pending und verfehlt
+bewusst dieses Abnahme-Gate. Ein grüner Fixture-Test ersetzt keinen Referenz-Paritätsnachweis.

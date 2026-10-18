@@ -1,0 +1,27 @@
+# M2-P01: Spec-abgeleitete Spalten; keine Referenzwerte oder Beschreibungstexte.
+key = ["Address"]
+drop_ref_columns = ["Description", "How To Fix"]
+
+[columns]
+"Address" = "Address"
+"Content" = "Content"
+"Status Code" = "Status Code"
+"Status" = "Status"
+"Indexability" = "Indexability"
+"Indexability Status" = "Indexability Status"
+"Canonical Link Element 1" = "Canonical Link Element 1"
+"Canonical Link Element 2" = "Canonical Link Element 2"
+"Canonical Link Element 3" = "Canonical Link Element 3"
+"Meta Robots 1" = "Meta Robots 1"
+"Meta Robots 2" = "Meta Robots 2"
+"Meta Robots 3" = "Meta Robots 3"
+"X-Robots-Tag 1" = "X-Robots-Tag 1"
+"X-Robots-Tag 2" = "X-Robots-Tag 2"
+"X-Robots-Tag 3" = "X-Robots-Tag 3"
+
+[normalize]
+base_url = true
+trim = true
+bool = "case-insensitive"
+number_decimals = 3
+empty_equals_null = true

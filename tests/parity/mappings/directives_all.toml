@@ -1,7 +1,6 @@
 # Spaltenmapping Referenz -> OpenSpider fuer den Export "Directives:All" (Format: docs/plan/M1.md 5.2).
 # Stand M1-P29 (Welle 5): an die echten Kopfzeilen der Referenz (Referenzprodukt 24.3 Free, englische Oberflaeche) angepasst.
 # Nur Spaltennamen der Kopfzeile; Beschreibungsspalten werden beim Einlesen verworfen (Clean-Room, A8).
-# Die Referenz fuehrt im Directives-Tab zusaetzlich Indexability und Indexability Status; OpenSpider liefert sie hier nicht (Spaltenliste ONPAGE/TECH-050 ff.).
 key = ["Address"]
 drop_ref_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Referenz nie einlesen
 
@@ -20,8 +19,8 @@ drop_ref_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Refer
 "Canonical Link Element 2" = "Canonical Link Element 2"
 "Canonical Link Element 3" = "Canonical Link Element 3"
 "HTTP Canonical" = { os = "HTTP Canonical 1" }
-"Indexability" = { ignore = true, reason = "Spaltenliste TECH-051 fuehrt Indexability nicht; die Referenz exportiert sie (Abnahmebericht, Spec-Luecke)" }
-"Indexability Status" = { ignore = true, reason = "Spaltenliste TECH-051 fuehrt Indexability Status nicht; die Referenz exportiert sie (Abnahmebericht, Spec-Luecke)" }
+"Indexability" = "Indexability"
+"Indexability Status" = "Indexability Status"
 
 [normalize]
 base_url = true          # http://127.0.0.1:<port> -> {BASE}, http://localhost:<port> -> {EXT}
