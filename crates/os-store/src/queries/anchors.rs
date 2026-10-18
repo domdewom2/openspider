@@ -1,21 +1,202 @@
-//! Abfragen: Ankertexte und Link-Abfragen der Links-Tabs (Non-Descriptive Anchor Text, Detailansicht).
-//!
-//! Die Funktionen legt das Fachpaket an; M2-F02 stellt nur das Modul bereit, damit `queries/mod.rs` nach Welle 0
-//! eingefroren ist.
+//! Shared anchor normalization and aggregation (TECH-136/146).
 
-// STUB(M2-D08)
+use os_model::{UrlId, Value};
+use rusqlite::params;
 
-/// Erweiterungspunkt für die Ankertext-Kollation (M2-D08).
-pub fn register_collations(_conn: &rusqlite::Connection) -> Result<(), crate::StoreError> {
+/// TECH-131/146: preserve case, collapse Unicode whitespace.
+pub fn normalize(text: &str) -> String {
+    text.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+/// TECH-136: exact phrase comparison, ignoring trailing punctuation.
+pub fn phrase(text: &str) -> String {
+    normalize(text)
+        .to_lowercase()
+        .trim_end_matches(['.', ',', ':', ';', '!', '?', '…', '»', '›', '→'])
+        .trim_end()
+        .to_owned()
+}
+
+fn authority(url: &str) -> String {
+    let (scheme, rest) = url.split_once("://").unwrap_or(("", url));
+    let auth = rest.split(['/', '?', '#']).next().unwrap_or("");
+    let auth = auth.rsplit('@').next().unwrap_or(auth).to_ascii_lowercase();
+    let has_port = if auth.starts_with('[') {
+        auth.split_once(']')
+            .is_some_and(|(_, rest)| rest.starts_with(':'))
+    } else {
+        auth.contains(':')
+    };
+    if has_port {
+        auth
+    } else {
+        let port = if scheme.eq_ignore_ascii_case("https") {
+            443
+        } else {
+            80
+        };
+        format!("{auth}:{port}")
+    }
+}
+
+/// Loopback hosts only; private networks are deliberately excluded (TECH-141).
+pub fn is_loopback(url: &str) -> bool {
+    let auth = authority(url);
+    let host = if auth.starts_with('[') {
+        auth.split(']').next().unwrap_or("").trim_start_matches('[')
+    } else {
+        auth.split(':').next().unwrap_or("")
+    };
+    host == "localhost"
+        || host.ends_with(".localhost")
+        || host == "0.0.0.0"
+        || host
+            .parse::<std::net::IpAddr>()
+            .is_ok_and(|ip| ip.is_loopback())
+}
+
+/// Collations are registered on every store connection, including read-only connections.
+pub fn register_collations(conn: &rusqlite::Connection) -> Result<(), crate::StoreError> {
+    conn.create_collation("OS_ANCHOR", |a, b| normalize(a).cmp(&normalize(b)))?;
+    conn.create_collation("OS_ANCHOR_SORT", |a, b| {
+        let a = normalize(a);
+        let b = normalize(b);
+        crate::collation::compare(&a, &b).then_with(|| a.cmp(&b))
+    })?;
+    conn.create_collation("OS_ANCHOR_PHRASE", |a, b| phrase(a).cmp(&phrase(b)))?;
+    conn.create_collation("OS_AUTHORITY", |a, b| authority(a).cmp(&authority(b)))?;
+    conn.create_collation("OS_LOOPBACK", |a, b| is_loopback(a).cmp(&is_loopback(b)))?;
     Ok(())
 }
 
-// STUB(M2-D08)
+/// Options shared by aggregation and its drill-down. Defaults follow TECH-146.
+#[derive(Debug, Clone, Copy)]
+pub struct AnchorOptions {
+    pub outlinks: bool,
+    pub exclude_self: bool,
+    pub exclude_nofollow: bool,
+}
+impl Default for AnchorOptions {
+    fn default() -> Self {
+        Self {
+            outlinks: false,
+            exclude_self: true,
+            exclude_nofollow: false,
+        }
+    }
+}
+
+/// Effective text: anchor, otherwise the image/area alt text. Empty text is a separate group.
+pub const TEXT_SQL: &str = "CASE WHEN COALESCE(l.anchor, '') COLLATE OS_ANCHOR = '' THEN COALESCE(l.alt_text, '') ELSE l.anchor END";
+
+fn condition(ids: &[UrlId], options: AnchorOptions) -> String {
+    let ids = ids
+        .iter()
+        .map(|id| id.0.to_string())
+        .collect::<Vec<_>>()
+        .join(",");
+    format!(
+        "l.{} IN ({}) AND l.link_type = 'Hyperlink' AND l.crawlable = 1 {} {}",
+        if options.outlinks {
+            "source_id"
+        } else {
+            "target_id"
+        },
+        ids,
+        if options.exclude_self {
+            "AND l.source_id <> l.target_id"
+        } else {
+            ""
+        },
+        if options.exclude_nofollow {
+            "AND l.follow = 1"
+        } else {
+            ""
+        }
+    )
+}
+
 pub fn detail_rows(
-    _: &crate::CrawlFile,
-    _: &[os_model::UrlId],
-    _: u64,
-    _: u64,
+    file: &crate::CrawlFile,
+    ids: &[UrlId],
+    offset: u64,
+    limit: u64,
 ) -> Result<super::DetailData, crate::StoreError> {
-    Err(crate::StoreError::NotImplemented("M2-D08"))
+    detail_rows_with(file, ids, offset, limit, AnchorOptions::default())
+}
+
+/// Aggregate in SQLite, page groups only, and retain the denominator across pages.
+pub fn detail_rows_with(
+    file: &crate::CrawlFile,
+    ids: &[UrlId],
+    offset: u64,
+    limit: u64,
+    options: AnchorOptions,
+) -> Result<super::DetailData, crate::StoreError> {
+    let base = format!(
+        "FROM links l WHERE {} GROUP BY ({TEXT_SQL}) COLLATE OS_ANCHOR",
+        condition(ids, options)
+    );
+    let total = file.conn().query_row(
+        &format!("SELECT COUNT(*) FROM (SELECT 1 {base})"),
+        [],
+        |r| r.get(0),
+    )?;
+    let mut stmt = file.conn().prepare(&format!(
+        "SELECT {TEXT_SQL}, COUNT(*), COUNT(DISTINCT l.source_id),
+        COUNT(DISTINCT l.target_id), SUM(l.follow <> 0), SUM(l.follow = 0),
+        100.0 * COUNT(*) / SUM(COUNT(*)) OVER () {base}
+        ORDER BY COUNT(*) DESC, ({TEXT_SQL}) COLLATE OS_ANCHOR_SORT ASC LIMIT ?1 OFFSET ?2"
+    ))?;
+    let rows = stmt
+        .query_map(
+            params![limit.min(i64::MAX as u64), offset.min(i64::MAX as u64)],
+            |r| {
+                let anchor = normalize(&r.get::<_, String>(0)?);
+                let mut values = vec![Value::Text(if anchor.is_empty() {
+                    "(leer)".into()
+                } else {
+                    anchor
+                })];
+                for i in 1..6 {
+                    values.push(Value::Int(r.get(i)?));
+                }
+                values.push(Value::Float(r.get(6)?));
+                Ok(values)
+            },
+        )?
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(super::DetailData {
+        columns: [
+            "Anchor Text",
+            "Links",
+            "Unique Sources",
+            "Unique Destinations",
+            "Follow Links",
+            "Nofollow Links",
+            "% of Links",
+        ]
+        .map(str::to_owned)
+        .to_vec(),
+        rows,
+        total,
+    })
+}
+
+/// IDs for opening an aggregate group as individual links, using exactly the same comparison.
+/// Pass the raw group key (empty string for the empty group), not its display label.
+pub fn matching_link_ids(
+    file: &crate::CrawlFile,
+    ids: &[UrlId],
+    anchor: &str,
+    options: AnchorOptions,
+) -> Result<Vec<i64>, crate::StoreError> {
+    let mut stmt = file.conn().prepare(&format!(
+        "SELECT l.id FROM links l WHERE {} AND ({TEXT_SQL}) COLLATE OS_ANCHOR = ?1 ORDER BY l.id",
+        condition(ids, options)
+    ))?;
+    let ids = stmt
+        .query_map([anchor], |r| r.get(0))?
+        .collect::<Result<_, _>>()?;
+    Ok(ids)
 }
