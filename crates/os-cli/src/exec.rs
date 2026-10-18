@@ -280,6 +280,7 @@ async fn crawl_phase(
     let (handle, path, id) = match &plan.source {
         Source::Load { path } => {
             // --resume
+            crate::listing::validate_resume(path)?;
             let file = CrawlFile::open(path, OpenMode::ReadOnly)
                 .or_else(|_| CrawlFile::open(path, OpenMode::ReadWrite))
                 .map_err(|e| CliError::usage(format!("Crawl-Datei nicht ladbar: {e}")))?;
