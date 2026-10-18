@@ -14,6 +14,8 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 
 [features]
 default = []
+# Opt-in synthetic grid measurement (M2-S01).
+stub-views = ["os-app/stub-views"]
 # WebDriver-Server der echten App für E2E-B (tauri-plugin-wdio-webdriver, M2-S02); nie in Release-Builds
 e2e-webdriver = ["dep:tauri-plugin-wdio-webdriver"]
 

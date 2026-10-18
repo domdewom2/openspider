@@ -285,6 +285,10 @@ impl App {
 
     /// Wie [`App::new`] mit einem eigenen Register (Tests und Einbettungen mit zusätzlichen Commands).
     pub fn with_registry(config: AppConfig, registry: Registry) -> Result<App, CmdError> {
+        #[cfg(feature = "stub-views")]
+        let config = crate::stub::configure(config);
+        #[cfg(feature = "stub-views")]
+        let registry = crate::stub::registry(registry, &config);
         let exec = Exec::new()?;
         let hub = Arc::new(InterruptHub::new());
         let (settings, startup_notice) = SettingsStore::open(config.paths.settings.clone());
