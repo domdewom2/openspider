@@ -7,6 +7,14 @@ import type { GraphNode } from "./GraphNode";
  */
 export type GraphDto = { 
 /**
+ * Legacy crawls use a link-based BFS when discovery provenance is absent.
+ */
+provenanceMissing: boolean, 
+/**
+ * Numeric metrics available in this immutable snapshot.
+ */
+availableMetrics: Array<string>, 
+/**
  * Knoten.
  */
 nodes: Array<GraphNode>, 

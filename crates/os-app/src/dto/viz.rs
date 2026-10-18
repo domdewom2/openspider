@@ -106,6 +106,17 @@ pub struct GraphNode {
     pub depth: u32,
     /// Wert der Metrik.
     pub metric: Option<f64>,
+    /// Independent numeric color metric (UI-095).
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub color_value: Option<f64>,
+    /// Current layout coordinates, supplied by the visualization for CSV export.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub x: Option<f64>,
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub y: Option<f64>,
     /// Knoten hat weitere Kinder außerhalb des Budgets.
     pub has_more: bool,
     /// HTTP-Statuscode der URL.
@@ -159,6 +170,12 @@ pub struct GraphEdge {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct GraphDto {
+    /// Legacy crawls use a link-based BFS when discovery provenance is absent.
+    #[serde(default)]
+    pub provenance_missing: bool,
+    /// Numeric metrics available in this immutable snapshot.
+    #[serde(default)]
+    pub available_metrics: Vec<String>,
     /// Knoten.
     pub nodes: Vec<GraphNode>,
     /// Kanten.

@@ -25,6 +25,14 @@ depth: number,
  */
 metric?: number | null, 
 /**
+ * Independent numeric color metric (UI-095).
+ */
+colorValue?: number | null, 
+/**
+ * Current layout coordinates, supplied by the visualization for CSV export.
+ */
+x?: number | null, y?: number | null, 
+/**
  * Knoten hat weitere Kinder außerhalb des Budgets.
  */
 hasMore: boolean, 

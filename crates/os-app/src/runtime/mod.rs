@@ -764,3 +764,17 @@ impl App {
         &self.0.hub
     }
 }
+
+/// Non-owning app reference for window-scoped background work.
+#[derive(Clone)]
+pub struct WeakApp(std::sync::Weak<Inner>);
+impl WeakApp {
+    pub fn upgrade(&self) -> Option<App> {
+        self.0.upgrade().map(App)
+    }
+}
+impl App {
+    pub fn downgrade(&self) -> WeakApp {
+        WeakApp(Arc::downgrade(&self.0))
+    }
+}
