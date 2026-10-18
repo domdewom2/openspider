@@ -1,0 +1,57 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useT, useFormat } from "../../../i18n";
+import { sidebar } from "../../../ipc/sidebar";
+import type { IssueRow } from "../../../ipc/gen/IssueRow";
+import type { IssueTypeDto } from "../../../ipc/gen/IssueTypeDto";
+import type { IssuePriorityDto } from "../../../ipc/gen/IssuePriorityDto";
+import { useSession } from "../../../state/session";
+import { useSidebarNavigation } from "../frame/state";
+import { QueryFeedback } from "../frame/QueryFeedback";
+import { IssueBadge } from "./IssueBadge";
+import { IssueExplanation } from "./IssueExplanation";
+import { PanelActions } from "../frame/PanelActions";
+import { SEGMENT_PALETTE } from "../../../ui/tokens/tokens";
+
+const TYPES: IssueTypeDto[] = ["issue", "warning", "opportunity"];
+const PRIORITIES: IssuePriorityDto[] = ["high", "medium", "low"];
+export function sortIssues(rows: readonly IssueRow[]): IssueRow[] {
+  return rows.filter(r => r.count > 0).slice().sort((a, b) => TYPES.indexOf(a.type) - TYPES.indexOf(b.type) || PRIORITIES.indexOf(a.priority) - PRIORITIES.indexOf(b.priority) || b.count - a.count || `${a.tab}: ${a.filter}`.localeCompare(`${b.tab}: ${b.filter}`, "en"));
+}
+export function issueRows(rows: readonly IssueRow[]): (string | number)[][] {
+  return [["Issue Name", "Issue Type", "Issue Priority", "URLs", "% of Total"], ...rows.map(r => [`${r.tab}: ${r.filter}`, r.type, r.priority, r.count, r.pct == null ? "–" : `${r.pct.toFixed(1)} %`])];
+}
+
+export function Issues({ needsAnalysis }: { needsAnalysis: boolean }) {
+  const t = useT();
+  const f = useFormat();
+  const [type, setType] = useState<IssueTypeDto | "">("");
+  const [priority, setPriority] = useState<IssuePriorityDto | "">("");
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<string | null>(null);
+  const scope = useSidebarNavigation(s => s.scope);
+  const navigate = useSidebarNavigation(s => s.navigate);
+  const setScope = useSidebarNavigation(s => s.setScope);
+  const crawl = useSession(s => s.crawl?.crawlId);
+  const version = useSession(s => s.issuesVersion);
+  const counts = useSession(s => s.countsVersion);
+  const args = { ...scope, type: type || null, priority: priority || null, search: search || null };
+  const query = useQuery({ queryKey: ["sidebar", "issues", crawl, args, version, counts], queryFn: ({ signal }) => sidebar.issues(args, signal), enabled: !!crawl, gcTime: 0 });
+  // Keep the same contract even when a fixture supplies an unfiltered list.
+  const rows = sortIssues(query.data ?? []).filter(r => (!type || r.type === type) && (!priority || r.priority === priority) && `${r.tab}: ${r.filter}`.toLocaleLowerCase().includes(search.toLocaleLowerCase()));
+  const issue = rows.find(r => r.id === selected);
+  return <>
+    <div className="os-sidebar-filters"><label>{t("sidebar-type")}<select aria-label={t("sidebar-type")} value={type} onChange={e => setType(e.target.value as typeof type)}><option value="">{t("sidebar-all")}</option>{TYPES.map(v => <option value={v} key={v}>{t(`sidebar-type-${v}`)}</option>)}</select></label>
+    <label>{t("sidebar-priority")}<select aria-label={t("sidebar-priority")} value={priority} onChange={e => setPriority(e.target.value as typeof priority)}><option value="">{t("sidebar-all")}</option>{PRIORITIES.map(v => <option value={v} key={v}>{t(`sidebar-priority-${v}`)}</option>)}</select></label>
+    <label>{t("sidebar-search")}<input type="search" value={search} onChange={e => setSearch(e.target.value)} /></label></div>
+    {needsAnalysis && <p role="status">{t("sidebar-more-issues")}</p>}
+    <QueryFeedback error={query.error} loading={!!crawl && query.isPending} retry={() => void query.refetch()} />
+    {!crawl && <p>{t("sidebar-no-crawl")}</p>}
+    {query.data && <><PanelActions which="issues" rows={issueRows(rows)} /><table className="os-sidebar-table"><thead><tr><th>{t("sidebar-issue-name")}</th><th>{t("sidebar-type")}</th><th>{t("sidebar-priority")}</th><th>{t("sidebar-urls")}</th><th>% of Total</th></tr></thead><tbody>{rows.map(row => <tr key={row.id} aria-selected={selected === row.id}>
+      <th scope="row"><button type="button" onClick={() => { setSelected(row.id); navigate(row.tab, row.filter); }} onDoubleClick={() => navigate(row.tab, row.filter, true)}>{row.tab}: {row.filter}</button>
+      {row.segmentShares.length > 0 && <div className="os-sidebar-segments" aria-label={t("sidebar-segments")}>{row.segmentShares.map((share, i) => <button type="button" key={share.segment} title={`${share.segment}: ${f.integer(share.count)}`} aria-label={`${share.segment}: ${f.integer(share.count)}`} style={{ flexGrow: share.count, background: SEGMENT_PALETTE[i % SEGMENT_PALETTE.length]?.light }} onClick={() => setScope({ ...scope, segment: { kind: "segment", name: share.segment } })} />)}</div>}</th>
+      <td><IssueBadge badge={{ issueType: row.type, priority: row.priority }} /></td><td className={`os-sidebar-priority-${row.priority}`}>{t(`sidebar-priority-${row.priority}`)}</td><td>{f.integer(row.count)}</td><td>{row.pct == null ? "–" : `${f.decimal(row.pct, 1)} %`}</td>
+    </tr>)}</tbody></table>{rows.length === 0 && <p>{t("sidebar-no-issues")}</p>}</>}
+    {issue && <IssueExplanation issue={issue} />}
+  </>;
+}

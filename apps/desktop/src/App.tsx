@@ -1,3 +1,4 @@
+import { SidebarMount } from "./features/sidebar/frame/SidebarMount";
 import { useEffect, useState } from "react";
 import { RegionBoundary } from "./app/ErrorBoundary";
 import { Providers } from "./app/Providers";
@@ -45,6 +46,7 @@ export function App() {
           {version !== null && <span data-testid="version">{t("app-version", { version })}</span>}
         </footer>
       </div>
+      <SidebarMount />
     </Providers>
   );
 }
