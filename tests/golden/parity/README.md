@@ -136,7 +136,8 @@ sind historische M1-Exportwünsche; für M2 gelten die tatsächlich verfügbaren
 4. **Jeden** `[[export]]`-Eintrag des Site-Manifests abarbeiten. `tab:` bedeutet Tab → Filter →
    Export, `bulk:` bedeutet Bulk Export, `report:` bedeutet Reports. CSV-Dateien unverändert
    unter `tests/golden/parity/<site>/ref/<ref_file>` speichern (Ordner dabei anlegen).
-   `bulk_` und `report_` im Dateinamen verhindern Kollisionen zwischen gleichnamigen Exportarten.
+   `bulk_` und `report_` im Referenzdateinamen verhindern Kollisionen zwischen gleichnamigen Exportarten.
+   OpenSpider-Ausgaben werden zusätzlich nach Tab/Bulk/Report und Konfigurationsvariante in getrennten Ordnern erzeugt.
    Auch leere Filter als CSV mit Kopfzeile exportieren.
 5. Besonderheiten:
    - **Crawl Path Report** gehört zu `parity-m2-links`: `/deep/8.html` auswählen, Rechtsklick →

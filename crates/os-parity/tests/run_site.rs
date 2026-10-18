@@ -709,3 +709,30 @@ fn m2_presence_gate_cannot_be_satisfied_by_legacy_sites() {
         .iter()
         .any(|f| f.contains("nur 0 M2-Sites")));
 }
+
+// spec: OUT-008
+#[test]
+fn tab_and_bulk_outputs_with_the_same_cli_filename_cannot_overwrite_each_other() {
+    let repo = repo();
+    let manifest = repo.root().join("tests/golden/parity/site-a/manifest.toml");
+    let mut text = std::fs::read_to_string(&manifest).unwrap();
+    text.push_str("\n[[export]]\nref_file = \"bulk_internal_all.csv\"\nos = \"bulk:Internal:All\"\nmapping = \"internal_all\"\nstatus = \"present\"\n");
+    write(&manifest, &text);
+    write(
+        &repo
+            .root()
+            .join("tests/golden/parity/site-a/ref/bulk_internal_all.csv"),
+        &ref_csv(repo.port).replace("Start", "Bulk"),
+    );
+    let seen = std::sync::Mutex::new(Vec::new());
+    let exporter = |req: &ExportRequest| {
+        seen.lock().unwrap().push(req.out_dir.clone());
+        assert!(req.tabs.is_empty() || req.bulk.is_empty());
+        fake(if req.bulk.is_empty() { "Start" } else { "Bulk" })(req)
+    };
+    let summary = run_sites(&repo.opts(&["site-a"], false), &exporter).unwrap();
+    assert!(summary.passed, "{:?}", summary.failures);
+    let dirs = seen.lock().unwrap();
+    assert_eq!(dirs.len(), 2);
+    assert_ne!(dirs[0], dirs[1]);
+}

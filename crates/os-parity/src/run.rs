@@ -610,7 +610,16 @@ fn run_site(
         };
         let index = requests
             .iter()
-            .position(|r| r.config == p.entry.config && r.sitemap == sitemap)
+            .position(|r| {
+                r.config == p.entry.config
+                    && r.sitemap == sitemap
+                    && match &p.os {
+                        OsExport::Tab { .. } => !r.tabs.is_empty(),
+                        OsExport::Bulk(_) => !r.bulk.is_empty(),
+                        OsExport::Report(_) => !r.reports.is_empty(),
+                        OsExport::Sitemap(_) => r.sitemap.is_some(),
+                    }
+            })
             .unwrap_or_else(|| {
                 let index = requests.len();
                 requests.push(ExportRequest {
