@@ -1,0 +1,8 @@
+.os-crawl-status { display: flex; flex: 1; flex-wrap: wrap; align-items: center; gap: 4px 14px; padding-block: 4px; min-width: 0; }
+.os-crawl-status > span { white-space: nowrap; }
+.os-status-warning { color: var(--os-issue-type-warning); }
+.os-status-danger { color: var(--os-issue-type-issue); }
+.os-mcp-status { color: inherit; background: transparent; border: none; cursor: pointer; font: inherit; text-decoration: underline; }
+.os-status-details { position: absolute; inset-inline-end: 12px; bottom: 60px; display: grid; gap: 8px; padding: 12px; background: var(--os-bg-surface); border: 1px solid var(--os-border); z-index: 10; }
+.os-analysis-progress { display: flex; gap: 8px; align-items: center; }
+.os-analysis-progress .os-progress { width: 100px; }
