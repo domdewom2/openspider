@@ -1,2 +1,44 @@
-# OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „Validation“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+[issues.validation-invalid-head-elements]
+what = "Der Quelltext enthält unzulässige Elemente oder Text im Head."
+why = "Diese Inhalte können den Head vorzeitig beenden und nachfolgende Metadaten unwirksam machen."
+fix = "Verschiebe Seiteninhalte in den Body und belasse nur erlaubte Metadaten im Head. Prüfe auch noscript-Inhalte."
+
+[issues.validation-head-not-first]
+what = "Vor dem ersten Head stehen bereits Elemente oder Text im Dokument."
+why = "Der Parser kann vorzeitig zum Body wechseln, sodass spätere Head-Metadaten nicht mehr wirksam sind."
+fix = "Setze den Head direkt hinter das öffnende html-Tag. Verschiebe sichtbare Inhalte hinter den Head in den Body."
+
+[issues.validation-missing-head]
+what = "Im Originalquelltext fehlt ein öffnendes Head-Tag."
+why = "Ein automatisch erzeugter Head kann Metadaten anders zuordnen als vom Seitenautor vorgesehen."
+fix = "Füge genau einen expliziten Head als erstes Element in html ein und ordne die Metadaten darin an."
+
+[issues.validation-multiple-head]
+what = "Der Originalquelltext enthält mehrere öffnende Head-Tags."
+why = "Zusätzliche Head-Tags werden vom Parser verworfen; nachfolgende Metadaten können dadurch unwirksam werden."
+fix = "Fasse alle Head-Metadaten in einem einzigen Head zusammen und korrigiere die erzeugenden Seitenvorlagen."
+
+[issues.validation-missing-body]
+what = "Im Originalquelltext fehlt ein öffnendes Body-Tag."
+why = "Der Parser muss die Inhaltsstruktur ergänzen. Bei älteren Frameset-Seiten bleibt die Struktur uneindeutig."
+fix = "Erzeuge einen expliziten Body für die Seiteninhalte und ersetze veraltete Frameset-Vorlagen durch gültiges HTML."
+
+[issues.validation-multiple-body]
+what = "Der Originalquelltext enthält mehrere öffnende Body-Tags."
+why = "Der Parser führt zusätzliche Body-Elemente zusammen oder verwirft sie; die beabsichtigte Struktur geht verloren."
+fix = "Erzeuge genau einen Body und entferne doppelte Wrapper aus eingebundenen Vorlagen oder Inhaltsfragmenten."
+
+[issues.validation-body-before-html]
+what = "Noch vor dem ersten html-Tag steht ein Element des Seiteninhalts oder sichtbarer Text."
+why = "Der Parser beginnt den Body vorzeitig; der spätere Head und seine Metadaten können ihre Wirkung verlieren."
+fix = "Entferne vorangestellte Inhalte aus der Ausgabe und setze sichtbare Inhalte in den Body hinter den Head."
+
+[issues.validation-html-document-size]
+what = "Das HTML-Dokument überschreitet die konfigurierte Größengrenze oder wurde beim Abruf abgeschnitten."
+why = "Suchmaschinen können den hinteren Teil großer Dokumente auslassen. Dort stehende Inhalte und Links gehen verloren."
+fix = "Verkleinere das Dokument, entferne unnötiges Inline-Markup oder teile die Inhalte auf. Prüfe die konfigurierte Größengrenze und das Download-Limit."
+
+[issues.validation-resource-size]
+what = "Die JavaScript- oder CSS-Ressource überschreitet die konfigurierte Größengrenze oder wurde beim Abruf abgeschnitten."
+why = "Eine nur teilweise verarbeitete Ressource kann die Darstellung und die Erkennung von Seiteninhalten beeinträchtigen."
+fix = "Verkleinere oder teile die Ressource, entferne ungenutzten Code und prüfe die konfigurierte Größengrenze sowie das Download-Limit."

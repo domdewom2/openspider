@@ -1,2 +1,44 @@
-# OpenSpider – Issue-Texte (English) ab M2, Tab „Validation“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/en.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+[issues.validation-invalid-head-elements]
+what = "The source contains elements or text that are not permitted in the head."
+why = "These contents can end the head early and prevent later metadata from being used."
+fix = "Move page content into the body and retain only permitted metadata in the head. Check noscript contents as well."
+
+[issues.validation-head-not-first]
+what = "Elements or text appear before the first head in the document."
+why = "The parser may enter the body early, preventing later head metadata from taking effect."
+fix = "Place the head immediately after the opening html tag. Move visible contents after the head into the body."
+
+[issues.validation-missing-head]
+what = "The original source does not contain an opening head tag."
+why = "An automatically generated head can assign metadata differently from the intended document structure."
+fix = "Add exactly one explicit head as the first element inside html and place the document metadata within it."
+
+[issues.validation-multiple-head]
+what = "The original source contains more than one opening head tag."
+why = "Additional head tags are discarded by the parser and later metadata may no longer take effect."
+fix = "Combine the metadata in a single head and correct the page templates that generate duplicate head tags."
+
+[issues.validation-missing-body]
+what = "The original source does not contain an opening body tag."
+why = "The parser must infer the content structure. Older frameset documents also lack an explicit body."
+fix = "Generate an explicit body for page content and replace obsolete frameset templates with valid HTML documents."
+
+[issues.validation-multiple-body]
+what = "The original source contains more than one opening body tag."
+why = "The parser merges or discards additional body elements, losing the intended document structure."
+fix = "Generate exactly one body and remove duplicate wrappers from included templates or content fragments."
+
+[issues.validation-body-before-html]
+what = "Page content or visible text appears before the first html tag."
+why = "The parser enters the body early; the later head and its metadata may no longer take effect."
+fix = "Remove leading output and place visible page content inside the body after the document head."
+
+[issues.validation-html-document-size]
+what = "The HTML document exceeds the configured size threshold or its download was truncated."
+why = "Search engines may omit the end of large documents, losing content and links located there."
+fix = "Reduce the document, remove unnecessary inline markup or split its contents. Check the configured size threshold and the download limit."
+
+[issues.validation-resource-size]
+what = "The JavaScript or CSS resource exceeds the configured size threshold or its download was truncated."
+why = "A resource that is only partly processed can impair rendering and the recognition of page content."
+fix = "Reduce or split the resource, remove unused code and check the configured size threshold and the download limit."
