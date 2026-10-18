@@ -114,4 +114,8 @@ async fn updates_keep_secrets_and_machine_exports_fail_on_another_machine() {
         .await
         .is_err());
     assert!(!home.path().join("escape.osauth").exists());
+    // The encoded destination fits a filesystem component even at the accepted byte limit.
+    let longest_name = "ß".repeat(60);
+    let saved = call(&app, "auth.saveProfile", profile(&longest_name, "basic")).await;
+    assert_eq!(saved["name"], longest_name);
 }

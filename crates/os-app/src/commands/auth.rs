@@ -95,7 +95,7 @@ fn save(
     .map_err(error)?;
     fs::create_dir_all(dir(app)).map_err(error)?;
     // Same-directory atomic replacement; a failed write never truncates the previous profile.
-    let tmp = dest.with_extension(format!("{}.tmp", uuid::Uuid::new_v4()));
+    let tmp = dest.with_file_name(format!(".profile-{}.tmp", uuid::Uuid::new_v4()));
     let result = (|| {
         fs::write(&tmp, bytes)?;
         fs::rename(&tmp, &dest)
