@@ -1,8 +1,35 @@
-# OpenSpider – Issue-Katalog ab M2, Tab „Sitemaps“ (UI-063/UI-064).
-#
-# Einträge wie in core/issues/catalog.toml (`[[issue]]` mit id, tab, filter, type, priority, type_rule, priority_rule,
-# doc_key, optional override_reason/needs_crawl_analysis/text_params); `tab` ist hier immer "Sitemaps". Der Loader liest die
-# M1-Datei und alle Dateien dieses Ordners. Texte: core/issues/texts/{de,en}.d/sitemaps.toml (Schlüssel issues.<id>).
-# M2-F02 legt nur die Datei an; die Einträge liefert das Paket des Tabs.
-
+# Klassifizierung abgeleitet aus öffentlicher Dokumentation der Referenz (Benchmark), begründet nach UI-063.
 schema = 1
+
+[[issue]]
+id = "sitemaps-urls-in-multiple-sitemaps"
+tab = "Sitemaps"
+filter = "URLs In Multiple Sitemaps"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L1"
+needs_crawl_analysis = true
+doc_key = "sitemaps-urls-in-multiple-sitemaps"
+
+[[issue]]
+id = "sitemaps-xml-sitemap-with-over-50k-urls"
+tab = "Sitemaps"
+filter = "XML Sitemap With Over 50k URLs"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H1"
+needs_crawl_analysis = false
+doc_key = "sitemaps-xml-sitemap-with-over-50k-urls"
+
+[[issue]]
+id = "sitemaps-xml-sitemap-with-over-50mb"
+tab = "Sitemaps"
+filter = "XML Sitemap With Over 50MB"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H1"
+needs_crawl_analysis = false
+doc_key = "sitemaps-xml-sitemap-with-over-50mb"

@@ -1,4 +1,4 @@
-//! Tab „Sitemaps“ (TECH-211, TECH-212, TECH-213, TECH-214, TECH-215).
+//! Tab „Sitemaps“ (TECH-211 bis TECH-218).
 //!
 //! Die Filter „URLs In Sitemap“, „URLs Not In Sitemap“, „Orphan URLs“ und „Non-Indexable URLs In Sitemap“
 //! sind Nachlauf-Filter des Teilschritts „Sitemaps“ (TECH-005): Sie lesen die Marken `in_sitemap` und
@@ -9,7 +9,7 @@
 //!
 //! Interne URLs der Tabellen. Ohne verarbeitete Sitemap (keine Datei der Art `urlset` in `sitemaps`) ist der
 //! Tab leer – damit meldet „URLs Not In Sitemap“ dann nichts. Sitemap-Dateien selbst stehen mit
-//! `in_tables = 0` in `urls` und gehören nicht zur Grundmenge (TECH-217/218 sind P1).
+//! `in_tables = 0` in `urls`; nur die beiden Live-Grenzfilter nehmen sie auf.
 
 use crate::defs::{ColumnDef, ColumnKind, ColumnSql, FilterDef, FilterKind, SortKey, TabDef};
 use os_model::{AnalysisStep, CrawlConfig, Value};
@@ -20,19 +20,21 @@ const POPULATION: &str = "u.is_internal = 1 AND u.in_tables = 1 \
 
 /// Die URL steht in mindestens einer verarbeiteten Sitemap (Marke des Teilschritts).
 const IN_SITEMAP: &str =
-    "EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'in_sitemap')";
+    "u.in_tables = 1 AND u.is_internal = 1 AND NOT EXISTS (SELECT 1 FROM sitemaps sm WHERE sm.url_id = u.id AND sm.kind IN ('urlset', 'index')) AND EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'in_sitemap')";
 
 /// Indexierbare, gecrawlte HTML-Seite, die in keiner Sitemap steht (TECH-213).
-const NOT_IN_SITEMAP: &str = "u.is_internal = 1 AND u.state = 'done' AND u.content_class = 'HTML' \
+const NOT_IN_SITEMAP: &str =
+    "u.in_tables = 1 AND u.is_internal = 1 AND NOT EXISTS (SELECT 1 FROM sitemaps sm WHERE sm.url_id = u.id AND sm.kind IN ('urlset', 'index')) AND u.state = 'done' AND u.content_class = 'HTML' \
     AND u.indexability = 'Indexable' \
     AND NOT EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'in_sitemap')";
 
 /// Orphan-Marke des Teilschritts (TECH-214).
 const ORPHAN: &str =
-    "EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'orphan')";
+    "u.in_tables = 1 AND u.is_internal = 1 AND NOT EXISTS (SELECT 1 FROM sitemaps sm WHERE sm.url_id = u.id AND sm.kind IN ('urlset', 'index')) AND EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'orphan')";
 
 /// Abgerufene, nicht indexierbare URL in einer Sitemap (TECH-215); nicht abgerufene URLs zählen nicht.
-const NON_INDEXABLE_IN_SITEMAP: &str = "u.state = 'done' AND u.indexability = 'Non-Indexable' \
+const NON_INDEXABLE_IN_SITEMAP: &str =
+    "u.in_tables = 1 AND u.is_internal = 1 AND NOT EXISTS (SELECT 1 FROM sitemaps sm WHERE sm.url_id = u.id AND sm.kind IN ('urlset', 'index')) AND u.state = 'done' AND u.indexability = 'Non-Indexable' \
     AND EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'in_sitemap')";
 
 fn column(key: &'static str, sql: &'static str, kind: ColumnKind) -> ColumnDef {
@@ -68,6 +70,17 @@ fn post_crawl(id: &'static str, predicate: &'static str, ignore_non_indexable: b
     }
 }
 
+fn live(id: &'static str, predicate: &'static str) -> FilterDef {
+    FilterDef {
+        id,
+        predicate,
+        kind: FilterKind::Live,
+        requires: Vec::new(),
+        ignore_non_indexable: false,
+        default_columns: &[],
+    }
+}
+
 fn no_params(_: &CrawlConfig) -> Vec<(&'static str, Value)> {
     Vec::new()
 }
@@ -75,7 +88,9 @@ fn no_params(_: &CrawlConfig) -> Vec<(&'static str, Value)> {
 /// Definition des Tabs „Sitemaps“.
 pub fn tab() -> TabDef {
     TabDef {
-        hidden_population: None,
+        hidden_population: Some(
+            "EXISTS (SELECT 1 FROM sitemaps s WHERE s.url_id = u.id AND s.kind IN ('urlset', 'index'))",
+        ),
         id: "Sitemaps",
         population: POPULATION,
         columns: vec![
@@ -92,7 +107,7 @@ pub fn tab() -> TabDef {
             // [OS-Erweiterung] (TECH-211): Anzahl der Sitemap-Dateien, in denen die URL steht.
             extension(
                 "Sitemaps",
-                "(SELECT COUNT(*) FROM sitemap_entries e WHERE e.url_id = u.id)",
+                "(SELECT COUNT(DISTINCT e.sitemap_id) FROM sitemap_entries e JOIN sitemaps s ON s.id = e.sitemap_id WHERE e.url_id = u.id AND s.kind = 'urlset')",
                 ColumnKind::Int,
             ),
             // [OS-Erweiterung] (TECH-214): bei Folge-Orphans die Adresse der Wurzel-Orphan-URL.
@@ -106,7 +121,7 @@ pub fn tab() -> TabDef {
         filters: vec![
             FilterDef {
                 id: "All",
-                predicate: "1",
+                predicate: "u.in_tables = 1 AND u.is_internal = 1 AND NOT EXISTS (SELECT 1 FROM sitemaps sm WHERE sm.url_id = u.id AND sm.kind IN ('urlset', 'index'))",
                 kind: FilterKind::Live,
                 requires: Vec::new(),
                 ignore_non_indexable: false,
@@ -119,6 +134,19 @@ pub fn tab() -> TabDef {
                 "Non-Indexable URLs In Sitemap",
                 NON_INDEXABLE_IN_SITEMAP,
                 false,
+            ),
+            post_crawl(
+                "URLs In Multiple Sitemaps",
+                "u.in_tables = 1 AND u.is_internal = 1 AND NOT EXISTS (SELECT 1 FROM sitemaps sm WHERE sm.url_id = u.id AND sm.kind IN ('urlset', 'index')) AND (SELECT COUNT(DISTINCT e.sitemap_id) FROM sitemap_entries e JOIN sitemaps s ON s.id = e.sitemap_id WHERE e.url_id = u.id AND s.kind = 'urlset') >= 2",
+                false,
+            ),
+            live(
+                "XML Sitemap With Over 50k URLs",
+                "EXISTS (SELECT 1 FROM sitemaps s WHERE s.url_id = u.id AND s.kind IN ('urlset', 'index') AND s.entries > 50000)",
+            ),
+            live(
+                "XML Sitemap With Over 50MB",
+                "EXISTS (SELECT 1 FROM sitemaps s WHERE s.url_id = u.id AND s.kind IN ('urlset', 'index') AND s.size_bytes > 52428800)",
             ),
         ],
         default_sort: vec![SortKey {

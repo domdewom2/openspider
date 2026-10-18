@@ -1,2 +1,14 @@
-# OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „Sitemaps“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+[issues.sitemaps-urls-in-multiple-sitemaps]
+what = "Die URL ist in mehreren unterschiedlichen XML-Sitemaps eingetragen."
+why = "Mehrfache Einträge sind zulässig, erschweren aber die eindeutige Pflege der Sitemap-Zuordnung."
+fix = "Ordne jede kanonische URL einer passenden Sitemap zu und entferne überflüssige Einträge."
+
+[issues.sitemaps-xml-sitemap-with-over-50k-urls]
+what = "Die XML-Sitemap oder der Sitemap-Index enthält mehr als 50.000 Einträge."
+why = "Suchmaschinen können Dateien oberhalb dieser Protokollgrenze verwerfen."
+fix = "Teile die Datei in Sitemaps beziehungsweise Indizes mit höchstens 50.000 Einträgen auf."
+
+[issues.sitemaps-xml-sitemap-with-over-50mb]
+what = "Die unkomprimierte XML-Sitemap ist größer als 52.428.800 Bytes (50 MiB)."
+why = "Die Größengrenze gilt auch für gzip-Dateien nach dem Entpacken. Größere Dateien können verworfen werden."
+fix = "Teile die Sitemap in kleinere Dateien auf und prüfe jeweils die unkomprimierte Größe."

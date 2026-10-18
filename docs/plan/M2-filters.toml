@@ -229,7 +229,7 @@ note = "UI-064 schreibt „XML Sitemap Over 50MB“; maßgeblich ist TECH-218 (�
 filters = [
   { id = "URLs In Multiple Sitemaps", spec = "TECH-216", kind = "post_crawl:Sitemaps", issue = true },
   { id = "XML Sitemap With Over 50k URLs", spec = "TECH-217", kind = "live", issue = true },
-  { id = "XML Sitemap With Over 50MB", spec = "TECH-218", kind = "live" },
+  { id = "XML Sitemap With Over 50MB", spec = "TECH-218", kind = "live", issue = true },
 ]
 
 [[tab]]

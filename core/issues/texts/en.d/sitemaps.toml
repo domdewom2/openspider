@@ -1,2 +1,14 @@
-# OpenSpider – Issue-Texte (English) ab M2, Tab „Sitemaps“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/en.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+[issues.sitemaps-urls-in-multiple-sitemaps]
+what = "The URL is listed in more than one distinct XML sitemap."
+why = "Repeated membership is valid but makes sitemap maintenance harder and adds redundant entries."
+fix = "Assign each canonical URL to an appropriate sitemap and remove redundant entries."
+
+[issues.sitemaps-xml-sitemap-with-over-50k-urls]
+what = "The XML sitemap or sitemap index contains more than 50,000 entries."
+why = "Search engines may reject files exceeding this protocol limit."
+fix = "Split the file into sitemaps or indexes containing at most 50,000 entries each."
+
+[issues.sitemaps-xml-sitemap-with-over-50mb]
+what = "The uncompressed XML sitemap exceeds 52,428,800 bytes (50 MiB)."
+why = "The size limit applies to gzip files after decompression too. Larger files may be rejected."
+fix = "Split the sitemap into smaller files and check the uncompressed size of each file."

@@ -9,3 +9,6 @@ URLs In Sitemap: needs_crawl_analysis
 URLs Not In Sitemap: needs_crawl_analysis
 Orphan URLs: needs_crawl_analysis
 Non-Indexable URLs In Sitemap: needs_crawl_analysis
+URLs In Multiple Sitemaps: needs_crawl_analysis
+XML Sitemap With Over 50k URLs: 0
+XML Sitemap With Over 50MB: 0
