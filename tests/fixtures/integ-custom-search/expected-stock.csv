@@ -1,0 +1,3 @@
+Address,Filter,Occurrences,Status Code,Indexability
+{BASE}/,Stock,3,200,Indexable
+{BASE}/missing,Stock,1,404,Non-Indexable

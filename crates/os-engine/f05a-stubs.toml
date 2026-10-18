@@ -375,24 +375,6 @@ function = "entries"
 signature = "pub fn entries() -> &'static [TableEntry]"
 
 [[stub]]
-owner = "M2-D14"
-file = "crates/os-parse/src/custom_search.rs"
-function = "run"
-signature = "pub fn run(_ctx: &PageCtx<'_>, _page: &mut ParsedPage)"
-
-[[stub]]
-owner = "M2-D14"
-file = "crates/os-parse/src/custom_search.rs"
-function = "run_on_body"
-signature = "pub fn run_on_body(_input: &crate::ParseInput<'_>) -> Vec<os_model::SearchHit>"
-
-[[stub]]
-owner = "M2-D14"
-file = "crates/os-parse/src/custom_search.rs"
-function = "validate"
-signature = "pub fn validate(_cfg: &os_model::CustomSearchConfig) -> Vec<os_model::ConfigIssue>"
-
-[[stub]]
 owner = "M2-D15"
 file = "crates/os-analyze/src/tabs/custom_extraction.rs"
 function = "tab"

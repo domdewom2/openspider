@@ -1,0 +1,9 @@
+{
+  "filters": [
+    {"name":"Stock", "expression":"Ausverkauft", "scope":"page_text"},
+    {"name":"Missing stock", "expression":"Ausverkauft", "scope":"page_text", "contains":false},
+    {"name":"Redirect", "expression":"redirect-marker"},
+    {"name":"Assumed", "expression":"assumed-marker"}
+  ],
+  "regex_timeout_ms": 2000
+}
