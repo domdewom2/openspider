@@ -1,0 +1,39 @@
+[[route]]
+path = "/x/"
+content_type = "text/html"
+body = "<!doctype html><title>Rewritten</title>"
+
+[[route]]
+host = "cdn.other.test"
+path = "/seite.html"
+content_type = "text/html"
+body = '<!doctype html><a href="/seite2.html">Next CDN page</a>'
+
+[[route]]
+host = "cdn.other.test"
+path = "/seite2.html"
+content_type = "text/html"
+body = "<!doctype html><title>CDN second page</title>"
+
+[[route]]
+host = "cdn.other.test"
+path = "/img.png"
+content_type = "image/png"
+png_size = 128
+
+[[route]]
+host = "other.test"
+path = "/assets/a.css"
+content_type = "text/css"
+body = "body { color: black; }"
+
+[[route]]
+host = "other.test"
+path = "/blog/"
+content_type = "text/html"
+body = "<!doctype html><title>External</title>"
+
+[[route]]
+path = "/list/index.html"
+content_type = "text/html"
+body = '<!doctype html><a href="http://site.test/x/index.html?sid=1">Discovered</a>'

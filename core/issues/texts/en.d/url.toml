@@ -1,2 +1,21 @@
-# OpenSpider – Issue-Texte (English) ab M2, Tab „URL“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/en.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+# Eigene Issue-Texte für M2-E04.
+
+[issues.url-repetitive-path]
+what = "The path contains the same non-empty segment more than once."
+why = "Repeated segments can indicate relative links that create an expanding crawl path."
+fix = "Review the linking page and correct relative paths. Keep deliberate repetitions when they represent distinct content."
+
+[issues.url-internal-search]
+what = "The URL matches a configured internal search pattern or a SearchAction template on the page."
+why = "Search results may create many combinations of URLs with overlapping or changing content."
+fix = "Check whether search results should be crawled and indexed. Adjust crawl rules and the search detection lists to match the site."
+
+[issues.url-broken-bookmark]
+what = "The fragment points to no known element ID or named anchor in the successful HTML target."
+why = "Visitors following the link cannot jump to the intended section."
+fix = "Correct the fragment in the linking page or restore the matching ID on the target. IDs are case-sensitive."
+
+[issues.url-ga-tracking-parameters]
+what = "The query contains a parameter beginning with utm_ or named _ga or _gl."
+why = "Tracking parameters can create additional URL variants for the same content and consume crawl capacity."
+fix = "Review internal links and remove unnecessary tracking parameters. Use URL rewriting for a crawl when those parameters do not change the content."

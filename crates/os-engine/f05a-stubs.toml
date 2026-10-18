@@ -609,12 +609,6 @@ function = "decide"
 signature = "pub fn decide( _res: &os_fetch::FetchResult, _attempt: u32, _cfg: &os_model::CrawlConfig, ) -> RetryDecision"
 
 [[stub]]
-owner = "M2-E04"
-file = "crates/os-parse/src/bookmarks.rs"
-function = "run"
-signature = "pub fn run(_ctx: &crate::PageCtx<'_>, _page: &mut os_model::ParsedPage)"
-
-[[stub]]
 owner = "M2-E05"
 file = "crates/os-engine/src/render_glue.rs"
 function = "render"

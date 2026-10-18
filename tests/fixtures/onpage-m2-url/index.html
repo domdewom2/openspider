@@ -1,0 +1,13 @@
+<!doctype html><html><head><meta charset="utf-8"><title>URL fixture</title></head><body>
+<a href="http://site.test/x/index.html?sid=1&amp;keep=%2F">Rewrite</a>
+<a href="http://site.test/x/index.html?sid=2&amp;keep=%2F">Same target</a>
+<a href="http://cdn.other.test/seite.html">CDN HTML</a>
+<img src="http://cdn.other.test/img.png" alt="CDN image">
+<link rel="stylesheet" href="http://other.test/assets/a.css">
+<a href="http://other.test/blog/">External path</a>
+<a href="/bookmarks.html#kontakt">Known</a><a href="/bookmarks.html#preise">Missing</a>
+<a href="/bookmarks.html#Kontakt">Wrong case</a><a href="/bookmarks.html#top">Top</a>
+<a href="/bookmarks.html#">Empty</a><a href="/bookmarks.html#!/route">Hash route</a>
+<a href="/bookmarks.html#:~:text=abc">Text</a><a href="/bookmarks.html#anker-alt">Legacy</a>
+<a href="/bookmarks.html#caf%C3%A9">Unicode</a><a href="/bookmarks.html#a%26b">Entity</a>
+</body></html>
