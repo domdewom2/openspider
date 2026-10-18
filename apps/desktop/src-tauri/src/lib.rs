@@ -66,6 +66,7 @@ pub fn run() {
     }
 
     builder = builder
+        .invoke_handler(tauri::generate_handler![desktop::browser_open])
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_notification::init())

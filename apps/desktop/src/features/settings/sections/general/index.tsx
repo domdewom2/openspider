@@ -1,3 +1,4 @@
+import { RemovalConfirmationSettings } from "../../../table/RemovalConfirmationSettings";
 import { useMemo } from "react";
 import { i18n, useT } from "../../../../i18n";
 import { usePrefs } from "../../../../state/prefs";
@@ -39,6 +40,7 @@ function General() {
       <Switch isSelected={notifications} anchor="general.notifications" onChange={(v) => void patch({ general: { notifications: v } })}>
         {t("settings-general-notifications")}
       </Switch>
+      <RemovalConfirmationSettings />
     </div>
   );
 }
