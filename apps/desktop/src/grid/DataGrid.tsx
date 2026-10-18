@@ -100,11 +100,14 @@ export function DataGrid(props: DataGridProps) {
     move(alignStart ? row : row < first ? row : row >= first + capacity ? row - capacity + 1 : first, left);
   };
   const bounds = (col: number, row: number): GridRect | undefined => {
-    const c = layout.find(c => c.index === col);
-    if (!c || (row !== -1 && (row < first || row >= first + count))) return undefined;
+    const c = visible[col];
+    if (!c || row < -1 || row >= source.total) return undefined;
+    // The controller reports geometry even for virtualized columns/rows; it does
+    // not imply that the cell is painted or hit-testable inside the viewport.
+    const x = visible.slice(0, col).reduce((n, column) => n + column.width, 0) - (c.pinned || c.key === "Row" ? 0 : position.left);
     const rect = canvas.current?.getBoundingClientRect();
     if (!rect) return undefined;
-    return { x: rect.x + c.x * size.scale, y: rect.y + (row === -1 ? 0 : headerHeight + (row - first) * rowHeight) * size.scale,
+    return { x: rect.x + x * size.scale, y: rect.y + (row === -1 ? 0 : headerHeight + (row - first) * rowHeight) * size.scale,
       width: c.width * size.scale, height: (row === -1 ? headerHeight : rowHeight) * size.scale };
   };
   const actions = useRef({ move, reveal, bounds }); actions.current = { move, reveal, bounds };

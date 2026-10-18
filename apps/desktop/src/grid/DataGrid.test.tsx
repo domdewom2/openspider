@@ -67,6 +67,10 @@ it("keeps exact middle jumps despite compressed scrollbar rounding and reconnect
     fireEvent.scroll(mounted.container.querySelector(".os-grid-scroll")!);
     expect(controller!.visible().y).toBe(region.y);
   }
+  const scroll = mounted.container.querySelector(".os-grid-scroll")!;
+  scroll.scrollLeft = 500; fireEvent.scroll(scroll);
+  expect(controller!.bounds(2, controller!.visible().y)).toMatchObject({ x: -90, width: 120 });
+  expect(controller!.bounds(999, 0)).toBeUndefined();
   mounted.unmount(); expect(controller).toBeNull(); expect(source.onScrollTo).toBeUndefined();
   await source.dispose();
 });
