@@ -1,0 +1,5 @@
+{
+  "existing": ["Date", "Start URL", "Internal:HTML", "Removed Metric"],
+  "selected": ["Response Codes:All", "Internal:HTML"],
+  "expected": ["Date", "Start URL", "Internal:HTML", "Removed Metric", "Response Codes:All"]
+}
