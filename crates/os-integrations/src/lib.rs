@@ -9,16 +9,23 @@
 
 pub mod core;
 pub mod crawl_glue;
+pub mod credentials;
 pub mod drive;
 pub mod ga4;
 pub mod gsc;
+pub mod http;
 pub mod linkmetrics;
+pub mod matching;
 pub mod oauth;
 pub mod psi;
 pub mod queue;
+pub mod quota;
+pub mod secret_export;
 
 pub use core::ApiError as IntegError;
-pub use core::{ApiCtx, ApiError, ApiSource, ApiState, ApiStatus, BoxFuture, UrlRef};
+pub use core::{
+    ApiCtx, ApiError, ApiSource, ApiState, ApiStatus, BoxFuture, ProviderQuota, UrlRef,
+};
 
 /// Name dieses Crates.
 pub const NAME: &str = env!("CARGO_PKG_NAME");

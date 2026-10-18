@@ -1,0 +1,13 @@
+{
+  "secret": "sk-TEST-INTEG-002",
+  "urls": ["https://integ.test:8080/a/", "https://integ.test:8080/b/", "https://integ.test:8080/c", "https://integ.test:8080/produkt", "https://integ.test:8080/d", "https://integ.test:8080/%C3%BC"],
+  "matching": [
+    ["https://integ.test:8080/a/", "http://integ.test:8080/a/", true],
+    ["https://integ.test:8080/b/", "https://integ.test:8080/b", true],
+    ["https://integ.test:8080/produkt", "https://integ.test:8080/Produkt", true],
+    ["https://integ.test:8080/d?x=1", "https://integ.test:8080/d", false],
+    ["https://integ.test:8080/d#one", "https://integ.test:8080/d", false],
+    ["https://integ.test:8080/%C3%BC", "https://integ.test:8080/ü", true],
+    ["https://integ.test:8080/a%2Fb", "https://integ.test:8080/a/b", false]
+  ]
+}

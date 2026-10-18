@@ -4,7 +4,7 @@
 //! Menge URLs [`ApiValueWrite`]s, die der Crawl-Pfad über `WriteBatch.api_values` in die Crawl-Datei schreibt (Schema v3,
 //! `api_values`). Die Futures sind geboxt, damit das Trait objektsicher bleibt (`Arc<dyn ApiSource>` in Engine und App).
 //!
-//! STUB(M2-I01): M2-F02 legt Trait und Typen an; Ablauf, Warteschlange, Wiederholungen und Ratenbegrenzung liefert
+//! M2-F02 legt Trait und Typen an; Ablauf, Warteschlange, Wiederholungen und Ratenbegrenzung liefert
 //! M2-I01 (`queue`), die Quellen die Pakete I02 – I05.
 
 use std::future::Future;
@@ -32,9 +32,48 @@ pub enum ApiError {
     /// Tageslimit oder Ratenbegrenzung erreicht (die Warteschlange pausiert).
     #[error("Limit erreicht: {0}")]
     RateLimited(String),
+    /// Anbieter- oder lokales Tageskontingent erschöpft.
+    #[error("Quota exceeded: {0}")]
+    QuotaExceeded(String),
+    /// Redigierte Antwort des Verbindungs-Prüfabrufs.
+    #[error("HTTP {status}: {message}")]
+    Provider { status: u16, message: String },
     /// Netzwerk- oder Protokollfehler.
     #[error("Abruf fehlgeschlagen: {0}")]
     Transport(String),
+}
+
+impl ApiError {
+    pub fn http_status(&self) -> Option<u16> {
+        if let Self::Provider { status, .. } = self {
+            return Some(*status);
+        }
+        let message = match self {
+            Self::Unauthorized(s)
+            | Self::Transport(s)
+            | Self::RateLimited(s)
+            | Self::QuotaExceeded(s) => s,
+            _ => return None,
+        };
+        let status = message
+            .strip_prefix("HTTP ")?
+            .get(..3)?
+            .parse::<u16>()
+            .ok()?;
+        (100..=599).contains(&status).then_some(status)
+    }
+    /// Anbietertexte können Zugangsdaten spiegeln; öffentliche Meldungen bleiben kontrolliert.
+    pub fn public_message(&self) -> String {
+        match self {
+            Self::NotImplemented(_) => "API-Quelle noch nicht verfügbar".into(),
+            Self::NotConnected(_) => "API nicht verbunden".into(),
+            Self::Unauthorized(_) => "Anmeldung abgelaufen – bitte neu verbinden".into(),
+            Self::RateLimited(_) => "Anfragelimit erreicht".into(),
+            Self::QuotaExceeded(_) => "Quota exceeded".into(),
+            Self::Provider { status, message } => format!("HTTP {status}: {message}"),
+            Self::Transport(_) => "API-Abruf fehlgeschlagen".into(),
+        }
+    }
 }
 
 /// Eine URL, zu der Werte abgerufen werden.
@@ -85,6 +124,19 @@ pub struct ApiCtx {
     pub cfg: CrawlConfig,
     /// Quelle der Geheimnisse (Schlüsselbund bzw. Speicher-Store in Tests, C13).
     pub secrets: Arc<dyn SecretStore>,
+    /// App-weite Netzwerkeinstellungen (K2-33).
+    pub network: os_model::settings::NetworkSettings,
+    /// Explizite Laufzeitfreigabe für Basis-URLs im Release.
+    pub allow_api_override: bool,
+}
+
+/// Vom Anbieter gemeldete Kontingentdimension, etwa GA4 tokensPerDay/tokensPerHour.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProviderQuota {
+    pub dimension: String,
+    pub used: u64,
+    pub limit: Option<u64>,
+    pub resets_at: Option<os_model::Timestamp>,
 }
 
 /// Eine API-Quelle.
@@ -98,6 +150,31 @@ pub trait ApiSource: Send + Sync {
         urls: &'a [UrlRef],
         ctx: &'a ApiCtx,
     ) -> BoxFuture<'a, Result<Vec<ApiValueWrite>, ApiError>>;
+
+    /// Genau ein Prüfabruf. Quellen können Kontoname, Ablauf und Scopes ergänzen.
+    fn test_connection<'a>(
+        &'a self,
+        ctx: &'a ApiCtx,
+        credential: &'a crate::credentials::Credential,
+    ) -> BoxFuture<'a, Result<crate::credentials::Credential, ApiError>> {
+        Box::pin(async move {
+            crate::http::probe(
+                self.kind(),
+                ctx,
+                credential
+                    .api_key
+                    .as_deref()
+                    .or(credential.access_token.as_deref()),
+            )
+            .await?;
+            Ok(credential.clone())
+        })
+    }
+
+    /// Kontingente aus der letzten Anbieterantwort (leere Liste vor dem ersten Abruf).
+    fn quotas(&self) -> Vec<ProviderQuota> {
+        Vec::new()
+    }
 
     /// Aktueller Stand der Quelle.
     fn status(&self) -> ApiStatus;
