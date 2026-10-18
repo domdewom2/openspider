@@ -16,6 +16,11 @@ SLUG = lambda s: re.sub('[^a-z0-9]+', '_', s.lower()).strip('_')
 NORMALIZE = '\n[normalize]\nbase_url = true\ntrim = true\nbool = "case-insensitive"\nnumber_decimals = 3\nempty_equals_null = true\n'
 
 
+def write(path, text):
+    # Explicit UTF-8/LF also on Windows; Path.write_text defaults to the system encoding/newlines.
+    path.write_bytes(text.encode('utf-8'))
+
+
 def mapping(name, columns, key=('Address',), *, xml=False, ordered=False):
     target = MAP / (name + '.toml')
     if target.exists():
@@ -25,7 +30,7 @@ def mapping(name, columns, key=('Address',), *, xml=False, ordered=False):
     if xml: text += 'format = "xml"\n'
     if ordered: text += 'ordered = true\n'
     text += '\n[columns]\n' + '\n'.join(Q(c) + ' = ' + Q(c) for c in columns) + '\n' + NORMALIZE
-    target.write_text(text.rstrip() + '\n')
+    write(target, text.rstrip() + '\n')
     return name
 
 
@@ -46,7 +51,7 @@ def new_manifest(site, port, entries, list_source=None):
         for field in ['config', 'select']:
             if entry.get(field):
                 text += f'[export.{field}]\n' + '\n'.join(Q(k) + ' = ' + Q(v) for k, v in entry[field].items()) + '\n'
-    target.write_text(text.rstrip() + '\n')
+    write(target, text.rstrip() + '\n')
 
 
 def entry(os, name=None, **opts):
@@ -64,7 +69,7 @@ def main():
     # Only tab/filter labels from the regular catalogue layout are needed here. The Rust
     # integration tests validate all resulting TOML, including the canonical filter catalogue.
     filters = []
-    for section in (ROOT / 'docs/plan/M2-filters.toml').read_text().split('[[tab]]')[1:]:
+    for section in (ROOT / 'docs/plan/M2-filters.toml').read_text(encoding="utf-8").split('[[tab]]')[1:]:
         name = re.search(r'^id = "([^"]+)"', section, re.M).group(1)
         rows = [dict(id=label, extension='extension = true' in line) for line in section.splitlines()
                 for label in re.findall(r'^  \{ id = "([^"]+)"', line)]
@@ -100,7 +105,7 @@ def main():
     for old, new in [('content_all', 'content_m2'), ('internal_all', 'internal_m2'), ('images_all', 'images_m2'), ('url_all', 'url_m2')]:
         target = MAP / (new + '.toml')
         if target.exists(): continue
-        source = (MAP / (old + '.toml')).read_text()
+        source = (MAP / (old + '.toml')).read_text(encoding="utf-8")
         extra = {'content_all': ['Sentence Count', 'Average Words Per Sentence', 'Flesch Reading Ease Score', 'Readability', 'Closest Near Duplicate Match', 'No. Near Duplicates'],
                  'internal_all': ['Link Score'], 'images_all': [], 'url_all': []}[old]
         # Replace old ignore rules for M2-owned values, preserving all remaining baseline columns.
@@ -109,10 +114,10 @@ def main():
             if re.search(pattern, source, re.M): source = re.sub(pattern, Q(column) + ' = ' + Q(column), source, flags=re.M)
             else: source = source.replace('[normalize]', Q(column) + ' = ' + Q(column) + '\n\n[normalize]')
         source = source.replace('"Closest Near Duplicate Match" = "Closest Near Duplicate Match"', '"Closest Near Duplicate Match" = { os = "Closest Similarity Match" }')
-        target.write_text(source)
+        write(target, source)
     # Upload order is significant, including repeat occurrences of an address.
     target = MAP / 'list_internal.toml'
-    if not target.exists(): target.write_text((MAP / 'internal_m2.toml').read_text().replace('key = ["Address"]', 'ordered = true\nkey = ["Address", "#"]'))
+    if not target.exists(): write(target, (MAP / 'internal_m2.toml').read_text(encoding="utf-8").replace('key = ["Address"]', 'ordered = true\nkey = ["Address", "#"]'))
     common = [tab('Internal', name='internal_m2'), tab('Response Codes'), entry('report:Crawl Overview')]
     onpage = common + [tab(t, name={'Content': 'content_m2', 'URL': 'url_m2', 'Images': 'images_m2'}.get(t)) for t in ['Page Titles', 'Meta Description', 'Meta Keywords', 'H1', 'H2', 'Content', 'URL', 'Images']]
     onpage += selected(['Page Titles', 'Meta Description', 'Meta Keywords', 'H1', 'H2', 'Content', 'URL', 'Images', 'Internal'])
@@ -130,26 +135,26 @@ def main():
     for os in ['Redirects:Redirect & Canonical Chains', 'Canonicals:Canonical Chains', 'Canonicals:Non-Indexable Canonicals']:
         name = 'm2_' + SLUG(os)
         target = MAP / (name + '.toml')
-        if not target.exists(): target.write_text((MAP / 'redirect_chains.toml').read_text())
+        if not target.exists(): write(target, (MAP / 'redirect_chains.toml').read_text(encoding="utf-8"))
         technical.append(entry('report:' + os, name))
     for name, schema in [('All Hreflang URLs','hreflang_urls'), ('Non-200 Hreflang URLs','hreflang_urls'), ('Unlinked Hreflang URLs','hreflang_urls'), ('Missing Return Links','hreflang_missing_returns'), ('Inconsistent Language & Region Return Links','hreflang_inconsistent_returns'), ('Non Canonical Return Links','hreflang_noncanonical_returns'), ('Noindex Return Links','hreflang_noindex_returns')]:
         technical.append(entry('report:Hreflang:' + name, schema))
     for group in ['canonicals', 'directives']:
-        source = (ROOT / f'crates/os-export/src/catalog/bulk_{group}.rs').read_text()
+        source = (ROOT / f'crates/os-export/src/catalog/bulk_{group}.rs').read_text(encoding="utf-8")
         technical += [entry('bulk:' + name, 'all_inlinks') for name in re.findall(r'\bname: "([^"]+)"', source)]
     links = common + [tab('Links')] + selected(['Links'])
     for name in ['All Anchor Text', 'External Links', 'Internal Nofollow Outlinks', 'Internal Outlinks With No Anchor Text', 'Non-Descriptive Anchor Text In Internal Outlinks', 'Follow & Nofollow Internal Inlinks To Page', 'Internal Nofollow Inlinks Only', 'Outlinks To Localhost', 'Pages With Uncrawlable Internal Outlinks', 'Non-Indexable Page Inlinks Only']:
         links.append(entry('bulk:Links:' + name, 'links_anchor_text' if name == 'All Anchor Text' else 'all_inlinks'))
     links.append(entry('report:Crawl Path Report', 'crawl_path', ref_file='crawl_path_deep8.csv', select={'Target Address':'/deep/8.html'}))
     sec = common + [tab('Security')] + selected(['Security'])
-    source = (ROOT / 'crates/os-export/src/catalog/bulk_security.rs').read_text()
+    source = (ROOT / 'crates/os-export/src/catalog/bulk_security.rs').read_text(encoding="utf-8")
     sec += [entry('bulk:' + name, 'all_inlinks') for name in re.findall(r'\bname: "([^"]+)"', source)]
     sec.append(entry('report:Insecure Content', 'all_inlinks'))
     listed = [tab('Internal', name='list_internal'), tab('Response Codes'), entry('report:Crawl Overview'), entry('report:Redirects:Redirect Chains', 'redirect_chains'), entry('report:Redirects:Redirect & Canonical Chains', 'm2_redirects_redirect_canonical_chains')]
     for e in listed:
         if e['os'].startswith('report:Redirects:'): e['mapping'] = 'list_chains'
     target = MAP / 'list_chains.toml'
-    if not target.exists(): target.write_text((MAP / 'm2_redirects_redirect_canonical_chains.toml').read_text().replace('dedupe_reference = true', 'ordered = true').replace('key = ["Address"]', 'key = ["Address", "#"]'))
+    if not target.exists(): write(target, (MAP / 'm2_redirects_redirect_canonical_chains.toml').read_text(encoding="utf-8").replace('dedupe_reference = true', 'ordered = true').replace('key = ["Address"]', 'key = ["Address", "#"]'))
     for suffix, port, entries in [('onpage',8906,onpage),('technical',8907,technical),('links',8908,links),('security',8909,sec),('list',8910,listed)]:
         # Names/filenames are unique; repeated All exports from the table are collapsed.
         seen = set()

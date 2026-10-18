@@ -64,7 +64,7 @@ class Site:
 
 def pixels(width, profile):
     # Eigene kalibrierte Engine lesen, keine Font-/Referenzressourcen öffnen.
-    source = (ROOT / 'crates/os-parse/src/pixel/calibrated.rs').read_text()
+    source = (ROOT / 'crates/os-parse/src/pixel/calibrated.rs').read_text(encoding="utf-8")
     table = source.split('const ' + profile + ':', 1)[1].split('];', 1)[0]
     widths = dict((c, int(n)) for c, n in re.findall(r"\('([^']+)', (\d+)\)", table))
     for a in range(width // widths['a'], -1, -1):
