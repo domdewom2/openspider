@@ -1,0 +1,19 @@
+# F-TLS: crawl_fixture_from serves HTTP and HTTPS through the fixture CA.
+[[route]]
+path = "/redirect"
+status = 302
+location = "/https/safe.html"
+[[route]]
+path = "/image.jpg"
+content_type = "application/javascript"
+body = "let x = 1;"
+[[route]]
+path = "/headers"
+content_type = "application/json"
+body = "{}"
+[route.headers]
+Strict-Transport-Security = "max-age=0"
+Content-Security-Policy = "default-src 'self'"
+X-Content-Type-Options = "NoSniff"
+X-Frame-Options = "sameorigin"
+Referrer-Policy = "unsafe-url, strict-origin, foo"
