@@ -1,0 +1,7 @@
+# M2-P01: generiert durch tests/parity/gen/m2_sites.py.
+
+[[route]]
+path = "/"
+status = 200
+[route.headers]
+"Last-Modified" = "Thu, 01 Oct 2026 10:00:00 GMT"

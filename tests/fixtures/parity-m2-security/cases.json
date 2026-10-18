@@ -1,0 +1,82 @@
+[
+  {
+    "path": "/form-http.html",
+    "spec": "ONPAGE-034",
+    "status": 200
+  },
+  {
+    "path": "/form-relative.html",
+    "spec": "ONPAGE-035",
+    "status": 200
+  },
+  {
+    "path": "/submit",
+    "spec": "ONPAGE-035",
+    "status": 200
+  },
+  {
+    "path": "/blank-unsafe.html",
+    "spec": "ONPAGE-036",
+    "status": 200
+  },
+  {
+    "path": "/blank-noopener.html",
+    "spec": "ONPAGE-036",
+    "status": 200
+  },
+  {
+    "path": "/blank-noreferrer.html",
+    "spec": "ONPAGE-036",
+    "status": 200
+  },
+  {
+    "path": "/external.html",
+    "spec": "ONPAGE-036",
+    "status": 200
+  },
+  {
+    "path": "/protocol-relative.html",
+    "spec": "ONPAGE-037",
+    "status": 200
+  },
+  {
+    "path": "/headers-all.html",
+    "spec": "ONPAGE-039",
+    "status": 200
+  },
+  {
+    "path": "/headers-none.html",
+    "spec": "ONPAGE-039",
+    "status": 200
+  },
+  {
+    "path": "/without-content-security-policy.html",
+    "spec": "ONPAGE-040",
+    "status": 200
+  },
+  {
+    "path": "/without-x-content-type-options.html",
+    "spec": "ONPAGE-040",
+    "status": 200
+  },
+  {
+    "path": "/without-x-frame-options.html",
+    "spec": "ONPAGE-040",
+    "status": 200
+  },
+  {
+    "path": "/without-referrer-policy.html",
+    "spec": "ONPAGE-040",
+    "status": 200
+  },
+  {
+    "path": "/bad-types.html",
+    "spec": "ONPAGE-043",
+    "status": 200
+  },
+  {
+    "path": "/",
+    "spec": "CRAWL-001",
+    "status": 200
+  }
+]

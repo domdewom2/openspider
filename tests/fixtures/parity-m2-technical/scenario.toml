@@ -1,0 +1,72 @@
+# M2-P01: generiert durch tests/parity/gen/m2_sites.py.
+
+[[route]]
+path = "/redirect-canonical"
+status = 301
+location = "/canonical-chain-a.html"
+
+[[route]]
+path = "/pagination-404-target.html"
+status = 404
+
+[[route]]
+path = "/xrobots-noindex.html"
+status = 200
+[route.headers]
+"X-Robots-Tag" = "noindex"
+
+[[route]]
+path = "/xrobots-bot.html"
+status = 200
+[route.headers]
+"X-Robots-Tag" = "googlebot: nosnippet"
+
+[[route]]
+path = "/xrobots-all.html"
+status = 200
+[route.headers]
+"X-Robots-Tag" = "noarchive, max-snippet:40"
+
+[[route]]
+path = "/large.html"
+status = 200
+body_size = 2097153
+
+[[route]]
+path = "/large.txt"
+content_type = "text/plain"
+body = "Large resource"
+body_size = 2097153
+
+[[route]]
+path = "/refresh.html"
+status = 200
+[route.headers]
+"Refresh" = "0; url=/canonical-target.html"
+
+[[route]]
+path = "/refresh-self.html"
+status = 200
+[route.headers]
+"Refresh" = "0; url=/refresh-self.html"
+
+[[route]]
+path = "/tail"
+status = 302
+location = "/loop-a"
+
+[[route]]
+path = "/loop-a"
+status = 302
+location = "/loop-b"
+
+[[route]]
+path = "/loop-b"
+status = 302
+location = "/loop-a"
+
+[[route]]
+path = "/"
+status = 200
+[route.headers]
+"Last-Modified" = "Thu, 01 Oct 2026 10:00:00 GMT"
