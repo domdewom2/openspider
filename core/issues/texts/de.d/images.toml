@@ -1,2 +1,16 @@
-# OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „Images“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+# M2-D03: eigene Bildhinweise.
+
+[issues.images-background-images]
+what = "Das Bild wird ausschließlich über CSS oder zur Laufzeit geladen."
+why = "Hintergrundbilder liefern keinen alternativen Text für diesen Inhalt."
+fix = "Prüfen, ob das Bild inhaltlich relevant ist. Relevante Bilder mit einem img-Element und passendem alt-Text einbinden."
+
+[issues.images-missing-size-attributes]
+what = "Bei mindestens einer Bildeinbindung fehlt eine Breiten- oder Höhenangabe im HTML."
+why = "Ohne feste Abmessungen kann sich das Seitenlayout während des Ladens verschieben."
+fix = "An jedem img-Element width und height mit dem passenden Seitenverhältnis angeben. CSS-Größen ersetzen diese Attribute nicht."
+
+[issues.images-incorrectly-sized-images]
+what = "Mindestens eine sichtbare Bildeinbindung lädt mehr Pixel als für ihre Anzeige nötig."
+why = "Eine passend skalierte Bilddatei kann die übertragene Datenmenge verringern. Die Einsparung ist eine Schätzung anhand des Flächenverhältnisses."
+fix = "Bilder in passenden Abmessungen ausliefern und für verschiedene Anzeigegrößen srcset und sizes verwenden."
