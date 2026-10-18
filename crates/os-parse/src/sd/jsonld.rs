@@ -44,7 +44,7 @@ pub fn extract(ctx: &PageCtx<'_>) -> Vec<SdItem> {
                         block + 1,
                         1,
                         1,
-                        &raw.chars().take(80).collect::<String>(),
+                        &raw.chars().take(41).collect::<String>(),
                     ));
                     continue;
                 }
@@ -66,7 +66,7 @@ pub fn extract(ctx: &PageCtx<'_>) -> Vec<SdItem> {
                 let snippet = raw
                     .chars()
                     .skip(before.saturating_sub(40))
-                    .take(81)
+                    .take(before.min(40) + 41)
                     .collect::<String>();
                 result.push(model::error(
                     "json-ld",

@@ -62,9 +62,9 @@ pub fn tab() -> TabDef {
         filters: vec![filter("All", "1", false),
             filter("Contains Structured Data", concat!("EXISTS(SELECT 1 FROM sd_items s WHERE s.url_id=u.id AND ", active!(), ")"), false),
             filter("Missing Structured Data", concat!("NOT EXISTS(SELECT 1 FROM sd_items s WHERE s.url_id=u.id AND ", active!(), ")"), true),
-            filter("JSON-LD URLs", " :sd_json=1 AND EXISTS(SELECT 1 FROM sd_items s WHERE s.url_id=u.id AND s.format='json-ld')", false),
-            filter("Microdata URLs", ":sd_micro=1 AND EXISTS(SELECT 1 FROM sd_items s WHERE s.url_id=u.id AND s.format='microdata')", false),
-            filter("RDFa URLs", ":sd_rdfa=1 AND EXISTS(SELECT 1 FROM sd_items s WHERE s.url_id=u.id AND s.format='rdfa')", false),
+            filter("JSON-LD URLs", " :sd_json=1 AND EXISTS(SELECT 1 FROM sd_items s WHERE s.url_id=u.id AND s.format='json-ld' AND json_extract(s.json,'$._os_parse_error') IS NULL AND NOT EXISTS(SELECT 1 FROM sd_issues i WHERE i.url_id=s.url_id AND i.item_id=s.id AND i.validation='parse'))", false),
+            filter("Microdata URLs", ":sd_micro=1 AND EXISTS(SELECT 1 FROM sd_items s WHERE s.url_id=u.id AND s.format='microdata' AND json_extract(s.json,'$._os_parse_error') IS NULL AND NOT EXISTS(SELECT 1 FROM sd_issues i WHERE i.url_id=s.url_id AND i.item_id=s.id AND i.validation='parse'))", false),
+            filter("RDFa URLs", ":sd_rdfa=1 AND EXISTS(SELECT 1 FROM sd_items s WHERE s.url_id=u.id AND s.format='rdfa' AND json_extract(s.json,'$._os_parse_error') IS NULL AND NOT EXISTS(SELECT 1 FROM sd_issues i WHERE i.url_id=s.url_id AND i.item_id=s.id AND i.validation='parse'))", false),
             filter("Parse Errors", concat!("EXISTS(SELECT 1 FROM sd_issues i JOIN sd_items s ON s.id=i.item_id WHERE i.url_id=u.id AND i.validation='parse' AND ", active!(), ")"), true)],
         default_sort: Vec::new(), params, hidden_population: None,
     }

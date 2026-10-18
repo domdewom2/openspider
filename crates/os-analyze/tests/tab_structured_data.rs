@@ -93,7 +93,7 @@ fn active_formats_and_issue_indexability_share_view_counts() {
     cfg.issues.ignore_non_indexable = true;
     assert_eq!(ids(&file, &cfg, "Missing Structured Data"), [4, 8]);
     assert_eq!(ids(&file, &cfg, "Parse Errors"), [2]);
-    assert_eq!(ids(&file, &cfg, "JSON-LD URLs"), [1, 2, 9]);
+    assert_eq!(ids(&file, &cfg, "JSON-LD URLs"), [1]);
     assert!(ids(&file, &cfg, "Microdata URLs").is_empty());
     cfg.extraction.structured_data.microdata = true;
     assert_eq!(ids(&file, &cfg, "Microdata URLs"), [1, 4]);
