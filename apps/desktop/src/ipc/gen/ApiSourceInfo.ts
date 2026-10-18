@@ -35,6 +35,10 @@ account?: string | null,
  */
 quota?: QuotaDto | null, 
 /**
+ * Kontingentdimensionen aus der Anbieterantwort (INTEG-006).
+ */
+quotaDimensions?: Array<QuotaDto>, 
+/**
  * Beim Start automatisch verbinden (INTEG-011).
  */
 autoConnect: boolean, 

@@ -72,6 +72,10 @@ pub struct ApiSourceInfo {
     pub account: Option<String>,
     /// Kontingent.
     pub quota: Option<QuotaDto>,
+    /// Kontingentdimensionen aus der Anbieterantwort (INTEG-006).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub quota_dimensions: Option<Vec<QuotaDto>>,
     /// Beim Start automatisch verbinden (INTEG-011).
     pub auto_connect: bool,
     /// Aktueller Verbindungszustand des API-Anbieters.
