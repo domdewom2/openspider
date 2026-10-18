@@ -210,3 +210,293 @@ mod tests {
         assert_eq!(wal_checkpoint_pages(i64::MAX), WAL_CHECKPOINT_MAX_PAGES);
     }
 }
+
+/// Benannte Crawl-Konfigurationen; unabhängig von den SQLite-Leistungsprofilen oben.
+/// Namen sind Dateistämme, niemals Pfade (OUT-220).
+#[derive(Debug, Clone)]
+pub struct ConfigProfiles {
+    settings: std::path::PathBuf,
+}
+
+impl ConfigProfiles {
+    pub fn new(settings: impl Into<std::path::PathBuf>) -> Self {
+        Self {
+            settings: settings.into(),
+        }
+    }
+
+    pub fn path(&self, name: &str) -> Result<std::path::PathBuf, StoreError> {
+        if name.trim() != name
+            || name.is_empty()
+            || name.ends_with('.')
+            || name.chars().any(|c| {
+                c.is_control() || matches!(c, '/' | '\\' | ':' | '*' | '?' | '"' | '<' | '>' | '|')
+            })
+        {
+            return Err(StoreError::InvalidInput("ungültiger Profilname".into()));
+        }
+        Ok(self
+            .settings
+            .join("profiles")
+            .join(format!("{name}.osconfig")))
+    }
+
+    /// Verhindert Exporte auf verwaltete Profildateien, auch über relative Pfade/Symlinks.
+    pub fn is_managed_path(&self, path: &std::path::Path) -> Result<bool, StoreError> {
+        let absolute = if path.is_absolute() {
+            path.to_path_buf()
+        } else {
+            std::env::current_dir()
+                .map_err(|e| StoreError::io(path, e))?
+                .join(path)
+        };
+        let resolved = std::fs::canonicalize(&absolute)
+            .or_else(|_| {
+                std::fs::canonicalize(absolute.parent().unwrap_or(&absolute))
+                    .map(|p| p.join(absolute.file_name().unwrap_or_default()))
+            })
+            .unwrap_or(absolute);
+        let settings =
+            std::fs::canonicalize(&self.settings).unwrap_or_else(|_| self.settings.clone());
+        let profiles = std::fs::canonicalize(self.settings.join("profiles"))
+            .unwrap_or_else(|_| settings.join("profiles"));
+        let default = self.settings.join(os_model::DEFAULT_PROFILE_FILE);
+        let default = std::fs::canonicalize(&default)
+            .unwrap_or_else(|_| settings.join(os_model::DEFAULT_PROFILE_FILE));
+        Ok(resolved.starts_with(profiles) || resolved == default)
+    }
+
+    pub fn load(&self, name: &str) -> Result<os_model::LoadedConfig, StoreError> {
+        let path = self.path(name)?;
+        if !path.is_file() {
+            return Err(StoreError::NotFound(path));
+        }
+        os_model::CrawlConfig::load_file(&path).map_err(|e| StoreError::InvalidInput(e.to_string()))
+    }
+
+    pub fn save(
+        &self,
+        name: &str,
+        config: &os_model::CrawlConfig,
+        overwrite: bool,
+    ) -> Result<(), StoreError> {
+        let path = self.path(name)?;
+        if path.exists() && !overwrite {
+            return Err(StoreError::AlreadyExists(path));
+        }
+        let report = config.validate();
+        if !report.is_ok() {
+            return Err(StoreError::InvalidInput(report.errors[0].to_string()));
+        }
+        config.save_file(&path)?;
+        if self.default_name()?.as_deref() == Some(name) {
+            config.save_default(&self.settings)?;
+        }
+        Ok(())
+    }
+
+    pub fn names(&self) -> Result<Vec<String>, StoreError> {
+        let dir = self.settings.join("profiles");
+        let entries = match std::fs::read_dir(&dir) {
+            Ok(e) => e,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+            Err(e) => return Err(StoreError::io(&dir, e)),
+        };
+        let mut names = Vec::new();
+        for entry in entries {
+            let entry = entry.map_err(|e| StoreError::io(&dir, e))?;
+            let path = entry.path();
+            if path.extension().is_some_and(|e| e == "osconfig")
+                && entry
+                    .file_type()
+                    .map_err(|e| StoreError::io(&path, e))?
+                    .is_file()
+            {
+                if let Some(name) = path.file_stem().and_then(|s| s.to_str()) {
+                    if self.path(name).is_ok() {
+                        names.push(name.to_owned());
+                    }
+                }
+            }
+        }
+        names.sort();
+        Ok(names)
+    }
+
+    pub fn default_name(&self) -> Result<Option<String>, StoreError> {
+        let path = self.settings.join("profiles/default.json");
+        match std::fs::read(&path) {
+            Ok(bytes) => serde_json::from_slice(&bytes)
+                .map_err(|_| StoreError::InvalidInput("ungültiger Standardprofil-Verweis".into())),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(e) => Err(StoreError::io(&path, e)),
+        }
+    }
+
+    pub fn set_default(&self, name: Option<&str>) -> Result<(), StoreError> {
+        let config = name.map(|n| self.load(n)).transpose()?;
+        if let Some(config) = config {
+            config.config.save_default(&self.settings)?;
+        } else {
+            os_model::CrawlConfig::reset_default(&self.settings)?;
+        }
+        self.write_json("default.json", &serde_json::json!(name))
+    }
+
+    pub fn delete(&self, name: &str) -> Result<(), StoreError> {
+        let path = self.path(name)?;
+        if self.default_name()?.as_deref() == Some(name) {
+            self.set_default(None)?;
+        }
+        std::fs::remove_file(&path).map_err(|e| StoreError::io(&path, e))
+    }
+
+    /// Letzte zehn erfolgreich geladene Profile, neuestes zuerst.
+    pub fn remember_loaded(&self, name: &str) -> Result<(), StoreError> {
+        self.path(name)?;
+        let mut recent = self.recent()?;
+        recent.retain(|n| n != name);
+        recent.insert(0, name.into());
+        recent.truncate(10);
+        self.write_json("recent.json", &serde_json::json!(recent))
+    }
+
+    pub fn recent(&self) -> Result<Vec<String>, StoreError> {
+        let path = self.settings.join("profiles/recent.json");
+        match std::fs::read(&path) {
+            Ok(bytes) => serde_json::from_slice(&bytes)
+                .map_err(|_| StoreError::InvalidInput("ungültige Profilliste".into())),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Vec::new()),
+            Err(e) => Err(StoreError::io(&path, e)),
+        }
+    }
+
+    fn write_json(&self, name: &str, value: &serde_json::Value) -> Result<(), StoreError> {
+        let dir = self.settings.join("profiles");
+        std::fs::create_dir_all(&dir).map_err(|e| StoreError::io(&dir, e))?;
+        let path = dir.join(name);
+        let tmp = dir.join(format!("{name}.tmp"));
+        std::fs::write(&tmp, value.to_string()).map_err(|e| StoreError::io(&tmp, e))?;
+        std::fs::rename(&tmp, &path).map_err(|e| StoreError::io(&path, e))
+    }
+}
+
+/// Speichern und Neuberechnen in derselben Transaktion. Ein Fehler stellt auch die alte
+/// Konfiguration und die Analyse-Stempel wieder her (K-20, K2-43).
+pub fn config_transaction<T, E>(
+    file: &mut crate::CrawlFile,
+    map_error: impl Fn(StoreError) -> E,
+    f: impl FnOnce(&mut crate::CrawlFile) -> Result<T, E>,
+) -> Result<T, E> {
+    // Vor jeder lesenden Neuberechnung die Schreibsperre erwerben. Eine verzögerte
+    // Transaktion könnte sonst trotz busy_timeout mit SQLITE_BUSY_SNAPSHOT scheitern.
+    file.conn()
+        .execute_batch("BEGIN IMMEDIATE")
+        .map_err(StoreError::from)
+        .map_err(&map_error)?;
+    match f(file) {
+        Ok(value) => match file.conn().execute_batch("COMMIT") {
+            Ok(()) => Ok(value),
+            Err(commit_error) => {
+                // Deferred Constraints können erst beim COMMIT fehlschlagen; die
+                // Verbindung muss auch dann für den nächsten Auftrag frei sein.
+                if !file.conn().is_autocommit() {
+                    file.conn()
+                        .execute_batch("ROLLBACK")
+                        .map_err(StoreError::from)
+                        .map_err(&map_error)?;
+                }
+                Err(map_error(commit_error.into()))
+            }
+        },
+        Err(e) => {
+            file.conn()
+                .execute_batch("ROLLBACK")
+                .map_err(StoreError::from)
+                .map_err(&map_error)?;
+            Err(e)
+        }
+    }
+}
+
+/// Atomare Ausgabe verschlüsselter Profile; im Gegensatz zu save_file sind die Bytes opak.
+pub fn write_export(path: &std::path::Path, bytes: &[u8]) -> Result<(), StoreError> {
+    if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
+        std::fs::create_dir_all(parent).map_err(|e| StoreError::io(parent, e))?;
+    }
+    let tmp = path.with_extension(format!("tmp{}", std::process::id()));
+    std::fs::write(&tmp, bytes).map_err(|e| StoreError::io(&tmp, e))?;
+    std::fs::rename(&tmp, path).map_err(|e| StoreError::io(path, e))
+}
+
+/// Entfernt nach einer Regeländerung ausgeschlossene Queue-Einträge. Läuft innerhalb
+/// der Konfigurationstransaktion, in begrenzten Blöcken; die Start-URL bleibt erhalten.
+pub fn refilter_config_queue(
+    file: &crate::CrawlFile,
+    mut reason: impl FnMut(&str) -> Result<Option<os_model::NotCrawledReason>, StoreError>,
+) -> Result<u64, StoreError> {
+    let start = file.meta()?.start_url;
+    let seq = file
+        .get_meta("change_seq")?
+        .unwrap_or_else(|| "0".into())
+        .parse::<i64>()
+        .map_err(|_| StoreError::InvalidInput("ungültige Änderungssequenz".into()))?
+        + 1;
+    let mut last = 0i64;
+    let mut removed = 0u64;
+    let mut counters = std::collections::BTreeMap::<&str, i64>::new();
+    loop {
+        let entries = {
+            let mut stmt = file.conn().prepare_cached("SELECT q.url_id, u.url FROM queue q JOIN urls u ON u.id = q.url_id WHERE q.url_id > ?1 ORDER BY q.url_id LIMIT 1024")?;
+            let entries = stmt
+                .query_map([last], |r| {
+                    Ok((r.get::<_, i64>(0)?, r.get::<_, String>(1)?))
+                })?
+                .collect::<Result<Vec<_>, _>>()?;
+            entries
+        };
+        if entries.is_empty() {
+            break;
+        }
+        for (id, url) in entries {
+            last = id;
+            if start.as_deref() == Some(url.as_str()) {
+                continue;
+            }
+            let Some(reason) = reason(&url)? else {
+                continue;
+            };
+            let counter = match reason {
+                os_model::NotCrawledReason::Excluded => "excluded_skipped",
+                os_model::NotCrawledReason::NotIncluded => "not_included_skipped",
+                _ => return Err(StoreError::InvalidInput("Queue-Regelgrund erwartet".into())),
+            };
+            file.conn()
+                .prepare_cached("DELETE FROM queue WHERE url_id = ?1")?
+                .execute([id])?;
+            file.conn().prepare_cached("UPDATE urls SET state = 'discovered', not_crawled_reason = ?2, in_tables = 0, change_seq = ?3 WHERE id = ?1")?.execute(rusqlite::params![id,reason.as_str(),seq])?;
+            *counters.entry(counter).or_default() += 1;
+            removed += 1;
+        }
+    }
+    if removed > 0 {
+        file.set_meta("change_seq", &seq.to_string())?;
+        for (key, delta) in counters {
+            file.conn().prepare_cached("INSERT INTO crawl_counters (key,value) VALUES (?1,?2) ON CONFLICT(key) DO UPDATE SET value = value + excluded.value")?.execute(rusqlite::params![key,delta])?;
+        }
+    }
+    Ok(removed)
+}
+
+/// Schlüsselableitung des portablen Konfigurationsexports (INTEG-002).
+/// Die Parameter des Formats v1 sind fest, unabhängig von Bibliotheksdefaults.
+pub fn config_export_key(password: &str, salt: &[u8]) -> Result<[u8; 32], StoreError> {
+    use argon2::{Algorithm, Argon2, Params, Version};
+    let params = Params::new(19_456, 2, 1, Some(32))
+        .map_err(|_| StoreError::InvalidInput("Export-KDF nicht verfügbar".into()))?;
+    let mut key = [0u8; 32];
+    Argon2::new(Algorithm::Argon2id, Version::V0x13, params)
+        .hash_password_into(password.as_bytes(), salt, &mut key)
+        .map_err(|_| StoreError::InvalidInput("Export-Schlüsselableitung fehlgeschlagen".into()))?;
+    Ok(key)
+}
