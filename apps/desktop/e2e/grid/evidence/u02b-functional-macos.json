@@ -1,0 +1,5292 @@
+{
+  "platform": "macOS 26.3, Macmini9,1, Apple M1, 16 GiB",
+  "note": "Functional run during compilation; latency values are not quiet-hardware measurements. 14 tests passed, 31.6 s.",
+  "artifacts": {
+    "grid.gate.ts-gen-ui-large--744f4-eyboard-and-copy-delegation-chromium/S-1-functional.json": {
+      "platform": "chromium",
+      "jump": {
+        "requestedRow": 4999999,
+        "requestedVisible": true,
+        "contentReady": true,
+        "contentMs": 83.40000000596046,
+        "total": 5000000,
+        "columns": 65,
+        "visible": {
+          "x": 2,
+          "y": 4999973,
+          "width": 8,
+          "height": 27
+        },
+        "selection": {
+          "kind": "ids",
+          "ids": []
+        },
+        "cachedRows": 400,
+        "last": 5000000,
+        "rowCount": "5000001",
+        "visibility": "visible",
+        "documentFocus": true,
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "domRows": 28,
+        "dpr": 1,
+        "zoom": 1,
+        "canvas": [
+          {
+            "width": 1266,
+            "height": 750,
+            "cssWidth": 1266,
+            "cssHeight": 750,
+            "widthError": 0,
+            "heightError": 0
+          }
+        ],
+        "cellWidth": 320,
+        "bounds": {
+          "x": 90,
+          "y": 66,
+          "width": 320,
+          "height": 26
+        },
+        "headerBounds": {
+          "x": 90,
+          "y": 36,
+          "width": 320,
+          "height": 30
+        }
+      },
+      "warnings": [],
+      "ariaRowCount": "5000001",
+      "checks": {
+        "ariaTree": true,
+        "lastRow": true,
+        "jumpBudget": true,
+        "reactWarnings": true
+      }
+    },
+    "grid.gate.ts-gen-ui-large--744f4-eyboard-and-copy-delegation-webkit/S-1-functional.json": {
+      "platform": "webkit",
+      "jump": {
+        "requestedRow": 4999999,
+        "requestedVisible": true,
+        "contentReady": true,
+        "contentMs": 154,
+        "total": 5000000,
+        "columns": 65,
+        "visible": {
+          "x": 2,
+          "y": 4999973,
+          "width": 8,
+          "height": 27
+        },
+        "selection": {
+          "kind": "ids",
+          "ids": []
+        },
+        "cachedRows": 400,
+        "last": 5000000,
+        "rowCount": "5000001",
+        "visibility": "visible",
+        "documentFocus": true,
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "domRows": 28,
+        "dpr": 2,
+        "zoom": 1,
+        "canvas": [
+          {
+            "width": 2532,
+            "height": 1500,
+            "cssWidth": 1266,
+            "cssHeight": 750,
+            "widthError": 0,
+            "heightError": 0
+          }
+        ],
+        "cellWidth": 320,
+        "bounds": {
+          "x": 90,
+          "y": 66,
+          "width": 320,
+          "height": 26
+        },
+        "headerBounds": {
+          "x": 90,
+          "y": 36,
+          "width": 320,
+          "height": 30
+        }
+      },
+      "warnings": [],
+      "ariaRowCount": "5000001",
+      "checks": {
+        "ariaTree": true,
+        "lastRow": true,
+        "jumpBudget": false,
+        "reactWarnings": true
+      }
+    },
+    "grid.gate.ts-S-2-evidence-zoom-matrix-at-DPR-3-webkit/S-2-dpr-3.json": {
+      "platform": "webkit",
+      "evidence": [
+        {
+          "zoom": 0.8,
+          "dpr": 3,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": []
+            },
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 3798,
+                "height": 2250,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 11,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": []
+            },
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 0.8,
+            "canvas": [
+              {
+                "width": 3806,
+                "height": 1800,
+                "cssWidth": 1268.796875,
+                "cssHeight": 600,
+                "widthError": -0.390625,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 256,
+            "bounds": {
+              "x": 72,
+              "y": 52.796875,
+              "width": 256,
+              "height": 20.8
+            },
+            "headerBounds": {
+              "x": 72,
+              "y": 28.796875,
+              "width": 256,
+              "height": 24
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 11,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 0.8,
+            "canvas": [
+              {
+                "width": 3806,
+                "height": 1800,
+                "cssWidth": 1268.796875,
+                "cssHeight": 600,
+                "widthError": -0.390625,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 256,
+            "bounds": {
+              "x": 72,
+              "y": 52.796875,
+              "width": 256,
+              "height": 20.8
+            },
+            "headerBounds": {
+              "x": 72,
+              "y": 28.796875,
+              "width": 256,
+              "height": 24
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 1,
+          "dpr": 3,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 11,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 0.8,
+            "canvas": [
+              {
+                "width": 3806,
+                "height": 1800,
+                "cssWidth": 1268.796875,
+                "cssHeight": 600,
+                "widthError": -0.390625,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 256,
+            "bounds": {
+              "x": 72,
+              "y": 52.796875,
+              "width": 256,
+              "height": 20.8
+            },
+            "headerBounds": {
+              "x": 72,
+              "y": 28.796875,
+              "width": 256,
+              "height": 24
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 3798,
+                "height": 2250,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 3798,
+                "height": 2250,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 1.25,
+          "dpr": 3,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 3798,
+                "height": 2250,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 7,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 1.25,
+            "canvas": [
+              {
+                "width": 3788,
+                "height": 2813,
+                "cssWidth": 1262.5,
+                "cssHeight": 937.5,
+                "widthError": 0.5,
+                "heightError": 0.5
+              }
+            ],
+            "cellWidth": 400,
+            "bounds": {
+              "x": 112.5,
+              "y": 82.5,
+              "width": 400,
+              "height": 32.5
+            },
+            "headerBounds": {
+              "x": 112.5,
+              "y": 45,
+              "width": 400,
+              "height": 37.5
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 7,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 1.25,
+            "canvas": [
+              {
+                "width": 3788,
+                "height": 2813,
+                "cssWidth": 1262.5,
+                "cssHeight": 937.5,
+                "widthError": 0.5,
+                "heightError": 0.5
+              }
+            ],
+            "cellWidth": 400,
+            "bounds": {
+              "x": 112.5,
+              "y": 82.5,
+              "width": 400,
+              "height": 32.5
+            },
+            "headerBounds": {
+              "x": 112.5,
+              "y": 45,
+              "width": 400,
+              "height": 37.5
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 1.5,
+          "dpr": 3,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 7,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 1.25,
+            "canvas": [
+              {
+                "width": 3788,
+                "height": 2813,
+                "cssWidth": 1262.5,
+                "cssHeight": 937.5,
+                "widthError": 0.5,
+                "heightError": 0.5
+              }
+            ],
+            "cellWidth": 400,
+            "bounds": {
+              "x": 112.5,
+              "y": 82.5,
+              "width": 400,
+              "height": 32.5
+            },
+            "headerBounds": {
+              "x": 112.5,
+              "y": 45,
+              "width": 400,
+              "height": 37.5
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 6,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 1.5,
+            "canvas": [
+              {
+                "width": 3776,
+                "height": 3375,
+                "cssWidth": 1258.5,
+                "cssHeight": 1125,
+                "widthError": 0.5,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 480.1875732708089,
+            "bounds": {
+              "x": 135.052754982415,
+              "y": 99.01758499413833,
+              "width": 480.1875732708089,
+              "height": 39.01524032825323
+            },
+            "headerBounds": {
+              "x": 135.052754982415,
+              "y": 54,
+              "width": 480.1875732708089,
+              "height": 45.01758499413833
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 6,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 1.5,
+            "canvas": [
+              {
+                "width": 3776,
+                "height": 3375,
+                "cssWidth": 1258.5,
+                "cssHeight": 1125,
+                "widthError": 0.5,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 480.1875732708089,
+            "bounds": {
+              "x": 135.052754982415,
+              "y": 99.01758499413833,
+              "width": 480.1875732708089,
+              "height": 39.01524032825323
+            },
+            "headerBounds": {
+              "x": 135.052754982415,
+              "y": 54,
+              "width": 480.1875732708089,
+              "height": 45.01758499413833
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 2,
+          "dpr": 3,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 6,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 1.5,
+            "canvas": [
+              {
+                "width": 3776,
+                "height": 3375,
+                "cssWidth": 1258.5,
+                "cssHeight": 1125,
+                "widthError": 0.5,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 480.1875732708089,
+            "bounds": {
+              "x": 135.052754982415,
+              "y": 99.01758499413833,
+              "width": 480.1875732708089,
+              "height": 39.01524032825323
+            },
+            "headerBounds": {
+              "x": 135.052754982415,
+              "y": 54,
+              "width": 480.1875732708089,
+              "height": 45.01758499413833
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 4,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 2,
+            "canvas": [
+              {
+                "width": 3756,
+                "height": 4500,
+                "cssWidth": 1252,
+                "cssHeight": 1500,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 640,
+            "bounds": {
+              "x": 180,
+              "y": 132,
+              "width": 640,
+              "height": 52
+            },
+            "headerBounds": {
+              "x": 180,
+              "y": 72,
+              "width": 640,
+              "height": 60
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 4,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 2,
+            "canvas": [
+              {
+                "width": 3756,
+                "height": 4500,
+                "cssWidth": 1252,
+                "cssHeight": 1500,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 640,
+            "bounds": {
+              "x": 180,
+              "y": 132,
+              "width": 640,
+              "height": 52
+            },
+            "headerBounds": {
+              "x": 180,
+              "y": 72,
+              "width": 640,
+              "height": 60
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        }
+      ]
+    },
+    "grid.gate.ts-S-2-evidence-zoom-matrix-at-DPR-2-chromium/S-2-dpr-2.json": {
+      "platform": "chromium",
+      "evidence": [
+        {
+          "zoom": 0.8,
+          "dpr": 2,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": []
+            },
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 2532,
+                "height": 1500,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 11,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": []
+            },
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 0.8,
+            "canvas": [
+              {
+                "width": 2538,
+                "height": 1200,
+                "cssWidth": 1268.796875,
+                "cssHeight": 600,
+                "widthError": 0.40625,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 256,
+            "bounds": {
+              "x": 72,
+              "y": 52.796875,
+              "width": 256,
+              "height": 20.8
+            },
+            "headerBounds": {
+              "x": 72,
+              "y": 28.796875,
+              "width": 256,
+              "height": 24
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 11,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 0.8,
+            "canvas": [
+              {
+                "width": 2538,
+                "height": 1200,
+                "cssWidth": 1268.796875,
+                "cssHeight": 600,
+                "widthError": 0.40625,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 256,
+            "bounds": {
+              "x": 72,
+              "y": 52.796875,
+              "width": 256,
+              "height": 20.8
+            },
+            "headerBounds": {
+              "x": 72,
+              "y": 28.796875,
+              "width": 256,
+              "height": 24
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 1,
+          "dpr": 2,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 11,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 0.8,
+            "canvas": [
+              {
+                "width": 2538,
+                "height": 1200,
+                "cssWidth": 1268.796875,
+                "cssHeight": 600,
+                "widthError": 0.40625,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 256,
+            "bounds": {
+              "x": 72,
+              "y": 52.796875,
+              "width": 256,
+              "height": 20.8
+            },
+            "headerBounds": {
+              "x": 72,
+              "y": 28.796875,
+              "width": 256,
+              "height": 24
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 2532,
+                "height": 1500,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 2532,
+                "height": 1500,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 1.25,
+          "dpr": 2,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 2532,
+                "height": 1500,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 7,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 1.25,
+            "canvas": [
+              {
+                "width": 2495,
+                "height": 1875,
+                "cssWidth": 1247.5,
+                "cssHeight": 937.5,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 400,
+            "bounds": {
+              "x": 112.5,
+              "y": 82.5,
+              "width": 400,
+              "height": 32.5
+            },
+            "headerBounds": {
+              "x": 112.5,
+              "y": 45,
+              "width": 400,
+              "height": 37.5
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 7,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 1.25,
+            "canvas": [
+              {
+                "width": 2495,
+                "height": 1875,
+                "cssWidth": 1247.5,
+                "cssHeight": 937.5,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 400,
+            "bounds": {
+              "x": 112.5,
+              "y": 82.5,
+              "width": 400,
+              "height": 32.5
+            },
+            "headerBounds": {
+              "x": 112.5,
+              "y": 45,
+              "width": 400,
+              "height": 37.5
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 1.5,
+          "dpr": 2,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 7,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 1.25,
+            "canvas": [
+              {
+                "width": 2495,
+                "height": 1875,
+                "cssWidth": 1247.5,
+                "cssHeight": 937.5,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 400,
+            "bounds": {
+              "x": 112.5,
+              "y": 82.5,
+              "width": 400,
+              "height": 32.5
+            },
+            "headerBounds": {
+              "x": 112.5,
+              "y": 45,
+              "width": 400,
+              "height": 37.5
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 6,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 1.5,
+            "canvas": [
+              {
+                "width": 2487,
+                "height": 2250,
+                "cssWidth": 1243.5,
+                "cssHeight": 1125,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 480.1897983392646,
+            "bounds": {
+              "x": 135.05338078291814,
+              "y": 99.01779359430606,
+              "width": 480.1897983392645,
+              "height": 39.015421115065244
+            },
+            "headerBounds": {
+              "x": 135.05338078291814,
+              "y": 54,
+              "width": 480.1897983392645,
+              "height": 45.01779359430605
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 6,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 1.5,
+            "canvas": [
+              {
+                "width": 2487,
+                "height": 2250,
+                "cssWidth": 1243.5,
+                "cssHeight": 1125,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 480.1897983392646,
+            "bounds": {
+              "x": 135.05338078291814,
+              "y": 99.01779359430606,
+              "width": 480.1897983392645,
+              "height": 39.015421115065244
+            },
+            "headerBounds": {
+              "x": 135.05338078291814,
+              "y": 54,
+              "width": 480.1897983392645,
+              "height": 45.01779359430605
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 2,
+          "dpr": 2,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 6,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 1.5,
+            "canvas": [
+              {
+                "width": 2487,
+                "height": 2250,
+                "cssWidth": 1243.5,
+                "cssHeight": 1125,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 480.1897983392646,
+            "bounds": {
+              "x": 135.05338078291814,
+              "y": 99.01779359430606,
+              "width": 480.1897983392645,
+              "height": 39.015421115065244
+            },
+            "headerBounds": {
+              "x": 135.05338078291814,
+              "y": 54,
+              "width": 480.1897983392645,
+              "height": 45.01779359430605
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 4,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 2,
+            "canvas": [
+              {
+                "width": 2476,
+                "height": 3000,
+                "cssWidth": 1238,
+                "cssHeight": 1500,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 639.4944707740917,
+            "bounds": {
+              "x": 179.85781990521326,
+              "y": 131.9526066350711,
+              "width": 639.4944707740916,
+              "height": 51.95892575039494
+            },
+            "headerBounds": {
+              "x": 179.85781990521326,
+              "y": 72,
+              "width": 639.4944707740916,
+              "height": 59.95260663507109
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 4,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 2,
+            "canvas": [
+              {
+                "width": 2476,
+                "height": 3000,
+                "cssWidth": 1238,
+                "cssHeight": 1500,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 639.4944707740917,
+            "bounds": {
+              "x": 179.85781990521326,
+              "y": 131.9526066350711,
+              "width": 639.4944707740916,
+              "height": 51.95892575039494
+            },
+            "headerBounds": {
+              "x": 179.85781990521326,
+              "y": 72,
+              "width": 639.4944707740916,
+              "height": 59.95260663507109
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        }
+      ]
+    },
+    "grid.gate.ts-S-2-evidence-zoom-matrix-at-DPR-3-chromium/S-2-dpr-3.json": {
+      "platform": "chromium",
+      "evidence": [
+        {
+          "zoom": 0.8,
+          "dpr": 3,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": []
+            },
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 3798,
+                "height": 2250,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 11,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": []
+            },
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 0.8,
+            "canvas": [
+              {
+                "width": 3806,
+                "height": 1800,
+                "cssWidth": 1268.796875,
+                "cssHeight": 600,
+                "widthError": -0.390625,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 256,
+            "bounds": {
+              "x": 72,
+              "y": 52.796875,
+              "width": 256,
+              "height": 20.8
+            },
+            "headerBounds": {
+              "x": 72,
+              "y": 28.796875,
+              "width": 256,
+              "height": 24
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 11,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 0.8,
+            "canvas": [
+              {
+                "width": 3806,
+                "height": 1800,
+                "cssWidth": 1268.796875,
+                "cssHeight": 600,
+                "widthError": -0.390625,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 256,
+            "bounds": {
+              "x": 72,
+              "y": 52.796875,
+              "width": 256,
+              "height": 20.8
+            },
+            "headerBounds": {
+              "x": 72,
+              "y": 28.796875,
+              "width": 256,
+              "height": 24
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 1,
+          "dpr": 3,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 11,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 0.8,
+            "canvas": [
+              {
+                "width": 3806,
+                "height": 1800,
+                "cssWidth": 1268.796875,
+                "cssHeight": 600,
+                "widthError": -0.390625,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 256,
+            "bounds": {
+              "x": 72,
+              "y": 52.796875,
+              "width": 256,
+              "height": 20.8
+            },
+            "headerBounds": {
+              "x": 72,
+              "y": 28.796875,
+              "width": 256,
+              "height": 24
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 3798,
+                "height": 2250,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 3798,
+                "height": 2250,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 1.25,
+          "dpr": 3,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 3798,
+                "height": 2250,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 7,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 1.25,
+            "canvas": [
+              {
+                "width": 3743,
+                "height": 2813,
+                "cssWidth": 1247.5,
+                "cssHeight": 937.5,
+                "widthError": 0.5,
+                "heightError": 0.5
+              }
+            ],
+            "cellWidth": 400,
+            "bounds": {
+              "x": 112.5,
+              "y": 82.5,
+              "width": 400,
+              "height": 32.5
+            },
+            "headerBounds": {
+              "x": 112.5,
+              "y": 45,
+              "width": 400,
+              "height": 37.5
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 7,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 1.25,
+            "canvas": [
+              {
+                "width": 3743,
+                "height": 2813,
+                "cssWidth": 1247.5,
+                "cssHeight": 937.5,
+                "widthError": 0.5,
+                "heightError": 0.5
+              }
+            ],
+            "cellWidth": 400,
+            "bounds": {
+              "x": 112.5,
+              "y": 82.5,
+              "width": 400,
+              "height": 32.5
+            },
+            "headerBounds": {
+              "x": 112.5,
+              "y": 45,
+              "width": 400,
+              "height": 37.5
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 1.5,
+          "dpr": 3,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 7,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 1.25,
+            "canvas": [
+              {
+                "width": 3743,
+                "height": 2813,
+                "cssWidth": 1247.5,
+                "cssHeight": 937.5,
+                "widthError": 0.5,
+                "heightError": 0.5
+              }
+            ],
+            "cellWidth": 400,
+            "bounds": {
+              "x": 112.5,
+              "y": 82.5,
+              "width": 400,
+              "height": 32.5
+            },
+            "headerBounds": {
+              "x": 112.5,
+              "y": 45,
+              "width": 400,
+              "height": 37.5
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 6,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 1.5,
+            "canvas": [
+              {
+                "width": 3731,
+                "height": 3375,
+                "cssWidth": 1243.5,
+                "cssHeight": 1125,
+                "widthError": 0.5,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 480.1897983392646,
+            "bounds": {
+              "x": 135.05338078291814,
+              "y": 99.01779359430606,
+              "width": 480.1897983392645,
+              "height": 39.015421115065244
+            },
+            "headerBounds": {
+              "x": 135.05338078291814,
+              "y": 54,
+              "width": 480.1897983392645,
+              "height": 45.01779359430605
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 6,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 1.5,
+            "canvas": [
+              {
+                "width": 3731,
+                "height": 3375,
+                "cssWidth": 1243.5,
+                "cssHeight": 1125,
+                "widthError": 0.5,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 480.1897983392646,
+            "bounds": {
+              "x": 135.05338078291814,
+              "y": 99.01779359430606,
+              "width": 480.1897983392645,
+              "height": 39.015421115065244
+            },
+            "headerBounds": {
+              "x": 135.05338078291814,
+              "y": 54,
+              "width": 480.1897983392645,
+              "height": 45.01779359430605
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 2,
+          "dpr": 3,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 6,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 1.5,
+            "canvas": [
+              {
+                "width": 3731,
+                "height": 3375,
+                "cssWidth": 1243.5,
+                "cssHeight": 1125,
+                "widthError": 0.5,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 480.1897983392646,
+            "bounds": {
+              "x": 135.05338078291814,
+              "y": 99.01779359430606,
+              "width": 480.1897983392645,
+              "height": 39.015421115065244
+            },
+            "headerBounds": {
+              "x": 135.05338078291814,
+              "y": 54,
+              "width": 480.1897983392645,
+              "height": 45.01779359430605
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 4,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 2,
+            "canvas": [
+              {
+                "width": 3714,
+                "height": 4500,
+                "cssWidth": 1238,
+                "cssHeight": 1500,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 639.4944707740917,
+            "bounds": {
+              "x": 179.85781990521326,
+              "y": 131.9526066350711,
+              "width": 639.4944707740916,
+              "height": 51.95892575039494
+            },
+            "headerBounds": {
+              "x": 179.85781990521326,
+              "y": 72,
+              "width": 639.4944707740916,
+              "height": 59.95260663507109
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 4,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 3,
+            "zoom": 2,
+            "canvas": [
+              {
+                "width": 3714,
+                "height": 4500,
+                "cssWidth": 1238,
+                "cssHeight": 1500,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 639.4944707740917,
+            "bounds": {
+              "x": 179.85781990521326,
+              "y": 131.9526066350711,
+              "width": 639.4944707740916,
+              "height": 51.95892575039494
+            },
+            "headerBounds": {
+              "x": 179.85781990521326,
+              "y": 72,
+              "width": 639.4944707740916,
+              "height": 59.95260663507109
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        }
+      ]
+    },
+    "grid.gate.ts-S-1-arbitrary-programmatic-jumps-webkit/S-1-arbitrary-jumps.json": {
+      "platform": "webkit",
+      "results": [
+        {
+          "requestedRow": 400,
+          "requestedVisible": true,
+          "contentReady": true,
+          "contentMs": 75,
+          "total": 5000000,
+          "columns": 65,
+          "visible": {
+            "x": 2,
+            "y": 400,
+            "width": 8,
+            "height": 28
+          },
+          "selection": {
+            "kind": "ids",
+            "ids": []
+          },
+          "cachedRows": 600,
+          "last": "loading",
+          "rowCount": "5000001",
+          "visibility": "visible",
+          "documentFocus": true,
+          "innerWidth": 1280,
+          "innerHeight": 800,
+          "domRows": 29,
+          "dpr": 2,
+          "zoom": 1,
+          "canvas": [
+            {
+              "width": 2532,
+              "height": 1500,
+              "cssWidth": 1266,
+              "cssHeight": 750,
+              "widthError": 0,
+              "heightError": 0
+            }
+          ],
+          "cellWidth": 320,
+          "bounds": {
+            "x": 90,
+            "y": 66,
+            "width": 320,
+            "height": 26
+          },
+          "headerBounds": {
+            "x": 90,
+            "y": 36,
+            "width": 320,
+            "height": 30
+          }
+        },
+        {
+          "requestedRow": 2500000,
+          "requestedVisible": true,
+          "contentReady": true,
+          "contentMs": 74,
+          "total": 5000000,
+          "columns": 65,
+          "visible": {
+            "x": 2,
+            "y": 2500000,
+            "width": 8,
+            "height": 28
+          },
+          "selection": {
+            "kind": "ids",
+            "ids": []
+          },
+          "cachedRows": 1000,
+          "last": "loading",
+          "rowCount": "5000001",
+          "visibility": "visible",
+          "documentFocus": true,
+          "innerWidth": 1280,
+          "innerHeight": 800,
+          "domRows": 29,
+          "dpr": 2,
+          "zoom": 1,
+          "canvas": [
+            {
+              "width": 2532,
+              "height": 1500,
+              "cssWidth": 1266,
+              "cssHeight": 750,
+              "widthError": 0,
+              "heightError": 0
+            }
+          ],
+          "cellWidth": 320,
+          "bounds": {
+            "x": 90,
+            "y": 66,
+            "width": 320,
+            "height": 26
+          },
+          "headerBounds": {
+            "x": 90,
+            "y": 36,
+            "width": 320,
+            "height": 30
+          }
+        }
+      ]
+    },
+    "grid.gate.ts-S-2-evidence-zoom-matrix-at-DPR-1-webkit/S-2-dpr-1.json": {
+      "platform": "webkit",
+      "evidence": [
+        {
+          "zoom": 0.8,
+          "dpr": 1,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": []
+            },
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 1266,
+                "height": 750,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 11,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": []
+            },
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 0.8,
+            "canvas": [
+              {
+                "width": 1269,
+                "height": 600,
+                "cssWidth": 1268.796875,
+                "cssHeight": 600,
+                "widthError": 0.203125,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 256,
+            "bounds": {
+              "x": 72,
+              "y": 52.796875,
+              "width": 256,
+              "height": 20.8
+            },
+            "headerBounds": {
+              "x": 72,
+              "y": 28.796875,
+              "width": 256,
+              "height": 24
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 11,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 0.8,
+            "canvas": [
+              {
+                "width": 1269,
+                "height": 600,
+                "cssWidth": 1268.796875,
+                "cssHeight": 600,
+                "widthError": 0.203125,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 256,
+            "bounds": {
+              "x": 72,
+              "y": 52.796875,
+              "width": 256,
+              "height": 20.8
+            },
+            "headerBounds": {
+              "x": 72,
+              "y": 28.796875,
+              "width": 256,
+              "height": 24
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 1,
+          "dpr": 1,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 11,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 0.8,
+            "canvas": [
+              {
+                "width": 1269,
+                "height": 600,
+                "cssWidth": 1268.796875,
+                "cssHeight": 600,
+                "widthError": 0.203125,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 256,
+            "bounds": {
+              "x": 72,
+              "y": 52.796875,
+              "width": 256,
+              "height": 20.8
+            },
+            "headerBounds": {
+              "x": 72,
+              "y": 28.796875,
+              "width": 256,
+              "height": 24
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 1266,
+                "height": 750,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 1266,
+                "height": 750,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 1.25,
+          "dpr": 1,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 1266,
+                "height": 750,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 7,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 1.25,
+            "canvas": [
+              {
+                "width": 1263,
+                "height": 938,
+                "cssWidth": 1262.5,
+                "cssHeight": 937.5,
+                "widthError": 0.5,
+                "heightError": 0.5
+              }
+            ],
+            "cellWidth": 400,
+            "bounds": {
+              "x": 112.5,
+              "y": 82.5,
+              "width": 400,
+              "height": 32.5
+            },
+            "headerBounds": {
+              "x": 112.5,
+              "y": 45,
+              "width": 400,
+              "height": 37.5
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 7,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 1.25,
+            "canvas": [
+              {
+                "width": 1263,
+                "height": 938,
+                "cssWidth": 1262.5,
+                "cssHeight": 937.5,
+                "widthError": 0.5,
+                "heightError": 0.5
+              }
+            ],
+            "cellWidth": 400,
+            "bounds": {
+              "x": 112.5,
+              "y": 82.5,
+              "width": 400,
+              "height": 32.5
+            },
+            "headerBounds": {
+              "x": 112.5,
+              "y": 45,
+              "width": 400,
+              "height": 37.5
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 1.5,
+          "dpr": 1,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 7,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 1.25,
+            "canvas": [
+              {
+                "width": 1263,
+                "height": 938,
+                "cssWidth": 1262.5,
+                "cssHeight": 937.5,
+                "widthError": 0.5,
+                "heightError": 0.5
+              }
+            ],
+            "cellWidth": 400,
+            "bounds": {
+              "x": 112.5,
+              "y": 82.5,
+              "width": 400,
+              "height": 32.5
+            },
+            "headerBounds": {
+              "x": 112.5,
+              "y": 45,
+              "width": 400,
+              "height": 37.5
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 6,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 1.5,
+            "canvas": [
+              {
+                "width": 1259,
+                "height": 1125,
+                "cssWidth": 1258.5,
+                "cssHeight": 1125,
+                "widthError": 0.5,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 480.1875732708089,
+            "bounds": {
+              "x": 135.052754982415,
+              "y": 99.01758499413833,
+              "width": 480.1875732708089,
+              "height": 39.01524032825323
+            },
+            "headerBounds": {
+              "x": 135.052754982415,
+              "y": 54,
+              "width": 480.1875732708089,
+              "height": 45.01758499413833
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 6,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 1.5,
+            "canvas": [
+              {
+                "width": 1259,
+                "height": 1125,
+                "cssWidth": 1258.5,
+                "cssHeight": 1125,
+                "widthError": 0.5,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 480.1875732708089,
+            "bounds": {
+              "x": 135.052754982415,
+              "y": 99.01758499413833,
+              "width": 480.1875732708089,
+              "height": 39.01524032825323
+            },
+            "headerBounds": {
+              "x": 135.052754982415,
+              "y": 54,
+              "width": 480.1875732708089,
+              "height": 45.01758499413833
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 2,
+          "dpr": 1,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 6,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 1.5,
+            "canvas": [
+              {
+                "width": 1259,
+                "height": 1125,
+                "cssWidth": 1258.5,
+                "cssHeight": 1125,
+                "widthError": 0.5,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 480.1875732708089,
+            "bounds": {
+              "x": 135.052754982415,
+              "y": 99.01758499413833,
+              "width": 480.1875732708089,
+              "height": 39.01524032825323
+            },
+            "headerBounds": {
+              "x": 135.052754982415,
+              "y": 54,
+              "width": 480.1875732708089,
+              "height": 45.01758499413833
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 4,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 2,
+            "canvas": [
+              {
+                "width": 1252,
+                "height": 1500,
+                "cssWidth": 1252,
+                "cssHeight": 1500,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 640,
+            "bounds": {
+              "x": 180,
+              "y": 132,
+              "width": 640,
+              "height": 52
+            },
+            "headerBounds": {
+              "x": 180,
+              "y": 72,
+              "width": 640,
+              "height": 60
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 4,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 2,
+            "canvas": [
+              {
+                "width": 1252,
+                "height": 1500,
+                "cssWidth": 1252,
+                "cssHeight": 1500,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 640,
+            "bounds": {
+              "x": 180,
+              "y": 132,
+              "width": 640,
+              "height": 52
+            },
+            "headerBounds": {
+              "x": 180,
+              "y": 72,
+              "width": 640,
+              "height": 60
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        }
+      ]
+    },
+    "grid.gate.ts-S-1-arbitrary-programmatic-jumps-chromium/S-1-arbitrary-jumps.json": {
+      "platform": "chromium",
+      "results": [
+        {
+          "requestedRow": 400,
+          "requestedVisible": true,
+          "contentReady": true,
+          "contentMs": 77.30000001192093,
+          "total": 5000000,
+          "columns": 65,
+          "visible": {
+            "x": 2,
+            "y": 400,
+            "width": 8,
+            "height": 28
+          },
+          "selection": {
+            "kind": "ids",
+            "ids": []
+          },
+          "cachedRows": 600,
+          "last": "loading",
+          "rowCount": "5000001",
+          "visibility": "visible",
+          "documentFocus": true,
+          "innerWidth": 1280,
+          "innerHeight": 800,
+          "domRows": 29,
+          "dpr": 1,
+          "zoom": 1,
+          "canvas": [
+            {
+              "width": 1266,
+              "height": 750,
+              "cssWidth": 1266,
+              "cssHeight": 750,
+              "widthError": 0,
+              "heightError": 0
+            }
+          ],
+          "cellWidth": 320,
+          "bounds": {
+            "x": 90,
+            "y": 66,
+            "width": 320,
+            "height": 26
+          },
+          "headerBounds": {
+            "x": 90,
+            "y": 36,
+            "width": 320,
+            "height": 30
+          }
+        },
+        {
+          "requestedRow": 2500000,
+          "requestedVisible": true,
+          "contentReady": true,
+          "contentMs": 87.29999999701977,
+          "total": 5000000,
+          "columns": 65,
+          "visible": {
+            "x": 2,
+            "y": 2500000,
+            "width": 8,
+            "height": 28
+          },
+          "selection": {
+            "kind": "ids",
+            "ids": []
+          },
+          "cachedRows": 1000,
+          "last": "loading",
+          "rowCount": "5000001",
+          "visibility": "visible",
+          "documentFocus": true,
+          "innerWidth": 1280,
+          "innerHeight": 800,
+          "domRows": 29,
+          "dpr": 1,
+          "zoom": 1,
+          "canvas": [
+            {
+              "width": 1266,
+              "height": 750,
+              "cssWidth": 1266,
+              "cssHeight": 750,
+              "widthError": 0,
+              "heightError": 0
+            }
+          ],
+          "cellWidth": 320,
+          "bounds": {
+            "x": 90,
+            "y": 66,
+            "width": 320,
+            "height": 26
+          },
+          "headerBounds": {
+            "x": 90,
+            "y": 36,
+            "width": 320,
+            "height": 30
+          }
+        }
+      ]
+    },
+    "grid.gate.ts-S-1-diagnosti-8342d-RIA-tree-without-StrictMode-webkit/S-1-without-strict.json": {
+      "total": 5000000,
+      "columns": 65,
+      "visible": {
+        "x": 2,
+        "y": 0,
+        "width": 8,
+        "height": 28
+      },
+      "selection": {
+        "kind": "ids",
+        "ids": []
+      },
+      "cachedRows": 200,
+      "last": "loading",
+      "rowCount": "5000001",
+      "visibility": "visible",
+      "documentFocus": true,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "domRows": 29,
+      "dpr": 2,
+      "zoom": 1,
+      "canvas": [
+        {
+          "width": 2532,
+          "height": 1500,
+          "cssWidth": 1266,
+          "cssHeight": 750,
+          "widthError": 0,
+          "heightError": 0
+        }
+      ],
+      "cellWidth": 320,
+      "bounds": {
+        "x": 90,
+        "y": 66,
+        "width": 320,
+        "height": 26
+      },
+      "headerBounds": {
+        "x": 90,
+        "y": 36,
+        "width": 320,
+        "height": 30
+      }
+    },
+    "grid.gate.ts-S-2-evidence-zoom-matrix-at-DPR-2-webkit/S-2-dpr-2.json": {
+      "platform": "webkit",
+      "evidence": [
+        {
+          "zoom": 0.8,
+          "dpr": 2,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": []
+            },
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 2532,
+                "height": 1500,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 11,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": []
+            },
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 0.8,
+            "canvas": [
+              {
+                "width": 2538,
+                "height": 1200,
+                "cssWidth": 1268.796875,
+                "cssHeight": 600,
+                "widthError": 0.40625,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 256,
+            "bounds": {
+              "x": 72,
+              "y": 52.796875,
+              "width": 256,
+              "height": 20.8
+            },
+            "headerBounds": {
+              "x": 72,
+              "y": 28.796875,
+              "width": 256,
+              "height": 24
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 11,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 0.8,
+            "canvas": [
+              {
+                "width": 2538,
+                "height": 1200,
+                "cssWidth": 1268.796875,
+                "cssHeight": 600,
+                "widthError": 0.40625,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 256,
+            "bounds": {
+              "x": 72,
+              "y": 52.796875,
+              "width": 256,
+              "height": 20.8
+            },
+            "headerBounds": {
+              "x": 72,
+              "y": 28.796875,
+              "width": 256,
+              "height": 24
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 1,
+          "dpr": 2,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 11,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 0.8,
+            "canvas": [
+              {
+                "width": 2538,
+                "height": 1200,
+                "cssWidth": 1268.796875,
+                "cssHeight": 600,
+                "widthError": 0.40625,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 256,
+            "bounds": {
+              "x": 72,
+              "y": 52.796875,
+              "width": 256,
+              "height": 20.8
+            },
+            "headerBounds": {
+              "x": 72,
+              "y": 28.796875,
+              "width": 256,
+              "height": 24
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 2532,
+                "height": 1500,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 2532,
+                "height": 1500,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 1.25,
+          "dpr": 2,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 2532,
+                "height": 1500,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 7,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 1.25,
+            "canvas": [
+              {
+                "width": 2525,
+                "height": 1875,
+                "cssWidth": 1262.5,
+                "cssHeight": 937.5,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 400,
+            "bounds": {
+              "x": 112.5,
+              "y": 82.5,
+              "width": 400,
+              "height": 32.5
+            },
+            "headerBounds": {
+              "x": 112.5,
+              "y": 45,
+              "width": 400,
+              "height": 37.5
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 7,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 1.25,
+            "canvas": [
+              {
+                "width": 2525,
+                "height": 1875,
+                "cssWidth": 1262.5,
+                "cssHeight": 937.5,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 400,
+            "bounds": {
+              "x": 112.5,
+              "y": 82.5,
+              "width": 400,
+              "height": 32.5
+            },
+            "headerBounds": {
+              "x": 112.5,
+              "y": 45,
+              "width": 400,
+              "height": 37.5
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 1.5,
+          "dpr": 2,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 7,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 1.25,
+            "canvas": [
+              {
+                "width": 2525,
+                "height": 1875,
+                "cssWidth": 1262.5,
+                "cssHeight": 937.5,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 400,
+            "bounds": {
+              "x": 112.5,
+              "y": 82.5,
+              "width": 400,
+              "height": 32.5
+            },
+            "headerBounds": {
+              "x": 112.5,
+              "y": 45,
+              "width": 400,
+              "height": 37.5
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 6,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 1.5,
+            "canvas": [
+              {
+                "width": 2517,
+                "height": 2250,
+                "cssWidth": 1258.5,
+                "cssHeight": 1125,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 480.1875732708089,
+            "bounds": {
+              "x": 135.052754982415,
+              "y": 99.01758499413833,
+              "width": 480.1875732708089,
+              "height": 39.01524032825323
+            },
+            "headerBounds": {
+              "x": 135.052754982415,
+              "y": 54,
+              "width": 480.1875732708089,
+              "height": 45.01758499413833
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 6,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 1.5,
+            "canvas": [
+              {
+                "width": 2517,
+                "height": 2250,
+                "cssWidth": 1258.5,
+                "cssHeight": 1125,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 480.1875732708089,
+            "bounds": {
+              "x": 135.052754982415,
+              "y": 99.01758499413833,
+              "width": 480.1875732708089,
+              "height": 39.01524032825323
+            },
+            "headerBounds": {
+              "x": 135.052754982415,
+              "y": 54,
+              "width": 480.1875732708089,
+              "height": 45.01758499413833
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 2,
+          "dpr": 2,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 6,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 1.5,
+            "canvas": [
+              {
+                "width": 2517,
+                "height": 2250,
+                "cssWidth": 1258.5,
+                "cssHeight": 1125,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 480.1875732708089,
+            "bounds": {
+              "x": 135.052754982415,
+              "y": 99.01758499413833,
+              "width": 480.1875732708089,
+              "height": 39.01524032825323
+            },
+            "headerBounds": {
+              "x": 135.052754982415,
+              "y": 54,
+              "width": 480.1875732708089,
+              "height": 45.01758499413833
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 4,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 2,
+            "canvas": [
+              {
+                "width": 2504,
+                "height": 3000,
+                "cssWidth": 1252,
+                "cssHeight": 1500,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 640,
+            "bounds": {
+              "x": 180,
+              "y": 132,
+              "width": 640,
+              "height": 52
+            },
+            "headerBounds": {
+              "x": 180,
+              "y": 72,
+              "width": 640,
+              "height": 60
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 4,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 2,
+            "zoom": 2,
+            "canvas": [
+              {
+                "width": 2504,
+                "height": 3000,
+                "cssWidth": 1252,
+                "cssHeight": 1500,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 640,
+            "bounds": {
+              "x": 180,
+              "y": 132,
+              "width": 640,
+              "height": 52
+            },
+            "headerBounds": {
+              "x": 180,
+              "y": 72,
+              "width": 640,
+              "height": 60
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        }
+      ]
+    },
+    "grid.gate.ts-S-1-diagnosti-8342d-RIA-tree-without-StrictMode-chromium/S-1-without-strict.json": {
+      "total": 5000000,
+      "columns": 65,
+      "visible": {
+        "x": 2,
+        "y": 0,
+        "width": 8,
+        "height": 28
+      },
+      "selection": {
+        "kind": "ids",
+        "ids": []
+      },
+      "cachedRows": 200,
+      "last": "loading",
+      "rowCount": "5000001",
+      "visibility": "visible",
+      "documentFocus": true,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "domRows": 29,
+      "dpr": 1,
+      "zoom": 1,
+      "canvas": [
+        {
+          "width": 1266,
+          "height": 750,
+          "cssWidth": 1266,
+          "cssHeight": 750,
+          "widthError": 0,
+          "heightError": 0
+        }
+      ],
+      "cellWidth": 320,
+      "bounds": {
+        "x": 90,
+        "y": 66,
+        "width": 320,
+        "height": 26
+      },
+      "headerBounds": {
+        "x": 90,
+        "y": 36,
+        "width": 320,
+        "height": 30
+      }
+    },
+    "grid.gate.ts-S-2-evidence-zoom-matrix-at-DPR-1-chromium/S-2-dpr-1.json": {
+      "platform": "chromium",
+      "evidence": [
+        {
+          "zoom": 0.8,
+          "dpr": 1,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": []
+            },
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 1266,
+                "height": 750,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 11,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": []
+            },
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 0.8,
+            "canvas": [
+              {
+                "width": 1269,
+                "height": 600,
+                "cssWidth": 1268.796875,
+                "cssHeight": 600,
+                "widthError": 0.203125,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 256,
+            "bounds": {
+              "x": 72,
+              "y": 52.796875,
+              "width": 256,
+              "height": 20.8
+            },
+            "headerBounds": {
+              "x": 72,
+              "y": 28.796875,
+              "width": 256,
+              "height": 24
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 11,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 0.8,
+            "canvas": [
+              {
+                "width": 1269,
+                "height": 600,
+                "cssWidth": 1268.796875,
+                "cssHeight": 600,
+                "widthError": 0.203125,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 256,
+            "bounds": {
+              "x": 72,
+              "y": 52.796875,
+              "width": 256,
+              "height": 20.8
+            },
+            "headerBounds": {
+              "x": 72,
+              "y": 28.796875,
+              "width": 256,
+              "height": 24
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 1,
+          "dpr": 1,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 11,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 0.8,
+            "canvas": [
+              {
+                "width": 1269,
+                "height": 600,
+                "cssWidth": 1268.796875,
+                "cssHeight": 600,
+                "widthError": 0.203125,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 256,
+            "bounds": {
+              "x": 72,
+              "y": 52.796875,
+              "width": 256,
+              "height": 20.8
+            },
+            "headerBounds": {
+              "x": 72,
+              "y": 28.796875,
+              "width": 256,
+              "height": 24
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 1266,
+                "height": 750,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 1266,
+                "height": 750,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 1.25,
+          "dpr": 1,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 8,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 1,
+            "canvas": [
+              {
+                "width": 1266,
+                "height": 750,
+                "cssWidth": 1266,
+                "cssHeight": 750,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 320,
+            "bounds": {
+              "x": 90,
+              "y": 66,
+              "width": 320,
+              "height": 26
+            },
+            "headerBounds": {
+              "x": 90,
+              "y": 36,
+              "width": 320,
+              "height": 30
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 7,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 1.25,
+            "canvas": [
+              {
+                "width": 1248,
+                "height": 938,
+                "cssWidth": 1247.5,
+                "cssHeight": 937.5,
+                "widthError": 0.5,
+                "heightError": 0.5
+              }
+            ],
+            "cellWidth": 400,
+            "bounds": {
+              "x": 112.5,
+              "y": 82.5,
+              "width": 400,
+              "height": 32.5
+            },
+            "headerBounds": {
+              "x": 112.5,
+              "y": 45,
+              "width": 400,
+              "height": 37.5
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 7,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 1.25,
+            "canvas": [
+              {
+                "width": 1248,
+                "height": 938,
+                "cssWidth": 1247.5,
+                "cssHeight": 937.5,
+                "widthError": 0.5,
+                "heightError": 0.5
+              }
+            ],
+            "cellWidth": 400,
+            "bounds": {
+              "x": 112.5,
+              "y": 82.5,
+              "width": 400,
+              "height": 32.5
+            },
+            "headerBounds": {
+              "x": 112.5,
+              "y": 45,
+              "width": 400,
+              "height": 37.5
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 1.5,
+          "dpr": 1,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 7,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 1.25,
+            "canvas": [
+              {
+                "width": 1248,
+                "height": 938,
+                "cssWidth": 1247.5,
+                "cssHeight": 937.5,
+                "widthError": 0.5,
+                "heightError": 0.5
+              }
+            ],
+            "cellWidth": 400,
+            "bounds": {
+              "x": 112.5,
+              "y": 82.5,
+              "width": 400,
+              "height": 32.5
+            },
+            "headerBounds": {
+              "x": 112.5,
+              "y": 45,
+              "width": 400,
+              "height": 37.5
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 6,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 1.5,
+            "canvas": [
+              {
+                "width": 1244,
+                "height": 1125,
+                "cssWidth": 1243.5,
+                "cssHeight": 1125,
+                "widthError": 0.5,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 480.1897983392646,
+            "bounds": {
+              "x": 135.05338078291814,
+              "y": 99.01779359430606,
+              "width": 480.1897983392645,
+              "height": 39.015421115065244
+            },
+            "headerBounds": {
+              "x": 135.05338078291814,
+              "y": 54,
+              "width": 480.1897983392645,
+              "height": 45.01779359430605
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 6,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 1.5,
+            "canvas": [
+              {
+                "width": 1244,
+                "height": 1125,
+                "cssWidth": 1243.5,
+                "cssHeight": 1125,
+                "widthError": 0.5,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 480.1897983392646,
+            "bounds": {
+              "x": 135.05338078291814,
+              "y": 99.01779359430606,
+              "width": 480.1897983392645,
+              "height": 39.015421115065244
+            },
+            "headerBounds": {
+              "x": 135.05338078291814,
+              "y": 54,
+              "width": 480.1897983392645,
+              "height": 45.01779359430605
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        },
+        {
+          "zoom": 2,
+          "dpr": 1,
+          "before": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 6,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 1.5,
+            "canvas": [
+              {
+                "width": 1244,
+                "height": 1125,
+                "cssWidth": 1243.5,
+                "cssHeight": 1125,
+                "widthError": 0.5,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 480.1897983392646,
+            "bounds": {
+              "x": 135.05338078291814,
+              "y": 99.01779359430606,
+              "width": 480.1897983392645,
+              "height": 39.015421115065244
+            },
+            "headerBounds": {
+              "x": 135.05338078291814,
+              "y": 54,
+              "width": 480.1897983392645,
+              "height": 45.01779359430605
+            }
+          },
+          "after": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 4,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 2,
+            "canvas": [
+              {
+                "width": 1238,
+                "height": 1500,
+                "cssWidth": 1238,
+                "cssHeight": 1500,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 639.4944707740917,
+            "bounds": {
+              "x": 179.85781990521326,
+              "y": 131.9526066350711,
+              "width": 639.4944707740916,
+              "height": 51.95892575039494
+            },
+            "headerBounds": {
+              "x": 179.85781990521326,
+              "y": 72,
+              "width": 639.4944707740916,
+              "height": 59.95260663507109
+            }
+          },
+          "clicked": {
+            "total": 5000000,
+            "columns": 65,
+            "visible": {
+              "x": 2,
+              "y": 400,
+              "width": 4,
+              "height": 28
+            },
+            "selection": {
+              "kind": "ids",
+              "ids": [
+                403
+              ]
+            },
+            "focus": 403,
+            "cachedRows": 600,
+            "last": "loading",
+            "rowCount": "5000001",
+            "visibility": "visible",
+            "documentFocus": true,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "domRows": 29,
+            "dpr": 1,
+            "zoom": 2,
+            "canvas": [
+              {
+                "width": 1238,
+                "height": 1500,
+                "cssWidth": 1238,
+                "cssHeight": 1500,
+                "widthError": 0,
+                "heightError": 0
+              }
+            ],
+            "cellWidth": 639.4944707740917,
+            "bounds": {
+              "x": 179.85781990521326,
+              "y": 131.9526066350711,
+              "width": 639.4944707740916,
+              "height": 51.95892575039494
+            },
+            "headerBounds": {
+              "x": 179.85781990521326,
+              "y": 72,
+              "width": 639.4944707740916,
+              "height": 59.95260663507109
+            }
+          },
+          "checks": {
+            "backingStore": true,
+            "cellWidth": true,
+            "anchor": true,
+            "header": true,
+            "selection": true,
+            "hit": true
+          }
+        }
+      ]
+    }
+  }
+}
