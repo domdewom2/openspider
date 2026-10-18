@@ -13,6 +13,9 @@ import "./grid.css";
 export interface ColumnState { key: string; width: number; visible: boolean; pinned: boolean; sort?: "asc" | "desc" }
 export interface GridTheme { tokens: TokenMap; fontFamily: string; fontSize: number; zebra: boolean }
 export interface DataGridProps {
+  /** Optional upper-table sorting gesture and title decoration (M2-U10). */
+  onSortGesture?: (column: string, extend: boolean) => void;
+  headerTitle?: (column: string) => string;
   source: ViewDataSource;
   columns: ColumnState[];
   selection: SelectionModel;
@@ -53,7 +56,7 @@ export function DataGrid(props: DataGridProps) {
   const visible = useMemo(() => props.columns.filter(c => c.visible || c.key === "Row").sort((a, b) =>
     a.key === "Row" ? -1 : b.key === "Row" ? 1 : Number(b.pinned) - Number(a.pinned)), [props.columns]);
   const metadata = useMemo(() => new Map(source.columns.map((c, i) => [c.key, { column: c, index: i }])), [source]);
-  const columns = useMemo(() => visible.map(c => ({ id: c.key, title: c.key, width: c.width, hasMenu: true })), [visible]);
+  const columns = useMemo(() => visible.map(c => ({ id: c.key, title: props.headerTitle?.(c.key) ?? c.key, width: c.width, hasMenu: true })), [visible, props.headerTitle]);
   const freeze = visible.findIndex(c => !c.pinned && c.key !== "Row");
   const tokens = theme.tokens;
   const canvasTheme: Partial<Theme> = { bgCell: tokens["bg.surface"], bgCellMedium: tokens["bg.zebra"], bgHeader: tokens["bg.app"],
@@ -150,7 +153,10 @@ export function DataGrid(props: DataGridProps) {
         next.splice(target, 0, column);
         props.onColumnsChange(next);
       }}
-      onHeaderClicked={(col, event) => { event.preventDefault(); const c = visible[col]; if (metadata.get(c.key)?.column.sortable) props.onSortChange([{ column: c.key, dir: c.sort === "asc" ? "desc" : "asc" }]); }}
+      onHeaderClicked={(col, event) => { event.preventDefault(); const c = visible[col]; if (metadata.get(c.key)?.column.sortable) {
+        if (props.onSortGesture) { props.onSortGesture(c.key, event.shiftKey); return; }
+        props.onSortChange([{ column: c.key, dir: c.sort === "asc" ? "desc" : "asc" }]);
+      } }}
       onCellContextMenu={([col, row], event) => { event.preventDefault(); props.onContextMenu({ column: visible[col].key, row, urlId: source.rowKey(row), x: event.bounds.x, y: event.bounds.y }); }}
       onHeaderContextMenu={(col, event) => { event.preventDefault(); props.onContextMenu({ column: visible[col].key, x: event.bounds.x, y: event.bounds.y }); }}
       onHeaderMenuClick={(col, bounds) => props.onContextMenu({ column: visible[col].key, x: bounds.x, y: bounds.y + bounds.height })}
