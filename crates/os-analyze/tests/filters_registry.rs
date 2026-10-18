@@ -76,7 +76,16 @@ fn expected_filters(tab_id: &str) -> Vec<(String, String, Vec<String>)> {
             }
             for f in tab["filters"].as_array().unwrap() {
                 let id = f["id"].as_str().unwrap();
-                if id.starts_with('<') {
+                // D10: diese zwei Kennungen beginnen mit einem echten HTML-Tag,
+                // nicht mit einem dynamischen Filter-Platzhalter.
+                if id.starts_with('<')
+                    && !(tab_id == "Validation"
+                        && matches!(
+                            id,
+                            "<head> Not First In <html> Element"
+                                | "<body> Element Preceding <html>"
+                        ))
+                {
                     continue;
                 }
                 let requires = f
@@ -275,8 +284,8 @@ fn every_tab_is_a_real_definition_or_a_marked_stub() {
             );
         }
     }
-    // Alle 15 neuen Tabs sind in M2-F02 Stubs; die 16 Tabs von M1 sind echte Definitionen.
-    assert_eq!(stubs, 15, "Stub-Tabs");
+    // D10 hat Validation umgesetzt; die übrigen 14 neuen Tabs sind noch F02-Stubs.
+    assert_eq!(stubs, 14, "Stub-Tabs");
 }
 
 #[test]

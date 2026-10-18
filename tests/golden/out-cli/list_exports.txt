@@ -294,10 +294,12 @@ Search Console:AMP URL Is Invalid
 Search Console:Rich Result Invalid
 Validation:All
 Validation:Invalid HTML Elements In <head>
+Validation:<head> Not First In <html> Element
 Validation:Missing <head> Tag
 Validation:Multiple <head> Tags
 Validation:Missing <body> Tag
 Validation:Multiple <body> Tags
+Validation:<body> Element Preceding <html>
 Validation:HTML Document Over 2MB
 Validation:Resource Over 2MB
 Link Metrics:All
@@ -554,10 +556,12 @@ Search Console:AMP URL Is Invalid Inlinks
 Search Console:Rich Result Invalid Inlinks
 Validation:All Inlinks
 Validation:Invalid HTML Elements In <head> Inlinks
+Validation:<head> Not First In <html> Element Inlinks
 Validation:Missing <head> Tag Inlinks
 Validation:Multiple <head> Tags Inlinks
 Validation:Missing <body> Tag Inlinks
 Validation:Multiple <body> Tags Inlinks
+Validation:<body> Element Preceding <html> Inlinks
 Validation:HTML Document Over 2MB Inlinks
 Validation:Resource Over 2MB Inlinks
 Link Metrics:All Inlinks

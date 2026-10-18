@@ -216,6 +216,23 @@ pub(crate) fn filter_states_for_file(
         return Ok(states);
     }
     let markers: Vec<_> = markers.into_iter().collect();
+    let domains: Vec<_> = markers
+        .iter()
+        .enumerate()
+        .filter_map(|(i, marker)| {
+            crate::defs::coverage_domain(tab.id, marker).map(|domain| (i, domain))
+        })
+        .collect();
+    let domain_sums = domains
+        .iter()
+        .map(|(i, domain)| {
+            format!(
+                ", COALESCE(SUM(CASE WHEN ({domain}) THEN 1 ELSE 0 END), 0), \
+         COALESCE(SUM(CASE WHEN ({domain}) THEN EXISTS(SELECT 1 FROM url_ext e \
+         WHERE e.url_id = u.id AND e.key = :coverage_{i} AND e.v_int = 1) ELSE 0 END), 0)"
+            )
+        })
+        .collect::<String>();
     let sums = markers.iter().enumerate().map(|(i, _)| format!(
         "COALESCE(SUM(EXISTS(SELECT 1 FROM url_ext e WHERE e.url_id = u.id AND e.key = :coverage_{i} AND e.v_int = 1)), 0)"
     )).collect::<Vec<_>>().join(", ");
@@ -223,7 +240,7 @@ pub(crate) fn filter_states_for_file(
         Some(hidden) => format!("({}) OR ({hidden})", tab.population),
         None => tab.population.to_string(),
     };
-    let sql = format!("SELECT COUNT(*), {sums} FROM urls u WHERE ({population})");
+    let sql = format!("SELECT COUNT(*), {sums}{domain_sums} FROM urls u WHERE ({population})");
     let mut stmt = file.conn().prepare(&sql)?;
     for (name, value) in (tab.params)(cfg) {
         let name = if name.starts_with(':') {
@@ -257,6 +274,14 @@ pub(crate) fn filter_states_for_file(
         .enumerate()
         .map(|(i, marker)| Ok((*marker, row.get(i + 1)?)))
         .collect::<Result<_, rusqlite::Error>>()?;
+    let domain_counts: BTreeMap<_, (u64, u64)> = domains
+        .iter()
+        .enumerate()
+        .map(|(offset, (i, _))| {
+            let column = 1 + markers.len() + offset * 2;
+            Ok((markers[*i], (row.get(column)?, row.get(column + 1)?)))
+        })
+        .collect::<Result<_, rusqlite::Error>>()?;
     for (def, state) in defs.iter().zip(&mut states) {
         if !state.yields_rows() {
             continue;
@@ -265,6 +290,10 @@ pub(crate) fn filter_states_for_file(
         for req in &def.requires {
             if let Requirement::Coverage { marker, .. } = req {
                 let covered = checked[marker];
+                let (total, covered) = domain_counts
+                    .get(marker)
+                    .copied()
+                    .unwrap_or((total, covered));
                 if total > 0 && covered == 0 {
                     *state = FilterState::NeedsRecrawl;
                     break;

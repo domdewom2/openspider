@@ -273,12 +273,6 @@ function = "detail_rows"
 signature = "pub fn detail_rows( _: &crate::CrawlFile, _: &[os_model::UrlId], _: u64, _: u64, ) -> Result<super::DetailData, crate::StoreError>"
 
 [[stub]]
-owner = "M2-D10"
-file = "crates/os-analyze/src/tabs/validation.rs"
-function = "tab"
-signature = "pub fn tab() -> TabDef"
-
-[[stub]]
 owner = "M2-D11"
 file = "crates/os-export/src/catalog/bulk_security.rs"
 function = "entries"
@@ -737,12 +731,6 @@ signature = "pub fn tab() -> TabDef"
 [[stub]]
 owner = "M2-F02"
 file = "crates/os-analyze/src/tabs/structured_data.rs"
-function = "tab"
-signature = "pub fn tab() -> TabDef"
-
-[[stub]]
-owner = "M2-F02"
-file = "crates/os-analyze/src/tabs/validation.rs"
 function = "tab"
 signature = "pub fn tab() -> TabDef"
 
