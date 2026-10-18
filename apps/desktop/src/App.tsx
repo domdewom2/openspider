@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { DetailFrame } from "./features/detail/frame/DetailFrame";
 import { RegionBoundary } from "./app/ErrorBoundary";
 import { Providers } from "./app/Providers";
 import { useT } from "./i18n";
@@ -39,6 +40,7 @@ export function App() {
           <RegionBoundary name="table">
             <EmptyState state={{ code: "NO_DATA_YET" }} />
           </RegionBoundary>
+          <DetailFrame />
         </main>
         <aside className="os-app-sidebar" aria-label={t("app-region-sidebar")} />
         <footer className="os-app-status" role="contentinfo" aria-label={t("app-region-status")}>

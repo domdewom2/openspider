@@ -26,6 +26,9 @@ export interface DataGridProps {
   onExportSelection: () => void;
   rowHeight: number;
   theme: GridTheme;
+  /** Optional feature-specific titles and empty-cell explanations; canonical keys remain unchanged. */
+  columnTitles?: Readonly<Record<string, string>>;
+  columnHints?: Readonly<Record<string, string>>;
   ariaLabel: string;
   locale: string;
   /** Measurement/navigation API; never exposes Glide types to consumers. */
@@ -53,7 +56,7 @@ export function DataGrid(props: DataGridProps) {
   const visible = useMemo(() => props.columns.filter(c => c.visible || c.key === "Row").sort((a, b) =>
     a.key === "Row" ? -1 : b.key === "Row" ? 1 : Number(b.pinned) - Number(a.pinned)), [props.columns]);
   const metadata = useMemo(() => new Map(source.columns.map((c, i) => [c.key, { column: c, index: i }])), [source]);
-  const columns = useMemo(() => visible.map(c => ({ id: c.key, title: c.key, width: c.width, hasMenu: true })), [visible]);
+  const columns = useMemo(() => visible.map(c => ({ id: c.key, title: props.columnTitles?.[c.key] ?? c.key, width: c.width, hasMenu: true })), [visible, props.columnTitles]);
   const freeze = visible.findIndex(c => !c.pinned && c.key !== "Row");
   const tokens = theme.tokens;
   const canvasTheme: Partial<Theme> = { bgCell: tokens["bg.surface"], bgCellMedium: tokens["bg.zebra"], bgHeader: tokens["bg.app"],
@@ -158,7 +161,7 @@ export function DataGrid(props: DataGridProps) {
         if (event.kind !== "cell") { setTooltip(undefined); return; }
         const [col, row] = event.location; const meta = metadata.get(visible[col].key)!;
         const value = source.getCell(meta.index, row);
-        setTooltip(value === LOADING ? undefined : { text: cellTooltip(value, meta.column, props.locale), x: event.bounds.x, y: event.bounds.y + event.bounds.height });
+        setTooltip(value === LOADING ? undefined : { text: cellTooltip(value, meta.column, props.locale) || props.columnHints?.[meta.column.key] || "", x: event.bounds.x, y: event.bounds.y + event.bounds.height });
       }} />
     {tooltip?.text && <div role="tooltip" className="os-grid-tooltip" style={{ left: tooltip.x, top: tooltip.y }}>{tooltip.text}</div>}
   </div>;
