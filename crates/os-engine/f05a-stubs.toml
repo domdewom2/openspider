@@ -843,12 +843,6 @@ function = "main"
 signature = "fn main()"
 
 [[stub]]
-owner = "M2-O01"
-file = "crates/os-cli/src/logging.rs"
-function = "init"
-signature = "pub fn init(_args: &crate::args::RunArgs)"
-
-[[stub]]
 owner = "M2-R02"
 file = "crates/os-analyze/src/tabs/javascript.rs"
 function = "tab"

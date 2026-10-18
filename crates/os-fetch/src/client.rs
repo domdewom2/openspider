@@ -334,6 +334,10 @@ impl HttpFetcher {
                 }
             }
         };
+        // OUT-241 (K2-61): additional completion event, with the URL redacted before logging.
+        if let FetchOutcome::Response(response) = &outcome {
+            tracing::debug!(url = %redact::url(url.as_str()), status = response.status, response_time_ms = response.response_time_ms, "Abruf abgeschlossen");
+        }
         FetchResult {
             url: req.url,
             started_at,

@@ -1,0 +1,153 @@
+use os_app::diag::{self, LogFile, LogLayer};
+use serde_json::json;
+use std::{
+    fs,
+    time::{Duration, SystemTime},
+};
+use tracing_subscriber::{prelude::*, EnvFilter};
+
+// spec: OUT-242
+#[test]
+fn bounded_rotation_and_oldest_first_cleanup_leave_other_files_alone() {
+    let home = tempfile::tempdir().unwrap();
+    let p = home.path();
+    let log = LogFile::with_limits(p.join("openspider.log"), true, 5, 2);
+    for n in 0..5 {
+        log.write_line(&format!("{n}{n}{n}{n}")).unwrap();
+    }
+    assert_eq!(
+        fs::read_to_string(p.join("openspider.log")).unwrap(),
+        "4444\n"
+    );
+    assert_eq!(
+        fs::read_to_string(p.join("openspider.1.log")).unwrap(),
+        "3333\n"
+    );
+    assert_eq!(
+        fs::read_to_string(p.join("openspider.2.log")).unwrap(),
+        "2222\n"
+    );
+    assert!(!p.join("openspider.3.log").exists());
+    fs::write(p.join("crawl.ospider"), "CRAWL-DATA").unwrap();
+    for (name, age) in [("cli-old.log", 31), ("task-new.log", 1)] {
+        fs::write(p.join(name), "abc").unwrap();
+        let f = fs::File::options().write(true).open(p.join(name)).unwrap();
+        f.set_modified(SystemTime::now() - Duration::from_secs(age * 86400))
+            .unwrap();
+    }
+    diag::cleanup(p, SystemTime::now(), 30, 500).unwrap();
+    assert!(!p.join("cli-old.log").exists());
+    assert!(p.join("task-new.log").exists());
+    diag::cleanup(p, SystemTime::now(), 30, 15).unwrap();
+    assert!(!p.join("task-new.log").exists());
+    assert_eq!(
+        diag::log_files(p).unwrap().iter().map(|f| f.2).sum::<u64>(),
+        15
+    );
+    assert_eq!(
+        fs::read_to_string(p.join("crawl.ospider")).unwrap(),
+        "CRAWL-DATA"
+    );
+}
+// spec: OUT-240
+// spec: OUT-241
+// spec: OUT-243
+#[test]
+fn json_lines_have_millisecond_offset_module_filters_and_redaction() {
+    let home = tempfile::tempdir().unwrap();
+    let path = home.path().join("cli-fixture.log");
+    let subscriber = tracing_subscriber::registry()
+        .with(EnvFilter::new("info,os_fetch=trace"))
+        .with(LogLayer {
+            file: LogFile::new(path.clone(), false),
+            json: true,
+            stderr: false,
+        });
+    tracing::subscriber::with_default(subscriber, || {
+        tracing::debug!(target:"os_engine","HIDDEN");
+        tracing::trace!(target:"os_fetch",password="PASSWORD-FIXTURE",url="https://user:PASS-FIXTURE@fixture.test/?token=TOKEN-FIXTURE", "fetch");
+        tracing::info!("visible");
+    });
+    let raw = fs::read_to_string(path).unwrap();
+    assert!(!raw.contains("HIDDEN"));
+    for s in ["PASSWORD-FIXTURE", "PASS-FIXTURE", "TOKEN-FIXTURE"] {
+        assert!(!raw.contains(s), "{raw}");
+    }
+    let lines: Vec<serde_json::Value> = raw
+        .lines()
+        .map(|l| serde_json::from_str(l).unwrap())
+        .collect();
+    assert_eq!(lines.len(), 2);
+    assert_eq!(lines[0]["module"], "os_fetch");
+    assert_eq!(lines[0]["level"], "TRACE");
+    let stamp = lines[0]["timestamp"].as_str().unwrap();
+    assert_eq!(stamp.len(), 29);
+    assert_eq!(&stamp[19..20], ".");
+    assert_eq!(&stamp[23..], "+00:00");
+}
+// spec: OUT-241
+#[test]
+fn level_reload_takes_effect_without_restart() {
+    let home = tempfile::tempdir().unwrap();
+    let path = home.path().join("openspider.log");
+    let (layer, reload) = tracing_subscriber::reload::Layer::new(EnvFilter::new("info"));
+    let subscriber = tracing_subscriber::registry().with(layer).with(LogLayer {
+        file: LogFile::new(path.clone(), true),
+        json: false,
+        stderr: false,
+    });
+    tracing::subscriber::with_default(subscriber, || {
+        tracing::debug!("BEFORE");
+        reload.reload(EnvFilter::new("debug")).unwrap();
+        tracing::debug!("AFTER");
+    });
+    let raw = fs::read_to_string(path).unwrap();
+    assert!(!raw.contains("BEFORE"));
+    assert!(raw.contains("AFTER"));
+}
+// spec: OUT-243
+#[test]
+fn structured_headers_and_free_text_cover_all_sensitive_types() {
+    let value = json!({"Authorization":"AUTH-FIXTURE","Proxy-Authorization":"PROXY-FIXTURE","Cookie":"COOKIE-FIXTURE","Set-Cookie":"SET-FIXTURE","api_key":"KEY-FIXTURE","access_token":"OAUTH-FIXTURE","passphrase":"PHRASE-FIXTURE","headers":[{"name":"Authorization","value":"HEADER-FIXTURE"}],"message":"Authorization: Bearer BEARER-FIXTURE"});
+    let clean = diag::redact(&value).to_string();
+    assert!(!clean.contains("FIXTURE"), "{clean}");
+    assert_eq!(
+        diag::redact_text("password=multi word SECRET"),
+        "password=<redacted>"
+    );
+    assert!(
+        diag::redact_text("request https://u:p@fixture.test/?api_key=SECRET")
+            .contains("<redacted>")
+    );
+}
+
+// spec: OUT-241
+#[test]
+fn app_settings_reload_the_installed_filter() {
+    const CHILD: &str = "OPENSPIDER_O01_RELOAD_HOME";
+    if let Some(home) = std::env::var_os(CHILD) {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let app = os_app::App::new(os_app::AppConfig::new(&home)).unwrap();
+            tracing::debug!("BEFORE-SETTINGS");
+            app.apply_settings_patch(&json!({"logging":{"level":"debug"}}))
+                .unwrap();
+            tracing::debug!("AFTER-SETTINGS");
+        });
+        return;
+    }
+    let home = tempfile::tempdir().unwrap();
+    let output = std::process::Command::new(std::env::current_exe().unwrap())
+        .args(["--exact", "app_settings_reload_the_installed_filter"])
+        .env(CHILD, home.path())
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stdout)
+    );
+    let raw = fs::read_to_string(home.path().join("logs/openspider.log")).unwrap();
+    assert!(!raw.contains("BEFORE-SETTINGS"));
+    assert!(raw.contains("AFTER-SETTINGS"));
+}
