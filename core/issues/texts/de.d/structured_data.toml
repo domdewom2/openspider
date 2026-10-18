@@ -1,2 +1,9 @@
-# OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „Structured Data“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+[issues.structured-data-missing]
+what = "Für diese Seite wurden in den aktivierten Formaten keine strukturierten Daten gefunden."
+why = "Strukturierte Daten können Suchdiensten helfen, die beschriebenen Inhalte einzuordnen. Ihr Fehlen verhindert die normale Indexierung nicht."
+fix = "Prüfen Sie, ob zum Inhalt passende strukturierte Daten sinnvoll sind. Aktivieren Sie die gewünschten Extraktionsformate und crawlen Sie nach Änderungen erneut."
+
+[issues.structured-data-parse-errors]
+what = "Mindestens ein Block strukturierter Daten konnte nicht gelesen werden."
+why = "Syntaxfehler oder nicht auflösbare Typangaben verhindern, dass dieser Block zuverlässig ausgewertet wird. Andere lesbare Blöcke werden weiterhin erfasst."
+fix = "Öffnen Sie die Details der strukturierten Daten. Korrigieren Sie die gemeldete Stelle anhand von Zeile, Spalte und Ausschnitt und prüfen Sie die Seite erneut."

@@ -1714,6 +1714,18 @@ async fn issues_that_need_the_crawl_analysis_are_named_instead_of_counted() {
         .as_array()
         .expect("nicht auswertbare Issues");
     assert!(!pending.is_empty());
-    assert!(pending.iter().all(|p| p["state"] == "needs_crawl_analysis"));
+    // M2-D09 replaces the SD stubs: its two issues require an enabled extraction format.
+    assert!(pending.iter().all(|p| {
+        if p["tab"] == "Structured Data"
+            && matches!(
+                p["filter"].as_str(),
+                Some("Missing Structured Data" | "Parse Errors")
+            )
+        {
+            p["state"] == "needs_config"
+        } else {
+            p["state"] == "needs_crawl_analysis"
+        }
+    }));
     client.cancel().await;
 }

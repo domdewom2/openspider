@@ -276,7 +276,10 @@ fn every_tab_is_a_real_definition_or_a_marked_stub() {
         }
     }
     // Alle 15 neuen Tabs sind in M2-F02 Stubs; die 16 Tabs von M1 sind echte Definitionen.
-    assert_eq!(stubs, 15, "Stub-Tabs");
+    assert_eq!(
+        stubs, 14,
+        "Stub-Tabs (Structured Data implemented by M2-D09)"
+    );
 }
 
 #[test]
@@ -403,7 +406,9 @@ fn dynamic_column_sources_are_registered_per_tab_and_names_are_interned() {
     ] {
         assert!(tabs::dynamic_columns(tab, &cfg).is_empty(), "{tab}");
     }
-    assert!(tabs::column_sources().is_empty());
+    assert!(tabs::column_sources()
+        .iter()
+        .all(|(tab, _)| *tab == "Structured Data"));
     // Namen zur Laufzeit: gleicher Text, dieselbe Referenz.
     let a = intern("Preis (Extraktor 1)");
     let b = intern(&String::from("Preis (Extraktor 1)"));
