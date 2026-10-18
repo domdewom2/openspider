@@ -1,0 +1,4 @@
+.os-memory-banner { position: fixed; inset-inline: 12px; top: 85px; z-index: 20; }
+.os-dialog form { display: grid; gap: 8px; }
+.os-dialog form label { display: flex; gap: 8px; align-items: center; }
+.os-dialog pre { max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; }

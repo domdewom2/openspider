@@ -1,0 +1,16 @@
+.os-crawl-header { flex: 1; min-width: 0; padding-inline-start: 12px; }
+.os-crawl-header form { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.os-crawl-header label { display: flex; align-items: center; gap: 4px; font-size: 11px; }
+.os-crawl-header input, .os-crawl-header select, .os-crawl-header textarea { background: var(--os-bg-surface); color: var(--os-text); border: 1px solid var(--os-border); border-radius: 3px; min-width: 0; font: inherit; padding: 3px; }
+.os-crawl-header input:focus-visible, .os-crawl-header select:focus-visible, .os-crawl-header textarea:focus-visible { outline: 2px solid var(--os-accent); }
+.os-start-url { flex: 1; min-width: 100px; }
+.os-start-url input, .os-start-url textarea { width: 100%; }
+.os-crawl-header input[type=file] { max-width: 150px; }
+.os-crawl-header textarea { height: 24px; }
+.os-header-progress { display: flex; align-items: center; gap: 5px; min-width: 80px; font-size: 11px; }
+.os-header-progress .os-progress { flex: 1; }
+.os-header-hint { display: inline-block; font-size: 11px; color: var(--os-text-muted); margin-inline-end: 12px; }
+/* Fit translated hints without covering the next focus region. */
+.os-app:has(.os-crawl-header) { grid-template-rows: auto 28px 1fr auto; }
+.os-app-header:has(.os-crawl-header) { min-height: 40px; padding-block: 4px; }
+@media (max-width: 1100px) { .os-crawl-header form { flex-wrap: wrap; } }

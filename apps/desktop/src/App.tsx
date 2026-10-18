@@ -1,3 +1,6 @@
+import { Header } from "./features/header/Header";
+import { Statusbar } from "./features/statusbar/Statusbar";
+import { Notifications } from "./features/notifications/Notifications";
 import { useEffect, useState } from "react";
 import { RegionBoundary } from "./app/ErrorBoundary";
 import { Providers } from "./app/Providers";
@@ -33,6 +36,7 @@ export function App() {
       <div className="os-app">
         <header className="os-app-header" role="banner" aria-label={t("app-region-header")}>
           <h1 className="os-app-title">{t("app-title")}</h1>
+          <Header />
         </header>
         <nav className="os-app-tabs" aria-label={t("app-region-tabs")} />
         <main className="os-app-main" data-region="table" aria-label={t("app-region-table")}>
@@ -42,8 +46,10 @@ export function App() {
         </main>
         <aside className="os-app-sidebar" aria-label={t("app-region-sidebar")} />
         <footer className="os-app-status" role="contentinfo" aria-label={t("app-region-status")}>
+          <Statusbar />
           {version !== null && <span data-testid="version">{t("app-version", { version })}</span>}
         </footer>
+        <Notifications />
       </div>
     </Providers>
   );
