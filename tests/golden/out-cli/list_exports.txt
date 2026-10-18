@@ -355,6 +355,8 @@ Response Codes:External:Client Error (4xx) Inlinks
 Response Codes:External:Server Error (5xx) Inlinks
 Response Codes:External:All Error Inlinks
 Issues:All Issues
+Images:Images With Alt Text Over 100 Characters Inlinks
+Images:Images Over 100 KB Inlinks
 Security:HTTP URLs Inlinks
 Security:Mixed Content Inlinks
 Security:Form URL Insecure Inlinks

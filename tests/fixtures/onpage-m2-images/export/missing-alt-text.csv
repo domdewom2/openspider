@@ -1,0 +1,2 @@
+From,To,Alt Text,Size,Real Dimensions (WxH),Dimensions in Attributes (WxH),Display Dimensions (WxH),Potential Savings,Path Type,Link Path,Link Position,Link Origin
+https://site.test/other.html,https://site.test/mixed.jpg,,204800,2000x1000,,400x200,196608,Path-Relative,/html[1]/body[1]/img[2],Content,HTML
