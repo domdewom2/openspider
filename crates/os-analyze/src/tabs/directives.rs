@@ -1,4 +1,4 @@
-//! Tab „Directives“ (TECH-051 bis TECH-056, TECH-064).
+//! Tab „Directives“ (TECH-051 bis TECH-068).
 //!
 //! **Grundmenge (TECH-051):** alle internen Tabellenzeilen mit einer HTTP-Antwort (jeder Status), weil
 //! `X-Robots-Tag` auch an Nicht-HTML- und Nicht-200-Antworten hängt. Die robots.txt hat keine
@@ -9,7 +9,7 @@
 //! `noindex` zugleich stehen in beiden Filtern, `all` zählt nicht als `index`, `none` nicht als `noindex`. Die
 //! Tokens stehen kommagetrennt in `directives.tokens`; verglichen wird mit Kommagrenzen.
 
-use crate::defs::{ColumnDef, ColumnKind, FilterDef, FilterKind, TabDef};
+use crate::defs::{ColumnDef, ColumnKind, FilterDef, FilterKind, Requirement, TabDef};
 
 use super::canonicals::{
     canonical_link_element_column, column, extension_column, http_canonical_column,
@@ -71,12 +71,13 @@ pub fn tab() -> TabDef {
             meta_refresh_column(),
             canonical_link_element_column(),
             http_canonical_column(),
-            // [OS-Erweiterung]: Wirkung der Angaben (TECH-066) und Indexierbarkeit.
-            extension_column("Indexability", "u.indexability", ColumnKind::Text),
-            extension_column(
+            // M2-S01: Indexierbarkeit gehört zu den Standardspalten.
+            column("Indexability", "u.indexability", ColumnKind::Text, true),
+            column(
                 "Indexability Status",
                 "u.indexability_status",
                 ColumnKind::Text,
+                true,
             ),
             extension_column("Effective Index", "u.effective_index", ColumnKind::Bool),
             extension_column("Effective Follow", "u.effective_follow", ColumnKind::Bool),
@@ -92,19 +93,52 @@ pub fn tab() -> TabDef {
                 "Refresh",
                 "EXISTS (SELECT 1 FROM refresh r WHERE r.url_id = u.id)",
             ),
+            filter("NoArchive", has_token!("noarchive")),
+            filter("NoSnippet", has_token!("nosnippet")),
+            filter("Max-Snippet", has_token!("max-snippet:%")),
+            filter("Max-Image-Preview", has_token!("max-image-preview:%")),
+            filter("Max-Video-Preview", has_token!("max-video-preview:%")),
+            filter("NoImageIndex", has_token!("noimageindex")),
+            filter("NoTranslate", concat!("EXISTS (SELECT 1 FROM directives d WHERE d.url_id = u.id ",
+                "AND (d.applies = 1 OR (d.source = 'meta_robots' AND d.agent = 'google')) ",
+                "AND (',' || d.tokens || ',') LIKE '%,notranslate,%')")),
+            filter("Unavailable_After", has_token!("unavailable_after:%")),
+            FilterDef {
+                requires: vec![Requirement::Coverage {
+                    config: "advanced.html_validation",
+                    marker: "validation.checked",
+                }],
+                ..filter("Outside <head>", "EXISTS (SELECT 1 FROM directives d WHERE d.url_id = u.id AND d.source = 'meta_robots' AND d.in_head = 0)")
+            },
         ],
         default_sort: Vec::new(),
         params: |_| Vec::new(),
-        hidden_population: None,
+        hidden_population: Some("u.is_internal = 1 AND COALESCE(u.status_code, 0) > 0 AND u.indexability_status = 'noindex' AND EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'respect_hidden')"),
     }
 }
 
 /// URL-Beiträge des Fachpakets M2-D06.
-// STUB(M2-D06)
 pub fn url_details(
-    _: &os_store::CrawlFile,
+    file: &os_store::CrawlFile,
     _: &os_model::CrawlConfig,
-    _: os_model::UrlId,
+    id: os_model::UrlId,
 ) -> Result<Vec<(String, String)>, crate::ViewError> {
-    Ok(Vec::new())
+    let mut stmt = file
+        .conn()
+        .prepare("SELECT tokens FROM directives WHERE url_id = ?1 AND applies = 1")?;
+    let mut rows = stmt.query([id.0])?;
+    let mut smallest: Option<u64> = None;
+    while let Some(row) = rows.next()? {
+        let tokens: String = row.get(0)?;
+        for token in tokens.split(',') {
+            if let Some(value) = token.strip_prefix("max-snippet:") {
+                if let Ok(n) = value.parse::<u64>() {
+                    smallest = Some(smallest.map_or(n, |old| old.min(n)));
+                }
+            }
+        }
+    }
+    Ok(smallest
+        .map(|n| vec![("Max-Snippet".into(), n.to_string())])
+        .unwrap_or_default())
 }

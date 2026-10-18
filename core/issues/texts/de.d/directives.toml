@@ -1,2 +1,25 @@
-# OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „Directives“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.directives-nosnippet]
+what = "Eine Robots-Angabe unterbindet Suchergebnis-Snippets."
+why = "Fehlende Vorschautexte können die Auswahl des Ergebnisses erschweren."
+fix = "Prüfe die beabsichtigte Darstellung und entferne nosnippet, falls Vorschauen erlaubt sein sollen."
+
+[issues.directives-noimageindex]
+what = "Die Seite enthält die Robots-Direktive noimageindex."
+why = "Suchmaschinen sollen Bilder nicht über diese Seite indexieren. Die Seite selbst bleibt davon unabhängig indexierbar."
+fix = "Prüfe die gewünschte Bildsichtbarkeit und entferne die Direktive, wenn Bilder über diese Seite gefunden werden sollen."
+
+[issues.directives-notranslate]
+what = "Eine Meta- oder Header-Angabe fordert notranslate an."
+why = "Die Angabe kann Übersetzungsangebote im Suchergebnis unterdrücken."
+fix = "Prüfe, ob die Einschränkung weiterhin gewünscht ist, und entferne sie gegebenenfalls."
+
+[issues.directives-unavailable-after]
+what = "Eine Robots-Angabe legt mit unavailable_after ein Ablaufdatum fest."
+why = "Ein vergessenes Ablaufdatum kann später die Sichtbarkeit in Suchergebnissen beenden. Ungültige Werte können ignoriert werden."
+fix = "Prüfe Datum, Zeitzone und Format. Entferne die Direktive, wenn kein Ablauf vorgesehen ist."
+
+[issues.directives-outside-head]
+what = "Mindestens ein Robots-Meta-Element liegt außerhalb des HTML-Heads."
+why = "Crawler können Angaben außerhalb des Heads unterschiedlich auswerten. OpenSpider berücksichtigt sie vorsorglich."
+fix = "Verschiebe Robots-Meta-Elemente in den Head und prüfe Elemente, die den Head vorzeitig schließen."
