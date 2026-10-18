@@ -279,24 +279,6 @@ function = "tab"
 signature = "pub fn tab() -> TabDef"
 
 [[stub]]
-owner = "M2-D10"
-file = "crates/os-parse/src/validation.rs"
-function = "response_facts"
-signature = "pub fn response_facts( _input: &crate::ResponseInput<'_>, ) -> Vec<(os_model::ExtKey, os_model::Value)>"
-
-[[stub]]
-owner = "M2-D10"
-file = "crates/os-parse/src/validation.rs"
-function = "run"
-signature = "pub fn run(_ctx: &PageCtx<'_>, _page: &mut ParsedPage)"
-
-[[stub]]
-owner = "M2-D10"
-file = "crates/os-parse/src/validation.rs"
-function = "to_ext"
-signature = "pub fn to_ext(_facts: &os_model::ValidationFacts) -> Vec<(os_model::ExtKey, os_model::Value)>"
-
-[[stub]]
 owner = "M2-D11"
 file = "crates/os-export/src/catalog/bulk_security.rs"
 function = "entries"

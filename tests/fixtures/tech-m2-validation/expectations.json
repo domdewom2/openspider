@@ -1,0 +1,208 @@
+[
+  {
+    "file": "ok.html",
+    "codes": [],
+    "html": 1,
+    "head": 1,
+    "body": 1
+  },
+  {
+    "file": "invalid-head-img.html",
+    "codes": [
+      "invalid-head-element"
+    ],
+    "html": 1,
+    "head": 1,
+    "body": 1
+  },
+  {
+    "file": "invalid-head-div.html",
+    "codes": [
+      "invalid-head-element"
+    ],
+    "html": 1,
+    "head": 1,
+    "body": 1
+  },
+  {
+    "file": "invalid-head-text.html",
+    "codes": [
+      "invalid-head-element"
+    ],
+    "html": 1,
+    "head": 1,
+    "body": 1
+  },
+  {
+    "file": "noscript-img.html",
+    "codes": [
+      "invalid-head-element"
+    ],
+    "html": 1,
+    "head": 1,
+    "body": 1
+  },
+  {
+    "file": "noscript-link.html",
+    "codes": [],
+    "html": 1,
+    "head": 1,
+    "body": 1
+  },
+  {
+    "file": "custom-head.html",
+    "codes": [
+      "invalid-head-element"
+    ],
+    "html": 1,
+    "head": 1,
+    "body": 1
+  },
+  {
+    "file": "p-before-head.html",
+    "codes": [
+      "head-not-first"
+    ],
+    "html": 1,
+    "head": 1,
+    "body": 1
+  },
+  {
+    "file": "img-before-head.html",
+    "codes": [
+      "head-not-first"
+    ],
+    "html": 1,
+    "head": 1,
+    "body": 1
+  },
+  {
+    "file": "no-head.html",
+    "codes": [
+      "missing-head"
+    ],
+    "html": 1,
+    "head": 0,
+    "body": 1
+  },
+  {
+    "file": "no-body.html",
+    "codes": [
+      "missing-body"
+    ],
+    "html": 1,
+    "head": 1,
+    "body": 0
+  },
+  {
+    "file": "two-heads.html",
+    "codes": [
+      "multiple-head"
+    ],
+    "html": 1,
+    "head": 2,
+    "body": 1
+  },
+  {
+    "file": "header-element.html",
+    "codes": [],
+    "html": 1,
+    "head": 1,
+    "body": 1
+  },
+  {
+    "file": "two-bodies.html",
+    "codes": [
+      "multiple-body"
+    ],
+    "html": 1,
+    "head": 1,
+    "body": 2
+  },
+  {
+    "file": "body-before-html.html",
+    "codes": [
+      "body-before-html",
+      "multiple-body"
+    ],
+    "html": 1,
+    "head": 1,
+    "body": 2
+  },
+  {
+    "file": "div-before-html.html",
+    "codes": [
+      "body-before-html"
+    ],
+    "html": 1,
+    "head": 1,
+    "body": 1
+  },
+  {
+    "file": "img-before-html.html",
+    "codes": [
+      "body-before-html"
+    ],
+    "html": 1,
+    "head": 1,
+    "body": 1
+  },
+  {
+    "file": "text-before-html.html",
+    "codes": [
+      "body-before-html"
+    ],
+    "html": 1,
+    "head": 1,
+    "body": 1
+  },
+  {
+    "file": "meta-before-html.html",
+    "codes": [],
+    "html": 1,
+    "head": 1,
+    "body": 1
+  },
+  {
+    "file": "comment-before-html.html",
+    "codes": [],
+    "html": 1,
+    "head": 1,
+    "body": 1
+  },
+  {
+    "file": "head-in-script.html",
+    "codes": [],
+    "html": 1,
+    "head": 1,
+    "body": 1
+  },
+  {
+    "file": "no-html.html",
+    "codes": [
+      "head-not-first"
+    ],
+    "html": 0,
+    "head": 1,
+    "body": 1
+  },
+  {
+    "file": "text-before-head.html",
+    "codes": [
+      "head-not-first"
+    ],
+    "html": 1,
+    "head": 1,
+    "body": 1
+  },
+  {
+    "file": "no-head-or-body.html",
+    "codes": [
+      "missing-body",
+      "missing-head"
+    ],
+    "html": 1,
+    "head": 0,
+    "body": 0
+  }
+]
