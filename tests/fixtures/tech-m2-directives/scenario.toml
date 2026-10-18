@@ -1,0 +1,32 @@
+[[route]]
+path = "/header.html"
+[route.headers]
+X-Robots-Tag = "noindex, noarchive, nosnippet, max-snippet:20, max-image-preview:none, max-video-preview:0, noimageindex, notranslate, unavailable_after:invalid"
+
+[[route]]
+path = "/conflict.html"
+[route.headers]
+X-Robots-Tag = "noindex, nofollow, max-snippet:30"
+
+[[route]]
+path = "/header-self.html"
+[route.headers]
+Refresh = "0;url=/header-self.html#top"
+
+[[route]]
+path = "/header-bare.html"
+[route.headers]
+Refresh = "10"
+
+[[route]]
+path = "/gone.html"
+status = 404
+[route.headers]
+X-Robots-Tag = "noarchive"
+
+[[route]]
+path = "/pdf.html"
+content_type = "application/pdf"
+body = "%PDF-1.4\n%%EOF\n"
+[route.headers]
+X-Robots-Tag = "noarchive"
