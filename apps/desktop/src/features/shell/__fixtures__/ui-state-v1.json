@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "state": {
+    "window": { "x": 8000, "y": 100, "width": 1440, "height": 900, "contentHeight": 836 },
+    "layout": { "sidebarWidth": 500, "detailHeight": 300, "sidebarVisible": true, "detailVisible": false },
+    "tables": {
+      "Internal": { "hidden": ["title"], "order": ["status", "address"], "widths": { "address": 450 }, "sort": [{ "key": "status", "direction": "desc" }], "pinned": [] },
+      "Images": { "hidden": ["size"], "widths": { "address": 400 } },
+      "detail:Inlinks": { "order": ["anchor", "address"], "sort": [{ "key": "anchor", "direction": "asc" }] },
+      "sidebar:Overview": { "widths": { "count": 200 } }
+    },
+    "columnTemplates": { "Basis": { "Internal": { "widths": { "address": 300 } } } },
+    "tabs": ["Images", "Internal"],
+    "filters": { "Internal": "All" },
+    "searchHistory": ["example"],
+    "theme": "dark", "language": "de", "visualization": { "kind": "tree" }
+  }
+}
