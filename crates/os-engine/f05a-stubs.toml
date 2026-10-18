@@ -441,12 +441,6 @@ function = "element_path"
 signature = "pub fn element_path(_doc: &crate::dom::Document, node: scraper::ElementRef<'_>) -> String"
 
 [[stub]]
-owner = "M2-D17"
-file = "crates/os-export/src/reports/sidebar.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
 owner = "M2-D18"
 file = "crates/os-export/src/catalog/bulk_web.rs"
 function = "entries"
