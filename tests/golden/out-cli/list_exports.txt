@@ -318,6 +318,16 @@ Change Detection:Indexability
 Change Detection:Content
 Links:All Inlinks
 Links:All Outlinks
+Links:All Anchor Text
+Links:External Links
+Links:Internal Nofollow Outlinks
+Links:Internal Outlinks With No Anchor Text
+Links:Non-Descriptive Anchor Text In Internal Outlinks
+Links:Follow & Nofollow Internal Inlinks To Page
+Links:Internal Nofollow Inlinks Only
+Links:Outlinks To Localhost
+Links:Pages With Uncrawlable Internal Outlinks
+Links:Non-Indexable Page Inlinks Only
 Response Codes:Internal & External:All Inlinks
 Response Codes:Internal & External:Blocked by Robots.txt Inlinks
 Response Codes:Internal & External:Blocked Resource Inlinks
