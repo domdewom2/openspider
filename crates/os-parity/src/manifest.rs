@@ -185,7 +185,7 @@ impl OsExport {
         match self {
             Self::Sitemap(kind) => {
                 return vec![if kind == "images" {
-                    "images_sitemap.xml"
+                    "image-sitemap.xml"
                 } else {
                     "sitemap.xml"
                 }
@@ -343,6 +343,15 @@ os_file = "overview.csv"
 #[cfg(test)]
 mod m2_tests {
     use super::*;
+
+    // spec: OUT-127
+    #[test]
+    fn image_sitemap_output_name_matches_the_spec() {
+        assert_eq!(
+            OsExport::parse("sitemap:images").unwrap().file_candidates(),
+            ["image-sitemap.xml"]
+        );
+    }
 
     // spec: CRAWL-029
     #[test]

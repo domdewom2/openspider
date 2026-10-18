@@ -127,7 +127,7 @@ def main():
             e['mapping'] = {'content_all':'content_m2','url_all':'url_m2','images_all':'images_m2','internal_all':'internal_m2'}[e['mapping']]
     onpage += [entry('bulk:Content:Near Duplicates', 'content_near_duplicates'), entry('bulk:Images:Images Missing Size Attributes Inlinks', 'images_missing_sizes'), entry('report:SERP Summary')]
     for variant, kind, config in [('default', 'default', {}), ('options', 'default', {'sitemap_gen.lastmod.source':'server', 'sitemap_gen.priority.enabled':'true', 'sitemap_gen.changefreq.basis':'depth', 'sitemap_gen.images.enabled':'true'}), ('images', 'images', {})]:
-        onpage.append(dict(ref_file='sitemap_' + variant + '.xml', os='sitemap:' + kind, mapping='sitemap_xml', os_file='images_sitemap.xml' if kind == 'images' else 'sitemap.xml', config=config))
+        onpage.append(dict(ref_file='sitemap_' + variant + '.xml', os='sitemap:' + kind, mapping='sitemap_xml', os_file='image-sitemap.xml' if kind == 'images' else 'sitemap.xml', config=config))
     technical = common + [tab(t) for t in ['Canonicals', 'Pagination', 'Directives', 'Hreflang', 'Validation']]
     technical += selected(['Canonicals', 'Pagination', 'Directives', 'Hreflang', 'Validation'])
     technical.append(tab('Response Codes', 'Internal Redirection (HTTP Refresh)'))
