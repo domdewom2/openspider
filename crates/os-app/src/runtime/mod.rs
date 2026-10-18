@@ -271,6 +271,24 @@ impl Drop for Inner {
 #[derive(Clone)]
 pub struct App(Arc<Inner>);
 
+/// Schwache App-Referenz für periodische Dienste ohne Besitzzyklus (M2-O02).
+#[derive(Clone)]
+pub struct WeakApp(std::sync::Weak<Inner>);
+
+impl WeakApp {
+    /// Liefert die App nur solange sie noch lebt.
+    pub fn upgrade(&self) -> Option<App> {
+        self.0.upgrade().map(App)
+    }
+}
+
+impl App {
+    /// Periodische Dienste halten die Anwendung nicht selbst am Leben.
+    pub fn downgrade(&self) -> WeakApp {
+        WeakApp(Arc::downgrade(&self.0))
+    }
+}
+
 fn clamp_interval(ms: u32) -> u32 {
     ms.clamp(LIVE_INTERVAL_RANGE_MS.0, LIVE_INTERVAL_RANGE_MS.1)
 }
