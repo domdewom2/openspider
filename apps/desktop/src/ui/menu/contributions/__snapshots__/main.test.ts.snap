@@ -1,0 +1,471 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`UI-002 mac > de: vollständige Menüfolge, Modi und Katalog-Untermenüs 1`] = `
+"OpenSpider
+  + Über OpenSpider
+  -
+  + Einstellungen… | ⌘,
+  -
+  + Dienste
+  + OpenSpider ausblenden
+  + Andere ausblenden
+  + Alle einblenden
+  -
+  + OpenSpider beenden
+
+Datei
+  + Neuer Crawl | ⌘N
+  + Crawl öffnen | ⌘O
+  + Zuletzt geöffnet
+  + /fixture/basic.ospider
+  + Crawl speichern unter… | ⌘S
+  + Crawls verwalten…
+  + Crawl importieren…
+  + Crawl-Datei exportieren…
+
+Bearbeiten
+  + Rückgängig
+  + Wiederholen
+  -
+  + Ausschneiden
+  + Kopieren
+  + Einfügen
+  + Alles auswählen
+
+Konfiguration
+  + Spider-Konfiguration | ⌘K
+  + Inhalte…
+  + Robots…
+  + URL-Umschreibung…
+  + Einschließen / Ausschließen…
+  + Geschwindigkeit…
+  + User-Agent…
+  + HTTP-Header…
+  + API-Zugänge…
+  + Segmente…
+  + Crawl-Analyse…
+  + Benutzerdefiniert
+  + Suche…
+  + Extraktion…
+  + JavaScript…
+  + Konfigurations-Diff | ⇧⌘C
+  + Profile
+  + Profil speichern unter…
+  + Profil laden…
+  + Letzte Profile…
+  + Als Standard speichern
+  + Standard zurücksetzen
+
+Modus
+  + Spider [ ]
+  + Liste [x]
+  + SERP [ ]
+  + APIs [ ]
+  + Vergleich [ ]
+
+Bulk-Export
+  + Links
+  + Pages With Uncrawlable Internal Outlinks
+
+Berichte
+  + JavaScript
+  + JavaScript Console Log Summary
+  - Analysis report | Diese Aktion erfordert einen ruhenden Crawl mit Daten oder einen verfügbaren Dienst.
+
+Sitemaps
+  + pages
+
+Visualisierungen
+  + Crawl-Baum
+  + Crawl-Graph
+  + Verzeichnisbaum
+  + Verzeichnisgraph
+  + 3D-Crawl-Graph
+  + 3D-Verzeichnisgraph
+  + Inlink-Ankertext-Wortwolke
+  + Body-Text-Wortwolke
+  + Content-Cluster
+
+Crawl-Analyse
+  + Crawl-Analyse starten | ⇧⌘A
+  + Crawl-Analyse…
+
+Ansicht
+  + Fokus-Modus
+  + Detailfenster ein- oder ausblenden | ⌘J
+  + Seitenleiste ein- oder ausblenden | ⇧⌘J
+  + Spalten aller Tabellen zurücksetzen
+  + Tabs zurücksetzen
+  -
+  + Vergrößern | ⌘=
+  + Verkleinern | ⌘-
+  + Zoom auf 100 % zurücksetzen | ⌘0
+  -
+  + Fokus wechseln: Tabelle, Details, Seitenleiste | F6
+  + Fokus rückwärts wechseln | ⇧F6
+  + Nächster Unterschied | F7
+  + Vorheriger Unterschied | ⇧F7
+
+MCP
+  + Server starten
+  - Server stoppen | Diese Aktion erfordert einen ruhenden Crawl mit Daten oder einen verfügbaren Dienst.
+  + Konfigurieren
+  + Werkzeuge anzeigen…
+  + Beim App-Start automatisch starten [ ]
+  + API-Beschreibung als Markdown speichern…
+
+Fenster
+  + Im Dock ablegen
+  + Zoomen
+  + Alle nach vorne bringen
+
+Hilfe
+  + Benutzerhandbuch
+  + Tastaturkürzel
+  + Nutzungsstatistik
+  + Debug-Informationen
+  + Logs-Ordner öffnen
+  + Nach Updates suchen
+  + Über OpenSpider"
+`;
+
+exports[`UI-002 mac > en: vollständige Menüfolge, Modi und Katalog-Untermenüs 1`] = `
+"OpenSpider
+  + About OpenSpider
+  -
+  + Settings… | ⌘,
+  -
+  + Services
+  + Hide OpenSpider
+  + Hide Others
+  + Show All
+  -
+  + Quit OpenSpider
+
+File
+  + New crawl | ⌘N
+  + Open crawl | ⌘O
+  + Recently opened
+  + /fixture/basic.ospider
+  + Save crawl as… | ⌘S
+  + Manage crawls…
+  + Import crawl…
+  + Export crawl file…
+
+Edit
+  + Undo
+  + Redo
+  -
+  + Cut
+  + Copy
+  + Paste
+  + Select All
+
+Configuration
+  + Spider configuration | ⌘K
+  + Content…
+  + Robots…
+  + URL rewriting…
+  + Include / exclude…
+  + Speed…
+  + User agent…
+  + HTTP headers…
+  + API access…
+  + Segments…
+  + Crawl analysis…
+  + Custom
+  + Search…
+  + Extraction…
+  + JavaScript…
+  + Configuration diff | ⇧⌘C
+  + Profiles
+  + Save profile as…
+  + Load profile…
+  + Recent profiles…
+  + Save as default
+  + Reset default
+
+Mode
+  + Spider [ ]
+  + List [x]
+  + SERP [ ]
+  + APIs [ ]
+  + Compare [ ]
+
+Bulk Export
+  + Links
+  + Pages With Uncrawlable Internal Outlinks
+
+Reports
+  + JavaScript
+  + JavaScript Console Log Summary
+  - Analysis report | This action requires an idle crawl with data or an available service.
+
+Sitemaps
+  + pages
+
+Visualisations
+  + Crawl tree
+  + Crawl graph
+  + Directory tree
+  + Directory graph
+  + 3D crawl graph
+  + 3D directory graph
+  + Inlink anchor text word cloud
+  + Body text word cloud
+  + Content clusters
+
+Crawl Analysis
+  + Start crawl analysis | ⇧⌘A
+  + Crawl analysis…
+
+View
+  + Focus mode
+  + Show or hide details | ⌘J
+  + Show or hide sidebar | ⇧⌘J
+  + Reset columns in all tables
+  + Reset tabs
+  -
+  + Zoom in | ⌘=
+  + Zoom out | ⌘-
+  + Reset zoom to 100 % | ⌘0
+  -
+  + Move focus: table, details, sidebar | F6
+  + Move focus backwards | ⇧F6
+  + Next difference | F7
+  + Previous difference | ⇧F7
+
+MCP
+  + Start server
+  - Stop server | This action requires an idle crawl with data or an available service.
+  + Configure
+  + Show tools…
+  + Start automatically with the app [ ]
+  + Save API description as Markdown…
+
+Window
+  + Minimize
+  + Zoom
+  + Bring All to Front
+
+Help
+  + User guide
+  + Keyboard Shortcuts
+  + Usage statistics
+  + Debug information
+  + Open logs folder
+  + Check for updates
+  + About OpenSpider"
+`;
+
+exports[`UI-002 win > de: vollständige Menüfolge, Modi und Katalog-Untermenüs 1`] = `
+"Datei
+  + Neuer Crawl | Strg+N
+  + Crawl öffnen | Strg+O
+  + Zuletzt geöffnet
+  + /fixture/basic.ospider
+  + Crawl speichern unter… | Strg+S
+  + Crawls verwalten…
+  + Crawl importieren…
+  + Crawl-Datei exportieren…
+  -
+  + Einstellungen… | Strg+,
+  + OpenSpider beenden
+
+Konfiguration
+  + Spider-Konfiguration | Strg+K
+  + Inhalte…
+  + Robots…
+  + URL-Umschreibung…
+  + Einschließen / Ausschließen…
+  + Geschwindigkeit…
+  + User-Agent…
+  + HTTP-Header…
+  + API-Zugänge…
+  + Segmente…
+  + Crawl-Analyse…
+  + Benutzerdefiniert
+  + Suche…
+  + Extraktion…
+  + JavaScript…
+  + Konfigurations-Diff | Strg+Umschalt+C
+  + Profile
+  + Profil speichern unter…
+  + Profil laden…
+  + Letzte Profile…
+  + Als Standard speichern
+  + Standard zurücksetzen
+
+Modus
+  + Spider [ ]
+  + Liste [x]
+  + SERP [ ]
+  + APIs [ ]
+  + Vergleich [ ]
+
+Bulk-Export
+  + Links
+  + Pages With Uncrawlable Internal Outlinks
+
+Berichte
+  + JavaScript
+  + JavaScript Console Log Summary
+  - Analysis report | Diese Aktion erfordert einen ruhenden Crawl mit Daten oder einen verfügbaren Dienst.
+
+Sitemaps
+  + pages
+
+Visualisierungen
+  + Crawl-Baum
+  + Crawl-Graph
+  + Verzeichnisbaum
+  + Verzeichnisgraph
+  + 3D-Crawl-Graph
+  + 3D-Verzeichnisgraph
+  + Inlink-Ankertext-Wortwolke
+  + Body-Text-Wortwolke
+  + Content-Cluster
+
+Crawl-Analyse
+  + Crawl-Analyse starten | Strg+Umschalt+A
+  + Crawl-Analyse…
+
+Ansicht
+  + Fokus-Modus
+  + Detailfenster ein- oder ausblenden | Strg+J
+  + Seitenleiste ein- oder ausblenden | Strg+Umschalt+J
+  + Spalten aller Tabellen zurücksetzen
+  + Tabs zurücksetzen
+  -
+  + Vergrößern | Strg+=
+  + Verkleinern | Strg+-
+  + Zoom auf 100 % zurücksetzen | Strg+0
+  -
+  + Fokus wechseln: Tabelle, Details, Seitenleiste | F6
+  + Fokus rückwärts wechseln | Umschalt+F6
+  + Nächster Unterschied | F7
+  + Vorheriger Unterschied | Umschalt+F7
+
+MCP
+  + Server starten
+  - Server stoppen | Diese Aktion erfordert einen ruhenden Crawl mit Daten oder einen verfügbaren Dienst.
+  + Konfigurieren
+  + Werkzeuge anzeigen…
+  + Beim App-Start automatisch starten [ ]
+  + API-Beschreibung als Markdown speichern…
+
+Hilfe
+  + Benutzerhandbuch
+  + Tastaturkürzel
+  + Nutzungsstatistik
+  + Debug-Informationen
+  + Logs-Ordner öffnen
+  + Nach Updates suchen
+  + Über OpenSpider"
+`;
+
+exports[`UI-002 win > en: vollständige Menüfolge, Modi und Katalog-Untermenüs 1`] = `
+"File
+  + New crawl | Ctrl+N
+  + Open crawl | Ctrl+O
+  + Recently opened
+  + /fixture/basic.ospider
+  + Save crawl as… | Ctrl+S
+  + Manage crawls…
+  + Import crawl…
+  + Export crawl file…
+  -
+  + Settings… | Ctrl+,
+  + Quit OpenSpider
+
+Configuration
+  + Spider configuration | Ctrl+K
+  + Content…
+  + Robots…
+  + URL rewriting…
+  + Include / exclude…
+  + Speed…
+  + User agent…
+  + HTTP headers…
+  + API access…
+  + Segments…
+  + Crawl analysis…
+  + Custom
+  + Search…
+  + Extraction…
+  + JavaScript…
+  + Configuration diff | Ctrl+Shift+C
+  + Profiles
+  + Save profile as…
+  + Load profile…
+  + Recent profiles…
+  + Save as default
+  + Reset default
+
+Mode
+  + Spider [ ]
+  + List [x]
+  + SERP [ ]
+  + APIs [ ]
+  + Compare [ ]
+
+Bulk Export
+  + Links
+  + Pages With Uncrawlable Internal Outlinks
+
+Reports
+  + JavaScript
+  + JavaScript Console Log Summary
+  - Analysis report | This action requires an idle crawl with data or an available service.
+
+Sitemaps
+  + pages
+
+Visualisations
+  + Crawl tree
+  + Crawl graph
+  + Directory tree
+  + Directory graph
+  + 3D crawl graph
+  + 3D directory graph
+  + Inlink anchor text word cloud
+  + Body text word cloud
+  + Content clusters
+
+Crawl Analysis
+  + Start crawl analysis | Ctrl+Shift+A
+  + Crawl analysis…
+
+View
+  + Focus mode
+  + Show or hide details | Ctrl+J
+  + Show or hide sidebar | Ctrl+Shift+J
+  + Reset columns in all tables
+  + Reset tabs
+  -
+  + Zoom in | Ctrl+=
+  + Zoom out | Ctrl+-
+  + Reset zoom to 100 % | Ctrl+0
+  -
+  + Move focus: table, details, sidebar | F6
+  + Move focus backwards | Shift+F6
+  + Next difference | F7
+  + Previous difference | Shift+F7
+
+MCP
+  + Start server
+  - Stop server | This action requires an idle crawl with data or an available service.
+  + Configure
+  + Show tools…
+  + Start automatically with the app [ ]
+  + Save API description as Markdown…
+
+Help
+  + User guide
+  + Keyboard Shortcuts
+  + Usage statistics
+  + Debug information
+  + Open logs folder
+  + Check for updates
+  + About OpenSpider"
+`;

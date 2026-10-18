@@ -1,0 +1,130 @@
+M2-U04 – Paketbericht
+
+Umsetzung
+UI-002: vollständige Menüfolge auf macOS und Windows, de/en, native Systemmenüs aus dem Fundament, markierte Modi, Aktivierungsregeln und Deaktivierungsgründe. Bulk-Export/Berichte/Sitemaps werden ausschließlich aus export.catalog aufgebaut; englische Kanonnamen dienen als Übersetzungsfallback. Fachaktionen folgen dem zentralen Aktionsregister und werden bei späterer Registrierung verfügbar.
+UI-113: Hilfe-Tabelle und Menübeschriftungen lesen ui/shortcuts.ts. Feature-Beiträge verzichten auf globale native Accelerators und verwenden den vorhandenen kontextsensitiven Dispatcher. F6/F7-Aktionen sind zusätzlich im Menü enthalten. Reservierungsliste, sämtliche Registerbelegungen und Bearbeitungs-/Dialogkontexte werden geprüft.
+CRAWL-127 (UI-Anteil): Öffnen, Kopieren über Speichern unter/Crawl-Export, Import sowie zehn persistierte, deduplizierte zuletzt geöffnete Pfade; fehlende Dateien werden mit Hinweis entfernt, andere Lesefehler erhalten den Verlauf. Startkonflikte mit verzögert geladenem Verlauf sind abgesichert.
+OUT-227 (UI-Anteil): Debug zeigt alle vom Kern gelieferten effektiven Pfade einschließlich OPENSPIDER_HOME.
+OUT-241 (UI-Anteil): sofortiges settings.set für error/warn/info/debug/trace; separate Änderung der Log-Aufbewahrung. Bedienbar auch bei fehlgeschlagenen Systeminformationen.
+OUT-244 (UI-Anteil): Systeminformationen einschließlich zusätzlicher CPU-/RAM-/Chromium-/Integrationsangaben aus DebugInfo.extra; Dateivorschau durch diag.previewBundle, erst danach bestätigter ZIP-Export, Operationsstatus und Abbruch.
+Hilfe enthält außerdem Über mit LICENSE/NOTICE, lokale Nutzungsstatistik mit Leerzustand und Öffnen des Log-Ordners.
+
+Tests und Umgebung
+macOS, Branch m2/u04; Ausgangs-Worktree war sauber. Clean-Room: nur Spec und eigener Quellcode, keine Referenzressourcen.
+- cargo fmt --all --check: grün.
+- cargo clippy --workspace --exclude openspider-desktop --all-targets --locked -- -D warnings: grün (1 min 23 s einschließlich erstmaligem Build).
+- cargo test --workspace --exclude openspider-desktop --locked: grün, 2307 bestanden, 40 bestehende Ignores, 258 Testbinaries einschließlich Doc-Tests; rund 12 min 19 s einschließlich Test-Build.
+- npm ci: grün, Lockdatei unverändert; Host-Node 22.20.0 erzeugt vorhandene Engine-Hinweise für einige jsdom-Abhängigkeiten (erfordern >=22.22.2).
+- npm run -w apps/desktop typecheck: grün.
+- npm run -w apps/desktop test: 170 bestanden, 18 Dateien, vier Menü-Snapshots; letzter Lauf 3,61 s.
+- Playwright Chromium + WebKit, simulierte Plattformen mac/win: 174 Kürzelprüfungen und 12 Menü-/Debugprüfungen bestanden. Voller eigener Browserlauf: 186 bestanden in 1,6 min; abschließender Menü-/Debuglauf nach den Regressionsergänzungen: 12 bestanden, 2 C9-Platzhalter, 21,7 s.
+- npm run -w apps/desktop check:static: grün, einschließlich IPC-Generator und i18n-Vollständigkeit.
+- npm run -w apps/desktop check:licenses und cargo deny check licenses bans sources: grün.
+- docs/plan/M2-check.py und scripts/check-neutral.sh: grün. Bestehende verwaiste Ausnahmen in check-neutral.allow werden unverändert gemeldet.
+- Keine neuen Abhängigkeiten, keine Änderungen an Rust-Code, Manifesten oder fremden Tests.
+
+Abweichungen und Integration
+- C9: e2e/menu/core.spec.ts enthält einen vollständigen echten Bridge-Test für Debug-Pfade, Live-Log-Level und Dateivorschau, markiert mit "wartet auf M2-O01". Der O01-Command ist im vorintegrierten Stand noch ein Unsupported-Stub. M2-N01 entfernt ausschließlich diesen Platzhalter; die zwei übersprungenen Fälle entsprechen den beiden Browserprojekten. Frontend- und Fehlerfälle sind ohne Ignore gegen den F05-Vertrag getestet.
+- Konfigurations-, Profil-, Verwaltungs-, Visualisierungs- und weitere Fachaktionen werden von ihren UI-Besitzern im Aktionsregister implementiert. Bis dahin sind ihre Menüeinträge mit Erklärung deaktiviert. Die Moduswahl ist als useMainMode in features/help/state.ts verfügbar; SERP/APIs/Vergleich werden nicht als ungültige Werte in CrawlConfig geschrieben (dort existieren nur Spider/Liste).
+- Nach Updates suchen bleibt bis zum Update-Controller deaktiviert: OUT-250 ist laut M2-Plan M3.
+- Für Dateiaktionen wird ein zugänglicher In-App-Dialog zur Eingabe des vollständigen Pfads verwendet; der vorgebaute IPC-Vertrag stellt keinen nativen Dateiauswahldialog bereit.
+- Das Benutzerhandbuch öffnet derzeit das eigene Repository-Verzeichnis docs. Offene Produktfrage: spätere kanonische öffentliche Handbuch-URL.
+- Kein Push, Merge oder PR. Keine CI-Lauf-ID, da der Auftrag keinen Push erlaubt; native Tauri-/Windows-OS-Prüfungen wurden nicht ausgeführt. Browsernachweise sind keine Prüfung der tatsächlichen nativen OS-Menüinteraktion.
+
+Fremdergänzungen (K2-61)
+Sechs Dateien außerhalb von owns, jeweils ausschließlich Registrierung oder optionale Erweiterung mit unverändertem Standardverhalten bestehender Beiträge:
+1. apps/desktop/src/App.tsx: Import und Registrierung des HelpDialogs-Hosts.
+2. apps/desktop/src/app/runtime.ts: Import/Init-Aufruf installMainMenus sowie zusätzliche Kontextfelder hasData/analysisRunning.
+3. apps/desktop/src/ui/actions.ts: zusätzliche Beobachter-API und Benachrichtigung bei Registrierung/Abmeldung.
+4. apps/desktop/src/ui/menu/types.ts: optionale Felder label, nativeAccelerator, showDisabledReason und shortcutInLabel.
+5. apps/desktop/src/ui/menu/build.ts: Auswertung dieser optionalen Felder; ohne Opt-in bleiben Text und native Accelerators unverändert.
+6. apps/desktop/src/ui/menu/tauriMenu.ts: zusätzliche Textfunktion für die optionalen Kürzel-/Deaktivierungshinweise; ohne Opt-in unveränderter Menütext.
+Keine fremden Goldens/Fixtures regeneriert. Keine K2-60-Änderungen.
+
+Vollständiger Diff der Fremdergänzungen (Basis bis Implementierungscommit; --unified=0):
+diff --git a/apps/desktop/src/App.tsx b/apps/desktop/src/App.tsx
+index 9de7e22..5928d71 100644
+--- a/apps/desktop/src/App.tsx
++++ b/apps/desktop/src/App.tsx
+@@ -0,0 +1 @@
++import { HelpDialogs } from "./features/help/HelpDialogs";
+@@ -32,0 +34 @@ export function App() {
++      <HelpDialogs />
+diff --git a/apps/desktop/src/app/runtime.ts b/apps/desktop/src/app/runtime.ts
+index 2467c9f..4041713 100644
+--- a/apps/desktop/src/app/runtime.ts
++++ b/apps/desktop/src/app/runtime.ts
+@@ -2,0 +3 @@
++import { installMainMenus } from "../features/help/install";
+@@ -109,0 +111 @@ export function bootWindow(opts: BootOptions): Runtime {
++    offs.push(installMainMenus());
+@@ -114 +116 @@ export function bootWindow(opts: BootOptions): Runtime {
+-        return { hasCrawl: crawl !== null, crawlRunning: crawl?.phase === "running" };
++        return { hasCrawl: crawl !== null, crawlRunning: crawl?.phase === "running", hasData: (crawl?.crawled ?? 0) > 0, analysisRunning: useSession.getState().analysis?.running === true };
+diff --git a/apps/desktop/src/ui/actions.ts b/apps/desktop/src/ui/actions.ts
+index 89bb01c..1eb37d8 100644
+--- a/apps/desktop/src/ui/actions.ts
++++ b/apps/desktop/src/ui/actions.ts
+@@ -14,0 +15,7 @@ const handlers = new Map<ActionId, ActionHandler[]>();
++const registryListeners = new Set<() => void>();
++
++/** Menüaktivierung folgt auch verspätet registrierten Feature-Controllern. */
++export function onActionRegistryChanged(listener: () => void): () => void {
++  registryListeners.add(listener);
++  return () => registryListeners.delete(listener);
++}
+@@ -19,0 +27 @@ export function registerAction(id: ActionId, handler: ActionHandler): () => void
++  for (const listener of registryListeners) listener();
+@@ -24,0 +33 @@ export function registerAction(id: ActionId, handler: ActionHandler): () => void
++    for (const listener of registryListeners) listener();
+diff --git a/apps/desktop/src/ui/menu/build.ts b/apps/desktop/src/ui/menu/build.ts
+index 29f60d7..ef71780 100644
+--- a/apps/desktop/src/ui/menu/build.ts
++++ b/apps/desktop/src/ui/menu/build.ts
+@@ -67 +67 @@ function resolveItem(spec: MenuItemSpec, o: BuildOptions, native: Set<ActionId>)
+-  const label = spec.labelKey ? o.t(spec.labelKey) : spec.id;
++  const label = spec.labelKey ? o.t(spec.labelKey, undefined, { fallback: spec.label }) : spec.label ?? spec.id;
+@@ -75,0 +76 @@ function resolveItem(spec: MenuItemSpec, o: BuildOptions, native: Set<ActionId>)
++    ...(spec.showDisabledReason ? { showDisabledReason: true } : {}),
+@@ -83 +84,2 @@ function resolveItem(spec: MenuItemSpec, o: BuildOptions, native: Set<ActionId>)
+-    if (o.native && !isEditingCombo(canonicalCombo(combo, o.platform))) {
++    if (spec.nativeAccelerator === false) base.shortcutInLabel = true;
++    if (spec.nativeAccelerator !== false && o.native && !isEditingCombo(canonicalCombo(combo, o.platform))) {
+diff --git a/apps/desktop/src/ui/menu/tauriMenu.ts b/apps/desktop/src/ui/menu/tauriMenu.ts
+index 4b5370a..87b1a25 100644
+--- a/apps/desktop/src/ui/menu/tauriMenu.ts
++++ b/apps/desktop/src/ui/menu/tauriMenu.ts
+@@ -23,0 +24,7 @@ const PREDEFINED: Record<PredefinedKind, Predefined> = {
++/** Additive Feature-Optionen: vorhandene Beiträge behalten ihre bisherige Beschriftung. */
++function nativeItemText(item: ResolvedItem): string {
++  return item.label
++    + (item.shortcutInLabel && item.shortcutText ? ` (${item.shortcutText})` : "")
++    + (item.showDisabledReason && !item.enabled && item.disabledReason ? ` — ${item.disabledReason}` : "");
++}
++
+@@ -35 +42 @@ async function toNative(item: ResolvedItem): Promise<MenuItem | CheckMenuItem |
+-        text: item.label,
++        text: nativeItemText(item),
+@@ -44 +51 @@ async function toNative(item: ResolvedItem): Promise<MenuItem | CheckMenuItem |
+-        text: item.label,
++        text: nativeItemText(item),
+diff --git a/apps/desktop/src/ui/menu/types.ts b/apps/desktop/src/ui/menu/types.ts
+index 3db0d1f..a1fbb3d 100644
+--- a/apps/desktop/src/ui/menu/types.ts
++++ b/apps/desktop/src/ui/menu/types.ts
+@@ -52,0 +53,2 @@ export interface MenuItemSpec {
++  /** Dynamischer Text (z. B. Dateipfad); bei labelKey englischer Kanon-Fallback. */
++  label?: string;
+@@ -56,0 +59,4 @@ export interface MenuItemSpec {
++  /** false: Kürzel nur anzeigen; der Dispatcher wahrt Textfeld-/Dialog-Scopes. */
++  nativeAccelerator?: boolean;
++  /** Native Menüs zeigen den Deaktivierungsgrund im Text, wenn kein Tooltip verfügbar ist. */
++  showDisabledReason?: boolean;
+@@ -86,0 +93,4 @@ export interface ResolvedItem {
++  /** Kürzel als Text anzeigen, wenn der Feature-Beitrag native Accelerators ausschließt. */
++  shortcutInLabel?: boolean;
++  /** Opt-in für native Statusbeschriftung deaktivierter Feature-Einträge. */
++  showDisabledReason?: boolean;
+
+Implementierungscommit: 778acf19a02bc6f81c395fe5bd906a79ba4a96ae
+Test-/Berichtscommit: separat; letzter Commit im abschließenden Chat-Bericht.
