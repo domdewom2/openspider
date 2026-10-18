@@ -105,30 +105,6 @@ function = "response_facts"
 signature = "pub fn response_facts( _input: &crate::ResponseInput<'_>, ) -> Vec<(os_model::ExtKey, os_model::Value)>"
 
 [[stub]]
-owner = "M2-D04"
-file = "crates/os-export/src/catalog/bulk_canonicals.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
-owner = "M2-D04"
-file = "crates/os-export/src/reports/canonical_chains.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
-owner = "M2-D04"
-file = "crates/os-export/src/reports/non_indexable_canonicals.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
-owner = "M2-D04"
-file = "crates/os-export/src/reports/redirect_canonical_chains.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
 owner = "M2-D05"
 file = "crates/os-analyze/src/analysis/steps/pagination.rs"
 function = "run"

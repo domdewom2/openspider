@@ -1,24 +1,25 @@
-//! Redirects: Redirect & Canonical Chains (OUT-083).
-//!
-//! STUB(M2-D04): Alle Einträge liefern bis zur Umsetzung nur die Kopfzeile (K-14, `stub_run`). Das Paket ersetzt `run`
-//! je Eintrag durch die Auswertung und ergänzt oder schärft Kopfzeile, Voraussetzungen und Aliase; der Katalog in
-//! `catalog/mod.rs` bleibt unverändert, weil er nur `entries()` aufruft.
+//! Redirect- und Canonical-Ketten (OUT-083).
+use super::canonical_chains;
+use crate::catalog::{TableEntry, TableJob};
+use crate::error::ExportError;
+use crate::types::TableWriter;
 
-use crate::catalog::{stub_run, TableEntry};
-
-/// Die Einträge dieser Gruppe in Menüreihenfolge.
 pub fn entries() -> &'static [TableEntry] {
     ENTRIES
 }
-
-// STUB(M2-D04)
 const ENTRIES: &[TableEntry] = &[TableEntry {
     name: "Redirects:Redirect & Canonical Chains",
     aliases: &[],
     file_stem: "Redirects:Redirect & Canonical Chains",
     header: crate::catalog::CHAIN_HEADER,
-    header_fn: None,
+    header_fn: Some(header),
     requires: &[],
     owner: "M2-D04",
-    run: stub_run,
+    run,
 }];
+fn header(job: &TableJob<'_>) -> Result<Vec<String>, ExportError> {
+    canonical_chains::make_header(job, false)
+}
+fn run(job: &TableJob<'_>, writer: &mut dyn TableWriter) -> Result<u64, ExportError> {
+    canonical_chains::write(job, writer, false)
+}
