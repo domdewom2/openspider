@@ -399,11 +399,16 @@ fn dynamic_column_sources_are_registered_per_tab_and_names_are_interned() {
         "Custom Extraction",
         "Custom JavaScript",
         "Link Metrics",
-        "Internal",
     ] {
         assert!(tabs::dynamic_columns(tab, &cfg).is_empty(), "{tab}");
     }
-    assert!(tabs::column_sources().is_empty());
+    // K2-60: D08 has replaced its Internal Link Score source stub.
+    let sources = tabs::column_sources();
+    assert_eq!(sources.len(), 1);
+    assert_eq!(sources[0].0, "Internal");
+    let columns = tabs::dynamic_columns("Internal", &cfg);
+    assert_eq!(columns.len(), 1);
+    assert_eq!(columns[0].key, "Link Score");
     // Namen zur Laufzeit: gleicher Text, dieselbe Referenz.
     let a = intern("Preis (Extraktor 1)");
     let b = intern(&String::from("Preis (Extraktor 1)"));

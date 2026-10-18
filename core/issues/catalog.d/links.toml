@@ -1,8 +1,89 @@
-# OpenSpider – Issue-Katalog ab M2, Tab „Links“ (UI-063/UI-064).
-#
-# Einträge wie in core/issues/catalog.toml (`[[issue]]` mit id, tab, filter, type, priority, type_rule, priority_rule,
-# doc_key, optional override_reason/needs_crawl_analysis/text_params); `tab` ist hier immer "Links". Der Loader liest die
-# M1-Datei und alle Dateien dieses Ordners. Texte: core/issues/texts/{de,en}.d/links.toml (Schlüssel issues.<id>).
-# M2-F02 legt nur die Datei an; die Einträge liefert das Paket des Tabs.
-
 schema = 1
+
+[[issue]]
+id = "links-non-descriptive-anchor-text-in-internal-outlinks"
+tab = "Links"
+filter = "Non-Descriptive Anchor Text In Internal Outlinks"
+type = "Opportunity"
+priority = "Low"
+type_rule = "T-O1"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "links-non-descriptive-anchor-text-in-internal-outlinks"
+
+[[issue]]
+id = "links-pages-with-high-external-outlinks"
+tab = "Links"
+filter = "Pages With High External Outlinks"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W1"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "links-pages-with-high-external-outlinks"
+
+[[issue]]
+id = "links-pages-with-high-internal-outlinks"
+tab = "Links"
+filter = "Pages With High Internal Outlinks"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W1"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "links-pages-with-high-internal-outlinks"
+
+[[issue]]
+id = "links-follow-and-nofollow-internal-inlinks-to-page"
+tab = "Links"
+filter = "Follow & Nofollow Internal Inlinks To Page"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W1"
+priority_rule = "P-L1"
+needs_crawl_analysis = true
+doc_key = "links-follow-and-nofollow-internal-inlinks-to-page"
+
+[[issue]]
+id = "links-internal-nofollow-inlinks-only"
+tab = "Links"
+filter = "Internal Nofollow Inlinks Only"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W1"
+priority_rule = "P-L1"
+needs_crawl_analysis = true
+doc_key = "links-internal-nofollow-inlinks-only"
+
+[[issue]]
+id = "links-outlinks-to-localhost"
+tab = "Links"
+filter = "Outlinks To Localhost"
+type = "Issue"
+priority = "High"
+type_rule = "T-I1"
+priority_rule = "P-H1"
+needs_crawl_analysis = false
+doc_key = "links-outlinks-to-localhost"
+
+[[issue]]
+id = "links-non-indexable-page-inlinks-only"
+tab = "Links"
+filter = "Non-Indexable Page Inlinks Only"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = true
+doc_key = "links-non-indexable-page-inlinks-only"
+
+[[issue]]
+id = "links-pages-with-uncrawlable-internal-outlinks"
+tab = "Links"
+filter = "Pages With Uncrawlable Internal Outlinks"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "links-pages-with-uncrawlable-internal-outlinks"

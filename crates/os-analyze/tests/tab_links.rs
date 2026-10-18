@@ -124,7 +124,7 @@ async fn population_is_internal_html_200_and_counts_exclude_self_links() {
     let fx = crawl_main(&cfg).await;
     check(&fx, &cfg, "All", &ALL_PAGES);
 
-    // Standardspalten = Referenz-Spaltenfolge; `Inlinks` ist eine ausgeblendete Zusatzspalte.
+    // TECH-130 [M2]: Inlinks is now a visible standard column.
     let default = page(&fx.file, &cfg, "All", false);
     assert_eq!(
         default.columns,
@@ -134,6 +134,7 @@ async fn population_is_internal_html_200_and_counts_exclude_self_links() {
             "Indexability Status",
             "Crawl Depth",
             "Link Score",
+            "Inlinks",
             "Unique Inlinks",
             "Unique JS Inlinks",
             "% of Total",
@@ -146,11 +147,7 @@ async fn population_is_internal_html_200_and_counts_exclude_self_links() {
         ]
     );
     let all = page(&fx.file, &cfg, "All", true);
-    assert_eq!(
-        all.columns.last().map(String::as_str),
-        Some("Inlinks"),
-        "Erweiterungsspalte steht hinter den Referenzspalten"
-    );
+    assert_eq!(all.columns, default.columns);
 
     // Startseite: Tiefe 0; 5 Ketten-Seiten + /attrs.html verlinken sie (der Selbstlink zählt nicht).
     assert_eq!(cell(&all, "/", "Crawl Depth"), "0");
@@ -207,11 +204,17 @@ async fn population_is_internal_html_200_and_counts_exclude_self_links() {
 /// Filterzahlen des Tabs „Links“ (eine Zeile je Filter).
 fn counts(file: &CrawlFile, cfg: &CrawlConfig) -> String {
     let mut out = String::new();
-    for c in filter_counts(file, cfg)
-        .unwrap()
-        .into_iter()
-        .filter(|c| c.tab == "Links")
-    {
+    for c in filter_counts(file, cfg).unwrap().into_iter().filter(|c| {
+        c.tab == "Links"
+            && matches!(
+                c.filter.as_str(),
+                "All"
+                    | "Pages With High Crawl Depth"
+                    | "Pages Without Internal Outlinks"
+                    | "Internal Nofollow Outlinks"
+                    | "Internal Outlinks With No Anchor Text"
+            )
+    }) {
         assert_eq!(c.state, FilterState::Ready, "{}", c.filter);
         out.push_str(&format!("{}: {}\n", c.filter, c.count.unwrap()));
     }

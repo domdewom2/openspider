@@ -207,42 +207,6 @@ function = "export_detail"
 signature = "pub fn export_detail( _: &crate::catalog::TableJob<'_>, _: &os_analyze::details::DetailReq<'_>, _: &std::path::Path, _: crate::types::Format, ) -> Result<crate::types::ExportFileInfo, crate::error::ExportError>"
 
 [[stub]]
-owner = "M2-D08"
-file = "crates/os-analyze/src/analysis/steps/link_score.rs"
-function = "run"
-signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
-
-[[stub]]
-owner = "M2-D08"
-file = "crates/os-analyze/src/analysis/steps/links.rs"
-function = "run"
-signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
-
-[[stub]]
-owner = "M2-D08"
-file = "crates/os-analyze/src/tabs/links.rs"
-function = "column_source"
-signature = "pub fn column_source() -> Option<Box<dyn crate::defs::ColumnSource>>"
-
-[[stub]]
-owner = "M2-D08"
-file = "crates/os-analyze/src/tabs/links.rs"
-function = "url_details"
-signature = "pub fn url_details( _: &os_store::CrawlFile, _: &os_model::CrawlConfig, _: os_model::UrlId, ) -> Result<Vec<(String, String)>, crate::ViewError>"
-
-[[stub]]
-owner = "M2-D08"
-file = "crates/os-store/src/queries/anchors.rs"
-function = "detail_rows"
-signature = "pub fn detail_rows( _: &crate::CrawlFile, _: &[os_model::UrlId], _: u64, _: u64, ) -> Result<super::DetailData, crate::StoreError>"
-
-[[stub]]
-owner = "M2-D08"
-file = "crates/os-store/src/queries/anchors.rs"
-function = "register_collations"
-signature = "pub fn register_collations(_conn: &rusqlite::Connection) -> Result<(), crate::StoreError>"
-
-[[stub]]
 owner = "M2-D09"
 file = "crates/os-analyze/src/tabs/structured_data.rs"
 function = "tab"

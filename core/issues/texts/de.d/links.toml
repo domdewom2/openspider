@@ -1,2 +1,40 @@
-# OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „Links“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.links-non-descriptive-anchor-text-in-internal-outlinks]
+what = "Interne Links verwenden einen allgemeinen Ankertext aus der konfigurierten Liste."
+why = "Allgemeine Beschriftungen verraten Lesern und Suchmaschinen wenig über das Ziel."
+fix = "Beschreibe das Linkziel mit einem kurzen, konkreten Ankertext."
+
+[issues.links-pages-with-high-external-outlinks]
+what = "Die Seite erreicht den Schwellwert für verfolgbare externe Links."
+why = "Viele externe Links können den Fokus einer Seite schwächen und ihre Pflege erschweren."
+fix = "Prüfe die Relevanz der Links und entferne unnötige Verweise."
+
+[issues.links-pages-with-high-internal-outlinks]
+what = "Die Seite erreicht den Schwellwert für verfolgbare interne Links."
+why = "Sehr lange Linklisten können wichtige Navigationswege verdecken."
+fix = "Entferne redundante Links und ordne die Navigation nach hilfreichen Zielen."
+
+[issues.links-follow-and-nofollow-internal-inlinks-to-page]
+what = "Die Seite erhält interne Links mit und ohne nofollow."
+why = "Widersprüchliche Linkanweisungen erschweren eine einheitliche interne Verlinkung."
+fix = "Prüfe die Quellseiten und vereinheitliche die Linkattribute, wo es sinnvoll ist."
+
+[issues.links-internal-nofollow-inlinks-only]
+what = "Alle bekannten internen Hyperlinks auf diese Seite sind nofollow."
+why = "Suchmaschinen stehen dadurch weniger nutzbare interne Wege zur Seite zur Verfügung."
+fix = "Ergänze einen passenden verfolgbaren Link, wenn die Seite auffindbar sein soll."
+
+[issues.links-outlinks-to-localhost]
+what = "Die Seite verweist auf einen Loopback-Host außerhalb der Startadresse des Crawls."
+why = "Diese Adressen führen zum Rechner des Besuchers statt zum öffentlichen Dienst."
+fix = "Ersetze Entwicklungsadressen durch die vorgesehenen Produktionsadressen."
+
+[issues.links-non-indexable-page-inlinks-only]
+what = "Nur nicht indexierbare Seiten verlinken intern auf diese indexierbare Seite."
+why = "Auffindbarkeit und interne Gewichtung hängen damit von ausgeschlossenen Seiten ab."
+fix = "Verlinke die Seite von einer passenden indexierbaren Seite."
+
+[issues.links-pages-with-uncrawlable-internal-outlinks]
+what = "Die Seite enthält gespeicherte interne Navigation ohne crawlbaren Hyperlink."
+why = "Suchmaschinen finden Ziele möglicherweise nicht, wenn die Navigation nur per Skript erfolgt."
+fix = "Verwende für Navigationslinks ein Ankerelement mit regulärem href."
