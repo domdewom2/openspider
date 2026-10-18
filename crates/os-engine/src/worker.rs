@@ -1264,6 +1264,22 @@ async fn assemble<F: Fetch>(
     let keep_canonicals = cfg.spider.canonicals.store;
     let keep_hreflang = cfg.spider.hreflang.store;
     let keep_pagination = cfg.spider.pagination.store;
+    // M2-D04 (K2-61): transportiert Canonical-Attribute und den Prüfmarker des Dokumentbaums.
+    if keep_canonicals {
+        batch.ext.extend(
+            os_parse::canonical::page_facts(
+                &canonicals,
+                cfg.advanced.html_validation
+                    && (parsed.is_some() || facts.content_class != ContentClass::Html),
+            )
+            .into_iter()
+            .map(|(key, value)| os_model::ExtWrite {
+                url: item.id,
+                key,
+                value,
+            }),
+        );
+    }
     let canon_rows: Vec<CanonicalRow> = if keep_canonicals {
         canonicals
             .iter()

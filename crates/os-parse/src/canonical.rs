@@ -54,23 +54,56 @@ pub fn extract(doc: &Document, base: &url::Url) -> Vec<CanonicalRef> {
         };
         let (raw, resolved) = raw_and_resolved(base, href);
         out.push(CanonicalRef {
+            invalid_attribute: ["hreflang", "lang", "media", "type"]
+                .iter()
+                .any(|name| el.value().attr(name).is_some()),
             source: HintSource::Html,
             raw,
             resolved,
             in_head: dom::in_head(el),
             order: out.len() as u32,
             xpath: Some(dom::xpath(el)),
-            ..Default::default()
         });
     }
     out
 }
 
-// STUB(M2-D04)
-pub fn response_facts(
-    _input: &crate::ResponseInput<'_>,
+/// Persistierbare Annotationseigenschaften; Quellwerte und Zielvergleich bleiben unverändert.
+pub fn annotation_facts(canonicals: &[CanonicalRef]) -> Vec<(os_model::ExtKey, os_model::Value)> {
+    if canonicals.iter().any(|c| c.invalid_attribute) {
+        vec![(
+            os_model::ExtKey::from_static("canonical.invalid_attribute"),
+            os_model::Value::Bool(true),
+        )]
+    } else {
+        Vec::new()
+    }
+}
+
+/// Coverage für den Canonical-Dokumentbaum (TECH-008/023). Nicht-HTML benötigt keine Head-Prüfung.
+/// Der Aufrufer bestätigt, dass HTML tatsächlich geparst wurde und die Option beim Abruf aktiv war.
+pub fn page_facts(
+    canonicals: &[CanonicalRef],
+    checked: bool,
 ) -> Vec<(os_model::ExtKey, os_model::Value)> {
-    Vec::new()
+    let mut facts = annotation_facts(canonicals);
+    if checked {
+        facts.push((
+            os_model::ExtKey::from_static("canonical.checked"),
+            os_model::Value::Bool(true),
+        ));
+    }
+    facts
+}
+
+/// Link-Header werden auch für PDFs und externe Antworten ausgewertet.
+pub fn response_facts(
+    input: &crate::ResponseInput<'_>,
+) -> Vec<(os_model::ExtKey, os_model::Value)> {
+    if !input.cfg.crawl.spider.canonicals.store {
+        return Vec::new();
+    }
+    annotation_facts(&crate::headers::hints(input.url, input.headers, input.cfg).canonicals)
 }
 
 #[cfg(test)]
