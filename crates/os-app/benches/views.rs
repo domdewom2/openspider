@@ -2,7 +2,7 @@
 //! IPC-Anteil folgt in M2-U31).
 //!
 //! Standard: 100 000 Zeilen; `OPENSPIDER_BENCH_LARGE=1` misst 1 Mio. und 5 Mio. Zeilen (Detail-View je mit bis zu
-//! 1 Mio. Inlinks einer URL). Jede Messung erscheint als Zeile `K05 rows=<n> <metric>=<wert>`; die Zeilenfenster
+//! 1 Mio. Inlinks einer URL), `OPENSPIDER_BENCH_ROWS=<n>` genau eine Größe. Jede Messung erscheint als Zeile `K05 rows=<n> <metric>=<wert>`; die Zeilenfenster
 //! und `view.locate` laufen zusätzlich als criterion-Gruppe `app_view`.
 // spec: UI-141
 // spec: UI-142
@@ -85,16 +85,19 @@ impl Bench {
     }
     /// Waits for a `Building` handle's operation and returns the ready handle.
     async fn ready(&self, h: Value) -> Value {
+        self.try_ready(h).await.unwrap_or_else(|e| panic!("{e:?}"))
+    }
+    async fn try_ready(&self, h: Value) -> Result<Value, os_app::CmdError> {
         if h["state"] == "ready" {
-            return h;
+            return Ok(h);
         }
         let id = h["op"]["opId"].as_str().unwrap().to_string();
         loop {
             let s = self.app.ops().status(&id).unwrap();
             match s.state {
-                OpState::Done => return s.result.unwrap(),
+                OpState::Done => return Ok(s.result.unwrap()),
                 OpState::Running => tokio::time::sleep(Duration::from_millis(1)).await,
-                _ => panic!("{s:?}"),
+                _ => return Err(s.error.unwrap()),
             }
         }
     }
@@ -105,6 +108,37 @@ impl Bench {
             .await;
         let h = self.ready(h).await;
         (h, t.elapsed())
+    }
+    /// Like `timed_update`, but a failure (e.g. the search budget) is reported instead of aborting the run.
+    async fn measured_update(&self, metric: &str, h: &Value, spec: Value) -> Option<Value> {
+        let t = Instant::now();
+        let r = match self
+            .app
+            .dispatch(
+                CallCtx::for_window("main"),
+                "view.update",
+                json!({"viewId":h["viewId"],"spec":spec}),
+            )
+            .await
+        {
+            Ok(h) => self.try_ready(h).await,
+            Err(e) => Err(e),
+        };
+        match r {
+            Ok(h) => {
+                self.report(metric, t.elapsed());
+                Some(h)
+            }
+            Err(e) => {
+                eprintln!(
+                    "K05 rows={} {metric}=failed:{} after_ms={:.1}",
+                    self.rows,
+                    e.message_key,
+                    t.elapsed().as_secs_f64() * 1000.0
+                );
+                None
+            }
+        }
     }
     async fn rows(&self, h: &Value, offset: u64) -> Value {
         self.call(
@@ -203,26 +237,27 @@ async fn scenario(b: &Bench) -> Value {
         b.report(&format!("{metric}_reverse"), d);
     }
     // UI-141: Address substring and regex search.
-    let (s, d) = b
-        .timed_update(
+    if let Some(s) = b
+        .measured_update(
+            "search_substring",
             &h,
             tab("All", json!([]), json!({"kind":"simple","text":"00001"})),
         )
-        .await;
-    b.report("search_substring", d);
-    assert!(s["total"].as_u64().unwrap() > 0);
+        .await
+    {
+        assert!(s["total"].as_u64().unwrap() > 0);
+    }
     let tree = json!({"kind":"group","op":"and","children":[{"kind":"cond","column":"Address","op":"regex","value":"/0+1[0-9]*5$"}]});
-    let (_, d) = b
-        .timed_update(
-            &h,
-            tab(
-                "All",
-                json!([]),
-                json!({"kind":"rules","tree":tree,"caseSensitive":false}),
-            ),
-        )
-        .await;
-    b.report("search_regex", d);
+    b.measured_update(
+        "search_regex",
+        &h,
+        tab(
+            "All",
+            json!([]),
+            json!({"kind":"rules","tree":tree,"caseSensitive":false}),
+        ),
+    )
+    .await;
     // UI-141: cancelling a running build restores the previous view.
     let (h, _) = b.timed_update(&h, tab("All", json!([]), Value::Null)).await;
     let building = b
@@ -269,7 +304,9 @@ async fn scenario(b: &Bench) -> Value {
 }
 
 fn main() {
-    let sizes: Vec<u32> = if std::env::var("OPENSPIDER_BENCH_LARGE").as_deref() == Ok("1") {
+    let sizes: Vec<u32> = if let Ok(n) = std::env::var("OPENSPIDER_BENCH_ROWS") {
+        vec![n.parse().expect("OPENSPIDER_BENCH_ROWS")]
+    } else if std::env::var("OPENSPIDER_BENCH_LARGE").as_deref() == Ok("1") {
         vec![1_000_000, 5_000_000]
     } else {
         vec![100_000]
