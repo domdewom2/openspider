@@ -23,11 +23,21 @@ fn request(cfg: CrawlConfig, start: &str, dir: &tempfile::TempDir) -> CrawlReque
     }
 }
 
+/// Simulierte Zeitkriterien dürfen nicht vom freien RAM des Testrechners abhängen (M2-E02 drosselt sonst Threads).
+fn fixed_memory_probe() {
+    os_engine::memory::set_probe(Some(Arc::new(|| os_engine::memory::Sample {
+        physical_bytes: 16 << 30,
+        available_bytes: 8 << 30,
+        ..Default::default()
+    })));
+}
+
 async fn start(
     site: SimSite,
     cfg: CrawlConfig,
     sink: &MemorySink,
 ) -> (Arc<SimFetcher>, CrawlHandle, tempfile::TempDir) {
+    fixed_memory_probe();
     let fetcher = SimFetcher::new(site);
     let dir = tempfile::tempdir().unwrap();
     let handle = start_crawl(

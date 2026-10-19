@@ -10,7 +10,7 @@ async fn call(app: &os_app::App, name: &str, args: Value) -> Value {
 
 // spec: CRAWL-126 [M2]
 #[tokio::test]
-#[ignore = "wartet auf M2-E04"]
+#[ignore = "M2: wartet auf M2-E04"]
 async fn rules_test_returns_per_rule_matches_from_the_url_trace() {
     let dir = tempfile::tempdir().unwrap();
     let app = common::new_app(dir.path());
@@ -22,7 +22,7 @@ async fn rules_test_returns_per_rule_matches_from_the_url_trace() {
 
 // spec: CRAWL-126 [M2]
 #[tokio::test]
-#[ignore = "wartet auf M2-E04"]
+#[ignore = "M2: wartet auf M2-E04"]
 async fn rules_test_passes_query_removal_and_ordered_replacements() {
     let dir = tempfile::tempdir().unwrap();
     let app = common::new_app(dir.path());
@@ -41,7 +41,7 @@ async fn rules_test_passes_query_removal_and_ordered_replacements() {
 
 // spec: INTEG-082 [M2]
 #[tokio::test]
-#[ignore = "wartet auf M2-D16"]
+#[ignore = "M2: wartet auf M2-D16"]
 async fn config_set_reclassifies_stored_link_paths_without_requests() {
     use os_app::{dto::CrawlConfigDto, pool::CrawlKey, runtime::sessions::SessionInfo, WindowId};
     use os_model::{CrawlConfig, CrawlState, LinkPositionRule};
@@ -108,7 +108,7 @@ async fn config_set_reclassifies_stored_link_paths_without_requests() {
 
 // spec: INTEG-002 [M2]
 #[tokio::test]
-#[ignore = "wartet auf M2-I01"]
+#[ignore = "M2: wartet auf M2-I01"]
 async fn export_uses_explicit_consent_and_authenticated_password_encryption() {
     let dir = tempfile::tempdir().unwrap();
     let secrets = std::sync::Arc::new(os_fetch::MemorySecretStore::new());

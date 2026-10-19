@@ -74,13 +74,12 @@ fn url_details<'a>(
                         os_analyze::details::url_details(file, &s.config, UrlId(args.url_id))
                             .map_err(view_error)?
                     {
+                        // Leerer Text = kein Wert (z. B. Link Score vor dem Analyseschritt, M2-D08).
+                        let value = (!value.is_empty()).then_some(serde_json::Value::String(value));
                         if let Some(row) = rows.iter_mut().find(|row| row.name == name) {
-                            row.value = Some(serde_json::Value::String(value));
+                            row.value = value;
                         } else {
-                            rows.push(NameValue {
-                                name,
-                                value: Some(serde_json::Value::String(value)),
-                            });
+                            rows.push(NameValue { name, value });
                         }
                     }
                     to_json(&rows)

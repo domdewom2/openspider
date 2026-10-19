@@ -297,6 +297,8 @@ impl HttpFetcher {
                 .build()
                 .map_err(|e| FetchError::Config(redact::text(&e.to_string())))?,
             auth: AuthMatcher::new(&self.cfg.basic_auth).map_err(FetchError::Config)?,
+            digest: crate::auth::digest::DigestAuth::default(),
+            hsts: hsts::Policies::default(),
             limiter: None,
             global_jar: self.global_jar.clone(),
         };
@@ -340,6 +342,8 @@ impl HttpFetcher {
                 .build()
                 .map_err(|e| FetchError::Config(redact::text(&e.to_string())))?,
             auth: AuthMatcher::new(&self.cfg.basic_auth).map_err(FetchError::Config)?,
+            digest: crate::auth::digest::DigestAuth::default(),
+            hsts: hsts::Policies::default(),
             limiter: None,
             global_jar: self.global_jar.clone(),
         })

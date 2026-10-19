@@ -3,7 +3,7 @@ use os_model::{CrawlConfig, Value};
 
 // spec: TECH-143
 #[tokio::test]
-#[ignore = "wartet auf M2-E01"]
+#[ignore = "M2: wartet auf M2-E01"]
 async fn captured_uncrawlable_navigation_is_filterable_and_never_queued() {
     let mut cfg = CrawlConfig::default();
     cfg.spider.store_uncrawlable_links = true;

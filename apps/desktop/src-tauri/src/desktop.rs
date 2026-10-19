@@ -327,7 +327,6 @@ mod browser_tests {
         ] {
             assert!(os_app::runtime::hooks::launch_browser_urls(&invalid).is_err());
         }
-        }
     }
 }
 

@@ -123,9 +123,9 @@ async fn export_catalog_uses_configured_entries_and_prerequisites_and_fach_dispa
     assert!(std::fs::read_to_string(result.path)
         .unwrap()
         .contains("https://site.test/old"));
-    let e = fx.op("export.detail",json!({"spec":{"kind":"detail","detail":"crawlPath","urlIds":[2],"params":{},"sort":[]},"selection":{"kind":"ids","ids":[2]},"path":fx.dir.path().join("path.csv"),"format":"csv"})).await.unwrap_err();
+    let e = fx.op("export.detail",json!({"spec":{"kind":"detail","detail":"nGrams","urlIds":[2],"params":{},"sort":[]},"selection":{"kind":"ids","ids":[2]},"path":fx.dir.path().join("path.csv"),"format":"csv"})).await.unwrap_err();
     assert_eq!(e.code, ErrorCode::Unsupported);
-    assert_eq!(e.args["owner"], "M2-D17");
+    assert_eq!(e.args["owner"], "M2-D02");
 }
 // spec: OUT-020
 // spec: OUT-021 [P1]
@@ -208,7 +208,16 @@ async fn url_details_export_contains_every_main_table_property() {
     assert!(text
         .trim_start_matches('\u{feff}')
         .starts_with("Name,Value"));
-    assert_eq!(text.lines().count(), columns.as_array().unwrap().len() + 1);
+    // CSV-Datensätze statt Zeilen: mehrfache Header-Werte stehen als Zeilenumbruch in einer Zelle (K2-63).
+    let (mut quoted, mut records) = (false, 0);
+    for ch in text.chars() {
+        match ch {
+            '"' => quoted = !quoted,
+            '\n' if !quoted => records += 1,
+            _ => {}
+        }
+    }
+    assert_eq!(records, columns.as_array().unwrap().len() + 1);
     assert!(text.contains("Title 1,Same title"));
 }
 

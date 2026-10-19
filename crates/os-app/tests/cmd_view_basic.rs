@@ -172,20 +172,11 @@ async fn links_keep_occurrences_raw_target_and_filter_before_paging() {
 #[tokio::test]
 async fn fach_details_route_to_their_registered_owner_instead_of_fabricating_rows() {
     let fx = Fx::new();
-    for (spec, owner) in [
-        (
-            json!({"kind":"images","urlIds":[1],"search":null,"sort":[]}),
-            "M2-D03",
-        ),
-        (
-            json!({"kind":"detail","detail":"hreflang","urlIds":[1],"params":{},"sort":[]}),
-            "M2-D07",
-        ),
-        (
-            json!({"kind":"detail","detail":"anchors","urlIds":[2],"params":{},"sort":[]}),
-            "M2-D08",
-        ),
-    ] {
+    // K2-60: D03 (Bilder), D07 (Hreflang) und D08 (Anker) liefern echte Zeilen; M2-D02 (N-Gramme) ist noch Stub.
+    for (spec, owner) in [(
+        json!({"kind":"detail","detail":"nGrams","urlIds":[2],"params":{},"sort":[]}),
+        "M2-D02",
+    )] {
         let e = fx
             .app
             .dispatch(

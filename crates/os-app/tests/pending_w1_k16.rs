@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 // spec: UI-091
 #[tokio::test]
-#[ignore = "wartet auf M2-K09"]
+#[ignore = "M2: wartet auf M2-K09"]
 async fn depth_twelve_graph_path_equals_crawl_path() {
     let (dir, file) = fx::depth_twelve();
     let app = common::new_app(&dir.path().join("app"));

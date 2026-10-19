@@ -104,6 +104,36 @@
         }
       },
       "tab": "Internal"
+    },
+    {
+      "filter": {
+        "analysisStep": null,
+        "count": 0,
+        "id": "Flash",
+        "issue": null,
+        "labelTemplate": "Flash",
+        "params": {},
+        "pct": 0.0,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      "tab": "Internal"
+    },
+    {
+      "filter": {
+        "analysisStep": null,
+        "count": 0,
+        "id": "Other",
+        "issue": null,
+        "labelTemplate": "Other",
+        "params": {},
+        "pct": 0.0,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      "tab": "Internal"
     }
   ],
   "version": 42

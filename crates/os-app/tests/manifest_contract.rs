@@ -372,8 +372,8 @@ async fn stubs_answer_unsupported_with_command_and_owner() {
     }
     // Besitzer laut Modulkarte 3.6
     for o in [
-        "M2-K14", "M2-K09", "M2-K17", "M2-O01", "M2-C01",
-        "M2-D19", "M2-D21", "M2-T01", "M2-T02", "M2-U17",
+        "M2-K14", "M2-K09", "M2-K17", "M2-O01", "M2-C01", "M2-D19", "M2-D21", "M2-T01", "M2-T02",
+        "M2-U17",
     ] {
         assert!(owners.contains(o), "kein Stub mit Besitzer {o}");
     }
