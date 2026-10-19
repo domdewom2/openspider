@@ -22,7 +22,7 @@ Der genaue Diff steht in [K2-61.patch](K2-61.patch). Der Nutzerauftrag erlaubt d
 | `apps/desktop/src/ipc/gen/McpSettingsDto.ts` | Neu erzeugte optionale Felder `classes`/`port` | Ableitung ausschließlich der eigenen additiven DTO-Ausgabe. |
 | `apps/desktop/src/ipc/gen/CallLogRow.ts` | Neu erzeugtes optionales Feld `resultBytes` | Ableitung ausschließlich der eigenen additiven DTO-Ausgabe. |
 
-Der Generator lief in ein temporäres Verzeichnis; nur die beiden betroffenen Typdateien wurden übernommen. Keine fremden Stub-Einträge, Testlogik oder Erwartungen wurden verändert. K2-60 und K2-63 waren nicht nötig. Keine neuen Abhängigkeiten oder Manifeständerungen.
+Der Generator lief in ein temporäres Verzeichnis; nur die beiden betroffenen Typdateien wurden übernommen. Keine fremden Stub-Einträge oder Testdateien wurden verändert. Die einzigen regenerierten Goldens sind die beiden oben genannten TypeScript-Dateien. K2-60 und K2-63 waren nicht nötig. Keine neuen Abhängigkeiten oder Manifeständerungen.
 
 ## Prüfungen
 
@@ -31,7 +31,7 @@ Die Vitest-Fixture `fixtures/agent-m2-ui.ts` stellt die bereits vorhandenen IPC-
 ```sh
 cargo fmt --all --check
 cargo clippy --locked --workspace --exclude openspider-desktop --all-targets -j 2 -- -D warnings
-OPENSPIDER_SECRET_STORE=memory cargo test --locked --workspace --exclude openspider-desktop -j 2
+RUST_TEST_THREADS=1 OPENSPIDER_SECRET_STORE=memory cargo test --locked --workspace --exclude openspider-desktop --no-fail-fast -j 2
 cargo deny check licenses bans sources
 npm ci
 npm run -w apps/desktop typecheck
@@ -41,9 +41,13 @@ npm run -w apps/desktop check:static
 npx playwright test --config e2e/mcp/playwright.config.ts --project=chromium --project=webkit --workers=2
 ```
 
-Lokale Umgebung: macOS arm64, Rust 1.99.1, Node 22.20.0. Frontend: 209 Tests in 24,50 s; Browser: 10 Tests in 12,9 s; statische Prüfungen: 28 Tests in 1,69 s plus aktuelle IPC-Wrapper und npm-Lizenzprüfung. `npm ci`, TypeScript, Formatierung, Clippy (2 min 52 s) und `cargo deny` sind grün.
+Lokale Umgebung: macOS arm64, Rust 1.99.1, Node 22.20.0. Frontend: 209 Tests in 13,50 s, darunter 18 neue U25-Komponententests; Browser: 10 Tests in 8,8 s; statische Prüfungen: 28 Tests in 1,69 s plus aktuelle IPC-Wrapper und npm-Lizenzprüfung. `npm ci`, TypeScript, Formatierung, Clippy (2 min 52 s), `cargo deny` und die Neutralitätsprüfung sind grün.
 
 Die ersten beiden Rust-Test-Builds scheiterten beim Linken an einem vollen gemeinsamen Datenträger, noch vor der Testausführung. Nur der eigene Cargo-Buildordner wurde bereinigt. Der erneute Workspace-Testlauf verwendet deshalb zusätzlich `CARGO_INCREMENTAL=0`, `CARGO_PROFILE_DEV_DEBUG=0`, `CARGO_PROFILE_TEST_DEBUG=0`, `CARGO_PROFILE_DEV_OPT_LEVEL=1`, `CARGO_PROFILE_TEST_OPT_LEVEL=1`, `CARGO_PROFILE_DEV_STRIP=symbols` und `CARGO_PROFILE_TEST_STRIP=symbols`. Das verändert weder Quellcode noch Features; Debug-Assertions bleiben aktiv. Keine fremden Buildordner wurden gelöscht.
+
+Im anschließenden parallelen Workspace-Lauf schlug der bestehende Engine-Test `core_robots::blocked_urls_get_status_zero_are_never_requested_and_do_not_use_up_the_limit` fehl (`crates/os-engine/tests/core_robots.rs:100`: drei statt vier Requests). Derselbe unveränderte Workspace-Test war isoliert grün. Der vollständige Wiederholungslauf verwendet deshalb zusätzlich `RUST_TEST_THREADS=1` und `--no-fail-fast`, ohne einen Test zu überspringen. Die Ursache des sporadischen Engine-Fehlers ist außerhalb von U25 weiterzuverfolgen; weder Engine-Verhalten noch Test-Erwartung wurden angepasst.
+
+Endergebnis des vollständigen Workspace-Laufs einschließlich Doc-Tests: **3.028 bestanden, 0 fehlgeschlagen, 89 bestehende Ignores, 411 abgeschlossene Testsuites, Exit-Code 0**. Der serielle Wiederholungslauf dauerte etwa 30 min 20 s bei vorhandenem Build-Cache; der kompakte Erstaufbau zuvor 22 min 33 s. Alle drei `core_robots`-Tests sind im vollständigen Wiederholungslauf grün. U25 fügt keine Ignores hinzu. Keine CI-Lauf-ID: gemäß Auftrag kein Push, Merge oder PR.
 
 ## Abweichungen und offene Integration
 

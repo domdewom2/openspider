@@ -291,8 +291,8 @@ it("uses the canonical German status strings, plural rules and strict port valid
 });
 
 // spec: AGENT-043
-it("redacts credentials in JSON, TOML, URL userinfo and bearer text", () => {
-  for (const text of [`{"access_token":"${TEST_TOKEN}"}`, `OPENAI_API_KEY = "${TEST_TOKEN}"`, `https://user:${TEST_TOKEN}@example.test/`, `Authorization: Bearer ${TEST_TOKEN}`, `url?api_key=${TEST_TOKEN}&name=ok`]) expect(redactText(text)).not.toContain(TEST_TOKEN);
+it("redacts credentials in JSON, TOML, CLI arguments, URL userinfo and bearer text", () => {
+  for (const text of [`{"access_token":"${TEST_TOKEN}"}`, `OPENAI_API_KEY = "${TEST_TOKEN}"`, `https://user:${TEST_TOKEN}@example.test/`, `Authorization: Bearer ${TEST_TOKEN}`, `url?api_key=${TEST_TOKEN}&name=ok`, `["mcp", "--token", "${TEST_TOKEN}"]`, `--api-key '${TEST_TOKEN}'`, `--password ${TEST_TOKEN}`]) expect(redactText(text)).not.toContain(TEST_TOKEN);
 });
 
 // spec: OUT-285 [P1]

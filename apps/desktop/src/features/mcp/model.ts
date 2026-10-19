@@ -38,6 +38,7 @@ export function errorKey(error: unknown): string {
 export function redactText(text: string): string {
   return text
     .replace(/\bBearer\s+[^\s"'\\,}]+/gi, "Bearer [redacted]")
+    .replace(/((?:["']?)--[\w-]*(?:token|secret|password|api[_-]?key|credential)[\w-]*(?:["']?)(?:\s*,\s*|\s+))("(?:\\.|[^"\\])*"|'[^']*'|[^\s,\]}]+)/gi, "$1\"[redacted]\"")
     .replace(/((?:["']?)(?:[\w.-]*(?:token|secret|password|authorization|api[_-]?key|cookie|credential)[\w.-]*)(?:["']?)\s*[:=]\s*)("(?:\\.|[^"\\])*"|'[^']*'|[^\s,;}&]+)/gi, "$1\"[redacted]\"")
     .replace(/(https?:\/\/)[^\s/@]+:[^\s/@]+@/gi, "$1[redacted]@");
 }
