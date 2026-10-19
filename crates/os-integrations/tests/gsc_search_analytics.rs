@@ -161,15 +161,32 @@ async fn connecting_sends_exactly_one_site_list_request() {
         client_secret: None,
         scopes: vec![],
     };
-    source.test_connection(&ctx, &credential).await.unwrap();
+    let checked = source.test_connection(&ctx, &credential).await.unwrap();
     assert_eq!(mock.requests().len(), 1);
+    // Konto-Kennung und Beschriftung kommen aus der Property-Liste und sind beim erneuten Verbinden gleich.
+    assert!(checked.account_id.starts_with("gsc-"));
+    assert_eq!(checked.label, "https://integ.test/ (URL-Präfix) (+2)");
+    assert_eq!(checked.access_token.as_deref(), Some("good"));
+    let again = source.test_connection(&ctx, &credential).await.unwrap();
+    assert_eq!(again.account_id, checked.account_id);
+    mock.set_sites(&[("sc-domain:other.test", "siteOwner")]);
+    let other = source.test_connection(&ctx, &credential).await.unwrap();
+    assert_ne!(other.account_id, checked.account_id);
+    assert_eq!(other.label, "other.test (Domain)");
+    mock.set_sites(&[
+        ("sc-domain:integ.test", "siteOwner"),
+        ("https://integ.test/", "siteFullUser"),
+        ("https://integ.test/blog/", "siteRestrictedUser"),
+        ("https://unverified.test/", "siteUnverifiedUser"),
+    ]);
+    assert_eq!(mock.requests().len(), 3);
     assert_eq!(mock.requests()[0].endpoint, "sites");
     let bad = Credential {
         access_token: Some("bad".into()),
         ..credential
     };
     assert!(source.test_connection(&ctx, &bad).await.is_err());
-    assert_eq!(mock.requests().len(), 2);
+    assert_eq!(mock.requests().len(), 4);
     server.stop().await;
 }
 

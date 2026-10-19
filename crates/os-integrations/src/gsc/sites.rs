@@ -160,3 +160,28 @@ pub fn most_specific<'a>(url: &str, properties: &'a [Property]) -> Option<&'a Pr
 pub fn connected_label(account: &str, property: &str) -> String {
     format!("Verbunden ({account} / {property})")
 }
+
+/// Stabile Konto-Kennung und Beschriftung aus der Property-Liste (INTEG-003/110). Ohne Identitätsscope liefert Google
+/// keine Konto-ID; die Kennung ist daher ein Hash über die sortierten Properties mit Berechtigung, die Beschriftung
+/// nennt die erste auswählbare Property und die Zahl der weiteren. Ein erneutes Verbinden desselben Kontos ergibt
+/// dieselbe Kennung und überschreibt den gespeicherten Eintrag.
+pub fn account_identity(properties: &[Property]) -> (String, String) {
+    let mut keys: Vec<String> = properties
+        .iter()
+        .map(|p| format!("{}\u{1f}{}", p.site_url, p.permission))
+        .collect();
+    keys.sort();
+    // FNV-1a, 64 Bit: kein Geheimnis, nur eine stabile Kennung.
+    let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
+    for byte in keys.join("\u{1e}").bytes() {
+        hash ^= u64::from(byte);
+        hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
+    }
+    let selectable: Vec<&Property> = properties.iter().filter(|p| p.selectable()).collect();
+    let label = match selectable.split_first() {
+        None => "Search Console".to_string(),
+        Some((first, [])) => first.label(),
+        Some((first, rest)) => format!("{} (+{})", first.label(), rest.len()),
+    };
+    (format!("gsc-{hash:016x}"), label)
+}

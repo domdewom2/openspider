@@ -237,8 +237,13 @@ impl ApiSource for GscSource {
                 .clone()
                 .or(credential.api_key.clone());
             let http = GscHttp::new(ctx, &options, token, self.clock.clone())?;
-            list_properties(&http).await.map_err(|e| e.to_api_error())?;
-            Ok(credential.clone())
+            let properties = list_properties(&http).await.map_err(|e| e.to_api_error())?;
+            // Kennung und Beschriftung aus der Property-Liste (OAuth ohne Identitätsscope, siehe `oauth`).
+            let (account_id, label) = sites::account_identity(&properties);
+            let mut credential = credential.clone();
+            credential.account_id = account_id;
+            credential.label = label;
+            Ok(credential)
         })
     }
 
