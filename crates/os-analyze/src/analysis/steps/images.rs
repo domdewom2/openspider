@@ -16,7 +16,9 @@ pub fn run(
     }
     let tx = file.conn().unchecked_transaction()?;
     // Nicht korreliert: alle img/srcset-Ziele einmal lesen, nicht je Hintergrundinstanz.
-    tx.execute_batch("CREATE TEMP TABLE d03_background(id INTEGER PRIMARY KEY);
+    tx.execute_batch("DROP TABLE IF EXISTS temp.d03_background;
+      DROP TABLE IF EXISTS temp.d03_changed;
+      CREATE TEMP TABLE d03_background(id INTEGER PRIMARY KEY);
       INSERT INTO d03_background SELECT DISTINCT image_id FROM image_instances
         WHERE image_id IS NOT NULL AND (source='css' OR origin='Dynamically Loaded')
         AND image_id NOT IN (SELECT image_id FROM image_instances WHERE source IN ('img','srcset') AND image_id IS NOT NULL);

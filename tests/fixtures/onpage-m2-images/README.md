@@ -10,4 +10,6 @@ Alle Inhalte sind eigens erzeugt. Keine Referenzdaten.
 
 Dateiformatgrundlagen: [PNG](https://www.w3.org/TR/png-3/), [WebP](https://developers.google.com/speed/webp/docs/riff_container), [AVIF](https://aomediacodec.github.io/av1-avif/index.html). Der Bildkopfleser dekodiert keine Pixel.
 
-Paketbericht mit Prüfungen, Fremdergänzungen und Fremdbefund: [REPORT.md](REPORT.md).
+Paketbericht mit Prüfungen, Fable-Fixes und K2-63-Erwartungsänderung: [M2-D03](../../../docs/plan/M2-reports/d03.md).
+
+Offene Übergabe an Planer/N01: [K2-Klärung zu ONPAGE-179](K2-clarifications.md).

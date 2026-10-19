@@ -303,8 +303,14 @@ pub fn instance_rows(
         "c1 COLLATE OS_TEXT".to_string(),
         "id".to_string(),
     ]);
-    let sql = format!("{cte} SELECT {}, (SELECT COUNT(*) FROM cells) FROM cells ORDER BY {} LIMIT :limit OFFSET :offset",
-        (0..INSTANCE_COLUMNS.len()).map(|i| format!("c{i}")).collect::<Vec<_>>().join(","), order.join(","));
+    let sql = format!(
+        "{cte} SELECT {}, COUNT(*) OVER () FROM cells ORDER BY {} LIMIT :limit OFFSET :offset",
+        (0..INSTANCE_COLUMNS.len())
+            .map(|i| format!("c{i}"))
+            .collect::<Vec<_>>()
+            .join(","),
+        order.join(",")
+    );
     let mut stmt = file.conn().prepare(&sql)?;
     bind_instance_params(&mut stmt, cfg, req)?;
     let mut cursor = stmt.raw_query();

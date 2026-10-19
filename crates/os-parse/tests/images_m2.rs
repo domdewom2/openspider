@@ -105,6 +105,7 @@ fn facts(body: &[u8], enabled: bool, status: u16) -> Vec<(os_model::ExtKey, Valu
 // spec: ONPAGE-172
 #[test]
 fn header_extension_reads_five_formats_and_primary_avif_item() {
+    assert!(facts(&[], true, 200).is_empty());
     for name in [
         "header.png",
         "header.gif",
@@ -134,4 +135,28 @@ fn header_extension_reads_five_formats_and_primary_avif_item() {
     }
     assert!(facts(b"<svg width='800' height='600'></svg>", true, 200).is_empty());
     assert!(facts(&[0; 32], true, 200).is_empty());
+}
+
+// spec: ONPAGE-172
+#[test]
+fn truncated_response_does_not_publish_header_dimensions() {
+    let body = fixture("header.png");
+    let mut cfg = CrawlConfig::default();
+    cfg.images.real_dimensions_from_header = true;
+    let parse = ParseConfig::from_crawl_config(&cfg);
+    // The retained prefix contains dimensions, but Content-Length exceeds the stored body.
+    assert!(!facts(&body[..33], true, 200).is_empty());
+    let input = ResponseInput {
+        url: &url::Url::parse("https://cdn.test/image").unwrap(),
+        internal: false,
+        purpose: FetchPurpose::External,
+        status: 200,
+        headers: &[],
+        body: &body[..33],
+        content_length: Some(body.len() as u64),
+        untruncated_bytes: Some(body.len() as u64),
+        truncated: true,
+        cfg: &parse,
+    };
+    assert!(os_parse::response_ext(&input).is_empty());
 }

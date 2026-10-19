@@ -218,7 +218,10 @@ pub fn extract(doc: &Document, base: &url::Url) -> Vec<ImageInstance> {
 pub fn response_facts(
     input: &crate::ResponseInput<'_>,
 ) -> Vec<(os_model::ExtKey, os_model::Value)> {
-    if !input.cfg.crawl.images.real_dimensions_from_header || !(200..300).contains(&input.status) {
+    if !input.cfg.crawl.images.real_dimensions_from_header
+        || !(200..300).contains(&input.status)
+        || input.truncated
+    {
         return Vec::new();
     }
     let Some((w, h)) = header_dimensions(input.body) else {

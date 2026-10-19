@@ -106,7 +106,7 @@ const ENTRIES: &[TableEntry] = &[
         file_stem: "Images:Background Images Inlinks",
         header: crate::catalog::IMAGE_HEADER,
         header_fn: None,
-        requires: &[],
+        requires: &[ReportRequirement::Rendering],
         owner: "M2-D03",
         run: background,
     },
@@ -129,11 +129,12 @@ fn run(
 ) -> Result<u64, crate::ExportError> {
     let state = os_analyze::views::state_of(job.file, job.cfg, "Images", filter.tab_filter())?;
     if !state.yields_rows() {
-        return Err(crate::ExportError::Output(format!(
+        tracing::warn!(
             "{} requires Images:{} ({state:?})",
             job.entry_name,
             filter.tab_filter()
-        )));
+        );
+        return Ok(0);
     }
     let kinds: Vec<_> = images::INSTANCE_COLUMNS[..12]
         .iter()
@@ -297,21 +298,68 @@ mod tests {
         );
     }
     // spec: OUT-053
+    // spec: OUT-112
     #[test]
     fn post_analysis_exports_report_missing_prerequisites_and_inline_backgrounds_work() {
+        use calamine::{Reader, Xlsx};
         let (dir, file, mut cfg) = setup();
         let tabs = os_analyze::tabs::all();
+        os_analyze::analysis::persist::write_step(
+            &file,
+            AnalysisStep::Images,
+            StepState::Pending,
+            None,
+            None,
+        )
+        .unwrap();
+        for mode in [RenderingMode::Text, RenderingMode::JavaScript] {
+            cfg.rendering.mode = mode;
+            for entry in &entries()[5..] {
+                let job = TableJob {
+                    entry_name: entry.name,
+                    tabs: &tabs,
+                    file: &file,
+                    cfg: &cfg,
+                };
+                for format in [Format::Csv, Format::Xlsx] {
+                    let path = dir.path().join(entry.file_name(if format == Format::Csv {
+                        "csv"
+                    } else {
+                        "xlsx"
+                    }));
+                    let info = catalog::export_table(entry, &job, &path, format).unwrap();
+                    assert_eq!(info.rows, 0);
+                    if mode == RenderingMode::Text
+                        && entry.requires.contains(&ReportRequirement::Rendering)
+                    {
+                        assert_eq!(
+                            info.warnings,
+                            [format!(
+                                "report '{}' requires JavaScript rendering",
+                                entry.name
+                            )]
+                        );
+                    }
+                    if format == Format::Csv {
+                        let text = std::fs::read_to_string(path).unwrap();
+                        let mut reader = csv::Reader::from_reader(
+                            text.trim_start_matches('\u{feff}').as_bytes(),
+                        );
+                        assert_eq!(
+                            reader.headers().unwrap().iter().collect::<Vec<_>>(),
+                            catalog::IMAGE_HEADER
+                        );
+                        assert_eq!(reader.records().count(), 0);
+                    } else {
+                        let mut workbook: Xlsx<_> = calamine::open_workbook(path).unwrap();
+                        let range = workbook.worksheet_range_at(0).unwrap().unwrap();
+                        assert_eq!(range.height(), 1);
+                        assert_eq!(range.width(), 12);
+                    }
+                }
+            }
+        }
         cfg.rendering.mode = RenderingMode::Text;
-        let entry = &entries()[6];
-        let job = TableJob {
-            entry_name: entry.name,
-            tabs: &tabs,
-            file: &file,
-            cfg: &cfg,
-        };
-        let err = catalog::export_table(entry, &job, &dir.path().join("missing.csv"), Format::Csv)
-            .unwrap_err();
-        assert!(err.to_string().contains("NeedsRendering"));
         cfg.images.parse_inline_css_backgrounds = true;
         os_analyze::analysis::persist::write_step(
             &file,

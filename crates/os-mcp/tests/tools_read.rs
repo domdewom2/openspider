@@ -1714,6 +1714,19 @@ async fn issues_that_need_the_crawl_analysis_are_named_instead_of_counted() {
         .as_array()
         .expect("nicht auswertbare Issues");
     assert!(!pending.is_empty());
-    assert!(pending.iter().all(|p| p["state"] == "needs_crawl_analysis"));
+    // spec: ONPAGE-007, ONPAGE-178, ONPAGE-179, ONPAGE-180
+    assert!(pending.iter().all(|p| {
+        let own_image_filter = p["tab"] == "Images"
+            && matches!(
+                p["filter"].as_str(),
+                Some("Background Images" | "Missing Size Attributes" | "Incorrectly Sized Images")
+            );
+        p["state"]
+            == if own_image_filter {
+                "needs_rendering"
+            } else {
+                "needs_crawl_analysis"
+            }
+    }));
     client.cancel().await;
 }

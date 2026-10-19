@@ -107,6 +107,10 @@ fn backgrounds_exclude_img_and_srcset_on_any_page_and_reanalysis_is_atomic() {
         ["bg.png", "dynamic.png"]
     );
     let seq = os_store::queries::change_seq(file.conn()).unwrap();
+    // A reused connection may still contain scratch tables from an earlier invocation.
+    file.conn()
+        .execute_batch("CREATE TEMP TABLE d03_background(stale TEXT); CREATE TEMP TABLE d03_changed(stale TEXT);")
+        .unwrap();
     analyze(&file, &cfg);
     assert_eq!(os_store::queries::change_seq(file.conn()).unwrap(), seq);
     file.conn().execute("INSERT INTO image_instances(page_id,image_id,src_raw,source,alt_present,position) VALUES (2,13,'bg.png','srcset',1,99)",[]).unwrap();
@@ -289,6 +293,8 @@ fn details_page_and_image_selection_preserve_parity_columns_and_empty_facts() {
         3,
         500,
     );
+    assert_eq!(page1.total, all.total);
+    assert_eq!(page2.total, all.total);
     assert_eq!([page1.rows, page2.rows].concat(), all.rows);
     assert_eq!(all.total, 17);
 }
