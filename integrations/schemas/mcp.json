@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OpenSpider STDIO launch configuration",
+  "type": "object", "additionalProperties": false, "required": ["mcpServers"],
+  "properties": {
+    "mcpServers": {
+      "type": "object", "additionalProperties": false, "required": ["openspider"],
+      "properties": {
+        "openspider": {
+          "type": "object", "additionalProperties": false, "required": ["command", "args"],
+          "properties": {
+            "command": { "const": "node" },
+            "args": { "const": ["${CLAUDE_PLUGIN_ROOT}/scripts/launch.mjs"] }
+          }
+        }
+      }
+    }
+  }
+}

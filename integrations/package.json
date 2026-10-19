@@ -1,0 +1,17 @@
+{
+  "name": "openspider-integrations",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync": "node scripts/sync-skill.mjs",
+    "validate": "node scripts/validate.mjs",
+    "test": "node --test tests/contracts.test.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "eval:report": "node scripts/eval-report.mjs"
+  },
+  "engines": { "node": ">=22" },
+  "devDependencies": {
+    "ajv": "8.20.0",
+    "yaml": "2.9.1"
+  }
+}
