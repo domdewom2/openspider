@@ -18,7 +18,7 @@ fn paths(file: &os_store::CrawlFile, cfg: &CrawlConfig, base: &str, filter: &str
 }
 // spec: TECH-011 [M2]
 #[tokio::test]
-#[ignore = "wartet auf M2-E01"]
+#[ignore = "M2: wartet auf M2-E01"]
 async fn respect_canonical_hides_sources_but_preserves_crawling_and_the_canonicalised_filter() {
     let mut cfg = CrawlConfig::default();
     cfg.advanced.respect_canonical = true;

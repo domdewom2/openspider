@@ -6,7 +6,7 @@ use os_model::{CrawlConfig, Value};
 // spec: ONPAGE-064
 // spec: CRAWL-018 [M2]
 #[tokio::test]
-#[ignore = "wartet auf M2-E03"]
+#[ignore = "M2: wartet auf M2-E03"]
 async fn hsts_upgrade_is_synthetic_and_respects_the_switch() {
     for enabled in [true, false] {
         let mut cfg = CrawlConfig::default();

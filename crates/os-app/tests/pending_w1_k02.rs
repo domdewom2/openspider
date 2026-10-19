@@ -12,7 +12,7 @@ use std::sync::Arc;
 
 // spec: UI-011 [P1]
 #[tokio::test]
-#[ignore = "wartet auf M2-K06"]
+#[ignore = "M2: wartet auf M2-K06"]
 async fn parsed_rules_reach_the_app_view_and_invalid_regex_preserves_it() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("fx-ui-basic.ospider");

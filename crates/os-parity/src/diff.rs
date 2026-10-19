@@ -336,11 +336,13 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
         if mapping.dedupe_reference && srow.ordinal > 0 {
             continue;
         }
+        // Blockformat: Zeilen zu Filtern außerhalb von M1 werden nur gezählt, auch wenn OpenSpider ab M2 eine
+        // eigene Zeile dazu liefert (Welle 1 setzt weitere Tabs um); der Vergleich folgt mit den M2-Mappings (P01).
+        if blocks_outside_m1(mapping, &srow.tuple) {
+            ignored_ref_rows.push(srow.display.clone());
+            continue;
+        }
         let Some(&oi) = os_index.get(srow.id.as_str()) else {
-            if blocks_outside_m1(mapping, &srow.tuple) {
-                ignored_ref_rows.push(srow.display.clone());
-                continue;
-            }
             match deviations
                 .iter()
                 .position(|d| d.excuses_row(Scope::MissingInOs, &srow.tuple))
