@@ -1717,14 +1717,10 @@ async fn issues_that_need_the_crawl_analysis_are_named_instead_of_counted() {
     // M2-D09 replaces the SD stubs: its two issues require an enabled extraction format.
     // ONPAGE-079: Broken Bookmark requires advanced.crawl_fragments (K2-63).
     // spec: ONPAGE-099, ONPAGE-108, TECH-008 [P1]
-    let mut outside_head = 0;
     for issue in pending {
         let expected = match (issue["tab"].as_str(), issue["filter"].as_str()) {
             // TECH-008 / K2-44, K2-63: Outside-Filter benötigen Prüfmarker pro URL.
-            (_, Some("Outside <head>")) => {
-                outside_head += 1;
-                "needs_recrawl"
-            }
+            (_, Some("Outside <head>")) => "needs_recrawl",
             (Some("Structured Data"), Some("Missing Structured Data" | "Parse Errors")) => {
                 "needs_config"
             }
@@ -1738,10 +1734,10 @@ async fn issues_that_need_the_crawl_analysis_are_named_instead_of_counted() {
             _ => "needs_crawl_analysis",
         };
         let state = issue["state"].as_str().unwrap_or_default();
-        let ok = state == expected || (expected == "needs_crawl_analysis" && state == "needs_config");
+        let ok =
+            state == expected || (expected == "needs_crawl_analysis" && state == "needs_config");
         assert!(ok, "nicht ausgewertetes Issue: {issue}");
     }
-    assert!(outside_head >= 2, "Outside-<head>-Filter: {outside_head}");
     assert!(pending.iter().any(|p| p["state"] == "needs_crawl_analysis"));
     client.cancel().await;
 }

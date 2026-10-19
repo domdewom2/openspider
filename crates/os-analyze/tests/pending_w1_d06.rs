@@ -7,7 +7,7 @@ use os_model::{CrawlConfig, FilterState};
 
 // spec: TECH-051 [M2]
 #[tokio::test]
-#[ignore = "wartet auf M2-E01"]
+#[ignore = "M2: wartet auf M2-E01"]
 async fn respect_noindex_hides_noindex_urls_except_in_the_directives_filters() {
     let mut cfg = CrawlConfig::default();
     cfg.advanced.respect_noindex = true;
@@ -39,7 +39,7 @@ async fn respect_noindex_hides_noindex_urls_except_in_the_directives_filters() {
 // spec: TECH-008 [M2]
 // spec: TECH-065
 #[tokio::test]
-#[ignore = "wartet auf M2-D10"]
+#[ignore = "M2: wartet auf M2-D10"]
 async fn outside_head_filter_needs_html_validation() {
     let cfg = CrawlConfig::default();
     let fx = crawl_fixture("tech-m2-directives", cfg.clone()).await;

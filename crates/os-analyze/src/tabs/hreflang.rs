@@ -23,7 +23,7 @@
 //! geprüft (K-35). Ist `hreflang.allow_script_subtag` aus, gilt jeder Code in der Form `ll-Ssss[-RR]` als
 //! ungültig – die Entscheidung fällt hier im Prädikat und wirkt nach einer Konfigurationsänderung ohne Recrawl.
 
-use crate::defs::{intern, Requirement};
+use crate::defs::{intern, register_coverage_domain, Requirement};
 use crate::details::{DetailReq, DetailRows};
 use crate::ViewError;
 use os_model::{AnalysisStep, CrawlConfig, HreflangOverLimit, Value};
@@ -183,6 +183,13 @@ fn params(cfg: &CrawlConfig) -> Vec<(&'static str, Value)> {
 /// der Code, dann die URL – `HTML hreflang 1`, `HTML hreflang 1 URL`, `HTML hreflang 2`, … (ebenso `HTTP` und
 /// `Sitemap`). Die Anzahl der Indizes ist das Maximum über die Ansicht.
 pub fn tab() -> TabDef {
+    // Der Prüfmarker der HTML-Validierung (M2-D10) existiert nur für geparste HTML-Seiten; Sitemap-/HTTP-
+    // Annotationen anderer URLs zählen nicht als ungeprüft (TECH-008, K2-63).
+    register_coverage_domain(
+        "Hreflang",
+        "validation.checked",
+        "u.content_class = 'HTML' AND u.status_code BETWEEN 200 AND 299",
+    );
     TabDef {
         id: "Hreflang",
         population: POPULATION,

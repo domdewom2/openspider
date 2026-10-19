@@ -12,7 +12,7 @@ Multiple Entries: 0
 Missing Self Reference: 0
 Not Using Canonical: 0
 Missing X-Default: 2
-Outside <head>: needs_recrawl
+Outside <head>: 0
 All: 5
 URLs In Sitemap: needs_crawl_analysis
 URLs Not In Sitemap: needs_crawl_analysis

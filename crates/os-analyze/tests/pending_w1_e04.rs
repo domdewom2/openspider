@@ -3,7 +3,7 @@ use os_model::{CrawlConfig, Value};
 
 // spec: ONPAGE-079
 #[tokio::test]
-#[ignore = "wartet auf M2-E01"]
+#[ignore = "M2: wartet auf M2-E01"]
 async fn fragment_rows_reuse_one_fetch_and_base_bookmarks() {
     // Fixture: onpage-url.
     let mut cfg = CrawlConfig::default();

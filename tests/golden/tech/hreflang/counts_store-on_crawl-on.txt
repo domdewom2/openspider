@@ -12,4 +12,4 @@ Multiple Entries: 1
 Missing Self Reference: 0
 Not Using Canonical: 0
 Missing X-Default: 7
-Outside <head>: needs_recrawl
+Outside <head>: 0

@@ -6,7 +6,7 @@ use os_model::{CrawlConfig, FilterState};
 // spec: TECH-008 [M2]
 // spec: TECH-086
 #[tokio::test]
-#[ignore = "wartet auf M2-D10"]
+#[ignore = "M2: wartet auf M2-D10"]
 async fn crawl_transports_validation_coverage_for_outside_hreflang() {
     let mut cfg = CrawlConfig::default();
     cfg.advanced.html_validation = true;

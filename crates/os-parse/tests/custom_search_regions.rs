@@ -513,7 +513,7 @@ fn content_area_text_shares_word_count_rules_including_blank_and_nested_rules() 
             ..Default::default()
         },
     ] {
-        let text = os_parse::content::area_text(&doc, &area);
+        let text = os_parse::content::area_text_flat(&doc, &area);
         // This fixture has no list items (whose word-count bonus is intentional).
         assert_eq!(
             text.split_whitespace().count() as u32,

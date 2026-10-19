@@ -2,7 +2,7 @@
 //!
 //! Head/body HTML is reserialized via `inner_html()` from the repaired HTML5 DOM
 //! (INTEG-024/025); entity spelling and attribute order can differ from the source.
-//! Content Area uses `content::area_text`, sharing ONPAGE-140 rules and traversal
+//! Content Area uses `content::area_text_flat`, sharing ONPAGE-140 rules and traversal
 //! with word count. Regions, their lowercase text and the XPath tree are cached per page.
 
 use std::cell::OnceCell;
@@ -144,7 +144,7 @@ fn regions(
         }
         SearchScope::PageText => vec![visible_text(doc, false)],
         SearchScope::PageTextNoAnchors => vec![visible_text(doc, true)],
-        SearchScope::ContentArea => vec![crate::content::area_text(doc, area)],
+        SearchScope::ContentArea => vec![crate::content::area_text_flat(doc, area)],
         SearchScope::XPath => match xpath.get_or_insert_with(|| XPathDocument::new(doc)) {
             Ok(xpath) => xpath.text(filter.xpath.as_deref().unwrap_or(""))?,
             Err(error) => return Err(error.clone()),

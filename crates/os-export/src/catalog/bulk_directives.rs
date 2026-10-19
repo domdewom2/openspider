@@ -230,7 +230,7 @@ mod tests {
     async fn every_p1_filter_exports_its_actual_inlinks_in_standard_format() {
         let cfg = CrawlConfig::default();
         let fx = crawl_fixture("tech-m2-directives", cfg.clone()).await;
-        fx.file.conn().execute("INSERT INTO url_ext(url_id, key, v_int) SELECT id, 'validation.checked', 1 FROM urls", []).unwrap();
+        fx.file.conn().execute("INSERT OR REPLACE INTO url_ext(url_id, key, v_int) SELECT id, 'validation.checked', 1 FROM urls", []).unwrap();
         let tabs = os_analyze::tabs::all();
         let tab = tabs.iter().find(|t| t.id == "Directives").unwrap();
         let out = fx.dir.path().join("exports");

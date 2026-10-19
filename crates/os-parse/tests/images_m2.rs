@@ -85,11 +85,18 @@ fn inline_css_extension_adds_instances_without_duplicating_existing_css_links() 
         .iter()
         .any(|i| ["lazy.png", "icon.png", "og.png", "font.woff"].contains(&i.src_raw.as_str())));
 }
+/// Nur die Bildfakten; andere Antwortmodule (z. B. Pagination, M2-D05) liefern eigene Schlüssel.
+fn image_only(facts: Vec<(os_model::ExtKey, Value)>) -> Vec<(os_model::ExtKey, Value)> {
+    facts
+        .into_iter()
+        .filter(|(key, _)| key.as_str().starts_with("image."))
+        .collect()
+}
 fn facts(body: &[u8], enabled: bool, status: u16) -> Vec<(os_model::ExtKey, Value)> {
     let mut cfg = CrawlConfig::default();
     cfg.images.real_dimensions_from_header = enabled;
     let parse = ParseConfig::from_crawl_config(&cfg);
-    os_parse::response_ext(&ResponseInput {
+    image_only(os_parse::response_ext(&ResponseInput {
         url: &url::Url::parse("https://cdn.test/image").unwrap(),
         internal: false,
         purpose: FetchPurpose::External,
@@ -100,7 +107,7 @@ fn facts(body: &[u8], enabled: bool, status: u16) -> Vec<(os_model::ExtKey, Valu
         untruncated_bytes: None,
         truncated: false,
         cfg: &parse,
-    })
+    }))
 }
 // spec: ONPAGE-172
 #[test]
@@ -158,5 +165,5 @@ fn truncated_response_does_not_publish_header_dimensions() {
         truncated: true,
         cfg: &parse,
     };
-    assert!(os_parse::response_ext(&input).is_empty());
+    assert!(image_only(os_parse::response_ext(&input)).is_empty());
 }

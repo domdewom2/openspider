@@ -7,11 +7,11 @@ use std::collections::{BTreeMap, BTreeSet};
 async fn fixture() -> (FixtureCrawl, CrawlConfig) {
     let cfg = CrawlConfig::default();
     let fx = crawl_fixture("tech-m2-directives", cfg.clone()).await;
-    // Prüfmarker kommt in Welle 1 von D10; hier dessen gespeicherter Vertrag.
+    // Prüfmarker liefert seit D10 der Crawl; hier für alle URLs gesetzt (gespeicherter Vertrag).
     fx.file
         .conn()
         .execute(
-            "INSERT INTO url_ext(url_id, key, v_int) SELECT id, 'validation.checked', 1 FROM urls",
+            "INSERT OR REPLACE INTO url_ext(url_id, key, v_int) SELECT id, 'validation.checked', 1 FROM urls",
             [],
         )
         .unwrap();

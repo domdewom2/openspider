@@ -1,7 +1,7 @@
 use os_model::{CancelToken, CrawlConfig};
 // spec: ONPAGE-140 [M2]
 #[tokio::test]
-#[ignore = "wartet auf M2-E01"]
+#[ignore = "M2: wartet auf M2-E01"]
 async fn changed_area_recomputes_word_count_from_stored_html_without_requests() {
     let mut cfg = CrawlConfig::default();
     cfg.extraction.store_html = true;

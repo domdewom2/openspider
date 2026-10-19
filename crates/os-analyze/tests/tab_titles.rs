@@ -245,13 +245,7 @@ async fn every_filter_is_a_subset_of_all_and_counts_match_rows() {
             .iter()
             .find(|c| c.tab == TAB && c.filter == filter.id)
             .unwrap();
-        if filter.id == "Outside <head>" {
-            // ONPAGE-099 / TECH-008: this M1 crawl has no validation coverage.
-            assert_eq!(count.state, FilterState::NeedsRecrawl);
-            assert_eq!(count.count, None);
-            assert!(rows.is_empty());
-            continue;
-        }
+        // ONPAGE-099 / TECH-008: seit M2-D10 liefert der Crawl den Prüfmarker, auch Outside <head> ist bereit.
         assert_eq!(count.state, FilterState::Ready, "{}", filter.id);
         assert_eq!(
             count.count.expect("Filter ist bereit") as usize,
