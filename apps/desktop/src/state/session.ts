@@ -13,6 +13,8 @@ import type { ViewChanged } from "../ipc/gen/ViewChanged";
 export interface SessionState {
   /** Laufende Nummer des letzten angewendeten Ticks (ältere werden verworfen). */
   seq: number;
+  /** Active per-host pacing notices, retained when a dialog is dismissed. */
+  throttled: Record<string, boolean>;
   crawl: CrawlStatus | null;
   analysis: AnalysisStatus | null;
   mcp: McpStatus | null;
@@ -26,10 +28,13 @@ export interface SessionState {
   notices: Notice[];
   applyTick(tick: Tick): void;
   clearNotices(): void;
+  pushNotice(notice: Notice): void;
+  dismissNotice(notice: Notice): void;
 }
 
 export const useSession = create<SessionState>((set, get) => ({
   seq: -1,
+  throttled: {},
   crawl: null,
   analysis: null,
   mcp: null,
@@ -48,6 +53,7 @@ export const useSession = create<SessionState>((set, get) => ({
       for (const o of tick.ops) ops[o.opId] = o;
       return {
         seq: tick.seq,
+        throttled: tick.crawl && ["idle", "completed", "failed"].includes(tick.crawl.phase) ? {} : reduceThrottle(tick.crawl && tick.crawl.crawlId !== s.crawl?.crawlId ? {} : s.throttled, tick.notices),
         crawl: tick.crawl ?? s.crawl,
         analysis: tick.analysis ?? s.analysis,
         mcp: tick.mcp ?? s.mcp,
@@ -60,6 +66,12 @@ export const useSession = create<SessionState>((set, get) => ({
       };
     });
   },
+  pushNotice(notice) {
+    set((s) => ({ notices: [...s.notices, notice], throttled: reduceThrottle(s.throttled, [notice]) }));
+  },
+  dismissNotice(notice) {
+    set((s) => ({ notices: s.notices.filter((n) => n !== notice) }));
+  },
   clearNotices() {
     set({ notices: [] });
   },
@@ -67,5 +79,17 @@ export const useSession = create<SessionState>((set, get) => ({
 
 /** Verbindet den Event-Bus des Fensters mit dem Sitzungszustand; liefert die Abmeldung. */
 export function attachSession(bus: EventBus): () => void {
-  return bus.on("tick", (t) => useSession.getState().applyTick(t));
+  const offTick = bus.on("tick", (t) => useSession.getState().applyTick(t));
+  const offNotice = bus.on("notice", (n) => useSession.getState().pushNotice(n));
+  return () => { offTick(); offNotice(); };
+}
+
+function reduceThrottle(before: Record<string, boolean>, notices: Notice[]): Record<string, boolean> {
+  const next = { ...before };
+  for (const n of notices) {
+    const host = String(n.args.host ?? "");
+    if (n.code === "crawl-throttled") next[host] = true;
+    if (n.code === "crawl-throttle-cleared") delete next[host];
+  }
+  return next;
 }
