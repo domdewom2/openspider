@@ -60,6 +60,9 @@ export function createLayoutStore(api: StateApi = uistate) {
   let revision = 0;
   let saved = -1;
   let queue: Promise<void> = Promise.resolve();
+  const ownedSections = ["layout", "window", "tables", "columnTemplates"];
+  const changedSections = new Map<string, number>();
+  let resetRevision: number | undefined;
   return create<LayoutState>((set, get) => ({
     loaded: false, error: null, sections: {}, layout: defaultLayout(1440, 836),
     load(width, height) {
@@ -82,6 +85,7 @@ export function createLayoutStore(api: StateApi = uistate) {
     setSection(key, value) {
       if (key === "layout") throw new Error("Use setLayout for layout changes");
       revision++;
+      changedSections.set(key, revision);
       set({ sections: { ...get().sections, [key]: value } });
     },
     resetColumns() {
@@ -92,6 +96,8 @@ export function createLayoutStore(api: StateApi = uistate) {
     resetAll(width, height) {
       const layout = defaultLayout(width, height);
       revision++;
+      resetRevision = revision;
+      changedSections.clear();
       set({ layout, sections: { layout: layout as unknown as JsonValue } });
     },
     flush() {
@@ -99,10 +105,25 @@ export function createLayoutStore(api: StateApi = uistate) {
         if (loading) await loading;
         if (!get().loaded || saved === revision) return;
         const writing = revision;
-        const snapshot: UiStateJson = { version: UI_STATE_VERSION, state: structuredClone(get().sections) };
+        const local = structuredClone(get().sections);
+        const changed = [...changedSections.keys()];
+        const reset = resetRevision;
         try {
+          // The shared file may have changed since startup. Replace only our slices and
+          // explicitly edited foreign keys; resetAll deliberately replaces everything.
+          const fresh = await api.load();
+          const sections = reset === undefined ? { ...object(fresh.state) } : {};
+          for (const key of new Set([...ownedSections, ...changed])) {
+            if (Object.hasOwn(local, key)) sections[key] = local[key]!;
+            else delete sections[key];
+          }
+          const snapshot: UiStateJson = { version: UI_STATE_VERSION, state: sections };
           await api.save(snapshot);
           saved = writing;
+          for (const [key, changedAt] of changedSections) {
+            if (changedAt <= writing) changedSections.delete(key);
+          }
+          if (resetRevision === reset) resetRevision = undefined;
           set({ error: null });
         } catch (e) {
           set({ error: toCmdError(e) });

@@ -4,6 +4,7 @@ import { createClient, setClient } from "../../ipc/client";
 import { MockCore } from "../../ipc/transport/mock";
 import { eventBus } from "../../ipc/events";
 import { runAction } from "../../ui/actions";
+import { allMenuContributions, registerMenuContributions } from "../../ui/menu/registry";
 import { setLanguage } from "../../i18n";
 import { useLayout, normalizeUiState } from "../../state/layout";
 import { QuitDialog } from "./QuitDialog";
@@ -26,9 +27,12 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); setClient(null); });
 
 // spec: UI-021 [P1]
 it("cancel preserves all table layouts; confirming updates every open subscriber immediately", async () => {
+  const offMenu = registerMenuContributions("features/help", [{ menu: "view", group: "layout", order: 15,
+    items: [{ id: "view.resetColumns", labelKey: "shell-reset-columns", action: "view.resetColumns" }] }]);
   const changed = vi.fn();
   const off = useLayout.subscribe(changed);
   render(<div className="os-app"><header /><nav /><main /><aside /><footer /><Shell /></div>);
+  expect(allMenuContributions().flatMap((c) => c.items).filter((item) => item.id === "view.resetColumns")).toHaveLength(1);
   act(() => { runAction("view.resetColumns"); });
   expect(screen.getByRole("dialog")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
@@ -41,6 +45,7 @@ it("cancel preserves all table layouts; confirming updates every open subscriber
   expect(changed).toHaveBeenCalled();
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   off();
+  offMenu();
 });
 
 // spec: UI-001

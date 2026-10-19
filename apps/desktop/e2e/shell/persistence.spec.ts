@@ -34,8 +34,7 @@ async function open(page: Page, url: string) {
   await expect(page.locator("[data-shell-ready]")).toHaveAttribute("data-shell-ready", "true");
 }
 
-// spec: UI-125 [P1]
-// spec: UI-021 [P1]
+// spec: UI-125, UI-021 [P1]
 test("migrated fixture and global column reset survive an actual core and frontend restart", async ({ page }) => {
   const home = await mkdtemp(join(tmpdir(), "os-shell-restart-"));
   await writeFile(join(home, "ui-state.json"), JSON.stringify(fixture));

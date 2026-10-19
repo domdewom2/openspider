@@ -14,4 +14,3 @@ shell-quit-analysis = Crawl analysis in progress
 shell-quit-export = Export in progress
 shell-quit-mcpSessions = Connected HTTP MCP sessions
 shell-quit-error = OpenSpider could not quit. Please try again.
-notice-app-quit-confirmation = Confirm quitting OpenSpider.

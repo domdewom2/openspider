@@ -3,7 +3,6 @@ import { useT } from "../../i18n";
 import { toCmdError } from "../../ipc/errors";
 import { useLayout, persistLayout } from "../../state/layout";
 import { registerAction } from "../../ui/actions";
-import { registerMenuContributions } from "../../ui/menu/registry";
 import { Button } from "../../ui/primitives/Button";
 import { Dialog, DialogFooter } from "../../ui/primitives/Dialog";
 import { Divider } from "./Divider";
@@ -84,9 +83,7 @@ export function Shell() {
       registerAction("view.resetColumns", () => {
         if (!useLayout.getState().loaded) return false;
         setResetOpen(true);
-      }),
-      registerMenuContributions("features/shell", [{ menu: "view", group: "layout", order: 15,
-        items: [{ id: "view.resetColumns", labelKey: "shell-reset-columns", action: "view.resetColumns" }] }])];
+      })];
     return () => offs.forEach((off) => off());
   }, []);
   const commit = (pane: Pane, size: number) => {

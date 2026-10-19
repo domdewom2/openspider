@@ -89,6 +89,13 @@ test("restart restores shares/visibility, and resize keeps the saved proportions
   await page.setViewportSize({ width: 1440, height: 900 });
   await app.open(page, "main"); await ready(page); await resetState(page);
   await drag(page, "sidebar", 500); await drag(page, "detail", 300);
+  const content = (await sizes(page)).content;
+  // Read-merge-write is asynchronous: verify persistence before destroying the page.
+  await expect.poll(() => page.evaluate(async (content) => {
+    const path = "/src/ipc/uistate.ts";
+    const { uistate } = await import(/* @vite-ignore */ path);
+    return (await uistate.load()).state.layout.detail.share * content;
+  }, content)).toBeCloseTo(300, 0);
   await page.reload(); await ready(page);
   expect((await sizes(page)).sidebar).toBeCloseTo(500, 0);
   expect((await sizes(page)).detail).toBeCloseTo(300, 0);
