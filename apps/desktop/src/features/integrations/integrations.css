@@ -1,5 +1,11 @@
 .os-integ-layout { min-height: 360px; }
-.os-integ-layout > .os-tablist { min-width: 220px; }
+.os-integ-layout > .os-tablist { min-width: 220px; max-width: 260px; }
+.os-integ-layout > .os-tablist > .os-tab { height: auto; min-height: 28px; padding: 6px 12px; }
+/* Die Unterbereiche liegen waagerecht über dem Inhalt, auch innerhalb der senkrechten Quellenliste. */
+.os-integ-sections { flex-direction: column; }
+.os-integ-layout .os-integ-sections > .os-tablist { flex-direction: row; min-width: 0; padding: 0 0 8px; border-bottom: 1px solid var(--os-border); }
+.os-integ-layout .os-integ-sections > .os-tablist > .os-tab[data-selected] { box-shadow: inset 0 -3px 0 var(--os-accent); }
+.os-integ-layout > .os-tabpanel { padding-inline-start: 12px; max-height: 60vh; overflow: auto; }
 .os-integ-entry { display: flex; flex-direction: column; gap: 2px; text-align: start; }
 .os-integ-entry-name { font-weight: 600; }
 .os-integ-entry-status { color: var(--os-text-muted); font-size: 0.9em; overflow-wrap: anywhere; }
