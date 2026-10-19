@@ -249,3 +249,87 @@ pub fn selected_link_ids(
         .collect::<Result<Vec<i64>, _>>()?;
     Ok(keys)
 }
+
+/// Additiv (K2-61, M2-K05): Zeilen bekannter Link-IDs in der übergebenen Reihenfolge, im Format von
+/// [`selected_links`] (Primärschlüsselzugriff, kein `COUNT`, kein `OFFSET`). Für Fenster materialisierter
+/// Detail-Views aus [`selected_link_ids`]; `total` ist die Anzahl der gelieferten Zeilen. Gelöschte Links fehlen.
+pub fn selected_links_by_ids(
+    conn: &Connection,
+    selection: &LinkSelection,
+    ids: &[i64],
+) -> Result<LinkTablePage, StoreError> {
+    let present = serde_json::to_string(ids).expect("integer IDs");
+    let mut stmt =
+        conn.prepare("SELECT l.id FROM links l WHERE l.id IN (SELECT value FROM json_each(?1))")?;
+    let found = stmt
+        .query_map([present], |r| r.get::<_, i64>(0))?
+        .collect::<Result<std::collections::HashSet<_>, _>>()?;
+    let keys = ids
+        .iter()
+        .copied()
+        .filter(|id| found.contains(id))
+        .collect::<Vec<_>>();
+    let total = keys.len() as u64;
+    let views = link_views_by_ids(conn, &keys)?;
+    // Batch the extra columns once for the page instead of executing one query per link.
+    let key_json = serde_json::to_string(&keys).expect("integer IDs");
+    let mut extras = conn.prepare("SELECT l.id,t.size_bytes,l.rel,l.path_type,l.link_origin FROM links l LEFT JOIN urls t ON t.id=l.target_id WHERE l.id IN (SELECT value FROM json_each(?1))")?;
+    let mut extras = extras
+        .query_map([key_json], |r| {
+            Ok((
+                r.get::<_, i64>(0)?,
+                (
+                    r.get::<_, Option<i64>>(1)?,
+                    r.get::<_, Option<String>>(2)?,
+                    r.get::<_, Option<String>>(3)?,
+                    r.get::<_, String>(4)?,
+                ),
+            ))
+        })?
+        .collect::<Result<std::collections::HashMap<_, _>, _>>()?;
+    let mut rows = Vec::with_capacity(keys.len());
+    for (id, link) in keys.iter().zip(views) {
+        let (size, rel, path, origin) = extras
+            .remove(id)
+            .ok_or_else(|| StoreError::InvalidInput("Missing selected link".into()))?;
+        let crawlability = if selection.include_uncrawlable {
+            Value::from(if link.crawlable {
+                "Crawlable"
+            } else {
+                "Uncrawlable"
+            })
+        } else {
+            Value::Null
+        };
+        rows.push(vec![
+            Value::from(link.link_type.as_str()),
+            Value::from(link.source_address),
+            Value::from(link.target_address),
+            size.into(),
+            link.alt_text.into(),
+            link.anchor.into(),
+            if link.crawlable {
+                link.status_code.map(i64::from).into()
+            } else {
+                Value::Null
+            },
+            if link.crawlable {
+                link.status.into()
+            } else {
+                Value::from("Uncrawlable")
+            },
+            link.follow.into(),
+            link.target_attr.into(),
+            rel.into(),
+            path.into(),
+            link.link_path.into(),
+            link.link_position.into(),
+            origin.into(),
+            crawlability,
+            link.uncrawlable_reason.into(),
+            link.original_url.into(),
+            link.pdf_page.map(i64::from).into(),
+        ]);
+    }
+    Ok(LinkTablePage { keys, rows, total })
+}
