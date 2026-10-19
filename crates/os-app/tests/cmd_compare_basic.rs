@@ -52,6 +52,14 @@ async fn open_orders_the_crawls_by_start_time() {
     let s = open(&app, old.file.path(), new.file.path(), json!([])).await;
     assert_eq!(s.current.file, new.file.path().to_string_lossy());
     assert_eq!(s.previous.file, old.file.path().to_string_lossy());
+    assert_eq!(
+        s.current.file_bytes,
+        std::fs::metadata(new.file.path()).unwrap().len()
+    );
+    assert_eq!(
+        s.previous.file_bytes,
+        std::fs::metadata(old.file.path()).unwrap().len()
+    );
     assert!(s.current.started_at > s.previous.started_at);
     assert_eq!(s.version, 1);
     // Standard der Change Detection aus der Konfiguration des Current-Crawls (M2-C02 wertet aus).
@@ -107,7 +115,7 @@ async fn swap_exchanges_the_roles_and_recomputes_the_classes() {
     let (old, new) = (v1().await, v2().await);
     let home = tempfile::tempdir().unwrap();
     let app = app(home.path());
-    open(&app, new.file.path(), old.file.path(), json!([])).await;
+    let opened = open(&app, new.file.path(), old.file.path(), json!([])).await;
     let window = WindowId("main".into());
     let before = os_app::commands::compare::with_active(&app, &window, |a| {
         Ok(a.comparison.filter("Internal", "HTML").unwrap())
@@ -117,6 +125,8 @@ async fn swap_exchanges_the_roles_and_recomputes_the_classes() {
     let s: CompareSession =
         serde_json::from_value(call(&app, "compare.swap", json!(null)).await.unwrap()).unwrap();
     assert_eq!(s.current.file, old.file.path().to_string_lossy());
+    assert_eq!(s.current.file_bytes, opened.previous.file_bytes);
+    assert_eq!(s.previous.file_bytes, opened.current.file_bytes);
     assert_eq!(s.version, 2);
     assert_eq!(
         os_app::commands::compare::active_version(&app, &window),

@@ -108,7 +108,7 @@ pub fn active_version(app: &App, window: &WindowId) -> Option<u64> {
 /// Löst eine Auswahl auf: vorhandene Datei oder Kennung aus der Crawl-Verwaltung.
 async fn resolve(app: &App, selection: &str, field: &'static str) -> Result<PathBuf, CmdError> {
     let path = Path::new(selection);
-    if path.is_file() {
+    if tokio::fs::metadata(path).await.is_ok_and(|m| m.is_file()) {
         return Ok(path.to_path_buf());
     }
     let id: os_model::CrawlId = selection
@@ -127,11 +127,12 @@ async fn resolve(app: &App, selection: &str, field: &'static str) -> Result<Path
         })
 }
 
-/// Angaben einer Seite für die Zusammenfassung (ohne Dateizugriff).
+/// Im Blocking-Worker erfasste Angaben einer Seite; `summary` benötigt keinen Dateizugriff.
 struct SideInfo {
     meta: os_store::CrawlMeta,
     source: PathBuf,
     urls: u64,
+    file_bytes: u64,
 }
 
 impl SideInfo {
@@ -140,6 +141,7 @@ impl SideInfo {
         SideInfo {
             meta: c.side(side).meta.clone(),
             source: c.side(side).source.clone(),
+            file_bytes: std::fs::metadata(&c.side(side).source).map_or(0, |d| d.len()),
             urls: match side {
                 Side::Current => p.current.len(),
                 Side::Previous => p.previous.len(),
@@ -160,7 +162,7 @@ impl SideInfo {
             finished_at: m.ended_at.map(|t| t.to_db()),
             // Gecrawlte URLs (Existenz im Sinne von OUT-142).
             urls: self.urls,
-            file_bytes: std::fs::metadata(&self.source).map_or(0, |d| d.len()),
+            file_bytes: self.file_bytes,
             schema_version: m.schema_version,
             owner: CrawlOwner {
                 kind: OwnerKind::App,
@@ -172,6 +174,7 @@ impl SideInfo {
     }
 }
 
+// Nur aus spawn_blocking/with_active aufrufen: SideInfo::of liest die Dateimetadaten.
 fn dto(active: &ActiveComparison, now: os_model::Timestamp) -> CompareSession {
     let c = &active.comparison;
     CompareSession {
@@ -300,16 +303,17 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
         let current = resolve(app, &args.current, "current").await?;
         let previous = resolve(app, &args.previous, "previous").await?;
         let work = app.config().paths.cache.join("compare");
-        std::fs::create_dir_all(&work).map_err(|e| {
-            store_error(&os_store::StoreError::Io {
-                path: work.clone(),
-                source: e,
-            })
-        })?;
         let cancel = ctx.cancel.clone();
         wait_for_memory(&cancel).await?;
         let _guard = os_engine::memory::watch_operation(cancel.clone());
-        let opened = tokio::task::spawn_blocking(move || -> Result<ActiveComparison, CmdError> {
+        let now = app.config().clock.now();
+        let (opened, result) = tokio::task::spawn_blocking(move || -> Result<_, CmdError> {
+            std::fs::create_dir_all(&work).map_err(|e| {
+                store_error(&os_store::StoreError::Io {
+                    path: work.clone(),
+                    source: e,
+                })
+            })?;
             let a = CrawlSide::open(&current, &work).map_err(compare_error)?;
             let b = CrawlSide::open(&previous, &work).map_err(compare_error)?;
             let comparison = Comparison::open(a, b, &mapping, &cancel).map_err(compare_error)?;
@@ -327,16 +331,16 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
                 .content_threshold_pct
                 .unwrap_or(defaults.content_threshold_pct);
             notes_log(&comparison.notes());
-            Ok(ActiveComparison {
+            let opened = ActiveComparison {
                 comparison,
                 elements,
                 content_threshold_pct,
-            })
+            };
+            let result = dto(&opened, now);
+            Ok((opened, result))
         })
         .await
         .map_err(|e| internal("compare.open", e.to_string()))??;
-        let now = app.config().clock.now();
-        let result = dto(&opened, now);
         close_window(app, &ctx.window).await?;
         state(app)
             .sessions

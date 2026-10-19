@@ -5,7 +5,7 @@
 //! Rückverweise, Inline-Flags, nicht-gierige Quantoren) mit Schrittlimit, **Suche** statt Vollübereinstimmung – jeder
 //! Treffer irgendwo in der URL wird ersetzt, `$1` bzw. `${name}` im Ersatztext setzt Gruppen ein. Überschreitet ein
 //! Abgleich das Schrittlimit, bleibt die URL für diese Regel unverändert; die Regel wird einmal je Mapping als Warnung
-//! gemeldet ([`UrlMapping::take_warnings`]).
+//! gemeldet ([`UrlMapping::warnings`]).
 
 use std::collections::BTreeSet;
 use std::sync::Mutex;
@@ -192,7 +192,7 @@ impl UrlMapping {
         }
     }
 
-    /// Bildet eine URL des Previous-Crawls ab.
+    /// Bildet eine URL des ursprünglich als Previous geöffneten Crawls ab (auch nach einem Tausch).
     pub fn apply(&self, url: &str) -> Mapped {
         let mut current = url.to_string();
         let mut first_rule = None;
@@ -227,8 +227,11 @@ impl UrlMapping {
         MappingTrace { output, steps }
     }
 
-    /// Gesammelte Warnungen (je Regel höchstens eine) und leert die Liste.
-    pub fn take_warnings(&self) -> Vec<MappingWarning> {
-        std::mem::take(&mut *self.warnings.lock().unwrap_or_else(|p| p.into_inner()))
+    /// Gesammelte Warnungen (je Regel höchstens eine), bleiben bei erneutem Lesen erhalten.
+    pub fn warnings(&self) -> Vec<MappingWarning> {
+        self.warnings
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .clone()
     }
 }

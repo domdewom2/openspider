@@ -326,29 +326,30 @@ fn joined(anchors: &BTreeSet<String>) -> String {
 }
 
 /// Vergleicht die Links einer URL: `current_id`/`previous_id` sind die Kennungen der URL in beiden Crawls (`None`,
-/// wenn sie dort nicht existiert).
+/// wenn sie dort nicht existiert). `mapped_side` bezeichnet den Crawl, dessen URLs das Mapping abbildet; beim
+/// Tausch wechselt diese Rolle, die Regeln behalten ihre Richtung.
 pub fn compare_links(
     current: &CrawlFile,
     previous: &CrawlFile,
     mapping: &UrlMapping,
+    mapped_side: Side,
     current_id: Option<i64>,
     previous_id: Option<i64>,
     direction: LinkDirection,
 ) -> Result<LinkComparison, CompareError> {
-    let identity = |u: &str| u.to_string();
-    let mapped = |u: &str| {
-        if mapping.is_empty() {
+    let normalize = |side, u: &str| {
+        if side != mapped_side || mapping.is_empty() {
             u.to_string()
         } else {
             mapping.apply(u).url
         }
     };
     let cur = match current_id {
-        Some(id) => instances(current, id, direction, &identity)?,
+        Some(id) => instances(current, id, direction, &|u| normalize(Side::Current, u))?,
         None => Vec::new(),
     };
     let prev = match previous_id {
-        Some(id) => instances(previous, id, direction, &mapped)?,
+        Some(id) => instances(previous, id, direction, &|u| normalize(Side::Previous, u))?,
         None => Vec::new(),
     };
     let presence = match (current_id, previous_id) {

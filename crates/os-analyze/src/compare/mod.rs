@@ -206,6 +206,7 @@ pub struct Comparison {
     current: usize,
     rules: Vec<MappingRule>,
     mapping: UrlMapping,
+    mapped_side: Side,
     pairing: Pairing,
     cache: [HashMap<FilterKey, Arc<FilterSet>>; 2],
     version: u64,
@@ -250,17 +251,12 @@ impl Comparison {
                 .cloned()
                 .map(CompareNote::Collision),
         );
-        notes.extend(
-            mapping
-                .take_warnings()
-                .into_iter()
-                .map(CompareNote::MappingWarning),
-        );
         Ok(Comparison {
             sides: [current, previous],
             current: 0,
             rules: rules.to_vec(),
             mapping,
+            mapped_side: Side::Previous,
             pairing,
             cache: [HashMap::new(), HashMap::new()],
             version: 1,
@@ -320,7 +316,7 @@ impl Comparison {
         let mut notes = self.notes.clone();
         notes.extend(
             self.mapping
-                .take_warnings()
+                .warnings()
                 .into_iter()
                 .map(CompareNote::MappingWarning),
         );
@@ -330,6 +326,10 @@ impl Comparison {
     /// Vertauscht Current und Previous (OUT-141): dieselben Paare mit vertauschten Rollen, alle Zähler neu.
     pub fn swap(&mut self) {
         self.current = 1 - self.current;
+        self.mapped_side = match self.mapped_side {
+            Side::Current => Side::Previous,
+            Side::Previous => Side::Current,
+        };
         self.pairing = self.pairing.inverted();
         self.version += 1;
     }
@@ -406,8 +406,7 @@ impl Comparison {
             current: current.ids.as_ref().map(RoaringBitmap::len),
             previous: previous
                 .as_ref()
-                .and_then(|p| p.ids.as_ref())
-                .map(RoaringBitmap::len),
+                .map_or(Some(0), |p| p.ids.as_ref().map(RoaringBitmap::len)),
             classes,
         })
     }
@@ -579,6 +578,7 @@ impl Comparison {
             &self.current().file,
             &self.previous().file,
             &self.mapping,
+            self.mapped_side,
             current_id,
             previous_id,
             direction,

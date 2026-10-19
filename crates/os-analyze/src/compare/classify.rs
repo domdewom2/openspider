@@ -171,7 +171,7 @@ pub struct FilterComparison {
     pub previous_state: Option<FilterState>,
     /// Treffer im Current-Crawl (nur bei `Ready`).
     pub current: Option<u64>,
-    /// Treffer im Previous-Crawl (nur bei `Ready`).
+    /// Treffer im Previous-Crawl (bei `Ready`), 0 bei fehlender Filterdefinition.
     pub previous: Option<u64>,
     /// Unterfilter; nur, wenn beide Seiten Zahlen haben.
     pub classes: Option<[u64; 4]>,

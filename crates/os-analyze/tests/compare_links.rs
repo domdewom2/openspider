@@ -51,6 +51,43 @@ const ANCHOR: ChangeFilter = ChangeFilter::Only(LinkChange::AnchorChanged);
 const SAME: ChangeFilter = ChangeFilter::Only(LinkChange::Unchanged);
 
 // spec: OUT-149
+// spec: OUT-141
+#[tokio::test(flavor = "multi_thread")]
+async fn swapping_keeps_link_identities_mapped_on_the_original_staging_crawl() {
+    let (old, new) = (staging().await, live().await);
+    let rules = [
+        rule(r"^http://staging\.site\.test", "http://www.site.test"),
+        rule(r"(\.test/.+)/$", "$1"),
+    ];
+    let mut cmp = compare(&old, &new, &rules);
+    for swaps in 0..3 {
+        if swaps > 0 {
+            cmp.swap();
+        }
+        let (file, a) = if swaps == 1 {
+            (&old.file, "http://staging.site.test/a/")
+        } else {
+            (&new.file, "http://www.site.test/a")
+        };
+        // /a hat einen Outlink auf /shop/a und einen Inlink von der Startseite.
+        for direction in [LinkDirection::Outlinks, LinkDirection::Inlinks] {
+            let links = cmp.links(Side::Current, id_of(file, a), direction).unwrap();
+            assert_eq!(links.presence, Presence::Both);
+            for source in [LinkSource::Current, LinkSource::Previous] {
+                let rows = links.view(source, Side::Current, ChangeFilter::All);
+                assert!(!rows.is_empty(), "{swaps} {direction:?} {source:?}");
+                assert!(
+                    rows.iter().all(|r| r.change == Some(LinkChange::Unchanged)),
+                    "{rows:?}"
+                );
+                assert!(links.view(source, Side::Current, ADDED).is_empty());
+                assert!(links.view(source, Side::Current, REMOVED).is_empty());
+            }
+        }
+    }
+}
+
+// spec: OUT-149
 #[tokio::test(flavor = "multi_thread")]
 async fn page_one_level_deeper_shows_the_removed_link_from_the_homepage() {
     let (old, new) = (v1().await, v2().await);

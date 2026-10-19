@@ -356,6 +356,29 @@ async fn issues_carry_the_comparison_columns_of_their_filter() {
 
 // spec: OUT-143
 #[tokio::test(flavor = "multi_thread")]
+async fn a_custom_filter_without_previous_definition_has_zero_previous_hits() {
+    let mut config = cfg();
+    config.custom_search.filters.push(os_model::SearchFilter {
+        name: "Current only".into(),
+        expression: "<h1>".into(),
+        ..Default::default()
+    });
+    let (old, new) = (v1().await, v2_with(config).await);
+    let mut cmp = compare(&old, &new, &[]);
+    let row = cmp.filter("Custom Search", "Current only").unwrap();
+    let current = row.current.expect("bereiter Custom-Filter");
+    assert!(current > 0);
+    assert_eq!(row.previous, Some(0));
+    assert_eq!(row.change(), Some(current as i64));
+    assert_eq!(row.previous_state, None);
+    assert_eq!(row.classes, None);
+    assert_eq!(cmp.classes("Custom Search", "Current only").unwrap(), None);
+    let overview = cmp.overview(&CancelToken::new()).unwrap();
+    assert!(overview.contains(&row));
+}
+
+// spec: OUT-143
+#[tokio::test(flavor = "multi_thread")]
 async fn issues_are_sortable_by_change() {
     let (old, new) = (v1().await, v2().await);
     let mut cmp = compare(&old, &new, &[]);

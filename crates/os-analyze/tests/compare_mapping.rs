@@ -197,9 +197,50 @@ fn step_limit_leaves_the_url_unchanged_and_warns_once() {
     assert!(trace.steps[0].error.is_some());
     assert_eq!(trace.output, format!("pre:{input}"));
     mapping.apply(&input);
-    let warnings = mapping.take_warnings();
+    let warnings = mapping.warnings();
     assert_eq!(warnings.len(), 1);
     assert_eq!(warnings[0].rule, 0);
+    assert_eq!(mapping.warnings(), warnings);
+}
+
+// spec: OUT-146
+#[tokio::test(flavor = "multi_thread")]
+async fn comparison_notes_keep_warnings_from_open_and_later_mapping_calls() {
+    let (old, new) = (staging().await, live().await);
+    let cmp = compare(&old, &new, &[rule(r"(a|a)*\1$", "x")]);
+    assert!(cmp.notes().is_empty());
+    // Eine erst nach open ausgewertete URL überschreitet das Schrittlimit.
+    let input = format!("http://staging.site.test/{}b", "a".repeat(40));
+    assert_eq!(cmp.mapping().apply(&input).url, input);
+    let notes = cmp.notes();
+    assert!(matches!(&notes[..], [CompareNote::MappingWarning(w)] if w.rule == 0));
+    assert_eq!(cmp.notes(), notes);
+    cmp.mapping().apply(&input);
+    assert_eq!(cmp.notes(), notes);
+
+    // Auch beim Paaraufbau entstandene Warnungen werden nicht doppelt übernommen.
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("step-limit.ospider");
+    std::fs::copy(old.file.path(), &path).unwrap();
+    {
+        let file = os_store::CrawlFile::open(&path, os_store::OpenMode::ReadWrite).unwrap();
+        file.conn()
+            .execute(
+                "UPDATE urls SET url = ?1, address = ?1 WHERE address = 'http://staging.site.test/a/'",
+                [&input],
+            )
+            .unwrap();
+    }
+    let cmp = Comparison::open(
+        os_analyze::compare::CrawlSide::open(&path, dir.path()).unwrap(),
+        side(&new),
+        &[rule(r"(a|a)*\1$", "x")],
+        &CancelToken::new(),
+    )
+    .unwrap();
+    let notes = cmp.notes();
+    assert!(matches!(&notes[..], [CompareNote::MappingWarning(w)] if w.rule == 0));
+    assert_eq!(cmp.notes(), notes);
 }
 
 // spec: OUT-146
