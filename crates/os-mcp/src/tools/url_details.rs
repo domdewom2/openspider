@@ -588,6 +588,14 @@ fn overview(crawl: &OpenCrawl, facts: &UrlFacts) -> Result<Json, ToolError> {
         exprs.join(", "),
         views::URLS_FROM
     );
+    // K2-61: Konfigurationsparameter zusätzlicher Internal-Spalten (M2-D02).
+    let mut params = (tab.params)(&crawl.cfg)
+        .into_iter()
+        .map(|(name, value)| (format!(":{name}"), value))
+        .collect::<Vec<_>>();
+    tabs::content::bind_analysis_params(&mut params, &crawl.file, &crawl.cfg)
+        .map_err(view_error)?;
+    let sql = inline_params(&sql, &params).map_err(internal)?;
     let values = json_query(crawl, &sql, facts.id)?;
     let values = values.as_array().cloned().unwrap_or_default();
 

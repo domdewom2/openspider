@@ -10,51 +10,9 @@ signature = "pub fn tab() -> TabDef"
 
 [[stub]]
 owner = "M2-D02"
-file = "crates/os-analyze/src/analysis/steps/near_duplicates.rs"
-function = "run"
-signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
-
-[[stub]]
-owner = "M2-D02"
-file = "crates/os-analyze/src/tabs/duplicates.rs"
-function = "detail_rows"
-signature = "pub fn detail_rows( _: &os_store::CrawlFile, _: &os_model::CrawlConfig, _: &crate::details::DetailReq<'_>, ) -> Result<crate::details::DetailRows, crate::ViewError>"
-
-[[stub]]
-owner = "M2-D02"
 file = "crates/os-analyze/src/tabs/duplicates.rs"
 function = "ngram_details"
 signature = "pub fn ngram_details( _: &os_store::CrawlFile, _: &os_model::CrawlConfig, _: &crate::details::DetailReq<'_>, ) -> Result<crate::details::DetailRows, crate::ViewError>"
-
-[[stub]]
-owner = "M2-D02"
-file = "crates/os-engine/src/recompute/d02.rs"
-function = "run"
-signature = "pub fn run( _file: &mut os_store::CrawlFile, _old: &os_model::CrawlConfig, _new: &os_model::CrawlConfig, _cancel: &os_model::CancelToken, ) -> Result<Vec<os_model::UrlId>, crate::EngineError>"
-
-[[stub]]
-owner = "M2-D02"
-file = "crates/os-export/src/catalog/bulk_content.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
-owner = "M2-D02"
-file = "crates/os-parse/src/content.rs"
-function = "run"
-signature = "pub fn run(_ctx: &crate::PageCtx<'_>, _page: &mut os_model::ParsedPage)"
-
-[[stub]]
-owner = "M2-D02"
-file = "crates/os-parse/src/pdf.rs"
-function = "parse"
-signature = "pub fn parse(body: &[u8], _cfg: &crate::ParseConfig) -> os_model::PdfResult"
-
-[[stub]]
-owner = "M2-D02"
-file = "crates/os-parse/src/readability.rs"
-function = "run"
-signature = "pub fn run(_ctx: &PageCtx<'_>, _page: &mut ParsedPage)"
 
 [[stub]]
 owner = "M2-D03"

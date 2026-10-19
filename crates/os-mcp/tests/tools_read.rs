@@ -1727,6 +1727,8 @@ async fn issues_that_need_the_crawl_analysis_are_named_instead_of_counted() {
             (Some("Structured Data"), Some("Missing Structured Data" | "Parse Errors")) => {
                 "needs_config"
             }
+            // K2-63, ONPAGE-144: Near Duplicates benötigt zuerst seinen Opt-in-Schalter.
+            (Some("Content"), Some("Near Duplicates")) => "needs_config",
             _ => "needs_crawl_analysis",
         };
         let state = issue["state"].as_str().unwrap_or_default();

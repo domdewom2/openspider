@@ -376,8 +376,20 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
     ),
     ("Content", "Soft 404 Pages", None, &[], false),
     ("Content", "Lorem Ipsum Placeholder", None, &[], false),
-    ("Content", "Readability Difficult", None, &[], false),
-    ("Content", "Readability Very Difficult", None, &[], false),
+    (
+        "Content",
+        "Readability Difficult",
+        None,
+        &["extraction.readability"],
+        false,
+    ),
+    (
+        "Content",
+        "Readability Very Difficult",
+        None,
+        &["extraction.readability"],
+        false,
+    ),
     (
         "Content",
         "Spelling Errors",

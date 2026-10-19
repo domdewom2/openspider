@@ -202,7 +202,9 @@ pub fn query_view_in(
 ) -> Result<ViewPage, ViewError> {
     let _search = crate::search::prepare_view(tabs, file, cfg, q)?;
     let q = &crate::search::prepared_query(q);
-    let built = build::build(tabs, q, cfg)?;
+    let mut built = build::build(tabs, q, cfg)?;
+    // K2-61, ONPAGE-144: Dateizustand für gemeinsame Content-/Internal-Spalten.
+    tabs::content::bind_analysis_params(&mut built.plan.params, file, cfg)?;
     let ready = is_ready(file, cfg, &built)?;
     exec::query_page(file, &built, q, ready)
 }
@@ -228,7 +230,9 @@ pub fn stream_view_in(
 ) -> Result<Vec<String>, ViewError> {
     let _search = crate::search::prepare_view(tabs, file, cfg, q)?;
     let q = &crate::search::prepared_query(q);
-    let built = build::build(tabs, q, cfg)?;
+    let mut built = build::build(tabs, q, cfg)?;
+    // K2-61, ONPAGE-144: derselbe Bereitschaftsparameter beim Streamen/Export.
+    tabs::content::bind_analysis_params(&mut built.plan.params, file, cfg)?;
     let ready = is_ready(file, cfg, &built)?;
     exec::stream_rows(file, &built, ready, sink)
 }

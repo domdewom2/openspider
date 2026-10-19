@@ -44,6 +44,7 @@ struct TokenCounter {
     list_items: u64,
     token_chars: u64,
     in_token: bool,
+    text: String,
 }
 
 impl TokenCounter {
@@ -51,18 +52,25 @@ impl TokenCounter {
         for c in text.chars() {
             if c.is_whitespace() {
                 self.in_token = false;
+                if !self.text.ends_with([' ', '\n']) {
+                    self.text.push(' ');
+                }
             } else {
                 if !self.in_token {
                     self.in_token = true;
                     self.tokens += 1;
                 }
                 self.token_chars += 1;
+                self.text.push(c);
             }
         }
     }
 
     fn boundary(&mut self) {
         self.in_token = false;
+        if !self.text.ends_with('\n') && !self.text.is_empty() {
+            self.text.push('\n');
+        }
     }
 
     /// Länge des Textes, wenn die Token mit je genau einem Leerzeichen verbunden werden.
@@ -344,5 +352,62 @@ pub fn analyze_with_source(
     }
 }
 
-// STUB(M2-D02)
-pub fn run(_ctx: &crate::PageCtx<'_>, _page: &mut os_model::ParsedPage) {}
+/// Text des Inhaltsbereichs; Blockgrenzen bleiben für die Satzanalyse erhalten.
+pub fn area_text(doc: &Document, area: &ContentAreaConfig) -> String {
+    body_of(doc)
+        .map(|b| walk(b, &Rules::for_area(area)).text.trim().to_owned())
+        .unwrap_or_default()
+}
+
+/// Erfasst Text für konfigurierbare Filter ohne erneuten Abruf.
+pub fn run(ctx: &crate::PageCtx<'_>, page: &mut os_model::ParsedPage) {
+    use os_model::{ExtKey, Value};
+    let area = area_text(ctx.doc, &ctx.cfg.content_area);
+    let body = body_of(ctx.doc)
+        .map(|b| walk(b, &Rules::whole_body()).text)
+        .unwrap_or_default();
+    let select_text = |name| {
+        let selector = scraper::Selector::parse(name).expect("static selector");
+        ctx.doc
+            .html()
+            .select(&selector)
+            .map(|e| e.text().collect::<String>())
+            .collect::<Vec<_>>()
+            .join(" ")
+    };
+    let soft = crate::text::normalize(&format!(
+        "{} {} {}",
+        select_text("title"),
+        select_text("h1"),
+        area
+    ))
+    .to_lowercase();
+    let selector = scraper::Selector::parse("meta[name]").expect("static selector");
+    let description = ctx
+        .doc
+        .html()
+        .select(&selector)
+        .filter(|e| {
+            e.value()
+                .attr("name")
+                .is_some_and(|n| n.eq_ignore_ascii_case("description"))
+        })
+        .filter_map(|e| e.value().attr("content"))
+        .collect::<Vec<_>>()
+        .join(" ");
+    let lorem = crate::text::normalize(&format!(
+        "{} {} {}",
+        select_text("title"),
+        description,
+        body
+    ))
+    .to_lowercase()
+    .contains("lorem ipsum");
+    for (key, value) in [
+        ("content.text", Value::Text(area)),
+        ("content.soft404_text", Value::Text(soft)),
+        ("content.lorem", Value::Bool(lorem)),
+    ] {
+        page.ext.push((ExtKey::from_static(key), value));
+    }
+}

@@ -221,16 +221,76 @@ pub(crate) fn element_params(
     ]
 }
 
-/// Detail-Erweiterungspunkt für M2-D02.
-// STUB(M2-D02)
+/// Duplikate der gewählten URL, vor dem Paging nach Ähnlichkeit/Adresse geordnet.
 pub fn detail_rows(
-    _: &os_store::CrawlFile,
-    _: &os_model::CrawlConfig,
-    _: &crate::details::DetailReq<'_>,
+    file: &os_store::CrawlFile,
+    cfg: &CrawlConfig,
+    req: &crate::details::DetailReq<'_>,
 ) -> Result<crate::details::DetailRows, crate::ViewError> {
-    Err(crate::ViewError::NotImplemented("M2-D02"))
+    use os_model::Value;
+    let mut out = crate::details::DetailRows {
+        columns: vec![
+            ("Address".into(), ColumnKind::Url),
+            ("Similarity".into(), ColumnKind::Int),
+            ("Match Type".into(), ColumnKind::Text),
+        ],
+        rows: Vec::new(),
+        total: 0,
+        notes: Vec::new(),
+    };
+    let Some(id) = req.url_ids.first() else {
+        return Ok(out);
+    };
+    let mode = req
+        .params
+        .get("filter")
+        .and_then(|v| v.as_str())
+        .unwrap_or("All");
+    let exact = mode != "Near" && cfg.extraction.hash && cfg.duplicates.exact_enabled;
+    let state = crate::views::state_of(file, cfg, "Content", "Near Duplicates")?;
+    let near = mode != "Exact" && state == os_model::FilterState::Ready;
+    if mode == "Near" && !near {
+        out.notes.push((
+            "needs_crawl_analysis".into(),
+            "Nahezu-Duplikate benötigen eine aktuelle Crawl-Analyse".into(),
+        ));
+    }
+    let sql = "SELECT d.address,100 AS score,'Exact' AS kind FROM urls u JOIN urls d ON d.hash_md5=u.hash_md5 WHERE u.id=?1 AND d.id<>u.id AND u.hash_md5<>'' AND u.is_internal=1 AND u.in_tables=1 AND u.content_class='HTML' AND u.status_code BETWEEN 200 AND 299 AND d.is_internal=1 AND d.in_tables=1 AND d.content_class='HTML' AND d.status_code BETWEEN 200 AND 299 AND (?2=0 OR (COALESCE(d.indexability,'')<>'Non-Indexable' AND COALESCE(u.indexability,'')<>'Non-Indexable')) AND ?3 UNION ALL SELECT d.address,CAST(ROUND(n.similarity*100) AS INTEGER),'Near' FROM near_duplicates n JOIN urls d ON d.id=n.other_id WHERE n.url_id=?1 AND ?4";
+    out.total = file.conn().query_row(
+        &format!("SELECT COUNT(*) FROM ({sql})"),
+        rusqlite::params![id.0, cfg.duplicates.only_indexable, exact, near],
+        |r| r.get(0),
+    )?;
+    let mut stmt = file.conn().prepare(&format!(
+        "SELECT address,score,kind FROM ({sql}) ORDER BY score DESC,address COLLATE BINARY,kind LIMIT ?5 OFFSET ?6"
+    ))?;
+    out.rows = stmt
+        .query_map(
+            rusqlite::params![
+                id.0,
+                cfg.duplicates.only_indexable,
+                exact,
+                near,
+                req.limit.min(500) as i64,
+                req.offset.min(i64::MAX as u64) as i64,
+            ],
+            |r| {
+                Ok(vec![
+                    Value::Text(r.get(0)?),
+                    Value::Int(r.get(1)?),
+                    Value::Text(r.get(2)?),
+                ])
+            },
+        )?
+        .collect::<Result<_, _>>()?;
+    if out.total == 0 {
+        out.notes
+            .push(("empty".into(), "Keine Duplikate gefunden".into()));
+    }
+    Ok(out)
 }
 
+/// UI-049 ist P2 und gehört nicht zum Content-P1-Paket.
 // STUB(M2-D02)
 pub fn ngram_details(
     _: &os_store::CrawlFile,

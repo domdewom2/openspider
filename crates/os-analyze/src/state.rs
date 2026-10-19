@@ -33,6 +33,7 @@ fn relevant_sections(step: AnalysisStep) -> &'static [&'static str] {
         AnalysisStep::NearDuplicates => &[
             "duplicates.near_enabled",
             "duplicates.near_threshold_pct",
+            "duplicates.only_indexable",
             "content.area",
         ],
         AnalysisStep::Images => &["image", "images", "rendering.mode"],

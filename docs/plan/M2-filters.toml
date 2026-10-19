@@ -139,8 +139,8 @@ filters = [
   { id = "Near Duplicates", spec = "ONPAGE-144", kind = "post_crawl:NearDuplicates", issue = true, requires = ["duplicates.near_enabled"] },
   { id = "Soft 404 Pages", spec = "ONPAGE-147", kind = "live", issue = true },
   { id = "Lorem Ipsum Placeholder", spec = "ONPAGE-148", kind = "live", issue = true },
-  { id = "Readability Difficult", spec = "ONPAGE-150", kind = "live", issue = true },
-  { id = "Readability Very Difficult", spec = "ONPAGE-151", kind = "live", issue = true },
+  { id = "Readability Difficult", spec = "ONPAGE-150", kind = "live", issue = true, requires = ["extraction.readability"] },
+  { id = "Readability Very Difficult", spec = "ONPAGE-151", kind = "live", issue = true, requires = ["extraction.readability"] },
   { id = "Spelling Errors", spec = "ONPAGE-155", kind = "live", package = "M2-D19", issue = true, requires = ["spelling.enabled"] },
   { id = "Grammar Errors", spec = "ONPAGE-156", kind = "live", package = "M2-D19", issue = true, requires = ["grammar.enabled"] },
 ]
