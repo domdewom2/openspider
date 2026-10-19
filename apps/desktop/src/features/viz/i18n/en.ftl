@@ -1,0 +1,129 @@
+## Visualisations (M2-U24)
+viz-kind-crawlTree = Crawl tree
+viz-kind-crawlGraph = Force-directed crawl graph
+viz-kind-directoryTree = Directory tree
+viz-kind-anchorWords = Inlink anchor text word cloud
+viz-pick-kind = Visualisation type
+viz-data-changed = Data changed
+viz-refresh = Refresh
+viz-provenance-missing = This crawl file has no record of where each URL was first found. The structure is derived from its links instead.
+viz-sidebar-label = Visualisation settings
+viz-trail-start = Start URL
+viz-trail-label = Root path
+viz-loading = Loading…
+viz-truncated = Node budget reached: { $count } nodes shown
+viz-node-count = { $count } nodes
+viz-canvas-label = { $kind } with { $count } nodes. Use the search field to find a URL; plus and minus zoom, arrow keys pan.
+viz-hidden-children = { $count } subpages hidden ({ $total } descendants in total)
+
+viz-menu-label = Node actions
+viz-menu-show-in-table = Show in table
+viz-menu-explore = Explore
+viz-menu-focus = Focus
+viz-menu-release = Release position
+viz-menu-reset-view = Reset view
+viz-reason-path-node = This node is a directory without a crawled URL.
+viz-reason-nothing-hidden = No hidden subpages.
+viz-confirm-title = Too many subpages
+viz-confirm-body = Opening this node would add { $count } subpages and exceed the node budget by more than 1,000 nodes. Focus on this node instead?
+
+viz-section-search = Search
+viz-search-label = Search URL
+viz-search-placeholder = Part of the address
+viz-search-clear = Clear search
+viz-search-prev = Previous match
+viz-search-next = Next match
+viz-search-count = { $index } of { $total }
+viz-search-none = No matches
+
+viz-section-nodes = Nodes and lines
+viz-orientation = Orientation
+viz-orientation-lr = Left to right
+viz-orientation-tb = Top to bottom
+viz-expand-depth = Expand to depth
+viz-expand-apply = Apply
+viz-level-gap = Level spacing (px)
+viz-node-gap = Node spacing (px)
+viz-label-mode = Labels
+viz-label-path = Path
+viz-label-url = Full URL
+viz-r0 = Base radius (px)
+viz-falloff = Decrease per level
+viz-allow-overlap = Allow overlap
+viz-repulsion = Repulsion
+viz-spring = Spring length (px)
+viz-label-zoom = Show labels from zoom
+viz-seed = Random seed
+viz-pause = Pause simulation
+viz-resume = Resume simulation
+viz-layout-idle = Layout not started
+viz-layout-running = Layout running ({ $steps } steps)
+viz-layout-paused = Layout paused ({ $steps } steps)
+viz-layout-done = Layout finished ({ $steps } steps)
+viz-line-width = Line width (px)
+viz-include-non-html = Include non-HTML URLs
+viz-include-non-indexable = Include non-indexable pages
+
+viz-section-colors = Colour and size
+viz-color-mode = Colour by
+viz-color-indexability = Indexability
+viz-color-statusClass = Response code class
+viz-color-segment = Segment
+viz-color-metric = Metric gradient
+viz-palette = Colour scheme
+viz-palette-standard = Standard
+viz-palette-colorblind = Colour-blind safe
+viz-metric = Scaling metric
+viz-metric-unavailable = No data for this metric (API not connected)
+viz-size-by-metric = Scale node size by metric
+viz-min-radius = Min. radius (px)
+viz-max-radius = Max. radius (px)
+
+viz-section-budget = Node budget
+viz-budget = Maximum nodes
+viz-budget-warning = More than 10,000 nodes can make the view slow to draw and to interact with.
+
+viz-section-legend = Legend
+viz-legend-indexable = Indexable
+viz-legend-non-indexable = Non-indexable
+viz-legend-status-2xx = 2xx success
+viz-legend-status-3xx = 3xx redirect
+viz-legend-status-4xx = 4xx client error
+viz-legend-status-5xx = 5xx server error
+viz-legend-status-none = No response
+viz-legend-no-segment = No segment
+viz-legend-capped = Subpages hidden (badge = count)
+viz-legend-path = Directory without crawled URL
+viz-legend-missing = No value for the metric
+viz-legend-min = Min { $value }
+viz-legend-max = Max { $value }
+viz-legend-size = Size: { $metric } (area grows with the value; { $max } = { $rmax } px, smallest { $rmin } px)
+viz-legend-depth = Size and brightness decrease with click depth.
+
+viz-section-export = Export
+viz-export-svg = SVG
+viz-export-png = PNG { $factor }×
+viz-export-csv = Export nodes and edges (CSV)
+viz-export-csv-dir = Target folder
+viz-export-csv-choose = Choose a folder for nodes.csv and edges.csv
+viz-export-csv-collapsed = Expand all nodes first: the CSV export contains exactly the nodes delivered for this view.
+viz-export-running = Exporting…
+viz-export-done = Saved nodes.csv and edges.csv in { $path }
+viz-export-failed = The export failed.
+
+viz-section-words = Word cloud
+viz-words-unit = Unit
+viz-words-phrase = Whole phrase
+viz-words-word = Single word
+viz-words-stopwords = Remove stop words
+viz-words-nofollow = Include nofollow links
+viz-words-max = Maximum terms
+viz-section-terms = Terms
+viz-word-label = { $term }: { $count } links. Show these inlinks in the table.
+
+notice-viz-data-changed = The crawl data behind a visualisation has changed.
+notice-viz-provenance-missing = This crawl file has no record of where each URL was first found.
+notice-viz-stopwords-unavailable = No stop word list is available for “{ $language }”.
+err-viz-snapshot-closed = This visualisation is no longer available. Open it again from the main window.
+err-viz-kind = This kind of visualisation is not available.
+err-viz-main-crawl-changed = The main window now shows a different crawl.
