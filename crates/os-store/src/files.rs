@@ -661,7 +661,19 @@ pub fn location_warnings(path: &Path) -> Vec<LocationWarning> {
     if let Some(service) = sync_service(path) {
         out.push(LocationWarning::SyncFolder(service));
     }
-    out.extend(filesystem_warnings(path));
+    let text = path.to_string_lossy();
+    if (text.starts_with(r"\\") && !text.starts_with(r"\\?\"))
+        || text.starts_with("smb://")
+        || text.starts_with("nfs://")
+        || text.starts_with("afp://")
+    {
+        out.push(LocationWarning::NetworkDrive);
+    }
+    for warning in filesystem_warnings(path) {
+        if !out.contains(&warning) {
+            out.push(warning);
+        }
+    }
     out
 }
 
@@ -677,7 +689,12 @@ fn sync_service(path: &Path) -> Option<&'static str> {
         if name == "icloud drive" || name == "mobile documents" || name == "com~apple~clouddocs" {
             return Some("iCloud Drive");
         }
-        if name == "google drive" || name == "googledrive" || name == "my drive" {
+        if name == "google drive"
+            || name == "googledrive"
+            || name == "my drive"
+            || name.starts_with("googledrive-")
+            || name.starts_with("google drive (")
+        {
             return Some("Google Drive");
         }
     }
@@ -718,15 +735,81 @@ fn filesystem_warnings(path: &Path) -> Vec<LocationWarning> {
 
 #[cfg(windows)]
 fn filesystem_warnings(path: &Path) -> Vec<LocationWarning> {
-    let text = path.to_string_lossy();
-    if text.starts_with(r"\\") && !text.starts_with(r"\\?\") {
-        vec![LocationWarning::NetworkDrive]
-    } else {
-        Vec::new()
+    use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::Storage::FileSystem::{
+        GetDriveTypeW, GetVolumeInformationW, GetVolumePathNameW,
+    };
+    let path = std::path::absolute(path).unwrap_or_else(|_| path.to_path_buf());
+    let wide: Vec<u16> = path.as_os_str().encode_wide().chain(Some(0)).collect();
+    let mut volume = vec![0u16; 32768];
+    let mut filesystem = [0u16; 32];
+    let mut out = Vec::new();
+    // SAFETY: NUL-terminierter Eingabepfad und gültige, hinreichend große Ausgabepuffer.
+    unsafe {
+        if GetVolumePathNameW(wide.as_ptr(), volume.as_mut_ptr(), volume.len() as u32) == 0 {
+            return out;
+        }
+        const DRIVE_REMOTE: u32 = 4;
+        if GetDriveTypeW(volume.as_ptr()) == DRIVE_REMOTE {
+            out.push(LocationWarning::NetworkDrive);
+        }
+        if GetVolumeInformationW(
+            volume.as_ptr(),
+            std::ptr::null_mut(),
+            0,
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+            filesystem.as_mut_ptr(),
+            filesystem.len() as u32,
+        ) != 0
+        {
+            let end = filesystem
+                .iter()
+                .position(|c| *c == 0)
+                .unwrap_or(filesystem.len());
+            let name = String::from_utf16_lossy(&filesystem[..end]);
+            if ["FAT", "FAT32", "exFAT"]
+                .iter()
+                .any(|n| name.eq_ignore_ascii_case(n))
+            {
+                out.push(LocationWarning::FatFilesystem);
+            }
+        }
+    }
+    out
+}
+
+#[cfg(target_os = "linux")]
+fn filesystem_warnings(path: &Path) -> Vec<LocationWarning> {
+    use std::ffi::CString;
+    use std::os::unix::ffi::OsStrExt;
+    let mut existing = path;
+    while !existing.exists() {
+        match existing.parent() {
+            Some(p) if !p.as_os_str().is_empty() => existing = p,
+            _ => return Vec::new(),
+        }
+    }
+    let Ok(path) = CString::new(existing.as_os_str().as_bytes()) else {
+        return Vec::new();
+    };
+    // SAFETY: gültiger C-String und beschreibbarer statfs-Ausgabepuffer.
+    let kind = unsafe {
+        let mut stat: libc::statfs = std::mem::zeroed();
+        if libc::statfs(path.as_ptr(), &mut stat) != 0 {
+            return Vec::new();
+        }
+        stat.f_type as u64
+    };
+    match kind {
+        0x6969 | 0xff53_4d42 | 0x517b => vec![LocationWarning::NetworkDrive],
+        0x4d44 | 0x2011_bab0 => vec![LocationWarning::FatFilesystem],
+        _ => Vec::new(),
     }
 }
 
-#[cfg(not(any(target_os = "macos", windows)))]
+#[cfg(not(any(target_os = "macos", target_os = "linux", windows)))]
 fn filesystem_warnings(_path: &Path) -> Vec<LocationWarning> {
     Vec::new()
 }

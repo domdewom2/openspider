@@ -19,6 +19,11 @@ use crate::meta::CrawlMeta;
 use crate::open::{CrawlFile, OpenMode};
 use crate::schema;
 
+mod index;
+mod management;
+pub use index::MetadataIndex;
+pub use management::{Manager, Project, RetentionDeletion};
+
 /// Dateiendung einer Crawl-Datei.
 pub const EXTENSION: &str = "ospider";
 
@@ -31,6 +36,18 @@ pub struct CrawlListing {
     pub meta: CrawlMeta,
     /// Anzahl der URLs in der Datei.
     pub url_count: u64,
+    /// Sperre des Crawls oder seines Projekts.
+    pub locked: bool,
+    /// Datei und WAL in Bytes.
+    pub file_bytes: u64,
+    /// Letzte Änderung (einschließlich WAL), Unix-Millisekunden.
+    pub modified_ms: i64,
+    /// Verbleibende Warteschlange (Fortsetzbarkeit nach K2-34).
+    pub queued: u64,
+    /// Gespeicherte Laufzeit, sofern verfügbar.
+    pub duration_ms: Option<u64>,
+    /// Anlegezeit als Heartbeat-Rückfall vor dem ersten Engine-Batch.
+    pub created_at: Option<Timestamp>,
 }
 
 /// Liste samt der Dateien, die nicht gelesen werden konnten.
@@ -84,10 +101,17 @@ pub fn list_crawls(dir: &Path) -> Result<Vec<CrawlListing>, StoreError> {
 
 /// Wie [`list_crawls`], aber mit den übersprungenen Dateien und ihrer Ursache.
 pub fn list_crawls_report(dir: &Path) -> Result<ListingReport, StoreError> {
+    if !dir.exists() {
+        return Ok(ListingReport::default());
+    }
+    // Die M1-Lese-API legt beim Inspizieren fremder Ordner keine Verwaltungsdateien an.
+    if dir.join(".registry.sqlite").exists() {
+        return Manager::open(dir)?.list();
+    }
     let mut report = ListingReport::default();
     for path in candidate_files(dir)? {
         match read_listing(&path) {
-            Ok(listing) => report.crawls.push(listing),
+            Ok(l) => report.crawls.push(l),
             Err(e) => report.skipped.push((path, e)),
         }
     }
@@ -97,17 +121,108 @@ pub fn list_crawls_report(dir: &Path) -> Result<ListingReport, StoreError> {
 /// Liest Metadaten und URL-Anzahl einer Datei, ohne sie zu migrieren oder zu verändern.
 pub fn read_listing(path: &Path) -> Result<CrawlListing, StoreError> {
     let conn = open_raw_metadata(path)?;
-    let read = || -> Result<(CrawlMeta, i64), StoreError> {
-        let meta = read_meta(&conn)?;
-        let url_count: i64 = conn.query_row("SELECT COUNT(*) FROM urls", [], |r| r.get(0))?;
-        Ok((meta, url_count))
-    };
-    let (meta, url_count) = read().map_err(|e| classify_error(path, e))?;
+    read_listing_conn(path, &conn).map_err(|e| classify_error(path, e))
+}
+
+fn read_listing_conn(path: &Path, conn: &Connection) -> Result<CrawlListing, StoreError> {
+    let meta = read_meta(conn)?;
+    let url_count: u64 = conn.query_row("SELECT COUNT(*) FROM urls", [], |r| r.get(0))?;
+    let queued: u64 = conn.query_row("SELECT COUNT(*) FROM queue", [], |r| r.get(0))?;
+    let locked = conn
+        .query_row("SELECT value FROM crawl_meta WHERE key='locked'", [], |r| {
+            r.get::<_, String>(0)
+        })
+        .optional()?
+        .is_some_and(|v| v == "1");
+    let duration_ms = conn
+        .query_row(
+            "SELECT value FROM crawl_meta WHERE key='duration_ms'",
+            [],
+            |r| r.get::<_, String>(0),
+        )
+        .optional()?
+        .and_then(|v| v.parse().ok());
+    let created_at = conn
+        .query_row(
+            "SELECT value FROM crawl_meta WHERE key='created_at'",
+            [],
+            |r| r.get::<_, String>(0),
+        )
+        .optional()?
+        .and_then(|s| Timestamp::from_db(&s).ok());
+    let (file_bytes, modified_ms) = file_stats(path)?;
     Ok(CrawlListing {
         path: path.to_path_buf(),
         meta,
-        url_count: u64::try_from(url_count).unwrap_or(0),
+        url_count,
+        locked,
+        file_bytes,
+        modified_ms,
+        queued,
+        duration_ms,
+        created_at,
     })
+}
+
+use rusqlite::OptionalExtension;
+
+/// Alter eines Running-Heartbeats wird bei jeder Auswertung neu geprüft, auch bei einem Cache-Treffer.
+pub fn effective_state(meta: &CrawlMeta, now: Timestamp) -> CrawlState {
+    crate::resume::effective_state_at(meta.state, meta.heartbeat_at.or(meta.started_at), now)
+}
+
+impl CrawlListing {
+    /// Wie CrawlFile::effective_state: Heartbeat, Startzeit, anschließend Anlegezeit.
+    pub fn effective_state(&self, now: Timestamp) -> CrawlState {
+        crate::resume::effective_state_at(
+            self.meta.state,
+            self.meta
+                .heartbeat_at
+                .or(self.meta.started_at)
+                .or(self.created_at),
+            now,
+        )
+    }
+
+    /// Gemeinsame Fortsetzbarkeit nach K2-34.
+    pub fn can_resume(&self, now: Timestamp) -> bool {
+        matches!(
+            self.effective_state(now),
+            CrawlState::Paused | CrawlState::Incomplete
+        ) || (self.meta.state == CrawlState::Completed && self.queued > 0)
+    }
+}
+
+fn companion(path: &Path, suffix: &str) -> PathBuf {
+    let mut name = path.as_os_str().to_os_string();
+    name.push(suffix);
+    PathBuf::from(name)
+}
+
+fn file_stats(path: &Path) -> Result<(u64, i64), StoreError> {
+    let mut bytes = 0u64;
+    let mut modified = 0i64;
+    for p in [path.to_path_buf(), companion(path, "-wal")] {
+        match std::fs::metadata(&p) {
+            Ok(m) => {
+                // Ein beim bloßen Metadatenlesen angelegtes leeres WAL ist keine Datenänderung.
+                if p != path && m.len() == 0 {
+                    continue;
+                }
+                bytes = bytes.saturating_add(m.len());
+                let ms = m
+                    .modified()
+                    .map_err(|e| StoreError::io(&p, e))?
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_millis();
+                modified = modified.max(i64::try_from(ms).unwrap_or(i64::MAX));
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound && p != path => {}
+            Err(e) => return Err(StoreError::io(&p, e)),
+        }
+    }
+    Ok((bytes, modified))
 }
 
 /// Sucht die Datei zu einer Crawl-Kennung: zuerst `<dir>/<id>.ospider`, danach über die Kennung in den
@@ -116,6 +231,13 @@ pub fn find(dir: &Path, id: &CrawlId) -> Option<PathBuf> {
     let direct = path_for(dir, id);
     if direct.is_file() {
         return Some(direct);
+    }
+    if let Ok(mut manager) = Manager::open_existing(dir) {
+        if let Ok(report) = manager.list() {
+            if let Some(item) = report.crawls.into_iter().find(|l| l.meta.crawl_id == *id) {
+                return Some(item.path);
+            }
+        }
     }
     let entries = std::fs::read_dir(dir).ok()?;
     for entry in entries.flatten() {
@@ -152,51 +274,8 @@ pub fn import_file(
     ids: &dyn IdSource,
     clock: &dyn Clock,
 ) -> Result<PathBuf, StoreError> {
-    let source = open_raw_metadata(src)?;
-    let meta = read_meta(&source).map_err(|e| classify_error(src, e))?;
-
-    let mut id = meta.crawl_id;
-    let renamed = find(dir, &id).is_some();
-    if renamed {
-        loop {
-            id = ids.new_crawl_id(clock.now());
-            if find(dir, &id).is_none() {
-                break;
-            }
-        }
-    }
-    let dest = path_for(dir, &id);
-
-    // Die Kopie entsteht über die Verbindung auf der Quelle; ältere Schemaversionen bleiben ältere
-    // Schemaversionen (sie werden erst beim Öffnen migriert).
-    std::fs::create_dir_all(dir).map_err(|e| StoreError::io(dir, e))?;
-    if dest.exists() {
-        return Err(StoreError::AlreadyExists(dest));
-    }
-    let tmp = {
-        let mut name = dest.as_os_str().to_owned();
-        name.push(".importing");
-        PathBuf::from(name)
-    };
-    let _ = std::fs::remove_file(&tmp);
-    let copied = source
-        .execute("VACUUM INTO ?1", [tmp.to_string_lossy().as_ref()])
-        .map_err(StoreError::from)
-        .and_then(|_| {
-            if renamed {
-                let copy = Connection::open(&tmp)?;
-                copy.execute(
-                    "UPDATE crawl_meta SET value = ?1 WHERE key = 'crawl_id'",
-                    [id.to_string()],
-                )?;
-            }
-            std::fs::rename(&tmp, &dest).map_err(|e| StoreError::io(&dest, e))
-        });
-    if let Err(e) = copied {
-        let _ = std::fs::remove_file(&tmp);
-        return Err(e);
-    }
-    Ok(dest)
+    read_listing(src)?;
+    Manager::open(dir)?.import(src, dir, ids, clock, &|_, _| true)
 }
 
 /// Ordnet SQLite-Fehler beim Lesen einer beschädigten Datei dem Fehlerbild „beschädigt“ zu.

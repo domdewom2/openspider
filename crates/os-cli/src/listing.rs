@@ -1,16 +1,12 @@
 //! `--list-crawls` (OUT-185): Tabelle oder JSON-Array aller Crawls der Crawl-Verwaltung.
 
 use std::path::Path;
-use std::time::Duration;
 
-use os_model::{Clock, CrawlState, SystemClock};
+use os_model::{Clock, SystemClock, Timestamp};
 use os_store::registry::{self, CrawlListing};
 use serde_json::json;
 
 use crate::exit::CliError;
-
-/// Ab diesem Alter des letzten Heartbeats gilt ein „Running“ als abgestürzt (wie `effective_state`).
-const HEARTBEAT_TIMEOUT: Duration = Duration::from_secs(10);
 
 /// Eine Zeile der Liste.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -31,22 +27,13 @@ pub struct Row {
     pub urls: u64,
     /// Zustand (`Running`, `Paused`, `Completed`, `Incomplete`, `Failed`).
     pub status: String,
-    /// Gesperrt gegen automatisches Löschen (P2, in M1 immer `no`).
+    /// Gesperrt gegen Löschen, direkt oder über das Projekt.
     pub locked: bool,
 }
 
 fn row(listing: &CrawlListing, now_ms: i64) -> Row {
     let meta = &listing.meta;
-    let mut state = meta.state;
-    if state == CrawlState::Running {
-        let limit = i64::try_from(HEARTBEAT_TIMEOUT.as_millis()).unwrap_or(0);
-        let alive = meta
-            .heartbeat_at
-            .is_some_and(|h| now_ms - h.unix_millis() <= limit);
-        if !alive {
-            state = CrawlState::Incomplete;
-        }
-    }
+    let state = listing.effective_state(Timestamp::from_unix_millis(now_ms));
     Row {
         id: meta.crawl_id.to_string(),
         project: meta.project.clone(),
@@ -56,8 +43,27 @@ fn row(listing: &CrawlListing, now_ms: i64) -> Row {
         started: meta.started_at.map(|t| t.to_export()).unwrap_or_default(),
         urls: listing.url_count,
         status: state.as_str().to_string(),
-        locked: false,
+        locked: listing.locked,
     }
+}
+
+/// Verwaltungsprüfung bei der Initialisierung von `--load-crawl --resume` (CRAWL-128, K2-34).
+/// Nicht fortsetzbare Zustände melden Exit 1 samt Zustand, bevor die Engine gestartet wird.
+pub fn validate_resume(path: &Path) -> Result<(), CliError> {
+    let listing = registry::read_listing(path)
+        .map_err(|e| CliError::crawl(format!("Crawl-Datei nicht lesbar: {e}")))?;
+    let state = listing.effective_state(SystemClock.now());
+    if matches!(
+        state,
+        os_model::CrawlState::Completed | os_model::CrawlState::Failed
+    ) && !listing.can_resume(SystemClock.now())
+    {
+        return Err(CliError::internal(format!(
+            "Crawl im Zustand {} kann nicht fortgesetzt werden",
+            state.as_str()
+        )));
+    }
+    Ok(())
 }
 
 /// Zeilen und nicht lesbare Dateien (Pfad, Ursache).
