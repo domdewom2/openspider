@@ -18,6 +18,18 @@
     "longRunning": false
   },
   {
+    "name": "settings.resources",
+    "args": "void",
+    "ret": "JsonValue",
+    "longRunning": false
+  },
+  {
+    "name": "settings.importCertificates",
+    "args": "string[]",
+    "ret": "string[]",
+    "longRunning": false
+  },
+  {
     "name": "settings.get",
     "args": "void",
     "ret": "AppSettingsDto",
