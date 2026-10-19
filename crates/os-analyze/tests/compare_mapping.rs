@@ -50,14 +50,19 @@ async fn staging_urls_are_treated_as_their_live_counterparts() {
 async fn back_references_carry_the_path_over() {
     let (old, new) = (staging().await, live().await);
     let rules = vec![
-        rule(r"^http://staging\.site\.test/(.*)$", "http://www.site.test/$1"),
+        rule(
+            r"^http://staging\.site\.test/(.*)$",
+            "http://www.site.test/$1",
+        ),
         rule(r"(\.test/.+)/$", "$1"),
     ];
     let mapping = UrlMapping::compile(&rules).unwrap();
     assert_eq!(mapping.apply(&stg("/a")).url, www("/a"));
     let mut cmp = compare(&old, &new, &rules);
     assert_eq!(
-        cmp.filter("Internal", "HTML").unwrap().class(CompareClass::New),
+        cmp.filter("Internal", "HTML")
+            .unwrap()
+            .class(CompareClass::New),
         Some(0)
     );
 }
@@ -107,11 +112,16 @@ fn search_semantics_and_lookaround() {
 async fn lookahead_maps_only_the_shop_in_the_fixture() {
     let (old, new) = (staging().await, live().await);
     let rules = vec![
-        rule(r"^http://staging\.site\.test(?=/shop/)", "http://www.site.test"),
+        rule(
+            r"^http://staging\.site\.test(?=/shop/)",
+            "http://www.site.test",
+        ),
         rule(r"(\.test/.+)/$", "$1"),
     ];
     let mut cmp = compare(&old, &new, &rules);
-    let new_ids = cmp.class_ids("Internal", "HTML", CompareClass::New).unwrap();
+    let new_ids = cmp
+        .class_ids("Internal", "HTML", CompareClass::New)
+        .unwrap();
     let new_pages = addresses(&new.file, &new_ids);
     assert!(!new_pages.contains(&www("/shop/a")));
     assert!(new_pages.contains(&www("/blog/b")));
@@ -137,7 +147,10 @@ async fn collisions_follow_the_rule_order_and_are_reported() {
     assert_eq!(collision.winner, stg("/dup"));
     assert_eq!(collision.losers, [stg("/dup/")]);
     let dup_slash = id_of(&old.file, &stg("/dup/"));
-    assert_eq!(cmp.partner(os_analyze::compare::Side::Previous, dup_slash), None);
+    assert_eq!(
+        cmp.partner(os_analyze::compare::Side::Previous, dup_slash),
+        None
+    );
 
     // Gleiche erste Regel (Host-Regel trifft beide): die lexikographisch kleinste Previous-URL gewinnt.
     let new = live().await;

@@ -51,7 +51,9 @@ pub struct Pairing {
 }
 
 pub(crate) fn url_index(id: i64) -> Result<u32, CompareError> {
-    u32::try_from(id).map_err(|_| CompareError::Invalid(format!("URL-Kennung {id} außerhalb des Bitmap-Bereichs")))
+    u32::try_from(id).map_err(|_| {
+        CompareError::Invalid(format!("URL-Kennung {id} außerhalb des Bitmap-Bereichs"))
+    })
 }
 
 /// Liest die existierenden URLs einer Datei als `(Kennung, URL)`.
@@ -60,14 +62,14 @@ fn existing(
     cancel: &CancelToken,
     mut f: impl FnMut(u32, String) -> Result<(), CompareError>,
 ) -> Result<(), CompareError> {
-    let mut stmt = file
-        .conn()
-        .prepare(&format!("SELECT id, url FROM urls WHERE {EXISTS_SQL} ORDER BY id"))?;
+    let mut stmt = file.conn().prepare(&format!(
+        "SELECT id, url FROM urls WHERE {EXISTS_SQL} ORDER BY id"
+    ))?;
     let mut rows = stmt.raw_query();
     let mut n = 0u32;
     while let Some(row) = rows.next()? {
         n = n.wrapping_add(1);
-        if n % 4096 == 0 {
+        if n.is_multiple_of(4096) {
             super::checkpoint(cancel)?;
         }
         f(url_index(row.get(0)?)?, row.get(1)?)?;

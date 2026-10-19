@@ -17,11 +17,11 @@
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
+use os_analyze::compare::links::CHANGE_COLUMNS;
 use os_analyze::compare::{
     ChangeFilter, CompareClass, CompareError, Comparison, LinkDirection, LinkSource, RoaringBitmap,
     Side,
 };
-use os_analyze::compare::links::CHANGE_COLUMNS;
 use os_analyze::defs::{ColumnSql, TabDef};
 use os_analyze::views::{self, ColumnSelection, PageStart, ViewQuery};
 use os_analyze::ColumnKind;
@@ -39,7 +39,8 @@ use crate::types::{ExportCtx, ExportFileInfo, Format, ReportResult, SegmentScope
 
 /// Kopfzeile des Crawl Overview im Vergleichsmodus (OUT-147).
 pub const OVERVIEW_HEADER: [&str; 10] = [
-    "Section", "Item", "Current", "Previous", "Change", "Change %", "Added", "New", "Removed", "Missing",
+    "Section", "Item", "Current", "Previous", "Change", "Change %", "Added", "New", "Removed",
+    "Missing",
 ];
 
 /// Zusatzspalte der Tab-Exporte (OUT-151).
@@ -107,7 +108,10 @@ impl OverviewRow {
     pub fn to_values(&self) -> (Vec<ColumnKind>, Vec<Value>) {
         let cell = |c: &Cell| match c {
             Cell::Empty => (ColumnKind::Int, Value::Null),
-            Cell::Int(n) => (ColumnKind::Int, Value::Int(i64::try_from(*n).unwrap_or(i64::MAX))),
+            Cell::Int(n) => (
+                ColumnKind::Int,
+                Value::Int(i64::try_from(*n).unwrap_or(i64::MAX)),
+            ),
             Cell::Text(t) => (ColumnKind::Text, Value::Text(t.clone())),
             Cell::Float(f) => (ColumnKind::Float { decimals: 2 }, Value::Float(*f)),
         };
@@ -130,10 +134,9 @@ impl OverviewRow {
             self.change_pct().map_or(Value::Null, Value::Float),
         ];
         for i in 0..4 {
-            values.push(
-                self.classes
-                    .map_or(Value::Null, |k| Value::Int(i64::try_from(k[i]).unwrap_or(i64::MAX))),
-            );
+            values.push(self.classes.map_or(Value::Null, |k| {
+                Value::Int(i64::try_from(k[i]).unwrap_or(i64::MAX))
+            }));
         }
         (kinds, values)
     }
@@ -152,7 +155,8 @@ pub fn crawl_overview(
     let current = overview::build(&cur.file, &cur.config, &tabs_of(&cur.file, &cur.config))?;
     let previous = overview::build(&prev.file, &prev.config, &tabs_of(&prev.file, &prev.config))?;
     let text = |s: &str| Cell::Text(s.to_string());
-    let stamp = |t: Option<os_model::Timestamp>| t.map_or(Cell::Empty, |t| Cell::Text(t.to_export()));
+    let stamp =
+        |t: Option<os_model::Timestamp>| t.map_or(Cell::Empty, |t| Cell::Text(t.to_export()));
     let mut rows = vec![
         OverviewRow {
             section: HEADER_SECTION.into(),
@@ -271,8 +275,14 @@ fn column_kind(tab: Option<&TabDef>, name: &str) -> ColumnKind {
 }
 
 /// Adressen zu Kennungen einer Datei.
-fn addresses(file: &CrawlFile, ids: impl IntoIterator<Item = u32>) -> Result<HashMap<u32, String>, ExportError> {
-    let mut stmt = crate::links_export::sql(file.conn().prepare("SELECT address FROM urls WHERE id = ?1"))?;
+fn addresses(
+    file: &CrawlFile,
+    ids: impl IntoIterator<Item = u32>,
+) -> Result<HashMap<u32, String>, ExportError> {
+    let mut stmt = crate::links_export::sql(
+        file.conn()
+            .prepare("SELECT address FROM urls WHERE id = ?1"),
+    )?;
     let mut out = HashMap::new();
     for id in ids {
         let address: String =
@@ -282,8 +292,11 @@ fn addresses(file: &CrawlFile, ids: impl IntoIterator<Item = u32>) -> Result<Has
     Ok(out)
 }
 
-/// Zeilen zu ausdrücklichen Kennungen (Removed, Missing) in Adressreihenfolge, Spalten des Tabs.
-#[allow(clippy::too_many_arguments)]
+/// Zeile zu einer Kennung: Spaltennamen der Seite, Kennung, Werte.
+type IdRow = (Vec<String>, UrlId, Vec<Value>);
+
+/// Zeilen zu ausdrücklichen Kennungen (Removed, Missing) in Adressreihenfolge, Spalten des Tabs; je Abschnitt von 500
+/// Kennungen eine Abfrage.
 fn rows_by_ids(
     file: &CrawlFile,
     cfg: &CrawlConfig,
@@ -291,12 +304,12 @@ fn rows_by_ids(
     columns: &ColumnSelection,
     ids: &RoaringBitmap,
     ctx: &ExportCtx<'_>,
-    sink: &mut dyn FnMut(&[String], UrlId, &[Value]) -> Result<(), ExportError>,
-) -> Result<(), ExportError> {
+) -> Result<Vec<IdRow>, ExportError> {
     let tabs = tabs_of(file, cfg);
     let names = addresses(file, ids.iter())?;
     let mut sorted: Vec<(String, u32)> = names.into_iter().map(|(id, a)| (a, id)).collect();
     sorted.sort();
+    let mut out = Vec::with_capacity(sorted.len());
     for chunk in sorted.chunks(500) {
         ctx.checkpoint()?;
         let mut q = ViewQuery::new(tab, "All");
@@ -309,11 +322,11 @@ fn rows_by_ids(
         q.start = PageStart::Offset(0);
         let chunk_ids: Vec<UrlId> = chunk.iter().map(|(_, id)| UrlId(i64::from(*id))).collect();
         let page = views::query_url_ids_in(&tabs, file, cfg, &q, &chunk_ids, true)?;
-        for (key, row) in page.row_keys.iter().zip(&page.rows) {
-            sink(&page.columns, *key, row)?;
+        for (key, row) in page.row_keys.iter().zip(page.rows) {
+            out.push((page.columns.clone(), *key, row));
         }
     }
-    Ok(())
+    Ok(out)
 }
 
 /// Schreibt einen Tab-Export im Vergleichsmodus (OUT-151).
@@ -378,7 +391,10 @@ pub fn write_tab(
         if !mapped {
             return Ok(None);
         }
-        let Some(p) = u32::try_from(id).ok().and_then(|id| pairing.previous_of(id)) else {
+        let Some(p) = u32::try_from(id)
+            .ok()
+            .and_then(|id| pairing.previous_of(id))
+        else {
             return Ok(None);
         };
         Ok(addresses(&prev.file, [p])?.remove(&p))
@@ -409,7 +425,13 @@ pub fn write_tab(
                         Some(c) => status == Some(c.as_str()),
                     };
                     if keep {
-                        emit(&mut *writer, &page.columns, row, status, previous_of(key.0)?)?;
+                        emit(
+                            &mut *writer,
+                            &page.columns,
+                            row,
+                            status,
+                            previous_of(key.0)?,
+                        )?;
                     }
                 }
                 match page.next_cursor {
@@ -424,11 +446,14 @@ pub fn write_tab(
             };
             let ids = k.ids(class, pairing);
             let side = comparison.side(class.side());
-            let mut rows = Vec::new();
-            rows_by_ids(&side.file, &side.config, &tab, &selection.columns, &ids, ctx, &mut |names, key, values| {
-                rows.push((names.to_vec(), key, values.to_vec()));
-                Ok(())
-            })?;
+            let rows = rows_by_ids(
+                &side.file,
+                &side.config,
+                &tab,
+                &selection.columns,
+                &ids,
+                ctx,
+            )?;
             for (names, key, values) in rows {
                 ctx.checkpoint()?;
                 let previous_address = match class {
@@ -438,7 +463,13 @@ pub fn write_tab(
                     }
                     _ => previous_of(key.0)?,
                 };
-                emit(&mut *writer, &names, &values, Some(class.as_str()), previous_address)?;
+                emit(
+                    &mut *writer,
+                    &names,
+                    &values,
+                    Some(class.as_str()),
+                    previous_address,
+                )?;
             }
         }
     }
@@ -455,7 +486,12 @@ pub fn export_tab(
     let cancel = CancelToken::new();
     let mut ctx = plain_ctx(&cancel);
     let sheet = format!("{} {}", selection.tab, selection.filter);
-    let mut writer = open_writer(path, format, &sheet, &writer_options(&comparison.current().config))?;
+    let mut writer = open_writer(
+        path,
+        format,
+        &sheet,
+        &writer_options(&comparison.current().config),
+    )?;
     write_tab(comparison, selection, writer.as_mut(), &mut ctx)?;
     writer.finish()
 }
@@ -542,12 +578,20 @@ impl TableWriter for SegmentWriter<'_> {
         Ok(())
     }
     fn finish(self: Box<Self>) -> Result<ExportFileInfo, ExportError> {
-        Err(ExportError::Write("SegmentWriter wird nicht abgeschlossen".into()))
+        Err(ExportError::Write(
+            "SegmentWriter wird nicht abgeschlossen".into(),
+        ))
     }
 }
 
-fn segment_addresses(file: &CrawlFile, scope: &dyn SegmentScope) -> Result<HashSet<String>, ExportError> {
-    let sql = format!("SELECT u.address FROM urls u WHERE {}", scope.population_sql());
+fn segment_addresses(
+    file: &CrawlFile,
+    scope: &dyn SegmentScope,
+) -> Result<HashSet<String>, ExportError> {
+    let sql = format!(
+        "SELECT u.address FROM urls u WHERE {}",
+        scope.population_sql()
+    );
     let mut stmt = crate::links_export::sql(file.conn().prepare(&sql))?;
     let rows = crate::links_export::sql(stmt.query_map([], |r| r.get::<_, String>(0)))?;
     rows.map(crate::links_export::sql).collect()
@@ -611,6 +655,10 @@ pub fn save_report(
 /// Alle Reportnamen des Menüs (Katalog und Tabellen-Einträge), die im Vergleichsmodus bedienbar sind.
 pub fn report_names() -> Vec<String> {
     let mut names = report_catalog::names();
-    names.extend(crate::reports::report_tables().iter().map(|e| e.name.to_string()));
+    names.extend(
+        crate::reports::report_tables()
+            .iter()
+            .map(|e| e.name.to_string()),
+    );
     names
 }

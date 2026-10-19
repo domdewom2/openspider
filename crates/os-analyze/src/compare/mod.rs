@@ -21,12 +21,16 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use os_model::{CancelToken, CrawlConfig, CrawlMode, FilterState, IssuePriority, IssueType, MappingRule};
+use os_model::{
+    CancelToken, CrawlConfig, CrawlMode, FilterState, IssuePriority, IssueType, MappingRule,
+};
 use os_store::{CrawlFile, CrawlMeta, OpenMode, StoreError};
 pub use roaring::RoaringBitmap;
 
 pub use classify::{Classes, CompareClass, FilterComparison, FilterSet, Side};
-pub use links::{ChangeFilter, LinkChange, LinkComparison, LinkDirection, LinkRow, LinkSource, Presence};
+pub use links::{
+    ChangeFilter, LinkChange, LinkComparison, LinkDirection, LinkRow, LinkSource, Presence,
+};
 pub use mapping::{Mapped, MappingError, MappingStep, MappingTrace, MappingWarning, UrlMapping};
 pub use pairing::{Collision, Pairing, EXISTS_SQL};
 
@@ -239,8 +243,19 @@ impl Comparison {
                 });
             }
         }
-        notes.extend(pairing.collisions.iter().cloned().map(CompareNote::Collision));
-        notes.extend(mapping.take_warnings().into_iter().map(CompareNote::MappingWarning));
+        notes.extend(
+            pairing
+                .collisions
+                .iter()
+                .cloned()
+                .map(CompareNote::Collision),
+        );
+        notes.extend(
+            mapping
+                .take_warnings()
+                .into_iter()
+                .map(CompareNote::MappingWarning),
+        );
         Ok(Comparison {
             sides: [current, previous],
             current: 0,
@@ -340,7 +355,9 @@ impl Comparison {
         if !known {
             return Ok(None);
         }
-        let set = Arc::new(classify::filter_set(&tabs, &s.file, &s.config, tab, filter)?);
+        let set = Arc::new(classify::filter_set(
+            &tabs, &s.file, &s.config, tab, filter,
+        )?);
         self.cache[i].insert(key, set.clone());
         Ok(Some(set))
     }
@@ -387,7 +404,10 @@ impl Comparison {
             current_state: current.state.clone(),
             previous_state: previous.as_ref().map(|p| p.state.clone()),
             current: current.ids.as_ref().map(RoaringBitmap::len),
-            previous: previous.as_ref().and_then(|p| p.ids.as_ref()).map(RoaringBitmap::len),
+            previous: previous
+                .as_ref()
+                .and_then(|p| p.ids.as_ref())
+                .map(RoaringBitmap::len),
             classes,
         })
     }
@@ -417,7 +437,9 @@ impl Comparison {
         class: CompareClass,
     ) -> Result<RoaringBitmap, CompareError> {
         let classes = self.classes(tab, filter)?.ok_or_else(|| {
-            CompareError::Invalid(format!("Filter {tab}:{filter} hat in einem der Crawls keine Zahl"))
+            CompareError::Invalid(format!(
+                "Filter {tab}:{filter} hat in einem der Crawls keine Zahl"
+            ))
         })?;
         Ok(classes.ids(class, &self.pairing))
     }
@@ -453,7 +475,10 @@ impl Comparison {
 
     /// Alle Filter aller Tabs des Current-Crawls in Anzeigereihenfolge (ohne Stubs und ohne Change Detection), wie
     /// die Overview im Vergleichsmodus (OUT-142). Prüft das Token je Filter (Pause/Abbruch, CRAWL-129).
-    pub fn overview(&mut self, cancel: &CancelToken) -> Result<Vec<FilterComparison>, CompareError> {
+    pub fn overview(
+        &mut self,
+        cancel: &CancelToken,
+    ) -> Result<Vec<FilterComparison>, CompareError> {
         let tabs: Vec<(String, Vec<String>)> = self
             .current()
             .tabs()
@@ -512,7 +537,9 @@ impl Comparison {
             order(a.issue_type)
                 .cmp(&order(b.issue_type))
                 .then(prio(a.priority).cmp(&prio(b.priority)))
-                .then_with(|| (&a.filter.tab, &a.filter.filter).cmp(&(&b.filter.tab, &b.filter.filter)))
+                .then_with(|| {
+                    (&a.filter.tab, &a.filter.filter).cmp(&(&b.filter.tab, &b.filter.filter))
+                })
         });
         Ok(rows)
     }

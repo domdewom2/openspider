@@ -30,13 +30,18 @@ fn ends(rows: &[&LinkRow]) -> Vec<(String, String)> {
     v
 }
 
-fn hyperlinks<'a>(rows: Vec<&'a LinkRow>) -> Vec<&'a LinkRow> {
+fn hyperlinks(rows: Vec<&LinkRow>) -> Vec<&LinkRow> {
     rows.into_iter()
         .filter(|r| text(&r.values[0]) == "Hyperlink")
         .collect()
 }
 
-fn links_of(cmp: &Comparison, new: &os_store::CrawlFile, path: &str, d: LinkDirection) -> os_analyze::compare::LinkComparison {
+fn links_of(
+    cmp: &Comparison,
+    new: &os_store::CrawlFile,
+    path: &str,
+    d: LinkDirection,
+) -> os_analyze::compare::LinkComparison {
     cmp.links(Side::Current, id_of(new, &www(path)), d).unwrap()
 }
 
@@ -75,7 +80,11 @@ async fn auto_source_follows_the_upper_window() {
     assert_eq!(ends(&fixed), ends(&current));
     // Auswahl einer Previous-URL im oberen Fenster liefert dieselbe Ansicht.
     let from_previous = cmp
-        .links(Side::Previous, id_of(&old.file, &www("/deep.html")), LinkDirection::Inlinks)
+        .links(
+            Side::Previous,
+            id_of(&old.file, &www("/deep.html")),
+            LinkDirection::Inlinks,
+        )
         .unwrap();
     assert_eq!(from_previous, deep);
 }
@@ -147,11 +156,15 @@ async fn per_url_invariant_for_every_paired_url() {
             let n = |s: LinkSource, f: ChangeFilter| l.view(s, Side::Current, f).len();
             assert_eq!(
                 n(LinkSource::Current, ChangeFilter::All),
-                n(LinkSource::Current, ADDED) + n(LinkSource::Current, ANCHOR) + n(LinkSource::Current, SAME)
+                n(LinkSource::Current, ADDED)
+                    + n(LinkSource::Current, ANCHOR)
+                    + n(LinkSource::Current, SAME)
             );
             assert_eq!(
                 n(LinkSource::Previous, ChangeFilter::All),
-                n(LinkSource::Previous, REMOVED) + n(LinkSource::Previous, ANCHOR) + n(LinkSource::Previous, SAME)
+                n(LinkSource::Previous, REMOVED)
+                    + n(LinkSource::Previous, ANCHOR)
+                    + n(LinkSource::Previous, SAME)
             );
             checked += 1;
         }
@@ -173,7 +186,11 @@ async fn url_in_one_crawl_only_shows_its_own_links() {
     assert!(rows.iter().all(|r| r.change.is_none()));
 
     let gone = cmp
-        .links(Side::Previous, id_of(&old.file, &www("/gone1.html")), LinkDirection::Inlinks)
+        .links(
+            Side::Previous,
+            id_of(&old.file, &www("/gone1.html")),
+            LinkDirection::Inlinks,
+        )
         .unwrap();
     assert_eq!(gone.presence, Presence::PreviousOnly);
     let rows = gone.view(LinkSource::Current, Side::Current, ChangeFilter::All);

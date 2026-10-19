@@ -108,10 +108,7 @@ fn older_files_are_migrated_as_copies_without_touching_the_original() {
     for side in [Side::Current, Side::Previous] {
         let copy = cmp.side(side).migrated.clone().expect("migrierte Kopie");
         assert!(copy.starts_with(work.path()));
-        assert_eq!(
-            cmp.side(side).meta.schema_version,
-            os_store::SCHEMA_VERSION
-        );
+        assert_eq!(cmp.side(side).meta.schema_version, os_store::SCHEMA_VERSION);
     }
 }
 
@@ -140,12 +137,19 @@ async fn fixture_changes_land_in_the_expected_classes() {
     let removed = cmp
         .class_ids("Page Titles", "Duplicate", CompareClass::Removed)
         .unwrap();
-    assert_eq!(addresses(cur, &removed), [www("/dup1.html"), www("/dup2.html")]);
+    assert_eq!(
+        addresses(cur, &removed),
+        [www("/dup1.html"), www("/dup2.html")]
+    );
 
     // Behobene 404: Removed in Client Error (4XX), Added in Success (2XX).
     let fixed = vec![www("/missing.html")];
     let ids = cmp
-        .class_ids("Response Codes", "Client Error (4XX)", CompareClass::Removed)
+        .class_ids(
+            "Response Codes",
+            "Client Error (4XX)",
+            CompareClass::Removed,
+        )
         .unwrap();
     assert_eq!(addresses(cur, &ids), fixed);
     let ids = cmp
@@ -157,8 +161,13 @@ async fn fixture_changes_land_in_the_expected_classes() {
     let missing = cmp
         .class_ids("Internal", "HTML", CompareClass::Missing)
         .unwrap();
-    assert_eq!(addresses(prev, &missing), [www("/gone1.html"), www("/gone2.html")]);
-    let new_pages = cmp.class_ids("Internal", "HTML", CompareClass::New).unwrap();
+    assert_eq!(
+        addresses(prev, &missing),
+        [www("/gone1.html"), www("/gone2.html")]
+    );
+    let new_pages = cmp
+        .class_ids("Internal", "HTML", CompareClass::New)
+        .unwrap();
     assert_eq!(
         addresses(cur, &new_pages),
         [
@@ -169,7 +178,9 @@ async fn fixture_changes_land_in_the_expected_classes() {
         ]
     );
     // Die 404 war kein HTML; nach der Behebung kommt sie zu Internal:HTML hinzu.
-    let added = cmp.class_ids("Internal", "HTML", CompareClass::Added).unwrap();
+    let added = cmp
+        .class_ids("Internal", "HTML", CompareClass::Added)
+        .unwrap();
     assert_eq!(addresses(cur, &added), fixed);
     let html = cmp.filter("Internal", "HTML").unwrap();
     assert_eq!(html.class(CompareClass::New), Some(4));
@@ -295,7 +306,10 @@ async fn swapping_turns_added_into_removed_and_new_into_missing() {
     assert_invariant(&after);
     let mut checked = 0;
     for b in &before {
-        let Some(a) = after.iter().find(|a| a.tab == b.tab && a.filter == b.filter) else {
+        let Some(a) = after
+            .iter()
+            .find(|a| a.tab == b.tab && a.filter == b.filter)
+        else {
             continue;
         };
         let (Some(kb), Some(ka)) = (b.classes, a.classes) else {
@@ -391,8 +405,8 @@ async fn a_paused_comparison_waits_and_resumes() {
     let worker_token = token.clone();
     let (tx, rx) = mpsc::channel();
     std::thread::spawn(move || {
-        let result = Comparison::open(a, b, &[], &worker_token)
-            .and_then(|mut c| c.overview(&worker_token));
+        let result =
+            Comparison::open(a, b, &[], &worker_token).and_then(|mut c| c.overview(&worker_token));
         tx.send(result).unwrap();
     });
     assert!(

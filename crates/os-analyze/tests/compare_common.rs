@@ -117,7 +117,10 @@ pub fn rule(pattern: &str, replacement: &str) -> MappingRule {
 }
 
 /// Adressen zu Kennungen einer Seite, sortiert.
-pub fn addresses(file: &os_store::CrawlFile, ids: &os_analyze::compare::RoaringBitmap) -> Vec<String> {
+pub fn addresses(
+    file: &os_store::CrawlFile,
+    ids: &os_analyze::compare::RoaringBitmap,
+) -> Vec<String> {
     let mut stmt = file
         .conn()
         .prepare("SELECT address FROM urls WHERE id = ?1")

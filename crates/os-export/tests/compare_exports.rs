@@ -76,7 +76,14 @@ async fn crawl_overview_matches_the_comparison_panel() {
     let (old, new) = (v1().await, v2().await);
     let mut cmp = compare(&old, &new, &[]);
     let dir = tempfile::tempdir().unwrap();
-    let result = cx::save_report(&mut cmp, "Crawl Overview", dir.path(), Format::Csv, &CancelToken::new()).unwrap();
+    let result = cx::save_report(
+        &mut cmp,
+        "Crawl Overview",
+        dir.path(),
+        Format::Csv,
+        &CancelToken::new(),
+    )
+    .unwrap();
     let table = Table::read(&result.files[0].path);
     assert_eq!(table.header, cx::OVERVIEW_HEADER);
     // Kopfblock mit Name und Startzeit beider Crawls.
@@ -87,26 +94,43 @@ async fn crawl_overview_matches_the_comparison_panel() {
         .expect("Kopfblock");
     assert!(start[2].starts_with("2026-02-01"), "{start:?}");
     assert!(start[3].starts_with("2026-01-01"), "{start:?}");
-    assert!(table.rows.iter().any(|r| r[0] == cx::HEADER_SECTION && r[1] == "Name"));
+    assert!(table
+        .rows
+        .iter()
+        .any(|r| r[0] == cx::HEADER_SECTION && r[1] == "Name"));
     // Jede Filterzeile hat genau die Werte des Panels.
     let panel = cmp.overview(&CancelToken::new()).unwrap();
     let mut checked = 0;
     for f in &panel {
-        let Some(row) = table
-            .rows
-            .iter()
-            .find(|r| r[0] == f.tab && r[1] == f.label)
-        else {
+        let Some(row) = table.rows.iter().find(|r| r[0] == f.tab && r[1] == f.label) else {
             continue;
         };
-        assert_eq!(table.get(row, "Current"), num(f.current), "{}:{}", f.tab, f.label);
-        assert_eq!(table.get(row, "Previous"), num(f.previous), "{}:{}", f.tab, f.label);
+        assert_eq!(
+            table.get(row, "Current"),
+            num(f.current),
+            "{}:{}",
+            f.tab,
+            f.label
+        );
+        assert_eq!(
+            table.get(row, "Previous"),
+            num(f.previous),
+            "{}:{}",
+            f.tab,
+            f.label
+        );
         assert_eq!(
             table.get(row, "Change"),
             f.change().map(|c| c.to_string()).unwrap_or_default()
         );
         for class in CompareClass::ALL {
-            assert_eq!(table.get(row, class.as_str()), num(f.class(class)), "{}:{}", f.tab, f.label);
+            assert_eq!(
+                table.get(row, class.as_str()),
+                num(f.class(class)),
+                "{}:{}",
+                f.tab,
+                f.label
+            );
         }
         checked += 1;
     }
@@ -144,7 +168,11 @@ async fn change_detection_rows_form_their_own_section() {
     assert_eq!(last[0], "Change Detection");
     assert_eq!(table.get(last, "Change"), "1");
     assert_eq!(
-        table.rows.iter().filter(|r| r[0] == "Change Detection").count(),
+        table
+            .rows
+            .iter()
+            .filter(|r| r[0] == "Change Detection")
+            .count(),
         1
     );
 }
@@ -170,10 +198,15 @@ async fn removed_subfilter_export_carries_the_fixed_404() {
     .unwrap();
     assert_eq!(info.rows, 1);
     let table = Table::read(&path);
-    let row = table.find("Address", &www("/missing.html")).expect("behobene 404");
+    let row = table
+        .find("Address", &www("/missing.html"))
+        .expect("behobene 404");
     assert_eq!(table.get(row, cx::STATUS_COLUMN), "Removed");
     // Ohne Mapping keine Spalte Previous Address.
-    assert!(!table.header.iter().any(|h| h == cx::PREVIOUS_ADDRESS_COLUMN));
+    assert!(!table
+        .header
+        .iter()
+        .any(|h| h == cx::PREVIOUS_ADDRESS_COLUMN));
 }
 
 // spec: OUT-151
@@ -191,18 +224,45 @@ async fn filter_export_lists_statuses_and_missing_rows_come_from_previous() {
     };
     cx::export_tab(&mut cmp, &selection(None), &all, Format::Csv).unwrap();
     let table = Table::read(&all);
-    assert_eq!(table.get(table.find("Address", &www("/new1.html")).unwrap(), cx::STATUS_COLUMN), "New");
-    assert_eq!(table.get(table.find("Address", &www("/missing.html")).unwrap(), cx::STATUS_COLUMN), "Added");
-    assert_eq!(table.get(table.find("Address", &www("/a.html")).unwrap(), cx::STATUS_COLUMN), "Unchanged");
+    assert_eq!(
+        table.get(
+            table.find("Address", &www("/new1.html")).unwrap(),
+            cx::STATUS_COLUMN
+        ),
+        "New"
+    );
+    assert_eq!(
+        table.get(
+            table.find("Address", &www("/missing.html")).unwrap(),
+            cx::STATUS_COLUMN
+        ),
+        "Added"
+    );
+    assert_eq!(
+        table.get(
+            table.find("Address", &www("/a.html")).unwrap(),
+            cx::STATUS_COLUMN
+        ),
+        "Unchanged"
+    );
     assert!(table.find("Address", &www("/gone1.html")).is_none());
 
     let missing = dir.path().join("html-missing.csv");
-    let info = cx::export_tab(&mut cmp, &selection(Some(CompareClass::Missing)), &missing, Format::Csv).unwrap();
+    let info = cx::export_tab(
+        &mut cmp,
+        &selection(Some(CompareClass::Missing)),
+        &missing,
+        Format::Csv,
+    )
+    .unwrap();
     assert_eq!(info.rows, 2);
     let table = Table::read(&missing);
     let addresses: Vec<&str> = table.rows.iter().map(|r| table.get(r, "Address")).collect();
     assert_eq!(addresses, [www("/gone1.html"), www("/gone2.html")]);
-    assert!(table.rows.iter().all(|r| table.get(r, cx::STATUS_COLUMN) == "Missing"));
+    assert!(table
+        .rows
+        .iter()
+        .all(|r| table.get(r, cx::STATUS_COLUMN) == "Missing"));
 }
 
 // spec: OUT-151
@@ -231,7 +291,10 @@ async fn mapping_adds_the_previous_address() {
     .unwrap();
     let table = Table::read(&path);
     let row = table.find("Address", &www("/a")).unwrap();
-    assert_eq!(table.get(row, cx::PREVIOUS_ADDRESS_COLUMN), "http://staging.site.test/a/");
+    assert_eq!(
+        table.get(row, cx::PREVIOUS_ADDRESS_COLUMN),
+        "http://staging.site.test/a/"
+    );
     assert_eq!(table.get(row, cx::STATUS_COLUMN), "Unchanged");
 }
 
@@ -280,8 +343,22 @@ async fn reports_in_comparison_refer_to_the_current_crawl() {
     let mut cmp = compare(&old, &new, &[]);
     let a = tempfile::tempdir().unwrap();
     let b = tempfile::tempdir().unwrap();
-    let in_compare = cx::save_report(&mut cmp, "Redirects:All Redirects", a.path(), Format::Csv, &CancelToken::new()).unwrap();
-    let plain = os_export::save_report(&new.file, &new.file.config().unwrap(), "Redirects:All Redirects", b.path(), Format::Csv).unwrap();
+    let in_compare = cx::save_report(
+        &mut cmp,
+        "Redirects:All Redirects",
+        a.path(),
+        Format::Csv,
+        &CancelToken::new(),
+    )
+    .unwrap();
+    let plain = os_export::save_report(
+        &new.file,
+        &new.file.config().unwrap(),
+        "Redirects:All Redirects",
+        b.path(),
+        Format::Csv,
+    )
+    .unwrap();
     assert_eq!(
         std::fs::read(&in_compare.files[0].path).unwrap(),
         std::fs::read(&plain.files[0].path).unwrap()
@@ -301,7 +378,8 @@ async fn every_report_can_be_saved_in_comparison_mode() {
     let mut saved = 0;
     for name in names {
         let (a, b) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-        let in_compare = cx::save_report(&mut cmp, &name, a.path(), Format::Csv, &CancelToken::new());
+        let in_compare =
+            cx::save_report(&mut cmp, &name, a.path(), Format::Csv, &CancelToken::new());
         let plain = os_export::save_report(&new.file, &cfg, &name, b.path(), Format::Csv);
         match (&in_compare, &plain) {
             (Ok(r), Ok(_)) => {
@@ -353,7 +431,15 @@ async fn redirect_chains_with_segment_keep_only_chains_starting_in_it() {
 
     let shop_path = dir.path().join("shop.csv");
     let mut writer = csv_writer(&shop_path);
-    cx::write_report_in_segment(&fx.file, &cfg, "Redirects:Redirect Chains", &Shop, writer.as_mut(), &mut ctx(&cancel)).unwrap();
+    cx::write_report_in_segment(
+        &fx.file,
+        &cfg,
+        "Redirects:Redirect Chains",
+        &Shop,
+        writer.as_mut(),
+        &mut ctx(&cancel),
+    )
+    .unwrap();
     writer.finish().unwrap();
     let shop = Table::read(&shop_path);
     assert_eq!(shop.header, all.header);
@@ -378,7 +464,8 @@ async fn a_paused_comparison_export_waits_and_resumes() {
         let result = (|| {
             let mut cmp = os_analyze::compare::Comparison::open(a, b, &[], &CancelToken::new())
                 .map_err(cx::compare_error)?;
-            let mut writer = os_export::open_writer(&out, Format::Csv, "Sheet", &Default::default())?;
+            let mut writer =
+                os_export::open_writer(&out, Format::Csv, "Sheet", &Default::default())?;
             cx::write_crawl_overview(&mut cmp, &[], writer.as_mut(), &mut ctx(&worker))?;
             writer.finish()
         })();
@@ -393,5 +480,7 @@ async fn a_paused_comparison_export_waits_and_resumes() {
     cancelled.cancel();
     let mut cmp = compare(&old, &new, &[]);
     let mut writer = csv_writer(&dir.path().join("x.csv"));
-    assert!(cx::write_crawl_overview(&mut cmp, &[], writer.as_mut(), &mut ctx(&cancelled)).is_err());
+    assert!(
+        cx::write_crawl_overview(&mut cmp, &[], writer.as_mut(), &mut ctx(&cancelled)).is_err()
+    );
 }

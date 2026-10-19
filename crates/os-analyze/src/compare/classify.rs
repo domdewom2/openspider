@@ -105,7 +105,11 @@ pub struct Classes {
 
 impl Classes {
     /// Klassifiziert `current` (Current-Kennungen in F) gegen `previous` (Previous-Kennungen in F).
-    pub fn classify(pairing: &Pairing, current: &RoaringBitmap, previous: &RoaringBitmap) -> Classes {
+    pub fn classify(
+        pairing: &Pairing,
+        current: &RoaringBitmap,
+        previous: &RoaringBitmap,
+    ) -> Classes {
         let previous_in_current = pairing.to_current(previous);
         let current_in_previous = {
             let mut out = RoaringBitmap::new();

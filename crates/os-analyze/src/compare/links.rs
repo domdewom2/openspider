@@ -144,7 +144,10 @@ impl LinkRow {
     /// Werte samt Zusatzspalten ([`LINK_COLUMNS`] + [`CHANGE_COLUMNS`]).
     pub fn export_values(&self) -> Vec<Value> {
         let mut v = self.values.clone();
-        v.push(self.change.map_or(Value::Null, |c| Value::Text(c.as_str().into())));
+        v.push(
+            self.change
+                .map_or(Value::Null, |c| Value::Text(c.as_str().into())),
+        );
         v.push(Value::Text(self.crawl.as_str().into()));
         v.push(
             self.previous_anchor
@@ -208,16 +211,13 @@ impl LinkComparison {
                 .iter()
                 .filter(|r| r.change == Some(LinkChange::Removed))
                 .collect(),
-            ChangeFilter::Only(c) => rows(side)
-                .iter()
-                .filter(|r| r.change == Some(c))
-                .collect(),
+            ChangeFilter::Only(c) => rows(side).iter().filter(|r| r.change == Some(c)).collect(),
         }
     }
 }
 
 struct Instance {
-    key: (String, String, String),
+    key: Identity,
     values: Vec<Value>,
     anchor: String,
 }
@@ -228,7 +228,9 @@ fn cell(v: rusqlite::types::ValueRef<'_>) -> Value {
         ValueRef::Null => Value::Null,
         ValueRef::Integer(i) => Value::Int(i),
         ValueRef::Real(f) => Value::Float(f),
-        ValueRef::Text(t) | ValueRef::Blob(t) => Value::Text(String::from_utf8_lossy(t).into_owned()),
+        ValueRef::Text(t) | ValueRef::Blob(t) => {
+            Value::Text(String::from_utf8_lossy(t).into_owned())
+        }
     }
 }
 
@@ -245,7 +247,10 @@ fn instances(
 ) -> Result<Vec<Instance>, CompareError> {
     let (filter, order) = match direction {
         LinkDirection::Outlinks => ("l.source_id = ?1", "l.position ASC, l.id ASC"),
-        LinkDirection::Inlinks => ("l.target_id = ?1", "s.address ASC, l.position ASC, l.id ASC"),
+        LinkDirection::Inlinks => (
+            "l.target_id = ?1",
+            "s.address ASC, l.position ASC, l.id ASC",
+        ),
     };
     let sql = format!(
         "SELECT l.link_type, s.address, COALESCE(t.address, l.target_raw), t.size_bytes, l.alt_text, l.anchor, \
@@ -284,15 +289,17 @@ fn instances(
     Ok(out)
 }
 
+type Identity = (String, String, String);
+
 struct Group {
     values: Vec<Value>,
     anchors: BTreeSet<String>,
     first_anchor: String,
 }
 
-fn group(instances: Vec<Instance>) -> (Vec<(String, String, String)>, HashMap<(String, String, String), Group>) {
+fn group(instances: Vec<Instance>) -> (Vec<Identity>, HashMap<Identity, Group>) {
     let mut order = Vec::new();
-    let mut groups: HashMap<(String, String, String), Group> = HashMap::new();
+    let mut groups: HashMap<Identity, Group> = HashMap::new();
     for i in instances {
         match groups.get_mut(&i.key) {
             Some(g) => {

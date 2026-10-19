@@ -182,10 +182,7 @@ impl UrlMapping {
         if !matched {
             return (false, input.to_string(), None);
         }
-        match rule
-            .regex
-            .try_replacen(input, 0, rule.replacement.as_str())
-        {
+        match rule.regex.try_replacen(input, 0, rule.replacement.as_str()) {
             Ok(out) => (true, out.into_owned(), None),
             Err(e) => {
                 let message = format!("Ausdruck zu aufwendig: {e}");
