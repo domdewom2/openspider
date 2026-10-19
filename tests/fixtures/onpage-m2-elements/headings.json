@@ -1,0 +1,16 @@
+[
+  {"html":"<h1><img alt='Logo'></h1>", "alt":true, "h1":false, "h2":false},
+  {"html":"<h1><a href='/'><img alt='Firma'></a></h1>", "alt":true, "h1":false, "h2":false},
+  {"html":"<h1>First</h1><h1><img alt='Second'></h1>", "alt":true, "h1":false, "h2":false},
+  {"html":"<h1><img alt=''></h1>", "alt":false, "h1":false, "h2":false},
+  {"html":"<h1><img></h1>", "alt":false, "h1":false, "h2":false},
+  {"html":"<h2>B</h2><h1>A</h1>", "alt":false, "h1":true, "h2":false},
+  {"html":"<h1>A</h1><h2>B</h2>", "alt":false, "h1":false, "h2":false},
+  {"html":"<h2>B</h2><h3>C</h3>", "alt":false, "h1":false, "h2":false},
+  {"html":"<h3></h3><h1>A</h1>", "alt":false, "h1":true, "h2":false},
+  {"html":"<h1>A</h1><h3>C</h3><h2>B</h2>", "alt":false, "h1":false, "h2":true},
+  {"html":"<h1>A</h1><h2>B</h2><h3>C</h3><h2>D</h2>", "alt":false, "h1":false, "h2":false},
+  {"html":"<h4>D</h4><h1>A</h1><h2>B</h2>", "alt":false, "h1":true, "h2":true},
+  {"html":"<h2>B</h2>", "alt":false, "h1":false, "h2":false},
+  {"html":"<template><h3>C</h3><h1><img alt='ignore'></h1></template><h1>A</h1><h2>B</h2>", "alt":false, "h1":false, "h2":false}
+]

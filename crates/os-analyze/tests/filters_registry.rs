@@ -285,8 +285,9 @@ fn every_tab_is_a_real_definition_or_a_marked_stub() {
         }
     }
     // Alle 15 neuen Tabs sind in M2-F02 Stubs; die 16 Tabs von M1 sind echte Definitionen.
+    // M2-D01 implements Meta Keywords.
     assert_eq!(
-        stubs, 12,
+        stubs, 11,
         "Stub-Tabs (Structured Data: M2-D09, Validation: M2-D10, Custom Extraction: M2-D15)"
     );
 }

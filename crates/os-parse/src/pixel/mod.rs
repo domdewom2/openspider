@@ -137,3 +137,71 @@ pub fn annotate(texts: &mut Vec<ExtractedText>, size_px: f64, bold: bool) {
         t.px = Some(width_px(&t.text, size_px, bold));
     }
 }
+
+/// Character offset of the last complete word fitting with the suffix ` …`.
+/// None means the original text already fits. Offsets count Unicode scalar values.
+/// Some(0) means no complete word fits. Append ` …` to the selected prefix;
+/// when even the suffix exceeds the limit, display an empty preview.
+pub fn truncate_at(text: &str, max_px: u32, size_px: f64, bold: bool) -> Option<u32> {
+    if width_px(text, size_px, bold) <= max_px {
+        return None;
+    }
+    let mut cut = 0;
+    for (byte, word) in text.unicode_word_indices() {
+        let end = byte + word.len();
+        let candidate = format!("{} …", text[..end].trim_end());
+        if width_px(&candidate, size_px, bold) <= max_px {
+            cut = text[..end].chars().count() as u32;
+        } else {
+            break;
+        }
+    }
+    Some(cut)
+}
+
+/// Effective title/description limits and font sizes for a configured device.
+pub fn serp_profile(cfg: &os_model::CrawlConfig, device: &str) -> (u32, u32, f64, f64) {
+    let p = match device {
+        "mobile" => &cfg.serp.mobile,
+        "tablet" => &cfg.serp.tablet,
+        _ => &cfg.serp.desktop,
+    };
+    (
+        p.title_max_px.unwrap_or(cfg.title.max_px),
+        p.description_max_px.unwrap_or(cfg.meta_description.max_px),
+        p.title_font_px,
+        p.description_font_px,
+    )
+}
+
+/// A field's metrics and final preview, ready for the SERP detail service (M2-K09).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SerpMeasurement {
+    pub chars: u32,
+    pub px: u32,
+    pub max_px: u32,
+    /// Negative when the original text exceeds the configured limit.
+    pub remaining: i64,
+    /// Unicode scalar offset, matching [`truncate_at`].
+    pub cut_at: Option<u32>,
+    pub preview: String,
+}
+
+/// Measures original or edited text without altering stored extraction values.
+pub fn measure_serp(text: &str, max_px: u32, size_px: f64, bold: bool) -> SerpMeasurement {
+    let px = width_px(text, size_px, bold);
+    let cut_at = truncate_at(text, max_px, size_px, bold);
+    let preview = match cut_at {
+        None => text.to_owned(),
+        Some(_) if width_px(" …", size_px, bold) > max_px => String::new(),
+        Some(cut) => format!("{} …", text.chars().take(cut as usize).collect::<String>()),
+    };
+    SerpMeasurement {
+        chars: text.chars().count() as u32,
+        px,
+        max_px,
+        remaining: i64::from(max_px) - i64::from(px),
+        cut_at,
+        preview,
+    }
+}

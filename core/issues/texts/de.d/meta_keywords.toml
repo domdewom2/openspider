@@ -1,2 +1,15 @@
-# OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „Meta Keywords“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.meta-keywords-missing]
+what = "Es wurde kein gefüllter Keywords-Wert gefunden."
+why = "Meta Keywords haben für viele Suchmaschinen keine Rankingwirkung."
+fix = "Prüfe, ob interne Systeme diese Angaben benötigen; andernfalls können sie entfallen."
+
+[issues.meta-keywords-duplicate]
+what = "Der erste Keywords-Wert kommt auf mehreren Seiten vor."
+why = "Meta Keywords haben für viele Suchmaschinen keine Rankingwirkung."
+fix = "Prüfe, ob interne Systeme diese Angaben benötigen; andernfalls können sie entfallen."
+
+[issues.meta-keywords-multiple]
+what = "Die Seite enthält mehrere Keywords-Elemente."
+why = "Meta Keywords haben für viele Suchmaschinen keine Rankingwirkung."
+fix = "Prüfe, ob interne Systeme diese Angaben benötigen; andernfalls können sie entfallen."

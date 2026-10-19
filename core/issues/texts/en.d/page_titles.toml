@@ -1,2 +1,10 @@
-# OpenSpider – Issue-Texte (English) ab M2, Tab „Page Titles“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/en.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.page-titles-same-as-h1]
+what = "The first title and first H1 have identical text."
+why = "Matching text can be intentional, but the title and main heading serve different presentation contexts."
+fix = "Review the affected elements in context and adjust the template when appropriate."
+
+[issues.page-titles-outside-head]
+what = "An HTML title element is outside the document head."
+why = "Search engines may ignore or replace titles outside the document head."
+fix = "Move the title into the HTML document head and remove additional body titles."

@@ -1716,18 +1716,24 @@ async fn issues_that_need_the_crawl_analysis_are_named_instead_of_counted() {
     assert!(!pending.is_empty());
     // M2-D09 replaces the SD stubs: its two issues require an enabled extraction format.
     // ONPAGE-079: Broken Bookmark requires advanced.crawl_fragments (K2-63).
-    assert!(pending.iter().all(|p| {
-        if p["tab"] == "Structured Data"
-            && matches!(
-                p["filter"].as_str(),
-                Some("Missing Structured Data" | "Parse Errors")
-            )
-        {
-            p["state"] == "needs_config"
-        } else {
-            p["state"] == "needs_crawl_analysis" || p["state"] == "needs_config"
-        }
-    }));
+    // spec: ONPAGE-099, ONPAGE-108, TECH-008 [P1]
+    let mut outside_head = 0;
+    for issue in pending {
+        let expected = match (issue["tab"].as_str(), issue["filter"].as_str()) {
+            (Some("Page Titles" | "Meta Description"), Some("Outside <head>")) => {
+                outside_head += 1;
+                "needs_recrawl"
+            }
+            (Some("Structured Data"), Some("Missing Structured Data" | "Parse Errors")) => {
+                "needs_config"
+            }
+            _ => "needs_crawl_analysis",
+        };
+        let state = issue["state"].as_str().unwrap_or_default();
+        let ok = state == expected || (expected == "needs_crawl_analysis" && state == "needs_config");
+        assert!(ok, "nicht ausgewertetes Issue: {issue}");
+    }
+    assert_eq!(outside_head, 2);
     assert!(pending.iter().any(|p| p["state"] == "needs_crawl_analysis"));
     client.cancel().await;
 }

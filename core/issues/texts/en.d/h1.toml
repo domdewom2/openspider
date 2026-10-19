@@ -1,2 +1,10 @@
-# OpenSpider – Issue-Texte (English) ab M2, Tab „H1“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/en.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.h1-alt-text]
+what = "An H1 contains an image with nonempty alternative text."
+why = "The main heading should clearly describe the page content in a meaningful order."
+fix = "Review heading order and whether the image alternative text is suitable as the main heading."
+
+[issues.h1-non-sequential]
+what = "Another heading level precedes the first H1."
+why = "The main heading should clearly describe the page content in a meaningful order."
+fix = "Place the main heading before subordinate headings and review the page template outline."
