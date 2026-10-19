@@ -25,6 +25,11 @@ resolution to the fixture server if evaluating that route. The tasks in this set
 relative-path redirect routes. For the comparison task, crawl the basic site twice
 without restarting the fixture server (same origin), retaining both files.
 
+The `basic-robots` task uses this default crawl without `exclude.osconfig`.
+`out-basic-site/robots.txt` allows all paths: `/privat/intern.html` is fetched with
+HTTP 200 and has no robots meta directive. Its directory name is not a blocking rule.
+The smoke test checks the saved page is fetched so this premise stays executable.
+
 The default server only reads saved crawls. To evaluate crawl-control behavior, an
 operator may set `classes = ["read", "crawl"]` and `allow_private_targets = true` in
 the **temporary** home's `mcp.toml`. Never change the user's production network policy

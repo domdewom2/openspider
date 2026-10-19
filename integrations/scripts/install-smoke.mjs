@@ -5,7 +5,7 @@ import { json } from './validate.mjs';
 import { run } from './process.mjs';
 
 export async function installSmoke(temp) {
-  if (!process.env.OPENSPIDER_CLAUDE_BINARY) return null;
+  assert(process.env.OPENSPIDER_CLAUDE_BINARY, 'Set OPENSPIDER_CLAUDE_BINARY to the Claude Code executable; installation and slash execution are required');
   const binary = resolve(process.env.OPENSPIDER_CLAUDE_BINARY);
   const config = join(temp, 'claude-config');
   const env = { ...process.env, CLAUDE_CONFIG_DIR: config, CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1' };
@@ -21,5 +21,5 @@ export async function installSmoke(temp) {
   const installed = json(join(config, 'plugins/installed_plugins.json'));
   const entry = installed.plugins['openspider@openspider-marketplace'];
   assert(entry?.length, 'Plugin missing from Claude installation registry');
-  return entry[0].installPath;
+  return { plugin: entry[0].installPath, binary, env };
 }

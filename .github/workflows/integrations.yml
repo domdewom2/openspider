@@ -62,7 +62,7 @@ jobs:
         run: |
           npm install --prefix "$RUNNER_TEMP/openspider-claude" --no-audit --no-fund @anthropic-ai/claude-code@2.1.303
           echo "OPENSPIDER_CLAUDE_BINARY=$RUNNER_TEMP/openspider-claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe" >> "$GITHUB_ENV"
-      - name: Marketplace installation and real MCP fixture workflow (AGENT-042)
+      - name: Marketplace installation, installed slash command and MCP fixture (AGENT-042)
         run: npm run --prefix integrations smoke
       - name: Optional skill evaluation report (AGENT-041)
         if: always()
@@ -71,5 +71,7 @@ jobs:
         if: always()
         with:
           name: integrations-eval-${{ matrix.os }}
-          path: target/integrations/eval-report.json
+          path: |
+            target/integrations/eval-report.json
+            target/integrations/slash-smoke.json
           if-no-files-found: error

@@ -11,6 +11,7 @@ import { registry } from './validate.mjs';
 import { run } from './process.mjs';
 import { McpClient } from './mcp-client.mjs';
 import { installSmoke } from './install-smoke.mjs';
+import { slashSmoke } from './slash-smoke.mjs';
 
 const suffix = process.platform === 'win32' ? '.exe' : '';
 const metadata = await run('cargo', ['metadata', '--no-deps', '--locked', '--format-version', '1'], { cwd: resolve(root, '..') });
@@ -25,7 +26,7 @@ let site;
 let client;
 try {
   const installed = await installSmoke(temp);
-  const plugin = installed ?? join(root, 'claude-plugin');
+  const { plugin } = installed;
   const launcher = join(plugin, 'scripts/launch.mjs');
   const command = readFileSync(join(plugin, 'commands/openspider-issues.md'), 'utf8');
   assert(command.includes('`list_issues`') && command.includes('`list_crawls`'));
@@ -75,7 +76,15 @@ try {
   const rows = await client.call('query_urls', { crawl_id: id, tab: 'Response Codes', filter: 'Client Error (4xx)' });
   assert(rows.total >= 1);
   assert(JSON.stringify(rows.content).includes('/missing.html'), 'Missing expected 404 evidence');
+  // spec: AGENT-041 — the basic-robots eval uses the default, unexcluded crawl.
+  const privatePage = await client.call('url_details', { crawl_id: id, url: `${origin}/privat/intern.html`, sections: ['overview', 'directives'] });
+  assert.equal(privatePage.summary.crawled, true, 'The default eval crawl must fetch /privat/intern.html');
+  assert.match(privatePage.content.map((block) => block.text ?? '').join('\n'), /"Status Code":\s*200/);
+  assert.match(privatePage.content.map((block) => block.text ?? '').join('\n'), /"directives":\s*\[\s*\]/);
   await client.close();
+
+  // spec: AGENT-042 — invoke the marketplace-installed slash command in Claude Code.
+  const slash = await slashSmoke(installed, temp, launchEnv, { id, origin, issues });
 
   // Full register is exposed solely in this isolated test process, not the plugin config.
   client = new McpClient(binary, ['mcp', '--allow', 'read,crawl,write,cost'], env);
@@ -88,7 +97,7 @@ try {
     const check = new Ajv({ strict: false }).compile(schemas.get(example.tool));
     assert(check(example.arguments), `${example.tool}: ${JSON.stringify(check.errors)}`);
   }
-  console.log(JSON.stringify({ marketplace_install: installed ? 'passed' : 'not run (set OPENSPIDER_CLAUDE_BINARY)', fixture: 'out-basic-site', missing_binary: 'passed', mcp_issues_workflow: 'passed', live_schema_examples: 'passed', agent_slash_execution: 'optional manual evaluation' }, null, 2));
+  console.log(JSON.stringify({ marketplace_install: 'passed', fixture: 'out-basic-site', missing_binary: 'passed', mcp_issues_workflow: 'passed', live_schema_examples: 'passed', eval_private_page_fetched: 'passed', agent_slash_execution: slash }, null, 2));
 } finally {
   if (client) await client.close();
   if (site?.pid && site.exitCode === null && site.signalCode === null) {

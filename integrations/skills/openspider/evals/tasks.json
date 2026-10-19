@@ -25,9 +25,9 @@
   },
   {
     "id": "basic-robots", "fixture": "out-basic-site",
-    "prompt": "Why was /privat/intern.html not fetched? Should we treat missing metadata as an SEO error?",
+    "prompt": "Was /privat/intern.html fetched in the default crawl? Check its saved response and robots directives. Does its /privat/ path prove that robots.txt blocks it?",
     "tools": ["url_details"],
-    "criteria": ["Inspect the not-crawled reason and robots evidence", "Do not treat unavailable metadata as confirmed missing", "Distinguish intended protection from accidental blocking"]
+    "criteria": ["Confirm the saved HTTP 200 response", "Report no robots meta directive in the saved page", "Do not infer robots.txt blocking from /privat/ or guarantee indexing from a successful fetch"]
   },
   {
     "id": "basic-links", "fixture": "out-basic-site",

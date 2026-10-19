@@ -21,12 +21,18 @@ npm run --prefix integrations smoke
 npm run --prefix integrations eval:report
 ```
 
-Set `OPENSPIDER_CLAUDE_BINARY` to a Claude Code executable to include real marketplace
-validation and installation in `smoke`. The CI matrix requires it on macOS and Windows.
+Set `OPENSPIDER_CLAUDE_BINARY` to a Claude Code executable (CI pins 2.1.303).
+`smoke` requires it for marketplace validation, installation and slash execution on
+macOS and Windows; a missing executable setting fails the test.
 The installation uses a disposable `CLAUDE_CONFIG_DIR`; the fixture crawl uses a
 disposable `OPENSPIDER_HOME` and ephemeral loopback server. Smoke checks the installed
-command artifact and executes its read-tool workflow, without an LLM or credentials.
-Interactive slash invocation and behavioral skill grading remain optional/manual;
+`/openspider:openspider-issues <crawl-id> en` via `claude -p`, using the marketplace
+installation rather than `--plugin-dir`. A scripted loopback Messages API stands in
+for the model; Claude Code expands the command, reads the installed skill and calls
+the real plugin MCP tools. The test checks successful tool results and final issue
+output against the fixture crawl. It requires no external API or credentials and
+writes `target/integrations/slash-smoke.json` for CI inspection. This deterministic
+dispatch test does not measure model reasoning. Behavioral skill grading remains optional;
 see [eval instructions](skills/openspider/evals/README.md). The CI summary explicitly
 reports unmeasured agent success when no evaluation results were supplied.
 
