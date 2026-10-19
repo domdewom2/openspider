@@ -173,6 +173,38 @@ fn uncrawlable_export_includes_raw_targets_and_reason_and_is_gated_by_option() {
         .iter()
         .any(|r| r[2] == "mailto:test@site.test" && r[15] == "missing href"));
 }
+
+// spec: TECH-142
+// spec: OUT-068
+#[test]
+fn non_indexable_inlinks_export_includes_list_inputs_at_depth_zero() {
+    let dir = tempfile::tempdir().unwrap();
+    let f = fixture(dir.path());
+    exec(
+        &f,
+        "UPDATE urls SET discovered_via='list_input', crawl_depth=0;
+        UPDATE crawl_meta SET value='' WHERE key='start_url';
+        UPDATE crawl_meta SET value='list' WHERE key='mode'",
+    );
+    let cfg = CrawlConfig::default();
+    os_analyze::analysis::runner::run_only(
+        &f,
+        &cfg,
+        &os_model::CancelToken::new(),
+        &|_, _| {},
+        &[os_model::AnalysisStep::Links],
+    )
+    .unwrap();
+    let rows = export(&f, &cfg, "Non-Indexable Page Inlinks Only", dir.path());
+    assert_eq!(rows.len(), 5);
+    let destinations: std::collections::BTreeSet<_> =
+        rows.iter().skip(1).map(|row| row[2].as_str()).collect();
+    assert_eq!(
+        destinations,
+        ["https://site.test/5", "https://site.test/6"].into()
+    );
+}
+
 // spec: OUT-031 [P1]
 #[test]
 fn raw_mailto_and_tel_targets_survive_the_writebatch_contract() {
@@ -216,11 +248,14 @@ fn bulk_spec_aliases_preserve_selection_with_distinct_tab_and_bulk_file_names() 
     let dir = tempfile::tempdir().unwrap();
     let f = fixture(dir.path());
     let cfg = CrawlConfig::default();
+    let mut alias_count = 0;
     for entry in bulk_links::entries()
         .iter()
         .filter(|e| matches!(e.selection, bulk_links::Selection::LinkSpec(_)))
     {
         for alias in &entry.aliases {
+            alias_count += 1;
+            assert_eq!(entry.name, format!("{alias} (Bulk)"));
             assert_eq!(
                 os_export::catalog::resolve(ExportKind::Bulk, alias).unwrap(),
                 ExportRef::Bulk(entry.name.clone())
@@ -235,6 +270,7 @@ fn bulk_spec_aliases_preserve_selection_with_distinct_tab_and_bulk_file_names() 
             assert_eq!(infos[0].path, canonical[0].path);
         }
     }
+    assert_eq!(alias_count, 8);
 }
 
 // spec: OUT-041

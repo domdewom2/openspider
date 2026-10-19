@@ -308,7 +308,7 @@ fn seed_is_excluded_when_raw_start_url_differs_from_normalized_address() {
     fixture(&file);
     sql(
         &file,
-        "UPDATE urls SET address='https://site.test/', crawl_depth=0 WHERE id=1;
+        "UPDATE urls SET address='https://site.test/', discovered_via='start', crawl_depth=0 WHERE id=1;
         INSERT INTO links(source_id,target_id,target_raw,link_type,position,follow)
         VALUES(2,1,'/','Hyperlink',9,1)",
     );
@@ -332,6 +332,29 @@ fn seed_is_excluded_when_raw_start_url_differs_from_normalized_address() {
             .unwrap();
         assert_eq!(actual, [5, 6]);
     }
+}
+
+// spec: TECH-142
+#[test]
+fn list_input_at_depth_zero_is_included_without_a_start_url() {
+    let (_dir, file) = file();
+    fixture(&file);
+    sql(
+        &file,
+        "UPDATE urls SET discovered_via='list_input', crawl_depth=0;
+        UPDATE crawl_meta SET value='' WHERE key='start_url';
+        UPDATE crawl_meta SET value='list' WHERE key='mode'",
+    );
+    let cfg = CrawlConfig::default();
+    os_analyze::analysis::runner::run_only(
+        &file,
+        &cfg,
+        &CancelToken::new(),
+        &|_, _| {},
+        &[os_model::AnalysisStep::Links],
+    )
+    .unwrap();
+    assert_eq!(ids(&file, &cfg, "Non-Indexable Page Inlinks Only"), [5, 6]);
 }
 
 // spec: TECH-141

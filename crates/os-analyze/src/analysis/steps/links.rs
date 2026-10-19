@@ -35,7 +35,7 @@ fn run_inner(file: &CrawlFile, cancel: &CancelToken) -> Result<StepState, Analyz
         ("link.nofollow_only", "d.yes = 0 AND d.no = 1"),
         (
             "link.non_indexable_only",
-            "d.indexable = 0 AND u.indexability = 'Indexable' AND COALESCE(u.crawl_depth, -1) <> 0",
+            "d.indexable = 0 AND u.indexability = 'Indexable' AND u.discovered_via <> 'start'",
         ),
     ] {
         tx.execute(&format!("INSERT INTO d08_link_facts SELECT d.id, ?1, 1 FROM d08_inlinks d JOIN urls u ON u.id = d.id WHERE {condition}"), [key])?;

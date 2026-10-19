@@ -320,14 +320,14 @@ Links:All Inlinks
 Links:All Outlinks
 Links:All Anchor Text
 Links:External Links
-Links:Internal Nofollow Outlinks Outlinks
-Links:Internal Outlinks With No Anchor Text Outlinks
-Links:Non-Descriptive Anchor Text In Internal Outlinks Outlinks
-Links:Follow & Nofollow Internal Inlinks To Page Inlinks
-Links:Internal Nofollow Inlinks Only Inlinks
-Links:Outlinks To Localhost Outlinks
-Links:Pages With Uncrawlable Internal Outlinks Outlinks
-Links:Non-Indexable Page Inlinks Only Inlinks
+Links:Internal Nofollow Outlinks (Bulk)
+Links:Internal Outlinks With No Anchor Text (Bulk)
+Links:Non-Descriptive Anchor Text In Internal Outlinks (Bulk)
+Links:Follow & Nofollow Internal Inlinks To Page (Bulk)
+Links:Internal Nofollow Inlinks Only (Bulk)
+Links:Outlinks To Localhost (Bulk)
+Links:Pages With Uncrawlable Internal Outlinks (Bulk)
+Links:Non-Indexable Page Inlinks Only (Bulk)
 Response Codes:Internal & External:All Inlinks
 Response Codes:Internal & External:Blocked by Robots.txt Inlinks
 Response Codes:Internal & External:Blocked Resource Inlinks

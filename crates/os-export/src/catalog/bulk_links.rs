@@ -180,16 +180,11 @@ pub fn entries() -> &'static [BulkLinkEntry] {
                 LinkOrder::Outlinks
             };
             // OUT-008: Die acht Tab-Filter haben bereits den Spec-Namen als Dateistamm.
-            // Der Bulk-Name ergänzt die Richtung; der Spec-Name bleibt als Alias gültig.
+            // Der Zusatz (Bulk) vermeidet doppelte Richtungsangaben; der Spec-Name bleibt als Alias gültig.
             let canonical = if matches!(name, "All Anchor Text" | "External Links") {
                 format!("Links:{name}")
             } else {
-                let direction = if order == LinkOrder::Inlinks {
-                    "Inlinks"
-                } else {
-                    "Outlinks"
-                };
-                format!("Links:{name} {direction}")
+                format!("Links:{name} (Bulk)")
             };
             let aliases = if canonical == format!("Links:{name}") {
                 Vec::new()
