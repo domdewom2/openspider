@@ -1,4 +1,4 @@
-//! Lesende Werkzeuge des MCP-Servers (AGENT-004, AGENT-010 … AGENT-013): `list_crawls`, `crawl_overview`,
+//! Werkzeuge des MCP-Servers (AGENT-004, AGENT-010 … AGENT-013): `list_crawls`, `crawl_overview`,
 //! `query_urls`, `url_details`, `list_issues`. Alle seitenstämmigen Felder (Titel, Texte, Ankertexte, Alt-Texte,
 //! Header, Adressen …) stehen ausschließlich in `ToolOutput.untrusted`; die Zusammenfassung enthält nur
 //! Zähler, Zustände und Katalogdaten.
@@ -8,10 +8,13 @@
 //! Zählung, keine eigene Sortierung.
 
 pub mod common;
+pub mod crawl;
 pub mod crawl_overview;
+pub mod export;
 pub mod list_crawls;
 pub mod list_issues;
 pub mod query_urls;
+pub mod sql_query;
 pub mod url_details;
 
 use crate::tool::Tool;
@@ -24,6 +27,12 @@ pub fn all() -> Vec<Box<dyn Tool>> {
         Box::new(query_urls::QueryUrls),
         Box::new(url_details::UrlDetails),
         Box::new(list_issues::ListIssues),
+        Box::new(sql_query::SqlQuery),
+        Box::new(crawl::CrawlTool("start_crawl")),
+        Box::new(crawl::CrawlTool("crawl_status")),
+        Box::new(crawl::CrawlTool("stop_crawl")),
+        Box::new(crawl::CrawlTool("resume_crawl")),
+        Box::new(export::Export),
     ]
 }
 
@@ -33,7 +42,7 @@ mod tests {
 
     // spec: AGENT-010, AGENT-011, AGENT-012, AGENT-013
     #[test]
-    fn the_five_reading_tools_are_registered_with_class_read() {
+    fn m2_tools_are_registered_with_their_permission_classes() {
         let tools = super::all();
         let names: Vec<&str> = tools.iter().map(|t| t.name()).collect();
         assert_eq!(
@@ -43,10 +52,22 @@ mod tests {
                 "crawl_overview",
                 "query_urls",
                 "url_details",
-                "list_issues"
+                "list_issues",
+                "sql_query",
+                "start_crawl",
+                "crawl_status",
+                "stop_crawl",
+                "resume_crawl",
+                "export"
             ]
         );
-        assert!(tools.iter().all(|t| t.class() == ToolClass::Read));
+        assert_eq!(
+            tools
+                .iter()
+                .filter(|t| t.class() == ToolClass::Read)
+                .count(),
+            6
+        );
         for t in &tools {
             assert_eq!(t.input_schema()["type"], "object", "{}", t.name());
             assert!(!t.description().is_empty());

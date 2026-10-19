@@ -88,6 +88,57 @@ pub(crate) fn lang_arg(args: &Json) -> Result<Lang, ToolError> {
     }
 }
 
+/// Discover .ospider files by their embedded crawl IDs, including manually named files, with no registry.
+pub(crate) fn discover(
+    dir: &std::path::Path,
+) -> Result<registry::ListingReport, os_store::StoreError> {
+    let mut report = registry::list_crawls_report(dir)?;
+    let entries = match std::fs::read_dir(dir) {
+        Ok(entries) => entries,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(report),
+        Err(e) => {
+            return Err(os_store::StoreError::Io {
+                path: dir.to_path_buf(),
+                source: e,
+            })
+        }
+    };
+    for entry in entries {
+        let path = entry
+            .map_err(|e| os_store::StoreError::Io {
+                path: dir.to_path_buf(),
+                source: e,
+            })?
+            .path();
+        let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
+            continue;
+        };
+        if !name.ends_with(".ospider")
+            || name.ends_with(".bak.ospider")
+            || name.ends_with(".repaired.ospider")
+            || !path.is_file()
+            || report.crawls.iter().any(|c| c.path == path)
+            || report.skipped.iter().any(|(p, _)| *p == path)
+        {
+            continue;
+        }
+        match registry::read_listing(&path) {
+            Ok(crawl)
+                if !report
+                    .crawls
+                    .iter()
+                    .any(|c| c.meta.crawl_id == crawl.meta.crawl_id) =>
+            {
+                report.crawls.push(crawl)
+            }
+            Ok(_) => {}
+            Err(e) => report.skipped.push((path, e)),
+        }
+    }
+    report.crawls.sort_by_key(|c| c.meta.crawl_id.to_string());
+    Ok(report)
+}
+
 /// Öffnet den Crawl aus dem Argument `crawl_id`.
 ///
 /// # Errors

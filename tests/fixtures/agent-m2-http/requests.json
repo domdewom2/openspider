@@ -1,0 +1,61 @@
+[
+  {
+    "token": "missing",
+    "status": 401
+  },
+  {
+    "token": "wrong",
+    "status": 401
+  },
+  {
+    "origin": "https://evil.example",
+    "status": 403
+  },
+  {
+    "origin": "null",
+    "status": 403
+  },
+  {
+    "origin": "http://localhost.evil.example",
+    "status": 403
+  },
+  {
+    "origin": "http://localhost@evil.example",
+    "status": 403
+  },
+  {
+    "origin": "http://localhost/path",
+    "status": 403
+  },
+  {
+    "host": "evil.example:PORT",
+    "status": 403
+  },
+  {
+    "origin": "http://localhost\r\nOrigin: http://evil.example",
+    "status": 403
+  },
+  {
+    "host": "localhost",
+    "status": 403
+  },
+  {
+    "host": "127.0.0.1:1",
+    "status": 403
+  },
+  {
+    "origin": "http://localhost:1234",
+    "status": 200
+  },
+  {
+    "origin": "https://127.0.0.1",
+    "status": 200
+  },
+  {
+    "origin": "http://[::1]:3210",
+    "status": 200
+  },
+  {
+    "status": 200
+  }
+]

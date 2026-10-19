@@ -120,8 +120,15 @@ fn stdout_carries_only_json_rpc_and_logs_go_to_stderr() {
     assert_eq!(by_id.len(), 6, "{responses:?}");
     assert_eq!(by_id["1"]["result"]["serverInfo"]["name"], "openspider");
     assert!(by_id["2"]["result"]["tools"].is_array());
-    assert_eq!(by_id["3"]["result"]["resources"], json!([]));
-    assert_eq!(by_id["4"]["result"]["prompts"], json!([]));
+    let resources = by_id["3"]["result"]["resources"].as_array().unwrap();
+    assert_eq!(
+        resources
+            .iter()
+            .map(|r| r["uri"].as_str().unwrap())
+            .collect::<Vec<_>>(),
+        ["openspider://schema", "openspider://tools"]
+    );
+    assert_eq!(by_id["4"]["result"]["prompts"].as_array().unwrap().len(), 6);
     assert_eq!(by_id["5"]["result"]["isError"], true);
 
     let log = drain(&stderr).join("\n");
@@ -292,8 +299,8 @@ async fn rmcp_client_talks_to_the_binary_over_stdio() {
     assert!(tools
         .iter()
         .all(|t| { t.annotations.as_ref().and_then(|a| a.read_only_hint) == Some(true) }));
-    assert!(client.list_all_resources().await.unwrap().is_empty());
-    assert!(client.list_all_prompts().await.unwrap().is_empty());
+    assert_eq!(client.list_all_resources().await.unwrap().len(), 2);
+    assert_eq!(client.list_all_prompts().await.unwrap().len(), 6);
     let result = client
         .call_tool(CallToolRequestParams::new("gibt_es_nicht"))
         .await

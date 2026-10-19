@@ -208,6 +208,7 @@ fn class_index(class: ToolClass) -> usize {
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct DomainPolicy {
     allowed: Vec<String>,
+    restricted: bool,
     allow_private: bool,
 }
 
@@ -223,6 +224,7 @@ impl DomainPolicy {
     /// Baut die Regeln aus einer Domain-Liste (leer = alle Domains) und dem Schalter für private Ziele.
     pub fn new(domains: &[String], allow_private: bool) -> Self {
         DomainPolicy {
+            restricted: domains.iter().any(|domain| !domain.trim().is_empty()),
             allowed: domains
                 .iter()
                 .filter_map(|d| normalize_domain_entry(d))
@@ -231,9 +233,14 @@ impl DomainPolicy {
         }
     }
 
+    /// Whether connection-time private-target checks are disabled by configuration.
+    pub fn allows_private_targets(&self) -> bool {
+        self.allow_private
+    }
+
     /// Ist eine Domain-Liste gesetzt?
     pub fn is_restricted(&self) -> bool {
-        !self.allowed.is_empty()
+        self.restricted
     }
 
     /// Prüft alle Ziel-URLs in den Werkzeugargumenten.
@@ -247,7 +254,7 @@ impl DomainPolicy {
                 self.check_url(url)?;
             }
         }
-        if let Some(Value::Array(urls)) = args.get("urls") {
+        if let Some(Value::Array(urls)) = args.get("urls").or_else(|| args.get("url_list")) {
             for url in urls.iter().filter_map(Value::as_str) {
                 self.check_url(url)?;
             }
@@ -261,7 +268,7 @@ impl DomainPolicy {
     /// Meldung (deutsch), wenn die URL nicht erlaubt ist.
     pub fn check_url(&self, url: &str) -> Result<(), String> {
         let host = parse_http_host(url)?;
-        if !self.allowed.is_empty() && !self.allowed.iter().any(|d| host_matches(&host, d)) {
+        if self.restricted && !self.allowed.iter().any(|d| host_matches(&host, d)) {
             return Err(format!(
                 "Die URL {url} liegt außerhalb der erlaubten Domains ({}). Die Liste steht in mcp.toml \
                  (allowed_domains) und lässt sich nicht über MCP ändern.",
@@ -348,7 +355,7 @@ fn is_private_host(host: &str) -> bool {
     last.starts_with("0x") || (!last.is_empty() && last.bytes().all(|b| b.is_ascii_digit()))
 }
 
-fn is_private_ip(ip: IpAddr) -> bool {
+pub(crate) fn is_private_ip(ip: IpAddr) -> bool {
     match ip {
         IpAddr::V4(v4) => is_private_v4(v4),
         IpAddr::V6(v6) => {
@@ -536,6 +543,17 @@ mod tests {
         assert!(p
             .check_url("http://out-basic-site.test.evil.test/")
             .is_err());
+    }
+
+    // spec: AGENT-003 [M2]
+    #[test]
+    fn malformed_configured_domains_never_turn_a_restriction_into_allow_all() {
+        let invalid = DomainPolicy::new(&["http://%".into()], true);
+        assert!(invalid.is_restricted());
+        assert!(invalid.check_url("https://out-basic-site.test/").is_err());
+        let mixed = DomainPolicy::new(&["http://%".into(), "out-basic-site.test".into()], true);
+        assert!(mixed.check_url("https://out-basic-site.test/").is_ok());
+        assert!(mixed.check_url("https://other.test/").is_err());
     }
 
     // spec: AGENT-003

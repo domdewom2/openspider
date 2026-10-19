@@ -177,6 +177,10 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
         sh.lock_core().requeue(item.clone());
         return Ok(());
     }
+    // Optional fetcher policy: preserve an explicit target denial instead of masking it as robots failure.
+    if record_target_denial(sh, item, &url).await? {
+        return Ok(());
+    }
     // 1. robots.txt
     let t = std::time::Instant::now();
     let check = sh.gate.check(&*sh.fetcher, &url).await;
@@ -187,6 +191,10 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
     }
     if sh.ctl.stop.load(Ordering::SeqCst) != STOP_NONE {
         sh.lock_core().requeue(item.clone());
+        return Ok(());
+    }
+    // DNS may have changed while robots.txt was fetched; check the policy again before its decision.
+    if record_target_denial(sh, item, &url).await? {
         return Ok(());
     }
     match &check.decision {
@@ -280,6 +288,26 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
         ingest_sitemaps(sh, sitemap_seeds).await?;
     }
     Ok(())
+}
+
+/// Additive policy hook; no effect for existing Fetch implementations (default: no denial).
+async fn record_target_denial<F: Fetch>(
+    sh: &Arc<Shared<F>>,
+    item: &QueueItem,
+    url: &Url,
+) -> Result<bool, Failure> {
+    let Some(result) = sh.fetcher.target_denial(url).await else {
+        return Ok(false);
+    };
+    let analysis = analyze(sh, item, url, &result).await;
+    let batch = assemble(sh, item, analysis).await?;
+    sh.writer.send(batch).await?;
+    sh.progress
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .record_completion(sh.clock_mono(), None);
+    sh.ctl.notify.notify_one();
+    Ok(true)
 }
 
 // ---------------------------------------------------------------------------------------------------

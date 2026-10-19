@@ -34,9 +34,10 @@ async fn the_five_reading_tools_work_over_stdio() {
             "list_crawls",
             "list_issues",
             "query_urls",
+            "sql_query",
             "url_details"
         ],
-        "im Auslieferungszustand genau die fünf lesenden Werkzeuge"
+        "im Auslieferungszustand genau die sechs lesenden Werkzeuge"
     );
     let crawls = client.call("list_crawls", json!({})).await;
     assert_eq!(

@@ -69,7 +69,8 @@ impl McpServer {
     /// Baut den Server aus Werkzeugen (z. B. `tools::all()`), den aufgelösten Freigaben und der
     /// Aufrufumgebung. Nicht freigegebene Werkzeuge bleiben im Server, erscheinen aber weder in `tools/list`
     /// noch sind sie aufrufbar.
-    pub fn new(tools: Vec<Box<dyn Tool>>, permissions: Permissions, ctx: ToolContext) -> Self {
+    pub fn new(tools: Vec<Box<dyn Tool>>, permissions: Permissions, mut ctx: ToolContext) -> Self {
+        ctx.target_policy = permissions.domains().clone();
         let tools: Vec<Arc<dyn Tool>> = tools.into_iter().map(Arc::from).collect();
         for name in permissions.disabled_tools() {
             if !tools.iter().any(|t| t.name() == name) {
@@ -151,6 +152,33 @@ impl McpServer {
         }
     }
 
+    /// Downloadable API description generated from the same enabled tool schemas as tools/list.
+    pub fn markdown(&self) -> String {
+        let mut text = String::from("# OpenSpider MCP tools\n\n");
+        for tool in self.list() {
+            text.push_str(&format!(
+                "## {}\n\n{}\n\n| Parameter | Schema |\n| --- | --- |\n",
+                tool.name,
+                tool.description.as_deref().unwrap_or("")
+            ));
+            if let Some(properties) = tool
+                .input_schema
+                .get("properties")
+                .and_then(Value::as_object)
+            {
+                for (name, schema) in properties {
+                    text.push_str(&format!(
+                        "| {} | `{}` |\n",
+                        name,
+                        schema.to_string().replace('|', "\\|")
+                    ));
+                }
+            }
+            text.push('\n');
+        }
+        text
+    }
+
     /// Wandelt ein Werkzeugergebnis in Antwortblöcke um (Format siehe Moduldoku), kürzt zu lange Antworten.
     pub fn render(&self, output: ToolOutput) -> CallToolResult {
         let write_enabled = self.inner.permissions.allows_class(ToolClass::Write);
@@ -170,7 +198,12 @@ fn describe(tool: &dyn Tool) -> McpTool {
 }
 
 fn tool_error(message: String) -> CallToolResult {
-    CallToolResult::error(vec![ContentBlock::text(message)])
+    let shaped = paging::shape(message, None, 0, 50_000, false);
+    let mut content = vec![ContentBlock::text(shaped.summary)];
+    if let Some(notice) = shaped.notice {
+        content.push(ContentBlock::text(notice));
+    }
+    CallToolResult::error(content)
 }
 
 fn tool_error_text(e: &ToolError) -> String {
@@ -224,6 +257,48 @@ pub fn render_output(output: ToolOutput, max_chars: usize, write_enabled: bool) 
     CallToolResult::success(content)
 }
 
+/// Keep valid JSON, report omissions, and prioritize common query objects within OUT-285's limit.
+fn bounded_schema(mut value: serde_json::Value) -> String {
+    const MAX_CHARS: usize = 50_000;
+    value["total_crawls"] = json!(value["crawls"].as_array().map_or(0, Vec::len));
+    value["truncated"] = json!(false);
+    if value.to_string().chars().count() <= MAX_CHARS {
+        return value.to_string();
+    }
+    value["truncated"] = json!(true);
+    value["usage"] =
+        json!("Response shortened to 50000 characters; use sql_query for specific schema details.");
+    if let Some(objects) = value
+        .pointer_mut("/latest/schema/objects")
+        .and_then(|v| v.as_array_mut())
+    {
+        objects.sort_by_key(|o| {
+            (
+                o["name"] != "urls",
+                !o["name"].as_str().is_some_and(|s| s.starts_with("q_")),
+            )
+        });
+    }
+    // Reserve room for useful schema data instead of serializing an unbounded list repeatedly.
+    let crawls = value["crawls"].as_array_mut().unwrap();
+    if crawls.len() > 100 {
+        crawls.drain(..crawls.len() - 100);
+    }
+    while value.to_string().chars().count() > MAX_CHARS {
+        if let Some(objects) = value
+            .pointer_mut("/latest/schema/objects")
+            .and_then(|v| v.as_array_mut())
+            .filter(|v| !v.is_empty())
+        {
+            objects.pop();
+        } else {
+            value["latest"] = serde_json::Value::Null;
+            value["crawls"].as_array_mut().unwrap().pop();
+        }
+    }
+    value.to_string()
+}
+
 impl ServerHandler for McpServer {
     fn get_info(&self) -> ServerConfig {
         ServerConfig::new(
@@ -259,16 +334,69 @@ impl ServerHandler for McpServer {
         _request: Option<PaginatedRequestParams>,
         _context: RequestContext<RoleServer>,
     ) -> Result<ListResourcesResult, ErrorData> {
-        Ok(ListResourcesResult::with_all_items(Vec::new()))
+        Ok(ListResourcesResult::with_all_items(vec![
+            rmcp::model::Resource::new("openspider://schema", "Crawl SQL schema")
+                .with_description(
+                    "Latest readable crawl schema and crawl IDs/schema versions (bounded response)",
+                )
+                .with_mime_type("application/json"),
+            rmcp::model::Resource::new("openspider://tools", "openspider-mcp-tools.md")
+                .with_description("Enabled tools and parameter schemas")
+                .with_mime_type("text/markdown"),
+        ]))
     }
 
-    // Prompts bleiben bis M2 leer.
+    async fn read_resource(
+        &self,
+        request: rmcp::model::ReadResourceRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<rmcp::model::ReadResourceResponse, ErrorData> {
+        let text = match request.uri.as_str() {
+            "openspider://tools" => self.markdown(),
+            "openspider://schema" => {
+                let mut crawls = crate::tools::common::discover(&self.inner.ctx.crawl_dir)
+                    .map_err(|e| ErrorData::internal_error(e.to_string(), None))?
+                    .crawls;
+                crawls.sort_by_key(|c| (c.meta.started_at, c.meta.crawl_id.to_string()));
+                let schema = crawls.iter().rev().find_map(|crawl| {
+                    os_store::readonly_sql::schema(&crawl.path).ok().map(|schema| {
+                        json!({"crawl_id":crawl.meta.crawl_id.to_string(), "schema":schema})
+                    })
+                });
+                bounded_schema(json!({"latest":schema,"crawls":crawls.iter().map(|c| {
+                    json!({"crawl_id":c.meta.crawl_id.to_string(),"schema_version":c.meta.schema_version})
+                }).collect::<Vec<_>>()}))
+            }
+            _ => {
+                return Err(ErrorData::invalid_params(
+                    "Unknown resource; use resources/list",
+                    None,
+                ))
+            }
+        };
+        Ok(
+            rmcp::model::ReadResourceResult::new(vec![rmcp::model::ResourceContents::text(
+                text,
+                request.uri,
+            )])
+            .into(),
+        )
+    }
+
+    async fn get_prompt(
+        &self,
+        request: rmcp::model::GetPromptRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<rmcp::model::GetPromptResponse, ErrorData> {
+        crate::prompts::get(request).map(Into::into)
+    }
+
     async fn list_prompts(
         &self,
         _request: Option<PaginatedRequestParams>,
         _context: RequestContext<RoleServer>,
     ) -> Result<ListPromptsResult, ErrorData> {
-        Ok(ListPromptsResult::with_all_items(Vec::new()))
+        Ok(ListPromptsResult::with_all_items(crate::prompts::list()))
     }
 }
 
@@ -282,6 +410,21 @@ mod tests {
             .iter()
             .map(|c| c.as_text().expect("Textblock").text.clone())
             .collect()
+    }
+
+    // spec: AGENT-014
+    // spec: OUT-285 [P1]
+    #[test]
+    fn schema_response_stays_valid_json_and_bounded_for_large_crawl_folders_and_schemas() {
+        let schema = json!({"latest":{"schema":{"objects":[
+            {"name":"urls","columns":[{"name":"address"}]},
+            {"name":"huge","description":"ä".repeat(60_000)}
+        ]}}, "crawls":(0..1000).map(|i| json!({"crawl_id":i,"schema_version":3})).collect::<Vec<_>>()});
+        let text = bounded_schema(schema);
+        assert!(text.chars().count() <= 50_000);
+        let value: serde_json::Value = serde_json::from_str(&text).unwrap();
+        assert_eq!(value["truncated"], true);
+        assert_eq!(value["latest"]["schema"]["objects"][0]["name"], "urls");
     }
 
     // spec: AGENT-004
@@ -387,5 +530,10 @@ mod tests {
             v["next_cursor"], "n",
             "Zusammenfassung bleibt gültiges JSON"
         );
+        let failure = tool_error("ä".repeat(80_000));
+        assert_eq!(failure.is_error, Some(true));
+        let failure = texts(&failure);
+        assert!(failure.iter().map(|s| s.chars().count()).sum::<usize>() <= 50_000);
+        assert!(failure.last().unwrap().contains("gekürzt"));
     }
 }

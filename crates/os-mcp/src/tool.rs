@@ -33,8 +33,18 @@ pub struct ToolContext {
     /// Höchstzahl Zeichen einer Antwort (Standard 50 000).
     pub max_chars: usize,
     /// Zugriff auf die Sitzung der App (ab M2, K-17): Crawl-Liste, Start/Stopp und Live-Status im App-Prozess. `None` im
-    /// STDIO-Server (`openspider mcp`), der nur Crawl-Dateien liest.
+    /// STDIO-Server (`openspider mcp`), der eigene Engine-Handles verwaltet.
     pub session: Option<Arc<dyn SessionAccess>>,
+    /// Settings directory for profiles and the current export directory.
+    pub settings_dir: PathBuf,
+    /// MCP settings loaded by the server, never writable through tools.
+    pub settings: crate::settings::McpSettings,
+    /// Connection-time target policy, supplied by the server permissions.
+    pub target_policy: crate::permissions::DomainPolicy,
+    /// Shared handles of headless crawls owned by this server process.
+    pub(crate) crawls: Arc<crate::crawl_service::CrawlService>,
+    /// SQL worker executable and arguments for embedded hosts (K17); headless defaults to itself.
+    pub sql_worker: Option<(PathBuf, Vec<String>)>,
 }
 
 impl ToolContext {
@@ -44,7 +54,18 @@ impl ToolContext {
             crawl_dir,
             max_chars: 50_000,
             session: None,
+            settings_dir: os_store::paths::app_paths().settings,
+            settings: crate::settings::McpSettings::default(),
+            target_policy: crate::permissions::DomainPolicy::default(),
+            crawls: Arc::new(crate::crawl_service::CrawlService::default()),
+            sql_worker: None,
         }
+    }
+
+    /// Configure an executable whose arguments select os_store::readonly_sql::worker_main.
+    pub fn with_sql_worker(mut self, executable: PathBuf, args: Vec<String>) -> Self {
+        self.sql_worker = Some((executable, args));
+        self
     }
 
     /// Derselbe Kontext mit dem Sitzungszugriff der App.

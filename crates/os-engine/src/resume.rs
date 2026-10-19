@@ -65,6 +65,13 @@ impl<F: Fetch> PrimedFetch<F> {
 }
 
 impl<F: Fetch> Fetch for PrimedFetch<F> {
+    fn target_denial<'a>(
+        &'a self,
+        url: &'a url::Url,
+    ) -> Pin<Box<dyn Future<Output = Option<FetchResult>> + Send + 'a>> {
+        self.inner.target_denial(url)
+    }
+
     fn fetch(&self, req: FetchRequest) -> Pin<Box<dyn Future<Output = FetchResult> + Send + '_>> {
         if req.purpose == FetchPurpose::RobotsTxt {
             if let Some(p) = self.robots.get(req.url.as_str()) {
