@@ -102,6 +102,59 @@ fn spelling_texts(page: &ParsedPage) -> Vec<String> {
 
 // spec: ONPAGE-153
 #[test]
+fn environment_dictionaries_take_precedence_after_configuration() {
+    const CHILD: &str = "OPENSPIDER_TEST_DICTIONARY_RESOURCES_CHILD";
+    let fixture_dir = fixture().join("dictionaries");
+    if std::env::var_os(CHILD).is_some() {
+        let configured_dir = fixture().join("configured");
+        let personal_dir = fixture().join("personal");
+        // A previously configured set can contain environment paths in a different order.
+        dictionary::configure(Resources {
+            dictionary_dirs: vec![fixture(), configured_dir.clone(), fixture_dir.clone()],
+            personal_dir: Some(personal_dir.clone()),
+        });
+        let expected = Resources {
+            dictionary_dirs: vec![fixture_dir, fixture(), configured_dir.clone()],
+            personal_dir: Some(personal_dir.clone()),
+        };
+        assert_eq!(dictionary::resources(), expected);
+        // App startup may replace the configured set without including the fixture paths.
+        dictionary::configure(Resources {
+            dictionary_dirs: vec![configured_dir],
+            personal_dir: Some(personal_dir),
+        });
+        let actual = dictionary::resources();
+        assert_eq!(actual, expected);
+        let dictionary =
+            dictionary::find("de-DE", &actual).expect("fixture dictionary after startup");
+        assert!(dictionary.check("Beispiel"));
+        assert!(!dictionary.check("Rechtschreibfeler"));
+        return;
+    }
+    // Isolate both the process environment and the global dictionary configuration from sibling tests.
+    let output = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "spelling::tests::environment_dictionaries_take_precedence_after_configuration",
+            "--nocapture",
+        ])
+        .env(CHILD, "1")
+        .env(
+            dictionary::DICTIONARIES_ENV,
+            std::env::join_paths([fixture_dir.clone(), fixture(), fixture_dir]).unwrap(),
+        )
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "isolated dictionary test failed:\n{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+// spec: ONPAGE-153
+#[test]
 fn de_errors_reports_three_spelling_errors_in_title_description_and_body() {
     let page = parse("de-errors.html", &spec_cfg());
     assert_eq!(text(&page, KEY_LANGUAGE), "de-DE");

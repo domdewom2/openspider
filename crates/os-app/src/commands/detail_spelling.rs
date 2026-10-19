@@ -148,7 +148,7 @@ mod tests {
     use os_engine::testing::{crawl_fixture, FixtureCrawl};
     use os_model::CancelToken;
     use std::path::PathBuf;
-    use std::sync::Arc;
+    use std::sync::{Arc, OnceLock};
 
     fn fixture() -> PathBuf {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../tests/fixtures/ui/fx-ui-spell")
@@ -156,7 +156,11 @@ mod tests {
 
     /// Prüfungen an, Sprachwahl mit den Defaults der Spec; Mini-Wörterbücher der Fixture über die Umgebung.
     fn spec_cfg() -> CrawlConfig {
-        std::env::set_var(dictionary::DICTIONARIES_ENV, fixture().join("dictionaries"));
+        static INIT: OnceLock<()> = OnceLock::new();
+        INIT.get_or_init(|| {
+            std::env::set_var(dictionary::DICTIONARIES_ENV, fixture().join("dictionaries"));
+            dictionary::configure(resources(None));
+        });
         let mut cfg = CrawlConfig::default();
         cfg.spelling.enabled = true;
         cfg.grammar.enabled = true;

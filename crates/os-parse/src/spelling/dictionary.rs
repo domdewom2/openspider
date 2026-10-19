@@ -16,8 +16,9 @@
 //! `dirs` bzw. `OPENSPIDER_HOME`, [`under`]). Eine Prüfung in `de-AT` liest `de-AT.txt` und `de.txt`. Vergleich ohne
 //! Beachtung der Groß-/Kleinschreibung.
 //!
-//! **Orte ohne App** (CLI, Tests): ohne [`configure`] gelten die Verzeichnisse aus `OPENSPIDER_DICTIONARIES` und, falls
-//! `OPENSPIDER_HOME` gesetzt ist, `<OPENSPIDER_HOME>/dictionaries` samt persönlichem Wörterbuch ([`resources`]).
+//! **Orte aus der Umgebung** (auch nach [`configure`]): `OPENSPIDER_DICTIONARIES` hat Vorrang vor den konfigurierten
+//! Verzeichnissen. Ohne [`configure`] gilt zusätzlich, falls `OPENSPIDER_HOME` gesetzt ist,
+//! `<OPENSPIDER_HOME>/dictionaries` samt persönlichem Wörterbuch ([`resources`]).
 
 use std::collections::{HashMap, HashSet};
 use std::io::Read;
@@ -76,19 +77,27 @@ pub fn under(settings: &Path) -> Resources {
     }
 }
 
-/// Die aktuell gesetzten Orte; ohne [`configure`] aus der Umgebung: [`DICTIONARIES_ENV`] und, falls gesetzt,
-/// `OPENSPIDER_HOME` (wie [`under`]).
+/// Die aktuell gesetzten Orte, immer mit den Verzeichnissen aus [`DICTIONARIES_ENV`] zuerst (in Pfadlistenreihenfolge,
+/// ohne Duplikate). Ohne [`configure`] gilt zusätzlich `OPENSPIDER_HOME`, falls gesetzt (wie [`under`]).
 pub fn resources() -> Resources {
-    if let Some(set) = global().read().unwrap_or_else(|e| e.into_inner()).clone() {
-        return set;
+    let mut set = global()
+        .read()
+        .unwrap_or_else(|e| e.into_inner())
+        .clone()
+        .unwrap_or_else(
+            || match std::env::var_os(HOME_ENV).filter(|h| !h.is_empty()) {
+                Some(home) => under(Path::new(&home)),
+                None => Resources::default(),
+            },
+        );
+    let mut dirs = Vec::new();
+    for dir in env_dirs().into_iter().chain(set.dictionary_dirs) {
+        if !dirs.contains(&dir) {
+            dirs.push(dir);
+        }
     }
-    match std::env::var_os(HOME_ENV).filter(|h| !h.is_empty()) {
-        Some(home) => under(Path::new(&home)),
-        None => Resources {
-            dictionary_dirs: env_dirs(),
-            personal_dir: None,
-        },
-    }
+    set.dictionary_dirs = dirs;
+    set
 }
 
 /// Gebündelte Wörterbücher: Code, Affixdatei, gzip-komprimierte Wortliste.

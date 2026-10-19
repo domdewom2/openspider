@@ -3,6 +3,7 @@
 //! `Spelling Errors`/`Grammar Errors`, Detail-Tab „Spelling & Grammar Details“ und PDFs.
 
 use std::path::PathBuf;
+use std::sync::OnceLock;
 
 use os_analyze::details::{detail_source, DetailKind, DetailReq};
 use os_analyze::views::{query_view, state_of, ColumnSelection, ViewPage, ViewQuery};
@@ -17,7 +18,10 @@ fn fixture() -> PathBuf {
 
 /// Rechtschreibung und Grammatik an, Sprachwahl mit den Defaults der Spec; Mini-Wörterbücher der Fixture.
 fn spec_cfg() -> CrawlConfig {
-    std::env::set_var("OPENSPIDER_DICTIONARIES", fixture().join("dictionaries"));
+    static INIT: OnceLock<()> = OnceLock::new();
+    INIT.get_or_init(|| {
+        std::env::set_var("OPENSPIDER_DICTIONARIES", fixture().join("dictionaries"));
+    });
     let mut cfg = CrawlConfig::default();
     cfg.spelling.enabled = true;
     cfg.grammar.enabled = true;
