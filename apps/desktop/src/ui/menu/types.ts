@@ -46,6 +46,8 @@ export type MenuContext = Readonly<Record<string, unknown>> & {
 };
 
 export interface MenuItemSpec {
+  /** Literal user data (e.g. a recent file path); omitted entries use labelKey. */
+  literalLabel?: string;
   /** Eindeutig innerhalb des Menüs, z. B. `file.new`. */
   id: string;
   /** Fluent-Schlüssel der Beschriftung (bei `predefined` und Trennern entfällt sie). */
