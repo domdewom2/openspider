@@ -375,7 +375,7 @@ async fn crawl_authentication_headers_are_passed_to_the_local_run() {
 
 // spec: INTEG-132
 #[tokio::test]
-#[ignore = "Klärung K2-09: Lauf gegen eine echte Lighthouse-Installation (OPENSPIDER_LIGHTHOUSE), Bündelung in M3"]
+#[ignore = "M3: Lauf gegen eine echte Lighthouse-Installation (OPENSPIDER_LIGHTHOUSE, Klärung K2-09), Bündelung in M3"]
 async fn real_lighthouse_installation_scores_a_basic_auth_page() {
     let cli = std::env::var_os("OPENSPIDER_LIGHTHOUSE").expect("Pfad zur Lighthouse-CLI");
     let runner = LocalRunner::discover(&LocalOptions {
