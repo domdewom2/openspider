@@ -9,7 +9,7 @@ import type { VizOpenArgs } from "../../../ipc/gen/VizOpenArgs";
 import type { VizWordsArgs } from "../../../ipc/gen/VizWordsArgs";
 import type { WordFreq } from "../../../ipc/gen/WordFreq";
 import type { Transport } from "../../../ipc/transport/types";
-import { windowLabelFor } from "../open";
+import { windowLabelFor } from "../labels";
 import { fxUiBasic, fxUiDirs, fxUiWords, selectGraph, type SynthTree } from "./synthetic";
 
 export interface FakeCall {
@@ -76,7 +76,7 @@ export class FakeVizCore {
       case "viz.words":
         return this.wordList(args as VizWordsArgs);
       case "viz.exportCsv":
-        return this.exportCsv(args as VizExportArgs, window);
+        return this.exportCsv(args as VizExportArgs);
       case "viz.focusInMain":
         return null;
       case "settings.get":
@@ -130,18 +130,18 @@ export class FakeVizCore {
     return this.words().slice(0, a.maxTerms ?? 100);
   }
 
-  private exportCsv(a: VizExportArgs, window: string): { opId: string; labelKey: string; cancellable: boolean } {
+  private exportCsv(a: VizExportArgs): { opId: string; labelKey: string; cancellable: boolean } {
     const s = this.snapshots.get(a.snapshotId);
     if (!s?.last || a.nodes.length !== s.last.nodes.length || a.edges.length !== s.last.edges.length) throw err("InvalidInput", "err-invalid-input", "nodes");
     const opId = `op-${++this.op}`;
-    setTimeout(
-      () =>
+    // Operationen stehen wie im Kern im Tick jedes Fensters.
+    setTimeout(() => {
+      for (const window of this.subs.keys())
         this.emit(window, {
           kind: "tick",
           tick: { seq: this.op, at: "2026-10-19T00:00:00Z", views: [], countsVersion: 0, issuesVersion: 0, sidebarVersion: 0, notices: [], ops: [{ opId, labelKey: "op-viz-export", done: 1, total: 1, state: "done", result: { path: a.dir, bytes: 1 } }] },
-        }),
-      5,
-    );
+        });
+    }, 5);
     return { opId, labelKey: "op-viz-export", cancellable: true };
   }
 

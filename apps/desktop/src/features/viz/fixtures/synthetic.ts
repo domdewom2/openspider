@@ -90,19 +90,21 @@ export function fxUiDepth(depth = 12): SynthTree {
   return t;
 }
 
-/** `fx-ui-dirs`: Verzeichnisbaum mit zwei Verzeichnissen ohne Indexseite (hohle Pfadknoten), Query-Varianten als Geschwister. */
+/**
+ * `fx-ui-dirs`: Verzeichnisbaum wie im Kern (Schema → Host = Start-URL → Pfadsegmente) mit zwei Verzeichnissen ohne
+ * Indexseite (hohle Pfadknoten); die Query-Variante hängt als Kind an ihrer Seite.
+ */
 export function fxUiDirs(): SynthTree {
   const t = empty();
   const path = (id: number, label: string, depth: number): SynthNode => ({ ...page(id, label, depth), address: null, label, statusCode: null, indexability: null, uniqueInlinks: null, metrics: {} });
   add(t, path(-1, "http", 0), null);
-  add(t, { ...path(-2, "127.0.0.1:8000", 1) }, -1);
-  add(t, page(1, "/", 2, { label: "/" } as Partial<SynthNode>), -2);
-  add(t, path(-3, "docs", 2), -2);
-  add(t, page(2, "/docs/a.html", 3, { label: "a.html" } as Partial<SynthNode>), -3);
-  add(t, page(3, "/docs/b.html", 3, { label: "b.html" } as Partial<SynthNode>), -3);
-  add(t, path(-4, "blog", 2), -2);
-  add(t, page(4, "/blog/post", 3, { label: "post" } as Partial<SynthNode>), -4);
-  add(t, page(5, "/blog/post?page=2", 4, { label: "post?page=2" } as Partial<SynthNode>), 4);
+  add(t, page(1, "/", 1, { label: "127.0.0.1:8000" }), -1);
+  add(t, path(-2, "docs", 2), 1);
+  add(t, page(2, "/docs/a.html", 3, { label: "a.html" }), -2);
+  add(t, page(3, "/docs/b.html", 3, { label: "b.html" }), -2);
+  add(t, path(-3, "blog", 2), 1);
+  add(t, page(4, "/blog/post", 3, { label: "post" }), -3);
+  add(t, page(5, "/blog/post?page=2", 4, { label: "post?page=2" }), 4);
   return t;
 }
 

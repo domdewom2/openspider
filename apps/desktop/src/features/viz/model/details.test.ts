@@ -24,7 +24,7 @@ describe("Tooltip", () => {
   // spec: UI-093
   it("Pfadknoten ohne gecrawlte URL zeigen im Tooltip nur den Pfad (fx-ui-dirs)", () => {
     const tree = VizTree.from(selectGraph(fxUiDirs(), { budget: 10_000, expandDepth: 100, metric: "crawl_depth" }));
-    expect(tooltipRows(tree.get(-3)!, directoryPath(tree, -3), "crawl_depth", num)).toEqual([{ name: "Path", value: "/docs" }]);
+    expect(tooltipRows(tree.get(-2)!, directoryPath(tree, -2), "crawl_depth", num)).toEqual([{ name: "Path", value: "/docs" }]);
   });
 });
 

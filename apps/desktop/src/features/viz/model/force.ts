@@ -21,11 +21,14 @@ export const MOVE_EPSILON = 0.1;
 export const MAX_LAYOUT_MS = 10_000;
 const MIN_STEPS = 60;
 const ALPHA_MIN = 0.001;
-const ALPHA_DECAY = 1 - Math.pow(ALPHA_MIN, 1 / 300);
+const ALPHA_DECAY = 1 - Math.pow(ALPHA_MIN, 1 / 200);
 const VELOCITY_DECAY = 0.4;
-const THETA2 = 0.81;
+const THETA2 = 1.44;
 const COLLIDE_STRENGTH = 1;
 const COLLIDE_ITERATIONS = 2;
+/** Zellmarken im Quadtree (sonst Index des ersten Punkts im Blatt). */
+const EMPTY = -1;
+const INTERNAL = -2;
 
 export interface ForceInput {
   /** Elternindex je Knoten (-1 = Wurzel); Knoten in Breitensuche-Reihenfolge (Eltern vor Kindern). */
@@ -252,7 +255,7 @@ export class ForceSim {
     this.cy0[c] = y0;
     this.csize[c] = size;
     this.cchild.fill(-1, c * 4, c * 4 + 4);
-    this.cpoint[c] = -1;
+    this.cpoint[c] = EMPTY;
     this.cmass[c] = 0;
     return c;
   }
@@ -269,11 +272,6 @@ export class ForceSim {
     const child = this.newCell((this.cx0[c] as number) + (q & 1 ? h : 0), (this.cy0[c] as number) + (q & 2 ? h : 0), h);
     this.cchild[c * 4 + q] = child;
     return child;
-  }
-
-  private isInternal(c: number): boolean {
-    const b = c * 4;
-    return (this.cchild[b] as number) >= 0 || (this.cchild[b + 1] as number) >= 0 || (this.cchild[b + 2] as number) >= 0 || (this.cchild[b + 3] as number) >= 0;
   }
 
   private buildTree(): void {
@@ -300,12 +298,12 @@ export class ForceSim {
       const y = pos[i * 2 + 1] as number;
       let c = root;
       for (;;) {
-        if (this.isInternal(c)) {
+        const p = this.cpoint[c] as number;
+        if (p === INTERNAL) {
           c = this.childCell(c, this.quadrant(c, x, y));
           continue;
         }
-        const p = this.cpoint[c] as number;
-        if (p < 0) {
+        if (p === EMPTY) {
           this.cpoint[c] = i;
           break;
         }
@@ -317,7 +315,7 @@ export class ForceSim {
           this.nextPoint[p] = i;
           break;
         }
-        this.cpoint[c] = -1;
+        this.cpoint[c] = INTERNAL;
         const moved = this.childCell(c, this.quadrant(c, px, py));
         this.cpoint[moved] = p;
         c = this.childCell(c, this.quadrant(c, x, y));
@@ -405,35 +403,64 @@ export class ForceSim {
     }
   }
 
+  // Kollisionsraster: Hashtabelle über Zellkoordinaten, per Zählsortierung in typisierten Feldern (keine Objekte je Schritt).
+  private gridHead = new Int32Array(0);
+  private gridNodes = new Int32Array(0);
+  private gridCellX = new Int32Array(0);
+  private gridCellY = new Int32Array(0);
+
   private collide(): void {
+    const n = this.n;
     const pos = this.pos;
     const vel = this.vel;
     const cell = Math.max(1, this.maxRadius * 2);
-    const grid = new Map<number, number[]>();
-    const key = (gx: number, gy: number) => gx * 1_000_003 + gy;
-    const gxOf = new Int32Array(this.n);
-    const gyOf = new Int32Array(this.n);
-    for (let i = 0; i < this.n; i++) {
+    let size = 1;
+    while (size < n * 2) size <<= 1;
+    const mask = size - 1;
+    if (this.gridHead.length !== size + 1) this.gridHead = new Int32Array(size + 1);
+    if (this.gridNodes.length !== n) {
+      this.gridNodes = new Int32Array(n);
+      this.gridCellX = new Int32Array(n);
+      this.gridCellY = new Int32Array(n);
+    }
+    const head = this.gridHead;
+    const sorted = this.gridNodes;
+    const cx = this.gridCellX;
+    const cy = this.gridCellY;
+    const hash = (gx: number, gy: number) => (Math.imul(gx, 73856093) ^ Math.imul(gy, 19349663)) & mask;
+    head.fill(0);
+    for (let i = 0; i < n; i++) {
       const gx = Math.floor(((pos[i * 2] as number) + (vel[i * 2] as number)) / cell);
       const gy = Math.floor(((pos[i * 2 + 1] as number) + (vel[i * 2 + 1] as number)) / cell);
-      gxOf[i] = gx;
-      gyOf[i] = gy;
-      const k = key(gx, gy);
-      const list = grid.get(k);
-      if (list) list.push(i);
-      else grid.set(k, [i]);
+      cx[i] = gx;
+      cy[i] = gy;
+      const h = hash(gx, gy) + 1;
+      head[h] = (head[h] as number) + 1;
     }
-    for (let i = 0; i < this.n; i++) {
+    for (let h = 1; h <= size; h++) head[h] = (head[h] as number) + (head[h - 1] as number);
+    // Zweiter Zähler: Einfügeposition je Bucket (head[h] = Anfang, wird dabei auf das Ende geschoben und danach zurückgesetzt).
+    for (let i = 0; i < n; i++) {
+      const h = hash(cx[i] as number, cy[i] as number);
+      sorted[head[h] as number] = i;
+      head[h] = (head[h] as number) + 1;
+    }
+    for (let h = size; h > 0; h--) head[h] = head[h - 1] as number;
+    head[0] = 0;
+    for (let i = 0; i < n; i++) {
       const ri = this.radius[i] as number;
       const ri2 = ri * ri;
-      const gx = gxOf[i] as number;
-      const gy = gyOf[i] as number;
+      const gx = cx[i] as number;
+      const gy = cy[i] as number;
       for (let ox = -1; ox <= 1; ox++) {
         for (let oy = -1; oy <= 1; oy++) {
-          const list = grid.get(key(gx + ox, gy + oy));
-          if (!list) continue;
-          for (const j of list) {
-            if (j <= i) continue;
+          const tx = gx + ox;
+          const ty = gy + oy;
+          const h = hash(tx, ty);
+          const end = head[h + 1] as number;
+          for (let k = head[h] as number; k < end; k++) {
+            const j = sorted[k] as number;
+            // Nur echte Nachbarzelle (Hash-Kollisionen) und jedes Paar einmal.
+            if (j <= i || cx[j] !== tx || cy[j] !== ty) continue;
             const rj = this.radius[j] as number;
             const r = ri + rj;
             let x = (pos[i * 2] as number) + (vel[i * 2] as number) - (pos[j * 2] as number) - (vel[j * 2] as number);
@@ -446,9 +473,9 @@ export class ForceSim {
               l = x * x + y * y;
             }
             l = Math.sqrt(l);
-            const k = ((r - l) / l) * COLLIDE_STRENGTH;
-            x *= k;
-            y *= k;
+            const f = ((r - l) / l) * COLLIDE_STRENGTH;
+            x *= f;
+            y *= f;
             const rj2 = rj * rj;
             const share = rj2 / (ri2 + rj2);
             vel[i * 2] = (vel[i * 2] as number) + x * share;

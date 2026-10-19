@@ -6,6 +6,7 @@ import type { VizKind } from "../../ipc/gen/VizKind";
 import type { VizOpenResult } from "../../ipc/gen/VizOpenResult";
 import { isTauri } from "../../ipc/transport/tauri";
 import { viz } from "../../ipc/viz";
+import { windowLabelFor } from "./labels";
 
 /** Arten, die dieses Paket darstellt (UI-091, UI-092, UI-093, UI-099). */
 export type VizWindowKind = "crawlTree" | "crawlGraph" | "directoryTree" | "anchorWords";
@@ -25,10 +26,7 @@ export function coreKind(kind: VizWindowKind): VizKind {
   return kind;
 }
 
-/** Fensterlabel wie im Kern: `viz-` + Hex der UTF-8-Bytes der Schnappschuss-Kennung. */
-export function windowLabelFor(snapshotId: string): string {
-  return `viz-${[...new TextEncoder().encode(snapshotId)].map((b) => b.toString(16).padStart(2, "0")).join("")}`;
-}
+export { windowLabelFor };
 
 export const KIND_KEY = "os.viz.kind.";
 

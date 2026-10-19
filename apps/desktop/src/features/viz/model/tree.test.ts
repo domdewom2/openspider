@@ -54,12 +54,12 @@ describe("Crawl-Baum", () => {
 
 describe("Verzeichnisbaum", () => {
   // spec: UI-093
-  it("zwei Verzeichnisse ohne Indexseite → genau zwei hohle Pfadknoten; Query-Varianten sind Kinder ihres Pfadknotens (fx-ui-dirs)", () => {
+  it("zwei Verzeichnisse ohne Indexseite → genau zwei hohle Verzeichnisknoten (dazu der Schema-Knoten); Query-Variante hängt an ihrer Seite (fx-ui-dirs)", () => {
     const tree = VizTree.from(selectGraph(fxUiDirs(), { budget: 10_000, expandDepth: 100, metric: "crawl_depth" }));
     const scene = buildScene(tree, layoutTree(tree, TREE_LAYOUT_DEFAULTS), ENC, "path");
     const hollow = scene.nodes.filter((n) => n.hollow).map((n) => n.label);
-    expect(hollow).toEqual(["http", "127.0.0.1:8000", "docs", "blog"]);
-    expect(hollow.filter((l) => l === "docs" || l === "blog")).toHaveLength(2);
+    expect(hollow).toEqual(["http", "docs", "blog"]);
+    expect(scene.nodes.filter((n) => n.hollow && tree.get(n.id)!.level >= 2)).toHaveLength(2);
     expect(tree.get(5)!.parent).toBe(4);
     expect(scene.nodes.every((n) => n.label !== "")).toBe(true);
   });

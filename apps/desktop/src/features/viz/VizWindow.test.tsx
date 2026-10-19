@@ -188,7 +188,7 @@ describe("Visualisierungsfenster", () => {
   // spec: UI-093
   it("Verzeichnisbaum: Legende nennt hohle Pfadknoten", async () => {
     await openWindow("directoryTree");
-    await screen.findByText("8 nodes");
+    await screen.findByText("7 nodes");
     expect(screen.getByTestId("viz-legend")).toHaveTextContent("Directory without crawled URL");
     expect(graphCalls()[0]).toMatchObject({ kind: "directoryTree" });
   });

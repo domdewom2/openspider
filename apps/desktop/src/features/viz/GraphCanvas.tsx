@@ -181,7 +181,9 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
   useEffect(
     () => () => {
+      // Kennung zurücksetzen: sonst plant schedule() nach einem erneuten Einhängen (StrictMode) nie wieder ein Bild.
       if (frame.current && typeof cancelAnimationFrame === "function") cancelAnimationFrame(frame.current);
+      frame.current = 0;
       if (hoverTimer.current) clearTimeout(hoverTimer.current);
     },
     [],

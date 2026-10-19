@@ -34,7 +34,7 @@ export interface GraphViewProps {
   exportDir?: string | null;
 }
 
-export type LayoutState = { phase: "idle" | "running" | "paused" | "done"; steps: number; reason?: string };
+export type LayoutState = { phase: "idle" | "running" | "paused" | "done"; steps: number; reason?: string; ms?: number };
 
 interface Loaded {
   tree: VizTree;
@@ -57,6 +57,10 @@ export interface VizDebug {
   positions(): { id: number; x: number; y: number }[];
   screenOf(id: number): [number, number] | null;
   matches: number[];
+  setTransform(t: Transform): void;
+  panBy(dx: number, dy: number): void;
+  /** Klick auf einen Knoten (Baum: ein-/ausklappen). */
+  click(id: number): void;
 }
 
 declare global {
@@ -216,9 +220,10 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
       ids.forEach((id, i) => positions.current.set(id, [r.positions[i * 2] as number, r.positions[i * 2 + 1] as number]));
       canvas.current?.redraw();
       bumpFrame();
-      if (r.type === "done") setLayoutState({ phase: "done", steps: r.steps, reason: r.reason });
+      if (r.type === "done") setLayoutState({ phase: "done", steps: r.steps, reason: r.reason, ms: performance.now() - startedAt });
       else setLayoutState((s) => (s.phase === "paused" ? s : { phase: "running", steps: r.steps }));
     };
+    const startedAt = performance.now();
     const run = createForceRunner(onReply);
     runner.current = run;
     setLayoutState({ phase: "running", steps: 0 });
@@ -265,10 +270,14 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
     // Treffer in eingeklappten Teilen: Pfad automatisch öffnen (UI-090).
     if (tree.reveal(currentHit)) bumpTree();
   }, [currentHit, tree]);
+  // Nur bei einem neuen aktuellen Treffer zentrieren – nicht bei jedem Neuladen (Rückkehr stellt die gemerkte Ansicht her).
+  const centered = useRef<number | null>(null);
   useEffect(() => {
-    if (currentHit === null || !scene || !canvas.current) return;
+    if (currentHit === null) centered.current = null;
+    if (currentHit === null || currentHit === centered.current || !scene || !canvas.current) return;
     const k = scene.index.get(currentHit);
     if (k === undefined) return;
+    centered.current = currentHit;
     const n = scene.nodes[k] as Scene["nodes"][number];
     const { width, height } = canvas.current.size();
     canvas.current.setTransform(centerOn(canvas.current.getTransform(), n.x, n.y, width, height));
@@ -332,8 +341,8 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
       const hidden = tree.isCapped(id) ? tree.hidden(id) : null;
       return (
         <dl className="os-viz-tip">
-          {rows.map((r) => (
-            <div key={r.name} className="os-viz-tip-row">
+          {rows.map((r, i) => (
+            <div key={i} className="os-viz-tip-row">
               <dt>{r.name}</dt>
               <dd>{r.value}</dd>
             </div>
@@ -420,10 +429,16 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
       edges: scene?.edges.length ?? 0,
       truncated: data?.dto.truncated ?? false,
       layout: layoutState,
-      transform: canvas.current?.getTransform() ?? { k: 1, x: 0, y: 0 },
+      get transform() {
+        return canvas.current?.getTransform() ?? { k: 1, x: 0, y: 0 };
+      },
       trail: trail.entries.map((e) => ({ id: e.id, label: e.label })),
-      firstFrameMs: timing.current.firstFrame,
-      loadedAt: timing.current.loaded,
+      get firstFrameMs() {
+        return timing.current.firstFrame;
+      },
+      get loadedAt() {
+        return timing.current.loaded;
+      },
       svg: () => canvas.current?.svg() ?? "",
       csv: () => (tree && scene ? csvPayload(tree, scene) : null),
       positions: () => scene?.nodes.map((n) => ({ id: n.id, x: n.x, y: n.y })) ?? [],
@@ -435,6 +450,12 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
         return [n.x * tr.k + tr.x, n.y * tr.k + tr.y];
       },
       matches: searchState.matches,
+      setTransform: (tr) => canvas.current?.setTransform(tr),
+      panBy: (dx, dy) => {
+        const tr = canvas.current?.getTransform();
+        if (tr) canvas.current?.setTransform({ k: tr.k, x: tr.x + dx, y: tr.y + dy });
+      },
+      click: (id) => onNodeClick(id),
     };
   });
 
