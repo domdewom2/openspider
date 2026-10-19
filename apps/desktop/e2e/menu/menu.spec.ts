@@ -35,14 +35,14 @@ for (const platform of ["mac", "win"] as const) for (const language of ["de", "e
 // spec: UI-002
 test("Menüsprachwechsel aktualisiert auch einen geöffneten Hilfe-Dialog", async ({ page }) => {
   await page.goto("/?transport=mock");
-  await page.waitForFunction(() => window.__osMenu !== undefined);
+  await expect(page.getByRole("main")).toBeVisible();
   await page.evaluate(async () => {
     // @ts-expect-error Vite-Quellmodul.
     const { runAction } = await import("/src/ui/actions.ts");
     // @ts-expect-error Vite-Quellmodul.
-    const { setLanguage } = await import("/src/i18n/index.ts");
+    const { usePrefs } = await import("/src/state/prefs.ts");
     runAction("help.shortcuts", { source: "menu" });
-    await setLanguage("de");
+    await usePrefs.getState().patch({ general: { language: "de" } });
   });
   await expect(page.getByRole("dialog", { name: "Tastaturkürzel" })).toBeVisible();
   expect(await page.evaluate(() => window.__osMenu!.model.menus.find((m) => m.id === "file")?.label)).toBe("Datei");

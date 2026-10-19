@@ -7,3 +7,7 @@
 .os-help-properties dd { margin: 0; overflow-wrap: anywhere; }
 .os-dialog-body pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .os-help-operation { position: fixed; inset-inline: 20px; bottom: 32px; padding: 12px; background: var(--os-bg-surface); border: 1px solid var(--os-border); z-index: 20; }
+
+.os-menu-availability { position: relative; }
+.os-menu-availability summary { cursor: pointer; }
+.os-menu-availability ul { position: absolute; bottom: 100%; inset-inline-start: 0; width: min(540px, 80vw); max-height: 40vh; overflow: auto; padding: 12px 24px; background: var(--os-bg-surface); border: 1px solid var(--os-border); z-index: 20; }

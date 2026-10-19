@@ -1,3 +1,4 @@
+import { MenuAvailability } from "./features/help/MenuAvailability";
 import { HelpDialogs } from "./features/help/HelpDialogs";
 import { useEffect, useState } from "react";
 import { RegionBoundary } from "./app/ErrorBoundary";
@@ -44,6 +45,7 @@ export function App() {
         </main>
         <aside className="os-app-sidebar" aria-label={t("app-region-sidebar")} />
         <footer className="os-app-status" role="contentinfo" aria-label={t("app-region-status")}>
+          <MenuAvailability />
           {version !== null && <span data-testid="version">{t("app-version", { version })}</span>}
         </footer>
       </div>

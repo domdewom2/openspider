@@ -13,7 +13,10 @@ import { config } from "../../ipc/config";
 import { analysis } from "../../ipc/analysis";
 import { useMainMode } from "./state";
 import { toCmdError } from "../../ipc/errors";
-import { askPath, showHelp, useHelp } from "./state";
+import { showHelp, useHelp } from "./state";
+import { client } from "../../ipc/client";
+import { chooseFile } from "./files";
+import { installMenuContexts } from "./menuContexts";
 import { loadRecent, normalizeRecent, saveRecent } from "./recent";
 
 /** Registrierung und Abmeldung sind fenstergebunden; verspätete Antworten ändern kein geschlossenes Fenster. */
@@ -24,7 +27,6 @@ export function installMainMenus(): () => void {
   const state: MainMenuState = { recent: [], mode: "spider", mcpRunning: false, mcpAutostart: false, available: hasAction };
   let removeMenu = () => {};
   let recentOffs: (() => void)[] = [];
-  let catalogOffs: (() => void)[] = [];
   const offs: (() => void)[] = [];
   const error = (e: unknown) => {
     if (!live) return;
@@ -73,14 +75,16 @@ export function installMainMenus(): () => void {
     setRecent([{ path }, ...state.recent.filter((e) => e.path !== path)]);
     await persist();
   };
-  on("crawl.open", () => askPath({ title: "shortcut-crawl-open", submit: (path) => openPath(path) }));
-  for (const id of ["crawl.saveAs", "crawl.export"]) on(id, () => askPath({ title: id === "crawl.saveAs" ? "shortcut-crawl-save-as" : "u04-crawl-export", submit: (dest) => crawl.saveAs({ dest }) }));
-  on("crawl.import", () => askPath({ title: "u04-crawl-import", submit: (path) => crawls.import({ paths: [path] }) }));
+  const file = (request: Parameters<typeof chooseFile>[0]) => chooseFile(request, () => live);
+  on("crawl.open", () => file({ kind: "open", extensions: ["ospider"], title: "shortcut-crawl-open", submit: (path) => openPath(path) }));
+  for (const id of ["crawl.saveAs", "crawl.export"]) on(id, () => file({ kind: "save", extensions: ["ospider"], defaultPath: "crawl.ospider", title: id === "crawl.saveAs" ? "shortcut-crawl-save-as" : "u04-crawl-export", submit: (dest) => crawl.saveAs({ dest }) }));
+  on("crawl.import", () => file({ kind: "open", extensions: ["ospider"], title: "u04-crawl-import", submit: (path) => crawls.import({ paths: [path] }) }));
   for (const page of ["shortcuts", "debug", "usage"] as const) on(`help.${page}`, () => showHelp(page));
   on("app.about", () => showHelp("about"));
   on("help.logs", () => diag.openLogs());
   // URLs aus dem eigenen öffentlichen Repository, keine Referenzressourcen.
-  on("help.manual", () => { window.open("https://github.com/domdewom2/openspider/tree/main/docs", "_blank", "noopener,noreferrer"); });
+  on("help.manual", () => { if (client.transportName === "tauri") return client.invoke<void>("open_manual");
+    window.open("https://github.com/domdewom2/openspider/tree/main/docs", "_blank", "noopener,noreferrer"); });
   for (const mode of ["spider", "list", "serp", "apis", "compare"] as const) on(`mode.${mode}`, () => {
     useMainMode.setState({ mode });
     state.mode = mode;
@@ -90,7 +94,7 @@ export function installMainMenus(): () => void {
   on("mcp.start", async () => { const status = await mcp.start({}); if (live) useSession.setState({ mcp: status }); });
   on("mcp.stop", async () => { const status = await mcp.stop(); if (live) useSession.setState({ mcp: status }); });
   on("mcp.autostart", async () => { await mcp.setAutostart({ value: !state.mcpAutostart }); await usePrefs.getState().load(); });
-  on("mcp.markdown", () => askPath({ title: "u04-mcp-markdown", submit: (path) => mcp.saveToolsMarkdown({ path }) }));
+  on("mcp.markdown", () => file({ kind: "save", extensions: ["md"], defaultPath: "openspider-api.md", title: "u04-mcp-markdown", submit: (path) => mcp.saveToolsMarkdown({ path }) }));
 
   let catalogVersion = 0;
   const refreshCatalog = async () => {
@@ -99,14 +103,6 @@ export function installMainMenus(): () => void {
       const catalog = await exportApi.catalog();
       if (!live || version !== catalogVersion) return;
       state.catalog = catalog;
-      catalogOffs.forEach((off) => off());
-      catalogOffs = [];
-      for (const [menu, groups] of [["bulkExport", catalog.bulk], ["reports", catalog.reports]] as const)
-        for (const group of groups) for (const entry of group.items) catalogOffs.push(on(`catalog.${menu}.${entry.name}`, () => askPath({
-          title: entry.labelKey, titleFallback: entry.name, directory: true,
-          submit: (dir) => (menu === "bulkExport" ? exportApi.bulk : exportApi.report)({ name: entry.name, dir, format: usePrefs.getState().dto?.export.format === "xlsx" ? "xlsx" : "csv", singleWorkbook: false }),
-        }), false));
-      for (const entry of catalog.sitemaps) catalogOffs.push(on(`catalog.sitemaps.${entry.name}`, () => askPath({ title: entry.labelKey, titleFallback: entry.name, directory: true, submit: (dir) => exportApi.sitemap({ sitemapKind: entry.name, dir }) }), false));
       rebuild();
     } catch {
       // Andere Welle-1-Pakete füllen die Katalog-Commands. Das Menü erklärt den Leerzustand.
@@ -122,6 +118,7 @@ export function installMainMenus(): () => void {
   offs.push(usePrefs.subscribe(rebuild));
   offs.push(onActionRegistryChanged(rebuild));
   offs.push(useMainMode.subscribe((next) => { modeRevision++; state.mode = next.mode; rebuild(); }));
+  offs.push(installMenuContexts(rebuild));
   rebuild();
   recentReady = loadRecent().then((entries) => { if (live) setRecent(entries); }).catch(error);
   void refreshCatalog();
@@ -134,7 +131,6 @@ export function installMainMenus(): () => void {
     live = false;
     removeMenu();
     recentOffs.forEach((off) => off());
-    catalogOffs.forEach((off) => off());
     offs.reverse().forEach((off) => off());
     useHelp.setState({ page: null, path: null, message: null, operation: null });
   };

@@ -125,7 +125,7 @@ Hilfe
   + Nutzungsstatistik
   + Debug-Informationen
   + Logs-Ordner öffnen
-  + Nach Updates suchen
+  - Nach Updates suchen | Verfügbar ab M3.
   + Über OpenSpider"
 `;
 
@@ -254,7 +254,7 @@ Help
   + Usage statistics
   + Debug information
   + Open logs folder
-  + Check for updates
+  - Check for updates | Available from M3.
   + About OpenSpider"
 `;
 
@@ -360,7 +360,7 @@ Hilfe
   + Nutzungsstatistik
   + Debug-Informationen
   + Logs-Ordner öffnen
-  + Nach Updates suchen
+  - Nach Updates suchen | Verfügbar ab M3.
   + Über OpenSpider"
 `;
 
@@ -466,6 +466,6 @@ Help
   + Usage statistics
   + Debug information
   + Open logs folder
-  + Check for updates
+  - Check for updates | Available from M3.
   + About OpenSpider"
 `;

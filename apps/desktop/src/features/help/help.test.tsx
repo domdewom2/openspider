@@ -134,18 +134,23 @@ it("Hilfe-Aktionen öffnen echte Dialoge; leere Nutzungsstatistik zeigt keinen F
 });
 
 // spec: UI-002
-it("Katalogeinträge rufen exakt den gelieferten Exportnamen auf; spätere Feature-Handler haben Vorrang", async () => {
-  core.handlers.set("export.bulk", () => ({ opId: "bulk" }));
+it("Katalogeinträge warten auf U16 und delegieren an dessen Aktions-IDs", async () => {
   dispose = installMainMenus();
-  const id = "catalog.bulkExport.Pages With Uncrawlable Internal Outlinks";
-  await waitFor(() => expect(hasAction(id)).toBe(true));
-  runAction(id, { source: "menu" });
-  await useHelp.getState().path?.submit("/fixture/out");
-  expect(core.calls.at(-1)).toMatchObject({ cmd: "export.bulk", args: { name: "Pages With Uncrawlable Internal Outlinks", dir: "/fixture/out", format: "csv", singleWorkbook: false } });
-  const handler = vi.fn(); const off = registerAction("crawl.open", handler);
-  runAction("crawl.open"); expect(handler).toHaveBeenCalledTimes(1); off();
-  dispose(); dispose = undefined;
+  const id = "export.bulk.Pages With Uncrawlable Internal Outlinks";
+  const entry = () => flattenItems(buildMenuModel(allMenuContributions(), { platform: "win", lang: "en", t: makeT("en"), ctx: { hasCrawl: true }, native: false }).menus.flatMap(menu => menu.items)).find(item => item.action === id);
+  await waitFor(() => expect(entry()).toBeDefined());
+  expect(entry()?.enabled).toBe(false);
   expect(hasAction(id)).toBe(false);
+  const handler = vi.fn();
+  const off = registerAction(id, handler);
+  try {
+    expect(entry()?.enabled).toBe(true);
+    runAction(entry()!.action!, { source: "menu" });
+    expect(handler).toHaveBeenCalledOnce();
+    expect(useHelp.getState().path).toBeNull();
+    expect(core.calls.filter(call => ["export.bulk", "export.report", "export.sitemap"].includes(call.cmd))).toEqual([]);
+  } finally { off(); }
+  expect(entry()?.enabled).toBe(false);
 });
 
 // spec: UI-002
@@ -230,4 +235,137 @@ it("Log-Level bleibt auch bei fehlgeschlagenen Systeminformationen bedienbar", a
   expect(screen.getByRole("alert")).toBeVisible();
   fireEvent.change(level, { target: { value: "warn" } });
   await waitFor(() => expect(core.settings.logging.level).toBe("warn"));
+});
+
+// spec: CRAWL-127 [M2], UI-002
+it("Native Dateiaktionen verwenden Open/Save mit Filtern, Abbruch führt keine Aktion aus", async () => {
+  setClient(createClient({ ...core.transport(), name: "tauri" }));
+  core.handlers.set("dialog.open", () => null);
+  core.handlers.set("dialog.save", () => "/fixture/copy.ospider");
+  core.handlers.set("crawl.saveAs", () => ({ opId: "native-copy" }));
+  core.handlers.set("crawls.import", () => ({ opId: "native-import" }));
+  core.handlers.set("mcp.saveToolsMarkdown", () => undefined);
+  dispose = installMainMenus();
+  runAction("crawl.open", { source: "menu" });
+  await waitFor(() => expect(core.calls.some(call => call.cmd === "dialog.open")).toBe(true));
+  expect(core.calls.some(call => call.cmd === "crawl.open")).toBe(false);
+  expect(useHelp.getState().path).toBeNull();
+  core.handlers.set("dialog.open", () => "/fixture/basic.ospider");
+  runAction("crawl.open", { source: "menu" });
+  await waitFor(() => expect(core.calls.find(call => call.cmd === "crawl.open")?.args).toEqual({ kind: "path", path: "/fixture/basic.ospider" }));
+  for (const id of ["crawl.saveAs", "crawl.export", "crawl.import", "mcp.markdown"]) {
+    runAction(id, { source: "menu" });
+    const cmd = id === "crawl.import" ? "crawls.import" : id === "mcp.markdown" ? "mcp.saveToolsMarkdown" : "crawl.saveAs";
+    await waitFor(() => expect(core.calls.some(call => call.cmd === cmd)).toBe(true));
+  }
+  const dialogs = core.calls.filter(call => call.cmd.startsWith("dialog."));
+  expect(dialogs).toHaveLength(6);
+  for (const call of dialogs) {
+    expect(call.args).toMatchObject({ options: { filters: [{ extensions: [call === dialogs.at(-1) ? "md" : "ospider"] }] } });
+    if (call.cmd === "dialog.open") expect(call.args).toMatchObject({ options: { directory: false, multiple: false } });
+  }
+  expect(core.calls.find(call => call.cmd === "crawls.import")?.args).toEqual({ paths: ["/fixture/basic.ospider"] });
+  expect(useHelp.getState().operation?.opId).toBe("native-import");
+  expect(useHelp.getState().path).toBeNull();
+});
+
+// spec: CRAWL-127 [M2]
+it("Fehler des nativen Dateidialogs zeigt eine Meldung und keinen Pfad-Fallback", async () => {
+  setClient(createClient({ ...core.transport(), name: "tauri" }));
+  core.handlers.set("dialog.open", () => { throw new IpcError(localError("Permission", "err-code-permission")); });
+  dispose = installMainMenus();
+  runAction("crawl.open", { source: "menu" });
+  await waitFor(() => expect(useHelp.getState().message).toBeTruthy());
+  expect(useHelp.getState().path).toBeNull();
+  expect(core.calls.some(call => call.cmd === "crawl.open")).toBe(false);
+});
+
+// spec: UI-002
+it("Das Handbuch verwendet in Tauri den nativen Command", async () => {
+  setClient(createClient({ ...core.transport(), name: "tauri" }));
+  core.handlers.set("open_manual", () => ({}));
+  const open = vi.spyOn(window, "open").mockReturnValue(null);
+  dispose = installMainMenus();
+  runAction("help.manual", { source: "menu" });
+  await waitFor(() => expect(core.calls.some(call => call.cmd === "open_manual")).toBe(true));
+  expect(open).not.toHaveBeenCalled();
+});
+
+// spec: OUT-244 [P1]
+it("Native Diagnoseauswahl öffnet nach der Vorschau den ZIP-Speichern-Dialog", async () => {
+  setClient(createClient({ ...core.transport(), name: "tauri" }));
+  core.handlers.set("dialog.save", () => null);
+  render(<DebugHelp />);
+  await screen.findByText("macOS fixture");
+  fireEvent.click(screen.getByRole("button", { name: "Save logs…" }));
+  await screen.findByText("system.txt");
+  expect(core.calls.some(call => call.cmd === "dialog.save")).toBe(false);
+  fireEvent.click(screen.getByRole("button", { name: "Save these files" }));
+  await waitFor(() => expect(core.calls.some(call => call.cmd === "dialog.save")).toBe(true));
+  await waitFor(() => expect(screen.getByRole("button", { name: "Save these files" })).toBeEnabled());
+  expect(core.calls.some(call => call.cmd === "diag.bundle")).toBe(false);
+  core.handlers.set("dialog.save", () => "/fixture/support.zip");
+  fireEvent.click(screen.getByRole("button", { name: "Save these files" }));
+  await waitFor(() => expect(core.calls.find(call => call.cmd === "diag.bundle")?.args).toEqual({ dest: "/fixture/support.zip" }));
+  expect(core.calls.find(call => call.cmd === "dialog.save")?.args).toMatchObject({ options: { filters: [{ extensions: ["zip"] }] } });
+});
+
+// spec: UI-113 [P1]
+it("Native Menüaktionen beachten Textfeld- und Dialog-Scopes auch vor dem Menü-Neuaufbau", async () => {
+  dispose = installMainMenus();
+  const handler = vi.fn();
+  const off = registerAction("crawl.new", handler);
+  const field = document.createElement("input");
+  const modal = document.createElement("div");
+  document.body.append(field, modal);
+  const entry = () => flattenItems(buildMenuModel(allMenuContributions(), { platform: "mac", lang: "en", t: makeT("en"), ctx: {}, native: true }).menus.flatMap(menu => menu.items)).find(item => item.action === "crawl.new");
+  try {
+    expect(entry()?.accelerator).toBe("CmdOrCtrl+N");
+    expect(entry()?.enabled).toBe(true);
+    field.focus();
+    expect(entry()?.enabled).toBe(false);
+    await waitFor(() => expect(entry()?.disabledReason).toMatch(/Unavailable while/));
+    expect(runAction("crawl.new", { source: "menu" })).toBe(false);
+    expect(handler).not.toHaveBeenCalled();
+    field.blur();
+    expect(runAction("crawl.new", { source: "menu" })).toBe(true);
+    expect(handler).toHaveBeenCalledOnce();
+    modal.setAttribute("aria-modal", "true");
+    expect(entry()?.enabled).toBe(false);
+    await waitFor(() => expect(entry()?.disabledReason).toMatch(/Unavailable while/));
+    expect(runAction("crawl.new", { source: "menu" })).toBe(false);
+    expect(handler).toHaveBeenCalledOnce();
+    modal.removeAttribute("aria-modal");
+    expect(entry()?.enabled).toBe(true);
+  } finally { off(); field.remove(); modal.remove(); }
+});
+
+// spec: UI-002
+it("Statuszeile zeigt Deaktivierungsgründe einschließlich M3 für Updates", async () => {
+  dispose = installMainMenus();
+  const { MenuAvailability } = await import("./MenuAvailability");
+  render(<MenuAvailability />);
+  expect(screen.getByText(/Unavailable menu actions/)).toBeVisible();
+  fireEvent.click(screen.getByText(/Unavailable menu actions/));
+  expect(screen.getByText("Check for updates: Available from M3.")).toBeVisible();
+  const entry = screen.getByText("Spider configuration: This action requires an idle crawl with data or an available service.");
+  expect(entry).toBeVisible();
+  let off!: () => void;
+  act(() => { off = registerAction("config.spider", () => {}); });
+  expect(screen.queryByText("Spider configuration: This action requires an idle crawl with data or an available service.")).toBeNull();
+  act(() => off());
+  expect(screen.getByText("Spider configuration: This action requires an idle crawl with data or an available service.")).toBeVisible();
+});
+
+// spec: CRAWL-127 [M2]
+it("Ein nach Fensterende bestätigter nativer Dialog startet keinen Crawl", async () => {
+  setClient(createClient({ ...core.transport(), name: "tauri" }));
+  let selected!: (path: string) => void;
+  core.handlers.set("dialog.open", () => new Promise(resolve => { selected = resolve; }));
+  dispose = installMainMenus();
+  runAction("crawl.open", { source: "menu" });
+  dispose(); dispose = undefined;
+  selected("/fixture/basic.ospider");
+  await Promise.resolve(); await Promise.resolve();
+  expect(core.calls.some(call => call.cmd === "crawl.open")).toBe(false);
 });

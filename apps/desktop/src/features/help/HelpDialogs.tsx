@@ -15,6 +15,8 @@ import { shortcutTable } from "../../ui/shortcuts";
 import { currentPlatform, type Platform } from "../../ui/platform";
 import { Dialog } from "../../ui/primitives/Dialog";
 import { Button } from "../../ui/primitives/Button";
+import { client } from "../../ipc/client";
+import { chooseFile } from "./files";
 import { useHelp } from "./state";
 import license from "../../../../../LICENSE?raw";
 import notice from "../../../../../NOTICE?raw";
@@ -92,11 +94,14 @@ export function DebugHelp() {
     {preview && <section aria-label={t("u04-bundle-preview")}>
       <h3>{t("u04-bundle-preview")}</h3><ul>{preview.files.map((file) => <li key={file}>{file}</li>)}</ul>
       {preview.warnings.map((warning, index) => <p key={index} role="status">{warning}</p>)}
-      <form onSubmit={(e) => { e.preventDefault(); if (dest.trim()) void perform(async () => { const handle = await diag.bundle({ dest: dest.trim() }); useHelp.setState({ operation: handle }); setPreview(undefined); }); }}>
+      {client.transportName === "tauri" ? <Button isDisabled={busy} onPress={() => void perform(() => chooseFile({
+        kind: "save", title: "u04-destination", extensions: ["zip"], defaultPath: "openspider-diagnostics.zip",
+        submit: async (dest) => { const handle = await diag.bundle({ dest }); setPreview(undefined); return handle; },
+      }))}>{t("u04-confirm-bundle")}</Button> : <form onSubmit={(e) => { e.preventDefault(); if (dest.trim()) void perform(async () => { const handle = await diag.bundle({ dest: dest.trim() }); useHelp.setState({ operation: handle }); setPreview(undefined); }); }}>
         <label>{t("u04-destination")} <input value={dest} required onChange={(e) => setDest(e.target.value)} placeholder="openspider-diagnostics.zip" /></label>
         <Button type="submit" isDisabled={busy || !dest.trim()}>{t("u04-confirm-bundle")}</Button>
         <Button isDisabled={busy} onPress={() => setPreview(undefined)}>{t("u04-cancel")}</Button>
-      </form>
+      </form>}
     </section>}
   </div>;
 }

@@ -19,5 +19,5 @@ export const useHelp = create<HelpState>(() => ({ page: null, path: null, messag
 export const showHelp = (page: HelpPage) => useHelp.setState({ page, message: null });
 export const askPath = (path: PathRequest) => useHelp.setState({ path, message: null });
 
-/** Gemeinsame Moduswahl für Menü und Kopfleiste; CrawlConfig kennt nur Spider/Liste. */
+/** N01 integrates this mode selection with U03 useHeader.mode; CrawlConfig knows only Spider/List. */
 export const useMainMode = create<{ mode: CrawlModeDto }>(() => ({ mode: "spider" }));

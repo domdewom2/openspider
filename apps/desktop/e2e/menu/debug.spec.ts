@@ -1,9 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { debugFixture } from "../../src/features/help/__fixtures__/fx-ui-basic";
 
-// spec: OUT-241 [P1]
-// spec: OUT-244 [P1]
-// spec: OUT-227 [M2]
+// spec: OUT-241 [P1], OUT-244 [P1], OUT-227 [M2]
 test("Debug-Dialog: Pfade, sofortiger Log-Level, Aufbewahrung und bestätigte Dateivorschau", async ({ page }) => {
   await page.addInitScript(() => Object.defineProperty(navigator, "languages", { value: ["en"] }));
   await page.goto("/?transport=mock");

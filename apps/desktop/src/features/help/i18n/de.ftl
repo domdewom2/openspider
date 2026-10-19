@@ -101,3 +101,9 @@ u04-path-cache = Cache
 u04-path-exports = Exporte
 u04-path-homeOverride = OPENSPIDER_HOME
 u04-feature-unavailable = Diese Funktion ist noch nicht verfügbar.
+
+u04-updates-m3 = Verfügbar ab M3.
+u04-unavailable-actions = Nicht verfügbare Menüaktionen ({ $count })
+u04-context-modal = Während eines modalen Dialogs nicht verfügbar.
+u04-context-field = Während der Texteingabe nicht verfügbar.
+u04-context-table = Fokus auf eine Tabelle setzen.

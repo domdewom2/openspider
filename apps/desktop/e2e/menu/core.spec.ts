@@ -1,8 +1,6 @@
 import { test, expect } from "../fixtures/app";
 
-// spec: OUT-241 [P1]
-// spec: OUT-244 [P1]
-// spec: OUT-227 [M2]
+// spec: OUT-241 [P1], OUT-244 [P1], OUT-227 [M2]
 test("Echte Bridge: effektive Debug-Pfade, Live-Log-Level und Diagnosevorschau", async ({ app, page }) => {
   test.fixme(true, "wartet auf M2-O01");
   expect(app.mode).toBe("bridge");

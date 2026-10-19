@@ -1,4 +1,5 @@
 // UI-002: Fachmenüs. Aktions-IDs sind dieselben wie im Kürzelregister und in den Feature-Controllern.
+import { menuContextAllows, menuContextReason } from "../../../features/help/menuContexts";
 import { shortcutById } from "../../shortcuts";
 import type { ExportCatalog } from "../../../ipc/gen/ExportCatalog";
 import type { MenuContext, MenuContribution, MenuItemSpec, TopMenuId } from "../types";
@@ -7,7 +8,7 @@ const idle = (c: MenuContext) => c.crawlRunning !== true;
 const data = (c: MenuContext) => c.hasCrawl === true && c.hasData !== false;
 const ready = (c: MenuContext) => data(c) && idle(c);
 const item = (id: string, labelKey: string, enabled?: MenuItemSpec["enabled"]): MenuItemSpec => ({
-  id, action: id, labelKey, nativeAccelerator: false,
+  id, action: id, labelKey,
   ...(enabled ? { enabled, disabledReasonKey: "u04-reason-unavailable" } : {}),
 });
 const action = (id: string, enabled?: MenuItemSpec["enabled"]) => item(id, shortcutById(id)?.labelKey ?? `u04-${id.replaceAll(".", "-")}`, enabled);
@@ -63,26 +64,25 @@ export function mainMenuContributions(state: MainMenuState): MenuContribution[] 
     group("visualisations", "graphs", 10, ["crawlTree", "crawlGraph", "directoryTree", "directoryGraph", "crawlGraph3d", "directoryGraph3d", "anchorWords", "bodyWords", "contentCluster"].map((s) => action(`viz.${s}`, data))),
     group("help", "help", 11, [
       action("help.manual"), { ...action("help.shortcuts"), labelKey: "menu-item-shortcuts" }, action("help.usage"),
-      action("help.debug"), action("help.logs"), action("help.updates"),
+      action("help.debug"), action("help.logs"), { ...action("help.updates", () => false), disabledReasonKey: "u04-updates-m3" },
       { ...action("app.about"), id: "help.about", labelKey: "menu-item-about" },
     ]),
   ];
   for (const menu of ["bulkExport", "reports", "sitemaps"] as const) {
     const exportItem = (entry: ExportCatalog["sitemaps"][number]): MenuItemSpec => ({
-      ...item(`catalog.${menu}.${entry.name}`, entry.labelKey, (c) => ready(c) && entry.enabled),
+      ...item(`export.${menu === "bulkExport" ? "bulk" : menu === "reports" ? "report" : "sitemap"}.${entry.name}`, entry.labelKey, (c) => ready(c) && entry.enabled),
       label: entry.name, disabledReasonKey: entry.disabledReason ?? "u04-reason-unavailable",
     });
     const groups = menu === "bulkExport" ? state.catalog?.bulk : menu === "reports" ? state.catalog?.reports : null;
     result.push(group(menu, "catalog", 10, menu === "sitemaps" && state.catalog ? state.catalog.sitemaps.map(exportItem) : groups ? groups.map((g) => ({
-      id: `catalog.${menu}.${g.key}`, labelKey: g.labelKey, label: g.key, items: g.items.map(exportItem),
+      id: `export-group-${menu === "bulkExport" ? "bulk" : "reports"}-${g.key}`, labelKey: g.labelKey, label: g.key, items: g.items.map(exportItem),
     })) : [{ id: `${menu}.loading`, labelKey: "u04-catalog-unavailable", enabled: () => false, disabledReasonKey: "u04-catalog-unavailable" }]));
   }
   const activate = (entry: MenuItemSpec): MenuItemSpec => ({
     ...entry,
-    showDisabledReason: true,
-    ...(entry.action && state.available ? {
-      enabled: (ctx: MenuContext) => state.available!(entry.action!) && (entry.enabled?.(ctx) ?? true),
-      disabledReasonKey: entry.disabledReasonKey ?? "u04-feature-unavailable",
+    ...(entry.action ? {
+      enabled: (ctx: MenuContext) => menuContextAllows(entry.action!) && (state.available?.(entry.action!) ?? true) && (entry.enabled?.(ctx) ?? true),
+      disabledReasonKey: menuContextReason(entry.action!) ?? entry.disabledReasonKey ?? "u04-feature-unavailable",
     } : {}),
     ...(entry.items ? { items: entry.items.map(activate) } : {}),
   });
