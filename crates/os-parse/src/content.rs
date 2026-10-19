@@ -39,6 +39,8 @@ pub struct ContentStats {
 /// Zählt Token und deren Zeichen in einem Strom aus Textstücken und Blockgrenzen.
 #[derive(Default)]
 struct TokenCounter {
+    /// Optional text sink for INTEG-027; word-count/ratio callers allocate no text.
+    text: Option<String>,
     tokens: u64,
     /// Anzahl `<li>` im Inhaltsbereich (A-35b).
     list_items: u64,
@@ -49,6 +51,9 @@ struct TokenCounter {
 
 impl TokenCounter {
     fn push_text(&mut self, text: &str) {
+        if let Some(out) = &mut self.text {
+            out.push_str(text);
+        }
         for c in text.chars() {
             if c.is_whitespace() {
                 self.in_token = false;
@@ -67,6 +72,9 @@ impl TokenCounter {
     }
 
     fn boundary(&mut self) {
+        if let Some(out) = &mut self.text {
+            out.push(' ');
+        }
         self.in_token = false;
         if !self.text.ends_with('\n') && !self.text.is_empty() {
             self.text.push('\n');
@@ -208,8 +216,12 @@ fn body_of(doc: &Document) -> Option<ElementRef<'_>> {
 
 /// Durchläuft den Body iterativ (kein Stapelüberlauf bei tiefen Bäumen) und speist den Zähler.
 fn walk(body: ElementRef, rules: &Rules) -> TokenCounter {
+    walk_into(body, rules, TokenCounter::default())
+}
+
+/// Same traversal with an optional text sink; existing counters keep their defaults.
+fn walk_into(body: ElementRef, rules: &Rules, mut counter: TokenCounter) -> TokenCounter {
     let has_include = rules.has_include();
-    let mut counter = TokenCounter::default();
     // > 0: innerhalb eines ausgeschlossenen Teilbaums (Tiefe relativ zu dessen Wurzel).
     let mut skip_depth = 0usize;
     // Wie viele geöffnete Vorfahren (inkl. Selbst) passen zu einer Include-Regel.
@@ -275,6 +287,22 @@ fn walk(body: ElementRef, rules: &Rules) -> TokenCounter {
         }
     }
     counter
+}
+
+/// Text des Inhaltsbereichs (INTEG-027), mit denselben Regeln und Blockgrenzen
+/// wie die Wortzahl (ONPAGE-140/141). Listenpunkt-Zusatzwörter sind keine Textzeichen.
+pub fn area_text(doc: &Document, area: &ContentAreaConfig) -> String {
+    let Some(body) = body_of(doc) else {
+        return String::new();
+    };
+    let counter = TokenCounter {
+        text: Some(String::new()),
+        ..Default::default()
+    };
+    let text = walk_into(body, &Rules::for_area(area), counter)
+        .text
+        .unwrap();
+    crate::text::normalize_ws(&text)
 }
 
 /// Wortzahl des Inhaltsbereichs (ONPAGE-141).
