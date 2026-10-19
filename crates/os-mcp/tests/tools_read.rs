@@ -1729,6 +1729,11 @@ async fn issues_that_need_the_crawl_analysis_are_named_instead_of_counted() {
             }
             // K2-63, ONPAGE-144: Near Duplicates benötigt zuerst seinen Opt-in-Schalter.
             (Some("Content"), Some("Near Duplicates")) => "needs_config",
+            // spec: ONPAGE-007, ONPAGE-178, ONPAGE-179, ONPAGE-180
+            (
+                Some("Images"),
+                Some("Background Images" | "Missing Size Attributes" | "Incorrectly Sized Images"),
+            ) => "needs_rendering",
             _ => "needs_crawl_analysis",
         };
         let state = issue["state"].as_str().unwrap_or_default();
