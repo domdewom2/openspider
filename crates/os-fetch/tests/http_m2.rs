@@ -93,7 +93,9 @@ async fn tls_import_errors_sni_and_probe_chain() {
             .await
             .outcome,
     );
-    assert!(unknown.contains("UnknownIssuer"), "{unknown}");
+    // Platform verifiers differ in casing and separators, but preserve the cause.
+    let norm = |s: &str| s.to_ascii_lowercase().replace([' ', '_', '-'], "");
+    assert!(norm(&unknown).contains(&norm("UnknownIssuer")), "{unknown}");
     let dir = tempfile::tempdir().unwrap();
     let ca = dir.path().join("ca.pem");
     std::fs::write(&ca, site.ca_cert_pem()).unwrap();
@@ -110,12 +112,7 @@ async fn tls_import_errors_sni_and_probe_chain() {
         ("wronghost.site.test", "NotValidForName"),
     ] {
         let detail = tls_detail(get(&f, url(&site, "https", host, "/")).await.outcome);
-        assert!(
-            detail
-                .to_ascii_lowercase()
-                .contains(&expected.to_ascii_lowercase()),
-            "{host}: {detail}"
-        );
+        assert!(norm(&detail).contains(&norm(expected)), "{host}: {detail}");
         assert_ne!(detail, unknown);
     }
     let probe = os_fetch::net::certificates::probe(
@@ -249,7 +246,7 @@ async fn headers_are_validated_merged_scoped_and_language_is_opt_in() {
     }
 }
 
-// spec: CRAWL-075 [M2]
+// spec: CRAWL-075
 // spec: CRAWL-140 [P1]
 // spec: CRAWL-042 [M2]
 #[tokio::test]
@@ -377,7 +374,7 @@ async fn robots_gate_follows_synthetic_hsts_redirect_and_applies_https_rules() {
 }
 
 // spec: CRAWL-011
-// spec: CRAWL-075 [M2]
+// spec: CRAWL-075
 // spec: CRAWL-140 [P1]
 #[tokio::test]
 async fn compressed_streams_with_large_or_unknown_wire_length_are_bounded() {
