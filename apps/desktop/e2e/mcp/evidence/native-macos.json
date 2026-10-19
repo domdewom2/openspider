@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-10-19T22:53:07.970Z",
+  "platform": "darwin",
+  "arch": "arm64",
+  "kernel": "25.3.0",
+  "engine": "WKWebView",
+  "delayMs": 1500,
+  "nativeClipboard": true,
+  "domRedacted": true,
+  "restored": true,
+  "errors": []
+}

@@ -302,3 +302,34 @@ it("uses the canonical Markdown filename in the native save dialog", async () =>
   await nativeMcpDesktop.chooseMarkdown();
   expect(getClient().invoke).toHaveBeenCalledWith("dialog.save", expect.objectContaining({ options: expect.objectContaining({ defaultPath: "openspider-mcp-tools.md" }) }), undefined);
 });
+
+// spec: AGENT-043
+it("redacts multiline JSON and TOML arguments before generating the displayed diff", async () => {
+  for (const kind of ["claudeDesktop", "claudeCode", "codex"] as const) {
+    cleanup();
+    const before = kind === "codex"
+      ? `[mcp_servers.foreign]\ncommand = "foreign-helper"\nargs = [\n  "--token",\n  "${TEST_TOKEN}", # secret value on its own line\n  '--api-key',\n  '${TEST_TOKEN}-key',\n]\nenv = { API_KEY = "${TEST_TOKEN}-env", KEEP = "visible" }\n`
+      : JSON.stringify({ mcpServers: { foreign: { command: "foreign-helper", args: ["--token", TEST_TOKEN, "--password", `${TEST_TOKEN}-password`], env: { API_KEY: `${TEST_TOKEN}-env`, KEEP: "visible" } } } }, null, 2);
+    const value = clientPreview(kind, before);
+    // The raw server diff is deliberately unsafe. It must never be rendered.
+    value.diff = `+ "--token",\n+ "${TEST_TOKEN}"\n+ DIFF_ONLY_SECRET`;
+    fixture.core.handlers.set("mcp.clientConfigPreview", () => value);
+    render(<ClientsPanel initialClient={kind} desktop={desktop} />);
+    await click("Preview changes");
+    expect(await screen.findByLabelText("Configuration diff")).toHaveTextContent("foreign-helper");
+    expect(screen.getByLabelText("Configuration diff")).toHaveTextContent("visible");
+    expect(document.body.innerHTML).not.toContain(TEST_TOKEN);
+    expect(document.body.innerHTML).not.toContain("DIFF_ONLY_SECRET");
+    await click("Copy configuration");
+    await waitFor(() => expect(desktop.copy).toHaveBeenLastCalledWith(value.after));
+  }
+});
+
+// spec: AGENT-043
+it("fails closed for malformed or unsupported configurations instead of displaying raw secrets", async () => {
+  const { redactConfig } = await import("./configPreview");
+  for (const source of [`args = ["--token", "${TEST_TOKEN}"`, `token = '''${TEST_TOKEN}'''`, `not JSON ${TEST_TOKEN}`]) {
+    for (const kind of ["codex", "claudeDesktop"] as const) expect(redactConfig(source, kind)).toBe("[redacted]");
+  }
+  expect(redactConfig(`args = ['--token', '${TEST_TOKEN}', '--api-key=${TEST_TOKEN}']`, "codex")).not.toContain(TEST_TOKEN);
+});

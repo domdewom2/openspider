@@ -124,3 +124,21 @@ test("classes and individual tools use the service contract and canceling a Mark
   await page.getByRole("button", { name: "Download API description (Markdown)…", exact: true }).click();
   expect(await page.evaluate(() => window.mcpFixture.calls().filter(call => call.cmd === "mcp.saveToolsMarkdown"))).toEqual([]);
 });
+
+// spec: AGENT-043
+test("multiline JSON and TOML client arguments never expose credentials in the rendered preview", async ({ page }) => {
+  await page.getByRole("button", { name: "Close", exact: true }).click();
+  for (const kind of ["claudeDesktop", "claudeCode", "codex"] as const) {
+    const original = kind === "codex"
+      ? `[mcp_servers.foreign]\ncommand = "foreign-helper"\nargs = [\n  "--token",\n  "${TEST_TOKEN}",\n]\n`
+      : JSON.stringify({ mcpServers: { foreign: { command: "foreign-helper", args: ["--token", TEST_TOKEN] } } }, null, 2);
+    await writeFile(configPath(kind), original);
+    await page.evaluate(name => window.mcpFixture.action(`mcp.${name}`), kind);
+    await page.getByRole("button", { name: "Preview changes", exact: true }).click();
+    await expect(page.getByLabel("Configuration diff")).toContainText("foreign-helper");
+    await expect(page.getByLabel("Configuration diff")).toContainText("[redacted]");
+    await page.getByText("Resulting configuration", { exact: true }).click();
+    expect(await page.locator("body").innerHTML()).not.toContain(TEST_TOKEN);
+    await page.getByRole("button", { name: "Close", exact: true }).click();
+  }
+});

@@ -6,6 +6,7 @@ import type { McpClientPreview } from "../../ipc/gen/McpClientPreview";
 import { Banner, Button, Checkbox, Select } from "../../ui/primitives";
 import type { McpDesktop } from "./desktop";
 import { errorKey, redactText } from "./model";
+import { safeClientPreview } from "./configPreview";
 
 export function ClientsPanel({ initialClient, desktop }: { initialClient: McpClientKind; desktop: McpDesktop }) {
   const t = useT();
@@ -30,6 +31,7 @@ export function ClientsPanel({ initialClient, desktop }: { initialClient: McpCli
     const value = await mcp.clientConfigPreview({ client: kind });
     if (alive.current) setPreview(value);
   });
+  const displayed = preview ? safeClientPreview(preview, kind) : null;
   return <section className="os-mcp-stack" aria-label={t("mcp-clients")}>
     <Select label={t("mcp-client")} value={kind} isDisabled={busy} onChange={value => {
       setKind(value as McpClientKind); setPreview(null); setConfirmed(false); setBackup(null); setMessage(null); setError(null);
@@ -39,11 +41,11 @@ export function ClientsPanel({ initialClient, desktop }: { initialClient: McpCli
     <Button isDisabled={busy} onPress={() => void load()}>{t("mcp-preview")}</Button>
     {preview && <>
       <p className="os-mcp-path">{redactText(preview.path)}</p>
-      <pre className="os-mcp-preview" aria-label={t("mcp-diff")}>{redactText(preview.diff) || t("mcp-no-changes")}</pre>
-      <details><summary>{t("mcp-config-content")}</summary><pre className="os-mcp-preview">{redactText(preview.after)}</pre></details>
-      <Checkbox isSelected={confirmed} isDisabled={busy || !preview.diff} onChange={setConfirmed}>{t("mcp-confirm-write")}</Checkbox>
+      <pre className="os-mcp-preview" aria-label={t("mcp-diff")}>{displayed?.diff || t("mcp-no-changes")}</pre>
+      <details><summary>{t("mcp-config-content")}</summary><pre className="os-mcp-preview">{displayed?.after}</pre></details>
+      <Checkbox isSelected={confirmed} isDisabled={busy || !displayed?.diff} onChange={setConfirmed}>{t("mcp-confirm-write")}</Checkbox>
       <div className="os-mcp-actions">
-        <Button isDisabled={busy || !confirmed || !preview.diff} onPress={() => void run(async () => {
+        <Button isDisabled={busy || !confirmed || !displayed?.diff} onPress={() => void run(async () => {
           // Re-read immediately before writing: never confirm a diff that has changed on disk.
           const fresh = await mcp.clientConfigPreview({ client: kind });
           if (!alive.current) return;

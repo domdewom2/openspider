@@ -7,7 +7,10 @@ export interface McpDesktop {
 }
 
 export const nativeMcpDesktop: McpDesktop = {
-  copy: text => navigator.clipboard.writeText(text),
+  copy: text => {
+    if (client.transportName !== "tauri") return Promise.reject(new IpcError(localError("Unsupported", "mcp-native-required")));
+    return client.invoke<void>("plugin:clipboard-manager|write_text", { text });
+  },
   chooseMarkdown: () => {
     if (client.transportName !== "tauri") return Promise.reject(new IpcError(localError("Unsupported", "mcp-native-required")));
     return client.invoke<string | null>("dialog.save", { options: {

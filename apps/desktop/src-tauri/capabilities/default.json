@@ -19,6 +19,7 @@
     "core:window:allow-is-minimized",
     "core:webview:allow-set-webview-zoom",
     "dialog:default",
+    "clipboard-manager:allow-write-text",
     "notification:default",
     "os:default",
     "os-app:default",

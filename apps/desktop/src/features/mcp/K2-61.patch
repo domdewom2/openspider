@@ -88,3 +88,16 @@ index 7577854..56454b3 100644
 +    #[ts(optional)]
 +    pub result_bytes: Option<u32>,
  }
+
+diff --git a/apps/desktop/src-tauri/capabilities/default.json b/apps/desktop/src-tauri/capabilities/default.json
+index 0991b9b..b8ca30d 100644
+--- a/apps/desktop/src-tauri/capabilities/default.json
++++ b/apps/desktop/src-tauri/capabilities/default.json
+@@ -19,6 +19,7 @@
+     "core:window:allow-is-minimized",
+     "core:webview:allow-set-webview-zoom",
+     "dialog:default",
++    "clipboard-manager:allow-write-text",
+     "notification:default",
+     "os:default",
+     "os-app:default",
