@@ -1,6 +1,4 @@
-//! Tab „H2“ (ONPAGE-130 … 134; Filter-Kennungen aus `docs/plan/M1-filters.toml`).
-//!
-//! Wie [`super::h1`] für `<h2>`. „Non-sequential“ (ONPAGE-135) ist P1.
+//! Element tab h2: stored values and live filters.
 
 use os_model::Value;
 
@@ -53,6 +51,8 @@ pub fn tab() -> TabDef {
             ),
             // ONPAGE-134
             problem_filter("Multiple", "u.h2_count > 1"),
+            problem_filter("Non-sequential", "EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id = u.id AND e.key = 'head.h2_non_sequential' AND e.v_int = 1)"),
+
         ],
         // Keine Tab-Sortierung: Entdeckungsreihenfolge; nur `Duplicate` gruppiert (tabs::filter_default_sort).
         default_sort: Vec::new(),

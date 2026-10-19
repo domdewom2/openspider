@@ -223,12 +223,15 @@ async fn base_set_is_internal_html_with_2xx() {
 }
 
 // spec: ONPAGE-009
+// spec: ONPAGE-099
+// spec: TECH-008 [P1]
 #[tokio::test]
 async fn every_filter_is_a_subset_of_all_and_counts_match_rows() {
     let fx = crawl(SCENARIO, CrawlConfig::default()).await;
     let cfg = fx.file.config().unwrap();
     let all = sorted_addresses(&fx, &cfg, TAB, "All");
     let tab = os_analyze::tabs::page_titles::tab();
+    let counts = filter_counts(&fx.file, &cfg).unwrap();
     for filter in &tab.filters {
         let rows = sorted_addresses(&fx, &cfg, TAB, filter.id);
         for a in &rows {
@@ -238,21 +241,29 @@ async fn every_filter_is_a_subset_of_all_and_counts_match_rows() {
                 filter.id
             );
         }
-        let (count, _) = counted(&fx, &cfg, TAB, filter.id);
+        let count = counts
+            .iter()
+            .find(|c| c.tab == TAB && c.filter == filter.id)
+            .unwrap();
+        if filter.id == "Outside <head>" {
+            // ONPAGE-099 / TECH-008: this M1 crawl has no validation coverage.
+            assert_eq!(count.state, FilterState::NeedsRecrawl);
+            assert_eq!(count.count, None);
+            assert!(rows.is_empty());
+            continue;
+        }
+        assert_eq!(count.state, FilterState::Ready, "{}", filter.id);
         assert_eq!(
-            count as usize,
+            count.count.expect("Filter ist bereit") as usize,
             rows.len(),
             "Zähler = Zeilenzahl für {}",
             filter.id
         );
     }
-    let counts = filter_counts(&fx.file, &cfg).unwrap();
-    for c in counts.iter().filter(|c| c.tab == TAB) {
-        assert_eq!(c.state, FilterState::Ready, "{}", c.filter);
-    }
 }
 
 // spec: ONPAGE-090
+// spec: ONPAGE-097
 #[tokio::test]
 async fn columns_and_extraction_values() {
     let fx = crawl(SCENARIO, CrawlConfig::default()).await;
@@ -269,6 +280,7 @@ async fn columns_and_extraction_values() {
             "Title 2",
             "Title 2 Length",
             "Title 2 Pixel Width",
+            "H1-1",
             "Indexability",
             "Indexability Status"
         ]
@@ -277,7 +289,14 @@ async fn columns_and_extraction_values() {
     let mut q = ViewQuery::new(TAB, "All");
     q.limit = 1;
     let default_page = query_view(&fx.file, &cfg, &q).unwrap();
-    assert_eq!(default_page.columns, page.columns);
+    // ONPAGE-097: H1-1 is available to Same as H1 and explicit column selection.
+    let expected_default_columns: Vec<_> = page
+        .columns
+        .iter()
+        .filter(|column| column.as_str() != "H1-1")
+        .cloned()
+        .collect();
+    assert_eq!(default_page.columns, expected_default_columns);
 
     // <title>Start</title> → Title 1 „Start“, Länge 5, Occurrences 1.
     assert_eq!(cell(&fx, &page, "/basic.html", "Title 1"), text("Start"));

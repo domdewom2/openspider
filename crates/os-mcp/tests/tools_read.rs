@@ -1714,6 +1714,21 @@ async fn issues_that_need_the_crawl_analysis_are_named_instead_of_counted() {
         .as_array()
         .expect("nicht auswertbare Issues");
     assert!(!pending.is_empty());
-    assert!(pending.iter().all(|p| p["state"] == "needs_crawl_analysis"));
+    // spec: ONPAGE-099, ONPAGE-108, TECH-008 [P1]
+    let mut outside_head = 0;
+    for issue in pending {
+        let expected = match (issue["tab"].as_str(), issue["filter"].as_str()) {
+            (Some("Page Titles" | "Meta Description"), Some("Outside <head>")) => {
+                outside_head += 1;
+                "needs_recrawl"
+            }
+            _ => "needs_crawl_analysis",
+        };
+        assert_eq!(
+            issue["state"], expected,
+            "nicht ausgewertetes Issue: {issue}"
+        );
+    }
+    assert_eq!(outside_head, 2);
     client.cancel().await;
 }

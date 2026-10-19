@@ -1,9 +1,4 @@
-//! Tab „Page Titles“ (ONPAGE-090 … 094, 098; Filter-Kennungen aus `docs/plan/M1-filters.toml`).
-//!
-//! Grundmenge: interne HTML-Seiten mit 2xx (ONPAGE-009, siehe [`super::duplicates`]). Die Werte (`Title 1/2`,
-//! Länge in Codepoints nach N(x), Pixelbreite aus P05) stehen fertig in `urls`; die Filter rechnen nur mit
-//! diesen Rohwerten und den Schwellen aus der Konfiguration (ONPAGE-002) – eine Änderung wirkt ohne Recrawl.
-//! Die Pixel-Filter (ONPAGE-095/096) sind P1; die Pixelbreiten stehen nur als Spalten da.
+//! Element tab page_titles: stored values and live filters.
 
 use os_model::Value;
 
@@ -50,6 +45,7 @@ pub fn tab() -> TabDef {
             true,
         ),
     ];
+    columns.push(column("H1-1", "u.h1_1", ColumnKind::Text, false));
     columns.extend(indexability_columns());
     TabDef {
         id: "Page Titles",
@@ -73,6 +69,39 @@ pub fn tab() -> TabDef {
             ),
             // ONPAGE-098: mehr als ein <title> (Anzahl auf 2 gedeckelt gespeichert, > 1 genügt).
             problem_filter("Multiple", "u.title_count > 1"),
+            problem_filter("Over {title.max_px} Pixels", "u.title_1_px > :title_max_px"),
+            problem_filter(
+                "Below {title.min_px} Pixels",
+                "u.title_1_px > 0 AND u.title_1_px < :title_min_px",
+            ),
+            {
+                let mut f = problem_filter(
+                    "Same as H1",
+                    "u.title_1 <> '' AND u.title_1 = u.h1_1 COLLATE BINARY",
+                );
+                f.default_columns = &[
+                    "Address",
+                    "Occurrences",
+                    "Title 1",
+                    "Title 1 Length",
+                    "Title 1 Pixel Width",
+                    "Title 2",
+                    "Title 2 Length",
+                    "Title 2 Pixel Width",
+                    "H1-1",
+                    "Indexability",
+                    "Indexability Status",
+                ];
+                f
+            },
+            {
+                let mut f = problem_filter("Outside <head>", "EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id = u.id AND e.key = 'head.title_outside' AND e.v_int = 1)");
+                f.requires.push(crate::defs::Requirement::Coverage {
+                    config: "advanced.html_validation",
+                    marker: "validation.checked",
+                });
+                f
+            },
         ],
         // Keine Tab-Sortierung: Entdeckungsreihenfolge; nur `Duplicate` gruppiert (tabs::filter_default_sort).
         default_sort: Vec::new(),
@@ -86,6 +115,8 @@ pub fn tab() -> TabDef {
                 "title_min_chars",
                 Value::Int(i64::from(cfg.title.min_chars)),
             ));
+            p.push(("title_max_px", Value::Int(i64::from(cfg.title.max_px))));
+            p.push(("title_min_px", Value::Int(i64::from(cfg.title.min_px))));
             p
         },
         hidden_population: None,

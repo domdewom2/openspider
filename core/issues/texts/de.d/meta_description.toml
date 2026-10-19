@@ -1,2 +1,5 @@
-# OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „Meta Description“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.meta-description-outside-head]
+what = "Eine Beschreibung steht außerhalb des Dokumentkopfs."
+why = "Suchmaschinen können Beschreibungen außerhalb des Dokumentkopfs ignorieren."
+fix = "Verschiebe die Meta Description in den HTML-Dokumentkopf."

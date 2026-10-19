@@ -9,24 +9,6 @@ function = "tab"
 signature = "pub fn tab() -> TabDef"
 
 [[stub]]
-owner = "M2-D01"
-file = "crates/os-analyze/src/tabs/meta_keywords.rs"
-function = "tab"
-signature = "pub fn tab() -> TabDef"
-
-[[stub]]
-owner = "M2-D01"
-file = "crates/os-export/src/reports/serp_summary.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
-owner = "M2-D01"
-file = "crates/os-parse/src/elements.rs"
-function = "annotate_facts"
-signature = "pub fn annotate_facts( _doc: &crate::dom::Document, _cfg: &crate::ParseConfig, _page: &mut os_model::ParsedPage, )"
-
-[[stub]]
 owner = "M2-D02"
 file = "crates/os-analyze/src/analysis/steps/near_duplicates.rs"
 function = "run"

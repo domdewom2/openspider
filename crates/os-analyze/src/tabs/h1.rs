@@ -1,8 +1,4 @@
-//! Tab „H1“ (ONPAGE-120 … 124; Filter-Kennungen aus `docs/plan/M1-filters.toml`).
-//!
-//! Wie [`super::page_titles`]. `Occurrences` und der Filter „Multiple“ zählen alle `<h1>` ungedeckelt
-//! (ONPAGE-008); gespeichert sind Anzahl und die ersten zwei Werte. „Alt Text in h1“ (ONPAGE-125) und
-//! „Non-sequential“ (ONPAGE-126) sind P1.
+//! Element tab h1: stored values and live filters.
 
 use os_model::Value;
 
@@ -55,6 +51,8 @@ pub fn tab() -> TabDef {
             ),
             // ONPAGE-124: Occurrences > 1, auch leere H1 zählen.
             problem_filter("Multiple", "u.h1_count > 1"),
+            problem_filter("Alt Text in h1", "EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id = u.id AND e.key = 'head.h1_alt' AND e.v_int = 1)"),
+            problem_filter("Non-sequential", "EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id = u.id AND e.key = 'head.h1_non_sequential' AND e.v_int = 1)"),
         ],
         // Keine Tab-Sortierung: Entdeckungsreihenfolge; nur `Duplicate` gruppiert (tabs::filter_default_sort).
         default_sort: Vec::new(),

@@ -186,6 +186,7 @@ async fn base_set_and_filters_are_consistent() {
         text("Non-Indexable")
     );
     let tab = os_analyze::tabs::meta_description::tab();
+    let counts = filter_counts(&fx.file, &cfg).unwrap();
     for filter in &tab.filters {
         let rows = sorted_addresses(&fx, &cfg, TAB, filter.id);
         assert!(
@@ -193,14 +194,23 @@ async fn base_set_and_filters_are_consistent() {
             "{TAB}:{} ⊆ All",
             filter.id
         );
-        assert_eq!(counted(&fx, &cfg, TAB, filter.id).0 as usize, rows.len());
+        let count = counts
+            .iter()
+            .find(|c| c.tab == TAB && c.filter == filter.id)
+            .unwrap();
+        if count.state.yields_rows() {
+            assert_eq!(count.count.unwrap() as usize, rows.len());
+        } else {
+            assert_eq!(filter.id, "Outside <head>");
+            assert_eq!(count.state, FilterState::NeedsRecrawl);
+            assert_eq!(count.count, None);
+            assert!(rows.is_empty());
+        }
     }
-    for c in filter_counts(&fx.file, &cfg)
-        .unwrap()
-        .iter()
-        .filter(|c| c.tab == TAB)
-    {
-        assert_eq!(c.state, FilterState::Ready, "{}", c.filter);
+    for c in counts.iter().filter(|c| c.tab == TAB) {
+        if c.filter != "Outside <head>" {
+            assert_eq!(c.state, FilterState::Ready, "{}", c.filter);
+        }
     }
 }
 
