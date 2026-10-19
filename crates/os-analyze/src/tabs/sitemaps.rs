@@ -18,24 +18,42 @@ use os_model::{AnalysisStep, CrawlConfig, Value};
 const POPULATION: &str = "u.is_internal = 1 AND u.in_tables = 1 \
     AND EXISTS (SELECT 1 FROM sitemaps s WHERE s.kind = 'urlset')";
 
+// hidden_population nimmt Sitemap-Dateien trotz in_tables = 0 auf. Alle Seitenfilter schließen
+// dieselben Dateien aus, auch wenn sie zuvor als Seite entdeckt wurden: Nur die beiden
+// Grenzfilter dürfen Sitemap-Dateien zeigen (TECH-217/218).
+macro_rules! page {
+    () => {
+        "u.in_tables = 1 AND u.is_internal = 1 AND NOT EXISTS (SELECT 1 FROM sitemaps sm WHERE sm.url_id = u.id AND sm.kind IN ('urlset', 'index'))"
+    };
+}
+const PAGE: &str = page!();
+
 /// Die URL steht in mindestens einer verarbeiteten Sitemap (Marke des Teilschritts).
-const IN_SITEMAP: &str =
-    "u.in_tables = 1 AND u.is_internal = 1 AND NOT EXISTS (SELECT 1 FROM sitemaps sm WHERE sm.url_id = u.id AND sm.kind IN ('urlset', 'index')) AND EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'in_sitemap')";
+const IN_SITEMAP: &str = concat!(
+    page!(),
+    " AND EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'in_sitemap')"
+);
 
 /// Indexierbare, gecrawlte HTML-Seite, die in keiner Sitemap steht (TECH-213).
-const NOT_IN_SITEMAP: &str =
-    "u.in_tables = 1 AND u.is_internal = 1 AND NOT EXISTS (SELECT 1 FROM sitemaps sm WHERE sm.url_id = u.id AND sm.kind IN ('urlset', 'index')) AND u.state = 'done' AND u.content_class = 'HTML' \
+const NOT_IN_SITEMAP: &str = concat!(
+    page!(),
+    " AND u.state = 'done' AND u.content_class = 'HTML' \
     AND u.indexability = 'Indexable' \
-    AND NOT EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'in_sitemap')";
+    AND NOT EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'in_sitemap')"
+);
 
 /// Orphan-Marke des Teilschritts (TECH-214).
-const ORPHAN: &str =
-    "u.in_tables = 1 AND u.is_internal = 1 AND NOT EXISTS (SELECT 1 FROM sitemaps sm WHERE sm.url_id = u.id AND sm.kind IN ('urlset', 'index')) AND EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'orphan')";
+const ORPHAN: &str = concat!(
+    page!(),
+    " AND EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'orphan')"
+);
 
 /// Abgerufene, nicht indexierbare URL in einer Sitemap (TECH-215); nicht abgerufene URLs zählen nicht.
-const NON_INDEXABLE_IN_SITEMAP: &str =
-    "u.in_tables = 1 AND u.is_internal = 1 AND NOT EXISTS (SELECT 1 FROM sitemaps sm WHERE sm.url_id = u.id AND sm.kind IN ('urlset', 'index')) AND u.state = 'done' AND u.indexability = 'Non-Indexable' \
-    AND EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'in_sitemap')";
+const NON_INDEXABLE_IN_SITEMAP: &str = concat!(
+    page!(),
+    " AND u.state = 'done' AND u.indexability = 'Non-Indexable' \
+    AND EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'in_sitemap')"
+);
 
 fn column(key: &'static str, sql: &'static str, kind: ColumnKind) -> ColumnDef {
     ColumnDef {
@@ -104,7 +122,7 @@ pub fn tab() -> TabDef {
                 "u.indexability_status",
                 ColumnKind::Text,
             ),
-            // [OS-Erweiterung] (TECH-211): Anzahl der Sitemap-Dateien, in denen die URL steht.
+            // [OS-Erweiterung] (TECH-211): Anzahl verschiedener urlset-Dateien, in denen die URL steht (TECH-216).
             extension(
                 "Sitemaps",
                 "(SELECT COUNT(DISTINCT e.sitemap_id) FROM sitemap_entries e JOIN sitemaps s ON s.id = e.sitemap_id WHERE e.url_id = u.id AND s.kind = 'urlset')",
@@ -121,7 +139,7 @@ pub fn tab() -> TabDef {
         filters: vec![
             FilterDef {
                 id: "All",
-                predicate: "u.in_tables = 1 AND u.is_internal = 1 AND NOT EXISTS (SELECT 1 FROM sitemaps sm WHERE sm.url_id = u.id AND sm.kind IN ('urlset', 'index'))",
+                predicate: PAGE,
                 kind: FilterKind::Live,
                 requires: Vec::new(),
                 ignore_non_indexable: false,
@@ -137,7 +155,7 @@ pub fn tab() -> TabDef {
             ),
             post_crawl(
                 "URLs In Multiple Sitemaps",
-                "u.in_tables = 1 AND u.is_internal = 1 AND NOT EXISTS (SELECT 1 FROM sitemaps sm WHERE sm.url_id = u.id AND sm.kind IN ('urlset', 'index')) AND (SELECT COUNT(DISTINCT e.sitemap_id) FROM sitemap_entries e JOIN sitemaps s ON s.id = e.sitemap_id WHERE e.url_id = u.id AND s.kind = 'urlset') >= 2",
+                concat!(page!(), " AND (SELECT COUNT(DISTINCT e.sitemap_id) FROM sitemap_entries e JOIN sitemaps s ON s.id = e.sitemap_id WHERE e.url_id = u.id AND s.kind = 'urlset') >= 2"),
                 false,
             ),
             live(

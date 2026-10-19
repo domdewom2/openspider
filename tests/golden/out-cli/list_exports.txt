@@ -423,13 +423,13 @@ Structured Data:Microdata URLs Triples
 Structured Data:JSON-LD URLs Triples
 Structured Data:RDFa URLs Triples
 Structured Data:Rich Result Feature Detected Triples
-Sitemaps:URLs In Sitemap
-Sitemaps:URLs Not In Sitemap
-Sitemaps:Non-Indexable URLs In Sitemap
-Sitemaps:URLs In Multiple Sitemaps
-Sitemaps:XML Sitemap With Over 50k URLs
-Sitemaps:XML Sitemap Over 50MB
-Sitemaps:Orphan URLs
+Sitemaps:URLs In Sitemap Details
+Sitemaps:URLs Not In Sitemap Details
+Sitemaps:Non-Indexable URLs In Sitemap Details
+Sitemaps:URLs In Multiple Sitemaps Details
+Sitemaps:XML Sitemap With Over 50k URLs Details
+Sitemaps:XML Sitemap Over 50MB Details
+Sitemaps:Orphan URLs Details
 JavaScript:Blocked Resource Inlinks
 JavaScript:Contains JavaScript Links Inlinks
 JavaScript:Contains JavaScript Content Inlinks

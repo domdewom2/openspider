@@ -1,7 +1,8 @@
 //! Sitemap-Zuordnungen je Filter (OUT-057, TECH-219).
 //!
-//! Kanonische Namen ohne „Details“; Dateistämme bleiben aus Kompatibilitätsgründen bestehen und
-//! unterscheiden Bulk-Dateien von den gleichnamigen Tab-Exporten (OUT-008).
+//! Kanonische Namen mit „Details“ unterscheiden Bulk- von Tab-Exporten (OUT-008).
+//! OUT-057-Kurznamen und frühere „Inlinks“-Namen bleiben Aliase innerhalb von ExportKind::Bulk.
+//! Statuscode 0 (No Response) wird wie bei den Link-Exporten als leere Zelle ausgegeben.
 
 use crate::catalog::reports::ReportRequirement;
 use crate::catalog::{TableEntry, TableJob};
@@ -18,10 +19,10 @@ pub fn entries() -> &'static [TableEntry] {
 
 const ENTRIES: &[TableEntry] = &[
     TableEntry {
-        name: "Sitemaps:URLs In Sitemap",
+        name: "Sitemaps:URLs In Sitemap Details",
         aliases: &[
             "Sitemaps:URLs In Sitemap Inlinks",
-            "Sitemaps:URLs In Sitemap Details",
+            "Sitemaps:URLs In Sitemap",
         ],
         file_stem: "Sitemaps:URLs In Sitemap Details",
         header: &[
@@ -40,10 +41,10 @@ const ENTRIES: &[TableEntry] = &[
         header_fn: None,
     },
     TableEntry {
-        name: "Sitemaps:URLs Not In Sitemap",
+        name: "Sitemaps:URLs Not In Sitemap Details",
         aliases: &[
             "Sitemaps:URLs Not In Sitemap Inlinks",
-            "Sitemaps:URLs Not In Sitemap Details",
+            "Sitemaps:URLs Not In Sitemap",
         ],
         file_stem: "Sitemaps:URLs Not In Sitemap Details",
         header: &["Address"],
@@ -56,10 +57,10 @@ const ENTRIES: &[TableEntry] = &[
         run,
     },
     TableEntry {
-        name: "Sitemaps:Non-Indexable URLs In Sitemap",
+        name: "Sitemaps:Non-Indexable URLs In Sitemap Details",
         aliases: &[
             "Sitemaps:Non-Indexable URLs In Sitemap Inlinks",
-            "Sitemaps:Non-Indexable URLs In Sitemap Details",
+            "Sitemaps:Non-Indexable URLs In Sitemap",
         ],
         file_stem: "Sitemaps:Non-Indexable URLs In Sitemap Details",
         header: &[
@@ -78,10 +79,10 @@ const ENTRIES: &[TableEntry] = &[
         header_fn: None,
     },
     TableEntry {
-        name: "Sitemaps:URLs In Multiple Sitemaps",
+        name: "Sitemaps:URLs In Multiple Sitemaps Details",
         aliases: &[
             "Sitemaps:URLs In Multiple Sitemaps Inlinks",
-            "Sitemaps:URLs In Multiple Sitemaps Details",
+            "Sitemaps:URLs In Multiple Sitemaps",
         ],
         file_stem: "Sitemaps:URLs In Multiple Sitemaps Details",
         header: &[
@@ -100,10 +101,10 @@ const ENTRIES: &[TableEntry] = &[
         header_fn: None,
     },
     TableEntry {
-        name: "Sitemaps:XML Sitemap With Over 50k URLs",
+        name: "Sitemaps:XML Sitemap With Over 50k URLs Details",
         aliases: &[
             "Sitemaps:XML Sitemap With Over 50k URLs Inlinks",
-            "Sitemaps:XML Sitemap With Over 50k URLs Details",
+            "Sitemaps:XML Sitemap With Over 50k URLs",
         ],
         file_stem: "Sitemaps:XML Sitemap With Over 50k URLs Details",
         header: &[
@@ -119,10 +120,10 @@ const ENTRIES: &[TableEntry] = &[
         header_fn: None,
     },
     TableEntry {
-        name: "Sitemaps:XML Sitemap Over 50MB",
+        name: "Sitemaps:XML Sitemap Over 50MB Details",
         aliases: &[
             "Sitemaps:XML Sitemap Over 50MB Inlinks",
-            "Sitemaps:XML Sitemap Over 50MB Details",
+            "Sitemaps:XML Sitemap Over 50MB",
         ],
         file_stem: "Sitemaps:XML Sitemap Over 50MB Details",
         header: &[
@@ -138,11 +139,8 @@ const ENTRIES: &[TableEntry] = &[
         header_fn: None,
     },
     TableEntry {
-        name: "Sitemaps:Orphan URLs",
-        aliases: &[
-            "Sitemaps:Orphan URLs Inlinks",
-            "Sitemaps:Orphan URLs Details",
-        ],
+        name: "Sitemaps:Orphan URLs Details",
+        aliases: &["Sitemaps:Orphan URLs Inlinks", "Sitemaps:Orphan URLs"],
         file_stem: "Sitemaps:Orphan URLs Details",
         header: &[
             "Sitemap",
@@ -166,7 +164,12 @@ fn run(job: &TableJob<'_>, writer: &mut dyn TableWriter) -> Result<u64, ExportEr
     let all: Vec<_> = entries().iter().collect();
     let entry = crate::catalog::find_table(&all, job.entry_name)
         .ok_or_else(|| ExportError::Unsupported(job.entry_name.into()))?;
-    let filter = entry.name.strip_prefix("Sitemaps:").unwrap_or(entry.name);
+    let filter = entry
+        .name
+        .strip_prefix("Sitemaps:")
+        .unwrap_or(entry.name)
+        .strip_suffix(" Details")
+        .unwrap_or(entry.name);
     let filter = if filter == "XML Sitemap Over 50MB" {
         "XML Sitemap With Over 50MB"
     } else {
@@ -182,18 +185,23 @@ pub(crate) fn write_filter(
     filter: &str,
     orphan_report: bool,
 ) -> Result<u64, ExportError> {
-    if !views::state_of_in(job.tabs, job.file, job.cfg, "Sitemaps", filter)?.yields_rows() {
-        tracing::warn!("{} requires the Sitemaps crawl analysis", job.entry_name);
-        return Ok(0);
-    }
     let processed = db(job.file.conn().query_row(
         "SELECT EXISTS(SELECT 1 FROM sitemaps WHERE kind IN ('urlset', 'index'))",
         [],
         |r| r.get::<_, bool>(0),
     ))?;
     if !processed {
-        tracing::warn!("{} requires a processed sitemap", job.entry_name);
-        return Ok(0);
+        return Err(ExportError::Unsupported(format!(
+            "{} requires a processed sitemap",
+            job.entry_name
+        )));
+    }
+    // Direct exports do not call prereq::availability; return an actionable reason to every caller.
+    if !views::state_of_in(job.tabs, job.file, job.cfg, "Sitemaps", filter)?.yields_rows() {
+        return Err(ExportError::Unsupported(format!(
+            "{} requires the Sitemaps crawl analysis",
+            job.entry_name
+        )));
     }
     let plan = views::plan_in(
         job.tabs,
@@ -359,7 +367,7 @@ mod tests {
     // spec: OUT-057
     // spec: TECH-219
     #[test]
-    fn all_seven_exports_match_fixture_and_legacy_aliases_resolve() {
+    fn all_seven_exports_match_fixture_and_short_and_legacy_aliases_resolve() {
         let (dir, file) = fixture();
         let cfg = CrawlConfig::default();
         analyze(&file, &cfg);
@@ -368,6 +376,13 @@ mod tests {
         ))
         .unwrap();
         for entry in entries() {
+            let short = entry.name.strip_suffix(" Details").unwrap();
+            if short != "Sitemaps:XML Sitemap Over 50MB" {
+                assert!(matches!(
+                    crate::catalog::resolve(crate::catalog::ExportKind::Tab, short).unwrap(),
+                    crate::catalog::ExportRef::Tab { .. }
+                ));
+            }
             let files = export_bulk(
                 &file,
                 &cfg,
@@ -380,7 +395,12 @@ mod tests {
             assert_eq!(header, entry.header, "{}", entry.name);
             assert_eq!(
                 rows,
-                expected[entry.name.strip_prefix("Sitemaps:").unwrap()],
+                expected[entry
+                    .name
+                    .strip_prefix("Sitemaps:")
+                    .unwrap()
+                    .strip_suffix(" Details")
+                    .unwrap()],
                 "{}",
                 entry.name
             );
@@ -422,6 +442,37 @@ mod tests {
             "https://site.test/a.xml"
         );
         assert_eq!(range.get((1, 2)).unwrap().to_string(), "200");
+    }
+
+    // spec: OUT-057
+    #[test]
+    fn no_response_status_is_an_empty_export_cell() {
+        let (dir, file) = fixture();
+        let cfg = CrawlConfig::default();
+        file.conn()
+            .execute(
+                "UPDATE urls SET status_code = 0 WHERE address = 'https://site.test/both'",
+                [],
+            )
+            .unwrap();
+        analyze(&file, &cfg);
+        let files = export_bulk(
+            &file,
+            &cfg,
+            "Sitemaps:URLs In Multiple Sitemaps",
+            dir.path(),
+            Format::Csv,
+        )
+        .unwrap();
+        let (_, rows) = csv(&files[0].path);
+        let both: Vec<_> = rows
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|r| r[1] == "https://site.test/both")
+            .collect();
+        assert_eq!(both.len(), 2);
+        assert!(both.iter().all(|r| r[2] == ""));
     }
 
     // spec: OUT-099
@@ -489,7 +540,7 @@ mod tests {
     // spec: OUT-057
     // spec: OUT-099
     #[test]
-    fn availability_and_empty_outputs_explain_missing_sources_and_pending_analysis() {
+    fn availability_and_direct_exports_explain_missing_sources_and_pending_analysis() {
         let (dir, file) = fixture();
         let cfg = CrawlConfig::default();
         let report = &crate::reports::orphan_pages::entries()[0];
@@ -504,12 +555,30 @@ mod tests {
             &dir.path().join("pending"),
             Format::Csv,
         )
-        .unwrap();
-        assert_eq!(result.files[0].rows, 0);
+        .unwrap_err();
+        assert!(
+            matches!(result, ExportError::Unsupported(ref reason) if reason.contains("crawl analysis"))
+        );
+        for entry in entries()
+            .iter()
+            .filter(|e| e.requires.contains(&ReportRequirement::CrawlAnalysis))
+        {
+            let error = export_bulk(
+                &file,
+                &cfg,
+                entry.name,
+                &dir.path().join("pending-bulk"),
+                Format::Csv,
+            )
+            .unwrap_err();
+            assert!(
+                matches!(error, ExportError::Unsupported(ref reason) if reason.contains("crawl analysis"))
+            );
+        }
         // Die Dateigrenzfilter sind vor der Analyse verfügbar.
         let live = entries()
             .iter()
-            .find(|e| e.name.ends_with("Over 50MB"))
+            .find(|e| e.name.ends_with("Over 50MB Details"))
             .unwrap();
         assert!(
             crate::reports::prereq::availability(live.name, live.requires, &file, &cfg).enabled
@@ -534,8 +603,10 @@ mod tests {
                 &dir.path().join("empty"),
                 Format::Csv,
             )
-            .unwrap();
-            assert_eq!(files[0].rows, 0);
+            .unwrap_err();
+            assert!(
+                matches!(files, ExportError::Unsupported(ref reason) if reason.contains("processed sitemap"))
+            );
         }
     }
 }

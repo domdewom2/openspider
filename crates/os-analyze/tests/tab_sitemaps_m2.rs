@@ -233,3 +233,54 @@ fn paused_step_waits_for_resume_and_cancelled_step_preserves_results() {
         3
     );
 }
+
+// spec: TECH-211
+// spec: TECH-216
+#[tokio::test]
+async fn live_crawl_counts_distinct_urlsets_from_xml_and_gzip_fixtures() {
+    let mut cfg = CrawlConfig::default();
+    cfg.speed.threads = 1;
+    cfg.sitemaps.crawl_linked = true;
+    // Existing Spec fixture, read-only: both in sitemap-pages.xml + sitemap-posts.xml.gz,
+    // dup-same-file twice in sitemap-pages.xml. Exercise HTTP, gzip, parser and Store together.
+    let fx =
+        os_engine::testing::crawl_fixture_from("tech/sitemaps", "http://site.test/", cfg.clone())
+            .await;
+    let maps: Vec<String> = fx.file.conn().prepare(
+        "SELECT s.url FROM sitemap_entries e JOIN sitemaps s ON s.id = e.sitemap_id JOIN urls u ON u.id = e.url_id WHERE u.address = 'http://site.test/both' ORDER BY s.url"
+    ).unwrap().query_map([], |r| r.get(0)).unwrap().map(Result::unwrap).collect();
+    assert_eq!(
+        maps,
+        [
+            "http://site.test/sitemap-pages.xml",
+            "http://site.test/sitemap-posts.xml.gz"
+        ]
+    );
+    assert!(
+        analysis::run(&fx.file, &cfg, &CancelToken::new(), &|_, _| {})
+            .unwrap()
+            .complete
+    );
+    let multiple = query_view(
+        &fx.file,
+        &cfg,
+        &ViewQuery::new("Sitemaps", "URLs In Multiple Sitemaps"),
+    )
+    .unwrap();
+    assert_eq!(multiple.rows.len(), 1);
+    assert_eq!(
+        multiple.rows[0][0],
+        Value::Text("http://site.test/both".into())
+    );
+    let mut query = ViewQuery::new("Sitemaps", "All");
+    query.columns = ColumnSelection::Named(vec!["Address".into(), "Sitemaps".into()]);
+    let page = query_view(&fx.file, &cfg, &query).unwrap();
+    for (path, count) in [("both", 2), ("dup-same-file", 1)] {
+        let row = page
+            .rows
+            .iter()
+            .find(|r| r[0] == Value::Text(format!("http://site.test/{path}")))
+            .unwrap();
+        assert_eq!(row[1], Value::Int(count));
+    }
+}
