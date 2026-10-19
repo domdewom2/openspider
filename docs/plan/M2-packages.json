@@ -2364,6 +2364,27 @@
   "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 und 2a (inkl. K2-60/K2-61/K2-63). User-Entscheidung 18.10.: MCP-Umfang ergänzen (Abgleich: Referenzprodukt hat 29 Werkzeuge inkl. Node.js-/Dateisystem-Tools). list_catalog nutzt denselben Katalog wie UI/Export (catalog.*), keine eigene Liste; url_content nur aus der Crawl-Datei, Ausgabe im Untrusted-Block (AGENT-004); url_screenshot nur aus gespeicherten Render-Screenshots (R01). Registrierung in der bestehenden Werkzeugliste von os-mcp ist additiv (K2-61). Kein Werkzeug für Code-Ausführung oder freien Dateisystemzugriff (statischer Test, AGENT-019)."
  },
  {
+  "id": "M2-Z01",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "macOS-Signier- und Notarisierungs-Pipeline (vorgezogen aus M3): Developer ID, Notarisierung, signiertes DMG als CI-Artefakt",
+  "wave": 2,
+  "spec_ids": [],
+  "owns": [
+   ".github/workflows/release-macos.yml",
+   "apps/desktop/src-tauri/entitlements.plist",
+   "docs/release/macos-signing.md",
+   "scripts/release/verify-macos.sh"
+  ],
+  "depends_on": [
+   "M2-F03",
+   "M2-F04"
+  ],
+  "size": "M",
+  "runner": "local-mac+ci",
+  "prompt_notes": "User-Wunsch 19.10.: Mac-Signierung vor dem Urlaub testen. Workflow release-macos.yml (workflow_dispatch + Tags v*, KEIN automatisches Release-Publishing; Ergebnis nur als Actions-Artefakt): Desktop-App für aarch64-apple-darwin und x86_64-apple-darwin (bzw. universal) bauen (tauri build), mit Developer ID Application signieren (Hardened Runtime, entitlements.plist minimal: nur was WKWebView/Netzwerk braucht), notarisieren (xcrun notarytool submit --wait, App-spezifisches Passwort) und stapeln (xcrun stapler staple), DMG erzeugen. Secrets/Variables genau mit den Namen: APPLE_CERTIFICATE (base64 .p12), APPLE_CERTIFICATE_PASSWORD, APPLE_ID, APPLE_PASSWORD, KEYCHAIN_PASSWORD (Secrets); APPLE_SIGNING_IDENTITY, APPLE_TEAM_ID (Variables). Temporärer Schlüsselbund im Runner, nach dem Lauf löschen; keine Secrets in Logs. Fehlen die Secrets, endet der Job mit klarer Meldung (kein roter Absturz). scripts/release/verify-macos.sh prüft lokal und im Workflow: codesign --verify --deep --strict, spctl -a -t exec -vv (accepted, source=Notarized Developer ID), stapler validate. Additiv nach K2-61 erlaubt: bundle.macOS-Abschnitt in apps/desktop/src-tauri/tauri.conf.json (entitlements, minimumSystemVersion, hardenedRuntime). Doku docs/release/macos-signing.md (wie Zertifikat/Secrets anlegen, wie prüfen)."
+ },
+ {
   "id": "M2-A01",
   "kind": "package",
   "model": "sonnet",
@@ -3227,6 +3248,7 @@
    "crates/os-analyze/tests/tab_internal.rs (nur alter ONPAGE-012-Test, M2.md 5.1)"
   ],
   "depends_on": [
+   "M2-Z01",
    "M2-M03",
    "M2-N01",
    "M2-K05",
