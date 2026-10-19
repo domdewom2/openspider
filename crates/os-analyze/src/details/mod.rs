@@ -63,7 +63,7 @@ macro_rules! table_source {
     )*};
 }
 table_source! { headers => "http_headers", cookies => "cookies", console => "render_console",
-blocked => "render_blocked", network => "render_network", forms => "forms", sitemaps => "sitemap_entries", spelling => "spelling_findings", a11y_rules => "a11y_rules",
+blocked => "render_blocked", network => "render_network", forms => "forms", sitemaps => "sitemap_entries", a11y_rules => "a11y_rules",
 a11y_nodes => "a11y_nodes", search => "custom_search_hits", extraction => "custom_extraction_values",
 js => "custom_js_values", api => "api_values" }
 
@@ -79,7 +79,7 @@ pub fn detail_source(kind: DetailKind) -> (&'static str, DetailFn) {
         ConsoleLog => ("M2-E05", console),
         BlockedResources => ("M2-E05", blocked),
         Network => ("M2-E05", network),
-        Spelling => ("M2-D19", spelling),
+        Spelling => ("M2-D19", crate::tabs::content::spelling_details),
         A11yRules => ("M2-D21", a11y_rules),
         A11yNodes => ("M2-D21", a11y_nodes),
         Duplicates => ("M2-D02", crate::tabs::duplicates::detail_rows),
