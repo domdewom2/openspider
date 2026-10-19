@@ -61,6 +61,23 @@ pub struct CrawlHandle {
 }
 
 impl CrawlHandle {
+    /// Sendet ohne geborgten Handle; App-Sitzungssperren können vor dem Warten freigegeben werden.
+    pub fn request_add_urls(
+        &self,
+        urls: Vec<String>,
+    ) -> impl std::future::Future<Output = Result<crate::AddUrlsSummary, EngineError>> + Send + use<>
+    {
+        let sender = self.control.add_urls.clone();
+        async move {
+            let (tx, rx) = tokio::sync::oneshot::channel();
+            sender
+                .send((urls, tx))
+                .map_err(|_| EngineError::Invalid("Crawl nicht mehr aktiv".into()))?;
+            rx.await
+                .map_err(|_| EngineError::Invalid("Crawl wurde beendet".into()))?
+        }
+    }
+
     /// Sendet zusätzliche Eingaben an die Steuerschleife (CRAWL-131).
     pub async fn add_urls(&self, urls: Vec<String>) -> Result<crate::AddUrlsSummary, EngineError> {
         let (tx, rx) = tokio::sync::oneshot::channel();
@@ -549,6 +566,7 @@ pub(crate) fn make_shared<F: Fetch>(init: SharedInit<F>) -> (Arc<Shared<F>>, Arc
         reason: Mutex::new(None),
     });
     let sh = Arc::new(Shared {
+        sitemap_ingest_lock: Default::default(),
         add_rx: tokio::sync::Mutex::new(add_rx),
         fetcher: init.fetcher,
         gate: build_gate(&init.cfg),
@@ -607,6 +625,7 @@ pub(crate) fn launch<F: Fetch>(setup: Setup<F>) -> CrawlHandle {
         primed_origins,
         seeds,
     } = setup;
+    let deps = crate::memory::resource_deps(deps);
     // Nur Kennung und Betriebsparameter loggen: URLs und Konfiguration können Geheimnisse enthalten.
     tracing::info!(%crawl_id, threads = cfg.speed.threads, "Crawl gestartet");
     // RAM-Fenster der Warteschlange (K-78 b); beim Fortsetzen hat `resume::restore` es schon eingeschaltet
@@ -614,7 +633,7 @@ pub(crate) fn launch<F: Fetch>(setup: Setup<F>) -> CrawlHandle {
         core.frontier
             .enable_spill(crate::queue::queue_window(), file.clone());
     }
-    let tracker = make_tracker(
+    let mut tracker = make_tracker(
         &cfg,
         &*deps.clock,
         tracker_started_at,
@@ -622,6 +641,7 @@ pub(crate) fn launch<F: Fetch>(setup: Setup<F>) -> CrawlHandle {
         crawled,
         paused_total,
     );
+    tracker.track_file(&file);
     let (sh, control) = make_shared(SharedInit {
         fetcher,
         cfg,
@@ -643,6 +663,7 @@ pub(crate) fn launch<F: Fetch>(setup: Setup<F>) -> CrawlHandle {
         .lock()
         .unwrap_or_else(|p| p.into_inner())
         .snapshot(deps.clock.monotonic(), queued, discovered, 0);
+    crate::memory::guard_start(&sh);
     let (progress_tx, progress_rx) = watch::channel(initial);
     let task = tokio::spawn(run(RunParts {
         sh,

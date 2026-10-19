@@ -123,6 +123,8 @@ impl<F: Fetch> Fetch for Recording<F> {
 
 fn gate(mode: RobotsMode, policy: RobotsUnreachablePolicy) -> RobotsGate {
     RobotsGate::new(RobotsGateConfig {
+        custom_files: Default::default(),
+        respect_crawl_delay: false,
         token: "OpenSpider".to_string(),
         mode,
         unreachable_policy: policy,
@@ -134,6 +136,8 @@ fn gate(mode: RobotsMode, policy: RobotsUnreachablePolicy) -> RobotsGate {
 /// Wie [`respect`], aber mit kurzer Wartezeit für Echtzeit-Tests (siehe Moduldoku).
 fn respect_fast_retry() -> RobotsGate {
     RobotsGate::new(RobotsGateConfig {
+        custom_files: Default::default(),
+        respect_crawl_delay: false,
         token: "OpenSpider".to_string(),
         mode: RobotsMode::Respect,
         unreachable_policy: RobotsUnreachablePolicy::BlockHost,

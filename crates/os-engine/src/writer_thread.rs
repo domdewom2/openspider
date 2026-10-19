@@ -245,6 +245,15 @@ impl WriterStatsSnapshot {
 }
 
 impl WriterSender {
+    /// Reserviert vor synchroner Frontier-Mutation; bei Gegendruck bleibt die Frontier unverändert.
+    pub fn try_reserve(&self) -> Result<Slot, WriterGone> {
+        self.tx
+            .clone()
+            .try_reserve_owned()
+            .map(|permit| Slot { permit })
+            .map_err(|_| WriterGone)
+    }
+
     /// Reserviert einen Platz (wartet, solange der Kanal voll ist – hier greift der Gegendruck).
     pub async fn reserve(&self) -> Result<Slot, WriterGone> {
         match self.tx.clone().reserve_owned().await {

@@ -1,0 +1,10 @@
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+ xmlns:i="http://www.google.com/schemas/sitemap-image/1.1"
+ xmlns:v="http://www.google.com/schemas/sitemap-video/1.1"
+ xmlns:n="http://www.google.com/schemas/sitemap-news/0.9">
+ <url><loc>https://site.test/page?a=1&amp;b=2</loc><lastmod>2026-10-19</lastmod><changefreq>DAILY</changefreq><priority>0.7</priority>
+ <i:image><i:loc>https://site.test/image.jpg</i:loc><i:caption>Bild &amp; Text</i:caption></i:image>
+ <v:video><v:title>Film</v:title><v:player_loc allow_embed="yes">https://site.test/video</v:player_loc></v:video>
+ <n:news><n:publication><n:name>Journal</n:name><n:language>de</n:language></n:publication></n:news>
+ </url><url><loc>https://site.test/second</loc></url>
+</urlset>

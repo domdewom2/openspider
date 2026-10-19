@@ -1,0 +1,12 @@
+[[route]]
+path = "/"
+body = '<html><a href="/first">first</a></html>'
+[[route]]
+path = "/first"
+body = '<html>first</html>'
+[[route]]
+path = "/added"
+body = '<html>added</html>'
+[[route]]
+path = "/robots.txt"
+body = 'User-agent: *'

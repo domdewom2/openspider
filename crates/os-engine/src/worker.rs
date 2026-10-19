@@ -78,6 +78,7 @@ pub(crate) const STOP_PAUSE: u8 = 2;
 
 /// Zustand, den alle Worker und die Steuerschleife teilen.
 pub(crate) struct Shared<F: Fetch> {
+    pub sitemap_ingest_lock: tokio::sync::Mutex<()>,
     pub add_rx: tokio::sync::Mutex<tokio::sync::mpsc::UnboundedReceiver<AddRequest>>,
     pub fetcher: Arc<F>,
     pub cfg: Arc<CrawlConfig>,

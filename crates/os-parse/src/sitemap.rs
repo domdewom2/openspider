@@ -14,8 +14,7 @@
 //!   ergibt `Invalid` ohne Einträge.
 //! * **Weitere Formate (CRAWL-060, Q11):** Text-Sitemaps (eine URL je Zeile; mindestens eine gültige URL nötig),
 //!   RSS (`item/link`, `pubDate`) und Atom (`entry/link@href`, `updated`) ergeben `Urlset`.
-//! * **Kodierung:** UTF-8 wird gestreamt; UTF-16 (BOM) und andere in der XML-Deklaration genannte Kodierungen
-//!   werden vollständig gelesen und umkodiert.
+//! * **Kodierung:** UTF-8, UTF-16 (BOM) und andere deklarierte Kodierungen werden gestreamt und bei Bedarf umkodiert.
 
 use std::cell::Cell;
 use std::io::{self, BufRead, BufReader, Cursor, Read};
@@ -34,8 +33,6 @@ use crate::hreflang::{apply_limit, make_ref};
 
 /// Mehr entpackte Bytes werden nicht mehr gezählt.
 const MAX_COUNTED: u64 = 1 << 30;
-/// Obergrenze für das Umkodieren nicht-UTF-8-Dateien im Speicher.
-const MAX_TRANSCODE: u64 = 256 << 20;
 
 /// Zählt die gelesenen Bytes über einen geteilten Zähler.
 struct Counting<R> {
@@ -56,50 +53,106 @@ struct Parsed {
     kind: Option<SitemapKind>,
     locs: Vec<SitemapLoc>,
     invalid: u32,
+    error: Option<String>,
 }
 
 /// Wertet eine Sitemap aus (gzip wird an den Magic-Bytes erkannt, `content_type` ist nicht maßgeblich).
 pub fn parse(url: &url::Url, body: &[u8], _content_type: Option<&str>) -> SitemapDoc {
+    parse_reader(url, body).0
+}
+
+/// Liest auch gzip aus einem Strom; liefert zusätzlich den Fehler bei unvollständigen Dokumenten.
+pub fn parse_reader(url: &url::Url, source: impl Read) -> (SitemapDoc, Option<String>) {
+    let mut raw = BufReader::new(source);
+    let mut magic = Vec::new();
+    let _ = (&mut raw).take(2).read_to_end(&mut magic);
+    let gzip = magic.starts_with(&[0x1f, 0x8b]);
+    let body = Cursor::new(magic).chain(raw);
     let count = Rc::new(Cell::new(0u64));
-    let source: Box<dyn Read + '_> = if body.starts_with(&[0x1f, 0x8b]) {
+    let source: Box<dyn Read + '_> = if gzip {
         Box::new(MultiGzDecoder::new(body))
     } else {
         Box::new(body)
     };
-    let mut input = BufReader::with_capacity(
-        64 * 1024,
-        Counting {
-            inner: source,
-            count: Rc::clone(&count),
-        },
-    );
-
-    let head = input.fill_buf().map(<[u8]>::to_vec).unwrap_or_default();
-    let parsed = match detect_encoding(&head) {
+    let mut counted = Counting {
+        inner: source,
+        count: Rc::clone(&count),
+    };
+    // Read may return a single byte; detection must not depend on chunk boundaries.
+    let mut head = Vec::new();
+    let head_error = (&mut counted).take(512).read_to_end(&mut head).err();
+    let mut input = BufReader::with_capacity(64 * 1024, Cursor::new(head.clone()).chain(counted));
+    let mut parsed = match detect_encoding(&head) {
         Some(encoding) => {
-            let mut raw = Vec::new();
-            let _ = (&mut input).take(MAX_TRANSCODE).read_to_end(&mut raw);
-            let (text, _, _) = encoding.decode(&raw);
-            parse_stream(&mut Cursor::new(text.into_owned().into_bytes()), url)
+            let decoder = DecoderReader {
+                input: &mut input,
+                decoder: encoding.new_decoder(),
+                output: [0; 32 * 1024],
+                start: 0,
+                end: 0,
+                finished: false,
+            };
+            parse_stream(&mut BufReader::new(decoder), url)
         }
         None => {
             if head.starts_with(&[0xEF, 0xBB, 0xBF]) {
+                let _ = input.fill_buf();
                 input.consume(3);
             }
             parse_stream(&mut input, url)
         }
     };
     // Rest zählen, damit `size_bytes` auch bei vorzeitigem Abbruch die entpackte Größe nennt.
-    let _ = io::copy(
+    let rest = io::copy(
         &mut (&mut input).take(MAX_COUNTED.saturating_sub(count.get())),
         &mut io::sink(),
     );
 
-    SitemapDoc {
-        kind: parsed.kind.unwrap_or(SitemapKind::Invalid),
-        locs: parsed.locs,
-        invalid_entries: parsed.invalid,
-        size_bytes: count.get(),
+    if let Some(error) = head_error {
+        parsed.error = Some(error.to_string());
+    }
+    if let Err(error) = rest {
+        parsed.error = Some(error.to_string());
+    }
+    (
+        SitemapDoc {
+            kind: parsed.kind.unwrap_or(SitemapKind::Invalid),
+            locs: parsed.locs,
+            invalid_entries: parsed.invalid,
+            size_bytes: count.get(),
+        },
+        parsed.error,
+    )
+}
+
+/// Dekodiert mit konstanten Puffern; die Bytezählung bleibt auf dem entpackten Originalstrom.
+struct DecoderReader<'a, R> {
+    input: &'a mut R,
+    decoder: encoding_rs::Decoder,
+    output: [u8; 32 * 1024],
+    start: usize,
+    end: usize,
+    finished: bool,
+}
+impl<R: BufRead> Read for DecoderReader<'_, R> {
+    fn read(&mut self, out: &mut [u8]) -> io::Result<usize> {
+        if out.is_empty() {
+            return Ok(0);
+        }
+        while self.start == self.end && !self.finished {
+            let input = self.input.fill_buf()?;
+            let eof = input.is_empty();
+            let (result, read, written, _) =
+                self.decoder.decode_to_utf8(input, &mut self.output, eof);
+            self.input.consume(read);
+            self.start = 0;
+            self.end = written;
+            self.finished = eof && result == encoding_rs::CoderResult::InputEmpty;
+        }
+        let n = out.len().min(self.end - self.start);
+        out[..n].copy_from_slice(&self.output[self.start..self.start + n]);
+        self.start += n;
+        Ok(n)
     }
 }
 
@@ -217,6 +270,8 @@ enum Mode {
 enum Field {
     Loc,
     Lastmod,
+    Changefreq,
+    Priority,
 }
 
 #[derive(Default)]
@@ -225,6 +280,9 @@ struct Entry {
     loc: Option<String>,
     lastmod: Option<String>,
     hreflang: Vec<HreflangRef>,
+    changefreq: Option<String>,
+    priority: Option<f64>,
+    extensions: Vec<os_model::SitemapExtension>,
 }
 
 struct Capture {
@@ -249,6 +307,14 @@ fn attr(e: &BytesStart<'_>, name: &str) -> Option<String> {
     })
 }
 
+struct ExtensionCapture {
+    depth: usize,
+    kind: os_model::SitemapExtKind,
+    namespace: String,
+    namespaces: std::collections::BTreeMap<String, String>,
+    writer: quick_xml::Writer<Vec<u8>>,
+}
+
 fn parse_xml<R: BufRead>(input: &mut R, url: &url::Url) -> Parsed {
     let mut reader = NsReader::from_reader(input);
     reader.config_mut().allow_dangling_amp = true;
@@ -259,13 +325,70 @@ fn parse_xml<R: BufRead>(input: &mut R, url: &url::Url) -> Parsed {
     let mut entry: Option<Entry> = None;
     let mut capture: Option<Capture> = None;
     let mut buf = Vec::new();
+    let mut extension: Option<ExtensionCapture> = None;
 
     loop {
         buf.clear();
-        let Ok((ns, event)) = reader.read_resolved_event_into(&mut buf) else {
-            break;
+        let (ns, event) = match reader.read_resolved_event_into(&mut buf) {
+            Ok(value) => value,
+            Err(error) => {
+                parsed.error = Some(error.to_string());
+                break;
+            }
+        };
+        let namespace = match &ns {
+            ResolveResult::Bound(n) => n.as_ref().to_string(),
+            _ => String::new(),
         };
         let xhtml = matches!(&ns, ResolveResult::Bound(n) if n.as_ref() == XHTML_NS);
+        if extension.is_none() && entry.as_ref().is_some_and(|e| stack.len() == e.depth + 1) {
+            if let Event::Start(e) | Event::Empty(e) = &event {
+                let kind = match (namespace.as_str(), e.local_name().as_ref()) {
+                    ("http://www.google.com/schemas/sitemap-image/1.1", "image") => {
+                        Some(os_model::SitemapExtKind::Image)
+                    }
+                    ("http://www.google.com/schemas/sitemap-video/1.1", "video") => {
+                        Some(os_model::SitemapExtKind::Video)
+                    }
+                    ("http://www.google.com/schemas/sitemap-news/0.9", "news") => {
+                        Some(os_model::SitemapExtKind::News)
+                    }
+                    _ => None,
+                };
+                if let Some(kind) = kind {
+                    let namespaces = reader
+                        .resolver()
+                        .bindings()
+                        .map(|(prefix, ns)| {
+                            let name = match prefix {
+                                quick_xml::name::PrefixDeclaration::Default => String::new(),
+                                quick_xml::name::PrefixDeclaration::Named(name) => name.to_string(),
+                            };
+                            (name, ns.as_ref().to_string())
+                        })
+                        .collect();
+                    extension = Some(ExtensionCapture {
+                        depth: stack.len(),
+                        kind,
+                        namespace: namespace.clone(),
+                        namespaces,
+                        writer: quick_xml::Writer::new(Vec::new()),
+                    });
+                }
+            }
+        }
+        if let Some(capture) = extension.as_mut() {
+            let done = (matches!(event, Event::End(_)) && stack.len() == capture.depth + 1)
+                || (matches!(event, Event::Empty(_)) && stack.len() == capture.depth);
+            let _ = capture.writer.write_event(event.clone().into_owned());
+            if done {
+                let capture = extension.take().expect("extension");
+                if let Some(entry) = entry.as_mut() {
+                    entry.extensions.push(os_model::SitemapExtension { kind: capture.kind,
+                        json: serde_json::json!({"namespace": capture.namespace, "namespaces": capture.namespaces, "xml": String::from_utf8_lossy(&capture.writer.into_inner())}).to_string() });
+                }
+            }
+        }
         match event {
             Event::Start(ref e) | Event::Empty(ref e) => {
                 let name = local_name(e);
@@ -326,7 +449,12 @@ fn parse_xml<R: BufRead>(input: &mut R, url: &url::Url) -> Parsed {
                     }
                 }
             }
-            Event::Eof => break,
+            Event::Eof => {
+                if !stack.is_empty() {
+                    parsed.error = Some("Unvollständiges XML".into());
+                }
+                break;
+            }
             _ => {}
         }
     }
@@ -388,6 +516,17 @@ fn open_element(
                 text: String::new(),
             });
         }
+        (Mode::Urlset, "changefreq" | "priority") => {
+            *capture = Some(Capture {
+                field: if name == "changefreq" {
+                    Field::Changefreq
+                } else {
+                    Field::Priority
+                },
+                depth,
+                text: String::new(),
+            });
+        }
         (Mode::Urlset, "link") if xhtml => {
             let (rel, code, href) = (attr(e, "rel"), attr(e, "hreflang"), attr(e, "href"));
             if let (Some(rel), Some(code), Some(href)) = (rel, code, href) {
@@ -434,6 +573,10 @@ fn close_element(
             match c.field {
                 Field::Loc => current.loc = Some(text),
                 Field::Lastmod => current.lastmod = Some(text),
+                Field::Changefreq => current.changefreq = Some(text.to_lowercase()),
+                Field::Priority => {
+                    current.priority = text.parse::<f64>().ok().filter(|v| v.is_finite())
+                }
             }
         }
     }
@@ -448,6 +591,9 @@ fn close_element(
                 &mut parsed.invalid,
             );
             loc.hreflang_truncated = truncated;
+            loc.changefreq = done.changefreq;
+            loc.priority = done.priority;
+            loc.extensions = done.extensions;
             parsed.locs.push(loc);
         }
     }

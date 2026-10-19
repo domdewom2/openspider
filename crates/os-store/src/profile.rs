@@ -130,6 +130,24 @@ impl AppliedPragmas {
     }
 }
 
+/// Optionale app-weite Cache-Obergrenze. Null belässt die Profilgrenzen (OUT-267).
+static CACHE_LIMIT_BYTES: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+pub fn set_cache_limit(bytes: Option<u64>) {
+    CACHE_LIMIT_BYTES.store(bytes.unwrap_or(0), std::sync::atomic::Ordering::Relaxed);
+}
+fn apply_cache_limit(conn: &Connection, profile: StorageProfile) -> Result<(), StoreError> {
+    let bytes = CACHE_LIMIT_BYTES.load(std::sync::atomic::Ordering::Relaxed);
+    if bytes > 0 {
+        let kib = (bytes / 1024).max(1).min(i64::MAX as u64) as i64;
+        conn.pragma_update(
+            None,
+            "cache_size",
+            -kib.min(profile.cache_size_kib().saturating_abs()),
+        )?;
+    }
+    Ok(())
+}
+
 /// Setzt die Verbindungs-PRAGMAs: WAL, `synchronous` nach Profil (während des Crawls), `foreign_keys = OFF`
 /// (Konsistenz sichert der Writer), Cache nach Profil, Checkpoint-Schwelle ([`WAL_CHECKPOINT_MIN_PAGES`]) und
 /// Wartezeit bei gesperrter Datei.
@@ -140,6 +158,7 @@ pub fn apply(conn: &Connection, profile: StorageProfile) -> Result<(), StoreErro
     conn.pragma_update(None, "cache_size", profile.cache_size_kib())?;
     conn.pragma_update(None, "wal_autocheckpoint", WAL_CHECKPOINT_MIN_PAGES)?;
     conn.busy_timeout(std::time::Duration::from_secs(5))?;
+    apply_cache_limit(conn, profile)?;
     Ok(())
 }
 

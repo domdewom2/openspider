@@ -46,6 +46,8 @@ pub struct ProgressTracker {
     /// Laufzeit vor dem aktuellen Lauf (Fortsetzen): Pausen eingeschlossen, die Wartezeit bis zum Fortsetzen
     /// gehört zu `paused_total`.
     elapsed_before: Duration,
+    resource_file: Option<std::path::PathBuf>,
+    large_crawl_noted: bool,
 }
 
 impl ProgressTracker {
@@ -65,7 +67,14 @@ impl ProgressTracker {
             limit,
             finished_at: None,
             elapsed_before: Duration::ZERO,
+            resource_file: None,
+            large_crawl_noted: false,
         }
+    }
+
+    /// Verknüpft die Fortschrittsanzeige mit der Crawl-Datei.
+    pub fn track_file(&mut self, path: &std::path::Path) {
+        self.resource_file = Some(path.to_path_buf());
     }
 
     /// Setzt den Zählerstand, mit dem ein fortgesetzter Crawl weiterrechnet (P19).
@@ -189,6 +198,14 @@ impl ProgressTracker {
         let avg_response_time = (self.response_count > 0)
             .then(|| self.response_ms_sum as f64 / self.response_count as f64 / 1000.0);
 
+        if discovered >= 5_000_000 && !self.large_crawl_noted {
+            tracing::warn!(
+                discovered,
+                "Großer Crawl: längere Laufzeit und zusätzlichen Datenträgerplatz einplanen"
+            );
+            self.large_crawl_noted = true;
+        }
+        let memory = crate::memory::sample();
         Progress {
             state: self.state,
             end_reason: self.end_reason,
@@ -205,10 +222,14 @@ impl ProgressTracker {
             paused_s: paused.as_secs(),
             discovered,
             // M2-E02 (CRAWL-129): Speicherstufe und Dateigröße
-            memory_stage: None,
-            file_bytes: None,
-            memory_used_bytes: None,
-            memory_limit_bytes: None,
+            memory_stage: Some(memory.stage()),
+            file_bytes: self
+                .resource_file
+                .as_ref()
+                .and_then(|p| std::fs::metadata(p).ok())
+                .map(|m| m.len()),
+            memory_used_bytes: Some(memory.used()),
+            memory_limit_bytes: Some(memory.limit()),
         }
     }
 
