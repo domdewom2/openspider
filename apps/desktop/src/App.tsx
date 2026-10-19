@@ -3,6 +3,7 @@ import { Shell } from "./features/shell/Shell";
 import { Header } from "./features/header/Header";
 import { Statusbar } from "./features/statusbar/Statusbar";
 import { Notifications } from "./features/notifications/Notifications";
+import { SidebarMount } from "./features/sidebar/frame/SidebarMount";
 import { useEffect, useState, type ComponentType } from "react";
 import { RegionBoundary } from "./app/ErrorBoundary";
 import { Providers } from "./app/Providers";
@@ -66,6 +67,7 @@ export function App() {
         </footer>
         <Notifications />
       </div>
+      <SidebarMount />
     </Providers>
   );
 }
