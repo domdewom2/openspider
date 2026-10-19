@@ -53,6 +53,34 @@ fn suffix(scope: Option<&SegmentFilter>) -> Option<&str> {
         .or_else(|| scope.map(|_| "unassigned"))
 }
 
+/// Reserve names for every saved segment before opening a writer. Single-segment
+/// exports use the same plan as `all`, including on case-insensitive filesystems.
+fn file_name(
+    file: &CrawlFile,
+    canonical: &str,
+    scope: Option<&SegmentFilter>,
+    extension: &str,
+) -> Result<String, ExportError> {
+    let mut registry = crate::fs_paths::NameRegistry::new();
+    let unfiltered = crate::naming::file_name(canonical, None, extension);
+    registry.claim(&unfiltered, "unfiltered");
+    let Some(scope) = scope else {
+        return Ok(unfiltered);
+    };
+    let cfg = segments::saved_config(file).map_err(|e| ExportError::Write(e.to_string()))?;
+    for segment in &cfg.segments.list {
+        let requested = crate::naming::file_name(canonical, Some(&segment.name), extension);
+        let resolved = registry.claim(&requested, &format!("segment:{}", segment.name));
+        if scope.name.as_deref() == Some(segment.name.as_str()) {
+            return Ok(resolved);
+        }
+    }
+    Ok(registry.claim(
+        &crate::naming::file_name(canonical, suffix(Some(scope)), extension),
+        &format!("scope:{:?}", scope.name),
+    ))
+}
+
 pub fn export_view(
     file: &CrawlFile,
     cfg: &CrawlConfig,
@@ -63,11 +91,7 @@ pub fn export_view(
 ) -> Result<ExportFileInfo, ExportError> {
     let registry = tabs(file, cfg, scope);
     let name = crate::tab_export::canonical_name(&registry, cfg, &query.tab, &query.filter)?;
-    let path = directory.join(crate::naming::file_name(
-        &name,
-        suffix(scope),
-        format.extension(),
-    ));
+    let path = directory.join(file_name(file, &name, scope, format.extension())?);
     crate::pipeline::export_view(&registry, file, cfg, query, &path, format, &query.tab)
 }
 
@@ -114,11 +138,12 @@ fn export_bulk_snapshot(
                 tab.population = os_analyze::defs::intern(&scope.population_sql());
                 let mut tabs = tabs;
                 if canonical == "Links:All Outlinks" {
-                    let path = directory.join(crate::naming::file_name(
+                    let path = directory.join(file_name(
+                        file,
                         &canonical,
-                        suffix(Some(scope)),
+                        Some(scope),
                         format.extension(),
-                    ));
+                    )?);
                     let mut writer = crate::output::open_writer(
                         &path,
                         format,
@@ -146,11 +171,12 @@ fn export_bulk_snapshot(
                     };
                 }
                 tabs.push(tab);
-                let path = directory.join(crate::naming::file_name(
+                let path = directory.join(file_name(
+                    file,
                     &canonical,
-                    suffix(Some(scope)),
+                    Some(scope),
                     format.extension(),
-                ));
+                )?);
                 return Ok(vec![crate::links_export::export_link_entry(
                     &tabs, file, cfg, &entry, &path, format, &canonical,
                 )?]);
@@ -217,7 +243,7 @@ fn export_bulk_snapshot(
     let staging = Staging::new(directory)?;
     let generated =
         crate::pipeline::export_bulk_in(&tabs, file, cfg, &canonical, &staging.0, format)?;
-    publish(generated, scope, directory, &staging.0)
+    publish(file, generated, scope, directory, &staging.0)
 }
 struct Staging(std::path::PathBuf);
 impl Staging {
@@ -242,6 +268,7 @@ impl Drop for Staging {
     }
 }
 fn publish(
+    file: &CrawlFile,
     mut files: Vec<ExportFileInfo>,
     scope: Option<&SegmentFilter>,
     directory: &Path,
@@ -260,7 +287,7 @@ fn publish(
             .map_err(|e| ExportError::Write(e.to_string()))?;
         let dest = directory
             .join(relative)
-            .with_file_name(crate::naming::file_name(stem, suffix(scope), ext));
+            .with_file_name(file_name(file, stem, scope, ext)?);
         if let Some(parent) = dest.parent() {
             std::fs::create_dir_all(parent).map_err(|source| ExportError::Io {
                 path: parent.into(),
@@ -357,7 +384,7 @@ fn export_report_snapshot(
             &staging.0,
             format,
         )?;
-        report.files = publish(report.files, Some(scope), directory, &staging.0)?;
+        report.files = publish(file, report.files, Some(scope), directory, &staging.0)?;
         return Ok(report);
     }
     let stem = if let Ok(def) = crate::catalog::reports::resolve(&canonical) {
@@ -367,11 +394,7 @@ fn export_report_snapshot(
             .ok_or_else(|| ExportError::Unsupported(canonical.clone()))?
             .file_stem
     };
-    let path = directory.join(crate::naming::file_name(
-        stem,
-        suffix(Some(scope)),
-        format.extension(),
-    ));
+    let path = directory.join(file_name(file, stem, Some(scope), format.extension())?);
     let scoped = tabs(file, cfg, Some(scope));
     let job = crate::catalog::TableJob {
         entry_name: &canonical,
@@ -536,11 +559,7 @@ fn write_scoped_table(
     write: impl FnOnce(&mut dyn crate::types::TableWriter) -> Result<u64, ExportError>,
 ) -> Result<ExportFileInfo, ExportError> {
     let _addresses = AddressScope::new(job.file, scope)?;
-    let path = directory.join(crate::naming::file_name(
-        stem,
-        suffix(Some(scope)),
-        format.extension(),
-    ));
+    let path = directory.join(file_name(job.file, stem, Some(scope), format.extension())?);
     let writer = crate::output::open_writer(
         &path,
         format,
