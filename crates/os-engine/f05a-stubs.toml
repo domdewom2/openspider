@@ -39,12 +39,6 @@ function = "run"
 signature = "pub fn run(_ctx: &PageCtx<'_>, _page: &mut ParsedPage)"
 
 [[stub]]
-owner = "M2-D20"
-file = "crates/os-export/src/reports/structured_data.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
 owner = "M2-D21"
 file = "crates/os-analyze/src/tabs/accessibility.rs"
 function = "tab"
