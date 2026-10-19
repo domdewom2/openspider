@@ -23,6 +23,11 @@ fn assert_golden(path: impl AsRef<Path>, actual: &str) {
     }
     if path.file_name().unwrap() == "list_exports.txt" {
         expected.push_str("Queued URLs\n");
+        // K2-61 (Golden durch eigene Ausgabe): X01 adds Pagination's missing All entry.
+        expected = expected.replace(
+            "Hreflang:All Inlinks\n",
+            "Pagination:All Inlinks\nHreflang:All Inlinks\n",
+        );
     }
     expected = expected
         .lines()

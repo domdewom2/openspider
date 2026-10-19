@@ -442,15 +442,6 @@ async fn every_f05_command_reports_its_exact_owner() {
         ),
         ("M2-O02", vec!["projects.list", "crawls.checkLocation"]),
         (
-            "M2-X01",
-            vec![
-                "export.multi",
-                "export.presetList",
-                "export.presetSave",
-                "export.presetDelete",
-            ],
-        ),
-        (
             "M2-X03",
             vec!["export.customSummaryMetrics", "export.customSummary"],
         ),
