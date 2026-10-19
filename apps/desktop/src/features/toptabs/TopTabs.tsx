@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useT } from "../../i18n";
 import { eventBus } from "../../ipc/events";
 import { useSession } from "../../state/session";
-import { useTabs } from "../../state/tabs";
+import { MANDATORY_TAB, useTabs } from "../../state/tabs";
+import { TabContextMenuHost, TabsConfigDialog, tabContextEntries } from "../table-advanced/TabControls";
 import { useAction } from "../../ui/actions";
 import { registerMenuContributions } from "../../ui/menu/registry";
 import { TabBar } from "../../ui/primitives/TabBar";
@@ -12,6 +13,8 @@ import "./toptabs.css";
 
 export function TopTabs() {
   const t = useT(); const s = useTabs();
+  const [configure, setConfigure] = useState(false);
+  const layout = { order: s.order, hidden: s.hidden, mandatory: MANDATORY_TAB };
   const fail = (error: unknown) => useTabs.setState({ error });
   const crawlId = useSession(s => s.crawl?.crawlId);
   useEffect(() => { void useTabs.getState().load(); }, [crawlId]);
@@ -52,12 +55,18 @@ export function TopTabs() {
         isDisabled: index + direction < 0 || index + direction >= s.order.length,
         onAction: (): void => { const order = [...s.order]; [order[index], order[index + direction]] = [order[index + direction], order[index]]; void s.reorder(order).catch(fail); } })),
     ]),
-    { id: "reset-tabs", label: t("u10-tabs-reset"), separatorBefore: true, onAction: (): void => void s.reset().catch(fail) },
+    { id: "configure-tabs", label: t("u20-tabs-configure"), separatorBefore: true, onAction: (): void => setConfigure(true) },
+    { id: "reset-tabs", label: t("u10-tabs-reset"), onAction: (): void => void s.reset().catch(fail) },
   ];
   return <div className="u10-top-tabs">
-    <TabBar tabs={s.order.filter(id => !s.hidden.includes(id)).map(id => ({ id, label: label(id) }))}
-      selected={s.active} onSelect={s.select} onReorder={ids => void s.reorder(ids).catch(fail)}
-      label={t("u10-tabs")} overflowLabel={t("u10-tabs-configure")} overflowEntries={entries} />
+    <TabContextMenuHost className="u20-tab-host" label={t("u20-tab-menu")} entriesFor={tab => tabContextEntries(t, tab, layout, {
+      hide: ids => void s.hide(ids).catch(fail), configure: () => setConfigure(true), reset: () => void s.reset().catch(fail) })}>
+      <TabBar tabs={s.order.filter(id => !s.hidden.includes(id)).map(id => ({ id, label: label(id) }))}
+        selected={s.active} onSelect={s.select} onReorder={ids => void s.reorder(ids).catch(fail)}
+        label={t("u10-tabs")} overflowLabel={t("u10-tabs-configure")} overflowEntries={entries} />
+    </TabContextMenuHost>
+    <TabsConfigDialog isOpen={configure} onOpenChange={setConfigure} layout={layout} label={label}
+      onApply={(order, hidden) => void s.layout(order, hidden).catch(fail)} />
     {s.error != null && <span role="alert">{t("u10-tabs-error")}</span>}
   </div>;
 }
