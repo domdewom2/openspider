@@ -1,0 +1,5 @@
+# Szenario ui/fx-ui-spell (ONPAGE-153 … ONPAGE-157, ONPAGE-166, UI-047). Fixture des Pakets M2-D19.
+
+[[route]]
+path = "/fehler.pdf"
+content_type = "application/pdf"
