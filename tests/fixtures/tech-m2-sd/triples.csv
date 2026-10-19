@@ -1,0 +1,9 @@
+﻿Address,Format,Subject,Predicate,Object,Validation Type,Severity,Issue
+https://site.test/mixed,json-ld,_:b0,rdf:type,schema:Product,,,
+https://site.test/mixed,json-ld,_:b0,rdf:type,schema:Thing,,,
+https://site.test/mixed,json-ld,_:b0,schema:name,"""X""",,,
+https://site.test/mixed,json-ld,_:b1,rdf:type,schema:Offer,,,
+https://site.test/mixed,json-ld,_:b1,schema:price,"""5""",,,
+https://site.test/mixed,json-ld,_:b0,schema:offers,_:b1,,,
+https://site.test/mixed,json-ld,_:b2,rdf:type,schema:Product,,,
+https://site.test/mixed,json-ld,_:b2,schema:name,"""Y""",,,

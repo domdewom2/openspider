@@ -133,6 +133,12 @@ fn overview_labels_use_the_current_thresholds_and_states_are_complete() {
     assert!(pending.iter().all(|c| c.count.is_none() && c.pct.is_none()));
     let all_filters = counts.iter().filter(|c| c.filter == "All");
     for c in all_filters {
+        // M2-D09 replaces the SD stub: All requires at least one enabled format (TECH-183).
+        if c.tab == "Structured Data" {
+            assert!(matches!(c.state, FilterState::NeedsConfig(_)));
+            assert!(c.count.is_none() && c.pct.is_none());
+            continue;
+        }
         assert_eq!(
             c.state,
             FilterState::Ready,

@@ -175,6 +175,7 @@ pub fn column_sources() -> Vec<(&'static str, Box<dyn ColumnSource>)> {
     add("Link Metrics", link_metrics::column_source());
     add("Internal", dynamic_api::column_source());
     add("Internal", links::column_source());
+    add("Structured Data", structured_data::column_source());
     add("Internal", internal_crawl::column_source());
     #[cfg(feature = "testing")]
     add("Internal", testing::source());
