@@ -3,7 +3,7 @@ import type { Tick } from "../../../ipc/gen/Tick";
 import { MockCore } from "../../../ipc/transport/mock";
 import { useSession } from "../../../state/session";
 import { useHeader } from "../model";
-import fixture from "./fx-ui-basic.json";
+import fixture from "./tick-running.json";
 
 export const tick = fixture as Tick;
 export function setupHeader() {

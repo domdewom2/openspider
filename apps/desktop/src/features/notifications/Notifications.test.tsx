@@ -14,19 +14,47 @@ import { IpcError, localError } from "../../ipc/errors";
 let core: ReturnType<typeof setupHeader>;
 beforeEach(async () => { core = setupHeader(); await setLanguage("en"); usePrefs.setState({ notifications: true }); });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
-function notice(code: string, args: Notice["args"] = {}) { act(() => useSession.getState().pushNotice({ level: "error", code, args })); }
+function notice(code: string, args: Notice["args"] = {}, level: Notice["level"] = "error") { act(() => useSession.getState().pushNotice({ level, code, args })); }
 
 // spec: UI-019
 it("shows DNS, connection, TLS, robots and cross-host failures without hiding the cause", async () => {
+  const open = vi.spyOn(window, "open").mockReturnValue(null);
   render(<Notifications />);
   for (const [code, text] of [["start-dns", /DNS/], ["start-connection", /connection.*failed/], ["start-tls", /TLS certificate/], ["start-robots", /robots.txt blocks/], ["start-redirect-host", /different host/]] as const) {
     notice(code, { status: 0, target: "https://other.test/" });
     expect(await screen.findByRole("dialog")).toBeVisible();
     expect(screen.getByText(text)).toBeVisible();
-    if (code === "start-robots") expect(screen.getByRole("button", { name: /Ignore robots.txt/ })).toBeVisible();
+    if (code === "start-robots") {
+      fireEvent.click(screen.getByRole("button", { name: /Ignore robots.txt/ }));
+      expect(open).toHaveBeenCalledWith("settings.html#robots.mode", "settings", expect.any(String));
+      expect(core.calls.some((c) => c.cmd === "config.set")).toBe(false);
+    }
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     await waitFor(() => expect(useSession.getState().notices).toHaveLength(0));
   }
+});
+
+// spec: UI-019
+it.each(["unknown-info", "app-quit-confirmation"])("dismisses informational notice %s without opening a dialog", (code) => {
+  useSession.getState().applyTick({ ...tick, notices: [{ level: "info", code, args: {} }] });
+  render(<Notifications />);
+  act(() => useSession.getState().pushNotice({ level: "info", code, args: {} }));
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(useSession.getState().notices).toHaveLength(0);
+});
+
+// spec: UI-019
+it.each(["warning", "error"] as const)("shows a %s dialog even with an informational notice queued first", (level) => {
+  act(() => {
+    useSession.getState().pushNotice({ level: "info", code: "unknown-info", args: {} });
+    useSession.getState().pushNotice({ level, code: "disk-low", args: { path: "crawls", freeBytes: 1234 } });
+  });
+  render(<Notifications />);
+  expect(screen.getByRole("dialog")).toBeVisible();
+  expect(screen.getByText(/crawls.*1,?234/)).toBeVisible();
+  expect(useSession.getState().notices).toHaveLength(1);
+  fireEvent.click(screen.getByRole("button", { name: "Close" }));
+  expect(useSession.getState().notices).toHaveLength(0);
 });
 
 // spec: UI-019
@@ -65,7 +93,7 @@ it("sends completion notifications only in the background with notifications ena
   vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
   await notifyCompletion("Crawl completed", "1200 URLs crawled."); expect(send).not.toHaveBeenCalled();
   vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
-  render(<Notifications />); notice("crawl-completed", { crawled: 1200 });
+  render(<Notifications />); notice("crawl-completed", { crawled: 1200 }, "info");
   await waitFor(() => expect(send).toHaveBeenCalledWith("Crawl completed", { body: "1,200 URLs crawled." }));
   expect(screen.queryByRole("dialog")).toBeNull();
   usePrefs.setState({ notifications: false }); await notifyCompletion("Analysis completed", "1200 URLs crawled.");
@@ -103,10 +131,14 @@ it("cancel resumes without saving credentials", async () => {
 
 // spec: CRAWL-129
 it("shows the memory pause banner and three direct settings links", () => {
+  const open = vi.spyOn(window, "open").mockReturnValue(null);
   useSession.getState().applyTick({ ...tick, crawl: { ...tick.crawl!, memoryStage: "paused" } });
   render(<Notifications />);
   expect(screen.getByText("Low memory – crawl paused")).toBeVisible();
-  for (const name of ["Reduce threads", "Disable rendering", "Disable HTML storage"]) expect(screen.getByRole("button", { name })).toBeVisible();
+  for (const [name, anchor] of [["Reduce threads", "speed.threads"], ["Disable rendering", "rendering.mode"], ["Disable HTML storage", "extraction.store_html"]]) {
+    fireEvent.click(screen.getByRole("button", { name }));
+    expect(open).toHaveBeenLastCalledWith(`settings.html#${anchor}`, "settings", expect.any(String));
+  }
 });
 
 // spec: UI-019

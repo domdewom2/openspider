@@ -1,5 +1,5 @@
 import { test, expect } from "../fixtures/app";
-import tick from "../../src/features/header/fixtures/fx-ui-basic.json" with { type: "json" };
+import tick from "../../src/features/header/fixtures/tick-running.json" with { type: "json" };
 
 // spec: UI-013
 test("keeps MCP visible without an active crawl and opens its menu", async ({ app, page }) => {

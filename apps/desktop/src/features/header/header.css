@@ -11,6 +11,5 @@
 .os-header-progress .os-progress { flex: 1; }
 .os-header-hint { display: inline-block; font-size: 11px; color: var(--os-text-muted); margin-inline-end: 12px; }
 /* Fit translated hints without covering the next focus region. */
-.os-app:has(.os-crawl-header) { grid-template-rows: auto 28px 1fr auto; }
 .os-app-header:has(.os-crawl-header) { min-height: 40px; padding-block: 4px; }
 @media (max-width: 1100px) { .os-crawl-header form { flex-wrap: wrap; } }

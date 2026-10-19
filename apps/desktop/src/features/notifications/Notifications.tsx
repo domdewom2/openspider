@@ -24,6 +24,7 @@ export async function notifyCompletion(title: string, body: string): Promise<voi
 
 const completion = (n: Notice) => n.code === "crawl-completed" || n.code === "analysis-completed";
 const pacing = (n: Notice) => n.code === "crawl-throttled" || n.code === "crawl-throttle-cleared";
+const modal = (n: Notice) => !completion(n) && !pacing(n) && (n.level === "error" || n.level === "warning");
 
 /** Serial dialogs, immediate errors, and rare live announcements; numeric ticks never enter the live region. */
 export function Notifications() {
@@ -39,7 +40,7 @@ export function Notifications() {
   const [password, setPassword] = useState("");
   const [httpConfirmed, setHttpConfirmed] = useState(false);
   const [copyResult, setCopyResult] = useState("");
-  const current = notices.find((n) => !completion(n) && !pacing(n));
+  const current = notices.find(modal);
   const host = String(current?.args.host ?? "");
   const realm = String(current?.args.realm ?? "");
   const isAuth = current?.code === "auth-required";
@@ -62,7 +63,7 @@ export function Notifications() {
         const tr = getT();
         void notifyCompletion(tr(`notice-${n.code}`), tr("notify-completed-count", { count: Number(n.args.crawled ?? useSession.getState().crawl?.crawled ?? 0) })).catch(reportError);
         useSession.getState().dismissNotice(n);
-      } else if (pacing(n)) useSession.getState().dismissNotice(n);
+      } else if (!modal(n)) useSession.getState().dismissNotice(n);
     }
   }, [notices]);
 
@@ -102,7 +103,7 @@ export function Notifications() {
   const httpsFailure = current && ["start-connection", "start-dns", "err-start-connection"].includes(current.code) && String(current.args.startUrl ?? "").startsWith("https:");
   return <>
     {stage === "paused" && <div className="os-memory-banner"><Banner kind="error"><strong>{t("notify-memory-paused")}</strong>
-      {[["speed.threads", "notify-reduce-threads"], ["rendering.mode", "notify-disable-rendering"], ["storage.store_html", "notify-disable-html"]].map(([anchor, label]) => <Button key={anchor} onPress={() => void openSettingsWindow(anchor)}>{t(label!)}</Button>)}
+      {[["speed.threads", "notify-reduce-threads"], ["rendering.mode", "notify-disable-rendering"], ["extraction.store_html", "notify-disable-html"]].map(([anchor, label]) => <Button key={anchor} onPress={() => void openSettingsWindow(anchor)}>{t(label!)}</Button>)}
     </Banner></div>}
     <ToastRegion label={t("notify-title")} />
     <Dialog title={t(isAuth ? "notify-auth-title" : "notify-title")} isOpen={!!current} isDismissable={!busy} onOpenChange={(open) => { if (!open) cancelDialog(); }}>
@@ -111,7 +112,7 @@ export function Notifications() {
       {current?.args.status != null && <p>{t("notify-status", { status: String(current.args.status) })}</p>}
       {current?.args.path != null && <p>{String(current.args.path)} · {t("notify-free", { free: String(current.args.freeBytes ?? "–") })}</p>}
       {current?.args.target != null && <p>{String(current.args.target)}</p>}
-      {current?.code === "start-robots" && <Button onPress={() => void openSettingsWindow("robots.ignore_robots_txt")}>{t("notify-robots-setting")}</Button>}
+      {current?.code === "start-robots" && <Button onPress={() => void openSettingsWindow("robots.mode")}>{t("notify-robots-setting")}</Button>}
       {httpsFailure && <Button isDisabled={busy} onPress={() => {
         const startUrl = String(current.args.startUrl);
         useHeader.setState({ url: startUrl.replace(/^https:/, "http:") }); dismiss();

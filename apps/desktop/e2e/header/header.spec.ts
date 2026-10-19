@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { test, expect } from "../fixtures/app";
-import tick from "../../src/features/header/fixtures/fx-ui-basic.json" with { type: "json" };
+import tick from "../../src/features/header/fixtures/tick-running.json" with { type: "json" };
 
 // spec: UI-003
 test("validates start addresses inline and shows the subfolder slash hint", async ({ app, page }) => {
