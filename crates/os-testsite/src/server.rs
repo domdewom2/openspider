@@ -1,6 +1,11 @@
 //! Eigener HTTP/1.1-Server: Annahme-Schleife, TLS-Erkennung am ersten Byte, Request-Parser und
 //! Antwort-Ausgabe. Handgeschrieben, weil die Fehlerrouten (eigener Reason-Text, abgebrochene
 //! Antworten, TCP-Reset, tröpfelnder Body, mehrfache Header) unter hyper/axum nicht möglich sind.
+//!
+//! TLS prefers h2 for ordinary scenarios. If ANY route requires chunked transfer,
+//! trickle, abort/reset, or informational responses, the WHOLE scenario advertises
+//! only http/1.1. ALPN is negotiated before the route is known; this preserves all
+//! wire-fixture semantics, including on reused connections.
 
 use std::io::{self, Write};
 use std::pin::Pin;
@@ -146,7 +151,20 @@ async fn serve(tcp: TcpStream, state: Arc<AppState>) {
     }
     let (conn, tls, sni) = if first[0] == 0x16 {
         let Ok(material) = state.tls() else { return };
-        let acceptor = TlsAcceptor::from(Arc::clone(&material.server_config));
+        let config = if state.routes.iter().any(|r| {
+            r.chunked
+                || r.trickle_bytes_per_s.is_some()
+                || r.abort_after_headers
+                || r.reset_mid_body
+                || !r.informational.is_empty()
+        }) {
+            let mut config = (*material.server_config).clone();
+            config.alpn_protocols = vec![b"http/1.1".to_vec()];
+            Arc::new(config)
+        } else {
+            Arc::clone(&material.server_config)
+        };
+        let acceptor = TlsAcceptor::from(config);
         match acceptor.accept(tcp).await {
             Ok(stream) => {
                 if stream.get_ref().1.alpn_protocol() == Some(b"h2") {

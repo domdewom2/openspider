@@ -36,3 +36,6 @@ body = '<html><a href="/flaky">Retry</a><a href="/steady">Steady</a></html>'
 [[route]]
 path = "/steady"
 body = "steady"
+[[route]]
+path = "/robots.txt"
+body = "User-agent: *\nDisallow: /private\n"

@@ -80,7 +80,7 @@ async fn overload_pauses_then_recovers_after_twenty_successes() {
     p.on_result(&u, &result(503, 1, None), &cfg, &clock);
     p.on_result(&u, &result(503, 1, None), &cfg, &clock);
     p.before_fetch(&u, None, &cfg, &clock).await;
-    assert_eq!(clock.monotonic(), Duration::from_secs(302));
+    assert_eq!(clock.monotonic(), Duration::from_secs(301));
     for _ in 0..40 {
         p.on_result(&u, &result(200, 1, None), &cfg, &clock);
     }
@@ -142,4 +142,88 @@ async fn rate_limit_retry_after_applies_without_adaptive_spacing() {
     p.before_fetch(&u, None, &cfg, &clock).await;
     assert_eq!(clock.monotonic(), Duration::from_secs(15));
     assert!(p.status(&u, &clock).1);
+}
+
+// spec: CRAWL-146
+#[tokio::test(start_paused = true)]
+async fn isolated_503_does_not_throttle_but_bursts_and_429_do() {
+    let clock = TestClock(tokio::time::Instant::now());
+    let cfg = CrawlConfig::default();
+    let p = HostPacer::new(None);
+    let u = "http://site.test/".parse().unwrap();
+    p.before_fetch(&u, None, &cfg, &clock).await;
+    p.on_result(&u, &result(503, 1, None), &cfg, &clock);
+    assert!(!p.status(&u, &clock).1);
+    for _ in 0..20 {
+        p.on_result(&u, &result(200, 1, None), &cfg, &clock);
+    }
+    p.on_result(&u, &result(503, 1, None), &cfg, &clock);
+    assert!(!p.status(&u, &clock).1);
+    tokio::time::advance(Duration::from_secs(11)).await;
+    p.on_result(&u, &result(503, 1, None), &cfg, &clock);
+    assert!(!p.status(&u, &clock).1);
+    p.on_result(&u, &result(503, 1, None), &cfg, &clock);
+    assert!(p.status(&u, &clock).1);
+    p.before_fetch(&u, None, &cfg, &clock).await;
+    let start = clock.monotonic();
+    p.before_fetch(&u, None, &cfg, &clock).await;
+    assert_eq!(clock.monotonic() - start, Duration::from_secs(1));
+    for _ in 0..20 {
+        p.on_result(&u, &result(200, 1, None), &cfg, &clock);
+    }
+    assert!(!p.status(&u, &clock).1);
+    p.on_result(&u, &result(429, 1, None), &cfg, &clock);
+    assert!(p.status(&u, &clock).1);
+}
+
+// spec: CRAWL-146
+#[tokio::test(start_paused = true)]
+async fn adapter_retry_after_is_a_capped_one_shot_pause() {
+    let clock = TestClock(tokio::time::Instant::now());
+    let cfg = CrawlConfig::default();
+    let p = HostPacer::new(None);
+    let u = "http://site.test/".parse().unwrap();
+    p.on_response(&u, 503, Some(Duration::from_secs(999)));
+    assert!(p.status(&u, &clock).1);
+    p.before_fetch(&u, None, &cfg, &clock).await;
+    p.before_fetch(&u, None, &cfg, &clock).await;
+    assert_eq!(clock.monotonic(), Duration::from_secs(300));
+    assert!(!p.status(&u, &clock).1);
+    p.on_response(&u, 503, None);
+    assert!(!p.status(&u, &clock).1);
+    p.on_response(&u, 429, None);
+    p.before_fetch(&u, None, &cfg, &clock).await;
+    assert_eq!(clock.monotonic(), Duration::from_secs(301));
+}
+
+// spec: CRAWL-147
+#[tokio::test(start_paused = true)]
+async fn first_acquisitions_obey_config_before_any_fetch_or_robots() {
+    for (cap, auto, rate, expected) in [
+        (Some(3), false, None, 3),
+        (None, false, None, 8),
+        (Some(3), true, None, 1),
+        (None, true, Some(2.0), 8),
+    ] {
+        let p = HostPacer::new(cap);
+        let mut cfg = CrawlConfig::default();
+        cfg.speed.auto = auto;
+        cfg.speed.max_urls_per_sec = rate;
+        p.configure(&cfg);
+        let u = "http://site.test/".parse().unwrap();
+        let mut permits = Vec::new();
+        for _ in 0..expected {
+            let next = p.acquire(&u);
+            tokio::pin!(next);
+            let std::task::Poll::Ready(permit) = futures_util::poll!(next.as_mut()) else {
+                panic!("initial concurrency must be available without before_fetch");
+            };
+            permits.push(permit);
+        }
+        if cap.is_some() {
+            let next = p.acquire(&u);
+            tokio::pin!(next);
+            assert!(futures_util::poll!(next.as_mut()).is_pending());
+        }
+    }
 }

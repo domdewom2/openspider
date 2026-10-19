@@ -4,7 +4,7 @@ use os_model::{CrawlConfig, NoResponseReason, SystemClock, Timestamp};
 use os_testsite::TestSite;
 use std::{sync::Arc, time::Duration};
 
-// spec: CRAWL-096
+// spec: CRAWL-096 [M2]
 #[tokio::test]
 async fn fixture_retries_keep_only_the_final_result_and_count_attempts() {
     for (path, retries, status, attempts) in [
@@ -49,7 +49,7 @@ async fn fixture_retries_keep_only_the_final_result_and_count_attempts() {
     }
 }
 
-// spec: CRAWL-096
+// spec: CRAWL-096 [M2]
 // spec: CRAWL-097
 #[test]
 fn retry_after_dates_caps_and_network_failure_policy() {
@@ -102,7 +102,7 @@ fn retry_after_dates_caps_and_network_failure_policy() {
     }
 }
 
-// spec: CRAWL-096
+// spec: CRAWL-096 [M2]
 #[tokio::test]
 async fn frontier_backoff_releases_worker_and_persists_final_attempts() {
     let mut cfg = CrawlConfig::default();
@@ -126,7 +126,7 @@ async fn frontier_backoff_releases_worker_and_persists_final_attempts() {
     assert_eq!(fx.summary.crawled, 3);
 }
 
-// spec: CRAWL-096
+// spec: CRAWL-096 [M2]
 #[test]
 fn exponential_backoff_is_not_capped_by_the_retry_after_header_limit() {
     let mut cfg = CrawlConfig::default();

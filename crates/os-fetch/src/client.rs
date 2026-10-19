@@ -181,7 +181,6 @@ impl FetchConfig {
 pub struct HttpFetcher {
     cfg: FetchConfig,
     hsts: hsts::Policies,
-    header_domain: std::sync::Mutex<Option<String>>,
     connect_timeout: Duration,
     client: reqwest::Client,
     auth: AuthMatcher,
@@ -249,7 +248,6 @@ impl HttpFetcher {
             .map_err(|e| FetchError::Config(redact::text(&e.to_string())))?;
         Ok(HttpFetcher {
             hsts: hsts::Policies::default(),
-            header_domain: std::sync::Mutex::new(None),
             cfg,
             connect_timeout,
             client,
@@ -364,6 +362,7 @@ impl HttpFetcher {
         let result = match tokio::time::timeout(budget, exchange).await {
             Ok(r) => r,
             Err(_) => Err(Failure {
+                proxy_auth_required: false,
                 reason: NoResponseReason::ResponseTimeout,
                 detail: format!(
                     "keine vollständige Antwort innerhalb von {} s",
@@ -374,7 +373,7 @@ impl HttpFetcher {
         let outcome = match result {
             Ok(ex) => {
                 let response_time_ms = millis(ex.finished.saturating_sub(t0));
-                let mut response = finish_response(ex, max_body, response_time_ms).await;
+                let mut response = finish_response(ex, response_time_ms);
                 response.attempts = req.attempt.saturating_add(1);
                 if self.cfg.http.respect_hsts && !self.cfg.http.ignore_certificate_errors {
                     if let Some(value) = response.header("strict-transport-security") {
@@ -383,32 +382,26 @@ impl HttpFetcher {
                 }
                 FetchOutcome::Response(response)
             }
-            Err(failure)
-                if failure
-                    .detail
-                    .contains("tunnel error: proxy authorization required") =>
-            {
-                FetchOutcome::Response(HttpResponse {
-                    status: 407,
-                    status_text: "Proxy-Authentifizierung fehlgeschlagen".into(),
-                    request_headers: vec![],
-                    set_cookies: vec![],
-                    content_length: None,
-                    untruncated_bytes: Some(0),
-                    synthetic: None,
-                    attempts: req.attempt.saturating_add(1),
-                    reason_phrase: None,
-                    http_version: String::new(),
-                    headers: vec![],
-                    body: bytes::Bytes::new(),
-                    size_bytes: 0,
-                    transferred_bytes: 0,
-                    response_time_ms: millis(clock.monotonic().saturating_sub(t0)),
-                    truncated: false,
-                    decode_error: None,
-                    md5_hex: String::new(),
-                })
-            }
+            Err(failure) if failure.proxy_auth_required => FetchOutcome::Response(HttpResponse {
+                status: 407,
+                status_text: "Proxy-Authentifizierung fehlgeschlagen".into(),
+                request_headers: vec![],
+                set_cookies: vec![],
+                content_length: None,
+                untruncated_bytes: Some(0),
+                synthetic: None,
+                attempts: req.attempt.saturating_add(1),
+                reason_phrase: None,
+                http_version: String::new(),
+                headers: vec![],
+                body: bytes::Bytes::new(),
+                size_bytes: 0,
+                transferred_bytes: 0,
+                response_time_ms: millis(clock.monotonic().saturating_sub(t0)),
+                truncated: false,
+                decode_error: None,
+                md5_hex: String::new(),
+            }),
             Err(failure) => {
                 let elapsed_ms = millis(clock.monotonic().saturating_sub(t0));
                 tracing::debug!(
@@ -483,6 +476,7 @@ impl HttpFetcher {
                 headers.insert(
                     header::AUTHORIZATION,
                     HeaderValue::from_str(&value).map_err(|_| Failure {
+                        proxy_auth_required: false,
                         reason: NoResponseReason::Malformed,
                         detail: "Ungültige Digest-Zugangsdaten".into(),
                     })?,
@@ -529,6 +523,7 @@ impl HttpFetcher {
                 break;
             };
             let mut value = HeaderValue::from_str(&value).map_err(|_| Failure {
+                proxy_auth_required: false,
                 reason: NoResponseReason::Malformed,
                 detail: "Ungültige Digest-Challenge".into(),
             })?;
@@ -642,7 +637,7 @@ struct Exchange {
 }
 
 /// Dekomprimiert, zählt Bytes, bildet den MD5 und redigiert Header.
-async fn finish_response(ex: Exchange, _max_body: u64, response_time_ms: u32) -> HttpResponse {
+fn finish_response(ex: Exchange, response_time_ms: u32) -> HttpResponse {
     let Exchange {
         request_headers,
         status,
@@ -684,6 +679,24 @@ async fn finish_response(ex: Exchange, _max_body: u64, response_time_ms: u32) ->
         .iter()
         .find(|(n, _)| n.eq_ignore_ascii_case("content-length"))
         .and_then(|(_, v)| v.parse().ok());
+    // Content-Length describes encoded bytes. A cut decoded stream has no known
+    // total decoded length (review decision for CRAWL-075/140).
+    let compressed = !parse_encodings(
+        headers
+            .iter()
+            .filter(|(n, _)| n.eq_ignore_ascii_case("content-encoding"))
+            .map(|(_, v)| v.as_str()),
+    )
+    .is_empty();
+    let untruncated_bytes = if decoded.truncated {
+        if compressed {
+            None
+        } else {
+            content_length.or(Some(body.len() as u64))
+        }
+    } else {
+        Some(body.len() as u64)
+    };
     let headers = headers
         .into_iter()
         .map(|(n, v)| {
@@ -695,11 +708,7 @@ async fn finish_response(ex: Exchange, _max_body: u64, response_time_ms: u32) ->
         request_headers,
         set_cookies,
         content_length,
-        untruncated_bytes: if decoded.truncated || input_truncated {
-            content_length.or(Some(body.len() as u64))
-        } else {
-            Some(body.len() as u64)
-        },
+        untruncated_bytes,
         synthetic: None,
         attempts: 1,
         status,
@@ -707,11 +716,7 @@ async fn finish_response(ex: Exchange, _max_body: u64, response_time_ms: u32) ->
         status_text: shown_text,
         http_version: version,
         headers,
-        size_bytes: if decoded.truncated || input_truncated {
-            content_length.unwrap_or(body.len() as u64)
-        } else {
-            body.len() as u64
-        },
+        size_bytes: untruncated_bytes.unwrap_or(body.len() as u64),
         body,
         transferred_bytes,
         response_time_ms,
@@ -749,12 +754,6 @@ impl HttpFetcher {
             return;
         }
         let host = url.host_str().unwrap_or("");
-        let domain = os_url::scope::registrable_domain(host).unwrap_or_else(|| host.to_string());
-        let mut root = self.header_domain.lock().unwrap_or_else(|p| p.into_inner());
-        if root.as_ref().is_some_and(|r| *r != domain) {
-            return;
-        }
-        root.get_or_insert(domain);
         if let Some(value) = &self.cfg.http.accept_language {
             headers.insert(
                 header::ACCEPT_LANGUAGE,

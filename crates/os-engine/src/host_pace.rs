@@ -10,6 +10,10 @@ use tokio::sync::Notify;
 use url::Url;
 
 struct State {
+    auto_mode: bool,
+    responses: u64,
+    last_overload: Option<(Duration, u64)>,
+    adapter_pause: Option<tokio::time::Instant>,
     active: usize,
     limit: usize,
     last_start: Option<Duration>,
@@ -25,6 +29,10 @@ struct State {
 impl Default for State {
     fn default() -> Self {
         Self {
+            auto_mode: false,
+            responses: 0,
+            last_overload: None,
+            adapter_pause: None,
             active: 0,
             limit: 1,
             last_start: None,
@@ -40,9 +48,30 @@ impl Default for State {
     }
 }
 impl State {
-    // Bereits verstrichene Timer-Wartezeit ist auch dann vergangen, wenn eine
-    // deterministische Schritt-Uhr nur bei Abfragen vorrückt. Tokio-Zeit bleibt
-    // unter start_paused vollständig simulierbar.
+    // Review decision: an isolated 503 without Retry-After is handled by retry.
+    // A burst needs two overload responses within BOTH 10 s and 20 responses.
+    fn overload(&mut self, status: u16, retry: Option<Duration>, now: Duration) -> bool {
+        self.responses = self.responses.saturating_add(1);
+        if !matches!(status, 429 | 503) {
+            return false;
+        }
+        let repeated = self.last_overload.is_some_and(|(at, response)| {
+            now.saturating_sub(at) <= Duration::from_secs(10)
+                && self.responses.saturating_sub(response) <= 20
+        });
+        self.last_overload = Some((now, self.responses));
+        status == 429 || retry.is_some() || repeated
+    }
+    fn increase_spacing(&mut self) {
+        self.spacing = if self.spacing.is_zero() {
+            Duration::from_secs(1)
+        } else {
+            (self.spacing * 2).min(Duration::from_secs(60))
+        };
+        self.successes = 0;
+    }
+    // Timer waits also count when a deterministic clock advances only on queries.
+    // Tokio time remains virtual under start_paused.
     fn now(&mut self, clock: &dyn Clock) -> Duration {
         let clock_now = clock.monotonic();
         let timer_now = self
@@ -96,6 +125,7 @@ impl PaceCancellation {
 pub struct HostPacer {
     cancellation: Arc<PaceCancellation>,
     notices: Arc<Mutex<Vec<String>>>,
+    auto_start: std::sync::atomic::AtomicBool,
     cap: Option<u32>,
     hosts: Mutex<HashMap<String, Arc<Host>>>,
 }
@@ -110,9 +140,15 @@ impl HostPacer {
         Self {
             notices: Arc::default(),
             cancellation: Arc::default(),
+            auto_start: std::sync::atomic::AtomicBool::new(false),
             cap: cap.filter(|n| *n > 0),
             hosts: Mutex::new(HashMap::new()),
         }
+    }
+    /// Configure the initial concurrency before workers (including robots) start.
+    pub fn configure(&self, cfg: &CrawlConfig) {
+        self.auto_start
+            .store(auto(cfg), std::sync::atomic::Ordering::SeqCst);
     }
     fn host(&self, url: &Url) -> Arc<Host> {
         let key = format!(
@@ -124,7 +160,21 @@ impl HostPacer {
             .lock()
             .unwrap_or_else(|p| p.into_inner())
             .entry(key)
-            .or_default()
+            .or_insert_with(|| {
+                let auto_mode = self.auto_start.load(std::sync::atomic::Ordering::SeqCst);
+                Arc::new(Host {
+                    state: Mutex::new(State {
+                        auto_mode,
+                        limit: if auto_mode {
+                            1
+                        } else {
+                            self.cap.map_or(usize::MAX, |n| n as usize)
+                        },
+                        ..State::default()
+                    }),
+                    changed: Notify::new(),
+                })
+            })
             .clone()
     }
     pub async fn acquire(&self, url: &Url) -> HostPermit {
@@ -176,6 +226,10 @@ impl HostPacer {
                         ));
                     }
                 }
+                if auto(cfg) && !s.auto_mode {
+                    s.limit = 1;
+                }
+                s.auto_mode = auto(cfg);
                 if !auto(cfg) {
                     s.limit = self.cap.map_or(usize::MAX, |n| n as usize);
                     host.changed.notify_waiters();
@@ -198,11 +252,15 @@ impl HostPacer {
                     .last_start
                     .map_or(Duration::ZERO, |t| t.saturating_add(spacing))
                     .max(s.paused_until);
-                if due <= now {
+                let adapter_wait = s
+                    .adapter_pause
+                    .map(|t| t.saturating_duration_since(tokio::time::Instant::now()))
+                    .unwrap_or_default();
+                if due <= now && adapter_wait.is_zero() {
                     s.last_start = Some(now);
                     Duration::ZERO
                 } else {
-                    due - now
+                    due.saturating_sub(now).max(adapter_wait)
                 }
             };
             if wait.is_zero() {
@@ -242,16 +300,17 @@ impl HostPacer {
                 s.paused_until = s.paused_until.max(now.saturating_add(delay));
             }
         }
-        let overloaded = status == 503 || (status == 429 && cfg.http.throttle_on_429);
+        let overload_status = if status == 429 && !cfg.http.throttle_on_429 {
+            0
+        } else {
+            status
+        };
+        let overloaded = s.overload(overload_status, retry, now);
         if cfg.speed.adaptive_throttle && overloaded {
             if let Some(delay) = retry {
                 s.paused_until = s.paused_until.max(now.saturating_add(delay));
             } else {
-                s.spacing = if s.spacing.is_zero() {
-                    Duration::from_secs(1)
-                } else {
-                    (s.spacing * 2).min(Duration::from_secs(60))
-                };
+                s.increase_spacing();
             }
             s.successes = 0;
             tracing::info!(host = url.host_str(), "Gedrosselt");
@@ -309,22 +368,23 @@ impl HostPacer {
         }
         host.changed.notify_waiters();
     }
-    /// Für Transportadapter ohne Clock-Kontext: Mindestabstand ab der letzten Anfrage.
+    /// Clockless adapter for overload responses. Retry-After is a one-shot Tokio
+    /// pause (capped at 300 s), never permanent spacing. Without Retry-After only
+    /// 429 doubles spacing; 503 burst detection and recovery require on_result's
+    /// complete response stream and configuration.
     pub fn on_response(&self, url: &Url, status: u16, retry_after: Option<Duration>) {
         if !matches!(status, 429 | 503) {
             return;
         }
         let host = self.host(url);
         let mut s = host.state.lock().unwrap_or_else(|p| p.into_inner());
-        s.spacing = retry_after
-            .unwrap_or_else(|| {
-                if s.spacing.is_zero() {
-                    Duration::from_secs(1)
-                } else {
-                    (s.spacing * 2).min(Duration::from_secs(60))
-                }
-            })
-            .min(Duration::from_secs(300));
+        if let Some(delay) = retry_after {
+            let until = tokio::time::Instant::now() + delay.min(Duration::from_secs(300));
+            s.adapter_pause = Some(s.adapter_pause.map_or(until, |old| old.max(until)));
+        } else if status == 429 {
+            s.increase_spacing();
+        }
+        host.changed.notify_waiters();
     }
     /// Momentaufnahme für Fortschrittsanzeigen und deterministische Tests.
     pub fn status(&self, url: &Url, clock: &dyn Clock) -> (usize, bool) {
@@ -333,7 +393,10 @@ impl HostPacer {
         let now = s.now(clock);
         (
             s.limit,
-            !s.spacing.is_zero() || s.paused_until.max(s.throttle_until) > now,
+            !s.spacing.is_zero()
+                || s.paused_until.max(s.throttle_until) > now
+                || s.adapter_pause
+                    .is_some_and(|t| t > tokio::time::Instant::now()),
         )
     }
 }

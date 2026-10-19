@@ -14,6 +14,8 @@ use crate::resolve::ResolveError;
 /// Ein Fehlschlag mit Ursache und Detailtext für das Protokoll (bereits redigiert).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Failure {
+    /// CONNECT was rejected with HTTP 407.
+    pub proxy_auth_required: bool,
     /// Klassifizierte Ursache.
     pub reason: NoResponseReason,
     /// Technische Einzelheit.
@@ -79,7 +81,17 @@ const TLS_HINTS: &[&str] = &[
 pub fn classify_parts(p: &ErrorParts) -> Failure {
     let detail = redact::text(&dedup_join(&p.messages));
     let reason = decide(p);
-    Failure { reason, detail }
+    // reqwest 0.13.5 does not expose CONNECT status as a typed error.
+    // Keep its tunnel diagnostic dependency here, covered by the CONNECT fixture.
+    let proxy_auth_required = p
+        .messages
+        .iter()
+        .any(|m| strip_urls(m).contains("tunnel error: proxy authorization required"));
+    Failure {
+        reason,
+        detail,
+        proxy_auth_required,
+    }
 }
 
 fn decide(p: &ErrorParts) -> NoResponseReason {

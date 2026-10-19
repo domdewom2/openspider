@@ -580,6 +580,7 @@ pub(crate) fn make_shared<F: Fetch>(init: SharedInit<F>) -> (Arc<Shared<F>>, Arc
         cfg: init.cfg,
         primed_origins: init.primed_origins,
     });
+    sh.host_pacer.configure(&sh.cfg);
     (sh, control)
 }
 

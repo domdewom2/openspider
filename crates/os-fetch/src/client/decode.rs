@@ -218,49 +218,31 @@ pub(super) async fn stream(
             wire,
         ));
     }
+    // Small, bounded wire bodies do not occupy a blocking worker during I/O.
+    if response.content_length().is_some_and(|n| n < 512 * 1024) {
+        let mut raw = Vec::new();
+        while let Some(chunk) = response.chunk().await? {
+            raw.extend_from_slice(&chunk);
+        }
+        let wire = raw.len() as u64;
+        let decoded = if raw.is_empty() {
+            Decoded::default()
+        } else {
+            decode_reader(Box::new(std::io::Cursor::new(raw)), encodings, max_out)
+        };
+        return Ok((decoded, wire));
+    }
     let (tx, rx) = tokio::sync::mpsc::channel(2);
     let encodings = encodings.to_vec();
     let mut task = tokio::task::spawn_blocking(move || {
-        let mut reader: Box<dyn Read + Send> = Box::new(Input {
-            rx,
-            chunk: bytes::Bytes::new(),
-        });
-        for enc in encodings.iter().rev() {
-            reader = match enc {
-                Encoding::Identity => reader,
-                Encoding::Gzip => Box::new(flate2::read::MultiGzDecoder::new(reader)),
-                Encoding::Brotli => Box::new(brotli::Decompressor::new(reader, 8192)),
-                Encoding::Deflate => {
-                    let mut head = [0u8; 2];
-                    if let Err(e) = reader.read_exact(&mut head) {
-                        return Decoded {
-                            error: Some(format!("deflate: {e}")),
-                            ..Decoded::default()
-                        };
-                    }
-                    let zlib = head[0] & 15 == 8
-                        && ((u16::from(head[0]) << 8) | u16::from(head[1])) % 31 == 0;
-                    let buffered = io::Cursor::new(head).chain(reader);
-                    if zlib {
-                        Box::new(flate2::read::ZlibDecoder::new(buffered))
-                    } else {
-                        Box::new(flate2::read::DeflateDecoder::new(buffered))
-                    }
-                }
-                Encoding::Unknown(n) => {
-                    return Decoded {
-                        error: Some(format!("nicht unterstütztes Content-Encoding {n:?}")),
-                        ..Decoded::default()
-                    }
-                }
-            };
-        }
-        let (body, truncated, error) = read_limited(reader, max_out, "Content-Encoding");
-        Decoded {
-            body,
-            truncated,
-            error,
-        }
+        decode_reader(
+            Box::new(Input {
+                rx,
+                chunk: bytes::Bytes::new(),
+            }),
+            &encodings,
+            max_out,
+        )
     });
     let mut wire = 0;
     loop {
@@ -283,6 +265,49 @@ pub(super) async fn stream(
         decoded = Decoded::default();
     }
     Ok((decoded, wire))
+}
+
+fn decode_reader(
+    mut reader: Box<dyn Read + Send>,
+    encodings: &[Encoding],
+    max_out: u64,
+) -> Decoded {
+    for enc in encodings.iter().rev() {
+        reader = match enc {
+            Encoding::Identity => reader,
+            Encoding::Gzip => Box::new(flate2::read::MultiGzDecoder::new(reader)),
+            Encoding::Brotli => Box::new(brotli::Decompressor::new(reader, 8192)),
+            Encoding::Deflate => {
+                let mut head = [0u8; 2];
+                if let Err(e) = reader.read_exact(&mut head) {
+                    return Decoded {
+                        error: Some(format!("deflate: {e}")),
+                        ..Decoded::default()
+                    };
+                }
+                let zlib =
+                    head[0] & 15 == 8 && ((u16::from(head[0]) << 8) | u16::from(head[1])) % 31 == 0;
+                let buffered = std::io::Cursor::new(head).chain(reader);
+                if zlib {
+                    Box::new(flate2::read::ZlibDecoder::new(buffered))
+                } else {
+                    Box::new(flate2::read::DeflateDecoder::new(buffered))
+                }
+            }
+            Encoding::Unknown(n) => {
+                return Decoded {
+                    error: Some(format!("nicht unterstütztes Content-Encoding {n:?}")),
+                    ..Decoded::default()
+                }
+            }
+        };
+    }
+    let (body, truncated, error) = read_limited(reader, max_out, "Content-Encoding");
+    Decoded {
+        body,
+        truncated,
+        error,
+    }
 }
 
 #[cfg(test)]

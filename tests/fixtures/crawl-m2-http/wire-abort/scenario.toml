@@ -1,0 +1,7 @@
+[[route]]
+path = "/wire"
+body = "wire body"
+abort_after_headers = true
+[[route]]
+path = "/"
+body = "normal"

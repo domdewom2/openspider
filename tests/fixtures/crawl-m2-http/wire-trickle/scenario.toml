@@ -1,0 +1,7 @@
+[[route]]
+path = "/wire"
+body = "wire body"
+trickle_bytes_per_s = 1000
+[[route]]
+path = "/"
+body = "normal"

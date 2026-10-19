@@ -18,7 +18,7 @@ fn url(site: &TestSite, scheme: &str, host: &str, path: &str) -> Url {
     Url::parse(&format!("{scheme}://{host}:{}{path}", site.addr().port())).unwrap()
 }
 
-// spec: CRAWL-018
+// spec: CRAWL-018 [M2]
 #[tokio::test]
 async fn hsts_is_crawl_local_secure_expiring_and_revocable() {
     let site = TestSite::start("crawl-m2-http").await.unwrap();
@@ -73,22 +73,27 @@ async fn hsts_is_crawl_local_secure_expiring_and_revocable() {
 
 // spec: CRAWL-023
 // spec: OUT-270
-// spec: CRAWL-123 [M2]
+// spec: CRAWL-123
 #[tokio::test]
 async fn tls_import_errors_sni_and_probe_chain() {
     let site = TestSite::start("crawl-m2-http").await.unwrap();
     let mut cfg = setup(&site, Arc::new(SystemClock));
     cfg.extra_root_certs.clear();
     let untrusted = HttpFetcher::new(cfg.clone()).unwrap();
-    assert!(matches!(
+    let tls_detail = |outcome| match outcome {
+        FetchOutcome::NoResponse {
+            reason: os_model::NoResponseReason::TlsError,
+            detail,
+            ..
+        } => detail,
+        other => panic!("expected TLS failure, got {other:?}"),
+    };
+    let unknown = tls_detail(
         get(&untrusted, url(&site, "https", "site.test", "/"))
             .await
             .outcome,
-        FetchOutcome::NoResponse {
-            reason: os_model::NoResponseReason::TlsError,
-            ..
-        }
-    ));
+    );
+    assert!(unknown.contains("UnknownIssuer"), "{unknown}");
     let dir = tempfile::tempdir().unwrap();
     let ca = dir.path().join("ca.pem");
     std::fs::write(&ca, site.ca_cert_pem()).unwrap();
@@ -100,14 +105,18 @@ async fn tls_import_errors_sni_and_probe_chain() {
         expect_response(get(&f, url(&site, "https", "site.test", "/")).await).status,
         200
     );
-    for host in ["expired.site.test", "wronghost.site.test"] {
-        assert!(matches!(
-            get(&f, url(&site, "https", host, "/")).await.outcome,
-            FetchOutcome::NoResponse {
-                reason: os_model::NoResponseReason::TlsError,
-                ..
-            }
-        ));
+    for (host, expected) in [
+        ("expired.site.test", "Expired"),
+        ("wronghost.site.test", "NotValidForName"),
+    ] {
+        let detail = tls_detail(get(&f, url(&site, "https", host, "/")).await.outcome);
+        assert!(
+            detail
+                .to_ascii_lowercase()
+                .contains(&expected.to_ascii_lowercase()),
+            "{host}: {detail}"
+        );
+        assert_ne!(detail, unknown);
     }
     let probe = os_fetch::net::certificates::probe(
         url(&site, "https", "site.test", "/").as_str(),
@@ -208,8 +217,28 @@ async fn headers_are_validated_merged_scoped_and_language_is_opt_in() {
     assert!(body.contains("secret"));
     assert!(body.contains("custom=1"));
     assert!(body.contains("session=2"));
-    let external = expect_response(get(&f, url(&site, "http", "other.test", "/echo")).await);
-    assert!(!String::from_utf8_lossy(&external.body).contains("secret"));
+    for host in ["blog.site.test", "other.test"] {
+        for purpose in [
+            os_fetch::FetchPurpose::Page,
+            os_fetch::FetchPurpose::Sitemap,
+        ] {
+            let mut req = page_request(url(&site, "http", host, "/echo"));
+            req.purpose = purpose;
+            let r = expect_response(f.fetch(req).await);
+            let body = String::from_utf8_lossy(&r.body);
+            assert!(body.contains("secret"));
+            assert!(body.contains("de-DE"));
+        }
+    }
+    // Scope is the caller's decision, even for another URL on the first domain.
+    for host in ["site.test", "other.test"] {
+        let mut req = page_request(url(&site, "http", host, "/echo"));
+        req.purpose = os_fetch::FetchPurpose::External;
+        let external = expect_response(f.fetch(req).await);
+        let body = String::from_utf8_lossy(&external.body);
+        assert!(!body.contains("secret"));
+        assert!(!body.contains("de-DE"));
+    }
     for (name, value) in [("User-Agent", "x"), ("X-Foo", "a\r\nb")] {
         cfg.http.headers = vec![os_model::HeaderEntry {
             name: name.into(),
@@ -253,7 +282,8 @@ async fn limits_apply_during_receipt_to_decoded_body_and_media() {
     assert!(r.truncated);
     assert_eq!(r.decode_error, None);
     assert_eq!(r.attempts, 3);
-    assert!(r.untruncated_bytes.is_some());
+    assert_eq!(r.untruncated_bytes, None);
+    assert_eq!(r.size_bytes, 1024);
     let r = expect_response(get(&f, server.url("/media")).await);
     assert_eq!(r.body.len(), 65536);
     assert!(r.truncated);
@@ -312,4 +342,136 @@ async fn digest_md5_sha256_nonce_counter_and_stale_challenge() {
         assert_eq!(second.body, "00000002");
         assert!(!format!("{first:?}").contains("password"));
     }
+}
+
+// spec: CRAWL-018 [M2]
+// spec: CRAWL-098
+#[tokio::test]
+async fn robots_gate_follows_synthetic_hsts_redirect_and_applies_https_rules() {
+    use os_fetch::robots::{RobotsDecision, RobotsGate, RobotsGateConfig};
+    let site = TestSite::start("crawl-m2-http").await.unwrap();
+    let f = HttpFetcher::new(setup(&site, Arc::new(SystemClock))).unwrap();
+    get(&f, url(&site, "https", "site.test", "/hsts")).await;
+    let gate = RobotsGate::new(RobotsGateConfig::from_crawl_config(&CrawlConfig::default()));
+    let check = gate
+        .check(&f, &url(&site, "http", "site.test", "/private"))
+        .await;
+    assert!(matches!(
+        check.decision,
+        RobotsDecision::Blocked {
+            unreachable: false,
+            ..
+        }
+    ));
+    let (fetch, _) = check.robots_fetch.unwrap();
+    let response = expect_response(fetch);
+    assert_eq!(response.status, 307);
+    assert_eq!(response.synthetic, Some(os_fetch::SyntheticResponse::Hsts));
+    let requests = site.requests();
+    let robots: Vec<_> = requests
+        .iter()
+        .filter(|r| r.path_and_query == "/robots.txt")
+        .collect();
+    assert_eq!(robots.len(), 1);
+    assert!(robots[0].tls);
+}
+
+// spec: CRAWL-011
+// spec: CRAWL-075 [M2]
+// spec: CRAWL-140 [P1]
+#[tokio::test]
+async fn compressed_streams_with_large_or_unknown_wire_length_are_bounded() {
+    use std::io::Write;
+    let mut seed = 42u32;
+    let big: Vec<u8> = (0..2_000_000)
+        .map(|_| {
+            seed ^= seed << 13;
+            seed ^= seed >> 17;
+            seed ^= seed << 5;
+            seed as u8
+        })
+        .collect();
+    let mut gzip = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
+    gzip.write_all(&big).unwrap();
+    let compressed = gzip.finish().unwrap();
+    assert!(compressed.len() > 512 * 1024);
+    let server = MiniServer::start(move |req| {
+        if req.path() == "/unknown" {
+            let mut bytes =
+                b"HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nConnection: close\r\n\r\n".to_vec();
+            bytes.extend_from_slice(&compressed);
+            Reply::RawThenClose(bytes)
+        } else {
+            Reply::Raw(response(
+                200,
+                "OK",
+                &[("Content-Encoding", "gzip")],
+                &compressed,
+            ))
+        }
+    })
+    .await;
+    let f = fetcher_with(Arc::new(SystemClock), |_| {});
+    for path in ["/known", "/unknown"] {
+        let mut req = page_request(server.url(path));
+        req.body_limit.max_decoded_bytes = 1024;
+        let r = expect_response(f.fetch(req).await);
+        assert_eq!(&r.body[..], &big[..1024]);
+        assert!(r.truncated);
+        assert_eq!(r.decode_error, None);
+        assert_eq!(r.untruncated_bytes, None);
+        assert_eq!(r.size_bytes, 1024);
+        assert!(r.transferred_bytes < big.len() as u64);
+    }
+}
+
+// spec: CRAWL-011
+#[test]
+fn small_compressed_responses_work_with_the_blocking_pool_occupied() {
+    use std::io::Write;
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .max_blocking_threads(1)
+        .build()
+        .unwrap();
+    runtime.block_on(async {
+        let body = b"small compressed fixture";
+        let mut gzip = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
+        gzip.write_all(body).unwrap();
+        let gzip = gzip.finish().unwrap();
+        let mut br = Vec::new();
+        {
+            let mut writer = brotli::CompressorWriter::new(&mut br, 4096, 5, 22);
+            writer.write_all(body).unwrap();
+        }
+        let server = MiniServer::start(move |req| {
+            let (enc, bytes) = if req.path() == "/br" {
+                ("br", &br)
+            } else {
+                ("gzip", &gzip)
+            };
+            Reply::Raw(response(200, "OK", &[("Content-Encoding", enc)], bytes))
+        })
+        .await;
+        let f = fetcher_with(Arc::new(SystemClock), |_| {});
+        let (release, wait) = std::sync::mpsc::channel::<()>();
+        let (ready, started) = tokio::sync::oneshot::channel();
+        let blocker = tokio::task::spawn_blocking(move || {
+            ready.send(()).unwrap();
+            let _ = wait.recv();
+        });
+        started.await.unwrap();
+        let result = tokio::time::timeout(Duration::from_secs(5), async {
+            for path in ["/gzip", "/br"] {
+                let r = expect_response(get(&f, server.url(path)).await);
+                assert_eq!(&r.body[..], body);
+                assert_eq!(r.untruncated_bytes, Some(body.len() as u64));
+                assert_eq!(r.decode_error, None);
+            }
+        })
+        .await;
+        drop(release);
+        blocker.await.unwrap();
+        result.expect("small responses must not need a blocking worker");
+    });
 }
