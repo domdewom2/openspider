@@ -186,3 +186,66 @@ pub fn overview_summary(conn: &Connection) -> Result<Vec<(String, u64)>, StoreEr
 pub fn http_status_line(conn: &Connection, id: UrlId) -> Result<String, StoreError> {
     Ok(conn.query_row("SELECT COALESCE(http_version,'') || CASE WHEN status_code IS NULL THEN '' ELSE ' ' || status_code END FROM urls WHERE id=?1", [id.0], |r| r.get(0)).optional()?.unwrap_or_default())
 }
+
+/// Additiv (K2-61, M2-K05): alle Link-IDs einer Auswahl in der Reihenfolge von [`selected_links`], für
+/// materialisierte Detail-Views (K-1g, 1 Mio. Inlinks). Die Fenster liest die App danach über `row_ids`, ohne
+/// erneutes Zählen und ohne `OFFSET`. Prädikate und Sortierung müssen mit `selected_links` übereinstimmen.
+pub fn selected_link_ids(
+    conn: &Connection,
+    selection: &LinkSelection,
+    page: &PageReq,
+) -> Result<Vec<i64>, StoreError> {
+    let ids = serde_json::to_string(&selection.url_ids.iter().map(|id| id.0).collect::<Vec<_>>())
+        .expect("integer IDs");
+    let row_ids = selection
+        .row_ids
+        .as_ref()
+        .map(|ids| serde_json::to_string(ids).expect("integer IDs"));
+    let direction = if selection.incoming {
+        Direction::In
+    } else {
+        Direction::Out
+    };
+    let (order, _) = order_by(direction, &page.sort)?;
+    let side = if selection.incoming {
+        "l.target_id"
+    } else {
+        "l.source_id"
+    };
+    let resource = "l.link_type IN ('Image','CSS','JavaScript','Iframe','Media')";
+    let mut stmt = conn.prepare(&format!("SELECT l.id FROM links l JOIN urls s ON s.id=l.source_id LEFT JOIN urls t ON t.id=l.target_id
+        WHERE {side} IN (SELECT value FROM json_each(?1))
+        AND (?2 IS NULL OR l.link_position=?2)
+        AND (?3 IS NULL OR l.link_type=?3)
+        AND (?4=0 OR l.source_id IS NOT l.target_id)
+        AND (?5=0 OR l.follow=1)
+        AND (?6 IS NULL OR t.is_internal=?6)
+        AND (?7=0 OR l.crawlable=0)
+        AND (?8=1 OR l.crawlable=1)
+        AND (?9 IS NULL OR COALESCE(l.anchor,l.alt_text,'')=?9)
+        AND (?10 IS NULL OR instr(lower(s.address || ' ' || COALESCE(t.address,l.target_raw) || ' ' || COALESCE(l.anchor,'') || ' ' || COALESCE(l.alt_text,'')),lower(?10))>0)
+        AND (?11=0 OR {resource}) AND (?12=0 OR NOT ({resource}))
+        AND (?13 IS NULL OR l.id IN (SELECT value FROM json_each(?13)))
+        ORDER BY {order}"))?;
+    let keys = stmt
+        .query_map(
+            params![
+                ids,
+                page.position,
+                selection.link_type,
+                selection.exclude_self,
+                selection.exclude_nofollow,
+                selection.internal,
+                selection.uncrawlable_only,
+                selection.include_uncrawlable && !selection.incoming,
+                selection.anchor,
+                selection.search,
+                selection.resources,
+                selection.exclude_resources,
+                row_ids
+            ],
+            |r| r.get(0),
+        )?
+        .collect::<Result<Vec<i64>, _>>()?;
+    Ok(keys)
+}
