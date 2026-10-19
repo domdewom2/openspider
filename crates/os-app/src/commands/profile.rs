@@ -1,23 +1,242 @@
-//! profile.* (OUT-220, OUT-221).
-//!
-//! STUB(M2-K07): Gerüst von M2-F01. Name, Argument- und Rückgabetyp sowie `long_running` stehen im Katalog
-//! (`docs/plan/M2.md` 3.6a, `M2-ui-concept.md` 4.4) und ändert M2-K07 nicht; es ersetzt diese Datei durch die
-//! Umsetzung. Bis dahin antwortet jeder Command mit `CmdError::Unsupported`.
+//! Benannte Konfigurationsprofile (OUT-220/221); Laden wendet noch keine Werte an.
+use super::config::{decode, dto, valid, warn_loaded};
+use crate::{
+    dto::*,
+    registry::{CmdResult, CommandMeta, Registry},
+    runtime::{
+        error::{parse_args, store_error, to_json},
+        App, CallCtx,
+    },
+};
+use futures_util::future::BoxFuture;
+use os_model::{CrawlConfig, CrawlState};
+use os_store::profile::ConfigProfiles;
+use serde_json::Value;
+use std::path::Path;
 
-stub_commands!(
-    "M2-K07",
-    [
-        ("profile.list", "void", "ConfigProfileInfo[]", false),
-        ("profile.load", "NameArgs", "CrawlConfigDto", false),
+fn store(app: &App) -> ConfigProfiles {
+    ConfigProfiles::new(&app.config().paths.settings)
+}
+fn info(store: &ConfigProfiles, name: &str) -> Result<ConfigProfileInfo, CmdError> {
+    let path = store.path(name).map_err(|e| store_error(&e))?;
+    let modified = std::fs::metadata(&path)
+        .and_then(|m| m.modified())
+        .map_err(|_| CmdError::new(ErrorCode::Io, "err-profile-metadata"))?;
+    let stamp: time::OffsetDateTime = modified.into();
+    Ok(ConfigProfileInfo {
+        name: name.into(),
+        is_default: store
+            .default_name()
+            .map_err(|e| store_error(&e))?
+            .as_deref()
+            == Some(name),
+        modified_at: os_model::Timestamp(stamp).to_db(),
+        path: path.to_string_lossy().into_owned(),
+    })
+}
+fn list<'a>(app: &'a App, _: CallCtx, _: Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let store = store(app);
+        app.write_queue()
+            .submit_admin(move || {
+                let entries: Result<Vec<_>, _> = store
+                    .names()
+                    .map_err(|e| store_error(&e))?
+                    .iter()
+                    .map(|n| info(&store, n))
+                    .collect();
+                to_json(&entries?)
+            })
+            .await
+    })
+}
+fn load<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let NameArgs { name } = parse_args(args)?;
+        if app
+            .sessions()
+            .current(&ctx.window)
+            .is_some_and(|s| s.state == CrawlState::Running)
+        {
+            let mut e = CmdError::new(ErrorCode::CrawlRunning, "err-config-pause-required");
+            e.field = Some("profile".into());
+            return Err(e);
+        }
+        let store = store(app);
+        let loaded = app
+            .write_queue()
+            .submit_admin(move || {
+                let loaded = store.load(&name).map_err(|e| store_error(&e))?;
+                valid(&loaded.config)?;
+                store.remember_loaded(&name).map_err(|e| store_error(&e))?;
+                Ok(loaded)
+            })
+            .await?;
+        warn_loaded(app, &loaded);
+        to_json(&dto(&loaded.config)?)
+    })
+}
+fn save<'a>(app: &'a App, _: CallCtx, args: Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let args: ProfileSaveArgs = parse_args(args)?;
+        let cfg = decode(args.config)?;
+        valid(&cfg)?;
+        let store = store(app);
+        app.write_queue()
+            .submit_admin(move || {
+                store
+                    .save(&args.name, &cfg, args.overwrite)
+                    .map_err(|e| store_error(&e))?;
+                to_json(&info(&store, &args.name)?)
+            })
+            .await
+    })
+}
+fn delete<'a>(app: &'a App, _: CallCtx, args: Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let NameArgs { name } = parse_args(args)?;
+        let store = store(app);
+        app.write_queue()
+            .submit_admin(move || {
+                store.delete(&name).map_err(|e| store_error(&e))?;
+                Ok(Value::Null)
+            })
+            .await
+    })
+}
+fn set_default<'a>(app: &'a App, _: CallCtx, args: Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let SetDefaultProfileArgs { name } = parse_args(args)?;
+        let store = store(app);
+        app.write_queue()
+            .submit_admin(move || {
+                if let Some(name) = &name {
+                    valid(&store.load(name).map_err(|e| store_error(&e))?.config)?;
+                }
+                store
+                    .set_default(name.as_deref())
+                    .map_err(|e| store_error(&e))?;
+                Ok(Value::Null)
+            })
+            .await
+    })
+}
+fn import<'a>(app: &'a App, _: CallCtx, args: Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let PathArgs { path } = parse_args(args)?;
+        let store = store(app);
+        let loaded = app
+            .write_queue()
+            .submit_admin(move || {
+                let path = Path::new(&path);
+                let name = path
+                    .file_stem()
+                    .and_then(|n| n.to_str())
+                    .ok_or_else(|| CmdError::invalid_input("err-profile-name", "path"))?;
+                let loaded = CrawlConfig::load_file(path).map_err(|e| {
+                    let mut error = CmdError::invalid_input(
+                        "err-profile-format",
+                        e.field.unwrap_or_else(|| "path".into()),
+                    );
+                    if let Some(line) = e.line {
+                        error = error.with_arg("line", line);
+                    }
+                    if let Some(col) = e.column {
+                        error = error.with_arg("column", col);
+                    }
+                    error
+                })?;
+                valid(&loaded.config)?;
+                store
+                    .save(name, &loaded.config, false)
+                    .map_err(|e| match e {
+                        // profile.import hat keine Überschreiboption (3.6a).
+                        os_store::StoreError::AlreadyExists(_) => {
+                            CmdError::invalid_input("err-file-exists", "path")
+                                .with_arg("reason", "exists")
+                        }
+                        _ => store_error(&e),
+                    })?;
+                Ok((loaded, info(&store, name)?))
+            })
+            .await?;
+        warn_loaded(app, &loaded.0);
+        to_json(&loaded.1)
+    })
+}
+fn export<'a>(app: &'a App, _: CallCtx, args: Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let args: ProfileExportArgs = parse_args(args)?;
+        if args.include_secrets == Some(true) && args.password.as_ref().is_none_or(|p| p.is_empty())
+        {
+            return Err(CmdError::invalid_input(
+                "err-export-password-required",
+                "password",
+            ));
+        }
+        if !Path::new(&args.path).is_absolute() {
+            return Err(CmdError::invalid_input("err-export-absolute-path", "path"));
+        }
+        let store = store(app);
+        app.write_queue()
+            .submit_admin(move || export_file(&store, args))
+            .await
+    })
+}
+
+fn export_file(store: &ConfigProfiles, args: ProfileExportArgs) -> CmdResult {
+    let cfg = store.load(&args.name).map_err(|e| store_error(&e))?.config;
+    valid(&cfg)?;
+    let path = Path::new(&args.path);
+    // Keine Ausgabe darf ein verwaltetes Profil ersetzen: dort bleiben nur Verweise.
+    if store.is_managed_path(path).map_err(|e| store_error(&e))? {
+        return Err(CmdError::invalid_input(
+            "err-export-profile-destination",
+            "path",
+        ));
+    }
+    if args.include_secrets == Some(true) {
+        // K2-52: Format, KDF und AES-256-GCM-Helfer gehören M2-I01.
+        return Err(CmdError::unsupported(
+            "profile.export.includeSecrets",
+            "M2-I01",
+        ));
+    }
+    cfg.save_file(path).map_err(|_| {
+        CmdError::new(ErrorCode::Io, "err-profile-export").with_arg("path", args.path)
+    })?;
+    Ok(Value::Null)
+}
+
+/// Unveränderter IPC-Katalog.
+pub fn register(r: &mut Registry) {
+    for (name, args, ret, handler) in [
         (
-            "profile.save",
-            "ProfileSaveArgs",
-            "ConfigProfileInfo",
-            false
+            "profile.list",
+            "void",
+            "ConfigProfileInfo[]",
+            list as crate::registry::Handler,
         ),
-        ("profile.delete", "NameArgs", "void", false),
-        ("profile.setDefault", "SetDefaultProfileArgs", "void", false),
-        ("profile.import", "PathArgs", "ConfigProfileInfo", false),
-        ("profile.export", "ProfileExportArgs", "void", false),
-    ]
-);
+        ("profile.load", "NameArgs", "CrawlConfigDto", load),
+        ("profile.save", "ProfileSaveArgs", "ConfigProfileInfo", save),
+        ("profile.delete", "NameArgs", "void", delete),
+        (
+            "profile.setDefault",
+            "SetDefaultProfileArgs",
+            "void",
+            set_default,
+        ),
+        ("profile.import", "PathArgs", "ConfigProfileInfo", import),
+        ("profile.export", "ProfileExportArgs", "void", export),
+    ] {
+        r.register(
+            CommandMeta {
+                name,
+                args,
+                ret,
+                long_running: false,
+            },
+            handler,
+        );
+    }
+}
