@@ -98,6 +98,11 @@ export function UpperTable() {
     void controller.refreshCounts();
     return eventBus.on("tick", tick => { void controller.tick(tick).catch(fail); });
   }, [controller, crawlId, segmentKey]);
+  // Segment label colours (UI-020); stable between renders so the grid does not redraw every cell.
+  const cellColors = useCallback((column: string, value: unknown) => {
+    const color = column === "Segment" ? segmentColor(segments.segments, value) : undefined;
+    return color ? { background: color, text: segmentLabelColor(color) } : undefined;
+  }, [segments.segments]);
   const setGrid = useCallback((value: GridController | null) => { grid.current = value; }, []);
   useEffect(() => {
     const id = tabs.focusId ?? controller.selection.focus;
@@ -246,8 +251,7 @@ export function UpperTable() {
       {empty ? <EmptyState state={empty} /> : source && columns.length > 0 ?
         <DataGrid source={source} columns={columns.map(c => ({ ...c, sort: query.sort.find(s => s.column === c.key)?.dir }))}
           selection={controller.selection} onSelectionChange={controller.setSelection}
-          cellColors={(column, value) => { const color = column === "Segment" ? segmentColor(segments.segments, value) : undefined;
-            return color ? { background: color, text: segmentLabelColor(color) } : undefined; }}
+          cellColors={cellColors}
           onSortChange={sort => tabs.query({ sort })} onSortGesture={(column, extend) => tabs.query({ sort: cycleSort(query.sort, column, extend) })}
           headerTitle={column => { const index = query.sort.findIndex(s => s.column === column); return index < 0 ? column : `${column} ${query.sort[index].dir === "asc" ? "↑" : "↓"}${query.sort.length > 1 ? index + 1 : ""}`; }}
           onColumnsChange={next => void columnState.change(tabs.active, next).catch(fail)}
