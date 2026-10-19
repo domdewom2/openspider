@@ -214,6 +214,27 @@ fn reveal(_paths: &[PathBuf]) -> Result<(), CmdError> {
     ))
 }
 
+/// Native reveal action for completed exports (OUT-006); runs filesystem checks off the UI thread.
+#[tauri::command]
+pub async fn open_export_folder(app: tauri::State<'_, App>, path: String) -> Result<(), CmdError> {
+    let actions = app
+        .desktop_actions()
+        .ok_or_else(|| CmdError::new(ErrorCode::Unsupported, "export-native-required"))?;
+    tauri::async_runtime::spawn_blocking(move || {
+        actions.reveal_paths(&[export_output_path(&path)?])
+    })
+    .await
+    .map_err(failure)?
+}
+
+fn export_output_path(path: &str) -> Result<PathBuf, CmdError> {
+    let path = PathBuf::from(path);
+    if !path.is_absolute() {
+        return Err(CmdError::new(ErrorCode::InvalidInput, "err-invalid-path"));
+    }
+    path.canonicalize().map_err(failure)
+}
+
 #[cfg(all(test, target_os = "windows"))]
 mod windows_tests {
     use super::*;
@@ -234,5 +255,26 @@ mod linux_tests {
     #[test]
     fn reveal_is_explicitly_unsupported() {
         assert_eq!(reveal(&[]).unwrap_err().code, ErrorCode::Unsupported);
+    }
+}
+
+#[cfg(test)]
+mod export_tests {
+    use super::*;
+
+    // spec: OUT-006
+    #[test]
+    fn completed_export_paths_use_native_filesystem_paths() {
+        let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../src/features/export/fixtures/out-basic-site.json");
+        assert_eq!(
+            export_output_path(fixture.to_str().unwrap()).unwrap(),
+            fixture.canonicalize().unwrap()
+        );
+        assert_eq!(
+            export_output_path("relative.csv").unwrap_err().code,
+            ErrorCode::InvalidInput
+        );
+        assert!(export_output_path(fixture.join("missing.csv").to_str().unwrap()).is_err());
     }
 }

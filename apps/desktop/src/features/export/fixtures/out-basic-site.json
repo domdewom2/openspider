@@ -1,0 +1,12 @@
+{
+  "view": { "kind": "view", "tab": "Page Titles", "filter": "Missing", "viewId": "titles-blog-sorted", "version": 7, "columns": ["Address", "Title 1"] },
+  "detail": { "kind": "detail", "spec": { "kind": "detail", "detail": "cookies", "urlIds": [11, 12, 13], "params": {}, "sort": [] }, "selection": { "kind": "ids", "ids": [11, 12, 13] } },
+  "name": "page_titles_missing_segment_blog_2026-10-13.csv",
+  "catalog": {
+    "bulk": [{ "key": "Links", "labelKey": "export-fixture-links", "items": [{ "name": "Links:All Inlinks", "labelKey": "export-fixture-inlinks", "enabled": true }, { "name": "Screenshots", "labelKey": "export-fixture-shots", "enabled": false, "disabledReason": "export-unavailable" }] }],
+    "reports": [{ "key": "Reports", "labelKey": "export-fixture-reports", "items": [{ "name": "Crawl Overview", "labelKey": "export-fixture-overview", "enabled": true }] }],
+    "sitemaps": []
+  },
+  "tabs": [{ "id": "Internal", "defaultOrder": 0, "detailCapable": true, "filters": [{ "id": "All", "labelTemplate": "All", "params": {}, "state": { "kind": "ready" } }] }],
+  "preset": { "name": "Daily", "items": [{ "kind": "tab", "name": "Internal:All" }, { "kind": "bulk", "name": "Links:All Inlinks" }, { "kind": "report", "name": "Crawl Overview" }], "singleWorkbook": true, "skipEmpty": true }
+}

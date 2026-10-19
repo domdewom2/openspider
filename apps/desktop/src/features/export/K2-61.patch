@@ -1,0 +1,68 @@
+diff --git a/apps/desktop/src-tauri/src/desktop.rs b/apps/desktop/src-tauri/src/desktop.rs
+index 374a249..0b86b53 100644
+--- a/apps/desktop/src-tauri/src/desktop.rs
++++ b/apps/desktop/src-tauri/src/desktop.rs
+@@ -216,0 +217,21 @@ fn reveal(_paths: &[PathBuf]) -> Result<(), CmdError> {
++/// Native reveal action for completed exports (OUT-006); runs filesystem checks off the UI thread.
++#[tauri::command]
++pub async fn open_export_folder(app: tauri::State<'_, App>, path: String) -> Result<(), CmdError> {
++    let actions = app
++        .desktop_actions()
++        .ok_or_else(|| CmdError::new(ErrorCode::Unsupported, "export-native-required"))?;
++    tauri::async_runtime::spawn_blocking(move || {
++        actions.reveal_paths(&[export_output_path(&path)?])
++    })
++    .await
++    .map_err(failure)?
++}
++
++fn export_output_path(path: &str) -> Result<PathBuf, CmdError> {
++    let path = PathBuf::from(path);
++    if !path.is_absolute() {
++        return Err(CmdError::new(ErrorCode::InvalidInput, "err-invalid-path"));
++    }
++    path.canonicalize().map_err(failure)
++}
++
+@@ -238,0 +260,21 @@ mod linux_tests {
++
++#[cfg(test)]
++mod export_tests {
++    use super::*;
++
++    // spec: OUT-006
++    #[test]
++    fn completed_export_paths_use_native_filesystem_paths() {
++        let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
++            .join("../src/features/export/fixtures/out-basic-site.json");
++        assert_eq!(
++            export_output_path(fixture.to_str().unwrap()).unwrap(),
++            fixture.canonicalize().unwrap()
++        );
++        assert_eq!(
++            export_output_path("relative.csv").unwrap_err().code,
++            ErrorCode::InvalidInput
++        );
++        assert!(export_output_path(fixture.join("missing.csv").to_str().unwrap()).is_err());
++    }
++}
+diff --git a/apps/desktop/src-tauri/src/lib.rs b/apps/desktop/src-tauri/src/lib.rs
+index eedd831..0d2d8a1 100644
+--- a/apps/desktop/src-tauri/src/lib.rs
++++ b/apps/desktop/src-tauri/src/lib.rs
+@@ -103 +103,4 @@ pub fn run() {
+-        .invoke_handler(tauri::generate_handler![app_version])
++        .invoke_handler(tauri::generate_handler![
++            app_version,
++            desktop::open_export_folder
++        ])
+diff --git a/apps/desktop/src/App.tsx b/apps/desktop/src/App.tsx
+index 9de7e22..4d3f5a3 100644
+--- a/apps/desktop/src/App.tsx
++++ b/apps/desktop/src/App.tsx
+@@ -0,0 +1 @@
++import { ExportHost, ExportViewButton } from "./features/export";
+@@ -32,0 +34 @@ export function App() {
++      <ExportHost />
+@@ -38,0 +41 @@ export function App() {
++          <ExportViewButton />

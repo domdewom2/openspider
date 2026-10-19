@@ -1,3 +1,4 @@
+import { ExportHost, ExportViewButton } from "./features/export";
 import { useEffect, useState } from "react";
 import { RegionBoundary } from "./app/ErrorBoundary";
 import { Providers } from "./app/Providers";
@@ -30,12 +31,14 @@ export function App() {
 
   return (
     <Providers>
+      <ExportHost />
       <div className="os-app">
         <header className="os-app-header" role="banner" aria-label={t("app-region-header")}>
           <h1 className="os-app-title">{t("app-title")}</h1>
         </header>
         <nav className="os-app-tabs" aria-label={t("app-region-tabs")} />
         <main className="os-app-main" data-region="table" aria-label={t("app-region-table")}>
+          <ExportViewButton />
           <RegionBoundary name="table">
             <EmptyState state={{ code: "NO_DATA_YET" }} />
           </RegionBoundary>
