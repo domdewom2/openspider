@@ -400,15 +400,9 @@ impl Layout {
     }
 }
 fn reason_text(reason: &str) -> &str {
-    match reason {
-        "non_anchor_href" => "href on non-anchor element",
-        "anchor_onclick_navigation" => "onclick navigation",
-        "javascript_href" => "javascript: URL",
-        "anchor_missing_href" => "missing href",
-        "anchor_empty_href" => "empty href",
-        "anchor_fragment_only" => "fragment only",
-        "anchor_return_false" => "onclick return false",
-        other => other,
+    match reason.parse::<os_model::UncrawlableReason>() {
+        Ok(known) => known.label(),
+        Err(_) => reason,
     }
 }
 fn link_spec_condition(

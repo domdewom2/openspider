@@ -33,7 +33,10 @@ fn run_inner(file: &CrawlFile, cancel: &CancelToken) -> Result<StepState, Analyz
     for (key, condition) in [
         ("link.mixed_inlinks", "d.yes = 1 AND d.no = 1"),
         ("link.nofollow_only", "d.yes = 0 AND d.no = 1"),
-        ("link.non_indexable_only", "d.indexable = 0 AND u.indexability = 'Indexable' AND u.address <> COALESCE((SELECT value FROM crawl_meta WHERE key = 'start_url'), '')"),
+        (
+            "link.non_indexable_only",
+            "d.indexable = 0 AND u.indexability = 'Indexable' AND COALESCE(u.crawl_depth, -1) <> 0",
+        ),
     ] {
         tx.execute(&format!("INSERT INTO d08_link_facts SELECT d.id, ?1, 1 FROM d08_inlinks d JOIN urls u ON u.id = d.id WHERE {condition}"), [key])?;
     }
@@ -73,33 +76,66 @@ pub(super) fn with_sql_cancel(
     cancel: &CancelToken,
     work: impl FnOnce() -> Result<StepState, AnalyzeError>,
 ) -> Result<StepState, AnalyzeError> {
-    use std::sync::atomic::{AtomicBool, Ordering};
-    let finished = AtomicBool::new(false);
-    struct Finish<'a>(&'a AtomicBool);
-    impl Drop for Finish<'_> {
-        fn drop(&mut self) {
-            self.0.store(true, Ordering::Release);
-        }
+    let handle = conn.get_interrupt_handle();
+    let _registration = cancel.on_cancel(move || handle.interrupt());
+    if cancel.is_cancelled() {
+        return Ok(StepState::Pending);
     }
-    std::thread::scope(|scope| {
-        let handle = conn.get_interrupt_handle();
-        let done = &finished;
-        scope.spawn(move || {
-            while !done.load(Ordering::Acquire) {
-                if cancel.is_cancelled() {
-                    handle.interrupt();
-                }
-                std::thread::sleep(std::time::Duration::from_millis(5));
-            }
-        });
-        let _finish = Finish(&finished);
-        match work() {
-            Err(AnalyzeError::Sql(rusqlite::Error::SqliteFailure(e, _)))
-                if e.code == rusqlite::ErrorCode::OperationInterrupted && cancel.is_cancelled() =>
-            {
-                Ok(StepState::Pending)
-            }
-            result => result,
+    match work() {
+        Err(AnalyzeError::Sql(rusqlite::Error::SqliteFailure(e, _)))
+            if e.code == rusqlite::ErrorCode::OperationInterrupted && cancel.is_cancelled() =>
+        {
+            Ok(StepState::Pending)
         }
-    })
+        result => result,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // spec: PERF-007
+    #[test]
+    fn cancel_hook_interrupts_an_active_sql_statement_and_releases_connection() {
+        let conn = rusqlite::Connection::open_in_memory().unwrap();
+        let cancel = CancelToken::new();
+        let (started, ready) = std::sync::mpsc::channel();
+        conn.create_scalar_function(
+            "d08_started",
+            0,
+            rusqlite::functions::FunctionFlags::SQLITE_UTF8,
+            move |_| {
+                started.send(()).unwrap();
+                Ok(1)
+            },
+        )
+        .unwrap();
+        let result = std::thread::scope(|scope| {
+            let worker_cancel = &cancel;
+            scope.spawn(move || {
+                ready
+                    .recv_timeout(std::time::Duration::from_secs(5))
+                    .unwrap();
+                worker_cancel.cancel();
+            });
+            with_sql_cancel(&conn, &cancel, || {
+                conn.query_row(
+                    "WITH RECURSIVE numbers(x) AS (SELECT d08_started()
+                    UNION ALL SELECT x+1 FROM numbers WHERE x<100000000)
+                    SELECT sum(x) FROM numbers",
+                    [],
+                    |r| r.get::<_, i64>(0),
+                )?;
+                Ok(StepState::Done)
+            })
+        })
+        .unwrap();
+        assert_eq!(result, StepState::Pending);
+        assert_eq!(
+            conn.query_row("SELECT 1", [], |r| r.get::<_, i64>(0))
+                .unwrap(),
+            1
+        );
+    }
 }

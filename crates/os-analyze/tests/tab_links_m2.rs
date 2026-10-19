@@ -55,6 +55,11 @@ fn thresholds_count_follow_instances_without_resources_or_self_links() {
     assert_eq!(ids(&file, &cfg, "Pages With High External Outlinks"), [1]);
     cfg.links.high_external_outlinks = 2;
     assert!(ids(&file, &cfg, "Pages With High External Outlinks").is_empty());
+    cfg.links.high_internal_outlinks = 1;
+    assert_eq!(
+        ids(&file, &cfg, "Pages With High Internal Outlinks"),
+        [1, 2, 3, 7, 8]
+    );
     cfg.links.high_internal_outlinks = 4;
     assert_eq!(
         ids(&file, &cfg, "Pages With High Internal Outlinks"),
@@ -73,7 +78,7 @@ fn incoming_analysis_is_atomic_repeatable_and_excludes_self_and_resources() {
         links::run(&file, &cfg, &CancelToken::new()).unwrap(),
         StepState::Done
     );
-    // Query predicates independently of runner state, then verify runner publication below.
+    // Prädikate unabhängig vom Runner-Zustand prüfen, danach dessen Veröffentlichung.
     for (key, expected) in [
         ("link.mixed_inlinks", vec![4]),
         ("link.nofollow_only", vec![5]),
@@ -173,6 +178,18 @@ fn anchors_aggregate_page_drilldown_and_apply_both_directions_and_exclusions() {
     let (_dir, file) = file();
     fixture(&file);
     let data = anchors::detail_rows(&file, &[UrlId(4)], 0, 50).unwrap();
+    assert_eq!(
+        data.columns,
+        [
+            "Anchor Text",
+            "Links",
+            "Unique Sources",
+            "Unique Targets",
+            "Follow Links",
+            "Nofollow Links",
+            "% of Links"
+        ]
+    );
     let products = data
         .rows
         .iter()
@@ -273,7 +290,7 @@ fn anchors_registry_preserves_numeric_types_and_selection_options() {
         .iter()
         .find(|r| r[0] == Value::Text("Produkte".into()))
         .unwrap();
-    assert_eq!(products[1], Value::Int(4)); // Three followed sources and the self-link.
+    assert_eq!(products[1], Value::Int(4)); // Drei folgbare Quellen und der Selbstlink.
     let params = serde_json::json!({"direction":"outlinks","excludeSelf":false});
     let req = DetailReq {
         params: &params,
@@ -282,4 +299,85 @@ fn anchors_registry_preserves_numeric_types_and_selection_options() {
     let data = source(&file, &CrawlConfig::default(), &req).unwrap();
     assert_eq!(data.rows.len(), 1);
     assert_eq!(data.rows[0][1], Value::Int(1));
+}
+
+// spec: TECH-142
+#[test]
+fn seed_is_excluded_when_raw_start_url_differs_from_normalized_address() {
+    let (_dir, file) = file();
+    fixture(&file);
+    sql(
+        &file,
+        "UPDATE urls SET address='https://site.test/', crawl_depth=0 WHERE id=1;
+        INSERT INTO links(source_id,target_id,target_raw,link_type,position,follow)
+        VALUES(2,1,'/','Hyperlink',9,1)",
+    );
+    for start in ["https://site.test", "https://SITE.TEST"] {
+        file.conn()
+            .execute(
+                "UPDATE crawl_meta SET value=?1 WHERE key='start_url'",
+                [start],
+            )
+            .unwrap();
+        links::run(&file, &CrawlConfig::default(), &CancelToken::new()).unwrap();
+        let actual: Vec<i64> = file
+            .conn()
+            .prepare(
+                "SELECT url_id FROM url_ext WHERE key='link.non_indexable_only' ORDER BY url_id",
+            )
+            .unwrap()
+            .query_map([], |r| r.get(0))
+            .unwrap()
+            .collect::<Result<_, _>>()
+            .unwrap();
+        assert_eq!(actual, [5, 6]);
+    }
+}
+
+// spec: TECH-141
+#[test]
+fn url_sql_functions_work_on_read_only_connections_and_accept_null() {
+    let (_dir, file) = file();
+    fixture(&file);
+    let reader = os_store::CrawlFile::open(file.path(), os_store::OpenMode::ReadOnly).unwrap();
+    let result: (bool, bool, Option<String>, String) = reader
+        .conn()
+        .query_row(
+            "SELECT os_is_loopback('http://LOCALHOST/x'), os_is_loopback(NULL),
+            os_authority(NULL), os_authority('https://LOCALHOST/x')",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+        )
+        .unwrap();
+    assert_eq!(result, (true, false, None, "localhost:443".into()));
+    assert_eq!(
+        ids(&reader, &CrawlConfig::default(), "Outlinks To Localhost"),
+        [1]
+    );
+}
+
+// spec: PERF-007
+#[test]
+fn cancel_hooks_are_once_only_immediate_after_cancel_and_removed_on_drop() {
+    use std::sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    };
+    let token = CancelToken::new();
+    let calls = Arc::new(AtomicUsize::new(0));
+    let count = calls.clone();
+    let active = token.on_cancel(move || {
+        count.fetch_add(1, Ordering::SeqCst);
+    });
+    let dropped = token.on_cancel(|| panic!("freigegebener Hook darf nicht laufen"));
+    drop(dropped);
+    token.clone().cancel();
+    token.cancel();
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+    drop(active);
+    let count = calls.clone();
+    let _late = token.on_cancel(move || {
+        count.fetch_add(1, Ordering::SeqCst);
+    });
+    assert_eq!(calls.load(Ordering::SeqCst), 2);
 }

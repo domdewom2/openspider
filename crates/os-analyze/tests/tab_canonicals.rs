@@ -662,7 +662,13 @@ async fn the_step_is_repeatable_and_stamps_the_change_feed() {
 
     // Die markierten Zeilen erscheinen im Änderungsfeed.
     let changed = queries::changed_since(conn, before, 500).unwrap();
-    assert_eq!(changed.len(), BASIC_NON_INDEXABLE.len());
+    // TECH-139/145: Links und Link Score stempeln zusätzlich eigene Ergebniszeilen.
+    assert!(BASIC_NON_INDEXABLE
+        .iter()
+        .all(|path| changed.iter().any(|id| {
+            let row = queries::url_by_id(conn, *id).unwrap().unwrap();
+            c.norm(&row.address) == *path
+        })));
 
     // Zweiter Lauf: gleiche Menge, keine Änderung.
     analyse_now(&c);

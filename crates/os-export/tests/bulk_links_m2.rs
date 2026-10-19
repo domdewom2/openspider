@@ -207,3 +207,69 @@ fn raw_mailto_and_tel_targets_survive_the_writebatch_contract() {
         (&"mailto:hello@site.test".into(), &"tel:+493012345".into())
     );
 }
+
+// spec: OUT-008
+// spec: OUT-068
+#[test]
+fn bulk_spec_aliases_preserve_selection_with_distinct_tab_and_bulk_file_names() {
+    use os_export::catalog::{bulk_links, ExportKind, ExportRef};
+    let dir = tempfile::tempdir().unwrap();
+    let f = fixture(dir.path());
+    let cfg = CrawlConfig::default();
+    for entry in bulk_links::entries()
+        .iter()
+        .filter(|e| matches!(e.selection, bulk_links::Selection::LinkSpec(_)))
+    {
+        for alias in &entry.aliases {
+            assert_eq!(
+                os_export::catalog::resolve(ExportKind::Bulk, alias).unwrap(),
+                ExportRef::Bulk(entry.name.clone())
+            );
+            let tab_name = os_export::naming::file_name(alias, None, "csv");
+            let infos = export_bulk(&f, &cfg, alias, dir.path(), Format::Csv).unwrap();
+            assert_ne!(
+                infos[0].path.file_name().unwrap().to_str().unwrap(),
+                tab_name
+            );
+            let canonical = export_bulk(&f, &cfg, &entry.name, dir.path(), Format::Csv).unwrap();
+            assert_eq!(infos[0].path, canonical[0].path);
+        }
+    }
+}
+
+// spec: OUT-041
+#[test]
+fn uncrawlable_export_uses_model_labels_for_every_known_reason_and_preserves_unknowns() {
+    let dir = tempfile::tempdir().unwrap();
+    let f = fixture(dir.path());
+    let mut cfg = CrawlConfig::default();
+    cfg.spider.store_uncrawlable_links = true;
+    for reason in UncrawlableReason::ALL {
+        exec(
+            &f,
+            &format!(
+                "UPDATE links SET uncrawlable_reason='{}' WHERE source_id=8 AND crawlable=0",
+                reason.as_str()
+            ),
+        );
+        let rows = export(
+            &f,
+            &cfg,
+            "Pages With Uncrawlable Internal Outlinks",
+            dir.path(),
+        );
+        assert_eq!(rows.len(), 3);
+        assert!(rows.iter().skip(1).all(|r| r[15] == reason.label()));
+    }
+    exec(
+        &f,
+        "UPDATE links SET uncrawlable_reason='future_reason' WHERE source_id=8 AND crawlable=0",
+    );
+    let rows = export(
+        &f,
+        &cfg,
+        "Pages With Uncrawlable Internal Outlinks",
+        dir.path(),
+    );
+    assert!(rows.iter().skip(1).all(|r| r[15] == "future_reason"));
+}

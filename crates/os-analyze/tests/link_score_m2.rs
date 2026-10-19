@@ -194,6 +194,7 @@ fn cancellation_during_iterations_keeps_the_previous_complete_result() {
     nodes(&file, 20_000);
     sql(&file,"INSERT INTO links(source_id,target_id,target_raw,link_type,position,follow) SELECT id,id%20000+1,'/','Hyperlink',1,1 FROM urls;
         INSERT INTO url_ext(url_id,key,v_int) VALUES (1,'linkscore.score',77)");
+    file.conn().pragma_update(None, "temp_store", 2).unwrap();
     let cancel = CancelToken::new();
     let state = std::thread::scope(|scope| {
         scope.spawn(|| {
@@ -205,6 +206,12 @@ fn cancellation_during_iterations_keeps_the_previous_complete_result() {
         link_score::run(&file, &CrawlConfig::default(), &cancel).unwrap()
     });
     assert_eq!(state, StepState::Pending);
+    assert_eq!(
+        file.conn()
+            .query_row("PRAGMA temp_store", [], |r| r.get::<_, i64>(0))
+            .unwrap(),
+        2
+    );
     assert_eq!(
         file.conn()
             .query_row(
@@ -263,4 +270,31 @@ fn identical_reanalysis_does_not_advance_the_change_feed() {
     assert!(os_store::queries::changed_since(file.conn(), seq, 500)
         .unwrap()
         .is_empty());
+}
+
+// spec: TECH-145
+#[test]
+fn temp_store_is_restored_after_success_and_sql_failure() {
+    let (_dir, file) = file();
+    score_fixture(&file);
+    for previous in [0, 1, 2] {
+        file.conn()
+            .pragma_update(None, "temp_store", previous)
+            .unwrap();
+        link_score::run(&file, &CrawlConfig::default(), &CancelToken::new()).unwrap();
+        let actual: i64 = file
+            .conn()
+            .query_row("PRAGMA temp_store", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(actual, previous);
+        sql(&file, "CREATE TRIGGER fail_score BEFORE INSERT ON url_ext BEGIN SELECT RAISE(ABORT, 'test failure'); END;
+            DELETE FROM url_ext WHERE key LIKE 'linkscore.%'");
+        assert!(link_score::run(&file, &CrawlConfig::default(), &CancelToken::new()).is_err());
+        let actual: i64 = file
+            .conn()
+            .query_row("PRAGMA temp_store", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(actual, previous);
+        sql(&file, "DROP TRIGGER IF EXISTS fail_score");
+    }
 }

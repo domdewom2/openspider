@@ -169,20 +169,38 @@ pub fn entries() -> &'static [BulkLinkEntry] {
             "Pages With Uncrawlable Internal Outlinks",
             "Non-Indexable Page Inlinks Only",
         ] {
-            v.push(BulkLinkEntry {
-                name: format!("Links:{name}"),
-                aliases: Vec::new(),
-                selection: Selection::LinkSpec(name),
-                order: if matches!(
-                    name,
-                    "Follow & Nofollow Internal Inlinks To Page"
-                        | "Internal Nofollow Inlinks Only"
-                        | "Non-Indexable Page Inlinks Only"
-                ) {
-                    LinkOrder::Inlinks
+            let order = if matches!(
+                name,
+                "Follow & Nofollow Internal Inlinks To Page"
+                    | "Internal Nofollow Inlinks Only"
+                    | "Non-Indexable Page Inlinks Only"
+            ) {
+                LinkOrder::Inlinks
+            } else {
+                LinkOrder::Outlinks
+            };
+            // OUT-008: Die acht Tab-Filter haben bereits den Spec-Namen als Dateistamm.
+            // Der Bulk-Name ergänzt die Richtung; der Spec-Name bleibt als Alias gültig.
+            let canonical = if matches!(name, "All Anchor Text" | "External Links") {
+                format!("Links:{name}")
+            } else {
+                let direction = if order == LinkOrder::Inlinks {
+                    "Inlinks"
                 } else {
-                    LinkOrder::Outlinks
-                },
+                    "Outlinks"
+                };
+                format!("Links:{name} {direction}")
+            };
+            let aliases = if canonical == format!("Links:{name}") {
+                Vec::new()
+            } else {
+                vec![format!("Links:{name}")]
+            };
+            v.push(BulkLinkEntry {
+                name: canonical,
+                aliases,
+                selection: Selection::LinkSpec(name),
+                order,
                 requires_rendering: false,
             });
         }

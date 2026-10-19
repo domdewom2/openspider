@@ -53,15 +53,20 @@ pub fn run_with_scaling(
         return Ok(StepState::Pending);
     }
     let conn = file.conn();
-    // FILE bounds edge memory even on large crawls. Tables belong to this connection only.
-    conn.execute_batch("PRAGMA temp_store = FILE; DROP TABLE IF EXISTS temp.d08_routes; DROP TABLE IF EXISTS temp.d08_edges;
-        CREATE TEMP TABLE d08_routes (id INTEGER PRIMARY KEY, node INTEGER, resolved INTEGER);")?;
-    let result = super::links::with_sql_cancel(conn, cancel, || calculate(file, cancel, scaling));
+    let previous_temp_store: i64 = conn.query_row("PRAGMA temp_store", [], |r| r.get(0))?;
+    // Die Einstellung gilt verbindungsweit; auch bei SQL-Fehlern und Abbruch zurücksetzen.
+    let result = (|| {
+        conn.execute_batch("PRAGMA temp_store = FILE; DROP TABLE IF EXISTS temp.d08_routes; DROP TABLE IF EXISTS temp.d08_edges;
+            CREATE TEMP TABLE d08_routes (id INTEGER PRIMARY KEY, node INTEGER, resolved INTEGER);")?;
+        super::links::with_sql_cancel(conn, cancel, || calculate(file, cancel, scaling))
+    })();
     let cleanup = conn.execute_batch(
         "DROP TABLE IF EXISTS temp.d08_routes; DROP TABLE IF EXISTS temp.d08_edges;",
     );
+    let restore = conn.pragma_update(None, "temp_store", previous_temp_store);
     let state = result?;
     cleanup?;
+    restore?;
     Ok(state)
 }
 

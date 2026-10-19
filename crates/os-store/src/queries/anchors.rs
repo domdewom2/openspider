@@ -55,7 +55,7 @@ pub fn is_loopback(url: &str) -> bool {
             .is_ok_and(|ip| ip.is_loopback())
 }
 
-/// Collations are registered on every store connection, including read-only connections.
+/// Kollationen und skalare Funktionen auf jeder Store-Verbindung, auch nur lesend.
 pub fn register_collations(conn: &rusqlite::Connection) -> Result<(), crate::StoreError> {
     conn.create_collation("OS_ANCHOR", |a, b| normalize(a).cmp(&normalize(b)))?;
     conn.create_collation("OS_ANCHOR_SORT", |a, b| {
@@ -64,8 +64,18 @@ pub fn register_collations(conn: &rusqlite::Connection) -> Result<(), crate::Sto
         crate::collation::compare(&a, &b).then_with(|| a.cmp(&b))
     })?;
     conn.create_collation("OS_ANCHOR_PHRASE", |a, b| phrase(a).cmp(&phrase(b)))?;
-    conn.create_collation("OS_AUTHORITY", |a, b| authority(a).cmp(&authority(b)))?;
-    conn.create_collation("OS_LOOPBACK", |a, b| is_loopback(a).cmp(&is_loopback(b)))?;
+    use rusqlite::functions::FunctionFlags;
+    let flags = FunctionFlags::SQLITE_UTF8
+        | FunctionFlags::SQLITE_DETERMINISTIC
+        | FunctionFlags::SQLITE_INNOCUOUS;
+    conn.create_scalar_function("os_authority", 1, flags, |ctx| {
+        Ok(ctx.get::<Option<String>>(0)?.map(|url| authority(&url)))
+    })?;
+    conn.create_scalar_function("os_is_loopback", 1, flags, |ctx| {
+        Ok(ctx
+            .get::<Option<String>>(0)?
+            .is_some_and(|url| is_loopback(&url)))
+    })?;
     Ok(())
 }
 
@@ -171,7 +181,7 @@ pub fn detail_rows_with(
             "Anchor Text",
             "Links",
             "Unique Sources",
-            "Unique Destinations",
+            "Unique Targets",
             "Follow Links",
             "Nofollow Links",
             "% of Links",

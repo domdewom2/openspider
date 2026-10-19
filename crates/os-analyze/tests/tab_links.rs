@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 use os_analyze::views::{filter_counts, query_view, ColumnSelection, ViewPage, ViewQuery};
 use os_engine::testing::{crawl_fixture_from, FixtureCrawl};
-use os_model::{CrawlConfig, FilterState, StoreCrawl, Value};
+use os_model::{CrawlConfig, StoreCrawl, Value};
 use os_store::{CrawlFile, OpenMode};
 use os_testsite::golden;
 
@@ -204,19 +204,17 @@ async fn population_is_internal_html_200_and_counts_exclude_self_links() {
 /// Filterzahlen des Tabs „Links“ (eine Zeile je Filter).
 fn counts(file: &CrawlFile, cfg: &CrawlConfig) -> String {
     let mut out = String::new();
-    for c in filter_counts(file, cfg).unwrap().into_iter().filter(|c| {
-        c.tab == "Links"
-            && matches!(
-                c.filter.as_str(),
-                "All"
-                    | "Pages With High Crawl Depth"
-                    | "Pages Without Internal Outlinks"
-                    | "Internal Nofollow Outlinks"
-                    | "Internal Outlinks With No Anchor Text"
-            )
-    }) {
-        assert_eq!(c.state, FilterState::Ready, "{}", c.filter);
-        out.push_str(&format!("{}: {}\n", c.filter, c.count.unwrap()));
+    for c in filter_counts(file, cfg)
+        .unwrap()
+        .into_iter()
+        .filter(|c| c.tab == "Links")
+    {
+        out.push_str(&format!(
+            "{}: {} ({})\n",
+            c.filter,
+            c.count.map_or_else(|| "-".into(), |n| n.to_string()),
+            c.state.as_str()
+        ));
     }
     out
 }
