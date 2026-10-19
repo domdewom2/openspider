@@ -609,7 +609,11 @@ async fn analyze<F: Fetch>(
             match other {
                 ContentClass::Css => a.css_links = os_parse::parse_css(url, &resp.body),
                 ContentClass::Pdf => {
-                    let pdf = os_parse::pdf::parse(&resp.body, &sh.pcfg);
+                    let mut pdf = os_parse::pdf::parse(&resp.body, &sh.pcfg);
+                    // M2-D19: Rechtschreib-/Grammatikbefunde des Textlayers nach `spelling_findings`.
+                    a.extra
+                        .spelling
+                        .extend(os_parse::spelling::take_findings(item.id, &mut pdf.ext));
                     a.pdf_word_count = pdf.word_count;
                     a.pdf = Some(pdf.meta);
                     a.css_links.extend(pdf.links);
@@ -1573,6 +1577,10 @@ fn transport_page(url: UrlId, page: &ParsedPage, batch: &mut WriteBatch) {
             }
         });
     }
+    // M2-D19: Rechtschreib-/Grammatikbefunde aus `spelling.findings` nach `spelling_findings`.
+    batch
+        .spelling
+        .extend(os_parse::spelling::take_findings(url, &mut facts));
     if page.hreflang_truncated > 0 {
         facts.push((
             os_model::ExtKey::from_static("hreflang.truncated"),
