@@ -31,7 +31,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PLAN = ROOT / "docs" / "plan"
 SPEC = ROOT / "docs" / "spec"
 
-ERWARTETE_SPEC_IDS = 586  # Rev. 3: +CRAWL-145 … 147 (E03), +OUT-233/234 (F02), +OUT-273 (V01)
+ERWARTETE_SPEC_IDS = 590  # 19.10.: +AGENT-016 … 019 (M03); Rev. 3: +CRAWL-145 … 147 (E03), +OUT-233/234 (F02), +OUT-273 (V01)
 
 # C14: Bis zum Merge von M1_SPERRE_BIS kein M2-Besitz in diesen Crates.
 M1_SPERRE = ("crates/os-store", "crates/os-engine", "crates/os-analyze")

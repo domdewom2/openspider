@@ -2334,6 +2334,36 @@
   "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Budgets UI-141/142 über os-app gemessen (IPC-Anteil in M2-U31). Nach dem Merge laufen alle UI-Tabellen auf den echten Sitzungen; Alpha-Suite M2-A01 muss grün bleiben. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. Rev. 5 (K2-25): für UI-011 erfüllt dieses Paket die Suchintegration in die View-Sitzungen (K2-38) (eigene getaggte Tests)."
  },
  {
+  "id": "M2-M03",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "MCP-Ergänzung: list_catalog, url_content, url_screenshot, Export page_content_ndjson (AGENT-016–019)",
+  "wave": 2,
+  "spec_ids": [
+   "AGENT-016",
+   "AGENT-017",
+   "AGENT-018",
+   "AGENT-019"
+  ],
+  "owns": [
+   "crates/os-mcp/src/tools/list_catalog.rs",
+   "crates/os-mcp/src/tools/url_content.rs",
+   "crates/os-mcp/src/tools/url_screenshot.rs",
+   "crates/os-mcp/tests/tools_m03.rs",
+   "crates/os-export/src/catalog/page_content.rs",
+   "crates/os-export/tests/page_content_ndjson.rs"
+  ],
+  "depends_on": [
+   "M2-M01",
+   "M2-K06",
+   "M2-X01",
+   "M2-R01"
+  ],
+  "size": "M",
+  "runner": "cloud",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 und 2a (inkl. K2-60/K2-61/K2-63). User-Entscheidung 18.10.: MCP-Umfang ergänzen (Abgleich: Referenzprodukt hat 29 Werkzeuge inkl. Node.js-/Dateisystem-Tools). list_catalog nutzt denselben Katalog wie UI/Export (catalog.*), keine eigene Liste; url_content nur aus der Crawl-Datei, Ausgabe im Untrusted-Block (AGENT-004); url_screenshot nur aus gespeicherten Render-Screenshots (R01). Registrierung in der bestehenden Werkzeugliste von os-mcp ist additiv (K2-61). Kein Werkzeug für Code-Ausführung oder freien Dateisystemzugriff (statischer Test, AGENT-019)."
+ },
+ {
   "id": "M2-A01",
   "kind": "package",
   "model": "sonnet",
@@ -3197,6 +3227,7 @@
    "crates/os-analyze/tests/tab_internal.rs (nur alter ONPAGE-012-Test, M2.md 5.1)"
   ],
   "depends_on": [
+   "M2-M03",
    "M2-N01",
    "M2-K05",
    "M2-A01",
