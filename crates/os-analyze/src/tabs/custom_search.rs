@@ -5,6 +5,7 @@ use os_model::{CrawlConfig, SearchFilter};
 use crate::defs::{intern, ColumnDef, ColumnKind, ColumnSource, FilterDef, FilterKind, TabDef};
 
 /// Effective name; empty names use their one-based configuration position.
+/// Keep in sync with `os_parse::custom_search::filter_name` (crate boundary).
 pub fn filter_name(filter: &SearchFilter, index: usize) -> String {
     if filter.name.trim().is_empty() {
         format!("Filter {}", index + 1)

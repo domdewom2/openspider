@@ -3,7 +3,7 @@ use os_analyze::{
     views::{self, ColumnSelection, ViewQuery},
 };
 use os_engine::testing::crawl_fixture;
-use os_model::{CrawlConfig, CustomSearchConfig, Value};
+use os_model::{CrawlConfig, CustomSearchConfig, SearchFilter, SearchKind, SearchScope, Value};
 
 fn config() -> CrawlConfig {
     CrawlConfig {
@@ -189,4 +189,52 @@ async fn search_scope_includes_error_and_redirect_bodies_but_excludes_resources_
         .total,
         1
     );
+}
+
+// spec: INTEG-028
+// spec: INTEG-031
+#[tokio::test]
+async fn pure_lookahead_populates_contains_filter_and_never_negative_results() {
+    let mut cfg = config();
+    cfg.custom_search.filters = [true, false]
+        .into_iter()
+        .map(|contains| SearchFilter {
+            name: if contains {
+                "Both terms"
+            } else {
+                "Missing terms"
+            }
+            .into(),
+            scope: SearchScope::Html,
+            kind: SearchKind::Regex,
+            expression: "(?s)(?=.*Ausverkauft)(?=.*missing)".into(),
+            contains,
+            ..Default::default()
+        })
+        .collect();
+    let fx = crawl_fixture("integ-custom-search", cfg.clone()).await;
+    let tabs = tabs::configured(&cfg);
+    let positive = views::query_view_in(
+        &tabs,
+        &fx.file,
+        &cfg,
+        &ViewQuery::new("Custom Search", "Both terms"),
+    )
+    .unwrap();
+    assert_eq!(positive.total, 1);
+    assert!(matches!(&positive.rows[0][0], Value::Text(address) if address.ends_with('/')));
+    assert!(matches!(positive.rows[0][4], Value::Int(count) if count >= 1));
+    assert_eq!(positive.rows[0][5], Value::Text("Contains".into()));
+    let negative = views::query_view_in(
+        &tabs,
+        &fx.file,
+        &cfg,
+        &ViewQuery::new("Custom Search", "Missing terms"),
+    )
+    .unwrap();
+    assert_eq!(negative.total, 3);
+    assert!(negative
+        .rows
+        .iter()
+        .all(|row| row[5] == Value::Text("Does Not Contain".into())));
 }

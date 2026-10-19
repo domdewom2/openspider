@@ -1,6 +1,12 @@
 //! Custom Search: decoded HTML, text regions and XPath (INTEG-020 … 035).
+//!
+//! Head/body HTML is reserialized via `inner_html()` from the repaired HTML5 DOM
+//! (INTEG-024/025); entity spelling and attribute order can differ from the source.
+//! Content Area uses `content::area_text`, sharing ONPAGE-140 rules and traversal
+//! with word count. Regions, their lowercase text and the XPath tree are cached per page.
 
-use std::collections::HashSet;
+use std::cell::OnceCell;
+use std::collections::{HashMap, HashSet};
 use std::time::{Duration, Instant};
 
 use ego_tree::iter::Edge;
@@ -10,7 +16,7 @@ use os_model::{
     SearchHit, SearchKind, SearchScope,
 };
 use scraper::{ElementRef, Node, Selector};
-use xee_xpath::{Documents, Queries, Query};
+use xee_xpath::{Documents, Item, Queries, Query};
 
 use crate::{dom::Document, PageCtx, ParseInput};
 
@@ -41,22 +47,64 @@ pub fn filter_name(filter: &SearchFilter, index: usize) -> String {
     }
 }
 
-fn regex(expression: &str) -> Result<Regex, fancy_regex::Error> {
-    // A deterministic VM step cap bounds even a single find(), where elapsed-time
-    // checks cannot interrupt execution. No worker threads survive a timed-out page.
+fn regex(expression: &str, region_bytes: usize) -> Result<Regex, fancy_regex::Error> {
+    // A find() includes unsuccessful start positions in its backtrack count.
+    // Keep at least the library default, growing with input size so ordinary
+    // lookarounds on large pages do not exhaust a tiny fixed cap. The cap still
+    // bounds a single find(), which wall-clock checks cannot interrupt.
     RegexBuilder::new(expression)
-        .backtrack_limit(50_000)
+        .backtrack_limit(1_000_000.max(region_bytes.saturating_mul(8)))
         .build()
 }
 
+struct Region {
+    original: String,
+    lower: OnceCell<String>,
+}
+
+impl Region {
+    fn new(original: String) -> Self {
+        Self {
+            original,
+            lower: OnceCell::new(),
+        }
+    }
+
+    fn text(&self, case_sensitive: bool) -> &str {
+        if case_sensitive {
+            &self.original
+        } else {
+            self.lower.get_or_init(|| self.original.to_lowercase())
+        }
+    }
+}
+
 fn evaluate(doc: &Document, html: &str, cfg: &crate::ParseConfig) -> Vec<SearchHit> {
+    let started = Instant::now();
+    let budget = Duration::from_millis(u64::from(cfg.custom_search.regex_timeout_ms));
+    let mut regions_by_scope = HashMap::new();
+    let mut xpath = None;
     cfg.custom_search
         .filters
         .iter()
         .enumerate()
         .map(|(i, filter)| {
-            let result = regions(doc, html, &cfg.content_area, filter)
-                .and_then(|regions| count(&regions, filter, cfg.custom_search.regex_timeout_ms));
+            let key = (
+                filter.scope,
+                if filter.scope == SearchScope::XPath {
+                    filter.xpath.clone()
+                } else {
+                    None
+                },
+            );
+            let regions = regions_by_scope.entry(key).or_insert_with(|| {
+                regions(doc, html, &cfg.content_area, filter, &mut xpath)
+                    .map(|texts| texts.into_iter().map(Region::new).collect::<Vec<_>>())
+            });
+            let result = match regions {
+                Ok(regions) => count(regions, filter, started, budget),
+                Err(error) => Err(error.clone()),
+            };
             match result {
                 Ok(count) => SearchHit {
                     def_index: i as u32,
@@ -78,6 +126,7 @@ fn regions(
     html: &str,
     area: &ContentAreaConfig,
     filter: &SearchFilter,
+    xpath: &mut Option<Result<XPathDocument, String>>,
 ) -> Result<Vec<String>, String> {
     Ok(match filter.scope {
         SearchScope::Html => vec![html.to_owned()],
@@ -93,44 +142,22 @@ fn regions(
                 .map(|el| el.inner_html())
                 .collect()
         }
-        SearchScope::PageText => vec![visible_text(doc, false, None)],
-        SearchScope::PageTextNoAnchors => vec![visible_text(doc, true, None)],
-        SearchScope::ContentArea => vec![visible_text(doc, false, Some(area))],
-        SearchScope::XPath => xpath_text(doc, filter.xpath.as_deref().unwrap_or(""))?,
+        SearchScope::PageText => vec![visible_text(doc, false)],
+        SearchScope::PageTextNoAnchors => vec![visible_text(doc, true)],
+        SearchScope::ContentArea => vec![crate::content::area_text(doc, area)],
+        SearchScope::XPath => match xpath.get_or_insert_with(|| XPathDocument::new(doc)) {
+            Ok(xpath) => xpath.text(filter.xpath.as_deref().unwrap_or(""))?,
+            Err(error) => return Err(error.clone()),
+        },
     })
 }
 
-fn matches_rule(
-    el: &scraper::node::Element,
-    names: &[String],
-    classes: &[String],
-    ids: &[String],
-) -> bool {
-    names
-        .iter()
-        .any(|s| s.trim().eq_ignore_ascii_case(el.name()))
-        || classes.iter().any(|s| {
-            el.has_class(
-                s.trim().trim_start_matches('.'),
-                scraper::CaseSensitivity::CaseSensitive,
-            )
-        })
-        || ids
-            .iter()
-            .any(|s| el.attr("id") == Some(s.trim().trim_start_matches('#')))
-}
-
-fn visible_text(doc: &Document, no_anchors: bool, area: Option<&ContentAreaConfig>) -> String {
+fn visible_text(doc: &Document, no_anchors: bool) -> String {
     let Some(body) = doc.html().select(&Selector::parse("body").unwrap()).next() else {
         return String::new();
     };
-    let has_include = area.is_some_and(|a| {
-        !a.include_elements.is_empty() || !a.include_classes.is_empty() || !a.include_ids.is_empty()
-    });
     let mut out = String::new();
     let mut skip = 0usize;
-    let mut included = 0usize;
-    let mut marks = Vec::new();
     for edge in body.traverse() {
         match edge {
             Edge::Open(node) => match node.value() {
@@ -145,37 +172,17 @@ fn visible_text(doc: &Document, no_anchors: bool, area: Option<&ContentAreaConfi
                     }
                     if matches!(name, "script" | "style" | "noscript" | "template" | "title")
                         || (no_anchors && name == "a")
-                        || area.is_some_and(|a| {
-                            name == "svg"
-                                || matches_rule(
-                                    el,
-                                    &a.exclude_elements,
-                                    &a.exclude_classes,
-                                    &a.exclude_ids,
-                                )
-                        })
                     {
                         skip = 1;
                         continue;
                     }
-                    let hit = area.is_some_and(|a| {
-                        matches_rule(el, &a.include_elements, &a.include_classes, &a.include_ids)
-                    });
-                    marks.push(hit);
-                    included += usize::from(hit);
                 }
-                Node::Text(text) if skip == 0 && (!has_include || included > 0) => {
-                    out.push_str(text)
-                }
+                Node::Text(text) if skip == 0 => out.push_str(text),
                 _ => {}
             },
             Edge::Close(node) => {
                 if let Node::Element(el) = node.value() {
-                    if skip > 0 {
-                        skip -= 1;
-                    } else {
-                        included -= usize::from(marks.pop() == Some(true));
-                    }
+                    skip = skip.saturating_sub(1);
                     if skip == 0 && crate::dom::is_block(el.name()) {
                         out.push(' ');
                     }
@@ -186,70 +193,94 @@ fn visible_text(doc: &Document, no_anchors: bool, area: Option<&ContentAreaConfi
     crate::text::normalize_ws(&out)
 }
 
-fn xpath_text(doc: &Document, expression: &str) -> Result<Vec<String>, String> {
-    let mut documents = Documents::new();
-    let xot = documents.xot_mut();
-    let root = xot.new_document();
-    let mut stack = vec![root];
-    // Build XPath's tree from the repaired HTML5 DOM, rather than parsing HTML as XML.
-    // HTML element names deliberately have no namespace (the configuration contract).
-    for edge in doc.html().root_element().traverse() {
-        match edge {
-            Edge::Open(node) => match node.value() {
-                Node::Element(el) => {
-                    let name = xot.add_name(el.name());
-                    let child = xot.new_element(name);
-                    for (name, value) in el.attrs() {
-                        let name = xot.add_name(name);
-                        xot.set_attribute(child, name, value);
-                    }
-                    xot.append(*stack.last().unwrap(), child)
-                        .map_err(|e| e.to_string())?;
-                    stack.push(child);
-                }
-                Node::Text(text) => xot
-                    .append_text(*stack.last().unwrap(), text)
-                    .map_err(|e| e.to_string())?,
-                Node::Comment(text) => xot
-                    .append_comment(*stack.last().unwrap(), text)
-                    .map_err(|e| e.to_string())?,
-                _ => {}
-            },
-            Edge::Close(node) if ElementRef::wrap(node).is_some() => {
-                stack.pop();
-            }
-            _ => {}
-        }
-    }
-    let queries = Queries::default();
-    let query = queries
-        .many(&format!("({expression}) ! string(.)"), |_, item| {
-            Ok(item.try_into_value::<String>()?)
-        })
-        .map_err(|e| e.to_string())?;
-    query
-        .execute(&mut documents, root)
-        .map_err(|e| e.to_string())
+struct XPathDocument {
+    documents: Documents,
+    root: Item,
 }
 
-fn count(regions: &[String], filter: &SearchFilter, timeout_ms: u32) -> Result<u32, String> {
+impl XPathDocument {
+    fn new(doc: &Document) -> Result<Self, String> {
+        let mut documents = Documents::new();
+        let xot = documents.xot_mut();
+        let root = xot.new_document();
+        let mut stack = vec![root];
+        // Build XPath's tree from the repaired HTML5 DOM, rather than parsing HTML as XML.
+        // HTML element names deliberately have no namespace (the configuration contract).
+        for edge in doc.html().root_element().traverse() {
+            match edge {
+                Edge::Open(node) => match node.value() {
+                    Node::Element(el) => {
+                        let name = xot.add_name(el.name());
+                        let child = xot.new_element(name);
+                        for (name, value) in el.attrs() {
+                            let name = xot.add_name(name);
+                            xot.set_attribute(child, name, value);
+                        }
+                        xot.append(*stack.last().unwrap(), child)
+                            .map_err(|e| e.to_string())?;
+                        stack.push(child);
+                    }
+                    Node::Text(text) => xot
+                        .append_text(*stack.last().unwrap(), text)
+                        .map_err(|e| e.to_string())?,
+                    Node::Comment(text) => xot
+                        .append_comment(*stack.last().unwrap(), text)
+                        .map_err(|e| e.to_string())?,
+                    _ => {}
+                },
+                Edge::Close(node) if ElementRef::wrap(node).is_some() => {
+                    stack.pop();
+                }
+                _ => {}
+            }
+        }
+        Ok(Self {
+            documents,
+            root: Item::Node(root),
+        })
+    }
+
+    fn text(&mut self, expression: &str) -> Result<Vec<String>, String> {
+        let queries = Queries::default();
+        let query = queries
+            .many(&format!("({expression}) ! string(.)"), |_, item| {
+                Ok(item.try_into_value::<String>()?)
+            })
+            .map_err(|e| e.to_string())?;
+        query
+            .execute(&mut self.documents, &self.root)
+            .map_err(|e| e.to_string())
+    }
+}
+
+fn count(
+    regions: &[Region],
+    filter: &SearchFilter,
+    started: Instant,
+    budget: Duration,
+) -> Result<u32, String> {
     if filter.expression.is_empty() {
         return Err("Empty search expression".into());
     }
-    let started = Instant::now();
-    let budget = Duration::from_millis(u64::from(timeout_ms));
     let mut total = 0u32;
     if filter.kind == SearchKind::Regex {
-        let re = regex(&filter.expression).map_err(|e| e.to_string())?;
-        for text in regions {
-            for found in re.find_iter(text) {
+        if started.elapsed() >= budget {
+            return Err("Regex timeout".into());
+        }
+        let region_bytes = regions.iter().map(|r| r.original.len()).max().unwrap_or(0);
+        let re = regex(&filter.expression, region_bytes).map_err(|e| e.to_string())?;
+        for region in regions {
+            if started.elapsed() >= budget {
+                return Err("Regex timeout".into());
+            }
+            for found in re.find_iter(&region.original) {
                 if started.elapsed() >= budget {
                     return Err("Regex timeout".into());
                 }
-                let found = found.map_err(|_| "Regex timeout".to_owned())?;
-                if found.start() != found.end() {
-                    total = total.saturating_add(1);
-                }
+                found.map_err(|_| "Regex timeout".to_owned())?;
+                // find_iter advances after empty matches, so pure lookarounds
+                // count as matches and x* still terminates (INTEG-028).
+                total = total.saturating_add(1);
             }
             if started.elapsed() >= budget {
                 return Err("Regex timeout".into());
@@ -261,12 +292,8 @@ fn count(regions: &[String], filter: &SearchFilter, timeout_ms: u32) -> Result<u
         } else {
             filter.expression.to_lowercase()
         };
-        for text in regions {
-            let text = if filter.case_sensitive {
-                text.clone()
-            } else {
-                text.to_lowercase()
-            };
+        for region in regions {
+            let text = region.text(filter.case_sensitive);
             total = total
                 .saturating_add(u32::try_from(text.matches(&needle).count()).unwrap_or(u32::MAX));
         }
@@ -277,9 +304,9 @@ fn count(regions: &[String], filter: &SearchFilter, timeout_ms: u32) -> Result<u
 /// Validate before starting a crawl, including XPath syntax.
 pub fn validate(cfg: &CustomSearchConfig) -> Vec<ConfigIssue> {
     let mut issues = Vec::new();
-    let mut add = |path: String, message: String| {
+    let mut add = |code: &str, path: String, message: String| {
         issues.push(ConfigIssue {
-            code: "invalid_custom_search".into(),
+            code: format!("invalid_custom_search.{code}"),
             position: None,
             kind: ConfigIssueKind::InvalidValue,
             path,
@@ -290,6 +317,7 @@ pub fn validate(cfg: &CustomSearchConfig) -> Vec<ConfigIssue> {
     };
     if cfg.filters.len() > 100 {
         add(
+            "limit",
             "custom_search.filters".into(),
             "Maximal 100 Suchfilter".into(),
         );
@@ -298,24 +326,33 @@ pub fn validate(cfg: &CustomSearchConfig) -> Vec<ConfigIssue> {
     for (i, filter) in cfg.filters.iter().enumerate() {
         let path = format!("custom_search.filters[{i}]");
         if !names.insert(filter_name(filter, i).to_lowercase()) {
-            add(format!("{path}.name"), "Name ist nicht eindeutig".into());
+            add(
+                "duplicate_name",
+                format!("{path}.name"),
+                "Name ist nicht eindeutig".into(),
+            );
         }
         if filter.expression.trim().is_empty() {
             add(
+                "empty_expression",
                 format!("{path}.expression"),
                 "Suchausdruck darf nicht leer sein".into(),
             );
         } else if filter.kind == SearchKind::Regex {
-            if let Err(e) = regex(&filter.expression) {
-                add(format!("{path}.expression"), e.to_string());
+            if let Err(e) = regex(&filter.expression, 0) {
+                add("invalid_regex", format!("{path}.expression"), e.to_string());
             }
         }
         if filter.scope == SearchScope::XPath {
             let xpath = filter.xpath.as_deref().unwrap_or("");
             if xpath.trim().is_empty() {
-                add(format!("{path}.xpath"), "XPath erforderlich".into());
+                add(
+                    "invalid_xpath",
+                    format!("{path}.xpath"),
+                    "XPath erforderlich".into(),
+                );
             } else if let Err(e) = Queries::default().sequence(xpath) {
-                add(format!("{path}.xpath"), e.to_string());
+                add("invalid_xpath", format!("{path}.xpath"), e.to_string());
             }
         }
     }

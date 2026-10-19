@@ -20,12 +20,16 @@ also searched. URL and Inlinks exports use these same persisted facts.
 - INTEG-028's `(a+)+$` example is handled by fancy-regex's linear matcher and
   immediately returns zero instead of a timeout. A backreference variant,
   `(?:(a+)\1)+$`, exercises the actual VM step limit and returns `Regex timeout`.
-- INTEG-028 asks both for a positive count for a pure lookahead and for zero-length
-  matches not to be counted. This implementation follows the explicit empty-match
-  rule: `(?s)(?=.*rot)(?=.*blau)` counts zero; adding `.+` counts one.
-- Regex evaluation uses the configured wall-time budget plus a deterministic
-  50,000-backtrack cap per find. Hitting either limit produces `Regex timeout`;
-  the step cap can stop a pattern before its wall-time budget expires.
+- Empty regex matches count, including pure lookaheads; `find_iter` advances so
+  `x*` terminates. The configured wall-time budget starts once per page and is
+  shared by all regex filters; text filters still run after it expires.
+- Regex evaluation also bounds a single `find` by a deterministic backtrack cap:
+  at least the library default of 1,000,000, or 8 times the largest region's UTF-8
+  byte length, whichever is larger. The fixture-derived 200 KB HTML test verifies
+  successful and unsuccessful lookbehind scans without a false timeout.
+- Validation codes are `invalid_custom_search.limit`, `.duplicate_name`,
+  `.empty_expression`, `.invalid_regex`, `.invalid_xpath`. U13B should use these
+  codes rather than interpreting localized messages.
 - UI dialogs and CSV/TXT file loading are U13B; the parser's Bulk Add function
   accepts already decoded single-column records and reports skipped/overflow counts.
   Rendered input (INTEG-030) is wired by E05.

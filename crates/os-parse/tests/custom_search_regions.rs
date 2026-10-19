@@ -218,7 +218,7 @@ fn content_area_obeys_default_and_custom_include_exclude_rules() {
 
 // spec: INTEG-028
 #[test]
-fn regex_counts_nonoverlapping_nonempty_matches_with_lookaround_and_flags() {
+fn regex_counts_nonoverlapping_matches_including_empty_lookarounds_and_flags() {
     let expressions = [
         "pr",
         r"\bpr\b",
@@ -245,9 +245,26 @@ fn regex_counts_nonoverlapping_nonempty_matches_with_lookaround_and_flags() {
     );
     assert!(found.iter().all(|h| h.error.is_none()), "{found:?}");
     assert_eq!(
-        found.iter().map(|h| h.count).collect::<Vec<_>>(),
-        [3, 1, 2, 4, 1, 0, 1, 0, 1, 0]
+        found[..7].iter().map(|h| h.count).collect::<Vec<_>>(),
+        [3, 1, 2, 4, 1, 0, 1]
     );
+    assert!(
+        found[7].count > 0,
+        "x* terminates while counting empty matches"
+    );
+    assert_eq!(found[8].count, 1);
+    assert!(found[9].count >= 1, "the spec's pure lookahead must match");
+    let missing = hits(
+        b"<p>rot</p>",
+        "text/html",
+        vec![SearchFilter {
+            kind: SearchKind::Regex,
+            ..filter(SearchScope::Html, expressions[9])
+        }],
+        ContentAreaConfig::default(),
+    );
+    assert_eq!(missing[0].count, 0);
+    assert_eq!(missing[0].error, None);
 }
 
 // spec: INTEG-028
@@ -281,13 +298,20 @@ fn text_is_literal_and_unicode_aware_without_sharp_s_expansion() {
     let found = hits(
         HTML.as_bytes(),
         "text/html",
-        vec![SearchFilter {
-            case_sensitive: true,
-            ..filter(SearchScope::PageText, "openspider")
-        }],
+        vec![
+            filter(SearchScope::PageText, "openspider"),
+            SearchFilter {
+                case_sensitive: true,
+                ..filter(SearchScope::PageText, "openspider")
+            },
+        ],
         ContentAreaConfig::default(),
     );
-    assert_eq!(found[0].count, 0);
+    assert!(found.iter().all(|hit| hit.error.is_none()));
+    assert_eq!(
+        found.iter().map(|hit| hit.count).collect::<Vec<_>>(),
+        [1, 0]
+    );
 }
 
 // spec: INTEG-020
@@ -321,12 +345,24 @@ fn validation_enforces_limits_names_expressions_and_roundtrips_profiles() {
     cfg.filters[3].kind = SearchKind::Regex;
     cfg.filters[3].expression = "(abc".into();
     let issues = custom_search::validate(&cfg);
-    for path in [
-        "custom_search.filters[1].name",
-        "custom_search.filters[2].expression",
-        "custom_search.filters[3].expression",
+    for (path, code) in [
+        ("custom_search.filters", "limit"),
+        ("custom_search.filters[1].name", "duplicate_name"),
+        ("custom_search.filters[2].expression", "empty_expression"),
+        ("custom_search.filters[3].expression", "invalid_regex"),
     ] {
-        assert!(issues.iter().any(|i| i.path == path));
+        assert!(issues
+            .iter()
+            .any(|i| i.path == path && i.code == format!("invalid_custom_search.{code}")));
+    }
+    cfg.filters[0].scope = SearchScope::XPath;
+    for xpath in ["", "//*["] {
+        cfg.filters[0].xpath = Some(xpath.into());
+        let issues = custom_search::validate(&cfg);
+        assert!(issues
+            .iter()
+            .any(|i| i.path == "custom_search.filters[0].xpath"
+                && i.code == "invalid_custom_search.invalid_xpath"));
     }
 }
 
@@ -406,4 +442,90 @@ fn regular_nested_repetition_uses_the_linear_engine_without_a_false_timeout() {
     );
     assert_eq!(found[0].count, 0);
     assert_eq!(found[0].error, None);
+}
+
+// spec: INTEG-028
+#[test]
+fn lookbehind_on_large_html_finds_late_matches_and_handles_no_match() {
+    // Fixture-derived page of about 200 KB: successful and unsuccessful scans
+    // both exceed the old fixed 50,000-backtrack cap.
+    let html = format!(
+        "<html><body>{}<p class=\"price\">42</p></body></html>",
+        HTML.repeat(200_000 / HTML.len() + 1)
+            .replace("class=\"price\"", "class=\"other\"")
+    );
+    assert!(html.len() > 200_000);
+    let found = hits(
+        html.as_bytes(),
+        "text/html",
+        [r#"(?<=class=")price"#, r#"(?<=class=")missing"#]
+            .into_iter()
+            .map(|expression| SearchFilter {
+                kind: SearchKind::Regex,
+                ..filter(SearchScope::Html, expression)
+            })
+            .collect(),
+        ContentAreaConfig::default(),
+    );
+    assert!(found.iter().all(|hit| hit.error.is_none()), "{found:?}");
+    assert_eq!(found[0].count, 1);
+    assert_eq!(found[1].count, 0);
+}
+
+// spec: INTEG-028
+#[test]
+fn exhausted_page_budget_marks_regex_filters_but_keeps_text_search_working() {
+    let mut cfg = ParseConfig::from_crawl_config(&CrawlConfig::default());
+    cfg.custom_search.regex_timeout_ms = 0;
+    cfg.custom_search.filters = ["natural", "missing"]
+        .into_iter()
+        .map(|expression| SearchFilter {
+            kind: SearchKind::Regex,
+            ..filter(SearchScope::Html, expression)
+        })
+        .chain([filter(SearchScope::Html, "natural")])
+        .collect();
+    let found = custom_search::run_on_body(&ParseInput {
+        status: 200,
+        url: &Url::parse("https://site.test/budget").unwrap(),
+        body: REGEX.as_bytes(),
+        content_type: Some("text/html"),
+        headers: &[],
+        cfg: &cfg,
+    });
+    assert!(found[..2]
+        .iter()
+        .all(|hit| hit.count == 0 && hit.error.as_deref() == Some("Regex timeout")));
+    assert_eq!(found[2].count, 2);
+    assert_eq!(found[2].error, None);
+}
+
+// spec: INTEG-027
+#[test]
+fn content_area_text_shares_word_count_rules_including_blank_and_nested_rules() {
+    let doc = os_parse::dom::Document::parse(HTML);
+    for area in [
+        ContentAreaConfig::default(),
+        ContentAreaConfig {
+            include_elements: vec!["  ".into(), " MAIN ".into()],
+            exclude_classes: vec![".price".into()],
+            exclude_ids: vec!["#comments".into()],
+            ..Default::default()
+        },
+    ] {
+        let text = os_parse::content::area_text(&doc, &area);
+        // This fixture has no list items (whose word-count bonus is intentional).
+        assert_eq!(
+            text.split_whitespace().count() as u32,
+            os_parse::content::word_count(&doc, &area)
+        );
+        let found = hits(
+            HTML.as_bytes(),
+            "text/html",
+            vec![filter(SearchScope::ContentArea, &text)],
+            area,
+        );
+        assert_eq!(found[0].count, 1);
+        assert_eq!(found[0].error, None);
+    }
 }
