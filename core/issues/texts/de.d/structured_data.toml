@@ -7,3 +7,23 @@ fix = "Prüfen Sie, ob zum Inhalt passende strukturierte Daten sinnvoll sind. Ak
 what = "Mindestens ein Block strukturierter Daten konnte nicht gelesen werden."
 why = "Syntaxfehler oder nicht auflösbare Typangaben verhindern, dass dieser Block zuverlässig ausgewertet wird. Andere lesbare Blöcke werden weiterhin erfasst."
 fix = "Öffnen Sie die Details der strukturierten Daten. Korrigieren Sie die gemeldete Stelle anhand von Zeile, Spalte und Ausschnitt und prüfen Sie die Seite erneut."
+
+[issues.structured-data-validation-errors]
+what = "Mindestens ein Element strukturierter Daten verwendet einen Typ, eine Eigenschaft oder einen Wert, der nicht zum schema.org-Vokabular passt."
+why = "Unbekannte Namen, Eigenschaften an unpassenden Typen und Werte der falschen Art können dazu führen, dass das Markup ignoriert oder falsch gedeutet wird."
+fix = "Öffnen Sie die Details der strukturierten Daten und korrigieren Sie jeden Befund am angegebenen Eigenschaftspfad. Prüfen Sie Schreibweise sowie Groß- und Kleinschreibung anhand der schema.org-Referenz."
+
+[issues.structured-data-validation-warnings]
+what = "Mindestens ein Element strukturierter Daten verwendet noch das abgekündigte Vokabular data-vocabulary.org."
+why = "Suchdienste werten dieses Vokabular nicht mehr aus; das Markup bleibt daher wirkungslos."
+fix = "Ersetzen Sie die Elemente durch gleichwertige schema.org-Typen und -Eigenschaften und prüfen Sie die Seite erneut."
+
+[issues.structured-data-rich-result-errors]
+what = "Bei mindestens einem erkannten Rich-Result-Feature fehlt eine Pflichteigenschaft oder ein Wert ist ungültig."
+why = "Ein Feature mit Fehlern kommt für die zugehörige erweiterte Darstellung in den Suchergebnissen nicht in Frage."
+fix = "Öffnen Sie die Details der strukturierten Daten, ergänzen Sie die fehlenden Pflichteigenschaften und korrigieren Sie ungültige Werte je genanntem Feature."
+
+[issues.structured-data-rich-result-warnings]
+what = "Bei mindestens einem erkannten Rich-Result-Feature fehlt eine empfohlene Eigenschaft."
+why = "Das Feature bleibt nutzbar, zusätzliche Angaben können die Darstellung im Suchergebnis aber vollständiger machen."
+fix = "Ergänzen Sie die empfohlenen Eigenschaften, soweit die Informationen auf der Seite vorhanden sind."

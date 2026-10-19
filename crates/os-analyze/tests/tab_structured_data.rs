@@ -148,7 +148,7 @@ async fn fixture_crawl_persists_all_formats_through_the_writer() {
     );
     let data =
         os_store::queries::structured_data::detail_rows(&crawl.file, &p.row_keys, 0, 20).unwrap();
-    assert_eq!(data.total, 3);
+    assert_eq!(data.total, 7);
     for filter in ["JSON-LD URLs", "Microdata URLs", "RDFa URLs"] {
         assert_eq!(page(&crawl.file, &cfg, filter).total, 1);
     }

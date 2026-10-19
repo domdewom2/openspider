@@ -16,6 +16,24 @@ pub struct SdItem {
     pub parse_error: Option<String>,
 }
 
+/// Ein Befund der Validierung strukturierter Daten (TECH-187/188, M2-D20; K2-61). Der Transport bildet ihn auf
+/// [`crate::SdIssueWrite`] ab.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SdFinding {
+    /// Index des Elements in `ParsedPage.structured_data`; `None` = Fakt der Seite (erkanntes Rich-Result-Feature).
+    pub item: Option<u32>,
+    /// Art der Validierung: `schema_org` oder `rich_results`.
+    pub validation: String,
+    /// Rich-Result-Feature, z. B. `Product snippet`.
+    pub feature: Option<String>,
+    /// Schweregrad: `error`, `warning` oder `info` (Feature erkannt).
+    pub severity: String,
+    /// Pfad der Eigenschaft ab dem Element, z. B. `offers[0].priceCurrency`.
+    pub property: Option<String>,
+    /// Stabile Befund-ID, z. B. `sd.schema.unknown_type`.
+    pub code: String,
+}
+
 /// Ein Formular der Seite (ONPAGE-034/035).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FormRef {

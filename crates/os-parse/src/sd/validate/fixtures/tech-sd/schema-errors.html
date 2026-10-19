@@ -1,0 +1,5 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>schema errors</title>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Prodcut", "name": "Typo in the type"}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Product", "name": "Shoe", "pricee": "5", "recipeIngredient": "salt", "offers": {"@type": "Offer", "price": "abc", "priceCurrency": "EUR"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Report", "author": {"@type": "Product", "name": "Not a person"}, "dateCreated": "gestern", "ex:foo": "custom vocabulary"}</script>
+</head><body><p>Five schema.org errors: unknown type, unknown property, wrong domain, wrong object type, invalid date.</p></body></html>
