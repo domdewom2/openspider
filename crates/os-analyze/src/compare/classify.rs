@@ -182,10 +182,8 @@ impl FilterComparison {
     /// `Change` in Prozent von `Previous` (zwei Nachkommastellen); leer bei `Previous` = 0.
     pub fn change_pct(&self) -> Option<f64> {
         let previous = self.previous?;
-        (previous > 0).then(|| {
-            let pct = self.change()? as f64 * 100.0 / previous as f64;
-            Some((pct * 100.0).round() / 100.0)
-        })?
+        let change = self.change()?;
+        (previous > 0).then(|| ((change as f64 * 100.0 / previous as f64) * 100.0).round() / 100.0)
     }
 
     /// Anzahl eines Unterfilters.
