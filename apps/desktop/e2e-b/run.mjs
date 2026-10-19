@@ -1,0 +1,263 @@
+// Native E2E-B + platform spikes. Run from the repository root; see S-3/S-5b/S-6.
+import assert from "node:assert/strict";
+import { spawn, execFileSync } from "node:child_process";
+import { once } from "node:events";
+import { mkdtemp, mkdir, rm, writeFile, copyFile } from "node:fs/promises";
+import { tmpdir, release, arch } from "node:os";
+import { resolve, join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { createServer } from "node:net";
+import { createServer as httpServer } from "node:http";
+import { setTimeout as delay } from "node:timers/promises";
+import { remote } from "webdriverio";
+
+const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+const binary = process.argv[2] && resolve(process.argv[2]);
+const mode = process.argv[3] ?? "smoke";
+const output = resolve(process.argv[4] ?? `apps/desktop/e2e-b/artifacts/s02-${mode}`);
+if (!binary || !["smoke", "s3", "s6"].includes(mode)) throw new Error("Usage: node apps/desktop/e2e-b/run.mjs <debug binary> [smoke|s3|s6] [output]");
+if (!["darwin", "win32"].includes(process.platform)) throw new Error("Native spike requires macOS or Windows");
+const started = Date.now();
+await mkdir(output, { recursive: true });
+const home = await mkdtemp(join(tmpdir(), "openspider-s02-"));
+const children = [];
+let browser, appPid, fixture;
+let logs = "";
+const report = { mode, platform: process.platform, release: release(), arch: arch(), node: process.version,
+  launch: process.env.S02_GUI === "1" ? "LaunchServices" : "child-process", checks: [], errors: [] };
+
+async function freePort() {
+  const server = createServer();
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const port = server.address().port;
+  await new Promise(r => server.close(r));
+  return port;
+}
+function child(command, args, env = {}) {
+  const p = spawn(command, args, { cwd: repo, env: { ...process.env, ...env }, stdio: ["ignore", "pipe", "pipe"] });
+  p.on("error", e => { logs += `${command}: ${e}\n`; });
+  p.stdout.on("data", d => { logs += d; });
+  p.stderr.on("data", d => { logs += d; });
+  children.push(p);
+  return p;
+}
+async function until(fn, label, ms = 30_000) {
+  const deadline = Date.now() + ms;
+  let last;
+  while (Date.now() < deadline) {
+    try { const value = await fn(); if (value) return value; } catch (e) { last = e; }
+    await delay(150);
+  }
+  throw new Error(`${label}: timed out${last ? ` (${last})` : ""}`);
+}
+// execute/async may block the WKWebView evaluation queue needed by IPC. Poll an independent promise instead.
+async function evaluate(expression) {
+  await browser.execute(`window.__s02Result = null; Promise.resolve().then(() => (${expression})).then(value => { window.__s02Result = {ok:true, value:value ?? null}; }, error => { window.__s02Result = {ok:false, failure:JSON.stringify(error, Object.getOwnPropertyNames(error))}; }); return true;`);
+  const result = await until(() => browser.execute("return window.__s02Result"), expression);
+  if (!result.ok) throw new Error(result.failure);
+  return result.value;
+}
+async function check(name, fn) {
+  try { const value = await fn(); report.checks.push({ name, status: "passed", value }); }
+  catch (e) { report.checks.push({ name, status: "failed", error: String(e) }); report.errors.push(`${name}: ${e}`); }
+}
+function native(action, key) {
+  const helper = process.env.S02_MAC_HELPER;
+  assert.ok(helper, "Set S02_MAC_HELPER to compiled spikes/macos.swift");
+  return execFileSync(helper, [action, String(appPid), ...(key ? [key] : [])], { encoding: "utf8" });
+}
+async function key(value) {
+  if (process.platform === "darwin") native("key", value);
+  else await browser.performActions([{ type: "key", id: "keyboard", actions: [
+    { type: "keyDown", value: "\uE009" }, { type: "keyDown", value },
+    { type: "keyUp", value }, { type: "keyUp", value: "\uE009" },
+  ] }]);
+  await delay(250);
+}
+async function startFixture() {
+  let requests = 0;
+  fixture = httpServer((req, res) => {
+    requests++;
+    res.setHeader("Content-Type", "text/html");
+    const i = Number(req.url.slice(1)) || 0;
+    const timer = setTimeout(() => res.end(`<html><title>S02 fixture ${i}</title><body><a href="/${i + 1}">Next</a></body></html>`), 100);
+    res.on("close", () => clearTimeout(timer));
+  });
+  fixture.listen(0, "127.0.0.1");
+  await once(fixture, "listening");
+  const url = `http://127.0.0.1:${fixture.address().port}/`;
+  const result = await evaluate(`window.s02.start(${JSON.stringify(url)})`);
+  await until(() => requests > 1, "Crawl must request the fixture");
+  await until(async () => (await evaluate("window.s02.snapshot()")).ticks.some(t => t.phase === "running"), "Crawl must emit running ticks");
+  return result;
+}
+
+try {
+  // Always start our own Vite; an occupied fixed Tauri dev port is an error, never another worktree's app.
+  const vite = child(process.execPath, [join(repo, "node_modules/vite/bin/vite.js"), join(repo, "apps/desktop"), "--host", "localhost"], {});
+  await until(async () => {
+    if (vite.exitCode !== null) throw new Error(`Vite exited ${vite.exitCode}: ${logs}`);
+    return logs.includes("Local:") || logs.includes("http://localhost:1420");
+  }, "Vite ready");
+  const port = await freePort();
+  const env = { OPENSPIDER_HOME: home, OPENSPIDER_SECRET_STORE: "memory", TAURI_WEBDRIVER_PORT: String(port) };
+  if (process.platform === "win32") {
+    child(process.env.TAURI_DRIVER ?? "tauri-driver", ["--port", String(port), "--native-port", String(await freePort())], env);
+    await until(async () => (await fetch(`http://127.0.0.1:${port}/status`, { signal: AbortSignal.timeout(1000) })).ok, "tauri-driver");
+    browser = await remote({ hostname: "127.0.0.1", port, logLevel: "error", connectionRetryCount: 0,
+      capabilities: { "tauri:options": { application: binary } } });
+  } else {
+    if (process.env.S02_GUI === "1") {
+      const bundle = join(home, "S02.app");
+      await mkdir(join(bundle, "Contents/MacOS"), { recursive: true });
+      await copyFile(binary, join(bundle, "Contents/MacOS/OpenSpider"));
+      await writeFile(join(bundle, "Contents/Info.plist"), '<?xml version="1.0"?><plist version="1.0"><dict><key>CFBundleExecutable</key><string>OpenSpider</string><key>CFBundleIdentifier</key><string>org.openspider.s02</string><key>CFBundleName</key><string>OpenSpider S02</string><key>CFBundlePackageType</key><string>APPL</string></dict></plist>');
+      execFileSync("/usr/bin/open", ["-n", "-a", bundle, "--stdout", join(output, "app.stdout.log"), "--stderr", join(output, "app.stderr.log"), ...Object.entries(env).flatMap(([k,v]) => ["--env", `${k}=${v}`])]);
+      appPid = await until(() => {
+        const lines = execFileSync("/bin/ps", ["-A", "-o", "pid=,command="], { encoding: "utf8" }).split("\n");
+        const line = lines.find(l => l.includes(join(bundle, "Contents/MacOS/OpenSpider")));
+        return line && Number(line.trim().split(/\s+/)[0]);
+      }, "GUI app process");
+    } else appPid = child(binary, [], env).pid;
+    await until(async () => (await fetch(`http://127.0.0.1:${port}/status`, { signal: AbortSignal.timeout(1000) })).ok, "embedded WebDriver");
+    browser = await remote({ hostname: "127.0.0.1", port, logLevel: "error", connectionRetryCount: 0, capabilities: {} });
+  }
+  await until(() => browser.execute("return window.__osRuntime?.transport === 'tauri' && !!window.__osMenu"), "native app + menu");
+  await evaluate("import('/spikes/probe.ts').then(m => { window.s02 = m; })");
+  report.beforeActivation = await evaluate("window.s02.snapshot()");
+  report.afterTauriActivation = await evaluate("window.s02.activate()");
+  if (process.platform === "darwin" && process.env.S02_MAC_HELPER) {
+    report.nativeActivation = JSON.parse(native("activate"));
+    report.afterNativeActivation = await evaluate("window.s02.snapshot()");
+  }
+  // spec: UI-001, OUT-232
+  await check("main window and real IPC", async () => {
+    const state = await evaluate("window.s02.snapshot()");
+    assert.equal(state.transport, "tauri");
+    assert.equal(state.shell.visible, true);
+    return state;
+  });
+  // spec: UI-113
+  if (mode === "s3") {
+    await evaluate("window.s02.installKeyboardFixture()");
+    await check("native editing shortcuts in a text field", async () => {
+      const state = await evaluate("window.s02.snapshot()");
+      assert.equal(state.frontend, "visible", "Native keyboard proof requires visible WKWebView");
+      assert.equal(state.focus, true, "Native keyboard proof requires focus");
+      await browser.execute("document.querySelector('#s02-input').focus()");
+      await key("a");
+      let result = await evaluate("window.s02.keyboardSnapshot()");
+      assert.deepEqual(result.selection, [0, 13]);
+      await key("c");
+      await browser.execute("document.querySelector('#s02-paste').focus()");
+      await key("v");
+      result = await evaluate("window.s02.keyboardSnapshot()");
+      assert.equal(result.paste, "fixture alpha");
+      await browser.execute("document.querySelector('#s02-input').focus()");
+      await key("a"); await key("x");
+      assert.equal((await evaluate("window.s02.keyboardSnapshot()")).value, "");
+      await key("z");
+      result = await evaluate("window.s02.keyboardSnapshot()");
+      assert.equal(result.value, "fixture alpha");
+      assert.deepEqual(result.actions, [], "Editing must not dispatch table/global commands");
+      return result;
+    });
+    await check("table fixture C/A dispatch once; V/X/Z do not mutate it", async () => {
+      const state = await evaluate("window.s02.snapshot()");
+      assert.equal(state.frontend, "visible"); assert.equal(state.focus, true);
+      await browser.execute("document.querySelector('#s02-grid').focus()");
+      const before = await evaluate("window.s02.keyboardSnapshot()");
+      for (const k of ["c", "a", "v", "x", "z"]) await key(k);
+      const after = await evaluate("window.s02.keyboardSnapshot()");
+      assert.deepEqual(after.actions.slice(before.actions.length), ["table.copy", "table.selectAll"]);
+      assert.equal(after.value, before.value);
+      assert.equal(after.paste, before.paste);
+      return after;
+    });
+  }
+  // spec: UI-143
+  if (mode === "s6") {
+    await check("running fixture crawl prerequisite", startFixture);
+    if (report.errors.length === 0) {
+      for (const state of ["visible", "minimized", "restored", "covered", "uncovered"]) {
+        let cover;
+        if (state === "minimized") await evaluate("window.s02.minimize()");
+        if (["restored", "uncovered"].includes(state)) {
+          native("restore"); await evaluate("window.s02.activate()");
+        }
+        if (state === "covered") cover = child(process.env.S02_MAC_HELPER, ["cover", String(appPid)]);
+        await delay(2000);
+        const before = await evaluate("window.s02.snapshot()");
+        if (state === "minimized") assert.equal(before.shell.minimized, true);
+        if (["visible", "restored", "uncovered"].includes(state)) {
+          assert.equal(before.shell.minimized, false, `${state}: window did not restore`);
+          assert.equal(before.frontend, "visible", `${state}: no visible baseline`);
+        }
+        await delay(30_000);
+        const after = await evaluate("window.s02.snapshot()");
+        if (cover) cover.kill();
+        const ticks = after.ticks.filter(t => t.at > before.at && t.at <= after.at);
+        const hz = ticks.length / ((after.at - before.at) / 1000);
+        report.checks.push({ name: state, status: "measured", before, after, hz });
+        // No crawl/no ticks is not a throttle pass. Native occlusion still needs a shell probe (S-6).
+        assert.ok(ticks.some(t => t.phase === "running"), "Crawl must remain active throughout measurement");
+        if (["minimized", "covered"].includes(state)) assert.ok(hz <= 1.04, `hidden rate ${hz} Hz > 1 Hz (+one boundary tick)`);
+        else assert.ok(hz > 1, `visible rate ${hz} Hz did not recover`);
+      }
+      throw new Error("Native occlusion-source telemetry is absent in window.rs; rate observations alone cannot pass S-6");
+    }
+  }
+  if (mode === "smoke") {
+    // spec: UI-001
+    await check("active native desktop", async () => {
+      const state = await evaluate("window.s02.snapshot()");
+      assert.equal(state.frontend, "visible");
+      assert.equal(state.focus, true);
+      return { frontend: state.frontend, focus: state.focus };
+    });
+    // spec: OUT-222, UI-016
+    await check("separate settings window", async () => {
+      const before = await browser.getWindowHandles();
+      await evaluate("window.s02.settings()");
+      const handles = await until(async () => { const h = await browser.getWindowHandles(); return h.length > before.length && h; }, "settings window");
+      const settings = handles.find(h => !before.includes(h));
+      await browser.switchToWindow(settings);
+      await until(() => browser.execute("return window.__osRuntime?.label === 'settings' && document.body.innerText.length > 0"), "settings content");
+      await evaluate("import('/spikes/probe.ts').then(m => { window.s02 = m; })");
+      const value = await evaluate("window.s02.snapshot()");
+      assert.equal(value.transport, "tauri");
+      assert.equal(value.shell.visible, true);
+      assert.equal(value.shell.minimized, false);
+      await browser.switchToWindow(before[0]);
+      return value;
+    });
+    // spec: UI-113, OUT-232
+    await check("closing during a running fixture crawl asks before quitting", async () => {
+      await startFixture();
+      assert.equal(await browser.execute("return !!document.querySelector('[role=alertdialog], [role=dialog], dialog[open]')"), false);
+      await evaluate("window.s02.close()");
+      await until(() => browser.execute("return !!document.querySelector('[role=alertdialog], [role=dialog], dialog[open]')"), "quit confirmation");
+      return await browser.execute("return document.querySelector('[role=alertdialog], [role=dialog], dialog[open]').textContent");
+    });
+  }
+} catch (e) { report.errors.push(String(e)); }
+finally {
+  if (browser) {
+    report.final = await evaluate("window.s02.snapshot()").catch(e => ({ error: String(e) }));
+    await browser.saveScreenshot(join(output, "window.png")).catch(e => { logs += `Screenshot: ${e}\n`; });
+    await browser.deleteSession().catch(() => {});
+  }
+  for (const p of children.reverse()) {
+    if (p.exitCode === null) { p.kill(); await Promise.race([once(p, "exit"), delay(3000)]); if (p.exitCode === null) p.kill("SIGKILL"); }
+  }
+  if (process.env.S02_GUI === "1" && appPid) { try { process.kill(appPid, "SIGTERM"); } catch {} }
+  if (fixture) { fixture.closeAllConnections(); fixture.close(); }
+  report.seconds = (Date.now() - started) / 1000;
+  report.status = report.errors.length ? "failed" : "passed";
+  await writeFile(join(output, "report.json"), JSON.stringify(report, null, 2) + "\n");
+  await writeFile(join(output, "native.log"), logs);
+  await rm(home, { recursive: true, force: true });
+}
+console.log(JSON.stringify({ status: report.status, seconds: report.seconds, errors: report.errors }, null, 2));
+if (report.status !== "passed") process.exitCode = 1;

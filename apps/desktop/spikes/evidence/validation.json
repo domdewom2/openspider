@@ -1,0 +1,60 @@
+{
+  "platform": "macOS 26.3 (25D125) arm64",
+  "date": "2026-10-19",
+  "baseCommit": "ef32c7f",
+  "cloudPlatform": null,
+  "newCiRun": null,
+  "python": "Homebrew Python 3.10.13 / SQLite 3.43.2 via temporary PATH shim",
+  "checks": [
+    {
+      "command": "cargo fmt --all --check",
+      "status": "passed",
+      "seconds": 2.38
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "status": "passed",
+      "seconds": 148.91
+    },
+    {
+      "command": "cargo test --workspace",
+      "status": "passed",
+      "seconds": 379.59
+    },
+    {
+      "command": "npm ci",
+      "status": "passed",
+      "seconds": 6.38
+    },
+    {
+      "command": "npm run -w apps/desktop typecheck",
+      "status": "passed",
+      "seconds": 1.37
+    },
+    {
+      "command": "npm run -w apps/desktop test",
+      "status": "passed",
+      "seconds": 4.47
+    },
+    {
+      "command": "cargo deny check licenses bans sources",
+      "status": "passed",
+      "seconds": 2.0
+    },
+    {
+      "command": "npm run -w apps/desktop check:static",
+      "status": "passed",
+      "seconds": 1.78
+    }
+  ],
+  "rustTotals": {
+    "passed": 2272,
+    "failed": 0,
+    "ignored": 40,
+    "programs": 256
+  },
+  "frontend": {
+    "files": 12,
+    "passed": 132
+  }
+}

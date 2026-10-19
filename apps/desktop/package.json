@@ -61,7 +61,8 @@
     "typescript": "^7.0.2",
     "vite": "^8.3.4",
     "vitest": "^5.0.4",
-    "vitest-canvas-mock": "1.2.0"
+    "vitest-canvas-mock": "1.2.0",
+    "webdriverio": "7.40.0"
   },
   "engines": {
     "node": ">=22"

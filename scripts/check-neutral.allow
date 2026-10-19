@@ -7,3 +7,4 @@ tests/fixtures/tech/multi-columns/d500.html	hreflang="sf" href="/hl/sf.html"	Tes
 .github/workflows/ci.yml	*/sf/ Referenzdateien	vorübergehend bis zum Merge von M2-F04 (alter Job parity)
 .github/workflows/ci.yml	*/sf/*.csv >/dev/null	vorübergehend bis zum Merge von M2-F04 (alter Job parity)
 .github/workflows/ci.yml	*/sf/ – Paritätslauf	vorübergehend bis zum Merge von M2-F04 (alter Job parity)
+package-lock.json	sha512-9rTIZ4ZjWwalCPiaY+kPiALLfOKgAz5CTi/Zb1L+qSZ8PH3zVo1T8JcgXIIqg1iM3pZ6hF+n9xO5r2jZ/SF+jg==	M2-S02/K2-61: exakter npm-Integritaetshash von devtools-protocol@0.0.1260888, zufaelliger Base64-Treffer, kein Produktbezug
