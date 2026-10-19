@@ -261,36 +261,6 @@ function = "validate"
 signature = "pub fn validate(_cfg: &os_model::CustomSearchConfig) -> Vec<os_model::ConfigIssue>"
 
 [[stub]]
-owner = "M2-D17"
-file = "crates/os-export/src/reports/crawl_path.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
-owner = "M2-D17"
-file = "crates/os-export/src/reports/crawl_path.rs"
-function = "export_detail"
-signature = "pub fn export_detail( _: &crate::catalog::TableJob<'_>, _: &os_analyze::details::DetailReq<'_>, _: &std::path::Path, _: crate::types::Format, ) -> Result<crate::types::ExportFileInfo, crate::error::ExportError>"
-
-[[stub]]
-owner = "M2-D17"
-file = "crates/os-export/src/reports/queued_urls.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
-owner = "M2-D17"
-file = "crates/os-export/src/reports/sidebar.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
-owner = "M2-D17"
-file = "crates/os-store/src/queries/crawl_path.rs"
-function = "detail_rows"
-signature = "pub fn detail_rows( _: &crate::CrawlFile, _: &[os_model::UrlId], _: u64, _: u64, ) -> Result<super::DetailData, crate::StoreError>"
-
-[[stub]]
 owner = "M2-D18"
 file = "crates/os-export/src/catalog/bulk_web.rs"
 function = "entries"

@@ -1,0 +1,15 @@
+Target Address,Step,Address,Status Code,Link Type,Anchor,Crawl Depth
+https://site.test/a/b/c,0,https://site.test/a/b/c,200,Hyperlink,C,3
+https://site.test/a/b/c,1,https://site.test/a/b,200,Hyperlink,B,2
+https://site.test/a/b/c,2,https://site.test/a,200,Hyperlink,A,1
+https://site.test/a/b/c,3,https://site.test/,200,,,0
+https://site.test/z,0,https://site.test/z,200,HTTP Redirect,,2
+https://site.test/z,1,https://site.test/redirect,301,Hyperlink,redirect,1
+https://site.test/z,2,https://site.test/,200,,,0
+https://site.test/diamond,0,https://site.test/diamond,200,Hyperlink,diamond,2
+https://site.test/diamond,1,https://site.test/l,200,Hyperlink,left,1
+https://site.test/diamond,2,https://site.test/,200,,,0
+https://site.test/orphan,0,https://site.test/orphan,200,XML Sitemap,,1
+https://site.test/orphan,1,https://site.test/sitemap.xml,200,,,0
+https://site.test/list-z,0,https://site.test/list-z,200,HTTP Redirect,,1
+https://site.test/list-z,1,https://site.test/list,200,,,0

@@ -1,0 +1,83 @@
+[[route]]
+path = "/"
+body = '<html><body><a href="/page-0">Page</a><a href="/page-1">Page</a><a href="/page-2">Page</a><a href="/page-3">Page</a><a href="/page-4">Page</a><a href="/page-5">Page</a><a href="/page-6">Page</a><a href="/page-7">Page</a><a href="/page-8">Page</a><a href="/page-9">Page</a><a href="/page-10">Page</a><a href="/page-11">Page</a><a href="/page-12">Page</a><a href="/page-13">Page</a><a href="/page-14">Page</a><a href="/page-15">Page</a><a href="/page-16">Page</a><a href="/page-17">Page</a><a href="/page-18">Page</a><a href="/page-19">Page</a></body></html>'
+
+[[route]]
+path = "/page-0"
+body = "<html><body>Page 0</body></html>"
+
+[[route]]
+path = "/page-1"
+body = "<html><body>Page 1</body></html>"
+
+[[route]]
+path = "/page-2"
+body = "<html><body>Page 2</body></html>"
+
+[[route]]
+path = "/page-3"
+body = "<html><body>Page 3</body></html>"
+
+[[route]]
+path = "/page-4"
+body = "<html><body>Page 4</body></html>"
+
+[[route]]
+path = "/page-5"
+body = "<html><body>Page 5</body></html>"
+
+[[route]]
+path = "/page-6"
+body = "<html><body>Page 6</body></html>"
+
+[[route]]
+path = "/page-7"
+body = "<html><body>Page 7</body></html>"
+
+[[route]]
+path = "/page-8"
+body = "<html><body>Page 8</body></html>"
+
+[[route]]
+path = "/page-9"
+body = "<html><body>Page 9</body></html>"
+
+[[route]]
+path = "/page-10"
+body = "<html><body>Page 10</body></html>"
+
+[[route]]
+path = "/page-11"
+body = "<html><body>Page 11</body></html>"
+
+[[route]]
+path = "/page-12"
+body = "<html><body>Page 12</body></html>"
+
+[[route]]
+path = "/page-13"
+body = "<html><body>Page 13</body></html>"
+
+[[route]]
+path = "/page-14"
+body = "<html><body>Page 14</body></html>"
+
+[[route]]
+path = "/page-15"
+body = "<html><body>Page 15</body></html>"
+
+[[route]]
+path = "/page-16"
+body = "<html><body>Page 16</body></html>"
+
+[[route]]
+path = "/page-17"
+body = "<html><body>Page 17</body></html>"
+
+[[route]]
+path = "/page-18"
+body = "<html><body>Page 18</body></html>"
+
+[[route]]
+path = "/page-19"
+body = "<html><body>Page 19</body></html>"
