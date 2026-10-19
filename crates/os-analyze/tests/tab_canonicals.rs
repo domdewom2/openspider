@@ -663,7 +663,14 @@ async fn the_step_is_repeatable_and_stamps_the_change_feed() {
     // Die markierten Zeilen erscheinen im Änderungsfeed.
     let changed = queries::changed_since(conn, before, 500).unwrap();
     let flagged: i64 = conn.query_row("SELECT COUNT(DISTINCT url_id) FROM url_flags WHERE flag IN ('non_indexable_canonical', 'unlinked_canonical')", [], |r| r.get(0)).unwrap();
-    assert_eq!(changed.len(), flagged as usize);
+    assert!(changed.len() >= flagged as usize);
+    // TECH-139/145: Links und Link Score stempeln zusätzlich eigene Ergebniszeilen.
+    assert!(BASIC_NON_INDEXABLE
+        .iter()
+        .all(|path| changed.iter().any(|id| {
+            let row = queries::url_by_id(conn, *id).unwrap().unwrap();
+            c.norm(&row.address) == *path
+        })));
 
     // Zweiter Lauf: gleiche Menge, keine Änderung.
     analyse_now(&c);

@@ -69,6 +69,9 @@ js => "custom_js_values", api => "api_values" }
 
 /// Dispatch und Besitzer bleiben auch bei noch nicht implementierten Quellen abrufbar.
 pub fn detail_source(kind: DetailKind) -> (&'static str, DetailFn) {
+    if let Some(source) = crate::tabs::links::detail_source(kind) {
+        return source;
+    }
     use DetailKind::*;
     match kind {
         Headers => ("M2-E01", headers),

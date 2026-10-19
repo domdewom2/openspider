@@ -15,42 +15,6 @@ function = "ngram_details"
 signature = "pub fn ngram_details( _: &os_store::CrawlFile, _: &os_model::CrawlConfig, _: &crate::details::DetailReq<'_>, ) -> Result<crate::details::DetailRows, crate::ViewError>"
 
 [[stub]]
-owner = "M2-D08"
-file = "crates/os-analyze/src/analysis/steps/link_score.rs"
-function = "run"
-signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
-
-[[stub]]
-owner = "M2-D08"
-file = "crates/os-analyze/src/analysis/steps/links.rs"
-function = "run"
-signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
-
-[[stub]]
-owner = "M2-D08"
-file = "crates/os-analyze/src/tabs/links.rs"
-function = "column_source"
-signature = "pub fn column_source() -> Option<Box<dyn crate::defs::ColumnSource>>"
-
-[[stub]]
-owner = "M2-D08"
-file = "crates/os-analyze/src/tabs/links.rs"
-function = "url_details"
-signature = "pub fn url_details( _: &os_store::CrawlFile, _: &os_model::CrawlConfig, _: os_model::UrlId, ) -> Result<Vec<(String, String)>, crate::ViewError>"
-
-[[stub]]
-owner = "M2-D08"
-file = "crates/os-store/src/queries/anchors.rs"
-function = "detail_rows"
-signature = "pub fn detail_rows( _: &crate::CrawlFile, _: &[os_model::UrlId], _: u64, _: u64, ) -> Result<super::DetailData, crate::StoreError>"
-
-[[stub]]
-owner = "M2-D08"
-file = "crates/os-store/src/queries/anchors.rs"
-function = "register_collations"
-signature = "pub fn register_collations(_conn: &rusqlite::Connection) -> Result<(), crate::StoreError>"
-
-[[stub]]
 owner = "M2-D18"
 file = "crates/os-export/src/catalog/bulk_web.rs"
 function = "entries"
@@ -115,18 +79,6 @@ owner = "M2-E05"
 file = "crates/os-engine/src/render_glue.rs"
 function = "render"
 signature = "fn render<'a>( &'a self, url: &'a str, opts: &'a RenderOpts, ) -> BoxFuture<'a, Result<RenderedPage, RenderError>>"
-
-[[stub]]
-owner = "M2-F02"
-file = "crates/os-analyze/src/analysis/steps/link_score.rs"
-function = "run"
-signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
-
-[[stub]]
-owner = "M2-F02"
-file = "crates/os-analyze/src/analysis/steps/links.rs"
-function = "run"
-signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
 
 [[stub]]
 owner = "M2-F02"

@@ -1,0 +1,22 @@
+Source,Destination,Anchor,Alt Text,Link Position,Follow,Status Code
+https://site.test/1,https://site.test/4,Click Here!,,,True,200
+https://site.test/1,https://site.test/7,Hier klicken für Preise,,,True,200
+https://site.test/1,http://127.2.3.4/x,,,,True,200
+https://site.test/1,http://127.2.3.4/x,,,,False,200
+https://site.test/1,https://site.test/4,Produkte,,,True,200
+https://site.test/1,https://site.test/4,,Logo,,True,200
+https://site.test/2,https://site.test/4,Produkte,,,False,200
+https://site.test/2,https://site.test/5,Mehr…,,,False,200
+https://site.test/2,https://site.test/6,Produkte,,,True,200
+https://site.test/2,https://site.test/4,,,,True,200
+https://site.test/3,https://site.test/5,Read More!,,,False,200
+https://site.test/3,https://site.test/6,Produkte,,,True,200
+https://site.test/3,https://site.test/4,produkte,,,True,200
+https://site.test/3,https://site.test/4,Mehr,,,True,200
+https://site.test/3,https://site.test/4,Mehr,,,True,200
+https://site.test/4,https://site.test/4,Produkte,,,True,200
+https://site.test/6,https://site.test/6,Produkte,,,True,200
+https://site.test/7,https://site.test/4,Produkte,,,True,200
+https://site.test/8,https://site.test/9,,,,True,200
+https://site.test/8,mailto:test@site.test,,,,True,
+https://site.test/8,https://site.test/4,Produkte,,,True,200

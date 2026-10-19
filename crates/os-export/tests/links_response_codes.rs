@@ -80,7 +80,8 @@ fn all_36_entries_are_registered_with_distinct_file_names() {
         catalog::resolve(ExportKind::Bulk, "Response Codes:Internal:All").unwrap(),
         ExportRef::Bulk("Response Codes:Internal:All Inlinks".into())
     );
-    assert_eq!(all.len(), 2 + 36);
+    // OUT-033…041/068: zehn weitere Links-Exporte.
+    assert_eq!(all.len(), 12 + 36);
     // OUT-008: keine Kollision mit den Tab-Exporten desselben Tabs
     let cfg = CrawlConfig::default();
     let tab_names: Vec<String> = tabs::all()
@@ -390,7 +391,13 @@ async fn every_entry_exports_against_the_registered_tabs() {
         let infos = export_bulk(&fx.file, &cfg, &name, dir.path(), Format::Csv)
             .unwrap_or_else(|e| panic!("{name}: {e}"));
         let text = read_csv(&infos[0].path);
-        assert!(text.starts_with("Type,Source,Destination,"), "{name}");
+        // OUT-033 hat ein eigenes Layout; OUT-050 behält das Standard-Linkformat.
+        let header = if name == "Links:All Anchor Text" {
+            "Source,Destination,Anchor,Alt Text,Link Position,Follow,Status Code"
+        } else {
+            "Type,Source,Destination,"
+        };
+        assert!(text.starts_with(header), "{name}");
         files.insert(infos[0].path.clone());
     }
     assert_eq!(files.len(), bulk_links::names().len());

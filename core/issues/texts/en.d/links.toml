@@ -1,2 +1,40 @@
-# OpenSpider – Issue-Texte (English) ab M2, Tab „Links“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/en.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.links-non-descriptive-anchor-text-in-internal-outlinks]
+what = "Internal links use a generic anchor phrase from the configured list."
+why = "Generic labels give readers and search engines little information about the destination."
+fix = "Replace the phrase with a concise description of the destination."
+
+[issues.links-pages-with-high-external-outlinks]
+what = "The page meets the configured threshold for followed external outlinks."
+why = "Many external links can dilute the focus of a page and make maintenance harder."
+fix = "Review the links for relevance and remove unnecessary references."
+
+[issues.links-pages-with-high-internal-outlinks]
+what = "The page meets the configured threshold for followed internal outlinks."
+why = "Very large link lists can obscure useful navigation and distribute attention broadly."
+fix = "Reduce redundant links and group navigation around useful destinations."
+
+[issues.links-follow-and-nofollow-internal-inlinks-to-page]
+what = "The page receives both followed and nofollow internal links."
+why = "Inconsistent link instructions can make the intended internal link policy unclear."
+fix = "Check the source pages and use consistent link attributes where appropriate."
+
+[issues.links-internal-nofollow-inlinks-only]
+what = "Every known internal hyperlink to this page is nofollow."
+why = "Search engines may have fewer usable internal paths to this page."
+fix = "Add a relevant followed internal link if the page should be discoverable."
+
+[issues.links-outlinks-to-localhost]
+what = "The page references a loopback host outside the crawl start authority."
+why = "These addresses point to the visitor’s own computer rather than a public service."
+fix = "Replace development URLs with the intended production URLs."
+
+[issues.links-non-indexable-page-inlinks-only]
+what = "Only non-indexable pages provide internal hyperlinks to this indexable page."
+why = "Discovery and internal authority may depend on pages that search engines exclude."
+fix = "Link to the page from a relevant indexable page."
+
+[issues.links-pages-with-uncrawlable-internal-outlinks]
+what = "The page contains stored internal navigation that is not a crawlable hyperlink."
+why = "Search engines may not discover destinations implemented only as scripted navigation."
+fix = "Use an anchor element with a regular href for navigational links."

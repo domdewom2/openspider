@@ -1,5 +1,13 @@
-All: 18
-Pages With High Crawl Depth: 2
-Pages Without Internal Outlinks: 2
-Internal Nofollow Outlinks: 1
-Internal Outlinks With No Anchor Text: 4
+All: 18 (ready)
+Pages With High Crawl Depth: 2 (ready)
+Pages Without Internal Outlinks: 2 (ready)
+Internal Nofollow Outlinks: 1 (ready)
+Internal Outlinks With No Anchor Text: 4 (ready)
+Non-Descriptive Anchor Text In Internal Outlinks: 0 (ready)
+Pages With High External Outlinks: 0 (ready)
+Pages With High Internal Outlinks: 0 (ready)
+Follow & Nofollow Internal Inlinks To Page: - (needs_crawl_analysis)
+Internal Nofollow Inlinks Only: - (needs_crawl_analysis)
+Outlinks To Localhost: 0 (ready)
+Non-Indexable Page Inlinks Only: - (needs_crawl_analysis)
+Pages With Uncrawlable Internal Outlinks: 0 (ready)

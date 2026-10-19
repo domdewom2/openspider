@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 use os_analyze::views::{filter_counts, query_view, ColumnSelection, ViewPage, ViewQuery};
 use os_engine::testing::{crawl_fixture_from, FixtureCrawl};
-use os_model::{CrawlConfig, FilterState, StoreCrawl, Value};
+use os_model::{CrawlConfig, StoreCrawl, Value};
 use os_store::{CrawlFile, OpenMode};
 use os_testsite::golden;
 
@@ -124,7 +124,7 @@ async fn population_is_internal_html_200_and_counts_exclude_self_links() {
     let fx = crawl_main(&cfg).await;
     check(&fx, &cfg, "All", &ALL_PAGES);
 
-    // Standardspalten = Referenz-Spaltenfolge; `Inlinks` ist eine ausgeblendete Zusatzspalte.
+    // TECH-130 [M2]: Inlinks is now a visible standard column.
     let default = page(&fx.file, &cfg, "All", false);
     assert_eq!(
         default.columns,
@@ -134,6 +134,7 @@ async fn population_is_internal_html_200_and_counts_exclude_self_links() {
             "Indexability Status",
             "Crawl Depth",
             "Link Score",
+            "Inlinks",
             "Unique Inlinks",
             "Unique JS Inlinks",
             "% of Total",
@@ -146,11 +147,7 @@ async fn population_is_internal_html_200_and_counts_exclude_self_links() {
         ]
     );
     let all = page(&fx.file, &cfg, "All", true);
-    assert_eq!(
-        all.columns.last().map(String::as_str),
-        Some("Inlinks"),
-        "Erweiterungsspalte steht hinter den Referenzspalten"
-    );
+    assert_eq!(all.columns, default.columns);
 
     // Startseite: Tiefe 0; 5 Ketten-Seiten + /attrs.html verlinken sie (der Selbstlink zählt nicht).
     assert_eq!(cell(&all, "/", "Crawl Depth"), "0");
@@ -212,8 +209,12 @@ fn counts(file: &CrawlFile, cfg: &CrawlConfig) -> String {
         .into_iter()
         .filter(|c| c.tab == "Links")
     {
-        assert_eq!(c.state, FilterState::Ready, "{}", c.filter);
-        out.push_str(&format!("{}: {}\n", c.filter, c.count.unwrap()));
+        out.push_str(&format!(
+            "{}: {} ({})\n",
+            c.filter,
+            c.count.map_or_else(|| "-".into(), |n| n.to_string()),
+            c.state.as_str()
+        ));
     }
     out
 }

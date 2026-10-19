@@ -18,11 +18,9 @@
 //! Die Schwellen stammen aus `links.*` der Konfiguration, die in der Crawl-Datei liegt; eine Änderung wirkt
 //! beim nächsten Zugriff ohne Recrawl.
 //!
-//! # Offen (P1)
-//!
-//! `Link Score` und die JavaScript-Spalten sind in M1 leer (TECH-145, TECH-103: kein Rendering).
+//! Link Score is published by the post-crawl step (TECH-145). JavaScript counters require rendering.
 
-use os_model::{CrawlConfig, Value};
+use os_model::{AnalysisStep, CrawlConfig, Value};
 
 use crate::defs::{ColumnDef, ColumnKind, ColumnSql, FilterDef, FilterKind, SortKey, TabDef};
 
@@ -54,14 +52,14 @@ const NO_OUTLINKS: &str = "(c.outlinks - c.self_outlinks) = 0";
 /// Interner Hyperlink mit `rel` nofollow, ugc oder sponsored (TECH-134); `links.rel` ist kleingeschrieben und
 /// mit einem Leerzeichen zwischen den Token gespeichert. Seiten-nofollow (Meta, Header) zählt nicht.
 const NOFOLLOW_OUTLINK: &str = "EXISTS (SELECT 1 FROM links l JOIN urls t ON t.id = l.target_id \
-    WHERE l.source_id = u.id AND l.link_type = 'Hyperlink' AND t.is_internal = 1 AND l.rel IS NOT NULL \
+    WHERE l.source_id = u.id AND l.link_type = 'Hyperlink' AND l.crawlable = 1 AND t.is_internal = 1 AND l.rel IS NOT NULL \
     AND ((' ' || l.rel || ' ') LIKE '% nofollow %' OR (' ' || l.rel || ' ') LIKE '% ugc %' \
          OR (' ' || l.rel || ' ') LIKE '% sponsored %'))";
 
 /// Interner Hyperlink, bei dem Ankertext und Alt-Text leer sind (TECH-135); `<area>` ohne `alt` zählt.
 const NO_ANCHOR: &str = "EXISTS (SELECT 1 FROM links l JOIN urls t ON t.id = l.target_id \
-    WHERE l.source_id = u.id AND l.link_type = 'Hyperlink' AND t.is_internal = 1 \
-    AND TRIM(COALESCE(l.anchor, '')) = '' AND TRIM(COALESCE(l.alt_text, '')) = '')";
+    WHERE l.source_id = u.id AND l.link_type = 'Hyperlink' AND l.crawlable = 1 AND t.is_internal = 1 \
+    AND COALESCE(l.anchor, '') COLLATE OS_ANCHOR = '' AND COALESCE(l.alt_text, '') COLLATE OS_ANCHOR = '')";
 
 fn column(key: &'static str, sql: &'static str, kind: ColumnKind) -> ColumnDef {
     ColumnDef {
@@ -87,10 +85,30 @@ fn filter(id: &'static str, predicate: &'static str, ignore_non_indexable: bool)
 
 /// Schwellen aus den Link-Präferenzen.
 fn params(cfg: &CrawlConfig) -> Vec<(&'static str, Value)> {
-    vec![(
-        "high_crawl_depth",
-        Value::Int(i64::from(cfg.links.high_crawl_depth)),
-    )]
+    vec![
+        (
+            "high_crawl_depth",
+            Value::Int(i64::from(cfg.links.high_crawl_depth)),
+        ),
+        (
+            "high_internal_outlinks",
+            Value::Int(i64::from(cfg.links.high_internal_outlinks)),
+        ),
+        (
+            "high_external_outlinks",
+            Value::Int(i64::from(cfg.links.high_external_outlinks)),
+        ),
+        (
+            "store_uncrawlable_links",
+            Value::Bool(cfg.spider.store_uncrawlable_links),
+        ),
+        (
+            "anchor_phrases",
+            Value::Text(
+                serde_json::to_string(&cfg.links.non_descriptive_anchors).expect("string list"),
+            ),
+        ),
+    ]
 }
 
 /// Definition des Tabs „Links“.
@@ -107,17 +125,10 @@ pub fn tab() -> TabDef {
                 ColumnKind::Text,
             ),
             column("Crawl Depth", "u.crawl_depth", ColumnKind::Int),
-            // P1 (TECH-145): leer, bis der Teilschritt „Link Score“ existiert.
-            column("Link Score", "NULL", ColumnKind::Int),
-            // [OS-Erweiterung]: steht in der Referenz im Internal-Tab (TECH-130, Zusatzspalte).
-            ColumnDef {
-                key: "Inlinks",
-                sql: ColumnSql::Expr("(c.inlinks - c.self_inlinks)"),
-                kind: ColumnKind::Int,
-                default_visible: false,
-                extension: true,
-                ..ColumnDef::META
-            },
+            // Empty until the score step publishes its complete result.
+            column("Link Score", SCORE_SQL, ColumnKind::Int)
+                .with_needs(crate::defs::Needs::CrawlAnalysis(AnalysisStep::LinkScore)),
+            column("Inlinks", "(c.inlinks - c.self_inlinks)", ColumnKind::Int),
             column("Unique Inlinks", unique_inlinks!(), ColumnKind::Int),
             column("Unique JS Inlinks", "NULL", ColumnKind::Int),
             column(
@@ -158,6 +169,25 @@ pub fn tab() -> TabDef {
             filter("Pages Without Internal Outlinks", NO_OUTLINKS, true),
             filter("Internal Nofollow Outlinks", NOFOLLOW_OUTLINK, false),
             filter("Internal Outlinks With No Anchor Text", NO_ANCHOR, false),
+            filter(
+                "Non-Descriptive Anchor Text In Internal Outlinks",
+                NON_DESCRIPTIVE_PAGE,
+                false,
+            ),
+            filter("Pages With High External Outlinks", HIGH_EXTERNAL, false),
+            filter("Pages With High Internal Outlinks", HIGH_INTERNAL, false),
+            post_filter(
+                "Follow & Nofollow Internal Inlinks To Page",
+                "link.mixed_inlinks",
+            ),
+            post_filter("Internal Nofollow Inlinks Only", "link.nofollow_only"),
+            filter("Outlinks To Localhost", LOCALHOST_PAGE, false),
+            post_filter("Non-Indexable Page Inlinks Only", "link.non_indexable_only"),
+            filter(
+                "Pages With Uncrawlable Internal Outlinks",
+                UNCRAWLABLE_PAGE,
+                false,
+            ),
         ],
         default_sort: vec![SortKey {
             column: "Address".to_string(),
@@ -168,17 +198,115 @@ pub fn tab() -> TabDef {
     }
 }
 
-// STUB(M2-D08)
+/// Stored score is published atomically by the analysis step.
+pub const SCORE_SQL: &str =
+    "CASE WHEN NOT EXISTS (SELECT 1 FROM analysis_steps WHERE step = 'link_score' AND state <> 'done') THEN (SELECT v_int FROM url_ext WHERE url_id = u.id AND key = 'linkscore.score') END";
+pub const NON_DESCRIPTIVE_LINK: &str = "l.link_type = 'Hyperlink' AND l.crawlable = 1 AND t.is_internal = 1 AND EXISTS (SELECT 1 FROM json_each(:anchor_phrases) p WHERE (CASE WHEN COALESCE(l.anchor, '') COLLATE OS_ANCHOR = '' THEN COALESCE(l.alt_text, '') ELSE l.anchor END) COLLATE OS_ANCHOR_PHRASE = p.value AND p.value COLLATE OS_ANCHOR_PHRASE <> '')";
+const NON_DESCRIPTIVE_PAGE: &str = "EXISTS (SELECT 1 FROM links l JOIN urls t ON t.id = l.target_id, json_each(:anchor_phrases) p WHERE l.source_id = u.id AND l.link_type = 'Hyperlink' AND l.crawlable = 1 AND t.is_internal = 1 AND (CASE WHEN COALESCE(l.anchor, '') COLLATE OS_ANCHOR = '' THEN COALESCE(l.alt_text, '') ELSE l.anchor END) COLLATE OS_ANCHOR_PHRASE = p.value AND p.value COLLATE OS_ANCHOR_PHRASE <> '')";
+const HIGH_EXTERNAL: &str = "u.id IN (SELECT l.source_id FROM links l JOIN urls t ON t.id = l.target_id WHERE l.link_type = 'Hyperlink' AND l.crawlable = 1 AND l.follow = 1 AND t.is_internal = 0 GROUP BY l.source_id HAVING COUNT(*) >= :high_external_outlinks)";
+const HIGH_INTERNAL: &str = "u.id IN (SELECT l.source_id FROM links l JOIN urls t ON t.id = l.target_id WHERE l.link_type = 'Hyperlink' AND l.crawlable = 1 AND l.follow = 1 AND t.is_internal = 1 AND l.source_id <> l.target_id GROUP BY l.source_id HAVING COUNT(*) >= :high_internal_outlinks)";
+pub const LOCALHOST_LINK: &str = "os_is_loopback(t.address) AND NOT (os_is_loopback((SELECT value FROM crawl_meta WHERE key = 'start_url')) AND os_authority(t.address) = os_authority((SELECT value FROM crawl_meta WHERE key = 'start_url')))";
+const LOCALHOST_PAGE: &str = "EXISTS (SELECT 1 FROM links l JOIN urls t ON t.id = l.target_id WHERE l.source_id = u.id AND os_is_loopback(t.address) AND NOT (os_is_loopback((SELECT value FROM crawl_meta WHERE key = 'start_url')) AND os_authority(t.address) = os_authority((SELECT value FROM crawl_meta WHERE key = 'start_url'))))";
+const UNCRAWLABLE_PAGE: &str = ":store_uncrawlable_links = 1 AND EXISTS (SELECT 1 FROM links l JOIN urls t ON t.id = l.target_id WHERE l.source_id = u.id AND l.link_type = 'Hyperlink' AND l.crawlable = 0 AND t.is_internal = 1)";
+
+fn post_filter(id: &'static str, key: &str) -> FilterDef {
+    FilterDef {
+        kind: FilterKind::PostCrawl(AnalysisStep::Links),
+        ..filter(
+            id,
+            crate::defs::intern(&format!(
+                "u.id IN (SELECT url_id FROM url_ext WHERE key = '{key}' AND v_int = 1)"
+            )),
+            false,
+        )
+    }
+}
+struct ScoreSource;
+impl crate::defs::ColumnSource for ScoreSource {
+    fn columns(&self, _: &CrawlConfig) -> Vec<ColumnDef> {
+        vec![column("Link Score", SCORE_SQL, ColumnKind::Int)
+            .with_needs(crate::defs::Needs::CrawlAnalysis(AnalysisStep::LinkScore))]
+    }
+}
 pub fn column_source() -> Option<Box<dyn crate::defs::ColumnSource>> {
-    None
+    Some(Box::new(ScoreSource))
 }
 
-/// URL-Beiträge des Fachpakets M2-D08.
-// STUB(M2-D08)
 pub fn url_details(
-    _: &os_store::CrawlFile,
-    _: &os_model::CrawlConfig,
-    _: os_model::UrlId,
+    file: &os_store::CrawlFile,
+    _: &CrawlConfig,
+    id: os_model::UrlId,
 ) -> Result<Vec<(String, String)>, crate::ViewError> {
-    Ok(Vec::new())
+    use rusqlite::OptionalExtension;
+    let score: Option<i64> = file
+        .conn()
+        .query_row(
+            &format!("SELECT {SCORE_SQL} FROM urls u WHERE u.id = ?1"),
+            [id.0],
+            |r| r.get::<_, Option<i64>>(0),
+        )
+        .optional()?
+        .flatten();
+    Ok(vec![(
+        "Link Score".into(),
+        score.map(|s| s.to_string()).unwrap_or_default(),
+    )])
+}
+
+/// Detail registry extension: keep anchor options and numeric kinds at the package boundary.
+pub fn detail_source(
+    kind: crate::details::DetailKind,
+) -> Option<(&'static str, crate::details::DetailFn)> {
+    (kind == crate::details::DetailKind::Anchors).then_some(("M2-D08", anchor_details))
+}
+fn anchor_details(
+    file: &os_store::CrawlFile,
+    _: &CrawlConfig,
+    req: &crate::details::DetailReq<'_>,
+) -> Result<crate::details::DetailRows, crate::ViewError> {
+    let boolean = |camel: &str, snake: &str, default: bool| {
+        req.params
+            .get(camel)
+            .or_else(|| req.params.get(snake))
+            .and_then(serde_json::Value::as_bool)
+            .unwrap_or(default)
+    };
+    let options = os_store::queries::anchors::AnchorOptions {
+        outlinks: boolean("outlinks", "outlinks", false)
+            || req
+                .params
+                .get("direction")
+                .and_then(serde_json::Value::as_str)
+                == Some("outlinks"),
+        exclude_self: boolean("excludeSelf", "exclude_self", true),
+        exclude_nofollow: boolean("excludeNofollow", "exclude_nofollow", false),
+    };
+    let data = os_store::queries::anchors::detail_rows_with(
+        file,
+        req.url_ids,
+        req.offset,
+        req.limit,
+        options,
+    )?;
+    let columns = data
+        .columns
+        .into_iter()
+        .enumerate()
+        .map(|(i, name)| {
+            (
+                name,
+                match i {
+                    0 => ColumnKind::Text,
+                    6 => ColumnKind::Float { decimals: 2 },
+                    _ => ColumnKind::Int,
+                },
+            )
+        })
+        .collect();
+    Ok(crate::details::DetailRows {
+        columns,
+        rows: data.rows,
+        total: data.total,
+        notes: Vec::new(),
+    })
 }

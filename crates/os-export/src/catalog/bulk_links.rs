@@ -23,6 +23,8 @@ pub const RESPONSE_CODES_TAB: &str = "Response Codes";
 /// Welche Ziel-URLs ein Link-Bulk-Export umfasst.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Selection {
+    /// Link-level selection defined by the Links specifications.
+    LinkSpec(&'static str),
     /// Alle Links, unabhängig vom Ziel (`Links:All Inlinks`/`All Outlinks`).
     All,
     /// Links auf Ziele, die in mindestens einem der Filter liegen (Vereinigung).
@@ -155,6 +157,48 @@ pub fn entries() -> &'static [BulkLinkEntry] {
                 requires_rendering: false,
             },
         ];
+        for name in [
+            "All Anchor Text",
+            "External Links",
+            "Internal Nofollow Outlinks",
+            "Internal Outlinks With No Anchor Text",
+            "Non-Descriptive Anchor Text In Internal Outlinks",
+            "Follow & Nofollow Internal Inlinks To Page",
+            "Internal Nofollow Inlinks Only",
+            "Outlinks To Localhost",
+            "Pages With Uncrawlable Internal Outlinks",
+            "Non-Indexable Page Inlinks Only",
+        ] {
+            let order = if matches!(
+                name,
+                "Follow & Nofollow Internal Inlinks To Page"
+                    | "Internal Nofollow Inlinks Only"
+                    | "Non-Indexable Page Inlinks Only"
+            ) {
+                LinkOrder::Inlinks
+            } else {
+                LinkOrder::Outlinks
+            };
+            // OUT-008: Die acht Tab-Filter haben bereits den Spec-Namen als Dateistamm.
+            // Der Zusatz (Bulk) vermeidet doppelte Richtungsangaben; der Spec-Name bleibt als Alias gültig.
+            let canonical = if matches!(name, "All Anchor Text" | "External Links") {
+                format!("Links:{name}")
+            } else {
+                format!("Links:{name} (Bulk)")
+            };
+            let aliases = if canonical == format!("Links:{name}") {
+                Vec::new()
+            } else {
+                vec![format!("Links:{name}")]
+            };
+            v.push(BulkLinkEntry {
+                name: canonical,
+                aliases,
+                selection: Selection::LinkSpec(name),
+                order,
+                requires_rendering: false,
+            });
+        }
         v.extend(response_code_entries());
         v
     })

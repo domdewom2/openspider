@@ -111,7 +111,7 @@ fn select_sql(where_sql: &str, order: LinkOrder) -> String {
         "SELECT l.link_type, s.address, COALESCE(t.address, l.target_raw), t.size_bytes, l.alt_text, \
                 l.anchor, {STATUS_CODE_SQL}, {STATUS_SQL}, \
                 CASE WHEN l.follow <> 0 THEN 'True' ELSE 'False' END, \
-                l.target_attr, l.rel, l.path_type, l.link_path, l.link_position, l.link_origin \
+                l.target_attr, l.rel, l.path_type, l.link_path, l.link_position, l.link_origin, l.uncrawlable_reason \
          FROM links l \
          JOIN urls s ON s.id = l.source_id \
          LEFT JOIN urls t ON t.id = l.target_id \
@@ -156,9 +156,19 @@ pub(crate) fn stream_links(
     kinds: &[ColumnKind],
     writer: &mut dyn TableWriter,
 ) -> Result<u64, ExportError> {
-    stream_links_with(file, where_sql, params, order, kinds, writer, None)
+    stream_links_with(
+        file,
+        where_sql,
+        params,
+        order,
+        kinds,
+        writer,
+        None,
+        Layout::Standard,
+    )
 }
 
+#[allow(clippy::too_many_arguments)]
 fn stream_links_with(
     file: &CrawlFile,
     where_sql: &str,
@@ -167,6 +177,7 @@ fn stream_links_with(
     kinds: &[ColumnKind],
     writer: &mut dyn TableWriter,
     mut ctx: Option<&mut crate::types::ExportCtx<'_>>,
+    layout: Layout,
 ) -> Result<u64, ExportError> {
     let conn = file.conn();
     let mut stmt = sql(conn.prepare_cached(&select_sql(where_sql, order)))?;
@@ -180,10 +191,19 @@ fn stream_links_with(
             (ctx.progress)(count);
         }
         values.clear();
-        for i in 0..LINK_COLUMNS.len() {
+        for &i in layout.indices() {
             let v = match i {
                 3 | 6 => sql(row.get::<_, Option<i64>>(i))?.map_or(Value::Null, Value::Int),
                 _ => sql(row.get::<_, Option<String>>(i))?.map_or(Value::Null, Value::Text),
+            };
+            let v = match (layout, i, v) {
+                (Layout::Anchors, 5, Value::Text(s)) => {
+                    Value::Text(os_store::queries::anchors::normalize(&s))
+                }
+                (Layout::Uncrawlable, 15, Value::Text(s)) => {
+                    Value::Text(reason_text(&s).to_owned())
+                }
+                (_, _, value) => value,
             };
             values.push(v);
         }
@@ -225,6 +245,7 @@ fn target_condition(
             }))
         }
         Selection::Empty => return Ok(None),
+        Selection::LinkSpec(spec) => return link_spec_condition(tabs, file, cfg, spec, warnings),
         Selection::Filters { tab, filters } => (tab, filters, None),
         Selection::FilterWhere { tab, filter, extra } => {
             (tab, std::slice::from_ref(filter), Some(extra.as_str()))
@@ -272,7 +293,8 @@ pub(crate) fn export_link_entry(
     format: Format,
     sheet: &str,
 ) -> Result<ExportFileInfo, ExportError> {
-    let kinds = link_kinds();
+    let layout = Layout::for_entry(entry);
+    let kinds = layout.kinds();
     let mut warnings: Vec<String> = Vec::new();
     let condition = target_condition(tabs, file, cfg, &entry.selection, &mut warnings)?;
     if entry.selection == Selection::Empty {
@@ -282,9 +304,18 @@ pub(crate) fn export_link_entry(
         ));
     }
     let mut writer = open_writer(path, format, sheet, &writer_options(cfg))?;
-    writer.header(&link_header())?;
+    writer.header(&Layout::for_entry(entry).header())?;
     if let Some(c) = &condition {
-        stream_links(file, &c.sql, &c.params, entry.order, &kinds, &mut *writer)?;
+        stream_links_with(
+            file,
+            &c.sql,
+            &c.params,
+            entry.order,
+            &kinds,
+            &mut *writer,
+            None,
+            layout,
+        )?;
     }
     let mut info = writer.finish()?;
     for w in &warnings {
@@ -304,16 +335,17 @@ pub fn export_link_entry_to(
     ctx.checkpoint()?;
     let mut warnings = Vec::new();
     let condition = target_condition(job.tabs, job.file, job.cfg, &entry.selection, &mut warnings)?;
-    writer.header(&link_header())?;
+    writer.header(&Layout::for_entry(entry).header())?;
     let count = match condition {
         Some(c) => stream_links_with(
             job.file,
             &c.sql,
             &c.params,
             entry.order,
-            &link_kinds(),
+            &Layout::for_entry(entry).kinds(),
             writer,
             Some(ctx),
+            Layout::for_entry(entry),
         )?,
         None => 0,
     };
@@ -323,4 +355,92 @@ pub fn export_link_entry_to(
         ctx.skipped.push(entry.name.clone());
     }
     Ok(count)
+}
+
+#[derive(Clone, Copy)]
+enum Layout {
+    Standard,
+    Anchors,
+    Uncrawlable,
+}
+impl Layout {
+    fn for_entry(entry: &BulkLinkEntry) -> Self {
+        match entry.selection {
+            Selection::LinkSpec("All Anchor Text") => Self::Anchors,
+            Selection::LinkSpec("Pages With Uncrawlable Internal Outlinks") => Self::Uncrawlable,
+            _ => Self::Standard,
+        }
+    }
+    fn indices(self) -> &'static [usize] {
+        match self {
+            Self::Standard => &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+            Self::Anchors => &[1, 2, 5, 4, 13, 8, 6],
+            Self::Uncrawlable => &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        }
+    }
+    fn header(self) -> Vec<String> {
+        self.indices()
+            .iter()
+            .map(|&i| {
+                if i == 15 {
+                    "Link Crawlability"
+                } else {
+                    LINK_COLUMNS[i]
+                }
+                .to_owned()
+            })
+            .collect()
+    }
+    fn kinds(self) -> Vec<ColumnKind> {
+        let kinds = link_kinds();
+        self.indices()
+            .iter()
+            .map(|&i| if i == 15 { ColumnKind::Text } else { kinds[i] })
+            .collect()
+    }
+}
+fn reason_text(reason: &str) -> &str {
+    match reason.parse::<os_model::UncrawlableReason>() {
+        Ok(known) => known.label(),
+        Err(_) => reason,
+    }
+}
+fn link_spec_condition(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    spec: &str,
+    warnings: &mut Vec<String>,
+) -> Result<Option<TargetCondition>, ExportError> {
+    use os_analyze::tabs::links::{LOCALHOST_LINK, NON_DESCRIPTIVE_LINK};
+    let mut params = Vec::new();
+    let predicate = match spec {
+        "All Anchor Text" => "l.link_type = 'Hyperlink'".to_owned(),
+        "External Links" => "s.is_internal = 1 AND t.is_internal = 0".to_owned(),
+        "Internal Nofollow Outlinks" => "s.is_internal = 1 AND t.is_internal = 1 AND l.link_type = 'Hyperlink' AND l.crawlable = 1 AND l.follow = 0".to_owned(),
+        "Internal Outlinks With No Anchor Text" => "s.is_internal = 1 AND t.is_internal = 1 AND l.link_type = 'Hyperlink' AND l.crawlable = 1 AND COALESCE(l.anchor, '') COLLATE OS_ANCHOR = '' AND COALESCE(l.alt_text, '') COLLATE OS_ANCHOR = ''".to_owned(),
+        "Non-Descriptive Anchor Text In Internal Outlinks" => {
+            params.push((":anchor_phrases".into(), Value::Text(serde_json::to_string(&cfg.links.non_descriptive_anchors).expect("string list"))));
+            format!("s.is_internal = 1 AND ({NON_DESCRIPTIVE_LINK})")
+        }
+        "Outlinks To Localhost" => format!("s.is_internal = 1 AND ({LOCALHOST_LINK})"),
+        "Pages With Uncrawlable Internal Outlinks" => {
+            if !cfg.spider.store_uncrawlable_links {
+                warnings.push("Uncrawlable links require spider.store_uncrawlable_links".into());
+                return Ok(None);
+            }
+            "s.is_internal = 1 AND l.link_type = 'Hyperlink' AND l.crawlable = 0".to_owned()
+        }
+        "Follow & Nofollow Internal Inlinks To Page" | "Internal Nofollow Inlinks Only" | "Non-Indexable Page Inlinks Only" => {
+            let selection = Selection::Filters { tab: "Links".into(), filters: vec![spec.into()] };
+            let Some(mut condition) = target_condition(tabs, file, cfg, &selection, warnings)? else { return Ok(None) };
+            condition.sql = format!("({}) AND s.is_internal = 1 AND l.link_type = 'Hyperlink' AND l.crawlable = 1 AND l.source_id <> l.target_id", condition.sql);
+            return Ok(Some(condition));
+        }
+        _ => unreachable!("unknown Links specification"),
+    };
+    Ok(Some(TargetCondition {
+        sql: predicate,
+        params,
+    }))
 }

@@ -598,6 +598,21 @@ string_enum! {
         AnchorMissingHref => "anchor_missing_href", AnchorEmptyHref => "anchor_empty_href", AnchorFragmentOnly => "anchor_fragment_only",
     }
 }
+impl UncrawlableReason {
+    /// Anzeigetext für gespeicherte, nicht crawlbare Links (K2-27, OUT-041).
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::NonAnchorHref => "href on non-anchor element",
+            Self::AnchorOnclickNavigation => "onclick navigation",
+            Self::JavascriptHref => "javascript: URL",
+            Self::AnchorReturnFalse => "onclick return false",
+            Self::AnchorMissingHref => "missing href",
+            Self::AnchorEmptyHref => "empty href",
+            Self::AnchorFragmentOnly => "fragment only",
+        }
+    }
+}
+
 string_enum! {
     /// Herkunft eines Cookies (CRAWL-062).
     #[derive(Default)]
