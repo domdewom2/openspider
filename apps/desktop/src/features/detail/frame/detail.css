@@ -12,6 +12,3 @@
 .os-detail-link { color: var(--os-link); background: transparent; border: 0; text-decoration: underline; cursor: pointer; }
 .os-detail-preview { flex: 0 0 auto; max-height: 40%; overflow: auto; }
 .os-detail-preview img { object-fit: contain; }
-/* Additive mount in the foundation shell; the layout package can place this region inside its split pane. */
-.os-app-main:has(> .os-detail) { flex-direction: column; align-items: stretch; justify-content: flex-start; }
-.os-app-main > .os-detail { flex: 0 0 40%; height: 40%; margin-top: auto; }

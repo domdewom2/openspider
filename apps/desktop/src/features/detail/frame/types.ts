@@ -3,7 +3,7 @@ import type { ViewSpec } from "../../../ipc/gen/ViewSpec";
 import type { Selection } from "../../../ipc/gen/Selection";
 
 export const DETAIL_TABS = ["urlDetails", "inlinks", "outlinks", "images", "resources", "serp", "rendered", "consoleLog", "source", "headers", "cookies", "duplicates", "structuredData", "lighthouse", "spelling", "a11y", "nGrams"] as const;
-export type DetailTabId = typeof DETAIL_TABS[number] | "crawlPath";
+export type DetailTabId = typeof DETAIL_TABS[number];
 export interface DetailSelection {
   /** URL ids in selection order; all top tabs publish through this same interface. */
   urlIds: number[];

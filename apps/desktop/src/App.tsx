@@ -1,16 +1,22 @@
-import { useEffect, useState } from "react";
-import { DetailFrame } from "./features/detail/frame/DetailFrame";
+import { useEffect, useState, type ComponentType } from "react";
 import { RegionBoundary } from "./app/ErrorBoundary";
 import { Providers } from "./app/Providers";
 import { useT } from "./i18n";
 import { app as appApi } from "./ipc/app";
 import { EmptyState } from "./ui/primitives/EmptyState";
 
+/** Optional main-window regions; absent registrations retain the scaffold defaults. */
+const mainRegions: { detail?: ComponentType } = {};
+export function registerMainRegions(regions: Partial<typeof mainRegions>): void {
+  Object.assign(mainRegions, regions);
+}
+
 /**
  * Hauptfenster (Gerüst, M2-F04): Landmarks nach M2-ui-concept 1.2 mit leeren Regionen. Die Fachpakete (U01 Layout,
  * U03 Kopf-/Statusleiste, U10 Tabelle, U11 Details, U12 Seitenleiste) füllen sie.
  */
 export function App() {
+  const DetailRegion = mainRegions.detail;
   const t = useT();
   const [version, setVersion] = useState<string | null>(null);
 
@@ -40,8 +46,8 @@ export function App() {
           <RegionBoundary name="table">
             <EmptyState state={{ code: "NO_DATA_YET" }} />
           </RegionBoundary>
-          <DetailFrame />
         </main>
+        {DetailRegion && <DetailRegion />}
         <aside className="os-app-sidebar" aria-label={t("app-region-sidebar")} />
         <footer className="os-app-status" role="contentinfo" aria-label={t("app-region-status")}>
           {version !== null && <span data-testid="version">{t("app-version", { version })}</span>}

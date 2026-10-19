@@ -5,7 +5,7 @@ type State = { [key: string]: JsonValue };
 let tail: Promise<unknown> = Promise.resolve();
 const pending = new Map<string, ReturnType<typeof setTimeout>>();
 
-/** Serial read/merge/write prevents this region's tab and column saves from overwriting one another. */
+/** Serializes this feature's writes only. N01 must provide a shared, zod-validated uistate updater for all regions. */
 export function updateDetailState(update: (state: State) => State): Promise<UiStateJson> {
   const task = tail.catch(() => undefined).then(async () => {
     const dto = await uistate.load();

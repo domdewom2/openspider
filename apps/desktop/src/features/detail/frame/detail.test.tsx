@@ -3,13 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useEffect, useState } from "react";
 import { createClient, setClient } from "../../../ipc/client";
 import { useSession } from "../../../state/session";
+import { App, registerMainRegions } from "../../../App";
+import { eventBus } from "../../../ipc/events";
 import { SelectionModel } from "../../../state/selection";
 import { setLanguage } from "../../../i18n";
 import type { DataGridProps } from "../../../grid/DataGrid";
 import type { ViewSpec } from "../../../ipc/gen/ViewSpec";
 import type { DetailActions } from "./types";
 import { DetailFrame } from "./DetailFrame";
-import deepPath from "./fixtures/fx-ui-depth.json";
+import deepPath from "./fixtures/u11-depth-contract.json";
 import { detailFixtureCore } from "./fixtures/core";
 import { DEFAULT_LINK_OPTIONS, linkSpec } from "../anchors/model";
 import { URL_DETAIL_FIELDS } from "../url-details/UrlDetails";
@@ -19,6 +21,8 @@ import { IMAGE_COLUMNS } from "../images/Images";
 import { updateDetailState } from "./persistence";
 import { normalizeDetailPreferences } from "./preferences";
 import { DETAIL_NAVIGATE_EVENT, setDetailSelection } from "./selection";
+import { DETAIL_OPEN_BROWSER_EVENT, requestBrowser } from "./browser";
+import { DETAIL_TABS } from "./types";
 
 // Keep the shared bounded data source; substitute only the canvas when testing the feature in jsdom.
 vi.mock("../../../grid/DataGrid", async importOriginal => {
@@ -48,15 +52,28 @@ beforeEach(async () => {
   Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: vi.fn().mockResolvedValue(undefined) } });
   await setLanguage("en");
 });
-afterEach(async () => { cleanup(); await settle(0); setClient(null); vi.useRealTimers(); setDetailSelection({ urlIds: [] }); });
+afterEach(async () => { cleanup(); await settle(0); setClient(null); vi.useRealTimers(); vi.restoreAllMocks(); setDetailSelection({ urlIds: [] }); useSession.setState({ seq: -1, crawl: null, views: {} }); });
 
 describe("detail frame and URL properties", () => {
+  // spec: UI-030
+  it("keeps the shell default and registers details as a separate region outside the upper table", async () => {
+    const scaffold = render(<App />); await settle();
+    expect(screen.queryByRole("region", { name: "Details" })).toBeNull();
+    scaffold.unmount();
+    registerMainRegions({ detail: DetailFrame });
+    try {
+      render(<App />); await settle();
+      expect(screen.getByRole("region", { name: "Details" }).closest("main")).toBeNull();
+      expect(screen.getByRole("main")).toBeInTheDocument();
+    } finally { registerMainRegions({ detail: undefined }); }
+  });
   // spec: UI-030
   it("does not request data without a selection and preserves the standard tab order", async () => {
     render(<DetailFrame actions={actions} />); await settle();
     expect(screen.getByText("Select a row in the table above to see its details.")).toBeInTheDocument();
     expect(fixture.core.calls.filter(c => c.cmd.startsWith("detail.") || c.cmd.startsWith("view.")).length).toBe(0);
     const list = screen.getByRole("tablist"); expect(within(list).getAllByRole("tab", { hidden: true }).slice(0, 5).map(e => e.textContent)).toEqual(["URL Details", "Inlinks", "Outlinks", "Image Details", "Resources"]);
+    expect(within(list).getAllByRole("tab", { hidden: true }).map(e => e.getAttribute("data-tab-id"))).toEqual(DETAIL_TABS);
   });
   // spec: UI-145
   it("debounces fast changes for 100 ms and only requests the visible tab", async () => {
@@ -112,8 +129,9 @@ describe("detail frame and URL properties", () => {
     fireEvent.keyDown(screen.getByRole("tablist").parentElement!, { key: "ArrowRight", altKey: true, shiftKey: true }); await settle(1000);
     expect(fixture.core.uiState.state).toMatchObject({ unrelated: { x: 7 } });
     expect((fixture.core.uiState.state as { detail: { order: string[] } }).detail.order.slice(0, 2)).toEqual(["inlinks", "urlDetails"]);
-    const normalized = normalizeDetailPreferences({ order: ["outlinks", "outlinks", "unknown"], hidden: ["urlDetails", "cookies"] });
+    const normalized = normalizeDetailPreferences({ order: ["outlinks", "outlinks", "unknown", "crawlPath"], hidden: ["urlDetails", "cookies", "crawlPath"] });
     expect(normalized.order.slice(0, 4)).toEqual(["outlinks", "urlDetails", "inlinks", "images"]); expect(normalized.hidden).toEqual(["cookies"]);
+    expect(normalized.order).toHaveLength(17); expect(normalized.order).not.toContain("crawlPath");
   });
 });
 
@@ -206,6 +224,10 @@ describe("paged tables", () => {
     render(<DetailFrame selection={selection} actions={actions} listMode />); await settle();
     fireEvent.click(screen.getByRole("button", { name: "Crawl Path" })); await settle();
     expect(screen.getByText("HTTP Redirect")).toBeInTheDocument(); expect(screen.getByText(/Directly uploaded/)).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Crawl Path" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Close" })); await settle();
+    expect(screen.getByRole("rowheader", { name: "Link Score" })).toBeInTheDocument();
+    expect(fixture.core.calls.filter(c => c.cmd === "uistate.save")).toHaveLength(0);
   });
   // spec: OUT-023
   it("exports a crawl-path report for the selected URLs in selection order", async () => {
@@ -285,6 +307,40 @@ describe("view lifecycle and preferences", () => {
 });
 
 describe("headers and images", () => {
+  // spec: UI-035, UI-145
+  it("keeps a row-selected preview and consent through crawl ticks and equal selections, but clears it for a new selection", async () => {
+    fixture.options.stored = false;
+    const { rerender } = render(<DetailFrame selection={selection} actions={actions} />);
+    await settle(); await selectTab("Image Details");
+    fireEvent.click(screen.getByTestId("detail-row-0")); await settle(0); await settle();
+    fireEvent.click(screen.getByRole("button", { name: "Load image from server…" }));
+    const image = screen.getByRole("img"); expect(image).toHaveAttribute("src", "ospider://img/fixture/7");
+    const previewCalls = fixture.core.calls.filter(c => c.cmd === "detail.imagePreview").length;
+    await act(async () => useSession.getState().applyTick({
+      seq: 1, at: "2026-10-19T12:00:00Z", countsVersion: 0, issuesVersion: 0, sidebarVersion: 0, views: [], ops: [], notices: [],
+      crawl: { crawlId: "fixture", phase: "running", mode: "spider", crawled: 10, queued: 20, discovered: 30, percent: 33, rate: 2, avgRate: 2, elapsedS: 5, pausedS: 0, activeThreads: 2, owner: { kind: "app", live: true, controllable: true } },
+    }));
+    rerender(<DetailFrame selection={{ ...selection, urlIds: [...selection.urlIds] }} actions={actions} />); await settle(500);
+    expect(screen.getByRole("img")).toBe(image); expect(image).toHaveAttribute("src", "ospider://img/fixture/7");
+    expect(screen.queryByRole("button", { name: "Load image from server…" })).toBeNull();
+    expect(fixture.core.calls.filter(c => c.cmd === "detail.imagePreview")).toHaveLength(previewCalls);
+    rerender(<DetailFrame selection={{ ...selection, focus: 3 }} actions={actions} />); await settle();
+    expect(screen.queryByRole("img")).toBeNull();
+  });
+  // spec: UI-033, UI-043
+  it("reloads rendering and storage capabilities on settingsChanged and unsubscribes on unmount", async () => {
+    const listeners = eventBus.listenerCount("settingsChanged");
+    const { unmount } = render(<DetailFrame selection={selection} actions={actions} />);
+    await settle(); await selectTab("Cookies");
+    expect(screen.queryByText("JavaScript cookies require JavaScript rendering.")).toBeNull();
+    fixture.core.handlers.set("config.get", () => ({ config: { rendering: { mode: "text" }, extraction: { store_html: false }, spider: { store_uncrawlable_links: false } } }));
+    await act(async () => eventBus.emit({ kind: "settingsChanged", keys: ["config"] })); await settle();
+    expect(screen.getByText("JavaScript cookies require JavaScript rendering.")).toBeInTheDocument();
+    await selectTab("Outlinks");
+    fireEvent.contextMenu(screen.getByText("https://outside.test/a?x=2")); await settle(0);
+    expect(screen.getByRole("menuitem", { name: "Show link element in source" })).toHaveAttribute("aria-disabled", "true");
+    unmount(); expect(eventBus.listenerCount("settingsChanged")).toBe(listeners);
+  });
   // spec: UI-042
   it("shows headers of the focus redirect preserving repeated names and searches without case sensitivity", async () => {
     render(<DetailFrame selection={selection} actions={actions} />); await settle(); await selectTab("HTTP Headers");
@@ -312,5 +368,35 @@ describe("headers and images", () => {
     const listener = vi.fn(); document.addEventListener(DETAIL_NAVIGATE_EVENT, listener);
     render(<DetailFrame selection={selection} />); await settle(); fireEvent.click(screen.getByRole("button", { name: "https://site.test/final" }));
     expect(listener.mock.calls[0][0].detail).toEqual({ address: "https://site.test/final", tab: "auto" }); document.removeEventListener(DETAIL_NAVIGATE_EVENT, listener);
+  });
+  // spec: UI-035, UI-111
+  it("routes image and From/To browser actions through the native handoff in Tauri", async () => {
+    setClient(createClient({ ...fixture.core.transport(), name: "tauri" }));
+    const popup = vi.spyOn(window, "open").mockReturnValue(null);
+    const listener = vi.fn(); document.addEventListener(DETAIL_OPEN_BROWSER_EVENT, listener);
+    const { openBrowser: _openBrowser, ...otherActions } = actions;
+    const { rerender } = render(<DetailFrame selection={selection} actions={otherActions} />);
+    try {
+      await settle(); await selectTab("Outlinks");
+      fireEvent.contextMenu(screen.getByText("https://outside.test/a?x=2")); await settle(0);
+      fireEvent.click(screen.getByRole("menuitem", { name: "Open To in browser" })); await settle(0);
+      expect(listener.mock.calls[0][0].detail).toEqual({ address: "https://outside.test/a?x=2" });
+      rerender(<DetailFrame selection={{ ...selection, urlIds: [7], topTab: "Images", focus: 7 }} actions={otherActions} />);
+      await selectTab("Image Details");
+      fireEvent.click(screen.getByRole("button", { name: "Open original in browser" }));
+      expect(listener.mock.calls[1][0].detail).toEqual({ address: "https://site.test/image.svg" });
+      expect(popup).not.toHaveBeenCalled();
+    } finally { document.removeEventListener(DETAIL_OPEN_BROWSER_EVENT, listener); }
+  });
+  // spec: UI-111
+  it("allows a consumed browser request to suppress the mock/bridge popup fallback and rejects non-web URLs", () => {
+    const popup = vi.spyOn(window, "open").mockReturnValue(null);
+    requestBrowser("https://site.test/"); expect(popup).toHaveBeenCalledOnce();
+    const listener = vi.fn((event: Event) => event.preventDefault());
+    document.addEventListener(DETAIL_OPEN_BROWSER_EVENT, listener);
+    try {
+      requestBrowser("https://site.test/handled"); requestBrowser("javascript:alert(1)"); requestBrowser("file:///local");
+      expect(listener).toHaveBeenCalledOnce(); expect(popup).toHaveBeenCalledOnce();
+    } finally { document.removeEventListener(DETAIL_OPEN_BROWSER_EVENT, listener); }
   });
 });

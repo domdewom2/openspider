@@ -49,7 +49,8 @@ export function ImagePreviewPanel({ urlId, address, crawlId, actions }: { urlId?
 }
 export function Images(props: DetailPanelProps) {
   const t = useT(); const [search, setSearch] = useState(""); const [sort, setSort] = useState<SortKey[]>([]); const [address, setAddress] = useState<string>();
-  useEffect(() => { setAddress(undefined); }, [props.selection]);
+  const selectedIds = props.selection.urlIds.join(",");
+  useEffect(() => { setAddress(undefined); }, [selectedIds, props.selection.focus, props.selection.crawlId, props.selection.topTab]);
   const focus = props.selection.focus ?? props.selection.urlIds[0];
   return <><SearchField label={t("detail-search")} value={search} onChange={setSearch} clearLabel={t("detail-clear")} />
     {(props.selection.topTab === "Images" || address) && <ImagePreviewPanel key={`${focus}:${address}`} urlId={props.selection.topTab === "Images" && !address ? focus : undefined} address={address} crawlId={props.selection.crawlId} actions={props.actions} />}

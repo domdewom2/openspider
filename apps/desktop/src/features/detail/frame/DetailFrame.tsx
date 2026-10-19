@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { RegionBoundary } from "../../../app/ErrorBoundary";
 import { config } from "../../../ipc/config";
+import { eventBus } from "../../../ipc/events";
 import { exportApi } from "../../../ipc/export";
 import type { ViewSpec } from "../../../ipc/gen/ViewSpec";
 import type { Selection } from "../../../ipc/gen/Selection";
@@ -26,12 +27,13 @@ import { CrawlPath } from "../crawl-path/CrawlPath";
 import { DetailEmpty, DetailError } from "./Feedback";
 import { useDetailPreferences } from "./preferences";
 import { DETAIL_BACK_EVENT, requestNavigation, useDetailSelection } from "./selection";
+import { requestBrowser } from "./browser";
 import type { DetailActions, DetailPanelProps, DetailPlugin, DetailSelection, DetailTabId } from "./types";
 import "./detail.css";
 
 const extensionModules = import.meta.glob<{ detailTab?: DetailPlugin }>("../*/index.tsx", { eager: true });
-const PANELS: Partial<Record<DetailTabId, DetailPlugin["Component"]>> = { urlDetails: UrlDetails, inlinks: Inlinks, outlinks: Outlinks, images: Images, resources: Resources, headers: Headers, cookies: Cookies, crawlPath: CrawlPath };
-const UNION_TABS = new Set<DetailTabId>(["inlinks", "outlinks", "images", "resources", "nGrams", "crawlPath"]);
+const PANELS: Partial<Record<DetailTabId, DetailPlugin["Component"]>> = { urlDetails: UrlDetails, inlinks: Inlinks, outlinks: Outlinks, images: Images, resources: Resources, headers: Headers, cookies: Cookies };
+const UNION_TABS = new Set<DetailTabId>(["inlinks", "outlinks", "images", "resources", "nGrams"]);
 const DEFAULT_POSITIONS = ["Head", "Header", "Nav", "Content", "Sidebar", "Footer"];
 export interface DetailFrameProps {
   selection?: DetailSelection;
@@ -47,11 +49,14 @@ export function DetailFrame(props: DetailFrameProps) {
   const t = useT(); const shared = useDetailSelection(s => s.selection); const selection = props.selection ?? shared;
   const crawl = useSession(s => s.crawl);
   const [active, setActive] = useState<DetailTabId>("urlDetails"); const [error, setError] = useState<unknown>();
+  const [showCrawlPath, setShowCrawlPath] = useState(false);
   const [features, setFeatures] = useState({ rendering: false, htmlStored: false, storeUncrawlable: false, positions: DEFAULT_POSITIONS });
   const [preferences, savePreferences, loaded] = useDetailPreferences(setError);
   const [exporting, setExporting] = useState<{ spec: ViewSpec; selection: Selection }>();
   const [path, setPath] = useState(""); const [format, setFormat] = useState<ExportFormatDto>("csv"); const [exportBusy, setExportBusy] = useState(false);
   const [exportOp, setExportOp] = useState<string>(); const op = useSession(s => exportOp ? s.ops[exportOp] : undefined);
+  const [configVersion, setConfigVersion] = useState(0);
+  useEffect(() => eventBus.on("settingsChanged", () => setConfigVersion(version => version + 1)), []);
   useEffect(() => {
     const controller = new AbortController();
     void config.get(controller.signal).then(dto => {
@@ -60,11 +65,11 @@ export function DetailFrame(props: DetailFrameProps) {
         positions: [...new Set([...DEFAULT_POSITIONS, ...(cfg.link_positions?.rules ?? []).map(p => p.position)])] });
     }).catch(() => undefined);
     return () => controller.abort();
-  }, [selection.crawlId, crawl?.crawlId]);
+  }, [selection.crawlId, crawl?.crawlId, configVersion]);
   const actions: DetailActions = useMemo(() => ({
     navigate: requestNavigation,
     back: () => { document.dispatchEvent(new CustomEvent(DETAIL_BACK_EVENT)); },
-    openBrowser: address => { if (/^https?:\/\//i.test(address)) window.open(address, "_blank", "noopener,noreferrer"); },
+    openBrowser: requestBrowser,
     export: (spec, selection) => { setExporting({ spec, selection }); setPath(""); },
     reportError: setError,
     ...props.actions,
@@ -88,10 +93,7 @@ export function DetailFrame(props: DetailFrameProps) {
         isDisabled: id === "urlDetails" || !loaded, onAction: () => savePreferences({ ...preferences, hidden: preferences.hidden.includes(id) ? preferences.hidden.filter(t => t !== id) : [...preferences.hidden, id] }),
       }))} />
       <Button isDisabled={!loaded} onPress={() => { savePreferences({ order: [], hidden: [] }); setActive("urlDetails"); }}>{t("detail-reset-tabs")}</Button>
-      <Button isDisabled={!selected || !loaded} onPress={() => {
-        if (preferences.hidden.includes("crawlPath")) savePreferences({ ...preferences, hidden: preferences.hidden.filter(id => id !== "crawlPath") });
-        setActive("crawlPath");
-      }}>{t("detail-tab-crawlPath")}</Button>
+      <Button isDisabled={!selected || !loaded} onPress={() => setShowCrawlPath(true)}>{t("detail-tab-crawlPath")}</Button>
     </div>
     <ContextMenu label={t("detail-configure-tabs")} entries={[
       { id: "close", label: t("detail-close"), isDisabled: tab === "urlDetails" || !loaded, onAction: () => savePreferences({ ...preferences, hidden: [...preferences.hidden, tab] }) },
@@ -104,11 +106,15 @@ export function DetailFrame(props: DetailFrameProps) {
     {error ? <DetailError error={error} /> : null}
     {op && <Banner kind={op.error ? "error" : "info"}>{op.error ? t(`err-code-${op.error.code.toLowerCase()}`) : t("detail-export-status", { status: op.state })}</Banner>}
     <div className="os-detail-body" role="tabpanel" aria-label={t(`detail-tab-${tab}`)}>
-      {!selected ? <DetailEmpty state={{ code: "NO_SELECTION" }} /> : <>
+      {!selected ? <DetailEmpty state={{ code: "NO_SELECTION" }} /> : showCrawlPath ? null : <>
         {multiFocus && <Banner>{t("detail-focus", { id: selection.focus ?? selection.urlIds[0] })}</Banner>}
         {Panel ? <RegionBoundary key={`${tab}:${selection.crawlId ?? crawl?.crawlId ?? ""}`} name="detail"><Panel {...panelProps} /></RegionBoundary> : <DetailEmpty state={{ code: "NO_DATA_YET" }} />}
       </>}
     </div>
+    <Dialog title={t("detail-tab-crawlPath")} isOpen={showCrawlPath} onOpenChange={setShowCrawlPath} size="large"
+      footer={close => <Button onPress={close}>{t("detail-close")}</Button>}>
+      {selected ? <RegionBoundary key={effectiveSelection.crawlId} name="detail"><CrawlPath {...panelProps} /></RegionBoundary> : <DetailEmpty state={{ code: "NO_SELECTION" }} />}
+    </Dialog>
     <Dialog title={t("detail-export")} isOpen={!!exporting} onOpenChange={open => { if (!open && !exportBusy) setExporting(undefined); }}>
       <TextField label={t("detail-export-path")} value={path} onChange={setPath} />
       <Select label={t("detail-export-format")} value={format} onChange={value => setFormat(value as ExportFormatDto)} options={[{ value: "csv", label: "CSV" }, { value: "xlsx", label: "XLSX" }]} />

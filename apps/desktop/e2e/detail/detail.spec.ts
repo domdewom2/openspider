@@ -33,10 +33,9 @@ test("Anchors uses core aggregation, default exclusions and exact drill-down", a
   await expect.poll(() => calls(page, "view.rows")).not.toEqual([]);
   const canvas = page.getByLabel("Inlinks", { exact: true }).locator("canvas").first();
   await expect(canvas).toBeVisible();
-  // Glide's scroll surface receives pointer input above its canvas.
-  const bounds = await canvas.boundingBox();
-  if (!bounds) throw new Error("Expected canvas bounds");
-  await page.mouse.click(bounds.x + 55, bounds.y + 38);
+  await canvas.focus();
+  // Selecting the first row already activates the Anchors drill-down.
+  await canvas.press("Home");
   await expect.poll(async () => JSON.stringify(await calls(page, "view.open"))).toContain('"anchor":"Produkte"');
 });
 
@@ -80,7 +79,7 @@ test("crawl path export uses the selected URLs and the complete core export", as
   await page.goto("/e2e/detail/index.html"); await page.getByRole("button", { name: "Select three URLs" }).click();
   await page.getByRole("button", { name: "Crawl Path", exact: true }).click();
   await page.getByRole("button", { name: "Export details", exact: true }).click();
-  const dialog = page.getByRole("dialog"); await dialog.getByRole("textbox", { name: "Destination file" }).fill("crawl-path.csv");
+  const dialog = page.getByRole("dialog", { name: "Export details", exact: true }); await dialog.getByRole("textbox", { name: "Destination file" }).fill("crawl-path.csv");
   await dialog.getByRole("button", { name: "Export details" }).click();
   await expect.poll(() => calls(page, "export.detail")).toEqual([expect.objectContaining({ spec: expect.objectContaining({ kind: "detail", detail: "crawlPath", urlIds: [1, 2, 3] }), selection: { kind: "ids", ids: [1, 2, 3] }, path: "crawl-path.csv", format: "csv" })]);
 });

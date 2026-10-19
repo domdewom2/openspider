@@ -7,7 +7,7 @@ const schema = z.object({ order: z.array(z.string()).default([]), hidden: z.arra
 export interface DetailPreferences { order: DetailTabId[]; hidden: DetailTabId[] }
 export function normalizeDetailPreferences(value: unknown): DetailPreferences {
   const parsed = schema.safeParse(value); const preferences = parsed.success ? parsed.data : { order: [], hidden: [] };
-  const known = [...DETAIL_TABS, "crawlPath"] as DetailTabId[];
+  const known: readonly DetailTabId[] = DETAIL_TABS;
   return { order: [...new Set([...preferences.order.filter(id => known.includes(id as DetailTabId)), ...known])] as DetailTabId[],
     hidden: preferences.hidden.filter(id => id !== "urlDetails" && known.includes(id as DetailTabId)) as DetailTabId[] };
 }

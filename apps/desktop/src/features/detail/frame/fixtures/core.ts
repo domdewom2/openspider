@@ -1,4 +1,5 @@
-import basicFixture from "./fx-ui-basic.json";
+// U11-only contract data derived from docs/spec; the shared fx-ui-basic belongs to K04.
+import basicFixture from "./u11-contract.json";
 import { MockCore } from "../../../../ipc/transport/mock";
 import type { ViewSpec } from "../../../../ipc/gen/ViewSpec";
 import type { ViewOpenArgs } from "../../../../ipc/gen/ViewOpenArgs";
