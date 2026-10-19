@@ -193,7 +193,12 @@ Der XML-Leser ignoriert Attribute wie `xsi:schemaLocation`; verglichen werden Si
 Die Spalte `Images` speichert sortierte Bilddatensätze als JSON-Strings, getrennt durch Zeilenumbrüche.
 Sie wird im Sitemap-Vergleich mit der 97-%-Schwelle für Attribute bewertet; die URL-Menge bleibt exakt.
 Der Fixture-Test führt `m2_sites.py --check` einschließlich `generated_m2.txt` automatisch aus.
-`real_repo_files.rs` prüft die bereits registrierten M2-Bulk-Aufträge gegen `os_export::catalog`
-und gleicht Canonicals/Directives/Security vollständig ab, damit Änderungen an den Katalogen
-(D04/D06/D11) veraltete Manifeste sichtbar machen. Für die noch von D08 zu registrierenden
-zehn Links-Exporte liegt der vollständige Vertrag nach K2-26 in `pending_w1_p01.rs`; N01 aktiviert ihn.
+Der Generator-Test versucht ohne Shell `python3`, bei fehlendem Interpreter `python`, danach `py -3`.
+`real_repo_files.rs` prüft Tab-/Filter-Aufträge exakt über das Overview-Mapping, das die
+Default-Platzhalter bereits auflöst. Der Fixture-Test prüft Tab-Kennung und Label-Präfix.
+Die zwei vollständigen Bulk-Katalogtests liegen unter „Schnittstellenbedarf M2-N01“ in
+`docs/plan/M2-reports/p01.md`: Erst N01 darf die fehlende `os-export`-Testabhängigkeit nach C7
+ergänzen und die Tests aufnehmen. Jeder angeforderte Bulk-Name muss auflösbar sein; zusätzliche
+Katalogeinträge sind erlaubt. Q02/Orchestrator prüfen nach D04/D06/D11, ob neue Exporte je
+Filter weitere Manifestaufträge benötigen. Die zehn Links-Exporte setzen das D08-Register voraus;
+N01 übernimmt und aktiviert auch diesen Vertrag nach dessen Integration.

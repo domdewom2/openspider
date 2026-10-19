@@ -1845,7 +1845,6 @@ fn manifests_mappings_and_profile_are_consistent() {
             .as_array_mut()
             .unwrap()
             .extend(more["tab"].as_array().unwrap().clone());
-        let defaults = serde_json::to_value(os_model::CrawlConfig::default()).unwrap();
         let mut v = Vec::new();
         for tab in doc["tab"].as_array().unwrap() {
             for f in tab["filters"].as_array().unwrap() {
@@ -1855,25 +1854,7 @@ fn manifests_mappings_and_profile_are_consistent() {
                     .unwrap()
                     .as_str()
                     .unwrap();
-                let mut label = label.to_string();
-                while let Some(start) = label.find('{') {
-                    let end = label[start..].find('}').map(|n| start + n).unwrap();
-                    let key = &label[start + 1..end];
-                    let value = key
-                        .split('.')
-                        .try_fold(&defaults, |v, k| v.get(k))
-                        .unwrap_or_else(|| panic!("unbekannter Filter-Platzhalter {key}"));
-                    let value = if key.ends_with("_bytes") {
-                        (value.as_u64().unwrap() / (1024 * 1024)).to_string()
-                    } else {
-                        value
-                            .as_str()
-                            .map(str::to_string)
-                            .unwrap_or_else(|| value.to_string())
-                    };
-                    label.replace_range(start..=end, &value);
-                }
-                v.push((tab["id"].as_str().unwrap().to_string(), label));
+                v.push((tab["id"].as_str().unwrap().to_string(), label.to_string()));
             }
         }
         v
@@ -1928,10 +1909,10 @@ fn manifests_mappings_and_profile_are_consistent() {
                     let (tab, filter) =
                         rest.split_once(':').unwrap_or_else(|| panic!("tab:{rest}"));
                     assert!(
-                        all_filters
-                            .iter()
-                            .any(|(t, f)| t.eq_ignore_ascii_case(tab)
-                                && f.eq_ignore_ascii_case(filter)),
+                        all_filters.iter().any(|(t, f)| t.eq_ignore_ascii_case(tab)
+                            && (f.eq_ignore_ascii_case(filter)
+                                || f.contains('{')
+                                    && filter.starts_with(f.split('{').next().unwrap()))),
                         "{name}: unbekannter Filter {os}"
                     );
                 }
@@ -2315,11 +2296,24 @@ fn m2_upload_fixture_retains_duplicates_invalid_lines_and_case_distinctions() {
 // spec: OUT-080
 #[test]
 fn m2_generator_matches_committed_fixtures_and_inventory() {
-    let output = std::process::Command::new("python3")
-        .args(["-B", "tests/parity/gen/m2_sites.py", "--check"])
-        .current_dir(repo_root())
-        .output()
-        .expect("Python 3 ist für die Paritäts-Generatorprüfung erforderlich");
+    let output = [("python3", false), ("python", false), ("py", true)]
+        .into_iter()
+        .find_map(|(interpreter, launcher)| {
+            let mut command = std::process::Command::new(interpreter);
+            if launcher {
+                command.arg("-3");
+            }
+            match command
+                .args(["-B", "tests/parity/gen/m2_sites.py", "--check"])
+                .current_dir(repo_root())
+                .output()
+            {
+                Ok(output) => Some(output),
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+                Err(error) => panic!("{interpreter} konnte nicht gestartet werden: {error}"),
+            }
+        })
+        .expect("Python 3 ist erforderlich (python3, python oder py -3)");
     assert!(
         output.status.success(),
         "Generatorprüfung fehlgeschlagen:\n{}\n{}",
