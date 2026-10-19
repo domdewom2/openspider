@@ -117,8 +117,13 @@ pub fn literal(v: &Value) -> Option<&Value> {
     }
 }
 
-/// Pfad einer Eigenschaft ab dem Top-Level-Item (`offers[0].priceCurrency`).
+/// Pfad einer Eigenschaft ab dem Top-Level-Item (`offers[0].priceCurrency`); schema.org-Schlüssel erscheinen mit
+/// ihrem Kurznamen (`https://schema.org/name` → `name`).
 pub fn path(prefix: &str, key: &str, index: Option<usize>) -> String {
+    let key = match classify(key) {
+        Iri::Schema(name) => name,
+        _ => key,
+    };
     match index {
         Some(i) => format!("{prefix}{key}[{i}]"),
         None => format!("{prefix}{key}"),
