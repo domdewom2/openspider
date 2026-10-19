@@ -295,7 +295,7 @@ async fn slow_builds_run_as_cancellable_operations_and_cancel_restores_within_10
 }
 
 // spec: UI-141
-// spec: UI-020 [M2]
+// Segment-Schnittstelle (RestrictProvider) für M2-K14/M2-C01
 #[tokio::test]
 async fn segment_restrictions_come_from_the_provider_and_finish_in_the_operation() {
     let fx = Fx::new();

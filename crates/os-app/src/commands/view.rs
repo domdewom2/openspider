@@ -512,6 +512,7 @@ pub(crate) async fn page(
         PageSelection {
             expected,
             ids: None,
+            ordered: false,
         },
     )
     .await
@@ -535,6 +536,7 @@ pub(crate) async fn selected_page(
         PageSelection {
             expected: Some(v.version),
             ids: Some(ids),
+            ordered: false,
         },
     )
     .await
@@ -542,6 +544,31 @@ pub(crate) async fn selected_page(
 struct PageSelection {
     expected: Option<u64>,
     ids: Option<Vec<i64>>,
+    /// `ids` are already a window of a materialized link list in view order (read by primary key).
+    ordered: bool,
+}
+/// Window of a materialized link list (K-1g): rows by primary key in list order.
+async fn ordered_link_page(
+    app: &App,
+    v: &OpenView,
+    columns: Vec<String>,
+    ids: Vec<i64>,
+    limit: u32,
+) -> Result<DataPage, CmdError> {
+    page_query(
+        app,
+        &v.session,
+        v.spec.clone(),
+        columns,
+        0,
+        limit,
+        PageSelection {
+            expected: Some(v.version),
+            ids: Some(ids),
+            ordered: true,
+        },
+    )
+    .await
 }
 async fn page_query(
     app: &App,
@@ -555,6 +582,7 @@ async fn page_query(
     let PageSelection {
         expected,
         ids: selected_ids,
+        ordered,
     } = selection;
     #[cfg(test)]
     app.ext::<PageReads>().0.fetch_add(1, Ordering::Relaxed);
@@ -647,12 +675,23 @@ async fn page_query(
                         (names, kinds, p.rows, keys, p.total, None)
                     } else {
                         let (mut selection, req) = link_selection(&spec, &cfg, offset, limit)?;
-                        selection.row_ids = selected_ids;
-                        let p = os_store::queries::app_support::selected_links(
-                            file.conn(),
-                            &selection,
-                            &req,
-                        )
+                        let p = match selected_ids {
+                            Some(ids) if ordered => {
+                                os_store::queries::app_support::selected_links_by_ids(
+                                    file.conn(),
+                                    &selection,
+                                    &ids,
+                                )
+                            }
+                            ids => {
+                                selection.row_ids = ids;
+                                os_store::queries::app_support::selected_links(
+                                    file.conn(),
+                                    &selection,
+                                    &req,
+                                )
+                            }
+                        }
                         .map_err(|e| crate::runtime::error::store_error(&e))?;
                         let names = [
                             "Type",
@@ -1020,7 +1059,7 @@ fn rows<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
             let ids = link_ids(app, &v, links).await?;
             let start = (args.offset.min(ids.len() as u64)) as usize;
             let end = start.saturating_add(args.limit as usize).min(ids.len());
-            selected_page(app, &v, columns, ids[start..end].to_vec(), 0, args.limit).await?
+            ordered_link_page(app, &v, columns, ids[start..end].to_vec(), args.limit).await?
         } else {
             page(
                 app,

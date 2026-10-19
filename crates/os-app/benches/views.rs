@@ -254,6 +254,9 @@ async fn scenario(b: &Bench) -> Value {
         .await;
     b.report("inlinks_open", t.elapsed());
     let inlinks = d["total"].as_u64().unwrap();
+    let t = Instant::now();
+    black_box(b.rows(&d, 0).await);
+    b.report("inlinks_materialize", t.elapsed());
     let mut times = Vec::new();
     for offset in offsets(inlinks, 20) {
         let t = Instant::now();
