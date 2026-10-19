@@ -1,8 +1,9 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { DataGridProps } from "../../grid/DataGrid";
 import { defaultColumns } from "../../grid/DataGrid";
 import { createClient, setClient } from "../../ipc/client";
+import { localError } from "../../ipc/errors";
 import { eventBus } from "../../ipc/events";
 import { crawl } from "../../ipc/crawl";
 import { catalog } from "../../ipc/catalog";
@@ -13,13 +14,14 @@ import { useTabs, cycleSort, defaultQuery } from "../../state/tabs";
 import { normalizeColumns, useColumns, exportColumns } from "../../state/columns";
 import { SelectionModel } from "../../state/selection";
 import { useSession } from "../../state/session";
-import { setLanguage, makeT } from "../../i18n";
+import { setLanguage } from "../../i18n";
 import { ViewDataSource } from "../../data/ViewDataSource";
-import { UpperTable, filterLabel } from "./UpperTable";
+import { UpperTable } from "./UpperTable";
 import { TableController } from "./controller";
 import { contextSelection, launchBrowser, openSelected } from "./actions";
 import { fixtureColumns, fixtureTabs, tableFixture } from "./fixtures/core";
-import fixture from "./fixtures/fx-ui-basic.json";
+import { flushUiState } from "../../state/uistate";
+import fixture from "./fixtures/u10-contract.json";
 const capture = vi.hoisted(() => ({ grid: undefined as DataGridProps | undefined }));
 vi.mock("../../grid/DataGrid", async original => {
   const lib = await original<typeof import("../../grid/DataGrid")>();
@@ -33,7 +35,7 @@ beforeEach(async () => {
   useSession.setState({ ops: {} }); capture.grid = undefined;
   await setLanguage("en");
 });
-afterEach(() => { cleanup(); setClient(null); vi.restoreAllMocks(); });
+afterEach(async () => { await flushUiState(); cleanup(); setClient(null); vi.restoreAllMocks(); });
 const tick = (seq: number, views: Tick["views"] = []): Tick => ({ seq, at: "2026-10-18T10:00:00Z", views, countsVersion: seq, issuesVersion: seq, sidebarVersion: seq, ops: [], notices: [] });
 async function mounted() { render(<UpperTable />); await screen.findByTestId("grid"); await waitFor(() => expect(capture.grid?.source.rowKey(0)).toBe(1)); }
 
@@ -59,20 +61,23 @@ it("cycles primary and secondary sorting without sorting a local page", async ()
 // spec: UI-014
 it("combines filter and Enter search, retaining the All denominator and selected count", async () => {
   await mounted();
-  fireEvent.change(screen.getByLabelText("Filter"), { target: { value: "Client Error (4xx)" } });
+  fireEvent.click(screen.getByRole("button", { name: /Filter/ }));
+  fireEvent.click(await screen.findByRole("option", { name: /Client Error/ }));
   await waitFor(() => expect(capture.grid!.source.total).toBe(1));
   const search = screen.getByLabelText("Search Address");
   fireEvent.change(search, { target: { value: "/b" } });
   expect(useTabs.getState().queries.Internal.search).toBe("");
-  fireEvent.submit(search.closest("form")!);
+  fireEvent.keyDown(search, { key: "Enter", code: "Enter", charCode: 13 });
   await waitFor(() => expect(screen.getByText(/Showing: 1 of 3/)).toHaveTextContent("Search active"));
   act(() => capture.grid!.onSelectionChange(SelectionModel.empty().select(2)));
   expect(screen.getByText(/Showing: 1 of 3/)).toHaveTextContent("1 selected");
   fireEvent.keyDown(search, { key: "Escape" });
   expect(useTabs.getState().queries.Internal.search).toBe("");
-  fireEvent.change(screen.getByLabelText("Filter"), { target: { value: "Unlinked" } });
+  fireEvent.click(screen.getByRole("button", { name: /Filter/ }));
+  const unlinked = await screen.findByRole("option", { name: /Unlinked/ });
+  expect(unlinked).toHaveTextContent("–");
+  fireEvent.click(unlinked);
   await waitFor(() => expect(document.querySelector('[data-empty-state="NEEDS_CRAWL_ANALYSIS"]')).not.toBeNull());
-  expect(screen.getByRole("option", { name: /Unlinked \(–\)/ })).toBeInTheDocument();
 });
 
 // spec: UI-008 [P1]
@@ -212,11 +217,20 @@ it("submits recrawl as a URL selection and refreshes the view through subsequent
 
 // spec: UI-006
 // spec: UI-014
-it("formats issue names and priorities, and formats counts according to the UI language", () => {
+it("formats issue names and priorities, and formats counts according to the UI language", async () => {
   const filter = { ...fixtureTabs[0].filters[0], count: 1234, issue: { issueType: "warning" as const, priority: "high" as const } };
-  expect(filterLabel(filter, makeT("en"), "en")).toContain("1,234");
-  expect(filterLabel(filter, makeT("de"), "de")).toContain("1.234");
-  expect(filterLabel(filter, makeT("en"), "en")).toContain("▲ warning · high");
+  const configured = structuredClone(fixtureTabs);
+  configured[0].filters[0] = filter;
+  useTabs.setState({ catalog: configured });
+  vi.spyOn(catalog, "filterCounts").mockResolvedValue({ version: 1, filters: [{ tab: "Internal", filter }] });
+  await mounted();
+  fireEvent.click(screen.getByRole("button", { name: /Filter/ }));
+  const option = screen.getByRole("option", { name: /All/ });
+  expect(within(option).getByText("warning")).toHaveClass("os-badge");
+  expect(within(option).getByText("high")).toHaveClass("os-badge-danger");
+  expect(option).toHaveTextContent("1,234");
+  await act(async () => { await setLanguage("de"); });
+  expect(screen.getAllByRole("option")[0]).toHaveTextContent("1.234");
 });
 
 // spec: UI-114
@@ -246,6 +260,7 @@ it("lets settings restore the removal confirmation preference", async () => {
   const setting = await screen.findByRole("checkbox", { name: "Confirm removal from the table context menu" });
   await waitFor(() => expect(setting).not.toBeChecked());
   fireEvent.click(setting);
+  await act(async () => { await flushUiState(); });
   await waitFor(async () => expect(await confirmsRemoval()).toBe(true));
 });
 
@@ -283,4 +298,37 @@ it("accepts a new crawl's lower change sequence and discards the previous crawl'
   controller.resetCrawl(); await controller.refreshCounts();
   expect(controller.counts.version).toBe(1);
   expect(controller.counts.filters[0].filter.count).toBe(3); controller.dispose();
+});
+
+// spec: UI-110
+it("reports a localized browser error when the native command is unsupported", async () => {
+  await mounted();
+  const delegate = createClient(fx.core.transport());
+  const native = async <T,>(command: string, args?: unknown, signal?: AbortSignal): Promise<T> => {
+    if (command === "browser_open") throw localError("Unsupported", "err-desktop-platform");
+    return delegate.invoke<T>(command, args, signal);
+  };
+  setClient({ ...delegate, transportName: "tauri", invoke: native });
+  await expect(launchBrowser([fixture.rows[0].Address])).rejects.toMatchObject({ cmdError: { code: "Unsupported", messageKey: "u10-browser-error" } });
+  act(() => capture.grid!.onSelectionChange(SelectionModel.empty().select(1)));
+  act(() => capture.grid!.onContextMenu({ column: "Address", urlId: 1, x: 0, y: 0 }));
+  fireEvent.click(await screen.findByRole("menuitem", { name: "Open in browser" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Could not open the browser");
+  await act(async () => { await setLanguage("de"); });
+  expect(screen.getByRole("alert")).toHaveTextContent("Browser konnte nicht geöffnet werden");
+});
+
+// spec: UI-110
+it("uses an app dialog for large copies and cancellation does not write the clipboard", async () => {
+  await mounted();
+  const copy = vi.spyOn(capture.grid!.source.api, "copy");
+  let result!: Promise<boolean>;
+  act(() => { result = capture.grid!.confirmLargeCopy(100001); });
+  const dialog = await screen.findByRole("dialog");
+  fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+  await expect(result).resolves.toBe(false);
+  expect(copy).not.toHaveBeenCalled();
+  act(() => { result = capture.grid!.confirmLargeCopy(100001); });
+  fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Copy rows" }));
+  await expect(result).resolves.toBe(true);
 });

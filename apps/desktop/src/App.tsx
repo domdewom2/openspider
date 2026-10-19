@@ -6,7 +6,7 @@ import { app as appApi } from "./ipc/app";
 import { EmptyState } from "./ui/primitives/EmptyState";
 
 /** Optional main-window regions; absent registrations retain the scaffold defaults. */
-const mainRegions: { tabs?: ComponentType; table?: ComponentType } = {};
+const mainRegions: { tabs?: ComponentType; table?: ComponentType; detail?: ComponentType } = {};
 export function registerMainRegions(regions: Partial<typeof mainRegions>): void {
   Object.assign(mainRegions, regions);
 }
@@ -18,6 +18,7 @@ export function registerMainRegions(regions: Partial<typeof mainRegions>): void 
 export function App() {
   const TabsRegion = mainRegions.tabs;
   const TableRegion = mainRegions.table;
+  const DetailRegion = mainRegions.detail;
   const t = useT();
   const [version, setVersion] = useState<string | null>(null);
 
@@ -47,6 +48,7 @@ export function App() {
           <RegionBoundary name="table">
             {TableRegion ? <TableRegion /> : <EmptyState state={{ code: "NO_DATA_YET" }} />}
           </RegionBoundary>
+          {DetailRegion && <RegionBoundary name="detail"><DetailRegion /></RegionBoundary>}
         </main>
         <aside className="os-app-sidebar" aria-label={t("app-region-sidebar")} />
         <footer className="os-app-status" role="contentinfo" aria-label={t("app-region-status")}>

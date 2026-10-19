@@ -59,3 +59,5 @@ u10-issue-opportunity = opportunity
 u10-priority-high = high
 u10-priority-medium = medium
 u10-priority-low = low
+u10-browser-error = Could not open the browser
+u10-clear-search = Clear search

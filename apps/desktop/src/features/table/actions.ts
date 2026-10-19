@@ -1,3 +1,4 @@
+import { IpcError, toCmdError } from "../../ipc/errors";
 import { client } from "../../ipc/client";
 import type { ViewDataSource } from "../../data/ViewDataSource";
 import { SelectionModel } from "../../state/selection";
@@ -44,6 +45,10 @@ export async function openSelected(source: ViewDataSource, selection: SelectionM
 export async function launchBrowser(urls: string[]): Promise<void> {
   const valid = urls.map(browserUrl).filter((url): url is string => url !== null).slice(0, 10);
   if (!valid.length) return;
-  if (client.transportName === "tauri") await client.invoke<void>("browser_open", { urls: valid });
-  else for (const url of valid) window.open(url, "_blank", "noopener,noreferrer");
+  try {
+    if (client.transportName === "tauri") await client.invoke<void>("browser_open", { urls: valid });
+    else for (const url of valid) window.open(url, "_blank", "noopener,noreferrer");
+  } catch (error) {
+    throw new IpcError({ ...toCmdError(error), messageKey: "u10-browser-error" });
+  }
 }

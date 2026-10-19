@@ -49,7 +49,9 @@ export function moveItem<T>(list: readonly T[], from: number, to: number): T[] {
  * Horizontale Tab-Leiste mit Überlauf-Dropdown und verschiebbarer Reihenfolge (Top-Tabs, Detail-Tabs). Roving Tabindex:
  * ←/→ wechselt den Tab, Pos1/Ende springt; Alt+Umschalt+←/→ verschiebt den Tab (Tastatur-Alternative zum Ziehen).
  */
-export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReorder, measure, className }: {
+export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReorder, measure, className, overflowEntries }: {
+  /** Optional complete overflow/configuration menu (M2-U10); default lists clipped tabs. */
+  overflowEntries?: readonly MenuEntry[];
   tabs: readonly TabBarItem[];
   selected: string;
   onSelect: (id: string) => void;
@@ -152,7 +154,7 @@ export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReord
           );
         })}
       </div>
-      {hidden.length > 0 && <Menu label={overflowLabel} entries={entries} trigger={<IconButton label={overflowLabel} icon={<ChevronsRight size={14} />} />} />}
+      {(hidden.length > 0 || overflowEntries) && <Menu label={overflowLabel} entries={overflowEntries ?? entries} trigger={<IconButton label={overflowLabel} icon={<ChevronsRight size={14} />} />} />}
     </div>
   );
 }

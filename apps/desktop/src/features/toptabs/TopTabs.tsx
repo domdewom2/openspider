@@ -6,14 +6,15 @@ import { useTabs } from "../../state/tabs";
 import { useAction } from "../../ui/actions";
 import { registerMenuContributions } from "../../ui/menu/registry";
 import { TabBar } from "../../ui/primitives/TabBar";
-import { Button } from "../../ui/primitives/Button";
+import type { MenuEntry } from "../../ui/primitives/Menu";
 
 import "./toptabs.css";
 
 export function TopTabs() {
   const t = useT(); const s = useTabs();
   const fail = (error: unknown) => useTabs.setState({ error });
-  useEffect(() => { void useTabs.getState().load(); }, []);
+  const crawlId = useSession(s => s.crawl?.crawlId);
+  useEffect(() => { void useTabs.getState().load(); }, [crawlId]);
   useEffect(() => eventBus.on("focusUrl", event => {
     if (useSession.getState().crawl?.crawlId !== event.crawlId) return;
     useTabs.getState().focus(event.isInternal ? "Internal" : "External", event.urlId);
@@ -39,28 +40,24 @@ export function TopTabs() {
   useAction("toptab.goto.8", () => s.select(s.order.filter(id => !s.hidden.includes(id))[7]));
   useAction("toptab.goto.9", () => s.select(s.order.filter(id => !s.hidden.includes(id))[8]));
   const label = (id: string) => t(`tab-${id.toLowerCase().replaceAll(" ", "-")}`, undefined, { fallback: id });
+  const entries: MenuEntry[] = [
+    ...s.order.map(id => ({ id: `visible-${id}`, label: label(id), checked: !s.hidden.includes(id),
+      isDisabled: id === "Internal", disabledReason: id === "Internal" ? t("u10-tabs-internal") : undefined,
+      onCheckedChange: (checked: boolean): void => { void s.show(id, checked).catch(fail); } })),
+    ...s.order.flatMap((id, index) => [
+      { id: `open-${id}`, label: `${t("u10-tabs-open")} ${label(id)}`, separatorBefore: true,
+        onAction: (): void => { void s.show(id, true).catch(fail); s.select(id); } },
+      ...([-1, 1] as const).map(direction => ({ id: `move-${id}-${direction}`,
+        label: t(direction < 0 ? "u10-tabs-up" : "u10-tabs-down", { tab: label(id) }),
+        isDisabled: index + direction < 0 || index + direction >= s.order.length,
+        onAction: (): void => { const order = [...s.order]; [order[index], order[index + direction]] = [order[index + direction], order[index]]; void s.reorder(order).catch(fail); } })),
+    ]),
+    { id: "reset-tabs", label: t("u10-tabs-reset"), separatorBefore: true, onAction: (): void => void s.reset().catch(fail) },
+  ];
   return <div className="u10-top-tabs">
     <TabBar tabs={s.order.filter(id => !s.hidden.includes(id)).map(id => ({ id, label: label(id) }))}
       selected={s.active} onSelect={s.select} onReorder={ids => void s.reorder(ids).catch(fail)}
-      label={t("u10-tabs")} overflowLabel={t("u10-tabs-overflow")} />
-    <details className="u10-tabs-config">
-      <summary aria-label={t("u10-tabs-configure")}>▾</summary>
-      <div className="u10-tabs-popup" aria-label={t("u10-tabs-configure")}>
-        {s.order.map((id, index) => <div className="u10-tabs-item" key={id}>
-          <label><input type="checkbox" checked={!s.hidden.includes(id)} disabled={id === "Internal"}
-            title={id === "Internal" ? t("u10-tabs-internal") : undefined}
-            onChange={event => void s.show(id, event.target.checked).catch(fail)} />{label(id)}</label>
-          <Button onPress={() => { void s.show(id, true).then(() => s.select(id)).catch(fail); }}>{t("u10-tabs-open")}</Button>
-          <Button aria-label={t("u10-tabs-up", { tab: label(id) })} isDisabled={index === 0} onPress={() => {
-            const order = [...s.order]; [order[index - 1], order[index]] = [order[index], order[index - 1]]; void s.reorder(order).catch(fail);
-          }}>↑</Button>
-          <Button aria-label={t("u10-tabs-down", { tab: label(id) })} isDisabled={index === s.order.length - 1} onPress={() => {
-            const order = [...s.order]; [order[index + 1], order[index]] = [order[index], order[index + 1]]; void s.reorder(order).catch(fail);
-          }}>↓</Button>
-        </div>)}
-        <Button onPress={() => void s.reset().catch(fail)}>{t("u10-tabs-reset")}</Button>
-      </div>
-    </details>
+      label={t("u10-tabs")} overflowLabel={t("u10-tabs-configure")} overflowEntries={entries} />
     {s.error != null && <span role="alert">{t("u10-tabs-error")}</span>}
   </div>;
 }

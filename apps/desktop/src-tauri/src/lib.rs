@@ -66,7 +66,6 @@ pub fn run() {
     }
 
     builder = builder
-        .invoke_handler(tauri::generate_handler![desktop::browser_open])
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_notification::init())
@@ -101,7 +100,7 @@ pub fn run() {
                 assets::handle(&scheme_app, ctx, request, responder);
             },
         )
-        .invoke_handler(tauri::generate_handler![app_version])
+        .invoke_handler(tauri::generate_handler![app_version, desktop::browser_open])
         .setup(move |tauri_app| {
             desktop::install(&setup_app, tauri_app.handle(), setup_quitting.clone());
             // Dateien, die den Start auslösen: Argumente (Windows/Linux) und geöffnete URLs (macOS)

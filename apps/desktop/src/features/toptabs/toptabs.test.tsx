@@ -1,7 +1,9 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, beforeEach, expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { flushUiState } from "../../state/uistate";
 import { createClient, setClient } from "../../ipc/client";
 import { eventBus } from "../../ipc/events";
+import { catalog } from "../../ipc/catalog";
 import { uistate } from "../../ipc/uistate";
 import { useTabs } from "../../state/tabs";
 import { useSession } from "../../state/session";
@@ -16,7 +18,7 @@ beforeEach(async () => {
   useTabs.setState({ catalog: [], order: [], hidden: [], active: "Internal", queries: {}, loaded: false, focusId: undefined, focusRequest: 0, error: null });
   await setLanguage("en");
 });
-afterEach(() => { cleanup(); setClient(null); });
+afterEach(async () => { await flushUiState(); cleanup(); vi.restoreAllMocks(); setClient(null); });
 
 // spec: UI-004 [P1]
 it("loads only catalog tabs, persists reordering and hiding, and resets to catalog defaults", async () => {
@@ -45,13 +47,15 @@ it("retains each tab's last filter and sort, and accepts navigation from Overvie
 // spec: UI-004 [P1]
 it("offers checkboxes for every tab, protects Internal, and reopens a hidden tab", async () => {
   render(<TopTabs />); await screen.findByRole("tab", { name: "Internal" });
-  expect(screen.getByRole("checkbox", { name: "Internal" })).toBeDisabled();
-  fireEvent.click(screen.getByRole("checkbox", { name: "AMP" }));
+  fireEvent.click(screen.getByRole("button", { name: "Configure tabs" }));
+  expect(screen.getAllByRole("menuitemcheckbox")).toHaveLength(fixtureTabs.length);
+  expect(screen.getByRole("menuitemcheckbox", { name: "Internal" })).toHaveAttribute("aria-disabled", "true");
+  fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "AMP" }));
   await waitFor(() => expect(useTabs.getState().hidden).toContain("AMP"));
   expect(screen.queryByRole("tab", { name: "AMP" })).toBeNull();
-  fireEvent.click(screen.getByRole("checkbox", { name: "AMP" }));
-  await screen.findByRole("tab", { name: "AMP" });
-  fireEvent.click(screen.getByRole("button", { name: "Move Images up" }));
+  fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "AMP" }));
+  await waitFor(() => expect(useTabs.getState().hidden).not.toContain("AMP"));
+  fireEvent.click(screen.getByRole("menuitem", { name: "Move Images up" }));
   await waitFor(() => expect(useTabs.getState().order).toEqual(["Internal", "Images", "External", "AMP"]));
 });
 
@@ -67,4 +71,13 @@ it("registers focusUrl navigation, checks crawl identity, and reveals and resets
   expect(useTabs.getState()).toMatchObject({ active: "External", focusId: 2, queries: { External: { filter: "All", search: "" } } });
   expect(useTabs.getState().hidden).not.toContain("External");
   mounted.unmount(); expect(eventBus.listenerCount("focusUrl")).toBe(before);
+});
+
+// spec: UI-004
+it("reloads catalog tabs and persisted preferences after switching crawls", async () => {
+  const load = vi.spyOn(catalog, "tabs");
+  render(<TopTabs />); await screen.findByRole("tab", { name: "Internal" });
+  const before = load.mock.calls.length;
+  act(() => useSession.setState({ crawl: { crawlId: "changed-crawl" } as CrawlStatus }));
+  await waitFor(() => expect(load).toHaveBeenCalledTimes(before + 1));
 });

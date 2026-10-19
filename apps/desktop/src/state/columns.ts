@@ -4,7 +4,8 @@ import { config } from "../ipc/config";
 import { uistate } from "../ipc/uistate";
 import { defaultColumns, type ColumnState } from "../grid/DataGrid";
 import type { ColumnMeta } from "../ipc/gen/ColumnMeta";
-import { object, saveTableState } from "./tabs";
+import { object } from "./tabs";
+import { saveUiState } from "./uistate";
 
 export function normalizeColumns(meta: ColumnMeta[], saved: ColumnState[] = [], profile?: string[]): ColumnState[] {
   const defaults = defaultColumns(meta);
@@ -30,8 +31,7 @@ export function persistColumns(tab: string, columns: ColumnState[]): Promise<voi
     const dto = await config.get();
     const root = object(dto.config); const ui = object(root.ui);
     await config.set({ ...dto, config: { ...root, ui: { ...ui, columns: { ...object(ui.columns), [tab]: exportColumns(columns) } } } });
-    const saved = await uistate.load();
-    await saveTableState({ tableColumns: { ...object(object(saved.state).tableColumns), [tab]: columns.map(c => ({ ...c })) } });
+    await saveUiState(state => ({ ...state, tableColumns: { ...object(state.tableColumns), [tab]: columns.map(c => ({ key: c.key, width: c.width, visible: c.visible, pinned: c.pinned, ...(c.sort ? { sort: c.sort } : {}) })) } }));
   });
   profileQueue = job;
   return job;

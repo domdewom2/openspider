@@ -5,7 +5,8 @@ import { startBridge } from "../support/bridge";
 // spec: UI-018
 // spec: UI-114
 test("real bridge: crawl, recrawl a changed page, then remove the URL and update the counts", async ({ page }) => {
-  test.fixme(true, "wartet auf M2-K01/M2-K04/M2-K06: echte Views, Crawl-Steuerung und Neuberechnung (C9)");
+  // Integration also requires K01 views and K04 crawl control. N01 resolves this C9 placeholder.
+  test.fixme(true, "wartet auf M2-K06");
   const bridge = await startBridge();
   expect(bridge).not.toBeNull();
   let title = "Initial title";
@@ -17,7 +18,7 @@ test("real bridge: crawl, recrawl a changed page, then remove the URL and update
     await page.evaluate(async url => {
       const modulePath = "/src/ipc/crawl.ts";
       const { crawl } = await import(modulePath);
-      await crawl.start({ source: { kind: "list", items: [url], label: "fx-ui-basic" }, scope: "domain" });
+      await crawl.start({ source: { kind: "list", items: [url], label: "u10-contract" }, scope: "domain" });
     }, `http://127.0.0.1:${address.port}/`);
     await expect(page.getByText("Showing: 1 of 1", { exact: true })).toBeVisible();
     const canvas = page.locator(".os-data-grid");

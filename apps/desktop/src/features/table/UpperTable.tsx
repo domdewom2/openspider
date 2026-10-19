@@ -7,7 +7,6 @@ import { eventBus } from "../../ipc/events";
 import { toCmdError } from "../../ipc/errors";
 import { exportApi } from "../../ipc/export";
 import { op } from "../../ipc/op";
-import type { FilterInfo } from "../../ipc/gen/FilterInfo";
 import type { ViewSpec } from "../../ipc/gen/ViewSpec";
 import { useColumns, exportColumns } from "../../state/columns";
 import { usePrefs } from "../../state/prefs";
@@ -17,6 +16,9 @@ import { useAction } from "../../ui/actions";
 import { currentPlatform } from "../../ui/platform";
 import { Button } from "../../ui/primitives/Button";
 import { Dialog, DialogFooter } from "../../ui/primitives/Dialog";
+import { ComboBox } from "../../ui/primitives/ComboBox";
+import { Badge } from "../../ui/primitives/Feedback";
+import { Checkbox, SearchField, TextField } from "../../ui/primitives/fields";
 import { EmptyState } from "../../ui/primitives/EmptyState";
 import { MenuBody, type MenuEntry } from "../../ui/primitives/Menu";
 import { Popover } from "react-aria-components";
@@ -29,12 +31,6 @@ import { TableController } from "./controller";
 import { contextSelection, openSelected, launchBrowser } from "./actions";
 import "./table.css";
 
-export function filterLabel(filter: FilterInfo, t: ReturnType<typeof useT>, locale: string): string {
-  const number = filter.state.kind === "needsCrawlAnalysis" || filter.count == null ? "–" : new Intl.NumberFormat(locale).format(filter.count);
-  const issue = filter.issue ? `${filter.issue.issueType === "issue" ? "●" : filter.issue.issueType === "warning" ? "▲" : "◆"} ${t(`u10-issue-${filter.issue.issueType}`)} · ${t(`u10-priority-${filter.issue.priority}`)} · ` : "";
-  const state = filter.state.kind === "ready" ? "" : ` · ${t(`u10-filter-${filter.state.kind}`)}`;
-  return `${issue}${t(`filter-${filter.labelTemplate.toLowerCase().replaceAll(" ", "-")}`, filter.params, { fallback: filter.id })} (${number})${state}`;
-}
 export function UpperTable() {
   const t = useT(); const locale = currentLanguage(); const tabs = useTabs();
   const query = tabs.queries[tabs.active] ?? defaultQuery();
@@ -46,7 +42,7 @@ export function UpperTable() {
   useSyncExternalStore(controller.subscribe, controller.snapshot);
   const source = controller.source;
   const grid = useRef<GridController | null>(null);
-  const search = useRef<HTMLInputElement>(null); const filterRef = useRef<HTMLSelectElement>(null);
+  const search = useRef<HTMLDivElement>(null); const filterRef = useRef<HTMLDivElement>(null);
   const [text, setText] = useState(query.search);
   const [context, setContext] = useState<{ column: string; urlId?: number; x: number; y: number }>();
   const anchor = useRef<HTMLSpanElement>(null);
@@ -55,6 +51,9 @@ export function UpperTable() {
   const analysis = useSession(s => s.analysis);
   const [stale, setStale] = useState(false);
   const [remove, setRemove] = useState(false); const [skipRemoval, setSkipRemoval] = useState(false);
+  const [copyConfirm, setCopyConfirm] = useState(false);
+  const copyResolve = useRef<((ok: boolean) => void) | undefined>(undefined);
+  const confirmLargeCopy = () => new Promise<boolean>(resolve => { copyResolve.current?.(false); copyResolve.current = resolve; setCopyConfirm(true); });
   const [browserConfirm, setBrowserConfirm] = useState(false);
   const browserResolve = useRef<((ok: boolean) => void) | undefined>(undefined);
   const [exportSpec, setExportSpec] = useState<ViewSpec>();
@@ -67,7 +66,7 @@ export function UpperTable() {
   const activeFilter = filters.find(f => f.id === query.filter);
   const total = filters.find(f => f.id === "All")?.count;
   const fail = controller.fail;
-  useEffect(() => { controller.activate(); return () => { controller.dispose(); browserResolve.current?.(false); }; }, [controller]);
+  useEffect(() => { controller.activate(); return () => { controller.dispose(); browserResolve.current?.(false); copyResolve.current?.(false); }; }, [controller]);
   useEffect(() => { controller.resetCrawl(); }, [controller, crawlId]);
   useEffect(() => {
     void columnState.load(tabs.active).catch(fail);
@@ -107,7 +106,7 @@ export function UpperTable() {
   const copy = (keys: string[], cell = false) => {
     if (!source) return;
     const selection = cell && context?.urlId !== undefined ? controller.selection.select(context.urlId) : controller.selection;
-    void copySelection(source, selection, keys, { confirmLarge: async () => window.confirm(t("u10-large-copy")), offerExport: () => setExportOpen(true), withHeader: false }).catch(fail);
+    void copySelection(source, selection, keys, { confirmLarge: confirmLargeCopy, offerExport: () => setExportOpen(true), withHeader: false }).catch(fail);
   };
   const openBrowser = () => {
     if (!source) return;
@@ -122,9 +121,9 @@ export function UpperTable() {
       : await exportApi.view({ viewId: source.viewId, version: source.version, path, format: "csv", allColumns, columns: exportColumns(columns) });
     setOperation({ id: result.opId, total: exportSpec ? count : source.total }); setExportOpen(false);
   };
-  useAction("search.focus", () => search.current?.focus());
+  useAction("search.focus", () => search.current?.querySelector("input")?.focus());
   useAction("search.clear", () => { tabs.query({ search: "" }); setText(""); });
-  useAction("filter.open", () => filterRef.current?.focus());
+  useAction("filter.open", () => filterRef.current?.querySelector("button")?.click());
   useAction("export.view", () => openExport());
   useAction("crawl.recrawl", () => { void actOnSelection("recrawl").catch(fail); });
   useAction("table.remove", () => { void requestRemoval(true).catch(fail); });
@@ -162,13 +161,16 @@ export function UpperTable() {
     activeFilter?.state.kind === "needsRendering" ? { code: "NEEDS_JS_RENDERING" as const } : null;
   return <section className="u10-table" data-shortcut-scope="table" aria-label={t("u10-table")}>
     <div className="u10-toolbar">
-      <label>{t("u10-filter")}<select ref={filterRef} data-priority={activeFilter?.issue?.priority} value={query.filter} onChange={e => tabs.query({ filter: e.target.value })}>
-        {filters.map(f => <option key={f.id} value={f.id} title={filterLabel(f, t, locale)} data-priority={f.issue?.priority}>{filterLabel(f, t, locale)}</option>)}
-      </select></label>
-      <form onSubmit={e => { e.preventDefault(); tabs.query({ search: text }); }}>
-        <label>{t("u10-search")}<input ref={search} type="search" value={text} onChange={e => setText(e.target.value)}
-          onKeyDown={e => { if (e.key === "Escape") { setText(""); tabs.query({ search: "" }); } }} /></label>
-      </form>
+      <div ref={filterRef}><ComboBox label={t("u10-filter")} selected={query.filter} onSelect={filter => tabs.query({ filter })}
+        formatCount={n => new Intl.NumberFormat(locale).format(n)} options={filters.map(f => ({ id: f.id,
+          label: t(`filter-${f.labelTemplate.toLowerCase().replaceAll(" ", "-")}`, f.params, { fallback: f.id }),
+          count: f.state.kind === "needsCrawlAnalysis" ? null : f.count ?? null,
+          hint: f.state.kind === "ready" ? undefined : t(`u10-filter-${f.state.kind}`),
+          badge: f.issue ? <><Badge tone={f.issue.issueType === "issue" ? "danger" : f.issue.issueType === "warning" ? "warning" : "neutral"}>{t(`u10-issue-${f.issue.issueType}`)}</Badge>
+            <Badge tone={f.issue.priority === "high" ? "danger" : f.issue.priority === "medium" ? "warning" : "neutral"}>{t(`u10-priority-${f.issue.priority}`)}</Badge></> : undefined,
+        }))} /></div>
+      <div ref={search}><SearchField label={t("u10-search")} value={text} onChange={setText}
+        onSubmit={value => tabs.query({ search: value })} onClear={() => { setText(""); tabs.query({ search: "" }); }} clearLabel={t("u10-clear-search")} /></div>
       <Button onPress={() => openExport()} isDisabled={!source}>{t("u10-export")}</Button>
       <ColumnsMenu columns={columns} onChange={next => void columnState.change(tabs.active, next).catch(fail)} onReset={() => void columnState.reset(tabs.active).catch(fail)} />
     </div>
@@ -188,7 +190,7 @@ export function UpperTable() {
           headerTitle={column => { const index = query.sort.findIndex(s => s.column === column); return index < 0 ? column : `${column} ${query.sort[index].dir === "asc" ? "↑" : "↓"}${query.sort.length > 1 ? index + 1 : ""}`; }}
           onColumnsChange={next => void columnState.change(tabs.active, next).catch(fail)}
           onContextMenu={showContext} onActivate={() => undefined} onError={fail} controller={setGrid}
-          confirmLargeCopy={async () => window.confirm(t("u10-large-copy"))} onExportSelection={() => openExport()}
+          confirmLargeCopy={confirmLargeCopy} onExportSelection={() => openExport()}
           rowHeight={SIZES.rowHeight[appearance.density]} locale={locale} ariaLabel={t("u10-table")}
           theme={{ tokens: resolveTokens(resolveTheme(appearance.theme, systemPrefersDark()), appearance.accent),
             fontFamily: FONT_STACKS[currentPlatform()].ui, fontSize: SIZES.fontTable[appearance.density], zebra: appearance.zebra }} /> :
@@ -204,7 +206,12 @@ export function UpperTable() {
       footer={<DialogFooter okLabel={t("u10-remove")} cancelLabel={t("u10-cancel")} okVariant="danger"
         onOk={() => void (async () => { if (skipRemoval) await saveTableState({ tableConfirmRemove: false }); await actOnSelection("remove"); })().catch(fail)} onCancel={() => setRemove(false)} />}>
       <p>{t("u10-remove-confirm", { count })}</p>
-      <label><input type="checkbox" checked={skipRemoval} onChange={event => setSkipRemoval(event.target.checked)} />{t("u10-dont-ask")}</label>
+      <Checkbox isSelected={skipRemoval} onChange={setSkipRemoval}>{t("u10-dont-ask")}</Checkbox>
+    </Dialog>
+    <Dialog title={t("u10-copy-rows")} isOpen={copyConfirm} onOpenChange={open => { setCopyConfirm(open); if (!open) copyResolve.current?.(false); }}
+      footer={<DialogFooter okLabel={t("u10-copy-rows")} cancelLabel={t("u10-cancel")}
+        onOk={() => { copyResolve.current?.(true); setCopyConfirm(false); }} onCancel={() => { copyResolve.current?.(false); setCopyConfirm(false); }} />}>
+      {t("u10-large-copy")}
     </Dialog>
     <Dialog title={t("u10-browser")} isOpen={browserConfirm} onOpenChange={open => { setBrowserConfirm(open); if (!open) browserResolve.current?.(false); }}
       footer={<DialogFooter okLabel={t("u10-open")} cancelLabel={t("u10-cancel")}
@@ -214,8 +221,8 @@ export function UpperTable() {
     <Dialog title={t("u10-export")} isOpen={exportOpen} onOpenChange={setExportOpen}
       footer={<DialogFooter okLabel={t("u10-export")} cancelLabel={t("u10-cancel")} okDisabled={!path.trim()}
         onOk={() => void exportSelection().catch(fail)} onCancel={() => setExportOpen(false)} />}>
-      <label>{t("u10-export-path")}<input value={path} onChange={e => setPath(e.target.value)} /></label>
-      {!exportSpec && <label><input type="checkbox" checked={allColumns} onChange={e => setAllColumns(e.target.checked)} />{t("u10-export-all")}</label>}
+      <TextField label={t("u10-export-path")} value={path} onChange={setPath} />
+      {!exportSpec && <Checkbox isSelected={allColumns} onChange={setAllColumns}>{t("u10-export-all")}</Checkbox>}
     </Dialog>
   </section>;
 }

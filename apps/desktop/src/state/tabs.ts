@@ -1,3 +1,4 @@
+import { saveUiState } from "./uistate";
 import { create } from "zustand";
 import { catalog } from "../ipc/catalog";
 import { uistate } from "../ipc/uistate";
@@ -18,15 +19,9 @@ export function cycleSort(sort: SortKey[], column: string, extend = false): Sort
 export function object(value: JsonValue | undefined): Record<string, JsonValue> {
   return value !== null && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
-let saveQueue: Promise<unknown> = Promise.resolve();
-/** Merge only this feature's keys; other windows/features own the remaining state. */
+/** Merge only this feature's keys through the shared persistence queue. */
 export function saveTableState(patch: Record<string, JsonValue>): Promise<void> {
-  const job = saveQueue.catch(() => undefined).then(async () => {
-    const dto = await uistate.load();
-    await uistate.save({ ...dto, state: { ...object(dto.state), ...patch } });
-  });
-  saveQueue = job;
-  return job;
+  return saveUiState(state => ({ ...state, ...patch }));
 }
 interface TabsState {
   catalog: TabInfo[]; order: string[]; hidden: string[]; active: string; queries: Record<string, TabQuery>;

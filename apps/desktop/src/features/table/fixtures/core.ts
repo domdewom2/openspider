@@ -7,7 +7,7 @@ import type { RowsArgs } from "../../../ipc/gen/RowsArgs";
 import type { LocateArgs } from "../../../ipc/gen/LocateArgs";
 import type { ViewSpec } from "../../../ipc/gen/ViewSpec";
 import type { CrawlConfigDto } from "../../../ipc/gen/CrawlConfigDto";
-import data from "./fx-ui-basic.json";
+import data from "./u10-contract.json";
 export const fixtureTabs = data.tabs as TabInfo[];
 export const fixtureColumns = data.columns as ColumnMeta[];
 export function tableFixture() {

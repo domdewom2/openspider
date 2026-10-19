@@ -44,6 +44,9 @@ impl<R: Runtime> WindowHost for Host<R> {
     }
 }
 impl<R: Runtime> DesktopActions for Host<R> {
+    fn open_urls(&self, urls: &[String]) -> Result<(), CmdError> {
+        os_app::runtime::hooks::launch_browser_urls(urls)
+    }
     fn write_clipboard(&self, text: &str) -> Result<(), CmdError> {
         self.0.clipboard().write_text(text).map_err(failure)
     }
@@ -239,12 +242,11 @@ mod linux_tests {
 
 /// Native platform action for the upper table; no crawl data crosses this boundary.
 #[tauri::command]
-pub fn browser_open(urls: Vec<String>) -> Result<(), CmdError> {
+pub fn browser_open(app: tauri::State<'_, App>, urls: Vec<String>) -> Result<(), CmdError> {
     let urls = browser_urls(&urls)?;
-    for url in urls {
-        launch_browser(url.as_str())?;
-    }
-    Ok(())
+    app.desktop_actions()
+        .ok_or_else(|| CmdError::new(ErrorCode::Unsupported, "err-desktop-platform"))?
+        .open_urls(&urls.iter().map(ToString::to_string).collect::<Vec<_>>())
 }
 
 fn browser_urls(urls: &[String]) -> Result<Vec<tauri::Url>, CmdError> {
@@ -260,102 +262,6 @@ fn browser_urls(urls: &[String]) -> Result<Vec<tauri::Url>, CmdError> {
             Ok(url)
         })
         .collect()
-}
-
-#[cfg(target_os = "macos")]
-fn launch_browser(url: &str) -> Result<(), CmdError> {
-    use std::ffi::{c_char, c_void, CString};
-    type Obj = *mut c_void;
-    #[link(name = "objc")]
-    unsafe extern "C" {
-        fn objc_getClass(name: *const c_char) -> Obj;
-        fn sel_registerName(name: *const c_char) -> Obj;
-        fn objc_msgSend();
-    }
-    #[link(name = "AppKit", kind = "framework")]
-    unsafe extern "C" {}
-    let text = CString::new(url).map_err(failure)?;
-    // SAFETY: all selectors match their Objective-C signatures; the pool owns the temporary
-    // NSString and NSURL. NSWorkspace opens the validated HTTP(S) URL through Launch Services.
-    let opened = unsafe {
-        let send0: unsafe extern "C" fn(Obj, Obj) -> Obj =
-            std::mem::transmute(objc_msgSend as *const ());
-        let send1: unsafe extern "C" fn(Obj, Obj, Obj) -> Obj =
-            std::mem::transmute(objc_msgSend as *const ());
-        let string: unsafe extern "C" fn(Obj, Obj, *const c_char) -> Obj =
-            std::mem::transmute(objc_msgSend as *const ());
-        let open: unsafe extern "C" fn(Obj, Obj, Obj) -> bool =
-            std::mem::transmute(objc_msgSend as *const ());
-        let pool = send0(
-            objc_getClass(c"NSAutoreleasePool".as_ptr()),
-            sel_registerName(c"new".as_ptr()),
-        );
-        let value = string(
-            objc_getClass(c"NSString".as_ptr()),
-            sel_registerName(c"stringWithUTF8String:".as_ptr()),
-            text.as_ptr(),
-        );
-        let ns_url = send1(
-            objc_getClass(c"NSURL".as_ptr()),
-            sel_registerName(c"URLWithString:".as_ptr()),
-            value,
-        );
-        let workspace = send0(
-            objc_getClass(c"NSWorkspace".as_ptr()),
-            sel_registerName(c"sharedWorkspace".as_ptr()),
-        );
-        let opened =
-            !ns_url.is_null() && open(workspace, sel_registerName(c"openURL:".as_ptr()), ns_url);
-        send0(pool, sel_registerName(c"drain".as_ptr()));
-        opened
-    };
-    if opened {
-        Ok(())
-    } else {
-        Err(failure("Browser could not open URL"))
-    }
-}
-
-#[cfg(target_os = "windows")]
-fn launch_browser(url: &str) -> Result<(), CmdError> {
-    use std::{ffi::c_void, ptr};
-    #[link(name = "shell32")]
-    unsafe extern "system" {
-        fn ShellExecuteW(
-            window: *mut c_void,
-            operation: *const u16,
-            file: *const u16,
-            parameters: *const u16,
-            directory: *const u16,
-            show: i32,
-        ) -> *mut c_void;
-    }
-    let operation: Vec<u16> = "open\0".encode_utf16().collect();
-    let value: Vec<u16> = url.encode_utf16().chain(Some(0)).collect();
-    // SAFETY: strings are NUL-terminated and live for the duration of the native call.
-    let result = unsafe {
-        ShellExecuteW(
-            ptr::null_mut(),
-            operation.as_ptr(),
-            value.as_ptr(),
-            ptr::null(),
-            ptr::null(),
-            1,
-        )
-    } as isize;
-    if result > 32 {
-        Ok(())
-    } else {
-        Err(failure(format!("ShellExecuteW: {result}")))
-    }
-}
-
-#[cfg(not(any(target_os = "macos", target_os = "windows")))]
-fn launch_browser(_url: &str) -> Result<(), CmdError> {
-    Err(CmdError::new(
-        ErrorCode::Unsupported,
-        "err-desktop-platform",
-    ))
 }
 
 #[cfg(test)]
@@ -374,6 +280,31 @@ mod browser_tests {
             vec!["javascript:alert(1)".into()],
         ] {
             assert!(browser_urls(&invalid).is_err());
+        }
+    }
+
+    // spec: UI-110
+    #[test]
+    fn browser_registry_is_not_replaced_by_a_later_handler() {
+        let source = include_str!("lib.rs");
+        assert_eq!(source.matches(".invoke_handler(").count(), 1);
+        assert!(source.contains("tauri::generate_handler![app_version, desktop::browser_open]"));
+    }
+
+    // spec: UI-110
+    #[test]
+    fn browser_adapter_validates_the_entire_batch_before_launching() {
+        let fixture: serde_json::Value = serde_json::from_str(include_str!(
+            "../../src/features/table/fixtures/u10-contract.json"
+        ))
+        .unwrap();
+        let valid = fixture["rows"][0]["Address"].as_str().unwrap().to_owned();
+        for invalid in [
+            vec![],
+            vec![valid.clone(); 11],
+            vec![valid.clone(), "file:///tmp/a".into()],
+        ] {
+            assert!(os_app::runtime::hooks::launch_browser_urls(&invalid).is_err());
         }
     }
 }

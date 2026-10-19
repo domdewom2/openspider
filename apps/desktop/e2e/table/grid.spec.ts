@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-const fixture = "/src/features/table/fixtures/fx-ui-basic.html";
+const fixture = "/src/features/table/fixtures/u10-contract.html";
 test.beforeEach(async ({ page }) => {
   await page.clock.install({ time: new Date("2026-10-18T10:00:00Z") });
   await page.goto(fixture);
