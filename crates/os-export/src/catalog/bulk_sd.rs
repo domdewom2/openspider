@@ -234,17 +234,21 @@ fn write_url(
             return Ok(0);
         }
     }
-    let mut stmt = job.file.conn().prepare("SELECT s.format, s.json FROM sd_items s JOIN urls u ON u.id=s.url_id WHERE u.url=?1 ORDER BY CASE s.format WHEN 'json-ld' THEN 0 WHEN 'microdata' THEN 1 ELSE 2 END,s.id").map_err(os_store::StoreError::from)?;
+    let mut stmt = job.file.conn().prepare("SELECT s.format, s.json, s.id FROM sd_items s JOIN urls u ON u.id=s.url_id WHERE u.url=?1 ORDER BY CASE s.format WHEN 'json-ld' THEN 0 WHEN 'microdata' THEN 1 ELSE 2 END,s.id").map_err(os_store::StoreError::from)?;
     let items = stmt
         .query_map([address], |r| {
-            Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?))
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, i64>(2)?,
+            ))
         })
         .map_err(os_store::StoreError::from)?;
     let mut n = 0;
     let mut blanks = 0;
     let mut seen = HashSet::new();
     for item in items {
-        let (format, json) = item.map_err(os_store::StoreError::from)?;
+        let (format, json, item_id) = item.map_err(os_store::StoreError::from)?;
         if !enabled(job.cfg, &format) {
             continue;
         }
@@ -274,9 +278,8 @@ fn write_url(
         if filter == "Parse Errors" {
             continue;
         }
-        // Validation exports are completed by D20; these paths already share the selection contract.
         let mut triples = Vec::new();
-        triples_for(&v, &mut blanks, &mut triples);
+        let subject = triples_for(&v, &mut blanks, &mut triples);
         for (s, p, o) in triples {
             if seen.insert((s.clone(), p.clone(), o.clone())) {
                 writer.row(
@@ -285,6 +288,26 @@ fn write_url(
                 )?;
                 n += 1;
             }
+        }
+        // M2-D20 (K2-61): Validierungsbefunde des Elements (OUT-056: Validation Type, Severity, Issue).
+        for [property, validation, severity, issue] in
+            crate::reports::structured_data::triple_findings(job, item_id, filter)?
+        {
+            writer.row(
+                &[ColumnKind::Text; 8],
+                &[
+                    address,
+                    &format,
+                    &subject,
+                    &property,
+                    "",
+                    &validation,
+                    &severity,
+                    &issue,
+                ]
+                .map(|s| Value::Text(s.into())),
+            )?;
+            n += 1;
         }
     }
     Ok(n)
