@@ -338,6 +338,10 @@ impl<'a> BatchCounters<'a> {
 }
 
 /// Der Trigger aus Migration 0002, der jeder neuen `urls`-Zeile ihre Zählerzeile gibt.
+/// Auch `os-loadtest::gen_ui` (UI-148, M2-K19) lädt `urls_counters_insert` über
+/// `sqlite_master`, entfernt ihn beim Bulk-Laden und stellt seine SQL-Definition
+/// wieder her; die Sekundärindizes von urls/links/url_counters lädt es ebenso.
+/// Bei Schema-/Namensänderungen den Vertragstest `gen_ui_large_fixture` mitprüfen.
 pub(crate) const INSERT_TRIGGER_SQL: &str =
     "CREATE TRIGGER IF NOT EXISTS urls_counters_insert AFTER INSERT ON urls \
      BEGIN INSERT OR IGNORE INTO url_counters (url_id) VALUES (new.id); END";

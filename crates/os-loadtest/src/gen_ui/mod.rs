@@ -5,6 +5,9 @@
 //! ist die CI-Variante. URL 1 hat min(N−1, 1 Mio.) verschiedene Inlink-Quellen;
 //! URL 2 enthält genau 15 MiB rohes HTML. Alle Zeiten und IDs sind seedfest.
 //! Sortierdaten enthalten NULL, Leertext, Duplikate, Unicode und lange Texte.
+//! Die Tiefe (`crawl_depth`) ist ein Verteilungswert, nicht die Graph-Distanz:
+//! Außerhalb des Hubs gilt 1 + r % 4, unabhängig von der Ringposition. Damit
+//! eignet sich die Fixture für Tiefenfilter, nicht für Distanzprüfungen (UI-066).
 //!
 //! Speicher: 10 000 URLs/200 000 Links pro SQL-Transaktion, 64 MiB SQLite-Cache,
 //! temporäre Sortierung auf Disk. Sekundärindizes entstehen nach dem Laden;
@@ -12,6 +15,8 @@
 //! Die aktuelle Store-Migration (mindestens v3, derzeit v4) bleibt unverändert.
 //! Eine private temporäre Datei wird erst nach Checkpoint und Schließen ohne
 //! Überschreiben veröffentlicht. Ein Fehler hinterlässt keine halbe Zieldatei.
+//! `synchronous=OFF` gilt nur im Staging-Ordner; bei Abbruch wird diese Datei
+//! verworfen. Vor der Veröffentlichung wird wieder auf `NORMAL` gestellt.
 
 use std::error::Error;
 use std::path::Path;

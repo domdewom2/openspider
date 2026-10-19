@@ -1,14 +1,64 @@
 //! Store-backed UI fixture tests; no server, clock, renderer or foreign W1 stub.
-#[path = "../src/gen_ui/mod.rs"]
-mod gen_ui;
-
 use clap::Parser;
-use gen_ui::{generate, DEFAULT_ROWS, DEFAULT_SEED, HTML_BYTES, LINKS_PER_PAGE};
+use os_loadtest::gen_ui::{self, generate, DEFAULT_ROWS, DEFAULT_SEED, HTML_BYTES, LINKS_PER_PAGE};
 use os_model::UrlId;
 use os_store::{CrawlFile, OpenMode};
+use std::process::Command;
 
 fn scalar(file: &CrawlFile, sql: &str) -> i64 {
     file.conn().query_row(sql, [], |r| r.get(0)).unwrap()
+}
+
+// spec: UI-148
+#[test]
+fn binary_generates_fixture_and_emits_json_report_on_stdout() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("cli fixture.ospider");
+    let output = Command::new(env!("CARGO_BIN_EXE_gen-ui-large"))
+        .arg("--output")
+        .arg(&path)
+        .args(["--rows", "22", "--seed", "18446744073709551615"])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["rows"], 22);
+    assert_eq!(report["links"], 440);
+    assert_eq!(report["seed"], u64::MAX);
+    assert_eq!(report["hub_inlinks"], 21);
+    assert_eq!(report["html_bytes"], HTML_BYTES);
+    assert_eq!(report["schema_version"], os_store::SCHEMA_VERSION);
+    assert!(report["elapsed_ms"].as_u64().is_some());
+    assert_eq!(
+        report["file_bytes"],
+        std::fs::metadata(&path).unwrap().len()
+    );
+    assert!(String::from_utf8_lossy(&output.stderr).contains("checkpoint"));
+    let file = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
+    assert_eq!(scalar(&file, "SELECT COUNT(*) FROM q_urls"), 22);
+    assert_eq!(scalar(&file, "SELECT COUNT(*) FROM links"), 440);
+}
+
+// spec: UI-148
+#[test]
+fn binary_reports_errors_without_overwriting_output_or_emitting_success_json() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("existing.ospider");
+    std::fs::write(&path, b"keep me").unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_gen-ui-large"))
+        .arg("--output")
+        .arg(&path)
+        .args(["--rows", "22"])
+        .output()
+        .unwrap();
+    assert_eq!(output.status.code(), Some(1));
+    assert!(output.stdout.is_empty());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("Zieldatei existiert bereits"));
+    assert_eq!(std::fs::read(&path).unwrap(), b"keep me");
 }
 
 // spec: UI-148

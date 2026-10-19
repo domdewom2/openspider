@@ -11,6 +11,7 @@ pub mod child;
 pub mod crawler;
 pub mod diag;
 pub mod engine;
+pub mod gen_ui;
 pub mod proc;
 pub mod report;
 pub mod rss;

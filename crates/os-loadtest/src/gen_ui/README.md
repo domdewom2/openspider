@@ -1,20 +1,11 @@
 # UI-Lastfixture (M2-K19 / UI-148)
 
-Vorgesehener Aufruf aus der Repository-Wurzel nach der Binary-Verdrahtung:
+Aufruf aus der Repository-Wurzel:
 
 ```sh
 cargo run --release --locked -p os-loadtest --bin gen-ui-large -- --output target/ui-large.ospider
 cargo run --release --locked -p os-loadtest --bin gen-ui-large -- --output target/ui-small.ospider --rows 100000 --seed 19
 ```
-
-Integration noch offen: Das Manifest registriert `src/bin/gen-ui-large.rs`
-(F05-Stub mit Besitzervermerk M2-K05), während M2-K19 laut `owns` nur
-`src/bin/gen_ui_large.rs` ändern darf. Generator und CLI-Argumente sind in
-diesem Modul implementiert und getestet. Die Ersetzung des registrierten
-Stubs benötigt eine ausdrückliche Erweiterung des Dateibesitzes; sie ist
-keine additive Schnittstellenergänzung nach K2-61. Der bestehende Stub bleibt
-bis dahin unverändert. Im Einstieg sind nur `Args::parse().run()`, die
-JSON-Ausgabe des Berichts und die Behandlung des Fehler-Exitcodes zu ergänzen.
 
 Standard: 5 000 000 URLs, 100 000 000 Hyperlinks, Seed 19. Unterstützt werden
 22 bis 5 000 000 URLs. Das Minimum hält die 20 Ziele je Quelle verschieden,
@@ -27,7 +18,9 @@ Alle URLs sind intern und HTML; 99 % haben Status 200, 1 % Status 404.
 Linkzähler stehen für Tabellenprojektionen bereit. Die Verteilungen enthalten
 fehlende und leere Titel, Duplikate, Unicode, 300 Zeichen lange Titel,
 verschiedene Wortzahlen einschließlich 0/2/10/NULL, variable Antwortzeiten,
-Größen, Tiefen und noindex. Die Graphstruktur bleibt zwischen Seeds gleich;
+Größen, Tiefen und noindex. Die Tiefe ist ein Verteilungswert, nicht die
+Graph-Distanz (siehe Modul-Dokumentation); für Distanzprüfungen in UI-066
+ist diese Fixture nicht vorgesehen. Die Graphstruktur bleibt zwischen Seeds gleich;
 Spaltenwerte, Crawl-ID und gespeicherter Seed ändern sich. Zeitstempel sind
 fest. Wiederholungen mit identischen Optionen und derselben Programmversion
 erzeugen dieselben Datei-Bytes; Laufzeitangaben erscheinen nur im JSON-Bericht.
@@ -62,6 +55,31 @@ Die 100 000-Zeilen-Fixture läuft regulär. Der große Test ist ausschließlich
 ein Benchmark-Ignore und erzwingt die Zehn-Minuten-Grenze für die Erzeugung
 einschließlich Indizes, Checkpoint und Veröffentlichung. Nightly-Job und
 UI-Performancebudgets liegen bei M2-U31.
+
+Übergabe an den nightly-Job von M2-U31 (UI-148): Nach dem Release-Build die
+stdout-Ausgabe als `target/loadtest/gen-ui-large.json` aufbewahren. Beispiel
+für den Erzeugungsschritt in `.github/workflows/ui-nightly.yml` (Besitzer U31):
+
+```yaml
+- name: UI-Fixture und Generatorbericht
+  shell: bash
+  run: |
+    mkdir -p target/loadtest
+    target/release/gen-ui-large --output target/ui-large.ospider > target/loadtest/gen-ui-large.json
+    python3 -c 'import json; r=json.load(open("target/loadtest/gen-ui-large.json")); assert r["rows"] == 5000000 and r["elapsed_ms"] <= 600000, r'
+- uses: actions/upload-artifact@v4
+  if: always()
+  with:
+    name: gen-ui-large-${{ runner.os }}-${{ runner.arch }}
+    path: target/loadtest/gen-ui-large.json
+    if-no-files-found: error
+```
+
+Der Bericht enthält `rows`, `links`, `seed`, `hub_inlinks`, `html_bytes`,
+`schema_version`, `elapsed_ms` und `file_bytes`. U31 historisiert die Berichte
+je Plattform (macOS arm64 / Windows x64) und vergleicht die Laufzeit mit dem
+Budget sowie dem gleitenden Median der letzten sieben Läufe (+10 %).
+Die große Datenbank selbst wird nicht als CI-Artefakt benötigt.
 
 Lokaler Nachweis (macOS arm64, 16 GiB RAM, Release-Build): Der Benchmark-Test
 erzeugte mit Seed 19 insgesamt 5 000 000 URLs und 100 000 000 Links in
