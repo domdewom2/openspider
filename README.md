@@ -38,6 +38,39 @@ What makes it different: **AI agents are first-class users.** A built-in MCP ser
 | 🆓 **Free, no limits** | Apache-2.0. No URL cap, no license key, headless CLI and scheduled crawls included – perfect for CI/CD pipelines. |
 | ⚡ **Native and fast** | Rust core, Tauri desktop app, small installers for macOS (Apple Silicon & Intel) and Windows. |
 
+## Performance
+
+Measured on Apple Silicon with synthetic test sites (30 links per page), pre-alpha builds. Numbers will be updated as development continues.
+
+**Crawling**
+
+| Crawl | Result |
+|---|---|
+| 1,000,000 URLs | about 4.5 minutes, **~3,600 URLs/s**, peak memory **< 0.5 GB** (Apple M2) |
+| Crash safety | 10 of 10 hard kills during a crawl resumed cleanly from the crawl file |
+
+**Side by side with a widely used commercial desktop SEO crawler** – same machine, same local test site with 100,000 URLs, both with default settings (5 threads), crawl saved and the internal URL table exported:
+
+| | OpenSpider | Commercial crawler |
+|---|---|---|
+| Total time | **27 s** | 301 s |
+| Throughput | **~3,700 URLs/s** | ~350 URLs/s |
+| Peak memory | **0.76 GB** | 2.46 GB |
+
+About 10× faster with a third of the memory. A local test site has no network latency, so on real websites politeness limits and server response times narrow the gap. You can reproduce the OpenSpider side with the load-test tools in `crates/os-loadtest`.
+
+**Working with the results – 5,000,000 URLs in one crawl file**
+
+| Operation | Measured | Budget |
+|---|---|---|
+| Fetch a page of 200 rows × 20 columns | **0.7 ms** | ≤ 30 ms |
+| Switch filter (cached) | **36 ms** | ≤ 200 ms |
+| Reverse sort order | **35–42 ms** | ≤ 200 ms |
+| Search as a filter | **53 ms** | ≤ 1 s |
+| Scroll the table (desktop app grid) | **~60 fps**, no frame over 50 ms | ≥ 55 fps |
+
+Memory for an open view over 5 million rows stays around 60 MB. The table never loads the whole crawl – it streams the visible window from the crawl file.
+
 ## Quick start
 
 > OpenSpider is in active development. There are no installers yet – the headless CLI and the MCP server already work when built from source. The desktop app is coming with the alpha.
