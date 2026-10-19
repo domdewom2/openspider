@@ -29,11 +29,11 @@ pub struct McpArgs {
     pub sql_worker: bool,
 
     /// Streamable HTTP on IPv4/IPv6 loopback instead of STDIO (token in the secret store).
-    #[arg(long)]
+    #[arg(long, hide = true)]
     pub http: bool,
 
     /// Loopback HTTP port (0 selects a free port).
-    #[arg(long, requires = "http")]
+    #[arg(long, requires = "http", hide = true)]
     pub port: Option<u16>,
 
     /// Freigegebene Werkzeugklassen (read, crawl, write, cost), kommagetrennt.
@@ -179,13 +179,6 @@ pub fn launch_args(args: &McpArgs, with_subcommand: bool) -> Vec<String> {
         out.push("--crawl-dir".into());
         out.push(print_config::path_string(dir));
     }
-    if args.http {
-        out.push("--http".into());
-        if let Some(port) = args.port {
-            out.push("--port".into());
-            out.push(port.to_string());
-        }
-    }
     if args.read_only {
         out.push("--read-only".into());
     }
@@ -235,6 +228,17 @@ mod tests {
         Wrapper::try_parse_from(std::iter::once("t").chain(argv.iter().copied()))
             .unwrap()
             .args
+    }
+
+    // spec: AGENT-001 [M2]
+    #[test]
+    fn internal_http_flags_are_hidden_and_client_launches_use_stdio() {
+        use clap::CommandFactory;
+        let help = Wrapper::command().render_long_help().to_string();
+        assert!(!help.contains("--http"));
+        assert!(!help.contains("--port"));
+        let args = parse(&["--http", "--port", "4567", "--allow", "read"]);
+        assert_eq!(launch_args(&args, true), ["mcp", "--allow", "read"]);
     }
 
     // spec: AGENT-001

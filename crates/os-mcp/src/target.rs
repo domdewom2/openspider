@@ -1,9 +1,11 @@
 //! Connection-time MCP target protection. Every request (including robots/resources/redirects)
-//! resolves once, validates all addresses, and connects to those same addresses.
+//! uses a briefly cached, validated DNS answer and connects to those same addresses.
+use std::collections::VecDeque;
 use std::future::Future;
 use std::net::{IpAddr, SocketAddr};
 use std::pin::Pin;
-use std::time::Duration;
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 
 use os_fetch::http::{FetchOutcome, FetchRequest, FetchResult};
 use os_fetch::{Fetch, FetchConfig, HttpFetcher};
@@ -11,11 +13,18 @@ use os_model::{Clock, NoResponseReason, SystemClock};
 
 use crate::permissions::{is_private_ip, DomainPolicy};
 
+const CACHE_CAPACITY: usize = 64;
+const DNS_TTL: Duration = Duration::from_secs(2);
+type AddressResult = Result<Vec<SocketAddr>, (NoResponseReason, String)>;
+type ClientKey = (String, u16, Vec<SocketAddr>);
+
 pub(crate) struct ProtectedFetcher {
     inner: HttpFetcher,
     resolver: os_fetch::resolve::HostResolver,
     allow_private: bool,
     policy: DomainPolicy,
+    addresses: tokio::sync::Mutex<VecDeque<(String, Instant, AddressResult)>>,
+    clients: Mutex<VecDeque<(ClientKey, Arc<HttpFetcher>)>>,
 }
 
 impl ProtectedFetcher {
@@ -30,6 +39,8 @@ impl ProtectedFetcher {
             resolver,
             allow_private,
             policy,
+            addresses: Default::default(),
+            clients: Default::default(),
         })
     }
 
@@ -37,6 +48,56 @@ impl ProtectedFetcher {
         &self,
         req: &FetchRequest,
     ) -> Result<Vec<SocketAddr>, (NoResponseReason, String)> {
+        // Share approved answers between policy hooks and fetch without serializing unrelated DNS.
+        let mut cache = self.addresses.lock().await;
+        cache.retain(|(_, at, _)| at.elapsed() < DNS_TTL);
+        let url = req.url.as_str();
+        if let Some(index) = cache.iter().position(|(key, _, _)| key == url) {
+            let entry = cache.remove(index).unwrap();
+            let result = entry.2.clone();
+            cache.push_back(entry);
+            return result;
+        }
+        drop(cache);
+        let result = self.resolve_addresses(req).await;
+        let mut cache = self.addresses.lock().await;
+        cache.retain(|(key, at, _)| key != url && at.elapsed() < DNS_TTL);
+        if cache.len() == CACHE_CAPACITY {
+            cache.pop_front();
+        }
+        cache.push_back((url.to_owned(), Instant::now(), result.clone()));
+        result
+    }
+
+    fn client(
+        &self,
+        req: &FetchRequest,
+        mut addrs: Vec<SocketAddr>,
+    ) -> Result<Arc<HttpFetcher>, String> {
+        addrs.sort_unstable();
+        addrs.dedup();
+        let host = req.url.host_str().unwrap_or("").to_owned();
+        let key = (host, req.url.port_or_known_default().unwrap_or(80), addrs);
+        let mut cache = self.clients.lock().map_err(|e| e.to_string())?;
+        if let Some(index) = cache.iter().position(|(cached, _)| *cached == key) {
+            let entry = cache.remove(index).unwrap();
+            let client = entry.1.clone();
+            cache.push_back(entry);
+            return Ok(client);
+        }
+        let client = Arc::new(
+            self.inner
+                .pinned_client(&key.0, &key.2)
+                .map_err(|e| e.to_string())?,
+        );
+        if cache.len() == CACHE_CAPACITY {
+            cache.pop_front();
+        }
+        cache.push_back((key, client.clone()));
+        Ok(client)
+    }
+
+    async fn resolve_addresses(&self, req: &FetchRequest) -> AddressResult {
         // Normalized URL comes from the engine, so noncanonical IP spellings are normalized too.
         self.policy
             .check_url(req.url.as_str())
@@ -110,8 +171,8 @@ impl Fetch for ProtectedFetcher {
         Box::pin(async move {
             let started_at = SystemClock.now();
             let failure = match self.addresses(&req).await {
-                Ok(addrs) => match self.inner.fetch_pinned(req.clone(), &addrs).await {
-                    Ok(result) => return result,
+                Ok(addrs) => match self.client(&req, addrs) {
+                    Ok(client) => return self.inner.fetch_with_pinned(req, &client).await,
                     Err(e) => (NoResponseReason::ConnectionError, e.to_string()),
                 },
                 Err(failure) => failure,
@@ -152,6 +213,97 @@ mod tests {
                 .unwrap();
         ProtectedFetcher::new(config, DomainPolicy::new(&[], allow_private), allow_private).unwrap()
     }
+    // spec: AGENT-020
+    #[tokio::test]
+    async fn approved_addresses_and_connections_are_reused_but_expire_and_change_safely() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let connections = Arc::new(AtomicUsize::new(0));
+        let count = connections.clone();
+        let server = tokio::spawn(async move {
+            loop {
+                let (mut stream, _) = listener.accept().await.unwrap();
+                count.fetch_add(1, Ordering::SeqCst);
+                tokio::spawn(async move {
+                    let mut byte = [0];
+                    loop {
+                        let mut header = Vec::new();
+                        while !header.ends_with(b"\r\n\r\n") {
+                            if stream.read_exact(&mut byte).await.is_err() {
+                                return;
+                            }
+                            header.push(byte[0]);
+                        }
+                        if stream
+                            .write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok")
+                            .await
+                            .is_err()
+                        {
+                            return;
+                        }
+                    }
+                });
+            }
+        });
+        let mut cfg = CrawlConfig::default();
+        cfg.network.resolve = vec![format!("public.test={addr}")];
+        let guard = protected(&cfg, true);
+        let req = request("http://public.test/", FetchPurpose::Page);
+        guard.target_denial(&req.url).await;
+        let at = guard.addresses.lock().await[0].1;
+        guard.target_denial(&req.url).await;
+        for _ in 0..3 {
+            assert!(matches!(
+                guard.fetch(req.clone()).await.outcome,
+                FetchOutcome::Response(_)
+            ));
+        }
+        assert_eq!(
+            guard.addresses.lock().await[0].1,
+            at,
+            "hooks and fetch use one lookup"
+        );
+        assert_eq!(
+            connections.load(Ordering::SeqCst),
+            1,
+            "keep-alive reuses the TCP connection"
+        );
+        let client = guard.client(&req, vec![addr]).unwrap();
+        assert!(Arc::ptr_eq(
+            &client,
+            &guard.client(&req, vec![addr, addr]).unwrap()
+        ));
+        assert!(!Arc::ptr_eq(
+            &client,
+            &guard
+                .client(
+                    &req,
+                    vec![SocketAddr::new(addr.ip(), addr.port().saturating_sub(1))]
+                )
+                .unwrap()
+        ));
+        guard.addresses.lock().await[0].1 = Instant::now() - DNS_TTL;
+        guard.addresses(&req).await.unwrap();
+        assert!(guard.addresses.lock().await[0].1 > at);
+        for port in 1..=70 {
+            guard
+                .client(&req, vec![SocketAddr::new(addr.ip(), port)])
+                .unwrap();
+            guard
+                .addresses(&request(
+                    &format!("http://public.test/{port}"),
+                    FetchPurpose::Page,
+                ))
+                .await
+                .unwrap();
+        }
+        assert_eq!(guard.clients.lock().unwrap().len(), CACHE_CAPACITY);
+        assert_eq!(guard.addresses.lock().await.len(), CACHE_CAPACITY);
+        server.abort();
+    }
+
     // spec: AGENT-020
     #[tokio::test]
     async fn dns_overrides_and_every_fetch_purpose_are_guarded_before_any_request() {

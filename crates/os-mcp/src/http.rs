@@ -23,7 +23,7 @@ pub struct TokenStore {
 }
 struct TokenInner {
     store: Arc<dyn SecretStoreMut>,
-    lock: Mutex<()>,
+    token: Mutex<String>,
 }
 impl std::fmt::Debug for TokenStore {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -36,45 +36,45 @@ fn failure(e: impl std::fmt::Display) -> McpError {
 impl TokenStore {
     /// Load a token or generate 256 bits with the OS random source and save through SecretStoreMut.
     pub fn open(store: Arc<dyn SecretStoreMut>) -> Result<Self, McpError> {
+        let token = store.try_get(TOKEN_KEY).map_err(failure)?;
+        if token
+            .as_ref()
+            .is_some_and(|s| s.len() != 64 || !s.bytes().all(|b| b.is_ascii_hexdigit()))
+        {
+            return Err(failure("Invalid stored MCP token; regenerate it"));
+        }
+        let missing = token.is_none();
         let this = Self {
             inner: Arc::new(TokenInner {
                 store,
-                lock: Mutex::new(()),
+                token: Mutex::new(token.unwrap_or_default()),
             }),
         };
-        let token = this.inner.store.try_get(TOKEN_KEY).map_err(failure)?;
-        if token.is_none() {
+        if missing {
             this.rotate()?;
-        } else if !token
-            .as_ref()
-            .is_some_and(|s| s.len() == 64 && s.bytes().all(|b| b.is_ascii_hexdigit()))
-        {
-            return Err(failure("Invalid stored MCP token; regenerate it"));
         }
         Ok(this)
     }
     /// Explicit local UI operation; never exposed as an MCP tool.
     pub fn copy_token(&self) -> Result<String, McpError> {
         self.inner
-            .store
-            .try_get(TOKEN_KEY)
-            .map_err(failure)?
-            .ok_or_else(|| failure("MCP token missing"))
+            .token
+            .lock()
+            .map(|token| token.clone())
+            .map_err(failure)
     }
     /// Generate a new token; the next request immediately rejects the old value.
     pub fn rotate(&self) -> Result<String, McpError> {
-        let _lock = self.inner.lock.lock().map_err(failure)?;
+        let mut current = self.inner.token.lock().map_err(failure)?;
         let mut bytes = [0u8; 32];
         getrandom::fill(&mut bytes).map_err(failure)?;
         let token = bytes.iter().map(|b| format!("{b:02x}")).collect::<String>();
         self.inner.store.set(TOKEN_KEY, &token).map_err(failure)?;
+        *current = token.clone();
         Ok(token)
     }
     fn accepts(&self, value: &str) -> bool {
-        let Ok(_lock) = self.inner.lock.lock() else {
-            return false;
-        };
-        let Ok(Some(expected)) = self.inner.store.try_get(TOKEN_KEY) else {
+        let Ok(expected) = self.inner.token.lock() else {
             return false;
         };
         if value.len() != expected.len() {
@@ -158,7 +158,7 @@ impl HttpServer {
         let port = v4.local_addr().map_err(failure)?.port();
         let v6 = TcpListener::bind(SocketAddr::from((Ipv6Addr::LOCALHOST, port)))
             .await
-            .map_err(failure)?;
+            .map_err(|e| failure(format!("IPv6-Loopback nicht verfügbar ([::1]:{port}): {e}")))?;
         let mut manager = LocalSessionManager::default();
         manager.session_config.keep_alive = Some(Duration::from_secs(600));
         let mut config = StreamableHttpServerConfig::default();
@@ -229,5 +229,61 @@ impl Drop for HttpServer {
         for task in &self.tasks {
             task.abort();
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use os_fetch::secrets::{MemorySecretStore, SecretBackend, SecretError, SecretStore};
+    use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+
+    #[derive(Default)]
+    struct CountingStore {
+        memory: MemorySecretStore,
+        reads: AtomicUsize,
+        fail_write: AtomicBool,
+    }
+    impl SecretStore for CountingStore {
+        fn get(&self, key: &str) -> Option<String> {
+            self.reads.fetch_add(1, Ordering::SeqCst);
+            self.memory.get(key)
+        }
+    }
+    impl SecretStoreMut for CountingStore {
+        fn set(&self, key: &str, value: &str) -> Result<(), SecretError> {
+            if self.fail_write.load(Ordering::SeqCst) {
+                return Err(SecretError::new("write failed"));
+            }
+            self.memory.set(key, value);
+            Ok(())
+        }
+        fn delete(&self, key: &str) -> Result<(), SecretError> {
+            SecretStoreMut::delete(&self.memory, key)
+        }
+        fn backend(&self) -> SecretBackend {
+            SecretBackend::Memory
+        }
+    }
+    // spec: AGENT-002
+    #[test]
+    fn requests_only_read_memory_and_rotation_updates_store_and_all_clones_atomically() {
+        let store = Arc::new(CountingStore::default());
+        let tokens = TokenStore::open(store.clone()).unwrap();
+        let clone = tokens.clone();
+        let old = tokens.copy_token().unwrap();
+        for _ in 0..10 {
+            assert!(clone.accepts(&old));
+        }
+        assert_eq!(store.reads.load(Ordering::SeqCst), 1);
+        store.fail_write.store(true, Ordering::SeqCst);
+        assert!(tokens.rotate().is_err());
+        assert!(clone.accepts(&old));
+        store.fail_write.store(false, Ordering::SeqCst);
+        let new = tokens.rotate().unwrap();
+        assert!(!clone.accepts(&old));
+        assert!(clone.accepts(&new));
+        assert_eq!(store.reads.load(Ordering::SeqCst), 1);
+        assert_eq!(TokenStore::open(store).unwrap().copy_token().unwrap(), new);
     }
 }

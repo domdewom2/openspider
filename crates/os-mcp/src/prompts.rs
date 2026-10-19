@@ -18,7 +18,7 @@ pub const TEMPLATES:[(&str,&str,&str,&str,&str);6]=[
 pub fn list() -> Vec<Prompt> {
     TEMPLATES
         .iter()
-        .map(|(name, de, en, _, _)| {
+        .map(|(name, de, en, focus_de, focus_en)| {
             let mut args = vec![
                 PromptArgument::new("crawl_id")
                     .with_required(true)
@@ -34,7 +34,8 @@ pub fn list() -> Vec<Prompt> {
                         .with_description("Previous crawl for migration comparison"),
                 );
             }
-            Prompt::new(*name, Some(*en), Some(args)).with_title(*de)
+            Prompt::new(*name, Some(format!("{focus_de} / {focus_en}")), Some(args))
+                .with_title(format!("{de} / {en}"))
         })
         .collect()
 }

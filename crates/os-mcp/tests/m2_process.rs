@@ -123,10 +123,34 @@ async fn sql_worker_is_isolated_paged_and_schema_comes_from_the_actual_file() {
         .await
         .is_error
     );
+    let latest = world.add("out-basic-site", "/", base_config(), 399).await;
+    let latest_file = os_store::CrawlFile::open(
+        &world.dir.path().join(format!("{}.ospider", latest.id)),
+        os_store::OpenMode::ReadWrite,
+    )
+    .unwrap();
+    latest_file
+        .set_meta("started_at", "2026-01-02T00:00:00.000Z")
+        .unwrap();
+    drop(latest_file);
+    std::fs::write(world.dir.path().join("broken.ospider"), "broken database").unwrap();
     let resource = c
         .read_resource(ReadResourceRequestParams::new("openspider://schema"))
         .await
         .unwrap();
+    let text = match &resource.contents[0] {
+        rmcp::model::ResourceContents::TextResourceContents { text, .. } => text,
+        _ => panic!("schema must be text JSON"),
+    };
+    assert!(text.chars().count() <= 50_000);
+    let schema: Value = serde_json::from_str(text).unwrap();
+    assert_eq!(schema["latest"]["crawl_id"], latest.id);
+    assert_eq!(schema["crawls"].as_array().unwrap().len(), 2);
+    assert!(schema["crawls"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|c| c.get("schema_version").is_some() && c.get("schema").is_none()));
     let serialized = serde_json::to_value(resource).unwrap().to_string();
     for name in ["urls", "crawl_meta", "q_urls", "status_code", "address"] {
         assert!(serialized.contains(name), "{name}");
@@ -145,6 +169,8 @@ async fn six_localized_prompts_only_reference_registered_tools_and_publish_param
     assert_eq!(prompts.len(), 6);
     let tools = c.list_all_tools().await.unwrap();
     for prompt in prompts {
+        assert!(prompt.title.as_deref().unwrap().contains(" / "));
+        assert!(prompt.description.as_deref().unwrap().contains(" / "));
         let args = prompt.arguments.unwrap();
         assert!(args.iter().any(|a| a.name == "crawl_id"));
         assert!(args.iter().any(|a| a.name == "lang"));
@@ -255,6 +281,48 @@ async fn exports_match_core_cli_writers_and_obey_path_and_overwrite_protection()
             std::fs::read(&files[0].path).unwrap(),
             "{kind}:{name}"
         );
+        if kind == "tab" {
+            // Workspace integration tests build the real CLI binary; focused runs build it first.
+            let cli = std::env::current_exe()
+                .unwrap()
+                .parent()
+                .unwrap()
+                .parent()
+                .unwrap()
+                .join(format!("openspider{}", std::env::consts::EXE_SUFFIX));
+            let cli_out = tempfile::tempdir().unwrap();
+            let result = tokio::process::Command::new(cli)
+                .env("OPENSPIDER_HOME", home.path())
+                .env("OPENSPIDER_SECRET_STORE", "memory")
+                .arg("--load-crawl")
+                .arg(stored.fx.file.path())
+                .args([
+                    "--export-tabs",
+                    "Internal:All",
+                    "--export-format",
+                    "csv",
+                    "--output-folder",
+                ])
+                .arg(cli_out.path())
+                .output()
+                .await
+                .expect("build os-cli before focused MCP process tests");
+            assert!(
+                result.status.success(),
+                "{}",
+                String::from_utf8_lossy(&result.stderr)
+            );
+            let csv = std::fs::read_dir(cli_out.path())
+                .unwrap()
+                .map(|e| e.unwrap().path())
+                .find(|p| p.extension().is_some_and(|ext| ext == "csv"))
+                .unwrap();
+            assert_eq!(
+                first,
+                std::fs::read(csv).unwrap(),
+                "MCP CSV equals actual CLI export bytes"
+            );
+        }
         let again = call(
             &c,
             "export",
@@ -475,6 +543,9 @@ async fn headless_crawl_start_status_stop_resume_permissions_and_safe_overrides(
     let full = call(&c, "start_crawl", json!({"url":site.url("/")})).await;
     let full_id = full.summary()["crawl_id"].as_str().unwrap();
     wait_stopped(&c, full_id).await;
+    let stopped = call(&c, "stop_crawl", json!({"crawl_id":list_id})).await;
+    assert!(stopped.is_error);
+    assert!(stopped.blocks.join(" ").contains("already finished"));
     let core_dir = tempfile::tempdir().unwrap();
     let core_path = core_dir.path().join("core.ospider");
     let deps = os_engine::testing::test_deps();

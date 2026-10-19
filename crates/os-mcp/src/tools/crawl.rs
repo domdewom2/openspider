@@ -42,15 +42,22 @@ fn config(ctx: &ToolContext, args: &Value) -> Result<CrawlConfig, ToolError> {
                 "config_profile must be a local profile name (letters, digits, - or _)".into(),
             ));
         }
+        let profile_error = |e: std::io::Error| {
+            if e.kind() == std::io::ErrorKind::NotFound {
+                ToolError::InvalidArguments(format!("unknown config_profile {profile}"))
+            } else {
+                internal(e)
+            }
+        };
         let root = ctx
             .settings_dir
             .join("profiles")
             .canonicalize()
-            .map_err(internal)?;
+            .map_err(profile_error)?;
         let path = root
             .join(format!("{profile}.osconfig"))
             .canonicalize()
-            .map_err(internal)?;
+            .map_err(profile_error)?;
         if !path.starts_with(&root) {
             return Err(ToolError::InvalidArguments(
                 "profile outside profile directory".into(),
@@ -225,5 +232,30 @@ impl Tool for CrawlTool {
             total: None,
             next_cursor: None,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    // spec: AGENT-020
+    #[test]
+    fn missing_profile_directory_and_file_are_invalid_arguments() {
+        let home = tempfile::tempdir().unwrap();
+        let mut ctx = ToolContext::new(home.path().join("crawls"));
+        ctx.settings_dir = home.path().to_path_buf();
+        for create in [false, true] {
+            if create {
+                std::fs::create_dir(home.path().join("profiles")).unwrap();
+            }
+            assert!(matches!(config(&ctx, &json!({"config_profile":"missing"})),
+                Err(ToolError::InvalidArguments(message)) if message == "unknown config_profile missing"));
+        }
+        std::fs::remove_dir(home.path().join("profiles")).unwrap();
+        std::fs::write(home.path().join("profiles"), "not a directory").unwrap();
+        assert!(matches!(
+            config(&ctx, &json!({"config_profile":"missing"})),
+            Err(ToolError::Internal(_))
+        ));
     }
 }

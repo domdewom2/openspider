@@ -1,5 +1,5 @@
 //! Headless crawl handles; the existing engine owns lifecycle, persistence and heartbeat.
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 
 use os_analyze::analysis::{run_after_crawl, CancelToken};
@@ -15,6 +15,7 @@ use crate::{ToolContext, ToolError};
 #[derive(Default)]
 pub(crate) struct CrawlService {
     handles: Mutex<HashMap<String, CrawlHandle>>,
+    finished: Mutex<HashSet<String>>,
 }
 impl std::fmt::Debug for CrawlService {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -106,7 +107,14 @@ impl CrawlService {
             .block_on(os_engine::start_crawl(Arc::new(fetcher), req, deps))
             .map_err(invalid)?;
         let mut handles = self.handles.lock().map_err(invalid)?;
-        handles.retain(|_, h| h.progress().state == os_model::CrawlState::Running);
+        let mut finished = self.finished.lock().map_err(invalid)?;
+        handles.retain(|id, h| {
+            let running = h.progress().state == os_model::CrawlState::Running;
+            if !running {
+                finished.insert(id.clone());
+            }
+            running
+        });
         handles.insert(id.to_string(), handle);
         Ok(json!({"crawl_id":id.to_string(),"state":"Running"}))
     }
@@ -120,6 +128,15 @@ impl CrawlService {
 
     pub fn stop(&self, id: &str) -> Result<(), ToolError> {
         let handles = self.handles.lock().map_err(invalid)?;
+        if self.finished.lock().map_err(invalid)?.contains(id)
+            || handles
+                .get(id)
+                .is_some_and(|h| h.progress().state != os_model::CrawlState::Running)
+        {
+            return Err(ToolError::InvalidArguments(format!(
+                "Crawl {id} already finished"
+            )));
+        }
         let handle = handles.get(id).ok_or_else(|| {
             ToolError::NotFound(format!("Crawl {id} is not controlled by this MCP process"))
         })?;
@@ -145,6 +162,7 @@ impl CrawlService {
         let handle = tokio::runtime::Handle::current()
             .block_on(os_engine::resume_crawl(Arc::new(fetcher), path, None, deps))
             .map_err(invalid)?;
+        self.finished.lock().map_err(invalid)?.remove(id);
         self.handles
             .lock()
             .map_err(invalid)?

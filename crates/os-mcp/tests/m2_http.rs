@@ -215,3 +215,22 @@ async fn occupied_port_fails_without_a_partially_started_server() {
         .await
         .unwrap();
 }
+
+// spec: AGENT-002
+#[tokio::test]
+async fn unavailable_ipv6_loopback_reports_the_cause_and_releases_ipv4() {
+    let occupied = tokio::net::TcpListener::bind("[::1]:0").await.unwrap();
+    let port = occupied.local_addr().unwrap().port();
+    let dir = tempfile::tempdir().unwrap();
+    let tokens = TokenStore::open(Arc::new(MemorySecretStore::new())).unwrap();
+    let error = match HttpServer::bind(server(dir.path()), port, tokens).await {
+        Ok(_) => panic!("occupied IPv6 port must reject the atomic bind"),
+        Err(error) => error,
+    };
+    assert!(error.to_string().contains("IPv6-Loopback nicht verfügbar"));
+    assert!(
+        tokio::net::TcpListener::bind((std::net::Ipv4Addr::LOCALHOST, port))
+            .await
+            .is_ok()
+    );
+}
