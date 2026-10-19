@@ -48,6 +48,41 @@ fn metadata_fixture(root: &Path, n: usize) {
 
 // spec: OUT-228
 #[test]
+fn a_thousand_crawls_load_from_persistent_index_without_opening_crawl_databases() {
+    let dir = tempfile::tempdir().unwrap();
+    metadata_fixture(dir.path(), 1000);
+    let mut m = Manager::open(dir.path()).unwrap();
+    let initial = m.list().unwrap();
+    assert_eq!(initial.crawls.len(), 1000);
+    drop(m);
+    // DELETE-Journal-Fixture: diese Sperre blockiert SQLite-Leser, aber ändert den
+    // Datei-Fingerprint nicht. Ein erneutes Öffnen der Crawl-Datenbank würde scheitern.
+    let locked = rusqlite::Connection::open(&initial.crawls[0].path).unwrap();
+    locked.execute_batch("BEGIN EXCLUSIVE").unwrap();
+    let mut reopened = Manager::open(dir.path()).unwrap();
+    let list = reopened.list().unwrap();
+    assert!(list.skipped.is_empty());
+    assert_eq!(list.crawls.len(), 1000);
+    assert_eq!(
+        list.crawls[0].meta.crawl_id,
+        initial.crawls[0].meta.crawl_id
+    );
+    let mut names: Vec<_> = list.crawls.iter().map(|l| &l.meta.name).collect();
+    names.sort();
+    assert_eq!(names[0], "Crawl 0000");
+    assert_eq!(names[999], "Crawl 0999");
+    assert_eq!(
+        list.crawls
+            .iter()
+            .filter(|l| l.meta.name.to_lowercase().contains("0042"))
+            .count(),
+        1
+    );
+}
+
+// spec: OUT-228
+#[test]
+#[ignore = "Benchmark: 1 000 Crawls öffnen < 500 ms, sortieren < 200 ms, suchen < 100 ms; ruhige Maschine"]
 fn a_thousand_crawls_load_from_persistent_index_in_under_500_ms() {
     let dir = tempfile::tempdir().unwrap();
     metadata_fixture(dir.path(), 1000);

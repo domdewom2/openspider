@@ -357,3 +357,49 @@ async fn sync_and_network_paths_return_warning_levels() {
         .unwrap()
         .contains(&json!("warn-location-network")));
 }
+
+// spec: OUT-228
+#[tokio::test]
+async fn listing_and_search_return_all_matches_beyond_one_thousand_crawls() {
+    let dir = tempfile::tempdir().unwrap();
+    let app = common::new_app(dir.path());
+    let root = &app.config().paths.crawls;
+    std::fs::create_dir_all(root).unwrap();
+    let ids = SeededIds::new(1001);
+    for i in 0..1001 {
+        let id = ids.new_crawl_id(common::created_at());
+        let conn = rusqlite::Connection::open(registry::path_for(root, &id)).unwrap();
+        conn.pragma_update(None, "application_id", os_store::schema::APPLICATION_ID)
+            .unwrap();
+        conn.pragma_update(
+            None,
+            "user_version",
+            os_store::schema::latest_version(os_store::schema::MIGRATIONS),
+        )
+        .unwrap();
+        conn.execute_batch("CREATE TABLE crawl_meta(key TEXT PRIMARY KEY,value TEXT NOT NULL);CREATE TABLE urls(id INTEGER PRIMARY KEY);CREATE TABLE queue(url_id INTEGER PRIMARY KEY);").unwrap();
+        let tx = conn.unchecked_transaction().unwrap();
+        for (key, value) in [
+            ("crawl_id", id.to_string()),
+            ("mode", "spider".into()),
+            ("project", "Large fixture".into()),
+            ("name", format!("Crawl {i:04}")),
+            ("state", "Completed".into()),
+            ("started_at", common::created_at().to_db()),
+        ] {
+            tx.execute("INSERT INTO crawl_meta VALUES (?1,?2)", [key, &value])
+                .unwrap();
+        }
+        tx.commit().unwrap();
+    }
+    for query in [
+        json!({"show":"all"}),
+        json!({"show":"all","search":"large FIXTURE"}),
+    ] {
+        let list = call(&app, "crawls.list", query).await;
+        assert_eq!(list.as_array().unwrap().len(), 1001);
+    }
+    let list = call(&app, "crawls.list", json!({"show":"all","search":"1000"})).await;
+    assert_eq!(list.as_array().unwrap().len(), 1);
+    assert_eq!(list[0]["crawl"]["name"], "Crawl 1000");
+}

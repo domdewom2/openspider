@@ -58,4 +58,15 @@ async fn listing_and_load_share_stable_ids_after_rename_lock_and_location_move()
     let resume = env.run(&["--load-crawl", &id.to_string(), "--resume"]);
     assert_eq!(resume.code, 1, "{}", resume.dump());
     assert!(resume.stderr.contains("Completed"));
+    let file = os_store::CrawlFile::open(
+        &os_store::registry::path_for(dest.path(), &id),
+        os_store::OpenMode::ReadWrite,
+    )
+    .unwrap();
+    file.set_meta("state", "Failed").unwrap();
+    drop(file);
+    let resume = env.run(&["--load-crawl", &id.to_string(), "--resume"]);
+    assert_eq!(resume.code, 1, "{}", resume.dump());
+    assert!(resume.stderr.contains("Failed"));
+    assert_eq!(site.total_requests(), requests);
 }

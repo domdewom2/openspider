@@ -42,6 +42,15 @@ fn projects_and_locks_are_persistent_and_inherited_by_future_crawls() {
     new_file.set_meta("project", "Kunde A").unwrap();
     drop(new_file);
     assert!(m.get(&new_id).unwrap().locked);
+    assert!(
+        m.list()
+            .unwrap()
+            .crawls
+            .iter()
+            .find(|l| l.meta.crawl_id == new_id)
+            .unwrap()
+            .locked
+    );
     m.lock_project(&p.id, false).unwrap();
     m.lock(&id, true).unwrap();
     assert!(!m.get(&new_id).unwrap().locked);
@@ -358,4 +367,108 @@ fn cancelled_import_publishes_no_partial_file_and_does_not_overwrite_destination
         .path()
         .to_string_lossy()
         .ends_with(".copying")));
+}
+
+// spec: OUT-228
+#[test]
+fn listing_scans_only_explicit_locations_without_descending_into_hidden_or_deep_folders() {
+    let root = tempfile::tempdir().unwrap();
+    let external = tempfile::tempdir().unwrap();
+    let (root_id, _) = crawl(root.path(), 31, CrawlState::Completed);
+    let (external_id, _) = crawl(external.path(), 32, CrawlState::Completed);
+    for (i, base) in [root.path(), external.path()].into_iter().enumerate() {
+        crawl(&base.join("child"), 40 + i as u64, CrawlState::Completed);
+        crawl(
+            &base.join("child").join("deep"),
+            50 + i as u64,
+            CrawlState::Completed,
+        );
+        crawl(&base.join(".hidden"), 60 + i as u64, CrawlState::Completed);
+    }
+    let mut manager = Manager::open(root.path()).unwrap();
+    manager.add_location(external.path()).unwrap();
+    let list = manager.list().unwrap();
+    assert!(list.skipped.is_empty());
+    let listed: HashSet<_> = list.crawls.iter().map(|l| l.meta.crawl_id).collect();
+    assert_eq!(listed, HashSet::from([root_id, external_id]));
+    assert!(!external.path().join(".registry.sqlite").exists());
+    assert!(!external.path().join(".index.sqlite").exists());
+}
+
+// spec: CRAWL-128
+#[test]
+fn file_and_cached_listing_share_heartbeat_boundaries_and_fallbacks() {
+    let dir = tempfile::tempdir().unwrap();
+    let (_, path) = crawl(dir.path(), 70, CrawlState::Running);
+    let file = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
+    for (heartbeat, started, created, reference) in [
+        (
+            Some(now()),
+            Some(created_at()),
+            Some(created_at()),
+            Some(now()),
+        ),
+        (None, Some(now()), Some(created_at()), Some(now())),
+        (None, None, Some(now()), Some(now())),
+        (None, None, None, None),
+    ] {
+        for (key, value) in [
+            ("heartbeat_at", heartbeat),
+            ("started_at", started),
+            ("created_at", created),
+        ] {
+            match value {
+                Some(t) => file.set_meta(key, &t.to_db()).unwrap(),
+                None => {
+                    file.conn()
+                        .execute("DELETE FROM crawl_meta WHERE key=?1", [key])
+                        .unwrap();
+                }
+            }
+        }
+        let listing = registry::read_listing(&path).unwrap();
+        for delta in [-1, 0, 9_999, 10_000, 10_001] {
+            let time = Timestamp::from_unix_millis(now().unix_millis() + delta);
+            let expected = if reference.is_some() && delta <= 10_000 {
+                CrawlState::Running
+            } else {
+                CrawlState::Incomplete
+            };
+            assert_eq!(listing.effective_state(time), expected);
+            assert_eq!(
+                file.effective_state(&ManualClock::new(time)).unwrap(),
+                expected
+            );
+        }
+    }
+}
+
+// spec: CRAWL-127 [M2]
+#[test]
+fn import_to_external_storage_keeps_management_databases_under_registry_root() {
+    let root = tempfile::tempdir().unwrap();
+    let external = tempfile::tempdir().unwrap();
+    let source = tempfile::tempdir().unwrap();
+    let (_, path) = crawl(source.path(), 80, CrawlState::Paused);
+    let mut manager = Manager::open(root.path()).unwrap();
+    let imported = manager
+        .import(
+            &path,
+            external.path(),
+            &SeededIds::new(81),
+            &ManualClock::new(now()),
+            &|_, _| true,
+        )
+        .unwrap();
+    assert_eq!(imported.parent(), Some(external.path()));
+    assert_eq!(manager.list().unwrap().crawls.len(), 1);
+    drop(manager);
+    assert!(root.path().join(".registry.sqlite").exists());
+    assert!(root.path().join(".index.sqlite").exists());
+    assert!(!external.path().join(".registry.sqlite").exists());
+    assert!(!external.path().join(".index.sqlite").exists());
+    assert_eq!(
+        Manager::open(root.path()).unwrap().list().unwrap().crawls[0].path,
+        imported
+    );
 }

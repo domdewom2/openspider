@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use futures_util::future::BoxFuture;
+use os_model::settings::AppSettings;
 use os_model::{CrawlId, CrawlMode, CrawlState, RetentionPolicy};
 use os_store::registry::{self, Manager};
 
@@ -17,7 +18,22 @@ use crate::runtime::{App, CallCtx};
 struct ManagementState {
     gate: Arc<tokio::sync::Mutex<()>>,
     retention_task: Mutex<Option<tokio::task::JoinHandle<()>>>,
+    retention_settings: Mutex<Option<AppSettings>>,
 }
+impl ManagementState {
+    fn update_retention_settings(&self, current: AppSettings) -> bool {
+        let mut previous = self
+            .retention_settings
+            .lock()
+            .unwrap_or_else(|p| p.into_inner());
+        let changed = previous
+            .as_ref()
+            .is_none_or(|old| old.retention != current.retention || old.storage != current.storage);
+        *previous = Some(current);
+        changed
+    }
+}
+
 impl Drop for ManagementState {
     fn drop(&mut self) {
         if let Some(task) = self
@@ -233,7 +249,6 @@ async fn listing(app: &App, args: serde_json::Value) -> CmdResult {
             }
         });
     }
-    items.truncate(1000);
     to_json(&items)
 }
 
@@ -579,6 +594,8 @@ pub async fn run_retention(app: &App) -> Result<usize, CmdError> {
 
 /// Start sofort und anschließend mindestens einmal pro Stunde, ohne die App am Leben zu halten.
 pub fn start_retention(app: &App) {
+    app.ext::<ManagementState>()
+        .update_retention_settings(app.settings_snapshot());
     let weak = app.downgrade();
     let task = app.handle().spawn(async move {
         loop {
@@ -600,6 +617,12 @@ pub fn start_retention(app: &App) {
 
 /// Neue Richtlinie/Speicherorte sofort anwenden; ein Speicherortwechsel kopiert keine Crawls.
 pub fn on_settings_changed(app: &App) {
+    if !app
+        .ext::<ManagementState>()
+        .update_retention_settings(app.settings_snapshot())
+    {
+        return;
+    }
     let weak = app.downgrade();
     app.handle().spawn(async move {
         if let Some(app) = weak.upgrade() {
@@ -608,4 +631,29 @@ pub fn on_settings_changed(app: &App) {
             }
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // spec: OUT-229
+    #[test]
+    fn retention_reacts_to_policy_and_storage_changes_but_ignores_other_settings() {
+        let state = ManagementState::default();
+        let mut snapshot = AppSettings::default();
+        assert!(state.update_retention_settings(snapshot.clone()));
+        assert!(!state.update_retention_settings(snapshot.clone()));
+        snapshot.retention.policy = RetentionPolicy::OneWeek;
+        assert!(state.update_retention_settings(snapshot.clone()));
+        snapshot.general.notifications = !snapshot.general.notifications;
+        assert!(!state.update_retention_settings(snapshot.clone()));
+        snapshot.appearance.zoom_pct = 125;
+        assert!(!state.update_retention_settings(snapshot.clone()));
+        snapshot.storage.crawls_dir = Some("external-crawls".into());
+        assert!(state.update_retention_settings(snapshot.clone()));
+        assert!(!state.update_retention_settings(snapshot.clone()));
+        snapshot.retention.policy = RetentionPolicy::Never;
+        assert!(state.update_retention_settings(snapshot));
+    }
 }

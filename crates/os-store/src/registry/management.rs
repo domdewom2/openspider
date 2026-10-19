@@ -13,6 +13,8 @@ pub struct Project {
 }
 
 /// Verwaltung eines Crawl-Ordners und seiner zusätzlich bekannten Speicherorte.
+/// `.registry.sqlite` und `.index.sqlite` liegen immer unter `root` (App: `paths.crawls`),
+/// auch wenn importierte oder verschobene Crawl-Dateien an externen Speicherorten liegen.
 pub struct Manager {
     root: PathBuf,
     // Dauerhafte Projekt-/Speicherort-Daten liegen getrennt vom verwerfbaren Metadaten-Index.
@@ -69,17 +71,22 @@ impl Manager {
         );
         let mut paths = Vec::new();
         for dir in dirs {
-            collect_files(&dir, &mut paths)?;
+            paths.extend(candidate_files(&dir)?);
         }
         paths.sort();
         paths.dedup();
+        let locked_projects = self
+            .state
+            .prepare("SELECT name FROM projects WHERE locked=1")?
+            .query_map([], |r| r.get::<_, String>(0))?
+            .collect::<Result<HashSet<_>, _>>()?;
         let tx = self.index.conn.unchecked_transaction()?;
         let mut report = ListingReport::default();
         let mut seen = HashSet::new();
         for path in paths {
             match self.index.read(&path) {
                 Ok(mut l) => {
-                    l.locked |= self.project_locked(&l.meta.project)?;
+                    l.locked |= locked_projects.contains(&l.meta.project);
                     if seen.insert(l.meta.crawl_id) {
                         report.crawls.push(l);
                     }
@@ -511,25 +518,6 @@ fn absolute(path: &Path) -> Result<PathBuf, StoreError> {
             .join(path))
     }
 }
-fn collect_files(dir: &Path, out: &mut Vec<PathBuf>) -> Result<(), StoreError> {
-    out.extend(candidate_files(dir)?);
-    let entries = match std::fs::read_dir(dir) {
-        Ok(e) => e,
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
-        Err(e) => return Err(StoreError::io(dir, e)),
-    };
-    for entry in entries {
-        let entry = entry.map_err(|e| StoreError::io(dir, e))?;
-        if entry
-            .file_type()
-            .map_err(|e| StoreError::io(&entry.path(), e))?
-            .is_dir()
-        {
-            collect_files(&entry.path(), out)?;
-        }
-    }
-    Ok(())
-}
 fn fresh_id(
     dir: &Path,
     known: &[CrawlListing],
@@ -613,33 +601,59 @@ pub fn copy_snapshot(
     result
 }
 
-// Atomare Veröffentlichung ohne Überschreiben, auch auf FAT/exFAT (keine Hardlinks).
+// Exklusive Veröffentlichung, sofern das Dateisystem sie unterstützt. Sonst schützt die
+// `.copying`-Reservierung vor anderen OpenSpider-Kopien; externe Schreiber dürfen das Ziel
+// zwischen Existenzprüfung und Rename nicht belegen. Keine Hardlinks (FAT/exFAT).
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 fn publish(src: &Path, dest: &Path) -> std::io::Result<()> {
     use std::os::unix::ffi::OsStrExt;
-    let src = std::ffi::CString::new(src.as_os_str().as_bytes())?;
-    let dest = std::ffi::CString::new(dest.as_os_str().as_bytes())?;
+    let c_src = std::ffi::CString::new(src.as_os_str().as_bytes())?;
+    let c_dest = std::ffi::CString::new(dest.as_os_str().as_bytes())?;
     // SAFETY: beide Pfade sind gültige, NUL-terminierte C-Strings.
     let result = unsafe {
         #[cfg(target_os = "macos")]
         {
-            libc::renamex_np(src.as_ptr(), dest.as_ptr(), libc::RENAME_EXCL)
+            libc::renamex_np(c_src.as_ptr(), c_dest.as_ptr(), libc::RENAME_EXCL)
         }
         #[cfg(target_os = "linux")]
         {
             libc::renameat2(
                 libc::AT_FDCWD,
-                src.as_ptr(),
+                c_src.as_ptr(),
                 libc::AT_FDCWD,
-                dest.as_ptr(),
+                c_dest.as_ptr(),
                 libc::RENAME_NOREPLACE,
             )
         }
     };
-    if result == 0 {
+    let result = if result == 0 {
         Ok(())
     } else {
         Err(std::io::Error::last_os_error())
+    };
+    publish_or_fallback(src, dest, result)
+}
+
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+fn publish_or_fallback(
+    src: &Path,
+    dest: &Path,
+    result: std::io::Result<()>,
+) -> std::io::Result<()> {
+    match result {
+        Err(e)
+            if e.raw_os_error().is_some_and(|code| {
+                [libc::ENOTSUP, libc::EINVAL, libc::ENOSYS, libc::EOPNOTSUPP].contains(&code)
+            }) =>
+        {
+            // try_exists vermeidet ein Überschreiben auch bei Fehlern der Existenzprüfung.
+            if dest.try_exists()? {
+                Err(std::io::ErrorKind::AlreadyExists.into())
+            } else {
+                std::fs::rename(src, dest)
+            }
+        }
+        other => other,
     }
 }
 
@@ -662,4 +676,40 @@ fn publish(src: &Path, dest: &Path) -> std::io::Result<()> {
 #[cfg(not(any(target_os = "macos", target_os = "linux", windows)))]
 fn publish(src: &Path, dest: &Path) -> std::io::Result<()> {
     std::fs::hard_link(src, dest)
+}
+
+#[cfg(all(test, any(target_os = "macos", target_os = "linux")))]
+mod tests {
+    use super::*;
+
+    // spec: CRAWL-127 [M2]
+    #[test]
+    fn unsupported_exclusive_rename_falls_back_without_replacing_existing_destinations() {
+        let dir = tempfile::tempdir().unwrap();
+        let src = dir.path().join("crawl.ospider.copying");
+        let dest = dir.path().join("crawl.ospider");
+        for code in [libc::ENOTSUP, libc::EINVAL, libc::ENOSYS, libc::EOPNOTSUPP] {
+            std::fs::write(&src, b"snapshot").unwrap();
+            publish_or_fallback(&src, &dest, Err(std::io::Error::from_raw_os_error(code))).unwrap();
+            assert_eq!(std::fs::read(&dest).unwrap(), b"snapshot");
+            assert!(!src.exists());
+            std::fs::write(&src, b"replacement").unwrap();
+            let error =
+                publish_or_fallback(&src, &dest, Err(std::io::Error::from_raw_os_error(code)))
+                    .unwrap_err();
+            assert_eq!(error.kind(), std::io::ErrorKind::AlreadyExists);
+            assert_eq!(std::fs::read(&dest).unwrap(), b"snapshot");
+            assert_eq!(std::fs::read(&src).unwrap(), b"replacement");
+            std::fs::remove_file(&dest).unwrap();
+        }
+        let error = publish_or_fallback(
+            &src,
+            &dest,
+            Err(std::io::Error::from_raw_os_error(libc::EACCES)),
+        )
+        .unwrap_err();
+        assert_eq!(error.raw_os_error(), Some(libc::EACCES));
+        assert!(src.exists());
+        assert!(!dest.exists());
+    }
 }

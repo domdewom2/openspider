@@ -168,24 +168,20 @@ use rusqlite::OptionalExtension;
 
 /// Alter eines Running-Heartbeats wird bei jeder Auswertung neu geprüft, auch bei einem Cache-Treffer.
 pub fn effective_state(meta: &CrawlMeta, now: Timestamp) -> CrawlState {
-    if meta.state == CrawlState::Running
-        && !meta
-            .heartbeat_at
-            .or(meta.started_at)
-            .is_some_and(|h| now.unix_millis().saturating_sub(h.unix_millis()) <= 10_000)
-    {
-        CrawlState::Incomplete
-    } else {
-        meta.state
-    }
+    crate::resume::effective_state_at(meta.state, meta.heartbeat_at.or(meta.started_at), now)
 }
 
 impl CrawlListing {
     /// Wie CrawlFile::effective_state: Heartbeat, Startzeit, anschließend Anlegezeit.
     pub fn effective_state(&self, now: Timestamp) -> CrawlState {
-        let mut meta = self.meta.clone();
-        meta.heartbeat_at = meta.heartbeat_at.or(meta.started_at).or(self.created_at);
-        effective_state(&meta, now)
+        crate::resume::effective_state_at(
+            self.meta.state,
+            self.meta
+                .heartbeat_at
+                .or(self.meta.started_at)
+                .or(self.created_at),
+            now,
+        )
     }
 
     /// Gemeinsame Fortsetzbarkeit nach K2-34.

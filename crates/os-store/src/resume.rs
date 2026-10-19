@@ -6,7 +6,7 @@
 //!   Abrufreihenfolge.
 //! * [`CrawlFile::for_each_url_key`] / [`CrawlFile::url_keys_page`]: alle `(id, url)` für das Seen-Set.
 
-use os_model::{Clock, CrawlState, UrlId};
+use os_model::{Clock, CrawlState, Timestamp, UrlId};
 use rusqlite::OptionalExtension;
 
 use crate::error::StoreError;
@@ -14,6 +14,24 @@ use crate::open::CrawlFile;
 
 /// Ein Heartbeat, der älter ist als diese Zeit (Millisekunden), gilt als ausgeblieben.
 pub const HEARTBEAT_TIMEOUT_MS: i64 = 10_000;
+
+/// Wertet den gespeicherten Zustand anhand der letzten Aktivität aus, ohne Dateizugriff.
+/// Aufrufer wählen Heartbeat, Startzeit oder Anlegezeit in dieser Reihenfolge.
+pub fn effective_state_at(
+    state: CrawlState,
+    reference: Option<Timestamp>,
+    now: Timestamp,
+) -> CrawlState {
+    if state == CrawlState::Running
+        && !reference.is_some_and(|t| {
+            now.unix_millis().saturating_sub(t.unix_millis()) <= HEARTBEAT_TIMEOUT_MS
+        })
+    {
+        CrawlState::Incomplete
+    } else {
+        state
+    }
+}
 
 /// Eintrag der Warteschlange.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -55,14 +73,7 @@ impl CrawlFile {
                 None => None,
             },
         };
-        let alive = reference
-            .map(|t| clock.now().unix_millis() - t.unix_millis() <= HEARTBEAT_TIMEOUT_MS)
-            .unwrap_or(false);
-        Ok(if alive {
-            CrawlState::Running
-        } else {
-            CrawlState::Incomplete
-        })
+        Ok(effective_state_at(meta.state, reference, clock.now()))
     }
 
     /// Liest den Zustand zum Fortsetzen. `next_url_id` und `next_seq` sind mindestens so groß wie die
