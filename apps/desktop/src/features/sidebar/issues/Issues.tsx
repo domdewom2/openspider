@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useT, useFormat } from "../../../i18n";
+import { useT, useFormat, type TFn } from "../../../i18n";
 import { sidebar } from "../../../ipc/sidebar";
 import type { IssueRow } from "../../../ipc/gen/IssueRow";
 import type { IssueTypeDto } from "../../../ipc/gen/IssueTypeDto";
@@ -18,8 +18,8 @@ const PRIORITIES: IssuePriorityDto[] = ["high", "medium", "low"];
 export function sortIssues(rows: readonly IssueRow[]): IssueRow[] {
   return rows.filter(r => r.count > 0).slice().sort((a, b) => TYPES.indexOf(a.type) - TYPES.indexOf(b.type) || PRIORITIES.indexOf(a.priority) - PRIORITIES.indexOf(b.priority) || b.count - a.count || `${a.tab}: ${a.filter}`.localeCompare(`${b.tab}: ${b.filter}`, "en"));
 }
-export function issueRows(rows: readonly IssueRow[]): (string | number)[][] {
-  return [["Issue Name", "Issue Type", "Issue Priority", "URLs", "% of Total"], ...rows.map(r => [`${r.tab}: ${r.filter}`, r.type, r.priority, r.count, r.pct == null ? "–" : `${r.pct.toFixed(1)} %`])];
+export function issueRows(rows: readonly IssueRow[], t: TFn): (string | number)[][] {
+  return [[t("sidebar-issue-name"), t("sidebar-type"), t("sidebar-priority"), t("sidebar-urls"), t("sidebar-percent-total")], ...rows.map(r => [`${r.tab}: ${r.filter}`, r.type, r.priority, r.count, r.pct == null ? "–" : `${r.pct.toFixed(1)} %`])];
 }
 
 export function Issues({ needsAnalysis }: { needsAnalysis: boolean }) {
@@ -47,7 +47,7 @@ export function Issues({ needsAnalysis }: { needsAnalysis: boolean }) {
     {needsAnalysis && <p role="status">{t("sidebar-more-issues")}</p>}
     <QueryFeedback error={query.error} loading={!!crawl && query.isPending} retry={() => void query.refetch()} />
     {!crawl && <p>{t("sidebar-no-crawl")}</p>}
-    {query.data && <><PanelActions which="issues" rows={issueRows(rows)} /><table className="os-sidebar-table"><thead><tr><th>{t("sidebar-issue-name")}</th><th>{t("sidebar-type")}</th><th>{t("sidebar-priority")}</th><th>{t("sidebar-urls")}</th><th>% of Total</th></tr></thead><tbody>{rows.map(row => <tr key={row.id} aria-selected={selected === row.id}>
+    {query.data && <><PanelActions which="issues" rows={issueRows(rows, t)} /><table className="os-sidebar-table"><thead><tr><th>{t("sidebar-issue-name")}</th><th>{t("sidebar-type")}</th><th>{t("sidebar-priority")}</th><th>{t("sidebar-urls")}</th><th>{t("sidebar-percent-total")}</th></tr></thead><tbody>{rows.map(row => <tr key={row.id} aria-selected={selected === row.id}>
       <th scope="row"><button type="button" onClick={() => { setSelected(row.id); navigate(row.tab, row.filter); }} onDoubleClick={() => navigate(row.tab, row.filter, true)}>{row.tab}: {row.filter}</button>
       {row.segmentShares.length > 0 && <div className="os-sidebar-segments" aria-label={t("sidebar-segments")}>{row.segmentShares.map((share, i) => <button type="button" key={share.segment} title={`${share.segment}: ${f.integer(share.count)}`} aria-label={`${share.segment}: ${f.integer(share.count)}`} style={{ flexGrow: share.count, background: SEGMENT_PALETTE[i % SEGMENT_PALETTE.length]?.light }} onClick={() => setScope({ ...scope, segment: { kind: "segment", name: share.segment } })} />)}</div>}</th>
       <td><IssueBadge badge={{ issueType: row.type, priority: row.priority }} /></td><td className={`os-sidebar-priority-${row.priority}`}>{t(`sidebar-priority-${row.priority}`)}</td><td>{f.integer(row.count)}</td><td>{row.pct == null ? "–" : `${f.decimal(row.pct, 1)} %`}</td>

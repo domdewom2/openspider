@@ -19,7 +19,7 @@
 .os-sidebar-filters, .os-sidebar-actions { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px; }
 .os-sidebar-filters label { display: flex; flex-direction: column; min-width: 0; }
 .os-sidebar-filters input { max-width: 100%; }
-.os-sidebar-explanation, .os-sidebar-analysis { padding: 8px; }
+.os-sidebar-explanation { padding: 8px; }
 .os-sidebar-explanation dd { margin: 0 0 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .os-sidebar-explanation dt { font-weight: 600; }
 .os-sidebar-segments { display: flex; height: 12px; gap: 1px; margin-top: 4px; }
@@ -27,5 +27,3 @@
 .os-sidebar details > label { display: flex; align-items: center; gap: 4px; }
 .os-sidebar [aria-selected="true"] { background: var(--os-bg-selection); }
 @media (forced-colors: active) { .os-sidebar-stale { color: GrayText; } .os-sidebar-segments button { border: 1px solid ButtonText; } }
-
-.os-sidebar-progress { margin-inline-start: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

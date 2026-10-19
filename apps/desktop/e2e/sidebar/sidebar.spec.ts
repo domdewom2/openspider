@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { startFakeBridge, type FakeBridge } from "../support/fake-bridge";
-import fixture from "./fx-ui-basic.json" with { type: "json" };
+import fixture from "./sidebar-dto.json" with { type: "json" };
 import tick from "../../src/ipc/__fixtures__/Tick.json" with { type: "json" };
 import type { Tick } from "../../src/ipc/gen/Tick";
 
@@ -51,33 +51,32 @@ test("shows prerequisites without zero counts, remembers collapse and refreshes 
 });
 
 // spec: UI-062
-test("filters issues and uses the common exporter", async ({ page }) => {
-  bridge.core.handlers.set("export.issues", () => ({ opId: "export-1", labelKey: "export", cancellable: true }));
+test("filters issues and shows the shared export integration placeholder", async ({ page }) => {
   await page.getByRole("tab", { name: "Issues", exact: true }).click();
   await page.getByLabel("Issue Type", { exact: true }).selectOption("opportunity");
   await page.getByLabel("Issue Priority", { exact: true }).selectOption("medium");
   await page.getByLabel("Search issues", { exact: true }).fill("duplicate");
   await expect(page.getByRole("table").getByRole("row")).toHaveCount(2);
   await page.getByRole("button", { name: "Export", exact: true }).click();
-  const dialog = page.getByRole("dialog");
-  await dialog.getByLabel("Destination file").fill("issues.csv");
-  await dialog.getByRole("button", { name: "Export", exact: true }).click();
-  await expect.poll(() => bridge.core.calls.find(c => c.cmd === "export.issues")?.args).toEqual({ which: "issues", path: "issues.csv", format: "csv" });
+  await expect(page.getByRole("status").filter({ hasText: "Export is not available in this build yet." })).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  expect(bridge.core.calls.some(c => c.cmd.startsWith("export."))).toBe(false);
 });
 
-// spec: UI-080
-// spec: UI-082 [M2]
-// spec: ONPAGE-140 [M2]
-test("shows stale analysis, saved HTML notice and live named step progress in the status bar", async ({ page }) => {
+// spec: UI-080, UI-082 [M2], ONPAGE-140 [M2]
+test("keeps stale analysis and saved HTML notices above every sidebar tab", async ({ page }) => {
   await expect(page.getByRole("status").filter({ hasText: "Analysis outdated" })).toBeVisible();
-  await page.getByRole("tab", { name: "Analysis", exact: true }).click();
+  const sidebar = page.getByRole("complementary", { name: "Sidebar" });
+  await expect(sidebar.getByRole("tab", { name: "Analysis", exact: true })).toHaveCount(0);
+  await sidebar.getByRole("tab", { name: "Issues", exact: true }).click();
   await expect(page.getByText("Reanalysis needs saved HTML. Recrawl required.")).toBeVisible();
   await expect(page.getByRole("button", { name: "HTML storage setting" })).toBeVisible();
   await page.getByRole("button", { name: "Analyze again", exact: true }).click();
   await expect.poll(() => bridge.core.calls.find(c => c.cmd === "analysis.start")?.args).toEqual({ steps: null });
   bridge.core.emit("main", { kind: "tick", tick: { ...tick, seq: 19, analysis: { ...fixture.analysis, running: true, current: "link_score", percent: 42 } } as Tick });
-  await expect(page.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "42");
-  await expect(page.getByRole("contentinfo")).toContainText("42 %");
+  await expect(sidebar.getByRole("status").filter({ hasText: "Analysis outdated" })).toBeVisible();
+  await expect(sidebar.getByRole("button", { name: "Analyze again", exact: true })).toBeDisabled();
+  await expect(sidebar.getByRole("status").filter({ hasText: "Reanalysis needs saved HTML" })).toBeVisible();
 });
 
 // spec: UI-065 [M2]

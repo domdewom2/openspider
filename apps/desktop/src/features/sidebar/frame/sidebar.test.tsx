@@ -9,7 +9,9 @@ import type { CrawlStatus } from "../../../ipc/gen/CrawlStatus";
 import type { OverviewDto } from "../../../ipc/gen/OverviewDto";
 import type { AnalysisStatus } from "../../../ipc/gen/AnalysisStatus";
 import tick from "../../../ipc/__fixtures__/Tick.json";
-import fixture from "../../../../e2e/sidebar/fx-ui-basic.json";
+import fixture from "../../../../e2e/sidebar/sidebar-dto.json";
+import { registerAction } from "../../../ui/actions";
+import { SidebarMount } from "./SidebarMount";
 import { SidebarFrame } from "./SidebarFrame";
 import { useSidebarNavigation } from "./state";
 import { hasCount } from "../analysis/FilterStatus";
@@ -26,8 +28,6 @@ beforeEach(async () => {
   core.handlers.set("sidebar.issueExplain", () => fixture.explanation);
   core.handlers.set("analysis.status", () => fixture.analysis);
   core.handlers.set("analysis.start", () => ({ opId: "analyze-1", labelKey: "analysis", cancellable: true }));
-  core.handlers.set("export.issues", () => ({ opId: "export-1", labelKey: "export", cancellable: true }));
-  core.handlers.set("export.sidebar", () => ({ opId: "export-2", labelKey: "export", cancellable: true }));
   setClient(createClient(core.transport()));
   useSession.setState({ seq: -1, crawl: tick.crawl as CrawlStatus, analysis: null, countsVersion: 1, issuesVersion: 1, sidebarVersion: 1, ops: {} });
   useSidebarNavigation.setState({ scope: {}, target: null });
@@ -114,8 +114,8 @@ it("keeps old values grey, shows stale steps from the core and starts only a use
   mount();
   expect(await screen.findByText("Analysis outdated – analyze again")).toBeVisible();
   expect(core.calls.some(c => c.cmd === "analysis.start")).toBe(false);
-  await tab("Analysis");
-  expect(await screen.findByText("Pending · Outdated")).toBeVisible();
+  expect(screen.queryByRole("tab", { name: "Analysis" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Low Content Pages" }).closest("tr")).toHaveTextContent("1");
   fireEvent.click(screen.getByRole("button", { name: "Analyze again" }));
   await waitFor(() => expect(core.calls.filter(c => c.cmd === "analysis.start").at(-1)?.args).toEqual({ steps: null }));
   const before = core.calls.filter(c => c.cmd === "analysis.start").length;
@@ -126,28 +126,41 @@ it("keeps old values grey, shows stale steps from the core and starts only a use
 // spec: ONPAGE-140 [M2]
 it("uses the core needsRecrawl state for the saved HTML notice and points at the storage setting", async () => {
   const open = vi.spyOn(window, "open").mockReturnValue(null);
-  mount(); await tab("Analysis");
+  mount();
   expect(await screen.findByText("Reanalysis needs saved HTML. Recrawl required.")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "HTML storage setting" }));
   expect(open).toHaveBeenCalledWith(expect.stringContaining("#extraction.store_html"), "settings", expect.any(String));
 });
 
 // spec: UI-080
-it("renders live step progress and cancellation, never replacing pending filter counts with zero", async () => {
-  mount(); await tab("Analysis");
-  fireEvent.click(await screen.findByRole("button", { name: "Analyze again" }));
-  await waitFor(() => expect(core.calls.some(c => c.cmd === "analysis.start")).toBe(true));
+it("updates the sidebar notice from core ticks and never replaces pending filter counts with zero", async () => {
+  core.handlers.set("analysis.status", () => ({ running: false, steps: [] }));
+  mount();
+  await screen.findByRole("table", { name: "Summary" });
+  expect(screen.queryByText("Analysis outdated – analyze again")).not.toBeInTheDocument();
   act(() => useSession.setState({ analysis: { ...fixture.analysis, running: true, current: "link_score", percent: 42 } as AnalysisStatus }));
-  expect(await screen.findByRole("progressbar")).toHaveAttribute("aria-valuenow", "42");
-  fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-  await waitFor(() => expect(core.calls.some(c => c.cmd === "op.cancel" && (c.args as { opId: string }).opId === "analyze-1")).toBe(true));
+  expect(await screen.findByRole("button", { name: "Analyze again" })).toBeDisabled();
+  await tab("Issues");
+  expect(screen.getByRole("button", { name: "Analyze again" })).toBeDisabled();
+  expect(screen.getByText("Reanalysis needs saved HTML. Recrawl required.")).toBeVisible();
   expect(hasCount({ kind: "needsCrawlAnalysis" })).toBe(false);
   expect(hasCount({ kind: "needsRecrawl" })).toBe(false);
   expect(hasCount({ kind: "incomplete", unchecked: 7 })).toBe(true);
 });
 
+// spec: UI-060, UI-080
+it("mounts only the specified sidebar tabs and leaves statusbar composition to U03", async () => {
+  core.uiState = { version: 1, state: { sidebar: { selected: "analysis", order: ["analysis", "issues"] } } };
+  useSession.setState({ analysis: { ...fixture.analysis, running: true, percent: 42 } as AnalysisStatus });
+  render(<Providers><div><aside className="os-app-sidebar" /><footer className="os-app-status">U03 status</footer><SidebarMount /></div></Providers>);
+  await screen.findByRole("button", { name: "Page Titles: Duplicate" });
+  expect(screen.getAllByRole("tab").map(t => t.textContent)).toEqual(["Issues", "Overview", "Site Structure", "Segments", "Response Times", "API", "Spelling & Grammar"]);
+  expect(screen.getByRole("contentinfo").textContent).toBe("U03 status");
+  expect(screen.getByRole("contentinfo").children).toHaveLength(0);
+});
+
 // spec: UI-060
-it("copies displayed rows and routes issue export to the common core exporter", async () => {
+it("copies displayed rows and dispatches export to the shared UI action", async () => {
   const writeText = vi.fn().mockResolvedValue(undefined);
   Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
   mount(); await tab("Issues");
@@ -155,10 +168,16 @@ it("copies displayed rows and routes issue export to the common core exporter", 
   await waitFor(() => expect(writeText).toHaveBeenCalledWith(expect.stringContaining("Issue Name\tIssue Type\tIssue Priority\tURLs\t% of Total")));
   expect(tsv([["A\nB", "C\tD"]])).toBe("A B\tC D");
   fireEvent.click(screen.getByRole("button", { name: "Export" }));
-  const dialog = await screen.findByRole("dialog");
-  fireEvent.change(within(dialog).getByLabelText("Destination file"), { target: { value: "issues.csv" } });
-  fireEvent.click(within(dialog).getByRole("button", { name: "Export" }));
-  await waitFor(() => expect(core.calls.find(c => c.cmd === "export.issues")?.args).toEqual({ which: "issues", path: "issues.csv", format: "csv" }));
+  expect(await screen.findByText("Export is not available in this build yet.")).toBeVisible();
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(core.calls.some(c => c.cmd.startsWith("export."))).toBe(false);
+  const handler = vi.fn();
+  const unregister = registerAction("export.sidebar", handler);
+  try {
+    fireEvent.click(screen.getByRole("button", { name: "Export" }));
+    expect(handler).toHaveBeenCalledWith({ source: "ui" });
+    expect(screen.queryByText("Export is not available in this build yet.")).not.toBeInTheDocument();
+  } finally { unregister(); }
 });
 
 // spec: UI-061
@@ -219,7 +238,7 @@ it("shows core errors with retry instead of presenting fabricated counts", async
 
 // spec: UI-080
 it("keeps an accepted analysis start disabled until the core finishes the operation", async () => {
-  mount(); await tab("Analysis");
+  mount();
   const start = await screen.findByRole("button", { name: "Analyze again" });
   fireEvent.click(start);
   await waitFor(() => expect(core.calls.some(c => c.cmd === "analysis.start")).toBe(true));
@@ -241,4 +260,22 @@ it("marks only filters belonging to invalidated steps stale before a counts tick
   expect(duplicate.closest("tr")).toHaveClass("os-sidebar-stale");
   expect(duplicate.closest("tr")).toHaveTextContent("2");
   expect(screen.getByRole("button", { name: "Indexable" }).closest("tr")).not.toHaveClass("os-sidebar-stale");
+});
+
+// spec: UI-060, UI-061, UI-062
+it("localizes the percent heading in summary, filter and issue tables and copied rows", async () => {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+  mount();
+  await screen.findByRole("table", { name: "Summary" });
+  await act(async () => { await setLanguage("de"); });
+  const tables = screen.getAllByRole("table");
+  for (const table of tables) expect(within(table).getByRole("columnheader", { name: "% gesamt" })).toBeVisible();
+  expect(screen.queryByRole("columnheader", { name: "% of Total" })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Kopieren" }));
+  await waitFor(() => expect(writeText).toHaveBeenLastCalledWith(expect.stringContaining("Name\tURLs\t% gesamt")));
+  await tab("Befunde");
+  expect(await screen.findByRole("columnheader", { name: "% gesamt" })).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Kopieren" }));
+  await waitFor(() => expect(writeText).toHaveBeenLastCalledWith(expect.stringContaining("Befundname\tBefundtyp\tPriorität\tURLs\t% gesamt")));
 });
