@@ -92,6 +92,7 @@ fn url_id(fx: &FixtureCrawl, path: &str) -> UrlId {
 
 // spec: ONPAGE-153
 // spec: ONPAGE-166
+// spec: ONPAGE-142 [P1]
 #[tokio::test]
 async fn language_and_spelling_columns_follow_the_page_language() {
     let cfg = spec_cfg();
