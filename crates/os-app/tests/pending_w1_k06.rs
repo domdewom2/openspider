@@ -110,3 +110,29 @@ async fn image_sitemap_options_reach_the_configuration_aware_provider() {
     assert!(xml.contains("image:loc"));
     assert!(xml.contains("https://site.test/image.png"));
 }
+
+// spec: TECH-146
+#[tokio::test]
+#[ignore = "wartet auf M2-D08"]
+async fn parameterless_anchor_details_keep_the_f05_provider_reachable() {
+    let fx = Fx::new();
+    let spec = json!({"kind":"detail","detail":"anchors","urlIds":[2],"params":{},"sort":[]});
+    let h = fx.open(spec.clone(), json!([])).await;
+    assert!(h["total"].as_u64().unwrap() > 0);
+    let rows = fx.rows(&h, 0, 500, json!([])).await;
+    assert!(rows["columns"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|c| c == "Anchor Text"));
+    let path = fx.dir.path().join("anchors.csv");
+    fx.op(
+        "export.detail",
+        json!({"spec":spec,"selection":{"kind":"ids","ids":[2]},"path":path,"format":"csv"}),
+    )
+    .await
+    .unwrap();
+    assert!(std::fs::read_to_string(path)
+        .unwrap()
+        .contains("Anchor Text"));
+}

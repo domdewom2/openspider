@@ -1,8 +1,22 @@
 diff --git a/crates/os-analyze/src/details/mod.rs b/crates/os-analyze/src/details/mod.rs
-index 5b50269..733bf93 100644
+index 5b50269..2fabb56 100644
 --- a/crates/os-analyze/src/details/mod.rs
 +++ b/crates/os-analyze/src/details/mod.rs
-@@ -184,0 +185,150 @@ pub fn url_details(
+@@ -98,0 +99,13 @@ pub fn detail_source(kind: DetailKind) -> (&'static str, DetailFn) {
++/// App views and paged exports share the same canonical adapters (UI-042/OUT-021).
++pub fn app_detail_source(kind: DetailKind) -> (&'static str, DetailFn) {
++    let (owner, source) = detail_source(kind);
++    (
++        owner,
++        match kind {
++            DetailKind::Headers => stored_header_details,
++            DetailKind::Anchors => selected_anchor_details,
++            _ => source,
++        },
++    )
++}
++
+@@ -184,0 +198,158 @@ pub fn url_details(
 +
 +/// Every Internal column for one URL, including external/hidden URLs. Uses the same
 +/// expressions and multi-column expansion as the main table (UI-031, OUT-021).
@@ -75,7 +89,8 @@ index 5b50269..733bf93 100644
 +                let direction: String = r.get(1)?;
 +                let name: String = r.get(2)?;
 +                let raw: String = r.get(3)?;
-+                // Same sensitive-header policy as os-fetch; os-analyze has no fetch dependency.
++                // Mirrors os_fetch::redact::SENSITIVE_HEADERS. N01: move the policy to
++                // os-model/os-store; C7 forbids an os-analyze -> os-fetch dependency.
 +                let sensitive = matches!(
 +                    name.trim().to_ascii_lowercase().as_str(),
 +                    "authorization"
@@ -119,7 +134,7 @@ index 5b50269..733bf93 100644
 +/// Preserves the complete selection contract at the parameter-aware anchor extension.
 +pub fn selected_anchor_details(
 +    file: &CrawlFile,
-+    _: &CrawlConfig,
++    cfg: &CrawlConfig,
 +    req: &DetailReq<'_>,
 +) -> Result<DetailRows, ViewError> {
 +    let sort = req
@@ -137,11 +152,18 @@ index 5b50269..733bf93 100644
 +        &sort,
 +        req.offset,
 +        req.limit,
-+    )
-+    .map_err(|e| match e {
-+        os_store::StoreError::NotImplemented(owner) => ViewError::NotImplemented(owner),
-+        other => ViewError::Store(other),
-+    })?;
++    );
++    let rows = match rows {
++        Err(os_store::StoreError::NotImplemented(_))
++            if req.params.is_null() || req.params.as_object().is_some_and(|p| p.is_empty()) =>
++        {
++            return anchors(file, cfg, req);
++        }
++        result => result.map_err(|e| match e {
++            os_store::StoreError::NotImplemented(owner) => ViewError::NotImplemented(owner),
++            other => ViewError::Store(other),
++        })?,
++    };
 +    Ok(DetailRows {
 +        columns: rows
 +            .columns
@@ -154,10 +176,10 @@ index 5b50269..733bf93 100644
 +    })
 +}
 diff --git a/crates/os-analyze/src/views.rs b/crates/os-analyze/src/views.rs
-index b9e3da7..2dce8b7 100644
+index b9e3da7..36a4f81 100644
 --- a/crates/os-analyze/src/views.rs
 +++ b/crates/os-analyze/src/views.rs
-@@ -297,0 +298,34 @@ pub fn resolve_name(input: &str) -> Result<(String, String), NameError> {
+@@ -297,0 +298,46 @@ pub fn resolve_name(input: &str) -> Result<(String, String), NameError> {
 +
 +/// Offset page restricted to explicit URL IDs, bound as one JSON parameter (K2-61).
 +/// `outside_population` supports URL Details for hidden and external URLs using Internal columns.
@@ -192,11 +214,37 @@ index b9e3da7..2dce8b7 100644
 +    page.next_cursor = None;
 +    Ok(page)
 +}
++
++/// Expanded column schema from the plan; only multi-column cardinalities need SQL.
++/// Does not query a result page, total, version or filter readiness.
++pub fn column_names_in(
++    tabs: &[TabDef],
++    file: &CrawlFile,
++    cfg: &CrawlConfig,
++    query: &ViewQuery,
++) -> Result<Vec<String>, ViewError> {
++    let built = build::build(tabs, query, cfg)?;
++    exec::planned_columns(file, &built)
++}
+diff --git a/crates/os-analyze/src/views/exec.rs b/crates/os-analyze/src/views/exec.rs
+index 21ff82e..a1559eb 100644
+--- a/crates/os-analyze/src/views/exec.rs
++++ b/crates/os-analyze/src/views/exec.rs
+@@ -544,0 +545,9 @@ pub(super) fn stream_rows(
++
++/// Resolve expanded headers without counting or fetching the view's data rows.
++pub(super) fn planned_columns(
++    file: &CrawlFile,
++    built: &Built<'_>,
++) -> Result<Vec<String>, ViewError> {
++    let prepared = prepare_columns(file.conn(), built, true)?;
++    Ok(header(&built.columns, &prepared.plans))
++}
 diff --git a/crates/os-app/src/pool.rs b/crates/os-app/src/pool.rs
-index 8c5f1ee..01740ed 100644
+index 8c5f1ee..d306765 100644
 --- a/crates/os-app/src/pool.rs
 +++ b/crates/os-app/src/pool.rs
-@@ -164,0 +165,22 @@ impl ReadPool {
+@@ -164,0 +165,63 @@ impl ReadPool {
 +    /// Runs all reads in one SQLite snapshot, rolling back even when the callback fails.
 +    /// Additive K2-61 extension for versioned app views and exports.
 +    pub async fn run_snapshot<T: Send + 'static>(
@@ -204,26 +252,67 @@ index 8c5f1ee..01740ed 100644
 +        crawl: CrawlKey,
 +        f: impl FnOnce(&CrawlFile, &CancelToken) -> Result<T, StoreError> + Send + 'static,
 +    ) -> Result<T, CmdError> {
-+        self.run(crawl, move |file, cancel| {
-+            file.conn().execute_batch("BEGIN DEFERRED")?;
-+            let result = std::panic::catch_unwind(AssertUnwindSafe(|| f(file, cancel)));
-+            let rollback = file.conn().execute_batch("ROLLBACK");
-+            match result {
-+                Ok(result) => result.and_then(|value| {
-+                    rollback?;
-+                    Ok(value)
-+                }),
-+                Err(panic) => std::panic::resume_unwind(panic),
++        let slot = self
++            .inner
++            .lock()
++            .get(&crawl)
++            .cloned()
++            .ok_or_else(|| no_crawl(&crawl.0))?;
++        let token = crate::runtime::current_cancel();
++        let access = slot.access.clone().read_owned().await;
++        let permit = Arc::clone(&slot.permits)
++            .acquire_owned()
++            .await
++            .map_err(|_| internal("ReadPool::run_snapshot", "Semaphore geschlossen"))?;
++        let hub = Arc::clone(&self.inner.hub);
++        tokio::task::spawn_blocking(move || {
++            let _permit = permit;
++            let _access = access;
++            let file = checkout(&slot).map_err(|e| store_error(&e))?;
++            let mut reusable = file.conn().is_autocommit();
++            let outcome = {
++                let _registration = hub.register(&token, file.conn().get_interrupt_handle());
++                std::panic::catch_unwind(AssertUnwindSafe(|| {
++                    if token.is_cancelled() {
++                        return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"));
++                    }
++                    reusable = false;
++                    file.conn()
++                        .execute_batch("BEGIN DEFERRED")
++                        .map_err(|e| store_error(&e.into()))?;
++                    let result = f(&file, &token);
++                    let rollback = file.conn().execute_batch("ROLLBACK");
++                    // Check rollback even when the callback failed. Only clean connections return.
++                    rollback.map_err(|e| store_error(&e.into()))?;
++                    reusable = file.conn().is_autocommit();
++                    result.map_err(|e| store_error(&e))
++                }))
++            };
++            match outcome {
++                Ok(result) => {
++                    if reusable {
++                        slot.idle
++                            .lock()
++                            .unwrap_or_else(|p| p.into_inner())
++                            .push(file);
++                    }
++                    result
++                }
++                Err(panic) => Err(internal(
++                    "ReadPool::run_snapshot",
++                    panic_text(panic.as_ref()),
++                )),
 +            }
 +        })
 +        .await
++        .map_err(|e| internal("ReadPool::run_snapshot", e.to_string()))?
 +    }
 +
 diff --git a/crates/os-export/src/detail_export.rs b/crates/os-export/src/detail_export.rs
-index 05606e4..fd934d8 100644
+index 05606e4..b83be0b 100644
 --- a/crates/os-export/src/detail_export.rs
 +++ b/crates/os-export/src/detail_export.rs
-@@ -47,0 +48,54 @@ pub fn export_detail(
+@@ -47,0 +48,49 @@ pub fn export_detail(
 +
 +/// Paged variant of the F05 detail export for app operations (additive K2-61).
 +/// Keeps memory bounded and checks cancellation between source pages and rows.
@@ -234,12 +323,7 @@ index 05606e4..fd934d8 100644
 +    writer: &mut dyn crate::TableWriter,
 +    ctx: &mut crate::types::ExportCtx<'_>,
 +) -> Result<u64, ExportError> {
-+    let (_, source) = detail_source(kind);
-+    let source = match kind {
-+        DetailKind::Headers => os_analyze::details::stored_header_details,
-+        DetailKind::Anchors => os_analyze::details::selected_anchor_details,
-+        _ => source,
-+    };
++    let (_, source) = os_analyze::details::app_detail_source(kind);
 +    let mut offset = 0;
 +    let mut header = None;
 +    loop {
@@ -418,10 +502,10 @@ index 08f19f8..9d69f78 100644
 +}
 diff --git a/crates/os-store/src/queries/app_support.rs b/crates/os-store/src/queries/app_support.rs
 new file mode 100644
-index 0000000..9b606ea
+index 0000000..2733ffb
 --- /dev/null
 +++ b/crates/os-store/src/queries/app_support.rs
-@@ -0,0 +1,164 @@
+@@ -0,0 +1,188 @@
 +//! Additive read helpers for the app's paged link tables and overview (K2-61).
 +use super::*;
 +use os_model::Value;
@@ -430,6 +514,8 @@ index 0000000..9b606ea
 +#[derive(Debug, Clone, Default)]
 +pub struct LinkSelection {
 +    pub url_ids: Vec<UrlId>,
++    /// Optional explicit link row IDs, intersected with every view predicate before paging.
++    pub row_ids: Option<Vec<i64>>,
 +    pub incoming: bool,
 +    pub resources: bool,
 +    pub exclude_resources: bool,
@@ -458,6 +544,10 @@ index 0000000..9b606ea
 +) -> Result<LinkTablePage, StoreError> {
 +    let ids = serde_json::to_string(&selection.url_ids.iter().map(|id| id.0).collect::<Vec<_>>())
 +        .expect("integer IDs");
++    let row_ids = selection
++        .row_ids
++        .as_ref()
++        .map(|ids| serde_json::to_string(ids).expect("integer IDs"));
 +    let direction = if selection.incoming {
 +        Direction::In
 +    } else {
@@ -481,7 +571,8 @@ index 0000000..9b606ea
 +        AND (?8=1 OR l.crawlable=1)
 +        AND (?9 IS NULL OR COALESCE(l.anchor,l.alt_text,'')=?9)
 +        AND (?10 IS NULL OR instr(lower(s.address || ' ' || COALESCE(t.address,l.target_raw) || ' ' || COALESCE(l.anchor,'') || ' ' || COALESCE(l.alt_text,'')),lower(?10))>0)
-+        AND (?11=0 OR {resource}) AND (?12=0 OR NOT ({resource}))");
++        AND (?11=0 OR {resource}) AND (?12=0 OR NOT ({resource}))
++        AND (?13 IS NULL OR l.id IN (SELECT value FROM json_each(?13)))");
 +    let params = params![
 +        ids,
 +        page.position,
@@ -494,7 +585,8 @@ index 0000000..9b606ea
 +        selection.anchor,
 +        selection.search,
 +        selection.resources,
-+        selection.exclude_resources
++        selection.exclude_resources,
++        row_ids
 +    ];
 +    let total = conn.query_row(&format!("SELECT COUNT(*) {base}"), params, |r| r.get(0))?;
 +    let mut stmt = conn.prepare(&format!(
@@ -506,11 +598,27 @@ index 0000000..9b606ea
 +        .query_map(params, |r| r.get(0))?
 +        .collect::<Result<Vec<i64>, _>>()?;
 +    let views = link_views_by_ids(conn, &keys)?;
-+    let mut extras = conn.prepare("SELECT t.size_bytes,l.rel,l.path_type,l.link_origin FROM links l LEFT JOIN urls t ON t.id=l.target_id WHERE l.id=?1")?;
++    // Batch the extra columns once for the page instead of executing one query per link.
++    let key_json = serde_json::to_string(&keys).expect("integer IDs");
++    let mut extras = conn.prepare("SELECT l.id,t.size_bytes,l.rel,l.path_type,l.link_origin FROM links l LEFT JOIN urls t ON t.id=l.target_id WHERE l.id IN (SELECT value FROM json_each(?1))")?;
++    let mut extras = extras
++        .query_map([key_json], |r| {
++            Ok((
++                r.get::<_, i64>(0)?,
++                (
++                    r.get::<_, Option<i64>>(1)?,
++                    r.get::<_, Option<String>>(2)?,
++                    r.get::<_, Option<String>>(3)?,
++                    r.get::<_, String>(4)?,
++                ),
++            ))
++        })?
++        .collect::<Result<std::collections::HashMap<_, _>, _>>()?;
 +    let mut rows = Vec::with_capacity(keys.len());
 +    for (id, link) in keys.iter().zip(views) {
-+        let (size, rel, path, origin): (Option<i64>, Option<String>, Option<String>, String) =
-+            extras.query_row([id], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)))?;
++        let (size, rel, path, origin) = extras
++            .remove(id)
++            .ok_or_else(|| StoreError::InvalidInput("Missing selected link".into()))?;
 +        let crawlability = if selection.include_uncrawlable {
 +            Value::from(if link.crawlable {
 +                "Crawlable"

@@ -6,6 +6,8 @@ use os_model::Value;
 #[derive(Debug, Clone, Default)]
 pub struct LinkSelection {
     pub url_ids: Vec<UrlId>,
+    /// Optional explicit link row IDs, intersected with every view predicate before paging.
+    pub row_ids: Option<Vec<i64>>,
     pub incoming: bool,
     pub resources: bool,
     pub exclude_resources: bool,
@@ -34,6 +36,10 @@ pub fn selected_links(
 ) -> Result<LinkTablePage, StoreError> {
     let ids = serde_json::to_string(&selection.url_ids.iter().map(|id| id.0).collect::<Vec<_>>())
         .expect("integer IDs");
+    let row_ids = selection
+        .row_ids
+        .as_ref()
+        .map(|ids| serde_json::to_string(ids).expect("integer IDs"));
     let direction = if selection.incoming {
         Direction::In
     } else {
@@ -57,7 +63,8 @@ pub fn selected_links(
         AND (?8=1 OR l.crawlable=1)
         AND (?9 IS NULL OR COALESCE(l.anchor,l.alt_text,'')=?9)
         AND (?10 IS NULL OR instr(lower(s.address || ' ' || COALESCE(t.address,l.target_raw) || ' ' || COALESCE(l.anchor,'') || ' ' || COALESCE(l.alt_text,'')),lower(?10))>0)
-        AND (?11=0 OR {resource}) AND (?12=0 OR NOT ({resource}))");
+        AND (?11=0 OR {resource}) AND (?12=0 OR NOT ({resource}))
+        AND (?13 IS NULL OR l.id IN (SELECT value FROM json_each(?13)))");
     let params = params![
         ids,
         page.position,
@@ -70,7 +77,8 @@ pub fn selected_links(
         selection.anchor,
         selection.search,
         selection.resources,
-        selection.exclude_resources
+        selection.exclude_resources,
+        row_ids
     ];
     let total = conn.query_row(&format!("SELECT COUNT(*) {base}"), params, |r| r.get(0))?;
     let mut stmt = conn.prepare(&format!(
@@ -82,11 +90,27 @@ pub fn selected_links(
         .query_map(params, |r| r.get(0))?
         .collect::<Result<Vec<i64>, _>>()?;
     let views = link_views_by_ids(conn, &keys)?;
-    let mut extras = conn.prepare("SELECT t.size_bytes,l.rel,l.path_type,l.link_origin FROM links l LEFT JOIN urls t ON t.id=l.target_id WHERE l.id=?1")?;
+    // Batch the extra columns once for the page instead of executing one query per link.
+    let key_json = serde_json::to_string(&keys).expect("integer IDs");
+    let mut extras = conn.prepare("SELECT l.id,t.size_bytes,l.rel,l.path_type,l.link_origin FROM links l LEFT JOIN urls t ON t.id=l.target_id WHERE l.id IN (SELECT value FROM json_each(?1))")?;
+    let mut extras = extras
+        .query_map([key_json], |r| {
+            Ok((
+                r.get::<_, i64>(0)?,
+                (
+                    r.get::<_, Option<i64>>(1)?,
+                    r.get::<_, Option<String>>(2)?,
+                    r.get::<_, Option<String>>(3)?,
+                    r.get::<_, String>(4)?,
+                ),
+            ))
+        })?
+        .collect::<Result<std::collections::HashMap<_, _>, _>>()?;
     let mut rows = Vec::with_capacity(keys.len());
     for (id, link) in keys.iter().zip(views) {
-        let (size, rel, path, origin): (Option<i64>, Option<String>, Option<String>, String) =
-            extras.query_row([id], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)))?;
+        let (size, rel, path, origin) = extras
+            .remove(id)
+            .ok_or_else(|| StoreError::InvalidInput("Missing selected link".into()))?;
         let crawlability = if selection.include_uncrawlable {
             Value::from(if link.crawlable {
                 "Crawlable"

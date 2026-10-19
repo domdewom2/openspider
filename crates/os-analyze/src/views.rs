@@ -329,3 +329,15 @@ pub fn query_url_ids_in(
     page.next_cursor = None;
     Ok(page)
 }
+
+/// Expanded column schema from the plan; only multi-column cardinalities need SQL.
+/// Does not query a result page, total, version or filter readiness.
+pub fn column_names_in(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    query: &ViewQuery,
+) -> Result<Vec<String>, ViewError> {
+    let built = build::build(tabs, query, cfg)?;
+    exec::planned_columns(file, &built)
+}

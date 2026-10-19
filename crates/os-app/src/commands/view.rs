@@ -394,6 +394,62 @@ pub(crate) async fn page(
     limit: u32,
     expected: Option<u64>,
 ) -> Result<DataPage, CmdError> {
+    page_query(
+        app,
+        s,
+        spec,
+        columns,
+        offset,
+        limit,
+        PageSelection {
+            expected,
+            ids: None,
+        },
+    )
+    .await
+}
+/// Explicit URL/link IDs are restricted in SQL before counting and paging.
+pub(crate) async fn selected_page(
+    app: &App,
+    v: &OpenView,
+    columns: Vec<String>,
+    ids: Vec<i64>,
+    offset: u64,
+    limit: u32,
+) -> Result<DataPage, CmdError> {
+    page_query(
+        app,
+        &v.session,
+        v.spec.clone(),
+        columns,
+        offset,
+        limit,
+        PageSelection {
+            expected: Some(v.version),
+            ids: Some(ids),
+        },
+    )
+    .await
+}
+struct PageSelection {
+    expected: Option<u64>,
+    ids: Option<Vec<i64>>,
+}
+async fn page_query(
+    app: &App,
+    s: &SessionInfo,
+    spec: ViewSpec,
+    columns: Vec<String>,
+    offset: u64,
+    limit: u32,
+    selection: PageSelection,
+) -> Result<DataPage, CmdError> {
+    let PageSelection {
+        expected,
+        ids: selected_ids,
+    } = selection;
+    #[cfg(test)]
+    app.ext::<PageReads>().0.fetch_add(1, Ordering::Relaxed);
     if !(1..=500).contains(&limit) {
         return Err(CmdError::invalid_input("err-invalid-limit", "limit"));
     }
@@ -405,13 +461,31 @@ pub(crate) async fn page(
                 if expected.is_some_and(|v| v != version) {
                     return Err(stale());
                 }
-                if let ViewSpec::Tab { tab, filter, .. } = &spec {
+                if let ViewSpec::Tab {
+                    tab,
+                    filter,
+                    search,
+                    ..
+                } = &spec
+                {
                     let mut q = tab_query(&spec, &columns, offset, limit)?;
                     if columns.is_empty() {
                         q.columns = views::ColumnSelection::Default;
                     }
                     let registry = os_analyze::tabs::configured_for_file(&cfg, file);
-                    let p = views::query_view_in(&registry, file, &cfg, &q).map_err(view_error)?;
+                    let p = if let Some(ids) = &selected_ids {
+                        views::query_url_ids_in(
+                            &registry,
+                            file,
+                            &cfg,
+                            &q,
+                            &ids.iter().copied().map(UrlId).collect::<Vec<_>>(),
+                            false,
+                        )
+                    } else {
+                        views::query_view_in(&registry, file, &cfg, &q)
+                    }
+                    .map_err(view_error)?;
                     let t = os_analyze::names::find_tab(&registry, tab).expect("resolved");
                     let meta = catalog::expanded_columns(t, &p.columns, &cfg);
                     let state = views::state_of_in(&registry, file, &cfg, tab, filter)
@@ -431,7 +505,14 @@ pub(crate) async fn page(
                             EmptyCode::NoDataYet,
                             Some("needsRecrawl".into()),
                         )),
-                        _ if p.total == 0 => Some(catalog::empty(EmptyCode::NoMatch, None)),
+                        _ if p.total == 0 => Some(catalog::empty(
+                            if search.is_some() {
+                                EmptyCode::NoMatch
+                            } else {
+                                EmptyCode::NoDataYet
+                            },
+                            None,
+                        )),
                         _ => None,
                     };
                     let cells = p
@@ -483,12 +564,7 @@ pub(crate) async fn page(
                             offset,
                             limit: u64::from(limit),
                         };
-                        let (_, source) = os_analyze::details::detail_source(kind);
-                        let source = match kind {
-                            DetailKind::Headers => os_analyze::details::stored_header_details,
-                            DetailKind::Anchors => os_analyze::details::selected_anchor_details,
-                            _ => source,
-                        };
+                        let (_, source) = os_analyze::details::app_detail_source(kind);
                         let p = source(file, &cfg, &req).map_err(view_error)?;
                         let (names, kinds): (Vec<_>, Vec<_>) = p.columns.into_iter().unzip();
                         let keys = (0..p.rows.len())
@@ -501,7 +577,8 @@ pub(crate) async fn page(
                             .collect();
                         (names, kinds, p.rows, keys, p.total, None)
                     } else {
-                        let (selection, req) = link_selection(&spec, &cfg, offset, limit)?;
+                        let (mut selection, req) = link_selection(&spec, &cfg, offset, limit)?;
+                        selection.row_ids = selected_ids;
                         let p = os_store::queries::app_support::selected_links(
                             file.conn(),
                             &selection,
@@ -754,12 +831,15 @@ fn copy<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
 fn close<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
         let args: ViewCloseArgs = parse_args(args)?;
-        get(app, &ctx, &args.view_id)?;
-        registry(app)
-            .entries
-            .lock()
-            .unwrap_or_else(|p| p.into_inner())
-            .remove(&args.view_id);
+        let views = registry(app);
+        let mut entries = views.entries.lock().unwrap_or_else(|p| p.into_inner());
+        if !entries
+            .get(&args.view_id)
+            .is_some_and(|v| v.owner == ctx.window)
+        {
+            return Err(CmdError::new(ErrorCode::NotFound, "err-view-not-found"));
+        }
+        entries.remove(&args.view_id);
         to_json(&())
     })
 }
@@ -786,5 +866,23 @@ pub fn register(r: &mut Registry) {
             },
             h,
         );
+    }
+}
+
+#[cfg(test)]
+#[derive(Default)]
+struct PageReads(std::sync::atomic::AtomicUsize);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate as os_app;
+    include!("../../tests/cmd_copy_page_fixture.rs");
+
+    // spec: UI-012
+    // spec: UI-140
+    #[tokio::test]
+    async fn two_selected_ids_use_one_restricted_page_in_a_large_view() {
+        assert_copy_uses_one_page(|app| app.ext::<PageReads>().0.load(Ordering::Relaxed)).await;
     }
 }

@@ -21,6 +21,40 @@ use std::{
     collections::BTreeMap,
     path::{Path, PathBuf},
 };
+/// OUT-021 canonical detail paths, also used as the workbook's sheet title.
+fn detail_name(spec: &ViewSpec) -> &'static str {
+    match spec {
+        ViewSpec::Tab { .. } => "URL Details",
+        ViewSpec::Inlinks { .. } => "Inlinks",
+        ViewSpec::Outlinks { .. } => "Outlinks",
+        ViewSpec::Images { .. } => "Image Details",
+        ViewSpec::Resources { .. } => "Resources",
+        ViewSpec::Detail { detail, .. } => match detail {
+            DetailTable::Headers => "HTTP Headers",
+            DetailTable::Cookies => "Cookies",
+            DetailTable::ConsoleLog => "Chrome Console Log",
+            DetailTable::BlockedResources => "Blocked Resources",
+            DetailTable::Network => "Network",
+            DetailTable::Spelling => "Spelling & Grammar Details",
+            DetailTable::A11yRules | DetailTable::A11yNodes => "Accessibility Details",
+            DetailTable::Duplicates => "Duplicate Details",
+            DetailTable::NGrams => "N-grams",
+            DetailTable::StructuredDataItems | DetailTable::StructuredDataIssues => {
+                "Structured Data Details"
+            }
+            DetailTable::RedirectChain => "Redirect Chain",
+            DetailTable::SitemapMembership => "Sitemap Membership",
+            DetailTable::CustomSearch => "Custom Search",
+            DetailTable::CustomExtraction => "Custom Extraction",
+            DetailTable::CustomJs => "Custom JavaScript",
+            DetailTable::ApiValues => "API Values",
+            DetailTable::Forms => "Forms",
+            DetailTable::Hreflang => "Hreflang",
+            DetailTable::CrawlPath => "Crawl Path",
+            DetailTable::Anchors => "Anchors",
+        },
+    }
+}
 fn export_error(e: ExportError) -> CmdError {
     match e {
         ExportError::Store(e) => store_error(&e),
@@ -123,13 +157,18 @@ fn writer(
     cancel: &CancelToken,
     progress: &ProgressSink,
 ) -> Result<Box<dyn TableWriter>, ExportError> {
+    detail_writer(path, fmt, cfg, cancel, progress, "Export")
+}
+fn detail_writer(
+    path: &Path,
+    fmt: Format,
+    cfg: &CrawlConfig,
+    cancel: &CancelToken,
+    progress: &ProgressSink,
+    name: &str,
+) -> Result<Box<dyn TableWriter>, ExportError> {
     Ok(Box::new(GuardedWriter {
-        inner: os_export::open_writer(
-            path,
-            fmt,
-            "Export",
-            &os_export::pipeline::writer_options(cfg),
-        )?,
+        inner: os_export::open_writer(path, fmt, name, &os_export::pipeline::writer_options(cfg))?,
         cancel: cancel.clone(),
         progress: progress.clone(),
         rows: 0,
@@ -286,22 +325,9 @@ fn suggest<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture
                         }
                         ExportTarget::Bulk { name, format: f }
                         | ExportTarget::Report { name, format: f } => (name, format(f)?),
-                        ExportTarget::Detail { spec, format: f } => (
-                            match spec {
-                                ViewSpec::Inlinks { .. } => "Detail:Inlinks".into(),
-                                ViewSpec::Outlinks { .. } => "Detail:Outlinks".into(),
-                                ViewSpec::Images { .. } => "Detail:Image Details".into(),
-                                ViewSpec::Resources { .. } => "Detail:Resources".into(),
-                                ViewSpec::Detail { detail, .. } => format!("Detail:{detail:?}"),
-                                _ => {
-                                    return Err(CmdError::invalid_input(
-                                        "err-detail-required",
-                                        "spec",
-                                    ))
-                                }
-                            },
-                            format(f)?,
-                        ),
+                        ExportTarget::Detail { spec, format: f } => {
+                            (format!("Detail:{}", detail_name(&spec)), format(f)?)
+                        }
                         ExportTarget::Sitemap { sitemap_kind } => {
                             return to_json(&format!(
                                 "sitemap_{}.xml",
@@ -473,9 +499,15 @@ fn export_detail<'a>(
                             Ok((|| {
                                 let stage = Stage::new(parent(&path))?;
                                 let staged = stage.0.join("detail");
-                                let mut out =
-                                    writer(&staged, fmt, &s.config, &worker_token, &progress)
-                                        .map_err(export_error)?;
+                                let mut out = detail_writer(
+                                    &staged,
+                                    fmt,
+                                    &s.config,
+                                    &worker_token,
+                                    &progress,
+                                    detail_name(&spec),
+                                )
+                                .map_err(export_error)?;
                                 let report = |n| progress.report(n, None);
                                 let mut context = ExportCtx {
                                     cancel: &worker_token,
@@ -542,7 +574,7 @@ fn export_detail<'a>(
                                         file,
                                         cfg: &s.config,
                                         tabs: &tabs,
-                                        entry_name: "Detail",
+                                        entry_name: detail_name(&spec),
                                     };
                                     os_export::detail_export::export_detail_with_ctx(
                                         kind,
@@ -871,12 +903,12 @@ fn panel<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'
                                             "% of Total".into(),
                                         ])
                                         .map_err(export_error)?;
-                                        for (name, count) in
+                                        for row in super::sidebar::summary_rows(
                                             os_store::queries::app_support::overview_summary(
                                                 file.conn(),
                                             )
-                                            .map_err(|e| store_error(&e))?
-                                        {
+                                            .map_err(|e| store_error(&e))?,
+                                        ) {
                                             out.row(
                                                 &[
                                                     ColumnKind::Text,
@@ -884,9 +916,9 @@ fn panel<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'
                                                     ColumnKind::Float { decimals: 1 },
                                                 ],
                                                 &[
-                                                    name.into(),
-                                                    Value::Int(count as i64),
-                                                    Value::Null,
+                                                    row.key.into(),
+                                                    Value::Int(row.count as i64),
+                                                    row.pct.into(),
                                                 ],
                                             )
                                             .map_err(export_error)?;

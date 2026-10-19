@@ -306,6 +306,8 @@ fn get_tabs<'a>(app: &'a App, ctx: CallCtx, _: serde_json::Value) -> BoxFuture<'
                 id: t.id.into(),
                 default_order: i as u16,
                 filters: t.filters.iter().map(|f| info(t.id, f, &cfg)).collect(),
+                // Every registered tab has URL-backed rows (TabDef.population over urls u),
+                // so URL Details and link detail views are available (ONPAGE-036/UI-031).
                 detail_capable: true,
             })
             .collect::<Vec<_>>();
@@ -326,13 +328,12 @@ fn columns<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture
                     let registry = tabs::configured_for_file(&cfg, file);
                     let mut q = views::ViewQuery::new(&args.tab, "All");
                     q.columns = views::ColumnSelection::All;
-                    q.limit = 1;
-                    Ok(views::query_view_in(&registry, file, &cfg, &q)
+                    Ok(views::column_names_in(&registry, file, &cfg, &q)
                         .map_err(view_error)
-                        .and_then(|page| {
+                        .and_then(|names| {
                             let t =
                                 names::find_tab(&registry, &args.tab).expect("query resolved tab");
-                            to_json(&expanded_columns(t, &page.columns, &cfg))
+                            to_json(&expanded_columns(t, &names, &cfg))
                         }))
                 })
                 .await?

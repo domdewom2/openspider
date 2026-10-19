@@ -42,16 +42,25 @@ pub(crate) async fn copy(app: &App, ctx: &CallCtx, args: CopyArgs) -> Result<Cop
             (None, except.iter().copied().collect())
         }
     };
-    let probe = view::page(
-        app,
-        &v.session,
-        v.spec.clone(),
-        args.columns.clone(),
-        0,
-        1,
-        Some(v.version),
-    )
-    .await?;
+    let targeted = ids.is_some() && view::detail_spec(&v.spec).is_none();
+    let selected = ids
+        .as_ref()
+        .map(|ids| ids.iter().copied().collect::<Vec<_>>())
+        .unwrap_or_default();
+    let probe = if targeted {
+        view::selected_page(app, &v, args.columns.clone(), selected.clone(), 0, 500).await?
+    } else {
+        view::page(
+            app,
+            &v.session,
+            v.spec.clone(),
+            args.columns.clone(),
+            0,
+            1,
+            Some(v.version),
+        )
+        .await?
+    };
     let width = probe.columns.len() as u64;
     if width == 0 {
         return Err(CmdError::invalid_input("err-copy-columns", "columns"));
@@ -71,19 +80,8 @@ pub(crate) async fn copy(app: &App, ctx: &CallCtx, args: CopyArgs) -> Result<Cop
             windows,
         ));
     }
-    let mut offset = 0;
     let mut count = 0u64;
-    loop {
-        let p = view::page(
-            app,
-            &v.session,
-            v.spec.clone(),
-            args.columns.clone(),
-            offset,
-            500,
-            Some(v.version),
-        )
-        .await?;
+    let mut append = |p: &view::DataPage| -> Result<(), CmdError> {
         for (key, row) in p.keys.iter().zip(&p.cells) {
             if ids.as_ref().is_none_or(|ids| ids.contains(key)) && !except.contains(key) {
                 count += 1;
@@ -93,9 +91,64 @@ pub(crate) async fn copy(app: &App, ctx: &CallCtx, args: CopyArgs) -> Result<Cop
                 text.push_str(&tsv_row(row, windows));
             }
         }
-        offset += p.keys.len() as u64;
-        if p.keys.is_empty() || offset >= p.total {
-            break;
+        Ok(())
+    };
+    if targeted {
+        // The first restricted page doubles as the schema probe.
+        append(&probe)?;
+        let mut offset = probe.keys.len() as u64;
+        while offset < probe.total {
+            let p =
+                view::selected_page(app, &v, args.columns.clone(), selected.clone(), offset, 500)
+                    .await?;
+            append(&p)?;
+            if p.keys.is_empty() {
+                break;
+            }
+            offset += p.keys.len() as u64;
+        }
+    } else if let Some(ids) = &ids {
+        // Detail sources expose ordinal row keys. Read only the requested contiguous ranges
+        // through DetailReq.offset/limit, preserving the original source URL selection.
+        let mut keys = ids.iter().copied().filter(|id| *id > 0).collect::<Vec<_>>();
+        keys.sort_unstable();
+        let mut start = 0;
+        while start < keys.len() {
+            let mut end = start + 1;
+            while end < keys.len() && end - start < 500 && keys[end] == keys[end - 1] + 1 {
+                end += 1;
+            }
+            let p = view::page(
+                app,
+                &v.session,
+                v.spec.clone(),
+                args.columns.clone(),
+                (keys[start] - 1) as u64,
+                (end - start) as u32,
+                Some(v.version),
+            )
+            .await?;
+            append(&p)?;
+            start = end;
+        }
+    } else {
+        let mut offset = 0;
+        loop {
+            let p = view::page(
+                app,
+                &v.session,
+                v.spec.clone(),
+                args.columns.clone(),
+                offset,
+                500,
+                Some(v.version),
+            )
+            .await?;
+            append(&p)?;
+            offset += p.keys.len() as u64;
+            if p.keys.is_empty() || offset >= p.total {
+                break;
+            }
         }
     }
     let desktop = app

@@ -96,6 +96,19 @@ pub fn detail_source(kind: DetailKind) -> (&'static str, DetailFn) {
     }
 }
 
+/// App views and paged exports share the same canonical adapters (UI-042/OUT-021).
+pub fn app_detail_source(kind: DetailKind) -> (&'static str, DetailFn) {
+    let (owner, source) = detail_source(kind);
+    (
+        owner,
+        match kind {
+            DetailKind::Headers => stored_header_details,
+            DetailKind::Anchors => selected_anchor_details,
+            _ => source,
+        },
+    )
+}
+
 fn table_rows(file: &CrawlFile, req: &DetailReq<'_>, table: &str) -> Result<DetailRows, ViewError> {
     let ids = serde_json::to_string(&req.url_ids.iter().map(|id| id.0).collect::<Vec<_>>())
         .expect("integer list");
@@ -254,7 +267,8 @@ pub fn stored_header_details(
                 let direction: String = r.get(1)?;
                 let name: String = r.get(2)?;
                 let raw: String = r.get(3)?;
-                // Same sensitive-header policy as os-fetch; os-analyze has no fetch dependency.
+                // Mirrors os_fetch::redact::SENSITIVE_HEADERS. N01: move the policy to
+                // os-model/os-store; C7 forbids an os-analyze -> os-fetch dependency.
                 let sensitive = matches!(
                     name.trim().to_ascii_lowercase().as_str(),
                     "authorization"
@@ -298,7 +312,7 @@ pub fn stored_header_details(
 /// Preserves the complete selection contract at the parameter-aware anchor extension.
 pub fn selected_anchor_details(
     file: &CrawlFile,
-    _: &CrawlConfig,
+    cfg: &CrawlConfig,
     req: &DetailReq<'_>,
 ) -> Result<DetailRows, ViewError> {
     let sort = req
@@ -316,11 +330,18 @@ pub fn selected_anchor_details(
         &sort,
         req.offset,
         req.limit,
-    )
-    .map_err(|e| match e {
-        os_store::StoreError::NotImplemented(owner) => ViewError::NotImplemented(owner),
-        other => ViewError::Store(other),
-    })?;
+    );
+    let rows = match rows {
+        Err(os_store::StoreError::NotImplemented(_))
+            if req.params.is_null() || req.params.as_object().is_some_and(|p| p.is_empty()) =>
+        {
+            return anchors(file, cfg, req);
+        }
+        result => result.map_err(|e| match e {
+            os_store::StoreError::NotImplemented(owner) => ViewError::NotImplemented(owner),
+            other => ViewError::Store(other),
+        })?,
+    };
     Ok(DetailRows {
         columns: rows
             .columns

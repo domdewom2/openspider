@@ -93,6 +93,14 @@ fn headers<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture
     Box::pin(async move {
         let args: UrlIdArgs = parse_args(args)?;
         let s = session(app, &ctx)?;
+        if let Some(gate) =
+            super::view::detail_gate(os_analyze::details::DetailKind::Headers, &s.config)
+        {
+            return Err(
+                CmdError::new(ErrorCode::Unsupported, "err-detail-unavailable")
+                    .with_arg("state", serde_json::to_value(gate).unwrap_or_default()),
+            );
+        }
         app.read_pool()
             .run_snapshot(s.key, move |file, _| {
                 if os_store::queries::url_by_id(file.conn(), UrlId(args.url_id))?.is_none() {

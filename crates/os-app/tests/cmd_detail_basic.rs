@@ -43,3 +43,26 @@ async fn headers_preserve_duplicate_order_and_redirect_response_and_redact_crede
     assert_eq!(r["statusLine"], "HTTP/1.1 301");
     assert_eq!(r["response"][0]["name"], "Location");
 }
+
+// spec: UI-042
+#[tokio::test]
+async fn headers_report_disabled_storage_instead_of_empty_lists() {
+    let fx = Fx::new();
+    fx.app.sessions().update_config(
+        &os_app::pool::CrawlKey("fx-ui-basic".into()),
+        std::sync::Arc::new(os_model::CrawlConfig::default()),
+    );
+    let e = fx
+        .app
+        .dispatch(
+            os_app::CallCtx::for_window("main"),
+            "detail.headers",
+            json!({"urlId":1}),
+        )
+        .await
+        .unwrap_err();
+    assert_eq!(e.code, os_app::dto::ErrorCode::Unsupported);
+    assert_eq!(e.message_key, "err-detail-unavailable");
+    assert_eq!(e.args["state"]["code"], "FEATURE_DISABLED");
+    assert_eq!(e.args["state"]["arg"], "extraction.http_headers");
+}

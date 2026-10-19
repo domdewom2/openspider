@@ -123,10 +123,9 @@ async fn export_catalog_uses_configured_entries_and_prerequisites_and_fach_dispa
     assert!(std::fs::read_to_string(result.path)
         .unwrap()
         .contains("https://site.test/old"));
-    match fx.op("export.detail",json!({"spec":{"kind":"detail","detail":"crawlPath","urlIds":[2],"params":{},"sort":[]},"selection":{"kind":"ids","ids":[2]},"path":fx.dir.path().join("path.csv"),"format":"csv"})).await {
-        Err(e) => { assert_eq!(e.code,ErrorCode::Unsupported); assert_eq!(e.args["owner"],"M2-D17"); },
-        Ok(result) => {assert!(result.bytes>0);}
-    }
+    let e = fx.op("export.detail",json!({"spec":{"kind":"detail","detail":"crawlPath","urlIds":[2],"params":{},"sort":[]},"selection":{"kind":"ids","ids":[2]},"path":fx.dir.path().join("path.csv"),"format":"csv"})).await.unwrap_err();
+    assert_eq!(e.code, ErrorCode::Unsupported);
+    assert_eq!(e.args["owner"], "M2-D17");
 }
 // spec: OUT-020
 // spec: OUT-021 [P1]
@@ -280,4 +279,115 @@ async fn list_export_preserves_upload_duplicates_original_input_and_invalid_rows
     assert!(!std::fs::read_to_string(&path)
         .unwrap()
         .contains("Original Url"));
+}
+
+// spec: OUT-021 [P1]
+#[tokio::test]
+async fn detail_names_are_canonical_and_url_details_use_the_tab_descriptor() {
+    let fx = Fx::new();
+    for (spec, expected) in [
+        (
+            json!({"kind":"detail","detail":"headers","urlIds":[1],"params":{},"sort":[]}),
+            "http_headers",
+        ),
+        (
+            json!({"kind":"detail","detail":"structuredDataItems","urlIds":[1],"params":{},"sort":[]}),
+            "structured_data_details",
+        ),
+        (
+            json!({"kind":"detail","detail":"structuredDataIssues","urlIds":[1],"params":{},"sort":[]}),
+            "structured_data_details",
+        ),
+        (tab(), "url_details"),
+    ] {
+        let name = fx
+            .call(
+                "export.suggestName",
+                json!({"target":{"kind":"detail","spec":spec,"format":"csv"}}),
+            )
+            .await;
+        assert_eq!(name, format!("detail_{expected}_2026-10-13.csv"));
+    }
+}
+
+// spec: OUT-021 [P1]
+#[tokio::test]
+async fn header_workbook_uses_the_same_canonical_detail_title() {
+    use std::io::Read;
+    let fx = Fx::new();
+    let result = fx.op("export.detail", json!({"spec":{"kind":"detail","detail":"headers","urlIds":[1],"params":{},"sort":[]},"selection":{"kind":"ids","ids":[1]},"path":fx.dir.path().join("headers.xlsx"),"format":"xlsx"})).await.unwrap();
+    let mut archive = zip::ZipArchive::new(std::fs::File::open(result.path).unwrap()).unwrap();
+    let mut workbook = String::new();
+    archive
+        .by_name("xl/workbook.xml")
+        .unwrap()
+        .read_to_string(&mut workbook)
+        .unwrap();
+    assert!(workbook.contains("name=\"HTTP Headers\""));
+}
+
+// spec: UI-061
+#[tokio::test]
+async fn overview_export_matches_every_summary_percentage() {
+    let fx = Fx::new();
+    let overview = fx.call("sidebar.overview", json!({})).await;
+    let result = fx
+        .op(
+            "export.sidebar",
+            json!({"which":"overview","path":fx.dir.path().join("overview.csv"),"format":"csv"}),
+        )
+        .await
+        .unwrap();
+    let text = std::fs::read_to_string(result.path).unwrap();
+    for (record, summary) in text
+        .lines()
+        .skip(1)
+        .zip(overview["summary"].as_array().unwrap())
+    {
+        let record = record.split(',').collect::<Vec<_>>();
+        assert_eq!(record[0], summary["key"].as_str().unwrap());
+        assert_eq!(
+            record[1].parse::<u64>().unwrap(),
+            summary["count"].as_u64().unwrap()
+        );
+        assert_eq!(
+            record[2].parse::<f64>().unwrap(),
+            summary["pct"].as_f64().unwrap()
+        );
+    }
+}
+
+// Fixture-only SQL fault injection through the read pool.
+// spec: OUT-010
+#[tokio::test]
+#[allow(clippy::disallowed_methods)]
+async fn failed_rollback_discards_the_connection_even_when_the_callback_also_failed() {
+    let fx = Fx::new();
+    let key = os_app::pool::CrawlKey("fx-ui-basic".into());
+    fx.app
+        .read_pool()
+        .run_snapshot::<()>(key.clone(), |file, _| {
+            // End the transaction early so the pool's ROLLBACK deterministically fails.
+            file.conn()
+                .execute_batch("CREATE TEMP TABLE poisoned_snapshot(x); COMMIT")?;
+            Err(os_store::StoreError::InvalidInput("callback failed".into()))
+        })
+        .await
+        .unwrap_err();
+    let leftover = fx
+        .app
+        .read_pool()
+        .run_snapshot(key, |file, _| {
+            Ok(file.conn().query_row(
+                "SELECT count(*) FROM sqlite_temp_master WHERE name='poisoned_snapshot'",
+                [],
+                |r| r.get::<_, i64>(0),
+            )?)
+        })
+        .await
+        .unwrap();
+    assert_eq!(
+        leftover, 0,
+        "a rollback failure must discard the connection"
+    );
 }

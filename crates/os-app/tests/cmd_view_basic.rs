@@ -186,7 +186,7 @@ async fn fach_details_route_to_their_registered_owner_instead_of_fabricating_row
             "M2-D08",
         ),
     ] {
-        match fx
+        let e = fx
             .app
             .dispatch(
                 CallCtx::for_window("main"),
@@ -194,16 +194,9 @@ async fn fach_details_route_to_their_registered_owner_instead_of_fabricating_row
                 json!({"spec":spec,"columns":[]}),
             )
             .await
-        {
-            Err(e) => {
-                assert_eq!(e.code, ErrorCode::Unsupported);
-                assert_eq!(e.args["owner"], owner);
-            }
-            Ok(handle) => {
-                assert_eq!(handle["state"], "ready");
-                assert!(handle["total"].is_number());
-            }
-        }
+            .unwrap_err();
+        assert_eq!(e.code, ErrorCode::Unsupported);
+        assert_eq!(e.args["owner"], owner);
     }
 }
 
@@ -213,6 +206,7 @@ async fn fach_details_route_to_their_registered_owner_instead_of_fabricating_row
 async fn update_refreshes_config_while_old_rows_remain_stale() {
     let fx = Fx::new();
     let h = fx.open(tab(), json!(["Address", "Title 1"])).await;
+    let old = fx.open(tab(), json!(["Address"])).await;
     let mut cfg = os_model::CrawlConfig::default();
     cfg.extraction.http_headers = true;
     cfg.extraction.page_titles = false;
@@ -230,6 +224,17 @@ async fn update_refreshes_config_while_old_rows_remain_stale() {
         .await
         .unwrap_err();
     assert_eq!(e.code, ErrorCode::Stale);
+    fx.call("view.close", json!({"viewId":old["viewId"]})).await;
+    let gone = fx
+        .app
+        .dispatch(
+            CallCtx::for_window("main"),
+            "view.close",
+            json!({"viewId":old["viewId"]}),
+        )
+        .await
+        .unwrap_err();
+    assert_eq!(gone.code, ErrorCode::NotFound);
     let refreshed = fx
         .call("view.update", json!({"viewId":h["viewId"],"spec":tab()}))
         .await;
@@ -240,4 +245,19 @@ async fn update_refreshes_config_while_old_rows_remain_stale() {
     );
     let rows = fx.rows(&refreshed, 0, 1, json!([])).await;
     assert!(rows["cells"][0][1].is_null());
+}
+
+// spec: UI-140
+#[tokio::test]
+async fn empty_tab_only_offers_clear_search_when_a_search_is_active() {
+    let fx = Fx::new();
+    let mut spec = tab();
+    spec["search"] = json!({"kind":"simple","text":"absent"});
+    let h = fx.open(spec, json!(["Address"])).await;
+    assert_eq!(h["emptyState"]["code"], "NO_MATCH");
+    assert_eq!(h["emptyState"]["action"]["kind"], "clearSearch");
+    fx.write("UPDATE urls SET in_tables=0");
+    let h = fx.open(tab(), json!(["Address"])).await;
+    assert_eq!(h["emptyState"]["code"], "NO_DATA_YET");
+    assert!(h["emptyState"]["action"].is_null());
 }

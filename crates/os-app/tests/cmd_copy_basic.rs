@@ -30,3 +30,42 @@ async fn copy_rejects_more_than_one_million_cells_without_touching_clipboard() {
     assert_eq!(e.message_key, "err-copy-too-large");
     assert_eq!(*fx.clipboard.0.lock().unwrap(), "unchanged");
 }
+
+// spec: UI-012
+// spec: UI-032
+#[tokio::test]
+async fn copying_link_ids_intersects_the_view_and_keeps_sort_order() {
+    let fx = Fx::new();
+    let mut spec = links(true);
+    spec["filter"] = json!({"id":"Hyperlinks"});
+    spec["sort"] = json!([{"column":"Anchor Text","dir":"desc"}]);
+    let h = fx.open(spec, json!(["Anchor Text"])).await;
+    let result = fx.call("view.copy", json!({"viewId":h["viewId"],"selection":{"kind":"ids","ids":[1,3,3,5,9]},"columns":["Anchor Text"],"withHeader":false})).await;
+    assert_eq!(result["rows"], 2);
+    let eol = if cfg!(windows) { "\r\n" } else { "\n" };
+    assert_eq!(
+        *fx.clipboard.0.lock().unwrap(),
+        format!("Beta{eol} Alpha {eol}")
+    );
+}
+
+// spec: UI-012
+// spec: UI-042
+#[tokio::test]
+async fn copying_detail_ids_preserves_ordinal_keys_across_unloaded_pages() {
+    let fx = Fx::new();
+    fx.write("WITH RECURSIVE n(x) AS (SELECT 3 UNION ALL SELECT x+1 FROM n WHERE x<610) INSERT INTO http_headers SELECT 1,'response',x,'X-Page',CAST(x AS TEXT) FROM n");
+    let h = fx
+        .open(
+            json!({"kind":"detail","detail":"headers","urlIds":[1],"params":{},"sort":[]}),
+            json!(["Header Name", "Header Value"]),
+        )
+        .await;
+    let result = fx.call("view.copy", json!({"viewId":h["viewId"],"selection":{"kind":"ids","ids":[612,2,612]},"columns":["Header Name","Header Value"],"withHeader":false})).await;
+    assert_eq!(result["rows"], 2);
+    let eol = if cfg!(windows) { "\r\n" } else { "\n" };
+    assert_eq!(
+        *fx.clipboard.0.lock().unwrap(),
+        format!("Set-Cookie\t<redacted>{eol}X-Page\t610{eol}")
+    );
+}

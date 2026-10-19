@@ -55,12 +55,7 @@ pub fn export_detail_with_ctx(
     writer: &mut dyn crate::TableWriter,
     ctx: &mut crate::types::ExportCtx<'_>,
 ) -> Result<u64, ExportError> {
-    let (_, source) = detail_source(kind);
-    let source = match kind {
-        DetailKind::Headers => os_analyze::details::stored_header_details,
-        DetailKind::Anchors => os_analyze::details::selected_anchor_details,
-        _ => source,
-    };
+    let (_, source) = os_analyze::details::app_detail_source(kind);
     let mut offset = 0;
     let mut header = None;
     loop {

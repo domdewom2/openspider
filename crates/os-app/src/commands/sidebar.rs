@@ -9,6 +9,19 @@ use crate::{
     },
 };
 use futures_util::future::BoxFuture;
+/// UI-061 summary shares one denominator and rounding rule with its export.
+pub(crate) fn summary_rows(summary: Vec<(String, u64)>) -> Vec<SummaryRow> {
+    let encountered = summary.first().map_or(0, |r| r.1);
+    summary
+        .into_iter()
+        .map(|(key, count)| SummaryRow {
+            key,
+            count,
+            pct: (encountered > 0)
+                .then(|| (count as f64 * 1000.0 / encountered as f64).round() / 10.0),
+        })
+        .collect()
+}
 fn overview<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
         let args: ScopeArgs = parse_args(args)?;
@@ -17,16 +30,7 @@ fn overview<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFutur
         app.read_pool()
             .run_snapshot(s.key, move |file, _| {
                 let summary = os_store::queries::app_support::overview_summary(file.conn())?;
-                let encountered = summary.first().map_or(0, |r| r.1);
-                let summary = summary
-                    .into_iter()
-                    .map(|(key, count)| SummaryRow {
-                        key,
-                        count,
-                        pct: (encountered > 0)
-                            .then(|| (count as f64 * 1000.0 / encountered as f64).round() / 10.0),
-                    })
-                    .collect();
+                let summary = summary_rows(summary);
                 let registry = os_analyze::tabs::configured_for_file(&s.config, file);
                 Ok(
                     os_analyze::views::filter_counts_in(&registry, file, &s.config)
