@@ -271,3 +271,20 @@ it("opening the already active running file relies on core identity and never as
   expect(calls("crawl.open")).toHaveLength(1);
   expect(useSession.getState().crawl?.phase).toBe("running");
 });
+
+// spec: CRAWL-127
+it("names the file and distinguishes newer schemas and foreign formats without offering repair or deleting history", async () => {
+  writeRecent(["/fixture/Alpha.ospider"]);
+  fixture.core.handlers.set("crawl.open", () => { throw new IpcError(localError("Store", "err-crawl-newer-version", { generator: "OpenSpider 99.0", found: 99 })); });
+  await mount(); click("Open crawl…");
+  await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Please update OpenSpider"));
+  expect(screen.getByRole("alert")).toHaveTextContent("/fixture/Alpha.ospider");
+  expect(screen.getByRole("alert")).toHaveTextContent("OpenSpider 99.0");
+  expect(screen.queryByRole("button", { name: "Attempt repair" })).toBeNull();
+  expect(readRecent()).toEqual(["/fixture/Alpha.ospider"]);
+  fixture.core.handlers.set("crawl.open", () => { throw new IpcError(localError("Store", "err-not-a-crawl-file")); });
+  click("Open crawl…");
+  await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Not an OpenSpider crawl file"));
+  expect(screen.getByRole("dialog", { name: "Manage crawls…" })).toBeVisible();
+  expect(readRecent()).toEqual(["/fixture/Alpha.ospider"]);
+});

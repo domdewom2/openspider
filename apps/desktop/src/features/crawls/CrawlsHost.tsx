@@ -72,7 +72,19 @@ export function CrawlsHost({ desktop = nativeCrawlDesktop }: { desktop?: CrawlDe
     document.addEventListener("focusout", keepFocus);
     return () => { cancelAnimationFrame(frame); document.removeEventListener("focusout", keepFocus); };
   }, [open, disabled]);
-  const textError = useCallback((e: unknown) => describeError(t, toCmdError(e), key => i18n.has(currentLanguage(), key)).text, [t]);
+  const textError = useCallback((e: unknown) => {
+    const error = toCmdError(e);
+    const fileMessages: Record<string, string> = {
+      "err-crawl-corrupt": "crawls-error-corrupt",
+      "err-not-a-crawl-file": "crawls-error-foreign",
+      "err-crawl-newer-version": "crawls-error-newer",
+      "err-crawl-migration-required": "crawls-error-migration",
+      "err-file-not-found": "crawls-error-missing",
+      "err-file-exists": "crawls-error-exists",
+    };
+    const message = fileMessages[error.messageKey];
+    return message ? t(message, error.args) : describeError(t, error, key => i18n.has(currentLanguage(), key)).text;
+  }, [t]);
   const refresh = useCallback(async () => {
     const version = ++requestVersion.current;
     setLoading(true);
@@ -130,7 +142,7 @@ export function CrawlsHost({ desktop = nativeCrawlDesktop }: { desktop?: CrawlDe
         try { await desktop.check(path); } catch (checkError) { missing = toCmdError(checkError).code === "NotFound"; }
       }
       if (missing && path) setRecent(writeRecent(readRecent().filter(p => p !== path)));
-      setError({ text: `${path ?? ""}: ${textError(e)}`, path: err.messageKey === "err-crawl-corrupt" ? path : undefined });
+      setError({ text: `${path ?? ""}: ${missing ? t("crawls-error-missing") : textError(e)}`, path: err.messageKey === "err-crawl-corrupt" ? path : undefined });
     }
   };
   // The core recognizes an already-open file before checking whether replacement needs a pause.
