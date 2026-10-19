@@ -1,0 +1,52 @@
+{
+  "comment": "M2-U26 Vertragsfixture: synthetische Antworten von api.list/api.status/api.getSettings und Property-Listen (INTEG-090: 2 Konten, 3 Properties, 2 Streams; INTEG-110: 4 Properties inkl. unbestätigt).",
+  "sources": [
+    { "kind": "ga4", "labelKey": "api-ga4", "auth": "oauth", "connected": false, "autoConnect": false, "state": "disconnected", "accounts": [] },
+    { "kind": "gsc", "labelKey": "api-gsc", "auth": "oauth", "connected": false, "autoConnect": false, "state": "disconnected", "accounts": [] },
+    { "kind": "psi", "labelKey": "api-psi", "auth": "apiKey", "connected": false, "autoConnect": false, "state": "disconnected", "accounts": [] },
+    { "kind": "majestic", "labelKey": "api-majestic", "auth": "apiKey", "connected": false, "autoConnect": false, "state": "disconnected", "accounts": [] },
+    { "kind": "ahrefs", "labelKey": "api-ahrefs", "auth": "apiKey", "connected": false, "autoConnect": false, "state": "disconnected", "accounts": [] },
+    { "kind": "moz", "labelKey": "api-moz", "auth": "apiKey", "connected": false, "autoConnect": false, "state": "disconnected", "accounts": [] }
+  ],
+  "accounts": {
+    "google": { "kind": "ga4", "account": "analyst@integ.test", "accountId": "google-1", "scopes": ["https://www.googleapis.com/auth/analytics.readonly"] },
+    "moz": { "kind": "moz", "account": "moz", "accountId": "default", "scopes": [], "keySuffix": "abcd" }
+  },
+  "settings": {
+    "ga4": { "enabled": false, "property": null, "date_range": { "preset": "last_30_days" }, "metrics": ["sessions"], "limits": { "retries": 5, "concurrency": 5, "window_s": 60 } },
+    "gsc": { "enabled": false, "site": null, "search_type": "web", "url_inspection": false, "limits": { "retries": 5, "concurrency": 5, "window_s": 60 } },
+    "psi": { "enabled": false, "device": "mobile", "local": false, "metric_groups": [], "limits": { "retries": 5, "concurrency": 5, "window_s": 60 } },
+    "majestic": { "enabled": false, "levels": ["url"], "metrics": ["TrustFlow"], "limits": { "retries": 5, "concurrency": 5, "window_s": 60 } },
+    "ahrefs": { "enabled": false, "levels": [], "metrics": [], "limits": { "retries": 5, "concurrency": 5, "window_s": 60 } },
+    "moz": { "enabled": false, "levels": ["url"], "metrics": ["page_authority"], "limits": { "retries": 5, "concurrency": 5, "window_s": 60 } }
+  },
+  "ga4Accounts": [
+    {
+      "id": "accounts/100",
+      "name": "Integ Shop",
+      "properties": [
+        { "id": "properties/1001", "name": "Shop Web", "streams": [
+          { "id": "streams/1", "name": "Shop", "hostname": "integ.test" },
+          { "id": "streams/2", "name": "Blog", "hostname": "blog.integ.test" }
+        ] },
+        { "id": "properties/1002", "name": "Shop App", "streams": [] }
+      ]
+    },
+    { "id": "accounts/200", "name": "Agency", "properties": [
+      { "id": "properties/2001", "name": "Agency Site", "streams": [] }
+    ] },
+    { "id": "accounts/300", "name": "Empty", "properties": [] }
+  ],
+  "gscSites": [
+    { "siteUrl": "https://integ.test/", "permissionLevel": "siteFullUser" },
+    { "siteUrl": "sc-domain:integ.test", "permissionLevel": "siteOwner" },
+    { "siteUrl": "https://staging.integ.test/", "permissionLevel": "siteUnverifiedUser" },
+    { "siteUrl": "sc-domain:other.test", "permissionLevel": "siteRestrictedUser" }
+  ],
+  "status": [
+    { "kind": "ga4", "labelKey": "api-ga4", "connected": true, "requested": 1, "received": 1, "errors": 0, "running": false, "completed": 1 },
+    { "kind": "gsc", "labelKey": "api-gsc", "connected": true, "requested": 400, "received": 400, "errors": 0, "running": false, "completed": 400 },
+    { "kind": "psi", "labelKey": "api-psi", "connected": true, "requested": 400, "received": 117, "errors": 3, "running": true, "completed": 120 }
+  ],
+  "apiList": "https://integ.test:8080/a/\nhttps://integ.test:8080/b/\n\nhttps://integ.test:8080/a/\nhttps://integ.test:8080/c\nhttps://integ.test:8080/d?x=1\n"
+}

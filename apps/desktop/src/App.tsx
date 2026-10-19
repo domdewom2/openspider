@@ -4,6 +4,7 @@ import { Header } from "./features/header/Header";
 import { Statusbar } from "./features/statusbar/Statusbar";
 import { Notifications } from "./features/notifications/Notifications";
 import { SidebarMount } from "./features/sidebar/frame/SidebarMount";
+import { IntegrationsHeaderSlot, IntegrationsHost } from "./features/integrations";
 import { useEffect, useState, type ComponentType } from "react";
 import { RegionBoundary } from "./app/ErrorBoundary";
 import { Providers } from "./app/Providers";
@@ -46,11 +47,13 @@ export function App() {
   return (
     <Providers>
       <ExportHost />
+      <IntegrationsHost />
       <div className="os-app">
         <Shell />
         <header className="os-app-header" role="banner" aria-label={t("app-region-header")}>
           <h1 className="os-app-title">{t("app-title")}</h1>
           <Header />
+          <IntegrationsHeaderSlot />
         </header>
         <nav className="os-app-tabs" aria-label={t("app-region-tabs")}>{TabsRegion && <TabsRegion />}</nav>
         <main className="os-app-main" data-region="table" aria-label={t("app-region-table")}>
