@@ -3,6 +3,218 @@
 # Einträge wie in core/issues/catalog.toml (`[[issue]]` mit id, tab, filter, type, priority, type_rule, priority_rule,
 # doc_key, optional override_reason/needs_crawl_analysis/text_params); `tab` ist hier immer "PageSpeed". Der Loader liest die
 # M1-Datei und alle Dateien dieses Ordners. Texte: core/issues/texts/{de,en}.d/pagespeed.toml (Schlüssel issues.<id>).
-# M2-F02 legt nur die Datei an; die Einträge liefert das Paket des Tabs.
+# Klassifizierung abgeleitet aus öffentlicher Dokumentation der Referenz (Benchmark), begründet nach UI-063.
+# Herleitung (M2-I04): durchgehend T-O2 (messbare Einsparung, nichts ist kaputt). Priorität nach Einsparpotenzial:
+# Befunde mit Wirkung auf die Ladezeit-Kennzahlen (Core Web Vitals) und damit auf die Bewertung im Suchergebnis
+# P-M1; Optimize DOM Size und Font Display wirken nur unter Sonderbedingungen bzw. als Hygiene P-L1.
 
 schema = 1
+
+[[issue]]
+id = "pagespeed-document-request-latency"
+tab = "PageSpeed"
+filter = "Document Request Latency"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "pagespeed-document-request-latency"
+
+[[issue]]
+id = "pagespeed-lcp-request-discovery"
+tab = "PageSpeed"
+filter = "LCP Request Discovery"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "pagespeed-lcp-request-discovery"
+
+[[issue]]
+id = "pagespeed-render-blocking-requests"
+tab = "PageSpeed"
+filter = "Render Blocking Requests"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "pagespeed-render-blocking-requests"
+
+[[issue]]
+id = "pagespeed-network-dependency-tree"
+tab = "PageSpeed"
+filter = "Network Dependency Tree"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "pagespeed-network-dependency-tree"
+
+[[issue]]
+id = "pagespeed-use-efficient-cache-lifetimes"
+tab = "PageSpeed"
+filter = "Use Efficient Cache Lifetimes"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "pagespeed-use-efficient-cache-lifetimes"
+
+[[issue]]
+id = "pagespeed-layout-shift-culprits"
+tab = "PageSpeed"
+filter = "Layout Shift Culprits"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "pagespeed-layout-shift-culprits"
+
+[[issue]]
+id = "pagespeed-improve-image-delivery"
+tab = "PageSpeed"
+filter = "Improve Image Delivery"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "pagespeed-improve-image-delivery"
+
+[[issue]]
+id = "pagespeed-forced-reflow"
+tab = "PageSpeed"
+filter = "Forced Reflow"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "pagespeed-forced-reflow"
+
+[[issue]]
+id = "pagespeed-legacy-javascript"
+tab = "PageSpeed"
+filter = "Legacy JavaScript"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "pagespeed-legacy-javascript"
+
+[[issue]]
+id = "pagespeed-duplicated-javascript"
+tab = "PageSpeed"
+filter = "Duplicated JavaScript"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "pagespeed-duplicated-javascript"
+
+[[issue]]
+id = "pagespeed-avoid-enormous-network-payloads"
+tab = "PageSpeed"
+filter = "Avoid Enormous Network Payloads"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "pagespeed-avoid-enormous-network-payloads"
+
+[[issue]]
+id = "pagespeed-minify-css"
+tab = "PageSpeed"
+filter = "Minify CSS"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "pagespeed-minify-css"
+
+[[issue]]
+id = "pagespeed-minify-javascript"
+tab = "PageSpeed"
+filter = "Minify JavaScript"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "pagespeed-minify-javascript"
+
+[[issue]]
+id = "pagespeed-reduce-unused-css"
+tab = "PageSpeed"
+filter = "Reduce Unused CSS"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "pagespeed-reduce-unused-css"
+
+[[issue]]
+id = "pagespeed-reduce-unused-javascript"
+tab = "PageSpeed"
+filter = "Reduce Unused JavaScript"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "pagespeed-reduce-unused-javascript"
+
+[[issue]]
+id = "pagespeed-reduce-javascript-execution-time"
+tab = "PageSpeed"
+filter = "Reduce JavaScript Execution Time"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "pagespeed-reduce-javascript-execution-time"
+
+[[issue]]
+id = "pagespeed-minimize-main-thread-work"
+tab = "PageSpeed"
+filter = "Minimize Main-Thread Work"
+type = "Opportunity"
+priority = "Medium"
+type_rule = "T-O2"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "pagespeed-minimize-main-thread-work"
+
+[[issue]]
+id = "pagespeed-optimize-dom-size"
+tab = "PageSpeed"
+filter = "Optimize DOM Size"
+type = "Opportunity"
+priority = "Low"
+type_rule = "T-O2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "pagespeed-optimize-dom-size"
+
+[[issue]]
+id = "pagespeed-font-display"
+tab = "PageSpeed"
+filter = "Font Display"
+type = "Opportunity"
+priority = "Low"
+type_rule = "T-O2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "pagespeed-font-display"

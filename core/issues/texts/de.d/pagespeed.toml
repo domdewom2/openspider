@@ -1,2 +1,97 @@
 # OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „PageSpeed“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+# Platzhalter wie in core/issues/texts/de.toml. Texte von M2-I04.
+
+[issues.pagespeed-document-request-latency]
+what = "Das HTML-Dokument selbst kommt verzögert an: Weiterleitungen, eine langsame Serverantwort oder fehlende Textkompression verlängern die Anfrage."
+why = "Jede Verzögerung beim Dokument verschiebt alle folgenden Schritte – erstes Rendern und größtes Element erscheinen später."
+fix = "Leite direkt auf die endgültige URL, beschleunige die Serverantwort (Caching, schnellere Datenbankabfragen) und liefere HTML komprimiert aus."
+
+[issues.pagespeed-lcp-request-discovery]
+what = "Die Ressource des größten sichtbaren Elements (LCP) wird spät entdeckt oder nachrangig geladen, etwa per Lazy-Loading oder ohne hohe Ladepriorität."
+why = "Der Browser kann das wichtigste Bild erst spät anfordern; der Largest Contentful Paint verschlechtert sich."
+fix = "Binde das LCP-Bild direkt im HTML ein, verzichte dort auf Lazy-Loading und setze fetchpriority=\"high\"."
+
+[issues.pagespeed-render-blocking-requests]
+what = "Stylesheets oder Skripte halten das erste Rendern der Seite auf."
+why = "Solange blockierende Ressourcen laden, sieht der Nutzer nichts; das erste Rendern verzögert sich messbar."
+fix = "Binde kritisches CSS inline ein, lade übriges CSS nachrangig und versieh Skripte mit defer oder async."
+
+[issues.pagespeed-network-dependency-tree]
+what = "Kritische Ressourcen hängen in langen Ketten voneinander ab, sodass jede erst nach der vorherigen angefordert wird."
+why = "Lange Anforderungsketten summieren Netzwerklatenzen und verzögern die Darstellung."
+fix = "Verkürze die Ketten, lade wichtige Ressourcen früh vor und baue Verbindungen zu benötigten Hosts vorab auf (preconnect)."
+
+[issues.pagespeed-use-efficient-cache-lifetimes]
+what = "Statische Ressourcen werden ohne oder mit zu kurzer Cache-Lebensdauer ausgeliefert."
+why = "Wiederkehrende Besucher laden dieselben Dateien erneut; das kostet Bytes und Zeit."
+fix = "Setze für versionierte statische Dateien lange Cache-Lebensdauern (Cache-Control max-age)."
+
+[issues.pagespeed-layout-shift-culprits]
+what = "Elemente verschieben das Layout nachträglich, zum Beispiel Bilder ohne Abmessungen, nachgeladene Inhalte oder Webfonts."
+why = "Springende Inhalte stören beim Lesen und Klicken und verschlechtern den Cumulative Layout Shift."
+fix = "Reserviere Platz für Bilder, Einbettungen und nachgeladene Bereiche und vermeide Inhalte, die sich über vorhandene schieben."
+
+[issues.pagespeed-improve-image-delivery]
+what = "Bilder sind größer als nötig: unpassendes Format, zu hohe Auflösung oder schwache Kompression."
+why = "Überflüssige Bild-Bytes verlängern die Ladezeit, besonders in Mobilfunknetzen."
+fix = "Liefere Bilder in passender Größe und modernen Formaten (WebP, AVIF) mit angemessener Kompression aus."
+
+[issues.pagespeed-forced-reflow]
+what = "JavaScript liest Layoutwerte unmittelbar nach Änderungen am DOM und zwingt den Browser zu einer sofortigen Neuberechnung."
+why = "Erzwungene Neuberechnungen blockieren den Hauptthread und machen die Seite träge."
+fix = "Bündele Lesezugriffe auf Layoutwerte vor den Schreibzugriffen und vermeide Lesen direkt nach DOM-Änderungen."
+
+[issues.pagespeed-legacy-javascript]
+what = "Moderne Browser erhalten Polyfills und umgewandelten Code, den sie nicht brauchen."
+why = "Überflüssiger Code erhöht Download und Ausführungszeit."
+fix = "Erzeuge ein separates Bundle für moderne Browser und liefere Polyfills nur bei Bedarf aus."
+
+[issues.pagespeed-duplicated-javascript]
+what = "Dieselben Module oder Bibliotheken stecken mehrfach in den ausgelieferten Skripten."
+why = "Doppelter Code wird mehrfach geladen und ausgeführt."
+fix = "Prüfe die Bundles auf doppelte Abhängigkeiten und teile gemeinsamen Code in ein einziges Modul aus."
+
+[issues.pagespeed-avoid-enormous-network-payloads]
+what = "Die Seite überträgt insgesamt sehr viele Daten."
+why = "Große Datenmengen verlängern die Ladezeit und verursachen bei Nutzern mit Volumentarif Kosten."
+fix = "Reduziere Bilder, Skripte und Schriften, entferne Ungenutztes und lade nachrangige Inhalte erst bei Bedarf."
+
+[issues.pagespeed-minify-css]
+what = "CSS-Dateien enthalten Leerraum und Kommentare, die sich ohne Funktionsverlust entfernen lassen."
+why = "Unverkleinerte Stylesheets übertragen unnötige Bytes vor dem ersten Rendern."
+fix = "Verkleinere CSS im Build-Prozess (Minifizierung) und liefere es komprimiert aus."
+
+[issues.pagespeed-minify-javascript]
+what = "JavaScript-Dateien enthalten Leerraum, Kommentare und lange Namen, die sich verkleinern lassen."
+why = "Unverkleinerte Skripte übertragen und parsen unnötige Bytes."
+fix = "Verkleinere Skripte im Build-Prozess und liefere sie komprimiert aus."
+
+[issues.pagespeed-reduce-unused-css]
+what = "Ein großer Teil der geladenen CSS-Regeln wird auf der Seite nicht verwendet."
+why = "Ungenutzte Regeln verlängern Download und Stilberechnung."
+fix = "Entferne ungenutzte Regeln oder teile Stylesheets nach Seitentyp auf und lade nur, was die Seite braucht."
+
+[issues.pagespeed-reduce-unused-javascript]
+what = "Ein großer Teil des geladenen JavaScripts wird beim Laden der Seite nicht ausgeführt."
+why = "Ungenutzter Code kostet Download-Bytes sowie Zeit für Parsen und Kompilieren."
+fix = "Teile Bundles auf (Code-Splitting), lade Funktionen erst bei Bedarf und entferne nicht benötigte Bibliotheken."
+
+[issues.pagespeed-reduce-javascript-execution-time]
+what = "Das Parsen, Kompilieren und Ausführen von JavaScript dauert lange."
+why = "Lange Skriptausführung blockiert den Hauptthread und verzögert Interaktionen."
+fix = "Reduziere und verschiebe Skriptarbeit, entferne teure Drittanbieter-Skripte und teile lange Aufgaben auf."
+
+[issues.pagespeed-minimize-main-thread-work]
+what = "Der Hauptthread ist beim Laden lange mit Stilberechnung, Layout, Rendern und Skripten beschäftigt."
+why = "Ein ausgelasteter Hauptthread reagiert verzögert auf Eingaben."
+fix = "Verringere Skriptarbeit, vereinfache Stile und Layout und verschiebe nicht dringende Aufgaben."
+
+[issues.pagespeed-optimize-dom-size]
+what = "Die Seite hat ein sehr großes DOM, und Stil- oder Layoutberechnungen darauf dauern lange."
+why = "Große DOM-Bäume verteuern jede Berechnung und erhöhen den Speicherbedarf."
+fix = "Reduziere die Zahl der Elemente, rendere lange Listen nur ausschnittsweise und vermeide tiefe Verschachtelung."
+
+[issues.pagespeed-font-display]
+what = "Webfonts halten Text während des Ladens unsichtbar."
+why = "Unsichtbarer Text verzögert, ab wann Inhalte lesbar sind."
+fix = "Setze font-display: swap oder optional, damit sofort eine Ersatzschrift angezeigt wird."
