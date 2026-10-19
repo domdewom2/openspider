@@ -1,0 +1,1 @@
+{"offset":0,"rowKeys":[1,2,3],"columns":["Row","Address","Size (bytes)","Response Time","Meta Description 1"],"cells":[[1,"https://fixture.invalid/page/0000001",12345,0.123,null],[2,"https://fixture.invalid/page/0000002",12345,0.123,null],[3,"https://fixture.invalid/page/0000003",12345,0.123,null]]}
