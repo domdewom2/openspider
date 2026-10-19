@@ -2,6 +2,7 @@
 use super::{lifecycle_bus::CrawlEvent, App};
 pub fn start(app: &App) {
     crate::session::init(app);
+    crate::commands::segment::on_startup(app);
     crate::commands::sidebar_ext::on_startup(app);
     crate::logging::init_for_app(app);
     crate::commands::api::on_startup(app);
