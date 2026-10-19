@@ -41,7 +41,7 @@ pub const STREAM: &str = "properties/2001/dataStreams/3001";
 pub const STREAM_HOST: &str = "integ.test";
 
 /// Szenario der Testsite mit acht HTML-Seiten (INTEG-097/098), Start `http://integ.test/`; `/orphan` ist nur über die
-/// Sitemap erreichbar.
+/// Sitemap der robots.txt erreichbar (Crawl mit `sitemaps.crawl_linked = true`).
 pub const SITE_SCENARIO: &str = r#"
 [[route]]
 path = "/"
@@ -748,19 +748,28 @@ fn eval_filter(expr: &Value, row: &MockRow) -> bool {
     {
         return list.iter().any(|v| v.as_str() == Some(value.as_str()));
     }
-    let Some(sf) = filter.get("stringFilter") else {
+    let Some(string_filter) = filter.get("stringFilter") else {
         return true;
     };
-    let case = sf["caseSensitive"].as_bool().unwrap_or(false);
+    let case = string_filter["caseSensitive"].as_bool().unwrap_or(false);
     let (value, wanted) = if case {
-        (value, sf["value"].as_str().unwrap_or_default().to_string())
+        (
+            value,
+            string_filter["value"]
+                .as_str()
+                .unwrap_or_default()
+                .to_string(),
+        )
     } else {
         (
             value.to_lowercase(),
-            sf["value"].as_str().unwrap_or_default().to_lowercase(),
+            string_filter["value"]
+                .as_str()
+                .unwrap_or_default()
+                .to_lowercase(),
         )
     };
-    match sf["matchType"].as_str().unwrap_or("EXACT") {
+    match string_filter["matchType"].as_str().unwrap_or("EXACT") {
         "EXACT" => value == wanted,
         "BEGINS_WITH" => value.starts_with(&wanted),
         "ENDS_WITH" => value.ends_with(&wanted),
