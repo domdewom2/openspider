@@ -62,15 +62,30 @@ async fn stale_versions_limits_no_selection_and_window_cleanup() {
     let fx = Fx::new();
     let h = fx.open(tab(), json!(["Address"])).await;
     fx.write("UPDATE crawl_meta SET value='43' WHERE key='change_seq'");
-    let e = fx
+    // M2-K05: double buffer – version 42 stays readable until the change feed has maintained the view (K-1c).
+    assert_eq!(fx.rows(&h, 0, 1, json!([])).await["version"], 42);
+    let s = fx
         .app
-        .dispatch(
-            CallCtx::for_window("main"),
-            "view.rows",
-            json!({"viewId":h["viewId"],"version":42,"offset":0,"limit":1,"columns":[]}),
-        )
-        .await
-        .unwrap_err();
+        .sessions()
+        .current(&os_app::WindowId("main".into()))
+        .unwrap();
+    os_app::session::feed::refresh(&fx.app, &s).await.unwrap();
+    let start = std::time::Instant::now();
+    let e = loop {
+        let r = fx
+            .app
+            .dispatch(
+                CallCtx::for_window("main"),
+                "view.rows",
+                json!({"viewId":h["viewId"],"version":42,"offset":0,"limit":1,"columns":[]}),
+            )
+            .await;
+        match r {
+            Err(e) => break e,
+            Ok(_) => assert!(start.elapsed() < std::time::Duration::from_secs(10)),
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(5)).await;
+    };
     assert_eq!(e.code, ErrorCode::Stale);
     let e = fx
         .app
