@@ -118,3 +118,6 @@ pub mod config_robots;
 pub mod export_multi;
 pub mod export_summary;
 pub mod settings_network;
+
+/// Crawl-file desktop extension points (M2-U15, K2-61).
+pub mod crawl_files;
