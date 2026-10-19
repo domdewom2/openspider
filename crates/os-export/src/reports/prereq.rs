@@ -104,6 +104,7 @@ pub fn availability(
         Vec::new()
     };
     let mut warnings = requirement_warnings(name, requires, cfg, &pending);
+    warnings.extend(crate::catalog::bulk_web::availability_warnings(name, file));
     for req in requires {
         let missing = match req {
             ReportRequirement::SitemapProcessed => !file

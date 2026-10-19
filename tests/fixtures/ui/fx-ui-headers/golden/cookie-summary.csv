@@ -1,0 +1,8 @@
+Cookie Name,Domain,Path,Persistence,Secure,HttpOnly,SameSite,Type,First-Party,URLs,Sample URL
+expires,www.site.test,/,1,False,False,,HTTP,True,1,https://www.site.test/01
+session,www.site.test,/,Session,True,True,Strict,HTTP,True,1,https://www.site.test/01
+shared,.site.test,/,1,True,True,Lax,HTTP,True,12,https://www.site.test/01
+sibling,cdn.site.test,/,Session,False,False,,HTTP,True,1,https://www.site.test/01
+third,tracker.test,/,Session,False,False,None,HTTP,False,1,https://www.site.test/01
+third,tracker.test,/,Session,False,False,None,JavaScript,False,1,https://www.site.test/01
+trap,not-site.test,/,Session,False,False,,HTTP,False,1,https://www.site.test/01

@@ -421,6 +421,9 @@ fn export_bulk_in_snapshot(
         ExportRef::Bulk(canonical) => canonical,
         other => unreachable!("Bulk-Auflösung lieferte {other:?}"),
     };
+    if let Some(kind) = catalog::bulk_web::page_export(&canonical) {
+        return catalog::bulk_web::export_pages(file, cfg, kind, out_dir, None);
+    }
     if !cfg.export.inlinks_for_all_filters && catalog::bulk_generic::is_generic_name(&canonical) {
         return Err(ExportError::Unsupported(format!(
             "{canonical}: enable export.inlinks_for_all_filters to export generic inlinks"
@@ -693,6 +696,28 @@ fn export_batch_in(
                         .unwrap_or_else(|| "generic inlink exports disabled".into())
                 ));
                 continue;
+            }
+            if kind == ExportKind::Bulk {
+                if let Some(page_kind) = catalog::bulk_web::page_export(&name) {
+                    let files = catalog::bulk_web::export_pages(
+                        file,
+                        cfg,
+                        page_kind,
+                        options.directory,
+                        Some(ctx),
+                    )?;
+                    let rows = files.last().map_or(0, |info| info.rows);
+                    if rows == 0 && ctx.skip_empty {
+                        result.skipped.push(name);
+                    }
+                    done.set(done.get() + rows);
+                    (ctx.progress)(done.get());
+                    for info in files {
+                        result.warnings.extend(info.warnings.clone());
+                        result.files.push(info);
+                    }
+                    continue;
+                }
             }
             let path =
                 options
