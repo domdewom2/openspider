@@ -1,0 +1,8 @@
+{
+  "name": "openspider",
+  "version": "0.1.0",
+  "description": "OpenSpider MCP connection, SEO audit skill and audit, compare and issues commands.",
+  "author": { "name": "OpenSpider contributors" },
+  "license": "Apache-2.0",
+  "keywords": ["seo", "crawl", "audit", "mcp"]
+}
