@@ -2,7 +2,8 @@
 import assert from "node:assert/strict";
 import { spawn, execFileSync } from "node:child_process";
 import { once } from "node:events";
-import { mkdtemp, mkdir, rm, writeFile, copyFile } from "node:fs/promises";
+import { mkdtemp, mkdir, rm, writeFile, copyFile, readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { tmpdir, release, arch } from "node:os";
 import { resolve, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,6 +11,7 @@ import { createServer } from "node:net";
 import { createServer as httpServer } from "node:http";
 import { setTimeout as delay } from "node:timers/promises";
 import { remote } from "webdriverio";
+import { measure, validateRate } from "./measurement.mjs";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const binary = process.argv[2] && resolve(process.argv[2]);
@@ -24,6 +26,10 @@ const children = [];
 let browser, appPid, fixture;
 let logs = "";
 const report = { mode, platform: process.platform, release: release(), arch: arch(), node: process.version,
+  startedAt: new Date(started).toISOString(),
+  revision: execFileSync("git", ["rev-parse", "HEAD"], { cwd: repo, encoding: "utf8" }).trim(),
+  runnerSha256: createHash("sha256").update(await readFile(fileURLToPath(import.meta.url))).digest("hex"),
+  probeSha256: createHash("sha256").update(await readFile(join(repo, "apps/desktop/spikes/probe.ts"))).digest("hex"),
   launch: process.env.S02_GUI === "1" ? "LaunchServices" : "child-process", checks: [], errors: [] };
 
 async function freePort() {
@@ -88,6 +94,7 @@ async function startFixture() {
   await once(fixture, "listening");
   const url = `http://127.0.0.1:${fixture.address().port}/`;
   const result = await evaluate(`window.s02.start(${JSON.stringify(url)})`);
+  report.crawlStart = result;
   await until(() => requests > 1, "Crawl must request the fixture");
   await until(async () => (await evaluate("window.s02.snapshot()")).ticks.some(t => t.phase === "running"), "Crawl must emit running ticks");
   return result;
@@ -123,7 +130,15 @@ try {
     await until(async () => (await fetch(`http://127.0.0.1:${port}/status`, { signal: AbortSignal.timeout(1000) })).ok, "embedded WebDriver");
     browser = await remote({ hostname: "127.0.0.1", port, logLevel: "error", connectionRetryCount: 0, capabilities: {} });
   }
-  await until(() => browser.execute("return window.__osRuntime?.transport === 'tauri' && !!window.__osMenu"), "native app + menu");
+  // Bound each probe so a lost startup callback cannot consume the entire readiness deadline.
+  await browser.setTimeout({ script: 5000 });
+  report.startup = { attempts: 0, transientErrors: [] };
+  await until(async () => {
+    report.startup.attempts++;
+    try { return await browser.execute("return window.__osRuntime?.transport === 'tauri' && !!window.__osMenu"); }
+    catch (e) { report.startup.transientErrors.push(String(e)); throw e; }
+  }, "native app + menu");
+  await browser.setTimeout({ script: 30_000 });
   await evaluate("import('/spikes/probe.ts').then(m => { window.s02 = m; })");
   report.beforeActivation = await evaluate("window.s02.snapshot()");
   report.afterTauriActivation = await evaluate("window.s02.activate()");
@@ -182,31 +197,36 @@ try {
     if (report.errors.length === 0) {
       for (const state of ["visible", "minimized", "restored", "covered", "uncovered"]) {
         let cover;
-        if (state === "minimized") await evaluate("window.s02.minimize()");
-        if (["restored", "uncovered"].includes(state)) {
-          native("restore"); await evaluate("window.s02.activate()");
-        }
-        if (state === "covered") cover = child(process.env.S02_MAC_HELPER, ["cover", String(appPid)]);
-        await delay(2000);
-        const before = await evaluate("window.s02.snapshot()");
-        if (state === "minimized") assert.equal(before.shell.minimized, true);
-        if (["visible", "restored", "uncovered"].includes(state)) {
-          assert.equal(before.shell.minimized, false, `${state}: window did not restore`);
-          assert.equal(before.frontend, "visible", `${state}: no visible baseline`);
-        }
-        await delay(30_000);
-        const after = await evaluate("window.s02.snapshot()");
-        if (cover) cover.kill();
-        const ticks = after.ticks.filter(t => t.at > before.at && t.at <= after.at);
-        const hz = ticks.length / ((after.at - before.at) / 1000);
-        report.checks.push({ name: state, status: "measured", before, after, hz });
-        // No crawl/no ticks is not a throttle pass. Native occlusion still needs a shell probe (S-6).
-        assert.ok(ticks.some(t => t.phase === "running"), "Crawl must remain active throughout measurement");
-        if (["minimized", "covered"].includes(state)) assert.ok(hz <= 1.04, `hidden rate ${hz} Hz > 1 Hz (+one boundary tick)`);
-        else assert.ok(hz > 1, `visible rate ${hz} Hz did not recover`);
+        await check(`frontend-rate-${state}`, async () => {
+          try {
+            await check(`window-state-${state}`, async () => {
+              if (state === "minimized") await evaluate("window.s02.minimize()");
+              if (["restored", "uncovered"].includes(state)) {
+                native("restore"); await evaluate("window.s02.restore()");
+              }
+              if (state === "covered") cover = child(process.env.S02_MAC_HELPER, ["cover", String(appPid)]);
+              return await evaluate("window.s02.snapshot()");
+            });
+            await delay(2000);
+            const before = await evaluate("window.s02.snapshot()");
+            await delay(30_000);
+            const after = await evaluate("window.s02.snapshot()");
+            const measurement = measure(state, before, after);
+            report.checks.push(measurement);
+            validateRate(measurement);
+            return { seconds: measurement.seconds, hz: measurement.hz };
+          } finally {
+            if (cover && cover.exitCode === null) {
+              cover.kill();
+              await Promise.race([once(cover, "exit"), delay(3000)]);
+            }
+          }
+        });
       }
-      throw new Error("Native occlusion-source telemetry is absent in window.rs; rate observations alone cannot pass S-6");
     }
+    await check("native-occlusion-source", async () => {
+      assert.fail("window.rs lacks NSWindowOcclusionState observation and separate telemetry for frontend/shell sources (N01 interface requirement)");
+    });
   }
   if (mode === "smoke") {
     // spec: UI-001
@@ -233,8 +253,15 @@ try {
       return value;
     });
     // spec: UI-113, OUT-232
-    await check("closing during a running fixture crawl asks before quitting", async () => {
+    await check("app.requestQuit confirms a running fixture crawl", async () => {
       await startFixture();
+      report.quitDecision = await evaluate("window.s02.requestQuit()");
+      assert.equal(report.quitDecision.kind, "confirm");
+      assert.ok(report.quitDecision.reasons.includes("crawl"));
+      return report.quitDecision;
+    });
+    await check("closing during a running fixture crawl asks before quitting", async () => {
+      assert.equal(report.quitDecision?.kind, "confirm", "Requires a running crawl and confirmation decision");
       assert.equal(await browser.execute("return !!document.querySelector('[role=alertdialog], [role=dialog], dialog[open]')"), false);
       await evaluate("window.s02.close()");
       await until(() => browser.execute("return !!document.querySelector('[role=alertdialog], [role=dialog], dialog[open]')"), "quit confirmation");

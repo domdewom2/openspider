@@ -46,7 +46,14 @@ export function installKeyboardFixture() {
 
 export const settings = openSettingsWindow;
 export const minimize = () => getCurrentWindow().minimize();
+export async function restore() {
+  const win = getCurrentWindow();
+  if (await win.isMinimized()) await win.unminimize();
+  return activate();
+}
 export const close = () => getCurrentWindow().close();
+// The shell reserves Tauri's built-in app namespace; its own app domain is os-app.
+export const requestQuit = () => invoke("plugin:os-app|requestQuit");
 export const start = (url: string) => invoke("plugin:crawl|start", { source: { kind: "spider", url }, scope: "domain", profile: null });
 
 export function keyboardSnapshot() {

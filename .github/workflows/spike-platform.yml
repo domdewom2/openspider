@@ -1,6 +1,9 @@
 name: spike-platform
 
 on:
+  # Temporary S02 branch trigger: remove before merge, unless the planner retains it for reruns.
+  push:
+    branches: [m2/s02]
   workflow_dispatch:
 
 permissions:

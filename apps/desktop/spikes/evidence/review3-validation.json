@@ -1,0 +1,173 @@
+{
+  "platform": {
+    "os": "macOS 26.3 (25D125)",
+    "machine": "Macmini9,1 / Apple M1 / 16 GiB",
+    "node": "22.20.0",
+    "cargo": "1.99.1",
+    "python": "Homebrew 3.10.13 / SQLite 3.43.2"
+  },
+  "main": "3f6fbbe",
+  "merge": "5658122",
+  "checks": [
+    {
+      "name": "npm-ci",
+      "exit": 0,
+      "seconds": 18.0
+    },
+    {
+      "name": "typecheck",
+      "exit": 0,
+      "seconds": 3.71
+    },
+    {
+      "name": "desktop-test",
+      "exit": 0,
+      "seconds": 16.77
+    },
+    {
+      "name": "static",
+      "exit": 0,
+      "seconds": 5.69
+    },
+    {
+      "name": "fmt",
+      "exit": 0,
+      "seconds": 3.34
+    },
+    {
+      "name": "deny",
+      "exit": 0,
+      "seconds": 2.87
+    },
+    {
+      "name": "clippy",
+      "exit": 0,
+      "seconds": 105.51
+    },
+    {
+      "name": "workspace-test",
+      "exit": 0,
+      "seconds": 996.82
+    },
+    {
+      "name": "feature-build",
+      "exit": 0,
+      "seconds": 250.8
+    }
+  ],
+  "rustTests": {
+    "binaries": 363,
+    "passed": 2819,
+    "failed": 0,
+    "ignored": 68
+  },
+  "desktopTests": 162,
+  "staticTests": 28,
+  "measurementTests": 4,
+  "ci": {
+    "newRunIds": [],
+    "reason": "User explicitly prohibited push and PR"
+  },
+  "npmAudit": {
+    "info": 0,
+    "low": 0,
+    "moderate": 1,
+    "high": 6,
+    "critical": 0,
+    "total": 7
+  },
+  "targetSize": "24G",
+  "quietAttempts": [
+    {
+      "at": "2026-10-19T12:25:51.959390+00:00",
+      "command": "sh scripts/bench/wait_quiet.sh 2 1",
+      "exit": 1,
+      "seconds": 60.11,
+      "output": "load1=2.40 blieb >= 2\n"
+    },
+    {
+      "at": "2026-10-19T12:27:04.597012+00:00",
+      "command": "sh scripts/bench/wait_quiet.sh 2 1",
+      "exit": 0,
+      "seconds": 0.01,
+      "output": "load1=1.44 (< 2), frei: 25 GB\n"
+    },
+    {
+      "at": "2026-10-19T12:28:31.723682+00:00",
+      "command": "sh scripts/bench/wait_quiet.sh 2 1",
+      "exit": 0,
+      "seconds": 0.01,
+      "output": "load1=1.60 (< 2), frei: 25 GB\n"
+    }
+  ],
+  "s6StartupAttempts": [
+    {
+      "mode": "s6",
+      "platform": "darwin",
+      "release": "25.3.0",
+      "arch": "arm64",
+      "node": "v22.20.0",
+      "startedAt": "2026-10-19T12:25:52.335Z",
+      "revision": "56581228b436fec03d560d850c6c65b53a7c751f",
+      "runnerSha256": "0e8e3d0274c3e9116ce9a531ede19b49e0ece4c6e79b6b96281a1a150f96d624",
+      "probeSha256": "9f9c2ec2bcd8161b13f8c41635b4db5611faf400f3dc00b7d553f4fd4618c404",
+      "launch": "LaunchServices",
+      "checks": [],
+      "errors": [
+        "Error: native app + menu: timed out (script timeout: Script execution timed out)"
+      ],
+      "final": {
+        "error": "Error: {\"message\":\"undefined is not an object (evaluating 'window.s02.snapshot')\",\"line\":55,\"column\":135,\"sourceURL\":\"http://localhost:1420/\",\"stack\":\"@http://localhost:1420/:55:135\"}"
+      },
+      "seconds": 32.958,
+      "status": "failed"
+    },
+    {
+      "mode": "s6",
+      "platform": "darwin",
+      "release": "25.3.0",
+      "arch": "arm64",
+      "node": "v22.20.0",
+      "startedAt": "2026-10-19T12:27:04.766Z",
+      "revision": "56581228b436fec03d560d850c6c65b53a7c751f",
+      "runnerSha256": "0e8e3d0274c3e9116ce9a531ede19b49e0ece4c6e79b6b96281a1a150f96d624",
+      "probeSha256": "9f9c2ec2bcd8161b13f8c41635b4db5611faf400f3dc00b7d553f4fd4618c404",
+      "launch": "LaunchServices",
+      "checks": [],
+      "errors": [
+        "Error: native app + menu: timed out (script timeout: Script execution timed out)"
+      ],
+      "final": {
+        "error": "Error: {\"message\":\"undefined is not an object (evaluating 'window.s02.snapshot')\",\"line\":55,\"column\":135,\"sourceURL\":\"http://localhost:1420/\",\"stack\":\"@http://localhost:1420/:55:135\"}"
+      },
+      "seconds": 32.602,
+      "status": "failed"
+    }
+  ],
+  "nativeRuns": [
+    {
+      "mode": "s3",
+      "evidence": "apps/desktop/spikes/evidence/s3-gui.json",
+      "status": "failed",
+      "seconds": 7.437,
+      "startedAt": "2026-10-19T12:09:29.051Z"
+    },
+    {
+      "mode": "smoke",
+      "evidence": "apps/desktop/spikes/evidence/smoke-gui.json",
+      "status": "failed",
+      "seconds": 39.905,
+      "startedAt": "2026-10-19T12:07:27.997Z"
+    },
+    {
+      "mode": "s6",
+      "evidence": "apps/desktop/spikes/evidence/s6-gui.json",
+      "status": "failed",
+      "seconds": 170.362,
+      "startedAt": "2026-10-19T12:28:31.894Z"
+    }
+  ],
+  "mainIsAncestor": true,
+  "lockfilesUnchangedFromMerge": true,
+  "ownPathsOnlySinceMerge": true
+}

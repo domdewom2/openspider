@@ -4,6 +4,10 @@
   "release": "25.3.0",
   "arch": "arm64",
   "node": "v22.20.0",
+  "startedAt": "2026-10-19T12:07:27.997Z",
+  "revision": "56581228b436fec03d560d850c6c65b53a7c751f",
+  "runnerSha256": "eea6a6439496bc31a30154ab41a03c529302f2884448b067144b569f25492f90",
+  "probeSha256": "6360345eb3201413ce8c8b5cfd72cce3a4e7afb081e32d9e8861d8d3e4a0c7f8",
   "launch": "LaunchServices",
   "checks": [
     {
@@ -11,18 +15,330 @@
       "status": "passed",
       "value": {
         "actions": [],
-        "at": 1626,
+        "at": 2136,
         "focus": false,
         "frontend": "hidden",
         "keys": [],
+        "menu": {
+          "model": {
+            "lang": "de",
+            "menus": [
+              {
+                "id": "app",
+                "items": [
+                  {
+                    "action": "app.about",
+                    "enabled": true,
+                    "id": "app.about",
+                    "kind": "item",
+                    "label": "Über OpenSpider"
+                  },
+                  {
+                    "enabled": false,
+                    "id": "sep.app.settings",
+                    "kind": "separator",
+                    "label": ""
+                  },
+                  {
+                    "accelerator": "CmdOrCtrl+,",
+                    "action": "app.settings",
+                    "enabled": true,
+                    "id": "app.settings",
+                    "kind": "item",
+                    "label": "Einstellungen…",
+                    "shortcutText": "⌘,"
+                  },
+                  {
+                    "enabled": false,
+                    "id": "sep.app.system",
+                    "kind": "separator",
+                    "label": ""
+                  },
+                  {
+                    "enabled": true,
+                    "id": "app.services",
+                    "kind": "predefined",
+                    "label": "Dienste",
+                    "predefined": "services"
+                  },
+                  {
+                    "enabled": true,
+                    "id": "app.hide",
+                    "kind": "predefined",
+                    "label": "OpenSpider ausblenden",
+                    "predefined": "hide"
+                  },
+                  {
+                    "enabled": true,
+                    "id": "app.hideOthers",
+                    "kind": "predefined",
+                    "label": "Andere ausblenden",
+                    "predefined": "hideOthers"
+                  },
+                  {
+                    "enabled": true,
+                    "id": "app.showAll",
+                    "kind": "predefined",
+                    "label": "Alle einblenden",
+                    "predefined": "showAll"
+                  },
+                  {
+                    "enabled": false,
+                    "id": "sep.app.quit",
+                    "kind": "separator",
+                    "label": ""
+                  },
+                  {
+                    "action": "app.quit",
+                    "enabled": true,
+                    "id": "app.quit",
+                    "kind": "item",
+                    "label": "OpenSpider beenden"
+                  }
+                ],
+                "label": "OpenSpider"
+              },
+              {
+                "id": "file",
+                "items": [
+                  {
+                    "accelerator": "CmdOrCtrl+N",
+                    "action": "crawl.new",
+                    "enabled": true,
+                    "id": "file.new",
+                    "kind": "item",
+                    "label": "Neuer Crawl",
+                    "shortcutText": "⌘N"
+                  },
+                  {
+                    "accelerator": "CmdOrCtrl+O",
+                    "action": "crawl.open",
+                    "enabled": true,
+                    "id": "file.open",
+                    "kind": "item",
+                    "label": "Crawl öffnen",
+                    "shortcutText": "⌘O"
+                  },
+                  {
+                    "accelerator": "CmdOrCtrl+S",
+                    "action": "crawl.saveAs",
+                    "disabledReason": "Öffne oder starte zuerst einen Crawl.",
+                    "enabled": false,
+                    "id": "file.saveAs",
+                    "kind": "item",
+                    "label": "Crawl speichern unter…",
+                    "shortcutText": "⌘S"
+                  }
+                ],
+                "label": "Datei"
+              },
+              {
+                "id": "edit",
+                "items": [
+                  {
+                    "enabled": true,
+                    "id": "edit.undo",
+                    "kind": "predefined",
+                    "label": "Rückgängig",
+                    "predefined": "undo"
+                  },
+                  {
+                    "enabled": true,
+                    "id": "edit.redo",
+                    "kind": "predefined",
+                    "label": "Wiederholen",
+                    "predefined": "redo"
+                  },
+                  {
+                    "enabled": false,
+                    "id": "edit.sep1",
+                    "kind": "separator",
+                    "label": ""
+                  },
+                  {
+                    "enabled": true,
+                    "id": "edit.cut",
+                    "kind": "predefined",
+                    "label": "Ausschneiden",
+                    "predefined": "cut"
+                  },
+                  {
+                    "enabled": true,
+                    "id": "edit.copy",
+                    "kind": "predefined",
+                    "label": "Kopieren",
+                    "predefined": "copy"
+                  },
+                  {
+                    "enabled": true,
+                    "id": "edit.paste",
+                    "kind": "predefined",
+                    "label": "Einfügen",
+                    "predefined": "paste"
+                  },
+                  {
+                    "enabled": true,
+                    "id": "edit.selectAll",
+                    "kind": "predefined",
+                    "label": "Alles auswählen",
+                    "predefined": "selectAll"
+                  }
+                ],
+                "label": "Bearbeiten"
+              },
+              {
+                "id": "bulkExport",
+                "items": [
+                  {
+                    "action": "export.multi",
+                    "enabled": false,
+                    "id": "export.multi",
+                    "kind": "item",
+                    "label": "Mehrfachexport…"
+                  }
+                ],
+                "label": "Bulk-Export"
+              },
+              {
+                "id": "sitemaps",
+                "items": [
+                  {
+                    "action": "export.sitemap.pages",
+                    "enabled": false,
+                    "id": "export.sitemap.pages",
+                    "kind": "item",
+                    "label": "XML-Sitemap erstellen…"
+                  },
+                  {
+                    "action": "export.sitemap.images",
+                    "enabled": false,
+                    "id": "export.sitemap.images",
+                    "kind": "item",
+                    "label": "Bild-Sitemap erstellen…"
+                  }
+                ],
+                "label": "Sitemaps"
+              },
+              {
+                "id": "view",
+                "items": [
+                  {
+                    "accelerator": "CmdOrCtrl+J",
+                    "action": "view.toggleDetail",
+                    "enabled": true,
+                    "id": "view.detail",
+                    "kind": "item",
+                    "label": "Detailfenster ein- oder ausblenden",
+                    "shortcutText": "⌘J"
+                  },
+                  {
+                    "accelerator": "CmdOrCtrl+Shift+J",
+                    "action": "view.toggleSidebar",
+                    "enabled": true,
+                    "id": "view.sidebar",
+                    "kind": "item",
+                    "label": "Seitenleiste ein- oder ausblenden",
+                    "shortcutText": "⇧⌘J"
+                  },
+                  {
+                    "enabled": false,
+                    "id": "sep.view.zoom",
+                    "kind": "separator",
+                    "label": ""
+                  },
+                  {
+                    "accelerator": "CmdOrCtrl+=",
+                    "action": "zoom.in",
+                    "enabled": true,
+                    "id": "view.zoomIn",
+                    "kind": "item",
+                    "label": "Vergrößern",
+                    "shortcutText": "⌘="
+                  },
+                  {
+                    "accelerator": "CmdOrCtrl+-",
+                    "action": "zoom.out",
+                    "enabled": true,
+                    "id": "view.zoomOut",
+                    "kind": "item",
+                    "label": "Verkleinern",
+                    "shortcutText": "⌘-"
+                  },
+                  {
+                    "accelerator": "CmdOrCtrl+0",
+                    "action": "zoom.reset",
+                    "enabled": true,
+                    "id": "view.zoomReset",
+                    "kind": "item",
+                    "label": "Zoom auf 100 % zurücksetzen",
+                    "shortcutText": "⌘0"
+                  }
+                ],
+                "label": "Ansicht"
+              },
+              {
+                "id": "window",
+                "items": [
+                  {
+                    "enabled": true,
+                    "id": "window.minimize",
+                    "kind": "predefined",
+                    "label": "Im Dock ablegen",
+                    "predefined": "minimize"
+                  },
+                  {
+                    "enabled": true,
+                    "id": "window.zoom",
+                    "kind": "predefined",
+                    "label": "Zoomen",
+                    "predefined": "maximize"
+                  },
+                  {
+                    "enabled": true,
+                    "id": "window.front",
+                    "kind": "predefined",
+                    "label": "Alle nach vorne bringen",
+                    "predefined": "bringAllToFront"
+                  }
+                ],
+                "label": "Fenster"
+              },
+              {
+                "id": "help",
+                "items": [
+                  {
+                    "action": "help.shortcuts",
+                    "enabled": true,
+                    "id": "help.shortcuts",
+                    "kind": "item",
+                    "label": "Tastaturkürzel"
+                  }
+                ],
+                "label": "Hilfe"
+              }
+            ],
+            "nativeAccelerators": [
+              "app.settings",
+              "crawl.new",
+              "crawl.open",
+              "crawl.saveAs",
+              "view.toggleDetail",
+              "view.toggleSidebar",
+              "zoom.in",
+              "zoom.out",
+              "zoom.reset"
+            ],
+            "platform": "mac"
+          },
+          "rebuilds": 3
+        },
         "shell": {
           "minimized": false,
           "visible": true
         },
         "ticks": [],
         "transport": "tauri",
-        "visibility": [],
-        "menuRef": "#/menu"
+        "visibility": []
       }
     },
     {
@@ -35,7 +351,7 @@
       "status": "passed",
       "value": {
         "actions": [],
-        "at": 286.00000000000006,
+        "at": 363,
         "focus": false,
         "frontend": "hidden",
         "keys": [],
@@ -50,50 +366,684 @@
       }
     },
     {
+      "name": "app.requestQuit confirms a running fixture crawl",
+      "status": "passed",
+      "value": {
+        "kind": "confirm",
+        "reasons": [
+          "crawl"
+        ]
+      }
+    },
+    {
       "name": "closing during a running fixture crawl asks before quitting",
       "status": "failed",
-      "error": "Error: {\"args\":{},\"code\":\"Unsupported\",\"detail\":null,\"field\":null,\"messageKey\":\"err-not-implemented\",\"retryable\":false}"
+      "error": "Error: quit confirmation: timed out"
     }
   ],
   "errors": [
     "active native desktop: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'hidden'\n- 'visible'\n",
-    "closing during a running fixture crawl asks before quitting: Error: {\"args\":{},\"code\":\"Unsupported\",\"detail\":null,\"field\":null,\"messageKey\":\"err-not-implemented\",\"retryable\":false}"
+    "closing during a running fixture crawl asks before quitting: Error: quit confirmation: timed out"
   ],
   "beforeActivation": {
     "actions": [],
-    "at": 680,
+    "at": 1383,
     "focus": false,
     "frontend": "hidden",
     "keys": [],
+    "menu": {
+      "model": {
+        "lang": "de",
+        "menus": [
+          {
+            "id": "app",
+            "items": [
+              {
+                "action": "app.about",
+                "enabled": true,
+                "id": "app.about",
+                "kind": "item",
+                "label": "Über OpenSpider"
+              },
+              {
+                "enabled": false,
+                "id": "sep.app.settings",
+                "kind": "separator",
+                "label": ""
+              },
+              {
+                "accelerator": "CmdOrCtrl+,",
+                "action": "app.settings",
+                "enabled": true,
+                "id": "app.settings",
+                "kind": "item",
+                "label": "Einstellungen…",
+                "shortcutText": "⌘,"
+              },
+              {
+                "enabled": false,
+                "id": "sep.app.system",
+                "kind": "separator",
+                "label": ""
+              },
+              {
+                "enabled": true,
+                "id": "app.services",
+                "kind": "predefined",
+                "label": "Dienste",
+                "predefined": "services"
+              },
+              {
+                "enabled": true,
+                "id": "app.hide",
+                "kind": "predefined",
+                "label": "OpenSpider ausblenden",
+                "predefined": "hide"
+              },
+              {
+                "enabled": true,
+                "id": "app.hideOthers",
+                "kind": "predefined",
+                "label": "Andere ausblenden",
+                "predefined": "hideOthers"
+              },
+              {
+                "enabled": true,
+                "id": "app.showAll",
+                "kind": "predefined",
+                "label": "Alle einblenden",
+                "predefined": "showAll"
+              },
+              {
+                "enabled": false,
+                "id": "sep.app.quit",
+                "kind": "separator",
+                "label": ""
+              },
+              {
+                "action": "app.quit",
+                "enabled": true,
+                "id": "app.quit",
+                "kind": "item",
+                "label": "OpenSpider beenden"
+              }
+            ],
+            "label": "OpenSpider"
+          },
+          {
+            "id": "file",
+            "items": [
+              {
+                "accelerator": "CmdOrCtrl+N",
+                "action": "crawl.new",
+                "enabled": true,
+                "id": "file.new",
+                "kind": "item",
+                "label": "Neuer Crawl",
+                "shortcutText": "⌘N"
+              },
+              {
+                "accelerator": "CmdOrCtrl+O",
+                "action": "crawl.open",
+                "enabled": true,
+                "id": "file.open",
+                "kind": "item",
+                "label": "Crawl öffnen",
+                "shortcutText": "⌘O"
+              },
+              {
+                "accelerator": "CmdOrCtrl+S",
+                "action": "crawl.saveAs",
+                "disabledReason": "Öffne oder starte zuerst einen Crawl.",
+                "enabled": false,
+                "id": "file.saveAs",
+                "kind": "item",
+                "label": "Crawl speichern unter…",
+                "shortcutText": "⌘S"
+              }
+            ],
+            "label": "Datei"
+          },
+          {
+            "id": "edit",
+            "items": [
+              {
+                "enabled": true,
+                "id": "edit.undo",
+                "kind": "predefined",
+                "label": "Rückgängig",
+                "predefined": "undo"
+              },
+              {
+                "enabled": true,
+                "id": "edit.redo",
+                "kind": "predefined",
+                "label": "Wiederholen",
+                "predefined": "redo"
+              },
+              {
+                "enabled": false,
+                "id": "edit.sep1",
+                "kind": "separator",
+                "label": ""
+              },
+              {
+                "enabled": true,
+                "id": "edit.cut",
+                "kind": "predefined",
+                "label": "Ausschneiden",
+                "predefined": "cut"
+              },
+              {
+                "enabled": true,
+                "id": "edit.copy",
+                "kind": "predefined",
+                "label": "Kopieren",
+                "predefined": "copy"
+              },
+              {
+                "enabled": true,
+                "id": "edit.paste",
+                "kind": "predefined",
+                "label": "Einfügen",
+                "predefined": "paste"
+              },
+              {
+                "enabled": true,
+                "id": "edit.selectAll",
+                "kind": "predefined",
+                "label": "Alles auswählen",
+                "predefined": "selectAll"
+              }
+            ],
+            "label": "Bearbeiten"
+          },
+          {
+            "id": "bulkExport",
+            "items": [
+              {
+                "action": "export.multi",
+                "enabled": false,
+                "id": "export.multi",
+                "kind": "item",
+                "label": "Mehrfachexport…"
+              }
+            ],
+            "label": "Bulk-Export"
+          },
+          {
+            "id": "sitemaps",
+            "items": [
+              {
+                "action": "export.sitemap.pages",
+                "enabled": false,
+                "id": "export.sitemap.pages",
+                "kind": "item",
+                "label": "XML-Sitemap erstellen…"
+              },
+              {
+                "action": "export.sitemap.images",
+                "enabled": false,
+                "id": "export.sitemap.images",
+                "kind": "item",
+                "label": "Bild-Sitemap erstellen…"
+              }
+            ],
+            "label": "Sitemaps"
+          },
+          {
+            "id": "view",
+            "items": [
+              {
+                "accelerator": "CmdOrCtrl+J",
+                "action": "view.toggleDetail",
+                "enabled": true,
+                "id": "view.detail",
+                "kind": "item",
+                "label": "Detailfenster ein- oder ausblenden",
+                "shortcutText": "⌘J"
+              },
+              {
+                "accelerator": "CmdOrCtrl+Shift+J",
+                "action": "view.toggleSidebar",
+                "enabled": true,
+                "id": "view.sidebar",
+                "kind": "item",
+                "label": "Seitenleiste ein- oder ausblenden",
+                "shortcutText": "⇧⌘J"
+              },
+              {
+                "enabled": false,
+                "id": "sep.view.zoom",
+                "kind": "separator",
+                "label": ""
+              },
+              {
+                "accelerator": "CmdOrCtrl+=",
+                "action": "zoom.in",
+                "enabled": true,
+                "id": "view.zoomIn",
+                "kind": "item",
+                "label": "Vergrößern",
+                "shortcutText": "⌘="
+              },
+              {
+                "accelerator": "CmdOrCtrl+-",
+                "action": "zoom.out",
+                "enabled": true,
+                "id": "view.zoomOut",
+                "kind": "item",
+                "label": "Verkleinern",
+                "shortcutText": "⌘-"
+              },
+              {
+                "accelerator": "CmdOrCtrl+0",
+                "action": "zoom.reset",
+                "enabled": true,
+                "id": "view.zoomReset",
+                "kind": "item",
+                "label": "Zoom auf 100 % zurücksetzen",
+                "shortcutText": "⌘0"
+              }
+            ],
+            "label": "Ansicht"
+          },
+          {
+            "id": "window",
+            "items": [
+              {
+                "enabled": true,
+                "id": "window.minimize",
+                "kind": "predefined",
+                "label": "Im Dock ablegen",
+                "predefined": "minimize"
+              },
+              {
+                "enabled": true,
+                "id": "window.zoom",
+                "kind": "predefined",
+                "label": "Zoomen",
+                "predefined": "maximize"
+              },
+              {
+                "enabled": true,
+                "id": "window.front",
+                "kind": "predefined",
+                "label": "Alle nach vorne bringen",
+                "predefined": "bringAllToFront"
+              }
+            ],
+            "label": "Fenster"
+          },
+          {
+            "id": "help",
+            "items": [
+              {
+                "action": "help.shortcuts",
+                "enabled": true,
+                "id": "help.shortcuts",
+                "kind": "item",
+                "label": "Tastaturkürzel"
+              }
+            ],
+            "label": "Hilfe"
+          }
+        ],
+        "nativeAccelerators": [
+          "app.settings",
+          "crawl.new",
+          "crawl.open",
+          "crawl.saveAs",
+          "view.toggleDetail",
+          "view.toggleSidebar",
+          "zoom.in",
+          "zoom.out",
+          "zoom.reset"
+        ],
+        "platform": "mac"
+      },
+      "rebuilds": 3
+    },
     "shell": {
       "minimized": false,
       "visible": true
     },
     "ticks": [],
     "transport": "tauri",
-    "visibility": [],
-    "menuRef": "#/menu"
+    "visibility": []
   },
   "afterTauriActivation": {
     "actions": [],
-    "at": 705,
+    "at": 1395,
     "focus": false,
     "frontend": "hidden",
     "keys": [],
+    "menu": {
+      "model": {
+        "lang": "de",
+        "menus": [
+          {
+            "id": "app",
+            "items": [
+              {
+                "action": "app.about",
+                "enabled": true,
+                "id": "app.about",
+                "kind": "item",
+                "label": "Über OpenSpider"
+              },
+              {
+                "enabled": false,
+                "id": "sep.app.settings",
+                "kind": "separator",
+                "label": ""
+              },
+              {
+                "accelerator": "CmdOrCtrl+,",
+                "action": "app.settings",
+                "enabled": true,
+                "id": "app.settings",
+                "kind": "item",
+                "label": "Einstellungen…",
+                "shortcutText": "⌘,"
+              },
+              {
+                "enabled": false,
+                "id": "sep.app.system",
+                "kind": "separator",
+                "label": ""
+              },
+              {
+                "enabled": true,
+                "id": "app.services",
+                "kind": "predefined",
+                "label": "Dienste",
+                "predefined": "services"
+              },
+              {
+                "enabled": true,
+                "id": "app.hide",
+                "kind": "predefined",
+                "label": "OpenSpider ausblenden",
+                "predefined": "hide"
+              },
+              {
+                "enabled": true,
+                "id": "app.hideOthers",
+                "kind": "predefined",
+                "label": "Andere ausblenden",
+                "predefined": "hideOthers"
+              },
+              {
+                "enabled": true,
+                "id": "app.showAll",
+                "kind": "predefined",
+                "label": "Alle einblenden",
+                "predefined": "showAll"
+              },
+              {
+                "enabled": false,
+                "id": "sep.app.quit",
+                "kind": "separator",
+                "label": ""
+              },
+              {
+                "action": "app.quit",
+                "enabled": true,
+                "id": "app.quit",
+                "kind": "item",
+                "label": "OpenSpider beenden"
+              }
+            ],
+            "label": "OpenSpider"
+          },
+          {
+            "id": "file",
+            "items": [
+              {
+                "accelerator": "CmdOrCtrl+N",
+                "action": "crawl.new",
+                "enabled": true,
+                "id": "file.new",
+                "kind": "item",
+                "label": "Neuer Crawl",
+                "shortcutText": "⌘N"
+              },
+              {
+                "accelerator": "CmdOrCtrl+O",
+                "action": "crawl.open",
+                "enabled": true,
+                "id": "file.open",
+                "kind": "item",
+                "label": "Crawl öffnen",
+                "shortcutText": "⌘O"
+              },
+              {
+                "accelerator": "CmdOrCtrl+S",
+                "action": "crawl.saveAs",
+                "disabledReason": "Öffne oder starte zuerst einen Crawl.",
+                "enabled": false,
+                "id": "file.saveAs",
+                "kind": "item",
+                "label": "Crawl speichern unter…",
+                "shortcutText": "⌘S"
+              }
+            ],
+            "label": "Datei"
+          },
+          {
+            "id": "edit",
+            "items": [
+              {
+                "enabled": true,
+                "id": "edit.undo",
+                "kind": "predefined",
+                "label": "Rückgängig",
+                "predefined": "undo"
+              },
+              {
+                "enabled": true,
+                "id": "edit.redo",
+                "kind": "predefined",
+                "label": "Wiederholen",
+                "predefined": "redo"
+              },
+              {
+                "enabled": false,
+                "id": "edit.sep1",
+                "kind": "separator",
+                "label": ""
+              },
+              {
+                "enabled": true,
+                "id": "edit.cut",
+                "kind": "predefined",
+                "label": "Ausschneiden",
+                "predefined": "cut"
+              },
+              {
+                "enabled": true,
+                "id": "edit.copy",
+                "kind": "predefined",
+                "label": "Kopieren",
+                "predefined": "copy"
+              },
+              {
+                "enabled": true,
+                "id": "edit.paste",
+                "kind": "predefined",
+                "label": "Einfügen",
+                "predefined": "paste"
+              },
+              {
+                "enabled": true,
+                "id": "edit.selectAll",
+                "kind": "predefined",
+                "label": "Alles auswählen",
+                "predefined": "selectAll"
+              }
+            ],
+            "label": "Bearbeiten"
+          },
+          {
+            "id": "bulkExport",
+            "items": [
+              {
+                "action": "export.multi",
+                "enabled": false,
+                "id": "export.multi",
+                "kind": "item",
+                "label": "Mehrfachexport…"
+              }
+            ],
+            "label": "Bulk-Export"
+          },
+          {
+            "id": "sitemaps",
+            "items": [
+              {
+                "action": "export.sitemap.pages",
+                "enabled": false,
+                "id": "export.sitemap.pages",
+                "kind": "item",
+                "label": "XML-Sitemap erstellen…"
+              },
+              {
+                "action": "export.sitemap.images",
+                "enabled": false,
+                "id": "export.sitemap.images",
+                "kind": "item",
+                "label": "Bild-Sitemap erstellen…"
+              }
+            ],
+            "label": "Sitemaps"
+          },
+          {
+            "id": "view",
+            "items": [
+              {
+                "accelerator": "CmdOrCtrl+J",
+                "action": "view.toggleDetail",
+                "enabled": true,
+                "id": "view.detail",
+                "kind": "item",
+                "label": "Detailfenster ein- oder ausblenden",
+                "shortcutText": "⌘J"
+              },
+              {
+                "accelerator": "CmdOrCtrl+Shift+J",
+                "action": "view.toggleSidebar",
+                "enabled": true,
+                "id": "view.sidebar",
+                "kind": "item",
+                "label": "Seitenleiste ein- oder ausblenden",
+                "shortcutText": "⇧⌘J"
+              },
+              {
+                "enabled": false,
+                "id": "sep.view.zoom",
+                "kind": "separator",
+                "label": ""
+              },
+              {
+                "accelerator": "CmdOrCtrl+=",
+                "action": "zoom.in",
+                "enabled": true,
+                "id": "view.zoomIn",
+                "kind": "item",
+                "label": "Vergrößern",
+                "shortcutText": "⌘="
+              },
+              {
+                "accelerator": "CmdOrCtrl+-",
+                "action": "zoom.out",
+                "enabled": true,
+                "id": "view.zoomOut",
+                "kind": "item",
+                "label": "Verkleinern",
+                "shortcutText": "⌘-"
+              },
+              {
+                "accelerator": "CmdOrCtrl+0",
+                "action": "zoom.reset",
+                "enabled": true,
+                "id": "view.zoomReset",
+                "kind": "item",
+                "label": "Zoom auf 100 % zurücksetzen",
+                "shortcutText": "⌘0"
+              }
+            ],
+            "label": "Ansicht"
+          },
+          {
+            "id": "window",
+            "items": [
+              {
+                "enabled": true,
+                "id": "window.minimize",
+                "kind": "predefined",
+                "label": "Im Dock ablegen",
+                "predefined": "minimize"
+              },
+              {
+                "enabled": true,
+                "id": "window.zoom",
+                "kind": "predefined",
+                "label": "Zoomen",
+                "predefined": "maximize"
+              },
+              {
+                "enabled": true,
+                "id": "window.front",
+                "kind": "predefined",
+                "label": "Alle nach vorne bringen",
+                "predefined": "bringAllToFront"
+              }
+            ],
+            "label": "Fenster"
+          },
+          {
+            "id": "help",
+            "items": [
+              {
+                "action": "help.shortcuts",
+                "enabled": true,
+                "id": "help.shortcuts",
+                "kind": "item",
+                "label": "Tastaturkürzel"
+              }
+            ],
+            "label": "Hilfe"
+          }
+        ],
+        "nativeAccelerators": [
+          "app.settings",
+          "crawl.new",
+          "crawl.open",
+          "crawl.saveAs",
+          "view.toggleDetail",
+          "view.toggleSidebar",
+          "zoom.in",
+          "zoom.out",
+          "zoom.reset"
+        ],
+        "platform": "mac"
+      },
+      "rebuilds": 3
+    },
     "shell": {
       "minimized": false,
       "visible": true
     },
     "ticks": [],
     "transport": "tauri",
-    "visibility": [],
-    "menuRef": "#/menu"
+    "visibility": []
   },
   "nativeActivation": {
     "activationPolicy": 0,
     "active": false,
     "hidden": false,
-    "pid": 54467,
+    "pid": 46487,
     "postEventAccess": false,
     "session": {
       "loginDone": true,
@@ -103,317 +1053,948 @@
   },
   "afterNativeActivation": {
     "actions": [],
-    "at": 1460,
+    "at": 2120,
     "focus": false,
     "frontend": "hidden",
     "keys": [],
+    "menu": {
+      "model": {
+        "lang": "de",
+        "menus": [
+          {
+            "id": "app",
+            "items": [
+              {
+                "action": "app.about",
+                "enabled": true,
+                "id": "app.about",
+                "kind": "item",
+                "label": "Über OpenSpider"
+              },
+              {
+                "enabled": false,
+                "id": "sep.app.settings",
+                "kind": "separator",
+                "label": ""
+              },
+              {
+                "accelerator": "CmdOrCtrl+,",
+                "action": "app.settings",
+                "enabled": true,
+                "id": "app.settings",
+                "kind": "item",
+                "label": "Einstellungen…",
+                "shortcutText": "⌘,"
+              },
+              {
+                "enabled": false,
+                "id": "sep.app.system",
+                "kind": "separator",
+                "label": ""
+              },
+              {
+                "enabled": true,
+                "id": "app.services",
+                "kind": "predefined",
+                "label": "Dienste",
+                "predefined": "services"
+              },
+              {
+                "enabled": true,
+                "id": "app.hide",
+                "kind": "predefined",
+                "label": "OpenSpider ausblenden",
+                "predefined": "hide"
+              },
+              {
+                "enabled": true,
+                "id": "app.hideOthers",
+                "kind": "predefined",
+                "label": "Andere ausblenden",
+                "predefined": "hideOthers"
+              },
+              {
+                "enabled": true,
+                "id": "app.showAll",
+                "kind": "predefined",
+                "label": "Alle einblenden",
+                "predefined": "showAll"
+              },
+              {
+                "enabled": false,
+                "id": "sep.app.quit",
+                "kind": "separator",
+                "label": ""
+              },
+              {
+                "action": "app.quit",
+                "enabled": true,
+                "id": "app.quit",
+                "kind": "item",
+                "label": "OpenSpider beenden"
+              }
+            ],
+            "label": "OpenSpider"
+          },
+          {
+            "id": "file",
+            "items": [
+              {
+                "accelerator": "CmdOrCtrl+N",
+                "action": "crawl.new",
+                "enabled": true,
+                "id": "file.new",
+                "kind": "item",
+                "label": "Neuer Crawl",
+                "shortcutText": "⌘N"
+              },
+              {
+                "accelerator": "CmdOrCtrl+O",
+                "action": "crawl.open",
+                "enabled": true,
+                "id": "file.open",
+                "kind": "item",
+                "label": "Crawl öffnen",
+                "shortcutText": "⌘O"
+              },
+              {
+                "accelerator": "CmdOrCtrl+S",
+                "action": "crawl.saveAs",
+                "disabledReason": "Öffne oder starte zuerst einen Crawl.",
+                "enabled": false,
+                "id": "file.saveAs",
+                "kind": "item",
+                "label": "Crawl speichern unter…",
+                "shortcutText": "⌘S"
+              }
+            ],
+            "label": "Datei"
+          },
+          {
+            "id": "edit",
+            "items": [
+              {
+                "enabled": true,
+                "id": "edit.undo",
+                "kind": "predefined",
+                "label": "Rückgängig",
+                "predefined": "undo"
+              },
+              {
+                "enabled": true,
+                "id": "edit.redo",
+                "kind": "predefined",
+                "label": "Wiederholen",
+                "predefined": "redo"
+              },
+              {
+                "enabled": false,
+                "id": "edit.sep1",
+                "kind": "separator",
+                "label": ""
+              },
+              {
+                "enabled": true,
+                "id": "edit.cut",
+                "kind": "predefined",
+                "label": "Ausschneiden",
+                "predefined": "cut"
+              },
+              {
+                "enabled": true,
+                "id": "edit.copy",
+                "kind": "predefined",
+                "label": "Kopieren",
+                "predefined": "copy"
+              },
+              {
+                "enabled": true,
+                "id": "edit.paste",
+                "kind": "predefined",
+                "label": "Einfügen",
+                "predefined": "paste"
+              },
+              {
+                "enabled": true,
+                "id": "edit.selectAll",
+                "kind": "predefined",
+                "label": "Alles auswählen",
+                "predefined": "selectAll"
+              }
+            ],
+            "label": "Bearbeiten"
+          },
+          {
+            "id": "bulkExport",
+            "items": [
+              {
+                "action": "export.multi",
+                "enabled": false,
+                "id": "export.multi",
+                "kind": "item",
+                "label": "Mehrfachexport…"
+              }
+            ],
+            "label": "Bulk-Export"
+          },
+          {
+            "id": "sitemaps",
+            "items": [
+              {
+                "action": "export.sitemap.pages",
+                "enabled": false,
+                "id": "export.sitemap.pages",
+                "kind": "item",
+                "label": "XML-Sitemap erstellen…"
+              },
+              {
+                "action": "export.sitemap.images",
+                "enabled": false,
+                "id": "export.sitemap.images",
+                "kind": "item",
+                "label": "Bild-Sitemap erstellen…"
+              }
+            ],
+            "label": "Sitemaps"
+          },
+          {
+            "id": "view",
+            "items": [
+              {
+                "accelerator": "CmdOrCtrl+J",
+                "action": "view.toggleDetail",
+                "enabled": true,
+                "id": "view.detail",
+                "kind": "item",
+                "label": "Detailfenster ein- oder ausblenden",
+                "shortcutText": "⌘J"
+              },
+              {
+                "accelerator": "CmdOrCtrl+Shift+J",
+                "action": "view.toggleSidebar",
+                "enabled": true,
+                "id": "view.sidebar",
+                "kind": "item",
+                "label": "Seitenleiste ein- oder ausblenden",
+                "shortcutText": "⇧⌘J"
+              },
+              {
+                "enabled": false,
+                "id": "sep.view.zoom",
+                "kind": "separator",
+                "label": ""
+              },
+              {
+                "accelerator": "CmdOrCtrl+=",
+                "action": "zoom.in",
+                "enabled": true,
+                "id": "view.zoomIn",
+                "kind": "item",
+                "label": "Vergrößern",
+                "shortcutText": "⌘="
+              },
+              {
+                "accelerator": "CmdOrCtrl+-",
+                "action": "zoom.out",
+                "enabled": true,
+                "id": "view.zoomOut",
+                "kind": "item",
+                "label": "Verkleinern",
+                "shortcutText": "⌘-"
+              },
+              {
+                "accelerator": "CmdOrCtrl+0",
+                "action": "zoom.reset",
+                "enabled": true,
+                "id": "view.zoomReset",
+                "kind": "item",
+                "label": "Zoom auf 100 % zurücksetzen",
+                "shortcutText": "⌘0"
+              }
+            ],
+            "label": "Ansicht"
+          },
+          {
+            "id": "window",
+            "items": [
+              {
+                "enabled": true,
+                "id": "window.minimize",
+                "kind": "predefined",
+                "label": "Im Dock ablegen",
+                "predefined": "minimize"
+              },
+              {
+                "enabled": true,
+                "id": "window.zoom",
+                "kind": "predefined",
+                "label": "Zoomen",
+                "predefined": "maximize"
+              },
+              {
+                "enabled": true,
+                "id": "window.front",
+                "kind": "predefined",
+                "label": "Alle nach vorne bringen",
+                "predefined": "bringAllToFront"
+              }
+            ],
+            "label": "Fenster"
+          },
+          {
+            "id": "help",
+            "items": [
+              {
+                "action": "help.shortcuts",
+                "enabled": true,
+                "id": "help.shortcuts",
+                "kind": "item",
+                "label": "Tastaturkürzel"
+              }
+            ],
+            "label": "Hilfe"
+          }
+        ],
+        "nativeAccelerators": [
+          "app.settings",
+          "crawl.new",
+          "crawl.open",
+          "crawl.saveAs",
+          "view.toggleDetail",
+          "view.toggleSidebar",
+          "zoom.in",
+          "zoom.out",
+          "zoom.reset"
+        ],
+        "platform": "mac"
+      },
+      "rebuilds": 3
+    },
     "shell": {
       "minimized": false,
       "visible": true
     },
     "ticks": [],
     "transport": "tauri",
-    "visibility": [],
-    "menuRef": "#/menu"
+    "visibility": []
+  },
+  "crawlStart": {
+    "crawlId": "01a1540f-556f-7c2b-b5d7-078e74339655",
+    "file": "/var/folders/fz/9flwb7b55t788nq02b9q761h0000gp/T/openspider-s02-DLzfvQ/crawls/01a1540f-556f-7c2b-b5d7-078e74339655.ospider"
+  },
+  "quitDecision": {
+    "kind": "confirm",
+    "reasons": [
+      "crawl"
+    ]
   },
   "final": {
     "actions": [],
-    "at": 2008,
+    "at": 34652,
     "focus": false,
     "frontend": "hidden",
     "keys": [],
+    "menu": {
+      "model": {
+        "lang": "de",
+        "menus": [
+          {
+            "id": "app",
+            "items": [
+              {
+                "action": "app.about",
+                "enabled": true,
+                "id": "app.about",
+                "kind": "item",
+                "label": "Über OpenSpider"
+              },
+              {
+                "enabled": false,
+                "id": "sep.app.settings",
+                "kind": "separator",
+                "label": ""
+              },
+              {
+                "accelerator": "CmdOrCtrl+,",
+                "action": "app.settings",
+                "enabled": true,
+                "id": "app.settings",
+                "kind": "item",
+                "label": "Einstellungen…",
+                "shortcutText": "⌘,"
+              },
+              {
+                "enabled": false,
+                "id": "sep.app.system",
+                "kind": "separator",
+                "label": ""
+              },
+              {
+                "enabled": true,
+                "id": "app.services",
+                "kind": "predefined",
+                "label": "Dienste",
+                "predefined": "services"
+              },
+              {
+                "enabled": true,
+                "id": "app.hide",
+                "kind": "predefined",
+                "label": "OpenSpider ausblenden",
+                "predefined": "hide"
+              },
+              {
+                "enabled": true,
+                "id": "app.hideOthers",
+                "kind": "predefined",
+                "label": "Andere ausblenden",
+                "predefined": "hideOthers"
+              },
+              {
+                "enabled": true,
+                "id": "app.showAll",
+                "kind": "predefined",
+                "label": "Alle einblenden",
+                "predefined": "showAll"
+              },
+              {
+                "enabled": false,
+                "id": "sep.app.quit",
+                "kind": "separator",
+                "label": ""
+              },
+              {
+                "action": "app.quit",
+                "enabled": true,
+                "id": "app.quit",
+                "kind": "item",
+                "label": "OpenSpider beenden"
+              }
+            ],
+            "label": "OpenSpider"
+          },
+          {
+            "id": "file",
+            "items": [
+              {
+                "accelerator": "CmdOrCtrl+N",
+                "action": "crawl.new",
+                "enabled": true,
+                "id": "file.new",
+                "kind": "item",
+                "label": "Neuer Crawl",
+                "shortcutText": "⌘N"
+              },
+              {
+                "accelerator": "CmdOrCtrl+O",
+                "action": "crawl.open",
+                "enabled": true,
+                "id": "file.open",
+                "kind": "item",
+                "label": "Crawl öffnen",
+                "shortcutText": "⌘O"
+              },
+              {
+                "accelerator": "CmdOrCtrl+S",
+                "action": "crawl.saveAs",
+                "enabled": true,
+                "id": "file.saveAs",
+                "kind": "item",
+                "label": "Crawl speichern unter…",
+                "shortcutText": "⌘S"
+              }
+            ],
+            "label": "Datei"
+          },
+          {
+            "id": "edit",
+            "items": [
+              {
+                "enabled": true,
+                "id": "edit.undo",
+                "kind": "predefined",
+                "label": "Rückgängig",
+                "predefined": "undo"
+              },
+              {
+                "enabled": true,
+                "id": "edit.redo",
+                "kind": "predefined",
+                "label": "Wiederholen",
+                "predefined": "redo"
+              },
+              {
+                "enabled": false,
+                "id": "edit.sep1",
+                "kind": "separator",
+                "label": ""
+              },
+              {
+                "enabled": true,
+                "id": "edit.cut",
+                "kind": "predefined",
+                "label": "Ausschneiden",
+                "predefined": "cut"
+              },
+              {
+                "enabled": true,
+                "id": "edit.copy",
+                "kind": "predefined",
+                "label": "Kopieren",
+                "predefined": "copy"
+              },
+              {
+                "enabled": true,
+                "id": "edit.paste",
+                "kind": "predefined",
+                "label": "Einfügen",
+                "predefined": "paste"
+              },
+              {
+                "enabled": true,
+                "id": "edit.selectAll",
+                "kind": "predefined",
+                "label": "Alles auswählen",
+                "predefined": "selectAll"
+              }
+            ],
+            "label": "Bearbeiten"
+          },
+          {
+            "id": "bulkExport",
+            "items": [
+              {
+                "action": "export.multi",
+                "enabled": true,
+                "id": "export.multi",
+                "kind": "item",
+                "label": "Mehrfachexport…"
+              }
+            ],
+            "label": "Bulk-Export"
+          },
+          {
+            "id": "sitemaps",
+            "items": [
+              {
+                "action": "export.sitemap.pages",
+                "enabled": true,
+                "id": "export.sitemap.pages",
+                "kind": "item",
+                "label": "XML-Sitemap erstellen…"
+              },
+              {
+                "action": "export.sitemap.images",
+                "enabled": true,
+                "id": "export.sitemap.images",
+                "kind": "item",
+                "label": "Bild-Sitemap erstellen…"
+              }
+            ],
+            "label": "Sitemaps"
+          },
+          {
+            "id": "view",
+            "items": [
+              {
+                "accelerator": "CmdOrCtrl+J",
+                "action": "view.toggleDetail",
+                "enabled": true,
+                "id": "view.detail",
+                "kind": "item",
+                "label": "Detailfenster ein- oder ausblenden",
+                "shortcutText": "⌘J"
+              },
+              {
+                "accelerator": "CmdOrCtrl+Shift+J",
+                "action": "view.toggleSidebar",
+                "enabled": true,
+                "id": "view.sidebar",
+                "kind": "item",
+                "label": "Seitenleiste ein- oder ausblenden",
+                "shortcutText": "⇧⌘J"
+              },
+              {
+                "enabled": false,
+                "id": "sep.view.zoom",
+                "kind": "separator",
+                "label": ""
+              },
+              {
+                "accelerator": "CmdOrCtrl+=",
+                "action": "zoom.in",
+                "enabled": true,
+                "id": "view.zoomIn",
+                "kind": "item",
+                "label": "Vergrößern",
+                "shortcutText": "⌘="
+              },
+              {
+                "accelerator": "CmdOrCtrl+-",
+                "action": "zoom.out",
+                "enabled": true,
+                "id": "view.zoomOut",
+                "kind": "item",
+                "label": "Verkleinern",
+                "shortcutText": "⌘-"
+              },
+              {
+                "accelerator": "CmdOrCtrl+0",
+                "action": "zoom.reset",
+                "enabled": true,
+                "id": "view.zoomReset",
+                "kind": "item",
+                "label": "Zoom auf 100 % zurücksetzen",
+                "shortcutText": "⌘0"
+              }
+            ],
+            "label": "Ansicht"
+          },
+          {
+            "id": "window",
+            "items": [
+              {
+                "enabled": true,
+                "id": "window.minimize",
+                "kind": "predefined",
+                "label": "Im Dock ablegen",
+                "predefined": "minimize"
+              },
+              {
+                "enabled": true,
+                "id": "window.zoom",
+                "kind": "predefined",
+                "label": "Zoomen",
+                "predefined": "maximize"
+              },
+              {
+                "enabled": true,
+                "id": "window.front",
+                "kind": "predefined",
+                "label": "Alle nach vorne bringen",
+                "predefined": "bringAllToFront"
+              }
+            ],
+            "label": "Fenster"
+          },
+          {
+            "id": "help",
+            "items": [
+              {
+                "action": "help.shortcuts",
+                "enabled": true,
+                "id": "help.shortcuts",
+                "kind": "item",
+                "label": "Tastaturkürzel"
+              }
+            ],
+            "label": "Hilfe"
+          }
+        ],
+        "nativeAccelerators": [
+          "app.settings",
+          "crawl.new",
+          "crawl.open",
+          "crawl.saveAs",
+          "view.toggleDetail",
+          "view.toggleSidebar",
+          "zoom.in",
+          "zoom.out",
+          "zoom.reset"
+        ],
+        "platform": "mac"
+      },
+      "rebuilds": 53
+    },
     "shell": {
       "minimized": false,
       "visible": true
     },
-    "ticks": [],
+    "ticks": [
+      {
+        "at": 3226,
+        "phase": "running",
+        "seq": 1
+      },
+      {
+        "at": 3827,
+        "phase": "running",
+        "seq": 2
+      },
+      {
+        "at": 4431,
+        "phase": "running",
+        "seq": 3
+      },
+      {
+        "at": 4925,
+        "phase": "running",
+        "seq": 4
+      },
+      {
+        "at": 5523,
+        "phase": "running",
+        "seq": 5
+      },
+      {
+        "at": 6024,
+        "phase": "running",
+        "seq": 6
+      },
+      {
+        "at": 6527,
+        "phase": "running",
+        "seq": 7
+      },
+      {
+        "at": 7125,
+        "phase": "running",
+        "seq": 8
+      },
+      {
+        "at": 7724,
+        "phase": "running",
+        "seq": 9
+      },
+      {
+        "at": 8224,
+        "phase": "running",
+        "seq": 10
+      },
+      {
+        "at": 8725,
+        "phase": "running",
+        "seq": 11
+      },
+      {
+        "at": 9225,
+        "phase": "running",
+        "seq": 12
+      },
+      {
+        "at": 9825.000000000002,
+        "phase": "running",
+        "seq": 13
+      },
+      {
+        "at": 10325.000000000002,
+        "phase": "running",
+        "seq": 14
+      },
+      {
+        "at": 10924,
+        "phase": "running",
+        "seq": 15
+      },
+      {
+        "at": 11426,
+        "phase": "running",
+        "seq": 16
+      },
+      {
+        "at": 11927,
+        "phase": "running",
+        "seq": 17
+      },
+      {
+        "at": 12525,
+        "phase": "running",
+        "seq": 18
+      },
+      {
+        "at": 13027.000000000002,
+        "phase": "running",
+        "seq": 19
+      },
+      {
+        "at": 13624,
+        "phase": "running",
+        "seq": 20
+      },
+      {
+        "at": 14124,
+        "phase": "running",
+        "seq": 21
+      },
+      {
+        "at": 14625,
+        "phase": "running",
+        "seq": 22
+      },
+      {
+        "at": 15225,
+        "phase": "running",
+        "seq": 23
+      },
+      {
+        "at": 15726,
+        "phase": "running",
+        "seq": 24
+      },
+      {
+        "at": 16326,
+        "phase": "running",
+        "seq": 25
+      },
+      {
+        "at": 16926.000000000004,
+        "phase": "running",
+        "seq": 26
+      },
+      {
+        "at": 17526,
+        "phase": "running",
+        "seq": 27
+      },
+      {
+        "at": 18125,
+        "phase": "running",
+        "seq": 28
+      },
+      {
+        "at": 18628,
+        "phase": "running",
+        "seq": 29
+      },
+      {
+        "at": 19226,
+        "phase": "running",
+        "seq": 30
+      },
+      {
+        "at": 19826,
+        "phase": "running",
+        "seq": 31
+      },
+      {
+        "at": 20424,
+        "phase": "running",
+        "seq": 32
+      },
+      {
+        "at": 20925,
+        "phase": "running",
+        "seq": 33
+      },
+      {
+        "at": 21426.000000000004,
+        "phase": "running",
+        "seq": 34
+      },
+      {
+        "at": 21926.000000000004,
+        "phase": "running",
+        "seq": 35
+      },
+      {
+        "at": 22527,
+        "phase": "running",
+        "seq": 36
+      },
+      {
+        "at": 23125,
+        "phase": "running",
+        "seq": 37
+      },
+      {
+        "at": 23727,
+        "phase": "running",
+        "seq": 38
+      },
+      {
+        "at": 24326,
+        "phase": "running",
+        "seq": 39
+      },
+      {
+        "at": 24927,
+        "phase": "running",
+        "seq": 40
+      },
+      {
+        "at": 25525.000000000004,
+        "phase": "running",
+        "seq": 41
+      },
+      {
+        "at": 26126,
+        "phase": "running",
+        "seq": 42
+      },
+      {
+        "at": 26625,
+        "phase": "running",
+        "seq": 43
+      },
+      {
+        "at": 27127,
+        "phase": "running",
+        "seq": 44
+      },
+      {
+        "at": 27724,
+        "phase": "running",
+        "seq": 45
+      },
+      {
+        "at": 28225,
+        "phase": "running",
+        "seq": 46
+      },
+      {
+        "at": 28825,
+        "phase": "running",
+        "seq": 47
+      },
+      {
+        "at": 29325,
+        "phase": "running",
+        "seq": 48
+      },
+      {
+        "at": 29924,
+        "phase": "running",
+        "seq": 49
+      },
+      {
+        "at": 30844,
+        "phase": "running",
+        "seq": 50
+      },
+      {
+        "at": 33225,
+        "phase": "running",
+        "seq": 51
+      },
+      {
+        "at": 33441,
+        "phase": "running",
+        "seq": 52
+      },
+      {
+        "at": 33962,
+        "phase": "running",
+        "seq": 53
+      },
+      {
+        "at": 34028,
+        "phase": "running",
+        "seq": 54
+      },
+      {
+        "at": 34547.00000000001,
+        "phase": "running",
+        "seq": 55
+      },
+      {
+        "at": 34724.00000000001,
+        "phase": "running",
+        "seq": 56
+      }
+    ],
     "transport": "tauri",
-    "visibility": [],
-    "menuRef": "#/menu"
+    "visibility": []
   },
-  "seconds": 3.63,
-  "status": "failed",
-  "evidenceDate": "2026-10-19",
-  "baseCommit": "ef32c7f",
-  "menu": {
-    "model": {
-      "lang": "de",
-      "menus": [
-        {
-          "id": "app",
-          "items": [
-            {
-              "action": "app.about",
-              "enabled": true,
-              "id": "app.about",
-              "kind": "item",
-              "label": "Über OpenSpider"
-            },
-            {
-              "enabled": false,
-              "id": "sep.app.settings",
-              "kind": "separator",
-              "label": ""
-            },
-            {
-              "accelerator": "CmdOrCtrl+,",
-              "action": "app.settings",
-              "enabled": true,
-              "id": "app.settings",
-              "kind": "item",
-              "label": "Einstellungen…",
-              "shortcutText": "⌘,"
-            },
-            {
-              "enabled": false,
-              "id": "sep.app.system",
-              "kind": "separator",
-              "label": ""
-            },
-            {
-              "enabled": true,
-              "id": "app.services",
-              "kind": "predefined",
-              "label": "Dienste",
-              "predefined": "services"
-            },
-            {
-              "enabled": true,
-              "id": "app.hide",
-              "kind": "predefined",
-              "label": "OpenSpider ausblenden",
-              "predefined": "hide"
-            },
-            {
-              "enabled": true,
-              "id": "app.hideOthers",
-              "kind": "predefined",
-              "label": "Andere ausblenden",
-              "predefined": "hideOthers"
-            },
-            {
-              "enabled": true,
-              "id": "app.showAll",
-              "kind": "predefined",
-              "label": "Alle einblenden",
-              "predefined": "showAll"
-            },
-            {
-              "enabled": false,
-              "id": "sep.app.quit",
-              "kind": "separator",
-              "label": ""
-            },
-            {
-              "action": "app.quit",
-              "enabled": true,
-              "id": "app.quit",
-              "kind": "item",
-              "label": "OpenSpider beenden"
-            }
-          ],
-          "label": "OpenSpider"
-        },
-        {
-          "id": "file",
-          "items": [
-            {
-              "accelerator": "CmdOrCtrl+N",
-              "action": "crawl.new",
-              "enabled": true,
-              "id": "file.new",
-              "kind": "item",
-              "label": "Neuer Crawl",
-              "shortcutText": "⌘N"
-            },
-            {
-              "accelerator": "CmdOrCtrl+O",
-              "action": "crawl.open",
-              "enabled": true,
-              "id": "file.open",
-              "kind": "item",
-              "label": "Crawl öffnen",
-              "shortcutText": "⌘O"
-            },
-            {
-              "accelerator": "CmdOrCtrl+S",
-              "action": "crawl.saveAs",
-              "disabledReason": "Öffne oder starte zuerst einen Crawl.",
-              "enabled": false,
-              "id": "file.saveAs",
-              "kind": "item",
-              "label": "Crawl speichern unter…",
-              "shortcutText": "⌘S"
-            }
-          ],
-          "label": "Datei"
-        },
-        {
-          "id": "edit",
-          "items": [
-            {
-              "enabled": true,
-              "id": "edit.undo",
-              "kind": "predefined",
-              "label": "Rückgängig",
-              "predefined": "undo"
-            },
-            {
-              "enabled": true,
-              "id": "edit.redo",
-              "kind": "predefined",
-              "label": "Wiederholen",
-              "predefined": "redo"
-            },
-            {
-              "enabled": false,
-              "id": "edit.sep1",
-              "kind": "separator",
-              "label": ""
-            },
-            {
-              "enabled": true,
-              "id": "edit.cut",
-              "kind": "predefined",
-              "label": "Ausschneiden",
-              "predefined": "cut"
-            },
-            {
-              "enabled": true,
-              "id": "edit.copy",
-              "kind": "predefined",
-              "label": "Kopieren",
-              "predefined": "copy"
-            },
-            {
-              "enabled": true,
-              "id": "edit.paste",
-              "kind": "predefined",
-              "label": "Einfügen",
-              "predefined": "paste"
-            },
-            {
-              "enabled": true,
-              "id": "edit.selectAll",
-              "kind": "predefined",
-              "label": "Alles auswählen",
-              "predefined": "selectAll"
-            }
-          ],
-          "label": "Bearbeiten"
-        },
-        {
-          "id": "view",
-          "items": [
-            {
-              "accelerator": "CmdOrCtrl+J",
-              "action": "view.toggleDetail",
-              "enabled": true,
-              "id": "view.detail",
-              "kind": "item",
-              "label": "Detailfenster ein- oder ausblenden",
-              "shortcutText": "⌘J"
-            },
-            {
-              "accelerator": "CmdOrCtrl+Shift+J",
-              "action": "view.toggleSidebar",
-              "enabled": true,
-              "id": "view.sidebar",
-              "kind": "item",
-              "label": "Seitenleiste ein- oder ausblenden",
-              "shortcutText": "⇧⌘J"
-            },
-            {
-              "enabled": false,
-              "id": "sep.view.zoom",
-              "kind": "separator",
-              "label": ""
-            },
-            {
-              "accelerator": "CmdOrCtrl+=",
-              "action": "zoom.in",
-              "enabled": true,
-              "id": "view.zoomIn",
-              "kind": "item",
-              "label": "Vergrößern",
-              "shortcutText": "⌘="
-            },
-            {
-              "accelerator": "CmdOrCtrl+-",
-              "action": "zoom.out",
-              "enabled": true,
-              "id": "view.zoomOut",
-              "kind": "item",
-              "label": "Verkleinern",
-              "shortcutText": "⌘-"
-            },
-            {
-              "accelerator": "CmdOrCtrl+0",
-              "action": "zoom.reset",
-              "enabled": true,
-              "id": "view.zoomReset",
-              "kind": "item",
-              "label": "Zoom auf 100 % zurücksetzen",
-              "shortcutText": "⌘0"
-            }
-          ],
-          "label": "Ansicht"
-        },
-        {
-          "id": "window",
-          "items": [
-            {
-              "enabled": true,
-              "id": "window.minimize",
-              "kind": "predefined",
-              "label": "Im Dock ablegen",
-              "predefined": "minimize"
-            },
-            {
-              "enabled": true,
-              "id": "window.zoom",
-              "kind": "predefined",
-              "label": "Zoomen",
-              "predefined": "maximize"
-            },
-            {
-              "enabled": true,
-              "id": "window.front",
-              "kind": "predefined",
-              "label": "Alle nach vorne bringen",
-              "predefined": "bringAllToFront"
-            }
-          ],
-          "label": "Fenster"
-        },
-        {
-          "id": "help",
-          "items": [
-            {
-              "action": "help.shortcuts",
-              "enabled": true,
-              "id": "help.shortcuts",
-              "kind": "item",
-              "label": "Tastaturkürzel"
-            }
-          ],
-          "label": "Hilfe"
-        }
-      ],
-      "nativeAccelerators": [
-        "app.settings",
-        "crawl.new",
-        "crawl.open",
-        "crawl.saveAs",
-        "view.toggleDetail",
-        "view.toggleSidebar",
-        "zoom.in",
-        "zoom.out",
-        "zoom.reset"
-      ],
-      "platform": "mac"
-    },
-    "rebuilds": 2
-  },
-  "encodingNote": "Repeated identical menu snapshots are stored once at /menu; menuRef is a JSON pointer."
+  "seconds": 39.905,
+  "status": "failed"
 }

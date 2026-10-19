@@ -1,6 +1,9 @@
 name: ui-e2e-b
 
 on:
+  # Temporary S02 branch trigger: remove before merge, unless the planner retains it for reruns.
+  push:
+    branches: [m2/s02]
   schedule:
     - cron: "23 2 * * *"
   workflow_dispatch:
@@ -42,6 +45,7 @@ jobs:
       - run: npm ci
       - run: npm run -w apps/desktop check:licenses
       - run: npx --no-install tsc -p apps/desktop/spikes/tsconfig.json
+      - run: node --test apps/desktop/e2e-b/measurement.test.mjs
       - name: Build macOS embedded driver
         if: runner.os == 'macOS'
         run: |
