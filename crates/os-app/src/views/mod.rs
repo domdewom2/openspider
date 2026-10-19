@@ -92,13 +92,34 @@ pub fn release_idle(app: &App) {
     let now = app.config().clock.monotonic();
     let mut max = Budget::default().max_bytes;
     for view in &views {
-        max = view.budget.max_bytes;
+        max = max.min(view.budget.max_bytes);
         let mut state = lock(&view.state);
         if state.snapshot.is_some() && now.saturating_sub(state.used) >= view.budget.idle_release {
             state.snapshot = None;
         }
     }
+    lock(&shared.links).retain(|l| match l.upgrade() {
+        Some(l) => {
+            let mut ids = lock(&l.ids);
+            if ids
+                .as_ref()
+                .is_some_and(|(_, used)| now.saturating_sub(*used) >= l.idle)
+            {
+                *ids = None;
+            }
+            true
+        }
+        None => false,
+    });
     release_unused(max);
+    // Positions the shared LRU budget released must not stay alive in a published snapshot.
+    for view in &views {
+        if let Ok(session) = view.session.try_lock() {
+            if session.as_ref().is_some_and(|s| s.memory_bytes() == 0) {
+                lock(&view.state).snapshot = None;
+            }
+        }
+    }
 }
 
 /// Belegter Speicher aller Views der App (Positionslisten, Umkehrabbildungen, Bitmaps, Permutationen).
@@ -106,15 +127,12 @@ pub fn retained_bytes(app: &App) -> u64 {
     live(&shared(app))
         .iter()
         .map(|v| {
-            let held = lock(&v.state).snapshot.is_some();
             // try_lock: a running build must not block the measurement
-            let core = v
-                .session
+            v.session
                 .try_lock()
                 .ok()
                 .and_then(|s| s.as_ref().map(ViewSession::memory_bytes))
-                .unwrap_or(0);
-            core + u64::from(held)
+                .unwrap_or(0)
         })
         .sum()
 }
@@ -125,6 +143,7 @@ struct Shared {
     provider: Mutex<Option<Arc<dyn RestrictProvider>>>,
     budget: Mutex<Option<Budget>>,
     views: Mutex<Vec<Weak<TabView>>>,
+    links: Mutex<Vec<Weak<LinkView>>>,
     changed: Mutex<Vec<ViewChanged>>,
 }
 impl TickSource for Shared {
@@ -194,7 +213,11 @@ struct State {
     /// Generation der Kernsitzung, zu der `snapshot` gehört.
     core: u64,
     used: Duration,
+    /// Letzte Meldung eines Zugriffs an die Kernsitzung (deren eigene 60-s-Freigabe).
+    touched: Duration,
 }
+/// Abstand, in dem Zugriffe an die Kernsitzung weitergemeldet werden.
+const TOUCH_INTERVAL: Duration = Duration::from_secs(5);
 #[derive(Default)]
 struct Pending {
     ids: Vec<UrlId>,
@@ -231,6 +254,7 @@ impl TabView {
                 snapshot: None,
                 core: 0,
                 used: app.config().clock.monotonic(),
+                touched: app.config().clock.monotonic(),
             }),
             pending: Mutex::new(None),
             worker: AtomicBool::new(false),
@@ -319,6 +343,7 @@ impl TabView {
         st.snapshot = Some(snapshot);
         st.core = core;
         st.used = self.clock.monotonic();
+        st.touched = st.used;
         st.published = Some(Published {
             session,
             spec,
@@ -402,8 +427,27 @@ impl TabView {
         }
         let (snapshot, core) = self.snapshot(app, version).await?;
         let meta = self.published().map(|p| p.meta).unwrap_or_default();
+        let touch = {
+            let mut st = lock(&self.state);
+            let now = self.clock.monotonic();
+            let due = now.saturating_sub(st.touched) >= TOUCH_INTERVAL;
+            if due {
+                st.touched = now;
+            }
+            due
+        };
+        let slot = self.session.clone();
         app.read_pool()
             .run(self.key.clone(), move |file, _| {
+                if touch {
+                    // Keeps the core's idle clock in step with reads served from the snapshot; skipped while a
+                    // build holds the session.
+                    if let Ok(session) = slot.try_lock() {
+                        if let Some(s) = session.as_ref() {
+                            let _ = s.snapshot(file);
+                        }
+                    }
+                }
                 Ok(snapshot.rows(
                     file,
                     RowsReq {
@@ -587,5 +631,58 @@ async fn until_cancelled<T>(
     tokio::select! {
         r = work => Ok(r),
         _ = notify.notified() => Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled")),
+    }
+}
+
+/// Materialisierte Link-ID-Liste einer Detail-View (Inlinks/Outlinks/Resources, K-1g): einmal in Tabellenreihenfolge
+/// gelesen, danach liest jedes Fenster nur seine IDs (kein `COUNT`/`OFFSET` je Fenster, auch bei 1 Mio. Inlinks).
+/// Freigabe nach dem Leerlaufbudget wie bei Tab-Views; der nächste Zugriff liest die Liste neu.
+pub(crate) struct LinkView {
+    key: CrawlKey,
+    clock: Arc<dyn Clock>,
+    idle: Duration,
+    ids: Mutex<Option<(Arc<Vec<i64>>, Duration)>>,
+}
+impl LinkView {
+    pub fn new(app: &App, key: CrawlKey) -> Arc<LinkView> {
+        let shared = shared(app);
+        let idle = lock(&shared.budget).unwrap_or_default().idle_release;
+        let view = Arc::new(LinkView {
+            key,
+            clock: app.config().clock.clone(),
+            idle,
+            ids: Mutex::new(None),
+        });
+        lock(&shared.links).push(Arc::downgrade(&view));
+        view
+    }
+    /// Link-IDs des Datenstands `version` (`change_seq`); ein anderer Stand ist `Stale`.
+    pub async fn ids(
+        &self,
+        app: &App,
+        version: u64,
+        selection: os_store::queries::app_support::LinkSelection,
+        page: os_store::queries::PageReq,
+    ) -> Result<Arc<Vec<i64>>, CmdError> {
+        let now = self.clock.monotonic();
+        if let Some((ids, used)) = lock(&self.ids).as_mut() {
+            *used = now;
+            return Ok(ids.clone());
+        }
+        let ids = app
+            .read_pool()
+            .run(self.key.clone(), move |file, _| {
+                let seq = os_store::queries::change_seq(file.conn())?;
+                if seq != version {
+                    return Ok(None);
+                }
+                os_store::queries::app_support::selected_link_ids(file.conn(), &selection, &page)
+                    .map(Some)
+            })
+            .await?
+            .ok_or_else(crate::commands::view::stale)?;
+        let ids = Arc::new(ids);
+        *lock(&self.ids) = Some((ids.clone(), now));
+        Ok(ids)
     }
 }

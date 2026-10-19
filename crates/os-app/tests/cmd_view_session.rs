@@ -389,3 +389,79 @@ async fn idle_views_release_their_memory_after_60_seconds_and_rebuild_lazily() {
     fx.call("view.close", json!({"viewId":h["viewId"]})).await;
     assert_eq!(os_app::views::retained_bytes(&fx.app), 0);
 }
+
+// spec: UI-142
+#[tokio::test]
+async fn views_in_use_are_kept_beyond_60_seconds() {
+    let (fx, clock, _home) = fx_clock();
+    let h = fx.open(tab(), json!(["Address"])).await;
+    for _ in 0..4 {
+        clock.advance(Duration::from_secs(30));
+        fx.rows(&h, 0, 1, json!([])).await;
+        os_app::views::release_idle(&fx.app);
+        assert!(os_app::views::retained_bytes(&fx.app) > 0);
+    }
+}
+
+// spec: UI-032
+// spec: UI-140
+// spec: UI-142
+#[tokio::test]
+async fn inlink_views_page_a_materialized_id_list() {
+    let fx = Fx::new();
+    // 1 500 additional inlinks of URL 2 (K-1g: materialized link IDs instead of COUNT/OFFSET per window).
+    fx.write(
+        "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 1500) \
+         INSERT INTO links (id, source_id, target_id, target_raw, link_type, position, anchor, follow, link_position) \
+         SELECT 10000 + i, 1, 2, '/blog/a', 'Hyperlink', 100 + i, printf('a%04d', i), 1, 'Content' FROM n",
+    );
+    let mut spec = links(true);
+    spec["sort"] = json!([{"column":"Anchor Text","dir":"desc"}]);
+    let h = fx.open(spec, json!(["From", "Anchor Text"])).await;
+    let total = h["total"].as_u64().unwrap();
+    assert!(total > 1500);
+    let mut keys = Vec::new();
+    let mut anchors = Vec::new();
+    let mut offset = 0;
+    while offset < total {
+        let w = fx.rows(&h, offset, 500, json!([])).await;
+        assert_eq!(w["offset"], offset);
+        for (k, row) in w["rowKeys"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .zip(w["cells"].as_array().unwrap())
+        {
+            keys.push(k.as_i64().unwrap());
+            anchors.push(row[1].as_str().unwrap_or_default().to_string());
+        }
+        offset += 500;
+    }
+    assert_eq!(keys.len() as u64, total);
+    let ours = anchors
+        .iter()
+        .filter(|a| a.len() == 5 && a.starts_with('a'))
+        .collect::<Vec<_>>();
+    assert_eq!(ours.len(), 1500);
+    assert!(
+        ours.windows(2).all(|w| w[0] > w[1]),
+        "descending anchors across windows"
+    );
+    // Random access matches the sequential order; locate uses the same list.
+    let w = fx.rows(&h, 777, 3, json!([])).await;
+    assert_eq!(w["rowKeys"], json!(keys[777..780]));
+    assert_eq!(
+        fx.call(
+            "view.locate",
+            json!({"viewId":h["viewId"],"urlId":keys[1234]})
+        )
+        .await,
+        1234
+    );
+    // Link views stay bound to their data state.
+    fx.write("UPDATE crawl_meta SET value='43' WHERE key='change_seq'");
+    let e = try_call(&fx, "view.rows", rows_args(&h, &h["version"], 0, 1))
+        .await
+        .unwrap_err();
+    assert_eq!(e.code, ErrorCode::Stale);
+}

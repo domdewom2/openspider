@@ -9,7 +9,7 @@ use crate::{
         sessions::SessionInfo,
         App, CallCtx, WindowId,
     },
-    views::{Built, TabView},
+    views::{Built, LinkView, TabView},
 };
 use futures_util::future::BoxFuture;
 use os_analyze::{
@@ -39,6 +39,16 @@ pub(crate) struct OpenView {
     pub version: u64,
     /// K-1 session of a tab view; its published state overrides the fields above.
     pub tab: Option<Arc<TabView>>,
+    /// Materialized link IDs of an inlinks/outlinks/resources view (K-1g).
+    pub links: Option<Arc<LinkView>>,
+}
+/// Link tables with a materialized ID list; the anchor aggregation stays a detail source.
+fn link_list(app: &App, s: &SessionInfo, spec: &ViewSpec) -> Option<Arc<LinkView>> {
+    (matches!(
+        spec,
+        ViewSpec::Inlinks { .. } | ViewSpec::Outlinks { .. } | ViewSpec::Resources { .. }
+    ) && detail_spec(spec).is_none())
+    .then(|| LinkView::new(app, s.key.clone()))
 }
 #[derive(Default)]
 struct Views {
@@ -787,12 +797,14 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
                     columns: args.columns,
                     version: h.version,
                     tab: Some(tab),
+                    links: None,
                 },
             );
             return to_json(&h);
         }
         let p = page(app, &s, args.spec.clone(), args.columns.clone(), 0, 1, None).await?;
         let h = handle(id.clone(), p);
+        let links = link_list(app, &s, &args.spec);
         insert(
             app,
             id,
@@ -803,10 +815,15 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
                 columns: args.columns,
                 version: h.version,
                 tab: None,
+                links,
             },
         );
         to_json(&h)
     })
+}
+async fn link_ids(app: &App, v: &OpenView, links: &LinkView) -> Result<Arc<Vec<i64>>, CmdError> {
+    let (selection, page) = link_selection(&v.spec, &v.session.config, 0, 1)?;
+    links.ids(app, v.version, selection, page).await
 }
 fn insert(app: &App, id: String, view: OpenView) {
     registry(app)
@@ -941,6 +958,7 @@ fn update<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
         if !entries.contains_key(&args.view_id) {
             return Err(CmdError::new(ErrorCode::NotFound, "err-view-not-found"));
         }
+        v.links = link_list(app, &v.session, &args.spec);
         v.spec = args.spec;
         v.version = h.version;
         v.tab = tab;
@@ -993,20 +1011,28 @@ fn rows<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
                 cells: cells(w.rows, &w.meta),
             });
         }
-        let p = page(
-            app,
-            &v.session,
-            v.spec,
-            if args.columns.is_empty() {
-                v.columns
-            } else {
-                args.columns
-            },
-            args.offset,
-            args.limit,
-            Some(args.version),
-        )
-        .await?;
+        let columns = if args.columns.is_empty() {
+            v.columns.clone()
+        } else {
+            args.columns
+        };
+        let p = if let Some(links) = &v.links {
+            let ids = link_ids(app, &v, links).await?;
+            let start = (args.offset.min(ids.len() as u64)) as usize;
+            let end = start.saturating_add(args.limit as usize).min(ids.len());
+            selected_page(app, &v, columns, ids[start..end].to_vec(), 0, args.limit).await?
+        } else {
+            page(
+                app,
+                &v.session,
+                v.spec,
+                columns,
+                args.offset,
+                args.limit,
+                Some(args.version),
+            )
+            .await?
+        };
         to_json(&RowWindow {
             view_id: args.view_id,
             version: p.version,
@@ -1023,6 +1049,14 @@ fn locate<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
         let v = get(app, &ctx, &args.view_id)?;
         if let Some(tab) = &v.tab {
             return to_json(&tab.locate(app, v.version, args.url_id).await?);
+        }
+        if let Some(links) = &v.links {
+            let ids = link_ids(app, &v, links).await?;
+            return to_json(
+                &ids.iter()
+                    .position(|id| *id == args.url_id)
+                    .map(|i| i as u64),
+            );
         }
         let mut offset = 0;
         loop {
