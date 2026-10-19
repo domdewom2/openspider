@@ -15,14 +15,20 @@
 //!   prozentkodiert (`/über-uns` → `/%C3%BCber-uns`), IDN-Hosts in Punycode; URLs über 2 048 Zeichen fehlen in
 //!   der Sitemap und stehen im Bericht ([`SitemapReport::skipped_too_long`]).
 //!
-//! Nicht Teil von M1 (P1/P2): `lastmod`, `changefreq`, `priority`, Bilder, hreflang, Einschlussoptionen,
-//! Regex-Ausschluss, Segmente und gzip (OUT-121 ff.). Die Sitemap enthält deshalb je URL nur `<loc>`.
+//! M2 ergänzt Einschlussregeln, Metadaten, Bilder und hreflang (OUT-121 … 128).
+//! Optionen kommen aus der eingebetteten Konfiguration oder ausdrücklich über
+//! [`generate_sitemap_configured_with`]. Die Verarbeitung hält nur einen URL-Eintrag im Speicher.
 //! Ohne passende URL entsteht keine Datei (eine leere `urlset` verletzt das Schema).
+
+mod entries;
+mod selection;
+
+pub use entries::hreflang_available;
 
 use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
 
-use os_model::{Clock, SystemClock};
+use os_model::{Clock, CrawlConfig, SystemClock};
 use os_store::CrawlFile;
 
 use crate::error::ExportError;
@@ -41,7 +47,6 @@ pub const MAX_LOC_CHARS: usize = 2_048;
 pub const PROTOCOL_MAX_URLS: u32 = 50_000;
 
 const XML_DECLARATION: &str = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-const URLSET_OPEN: &str = "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
 const URLSET_CLOSE: &str = "</urlset>\n";
 
 /// Auswahl der Seiten (OUT-120), in Crawl-Reihenfolge.
@@ -74,6 +79,57 @@ pub fn generate_sitemap_with(
     clock: &dyn Clock,
     out_dir: &Path,
 ) -> Result<SitemapReport, ExportError> {
+    let config = db(file.config())?;
+    generate_sitemap_configured_with(file, opts, &config, base_url, clock, out_dir)
+}
+
+/// Erzeugt eine Seiten-Sitemap mit ausdrücklich gewählten v2-Optionen, ohne die Crawl-Datei zu ändern.
+/// `config.spider.hreflang.store` beschreibt, ob der Crawl hreflang extrahiert hat.
+pub fn generate_sitemap_configured_with(
+    file: &CrawlFile,
+    opts: &SitemapOptions,
+    config: &CrawlConfig,
+    base_url: Option<&str>,
+    clock: &dyn Clock,
+    out_dir: &Path,
+) -> Result<SitemapReport, ExportError> {
+    generate(file, opts, config, base_url, clock, out_dir, false)
+}
+
+/// Separate Bild-Sitemap (OUT-127), mit den Optionen des Crawls. Bilder sind in diesem Modus immer aktiv.
+pub fn generate_image_sitemap(
+    file: &CrawlFile,
+    opts: &SitemapOptions,
+    out_dir: &Path,
+) -> Result<SitemapReport, ExportError> {
+    let config = db(file.config())?;
+    generate_image_sitemap_with(file, opts, &config, None, &SystemClock, out_dir)
+}
+
+/// Separate Bild-Sitemap mit ausdrücklicher Konfiguration und Uhr. Seiten ohne passende Bilder fehlen.
+pub fn generate_image_sitemap_with(
+    file: &CrawlFile,
+    opts: &SitemapOptions,
+    config: &CrawlConfig,
+    base_url: Option<&str>,
+    clock: &dyn Clock,
+    out_dir: &Path,
+) -> Result<SitemapReport, ExportError> {
+    generate(file, opts, config, base_url, clock, out_dir, true)
+}
+
+fn generate(
+    file: &CrawlFile,
+    opts: &SitemapOptions,
+    config: &CrawlConfig,
+    base_url: Option<&str>,
+    clock: &dyn Clock,
+    out_dir: &Path,
+    images_only: bool,
+) -> Result<SitemapReport, ExportError> {
+    let settings = entries::Settings::new(config, images_only)?;
+    let names = Names::new(images_only);
+    let header = settings.header();
     if opts.max_urls_per_file == 0 || opts.max_urls_per_file > PROTOCOL_MAX_URLS {
         return Err(ExportError::Write(format!(
             "max_urls_per_file muss zwischen 1 und {PROTOCOL_MAX_URLS} liegen (war {})",
@@ -89,10 +145,14 @@ pub fn generate_sitemap_with(
     let mut parts: Vec<Part> = Vec::new();
     let mut open: Option<Open> = None;
 
-    let mut stmt = db(file.conn().prepare(SELECTION_SQL))?;
+    let sql = selection::sql(&config.sitemap_gen);
+    let mut stmt = db(file.conn().prepare(&sql))?;
     let mut rows = db(stmt.query([]))?;
     while let Some(row) = db(rows.next())? {
         let stored: String = db(row.get(0))?;
+        if settings.excluded(&stored)? {
+            continue;
+        }
         let Some(loc) = sitemap_loc(&stored) else {
             tracing::warn!("URL nicht für die Sitemap darstellbar, ausgelassen: {stored}");
             continue;
@@ -101,7 +161,28 @@ pub fn generate_sitemap_with(
             report.skipped_too_long.push(loc);
             continue;
         }
-        let entry = format!("  <url>\n    <loc>{}</loc>\n  </url>\n", escape_xml(&loc));
+        let id: i64 = db(row.get(1))?;
+        let depth: Option<u32> = db(row.get(2))?;
+        let modified: Option<String> = db(row.get(3))?;
+        let crawled: Option<String> = db(row.get(4))?;
+        let (entry, warnings) = settings.entry(
+            file,
+            entries::Page {
+                loc: &loc,
+                id,
+                depth: depth.unwrap_or(0),
+                modified: modified.as_deref(),
+                crawled: crawled.as_deref(),
+            },
+        )?;
+        let Some(entry) = entry else { continue };
+        if header.len() as u64 + entry.len() as u64 + URLSET_CLOSE.len() as u64
+            > opts.max_bytes_per_file
+        {
+            return Err(ExportError::Write(format!(
+                "Sitemap-Eintrag überschreitet das Byte-Limit: {loc}"
+            )));
+        }
         let full = match &open {
             None => true,
             Some(o) => {
@@ -115,11 +196,12 @@ pub fn generate_sitemap_with(
             if let Some(o) = open.take() {
                 parts.push(o.finish()?);
             }
-            open = Some(Open::create(out_dir, parts.len() + 1)?);
+            open = Some(Open::create(out_dir, parts.len() + 1, &names, &header)?);
         }
         if let Some(o) = open.as_mut() {
             o.write(entry.as_bytes())?;
             o.urls += 1;
+            o.warnings.extend(warnings);
         }
         report.urls += 1;
     }
@@ -131,7 +213,7 @@ pub fn generate_sitemap_with(
         0 => {}
         1 => {
             let part = parts.remove(0);
-            let target = out_dir.join(SINGLE_FILE);
+            let target = out_dir.join(names.single);
             std::fs::rename(fs_paths::fs_path(&part.path), fs_paths::fs_path(&target)).map_err(
                 |source| ExportError::Io {
                     path: target.clone(),
@@ -142,7 +224,7 @@ pub fn generate_sitemap_with(
                 path: target,
                 rows: part.urls,
                 bytes: part.bytes,
-                warnings: Vec::new(),
+                warnings: part.warnings,
             });
         }
         _ => {
@@ -165,14 +247,14 @@ pub fn generate_sitemap_with(
                 ));
             }
             index.push_str("</sitemapindex>\n");
-            let index_path = out_dir.join(INDEX_FILE);
+            let index_path = out_dir.join(names.index);
             write_all(&index_path, index.as_bytes())?;
             for part in parts {
                 report.files.push(ExportFileInfo {
                     path: part.path,
                     rows: part.urls,
                     bytes: part.bytes,
-                    warnings: Vec::new(),
+                    warnings: part.warnings,
                 });
             }
             report.files.push(ExportFileInfo {
@@ -240,11 +322,36 @@ fn base_url_for(file: &CrawlFile, explicit: Option<&str>) -> Result<String, Expo
     })
 }
 
+struct Names {
+    single: &'static str,
+    stem: &'static str,
+    index: &'static str,
+}
+
+impl Names {
+    fn new(images_only: bool) -> Self {
+        if images_only {
+            Self {
+                single: "image-sitemap.xml",
+                stem: "image-sitemap",
+                index: "image-sitemap_index.xml",
+            }
+        } else {
+            Self {
+                single: SINGLE_FILE,
+                stem: "sitemap",
+                index: INDEX_FILE,
+            }
+        }
+    }
+}
+
 /// Eine fertig geschriebene Teildatei.
 struct Part {
     path: PathBuf,
     urls: u64,
     bytes: u64,
+    warnings: Vec<String>,
 }
 
 /// Eine gerade geschriebene Teildatei.
@@ -253,11 +360,12 @@ struct Open {
     out: BufWriter<std::fs::File>,
     urls: u32,
     bytes: u64,
+    warnings: Vec<String>,
 }
 
 impl Open {
-    fn create(dir: &Path, number: usize) -> Result<Self, ExportError> {
-        let path = dir.join(format!("sitemap_{number}.xml"));
+    fn create(dir: &Path, number: usize, names: &Names, header: &str) -> Result<Self, ExportError> {
+        let path = dir.join(format!("{}_{number}.xml", names.stem));
         let file = fs_paths::create_file(&path).map_err(|source| ExportError::Io {
             path: path.clone(),
             source,
@@ -267,9 +375,9 @@ impl Open {
             out: BufWriter::with_capacity(256 * 1024, file),
             urls: 0,
             bytes: 0,
+            warnings: Vec::new(),
         };
-        open.write(XML_DECLARATION.as_bytes())?;
-        open.write(URLSET_OPEN.as_bytes())?;
+        open.write(header.as_bytes())?;
         Ok(open)
     }
 
@@ -294,6 +402,7 @@ impl Open {
             path: self.path,
             urls: u64::from(self.urls),
             bytes: self.bytes,
+            warnings: self.warnings,
         })
     }
 }
