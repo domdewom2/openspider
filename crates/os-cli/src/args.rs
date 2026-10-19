@@ -152,6 +152,10 @@ pub struct RunArgs {
     pub require_apis: bool,
 
     // ---- Exporte ------------------------------------------------------------------------------
+    /// Beschränkt Exporte auf ein gespeichertes Segment; `all` exportiert zusätzlich jedes Segment einzeln.
+    #[arg(long, value_name = "NAME|all", help_heading = "Exporte")]
+    pub segment: Option<String>,
+
     /// Tab-Exporte `"Tab:Filter,…"` (z. B. `"Internal:All,Response Codes:Client Error (4xx)"`); Kommas im
     /// Namen mit `\,` maskieren.
     #[arg(long, value_name = "TAB:FILTER,…", help_heading = "Exporte")]

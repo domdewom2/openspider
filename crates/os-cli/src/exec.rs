@@ -343,6 +343,14 @@ async fn crawl_phase(
         }
     };
 
+    let _segment_observer = if plan.config.segments.list.is_empty() {
+        None
+    } else {
+        Some(
+            os_analyze::segments::observe(path.clone(), signals.cancel_token())
+                .map_err(|error| CliError::internal(format!("Segmentbeobachter: {error}")))?,
+        )
+    };
     let json_errors = rep.json();
     let summary = monitor(handle, signals, rep, &path, json_errors)
         .await
@@ -537,9 +545,33 @@ fn export_phase(plan: &Plan, rep: &Reporter, signals: &Signals, crawled: &Crawle
         rep.phase("export");
     }
 
+    // Initialize configured segments once; subsequent exports only consume the saved assignment.
+    if !cfg.segments.list.is_empty() && matches!(file.get_meta("segments.definitions"), Ok(None)) {
+        if let Err(error) = os_analyze::segments::reassign(&file, &cfg, &signals.cancel_token()) {
+            rep.error(format!("Segmentzuordnung fehlgeschlagen: {error}"));
+            return ExportEnd::Done {
+                failures: 1,
+                files: 0,
+            };
+        }
+    }
+
     for item in &plan.exports {
         if signals.is_interrupted() {
             return ExportEnd::Interrupted;
+        }
+        if let Some(segment) = plan.segment.as_deref() {
+            match run_segment_export(&file, &cfg, item, out, plan.format, segment, rep) {
+                Ok(n) => files += n,
+                Err(message) => {
+                    failures += 1;
+                    rep.error(format!(
+                        "Export '{}' fehlgeschlagen: {message}",
+                        describe(item)
+                    ));
+                }
+            }
+            continue;
         }
         match run_export(&file, &cfg, item, out, plan.format, rep) {
             Ok(n) => files += n,
@@ -626,4 +658,30 @@ fn discard(path: &Path, rep: &Reporter) {
             }
         }
     }
+}
+
+/// Segment-aware companion to the unfiltered export dispatcher (OUT-011).
+fn run_segment_export(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    item: &Resolved,
+    out: &Path,
+    format: Format,
+    segment: &str,
+    rep: &Reporter,
+) -> Result<usize, String> {
+    let (kind, name) = match item {
+        Resolved::Tab { tab, filter } => ("tab", format!("{tab}:{filter}")),
+        Resolved::Bulk(name) => ("bulk", name.clone()),
+        Resolved::Issues => ("bulk", os_export::catalog::bulk_issues::BULK_NAME.into()),
+        Resolved::Report(name) => ("report", name.clone()),
+    };
+    let selection = os_export::types::ExportSelection {
+        kind: kind.into(),
+        name,
+    };
+    let files = os_export::segment::export_all(file, cfg, &selection, Some(segment), out, format)
+        .map_err(|e| e.to_string())?;
+    files.iter().for_each(|info| report_file(rep, info));
+    Ok(files.len())
 }
