@@ -1,0 +1,172 @@
+{
+  "version": "2026.10.1",
+  "updated": "2026-10-19",
+  "basis": "Eigene Zusammenstellung nach der öffentlichen Dokumentation von Google Search Central zu strukturierten Daten (Stand Oktober 2026); Namen der Eigenschaften und Typen stammen aus schema.org.",
+  "enums": {
+    "ItemAvailability": ["BackOrder", "Discontinued", "InStock", "InStoreOnly", "LimitedAvailability", "MadeToOrder", "OnlineOnly", "OutOfStock", "PreOrder", "PreSale", "Reserved", "SoldOut"],
+    "EventStatusType": ["EventCancelled", "EventMovedOnline", "EventPostponed", "EventRescheduled", "EventScheduled"]
+  },
+  "features": [
+    {
+      "name": "Product snippet",
+      "doc": "https://developers.google.com/search/docs/appearance/structured-data/product-snippet",
+      "deprecated_since": null,
+      "types": ["Product"],
+      "checks": {
+        "Product": {
+          "required": ["name"],
+          "one_of": [["review", "aggregateRating", "offers"]],
+          "follow": ["offers"]
+        },
+        "AggregateOffer": {"required": ["lowPrice", "priceCurrency"]},
+        "Offer": {"required": ["price"]}
+      },
+      "values": {"name": "text", "price": "number", "lowPrice": "number", "priceCurrency": "currency"}
+    },
+    {
+      "name": "Merchant listing",
+      "doc": "https://developers.google.com/search/docs/appearance/structured-data/merchant-listing",
+      "deprecated_since": null,
+      "types": ["Product"],
+      "with": "offers",
+      "checks": {
+        "Product": {
+          "required": ["name", "image", "offers"],
+          "recommended": ["brand", "description"],
+          "follow": ["offers"]
+        },
+        "Offer": {"required": ["price", "priceCurrency"], "recommended": ["availability"]}
+      },
+      "values": {"name": "text", "image": "image", "price": "number", "priceCurrency": "currency", "availability": "enum:ItemAvailability"}
+    },
+    {
+      "name": "Review snippet",
+      "doc": "https://developers.google.com/search/docs/appearance/structured-data/review-snippet",
+      "deprecated_since": null,
+      "types": ["Review", "AggregateRating"],
+      "nested_in": ["Book", "Course", "CreativeWorkSeason", "CreativeWorkSeries", "Episode", "Event", "Game", "LocalBusiness", "MediaObject", "Movie", "MusicPlaylist", "MusicRecording", "Organization", "Product", "Recipe", "SoftwareApplication"],
+      "checks": {
+        "Review": {"required": ["author", "reviewRating"], "required_top_level": ["itemReviewed"], "follow": ["reviewRating"]},
+        "AggregateRating": {"required": ["ratingValue"], "one_of": [["ratingCount", "reviewCount"]], "required_top_level": ["itemReviewed"]},
+        "Rating": {"required": ["ratingValue"]}
+      },
+      "values": {"ratingValue": "number", "ratingCount": "integer", "reviewCount": "integer"}
+    },
+    {
+      "name": "Breadcrumb",
+      "doc": "https://developers.google.com/search/docs/appearance/structured-data/breadcrumb",
+      "deprecated_since": null,
+      "types": ["BreadcrumbList"],
+      "checks": {
+        "BreadcrumbList": {"required": ["itemListElement"], "follow": ["itemListElement"]},
+        "ListItem": {"required": ["name", "position"], "required_unless_last": ["item"]}
+      },
+      "values": {"name": "text", "position": "integer", "item": "url"}
+    },
+    {
+      "name": "Article",
+      "doc": "https://developers.google.com/search/docs/appearance/structured-data/article",
+      "deprecated_since": null,
+      "types": ["Article"],
+      "checks": {
+        "Article": {
+          "recommended": ["author", "datePublished", "dateModified", "headline", "image"],
+          "amp_required": ["headline", "image", "datePublished"]
+        }
+      },
+      "values": {"datePublished": "date", "dateModified": "date", "headline": "text", "image": "image"}
+    },
+    {
+      "name": "Event",
+      "doc": "https://developers.google.com/search/docs/appearance/structured-data/event",
+      "deprecated_since": null,
+      "types": ["Event"],
+      "checks": {
+        "Event": {
+          "required": ["name", "startDate", "location"],
+          "recommended": ["description", "endDate", "image", "organizer"],
+          "follow": ["location"]
+        },
+        "Place": {"required": ["address"]},
+        "VirtualLocation": {"required": ["url"]}
+      },
+      "values": {"name": "text", "startDate": "date", "endDate": "date", "image": "image", "url": "url", "eventStatus": "enum:EventStatusType"}
+    },
+    {
+      "name": "Recipe",
+      "doc": "https://developers.google.com/search/docs/appearance/structured-data/recipe",
+      "deprecated_since": null,
+      "types": ["Recipe"],
+      "checks": {
+        "Recipe": {
+          "required": ["image", "name"],
+          "recommended": ["author", "datePublished", "description", "recipeIngredient", "recipeInstructions"]
+        }
+      },
+      "values": {"image": "image", "name": "text", "datePublished": "date", "description": "text"}
+    },
+    {
+      "name": "Video",
+      "doc": "https://developers.google.com/search/docs/appearance/structured-data/video",
+      "deprecated_since": null,
+      "types": ["VideoObject"],
+      "checks": {
+        "VideoObject": {
+          "required": ["name", "thumbnailUrl", "uploadDate"],
+          "recommended": ["contentUrl", "description", "duration", "embedUrl"]
+        }
+      },
+      "values": {"name": "text", "thumbnailUrl": "url", "uploadDate": "date", "contentUrl": "url", "embedUrl": "url", "duration": "duration"}
+    },
+    {
+      "name": "Job posting",
+      "doc": "https://developers.google.com/search/docs/appearance/structured-data/job-posting",
+      "deprecated_since": null,
+      "types": ["JobPosting"],
+      "checks": {
+        "JobPosting": {
+          "required": ["datePosted", "description", "hiringOrganization", "title"],
+          "one_of": [["jobLocation", "applicantLocationRequirements"]],
+          "recommended": ["baseSalary", "employmentType", "validThrough"]
+        }
+      },
+      "values": {"datePosted": "date", "validThrough": "date", "title": "text", "description": "text"}
+    },
+    {
+      "name": "Local business",
+      "doc": "https://developers.google.com/search/docs/appearance/structured-data/local-business",
+      "deprecated_since": null,
+      "types": ["LocalBusiness"],
+      "checks": {
+        "LocalBusiness": {"required": ["name", "address"], "recommended": ["telephone", "url"]}
+      },
+      "values": {"name": "text", "telephone": "text", "url": "url"}
+    },
+    {
+      "name": "Software app",
+      "doc": "https://developers.google.com/search/docs/appearance/structured-data/software-app",
+      "deprecated_since": null,
+      "types": ["SoftwareApplication"],
+      "checks": {
+        "SoftwareApplication": {
+          "required": ["name", "offers"],
+          "one_of": [["aggregateRating", "review"]],
+          "recommended": ["applicationCategory", "operatingSystem"],
+          "follow": ["offers"]
+        },
+        "Offer": {"required": ["price"]}
+      },
+      "values": {"name": "text", "price": "number"}
+    },
+    {"name": "Book actions", "deprecated_since": "2025-06", "types": ["Book"], "checks": {}, "values": {}},
+    {"name": "Course info", "deprecated_since": "2025-06", "types": ["Course"], "checks": {}, "values": {}},
+    {"name": "Estimated salary", "deprecated_since": "2025-06", "types": ["Occupation"], "checks": {}, "values": {}},
+    {"name": "FAQ", "deprecated_since": "2023-08", "types": ["FAQPage"], "checks": {}, "values": {}},
+    {"name": "Fact check", "deprecated_since": "2025-06", "types": ["ClaimReview"], "checks": {}, "values": {}},
+    {"name": "How-to", "deprecated_since": "2023-09", "types": ["HowTo"], "checks": {}, "values": {}},
+    {"name": "Learning video", "deprecated_since": "2025-06", "types": ["LearningResource"], "checks": {}, "values": {}},
+    {"name": "Sitelinks search box", "deprecated_since": "2024-11", "types": ["WebSite"], "checks": {}, "values": {}},
+    {"name": "Special announcement", "deprecated_since": "2025-06", "types": ["SpecialAnnouncement"], "checks": {}, "values": {}},
+    {"name": "Vehicle listing", "deprecated_since": "2025-06", "types": ["Vehicle"], "checks": {}, "values": {}}
+  ]
+}
