@@ -72,6 +72,19 @@ pub struct InspectionFields {
 }
 
 impl InspectionFields {
+    /// Weichen User-Declared und Google-Selected Canonical nach URL-Normalisierung voneinander ab? `None`, wenn eines
+    /// der beiden fehlt (dann greift der Filter „User-Declared Canonical Not Selected“ nicht, INTEG-125).
+    pub fn canonical_not_selected(&self) -> Option<bool> {
+        let normalize = |u: &str| {
+            url::Url::parse(u.trim())
+                .map(|u| u.to_string())
+                .unwrap_or_else(|_| u.trim().to_string())
+        };
+        let user = self.user_canonical.as_deref()?;
+        let google = self.google_canonical.as_deref()?;
+        Some(normalize(user) != normalize(google))
+    }
+
     /// `(Metrik, Spaltenname, Wert)` in Spaltenreihenfolge.
     pub fn columns(&self) -> [(&'static str, &'static str, Option<&str>); 17] {
         [
@@ -181,42 +194,47 @@ impl Outcome {
         }
     }
 
-    /// Werte für `api_values` (Quelle `gsc`, Textwerte).
+    /// Werte für `api_values` (Quelle `gsc`; Texte, dazu der Canonical-Vergleich als Zahl).
     pub fn values(&self, target: &Target, fetched_at: Timestamp) -> Vec<ApiValueWrite> {
-        let mut out = Vec::new();
-        let mut push = |metric: &str, value: &str| {
-            if value.is_empty() {
-                return;
-            }
-            out.push(ApiValueWrite {
-                url_id: target.url_id,
-                url: target.url.clone(),
-                source: SOURCE.into(),
-                metric: metric.into(),
-                level: "url".into(),
-                v_real: None,
-                v_text: Some(value.into()),
-                fetched_at,
-            });
+        let value = |metric: &str, v_real: Option<f64>, v_text: Option<&str>| ApiValueWrite {
+            url_id: target.url_id,
+            url: target.url.clone(),
+            source: SOURCE.into(),
+            metric: metric.into(),
+            level: "url".into(),
+            v_real,
+            v_text: v_text.map(str::to_string),
+            fetched_at,
         };
+        let mut texts: Vec<(&str, String)> = Vec::new();
+        let mut out = Vec::new();
         match self {
             Outcome::Skipped => {}
             Outcome::Inspected { fields, .. } => {
-                for (metric, _, value) in fields.columns() {
-                    if let Some(value) = value {
-                        push(metric, value);
+                for (metric, _, v) in fields.columns() {
+                    if let Some(v) = v {
+                        texts.push((metric, v.to_string()));
                     }
                 }
-            }
-            _ => {
-                if let Some(s) = self.summary() {
-                    push(metric::SUMMARY, &s);
+                if let Some(differs) = fields.canonical_not_selected() {
+                    out.push(value(
+                        metric::CANONICAL_NOT_SELECTED,
+                        Some(if differs { 1.0 } else { 0.0 }),
+                        None,
+                    ));
                 }
             }
+            _ => texts.extend(self.summary().map(|s| (metric::SUMMARY, s))),
         }
         if let Some(property) = self.property() {
-            push(metric::INSPECTION_PROPERTY, property);
+            texts.push((metric::INSPECTION_PROPERTY, property.to_string()));
         }
+        out.extend(
+            texts
+                .iter()
+                .filter(|(_, v)| !v.is_empty())
+                .map(|(metric, v)| value(metric, None, Some(v))),
+        );
         out
     }
 }

@@ -501,12 +501,24 @@ async fn all_seventeen_columns_are_filled_from_the_mock_answers() {
             let want = row[i + 1].replace("{url}", &target.url);
             assert_eq!(value.unwrap_or(""), want, "{} / {name}", row[0]);
         }
-        // Fehlende Teilergebnisse: Spalten leer, als Werte gar nicht geschrieben.
+        // Fehlende Teilergebnisse: Spalten leer, als Werte gar nicht geschrieben (dazu Inspection Property und, wenn
+        // beide Canonicals gesetzt sind, der Vergleich für INTEG-125).
         let values = outcome.values(target, now());
+        let canonicals = usize::from(fields.canonical_not_selected().is_some());
         assert_eq!(
             values.len(),
-            columns.iter().filter(|(_, _, v)| v.is_some()).count() + 1
+            columns.iter().filter(|(_, _, v)| v.is_some()).count() + 1 + canonicals
         );
+        let mismatch = values
+            .iter()
+            .find(|v| v.metric == "canonical_not_selected")
+            .and_then(|v| v.v_real);
+        let expected = match row[0] {
+            "inspect-canonical-mismatch" => Some(1.0),
+            "inspect-not-indexed" | "inspect-minimal" => None,
+            _ => Some(0.0),
+        };
+        assert_eq!(mismatch, expected, "{}", row[0]);
     }
     // Verdikte lesbar.
     for (raw, label) in [

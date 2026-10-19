@@ -58,6 +58,9 @@ pub mod metric {
     pub const RICH_RESULTS_TYPES_ERRORS: &str = "rich_results_types_errors";
     pub const RICH_RESULTS_WARNINGS: &str = "rich_results_warnings";
     pub const INSPECTION_PROPERTY: &str = "inspection_property";
+    /// 1, wenn User-Declared und Google-Selected Canonical nach Normalisierung verschieden sind, sonst 0 (nur wenn
+    /// beide gesetzt sind; INTEG-125).
+    pub const CANONICAL_NOT_SELECTED: &str = "canonical_not_selected";
 }
 
 /// Properties des Kontos (`GET /webmasters/v3/sites`, INTEG-110).

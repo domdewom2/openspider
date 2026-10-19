@@ -471,7 +471,7 @@ async fn by_page_aggregation_and_fragment_rows_are_assigned_without_summing() {
     server.stop().await;
 }
 
-// spec: INTEG-014 [P1]
+// spec: INTEG-014
 #[test]
 fn url_matching_follows_protocol_slash_case_query_and_percent_rules() {
     let row = |page: &str, clicks: f64, impressions: f64| analytics::SaRow {
