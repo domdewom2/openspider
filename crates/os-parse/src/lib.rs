@@ -244,6 +244,7 @@ pub fn parse_html(input: &ParseInput) -> ParsedPage {
         headers: input.headers,
         cfg,
     };
+    pagination::run(&ctx, &mut page);
     bookmarks::run(&ctx, &mut page);
     elements::annotate_facts(&doc, cfg, &mut page);
     content::run(&ctx, &mut page);

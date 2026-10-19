@@ -15,30 +15,6 @@ function = "ngram_details"
 signature = "pub fn ngram_details( _: &os_store::CrawlFile, _: &os_model::CrawlConfig, _: &crate::details::DetailReq<'_>, ) -> Result<crate::details::DetailRows, crate::ViewError>"
 
 [[stub]]
-owner = "M2-D05"
-file = "crates/os-analyze/src/analysis/steps/pagination.rs"
-function = "run"
-signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
-
-[[stub]]
-owner = "M2-D05"
-file = "crates/os-analyze/src/tabs/pagination.rs"
-function = "tab"
-signature = "pub fn tab() -> TabDef"
-
-[[stub]]
-owner = "M2-D05"
-file = "crates/os-export/src/catalog/bulk_pagination.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
-owner = "M2-D05"
-file = "crates/os-parse/src/pagination.rs"
-function = "response_facts"
-signature = "pub fn response_facts( _input: &crate::ResponseInput<'_>, ) -> Vec<(os_model::ExtKey, os_model::Value)>"
-
-[[stub]]
 owner = "M2-D06"
 file = "crates/os-analyze/src/tabs/directives.rs"
 function = "url_details"
@@ -298,12 +274,6 @@ signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &Cancel
 
 [[stub]]
 owner = "M2-F02"
-file = "crates/os-analyze/src/analysis/steps/pagination.rs"
-function = "run"
-signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
-
-[[stub]]
-owner = "M2-F02"
 file = "crates/os-analyze/src/tabs/accessibility.rs"
 function = "tab"
 signature = "pub fn tab() -> TabDef"
@@ -359,12 +329,6 @@ signature = "pub fn tab() -> TabDef"
 [[stub]]
 owner = "M2-F02"
 file = "crates/os-analyze/src/tabs/pagespeed.rs"
-function = "tab"
-signature = "pub fn tab() -> TabDef"
-
-[[stub]]
-owner = "M2-F02"
-file = "crates/os-analyze/src/tabs/pagination.rs"
 function = "tab"
 signature = "pub fn tab() -> TabDef"
 

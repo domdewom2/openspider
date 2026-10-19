@@ -1,2 +1,35 @@
-# OpenSpider – Issue-Texte (English) ab M2, Tab „Pagination“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/en.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.pagination-not-in-anchor-tag]
+what = "At least one pagination target has no ordinary anchor link on this page."
+why = "Link elements do not replace clickable navigation, so visitors may have difficulty reaching further content."
+fix = "Add an a-href link for every next or prev target in the navigation on the source page."
+
+[issues.pagination-non-200-urls]
+what = "At least one crawled pagination target does not respond with HTTP status 200. Both internal and external targets count; the internal source page is listed. Targets that have not been crawled are excluded."
+why = "Redirects, errors and blocked targets interrupt direct access to further pages in the series."
+fix = "Check the target status and accessibility, then point directly to an available page returning status 200."
+
+[issues.pagination-unlinked-urls]
+what = "At least one crawled pagination target has no hyperlink from any internal page in this crawl."
+why = "Without internal navigation the target is discoverable only through the pagination annotation and receives no ordinary link flow."
+fix = "Link to the target from internal navigation, then run the pagination analysis again to check the result."
+
+[issues.pagination-non-indexable]
+what = "This page contains pagination annotations but is itself classified as non-indexable."
+why = "Blocking, noindex or a canonical pointing elsewhere can keep later pages of the series out of the index."
+fix = "Review the stated indexability reason and adjust blocking directives or canonicals if this page should be indexed."
+
+[issues.pagination-multiple-urls]
+what = "This page contains more than one next annotation or more than one prev annotation."
+why = "Multiple annotations for one direction are ambiguous, even when they currently point to the same address."
+fix = "Keep at most one annotation per direction and reconcile HTML link elements with HTTP Link headers."
+
+[issues.pagination-loop]
+what = "This page belongs to a cycle of next references or a cycle of prev references."
+why = "The series returns to an already visited page and has no clear ending in that direction."
+fix = "Correct the references within the cycle; omit prev at the start and next at the end, then run the analysis again."
+
+[issues.pagination-sequence-error]
+what = "A pagination annotation on this page is not confirmed by the crawled HTML target returning status 200."
+why = "When next and prev are not reciprocal, the pages describe conflicting orders for the same series."
+fix = "Reconcile both directions: next from A to B needs prev from B to A, and prev from A to B needs next from B to A."
