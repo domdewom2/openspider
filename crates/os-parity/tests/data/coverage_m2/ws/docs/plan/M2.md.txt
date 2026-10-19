@@ -1,0 +1,8 @@
+## Anhang B – Kriterien
+| ID | Quelle | Pakete |
+|---|---|---|
+| OUT-020 | M1 7.3 | D12⁺, U10⁺, U20⁺ |
+| OUT-021 | M1 7.3 + [P1]-Kriterium | U10⁺ |
+| TECH-001 | M1 7.3 + [P1]-Kriterium | D12⁺ |
+| TECH-002 | M1 7.3 + [P1]-Kriterium | D12⁺ |
+| CRAWL-049 | M1 7.3 | **Abschnitt 9:** P2 (AMP) |

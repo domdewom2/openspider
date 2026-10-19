@@ -1,0 +1,7 @@
+[
+  {"id":"M2-D12","kind":"package","wave":1,"spec_ids":["CRAWL-001","CRAWL-002","CRAWL-003"],"extra_spec_ids":["OUT-020"],"owns":["crates/alpha/tests/check.rs","crates/*/tests/pending_w1_d12.rs (nur Platzhalter)"]},
+  {"id":"M2-E03","kind":"package","wave":1,"spec_ids":[],"owns":[]},
+  {"id":"M2-U10","kind":"package","wave":1,"spec_ids":["UI-001","UI-002","UI-003","UI-004"],"extra_spec_ids":["OUT-020","OUT-021"],"owns":["apps/desktop/src/features/{table,grid}/**","apps/desktop/e2e/table/**"]},
+  {"id":"M2-U20","kind":"package","wave":2,"spec_ids":["UI-090"],"extra_spec_ids":["OUT-020"],"owns":["apps/desktop/src/features/later/**"]},
+  {"id":"M2-Q03","kind":"measurement","wave":4,"spec_ids":["PERF-001"],"owns":["crates/alpha/tests/check.rs"]}
+]

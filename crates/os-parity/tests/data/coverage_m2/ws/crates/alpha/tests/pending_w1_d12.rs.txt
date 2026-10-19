@@ -1,0 +1,4 @@
+// spec: CRAWL-003
+#[test]
+#[ignore = "wartet auf M2-E03"]
+fn integration() { assert_eq!(2 + 2, 4); }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="vitest tests" tests="4" failures="0" errors="0">
+  <testsuite name="src/features/table/table.test.ts" tests="4" failures="0">
+    <testcase classname="src/features/table/table.test.ts" name="Tabelle &gt; zeigt Zeilen &amp; Größen" time="0.001"/>
+    <testcase classname="src/features/table/table.test.ts" name="Tabelle &gt; Sortierung &gt; sortiert" time="0.001"/>
+    <testcase classname="src/features/table/table.test.ts" name="Tabelle &gt; kopiert" time="0.001"/>
+    <testcase classname="src/features/table/table.test.ts" name="Tabelle &gt; fügt ein" time="0.001"/>
+  </testsuite>
+</testsuites>

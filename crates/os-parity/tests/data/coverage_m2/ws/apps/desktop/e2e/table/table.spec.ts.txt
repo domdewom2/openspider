@@ -1,0 +1,10 @@
+import { test } from '@playwright/test';
+test.describe('Browser', () => {
+// spec: UI-003
+test('zeigt Browser', async ({ page }) => {});
+// spec: UI-004
+test('späterer Browser', async ({ page }) => {
+  test.fixme(process.env.SKIP_BROWSER === '1', 'M4: Browserfunktion');
+});
+
+});
