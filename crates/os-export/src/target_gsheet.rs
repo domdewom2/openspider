@@ -412,3 +412,95 @@ pub fn staged_table(
         rows: StagedRows(lines),
     })
 }
+
+/// Typed staging for the shared export catalog. The caller owns the temporary
+/// directory until upload finishes; no crawl-sized allocation is required.
+pub struct StagedBatch {
+    pub tables: Vec<(String, crate::ExportFileInfo)>,
+    pub warnings: Vec<String>,
+    pub skipped: Vec<String>,
+}
+struct StagingWorkbook {
+    directory: std::path::PathBuf,
+    sheets: Vec<(String, Box<StagingWriter>)>,
+}
+impl crate::types::WorkbookTarget for StagingWorkbook {
+    fn sheet(&mut self, name: &str) -> Result<&mut dyn crate::TableWriter, ExportError> {
+        let path = self
+            .directory
+            .join(format!("sheet-{}.jsonl", self.sheets.len()));
+        self.sheets
+            .push((name.into(), Box::new(StagingWriter::create(&path)?)));
+        Ok(self
+            .sheets
+            .last_mut()
+            .expect("sheet just inserted")
+            .1
+            .as_mut())
+    }
+}
+/// Use the same names, prerequisites, ordering, warnings and empty suppression as
+/// local multi-export. Binary-only exports cannot be represented in Sheets.
+pub fn stage_batch(
+    file: &os_store::CrawlFile,
+    cfg: &os_model::CrawlConfig,
+    selections: &[crate::types::ExportSelection],
+    directory: &std::path::Path,
+    ctx: &mut crate::types::ExportCtx<'_>,
+) -> Result<StagedBatch, ExportError> {
+    use crate::TableWriter;
+    let mut workbook = StagingWorkbook {
+        directory: directory.into(),
+        sheets: Vec::new(),
+    };
+    let metadata = file.meta()?;
+    let mut filtered = Vec::new();
+    let mut skipped = Vec::new();
+    let mut warnings = Vec::new();
+    for selection in selections {
+        if matches!(
+            selection.name.as_str(),
+            "Web:Screenshots" | "Web:All Page Source" | "Web:All Page Text"
+        ) {
+            skipped.push(selection.name.clone());
+            warnings.push(format!(
+                "{}: Binärdateien sind kein Sheets-Tabellenexport",
+                selection.name
+            ));
+        } else {
+            filtered.push(selection.clone());
+        }
+    }
+    let mut control = crate::types::ExportCtx {
+        cancel: ctx.cancel,
+        progress: ctx.progress,
+        skip_empty: ctx.skip_empty,
+        workbook: Some(&mut workbook),
+        skipped: Vec::new(),
+    };
+    let outcome = crate::pipeline::export_batch(
+        file,
+        cfg,
+        &filtered,
+        &crate::pipeline::BatchOptions {
+            format: crate::Format::Csv,
+            directory,
+            crawl_name: &metadata.name,
+            single_workbook: false,
+        },
+        &mut control,
+    )?;
+    skipped.extend(outcome.skipped);
+    warnings.extend(outcome.warnings);
+    let tables = workbook
+        .sheets
+        .into_iter()
+        .map(|(name, writer)| writer.finish().map(|info| (name, info)))
+        .collect::<Result<_, _>>()?;
+    ctx.skipped.extend(skipped.clone());
+    Ok(StagedBatch {
+        tables,
+        warnings,
+        skipped,
+    })
+}

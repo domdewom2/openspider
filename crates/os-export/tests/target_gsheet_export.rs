@@ -292,3 +292,81 @@ async fn sheets_source_preserves_ten_upload_positions_while_engine_plans_eight_u
     assert_eq!(items[0], "https://site.test/b");
     assert_eq!(items[8], items[0]);
 }
+
+// spec: OUT-005
+#[tokio::test]
+async fn shared_catalog_stages_regular_tables_for_consolidated_sheets() {
+    use os_export::types::{ExportCtx, ExportSelection};
+    use os_model::{CrawlConfig, CrawlMode, IdSource, SeededIds};
+    use os_store::{CrawlFile, CrawlInit, StorageProfile};
+    let (_server, mock, client, _, _) = support::fixture().await;
+    let directory = tempfile::tempdir().unwrap();
+    let cfg = CrawlConfig::default();
+    let file = CrawlFile::create(
+        &directory.path().join("crawl.ospider"),
+        &CrawlInit {
+            crawl_id: SeededIds::new(73).new_crawl_id(Timestamp::UNIX_EPOCH),
+            mode: CrawlMode::Spider,
+            start_url: Some("https://site.test/".into()),
+            list_source: None,
+            project: "Project".into(),
+            name: "Crawl".into(),
+            config: cfg.clone(),
+            created_at: Timestamp::UNIX_EPOCH,
+        },
+        StorageProfile::Balanced,
+    )
+    .unwrap();
+    file.conn()
+        .execute_batch(include_str!(
+            "../../../tests/fixtures/out-m2-export/crawl.sql"
+        ))
+        .unwrap();
+    let cancel = CancelToken::new();
+    let mut control = ExportCtx {
+        cancel: &cancel,
+        progress: &|_| {},
+        skip_empty: false,
+        workbook: None,
+        skipped: vec![],
+    };
+    let staged = target_gsheet::stage_batch(
+        &file,
+        &cfg,
+        &[
+            ExportSelection {
+                kind: "tab".into(),
+                name: "Internal:All".into(),
+            },
+            ExportSelection {
+                kind: "tab".into(),
+                name: "Page Titles:All".into(),
+            },
+        ],
+        directory.path(),
+        &mut control,
+    )
+    .unwrap();
+    assert!(staged.warnings.is_empty(), "{:?}", staged.warnings);
+    assert_eq!(staged.tables.len(), 2);
+    let tables = staged
+        .tables
+        .iter()
+        .map(|(name, info)| target_gsheet::staged_table(name, info).unwrap())
+        .collect();
+    let result = target_gsheet::export(
+        &client,
+        &Destination::new("Project", "Crawl", "Combined"),
+        tables,
+        &cancel,
+    )
+    .await
+    .unwrap();
+    let files = mock.files();
+    let sheet = files.iter().find(|f| f.id == result.id).unwrap();
+    assert_eq!(sheet.sheets.len(), 2);
+    assert_eq!(sheet.sheets[0].title, "Internal All");
+    assert_eq!(sheet.sheets[1].title, "Page Titles All");
+    assert_eq!(sheet.sheets[0].rows[0][0], "Address");
+    assert!(sheet.sheets[0].rows.len() > 1);
+}
