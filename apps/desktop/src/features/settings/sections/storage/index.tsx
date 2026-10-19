@@ -6,7 +6,7 @@ import type { AppPaths } from "../../../../ipc/gen/AppPaths";
 import { usePrefs } from "../../../../state/prefs";
 import { useRelocation } from "./relocation";
 import { Button, Dialog, DialogFooter, Select } from "../../../../ui/primitives";
-import { RestartNote } from "../../frame/RestartNote";
+import { RestartNote } from "./restart";
 import { sectionTitleKey, type SettingsSection } from "../../frame/types";
 import { GiB, ramMaximum, readResources, type Resources } from "./resources";
 import { SettingInput, SettingsError, useSettingsAction } from "./shared";

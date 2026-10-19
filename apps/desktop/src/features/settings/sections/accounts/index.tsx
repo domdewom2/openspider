@@ -4,7 +4,7 @@ import { api } from "../../../../ipc/api";
 import type { ApiSourceInfo } from "../../../../ipc/gen/ApiSourceInfo";
 import { usePrefs } from "../../../../state/prefs";
 import { Button, Select, Switch } from "../../../../ui/primitives";
-import { RestartNote } from "../../frame/RestartNote";
+import { RestartNote } from "../storage/restart";
 import { sectionTitleKey, type SettingsSection } from "../../frame/types";
 import { SettingsError, useSettingsAction } from "../storage/shared";
 

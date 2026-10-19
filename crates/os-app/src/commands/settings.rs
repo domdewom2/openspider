@@ -5,11 +5,42 @@
 //! `restartRequired` die Schlüssel, deren Änderung einen Neustart erfordert.
 
 use futures_util::future::BoxFuture;
+use os_model::settings::AppSettings;
+use std::{collections::BTreeSet, sync::Mutex};
 
 use crate::dto::{CmdError, ErrorCode, SettingsPatch};
 use crate::registry::{CmdResult, CommandMeta, Registry};
 use crate::runtime::error::{parse_args, to_json};
 use crate::runtime::{App, CallCtx};
+
+#[derive(Default)]
+struct PendingRestarts {
+    previous: Option<AppSettings>,
+    keys: BTreeSet<String>,
+}
+
+/// Retains pending requirements for the lifetime of the app, across settings windows.
+pub fn on_startup(app: &App) {
+    app.ext::<Mutex<PendingRestarts>>()
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .previous = Some(app.settings_snapshot());
+}
+
+/// Additive service hook; existing settings.get/set response contracts stay unchanged.
+pub fn on_settings_changed(app: &App) {
+    let current = app.settings_snapshot();
+    let state = app.ext::<Mutex<PendingRestarts>>();
+    let mut state = state.lock().unwrap_or_else(|p| p.into_inner());
+    if let Some(previous) = state.previous.replace(current.clone()) {
+        let changed = previous.changed_keys(&current);
+        state.keys.extend(
+            AppSettings::restart_required(changed.iter().map(String::as_str))
+                .into_iter()
+                .map(String::from),
+        );
+    }
+}
 
 fn get<'a>(app: &'a App, _ctx: CallCtx, _args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move { to_json(&app.settings().dto(&[])) })
@@ -32,6 +63,14 @@ fn set<'a>(app: &'a App, _ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
 /// Read-only hardware snapshot for the settings UI (UI-123, OUT-267).
 fn resources<'a>(app: &'a App, _: CallCtx, _: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     let storage = app.settings_snapshot().storage;
+    let restart_required: Vec<_> = app
+        .ext::<Mutex<PendingRestarts>>()
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .keys
+        .iter()
+        .cloned()
+        .collect();
     Box::pin(async move {
         tokio::task::spawn_blocking(move || {
             let sample = os_engine::memory::sample();
@@ -44,6 +83,7 @@ fn resources<'a>(app: &'a App, _: CallCtx, _: serde_json::Value) -> BoxFuture<'a
                 "ramLimitBytes": ram,
                 "cacheLimitMb": cache >> 20,
                 "renderProcessLimit": renderers,
+                "restartRequired": restart_required,
             }))
         })
         .await
@@ -151,6 +191,47 @@ mod u14_tests {
         let mut config = crate::AppConfig::new(dir);
         config.secrets = Arc::new(MemorySecretStore::new());
         App::new(config).unwrap()
+    }
+
+    // spec: OUT-222
+    #[tokio::test]
+    async fn pending_restart_survives_get_profile_changes_and_windows_until_core_restart() {
+        let dir = tempfile::tempdir().unwrap();
+        let running = app(dir.path());
+        let ctx = || CallCtx::for_window("reopened-settings");
+        let snapshot = |app: App| async move {
+            app.dispatch(ctx(), "settings.resources", serde_json::Value::Null)
+                .await
+                .unwrap()["restartRequired"]
+                .clone()
+        };
+        assert_eq!(snapshot(running.clone()).await, serde_json::json!([]));
+        running
+            .apply_settings_patch(
+                &serde_json::json!({"storage": {"crawlsDir": "/fixture/changed"}}),
+            )
+            .unwrap();
+        let get = running
+            .dispatch(ctx(), "settings.get", serde_json::Value::Null)
+            .await
+            .unwrap();
+        assert_eq!(get["restartRequired"], serde_json::json!([]));
+        running
+            .apply_settings_patch(
+                &serde_json::json!({"storage": {"performanceProfile": "min_memory"}}),
+            )
+            .unwrap();
+        assert_eq!(
+            snapshot(running.clone()).await,
+            serde_json::json!(["storage.crawls_dir"])
+        );
+        drop(running);
+        let restarted = app(dir.path());
+        assert_eq!(
+            restarted.settings_snapshot().storage.crawls_dir.as_deref(),
+            Some("/fixture/changed")
+        );
+        assert_eq!(snapshot(restarted).await, serde_json::json!([]));
     }
 
     // spec: UI-123

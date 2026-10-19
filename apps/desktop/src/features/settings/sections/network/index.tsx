@@ -4,7 +4,7 @@ import { settings as api } from "../../../../ipc/settings";
 import type { CertificateChainDto } from "../../../../ipc/gen/CertificateChainDto";
 import { usePrefs } from "../../../../state/prefs";
 import { Button, Select, TextField } from "../../../../ui/primitives";
-import { RestartNote } from "../../frame/RestartNote";
+import { RestartNote } from "../storage/restart";
 import { sectionTitleKey, type SettingsSection } from "../../frame/types";
 import { SettingInput, SettingsError, useSettingsAction } from "../storage/shared";
 import { certificateIssuer } from "./certificates";

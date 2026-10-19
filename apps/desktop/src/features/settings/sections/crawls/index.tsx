@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useT } from "../../../../i18n";
 import { usePrefs } from "../../../../state/prefs";
 import { Dialog, DialogFooter, Select, TextField } from "../../../../ui/primitives";
-import { RestartNote } from "../../frame/RestartNote";
+import { RestartNote } from "../storage/restart";
 import { sectionTitleKey, type SettingsSection } from "../../frame/types";
 import { SettingInput, SettingsError, useSettingsAction } from "../storage/shared";
 

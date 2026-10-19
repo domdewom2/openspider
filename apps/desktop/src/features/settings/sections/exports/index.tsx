@@ -3,7 +3,7 @@ import { useT } from "../../../../i18n";
 import { app } from "../../../../ipc/app";
 import { usePrefs } from "../../../../state/prefs";
 import { Select } from "../../../../ui/primitives";
-import { RestartNote } from "../../frame/RestartNote";
+import { RestartNote } from "../storage/restart";
 import { sectionTitleKey, type SettingsSection } from "../../frame/types";
 import { SettingInput, SettingsError, useSettingsAction } from "../storage/shared";
 

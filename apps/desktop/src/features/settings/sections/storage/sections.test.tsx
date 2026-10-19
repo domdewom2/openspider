@@ -17,9 +17,15 @@ import { McpReference } from "../mcp";
 import fixture from "./fixture.json";
 import pem from "../network/fixtures/ca.pem.txt?raw";
 import { certificateIssuer } from "../network/certificates";
+import { useRelocationState } from "./relocation";
+import { usePendingRestarts } from "./restart";
+import { bootWindow, type Runtime } from "../../../../app/runtime";
 
 let core: MockCore;
+let runtime: Runtime | undefined;
 beforeEach(async () => {
+  useRelocationState.setState({ batch: null, cancelled: false, error: null });
+  usePendingRestarts.setState({ keys: [] });
   core = new MockCore();
   core.restartKeys.clear();
   core.handlers.set("settings.resources", () => fixture);
@@ -37,7 +43,7 @@ beforeEach(async () => {
   await usePrefs.getState().load();
   await setLanguage("en");
 });
-afterEach(() => { cleanup(); setClient(null); vi.useRealTimers(); });
+afterEach(() => { cleanup(); runtime?.dispose(); runtime = undefined; setClient(null); vi.useRealTimers(); });
 async function select(label: string, option: string) {
   fireEvent.click(screen.getByRole("button", { name: new RegExp(label) }));
   fireEvent.click(await screen.findByRole("option", { name: option }));
@@ -225,6 +231,59 @@ it("moves more than 1000 existing crawls in sequential OpHandle batches", async 
   expect(core.calls.filter((c) => c.cmd === "crawls.move")[1]?.args).toEqual({ ids: ["id-1000"], destinationDir: "/fixture/move" });
   act(() => useSession.setState({ ops: { "batch-2": { opId: "batch-2", labelKey: "", done: 1, total: 1, state: "done" } } }));
   expect(screen.getByText("Crawls moved.")).toBeVisible();
+});
+
+// spec: CRAWL-124 [M2]
+it("continues relocation while another section is open and restores progress on return", async () => {
+  core.handlers.set("crawls.list", () => Array.from({ length: 2001 }, (_, i) => ({ crawl: { crawlId: `id-${i}`, phase: "completed" } })));
+  let number = 0;
+  core.handlers.set("crawls.move", () => ({ opId: `batch-${++number}` }));
+  render(<SettingsFrame anchor="storage" />);
+  fireEvent.change(screen.getByLabelText("Crawl folder"), { target: { value: "/fixture/move" } }); apply("Crawl folder");
+  fireEvent.click(await screen.findByRole("button", { name: "Move existing crawls" }));
+  await waitFor(() => expect(number).toBe(1));
+  fireEvent.click(screen.getByRole("tab", { name: "Exports" }));
+  expect(screen.queryByLabelText("Crawl folder")).toBeNull();
+  act(() => useSession.setState({ ops: { "batch-1": { opId: "batch-1", labelKey: "", done: 1000, total: 1000, state: "done" } } }));
+  await waitFor(() => expect(number).toBe(2));
+  act(() => useSession.setState({ ops: { "batch-2": { opId: "batch-2", labelKey: "", done: 512, total: 1000, state: "running" } } }));
+  fireEvent.click(screen.getByRole("tab", { name: "Storage" }));
+  expect(screen.getByRole("progressbar")).toHaveAttribute("value", "512");
+  expect(screen.getByRole("button", { name: "Apply: Crawl folder" })).toBeDisabled();
+  fireEvent.click(screen.getByRole("tab", { name: "Exports" }));
+  act(() => useSession.setState({ ops: { "batch-2": { opId: "batch-2", labelKey: "", done: 1000, total: 1000, state: "done" } } }));
+  await waitFor(() => expect(number).toBe(3));
+  expect(core.calls.filter((c) => c.cmd === "crawls.move").map((c) => (c.args as { ids: string[] }).ids.length)).toEqual([1000, 1000, 1]);
+  act(() => useSession.setState({ ops: { "batch-3": { opId: "batch-3", labelKey: "", done: 1, total: 1, state: "done" } } }));
+  fireEvent.click(screen.getByRole("tab", { name: "Storage" }));
+  expect(screen.getByText("Crawls moved.")).toBeVisible();
+  expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
+});
+
+// spec: OUT-222
+it("retains pending restart notes through real settings events, profile changes and section switches", async () => {
+  core.restartKeys.add("storage.crawlsDir");
+  // The core reports requirements on settings.set only; settings.get returns none.
+  core.handlers.set("settings.get", () => ({ ...structuredClone(core.settings), restartRequired: [] }));
+  runtime = bootWindow({ kind: "settings", transport: core.transport("settings"), platform: "mac" });
+  await runtime.ready;
+  render(<SettingsFrame anchor="storage" />);
+  const note = () => document.querySelector('[data-restart-required="storage.crawls_dir"]');
+  expect(note()).toBeNull();
+  fireEvent.change(screen.getByLabelText("Crawl folder"), { target: { value: "/fixture/restart" } }); apply("Crawl folder");
+  fireEvent.click(await screen.findByRole("button", { name: "Keep existing files" }));
+  await waitFor(() => expect(note()).not.toBeNull());
+  const gets = core.calls.filter((c) => c.cmd === "settings.get").length;
+  act(() => core.emit("settings", { kind: "settingsChanged", keys: ["storage.crawls_dir"] }));
+  await waitFor(() => expect(core.calls.filter((c) => c.cmd === "settings.get").length).toBeGreaterThan(gets));
+  await waitFor(() => expect(usePrefs.getState().restartRequired).toEqual([]));
+  expect(note()).not.toBeNull();
+  await select("Performance profile", "Minimum memory");
+  await waitFor(() => expect(core.settings.storage.performanceProfile).toBe("min_memory"));
+  expect(note()).not.toBeNull();
+  fireEvent.click(screen.getByRole("tab", { name: "Exports" }));
+  fireEvent.click(screen.getByRole("tab", { name: "Storage" }));
+  expect(note()).not.toBeNull();
 });
 
 // spec: CRAWL-124 [M2]

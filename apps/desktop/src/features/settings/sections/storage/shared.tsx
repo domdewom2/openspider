@@ -4,7 +4,7 @@ import { client } from "../../../../ipc/client";
 import { toCmdError } from "../../../../ipc/errors";
 import { usePrefs } from "../../../../state/prefs";
 import { Button, TextField } from "../../../../ui/primitives";
-import { RestartNote } from "../../frame/RestartNote";
+import { RestartNote } from "./restart";
 
 export function useSettingsAction() {
   const [busy, setBusy] = useState(false);

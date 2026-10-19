@@ -3,6 +3,32 @@ import { startBridge } from "../support/bridge";
 import type {} from "./harness";
 
 // spec: OUT-222
+test("real settings events and subsequent profile changes preserve the crawl folder restart note", async ({ page }) => {
+  const bridge = await startBridge();
+  try {
+    expect(bridge, "real os-app bridge required").not.toBeNull();
+    await page.goto(`/e2e/settings-sections/index.html?bridge=${encodeURIComponent(bridge!.url)}`);
+    await page.waitForFunction(() => !!window.settingsFixture);
+    const note = page.locator('[data-restart-required="storage.crawls_dir"]');
+    await expect(note).toHaveCount(0);
+    await page.getByLabel("Crawl folder").fill("/fixture/restart-u14");
+    await page.getByRole("button", { name: "Apply: Crawl folder", exact: true }).click();
+    await page.getByRole("button", { name: "Keep existing files", exact: true }).click();
+    await expect(note).toBeVisible();
+    const dto = await page.evaluate(() => window.settingsFixture.invoke("settings.get")) as { restartRequired: string[] };
+    expect(dto.restartRequired).toEqual([]);
+    await page.getByRole("button", { name: /Performance profile/ }).click();
+    await page.getByRole("option", { name: "Minimum memory", exact: true }).click();
+    await expect.poll(() => page.evaluate(() => window.settingsFixture.settings()?.storage.performanceProfile)).toBe("min_memory");
+    await page.getByRole("tab", { name: "Exports", exact: true }).click();
+    await page.getByRole("tab", { name: "Storage", exact: true }).click();
+    await expect(note).toBeVisible();
+    await page.reload(); // A recreated webview still uses the same running core.
+    await expect(note).toBeVisible();
+  } finally { await bridge?.stop(); }
+});
+
+// spec: OUT-222
 test("real bridge persists settings and supplies live hardware values without a mock fallback", async ({ page }) => {
   const bridge = await startBridge();
   try {
