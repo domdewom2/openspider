@@ -2,6 +2,45 @@ use os_engine::{recompute, testing::crawl_fixture};
 use os_model::{CancelToken, CrawlConfig, UrlId};
 
 // spec: TECH-068
+#[tokio::test]
+async fn recompute_matches_crawl_for_every_fixture_url() {
+    for fixture in ["tech-m2-directives", "tech/indexability"] {
+        for respect_self_refresh in [false, true] {
+            let mut cfg = CrawlConfig::default();
+            cfg.advanced.respect_self_ref_meta_refresh = respect_self_refresh;
+            let mut fx = crawl_fixture(fixture, cfg.clone()).await;
+            let snapshot = |file: &os_store::CrawlFile| {
+                file.conn()
+                    .prepare("SELECT url, indexability, indexability_status FROM urls ORDER BY url")
+                    .unwrap()
+                    .query_map([], |row| {
+                        Ok((
+                            row.get::<_, String>(0)?,
+                            row.get::<_, Option<String>>(1)?,
+                            row.get::<_, Option<String>>(2)?,
+                        ))
+                    })
+                    .unwrap()
+                    .collect::<Result<Vec<_>, _>>()
+                    .unwrap()
+            };
+            let crawled = snapshot(&fx.file);
+            assert!(!crawled.is_empty());
+            // Der neue Schalter bleibt beim Crawl-Wert. Ein abweichender alter Wert
+            // erzwingt den vollständigen Lauf statt des No-op bei identischen Configs.
+            let mut old = cfg.clone();
+            old.advanced.respect_self_ref_meta_refresh = !respect_self_refresh;
+            recompute::d06::run(&mut fx.file, &old, &cfg, &CancelToken::new()).unwrap();
+            assert_eq!(
+                snapshot(&fx.file),
+                crawled,
+                "{fixture}, respect_self_refresh={respect_self_refresh}"
+            );
+        }
+    }
+}
+
+// spec: TECH-068
 // spec: TECH-051 [M2]
 #[tokio::test]
 async fn switching_refresh_and_respect_recomputes_persisted_facts_and_visibility() {

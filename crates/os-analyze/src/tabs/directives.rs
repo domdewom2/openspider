@@ -102,6 +102,9 @@ pub fn tab() -> TabDef {
             filter("NoTranslate", concat!("EXISTS (SELECT 1 FROM directives d WHERE d.url_id = u.id ",
                 "AND (d.applies = 1 OR (d.source = 'meta_robots' AND d.agent = 'google')) ",
                 "AND (',' || d.tokens || ',') LIKE '%,notranslate,%')")),
+            // LIKE behandelt auch `_` als Platzhalter (kein ESCAPE). Das Muster erfasst
+            // die normalisierten unavailable_after-Tokens; ein strikt literaler
+            // Unterstrich-Abgleich müsste `_` mit einer ESCAPE-Klausel maskieren.
             filter("Unavailable_After", has_token!("unavailable_after:%")),
             FilterDef {
                 requires: vec![Requirement::Coverage {

@@ -56,6 +56,12 @@ pub fn run(
             no_response_reason: sql(row.get::<_, Option<String>>(4))?.and_then(|s| s.parse().ok()),
             ..Default::default()
         };
+        // evaluate liest aus PageFacts ausschließlich effective_index und canonical_url.
+        // Aus FetchFacts liest es status_code, robots_blocked und no_response_reason;
+        // dazu kommen page_url, refresh.{source,target,target_raw} und die Konfiguration.
+        // Die übrigen PageFacts-Felder sind hier Platzhalter, keine rekonstruierten Werte.
+        // recompute_matches_crawl_for_every_fixture_url sichert diesen Vertrag gegen
+        // die beim Crawl erzeugten Statuswerte ab, falls evaluate weitere Felder nutzt.
         let page = PageFacts {
             title: Default::default(),
             meta_description: Default::default(),

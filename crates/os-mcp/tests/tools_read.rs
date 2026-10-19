@@ -1714,6 +1714,19 @@ async fn issues_that_need_the_crawl_analysis_are_named_instead_of_counted() {
         .as_array()
         .expect("nicht auswertbare Issues");
     assert!(!pending.is_empty());
-    assert!(pending.iter().all(|p| p["state"] == "needs_crawl_analysis"));
+    for issue in pending {
+        // TECH-008 / K2-44, K2-63: Outside-Filter benötigen Prüfmarker pro URL;
+        // die übrigen Filter warten hier auf die abgeschaltete Crawl-Analyse.
+        let allowed_states: &[&str] = match issue["filter"].as_str() {
+            Some("Outside <head>") => &["needs_recrawl"],
+            _ => &["needs_crawl_analysis"],
+        };
+        assert!(
+            issue["state"]
+                .as_str()
+                .is_some_and(|state| allowed_states.contains(&state)),
+            "unerwarteter Zustand je Filter: {issue}"
+        );
+    }
     client.cancel().await;
 }
