@@ -3,7 +3,8 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { expect, test } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
+import { expect, test, type Page } from "@playwright/test";
 import { FakeVizCore } from "../../src/features/viz/fixtures/fakeCore";
 import { fxUiBasic, fxUiDepth, fxUiDirs, genUiLarge } from "../../src/features/viz/fixtures/synthetic";
 import { canvasBox, layoutDone, nodePoint, openViz, readDownload, validateSvg } from "./support";
@@ -11,12 +12,61 @@ import { startVizBridge, type VizBridge } from "./viz-bridge";
 
 let bridge: VizBridge;
 
+async function expectAccessible(page: Page) {
+  const results = await new AxeBuilder({ page }).analyze();
+  const serious = results.violations.filter((v) => v.impact === "critical" || v.impact === "serious");
+  expect(serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
+}
+
 test.beforeEach(async () => {
   bridge = await startVizBridge(new FakeVizCore(fxUiBasic, fxUiDirs));
 });
 
 test.afterEach(async () => {
   await bridge.stop();
+});
+
+test.describe("Barrierefreiheit im Visualisierungsfenster", () => {
+  // spec: UI-090
+  // spec: UI-091
+  test("Crawl-Baum mit Seitenleiste und offenem Kontextmenü ohne kritische oder schwerwiegende axe-Verstöße", async ({ page }) => {
+    await openViz(page, bridge, "crawlTree");
+    await expect(page.getByTestId("viz-node-count")).toHaveText("25 nodes");
+    await expectAccessible(page);
+    const p = await nodePoint(page, 3);
+    await page.mouse.click(p.x, p.y, { button: "right" });
+    await expect(page.getByRole("menuitem", { name: "Show in table" })).toBeVisible();
+    await expectAccessible(page);
+  });
+
+  // spec: UI-096
+  test("Rückfrage „Zu viele Unterseiten“ ohne kritische oder schwerwiegende axe-Verstöße", async ({ page }) => {
+    await bridge.stop();
+    bridge = await startVizBridge(new FakeVizCore(() => genUiLarge([1, 3000])));
+    await openViz(page, bridge, "crawlTree");
+    await page.getByLabel("Maximum nodes").fill("10");
+    await page.getByLabel("Maximum nodes").press("Enter");
+    await expect(page.getByTestId("viz-node-count")).toHaveText("10 nodes");
+    await page.getByRole("searchbox", { name: "Search URL" }).fill("8000/");
+    await page.locator(".os-viz-canvas").focus();
+    await page.keyboard.press("Shift+F10");
+    await page.getByRole("menuitem", { name: "Explore" }).click();
+    const dialog = page.getByRole("dialog", { name: "Too many subpages" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText("2,991 subpages");
+    await expectAccessible(page);
+    await dialog.getByRole("button", { name: "Focus" }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect.poll(() => bridge.viz.calls.filter((c) => c.cmd === "viz.graph").at(-1)?.args).toMatchObject({ root: 1 });
+  });
+
+  // spec: UI-099
+  test("Wortwolke mit SVG-Schaltflächen und Begriffstabelle ohne kritische oder schwerwiegende axe-Verstöße", async ({ page }) => {
+    await openViz(page, bridge, "anchorWords", { root: 2 });
+    await expect(page.getByTestId("viz-terms").getByRole("row")).toHaveCount(7);
+    await expect(page.getByRole("button", { name: /^pricing: 12 links/ })).toBeVisible();
+    await expectAccessible(page);
+  });
 });
 
 test.describe("Visualisierungs-Rahmen", () => {

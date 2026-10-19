@@ -19,7 +19,7 @@ async function openWindow(kind: "crawlTree" | "crawlGraph" | "directoryTree" | "
   const label = windowLabelFor(snapshotId);
   setClient(createClient(core.transport(label)));
   offEvents = connectWindowEvents(getClient(), label);
-  render(<VizWindow params={{ snapshotId, kind, rootUrlId, label }} exportDir="/tmp/viz-out" />);
+  render(<VizWindow params={{ snapshotId, kind, rootUrlId, label }} exportDir="<export-dir>" />);
   return snapshotId;
 }
 
@@ -176,9 +176,9 @@ describe("Visualisierungsfenster", () => {
     expect(blobs).toHaveLength(1);
     expect(blobs[0]!.type).toBe("image/svg+xml");
     expect(await blobs[0]!.text()).toMatch(/^<\?xml version="1.0" encoding="UTF-8"\?>\n<svg xmlns="http:\/\/www.w3.org\/2000\/svg" version="1.1"/);
-    expect(screen.getByLabelText("Target folder")).toHaveValue("/tmp/viz-out");
+    expect(screen.getByLabelText("Target folder")).toHaveValue("<export-dir>");
     fireEvent.click(screen.getByRole("button", { name: "Export nodes and edges (CSV)" }));
-    expect(await screen.findByTestId("viz-export-done")).toHaveTextContent("/tmp/viz-out");
+    expect(await screen.findByTestId("viz-export-done")).toHaveTextContent("<export-dir>");
     const call = core.calls.find((c) => c.cmd === "viz.exportCsv")!.args as { nodes: unknown[]; edges: unknown[]; layout: string };
     expect(call.nodes).toHaveLength(25);
     expect(call.edges).toHaveLength(24);

@@ -31,7 +31,7 @@ export function ContextMenu({ entries, label, children, className }: { entries: 
     <div ref={host} className={className} onContextMenu={onContextMenu} onKeyDown={onKeyDown} style={{ position: "relative" }}>
       {children}
       <div ref={anchor} aria-hidden style={{ position: "absolute", left: at?.x ?? 0, top: at?.y ?? 0, width: 0, height: 0 }} />
-      <Popover triggerRef={anchor} isOpen={at !== null} onOpenChange={(o) => !o && setAt(null)} placement="bottom start" className="os-popover">
+      <Popover triggerRef={anchor} isOpen={at !== null} onOpenChange={(o) => !o && setAt(null)} placement="bottom start" className="os-popover" aria-label={label}>
         <MenuBody entries={entries.map((e) => ({ ...e, onAction: () => { e.onAction?.(); setAt(null); } }))} label={label} />
       </Popover>
     </div>

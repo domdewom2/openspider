@@ -5,7 +5,7 @@ import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
-import { bridgeAvailable, startBridge, type Bridge } from "../support/bridge";
+import { startBridge, type Bridge } from "../support/bridge";
 import { labelFor } from "./support";
 
 const PAGES: Record<string, string[]> = {
@@ -55,17 +55,18 @@ async function openSnapshot(page: Page, kind: string): Promise<{ snapshotId: str
 }
 
 test.describe("Visualisierungen gegen die echte Bridge", () => {
-  test.skip(!bridgeAvailable(), "os-app-bridge nicht gebaut (cargo build -p os-app --features e2e-bridge --bin os-app-bridge)");
   let bridge: Bridge | null;
-  let web: { server: Server; origin: string };
+  let web: { server: Server; origin: string } | undefined;
 
   test.beforeEach(async () => {
+    web = undefined;
     bridge = await startBridge();
+    expect(bridge, "real os-app bridge required (cargo build -p os-app --features e2e-bridge --bin os-app-bridge)").not.toBeNull();
     web = await site();
   });
   test.afterEach(async () => {
     await bridge?.stop();
-    await new Promise<void>((r) => web.server.close(() => r()));
+    if (web) await new Promise<void>((r) => web!.server.close(() => r()));
   });
 
   // spec: UI-090
@@ -75,7 +76,7 @@ test.describe("Visualisierungen gegen die echte Bridge", () => {
     const dir = mkdtempSync(join(tmpdir(), "viz-bridge-"));
     try {
       await page.goto(`/?bridge=${encodeURIComponent(bridge!.url)}`);
-      await crawl(page, `${web.origin}/`);
+      await crawl(page, `${web!.origin}/`);
       await expect.poll(async () => (await openSnapshot(page, "crawlTree")).nodes, { timeout: 30_000 }).toBe(5);
       const { snapshotId } = await openSnapshot(page, "crawlTree");
 
@@ -99,7 +100,7 @@ test.describe("Visualisierungen gegen die echte Bridge", () => {
         const path = "/src/ipc/crawl.ts";
         const { crawl } = (await import(path)) as typeof import("../../src/ipc/crawl");
         await crawl.addUrls({ urls: [url] });
-      }, `${web.origin}/docs/c.html`);
+      }, `${web!.origin}/docs/c.html`);
       await expect(viz.getByTestId("viz-data-changed")).toBeVisible({ timeout: 15_000 });
       await expect(viz.getByTestId("viz-node-count")).toHaveText("5 nodes");
     } finally {
@@ -112,7 +113,7 @@ test.describe("Visualisierungen gegen die echte Bridge", () => {
   test("Verzeichnisbaum: Verzeichnisse ohne Indexseite als hohle Pfadknoten", async ({ page, context }) => {
     expect(bridge).not.toBeNull();
     await page.goto(`/?bridge=${encodeURIComponent(bridge!.url)}`);
-    await crawl(page, `${web.origin}/`);
+    await crawl(page, `${web!.origin}/`);
     await expect.poll(async () => (await openSnapshot(page, "crawlTree")).nodes, { timeout: 30_000 }).toBe(5);
     const { snapshotId } = await openSnapshot(page, "directoryTree");
     const viz = await context.newPage();
