@@ -1,5 +1,15 @@
 {
   "backend": "launchd",
-  "files": [{ "path": "~/Library/LaunchAgents/de.openspider.task.nightly.plist", "content": "<?xml version=\"1.0\"?>" }],
-  "command": ["launchctl", "bootstrap", "gui/501", "~/Library/LaunchAgents/de.openspider.task.nightly.plist"]
+  "files": [
+    {
+      "path": "~/Library/LaunchAgents/de.openspider.task.nightly.plist",
+      "content": "<?xml version=\"1.0\"?>"
+    }
+  ],
+  "command": [
+    "launchctl",
+    "bootstrap",
+    "gui/501",
+    "~/Library/LaunchAgents/de.openspider.task.nightly.plist"
+  ]
 }

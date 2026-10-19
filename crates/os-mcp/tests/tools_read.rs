@@ -123,7 +123,9 @@ async fn an_empty_or_missing_crawl_folder_lists_nothing() {
 #[tokio::test]
 async fn an_unknown_crawl_id_is_a_tool_error_that_names_the_known_crawls() {
     let world = World::new();
-    let stored = world.add("out-basic-site", "/", base_config(), 1).await;
+    let mut cfg = base_config();
+    cfg.extraction.http_headers = true;
+    let stored = world.add("out-basic-site", "/", cfg, 1).await;
     let client = world.client().await;
     let reply = client
         .call(
@@ -168,7 +170,9 @@ fn report_cell(v: &Value) -> String {
 #[tokio::test]
 async fn crawl_overview_has_exactly_the_numbers_of_the_crawl_overview_report() {
     let world = World::new();
-    let stored = world.add("out-basic-site", "/", base_config(), 1).await;
+    let mut cfg = base_config();
+    cfg.extraction.http_headers = true;
+    let stored = world.add("out-basic-site", "/", cfg, 1).await;
     let client = world.client().await;
 
     let tmp = tempfile::tempdir().unwrap();
@@ -328,26 +332,16 @@ async fn crawl_overview_equals_the_golden_of_the_overview_report() {
             ));
         }
     }
-    let golden = Table::read(
-        &fixtures_dir()
-            .join("..")
-            .join("golden")
-            .join("out-issues")
-            .join("crawl_overview.csv"),
+    let mut csv = String::from("Section,Item,URLs,% of Total\n");
+    for (section, item, urls, pct) in actual {
+        let cells = [section, item, urls, pct].map(|s| format!("\"{}\"", s.replace('"', "\"\"")));
+        csv.push_str(&cells.join(","));
+        csv.push('\n');
+    }
+    os_testsite::golden::assert_m1_overview_golden(
+        fixtures_dir().join("../golden/out-issues/crawl_overview.csv"),
+        &csv,
     );
-    let expected: Vec<(String, String, String, String)> = golden
-        .rows
-        .iter()
-        .map(|r| {
-            (
-                r[golden.col("Section")].clone(),
-                r[golden.col("Item")].clone(),
-                r[golden.col("URLs")].clone(),
-                r[golden.col("% of Total")].clone(),
-            )
-        })
-        .collect();
-    assert_eq!(actual, expected, "Zeile für Zeile wie der Golden");
     client.cancel().await;
 }
 
@@ -382,7 +376,9 @@ async fn crawl_overview_names_the_top_issues_like_the_issues_tab() {
 #[tokio::test]
 async fn internal_all_paged_with_limit_5_equals_the_tab_export_without_duplicates() {
     let world = World::new();
-    let stored = world.add("out-basic-site", "/", base_config(), 1).await;
+    let mut cfg = base_config();
+    cfg.extraction.http_headers = true;
+    let stored = world.add("out-basic-site", "/", cfg, 1).await;
     let client = world.client().await;
 
     let export = export_view(&stored, &ViewQuery::new("Internal", "All"));
@@ -461,7 +457,9 @@ async fn client_errors_4xx_with_a_sort_equal_the_tab_export() {
 #[tokio::test]
 async fn sort_columns_and_search_work_like_in_the_export() {
     let world = World::new();
-    let stored = world.add("out-basic-site", "/", base_config(), 1).await;
+    let mut cfg = base_config();
+    cfg.extraction.http_headers = true;
+    let stored = world.add("out-basic-site", "/", cfg, 1).await;
     let client = world.client().await;
 
     let mut q = ViewQuery::new("Internal", "HTML");
@@ -518,7 +516,9 @@ async fn sort_columns_and_search_work_like_in_the_export() {
 #[tokio::test]
 async fn response_time_is_in_seconds_and_transferred_is_the_body_size() {
     let world = World::new();
-    let stored = world.add("out-basic-site", "/", base_config(), 1).await;
+    let mut cfg = base_config();
+    cfg.extraction.http_headers = true;
+    let stored = world.add("out-basic-site", "/", cfg, 1).await;
     let client = world.client().await;
 
     let reply = client
@@ -571,7 +571,9 @@ async fn response_time_is_in_seconds_and_transferred_is_the_body_size() {
 #[tokio::test]
 async fn invalid_names_are_errors_that_list_the_valid_ones() {
     let world = World::new();
-    let stored = world.add("out-basic-site", "/", base_config(), 1).await;
+    let mut cfg = base_config();
+    cfg.extraction.http_headers = true;
+    let stored = world.add("out-basic-site", "/", cfg, 1).await;
     let client = world.client().await;
     let id = stored.id.as_str();
 
@@ -655,7 +657,9 @@ async fn invalid_names_are_errors_that_list_the_valid_ones() {
 #[tokio::test]
 async fn a_cursor_of_another_query_is_rejected() {
     let world = World::new();
-    let stored = world.add("out-basic-site", "/", base_config(), 1).await;
+    let mut cfg = base_config();
+    cfg.extraction.http_headers = true;
+    let stored = world.add("out-basic-site", "/", cfg, 1).await;
     let client = world.client().await;
     let id = stored.id.as_str();
     let first = client
@@ -693,7 +697,9 @@ async fn a_cursor_of_another_query_is_rejected() {
 #[tokio::test]
 async fn multi_columns_can_be_sorted_by_their_numbered_name_and_listed_with_all_columns() {
     let world = World::new();
-    let stored = world.add("out-basic-site", "/", base_config(), 1).await;
+    let mut cfg = base_config();
+    cfg.extraction.http_headers = true;
+    let stored = world.add("out-basic-site", "/", cfg, 1).await;
     let client = world.client().await;
     let reply = client
         .call(
@@ -784,7 +790,9 @@ async fn a_numbered_name_with_a_suffix_is_accepted_and_an_unknown_suffix_lists_t
 #[tokio::test]
 async fn a_numbered_multi_column_name_can_be_requested_as_a_column() {
     let world = World::new();
-    let stored = world.add("out-basic-site", "/", base_config(), 1).await;
+    let mut cfg = base_config();
+    cfg.extraction.http_headers = true;
+    let stored = world.add("out-basic-site", "/", cfg, 1).await;
     let client = world.client().await;
     let reply = client
         .call(
@@ -891,7 +899,9 @@ fn count(stored: &Stored, sql: &str, param: i64) -> u64 {
 #[tokio::test]
 async fn the_start_page_comes_with_all_sections() {
     let world = World::new();
-    let stored = world.add("out-basic-site", "/", base_config(), 1).await;
+    let mut cfg = base_config();
+    cfg.extraction.http_headers = true;
+    let stored = world.add("out-basic-site", "/", cfg, 1).await;
     let client = world.client().await;
     let start = stored.fx.site.url("/");
     let reply = details(&client, &stored.id, &start, json!({})).await;
@@ -1080,7 +1090,9 @@ async fn hreflang_annotations_come_per_part_column_with_language_and_url_in_fixt
 #[tokio::test]
 async fn inlinks_and_outlinks_are_paged_with_limit_2_and_their_own_cursors() {
     let world = World::new();
-    let stored = world.add("out-basic-site", "/", base_config(), 1).await;
+    let mut cfg = base_config();
+    cfg.extraction.http_headers = true;
+    let stored = world.add("out-basic-site", "/", cfg, 1).await;
     let client = world.client().await;
     let start = stored.fx.site.url("/");
     let url_id: i64 = stored
@@ -1224,7 +1236,9 @@ async fn a_page_with_issues_lists_them_and_unknown_sections_are_rejected() {
 #[tokio::test]
 async fn a_url_that_is_not_in_the_crawl_is_reported_as_not_found() {
     let world = World::new();
-    let stored = world.add("out-basic-site", "/", base_config(), 1).await;
+    let mut cfg = base_config();
+    cfg.extraction.http_headers = true;
+    let stored = world.add("out-basic-site", "/", cfg, 1).await;
     let client = world.client().await;
     let url = stored.fx.site.url("/nie-verlinkt.html");
     let reply = details(&client, &stored.id, &url, json!({})).await;
@@ -1346,7 +1360,9 @@ async fn a_url_beyond_max_urls_reports_the_limit_as_reason() {
 #[tokio::test]
 async fn every_stored_reason_is_reported_with_its_own_text() {
     let world = World::new();
-    let stored = world.add("out-basic-site", "/", base_config(), 1).await;
+    let mut cfg = base_config();
+    cfg.extraction.http_headers = true;
+    let stored = world.add("out-basic-site", "/", cfg, 1).await;
     // Gründe, die der Crawl dieser Fixture nicht von selbst erzeugt (Listenmodus, Tiefenlimit, …), direkt in
     // einer Kopie der Datei gesetzt: Die Werkzeugschicht reicht jeden gespeicherten Grund mit eigenem Text durch.
     let path = world.dir.path().join(format!("{}.ospider", stored.id));
@@ -1698,6 +1714,30 @@ async fn issues_that_need_the_crawl_analysis_are_named_instead_of_counted() {
         .as_array()
         .expect("nicht auswertbare Issues");
     assert!(!pending.is_empty());
-    assert!(pending.iter().all(|p| p["state"] == "needs_crawl_analysis"));
+    // M2-D09 replaces the SD stubs: its two issues require an enabled extraction format.
+    // ONPAGE-079: Broken Bookmark requires advanced.crawl_fragments (K2-63).
+    // spec: ONPAGE-099, ONPAGE-108, TECH-008 [P1]
+    for issue in pending {
+        let expected = match (issue["tab"].as_str(), issue["filter"].as_str()) {
+            // TECH-008 / K2-44, K2-63: Outside-Filter benötigen Prüfmarker pro URL.
+            (_, Some("Outside <head>")) => "needs_recrawl",
+            (Some("Structured Data"), Some("Missing Structured Data" | "Parse Errors")) => {
+                "needs_config"
+            }
+            // K2-63, ONPAGE-144: Near Duplicates benötigt zuerst seinen Opt-in-Schalter.
+            (Some("Content"), Some("Near Duplicates")) => "needs_config",
+            // spec: ONPAGE-007, ONPAGE-178, ONPAGE-179, ONPAGE-180
+            (
+                Some("Images"),
+                Some("Background Images" | "Missing Size Attributes" | "Incorrectly Sized Images"),
+            ) => "needs_rendering",
+            _ => "needs_crawl_analysis",
+        };
+        let state = issue["state"].as_str().unwrap_or_default();
+        let ok =
+            state == expected || (expected == "needs_crawl_analysis" && state == "needs_config");
+        assert!(ok, "nicht ausgewertetes Issue: {issue}");
+    }
+    assert!(pending.iter().any(|p| p["state"] == "needs_crawl_analysis"));
     client.cancel().await;
 }

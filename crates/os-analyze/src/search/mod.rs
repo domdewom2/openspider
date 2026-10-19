@@ -24,6 +24,8 @@ pub enum RuleOp {
     EndsWith,
     /// Passt auf den regulären Ausdruck.
     Regex,
+    /// Passt nicht auf den regulären Ausdruck.
+    NotRegex,
     /// Größer als.
     Greater,
     /// Kleiner als.
@@ -65,10 +67,13 @@ pub enum RuleNode {
 /// Ergebnis von [`compile`]: Prädikat über `u` (Alias der Tabelle `urls`) samt Parametern.
 #[derive(Debug, Clone, PartialEq)]
 pub struct CompiledSearch {
-    /// SQL-Bedingung über `u` mit benannten Parametern.
+    /// SQL-Bedingung über `u` mit benannten Parametern. Rules benötigt `prepare`.
+    /// Simple behält den historischen ASCII-SQL-Plan; Unicode-Konsumenten verwenden
+    /// `matches_bitmap` oder `prepare(...).sql()` (Views übernehmen das automatisch).
     pub sql: String,
     /// Benannte Parameter mit führendem `:`.
     pub params: Vec<(String, os_model::Value)>,
+    program: eval::Program,
 }
 
 /// Fehler der Textsyntax mit Position (Zeichen ab 0).
@@ -80,21 +85,6 @@ pub struct ParseError {
     pub code: String,
 }
 
-// STUB(M2-K02)
-/// Wandelt die Textsyntax einer Suche in einen Regelbaum.
-pub fn parse(_text: &str) -> Result<RuleNode, ParseError> {
-    Err(ParseError {
-        position: 0,
-        code: "not-implemented".to_string(),
-    })
-}
-
-// STUB(M2-K02)
-/// Übersetzt einen Regelbaum in ein SQL-Prädikat (gleiche Semantik für Ansicht, Export und MCP).
-pub fn compile(_tree: &RuleNode, _case_sensitive: bool) -> Result<CompiledSearch, ViewError> {
-    Err(ViewError::NotImplemented("search::compile (M2-K02)"))
-}
-
 /// Lieferant einer Menge von URL-Kennungen als Bitmap: Segmente (K-14) und Vergleichsklassen (K-15) schränken eine
 /// Ansicht über diesen Weg ein, ohne dass `views` ihre Logik kennt (K-1).
 pub trait FilterSource: Send + Sync {
@@ -103,4 +93,20 @@ pub trait FilterSource: Send + Sync {
 
     /// Die URL-Kennungen, die die Quelle zulässt.
     fn bitmap(&self, file: &os_store::CrawlFile) -> Result<RoaringBitmap, ViewError>;
+}
+
+mod eval;
+mod folding;
+mod parser;
+mod view;
+pub use eval::{compile, compile_ctx, search_budget, validate_regex, SearchCtx, SearchError};
+pub use parser::format;
+pub use view::{
+    compile_visible, extend_query_hash, prepare_view, prepared_query, query_identity,
+    PreparedSearch,
+};
+
+/// Textsyntax → Regelbaum; Positionen sind Unicode-Zeichen ab 0.
+pub fn parse(text: &str) -> Result<RuleNode, ParseError> {
+    parser::parse(text)
 }

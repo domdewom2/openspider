@@ -6,6 +6,8 @@ import type { ProjectRenameArgs } from "./gen/ProjectRenameArgs";
 import { client } from "./client";
 
 export const projects = {
+  /** `projects.list` */
+  list: (signal?: AbortSignal) => client.invoke<ProjectInfo[]>("projects.list", undefined, signal),
   /** `projects.create` */
   create: (args: ProjectCreateArgs, signal?: AbortSignal) => client.invoke<ProjectInfo>("projects.create", args, signal),
   /** `projects.rename` */

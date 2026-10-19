@@ -1,8 +1,101 @@
-# OpenSpider – Issue-Katalog ab M2, Tab „Validation“ (UI-063/UI-064).
-#
-# Einträge wie in core/issues/catalog.toml (`[[issue]]` mit id, tab, filter, type, priority, type_rule, priority_rule,
-# doc_key, optional override_reason/needs_crawl_analysis/text_params); `tab` ist hier immer "Validation". Der Loader liest die
-# M1-Datei und alle Dateien dieses Ordners. Texte: core/issues/texts/{de,en}.d/validation.toml (Schlüssel issues.<id>).
-# M2-F02 legt nur die Datei an; die Einträge liefert das Paket des Tabs.
-
+# Klassifizierung abgeleitet aus öffentlicher Dokumentation der Referenz (Benchmark), begründet nach UI-063
 schema = 1
+
+[[issue]]
+id = "validation-invalid-head-elements"
+tab = "Validation"
+filter = "Invalid HTML Elements In <head>"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+doc_key = "validation-invalid-head-elements"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "validation-head-not-first"
+tab = "Validation"
+filter = "<head> Not First In <html> Element"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+doc_key = "validation-head-not-first"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "validation-missing-head"
+tab = "Validation"
+filter = "Missing <head> Tag"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H2"
+doc_key = "validation-missing-head"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "validation-multiple-head"
+tab = "Validation"
+filter = "Multiple <head> Tags"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H2"
+doc_key = "validation-multiple-head"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "validation-missing-body"
+tab = "Validation"
+filter = "Missing <body> Tag"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H2"
+doc_key = "validation-missing-body"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "validation-multiple-body"
+tab = "Validation"
+filter = "Multiple <body> Tags"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H2"
+doc_key = "validation-multiple-body"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "validation-body-before-html"
+tab = "Validation"
+filter = "<body> Element Preceding <html>"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+doc_key = "validation-body-before-html"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "validation-html-document-size"
+tab = "Validation"
+filter = "HTML Document Over {validation.html_doc_max_bytes}MB"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H2"
+doc_key = "validation-html-document-size"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "validation-resource-size"
+tab = "Validation"
+filter = "Resource Over {validation.resource_max_bytes}MB"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H2"
+doc_key = "validation-resource-size"
+needs_crawl_analysis = false

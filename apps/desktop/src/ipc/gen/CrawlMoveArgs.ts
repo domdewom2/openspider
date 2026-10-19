@@ -11,4 +11,8 @@ ids: Array<string>,
 /**
  * Zielprojekt; `null` = ohne Projekt.
  */
-project?: string | null, };
+project?: string | null, 
+/**
+ * Zielverzeichnis für die Crawl-Datei.
+ */
+destinationDir?: string | null, };

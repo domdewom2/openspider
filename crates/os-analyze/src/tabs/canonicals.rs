@@ -1,11 +1,11 @@
-//! Tab „Canonicals“ (TECH-011 bis TECH-018).
+//! Tab „Canonicals“ (TECH-011 bis TECH-023).
 //!
-//! **Grundmenge (TECH-011):** interne Tabellenzeilen mit Status 2xx (K-56) und HTML-Inhalt, dazu interne
+//! **Grundmenge (TECH-011):** interne Tabellenzeilen mit Status 2xx (K-56) und HTML-/PDF-Inhalt, dazu interne
 //! Nicht-HTML-2xx-URLs mit mindestens einer HTTP-Canonical. Ist `spider.canonicals.store` aus (CRAWL-046),
 //! bleibt die Grundmenge leer: es gibt weder Detailzeilen noch Spaltenwerte, und es entsteht kein
 //! `Canonicalised`.
 //!
-//! **Filter** (alle Live, außer „Non-Indexable Canonical“): gerechnet wird mit den Seitenfakten der Engine
+//! **Filter** (alle Live, außer „Non-Indexable Canonical“ und „Unlinked“): gerechnet wird mit den Seitenfakten der Engine
 //! (`canonical_count`, maßgebliche `canonical_url` nach TECH-017, `canonical_self` nach TECH-002) und den
 //! Zeilen der Tabelle `canonicals`. „Multiple Conflicting“ zählt die verschiedenen aufgelösten Canonical-
 //! URLs nach Normalisierung (Fragment entfernt, Prozent-Kodierung normalisiert); ungültige Rohwerte
@@ -16,16 +16,16 @@ use std::sync::OnceLock;
 
 use os_model::{AnalysisStep, CrawlConfig, Value};
 
-use crate::defs::{ColumnDef, ColumnKind, ColumnSql, FilterDef, FilterKind, TabDef};
+use crate::defs::{ColumnDef, ColumnKind, ColumnSql, FilterDef, FilterKind, Requirement, TabDef};
 
 /// Name der Markierung in `url_flags` (TECH-018), vom Schritt `analysis::steps::canonicals` gesetzt.
 pub const FLAG_NON_INDEXABLE_CANONICAL: &str = "non_indexable_canonical";
 
-/// Grundmenge: interne HTML-2xx-Zeilen und interne Nicht-HTML-2xx-URLs mit HTTP-Canonical (K-56).
+/// Grundmenge: interne HTML-/PDF-2xx-Zeilen und interne Nicht-HTML-2xx-URLs mit HTTP-Canonical (K-56).
 const POPULATION: &str =
     "u.is_internal = 1 AND u.in_tables = 1 AND u.status_code BETWEEN 200 AND 299 \
      AND :canon_store = 1 \
-     AND (u.content_class = 'HTML' \
+     AND (u.content_class IN ('HTML', 'PDF') \
           OR EXISTS (SELECT 1 FROM canonicals c WHERE c.url_id = u.id AND c.source = 'http'))";
 
 /// Zählt die verschiedenen normalisierten Canonical-Ziele einer URL.
@@ -169,17 +169,25 @@ fn params(cfg: &CrawlConfig) -> Vec<(&'static str, Value)> {
 fn filter(id: &'static str, predicate: &'static str, ignore_non_indexable: bool) -> FilterDef {
     FilterDef {
         id,
-        predicate,
+        predicate: crate::defs::intern(&format!("u.in_tables = 1 AND ({predicate})")),
         kind: FilterKind::Live,
         requires: Vec::new(),
         // CRAWL-089/TECH-015 (K-56): Nur „Missing“ schließt bei der Option nicht indexierbare Seiten aus.
         ignore_non_indexable,
+        default_columns: &[],
     }
 }
 
 /// Definition des Tabs „Canonicals“.
 pub fn tab() -> TabDef {
     TabDef {
+        hidden_population: Some(
+            "u.is_internal = 1 AND u.in_tables = 0 AND u.status_code BETWEEN 200 AND 299
+            AND :canon_store = 1 AND (u.content_class IN ('HTML', 'PDF') OR EXISTS
+              (SELECT 1 FROM canonicals c WHERE c.url_id = u.id AND c.source = 'http'))
+            AND EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id
+              AND f.flag = 'respect_hidden' AND f.value = 'canonical')",
+        ),
         id: "Canonicals",
         population: POPULATION,
         columns: vec![
@@ -221,25 +229,65 @@ pub fn tab() -> TabDef {
                 "u.canonical_count >= 1 AND u.canonical_self = 1",
                 false,
             ),
-            filter(
-                "Canonicalised",
-                "u.canonical_count >= 1 AND u.canonical_self = 0",
-                false,
-            ),
+            FilterDef {
+                predicate: "u.canonical_count >= 1 AND u.canonical_self = 0",
+                ..filter("Canonicalised", "1", false)
+            },
             filter(
                 "Missing",
-                "u.content_class = 'HTML' AND u.canonical_count = 0",
+                "u.content_class IN ('HTML', 'PDF') AND u.canonical_count = 0",
                 true,
             ),
             filter("Multiple", "u.canonical_count >= 2", false),
             filter("Multiple Conflicting", conflicting_predicate(), false),
             FilterDef {
                 id: "Non-Indexable Canonical",
-                predicate: "EXISTS (SELECT 1 FROM url_flags f \
+                predicate: "u.in_tables = 1 AND EXISTS (SELECT 1 FROM url_flags f \
                             WHERE f.url_id = u.id AND f.flag = 'non_indexable_canonical')",
                 kind: FilterKind::PostCrawl(AnalysisStep::Canonicals),
                 requires: Vec::new(),
                 ignore_non_indexable: false,
+                default_columns: &[],
+            },
+            filter(
+                "Canonical Is Relative",
+                "EXISTS (SELECT 1 FROM canonicals c WHERE c.url_id = u.id
+                AND NOT (instr(c.raw, ':') > 1 AND substr(c.raw, 1, 1) GLOB '[A-Za-z]'
+                AND substr(c.raw, 1, instr(c.raw, ':') - 1) NOT GLOB '*[^A-Za-z0-9+.-]*'))",
+                false,
+            ),
+            FilterDef {
+                kind: FilterKind::PostCrawl(AnalysisStep::Canonicals),
+                ..filter(
+                    "Unlinked",
+                    "EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id
+                    AND f.flag = 'unlinked_canonical')",
+                    false,
+                )
+            },
+            filter(
+                "Invalid Attribute In Annotation",
+                "EXISTS (SELECT 1 FROM url_ext e
+                WHERE e.url_id = u.id AND e.key = 'canonical.invalid_attribute' AND e.v_int = 1)",
+                false,
+            ),
+            filter(
+                "Contains Fragment URL",
+                "EXISTS (SELECT 1 FROM canonicals c
+                WHERE c.url_id = u.id AND instr(c.raw, '#') > 0)",
+                false,
+            ),
+            FilterDef {
+                requires: vec![Requirement::Coverage {
+                    config: "advanced.html_validation",
+                    marker: "canonical.checked",
+                }],
+                ..filter(
+                    "Outside <head>",
+                    "EXISTS (SELECT 1 FROM canonicals c WHERE c.url_id = u.id
+                    AND c.source = 'html' AND c.in_head = 0)",
+                    false,
+                )
             },
         ],
         default_sort: Vec::new(),

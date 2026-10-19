@@ -1,6 +1,7 @@
 //! Tabellen von Schema v3, die kein `WriteBatch`-Teil befüllt (`view_cache`, `serp_edits`, `near_duplicates`,
 //! `url_segments`, `api_status`, `api_errors`): Rundreise, Schlüssel und Standardwerte der Spalten. Die übrigen Tabellen
-//! prüft `writer_m2_roundtrip.rs` über den Writer. Infrastrukturtest ohne Spec-Tag.
+//! prüft `writer_m2_roundtrip.rs` über den Writer. Infrastrukturtest ohne Spec-Tag; nur der letzte Test prüft die
+//! `q_`-Sichten der Leseschnittstelle (OUT-233, OUT-234).
 
 mod schema_common;
 
@@ -188,6 +189,8 @@ fn sitemap_columns_added_by_v3_default_to_empty_values() {
     drop(file);
 }
 
+// spec: OUT-233
+// spec: OUT-234
 #[test]
 fn a_reopened_v3_file_has_all_tables_and_views_and_the_integrity_check_passes() {
     let dir = tempfile::tempdir().unwrap();

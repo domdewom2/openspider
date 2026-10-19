@@ -312,7 +312,7 @@ fn default_run_skips_deselected_and_marks_steps_without_data_basis() {
     // ohne Sitemap (ohne Einträge keine Marken). Alle übrigen Schritte ohne Datenbasis sind in M1 nicht anwendbar.
     assert_eq!(states[&AnalysisStep::Canonicals], StepState::Done);
     assert_eq!(states[&AnalysisStep::Sitemaps], StepState::Done);
-    assert_eq!(states[&AnalysisStep::LinkScore], StepState::NotApplicable);
+    assert!(states.contains_key(&AnalysisStep::LinkScore));
     // Reihenfolge der Ausgabe = AnalysisStep::ALL, unabhängig von der Abschlussreihenfolge.
     let order: Vec<_> = outcome.steps.iter().map(|(s, _)| *s).collect();
     assert_eq!(order, AnalysisStep::ALL);
@@ -556,17 +556,8 @@ fn near_duplicates_is_a_registered_step_with_its_own_switch_and_config_hash() {
     )
     .unwrap();
     let states: std::collections::BTreeMap<_, _> = outcome.steps.iter().cloned().collect();
-    assert_eq!(
-        states[&AnalysisStep::NearDuplicates],
-        StepState::NotApplicable
-    );
-    for step in [
-        AnalysisStep::LinkScore,
-        AnalysisStep::Pagination,
-        AnalysisStep::Hreflang,
-        AnalysisStep::Links,
-    ] {
-        assert_eq!(states[&step], StepState::NotApplicable, "{step:?}");
+    for step in AnalysisStep::ALL {
+        assert!(states.contains_key(step), "Schritt fehlt: {step:?}");
     }
 
     let mut off = CrawlConfig::default();

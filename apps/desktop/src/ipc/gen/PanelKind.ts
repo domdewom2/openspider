@@ -3,4 +3,4 @@
 /**
  * Seitenleisten-Inhalt für `export.sidebar`/`export.issues` (UI-060, UI-062).
  */
-export type PanelKind = "overview" | "issues" | "siteStructure" | "responseTimes" | "segments" | "api";
+export type PanelKind = "overview" | "issues" | "siteStructure" | "responseTimes" | "segments" | "api" | "spellingGrammar";

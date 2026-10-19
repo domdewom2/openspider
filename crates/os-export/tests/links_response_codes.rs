@@ -1,7 +1,5 @@
-//! Response-Codes-Inlinks-Exporte (OUT-050): 12 Einträge × {Internal & External, Internal, External}.
-//! Fixture `out-response-codes`. Platzhalter-Modus: Die Auswertung läuft gegen den Test-Tab
-//! `response_codes_tab()` (echte Prädikate, `links_support.rs`); die Goldens gegen die echten Filter von P21
-//! liegen unter `tests/golden/out-response-codes/` (M1-P26).
+//! Response-Codes-Inlinks-Exporte (OUT-050/067): drei Bereiche mit Fehlervereinigung.
+//! Fixture `out-response-codes`; Vertragsauswertung und registrierte Fachfilter mit CSV-Goldens.
 
 #[path = "links_support.rs"]
 mod support;
@@ -297,38 +295,39 @@ async fn refresh_targets_are_classified_by_their_refresh_and_not_as_success() {
     assert!(d.contains(&u("/refresh-target.html")));
 }
 
-// spec: OUT-050
+// spec: ONPAGE-067
+// spec: OUT-067
 #[tokio::test]
 async fn all_error_inlinks_are_the_union_of_no_response_4xx_and_5xx() {
     let fx = crawl_codes().await;
     let dir = tempfile::tempdir().unwrap();
-    let key = |rows: &[Vec<String>]| -> BTreeSet<(String, String, String, String)> {
-        rows.iter()
-            .map(|r| (r[2].clone(), r[1].clone(), r[0].clone(), r[12].clone()))
-            .collect()
+    let multiset = |rows: &[Vec<String>]| {
+        let mut counts = std::collections::BTreeMap::new();
+        for row in rows {
+            *counts.entry(row.clone()).or_insert(0usize) += 1;
+        }
+        counts
     };
-    let (_, all) = export(
-        &fx.file,
-        &names("Internal & External", "All Error Inlinks"),
-        dir.path(),
-    );
-    let mut union = BTreeSet::new();
-    for entry in [
-        "No Response Inlinks",
-        "Client Error (4xx) Inlinks",
-        "Server Error (5xx) Inlinks",
-    ] {
-        let (_, rows) = export(&fx.file, &names("Internal & External", entry), dir.path());
-        assert!(!rows.is_empty(), "{entry}");
-        union.extend(key(&rows));
+    for scope in SCOPES {
+        let (_, all) = export(&fx.file, &names(scope, "All Error Inlinks"), dir.path());
+        let mut union = Vec::new();
+        for entry in [
+            "No Response Inlinks",
+            "Client Error (4xx) Inlinks",
+            "Server Error (5xx) Inlinks",
+        ] {
+            let (_, rows) = export(&fx.file, &names(scope, entry), dir.path());
+            union.extend(rows);
+        }
+        assert_eq!(multiset(&all), multiset(&union), "{scope}");
+        let order: Vec<(u16, &str, &str)> = all
+            .iter()
+            .map(|r| (r[6].parse().unwrap_or(0), r[2].as_str(), r[1].as_str()))
+            .collect();
+        let mut sorted = order.clone();
+        sorted.sort();
+        assert_eq!(order, sorted, "{scope}");
     }
-    assert_eq!(key(&all), union);
-    assert_eq!(all.len(), union.len(), "keine Zeile doppelt");
-    // sortiert nach Destination, Source, Dokumentreihenfolge (OUT-031)
-    let order: Vec<(&str, &str)> = all.iter().map(|r| (r[2].as_str(), r[1].as_str())).collect();
-    let mut sorted = order.clone();
-    sorted.sort();
-    assert_eq!(order, sorted);
 }
 
 // spec: OUT-050
@@ -381,7 +380,7 @@ async fn every_entry_of_every_scope_exports_a_file_with_the_link_header() {
 // spec: OUT-050
 #[tokio::test]
 async fn every_entry_exports_against_the_registered_tabs() {
-    // Gegen die registrierten Tabs (heute P00b-Platzhalter, später die Filter von P21): kein Fehler, immer
+    // Gegen die registrierten Tabs: kein Fehler, immer
     // eine Datei mit Kopfzeile, die Ausgabedateien sind verschieden.
     let fx = crawl_codes().await;
     let dir = tempfile::tempdir().unwrap();
@@ -419,5 +418,81 @@ async fn golden_inlinks_exports_with_the_real_response_codes_filters() {
             &format!("out-response-codes/{file}"),
             &read_csv(&infos[0].path),
         );
+    }
+}
+
+// spec: OUT-067
+#[test]
+fn combined_error_export_accepts_the_spec_path_and_existing_catalog_name() {
+    let canonical = "Response Codes:Internal & External:All Error Inlinks";
+    for name in [canonical, "Response Codes:All Error Inlinks"] {
+        assert_eq!(
+            catalog::resolve(ExportKind::Bulk, name).unwrap(),
+            ExportRef::Bulk(canonical.into())
+        );
+    }
+    assert_eq!(
+        catalog::list(ExportKind::Bulk)
+            .iter()
+            .filter(|n| n.ends_with(":All Error Inlinks"))
+            .count(),
+        3
+    );
+}
+
+// spec: OUT-067
+// spec: ONPAGE-067
+#[tokio::test]
+async fn real_error_exports_match_the_component_multisets_in_every_scope() {
+    let fx = crawl_codes().await;
+    let dir = tempfile::tempdir().unwrap();
+    for scope in SCOPES {
+        let read = |entry: &str| {
+            let infos = export_bulk(
+                &fx.file,
+                &CrawlConfig::default(),
+                &names(scope, entry),
+                dir.path(),
+                Format::Csv,
+            )
+            .unwrap();
+            let mut rows = parse_csv(&read_csv(&infos[0].path));
+            rows.remove(0);
+            rows
+        };
+        let all = read("All Error Inlinks");
+        let mut expected = Vec::new();
+        for component in [
+            "No Response Inlinks",
+            "Client Error (4xx) Inlinks",
+            "Server Error (5xx) Inlinks",
+        ] {
+            expected.extend(read(component));
+        }
+        let mut actual = all.clone();
+        expected.sort();
+        actual.sort();
+        assert_eq!(actual, expected, "{scope}");
+        assert!(all
+            .iter()
+            .all(|r| r[6].is_empty() || r[6].starts_with(['4', '5'])));
+        assert!(all
+            .iter()
+            .all(|r| !r[2].ends_with("/private/blocked.html") && !r[2].ends_with("/r301")));
+        assert_eq!(
+            all.iter().any(|r| r[2] == "http://external.test/ext500"),
+            scope != "Internal"
+        );
+        assert!(all
+            .iter()
+            .filter(|r| r[6].is_empty())
+            .all(|r| !r[7].is_empty()));
+        let keys: Vec<_> = all
+            .iter()
+            .map(|r| (r[6].parse::<u16>().unwrap_or(0), r[2].clone(), r[1].clone()))
+            .collect();
+        let mut ordered = keys.clone();
+        ordered.sort();
+        assert_eq!(keys, ordered);
     }
 }

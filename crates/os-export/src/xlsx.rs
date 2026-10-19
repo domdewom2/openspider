@@ -240,11 +240,14 @@ pub struct XlsxWriter {
     sheet_names: Vec<String>,
     /// Anzahl Datenzeilen je Blatt.
     sheet_rows: Vec<u32>,
+    sheet_widths: Vec<usize>,
+    tables: usize,
     header: Option<Vec<String>>,
     max_rows: u32,
     total_rows: u64,
     truncated: u64,
     formats: Formats,
+    cancel: Option<os_model::CancelToken>,
 }
 
 impl XlsxWriter {
@@ -264,14 +267,22 @@ impl XlsxWriter {
             base_name: name.clone(),
             sheet_names: Vec::new(),
             sheet_rows: Vec::new(),
+            sheet_widths: Vec::new(),
+            tables: 1,
             header: None,
             max_rows: opts.max_rows_per_sheet.clamp(1, MAX_DATA_ROWS),
             total_rows: 0,
             truncated: 0,
             formats: Formats::new(),
+            cancel: None,
         };
         w.add_sheet(name)?;
         Ok(w)
+    }
+
+    /// Keeps final ZIP serialization interruptible, including large workbooks.
+    pub fn set_cancel(&mut self, cancel: os_model::CancelToken) {
+        self.cancel = Some(cancel);
     }
 
     /// Namen der bisher angelegten Blätter.
@@ -284,6 +295,7 @@ impl XlsxWriter {
         ws.set_name(&name).map_err(|e| xlsx_err(&self.path, e))?;
         self.sheet_names.push(name);
         self.sheet_rows.push(0);
+        self.sheet_widths.push(0);
         Ok(())
     }
 
@@ -296,6 +308,7 @@ impl XlsxWriter {
         let Some(columns) = self.header.clone() else {
             return Ok(());
         };
+        self.sheet_widths[idx] = columns.len();
         let mut clipped = 0u64;
         let ws = self
             .workbook
@@ -332,7 +345,7 @@ impl XlsxWriter {
 
 impl TableWriter for XlsxWriter {
     fn header(&mut self, columns: &[String]) -> Result<(), ExportError> {
-        if self.header.is_some() || self.total_rows > 0 {
+        if self.header.is_some() {
             return Err(ExportError::Write(
                 "Kopfzeile wurde bereits geschrieben".to_string(),
             ));
@@ -425,15 +438,14 @@ impl TableWriter for XlsxWriter {
 
     fn finish(self: Box<Self>) -> Result<ExportFileInfo, ExportError> {
         let mut this = *self;
-        if let Some(h) = &this.header {
-            let last_col = h.len().saturating_sub(1) as u16;
-            for idx in 0..this.sheet_names.len() {
-                let last_row = this.sheet_rows[idx];
+        for idx in 0..this.sheet_names.len() {
+            let width = this.sheet_widths[idx];
+            if width > 0 {
                 let ws = this
                     .workbook
                     .worksheet_from_index(idx)
                     .map_err(|e| xlsx_err(&this.path, e))?;
-                ws.autofilter(0, 0, last_row, last_col)
+                ws.autofilter(0, 0, this.sheet_rows[idx], (width - 1) as u16)
                     .map_err(|e| xlsx_err(&this.path, e))?;
             }
         }
@@ -449,7 +461,7 @@ impl TableWriter for XlsxWriter {
                 this.truncated
             ));
         }
-        if this.sheet_names.len() > 1 {
+        if this.sheet_names.len() > this.tables {
             tracing::warn!(
                 file = %this.path.display(),
                 sheets = this.sheet_names.len(),
@@ -463,9 +475,22 @@ impl TableWriter for XlsxWriter {
             ));
         }
         let target = fs_paths::fs_path(&this.path);
-        this.workbook
-            .save(&target)
-            .map_err(|e| xlsx_err(&this.path, e))?;
+        if let Some(cancel) = this.cancel.take() {
+            let file = std::fs::File::create(&target).map_err(|source| ExportError::Io {
+                path: this.path.clone(),
+                source,
+            })?;
+            this.workbook
+                .save_to_writer(CancellableOutput {
+                    file: std::io::BufWriter::new(file),
+                    cancel,
+                })
+                .map_err(|e| xlsx_err(&this.path, e))?;
+        } else {
+            this.workbook
+                .save(&target)
+                .map_err(|e| xlsx_err(&this.path, e))?;
+        }
         let bytes = std::fs::metadata(&target)
             .map_err(|source| ExportError::Io {
                 path: this.path.clone(),
@@ -478,6 +503,46 @@ impl TableWriter for XlsxWriter {
             bytes,
             warnings,
         })
+    }
+}
+
+impl crate::types::WorkbookTarget for XlsxWriter {
+    fn sheet(&mut self, name: &str) -> Result<&mut dyn TableWriter, ExportError> {
+        if self.header.is_none() && self.total_rows == 0 && self.sheet_names.len() == 1 {
+            let name = sheet_name(name);
+            self.workbook
+                .worksheet_from_index(0)
+                .map_err(|e| xlsx_err(&self.path, e))?
+                .set_name(&name)
+                .map_err(|e| xlsx_err(&self.path, e))?;
+            self.sheet_names[0] = name.clone();
+            self.base_name = name;
+        } else {
+            self.base_name = sheet_name(name);
+            self.add_sheet(unique_sheet_name(name, &self.sheet_names))?;
+            self.header = None;
+            self.tables += 1;
+        }
+        Ok(self)
+    }
+}
+
+struct CancellableOutput {
+    file: std::io::BufWriter<std::fs::File>,
+    cancel: os_model::CancelToken,
+}
+impl std::io::Write for CancellableOutput {
+    fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+        self.cancel
+            .checkpoint()
+            .map_err(|_| std::io::Error::other("Export cancelled"))?;
+        self.file.write(bytes)
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.cancel
+            .checkpoint()
+            .map_err(|_| std::io::Error::other("Export cancelled"))?;
+        self.file.flush()
     }
 }
 

@@ -58,6 +58,8 @@ pub struct AppSettings {
     pub accounts: AccountSettings,
     /// MCP-Server in der App (UI-129).
     pub mcp: McpSettings,
+    /// Logging und Aufbewahrung.
+    pub logging: LoggingSettings,
 }
 
 impl Default for AppSettings {
@@ -72,6 +74,7 @@ impl Default for AppSettings {
             network: NetworkSettings::default(),
             accounts: AccountSettings::default(),
             mcp: McpSettings::default(),
+            logging: LoggingSettings::default(),
         }
     }
 }
@@ -137,6 +140,10 @@ pub struct StorageSettings {
     /// RAM-Obergrenze in GB mit einer Nachkommastelle; nicht gesetzt = 50 % des physischen RAM, begrenzt auf
     /// [1 GB, physischer RAM − 2 GB] (CRAWL-129).
     pub ram_limit_gb: Option<f64>,
+    /// None = max(512 MiB, 25 % RAM).
+    pub cache_limit_mb: Option<u32>,
+    /// None = Kerne/2, höchstens 8.
+    pub render_process_limit: Option<u32>,
 }
 
 /// Aufbewahrung (OUT-229).
@@ -230,6 +237,22 @@ pub struct AccountSettings {
 pub struct McpSettings {
     /// MCP-Server beim Start der App starten.
     pub autostart: bool,
+}
+
+/// App-weite Logeinstellungen (OUT-241/242).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(default)]
+pub struct LoggingSettings {
+    pub level: String,
+    pub retention_days: u32,
+}
+impl Default for LoggingSettings {
+    fn default() -> Self {
+        Self {
+            level: "info".into(),
+            retention_days: 30,
+        }
+    }
 }
 
 /// Eine Meldung der Validierung mit TOML-Pfad.
@@ -326,6 +349,22 @@ impl AppSettings {
         }
         if self.retention.keep_last == Some(0) {
             bad("retention.keep_last", "mindestens 1".to_string());
+        }
+        if !["error", "warn", "info", "debug", "trace"].contains(&self.logging.level.as_str()) {
+            bad("logging.level", "ungültige Logstufe".into());
+        }
+        if !(1..=365).contains(&self.logging.retention_days) {
+            bad("logging.retention_days", "1 bis 365 Tage".into());
+        }
+        if self.storage.cache_limit_mb.is_some_and(|v| v < 256) {
+            bad("storage.cache_limit_mb", "mindestens 256 MiB".into());
+        }
+        if self
+            .storage
+            .render_process_limit
+            .is_some_and(|v| !(1..=32).contains(&v))
+        {
+            bad("storage.render_process_limit", "1 bis 32".into());
         }
         let p = &self.network.proxy;
         if p.mode == ProxyMode::Manual {

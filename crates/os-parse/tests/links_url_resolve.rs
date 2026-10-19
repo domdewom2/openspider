@@ -214,6 +214,7 @@ fn parse_html_reports_the_base_and_resolves_through_it() {
     let url = url::Url::parse("https://site.test/based.html").unwrap();
     let cfg = ParseConfig::from_crawl_config(&CrawlConfig::default());
     let page = os_parse::parse_html(&os_parse::ParseInput {
+        status: 200,
         url: &url,
         body: body.as_bytes(),
         content_type: Some("text/html; charset=utf-8"),

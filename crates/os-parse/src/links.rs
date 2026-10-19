@@ -48,7 +48,7 @@ pub(crate) fn walk<'a>(doc: &'a Document, mut f: impl FnMut(ElementRef<'a>, u32,
                 if template_depth > 0 {
                     continue;
                 }
-                let position = landmarks.last().copied().unwrap_or(LinkPosition::Content);
+                let position = landmarks.last().cloned().unwrap_or(LinkPosition::Content);
                 f(el, current, position);
                 if let Some(landmark) = landmark_of(el) {
                     landmarks.push(landmark);
@@ -78,7 +78,7 @@ fn landmark_of(el: ElementRef) -> Option<LinkPosition> {
         "nav" => Some(LinkPosition::Navigation),
         "header" => Some(LinkPosition::Header),
         "main" => Some(LinkPosition::Content),
-        "aside" => Some(LinkPosition::Aside),
+        "aside" => Some(LinkPosition::Sidebar),
         "footer" => Some(LinkPosition::Footer),
         _ => None,
     }
@@ -111,6 +111,7 @@ fn attr_text(el: ElementRef, name: &str) -> Option<String> {
 }
 
 struct Builder<'u> {
+    doc: &'u Document,
     base: &'u url::Url,
 }
 
@@ -139,10 +140,11 @@ impl Builder<'_> {
             nofollow_rel: rel.1,
             target,
             path_type: path_type(&cleaned),
-            xpath: dom::xpath(el),
+            xpath: crate::link_position::element_path(self.doc, el),
             position,
             in_head: dom::in_head(el),
             doc_order: ordinal,
+            ..Default::default()
         }
     }
 
@@ -204,7 +206,7 @@ fn type_for_as(as_value: Option<&str>) -> LinkType {
 
 /// Extrahiert alle Links in Dokumentreihenfolge.
 pub fn extract(doc: &Document, base: &url::Url, cfg: &ParseConfig) -> Vec<ExtractedLink> {
-    let builder = Builder { base };
+    let builder = Builder { base, doc };
     let mut out: Vec<ExtractedLink> = Vec::new();
     walk(doc, |el, ordinal, position| {
         let html = is_html(el);
@@ -280,7 +282,7 @@ pub fn extract(doc: &Document, base: &url::Url, cfg: &ParseConfig) -> Vec<Extrac
                         el,
                         poster,
                         ordinal,
-                        position,
+                        position.clone(),
                         None,
                     ));
                 }
@@ -302,7 +304,7 @@ pub fn extract(doc: &Document, base: &url::Url, cfg: &ParseConfig) -> Vec<Extrac
                         el,
                         src,
                         ordinal,
-                        position,
+                        position.clone(),
                         None,
                     ));
                 }
@@ -315,7 +317,7 @@ pub fn extract(doc: &Document, base: &url::Url, cfg: &ParseConfig) -> Vec<Extrac
                         el,
                         src,
                         ordinal,
-                        position,
+                        position.clone(),
                         None,
                     ));
                 }
@@ -328,7 +330,7 @@ pub fn extract(doc: &Document, base: &url::Url, cfg: &ParseConfig) -> Vec<Extrac
                         el,
                         data,
                         ordinal,
-                        position,
+                        position.clone(),
                         None,
                     ));
                 }
@@ -365,7 +367,7 @@ pub fn extract(doc: &Document, base: &url::Url, cfg: &ParseConfig) -> Vec<Extrac
     // Vorfahrensuche von M1 unverändert (M2-D16 füllt `link_position::classify`).
     for link in &mut out {
         link.position =
-            crate::link_position::classify(&link.xpath, link.position, &cfg.link_positions);
+            crate::link_position::classify(&link.xpath, link.position.clone(), &cfg.link_positions);
     }
     out
 }
@@ -419,7 +421,7 @@ mod tests {
         let links = run(
             "<body><header><a href=/h>h</a></header><a href=/c>c</a><footer><nav><a href=/f>f</a></nav><a href=/g>g</a></footer>",
         );
-        let pos: Vec<LinkPosition> = links.iter().map(|l| l.position).collect();
+        let pos: Vec<LinkPosition> = links.iter().map(|l| l.position.clone()).collect();
         assert_eq!(
             pos,
             [

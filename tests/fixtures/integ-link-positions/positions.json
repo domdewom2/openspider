@@ -1,0 +1,15 @@
+[
+  ["/style.css", "Head"],
+  ["/header", "Header"],
+  ["/header-nav", "Navigation"],
+  ["/nav", "Navigation"],
+  ["/menu", "Navigation"],
+  ["/aside", "Sidebar"],
+  ["/sidebar-id", "Sidebar"],
+  ["/sidebar-class", "Sidebar"],
+  ["/case", "Content"],
+  ["/footer", "Footer"],
+  ["/footer-nav", "Navigation"],
+  ["/content", "Content"],
+  ["/quotes", "Content"]
+]

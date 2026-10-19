@@ -1,0 +1,56 @@
+[
+  {
+    "name": "Security:Mixed Content Inlinks",
+    "source": "mixed.html",
+    "destinations": [
+      "http://cdn.test/a.css",
+      "http://cdn.test/a.js",
+      "http://cdn.test/f",
+      "http://cdn.test/p.png"
+    ]
+  },
+  {
+    "name": "Security:Form URL Insecure Inlinks",
+    "source": "form-insecure.html",
+    "destinations": [
+      "http://site.test/login"
+    ]
+  },
+  {
+    "name": "Security:Unsafe Cross-Origin Links Inlinks",
+    "source": "xo.html",
+    "destinations": [
+      "https://external.test/map",
+      "https://external.test/x"
+    ]
+  },
+  {
+    "name": "Security:Protocol-Relative Resource Links Inlinks",
+    "source": "relative.html",
+    "destinations": [
+      "https://cdn.test/a.js"
+    ]
+  },
+  {
+    "name": "Security:Mixed Content Inlinks",
+    "source": "resources.html",
+    "destinations": [
+      "http://cdn.test/a.mp3",
+      "http://cdn.test/a.vtt",
+      "http://cdn.test/a.webm",
+      "http://cdn.test/e",
+      "http://cdn.test/o",
+      "http://cdn.test/one.png",
+      "http://cdn.test/p.jpg",
+      "http://cdn.test/three.png",
+      "http://cdn.test/v.mp4"
+    ]
+  },
+  {
+    "name": "Security:Protocol-Relative Resource Links Inlinks",
+    "source": "resources.html",
+    "destinations": [
+      "https://cdn.test/two.png"
+    ]
+  }
+]

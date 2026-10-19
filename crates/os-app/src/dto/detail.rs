@@ -13,6 +13,8 @@ pub enum SerpDevice {
     Desktop,
     /// Mobil.
     Mobile,
+    /// Tablet-Geräteprofil für die SERP-Vorschau.
+    Tablet,
 }
 
 /// Gespeicherte Bearbeitung des Snippets (K-8).
@@ -296,6 +298,31 @@ pub struct SdIssueDto {
     pub property: Option<String>,
     /// Maschinenlesbarer Code.
     pub code: String,
+    /// Beschreibung des Befunds.
+    pub message: String,
+
+    /// Pfad zur betroffenen Eigenschaft in den strukturierten Daten.
+    pub path: String,
+
+    /// Zeilennummer im Quelldokument.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub line: Option<u32>,
+
+    /// Spaltennummer im Quelldokument.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub col: Option<u32>,
+
+    /// Quelltextausschnitt zum Befund.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub snippet: Option<String>,
+
+    /// URL der weiterführenden Dokumentation.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub doc_url: Option<String>,
 }
 
 /// Knoten des Baums der strukturierten Daten (UI-045).
@@ -314,6 +341,21 @@ pub struct SdNode {
     pub children: Vec<SdNode>,
     /// Befunde.
     pub issues: Vec<SdIssueDto>,
+    /// Pfad zur betroffenen Eigenschaft in den strukturierten Daten.
+    pub path: String,
+
+    /// Zeilennummer der Fundstelle im Quelltext.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub source_line: Option<u32>,
+
+    /// Spaltennummer der Fundstelle im Quelltext.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub source_col: Option<u32>,
+
+    /// Reihenfolge der Eigenschaften im Quelldokument.
+    pub property_order: Vec<String>,
 }
 
 /// Antwort von `detail.structuredData`.

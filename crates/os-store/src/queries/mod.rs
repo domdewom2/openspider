@@ -40,6 +40,8 @@ pub struct LinkSortKey {
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PageReq {
+    /// Linkposition als Filter vor Zählung und Paging.
+    pub position: Option<String>,
     /// Anzahl zu überspringender Zeilen.
     pub offset: u64,
     /// Höchstzahl Zeilen (1–500).
@@ -52,6 +54,7 @@ impl PageReq {
     /// Seitenanfrage mit Standardsortierung.
     pub fn new(offset: u64, limit: u32) -> Self {
         PageReq {
+            position: None,
             offset,
             limit,
             sort: Vec::new(),
@@ -106,6 +109,13 @@ pub struct UrlRow {
 /// Ein Link im Standard-Linkformat (Inlinks/Outlinks).
 #[derive(Debug, Clone, PartialEq)]
 pub struct LinkView {
+    pub link_path: Option<String>,
+    pub link_position: Option<String>,
+    pub pdf_page: Option<u32>,
+    pub crawlable: bool,
+    pub uncrawlable_reason: Option<String>,
+    pub original_url: String,
+    pub target_attr: Option<String>,
     /// Linktyp.
     pub link_type: LinkType,
     /// Quell-URL.
@@ -297,6 +307,13 @@ fn order_by(direction: Direction, sort: &[LinkSortKey]) -> Result<(String, bool)
 
 fn link_view(row: &Row<'_>) -> Result<LinkView, StoreError> {
     Ok(LinkView {
+        link_path: row.get(11)?,
+        link_position: row.get(12)?,
+        pdf_page: row.get(13)?,
+        crawlable: row.get(14)?,
+        uncrawlable_reason: row.get(15)?,
+        original_url: row.get(16)?,
+        target_attr: row.get(17)?,
         link_type: parse_enum::<LinkType>(&row.get::<_, String>(0)?)?,
         source_id: UrlId(row.get(1)?),
         source_address: row.get(2)?,
@@ -320,7 +337,7 @@ fn link_views_by_ids(conn: &Connection, ids: &[i64]) -> Result<Vec<LinkView>, St
     let placeholders = vec!["?"; ids.len()].join(",");
     let rows_sql = format!(
         "SELECT l.link_type, l.source_id, s.address, l.target_id, COALESCE(t.address, l.target_raw), \
-                l.anchor, l.alt_text, l.follow, t.status_code, {STATUS_EXPR}, l.id \
+                l.anchor, l.alt_text, l.follow, t.status_code, {STATUS_EXPR}, l.id, l.link_path, l.link_position, l.pdf_page, l.crawlable, l.uncrawlable_reason, l.target_raw, l.target_attr \
          FROM links l JOIN urls s ON s.id = l.source_id LEFT JOIN urls t ON t.id = l.target_id \
          WHERE l.id IN ({placeholders})"
     );
@@ -351,10 +368,10 @@ fn inlinks_without_index(
     let limit = u64::from(page.limit.clamp(1, MAX_PAGE_LIMIT));
     let sql = format!(
         "SELECT l.id FROM links l JOIN urls s ON s.id = l.source_id {join_target} \
-         WHERE l.target_id = ?1 ORDER BY {order}"
+         WHERE l.target_id = ?1 AND (?2 IS NULL OR l.link_position = ?2) ORDER BY {order}"
     );
     let mut stmt = conn.prepare_cached(&sql)?;
-    let mut rows = stmt.query([id.0])?;
+    let mut rows = stmt.query(params![id.0, page.position])?;
     let mut ids: Vec<i64> = Vec::new();
     let mut total = 0u64;
     while let Some(row) = rows.next()? {
@@ -383,15 +400,15 @@ fn links_page(
     let (filter, count_sql) = match direction {
         Direction::In => (
             "l.target_id = ?1",
-            "SELECT COUNT(*) FROM links WHERE target_id = ?1",
+            "SELECT COUNT(*) FROM links WHERE target_id = ?1 AND (?2 IS NULL OR link_position = ?2)",
         ),
         Direction::Out => (
             "l.source_id = ?1",
-            "SELECT COUNT(*) FROM links WHERE source_id = ?1",
+            "SELECT COUNT(*) FROM links WHERE source_id = ?1 AND (?2 IS NULL OR link_position = ?2)",
         ),
     };
     let (order, needs_target) = order_by(direction, &page.sort)?;
-    let total: i64 = conn.query_row(count_sql, [id.0], |r| r.get(0))?;
+    let total: i64 = conn.query_row(count_sql, params![id.0, page.position], |r| r.get(0))?;
     let limit = page.limit.clamp(1, MAX_PAGE_LIMIT);
     let offset = i64::try_from(page.offset).unwrap_or(i64::MAX);
 
@@ -404,11 +421,11 @@ fn links_page(
     };
     let ids_sql = format!(
         "SELECT l.id FROM links l JOIN urls s ON s.id = l.source_id {join_target} \
-         WHERE {filter} ORDER BY {order} LIMIT ?2 OFFSET ?3"
+         WHERE {filter} AND (?4 IS NULL OR l.link_position = ?4) ORDER BY {order} LIMIT ?2 OFFSET ?3"
     );
     let mut stmt = conn.prepare_cached(&ids_sql)?;
     let ids: Vec<i64> = stmt
-        .query_map(params![id.0, limit, offset], |r| r.get(0))?
+        .query_map(params![id.0, limit, offset, page.position], |r| r.get(0))?
         .collect::<Result<_, _>>()?;
     drop(stmt);
     if ids.is_empty() {
@@ -431,6 +448,14 @@ pub const MAX_PAGE_LIMIT: u32 = 500;
 /// Eingehende Links einer URL (alle Linktypen, Standard-Linkformat). Standardreihenfolge (OUT-031): nach
 /// Quelladresse, dann Dokumentposition. Blättert per Offset, ohne mehr als eine Seite zu materialisieren.
 pub fn inlinks(conn: &Connection, id: UrlId, page: PageReq) -> Result<Page<LinkView>, StoreError> {
+    let has_sitemaps: bool = conn.query_row(
+        "SELECT EXISTS(SELECT 1 FROM sitemap_entries WHERE url_id = ?1)",
+        [id.0],
+        |r| r.get(0),
+    )?;
+    if has_sitemaps && page.position.is_none() {
+        return sitemap_inlinks(conn, id, page);
+    }
     links_page(conn, Direction::In, id, page)
 }
 
@@ -536,4 +561,133 @@ pub fn changed_since(conn: &Connection, seq: u64, limit: u32) -> Result<Vec<UrlI
         )?
         .collect::<Result<Vec<_>, _>>()?;
     Ok(ids)
+}
+
+/// Dekodierter gespeicherter Quelltext (CRAWL-063).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StoredHtml {
+    pub charset: Option<String>,
+    pub bytes: Vec<u8>,
+}
+fn decode_html(
+    charset: Option<String>,
+    bytes: Vec<u8>,
+    compression: Option<String>,
+) -> Result<StoredHtml, StoreError> {
+    let bytes = match compression.as_deref() {
+        None => bytes,
+        Some("zstd") => zstd::stream::decode_all(bytes.as_slice())
+            .map_err(|e| StoreError::InvalidInput(format!("HTML-Dekompression: {e}")))?,
+        Some(other) => {
+            return Err(StoreError::InvalidInput(format!(
+                "Unbekannte HTML-Kompression: {other}"
+            )))
+        }
+    };
+    Ok(StoredHtml { charset, bytes })
+}
+pub fn stored_html(file: &crate::CrawlFile, url: UrlId) -> Result<Option<StoredHtml>, StoreError> {
+    let row = file
+        .conn()
+        .query_row(
+            "SELECT encoding, body, compression FROM page_html WHERE url_id = ?1",
+            [url.0],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+        )
+        .optional()?;
+    row.map(|(charset, bytes, compression)| decode_html(charset, bytes, compression))
+        .transpose()
+}
+pub fn for_each_stored_html(
+    file: &crate::CrawlFile,
+    mut f: impl FnMut(UrlId, StoredHtml) -> Result<(), StoreError>,
+) -> Result<(), StoreError> {
+    let mut stmt = file
+        .conn()
+        .prepare("SELECT url_id, encoding, body, compression FROM page_html ORDER BY url_id")?;
+    let mut rows = stmt.query([])?;
+    while let Some(r) = rows.next()? {
+        f(
+            UrlId(r.get(0)?),
+            decode_html(r.get(1)?, r.get(2)?, r.get(3)?)?,
+        )?;
+    }
+    Ok(())
+}
+pub fn for_each_link_path(
+    file: &crate::CrawlFile,
+    mut f: impl FnMut(i64, &str, Option<bool>),
+) -> Result<(), StoreError> {
+    let mut stmt = file.conn().prepare(
+        "SELECT id, link_path, in_head FROM links WHERE link_path IS NOT NULL ORDER BY id",
+    )?;
+    let mut rows = stmt.query([])?;
+    while let Some(r) = rows.next()? {
+        f(r.get(0)?, &r.get::<_, String>(1)?, r.get(2)?);
+    }
+    Ok(())
+}
+
+/// Ein gemeinsamer sortierter Strom; Sitemap-Zeilen beeinflussen keine Hyperlink-Zähler.
+fn sitemap_inlinks(
+    conn: &Connection,
+    id: UrlId,
+    page: PageReq,
+) -> Result<Page<LinkView>, StoreError> {
+    let (order, _) = order_by(Direction::In, &page.sort)?;
+    let order = order.replace("s.address", "COALESCE(l.sitemap_address, s.address)");
+    let sql = format!("WITH l AS (
+        SELECT id, source_id, target_id, target_raw, link_type, position, anchor, alt_text, follow,
+          rel, target_attr, path_type, link_path, link_position, link_origin, pdf_page, crawlable, uncrawlable_reason, NULL AS sitemap_address
+        FROM links WHERE target_id = ?1
+        UNION ALL
+        SELECT -sm.id, COALESCE(sm.url_id, 0), e.url_id, e.loc_raw, 'XML Sitemap', 0, NULL, NULL, 1,
+          NULL, NULL, NULL, NULL, NULL, 'HTML', NULL, 1, NULL, sm.url
+        FROM sitemap_entries e JOIN sitemaps sm ON sm.id = e.sitemap_id WHERE e.url_id = ?1
+    ) SELECT l.link_type, l.source_id, COALESCE(l.sitemap_address, s.address), l.target_id,
+      COALESCE(t.address, l.target_raw), l.anchor, l.alt_text, l.follow, t.status_code, {STATUS_EXPR},
+      l.id, l.link_path, l.link_position, l.pdf_page, l.crawlable, l.uncrawlable_reason, l.target_raw, l.target_attr
+      FROM l LEFT JOIN urls s ON s.id = l.source_id LEFT JOIN urls t ON t.id = l.target_id ORDER BY {order}");
+    let total: u64 = conn.query_row("SELECT (SELECT COUNT(*) FROM links WHERE target_id = ?1) + (SELECT COUNT(*) FROM sitemap_entries WHERE url_id = ?1)", [id.0], |r| r.get(0))?;
+    let mut stmt = conn.prepare(&format!("{sql} LIMIT ?2 OFFSET ?3"))?;
+    let mut rows = stmt.query(params![
+        id.0,
+        page.limit.clamp(1, MAX_PAGE_LIMIT),
+        page.offset.min(i64::MAX as u64)
+    ])?;
+    let mut items = Vec::new();
+    while let Some(row) = rows.next()? {
+        items.push(link_view(row)?);
+    }
+    let result = Page { items, total };
+    Ok(result)
+}
+
+/// Transportformat für die Detailquellen des Stores, ohne Abhängigkeit auf die Analyse.
+#[derive(Debug, Default)]
+pub struct DetailData {
+    pub columns: Vec<String>,
+    pub rows: Vec<Vec<os_model::Value>>,
+    pub total: u64,
+}
+
+/// Durable session counters for opening files without a progress snapshot and
+/// reconciling the final state of an externally owned crawl (M2-K04).
+/// Call inside the same read transaction as change_seq and the metadata.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SessionCounts {
+    pub discovered: u64,
+    pub queued: u64,
+    pub crawled: u64,
+}
+pub fn session_counts(conn: &Connection) -> Result<SessionCounts, StoreError> {
+    Ok(SessionCounts {
+        discovered: conn.query_row("SELECT COUNT(*) FROM urls", [], |r| r.get(0))?,
+        queued: conn.query_row("SELECT COUNT(*) FROM queue", [], |r| r.get(0))?,
+        crawled: conn.query_row(
+            "SELECT COUNT(*) FROM urls WHERE in_tables = 1 AND state = 'done'",
+            [],
+            |r| r.get(0),
+        )?,
+    })
 }

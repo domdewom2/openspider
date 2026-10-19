@@ -1,4 +1,5 @@
 // Generiert von scripts/gen-ipc.mjs aus src/ipc/commands.json – nicht von Hand ändern (npm run gen:ipc).
+import type { ApiAccountArgs } from "./gen/ApiAccountArgs";
 import type { ApiConnectArgs } from "./gen/ApiConnectArgs";
 import type { ApiErrorRow } from "./gen/ApiErrorRow";
 import type { ApiErrorsArgs } from "./gen/ApiErrorsArgs";
@@ -14,6 +15,8 @@ import type { OpHandle } from "./gen/OpHandle";
 import { client } from "./client";
 
 export const api = {
+  /** `api.removeAccount` */
+  removeAccount: (args: ApiAccountArgs, signal?: AbortSignal) => client.invoke<void>("api.removeAccount", args, signal),
   /** `api.list` */
   list: (signal?: AbortSignal) => client.invoke<ApiSourceInfo[]>("api.list", undefined, signal),
   /** `api.connect` – lang laufend: liefert sofort `OpHandle`, Ergebnis (ApiAccount) über `Tick.ops[].result`. */

@@ -12,7 +12,7 @@ use super::{FilterCount, ViewQuery, URLS_FROM};
 use crate::defs::TabDef;
 use crate::error::{AnalyzeError, ViewError};
 use crate::names;
-use crate::state::{filter_state, AnalysisSnapshot};
+use crate::state::{filter_states_for_file, AnalysisSnapshot};
 
 /// Prozent = Treffer ÷ Basis × 100, kaufmännisch auf eine Nachkommastelle; leere Basis ergibt 0,0.
 pub fn percent(hits: u64, base: u64) -> f64 {
@@ -44,18 +44,18 @@ pub(super) fn counts_in(
     cfg: &CrawlConfig,
 ) -> Result<Vec<FilterCount>, ViewError> {
     let conn = file.conn();
-    let tx = conn.unchecked_transaction()?;
+    let tx = conn
+        .is_autocommit()
+        .then(|| conn.unchecked_transaction())
+        .transpose()?;
     let version = queries::change_seq(conn)?;
     let cfg_json = serde_json::to_value(cfg).unwrap_or(serde_json::Value::Null);
     let analysis = analysis_snapshot(file)?;
 
     let mut out = Vec::new();
     for tab in tabs {
-        let states: Vec<FilterState> = tab
-            .filters
-            .iter()
-            .map(|f| filter_state(f, cfg, &cfg_json, &analysis))
-            .collect();
+        let states: Vec<FilterState> =
+            filter_states_for_file(&tab.filters, tab, file, cfg, &cfg_json, &analysis)?;
 
         // Ein Plan je zählbarem Filter; Population und Parameter sind für den ganzen Tab gleich.
         let mut sums: Vec<String> = Vec::new();
@@ -63,7 +63,7 @@ pub(super) fn counts_in(
         let mut population = None;
         let mut params = Vec::new();
         for (filter, state) in tab.filters.iter().zip(&states) {
-            if *state != FilterState::Ready {
+            if !state.yields_rows() {
                 slots.push(None);
                 continue;
             }

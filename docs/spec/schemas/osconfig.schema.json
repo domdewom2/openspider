@@ -3,6 +3,16 @@
     "AdvancedConfig": {
       "description": "Erweiterte Einstellungen (CRAWL-088/095, ONPAGE-020, TECH-068).",
       "properties": {
+        "always_follow_canonicals": {
+          "default": false,
+          "description": "Canonical-Ziele auch außerhalb des Crawl-Bereichs verfolgen (CRAWL-030, OUT-085).",
+          "type": "boolean"
+        },
+        "always_follow_redirects": {
+          "default": false,
+          "description": "Weiterleitungsziele auch außerhalb des Crawl-Bereichs verfolgen (CRAWL-030, OUT-085).",
+          "type": "boolean"
+        },
         "assume_html": {
           "default": false,
           "description": "Antworten ohne Content-Type als HTML behandeln.",
@@ -136,9 +146,17 @@
         "ahrefs": {
           "$ref": "#/$defs/LinkMetricsConfig",
           "default": {
+            "account": null,
             "base_url": null,
             "enabled": false,
             "levels": [],
+            "limits": {
+              "concurrency": 5,
+              "quota_limit": null,
+              "requests_per_window": null,
+              "retries": 5,
+              "window_s": 60
+            },
             "metrics": []
           },
           "description": "Ahrefs."
@@ -146,8 +164,16 @@
         "drive": {
           "$ref": "#/$defs/DriveConfig",
           "default": {
+            "account": null,
             "base_url": null,
             "enabled": false,
+            "limits": {
+              "concurrency": 5,
+              "quota_limit": null,
+              "requests_per_window": null,
+              "retries": 5,
+              "window_s": 60
+            },
             "root_folder": null
           },
           "description": "Google Drive."
@@ -155,6 +181,7 @@
         "ga4": {
           "$ref": "#/$defs/Ga4Config",
           "default": {
+            "account": null,
             "base_url": null,
             "date_range": {
               "from": null,
@@ -163,15 +190,28 @@
             },
             "enabled": false,
             "filter": null,
+            "limits": {
+              "concurrency": 5,
+              "quota_limit": null,
+              "requests_per_window": null,
+              "retries": 5,
+              "window_s": 60
+            },
             "metrics": [],
+            "oauth_client_id": null,
             "page_dimension": null,
-            "property": null
+            "property": null,
+            "url_match": {
+              "ignore_case": true,
+              "ignore_trailing_slash": true
+            }
           },
           "description": "Google Analytics 4."
         },
         "gsc": {
           "$ref": "#/$defs/GscConfig",
           "default": {
+            "account": null,
             "base_url": null,
             "date_range": {
               "from": null,
@@ -180,18 +220,38 @@
             },
             "enabled": false,
             "filter": null,
+            "limits": {
+              "concurrency": 5,
+              "quota_limit": null,
+              "requests_per_window": null,
+              "retries": 5,
+              "window_s": 60
+            },
+            "oauth_client_id": null,
             "search_type": "web",
             "site": null,
-            "url_inspection": false
+            "url_inspection": false,
+            "url_match": {
+              "ignore_case": true,
+              "ignore_trailing_slash": true
+            }
           },
           "description": "Google Search Console."
         },
         "majestic": {
           "$ref": "#/$defs/LinkMetricsConfig",
           "default": {
+            "account": null,
             "base_url": null,
             "enabled": false,
             "levels": [],
+            "limits": {
+              "concurrency": 5,
+              "quota_limit": null,
+              "requests_per_window": null,
+              "retries": 5,
+              "window_s": 60
+            },
             "metrics": []
           },
           "description": "Majestic."
@@ -199,9 +259,17 @@
         "moz": {
           "$ref": "#/$defs/LinkMetricsConfig",
           "default": {
+            "account": null,
             "base_url": null,
             "enabled": false,
             "levels": [],
+            "limits": {
+              "concurrency": 5,
+              "quota_limit": null,
+              "requests_per_window": null,
+              "retries": 5,
+              "window_s": 60
+            },
             "metrics": []
           },
           "description": "Moz."
@@ -209,9 +277,17 @@
         "psi": {
           "$ref": "#/$defs/PsiConfig",
           "default": {
+            "account": null,
             "base_url": null,
             "device": "mobile",
             "enabled": false,
+            "limits": {
+              "concurrency": 5,
+              "quota_limit": null,
+              "requests_per_window": null,
+              "retries": 5,
+              "window_s": 60
+            },
             "local": false,
             "metric_groups": []
           },
@@ -227,6 +303,56 @@
         "domain"
       ],
       "type": "string"
+    },
+    "ApiLimitsConfig": {
+      "description": "Grenzen je API-Quelle (INTEG-005/006).",
+      "properties": {
+        "concurrency": {
+          "default": 5,
+          "description": "Maximale parallele API-Anfragen, 1 bis 50 (INTEG-006).",
+          "format": "uint32",
+          "maximum": 50,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "quota_limit": {
+          "default": null,
+          "description": "Optionales Kontingent der API-Quelle (INTEG-006).",
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "requests_per_window": {
+          "default": null,
+          "description": "Anfragelimit je Zeitfenster; None deaktiviert das Limit (INTEG-006).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "retries": {
+          "default": 5,
+          "description": "Maximale Anzahl API-Wiederholungen, 0 bis 20 (INTEG-005).",
+          "format": "uint32",
+          "maximum": 20,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "window_s": {
+          "default": 60,
+          "description": "Dauer des API-Zeitfensters in Sekunden, mindestens 1 (INTEG-006).",
+          "format": "uint32",
+          "maximum": 4294967295,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
     },
     "AuthConfig": {
       "description": "Authentifizierung (CRAWL-117, OUT-225). Passwörter stehen nie hier, nur der Verweis in den Schlüsselbund.",
@@ -530,6 +656,28 @@
       ],
       "type": "string"
     },
+    "CrawlUiConfig": {
+      "description": "Profilgebundene Tabelleneinstellungen (ONPAGE-023, OUT-009).",
+      "properties": {
+        "columns": {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "default": {},
+          "description": "Sichtbare Spalten je Tab in Anzeigereihenfolge; fehlend bedeutet Standard (OUT-009, OUT-220).",
+          "type": "object"
+        },
+        "parity_filters": {
+          "default": true,
+          "description": "Filter nach den Paritätsregeln darstellen (ONPAGE-023).",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
     "CustomExtractionConfig": {
       "description": "Custom Extraction: bis zu 100 Extraktoren (INTEG-040).",
       "properties": {
@@ -568,6 +716,14 @@
             "$ref": "#/$defs/SearchFilter"
           },
           "type": "array"
+        },
+        "regex_timeout_ms": {
+          "default": 2000,
+          "description": "Zeitbudget je Regex (INTEG-028).",
+          "format": "uint32",
+          "maximum": 4294967295,
+          "minimum": 1,
+          "type": "integer"
         }
       },
       "type": "object"
@@ -612,6 +768,14 @@
     "DriveConfig": {
       "description": "Google Drive für den Sheets-Export (M2-X03).",
       "properties": {
+        "account": {
+          "default": null,
+          "description": "Konto-Kennung ohne Geheimnis (INTEG-003).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "base_url": {
           "default": null,
           "description": "Alternative Basis-URL (INTEG-019).",
@@ -624,6 +788,17 @@
           "default": false,
           "description": "Export nach Google Sheets einschalten.",
           "type": "boolean"
+        },
+        "limits": {
+          "$ref": "#/$defs/ApiLimitsConfig",
+          "default": {
+            "concurrency": 5,
+            "quota_limit": null,
+            "requests_per_window": null,
+            "retries": 5,
+            "window_s": 60
+          },
+          "description": "Anfragegrenzen (INTEG-005/006)."
         },
         "root_folder": {
           "default": null,
@@ -673,6 +848,11 @@
     "ExportConfig": {
       "description": "Export (OUT-002).",
       "properties": {
+        "inlinks_for_all_filters": {
+          "default": true,
+          "description": "Inlink-Exporte für alle Filter anbieten (OUT-066).",
+          "type": "boolean"
+        },
         "line_ending": {
           "$ref": "#/$defs/LineEnding",
           "default": "crlf",
@@ -720,7 +900,7 @@
           "type": "boolean"
         },
         "http_headers": {
-          "default": true,
+          "default": false,
           "description": "HTTP-Header speichern.",
           "type": "boolean"
         },
@@ -791,8 +971,8 @@
             "json_ld": false,
             "microdata": false,
             "rdfa": false,
-            "rich_results_validation": false,
-            "schema_org_validation": false
+            "rich_results_validation": true,
+            "schema_org_validation": true
           },
           "description": "Strukturierte Daten (CRAWL-065, ab v2)."
         },
@@ -902,6 +1082,14 @@
     "Ga4Config": {
       "description": "Google Analytics 4 (INTEG-0xx, M2-I02).",
       "properties": {
+        "account": {
+          "default": null,
+          "description": "Konto-Kennung ohne Geheimnis (INTEG-003).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "base_url": {
           "default": null,
           "description": "Alternative Basis-URL (nur Debug-/Testbuilds oder `--allow-api-override`, INTEG-019).",
@@ -932,6 +1120,17 @@
             "null"
           ]
         },
+        "limits": {
+          "$ref": "#/$defs/ApiLimitsConfig",
+          "default": {
+            "concurrency": 5,
+            "quota_limit": null,
+            "requests_per_window": null,
+            "retries": 5,
+            "window_s": 60
+          },
+          "description": "Anfragegrenzen (INTEG-005/006)."
+        },
         "metrics": {
           "default": [],
           "description": "Metriken.",
@@ -939,6 +1138,14 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "oauth_client_id": {
+          "default": null,
+          "description": "OAuth-Client-Kennung des Nutzers (INTEG-003).",
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "page_dimension": {
           "default": null,
@@ -955,6 +1162,14 @@
             "string",
             "null"
           ]
+        },
+        "url_match": {
+          "$ref": "#/$defs/UrlMatchConfig",
+          "default": {
+            "ignore_case": true,
+            "ignore_trailing_slash": true
+          },
+          "description": "URL-Abgleich (INTEG-014)."
         }
       },
       "type": "object"
@@ -981,6 +1196,14 @@
     "GscConfig": {
       "description": "Google Search Console (M2-I03).",
       "properties": {
+        "account": {
+          "default": null,
+          "description": "Konto-Kennung ohne Geheimnis (INTEG-003).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "base_url": {
           "default": null,
           "description": "Alternative Basis-URL (INTEG-019).",
@@ -1011,6 +1234,25 @@
             "null"
           ]
         },
+        "limits": {
+          "$ref": "#/$defs/ApiLimitsConfig",
+          "default": {
+            "concurrency": 5,
+            "quota_limit": null,
+            "requests_per_window": null,
+            "retries": 5,
+            "window_s": 60
+          },
+          "description": "Anfragegrenzen (INTEG-005/006)."
+        },
+        "oauth_client_id": {
+          "default": null,
+          "description": "OAuth-Client-Kennung des Nutzers (INTEG-003).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "search_type": {
           "$ref": "#/$defs/SearchType",
           "default": "web",
@@ -1028,6 +1270,14 @@
           "default": false,
           "description": "URL Inspection abfragen (Tageskontingent).",
           "type": "boolean"
+        },
+        "url_match": {
+          "$ref": "#/$defs/UrlMatchConfig",
+          "default": {
+            "ignore_case": true,
+            "ignore_trailing_slash": true
+          },
+          "description": "URL-Abgleich (INTEG-014)."
         }
       },
       "type": "object"
@@ -1178,6 +1428,30 @@
       },
       "type": "object"
     },
+    "ImagesConfig": {
+      "description": "Zusätzliche Bildfakten (ONPAGE-172/178/180).",
+      "properties": {
+        "incorrect_size_min_saving_kb": {
+          "default": 4,
+          "description": "Mindesteinsparung in KiB für die Größenwarnung (ONPAGE-180).",
+          "format": "uint32",
+          "maximum": 1000000,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "parse_inline_css_backgrounds": {
+          "default": false,
+          "description": "Inline-CSS-Hintergrundbilder extrahieren (ONPAGE-178).",
+          "type": "boolean"
+        },
+        "real_dimensions_from_header": {
+          "default": false,
+          "description": "Tatsächliche Bildmaße aus dem Dateikopf lesen (ONPAGE-172).",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
     "IssuesConfig": {
       "description": "Issue-Berechnung (CRAWL-089).",
       "properties": {
@@ -1269,7 +1543,7 @@
           "description": "Höchstzahl Links je URL (CRAWL-074, ab v2).",
           "format": "uint32",
           "maximum": 1073741824,
-          "minimum": 1,
+          "minimum": 0,
           "type": "integer"
         },
         "max_page_kb": {
@@ -1277,7 +1551,7 @@
           "description": "Höchste Seitengröße in KB.",
           "format": "uint64",
           "maximum": 1073741824,
-          "minimum": 1,
+          "minimum": 0,
           "type": "integer"
         },
         "max_query_params": {
@@ -1302,7 +1576,7 @@
           "description": "Höchste URL-Länge in Zeichen (CRAWL-073, ab v2).",
           "format": "uint32",
           "maximum": 16777216,
-          "minimum": 1,
+          "minimum": 0,
           "type": "integer"
         },
         "max_urls": {
@@ -1337,6 +1611,14 @@
     "LinkMetricsConfig": {
       "description": "Eine Linkmetrik-Quelle (Majestic, Ahrefs, Moz; M2-I05).",
       "properties": {
+        "account": {
+          "default": null,
+          "description": "Konto-Kennung ohne Geheimnis (INTEG-003).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "base_url": {
           "default": null,
           "description": "Alternative Basis-URL (INTEG-019).",
@@ -1357,6 +1639,17 @@
             "$ref": "#/$defs/ApiLevel"
           },
           "type": "array"
+        },
+        "limits": {
+          "$ref": "#/$defs/ApiLimitsConfig",
+          "default": {
+            "concurrency": 5,
+            "quota_limit": null,
+            "requests_per_window": null,
+            "retries": 5,
+            "window_s": 60
+          },
+          "description": "Anfragegrenzen (INTEG-005/006)."
         },
         "metrics": {
           "default": [],
@@ -1420,9 +1713,7 @@
               "position": "Footer"
             },
             {
-              "contains": [
-                ""
-              ],
+              "contains": [],
               "position": "Content"
             }
           ],
@@ -1551,6 +1842,14 @@
     "PsiConfig": {
       "description": "PageSpeed Insights und Lighthouse (M2-I04).",
       "properties": {
+        "account": {
+          "default": null,
+          "description": "Konto-Kennung ohne Geheimnis (INTEG-003).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "base_url": {
           "default": null,
           "description": "Alternative Basis-URL (INTEG-019).",
@@ -1568,6 +1867,17 @@
           "default": false,
           "description": "Quelle beim Crawl abfragen.",
           "type": "boolean"
+        },
+        "limits": {
+          "$ref": "#/$defs/ApiLimitsConfig",
+          "default": {
+            "concurrency": 5,
+            "quota_limit": null,
+            "requests_per_window": null,
+            "retries": 5,
+            "window_s": 60
+          },
+          "description": "Anfragegrenzen (INTEG-005/006)."
         },
         "local": {
           "default": false,
@@ -1623,12 +1933,13 @@
       "description": "Rendering (CRAWL-077).",
       "properties": {
         "ajax_timeout_s": {
-          "default": 5,
+          "default": 5.0,
           "description": "AJAX-Timeout in Sekunden, 0 – 60 (CRAWL-080, ab v2).",
-          "format": "uint32",
-          "maximum": 60,
-          "minimum": 0,
-          "type": "integer"
+          "format": "double",
+          "maximum": 60.0,
+          "minimum": 0.0,
+          "multipleOf": 0.1,
+          "type": "number"
         },
         "chromium_path": {
           "default": null,
@@ -1748,10 +2059,23 @@
     "RobotsConfig": {
       "description": "robots.txt (CRAWL-099/100).",
       "properties": {
+        "custom_files": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "Eigene robots.txt je Host ohne Schema, höchstens 512 KiB je Inhalt (CRAWL-102, CRAWL-132).",
+          "type": "object"
+        },
         "mode": {
           "$ref": "#/$defs/RobotsMode",
           "default": "respect",
           "description": "Umgang mit robots.txt (Listenmodus: die Engine wendet `ignore` an)."
+        },
+        "respect_crawl_delay": {
+          "default": true,
+          "description": "Crawl-delay aus robots.txt beachten (CRAWL-145).",
+          "type": "boolean"
         },
         "retries": {
           "default": 2,
@@ -1768,6 +2092,16 @@
           "maximum": 3600,
           "minimum": 0,
           "type": "integer"
+        },
+        "show_blocked_external": {
+          "default": false,
+          "description": "Durch robots.txt gesperrte externe URLs anzeigen (CRAWL-101).",
+          "type": "boolean"
+        },
+        "show_blocked_internal": {
+          "default": true,
+          "description": "Durch robots.txt gesperrte interne URLs anzeigen (CRAWL-101).",
+          "type": "boolean"
         },
         "unreachable_policy": {
           "$ref": "#/$defs/RobotsUnreachablePolicy",
@@ -1801,8 +2135,8 @@
           "type": "boolean"
         },
         "crawl_outside_start_folder": {
-          "default": false,
-          "description": "Ordner verlassen, wenn ein Link darauf zeigt.",
+          "default": true,
+          "description": "Ordner der Start-URL bei verlinkten Zielen verlassen (CRAWL-010).",
           "type": "boolean"
         },
         "exclude": {
@@ -1974,6 +2308,23 @@
       ],
       "type": "string"
     },
+    "SecurityConfig": {
+      "description": "Veraltete MIME-Typen (ONPAGE-043).",
+      "properties": {
+        "obsolete_mime_types": {
+          "default": [
+            "text/javascript",
+            "application/x-javascript"
+          ],
+          "description": "MIME-Typen, die als veraltet gelten sollen (ONPAGE-043).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "SegmentCondition": {
       "description": "Eine Bedingung einer Segmentregel.",
       "properties": {
@@ -2066,6 +2417,86 @@
             "$ref": "#/$defs/SegmentConfig"
           },
           "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "SerpConfig": {
+      "description": "Gerätespezifische Vorschaugrenzen (ONPAGE-194).",
+      "properties": {
+        "desktop": {
+          "$ref": "#/$defs/SerpDeviceConfig",
+          "default": {
+            "description_font_px": 14.0,
+            "description_max_px": null,
+            "title_font_px": 20.0,
+            "title_max_px": null
+          },
+          "description": "Desktop-Vorschau, standardmäßig an allgemeine Textgrenzen gekoppelt (ONPAGE-194)."
+        },
+        "mobile": {
+          "$ref": "#/$defs/SerpDeviceConfig",
+          "default": {
+            "description_font_px": 14.0,
+            "description_max_px": 680,
+            "title_font_px": 20.0,
+            "title_max_px": 561
+          },
+          "description": "Mobil-Vorschau mit eigenen Pixelgrenzen (ONPAGE-194)."
+        },
+        "tablet": {
+          "$ref": "#/$defs/SerpDeviceConfig",
+          "default": {
+            "description_font_px": 14.0,
+            "description_max_px": 680,
+            "title_font_px": 20.0,
+            "title_max_px": 561
+          },
+          "description": "Tablet-Vorschau mit eigenen Pixelgrenzen (ONPAGE-194)."
+        }
+      },
+      "type": "object"
+    },
+    "SerpDeviceConfig": {
+      "description": "SERP-Metriken je Gerät (ONPAGE-194).",
+      "properties": {
+        "description_font_px": {
+          "default": 14.0,
+          "description": "Schriftgröße der Beschreibung in Pixeln, 6 bis 64 (ONPAGE-194).",
+          "format": "double",
+          "maximum": 64.0,
+          "minimum": 6.0,
+          "type": "number"
+        },
+        "description_max_px": {
+          "default": null,
+          "description": "Maximale Beschreibungsbreite; None koppelt an meta_description.max_px (ONPAGE-194).",
+          "format": "uint32",
+          "maximum": 4000,
+          "minimum": 1,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "title_font_px": {
+          "default": 20.0,
+          "description": "Schriftgröße des Titels in Pixeln, 6 bis 64 (ONPAGE-194).",
+          "format": "double",
+          "maximum": 64.0,
+          "minimum": 6.0,
+          "type": "number"
+        },
+        "title_max_px": {
+          "default": null,
+          "description": "Maximale Titelbreite; None koppelt an title.max_px (ONPAGE-194).",
+          "format": "uint32",
+          "maximum": 4000,
+          "minimum": 1,
+          "type": [
+            "integer",
+            "null"
+          ]
         }
       },
       "type": "object"
@@ -2339,6 +2770,16 @@
     "SpeedConfig": {
       "description": "Geschwindigkeit (CRAWL-112/113).",
       "properties": {
+        "adaptive_throttle": {
+          "default": true,
+          "description": "Abrufrate bei Überlastung automatisch senken (CRAWL-146).",
+          "type": "boolean"
+        },
+        "auto": {
+          "default": false,
+          "description": "Threadzahl automatisch anpassen (CRAWL-147).",
+          "type": "boolean"
+        },
         "max_per_host": {
           "default": null,
           "description": "Höchstzahl paralleler Abrufe je Host.",
@@ -2534,6 +2975,11 @@
             "store": true
           },
           "description": "Paginierung."
+        },
+        "store_uncrawlable_links": {
+          "default": false,
+          "description": "Nicht abrufbare Links als Zeilen speichern (CRAWL-053, TECH-143, OUT-041).",
+          "type": "boolean"
         }
       },
       "type": "object"
@@ -2578,12 +3024,12 @@
           "type": "boolean"
         },
         "rich_results_validation": {
-          "default": false,
+          "default": true,
           "description": "Validierung gegen die Google-Rich-Result-Regeln.",
           "type": "boolean"
         },
         "schema_org_validation": {
-          "default": false,
+          "default": true,
           "description": "Validierung gegen schema.org.",
           "type": "boolean"
         }
@@ -2627,12 +3073,67 @@
     "UrlLimits": {
       "description": "Schwelle für URLs (ONPAGE-081).",
       "properties": {
+        "internal_search_params": {
+          "default": [
+            "s",
+            "q",
+            "query",
+            "search",
+            "search_query",
+            "searchterm",
+            "keyword",
+            "keywords",
+            "k",
+            "term"
+          ],
+          "description": "Query-Parameter zur Erkennung interner Suchseiten (ONPAGE-077).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "internal_search_segments": {
+          "default": [
+            "search",
+            "suche",
+            "recherche",
+            "buscar",
+            "busca",
+            "cerca",
+            "zoeken",
+            "szukaj",
+            "sok",
+            "haku",
+            "catalogsearch"
+          ],
+          "description": "Pfadsegmente zur Erkennung interner Suchseiten (ONPAGE-077).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "max_chars": {
           "default": 115,
           "description": "Höchstzahl Zeichen.",
           "format": "uint32",
           "minimum": 1,
           "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "UrlMatchConfig": {
+      "description": "URL-Abgleich von API-Quellen (INTEG-014).",
+      "properties": {
+        "ignore_case": {
+          "default": true,
+          "description": "Groß- und Kleinschreibung beim URL-Abgleich ignorieren (INTEG-014).",
+          "type": "boolean"
+        },
+        "ignore_trailing_slash": {
+          "default": true,
+          "description": "Abschließenden Slash beim URL-Abgleich ignorieren (INTEG-014).",
+          "type": "boolean"
         }
       },
       "type": "object"
@@ -2736,6 +3237,8 @@
     "advanced": {
       "$ref": "#/$defs/AdvancedConfig",
       "default": {
+        "always_follow_canonicals": false,
+        "always_follow_redirects": false,
         "assume_html": false,
         "cookies": "session_only",
         "crawl_fragments": false,
@@ -2772,17 +3275,34 @@
       "$ref": "#/$defs/ApiConfig",
       "default": {
         "ahrefs": {
+          "account": null,
           "base_url": null,
           "enabled": false,
           "levels": [],
+          "limits": {
+            "concurrency": 5,
+            "quota_limit": null,
+            "requests_per_window": null,
+            "retries": 5,
+            "window_s": 60
+          },
           "metrics": []
         },
         "drive": {
+          "account": null,
           "base_url": null,
           "enabled": false,
+          "limits": {
+            "concurrency": 5,
+            "quota_limit": null,
+            "requests_per_window": null,
+            "retries": 5,
+            "window_s": 60
+          },
           "root_folder": null
         },
         "ga4": {
+          "account": null,
           "base_url": null,
           "date_range": {
             "from": null,
@@ -2791,11 +3311,24 @@
           },
           "enabled": false,
           "filter": null,
+          "limits": {
+            "concurrency": 5,
+            "quota_limit": null,
+            "requests_per_window": null,
+            "retries": 5,
+            "window_s": 60
+          },
           "metrics": [],
+          "oauth_client_id": null,
           "page_dimension": null,
-          "property": null
+          "property": null,
+          "url_match": {
+            "ignore_case": true,
+            "ignore_trailing_slash": true
+          }
         },
         "gsc": {
+          "account": null,
           "base_url": null,
           "date_range": {
             "from": null,
@@ -2804,26 +3337,62 @@
           },
           "enabled": false,
           "filter": null,
+          "limits": {
+            "concurrency": 5,
+            "quota_limit": null,
+            "requests_per_window": null,
+            "retries": 5,
+            "window_s": 60
+          },
+          "oauth_client_id": null,
           "search_type": "web",
           "site": null,
-          "url_inspection": false
+          "url_inspection": false,
+          "url_match": {
+            "ignore_case": true,
+            "ignore_trailing_slash": true
+          }
         },
         "majestic": {
+          "account": null,
           "base_url": null,
           "enabled": false,
           "levels": [],
+          "limits": {
+            "concurrency": 5,
+            "quota_limit": null,
+            "requests_per_window": null,
+            "retries": 5,
+            "window_s": 60
+          },
           "metrics": []
         },
         "moz": {
+          "account": null,
           "base_url": null,
           "enabled": false,
           "levels": [],
+          "limits": {
+            "concurrency": 5,
+            "quota_limit": null,
+            "requests_per_window": null,
+            "retries": 5,
+            "window_s": 60
+          },
           "metrics": []
         },
         "psi": {
+          "account": null,
           "base_url": null,
           "device": "mobile",
           "enabled": false,
+          "limits": {
+            "concurrency": 5,
+            "quota_limit": null,
+            "requests_per_window": null,
+            "retries": 5,
+            "window_s": 60
+          },
           "local": false,
           "metric_groups": []
         }
@@ -2928,7 +3497,8 @@
     "custom_search": {
       "$ref": "#/$defs/CustomSearchConfig",
       "default": {
-        "filters": []
+        "filters": [],
+        "regex_timeout_ms": 2000
       },
       "description": "Custom Search (ab v2)."
     },
@@ -2946,6 +3516,7 @@
     "export": {
       "$ref": "#/$defs/ExportConfig",
       "default": {
+        "inlinks_for_all_filters": true,
         "line_ending": "crlf",
         "utf8_bom": true
       },
@@ -2960,7 +3531,7 @@
         "h1": true,
         "h2": true,
         "hash": true,
-        "http_headers": true,
+        "http_headers": false,
         "indexability": true,
         "last_modified": true,
         "meta_description": true,
@@ -2978,8 +3549,8 @@
           "json_ld": false,
           "microdata": false,
           "rdfa": false,
-          "rich_results_validation": false,
-          "schema_org_validation": false
+          "rich_results_validation": true,
+          "schema_org_validation": true
         },
         "text_ratio": true,
         "word_count": true,
@@ -3044,6 +3615,15 @@
       },
       "description": "Schwellen für Bilder."
     },
+    "images": {
+      "$ref": "#/$defs/ImagesConfig",
+      "default": {
+        "incorrect_size_min_saving_kb": 4,
+        "parse_inline_css_backgrounds": false,
+        "real_dimensions_from_header": false
+      },
+      "description": "Zusätzliche Bildmessungen und Einsparschwelle (ONPAGE-172, ONPAGE-178, ONPAGE-180)."
+    },
     "issues": {
       "$ref": "#/$defs/IssuesConfig",
       "default": {
@@ -3097,9 +3677,7 @@
             "position": "Footer"
           },
           {
-            "contains": [
-              ""
-            ],
+            "contains": [],
             "position": "Content"
           }
         ]
@@ -3177,7 +3755,7 @@
     "rendering": {
       "$ref": "#/$defs/RenderingConfig",
       "default": {
-        "ajax_timeout_s": 5,
+        "ajax_timeout_s": 5.0,
         "chromium_path": null,
         "js_error_reporting": true,
         "mode": "text",
@@ -3217,9 +3795,13 @@
     "robots": {
       "$ref": "#/$defs/RobotsConfig",
       "default": {
+        "custom_files": {},
         "mode": "respect",
+        "respect_crawl_delay": true,
         "retries": 2,
         "retry_delay_s": 5,
+        "show_blocked_external": false,
+        "show_blocked_internal": true,
         "unreachable_policy": "block_host"
       },
       "description": "robots.txt."
@@ -3236,7 +3818,7 @@
       "$ref": "#/$defs/ScopeConfig",
       "default": {
         "all_subdomains": false,
-        "crawl_outside_start_folder": false,
+        "crawl_outside_start_folder": true,
         "exclude": [],
         "include": [],
         "regex_partial_match": false,
@@ -3244,12 +3826,46 @@
       },
       "description": "Bereich und Include/Exclude."
     },
+    "security": {
+      "$ref": "#/$defs/SecurityConfig",
+      "default": {
+        "obsolete_mime_types": [
+          "text/javascript",
+          "application/x-javascript"
+        ]
+      },
+      "description": "Als veraltet zu meldende MIME-Typen (ONPAGE-043)."
+    },
     "segments": {
       "$ref": "#/$defs/SegmentsConfig",
       "default": {
         "list": []
       },
       "description": "Segmente (ab v2)."
+    },
+    "serp": {
+      "$ref": "#/$defs/SerpConfig",
+      "default": {
+        "desktop": {
+          "description_font_px": 14.0,
+          "description_max_px": null,
+          "title_font_px": 20.0,
+          "title_max_px": null
+        },
+        "mobile": {
+          "description_font_px": 14.0,
+          "description_max_px": 680,
+          "title_font_px": 20.0,
+          "title_max_px": 561
+        },
+        "tablet": {
+          "description_font_px": 14.0,
+          "description_max_px": 680,
+          "title_font_px": 20.0,
+          "title_max_px": 561
+        }
+      },
+      "description": "Gerätespezifische SERP-Pixelgrenzen und Schriften (ONPAGE-194)."
     },
     "sitemap_gen": {
       "$ref": "#/$defs/SitemapGenConfig",
@@ -3315,6 +3931,8 @@
     "speed": {
       "$ref": "#/$defs/SpeedConfig",
       "default": {
+        "adaptive_throttle": true,
+        "auto": false,
         "max_per_host": null,
         "max_urls_per_sec": null,
         "threads": 5
@@ -3394,7 +4012,8 @@
         "pagination": {
           "crawl": false,
           "store": true
-        }
+        },
+        "store_uncrawlable_links": false
       },
       "description": "Was gespeichert und gecrawlt wird."
     },
@@ -3408,9 +4027,42 @@
       },
       "description": "Schwellen für Page Titles."
     },
+    "ui": {
+      "$ref": "#/$defs/CrawlUiConfig",
+      "default": {
+        "columns": {},
+        "parity_filters": true
+      },
+      "description": "Profilgebundene Filter und sichtbare Tabellenspalten (ONPAGE-023, OUT-009, OUT-220)."
+    },
     "url": {
       "$ref": "#/$defs/UrlLimits",
       "default": {
+        "internal_search_params": [
+          "s",
+          "q",
+          "query",
+          "search",
+          "search_query",
+          "searchterm",
+          "keyword",
+          "keywords",
+          "k",
+          "term"
+        ],
+        "internal_search_segments": [
+          "search",
+          "suche",
+          "recherche",
+          "buscar",
+          "busca",
+          "cerca",
+          "zoeken",
+          "szukaj",
+          "sok",
+          "haku",
+          "catalogsearch"
+        ],
         "max_chars": 115
       },
       "description": "Schwelle für URLs."

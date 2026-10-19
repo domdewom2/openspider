@@ -1,0 +1,4 @@
+{
+  "build": {"beforeBuildCommand":"npx vite build --config src/grid/spike.vite.ts", "frontendDist":"../dist/grid"},
+  "app": {"windows":[{"label":"main","title":"OpenSpider Grid Gate","url":"src/grid/spike.html","width":1280,"height":800}]}
+}

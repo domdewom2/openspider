@@ -695,6 +695,7 @@ fn filter_default_sort_comes_from_the_registry_before_the_tab_default() {
             kind: os_analyze::FilterKind::Live,
             requires: Vec::new(),
             ignore_non_indexable: false,
+            default_columns: &[],
         });
         tab
     };

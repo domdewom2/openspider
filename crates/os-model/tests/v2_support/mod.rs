@@ -5,6 +5,27 @@ use os_model::*;
 
 /// Verändert alle in v2 neuen Felder (und nur diese) gegenüber den Standardwerten.
 pub fn change_all_v2_fields(c: &mut CrawlConfig) {
+    c.serp.desktop.title_max_px = Some(500);
+    c.serp.desktop.description_max_px = Some(800);
+    c.serp.mobile.title_max_px = Some(510);
+    c.serp.mobile.description_max_px = Some(810);
+    c.serp.tablet.title_max_px = Some(520);
+    c.serp.tablet.description_max_px = Some(820);
+    for device in [&mut c.serp.desktop, &mut c.serp.mobile, &mut c.serp.tablet] {
+        device.title_font_px = 21.0;
+        device.description_font_px = 15.0;
+    }
+    c.ui.parity_filters = false;
+    c.ui.columns
+        .insert("Internal".into(), vec!["Address".into()]);
+    c.images.real_dimensions_from_header = true;
+    c.images.parse_inline_css_backgrounds = true;
+    c.images.incorrect_size_min_saving_kb = 5;
+    c.security.obsolete_mime_types = vec!["application/test".into()];
+    c.advanced.always_follow_redirects = true;
+    c.advanced.always_follow_canonicals = true;
+    c.custom_search.regex_timeout_ms = 3000;
+
     c.limits.max_folder_depth = Some(6);
     c.limits.max_query_params = Some(3);
     c.limits.max_urls_per_subdomain = Some(1000);
@@ -26,7 +47,7 @@ pub fn change_all_v2_fields(c: &mut CrawlConfig) {
     c.auth.session_guard = vec!["/logout".into()];
     c.auth.profile_refs = vec!["shop".into()];
 
-    c.rendering.ajax_timeout_s = 12;
+    c.rendering.ajax_timeout_s = 12.0;
     c.rendering.js_error_reporting = false;
     c.rendering.viewport = ViewportConfig {
         preset: "custom".into(),
@@ -67,8 +88,8 @@ pub fn change_all_v2_fields(c: &mut CrawlConfig) {
         json_ld: true,
         microdata: true,
         rdfa: true,
-        schema_org_validation: true,
-        rich_results_validation: true,
+        schema_org_validation: false,
+        rich_results_validation: false,
         case_sensitive: true,
     };
 
@@ -120,7 +141,7 @@ pub fn change_all_v2_fields(c: &mut CrawlConfig) {
         },
         LinkPositionRule {
             position: "Content".into(),
-            contains: vec![String::new()],
+            contains: vec![],
         },
     ];
     c.rewrite = RewriteConfig {
@@ -159,6 +180,7 @@ pub fn change_all_v2_fields(c: &mut CrawlConfig) {
             metrics: vec!["sessions".into()],
             page_dimension: Some("landingPage".into()),
             filter: Some("country==DE".into()),
+            ..Default::default()
         },
         gsc: GscConfig {
             enabled: true,
@@ -172,6 +194,7 @@ pub fn change_all_v2_fields(c: &mut CrawlConfig) {
             search_type: SearchType::Image,
             filter: Some("device==MOBILE".into()),
             url_inspection: true,
+            ..Default::default()
         },
         psi: PsiConfig {
             enabled: true,
@@ -179,29 +202,34 @@ pub fn change_all_v2_fields(c: &mut CrawlConfig) {
             device: PsiDevice::Desktop,
             local: true,
             metric_groups: vec!["crux".into(), "lab".into()],
+            ..Default::default()
         },
         majestic: LinkMetricsConfig {
             enabled: true,
             base_url: Some("http://127.0.0.1:9/majestic".into()),
             levels: vec![ApiLevel::Domain],
             metrics: vec!["TrustFlow".into()],
+            ..Default::default()
         },
         ahrefs: LinkMetricsConfig {
             enabled: true,
             base_url: Some("http://127.0.0.1:9/ahrefs".into()),
             levels: vec![ApiLevel::Url, ApiLevel::Subdomain],
             metrics: vec!["refdomains".into()],
+            ..Default::default()
         },
         moz: LinkMetricsConfig {
             enabled: true,
             base_url: Some("http://127.0.0.1:9/moz".into()),
             levels: vec![ApiLevel::Subdomain],
             metrics: vec!["da".into()],
+            ..Default::default()
         },
         drive: DriveConfig {
             enabled: true,
             base_url: Some("http://127.0.0.1:9/drive".into()),
             root_folder: Some("Crawls".into()),
+            ..Default::default()
         },
     };
     c.segments.list = vec![SegmentConfig {
@@ -259,5 +287,71 @@ pub fn change_all_v2_fields(c: &mut CrawlConfig) {
             enabled: true,
             only_valid_targets: false,
         },
+    };
+    c.api.ga4.account = Some("fixture".into());
+    c.api.ga4.limits = ApiLimitsConfig {
+        retries: 3,
+        concurrency: 2,
+        requests_per_window: Some(10),
+        window_s: 30,
+        quota_limit: Some(100),
+    };
+    c.api.gsc.account = Some("fixture".into());
+    c.api.gsc.limits = ApiLimitsConfig {
+        retries: 3,
+        concurrency: 2,
+        requests_per_window: Some(10),
+        window_s: 30,
+        quota_limit: Some(100),
+    };
+    c.api.psi.account = Some("fixture".into());
+    c.api.psi.limits = ApiLimitsConfig {
+        retries: 3,
+        concurrency: 2,
+        requests_per_window: Some(10),
+        window_s: 30,
+        quota_limit: Some(100),
+    };
+    c.api.majestic.account = Some("fixture".into());
+    c.api.majestic.limits = ApiLimitsConfig {
+        retries: 3,
+        concurrency: 2,
+        requests_per_window: Some(10),
+        window_s: 30,
+        quota_limit: Some(100),
+    };
+    c.api.ahrefs.account = Some("fixture".into());
+    c.api.ahrefs.limits = ApiLimitsConfig {
+        retries: 3,
+        concurrency: 2,
+        requests_per_window: Some(10),
+        window_s: 30,
+        quota_limit: Some(100),
+    };
+    c.api.moz.account = Some("fixture".into());
+    c.api.moz.limits = ApiLimitsConfig {
+        retries: 3,
+        concurrency: 2,
+        requests_per_window: Some(10),
+        window_s: 30,
+        quota_limit: Some(100),
+    };
+    c.api.drive.account = Some("fixture".into());
+    c.api.drive.limits = ApiLimitsConfig {
+        retries: 3,
+        concurrency: 2,
+        requests_per_window: Some(10),
+        window_s: 30,
+        quota_limit: Some(100),
+    };
+    c.api.ga4.oauth_client_id = Some("fixture".into());
+    c.api.ga4.url_match = UrlMatchConfig {
+        ignore_trailing_slash: false,
+        ignore_case: false,
+    };
+    c.api.gsc.oauth_client_id = Some("fixture".into());
+    c.api.gsc.url_match = UrlMatchConfig {
+        ignore_trailing_slash: false,
+        ignore_case: false,
     };
 }

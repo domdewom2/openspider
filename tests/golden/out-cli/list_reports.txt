@@ -24,5 +24,11 @@ HTTP Header Summary
 Cookie Summary
 Crawl Path Report
 Queued URLs
+Sidebar:Overview
+Sidebar:Issues
 Sidebar:Site Structure
+Sidebar:Site Structure Depth
 Sidebar:Response Times
+Sidebar:Segments
+Sidebar:Spelling & Grammar
+Sidebar:API

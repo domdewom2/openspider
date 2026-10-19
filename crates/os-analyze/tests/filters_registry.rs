@@ -76,7 +76,16 @@ fn expected_filters(tab_id: &str) -> Vec<(String, String, Vec<String>)> {
             }
             for f in tab["filters"].as_array().unwrap() {
                 let id = f["id"].as_str().unwrap();
-                if id.starts_with('<') {
+                // D10: diese zwei Kennungen beginnen mit einem echten HTML-Tag,
+                // nicht mit einem dynamischen Filter-Platzhalter.
+                if id.starts_with('<')
+                    && !(tab_id == "Validation"
+                        && matches!(
+                            id,
+                            "<head> Not First In <html> Element"
+                                | "<body> Element Preceding <html>"
+                        ))
+                {
                     continue;
                 }
                 let requires = f
@@ -156,7 +165,10 @@ fn filters_match_the_registry_files_in_id_order_kind_and_requirements() {
                 .requires
                 .iter()
                 .filter_map(|r| match r {
-                    Requirement::Config(key) => Some((*key).to_string()),
+                    Requirement::Config(key)
+                    | Requirement::RenderingOrConfig(key)
+                    | Requirement::Coverage { config: key, .. } => Some((*key).to_string()),
+                    Requirement::AnyConfig(_) => Some("extraction.structured_data".into()),
                     Requirement::Rendering => None,
                 })
                 .collect();
@@ -273,7 +285,11 @@ fn every_tab_is_a_real_definition_or_a_marked_stub() {
         }
     }
     // Alle 15 neuen Tabs sind in M2-F02 Stubs; die 16 Tabs von M1 sind echte Definitionen.
-    assert_eq!(stubs, 15, "Stub-Tabs");
+    // M2-D01 implements Meta Keywords; M2-D05 Pagination, M2-D14 Custom Search.
+    assert_eq!(
+        stubs, 9,
+        "Stub-Tabs (Structured Data: M2-D09, Validation: M2-D10, Custom Extraction: M2-D15)"
+    );
 }
 
 #[test]
@@ -389,18 +405,38 @@ fn every_column_has_ui_metadata_derived_from_its_kind() {
 
 #[test]
 fn dynamic_column_sources_are_registered_per_tab_and_names_are_interned() {
-    // M2-F02: noch keine Quelle gemeldet (die Pakete D14, D15, D22, I05, I06 liefern sie), aber alle Einstiege existieren.
+    // M2-D14 registers Custom Search; unconfigured sources still return no columns.
     let cfg = CrawlConfig::default();
     for tab in [
         "Custom Search",
         "Custom Extraction",
         "Custom JavaScript",
         "Link Metrics",
-        "Internal",
     ] {
         assert!(tabs::dynamic_columns(tab, &cfg).is_empty(), "{tab}");
     }
-    assert!(tabs::column_sources().is_empty());
+    // M2-E01 ersetzt ausschließlich den bisherigen Internal-Crawl-Spaltenstub (K2-60).
+    let columns = tabs::dynamic_columns("Internal", &cfg);
+    assert_eq!(
+        columns.iter().map(|c| c.key).collect::<Vec<_>>(),
+        ["Links Truncated", "Truncated"]
+    );
+    // M2-D14 (Custom Search), M2-D15 (Custom Extraction und eine Internal-Quelle), M2-E01 (Internal), M2-D09 (Structured Data).
+    let mut sources = tabs::column_sources()
+        .iter()
+        .map(|(tab, _)| *tab)
+        .collect::<Vec<_>>();
+    sources.sort_unstable();
+    assert_eq!(
+        sources,
+        [
+            "Custom Extraction",
+            "Custom Search",
+            "Internal",
+            "Internal",
+            "Structured Data"
+        ]
+    );
     // Namen zur Laufzeit: gleicher Text, dieselbe Referenz.
     let a = intern("Preis (Extraktor 1)");
     let b = intern(&String::from("Preis (Extraktor 1)"));

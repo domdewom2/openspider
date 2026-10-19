@@ -1,2 +1,55 @@
-# OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „Security“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.security-mixed-content]
+what = "Die HTTPS-Seite bindet mindestens eine Ressource über HTTP ein."
+why = "Browser können diese Ressource blockieren; unverschlüsselte Inhalte können unterwegs verändert werden."
+fix = "Alle betroffenen Ressourcen über HTTPS bereitstellen und ihre Verweise aktualisieren."
+
+[issues.security-form-url-insecure]
+what = "Ein Formular sendet an eine HTTP-Adresse."
+why = "Formulardaten können auf dem Übertragungsweg gelesen oder verändert werden."
+fix = "Das Formularziel auf HTTPS umstellen und die sichere Übertragung prüfen."
+
+[issues.security-form-on-http-url]
+what = "Auf einer HTTP-Seite befindet sich ein Formular."
+why = "Auch bei sicherem Formularziel kann das unverschlüsselt ausgelieferte Formular manipuliert werden."
+fix = "Die gesamte Formularseite über HTTPS ausliefern und HTTP dauerhaft umleiten."
+
+[issues.security-unsafe-cross-origin-links]
+what = "Ein externer Link öffnet ein neues Fenster ohne explizites noopener oder noreferrer."
+why = "Moderne Browser setzen noopener bei _blank implizit. Ältere Browser können dem Ziel Zugriff auf das Ursprungsfenster erlauben."
+fix = "Bei externen Links mit target=_blank das rel-Token noopener oder noreferrer ergänzen."
+
+[issues.security-protocol-relative-resource-links]
+what = "Eine Ressourcenadresse beginnt mit // und übernimmt das Schema der Seite."
+why = "Auf HTTP-Seiten wird die Ressource dadurch ebenfalls unverschlüsselt geladen."
+fix = "Eine explizite HTTPS-Adresse verwenden und die Erreichbarkeit prüfen."
+
+[issues.security-missing-hsts-header]
+what = "Der Antwort fehlt ein gültiger Header Strict-Transport-Security."
+why = "Ohne HSTS erzwingt der Browser für spätere Besuche nicht automatisch HTTPS."
+fix = "Nach Prüfung der HTTPS-Abdeckung eine passende HSTS-Richtlinie senden."
+
+[issues.security-missing-content-security-policy-header]
+what = "Der Antwort fehlt ein gültiger Header Content-Security-Policy."
+why = "Ohne durchgesetzte CSP fehlt eine zusätzliche Begrenzung der erlaubten Ressourcen."
+fix = "Eine passende CSP als Antwort-Header einführen; Report-Only und Meta ersetzen diesen Header im Filter nicht."
+
+[issues.security-missing-x-content-type-options-header]
+what = "Der Antwort fehlt ein gültiger Header X-Content-Type-Options: nosniff."
+why = "Browser können Inhalte sonst unter einem unerwarteten Medientyp interpretieren."
+fix = "Den Antwort-Header X-Content-Type-Options mit dem Wert nosniff senden."
+
+[issues.security-missing-x-frame-options-header]
+what = "Der Antwort fehlt ein gültiger Header X-Frame-Options: DENY oder SAMEORIGIN."
+why = "Ohne diesen Schutz kann die Seite unter Umständen in fremden Frames erscheinen."
+fix = "DENY oder SAMEORIGIN passend zur Einbettungsstrategie senden; CSP frame-ancestors ersetzt den Header für diesen Filter nicht."
+
+[issues.security-missing-secure-referrer-policy-header]
+what = "Der Antwort fehlt ein gültiger Header Referrer-Policy."
+why = "Eine unsichere Richtlinie kann mehr Herkunftsinformationen als beabsichtigt weitergeben."
+fix = "Eine explizite sichere Referrer-Policy senden; in Listen zählt der letzte gültige Wert."
+
+[issues.security-bad-content-type]
+what = "Der Content-Type ist ungültig, als veraltet konfiguriert oder widerspricht Dateiendung beziehungsweise Inhaltssignatur."
+why = "Ein falscher Medientyp kann Darstellung und Verarbeitung der Ressource verändern."
+fix = "Den tatsächlichen Inhalt mit dem passenden MIME-Typ ausliefern. Die Liste veralteter Typen ist konfigurierbar; text/javascript ist nach RFC 9239 ein Standardtyp."

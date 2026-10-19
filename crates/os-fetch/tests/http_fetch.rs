@@ -682,6 +682,8 @@ async fn rate_limit_applies_to_every_purpose_including_robots_and_sitemaps() {
             purpose: purposes[i % purposes.len()],
             cookies: None,
             max_body_bytes: 1 << 20,
+            attempt: 0,
+            body_limit: Default::default(),
         };
         let _ = expect_response(f.fetch(req).await);
     }

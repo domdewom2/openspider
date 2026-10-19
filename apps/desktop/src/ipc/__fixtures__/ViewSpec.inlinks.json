@@ -1,7 +1,17 @@
 {
   "kind": "inlinks",
-  "urlIds": [1, 2],
-  "filter": { "id": "Hyperlinks" },
+  "urlIds": [
+    1,
+    2
+  ],
+  "filter": {
+    "id": "Hyperlinks",
+    "position": null,
+    "excludeSelf": null,
+    "excludeNofollow": null,
+    "anchor": null,
+    "mode": null
+  },
   "search": null,
   "sort": [],
   "compare": null

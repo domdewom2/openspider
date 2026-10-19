@@ -30,6 +30,7 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D20",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Structured Data:Validation Errors & Warnings",
@@ -47,6 +48,7 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D20",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Structured Data:Google Rich Results Features Summary",
@@ -64,12 +66,14 @@ const ENTRIES: &[TableEntry] = &[
         requires: &[],
         owner: "M2-D20",
         run: stub_run,
+        header_fn: None,
     },
     TableEntry {
         name: "Structured Data:Google Rich Results Features",
         aliases: &[],
         file_stem: "Structured Data:Google Rich Results Features",
         header: &["Address"],
+        header_fn: None,
         requires: &[],
         owner: "M2-D20",
         run: stub_run,

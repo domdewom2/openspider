@@ -1,8 +1,78 @@
-# OpenSpider – Issue-Katalog ab M2, Tab „Pagination“ (UI-063/UI-064).
-#
-# Einträge wie in core/issues/catalog.toml (`[[issue]]` mit id, tab, filter, type, priority, type_rule, priority_rule,
-# doc_key, optional override_reason/needs_crawl_analysis/text_params); `tab` ist hier immer "Pagination". Der Loader liest die
-# M1-Datei und alle Dateien dieses Ordners. Texte: core/issues/texts/{de,en}.d/pagination.toml (Schlüssel issues.<id>).
-# M2-F02 legt nur die Datei an; die Einträge liefert das Paket des Tabs.
-
 schema = 1
+
+[[issue]]
+id = "pagination-not-in-anchor-tag"
+tab = "Pagination"
+filter = "Pagination URL Not In Anchor Tag"
+type = "Issue"
+priority = "High"
+type_rule = "T-I3"
+priority_rule = "P-H1"
+doc_key = "pagination-not-in-anchor-tag"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "pagination-non-200-urls"
+tab = "Pagination"
+filter = "Non-200 Pagination URLs"
+type = "Issue"
+priority = "High"
+type_rule = "T-I1"
+priority_rule = "P-H1"
+doc_key = "pagination-non-200-urls"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "pagination-unlinked-urls"
+tab = "Pagination"
+filter = "Unlinked Pagination URLs"
+type = "Issue"
+priority = "Medium"
+type_rule = "T-I3"
+priority_rule = "P-M2"
+doc_key = "pagination-unlinked-urls"
+needs_crawl_analysis = true
+
+[[issue]]
+id = "pagination-non-indexable"
+tab = "Pagination"
+filter = "Non-Indexable"
+type = "Warning"
+priority = "High"
+type_rule = "T-W1"
+priority_rule = "P-H1"
+doc_key = "pagination-non-indexable"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "pagination-multiple-urls"
+tab = "Pagination"
+filter = "Multiple Pagination URLs"
+type = "Issue"
+priority = "Low"
+type_rule = "T-I3"
+priority_rule = "P-L1"
+doc_key = "pagination-multiple-urls"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "pagination-loop"
+tab = "Pagination"
+filter = "Pagination Loop"
+type = "Issue"
+priority = "Low"
+type_rule = "T-I3"
+priority_rule = "P-L1"
+doc_key = "pagination-loop"
+needs_crawl_analysis = true
+
+[[issue]]
+id = "pagination-sequence-error"
+tab = "Pagination"
+filter = "Sequence Error"
+type = "Issue"
+priority = "Low"
+type_rule = "T-I3"
+priority_rule = "P-L1"
+doc_key = "pagination-sequence-error"
+needs_crawl_analysis = true

@@ -1,4 +1,5 @@
-//! Redirect-Reports „All Redirects“ (OUT-081) und „Redirect Chains“ (OUT-082).
+//! Redirect-Reports „All Redirects“ (OUT-081), „Redirect Chains“ (OUT-082) und
+//! „Redirects to Errors“ (OUT-084), auch im Listenmodus (OUT-085).
 //!
 //! Eine Zeile je Start-URL einer Weiterleitung mit allen Sprüngen bis zum Endziel. Die Kette ermittelt
 //! `os_store::queries::redirect_chain`; die Flags `redirect_loop` und `redirect_limit_reached` stehen live in
@@ -26,6 +27,7 @@ use os_model::{LinkType, RedirectType, UrlId};
 use os_store::{queries, CrawlFile};
 
 use super::common::{db, writer_options};
+use crate::catalog::{TableEntry, TableJob};
 use crate::error::ExportError;
 use crate::types::{ExportFileInfo, Format};
 use os_analyze::ColumnKind;
@@ -41,6 +43,8 @@ pub enum RedirectReport {
     All,
     /// Nur Ketten ab zwei Sprüngen oder Schleifen.
     Chains,
+    /// Ketten mit fehlerhaftem Endziel.
+    Errors,
 }
 
 /// Ein Glied der Kette mit allen Angaben, die der Report braucht.
@@ -293,6 +297,12 @@ fn collect_ids(file: &CrawlFile, sql: &str) -> Result<Vec<i64>, ExportError> {
 /// zeigt auf die URL. Mit dem Index `links_target` ist das eine Suche je Kandidat; ohne ihn (K-74: pausierter oder
 /// abgebrochener Crawl) eine Teilabfrage, die `links` einmal für alle Kandidaten liest – nie ein Lauf je Zeile.
 fn start_ids(file: &CrawlFile) -> Result<Vec<i64>, ExportError> {
+    let list_count: i64 = db(file
+        .conn()
+        .query_row("SELECT COUNT(*) FROM list_input", [], |r| r.get(0)))?;
+    if list_count > 0 {
+        return collect_ids(file, "SELECT u.id FROM list_input l JOIN urls u ON u.id = l.url_id WHERE l.outcome = 'ok' AND (u.redirect_url IS NOT NULL OR u.redirect_target_id IS NOT NULL) ORDER BY l.position");
+    }
     let types = redirect_link_types();
     let linked = if db(os_store::link_index::present(file.conn()))? {
         format!(
@@ -506,6 +516,78 @@ pub(crate) fn write_report(
     sheet: &str,
     format: Format,
 ) -> Result<ExportFileInfo, ExportError> {
+    let mut writer = crate::output::open_writer(path, format, sheet, &writer_options(cfg))?;
+    let cancel = os_model::CancelToken::default();
+    let mut ctx = crate::types::ExportCtx {
+        cancel: &cancel,
+        progress: &|_| {},
+        skip_empty: false,
+        workbook: None,
+        skipped: Vec::new(),
+    };
+    write_report_to(file, which, writer.as_mut(), &mut ctx)?;
+    writer.finish()
+}
+
+pub fn write_report_to(
+    file: &CrawlFile,
+    which: RedirectReport,
+    writer: &mut dyn crate::types::TableWriter,
+    ctx: &mut crate::types::ExportCtx<'_>,
+) -> Result<u64, ExportError> {
+    write_rows(file, which, writer, ctx, true)
+}
+
+fn error_target(file: &CrawlFile, chain: &Chain) -> Result<bool, ExportError> {
+    if chain.outcome == ChainOutcome::Loop || chain.outcome == ChainOutcome::LimitReached {
+        return Ok(false);
+    }
+    let Some(id) = chain.nodes.last().and_then(|n| n.id) else {
+        return Ok(false);
+    };
+    // Die Fachfilter bleiben die einzige Quelle der Fehlerzuordnung (OUT-084).
+    // Insbesondere ist ein nicht abgerufenes Ziel kein Fehler und eine reine Schleife kein Fehlerziel.
+    static SQL: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    let sql = SQL.get_or_init(|| {
+        let tab = os_analyze::tabs::response_codes::tab();
+        let predicates = [
+            "Blocked by Robots.txt",
+            "No Response",
+            "Client Error (4XX)",
+            "Server Error (5XX)",
+        ]
+        .iter()
+        .map(|id| {
+            let filter = tab
+                .filters
+                .iter()
+                .find(|f| f.id == *id)
+                .expect("Response Codes error filter");
+            format!("({})", filter.predicate)
+        })
+        .collect::<Vec<_>>()
+        .join(" OR ");
+        format!(
+            "SELECT COALESCE(({}) AND ({predicates}), 0) FROM urls u WHERE u.id = ?1",
+            tab.population
+        )
+    });
+    db(file.conn().query_row(sql, [id], |r| r.get(0)))
+}
+
+fn write_rows(
+    file: &CrawlFile,
+    which: RedirectReport,
+    writer: &mut dyn crate::types::TableWriter,
+    ctx: &mut crate::types::ExportCtx<'_>,
+    header: bool,
+) -> Result<u64, ExportError> {
+    // Im Listenmodus ist ein nicht verfolgtes Ziel noch keine bekannte Ein-Sprung-Kette.
+    // Der Kettenreport behält diese Starts, damit der fehlende Abruf sichtbar bleibt (OUT-085).
+    let is_list: bool =
+        db(file
+            .conn()
+            .query_row("SELECT EXISTS(SELECT 1 FROM list_input)", [], |r| r.get(0)))?;
     // Durchgang 1: Zeilenmenge und längste Kette.
     let mut included: Vec<i64> = Vec::new();
     let mut max_hops = 0usize;
@@ -513,7 +595,12 @@ pub(crate) fn write_report(
         let chain = chain_for(file, id)?;
         let keep = match which {
             RedirectReport::All => true,
-            RedirectReport::Chains => chain.edges() >= 2 || chain.outcome == ChainOutcome::Loop,
+            RedirectReport::Errors => error_target(file, &chain)?,
+            RedirectReport::Chains => {
+                chain.edges() >= 2
+                    || chain.outcome == ChainOutcome::Loop
+                    || (is_list && chain.outcome == ChainOutcome::NotFollowed)
+            }
         };
         if keep {
             max_hops = max_hops.max(chain.edges());
@@ -528,17 +615,73 @@ pub(crate) fn write_report(
         columns.push(format!("Status Code {n}"));
         columns.push(format!("Status {n}"));
     }
-    let mut writer = crate::output::open_writer(path, format, sheet, &writer_options(cfg))?;
-    writer.header(&columns)?;
+    if header {
+        writer.header(&columns)?;
+    }
     // Durchgang 2: Zeilen schreiben (konstanter Speicher). Ohne Index `links_target` liest ein Lauf über `links`
     // die Beispielquellen aller Zeilen (eine Adresse je Zeile im Speicher).
     let samples = sample_sources(file, &included)?;
+    let mut count = 0;
     for id in included {
+        ctx.checkpoint()?;
         let chain = chain_for(file, id)?;
         let info = start_info(file, id, samples.as_ref())?;
         let start = load_node(file, id)?;
         let (kinds, values) = row_values(&chain, &start, &info, max_hops);
         writer.row(&kinds, &values)?;
+        count += 1;
+        (ctx.progress)(count);
     }
-    writer.finish()
+    Ok(count)
+}
+
+/// Redirects: Redirects to Errors (OUT-084, M2-D12): Kettenformat wie OUT-081, nur Ketten mit Fehlerziel.
+static REDIRECTS_TO_ERRORS: TableEntry = TableEntry {
+    name: "Redirects:Redirects to Errors",
+    aliases: &[],
+    file_stem: "Redirects to Errors",
+    header: crate::catalog::CHAIN_HEADER,
+    header_fn: Some(error_header),
+    requires: &[],
+    owner: "M2-D12",
+    run: error_run,
+};
+
+pub fn entries() -> &'static [TableEntry] {
+    std::slice::from_ref(&REDIRECTS_TO_ERRORS)
+}
+
+fn error_header(job: &TableJob<'_>) -> Result<Vec<String>, ExportError> {
+    let mut max_hops = 0;
+    for id in start_ids(job.file)? {
+        let chain = chain_for(job.file, id)?;
+        if error_target(job.file, &chain)? {
+            max_hops = max_hops.max(chain.edges());
+        }
+    }
+    let mut columns: Vec<String> = FIXED_COLUMNS.iter().map(|s| (*s).into()).collect();
+    for n in 1..=max_hops {
+        columns.extend([
+            format!("Redirect Type {n}"),
+            format!("Redirect URL {n}"),
+            format!("Status Code {n}"),
+            format!("Status {n}"),
+        ]);
+    }
+    Ok(columns)
+}
+
+fn error_run(
+    job: &TableJob<'_>,
+    writer: &mut dyn crate::types::TableWriter,
+) -> Result<u64, ExportError> {
+    let cancel = os_model::CancelToken::default();
+    let mut ctx = crate::types::ExportCtx {
+        cancel: &cancel,
+        progress: &|_| {},
+        skip_empty: false,
+        workbook: None,
+        skipped: Vec::new(),
+    };
+    write_rows(job.file, RedirectReport::Errors, writer, &mut ctx, false)
 }

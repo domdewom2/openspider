@@ -27,4 +27,36 @@ metric?: number | null,
 /**
  * Knoten hat weitere Kinder außerhalb des Budgets.
  */
-hasMore: boolean, };
+hasMore: boolean, 
+/**
+ * HTTP-Statuscode der URL.
+ */
+statusCode?: number | null, 
+/**
+ * Indexierbarkeitsstatus der URL.
+ */
+indexability?: string | null, 
+/**
+ * Anzahl eindeutiger eingehender Links.
+ */
+uniqueInlinks?: number | null, 
+/**
+ * Berechneter Link-Score der URL.
+ */
+linkScore?: number | null, 
+/**
+ * Kennung des zugeordneten Segments.
+ */
+segmentId?: string | null, 
+/**
+ * Anzeigefarbe des zugeordneten Segments.
+ */
+segmentColor?: string | null, 
+/**
+ * Anzahl der ausgeblendeten direkten Kinder.
+ */
+hiddenChildren: number, 
+/**
+ * Anzahl aller ausgeblendeten Nachfahren.
+ */
+hiddenDescendants: number, };

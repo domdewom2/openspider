@@ -47,7 +47,10 @@ fn the_manifest_has_exactly_the_keys_of_the_spec_with_the_expected_values() {
     assert_eq!(get(&m, "format").as_deref(), Some("ospider"));
     assert_eq!(get(&m, "manifest_version").as_deref(), Some("1"));
     assert_eq!(get(&m, "read_api_version").as_deref(), Some("1"));
-    assert_eq!(get(&m, "schema_version").as_deref(), Some("3"));
+    assert_eq!(
+        get(&m, "schema_version").as_deref(),
+        Some(os_store::SCHEMA_VERSION.to_string().as_str())
+    );
     assert_eq!(
         get(&m, "openspider_version").as_deref(),
         Some(OPENSPIDER_VERSION)
@@ -251,7 +254,11 @@ fn migrated_files_have_a_complete_manifest_and_unknown_values_are_null() {
             "{fixture}: unbekannt = NULL"
         );
         assert_eq!(get(&m, "writer_kind"), None, "{fixture}");
-        assert_eq!(get(&m, "schema_version").as_deref(), Some("3"), "{fixture}");
+        assert_eq!(
+            get(&m, "schema_version").as_deref(),
+            Some(os_store::SCHEMA_VERSION.to_string().as_str()),
+            "{fixture}"
+        );
         assert_eq!(get(&m, "read_api_version").as_deref(), Some("1"));
         assert_eq!(get(&m, "name").as_deref(), Some("Pausierter Crawl"));
         assert_eq!(get(&m, "completeness").as_deref(), Some("paused"));

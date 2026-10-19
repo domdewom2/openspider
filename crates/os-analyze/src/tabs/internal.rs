@@ -144,6 +144,7 @@ fn class_filter(id: &'static str, predicate: &'static str) -> FilterDef {
         kind: FilterKind::Live,
         requires: Vec::new(),
         ignore_non_indexable: false,
+        default_columns: &[],
     }
 }
 
@@ -253,7 +254,7 @@ pub fn tab() -> TabDef {
             true,
         ),
         // ONPAGE-013
-        col("Word Count", html_2xx!("u.word_count"), ColumnKind::Int, true),
+        col("Word Count", html_or_pdf_2xx!("u.word_count"), ColumnKind::Int, true),
         col(
             "Text Ratio",
             html_2xx!("u.text_ratio"),
@@ -348,13 +349,29 @@ pub fn tab() -> TabDef {
     let mut filters = vec![class_filter("All", "1")];
     filters.extend(class_filters());
     filters.push(unknown_filter());
+    filters.extend([
+        class_filter("Flash", "u.content_class = 'Plugins'"),
+        class_filter("Other", "u.content_class = 'Other' OR (:parity_filters=1 AND u.content_class IN ('Media','Fonts','XML'))"),
+        class_filter("Media", "u.content_class = 'Media'"),
+        class_filter("Fonts", "u.content_class = 'Fonts'"),
+        class_filter("XML", "u.content_class = 'XML'"),
+    ]);
 
+    columns.extend(super::content::analysis_columns());
     TabDef {
         id: "Internal",
         population: POPULATION,
         columns,
         filters,
         default_sort: Vec::new(),
-        params: |_| Vec::new(),
+        params: |cfg| {
+            let mut params = super::content::analysis_params(cfg);
+            params.push((
+                "parity_filters",
+                os_model::Value::Bool(cfg.ui.parity_filters),
+            ));
+            params
+        },
+        hidden_population: None,
     }
 }

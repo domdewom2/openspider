@@ -43,6 +43,8 @@ pub struct ValidationIssueFact {
 /// Fakten der HTML-Validierung einer Seite (TECH-008, `advanced.html_validation`).
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct ValidationFacts {
+    /// Struktur des Originalquelltexts; Token-Indizes beginnen bei 0.
+    pub tokens: ValidationTokens,
     /// Befunde in Dokumentreihenfolge.
     pub issues: Vec<ValidationIssueFact>,
     /// Anzahl Tokenfehler im `<head>`.
@@ -51,6 +53,18 @@ pub struct ValidationFacts {
     pub body_errors: u32,
     /// Größe des HTML-Dokuments in Byte (Grundlage der 2-MB-Filter).
     pub document_bytes: u64,
+}
+
+/// Token-Zusammenfassung ohne Speicherung des HTML-Quelltexts (TECH-280).
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct ValidationTokens {
+    pub html_count: u32,
+    pub head_count: u32,
+    pub body_count: u32,
+    pub first_html: Option<u64>,
+    pub first_head: Option<u64>,
+    pub first_body: Option<u64>,
+    pub first_element_after_html: Option<String>,
 }
 
 /// Ein Treffer eines Custom-Search-Filters (INTEG-020 ff.).

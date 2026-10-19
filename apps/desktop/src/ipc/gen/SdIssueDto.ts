@@ -23,4 +23,28 @@ property?: string | null,
 /**
  * Maschinenlesbarer Code.
  */
-code: string, };
+code: string, 
+/**
+ * Beschreibung des Befunds.
+ */
+message: string, 
+/**
+ * Pfad zur betroffenen Eigenschaft in den strukturierten Daten.
+ */
+path: string, 
+/**
+ * Zeilennummer im Quelldokument.
+ */
+line?: number | null, 
+/**
+ * Spaltennummer im Quelldokument.
+ */
+col?: number | null, 
+/**
+ * Quelltextausschnitt zum Befund.
+ */
+snippet?: string | null, 
+/**
+ * URL der weiterführenden Dokumentation.
+ */
+docUrl?: string | null, };

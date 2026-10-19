@@ -39,6 +39,11 @@ pub struct ContentStats {
 /// Zählt Token und deren Zeichen in einem Strom aus Textstücken und Blockgrenzen.
 #[derive(Default)]
 struct TokenCounter {
+    /// Optional text sink (INTEG-027, M2-D02); word-count/ratio callers allocate no text.
+    text: Option<String>,
+    /// Sink-Modus: Blockgrenzen als Zeilenumbruch und Leerraum zusammengefasst (M2-D02),
+    /// sonst Rohtext mit Leerzeichen an Blockgrenzen (INTEG-027).
+    keep_breaks: bool,
     tokens: u64,
     /// Anzahl `<li>` im Inhaltsbereich (A-35b).
     list_items: u64,
@@ -48,20 +53,40 @@ struct TokenCounter {
 
 impl TokenCounter {
     fn push_text(&mut self, text: &str) {
+        if !self.keep_breaks {
+            if let Some(out) = &mut self.text {
+                out.push_str(text);
+            }
+        }
         for c in text.chars() {
             if c.is_whitespace() {
                 self.in_token = false;
+                if let (true, Some(out)) = (self.keep_breaks, &mut self.text) {
+                    if !out.ends_with([' ', '\n']) {
+                        out.push(' ');
+                    }
+                }
             } else {
                 if !self.in_token {
                     self.in_token = true;
                     self.tokens += 1;
                 }
                 self.token_chars += 1;
+                if let (true, Some(out)) = (self.keep_breaks, &mut self.text) {
+                    out.push(c);
+                }
             }
         }
     }
 
     fn boundary(&mut self) {
+        if let Some(out) = &mut self.text {
+            if !self.keep_breaks {
+                out.push(' ');
+            } else if !out.ends_with('\n') && !out.is_empty() {
+                out.push('\n');
+            }
+        }
         self.in_token = false;
     }
 
@@ -200,8 +225,12 @@ fn body_of(doc: &Document) -> Option<ElementRef<'_>> {
 
 /// Durchläuft den Body iterativ (kein Stapelüberlauf bei tiefen Bäumen) und speist den Zähler.
 fn walk(body: ElementRef, rules: &Rules) -> TokenCounter {
+    walk_into(body, rules, TokenCounter::default())
+}
+
+/// Same traversal with an optional text sink; existing counters keep their defaults.
+fn walk_into(body: ElementRef, rules: &Rules, mut counter: TokenCounter) -> TokenCounter {
     let has_include = rules.has_include();
-    let mut counter = TokenCounter::default();
     // > 0: innerhalb eines ausgeschlossenen Teilbaums (Tiefe relativ zu dessen Wurzel).
     let mut skip_depth = 0usize;
     // Wie viele geöffnete Vorfahren (inkl. Selbst) passen zu einer Include-Regel.
@@ -267,6 +296,23 @@ fn walk(body: ElementRef, rules: &Rules) -> TokenCounter {
         }
     }
     counter
+}
+
+/// Text des Inhaltsbereichs (INTEG-027), mit denselben Regeln und Blockgrenzen
+/// wie die Wortzahl (ONPAGE-140/141). Listenpunkt-Zusatzwörter sind keine Textzeichen.
+/// Leerraum ist zu einzelnen Leerzeichen zusammengefasst.
+pub fn area_text_flat(doc: &Document, area: &ContentAreaConfig) -> String {
+    let Some(body) = body_of(doc) else {
+        return String::new();
+    };
+    let counter = TokenCounter {
+        text: Some(String::new()),
+        ..Default::default()
+    };
+    let text = walk_into(body, &Rules::for_area(area), counter)
+        .text
+        .unwrap_or_default();
+    crate::text::normalize_ws(&text)
 }
 
 /// Wortzahl des Inhaltsbereichs (ONPAGE-141).
@@ -341,5 +387,78 @@ pub fn analyze_with_source(
     ContentStats {
         word_count: word_count(doc, area),
         text_ratio: text_ratio(doc, source_chars),
+    }
+}
+
+/// Text des Inhaltsbereichs; Blockgrenzen bleiben für die Satzanalyse erhalten.
+pub fn area_text(doc: &Document, area: &ContentAreaConfig) -> String {
+    body_text_with_breaks(doc, &Rules::for_area(area))
+}
+
+/// Text mit erhaltenen Blockgrenzen für die Regeln `rules`.
+fn body_text_with_breaks(doc: &Document, rules: &Rules) -> String {
+    let Some(body) = body_of(doc) else {
+        return String::new();
+    };
+    let counter = TokenCounter {
+        text: Some(String::new()),
+        keep_breaks: true,
+        ..Default::default()
+    };
+    walk_into(body, rules, counter)
+        .text
+        .unwrap_or_default()
+        .trim()
+        .to_owned()
+}
+
+/// Erfasst Text für konfigurierbare Filter ohne erneuten Abruf.
+pub fn run(ctx: &crate::PageCtx<'_>, page: &mut os_model::ParsedPage) {
+    use os_model::{ExtKey, Value};
+    let area = area_text(ctx.doc, &ctx.cfg.content_area);
+    let body = body_text_with_breaks(ctx.doc, &Rules::whole_body());
+    let select_text = |name| {
+        let selector = scraper::Selector::parse(name).expect("static selector");
+        ctx.doc
+            .html()
+            .select(&selector)
+            .map(|e| e.text().collect::<String>())
+            .collect::<Vec<_>>()
+            .join(" ")
+    };
+    let soft = crate::text::normalize(&format!(
+        "{} {} {}",
+        select_text("title"),
+        select_text("h1"),
+        area
+    ))
+    .to_lowercase();
+    let selector = scraper::Selector::parse("meta[name]").expect("static selector");
+    let description = ctx
+        .doc
+        .html()
+        .select(&selector)
+        .filter(|e| {
+            e.value()
+                .attr("name")
+                .is_some_and(|n| n.eq_ignore_ascii_case("description"))
+        })
+        .filter_map(|e| e.value().attr("content"))
+        .collect::<Vec<_>>()
+        .join(" ");
+    let lorem = crate::text::normalize(&format!(
+        "{} {} {}",
+        select_text("title"),
+        description,
+        body
+    ))
+    .to_lowercase()
+    .contains("lorem ipsum");
+    for (key, value) in [
+        ("content.text", Value::Text(area)),
+        ("content.soft404_text", Value::Text(soft)),
+        ("content.lorem", Value::Bool(lorem)),
+    ] {
+        page.ext.push((ExtKey::from_static(key), value));
     }
 }

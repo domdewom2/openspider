@@ -94,6 +94,7 @@ fn filter(id: &'static str, predicate: &'static str) -> FilterDef {
         kind: FilterKind::Live,
         requires: Vec::new(),
         ignore_non_indexable: false,
+        default_columns: &[],
     }
 }
 
@@ -136,7 +137,7 @@ pub fn issue_tabs() -> Vec<TabDef> {
                     Value::Int(i64::from(cfg.title.max_chars)),
                 )]
             },
-        },
+         hidden_population: None, },
         TabDef {
             id: "H1",
             population: "u.is_internal = 1 AND u.in_tables = 1 AND u.content_class = 'HTML' AND u.status_code BETWEEN 200 AND 299",
@@ -150,7 +151,7 @@ pub fn issue_tabs() -> Vec<TabDef> {
             ],
             default_sort: sort_address(),
             params: |_| Vec::new(),
-        },
+         hidden_population: None, },
         TabDef {
             id: "Response Codes",
             population: "u.in_tables = 1 AND u.state = 'done'",
@@ -168,6 +169,6 @@ pub fn issue_tabs() -> Vec<TabDef> {
             ],
             default_sort: sort_address(),
             params: |_| Vec::new(),
-        },
+         hidden_population: None, },
     ]
 }

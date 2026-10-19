@@ -32,4 +32,16 @@ errors: number,
 /**
  * Verbleibendes Kontingent.
  */
-quotaLeft?: number | null, };
+quotaLeft?: number | null, 
+/**
+ * Anzahl laufender API-Aufträge.
+ */
+running: boolean, 
+/**
+ * Anzahl abgeschlossener API-Aufträge.
+ */
+completed: number, 
+/**
+ * Zeitpunkt der nächsten Kontingentrücksetzung (ISO 8601 UTC).
+ */
+resetAt?: string | null, };

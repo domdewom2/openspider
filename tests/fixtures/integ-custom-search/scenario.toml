@@ -1,0 +1,49 @@
+[[route]]
+path = "/"
+content_type = "text/html; charset=utf-8"
+body = '''<p>Ausverkauft Ausverkauft Ausverkauft</p><a href="/missing">missing</a><a href="/empty">empty</a><a href="/redirect">redirect</a><a href="/bodyless">bodyless</a><a href="/assumed">assumed</a><a href="/script.js">script</a><img src="/image.png" alt="photo"><a href="http://extern.test/external">external</a>'''
+
+[[route]]
+path = "/missing"
+status = 404
+content_type = "text/html; charset=utf-8"
+body = "<p>Ausverkauft</p>"
+
+[[route]]
+path = "/empty"
+content_type = "text/html; charset=utf-8"
+body = "<p>Available</p>"
+
+[[route]]
+path = "/redirect"
+status = 301
+location = "/empty"
+content_type = "text/html; charset=utf-8"
+body = "<p>redirect-marker</p>"
+
+[[route]]
+path = "/bodyless"
+status = 301
+location = "/empty"
+content_type = "text/html; charset=utf-8"
+
+[[route]]
+path = "/script.js"
+content_type = "application/javascript"
+body = "const stock = 'Ausverkauft';"
+
+[[route]]
+path = "/assumed"
+no_content_type = true
+body = "<p>assumed-marker</p>"
+
+[[route]]
+host = "extern.test"
+path = "/external"
+content_type = "text/html; charset=utf-8"
+body = "<p>Ausverkauft</p>"
+
+[[route]]
+path = "/image.png"
+content_type = "image/png"
+body = "Ausverkauft"

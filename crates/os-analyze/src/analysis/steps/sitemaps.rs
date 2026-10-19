@@ -65,8 +65,13 @@ pub fn run(
     cancel: &CancelToken,
 ) -> Result<StepState, AnalyzeError> {
     let conn = file.conn();
-    let in_sitemap = load_in_sitemap(conn)?;
-    if cancel.is_cancelled() {
+    if cancel.checkpoint().is_err() {
+        return Ok(StepState::Pending);
+    }
+    let Some(in_sitemap) = load_in_sitemap(conn, cancel)? else {
+        return Ok(StepState::Pending);
+    };
+    if cancel.checkpoint().is_err() {
         return Ok(StepState::Pending);
     }
     let spider = file.get_meta("mode")?.as_deref() != Some("list");
@@ -78,7 +83,7 @@ pub fn run(
     } else {
         BTreeMap::new()
     };
-    if cancel.is_cancelled() {
+    if cancel.checkpoint().is_err() {
         return Ok(StepState::Pending);
     }
     apply(file, &in_sitemap, &orphans)?;
@@ -86,15 +91,22 @@ pub fn run(
 }
 
 /// Kennungen aller URLs, die in einer verarbeiteten `urlset`-Sitemap stehen.
-fn load_in_sitemap(conn: &Connection) -> Result<BTreeSet<i64>, AnalyzeError> {
+fn load_in_sitemap(
+    conn: &Connection,
+    cancel: &CancelToken,
+) -> Result<Option<BTreeSet<i64>>, AnalyzeError> {
     let mut stmt = conn.prepare(
         "SELECT DISTINCT e.url_id FROM sitemap_entries e JOIN sitemaps s ON s.id = e.sitemap_id \
          WHERE s.kind = 'urlset' ORDER BY e.url_id",
     )?;
-    let ids = stmt
-        .query_map([], |r| r.get::<_, i64>(0))?
-        .collect::<Result<BTreeSet<_>, _>>()?;
-    Ok(ids)
+    let mut ids = BTreeSet::new();
+    for (n, row) in stmt.query_map([], |r| r.get::<_, i64>(0))?.enumerate() {
+        if n.is_multiple_of(CANCEL_CHECK_EVERY) && cancel.checkpoint().is_err() {
+            return Ok(None);
+        }
+        ids.insert(row?);
+    }
+    Ok(Some(ids))
 }
 
 /// Berechnet die Orphans: Kennung → Wurzel-Orphan (`None` bei Wurzel-Orphans). `None` im Ergebnis des
@@ -137,7 +149,7 @@ fn find_orphans(
     let mut steps = 0usize;
     while let Some(id) = queue.pop_front() {
         steps += 1;
-        if steps.is_multiple_of(CANCEL_CHECK_EVERY) && cancel.is_cancelled() {
+        if steps.is_multiple_of(CANCEL_CHECK_EVERY) && cancel.checkpoint().is_err() {
             return Ok(None);
         }
         for target in targets(&mut edges, id)? {
@@ -160,7 +172,7 @@ fn find_orphans(
     let mut origin: BTreeMap<i64, i64> = found.keys().map(|&r| (r, r)).collect();
     while let Some(id) = queue.pop_front() {
         steps += 1;
-        if steps.is_multiple_of(CANCEL_CHECK_EVERY) && cancel.is_cancelled() {
+        if steps.is_multiple_of(CANCEL_CHECK_EVERY) && cancel.checkpoint().is_err() {
             return Ok(None);
         }
         let root = origin.get(&id).copied().unwrap_or(id);
@@ -179,7 +191,10 @@ fn find_orphans(
          AND content_class IN ('HTML', 'PDF')",
     )?;
     let mut out = BTreeMap::new();
-    for (id, via) in found {
+    for (n, (id, via)) in found.into_iter().enumerate() {
+        if n.is_multiple_of(CANCEL_CHECK_EVERY) && cancel.checkpoint().is_err() {
+            return Ok(None);
+        }
         if eligible.exists([id])? {
             out.insert(id, via);
         }

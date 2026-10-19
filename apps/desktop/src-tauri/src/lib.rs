@@ -14,6 +14,7 @@
 
 pub mod assets;
 pub mod commands;
+pub mod desktop;
 pub mod events;
 pub mod open;
 pub mod plugin_names;
@@ -86,6 +87,7 @@ pub fn run() {
     let setup_app = app.clone();
     let run_app = app.clone();
     let run_quitting = quitting.clone();
+    let setup_quitting = quitting.clone();
 
     builder
         .manage(app)
@@ -98,8 +100,12 @@ pub fn run() {
                 assets::handle(&scheme_app, ctx, request, responder);
             },
         )
-        .invoke_handler(tauri::generate_handler![app_version])
+        .invoke_handler(tauri::generate_handler![
+            app_version,
+            desktop::open_export_folder
+        ])
         .setup(move |tauri_app| {
+            desktop::install(&setup_app, tauri_app.handle(), setup_quitting.clone());
             // Dateien, die den Start auslösen: Argumente (Windows/Linux) und geöffnete URLs (macOS)
             let args: Vec<String> = std::env::args().collect();
             let cwd = std::env::current_dir().ok();

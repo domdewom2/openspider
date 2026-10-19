@@ -1,0 +1,18 @@
+[[route]]
+path = "/a.png"
+png_size = 102400
+[[route]]
+path = "/s.png"
+png_size = 102401
+[[route]]
+path = "/l.png"
+png_size = 4096
+[[route]]
+path = "/p.webp"
+png_size = 4096
+[[route]]
+path = "/p.png"
+png_size = 4096
+[[route]]
+path = "/bg.png"
+png_size = 4096

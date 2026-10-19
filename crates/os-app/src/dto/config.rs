@@ -108,6 +108,20 @@ pub struct TestRulesArgs {
     pub rules: Vec<RuleDef>,
     /// Eingabe-URL.
     pub input: String,
+    /// Namen der aus URLs zu entfernenden Parameter.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub remove_parameters: Option<Vec<String>>,
+
+    /// Alle URL-Parameter entfernen.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub remove_all_parameters: Option<bool>,
+
+    /// Reguläre Ausdrücke auch auf Teiltreffer anwenden.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub regex_partial_match: Option<bool>,
 }
 
 /// Wirkung einer Regel auf die Eingabe.
@@ -183,6 +197,15 @@ pub struct ProfileExportArgs {
     pub name: String,
     /// Zieldatei (`.osconfig`).
     pub path: String,
+    /// Geheimnisse in die verschlüsselte Ausgabe aufnehmen.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub include_secrets: Option<bool>,
+
+    /// Passwort für den angefragten Vorgang; nur Eingabe.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub password: Option<String>,
 }
 
 /// Ein Segment (CRAWL-134, UI-068); `rules` ist die Oberfläche des Regelmodells der Konfiguration
@@ -252,4 +275,46 @@ pub struct SegmentPreview {
     pub counts: Vec<SegmentCount>,
     /// URLs ohne Segment.
     pub unassigned: u64,
+}
+
+/// Command-Vertrag RobotsTestArgs (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct RobotsTestArgs {
+    /// Zu prüfende URL.
+    pub url: String,
+
+    /// Inhalt der zu prüfenden robots.txt.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub content: Option<String>,
+
+    /// Für die Prüfung verwendete Subdomain.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub subdomain: Option<String>,
+}
+
+/// Command-Vertrag RobotsTestResult (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct RobotsTestResult {
+    /// Ob robots.txt den Abruf erlaubt.
+    pub allowed: bool,
+
+    /// Zeilennummer der zutreffenden robots.txt-Regel.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub matched_line: Option<u32>,
+
+    /// User-Agent für die robots.txt-Prüfung.
+    pub user_agent: String,
+}
+
+/// Command-Vertrag RobotsLoadArgs (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct RobotsLoadArgs {
+    /// Host für die Netzwerkprüfung.
+    pub host: String,
 }

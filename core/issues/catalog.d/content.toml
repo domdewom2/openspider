@@ -1,8 +1,56 @@
-# OpenSpider – Issue-Katalog ab M2, Tab „Content“ (UI-063/UI-064).
-#
-# Einträge wie in core/issues/catalog.toml (`[[issue]]` mit id, tab, filter, type, priority, type_rule, priority_rule,
-# doc_key, optional override_reason/needs_crawl_analysis/text_params); `tab` ist hier immer "Content". Der Loader liest die
-# M1-Datei und alle Dateien dieses Ordners. Texte: core/issues/texts/{de,en}.d/content.toml (Schlüssel issues.<id>).
-# M2-F02 legt nur die Datei an; die Einträge liefert das Paket des Tabs.
-
 schema = 1
+
+[[issue]]
+id = "content-near-duplicates"
+tab = "Content"
+filter = "Near Duplicates"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W2"
+priority_rule = "P-M1"
+needs_crawl_analysis = true
+doc_key = "content-near-duplicates"
+
+[[issue]]
+id = "content-soft-404-pages"
+tab = "Content"
+filter = "Soft 404 Pages"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H1"
+needs_crawl_analysis = false
+doc_key = "content-soft-404-pages"
+
+[[issue]]
+id = "content-lorem-ipsum-placeholder"
+tab = "Content"
+filter = "Lorem Ipsum Placeholder"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "content-lorem-ipsum-placeholder"
+
+[[issue]]
+id = "content-readability-difficult"
+tab = "Content"
+filter = "Readability Difficult"
+type = "Opportunity"
+priority = "Low"
+type_rule = "T-O2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "content-readability-difficult"
+
+[[issue]]
+id = "content-readability-very-difficult"
+tab = "Content"
+filter = "Readability Very Difficult"
+type = "Opportunity"
+priority = "Low"
+type_rule = "T-O2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "content-readability-very-difficult"

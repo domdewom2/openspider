@@ -36,4 +36,5 @@ const ENTRIES: &[TableEntry] = &[TableEntry {
     ],
     owner: "M2-D21",
     run: stub_run,
+    header_fn: None,
 }];

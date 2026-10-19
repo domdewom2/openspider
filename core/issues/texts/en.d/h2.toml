@@ -1,2 +1,5 @@
-# OpenSpider – Issue-Texte (English) ab M2, Tab „H2“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/en.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.h2-non-sequential]
+what = "A heading of level three or deeper precedes the first H2."
+why = "A coherent heading hierarchy helps navigation with assistive technology."
+fix = "Place subordinate headings after the appropriate H2."

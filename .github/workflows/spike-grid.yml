@@ -1,0 +1,74 @@
+name: Grid gate S-1 / S-2
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'apps/desktop/src/grid/**'
+      - 'apps/desktop/src/data/**'
+      - 'apps/desktop/src/state/selection.ts'
+      - 'apps/desktop/e2e/grid/**'
+      - 'crates/os-app/src/stub/**'
+      - '.github/workflows/spike-grid.yml'
+permissions:
+  contents: read
+jobs:
+  grid:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            project: webkit
+            binary: target/debug/openspider-desktop
+            scale: 1
+          - os: windows-latest
+            project: chromium
+            binary: target/debug/openspider-desktop.exe
+            scale: 1
+          - os: windows-latest
+            project: chromium
+            binary: target/debug/openspider-desktop.exe
+            scale: 1.25
+          - os: windows-latest
+            project: chromium
+            binary: target/debug/openspider-desktop.exe
+            scale: 1.5
+          - os: windows-latest
+            project: chromium
+            binary: target/debug/openspider-desktop.exe
+            scale: 2
+    runs-on: ${{ matrix.os }}
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+      CARGO_PROFILE_TEST_DEBUG: line-tables-only
+      OPENSPIDER_SECRET_STORE: memory
+      OS_GRID_SCALE: ${{ matrix.scale }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: npm ci
+      - run: npx playwright install ${{ matrix.project }}
+      - run: cargo build -p os-app --locked --features e2e-bridge,stub-views --bin os-app-bridge
+      - run: cargo test -p os-app --locked --features stub-views --test stub_views
+      - run: npm run -w apps/desktop e2e -- --config e2e/grid/playwright.config.ts --project=${{ matrix.project }} --workers=1
+      - name: Build real WebView fixture app
+        id: native-build
+        if: always()
+        run: npm run -w apps/desktop tauri -- build --debug --no-bundle --features stub-views,e2e-webdriver --config e2e/grid/native.conf.json
+      - name: Record real WKWebView / WebView2 (indicative, K2-12)
+        if: always() && steps.native-build.outcome == 'success'
+        run: node apps/desktop/e2e/grid/native.mjs ${{ matrix.binary }} target/loadtest/grid-native
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: grid-gate-${{ matrix.os }}-${{ matrix.scale }}
+          path: |
+            apps/desktop/dist/grid-results/
+            apps/desktop/playwright-report/
+            target/loadtest/grid-native/

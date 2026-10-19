@@ -1,8 +1,4 @@
-//! Tab „Meta Description“ (ONPAGE-100 … 104, 107; Filter-Kennungen aus `docs/plan/M1-filters.toml`).
-//!
-//! Wie [`super::page_titles`]: Rohwerte aus `urls`, Schwellen aus der Konfiguration, Grundmenge und
-//! Duplikat-Logik aus [`super::duplicates`]. Die Pixel-Filter (ONPAGE-105/106) und „Outside <head>“
-//! (ONPAGE-108) sind P1.
+//! Element tab meta_description: stored values and live filters.
 
 use os_model::Value;
 
@@ -82,6 +78,22 @@ pub fn tab() -> TabDef {
             ),
             // ONPAGE-107
             problem_filter("Multiple", "u.meta_desc_count > 1"),
+            problem_filter(
+                "Over {meta_description.max_px} Pixels",
+                "u.meta_desc_1_px > :md_max_px",
+            ),
+            problem_filter(
+                "Below {meta_description.min_px} Pixels",
+                "u.meta_desc_1_px > 0 AND u.meta_desc_1_px < :md_min_px",
+            ),
+            {
+                let mut f = problem_filter("Outside <head>", "EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id = u.id AND e.key = 'head.description_outside' AND e.v_int = 1)");
+                f.requires.push(crate::defs::Requirement::Coverage {
+                    config: "advanced.html_validation",
+                    marker: "validation.checked",
+                });
+                f
+            },
         ],
         // Keine Tab-Sortierung: Entdeckungsreihenfolge; nur `Duplicate` gruppiert (tabs::filter_default_sort).
         default_sort: Vec::new(),
@@ -95,7 +107,16 @@ pub fn tab() -> TabDef {
                 "md_min_chars",
                 Value::Int(i64::from(cfg.meta_description.min_chars)),
             ));
+            p.push((
+                "md_max_px",
+                Value::Int(i64::from(cfg.meta_description.max_px)),
+            ));
+            p.push((
+                "md_min_px",
+                Value::Int(i64::from(cfg.meta_description.min_px)),
+            ));
             p
         },
+        hidden_population: None,
     }
 }

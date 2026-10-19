@@ -134,6 +134,40 @@ Meilensteine (OS-Festlegung, einzige Quelle der Zuordnung): **M1** (headless, ST
 
 ## C. Werkzeuge (steuernd)
 
+### AGENT-016 Katalog der Namen
+- **Priorität:** P1
+- **Beschreibung:** `list_catalog(kind, tab?)` (Klasse `read`) liefert die gültigen kanonischen Namen, damit Agents Abfragen und Exporte ohne Raten formulieren: `kind` ∈ `tabs` (Tabs mit Filtern), `columns` (Spalten eines `tab` mit Datentyp und Kurzbeschreibung), `reports`, `bulk_exports`, `export_formats`. Quelle ist derselbe Katalog wie UI und Export (06, `catalog.*`), nicht eine eigene Liste.
+- **Akzeptanzkriterien:**
+  - [ ] Jeder von `list_catalog` gelieferte Tab-/Filter-/Report-/Exportname wird von `query_urls` bzw. `export` ohne Fehler akzeptiert (Rundreise-Test über den ganzen Katalog).
+  - [ ] Unbekanntes `kind` bzw. unbekannter `tab` → MCP-Fehler mit Liste der gültigen Werte.
+  - [ ] Paginierung nach AGENT-005.
+- **Testfixture:** Katalog des aktuellen Builds; Rundreise gegen einen Crawl von `out-basic-site` (06).
+
+### AGENT-017 Seiteninhalt einer URL
+- **Priorität:** P1
+- **Beschreibung:** `url_content(crawl_id, url, format = "text" | "html", max_chars?)` (Klasse `read`) liefert den gespeicherten Inhalt einer gecrawlten URL: `html` = Original-HTML (bzw. gerendertes HTML, falls gerendert und gespeichert, mit Kennzeichnung), `text` = extrahierter Seitentext (gleiche Extraktion wie Wortzahl/Custom Search). Ausgabe immer im Untrusted-Datenblock nach AGENT-004. Nur verfügbar, wenn der Crawl Inhalte gespeichert hat (Konfiguration „HTML speichern“ bzw. Rendering-Speicherung); sonst klare Meldung mit Hinweis auf die Einstellung.
+- **Akzeptanzkriterien:**
+  - [ ] Inhalt stammt ausschließlich aus der Crawl-Datei, kein erneuter Abruf.
+  - [ ] Antworten über `max_chars` (Standard 50.000) werden gekürzt mit Hinweis (AGENT-005).
+  - [ ] Bilder/Binärdaten werden nicht geliefert (Meldung mit Content-Type).
+- **Testfixture:** `out-basic-site` (06) einmal mit, einmal ohne gespeichertes HTML; eine Seite mit eingebettetem Prompt-Injection-Text im Body.
+
+### AGENT-018 Screenshot einer URL
+- **Priorität:** P2
+- **Beschreibung:** `url_screenshot(crawl_id, url)` (Klasse `read`) liefert den beim JavaScript-Rendering gespeicherten Screenshot als Bild-Inhalt (MCP `image`), sofern das Rendering Screenshots speichert (os-render); sonst klare Meldung.
+- **Akzeptanzkriterien:**
+  - [ ] Bild aus der Crawl-Datei bzw. dem Crawl-Ordner, kein erneutes Rendern.
+  - [ ] Größe begrenzt (lange Seite → Ausschnitt oder skaliert, Hinweis).
+- **Testfixture:** gerenderter Crawl einer Fixture-Seite mit gespeichertem Screenshot.
+
+### AGENT-019 Seiteninhalte als Datei und Abgrenzung
+- **Priorität:** P1
+- **Beschreibung:** `export` (AGENT-021) erhält die Exportart `page_content_ndjson`: je HTML-URL eine JSON-Zeile mit URL, Statuscode, Titel und Seitentext (optional HTML), für Weiterverarbeitung in Agents/RAG. Embeddings folgen mit 08-ai (M4). **Bewusst nicht** angeboten werden Werkzeuge zum Ausführen von Code/Skripten, Installieren von Paketen oder freien Lesen/Schreiben im Dateisystem; Auswertungen laufen über `sql_query` (AGENT-014), Dateien entstehen nur über `export` im Exportordner.
+- **Akzeptanzkriterien:**
+  - [ ] `page_content_ndjson` ist über `list_catalog(kind="bulk_exports")` sichtbar und liefert gültiges NDJSON (eine Zeile je HTML-URL).
+  - [ ] `tools/list` enthält kein Werkzeug zur Code-Ausführung oder zum freien Dateisystemzugriff (statischer Test).
+- **Testfixture:** `out-basic-site` (06).
+
 ### AGENT-020 Crawl starten, Status, stoppen
 - **Priorität:** P0
 - **Werkzeugklasse:** `crawl` (AGENT-003)

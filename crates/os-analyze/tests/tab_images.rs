@@ -221,7 +221,10 @@ async fn filter_registry_ids_are_unchanged() {
             "Over {image.max_kb} KB",
             "Missing Alt Text",
             "Missing Alt Attribute",
-            "Alt Text Over {image.alt_max_chars} Characters"
+            "Alt Text Over {image.alt_max_chars} Characters",
+            "Background Images",
+            "Missing Size Attributes",
+            "Incorrectly Sized Images"
         ]
     );
 }
@@ -347,7 +350,7 @@ async fn check_images_off_leaves_the_tab_empty_and_store_only_lists_without_down
 
 // spec: ONPAGE-170 [M2]
 #[test]
-#[ignore = "M2: ONPAGE-170 Lazy-Load-Bilder (data-src) und srcset-Option brauchen Rendering bzw. die Option 'Extract images from srcset' (P1)"]
+#[ignore = "M2: ONPAGE-170 Lazy-Load-Bilder (data-src) brauchen Rendering (M2-R02)"]
 fn lazy_load_images_are_found_with_rendering() {}
 
 // spec: ONPAGE-171
@@ -471,7 +474,9 @@ async fn size_is_body_bytes_then_content_length_then_zero() {
 // spec: ONPAGE-173
 #[tokio::test]
 async fn size_falls_back_to_content_length_header_when_no_body_was_stored() {
-    let fx = crawl(SCENARIO, CrawlConfig::default()).await;
+    let mut cfg = CrawlConfig::default();
+    cfg.extraction.http_headers = true;
+    let fx = crawl(SCENARIO, cfg).await;
     let cfg = fx.file.config().unwrap();
     // Simuliert eine nicht geladene Antwort mit bekanntem Header (gekürzter Download, zulässige
     // Optimierung): Körpergröße unbekannt, Content-Length vorhanden.
@@ -641,20 +646,61 @@ async fn filters_are_live_subsets_of_all_and_ready() {
     let cfg = fx.file.config().unwrap();
     let all = images_in(&fx, &cfg, "All");
     let tab = os_analyze::tabs::images::tab();
-    for filter in &tab.filters {
+    for filter in tab.filters.iter().filter(|f| f.requires.is_empty()) {
         let rows = images_in(&fx, &cfg, filter.id);
         assert!(rows.iter().all(|a| all.contains(a)), "{} ⊆ All", filter.id);
         assert_eq!(counted(&fx, &cfg, TAB, filter.id).0 as usize, rows.len());
     }
-    for c in filter_counts(&fx.file, &cfg)
-        .unwrap()
-        .iter()
-        .filter(|c| c.tab == TAB)
-    {
+    for c in filter_counts(&fx.file, &cfg).unwrap().iter().filter(|c| {
+        c.tab == TAB
+            && ![
+                "Background Images",
+                "Missing Size Attributes",
+                "Incorrectly Sized Images",
+            ]
+            .contains(&c.filter.as_str())
+    }) {
         assert_eq!(c.state, FilterState::Ready, "{}", c.filter);
     }
-    // Kein Filter hängt an einer Crawl-Analyse oder Konfiguration.
-    assert!(tab.filters.iter().all(|f| f.requires.is_empty()));
+    // Die M1-Filter bleiben live; neue Nachlauffilter prüfen tab_images_m2.rs.
+    assert!(tab.filters[..5].iter().all(|f| f.requires.is_empty()));
     // Die Seiten selbst (HTML) stehen nicht im Tab.
     assert!(all.iter().all(|a| !a.ends_with(".html") && a != "/"));
+}
+
+// spec: ONPAGE-170 [M2]
+// spec: CRAWL-055
+#[tokio::test]
+async fn srcset_option_crawls_candidates_and_default_keeps_unfetched_detail_instances() {
+    for enabled in [false, true] {
+        let mut cfg = CrawlConfig::default();
+        cfg.extraction.srcset = enabled;
+        let fx = crawl("onpage-m2-images", cfg).await;
+        let cfg = fx.file.config().unwrap();
+        let images = images_in(&fx, &cfg, "All");
+        for path in ["/s.png", "/l.png", "/p.webp"] {
+            assert_eq!(images.contains(&path.to_string()), enabled, "{path}");
+            assert_eq!(
+                fx.site
+                    .requests()
+                    .iter()
+                    .any(|request| request.path() == path),
+                enabled,
+                "Request {path}"
+            );
+        }
+        let rows = instances(&fx, "/");
+        assert_eq!(
+            rows.iter()
+                .filter(|(source, _, _, _)| source == "srcset")
+                .count(),
+            3
+        );
+        for (source, _, _, has_id) in rows {
+            if source == "srcset" {
+                assert_eq!(has_id, enabled);
+            }
+        }
+        assert!(!images.contains(&"/lazy.png".to_string()));
+    }
 }

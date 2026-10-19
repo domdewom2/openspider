@@ -1,0 +1,1 @@
+</a>; rel="canonical"; TYPE="", <https://site.test/b#>; rel="Canonical"; lang="en", </ignore>; rel="alternate"; media="print", </ok>; rel=canonical; title="media, type; hreflang"

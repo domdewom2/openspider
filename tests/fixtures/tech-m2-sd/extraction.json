@@ -1,0 +1,375 @@
+[
+  {
+    "fixture": "jsonld",
+    "items": [
+      {
+        "format": "json-ld",
+        "item": {
+          "@context": "https://schema.org/",
+          "@type": [
+            "https://schema.org/Product",
+            "https://schema.org/Thing"
+          ],
+          "_os_order": [
+            "@context",
+            "@type",
+            "name",
+            "offers"
+          ],
+          "_os_source": {
+            "block": 1,
+            "line": 2
+          },
+          "_os_types": [
+            "Product",
+            "Thing"
+          ],
+          "name": "X",
+          "offers": {
+            "@type": "https://schema.org/Offer",
+            "_os_order": [
+              "@type",
+              "price"
+            ],
+            "price": "5"
+          }
+        },
+        "parse_error": null,
+        "type_path": "Product|Thing"
+      },
+      {
+        "format": "json-ld",
+        "item": {
+          "@context": {
+            "@vocab": "http://schema.org/",
+            "_os_order": [
+              "@vocab"
+            ]
+          },
+          "@id": "#org",
+          "@type": "http://schema.org/Organization",
+          "_os_order": [
+            "@id",
+            "@type",
+            "name"
+          ],
+          "_os_source": {
+            "block": 2,
+            "line": 5
+          },
+          "_os_types": [
+            "Organization"
+          ],
+          "name": "O"
+        },
+        "parse_error": null,
+        "type_path": "Organization"
+      },
+      {
+        "format": "json-ld",
+        "item": {
+          "@context": {
+            "@vocab": "http://schema.org/",
+            "_os_order": [
+              "@vocab"
+            ]
+          },
+          "@type": "http://schema.org/WebSite",
+          "_os_order": [
+            "@type",
+            "publisher"
+          ],
+          "_os_source": {
+            "block": 2,
+            "line": 5
+          },
+          "_os_types": [
+            "WebSite"
+          ],
+          "publisher": {
+            "@context": {
+              "@vocab": "http://schema.org/",
+              "_os_order": [
+                "@vocab"
+              ]
+            },
+            "@id": "#org",
+            "@type": "http://schema.org/Organization",
+            "_os_order": [
+              "@id",
+              "@type",
+              "name"
+            ],
+            "name": "O"
+          }
+        },
+        "parse_error": null,
+        "type_path": "WebSite"
+      },
+      {
+        "format": "json-ld",
+        "item": {
+          "@context": "http://schema.org",
+          "@type": "http://schema.org/Product",
+          "_os_order": [
+            "@context",
+            "@type"
+          ],
+          "_os_source": {
+            "block": 3,
+            "line": 6
+          },
+          "_os_types": [
+            "Product"
+          ]
+        },
+        "parse_error": null,
+        "type_path": "Product"
+      },
+      {
+        "format": "json-ld",
+        "item": {
+          "@context": "https://schema.org",
+          "@type": "https://schema.org/Event",
+          "_os_order": [
+            "@context",
+            "@type"
+          ],
+          "_os_source": {
+            "block": 3,
+            "line": 6
+          },
+          "_os_types": [
+            "Event"
+          ]
+        },
+        "parse_error": null,
+        "type_path": "Event"
+      }
+    ]
+  },
+  {
+    "fixture": "microdata",
+    "items": [
+      {
+        "format": "microdata",
+        "item": {
+          "@id": "https://site.test/recipe",
+          "@type": [
+            "https://schema.org/Recipe",
+            "https://schema.org/CreativeWork"
+          ],
+          "_os_order": [
+            "name",
+            "datePublished",
+            "nutrition",
+            "image",
+            "url",
+            "subjectOf",
+            "recipeYield",
+            "ratingValue",
+            "description",
+            "alternateName",
+            "recipeCuisine",
+            "related"
+          ],
+          "_os_source": {
+            "item": 1,
+            "path": "/html[1]/body[1]/div[1]"
+          },
+          "_os_types": [
+            "Recipe",
+            "CreativeWork"
+          ],
+          "alternateName": " Soup text ",
+          "datePublished": "2026-10-18",
+          "description": " Soup text ",
+          "image": "https://site.test/soup.png",
+          "name": "Soup",
+          "nutrition": {
+            "@type": [
+              "https://schema.org/NutritionInformation"
+            ],
+            "_os_order": [
+              "calories"
+            ],
+            "calories": "5 kcal"
+          },
+          "ratingValue": "5",
+          "recipeCuisine": "Local",
+          "recipeYield": "2",
+          "related": {
+            "@type": [
+              "https://schema.org/Thing"
+            ],
+            "_os_order": [
+              "recipeCuisine"
+            ],
+            "recipeCuisine": "Local"
+          },
+          "subjectOf": "https://site.test/menu",
+          "url": "https://site.test/soup"
+        },
+        "parse_error": null,
+        "type_path": "Recipe|CreativeWork"
+      }
+    ]
+  },
+  {
+    "fixture": "rdfa",
+    "items": [
+      {
+        "format": "rdfa",
+        "item": {
+          "@id": "https://site.test/org",
+          "@type": [
+            "https://schema.org/Organization"
+          ],
+          "_os_order": [
+            "name"
+          ],
+          "_os_source": {
+            "path": "/html[1]/body[1]/div[1]"
+          },
+          "_os_types": [
+            "Organization"
+          ],
+          "name": "Company"
+        },
+        "parse_error": null,
+        "type_path": "Organization"
+      },
+      {
+        "format": "rdfa",
+        "item": {
+          "@type": [
+            "https://schema.org/Product"
+          ],
+          "_os_order": [
+            "name",
+            "url"
+          ],
+          "_os_source": {
+            "path": "/html[1]/body[1]/div[2]"
+          },
+          "_os_types": [
+            "Product"
+          ],
+          "name": "P",
+          "url": "https://site.test/product"
+        },
+        "parse_error": null,
+        "type_path": "Product"
+      },
+      {
+        "format": "rdfa",
+        "item": {
+          "@type": [
+            "https://schema.org/Event"
+          ],
+          "_os_order": [
+            "location"
+          ],
+          "_os_source": {
+            "path": "/html[1]/body[1]/div[3]"
+          },
+          "_os_types": [
+            "Event"
+          ],
+          "location": {
+            "@type": [
+              "https://schema.org/Place"
+            ],
+            "_os_order": [
+              "name"
+            ],
+            "name": "Hall"
+          }
+        },
+        "parse_error": null,
+        "type_path": "Event"
+      }
+    ]
+  },
+  {
+    "fixture": "errors",
+    "items": [
+      {
+        "format": "json-ld",
+        "item": {
+          "_os_parse_error": {
+            "block": 1,
+            "column": 38,
+            "line": 2,
+            "message": "trailing comma at line 2 column 38",
+            "snippet": "\n {\"name\":\"é 💚\",\"@type\":\"Product\",}\n"
+          }
+        },
+        "parse_error": "trailing comma at line 2 column 38 (block 1, line 2, column 38)",
+        "type_path": ""
+      },
+      {
+        "format": "json-ld",
+        "item": {
+          "_os_parse_error": {
+            "block": 2,
+            "column": 1,
+            "line": 2,
+            "message": "EOF while parsing a value at line 2 column 0",
+            "snippet": " \n"
+          }
+        },
+        "parse_error": "EOF while parsing a value at line 2 column 0 (block 2, line 2, column 1)",
+        "type_path": ""
+      },
+      {
+        "format": "json-ld",
+        "item": {
+          "_os_parse_error": {
+            "block": 3,
+            "column": 1,
+            "line": 1,
+            "message": "JSON-LD root must be an object or array",
+            "snippet": "42"
+          }
+        },
+        "parse_error": "JSON-LD root must be an object or array (block 3, line 1, column 1)",
+        "type_path": ""
+      },
+      {
+        "format": "json-ld",
+        "item": {
+          "_os_parse_error": {
+            "block": 4,
+            "column": 12,
+            "line": 1,
+            "message": "@type must be a string or an array of strings at line 1 column 12",
+            "snippet": "{\"@type\":42}"
+          }
+        },
+        "parse_error": "@type must be a string or an array of strings at line 1 column 12 (block 4, line 1, column 12)",
+        "type_path": ""
+      },
+      {
+        "format": "json-ld",
+        "item": {
+          "@type": "Product",
+          "_os_order": [
+            "@type",
+            "name"
+          ],
+          "_os_source": {
+            "block": 5,
+            "line": 9
+          },
+          "_os_types": [
+            "Product"
+          ],
+          "name": "still extracted"
+        },
+        "parse_error": null,
+        "type_path": "Product"
+      }
+    ]
+  }
+]

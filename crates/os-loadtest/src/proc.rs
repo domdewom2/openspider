@@ -41,6 +41,7 @@ pub struct Proc {
     started: Instant,
     stall_timeout: Duration,
     last_crawled: Option<u64>,
+    peak_rss: Option<u64>,
 }
 
 /// Wert von `key=` in einer Protokollzeile.
@@ -95,6 +96,7 @@ impl Proc {
             started: Instant::now(),
             stall_timeout,
             last_crawled: None,
+            peak_rss: None,
         })
     }
 
@@ -156,6 +158,7 @@ impl Proc {
         let mut origin = self.started;
         let mut samples: Vec<crate::throughput::Sample> = vec![(0.0, 0)];
         while let Some((at, line)) = self.next_stamped_line()? {
+            self.peak_rss = self.peak_rss.max(crate::rss::sample_child(&self.child));
             if line.starts_with("READY ") {
                 origin = at;
                 samples = vec![(0.0, 0)];
@@ -193,7 +196,7 @@ impl Proc {
             state,
             end_reason,
             seconds,
-            peak_rss_bytes: exit.peak_rss_bytes,
+            peak_rss_bytes: exit.peak_rss_bytes.max(self.peak_rss),
             max_stall_s: max_stall.as_secs_f64(),
             diag,
             samples,

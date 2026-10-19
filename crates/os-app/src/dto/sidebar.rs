@@ -145,6 +145,16 @@ pub struct SiteStructureArgs {
     pub view: SiteStructureView,
     /// Segment.
     pub segment: Option<SegmentFilter>,
+    /// Verzeichnispfad, dessen direkte Kinder nachgeladen werden; leer für die Wurzel.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub path: Option<String>,
+
+    /// Anzahl der vor der Ergebnisseite übersprungenen Einträge.
+    pub offset: u64,
+
+    /// Maximale Anzahl der zurückgegebenen Einträge.
+    pub limit: u32,
 }
 
 /// Knoten des Verzeichnisbaums (UI-066).
@@ -161,6 +171,8 @@ pub struct PathNode {
     pub by_class: BTreeMap<String, u64>,
     /// Kindknoten (Tiefe begrenzt, der Rest über weitere Aufrufe).
     pub children: Vec<PathNode>,
+    /// Weitere Kinder können nachgeladen werden.
+    pub has_more_children: bool,
 }
 
 /// Zeile der Tiefenverteilung.
@@ -210,7 +222,7 @@ pub struct Bucket {
     /// Untergrenze in ms (inklusive).
     pub from_ms: u32,
     /// Obergrenze in ms (exklusive).
-    pub to_ms: u32,
+    pub to_ms: Option<u32>,
     /// URLs.
     pub count: u64,
 }

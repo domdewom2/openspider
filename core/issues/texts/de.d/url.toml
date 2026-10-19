@@ -1,2 +1,21 @@
-# OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „URL“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+# Eigene Issue-Texte für M2-E04.
+
+[issues.url-repetitive-path]
+what = "Der Pfad enthält dasselbe nicht leere Segment mehrfach."
+why = "Wiederholungen können auf relative Links hinweisen, die immer längere Crawl-Pfade erzeugen."
+fix = "Prüfe die verlinkende Seite und korrigiere relative Pfade. Beabsichtigte Wiederholungen für unterschiedliche Inhalte können bestehen bleiben."
+
+[issues.url-internal-search]
+what = "Die URL passt zu einem konfigurierten Suchmuster oder einem SearchAction-Muster auf der Seite."
+why = "Suchergebnisse können viele URL-Kombinationen mit ähnlichen oder wechselnden Inhalten erzeugen."
+fix = "Prüfe, ob Suchergebnisse gecrawlt und indexiert werden sollen. Passe Crawl-Regeln und Sucherkennungslisten an die Website an."
+
+[issues.url-broken-bookmark]
+what = "Das Fragment verweist auf keine bekannte Element-ID oder benannte Sprungmarke im erfolgreichen HTML-Ziel."
+why = "Besucher erreichen über diesen Link den gewünschten Abschnitt nicht."
+fix = "Korrigiere das Fragment auf der verlinkenden Seite oder stelle die passende ID auf dem Ziel wieder her. IDs unterscheiden Groß- und Kleinschreibung."
+
+[issues.url-ga-tracking-parameters]
+what = "Die Query enthält einen Parameter mit dem Anfang utm_ oder dem Namen _ga oder _gl."
+why = "Tracking-Parameter können weitere URL-Varianten desselben Inhalts erzeugen und Crawl-Kapazität beanspruchen."
+fix = "Prüfe interne Links und entferne unnötige Tracking-Parameter. Nutze bei Bedarf URL-Umschreibungen für den Crawl, sofern diese Parameter den Inhalt nicht verändern."

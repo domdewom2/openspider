@@ -1,0 +1,4 @@
+Path,URLs,Indexable,Non-Indexable
+https://site.test/,14,13,1
+https://site.test/deep/,11,11,0
+https://site.test/section/,2,1,1

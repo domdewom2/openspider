@@ -1,0 +1,148 @@
+[
+  [
+    "/services/seo/services/",
+    [
+      "Repetitive Path"
+    ]
+  ],
+  [
+    "/a/b/a/b/",
+    [
+      "Repetitive Path"
+    ]
+  ],
+  [
+    "/blog/2024/blog-post",
+    []
+  ],
+  [
+    "/Shop/shop/",
+    []
+  ],
+  [
+    "/a//",
+    []
+  ],
+  [
+    "/a/a",
+    [
+      "Repetitive Path"
+    ]
+  ],
+  [
+    "/x?x=/x/x",
+    []
+  ],
+  [
+    "/x#x/x/x",
+    []
+  ],
+  [
+    "/search?q=schuhe",
+    [
+      "Internal Search"
+    ]
+  ],
+  [
+    "/suche/schuhe",
+    [
+      "Internal Search"
+    ]
+  ],
+  [
+    "/?s=test",
+    [
+      "Internal Search"
+    ]
+  ],
+  [
+    "/research/",
+    []
+  ],
+  [
+    "/?q=",
+    []
+  ],
+  [
+    "/?q",
+    []
+  ],
+  [
+    "/?Q=test",
+    [
+      "Internal Search"
+    ]
+  ],
+  [
+    "/%73earch/results",
+    [
+      "Internal Search"
+    ]
+  ],
+  [
+    "/?%71=test",
+    [
+      "Internal Search"
+    ]
+  ],
+  [
+    "/x?next=/search/",
+    []
+  ],
+  [
+    "/x#?q=test",
+    []
+  ],
+  [
+    "/?utm_source=nl",
+    [
+      "GA Tracking Parameters"
+    ]
+  ],
+  [
+    "/?UTM_Medium=x",
+    [
+      "GA Tracking Parameters"
+    ]
+  ],
+  [
+    "/?_ga=2.1234",
+    [
+      "GA Tracking Parameters"
+    ]
+  ],
+  [
+    "/?_gl=1*abc",
+    [
+      "GA Tracking Parameters"
+    ]
+  ],
+  [
+    "/?gclid=x",
+    []
+  ],
+  [
+    "/?utmx=1",
+    []
+  ],
+  [
+    "/#utm_source=x",
+    []
+  ],
+  [
+    "/?%75tm_source=",
+    [
+      "GA Tracking Parameters"
+    ]
+  ],
+  [
+    "/?utm_",
+    [
+      "GA Tracking Parameters"
+    ]
+  ],
+  [
+    "/?_ga2=x",
+    []
+  ]
+]

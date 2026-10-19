@@ -22,7 +22,7 @@ use time::UtcOffset;
 use crate::error::ExportError;
 use crate::fs_paths;
 use crate::naming;
-use crate::pipeline::export_view;
+
 use crate::types::{ExportFileInfo, Format};
 
 /// Exportiert die Ansicht in den Ausgabeordner (Dateiname nach OUT-008, ohne Datum).
@@ -33,7 +33,45 @@ pub fn export_tab(
     out_dir: &Path,
     format: Format,
 ) -> Result<ExportFileInfo, ExportError> {
-    export_tab_in(&tabs::all(), file, cfg, q, out_dir, format)
+    crate::pipeline::snapshot(file, || {
+        export_tab_in(
+            &tabs::configured_for_file(cfg, file),
+            file,
+            cfg,
+            q,
+            out_dir,
+            format,
+        )
+    })
+}
+
+/// Single-tab entry point for app/CLI callers with cancellation and upload-order control.
+/// `None` means an empty export was skipped or the table went into a shared workbook.
+pub fn export_tab_with(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    q: &ViewQuery,
+    out_dir: &Path,
+    format: Format,
+    preserve_upload_order: bool,
+    ctx: &mut crate::types::ExportCtx<'_>,
+) -> Result<Option<ExportFileInfo>, ExportError> {
+    crate::pipeline::snapshot(file, || {
+        let tabs = tabs::configured_for_file(cfg, file);
+        let canonical = canonical_name(&tabs, cfg, &q.tab, &q.filter)?;
+        let path = out_dir.join(naming::file_name(&canonical, None, format.extension()));
+        crate::pipeline::export_view_with(
+            &tabs,
+            file,
+            cfg,
+            q,
+            &path,
+            format,
+            &canonical.replace(':', " "),
+            preserve_upload_order,
+            ctx,
+        )
+    })
 }
 
 /// Wie [`export_tab`], gegen eine eigene Tab-Liste.
@@ -52,7 +90,18 @@ pub fn export_tab_in(
     })?;
     let path = out_dir.join(naming::file_name(&canonical, None, format.extension()));
     let sheet = canonical.replacen(':', " ", 1);
-    export_view(tabs, file, cfg, q, &path, format, &sheet)
+    // Existing CLI callers retain ordinary view order; L01/K06 opt into the
+    // new upload-order contract through `export_tab_with` / `export_view_with`.
+    let cancel = os_model::CancelToken::new();
+    let mut ctx = crate::types::ExportCtx {
+        cancel: &cancel,
+        progress: &|_| {},
+        skip_empty: false,
+        workbook: None,
+        skipped: Vec::new(),
+    };
+    crate::pipeline::export_view_with(tabs, file, cfg, q, &path, format, &sheet, false, &mut ctx)?
+        .ok_or_else(|| ExportError::Write("Missing tab output".into()))
 }
 
 /// Kanonischer Exportname `Tab:Filter` mit aufgelösten Schwellen (`Page Titles:Over 60 Characters`).
@@ -113,7 +162,7 @@ pub fn suggest_tab_file_name(
     format: Format,
 ) -> Result<String, ExportError> {
     suggest_tab_file_name_in(
-        &tabs::all(),
+        &tabs::configured_for_file(cfg, file),
         file,
         cfg,
         tab,

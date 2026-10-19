@@ -152,7 +152,7 @@ impl Tool for UrlDetails {
             untrusted.insert("overview".into(), overview(&crawl, &facts)?);
         }
 
-        let tab_defs = tabs::all();
+        let tab_defs = tabs::configured_for_file(&crawl.cfg, &crawl.file);
         let mut list_sections = 0;
         for (name, direction) in [("inlinks", Direction::In), ("outlinks", Direction::Out)] {
             if !wants(name) {
@@ -562,7 +562,7 @@ fn overview(crawl: &OpenCrawl, facts: &UrlFacts) -> Result<Json, ToolError> {
         (true, false) => "External",
         (false, _) => return core_overview(crawl, facts),
     };
-    let tab_defs = tabs::all();
+    let tab_defs = tabs::configured_for_file(&crawl.cfg, &crawl.file);
     let Some(tab) = tab_defs.iter().find(|t| t.id == tab_id) else {
         return core_overview(crawl, facts);
     };
@@ -578,7 +578,9 @@ fn overview(crawl: &OpenCrawl, facts: &UrlFacts) -> Result<Json, ToolError> {
         .iter()
         .filter_map(|c| match &c.sql {
             ColumnSql::Expr(e) => Some(format!("({e})")),
-            ColumnSql::Multi { .. } | ColumnSql::MultiPaired { .. } => None,
+            ColumnSql::Multi { .. }
+            | ColumnSql::MultiCrawlWide { .. }
+            | ColumnSql::MultiPaired { .. } => None,
         })
         .collect();
     let sql = format!(
@@ -586,6 +588,14 @@ fn overview(crawl: &OpenCrawl, facts: &UrlFacts) -> Result<Json, ToolError> {
         exprs.join(", "),
         views::URLS_FROM
     );
+    // K2-61: Konfigurationsparameter zusätzlicher Internal-Spalten (M2-D02).
+    let mut params = (tab.params)(&crawl.cfg)
+        .into_iter()
+        .map(|(name, value)| (format!(":{name}"), value))
+        .collect::<Vec<_>>();
+    tabs::content::bind_analysis_params(&mut params, &crawl.file, &crawl.cfg)
+        .map_err(view_error)?;
+    let sql = inline_params(&sql, &params).map_err(internal)?;
     let values = json_query(crawl, &sql, facts.id)?;
     let values = values.as_array().cloned().unwrap_or_default();
 
@@ -595,7 +605,7 @@ fn overview(crawl: &OpenCrawl, facts: &UrlFacts) -> Result<Json, ToolError> {
     }
     for col in ordered {
         match &col.sql {
-            ColumnSql::Multi { list_sql, .. } => {
+            ColumnSql::Multi { list_sql, .. } | ColumnSql::MultiCrawlWide { list_sql, .. } => {
                 let sql = format!("WITH l(v) AS ({list_sql}) SELECT json_group_array(v) FROM l");
                 out.insert(col.key.to_string(), json_query(crawl, &sql, facts.id)?);
             }

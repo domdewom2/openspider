@@ -1,2 +1,25 @@
-# OpenSpider – Issue-Texte (English) ab M2, Tab „Content“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/en.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.content-near-duplicates]
+what = "Pages have similar content within the configured content area."
+why = "Similar pages can divide attention across several URLs."
+fix = "Compare the text and consolidate pages that serve the same purpose."
+
+[issues.content-soft-404-pages]
+what = "A page with status 200 contains a configured error phrase."
+why = "A successful status may conceal a missing page. This phrase check can also match articles discussing errors."
+fix = "Check the matched phrase. Return 404 or 410 for removed content, or correct the page text."
+
+[issues.content-lorem-ipsum-placeholder]
+what = "The page contains the placeholder phrase lorem ipsum."
+why = "Placeholder text can make unfinished pages visible to visitors and crawlers."
+fix = "Replace the placeholder with reviewed content."
+
+[issues.content-readability-difficult]
+what = "The English Flesch score is at least 30 and below 50."
+why = "Long sentences and complex words can make a text harder to read. The formula is designed for English."
+fix = "Review sentence length and vocabulary for the intended audience."
+
+[issues.content-readability-very-difficult]
+what = "The page has an English Flesch reading ease score below 30."
+why = "The text may require specialist knowledge. The formula does not measure factual quality."
+fix = "Consider shorter sentences and explanations of technical terms."

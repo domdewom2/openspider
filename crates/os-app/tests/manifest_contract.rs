@@ -132,6 +132,24 @@ const CATALOG_4_4: &[&str] = &[
 
 /// Tabelle 3.6a (alle Zeilen) einschließlich `detail.spellingContext` und `detail.a11yNode`.
 const CATALOG_3_6A: &[&str] = &[
+    "app.requestQuit",
+    "app.confirmQuit",
+    "config.testRobots",
+    "config.loadRobots",
+    "settings.probeCertificates",
+    "settings.setProxyPassword",
+    "api.removeAccount",
+    "auth.importProfile",
+    "auth.exportProfile",
+    "diag.previewBundle",
+    "projects.list",
+    "crawls.checkLocation",
+    "export.multi",
+    "export.presetList",
+    "export.presetSave",
+    "export.presetDelete",
+    "export.customSummaryMetrics",
+    "export.customSummary",
     "api.list",
     "api.connect",
     "api.disconnect",
@@ -180,6 +198,8 @@ const CATALOG_3_6A: &[&str] = &[
 
 /// `long_running` laut den Tabellen (liefert sofort einen `OpHandle`).
 const LONG_RUNNING: &[&str] = &[
+    "export.multi",
+    "export.customSummary",
     // 3.6a
     "api.connect",
     "api.fetch",
@@ -352,9 +372,8 @@ async fn stubs_answer_unsupported_with_command_and_owner() {
     }
     // Besitzer laut Modulkarte 3.6
     for o in [
-        "M2-K04", "M2-K06", "M2-K02", "M2-K03", "M2-K07", "M2-K14", "M2-K16", "M2-K09", "M2-K17",
-        "M2-E02", "M2-I01", "M2-O01", "M2-O02", "M2-C01", "M2-D19", "M2-D21", "M2-T01", "M2-T02",
-        "M2-U17",
+        "M2-K06", "M2-K07", "M2-K14", "M2-K16", "M2-K09", "M2-K17", "M2-E02", "M2-O01", "M2-O02",
+        "M2-C01", "M2-D19", "M2-D21", "M2-T01", "M2-T02", "M2-U17",
     ] {
         assert!(owners.contains(o), "kein Stub mit Besitzer {o}");
     }
@@ -398,4 +417,59 @@ fn every_command_file_is_a_marked_stub_with_a_known_owner() {
         n += 1;
     }
     assert!(n >= 30, "{n} Command-Dateien");
+}
+
+// Infrastruktur (M2-F05b); Fachprüfung durch die jeweiligen Besitzer.
+// spec: UI-140
+#[tokio::test]
+async fn every_f05_command_reports_its_exact_owner() {
+    let dir = tempfile::tempdir().unwrap();
+    let app = App::new(AppConfig::new(dir.path())).unwrap();
+    for (owner, commands) in [
+        ("M2-E02", vec!["config.testRobots", "config.loadRobots"]),
+        (
+            "M2-E03",
+            vec!["settings.probeCertificates", "settings.setProxyPassword"],
+        ),
+        (
+            "M2-O01",
+            vec![
+                "auth.importProfile",
+                "auth.exportProfile",
+                "diag.previewBundle",
+            ],
+        ),
+        ("M2-O02", vec!["projects.list", "crawls.checkLocation"]),
+        (
+            "M2-X03",
+            vec!["export.customSummaryMetrics", "export.customSummary"],
+        ),
+    ] {
+        for command in commands {
+            let err = app
+                .dispatch(CallCtx::for_window("main"), command, serde_json::json!({}))
+                .await
+                .unwrap_err();
+            assert_eq!(err.code, ErrorCode::Unsupported, "{command}");
+            assert_eq!(err.args["command"], command);
+            assert_eq!(err.args["owner"], owner);
+        }
+    }
+}
+
+// spec: UI-140
+#[test]
+fn service_extensions_follow_their_command_domains() {
+    let manifest = default_registry().manifest();
+    let pos = |name| manifest.iter().position(|m| m.name == name).unwrap();
+    assert!(pos("settings.get") < pos("config.testRobots"));
+    assert!(pos("export.catalog") < pos("export.multi"));
+    assert_eq!(
+        manifest
+            .iter()
+            .find(|m| m.name == "app.requestQuit")
+            .unwrap()
+            .ret,
+        "QuitDecision"
+    );
 }

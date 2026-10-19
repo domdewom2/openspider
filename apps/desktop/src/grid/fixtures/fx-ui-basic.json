@@ -1,0 +1,11 @@
+{
+  "viewId": "fx-ui-basic", "version": 1, "total": 5000000, "state": "ready",
+  "columns": [
+    {"key":"Row","kind":{"kind":"int"},"defaultVisible":true,"defaultWidth":90,"align":"right","sortable":true,"searchable":[],"extension":false},
+    {"key":"Address","kind":{"kind":"url"},"defaultVisible":true,"defaultWidth":320,"align":"left","sortable":true,"searchable":[],"extension":false},
+    {"key":"Size (bytes)","kind":{"kind":"int"},"defaultVisible":true,"defaultWidth":120,"align":"right","sortable":true,"searchable":[],"extension":false},
+    {"key":"Response Time","kind":{"kind":"seconds3"},"defaultVisible":true,"defaultWidth":130,"align":"right","sortable":true,"searchable":[],"extension":false},
+    {"key":"Meta Description 1","kind":{"kind":"text"},"defaultVisible":true,"defaultWidth":200,"align":"left","sortable":true,"searchable":[],"extension":false}
+  ],
+  "row": [1, "https://fixture.invalid/page/0000001", 12345, 0.123, null]
+}

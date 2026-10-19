@@ -1,10 +1,18 @@
 {
   "id": "Over 60 Characters",
   "labelTemplate": "Over {title.max_chars} Characters",
-  "params": { "title.max_chars": 60 },
+  "params": {
+    "title.max_chars": 60
+  },
   "count": 12,
   "pct": 4.8,
-  "state": { "kind": "needsConfig", "key": "extraction.page_titles" },
-  "issue": { "issueType": "warning", "priority": "medium" },
+  "state": {
+    "kind": "needsConfig",
+    "key": "extraction.page_titles"
+  },
+  "issue": {
+    "issueType": "warning",
+    "priority": "medium"
+  },
   "analysisStep": null
 }

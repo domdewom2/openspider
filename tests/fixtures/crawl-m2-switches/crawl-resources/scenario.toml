@@ -1,0 +1,79 @@
+[[route]]
+path = "/headers"
+body = "<html><title>Headers</title><body><a href='/ok'>ok</a></body></html>"
+[route.headers]
+Link = "</mobile-header>; rel=alternate; media=handheld"
+Cache-Control = "max-age=60"
+
+[[route]]
+path = "/nocontenttype"
+no_content_type = true
+body = "<html><title>Missing type</title><a href='/only-missing'>only</a></html>"
+
+[[route]]
+path = "/wrongtype"
+content_type = "text/plain"
+body = "<html><title>Wrong type</title><a href='/only-wrong'>only</a></html>"
+
+[[route]]
+path = "/fragments"
+body = "<html><title>Fragments</title><a href='/base#one'>one</a><a href='/base#two'>two</a><a href='/later'>later</a></html>"
+
+[[route]]
+path = "/hashbang"
+body = "<a href='/base#!legacy'>legacy</a><a href='/base#ordinary'>ordinary</a>"
+
+[[route]]
+path = "/base"
+body = "<html><title>Shared base</title><h1>Shared heading</h1><a href='/base#self'>self</a><a href='/child'>child</a></html>"
+
+[[route]]
+path = "/later"
+body = "<html><a href='/base#late'>late discovery</a></html>"
+
+[[route]]
+path = "/blog/"
+body = "<a href='/shop/'>shop</a><img src='/outside.png'>"
+
+[[route]]
+path = "/shop/"
+body = "<a href='/shop/product'>must not follow</a>"
+
+[[route]]
+path = "/cookies"
+body = "<html><title>Cookies</title></html>"
+set_cookie = ["a=first; Domain=site.test; Path=/; Expires=Wed, 21 Oct 2037 07:28:00 GMT; Max-Age=123; Secure; HttpOnly; SameSite=Lax", "b=second; Path=/", "a=third; Path=/next"]
+[route.headers]
+X-Fixture = ["first", "second"]
+x-fixture = "third"
+
+[[route]]
+path = "/large"
+content_type = "text/html"
+body = "<html><a href='/early'>early</a>"
+body_size = 8192
+
+[[route]]
+path = "/video.mp4"
+content_type = "video/mp4"
+body_size = 5242880
+
+[[route]]
+path = "/rediscovery"
+body = "<html><head><link rel='alternate' hreflang='en' href='/noindex'></head><body><a href='/chain'>chain</a></body></html>"
+
+[[route]]
+path = "/chain"
+body = "<a href='/chain2'>deeper</a>"
+
+[[route]]
+path = "/chain2"
+body = "<a href='/noindex'>late rediscovery</a>"
+
+[[route]]
+path = "/noindex"
+body = "<html><head><meta name='robots' content='noindex'></head></html>"
+
+[[route]]
+path = "/latin1.html"
+content_type = "text/html; charset=windows-1252"

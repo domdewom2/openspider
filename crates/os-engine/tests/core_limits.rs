@@ -41,7 +41,9 @@ async fn hundred_connected_pages_give_exactly_one_hundred_html_rows_and_the_craw
 // spec: CRAWL-026
 #[tokio::test]
 async fn start_records_owner_and_process_and_the_pages_carry_titles_and_links() {
-    let fx = crawl_fixture("crawl-site-100", CrawlConfig::default()).await;
+    let mut cfg = CrawlConfig::default();
+    cfg.extraction.http_headers = true; // M1 fixture explicitly keeps its header baseline.
+    let fx = crawl_fixture("crawl-site-100", cfg).await;
     assert_eq!(
         fx.file.get_meta("owner_kind").unwrap().as_deref(),
         Some("cli")

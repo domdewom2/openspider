@@ -82,14 +82,17 @@ fn security_tab_lists_the_base_columns_and_numbered_directive_columns() {
             "Indexability Status",
             "Canonical Link Element",
             "Meta Robots",
-            "X-Robots-Tag"
+            "X-Robots-Tag",
+            "Expected Content Type"
         ]
     );
     assert!(tab.default_sort.is_empty());
     let filters: Vec<&str> = tab.filters.iter().map(|f| f.id).collect();
-    assert_eq!(filters, ["All", "HTTP URLs", "HTTPS URLs"]);
+    assert_eq!(&filters[..3], ["All", "HTTP URLs", "HTTPS URLs"]);
+    assert_eq!(filters.len(), 14);
 }
 
+// spec: ONPAGE-030
 #[tokio::test]
 async fn numbered_columns_grow_with_the_maximum_number_of_occurrences() {
     let fx = crawl("http").await;
@@ -106,7 +109,8 @@ async fn numbered_columns_grow_with_the_maximum_number_of_occurrences() {
             "Canonical Link Element 1",
             "Canonical Link Element 2",
             "Meta Robots 1",
-            "X-Robots-Tag 1"
+            "X-Robots-Tag 1",
+            "Expected Content Type"
         ]
     );
     let a = page.columns.iter().position(|c| c == "Address").unwrap();

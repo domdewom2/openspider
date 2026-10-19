@@ -1,0 +1,7 @@
+﻿Address,Near Duplicate Address,Similarity
+{BASE}/,{BASE}/near-a.html,100
+{BASE}/,{BASE}/near-b.html,100
+{BASE}/near-a.html,{BASE}/,100
+{BASE}/near-a.html,{BASE}/near-b.html,100
+{BASE}/near-b.html,{BASE}/,100
+{BASE}/near-b.html,{BASE}/near-a.html,100

@@ -25,6 +25,10 @@ pub enum FilterStateDto {
     NeedsRendering,
     /// Analyse veraltet.
     Stale,
+    /// Vertragserweiterung M2-F05b.
+    NeedsRecrawl,
+    /// Vertragserweiterung M2-F05b.
+    Incomplete { unchecked: u64 },
 }
 
 /// Art eines Befunds (UI-063).

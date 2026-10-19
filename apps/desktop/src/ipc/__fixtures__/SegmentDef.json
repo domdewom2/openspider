@@ -5,7 +5,14 @@
   "rules": {
     "kind": "group",
     "op": "and",
-    "children": [{ "kind": "cond", "column": "Address", "op": "contains", "value": "/produkt/" }]
+    "children": [
+      {
+        "kind": "cond",
+        "column": "Address",
+        "op": "contains",
+        "value": "/produkt/"
+      }
+    ]
   },
   "order": 0
 }

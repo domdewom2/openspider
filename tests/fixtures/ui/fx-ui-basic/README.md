@@ -1,0 +1,1 @@
+Synthetic UI fixture with 25 internal URLs (including one SVG), two external localhost URLs, a redirect, a 404, one noindex page, duplicate titles and an image without alt text. All traffic stays on the local fixture server. Page responses are delayed by 50 ms. expected.json records the stable summary.

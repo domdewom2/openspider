@@ -269,6 +269,9 @@ fn summary(file: &CrawlFile, rows: &mut Vec<OverviewRow>) -> Result<(), ExportEr
         ("Skipped Not In Include", COUNTER_NOT_INCLUDED),
         ("Skipped By Depth Limit", COUNTER_DEPTH_LIMIT),
         ("Skipped By Redirect Limit", COUNTER_REDIRECT_LIMIT),
+        ("Skipped By Folder Depth", "skipped_folder_depth"),
+        ("Skipped By Query Parameters", "skipped_query_params"),
+        ("Skipped By URL Length", "skipped_url_length"),
     ] {
         rows.push(OverviewRow::new(
             S,
@@ -407,7 +410,25 @@ fn response_codes(
     );
     push(
         "Redirection (HTTP Refresh)",
-        Some(n("redirect_type = 'http_refresh'")?),
+        Some({
+            let tabs = os_analyze::tabs::configured(cfg);
+            let tab = tabs
+                .iter()
+                .find(|t| t.id == "Response Codes")
+                .expect("Response Codes registry");
+            let filter = tab
+                .filters
+                .iter()
+                .find(|f| f.id == "Redirection (HTTP Refresh)")
+                .expect("HTTP Refresh filter");
+            count(
+                file,
+                &format!(
+                    "SELECT COUNT(*) FROM urls u WHERE {base_sql} AND ({})",
+                    filter.predicate
+                ),
+            )?
+        }),
     );
     let (chains, loops) = redirects::chain_and_loop_counts(file, internal)?;
     push("Redirect Chain", Some(chains));

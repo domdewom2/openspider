@@ -49,10 +49,14 @@ pub struct QuotaDto {
     pub limit: Option<u64>,
     /// Zurücksetzung (ISO 8601 UTC).
     pub resets_at: Option<String>,
+    /// Dimension für die API-Datenabfrage.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub dimension: Option<String>,
 }
 
 /// Eintrag von `api.list`.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(optional_fields = nullable)]
 pub struct ApiSourceInfo {
@@ -68,8 +72,22 @@ pub struct ApiSourceInfo {
     pub account: Option<String>,
     /// Kontingent.
     pub quota: Option<QuotaDto>,
+    /// Kontingentdimensionen aus der Anbieterantwort (INTEG-006).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub quota_dimensions: Option<Vec<QuotaDto>>,
     /// Beim Start automatisch verbinden (INTEG-011).
     pub auto_connect: bool,
+    /// Aktueller Verbindungszustand des API-Anbieters.
+    pub state: ApiConnState,
+
+    /// Fehler der letzten API-Verbindung.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub error: Option<CmdError>,
+
+    /// Verfügbare API-Konten.
+    pub accounts: Vec<ApiAccount>,
 }
 
 /// Argument von `api.connect`.
@@ -81,6 +99,20 @@ pub struct ApiConnectArgs {
     pub kind: ApiKind,
     /// API-Schlüssel (nur bei Quellen mit Schlüssel; Ablage im Schlüsselbund).
     pub api_key: Option<String>,
+    /// Zugangsdaten dauerhaft im Secret Store speichern.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub remember: Option<bool>,
+
+    /// Kennung des API-Kontos.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub account_id: Option<String>,
+
+    /// OAuth-Client-Geheimnis; nur Eingabe.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub client_secret: Option<String>,
 }
 
 /// Ergebnis von `api.connect`.
@@ -96,6 +128,13 @@ pub struct ApiAccount {
     pub scopes: Vec<String>,
     /// Ablauf des Tokens (ISO 8601 UTC).
     pub expires_at: Option<String>,
+    /// Kennung des API-Kontos.
+    pub account_id: String,
+
+    /// Zur Identifizierung sichtbare Endzeichen des API-Schlüssels.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub key_suffix: Option<String>,
 }
 
 /// Argument mit einer Quelle (`api.disconnect`, `api.testConnection`, `api.getSettings`).
@@ -140,6 +179,10 @@ pub struct ApiSetSettingsArgs {
     pub kind: ApiKind,
     /// Neue Einstellungen.
     pub settings: ApiSourceSettings,
+    /// Entscheidung über den nächsten API-Abruf.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub decision: Option<ApiSettingsDecision>,
 }
 
 /// Ergebnis von `api.setSettings`.
@@ -148,6 +191,11 @@ pub struct ApiSetSettingsArgs {
 pub struct ApiSettingsResult {
     /// Gespeicherte Daten dieser Quelle wurden ungültig (INTEG-010).
     pub invalidated: bool,
+    /// Ob vor dem Abruf eine Bestätigung erforderlich ist.
+    pub confirmation_required: bool,
+
+    /// Ob die gespeicherten API-Daten veraltet sind.
+    pub data_stale: bool,
 }
 
 /// Umfang von `api.fetch`.
@@ -171,7 +219,9 @@ pub enum ApiFetchScope {
 #[serde(rename_all = "camelCase")]
 pub struct ApiFetchArgs {
     /// Quellen; leer = alle verbundenen.
-    pub kinds: Vec<ApiKind>,
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub kinds: Option<Vec<ApiKind>>,
     /// Umfang.
     pub scope: ApiFetchScope,
 }
@@ -237,4 +287,44 @@ pub struct ApiRow {
     pub errors: u64,
     /// Verbleibendes Kontingent.
     pub quota_left: Option<u64>,
+    /// Anzahl laufender API-Aufträge.
+    pub running: bool,
+
+    /// Anzahl abgeschlossener API-Aufträge.
+    pub completed: u64,
+
+    /// Zeitpunkt der nächsten Kontingentrücksetzung (ISO 8601 UTC).
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub reset_at: Option<String>,
+}
+
+/// Command-Vertrag ApiAccountArgs (M2.md 3.14.9).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct ApiAccountArgs {
+    /// Art des Eintrags.
+    pub kind: ApiKind,
+
+    /// Kennung des API-Kontos.
+    pub account_id: String,
+}
+
+/// Vertrag M2-F05b.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub enum ApiConnState {
+    Disconnected,
+    Connecting,
+    Connected,
+    Error,
+}
+
+/// Vertrag M2-F05b.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub enum ApiSettingsDecision {
+    Ask,
+    Keep,
+    Reload,
 }

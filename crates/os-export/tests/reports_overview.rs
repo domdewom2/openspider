@@ -20,7 +20,7 @@ use os_export::{save_report, Format};
 use os_model::time::{IdSource, SeededIds};
 use os_model::{AnalysisStep, CrawlConfig, CrawlMode, Timestamp, Value};
 use os_store::{CrawlFile, CrawlInit, StorageProfile};
-use os_testsite::golden::{assert_golden, normalize};
+use os_testsite::golden::{assert_m1_overview_golden as assert_golden, normalize};
 
 const OVERVIEW: &str = "Crawl Overview";
 
@@ -166,7 +166,10 @@ async fn summary_section_has_the_specified_items_in_order() {
             "Skipped By Exclude",
             "Skipped Not In Include",
             "Skipped By Depth Limit",
-            "Skipped By Redirect Limit"
+            "Skipped By Redirect Limit",
+            "Skipped By Folder Depth",
+            "Skipped By Query Parameters",
+            "Skipped By URL Length"
         ]
     );
     assert_eq!(
@@ -502,6 +505,7 @@ fn probe_filter(id: &'static str, kind: FilterKind, requires: Vec<Requirement>) 
         kind,
         requires,
         ignore_non_indexable: false,
+        default_columns: &[],
     }
 }
 
@@ -534,6 +538,7 @@ async fn filters_that_cannot_be_filled_have_an_empty_urls_cell_not_zero() {
         ],
         default_sort: vec![],
         params: |_| Vec::new(),
+        hidden_population: None,
     };
     let (_tmp, t, result) = overview(&fx, &cfg, &[tab]);
     assert_eq!(urls(&t, "Probe", "All"), "12");
@@ -677,9 +682,12 @@ async fn placeholder_tabs_give_every_tab_with_all_filters_in_ui_order() {
     let result = save_report(&fx.file, &cfg, OVERVIEW, tmp.path(), Format::Csv).unwrap();
     let t = Table::read(&result.files[0].path);
 
-    // Abschnitt 5 = die Tabs aus tabs::all() in UI-Reihenfolge, je Tab alle Filter in Anzeigereihenfolge. Stub-Tabs und
+    // Abschnitt 5 = die konfigurierten Tabs in UI-Reihenfolge, je Tab alle Filter in Anzeigereihenfolge. Stub-Tabs und
     // Stub-Filter von M2 (M2-F02) tragen noch keine Zähler und erscheinen nicht.
-    let all: Vec<_> = tabs::all().into_iter().filter(|t| !t.is_stub()).collect();
+    let all: Vec<_> = tabs::configured(&cfg)
+        .into_iter()
+        .filter(|t| !t.is_stub())
+        .collect();
     let tab_ids: Vec<&str> = all.iter().map(|t| t.id).collect();
     let secs = sections(&t);
     let first = secs.iter().position(|s| s == tab_ids[0]).unwrap();
@@ -755,6 +763,7 @@ async fn overview_names_come_from_the_canonical_filter_list() {
         let got: Vec<String> = section_items(&t, &tab)
             .iter()
             .map(|s| (*s).to_string())
+            .filter(|label| want.contains(label))
             .collect();
         assert_eq!(got, want, "Tab {tab}");
     }

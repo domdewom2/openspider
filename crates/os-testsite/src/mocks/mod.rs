@@ -37,6 +37,12 @@ pub trait MockApi: Send + Sync {
 
     /// Die Routen des Mocks (relativ zu `/<name>`).
     fn router(&self) -> axum::Router;
+
+    /// INTEG-019: GET-Pfad für den quellenübergreifenden X-Scenario-Vertrag.
+    /// I02–I05 passen ihn bei der Mock-Registrierung an ihren Prüfendpunkt an.
+    fn scenario_path(&self) -> &'static str {
+        ""
+    }
 }
 
 /// Alle Mocks, die bereits eine Umsetzung haben, in fester Reihenfolge.

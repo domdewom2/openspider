@@ -12,4 +12,8 @@ kind: VizKind,
 /**
  * Wurzel; `null` = Start-URL bzw. Wurzelverzeichnis.
  */
-rootUrlId?: number | null, };
+rootUrlId?: number | null, 
+/**
+ * Kennung des zu erneuernden Visualisierungs-Snapshots.
+ */
+refreshSnapshotId?: string | null, };

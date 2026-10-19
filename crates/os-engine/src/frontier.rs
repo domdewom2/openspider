@@ -87,7 +87,13 @@ impl CrawlScope {
                 return ScopeClass::Internal;
             }
         }
-        self.base.classify(url)
+        if let Some(folder) = self.base.start_folder() {
+            let mut host_probe = url.clone();
+            host_probe.url.set_path(folder);
+            self.base.classify(&host_probe)
+        } else {
+            self.base.classify(url)
+        }
     }
 }
 
@@ -122,6 +128,7 @@ impl Purpose {
 /// Eine wartende URL.
 #[derive(Debug, Clone)]
 pub struct QueueItem {
+    pub attempt: u32,
     /// Kennung.
     pub id: UrlId,
     /// URL Encoded Address.
@@ -183,7 +190,9 @@ pub struct Seen {
 }
 
 /// Was die Entdeckung einer URL wissen muss (vom Aufrufer ohne Sperre vorbereitet).
+#[derive(Clone)]
 pub struct Cand<'a> {
+    pub source: Option<(UrlId, os_model::LinkType, Option<String>)>,
     /// Normalisierte Ziel-URL.
     pub norm: &'a NormUrl,
     /// Im Crawl-Bereich.
@@ -235,6 +244,10 @@ pub enum Pop {
 
 /// Gemeinsamer Zustand aller Worker (hinter einer Sperre).
 pub struct Core {
+    pub respect_hidden: std::collections::HashSet<UrlId>,
+    pub folder_policy: Option<(String, bool)>,
+    pub limits: os_model::LimitsConfig,
+    pub deferred: Vec<(std::time::Duration, QueueItem)>,
     /// Seen-Set.
     pub seen: SeenSet,
     /// Warteschlange.
@@ -251,6 +264,8 @@ pub struct Core {
     pub max_urls: u64,
     /// Laufende Worker.
     pub active: usize,
+    /// Laufende Klasse-0-Worker, die vor Sitemap-URLs Vorrang haben (CRAWL-059).
+    pub active_pages: usize,
     /// Cookie-Sitzungen (Index 0 = Sitzung des Spiders).
     pub sessions: Vec<Option<Arc<CookieJar>>>,
     /// Weiterleitungsgraph und Flags.
@@ -268,9 +283,59 @@ pub struct Core {
 }
 
 impl Core {
+    /// Rückstellung bis zu einem absoluten monotonen Zeitpunkt; keine neue URL.
+    pub fn defer(&mut self, item: QueueItem, due: std::time::Duration) {
+        self.refund();
+        self.deferred.push((due, item));
+    }
+    pub fn requeue(&mut self, item: QueueItem) {
+        self.refund();
+        self.frontier.push(item);
+    }
+    pub fn wake_deferred(&mut self, now: std::time::Duration) {
+        let waiting = std::mem::take(&mut self.deferred);
+        for (due, item) in waiting {
+            if due <= now {
+                self.frontier.push(item);
+            } else {
+                self.deferred.push((due, item));
+            }
+        }
+    }
+    pub fn next_due(&self) -> Option<std::time::Duration> {
+        self.deferred.iter().map(|(due, _)| *due).min()
+    }
+    pub fn restore_deferred(&mut self) {
+        for (_, mut item) in self.deferred.drain(..) {
+            item.attempt = 0;
+            self.frontier.push(item);
+        }
+    }
+    fn record_discovery(
+        &mut self,
+        c: &Cand<'_>,
+        target: UrlId,
+        depth: Option<u32>,
+        batch: &mut WriteBatch,
+    ) {
+        batch.discoveries.push(os_model::DiscoveryWrite {
+            seq: self.alloc_seq(),
+            target,
+            source: c.source.as_ref().map(|s| s.0),
+            kind: c.kind,
+            link_type: c.source.as_ref().map(|s| s.1),
+            anchor: c.source.as_ref().and_then(|s| s.2.clone()),
+            depth,
+        });
+    }
+
     /// Leerer Zustand.
     pub fn new(max_urls: u64, max_depth: Option<u32>) -> Self {
         Core {
+            respect_hidden: std::collections::HashSet::new(),
+            folder_policy: None,
+            limits: os_model::LimitsConfig::default(),
+            deferred: Vec::new(),
             seen: SeenSet::default(),
             frontier: Frontier::default(),
             next_url_id: 1,
@@ -279,6 +344,7 @@ impl Core {
             started: 0,
             max_urls: if max_urls == 0 { u64::MAX } else { max_urls },
             active: 0,
+            active_pages: 0,
             sessions: vec![None],
             redirects: RedirectGraph::default(),
             max_depth,
@@ -315,10 +381,10 @@ impl Core {
         if self.started >= self.max_urls {
             return Pop::LimitBlocked;
         }
-        match self.frontier.pop_checked() {
+        match self.frontier.pop_checked_while(self.active_pages != 0) {
             Popped::Item(item) => {
                 self.started += 1;
-                self.active += 1;
+                self.start_worker(item.priority == 0);
                 Pop::Item(item)
             }
             Popped::Empty => Pop::Empty,
@@ -331,9 +397,16 @@ impl Core {
         self.started = self.started.saturating_sub(1);
     }
 
+    /// Reserviert einen Worker und zählt aktive Seiten für die Prioritätssteuerung.
+    pub fn start_worker(&mut self, page: bool) {
+        self.active += 1;
+        self.active_pages += usize::from(page);
+    }
+
     /// Ein Worker ist fertig.
-    pub fn finish_worker(&mut self) {
+    pub fn finish_worker(&mut self, page: bool) {
         self.active = self.active.saturating_sub(1);
+        self.active_pages = self.active_pages.saturating_sub(usize::from(page));
     }
 
     /// Legt eine neue Cookie-Sitzung an.
@@ -422,6 +495,14 @@ impl Core {
                 rule_flag,
             };
         }
+        if url_limit_counter(&self.limits, c.norm).is_some() {
+            return Admission {
+                enqueue: false,
+                in_tables: false,
+                reason: Some(NotCrawledReason::UrlLimit),
+                rule_flag,
+            };
+        }
         // 2. Entscheidung der Speichern/Crawlen-Matrix
         if !c.crawl {
             return Admission {
@@ -473,6 +554,64 @@ impl Core {
         rules: &RuleSet,
         batch: &mut WriteBatch,
     ) -> UrlId {
+        let adjusted;
+        let c = if let Some((folder, check)) = &self.folder_policy {
+            if c.internal && !c.resource_like && !c.norm.url.path().starts_with(folder) {
+                adjusted = Cand {
+                    store: c.store && *check,
+                    crawl: c.crawl && *check,
+                    purpose: Purpose::External,
+                    reason: if *check {
+                        c.reason
+                    } else {
+                        Some(NotCrawledReason::OutsideScope)
+                    },
+                    ..c.clone()
+                };
+                &adjusted
+            } else {
+                c
+            }
+        } else {
+            c
+        };
+        if c.norm.url.fragment().is_some() {
+            let base = os_url::normalize(&c.norm.url);
+            let admitted = self.admit(c, depth, 0, rules);
+            let base_cand = Cand {
+                norm: &base,
+                store: c.store && admitted.in_tables,
+                crawl: c.crawl && admitted.enqueue,
+                ..c.clone()
+            };
+            self.discover_plain(&base_cand, depth, hops, session, rules, batch);
+            let fragment = Cand {
+                store: admitted.in_tables,
+                crawl: false,
+                reason: admitted.reason.or(Some(NotCrawledReason::StoreOnly)),
+                ..c.clone()
+            };
+            let id = self.discover_plain(&fragment, depth, hops, session, rules, batch);
+            batch.ext.push(os_model::ExtWrite {
+                url: id,
+                key: os_model::ExtKey::from_static("crawl.fragment_base"),
+                value: os_model::Value::Text(base.encoded),
+            });
+            return id;
+        }
+        self.discover_plain(c, depth, hops, session, rules, batch)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn discover_plain(
+        &mut self,
+        c: &Cand<'_>,
+        depth: Option<u32>,
+        hops: u32,
+        session: u32,
+        rules: &RuleSet,
+        batch: &mut WriteBatch,
+    ) -> UrlId {
         let kf = self.seen.key_fp(&c.norm.encoded);
         // Ohne Tiefe (nur über eine Sitemap erreichbar) gilt Priorität 1: hinter allen Link-URLs.
         let priority = u8::from(depth.is_none());
@@ -482,6 +621,7 @@ impl Core {
             // kürzerer Weg → Mindesttiefe
             if let Some(d) = depth {
                 if d < e.depth {
+                    self.record_discovery(c, id, Some(d), batch);
                     e.depth = d;
                     batch.url_updates.push(UrlUpdate::Depth { id, depth: d });
                 }
@@ -505,7 +645,11 @@ impl Core {
                         });
                     }
                 }
-                if c.store && e.flags & F_IN_TABLES == 0 && e.flags & F_RULE_BLOCKED == 0 {
+                if c.store
+                    && e.flags & F_IN_TABLES == 0
+                    && e.flags & F_RULE_BLOCKED == 0
+                    && !self.respect_hidden.contains(&id)
+                {
                     e.flags |= F_IN_TABLES;
                     batch
                         .url_updates
@@ -533,6 +677,7 @@ impl Core {
                         hops,
                         session,
                         replace: false,
+                        attempt: 0,
                     });
                     batch.url_updates.push(UrlUpdate::State {
                         id,
@@ -547,7 +692,8 @@ impl Core {
                     });
                     e.flags |= F_QUEUED;
                 }
-                if adm.in_tables && e.flags & F_IN_TABLES == 0 {
+                if adm.in_tables && e.flags & F_IN_TABLES == 0 && !self.respect_hidden.contains(&id)
+                {
                     e.flags |= F_IN_TABLES;
                     batch
                         .url_updates
@@ -563,6 +709,7 @@ impl Core {
         // neue URL
         let adm = self.admit(c, depth, 0, rules);
         let id = self.alloc_id();
+        self.record_discovery(c, id, depth, batch);
         let mut flags = adm.rule_flag;
         if adm.in_tables {
             flags |= F_IN_TABLES;
@@ -576,6 +723,11 @@ impl Core {
             }
             Some(NotCrawledReason::DepthLimit | NotCrawledReason::ListModeDepth) => {
                 batch.counters.push((COUNTER_DEPTH_LIMIT.to_string(), 1));
+            }
+            Some(NotCrawledReason::UrlLimit) => {
+                if let Some(counter) = url_limit_counter(&self.limits, c.norm) {
+                    batch.counters.push((counter.into(), 1));
+                }
             }
             _ => {}
         }
@@ -610,6 +762,7 @@ impl Core {
                 hops,
                 session,
                 replace: false,
+                attempt: 0,
             });
             batch.queue.push(QueueOp::Push {
                 id,
@@ -643,6 +796,63 @@ impl Core {
     }
 }
 
+/// Ein eindeutiger Überspringzähler je URL; Länge wird nach Umschreibung/Normalisierung geprüft.
+fn url_limit_counter(limits: &os_model::LimitsConfig, norm: &NormUrl) -> Option<&'static str> {
+    let query_count = norm
+        .url
+        .query()
+        .map_or(0, |q| q.split('&').filter(|p| !p.is_empty()).count());
+    if limits
+        .max_folder_depth
+        .is_some_and(|max| max != 0 && os_url::folder_depth(&norm.url) > max)
+    {
+        Some("skipped_folder_depth")
+    } else if limits
+        .max_query_params
+        .is_some_and(|max| query_count > max as usize)
+    {
+        Some("skipped_query_params")
+    } else if limits.max_url_length != 0 && norm.encoded.len() > limits.max_url_length as usize {
+        Some("skipped_url_length")
+    } else {
+        None
+    }
+}
+
+/// Eine spätere Entdeckung darf beim Fortsetzen ausgeblendete Seiten nicht wieder einblenden.
+pub(crate) fn restore_hidden(
+    path: &std::path::Path,
+    cfg: &os_model::CrawlConfig,
+    core: &mut Core,
+) -> Result<(), crate::EngineError> {
+    if !(cfg.advanced.respect_noindex
+        || cfg.advanced.respect_canonical
+        || cfg.advanced.respect_self_ref_meta_refresh)
+    {
+        return Ok(());
+    }
+    let file = os_store::CrawlFile::open(path, os_store::OpenMode::ReadOnly)?;
+    let mut stmt = file
+        .conn()
+        .prepare("SELECT url_id,value FROM url_flags WHERE flag = 'respect_hidden'")
+        .map_err(os_store::StoreError::from)?;
+    let rows = stmt
+        .query_map([], |r| Ok((UrlId(r.get(0)?), r.get::<_, String>(1)?)))
+        .map_err(os_store::StoreError::from)?;
+    for row in rows {
+        let (id, reason) = row.map_err(os_store::StoreError::from)?;
+        if match reason.as_str() {
+            "noindex" => cfg.advanced.respect_noindex,
+            "canonical" => cfg.advanced.respect_canonical,
+            "self_refresh" => cfg.advanced.respect_self_ref_meta_refresh,
+            _ => false,
+        } {
+            core.respect_hidden.insert(id);
+        }
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -663,6 +873,7 @@ mod tests {
             resource_like: false,
             apply_rules: true,
             purpose: Purpose::Page,
+            source: None,
         }
     }
 
@@ -675,8 +886,30 @@ mod tests {
         let mut out = Vec::new();
         while let Pop::Item(i) = core.try_pop() {
             out.push(i.id.0);
+            core.finish_worker(i.priority == 0);
         }
         out
+    }
+
+    // spec: CRAWL-131, CRAWL-005
+    #[test]
+    fn manually_started_workers_track_pages_and_resources_until_finished() {
+        let mut core = Core::new(0, None);
+        // Fixture: zwei Recrawl-Seiten und eine Ressource sind gleichzeitig aktiv.
+        for page in [true, false, true] {
+            core.start_worker(page);
+        }
+        assert_eq!((core.active, core.active_pages), (3, 2));
+        core.finish_worker(false);
+        assert_eq!((core.active, core.active_pages), (2, 2));
+        core.finish_worker(true);
+        assert_eq!((core.active, core.active_pages), (1, 1));
+        core.finish_worker(true);
+        assert_eq!((core.active, core.active_pages), (0, 0));
+        assert_eq!(
+            core.started, 0,
+            "Recrawl verbraucht kein Frontier-URL-Limit"
+        );
     }
 
     // spec: CRAWL-005
@@ -1022,5 +1255,91 @@ mod tests {
         assert!(b
             .url_updates
             .contains(&UrlUpdate::InTables { id, value: true }));
+    }
+    // spec: CRAWL-145
+    // Infrastruktur (M2-F05a) für CRAWL-145; Fachprüfung M2-E03.
+    #[test]
+    fn deferred_attempt_refunds_slot_and_restores_on_pause_without_new_discovery() {
+        let mut core = Core::new(1, None);
+        let n = norm("https://site.test/retry");
+        let mut batch = WriteBatch::default();
+        core.discover(&cand(&n), Some(0), 0, 0, &rules(&[], &[]), &mut batch);
+        let Pop::Item(mut item) = core.try_pop() else {
+            panic!("item")
+        };
+        item.attempt = 1;
+        core.defer(item, std::time::Duration::from_secs(2));
+        core.finish_worker(true); // ActiveGuard releases the worker on return from run_item.
+        assert_eq!(core.active, 0);
+        assert_eq!(core.started, 0);
+        assert_eq!(core.discovered(), 1);
+        core.wake_deferred(std::time::Duration::from_secs(1));
+        assert!(matches!(core.try_pop(), Pop::Empty));
+        core.restore_deferred();
+        let Pop::Item(item) = core.try_pop() else {
+            panic!("restored")
+        };
+        assert_eq!(item.attempt, 0);
+        assert_eq!(batch.discoveries.len(), 1);
+    }
+
+    // spec: CRAWL-059
+    // Infrastruktur (M2-F05a) für CRAWL-059; Fachprüfung M2-E02.
+    #[test]
+    fn sitemap_waits_for_active_page_and_discovery_records_shorter_paths() {
+        let mut core = Core::new(0, None);
+        let first = norm("https://site.test/page");
+        let sitemap = norm("https://site.test/sitemap-page");
+        let rules = rules(&[], &[]);
+        let mut batch = WriteBatch::default();
+        let source = core.discover(&cand(&first), Some(0), 0, 0, &rules, &mut batch);
+        let mut target = cand(&sitemap);
+        target.source = Some((source, os_model::LinkType::Hyperlink, Some("anchor".into())));
+        core.discover(&target, None, 0, 0, &rules, &mut batch);
+        assert!(matches!(core.try_pop(), Pop::Item(_)));
+        assert!(matches!(core.try_pop(), Pop::Empty));
+        core.finish_worker(true);
+        assert!(matches!(core.try_pop(), Pop::Item(_)));
+        core.discover(&target, Some(2), 1, 0, &rules, &mut batch);
+        assert_eq!(batch.discoveries.len(), 3);
+        assert_eq!(batch.discoveries.last().unwrap().depth, Some(2));
+        assert!(batch.discoveries.windows(2).all(|w| w[0].seq < w[1].seq));
+    }
+    // spec: CRAWL-059
+    #[test]
+    fn sitemap_workers_run_in_parallel_and_waiting_does_not_grow_the_heap() {
+        let mut core = Core::new(0, None);
+        let rules = rules(&[], &[]);
+        let mut batch = WriteBatch::default();
+        core.discover(
+            &cand(&norm("https://site.test/page")),
+            Some(0),
+            0,
+            0,
+            &rules,
+            &mut batch,
+        );
+        for n in 0..4 {
+            core.discover(
+                &cand(&norm(&format!("https://site.test/map-{n}"))),
+                None,
+                0,
+                0,
+                &rules,
+                &mut batch,
+            );
+        }
+        assert!(matches!(core.try_pop(), Pop::Item(_)));
+        let before = core.memory().heap_entries;
+        for _ in 0..100 {
+            assert!(matches!(core.try_pop(), Pop::Empty));
+        }
+        assert_eq!(core.memory().heap_entries, before);
+        core.finish_worker(true);
+        for _ in 0..4 {
+            assert!(matches!(core.try_pop(), Pop::Item(_)));
+        }
+        assert_eq!(core.active, 4);
+        assert_eq!(core.active_pages, 0);
     }
 }

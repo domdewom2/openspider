@@ -4,8 +4,20 @@ Non-200 Hreflang URLs: 0
 Missing Return Links: 1
 Incorrect Language & Region Codes: 0
 Missing: 3
+Unlinked Hreflang URLs: 1
+Inconsistent Language & Region Return Links: 0
+Non-Canonical Return Links: 0
+Noindex Return Links: 0
+Multiple Entries: 0
+Missing Self Reference: 0
+Not Using Canonical: 0
+Missing X-Default: 2
+Outside <head>: 0
 All: 5
 URLs In Sitemap: 4
 URLs Not In Sitemap: 1
 Orphan URLs: 1
 Non-Indexable URLs In Sitemap: 0
+URLs In Multiple Sitemaps: 0
+XML Sitemap With Over 50k URLs: 0
+XML Sitemap With Over 50MB: 0

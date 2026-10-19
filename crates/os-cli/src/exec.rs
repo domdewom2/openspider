@@ -284,6 +284,15 @@ async fn crawl_phase(
                 .or_else(|_| CrawlFile::open(path, OpenMode::ReadWrite))
                 .map_err(|e| CliError::usage(format!("Crawl-Datei nicht ladbar: {e}")))?;
             let meta = file.meta().map_err(store_err)?;
+            if matches!(meta.state, CrawlState::Failed | CrawlState::Completed) {
+                let queued: i64 = file
+                    .conn()
+                    .query_row("SELECT COUNT(*) FROM queue", [], |r| r.get(0))
+                    .map_err(|e| CliError::crawl(e.to_string()))?;
+                if meta.state == CrawlState::Failed || queued == 0 {
+                    return Err(CliError::crawl("Der Crawl kann nicht fortgesetzt werden"));
+                }
+            }
             let stored = file.config().map_err(store_err)?;
             drop(file);
             let cfg = plan.resume_config.clone().unwrap_or(stored);

@@ -1,8 +1,122 @@
-# OpenSpider – Issue-Katalog ab M2, Tab „Security“ (UI-063/UI-064).
-#
-# Einträge wie in core/issues/catalog.toml (`[[issue]]` mit id, tab, filter, type, priority, type_rule, priority_rule,
-# doc_key, optional override_reason/needs_crawl_analysis/text_params); `tab` ist hier immer "Security". Der Loader liest die
-# M1-Datei und alle Dateien dieses Ordners. Texte: core/issues/texts/{de,en}.d/security.toml (Schlüssel issues.<id>).
-# M2-F02 legt nur die Datei an; die Einträge liefert das Paket des Tabs.
-
 schema = 1
+
+[[issue]]
+id = "security-mixed-content"
+tab = "Security"
+filter = "Mixed Content"
+type = "Issue"
+priority = "High"
+type_rule = "T-I4"
+priority_rule = "P-H3"
+needs_crawl_analysis = false
+doc_key = "security-mixed-content"
+
+[[issue]]
+id = "security-form-url-insecure"
+tab = "Security"
+filter = "Form URL Insecure"
+type = "Issue"
+priority = "High"
+type_rule = "T-I4"
+priority_rule = "P-H3"
+needs_crawl_analysis = false
+doc_key = "security-form-url-insecure"
+
+[[issue]]
+id = "security-form-on-http-url"
+tab = "Security"
+filter = "Form on HTTP URL"
+type = "Issue"
+priority = "High"
+type_rule = "T-I4"
+priority_rule = "P-H3"
+needs_crawl_analysis = false
+doc_key = "security-form-on-http-url"
+
+[[issue]]
+id = "security-unsafe-cross-origin-links"
+tab = "Security"
+filter = "Unsafe Cross-Origin Links"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W3"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "security-unsafe-cross-origin-links"
+
+[[issue]]
+id = "security-protocol-relative-resource-links"
+tab = "Security"
+filter = "Protocol-Relative Resource Links"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "security-protocol-relative-resource-links"
+
+[[issue]]
+id = "security-missing-hsts-header"
+tab = "Security"
+filter = "Missing HSTS Header"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "security-missing-hsts-header"
+
+[[issue]]
+id = "security-missing-content-security-policy-header"
+tab = "Security"
+filter = "Missing Content-Security-Policy Header"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "security-missing-content-security-policy-header"
+
+[[issue]]
+id = "security-missing-x-content-type-options-header"
+tab = "Security"
+filter = "Missing X-Content-Type-Options Header"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "security-missing-x-content-type-options-header"
+
+[[issue]]
+id = "security-missing-x-frame-options-header"
+tab = "Security"
+filter = "Missing X-Frame-Options Header"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "security-missing-x-frame-options-header"
+
+[[issue]]
+id = "security-missing-secure-referrer-policy-header"
+tab = "Security"
+filter = "Missing Secure Referrer-Policy Header"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "security-missing-secure-referrer-policy-header"
+
+[[issue]]
+id = "security-bad-content-type"
+tab = "Security"
+filter = "Bad Content Type"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "security-bad-content-type"

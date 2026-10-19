@@ -1,0 +1,21 @@
+[[route]]
+path = "/"
+content_type = "text/html; charset=utf-8"
+body = '<!doctype html><head><link rel="next" href="/p2"></head><body><a rel="nofollow" href="/p2#nav">Two</a><a href="/about">About</a></body>'
+
+[[route]]
+path = "/p2"
+content_type = "text/html; charset=utf-8"
+body = '<!doctype html><head><link rel="previous" href="/"><link rel="next" href="/p3"></head><body><a href="/">First</a></body>'
+
+[[route]]
+path = "/p3"
+content_type = "text/html; charset=utf-8"
+body = '<!doctype html><head><meta name="robots" content="noindex"></head><body><a href="/p2">Previous</a></body>'
+[route.headers]
+Link = '</p2>; rel="prev"'
+
+[[route]]
+path = "/about"
+content_type = "text/html; charset=utf-8"
+body = '<!doctype html><body><a rel="next" href="/">Ordinary anchor</a></body>'

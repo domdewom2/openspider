@@ -1,18 +1,42 @@
-//! analysis.* (UI-080, UI-082, CRAWL-141).
-//!
-//! STUB(M2-K04): Gerüst von M2-F01. Name, Argument- und Rückgabetyp sowie `long_running` stehen im Katalog
-//! (`docs/plan/M2.md` 3.6a, `M2-ui-concept.md` 4.4) und ändert M2-K04 nicht; es ersetzt diese Datei durch die
-//! Umsetzung. Bis dahin antwortet jeder Command mit `CmdError::Unsupported`.
-
-stub_commands!(
-    "M2-K04",
-    [
-        (
-            "analysis.start",
-            "AnalysisStartArgs",
-            "AnalysisStatus",
-            true
-        ),
-        ("analysis.status", "void", "AnalysisStatus", false),
-    ]
-);
+//! Analysis command transport (UI-080, UI-082).
+use crate::{
+    dto::AnalysisStartArgs,
+    registry::{CmdResult, CommandMeta, Registry},
+    runtime::error::{parse_args, to_json},
+    session, App, CallCtx,
+};
+use futures_util::future::BoxFuture;
+fn start<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let a: AnalysisStartArgs = parse_args(args)?;
+        let s = session::current(app, &ctx.window)?;
+        session::control::ensure_idle(app, &s).await?;
+        to_json(&session::analysis::start_operation(app, s, a.steps, false)?)
+    })
+}
+fn status<'a>(app: &'a App, ctx: CallCtx, _: serde_json::Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let s = session::current(app, &ctx.window)?;
+        to_json(&session::analysis::status(app, &s).await?)
+    })
+}
+pub fn register(r: &mut Registry) {
+    r.register(
+        CommandMeta {
+            name: "analysis.start",
+            args: "AnalysisStartArgs",
+            ret: "AnalysisStatus",
+            long_running: true,
+        },
+        start,
+    );
+    r.register(
+        CommandMeta {
+            name: "analysis.status",
+            args: "void",
+            ret: "AnalysisStatus",
+            long_running: false,
+        },
+        status,
+    );
+}

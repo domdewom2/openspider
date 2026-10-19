@@ -6,13 +6,16 @@
 //! „nicht verbunden“ statt mit einem kryptischen Plattformfehler. Keiner der Typen zeigt Werte in
 //! seiner `Debug`-Ausgabe.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex, OnceLock};
 
 /// Quelle für Geheimnisse, die nie in Konfigurationsdateien stehen (`secret_ref`).
 pub trait SecretStore: Send + Sync {
     /// Liefert das Geheimnis zur Kennung.
     fn get(&self, id: &str) -> Option<String>;
+    fn try_get(&self, id: &str) -> Result<Option<String>, SecretError> {
+        Ok(self.get(id))
+    }
 }
 
 /// Speicher im Arbeitsspeicher für Tests (Mock-Schlüsselbund).
@@ -65,7 +68,7 @@ pub struct KeyringSecretStore {
 
 impl KeyringSecretStore {
     /// Dienstname, unter dem OpenSpider seine Einträge ablegt.
-    pub const DEFAULT_SERVICE: &'static str = "openspider";
+    pub const DEFAULT_SERVICE: &'static str = "OpenSpider";
 
     /// Store für den Standard-Dienstnamen.
     pub fn new() -> Self {
@@ -103,13 +106,43 @@ impl Default for KeyringSecretStore {
 
 impl SecretStore for KeyringSecretStore {
     fn get(&self, id: &str) -> Option<String> {
-        match keyring::Entry::new(&self.service, id).and_then(|e| e.get_password()) {
-            Ok(v) => Some(v),
-            Err(keyring::Error::NoEntry) => None,
-            Err(e) => {
-                tracing::warn!(secret_ref = id, error = %e, "Schlüsselbund nicht lesbar");
-                None
+        self.try_get(id).ok().flatten()
+    }
+    fn try_get(&self, id: &str) -> Result<Option<String>, SecretError> {
+        let entry = keyring::Entry::new(&self.service, id)
+            .map_err(|_| SecretError::new("Schlüsselbund nicht erreichbar"))?;
+        match entry.get_password() {
+            Ok(v) => Ok(Some(v)),
+            Err(keyring::Error::NoEntry) if self.service == Self::DEFAULT_SERVICE => {
+                let migrated = migrate_legacy_once(id, || {
+                    let old = keyring::Entry::new("openspider", id)
+                        .map_err(|_| SecretError::new("Alter Schlüsselbund nicht erreichbar"))?;
+                    match old.get_password() {
+                        Ok(v) => {
+                            entry.set_password(&v).map_err(|_| {
+                                SecretError::new("Schlüsselbundmigration nicht schreibbar")
+                            })?;
+                            old.delete_credential().map_err(|_| {
+                                SecretError::new("Alter Schlüsselbundeintrag nicht löschbar")
+                            })?;
+                            Ok(Some(v))
+                        }
+                        Err(keyring::Error::NoEntry) => Ok(None),
+                        Err(_) => Err(SecretError::new("Alter Schlüsselbund nicht lesbar")),
+                    }
+                })?;
+                if migrated.is_some() {
+                    return Ok(migrated);
+                }
+                // Ein paralleler Leser kann nach unserem ersten get_password migriert haben.
+                match entry.get_password() {
+                    Ok(value) => Ok(Some(value)),
+                    Err(keyring::Error::NoEntry) => Ok(None),
+                    Err(_) => Err(SecretError::new("Schlüsselbund nicht lesbar")),
+                }
             }
+            Err(keyring::Error::NoEntry) => Ok(None),
+            Err(_) => Err(SecretError::new("Schlüsselbund nicht lesbar")),
         }
     }
 }
@@ -245,5 +278,48 @@ mod tests {
     fn missing_entry_is_none_not_an_error() {
         let store: &dyn SecretStore = &MemorySecretStore::new();
         assert_eq!(store.get("gibt-es-nicht"), None);
+    }
+}
+
+/// K2-52: je Kennung höchstens ein Zugriff auf den alten Dienst, auch bei parallelen Lesern.
+/// Der Mutex bleibt während des Keyring-I/O in `migrate` gesperrt. Die Kennung wird vor
+/// dem Aufruf als versucht markiert; auch ein Fehlschlag wird im Prozess nicht erneut versucht.
+fn migrate_legacy_once(
+    id: &str,
+    migrate: impl FnOnce() -> Result<Option<String>, SecretError>,
+) -> Result<Option<String>, SecretError> {
+    static ATTEMPTED: OnceLock<Mutex<HashSet<String>>> = OnceLock::new();
+    let mut attempted = ATTEMPTED
+        .get_or_init(Default::default)
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    if !attempted.insert(id.to_owned()) {
+        return Ok(None);
+    }
+    migrate()
+}
+
+#[cfg(test)]
+mod migration_tests {
+    use super::*;
+
+    // spec: OUT-225
+    #[test]
+    fn legacy_migration_runs_once_per_secret_and_process_without_keyring_access() {
+        let fixture = "fixture/legacy-migration";
+        assert_eq!(
+            migrate_legacy_once(fixture, || Ok(Some("value".into())))
+                .unwrap()
+                .as_deref(),
+            Some("value")
+        );
+        assert_eq!(
+            migrate_legacy_once(fixture, || panic!("must not access legacy service twice"))
+                .unwrap(),
+            None
+        );
+        assert!(migrate_legacy_once("fixture/another-secret", || Ok(None))
+            .unwrap()
+            .is_none());
     }
 }

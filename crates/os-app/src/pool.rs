@@ -18,7 +18,7 @@ use std::sync::{Arc, Mutex};
 
 use os_analyze::analysis::CancelToken;
 use os_store::{CrawlFile, OpenMode, StoreError};
-use tokio::sync::Semaphore;
+use tokio::sync::{OwnedRwLockWriteGuard, RwLock, Semaphore};
 
 use crate::dto::{CmdError, ErrorCode};
 use crate::runtime::error::{internal, no_crawl, panic_text, store_error};
@@ -32,9 +32,11 @@ pub const DEFAULT_READ_CONNECTIONS: usize = 4;
 pub struct CrawlKey(pub String);
 
 struct Slot {
+    pinned: Mutex<HashMap<&'static str, Arc<Slot>>>,
     path: PathBuf,
     idle: Mutex<Vec<CrawlFile>>,
     permits: Arc<Semaphore>,
+    access: Arc<RwLock<()>>,
 }
 
 struct Inner {
@@ -75,13 +77,65 @@ impl ReadPool {
         }
     }
 
+    /// Sperrt neue Leser und wartet bestehende Leser ab. Unbekannte Schlüssel liefern einen leeren Wächter.
+    pub async fn exclusive(&self, key: &CrawlKey) -> ExclusiveGuard {
+        let slot = self.inner.lock().get(key).cloned();
+        let guard = match slot {
+            Some(slot) => {
+                let guard = slot.access.clone().write_owned().await;
+                slot.idle.lock().unwrap_or_else(|p| p.into_inner()).clear();
+                let mut pinned = slot.pinned.lock().unwrap_or_else(|p| p.into_inner());
+                for cached in pinned.values() {
+                    cached
+                        .idle
+                        .lock()
+                        .unwrap_or_else(|p| p.into_inner())
+                        .clear();
+                }
+                pinned.clear();
+                Some(guard)
+            }
+            None => None,
+        };
+        ExclusiveGuard { _guard: guard }
+    }
+
+    /// Prüft das Schema vor der Registrierung. Alte Dateien werden als eigenständige Kopie migriert.
+    pub async fn prepare_open(&self, key: CrawlKey, path: PathBuf) -> Result<OpenReport, CmdError> {
+        let report =
+            tokio::task::spawn_blocking(move || match CrawlFile::open(&path, OpenMode::ReadOnly) {
+                Ok(_) => Ok(OpenReport {
+                    path,
+                    migrated: false,
+                    original: None,
+                }),
+                Err(StoreError::MigrationRequired { .. }) => {
+                    let name = path.file_stem().unwrap_or_default().to_string_lossy();
+                    let dest = path.with_file_name(format!("{name}.migrated.ospider"));
+                    CrawlFile::migrate_copy(&path, &dest).map_err(|e| store_error(&e))?;
+                    Ok(OpenReport {
+                        path: dest,
+                        migrated: true,
+                        original: Some(path),
+                    })
+                }
+                Err(e) => Err(store_error(&e)),
+            })
+            .await
+            .map_err(|e| internal("ReadPool::prepare_open", e.to_string()))??;
+        self.register(key, report.path.clone());
+        Ok(report)
+    }
+
     /// Macht eine Crawl-Datei unter `key` lesbar. Ein vorhandener Eintrag mit demselben Schlüssel wird ersetzt
     /// (leerlaufende Verbindungen werden geschlossen, laufende Arbeiten beenden ihre Verbindung).
     pub fn register(&self, key: CrawlKey, path: impl Into<PathBuf>) {
         let slot = Arc::new(Slot {
+            pinned: Mutex::new(HashMap::new()),
             path: path.into(),
             idle: Mutex::new(Vec::new()),
             permits: Arc::new(Semaphore::new(self.inner.capacity)),
+            access: Arc::new(RwLock::new(())),
         });
         self.inner.lock().insert(key, slot);
     }
@@ -119,6 +173,47 @@ impl ReadPool {
         self.run_with(crawl, token, f).await
     }
 
+    /// Verbindungsgebundener Cache (z. B. Sidebar-Temp-Tabellen): je Name eine
+    /// serialisierte Leseverbindung. Nutzt dieselben Abbruch- und Exklusivsperren
+    /// wie `run_with`; Registerwechsel und Schließen verwerfen auch diesen Cache.
+    pub async fn run_cached<T: Send + 'static>(
+        &self,
+        crawl: CrawlKey,
+        cache: &'static str,
+        token: CancelToken,
+        f: impl FnOnce(&CrawlFile, &CancelToken) -> Result<T, StoreError> + Send + 'static,
+    ) -> Result<T, CmdError> {
+        let slot = self
+            .inner
+            .lock()
+            .get(&crawl)
+            .cloned()
+            .ok_or_else(|| no_crawl(&crawl.0))?;
+        let cached = slot
+            .pinned
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .entry(cache)
+            .or_insert_with(|| {
+                Arc::new(Slot {
+                    pinned: Mutex::new(HashMap::new()),
+                    path: slot.path.clone(),
+                    idle: Mutex::new(Vec::new()),
+                    permits: Arc::new(Semaphore::new(1)),
+                    access: slot.access.clone(),
+                })
+            })
+            .clone();
+        let pool = ReadPool {
+            inner: Arc::new(Inner {
+                crawls: Mutex::new(HashMap::from([(crawl.clone(), cached)])),
+                hub: self.inner.hub.clone(),
+                capacity: 1,
+            }),
+        };
+        pool.run_with(crawl, token, f).await
+    }
+
     /// Wie [`run`](Self::run) mit ausdrücklicher Marke.
     pub async fn run_with<T: Send + 'static>(
         &self,
@@ -135,6 +230,7 @@ impl ReadPool {
         if token.is_cancelled() {
             return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"));
         }
+        let access = slot.access.clone().read_owned().await;
         let permit = Arc::clone(&slot.permits)
             .acquire_owned()
             .await
@@ -142,6 +238,7 @@ impl ReadPool {
         let hub = Arc::clone(&self.inner.hub);
         let joined = tokio::task::spawn_blocking(move || {
             let _permit = permit;
+            let _access = access;
             run_blocking(&slot, &hub, &token, f)
         })
         .await;
@@ -194,4 +291,16 @@ fn run_blocking<T>(
         }
         Err(panic) => Err(internal("ReadPool::run", panic_text(panic.as_ref()))),
     }
+}
+
+/// Exklusiver Zugriff; Freigabe beim Verwerfen, auch nach Abbruch.
+pub struct ExclusiveGuard {
+    _guard: Option<OwnedRwLockWriteGuard<()>>,
+}
+/// Ergebnis der Versionsprüfung; das Original bleibt bei Migration erhalten.
+#[derive(Debug, Clone)]
+pub struct OpenReport {
+    pub path: PathBuf,
+    pub migrated: bool,
+    pub original: Option<PathBuf>,
 }

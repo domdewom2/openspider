@@ -117,9 +117,9 @@ pub fn extract(doc: &Document) -> ElementSets {
                 let Some(name) = value.attr("name") else {
                     continue;
                 };
-                if name.eq_ignore_ascii_case("description") {
+                if name.trim().eq_ignore_ascii_case("description") {
                     Kind::MetaDescription
-                } else if name.eq_ignore_ascii_case("keywords") {
+                } else if name.trim().eq_ignore_ascii_case("keywords") {
                     Kind::MetaKeywords
                 } else {
                     continue;
@@ -153,4 +153,78 @@ enum Kind {
     MetaKeywords,
     H1,
     H2,
+}
+
+/// Annotates DOM facts independently of the validation analyzer.
+pub fn annotate_facts(doc: &Document, cfg: &crate::ParseConfig, page: &mut os_model::ParsedPage) {
+    use os_model::{ExtKey, Value};
+    let mut first_level = None;
+    let mut has_h1 = false;
+    let mut has_h2 = false;
+    let mut deep_before_h2 = false;
+    let mut title_outside = false;
+    let mut description_outside = false;
+    let mut alt = false;
+    for node in doc.html().tree.root().descendants() {
+        let Some(el) = ElementRef::wrap(node) else {
+            continue;
+        };
+        if &*el.value().name.ns != XHTML_NS || dom::in_template(el) {
+            continue;
+        }
+        let name = el.value().name();
+        if matches!(name, "h1" | "h2" | "h3" | "h4" | "h5" | "h6") {
+            let level = name.as_bytes()[1];
+            first_level.get_or_insert(level);
+            has_h1 |= level == b'1';
+            has_h2 |= level == b'2';
+            deep_before_h2 |= !has_h2 && level > b'2';
+        }
+        if cfg.html_validation && !dom::in_head(el) {
+            title_outside |= name == "title";
+            description_outside |= name == "meta"
+                && el
+                    .value()
+                    .attr("name")
+                    .is_some_and(|n| n.trim().eq_ignore_ascii_case("description"));
+        }
+        if name == "img"
+            && el
+                .value()
+                .attr("alt")
+                .is_some_and(|a| !text::normalize_ws(a).is_empty())
+        {
+            alt |= el
+                .ancestors()
+                .filter_map(ElementRef::wrap)
+                .any(|a| a.value().name() == "h1");
+        }
+    }
+    let h1_seq = has_h1 && first_level != Some(b'1');
+    let h2_seq = has_h2 && deep_before_h2;
+    for (key, value) in [
+        ("head.h1_alt", alt),
+        ("head.h1_non_sequential", h1_seq),
+        ("head.h2_non_sequential", h2_seq),
+        // Only the first two values are stored as columns. Missing must still
+        // distinguish a nonempty third (or later) occurrence from all-empty tags.
+        (
+            "head.meta_keywords_nonempty",
+            page.meta_keywords
+                .iter()
+                .any(|value| !value.text.is_empty()),
+        ),
+    ] {
+        page.ext
+            .push((ExtKey::from_static(key), Value::Bool(value)));
+    }
+    if cfg.html_validation {
+        for (key, value) in [
+            ("head.title_outside", title_outside),
+            ("head.description_outside", description_outside),
+        ] {
+            page.ext
+                .push((ExtKey::from_static(key), Value::Bool(value)));
+        }
+    }
 }

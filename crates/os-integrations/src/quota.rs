@@ -1,0 +1,214 @@
+//! Lokaler Verbrauch je Quelle, Property und Pazifiktag; unabhängig von Crawl-Dateien.
+use crate::{queue::pacific_day, ApiError};
+use os_model::{Clock, SystemClock, Timestamp};
+use std::{
+    collections::BTreeMap,
+    path::{Path, PathBuf},
+    sync::Mutex,
+};
+#[derive(Default, serde::Serialize, serde::Deserialize)]
+struct Ledger {
+    counts: BTreeMap<String, u64>,
+}
+pub struct QuotaLedger {
+    path: PathBuf,
+    lock: Mutex<()>,
+}
+impl QuotaLedger {
+    pub fn new(path: impl Into<PathBuf>) -> Self {
+        Self {
+            path: path.into(),
+            lock: Mutex::new(()),
+        }
+    }
+    fn lock_file(&self) -> Result<std::fs::File, ApiError> {
+        if let Some(parent) = self.path.parent() {
+            std::fs::create_dir_all(parent).map_err(|_| failure())?;
+        }
+        let file = std::fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(false)
+            .open(self.path.with_extension("lock"))
+            .map_err(|_| failure())?;
+        file.lock().map_err(|_| failure())?;
+        Ok(file)
+    }
+    fn key(source: &str, property: &str, now: Timestamp) -> String {
+        serde_json::to_string(&(source, property, pacific_day(now))).expect("string tuple")
+    }
+    fn read(&self) -> Result<Ledger, ApiError> {
+        match std::fs::read(&self.path) {
+            Ok(bytes) => serde_json::from_slice(&bytes).map_err(|_| failure()),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Ledger::default()),
+            Err(_) => Err(failure()),
+        }
+    }
+    fn write(&self, ledger: &Ledger) -> Result<(), ApiError> {
+        if let Some(parent) = self.path.parent() {
+            std::fs::create_dir_all(parent).map_err(|_| failure())?;
+        }
+        let temp = self
+            .path
+            .with_extension(format!("{}.tmp", oauth2::CsrfToken::new_random().secret()));
+        let result = (|| {
+            use std::io::Write;
+            let mut file = std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&temp)
+                .map_err(|_| failure())?;
+            file.write_all(&serde_json::to_vec(ledger).map_err(|_| failure())?)
+                .map_err(|_| failure())?;
+            file.sync_all().map_err(|_| failure())?;
+            std::fs::rename(&temp, &self.path).map_err(|_| failure())
+        })(); // rename ersetzt atomar auf den unterstützten Plattformen.
+        if result.is_err() {
+            let _ = std::fs::remove_file(temp);
+        }
+        result
+    }
+    pub fn reserve(
+        &self,
+        source: &str,
+        property: &str,
+        now: Timestamp,
+        limit: u64,
+    ) -> Result<bool, ApiError> {
+        self.reserve_limits_at(
+            &[(
+                source.to_string(),
+                property.to_string(),
+                pacific_day(now),
+                limit,
+            )],
+            now,
+        )
+    }
+    /// Reserviert mehrere Perioden atomar, z. B. Anbietertag und benutzerdefinierter Crawl-Cap.
+    pub fn reserve_limits(
+        &self,
+        limits: &[(String, String, String, u64)],
+    ) -> Result<bool, ApiError> {
+        self.reserve_limits_at(limits, SystemClock.now())
+    }
+    pub fn reserve_limits_at(
+        &self,
+        limits: &[(String, String, String, u64)],
+        now: Timestamp,
+    ) -> Result<bool, ApiError> {
+        let _lock = self.lock.lock().unwrap_or_else(|p| p.into_inner());
+        let _file = self.lock_file()?;
+        let mut ledger = self.read()?;
+        prune(&mut ledger, now, None);
+        let entries = limits
+            .iter()
+            .map(|(source, property, period, limit)| {
+                (
+                    serde_json::to_string(&(source, property, period)).expect("strings"),
+                    *limit,
+                )
+            })
+            .collect::<Vec<_>>();
+        if entries
+            .iter()
+            .any(|(key, limit)| ledger.counts.get(key).copied().unwrap_or(0) >= *limit)
+        {
+            self.write(&ledger)?;
+            return Ok(false);
+        }
+        for (key, _) in entries {
+            *ledger.counts.entry(key).or_default() += 1;
+        }
+        self.write(&ledger)?;
+        Ok(true)
+    }
+    pub fn remaining_period(
+        &self,
+        source: &str,
+        property: &str,
+        period: &str,
+        limit: u64,
+    ) -> Result<u64, ApiError> {
+        let _lock = self.lock.lock().unwrap_or_else(|p| p.into_inner());
+        let _file = self.lock_file()?;
+        let key = serde_json::to_string(&(source, property, period)).expect("strings");
+        Ok(limit.saturating_sub(self.read()?.counts.get(&key).copied().unwrap_or(0)))
+    }
+    pub fn remaining(
+        &self,
+        source: &str,
+        property: &str,
+        now: Timestamp,
+        limit: u64,
+    ) -> Result<u64, ApiError> {
+        let _lock = self.lock.lock().unwrap_or_else(|p| p.into_inner());
+        let _file = self.lock_file()?;
+        Ok(limit.saturating_sub(
+            *self
+                .read()?
+                .counts
+                .get(&Self::key(source, property, now))
+                .unwrap_or(&0),
+        ))
+    }
+    pub fn exhaust(
+        &self,
+        source: &str,
+        property: &str,
+        now: Timestamp,
+        limit: u64,
+    ) -> Result<(), ApiError> {
+        let _lock = self.lock.lock().unwrap_or_else(|p| p.into_inner());
+        let _file = self.lock_file()?;
+        let mut ledger = self.read()?;
+        prune(&mut ledger, now, None);
+        ledger
+            .counts
+            .insert(Self::key(source, property, now), limit);
+        self.write(&ledger)
+    }
+    /// Entfernt nur Crawl-Perioden des geschlossenen Crawls, keine Anbieterzähler.
+    pub fn close_crawl(&self, key: &str, now: Timestamp) -> Result<(), ApiError> {
+        let _lock = self.lock.lock().unwrap_or_else(|p| p.into_inner());
+        let _file = self.lock_file()?;
+        let mut ledger = self.read()?;
+        prune(&mut ledger, now, Some(&format!("crawl:{key}")));
+        self.write(&ledger)
+    }
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+}
+fn prune(ledger: &mut Ledger, now: Timestamp, closed: Option<&str>) {
+    let cutoff = (crate::queue::pacific_date(now) - time::Duration::days(2)).to_string();
+    ledger.counts.retain(|key, _| {
+        let Ok((_, _, period)) = serde_json::from_str::<(String, String, String)>(key) else {
+            return true;
+        };
+        if period.starts_with("crawl:") {
+            return closed != Some(period.as_str());
+        }
+        // Nur ISO-Datumsperioden bereinigen; fremde/kommende Periodentypen bleiben erhalten.
+        period.len() != 10 || period.as_str() >= cutoff.as_str()
+    });
+}
+fn failure() -> ApiError {
+    ApiError::Transport("API-Kontingentdatei nicht lesbar oder schreibbar".into())
+}
+/// Nächste Tagesgrenze, auch an Tagen mit 23 bzw. 25 Stunden.
+pub fn next_reset(now: Timestamp) -> Timestamp {
+    let day = pacific_day(now);
+    let mut lo = now.unix_millis();
+    let mut hi = lo + 27 * 60 * 60 * 1000;
+    while hi - lo > 1 {
+        let mid = lo + (hi - lo) / 2;
+        if pacific_day(Timestamp::from_unix_millis(mid)) == day {
+            lo = mid;
+        } else {
+            hi = mid;
+        }
+    }
+    Timestamp::from_unix_millis(hi)
+}

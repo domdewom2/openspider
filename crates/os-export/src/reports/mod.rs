@@ -33,7 +33,7 @@ use os_model::CrawlConfig;
 use os_store::CrawlFile;
 
 use crate::catalog::reports::{self, ReportKind};
-use crate::catalog::{stub_run, TableEntry};
+use crate::catalog::TableEntry;
 use crate::error::ExportError;
 use crate::output::open_writer;
 use crate::types::{Format, ReportResult};
@@ -53,7 +53,14 @@ pub fn save_report(
     out_dir: &Path,
     format: Format,
 ) -> Result<ReportResult, ExportError> {
-    save_report_in(&tabs::all(), file, cfg, name, out_dir, format)
+    save_report_in(
+        &tabs::configured_for_file(cfg, file),
+        file,
+        cfg,
+        name,
+        out_dir,
+        format,
+    )
 }
 
 /// Wie [`save_report`], gegen eine eigene Tab-Liste (Tests, abweichende Registry).
@@ -69,7 +76,12 @@ pub fn save_report_in(
     if reports::resolve(name).is_err() {
         if let Some(entry) = crate::catalog::find_table(&report_tables(), name) {
             let path = out_dir.join(entry.file_name(format.extension()));
-            let job = crate::catalog::TableJob { tabs, file, cfg };
+            let job = crate::catalog::TableJob {
+                tabs,
+                file,
+                cfg,
+                entry_name: name,
+            };
             let info = crate::catalog::export_table(entry, &job, &path, format)?;
             let warnings = info.warnings.clone();
             return Ok(ReportResult {
@@ -115,25 +127,13 @@ pub fn save_report_in(
     Ok(result)
 }
 
-/// Redirects: Redirects to Errors (OUT-084, M2-D12): Kettenformat wie OUT-081, nur Ketten mit Fehlerziel.
-// STUB(M2-D12)
-static REDIRECTS_TO_ERRORS: TableEntry = TableEntry {
-    name: "Redirects:Redirects to Errors",
-    aliases: &[],
-    file_stem: "Redirects to Errors",
-    header: crate::catalog::CHAIN_HEADER,
-    requires: &[],
-    owner: "M2-D12",
-    run: stub_run,
-};
-
 /// Alle Reports von M2 als Tabellen-Einträge in Menüreihenfolge (Stub: nur Kopfzeile).
 pub fn report_tables() -> Vec<&'static TableEntry> {
-    let groups: [&'static [TableEntry]; 15] = [
+    let groups: [&'static [TableEntry]; 13] = [
         serp_summary::entries(),
         canonical_chains::entries(),
         non_indexable_canonicals::entries(),
-        std::slice::from_ref(&REDIRECTS_TO_ERRORS),
+        redirects::entries(),
         redirect_canonical_chains::entries(),
         hreflang::entries(),
         insecure_content::entries(),
@@ -142,9 +142,58 @@ pub fn report_tables() -> Vec<&'static TableEntry> {
         a11y_summary::entries(),
         http_headers::entries(),
         cookies::entries(),
-        crawl_path::entries(),
-        queued_urls::entries(),
         sidebar::entries(),
     ];
     groups.iter().flat_map(|g| g.iter()).collect()
+}
+
+/// Report in einen bereits geöffneten Writer (OUT-010/075).
+pub fn save_report_to(
+    job: &crate::catalog::TableJob<'_>,
+    writer: &mut dyn crate::types::TableWriter,
+    ctx: &mut crate::types::ExportCtx<'_>,
+) -> Result<u64, ExportError> {
+    ctx.checkpoint()?;
+    let count = if let Ok(def) = reports::resolve(job.entry_name) {
+        match def.kind {
+            ReportKind::CrawlOverview => {
+                let overview = overview::build(job.file, job.cfg, job.tabs)?;
+                writer.header(
+                    &overview::HEADER
+                        .iter()
+                        .map(|s| (*s).to_owned())
+                        .collect::<Vec<_>>(),
+                )?;
+                let mut count = 0;
+                for row in overview.rows {
+                    ctx.checkpoint()?;
+                    let (kinds, values) = row.to_values();
+                    writer.row(&kinds, &values)?;
+                    count += 1;
+                    (ctx.progress)(count);
+                }
+                count
+            }
+            ReportKind::AllRedirects => {
+                redirects::write_report_to(job.file, RedirectReport::All, writer, ctx)?
+            }
+            ReportKind::RedirectChains => {
+                redirects::write_report_to(job.file, RedirectReport::Chains, writer, ctx)?
+            }
+        }
+    } else {
+        let tables = report_tables();
+        let entry = crate::catalog::find_table(&tables, job.entry_name)
+            .ok_or_else(|| ExportError::Unsupported(job.entry_name.into()))?;
+        let header = match entry.header_fn {
+            Some(f) => f(job)?,
+            None => entry.header.iter().map(|s| (*s).to_owned()).collect(),
+        };
+        writer.header(&header)?;
+        (entry.run)(job, writer)?
+    };
+    if count == 0 && ctx.skip_empty {
+        ctx.skipped.push(job.entry_name.into());
+    }
+    Ok(count)
 }

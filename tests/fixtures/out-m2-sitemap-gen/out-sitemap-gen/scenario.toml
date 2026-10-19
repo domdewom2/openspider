@@ -1,0 +1,19 @@
+# OUT-123: Last-Modified erreicht den Generator über HTTP, Engine und Store.
+[[route]]
+path = "/"
+content_type = "text/html"
+body = '<html><head><title>Datum</title></head><body><a href="/invalid">Ungültig</a><a href="/missing">Fehlt</a></body></html>'
+[route.headers]
+Last-Modified = "Tue, 01 Oct 2026 10:00:00 GMT"
+
+[[route]]
+path = "/invalid"
+content_type = "text/html"
+body = "<html><body>Ungültiger Header</body></html>"
+[route.headers]
+Last-Modified = "kein Datum"
+
+[[route]]
+path = "/missing"
+content_type = "text/html"
+body = "<html><body>Ohne Header</body></html>"

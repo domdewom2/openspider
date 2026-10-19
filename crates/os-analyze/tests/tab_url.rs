@@ -713,5 +713,17 @@ fn every_filter_is_a_subset_of_all() {
         }
     }
     let ids: Vec<_> = tabs::url::tab().filters.iter().map(|f| f.id).collect();
-    assert_eq!(ids, FILTERS);
+    assert_eq!(
+        ids,
+        [
+            FILTERS.as_slice(),
+            &[
+                "Repetitive Path",
+                "Internal Search",
+                "Broken Bookmark",
+                "GA Tracking Parameters"
+            ]
+        ]
+        .concat()
+    );
 }

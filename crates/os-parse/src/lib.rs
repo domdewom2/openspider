@@ -6,10 +6,13 @@
 //! `content`, `pixel`, `pdf`), P06 (`directives`, `canonical`, `hreflang`, `refresh`, `pagination`,
 //! `headers`, `effective`, `sitemap`).
 
+pub mod alternates;
 pub mod base;
+pub mod bookmarks;
 pub mod canonical;
 pub mod charset;
 pub mod content;
+pub mod crawlability;
 pub mod css;
 pub mod custom_extract;
 pub mod custom_search;
@@ -31,6 +34,7 @@ pub mod sd;
 pub mod security;
 pub mod sitemap;
 pub mod spelling;
+pub mod switches;
 pub mod text;
 pub mod validation;
 
@@ -44,6 +48,7 @@ use os_model::{
 /// Einstellungen der Auswertung einer Seite.
 #[derive(Debug, Clone)]
 pub struct ParseConfig {
+    pub crawl: CrawlConfig,
     /// robots.txt-Token des Crawlers (für `<meta name=…>` und `X-Robots-Tag`).
     pub robots_token: String,
     /// Inhaltsbereich für Wortzahl und Textanteil (ONPAGE-140).
@@ -82,6 +87,7 @@ impl ParseConfig {
     /// Leitet die Parse-Konfiguration aus der Crawl-Konfiguration ab (`pixel` aus).
     pub fn from_crawl_config(cfg: &CrawlConfig) -> Self {
         ParseConfig {
+            crawl: cfg.clone(),
             robots_token: cfg
                 .user_agent
                 .robots_token
@@ -133,6 +139,7 @@ pub struct PageCtx<'a> {
 
 /// Eingabe der Auswertung einer HTML-Antwort.
 pub struct ParseInput<'a> {
+    pub status: u16,
     /// URL der Antwort.
     pub url: &'a url::Url,
     /// Body (dekomprimiert).
@@ -162,7 +169,12 @@ pub fn parse_html(input: &ParseInput) -> ParsedPage {
     let base = base::resolve_base(&doc, input.url);
 
     let mut links = links::extract(&doc, &base, cfg);
-    let images = images::extract(&doc, &base);
+    let (images, image_links) = images::extract_with(&doc, &base, cfg);
+    links.extend(image_links);
+    if cfg.crawl.spider.store_uncrawlable_links {
+        links.extend(crawlability::inspect(&doc, &base, cfg));
+    }
+    links.extend(alternates::extract(&doc, &base, cfg));
     links.extend(css::extract_inline(&doc, &base));
 
     let elements::ElementSets {
@@ -210,6 +222,7 @@ pub fn parse_html(input: &ParseInput) -> ParsedPage {
 
     headers::merge(&mut page, headers::hints(input.url, input.headers, cfg));
 
+    switches::filter_directives(&mut page.directives, cfg);
     let by_source = |source: DirectiveSource| -> Vec<Directive> {
         page.directives
             .iter()
@@ -231,9 +244,14 @@ pub fn parse_html(input: &ParseInput) -> ParsedPage {
         headers: input.headers,
         cfg,
     };
+    pagination::run(&ctx, &mut page);
+    bookmarks::run(&ctx, &mut page);
+    elements::annotate_facts(&doc, cfg, &mut page);
+    content::run(&ctx, &mut page);
     security::run(&ctx, &mut page);
     if cfg.html_validation {
         validation::run(&ctx, &mut page);
+        validation::set_document_bytes(&mut page, input.body.len() as u64);
     }
     if cfg.readability || cfg.minhash {
         readability::run(&ctx, &mut page);
@@ -241,7 +259,7 @@ pub fn parse_html(input: &ParseInput) -> ParsedPage {
     if !cfg.custom_search.filters.is_empty() {
         custom_search::run(&ctx, &mut page);
     }
-    if !cfg.custom_extraction.extractors.is_empty() {
+    if (200..300).contains(&input.status) && !cfg.custom_extraction.extractors.is_empty() {
         custom_extract::run(&ctx, &mut page);
     }
     if cfg.structured_data_enabled() {
@@ -250,6 +268,7 @@ pub fn parse_html(input: &ParseInput) -> ParsedPage {
     if cfg.spelling.enabled || cfg.grammar.enabled {
         spelling::run(&ctx, &mut page);
     }
+    switches::apply(&mut page, cfg);
     page
 }
 
@@ -277,15 +296,91 @@ pub fn parse_pdf_meta(body: &[u8]) -> PdfMeta {
     pdf::meta(body)
 }
 
+/// Antwortfakten unabhängig vom HTML-Parser.
+pub struct ResponseInput<'a> {
+    pub url: &'a url::Url,
+    pub internal: bool,
+    pub purpose: os_model::FetchPurpose,
+    pub status: u16,
+    pub headers: &'a [(String, String)],
+    pub body: &'a [u8],
+    pub content_length: Option<u64>,
+    pub untruncated_bytes: Option<u64>,
+    pub truncated: bool,
+    pub cfg: &'a ParseConfig,
+}
+/// Feste Reihenfolge der Antwortmodule; auch für 3xx und externe Ressourcen.
+pub fn response_ext(input: &ResponseInput<'_>) -> Vec<(os_model::ExtKey, os_model::Value)> {
+    response_ext_with(
+        input,
+        &[
+            security::response_facts,
+            validation::response_facts,
+            images::response_facts,
+            canonical::response_facts,
+            pagination::response_facts,
+        ],
+    )
+}
+
+type ResponseHook = fn(&ResponseInput<'_>) -> Vec<(os_model::ExtKey, os_model::Value)>;
+fn response_ext_with(
+    input: &ResponseInput<'_>,
+    hooks: &[ResponseHook],
+) -> Vec<(os_model::ExtKey, os_model::Value)> {
+    hooks.iter().flat_map(|hook| hook(input)).collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // spec: TECH-008, TECH-001, ONPAGE-059
+    // Infrastruktur (M2-F05a); Fachprüfung M2-D04/D05/D10/D11.
+    #[test]
+    fn response_hooks_keep_order_and_receive_non_html_redirect_and_external_inputs() {
+        fn first(input: &ResponseInput<'_>) -> Vec<(os_model::ExtKey, os_model::Value)> {
+            assert_eq!(input.status, 302);
+            assert!(!input.internal);
+            assert_eq!(input.body, b"fixture");
+            vec![(
+                os_model::ExtKey::from_static("security.fixture"),
+                os_model::Value::Int(1),
+            )]
+        }
+        fn second(_: &ResponseInput<'_>) -> Vec<(os_model::ExtKey, os_model::Value)> {
+            vec![(
+                os_model::ExtKey::from_static("validation.fixture"),
+                os_model::Value::Int(2),
+            )]
+        }
+        let url = url::Url::parse("https://site.test/fixture.bin").unwrap();
+        let cfg = ParseConfig::from_crawl_config(&CrawlConfig::default());
+        let input = ResponseInput {
+            url: &url,
+            internal: false,
+            purpose: os_model::FetchPurpose::External,
+            status: 302,
+            headers: &[],
+            body: b"fixture",
+            content_length: Some(7),
+            untruncated_bytes: Some(7),
+            truncated: false,
+            cfg: &cfg,
+        };
+        let facts = response_ext_with(&input, &[first, second]);
+        assert_eq!(
+            facts.iter().map(|(_, v)| v.clone()).collect::<Vec<_>>(),
+            vec![os_model::Value::Int(1), os_model::Value::Int(2)]
+        );
+    }
 
     #[test]
     fn parse_entry_points_smoke() {
         let url = url::Url::parse("https://site.test/a").unwrap();
         let cfg = ParseConfig::from_crawl_config(&CrawlConfig::default());
         let input = ParseInput {
+            status: 200,
             url: &url,
             body: b"<html><head><title>T</title></head><body><a href=\"/b\">b</a></body></html>",
             content_type: Some("text/html"),
@@ -314,6 +409,7 @@ mod tests {
         let url = url::Url::parse("https://site.test/a").unwrap();
         let cfg = ParseConfig::from_crawl_config(cfg);
         parse_html(&ParseInput {
+            status: 200,
             url: &url,
             body: body.as_bytes(),
             content_type: Some("text/html"),
@@ -363,10 +459,20 @@ mod tests {
             .extractors
             .push(os_model::Extractor::default());
         let switched = page_with(&all_on, M2_HTML);
-        assert_eq!(plain, switched);
+        let m1_only = |mut page: ParsedPage| {
+            page.ext.clear();
+            page.structured_data.clear();
+            page.forms.clear();
+            page.validation = None;
+            page.custom_search.clear();
+            page.custom_extraction.clear();
+            page.minhash = None;
+            page
+        };
+        assert_eq!(m1_only(plain.clone()), m1_only(switched));
         // Standardregeln = Positionen von M1.
         let positions: Vec<os_model::LinkPosition> =
-            plain.links.iter().map(|l| l.position).collect();
+            plain.links.iter().map(|l| l.position.clone()).collect();
         assert_eq!(
             positions,
             [

@@ -6,3 +6,14 @@
 # M2-F02 legt nur die Datei an; die Einträge liefert das Paket des Tabs.
 
 schema = 1
+
+[[issue]]
+id = "response-codes-internal-redirection-http-refresh"
+tab = "Response Codes"
+filter = "Internal Redirection (HTTP Refresh)"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "response-codes-internal-redirection-http-refresh"

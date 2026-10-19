@@ -382,11 +382,17 @@ async fn files_are_named_after_the_report_and_xlsx_holds_the_same_table() {
 }
 
 // spec: OUT-081 [M2]
-#[test]
-#[ignore = "M2: CRAWL-018 HSTS-Policy braucht den HSTS-Speicher der Engine (TLS-Fixture mit Strict-Transport-Security)"]
-fn hsts_policy_hop_is_307_hsts_policy() {
-    // Erwartung (OUT-081): erster Sprung `Redirect Type 1` = `HSTS Policy`, `Status Code 1` = 307,
-    // `Status 1` = `HSTS Policy`; `Temp Redirect in Chain` = False (kein Server-Sprung).
+// spec: CRAWL-018 [M2]
+#[tokio::test]
+async fn hsts_policy_hop_is_307_hsts_policy() {
+    let (fx, cfg) = crawl(None, &[]).await;
+    fx.file.conn().execute("UPDATE urls SET status_code = 307, status = 'HSTS Policy', redirect_type = 'hsts_policy' WHERE address = 'http://site.test/a'", []).unwrap();
+    let (_tmp, t) = load(&fx, &cfg, "Redirects:All Redirects");
+    let r = t.row("Address", "/a");
+    assert_eq!(hop(&t, r, "Redirect Type", 1), "HSTS Policy");
+    assert_eq!(hop(&t, r, "Status Code", 1), "307");
+    assert_eq!(hop(&t, r, "Status", 1), "HSTS Policy");
+    assert_eq!(t.get(r, "Temp Redirect in Chain"), "False");
 }
 
 // spec: OUT-081 [M2]
@@ -421,4 +427,203 @@ async fn reports_match_the_regression_goldens() {
         let bases: Vec<&str> = bases.iter().map(String::as_str).collect();
         assert_golden(golden.join(file), &normalize(&text, &bases));
     }
+}
+
+// spec: OUT-084
+// spec: ONPAGE-067
+#[tokio::test]
+async fn errors_report_includes_mixed_chain_but_excludes_success_and_loop() {
+    let cfg = base_config();
+    let fx = crawl_fixture_from("onpage-m2-rc", "http://site.test/", cfg.clone()).await;
+    let (_tmp, t) = load(&fx, &cfg, "Redirects:Redirects to Errors");
+    assert_eq!(t.rows.len(), 1);
+    let r = t.row("Address", "/refresh");
+    assert_eq!(t.get(r, "Number of Redirects"), "2");
+    assert_eq!(t.get(r, "Final Status Code"), "404");
+    assert_eq!(t.get(r, "Chain Type"), "Mixed");
+    assert_eq!(t.header.len(), 21);
+}
+
+// spec: OUT-084
+#[tokio::test]
+async fn all_redirect_types_include_blocked_no_response_and_server_error_targets() {
+    let cfg = base_config();
+    let fx = crawl_fixture_from("onpage-m2-rc", "http://site.test/", cfg.clone()).await;
+    for kind in [
+        "http",
+        "meta_refresh",
+        "http_refresh",
+        "javascript",
+        "hsts_policy",
+    ] {
+        fx.file
+            .conn()
+            .execute(
+                "UPDATE urls SET redirect_type = ?1 WHERE address = 'http://site.test/refresh'",
+                [kind],
+            )
+            .unwrap();
+        for (code, blocked, status) in [
+            (0, 0, "DNS Lookup Failed"),
+            (0, 1, "Blocked by Robots.txt"),
+            (503, 0, "Service Unavailable"),
+        ] {
+            fx.file.conn().execute("UPDATE urls SET status_code = ?1, robots_blocked = ?2, status = ?3 WHERE address = 'http://site.test/error'", (code, blocked, status)).unwrap();
+            let (_tmp, t) = load(&fx, &cfg, "Redirects:Redirects to Errors");
+            assert_eq!(t.rows.len(), 1, "{kind}: {status}");
+            assert_eq!(t.get(&t.rows[0], "Final Status"), status);
+        }
+    }
+}
+
+// spec: OUT-085
+#[tokio::test]
+async fn list_reports_keep_each_uploaded_start_and_upload_order() {
+    let cfg = base_config();
+    let fx = crawl_fixture_from("onpage-m2-rc", "http://site.test/", cfg.clone()).await;
+    fx.file.conn().execute("INSERT INTO list_input (position, original, url_id, outcome) SELECT 0, address, id, 'ok' FROM urls WHERE address = 'http://site.test/redirect'", []).unwrap();
+    fx.file.conn().execute("INSERT INTO list_input (position, original, url_id, outcome) SELECT 1, address, id, 'ok' FROM urls WHERE address = 'http://site.test/refresh'", []).unwrap();
+    let (_tmp, t) = load(&fx, &cfg, "Redirects:All Redirects");
+    assert_eq!(
+        t.column("Address"),
+        ["http://site.test/redirect", "http://site.test/refresh"]
+    );
+    fx.file
+        .conn()
+        .execute(
+            "UPDATE urls SET redirect_target_id = NULL WHERE address = 'http://site.test/refresh'",
+            [],
+        )
+        .unwrap();
+    let (_tmp, t) = load(&fx, &cfg, "Redirects:All Redirects");
+    assert_eq!(
+        t.get(t.row("Address", "/refresh"), "Final Status"),
+        "Not Followed"
+    );
+}
+
+// spec: OUT-085
+#[tokio::test]
+async fn list_chain_report_keeps_not_followed_starts() {
+    let cfg = base_config();
+    let fx = crawl_fixture_from("onpage-m2-rc", "http://site.test/", cfg.clone()).await;
+    fx.file.conn().execute("INSERT INTO list_input (position, original, url_id, outcome) SELECT 0, address, id, 'ok' FROM urls WHERE address = 'http://site.test/refresh'", []).unwrap();
+    fx.file
+        .conn()
+        .execute(
+            "UPDATE urls SET redirect_target_id = NULL WHERE address = 'http://site.test/refresh'",
+            [],
+        )
+        .unwrap();
+    let (_tmp, t) = load(&fx, &cfg, "Redirects:Redirect Chains");
+    assert_eq!(t.rows.len(), 1);
+    assert_eq!(t.get(&t.rows[0], "Final Status"), "Not Followed");
+    assert_eq!(t.get(&t.rows[0], "Number of Redirects"), "1");
+}
+
+// spec: OUT-084
+// spec: ONPAGE-067
+#[tokio::test]
+async fn error_report_matches_failure_filters_and_writes_the_same_xlsx_table() {
+    let cfg = base_config();
+    let fx = crawl_fixture_from("onpage-m2-rc", "http://site.test/errors-root", cfg.clone()).await;
+    let (_tmp, t) = load(&fx, &cfg, "Redirects:Redirects to Errors");
+    assert_eq!(t.rows.len(), 4);
+    for (path, hops, code, status) in [
+        ("/r-to-404", "1", "404", "Not Found"),
+        ("/r-to-blocked", "1", "0", "Blocked by Robots.txt"),
+        ("/r-chain-500", "2", "500", "Internal Server Error"),
+        ("/r-to-drop", "1", "0", "Connection Error"),
+    ] {
+        let row = t.row("Address", path);
+        assert_eq!(t.get(row, "Number of Redirects"), hops, "{path}");
+        assert_eq!(t.get(row, "Final Status Code"), code, "{path}");
+        assert_eq!(t.get(row, "Final Status"), status, "{path}");
+        let mut targets = Vec::new();
+        for filter in [
+            "Blocked by Robots.txt",
+            "No Response",
+            "Client Error (4XX)",
+            "Server Error (5XX)",
+        ] {
+            let mut q = os_analyze::views::ViewQuery::new("Response Codes", filter);
+            q.columns = os_analyze::views::ColumnSelection::Named(vec!["Address".into()]);
+            targets.extend(
+                os_analyze::views::query_view(&fx.file, &cfg, &q)
+                    .unwrap()
+                    .rows
+                    .into_iter()
+                    .map(|r| r[0].clone()),
+            );
+        }
+        assert!(targets.contains(&os_model::Value::Text(t.get(row, "Final Address").into())));
+    }
+    let (_tmp, result) = report(&fx, &cfg, "Redirects:Redirects to Errors", Format::Xlsx);
+    use calamine::Reader;
+    let mut workbook: calamine::Xlsx<_> = calamine::open_workbook(&result.files[0].path).unwrap();
+    let range = workbook.worksheet_range_at(0).unwrap().unwrap();
+    let actual: Vec<Vec<String>> = range
+        .rows()
+        .map(|r| r.iter().map(ToString::to_string).collect())
+        .collect();
+    let mut expected = vec![t.header];
+    expected.extend(t.rows);
+    assert_eq!(actual, expected);
+}
+
+// spec: OUT-085
+#[tokio::test]
+async fn real_list_crawl_reports_unfollowed_targets_in_upload_order() {
+    use os_engine::testing::{site_fetcher, test_deps};
+    use os_engine::{start_crawl, CrawlRequest, CrawlSource};
+    let site = os_testsite::TestSite::start("onpage-m2-rc").await.unwrap();
+    let cfg = os_engine::list_input::list_config(base_config());
+    let deps = test_deps();
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("list.ospider");
+    let handle = start_crawl(
+        site_fetcher(&site, &cfg, &deps),
+        CrawlRequest {
+            config: cfg.clone(),
+            source: CrawlSource::List {
+                items: vec![addr("/r-chain-500"), addr("/refresh")],
+                label: "redirect starts".into(),
+            },
+            file: path.clone(),
+            project: "d12".into(),
+            name: "list redirects".into(),
+        },
+        deps,
+    )
+    .await
+    .unwrap();
+    handle.wait().await.unwrap();
+    let file = os_store::CrawlFile::open(&path, os_store::OpenMode::ReadOnly).unwrap();
+    for name in ["Redirects:All Redirects", "Redirects:Redirect Chains"] {
+        let out = tempfile::tempdir().unwrap();
+        let result = save_report(&file, &cfg, name, out.path(), Format::Csv).unwrap();
+        let table = Table::read(&result.files[0].path);
+        assert_eq!(
+            table.column("Address"),
+            [addr("/r-chain-500"), addr("/refresh")]
+        );
+        for row in &table.rows {
+            assert_eq!(table.get(row, "Number of Redirects"), "1");
+            assert_eq!(table.get(row, "Final Status"), "Not Followed");
+            assert_eq!(table.get(row, "Final Status Code"), "");
+        }
+    }
+    assert!(!site.requests().iter().any(
+        |r| ["/r-to-500", "/redirect", "/e500", "/error"].contains(&r.path_and_query.as_str())
+    ));
+    let out = tempfile::tempdir().unwrap();
+    let result = save_report(
+        &file,
+        &cfg,
+        "Redirects:Redirects to Errors",
+        out.path(),
+        Format::Csv,
+    )
+    .unwrap();
+    assert_eq!(result.files[0].rows, 0);
 }

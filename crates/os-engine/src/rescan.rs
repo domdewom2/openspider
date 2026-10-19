@@ -87,7 +87,7 @@ fn prepare_recrawl(
             let norm = os_url::parse_start_url(&enc)
                 .map_err(|e| EngineError::Invalid(format!("Start-URL: {e}")))?;
             (
-                CrawlScope::new(Scope::new(&norm, &cfg.scope)),
+                CrawlScope::new(Scope::new(&norm, &cfg.scope).with_cdns(&cfg.cdns)),
                 norm.encoded.clone(),
             )
         }
@@ -101,7 +101,7 @@ fn prepare_recrawl(
                 })?;
             let hosts = std::mem::take(&mut restored.list_hosts);
             (
-                CrawlScope::with_hosts(Scope::new(&anchor, &cfg.scope), hosts),
+                CrawlScope::with_hosts(Scope::new(&anchor, &cfg.scope).with_cdns(&cfg.cdns), hosts),
                 String::new(),
             )
         }
@@ -142,6 +142,7 @@ fn prepare_recrawl(
                 hops: 0,
                 session: 0,
                 replace: true,
+                attempt: 0,
             });
         }
     }
@@ -222,7 +223,7 @@ pub async fn recrawl_urls<F: Fetch>(
             let Some(item) = pending.next() else { break };
             {
                 let mut core = sh.core.lock().unwrap_or_else(|p| p.into_inner());
-                core.active += 1;
+                core.start_worker(item.priority == 0);
             }
             set.spawn(worker::process(Arc::clone(&sh), item));
         }
@@ -255,6 +256,8 @@ pub async fn recrawl_urls<F: Fetch>(
 
 /// Tabellen mit einer Spalte, die auf eine URL zeigt und beim Entfernen der URL zeilenweise gelöscht wird.
 const OWNED: &[(&str, &str)] = &[
+    ("cookies", "url_id"),
+    ("discovery_edges", "target_id"),
     ("links", "source_id"),
     ("image_instances", "page_id"),
     ("canonicals", "url_id"),

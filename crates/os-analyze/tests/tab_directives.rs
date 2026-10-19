@@ -241,6 +241,8 @@ async fn columns_and_occurrences_follow_the_spec() {
             "Meta Refresh 1",
             "Canonical Link Element 1",
             "HTTP Canonical 1",
+            "Indexability",
+            "Indexability Status",
         ]
     );
     // Occurrences = Meta-Robots- + X-Robots-Tag-Werte
@@ -250,7 +252,7 @@ async fn columns_and_occurrences_follow_the_spec() {
     assert_eq!(occurrences("/conflict-meta.html"), Value::Int(2));
     assert_eq!(occurrences("/conflict-mixed.html"), Value::Int(2));
     assert_eq!(occurrences("/xrobots-two.html"), Value::Int(2));
-    // Die OS-Erweiterungen (Wirkung und Indexierbarkeit) stehen nur bei „alle Spalten“ und hinten.
+    // Indexierbarkeit ist Standard; die effektive Wirkung bleibt eine OS-Erweiterung.
     q.columns = ColumnSelection::All;
     let all = query_view(&c.fx.file, &c.cfg, &q).unwrap();
     assert_eq!(
@@ -539,22 +541,7 @@ async fn self_referencing_refresh_stays_in_the_filter_without_the_option() {
     assert_eq!(c.status("/refresh-0.html"), "Redirected");
 }
 
-// Respect Noindex (CRAWL-091): noindex-URLs werden ausgeblendet – außer in den Directives-Filtern; zusammen mit
-// TECH-068 nur Seiten mit dem Grund noindex.
-// spec: TECH-051 [M2]
-#[tokio::test]
-#[ignore = "M2: TECH-051 Respect Noindex (CRAWL-091) gehört nicht zu M1"]
-async fn respect_noindex_hides_noindex_urls_except_in_the_directives_filters() {
-    unreachable!("M2");
-}
-
-// „Outside <head>“ (TECH-065) hängt an der HTML-Validierung (TECH-008, P1).
-// spec: TECH-051 [M2]
-#[tokio::test]
-#[ignore = "M2: TECH-008 HTML-Validierung (Outside-<head>-Filter) gehört nicht zu M1"]
-async fn outside_head_filter_needs_html_validation() {
-    unreachable!("M2");
-}
+// M2-Ergänzungen: tab_directives_m2.rs; schichtübergreifend: pending_w1_d06.rs.
 
 // Golden-Dateien (TECH-007)
 // spec: TECH-051

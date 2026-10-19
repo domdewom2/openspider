@@ -18,6 +18,7 @@ const ENTRIES: &[TableEntry] = &[TableEntry {
     aliases: &[],
     file_stem: "Web:Screenshots",
     header: &["Address", "File"],
+    header_fn: None,
     requires: &[ReportRequirement::Rendering],
     owner: "M2-R02",
     run: stub_run,

@@ -66,6 +66,8 @@ impl Fixture {
                 purpose: FetchPurpose::Page,
                 cookies: None,
                 max_body_bytes: 0,
+                attempt: 0,
+                body_limit: Default::default(),
             })
             .await;
         let FetchOutcome::Response(r) = result.outcome else {
@@ -79,6 +81,7 @@ impl Fixture {
             .map(|(_, v)| v.clone());
         let cfg = ParseConfig::from_crawl_config(&self.cfg);
         parse_html(&ParseInput {
+            status: 200,
             url: &url,
             body: &r.body,
             content_type: content_type.as_deref(),
@@ -153,6 +156,7 @@ fn synth(link_type: LinkType, raw: &str, resolved: Option<&str>, order: u32) -> 
         position: LinkPosition::Content,
         in_head: true,
         doc_order: order,
+        ..Default::default()
     }
 }
 
@@ -211,6 +215,7 @@ fn cfg_with(slot: Slot, store: bool, crawl: bool) -> CrawlConfig {
 }
 
 // spec: CRAWL-038
+// spec: CRAWL-051
 #[tokio::test]
 async fn matrix_fixture_page_yields_one_link_of_every_type() {
     let fx = Fixture::start("crawl-store-crawl-matrix").await;
@@ -238,6 +243,7 @@ async fn matrix_fixture_page_yields_one_link_of_every_type() {
         ("Rel Next", "/m/next.html"),
         ("Rel Prev", "/m/prev.html"),
         ("Hreflang", "/m/hreflang-fr.html"),
+        ("Mobile Alternate", "/m/mobile.html"),
         ("Meta Refresh", "/m/refresh.html"),
     ];
     expected.sort();
@@ -249,6 +255,7 @@ async fn matrix_fixture_page_yields_one_link_of_every_type() {
 }
 
 // spec: CRAWL-038
+// spec: CRAWL-051
 #[tokio::test]
 async fn matrix_all_four_switch_combinations_per_link_type() {
     let fx = Fixture::start("crawl-store-crawl-matrix").await;
@@ -309,6 +316,12 @@ async fn matrix_all_four_switch_combinations_per_link_type() {
             |s| &mut s.meta_refresh,
             false,
         ),
+        (
+            LinkType::MobileAlternate,
+            "/m/mobile.html",
+            |s| &mut s.mobile_alternate,
+            false,
+        ),
     ];
     for (link_type, target, slot, external) in cases {
         let link = links
@@ -333,6 +346,7 @@ async fn matrix_all_four_switch_combinations_per_link_type() {
 }
 
 // spec: CRAWL-038
+// spec: CRAWL-051
 #[tokio::test]
 async fn matrix_defaults_crawl_everything_except_store_only_types() {
     let fx = Fixture::start("crawl-store-crawl-matrix").await;
@@ -352,7 +366,7 @@ async fn matrix_defaults_crawl_everything_except_store_only_types() {
     .iter()
     .map(|s| s.to_string())
     .collect();
-    // Paginierung und hreflang sind standardmäßig nur gespeichert (CRAWL-047/048).
+    // Paginierung, hreflang und Mobile Alternate sind standardmäßig nur gespeichert.
     assert_eq!(targets, expected);
     let stored_only: Vec<_> = fx
         .decisions(&links, &fx.cfg, true)
@@ -360,7 +374,7 @@ async fn matrix_defaults_crawl_everything_except_store_only_types() {
         .filter(|(_, d)| d.store && !d.crawl)
         .map(|(l, d)| (l.link_type, d.reason))
         .collect();
-    assert_eq!(stored_only.len(), 3);
+    assert_eq!(stored_only.len(), 4);
     assert!(stored_only
         .iter()
         .all(|(_, r)| *r == Some(NotCrawledReason::StoreOnly)));

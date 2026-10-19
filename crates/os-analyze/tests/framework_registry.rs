@@ -53,7 +53,7 @@ fn every_filter_is_a_subset_of_all_and_counts_match_the_views() {
     let cfg = CrawlConfig::default();
     let counts = filter_counts(&file, &cfg).unwrap();
     // Stub-Tabs und Stub-Filter von M2 (M2-F02) haben noch keine Zähler (`views::filter_counts_in`).
-    let all_tabs = tabs::all();
+    let all_tabs = tabs::configured(&cfg);
     let registered: usize = all_tabs
         .iter()
         .filter(|t| !t.is_stub())
@@ -133,6 +133,12 @@ fn overview_labels_use_the_current_thresholds_and_states_are_complete() {
     assert!(pending.iter().all(|c| c.count.is_none() && c.pct.is_none()));
     let all_filters = counts.iter().filter(|c| c.filter == "All");
     for c in all_filters {
+        // M2-D09 replaces the SD stub: All requires at least one enabled format (TECH-183).
+        if c.tab == "Structured Data" {
+            assert!(matches!(c.state, FilterState::NeedsConfig(_)));
+            assert!(c.count.is_none() && c.pct.is_none());
+            continue;
+        }
         assert_eq!(
             c.state,
             FilterState::Ready,

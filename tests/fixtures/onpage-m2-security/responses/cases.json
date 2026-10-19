@@ -1,0 +1,357 @@
+[
+  {
+    "url": "https://site.test/hsts",
+    "headers": {},
+    "expect": {
+      "missing_hsts": true,
+      "missing_csp": true,
+      "missing_xcto": true,
+      "missing_xfo": true,
+      "missing_referrer_policy": true
+    }
+  },
+  {
+    "url": "http://site.test/redirect",
+    "status": 302,
+    "headers": {
+      "Content-Security-Policy-Report-Only": "x"
+    },
+    "expect": {
+      "missing_hsts": false,
+      "missing_csp": true
+    }
+  },
+  {
+    "url": "https://site.test/non-html",
+    "headers": {
+      "sTrIcT-tRaNsPoRt-SeCuRiTy": "max-age=0",
+      "CONTENT-SECURITY-POLICY": "",
+      "X-Content-Type-Options": " NoSniff ",
+      "X-Frame-Options": " DeNy ",
+      "Referrer-Policy": "unsafe-url, strict-origin, foo"
+    },
+    "expect": {
+      "missing_hsts": false,
+      "missing_csp": false,
+      "missing_xcto": false,
+      "missing_xfo": false,
+      "missing_referrer_policy": false
+    }
+  },
+  {
+    "headers": {
+      "X-Content-Type-Options": "nosniff"
+    },
+    "expect": {
+      "missing_xcto": false
+    }
+  },
+  {
+    "headers": {
+      "X-Content-Type-Options": "NoSniff"
+    },
+    "expect": {
+      "missing_xcto": false
+    }
+  },
+  {
+    "headers": {
+      "X-Content-Type-Options": "sniff"
+    },
+    "expect": {
+      "missing_xcto": true
+    }
+  },
+  {
+    "headers": {
+      "X-Content-Type-Options": ""
+    },
+    "expect": {
+      "missing_xcto": true
+    }
+  },
+  {
+    "headers": {
+      "X-Frame-Options": "DENY",
+      "Content-Security-Policy": "frame-ancestors 'self'"
+    },
+    "expect": {
+      "missing_xfo": false
+    }
+  },
+  {
+    "headers": {
+      "X-Frame-Options": "sameorigin",
+      "Content-Security-Policy": "frame-ancestors 'self'"
+    },
+    "expect": {
+      "missing_xfo": false
+    }
+  },
+  {
+    "headers": {
+      "X-Frame-Options": " ALLOW-FROM https://x ",
+      "Content-Security-Policy": "frame-ancestors 'self'"
+    },
+    "expect": {
+      "missing_xfo": true
+    }
+  },
+  {
+    "headers": {
+      "X-Frame-Options": "",
+      "Content-Security-Policy": "frame-ancestors 'self'"
+    },
+    "expect": {
+      "missing_xfo": true
+    }
+  },
+  {
+    "headers": {
+      "Referrer-Policy": "strict-origin-when-cross-origin"
+    },
+    "expect": {
+      "missing_referrer_policy": false
+    }
+  },
+  {
+    "headers": {
+      "Referrer-Policy": "no-referrer"
+    },
+    "expect": {
+      "missing_referrer_policy": false
+    }
+  },
+  {
+    "headers": {
+      "Referrer-Policy": "no-referrer-when-downgrade"
+    },
+    "expect": {
+      "missing_referrer_policy": false
+    }
+  },
+  {
+    "headers": {
+      "Referrer-Policy": "strict-origin"
+    },
+    "expect": {
+      "missing_referrer_policy": false
+    }
+  },
+  {
+    "headers": {
+      "Referrer-Policy": "unsafe-url"
+    },
+    "expect": {
+      "missing_referrer_policy": true
+    }
+  },
+  {
+    "headers": {
+      "Referrer-Policy": "origin"
+    },
+    "expect": {
+      "missing_referrer_policy": true
+    }
+  },
+  {
+    "headers": {
+      "Referrer-Policy": "same-origin"
+    },
+    "expect": {
+      "missing_referrer_policy": true
+    }
+  },
+  {
+    "headers": {
+      "Referrer-Policy": "unsafe-url, strict-origin"
+    },
+    "expect": {
+      "missing_referrer_policy": false
+    }
+  },
+  {
+    "headers": {
+      "Referrer-Policy": "strict-origin, foo"
+    },
+    "expect": {
+      "missing_referrer_policy": false
+    }
+  },
+  {
+    "headers": {
+      "Referrer-Policy": "strict-origin, unsafe-url"
+    },
+    "expect": {
+      "missing_referrer_policy": true
+    }
+  },
+  {
+    "headers": {
+      "Referrer-Policy": "foo"
+    },
+    "expect": {
+      "missing_referrer_policy": true
+    }
+  },
+  {
+    "url": "https://site.test/image.jpg",
+    "mime": "application/javascript",
+    "body": "let x=1;",
+    "expect": {
+      "bad_content_type": true
+    }
+  },
+  {
+    "url": "https://site.test/script.js",
+    "mime": "text/javascript",
+    "body": "let x=1;",
+    "expect": {
+      "bad_content_type": true
+    }
+  },
+  {
+    "url": "https://site.test/script.js",
+    "mime": "application/javascript",
+    "body": "let x=1;",
+    "expect": {
+      "bad_content_type": false
+    }
+  },
+  {
+    "url": "https://site.test/page",
+    "mime": "text/plain",
+    "body": "plain text",
+    "expect": {
+      "bad_content_type": false
+    }
+  },
+  {
+    "url": "https://site.test/logo",
+    "mime": "text/html",
+    "body": "PNG",
+    "expect": {
+      "bad_content_type": true
+    }
+  },
+  {
+    "url": "https://site.test/bad",
+    "mime": "html",
+    "body": "text",
+    "expect": {
+      "bad_content_type": true
+    }
+  },
+  {
+    "url": "https://site.test/wrong",
+    "mime": "image/jpeg",
+    "body": "<!doctype html><html>",
+    "expect": {
+      "bad_content_type": true
+    }
+  },
+  {
+    "url": "https://site.test/UPPER.CSS",
+    "mime": "text/css; charset=UTF-8",
+    "body": "body{}",
+    "expect": {
+      "bad_content_type": false
+    }
+  },
+  {
+    "url": "https://site.test/x.svg",
+    "mime": "image/svg+xml",
+    "body": "<svg></svg>",
+    "expect": {
+      "bad_content_type": false
+    }
+  },
+  {
+    "url": "https://site.test/x.png",
+    "mime": "image/png",
+    "body": "PNG",
+    "expect": {
+      "bad_content_type": false
+    }
+  },
+  {
+    "url": "https://site.test/x.png",
+    "mime": "image/jpeg",
+    "body": "no signature",
+    "expect": {
+      "bad_content_type": false
+    }
+  },
+  {
+    "url": "https://site.test/x.woff",
+    "mime": "font/ttf",
+    "body": "no signature",
+    "expect": {
+      "bad_content_type": false
+    }
+  },
+  {
+    "url": "https://site.test/x.xml",
+    "mime": "application/atom+xml",
+    "body": "<feed/>",
+    "expect": {
+      "bad_content_type": false
+    }
+  },
+  {
+    "url": "https://site.test/x.mp4",
+    "mime": "audio/mpeg",
+    "body": "no signature",
+    "expect": {
+      "bad_content_type": false
+    }
+  },
+  {
+    "url": "https://site.test/x.js",
+    "mime": "application/x-ecmascript",
+    "body": "x=1",
+    "expect": {
+      "bad_content_type": false
+    }
+  },
+  {
+    "url": "https://site.test/x.unknown",
+    "mime": "text/css",
+    "body": "x{}",
+    "expect": {
+      "bad_content_type": false
+    }
+  },
+  {
+    "url": "https://site.test/file.json",
+    "mime": "text/plain",
+    "body": "no signature",
+    "expect": {
+      "bad_content_type": false
+    }
+  },
+  {
+    "url": "https://site.test/file.json",
+    "mime": "application/zip",
+    "body": "no signature",
+    "expect": {
+      "bad_content_type": false
+    }
+  },
+  {
+    "url": "https://site.test/file.json",
+    "mime": "image/png",
+    "body": "no signature",
+    "expect": {
+      "bad_content_type": true
+    }
+  },
+  {
+    "url": "https://site.test/file.json",
+    "mime": "application/javascript",
+    "body": "no signature",
+    "expect": {
+      "bad_content_type": true
+    }
+  }
+]
