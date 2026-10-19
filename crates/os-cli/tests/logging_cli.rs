@@ -78,18 +78,28 @@ async fn env_module_filter_only_increases_fetch_level() {
 fn panic_writes_a_redacted_backtrace_before_exit() {
     const CHILD: &str = "OPENSPIDER_O01_PANIC_CHILD";
     if std::env::var_os(CHILD).is_some() {
+        let old = std::panic::take_hook();
+        std::panic::set_hook(Box::new(move |info| {
+            eprintln!("PREVIOUS-CLI-HOOK");
+            old(info);
+        }));
         os_cli::logging::init(&os_cli::RunArgs::default());
         panic!("password=PANIC-FIXTURE");
     }
     let home = tempfile::tempdir().unwrap();
     let output = std::process::Command::new(std::env::current_exe().unwrap())
-        .args(["--exact", "panic_writes_a_redacted_backtrace_before_exit"])
+        .args([
+            "--exact",
+            "panic_writes_a_redacted_backtrace_before_exit",
+            "--nocapture",
+        ])
         .env(CHILD, "1")
         .env("OPENSPIDER_HOME", home.path())
         .env("OPENSPIDER_SECRET_STORE", "memory")
         .output()
         .unwrap();
     assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("PREVIOUS-CLI-HOOK"));
     let raw: String = fs::read_dir(home.path().join("logs"))
         .unwrap()
         .map(|e| fs::read_to_string(e.unwrap().path()).unwrap())

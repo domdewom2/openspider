@@ -1,5 +1,6 @@
 //! Transport-independent diagnostic and log primitives (OUT-240 … OUT-244).
-//! Compiled by the CLI as well, without depending on the app service crate.
+//! Temporary shared source until M2-N01 provides a common diagnostic crate (C7).
+//! Keep this module independent of os-app types until that migration.
 use serde_json::{json, Value};
 use std::{
     collections::BTreeMap,
@@ -36,25 +37,79 @@ pub fn sensitive(name: &str) -> bool {
             | "clientsecret"
     )
 }
-/// Free text is conservatively cut off after a sensitive assignment, including multiword headers.
+/// Redact assignment values while retaining subsequent diagnostic fields.
+/// Header values may contain multiple words/cookies, so keep masking those conservatively.
 pub fn redact_text(text: &str) -> String {
     text.lines()
         .map(|line| {
             let clean = os_fetch::redact::text(line);
-            let mut start = 0;
-            for (i, c) in clean.char_indices() {
-                if c.is_ascii_alphanumeric() || c == '-' || c == '_' {
+            let bytes = clean.as_bytes();
+            let mut out = String::with_capacity(clean.len());
+            let mut copied = 0;
+            let mut i = 0;
+            while i < bytes.len() {
+                if !(bytes[i].is_ascii_alphanumeric() || matches!(bytes[i], b'-' | b'_')) {
+                    i += 1;
                     continue;
                 }
-                if start < i && sensitive(&clean[start..i]) {
-                    let tail = clean[i..].trim_start_matches(['"', '\'', ' ', '\\']);
-                    if tail.starts_with(['=', ':']) {
-                        return format!("{}=<redacted>", &clean[..i]);
-                    }
+                let start = i;
+                while i < bytes.len()
+                    && (bytes[i].is_ascii_alphanumeric() || matches!(bytes[i], b'-' | b'_'))
+                {
+                    i += 1;
                 }
-                start = i + c.len_utf8();
+                let name = &clean[start..i];
+                if !sensitive(name) {
+                    continue;
+                }
+                let mut value = i;
+                // Also accept quoted JSON keys and spaces around the assignment.
+                if value < bytes.len() && matches!(bytes[value], b'"' | b'\'') {
+                    value += 1;
+                }
+                while value < bytes.len() && bytes[value].is_ascii_whitespace() {
+                    value += 1;
+                }
+                if value == bytes.len() || !matches!(bytes[value], b'=' | b':') {
+                    continue;
+                }
+                value += 1;
+                while value < bytes.len() && bytes[value].is_ascii_whitespace() {
+                    value += 1;
+                }
+                let quoted = bytes
+                    .get(value)
+                    .copied()
+                    .filter(|c| matches!(c, b'"' | b'\''));
+                if quoted.is_some() {
+                    value += 1;
+                }
+                let header = os_fetch::redact::is_sensitive_header(name);
+                let mut end = value;
+                while end < bytes.len() {
+                    if let Some(quote) = quoted {
+                        if bytes[end] == quote {
+                            break;
+                        }
+                        if bytes[end] == b'\\' && end + 1 < bytes.len() {
+                            end += 1;
+                        }
+                    } else if matches!(bytes[end], b'"' | b'\'')
+                        || (!header
+                            && (bytes[end].is_ascii_whitespace()
+                                || matches!(bytes[end], b';' | b'&')))
+                    {
+                        break;
+                    }
+                    end += 1;
+                }
+                out.push_str(&clean[copied..value]);
+                out.push_str("<redacted>");
+                copied = end;
+                i = end;
             }
-            clean
+            out.push_str(&clean[copied..]);
+            out
         })
         .collect::<Vec<_>>()
         .join("\n")
@@ -87,7 +142,14 @@ pub fn redact(value: &Value) -> Value {
     }
 }
 pub fn timestamp() -> String {
-    time::OffsetDateTime::now_utc().format(&time::format_description::parse_borrowed::<2>("[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:3][offset_hour sign:mandatory]:[offset_minute]").expect("static timestamp format")).unwrap_or_default()
+    let now = time::OffsetDateTime::now_local().unwrap_or_else(|_| time::OffsetDateTime::now_utc());
+    now.format(
+        &time::format_description::parse_borrowed::<2>(
+            "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:3][offset_hour sign:mandatory]:[offset_minute]",
+        )
+        .expect("static timestamp format"),
+    )
+    .unwrap_or_default()
 }
 pub fn file_stamp() -> String {
     time::OffsetDateTime::now_utc()
@@ -109,6 +171,8 @@ struct LogFileInner {
     rotate: bool,
     max_bytes: u64,
     archives: usize,
+    file: Option<fs::File>,
+    bytes: u64,
 }
 impl LogFile {
     pub fn new(path: PathBuf, rotate: bool) -> Self {
@@ -121,22 +185,28 @@ impl LogFile {
                 rotate,
                 max_bytes,
                 archives,
+                file: None,
+                bytes: 0,
             })),
         }
     }
     pub fn write_line(&self, line: &str) -> io::Result<()> {
-        let s = self.inner.lock().unwrap_or_else(|p| p.into_inner());
-        if let Some(parent) = s.path.parent() {
-            fs::create_dir_all(parent)?;
+        let mut s = self.inner.lock().unwrap_or_else(|p| p.into_inner());
+        if s.file.is_none() {
+            if let Some(parent) = s.path.parent() {
+                fs::create_dir_all(parent)?;
+            }
+            let file = fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(&s.path)?;
+            s.bytes = file.metadata()?.len();
+            s.file = Some(file);
         }
-        if s.rotate
-            && s.path
-                .metadata()
-                .map(|m| m.len())
-                .unwrap_or(0)
-                .saturating_add(line.len() as u64 + 1)
-                > s.max_bytes
-        {
+        let rotated = s.rotate && s.bytes.saturating_add(line.len() as u64 + 1) > s.max_bytes;
+        if rotated {
+            // Close before renaming: Windows does not allow renaming an open log file.
+            s.file.take();
             let archive = |n| s.path.with_file_name(format!("openspider.{n}.log"));
             if s.archives > 0 {
                 let _ = fs::remove_file(archive(s.archives));
@@ -151,16 +221,24 @@ impl LogFile {
             } else if s.path.exists() {
                 fs::remove_file(&s.path)?;
             }
+            s.bytes = 0;
+            s.file = Some(
+                fs::OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open(&s.path)?,
+            );
         }
-        let mut f = fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&s.path)?;
-        writeln!(f, "{line}")?;
-        f.flush()?;
-        drop(f);
-        if let Some(parent) = s.path.parent() {
-            cleanup(parent, SystemTime::now(), u32::MAX, 500 * 1024 * 1024)?;
+        let file = s.file.as_mut().expect("log opened above");
+        writeln!(file, "{line}")?;
+        file.flush()?;
+        s.bytes = s.bytes.saturating_add(line.len() as u64 + 1);
+        // Startup enforces retention and the folder cap. Subsequent directory scans
+        // happen only at rotation, never in the per-event hot path.
+        if rotated {
+            if let Some(parent) = s.path.parent() {
+                cleanup(parent, SystemTime::now(), u32::MAX, 500 * 1024 * 1024)?;
+            }
         }
         Ok(())
     }
@@ -373,10 +451,71 @@ pub fn write_bundle(
         if cancelled() {
             return Err(io::Error::new(io::ErrorKind::Interrupted, "Abgebrochen"));
         }
-        // Atomic no-clobber publication (hard link works on local macOS/Windows filesystems).
-        fs::hard_link(&tmp, dest)?;
+        // Prefer atomic no-clobber publication; support FAT/exFAT/SMB as well.
+        publish_bundle(&tmp, dest, |source, target| fs::hard_link(source, target))?;
         fs::metadata(dest).map(|m| m.len())
     })();
     let _ = fs::remove_file(tmp);
     result
+}
+
+fn publish_bundle(
+    tmp: &Path,
+    dest: &Path,
+    hard_link: impl FnOnce(&Path, &Path) -> io::Result<()>,
+) -> io::Result<()> {
+    match hard_link(tmp, dest) {
+        Ok(()) => Ok(()),
+        Err(e)
+            if matches!(
+                e.kind(),
+                io::ErrorKind::Unsupported | io::ErrorKind::PermissionDenied | io::ErrorKind::Other
+            ) =>
+        {
+            // Reserve exclusively: an existing destination must never be overwritten.
+            let reservation = fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(dest)?;
+            drop(reservation);
+            if let Err(e) = fs::rename(tmp, dest) {
+                let _ = fs::remove_file(dest);
+                return Err(e);
+            }
+            Ok(())
+        }
+        Err(e) => Err(e),
+    }
+}
+
+#[cfg(test)]
+mod publication_tests {
+    use super::*;
+
+    // spec: OUT-244
+    #[test]
+    fn filesystems_without_hard_links_publish_complete_bundles_without_clobbering() {
+        for kind in [
+            io::ErrorKind::Unsupported,
+            io::ErrorKind::PermissionDenied,
+            io::ErrorKind::Other,
+        ] {
+            let dir = tempfile::tempdir().unwrap();
+            let tmp = dir.path().join("bundle.tmp");
+            let dest = dir.path().join("bundle.zip");
+            fs::write(&tmp, "complete ZIP fixture").unwrap();
+            publish_bundle(&tmp, &dest, |_, _| Err(io::Error::from(kind))).unwrap();
+            assert_eq!(fs::read_to_string(&dest).unwrap(), "complete ZIP fixture");
+            assert!(!tmp.exists());
+            fs::write(&tmp, "replacement").unwrap();
+            let error = publish_bundle(&tmp, &dest, |_, _| Err(io::Error::from(kind))).unwrap_err();
+            assert_eq!(error.kind(), io::ErrorKind::AlreadyExists);
+            assert_eq!(fs::read_to_string(&dest).unwrap(), "complete ZIP fixture");
+            // A failed rename cleans up its reservation.
+            let absent = dir.path().join("absent.tmp");
+            let failed = dir.path().join("failed.zip");
+            assert!(publish_bundle(&absent, &failed, |_, _| Err(io::Error::from(kind))).is_err());
+            assert!(!failed.exists());
+        }
+    }
 }

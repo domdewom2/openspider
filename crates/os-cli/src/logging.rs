@@ -1,5 +1,7 @@
 //! CLI log setup and diagnostics (OUT-240 … OUT-244).
-// Shared, Tauri-free primitives, compiled without an os-app dependency.
+// M2-N01 interface request (C7): move these Tauri-free primitives to a common
+// crate and remove this temporary source inclusion; keep diag.rs free of app types.
+#[doc(hidden)]
 #[path = "../../os-app/src/diag.rs"]
 pub mod diagnostics;
 use std::time::SystemTime;
@@ -32,7 +34,7 @@ pub fn init(args: &crate::args::RunArgs) {
             stderr: true,
         });
     if subscriber.try_init().is_ok() {
-        let _old = std::panic::take_hook();
+        let old = std::panic::take_hook();
         std::panic::set_hook(Box::new(move |info| {
             let message = diagnostics::redact_text(&format!(
                 "{info}\n{}",
@@ -44,6 +46,7 @@ pub fn init(args: &crate::args::RunArgs) {
                 format!("{} ERROR panic: {message}", diagnostics::timestamp())
             };
             let _ = file.write_line(&line.replace('\n', "\\n"));
+            old(info);
         }));
     }
     // The legacy initializer keeps its other callers; an installed subscriber is left intact.
@@ -93,4 +96,26 @@ pub fn diagnostics_bundle_with_config(
     ));
     diagnostics::write_bundle(&path, &entries, || false)?;
     Ok(path)
+}
+
+/// Handle standalone diagnostics before crawl validation (OUT-244).
+/// M2-N01: retain this early entry when consolidating CLI dispatch.
+pub fn run_diagnostics(cli: &crate::Cli) -> Option<i32> {
+    let dest = cli.run.diagnostics.as_deref()?;
+    init(&cli.run);
+    Some(
+        match diagnostics_bundle_with_config(dest, cli.run.config.as_deref()) {
+            Ok(path) => {
+                println!("{}", path.display());
+                0
+            }
+            Err(e) => {
+                eprintln!(
+                    "Diagnosepaket fehlgeschlagen: {}",
+                    diagnostics::redact_text(&e.to_string())
+                );
+                1
+            }
+        },
+    )
 }

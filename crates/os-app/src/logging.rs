@@ -36,7 +36,7 @@ pub fn init_for_app(app: &crate::App) {
             .unwrap_or_else(|p| p.into_inner()) = Some(handle);
         static HOOK: OnceLock<()> = OnceLock::new();
         HOOK.get_or_init(|| {
-            let _old = std::panic::take_hook();
+            let old = std::panic::take_hook();
             std::panic::set_hook(Box::new(move |info| {
                 let line = crate::diag::redact_text(&format!(
                     "{} ERROR panic: {}\n{}",
@@ -45,6 +45,7 @@ pub fn init_for_app(app: &crate::App) {
                     std::backtrace::Backtrace::force_capture()
                 ));
                 let _ = file.write_line(&line.replace('\n', "\\n"));
+                old(info);
             }));
         });
     }

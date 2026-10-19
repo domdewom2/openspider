@@ -119,3 +119,39 @@ async fn updates_keep_secrets_and_machine_exports_fail_on_another_machine() {
     let saved = call(&app, "auth.saveProfile", profile(&longest_name, "basic")).await;
     assert_eq!(saved["name"], longest_name);
 }
+
+// spec: OUT-223
+// spec: CRAWL-121
+#[tokio::test]
+async fn profile_names_with_slashes_and_unicode_use_the_exact_secret_store_identifier() {
+    let home = tempfile::tempdir().unwrap();
+    let keys = Arc::new(MemorySecretStore::new());
+    let app = App::new(AppConfig::new(home.path()).with_secrets(keys.clone())).unwrap();
+    let name = "Team/QA – Größe 例";
+    let id = format!("auth/{name}");
+    call(&app, "auth.saveProfile", profile(name, "basic")).await;
+    let key = keys
+        .get(&id)
+        .expect("exact auth/<name> key, including slash and Unicode");
+    call(&app, "auth.saveProfile", profile(name, "basic")).await;
+    assert_eq!(keys.get(&id).as_deref(), Some(key.as_str()));
+    let list = call(&app, "auth.listProfiles", Value::Null).await;
+    assert_eq!(list[0]["name"], name);
+    let files: Vec<_> = std::fs::read_dir(home.path().join("auth"))
+        .unwrap()
+        .collect();
+    assert_eq!(files.len(), 1, "slash does not create nested directories");
+    let bytes = std::fs::read(files[0].as_ref().unwrap().path()).unwrap();
+    let decoded = os_store::auth_profiles::open(&bytes, None, |reference| {
+        assert_eq!(reference, id);
+        keys.get(reference)
+    })
+    .unwrap();
+    assert_eq!(decoded["profile"]["name"], name);
+    call(&app, "auth.deleteProfile", json!({"name":name})).await;
+    assert!(keys.get(&id).is_none());
+    assert_eq!(
+        call(&app, "auth.listProfiles", Value::Null).await,
+        json!([])
+    );
+}
