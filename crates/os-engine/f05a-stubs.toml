@@ -261,36 +261,6 @@ function = "validate"
 signature = "pub fn validate(_cfg: &os_model::CustomSearchConfig) -> Vec<os_model::ConfigIssue>"
 
 [[stub]]
-owner = "M2-D15"
-file = "crates/os-analyze/src/tabs/custom_extraction.rs"
-function = "tab"
-signature = "pub fn tab() -> TabDef"
-
-[[stub]]
-owner = "M2-D15"
-file = "crates/os-export/src/catalog/bulk_custom_extraction.rs"
-function = "dynamic_entries"
-signature = "pub fn dynamic_entries(_cfg: &os_model::CrawlConfig) -> Vec<super::DynamicEntry>"
-
-[[stub]]
-owner = "M2-D15"
-file = "crates/os-export/src/catalog/bulk_custom_extraction.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
-owner = "M2-D15"
-file = "crates/os-parse/src/custom_extract/mod.rs"
-function = "run"
-signature = "pub fn run(_ctx: &PageCtx<'_>, _page: &mut ParsedPage)"
-
-[[stub]]
-owner = "M2-D15"
-file = "crates/os-parse/src/custom_extract/mod.rs"
-function = "validate"
-signature = "pub fn validate(_cfg: &os_model::CustomExtractionConfig) -> Vec<os_model::ConfigIssue>"
-
-[[stub]]
 owner = "M2-D16"
 file = "crates/os-engine/src/recompute/d16.rs"
 function = "run"
@@ -515,12 +485,6 @@ signature = "pub fn tab() -> TabDef"
 [[stub]]
 owner = "M2-F02"
 file = "crates/os-analyze/src/tabs/change_detection.rs"
-function = "tab"
-signature = "pub fn tab() -> TabDef"
-
-[[stub]]
-owner = "M2-F02"
-file = "crates/os-analyze/src/tabs/custom_extraction.rs"
 function = "tab"
 signature = "pub fn tab() -> TabDef"
 

@@ -1,0 +1,8 @@
+Address,Extractor,Index,Value
+https://extract.test/a,h2,1,First
+https://extract.test/a,h2,2,
+https://extract.test/a,h2,3,Third
+https://extract.test/a,Extractor 2,1,"line one
+line two, ""quoted"""
+https://extract.test/b,h2,1,Only
+https://extract.test/c,h2,1,

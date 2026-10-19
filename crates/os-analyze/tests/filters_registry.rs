@@ -286,8 +286,8 @@ fn every_tab_is_a_real_definition_or_a_marked_stub() {
     }
     // Alle 15 neuen Tabs sind in M2-F02 Stubs; die 16 Tabs von M1 sind echte Definitionen.
     assert_eq!(
-        stubs, 13,
-        "Stub-Tabs (Structured Data implemented by M2-D09, Validation by M2-D10)"
+        stubs, 12,
+        "Stub-Tabs (Structured Data: M2-D09, Validation: M2-D10, Custom Extraction: M2-D15)"
     );
 }
 
@@ -420,17 +420,13 @@ fn dynamic_column_sources_are_registered_per_tab_and_names_are_interned() {
         columns.iter().map(|c| c.key).collect::<Vec<_>>(),
         ["Links Truncated", "Truncated"]
     );
-    // M2-E01 (Internal) und M2-D09 (Structured Data) melden je eine Quelle.
-    assert!(tabs::column_sources()
+    // M2-D15 (Custom Extraction), M2-E01 (Internal), M2-D09 (Structured Data) melden je eine Quelle.
+    let mut sources = tabs::column_sources()
         .iter()
-        .all(|(tab, _)| *tab == "Internal" || *tab == "Structured Data"));
-    assert_eq!(
-        tabs::column_sources()
-            .iter()
-            .filter(|(tab, _)| *tab == "Internal")
-            .count(),
-        1
-    );
+        .map(|(tab, _)| *tab)
+        .collect::<Vec<_>>();
+    sources.sort_unstable();
+    assert_eq!(sources, ["Custom Extraction", "Internal", "Structured Data"]);
     // Namen zur Laufzeit: gleicher Text, dieselbe Referenz.
     let a = intern("Preis (Extraktor 1)");
     let b = intern(&String::from("Preis (Extraktor 1)"));
