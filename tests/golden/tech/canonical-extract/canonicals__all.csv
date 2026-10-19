@@ -9,6 +9,7 @@ Address,Occurrences,Indexability Status,Canonical URL
 /in-template.html,0,,
 /no-href.html,0,,
 /one-header-two-entries.html,2,Canonicalised,/b-one.html
+/plain.pdf,0,,
 /rel-multi.html,1,,/rel-multi.html
 /rel-upper.html,1,,/rel-upper.html
 /rel-x.html,0,,

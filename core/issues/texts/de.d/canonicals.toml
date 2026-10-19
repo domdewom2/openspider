@@ -1,2 +1,24 @@
-# OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „Canonicals“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+[issues.canonicals-canonical-is-relative]
+what = "Mindestens eine Canonical-Angabe verwendet eine relative Adresse."
+why = "Die Zieladresse hängt von der Dokumentbasis ab; Änderungen an Basis oder Auslieferung können das Ziel verschieben."
+fix = "Eine vollständige HTTPS-Adresse für das beabsichtigte kanonische Ziel eintragen."
+
+[issues.canonicals-unlinked]
+what = "Das kanonische Ziel hat keinen Hyperlink von einer internen Seite."
+why = "Suchmaschinen erhalten ein Canonical-Signal, können das Ziel aber nicht über die normale interne Navigation erreichen."
+fix = "Das bevorzugte Ziel aus relevanten internen Seiten direkt verlinken und die Canonical-Auswahl prüfen."
+
+[issues.canonicals-invalid-attribute-in-annotation]
+what = "Eine Canonical-Angabe enthält hreflang, lang, media oder type."
+why = "Diese Attribute können dazu führen, dass Suchmaschinen die Canonical-Angabe ignorieren."
+fix = "Diese Attribute vom Canonical-Element oder Link-Header entfernen; Sprachalternativen separat auszeichnen."
+
+[issues.canonicals-contains-fragment-url]
+what = "Eine Canonical-Zieladresse enthält ein Fragment, auch wenn hinter # kein Wert steht."
+why = "Fragmente bezeichnen Abschnitte innerhalb einer Ressource und können die Auswahl der kanonischen Adresse uneindeutig machen."
+fix = "Das Fragment aus der Canonical-Angabe entfernen und auf die vollständige bevorzugte Ressourcenadresse zeigen."
+
+[issues.canonicals-outside-head]
+what = "Mindestens ein HTML-Canonical liegt im geparsten Dokument außerhalb des Heads."
+why = "Suchmaschinen können eine Canonical-Angabe außerhalb des Heads ignorieren."
+fix = "Das Canonical-Element in den Head verschieben und vorangehendes fehlerhaftes Markup reparieren."

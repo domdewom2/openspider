@@ -23,6 +23,7 @@ Address,Occurrences,Indexability Status,Canonical URL
 /noindex-target.html,1,noindex,/noindex-target.html
 /noindex-with-canonical.html,1,noindex,/target.html
 /none.html,0,,
+/none.pdf,0,,
 /pct/a~b.html,1,,/pct/a~b.html
 /self-abs.html,1,,/self-abs.html
 /self.html,1,,/self.html
