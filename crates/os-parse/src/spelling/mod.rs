@@ -291,8 +291,10 @@ pub fn pdf_language(doc: &lopdf::Document) -> Option<String> {
     let text = match raw {
         [0xFE, 0xFF, rest @ ..] => String::from_utf16_lossy(
             &rest
-                .chunks_exact(2)
-                .map(|c| u16::from_be_bytes([c[0], c[1]]))
+                .iter()
+                .step_by(2)
+                .zip(rest.iter().skip(1).step_by(2))
+                .map(|(hi, lo)| u16::from_be_bytes([*hi, *lo]))
                 .collect::<Vec<_>>(),
         ),
         _ => String::from_utf8_lossy(raw).into_owned(),

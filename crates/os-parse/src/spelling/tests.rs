@@ -918,3 +918,25 @@ fn a_stored_pdf_is_checked_in_its_catalog_language() {
         .iter()
         .all(|(k, _)| k.namespace() != "spelling"));
 }
+
+// spec: ONPAGE-166
+#[test]
+fn the_pdf_catalog_language_is_read_as_text_string() {
+    use lopdf::{dictionary, Object, StringFormat};
+    let with_lang = |raw: Vec<u8>| {
+        let mut doc = lopdf::Document::with_version("1.5");
+        let catalog = doc.add_object(dictionary! {
+            "Type" => "Catalog",
+            "Lang" => Object::String(raw, StringFormat::Literal),
+        });
+        doc.trailer.set("Root", catalog);
+        pdf_language(&doc)
+    };
+    assert_eq!(with_lang(b"de-DE".to_vec()).as_deref(), Some("de-DE"));
+    let utf16: Vec<u8> = [0xFE, 0xFF]
+        .into_iter()
+        .chain("pt-BR".encode_utf16().flat_map(u16::to_be_bytes))
+        .collect();
+    assert_eq!(with_lang(utf16).as_deref(), Some("pt-BR"));
+    assert_eq!(with_lang(b"  ".to_vec()), None);
+}
