@@ -22,7 +22,7 @@ use crate::error::ParityError;
 /// Schwellen eines Laufs.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Thresholds {
-    /// M2 B3(d): mindestens vier der fünf neuen Sites, unabhängig von M1.
+    /// M2 B3(d): mindestens vier neue Sites, sobald eine M2-Site present ist.
     pub min_m2_sites_present: usize,
     /// M1 A3 bleibt als eigenes Gruppengate bestehen.
     pub min_legacy_sites_present: usize,

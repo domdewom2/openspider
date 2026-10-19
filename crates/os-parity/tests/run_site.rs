@@ -575,7 +575,7 @@ fn list_source_and_configuration_variants_are_separate_requests_with_cli_argumen
 
 // spec: OUT-023
 #[test]
-fn target_selection_preserves_every_step_and_a_missing_target_fails() {
+fn target_selection_preserves_steps_and_reports_missing_os_target_as_difference() {
     let repo = repo();
     let manifest = repo.root().join("tests/golden/parity/site-a/manifest.toml");
     write(&manifest, &format!("site = \"site-a\"\nport = {}\n[[export]]\nref_file = \"path.csv\"\nos = \"report:Crawl Path Report\"\nmapping = \"path\"\nstatus = \"present\"\n[export.select]\n\"Target Address\" = \"/deep/8.html\"\n", repo.port));
@@ -608,7 +608,23 @@ fn target_selection_preserves_every_step_and_a_missing_target_fails() {
     };
     let summary = run_sites(&repo.opts(&["site-a"], false), &missing).unwrap();
     assert!(!summary.passed);
-    assert!(summary.failures[0].contains("Zielauswahl hat keine Zeilen"));
+    let Outcome::Compared { report } = single_export(&summary) else {
+        panic!("Ein fehlendes OS-Ziel muss als Abweichung berichtet werden");
+    };
+    assert_eq!(report.missing_in_os.len(), 2);
+    assert_eq!(report.agreement_pct, 0.0);
+    assert!(!report.url_set_identical);
+    assert_eq!(report.matched, 0);
+
+    // Eine leere Referenzauswahl bleibt dagegen ein Konfigurationsfehler,
+    // auch wenn die OS-Seite ebenfalls leer ist.
+    write(
+        &repo.root().join("tests/golden/parity/site-a/ref/path.csv"),
+        &data.replace("/deep/8.html", "/other.html"),
+    );
+    let summary = run_sites(&repo.opts(&["site-a"], false), &missing).unwrap();
+    assert!(matches!(single_export(&summary), Outcome::Error { message }
+        if message.contains("Zielauswahl der Referenz hat keine Zeilen")));
 }
 
 // spec: OUT-120
@@ -697,17 +713,55 @@ fn ordered_mapping_rejects_a_permutation_even_when_every_cell_and_duplicate_matc
 
 // spec: OUT-080
 #[test]
-fn m2_presence_gate_cannot_be_satisfied_by_legacy_sites() {
+fn m2_presence_gate_activates_only_when_m2_exports_are_present() {
     let repo = repo_with_thresholds(
-        "min_sites_present = 1\nmin_legacy_sites_present = 1\nmin_m2_sites_present = 1\n",
+        "min_sites_present = 1\nmin_legacy_sites_present = 1\nmin_m2_sites_present = 2\n",
     );
-    let summary = run_sites(&repo.opts(&["site-a"], true), &fake("Start")).unwrap();
+    let site = "parity-m2-example";
+    let manifest = repo
+        .root()
+        .join(format!("tests/golden/parity/{site}/manifest.toml"));
+    let text = format!("site = \"{site}\"\nport = {}\n[[export]]\nref_file = \"internal_all.csv\"\nos = \"tab:Internal:All\"\nmapping = \"internal_all\"\nstatus = \"pending\"\n", free_port());
+    write(&manifest, &text);
+    let opts = repo.opts(&["site-a", site], true);
+    let summary = run_sites(&opts, &fake("Start")).unwrap();
+    assert!(summary.passed, "{:?}", summary.failures);
     assert_eq!(summary.sites_present, 1);
+
+    write(
+        &repo
+            .root()
+            .join(format!("tests/fixtures/{site}/index.html")),
+        "<title>Start</title>",
+    );
+    let m = os_parity::manifest::Manifest::load(&manifest).unwrap();
+    write(
+        &repo
+            .root()
+            .join(format!("tests/golden/parity/{site}/ref/internal_all.csv")),
+        &ref_csv(m.port),
+    );
+    write(&manifest, &text.replace("pending", "present"));
+    let summary = run_sites(&opts, &fake("Start")).unwrap();
+    assert_eq!(summary.sites_present, 2);
     assert!(!summary.passed);
     assert!(summary
         .failures
         .iter()
-        .any(|f| f.contains("nur 0 M2-Sites")));
+        .any(|f| f.contains("nur 1 M2-Sites")));
+
+    write(
+        &repo.root().join("tests/parity/thresholds.toml"),
+        "min_sites_present = 1\nmin_legacy_sites_present = 1\nmin_m2_sites_present = 1\n",
+    );
+    let summary = run_sites(&opts, &fake("Start")).unwrap();
+    assert!(summary.passed, "{:?}", summary.failures);
+    let summary = run_sites(&repo.opts(&[site], true), &fake("Start")).unwrap();
+    assert!(!summary.passed);
+    assert!(summary
+        .failures
+        .iter()
+        .any(|f| f.contains("nur 0 M1-Sites")));
 }
 
 // spec: OUT-008

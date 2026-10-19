@@ -310,7 +310,7 @@ def main():
     args = parser.parse_args()
     files = generated()
     index = Path('tests/parity/gen/generated_m2.txt')
-    files[index] = ('\n'.join(sorted(str(p) for p in files)) + '\n').encode()
+    files[index] = ('\n'.join(sorted(p.as_posix() for p in files)) + '\n').encode()
     if args.check:
         bad = [str(p) for p, data in files.items() if not (ROOT / p).is_file() or (ROOT / p).read_bytes() != data]
         if bad:

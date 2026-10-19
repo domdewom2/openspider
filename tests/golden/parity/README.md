@@ -175,13 +175,25 @@ cargo test -p os-parity --test real_repo_files --test run_site
 
 Nur zum Ändern der eigenen neuen Fixtures `m2_sites.py` ohne `--check` aufrufen. Das Skript
 `m2_exports.py` legt fehlende M2-Mappings/Manifeste an und überschreibt keine bestehenden Dateien.
-`cases.json` in jeder neuen Site beschreibt Pfad/Spec/Status; `pixels.json` dokumentiert die
+`cases.json` in jeder neuen Site beschreibt Pfad/Spec/Status und dient Q02 als Einstieg
+für spec-abgeleitete Belege nach K2-14 (keine Referenz-Verifikation); `pixels.json` dokumentiert die
 Breiten der eigenen kalibrierten Engine und `expected_jaccard.json` die exakten Shingle-Werte.
 Die über 2 MiB großen Antworten entstehen über `body_size` im Fixture-Server, ohne große Repo-Dateien.
 Die Tiefe-8-Kette ist nur über ihren ersten Knoten verlinkt.
 
-Der Runner entdeckt jetzt zehn Sites. `thresholds.toml` verlangt mindestens vier bisherige und vier neue Sites mit mindestens einem
-vorhandenen Export (M1 A3, M2 B3(d)), identische URL-Mengen, ≥99 % für die genannten Tabs, ≥97 % für Bilder,
+Der Runner entdeckt zehn Sites. `thresholds.toml` verlangt mindestens vier bisherige Sites
+mit mindestens einem vorhandenen Export (M1 A3). Sobald eine `parity-m2-*`-Site einen
+`present`-Eintrag hat, verlangt `run --all` zusätzlich mindestens vier neue Sites (M2 B3(d)).
+Solange alle M2-Exporte pending/unavailable sind, bleibt der M1-Regressionslauf ausführbar.
+Q02 prüft den M2-Nachweis nach den Referenzexporten; ein grüner Fixture-Test ersetzt ihn nicht.
+Es gelten identische URL-Mengen, ≥99 % für die genannten Tabs, ≥97 % für Bilder,
 Hreflang/Links/Bulk/Reports/Listen/XML und identische Overview-Zähler aus M1 **und M2**.
-Bis die Referenzexporte vorliegen, meldet `run --all` die neuen Sites als pending und verfehlt
-bewusst dieses Abnahme-Gate. Ein grüner Fixture-Test ersetzt keinen Referenz-Paritätsnachweis.
+
+Der XML-Leser ignoriert Attribute wie `xsi:schemaLocation`; verglichen werden Sitemap-Elemente.
+Die Spalte `Images` speichert sortierte Bilddatensätze als JSON-Strings, getrennt durch Zeilenumbrüche.
+Sie wird im Sitemap-Vergleich mit der 97-%-Schwelle für Attribute bewertet; die URL-Menge bleibt exakt.
+Der Fixture-Test führt `m2_sites.py --check` einschließlich `generated_m2.txt` automatisch aus.
+`real_repo_files.rs` prüft die bereits registrierten M2-Bulk-Aufträge gegen `os_export::catalog`
+und gleicht Canonicals/Directives/Security vollständig ab, damit Änderungen an den Katalogen
+(D04/D06/D11) veraltete Manifeste sichtbar machen. Für die noch von D08 zu registrierenden
+zehn Links-Exporte liegt der vollständige Vertrag nach K2-26 in `pending_w1_p01.rs`; N01 aktiviert ihn.

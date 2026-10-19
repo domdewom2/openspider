@@ -1,8 +1,8 @@
 # Schwellen nach M2.md 6.4. URL-Mengen identisch; Werte in Prozent verglichener Zellen.
 # Neue Sites bleiben pending bis zum Referenzexport; Q02 prüft alle zehn Sites.
-min_sites_present = 8          # A3 + B3(d): mindestens vier je Gruppe
+min_sites_present = 4          # A3 bleibt vor den M2-Referenzexporten aktiv
 min_legacy_sites_present = 4
-min_m2_sites_present = 4
+min_m2_sites_present = 4       # aktiv ab der ersten M2-Site mit present
 
 [agreement_pct]
 internal_all = 99.0

@@ -76,12 +76,14 @@ fn start_tag(tag: &str, parent: Option<&Element>) -> Result<Element, ParityError
             .filter(|c| matches!(c, '\'' | '"'))
             .ok_or_else(invalid)?;
         let (value, tail) = rest[1..].split_once(quote).ok_or_else(invalid)?;
-        let prefix = if key == "xmlns" {
-            ""
-        } else {
-            key.strip_prefix("xmlns:").ok_or_else(invalid)?
-        };
-        namespaces.insert(prefix.to_string(), unescape(value)?);
+        // Nur Namespace-Deklarationen beeinflussen die Elementauflösung.
+        // Andere Attribute (z. B. xsi:schemaLocation) enthalten keine Vergleichsdaten.
+        let value = unescape(value)?;
+        if key == "xmlns" {
+            namespaces.insert(String::new(), value);
+        } else if let Some(prefix) = key.strip_prefix("xmlns:") {
+            namespaces.insert(prefix.to_string(), value);
+        }
         attrs = tail.trim_start();
     }
     let (prefix, name) = qualified.split_once(':').unwrap_or(("", &qualified));
@@ -154,6 +156,8 @@ fn document(text: &str) -> Result<Element, ParityError> {
                 return Err(invalid());
             }
         } else {
+            // Acht Ebenen reichen für sitemapindex/sitemap/loc und urlset/url/image/loc.
+            // Die Grenze verhindert unbeschränkt tiefe, nicht unterstützte Strukturen.
             if tag.starts_with('!') || stack.len() >= 8 || root.is_some() {
                 return Err(invalid());
             }
@@ -276,6 +280,24 @@ mod tests {
             .rows
             .is_empty());
         assert_eq!(parse(&format!("<s:sitemapindex xmlns:s='{SITEMAP}'><s:sitemap><s:loc><![CDATA[http://127.0.0.1:8906/sitemap.xml]]></s:loc></s:sitemap></s:sitemapindex>")).unwrap().rows.len(), 1);
+    }
+
+    // spec: OUT-120
+    // spec: OUT-126
+    #[test]
+    fn schema_location_and_non_namespace_attributes_do_not_change_sitemap_data() {
+        let plain = format!(
+            r#"<urlset xmlns="{SITEMAP}" xmlns:i="{IMAGE}"><url><loc>http://localhost/a</loc><i:image><i:loc>http://localhost/a.png</i:loc></i:image></url></urlset>"#
+        );
+        let attributed = plain
+            .replace("<urlset ", r#"<urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 sitemap.xsd" "#)
+            .replace("<url>", r#"<url id="one" xsi:type="entry">"#)
+            .replace("<loc>", r#"<loc data-note="a &amp; b > c">"#)
+            .replace("<i:image>", r#"<i:image id="picture">"#);
+        let expected = parse(&plain).unwrap();
+        let actual = parse(&attributed).unwrap();
+        assert_eq!(actual.columns, expected.columns);
+        assert_eq!(actual.rows, expected.rows);
     }
 
     // spec: OUT-120

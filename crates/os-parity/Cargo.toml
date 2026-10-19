@@ -24,4 +24,6 @@ name = "os-parity"
 path = "src/main.rs"
 
 [dev-dependencies]
+# K2-61: Manifest-Verträge gegen das ausführbare Exportregister prüfen.
+os-export.workspace = true
 tempfile.workspace = true

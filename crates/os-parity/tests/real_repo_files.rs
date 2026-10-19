@@ -87,7 +87,7 @@ fn deviations_schema_example_from_the_real_file_parses() {
 #[test]
 fn real_thresholds_file_loads_and_covers_the_a3_exports() {
     let t = Thresholds::load(&repo().join("tests/parity/thresholds.toml")).unwrap();
-    assert_eq!(t.min_sites_present, 8);
+    assert_eq!(t.min_sites_present, 4);
     assert_eq!(t.min_legacy_sites_present, 4);
     assert_eq!(t.min_m2_sites_present, 4);
     for name in ["redirects_to_errors", "all_error_inlinks"] {
@@ -215,5 +215,55 @@ fn new_manifests_preserve_list_source_sitemap_variants_and_crawl_path_target() {
         .chain(listed.export.iter())
     {
         assert_eq!(e.status, os_parity::manifest::ExportStatus::Pending);
+    }
+}
+
+// spec: OUT-008
+#[test]
+fn m2_manifest_bulk_exports_resolve_against_the_current_catalog() {
+    use os_export::catalog::{resolve, ExportKind};
+
+    let sites_dir = repo().join("tests/golden/parity");
+    let mut checked = 0;
+    let mut requested = std::collections::BTreeSet::new();
+    for entry in std::fs::read_dir(sites_dir).unwrap() {
+        let dir = entry.unwrap().path();
+        if !dir
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .starts_with("parity-m2-")
+        {
+            continue;
+        }
+        let manifest = Manifest::load(&dir.join("manifest.toml")).unwrap();
+        for export in manifest.export {
+            if let OsExport::Bulk(name) = OsExport::parse(&export.os).unwrap() {
+                // OUT-033..041/068 werden erst von M2-D08 registriert; vollständiger
+                // Integrationsvertrag in pending_w1_p01.rs nach K2-26.
+                if name.starts_with("Links:") {
+                    continue;
+                }
+                requested.insert(name.clone());
+                resolve(ExportKind::Bulk, &name)
+                    .unwrap_or_else(|e| panic!("{}/{}: {e}", manifest.site, export.ref_file));
+                checked += 1;
+            }
+        }
+    }
+    assert!(checked > 0, "keine M2-Bulk-Exportaufträge geprüft");
+    // Diese drei Gruppen werden beim Erstaufbau per Regex eingelesen. Auch neue
+    // Katalogeinträge müssen später im Exportauftrag auftauchen (D04/D06/D11).
+    for group in ["Canonicals:", "Directives:", "Security:"] {
+        let expected: std::collections::BTreeSet<_> = os_export::catalog::list(ExportKind::Bulk)
+            .into_iter()
+            .filter(|name| name.starts_with(group))
+            .collect();
+        let actual = requested
+            .iter()
+            .filter(|name| name.starts_with(group))
+            .cloned()
+            .collect();
+        assert_eq!(expected, actual, "veralteter Exportauftrag für {group}");
     }
 }

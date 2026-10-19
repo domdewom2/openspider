@@ -30,3 +30,7 @@ base64.workspace = true
 [[test]]
 name = "parity_fixtures"
 path = "../../tests/parity/fixtures_check.rs"
+
+[dev-dependencies]
+# K2-61: Filter-Platzhalter im Paritäts-Fixture-Test exakt mit Defaults auflösen.
+os-model.workspace = true

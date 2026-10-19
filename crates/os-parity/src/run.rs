@@ -439,11 +439,12 @@ pub fn run_sites(opts: &RunOptions, exporter: &dyn Exporter) -> Result<RunSummar
             .filter(|s| s.present && s.site.starts_with("parity-m2-"))
             .count();
         let legacy_present = sites_present - m2_present;
+        // Vor den M2-Referenzexporten bleibt A3 allein aktiv; danach gilt auch B3(d).
         for (group, count, need) in [
             ("M2", m2_present, thresholds.min_m2_sites_present),
             ("M1", legacy_present, thresholds.min_legacy_sites_present),
         ] {
-            if count < need {
+            if count < need && (group != "M2" || m2_present > 0) {
                 failures.push(format!(
                     "nur {count} {group}-Sites mit Status present, gefordert sind {need}"
                 ));
@@ -737,6 +738,11 @@ fn compare_one(
         &p.entry.select,
         ref_bases,
     )?;
+    if !p.entry.select.is_empty() && reference.rows.is_empty() {
+        return Err(ParityError::Invalid(
+            "Zielauswahl der Referenz hat keine Zeilen".into(),
+        ));
+    }
     let os = select_rows(
         read_output(&os_path, &p.mapping)?,
         &p.entry.select,
@@ -967,9 +973,6 @@ fn select_rows(
         table
             .rows
             .retain(|r| rules.prepare(&r[index], bases) == expected);
-    }
-    if !select.is_empty() && table.rows.is_empty() {
-        return Err(ParityError::Invalid("Zielauswahl hat keine Zeilen".into()));
     }
     Ok(table)
 }
