@@ -1,0 +1,22 @@
+# Szenario "out-m2-compare/segments" (OUT-113): je eine Weiterleitungskette mit zwei Sprüngen unter /shop/ und /blog/.
+# Start: http://www.site.test/
+
+[[route]]
+path = "/shop/old1"
+status = 301
+location = "/shop/mid1"
+
+[[route]]
+path = "/shop/mid1"
+status = 301
+location = "/shop/new1.html"
+
+[[route]]
+path = "/blog/old2"
+status = 301
+location = "/blog/mid2"
+
+[[route]]
+path = "/blog/mid2"
+status = 301
+location = "/blog/new2.html"

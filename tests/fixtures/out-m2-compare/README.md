@@ -28,3 +28,10 @@ Zwei Hosts mit gleicher Struktur: `staging.site.test` mit Trailing Slashes (Verz
 
 Weitere Testdaten: die älteren Crawl-Dateien `tests/fixtures/crawl-files/schema-v1.ospider` und `schema-v2.ospider`
 (nur gelesen und vor der Benutzung kopiert) für die Migration als Kopie (OUT-140).
+
+## `segments` (OUT-113)
+
+Je eine Weiterleitungskette mit zwei Sprüngen unter `/shop/` (`/shop/old1` → `/shop/mid1` → `/shop/new1.html`) und
+unter `/blog/` (`/blog/old2` → `/blog/mid2` → `/blog/new2.html`). Ein Segment „Shop“ (Adresse enthält `/shop/`)
+lässt im Report „Redirect Chains“ nur die Shop-Kette übrig. Die Spec nennt als Fixture `out-segments`; die gibt es nicht,
+und Fixtures gehören je einem Paket (K-65), daher liegt sie hier.
