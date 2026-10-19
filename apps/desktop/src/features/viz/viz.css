@@ -290,14 +290,29 @@ body,
   text-align: left;
 }
 
+/* Die Wolke nimmt keinen Einfluss auf die Größe der Fläche (sonst Rückkopplung mit der Messung). */
+.os-viz-stage > svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
 .os-viz-word {
   cursor: pointer;
 }
 
-.os-viz-word:hover,
-.os-viz-word:focus-visible {
+.os-viz-word:hover text,
+.os-viz-word:focus-visible text {
   fill: var(--os-accent);
+}
+
+.os-viz-word:focus-visible {
   outline: none;
+}
+
+.os-viz-word:focus-visible rect {
+  stroke: var(--os-focus);
+  stroke-width: 1.5;
 }
 
 .os-viz-host-error {

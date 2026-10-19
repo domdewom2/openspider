@@ -167,15 +167,10 @@ export function WordCloudView({ snapshotId, urlId, generation }: { snapshotId: s
             <svg ref={svg} xmlns="http://www.w3.org/2000/svg" version="1.1" width={w} height={h} viewBox={`0 0 ${w} ${h}`} role="group" aria-label={t("viz-kind-anchorWords")}>
               <g transform={`translate(${w / 2} ${h / 2})`}>
                 {placed.map((p) => (
-                  <text
+                  // Gruppe als Schaltfläche mit expliziter Trefferfläche: Textglyphen allein sind je Engine unterschiedlich klickbar.
+                  <g
                     key={p.text}
                     className="os-viz-word"
-                    x={p.x}
-                    y={p.y}
-                    fontSize={p.size}
-                    fontFamily={font}
-                    fill={ink}
-                    textAnchor="middle"
                     role="button"
                     tabIndex={0}
                     aria-label={t("viz-word-label", { term: p.text, count: p.count })}
@@ -187,8 +182,11 @@ export function WordCloudView({ snapshotId, urlId, generation }: { snapshotId: s
                       }
                     }}
                   >
-                    {p.text}
-                  </text>
+                    <rect x={p.x + p.box.x0} y={p.y + p.box.y0} width={p.box.x1 - p.box.x0} height={p.box.y1 - p.box.y0} fill="none" pointerEvents="all" />
+                    <text x={p.x} y={p.y} fontSize={p.size} fontFamily={font} fill={ink} textAnchor="middle">
+                      {p.text}
+                    </text>
+                  </g>
                 ))}
               </g>
             </svg>

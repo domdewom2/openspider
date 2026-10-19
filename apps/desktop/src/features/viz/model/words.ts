@@ -20,6 +20,8 @@ export interface PlacedWord {
   size: number;
   x: number;
   y: number;
+  /** Ausdehnung des Begriffs relativ zu (x, y) aus der Platzierung (Trefferfläche, ohne Textmessung in der Oberfläche). */
+  box: { x0: number; y0: number; x1: number; y1: number };
 }
 
 /** Häufigste zuerst, gleich häufige alphabetisch (stabile Eingabe für die Platzierung). */
@@ -33,6 +35,10 @@ interface CloudWord {
   size: number;
   x?: number;
   y?: number;
+  x0?: number;
+  y0?: number;
+  x1?: number;
+  y1?: number;
 }
 
 /** Platziert die Begriffe in einer Fläche w × h (Mittelpunkt = 0,0); nicht platzierbare Begriffe fehlen im Ergebnis. */
@@ -52,7 +58,18 @@ export function layoutWords(words: readonly WordFreq[], width: number, height: n
       .fontSize((d) => d.size)
       .random(mulberry32(seed))
       .timeInterval(Infinity)
-      .on("end", (placed: CloudWord[]) => resolve(placed.map((p) => ({ text: p.text, count: p.count, size: p.size, x: p.x ?? 0, y: p.y ?? 0 }))))
+      .on("end", (placed: CloudWord[]) =>
+        resolve(
+          placed.map((p) => ({
+            text: p.text,
+            count: p.count,
+            size: p.size,
+            x: p.x ?? 0,
+            y: p.y ?? 0,
+            box: { x0: p.x0 ?? -p.size, y0: p.y0 ?? -p.size, x1: p.x1 ?? p.size, y1: p.y1 ?? p.size / 2 },
+          })),
+        ),
+      )
       .start();
   });
 }
