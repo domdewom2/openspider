@@ -128,6 +128,7 @@ fn stage(root: &Path) -> Result<Stage, ToolError> {
         getrandom::fill(&mut bytes).map_err(internal)?;
         let name = bytes.iter().map(|n| format!("{n:02x}")).collect::<String>();
         let path = root.join(format!(".mcp-export-{name}"));
+        #[cfg_attr(not(unix), allow(unused_mut))]
         let mut builder = std::fs::DirBuilder::new();
         #[cfg(unix)]
         {
