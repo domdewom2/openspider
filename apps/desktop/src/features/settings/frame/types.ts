@@ -23,6 +23,7 @@ export const KNOWN_SECTIONS: readonly { id: string; order: number }[] = [
   { id: "network", order: 60 },
   { id: "accounts", order: 70 },
   { id: "external-tools", order: 80 },
+  { id: "email", order: 85 },
   { id: "mcp", order: 90 },
 ];
 
