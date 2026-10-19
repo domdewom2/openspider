@@ -518,3 +518,18 @@ fn ui_fixture_formats_agree_on_findings() {
         assert!(findings(&read("parse-error")).is_empty(), "{format}");
     }
 }
+
+// spec: TECH-189
+#[test]
+fn paths_use_short_names_for_schema_org_iris() {
+    let html = r#"<div itemscope itemtype="https://schema.org/Product"><meta itemprop="https://schema.org/name" content="x"><meta itemprop="https://schema.org/colour" content="red"></div>"#;
+    let f = findings(html);
+    assert_eq!(
+        summary(&of(&f, "schema_org", "error")),
+        [(
+            "sd.schema.unknown_property".into(),
+            "colour".into(),
+            String::new()
+        )]
+    );
+}
