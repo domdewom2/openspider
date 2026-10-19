@@ -852,8 +852,7 @@ fn run_report(s: &Ga4State, cfg: &MockConfig, scenario: &str, id: &str, body: &V
         .and_then(|v| v.parse().ok())
         .or_else(|| body["offset"].as_u64())
         .unwrap_or(0) as usize;
-    let (row_count, page): (usize, Vec<(Vec<String>, Vec<f64>)>) = if let Some(syn) = cfg.synthetic
-    {
+    let (row_count, page): (usize, Vec<Projected>) = if let Some(syn) = cfg.synthetic {
         let end = (offset + limit.min(syn.page_cap.unwrap_or(usize::MAX))).min(syn.rows);
         let page = (offset.min(end)..end)
             .map(|i| {
@@ -883,7 +882,7 @@ fn run_report(s: &Ga4State, cfg: &MockConfig, scenario: &str, id: &str, body: &V
                 *slot += v;
             }
         }
-        let mut all: Vec<(Vec<String>, Vec<f64>)> = grouped.into_iter().collect();
+        let mut all: Vec<Projected> = grouped.into_iter().collect();
         if let Some(order) = body["orderBys"]
             .as_array()
             .and_then(|o| o.first())
@@ -946,7 +945,10 @@ fn run_report(s: &Ga4State, cfg: &MockConfig, scenario: &str, id: &str, body: &V
     Json(out).into_response()
 }
 
-fn project(row: &MockRow, dims: &[String], metrics: &[String]) -> (Vec<String>, Vec<f64>) {
+/// Dimensionswerte und Metrikwerte einer Antwortzeile.
+type Projected = (Vec<String>, Vec<f64>);
+
+fn project(row: &MockRow, dims: &[String], metrics: &[String]) -> Projected {
     (
         dims.iter()
             .map(|d| {

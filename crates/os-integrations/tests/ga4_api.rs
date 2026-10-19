@@ -149,9 +149,11 @@ async fn accounts_properties_and_streams_are_dependent_and_selection_is_persiste
     assert_eq!(streams[1].host.as_deref(), Some("blog.integ.test"));
 
     // Auswahl im Profil: Property- und Stream-Kennung; bei erneuter Verbindung vorausgewählt.
-    let mut settings = Ga4Settings::default();
-    settings.property = "2001".into();
-    settings.stream = Some("3001".into());
+    let settings = Ga4Settings {
+        property: "2001".into(),
+        stream: Some("3001".into()),
+        ..Ga4Settings::default()
+    };
     let mut cfg = CrawlConfig::default();
     settings.to_config(&mut cfg.api.ga4);
     assert_eq!(cfg.api.ga4.property.as_deref(), Some(STREAM));
