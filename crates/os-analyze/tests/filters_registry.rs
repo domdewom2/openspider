@@ -399,11 +399,16 @@ fn dynamic_column_sources_are_registered_per_tab_and_names_are_interned() {
         "Custom Extraction",
         "Custom JavaScript",
         "Link Metrics",
-        "Internal",
     ] {
         assert!(tabs::dynamic_columns(tab, &cfg).is_empty(), "{tab}");
     }
-    assert!(tabs::column_sources().is_empty());
+    // M2-E01 ersetzt ausschließlich den bisherigen Internal-Crawl-Spaltenstub (K2-60).
+    let columns = tabs::dynamic_columns("Internal", &cfg);
+    assert_eq!(
+        columns.iter().map(|c| c.key).collect::<Vec<_>>(),
+        ["Links Truncated", "Truncated"]
+    );
+    assert_eq!(tabs::column_sources().len(), 1);
     // Namen zur Laufzeit: gleicher Text, dieselbe Referenz.
     let a = intern("Preis (Extraktor 1)");
     let b = intern(&String::from("Preis (Extraktor 1)"));

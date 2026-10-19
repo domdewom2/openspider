@@ -171,8 +171,14 @@ pub async fn start_crawl<F: Fetch>(
 ) -> Result<CrawlHandle, EngineError> {
     match &req.source {
         CrawlSource::Spider { start_url } => {
-            let start = os_url::parse_start_url(start_url)
+            let mut start = os_url::parse_start_url(start_url)
                 .map_err(|e| EngineError::Invalid(format!("Start-URL: {e}")))?;
+            if req.config.advanced.crawl_fragments {
+                if let Some((_, fragment)) = start_url.split_once('#') {
+                    start.url.set_fragment(Some(fragment));
+                    start = crate::fragments::normalize(&start.url, true);
+                }
+            }
             start_spider(fetcher, req, deps, start).await
         }
         CrawlSource::List { items, label } => {
@@ -267,6 +273,7 @@ async fn start_spider<F: Fetch>(
     let writer = WriterThread::spawn(open_sink(&deps, &req.file)?);
 
     let mut core = Core::new(cfg.limits.max_urls, cfg.limits.max_depth);
+    core.limits = cfg.limits.clone();
     if cfg.advanced.cookies == os_model::CookieMode::SessionOnly {
         core.sessions[0] = Some(Arc::new(CookieJar::new()));
     }
@@ -336,7 +343,10 @@ async fn start_list<F: Fetch>(
         crawl_id,
         now,
     } = prepare_fresh(&req, &deps, CrawlMode::List)?;
-    let plan = list_input::plan(&items, &cfg)?;
+    let mut plan = list_input::plan(&items, &cfg)?;
+    if cfg.advanced.crawl_fragments {
+        crate::fragments::restore_list_fragments(&mut plan, &cfg)?;
+    }
     // Anker des Crawl-Bereichs: die erste gültige Listen-URL, sonst die erste Sitemap-Adresse
     let anchor = plan
         .entries
@@ -372,6 +382,7 @@ async fn start_list<F: Fetch>(
 
     let max_depth = cfg.limits.max_depth.or(Some(0));
     let mut core = Core::new(cfg.limits.max_urls, max_depth);
+    core.limits = cfg.limits.clone();
     core.list_mode = true;
     if cfg.advanced.cookies == os_model::CookieMode::SessionOnly {
         core.sessions[0] = Some(Arc::new(CookieJar::new()));
@@ -539,7 +550,15 @@ pub(crate) struct SharedInit<F: Fetch> {
 }
 
 /// Gemeinsamer Zustand aus den Bausteinen; liefert auch die Steuerung (`Control`).
-pub(crate) fn make_shared<F: Fetch>(init: SharedInit<F>) -> (Arc<Shared<F>>, Arc<Control>) {
+pub(crate) fn make_shared<F: Fetch>(mut init: SharedInit<F>) -> (Arc<Shared<F>>, Arc<Control>) {
+    init.core.limits = init.cfg.limits.clone();
+    if init.cfg.scope.subfolder_only {
+        if let Ok(start) = Url::parse(&init.start_encoded) {
+            let path = start.path();
+            let folder = path.rfind('/').map_or("/", |i| &path[..=i]).to_string();
+            init.core.folder_policy = Some((folder, init.cfg.scope.crawl_outside_start_folder));
+        }
+    }
     let (add_urls, add_rx) = tokio::sync::mpsc::unbounded_channel();
     let control = Arc::new(Control {
         add_urls,
@@ -614,6 +633,7 @@ pub(crate) fn launch<F: Fetch>(setup: Setup<F>) -> CrawlHandle {
         core.frontier
             .enable_spill(crate::queue::queue_window(), file.clone());
     }
+    let hidden_result = crate::frontier::restore_hidden(&file, &cfg, &mut core);
     let tracker = make_tracker(
         &cfg,
         &*deps.clock,
@@ -634,6 +654,9 @@ pub(crate) fn launch<F: Fetch>(setup: Setup<F>) -> CrawlHandle {
         start_encoded,
         primed_origins,
     });
+    if let Err(error) = hidden_result {
+        sh.fail(error);
+    }
     let (queued, discovered) = {
         let c = sh.core.lock().unwrap_or_else(|p| p.into_inner());
         (c.frontier.len() as u64, c.discovered())
@@ -900,6 +923,14 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
     };
     publish(&sh, &progress_tx);
     tracing::info!(%crawl_id, state = state.as_str(), crawled, "Crawl beendet");
+
+    if sh.cfg.advanced.crawl_fragments && end != End::Failed {
+        sh.writer
+            .flush()
+            .await
+            .map_err(|_| EngineError::Join("Fragment-Basis nicht geschrieben".into()))?;
+        crate::fragments::materialize(&file, &sh.writer).await?;
+    }
 
     let mut last = WriteBatch::default();
     last.meta

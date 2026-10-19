@@ -1341,3 +1341,37 @@ body = "<!doctype html><html><head><title>it</title></head><body>it</body></html
     assert_eq!(it.status, Some(200));
     assert_eq!(link_rows(&on, "/it/"), 1);
 }
+
+// spec: CRAWL-047
+// spec: CRAWL-048
+// spec: CRAWL-050
+// spec: CRAWL-051
+#[tokio::test]
+async fn m2_page_link_switches_keep_all_four_store_crawl_combinations_independent() {
+    for (store, crawl) in [(false, false), (false, true), (true, false), (true, true)] {
+        let cfg = with(|c| {
+            let switch = StoreCrawl { store, crawl };
+            c.spider.pagination = switch;
+            c.spider.hreflang = switch;
+            c.spider.iframes = switch;
+            c.spider.mobile_alternate = switch;
+        });
+        let fx = crawl_fixture("crawl-m2-switches/crawl-resources", cfg).await;
+        for target in ["/next", "/en", "/frame", "/mobile"] {
+            assert_eq!(
+                hits(&fx, target),
+                usize::from(crawl),
+                "{target} store={store} crawl={crawl}"
+            );
+        }
+        assert_eq!(
+            count(&fx, "SELECT count(*) FROM hreflang"),
+            i64::from(store)
+        );
+        assert_eq!(
+            count(&fx, "SELECT count(*) FROM pagination"),
+            i64::from(store)
+        );
+        assert_eq!(link_rows(&fx, "/mobile"), i64::from(store));
+    }
+}

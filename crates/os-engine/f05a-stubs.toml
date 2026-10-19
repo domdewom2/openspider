@@ -531,48 +531,6 @@ function = "tab"
 signature = "pub fn tab() -> TabDef"
 
 [[stub]]
-owner = "M2-E01"
-file = "crates/os-analyze/src/tabs/internal_crawl.rs"
-function = "column_source"
-signature = "pub fn column_source() -> Option<Box<dyn crate::defs::ColumnSource>>"
-
-[[stub]]
-owner = "M2-E01"
-file = "crates/os-engine/src/recompute/e01.rs"
-function = "run"
-signature = "pub fn run( _file: &mut os_store::CrawlFile, _old: &os_model::CrawlConfig, _new: &os_model::CrawlConfig, _cancel: &os_model::CancelToken, ) -> Result<Vec<os_model::UrlId>, crate::EngineError>"
-
-[[stub]]
-owner = "M2-E01"
-file = "crates/os-parse/src/alternates.rs"
-function = "extract"
-signature = "pub fn extract( _doc: &crate::dom::Document, _base: &url::Url, _cfg: &crate::ParseConfig, ) -> Vec<os_model::ExtractedLink>"
-
-[[stub]]
-owner = "M2-E01"
-file = "crates/os-parse/src/alternates.rs"
-function = "from_headers"
-signature = "pub fn from_headers( _url: &url::Url, _headers: &[(String, String)], _cfg: &crate::ParseConfig, ) -> Vec<os_model::ExtractedLink>"
-
-[[stub]]
-owner = "M2-E01"
-file = "crates/os-parse/src/crawlability.rs"
-function = "inspect"
-signature = "pub fn inspect( _doc: &crate::dom::Document, _base: &url::Url, _cfg: &crate::ParseConfig, ) -> Vec<os_model::ExtractedLink>"
-
-[[stub]]
-owner = "M2-E01"
-file = "crates/os-parse/src/switches.rs"
-function = "apply"
-signature = "pub fn apply(_page: &mut os_model::ParsedPage, _cfg: &crate::ParseConfig)"
-
-[[stub]]
-owner = "M2-E01"
-file = "crates/os-parse/src/switches.rs"
-function = "filter_directives"
-signature = "pub fn filter_directives(_directives: &mut Vec<os_model::Directive>, _cfg: &crate::ParseConfig)"
-
-[[stub]]
 owner = "M2-E02"
 file = "crates/os-engine/src/lib.rs"
 function = "add_urls"
@@ -841,18 +799,6 @@ owner = "M2-D12"
 file = "crates/os-analyze/src/tabs/response_codes.rs"
 function = "configure_filters"
 signature = "pub fn configure_filters(tab: &mut TabDef)"
-
-[[stub]]
-owner = "M2-E01"
-file = "crates/os-engine/src/cookies.rs"
-function = "(module)"
-signature = "pub mod cookies"
-
-[[stub]]
-owner = "M2-E01"
-file = "crates/os-engine/src/fragments.rs"
-function = "(module)"
-signature = "pub mod fragments"
 
 [[stub]]
 owner = "M2-E03"
