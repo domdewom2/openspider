@@ -28,3 +28,6 @@ pub use secrets::{
     secret_store_from_env, MemorySecretStore, SecretBackend, SecretError, SecretStore,
     SecretStoreMut,
 };
+
+// INTEG-150: gemeinsame PSL-Auswertung ohne weitere Abhängigkeit im Integrationscrate.
+pub use os_url::registrable_domain;

@@ -187,3 +187,16 @@ pub fn derive_export_key(password: &str, salt: &[u8; 16]) -> Result<[u8; 32], St
         .map_err(|_| StoreError::InvalidInput("Exportpasswort nicht verwendbar".into()))?;
     Ok(key)
 }
+
+/// INTEG-151: nur interne HTML-URLs, optional externe Ziel-URLs; vorhandene API-Fakten
+/// bestimmen wie beim allgemeinen Abruf die Auswahl „fehlend“.
+pub fn linkmetrics_urls(
+    conn: &Connection,
+    source: &str,
+    missing: bool,
+    include_external: bool,
+) -> Result<Vec<(UrlId, String)>, StoreError> {
+    Ok(conn.prepare(
+        "SELECT id,url FROM urls u WHERE in_tables=1 AND ((is_internal=1 AND content_class='HTML') OR (is_internal=0 AND ?3)) AND (NOT ?2 OR NOT EXISTS(SELECT 1 FROM api_values a WHERE a.url_id=u.id AND a.source=?1)) ORDER BY id"
+    )?.query_map(params![source,missing,include_external], |r| Ok((UrlId(r.get(0)?),r.get(1)?)))?.collect::<Result<_,_>>()?)
+}

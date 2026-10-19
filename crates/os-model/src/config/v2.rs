@@ -722,8 +722,38 @@ pub struct LinkMetricsConfig {
     pub metrics: Vec<String>,
     /// Konto-Kennung ohne Geheimnis (INTEG-003).
     pub account: Option<String>,
+    /// Nicht geheime Anbieteroptionen (INTEG-152/153/154/157).
+    pub options: LinkMetricsOptions,
     /// Anfragegrenzen (INTEG-005/006).
     pub limits: super::ApiLimitsConfig,
+}
+
+/// Optionen der Linkdatenanbieter; fehlende Werte erhalten die Spec-Standards.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(default)]
+pub struct LinkMetricsOptions {
+    pub historic: bool,
+    pub include_external: bool,
+    pub oauth_client_id: Option<String>,
+    pub workspace: Option<String>,
+    pub country: Option<String>,
+    pub average_volume: bool,
+    pub moz_paid: bool,
+    pub moz_free_interval_s: u32,
+}
+impl Default for LinkMetricsOptions {
+    fn default() -> Self {
+        Self {
+            historic: false,
+            include_external: false,
+            oauth_client_id: None,
+            workspace: None,
+            country: None,
+            average_volume: false,
+            moz_paid: false,
+            moz_free_interval_s: 10,
+        }
+    }
 }
 
 /// Google Drive für den Sheets-Export (M2-X03).

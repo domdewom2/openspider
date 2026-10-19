@@ -177,6 +177,7 @@ string_enum! {
     pub enum ApiLevel {
         #[default]
         Url => "url",
+        UrlBoth => "url_both",
         Subdomain => "subdomain",
         Domain => "domain",
     }
