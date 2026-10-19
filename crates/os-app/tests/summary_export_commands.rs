@@ -169,3 +169,86 @@ async fn validation_no_crawl_and_revoked_token_are_reported_without_secrets() {
     assert!(error.contains("Google-Konto erneut verbinden"));
     assert!(!error.contains("fixture-access"));
 }
+
+// spec: OUT-210
+#[test]
+fn summary_resolves_winter_and_summer_at_crawl_start() {
+    // Isolate the OS timezone from every other test; no shell or global TZ mutation.
+    if std::env::var_os("X03_TIMEZONE_CHILD").is_none() {
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "summary_resolves_winter_and_summer_at_crawl_start",
+                "--nocapture",
+            ])
+            // Windows' CRT expects the POSIX abbreviation/offset form.
+            // Both fixture zones give January UTC+1 and July UTC+2.
+            .env(
+                "TZ",
+                if cfg!(windows) {
+                    "GST-1GDT"
+                } else {
+                    "Europe/Berlin"
+                },
+            )
+            .env("X03_TIMEZONE_CHILD", "1")
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        return;
+    }
+    os_model::time::init_local_offset();
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(async {
+            let dir = tempfile::tempdir().unwrap();
+            let mock = DriveMock::default();
+            let server = MockServer::start(vec![Arc::new(mock.clone())])
+                .await
+                .unwrap();
+            let mut config = AppConfig::new(dir.path());
+            // The application runs in summer while exporting both historical seasons.
+            config.clock = Arc::new(os_model::time::FixedClock::new(
+                Timestamp::from_db("2026-07-15T12:00:00Z").unwrap(),
+                std::time::Duration::ZERO,
+            ));
+            let app = App::new(config).unwrap();
+            fixture(&app, dir.path(), &server.base_url("drive"));
+            for (started, expected) in [
+                ("2026-01-15T12:00:00Z", "2026-01-15T13:00:00Z"),
+                ("2026-07-15T12:00:00Z", "2026-07-15T14:00:00Z"),
+            ] {
+                let file = CrawlFile::open(
+                    &dir.path().join("summary.ospider"),
+                    os_store::OpenMode::ReadWrite,
+                )
+                .unwrap();
+                file.set_meta("started_at", started).unwrap();
+                drop(file);
+                let handle = start(&app, vec!["Internal:HTML"]).await;
+                let status = app.ops().wait(&handle.op_id).await.unwrap();
+                assert_eq!(status.state, OpState::Done, "{:?}", status.error);
+                let files = mock.files();
+                let rows = &files
+                    .iter()
+                    .find(|f| f.name == "Audit_custom_summary_report")
+                    .unwrap()
+                    .sheets[0]
+                    .rows;
+                let actual = rows.last().unwrap()[0].as_f64().unwrap();
+                let expected = 25569.0
+                    + Timestamp::from_db(expected).unwrap().unix_millis() as f64 / 86_400_000.0;
+                assert!(
+                    (actual - expected).abs() < 1e-8,
+                    "{started}: {actual} != {expected}"
+                );
+            }
+        });
+}

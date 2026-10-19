@@ -119,7 +119,7 @@ async fn run_summary(
     };
     let client =
         DriveClient::new(&context, &args.account, app.config().clock.now()).map_err(failure)?;
-    let (measurement, project, crawl) = app
+    let (measurement, project, crawl, offset) = app
         .read_pool()
         .run_with(session.key, cancel.clone(), move |file, _token| {
             Ok(os_export::pipeline::snapshot(file, || {
@@ -131,7 +131,20 @@ async fn run_summary(
                     file,
                     cfg: &cfg,
                 })?;
-                Ok((measurement, meta.project, meta.name))
+                // SQLite resolves the system timezone for this instant, including DST.
+                // Run on the read-pool worker; the process-start offset is unrelated.
+                let seconds = os_store::queries::app_support::local_offset_seconds(
+                    file.conn(),
+                    measurement.started_at,
+                )?;
+                let offset = time::UtcOffset::from_whole_seconds(seconds)
+                    .ok()
+                    .ok_or_else(|| {
+                        os_export::ExportError::Write(
+                            "Lokale Crawlstartzeit nicht ermittelbar".into(),
+                        )
+                    })?;
+                Ok((measurement, meta.project, meta.name, offset))
             })
             .map_err(failure))
         })
@@ -148,13 +161,6 @@ async fn run_summary(
     if let Some(root) = context.cfg.api.drive.root_folder {
         destination.root = root;
     }
-    // Timestamp::to_export uses the application's initialized local offset.
-    let offset = time::OffsetDateTime::parse(
-        &measurement.started_at.to_export(),
-        &time::format_description::well_known::Rfc3339,
-    )
-    .map_err(failure)?
-    .offset();
     let result = until_cancelled(
         target_gsheet::custom_summary(
             &client,
