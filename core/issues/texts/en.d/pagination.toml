@@ -5,7 +5,7 @@ why = "Link elements do not replace clickable navigation, so visitors may have d
 fix = "Add an a-href link for every next or prev target in the navigation on the source page."
 
 [issues.pagination-non-200-urls]
-what = "At least one crawled pagination target does not respond with HTTP status 200."
+what = "At least one crawled pagination target does not respond with HTTP status 200. Both internal and external targets count; the internal source page is listed. Targets that have not been crawled are excluded."
 why = "Redirects, errors and blocked targets interrupt direct access to further pages in the series."
 fix = "Check the target status and accessibility, then point directly to an available page returning status 200."
 

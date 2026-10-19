@@ -33,12 +33,15 @@ fn params(cfg: &CrawlConfig) -> Vec<(&'static str, Value)> {
     )]
 }
 
-/// Der Pagination-Tab behält Folgeseiten unabhängig von `in_tables` (TECH-031).
+/// Nur durch Respect Next/Prev versteckte Folgeseiten bleiben sichtbar (TECH-031).
 pub fn tab() -> TabDef {
     TabDef {
         id: "Pagination",
-        hidden_population: None,
-        population: ":pagination_store = 1 AND u.is_internal = 1 AND \
+        hidden_population: Some(":pagination_store = 1 AND u.in_tables = 0 AND u.is_internal = 1 AND \
+            EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'respect_hidden' AND f.value = 'pagination') AND \
+            ((u.content_class = 'HTML' AND u.status_code = 200) OR \
+             (u.state = 'done' AND EXISTS (SELECT 1 FROM pagination p WHERE p.target_id = u.id)))"),
+        population: ":pagination_store = 1 AND u.in_tables = 1 AND u.is_internal = 1 AND \
             ((u.content_class = 'HTML' AND u.status_code = 200) OR \
              (u.state = 'done' AND EXISTS (SELECT 1 FROM pagination p WHERE p.target_id = u.id)))",
         columns: vec![

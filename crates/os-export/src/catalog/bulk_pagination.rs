@@ -1,6 +1,6 @@
 //! Pagination-Inlinks je Filter (OUT-066); Reports OUT-088/089 bleiben P2.
 
-use crate::catalog::{reports::ReportRequirement, TableEntry, TableJob};
+use crate::catalog::{find_table, reports::ReportRequirement, TableEntry, TableJob};
 use crate::error::ExportError;
 use crate::links_export::{self, LinkOrder};
 use crate::types::TableWriter;
@@ -8,11 +8,20 @@ use os_analyze::views::{self, ViewQuery};
 use os_model::FilterState;
 
 fn run(job: &TableJob<'_>, writer: &mut dyn TableWriter) -> Result<u64, ExportError> {
-    let filter = job
-        .entry_name
+    let registered: Vec<_> = entries().iter().collect();
+    let entry = find_table(&registered, job.entry_name).ok_or_else(|| {
+        ExportError::Name(os_analyze::NameError::Unknown {
+            input: job.entry_name.to_owned(),
+            suggestions: Vec::new(),
+        })
+    })?;
+    let filter = entry
+        .name
         .strip_prefix("Pagination:")
         .and_then(|s| s.strip_suffix(" Inlinks"))
-        .expect("registrierter Pagination-Export");
+        .ok_or_else(|| {
+            ExportError::Write(format!("Ungültiger Pagination-Export: {}", entry.name))
+        })?;
     if views::state_of_in(job.tabs, job.file, job.cfg, "Pagination", filter)? != FilterState::Ready
     {
         return Ok(0);
@@ -241,6 +250,20 @@ mod tests {
                 .0
                 .iter()
                 .all(|r| r.len() == crate::catalog::LINK_HEADER.len()));
+            let variant = entry.name.to_lowercase().replace(':', " :  ");
+            let mut alternate = Rows::default();
+            let alternate_job = TableJob {
+                entry_name: &variant,
+                tabs: &tabs,
+                file: &file,
+                cfg: &cfg,
+            };
+            assert_eq!(run(&alternate_job, &mut alternate).unwrap(), count);
+            assert_eq!(alternate.0, rows.0);
         }
+        assert!(matches!(
+            run(&job("Pagination:unknown Inlinks"), &mut Rows::default()),
+            Err(ExportError::Name(_))
+        ));
     }
 }

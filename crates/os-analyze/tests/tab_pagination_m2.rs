@@ -62,68 +62,32 @@ fn names(file: &CrawlFile, cfg: &CrawlConfig, filter: &str) -> Vec<String> {
     result.sort();
     result
 }
-fn check(filter: &str) {
+// spec: TECH-032
+// spec: TECH-033
+// spec: TECH-034
+// spec: TECH-035
+// spec: TECH-036
+// spec: TECH-037
+// spec: TECH-038
+// spec: TECH-039
+// spec: TECH-040
+// spec: TECH-041
+#[test]
+fn all_filters_match_the_pagination_fixture() {
     let (_dir, file) = fixture();
     analyze(&file);
     let expected: BTreeMap<String, Vec<String>> = serde_json::from_str(include_str!(
         "../../../tests/fixtures/tech-m2-pagination/filters.json"
     ))
     .unwrap();
-    assert_eq!(
-        names(&file, &CrawlConfig::default(), filter),
-        expected[filter],
-        "{filter}"
-    );
-}
-// spec: TECH-032
-#[test]
-fn contains_pagination() {
-    check("Contains Pagination");
-}
-// spec: TECH-033
-#[test]
-fn first_page_has_next_and_no_prev() {
-    check("First Page");
-}
-// spec: TECH-034
-#[test]
-fn paginated_pages_include_last_page() {
-    check("Paginated 2+ Pages");
-}
-// spec: TECH-035
-#[test]
-fn missing_anchor_is_live_and_separate_from_global_links() {
-    check("Pagination URL Not In Anchor Tag");
-}
-// spec: TECH-036
-#[test]
-fn non_200_covers_redirect_error_blocked_and_external_but_not_queued() {
-    check("Non-200 Pagination URLs");
-}
-// spec: TECH-037
-#[test]
-fn unlinked_needs_crawled_target_and_internal_hyperlink_including_area_nofollow() {
-    check("Unlinked Pagination URLs");
-}
-// spec: TECH-038
-#[test]
-fn non_indexable_describes_source_including_canonicalised_pages() {
-    check("Non-Indexable");
-}
-// spec: TECH-039
-#[test]
-fn multiple_counts_equal_html_and_header_annotations_per_direction() {
-    check("Multiple Pagination URLs");
-}
-// spec: TECH-040
-#[test]
-fn loops_include_next_prev_and_self_but_exclude_lead_and_second_annotation() {
-    check("Pagination Loop");
-}
-// spec: TECH-041
-#[test]
-fn sequence_requires_reciprocal_direction_and_html_200_target() {
-    check("Sequence Error");
+    assert_eq!(expected.len(), 10);
+    for (filter, expected) in expected {
+        assert_eq!(
+            names(&file, &CrawlConfig::default(), &filter),
+            expected,
+            "{filter}"
+        );
+    }
 }
 
 // spec: TECH-031
@@ -138,11 +102,35 @@ fn population_and_numbered_columns_follow_the_pagination_contract() {
     for absent in ["unknown", "created", "external-html", "external-target"] {
         assert!(!all.contains(&absent.into()), "{absent}");
     }
-    // The Pagination tab is the exception to table hiding.
+    // Only Respect Next/Prev grants an exception to table hiding.
     file.conn()
         .execute("UPDATE urls SET in_tables = 0 WHERE id = 2", [])
         .unwrap();
-    assert!(names(&file, &cfg, "All").contains(&"second".into()));
+    assert!(!names(&file, &cfg, "All").contains(&"second".into()));
+    for (reason, visible) in [
+        ("canonical", false),
+        ("excluded", false),
+        ("pagination", true),
+    ] {
+        file.conn().execute(
+            "INSERT OR REPLACE INTO url_flags (url_id, flag, value) VALUES (2, 'respect_hidden', ?1)",
+            [reason],
+        ).unwrap();
+        for filter in ["All", "Contains Pagination", "Paginated 2+ Pages"] {
+            let addresses = names(&file, &cfg, filter);
+            assert_eq!(
+                addresses.contains(&"second".into()),
+                visible,
+                "{reason}: {filter}"
+            );
+            let counts = filter_counts(&file, &cfg).unwrap();
+            let count = counts
+                .iter()
+                .find(|c| c.tab == "Pagination" && c.filter == filter)
+                .unwrap();
+            assert_eq!(count.count, Some(addresses.len() as u64));
+        }
+    }
     let mut q = ViewQuery::new("Pagination", "Multiple Pagination URLs");
     q.columns = ColumnSelection::Named(vec![
         "Address".into(),
@@ -218,6 +206,89 @@ fn analysis_states_repeatability_change_feed_and_removal() {
         )
         .unwrap();
     assert_eq!(n, 0);
+}
+
+// spec: TECH-037
+// spec: TECH-040
+// spec: TECH-041
+#[test]
+fn pause_during_flag_updates_resumes_or_cancels_with_atomic_rollback() {
+    use std::sync::{
+        atomic::{AtomicBool, Ordering},
+        mpsc,
+    };
+    use std::time::Duration;
+
+    for abort in [false, true] {
+        let (_dir, file) = fixture();
+        let before = queries::change_seq(file.conn()).unwrap();
+        let token = CancelToken::new();
+        let control = token.clone();
+        let (entered_tx, entered_rx) = mpsc::channel();
+        let once = AtomicBool::new(false);
+        file.conn()
+            .create_collation("pagination_pause", move |left, right| {
+                if !once.swap(true, Ordering::SeqCst) {
+                    control.pause();
+                    entered_tx.send(()).unwrap();
+                }
+                left.cmp(right)
+            })
+            .unwrap();
+        // Inject the pause after the first actual write inside the transaction.
+        file.conn()
+            .execute_batch(
+                "CREATE TEMP TRIGGER pause_pagination AFTER INSERT ON url_flags
+             WHEN NEW.flag LIKE 'pagination_%'
+             BEGIN SELECT 'left' = 'right' COLLATE pagination_pause; END;",
+            )
+            .unwrap();
+        let worker_token = token.clone();
+        let (done_tx, done_rx) = mpsc::channel();
+        let worker = std::thread::spawn(move || {
+            let state = pagination::run(&file, &CrawlConfig::default(), &worker_token).unwrap();
+            done_tx.send(state).unwrap();
+            (file, state)
+        });
+        entered_rx.recv_timeout(Duration::from_secs(5)).unwrap();
+        let waiting = done_rx.recv_timeout(Duration::from_millis(50));
+        if abort {
+            token.cancel();
+        } else {
+            token.resume();
+        }
+        let (file, state) = worker.join().unwrap();
+        assert!(matches!(waiting, Err(mpsc::RecvTimeoutError::Timeout)));
+        assert!(file.conn().is_autocommit());
+        let count: i64 = file
+            .conn()
+            .query_row(
+                "SELECT COUNT(*) FROM url_flags WHERE flag LIKE 'pagination_%'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        if abort {
+            assert_eq!(state, StepState::Pending);
+            assert_eq!(count, 0);
+            assert_eq!(queries::change_seq(file.conn()).unwrap(), before);
+            let stamped: i64 = file
+                .conn()
+                .query_row(
+                    "SELECT COUNT(*) FROM urls WHERE change_seq > ?1",
+                    [before as i64],
+                    |r| r.get(0),
+                )
+                .unwrap();
+            assert_eq!(stamped, 0);
+        } else {
+            assert_eq!(state, StepState::Done);
+            assert!(count > 0);
+            assert!(queries::change_seq(file.conn()).unwrap() > before);
+        }
+        analyze(&file);
+        assert!(names(&file, &CrawlConfig::default(), "Pagination Loop").contains(&"self".into()));
+    }
 }
 
 // spec: TECH-031

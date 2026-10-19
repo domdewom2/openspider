@@ -79,11 +79,12 @@ fn missing_anchor(ctx: &crate::PageCtx<'_>, refs: &[PaginationRef]) -> bool {
     })
 }
 
-/// Header-Fakten auch für Antworten ohne HTML-Parse und bei ausgeschaltetem Speichern.
+/// Header-Fakt auch für Antworten ohne HTML-Parse und bei ausgeschaltetem Speichern.
+/// `pagination.not_in_anchor` schreibt allein `run()`, das auch Header-URLs mit dem Baum vergleicht.
 pub fn response_facts(
     input: &crate::ResponseInput<'_>,
 ) -> Vec<(os_model::ExtKey, os_model::Value)> {
-    let (mut has_next, mut has_prev) = (false, false);
+    let mut has_prev = false;
     for entry in input
         .headers
         .iter()
@@ -91,20 +92,11 @@ pub fn response_facts(
         .flat_map(|(_, value)| crate::headers::parse_link_header(value))
     {
         if let Some(rel) = entry.param("rel") {
-            has_next |= has_rel_token(rel, "next");
             has_prev |= has_rel_token(rel, "prev") || has_rel_token(rel, "previous");
         }
     }
-    vec![
-        (
-            os_model::ExtKey::from_static("pagination.has_prev"),
-            os_model::Value::Bool(has_prev),
-        ),
-        // Antworten ohne HTML-Parse haben keine Ankernavigation. Beim HTML-Parse
-        // ersetzt run() diesen Wert anhand des vorhandenen Baums.
-        (
-            os_model::ExtKey::from_static("pagination.not_in_anchor"),
-            os_model::Value::Bool(has_next || has_prev),
-        ),
-    ]
+    vec![(
+        os_model::ExtKey::from_static("pagination.has_prev"),
+        os_model::Value::Bool(has_prev),
+    )]
 }

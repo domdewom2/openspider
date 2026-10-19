@@ -5,7 +5,7 @@ why = "Link-Elemente ersetzen keine anklickbare Navigation; weitere Inhalte kön
 fix = "Ergänze für jedes next- oder prev-Ziel einen passenden a-href-Link in der Seitennavigation."
 
 [issues.pagination-non-200-urls]
-what = "Mindestens ein abgerufenes Paginierungsziel antwortet nicht mit HTTP 200."
+what = "Mindestens ein abgerufenes Paginierungsziel antwortet nicht mit HTTP 200. Interne und externe Ziele zählen; gelistet wird die interne Quellseite. Nicht abgerufene Ziele werden nicht gemeldet."
 why = "Weiterleitungen, Fehler und gesperrte Ziele unterbrechen den direkten Zugang zu weiteren Seiten der Serie."
 fix = "Prüfe Status und Erreichbarkeit des Ziels und verweise direkt auf eine erreichbare Seite mit Status 200."
 

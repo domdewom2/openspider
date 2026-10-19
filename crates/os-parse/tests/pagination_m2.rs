@@ -103,18 +103,53 @@ fn has_prev_survives_the_store_switch_in_html_and_header_only_responses() {
         };
         assert_eq!(
             pagination::response_facts(&input),
-            [
-                (
-                    ExtKey::from_static("pagination.has_prev"),
-                    Value::Bool(true)
-                ),
-                (
-                    ExtKey::from_static("pagination.not_in_anchor"),
-                    Value::Bool(true)
-                ),
-            ]
+            [(
+                ExtKey::from_static("pagination.has_prev"),
+                Value::Bool(true)
+            )]
         );
         input.headers = &[];
         assert_eq!(pagination::response_facts(&input)[0].1, Value::Bool(false));
+    }
+}
+
+// spec: TECH-035
+#[test]
+fn header_only_pagination_without_anchors_has_one_authoritative_fact() {
+    let body = include_bytes!("../../../tests/fixtures/tech-m2-pagination/header-only.html");
+    for store in [true, false] {
+        let page = parse(body, store);
+        assert_eq!(fact(&page, "pagination.not_in_anchor"), Value::Bool(true));
+        assert_eq!(page.pagination.len(), 2);
+        assert!(page.pagination.iter().all(|p| p.source == HintSource::Http));
+        let cfg = ParseConfig::from_crawl_config(&CrawlConfig::default());
+        let url = url::Url::parse("https://site.test/start").unwrap();
+        let h = headers();
+        let response = pagination::response_facts(&ResponseInput {
+            url: &url,
+            internal: true,
+            purpose: FetchPurpose::Page,
+            status: 200,
+            headers: &h,
+            body,
+            content_length: None,
+            untruncated_bytes: None,
+            truncated: false,
+            cfg: &cfg,
+        });
+        // The writer sees exactly one value in either hook order, also when the anchor exists.
+        for parsed in [page, parse(HTML, store)] {
+            for facts in [
+                response.iter().chain(&parsed.ext).collect::<Vec<_>>(),
+                parsed.ext.iter().chain(&response).collect::<Vec<_>>(),
+            ] {
+                let matching: Vec<_> = facts
+                    .into_iter()
+                    .filter(|(k, _)| k.as_str() == "pagination.not_in_anchor")
+                    .collect();
+                assert_eq!(matching.len(), 1);
+                assert_eq!(matching[0].1, fact(&parsed, "pagination.not_in_anchor"));
+            }
+        }
     }
 }
