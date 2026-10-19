@@ -1,5 +1,10 @@
 # M2-K14 – Paketbericht
 
+> Historischer Implementierungsbericht vor Fables Review. Der maßgebliche Bericht
+> zur Fix-Runde mit aktuellen Prüfungen, Ausnahmen und offenen Abnahmen steht in
+> [docs/plan/M2-reports/k14.md](../../../../docs/plan/M2-reports/k14.md).
+> Die nachstehenden Laufzahlen beschreiben ausschließlich den früheren Stand.
+
 ## Umgesetzte Spec-IDs
 
 - **CRAWL-134:** validierte Segmentregeln mit UND/ODER-Gruppen und allen nativen Operatoren, case-sensitive Textvergleich, numerische NULL-Semantik, gemeinsame begrenzte Backtracking-Regex-Engine, Mehrfach-/verschränkte Spalten, Issue-Regeln, Verweise nur auf vorangehende Segmente, exklusive Priorität, Restmenge, JSON-Roundtrip und Speicherung in der Crawl-Konfiguration. Vorschau ohne Schreibzugriff; vollständige und inkrementelle Neuzuordnung mit Savepoint, Abbruch und Änderungsfeed. Nachlauf-/API-Werte bleiben bis zum Abschluss ausstehend. Automatische Aktualisierung in App und CLI, ohne neue HTTP-Requests.
@@ -39,6 +44,12 @@ Keine neue Crate, keine Manifest-/Lockfile-Änderung, keine Referenzprodukt-Insp
 `crates/os-app/tests/manifest_contract.rs`: ausschließlich `M2-K14` aus der Liste der noch erwarteten Stub-Besitzer entfernt; Command-Namen, DTO-Verträge und Long-Running-Markierungen unverändert.
 
 ## Fremdergänzungen (K2-61)
+
+**Freigabe für Welle 2:** Der Nutzerauftrag zur Fix-Runde vom 19.10.2026 wendet
+K2-60/K2-61/K2-63 ausdrücklich auf M2-K14 an. Damit sind die nachstehenden
+additiven Integrationsstellen in diesem Paket ausdrücklich freigegeben; die
+ursprüngliche Beschränkung von K2-61 auf Welle 1 ist dafür keine Begründung.
+Neue Ergänzungen und Nachweise siehe den oben verlinkten Fix-Bericht.
 
 Alle folgenden Änderungen sind reine Ergänzungen. Es wurde keine bestehende Signatur geändert und kein bestehender Exportdispatcher entfernt. Neue CLI-Auswahlfelder sind optional (Default `None`); der Segmentpfad ist über das neue Flag erreichbar. Die Initialisierung des Beobachters und einer noch fehlenden Zuordnung ist auf konfigurierte Segmente beschränkt.
 
