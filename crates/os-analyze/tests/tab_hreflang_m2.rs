@@ -8,12 +8,13 @@ use os_analyze::{
 };
 use os_model::{
     time::{IdSource, SeededIds},
-    AnalysisStep, CancelToken, CrawlConfig, CrawlMode, FilterState, HreflangOverLimit, StepState,
-    Timestamp, UrlId, Value,
+    AnalysisStep, CancelToken, ContentClass, CrawlConfig, CrawlMode, DiscoveryKind, ExtKey,
+    ExtWrite, FetchFacts, FilterState, HintSource, HreflangOverLimit, HreflangRef, HreflangRow,
+    Indexability, NewUrl, PageWrite, StepState, Timestamp, UrlId, UrlState, Value, WriteBatch,
 };
-use os_store::{CrawlFile, CrawlInit, StorageProfile};
+use os_store::{CrawlFile, CrawlInit, CrawlSink, SqliteSink, StorageProfile};
 
-fn fixture() -> (tempfile::TempDir, CrawlFile, CrawlConfig) {
+fn empty_fixture() -> (tempfile::TempDir, CrawlFile, CrawlConfig) {
     let dir = tempfile::tempdir().unwrap();
     let cfg = CrawlConfig::default();
     let at = Timestamp::from_db("2026-10-18T12:00:00.000Z").unwrap();
@@ -33,6 +34,11 @@ fn fixture() -> (tempfile::TempDir, CrawlFile, CrawlConfig) {
         StorageProfile::Balanced,
     )
     .unwrap();
+    (dir, file, cfg)
+}
+
+fn fixture() -> (tempfile::TempDir, CrawlFile, CrawlConfig) {
+    let (dir, file, cfg) = empty_fixture();
     file.conn()
         .execute_batch(include_str!(
             "../../../tests/fixtures/tech-m2-hreflang/relations.sql"
@@ -131,6 +137,35 @@ fn unlinked_is_postcrawl_repeatable_and_stamps_sources() {
     );
 }
 
+// spec: TECH-075
+#[test]
+fn unlinked_error_rolls_back_flags_and_change_feed_before_retry() {
+    let (_dir, file, cfg) = fixture();
+    let seq = file.get_meta("change_seq").unwrap();
+    file.conn()
+        .execute_batch("CREATE TEMP TRIGGER fail_stamp BEFORE UPDATE OF change_seq ON urls BEGIN SELECT RAISE(ABORT, 'fixture failure'); END;")
+        .unwrap();
+    assert!(analysis::steps::hreflang::run(&file, &cfg, &CancelToken::new()).is_err());
+    assert!(file.conn().is_autocommit());
+    let flags: i64 = file
+        .conn()
+        .query_row(
+            "SELECT COUNT(*) FROM url_flags WHERE flag='hreflang_unlinked'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(flags, 0);
+    assert_eq!(file.get_meta("change_seq").unwrap(), seq);
+    file.conn()
+        .execute_batch("DROP TRIGGER fail_stamp")
+        .unwrap();
+    assert_eq!(
+        analysis::steps::hreflang::run(&file, &cfg, &CancelToken::new()).unwrap(),
+        StepState::Done
+    );
+}
+
 // spec: TECH-077
 #[test]
 fn inconsistency_uses_source_selfcode_and_backlink_case_insensitively() {
@@ -219,9 +254,37 @@ fn own_canonical_must_be_used_in_annotations() {
     assert!(has(&file, &cfg, "Not Using Canonical", 10));
     assert!(!has(&file, &cfg, "Not Using Canonical", 1));
     file.conn()
-        .execute("UPDATE hreflang SET target_id=2 WHERE url_id=10", [])
+        .execute(
+            "UPDATE hreflang SET target_id=2,url='https://site.test/2' WHERE url_id=10",
+            [],
+        )
         .unwrap();
     assert!(!has(&file, &cfg, "Not Using Canonical", 10));
+}
+// spec: TECH-083
+#[test]
+fn canonical_url_comparison_does_not_require_a_crawled_target_or_identifier() {
+    let (_dir, file, cfg) = fixture();
+    file.conn()
+        .execute_batch(
+            "UPDATE urls SET state='queued',status_code=NULL WHERE id=2;
+         UPDATE hreflang SET target_id=2,url='https://site.test/2' WHERE url_id=10;",
+        )
+        .unwrap();
+    assert!(!has(&file, &cfg, "Not Using Canonical", 10));
+    // URL comparison also works when neither reference has a target identifier.
+    file.conn().execute_batch(
+        "UPDATE urls SET canonical_target_id=NULL,canonical_url='https://site.test/uncrawled' WHERE id=10;
+         UPDATE hreflang SET target_id=NULL,url='https://site.test/uncrawled' WHERE url_id=10;",
+    ).unwrap();
+    assert!(!has(&file, &cfg, "Not Using Canonical", 10));
+    file.conn()
+        .execute(
+            "UPDATE hreflang SET url='https://site.test/other' WHERE url_id=10",
+            [],
+        )
+        .unwrap();
+    assert!(has(&file, &cfg, "Not Using Canonical", 10));
 }
 // spec: TECH-084
 #[test]
@@ -278,13 +341,7 @@ fn details_cover_precedence_multiselection_sort_and_truncation() {
             "Missing"
         ]
     );
-    assert_eq!(
-        data.notes,
-        [(
-            "Hreflang Truncated".into(),
-            "5 weitere Annotationen nicht ausgewertet".into()
-        )]
-    );
+    assert_eq!(data.notes, [("Hreflang Truncated".into(), "5".into())]);
     let data = detail(&file, &cfg, &[UrlId(1), UrlId(2)]);
     assert_eq!(data.columns[0].0, "Address");
     assert_eq!(data.total, 12);
@@ -312,6 +369,84 @@ fn details_cover_precedence_multiselection_sort_and_truncation() {
         text(&detail(&file, &cfg, &[UrlId(1)]).rows[6][5]),
         "Inconsistent"
     );
+}
+
+// spec: TECH-089
+#[test]
+fn writebatch_transports_annotations_and_both_truncation_counters_to_details() {
+    let (_dir, file, mut cfg) = empty_fixture();
+    let address = "https://site.test/1";
+    let mut sink = SqliteSink::open(file.path(), StorageProfile::Balanced).unwrap();
+    sink.write(WriteBatch {
+        new_urls: vec![NewUrl {
+            id: UrlId(1),
+            url: address.into(),
+            address: address.into(),
+            origin: "https://site.test".into(),
+            is_internal: true,
+            in_tables: true,
+            discovered_via: DiscoveryKind::Start,
+            crawl_depth: Some(0),
+            folder_depth: 1,
+            url_length: address.len() as u32,
+            state: UrlState::Queued,
+            not_crawled_reason: None,
+        }],
+        pages: vec![PageWrite {
+            url_id: UrlId(1),
+            replace: false,
+            fetch: FetchFacts {
+                status_code: 200,
+                content_class: ContentClass::Html,
+                ..FetchFacts::default()
+            },
+            page: None,
+            indexability: Indexability::Indexable,
+            indexability_status: None,
+            links: vec![],
+            images: vec![],
+            canonicals: vec![],
+            directives: vec![],
+            refresh: vec![],
+            hreflang: vec![HreflangRow {
+                target_id: Some(UrlId(1)),
+                sitemap_id: None,
+                r: HreflangRef {
+                    source: HintSource::Html,
+                    code_raw: "en".into(),
+                    code_norm: "en".into(),
+                    code_valid: true,
+                    invalid_reason: None,
+                    href_raw: "/1".into(),
+                    resolved: Some(address.into()),
+                    in_head: true,
+                    xpath: None,
+                    order: 0,
+                },
+            }],
+            pagination: vec![],
+            headers: vec![],
+            html: None,
+        }],
+        ext: [("hreflang.truncated", 2), ("hreflang.truncated_sitemap", 3)]
+            .into_iter()
+            .map(|(key, n)| ExtWrite {
+                url: UrlId(1),
+                key: ExtKey::parse(key).unwrap(),
+                value: Value::Int(n),
+            })
+            .collect(),
+        ..WriteBatch::default()
+    })
+    .unwrap();
+    sink.finish().unwrap();
+    let data = detail(&file, &cfg, &[UrlId(1)]);
+    assert_eq!(data.total, 1);
+    assert_eq!(text(&data.rows[0][5]), "Self");
+    assert_eq!(data.notes, [("Hreflang Truncated".into(), "5".into())]);
+    cfg.hreflang.over_limit = HreflangOverLimit::Skip;
+    assert!(ids(&file, &cfg, "All").is_empty());
+    assert!(detail(&file, &cfg, &[UrlId(1)]).rows.is_empty());
 }
 // spec: TECH-071 [M2]
 #[test]

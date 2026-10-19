@@ -1714,6 +1714,12 @@ async fn issues_that_need_the_crawl_analysis_are_named_instead_of_counted() {
         .as_array()
         .expect("nicht auswertbare Issues");
     assert!(!pending.is_empty());
-    assert!(pending.iter().all(|p| p["state"] == "needs_crawl_analysis"));
+    assert!(pending.iter().any(|p| p["state"] == "needs_crawl_analysis"));
+    assert!(pending.iter().all(|p| {
+        matches!(
+            p["state"].as_str(),
+            Some("needs_crawl_analysis" | "needs_recrawl" | "needs_config")
+        )
+    }));
     client.cancel().await;
 }

@@ -5,7 +5,7 @@ use std::collections::BTreeSet;
 
 use os_model::{CrawlConfig, StepState};
 use os_store::{queries, CrawlFile};
-use rusqlite::{params, Connection};
+use rusqlite::{params, Connection, Transaction, TransactionBehavior};
 
 use crate::analysis::CancelToken;
 use crate::error::AnalyzeError;
@@ -28,21 +28,14 @@ pub fn run(
         return Ok(StepState::Pending);
     }
     let conn = file.conn();
-    conn.execute_batch("BEGIN IMMEDIATE")?;
-    match apply(conn, cfg, cancel) {
-        Ok(state) => {
-            conn.execute_batch(if state == StepState::Pending {
-                "ROLLBACK"
-            } else {
-                "COMMIT"
-            })?;
-            Ok(state)
-        }
-        Err(e) => {
-            let _ = conn.execute_batch("ROLLBACK");
-            Err(e)
-        }
+    let tx = Transaction::new_unchecked(conn, TransactionBehavior::Immediate)?;
+    let state = apply(&tx, cfg, cancel)?;
+    if state == StepState::Pending {
+        tx.rollback()?;
+    } else {
+        tx.commit()?;
     }
+    Ok(state)
 }
 
 fn collect(conn: &Connection, sql: &str) -> Result<BTreeSet<i64>, rusqlite::Error> {

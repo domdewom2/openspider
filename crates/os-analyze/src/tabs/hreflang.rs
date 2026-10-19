@@ -230,7 +230,7 @@ pub fn tab() -> TabDef {
             relationship_filter("Noindex Return Links"),
             filter("Multiple Entries", "EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id GROUP BY h.code_norm HAVING COUNT(*) >= 2)"),
             filter("Missing Self Reference", "EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id) AND NOT EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id AND h.target_id = u.id)"),
-            filter("Not Using Canonical", "EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id) AND u.canonical_count > 0 AND u.canonical_self = 0 AND NOT EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id AND h.target_id = u.canonical_target_id)"),
+            filter("Not Using Canonical", "EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id) AND u.canonical_count > 0 AND u.canonical_self = 0 AND NOT EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id AND h.url = u.canonical_url)"),
             filter("Missing X-Default", "EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id) AND NOT EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id AND h.code_norm = 'x-default')"),
             outside_filter(),
         ],
@@ -418,10 +418,7 @@ pub fn url_details(
 ) -> Result<Vec<(String, String)>, ViewError> {
     let n: i64 = file.conn().query_row("SELECT COALESCE(SUM(v_int), 0) FROM url_ext WHERE url_id = ?1 AND key IN ('hreflang.truncated', 'hreflang.truncated_sitemap')", [url.0], |r| r.get(0))?;
     Ok(if n > 0 {
-        vec![(
-            "Hreflang Truncated".into(),
-            format!("{n} weitere Annotationen nicht ausgewertet"),
-        )]
+        vec![("Hreflang Truncated".into(), n.to_string())]
     } else {
         Vec::new()
     })

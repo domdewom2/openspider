@@ -36,15 +36,18 @@ fn fixture() -> (tempfile::TempDir, CrawlFile, CrawlConfig) {
 }
 fn csv_report(index: usize) -> (Vec<String>, Vec<Vec<String>>) {
     let (dir, file, cfg) = fixture();
-    os_analyze::analysis::steps::hreflang::run(&file, &cfg, &CancelToken::new()).unwrap();
-    os_analyze::analysis::persist::write_step(
-        &file,
-        AnalysisStep::Hreflang,
-        StepState::Done,
-        None,
-        None,
-    )
-    .unwrap();
+    // Only OUT-092 needs the post-crawl flags; OUT-090 and the other reports use live facts.
+    if index == 2 {
+        os_analyze::analysis::steps::hreflang::run(&file, &cfg, &CancelToken::new()).unwrap();
+        os_analyze::analysis::persist::write_step(
+            &file,
+            AnalysisStep::Hreflang,
+            StepState::Done,
+            None,
+            None,
+        )
+        .unwrap();
+    }
     let tabs = tabs::all();
     let entry = &entries()[index];
     let path = dir.path().join("report.csv");
@@ -227,7 +230,7 @@ fn detail_csv_and_xlsx_export_selection_and_truncation_warning() {
         let path = dir.path().join(format!("detail.{}", format.extension()));
         let info = export_detail(&job, &req, &path, format).unwrap();
         assert_eq!(info.rows, 12);
-        assert!(info.warnings.iter().any(|w| w.contains("5 weitere")));
+        assert_eq!(info.warnings, ["Hreflang Truncated: 5"]);
         if format == Format::Xlsx {
             let mut book = open_workbook_auto(path).unwrap();
             let range = book.worksheet_range_at(0).unwrap().unwrap();
