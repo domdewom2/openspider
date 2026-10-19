@@ -1,0 +1,46 @@
+# TECH-281/289/290: erzeugte Größen, komprimiertes HTML.
+[[route]]
+path = "/big-2mb.html"
+content_type = "text/html"
+body = "<html><head></head><body></body></html>"
+body_size = 2097152
+encoding = "gzip"
+[[route]]
+path = "/big-2mb-plus.html"
+content_type = "text/html"
+body = "<html><head></head><body></body></html>"
+body_size = 2097153
+encoding = "gzip"
+[[route]]
+path = "/big.js"
+content_type = "application/javascript"
+body = "/* fixture */"
+body_size = 2621440
+[[route]]
+path = "/big.css"
+content_type = "text/css"
+body = "/* fixture */"
+body_size = 2621440
+[[route]]
+path = "/small.css"
+content_type = "text/css"
+body = "body {}"
+[[route]]
+path = "/big.png"
+content_type = "image/png"
+body = "image fixture"
+body_size = 2621440
+[[route]]
+path = "/tiny.png"
+content_type = "image/png"
+body = "image fixture"
+[[route]]
+path = "/created.html"
+status = 201
+content_type = "text/html"
+body = "<p>created"
+[[route]]
+path = "/error.html"
+status = 404
+content_type = "text/html"
+body = "<p>error"

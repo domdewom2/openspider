@@ -250,6 +250,7 @@ pub fn parse_html(input: &ParseInput) -> ParsedPage {
     security::run(&ctx, &mut page);
     if cfg.html_validation {
         validation::run(&ctx, &mut page);
+        validation::set_document_bytes(&mut page, input.body.len() as u64);
     }
     if cfg.readability || cfg.minhash {
         readability::run(&ctx, &mut page);

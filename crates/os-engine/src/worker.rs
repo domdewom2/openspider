@@ -1740,7 +1740,19 @@ mod tests {
         assert_eq!(batch.structured_data[0].json, "{}");
         assert_eq!(batch.sd_issues[0].url_id, UrlId(42));
         assert_eq!(batch.sd_issues[0].code, "fixture-parse-error");
-        assert_eq!(batch.ext[1].value, os_model::Value::Int(12));
+        // D10 liefert jetzt echte Validierungsfakten vor dem hreflang-Zähler.
+        assert!(batch.ext.iter().any(|fact| {
+            fact.key.as_str() == "validation.checked" && fact.value == os_model::Value::Bool(true)
+        }));
+        assert_eq!(
+            batch
+                .ext
+                .iter()
+                .find(|fact| fact.key.as_str() == "hreflang.truncated")
+                .unwrap()
+                .value,
+            os_model::Value::Int(12)
+        );
     }
 
     // spec: INTEG-020, INTEG-040, TECH-008

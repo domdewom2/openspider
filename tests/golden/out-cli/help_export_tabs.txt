@@ -294,10 +294,12 @@ Search Console:AMP URL Is Invalid
 Search Console:Rich Result Invalid
 Validation:All
 Validation:Invalid HTML Elements In <head>
+Validation:<head> Not First In <html> Element
 Validation:Missing <head> Tag
 Validation:Multiple <head> Tags
 Validation:Missing <body> Tag
 Validation:Multiple <body> Tags
+Validation:<body> Element Preceding <html>
 Validation:HTML Document Over 2MB
 Validation:Resource Over 2MB
 Link Metrics:All

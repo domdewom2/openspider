@@ -364,6 +364,30 @@ pub enum Requirement {
     Rendering,
 }
 
+type CoverageDomains = std::collections::BTreeMap<(&'static str, &'static str), &'static str>;
+
+fn coverage_domains() -> &'static Mutex<CoverageDomains> {
+    static DOMAINS: OnceLock<Mutex<CoverageDomains>> = OnceLock::new();
+    DOMAINS.get_or_init(|| Mutex::new(CoverageDomains::new()))
+}
+
+/// Registriert die prüfbare Teilmenge eines Tabs für einen Coverage-Marker.
+/// Ohne Registrierung gilt wie bisher die gesamte Tab-Population.
+pub fn register_coverage_domain(tab: &'static str, marker: &'static str, predicate: &'static str) {
+    coverage_domains()
+        .lock()
+        .expect("coverage domains")
+        .insert((tab, marker), predicate);
+}
+
+pub(crate) fn coverage_domain(tab: &str, marker: &str) -> Option<&'static str> {
+    coverage_domains()
+        .lock()
+        .expect("coverage domains")
+        .get(&(tab, marker))
+        .copied()
+}
+
 /// Sortierschlüssel.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SortKey {
