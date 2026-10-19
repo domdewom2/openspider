@@ -61,21 +61,14 @@ pub fn export_view(
     directory: &Path,
     format: Format,
 ) -> Result<ExportFileInfo, ExportError> {
-    let name = format!("{}:{}", query.tab, query.filter);
+    let registry = tabs(file, cfg, scope);
+    let name = crate::tab_export::canonical_name(&registry, cfg, &query.tab, &query.filter)?;
     let path = directory.join(crate::naming::file_name(
         &name,
         suffix(scope),
         format.extension(),
     ));
-    crate::pipeline::export_view(
-        &tabs(file, cfg, scope),
-        file,
-        cfg,
-        query,
-        &path,
-        format,
-        &query.tab,
-    )
+    crate::pipeline::export_view(&registry, file, cfg, query, &path, format, &query.tab)
 }
 
 /// Inlinks restrict targets. All Outlinks restrict sources; filter-specific inlinks

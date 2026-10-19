@@ -165,6 +165,7 @@ fn persisted_filters_column_reassignment_and_json_roundtrip_share_one_assignment
         segments::saved_config(&file).unwrap().segments,
         reversed.segments
     );
+    assert_eq!(file.config().unwrap().segments, reversed.segments);
 }
 // spec: CRAWL-134
 // spec: UI-068 [P1]

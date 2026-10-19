@@ -195,3 +195,32 @@ fn all_bulk_outputs_coexist_and_segment_reports_keep_external_chain_context() {
         0
     );
 }
+
+// spec: OUT-011
+#[test]
+fn segment_filenames_resolve_configured_thresholds_like_regular_tab_exports() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = fixture::new_file(dir.path(), "names.ospider");
+    fixture::exec(
+        &file,
+        include_str!("../../../tests/fixtures/out-m2-export/crawl.sql"),
+    );
+    let mut cfg = cfg();
+    cfg.title.max_chars = 17;
+    segments::reassign(&file, &cfg, &Default::default()).unwrap();
+    let query =
+        os_analyze::views::ViewQuery::new("Page Titles", "Over {title.max_chars} Characters");
+    let info = segment::export_view(
+        &file,
+        &cfg,
+        &query,
+        Some(&SegmentFilter::new("B")),
+        dir.path(),
+        Format::Csv,
+    )
+    .unwrap();
+    assert_eq!(
+        info.path.file_name().unwrap(),
+        "page_titles_over_17_characters_segment_b.csv"
+    );
+}

@@ -100,6 +100,11 @@ fn assign(
         "segments.definitions",
         &serde_json::to_string(&cfg.segments).expect("segment configuration"),
     )?;
+    let mut stored = file.config()?;
+    if stored.segments != cfg.segments {
+        stored.segments = cfg.segments.clone();
+        file.set_config(&stored)?;
+    }
     // Changing rules invalidates views even when the URL facts themselves did not change.
     let seq = os_store::queries::change_seq(file.conn())?
         .checked_add(1)
