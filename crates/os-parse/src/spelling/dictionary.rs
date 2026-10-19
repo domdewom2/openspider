@@ -12,9 +12,12 @@
 //! Geladene Wörterbücher bleiben für den Prozess im Speicher.
 //!
 //! **Persönliches Wörterbuch** (ONPAGE-157): eine Textdatei je Sprache (`<Code>.txt`, ein Wort je Zeile) in
-//! [`Resources::personal_dir`]; die App setzt den Ordner auf `<Einstellungen>/dictionaries/personal` (über `dirs`
-//! bzw. `OPENSPIDER_HOME`). Eine Prüfung in `de-AT` liest `de-AT.txt` und `de.txt`. Vergleich ohne Beachtung der
-//! Groß-/Kleinschreibung.
+//! [`Resources::personal_dir`]; die App setzt den Ordner beim Start auf `<Einstellungen>/dictionaries/personal` (über
+//! `dirs` bzw. `OPENSPIDER_HOME`, [`under`]). Eine Prüfung in `de-AT` liest `de-AT.txt` und `de.txt`. Vergleich ohne
+//! Beachtung der Groß-/Kleinschreibung.
+//!
+//! **Orte ohne App** (CLI, Tests): ohne [`configure`] gelten die Verzeichnisse aus `OPENSPIDER_DICTIONARIES` und, falls
+//! `OPENSPIDER_HOME` gesetzt ist, `<OPENSPIDER_HOME>/dictionaries` samt persönlichem Wörterbuch ([`resources`]).
 
 use std::collections::{HashMap, HashSet};
 use std::io::Read;
@@ -34,19 +37,58 @@ pub struct Resources {
     pub personal_dir: Option<PathBuf>,
 }
 
-fn global() -> &'static RwLock<Resources> {
-    static GLOBAL: OnceLock<RwLock<Resources>> = OnceLock::new();
-    GLOBAL.get_or_init(|| RwLock::new(Resources::default()))
+/// Umgebungsvariable mit zusätzlichen Wörterbuchverzeichnissen (Pfadliste wie `PATH`).
+pub const DICTIONARIES_ENV: &str = "OPENSPIDER_DICTIONARIES";
+
+/// Umgebungsvariable des Heimatordners (`os_store::paths::HOME_ENV`).
+const HOME_ENV: &str = "OPENSPIDER_HOME";
+
+fn global() -> &'static RwLock<Option<Resources>> {
+    static GLOBAL: OnceLock<RwLock<Option<Resources>>> = OnceLock::new();
+    GLOBAL.get_or_init(|| RwLock::new(None))
 }
 
-/// Setzt die Orte der Wörterbücher für alle folgenden Prüfungen des Prozesses.
+/// Setzt die Orte der Wörterbücher für alle folgenden Prüfungen des Prozesses (die App beim Start).
 pub fn configure(resources: Resources) {
-    *global().write().unwrap_or_else(|e| e.into_inner()) = resources;
+    *global().write().unwrap_or_else(|e| e.into_inner()) = Some(resources);
 }
 
-/// Die aktuell gesetzten Orte.
+/// Verzeichnisse aus [`DICTIONARIES_ENV`].
+pub fn env_dirs() -> Vec<PathBuf> {
+    std::env::var_os(DICTIONARIES_ENV)
+        .map(|v| {
+            std::env::split_paths(&v)
+                .filter(|p| !p.as_os_str().is_empty())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// Orte unterhalb eines Einstellungsordners: `<Ordner>/dictionaries` und `<Ordner>/dictionaries/personal`, davor die
+/// Verzeichnisse aus [`DICTIONARIES_ENV`].
+pub fn under(settings: &Path) -> Resources {
+    let root = settings.join("dictionaries");
+    let mut dirs = env_dirs();
+    dirs.push(root.clone());
+    Resources {
+        dictionary_dirs: dirs,
+        personal_dir: Some(root.join("personal")),
+    }
+}
+
+/// Die aktuell gesetzten Orte; ohne [`configure`] aus der Umgebung: [`DICTIONARIES_ENV`] und, falls gesetzt,
+/// `OPENSPIDER_HOME` (wie [`under`]).
 pub fn resources() -> Resources {
-    global().read().unwrap_or_else(|e| e.into_inner()).clone()
+    if let Some(set) = global().read().unwrap_or_else(|e| e.into_inner()).clone() {
+        return set;
+    }
+    match std::env::var_os(HOME_ENV).filter(|h| !h.is_empty()) {
+        Some(home) => under(Path::new(&home)),
+        None => Resources {
+            dictionary_dirs: env_dirs(),
+            personal_dir: None,
+        },
+    }
 }
 
 /// Gebündelte Wörterbücher: Code, Affixdatei, gzip-komprimierte Wortliste.
