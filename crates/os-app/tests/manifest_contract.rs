@@ -425,20 +425,14 @@ fn every_command_file_is_a_marked_stub_with_a_known_owner() {
 async fn every_f05_command_reports_its_exact_owner() {
     let dir = tempfile::tempdir().unwrap();
     let app = App::new(AppConfig::new(dir.path())).unwrap();
-    for (owner, commands) in [
-        (
-            "M2-O01",
-            vec![
-                "auth.importProfile",
-                "auth.exportProfile",
-                "diag.previewBundle",
-            ],
-        ),
-        (
-            "M2-X03",
-            vec!["export.customSummaryMetrics", "export.customSummary"],
-        ),
-    ] {
+    for (owner, commands) in [(
+        "M2-O01",
+        vec![
+            "auth.importProfile",
+            "auth.exportProfile",
+            "diag.previewBundle",
+        ],
+    )] {
         for command in commands {
             let err = app
                 .dispatch(CallCtx::for_window("main"), command, serde_json::json!({}))

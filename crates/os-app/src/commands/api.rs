@@ -1586,3 +1586,8 @@ pub fn register(r: &mut Registry) {
         );
     }
 }
+
+// Additive export access to the same persisted/session-only accounts (M2-X03, K2-61).
+pub fn export_credentials(app: &App) -> Arc<Credentials> {
+    app.ext::<ApiState>().credentials(app).clone()
+}

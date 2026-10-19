@@ -1,18 +1,199 @@
-//! STUB(M2-X03): Command-Verträge für Welle 1.
-stub_commands!(
-    "M2-X03",
-    [
+//! Custom Crawl Overview: pool-backed measurement, cancellable Sheets operation.
+use crate::{
+    dto::{
+        CmdError, CustomSummaryArgs, CustomSummaryMetric, ErrorCode, FileResult, Notice,
+        NoticeLevel,
+    },
+    registry::{CmdResult, CommandMeta, Registry},
+    runtime::{App, CallCtx},
+};
+use futures_util::future::BoxFuture;
+use os_export::{
+    catalog::TableJob,
+    target_gsheet::{self, Destination},
+    timeseries,
+};
+use os_integrations::{drive::DriveClient, ApiCtx};
+use serde_json::Value;
+
+#[derive(Default)]
+pub struct SummaryState {
+    serial: tokio::sync::Mutex<()>,
+}
+pub fn register(registry: &mut Registry) {
+    for (name, args, ret, long_running, handler) in [
         (
             "export.customSummaryMetrics",
             "void",
             "CustomSummaryMetric[]",
-            false
+            false,
+            metrics as crate::registry::Handler,
         ),
         (
             "export.customSummary",
             "CustomSummaryArgs",
             "FileResult",
-            true
+            true,
+            summary,
         ),
-    ]
-);
+    ] {
+        registry.register(
+            CommandMeta {
+                name,
+                args,
+                ret,
+                long_running,
+            },
+            handler,
+        );
+    }
+}
+fn failure(e: impl std::fmt::Display) -> CmdError {
+    CmdError::new(ErrorCode::Io, "err-io").with_detail(e.to_string())
+}
+fn metrics<'a>(app: &'a App, ctx: CallCtx, _args: Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let catalog = if let Some(session) = app.sessions().current(&ctx.window) {
+            app.read_pool()
+                .run(session.key, move |file, _token| {
+                    Ok(timeseries::catalog(&os_analyze::tabs::configured_for_file(
+                        &session.config,
+                        file,
+                    )))
+                })
+                .await?
+        } else {
+            timeseries::catalog(&os_analyze::tabs::configured(
+                &os_model::CrawlConfig::default(),
+            ))
+        };
+        serde_json::to_value(
+            catalog
+                .into_iter()
+                .map(|m| CustomSummaryMetric {
+                    id: m.name.clone(),
+                    label_key: m.name,
+                })
+                .collect::<Vec<_>>(),
+        )
+        .map_err(failure)
+    })
+}
+fn summary<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let args: CustomSummaryArgs = serde_json::from_value(args)
+            .map_err(|_| CmdError::invalid_input("err-invalid-args", "summary"))?;
+        if args.account.trim().is_empty() || args.target.trim().is_empty() {
+            return Err(CmdError::invalid_input("err-invalid-args", "target"));
+        }
+        let session = app
+            .sessions()
+            .current(&ctx.window)
+            .ok_or_else(|| CmdError::new(ErrorCode::NoCrawl, "err-no-crawl"))?;
+        let app = app.clone();
+        let handle = app
+            .clone()
+            .ops()
+            .spawn("op-export", true, move |cancel, progress| {
+                Box::pin(async move { run_summary(&app, session, args, cancel, progress).await })
+            });
+        serde_json::to_value(handle).map_err(failure)
+    })
+}
+
+async fn run_summary(
+    app: &App,
+    session: crate::runtime::sessions::SessionInfo,
+    args: CustomSummaryArgs,
+    cancel: os_model::CancelToken,
+    progress: crate::ops::ProgressSink,
+) -> CmdResult {
+    let state = app.ext::<SummaryState>();
+    let _guard = until_cancelled(state.serial.lock(), &cancel).await?;
+    let cfg = (*session.config).clone();
+    let context = ApiCtx {
+        cfg: cfg.clone(),
+        secrets: super::api::export_credentials(app),
+        network: app.settings_snapshot().network,
+        allow_api_override: false,
+    };
+    let client =
+        DriveClient::new(&context, &args.account, app.config().clock.now()).map_err(failure)?;
+    let (measurement, project, crawl) = app
+        .read_pool()
+        .run_with(session.key, cancel.clone(), move |file, _token| {
+            Ok(os_export::pipeline::snapshot(file, || {
+                let meta = file.meta()?;
+                let tabs = os_analyze::tabs::configured_for_file(&cfg, file);
+                let measurement = timeseries::measure(&TableJob {
+                    entry_name: "Custom Crawl Overview",
+                    tabs: &tabs,
+                    file,
+                    cfg: &cfg,
+                })?;
+                Ok((measurement, meta.project, meta.name))
+            })
+            .map_err(failure))
+        })
+        .await??;
+    let mut destination = Destination::new(
+        if project.is_empty() {
+            "Default"
+        } else {
+            &project
+        },
+        if crawl.is_empty() { "Crawl" } else { &crawl },
+        &args.target,
+    );
+    if let Some(root) = context.cfg.api.drive.root_folder {
+        destination.root = root;
+    }
+    // Timestamp::to_export uses the application's initialized local offset.
+    let offset = time::OffsetDateTime::parse(
+        &measurement.started_at.to_export(),
+        &time::format_description::well_known::Rfc3339,
+    )
+    .map_err(failure)?
+    .offset();
+    let result = until_cancelled(
+        target_gsheet::custom_summary(
+            &client,
+            &destination,
+            &args.metrics,
+            &measurement,
+            offset,
+            &cancel,
+        ),
+        &cancel,
+    )
+    .await?
+    .map_err(failure)?;
+    for warning in result.warnings {
+        app.push_notice(Notice {
+            level: NoticeLevel::Warning,
+            code: "notice-export-warning".into(),
+            args: [("message".into(), Value::String(warning))].into(),
+        });
+    }
+    progress.report(1, Some(1));
+    serde_json::to_value(FileResult {
+        path: result.url,
+        bytes: 0,
+    })
+    .map_err(failure)
+}
+async fn until_cancelled<T>(
+    future: impl std::future::Future<Output = T>,
+    cancel: &os_model::CancelToken,
+) -> Result<T, CmdError> {
+    tokio::pin!(future);
+    loop {
+        if cancel.is_cancelled() {
+            return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"));
+        }
+        tokio::select! {
+            result=&mut future => return Ok(result),
+            _=tokio::time::sleep(std::time::Duration::from_millis(50))=>{}
+        }
+    }
+}
