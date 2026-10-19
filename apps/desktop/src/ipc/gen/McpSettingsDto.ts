@@ -7,4 +7,12 @@ export type McpSettingsDto = {
 /**
  * Beim Start der App starten.
  */
-autostart: boolean, };
+autostart: boolean, 
+/**
+ * Gespeicherte Klassenfreigaben; fehlt der Wert, gilt nur `read` (AGENT-003).
+ */
+classes?: Array<string>, 
+/**
+ * Konfigurierter HTTP-Port; ohne Wert wählt der Server einen Port (OUT-285).
+ */
+port?: number, };
