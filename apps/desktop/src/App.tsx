@@ -1,4 +1,5 @@
 import { ExportHost, ExportViewButton } from "./features/export";
+import { IntegrationsHeaderSlot, IntegrationsHost } from "./features/integrations";
 import { useEffect, useState, type ComponentType } from "react";
 import { RegionBoundary } from "./app/ErrorBoundary";
 import { Providers } from "./app/Providers";
@@ -41,9 +42,11 @@ export function App() {
   return (
     <Providers>
       <ExportHost />
+      <IntegrationsHost />
       <div className="os-app">
         <header className="os-app-header" role="banner" aria-label={t("app-region-header")}>
           <h1 className="os-app-title">{t("app-title")}</h1>
+          <IntegrationsHeaderSlot />
         </header>
         <nav className="os-app-tabs" aria-label={t("app-region-tabs")}>{TabsRegion && <TabsRegion />}</nav>
         <main className="os-app-main" data-region="table" aria-label={t("app-region-table")}>
