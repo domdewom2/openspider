@@ -1,2 +1,47 @@
 # OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „Search Console“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+# Platzhalter wie in core/issues/texts/de.toml. Texte: M2-I03.
+
+[issues.search-console-page-is-not-mobile-friendly]
+what = "Die URL-Prüfung von Google meldet für diese Seite eine nicht bestandene Prüfung der mobilen Nutzbarkeit."
+why = "Auf Smartphones ist die Seite schwer lesbar oder bedienbar, und Google bewertet zuerst die mobile Fassung."
+fix = "Prüfe die aufgeführten Probleme der mobilen Nutzbarkeit, korrigiere Layout, Schriftgröße und Tippflächen und prüfe die URL erneut."
+
+[issues.search-console-orphan-urls]
+what = "Die Seite hat Search-Analytics-Daten, aber keine andere gecrawlte Seite verlinkt sie intern."
+why = "Seiten, die nur von außen erreichbar sind, erhalten keine internen Linksignale und geraten leicht aus dem Blick."
+fix = "Verlinke die Seite aus einem passenden Bereich der Website oder leite sie um bzw. entferne sie, wenn sie nicht mehr gebraucht wird."
+
+[issues.search-console-url-is-on-google-but-has-issues]
+what = "Google hat die URL indexiert, aber eine Prüfung für Mobilgeräte, AMP oder Rich Results ist fehlgeschlagen oder nur teilweise bestanden."
+why = "Die Seite kann in der Suche erscheinen, einzelne Erweiterungen fehlen aber oder werden eingeschränkt angezeigt."
+fix = "Sieh dir den fehlerhaften Teil des Prüfergebnisses an und behebe die gemeldeten Markup- oder Layoutprobleme."
+
+[issues.search-console-amp-url-is-invalid]
+what = "Die URL-Prüfung meldet die AMP-Fassung dieser Seite als ungültig."
+why = "Eine ungültige AMP-Seite wird nicht als AMP ausgeliefert; die zugehörigen Suchfunktionen stehen ihr nicht zur Verfügung."
+fix = "Behebe die AMP-Validierungsfehler aus der Spalte AMP Issues und prüfe die URL erneut."
+
+[issues.search-console-indexable-url-not-indexed]
+what = "OpenSpider bewertet die URL als indexierbar, Google meldet sie aber als nicht bei Google."
+why = "Eine Seite, die für die Suche gedacht ist, aber im Index fehlt, bringt keinen organischen Traffic."
+fix = "Prüfe den Abdeckungsstatus, stärke interne Links und Inhalt und beantrage die Indexierung, sobald die Ursache behoben ist."
+
+[issues.search-console-user-declared-canonical-not-selected]
+what = "Google hat eine andere kanonische URL gewählt als die, die die Seite angibt."
+why = "Google übergeht das angegebene Canonical; die Signale werden auf einer ungewollten URL zusammengeführt."
+fix = "Unterscheide doppelte Seiten klar oder richte Canonical-Tags, Weiterleitungen, interne Links und Sitemaps auf eine URL aus."
+
+[issues.search-console-no-search-analytics-data]
+what = "Die gecrawlte HTML-Seite hatte im gewählten Zeitraum keine Impressionen in Search Analytics."
+why = "Entweder erscheint die Seite nicht in den Suchergebnissen, oder sie ist noch nicht indexiert."
+fix = "Prüfe die Indexierung mit der URL-Prüfung und ob die Seite Suchanfragen bedient, nach denen tatsächlich gesucht wird."
+
+[issues.search-console-non-indexable-with-search-analytics-data]
+what = "Die Seite ist jetzt nicht indexierbar, hatte im gewählten Zeitraum aber noch Impressionen."
+why = "Nicht indexierbare Seiten mit Sichtbarkeit in der Suche können ihren Traffic verlieren, sobald Google die Änderung verarbeitet."
+fix = "Stelle sicher, dass noindex, Canonical oder Statusänderung gewollt sind; sonst mache die Seite wieder indexierbar."
+
+[issues.search-console-url-is-not-on-google]
+what = "Die URL-Prüfung meldet, dass die URL nicht bei Google ist."
+why = "Die URL kann nicht in den Google-Suchergebnissen erscheinen; für Seiten, die bewusst nicht indexiert werden sollen, ist das in Ordnung."
+fix = "Vergleiche mit dem Filter Indexable URL Not Indexed und handle nur bei Seiten, die in der Suche gefunden werden sollen."
