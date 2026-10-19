@@ -9,25 +9,27 @@ test("real bridge: the core parses the text syntax into the rule tree and valida
   expect(bridge).not.toBeNull();
   try {
     await page.goto(`/?bridge=${encodeURIComponent(bridge!.url)}`);
+    // The debug bridge needs a moment on a cold CI runner; wait until the table has settled before parsing.
+    await expect(page.getByText(/^Showing:/)).toBeVisible({ timeout: 20_000 });
     await page.getByRole("button", { name: "Advanced search", exact: true }).click();
     const panel = page.getByRole("region", { name: "Advanced search" });
     const syntax = page.getByLabel("Search query (text syntax)", { exact: true });
     await syntax.fill("Address ~");
     await syntax.press("Enter");
-    await expect(page.getByText(/^Query syntax error at character \d+$/)).toBeVisible();
+    await expect(page.getByText(/^Query syntax error at character \d+$/)).toBeVisible({ timeout: 15_000 });
     await syntax.fill('Address ~ "/blog/" AND "Word Count" < 200');
     await syntax.press("Enter");
-    await expect(panel.getByLabel("Query", { exact: true })).toHaveValue('Address ~ "/blog/" AND "Word Count" < "200"');
+    await expect(panel.getByLabel("Query", { exact: true })).toHaveValue('Address ~ "/blog/" AND "Word Count" < "200"', { timeout: 15_000 });
     await expect(panel.getByLabel("Operator", { exact: true })).toHaveCount(2);
     await expect(panel.getByLabel("Operator", { exact: true }).nth(1)).toHaveValue("lessThan");
     await expect(panel.getByLabel("Value", { exact: true }).nth(0)).toHaveValue("/blog/");
     await panel.getByLabel("Operator", { exact: true }).nth(0).selectOption("regex");
     await panel.getByLabel("Value", { exact: true }).nth(0).fill("(unclosed");
     await panel.getByRole("button", { name: "Search", exact: true }).click();
-    await expect(panel.getByRole("alert")).toContainText("Invalid regular expression");
+    await expect(panel.getByRole("alert")).toContainText("Invalid regular expression", { timeout: 15_000 });
     await panel.getByLabel("Value", { exact: true }).nth(0).fill("/([^/]+)/\\1/");
     await panel.getByRole("button", { name: "Search", exact: true }).click();
-    await expect(panel.getByLabel("Query", { exact: true })).toHaveValue('Address REGEX "/([^/]+)/\\\\1/" AND "Word Count" < "200"');
+    await expect(panel.getByLabel("Query", { exact: true })).toHaveValue('Address REGEX "/([^/]+)/\\\\1/" AND "Word Count" < "200"', { timeout: 15_000 });
     await expect(panel.getByRole("alert")).toHaveCount(0);
   } finally { await bridge?.stop(); }
 });

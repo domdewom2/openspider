@@ -126,13 +126,15 @@ test("resets the columns of all tables after confirmation and keeps the template
   await dialog.getByRole("button", { name: "OK", exact: true }).click();
   await page.getByRole("tab", { name: "Images", exact: true }).dragTo(page.getByRole("tab", { name: "Internal", exact: true }));
   await expect.poll(() => page.evaluate(() => localStorage.getItem("u20.fixture.uiState") ?? "")).toContain("Basis");
-  await page.evaluate(async () => {
-    const modulePath = "/src/ui/actions.ts";
-    const { runAction } = await import(modulePath);
-    runAction("view.resetAllColumns");
-  });
+  // Header context menu of the grid (canvas header row), as a user reaches the action.
+  await page.locator(".os-data-grid").click({ position: { x: 225, y: 12 }, button: "right" });
+  await page.getByRole("menuitem", { name: "Reset columns of all tables", exact: true }).click();
   const confirm = page.getByRole("dialog", { name: "Reset columns of all tables" });
-  await confirm.getByRole("button", { name: "Reset", exact: true }).click();
+  await expect(confirm).toBeVisible();
+  const reset = confirm.getByRole("button", { name: "Reset", exact: true });
+  await reset.focus();
+  await page.keyboard.press("Enter");
+  await expect(confirm).toBeHidden();
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("u20.fixture.uiState") ?? "{}").state?.tableColumns)).toBeUndefined();
   await page.reload();
   await expect(page.getByRole("tab").first()).toHaveText("Images");
