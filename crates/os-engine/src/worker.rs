@@ -25,9 +25,9 @@ use os_fetch::{content_class, Fetch, FetchOutcome, FetchRequest, FetchResult, Ht
 use os_model::{
     CanonicalRow, Clock, ContentClass, CrawlConfig, DirectiveRow, DiscoveryKind, ElementPair,
     ExtractedLink, ExtractedText, FetchFacts, HeaderHints, HeaderRow, HintSource, HreflangRow,
-    ImageRow, Indexability, IndexabilityInput, LinkOrigin, LinkPosition, LinkRow, LinkType,
-    NoResponseReason, NotCrawledReason, PageFacts, PageWrite, PaginationRow, ParsedPage, PathType,
-    PdfMeta, QueueOp, RedirectType, RefreshRow, RefreshSource, Timestamp, UrlId, WriteBatch,
+    ImageRow, IndexabilityInput, LinkOrigin, LinkPosition, LinkRow, LinkType, NoResponseReason,
+    NotCrawledReason, PageFacts, PageWrite, PaginationRow, ParsedPage, PathType, PdfMeta, QueueOp,
+    RedirectType, RefreshRow, RefreshSource, Timestamp, UrlId, WriteBatch,
 };
 use os_parse::{ParseConfig, ParseInput};
 use os_url::{NormUrl, ScopeClass};
@@ -188,53 +188,9 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
         sh.lock_core().requeue(item.clone());
         return Ok(());
     }
-    let internal = item.purpose != Purpose::External;
     match &check.decision {
         RobotsDecision::Blocked { .. } => {
-            let facts = crate::robots_glue::blocked_fetch_facts(&check.decision, &*sh.clock);
-            sh.lock_core().refund();
-            let counter = if internal {
-                "robots_blocked_internal"
-            } else {
-                "robots_blocked_external"
-            };
-            let mut batch = WriteBatch::default();
-            batch.counters.push((counter.to_string(), 1));
-            batch.pages.push(PageWrite {
-                url_id: item.id,
-                replace: item.replace,
-                indexability: Indexability::NonIndexable,
-                indexability_status: None,
-                fetch: facts,
-                page: None,
-                links: vec![],
-                images: vec![],
-                canonicals: vec![],
-                directives: vec![],
-                refresh: vec![],
-                hreflang: vec![],
-                pagination: vec![],
-                headers: vec![],
-                html: None,
-            });
-            let page = &mut batch.pages[0];
-            let (ind, status) = os_model::evaluate(&IndexabilityInput {
-                fetch: &page.fetch,
-                page: None,
-                page_url: &item.url,
-                refresh: &[],
-                cfg,
-                same_url: os_url::eq_for_compare,
-            });
-            page.indexability = ind;
-            page.indexability_status = status;
-            batch.queue.push(QueueOp::Pop { id: item.id });
-            sh.writer.send(batch).await?;
-            sh.progress
-                .lock()
-                .unwrap_or_else(|p| p.into_inner())
-                .record_completion(sh.clock_mono(), None);
-            sh.ctl.notify.notify_one();
+            crate::robots_glue::record_blocked(sh, item, &check.decision).await?;
             return Ok(());
         }
         RobotsDecision::Allowed | RobotsDecision::ReportOnly { .. } => {}

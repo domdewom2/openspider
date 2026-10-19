@@ -1,0 +1,34 @@
+[[route]]
+path = "/"
+body = '<!doctype html><html><body><a href="/blocked">Internal</a><a href="http://other.test/blocked">External</a><a href="/allowed">Allowed</a></body></html>'
+
+[[route]]
+path = "/robots.txt"
+host = "site.test"
+content_type = "text/plain"
+body = "User-agent: *\nDisallow: /blocked\n"
+
+[[route]]
+path = "/robots.txt"
+host = "other.test"
+content_type = "text/plain"
+body = "User-agent: *\nDisallow: /\n"
+
+[[route]]
+path = "/blocked"
+body = '<!doctype html><html><body>Blocked page</body></html>'
+
+[[route]]
+path = "/allowed"
+body = '<!doctype html><html><body><a href="/blocked">Internal again</a><a href="http://other.test/blocked">External again</a></body></html>'
+
+[[route]]
+path = "/unreachable-start"
+body = '<!doctype html><html><body><a href="http://unreachable.test/blocked">Unavailable robots.txt</a></body></html>'
+
+[[route]]
+path = "/robots.txt"
+host = "unreachable.test"
+status = 503
+content_type = "text/plain"
+body = "Service Unavailable"

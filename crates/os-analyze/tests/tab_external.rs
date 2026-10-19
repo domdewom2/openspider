@@ -462,14 +462,14 @@ async fn an_external_image_from_img_src_is_in_the_images_filter() {
     assert_eq!(external_addresses(&fx, "Images"), ["/ext.png"]);
 }
 
-// spec: ONPAGE-026
+// spec: ONPAGE-026, CRAWL-101
 #[tokio::test]
-async fn unanswered_and_robots_blocked_external_urls_are_unknown() {
+async fn unanswered_external_urls_are_unknown_and_robots_blocks_are_hidden_by_default() {
     let fx = external_site().await;
     let unknown = external_addresses(&fx, "Unknown");
-    // durch die robots.txt des externen Hosts blockiert
+    // CRAWL-101: durch robots.txt blockierte externe URLs sind standardmäßig ausgeblendet.
     assert!(
-        unknown.contains(&"/ext-blocked/x.html".to_string()),
+        !unknown.contains(&"/ext-blocked/x.html".to_string()),
         "{unknown:?}"
     );
     // ohne Content-Type
@@ -481,10 +481,9 @@ async fn unanswered_and_robots_blocked_external_urls_are_unknown() {
         "Unknown",
         ColumnSelection::All,
     );
-    assert_eq!(
-        t.get(&format!("{}/ext-blocked/x.html", ext(&fx)), "Status Code"),
-        Value::Int(0)
-    );
+    assert!(!t
+        .addresses()
+        .contains(&format!("{}/ext-blocked/x.html", ext(&fx))));
     assert_eq!(
         fx.site.count("localhost", "/ext-blocked/x.html"),
         0,
@@ -492,12 +491,13 @@ async fn unanswered_and_robots_blocked_external_urls_are_unknown() {
     );
 }
 
-// spec: ONPAGE-026
+// spec: ONPAGE-026, CRAWL-100, CRAWL-101
 #[tokio::test]
-async fn an_external_url_with_a_closed_port_is_unknown() {
+async fn an_external_url_with_unreachable_robots_is_hidden_by_default() {
     let fx = crawl_fixture_from("onpage-external", "/refused.html", CrawlConfig::default()).await;
     let unknown = external_addresses(&fx, "Unknown");
-    assert_eq!(unknown, ["http://localhost:1/"]);
+    // Die unerreichbare robots.txt sperrt den Host; externe Sperren sind ausgeblendet.
+    assert!(unknown.is_empty());
     let t = query(
         &fx,
         &CrawlConfig::default(),
@@ -505,9 +505,7 @@ async fn an_external_url_with_a_closed_port_is_unknown() {
         "Unknown",
         ColumnSelection::All,
     );
-    assert_eq!(t.get("http://localhost:1/", "Status Code"), Value::Int(0));
-    // Verbindung abgelehnt: ohne Content-Type
-    assert_eq!(t.get("http://localhost:1/", "Content"), Value::Null);
+    assert!(t.rows.is_empty());
 }
 
 // spec: ONPAGE-026

@@ -385,7 +385,7 @@ fn robots_cfg(mode: RobotsMode) -> CrawlConfig {
     cfg
 }
 
-// spec: ONPAGE-052
+// spec: ONPAGE-052, CRAWL-101
 #[test]
 fn respect_mode_lists_blocked_urls_with_status_0_and_never_requests_them() {
     let d = dump();
@@ -407,8 +407,8 @@ fn respect_mode_lists_blocked_urls_with_status_0_and_never_requests_them() {
         text(cell(d, a, "Matched Robots.txt Line")),
         Some("Zeile 2: Disallow: /blocked/")
     );
-    // blockierte externe URLs stehen in der externen Sicht
-    assert!(contains(
+    // CRAWL-101: blockierte externe URLs sind standardmäßig ausgeblendet.
+    assert!(!contains(
         d,
         "External Blocked by Robots.txt",
         "{EXT}/blocked/x"
@@ -598,13 +598,17 @@ fn a_closed_loopback_port_is_connection_refused() {
     );
 }
 
-// spec: ONPAGE-054
+// spec: ONPAGE-054, CRAWL-101
 #[test]
 fn robots_blocked_urls_are_not_in_no_response() {
     let d = dump();
     for url in ["{BASE}/blocked/a", "{EXT}/blocked/x"] {
         assert!(!contains(d, "No Response", url), "{url}");
-        assert!(contains(d, "Blocked by Robots.txt", url), "{url}");
+        assert_eq!(
+            contains(d, "Blocked by Robots.txt", url),
+            url == "{BASE}/blocked/a",
+            "{url} (externe Sperren standardmäßig ausgeblendet)"
+        );
     }
 }
 
