@@ -1,2 +1,7 @@
 # OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „Response Codes“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
 # Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.response-codes-internal-redirection-http-refresh]
+what = "Der Antwortheader verweist Besucher per Refresh auf eine andere URL."
+why = "Eine verzögerte Navigation verlängert die Wartezeit und kann von Crawlern unterschiedlich behandelt werden. Links auf diese Adresse verursachen einen zusätzlichen Navigationsschritt."
+fix = "Verlinke direkt auf das Ziel. Ersetze den Refresh-Header bei einem dauerhaften Umzug durch eine passende HTTP-Weiterleitung."
