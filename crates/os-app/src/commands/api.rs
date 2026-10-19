@@ -330,6 +330,49 @@ fn quota_left(quotas: &[QuotaDto]) -> Option<u64> {
         .min()
 }
 
+async fn authorize_ahrefs(
+    app: &App,
+    state: &ApiState,
+    cfg: &CrawlConfig,
+) -> Result<Credential, CmdError> {
+    let id = cfg
+        .api
+        .ahrefs
+        .options
+        .oauth_client_id
+        .as_deref()
+        .ok_or_else(|| CmdError::invalid_input("err-api-client-id", "oauth_client_id"))?;
+    let endpoints = state
+        .ahrefs_endpoints
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .clone()
+        .unwrap_or_default();
+    let authorization = linkmetrics::oauth::Authorization::begin(id, &endpoints)
+        .await
+        .map_err(error)?;
+    let open = state
+        .browser
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .clone();
+    if let Some(open) = open {
+        open(authorization.url.as_str()).map_err(error)?;
+    } else {
+        authorization.open_browser().map_err(error)?;
+    }
+    authorization
+        .finish(
+            &http::client_for(&api_ctx(app, cfg.clone())).map_err(error)?,
+            id,
+            None,
+            &endpoints,
+            app.config().clock.clone(),
+        )
+        .await
+        .map_err(error)
+}
+
 async fn connect_now(app: App, ctx: CallCtx, args: ApiConnectArgs) -> Result<ApiAccount, CmdError> {
     let state = app.ext::<ApiState>();
     let cfg = cfg(&app, &ctx);
@@ -363,14 +406,28 @@ async fn connect_now(app: App, ctx: CallCtx, args: ApiConnectArgs) -> Result<Api
         let workspace = (args.kind == ApiKind::Ahrefs)
             .then_some(cfg.api.ahrefs.options.workspace.as_ref())
             .flatten();
-        let mut credential = if let Some(id) = args.account_id.as_ref().or(workspace) {
-            state
-                .credentials(&app)
-                .list(model(args.kind))
-                .map_err(error)?
-                .into_iter()
-                .find(|c| &c.account_id == id)
-                .ok_or_else(|| CmdError::new(ErrorCode::NotFound, "err-api-account"))?
+        let saved = if let Some(id) = args.account_id.as_ref().or(workspace) {
+            Some(
+                state
+                    .credentials(&app)
+                    .list(model(args.kind))
+                    .map_err(error)?
+                    .into_iter()
+                    .find(|c| &c.account_id == id)
+                    .ok_or_else(|| CmdError::new(ErrorCode::NotFound, "err-api-account"))?,
+            )
+        } else {
+            None
+        };
+        let saved = saved.filter(|credential| {
+            args.kind != ApiKind::Ahrefs
+                || credential
+                    .expires_at
+                    .is_none_or(|at| at > app.config().clock.now())
+        });
+        let reused_ahrefs = args.kind == ApiKind::Ahrefs && saved.is_some();
+        let mut credential = if let Some(credential) = saved {
+            credential
         } else if matches!(args.kind, ApiKind::Ga4 | ApiKind::Gsc) {
             let id = client_id(&cfg, args.kind)
                 .ok_or_else(|| CmdError::invalid_input("err-api-client-id", "oauth_client_id"))?;
@@ -399,42 +456,7 @@ async fn connect_now(app: App, ctx: CallCtx, args: ApiConnectArgs) -> Result<Api
                 .await
                 .map_err(error)?
         } else if args.kind == ApiKind::Ahrefs {
-            let id = cfg
-                .api
-                .ahrefs
-                .options
-                .oauth_client_id
-                .as_deref()
-                .ok_or_else(|| CmdError::invalid_input("err-api-client-id", "oauth_client_id"))?;
-            let endpoints = state
-                .ahrefs_endpoints
-                .lock()
-                .unwrap_or_else(|p| p.into_inner())
-                .clone()
-                .unwrap_or_default();
-            let authorization = linkmetrics::oauth::Authorization::begin(id, &endpoints)
-                .await
-                .map_err(error)?;
-            let open = state
-                .browser
-                .lock()
-                .unwrap_or_else(|p| p.into_inner())
-                .clone();
-            if let Some(open) = open {
-                open(authorization.url.as_str()).map_err(error)?;
-            } else {
-                authorization.open_browser().map_err(error)?;
-            }
-            authorization
-                .finish(
-                    &http::client_for(&api_ctx(&app, cfg.clone())).map_err(error)?,
-                    id,
-                    None,
-                    &endpoints,
-                    app.config().clock.clone(),
-                )
-                .await
-                .map_err(error)?
+            authorize_ahrefs(&app, &state, &cfg).await?
         } else {
             let key = args
                 .api_key
@@ -462,15 +484,26 @@ async fn connect_now(app: App, ctx: CallCtx, args: ApiConnectArgs) -> Result<Api
             .await
             .map_err(error)?;
         }
-        credential = tokio::time::timeout(
+        let mut verified = tokio::time::timeout(
             Duration::from_secs(30),
             probe(&app, args.kind, cfg.clone(), &credential),
         )
         .await
         .map_err(|_| {
             CmdError::new(ErrorCode::Timeout, "err-api-connect-timeout").with_arg("seconds", 30)
-        })?
-        .map_err(error)?;
+        })?;
+        if reused_ahrefs && matches!(verified, Err(ApiError::Unauthorized(_))) {
+            credential = authorize_ahrefs(&app, &state, &cfg).await?;
+            verified = tokio::time::timeout(
+                Duration::from_secs(30),
+                probe(&app, args.kind, cfg.clone(), &credential),
+            )
+            .await
+            .map_err(|_| {
+                CmdError::new(ErrorCode::Timeout, "err-api-connect-timeout").with_arg("seconds", 30)
+            })?;
+        }
+        credential = verified.map_err(error)?;
         if state.connection(args.kind).attempt != attempt {
             return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"));
         }

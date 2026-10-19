@@ -12,6 +12,8 @@ use std::{collections::HashMap, sync::Arc};
 #[derive(Default, Clone)]
 pub struct MozMock {
     pub requests: Requests,
+    pub missing_targets: Vec<String>,
+    pub error_targets: Vec<String>,
     pub throttle_once: Arc<std::sync::atomic::AtomicBool>,
 }
 impl MockApi for MozMock {
@@ -79,13 +81,18 @@ async fn handle(State(s): State<MozMock>, headers: HeaderMap, Json(q): Json<Valu
     if queries.is_empty() || queries.len() > 50 {
         return StatusCode::BAD_REQUEST.into_response();
     }
-    let rows: Vec<_> = queries.iter().map(|query| {
+    let rows: Vec<_> = queries.iter().filter(|query| !s.missing_targets.iter().chain(&s.error_targets).any(|url| query["query"] == *url)).map(|query| {
         let mut metrics = json!({"page_authority":45,"domain_authority":65,"spam_score":3,"brand_authority_score":77,"link_propensity":0.15,"last_crawled":"2026-10-18"});
         for suffix in ["page","subdomain","root_domain"] { for prefix in ["root_domains_to_","external_pages_to_","pages_to_","nofollow_root_domains_to_"] { metrics[format!("{prefix}{suffix}")] = json!(5000000000_i64); } }
         json!({"site_query":query,"site_metrics":metrics})
     }).collect();
+    let errors: Vec<_> = queries
+        .iter()
+        .filter(|query| s.error_targets.iter().any(|url| query["query"] == *url))
+        .map(|query| json!({"site_query":query,"error":{"message":"fixture site failure"}}))
+        .collect();
     Json(
-        json!({"jsonrpc":"2.0","id":q["id"],"result":{"results_by_site":rows,"errors_by_site":[]}}),
+        json!({"jsonrpc":"2.0","id":q["id"],"result":{"results_by_site":rows,"errors_by_site":errors}}),
     )
     .into_response()
 }

@@ -12,6 +12,8 @@ use std::{collections::HashMap, sync::Arc};
 #[derive(Default, Clone)]
 pub struct MajesticMock {
     pub requests: Requests,
+    pub missing_targets: Vec<String>,
+    pub error_targets: Vec<String>,
 }
 impl MockApi for MajesticMock {
     fn name(&self) -> &'static str {
@@ -65,6 +67,6 @@ async fn handle(State(s): State<MajesticMock>, Form(q): Form<HashMap<String, Str
     {
         return StatusCode::BAD_REQUEST.into_response();
     }
-    let rows: Vec<_> = (0..n).map(|i| json!({"Item":q[&format!("item{i}")],"TrustFlow":75,"CitationFlow":80,"ExtBackLinks":5000000000_i64,"RefDomains":123,"RefIPs":99,"RefSubNets":88,"IndexedURLs":77,"ExtBackLinksEDU":66,"ExtBackLinksGOV":55,"RefDomainsEDU":44,"RefDomainsGOV":33})).collect();
+    let rows: Vec<_> = (0..n).filter(|i| !s.missing_targets.contains(&q[&format!("item{i}")])).map(|i| json!({"ResultCode":if s.error_targets.contains(&q[&format!("item{i}")]) { "NotFound" } else { "OK" },"Item":q[&format!("item{i}")],"TrustFlow":75,"CitationFlow":80,"ExtBackLinks":5000000000_i64,"RefDomains":123,"RefIPs":99,"RefSubNets":88,"IndexedURLs":77,"ExtBackLinksEDU":66,"ExtBackLinksGOV":55,"RefDomainsEDU":44,"RefDomainsGOV":33})).collect();
     Json(json!({"Code":"OK","DataTables":{"Results":{"Data":rows}}})).into_response()
 }

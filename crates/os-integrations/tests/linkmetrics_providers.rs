@@ -440,3 +440,208 @@ fn country_and_volume_are_settable_from_the_default_cli_profile() {
     let loaded = CrawlConfig::load_str(&cfg.to_osconfig_string().unwrap()).unwrap();
     assert_eq!(loaded.config.api.ahrefs, cfg.api.ahrefs);
 }
+
+// spec: INTEG-153
+#[tokio::test]
+async fn later_bundle_failure_preserves_first_bundle_outcomes() {
+    let mock = Arc::new(AhrefsMock::failing_from_batch(2));
+    let server = MockServer::start(vec![mock.clone()]).await.unwrap();
+    let mut ctx = context(
+        ApiKind::Ahrefs,
+        server.base_url("ahrefs"),
+        vec![ApiLevel::Url],
+        &["backlinks"],
+        Default::default(),
+    );
+    ctx.cfg.api.ahrefs.limits.retries = 0;
+    let source = LinkMetrics::with_clock(ApiKind::Ahrefs, clock());
+    let results = source.fetch_outcomes(&urls(101), &ctx).await;
+    assert_eq!(results.iter().filter(|(_, r)| r.is_ok()).count(), 100);
+    assert_eq!(results.iter().filter(|(_, r)| r.is_err()).count(), 1);
+    assert_eq!(mock.requests.all().len(), 2);
+    server.stop().await;
+}
+
+// spec: INTEG-152
+// spec: INTEG-153
+// spec: INTEG-154
+#[tokio::test]
+async fn missing_rows_and_native_site_errors_are_url_failures() {
+    let addresses = urls(3);
+    let majestic = Arc::new(MajesticMock {
+        missing_targets: vec![addresses[1].url.clone()],
+        error_targets: vec![addresses[2].url.clone()],
+        ..Default::default()
+    });
+    let moz = Arc::new(MozMock {
+        missing_targets: vec![addresses[1].url.clone()],
+        error_targets: vec![addresses[2].url.clone()],
+        ..Default::default()
+    });
+    let ahrefs = Arc::new(AhrefsMock::omitting_targets(vec![
+        addresses[1].url.clone(),
+        addresses[2].url.clone(),
+    ]));
+    let server = MockServer::start(vec![majestic, moz, ahrefs])
+        .await
+        .unwrap();
+    for (kind, path, metric) in [
+        (ApiKind::Majestic, "majestic", "TrustFlow"),
+        (ApiKind::Moz, "moz", "domain_authority"),
+        (ApiKind::Ahrefs, "ahrefs", "backlinks"),
+    ] {
+        let ctx = context(
+            kind,
+            server.base_url(path),
+            vec![ApiLevel::Url],
+            &[metric],
+            LinkMetricsOptions {
+                moz_paid: true,
+                ..Default::default()
+            },
+        );
+        let source = LinkMetrics::with_clock(kind, clock());
+        let results = source.fetch_outcomes(&addresses, &ctx).await;
+        assert!(results[0].1.is_ok());
+        assert!(results[1].1.is_err());
+        assert!(results[2].1.is_err());
+    }
+    server.stop().await;
+}
+
+// spec: INTEG-153
+#[tokio::test]
+async fn batch_adapter_rechecks_live_provider_quota_between_bundles() {
+    let mock = Arc::new(AhrefsMock::with_unit_limit(250));
+    let server = MockServer::start(vec![mock.clone()]).await.unwrap();
+    let ctx = context(
+        ApiKind::Ahrefs,
+        server.base_url("ahrefs"),
+        vec![ApiLevel::Url],
+        &["backlinks"],
+        Default::default(),
+    );
+    let source = Arc::new(LinkMetrics::with_clock(ApiKind::Ahrefs, clock()));
+    // A new explicit job uses current quotas, not an old quota snapshot.
+    source
+        .test_connection(&ctx, &credential(ApiKind::Ahrefs))
+        .await
+        .unwrap();
+    let adapter = linkmetrics::batch_source(source, urls(101));
+    let mut succeeded = 0;
+    for url in urls(101) {
+        succeeded += usize::from(adapter.fetch(&[url], &ctx).await.is_ok());
+    }
+    assert_eq!(succeeded, 100);
+    assert_eq!(mock.requests.all().len(), 1);
+    server.stop().await;
+}
+
+// spec: INTEG-153
+#[tokio::test]
+async fn crawl_cap_never_prefetches_urls_not_admitted_by_the_app() {
+    let mock = Arc::new(AhrefsMock::default());
+    let server = MockServer::start(vec![mock.clone()]).await.unwrap();
+    let mut ctx = context(
+        ApiKind::Ahrefs,
+        server.base_url("ahrefs"),
+        vec![ApiLevel::Url],
+        &["backlinks"],
+        Default::default(),
+    );
+    ctx.cfg.api.ahrefs.limits.quota_limit = Some(1);
+    let source = Arc::new(LinkMetrics::with_clock(ApiKind::Ahrefs, clock()));
+    let addresses = urls(101);
+    let adapter = linkmetrics::batch_source(source, addresses.clone());
+    let values = adapter.fetch(&addresses[..1], &ctx).await.unwrap();
+    assert_eq!(values.len(), 1);
+    let requests = mock.requests.all();
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].body["targets"].as_array().unwrap().len(), 1);
+    assert_eq!(requests[0].body["targets"][0]["url"], addresses[0].url);
+    server.stop().await;
+}
+
+// spec: INTEG-150
+#[tokio::test]
+async fn crawl_cap_still_deduplicates_shared_domain_targets() {
+    let mock = Arc::new(AhrefsMock::default());
+    let server = MockServer::start(vec![mock.clone()]).await.unwrap();
+    let mut ctx = context(
+        ApiKind::Ahrefs,
+        server.base_url("ahrefs"),
+        vec![ApiLevel::Domain],
+        &["backlinks"],
+        Default::default(),
+    );
+    ctx.cfg.api.ahrefs.limits.quota_limit = Some(2);
+    let source = Arc::new(LinkMetrics::with_clock(ApiKind::Ahrefs, clock()));
+    let addresses = urls(101);
+    let adapter = linkmetrics::batch_source(source, addresses.clone());
+    for url in &addresses[..2] {
+        let values = adapter
+            .fetch(std::slice::from_ref(url), &ctx)
+            .await
+            .unwrap();
+        assert_eq!(values.len(), 1);
+        assert_eq!(values[0].url_id, url.url_id);
+        assert_eq!(values[0].url, url.url);
+    }
+    assert_eq!(mock.requests.all().len(), 1);
+    server.stop().await;
+}
+
+// spec: INTEG-153
+#[tokio::test]
+async fn revoked_ahrefs_credentials_are_recognizable_without_a_json_body() {
+    let mock = Arc::new(AhrefsMock::default());
+    let server = MockServer::start(vec![mock]).await.unwrap();
+    let ctx = context(
+        ApiKind::Ahrefs,
+        server.base_url("ahrefs"),
+        vec![ApiLevel::Url],
+        &["backlinks"],
+        Default::default(),
+    );
+    let mut revoked = credential(ApiKind::Ahrefs);
+    revoked.access_token = Some("bad".into());
+    let source = LinkMetrics::with_clock(ApiKind::Ahrefs, clock());
+    assert!(matches!(
+        source.test_connection(&ctx, &revoked).await,
+        Err(ApiError::Unauthorized(_))
+    ));
+    server.stop().await;
+}
+
+// spec: INTEG-153
+#[tokio::test]
+async fn crawl_cap_cost_estimate_covers_the_actual_per_request_minimum() {
+    let mock = Arc::new(AhrefsMock::default());
+    let server = MockServer::start(vec![mock.clone()]).await.unwrap();
+    let mut ctx = context(
+        ApiKind::Ahrefs,
+        server.base_url("ahrefs"),
+        vec![ApiLevel::Url],
+        &["backlinks"],
+        Default::default(),
+    );
+    ctx.cfg.api.ahrefs.limits.quota_limit = Some(101);
+    let addresses = urls(101);
+    let estimated =
+        linkmetrics::estimate_cost(ApiKind::Ahrefs, &addresses, &ctx.cfg.api.ahrefs).unwrap();
+    let source = Arc::new(LinkMetrics::with_clock(ApiKind::Ahrefs, clock()));
+    source
+        .test_connection(&ctx, &credential(ApiKind::Ahrefs))
+        .await
+        .unwrap();
+    let before = source.quotas()[0].used;
+    let adapter = linkmetrics::batch_source(source.clone(), addresses.clone());
+    for url in addresses {
+        assert!(adapter.fetch(&[url], &ctx).await.is_ok());
+    }
+    let actual = source.quotas()[0].used - before;
+    assert_eq!(mock.requests.all().len(), 101);
+    assert_eq!(actual, 5050);
+    assert!(estimated >= actual, "estimate={estimated}, actual={actual}");
+    server.stop().await;
+}

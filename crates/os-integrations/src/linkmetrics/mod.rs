@@ -1,5 +1,7 @@
 //! Linkmetriken (INTEG-150–154/157). Alle Zugriffe benutzen den gemeinsamen Netzwerk- und Secret-Pfad.
 mod batch;
+type Outcome = Result<Vec<ApiValueWrite>, ApiError>;
+type Grouped = BTreeMap<(Option<os_model::UrlId>, String), Outcome>;
 pub mod catalog;
 pub mod oauth;
 pub use batch::batch_source;
@@ -196,6 +198,10 @@ impl LinkMetrics {
                 .await?
         };
         let status = response.status().as_u16();
+        if self.kind == ApiKind::Ahrefs && status == 401 {
+            // Auch eine leere 401-Antwort muss als widerrufene Anmeldung erkennbar sein.
+            return Err(ApiError::Unauthorized("Ahrefs-Zugang widerrufen".into()));
+        }
         if self.kind == ApiKind::Ahrefs {
             if let Some(cost) = response
                 .headers()
@@ -253,11 +259,18 @@ impl LinkMetrics {
         }
         Ok(value)
     }
-    async fn fetch_inner(
-        &self,
-        urls: &[UrlRef],
-        ctx: &ApiCtx,
-    ) -> Result<Vec<ApiValueWrite>, ApiError> {
+    fn check_quota(&self) -> Result<(), ApiError> {
+        if self.quotas().iter().any(|quota| {
+            quota.limit.is_some_and(|limit| quota.used >= limit)
+                && quota.resets_at.is_none_or(|reset| reset > self.clock.now())
+        }) {
+            return Err(ApiError::QuotaExceeded(
+                "Anbieterkontingent erschöpft".into(),
+            ));
+        }
+        Ok(())
+    }
+    async fn fetch_inner(&self, urls: &[UrlRef], ctx: &ApiCtx) -> Result<Grouped, ApiError> {
         let cfg = config(ctx, self.kind);
         let opts = cfg.options.clone();
         validate(self.kind, cfg)?;
@@ -292,7 +305,10 @@ impl LinkMetrics {
         };
         let transport = self.transport(ctx).await?;
         let base = self.base(ctx);
-        let mut output = vec![];
+        let mut output: Grouped = urls
+            .iter()
+            .map(|url| ((url.url_id, url.url.clone()), Ok(vec![])))
+            .collect();
         for chunk in targets.chunks(batch_size) {
             let traffic_groups = if self.kind == ApiKind::Ahrefs {
                 vec![false, true]
@@ -400,16 +416,29 @@ impl LinkMetrics {
                         transport.client.post(format!("{base}/jsonrpc")).header("x-moz-token", token).header("Content-Type", "application/json").body(json!({"jsonrpc":"2.0","id":oauth2::CsrfToken::new_random().secret(),"method":"data.site.metrics.fetch.multiple","params":{"data":{"site_queries":queries}}}).to_string())
                     }
                 };
-                let data = self.response(ctx, request, false, token).await?;
+                let response = match self.check_quota() {
+                    Ok(()) => self.response(ctx, request, false, token).await,
+                    Err(error) => Err(error),
+                };
+                let data = match response {
+                    Ok(data) => data,
+                    Err(error) => {
+                        for t in chunk {
+                            for url in &groups[t] {
+                                output.insert((url.url_id, url.url.clone()), Err(error.clone()));
+                            }
+                        }
+                        continue;
+                    }
+                };
                 let rows = match self.kind {
                     ApiKind::Majestic => data.pointer("/DataTables/Results/Data"),
                     ApiKind::Ahrefs => data.get("targets"),
                     _ => data.pointer("/result/results_by_site"),
                 }
-                .and_then(Value::as_array)
-                .ok_or_else(invalid)?;
+                .and_then(Value::as_array);
                 for (index, t) in chunk.iter().enumerate() {
-                    let row = rows.iter().find(|row| match self.kind {
+                    let row = rows.into_iter().flatten().find(|row| match self.kind {
                         ApiKind::Majestic => row["Item"].as_str() == Some(t.query.as_str()),
                         ApiKind::Ahrefs => row["index"].as_u64() == Some(index as u64),
                         _ => {
@@ -421,53 +450,93 @@ impl LinkMetrics {
                                     == Some(t.level.to_string().as_str())
                         }
                     });
-                    let Some(row) = row else {
-                        continue;
-                    };
-                    let row = if self.kind == ApiKind::Moz {
-                        &row["site_metrics"]
-                    } else {
-                        row
-                    };
-                    for metric in &metrics {
-                        let field = moz_field(metric, t.level);
-                        let derived = if metric.as_str() == "org_keywords_top10" {
-                            row["org_keywords_1_3"]
-                                .as_i64()
-                                .zip(row["org_keywords_4_10"].as_i64())
-                                .and_then(|(a, b)| a.checked_add(b))
-                                .map_or(Value::Null, |sum| json!(sum))
-                        } else {
-                            Value::Null
-                        };
-                        let value = if metric.as_str() == "org_keywords_top10" {
-                            &derived
-                        } else {
-                            &row[if self.kind == ApiKind::Moz {
-                                field.as_str()
-                            } else {
-                                metric.as_str()
-                            }]
-                        };
-                        if value.is_null() {
-                            continue;
+                    let parsed = (|| -> Outcome {
+                        let row = row.ok_or_else(invalid)?;
+                        if (self.kind == ApiKind::Majestic
+                            && row.get("ResultCode").is_some_and(|code| code != "OK"))
+                            || (self.kind == ApiKind::Moz
+                                && data
+                                    .pointer("/result/errors_by_site")
+                                    .and_then(Value::as_array)
+                                    .is_some_and(|errors| {
+                                        errors.iter().any(|error| {
+                                            let query = error
+                                                .pointer("/site_query/original_site_query/query")
+                                                .or_else(|| error.pointer("/site_query/query"))
+                                                .and_then(Value::as_str);
+                                            query == Some(t.query.as_str())
+                                                && error
+                                                    .pointer("/site_query/scope")
+                                                    .and_then(Value::as_str)
+                                                    == Some(t.level.to_string().as_str())
+                                        })
+                                    }))
+                        {
+                            return Err(invalid());
                         }
-                        let meta = catalog::catalog(self.kind)
-                            .iter()
-                            .find(|m| m.id == metric.as_str())
-                            .ok_or_else(invalid)?;
-                        let (real, text) = parse_value(meta, value)?;
-                        for url in &groups[t] {
-                            output.push(ApiValueWrite {
-                                url_id: url.url_id,
-                                url: url.url.clone(),
-                                source: self.kind.to_string(),
-                                metric: (*metric).clone(),
-                                level: t.level.to_string(),
-                                v_real: real,
-                                v_text: text.clone(),
-                                fetched_at: self.clock.now(),
-                            });
+                        let mut values = vec![];
+                        let row = if self.kind == ApiKind::Moz {
+                            &row["site_metrics"]
+                        } else {
+                            row
+                        };
+                        for metric in &metrics {
+                            let field = moz_field(metric, t.level);
+                            let derived = if metric.as_str() == "org_keywords_top10" {
+                                row["org_keywords_1_3"]
+                                    .as_i64()
+                                    .zip(row["org_keywords_4_10"].as_i64())
+                                    .and_then(|(a, b)| a.checked_add(b))
+                                    .map_or(Value::Null, |sum| json!(sum))
+                            } else {
+                                Value::Null
+                            };
+                            let value = if metric.as_str() == "org_keywords_top10" {
+                                &derived
+                            } else {
+                                &row[if self.kind == ApiKind::Moz {
+                                    field.as_str()
+                                } else {
+                                    metric.as_str()
+                                }]
+                            };
+                            if value.is_null() {
+                                return Err(invalid());
+                            }
+                            let meta = catalog::catalog(self.kind)
+                                .iter()
+                                .find(|m| m.id == metric.as_str())
+                                .ok_or_else(invalid)?;
+                            let (real, text) = parse_value(meta, value)?;
+                            for url in &groups[t] {
+                                values.push(ApiValueWrite {
+                                    url_id: url.url_id,
+                                    url: url.url.clone(),
+                                    source: self.kind.to_string(),
+                                    metric: (*metric).clone(),
+                                    level: t.level.to_string(),
+                                    v_real: real,
+                                    v_text: text.clone(),
+                                    fetched_at: self.clock.now(),
+                                });
+                            }
+                        }
+                        Ok(values)
+                    })();
+                    match parsed {
+                        Ok(values) => {
+                            for value in values {
+                                if let Some(Ok(stored)) =
+                                    output.get_mut(&(value.url_id, value.url.clone()))
+                                {
+                                    stored.push(value);
+                                }
+                            }
+                        }
+                        Err(error) => {
+                            for url in &groups[t] {
+                                output.insert((url.url_id, url.url.clone()), Err(error.clone()));
+                            }
                         }
                     }
                 }
@@ -484,27 +553,42 @@ impl LinkMetrics {
             }
             for (domain, urls) in domains {
                 let request = transport.client.post(format!("{base}/jsonrpc")).header("x-moz-token", token).header("Content-Type", "application/json").body(json!({"jsonrpc":"2.0","id":oauth2::CsrfToken::new_random().secret(),"method":"data.site.metrics.brand.authority.fetch","params":{"data":{"site_query":{"query":domain,"scope":"domain"}}}}).to_string());
-                let data = self.response(ctx, request, false, token).await?;
-                let value = data
-                    .pointer("/result/site_metrics/brand_authority_score")
-                    .ok_or_else(invalid)?;
-                let meta = catalog::catalog(self.kind)
-                    .iter()
-                    .find(|m| m.id == "brand_authority_score")
-                    .expect("catalog");
-                let (v_real, v_text) = parse_value(meta, value)?;
+                let parsed = async {
+                    self.check_quota()?;
+                    let data = self.response(ctx, request, false, token).await?;
+                    let value = data
+                        .pointer("/result/site_metrics/brand_authority_score")
+                        .ok_or_else(invalid)?;
+                    let meta = catalog::catalog(self.kind)
+                        .iter()
+                        .find(|m| m.id == "brand_authority_score")
+                        .expect("catalog");
+                    parse_value(meta, value)
+                }
+                .await;
+                let (v_real, v_text) = match parsed {
+                    Ok(value) => value,
+                    Err(error) => {
+                        for url in urls {
+                            output.insert((url.url_id, url.url.clone()), Err(error.clone()));
+                        }
+                        continue;
+                    }
+                };
                 for url in urls {
                     for level in &cfg.levels {
-                        output.push(ApiValueWrite {
-                            url_id: url.url_id,
-                            url: url.url.clone(),
-                            source: self.kind.to_string(),
-                            metric: meta.id.into(),
-                            level: level.to_string(),
-                            v_real,
-                            v_text: v_text.clone(),
-                            fetched_at: self.clock.now(),
-                        });
+                        if let Some(Ok(values)) = output.get_mut(&(url.url_id, url.url.clone())) {
+                            values.push(ApiValueWrite {
+                                url_id: url.url_id,
+                                url: url.url.clone(),
+                                source: self.kind.to_string(),
+                                metric: "brand_authority_score".into(),
+                                level: level.to_string(),
+                                v_real,
+                                v_text: v_text.clone(),
+                                fetched_at: self.clock.now(),
+                            });
+                        }
                     }
                 }
             }
@@ -619,9 +703,13 @@ pub fn estimate_cost(
                 .iter()
                 .any(|m| m.id == id && m.traffic)
         });
-        rows.saturating_mul(cfg.metrics.len() as u64 * 10)
-            .max(rows.div_ceil(100) * 50)
-            * (u64::from(link) + u64::from(traffic))
+        rows.saturating_mul(cfg.metrics.len() as u64 * 10).max(
+            if cfg.limits.quota_limit.is_some() {
+                rows.saturating_mul(50)
+            } else {
+                rows.div_ceil(100) * 50
+            },
+        ) * (u64::from(link) + u64::from(traffic))
     } else {
         rows
     })
@@ -648,34 +736,63 @@ impl ApiSource for LinkMetrics {
         ctx: &'a ApiCtx,
     ) -> BoxFuture<'a, Result<Vec<ApiValueWrite>, ApiError>> {
         Box::pin(async move {
+            let mut values = vec![];
+            for (_, result) in self.fetch_outcomes(urls, ctx).await {
+                values.extend(result?);
+            }
+            Ok(values)
+        })
+    }
+    fn fetch_outcomes<'a>(
+        &'a self,
+        urls: &'a [UrlRef],
+        ctx: &'a ApiCtx,
+    ) -> BoxFuture<'a, Vec<(UrlRef, Outcome)>> {
+        Box::pin(async move {
             let _serial = self.serial.lock().await;
             {
-                let mut s = self.status.lock().unwrap_or_else(|p| p.into_inner());
-                s.state = ApiState::Fetching;
-                s.urls_total = urls.len() as u64;
-                s.urls_done = 0;
-                s.urls_failed = 0;
-                s.detail = None;
+                let mut status = self.status.lock().unwrap_or_else(|p| p.into_inner());
+                status.state = ApiState::Fetching;
+                status.urls_total = urls.len() as u64;
+                status.urls_done = 0;
+                status.urls_failed = 0;
+                status.detail = None;
             }
             let result = self.fetch_inner(urls, ctx).await;
-            let mut s = self.status.lock().unwrap_or_else(|p| p.into_inner());
-            s.urls_done = urls.len() as u64;
-            s.urls_failed = if result.is_err() {
-                urls.len() as u64
-            } else {
-                0
-            };
-            s.state = match &result {
-                Ok(_) => ApiState::Idle,
-                Err(
+            let outcomes: Vec<_> = urls
+                .iter()
+                .map(|url| {
+                    let outcome = match &result {
+                        Ok(values) => values
+                            .get(&(url.url_id, url.url.clone()))
+                            .cloned()
+                            .unwrap_or_else(|| Err(invalid())),
+                        Err(error) => Err(error.clone()),
+                    };
+                    (url.clone(), outcome)
+                })
+                .collect();
+            let mut status = self.status.lock().unwrap_or_else(|p| p.into_inner());
+            status.urls_total = urls.len() as u64;
+            status.urls_done = urls.len() as u64;
+            status.urls_failed = outcomes
+                .iter()
+                .filter(|(_, outcome)| outcome.is_err())
+                .count() as u64;
+            let first_error = outcomes
+                .iter()
+                .find_map(|(_, outcome)| outcome.as_ref().err());
+            status.state = match first_error {
+                None => ApiState::Idle,
+                Some(
                     ApiError::Unauthorized(_)
                     | ApiError::RateLimited(_)
                     | ApiError::QuotaExceeded(_),
                 ) => ApiState::Paused,
-                Err(_) => ApiState::Failed,
+                Some(_) => ApiState::Failed,
             };
-            s.detail = result.as_ref().err().map(ApiError::public_message);
-            result
+            status.detail = first_error.map(ApiError::public_message);
+            outcomes
         })
     }
     fn test_connection<'a>(

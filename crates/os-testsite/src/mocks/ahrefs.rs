@@ -35,9 +35,23 @@ pub struct AhrefsMock {
     pub requests: Requests,
     pub log: common::CallLog,
     pub unit_limit: Option<u64>,
+    pub fail_batch_from: Option<usize>,
+    pub missing_targets: Vec<String>,
     challenges: Arc<Mutex<HashMap<String, String>>>,
 }
 impl AhrefsMock {
+    pub fn failing_from_batch(batch: usize) -> Self {
+        Self {
+            fail_batch_from: Some(batch),
+            ..Self::default()
+        }
+    }
+    pub fn omitting_targets(targets: Vec<String>) -> Self {
+        Self {
+            missing_targets: targets,
+            ..Self::default()
+        }
+    }
     pub fn with_unit_limit(unit_limit: u64) -> Self {
         Self {
             unit_limit: Some(unit_limit),
@@ -139,6 +153,15 @@ async fn metrics(
         return StatusCode::UNAUTHORIZED.into_response();
     }
     s.requests.record(body.clone());
+    if s.fail_batch_from
+        .is_some_and(|batch| s.requests.all().len() >= batch)
+    {
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(json!({"error":{"message":"fixture batch failure"}})),
+        )
+            .into_response();
+    }
     let Some(targets) = body["targets"].as_array() else {
         return StatusCode::BAD_REQUEST.into_response();
     };
@@ -148,6 +171,7 @@ async fn metrics(
     let rows: Vec<_> = targets
         .iter()
         .enumerate()
+        .filter(|(_, t)| !s.missing_targets.iter().any(|url| t["url"] == *url))
         .map(|(i, t)| {
             let mut row =
                 json!({"index":i,"url":t["url"],"mode":t["mode"],"protocol":t["protocol"]});
