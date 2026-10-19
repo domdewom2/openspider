@@ -1,4 +1,5 @@
 import { ExportHost, ExportViewButton } from "./features/export";
+import { McpHost, McpStatusField } from "./features/mcp";
 import { useEffect, useState, type ComponentType } from "react";
 import { RegionBoundary } from "./app/ErrorBoundary";
 import { Providers } from "./app/Providers";
@@ -41,6 +42,7 @@ export function App() {
   return (
     <Providers>
       <ExportHost />
+      <McpHost />
       <div className="os-app">
         <header className="os-app-header" role="banner" aria-label={t("app-region-header")}>
           <h1 className="os-app-title">{t("app-title")}</h1>
@@ -55,6 +57,7 @@ export function App() {
         </main>
         <aside className="os-app-sidebar" aria-label={t("app-region-sidebar")} />
         <footer className="os-app-status" role="contentinfo" aria-label={t("app-region-status")}>
+          <McpStatusField />
           {version !== null && <span data-testid="version">{t("app-version", { version })}</span>}
         </footer>
       </div>

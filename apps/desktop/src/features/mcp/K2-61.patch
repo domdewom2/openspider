@@ -1,0 +1,90 @@
+diff --git a/apps/desktop/src/App.tsx b/apps/desktop/src/App.tsx
+index 6b27f02..25cfa20 100644
+--- a/apps/desktop/src/App.tsx
++++ b/apps/desktop/src/App.tsx
+@@ -1,4 +1,5 @@
+ import { ExportHost, ExportViewButton } from "./features/export";
++import { McpHost, McpStatusField } from "./features/mcp";
+ import { useEffect, useState, type ComponentType } from "react";
+ import { RegionBoundary } from "./app/ErrorBoundary";
+ import { Providers } from "./app/Providers";
+@@ -41,6 +42,7 @@ export function App() {
+   return (
+     <Providers>
+       <ExportHost />
++      <McpHost />
+       <div className="os-app">
+         <header className="os-app-header" role="banner" aria-label={t("app-region-header")}>
+           <h1 className="os-app-title">{t("app-title")}</h1>
+@@ -55,6 +57,7 @@ export function App() {
+         </main>
+         <aside className="os-app-sidebar" aria-label={t("app-region-sidebar")} />
+         <footer className="os-app-status" role="contentinfo" aria-label={t("app-region-status")}>
++          <McpStatusField />
+           {version !== null && <span data-testid="version">{t("app-version", { version })}</span>}
+         </footer>
+       </div>
+diff --git a/apps/desktop/src/ipc/gen/CallLogRow.ts b/apps/desktop/src/ipc/gen/CallLogRow.ts
+index 6d404b6..c8edf04 100644
+--- a/apps/desktop/src/ipc/gen/CallLogRow.ts
++++ b/apps/desktop/src/ipc/gen/CallLogRow.ts
+@@ -31,4 +31,8 @@ ok: boolean,
+ /**
+  * Kurzfassung der Argumente (redigiert).
+  */
+-argsSummary: string, };
++argsSummary: string, 
++/**
++ * Ergebnisgröße in Byte; fehlt bei älteren Protokolleinträgen (AGENT-043).
++ */
++resultBytes?: number, };
+diff --git a/apps/desktop/src/ipc/gen/McpSettingsDto.ts b/apps/desktop/src/ipc/gen/McpSettingsDto.ts
+index e19a53f..7b9a6fb 100644
+--- a/apps/desktop/src/ipc/gen/McpSettingsDto.ts
++++ b/apps/desktop/src/ipc/gen/McpSettingsDto.ts
+@@ -7,4 +7,12 @@ export type McpSettingsDto = {
+ /**
+  * Beim Start der App starten.
+  */
+-autostart: boolean, };
++autostart: boolean, 
++/**
++ * Gespeicherte Klassenfreigaben; fehlt der Wert, gilt nur `read` (AGENT-003).
++ */
++classes?: Array<string>, 
++/**
++ * Konfigurierter HTTP-Port; ohne Wert wählt der Server einen Port (OUT-285).
++ */
++port?: number, };
+diff --git a/crates/os-app/src/dto/app.rs b/crates/os-app/src/dto/app.rs
+index 4535c60..fdce25d 100644
+--- a/crates/os-app/src/dto/app.rs
++++ b/crates/os-app/src/dto/app.rs
+@@ -162,6 +162,14 @@ pub struct AccountSettingsDto {
+ pub struct McpSettingsDto {
+     /// Beim Start der App starten.
+     pub autostart: bool,
++    /// Gespeicherte Klassenfreigaben; fehlt der Wert, gilt nur `read` (AGENT-003).
++    #[serde(default, skip_serializing_if = "Option::is_none")]
++    #[ts(optional)]
++    pub classes: Option<Vec<String>>,
++    /// Konfigurierter HTTP-Port; ohne Wert wählt der Server einen Port (OUT-285).
++    #[serde(default, skip_serializing_if = "Option::is_none")]
++    #[ts(optional)]
++    pub port: Option<u16>,
+ }
+ 
+ /// Antwort von `settings.get` / `settings.set`: App-Einstellungen (`settings.toml`, OUT-222).
+diff --git a/crates/os-app/src/dto/mcp.rs b/crates/os-app/src/dto/mcp.rs
+index 7577854..56454b3 100644
+--- a/crates/os-app/src/dto/mcp.rs
++++ b/crates/os-app/src/dto/mcp.rs
+@@ -127,4 +127,8 @@ pub struct CallLogRow {
+     pub ok: bool,
+     /// Kurzfassung der Argumente (redigiert).
+     pub args_summary: String,
++    /// Ergebnisgröße in Byte; fehlt bei älteren Protokolleinträgen (AGENT-043).
++    #[serde(default, skip_serializing_if = "Option::is_none")]
++    #[ts(optional)]
++    pub result_bytes: Option<u32>,
+ }
