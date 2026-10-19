@@ -1587,6 +1587,10 @@ fn transport_page(url: UrlId, page: &ParsedPage, batch: &mut WriteBatch) {
     let (items, issues) = os_parse::sd::to_writes(url, &page.structured_data);
     batch.structured_data.extend(items);
     batch.sd_issues.extend(issues);
+    // M2-D20 (K2-61): Befunde der schema.org- und Rich-Result-Validierung.
+    batch
+        .sd_issues
+        .extend(os_parse::sd::validate::to_writes(url, &page.sd_findings));
     batch
         .forms
         .extend(page.forms.iter().cloned().map(|form| os_model::FormWrite {
