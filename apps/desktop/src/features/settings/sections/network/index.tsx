@@ -65,7 +65,7 @@ export function Network() {
         return <details key={i}><summary>{t("u14-certificate-issuer", { index: i + 1, issuer: issuer || t("u14-certificate-unknown") })}</summary><pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{pem}</pre></details>;
       })}
       <Button isDisabled={action.busy || chain.certificates.length === 0} onPress={() => void action.run(async () => {
-        const paths = await api.importCertificates(chain.certificates);
+        const paths = await api.importCertificates({ certificates: chain.certificates });
         await action.save({ network: { trustedCertificates: [...network.trustedCertificates, ...paths] } }); setChain(null);
       })}>{t("u14-certificate-add")}</Button>
     </div>}

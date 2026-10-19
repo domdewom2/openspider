@@ -62,7 +62,8 @@ fn import_certificates<'a>(
     let directory = app.config().home.join("certificates");
     let id = app.config().ids.new_crawl_id(app.config().clock.now());
     Box::pin(async move {
-        let certificates: Vec<String> = parse_args(args)?;
+        let certificates: Vec<String> =
+            parse_args(args.get("certificates").cloned().unwrap_or(args))?;
         tokio::task::spawn_blocking(move || {
             if certificates.is_empty()
                 || certificates.len() > 16
@@ -114,7 +115,7 @@ pub fn register(r: &mut Registry) {
     r.register(
         CommandMeta {
             name: "settings.importCertificates",
-            args: "string[]",
+            args: "JsonValue",
             ret: "string[]",
             long_running: false,
         },
@@ -185,7 +186,7 @@ mod u14_tests {
             .dispatch(
                 CallCtx::for_window("settings"),
                 "settings.importCertificates",
-                serde_json::json!([pem]),
+                serde_json::json!({ "certificates": [pem] }),
             )
             .await
             .unwrap();
@@ -201,7 +202,7 @@ mod u14_tests {
             .dispatch(
                 CallCtx::for_window("settings"),
                 "settings.importCertificates",
-                serde_json::json!(["invalid"]),
+                serde_json::json!({ "certificates": ["invalid"] }),
             )
             .await
             .unwrap_err();

@@ -11,7 +11,7 @@ export const settings = {
   /** `settings.resources` */
   resources: (signal?: AbortSignal) => client.invoke<JsonValue>("settings.resources", undefined, signal),
   /** `settings.importCertificates` */
-  importCertificates: (args: string[], signal?: AbortSignal) => client.invoke<string[]>("settings.importCertificates", args, signal),
+  importCertificates: (args: JsonValue, signal?: AbortSignal) => client.invoke<string[]>("settings.importCertificates", args, signal),
   /** `settings.get` */
   get: (signal?: AbortSignal) => client.invoke<AppSettingsDto>("settings.get", undefined, signal),
   /** `settings.set` */

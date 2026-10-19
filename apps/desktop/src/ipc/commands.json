@@ -25,7 +25,7 @@
   },
   {
     "name": "settings.importCertificates",
-    "args": "string[]",
+    "args": "JsonValue",
     "ret": "string[]",
     "longRunning": false
   },
