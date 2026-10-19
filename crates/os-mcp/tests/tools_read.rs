@@ -1714,6 +1714,10 @@ async fn issues_that_need_the_crawl_analysis_are_named_instead_of_counted() {
         .as_array()
         .expect("nicht auswertbare Issues");
     assert!(!pending.is_empty());
-    assert!(pending.iter().all(|p| p["state"] == "needs_crawl_analysis"));
+    // ONPAGE-079: Broken Bookmark requires advanced.crawl_fragments (K2-63).
+    assert!(pending
+        .iter()
+        .all(|p| p["state"] == "needs_crawl_analysis" || p["state"] == "needs_config"));
+    assert!(pending.iter().any(|p| p["state"] == "needs_crawl_analysis"));
     client.cancel().await;
 }

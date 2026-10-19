@@ -35,7 +35,10 @@ pub struct Scope {
 impl Scope {
     /// CDN-Einträge erweitern den Bereich unabhängig von der Startordner-Grenze.
     pub fn with_cdns(mut self, cdns: &[String]) -> Self {
-        self.cdns = cdns.iter().filter_map(|entry| cdn_entry(entry)).collect();
+        self.cdns = cdns
+            .iter()
+            .filter_map(|entry| cdn_entry(entry).ok())
+            .collect();
         self
     }
     /// Legt den Bereich fest.
@@ -141,18 +144,35 @@ pub fn registrable_domain(host: &str) -> Option<String> {
     psl::domain_str(&ascii).map(str::to_string)
 }
 
-/// Eintrag ohne Schema; Host wird wie eine URL (inkl. IDNA) normalisiert.
-pub(crate) fn cdn_entry(entry: &str) -> Option<(String, String)> {
+/// Eintrag ohne Schema und Port; Host wird wie eine URL (inkl. IDNA) normalisiert.
+pub(crate) fn cdn_entry(entry: &str) -> Result<(String, String), &'static str> {
+    const INVALID: &str = "Erwartet: Domain oder Domain/Pfadpräfix";
+    const PORT: &str = "Port nicht erlaubt; erwartet: Domain oder Domain/Pfadpräfix";
     let entry = entry.trim();
     if entry.is_empty() || entry.contains("://") || entry.contains(['?', '#', '@']) {
-        return None;
+        return Err(INVALID);
     }
-    let url = url::Url::parse(&format!("https://{entry}")).ok()?;
+    // Check before URL parsing, which discards an explicit default port (:443).
+    let authority = entry.split('/').next().unwrap_or_default();
+    let has_port = if authority.starts_with('[') {
+        authority
+            .split_once(']')
+            .is_some_and(|(_, suffix)| suffix.starts_with(':'))
+    } else {
+        authority.contains(':')
+    };
+    if has_port {
+        return Err(PORT);
+    }
+    let url = url::Url::parse(&format!("https://{entry}")).map_err(|_| INVALID)?;
     if url.port().is_some() {
-        return None;
+        return Err(PORT);
     }
-    Some((
-        url.host_str()?.trim_end_matches('.').to_string(),
+    Ok((
+        url.host_str()
+            .ok_or(INVALID)?
+            .trim_end_matches('.')
+            .to_string(),
         url.path().to_string(),
     ))
 }

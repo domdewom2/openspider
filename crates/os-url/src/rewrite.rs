@@ -1,6 +1,10 @@
 //! URL-Umschreibung bei Entdeckung (CRAWL-103/104), vor der Normalisierung.
+//!
+//! Parameternamen werden vor dem exakten, case-sensitiven Vergleich nach
+//! `application/x-www-form-urlencoded` dekodiert (`%73id` = `sid`, `+` = Leerzeichen).
+//! Die Kodierung der verbleibenden Parameter und das Fragment bleiben unverändert.
 use std::borrow::Cow;
-use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::sync::{Arc, Mutex, OnceLock};
 
 use fancy_regex::{Regex, RegexBuilder};
@@ -16,15 +20,44 @@ pub(crate) fn compile(pattern: &str) -> Result<Regex, fancy_regex::Error> {
         .build()
 }
 
-// Bounded across configuration changes; discovery must not compile a regex for every link.
+const REGEX_CACHE_CAPACITY: usize = 128;
+
+#[derive(Default)]
+struct RegexCache {
+    // Least recently used first; bounded across configuration changes.
+    entries: VecDeque<(String, Arc<Regex>)>,
+}
+
+impl RegexCache {
+    fn get(&mut self, pattern: &str) -> Option<Arc<Regex>> {
+        let index = self.entries.iter().position(|(key, _)| key == pattern)?;
+        let entry = self.entries.remove(index)?;
+        let regex = Arc::clone(&entry.1);
+        self.entries.push_back(entry);
+        Some(regex)
+    }
+
+    fn insert(&mut self, pattern: &str, regex: Arc<Regex>) -> Arc<Regex> {
+        // Another discovery thread may have compiled the same pattern meanwhile.
+        if let Some(existing) = self.get(pattern) {
+            return existing;
+        }
+        if self.entries.len() == REGEX_CACHE_CAPACITY {
+            self.entries.pop_front();
+        }
+        self.entries.push_back((pattern.into(), Arc::clone(&regex)));
+        regex
+    }
+}
+
+// Discovery must not compile a regex for every link.
 fn cached_regex(pattern: &str) -> Result<Arc<Regex>, fancy_regex::Error> {
-    static CACHE: OnceLock<Mutex<HashMap<String, Arc<Regex>>>> = OnceLock::new();
-    let cache = CACHE.get_or_init(|| Mutex::new(HashMap::new()));
+    static CACHE: OnceLock<Mutex<RegexCache>> = OnceLock::new();
+    let cache = CACHE.get_or_init(|| Mutex::new(RegexCache::default()));
     if let Some(regex) = cache
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
         .get(pattern)
-        .cloned()
     {
         return Ok(regex);
     }
@@ -32,11 +65,7 @@ fn cached_regex(pattern: &str) -> Result<Arc<Regex>, fancy_regex::Error> {
     let mut cache = cache
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
-    if cache.len() >= 128 {
-        cache.clear();
-    }
-    cache.insert(pattern.into(), Arc::clone(&regex));
-    Ok(regex)
+    Ok(cache.insert(pattern, regex))
 }
 
 /// Entfernt Parameter, danach werden die Regex-Regeln der Reihe nach angewendet.
@@ -102,12 +131,36 @@ pub fn apply_discovered<'a>(cfg: &os_model::RewriteConfig, raw_resolved: &'a str
             },
             warning: None,
         },
-        Err(warning) => {
-            eprintln!("OpenSpider URL-Umschreibung: {warning}; Original-URL bleibt erhalten");
-            Rewritten {
-                url: Cow::Borrowed(raw_resolved),
-                warning: Some(warning),
-            }
+        Err(warning) => Rewritten {
+            url: Cow::Borrowed(raw_resolved),
+            warning: Some(warning),
+        },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // spec: CRAWL-104
+    #[test]
+    fn regex_cache_evicts_only_the_least_recently_used_pattern() {
+        let mut cache = RegexCache::default();
+        let first = cache.insert("first", Arc::new(compile("first").unwrap()));
+        for index in 1..REGEX_CACHE_CAPACITY {
+            let pattern = format!("pattern-{index}");
+            cache.insert(&pattern, Arc::new(compile(&pattern).unwrap()));
         }
+        assert!(Arc::ptr_eq(&cache.get("first").unwrap(), &first));
+        cache.insert("overflow", Arc::new(compile("overflow").unwrap()));
+        assert_eq!(cache.entries.len(), REGEX_CACHE_CAPACITY);
+        assert!(cache.get("pattern-1").is_none());
+        assert!(cache.get("pattern-2").is_some());
+        assert!(cache.get("overflow").is_some());
+        assert!(Arc::ptr_eq(&cache.get("first").unwrap(), &first));
+
+        let duplicate = cache.insert("first", Arc::new(compile("first").unwrap()));
+        assert!(Arc::ptr_eq(&duplicate, &first));
+        assert_eq!(cache.entries.len(), REGEX_CACHE_CAPACITY);
     }
 }

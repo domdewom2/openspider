@@ -4,11 +4,14 @@ use os_url::rewrite::apply_discovered;
 // spec: CRAWL-103
 #[test]
 fn parameters_preserve_survivor_encoding_order_and_fragment() {
+    // Fixture: crawl-rewrite.
     let cfg = RewriteConfig {
-        remove_parameters: vec!["sid".into(), "utm_source".into()],
+        remove_parameters: vec!["sid".into(), "utm_source".into(), "a b".into()],
         ..Default::default()
     };
-    for line in include_str!("../../../tests/fixtures/onpage-m2-url/rewrite.tsv").lines() {
+    for line in
+        include_str!("../../../tests/fixtures/onpage-m2-url/crawl-rewrite/rewrite.tsv").lines()
+    {
         let (input, expected) = line.split_once('\t').unwrap();
         let actual = apply_discovered(&cfg, input);
         assert_eq!(actual.url, expected, "{input}");
@@ -100,12 +103,13 @@ fn validation_rejects_every_invalid_rule_with_field_path() {
 // spec: CRAWL-108
 #[test]
 fn cdns_extend_scope_by_exact_host_and_case_sensitive_prefix() {
+    // Fixture: crawl-cdn.
     let start = os_url::parse_start_url("https://site.test/blog/").unwrap();
     let mut cfg = CrawlConfig::default();
     cfg.scope.subfolder_only = true;
     cfg.cdns = vec!["cdn.other.test".into(), "other.test/assets/".into()];
     let scope = os_url::Scope::new(&start, &cfg.scope).with_cdns(&cfg.cdns);
-    for line in include_str!("../../../tests/fixtures/onpage-m2-url/cdns.tsv").lines() {
+    for line in include_str!("../../../tests/fixtures/onpage-m2-url/crawl-cdn/cdns.tsv").lines() {
         let (url, class) = line.split_once('\t').unwrap();
         assert_eq!(
             scope.classify(&os_url::parse_start_url(url).unwrap()) == os_url::ScopeClass::Internal,
@@ -121,7 +125,36 @@ fn cdns_extend_scope_by_exact_host_and_case_sensitive_prefix() {
     assert_eq!(os_url::rules::validate(&cfg).len(), 3);
 }
 
-// spec: CRAWL-111
+// spec: CRAWL-108
+#[test]
+fn cdn_validation_explains_ports_including_explicit_default_ports() {
+    let start = os_url::parse_start_url("https://site.test/").unwrap();
+    for cdn in [
+        "other.test:8080/assets/",
+        "other.test:443/assets/",
+        "other.test:80",
+        "[2001:db8::1]:443/assets/",
+    ] {
+        let cfg = CrawlConfig {
+            cdns: vec![cdn.into()],
+            ..Default::default()
+        };
+        let issues = os_url::rules::validate(&cfg);
+        assert_eq!(issues.len(), 1, "{cdn}");
+        assert_eq!(issues[0].path, "cdns[0]");
+        assert!(issues[0].message.contains("Port nicht erlaubt"), "{cdn}");
+        let scope = os_url::Scope::new(&start, &cfg.scope).with_cdns(&cfg.cdns);
+        let url = os_url::parse_start_url(&format!("https://{cdn}")).unwrap();
+        assert_eq!(scope.classify(&url), os_url::ScopeClass::External, "{cdn}");
+    }
+    let cfg = CrawlConfig {
+        cdns: vec!["other.test/assets/v1:443/".into()],
+        ..Default::default()
+    };
+    assert!(os_url::rules::validate(&cfg).is_empty());
+}
+
+// RuleSet-Trace für M2-U13 (CRAWL-111).
 #[test]
 fn rule_trace_reports_all_matching_lines_and_compile_errors() {
     let mut input = os_url::rules::RuleTraceInput {

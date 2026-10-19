@@ -37,10 +37,11 @@ fn results(file: &CrawlFile, cfg: &CrawlConfig, filter: &str) -> Vec<i64> {
         .collect()
 }
 fn fixture_filter(filter: &str) {
+    // Fixture: onpage-url.
     let dir = tempfile::tempdir().unwrap();
     let file = file(dir.path());
     let rows: Vec<(String, Vec<String>)> = serde_json::from_str(include_str!(
-        "../../../tests/fixtures/onpage-m2-url/filters.json"
+        "../../../tests/fixtures/onpage-m2-url/onpage-url/filters.json"
     ))
     .unwrap();
     let mut expected = Vec::new();
@@ -199,9 +200,9 @@ fn broken_bookmarks_use_known_base_html_targets_and_decoded_fragments() {
 
 // spec: CRAWL-103
 // spec: CRAWL-104
-// spec: CRAWL-108
 #[tokio::test]
-async fn discovery_rewrites_deduplicate_and_cdns_follow_html_links() {
+async fn discovery_rewrites_deduplicate_and_preserve_original_links() {
+    // Fixture: crawl-rewrite.
     let mut cfg = CrawlConfig::default();
     cfg.rewrite.remove_parameters = vec!["sid".into()];
     cfg.rewrite.regex_replace = vec![
@@ -214,9 +215,8 @@ async fn discovery_rewrites_deduplicate_and_cdns_follow_html_links() {
             replacement: "/".into(),
         },
     ];
-    cfg.cdns = vec!["cdn.other.test".into(), "other.test/assets/".into()];
-    let dir =
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/fixtures/onpage-m2-url");
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../tests/fixtures/onpage-m2-url/crawl-rewrite");
     let fx = os_engine::testing::crawl_dir_with(
         &dir,
         "http://site.test/",
@@ -226,7 +226,6 @@ async fn discovery_rewrites_deduplicate_and_cdns_follow_html_links() {
     .await;
     assert_eq!(fx.site.count("site.test", "/x/"), 1);
     assert_eq!(fx.site.count("site.test", "/x/index.html"), 0);
-    assert_eq!(fx.site.count("cdn.other.test", "/seite2.html"), 1);
     let row: (String, i64) = fx
         .file
         .conn()
@@ -253,6 +252,36 @@ async fn discovery_rewrites_deduplicate_and_cdns_follow_html_links() {
         .requests()
         .iter()
         .any(|r| r.host == "site.test" && r.path_and_query.starts_with("/x/?") && r.tls));
+    let outlinks = os_store::queries::outlinks(
+        fx.file.conn(),
+        os_model::UrlId(1),
+        os_store::queries::PageReq::default(),
+    )
+    .unwrap();
+    assert!(outlinks.items.iter().any(|link| {
+        link.original_url == "http://site.test/x/index.html?sid=1&keep=%2F"
+            && link.target_address == "https://site.test/x/?keep=%2F"
+    }));
+}
+
+// spec: CRAWL-108
+#[tokio::test]
+async fn cdns_are_internal_and_follow_html_links() {
+    // Fixture: crawl-cdn.
+    let cfg = CrawlConfig {
+        cdns: vec!["cdn.other.test".into(), "other.test/assets/".into()],
+        ..Default::default()
+    };
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../tests/fixtures/onpage-m2-url/crawl-cdn");
+    let fx = os_engine::testing::crawl_dir_with(
+        &dir,
+        "https://site.test/",
+        cfg,
+        os_engine::testing::test_deps(),
+    )
+    .await;
+    assert_eq!(fx.site.count("cdn.other.test", "/seite2.html"), 1);
     for (url, internal) in [
         ("https://cdn.other.test/seite.html", 1),
         ("https://cdn.other.test/img.png", 1),
@@ -268,23 +297,14 @@ async fn discovery_rewrites_deduplicate_and_cdns_follow_html_links() {
             .unwrap();
         assert_eq!(actual, internal, "{url}");
     }
-    let outlinks = os_store::queries::outlinks(
-        fx.file.conn(),
-        os_model::UrlId(1),
-        os_store::queries::PageReq::default(),
-    )
-    .unwrap();
-    assert!(outlinks.items.iter().any(|link| {
-        link.original_url == "http://site.test/x/index.html?sid=1&keep=%2F"
-            && link.target_address == "https://site.test/x/?keep=%2F"
-    }));
 }
 
 // spec: CRAWL-104
 #[tokio::test]
 async fn list_inputs_stay_unchanged_while_discovered_urls_are_rewritten() {
-    let dir =
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/fixtures/onpage-m2-url");
+    // Fixture: crawl-rewrite.
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../tests/fixtures/onpage-m2-url/crawl-rewrite");
     let site = os_testsite::TestSite::start_dir(&dir, 0).await.unwrap();
     let mut cfg = CrawlConfig {
         mode: CrawlMode::List,

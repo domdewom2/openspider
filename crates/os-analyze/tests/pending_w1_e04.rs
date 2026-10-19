@@ -5,10 +5,11 @@ use os_model::{CrawlConfig, Value};
 #[tokio::test]
 #[ignore = "wartet auf M2-E01"]
 async fn fragment_rows_reuse_one_fetch_and_base_bookmarks() {
+    // Fixture: onpage-url.
     let mut cfg = CrawlConfig::default();
     cfg.advanced.crawl_fragments = true;
-    let dir =
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/fixtures/onpage-m2-url");
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../tests/fixtures/onpage-m2-url/onpage-url");
     let fx = os_engine::testing::crawl_dir_with(
         &dir,
         "http://site.test/",

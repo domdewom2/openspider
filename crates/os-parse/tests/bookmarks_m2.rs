@@ -4,9 +4,10 @@ use os_parse::{parse_html, ParseConfig, ParseInput};
 // spec: ONPAGE-079
 #[test]
 fn html5_bookmarks_are_exact_deduplicated_and_exclude_inert_content() {
+    // Fixture: onpage-url.
     let cfg = ParseConfig::from_crawl_config(&CrawlConfig::default());
     let url = url::Url::parse("https://site.test/page").unwrap();
-    let html = include_bytes!("../../../tests/fixtures/onpage-m2-url/bookmarks.html");
+    let html = include_bytes!("../../../tests/fixtures/onpage-m2-url/onpage-url/bookmarks.html");
     let page = parse_html(&ParseInput {
         status: 200,
         url: &url,

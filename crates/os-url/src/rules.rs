@@ -334,11 +334,8 @@ pub fn validate(cfg: &os_model::CrawlConfig) -> Vec<os_model::ConfigIssue> {
         }
     }
     for (index, cdn) in cfg.cdns.iter().enumerate() {
-        if crate::scope::cdn_entry(cdn).is_none() {
-            issue(
-                format!("cdns[{index}]"),
-                "Erwartet: Domain oder Domain/Pfadpräfix".into(),
-            );
+        if let Err(message) = crate::scope::cdn_entry(cdn) {
+            issue(format!("cdns[{index}]"), message.into());
         }
     }
     issues

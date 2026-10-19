@@ -1,0 +1,9 @@
+[[route]]
+path = "/x/"
+content_type = "text/html"
+body = "<!doctype html><title>Rewritten</title>"
+
+[[route]]
+path = "/list/index.html"
+content_type = "text/html"
+body = '<!doctype html><a href="http://site.test/x/index.html?sid=1">Discovered</a>'
