@@ -1,0 +1,4 @@
+https://fixture.test/
+https://fixture.test/
+not a URL
+https://fixture.test/page-1.html

@@ -115,6 +115,39 @@ impl Default for WriteQueue {
 }
 
 impl WriteQueue {
+    /// Create a new crawl on the serialized writer thread (API-only sessions).
+    pub async fn create_file(
+        &self,
+        key: CrawlKey,
+        path: PathBuf,
+        init: os_store::CrawlInit,
+        initial: os_model::WriteBatch,
+    ) -> Result<(), CmdError> {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        let dest = path.clone();
+        if !self.send(Msg::Job(Box::new(move |_| {
+            let result = (|| -> Result<(), StoreError> {
+                drop(os_store::CrawlFile::create(
+                    &dest,
+                    &init,
+                    os_store::StorageProfile::Balanced,
+                )?);
+                let mut sink =
+                    os_store::SqliteSink::open(&dest, os_store::StorageProfile::Balanced)?;
+                os_store::CrawlSink::write(&mut sink, initial)?;
+                sink.finish()
+            })()
+            .map_err(|e| store_error(&e));
+            let _ = tx.send(result);
+        }))) {
+            return Err(internal("WriteQueue::create_file", "Writer closed"));
+        }
+        rx.await
+            .map_err(|e| internal("WriteQueue::create_file", e.to_string()))??;
+        self.register(key, path);
+        Ok(())
+    }
+
     /// Startet den Schreib-Thread.
     pub fn new() -> WriteQueue {
         let paths: Registry = Arc::new(Mutex::new(HashMap::new()));

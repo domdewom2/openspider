@@ -26,6 +26,19 @@ pub struct SessionInfo {
 #[derive(Default)]
 pub struct SessionRegistry(Mutex<HashMap<WindowId, SessionInfo>>);
 impl SessionRegistry {
+    /// Publish an engine transition to all windows sharing this crawl.
+    pub fn update_state(&self, key: &CrawlKey, state: CrawlState) {
+        for s in self
+            .0
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .values_mut()
+            .filter(|s| &s.key == key)
+        {
+            s.state = state;
+        }
+    }
+
     pub fn current(&self, w: &WindowId) -> Option<SessionInfo> {
         self.0
             .lock()

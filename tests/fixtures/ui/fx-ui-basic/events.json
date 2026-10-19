@@ -1,0 +1,10 @@
+{
+  "durationMs": 60000,
+  "urlIntervalMs": 5,
+  "cases": [
+    {"intervalMs": 250, "hidden": false, "maxTicks": 240},
+    {"intervalMs": 500, "hidden": false, "maxTicks": 120},
+    {"intervalMs": 5000, "hidden": false, "maxTicks": 60},
+    {"intervalMs": 250, "hidden": true, "maxTicks": 60}
+  ]
+}
