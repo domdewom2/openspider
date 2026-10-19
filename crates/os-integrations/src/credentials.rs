@@ -31,7 +31,6 @@ struct Accounts {
 
 pub struct Credentials {
     store: Arc<dyn SecretStoreMut>,
-    persistent: Mutex<BTreeMap<String, Accounts>>,
     operation: Mutex<()>,
     session: Mutex<BTreeMap<String, BTreeMap<String, Credential>>>,
 }
@@ -39,21 +38,11 @@ impl Credentials {
     pub fn new(store: Arc<dyn SecretStoreMut>) -> Self {
         Self {
             store,
-            persistent: Mutex::default(),
             operation: Mutex::default(),
             session: Mutex::default(),
         }
     }
     fn saved(&self, kind: ApiKind) -> Result<Accounts, ApiError> {
-        if let Some(saved) = self
-            .persistent
-            .lock()
-            .unwrap_or_else(|p| p.into_inner())
-            .get(&kind.to_string())
-            .cloned()
-        {
-            return Ok(saved);
-        }
         let raw = self.store.try_get(&format!("api/{kind}")).map_err(|_| {
             ApiError::Transport("Schlüsselbund nicht lesbar; Sitzungsschlüssel möglich".into())
         })?;
@@ -63,10 +52,6 @@ impl Credentials {
                     .map_err(|_| ApiError::Transport("Zugangsdaten nicht lesbar".into()))
             })
             .unwrap_or_else(|| Ok(Accounts::default()))?;
-        self.persistent
-            .lock()
-            .unwrap_or_else(|p| p.into_inner())
-            .insert(kind.to_string(), saved.clone());
         Ok(saved)
     }
     pub fn list(&self, kind: ApiKind) -> Result<Vec<Credential>, ApiError> {
@@ -115,12 +100,16 @@ impl Credentials {
                 self.write_saved(kind, &saved)?;
             }
         }
-        self.session
-            .lock()
-            .unwrap_or_else(|p| p.into_inner())
-            .entry(kind.to_string())
-            .or_default()
-            .insert(credential.account_id.clone(), credential);
+        if persisted {
+            self.remove_session(kind, &credential.account_id);
+        } else {
+            self.session
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .entry(kind.to_string())
+                .or_default()
+                .insert(credential.account_id.clone(), credential);
+        }
         Ok(persisted)
     }
     fn write_saved(&self, kind: ApiKind, saved: &Accounts) -> Result<(), ApiError> {
@@ -135,26 +124,23 @@ impl Credentials {
             )
         };
         result.map_err(|_| ApiError::Transport("Schlüsselbund nicht beschreibbar".into()))?;
-        self.persistent
-            .lock()
-            .unwrap_or_else(|p| p.into_inner())
-            .insert(kind.to_string(), saved.clone());
         Ok(())
     }
     pub fn remove(&self, kind: ApiKind, id: &str) -> Result<(), ApiError> {
         let _operation = self.operation.lock().unwrap_or_else(|p| p.into_inner());
+        self.remove_session(kind, id);
         let mut saved = self.saved(kind)?;
         saved.accounts.remove(id);
-        self.write_saved(kind, &saved)?;
-        if let Some(session) = self
-            .session
-            .lock()
-            .unwrap_or_else(|p| p.into_inner())
-            .get_mut(&kind.to_string())
-        {
+        self.write_saved(kind, &saved)
+    }
+    fn remove_session(&self, kind: ApiKind, id: &str) {
+        let mut sessions = self.session.lock().unwrap_or_else(|p| p.into_inner());
+        if let Some(session) = sessions.get_mut(&kind.to_string()) {
             session.remove(id);
+            if session.is_empty() {
+                sessions.remove(&kind.to_string());
+            }
         }
-        Ok(())
     }
     pub fn is_persistent(&self, kind: ApiKind, id: &str) -> bool {
         self.saved(kind).is_ok_and(|a| a.accounts.contains_key(id))

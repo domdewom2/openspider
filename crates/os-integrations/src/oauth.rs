@@ -1,4 +1,9 @@
-//! Google Desktop-OAuth: PKCE S256, einmaliger Loopback-Listener und Token-Lebenszyklus.
+//! Google Desktop-OAuth: PKCE S256, einmaliger Loopback-Callback und Token-Lebenszyklus.
+//!
+//! Ohne Identitätsscope liefert Google keine stabile Konto-ID und keinen Kontonamen.
+//! I02/I03 müssen in ApiSource::test_connection account_id und label aus der Property-/Site-Liste
+//! bzw. Konto-Antwort setzen. Das generische Label darf nicht zur Zusammenführung dienen:
+//! mehrere verschiedene Google-Identitäten können dieselben Scopes besitzen.
 use crate::{credentials::Credential, ApiError};
 use oauth2::{CsrfToken, PkceCodeChallenge, PkceCodeVerifier};
 use os_model::{ApiKind, Clock};
@@ -138,59 +143,83 @@ impl Authorization {
         })
     }
     async fn receive(&self) -> Result<String, ApiError> {
-        let (mut stream, _) = self.listener.accept().await.map_err(|_| transport())?;
-        let mut bytes = Vec::new();
         loop {
-            let mut part = [0; 1024];
-            let n = stream.read(&mut part).await.map_err(|_| transport())?;
-            if n == 0 {
-                return Err(transport());
-            }
-            bytes.extend_from_slice(&part[..n]);
-            if bytes.len() > 16384 {
-                return Err(transport());
-            }
-            if bytes.windows(4).any(|w| w == b"\r\n\r\n") {
-                break;
-            }
+            let (mut stream, _) = self.listener.accept().await.map_err(|_| transport())?;
+            // Browser-Preconnects dürfen den Callback nicht bis zum Gesamt-Timeout blockieren.
+            let request =
+                tokio::time::timeout(Duration::from_secs(2), read_request(&mut stream)).await;
+            let request = match request {
+                Ok(Ok(request)) => request,
+                _ => {
+                    reply(&mut stream, false, false).await;
+                    continue;
+                }
+            };
+            let mut parts = request
+                .lines()
+                .next()
+                .unwrap_or_default()
+                .split_whitespace();
+            let method = parts.next();
+            let path = parts.next().unwrap_or_default();
+            let callback = Url::parse(&format!("http://127.0.0.1{path}"));
+            let callback = match callback {
+                Ok(url) if method == Some("GET") && url.path() == "/callback" => url,
+                _ => {
+                    reply(&mut stream, false, true).await;
+                    continue;
+                }
+            };
+            let parameters: Vec<_> = callback.query_pairs().collect();
+            let states: Vec<_> = parameters.iter().filter(|(k, _)| k == "state").collect();
+            let valid = states.len() == 1
+                && states[0].1 == *self.state.secret()
+                && parameters.iter().filter(|(key, _)| key == "code").count() == 1
+                && !parameters.iter().any(|(key, _)| key == "error");
+            let result = if valid {
+                parameters
+                    .iter()
+                    .find(|(k, _)| k == "code")
+                    .map(|(_, v)| v.to_string())
+                    .filter(|code| !code.is_empty())
+                    .ok_or_else(|| ApiError::Unauthorized("OAuth-Zustimmung verweigert".into()))
+            } else {
+                Err(ApiError::Unauthorized(
+                    "OAuth-Rückruf: ungültiger state".into(),
+                ))
+            };
+            reply(&mut stream, result.is_ok(), false).await;
+            return result;
         }
-        let request = String::from_utf8(bytes).map_err(|_| transport())?;
-        let mut parts = request
-            .lines()
-            .next()
-            .unwrap_or_default()
-            .split_whitespace();
-        let method = parts.next();
-        let path = parts.next().unwrap_or_default();
-        let callback = Url::parse(&format!("http://127.0.0.1{path}")).map_err(|_| transport())?;
-        let parameters: Vec<_> = callback.query_pairs().collect();
-        let states: Vec<_> = parameters.iter().filter(|(k, _)| k == "state").collect();
-        let valid = method == Some("GET")
-            && callback.path() == "/callback"
-            && states.len() == 1
-            && states[0].1 == *self.state.secret()
-            && parameters.iter().filter(|(key, _)| key == "code").count() == 1
-            && !parameters.iter().any(|(key, _)| key == "error");
-        let code = parameters
-            .iter()
-            .find(|(k, _)| k == "code")
-            .map(|(_, v)| v.to_string());
-        let result = if valid {
-            code.ok_or_else(|| ApiError::Unauthorized("OAuth-Zustimmung verweigert".into()))
-        } else {
-            Err(ApiError::Unauthorized(
-                "OAuth-Rückruf: ungültiger state".into(),
-            ))
-        };
-        let response = if result.is_ok() {
-            "HTTP/1.1 200 OK\r\nContent-Length: 23\r\nConnection: close\r\n\r\nAnmeldung abgeschlossen"
-        } else {
-            "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
-        };
-        let _ = stream.write_all(response.as_bytes()).await;
-        let _ = stream.shutdown().await;
-        result
     }
+}
+async fn read_request(stream: &mut tokio::net::TcpStream) -> Result<String, ApiError> {
+    let mut bytes = Vec::new();
+    loop {
+        let mut part = [0; 1024];
+        let n = stream.read(&mut part).await.map_err(|_| transport())?;
+        if n == 0 {
+            return Err(transport());
+        }
+        bytes.extend_from_slice(&part[..n]);
+        if bytes.len() > 16384 {
+            return Err(transport());
+        }
+        if bytes.windows(4).any(|w| w == b"\r\n\r\n") {
+            return String::from_utf8(bytes).map_err(|_| transport());
+        }
+    }
+}
+async fn reply(stream: &mut tokio::net::TcpStream, success: bool, missing: bool) {
+    let response = if success {
+        "HTTP/1.1 200 OK\r\nContent-Length: 23\r\nConnection: close\r\n\r\nAnmeldung abgeschlossen"
+    } else if missing {
+        "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+    } else {
+        "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+    };
+    let _ = stream.write_all(response.as_bytes()).await;
+    let _ = stream.shutdown().await;
 }
 #[derive(Deserialize)]
 struct Token {

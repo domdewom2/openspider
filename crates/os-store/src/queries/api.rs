@@ -171,6 +171,8 @@ pub fn has_values(conn: &Connection, source: &str) -> Result<bool, StoreError> {
 
 /// Reine Argon2id-Schlüsselableitung für API-Geheimnisexporte; kein Datenbankzugriff.
 /// Die Kryptobibliothek ist bereits Teil des eingefrorenen Store-Manifests.
+/// TODO(M2-N01): argon2 in os-integrations/Cargo.toml aufnehmen und diese Funktion nach
+/// os_integrations::secret_export verschieben (fachlicher Besitzer; Manifest bis dahin eingefroren).
 pub fn derive_export_key(password: &str, salt: &[u8; 16]) -> Result<[u8; 32], StoreError> {
     if password.is_empty() {
         return Err(StoreError::InvalidInput(

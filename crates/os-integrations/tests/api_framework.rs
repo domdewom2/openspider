@@ -131,10 +131,25 @@ async fn pkce_loopback_exchange_scopes_refresh_and_revoke() {
     let browser = client.get(auth.url.clone()).send().await.unwrap();
     let redirect = browser.headers()["location"].to_str().unwrap().to_owned();
     let finish = auth.finish(&client, "custom-client", None, &endpoints, clock.clone());
-    let callback = client.get(redirect).send();
+    let callback = async {
+        let url = url::Url::parse(&redirect).unwrap();
+        let addr = ("127.0.0.1", url.port().unwrap());
+        drop(tokio::net::TcpStream::connect(addr).await.unwrap());
+        let favicon = client
+            .get(format!(
+                "http://127.0.0.1:{}/favicon.ico",
+                url.port().unwrap()
+            ))
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(favicon.status(), 404);
+        client.get(&redirect).send().await
+    };
     let (c, response) = tokio::join!(finish, callback);
     assert!(response.unwrap().status().is_success());
     let mut c = c.unwrap();
+    assert!(client.get(&redirect).send().await.is_err());
     assert!(c.refresh_token.is_some());
     assert_eq!(c.scopes, vec![oauth::scope(ApiKind::Ga4).unwrap()]);
     clock.advance(Duration::from_secs(3600));
@@ -568,6 +583,9 @@ fn locked_keychain_still_allows_session_credentials() {
     assert!(Credentials::new(Arc::new(Locked))
         .list(ApiKind::Psi)
         .is_err());
+    assert!(store.remove(ApiKind::Psi, "a").is_err());
+    // Ohne Sitzungseintrag wird der Lesefehler wieder sichtbar.
+    assert!(store.list(ApiKind::Psi).is_err());
 }
 // spec: INTEG-005
 #[tokio::test]
@@ -712,14 +730,17 @@ fn password_export_roundtrip_rejects_wrong_password_and_tampering() {
 fn crawl_caps_and_provider_periods_are_reserved_atomically() {
     let dir = tempfile::tempdir().unwrap();
     let ledger = quota::QuotaLedger::new(dir.path().join("quota.json"));
+    let now = Timestamp::from_db("2026-10-18T12:00:00Z").unwrap();
     let daily = ("gsc".into(), "property".into(), "2026-10-18".into(), 10);
     let crawl = ("gsc".into(), "property".into(), "crawl:a".into(), 2);
     for _ in 0..2 {
         assert!(ledger
-            .reserve_limits(&[daily.clone(), crawl.clone()])
+            .reserve_limits_at(&[daily.clone(), crawl.clone()], now)
             .unwrap());
     }
-    assert!(!ledger.reserve_limits(&[daily.clone(), crawl]).unwrap());
+    assert!(!ledger
+        .reserve_limits_at(&[daily.clone(), crawl], now)
+        .unwrap());
     assert_eq!(
         ledger
             .remaining_period("gsc", "property", "2026-10-18", 10)
@@ -727,10 +748,13 @@ fn crawl_caps_and_provider_periods_are_reserved_atomically() {
         8
     );
     assert!(ledger
-        .reserve_limits(&[
-            daily,
-            ("gsc".into(), "property".into(), "crawl:b".into(), 2)
-        ])
+        .reserve_limits_at(
+            &[
+                daily,
+                ("gsc".into(), "property".into(), "crawl:b".into(), 2)
+            ],
+            now
+        )
         .unwrap());
     assert_eq!(
         ledger
@@ -744,4 +768,193 @@ fn crawl_caps_and_provider_periods_are_reserved_atomically() {
             .unwrap(),
         1
     );
+}
+
+// spec: INTEG-002
+#[test]
+fn credentials_observe_other_instances_updates_and_removals() {
+    let store = Arc::new(MemorySecretStore::new());
+    let first = Credentials::new(store.clone());
+    let second = Credentials::new(store.clone());
+    first.put(ApiKind::Ga4, credential(), true).unwrap();
+    assert_eq!(second.list(ApiKind::Ga4).unwrap().len(), 1);
+    first.remove(ApiKind::Ga4, "a").unwrap();
+    assert!(second.list(ApiKind::Ga4).unwrap().is_empty());
+    let mut updated = credential();
+    updated.label = "Updated by another instance".into();
+    first.put(ApiKind::Ga4, updated, true).unwrap();
+    assert_eq!(
+        second.list(ApiKind::Ga4).unwrap()[0].label,
+        "Updated by another instance"
+    );
+    let mut updated = credential();
+    updated.label = "Second instance".into();
+    second.put(ApiKind::Ga4, updated, true).unwrap();
+    let observed = first.list(ApiKind::Ga4).unwrap();
+    assert_eq!(observed.len(), 1);
+    assert_eq!(observed[0].label, "Second instance");
+    second.remove(ApiKind::Ga4, "a").unwrap();
+    assert!(first.list(ApiKind::Ga4).unwrap().is_empty());
+}
+
+// spec: INTEG-006
+#[test]
+fn ledger_prunes_old_days_and_only_the_closed_crawl() {
+    let dir = tempfile::tempdir().unwrap();
+    let ledger = quota::QuotaLedger::new(dir.path().join("quotas.json"));
+    let now = Timestamp::from_db("2026-10-18T12:00:00Z").unwrap();
+    for period in [
+        "2026-10-15",
+        "2026-10-16",
+        "2026-10-18",
+        "crawl:a",
+        "crawl:b",
+    ] {
+        ledger
+            .reserve_limits_at(&[("psi".into(), "".into(), period.into(), 100)], now)
+            .unwrap();
+    }
+    assert_eq!(
+        ledger
+            .remaining_period("psi", "", "2026-10-15", 100)
+            .unwrap(),
+        100
+    );
+    assert_eq!(
+        ledger
+            .remaining_period("psi", "", "2026-10-16", 100)
+            .unwrap(),
+        99
+    );
+    ledger.close_crawl("a", now).unwrap();
+    assert_eq!(
+        ledger.remaining_period("psi", "", "crawl:a", 100).unwrap(),
+        100
+    );
+    assert_eq!(
+        ledger.remaining_period("psi", "", "crawl:b", 100).unwrap(),
+        99
+    );
+    assert_eq!(
+        ledger
+            .remaining_period("psi", "", "2026-10-18", 100)
+            .unwrap(),
+        99
+    );
+    let spring = Timestamp::from_db("2026-03-10T07:00:00Z").unwrap();
+    ledger
+        .reserve_limits_at(
+            &[("gsc".into(), "".into(), "2026-03-08".into(), 100)],
+            spring,
+        )
+        .unwrap();
+    ledger.reserve("gsc", "", spring, 100).unwrap();
+    assert_eq!(
+        ledger
+            .remaining_period("gsc", "", "2026-03-08", 100)
+            .unwrap(),
+        99
+    );
+}
+
+// spec: INTEG-019
+#[tokio::test]
+async fn registered_source_mocks_obey_all_four_scenarios() {
+    // I02–I05 füllen registry() und scenario_path(); jeder registrierte INTEG-001-Dienst
+    // wird automatisch geprüft. Solange sie fehlen, bleibt der Rahmenmock aktiv geprüft.
+    let kinds = ["ga4", "gsc", "psi", "majestic", "ahrefs", "moz"];
+    let mut mocks: Vec<_> = os_testsite::mocks::registry()
+        .into_iter()
+        .filter(|mock| kinds.contains(&mock.name()))
+        .collect();
+    mocks.push(Arc::new(FixtureApi::default()));
+    let server = MockServer::start(mocks.clone()).await.unwrap();
+    let client = http::client(&Default::default()).unwrap();
+    for kind in kinds.into_iter().chain(["common"]) {
+        let Some(mock) = mocks.iter().find(|mock| mock.name() == kind) else {
+            continue;
+        };
+        for (scenario, status) in [
+            ("ok", 200),
+            ("empty", 200),
+            ("error", 401),
+            ("throttle", 429),
+        ] {
+            let response = client
+                .get(format!("{}{}", server.base_url(kind), mock.scenario_path()))
+                .header("X-Scenario", scenario)
+                .send()
+                .await
+                .unwrap();
+            assert_eq!(response.status().as_u16(), status, "{kind} / {scenario}");
+            if scenario == "empty" && kind == "common" {
+                let value: serde_json::Value =
+                    serde_json::from_slice(&response.bytes().await.unwrap()).unwrap();
+                assert_eq!(value["items"], serde_json::json!([]), "{kind}");
+            }
+        }
+    }
+    server.stop().await;
+}
+
+// spec: INTEG-007
+#[tokio::test]
+async fn slow_completion_keeps_other_network_requests_polled() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    struct PollSource(Arc<AtomicUsize>);
+    impl ApiSource for PollSource {
+        fn kind(&self) -> ApiKind {
+            ApiKind::Psi
+        }
+        fn status(&self) -> ApiStatus {
+            Source {
+                failed: Default::default(),
+            }
+            .status()
+        }
+        fn fetch<'a>(
+            &'a self,
+            _: &'a [UrlRef],
+            _: &'a ApiCtx,
+        ) -> os_integrations::BoxFuture<'a, Result<Vec<os_model::ApiValueWrite>, ApiError>>
+        {
+            Box::pin(async move {
+                tokio::task::yield_now().await;
+                self.0.fetch_add(1, Ordering::SeqCst);
+                Ok(vec![])
+            })
+        }
+    }
+    let count = Arc::new(AtomicUsize::new(0));
+    let urls: Vec<_> = (0..3)
+        .map(|i| UrlRef {
+            url_id: None,
+            url: format!("https://fixture.test/{i}"),
+        })
+        .collect();
+    let queue = Queue::default();
+    queue
+        .run_with(
+            Arc::new(PollSource(count.clone())),
+            &urls,
+            &context(),
+            2,
+            |_, _, _| {
+                let count = count.clone();
+                async move {
+                    tokio::time::timeout(Duration::from_secs(1), async {
+                        while count.load(Ordering::SeqCst) < 3 {
+                            tokio::task::yield_now().await;
+                        }
+                    })
+                    .await
+                    .expect("Netzwerk muss während des Commits weiterlaufen");
+                    Ok(())
+                }
+            },
+        )
+        .await
+        .unwrap();
+    queue.wait().await;
+    assert_eq!(queue.status().unwrap().urls_done, 3);
 }

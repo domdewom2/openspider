@@ -13,6 +13,9 @@ pub fn match_key(address: &str, options: &UrlMatchConfig) -> Option<String> {
     if options.ignore_trailing_slash && path != "/" {
         path = path.trim_end_matches('/').to_string();
     }
+    if options.ignore_case {
+        path = path.to_lowercase();
+    }
     let key = format!(
         "{}{}{}{}",
         &u[url::Position::BeforeHost..url::Position::BeforePath],
@@ -24,11 +27,8 @@ pub fn match_key(address: &str, options: &UrlMatchConfig) -> Option<String> {
             .map(|q| format!("#{}", normalize_percent(q)))
             .unwrap_or_default()
     );
-    Some(if options.ignore_case {
-        key.to_lowercase()
-    } else {
-        key
-    })
+    // Query-Werte und Fragment bleiben auch bei ignore_case case-sensitiv (INTEG-014).
+    Some(key)
 }
 fn normalize_percent(s: &str) -> String {
     // Unreserved ASCII and UTF-8 werden normalisiert; kodierte Trenner bleiben kodiert.

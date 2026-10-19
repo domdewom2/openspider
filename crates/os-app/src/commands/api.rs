@@ -268,59 +268,56 @@ fn quota_limits(config: &CrawlConfig, kind: ApiKind) -> (String, Option<u64>, Op
         custom,
     )
 }
-async fn quota_dto(
+async fn local_quotas(
     app: &App,
     config: &CrawlConfig,
     kind: ApiKind,
     crawl: Option<String>,
-) -> Result<Option<QuotaDto>, CmdError> {
+) -> Result<Vec<QuotaDto>, CmdError> {
     let (property, provider, custom) = quota_limits(config, kind);
-    let Some(limit) = custom.or(provider) else {
-        return Ok(None);
-    };
+    if provider.is_none() && custom.is_none() {
+        return Ok(vec![]);
+    }
     let ledger = app.ext::<ApiState>().quota(app);
     let now = app.config().clock.now();
-    let key = property.clone();
-    let left = app
-        .write_queue()
+    app.write_queue()
         .submit_admin(move || {
-            let provider_left = if let Some(limit) = provider {
-                ledger
-                    .remaining(name(kind), &key, now, limit)
-                    .map_err(error)?
-            } else {
-                u64::MAX
-            };
-            let crawl_left = if let Some(limit) = custom {
-                if let Some(crawl) = crawl {
+            let mut quotas = vec![];
+            if let Some(limit) = custom {
+                let left = if let Some(crawl) = crawl {
                     ledger
-                        .remaining_period(name(kind), &key, &format!("crawl:{crawl}"), limit)
+                        .remaining_period(name(kind), &property, &format!("crawl:{crawl}"), limit)
                         .map_err(error)?
                 } else {
                     limit
-                }
-            } else {
-                u64::MAX
-            };
-            Ok(provider_left.min(crawl_left))
+                };
+                quotas.push(QuotaDto {
+                    used: limit.saturating_sub(left),
+                    limit: Some(limit),
+                    resets_at: None,
+                    dimension: Some("urlsPerCrawl".into()),
+                });
+            }
+            if let Some(limit) = provider {
+                let left = ledger
+                    .remaining(name(kind), &property, now, limit)
+                    .map_err(error)?;
+                quotas.push(QuotaDto {
+                    used: limit.saturating_sub(left),
+                    limit: Some(limit),
+                    resets_at: Some(os_integrations::quota::next_reset(now).to_db()),
+                    dimension: Some("urlsPerDay".into()),
+                });
+            }
+            Ok(quotas)
         })
-        .await?;
-    Ok(Some(QuotaDto {
-        used: limit.saturating_sub(left),
-        limit: Some(limit),
-        resets_at: if custom.is_some() {
-            None
-        } else {
-            Some(os_integrations::quota::next_reset(now).to_db())
-        },
-        dimension: if custom.is_some() {
-            Some("urlsPerCrawl".into())
-        } else if property.is_empty() {
-            None
-        } else {
-            Some(property)
-        },
-    }))
+        .await
+}
+fn quota_left(quotas: &[QuotaDto]) -> Option<u64> {
+    quotas
+        .iter()
+        .filter_map(|q| q.limit.map(|limit| limit.saturating_sub(q.used)))
+        .min()
 }
 
 async fn connect_now(app: App, ctx: CallCtx, args: ApiConnectArgs) -> Result<ApiAccount, CmdError> {
@@ -490,9 +487,11 @@ impl Drop for ConnectingGuard {
 fn connect<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
         let args: ApiConnectArgs = parse_args(args)?;
-        let app = app.clone();
-        let ops = app.ops().clone();
-        to_json(&ops.spawn("op-api-connect",true,move |cancel,_|Box::pin(async move {tokio::select! {r=connect_now(app,ctx,args)=>to_json(&r?),_=cancelled(cancel)=>Err(CmdError::new(ErrorCode::Cancelled,"err-cancelled"))}})))
+        to_json(&spawn_long(
+            app,
+            "op-api-connect",
+            connect_now(app.clone(), ctx, args),
+        ))
     })
 }
 fn list<'a>(app: &'a App, ctx: CallCtx, _args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
@@ -502,6 +501,16 @@ fn list<'a>(app: &'a App, ctx: CallCtx, _args: serde_json::Value) -> BoxFuture<'
         let mut rows = vec![];
         for kind in KINDS {
             let c = state.connection(kind);
+            let mut local = local_quotas(
+                app,
+                &config,
+                kind,
+                app.sessions().current(&ctx.window).map(|s| s.key.0),
+            )
+            .await?
+            .into_iter();
+            let quota = local.next();
+            let mut dimensions: Vec<_> = local.collect();
             let provider_quotas = state
                 .sources
                 .lock()
@@ -519,27 +528,19 @@ fn list<'a>(app: &'a App, ctx: CallCtx, _args: serde_json::Value) -> BoxFuture<'
                 },
                 connected: c.state == ApiConnState::Connected,
                 account: c.account.as_ref().map(|a| a.account.clone()),
-                quota: quota_dto(
-                    app,
-                    &config,
-                    kind,
-                    app.sessions().current(&ctx.window).map(|s| s.key.0),
-                )
-                .await?,
-                quota_dimensions: if provider_quotas.is_empty() {
-                    None
-                } else {
-                    Some(
-                        provider_quotas
-                            .into_iter()
-                            .map(|q| QuotaDto {
-                                used: q.used,
-                                limit: q.limit,
-                                resets_at: q.resets_at.map(|at| at.to_db()),
-                                dimension: Some(q.dimension),
-                            })
-                            .collect(),
-                    )
+                quota,
+                quota_dimensions: {
+                    dimensions.extend(provider_quotas.into_iter().map(|q| QuotaDto {
+                        used: q.used,
+                        limit: q.limit,
+                        resets_at: q.resets_at.map(|at| at.to_db()),
+                        dimension: Some(q.dimension),
+                    }));
+                    if dimensions.is_empty() {
+                        None
+                    } else {
+                        Some(dimensions)
+                    }
                 },
                 auto_connect: app
                     .settings_snapshot()
@@ -651,14 +652,15 @@ fn test_connection<'a>(
         to_json(&ApiTestResult {
             ok: result.is_ok(),
             account: connection.account.map(|a| a.account),
-            quota_remaining: quota_dto(
-                app,
-                &cfg(app, &ctx),
-                args.kind,
-                app.sessions().current(&ctx.window).map(|s| s.key.0),
-            )
-            .await?
-            .and_then(|q| q.limit.map(|limit| limit.saturating_sub(q.used))),
+            quota_remaining: quota_left(
+                &local_quotas(
+                    app,
+                    &cfg(app, &ctx),
+                    args.kind,
+                    app.sessions().current(&ctx.window).map(|s| s.key.0),
+                )
+                .await?,
+            ),
             error: result.err(),
         })
     })
@@ -776,15 +778,18 @@ fn set_settings<'a>(
                 },
             );
             if remove {
-                let _ = fetch_now(
-                    app.clone(),
-                    ctx.clone(),
-                    ApiFetchArgs {
-                        kinds: Some(vec![args.kind]),
-                        scope: ApiFetchScope::All,
-                    },
-                )
-                .await?;
+                spawn_long(
+                    app,
+                    "op-api-fetch",
+                    fetch_now(
+                        app.clone(),
+                        ctx.clone(),
+                        ApiFetchArgs {
+                            kinds: Some(vec![args.kind]),
+                            scope: ApiFetchScope::All,
+                        },
+                    ),
+                );
             }
         } else {
             *app.ext::<ApiState>()
@@ -899,7 +904,7 @@ fn status<'a>(app: &'a App, ctx: CallCtx, _args: serde_json::Value) -> BoxFuture
             let errors = stored
                 .map(|s| s.failed)
                 .unwrap_or_else(|| live.as_ref().map(|s| s.urls_failed).unwrap_or(0));
-            let quota = quota_dto(
+            let quotas = local_quotas(
                 app,
                 &cfg(app, &ctx),
                 kind,
@@ -917,9 +922,7 @@ fn status<'a>(app: &'a App, ctx: CallCtx, _args: serde_json::Value) -> BoxFuture
                 .iter()
                 .filter_map(|q| q.limit.map(|limit| limit.saturating_sub(q.used)))
                 .min();
-            let local_left = quota
-                .as_ref()
-                .and_then(|q| q.limit.map(|limit| limit.saturating_sub(q.used)));
+            let local_left = quota_left(&quotas);
             let quota_left = match (provider_left, local_left) {
                 (Some(a), Some(b)) => Some(a.min(b)),
                 (a, b) => a.or(b),
@@ -939,7 +942,10 @@ fn status<'a>(app: &'a App, ctx: CallCtx, _args: serde_json::Value) -> BoxFuture
                 quota_left,
                 running: live.is_some_and(|s| s.state == os_integrations::ApiState::Fetching),
                 completed,
-                reset_at: quota.and_then(|q| q.resets_at).or(provider_reset),
+                reset_at: quotas
+                    .first()
+                    .and_then(|q| q.resets_at.clone())
+                    .or(provider_reset),
             });
         }
         to_json(&rows)
@@ -1122,7 +1128,7 @@ impl ApiSource for LimitedSource {
                 let allowed = self
                     .app
                     .write_queue()
-                    .submit_admin(move || ledger.reserve_limits(&limits).map_err(error))
+                    .submit_admin(move || ledger.reserve_limits_at(&limits, now).map_err(error))
                     .await
                     .map_err(|_| ApiError::Transport("Kontingent nicht speicherbar".into()))?;
                 if !allowed {
@@ -1177,6 +1183,13 @@ async fn fetch_now(
             .filter(|k| state.connection(*k).state == ApiConnState::Connected)
             .collect()
     });
+    if matches!(args.scope, ApiFetchScope::Selection { .. })
+        && kinds
+            .iter()
+            .any(|kind| matches!(kind, ApiKind::Ga4 | ApiKind::Gsc))
+    {
+        return Err(CmdError::invalid_input("err-api-report-selection", "scope"));
+    }
     // Erst alle Quellen auflösen, damit Unsupported keine teilweise ausgeführte Operation hinterlässt.
     let mut sources = vec![];
     for kind in kinds {
@@ -1331,7 +1344,22 @@ async fn fetch_now(
                 .await
                 .map_err(error)?;
             let (fetched, failed) = *counts.lock().unwrap_or_else(|p| p.into_inner());
-            Ok::<_, CmdError>((requested, fetched, failed))
+            let local =
+                local_quotas(&app, &session.config, kind, Some(session.key.0.clone())).await?;
+            let provider_left = state
+                .sources
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .get(name(kind))
+                .into_iter()
+                .flat_map(|source| source.quotas())
+                .filter_map(|q| q.limit.map(|limit| limit.saturating_sub(q.used)))
+                .min();
+            let remaining = [quota_left(&local), provider_left]
+                .into_iter()
+                .flatten()
+                .min();
+            Ok::<_, CmdError>((requested, fetched, failed, remaining))
         });
     }
     let mut summary = ApiFetchSummary {
@@ -1341,7 +1369,8 @@ async fn fetch_now(
         quota_left: None,
     };
     for result in futures_util::future::join_all(jobs).await {
-        let (requested, fetched, failed) = result?;
+        let (requested, fetched, failed, remaining) = result?;
+        summary.quota_left = [summary.quota_left, remaining].into_iter().flatten().min();
         summary.requested += requested;
         summary.fetched += fetched;
         summary.failed += failed;
@@ -1351,11 +1380,28 @@ async fn fetch_now(
 fn fetch<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
         let args: ApiFetchArgs = parse_args(args)?;
-        let app = app.clone();
-        let ops = app.ops().clone();
-        to_json(&ops.spawn("op-api-fetch",true,move |cancel,_|Box::pin(async move {tokio::select! {r=fetch_now(app,ctx,args)=>to_json(&r?),_=cancelled(cancel)=>Err(CmdError::new(ErrorCode::Cancelled,"err-cancelled"))}})))
+        to_json(&spawn_long(
+            app,
+            "op-api-fetch",
+            fetch_now(app.clone(), ctx, args),
+        ))
     })
 }
+fn spawn_long<F, T>(app: &App, name: &'static str, future: F) -> OpHandle
+where
+    F: std::future::Future<Output = Result<T, CmdError>> + Send + 'static,
+    T: serde::Serialize,
+{
+    app.ops().spawn(name, true, move |cancel, _| {
+        Box::pin(async move {
+            tokio::select! {
+                result = future => to_json(&result?),
+                _ = cancelled(cancel) => Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled")),
+            }
+        })
+    })
+}
+
 async fn cancelled(cancel: os_analyze::analysis::CancelToken) {
     while !cancel.is_cancelled() {
         tokio::time::sleep(Duration::from_millis(25)).await;
@@ -1408,7 +1454,27 @@ pub fn on_startup(app: &App) {
     }
     app.crawl_events()
         .add_barrier("api", Arc::new(Barrier(state.clone())));
-    app.crawl_events().subscribe(Box::new(move |_, event| {
+    app.crawl_events().subscribe(Box::new(move |app, event| {
+        if let CrawlEvent::Closed(key) = event {
+            let ledger = state.quota(app);
+            let key = key.0.clone();
+            let now = app.config().clock.now();
+            let app = app.clone();
+            tokio::spawn(async move {
+                let result = app
+                    .write_queue()
+                    .submit_admin(move || ledger.close_crawl(&key, now).map_err(error))
+                    .await;
+                if result.is_err() {
+                    app.push_notice(Notice {
+                        level: NoticeLevel::Warning,
+                        code: "notice-api-quota-cleanup-failed".into(),
+                        args: BTreeMap::new(),
+                    });
+                }
+            });
+            return;
+        }
         let (key, pause) = match event {
             CrawlEvent::Paused(key) => (key, true),
             CrawlEvent::Resumed(key) => (key, false),

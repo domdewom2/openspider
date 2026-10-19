@@ -1,3 +1,4 @@
+// Gemeinsames Hilfsmodul für cmd_api_* und pending_w1_i01 via #[path = "cmd_api_support.rs"].
 // Fixture-Aufbau und Assertions prüfen die gespeicherten Fakten direkt.
 #![allow(
     dead_code,

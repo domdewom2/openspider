@@ -5,7 +5,7 @@
     ["https://integ.test:8080/a/", "http://integ.test:8080/a/", true],
     ["https://integ.test:8080/b/", "https://integ.test:8080/b", true],
     ["https://integ.test:8080/produkt", "https://integ.test:8080/Produkt", true],
-    ["https://integ.test:8080/d?Color=RED#TOP", "https://integ.test:8080/d?color=red#top", true],
+    ["https://integ.test:8080/d?Color=RED#TOP", "https://integ.test:8080/d?color=red#top", false],
     ["https://integ.test:8080/d?x=1", "https://integ.test:8080/d", false],
     ["https://integ.test:8080/d#one", "https://integ.test:8080/d", false],
     ["https://integ.test:8080/%C3%BC", "https://integ.test:8080/ü", true],

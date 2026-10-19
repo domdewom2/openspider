@@ -116,19 +116,34 @@ impl Queue {
             }
         }))
         .buffer_unordered(concurrency.clamp(1, 50));
-        while let Some((url, outcome)) = requests.next().await {
-            let current = {
-                let mut status = self.status.lock().unwrap_or_else(|p| p.into_inner());
-                let status = status.as_mut().expect("initialized");
-                status.urls_done += 1;
-                status.urls_failed += u64::from(outcome.is_err());
-                if status.urls_done == status.urls_total {
-                    status.state = ApiState::Idle;
-                }
-                status.clone()
-            };
-            complete(url, outcome, current).await?;
-        }
+        // Ein begrenzter Kanal entkoppelt Netzwerk-Polling von langsamen Store-Commits.
+        // try_join beendet beim Schreibfehler auch den Produzenten und lässt keine Tasks zurück.
+        let (tx, mut rx) = tokio::sync::mpsc::channel(concurrency.clamp(1, 50));
+        let produce = async move {
+            while let Some(result) = requests.next().await {
+                tx.send(result)
+                    .await
+                    .map_err(|_| ApiError::Transport("API-Ergebniskanal geschlossen".into()))?;
+            }
+            Ok::<_, ApiError>(())
+        };
+        let consume = async {
+            while let Some((url, outcome)) = rx.recv().await {
+                let current = {
+                    let mut status = self.status.lock().unwrap_or_else(|p| p.into_inner());
+                    let status = status.as_mut().expect("initialized");
+                    status.urls_done += 1;
+                    status.urls_failed += u64::from(outcome.is_err());
+                    if status.urls_done == status.urls_total {
+                        status.state = ApiState::Idle;
+                    }
+                    status.clone()
+                };
+                complete(url, outcome, current).await?;
+            }
+            Ok::<_, ApiError>(())
+        };
+        tokio::try_join!(produce, consume)?;
         if let Some(status) = self
             .status
             .lock()
@@ -168,6 +183,9 @@ pub struct QueueResult {
 
 /// Google-Tagesgrenze: US-Pazifik mit den seit 2007 geltenden DST-Regeln.
 pub fn pacific_day(now: Timestamp) -> String {
+    pacific_date(now).to_string()
+}
+pub(crate) fn pacific_date(now: Timestamp) -> time::Date {
     use time::{Date, Month};
     let year = now.0.year();
     let sunday = |month: Month, n: u8| {
@@ -188,5 +206,5 @@ pub fn pacific_day(now: Timestamp) -> String {
     } else {
         -8
     };
-    (now.0 + time::Duration::hours(offset)).date().to_string()
+    (now.0 + time::Duration::hours(offset)).date()
 }

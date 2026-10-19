@@ -152,6 +152,8 @@ pub trait ApiSource: Send + Sync {
     ) -> BoxFuture<'a, Result<Vec<ApiValueWrite>, ApiError>>;
 
     /// Genau ein Prüfabruf. Quellen können Kontoname, Ablauf und Scopes ergänzen.
+    /// I02/I03 müssen account_id und label aus der Property-/Site-Liste oder Konto-Antwort
+    /// setzen: OAuth mit minimalem Scope liefert selbst keine stabile Google-Identität.
     fn test_connection<'a>(
         &'a self,
         ctx: &'a ApiCtx,

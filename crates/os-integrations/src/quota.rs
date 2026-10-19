@@ -1,6 +1,6 @@
 //! Lokaler Verbrauch je Quelle, Property und Pazifiktag; unabhängig von Crawl-Dateien.
 use crate::{queue::pacific_day, ApiError};
-use os_model::Timestamp;
+use os_model::{Clock, SystemClock, Timestamp};
 use std::{
     collections::BTreeMap,
     path::{Path, PathBuf},
@@ -76,21 +76,32 @@ impl QuotaLedger {
         now: Timestamp,
         limit: u64,
     ) -> Result<bool, ApiError> {
-        self.reserve_limits(&[(
-            source.to_string(),
-            property.to_string(),
-            pacific_day(now),
-            limit,
-        )])
+        self.reserve_limits_at(
+            &[(
+                source.to_string(),
+                property.to_string(),
+                pacific_day(now),
+                limit,
+            )],
+            now,
+        )
     }
     /// Reserviert mehrere Perioden atomar, z. B. Anbietertag und benutzerdefinierter Crawl-Cap.
     pub fn reserve_limits(
         &self,
         limits: &[(String, String, String, u64)],
     ) -> Result<bool, ApiError> {
+        self.reserve_limits_at(limits, SystemClock.now())
+    }
+    pub fn reserve_limits_at(
+        &self,
+        limits: &[(String, String, String, u64)],
+        now: Timestamp,
+    ) -> Result<bool, ApiError> {
         let _lock = self.lock.lock().unwrap_or_else(|p| p.into_inner());
         let _file = self.lock_file()?;
         let mut ledger = self.read()?;
+        prune(&mut ledger, now, None);
         let entries = limits
             .iter()
             .map(|(source, property, period, limit)| {
@@ -104,6 +115,7 @@ impl QuotaLedger {
             .iter()
             .any(|(key, limit)| ledger.counts.get(key).copied().unwrap_or(0) >= *limit)
         {
+            self.write(&ledger)?;
             return Ok(false);
         }
         for (key, _) in entries {
@@ -151,14 +163,36 @@ impl QuotaLedger {
         let _lock = self.lock.lock().unwrap_or_else(|p| p.into_inner());
         let _file = self.lock_file()?;
         let mut ledger = self.read()?;
+        prune(&mut ledger, now, None);
         ledger
             .counts
             .insert(Self::key(source, property, now), limit);
         self.write(&ledger)
     }
+    /// Entfernt nur Crawl-Perioden des geschlossenen Crawls, keine Anbieterzähler.
+    pub fn close_crawl(&self, key: &str, now: Timestamp) -> Result<(), ApiError> {
+        let _lock = self.lock.lock().unwrap_or_else(|p| p.into_inner());
+        let _file = self.lock_file()?;
+        let mut ledger = self.read()?;
+        prune(&mut ledger, now, Some(&format!("crawl:{key}")));
+        self.write(&ledger)
+    }
     pub fn path(&self) -> &Path {
         &self.path
     }
+}
+fn prune(ledger: &mut Ledger, now: Timestamp, closed: Option<&str>) {
+    let cutoff = (crate::queue::pacific_date(now) - time::Duration::days(2)).to_string();
+    ledger.counts.retain(|key, _| {
+        let Ok((_, _, period)) = serde_json::from_str::<(String, String, String)>(key) else {
+            return true;
+        };
+        if period.starts_with("crawl:") {
+            return closed != Some(period.as_str());
+        }
+        // Nur ISO-Datumsperioden bereinigen; fremde/kommende Periodentypen bleiben erhalten.
+        period.len() != 10 || period.as_str() >= cutoff.as_str()
+    });
 }
 fn failure() -> ApiError {
     ApiError::Transport("API-Kontingentdatei nicht lesbar oder schreibbar".into())

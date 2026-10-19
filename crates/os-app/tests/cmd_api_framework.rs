@@ -178,11 +178,26 @@ async fn data_settings_ask_keep_reload_and_limits_do_not_invalidate() {
         true
     );
     settings["values"]["metrics"] = json!(["screenPageViews"]);
+    h.app.ops().take_updates();
     let reload = json!({"kind":"ga4","settings":settings,"decision":"reload"});
     assert_eq!(
         h.call("api.setSettings", reload).await.unwrap()["invalidated"],
         true
     );
+    let reload_op = h
+        .app
+        .ops()
+        .take_updates()
+        .into_iter()
+        .find(|op| op.label_key == "op-api-fetch")
+        .unwrap();
+    let result = if reload_op.state == os_app::dto::OpState::Running {
+        h.app.ops().wait(&reload_op.op_id).await.unwrap()
+    } else {
+        reload_op
+    };
+    assert!(result.error.is_none());
+    assert_eq!(result.result.unwrap()["fetched"], 6);
     let mut settings = h
         .call("api.getSettings", json!({"kind":"ga4"}))
         .await
@@ -220,6 +235,23 @@ async fn profile_never_contains_secrets_and_remove_account_clears_secret_store()
         .code,
         ErrorCode::InvalidInput
     );
+    fn scan(path: &std::path::Path, secret: &[u8]) {
+        if path.is_dir() {
+            for entry in std::fs::read_dir(path).unwrap() {
+                scan(&entry.unwrap().path(), secret);
+            }
+        } else if path.is_file() {
+            let bytes = std::fs::read(path).unwrap();
+            assert!(
+                !bytes.windows(secret.len()).any(|w| w == secret),
+                "Geheimnis in {}",
+                path.display()
+            );
+        }
+    }
+    for path in h.app.config().paths.all() {
+        scan(path, fixture()["secret"].as_str().unwrap().as_bytes());
+    }
     let conn = h
         .app
         .read_pool()
@@ -313,6 +345,7 @@ async fn custom_quota_stops_before_provider_calls_and_is_visible_in_status() {
         .unwrap();
     assert_eq!(summary["fetched"], 5);
     assert_eq!(summary["failed"], 1);
+    assert_eq!(summary["quotaLeft"], 0);
     assert_eq!(source.calls.load(Ordering::SeqCst), 5);
     let status = h.call("api.status", json!(null)).await.unwrap();
     assert_eq!(status[0]["quotaLeft"], 0);
@@ -664,6 +697,31 @@ async fn provider_daily_and_hourly_quota_dimensions_remain_separate() {
     assert_eq!(info[0]["quotaDimensions"][0]["used"], 40);
     assert_eq!(info[0]["quotaDimensions"][1]["dimension"], "tokensPerHour");
     assert_eq!(info[0]["quotaDimensions"][1]["used"], 20);
+    assert_eq!(
+        h.op("api.fetch", json!({"kinds":["ga4"],"scope":{"kind":"all"}}))
+            .await
+            .unwrap()["quotaLeft"],
+        10
+    );
+    h.connect().await;
+    h.source(ApiKind::Psi);
+    let mut settings = h
+        .call("api.getSettings", json!({"kind":"psi"}))
+        .await
+        .unwrap();
+    settings["values"]["limits"]["quota_limit"] = json!(9);
+    h.call("api.setSettings", json!({"kind":"psi","settings":settings}))
+        .await
+        .unwrap();
+    assert_eq!(
+        h.op(
+            "api.fetch",
+            json!({"kinds":["ga4","psi"],"scope":{"kind":"all"}})
+        )
+        .await
+        .unwrap()["quotaLeft"],
+        3
+    );
     h.server.stop().await;
 }
 
@@ -894,4 +952,197 @@ async fn entering_a_new_key_works_when_the_keychain_is_locked() {
         "connected"
     );
     server.stop().await;
+}
+
+// spec: INTEG-010
+#[tokio::test]
+async fn reload_returns_while_fetch_is_pending_and_is_cancellable() {
+    let h = Harness::new().await;
+    h.connect().await;
+    h.source(ApiKind::Psi);
+    h.op("api.fetch", json!({"kinds":["psi"],"scope":{"kind":"all"}}))
+        .await
+        .unwrap();
+    let source = Arc::new(ControlledSource {
+        started: Default::default(),
+        release: Default::default(),
+        calls: Default::default(),
+    });
+    h.app.ext::<ApiState>().register_source(source.clone());
+    let mut settings = h
+        .call("api.getSettings", json!({"kind":"psi"}))
+        .await
+        .unwrap();
+    settings["values"]["device"] = json!("desktop");
+    h.app.ops().take_updates();
+    let result = tokio::time::timeout(
+        Duration::from_secs(2),
+        h.call(
+            "api.setSettings",
+            json!({"kind":"psi","settings":settings,"decision":"reload"}),
+        ),
+    )
+    .await
+    .unwrap()
+    .unwrap();
+    assert_eq!(result["invalidated"], true);
+    source.started.notified().await;
+    let op = h
+        .app
+        .ops()
+        .take_updates()
+        .into_iter()
+        .find(|op| op.label_key == "op-api-fetch")
+        .unwrap();
+    assert_eq!(op.state, os_app::dto::OpState::Running);
+    assert!(h.app.ops().cancel(&op.op_id));
+    assert_eq!(
+        h.app.ops().wait(&op.op_id).await.unwrap().state,
+        os_app::dto::OpState::Cancelled
+    );
+    h.server.stop().await;
+}
+
+// spec: INTEG-010
+#[tokio::test]
+async fn reload_without_registered_source_succeeds_and_reports_fetch_error_in_ops() {
+    let h = Harness::new().await;
+    h.connect().await;
+    h.app
+        .write_queue()
+        .submit(h.key.clone(), |conn| {
+            os_store::queries::api::replace_values(
+                conn,
+                "psi",
+                &[],
+                &[ApiValueWrite {
+                    url_id: Some(os_model::UrlId(1)),
+                    url: fixture()["urls"][0].as_str().unwrap().into(),
+                    source: "psi".into(),
+                    metric: "fixture.score".into(),
+                    level: "url".into(),
+                    v_real: Some(42.),
+                    v_text: None,
+                    fetched_at: Timestamp::UNIX_EPOCH,
+                }],
+            )
+        })
+        .await
+        .unwrap();
+    let mut settings = h
+        .call("api.getSettings", json!({"kind":"psi"}))
+        .await
+        .unwrap();
+    settings["values"]["device"] = json!("desktop");
+    h.app.ops().take_updates();
+    let result = h
+        .call(
+            "api.setSettings",
+            json!({"kind":"psi","settings":settings,"decision":"reload"}),
+        )
+        .await
+        .unwrap();
+    assert_eq!(result["invalidated"], true);
+    let op = h
+        .app
+        .ops()
+        .take_updates()
+        .into_iter()
+        .find(|op| op.label_key == "op-api-fetch")
+        .unwrap();
+    let result = if op.state == os_app::dto::OpState::Running {
+        h.app.ops().wait(&op.op_id).await.unwrap()
+    } else {
+        op
+    };
+    assert_eq!(result.error.unwrap().code, ErrorCode::Unsupported);
+    assert_eq!(
+        h.call("api.getSettings", json!({"kind":"psi"}))
+            .await
+            .unwrap()["values"]["device"],
+        "desktop"
+    );
+    let has_data = h
+        .app
+        .read_pool()
+        .run(h.key.clone(), |file, _| {
+            os_store::queries::api::has_values(file.conn(), "psi")
+        })
+        .await
+        .unwrap();
+    assert!(!has_data);
+    h.server.stop().await;
+}
+
+// spec: INTEG-009
+#[tokio::test]
+async fn selection_rejects_ga4_and_gsc_before_resolving_sources_or_views() {
+    let h = Harness::new().await;
+    for kind in ["ga4", "gsc"] {
+        for selection in [
+            json!({"kind":"ids","ids":[1]}),
+            json!({"kind":"all","viewId":"missing","version":1,"except":[]}),
+        ] {
+            let error = h
+                .op(
+                    "api.fetch",
+                    json!({"kinds":[kind],"scope":{"kind":"selection","selection":selection}}),
+                )
+                .await
+                .unwrap_err();
+            assert_eq!(error.code, ErrorCode::InvalidInput);
+        }
+    }
+    h.server.stop().await;
+}
+
+// spec: INTEG-006
+#[tokio::test]
+async fn provider_day_and_crawl_cap_have_independent_usage_and_summary_minimum() {
+    let h = Harness::new().await;
+    h.connect().await;
+    let source = h.source(ApiKind::Psi);
+    let ledger = os_integrations::quota::QuotaLedger::new(
+        h.app.config().paths.settings.join("api-quotas.json"),
+    );
+    let now = h.app.config().clock.now();
+    ledger.exhaust("psi", "", now, 24999).unwrap();
+    let mut settings = h
+        .call("api.getSettings", json!({"kind":"psi"}))
+        .await
+        .unwrap();
+    settings["values"]["limits"]["quota_limit"] = json!(5);
+    h.call("api.setSettings", json!({"kind":"psi","settings":settings}))
+        .await
+        .unwrap();
+    let rows = h.call("api.list", json!(null)).await.unwrap();
+    assert_eq!(rows[2]["quota"]["dimension"], "urlsPerCrawl");
+    assert_eq!(rows[2]["quota"]["used"], 0);
+    assert_eq!(rows[2]["quotaDimensions"][0]["used"], 24999);
+    let summary = h
+        .op("api.fetch", json!({"kinds":["psi"],"scope":{"kind":"all"}}))
+        .await
+        .unwrap();
+    assert_eq!(summary["quotaLeft"], 0);
+    assert_eq!(source.calls.load(Ordering::SeqCst), 1);
+    let rows = h.call("api.list", json!(null)).await.unwrap();
+    assert_eq!(rows[2]["quota"]["used"], 1);
+    assert_eq!(rows[2]["quotaDimensions"][0]["used"], 25000);
+    h.app.crawl_events().emit(
+        &h.app,
+        os_app::runtime::lifecycle_bus::CrawlEvent::Closed(h.key.clone()),
+    );
+    tokio::time::timeout(Duration::from_secs(2), async {
+        loop {
+            let rows = h.call("api.list", json!(null)).await.unwrap();
+            if rows[2]["quota"]["used"] == 0 {
+                break;
+            }
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .unwrap();
+    assert_eq!(ledger.remaining("psi", "", now, 25000).unwrap(), 0);
+    h.server.stop().await;
 }
