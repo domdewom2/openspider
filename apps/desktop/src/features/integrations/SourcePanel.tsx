@@ -1,5 +1,5 @@
 // Unterbereiche je Integration (INTEG-001): Konto/Verbindung, Metriken (Linkmetrik-Ebenen, INTEG-150), Erweitert.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { i18n, currentLanguage, useT } from "../../i18n";
 import type { ApiSourceInfo } from "../../ipc/gen/ApiSourceInfo";
 import type { JsonValue } from "../../ipc/gen/serde_json/JsonValue";
@@ -74,6 +74,10 @@ function AccountTab({ kind, info, conn, values, onChange }: SourcePanelProps) {
   const status = statusText(t, kind, { state, parts, error }, has);
   const denial = kind === "psi" && state === "error" ? psiDenialReason(error) : null;
   const busy = state === "connecting";
+  // Die gedrückte Schaltfläche verschwindet mit dem Zustandswechsel (und WebKit fokussiert Schaltflächen beim Klick
+  // nicht): der Fokus bleibt auf der Statuszeile im Dialog, damit Escape und Tab weiter funktionieren.
+  const statusRef = useRef<HTMLParagraphElement>(null);
+  const keepFocus = () => statusRef.current?.focus();
 
   const connect = (withAccount: string | null) => {
     void conn.connect({
@@ -84,11 +88,12 @@ function AccountTab({ kind, info, conn, values, onChange }: SourcePanelProps) {
       clientSecret: oauth && clientSecret ? clientSecret : null,
     });
     setKey("");
+    keepFocus();
   };
 
   return (
     <div className="os-integ-account">
-      <p className="os-integ-status" data-state={state} data-testid={`integ-status-${kind}`} role="status">
+      <p ref={statusRef} tabIndex={-1} className="os-integ-status" data-state={state} data-testid={`integ-status-${kind}`} role="status">
         {status}
       </p>
       {denial && (
@@ -144,9 +149,9 @@ function AccountTab({ kind, info, conn, values, onChange }: SourcePanelProps) {
           </>
         )}
         {busy && <span className="os-hint">{t(oauth ? "integ-connecting-browser" : "integ-connecting")}</span>}
-        {actions.disconnect && <Button onPress={() => void conn.disconnect(kind)}>{t("integ-disconnect")}</Button>}
+        {actions.disconnect && <Button onPress={() => { keepFocus(); void conn.disconnect(kind); }}>{t("integ-disconnect")}</Button>}
         {saved && !busy && (oauth || keyNeeded) && (
-          <Button variant="danger" onPress={() => void conn.removeAccount(kind, saved.accountId)}>{t("integ-remove-account")}</Button>
+          <Button variant="danger" onPress={() => { keepFocus(); void conn.removeAccount(kind, saved.accountId); }}>{t("integ-remove-account")}</Button>
         )}
       </div>
       {oauth && actions.connect && (

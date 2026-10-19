@@ -36,6 +36,7 @@ test("six integrations, connect with exactly one request, disconnect; Escape ret
   expect(axe.violations.filter((v) => v.impact === "critical")).toEqual([]);
   await dialog.getByRole("button", { name: "Disconnect" }).click();
   await expect(page.getByTestId("integ-status-moz")).toHaveText("Not connected");
+  await expect(page.getByTestId("integ-status-moz")).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(gear).toBeFocused();

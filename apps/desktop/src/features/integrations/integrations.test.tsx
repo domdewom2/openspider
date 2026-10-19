@@ -134,6 +134,8 @@ describe("API-Zugriffsdialog", () => {
     expect(screen.queryByDisplayValue(KEY)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Disconnect" }));
     await waitFor(() => expect(status("moz")).toHaveTextContent("Not connected"));
+    // Die Schaltfläche verschwindet; der Fokus bleibt im Dialog (WebKit fokussiert angeklickte Schaltflächen nicht).
+    expect(status("moz")).toHaveFocus();
     expect(calls("api.disconnect")[0]?.args).toEqual({ kind: "moz" });
     expect(calls("api.connect")).toHaveLength(1);
   });
