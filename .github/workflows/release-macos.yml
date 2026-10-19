@@ -1,0 +1,251 @@
+# macOS-Signier- und Notarisierungs-Pipeline (M2-Z01, vorgezogen aus M3).
+#
+# Baut die Desktop-App, signiert sie mit Developer ID (Hardened Runtime), notarisiert sie, heftet das Ticket und erzeugt
+# ein signiertes, notarisiertes DMG. Ergebnis ist ausschließlich ein Actions-Artefakt (14 Tage); es wird nichts
+# veröffentlicht (kein GitHub Release, kein Upload nach außen). Anleitung: docs/release/macos-signing.md.
+#
+# Secrets:   APPLE_CERTIFICATE (base64 der .p12), APPLE_CERTIFICATE_PASSWORD, APPLE_ID, APPLE_PASSWORD
+#            (App-spezifisches Passwort), KEYCHAIN_PASSWORD (frei gewählt, nur für den temporären Schlüsselbund)
+# Variablen: APPLE_SIGNING_IDENTITY ("Developer ID Application: Name (TEAMID)"), APPLE_TEAM_ID
+# Fehlt eines davon, beendet sich der Lauf nach dem ersten Schritt mit einer klaren Meldung und Erfolg (exit 0).
+
+name: Release macOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      arch:
+        description: "Architektur des Builds"
+        type: choice
+        options:
+          - universal
+          - aarch64
+          - x86_64
+        default: universal
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-macos-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  # Bei Tag-Auslösung gibt es keine Eingabe: dann universal.
+  ARCH: ${{ inputs.arch || 'universal' }}
+
+jobs:
+  macos:
+    name: signiertes DMG (${{ inputs.arch || 'universal' }})
+    runs-on: macos-15
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Secrets und Variablen prüfen
+        id: check
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ vars.APPLE_SIGNING_IDENTITY }}
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+        run: |
+          missing=()
+          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_ID APPLE_PASSWORD KEYCHAIN_PASSWORD \
+                      APPLE_SIGNING_IDENTITY APPLE_TEAM_ID; do
+            if [[ -z "${!name:-}" ]]; then
+              missing+=("$name")
+            fi
+          done
+          if [[ ${#missing[@]} -gt 0 ]]; then
+            list="${missing[*]}"
+            echo "::warning title=macOS-Signierung übersprungen::Nicht gesetzt: ${list}. Secrets und Variablen anlegen, siehe docs/release/macos-signing.md."
+            {
+              echo "### macOS-Signierung übersprungen"
+              echo
+              echo "Es fehlen: \`${list}\`"
+              echo
+              echo "Secrets: APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_ID, APPLE_PASSWORD, KEYCHAIN_PASSWORD."
+              echo "Variablen: APPLE_SIGNING_IDENTITY, APPLE_TEAM_ID."
+              echo "Anleitung: \`docs/release/macos-signing.md\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "macOS-Signierung übersprungen, nicht gesetzt: ${list}"
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Alle Secrets und Variablen sind gesetzt."
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Ziel bestimmen
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          case "$ARCH" in
+            universal) target=universal-apple-darwin ;;
+            aarch64) target=aarch64-apple-darwin ;;
+            x86_64) target=x86_64-apple-darwin ;;
+            *) echo "Unbekannte Architektur: $ARCH" >&2; exit 1 ;;
+          esac
+          echo "TAURI_TARGET=$target" >> "$GITHUB_ENV"
+          echo "BUNDLE_DIR=target/$target/release/bundle" >> "$GITHUB_ENV"
+          echo "Build-Ziel: $target"
+
+      - uses: actions/checkout@v4
+        if: steps.check.outputs.ready == 'true'
+
+      # Ohne rust-cache: ein signierter Release-Build soll nicht von einem Cache abhängen.
+      - uses: dtolnay/rust-toolchain@stable
+        if: steps.check.outputs.ready == 'true'
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - uses: actions/setup-node@v4
+        if: steps.check.outputs.ready == 'true'
+        timeout-minutes: 10
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: npm ci
+        if: steps.check.outputs.ready == 'true'
+        run: npm ci
+
+      - name: Schlüsselbund anlegen und Zertifikat importieren
+        if: steps.check.outputs.ready == 'true'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ vars.APPLE_SIGNING_IDENTITY }}
+        run: |
+          set -euo pipefail
+          keychain="$RUNNER_TEMP/openspider-signing.keychain-db"
+          cert="$RUNNER_TEMP/openspider-certificate.p12"
+
+          printf '%s' "$APPLE_CERTIFICATE" | base64 --decode > "$cert"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$keychain"
+          # Sperrt sich nach 6 Stunden, nicht schon bei Inaktivität mitten im Notarisieren.
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$keychain"
+
+          security import "$cert" -k "$keychain" -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -T /usr/bin/codesign
+          rm -f "$cert"
+
+          # codesign darf den privaten Schlüssel ohne Rückfrage-Dialog benutzen (der Runner hat keine Oberfläche).
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$keychain" > /dev/null
+
+          # Temporären Schlüsselbund vorn in die Suchliste, die vorhandenen dahinter.
+          keychains=("$keychain")
+          while IFS= read -r existing; do
+            keychains+=("$existing")
+          done < <(security list-keychains -d user | sed -e 's/^[[:space:]]*"//' -e 's/"$//')
+          security list-keychains -d user -s "${keychains[@]}"
+
+          if ! security find-identity -v -p codesigning "$keychain" | grep -qF -- "$APPLE_SIGNING_IDENTITY"; then
+            echo "Die Identität aus APPLE_SIGNING_IDENTITY steht nicht im importierten Zertifikat. Vorhanden:" >&2
+            security find-identity -v -p codesigning "$keychain" >&2
+            exit 1
+          fi
+          echo "Signierzertifikat importiert, Identität gefunden."
+
+      # Tauri signiert (Hardened Runtime + entitlements.plist aus tauri.conf.json), notarisiert die App (notarytool, wartet)
+      # und heftet das Ticket, sobald APPLE_ID, APPLE_PASSWORD und APPLE_TEAM_ID gesetzt sind; danach entsteht das DMG
+      # um die geheftete App. APPLE_CERTIFICATE wird hier bewusst NICHT übergeben: Tauri würde sonst das Zertifikat ein
+      # zweites Mal in einen eigenen Schlüsselbund importieren; der Schritt davor hat es bereits bereitgestellt.
+      - name: Tauri-Build (signiert und notarisiert)
+        if: steps.check.outputs.ready == 'true'
+        timeout-minutes: 60
+        env:
+          APPLE_SIGNING_IDENTITY: ${{ vars.APPLE_SIGNING_IDENTITY }}
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+        run: npm run -w apps/desktop tauri -- build --target "$TAURI_TARGET" --bundles app,dmg
+
+      # Das DMG selbst bekommt eine eigene Signatur, Notarisierung und Heftung (Tauri notarisiert nur die App darin).
+      - name: DMG signieren, notarisieren, heften
+        if: steps.check.outputs.ready == 'true'
+        timeout-minutes: 45
+        env:
+          APPLE_SIGNING_IDENTITY: ${{ vars.APPLE_SIGNING_IDENTITY }}
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          dmgs=("$BUNDLE_DIR"/dmg/*.dmg)
+          if [[ ${#dmgs[@]} -ne 1 ]]; then
+            echo "Erwartet genau ein DMG in $BUNDLE_DIR/dmg, gefunden: ${#dmgs[@]}" >&2
+            exit 1
+          fi
+          dmg="${dmgs[0]}"
+          echo "DMG: $dmg"
+
+          codesign --force --sign "$APPLE_SIGNING_IDENTITY" --timestamp "$dmg"
+
+          result="$RUNNER_TEMP/notary-result.json"
+          xcrun notarytool submit "$dmg" \
+            --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_PASSWORD" \
+            --wait --output-format json > "$result" || true
+          cat "$result"
+          if ! grep -Eq '"status" *: *"Accepted"' "$result"; then
+            id="$(sed -n 's/.*"id" *: *"\([^"]*\)".*/\1/p' "$result" | head -n 1)"
+            if [[ -n "$id" ]]; then
+              xcrun notarytool log "$id" \
+                --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_PASSWORD" || true
+            fi
+            echo "Notarisierung des DMG nicht angenommen." >&2
+            exit 1
+          fi
+          xcrun stapler staple "$dmg"
+
+      - name: Prüfen (verify-macos.sh)
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          out=release-artifacts
+          mkdir -p "$out"
+          apps=("$BUNDLE_DIR"/macos/*.app)
+          dmgs=("$BUNDLE_DIR"/dmg/*.dmg)
+          if [[ ${#apps[@]} -ne 1 || ${#dmgs[@]} -ne 1 ]]; then
+            echo "Erwartet je eine App und ein DMG unter $BUNDLE_DIR, gefunden: ${#apps[@]} App, ${#dmgs[@]} DMG" >&2
+            exit 1
+          fi
+          cp "${dmgs[0]}" "$out/"
+          rc=0
+          scripts/release/verify-macos.sh "${apps[0]}" 2>&1 | tee "$out/verify-app.log" || rc=1
+          scripts/release/verify-macos.sh "${dmgs[0]}" 2>&1 | tee "$out/verify-dmg.log" || rc=1
+          {
+            echo "### Prüfprotokoll"
+            echo
+            echo '```'
+            grep -hE '^(ERGEBNIS|Ziel:|\$ |-> )' "$out/verify-app.log" "$out/verify-dmg.log"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"
+
+      - name: Artefakt hochladen
+        if: always() && steps.check.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: openspider-macos-${{ inputs.arch || 'universal' }}
+          path: release-artifacts/
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Schlüsselbund löschen
+        if: always() && steps.check.outputs.ready == 'true'
+        run: |
+          security delete-keychain "$RUNNER_TEMP/openspider-signing.keychain-db" 2>/dev/null || true
+          rm -f "$RUNNER_TEMP/openspider-certificate.p12"
+          echo "Temporärer Schlüsselbund entfernt."
