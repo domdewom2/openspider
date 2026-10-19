@@ -24,6 +24,8 @@ pub enum RuleOp {
     EndsWith,
     /// Passt auf den regulären Ausdruck.
     Regex,
+    /// Passt nicht auf den regulären Ausdruck.
+    NotRegex,
     /// Größer als.
     Greater,
     /// Kleiner als.
@@ -65,10 +67,13 @@ pub enum RuleNode {
 /// Ergebnis von [`compile`]: Prädikat über `u` (Alias der Tabelle `urls`) samt Parametern.
 #[derive(Debug, Clone, PartialEq)]
 pub struct CompiledSearch {
-    /// SQL-Bedingung über `u` mit benannten Parametern.
+    /// SQL-Bedingung über `u` mit benannten Parametern. Rules benötigt `prepare`.
+    /// Simple behält den historischen ASCII-SQL-Plan; Unicode-Konsumenten verwenden
+    /// `matches_bitmap` oder `prepare(...).sql()` (Views übernehmen das automatisch).
     pub sql: String,
     /// Benannte Parameter mit führendem `:`.
     pub params: Vec<(String, os_model::Value)>,
+    program: eval::Program,
 }
 
 /// Fehler der Textsyntax mit Position (Zeichen ab 0).
@@ -78,21 +83,6 @@ pub struct ParseError {
     pub position: usize,
     /// Meldungsschlüssel.
     pub code: String,
-}
-
-// STUB(M2-K02)
-/// Wandelt die Textsyntax einer Suche in einen Regelbaum.
-pub fn parse(_text: &str) -> Result<RuleNode, ParseError> {
-    Err(ParseError {
-        position: 0,
-        code: "not-implemented".to_string(),
-    })
-}
-
-// STUB(M2-K02)
-/// Übersetzt einen Regelbaum in ein SQL-Prädikat (gleiche Semantik für Ansicht, Export und MCP).
-pub fn compile(_tree: &RuleNode, _case_sensitive: bool) -> Result<CompiledSearch, ViewError> {
-    Err(ViewError::NotImplemented("search::compile (M2-K02)"))
 }
 
 /// Lieferant einer Menge von URL-Kennungen als Bitmap: Segmente (K-14) und Vergleichsklassen (K-15) schränken eine
@@ -105,75 +95,18 @@ pub trait FilterSource: Send + Sync {
     fn bitmap(&self, file: &os_store::CrawlFile) -> Result<RoaringBitmap, ViewError>;
 }
 
-/// Kontext der Spaltensuche (UI-011), Fachumsetzung M2-K02.
-pub struct SearchCtx<'a> {
-    pub tab: &'a crate::TabDef,
-    pub columns: &'a [crate::ColumnDef],
-    pub visible: &'a [&'a str],
-}
-#[derive(Debug, thiserror::Error)]
-pub enum SearchError {
-    #[error("nicht implementiert: {0}")]
-    NotImplemented(&'static str),
-    #[error("Suche abgebrochen")]
-    Cancelled,
-    #[error("Zeitlimit der Suche erreicht")]
-    Deadline,
-    #[error(transparent)]
-    Store(#[from] os_store::StoreError),
-    #[error(transparent)]
-    Sql(#[from] rusqlite::Error),
-}
-// STUB(M2-K02)
-pub fn compile_ctx(
-    spec: &crate::views::SearchSpec,
-    _ctx: &SearchCtx<'_>,
-) -> Result<CompiledSearch, SearchError> {
-    match spec {
-        crate::views::SearchSpec::Simple(text) => Ok(CompiledSearch {
-            sql: "instr(lower(u.address), lower(:q)) > 0".into(),
-            params: vec![(":q".into(), os_model::Value::Text(text.clone()))],
-        }),
-        crate::views::SearchSpec::Rules { .. } => Err(SearchError::NotImplemented("M2-K02")),
-    }
-}
-impl CompiledSearch {
-    pub fn matches_bitmap(
-        &self,
-        file: &os_store::CrawlFile,
-        deadline: std::time::Instant,
-        cancel: &os_model::CancelToken,
-    ) -> Result<RoaringBitmap, SearchError> {
-        cancel.checkpoint().map_err(|_| SearchError::Cancelled)?;
-        if std::time::Instant::now() >= deadline {
-            return Err(SearchError::Deadline);
-        }
-        let mut stmt = file
-            .conn()
-            .prepare(&format!("SELECT u.id FROM urls u WHERE {}", self.sql))?;
-        for (name, value) in &self.params {
-            if let Some(index) = stmt.parameter_index(name)? {
-                let value = match value {
-                    os_model::Value::Null => rusqlite::types::Value::Null,
-                    os_model::Value::Bool(v) => rusqlite::types::Value::Integer(i64::from(*v)),
-                    os_model::Value::Int(v) => rusqlite::types::Value::Integer(*v),
-                    os_model::Value::Float(v) => rusqlite::types::Value::Real(*v),
-                    os_model::Value::Text(v) => rusqlite::types::Value::Text(v.clone()),
-                };
-                stmt.raw_bind_parameter(index, value)?;
-            }
-        }
-        let mut rows = stmt.raw_query();
-        let mut result = RoaringBitmap::new();
-        while let Some(row) = rows.next()? {
-            cancel.checkpoint().map_err(|_| SearchError::Cancelled)?;
-            if std::time::Instant::now() >= deadline {
-                return Err(SearchError::Deadline);
-            }
-            if let Ok(id) = u32::try_from(row.get::<_, i64>(0)?) {
-                result.insert(id);
-            }
-        }
-        Ok(result)
-    }
+mod eval;
+mod folding;
+mod parser;
+mod view;
+pub use eval::{compile, compile_ctx, search_budget, validate_regex, SearchCtx, SearchError};
+pub use parser::format;
+pub use view::{
+    compile_visible, extend_query_hash, prepare_view, prepared_query, query_identity,
+    PreparedSearch,
+};
+
+/// Textsyntax → Regelbaum; Positionen sind Unicode-Zeichen ab 0.
+pub fn parse(text: &str) -> Result<RuleNode, ParseError> {
+    parser::parse(text)
 }
