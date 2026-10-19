@@ -51,18 +51,6 @@ function = "register_collations"
 signature = "pub fn register_collations(_conn: &rusqlite::Connection) -> Result<(), crate::StoreError>"
 
 [[stub]]
-owner = "M2-D13"
-file = "crates/os-export/src/catalog/bulk_sitemaps.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
-owner = "M2-D13"
-file = "crates/os-export/src/reports/orphan_pages.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
 owner = "M2-D14"
 file = "crates/os-analyze/src/tabs/custom_search.rs"
 function = "tab"

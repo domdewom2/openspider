@@ -1,25 +1,29 @@
-//! Orphan Pages (OUT-099).
-//!
-//! STUB(M2-D13): Alle Einträge liefern bis zur Umsetzung nur die Kopfzeile (K-14, `stub_run`). Das Paket ersetzt `run`
-//! je Eintrag durch die Auswertung und ergänzt oder schärft Kopfzeile, Voraussetzungen und Aliase; der Katalog in
-//! `catalog/mod.rs` bleibt unverändert, weil er nur `entries()` aufruft.
+//! Orphan Pages: Sitemap-Anteil (OUT-099). GA/GSC ergänzt M2-I06.
 
 use crate::catalog::reports::ReportRequirement;
-use crate::catalog::{stub_run, TableEntry};
+use crate::catalog::{TableEntry, TableJob};
+use crate::error::ExportError;
+use crate::types::TableWriter;
 
 /// Die Einträge dieser Gruppe in Menüreihenfolge.
 pub fn entries() -> &'static [TableEntry] {
     ENTRIES
 }
 
-// STUB(M2-D13)
 const ENTRIES: &[TableEntry] = &[TableEntry {
     name: "Orphan Pages",
     aliases: &[],
     file_stem: "Orphan Pages",
     header: &["Address", "Source", "Status Code", "Indexability"],
     header_fn: None,
-    requires: &[ReportRequirement::CrawlAnalysis],
+    requires: &[
+        ReportRequirement::CrawlAnalysis,
+        ReportRequirement::OrphanSourceAvailable,
+    ],
     owner: "M2-D13",
-    run: stub_run,
+    run,
 }];
+
+fn run(job: &TableJob<'_>, writer: &mut dyn TableWriter) -> Result<u64, ExportError> {
+    crate::catalog::bulk_sitemaps::write_filter(job, writer, "Orphan URLs", true)
+}

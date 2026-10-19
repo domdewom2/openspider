@@ -3,3 +3,6 @@ URLs In Sitemap: 0
 URLs Not In Sitemap: 0
 Orphan URLs: 0
 Non-Indexable URLs In Sitemap: 0
+URLs In Multiple Sitemaps: 0
+XML Sitemap With Over 50k URLs: 0
+XML Sitemap With Over 50MB: 0
