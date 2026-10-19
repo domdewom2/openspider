@@ -34,6 +34,16 @@ pub fn run(
     let total: i64 = conn.query_row("SELECT COUNT(*) FROM minhash", [], |r| r.get(0))?;
     let mut rows = stmt.query([cfg.duplicates.only_indexable])?;
     let height = minhash::band_rows(cfg.duplicates.near_threshold_pct) * 4;
+    let band_values = (0..512 / height)
+        .map(|band| {
+            let parameter = band * 2 + 3;
+            format!("(?{parameter},?{},?1,?2)", parameter + 1)
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+    // Eine vorbereitete Sammelanweisung je Signatur statt einer je Band.
+    let mut insert_bands =
+        conn.prepare(&format!("INSERT INTO temp.d02_bands VALUES {band_values}"))?;
     let mut processed = 0;
     while let Some(row) = rows.next()? {
         if cancel.checkpoint().is_err() {
@@ -54,8 +64,8 @@ pub fn run(
         } else {
             "SELECT url_id FROM temp.d02_bands WHERE band=?1 AND sig=?2 AND ?3=''"
         };
+        let mut find = conn.prepare_cached(candidate_sql)?;
         for (band, bytes) in sig.chunks(height).enumerate() {
-            let mut find = conn.prepare_cached(candidate_sql)?;
             for candidate in find.query_map(
                 rusqlite::params![band as i64, bytes, hash.as_deref().unwrap_or("")],
                 |r| r.get::<_, i64>(0),
@@ -65,11 +75,16 @@ pub fn run(
                 }
                 candidates.insert(candidate?);
             }
-            conn.execute(
-                "INSERT INTO temp.d02_bands VALUES (?1,?2,?3,?4)",
-                rusqlite::params![band as i64, bytes, hash.as_deref().unwrap_or(""), id],
-            )?;
         }
+        let mut band_params = vec![
+            rusqlite::types::Value::Text(hash.clone().unwrap_or_default()),
+            rusqlite::types::Value::Integer(id),
+        ];
+        for (band, bytes) in sig.chunks(height).enumerate() {
+            band_params.push(rusqlite::types::Value::Integer(band as i64));
+            band_params.push(rusqlite::types::Value::Blob(bytes.to_vec()));
+        }
+        insert_bands.execute(rusqlite::params_from_iter(band_params))?;
         if !candidates.is_empty() {
             let text: String = conn
                 .query_row(

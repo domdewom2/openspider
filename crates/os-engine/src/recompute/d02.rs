@@ -10,6 +10,7 @@ pub fn run(
     }
     let mut last = 0i64;
     let mut changed = Vec::new();
+    let pcfg = os_parse::ParseConfig::from_crawl_config(new);
     let sql_error = |e| crate::EngineError::Store(os_store::StoreError::Sqlite(e));
     loop {
         cancel
@@ -43,7 +44,6 @@ pub fn run(
                 .map_err(sql_error)?;
             let url = url::Url::parse(&address)
                 .map_err(|e| crate::EngineError::Invalid(e.to_string()))?;
-            let pcfg = os_parse::ParseConfig::from_crawl_config(new);
             let ctx = os_parse::PageCtx {
                 url: &url,
                 base: &url,
@@ -77,6 +77,15 @@ pub fn run(
                     .find(|(k, _)| k.as_str() == key)
                     .map(|(_, v)| v.clone())
                     .unwrap_or(os_model::Value::Null);
+                if value == os_model::Value::Null {
+                    let exists: bool = file.conn().query_row(
+                        "SELECT EXISTS(SELECT 1 FROM url_ext WHERE url_id=?1 AND key=?2 AND COALESCE(v_int,v_real,v_text) IS NOT NULL)",
+                        (id, key), |r| r.get(0),
+                    ).map_err(sql_error)?;
+                    if !exists {
+                        continue;
+                    }
+                }
                 updates.ext.push(os_model::ExtWrite {
                     url: os_model::UrlId(id),
                     key: os_model::ExtKey::from_static(key),

@@ -372,8 +372,10 @@ fn stale_and_disabled_analysis_does_not_leak_old_similarity_columns() {
     for marker in [
         "0",
         "1",
+        "all",
         "near_duplicates",
         "sitemaps,near_duplicates",
+        "sitemaps, near_duplicates ",
         "sitemaps",
     ] {
         file.set_meta("analysis_stale", marker).unwrap();
@@ -384,6 +386,13 @@ fn stale_and_disabled_analysis_does_not_leak_old_similarity_columns() {
                 "No. Near Duplicates".into(),
             ]);
             let page = os_analyze::views::query_view(&file, &cfg, &query).unwrap();
+            let mut streamed = Vec::new();
+            os_analyze::views::stream_view(&file, &cfg, &query, &mut |row| {
+                streamed.push(row.to_vec());
+                Ok(())
+            })
+            .unwrap();
+            assert_eq!(streamed, page.rows, "{marker}: {tab} stream/query");
             let row = &page.rows[0];
             if marker == "0" || marker == "sitemaps" {
                 assert_eq!(
@@ -540,4 +549,86 @@ fn failed_publication_restores_previous_pairs_and_removes_scratch_tables() {
         )
         .unwrap();
     assert_eq!(scratch, 0);
+}
+
+// spec: ONPAGE-144
+#[tokio::test(start_paused = true)]
+async fn parser_and_analysis_signatures_match_on_seeded_texts_byte_for_byte() {
+    use os_engine::testing::{sim_deps, MemorySink, SimFetcher, SimSite};
+    let vocabulary = [
+        "Cat",
+        "Äpfel",
+        "Straße",
+        "東京",
+        "123",
+        "repeat",
+        "café",
+        "one-two",
+        "¿Qué?",
+        "Ελλάδα",
+    ];
+    let mut seed = 0xd02_u64;
+    let mut texts = vec![String::new(), "!!!".into(), "Cat".into(), "Cat cat".into()];
+    for length in 3..67 {
+        let mut words = Vec::new();
+        for _ in 0..length {
+            seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
+            words.push(vocabulary[(seed >> 32) as usize % vocabulary.len()]);
+        }
+        texts.push(words.join(" \n "));
+    }
+    let links = (0..texts.len())
+        .map(|id| format!("<a href='/{id}'>page</a>"))
+        .collect::<String>();
+    let mut site = SimSite::new().page("https://site.test/", &links);
+    for (id, text) in texts.iter().enumerate() {
+        site = site.page(
+            &format!("https://site.test/{id}"),
+            &format!("<main>{text}</main>"),
+        );
+    }
+    let sink = MemorySink::new();
+    let dir = tempfile::tempdir().unwrap();
+    let mut cfg = CrawlConfig::default();
+    cfg.duplicates.near_enabled = true;
+    let handle = os_engine::start_crawl(
+        SimFetcher::new(site),
+        os_engine::CrawlRequest {
+            config: cfg,
+            source: os_engine::CrawlSource::Spider {
+                start_url: "https://site.test/".into(),
+            },
+            file: dir.path().join("seeded.ospider"),
+            project: "fixture".into(),
+            name: "seeded".into(),
+        },
+        sim_deps(&sink),
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        handle.wait().await.unwrap().state,
+        os_model::CrawlState::Completed
+    );
+    let batches = sink.batches();
+    for (index, text) in texts.iter().enumerate() {
+        let address = format!("https://site.test/{index}");
+        let id = sink
+            .new_urls()
+            .into_iter()
+            .find(|u| u.url == address)
+            .unwrap()
+            .id;
+        let signature = &batches
+            .iter()
+            .flat_map(|b| &b.minhash)
+            .find(|(url, _)| *url == id)
+            .unwrap()
+            .1;
+        assert_eq!(
+            os_store::encode_minhash(signature),
+            os_store::encode_minhash(&minhash::signature(&minhash::shingles(text))),
+            "seed=0xd02 document={index}",
+        );
+    }
 }

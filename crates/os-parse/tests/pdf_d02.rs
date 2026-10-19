@@ -53,8 +53,22 @@ fn image_only_pdf_has_zero_words_and_no_readability() {
     let result = pdf::parse(&bytes, &ParseConfig::from_crawl_config(&cfg));
     assert_eq!(result.word_count, Some(0));
     assert_eq!(result.meta.title.as_deref(), Some("Test document"));
+    assert_eq!(
+        result.error.as_deref(),
+        Some("PDF enthält keinen Textlayer")
+    );
+    assert!(result
+        .ext
+        .iter()
+        .any(|(key, value)| key.as_str() == "content.pdf_error"
+            && value == &Value::Text("PDF enthält keinen Textlayer".into())));
     assert!(!result
         .ext
         .iter()
         .any(|(key, _)| key.as_str().starts_with("readability.")));
+    cfg.pdf.store = false;
+    let result = pdf::parse(&bytes, &ParseConfig::from_crawl_config(&cfg));
+    assert!(result.error.is_none());
+    assert!(result.ext.is_empty());
+    assert!(result.text.is_none());
 }

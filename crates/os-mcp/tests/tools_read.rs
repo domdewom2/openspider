@@ -1715,7 +1715,7 @@ async fn issues_that_need_the_crawl_analysis_are_named_instead_of_counted() {
         .expect("nicht auswertbare Issues");
     assert!(!pending.is_empty());
     assert!(pending.iter().all(|p| {
-        // K2-60: Der implementierte D02-Filter benötigt zuerst seinen Opt-in-Schalter.
+        // K2-63, ONPAGE-144: Near Duplicates benötigt zuerst seinen Opt-in-Schalter.
         if p["tab"] == "Content" && p["filter"] == "Near Duplicates" {
             p["state"] == "needs_config"
         } else {

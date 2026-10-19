@@ -682,9 +682,12 @@ async fn placeholder_tabs_give_every_tab_with_all_filters_in_ui_order() {
     let result = save_report(&fx.file, &cfg, OVERVIEW, tmp.path(), Format::Csv).unwrap();
     let t = Table::read(&result.files[0].path);
 
-    // Abschnitt 5 = die Tabs aus tabs::all() in UI-Reihenfolge, je Tab alle Filter in Anzeigereihenfolge. Stub-Tabs und
+    // Abschnitt 5 = die konfigurierten Tabs in UI-Reihenfolge, je Tab alle Filter in Anzeigereihenfolge. Stub-Tabs und
     // Stub-Filter von M2 (M2-F02) tragen noch keine Zähler und erscheinen nicht.
-    let all: Vec<_> = tabs::all().into_iter().filter(|t| !t.is_stub()).collect();
+    let all: Vec<_> = tabs::configured(&cfg)
+        .into_iter()
+        .filter(|t| !t.is_stub())
+        .collect();
     let tab_ids: Vec<&str> = all.iter().map(|t| t.id).collect();
     let secs = sections(&t);
     let first = secs.iter().position(|s| s == tab_ids[0]).unwrap();
@@ -700,12 +703,6 @@ async fn placeholder_tabs_give_every_tab_with_all_filters_in_ui_order() {
             .filters
             .iter()
             .filter(|f| !f.is_stub())
-            // K2-60: Die implementierten D02-Zusatzfilter sind im Paritätsmodus verborgen.
-            .filter(|f| {
-                tab.id != "Internal"
-                    || !cfg.ui.parity_filters
-                    || !matches!(f.id, "Media" | "Fonts" | "XML")
-            })
             .map(|f| os_analyze::names::label(f.id, &cfg))
             .collect();
         let got: Vec<&str> = section_items(&t, tab.id);

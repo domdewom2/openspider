@@ -4,6 +4,9 @@
 use os_analyze::FilterKind;
 use os_model::FilterState;
 
+#[path = "framework_common.rs"]
+mod store_fixture;
+
 const TAB: &str = "Content";
 const SCENARIO: &str = "onpage-content";
 const DUPES: &str = "onpage-content-dupes";
@@ -132,7 +135,7 @@ fn slug(s: &str) -> String {
     out.trim_end_matches('_').to_string()
 }
 
-/// M2-Goldens liegen im eigenen Fixture-Verzeichnis; die M1-Goldens bleiben erhalten.
+/// Regressions-Goldens am kanonischen Ort (K2-63, ONPAGE-142/149).
 fn assert_view_golden(
     fx: &FixtureCrawl,
     cfg: &CrawlConfig,
@@ -143,7 +146,7 @@ fn assert_view_golden(
     let label = os_analyze::names::label(filter_id, cfg);
     let page = view(fx, cfg, tab, filter_id);
     let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../tests/fixtures/onpage-m2-content/golden")
+        .join("../../tests/golden")
         .join(scenario)
         .join(format!("{}__{}.csv", slug(tab), slug(&label)));
     os_testsite::golden::assert_golden(path, &render_csv(fx, &page));
@@ -270,7 +273,7 @@ async fn hash_column_is_empty_when_hash_storage_is_off() {
     }
 }
 
-// spec: ONPAGE-142
+// spec: ONPAGE-142, ONPAGE-147, ONPAGE-148, ONPAGE-150, ONPAGE-151
 #[tokio::test]
 async fn base_set_is_internal_html_with_2xx() {
     let fx = crawl(SCENARIO, CrawlConfig::default()).await;
@@ -304,11 +307,16 @@ async fn base_set_is_internal_html_with_2xx() {
         )
         .unwrap();
     assert_eq!(in_urls, 4);
-    for f in os_analyze::tabs::content::tab()
-        .filters
-        .into_iter()
-        .filter(|f| matches!(f.id, "All" | "Exact Duplicates" | "Low Content Pages"))
-    {
+    for f in os_analyze::tabs::content::tab().filters {
+        if f.id == "Near Duplicates" {
+            assert_eq!(
+                os_analyze::views::state_of(&fx.file, &cfg, TAB, f.id).unwrap(),
+                FilterState::NeedsConfig("duplicates.near_enabled".into())
+            );
+            assert_eq!(view(&fx, &cfg, TAB, f.id).total, 0);
+            continue;
+        }
+        assert!(matches!(f.kind, FilterKind::Live), "{}", f.id);
         let rows = sorted_addresses(&fx, &cfg, TAB, f.id);
         assert!(rows.iter().all(|a| all.contains(a)), "{} ⊆ All", f.id);
         assert_eq!(counted(&fx, &cfg, TAB, f.id).0 as usize, rows.len());
@@ -584,8 +592,6 @@ async fn exact_duplicates_need_hash_storage_and_the_exact_switch() {
 // spec: ONPAGE-142 [P1]
 #[test]
 fn pdf_row_has_word_count_and_readability() {
-    #[path = "framework_common.rs"]
-    mod store_fixture;
     let facts: serde_json::Value = serde_json::from_str(include_str!(
         "../../../tests/fixtures/onpage-m2-content/pdf-facts.json"
     ))

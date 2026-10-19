@@ -107,6 +107,9 @@ fn parse_inner(body: &[u8], cfg: &crate::ParseConfig) -> os_model::PdfResult {
         let numbers: Vec<_> = pages.keys().copied().collect();
         match doc.extract_text(&numbers) {
             Ok(text) => {
+                if text.trim().is_empty() {
+                    result.error = Some("PDF enthält keinen Textlayer".into());
+                }
                 result.word_count =
                     Some(text.split_whitespace().count().min(u32::MAX as usize) as u32);
                 if cfg.readability {

@@ -26,6 +26,9 @@ pub fn jaccard(a: &BTreeSet<String>, b: &BTreeSet<String>) -> f64 {
 }
 
 pub fn signature(shingles: &BTreeSet<String>) -> Vec<u32> {
+    if shingles.is_empty() {
+        return Vec::new();
+    }
     let hashes: Vec<u64> = shingles
         .iter()
         .map(|w| {

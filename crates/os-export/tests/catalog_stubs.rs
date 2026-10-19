@@ -135,9 +135,9 @@ fn names_aliases_and_file_names_are_unique_across_all_catalogs() {
     );
     stems.extend(report_tables().iter().map(|e| e.file_stem.to_string()));
     let mut clashes = naming::collisions(stems.iter().map(String::as_str));
-    // K2-60, M2-D02: Der vorgegebene kanonische Bulk-Dateiname
+    // K2-63, OUT-052: Der vorgegebene kanonische Bulk-Dateiname
     // content_spelling_errors.csv entspricht auch dem Tab-Export dieses Filters.
-    // Genau diese beiden Exportarten dürfen denselben Stamm haben.
+    // Schnittstellenbedarf an Planer/N01: Tab-Dateiname oder Unterordner trennen (D02-Bericht).
     clashes.retain(|(file, names)| {
         file != "content_spelling_errors.csv"
             || names != &["Content:Spelling Errors", "Content:Spelling Errors"]

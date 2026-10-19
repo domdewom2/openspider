@@ -163,8 +163,12 @@ fn p1_column(key: &'static str, kind: ColumnKind) -> ColumnDef {
         _ => ("NULL", None),
     };
     let sql = match needs {
-        Some(crate::defs::Needs::Config("extraction.readability")) => crate::defs::intern(&format!("CASE WHEN :readability_enabled=1 THEN {sql} END")),
-        Some(crate::defs::Needs::CrawlAnalysis(_)) => crate::defs::intern(&format!("CASE WHEN :near_enabled=1 AND EXISTS (SELECT 1 FROM analysis_steps WHERE step='near_duplicates' AND state='done' AND config_hash=:near_config_hash) AND NOT EXISTS (SELECT 1 FROM crawl_meta WHERE key='analysis_stale' AND (value IN ('1','all') OR instr(','||value||',',',near_duplicates,')>0)) THEN {sql} END")),
+        Some(crate::defs::Needs::Config("extraction.readability")) => {
+            crate::defs::intern(&format!("CASE WHEN :readability_enabled=1 THEN {sql} END"))
+        }
+        Some(crate::defs::Needs::CrawlAnalysis(_)) => {
+            crate::defs::intern(&format!("CASE WHEN :near_ready=1 THEN {sql} END"))
+        }
         _ => sql,
     };
     let mut out = column(key, sql, kind, false);
@@ -343,19 +347,24 @@ pub fn analysis_params(cfg: &os_model::CrawlConfig) -> Vec<(&'static str, Value)
             "readability_enabled",
             Value::Bool(cfg.extraction.readability),
         ),
-        (
-            "near_enabled",
-            Value::Bool(
-                cfg.duplicates.near_enabled
-                    && cfg.analysis.step_enabled(AnalysisStep::NearDuplicates),
-            ),
-        ),
-        (
-            "near_config_hash",
-            Value::Text(crate::state::step_config_hash(
-                AnalysisStep::NearDuplicates,
-                cfg,
-            )),
-        ),
+        // Ohne Crawl-Datei ist die Bereitschaft unbekannt. Vor Ausführung auflösen.
+        ("near_ready", Value::Bool(false)),
     ]
+}
+
+/// Bindet den dateiabhängigen Spaltenparameter über das zentrale F05a-Zustandsmodell.
+/// Auch direkte SQL-Verbraucher müssen dies nach `TabDef.params` aufrufen.
+pub fn bind_analysis_params(
+    params: &mut [(String, Value)],
+    file: &os_store::CrawlFile,
+    cfg: &os_model::CrawlConfig,
+) -> Result<(), crate::error::ViewError> {
+    if let Some((_, value)) = params.iter_mut().find(|(name, _)| name == ":near_ready") {
+        // `state_of_in` vermeidet einen rekursiven Aufbau der konfigurierten Registry.
+        *value = Value::Bool(
+            crate::views::state_of_in(&[tab()], file, cfg, "Content", "Near Duplicates")?
+                == os_model::FilterState::Ready,
+        );
+    }
+    Ok(())
 }
