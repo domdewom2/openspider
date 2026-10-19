@@ -1,2 +1,22 @@
 # OpenSpider – Issue-Texte (English) ab M2, Tab „Analytics“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
 # Platzhalter wie in core/issues/texts/en.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.analytics-orphan-urls]
+what = "The URL appears in the Google Analytics 4 data but no crawled page links to it internally."
+why = "Pages without internal links receive no link equity and are hard to discover for search engines and visitors, even though they evidently get traffic."
+fix = "Link the page from relevant sections of the site, or remove or redirect it if it is no longer needed."
+
+[issues.analytics-bounce-rate-above-70]
+what = "According to Google Analytics 4 the page has a bounce rate above 70% (with at least one session)."
+why = "Many sessions without engagement can indicate content that does not match expectations from the search result, or technical problems."
+fix = "Review search intent, page title and the entry section as well as load time and rendering; offer suitable next steps."
+
+[issues.analytics-no-ga-data]
+what = "Google Analytics 4 returned no data for this crawled HTML page with status 200 in the selected date range."
+why = "The page either gets no visits or is not measured, for example because tracking is missing or another data stream records it."
+fix = "Check the tracking setup and the data stream; if measurement is correct, review the page's discoverability and usefulness."
+
+[issues.analytics-non-indexable-with-ga-data]
+what = "The page is non-indexable, yet Google Analytics 4 reports traffic for it (at least one value above 0)."
+why = "Visited pages that search engines may not index might be excluded by mistake or lead visitors to outdated addresses."
+fix = "Check noindex, canonical and redirects of this page and allow indexing or send visitors to the correct page."

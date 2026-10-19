@@ -1,2 +1,22 @@
 # OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „Analytics“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
 # Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.analytics-orphan-urls]
+what = "Die URL kommt in den Google-Analytics-4-Daten vor, wird aber von keiner gecrawlten Seite intern verlinkt."
+why = "Seiten ohne interne Links erhalten keinen Linkfluss und sind für Suchmaschinen und Besucher schwer auffindbar, obwohl sie offenbar Zugriffe haben."
+fix = "Verlinke die Seite aus passenden Bereichen der Website oder entferne bzw. leite sie weiter, wenn sie nicht mehr gebraucht wird."
+
+[issues.analytics-bounce-rate-above-70]
+what = "Die Absprungrate der Seite liegt laut Google Analytics 4 über 70 % (bei mindestens einer Sitzung)."
+why = "Viele Sitzungen ohne Interaktion können auf unpassende Inhalte, falsche Erwartungen aus dem Suchergebnis oder technische Probleme hinweisen."
+fix = "Prüfe Suchintention, Seitentitel und Einstieg der Seite sowie Ladezeit und Darstellung; ergänze passende nächste Schritte."
+
+[issues.analytics-no-ga-data]
+what = "Für die gecrawlte HTML-Seite mit Status 200 hat Google Analytics 4 im gewählten Zeitraum keine Daten geliefert."
+why = "Die Seite erhält entweder keine Besuche oder wird nicht gemessen, etwa weil das Tracking fehlt oder ein anderer Datenstream zählt."
+fix = "Prüfe Einbindung des Trackings und Datenstream; ist die Messung korrekt, bewerte Auffindbarkeit und Nutzen der Seite."
+
+[issues.analytics-non-indexable-with-ga-data]
+what = "Die Seite ist nicht indexierbar, hat laut Google Analytics 4 aber Zugriffe (mindestens ein Wert über 0)."
+why = "Besuchte Seiten, die Suchmaschinen nicht indexieren dürfen, können versehentlich ausgeschlossen sein oder Besucher auf veraltete Adressen führen."
+fix = "Prüfe noindex, Canonical und Weiterleitungen dieser Seite und gib sie zur Indexierung frei oder lenke Besucher auf die richtige Seite."
