@@ -1,5 +1,8 @@
 # M2-X03 – Implementierung und Integrationsbefund
 
+Historischer Erstbericht. Der aktuelle Stand der Fable-Fix-Runde steht im
+[kanonischen Paketbericht](../../../../docs/plan/M2-reports/x03.md).
+
 Stand: 2026-10-19, macOS arm64, Branch `m2/x03`. Beim Start war der Worktree sauber.
 Clean-Room: ausschließlich Projekt-Spec und offizielle Google-Protokolldokumentation; kein Referenzprodukt.
 
