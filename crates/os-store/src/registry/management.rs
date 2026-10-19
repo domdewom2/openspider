@@ -585,7 +585,11 @@ pub fn copy_snapshot(
         result
     })
     .and_then(|()| {
-        let f = std::fs::File::open(&tmp).map_err(|e| StoreError::io(&tmp, e))?;
+        // Schreibzugriff nötig: FlushFileBuffers verweigert unter Windows ein nur lesend geöffnetes Handle.
+        let f = std::fs::OpenOptions::new()
+            .write(true)
+            .open(&tmp)
+            .map_err(|e| StoreError::io(&tmp, e))?;
         f.sync_all().map_err(|e| StoreError::io(&tmp, e))?;
         if !progress(total, total) {
             return Err(rusqlite::Error::SqliteFailure(
