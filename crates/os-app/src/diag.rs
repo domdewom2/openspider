@@ -466,12 +466,7 @@ fn publish_bundle(
 ) -> io::Result<()> {
     match hard_link(tmp, dest) {
         Ok(()) => Ok(()),
-        Err(e)
-            if matches!(
-                e.kind(),
-                io::ErrorKind::Unsupported | io::ErrorKind::PermissionDenied | io::ErrorKind::Other
-            ) =>
-        {
+        Err(e) if e.kind() != io::ErrorKind::AlreadyExists => {
             // Reserve exclusively: an existing destination must never be overwritten.
             let reservation = fs::OpenOptions::new()
                 .write(true)
@@ -495,27 +490,59 @@ mod publication_tests {
     // spec: OUT-244
     #[test]
     fn filesystems_without_hard_links_publish_complete_bundles_without_clobbering() {
-        for kind in [
-            io::ErrorKind::Unsupported,
-            io::ErrorKind::PermissionDenied,
-            io::ErrorKind::Other,
+        for error in [
+            io::Error::from(io::ErrorKind::Unsupported),
+            io::Error::from(io::ErrorKind::PermissionDenied),
+            io::Error::from(io::ErrorKind::Other),
+            // Windows FAT/exFAT: ERROR_INVALID_FUNCTION is not mapped to Unsupported.
+            #[cfg(windows)]
+            io::Error::from_raw_os_error(1),
+            // An unassigned Unix errno exercises the same unmapped OS-error path.
+            #[cfg(unix)]
+            io::Error::from_raw_os_error(i32::MAX),
         ] {
+            let hard_link_error = || match error.raw_os_error() {
+                Some(code) => io::Error::from_raw_os_error(code),
+                None => io::Error::from(error.kind()),
+            };
             let dir = tempfile::tempdir().unwrap();
             let tmp = dir.path().join("bundle.tmp");
             let dest = dir.path().join("bundle.zip");
             fs::write(&tmp, "complete ZIP fixture").unwrap();
-            publish_bundle(&tmp, &dest, |_, _| Err(io::Error::from(kind))).unwrap();
+            publish_bundle(&tmp, &dest, |_, _| Err(hard_link_error())).unwrap();
             assert_eq!(fs::read_to_string(&dest).unwrap(), "complete ZIP fixture");
             assert!(!tmp.exists());
             fs::write(&tmp, "replacement").unwrap();
-            let error = publish_bundle(&tmp, &dest, |_, _| Err(io::Error::from(kind))).unwrap_err();
+            let error = publish_bundle(&tmp, &dest, |_, _| Err(hard_link_error())).unwrap_err();
             assert_eq!(error.kind(), io::ErrorKind::AlreadyExists);
             assert_eq!(fs::read_to_string(&dest).unwrap(), "complete ZIP fixture");
             // A failed rename cleans up its reservation.
             let absent = dir.path().join("absent.tmp");
             let failed = dir.path().join("failed.zip");
-            assert!(publish_bundle(&absent, &failed, |_, _| Err(io::Error::from(kind))).is_err());
+            assert!(publish_bundle(&absent, &failed, |_, _| Err(hard_link_error())).is_err());
             assert!(!failed.exists());
         }
+
+        let dir = tempfile::tempdir().unwrap();
+        let tmp = dir.path().join("bundle.tmp");
+        let dest = dir.path().join("bundle.zip");
+        fs::write(&tmp, "complete ZIP fixture").unwrap();
+        // AlreadyExists must propagate even if no destination is visible: no fallback.
+        let error = publish_bundle(&tmp, &dest, |_, _| {
+            Err(io::Error::from(io::ErrorKind::AlreadyExists))
+        })
+        .unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::AlreadyExists);
+        assert!(!dest.exists());
+        assert_eq!(fs::read_to_string(&tmp).unwrap(), "complete ZIP fixture");
+
+        fs::write(&dest, "existing destination").unwrap();
+        let error = publish_bundle(&tmp, &dest, |_, _| {
+            Err(io::Error::from(io::ErrorKind::AlreadyExists))
+        })
+        .unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::AlreadyExists);
+        assert_eq!(fs::read_to_string(&dest).unwrap(), "existing destination");
+        assert_eq!(fs::read_to_string(&tmp).unwrap(), "complete ZIP fixture");
     }
 }
