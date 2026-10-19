@@ -1,0 +1,7 @@
+{
+  "physicalBytes": 17179869184,
+  "usedBytes": 1073741824,
+  "ramLimitBytes": 8589934592,
+  "cacheLimitMb": 4096,
+  "renderProcessLimit": 8
+}
