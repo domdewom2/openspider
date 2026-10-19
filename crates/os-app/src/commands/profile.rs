@@ -12,7 +12,7 @@ use futures_util::future::BoxFuture;
 use os_model::{CrawlConfig, CrawlState};
 use os_store::profile::ConfigProfiles;
 use serde_json::Value;
-use std::{collections::BTreeMap, path::Path};
+use std::path::Path;
 
 fn store(app: &App) -> ConfigProfiles {
     ConfigProfiles::new(&app.config().paths.settings)
@@ -149,7 +149,14 @@ fn import<'a>(app: &'a App, _: CallCtx, args: Value) -> BoxFuture<'a, CmdResult>
                 valid(&loaded.config)?;
                 store
                     .save(name, &loaded.config, false)
-                    .map_err(|e| store_error(&e))?;
+                    .map_err(|e| match e {
+                        // profile.import hat keine Überschreiboption (3.6a).
+                        os_store::StoreError::AlreadyExists(_) => {
+                            CmdError::invalid_input("err-file-exists", "path")
+                                .with_arg("reason", "exists")
+                        }
+                        _ => store_error(&e),
+                    })?;
                 Ok((loaded, info(&store, name)?))
             })
             .await?;
@@ -167,19 +174,17 @@ fn export<'a>(app: &'a App, _: CallCtx, args: Value) -> BoxFuture<'a, CmdResult>
                 "password",
             ));
         }
+        if !Path::new(&args.path).is_absolute() {
+            return Err(CmdError::invalid_input("err-export-absolute-path", "path"));
+        }
         let store = store(app);
-        let secrets = app.config().secrets.clone();
         app.write_queue()
-            .submit_admin(move || export_file(&store, secrets.as_ref(), args))
+            .submit_admin(move || export_file(&store, args))
             .await
     })
 }
 
-fn export_file(
-    store: &ConfigProfiles,
-    secrets: &dyn os_fetch::SecretStoreMut,
-    args: ProfileExportArgs,
-) -> CmdResult {
+fn export_file(store: &ConfigProfiles, args: ProfileExportArgs) -> CmdResult {
     let cfg = store.load(&args.name).map_err(|e| store_error(&e))?.config;
     valid(&cfg)?;
     let path = Path::new(&args.path);
@@ -191,28 +196,15 @@ fn export_file(
         ));
     }
     if args.include_secrets == Some(true) {
-        let mut values = BTreeMap::new();
-        for kind in os_model::ApiKind::ALL {
-            let id = format!("api/{kind}");
-            if let Some(value) = secrets
-                .try_get(&id)
-                .map_err(|_| CmdError::new(ErrorCode::Permission, "err-secret-store"))?
-            {
-                values.insert(id, value);
-            }
-        }
-        let payload = serde_json::json!({"config":cfg.to_osconfig_string().map_err(|_|CmdError::new(ErrorCode::Io,"err-profile-serialize"))?,"secrets":values});
-        let encrypted = os_integrations::core::encrypt_config_export(
-            payload.to_string().as_bytes(),
-            args.password.as_deref().unwrap_or_default(),
-        )
-        .map_err(|_| CmdError::new(ErrorCode::Internal, "err-export-encrypt"))?;
-        os_store::profile::write_export(path, &encrypted).map_err(|e| store_error(&e))?;
-    } else {
-        cfg.save_file(path).map_err(|_| {
-            CmdError::new(ErrorCode::Io, "err-profile-export").with_arg("path", args.path)
-        })?;
+        // K2-52: Format, KDF und AES-256-GCM-Helfer gehören M2-I01.
+        return Err(CmdError::unsupported(
+            "profile.export.includeSecrets",
+            "M2-I01",
+        ));
     }
+    cfg.save_file(path).map_err(|_| {
+        CmdError::new(ErrorCode::Io, "err-profile-export").with_arg("path", args.path)
+    })?;
     Ok(Value::Null)
 }
 

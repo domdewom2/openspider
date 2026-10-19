@@ -241,15 +241,15 @@ impl ConfigProfiles {
             .join(format!("{name}.osconfig")))
     }
 
-    /// Verhindert Exporte auf verwaltete Profildateien, auch über relative Pfade/Symlinks.
+    /// Verhindert Exporte auf verwaltete Profildateien, auch über Symlinks.
+    /// Exportziele müssen absolut sein; relative Pfade werden nicht über das Arbeitsverzeichnis aufgelöst.
     pub fn is_managed_path(&self, path: &std::path::Path) -> Result<bool, StoreError> {
-        let absolute = if path.is_absolute() {
-            path.to_path_buf()
-        } else {
-            std::env::current_dir()
-                .map_err(|e| StoreError::io(path, e))?
-                .join(path)
-        };
+        if !path.is_absolute() {
+            return Err(StoreError::InvalidInput(
+                "absoluter Exportpfad erwartet".into(),
+            ));
+        }
+        let absolute = path.to_path_buf();
         let resolved = std::fs::canonicalize(&absolute)
             .or_else(|_| {
                 std::fs::canonicalize(absolute.parent().unwrap_or(&absolute))
@@ -419,16 +419,6 @@ pub fn config_transaction<T, E>(
     }
 }
 
-/// Atomare Ausgabe verschlüsselter Profile; im Gegensatz zu save_file sind die Bytes opak.
-pub fn write_export(path: &std::path::Path, bytes: &[u8]) -> Result<(), StoreError> {
-    if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
-        std::fs::create_dir_all(parent).map_err(|e| StoreError::io(parent, e))?;
-    }
-    let tmp = path.with_extension(format!("tmp{}", std::process::id()));
-    std::fs::write(&tmp, bytes).map_err(|e| StoreError::io(&tmp, e))?;
-    std::fs::rename(&tmp, path).map_err(|e| StoreError::io(path, e))
-}
-
 /// Entfernt nach einer Regeländerung ausgeschlossene Queue-Einträge. Läuft innerhalb
 /// der Konfigurationstransaktion, in begrenzten Blöcken; die Start-URL bleibt erhalten.
 pub fn refilter_config_queue(
@@ -486,17 +476,4 @@ pub fn refilter_config_queue(
         }
     }
     Ok(removed)
-}
-
-/// Schlüsselableitung des portablen Konfigurationsexports (INTEG-002).
-/// Die Parameter des Formats v1 sind fest, unabhängig von Bibliotheksdefaults.
-pub fn config_export_key(password: &str, salt: &[u8]) -> Result<[u8; 32], StoreError> {
-    use argon2::{Algorithm, Argon2, Params, Version};
-    let params = Params::new(19_456, 2, 1, Some(32))
-        .map_err(|_| StoreError::InvalidInput("Export-KDF nicht verfügbar".into()))?;
-    let mut key = [0u8; 32];
-    Argon2::new(Algorithm::Argon2id, Version::V0x13, params)
-        .hash_password_into(password.as_bytes(), salt, &mut key)
-        .map_err(|_| StoreError::InvalidInput("Export-Schlüsselableitung fehlgeschlagen".into()))?;
-    Ok(key)
 }

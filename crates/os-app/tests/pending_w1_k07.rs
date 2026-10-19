@@ -2,9 +2,13 @@
 #![allow(clippy::disallowed_types, clippy::disallowed_methods)]
 #[path = "runtime_common.rs"]
 mod common;
-use serde_json::json;
+use serde_json::{json, Value};
 
-// spec: CRAWL-109
+async fn call(app: &os_app::App, name: &str, args: Value) -> Value {
+    app.dispatch(common::ctx(), name, args).await.unwrap()
+}
+
+// spec: CRAWL-126 [M2]
 #[tokio::test]
 #[ignore = "wartet auf M2-E04"]
 async fn rules_test_returns_per_rule_matches_from_the_url_trace() {
@@ -16,7 +20,7 @@ async fn rules_test_returns_per_rule_matches_from_the_url_trace() {
     assert_eq!(result["steps"][1]["matched"], false);
 }
 
-// spec: CRAWL-103
+// spec: CRAWL-126 [M2]
 #[tokio::test]
 #[ignore = "wartet auf M2-E04"]
 async fn rules_test_passes_query_removal_and_ordered_replacements() {
@@ -100,4 +104,64 @@ async fn config_set_reclassifies_stored_link_paths_without_requests() {
         .unwrap();
     assert!(links.iter().any(|position| position == "Body"));
     assert_eq!(fx.site.requests().len(), requests);
+}
+
+// spec: INTEG-002 [M2]
+#[tokio::test]
+#[ignore = "wartet auf M2-I01"]
+async fn export_uses_explicit_consent_and_authenticated_password_encryption() {
+    let dir = tempfile::tempdir().unwrap();
+    let secrets = std::sync::Arc::new(os_fetch::MemorySecretStore::new());
+    secrets.set("api/psi", "sk-TEST-INTEG-002");
+    let app = os_app::App::new(os_app::AppConfig::new(dir.path()).with_secrets(secrets)).unwrap();
+    let cfg = os_model::CrawlConfig::load_str(include_str!(
+        "../../../tests/fixtures/config/commented.osconfig"
+    ))
+    .unwrap()
+    .config;
+    let config = os_app::dto::CrawlConfigDto {
+        schema_version: cfg.schema_version,
+        generator: cfg.generator.clone(),
+        config: serde_json::to_value(&cfg).unwrap(),
+    };
+    call(
+        &app,
+        "profile.save",
+        json!({"name":"safe","config":config,"overwrite":false}),
+    )
+    .await;
+    let plain = dir.path().join("plain.osconfig");
+    let encrypted = dir.path().join("encrypted.osconfig");
+    call(&app, "profile.export", json!({"name":"safe","path":plain})).await;
+    assert!(!std::fs::read_to_string(&plain)
+        .unwrap()
+        .contains("sk-TEST-INTEG-002"));
+    let err = app
+        .dispatch(
+            common::ctx(),
+            "profile.export",
+            json!({"name":"safe","path":encrypted,"includeSecrets":true}),
+        )
+        .await
+        .unwrap_err();
+    assert_eq!(err.field.as_deref(), Some("password"));
+    assert!(!encrypted.exists());
+    call(
+        &app,
+        "profile.export",
+        json!({"name":"safe","path":encrypted,"includeSecrets":true,"password":"fixture-password"}),
+    )
+    .await;
+    let bytes = std::fs::read(&encrypted).unwrap();
+    assert!(!bytes
+        .windows(b"sk-TEST-INTEG-002".len())
+        .any(|w| w == b"sk-TEST-INTEG-002"));
+    // Passwort-/Manipulationsprüfungen des Helfers gehören M2-I01.
+    // Plaintext secrets never appear in any stored profile, index, default or exported file.
+    for path in [plain, encrypted, dir.path().join("profiles/safe.osconfig")] {
+        assert!(!std::fs::read(path)
+            .unwrap()
+            .windows(b"sk-TEST-INTEG-002".len())
+            .any(|w| w == b"sk-TEST-INTEG-002"));
+    }
 }

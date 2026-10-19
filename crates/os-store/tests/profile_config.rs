@@ -67,3 +67,22 @@ fn invalid_names_do_not_escape_profile_directory_and_recent_is_bounded() {
     assert_eq!(&recent[..3], &["7", "11", "10"]);
     assert_eq!(recent.iter().filter(|n| n.as_str() == "7").count(), 1);
 }
+
+// spec: OUT-220 [M2]
+#[test]
+fn managed_export_destinations_require_absolute_paths() {
+    let dir = tempfile::tempdir().unwrap();
+    let store = ConfigProfiles::new(dir.path());
+    assert!(matches!(
+        store.is_managed_path(std::path::Path::new("relative.osconfig")),
+        Err(os_store::StoreError::InvalidInput(_))
+    ));
+    store.save("SEO", &CrawlConfig::default(), false).unwrap();
+    assert!(store.is_managed_path(&store.path("SEO").unwrap()).unwrap());
+    assert!(store
+        .is_managed_path(&CrawlConfig::default_profile_path(dir.path()))
+        .unwrap());
+    assert!(!store
+        .is_managed_path(&dir.path().join("export.osconfig"))
+        .unwrap());
+}

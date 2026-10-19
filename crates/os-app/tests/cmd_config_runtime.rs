@@ -158,18 +158,53 @@ async fn paused_allows_fetch_settings_but_rejects_structural_changes() {
     cfg.scope.exclude.push(".*/private/.*".into());
     cfg.limits.max_urls += 10;
     call(&app, "config.set", dto(&cfg)).await;
-    for path in ["mode", "scope.all_subdomains", "rendering.mode"] {
-        let mut input = dto(&cfg);
-        match path {
-            "mode" => input["config"]["mode"] = json!("list"),
-            "scope.all_subdomains" => input["config"]["scope"]["all_subdomains"] = json!(true),
-            _ => input["config"]["rendering"]["mode"] = json!("javascript"),
+    // Alle Erfassungs- und Speichern/Crawlen-Schalter bleiben in Pause editierbar.
+    let mut input = dto(&cfg);
+    let fields = input["config"]["spider"].as_object_mut().unwrap();
+    for value in fields.values_mut() {
+        if let Some(flag) = value.as_bool() {
+            *value = json!(!flag);
+        } else {
+            value["store"] = json!(false);
+            value["crawl"] = json!(false);
         }
+    }
+    input["config"]["scope"]["include"] = json!([".*"]);
+    input["config"]["scope"]["regex_partial_match"] = json!(true);
+    call(&app, "config.set", input.clone()).await;
+    assert_eq!(call(&app, "config.get", Value::Null).await, input);
+    for (pointer, path, value) in [
+        ("/config/mode", "mode", json!("list")),
+        (
+            "/config/scope/all_subdomains",
+            "scope.all_subdomains",
+            json!(true),
+        ),
+        (
+            "/config/scope/subfolder_only",
+            "scope.subfolder_only",
+            json!(true),
+        ),
+        (
+            "/config/scope/crawl_outside_start_folder",
+            "scope.crawl_outside_start_folder",
+            json!(false),
+        ),
+        (
+            "/config/rendering/mode",
+            "rendering.mode",
+            json!("javascript"),
+        ),
+    ] {
+        let mut changed = input.clone();
+        *changed.pointer_mut(pointer).unwrap() = value;
         let err = app
-            .dispatch(common::ctx(), "config.set", input)
+            .dispatch(common::ctx(), "config.set", changed)
             .await
             .unwrap_err();
+        assert_eq!(err.code, ErrorCode::InvalidInput);
         assert_eq!(err.field.as_deref(), Some(path));
+        assert_eq!(call(&app, "config.get", Value::Null).await, input);
     }
 }
 
@@ -273,7 +308,6 @@ async fn write_failure_rolls_back_config_and_emits_no_event() {
 }
 
 // spec: OUT-220 [M2]
-// spec: OUT-224
 #[tokio::test]
 async fn default_drafts_are_isolated_and_diff_uses_stable_paths() {
     let dir = tempfile::tempdir().unwrap();

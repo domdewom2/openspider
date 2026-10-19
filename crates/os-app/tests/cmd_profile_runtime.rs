@@ -132,7 +132,6 @@ async fn running_rejects_profile_load_and_paused_requires_explicit_apply() {
     );
 }
 
-// spec: OUT-221
 // spec: CRAWL-132
 #[tokio::test]
 async fn partial_unknown_future_and_malformed_file_handling() {
@@ -187,62 +186,6 @@ async fn partial_unknown_future_and_malformed_file_handling() {
 
 // spec: INTEG-002 [M2]
 #[tokio::test]
-async fn export_uses_explicit_consent_and_authenticated_password_encryption() {
-    let dir = tempfile::tempdir().unwrap();
-    let secrets = Arc::new(os_fetch::MemorySecretStore::new());
-    secrets.set("api/psi", "sk-TEST-INTEG-002");
-    let app = App::new(AppConfig::new(dir.path()).with_secrets(secrets)).unwrap();
-    call(
-        &app,
-        "profile.save",
-        json!({"name":"safe","config":dto(&CrawlConfig::default()),"overwrite":false}),
-    )
-    .await;
-    let plain = dir.path().join("plain.osconfig");
-    let encrypted = dir.path().join("encrypted.osconfig");
-    call(&app, "profile.export", json!({"name":"safe","path":plain})).await;
-    assert!(!std::fs::read_to_string(&plain)
-        .unwrap()
-        .contains("sk-TEST-INTEG-002"));
-    let err = app
-        .dispatch(
-            common::ctx(),
-            "profile.export",
-            json!({"name":"safe","path":encrypted,"includeSecrets":true}),
-        )
-        .await
-        .unwrap_err();
-    assert_eq!(err.field.as_deref(), Some("password"));
-    assert!(!encrypted.exists());
-    call(
-        &app,
-        "profile.export",
-        json!({"name":"safe","path":encrypted,"includeSecrets":true,"password":"fixture-password"}),
-    )
-    .await;
-    let bytes = std::fs::read(&encrypted).unwrap();
-    assert!(!bytes
-        .windows(b"sk-TEST-INTEG-002".len())
-        .any(|w| w == b"sk-TEST-INTEG-002"));
-    let decoded = os_integrations::core::decrypt_config_export(&bytes, "fixture-password").unwrap();
-    let payload: Value = serde_json::from_slice(&decoded).unwrap();
-    assert_eq!(payload["secrets"]["api/psi"], "sk-TEST-INTEG-002");
-    assert!(os_integrations::core::decrypt_config_export(&bytes, "wrong-password").is_err());
-    let mut tampered = bytes.clone();
-    let last = tampered.len() - 1;
-    tampered[last] ^= 1;
-    assert!(os_integrations::core::decrypt_config_export(&tampered, "fixture-password").is_err());
-    // Plaintext secrets never appear in any stored profile, index, default or exported file.
-    for path in [plain, encrypted, dir.path().join("profiles/safe.osconfig")] {
-        assert!(!std::fs::read(path)
-            .unwrap()
-            .windows(b"sk-TEST-INTEG-002".len())
-            .any(|w| w == b"sk-TEST-INTEG-002"));
-    }
-}
-
-// spec: INTEG-002 [M2]
-#[tokio::test]
 async fn encrypted_exports_cannot_replace_managed_or_default_profiles() {
     let dir = tempfile::tempdir().unwrap();
     let app = common::new_app(dir.path());
@@ -264,4 +207,120 @@ async fn encrypted_exports_cannot_replace_managed_or_default_profiles() {
         assert_eq!(err.field.as_deref(), Some("path"));
         assert_eq!(std::fs::read(path).unwrap(), before);
     }
+}
+
+// spec: OUT-220 [M2]
+// spec: CRAWL-132
+#[tokio::test]
+async fn import_name_collision_reports_path_and_preserves_existing_profile() {
+    let dir = tempfile::tempdir().unwrap();
+    let app = common::new_app(dir.path());
+    let source = dir.path().join("SEO.osconfig");
+    std::fs::write(
+        &source,
+        include_str!("../../../tests/fixtures/config/commented.osconfig"),
+    )
+    .unwrap();
+    call(&app, "profile.import", json!({"path":source})).await;
+    let profile = dir.path().join("profiles/SEO.osconfig");
+    let before = std::fs::read(&profile).unwrap();
+    CrawlConfig::default().save_file(&source).unwrap();
+    let err = app
+        .dispatch(common::ctx(), "profile.import", json!({"path":source}))
+        .await
+        .unwrap_err();
+    assert_eq!(err.code, ErrorCode::InvalidInput);
+    assert_eq!(err.field.as_deref(), Some("path"));
+    assert_eq!(err.args["reason"], "exists");
+    assert_eq!(std::fs::read(profile).unwrap(), before);
+}
+
+// spec: OUT-220 [M2]
+// spec: INTEG-002 [M2]
+#[tokio::test]
+async fn exports_require_absolute_paths() {
+    let dir = tempfile::tempdir().unwrap();
+    let app = common::new_app(dir.path());
+    call(
+        &app,
+        "profile.save",
+        json!({"name":"safe","config":dto(&CrawlConfig::default()),"overwrite":false}),
+    )
+    .await;
+    for path in ["relative.osconfig", "../relative.osconfig", ""] {
+        for include_secrets in [false, true] {
+            let err = app.dispatch(common::ctx(), "profile.export", json!({"name":"safe","path":path,"includeSecrets":include_secrets,"password":"fixture-password"})).await.unwrap_err();
+            assert_eq!(err.code, ErrorCode::InvalidInput);
+            assert_eq!(err.field.as_deref(), Some("path"));
+        }
+    }
+}
+
+// spec: INTEG-002 [M2]
+#[tokio::test]
+async fn secret_references_and_plain_exports_never_persist_credentials() {
+    fn scan(path: &std::path::Path) {
+        for entry in std::fs::read_dir(path).unwrap() {
+            let path = entry.unwrap().path();
+            if path.is_dir() {
+                scan(&path);
+            } else {
+                assert!(
+                    !std::fs::read(&path)
+                        .unwrap()
+                        .windows(b"sk-TEST-INTEG-002".len())
+                        .any(|w| w == b"sk-TEST-INTEG-002"),
+                    "{}",
+                    path.display()
+                );
+            }
+        }
+    }
+    let dir = tempfile::tempdir().unwrap();
+    let secrets = Arc::new(os_fetch::MemorySecretStore::new());
+    secrets.set("api/psi", "sk-TEST-INTEG-002");
+    let app = App::new(AppConfig::new(dir.path()).with_secrets(secrets)).unwrap();
+    let mut cfg = CrawlConfig::load_str(include_str!(
+        "../../../tests/fixtures/config/commented.osconfig"
+    ))
+    .unwrap()
+    .config;
+    cfg.generator = CrawlConfig::default().generator;
+    call(
+        &app,
+        "profile.save",
+        json!({"name":"safe","config":dto(&cfg),"overwrite":false}),
+    )
+    .await;
+    call(&app, "profile.setDefault", json!({"name":"safe"})).await;
+    call(&app, "profile.load", json!({"name":"safe"})).await;
+    for include_secrets in [None, Some(false)] {
+        let plain = dir
+            .path()
+            .join(format!("plain-{include_secrets:?}.osconfig"));
+        call(
+            &app,
+            "profile.export",
+            json!({"name":"safe","path":plain,"includeSecrets":include_secrets}),
+        )
+        .await;
+        assert_eq!(CrawlConfig::load_file(&plain).unwrap().config, cfg);
+    }
+    let encrypted = dir.path().join("encrypted.osconfig");
+    let err = app
+        .dispatch(
+            common::ctx(),
+            "profile.export",
+            json!({"name":"safe","path":encrypted,"includeSecrets":true}),
+        )
+        .await
+        .unwrap_err();
+    assert_eq!(err.code, ErrorCode::InvalidInput);
+    assert_eq!(err.field.as_deref(), Some("password"));
+    let err = app.dispatch(common::ctx(), "profile.export", json!({"name":"safe","path":encrypted,"includeSecrets":true,"password":"fixture-password"})).await.unwrap_err();
+    assert_eq!(err.code, ErrorCode::Unsupported);
+    assert_eq!(err.args["command"], "profile.export.includeSecrets");
+    assert_eq!(err.args["owner"], "M2-I01");
+    assert!(!encrypted.exists());
+    scan(dir.path());
 }

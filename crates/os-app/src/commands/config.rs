@@ -176,12 +176,16 @@ fn check_state(state: CrawlState, paths: &[String]) -> Result<(), CmdError> {
         let forbidden = if state == CrawlState::Running {
             !live_field(path)
         } else {
-            matches!(path.as_str(), "mode" | "rendering.mode")
-                || (path.starts_with("scope.")
-                    && !matches!(
-                        path.as_str(),
-                        "scope.include" | "scope.exclude" | "scope.regex_partial_match"
-                    ))
+            // CRAWL-126: nur strukturelle Felder aus osconfig.schema.json.
+            // Start-URL liegt in der Sitzung; das Schema hat kein Proxy-Feld.
+            matches!(
+                path.as_str(),
+                "mode"
+                    | "rendering.mode"
+                    | "scope.all_subdomains"
+                    | "scope.subfolder_only"
+                    | "scope.crawl_outside_start_folder"
+            )
         };
         if forbidden {
             let mut e = CmdError::new(
