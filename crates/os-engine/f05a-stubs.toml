@@ -111,18 +111,6 @@ function = "tab"
 signature = "pub fn tab() -> TabDef"
 
 [[stub]]
-owner = "M2-E03"
-file = "crates/os-engine/src/host_pace.rs"
-function = "on_response"
-signature = "pub fn on_response(&self, _url: &Url, _status: u16, _retry_after: Option<Duration>)"
-
-[[stub]]
-owner = "M2-E03"
-file = "crates/os-engine/src/retry.rs"
-function = "decide"
-signature = "pub fn decide( _res: &os_fetch::FetchResult, _attempt: u32, _cfg: &os_model::CrawlConfig, ) -> RetryDecision"
-
-[[stub]]
 owner = "M2-E05"
 file = "crates/os-engine/src/render_glue.rs"
 function = "render"
@@ -265,15 +253,3 @@ owner = "M2-R02"
 file = "crates/os-export/src/catalog/bulk_screenshots.rs"
 function = "entries"
 signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
-owner = "M2-E03"
-file = "crates/os-engine/src/host_pace.rs"
-function = "before_fetch"
-signature = "pub async fn before_fetch(&self, url: &Url, crawl_delay: Option<f64>, cfg: &CrawlConfig, clock: &dyn Clock)"
-
-[[stub]]
-owner = "M2-E03"
-file = "crates/os-engine/src/host_pace.rs"
-function = "on_result"
-signature = "pub fn on_result(&self, url: &Url, result: &FetchResult, cfg: &CrawlConfig, clock: &dyn Clock)"

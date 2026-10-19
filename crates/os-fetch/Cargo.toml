@@ -9,6 +9,8 @@ repository.workspace = true
 authors.workspace = true
 
 [dependencies]
+rustls.workspace = true
+rustls-platform-verifier = "0.7.1"
 sha2.workspace = true
 
 os-model.workspace = true

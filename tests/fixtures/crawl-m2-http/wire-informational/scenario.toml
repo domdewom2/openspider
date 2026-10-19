@@ -1,0 +1,7 @@
+[[route]]
+path = "/wire"
+body = "wire body"
+informational = [103]
+[[route]]
+path = "/"
+body = "normal"

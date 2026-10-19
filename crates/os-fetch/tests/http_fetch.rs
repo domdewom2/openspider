@@ -307,7 +307,8 @@ async fn body_is_cut_at_the_maximum_size() {
     let resp = expect_response(f.fetch(req).await);
     assert!(resp.truncated);
     assert_eq!(resp.body.len(), 1000);
-    assert_eq!(resp.size_bytes, 1000);
+    // M2: bei Abbruch stammt Größe aus Content-Length (CRAWL-140).
+    assert_eq!(resp.size_bytes, 50_000);
     // komprimiert: Obergrenze gilt für den dekomprimierten Body
     let mut req = page_request(server.url("/gzip-50k"));
     req.max_body_bytes = 2000;

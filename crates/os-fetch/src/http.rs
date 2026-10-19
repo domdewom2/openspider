@@ -68,6 +68,7 @@ pub struct HttpResponse {
     pub request_headers: Vec<(String, String)>,
     pub set_cookies: Vec<String>,
     pub content_length: Option<u64>,
+    /// Full decoded size when known; None for a truncated compressed stream.
     pub untruncated_bytes: Option<u64>,
     pub synthetic: Option<SyntheticResponse>,
     pub attempts: u32,
@@ -86,7 +87,8 @@ pub struct HttpResponse {
     pub headers: Vec<(String, String)>,
     /// Body (dekomprimiert, ggf. gekürzt).
     pub body: Bytes,
-    /// Größe des dekomprimierten Bodys in Bytes.
+    /// Größe des dekomprimierten Bodys in Bytes; bei unbekannter Gesamtgröße
+    /// die gespeicherte Teilgröße (siehe `truncated` und `untruncated_bytes`).
     pub size_bytes: u64,
     /// Übertragene Bytes (K-02, CRAWL-022): die über die Leitung empfangenen Body-Bytes –
     /// komprimiert, ohne Statuszeile, Header, Chunk-Rahmen und 1xx-Zwischenantworten; Antworten
@@ -264,6 +266,16 @@ pub(crate) fn head_len(
         n += name.len() + 2 + value.len() + 2;
     }
     (n + 2) as u64
+}
+
+impl HttpResponse {
+    /// Erster Wert eines Antwort-Headers, unabhängig von der Schreibweise.
+    pub fn header(&self, name: &str) -> Option<&str> {
+        self.headers
+            .iter()
+            .find(|(n, _)| n.eq_ignore_ascii_case(name))
+            .map(|(_, v)| v.as_str())
+    }
 }
 
 #[cfg(test)]

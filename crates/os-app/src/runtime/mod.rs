@@ -569,6 +569,7 @@ impl App {
         for s in &sources {
             s.collect(&mut parts);
         }
+        crate::commands::settings_network::collect_notices(self, &mut parts);
         parts.notices.extend(std::mem::take(
             &mut *self.0.notices.lock().unwrap_or_else(|p| p.into_inner()),
         ));

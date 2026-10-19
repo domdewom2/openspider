@@ -13,6 +13,7 @@
 //!
 //! Benutzername und Passwort werden UTF-8-kodiert (Referenz-Fix 20.3).
 
+pub(crate) mod digest;
 use url::Url;
 
 use crate::client::BasicAuthEntry;
@@ -24,6 +25,7 @@ struct Entry {
     port: Option<u16>,
     path: String,
     header: String,
+    credentials: BasicAuthEntry,
 }
 
 /// Ordnet Anfrage-URLs den passenden Basic-Auth-Zugangsdaten zu.
@@ -54,6 +56,7 @@ impl AuthMatcher {
             }
             let (scheme, host, port, path) = parse_prefix(&e.prefix)?;
             out.push(Entry {
+                credentials: e.clone(),
                 scheme,
                 host,
                 port,
@@ -65,6 +68,20 @@ impl AuthMatcher {
             });
         }
         Ok(AuthMatcher { entries: out })
+    }
+
+    pub(crate) fn credentials_for(&self, url: &Url) -> Option<&BasicAuthEntry> {
+        let header = self.authorization_for(url)?;
+        self.entries
+            .iter()
+            .filter(|e| e.header == header)
+            .filter(|e| {
+                url.host_str()
+                    .is_some_and(|h| h.eq_ignore_ascii_case(&e.host))
+                    && path_matches(&e.path, url.path())
+            })
+            .max_by_key(|e| e.path.len())
+            .map(|e| &e.credentials)
     }
 
     /// Ob mindestens ein Eintrag konfiguriert ist.

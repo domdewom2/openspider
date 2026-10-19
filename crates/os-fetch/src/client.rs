@@ -15,6 +15,7 @@
 
 mod classify;
 mod decode;
+mod hsts;
 
 use std::future::Future;
 use std::pin::Pin;
@@ -39,14 +40,12 @@ use crate::secrets::SecretStore;
 use crate::user_agents;
 
 use classify::{classify, Failure};
-use decode::{decode, parse_encodings};
+use decode::parse_encodings;
 
 /// Obergrenze des Verbindungsaufbaus (CRAWL-095, OS-Default).
 const MAX_CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
 /// Vorlauf der Gesamtgrenze vor dem Verbindungs-Timeout (siehe Modulkopf, Punkt 5).
 const OVERALL_SLACK: Duration = Duration::from_millis(100);
-/// Ab dieser Größe des komprimierten Bodys wird auf einem Blocking-Thread dekomprimiert.
-const BLOCKING_DECODE_THRESHOLD: usize = 512 * 1024;
 
 const ACCEPT_PAGE: &str = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
 const ACCEPT_ANY: &str = "*/*";
@@ -77,6 +76,12 @@ impl std::fmt::Debug for BasicAuthEntry {
 /// Konfiguration des Abrufers, abgeleitet aus der Crawl-Konfiguration.
 #[derive(Clone)]
 pub struct FetchConfig {
+    /// HTTP-Fachkonfiguration.
+    pub http: os_model::HttpConfig,
+    /// App-weite Netzwerkeinstellungen, beim Start eingefroren.
+    pub network: os_model::settings::NetworkSettings,
+    /// Aufgelöstes Proxy-Passwort (nie in Debug-Ausgaben).
+    pub proxy_password: Option<String>,
     /// HTTP-User-Agent.
     pub user_agent: String,
     /// Gesamtzeit für eine Antwort.
@@ -156,6 +161,9 @@ impl FetchConfig {
             }
         }
         Ok(FetchConfig {
+            http: cfg.http.clone(),
+            network: os_model::settings::NetworkSettings::default(),
+            proxy_password: None,
             user_agent: ua.http,
             response_timeout: Duration::from_secs(u64::from(cfg.advanced.response_timeout_s)),
             cookies: cfg.advanced.cookies,
@@ -172,9 +180,11 @@ impl FetchConfig {
 /// HTTP-Abrufer.
 pub struct HttpFetcher {
     cfg: FetchConfig,
+    hsts: hsts::Policies,
     connect_timeout: Duration,
     client: reqwest::Client,
     auth: AuthMatcher,
+    digest: crate::auth::digest::DigestAuth,
     limiter: Option<RateLimiter>,
     /// Gemeinsamer Speicher für `CookieMode::Persistent`, wenn die Anfrage keinen mitbringt.
     global_jar: Arc<CookieJar>,
@@ -209,13 +219,20 @@ impl HttpFetcher {
             .transpose()
             .map_err(FetchError::Config)?;
 
-        let mut builder = reqwest::Client::builder()
-            .user_agent(user_agent)
-            .redirect(reqwest::redirect::Policy::none())
-            .no_proxy()
-            .connect_timeout(connect_timeout)
-            .tcp_nodelay(true)
-            .dns_resolver(Arc::new(resolver));
+        validate_headers(&cfg.http)?;
+        crate::net::certificates::roots(&cfg.network).map_err(FetchError::Config)?;
+        let mut builder =
+            crate::net::client_builder_with_password(&cfg.network, cfg.proxy_password.as_deref())
+                .tls_danger_accept_invalid_certs(cfg.http.ignore_certificate_errors)
+                .retry(reqwest::retry::never())
+                .user_agent(user_agent)
+                .redirect(reqwest::redirect::Policy::none())
+                .connect_timeout(connect_timeout)
+                .tcp_nodelay(true)
+                .dns_resolver(Arc::new(resolver));
+        if cfg.http.version == os_model::HttpVersion::Http1 {
+            builder = builder.http1_only();
+        }
         let mut certs = Vec::new();
         for pem in &cfg.extra_root_certs {
             certs.extend(
@@ -230,10 +247,12 @@ impl HttpFetcher {
             .build()
             .map_err(|e| FetchError::Config(redact::text(&e.to_string())))?;
         Ok(HttpFetcher {
+            hsts: hsts::Policies::default(),
             cfg,
             connect_timeout,
             client,
             auth,
+            digest: crate::auth::digest::DigestAuth::default(),
             limiter,
             global_jar: Arc::new(CookieJar::new()),
         })
@@ -289,12 +308,42 @@ impl HttpFetcher {
         let _ = url.set_username("");
         let _ = url.set_password(None);
 
+        if self.cfg.http.respect_hsts && !self.hsts.is_empty() {
+            if let Some(target) = self.hsts.upgrade(&url, clock.monotonic()) {
+                return FetchResult {
+                    url: req.url,
+                    started_at: clock.now(),
+                    outcome: FetchOutcome::Response(HttpResponse {
+                        status: 307,
+                        status_text: "HSTS-Richtlinie".into(),
+                        headers: vec![("location".into(), target.to_string())],
+                        synthetic: Some(crate::SyntheticResponse::Hsts),
+                        attempts: req.attempt.saturating_add(1),
+                        request_headers: vec![],
+                        set_cookies: vec![],
+                        content_length: None,
+                        untruncated_bytes: Some(0),
+                        reason_phrase: None,
+                        http_version: String::new(),
+                        body: bytes::Bytes::new(),
+                        size_bytes: 0,
+                        transferred_bytes: 0,
+                        response_time_ms: 0,
+                        truncated: false,
+                        decode_error: None,
+                        md5_hex: String::new(),
+                    }),
+                };
+            }
+        }
         if let Some(limiter) = &self.limiter {
             limiter.acquire().await;
         }
         let started_at = clock.now();
         let t0 = clock.monotonic();
-        let max_body = if req.max_body_bytes > 0 {
+        let max_body = if req.body_limit.max_decoded_bytes > 0 {
+            req.body_limit.max_decoded_bytes
+        } else if req.max_body_bytes > 0 {
             req.max_body_bytes
         } else {
             self.cfg.max_body_bytes
@@ -303,10 +352,17 @@ impl HttpFetcher {
         tracing::debug!(url = %redact::url(url.as_str()), purpose = ?req.purpose, "Abruf beginnt");
 
         let budget = self.cfg.response_timeout + OVERALL_SLACK;
-        let exchange = self.exchange(&url, req.purpose, jar.as_deref(), max_body);
+        let exchange = self.exchange(
+            &url,
+            req.purpose,
+            jar.as_deref(),
+            max_body,
+            req.body_limit.abort_media_after,
+        );
         let result = match tokio::time::timeout(budget, exchange).await {
             Ok(r) => r,
             Err(_) => Err(Failure {
+                proxy_auth_required: false,
                 reason: NoResponseReason::ResponseTimeout,
                 detail: format!(
                     "keine vollständige Antwort innerhalb von {} s",
@@ -317,8 +373,35 @@ impl HttpFetcher {
         let outcome = match result {
             Ok(ex) => {
                 let response_time_ms = millis(ex.finished.saturating_sub(t0));
-                FetchOutcome::Response(finish_response(ex, max_body, response_time_ms).await)
+                let mut response = finish_response(ex, response_time_ms);
+                response.attempts = req.attempt.saturating_add(1);
+                if self.cfg.http.respect_hsts && !self.cfg.http.ignore_certificate_errors {
+                    if let Some(value) = response.header("strict-transport-security") {
+                        self.hsts.learn(&url, value, clock.monotonic());
+                    }
+                }
+                FetchOutcome::Response(response)
             }
+            Err(failure) if failure.proxy_auth_required => FetchOutcome::Response(HttpResponse {
+                status: 407,
+                status_text: "Proxy-Authentifizierung fehlgeschlagen".into(),
+                request_headers: vec![],
+                set_cookies: vec![],
+                content_length: None,
+                untruncated_bytes: Some(0),
+                synthetic: None,
+                attempts: req.attempt.saturating_add(1),
+                reason_phrase: None,
+                http_version: String::new(),
+                headers: vec![],
+                body: bytes::Bytes::new(),
+                size_bytes: 0,
+                transferred_bytes: 0,
+                response_time_ms: millis(clock.monotonic().saturating_sub(t0)),
+                truncated: false,
+                decode_error: None,
+                md5_hex: String::new(),
+            }),
             Err(failure) => {
                 let elapsed_ms = millis(clock.monotonic().saturating_sub(t0));
                 tracing::debug!(
@@ -348,6 +431,7 @@ impl HttpFetcher {
         purpose: FetchPurpose,
         jar: Option<&CookieJar>,
         max_body: u64,
+        media_limit: Option<u64>,
     ) -> Result<Exchange, Failure> {
         let accept = match purpose {
             FetchPurpose::Page | FetchPurpose::External => ACCEPT_PAGE,
@@ -372,6 +456,7 @@ impl HttpFetcher {
                 headers.insert(header::COOKIE, v);
             }
         }
+        self.custom_headers(url, purpose, &mut headers);
         for (name, value) in &headers {
             tracing::trace!(
                 header = %name,
@@ -380,6 +465,78 @@ impl HttpFetcher {
             );
         }
 
+        let credentials = self.auth.credentials_for(url);
+        let digest_key =
+            credentials.map(|c| format!("{}|{}", url.origin().ascii_serialization(), c.prefix));
+        if let (Some(c), Some(key)) = (credentials, &digest_key) {
+            if let Some(value) = self
+                .digest
+                .authorization(key, url, &c.username, &c.password)
+            {
+                headers.insert(
+                    header::AUTHORIZATION,
+                    HeaderValue::from_str(&value).map_err(|_| Failure {
+                        proxy_auth_required: false,
+                        reason: NoResponseReason::Malformed,
+                        detail: "Ungültige Digest-Zugangsdaten".into(),
+                    })?,
+                );
+            }
+        }
+        let mut response = self
+            .client
+            .get(url.clone())
+            .headers(headers.clone())
+            .send()
+            .await
+            .map_err(|e| classify(&e))?;
+        // Höchstens eine Challenge und eine stale-Nonce-Erneuerung je Abruf.
+        for attempt in 0..2 {
+            if response.status().as_u16() != 401 {
+                break;
+            }
+            let (Some(c), Some(key)) = (credentials, &digest_key) else {
+                break;
+            };
+            let challenge = response
+                .headers()
+                .get_all(header::WWW_AUTHENTICATE)
+                .iter()
+                .filter_map(|v| v.to_str().ok())
+                .find(|v| {
+                    v.get(..7)
+                        .is_some_and(|v| v.eq_ignore_ascii_case("digest "))
+                });
+            let Some(challenge) = challenge else {
+                break;
+            };
+            if attempt > 0 && !crate::auth::digest::is_stale(challenge) {
+                break;
+            }
+            if !self.digest.challenge(key, challenge) {
+                break;
+            }
+            let Some(value) = self
+                .digest
+                .authorization(key, url, &c.username, &c.password)
+            else {
+                break;
+            };
+            let mut value = HeaderValue::from_str(&value).map_err(|_| Failure {
+                proxy_auth_required: false,
+                reason: NoResponseReason::Malformed,
+                detail: "Ungültige Digest-Challenge".into(),
+            })?;
+            value.set_sensitive(true);
+            headers.insert(header::AUTHORIZATION, value);
+            response = self
+                .client
+                .get(url.clone())
+                .headers(headers.clone())
+                .send()
+                .await
+                .map_err(|e| classify(&e))?;
+        }
         let request_headers = headers
             .iter()
             .map(|(n, v)| {
@@ -389,15 +546,6 @@ impl HttpFetcher {
                 )
             })
             .collect();
-        let response = self
-            .client
-            .get(url.clone())
-            .headers(headers)
-            .send()
-            .await
-            .map_err(|e| classify(&e))?;
-        let mut response = response;
-
         let status = response.status().as_u16();
         let version = version_label(response.version());
         // hyper legt die Reason-Phrase nur ab, wenn sie vom IANA-Text abweicht; HTTP/2 hat keine, und Phrasen
@@ -426,26 +574,22 @@ impl HttpFetcher {
                 .map(|(_, v)| v.as_str()),
         );
 
-        let mut raw_body: Vec<u8> = Vec::new();
-        let mut wire_body_bytes: u64 = 0;
-        let mut truncated = false;
-        loop {
-            match response.chunk().await {
-                Ok(Some(chunk)) => {
-                    wire_body_bytes += chunk.len() as u64;
-                    raw_body.extend_from_slice(&chunk);
-                    if raw_body.len() as u64 > max_body {
-                        truncated = true;
-                        break;
-                    }
-                }
-                Ok(None) => break,
-                Err(e) => return Err(classify(&e)),
-            }
-        }
-        if truncated && encodings.is_empty() {
-            raw_body.truncate(max_body as usize);
-        }
+        let media = response
+            .headers()
+            .get(header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok())
+            .is_some_and(|v| v.starts_with("audio/") || v.starts_with("video/"));
+        let max_body = if media {
+            max_body.min(media_limit.unwrap_or(64 * 1024))
+        } else {
+            max_body
+        };
+        let (decoded, wire_body_bytes) = decode::stream(&mut response, &encodings, max_body)
+            .await
+            .map_err(|e| classify(&e))?;
+        let raw_body = decoded.body;
+        let truncated = decoded.truncated;
+        let decode_error = decoded.error;
         let finished = self.cfg.clock.monotonic();
 
         // Cookies erst nach vollständig empfangener Antwort übernehmen.
@@ -467,7 +611,7 @@ impl HttpFetcher {
             reason_phrase,
             version,
             headers: raw_headers,
-            encodings,
+            decode_error,
             raw_body,
             wire_body_bytes,
             truncated,
@@ -484,7 +628,7 @@ struct Exchange {
     reason_phrase: Option<String>,
     version: String,
     headers: Vec<(String, String)>,
-    encodings: Vec<decode::Encoding>,
+    decode_error: Option<String>,
     raw_body: Vec<u8>,
     wire_body_bytes: u64,
     truncated: bool,
@@ -493,14 +637,14 @@ struct Exchange {
 }
 
 /// Dekomprimiert, zählt Bytes, bildet den MD5 und redigiert Header.
-async fn finish_response(ex: Exchange, max_body: u64, response_time_ms: u32) -> HttpResponse {
+fn finish_response(ex: Exchange, response_time_ms: u32) -> HttpResponse {
     let Exchange {
         request_headers,
         status,
         reason_phrase,
         version,
         headers,
-        encodings,
+        decode_error,
         raw_body,
         wire_body_bytes,
         truncated: input_truncated,
@@ -513,18 +657,11 @@ async fn finish_response(ex: Exchange, max_body: u64, response_time_ms: u32) -> 
     // Header, Chunk-Rahmen und 1xx-Zwischenantworten); ohne Body (HEAD, 204, 304) 0.
     let transferred_bytes = wire_body_bytes;
 
-    let decoded = if encodings.is_empty() || raw_body.len() < BLOCKING_DECODE_THRESHOLD {
-        decode(raw_body, &encodings, max_body, input_truncated)
-    } else {
-        let encs = encodings.clone();
-        tokio::task::spawn_blocking(move || decode(raw_body, &encs, max_body, input_truncated))
-            .await
-            .unwrap_or_else(|_| decode::Decoded {
-                error: Some("Dekompression abgebrochen".to_string()),
-                ..decode::Decoded::default()
-            })
+    let decoded = decode::Decoded {
+        body: raw_body,
+        truncated: input_truncated,
+        error: decode_error,
     };
-
     let body = bytes::Bytes::from(decoded.body);
     let md5_hex = hex::encode(Md5::digest(&body));
     let decode_error = decoded.error.map(|e| redact::text(&e));
@@ -542,6 +679,24 @@ async fn finish_response(ex: Exchange, max_body: u64, response_time_ms: u32) -> 
         .iter()
         .find(|(n, _)| n.eq_ignore_ascii_case("content-length"))
         .and_then(|(_, v)| v.parse().ok());
+    // Content-Length describes encoded bytes. A cut decoded stream has no known
+    // total decoded length (review decision for CRAWL-075/140).
+    let compressed = !parse_encodings(
+        headers
+            .iter()
+            .filter(|(n, _)| n.eq_ignore_ascii_case("content-encoding"))
+            .map(|(_, v)| v.as_str()),
+    )
+    .is_empty();
+    let untruncated_bytes = if decoded.truncated {
+        if compressed {
+            None
+        } else {
+            content_length.or(Some(body.len() as u64))
+        }
+    } else {
+        Some(body.len() as u64)
+    };
     let headers = headers
         .into_iter()
         .map(|(n, v)| {
@@ -553,7 +708,7 @@ async fn finish_response(ex: Exchange, max_body: u64, response_time_ms: u32) -> 
         request_headers,
         set_cookies,
         content_length,
-        untruncated_bytes: (!decoded.truncated && !input_truncated).then_some(body.len() as u64),
+        untruncated_bytes,
         synthetic: None,
         attempts: 1,
         status,
@@ -561,7 +716,7 @@ async fn finish_response(ex: Exchange, max_body: u64, response_time_ms: u32) -> 
         status_text: shown_text,
         http_version: version,
         headers,
-        size_bytes: body.len() as u64,
+        size_bytes: untruncated_bytes.unwrap_or(body.len() as u64),
         body,
         transferred_bytes,
         response_time_ms,
@@ -575,8 +730,66 @@ fn millis(d: Duration) -> u32 {
     u32::try_from(d.as_millis()).unwrap_or(u32::MAX)
 }
 
+fn validate_headers(http: &os_model::HttpConfig) -> Result<(), FetchError> {
+    for h in &http.headers {
+        if h.name.eq_ignore_ascii_case("user-agent") {
+            return Err(FetchError::Config(
+                "User-Agent über CRAWL-114 konfigurieren".into(),
+            ));
+        }
+        reqwest::header::HeaderName::from_bytes(h.name.as_bytes())
+            .map_err(|_| FetchError::Config("Ungültiger Header-Name".into()))?;
+        HeaderValue::from_str(&h.value)
+            .map_err(|_| FetchError::Config("Ungültiger Header-Wert".into()))?;
+    }
+    if let Some(value) = &http.accept_language {
+        HeaderValue::from_str(value)
+            .map_err(|_| FetchError::Config("Ungültiges Accept-Language".into()))?;
+    }
+    Ok(())
+}
+impl HttpFetcher {
+    fn custom_headers(&self, url: &url::Url, purpose: FetchPurpose, headers: &mut HeaderMap) {
+        if purpose == FetchPurpose::External {
+            return;
+        }
+        let host = url.host_str().unwrap_or("");
+        if let Some(value) = &self.cfg.http.accept_language {
+            headers.insert(
+                header::ACCEPT_LANGUAGE,
+                HeaderValue::from_str(value).unwrap(),
+            );
+        }
+        for h in &self.cfg.http.headers {
+            if h.host
+                .as_ref()
+                .is_some_and(|h| !h.eq_ignore_ascii_case(host))
+            {
+                continue;
+            }
+            let name = reqwest::header::HeaderName::from_bytes(h.name.as_bytes()).unwrap();
+            let value = if name == header::COOKIE {
+                headers
+                    .get(header::COOKIE)
+                    .and_then(|v| v.to_str().ok())
+                    .map_or_else(|| h.value.clone(), |v| format!("{v}; {}", h.value))
+            } else {
+                h.value.clone()
+            };
+            headers.insert(name, HeaderValue::from_str(&value).unwrap());
+        }
+    }
+}
 impl Fetch for HttpFetcher {
     fn fetch(&self, req: FetchRequest) -> Pin<Box<dyn Future<Output = FetchResult> + Send + '_>> {
         Box::pin(self.fetch_impl(req))
+    }
+}
+
+impl FetchConfig {
+    /// Ergänzt den App-Snapshot; spätere Einstellungsänderungen verändern diesen Crawl nicht.
+    pub fn with_network(mut self, settings: &os_model::settings::NetworkSettings) -> Self {
+        self.network = settings.clone();
+        self
     }
 }

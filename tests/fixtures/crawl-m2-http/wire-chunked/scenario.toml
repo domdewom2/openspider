@@ -1,0 +1,7 @@
+[[route]]
+path = "/wire"
+body = "wire body"
+chunked = true
+[[route]]
+path = "/"
+body = "normal"

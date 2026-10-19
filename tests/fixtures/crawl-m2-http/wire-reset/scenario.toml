@@ -1,0 +1,7 @@
+[[route]]
+path = "/wire"
+body = "wire body"
+reset_mid_body = true
+[[route]]
+path = "/"
+body = "normal"

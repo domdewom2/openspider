@@ -427,10 +427,6 @@ async fn every_f05_command_reports_its_exact_owner() {
     let app = App::new(AppConfig::new(dir.path())).unwrap();
     for (owner, commands) in [
         (
-            "M2-E03",
-            vec!["settings.probeCertificates", "settings.setProxyPassword"],
-        ),
-        (
             "M2-O01",
             vec![
                 "auth.importProfile",
