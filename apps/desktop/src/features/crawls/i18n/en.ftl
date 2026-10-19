@@ -27,6 +27,7 @@ crawls-unlock = Unlock
 crawls-copyIds = Copy database ID
 crawls-reveal = Show in file manager
 crawls-compare = Choose for comparison
+crawls-compare-unavailable = Crawl comparison is not available yet.
 crawls-running = Crawl running – pause first
 crawls-selection-reason = Requires a suitable selection; locked crawls are protected.
 crawls-projectCreate = Create project

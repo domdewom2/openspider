@@ -23,7 +23,7 @@ export function managementFixture() {
   core.handlers.set("projects.lock", args => { const a = args as { id: string; locked: boolean }; ps.find(p => p.id === a.id)!.locked = a.locked; });
   for (const name of ["lock", "unlock"]) core.handlers.set(`crawls.${name}`, args => { for (const row of rows) if ((args as { ids: string[] }).ids.includes(row.crawl.crawlId)) row.locked = name === "lock"; });
   for (const name of ["move", "delete", "duplicate", "import", "export"]) core.handlers.set(`crawls.${name}`, () => operation(name));
-  for (const name of ["crawls.copyIds", "crawls.reveal", "crawl.pause", "crawl.resume", "op.cancel", "compare.open", "config.set"]) core.handlers.set(name, () => undefined);
+  for (const name of ["crawls.copyIds", "crawls.reveal", "crawl.pause", "crawl.resume", "op.cancel", "config.set"]) core.handlers.set(name, () => undefined);
   core.handlers.set("crawl.open", args => { const a = args as { crawlId?: string; path?: string }; return rows.find(r => r.crawl.crawlId === a.crawlId || r.crawl.file === a.path)?.crawl ?? rows[0]!.crawl; });
   core.handlers.set("crawl.saveAs", () => operation("save"));
   let destination: string | null = "/fixture/output.ospider";

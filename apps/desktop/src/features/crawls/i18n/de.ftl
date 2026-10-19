@@ -27,6 +27,7 @@ crawls-unlock = Entsperren
 crawls-copyIds = Datenbank-ID kopieren
 crawls-reveal = Im Dateimanager zeigen
 crawls-compare = Zum Vergleich wählen
+crawls-compare-unavailable = Der Crawl-Vergleich ist noch nicht verfügbar.
 crawls-running = Crawl läuft – erst pausieren
 crawls-selection-reason = Passende Auswahl erforderlich; gesperrte Crawls sind geschützt.
 crawls-projectCreate = Projekt anlegen

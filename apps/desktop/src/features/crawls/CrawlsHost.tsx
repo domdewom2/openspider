@@ -3,7 +3,6 @@ import { useT, i18n, currentLanguage } from "../../i18n";
 import { crawl } from "../../ipc/crawl";
 import { crawls } from "../../ipc/crawls";
 import { projects } from "../../ipc/projects";
-import { compare } from "../../ipc/compare";
 import { config } from "../../ipc/config";
 import { op } from "../../ipc/op";
 import { describeError, toCmdError } from "../../ipc/errors";
@@ -20,7 +19,7 @@ import { nativeCrawlDesktop, type CrawlDesktop, type RepairResult } from "./desk
 import { cell, columns, openCrawls, permissions, readRecent, sortRows, useCrawlsDialog, writeRecent, type Column } from "./model";
 import "./crawls.css";
 
-type Form = { kind: "rename" | "move" | "projectCreate" | "projectRename"; ids: string[]; projectId?: string; value: string };
+type Form = { kind: "rename" | "move" | "projectCreate" | "projectRename"; ids: string[]; projectId?: string; value: string; error?: string };
 type OpenRequest = { args: OpenCrawlArgs; resume: boolean };
 export function CrawlsHost({ desktop = nativeCrawlDesktop }: { desktop?: CrawlDesktop }) {
   const t = useT();
@@ -91,15 +90,15 @@ export function CrawlsHost({ desktop = nativeCrawlDesktop }: { desktop?: CrawlDe
     try {
       const [items, ps] = await Promise.all([crawls.list({ show: "all" }), projects.list()]);
       if (version !== requestVersion.current) return;
-      setRows(items.slice(0, 1000).map(row => ({ ...row, locked: row.locked || ps.some(p => p.name === row.project && p.locked) })));
+      setRows(items.map(row => ({ ...row, locked: row.locked || ps.some(p => p.name === row.project && p.locked) })));
       setProjectList(ps);
       setSelected(old => new Set([...old].filter(id => items.some(r => r.crawl.crawlId === id))));
     } finally { if (version === requestVersion.current) setLoading(false); }
   }, []);
-  const attempt = async (work: () => Promise<unknown>) => {
+  const attempt = async (work: () => Promise<unknown>, onError?: (text: string) => void) => {
     if (busyRef.current) return;
     busyRef.current = true; setBusy(true); setError(null);
-    try { await work(); } catch (e) { setError({ text: textError(e) }); }
+    try { await work(); } catch (e) { if (onError) onError(textError(e)); else setError({ text: textError(e) }); }
     finally { busyRef.current = false; setBusy(false); }
   };
   useEffect(() => {
@@ -175,7 +174,7 @@ export function CrawlsHost({ desktop = nativeCrawlDesktop }: { desktop?: CrawlDe
     return () => { for (const off of offs.reverse()) off(); };
   }, [recent, disabled, t, rows]);
   const actions: MenuEntry[] = (Object.keys(allowed) as (keyof typeof allowed)[]).map(action => ({ id: action, label: t(action === "open" ? "crawls-open-selected" : `crawls-${action}`),
-    isDisabled: disabled || !allowed[action], disabledReason: chosen.some(r => r.crawl.phase === "running") ? t("crawls-running") : t("crawls-selection-reason"),
+    isDisabled: disabled || !allowed[action], disabledReason: action === "compare" ? t("crawls-compare-unavailable") : chosen.some(r => r.crawl.phase === "running") ? t("crawls-running") : t("crawls-selection-reason"),
     onAction: () => {
       if (!allowed[action] || disabled) return;
       if (action === "delete") { setDeletion([...chosen]); return; }
@@ -190,7 +189,6 @@ export function CrawlsHost({ desktop = nativeCrawlDesktop }: { desktop?: CrawlDe
           case "unlock": await crawls.unlock({ ids }); await refresh(); break;
           case "copyIds": await crawls.copyIds({ ids }); break;
           case "reveal": await crawls.reveal({ ids }); break;
-          case "compare": await compare.open({ current: ids[0]!, previous: ids[1]!, mapping: [], elements: [] }); useCrawlsDialog.setState({ open: false }); break;
         }
       });
     },
@@ -199,12 +197,13 @@ export function CrawlsHost({ desktop = nativeCrawlDesktop }: { desktop?: CrawlDe
     if (!form) return;
     const value = form.value.trim();
     if (!value && form.kind !== "move") return;
+    setForm(f => f && ({ ...f, error: undefined }));
     if (form.kind === "rename") await crawls.rename({ crawlId: form.ids[0]!, name: value });
     if (form.kind === "move") startOp(await crawls.move({ ids: form.ids, project: value || null }));
     if (form.kind === "projectCreate") { const p = await projects.create({ name: value }); setProject(p.id); }
     if (form.kind === "projectRename") await projects.rename({ id: form.projectId!, name: value });
-    setForm(null); await refresh();
-  });
+    setForm(null); await refresh().catch(e => setError({ text: textError(e) }));
+  }, text => setForm(f => f && ({ ...f, error: text })));
   const toggle = (id: string, checked: boolean, range = false) => {
     setSelected(old => {
       const next = new Set(old);
@@ -257,9 +256,9 @@ export function CrawlsHost({ desktop = nativeCrawlDesktop }: { desktop?: CrawlDe
           <ContextMenu label={t("crawls-actions")} entries={actions}>
             <div className="os-crawls-scroll" onKeyDown={e => {
               if (e.key === "Delete" && (!(e.target instanceof HTMLInputElement) || e.target.type === "checkbox") && allowed.delete && !disabled) { e.preventDefault(); setDeletion([...chosen]); }
-              if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "a") { e.preventDefault(); setSelected(new Set(visible.map(r => r.crawl.crawlId))); }
+              if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "a") { e.preventDefault(); setSelected(new Set(visible.slice(0, 1000).map(r => r.crawl.crawlId))); }
             }}>
-              <table aria-label={t("crawls-table")}><thead><tr><th><input type="checkbox" aria-label={t("crawls-select-all")} checked={visible.length > 0 && chosen.length === visible.length} onChange={e => setSelected(e.target.checked ? new Set(visible.map(r => r.crawl.crawlId)) : new Set())} /></th>
+              <table aria-label={t("crawls-table")}><thead><tr><th><input type="checkbox" aria-label={t("crawls-select-all")} checked={visible.length > 0 && chosen.length === Math.min(visible.length, 1000)} onChange={e => setSelected(e.target.checked ? new Set(visible.slice(0, 1000).map(r => r.crawl.crawlId)) : new Set())} /></th>
                 {columns.map(c => <th key={c} aria-sort={sort.column === c ? sort.dir === "asc" ? "ascending" : "descending" : "none"}><button onClick={() => { setSort({ column: c, dir: sort.column === c && sort.dir === "asc" ? "desc" : "asc" }); setPage(0); }}>{t(`crawls-col-${c}`)}</button></th>)}
               </tr></thead><tbody>{visible.slice(page * 100, page * 100 + 100).map(row => <tr key={row.crawl.crawlId} aria-selected={selected.has(row.crawl.crawlId)} onDoubleClick={() => !disabled && void attempt(() => requestOpen({ kind: "id", crawlId: row.crawl.crawlId }))}
                 onContextMenu={() => { if (!selected.has(row.crawl.crawlId)) setSelected(new Set([row.crawl.crawlId])); }}>
@@ -272,6 +271,7 @@ export function CrawlsHost({ desktop = nativeCrawlDesktop }: { desktop?: CrawlDe
           <div className="os-crawls-toolbar"><Button isDisabled={page === 0} onPress={() => setPage(p => p - 1)}>{t("crawls-prev")}</Button><span>{t("crawls-count", { count: chosen.length, total: visible.length })}</span><Button isDisabled={(page + 1) * 100 >= visible.length} onPress={() => setPage(p => p + 1)}>{t("crawls-next")}</Button></div>
         </section></div>
         <div className="os-crawls-toolbar">{actions.map(a => <span key={a.id} title={a.isDisabled ? a.disabledReason : undefined}><Button isDisabled={a.isDisabled} onPress={a.onAction}>{a.label}</Button></span>)}</div>
+        {chosen.length === 2 && <p>{t("crawls-compare-unavailable")}</p>}
         {chosen.length === 1 && <div className="os-crawls-toolbar"><Button isDisabled={disabled || chosen[0]!.crawl.phase === "running"} onPress={() => void attempt(async () => { const path = chosen[0]!.crawl.file; try { await desktop.check(path); setError({ text: t("crawls-integrity-ok"), kind: "info" }); } catch (e) { const err = toCmdError(e); setError({ text: `${path}: ${textError(e)}`, path: err.messageKey === "err-crawl-corrupt" ? path : undefined }); } })}>{t("crawls-check")}</Button>
           <Button isDisabled={disabled || phase === "running"} onPress={() => void attempt(async () => { await config.set(await desktop.configuration(chosen[0]!.crawl.file)); setError({ text: t("crawls-config-applied"), kind: "info" }); })}>{t("crawls-config")}</Button></div>}
         {recent.length > 0 && <nav aria-label={t("crawls-recent")}><h3>{t("crawls-recent")}</h3>{recent.map(path => <Button key={path} isDisabled={disabled} onPress={() => void attempt(() => requestOpen({ kind: "path", path }))}>{path}</Button>)}</nav>}
@@ -290,7 +290,8 @@ export function CrawlsHost({ desktop = nativeCrawlDesktop }: { desktop?: CrawlDe
       <p>{t("crawls-delete-confirm", { count: deletion?.length ?? 0, bytes: deletion?.reduce((n, r) => n + r.crawl.fileBytes, 0) ?? 0 })}</p>
     </Dialog>
     <Dialog title={t(`crawls-${form?.kind ?? "rename"}`)} isOpen={!!form} onOpenChange={v => !v && setForm(null)} footer={<DialogFooter okLabel={t("crawls-apply")} cancelLabel={t("ui-dialog-cancel")} okDisabled={disabled || (!form?.value.trim() && form?.kind !== "move")} onOk={submitForm} onCancel={() => setForm(null)} />}>
-      <label>{t(form?.kind === "move" ? "crawls-target-project" : "crawls-col-name")}<input autoFocus value={form?.value ?? ""} list={form?.kind === "move" ? "crawls-project-options" : undefined} onChange={e => setForm(f => f && ({ ...f, value: e.target.value }))} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); submitForm(); } }} /></label>
+      {form?.error && <Banner kind="error">{form.error}</Banner>}
+      <label>{t(form?.kind === "move" ? "crawls-target-project" : "crawls-col-name")}<input autoFocus disabled={disabled} value={form?.value ?? ""} list={form?.kind === "move" ? "crawls-project-options" : undefined} onChange={e => setForm(f => f && ({ ...f, value: e.target.value, error: undefined }))} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); submitForm(); } }} /></label>
       <datalist id="crawls-project-options">{projectList.map(p => <option key={p.id} value={p.name} />)}</datalist>
       {form?.kind === "move" && <p>{t("crawls-move-help")}</p>}
     </Dialog>

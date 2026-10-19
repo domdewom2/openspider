@@ -20,9 +20,11 @@ export function permissions(rows: CrawlListing[]) {
   const any = rows.length > 0 && rows.length <= 1000;
   const running = rows.some(r => r.crawl.phase === "running");
   const locked = rows.some(r => r.locked);
-  return { open: rows.length === 1, resume: rows.length === 1 && rows[0]!.canResume && ["paused", "incomplete"].includes(rows[0]!.crawl.phase),
+  return { open: rows.length === 1, resume: rows.length === 1 && rows[0]!.canResume,
     rename: rows.length === 1 && !running && !locked, delete: any && !running && !locked,
-    move: any && !running, export: any && !running, duplicate: any && !running, lock: any, unlock: any, copyIds: any, reveal: any, compare: rows.length === 2 && !running };
+    move: any && !running, export: any && !running, duplicate: any && !running, lock: any, unlock: any, copyIds: any, reveal: any,
+    // M2-C01 still returns Unsupported for compare.open; enable with its real integration.
+    compare: false };
 }
 const recentKey = "openspider.recent-crawls.v1";
 export function readRecent(): string[] {

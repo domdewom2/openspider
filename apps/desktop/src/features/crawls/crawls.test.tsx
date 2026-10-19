@@ -54,15 +54,31 @@ it("shows task names and projects from the index, combines search with project a
 });
 
 // spec: OUT-228
-it("sorts every column and preserves ordered IDs for multi-copy and exactly two comparison inputs", async () => {
+it("sorts every column, preserves ordered IDs and explains the unavailable comparison even with two inputs", async () => {
   await mount();
   click("Name"); select("Beta"); select("Alpha");
   click("Copy database ID");
   await waitFor(() => expect(calls("crawls.copyIds")[0]?.args).toEqual({ ids: fixtureRows.slice(0, 2).map(r => r.crawl.crawlId) }));
-  expect(button("Choose for comparison")).toBeEnabled();
+  expect(button("Choose for comparison")).toBeDisabled();
+  expect(button("Choose for comparison").parentElement).toHaveAttribute("title", "Crawl comparison is not available yet.");
+  expect(screen.getByText("Crawl comparison is not available yet.")).toBeVisible();
   click("Choose for comparison");
-  await waitFor(() => expect(calls("compare.open")[0]?.args).toMatchObject({ current: fixtureRows[0]!.crawl.crawlId, previous: fixtureRows[1]!.crawl.crawlId }));
+  expect(calls("compare.open")).toHaveLength(0);
   for (const column of columns) expect(sortRows(fixtureRows, column, "asc")).toHaveLength(fixtureRows.length);
+});
+
+// spec: CRAWL-143
+it("resumes a completed crawl with a remaining queue using the core's shared canResume decision (K2-34)", async () => {
+  const rows = structuredClone(fixtureRows);
+  rows[1]!.canResume = true; // Core listing for Completed with non-empty queue.
+  fixture.setRows(rows);
+  await mount(); select("Beta");
+  expect(button("Resume")).toBeEnabled(); click("Resume");
+  await waitFor(() => expect(calls("crawl.resume")).toHaveLength(1));
+  expect(fixture.core.calls.filter(c => ["crawl.open", "crawl.resume"].includes(c.cmd)).map(c => c.cmd)).toEqual(["crawl.open", "crawl.resume"]);
+  expect(calls("crawl.open")[0]?.args).toEqual({ kind: "id", crawlId: rows[1]!.crawl.crawlId });
+  expect(permissions([fixtureRows[1]!]).resume).toBe(false); // Empty completed queue.
+  expect(permissions([{ ...rows[0]!, canResume: false }]).resume).toBe(false);
 });
 
 // spec: CRAWL-143
@@ -105,6 +121,52 @@ it("renames without changing ID and creates and renames projects through their c
   await waitFor(() => expect(button("Rename project")).toBeEnabled());
   click("Rename project"); fireEvent.change(screen.getByRole("textbox", { name: "Name" }), { target: { value: "Renamed project" } }); click("Apply");
   await waitFor(() => expect(calls("projects.rename")[0]?.args).toEqual({ id: "project-3", name: "Renamed project" }));
+});
+
+// spec: OUT-191 [M2]
+it("keeps a rejected project name and its error inside the active form and allows a corrected retry", async () => {
+  const createProject = fixture.core.handlers.get("projects.create")!;
+  fixture.core.handlers.set("projects.create", (args, ctx) => {
+    if ((args as { name: string }).name === "Kunde A") throw new IpcError(localError("InvalidInput", "err-file-exists", { path: "Kunde A" }));
+    return createProject(args, ctx);
+  });
+  await mount(); click("Create project");
+  const dialog = screen.getByRole("dialog", { name: "Create project" });
+  const input = within(dialog).getByRole("textbox", { name: "Name" });
+  fireEvent.change(input, { target: { value: "Kunde A" } });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Apply" }));
+  expect(await within(dialog).findByRole("alert")).toHaveTextContent("Kunde A");
+  expect(input).toHaveValue("Kunde A"); expect(input).toBeEnabled();
+  expect(screen.getAllByRole("alert")).toHaveLength(1);
+  fireEvent.change(input, { target: { value: "New project" } });
+  expect(within(dialog).queryByRole("alert")).toBeNull();
+  fireEvent.click(within(dialog).getByRole("button", { name: "Apply" }));
+  await waitFor(() => expect(screen.queryByRole("dialog", { name: "Create project" })).toBeNull());
+  expect(fixture.projects().some(p => p.name === "New project")).toBe(true);
+  click("Rename project");
+  const renameForm = screen.getByRole("dialog", { name: "Rename project" });
+  expect(within(renameForm).queryByRole("alert")).toBeNull();
+  fixture.core.handlers.set("projects.rename", () => { throw new IpcError(localError("InvalidInput", "err-file-exists", { path: "Kunde A" })); });
+  fireEvent.change(within(renameForm).getByRole("textbox"), { target: { value: "Kunde A" } });
+  fireEvent.click(within(renameForm).getByRole("button", { name: "Apply" }));
+  expect(await within(renameForm).findByRole("alert")).toHaveTextContent("Kunde A");
+  expect(within(renameForm).getByRole("textbox")).toHaveValue("Kunde A");
+});
+
+// spec: OUT-228
+it("shows rejected crawl rename and move requests in their active forms without losing input", async () => {
+  for (const command of ["crawls.rename", "crawls.move"]) fixture.core.handlers.set(command, () => { throw new IpcError(localError("Permission", "err-file-exists", { path: "Protected" })); });
+  await mount(); select("Alpha");
+  for (const action of ["Rename", "Move to project"]) {
+    click(action);
+    const dialog = screen.getByRole("dialog", { name: action });
+    const input = within(dialog).getByRole(action === "Rename" ? "textbox" : "combobox");
+    fireEvent.change(input, { target: { value: "Protected" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Apply" }));
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("Protected");
+    expect(input).toHaveValue("Protected");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+  }
 });
 
 // spec: CRAWL-143
@@ -179,15 +241,38 @@ it("batch lock and unlock require no confirmation and use the selection", async 
 });
 
 // spec: OUT-228
-it("keeps rendering bounded with 1000 indexed records and selects all across pages in one operation", async () => {
-  fixture.setRows(Array.from({ length: 1000 }, (_, i) => ({ ...fixtureRows[0]!, crawl: { ...fixtureRows[0]!.crawl, crawlId: `id-${i}`, name: `Crawl ${i}` } })));
+it("retains more than 1000 records for paging, sorting, project filters and search while limiting every selection path", async () => {
+  fixture.setRows(Array.from({ length: 1005 }, (_, i) => ({ ...fixtureRows[0]!, project: i === 1004 ? "Default" : "Kunde A", startUrl: `https://crawl-${i}.test/`, crawl: { ...fixtureRows[0]!.crawl, crawlId: `id-${i}`, name: `Crawl ${i}`, urls: i } })));
   useCrawlsDialog.setState({ open: true }); render(<CrawlsHost desktop={fixture.desktop} />);
-  await screen.findByText((_, node) => node?.textContent?.replace(/[\u2066-\u2069,]/g, "") === "0 selected / 1000 crawls");
+  const count = (selected: number, total = 1005) => screen.getByText((_, node) => node?.textContent?.replace(/[\u2066-\u2069,]/g, "") === `${selected} selected / ${total} crawls`);
+  await screen.findByText((_, node) => node?.textContent?.replace(/[\u2066-\u2069,]/g, "") === "0 selected / 1005 crawls");
+  click("Name");
   expect(within(screen.getByRole("table")).getAllByRole("row")).toHaveLength(101);
   fireEvent.click(screen.getByRole("checkbox", { name: "Select all filtered crawls" }));
-  expect(screen.getByText((_, node) => node?.textContent?.replace(/[\u2066-\u2069,]/g, "") === "1000 selected / 1000 crawls")).toBeVisible(); click("Lock");
+  expect(count(1000)).toBeVisible();
+  fireEvent.click(screen.getByRole("checkbox", { name: "Select all filtered crawls" }));
+  select("Crawl 0");
+  for (let i = 0; i < 10; i++) click("Next page");
+  expect(screen.getByText("Crawl 1004")).toBeVisible();
+  fireEvent.click(screen.getByRole("checkbox", { name: "Select: Crawl 1004" }), { shiftKey: true });
+  expect(count(1000)).toBeVisible();
+  select("Crawl 1004"); expect(count(1000)).toBeVisible();
+  expect(screen.getByRole("checkbox", { name: "Select: Crawl 1004" })).not.toBeChecked();
+  fireEvent.click(screen.getByRole("checkbox", { name: "Select all filtered crawls" }));
+  fireEvent.keyDown(screen.getByRole("checkbox", { name: "Select: Crawl 1004" }), { key: "a", ctrlKey: true });
+  expect(count(1000)).toBeVisible(); click("Lock");
   await waitFor(() => expect((calls("crawls.lock")[0]?.args as { ids: string[] }).ids).toHaveLength(1000));
-});
+  await waitFor(() => expect(button("Refresh")).toBeEnabled());
+  fireEvent.change(screen.getByRole("searchbox"), { target: { value: "crawl-1004.test" } });
+  expect(screen.getByText("Crawl 1004")).toBeVisible(); expect(count(0, 1)).toBeVisible();
+  select("Crawl 1004"); click("Copy database ID");
+  await waitFor(() => expect(calls("crawls.copyIds")[0]?.args).toEqual({ ids: ["id-1004"] }));
+  fireEvent.change(screen.getByRole("searchbox"), { target: { value: "" } });
+  click("URLs"); click("URLs");
+  expect(within(screen.getByRole("table")).getAllByRole("row")[1]).toHaveTextContent("Crawl 1004");
+  fireEvent.click(screen.getByRole("row", { name: "Default" }));
+  expect(count(0, 1)).toBeVisible(); expect(screen.getByText("Crawl 1004")).toBeVisible();
+}, 15_000);
 
 // spec: CRAWL-127
 it("saving uses the active crawl and a native destination without changing registry membership", async () => {

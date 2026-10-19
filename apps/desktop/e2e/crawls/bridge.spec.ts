@@ -10,7 +10,7 @@ import type {} from "./bridge-harness";
 // spec: OUT-228
 // spec: OUT-191 [M2]
 // spec: CRAWL-127
-test("real core lists a completed crawl, renames it without changing ID and exports a portable file", async ({ page }) => {
+test("real core manages portable crawls, reports comparison availability and rejects duplicate project names", async ({ page }) => {
   test.setTimeout(60_000);
   const output = await mkdtemp(join(tmpdir(), "os-crawls-u15-"));
   const server = createServer((request, response) => {
@@ -47,6 +47,36 @@ test("real core lists a completed crawl, renames it without changing ID and expo
     expect(original.byteLength).toBeGreaterThan(0);
     const after = await page.evaluate(async () => window.crawlsBridge.invoke("crawls.list", { show: "all" })) as typeof rows;
     expect(after[0]!.crawl.crawlId).toBe(rows[0]!.crawl.crawlId);
+    // Exercise an actual core rejection, rather than a successful comparison mock.
+    await page.getByRole("button", { name: "Duplicate", exact: true }).click();
+    await expect.poll(async () => (await page.evaluate(() => window.crawlsBridge.invoke("crawls.list", { show: "all" })) as typeof rows).length).toBe(2);
+    await expect(page.getByRole("button", { name: "Refresh", exact: true })).toBeEnabled();
+    await page.getByRole("button", { name: "Refresh", exact: true }).click();
+    await expect(page.getByRole("checkbox")).toHaveCount(3);
+    await page.getByRole("checkbox", { name: "Select all filtered crawls" }).check();
+    const comparison = page.getByRole("button", { name: "Choose for comparison", exact: true });
+    await expect(comparison).toBeDisabled();
+    await expect(comparison.locator("..")).toHaveAttribute("title", "Crawl comparison is not available yet.");
+    await page.getByRole("checkbox", { name: "Select all filtered crawls" }).focus();
+    await page.keyboard.press("Shift+F10");
+    const comparisonItem = page.getByRole("menuitem", { name: "Choose for comparison", exact: true });
+    await expect(comparisonItem).toHaveAttribute("aria-disabled", "true");
+    await page.keyboard.press("Escape");
+    await expect(page.getByText("Crawl comparison is not available yet.", { exact: true })).toBeVisible();
+    const ids = (await page.evaluate(() => window.crawlsBridge.invoke("crawls.list", { show: "all" })) as typeof rows).map(r => r.crawl.crawlId);
+    expect(await page.evaluate(async ids => {
+      try { await window.crawlsBridge.invoke("compare.open", { current: ids[0], previous: ids[1], mapping: [], elements: [] }); return "unexpected-success"; }
+      catch (error) { return (error as { code: string }).code; }
+    }, ids)).toBe("Unsupported");
+
+    // The same real bridge supplies the duplicate-name error to the active project form.
+    await page.evaluate(() => window.crawlsBridge.invoke("projects.create", { name: "Existing project" }));
+    await page.getByRole("button", { name: "Create project", exact: true }).click();
+    const projectForm = page.getByRole("dialog", { name: "Create project", exact: true });
+    await projectForm.getByRole("textbox", { name: "Name", exact: true }).fill("Existing project");
+    await projectForm.getByRole("button", { name: "Apply", exact: true }).click();
+    await expect(projectForm.getByRole("alert")).toBeVisible();
+    await expect(projectForm.getByRole("textbox", { name: "Name", exact: true })).toHaveValue("Existing project");
   } finally {
     await bridge?.stop();
     await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
