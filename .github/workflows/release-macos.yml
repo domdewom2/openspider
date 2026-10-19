@@ -23,6 +23,9 @@ on:
           - x86_64
         default: universal
   push:
+    # TEMP 19.10.: Testlauf vom Paket-Branch (vor dem Merge wieder entfernen)
+    branches:
+      - m2/z01
     tags:
       - "v*"
 
