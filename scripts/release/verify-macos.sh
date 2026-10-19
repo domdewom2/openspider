@@ -49,6 +49,17 @@ trap cleanup EXIT
 # run <Titel> <Pflicht 1|0> <Befehl ...>: führt aus, gibt die Ausgabe ins Protokoll, zählt Pflichtfehler.
 # Die Ausgabe des letzten Befehls bleibt in $last_output (für Folgeprüfungen).
 last_output=""
+# stapler validate fragt Apples Ticket-Dienst ab; kurze Netzwerkaussetzer auf CI-Runnern (Error 68,
+# "network connection was lost") sollen den Lauf nicht rot machen – bis zu 3 Versuche mit Pause.
+stapler_validate() {
+  local target="$1" i
+  for i in 1 2 3; do
+    if xcrun stapler validate "$target"; then return 0; fi
+    [ "$i" -lt 3 ] && { echo "stapler validate fehlgeschlagen (Versuch $i/3), neuer Versuch in 15 s" >&2; sleep 15; }
+  done
+  return 1
+}
+
 run() {
   local title="$1" required="$2"
   shift 2
@@ -101,7 +112,7 @@ verify_app() {
       failures=$((failures + 1))
     fi
   fi
-  run "Notarisierungsticket (stapler validate)" "$require_notarized" xcrun stapler validate "$app"
+  run "Notarisierungsticket (stapler validate)" "$require_notarized" stapler_validate "$app"
 }
 
 verify_dmg() {
@@ -119,7 +130,7 @@ verify_dmg() {
       failures=$((failures + 1))
     fi
   fi
-  run "Notarisierungsticket (stapler validate)" "$require_notarized" xcrun stapler validate "$dmg"
+  run "Notarisierungsticket (stapler validate)" "$require_notarized" stapler_validate "$dmg"
 
   mount_point="$(mktemp -d "${TMPDIR:-/tmp}/openspider-dmg.XXXXXX")"
   echo
