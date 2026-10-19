@@ -11,3 +11,5 @@ u14-positive-days = Bitte mindestens einen ganzen Tag eingeben.
 u14-retention-protection = Gesperrte Crawls und Projekte sowie geöffnete und laufende Crawls sind geschützt. Das Alter zählt ab Crawl-Ende, bei unvollständigen Crawls ab der letzten Änderung.
 u14-retention-enable = Aufbewahrung aktivieren
 u14-retention-warning = Alte Crawls werden automatisch gelöscht. Das betrifft auch Crawls aus gespeicherten Vergleichen: Diese Vergleiche werden dadurch nicht verfügbar. Gesperrte, geöffnete und laufende Crawls bleiben geschützt.
+u14-retention-custom-title = Aufbewahrungsdauer festlegen
+u14-retention-custom-apply = Aufbewahrung übernehmen
