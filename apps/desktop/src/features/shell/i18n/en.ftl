@@ -1,0 +1,16 @@
+shell-divider-sidebar = Resize sidebar; Enter restores, Home collapses
+shell-divider-detail = Resize details; Enter restores, Home collapses
+shell-details = Details
+shell-detail-empty = Select a URL to see its details.
+shell-reset-columns = Reset columns for all tables
+shell-reset-description = Restore column visibility, order, width, pinning and sorting for every table? Named column templates will be kept.
+shell-state-error = The window layout could not be saved or restored.
+shell-retry = Retry
+shell-quit-title = Quit OpenSpider?
+shell-quit-description = Work is still active. Pause and save it before quitting?
+shell-quit-confirm = Pause and quit
+shell-quit-crawl = Crawl in progress
+shell-quit-analysis = Crawl analysis in progress
+shell-quit-export = Export in progress
+shell-quit-mcpSessions = Connected HTTP MCP sessions
+shell-quit-error = OpenSpider could not quit. Please try again.

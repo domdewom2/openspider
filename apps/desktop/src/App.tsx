@@ -1,4 +1,5 @@
 import { ExportHost, ExportViewButton } from "./features/export";
+import { Shell } from "./features/shell/Shell";
 import { useEffect, useState, type ComponentType } from "react";
 import { RegionBoundary } from "./app/ErrorBoundary";
 import { Providers } from "./app/Providers";
@@ -42,6 +43,7 @@ export function App() {
     <Providers>
       <ExportHost />
       <div className="os-app">
+        <Shell />
         <header className="os-app-header" role="banner" aria-label={t("app-region-header")}>
           <h1 className="os-app-title">{t("app-title")}</h1>
         </header>
