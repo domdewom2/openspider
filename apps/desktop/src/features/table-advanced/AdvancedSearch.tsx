@@ -90,17 +90,17 @@ export function AdvancedSearch({ columns, value, locale, onApply, onClear }: {
     const ops = operatorsFor(meta);
     const error = errors[path.join(".")];
     return <div className="u20-cond" role="group" aria-label={t("u20-search-condition")}>
-      <label>{t("u20-search-column")}<select className="os-input" value={cond.column ?? ""} onChange={e => edit(path, () => {
+      <label>{t("u20-search-column")}<select aria-label={t("u20-search-column")} className="os-input" value={cond.column ?? ""} onChange={e => edit(path, () => {
         const column = e.target.value || null; const next = operatorsFor(columns.find(c => c.key === column) ?? null);
         return { ...cond, column, op: next.includes(cond.op) ? cond.op : next[0] };
       })}>
         <option value="">{t("u20-search-all-columns")}</option>
         {searchable.map(c => <option key={c.key} value={c.key}>{c.key}</option>)}
       </select></label>
-      <label>{t("u20-search-operator")}<select className="os-input" value={cond.op} onChange={e => edit(path, () => ({ ...cond, op: e.target.value as RuleOp }))}>
+      <label>{t("u20-search-operator")}<select aria-label={t("u20-search-operator")} className="os-input" value={cond.op} onChange={e => edit(path, () => ({ ...cond, op: e.target.value as RuleOp }))}>
         {ops.map(op => <option key={op} value={op}>{t(`u20-op-${op}`)}</option>)}
       </select></label>
-      {!isUnary(cond.op) && <label>{t("u20-search-value")}<input className="os-input" value={cond.value ?? ""} aria-invalid={error ? true : undefined}
+      {!isUnary(cond.op) && <label>{t("u20-search-value")}<input aria-label={t("u20-search-value")} className="os-input" value={cond.value ?? ""} aria-invalid={error ? true : undefined}
         data-invalid={error ? "true" : undefined} inputMode={meta && isNumericKind(meta.kind) ? "decimal" : undefined}
         onChange={e => edit(path, () => ({ ...cond, value: e.target.value }))}
         onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); void apply(); } }} /></label>}
@@ -109,7 +109,7 @@ export function AdvancedSearch({ columns, value, locale, onApply, onClear }: {
     </div>;
   };
   const renderGroup = (group: Group, path: Path): ReactNode => <fieldset className="u20-group" data-depth={path.length}>
-    <legend><label>{t("u20-search-combine")}<select className="os-input" value={group.op}
+    <legend><label>{t("u20-search-combine")}<select aria-label={t("u20-search-combine")} className="os-input" value={group.op}
       onChange={e => edit(path, node => ({ ...node, op: e.target.value as Group["op"] }) as Group)}>
       <option value="and">{t("u20-search-and")}</option><option value="or">{t("u20-search-or")}</option>
     </select></label></legend>
@@ -122,11 +122,11 @@ export function AdvancedSearch({ columns, value, locale, onApply, onClear }: {
   </fieldset>;
   return <div className="u20-advanced" role="region" aria-label={t("u20-search-advanced")}>
     <div className="u20-row">
-      <label className="u20-syntax">{t("u20-search-syntax-label")}<input className="os-input" value={text} aria-invalid={syntaxError ? true : undefined}
+      <label className="u20-syntax">{t("u20-search-syntax-label")}<input aria-label={t("u20-search-syntax-label")} className="os-input" value={text} aria-invalid={syntaxError ? true : undefined}
         data-invalid={syntaxError ? "true" : undefined} onChange={e => setText(e.target.value)}
         onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); void parseText().then(parsed => parsed && apply(parsed)); } }} /></label>
       <Button onPress={() => void parseText()}>{t("u20-search-parse")}</Button>
-      <label>{t("u20-search-history")}<select className="os-input" value="" onChange={e => {
+      <label>{t("u20-search-history")}<select aria-label={t("u20-search-history")} className="os-input" value="" onChange={e => {
         const entry = history.entries[Number(e.target.value)]; if (!entry) return;
         setTree(asGroup(entry.tree)); setCaseSensitive(entry.caseSensitive); setText(entry.text); setErrors({}); setSyntaxError(undefined);
       }}>

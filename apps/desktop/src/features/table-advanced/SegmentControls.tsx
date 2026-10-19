@@ -28,7 +28,7 @@ export function SegmentControls({ crawlId }: { crawlId?: string }) {
   if (!segments.length && !running.length) return null;
   const active = filter?.kind === "segment" ? segments.find(s => s.name === filter.name) : undefined;
   return <div className="u20-segments">
-    <label>{t("u20-segment")}<select className="os-input" value={encode(filter)} onChange={e => setFilter(decode(e.target.value))}>
+    <label>{t("u20-segment")}<select aria-label={t("u20-segment")} className="os-input" value={encode(filter)} onChange={e => setFilter(decode(e.target.value))}>
       <option value="">{t("u20-segment-all")}</option>
       {segments.map(s => <option key={s.id} value={`segment:${s.name}`}>{s.name}</option>)}
       <option value="none">{t("u20-segment-none")}</option>

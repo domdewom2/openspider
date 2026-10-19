@@ -39,7 +39,17 @@ export function TabContextMenuHost({ entriesFor, label, children, className }: {
     const tab = tabOf(event.target); if (!tab) return;
     event.preventDefault(); setMenu({ tab, x: event.clientX, y: event.clientY });
   };
+  useEffect(() => {
+    if (!menu) return;
+    // Keyboard users land in the menu (UI-112 via Shift+F10); the first enabled entry gets the focus.
+    const timer = setTimeout(() => document.querySelector<HTMLElement>(".u20-tab-popover [role=menuitem]:not([aria-disabled=true])")?.focus(), 0);
+    // The global Esc shortcut (search.clear) stops the event in the capture phase; close the menu from there as well.
+    const escape = (event: globalThis.KeyboardEvent) => { if (event.key === "Escape") setMenu(undefined); };
+    document.addEventListener("keydown", escape, true);
+    return () => { clearTimeout(timer); document.removeEventListener("keydown", escape, true); };
+  }, [menu]);
   const onKeyDown = (event: KeyboardEvent) => {
+    if (event.key === "Escape" && menu) { event.preventDefault(); setMenu(undefined); return; }
     if (event.key !== "ContextMenu" && !(event.key === "F10" && event.shiftKey)) return;
     const tab = tabOf(event.target); if (!tab) return;
     event.preventDefault(); event.stopPropagation();
@@ -50,7 +60,7 @@ export function TabContextMenuHost({ entriesFor, label, children, className }: {
   return <div className={className} onContextMenu={onContextMenu} onKeyDown={onKeyDown}>
     {children}
     <span ref={anchor} className="u20-menu-anchor" style={{ left: menu?.x ?? 0, top: menu?.y ?? 0 }} />
-    <Popover triggerRef={anchor} isOpen={menu !== undefined} onOpenChange={open => { if (!open) setMenu(undefined); }} placement="bottom start" className="os-popover">
+    <Popover triggerRef={anchor} isOpen={menu !== undefined} onOpenChange={open => { if (!open) setMenu(undefined); }} placement="bottom start" className="os-popover u20-tab-popover">
       <MenuBody entries={entries} label={label} />
     </Popover>
   </div>;

@@ -112,7 +112,7 @@ export function ColumnConfigurator({ tab, tabs, isOpen, onOpenChange, label }: {
     footer={<DialogFooter okLabel={t("u20-ok")} cancelLabel={t("u20-cancel")}
       onOk={() => { void store.change(tab, draft).catch(fail); onOpenChange(false); }} onCancel={() => onOpenChange(false)}
       extra={<Button onPress={() => { setDraft(normalizeColumns(meta)); setLeft(new Set()); setRight(new Set()); }}>{t("u20-columns-defaults")}</Button>} />}>
-    <label className="u20-field">{t("u20-columns-search")}<input className="os-input" value={search} onChange={e => setSearch(e.target.value)} /></label>
+    <label className="u20-field">{t("u20-columns-search")}<input aria-label={t("u20-columns-search")} className="os-input" value={search} onChange={e => setSearch(e.target.value)} /></label>
     <div className="u20-columns">
       <ColumnList label={t("u20-columns-available")} keys={available} selected={left} onSelect={select("left")} hint={hint} />
       <div className="u20-column-buttons">
@@ -128,11 +128,11 @@ export function ColumnConfigurator({ tab, tabs, isOpen, onOpenChange, label }: {
     <fieldset className="u20-templates">
       <legend>{t("u20-templates")}</legend>
       <div className="u20-row">
-        <label>{t("u20-template")}<select className="os-input" value={template} onChange={e => { setTemplate(e.target.value); setName(e.target.value); }}>
+        <label>{t("u20-template")}<select aria-label={t("u20-template")} className="os-input" value={template} onChange={e => { setTemplate(e.target.value); setName(e.target.value); }}>
           <option value="">–</option>
           {store.templates.map(x => <option key={x.name} value={x.name}>{x.name}</option>)}
         </select></label>
-        <label>{t("u20-template-name")}<input className="os-input" value={name} onChange={e => setName(e.target.value)} /></label>
+        <label>{t("u20-template-name")}<input aria-label={t("u20-template-name")} className="os-input" value={name} onChange={e => setName(e.target.value)} /></label>
       </div>
       <div className="u20-row">
         <Button isDisabled={!name.trim()} onPress={() => { const n = name.trim(); setTemplate(n); setMessage(t("u20-template-saved", { name: n })); void store.saveTemplate(n, exportColumns(draft)).catch(fail); }}>{t("u20-template-save")}</Button>
@@ -145,7 +145,7 @@ export function ColumnConfigurator({ tab, tabs, isOpen, onOpenChange, label }: {
         <Button isDisabled={!template} onPress={() => { setTemplate(""); setName(""); void store.deleteTemplate(template).catch(fail); }}>{t("u20-template-delete")}</Button>
       </div>
       <div className="u20-row">
-        <label>{t("u20-template-target")}<select className="os-input" value={target} onChange={e => setTarget(e.target.value)}>
+        <label>{t("u20-template-target")}<select aria-label={t("u20-template-target")} className="os-input" value={target} onChange={e => setTarget(e.target.value)}>
           <option value="">–</option>
           {tabs.filter(x => x.id !== tab).map(x => <option key={x.id} value={x.id}>{x.label}</option>)}
         </select></label>
