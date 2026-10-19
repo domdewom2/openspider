@@ -16,6 +16,8 @@ export interface DataGridProps {
   /** Optional upper-table sorting gesture and title decoration (M2-U10). */
   onSortGesture?: (column: string, extend: boolean) => void;
   headerTitle?: (column: string) => string;
+  /** Optional label colours per cell, e.g. the segment column (M2-U20, UI-020); additive, default none. */
+  cellColors?: (column: string, value: unknown) => { background: string; text: string } | undefined;
   source: ViewDataSource;
   columns: ColumnState[];
   selection: SelectionModel;
@@ -88,8 +90,11 @@ export function DataGrid(props: DataGridProps) {
   }, [source, source.version, selection.focus]);
   const content = useCallback(([col, row]: readonly [number, number]) => {
     const meta = metadata.get(visible[col].key)!;
-    return gridCell(source.getCell(meta.index, row), meta.column, props.locale, tokens);
-  }, [source, metadata, visible, props.locale, tokens, revision]);
+    const value = source.getCell(meta.index, row);
+    const cell = gridCell(value, meta.column, props.locale, tokens);
+    const colors = value === LOADING ? undefined : props.cellColors?.(meta.column.key, value);
+    return colors ? { ...cell, themeOverride: { ...cell.themeOverride, bgCell: colors.background, textDark: colors.text } } : cell;
+  }, [source, metadata, visible, props.locale, tokens, revision, props.cellColors]);
   const selectRow = async (row: number, col: number, shift = false, toggle = false) => {
     if (!source.total) return;
     const request = ++selectionRequest.current;
