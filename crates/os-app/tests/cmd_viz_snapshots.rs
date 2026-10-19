@@ -213,6 +213,12 @@ async fn csv_is_an_operation_with_displayed_nodes_coordinates_and_rfc_escaping()
     let mut data = graph(&app, &opened["snapshotId"]).await;
     data["nodes"][0]["x"] = json!(12.5);
     data["nodes"][0]["y"] = json!(-7);
+    data["nodes"][0]["address"] = json!("normalisiert");
+    data["nodes"][0]["depth"] = json!(999);
+    data["nodes"][0]["hiddenDescendants"] = json!(0);
+    data["nodes"][0]["segmentColor"] = json!("#ffffff");
+    data["nodes"].as_array_mut().unwrap().reverse();
+    data["edges"].as_array_mut().unwrap().reverse();
     let args = json!({"snapshotId":opened["snapshotId"],"dir":dir.path().join("csv"),"nodes":data["nodes"],"edges":data["edges"]});
     let op = call(&app, "viz.exportCsv", args.clone()).await;
     let status = app.ops().wait(op["opId"].as_str().unwrap()).await.unwrap();
@@ -229,6 +235,8 @@ async fn csv_is_an_operation_with_displayed_nodes_coordinates_and_rfc_escaping()
     );
     assert!(nodes.starts_with("Id,Address,Parent Id,Depth,Status Code,Indexability,Segment,Size Metric,Color Value,x,y\r\n"));
     assert!(nodes.contains(",12.5,-7\r\n"));
+    assert!(!nodes.contains("normalisiert"));
+    assert!(nodes.contains("1,https://site.test/,,0,200,Indexable,,50,"));
     assert!(nodes.contains("\"https://site.test/a,\"\"quoted\"\"\""));
     assert!(edges.contains("1,2,tree\r\n"));
     assert_eq!(
@@ -426,4 +434,82 @@ async fn a_closed_event_channel_can_resubscribe_without_losing_the_changed_hint(
         .iter()
         .any(|e| matches!(e,UiEvent::Notice {notice} if notice.code=="viz-data-changed")));
     app.window_closed(&window);
+}
+
+// spec: UI-090
+#[tokio::test]
+async fn lifecycle_events_wake_only_the_matching_crawl_and_notify_once() {
+    use os_app::runtime::lifecycle_bus::CrawlEvent;
+    let (dir, file) = fx::basic();
+    let (app, _) = app(&file, &dir.path().join("app"));
+    let opened = open(&app).await;
+    let window = WindowId(opened["window"].as_str().unwrap().into());
+    let sink = Arc::new(CollectingSink::new());
+    app.subscribe(window.clone(), sink.clone());
+    file.set_meta("change_seq", "17").unwrap();
+    app.crawl_events()
+        .emit(&app, CrawlEvent::Completed(CrawlKey("other".into())));
+    tokio::task::yield_now().await;
+    assert!(sink.is_empty());
+    app.crawl_events()
+        .emit(&app, CrawlEvent::Completed(CrawlKey("fixture".into())));
+    assert!(common::eventually(std::time::Duration::from_millis(500), || !sink.is_empty()).await);
+    assert_eq!(sink.take().len(), 1);
+    app.crawl_events()
+        .emit(&app, CrawlEvent::Cleared(CrawlKey("fixture".into())));
+    tokio::task::yield_now().await;
+    assert!(sink.is_empty());
+    app.window_closed(&window);
+}
+
+// spec: UI-099
+#[tokio::test]
+async fn unknown_stopword_language_returns_words_and_a_notice_and_defaults_include_self_links() {
+    let (dir, file) = fx::basic();
+    fx::link(&file, 2, 2, "the et produit", "", true, "Hyperlink");
+    let (app, _) = app(&file, &dir.path().join("app"));
+    let sink = Arc::new(CollectingSink::new());
+    app.subscribe(WindowId("main".into()), sink.clone());
+    let opened = open(&app).await;
+    let words = call(&app, "viz.words", json!({"snapshotId":opened["snapshotId"],"kind":"anchors","urlId":2,"mode":"word","language":"fr"})).await;
+    assert_eq!(
+        words,
+        json!([{"word":"et","count":1},{"word":"produit","count":1},{"word":"the","count":1}])
+    );
+    assert!(sink.take().iter().any(|event| matches!(event, UiEvent::Notice { notice } if notice.code == "viz-stopwords-unavailable" && notice.args["language"] == "fr")));
+    app.window_closed(&WindowId(opened["window"].as_str().unwrap().into()));
+}
+
+// spec: UI-090
+#[tokio::test]
+async fn csv_rejects_missing_duplicate_and_foreign_node_or_edge_sets() {
+    let (dir, file) = fx::basic();
+    let (app, _) = app(&file, &dir.path().join("app"));
+    let opened = open(&app).await;
+    let graph = graph(&app, &opened["snapshotId"]).await;
+    let base = json!({"snapshotId":opened["snapshotId"],"dir":dir.path().join("csv"),"nodes":graph["nodes"],"edges":graph["edges"]});
+    for variant in 0..6 {
+        let mut args = base.clone();
+        match variant {
+            0 => {
+                args["nodes"].as_array_mut().unwrap().pop();
+            }
+            1 => args["nodes"][1] = args["nodes"][0].clone(),
+            2 => args["nodes"][0]["id"] = json!(999),
+            3 => {
+                args["edges"].as_array_mut().unwrap().pop();
+            }
+            4 => args["edges"][1] = args["edges"][0].clone(),
+            _ => args["edges"][0]["target"] = json!(999),
+        }
+        assert_eq!(
+            app.dispatch(CallCtx::for_window("main"), "viz.exportCsv", args)
+                .await
+                .unwrap_err()
+                .code,
+            ErrorCode::InvalidInput
+        );
+    }
+    assert!(!dir.path().join("csv").exists());
+    app.window_closed(&WindowId(opened["window"].as_str().unwrap().into()));
 }

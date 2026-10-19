@@ -25,11 +25,11 @@ depth: number,
  */
 metric?: number | null, 
 /**
- * Independent numeric color metric (UI-095).
+ * Unabhängige numerische Farbmetrik (UI-095).
  */
 colorValue?: number | null, 
 /**
- * Current layout coordinates, supplied by the visualization for CSV export.
+ * Aktuelle Layoutkoordinaten der Visualisierung für den CSV-Export.
  */
 x?: number | null, y?: number | null, 
 /**

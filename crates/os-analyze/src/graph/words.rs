@@ -24,13 +24,21 @@ impl Default for WordOptions {
             language: "en".into(),
             max_terms: 100,
             include_nofollow: true,
-            exclude_self_links: true,
+            exclude_self_links: false,
         }
     }
 }
+impl WordOptions {
+    /// Unbekannte Sprachen behalten alle Wörter; der Command liefert dazu einen Hinweis.
+    pub fn stopwords_unavailable(&self) -> bool {
+        self.remove_stopwords
+            && self.unit == WordUnit::Word
+            && !matches!(self.language.split(['-', '_']).next(), Some("de" | "en"))
+    }
+}
 impl Snapshot {
-    /// Phrase counts preserve the case-sensitive Anchors grouping. Stopwords apply
-    /// only to word mode, so the default phrase view agrees with TECH-146.
+    /// Phrasen erhalten die groß-/kleinschreibungsabhängige Anchors-Gruppierung.
+    /// Stoppwörter gelten nur im Wortmodus; Phrasen entsprechen TECH-146.
     pub fn words(
         &self,
         url: i64,
@@ -43,10 +51,6 @@ impl Snapshot {
             return Err(invalid("maxTerms must be between 1 and 10000"));
         }
         let language = opts.language.split(['-', '_']).next().unwrap_or("en");
-        if opts.remove_stopwords && opts.unit == WordUnit::Word && !matches!(language, "de" | "en")
-        {
-            return Err(invalid("stopword language must be de or en"));
-        }
         let mut counts = BTreeMap::<String, u64>::new();
         for group in self.anchors.iter().filter(|g| {
             g.target_id == url
@@ -78,12 +82,14 @@ impl Snapshot {
     }
 }
 
-// Small, explicit language lists; they affect word mode only, never phrase identity.
+// Kleine explizite Sprachlisten wirken nur im Wortmodus, nie auf Phrasen.
 fn is_stopword(word: &str, language: &str) -> bool {
     let words = if language == "de" {
         "aber alle als am an auch auf aus bei bis das dass dem den der des die ein eine einem einen einer eines es für im in ist mit nach nicht oder sich sie sind und von vor war wie wir zu zum zur"
-    } else {
+    } else if language == "en" {
         "a an and are as at be been but by for from has have he her his i if in into is it its me my not of on or our she so that the their them there these they this to us was we were what when which who will with you your"
+    } else {
+        ""
     };
     words.split_whitespace().any(|w| w == word)
 }

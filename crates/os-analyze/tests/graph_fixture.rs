@@ -1,12 +1,15 @@
-//! In-memory store fixtures for K16. No external site or reference data.
+//! Store-Fixtures für K16 ohne externe Seiten oder Referenzdaten.
 #![allow(dead_code)]
 use os_model::{CrawlConfig, CrawlId, CrawlMode, Timestamp};
 use os_store::{CrawlFile, CrawlInit, StorageProfile};
 
 pub fn file() -> (tempfile::TempDir, CrawlFile) {
+    named_file("fx-ui-basic")
+}
+fn named_file(name: &str) -> (tempfile::TempDir, CrawlFile) {
     let dir = tempfile::tempdir().unwrap();
     let file = CrawlFile::create(
-        &dir.path().join("fx-ui-basic.ospider"),
+        &dir.path().join(format!("{name}.ospider")),
         &CrawlInit {
             crawl_id: "01900000-0000-7000-8000-000000000001"
                 .parse::<CrawlId>()
@@ -15,7 +18,7 @@ pub fn file() -> (tempfile::TempDir, CrawlFile) {
             start_url: Some("https://site.test/".into()),
             list_source: None,
             project: "Fixture".into(),
-            name: "fx-ui-basic".into(),
+            name: name.into(),
             config: CrawlConfig::default(),
             created_at: Timestamp::from_unix_millis(0),
         },
@@ -53,9 +56,9 @@ pub fn basic() -> (tempfile::TempDir, CrawlFile) {
     edge(&file, 3, Some(1), 3);
     edge(&file, 4, Some(2), 4);
     edge(&file, 5, Some(4), 5);
-    edge(&file, 6, Some(3), 5); // Later discovery improves the path.
-    edge(&file, 7, Some(3), 4); // Same depth: earlier seq 4 wins.
-    edge(&file, 8, Some(5), 1); // Cycles never duplicate a node.
+    edge(&file, 6, Some(3), 5); // Spätere Entdeckung verkürzt den Pfad.
+    edge(&file, 7, Some(3), 4); // Gleiche Tiefe: frühere Sequenz 4 gewinnt.
+    edge(&file, 8, Some(5), 1); // Zyklen duplizieren keine Knoten.
     edge(&file, 9, Some(1), 6);
     (dir, file)
 }
@@ -70,4 +73,30 @@ pub fn link(
 ) {
     file.conn().execute("INSERT INTO links(source_id, target_id, target_raw, link_type, position, anchor, alt_text, follow)
         VALUES (?1, ?2, '/target', ?3, 0, ?4, ?5, ?6)", rusqlite::params![source, target, kind, anchor, alt, follow]).unwrap();
+}
+
+pub fn depth_twelve() -> (tempfile::TempDir, CrawlFile) {
+    let (dir, file) = named_file("fx-ui-depth");
+    for id in 1..=13 {
+        url(
+            &file,
+            id,
+            &format!("https://site.test/{}", "deep/".repeat((id - 1) as usize)),
+            true,
+        );
+        edge(&file, id, if id == 1 { None } else { Some(id - 1) }, id);
+        if id > 1 {
+            link(&file, id - 1, id, "Tiefer", "", true, "Hyperlink");
+        }
+        file.conn()
+            .execute("UPDATE urls SET crawl_depth=?1 WHERE id=?2", [id - 1, id])
+            .unwrap();
+        file.conn()
+            .execute(
+                "UPDATE discovery_edges SET depth=?1 WHERE target_id=?2",
+                [id - 1, id],
+            )
+            .unwrap();
+    }
+    (dir, file)
 }

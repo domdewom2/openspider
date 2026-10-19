@@ -1,4 +1,4 @@
-//! Full cross-package assertion; M2-N01 removes the placeholder once D08 is integrated.
+//! Paketübergreifende Prüfung; M2-N01 entfernt den Platzhalter nach Integration von D08.
 #[path = "graph_fixture.rs"]
 mod fx;
 use os_analyze::graph::{Snapshot, WordOptions};
@@ -30,5 +30,5 @@ fn phrases_equal_the_anchors_detail_aggregation() {
         })
         .collect();
     assert_eq!(words, actual);
-    assert_eq!(words[0], ("Produkte".into(), 4));
+    assert_eq!(words[0], ("Produkte".into(), 5));
 }

@@ -1,4 +1,4 @@
-//! Window-scoped graph snapshots and CSV export (M2-K16).
+//! Graph-Schnappschüsse je Fenster und CSV-Export (M2-K16).
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
@@ -10,6 +10,7 @@ use crate::dto::*;
 use crate::pool::CrawlKey;
 use crate::registry::{CmdResult, CommandMeta, Registry};
 use crate::runtime::error::{internal, no_crawl, parse_args, store_error, to_json};
+use crate::runtime::lifecycle_bus::CrawlEvent;
 use crate::{App, CallCtx, WindowId};
 
 #[derive(Clone)]
@@ -22,9 +23,10 @@ struct Entry {
     last_graph: Option<GraphDto>,
     last_options: Option<GraphOptions>,
     notified: bool,
+    wake: Arc<tokio::sync::Notify>,
 }
 
-/// Per-app state, released by the existing window-close hook.
+/// Zustand je App; der Fensterschluss-Hook gibt Schnappschüsse frei.
 #[derive(Default)]
 pub struct VizState {
     entries: Mutex<HashMap<String, Entry>>,
@@ -40,9 +42,35 @@ fn state(app: &App) -> Arc<VizState> {
     let state = app.ext::<VizState>();
     state.init.get_or_init(|| {
         app.on_window_closed(Box::new(|app, window| {
-            app.ext::<VizState>()
+            app.ext::<VizState>().lock().retain(|_, e| {
+                if &e.window == window {
+                    e.wake.notify_one();
+                    false
+                } else {
+                    true
+                }
+            });
+        }));
+        app.crawl_events().subscribe(Box::new(|app, event| {
+            let key = match event {
+                CrawlEvent::Started(key)
+                | CrawlEvent::Paused(key)
+                | CrawlEvent::Resumed(key)
+                | CrawlEvent::Stopped(key)
+                | CrawlEvent::Completed(key)
+                | CrawlEvent::Opened(key)
+                | CrawlEvent::Closed(key)
+                | CrawlEvent::Cleared(key)
+                | CrawlEvent::ConfigChanged { key, .. } => key,
+            };
+            for entry in app
+                .ext::<VizState>()
                 .lock()
-                .retain(|_, e| &e.window != window);
+                .values()
+                .filter(|e| &e.key == key && !e.notified)
+            {
+                entry.wake.notify_one();
+            }
         }));
     });
     state
@@ -64,7 +92,7 @@ fn graph_kind(kind: VizKind) -> Result<bool, CmdError> {
     }
 }
 fn window_name(id: &str) -> String {
-    // WindowHost's F05 contract encodes snapshot bytes in the window label.
+    // Der F05-Vertrag kodiert Snapshot-ID-Bytes im Fensterlabel hexadezimal.
     format!(
         "viz-{}",
         id.as_bytes()
@@ -126,6 +154,7 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
             last_graph: None,
             last_options: None,
             notified: false,
+            wake: Arc::new(tokio::sync::Notify::new()),
         };
         {
             let state = state(app);
@@ -138,7 +167,9 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
                     return Err(stale());
                 }
             }
-            entries.insert(id.clone(), snapshot.clone());
+            if let Some(old) = entries.insert(id.clone(), snapshot.clone()) {
+                old.wake.notify_one();
+            }
         }
         if previous.is_none() {
             if let Some(host) = app.window_host() {
@@ -147,8 +178,8 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
                     return Err(err);
                 }
             }
-            watch(app, id.clone());
         }
+        watch(app, id.clone(), &snapshot);
         if snapshot.data.provenance_missing {
             notice(app, &window, "viz-provenance-missing", &id);
         }
@@ -171,19 +202,23 @@ fn notice(app: &App, window: &WindowId, code: &str, id: &str) -> bool {
         },
     )
 }
-fn watch(app: &App, id: String) {
+fn watch(app: &App, id: String, snapshot: &Entry) {
     let weak = app.downgrade();
+    let wake = snapshot.wake.clone();
     app.handle().spawn(async move {
         loop {
-            tokio::time::sleep(Duration::from_millis(500)).await;
+            tokio::select! {
+                _ = tokio::time::sleep(Duration::from_secs(1)) => {},
+                _ = wake.notified() => {},
+            }
             let Some(app) = weak.upgrade() else {
                 return;
             };
             let Ok(old) = entry(&app, &id) else {
                 return;
             };
-            if old.notified {
-                continue;
+            if old.notified || !Arc::ptr_eq(&wake, &old.wake) {
+                return;
             }
             let stamp = app
                 .read_pool()
@@ -205,14 +240,13 @@ fn watch(app: &App, id: String) {
                     return;
                 };
                 if !Arc::ptr_eq(&old.data, &current.data) || current.notified {
-                    continue;
+                    return;
                 }
                 current.notified = true;
                 current.window.clone()
             };
             if !notice(&app, &window, "viz-data-changed", &id) {
-                // Native windows may finish subscribing after the first poll.
-                // Retry until the changed-data hint actually reaches a frontend.
+                // Bis zur erfolgreichen Zustellung warten, falls das Fenster noch nicht abonniert ist.
                 let state = state(&app);
                 let mut entries = state.lock();
                 if let Some(current) = entries.get_mut(&id) {
@@ -220,6 +254,8 @@ fn watch(app: &App, id: String) {
                         current.notified = false;
                     }
                 }
+            } else {
+                return;
             }
         }
     });
@@ -310,7 +346,7 @@ fn graph<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'
     })
 }
 
-fn words<'a>(app: &'a App, _ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
+fn words<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
         let args: VizWordsArgs = parse_args(args)?;
         if args.kind != WordSource::Anchors {
@@ -326,13 +362,28 @@ fn words<'a>(app: &'a App, _ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
             language: args.language.unwrap_or_else(|| "en".into()),
             max_terms: args.max_terms.unwrap_or(100),
             include_nofollow: args.include_nofollow.unwrap_or(true),
-            exclude_self_links: args.exclude_self_links.unwrap_or(true),
+            exclude_self_links: args.exclude_self_links.unwrap_or(false),
         };
+        let unsupported_language = options
+            .stopwords_unavailable()
+            .then(|| options.language.clone());
         let snapshot = entry(app, &args.snapshot_id)?.data;
         let terms = tokio::task::spawn_blocking(move || snapshot.words(args.url_id, &options))
             .await
             .map_err(|e| internal("viz.words", e.to_string()))?
             .map_err(|e| store_error(&e))?;
+        if let Some(language) = unsupported_language {
+            app.send_event(
+                &ctx.window,
+                UiEvent::Notice {
+                    notice: Notice {
+                        level: NoticeLevel::Info,
+                        code: "viz-stopwords-unavailable".into(),
+                        args: BTreeMap::from([("language".into(), serde_json::json!(language))]),
+                    },
+                },
+            );
+        }
         to_json(
             &terms
                 .into_iter()
@@ -399,22 +450,25 @@ fn focus<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'
 
 fn export<'a>(app: &'a App, _ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
-        let args: VizExportArgs = parse_args(args)?;
+        let mut args: VizExportArgs = parse_args(args)?;
         let snapshot = entry(app, &args.snapshot_id)?;
         let displayed = snapshot.last_graph.ok_or_else(|| invalid("nodes"))?;
-        if args.nodes.len() != displayed.nodes.len() || args.edges != displayed.edges {
+        let expected_edges: BTreeSet<_> = displayed
+            .edges
+            .iter()
+            .map(|e| (e.source, e.target))
+            .collect();
+        let actual_edges: BTreeSet<_> = args.edges.iter().map(|e| (e.source, e.target)).collect();
+        if args.nodes.len() != displayed.nodes.len()
+            || args.edges.len() != expected_edges.len()
+            || actual_edges != expected_edges
+        {
             return Err(invalid("nodes"));
         }
         let expected: HashMap<_, _> = displayed.nodes.iter().map(|n| (n.id, n)).collect();
         let mut seen = BTreeSet::new();
-        for node in &args.nodes {
-            if !seen.insert(node.id) {
-                return Err(invalid("nodes"));
-            }
-            let mut data = node.clone();
-            data.x = None;
-            data.y = None;
-            if expected.get(&node.id).copied() != Some(&data)
+        for node in &mut args.nodes {
+            if !seen.insert(node.id)
                 || [node.x, node.y]
                     .into_iter()
                     .flatten()
@@ -422,7 +476,13 @@ fn export<'a>(app: &'a App, _ctx: CallCtx, args: serde_json::Value) -> BoxFuture
             {
                 return Err(invalid("nodes"));
             }
+            let frozen = expected.get(&node.id).ok_or_else(|| invalid("nodes"))?;
+            let (x, y) = (node.x, node.y);
+            *node = (*frozen).clone();
+            node.x = x;
+            node.y = y;
         }
+        args.edges = displayed.edges;
         let op = app
             .ops()
             .spawn("op-viz-export", true, move |cancel, progress| {
@@ -539,7 +599,7 @@ fn csv_row(fields: &[String]) -> String {
     format!("{}\r\n", fields.join(","))
 }
 
-/// Preserve the frozen F05 command catalog and operation contracts.
+/// Eingefrorenen F05-Command-Katalog und Operationsverträge beibehalten.
 pub fn register(r: &mut Registry) {
     for (name, args, ret, long_running, handler) in [
         (

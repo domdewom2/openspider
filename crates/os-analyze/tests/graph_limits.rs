@@ -84,16 +84,7 @@ fn explore_refuses_more_than_one_thousand_over_budget() {
 // spec: UI-091
 #[test]
 fn depth_twelve_fixture_expands_and_collapses_globally() {
-    let (_dir, file) = fx::file();
-    for id in 1..=13 {
-        fx::url(
-            &file,
-            id,
-            &format!("https://site.test/{}", "deep/".repeat((id - 1) as usize)),
-            true,
-        );
-        fx::edge(&file, id, if id == 1 { None } else { Some(id - 1) }, id);
-    }
+    let (_dir, file) = fx::depth_twelve();
     let snapshot = Snapshot::capture(&file).unwrap();
     assert_eq!(
         snapshot
@@ -116,7 +107,7 @@ fn depth_twelve_fixture_expands_and_collapses_globally() {
 
 // spec: UI-146
 #[test]
-#[ignore = "Benchmark: run on a quiet machine for K-16 preparation and projection budgets"]
+#[ignore = "Benchmark: K16-Aufbereitung und Projektion auf ruhiger Maschine"]
 fn ten_thousand_node_preparation_and_collapse_budget() {
     let (_dir, file) = large(10_000);
     let start = std::time::Instant::now();
@@ -136,4 +127,31 @@ fn ten_thousand_node_preparation_and_collapse_budget() {
     assert_eq!(collapsed.nodes.len(), 41);
     assert!(preparation <= std::time::Duration::from_millis(500));
     assert!(collapse <= std::time::Duration::from_millis(200));
+}
+
+// spec: UI-090
+// spec: UI-096
+#[test]
+fn capture_refuses_crawls_above_fifty_thousand_rows_before_loading_data() {
+    let (_dir, file) = large(50_001);
+    let error = Snapshot::capture(&file).unwrap_err().to_string();
+    assert!(error.contains("urls") && error.contains("50000"), "{error}");
+}
+
+// spec: UI-090
+// spec: UI-095
+#[test]
+fn capture_also_limits_metric_rows_in_small_crawls() {
+    let (_dir, file) = fx::basic();
+    file.conn()
+        .execute_batch(
+            "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i+1 FROM n WHERE i<250001)
+         INSERT INTO url_ext(url_id,key,v_int) SELECT 1,'metric.' || i,i FROM n;",
+        )
+        .unwrap();
+    let error = Snapshot::capture(&file).unwrap_err().to_string();
+    assert!(
+        error.contains("url_ext") && error.contains("250000"),
+        "{error}"
+    );
 }

@@ -1,4 +1,4 @@
-//! Immutable graph snapshots (K-16). No DOM or page bodies are retained.
+//! Unveränderliche Graph-Schnappschüsse (K-16) ohne DOM oder Seiteninhalte.
 mod load;
 mod words;
 
@@ -6,7 +6,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, VecDeque};
 
 pub use words::{WordOptions, WordUnit};
 
-/// Data shared by the tree and force-layout clients. Layout is a presentation concern.
+/// Gemeinsame Daten für Baum und Kraftgraph; das Layout bestimmt die Darstellung.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Node {
     pub id: i64,
@@ -40,18 +40,18 @@ struct Record {
     metrics: BTreeMap<String, f64>,
 }
 
-/// One consistent SQLite read transaction, released before opening the window.
+/// Konsistenter Stand aus einer SQLite-Lesetransaktion, vor dem Fensteröffnen freigegeben.
 #[derive(Debug)]
 pub struct Snapshot {
     crawl: Tree,
     directories: Tree,
-    anchors: Vec<os_store::queries::anchors::SnapshotGroup>,
+    anchors: Vec<load::SnapshotGroup>,
     pub change_seq: u64,
     pub reset_seq: u64,
     pub provenance_missing: bool,
 }
 
-/// Request limits apply to the data, independently of the chosen 2D layout.
+/// Datenlimits gelten unabhängig vom gewählten 2D-Layout.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GraphOptions {
     pub directory: bool,
@@ -109,7 +109,7 @@ pub(crate) fn metric_key(name: &str) -> String {
 }
 
 impl Snapshot {
-    /// Capture through the application's ReadPool, or directly in a headless caller.
+    /// Aufnahme über den Lese-Pool der App oder direkt im Betrieb ohne Oberfläche.
     pub fn capture(file: &os_store::CrawlFile) -> Result<Self, os_store::StoreError> {
         load::capture(file)
     }
@@ -130,7 +130,7 @@ impl Snapshot {
         self.crawl.nodes.get(&id).map(|r| r.internal)
     }
 
-    /// Numeric data actually present in this snapshot; unavailable API metrics are absent.
+    /// Tatsächlich vorhandene numerische Daten; nicht verfügbare API-Metriken fehlen.
     pub fn available_metrics(&self) -> BTreeSet<String> {
         self.crawl
             .nodes
@@ -139,7 +139,7 @@ impl Snapshot {
             .collect()
     }
 
-    /// Breadth-first projection, with exact counts for collapsed/budgeted descendants.
+    /// Breitensuche mit exakten Zählern für eingeklappte oder gekappte Nachkommen.
     pub fn graph(&self, options: &GraphOptions) -> Result<Graph, os_store::StoreError> {
         if !(1..=50_000).contains(&options.budget) {
             return Err(invalid("budget must be between 1 and 50000"));
@@ -153,7 +153,7 @@ impl Snapshot {
             return Err(invalid("unknown graph root"));
         }
         let roots = options.root.map_or_else(|| tree.roots.clone(), |r| vec![r]);
-        // Promote children of excluded URLs, preserving their discovery order.
+        // Kinder ausgeschlossener URLs unter Wahrung der Entdeckungsreihenfolge hochziehen.
         let mut children: HashMap<i64, Vec<i64>> = HashMap::new();
         let mut projected_roots = Vec::new();
         let mut order = Vec::new();
@@ -260,7 +260,7 @@ impl Snapshot {
                     node.hidden_descendants += 1 + descendants[child];
                 }
             }
-            // Include hidden descendants below visible children as well.
+            // Verborgene Nachkommen unter sichtbaren Kindern ebenfalls mitzählen.
             node.hidden_descendants = descendants[&id] - visible_descendants[&id];
             nodes.push(node);
         }

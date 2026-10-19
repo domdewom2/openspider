@@ -5,6 +5,7 @@ use std::collections::{BTreeMap, BinaryHeap, HashMap};
 
 pub(super) fn capture(file: &CrawlFile) -> Result<Snapshot, StoreError> {
     let tx = file.conn().unchecked_transaction()?;
+    check_capture_limits(file)?;
     let mut tree = Tree::default();
     let mut stmt = tx.prepare(
         "SELECT u.id, u.address, u.content_class, u.is_internal, u.crawl_depth,
@@ -72,8 +73,8 @@ pub(super) fn capture(file: &CrawlFile) -> Result<Snapshot, StoreError> {
             if let (Some(record), Some(value)) = (tree.nodes.get_mut(&id), value.filter(|n| n.is_finite())) {
                 record.metrics.entry(key.clone()).or_insert(value);
                 if custom {
-                    // Keep the first numeric value as the definition's short alias,
-                    // and expose every numbered extraction column independently.
+                    // Ersten Zahlenwert als Kurznamen der Definition erhalten;
+                    // nummerierte Extraktionsspalten zusätzlich einzeln anbieten.
                     if let Some((definition, _)) = key.rsplit_once('.') {
                         record.metrics.entry(definition.into()).or_insert(value);
                     }
@@ -170,7 +171,7 @@ pub(super) fn capture(file: &CrawlFile) -> Result<Snapshot, StoreError> {
                 heap.push(Reverse((depth.saturating_add(1), *seq, *child, Some(id))));
             }
         }
-        // List mode, disconnected islands, or incomplete old files remain visible as a forest.
+        // Listenmodus, getrennte Inseln und unvollständige Altdateien bleiben als Wald sichtbar.
         match remaining.find(|id| !visited.contains(id)) {
             Some(id) => heap.push(Reverse((0, i64::MAX, id, None))),
             None => break,
@@ -180,7 +181,7 @@ pub(super) fn capture(file: &CrawlFile) -> Result<Snapshot, StoreError> {
     let snapshot = Snapshot {
         crawl: tree,
         directories,
-        anchors: os_store::queries::anchors::snapshot_groups(file)?,
+        anchors: snapshot_groups(file)?,
         change_seq: file
             .get_meta("change_seq")?
             .and_then(|s| s.parse().ok())
@@ -206,7 +207,7 @@ fn directories(crawl: &Tree) -> Tree {
     let mut tree = Tree::default();
     let mut paths = BTreeMap::new();
     let mut next = -1_i64;
-    // Path-only URLs occupy their path node. Query variants become its children.
+    // URLs ohne Query belegen ihren Pfadknoten; Query-Varianten werden dessen Kinder.
     let real: HashMap<_, _> = crawl
         .nodes
         .values()
@@ -273,4 +274,84 @@ fn directories(crawl: &Tree) -> Tree {
         }
     }
     tree
+}
+
+/// Unveränderliche Ankergruppen mit getrennten Follow-/Selbstlink-Optionen (UI-099).
+#[derive(Debug, Clone)]
+pub(super) struct SnapshotGroup {
+    pub target_id: i64,
+    pub text: String,
+    pub follow: bool,
+    pub self_link: bool,
+    pub count: u64,
+}
+
+/// Interne Ankerphrasen mit Alt-Text als Rückfall; N01 stellt nach D08 auf dessen Aggregation um.
+fn snapshot_groups(file: &CrawlFile) -> Result<Vec<SnapshotGroup>, StoreError> {
+    let mut stmt = file.conn().prepare(
+        "SELECT l.target_id, l.anchor, l.alt_text, l.follow, l.source_id = l.target_id, COUNT(*)
+         FROM links l JOIN urls s ON s.id = l.source_id
+         WHERE s.is_internal = 1 AND l.link_type = 'Hyperlink' AND l.target_id IS NOT NULL
+         GROUP BY l.target_id, l.anchor, l.alt_text, l.follow, l.source_id = l.target_id",
+    )?;
+    let rows = stmt.query_map([], |r| {
+        let anchor: Option<String> = r.get(1)?;
+        let alt: Option<String> = r.get(2)?;
+        let text = anchor
+            .as_deref()
+            .filter(|s| !s.trim().is_empty())
+            .or(alt.as_deref())
+            .unwrap_or("")
+            .split_whitespace()
+            .collect::<Vec<_>>()
+            .join(" ");
+        Ok(SnapshotGroup {
+            target_id: r.get(0)?,
+            text: if text.is_empty() {
+                "(leer)".into()
+            } else {
+                text
+            },
+            follow: r.get(3)?,
+            self_link: r.get(4)?,
+            count: r.get(5)?,
+        })
+    })?;
+    rows.collect::<Result<_, _>>().map_err(Into::into)
+}
+
+/// Schutz vor vollständigen Millionen-Crawls und unbeschränkten Metrik-/Kantenmengen je Fenster.
+fn check_capture_limits(file: &CrawlFile) -> Result<(), StoreError> {
+    for (table, limit) in [
+        ("urls", 50_000_u64),
+        ("url_ext", 250_000),
+        ("api_values", 250_000),
+        ("custom_extraction_values", 250_000),
+        ("url_segments", 250_000),
+        ("links", 250_000),
+        ("discovery_edges", 250_000),
+    ] {
+        let exists: bool = file.conn().query_row(
+            "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?1)",
+            [table],
+            |r| r.get(0),
+        )?;
+        if !exists {
+            continue;
+        }
+        let count: u64 = file.conn().query_row(
+            &format!(
+                "SELECT COUNT(*) FROM (SELECT 1 FROM {table} LIMIT {})",
+                limit + 1
+            ),
+            [],
+            |r| r.get(0),
+        )?;
+        if count > limit {
+            return Err(super::invalid(&format!(
+                "Visualisierungs-Schnappschuss zu groß: {table} überschreitet {limit} Zeilen. Bitte einen kleineren Crawl öffnen."
+            )));
+        }
+    }
+    Ok(())
 }

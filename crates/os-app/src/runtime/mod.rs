@@ -765,7 +765,7 @@ impl App {
     }
 }
 
-/// Non-owning app reference for window-scoped background work.
+/// Schwache App-Referenz für Hintergrundaufgaben eines Fensters.
 #[derive(Clone)]
 pub struct WeakApp(std::sync::Weak<Inner>);
 impl WeakApp {

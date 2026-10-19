@@ -280,7 +280,7 @@ fn internal_phrases_alt_fallback_options_words_and_stopwords() {
     fx::link(&file, 5, 2, "external", "", true, "Hyperlink");
     let snapshot = Snapshot::capture(&file).unwrap();
     let phrases = snapshot.words(2, &WordOptions::default()).unwrap();
-    assert_eq!(phrases[0], ("Produkte Kaufen".into(), 4));
+    assert_eq!(phrases[0], ("Produkte Kaufen".into(), 5));
     assert!(phrases.contains(&("Logo".into(), 1)));
     assert!(phrases.contains(&("(leer)".into(), 1)));
     assert!(!phrases
@@ -295,17 +295,17 @@ fn internal_phrases_alt_fallback_options_words_and_stopwords() {
             },
         )
         .unwrap();
-    assert_eq!(follow[0], ("Produkte Kaufen".into(), 3));
+    assert_eq!(follow[0], ("Produkte Kaufen".into(), 4));
     let self_links = snapshot
         .words(
             2,
             &WordOptions {
-                exclude_self_links: false,
+                exclude_self_links: true,
                 ..Default::default()
             },
         )
         .unwrap();
-    assert_eq!(self_links[0], ("Produkte Kaufen".into(), 5));
+    assert_eq!(self_links[0], ("Produkte Kaufen".into(), 4));
     let words = snapshot
         .words(
             2,
@@ -317,7 +317,7 @@ fn internal_phrases_alt_fallback_options_words_and_stopwords() {
             },
         )
         .unwrap();
-    assert_eq!(words, [("produkte".into(), 6)]);
+    assert_eq!(words, [("produkte".into(), 7)]);
 }
 
 // spec: UI-091
@@ -352,4 +352,22 @@ fn disconnected_list_roots_also_report_budget_truncation() {
     assert_eq!(graph.nodes.len(), 2);
     assert!(graph.edges.is_empty());
     assert!(graph.truncated);
+}
+
+// spec: UI-099
+#[test]
+fn unsupported_stopword_language_keeps_every_word() {
+    let (_dir, file) = fx::basic();
+    fx::link(&file, 1, 2, "the et produit", "", true, "Hyperlink");
+    let snapshot = Snapshot::capture(&file).unwrap();
+    let options = WordOptions {
+        unit: WordUnit::Word,
+        language: "fr-FR".into(),
+        ..Default::default()
+    };
+    assert!(options.stopwords_unavailable());
+    assert_eq!(
+        snapshot.words(2, &options).unwrap(),
+        [("et".into(), 1), ("produit".into(), 1), ("the".into(), 1)]
+    );
 }
