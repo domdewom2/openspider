@@ -53,6 +53,26 @@ pub fn reassign(
 ) -> Result<Assignment, SegmentError> {
     assign(file, cfg, cancel, None)
 }
+
+/// Refresh the shared assignment after analysis or URL facts changed, before consumers read it.
+/// This also initializes assignments saved before freshness tracking was introduced.
+pub fn refresh_if_stale(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    cancel: &CancelToken,
+) -> Result<(), SegmentError> {
+    let Some(snapshot) = live_snapshot(file, 0)? else {
+        return Ok(());
+    };
+    if file.get_meta("segments.assignment_fingerprint")?.as_deref()
+        != Some(snapshot.fingerprint.as_str())
+        || file.get_meta("segments.assignment_seq")?.as_deref()
+            != Some(snapshot.sequence.to_string().as_str())
+    {
+        reassign(file, cfg, cancel)?;
+    }
+    Ok(())
+}
 /// Incremental live assignment for one bounded change-feed batch.
 /// Configuration changes automatically fall back to a complete replacement.
 pub fn reassign_urls(
@@ -112,6 +132,9 @@ fn assign(
     file.set_meta("change_seq", &seq.to_string())?;
     file.set_meta("reset_seq", &seq.to_string())?;
     file.set_meta("segments.assignment_seq", &seq.to_string())?;
+    if let Some(snapshot) = live_snapshot(file, seq)? {
+        file.set_meta("segments.assignment_fingerprint", &snapshot.fingerprint)?;
+    }
     if cancel.is_cancelled() {
         return Err(SegmentError::Cancelled);
     }

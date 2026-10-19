@@ -400,7 +400,37 @@ fn atom(
         "SELECT u.id,({sql}) FROM {} WHERE u.is_internal=1 AND ({restriction})",
         crate::views::URLS_FROM
     ))?;
-    let mut rows = stmt.query([])?;
+    // Use the parameters of the tab that supplied this column, just like a view.
+    let tabs = crate::tabs::configured_for_file(cfg, file);
+    let tab = tabs
+        .iter()
+        .find(|tab| tab.columns.iter().any(|c| c.key == col.definition.key))
+        .expect("resolved column tab");
+    let mut params = (tab.params)(cfg)
+        .into_iter()
+        .map(|(name, value)| {
+            let name = if name.starts_with([':', '@', '$']) {
+                name.to_string()
+            } else {
+                format!(":{name}")
+            };
+            (name, value)
+        })
+        .collect::<Vec<_>>();
+    crate::tabs::content::bind_analysis_params(&mut params, file, cfg)?;
+    for (name, value) in params {
+        if let Some(index) = stmt.parameter_index(&name)? {
+            let value = match value {
+                os_model::Value::Null => rusqlite::types::Value::Null,
+                os_model::Value::Bool(v) => rusqlite::types::Value::Integer(i64::from(v)),
+                os_model::Value::Int(v) => rusqlite::types::Value::Integer(v),
+                os_model::Value::Float(v) => rusqlite::types::Value::Real(v),
+                os_model::Value::Text(v) => rusqlite::types::Value::Text(v),
+            };
+            stmt.raw_bind_parameter(index, value)?;
+        }
+    }
+    let mut rows = stmt.raw_query();
     let mut bitmap = RoaringBitmap::new();
     while let Some(row) = rows.next()? {
         check(cancel, deadline)?;

@@ -399,3 +399,103 @@ fn headless_observer_assigns_new_urls_and_finishes_without_polling_feedback() {
         next
     );
 }
+
+// spec: CRAWL-134
+#[test]
+fn readability_columns_bind_config_parameters_for_preview_and_saved_assignment() {
+    let dir = tempfile::tempdir().unwrap();
+    let (_, file) = fixture::create(dir.path(), "readability.ospider", 14);
+    setup(&file);
+    file.conn().execute_batch("INSERT INTO url_ext(url_id,key,v_int,v_text) VALUES(1,'readability.sentences',10,NULL),(1,'readability.label',NULL,'Easy'),(2,'readability.sentences',2,NULL),(2,'readability.label',NULL,'Hard')").unwrap();
+    let mut cfg = cfg();
+    cfg.extraction.readability = true;
+    cfg.segments.list = vec![segment(
+        "Readable",
+        vec![
+            cond("Sentence Count", SegmentOp::GreaterThan, "5"),
+            cond("Readability", SegmentOp::Equals, "Easy"),
+        ],
+    )];
+    assert!(segments::validate_file(&file, &cfg).is_empty());
+    let preview = segments::preview(&file, &cfg, &Default::default()).unwrap();
+    assert_eq!(preview.segments[0].iter().collect::<Vec<_>>(), [1]);
+    let saved = segments::reassign(&file, &cfg, &Default::default()).unwrap();
+    assert_eq!(saved, preview);
+    assert_eq!(
+        SegmentFilter::new("Readable").bitmap(&file).unwrap(),
+        saved.segments[0]
+    );
+    cfg.extraction.readability = false;
+    let disabled = segments::reassign(&file, &cfg, &Default::default()).unwrap();
+    assert!(disabled.segments[0].is_empty());
+    assert!(disabled.pending.is_empty());
+}
+
+// spec: CRAWL-134
+#[test]
+fn near_duplicate_columns_bind_file_readiness_and_refresh_the_shared_assignment() {
+    use os_model::{AnalysisStep, StepState};
+    let dir = tempfile::tempdir().unwrap();
+    let (_, file) = fixture::create(dir.path(), "near.ospider", 14);
+    setup(&file);
+    let mut cfg = cfg();
+    cfg.duplicates.near_enabled = true;
+    cfg.analysis.near_duplicates = true;
+    cfg.segments.list = vec![segment(
+        "Near",
+        vec![cond("No. Near Duplicates", SegmentOp::GreaterThan, "0")],
+    )];
+    file.set_config(&cfg).unwrap();
+    file.conn()
+        .execute_batch("INSERT INTO near_duplicates VALUES(1,2,0.98),(2,1,0.98)")
+        .unwrap();
+    let pending = segments::reassign(&file, &cfg, &Default::default()).unwrap();
+    assert!(pending.segments[0].is_empty());
+    assert_eq!(pending.pending.len(), 1);
+    // Analysis completion can change readiness without changing URL facts/change_seq.
+    file.conn()
+        .execute(
+            "INSERT INTO analysis_steps(step,state,config_hash) VALUES(?1,?2,?3)",
+            (
+                AnalysisStep::NearDuplicates.as_str(),
+                StepState::Done.as_str(),
+                os_analyze::state::step_config_hash(AnalysisStep::NearDuplicates, &cfg),
+            ),
+        )
+        .unwrap();
+    let preview = segments::preview(&file, &cfg, &Default::default()).unwrap();
+    assert_eq!(preview.segments[0].iter().collect::<Vec<_>>(), [1, 2]);
+    assert!(preview.pending.is_empty());
+    segments::refresh_if_stale(&file, &cfg, &Default::default()).unwrap();
+    assert_eq!(
+        SegmentFilter::new("Near").bitmap(&file).unwrap(),
+        preview.segments[0]
+    );
+    let sequence = file.get_meta("change_seq").unwrap();
+    segments::refresh_if_stale(&file, &cfg, &Default::default()).unwrap();
+    assert_eq!(file.get_meta("change_seq").unwrap(), sequence);
+    file.conn()
+        .execute("UPDATE analysis_steps SET config_hash='stale'", [])
+        .unwrap();
+    segments::refresh_if_stale(&file, &cfg, &Default::default()).unwrap();
+    assert!(SegmentFilter::new("Near").bitmap(&file).unwrap().is_empty());
+}
+
+// spec: CRAWL-134
+#[test]
+#[ignore = "Benchmark: one million URLs, explicit CRAWL-134 acceptance run"]
+fn reassign_one_million_urls_within_spec_budget() {
+    let dir = tempfile::tempdir().unwrap();
+    let (_, file) = fixture::create(dir.path(), "million.ospider", 14);
+    file.conn().execute_batch("WITH RECURSIVE n(i) AS (VALUES(1) UNION ALL SELECT i+1 FROM n WHERE i<1000000) INSERT INTO urls(id,url,address,origin,is_internal,state,discovered_via,folder_depth,url_length) SELECT i,'https://site.test/blog/'||i,'https://site.test/blog/'||i,'https://site.test',1,'done','hyperlink',0,30 FROM n").unwrap();
+    let start = std::time::Instant::now();
+    let a = segments::reassign(&file, &cfg(), &Default::default()).unwrap();
+    let elapsed = start.elapsed();
+    assert_eq!(a.segments[0].len(), 1_000_000);
+    assert_eq!(
+        SegmentFilter::new("Blog").bitmap(&file).unwrap(),
+        a.segments[0]
+    );
+    eprintln!("CRAWL-134: 1000000 URLs, reassignment {elapsed:?}, budget <60s");
+    assert!(elapsed.as_secs_f64() < 60.0, "{elapsed:?}");
+}

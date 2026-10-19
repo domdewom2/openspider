@@ -545,6 +545,16 @@ fn export_phase(plan: &Plan, rep: &Reporter, signals: &Signals, crawled: &Crawle
         rep.phase("export");
     }
 
+    // CRAWL-134: loading without --resume has no observer; analysis can change membership.
+    if let Err(error) = os_analyze::segments::refresh_if_stale(&file, &cfg, &signals.cancel_token())
+    {
+        rep.error(format!("Segmentzuordnung fehlgeschlagen: {error}"));
+        return ExportEnd::Done {
+            failures: 1,
+            files: 0,
+        };
+    }
+
     // Initialize configured segments once; subsequent exports only consume the saved assignment.
     if !cfg.segments.list.is_empty() && matches!(file.get_meta("segments.definitions"), Ok(None)) {
         if let Err(error) = os_analyze::segments::reassign(&file, &cfg, &signals.cancel_token()) {
