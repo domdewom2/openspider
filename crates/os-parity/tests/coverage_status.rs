@@ -42,6 +42,8 @@ fn run_with(test_output: Option<&str>, junit: Option<&str>) -> Outcome {
     let ok = run(&CoverageArgs {
         milestone: os_parity::coverage::Milestone::M1,
         gate: false,
+        wave: 0,
+        merged: Vec::new(),
         frontend_junit: Vec::new(),
         packages: Some(data().join("packages.json")),
         test_output: test_output.map(|f| data().join(f)),
@@ -307,6 +309,8 @@ fn status_file_is_deterministic_and_verified_is_preserved() {
     let ok = run(&CoverageArgs {
         milestone: os_parity::coverage::Milestone::M1,
         gate: false,
+        wave: 0,
+        merged: Vec::new(),
         frontend_junit: Vec::new(),
         packages: Some(data().join("packages.json")),
         test_output: Some(data().join("sample-test-output.txt")),
@@ -348,6 +352,8 @@ fn strict_mode_fails_on_ignored_tests_without_reason() {
     let mut args = CoverageArgs {
         milestone: os_parity::coverage::Milestone::M1,
         gate: false,
+        wave: 0,
+        merged: Vec::new(),
         frontend_junit: Vec::new(),
         packages: Some(dir.path().join("packages.json")),
         test_output: Some(data().join("sample-test-output.txt")),
@@ -375,6 +381,8 @@ fn invalid_inputs_are_errors() {
     let base = CoverageArgs {
         milestone: os_parity::coverage::Milestone::M1,
         gate: false,
+        wave: 0,
+        merged: Vec::new(),
         frontend_junit: Vec::new(),
         packages: Some(dir.path().join("fehlt.json")),
         test_output: None,
@@ -390,6 +398,8 @@ fn invalid_inputs_are_errors() {
     assert!(run(&CoverageArgs {
         milestone: os_parity::coverage::Milestone::M1,
         gate: false,
+        wave: 0,
+        merged: Vec::new(),
         frontend_junit: Vec::new(),
         packages: Some(dir.path().join("p.json")),
         ..base.clone()
@@ -400,6 +410,8 @@ fn invalid_inputs_are_errors() {
     assert!(run(&CoverageArgs {
         milestone: os_parity::coverage::Milestone::M1,
         gate: false,
+        wave: 0,
+        merged: Vec::new(),
         frontend_junit: Vec::new(),
         packages: Some(dir.path().join("p.json")),
         junit: Some(dir.path().join("bad.xml")),
@@ -435,6 +447,8 @@ fn parity_evidence_sets_verified_only_for_clean_implemented_ids() {
     let ok = run(&CoverageArgs {
         milestone: os_parity::coverage::Milestone::M1,
         gate: false,
+        wave: 0,
+        merged: Vec::new(),
         frontend_junit: Vec::new(),
         packages: Some(data().join("packages.json")),
         test_output: Some(data().join("sample-test-output.txt")),

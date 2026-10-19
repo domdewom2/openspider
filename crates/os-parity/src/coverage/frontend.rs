@@ -3,6 +3,8 @@
 //! Literale test/it-Titel, Template-Titel und describe-Gruppen werden unterstützt. Statische
 //! Template-Teile müssen eindeutig passen; gleiche Datei-/Titel-Kombinationen bleiben mehrdeutig. Fixtures als *.ts.txt werden
 //! nicht gescannt. Kommentare, Strings und Templates werden lexikalisch getrennt.
+//! `Option::is_none_or` benötigt Rust >= 1.82; Workspace-MSRV ist 1.90 (Cargo.toml),
+//! rust-toolchain.toml folgt stable und muss dafür nicht angehoben werden.
 
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -486,7 +488,18 @@ pub(crate) fn read_junit(
 ) -> Result<Vec<TestResult>, ParityError> {
     let xml = std::fs::read_to_string(path)?;
     let mut out = Vec::new();
-    for (block, case) in results::frontend_cases(&xml)?.into_iter().enumerate() {
+    // Playwright-Retries: der letzte Eintrag derselben Datei/Suite und desselben
+    // konkreten Titels im selben Browserprojekt gewinnt. Template-Instanzen bleiben getrennt;
+    // zwischen verschiedenen JUnit-Dateien bleibt ein Fehlschlag maßgeblich.
+    let cases = results::frontend_cases(&xml)?;
+    let mut last = BTreeMap::new();
+    for (block, case) in cases.iter().enumerate() {
+        last.insert((&case.file, &case.suite, &case.project, &case.name), block);
+    }
+    for (block, case) in cases.iter().enumerate() {
+        if last.get(&(&case.file, &case.suite, &case.project, &case.name)) != Some(&block) {
+            continue;
+        }
         let mut candidates = Vec::new();
         for (file, scan) in scans {
             let relative = root.join(file).to_string_lossy().replace('\\', "/");
@@ -511,7 +524,7 @@ pub(crate) fn read_junit(
                     kind: NextestKind::Test(file.clone()),
                 },
                 path: test.name.clone(),
-                outcome: case.outcome,
+                outcome: case.outcome.clone(),
                 block,
             });
         } else {

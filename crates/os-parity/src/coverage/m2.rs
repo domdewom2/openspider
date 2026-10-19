@@ -1,6 +1,6 @@
 //! M2-Abdeckung: Paket-/Wellenbesitz, C9-Platzhalter und Anhang B (K2-58).
 //!
-//! Entwicklung prüft Welle 0/1; offene spätere Wellen und zulässige C9-Platzhalter sind Warnungen.
+//! Entwicklung prüft ausgewählte gemergte Pakete (Standard Welle 0); übrige offene Einträge sind Warnungen.
 //! --gate verlangt über alle Wellen implementierte IDs und vollständigen Anhang B. AMP bleibt nach
 //! K2-22 ausgenommen. Alle Berichte sind deterministisch und enthalten keine Laufzeitstempel.
 
@@ -29,12 +29,24 @@ struct Package {
     owns: Vec<String>,
 }
 impl Package {
-    fn later(&self) -> bool {
-        self.wave.as_u64().is_some_and(|w| w > 1)
+    fn wave_number(&self) -> Option<u64> {
+        self.wave.as_u64().or_else(|| {
+            self.wave
+                .as_str()?
+                .trim_end_matches(char::is_alphabetic)
+                .parse()
+                .ok()
+        })
+    }
+    fn required(&self, args: &CoverageArgs) -> bool {
+        args.gate
             || self
-                .wave
-                .as_str()
-                .is_some_and(|s| s.chars().next().is_some_and(|c| c > '1'))
+                .wave_number()
+                .is_some_and(|w| w <= u64::from(args.wave))
+            || args.merged.iter().any(|id| {
+                self.id.eq_ignore_ascii_case(id)
+                    || self.id.trim_start_matches("M2-").eq_ignore_ascii_case(id)
+            })
     }
     fn owns(&self, file: &str) -> bool {
         self.owns.iter().any(|p| owns(p, file))
@@ -143,6 +155,9 @@ fn in_e2e_dir(file: &str, dirs: &[&str]) -> bool {
 }
 
 fn c9(file: &str, reason: &str, packages: &[Package]) -> bool {
+    // Quelle: M2.md C9, Rev. 5 / K2-26 (17.10.2026), gespiegelt in M2-check.py P7.
+    // owns allein beschreibt nicht die erlaubten Zielpakete. Bis zu einer gemeinsamen
+    // Planer-Datei müssen Änderungen an dieser Tabelle und P7 zusammen geprüft werden.
     let Some(target_id) = placeholder_target(reason) else {
         return false;
     };
@@ -297,6 +312,15 @@ pub fn run(args: &CoverageArgs) -> Result<bool, ParityError> {
         .clone()
         .unwrap_or_else(|| root.join("docs/plan/M2-packages.json"));
     let packages = load(&path)?;
+    for id in &args.merged {
+        if !packages.iter().any(|p| {
+            p.id.eq_ignore_ascii_case(id) || p.id.trim_start_matches("M2-").eq_ignore_ascii_case(id)
+        }) {
+            return Err(ParityError::Invalid(format!(
+                "unbekanntes gemergtes M2-Paket: {id}"
+            )));
+        }
+    }
     let mut package_specs = PackageSpecs::default();
     for p in &packages {
         // Alle Planeinträge mit spec_ids zählen, auch Messpakete und Spikes (586 insgesamt).
@@ -345,9 +369,26 @@ pub fn run(args: &CoverageArgs) -> Result<bool, ParityError> {
         .and_then(|p| std::fs::read_to_string(p).ok())
         .and_then(|s| serde_json::from_str::<Value>(&s).ok())
         .filter(|v| v["milestone"] == "M2");
+    // M1-Tags sind bekannt, zählen aber weder als M2-Pflicht noch als M2-Zusatz-ID.
+    // Nur die für compute sichtbaren IDs filtern; der Ignore-Scan bleibt vollständig.
+    let m1_path = root.join("docs/plan/M1-packages.json");
+    let m1_ids: std::collections::BTreeSet<_> = if m1_path.exists() {
+        let m1 = super::load_packages(&m1_path)?;
+        m1.specs.into_keys().chain(m1.extra.into_keys()).collect()
+    } else {
+        Default::default()
+    };
+    let mut coverage_scans = scans.clone();
+    for test in coverage_scans.values_mut().flat_map(|s| &mut s.tests) {
+        test.ids.retain(|id| {
+            !m1_ids.contains(id)
+                || package_specs.specs.contains_key(id)
+                || package_specs.extra.contains_key(id)
+        });
+    }
     let mut report = compute_with_reason(
         &package_specs,
-        &scans,
+        &coverage_scans,
         target_list,
         &test_results,
         previous.as_ref(),
@@ -357,6 +398,7 @@ pub fn run(args: &CoverageArgs) -> Result<bool, ParityError> {
     report.warnings.extend(warnings);
     report.ignored_without_valid_reason.clear();
     let mut placeholders = Vec::new();
+    let mut legacy_ignores = Vec::new();
     for entry in report.specs.values_mut().chain(report.extra.values_mut()) {
         if entry
             .note
@@ -400,6 +442,38 @@ pub fn run(args: &CoverageArgs) -> Result<bool, ParityError> {
             report
                 .warnings
                 .push(format!("C9-Platzhalter {}:{}: {reason}", t.file, t.line));
+        } else if !args.gate && reason.trim().starts_with("M2:") {
+            let mut owners: Vec<_> = packages.iter().filter(|p| p.owns(&t.file)).collect();
+            // F05 besitzt beim Vorbau ganze Crates. Sobald ein Fachbesitzer ab
+            // Welle 1 existiert, entscheidet dessen Merge über die Altgründe.
+            if owners
+                .iter()
+                .any(|p| p.wave_number().is_some_and(|w| w > 0))
+            {
+                owners.retain(|p| p.wave_number().is_none_or(|w| w > 0));
+            }
+            // Kein Besitzer oder mehrere Besitzer mit einem bereits gemergten Paket:
+            // nicht stillschweigend freigeben (z. B. N01 als späterer Mitbesitzer).
+            if !owners.is_empty() && owners.iter().all(|p| !p.required(args)) {
+                let owners: Vec<_> = owners.iter().map(|p| p.id.as_str()).collect();
+                report.warnings.push(format!(
+                    "Altgrund, Besitzer {}: {}:{}: {reason}",
+                    owners.join(", "),
+                    t.file,
+                    t.line
+                ));
+                legacy_ignores.push(json!({"file": t.file, "test": name, "line": t.line,
+                    "reason": reason, "owners": owners, "spec_ids": t.ids}));
+            } else {
+                report.ignored_without_valid_reason.push(BadIgnore {
+                    file: t.file.clone(),
+                    test: name,
+                    line: t.line,
+                    reason: reason.clone(),
+                    spec_ids: t.ids.clone(),
+                    problem: "Altgrund eines gemergten oder unbekannten Besitzers".into(),
+                });
+            }
         } else {
             report.ignored_without_valid_reason.push(BadIgnore {
                 file: t.file.clone(),
@@ -417,10 +491,9 @@ pub fn run(args: &CoverageArgs) -> Result<bool, ParityError> {
     let mut blocking = Vec::new();
     for (id, entry) in &report.specs {
         let implemented = matches!(entry.status, Status::Implemented | Status::Verified);
-        let required_now = args.gate
-            || packages
-                .iter()
-                .any(|p| p.spec_ids.contains(id) && !p.later());
+        let required_now = packages
+            .iter()
+            .any(|p| p.spec_ids.contains(id) && p.required(args));
         let only_placeholders = !entry.tests.is_empty()
             && entry
                 .tests
@@ -443,7 +516,7 @@ pub fn run(args: &CoverageArgs) -> Result<bool, ParityError> {
                 blocking.push(id.clone());
             } else {
                 report.warnings.push(format!(
-                    "offene ID {id}: spätere Welle oder C9-Platzhalter (Entwicklung)"
+                    "offene ID {id}: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)"
                 ));
             }
         }
@@ -479,7 +552,7 @@ pub fn run(args: &CoverageArgs) -> Result<bool, ParityError> {
                 })
                 .cloned()
                 .collect();
-            let required_now = args.gate || !p.later();
+            let required_now = p.required(args);
             let failed = tests.iter().any(|t| t.result == TestState::Failed);
             let status = if missing.is_empty() && !failed {
                 Status::Implemented
@@ -502,7 +575,7 @@ pub fn run(args: &CoverageArgs) -> Result<bool, ParityError> {
                     appendix_open += 1;
                 } else {
                     report.warnings.push(format!(
-                        "Anhang B {id} / {} offen (spätere Welle oder C9-Platzhalter)",
+                        "Anhang B {id} / {} offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
                         p.id
                     ));
                 }
@@ -519,16 +592,30 @@ pub fn run(args: &CoverageArgs) -> Result<bool, ParityError> {
             );
         }
     }
-    let ok =
-        blocking.is_empty() && appendix_open == 0 && report.ignored_without_valid_reason.is_empty();
+    let failed_tests: std::collections::BTreeSet<_> = test_results
+        .iter()
+        .filter(|t| t.outcome == results::Outcome::Failed)
+        .map(|t| t.path.as_str())
+        .collect();
+    let ok = blocking.is_empty()
+        && appendix_open == 0
+        && report.ignored_without_valid_reason.is_empty()
+        && failed_tests.is_empty();
     let mut doc = report.to_json();
     doc["milestone"] = json!("M2");
     doc["mode"] = json!(if args.gate { "gate" } else { "development" });
     doc["appendix_b"] = json!(appendix);
     doc["placeholders"] = json!(placeholders);
+    doc["legacy_ignores"] = json!(legacy_ignores);
+    doc["required_packages"] = json!(packages
+        .iter()
+        .filter(|p| p.required(args))
+        .map(|p| &p.id)
+        .collect::<Vec<_>>());
     doc["blocking_specs"] = json!(blocking);
     doc["blocking_appendix_b"] = json!(appendix_open);
     doc["passed"] = json!(ok);
+    doc["failed_tests"] = json!(failed_tests);
     if let Some(out) = &args.write {
         if let Some(parent) = out.parent().filter(|p| !p.as_os_str().is_empty()) {
             std::fs::create_dir_all(parent)?;
@@ -540,6 +627,9 @@ pub fn run(args: &CoverageArgs) -> Result<bool, ParityError> {
         )?;
     }
     print!("{}", report.summary_text());
+    for name in &failed_tests {
+        println!("  FAILED {name}");
+    }
     println!(
         "Anhang B: {} (ID, Paket)-Einträge, {appendix_open} blockierend offen",
         appendix.values().map(BTreeMap::len).sum::<usize>()

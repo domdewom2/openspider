@@ -522,17 +522,20 @@ test src/lib.rs - parse (line 3) ... ok
 pub(crate) struct FrontendCase {
     pub file: String,
     pub suite: String,
+    pub project: String,
     pub name: String,
     pub outcome: Outcome,
 }
 
 /// Liest vitest-/Playwright-JUnit. Ungültiges oder abgeschnittenes XML liefert keine Gutschriften.
+/// Die XML-Reihenfolge bleibt erhalten: frontend::read_junit verwendet den letzten
+/// identischen Fall als Retry-Ergebnis (block), bevor Template-Instanzen zusammenlaufen.
 pub(crate) fn frontend_cases(xml: &str) -> Result<Vec<FrontendCase>, ParityError> {
     let invalid =
         || ParityError::Invalid("Frontend-JUnit: ungültiges oder unvollständiges XML".into());
     let mut rest = xml;
     let mut stack: Vec<String> = Vec::new();
-    let mut suites: Vec<String> = Vec::new();
+    let mut suites: Vec<(String, String)> = Vec::new();
     let mut cases = Vec::new();
     let mut case: Option<FrontendCase> = None;
     let mut seen = false;
@@ -568,7 +571,10 @@ pub(crate) fn frontend_cases(xml: &str) -> Result<Vec<FrontendCase>, ParityError
             "testsuite" => {
                 seen = true;
                 if !tag.self_closing {
-                    suites.push(tag.attr("name").unwrap_or("").to_string());
+                    suites.push((
+                        tag.attr("name").unwrap_or("").to_string(),
+                        tag.attr("hostname").unwrap_or("").to_string(),
+                    ));
                 }
             }
             "testcase" => {
@@ -581,7 +587,8 @@ pub(crate) fn frontend_cases(xml: &str) -> Result<Vec<FrontendCase>, ParityError
                         .or_else(|| tag.attr("classname"))
                         .unwrap_or("")
                         .to_string(),
-                    suite: suites.last().cloned().unwrap_or_default(),
+                    suite: suites.last().map(|s| s.0.clone()).unwrap_or_default(),
+                    project: suites.last().map(|s| s.1.clone()).unwrap_or_default(),
                     name: tag.attr("name").ok_or_else(invalid)?.to_string(),
                     outcome: Outcome::Ok,
                 };

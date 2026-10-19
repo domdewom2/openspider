@@ -20,7 +20,7 @@
 
 //!
 //! M2 (--milestone M2): zusätzlich TS-Tags und vitest-/Playwright-JUnit, Messpakete,
-//! M2-Ignore-Gründe und Anhang B je (ID, Paket). Entwicklung verlangt die aktuellen Wellen 0/1;
+//! M2-Ignore-Gründe und Anhang B je (ID, Paket). Entwicklung verlangt ausgewählte gemergte Pakete;
 //! --gate verlangt alle Wellen ohne Platzhalter und ohne deferred Pflicht-IDs. Siehe Modul `m2`.
 
 pub mod evidence;
@@ -61,6 +61,12 @@ pub struct CoverageArgs {
     /// M2-Abnahme: alle Wellen, keine Platzhalter, alle Pflicht-IDs implementiert.
     #[arg(long)]
     pub gate: bool,
+    /// M2-Entwicklung: Pakete bis einschließlich dieser Welle als gemergt behandeln (Standard 0).
+    #[arg(long, default_value_t = 0)]
+    pub wave: u32,
+    /// M2-Entwicklung: zusätzliche gemergte Paket-IDs, z. B. --merged D12,U10.
+    #[arg(long, value_delimiter = ',')]
+    pub merged: Vec<String>,
     /// JUnit aus vitest oder Playwright (wiederholbar).
     #[arg(long)]
     pub frontend_junit: Vec<PathBuf>,

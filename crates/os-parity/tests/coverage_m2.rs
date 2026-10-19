@@ -40,6 +40,8 @@ impl Fixture {
         let args = CoverageArgs {
             milestone: Milestone::M2,
             gate: false,
+            wave: 1,
+            merged: Vec::new(),
             frontend_junit: vec![data().join("vitest.xml"), data().join("playwright.xml")],
             packages: None,
             root: dir.path().into(),
@@ -298,6 +300,8 @@ fn repository_m2_report_includes_all_586_ids_including_spikes() {
     let args = CoverageArgs {
         milestone: Milestone::M2,
         gate: false,
+        wave: 1,
+        merged: Vec::new(),
         frontend_junit: vec![],
         packages: None,
         root: root.into(),
@@ -308,7 +312,7 @@ fn repository_m2_report_includes_all_586_ids_including_spikes() {
         parity_report: None,
         evidence: None,
     };
-    assert!(!run(&args).unwrap());
+    run(&args).unwrap();
     let doc: Value =
         serde_json::from_str(&std::fs::read_to_string(args.write.unwrap()).unwrap()).unwrap();
     assert_eq!(doc["summary"]["total"], 586);
@@ -489,4 +493,199 @@ test(`Theme ${other}`, () => {});
         .unwrap()
         .iter()
         .any(|w| w.as_str().unwrap().contains("2 Kandidaten")));
+}
+
+#[test]
+fn development_defaults_to_wave_zero_and_requires_only_selected_packages() {
+    let mut f = Fixture::new();
+    f.args.wave = 0;
+    f.args.test_output = None;
+    f.args.frontend_junit.clear();
+    let (ok, doc) = f.check();
+    assert!(ok, "{doc:#}");
+    assert_eq!(doc["required_packages"], serde_json::json!([]));
+    assert_eq!(doc["blocking_specs"], serde_json::json!([]));
+    assert_eq!(doc["blocking_appendix_b"], 0);
+    f.args.merged = vec!["d12".into()];
+    let (ok, doc) = f.check();
+    assert!(!ok);
+    assert_eq!(doc["required_packages"], serde_json::json!(["M2-D12"]));
+    assert_eq!(
+        doc["blocking_specs"],
+        serde_json::json!(["CRAWL-001", "CRAWL-002", "CRAWL-003"])
+    );
+    assert_eq!(doc["blocking_appendix_b"], 1);
+    f.args.merged = vec!["M2-U20".into()];
+    let (ok, doc) = f.check();
+    assert!(!ok);
+    assert_eq!(doc["blocking_specs"], serde_json::json!(["UI-090"]));
+    f.args.merged = vec!["typo".into()];
+    assert!(run(&f.args).is_err());
+}
+
+#[test]
+fn legacy_ignores_warn_with_owners_until_merged_and_block_the_gate() {
+    let mut f = Fixture::new();
+    f.args.wave = 0;
+    f.append(
+        "crates/alpha/tests/check.rs",
+        r#"
+#[test]
+#[ignore = "M2: Altgrund"]
+fn legacy() {}
+"#,
+    );
+    let path = f.dir.path().join("docs/plan/M2-packages.json");
+    let mut packages: Value =
+        serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+    packages.as_array_mut().unwrap().push(serde_json::json!({
+        "id": "M2-F05a", "wave": "0e", "owns": ["crates/alpha/**"]
+    }));
+    std::fs::write(path, packages.to_string()).unwrap();
+    let (ok, doc) = f.check();
+    assert!(ok, "{doc:#}");
+    assert_eq!(
+        doc["legacy_ignores"][0]["owners"],
+        serde_json::json!(["M2-D12", "M2-Q03"])
+    );
+    assert!(doc["warnings"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|w| w.as_str().unwrap().contains("Altgrund, Besitzer M2-D12")));
+    f.args.merged = vec!["D12".into()];
+    let (ok, doc) = f.check();
+    assert!(!ok);
+    assert_eq!(doc["legacy_ignores"], serde_json::json!([]));
+    assert_eq!(doc["ignored_without_valid_reason"][0]["test"], "legacy");
+    f.args.merged.clear();
+    f.args.gate = true;
+    let (ok, doc) = f.check();
+    assert!(!ok);
+    assert!(doc["ignored_without_valid_reason"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|i| i["test"] == "legacy"));
+}
+
+#[test]
+fn legacy_ignores_without_owners_are_never_waived() {
+    let mut f = Fixture::new();
+    f.args.wave = 0;
+    std::fs::write(
+        f.dir.path().join("crates/alpha/tests/unowned.rs"),
+        r#"
+#[test]
+#[ignore = "M2: unbekannter Besitzer"]
+fn unowned() {}
+"#,
+    )
+    .unwrap();
+    let (ok, doc) = f.check();
+    assert!(!ok);
+    assert_eq!(doc["ignored_without_valid_reason"][0]["test"], "unowned");
+}
+
+#[test]
+fn failed_tests_of_unmerged_packages_and_untagged_tests_still_block() {
+    let mut f = Fixture::new();
+    f.args.wave = 0;
+    let p = f.dir.path().join("cargo.txt");
+    let output = std::fs::read_to_string(data().join("cargo.txt")).unwrap()
+        + "test untagged_failure ... FAILED\n";
+    std::fs::write(&p, output).unwrap();
+    f.args.test_output = Some(p);
+    let (ok, doc) = f.check();
+    assert!(!ok);
+    assert_eq!(doc["failed_tests"], serde_json::json!(["untagged_failure"]));
+    let p = f.dir.path().join("failed.xml");
+    std::fs::write(&p, r#"<testsuite name="src/features/later/later.test.ts"><testcase name="zukünftig"><failure/></testcase></testsuite>"#).unwrap();
+    f.args.frontend_junit.push(p);
+    let (ok, doc) = f.check();
+    assert!(!ok);
+    assert_eq!(doc["blocking_specs"], serde_json::json!(["UI-090"]));
+}
+
+#[test]
+fn m1_ids_are_known_without_counting_towards_m2_but_typos_warn() {
+    let f = Fixture::new();
+    std::fs::write(
+        f.dir.path().join("docs/plan/M1-packages.json"),
+        r#"[
+      {"id":"M1-P01","kind":"package","spec_ids":["ONPAGE-999"]}
+    ]"#,
+    )
+    .unwrap();
+    f.append(
+        "crates/alpha/tests/check.rs",
+        r#"
+// spec: ONPAGE-999, ONPAGE-998
+#[test]
+fn inherited_and_typo() {}
+"#,
+    );
+    let (ok, doc) = f.check();
+    assert!(ok, "{doc:#}");
+    assert_eq!(doc["summary"]["total"], 9);
+    assert!(doc["extra"].get("ONPAGE-999").is_none());
+    let warning = doc["warnings"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find_map(|w| w.as_str().filter(|w| w.contains("in keinem Paket")))
+        .unwrap();
+    assert!(warning.contains("ONPAGE-998"));
+    assert!(!warning.contains("ONPAGE-999"));
+}
+
+#[test]
+fn junit_retries_use_the_last_identical_case_in_both_orders() {
+    for (first, last, expected) in [("<failure/>", "", "ok"), ("", "<failure/>", "failed")] {
+        let mut f = Fixture::new();
+        let p = f.dir.path().join("retries.xml");
+        std::fs::write(
+            &p,
+            format!(
+                r#"<testsuite name="src/features/table/table.test.ts">
+          <testcase name="Tabelle &gt; zeigt Zeilen &amp; Größen">{first}</testcase>
+          <testcase name="Tabelle &gt; zeigt Zeilen &amp; Größen">{last}</testcase>
+        </testsuite>"#
+            ),
+        )
+        .unwrap();
+        f.args.frontend_junit[0] = p;
+        let (_, doc) = f.check();
+        assert_eq!(doc["specs"]["UI-001"]["tests"][0]["result"], expected);
+        assert_eq!(
+            doc["failed_tests"].as_array().unwrap().is_empty(),
+            expected == "ok"
+        );
+    }
+}
+
+#[test]
+fn junit_browser_projects_are_independent_of_retry_order() {
+    let mut f = Fixture::new();
+    let p = f.dir.path().join("projects.xml");
+    std::fs::write(
+        &p,
+        r#"<testsuites>
+      <testsuite name="table/table.spec.ts" hostname="chromium">
+        <testcase name="Browser › zeigt Browser"><failure/></testcase>
+      </testsuite>
+      <testsuite name="table/table.spec.ts" hostname="webkit">
+        <testcase name="Browser › zeigt Browser"/>
+      </testsuite>
+    </testsuites>"#,
+    )
+    .unwrap();
+    f.args.frontend_junit[1] = p;
+    let (ok, doc) = f.check();
+    assert!(!ok);
+    assert_eq!(doc["specs"]["UI-003"]["status"], "open");
+    assert_eq!(
+        doc["failed_tests"],
+        serde_json::json!(["Browser > zeigt Browser"])
+    );
 }

@@ -40,6 +40,8 @@ fn run_with(packages: &Path, strict: bool) -> Outcome {
     let ok = run(&CoverageArgs {
         milestone: os_parity::coverage::Milestone::M1,
         gate: false,
+        wave: 0,
+        merged: Vec::new(),
         frontend_junit: Vec::new(),
         packages: Some(packages.to_path_buf()),
         test_output: Some(data().join("test-output.txt")),
@@ -187,6 +189,8 @@ fn extra_ids_do_not_count_for_summary_exit_code_or_strict() {
     assert!(run(&CoverageArgs {
         milestone: os_parity::coverage::Milestone::M1,
         gate: false,
+        wave: 0,
+        merged: Vec::new(),
         frontend_junit: Vec::new(),
         packages: Some(pk.clone()),
         test_output: Some(data().join("test-output.txt")),

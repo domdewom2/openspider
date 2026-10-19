@@ -237,7 +237,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": [
           {
@@ -597,7 +597,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": [
           {
@@ -739,7 +739,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -895,7 +895,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -919,7 +919,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       }
@@ -932,7 +932,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       }
@@ -945,7 +945,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       }
@@ -991,7 +991,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       }
@@ -1044,7 +1044,7 @@
           "M2",
           "P1"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -1070,7 +1070,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       }
@@ -1083,7 +1083,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       }
@@ -1096,7 +1096,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -1131,7 +1131,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -1142,7 +1142,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -1166,7 +1166,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -1177,7 +1177,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -1201,7 +1201,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       }
@@ -1216,7 +1216,7 @@
           "M2",
           "P1"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": [
           {
@@ -1252,7 +1252,7 @@
           "M2",
           "P1"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -1265,7 +1265,7 @@
           "M2",
           "P1"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       }
@@ -1319,7 +1319,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -1358,7 +1358,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": [
           {
@@ -1451,7 +1451,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": [
           {
@@ -1518,7 +1518,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -1529,7 +1529,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       }
@@ -1544,7 +1544,7 @@
           "M2",
           "P1"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": [
           {
@@ -1597,7 +1597,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": [
           {
@@ -1667,7 +1667,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -1717,7 +1717,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -1728,7 +1728,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -1739,7 +1739,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       }
@@ -1754,7 +1754,7 @@
           "M2",
           "P1"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -1767,7 +1767,7 @@
           "M2",
           "P1"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       }
@@ -1782,7 +1782,7 @@
           "M2",
           "P1"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       }
@@ -2147,7 +2147,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -2171,7 +2171,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -2182,7 +2182,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       }
@@ -2245,7 +2245,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -2269,7 +2269,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -2280,7 +2280,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -2291,7 +2291,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -2302,7 +2302,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -2313,7 +2313,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       }
@@ -2326,7 +2326,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": [
           {
@@ -2385,7 +2385,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": [
           {
@@ -2433,7 +2433,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": [
           {
@@ -2495,7 +2495,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       }
@@ -2508,7 +2508,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": [
           {
@@ -2542,7 +2542,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": [
           {
@@ -2571,7 +2571,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": [
           {
@@ -2762,7 +2762,7 @@
         "required_markers": [
           "P1"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -2786,7 +2786,7 @@
         "required_markers": [
           "P1"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -2797,7 +2797,7 @@
         "required_markers": [
           "P1"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       },
@@ -2876,7 +2876,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       }
@@ -2889,7 +2889,7 @@
         "required_markers": [
           "M2"
         ],
-        "required_now": true,
+        "required_now": false,
         "status": "open",
         "tests": []
       }
@@ -2944,12 +2944,12 @@
         "tests": [
           {
             "file": "apps/desktop/e2e/i18n/language.spec.ts",
-            "result": "ok",
+            "result": "no_result",
             "test": "Sprachwechsel ohne Neustart > Deutsch/Englisch wechselt in allen Fenstern und baut das Menü neu auf"
           },
           {
             "file": "apps/desktop/e2e/i18n/language.spec.ts",
-            "result": "ok",
+            "result": "no_result",
             "test": "Sprachwechsel ohne Neustart > die gewählte Sprache bleibt nach einem Neuladen erhalten"
           },
           {
@@ -3001,284 +3001,12 @@
       }
     }
   },
-  "blocking_appendix_b": 55,
+  "blocking_appendix_b": 0,
   "blocking_specs": [
-    "AGENT-002",
-    "AGENT-014",
-    "AGENT-020",
-    "AGENT-021",
-    "AGENT-040",
-    "CRAWL-010",
-    "CRAWL-042",
-    "CRAWL-047",
-    "CRAWL-048",
-    "CRAWL-050",
-    "CRAWL-051",
-    "CRAWL-053",
-    "CRAWL-057",
-    "CRAWL-058",
-    "CRAWL-083",
-    "CRAWL-101",
-    "CRAWL-103",
-    "CRAWL-108",
-    "CRAWL-116",
-    "CRAWL-118",
-    "CRAWL-121",
-    "CRAWL-138",
-    "CRAWL-143",
-    "CRAWL-146",
-    "CRAWL-147",
-    "INTEG-001",
-    "INTEG-002",
-    "INTEG-003",
-    "INTEG-004",
-    "INTEG-006",
-    "INTEG-007",
-    "INTEG-008",
-    "INTEG-009",
-    "INTEG-010",
-    "INTEG-014",
-    "INTEG-016",
-    "INTEG-018",
-    "INTEG-019",
-    "INTEG-021",
-    "INTEG-022",
-    "INTEG-023",
-    "INTEG-024",
-    "INTEG-025",
-    "INTEG-026",
-    "INTEG-027",
-    "INTEG-028",
-    "INTEG-029",
-    "INTEG-031",
-    "INTEG-032",
-    "INTEG-034",
-    "INTEG-035",
-    "INTEG-041",
-    "INTEG-042",
-    "INTEG-043",
-    "INTEG-044",
-    "INTEG-045",
-    "INTEG-046",
-    "INTEG-047",
-    "INTEG-048",
-    "INTEG-049",
-    "INTEG-050",
-    "INTEG-051",
-    "INTEG-052",
-    "INTEG-053",
-    "INTEG-080",
-    "ONPAGE-017",
-    "ONPAGE-019",
-    "ONPAGE-023",
-    "ONPAGE-030",
-    "ONPAGE-033",
-    "ONPAGE-035",
-    "ONPAGE-036",
-    "ONPAGE-037",
-    "ONPAGE-038",
-    "ONPAGE-039",
-    "ONPAGE-040",
-    "ONPAGE-041",
-    "ONPAGE-042",
-    "ONPAGE-043",
-    "ONPAGE-064",
-    "ONPAGE-067",
-    "ONPAGE-075",
-    "ONPAGE-077",
-    "ONPAGE-079",
-    "ONPAGE-080",
-    "ONPAGE-095",
-    "ONPAGE-096",
-    "ONPAGE-097",
-    "ONPAGE-099",
-    "ONPAGE-105",
-    "ONPAGE-106",
-    "ONPAGE-108",
-    "ONPAGE-110",
-    "ONPAGE-111",
-    "ONPAGE-112",
-    "ONPAGE-113",
-    "ONPAGE-125",
-    "ONPAGE-126",
-    "ONPAGE-135",
-    "ONPAGE-145",
-    "ONPAGE-147",
-    "ONPAGE-148",
-    "ONPAGE-150",
-    "ONPAGE-151",
-    "ONPAGE-165",
-    "ONPAGE-172",
-    "ONPAGE-178",
-    "ONPAGE-179",
-    "ONPAGE-180",
-    "ONPAGE-181",
-    "ONPAGE-193",
-    "ONPAGE-194",
-    "OUT-006",
-    "OUT-007",
-    "OUT-009",
-    "OUT-012",
-    "OUT-015",
-    "OUT-022",
-    "OUT-023",
-    "OUT-025",
-    "OUT-030",
-    "OUT-033",
-    "OUT-034",
-    "OUT-035",
-    "OUT-036",
-    "OUT-037",
-    "OUT-038",
-    "OUT-039",
-    "OUT-040",
-    "OUT-041",
-    "OUT-051",
-    "OUT-052",
-    "OUT-053",
-    "OUT-054",
-    "OUT-055",
-    "OUT-056",
-    "OUT-057",
-    "OUT-060",
-    "OUT-061",
-    "OUT-067",
-    "OUT-068",
-    "OUT-075",
-    "OUT-083",
-    "OUT-085",
-    "OUT-086",
-    "OUT-087",
-    "OUT-090",
-    "OUT-091",
-    "OUT-092",
-    "OUT-093",
-    "OUT-094",
-    "OUT-095",
-    "OUT-096",
-    "OUT-097",
-    "OUT-098",
-    "OUT-099",
-    "OUT-122",
-    "OUT-127",
-    "OUT-210",
-    "OUT-211",
-    "OUT-212",
-    "OUT-223",
-    "OUT-228",
     "OUT-232",
-    "OUT-240",
-    "OUT-244",
-    "OUT-269",
-    "OUT-270",
     "OUT-272",
-    "OUT-285",
-    "PERF-007",
-    "PERF-008",
-    "TECH-009",
-    "TECH-019",
-    "TECH-020",
-    "TECH-021",
-    "TECH-022",
-    "TECH-023",
-    "TECH-024",
-    "TECH-025",
-    "TECH-026",
-    "TECH-031",
-    "TECH-032",
-    "TECH-033",
-    "TECH-034",
-    "TECH-035",
-    "TECH-036",
-    "TECH-037",
-    "TECH-038",
-    "TECH-039",
-    "TECH-040",
-    "TECH-041",
-    "TECH-057",
-    "TECH-058",
-    "TECH-059",
-    "TECH-061",
-    "TECH-062",
-    "TECH-063",
-    "TECH-065",
-    "TECH-067",
-    "TECH-075",
-    "TECH-077",
-    "TECH-078",
-    "TECH-079",
-    "TECH-081",
-    "TECH-082",
-    "TECH-083",
-    "TECH-084",
-    "TECH-086",
-    "TECH-088",
-    "TECH-089",
-    "TECH-136",
-    "TECH-137",
-    "TECH-138",
-    "TECH-139",
-    "TECH-140",
-    "TECH-141",
-    "TECH-142",
-    "TECH-143",
-    "TECH-145",
-    "TECH-146",
-    "TECH-180",
-    "TECH-181",
-    "TECH-182",
-    "TECH-183",
-    "TECH-184",
-    "TECH-185",
-    "TECH-186",
-    "TECH-189",
-    "TECH-216",
-    "TECH-217",
-    "TECH-218",
-    "TECH-280",
-    "TECH-281",
-    "TECH-282",
-    "TECH-283",
-    "TECH-284",
-    "TECH-285",
-    "TECH-286",
-    "TECH-287",
-    "TECH-288",
-    "TECH-289",
-    "TECH-290",
-    "UI-003",
-    "UI-004",
-    "UI-006",
     "UI-007",
-    "UI-008",
-    "UI-010",
-    "UI-012",
-    "UI-013",
-    "UI-014",
-    "UI-015",
-    "UI-019",
-    "UI-021",
-    "UI-030",
-    "UI-031",
-    "UI-032",
-    "UI-033",
-    "UI-034",
-    "UI-035",
-    "UI-036",
-    "UI-042",
-    "UI-043",
-    "UI-050",
-    "UI-060",
-    "UI-061",
-    "UI-062",
-    "UI-065",
-    "UI-080",
-    "UI-081",
-    "UI-082",
-    "UI-110",
-    "UI-111",
-    "UI-114",
-    "UI-145"
+    "UI-012"
   ],
   "extra": {
     "AGENT-001": {
@@ -6808,12 +6536,17 @@
       ]
     }
   },
+  "failed_tests": [],
   "generated_by": "os-parity coverage",
-  "ignored_without_valid_reason": [
+  "ignored_without_valid_reason": [],
+  "legacy_ignores": [
     {
       "file": "crates/os-analyze/tests/tab_canonicals.rs",
       "line": 751,
-      "problem": "kein gültiger M2-Ignore-Grund oder unzulässiger C9-Platzhalter",
+      "owners": [
+        "M2-D04",
+        "M2-N01"
+      ],
       "reason": "M2: TECH-011 Respect Canonical (CRAWL-092) gehört nicht zu M1",
       "spec_ids": [
         "TECH-011"
@@ -6823,7 +6556,10 @@
     {
       "file": "crates/os-analyze/tests/tab_content.rs",
       "line": 582,
-      "problem": "kein gültiger M2-Ignore-Grund oder unzulässiger C9-Platzhalter",
+      "owners": [
+        "M2-D02",
+        "M2-N01"
+      ],
       "reason": "M2: ONPAGE-142 PDF-Zeile mit Word Count, Sentence Count und Lesbarkeit (P1-Funktionen ONPAGE-149/166)",
       "spec_ids": [
         "ONPAGE-142"
@@ -6833,7 +6569,10 @@
     {
       "file": "crates/os-analyze/tests/tab_content.rs",
       "line": 587,
-      "problem": "kein gültiger M2-Ignore-Grund oder unzulässiger C9-Platzhalter",
+      "owners": [
+        "M2-D02",
+        "M2-N01"
+      ],
       "reason": "M2: ONPAGE-143 Hash nach Wiedereinschalten ohne HTTP-Anfragen aus gespeichertem HTML (CRAWL-063, Vorhalt)",
       "spec_ids": [
         "ONPAGE-143"
@@ -6843,7 +6582,10 @@
     {
       "file": "crates/os-analyze/tests/tab_directives.rs",
       "line": 547,
-      "problem": "kein gültiger M2-Ignore-Grund oder unzulässiger C9-Platzhalter",
+      "owners": [
+        "M2-D06",
+        "M2-N01"
+      ],
       "reason": "M2: TECH-051 Respect Noindex (CRAWL-091) gehört nicht zu M1",
       "spec_ids": [
         "TECH-051"
@@ -6853,7 +6595,10 @@
     {
       "file": "crates/os-analyze/tests/tab_directives.rs",
       "line": 555,
-      "problem": "kein gültiger M2-Ignore-Grund oder unzulässiger C9-Platzhalter",
+      "owners": [
+        "M2-D06",
+        "M2-N01"
+      ],
       "reason": "M2: TECH-008 HTML-Validierung (Outside-<head>-Filter) gehört nicht zu M1",
       "spec_ids": [
         "TECH-051"
@@ -6863,7 +6608,10 @@
     {
       "file": "crates/os-analyze/tests/tab_images.rs",
       "line": 351,
-      "problem": "kein gültiger M2-Ignore-Grund oder unzulässiger C9-Platzhalter",
+      "owners": [
+        "M2-D03",
+        "M2-R02"
+      ],
       "reason": "M2: ONPAGE-170 Lazy-Load-Bilder (data-src) und srcset-Option brauchen Rendering bzw. die Option 'Extract images from srcset' (P1)",
       "spec_ids": [
         "ONPAGE-170"
@@ -6873,7 +6621,11 @@
     {
       "file": "crates/os-analyze/tests/tab_internal.rs",
       "line": 254,
-      "problem": "kein gültiger M2-Ignore-Grund oder unzulässiger C9-Platzhalter",
+      "owners": [
+        "M2-D02",
+        "M2-N01",
+        "M2-N02"
+      ],
       "reason": "M2: ONPAGE-010 HTTP/2-Antwort (os-testsite spricht nur HTTP/1.1, ALPN http/1.1); Ersatz: leere Reason-Phrase",
       "spec_ids": [
         "ONPAGE-010"
@@ -6883,7 +6635,11 @@
     {
       "file": "crates/os-analyze/tests/tab_internal.rs",
       "line": 554,
-      "problem": "kein gültiger M2-Ignore-Grund oder unzulässiger C9-Platzhalter",
+      "owners": [
+        "M2-D02",
+        "M2-N01",
+        "M2-N02"
+      ],
       "reason": "M2: ONPAGE-012 [P1] Total Transferred mit Rendering braucht JavaScript-Rendering",
       "spec_ids": [
         "ONPAGE-012"
@@ -6893,7 +6649,10 @@
     {
       "file": "crates/os-analyze/tests/tab_response_codes.rs",
       "line": 614,
-      "problem": "kein gültiger M2-Ignore-Grund oder unzulässiger C9-Platzhalter",
+      "owners": [
+        "M2-D12",
+        "M2-N01"
+      ],
       "reason": "M2: ONPAGE-054 „Malformed“ für ungültige Links braucht die Option „Crawl Invalid Links“ (CRAWL-054, P2)",
       "spec_ids": [
         "ONPAGE-054"
@@ -6903,7 +6662,10 @@
     {
       "file": "crates/os-analyze/tests/tab_response_codes.rs",
       "line": 1047,
-      "problem": "kein gültiger M2-Ignore-Grund oder unzulässiger C9-Platzhalter",
+      "owners": [
+        "M2-D12",
+        "M2-N01"
+      ],
       "reason": "M2: ONPAGE-063 „Retry liefert 200“ setzt Wiederholungen bei 5xx voraus (CRAWL-096, P1)",
       "spec_ids": [
         "ONPAGE-063"
@@ -6913,7 +6675,9 @@
     {
       "file": "crates/os-analyze/tests/tab_titles.rs",
       "line": 687,
-      "problem": "kein gültiger M2-Ignore-Grund oder unzulässiger C9-Platzhalter",
+      "owners": [
+        "M2-R02"
+      ],
       "reason": "M2: ONPAGE-090 Titel aus dem gerenderten DOM (js-title.html) braucht JavaScript-Rendering",
       "spec_ids": [
         "ONPAGE-090"
@@ -6923,7 +6687,11 @@
     {
       "file": "crates/os-cli/tests/cli_list.rs",
       "line": 238,
-      "problem": "kein gültiger M2-Ignore-Grund oder unzulässiger C9-Platzhalter",
+      "owners": [
+        "M2-T01",
+        "M2-L01",
+        "M2-L02"
+      ],
       "reason": "M2: OUT-183 Export in Upload-Reihenfolge mit Duplikaten und Spalte Original Url (OUT-015) gehört zu keinem M1-Paket",
       "spec_ids": [
         "OUT-183"
@@ -6933,7 +6701,10 @@
     {
       "file": "crates/os-engine/tests/core_limits.rs",
       "line": 97,
-      "problem": "kein gültiger M2-Ignore-Grund oder unzulässiger C9-Platzhalter",
+      "owners": [
+        "M2-E01",
+        "M2-E05"
+      ],
       "reason": "M2: CRAWL-022 Total Transferred mit Ressourcen nur mit JS-Rendering (K-02)",
       "spec_ids": [
         "CRAWL-022"
@@ -6943,7 +6714,11 @@
     {
       "file": "crates/os-export/tests/reports_redirects.rs",
       "line": 387,
-      "problem": "kein gültiger M2-Ignore-Grund oder unzulässiger C9-Platzhalter",
+      "owners": [
+        "M2-D12",
+        "M2-N01",
+        "M2-R02"
+      ],
       "reason": "M2: CRAWL-018 HSTS-Policy braucht den HSTS-Speicher der Engine (TLS-Fixture mit Strict-Transport-Security)",
       "spec_ids": [
         "OUT-081"
@@ -6953,7 +6728,11 @@
     {
       "file": "crates/os-export/tests/reports_redirects.rs",
       "line": 395,
-      "problem": "kein gültiger M2-Ignore-Grund oder unzulässiger C9-Platzhalter",
+      "owners": [
+        "M2-D12",
+        "M2-N01",
+        "M2-R02"
+      ],
       "reason": "M2: ONPAGE-057 JavaScript-Weiterleitungen gibt es nur mit Rendering",
       "spec_ids": [
         "OUT-081"
@@ -6963,7 +6742,10 @@
     {
       "file": "crates/os-mcp/tests/server_protocol.rs",
       "line": 736,
-      "problem": "kein gültiger M2-Ignore-Grund oder unzulässiger C9-Platzhalter",
+      "owners": [
+        "M2-M01",
+        "M2-K17"
+      ],
       "reason": "M2: AGENT-001 App-Konfigurationsschreiben (Klassenfreigabe aus der App speichern, AGENT-043)",
       "spec_ids": [
         "AGENT-001"
@@ -6973,7 +6755,10 @@
     {
       "file": "crates/os-mcp/tests/server_protocol.rs",
       "line": 741,
-      "problem": "kein gültiger M2-Ignore-Grund oder unzulässiger C9-Platzhalter",
+      "owners": [
+        "M2-M01",
+        "M2-K17"
+      ],
       "reason": "M2: AGENT-003 cost-Fall (Kostenschätzung, confirm: true) gegen den PSI-Mock",
       "spec_ids": [
         "AGENT-003"
@@ -6983,7 +6768,10 @@
     {
       "file": "crates/os-mcp/tests/tools_injection.rs",
       "line": 197,
-      "problem": "kein gültiger M2-Ignore-Grund oder unzulässiger C9-Platzhalter",
+      "owners": [
+        "M2-M01",
+        "M2-K17"
+      ],
       "reason": "M2: 04",
       "spec_ids": [
         "AGENT-004"
@@ -6995,6 +6783,20 @@
   "mode": "development",
   "passed": false,
   "placeholders": [],
+  "required_packages": [
+    "M2-F01",
+    "M2-V01",
+    "M2-F02",
+    "M2-F03",
+    "M2-F04",
+    "M2-H01",
+    "M2-V02",
+    "M2-S01",
+    "M2-S02",
+    "M2-G0",
+    "M2-F05a",
+    "M2-F05b"
+  ],
   "specs": {
     "AGENT-002": {
       "note": "kein Test mit `// spec:`-Tag gefunden",
@@ -10999,7 +10801,7 @@
       "tests": [
         {
           "file": "apps/desktop/e2e/i18n/language.spec.ts",
-          "result": "ok",
+          "result": "no_result",
           "test": "Sprachwechsel ohne Neustart > Systemsprache de-AT ergibt Deutsch, Polnisch ergibt Englisch"
         },
         {
@@ -12806,12 +12608,12 @@
       "tests": [
         {
           "file": "apps/desktop/e2e/settings/harness.spec.ts",
-          "result": "ok",
+          "result": "no_result",
           "test": "Harness und Design-System > alle elf Leerzustände sind mit data-empty-state auffindbar (de und en)"
         },
         {
           "file": "apps/desktop/e2e/settings/settings.spec.ts",
-          "result": "ok",
+          "result": "no_result",
           "test": "Einstellungsfenster und Erscheinungsbild > ein Anker öffnet den Abschnitt und fokussiert das Ziel-Steuerelement"
         },
         {
@@ -13291,17 +13093,17 @@
       "tests": [
         {
           "file": "apps/desktop/e2e/settings/harness.spec.ts",
-          "result": "ok",
+          "result": "no_result",
           "test": "Harness und Design-System > Kürzelanzeige je Plattform: macOS-Symbole, Windows deutsch Strg+…"
         },
         {
           "file": "apps/desktop/e2e/settings/harness.spec.ts",
-          "result": "ok",
+          "result": "no_result",
           "test": "Harness und Design-System > Tastaturkürzel lösen Aktionsereignisse aus"
         },
         {
           "file": "apps/desktop/e2e/settings/harness.spec.ts",
-          "result": "ok",
+          "result": "no_result",
           "test": "Harness und Design-System > Mod+, öffnet das Einstellungsfenster als eigenes Fenster (nicht modal)"
         },
         {
@@ -13407,32 +13209,32 @@
       "tests": [
         {
           "file": "apps/desktop/e2e/settings/bridge-protocol.spec.ts",
-          "result": "ok",
+          "result": "no_result",
           "test": "Bridge-Transport im Browser > Theme-Wechsel im Kern erreicht ein geöffnetes Fenster ohne Neuladen (settingsChanged)"
         },
         {
           "file": "apps/desktop/e2e/settings/harness.spec.ts",
-          "result": "ok",
+          "result": "no_result",
           "test": "Harness und Design-System > Primitive und Leerzustände ohne kritische axe-Verstöße im Theme ${theme}"
         },
         {
           "file": "apps/desktop/e2e/settings/settings.spec.ts",
-          "result": "ok",
+          "result": "no_result",
           "test": "Einstellungsfenster und Erscheinungsbild > Umschalten des Themes wirkt ohne Neustart auf alle offenen Fenster"
         },
         {
           "file": "apps/desktop/e2e/settings/settings.spec.ts",
-          "result": "ok",
+          "result": "no_result",
           "test": "Einstellungsfenster und Erscheinungsbild > System folgt dem Betriebssystem-Theme zur Laufzeit"
         },
         {
           "file": "apps/desktop/e2e/settings/settings.spec.ts",
-          "result": "ok",
+          "result": "no_result",
           "test": "Einstellungsfenster und Erscheinungsbild > Akzent #FFFF66 löst die Kontrastwarnung aus, Standard-Dichte ist kompakt (22 px)"
         },
         {
           "file": "apps/desktop/e2e/settings/settings.spec.ts",
-          "result": "ok",
+          "result": "no_result",
           "test": "Einstellungsfenster und Erscheinungsbild > Zoom skaliert ohne Neustart (CSS-Zoom außerhalb von Tauri)"
         },
         {
@@ -13560,17 +13362,17 @@
       "tests": [
         {
           "file": "apps/desktop/e2e/i18n/language.spec.ts",
-          "result": "ok",
+          "result": "no_result",
           "test": "Sprachwechsel ohne Neustart > Deutsch/Englisch wechselt in allen Fenstern und baut das Menü neu auf"
         },
         {
           "file": "apps/desktop/e2e/i18n/language.spec.ts",
-          "result": "ok",
+          "result": "no_result",
           "test": "Sprachwechsel ohne Neustart > die gewählte Sprache bleibt nach einem Neuladen erhalten"
         },
         {
           "file": "apps/desktop/e2e/settings/bridge-protocol.spec.ts",
-          "result": "ok",
+          "result": "no_result",
           "test": "Bridge-Transport im Browser > Sprachwechsel läuft über die Bridge und erreicht das zweite Fenster als Ereignis"
         },
         {
@@ -13728,14 +13530,15 @@
       ]
     },
     "UI-126": {
+      "note": "getaggte Tests ohne Ergebnis in der Testausgabe",
       "packages": [
         "M2-U30"
       ],
-      "status": "implemented",
+      "status": "open",
       "tests": [
         {
           "file": "apps/desktop/e2e/settings/settings.spec.ts",
-          "result": "ok",
+          "result": "no_result",
           "test": "Einstellungsfenster und Erscheinungsbild > Hauptfenster und Einstellungen haben keine kritischen oder schwerwiegenden axe-Verstöße"
         }
       ]
@@ -14153,277 +13956,624 @@
   },
   "summary": {
     "deferred": 0,
-    "implemented": 99,
-    "open": 487,
+    "implemented": 98,
+    "open": 488,
     "total": 586,
     "verified": 0
   },
   "warnings": [
-    "Tags mit IDs, die in keinem Paket stehen: AGENT-005, AGENT-010, AGENT-011, AGENT-013, CRAWL-002, CRAWL-003, CRAWL-005, CRAWL-006, CRAWL-007, CRAWL-008, CRAWL-011, CRAWL-012, CRAWL-013, CRAWL-014, CRAWL-015, CRAWL-017, CRAWL-019, CRAWL-021, CRAWL-027, CRAWL-028, CRAWL-038, CRAWL-040, CRAWL-041, CRAWL-044, CRAWL-045, CRAWL-046, CRAWL-052, CRAWL-056, CRAWL-064, CRAWL-066, CRAWL-067, CRAWL-071, CRAWL-072, CRAWL-088, CRAWL-095, CRAWL-098, CRAWL-099, CRAWL-100, CRAWL-109, CRAWL-110, CRAWL-113, CRAWL-114, CRAWL-125, CRAWL-135, CRAWL-139, CRAWL-141, ONPAGE-001, ONPAGE-003, ONPAGE-004, ONPAGE-005, ONPAGE-006, ONPAGE-007, ONPAGE-008, ONPAGE-009, ONPAGE-013, ONPAGE-014, ONPAGE-015, ONPAGE-018, ONPAGE-020, ONPAGE-021, ONPAGE-022, ONPAGE-024, ONPAGE-025, ONPAGE-026, ONPAGE-031, ONPAGE-032, ONPAGE-050, ONPAGE-051, ONPAGE-052, ONPAGE-055, ONPAGE-056, ONPAGE-058, ONPAGE-062, ONPAGE-065, ONPAGE-070, ONPAGE-071, ONPAGE-072, ONPAGE-073, ONPAGE-074, ONPAGE-076, ONPAGE-078, ONPAGE-081, ONPAGE-091, ONPAGE-092, ONPAGE-093, ONPAGE-094, ONPAGE-098, ONPAGE-100, ONPAGE-101, ONPAGE-102, ONPAGE-103, ONPAGE-104, ONPAGE-107, ONPAGE-120, ONPAGE-121, ONPAGE-122, ONPAGE-123, ONPAGE-124, ONPAGE-130, ONPAGE-131, ONPAGE-132, ONPAGE-133, ONPAGE-134, ONPAGE-141, ONPAGE-146, ONPAGE-152, ONPAGE-171, ONPAGE-173, ONPAGE-174, ONPAGE-175, ONPAGE-176, ONPAGE-177, ONPAGE-190, ONPAGE-191, OUT-002, OUT-003, OUT-008, OUT-013, OUT-032, OUT-050, OUT-063, OUT-080, OUT-082, OUT-120, OUT-129, OUT-131, OUT-180, OUT-181, OUT-185, OUT-186, OUT-188, OUT-189, OUT-192, OUT-193, OUT-194, OUT-204, OUT-221, OUT-225, OUT-231, OUT-268, TECH-001, TECH-002, TECH-004, TECH-005, TECH-007, TECH-010, TECH-012, TECH-013, TECH-014, TECH-016, TECH-017, TECH-018, TECH-050, TECH-052, TECH-053, TECH-054, TECH-055, TECH-056, TECH-064, TECH-070, TECH-072, TECH-073, TECH-074, TECH-076, TECH-080, TECH-085, TECH-131, TECH-132, TECH-133, TECH-134, TECH-135, TECH-144, TECH-211, TECH-212, TECH-213, TECH-214, TECH-215, UI-038, UI-063, UI-127",
-    "offene ID AGENT-015: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID AGENT-041: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID AGENT-042: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID AGENT-043: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID CRAWL-016: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID CRAWL-029: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID CRAWL-030: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID CRAWL-031: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID CRAWL-032: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID CRAWL-033: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID CRAWL-034: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID CRAWL-036: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID CRAWL-037: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID CRAWL-078: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID CRAWL-079: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID CRAWL-107: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID CRAWL-111: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID CRAWL-120: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID CRAWL-136: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID CRAWL-144: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-012: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-013: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-015: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-017: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-030: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-061: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-062: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-063: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-071: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-072: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-090: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-091: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-092: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-093: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-094: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-095: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-096: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-097: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-098: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-099: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-100: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-101: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-110: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-111: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-112: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-113: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-114: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-115: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-116: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-117: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-120: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-121: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-122: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-123: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-124: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-125: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-127: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-128: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-130: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-131: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-132: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-133: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-134: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-135: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-136: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-137: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-138: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-139: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-140: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-142: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-143: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-146: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-147: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-150: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-151: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-152: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-153: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-154: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID INTEG-157: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID ONPAGE-016: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID ONPAGE-053: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID ONPAGE-057: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID ONPAGE-155: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID ONPAGE-156: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID ONPAGE-157: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-005: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-011: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-043: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-045: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-046: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-048: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-049: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-062: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-100: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-101: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-102: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-103: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-109: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-110: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-111: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-113: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-133: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-140: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-141: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-142: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-143: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-144: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-145: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-147: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-149: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-151: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-152: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-160: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-161: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-162: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-163: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-164: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-165: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-166: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-167: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-168: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-169: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-170: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-171: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-187: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-196: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-197: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-198: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-201: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-202: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-205: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-206: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-207: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-209: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-280: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-281: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID OUT-282: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID PERF-004: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-006: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-087: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-100: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-101: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-102: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-103: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-104: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-105: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-106: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-107: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-108: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-109: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-110: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-111: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-114: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-187: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-188: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-190: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-230: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-231: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-232: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-233: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-234: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-235: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-236: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-237: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-251: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-252: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-253: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-254: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-255: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-256: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-257: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-259: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-301: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-302: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-303: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-304: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-305: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-306: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-307: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID TECH-308: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-009: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-020: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-037: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-039: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-040: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-041: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-044: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-045: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-047: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-048: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-066: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-067: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-068: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-069: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-070: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-090: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-091: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-092: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-093: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-095: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-096: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-099: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-112: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-122: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-123: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-124: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-129: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-144: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-146: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-147: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "offene ID UI-148: spätere Welle oder C9-Platzhalter (Entwicklung)",
-    "Anhang B ONPAGE-010 / M2-N01 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B ONPAGE-063 / M2-N01 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B OUT-081 / M2-N01 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B TECH-003 / M2-N01 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B UI-011 / M2-K05 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B UI-004 / M2-A01 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B OUT-001 / M2-A01 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B OUT-182 / M2-A01 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B CRAWL-022 / M2-E05 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B ONPAGE-012 / M2-E05 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B CRAWL-039 / M2-E05 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B CRAWL-077 / M2-E05 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B OUT-112 / M2-D18 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B ONPAGE-142 / M2-D19 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B UI-064 / M2-D20 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B UI-064 / M2-I02 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B UI-064 / M2-I03 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B UI-064 / M2-I04 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B OUT-183 / M2-X03 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B OUT-220 / M2-U13 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B CRAWL-126 / M2-U13 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B CRAWL-077 / M2-U13 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B CRAWL-124 / M2-U14 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B CRAWL-127 / M2-U15 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B OUT-191 / M2-U15 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B OUT-230 / M2-U15 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B UI-004 / M2-U20 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B UI-008 / M2-U20 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B UI-110 / M2-U20 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B ONPAGE-011 / M2-U20 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B ONPAGE-192 / M2-U21 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B OUT-285 / M2-U25 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B AGENT-003 / M2-U25 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B ONPAGE-090 / M2-R02 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B ONPAGE-170 / M2-R02 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B TECH-015 / M2-R02 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B UI-064 / M2-D21 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B UI-064 / M2-D23 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B AGENT-001 / M2-K17 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B AGENT-003 / M2-K17 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B AGENT-004 / M2-K17 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B OUT-285 / M2-K17 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B AGENT-012 / M2-K17 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B AGENT-020 / M2-K17 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B OUT-183 / M2-L01 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B OUT-015 / M2-L01 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B OUT-195 / M2-L01 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B OUT-203 / M2-L01 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B OUT-190 / M2-L02 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B UI-113 / M2-U32 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B UI-121 / M2-U32 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B UI-121 / M2-U33 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B PERF-008 / M2-Q03 offen (spätere Welle oder C9-Platzhalter)",
-    "Anhang B CRAWL-124 / M2-Q03 offen (spätere Welle oder C9-Platzhalter)"
+    "Tags mit IDs, die in keinem Paket stehen: CRAWL-064, CRAWL-071, CRAWL-139, ONPAGE-152, UI-127",
+    "16 Testergebnisse ohne getaggte Quelle bzw. unbekanntes Test-Binär (ohne Wirkung)",
+    "Altgrund, Besitzer M2-D04, M2-N01: crates/os-analyze/tests/tab_canonicals.rs:751: M2: TECH-011 Respect Canonical (CRAWL-092) gehört nicht zu M1",
+    "Altgrund, Besitzer M2-D02, M2-N01: crates/os-analyze/tests/tab_content.rs:582: M2: ONPAGE-142 PDF-Zeile mit Word Count, Sentence Count und Lesbarkeit (P1-Funktionen ONPAGE-149/166)",
+    "Altgrund, Besitzer M2-D02, M2-N01: crates/os-analyze/tests/tab_content.rs:587: M2: ONPAGE-143 Hash nach Wiedereinschalten ohne HTTP-Anfragen aus gespeichertem HTML (CRAWL-063, Vorhalt)",
+    "Altgrund, Besitzer M2-D06, M2-N01: crates/os-analyze/tests/tab_directives.rs:547: M2: TECH-051 Respect Noindex (CRAWL-091) gehört nicht zu M1",
+    "Altgrund, Besitzer M2-D06, M2-N01: crates/os-analyze/tests/tab_directives.rs:555: M2: TECH-008 HTML-Validierung (Outside-<head>-Filter) gehört nicht zu M1",
+    "Altgrund, Besitzer M2-D03, M2-R02: crates/os-analyze/tests/tab_images.rs:351: M2: ONPAGE-170 Lazy-Load-Bilder (data-src) und srcset-Option brauchen Rendering bzw. die Option 'Extract images from srcset' (P1)",
+    "Altgrund, Besitzer M2-D02, M2-N01, M2-N02: crates/os-analyze/tests/tab_internal.rs:254: M2: ONPAGE-010 HTTP/2-Antwort (os-testsite spricht nur HTTP/1.1, ALPN http/1.1); Ersatz: leere Reason-Phrase",
+    "Altgrund, Besitzer M2-D02, M2-N01, M2-N02: crates/os-analyze/tests/tab_internal.rs:554: M2: ONPAGE-012 [P1] Total Transferred mit Rendering braucht JavaScript-Rendering",
+    "Altgrund, Besitzer M2-D12, M2-N01: crates/os-analyze/tests/tab_response_codes.rs:614: M2: ONPAGE-054 „Malformed“ für ungültige Links braucht die Option „Crawl Invalid Links“ (CRAWL-054, P2)",
+    "Altgrund, Besitzer M2-D12, M2-N01: crates/os-analyze/tests/tab_response_codes.rs:1047: M2: ONPAGE-063 „Retry liefert 200“ setzt Wiederholungen bei 5xx voraus (CRAWL-096, P1)",
+    "Altgrund, Besitzer M2-R02: crates/os-analyze/tests/tab_titles.rs:687: M2: ONPAGE-090 Titel aus dem gerenderten DOM (js-title.html) braucht JavaScript-Rendering",
+    "Altgrund, Besitzer M2-T01, M2-L01, M2-L02: crates/os-cli/tests/cli_list.rs:238: M2: OUT-183 Export in Upload-Reihenfolge mit Duplikaten und Spalte Original Url (OUT-015) gehört zu keinem M1-Paket",
+    "Altgrund, Besitzer M2-E01, M2-E05: crates/os-engine/tests/core_limits.rs:97: M2: CRAWL-022 Total Transferred mit Ressourcen nur mit JS-Rendering (K-02)",
+    "Altgrund, Besitzer M2-D12, M2-N01, M2-R02: crates/os-export/tests/reports_redirects.rs:387: M2: CRAWL-018 HSTS-Policy braucht den HSTS-Speicher der Engine (TLS-Fixture mit Strict-Transport-Security)",
+    "Altgrund, Besitzer M2-D12, M2-N01, M2-R02: crates/os-export/tests/reports_redirects.rs:395: M2: ONPAGE-057 JavaScript-Weiterleitungen gibt es nur mit Rendering",
+    "Altgrund, Besitzer M2-M01, M2-K17: crates/os-mcp/tests/server_protocol.rs:736: M2: AGENT-001 App-Konfigurationsschreiben (Klassenfreigabe aus der App speichern, AGENT-043)",
+    "Altgrund, Besitzer M2-M01, M2-K17: crates/os-mcp/tests/server_protocol.rs:741: M2: AGENT-003 cost-Fall (Kostenschätzung, confirm: true) gegen den PSI-Mock",
+    "Altgrund, Besitzer M2-M01, M2-K17: crates/os-mcp/tests/tools_injection.rs:197: M2: 04",
+    "offene ID AGENT-002: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID AGENT-014: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID AGENT-015: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID AGENT-020: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID AGENT-021: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID AGENT-040: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID AGENT-041: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID AGENT-042: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID AGENT-043: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-010: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-016: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-029: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-030: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-031: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-032: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-033: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-034: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-036: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-037: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-042: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-047: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-048: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-050: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-051: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-053: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-057: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-058: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-078: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-079: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-083: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-101: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-103: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-107: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-108: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-111: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-116: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-118: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-120: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-121: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-136: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-138: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-143: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-144: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-146: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID CRAWL-147: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-001: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-002: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-003: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-004: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-006: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-007: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-008: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-009: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-010: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-012: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-013: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-014: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-015: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-016: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-017: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-018: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-019: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-021: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-022: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-023: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-024: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-025: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-026: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-027: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-028: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-029: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-030: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-031: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-032: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-034: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-035: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-041: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-042: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-043: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-044: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-045: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-046: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-047: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-048: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-049: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-050: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-051: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-052: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-053: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-061: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-062: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-063: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-071: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-072: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-080: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-090: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-091: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-092: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-093: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-094: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-095: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-096: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-097: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-098: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-099: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-100: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-101: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-110: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-111: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-112: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-113: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-114: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-115: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-116: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-117: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-120: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-121: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-122: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-123: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-124: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-125: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-127: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-128: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-130: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-131: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-132: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-133: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-134: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-135: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-136: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-137: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-138: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-139: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-140: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-142: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-143: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-146: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-147: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-150: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-151: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-152: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-153: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-154: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID INTEG-157: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-016: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-017: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-019: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-023: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-030: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-033: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-035: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-036: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-037: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-038: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-039: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-040: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-041: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-042: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-043: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-053: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-057: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-064: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-067: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-075: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-077: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-079: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-080: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-095: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-096: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-097: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-099: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-105: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-106: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-108: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-110: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-111: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-112: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-113: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-125: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-126: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-135: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-145: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-147: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-148: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-150: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-151: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-155: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-156: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-157: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-165: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-172: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-178: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-179: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-180: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-181: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-193: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID ONPAGE-194: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-005: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-006: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-007: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-009: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-011: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-012: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-015: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-022: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-023: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-025: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-030: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-033: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-034: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-035: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-036: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-037: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-038: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-039: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-040: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-041: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-043: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-045: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-046: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-048: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-049: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-051: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-052: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-053: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-054: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-055: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-056: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-057: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-060: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-061: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-062: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-067: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-068: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-075: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-083: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-085: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-086: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-087: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-090: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-091: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-092: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-093: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-094: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-095: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-096: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-097: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-098: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-099: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-100: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-101: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-102: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-103: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-109: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-110: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-111: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-113: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-122: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-127: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-133: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-140: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-141: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-142: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-143: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-144: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-145: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-147: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-149: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-151: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-152: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-160: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-161: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-162: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-163: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-164: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-165: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-166: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-167: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-168: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-169: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-170: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-171: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-187: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-196: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-197: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-198: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-201: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-202: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-205: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-206: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-207: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-209: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-210: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-211: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-212: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-223: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-228: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-240: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-244: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-269: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-270: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-280: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-281: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-282: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID OUT-285: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID PERF-004: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID PERF-007: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID PERF-008: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-006: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-009: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-019: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-020: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-021: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-022: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-023: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-024: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-025: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-026: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-031: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-032: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-033: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-034: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-035: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-036: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-037: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-038: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-039: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-040: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-041: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-057: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-058: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-059: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-061: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-062: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-063: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-065: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-067: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-075: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-077: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-078: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-079: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-081: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-082: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-083: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-084: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-086: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-087: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-088: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-089: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-100: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-101: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-102: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-103: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-104: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-105: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-106: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-107: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-108: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-109: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-110: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-111: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-114: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-136: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-137: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-138: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-139: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-140: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-141: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-142: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-143: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-145: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-146: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-180: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-181: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-182: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-183: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-184: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-185: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-186: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-187: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-188: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-189: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-190: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-216: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-217: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-218: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-230: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-231: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-232: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-233: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-234: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-235: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-236: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-237: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-251: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-252: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-253: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-254: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-255: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-256: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-257: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-259: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-280: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-281: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-282: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-283: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-284: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-285: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-286: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-287: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-288: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-289: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-290: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-301: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-302: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-303: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-304: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-305: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-306: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-307: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID TECH-308: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-003: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-004: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-006: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-008: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-009: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-010: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-013: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-014: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-015: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-019: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-020: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-021: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-030: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-031: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-032: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-033: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-034: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-035: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-036: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-037: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-039: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-040: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-041: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-042: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-043: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-044: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-045: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-047: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-048: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-050: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-060: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-061: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-062: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-065: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-066: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-067: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-068: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-069: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-070: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-080: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-081: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-082: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-090: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-091: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-092: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-093: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-095: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-096: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-099: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-110: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-111: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-112: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-114: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-122: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-123: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-124: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-126: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-129: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-144: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-145: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-146: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-147: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "offene ID UI-148: Besitzer noch nicht gemergt oder C9-Platzhalter (Entwicklung)",
+    "Anhang B UI-011 / M2-K02 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-020 / M2-K02 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B UI-082 / M2-K03 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B ONPAGE-140 / M2-K03 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-126 / M2-K04 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B AGENT-020 / M2-K04 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B UI-065 / M2-K06 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-020 / M2-K06 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-021 / M2-K06 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B ONPAGE-011 / M2-K06 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B TECH-066 / M2-K06 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B TECH-008 / M2-K06 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-220 / M2-K07 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-126 / M2-K07 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-131 / M2-E02 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B TECH-210 / M2-E02 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-140 / M2-E03 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-077 / M2-R01 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B TECH-008 / M2-D01 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B ONPAGE-142 / M2-D02 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B ONPAGE-140 / M2-D02 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B ONPAGE-170 / M2-D03 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B TECH-011 / M2-D04 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B TECH-008 / M2-D04 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B TECH-051 / M2-D06 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B TECH-066 / M2-D06 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B TECH-008 / M2-D06 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B TECH-071 / M2-D07 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B TECH-008 / M2-D07 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B TECH-130 / M2-D08 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-031 / M2-D08 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-140 / M2-D10 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B TECH-003 / M2-D10 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B UI-064 / M2-D10 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-018 / M2-D12 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B ONPAGE-054 / M2-D12 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B UI-064 / M2-D13 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B AGENT-004 / M2-D15 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-227 / M2-O01 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-127 / M2-O02 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-124 / M2-O02 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B AGENT-003 / M2-M01 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B AGENT-001 / M2-M01 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-001 / M2-U03 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-009 / M2-U03 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-026 / M2-U03 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-112 / M2-U03 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-117 / M2-U03 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-130 / M2-U03 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-127 / M2-U04 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-227 / M2-U04 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B ONPAGE-192 / M2-U11 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B ONPAGE-140 / M2-U12 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-020 / M2-U16 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-021 / M2-U16 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B ONPAGE-010 / M2-N01 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B ONPAGE-063 / M2-N01 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-081 / M2-N01 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B TECH-003 / M2-N01 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B UI-011 / M2-K05 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B UI-004 / M2-A01 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-001 / M2-A01 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-182 / M2-A01 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-022 / M2-E05 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B ONPAGE-012 / M2-E05 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-039 / M2-E05 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-077 / M2-E05 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-112 / M2-D18 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B ONPAGE-142 / M2-D19 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B UI-064 / M2-D20 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B UI-064 / M2-I02 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B UI-064 / M2-I03 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B UI-064 / M2-I04 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-183 / M2-X03 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-220 / M2-U13 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-126 / M2-U13 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-077 / M2-U13 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-124 / M2-U14 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-127 / M2-U15 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-191 / M2-U15 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-230 / M2-U15 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B UI-004 / M2-U20 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B UI-008 / M2-U20 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B UI-110 / M2-U20 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B ONPAGE-011 / M2-U20 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B ONPAGE-192 / M2-U21 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-285 / M2-U25 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B AGENT-003 / M2-U25 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B ONPAGE-090 / M2-R02 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B ONPAGE-170 / M2-R02 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B TECH-015 / M2-R02 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B UI-064 / M2-D21 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B UI-064 / M2-D23 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B AGENT-001 / M2-K17 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B AGENT-003 / M2-K17 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B AGENT-004 / M2-K17 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-285 / M2-K17 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B AGENT-012 / M2-K17 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B AGENT-020 / M2-K17 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-183 / M2-L01 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-015 / M2-L01 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-195 / M2-L01 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-203 / M2-L01 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B OUT-190 / M2-L02 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B UI-113 / M2-U32 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B UI-121 / M2-U32 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B UI-121 / M2-U33 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B PERF-008 / M2-Q03 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)",
+    "Anhang B CRAWL-124 / M2-Q03 offen (Besitzer noch nicht gemergt oder C9-Platzhalter)"
   ]
 }
