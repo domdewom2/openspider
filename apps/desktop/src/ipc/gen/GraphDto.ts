@@ -7,6 +7,14 @@ import type { GraphNode } from "./GraphNode";
  */
 export type GraphDto = { 
 /**
+ * Altdateien nutzen bei fehlender Entdeckungsherkunft eine Breitensuche über Links.
+ */
+provenanceMissing: boolean, 
+/**
+ * Numerische Metriken dieses unveränderlichen Schnappschusses.
+ */
+availableMetrics: Array<string>, 
+/**
  * Knoten.
  */
 nodes: Array<GraphNode>, 

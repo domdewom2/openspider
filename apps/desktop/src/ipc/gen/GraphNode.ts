@@ -25,6 +25,14 @@ depth: number,
  */
 metric?: number | null, 
 /**
+ * Unabhängige numerische Farbmetrik (UI-095).
+ */
+colorValue?: number | null, 
+/**
+ * Aktuelle Layoutkoordinaten der Visualisierung für den CSV-Export.
+ */
+x?: number | null, y?: number | null, 
+/**
  * Knoten hat weitere Kinder außerhalb des Budgets.
  */
 hasMore: boolean, 
