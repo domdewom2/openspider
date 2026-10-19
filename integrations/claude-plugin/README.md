@@ -49,9 +49,11 @@ Claude Code namespaces plugin commands. The files implementing the spec's
 ```
 
 The client may display a different qualified form; use its command picker. For the
-unqualified spellings, you can explicitly copy the three `commands/*.md` files into
-your project's `.claude/commands/` directory as project commands. The plugin does not
-write those files automatically. The `openspider` skill can also be selected directly.
+unqualified spellings, you can create project commands in `.claude/commands/` using
+the three `commands/*.md` files as templates. Replace `${CLAUDE_PLUGIN_ROOT}` in those
+copies with the actual plugin directory: project commands have no plugin root variable.
+The plugin does not write those files automatically. The `openspider` skill can also
+be selected directly.
 
 Start with saved crawls. The server invokes **`openspider mcp`** without additional
 class grants; by default only `read` is enabled. To allow a requested new crawl, the
