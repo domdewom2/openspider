@@ -261,24 +261,6 @@ function = "validate"
 signature = "pub fn validate(_cfg: &os_model::CustomSearchConfig) -> Vec<os_model::ConfigIssue>"
 
 [[stub]]
-owner = "M2-D16"
-file = "crates/os-engine/src/recompute/d16.rs"
-function = "run"
-signature = "pub fn run( _file: &mut os_store::CrawlFile, _old: &os_model::CrawlConfig, _new: &os_model::CrawlConfig, _cancel: &os_model::CancelToken, ) -> Result<Vec<os_model::UrlId>, crate::EngineError>"
-
-[[stub]]
-owner = "M2-D16"
-file = "crates/os-parse/src/link_position.rs"
-function = "classify"
-signature = "pub fn classify( _link_path: &str, landmark: LinkPosition, _rules: &LinkPositionsConfig, ) -> LinkPosition"
-
-[[stub]]
-owner = "M2-D16"
-file = "crates/os-parse/src/link_position.rs"
-function = "element_path"
-signature = "pub fn element_path(_doc: &crate::dom::Document, node: scraper::ElementRef<'_>) -> String"
-
-[[stub]]
 owner = "M2-D17"
 file = "crates/os-export/src/reports/crawl_path.rs"
 function = "entries"
