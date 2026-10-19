@@ -9,7 +9,7 @@ use crate::{
 use futures_util::future::BoxFuture;
 use os_integrations::{
     credentials::{Credential, Credentials},
-    http, oauth,
+    http, linkmetrics, oauth,
     queue::Queue,
     ApiCtx, ApiError, ApiSource, UrlRef,
 };
@@ -59,6 +59,7 @@ pub struct ApiState {
     browser: Mutex<Option<Arc<BrowserOpener>>>,
     /// Nur für freigegebene Debug-/Testendpunkte wirksam.
     endpoints: Mutex<Option<oauth::Endpoints>>,
+    ahrefs_endpoints: Mutex<Option<linkmetrics::oauth::Endpoints>>,
 }
 type BrowserOpener = dyn Fn(&str) -> Result<(), ApiError> + Send + Sync;
 impl ApiState {
@@ -74,6 +75,15 @@ impl ApiState {
     pub fn set_oauth_endpoints(&self, endpoints: oauth::Endpoints) {
         if cfg!(debug_assertions) {
             *self.endpoints.lock().unwrap_or_else(|p| p.into_inner()) = Some(endpoints);
+        }
+    }
+    /// Lokaler Ahrefs-OAuth-Mock; Google-Endpunkte bleiben unabhängig.
+    pub fn set_ahrefs_oauth_endpoints(&self, endpoints: linkmetrics::oauth::Endpoints) {
+        if cfg!(debug_assertions) {
+            *self
+                .ahrefs_endpoints
+                .lock()
+                .unwrap_or_else(|p| p.into_inner()) = Some(endpoints);
         }
     }
     fn quota(&self, app: &App) -> Arc<os_integrations::quota::QuotaLedger> {
@@ -350,7 +360,10 @@ async fn connect_now(app: App, ctx: CallCtx, args: ApiConnectArgs) -> Result<Api
         attempt,
     };
     let result: Result<ApiAccount, CmdError> = async {
-        let mut credential = if let Some(id) = args.account_id.as_ref() {
+        let workspace = (args.kind == ApiKind::Ahrefs)
+            .then_some(cfg.api.ahrefs.options.workspace.as_ref())
+            .flatten();
+        let mut credential = if let Some(id) = args.account_id.as_ref().or(workspace) {
             state
                 .credentials(&app)
                 .list(model(args.kind))
@@ -380,6 +393,43 @@ async fn connect_now(app: App, ctx: CallCtx, args: ApiConnectArgs) -> Result<Api
                     &http::client_for(&api_ctx(&app, cfg.clone())).map_err(error)?,
                     id,
                     args.client_secret.as_deref(),
+                    &endpoints,
+                    app.config().clock.clone(),
+                )
+                .await
+                .map_err(error)?
+        } else if args.kind == ApiKind::Ahrefs {
+            let id = cfg
+                .api
+                .ahrefs
+                .options
+                .oauth_client_id
+                .as_deref()
+                .ok_or_else(|| CmdError::invalid_input("err-api-client-id", "oauth_client_id"))?;
+            let endpoints = state
+                .ahrefs_endpoints
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .clone()
+                .unwrap_or_default();
+            let authorization = linkmetrics::oauth::Authorization::begin(id, &endpoints)
+                .await
+                .map_err(error)?;
+            let open = state
+                .browser
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .clone();
+            if let Some(open) = open {
+                open(authorization.url.as_str()).map_err(error)?;
+            } else {
+                authorization.open_browser().map_err(error)?;
+            }
+            authorization
+                .finish(
+                    &http::client_for(&api_ctx(&app, cfg.clone())).map_err(error)?,
+                    id,
+                    None,
                     &endpoints,
                     app.config().clock.clone(),
                 )
@@ -1143,6 +1193,22 @@ impl ApiSource for LimitedSource {
                 self.refresh_token(ctx, true).await?;
                 result = self.source.fetch(urls, ctx).await;
             }
+            if self.kind() == os_model::ApiKind::Ahrefs
+                && matches!(result, Err(ApiError::Unauthorized(_)))
+            {
+                // Ahrefs hat keine Refresh-Tokens: nur diese Integration bis zur Neuanmeldung stoppen.
+                if let Err(ref cause) = result {
+                    *self.blocked.lock().unwrap_or_else(|p| p.into_inner()) = Some(cause.clone());
+                    self.app.ext::<ApiState>().set_connection(
+                        ApiKind::Ahrefs,
+                        Connection {
+                            state: ApiConnState::Error,
+                            error: Some(error(cause.clone())),
+                            ..Default::default()
+                        },
+                    );
+                }
+            }
             if matches!(result, Err(ApiError::QuotaExceeded(_))) {
                 *self.blocked.lock().unwrap_or_else(|p| p.into_inner()) =
                     result.as_ref().err().cloned();
@@ -1227,7 +1293,24 @@ async fn fetch_now(
             let mut urls = app
                 .read_pool()
                 .run(session.key.clone(), move |file, _| {
-                    os_store::queries::api::urls(file.conn(), name(kind), missing)
+                    if linkmetrics::is_linkmetrics(model(kind)) {
+                        let file_config = file.config()?;
+                        let include_external = match kind {
+                            ApiKind::Majestic => &file_config.api.majestic,
+                            ApiKind::Ahrefs => &file_config.api.ahrefs,
+                            _ => &file_config.api.moz,
+                        }
+                        .options
+                        .include_external;
+                        os_store::queries::api::linkmetrics_urls(
+                            file.conn(),
+                            name(kind),
+                            missing,
+                            include_external,
+                        )
+                    } else {
+                        os_store::queries::api::urls(file.conn(), name(kind), missing)
+                    }
                 })
                 .await?;
             if let ApiFetchScope::Selection {
@@ -1252,6 +1335,28 @@ async fn fetch_now(
                 .or(value["site"].as_str())
                 .unwrap_or_default()
                 .to_string();
+            let source = if linkmetrics::is_linkmetrics(model(kind)) {
+                let context = api_ctx(&app, (*session.config).clone());
+                let estimate = linkmetrics::estimate_cost(
+                    model(kind),
+                    &urls,
+                    linkmetrics::config(&context, model(kind)),
+                )
+                .map_err(error)?;
+                if source.quotas().iter().any(|q| {
+                    q.limit
+                        .is_some_and(|limit| estimate > limit.saturating_sub(q.used))
+                }) {
+                    app.push_notice(Notice {
+                        level: NoticeLevel::Warning,
+                        code: "notice-api-units-insufficient".into(),
+                        args: [("estimated".into(), serde_json::json!(estimate))].into(),
+                    });
+                }
+                linkmetrics::batch_source(source, urls.clone())
+            } else {
+                source
+            };
             let source = Arc::new(LimitedSource {
                 app: app.clone(),
                 source,
@@ -1429,6 +1534,22 @@ impl CompletionBarrier for Barrier {
 pub fn on_startup(app: &App) {
     let state = app.ext::<ApiState>();
     let _ = state.credentials(app);
+    // I05: Quellen additiv registrieren; ausdrücklich registrierte Test-/Hostquellen haben Vorrang.
+    {
+        let mut sources = state.sources.lock().unwrap_or_else(|p| p.into_inner());
+        for kind in [
+            os_model::ApiKind::Majestic,
+            os_model::ApiKind::Ahrefs,
+            os_model::ApiKind::Moz,
+        ] {
+            sources.entry(kind.to_string()).or_insert_with(|| {
+                Arc::new(linkmetrics::LinkMetrics::with_clock(
+                    kind,
+                    app.config().clock.clone(),
+                ))
+            });
+        }
+    }
     for credential in state
         .credentials(app)
         .list(os_model::ApiKind::Ahrefs)
