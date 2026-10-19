@@ -459,27 +459,52 @@ async fn watch_memory(
 
 #[cfg(test)]
 mod tests {
+    use super::super::intercept::TargetWatch;
     use super::*;
-    use chromiumoxide::cdp::browser_protocol::page::CrashParams;
     use std::sync::Arc;
 
-    async fn crash_target(page: chromiumoxide::Page) {
-        use chromiumoxide::cdp::browser_protocol::inspector::EventTargetCrashed;
-        let mut crashed = page.event_listener::<EventTargetCrashed>().await.unwrap();
+    #[derive(Debug, Default)]
+    struct HoldFirstResource {
+        held: AtomicBool,
+        started: tokio::sync::Notify,
+    }
+    impl super::super::ResourcePolicy for HoldFirstResource {
+        fn allowed<'a>(
+            &'a self,
+            url: &'a str,
+        ) -> std::pin::Pin<Box<dyn std::future::Future<Output = bool> + Send + 'a>> {
+            Box::pin(async move {
+                if url.ends_with("/slow.js") && !self.held.swap(true, Ordering::AcqRel) {
+                    self.started.notify_one();
+                    std::future::pending::<()>().await;
+                }
+                true
+            })
+        }
+    }
+
+    async fn watch_target(target: page::TestTarget) -> TargetWatch {
+        tokio::time::timeout(
+            Duration::from_secs(30),
+            TargetWatch::start(&target.websocket, &target.id),
+        )
+        .await
+        .expect("Crash-Steuerkanal bereit")
+        .unwrap()
+    }
+
+    async fn crash_target(mut crashed: TargetWatch) {
         tokio::time::timeout(Duration::from_secs(60), async {
-            let command = page.execute(CrashParams::default());
-            tokio::pin!(command);
-            tokio::select! {
-                event = crashed.next() => { event.expect("Crash-Ereignis"); },
-                _ = &mut command => { crashed.next().await.expect("Crash-Ereignis"); },
-            }
+            crashed.crash();
+            crashed.wait().await.expect("Crash-Ereignis");
         })
         .await
         .expect("Crash wurde bestätigt");
     }
 
     #[tokio::test(flavor = "multi_thread")]
-    // Spec-Fixture `crawl-js`: Renderziel wird vor Navigation per Kanal übergeben.
+    // Spec-Fixture `crawl-js`: erster Crash während Fetch auf die Richtlinie wartet,
+    // weitere Crashes vor Navigation. Kein Inspector-Listener beteiligt.
     // spec: CRAWL-078
     async fn requires_chromium_retries_target_crash_exactly_once() {
         let site = os_testsite::TestSite::start("render-r01").await.unwrap();
@@ -493,25 +518,38 @@ mod tests {
         );
         let (tx, mut targets) = tokio::sync::mpsc::unbounded_channel();
         *renderer.targets.lock().unwrap() = Some(tx);
+        let policy = Arc::new(HoldFirstResource::default());
         let opts = RenderOpts {
             ajax_timeout_ms: 100,
             screenshots: false,
             page_timeout_ms: 120_000,
+            resource_policy: Some(policy.clone()),
             ..Default::default()
         };
         let r = renderer.clone();
-        let url = site.url("/csr.html");
+        let url = site.url("/crash-active.html");
         let first_opts = opts.clone();
-        let task = tokio::spawn(async move { r.render(&url, &first_opts).await });
-        let (page, _resume) = tokio::time::timeout(Duration::from_secs(60), targets.recv())
+        let mut task = tokio::spawn(async move { r.render(&url, &first_opts).await });
+        let (page, resume) = tokio::time::timeout(Duration::from_secs(60), targets.recv())
             .await
             .unwrap()
             .unwrap();
-        crash_target(page).await;
-        let (_page, resume) = tokio::time::timeout(Duration::from_secs(60), targets.recv())
+        // Steuerkanal und Überwachung stehen vor der Navigation bereit.
+        let crashed = watch_target(page).await;
+        resume.send(()).unwrap();
+        tokio::time::timeout(Duration::from_secs(30), policy.started.notified())
             .await
-            .unwrap()
-            .unwrap();
+            .expect("Navigation erreicht Ressourcenrichtlinie");
+        crash_target(crashed).await;
+        let (_page, resume) = tokio::time::timeout(Duration::from_secs(60), async {
+            tokio::select! {
+                target = targets.recv() => target,
+                result = &mut task => panic!("Rendern endet vor der Wiederholung: {result:?}"),
+            }
+        })
+        .await
+        .unwrap()
+        .unwrap();
         resume.send(()).unwrap();
         let result = tokio::time::timeout(Duration::from_secs(60), task)
             .await
@@ -528,7 +566,7 @@ mod tests {
                 .await
                 .unwrap()
                 .unwrap();
-            crash_target(page).await;
+            crash_target(watch_target(page).await).await;
         }
         assert!(matches!(
             tokio::time::timeout(Duration::from_secs(60), task)
@@ -542,9 +580,9 @@ mod tests {
         assert_eq!(
             site.requests()
                 .iter()
-                .filter(|r| r.path_and_query == "/csr.html")
+                .filter(|r| r.path_and_query == "/crash-active.html")
                 .count(),
-            1
+            2
         );
         renderer.close().await;
     }

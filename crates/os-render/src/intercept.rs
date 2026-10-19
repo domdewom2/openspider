@@ -3,7 +3,7 @@
 use super::{capture::Data, protocol, LaunchOpts, RenderError, RenderOpts};
 use base64::{prelude::BASE64_STANDARD, Engine};
 use chromiumoxide::{
-    cdp::browser_protocol::target::SessionId,
+    cdp::browser_protocol::target::{SessionId, TargetId},
     types::{CdpJsonEventMessage, Message},
     Connection, Page,
 };
@@ -39,6 +39,73 @@ async fn command(
         }
     }
     Err(RenderError::Crashed("CDP-Verbindung geschlossen".into()))
+}
+
+/// Browser-Ereignisse bleiben auch nach dem Verlust der Seiten-Session erreichbar.
+/// Der Kanal ist unabhängig von Fetch, damit auch eine wartende Ressourcenrichtlinie
+/// die Crash-Erkennung nicht blockiert.
+pub(super) struct TargetWatch {
+    conn: Connection<CdpJsonEventMessage>,
+    target: TargetId,
+    session: SessionId,
+}
+impl TargetWatch {
+    pub async fn start(ws: &str, target: &TargetId) -> Result<Self, RenderError> {
+        let mut conn = Connection::<CdpJsonEventMessage>::connect(ws)
+            .await
+            .map_err(protocol)?;
+        command(
+            &mut conn,
+            None,
+            "Target.setDiscoverTargets",
+            json!({"discover": true}),
+        )
+        .await?;
+        let attached = command(
+            &mut conn,
+            None,
+            "Target.attachToTarget",
+            json!({"targetId": target, "flatten": true}),
+        )
+        .await?;
+        let session = attached["sessionId"]
+            .as_str()
+            .ok_or_else(|| protocol("CDP ohne Sitzung"))?;
+        Ok(Self {
+            conn,
+            target: target.clone(),
+            session: SessionId::from(session.to_owned()),
+        })
+    }
+
+    pub async fn wait(&mut self) -> Result<(), RenderError> {
+        while let Some(message) = self.conn.next().await {
+            if let Message::Event(event) = message.map_err(protocol)? {
+                if target_lost(&event, &self.target, &self.session) {
+                    return Ok(());
+                }
+            }
+        }
+        Err(RenderError::Crashed("CDP-Verbindung geschlossen".into()))
+    }
+
+    #[cfg(test)]
+    pub fn crash(&mut self) {
+        // Page.crash bestätigt den Befehl nicht zuverlässig; nur das Ereignis zählt.
+        self.conn
+            .submit_command("Page.crash".into(), Some(self.session.clone()), json!({}))
+            .expect("Crash-Befehl senden");
+    }
+}
+
+fn target_lost(event: &CdpJsonEventMessage, target: &TargetId, session: &SessionId) -> bool {
+    match event.method.as_ref() {
+        "Target.targetCrashed" => event.params["targetId"].as_str() == Some(target.as_ref()),
+        // targetId ist bei detachedFromTarget optional. Die eigene Session bindet
+        // das Ereignis eindeutig ans Ziel; fremde Sessions dürfen weiterlaufen.
+        "Target.detachedFromTarget" => event.params["sessionId"].as_str() == Some(session.as_ref()),
+        _ => false,
+    }
 }
 impl Intercept {
     pub async fn start(
@@ -212,4 +279,46 @@ pub async fn dispose_context(
     )
     .await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    // spec: CRAWL-078
+    fn crash_events_are_scoped_to_the_target_and_own_session() {
+        let target = TargetId::from("render-target".to_owned());
+        let session = SessionId::from("watch-session".to_owned());
+        let matches = |method: &'static str, params| {
+            target_lost(
+                &CdpJsonEventMessage {
+                    method: method.into(),
+                    session_id: None,
+                    params,
+                },
+                &target,
+                &session,
+            )
+        };
+        assert!(matches("Target.targetCrashed", json!({"targetId": target})));
+        assert!(!matches(
+            "Target.targetCrashed",
+            json!({"targetId": "neighbor"})
+        ));
+        assert!(matches(
+            "Target.detachedFromTarget",
+            json!({"sessionId": session})
+        ));
+        assert!(!matches(
+            "Target.detachedFromTarget",
+            json!({"targetId": target, "sessionId": "other-session"})
+        ));
+        assert!(!matches("Target.detachedFromTarget", json!({})));
+        assert!(!matches("Inspector.targetCrashed", json!({})));
+        assert!(!matches(
+            "Target.targetCreated",
+            json!({"targetId": target})
+        ));
+    }
 }

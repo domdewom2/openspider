@@ -10,7 +10,6 @@ use chromiumoxide::{
             SetDownloadBehaviorParams, SetPermissionParams,
         },
         emulation::{SetDeviceMetricsOverrideParams, SetTouchEmulationEnabledParams},
-        inspector::EventTargetCrashed,
         network::{
             CookieParam, Headers, SetBypassServiceWorkerParams, SetCookiesParams,
             SetExtraHttpHeadersParams,
@@ -36,7 +35,13 @@ use std::{
 
 #[cfg(test)]
 pub(super) type TargetSender =
-    tokio::sync::mpsc::UnboundedSender<(Page, tokio::sync::oneshot::Sender<()>)>;
+    tokio::sync::mpsc::UnboundedSender<(TestTarget, tokio::sync::oneshot::Sender<()>)>;
+
+#[cfg(test)]
+pub(super) struct TestTarget {
+    pub websocket: String,
+    pub id: chromiumoxide::cdp::browser_protocol::target::TargetId,
+}
 
 // Ein eigener Steuerkanal räumt den Kontext auch bei blockierter JS-Schleife auf.
 // Abbruch eines Renderauftrags wartet dafür nicht auf den nächsten Browserstart.
@@ -139,15 +144,18 @@ pub async fn render(
             .await
             .map_err(|e| RenderError::Crashed(e.to_string()))?;
         cleanup.target = Some(page.target_id().clone());
-        let mut crashed = page
-            .event_listener::<EventTargetCrashed>()
-            .await
-            .map_err(protocol)?;
+        let mut crashed =
+            super::intercept::TargetWatch::start(browser.websocket_address(), page.target_id())
+                .await?;
         let run = async {
             #[cfg(test)]
             if let Some(targets) = &targets {
                 let (resume, ready) = tokio::sync::oneshot::channel();
-                if targets.send((page.clone(), resume)).is_ok() {
+                let target = TestTarget {
+                    websocket: browser.websocket_address().clone(),
+                    id: page.target_id().clone(),
+                };
+                if targets.send((target, resume)).is_ok() {
                     let _ = ready.await;
                 }
             }
@@ -155,7 +163,7 @@ pub async fn render(
         };
         tokio::select! {
             biased;
-            _ = crashed.next() => Err(RenderError::Crashed(url.into())),
+            _ = crashed.wait() => Err(RenderError::Crashed(url.into())),
             result = run => result,
         }
     };
