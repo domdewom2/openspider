@@ -52,3 +52,15 @@ pub fn records(text: &str) -> Vec<Vec<String>> {
 pub fn golden(name: &str, text: &str) {
     os_testsite::golden::assert_golden(fixture_dir().join("golden").join(name), text);
 }
+
+pub fn cookie_dates(file: &CrawlFile) -> Vec<(String, Option<String>)> {
+    let cases: Vec<(String, Option<String>)> = serde_json::from_str(
+        &std::fs::read_to_string(fixture_dir().join("cookie-dates.json")).unwrap(),
+    )
+    .unwrap();
+    for (i, (raw, _)) in cases.iter().enumerate() {
+        file.conn().execute("INSERT INTO cookies(url_id,position,origin,name,value,expires,secure,http_only,raw) VALUES(1,?1,'http',?2,'value',?3,0,0,?4)",
+            (100 + i as i64, format!("date-{i}"), raw, format!("date-{i}=value; Expires={raw}"))).unwrap();
+    }
+    cases
+}

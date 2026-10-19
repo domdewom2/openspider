@@ -48,6 +48,7 @@ fn run(job: &TableJob<'_>, writer: &mut dyn TableWriter) -> Result<u64, ExportEr
     let mut groups = std::collections::BTreeMap::<Key, Summary>::new();
     // The source is ordered by URL: only the last URL per cookie key is needed to deduplicate instances.
     crate::catalog::bulk_web::visit_cookies(job, |cookie| {
+        writer.checkpoint()?;
         let key = Key(
             cookie.name.clone(),
             cookie.domain.clone(),

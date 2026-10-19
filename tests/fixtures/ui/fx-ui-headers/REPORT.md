@@ -1,3 +1,11 @@
+# M2-D18 – Fixture- und Implementierungsnachweis
+
+Maßgeblicher Paketbericht einschließlich Fable-Fixrunde, Planfreigabe, Fremddiffs und aktueller Prüfungen: [docs/plan/M2-reports/d18.md](../../../../docs/plan/M2-reports/d18.md).
+
+Neue Regression-Fixture: `cookie-dates.json` mit 19 Cookie-Ablaufdaten für Bulk und Summary. Rendered Source liegt nach der Fixrunde unter `page_source/rendered/` mit eigenem Index; Original behält `page_source/`.
+
+Der historische Erstimplementierungsbericht folgt unverändert. Seine ursprünglichen Prüfangaben werden durch den aktuellen Paketbericht ergänzt, insbesondere wurden in der Fixrunde auch npm-Prüfungen beauftragt.
+
 # M2-D18 – Umsetzungsbericht
 
 ## Umfang

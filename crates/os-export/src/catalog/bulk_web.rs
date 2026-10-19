@@ -263,11 +263,12 @@ pub fn export_pages(
         .iter()
         .find(|entry| page_export(entry.name) == Some(kind))
         .expect("registered page export");
-    let dir = directory.join(if kind == PageExport::Text {
-        "page_text"
-    } else {
-        "page_source"
-    });
+    // Keep each variant independent when both are selected in a batch.
+    let dir = match kind {
+        PageExport::Original => directory.join("page_source"),
+        PageExport::Rendered => directory.join("page_source").join("rendered"),
+        PageExport::Text => directory.join("page_text"),
+    };
     crate::fs_paths::create_dir_all(&dir).map_err(|source| ExportError::Io {
         path: dir.clone(),
         source,
@@ -275,9 +276,10 @@ pub fn export_pages(
     if let Some(ctx) = ctx {
         ctx.checkpoint()?;
     }
-    let open_index = || -> Result<Box<dyn TableWriter>, ExportError> {
+    let open_index = || -> Result<_, ExportError> {
+        let pending = crate::output::PendingFile::new(&dir.join("index.csv"))?;
         let mut writer = crate::output::open_writer(
-            &dir.join("index.csv"),
+            &pending.path,
             Format::Csv,
             entry.name,
             &crate::pipeline::writer_options(cfg),
@@ -289,7 +291,7 @@ pub fn export_pages(
                 .map(|s| (*s).to_owned())
                 .collect::<Vec<_>>(),
         )?;
-        Ok(writer)
+        Ok((writer, pending))
     };
     let mut writer = if ctx.is_some_and(|ctx| ctx.skip_empty) {
         None
@@ -297,6 +299,7 @@ pub fn export_pages(
         Some(open_index()?)
     };
     let mut files = Vec::new();
+    let mut count = 0;
     pages(file, cfg, kind, |id, address, bytes| {
         if let Some(ctx) = ctx {
             ctx.checkpoint()?;
@@ -326,16 +329,25 @@ pub fn export_pages(
         writer
             .as_mut()
             .expect("opened index")
+            .0
             .row(&vec![ColumnKind::Text; values.len()], &values)?;
+        count += 1;
+        if let Some(ctx) = ctx {
+            (ctx.progress)(count);
+            ctx.checkpoint()?;
+        }
         Ok(())
     })?;
     if let Some(ctx) = ctx {
         ctx.checkpoint()?;
     }
-    let Some(writer) = writer else {
+    let Some((writer, pending)) = writer else {
         return Ok(files);
     };
     let mut info = writer.finish()?;
+    if let Some(ctx) = ctx {
+        ctx.checkpoint()?;
+    }
     info.warnings
         .extend(crate::reports::prereq::requirement_warnings(
             entry.name,
@@ -345,7 +357,7 @@ pub fn export_pages(
         ));
     info.warnings
         .extend(availability_warnings(entry.name, file));
-    files.push(info);
+    files.push(pending.publish(info)?);
     Ok(files)
 }
 
@@ -536,4 +548,81 @@ fn cookie_expiry(value: &str) -> Option<time::OffsetDateTime> {
         .or_else(|| {
             time::OffsetDateTime::parse(value, &time::format_description::well_known::Rfc2822).ok()
         })
+        .or_else(|| cookie_date(value))
+}
+
+/// Cookie-date token parsing per RFC 6265 §5.1.1, including legacy date forms.
+/// https://www.rfc-editor.org/rfc/rfc6265.html#section-5.1.1
+fn cookie_date(value: &str) -> Option<time::OffsetDateTime> {
+    fn number(token: &[u8], min: usize, max: usize) -> Option<(u16, &[u8])> {
+        let len = token.iter().take_while(|c| c.is_ascii_digit()).count();
+        if !(min..=max).contains(&len) {
+            return None;
+        }
+        let value = token[..len]
+            .iter()
+            .fold(0, |n, c| n * 10 + u16::from(c - b'0'));
+        Some((value, &token[len..]))
+    }
+    fn hms(token: &[u8]) -> Option<(u8, u8, u8)> {
+        let (h, rest) = number(token, 1, 2)?;
+        let (m, rest) = number(rest.strip_prefix(b":")?, 1, 2)?;
+        let (s, _) = number(rest.strip_prefix(b":")?, 1, 2)?;
+        Some((h as u8, m as u8, s as u8))
+    }
+    let mut day = None;
+    let mut month = None;
+    let mut year = None;
+    let mut clock = None;
+    for token in value
+        .as_bytes()
+        .split(|b| matches!(b, 0x09 | 0x20..=0x2f | 0x3b..=0x40 | 0x5b..=0x60 | 0x7b..=0x7e))
+    {
+        if clock.is_none() {
+            clock = hms(token);
+            if clock.is_some() {
+                continue;
+            }
+        }
+        if day.is_none() {
+            day = number(token, 1, 2).map(|(n, _)| n as u8);
+            if day.is_some() {
+                continue;
+            }
+        }
+        if month.is_none() {
+            month = [
+                b"jan", b"feb", b"mar", b"apr", b"may", b"jun", b"jul", b"aug", b"sep", b"oct",
+                b"nov", b"dec",
+            ]
+            .iter()
+            .position(|m| {
+                token
+                    .get(..3)
+                    .is_some_and(|prefix| prefix.eq_ignore_ascii_case(*m))
+            })
+            .map(|i| time::Month::try_from(i as u8 + 1).expect("calendar month"));
+            if month.is_some() {
+                continue;
+            }
+        }
+        if year.is_none() {
+            year = number(token, 2, 4).map(|(n, _)| n);
+        }
+    }
+    let year = match year? {
+        n @ 0..=69 => i32::from(n) + 2000,
+        n @ 70..=99 => i32::from(n) + 1900,
+        n => i32::from(n),
+    };
+    if year < 1601 {
+        return None;
+    }
+    let (h, m, s) = clock?;
+    Some(
+        time::Date::from_calendar_date(year, month?, day?)
+            .ok()?
+            .with_time(time::Time::from_hms(h, m, s).ok()?)
+            .assume_utc(),
+    )
 }

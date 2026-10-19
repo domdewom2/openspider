@@ -53,7 +53,10 @@ fn cookies_follow_ui_columns_defaults_party_classification_and_rendering_switch(
     cfg.rendering.mode = RenderingMode::JavaScript;
     let text = bulk(&file, &cfg, "Web:All Cookies", dir.path());
     golden("cookies.csv", &text);
-    assert_eq!(text.lines().next().unwrap(),"Address,Cookie Name,Cookie Value,Domain,Path,Expires,Max-Age,Secure,HttpOnly,SameSite,Type,Session,First-Party");
+    assert_eq!(
+        text.lines().next().unwrap(),
+        "Address,Cookie Name,Cookie Value,Domain,Path,Expires,Max-Age,Secure,HttpOnly,SameSite,Type,Session,First-Party"
+    );
     let rows = records(&text);
     let session = rows.iter().find(|r| r[1] == "session").unwrap();
     assert_eq!(
@@ -182,7 +185,7 @@ fn rendered_selection_requires_rendering_and_saved_dom_and_never_falls_back() {
     assert_eq!(rows.len(), 1);
     assert_eq!(rows[0][2], "Rendered");
     assert_eq!(
-        std::fs::read(dir.path().join("page_source").join(&rows[0][1])).unwrap(),
+        std::fs::read(dir.path().join("page_source/rendered").join(&rows[0][1])).unwrap(),
         b"<html>rendered</html>"
     );
     assert!(records(&bulk(&file, &cfg, "Web:All Page Source", dir.path())).is_empty());
@@ -372,7 +375,7 @@ fn rendered_export_decompresses_the_writer_format_without_changing_dom_bytes() {
     ));
     assert_eq!(index.len(), 1);
     assert_eq!(
-        std::fs::read(dir.path().join("page_source").join(&index[0][1])).unwrap(),
+        std::fs::read(dir.path().join("page_source/rendered").join(&index[0][1])).unwrap(),
         body
     );
 }
@@ -411,4 +414,181 @@ fn skipping_empty_page_exports_does_not_publish_an_index() {
     assert!(result.files.is_empty());
     assert_eq!(result.skipped, vec!["Web:All Page Text"]);
     assert!(!dir.path().join("page_text/index.csv").exists());
+}
+
+// spec: OUT-045
+// spec: OUT-022
+#[test]
+fn batch_keeps_original_and_rendered_sources_and_indexes_in_either_order() {
+    for reversed in [false, true] {
+        let dir = tempfile::tempdir().unwrap();
+        let file = file(dir.path());
+        file.conn()
+            .execute(
+                "INSERT INTO page_html(url_id,encoding,body) VALUES(1,'UTF-8',?1)",
+                [b"original".as_slice()],
+            )
+            .unwrap();
+        file.conn()
+            .execute(
+                "INSERT INTO render_pages(url_id,status,html) VALUES(1,'ok',?1)",
+                [b"rendered".as_slice()],
+            )
+            .unwrap();
+        let mut cfg = config();
+        cfg.extraction.store_rendered_html = true;
+        cfg.rendering.mode = RenderingMode::JavaScript;
+        let mut names = ["Web:All Page Source", "Web:All Rendered Page Source"];
+        if reversed {
+            names.reverse();
+        }
+        let selections = names.map(|name| os_export::types::ExportSelection {
+            kind: "bulk".into(),
+            name: name.into(),
+        });
+        let cancel = CancelToken::new();
+        let progress = std::cell::RefCell::new(Vec::new());
+        let report_progress = |n| progress.borrow_mut().push(n);
+        let mut ctx = os_export::types::ExportCtx {
+            cancel: &cancel,
+            progress: &report_progress,
+            skip_empty: false,
+            workbook: None,
+            skipped: Vec::new(),
+        };
+        let result = os_export::pipeline::export_batch(
+            &file,
+            &cfg,
+            &selections,
+            &os_export::pipeline::BatchOptions {
+                format: Format::Xlsx,
+                directory: dir.path(),
+                crawl_name: "both",
+                single_workbook: true,
+            },
+            &mut ctx,
+        )
+        .unwrap();
+        assert_eq!(result.files.len(), 4);
+        let unique: std::collections::HashSet<_> = result.files.iter().map(|f| &f.path).collect();
+        assert_eq!(unique.len(), result.files.len());
+        for (subdir, kind, body) in [
+            ("page_source", "Original", b"original".as_slice()),
+            ("page_source/rendered", "Rendered", b"rendered".as_slice()),
+        ] {
+            let index_path = dir.path().join(subdir).join("index.csv");
+            let index = records(&std::fs::read_to_string(&index_path).unwrap());
+            assert_eq!(index.len(), 1);
+            assert_eq!(index[0][2], kind);
+            assert_eq!(
+                std::fs::read(index_path.parent().unwrap().join(&index[0][1])).unwrap(),
+                body
+            );
+            assert_eq!(
+                result.files.iter().filter(|f| f.path == index_path).count(),
+                1
+            );
+        }
+        assert!(progress.borrow().windows(2).all(|ns| ns[0] <= ns[1]));
+        assert_eq!(progress.borrow().last(), Some(&2));
+    }
+}
+
+// spec: OUT-010
+// spec: OUT-045
+// spec: OUT-046
+#[test]
+fn page_index_is_published_only_after_success_and_cleaned_on_midstream_failure() {
+    use os_export::catalog::bulk_web::{export_pages, PageExport};
+    for kind in [PageExport::Original, PageExport::Rendered, PageExport::Text] {
+        for existing in [false, true] {
+            for cancel_during_export in [false, true] {
+                let dir = tempfile::tempdir().unwrap();
+                let file = file(dir.path());
+                for id in [1, 2] {
+                    let compression = if id == 2 && !cancel_during_export {
+                        Some("zstd")
+                    } else {
+                        None
+                    };
+                    file.conn().execute("INSERT INTO page_html(url_id,encoding,body,compression) VALUES(?1,'UTF-8',?2,?3)", (id, b"<body>page</body>".as_slice(), compression)).unwrap();
+                    file.conn().execute("INSERT INTO render_pages(url_id,status,html,compression) VALUES(?1,'ok',?2,?3)", (id, b"<body>rendered</body>".as_slice(), compression)).unwrap();
+                }
+                let subdir = match kind {
+                    PageExport::Original => "page_source",
+                    PageExport::Rendered => "page_source/rendered",
+                    PageExport::Text => "page_text",
+                };
+                let out = dir.path().join(subdir);
+                std::fs::create_dir_all(&out).unwrap();
+                let index = out.join("index.csv");
+                if existing {
+                    std::fs::write(&index, b"previous complete index").unwrap();
+                }
+                let cancel = CancelToken::new();
+                let visited = std::cell::Cell::new(0);
+                let progress = |rows| {
+                    visited.set(rows);
+                    if cancel_during_export {
+                        cancel.cancel();
+                    }
+                };
+                let ctx = os_export::types::ExportCtx {
+                    cancel: &cancel,
+                    progress: &progress,
+                    skip_empty: false,
+                    workbook: None,
+                    skipped: Vec::new(),
+                };
+                let mut cfg = config();
+                cfg.rendering.mode = RenderingMode::JavaScript;
+                cfg.extraction.store_rendered_html = true;
+                let error = export_pages(&file, &cfg, kind, dir.path(), Some(&ctx)).unwrap_err();
+                assert_eq!(
+                    visited.get(),
+                    1,
+                    "failure must occur after writing the first index row"
+                );
+                if cancel_during_export {
+                    assert!(error.to_string().contains("abgebrochen"));
+                }
+                if existing {
+                    assert_eq!(std::fs::read(&index).unwrap(), b"previous complete index");
+                } else {
+                    assert!(!index.exists());
+                }
+                assert!(std::fs::read_dir(&out).unwrap().all(|e| {
+                    e.unwrap()
+                        .path()
+                        .extension()
+                        .is_none_or(|ext| ext != "part")
+                }));
+                if !cancel_during_export {
+                    file.conn()
+                        .execute("UPDATE page_html SET compression=NULL", [])
+                        .unwrap();
+                    file.conn()
+                        .execute("UPDATE render_pages SET compression=NULL", [])
+                        .unwrap();
+                    let result = export_pages(&file, &cfg, kind, dir.path(), None).unwrap();
+                    assert_eq!(result.last().unwrap().rows, 2);
+                    assert_eq!(records(&std::fs::read_to_string(&index).unwrap()).len(), 2);
+                }
+            }
+        }
+    }
+}
+
+// spec: OUT-049
+#[test]
+fn cookie_dates_keep_valid_legacy_expiries_and_session_flags() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = file(dir.path());
+    let cases = cookie_dates(&file);
+    let rows = records(&bulk(&file, &config(), "Web:All Cookies", dir.path()));
+    for (i, (_, expected)) in cases.iter().enumerate() {
+        let row = rows.iter().find(|r| r[1] == format!("date-{i}")).unwrap();
+        assert_eq!(row[5], expected.as_deref().unwrap_or(""));
+        assert_eq!(row[11], if expected.is_some() { "False" } else { "True" });
+    }
 }

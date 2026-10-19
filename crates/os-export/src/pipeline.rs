@@ -699,12 +699,20 @@ fn export_batch_in(
             }
             if kind == ExportKind::Bulk {
                 if let Some(page_kind) = catalog::bulk_web::page_export(&name) {
+                    let progress = |rows| (ctx.progress)(done.get() + rows);
+                    let page_ctx = crate::types::ExportCtx {
+                        cancel: ctx.cancel,
+                        progress: &progress,
+                        skip_empty: ctx.skip_empty,
+                        workbook: None,
+                        skipped: Vec::new(),
+                    };
                     let files = catalog::bulk_web::export_pages(
                         file,
                         cfg,
                         page_kind,
                         options.directory,
-                        Some(ctx),
+                        Some(&page_ctx),
                     )?;
                     let rows = files.last().map_or(0, |info| info.rows);
                     if rows == 0 && ctx.skip_empty {
