@@ -204,6 +204,5 @@ async fn only_domains_of_later_packages_are_still_stubs() {
         .dispatch(ctx(), "view.rows", json!({}))
         .await
         .unwrap_err();
-    assert_eq!(e.message_key, "err-not-implemented");
-    assert_eq!(e.args["owner"], "M2-K06");
+    assert_eq!(e.code, ErrorCode::InvalidInput);
 }

@@ -45,3 +45,52 @@ pub fn export_detail(
     );
     Ok(info)
 }
+
+/// Paged variant of the F05 detail export for app operations (additive K2-61).
+/// Keeps memory bounded and checks cancellation between source pages and rows.
+pub fn export_detail_with_ctx(
+    kind: DetailKind,
+    job: &TableJob<'_>,
+    req: &DetailReq<'_>,
+    writer: &mut dyn crate::TableWriter,
+    ctx: &mut crate::types::ExportCtx<'_>,
+) -> Result<u64, ExportError> {
+    let (_, source) = os_analyze::details::app_detail_source(kind);
+    let mut offset = 0;
+    let mut header = None;
+    loop {
+        ctx.checkpoint()?;
+        let page = source(
+            job.file,
+            job.cfg,
+            &DetailReq {
+                url_ids: req.url_ids,
+                params: req.params,
+                sort: req.sort,
+                offset,
+                limit: 500,
+            },
+        )?;
+        let (names, kinds): (Vec<_>, Vec<_>) = page.columns.into_iter().unzip();
+        if let Some(expected) = &header {
+            if expected != &names {
+                return Err(ExportError::Write(
+                    "Detail columns changed in snapshot".into(),
+                ));
+            }
+        } else {
+            writer.header(&names)?;
+            header = Some(names);
+        }
+        let count = page.rows.len() as u64;
+        for row in page.rows {
+            ctx.checkpoint()?;
+            writer.row(&kinds, &row)?;
+        }
+        offset += count;
+        (ctx.progress)(offset);
+        if count == 0 || offset >= page.total {
+            return Ok(offset);
+        }
+    }
+}

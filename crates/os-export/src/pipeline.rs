@@ -542,6 +542,93 @@ fn export_report_in_snapshot(
     crate::reports::save_report_in(tabs, file, cfg, name, out_dir, format)
 }
 
+/// App export extension preserving uploaded list order without changing the M1 writer API.
+/// Only Internal:All in list mode is affected; other views retain their visible ordering.
+#[allow(clippy::too_many_arguments)]
+pub fn write_view_with_upload_order(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    q: &ViewQuery,
+    preserve: bool,
+    open: impl FnOnce() -> Result<Box<dyn TableWriter>, ExportError>,
+) -> Result<ExportFileInfo, ExportError> {
+    if !preserve
+        || file.meta()?.mode != os_model::CrawlMode::List
+        || !q.tab.eq_ignore_ascii_case("Internal")
+        || !q.filter.eq_ignore_ascii_case("All")
+    {
+        return write_view(tabs, file, cfg, q, open);
+    }
+    let mut probe = q.clone();
+    probe.limit = 1;
+    probe.start = PageStart::Offset(0);
+    let page = views::query_view_in(tabs, file, cfg, &probe)?;
+    let tab = names::find_tab(tabs, &q.tab).expect("resolved tab");
+    let mut kinds = vec![ColumnKind::Text];
+    kinds.extend(page.columns.iter().map(|n| column_kind(tab, n)));
+    let mut header = vec!["Original Url".into()];
+    header.extend(page.columns.iter().cloned());
+    let mut out = open()?;
+    out.header(&header)?;
+    let mut cursor = 0i64;
+    loop {
+        let mut stmt=file.conn().prepare("SELECT position,original,url_id,outcome FROM list_input WHERE position>=?1 ORDER BY position LIMIT 500").map_err(StoreError::from)?;
+        let input = stmt
+            .query_map([cursor], |r| {
+                Ok((
+                    r.get::<_, i64>(0)?,
+                    r.get::<_, String>(1)?,
+                    r.get::<_, Option<i64>>(2)?,
+                    r.get::<_, String>(3)?,
+                ))
+            })
+            .map_err(StoreError::from)?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(StoreError::from)?;
+        if input.is_empty() {
+            break;
+        }
+        let ids = input
+            .iter()
+            .filter_map(|(_, _, id, _)| id.map(os_model::UrlId))
+            .collect::<Vec<_>>();
+        let mut query = q.clone();
+        query.columns = views::ColumnSelection::Named(page.columns.clone());
+        query.limit = 500;
+        query.start = PageStart::Offset(0);
+        let data = views::query_url_ids_in(tabs, file, cfg, &query, &ids, false)?;
+        let mut by_id = std::collections::HashMap::new();
+        for (id, row) in data.row_keys.into_iter().zip(data.rows) {
+            by_id.insert(id.0, row);
+        }
+        for (position, original, id, outcome) in input {
+            cursor = position.saturating_add(1);
+            let values = match id.and_then(|id| by_id.get(&id)) {
+                Some(row) => row.clone(),
+                None if q.search.is_none()
+                    && matches!(outcome.as_str(), "invalid" | "excluded" | "not_included") =>
+                {
+                    let mut row = vec![Value::Null; page.columns.len()];
+                    if let Some(i) = page.columns.iter().position(|c| c == "Status") {
+                        row[i] = Value::from(match outcome.as_str() {
+                            "invalid" => "Invalid",
+                            "excluded" => "Excluded",
+                            _ => "Not Included",
+                        });
+                    }
+                    row
+                }
+                None => continue,
+            };
+            let mut row = vec![Value::Text(original)];
+            row.extend(values);
+            out.row(&kinds, &row)?;
+        }
+    }
+    out.finish()
+}
+
 /// Options shared by CLI, tasks and the multi-export command.
 pub struct BatchOptions<'a> {
     pub format: Format,

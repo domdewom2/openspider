@@ -99,6 +99,19 @@ pub fn detail_source(kind: DetailKind) -> (&'static str, DetailFn) {
     }
 }
 
+/// App views and paged exports share the same canonical adapters (UI-042/OUT-021).
+pub fn app_detail_source(kind: DetailKind) -> (&'static str, DetailFn) {
+    let (owner, source) = detail_source(kind);
+    (
+        owner,
+        match kind {
+            DetailKind::Headers => stored_header_details,
+            DetailKind::Anchors => selected_anchor_details,
+            _ => source,
+        },
+    )
+}
+
 fn table_rows(file: &CrawlFile, req: &DetailReq<'_>, table: &str) -> Result<DetailRows, ViewError> {
     let ids = serde_json::to_string(&req.url_ids.iter().map(|id| id.0).collect::<Vec<_>>())
         .expect("integer list");
@@ -184,4 +197,162 @@ pub fn url_details(
     rows.extend(crate::tabs::hreflang::url_details(file, cfg, url)?);
     rows.extend(crate::tabs::links::url_details(file, cfg, url)?);
     Ok(rows)
+}
+
+/// Every Internal column for one URL, including external/hidden URLs. Uses the same
+/// expressions and multi-column expansion as the main table (UI-031, OUT-021).
+pub fn url_properties(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    url: UrlId,
+) -> Result<Vec<(String, Value)>, ViewError> {
+    let tabs = crate::tabs::configured_for_file(cfg, file);
+    let mut q = crate::views::ViewQuery::new("Internal", "All");
+    q.columns = crate::views::ColumnSelection::All;
+    q.limit = 1;
+    let page = crate::views::query_url_ids_in(&tabs, file, cfg, &q, &[url], true)?;
+    Ok(page
+        .rows
+        .into_iter()
+        .next()
+        .map(|row| page.columns.into_iter().zip(row).collect())
+        .unwrap_or_default())
+}
+
+/// Canonical HTTP-header detail rows (UI-042/OUT-021), preserving duplicate positions.
+/// The generic F05 table source remains available unchanged.
+pub fn stored_header_details(
+    file: &CrawlFile,
+    _: &CrawlConfig,
+    req: &DetailReq<'_>,
+) -> Result<DetailRows, ViewError> {
+    let columns = [
+        ("Address", ColumnKind::Url),
+        ("Direction", ColumnKind::Text),
+        ("Header Name", ColumnKind::Text),
+        ("Header Value", ColumnKind::Text),
+    ];
+    let mut order = Vec::new();
+    for key in req.sort {
+        let (sql, text) = match key.column.as_str() {
+            "Address" => ("u.address", false),
+            "Direction" => ("h.direction", true),
+            "Header Name" => ("h.name", true),
+            "Header Value" => ("h.value", true),
+            _ => {
+                return Err(ViewError::Store(os_store::StoreError::InvalidInput(
+                    format!("Unknown header sort column: {}", key.column),
+                )))
+            }
+        };
+        let direction = if key.descending { "DESC" } else { "ASC" };
+        order.push(format!("({sql} IS NULL OR {sql}='') ASC"));
+        order.push(format!(
+            "{sql} {} {direction}",
+            if text { "COLLATE OS_TEXT" } else { "" }
+        ));
+    }
+    order.push("pick.rank,h.direction,h.position".into());
+    let ids = serde_json::to_string(&req.url_ids.iter().map(|id| id.0).collect::<Vec<_>>())
+        .expect("integer IDs");
+    let from="FROM http_headers h JOIN urls u ON u.id=h.url_id JOIN (SELECT value AS id,MIN(CAST(key AS INTEGER)) AS rank FROM json_each(?1) GROUP BY value) pick ON pick.id=h.url_id";
+    let total = file
+        .conn()
+        .query_row(&format!("SELECT COUNT(*) {from}"), [&ids], |r| r.get(0))?;
+    let mut stmt = file.conn().prepare(&format!(
+        "SELECT u.address,h.direction,h.name,h.value {from} ORDER BY {} LIMIT ?2 OFFSET ?3",
+        order.join(",")
+    ))?;
+    let rows = stmt
+        .query_map(
+            rusqlite::params![ids, req.limit.min(500), req.offset.min(i64::MAX as u64)],
+            |r| {
+                let direction: String = r.get(1)?;
+                let name: String = r.get(2)?;
+                let raw: String = r.get(3)?;
+                // Mirrors os_fetch::redact::SENSITIVE_HEADERS. N01: move the policy to
+                // os-model/os-store; C7 forbids an os-analyze -> os-fetch dependency.
+                let sensitive = matches!(
+                    name.trim().to_ascii_lowercase().as_str(),
+                    "authorization"
+                        | "proxy-authorization"
+                        | "cookie"
+                        | "set-cookie"
+                        | "set-cookie2"
+                        | "x-api-key"
+                        | "api-key"
+                        | "x-auth-token"
+                        | "x-access-token"
+                );
+                Ok(vec![
+                    Value::Text(r.get(0)?),
+                    Value::from(if direction == "request" {
+                        "Request"
+                    } else {
+                        "Response"
+                    }),
+                    name.into(),
+                    Value::from(if sensitive {
+                        "<redacted>".to_string()
+                    } else {
+                        raw
+                    }),
+                ])
+            },
+        )?
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(DetailRows {
+        columns: columns
+            .into_iter()
+            .map(|(name, kind)| (name.into(), kind))
+            .collect(),
+        rows,
+        total,
+        notes: Vec::new(),
+    })
+}
+
+/// Preserves the complete selection contract at the parameter-aware anchor extension.
+pub fn selected_anchor_details(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    req: &DetailReq<'_>,
+) -> Result<DetailRows, ViewError> {
+    let sort = req
+        .sort
+        .iter()
+        .map(|key| os_store::queries::LinkSortKey {
+            column: key.column.clone(),
+            desc: key.descending,
+        })
+        .collect::<Vec<_>>();
+    let rows = os_store::queries::anchors::selected_detail_rows(
+        file,
+        req.url_ids,
+        req.params,
+        &sort,
+        req.offset,
+        req.limit,
+    );
+    let rows = match rows {
+        Err(os_store::StoreError::NotImplemented(_))
+            if req.params.is_null() || req.params.as_object().is_some_and(|p| p.is_empty()) =>
+        {
+            return anchors(file, cfg, req);
+        }
+        result => result.map_err(|e| match e {
+            os_store::StoreError::NotImplemented(owner) => ViewError::NotImplemented(owner),
+            other => ViewError::Store(other),
+        })?,
+    };
+    Ok(DetailRows {
+        columns: rows
+            .columns
+            .into_iter()
+            .map(|name| (name, ColumnKind::Text))
+            .collect(),
+        rows: rows.rows,
+        total: rows.total,
+        notes: Vec::new(),
+    })
 }

@@ -1,0 +1,13 @@
+[
+  {
+    "count": 2,
+    "delta": null,
+    "filter": "Duplicate",
+    "id": "Page Titles/Duplicate",
+    "pct": 66.7,
+    "priority": "medium",
+    "segmentShares": [],
+    "tab": "Page Titles",
+    "type": "opportunity"
+  }
+]

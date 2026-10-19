@@ -1,0 +1,54 @@
+{
+  "columns": [
+    {
+      "align": "left",
+      "defaultVisible": true,
+      "defaultWidth": 320,
+      "extension": false,
+      "key": "Address",
+      "kind": {
+        "kind": "url"
+      },
+      "needs": null,
+      "searchable": [
+        "contains",
+        "notContains",
+        "equals",
+        "notEquals",
+        "startsWith",
+        "endsWith",
+        "regex",
+        "notRegex",
+        "isEmpty",
+        "isNotEmpty"
+      ],
+      "sortable": true
+    },
+    {
+      "align": "right",
+      "defaultVisible": true,
+      "defaultWidth": 96,
+      "extension": false,
+      "key": "Word Count",
+      "kind": {
+        "kind": "int"
+      },
+      "needs": null,
+      "searchable": [
+        "equals",
+        "notEquals",
+        "greaterThan",
+        "lessThan",
+        "isEmpty",
+        "isNotEmpty"
+      ],
+      "sortable": true
+    }
+  ],
+  "emptyState": null,
+  "op": null,
+  "state": "ready",
+  "total": 1,
+  "version": 42,
+  "viewId": "00000000-0000-74bf-a1b5-12ffabe74e6c"
+}

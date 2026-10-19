@@ -214,6 +214,69 @@ impl ReadPool {
         pool.run_with(crawl, token, f).await
     }
 
+    /// Runs all reads in one SQLite snapshot, rolling back even when the callback fails.
+    /// Additive K2-61 extension for versioned app views and exports.
+    pub async fn run_snapshot<T: Send + 'static>(
+        &self,
+        crawl: CrawlKey,
+        f: impl FnOnce(&CrawlFile, &CancelToken) -> Result<T, StoreError> + Send + 'static,
+    ) -> Result<T, CmdError> {
+        let slot = self
+            .inner
+            .lock()
+            .get(&crawl)
+            .cloned()
+            .ok_or_else(|| no_crawl(&crawl.0))?;
+        let token = crate::runtime::current_cancel();
+        let access = slot.access.clone().read_owned().await;
+        let permit = Arc::clone(&slot.permits)
+            .acquire_owned()
+            .await
+            .map_err(|_| internal("ReadPool::run_snapshot", "Semaphore geschlossen"))?;
+        let hub = Arc::clone(&self.inner.hub);
+        tokio::task::spawn_blocking(move || {
+            let _permit = permit;
+            let _access = access;
+            let file = checkout(&slot).map_err(|e| store_error(&e))?;
+            let mut reusable = file.conn().is_autocommit();
+            let outcome = {
+                let _registration = hub.register(&token, file.conn().get_interrupt_handle());
+                std::panic::catch_unwind(AssertUnwindSafe(|| {
+                    if token.is_cancelled() {
+                        return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"));
+                    }
+                    reusable = false;
+                    file.conn()
+                        .execute_batch("BEGIN DEFERRED")
+                        .map_err(|e| store_error(&e.into()))?;
+                    let result = f(&file, &token);
+                    let rollback = file.conn().execute_batch("ROLLBACK");
+                    // Check rollback even when the callback failed. Only clean connections return.
+                    rollback.map_err(|e| store_error(&e.into()))?;
+                    reusable = file.conn().is_autocommit();
+                    result.map_err(|e| store_error(&e))
+                }))
+            };
+            match outcome {
+                Ok(result) => {
+                    if reusable {
+                        slot.idle
+                            .lock()
+                            .unwrap_or_else(|p| p.into_inner())
+                            .push(file);
+                    }
+                    result
+                }
+                Err(panic) => Err(internal(
+                    "ReadPool::run_snapshot",
+                    panic_text(panic.as_ref()),
+                )),
+            }
+        })
+        .await
+        .map_err(|e| internal("ReadPool::run_snapshot", e.to_string()))?
+    }
+
     /// Wie [`run`](Self::run) mit ausdrücklicher Marke.
     pub async fn run_with<T: Send + 'static>(
         &self,

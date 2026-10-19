@@ -542,3 +542,12 @@ pub(super) fn stream_rows(
     drop(tx);
     Ok(columns)
 }
+
+/// Resolve expanded headers without counting or fetching the view's data rows.
+pub(super) fn planned_columns(
+    file: &CrawlFile,
+    built: &Built<'_>,
+) -> Result<Vec<String>, ViewError> {
+    let prepared = prepare_columns(file.conn(), built, true)?;
+    Ok(header(&built.columns, &prepared.plans))
+}

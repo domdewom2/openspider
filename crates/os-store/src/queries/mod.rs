@@ -691,3 +691,6 @@ pub fn session_counts(conn: &Connection) -> Result<SessionCounts, StoreError> {
         )?,
     })
 }
+
+/// App read helpers (additive K2-61 extension).
+pub mod app_support;

@@ -1,0 +1,110 @@
+{
+  "filters": [
+    {
+      "filter": {
+        "analysisStep": null,
+        "count": 6,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": 100.0,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      "tab": "Internal"
+    },
+    {
+      "filter": {
+        "analysisStep": null,
+        "count": 5,
+        "id": "HTML",
+        "issue": null,
+        "labelTemplate": "HTML",
+        "params": {},
+        "pct": 83.3,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      "tab": "Internal"
+    },
+    {
+      "filter": {
+        "analysisStep": null,
+        "count": 0,
+        "id": "JavaScript",
+        "issue": null,
+        "labelTemplate": "JavaScript",
+        "params": {},
+        "pct": 0.0,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      "tab": "Internal"
+    },
+    {
+      "filter": {
+        "analysisStep": null,
+        "count": 0,
+        "id": "CSS",
+        "issue": null,
+        "labelTemplate": "CSS",
+        "params": {},
+        "pct": 0.0,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      "tab": "Internal"
+    },
+    {
+      "filter": {
+        "analysisStep": null,
+        "count": 1,
+        "id": "Images",
+        "issue": null,
+        "labelTemplate": "Images",
+        "params": {},
+        "pct": 16.7,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      "tab": "Internal"
+    },
+    {
+      "filter": {
+        "analysisStep": null,
+        "count": 0,
+        "id": "PDF",
+        "issue": null,
+        "labelTemplate": "PDF",
+        "params": {},
+        "pct": 0.0,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      "tab": "Internal"
+    },
+    {
+      "filter": {
+        "analysisStep": null,
+        "count": 0,
+        "id": "Unknown",
+        "issue": null,
+        "labelTemplate": "Unknown",
+        "params": {},
+        "pct": 0.0,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      "tab": "Internal"
+    }
+  ],
+  "version": 42
+}

@@ -91,10 +91,10 @@ async fn errors_come_back_as_cmd_error_objects() {
     assert_eq!(v["err"]["args"]["command"], "gibt.es.nicht");
     assert_eq!(v["err"]["retryable"], false);
 
-    // noch nicht umgesetzte Domäne
+    // K06 validates the implemented command arguments.
     session.handle_text(r#"{"id":3,"cmd":"view.rows","args":{}}"#);
     let v = next(&mut rx).await;
-    assert_eq!(v["err"]["code"], "Unsupported");
+    assert_eq!(v["err"]["code"], "InvalidInput");
 
     session.handle_text("das ist kein JSON");
     let v = next(&mut rx).await;

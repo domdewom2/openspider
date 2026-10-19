@@ -1,0 +1,7 @@
+[
+  [{"needs_config":"advanced.html_validation"},{"kind":"needsConfig","key":"advanced.html_validation"}],
+  ["needs_recrawl",{"kind":"needsRecrawl"}],
+  [{"incomplete":{"unchecked":3}},{"kind":"incomplete","unchecked":3}],
+  ["needs_rendering",{"kind":"needsRendering"}],
+  ["stale",{"kind":"stale"}]
+]

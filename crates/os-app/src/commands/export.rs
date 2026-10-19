@@ -1,20 +1,1049 @@
-//! export.* (OUT-006, OUT-020, OUT-021, OUT-030 ff., OUT-120 ff.).
-//!
-//! STUB(M2-K06): Gerüst von M2-F01. Name, Argument- und Rückgabetyp sowie `long_running` stehen im Katalog
-//! (`docs/plan/M2.md` 3.6a, `M2-ui-concept.md` 4.4) und ändert M2-K06 nicht; es ersetzt diese Datei durch die
-//! Umsetzung. Bis dahin antwortet jeder Command mit `CmdError::Unsupported`.
-
-stub_commands!(
-    "M2-K06",
-    [
-        ("export.catalog", "void", "ExportCatalog", false),
-        ("export.suggestName", "SuggestNameArgs", "string", false),
-        ("export.view", "ExportViewArgs", "FileResult", true),
-        ("export.detail", "ExportDetailArgs", "FileResult", true),
-        ("export.bulk", "ExportBulkArgs", "FileResult", true),
-        ("export.report", "ExportBulkArgs", "FileResult", true),
-        ("export.sitemap", "ExportSitemapArgs", "FileResult", true),
-        ("export.issues", "ExportPanelArgs", "FileResult", true),
-        ("export.sidebar", "ExportPanelArgs", "FileResult", true),
-    ]
-);
+//! Export operations: shared core writers, snapshot reads, cancellation, atomic file publication.
+use super::{catalog, view};
+use crate::{
+    dto::*,
+    ops::ProgressSink,
+    registry::{CmdResult, CommandMeta, Registry},
+    runtime::{
+        error::{parse_args, store_error, to_json},
+        App, CallCtx,
+    },
+};
+use futures_util::future::BoxFuture;
+use os_analyze::{defs::ColumnKind, views};
+use os_export::{
+    catalog::{self as core, ExportKind, ExportRef, TableJob},
+    types::{ExportCtx, ExportFileInfo},
+    ExportError, Format, TableWriter,
+};
+use os_model::{CancelToken, CrawlConfig, Value};
+use std::{
+    collections::BTreeMap,
+    path::{Path, PathBuf},
+};
+/// OUT-021 canonical detail paths, also used as the workbook's sheet title.
+fn detail_name(spec: &ViewSpec) -> &'static str {
+    match spec {
+        ViewSpec::Tab { .. } => "URL Details",
+        ViewSpec::Inlinks { .. } => "Inlinks",
+        ViewSpec::Outlinks { .. } => "Outlinks",
+        ViewSpec::Images { .. } => "Image Details",
+        ViewSpec::Resources { .. } => "Resources",
+        ViewSpec::Detail { detail, .. } => match detail {
+            DetailTable::Headers => "HTTP Headers",
+            DetailTable::Cookies => "Cookies",
+            DetailTable::ConsoleLog => "Chrome Console Log",
+            DetailTable::BlockedResources => "Blocked Resources",
+            DetailTable::Network => "Network",
+            DetailTable::Spelling => "Spelling & Grammar Details",
+            DetailTable::A11yRules | DetailTable::A11yNodes => "Accessibility Details",
+            DetailTable::Duplicates => "Duplicate Details",
+            DetailTable::NGrams => "N-grams",
+            DetailTable::StructuredDataItems | DetailTable::StructuredDataIssues => {
+                "Structured Data Details"
+            }
+            DetailTable::RedirectChain => "Redirect Chain",
+            DetailTable::SitemapMembership => "Sitemap Membership",
+            DetailTable::CustomSearch => "Custom Search",
+            DetailTable::CustomExtraction => "Custom Extraction",
+            DetailTable::CustomJs => "Custom JavaScript",
+            DetailTable::ApiValues => "API Values",
+            DetailTable::Forms => "Forms",
+            DetailTable::Hreflang => "Hreflang",
+            DetailTable::CrawlPath => "Crawl Path",
+            DetailTable::Anchors => "Anchors",
+        },
+    }
+}
+fn export_error(e: ExportError) -> CmdError {
+    match e {
+        ExportError::Store(e) => store_error(&e),
+        ExportError::View(e) => catalog::view_error(e),
+        ExportError::Name(e) => catalog::view_error(os_analyze::ViewError::Name(e)),
+        ExportError::Io { path, source } => io_error(&path, source),
+        ExportError::Unsupported(s) => {
+            CmdError::new(ErrorCode::Unsupported, "err-export-unsupported").with_arg("format", s)
+        }
+        ExportError::NotImplemented(s) => CmdError::unsupported("export", s),
+        e => CmdError::new(ErrorCode::Io, "err-export-write").with_detail(e.to_string()),
+    }
+}
+fn io_error(path: &Path, e: std::io::Error) -> CmdError {
+    CmdError::new(
+        if e.kind() == std::io::ErrorKind::PermissionDenied {
+            ErrorCode::Permission
+        } else {
+            ErrorCode::Io
+        },
+        "err-export-io",
+    )
+    .with_arg("path", path.display().to_string())
+    .with_detail(e.to_string())
+}
+fn format(f: ExportFormatDto) -> Result<Format, CmdError> {
+    match f {
+        ExportFormatDto::Csv => Ok(Format::Csv),
+        ExportFormatDto::Xlsx => Ok(Format::Xlsx),
+        ExportFormatDto::Json => Err(CmdError::new(
+            ErrorCode::Unsupported,
+            "err-export-unsupported",
+        )
+        .with_arg("format", "json")),
+    }
+}
+fn checked(token: &CancelToken) -> Result<(), CmdError> {
+    if token.is_cancelled() {
+        Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"))
+    } else {
+        Ok(())
+    }
+}
+/// The wrapper covers CPU/file writes in addition to the pool's SQLite interrupt.
+struct GuardedWriter {
+    inner: Box<dyn TableWriter>,
+    cancel: CancelToken,
+    progress: ProgressSink,
+    rows: u64,
+    cfg: CrawlConfig,
+    masked: Vec<usize>,
+}
+impl TableWriter for GuardedWriter {
+    fn header(&mut self, n: &[String]) -> Result<(), ExportError> {
+        self.check()?;
+        self.masked = n
+            .iter()
+            .enumerate()
+            .filter_map(|(i, name)| {
+                catalog::extraction_key(name)
+                    .filter(|key| !catalog::config_on(&self.cfg, key))
+                    .map(|_| i)
+            })
+            .collect();
+        self.inner.header(n)
+    }
+    fn row(&mut self, k: &[ColumnKind], v: &[Value]) -> Result<(), ExportError> {
+        self.check()?;
+        if self.masked.is_empty() {
+            self.inner.row(k, v)?;
+        } else {
+            let mut row = v.to_vec();
+            for i in &self.masked {
+                if let Some(value) = row.get_mut(*i) {
+                    *value = Value::Null;
+                }
+            }
+            self.inner.row(k, &row)?;
+        }
+        self.rows += 1;
+        self.progress.report(self.rows, None);
+        Ok(())
+    }
+    fn finish(self: Box<Self>) -> Result<ExportFileInfo, ExportError> {
+        self.check()?;
+        self.inner.finish()
+    }
+}
+impl GuardedWriter {
+    fn check(&self) -> Result<(), ExportError> {
+        self.cancel
+            .checkpoint()
+            .map_err(|_| ExportError::Write("Export cancelled".into()))
+    }
+}
+fn writer(
+    path: &Path,
+    fmt: Format,
+    cfg: &CrawlConfig,
+    cancel: &CancelToken,
+    progress: &ProgressSink,
+) -> Result<Box<dyn TableWriter>, ExportError> {
+    detail_writer(path, fmt, cfg, cancel, progress, "Export")
+}
+fn detail_writer(
+    path: &Path,
+    fmt: Format,
+    cfg: &CrawlConfig,
+    cancel: &CancelToken,
+    progress: &ProgressSink,
+    name: &str,
+) -> Result<Box<dyn TableWriter>, ExportError> {
+    Ok(Box::new(GuardedWriter {
+        inner: os_export::open_writer(path, fmt, name, &os_export::pipeline::writer_options(cfg))?,
+        cancel: cancel.clone(),
+        progress: progress.clone(),
+        rows: 0,
+        cfg: cfg.clone(),
+        masked: Vec::new(),
+    }))
+}
+/// A private sibling directory keeps failed or cancelled exports away from existing user files.
+struct Stage(PathBuf);
+impl Stage {
+    fn new(parent: &Path) -> Result<Self, CmdError> {
+        std::fs::create_dir_all(parent).map_err(|e| io_error(parent, e))?;
+        let path = parent.join(format!(".openspider-export-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir(&path).map_err(|e| io_error(&path, e))?;
+        Ok(Self(path))
+    }
+    fn publish(
+        &self,
+        path: &Path,
+        target: &Path,
+        token: &CancelToken,
+    ) -> Result<FileResult, CmdError> {
+        checked(token)?;
+        let bytes = std::fs::metadata(path)
+            .map_err(|e| io_error(path, e))?
+            .len();
+        std::fs::rename(path, target).map_err(|e| io_error(target, e))?;
+        Ok(FileResult {
+            path: target.display().to_string(),
+            bytes,
+        })
+    }
+}
+impl Drop for Stage {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.0);
+    }
+}
+fn parent(path: &Path) -> &Path {
+    path.parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or(Path::new("."))
+}
+fn requirement<'a>(
+    kind: ExportKind,
+    name: &str,
+    entries: &'a [&'a core::TableEntry],
+) -> &'a [core::reports::ReportRequirement] {
+    if let Some(e) = core::find_table(entries, name) {
+        e.requires
+    } else if kind == ExportKind::Report {
+        core::reports::resolve(name).map_or(&[], |e| e.requires)
+    } else {
+        &[]
+    }
+}
+fn catalog_command<'a>(
+    app: &'a App,
+    ctx: CallCtx,
+    _: serde_json::Value,
+) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let s = catalog::session(app, &ctx)?;
+        app.read_pool()
+            .run_snapshot(s.key, move |file, _| {
+                let groups = |kind| {
+                    let entries = if kind == ExportKind::Bulk {
+                        core::bulk_tables()
+                    } else {
+                        os_export::reports::report_tables()
+                    };
+                    let mut out: BTreeMap<String, Vec<ExportItem>> = BTreeMap::new();
+                    for name in core::list_with(kind, &s.config) {
+                        let availability = os_export::reports::prereq::availability(
+                            &name,
+                            requirement(kind, &name, &entries),
+                            file,
+                            &s.config,
+                        );
+                        let group = name.split(':').next().unwrap_or("Exports").to_owned();
+                        out.entry(group).or_default().push(ExportItem {
+                            name: name.clone(),
+                            label_key: name,
+                            enabled: availability.enabled,
+                            disabled_reason: availability.reason,
+                        });
+                    }
+                    out.into_iter()
+                        .map(|(key, items)| ExportGroup {
+                            label_key: key.clone(),
+                            key,
+                            items,
+                        })
+                        .collect()
+                };
+                Ok(to_json(&ExportCatalog {
+                    bulk: groups(ExportKind::Bulk),
+                    reports: groups(ExportKind::Report),
+                    sitemaps: vec![
+                        ExportItem {
+                            name: "pages".into(),
+                            label_key: "export-sitemap-pages".into(),
+                            enabled: os_export::sitemap_gen::supports_configuration(
+                                &s.config.sitemap_gen,
+                            ),
+                            disabled_reason: (!os_export::sitemap_gen::supports_configuration(
+                                &s.config.sitemap_gen,
+                            ))
+                            .then(|| "M2-X02".into()),
+                        },
+                        ExportItem {
+                            name: "images".into(),
+                            label_key: "export-sitemap-images".into(),
+                            enabled: {
+                                let mut config = s.config.sitemap_gen.clone();
+                                config.images.enabled = true;
+                                os_export::sitemap_gen::supports_configuration(&config)
+                            },
+                            disabled_reason: {
+                                let mut config = s.config.sitemap_gen.clone();
+                                config.images.enabled = true;
+                                (!os_export::sitemap_gen::supports_configuration(&config))
+                                    .then(|| "M2-X02".into())
+                            },
+                        },
+                    ],
+                }))
+            })
+            .await?
+    })
+}
+fn suggest<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let args: SuggestNameArgs = parse_args(args)?;
+        let s = catalog::session(app, &ctx)?;
+        app.read_pool()
+            .run_snapshot(s.key, move |file, _| {
+                let started = file.meta()?.started_at;
+                Ok((|| {
+                    let (name, fmt) = match args.target {
+                        ExportTarget::View {
+                            tab,
+                            filter,
+                            format: f,
+                        } => {
+                            let tabs = os_analyze::tabs::configured_for_file(&s.config, file);
+                            (
+                                os_export::tab_export::canonical_name(
+                                    &tabs, &s.config, &tab, &filter,
+                                )
+                                .map_err(export_error)?,
+                                format(f)?,
+                            )
+                        }
+                        ExportTarget::Bulk { name, format: f }
+                        | ExportTarget::Report { name, format: f } => (name, format(f)?),
+                        ExportTarget::Detail { spec, format: f } => {
+                            (format!("Detail:{}", detail_name(&spec)), format(f)?)
+                        }
+                        ExportTarget::Sitemap { sitemap_kind } => {
+                            return to_json(&format!(
+                                "sitemap_{}.xml",
+                                os_export::naming::file_name(&sitemap_kind, None, "")
+                            ))
+                        }
+                    };
+                    to_json(&os_export::tab_export::suggest_file_name(
+                        &name, None, started, None, fmt,
+                    ))
+                })())
+            })
+            .await?
+    })
+}
+fn export_view<'a>(
+    app: &'a App,
+    ctx: CallCtx,
+    args: serde_json::Value,
+) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let args: ExportViewArgs = parse_args(args)?;
+        let fmt = format(args.format)?;
+        let v = view::get(app, &ctx, &args.view_id)?;
+        if args.version != v.version {
+            return Err(view::stale());
+        }
+        let columns = args.columns.clone().unwrap_or(v.columns.clone());
+        let mut q = view::tab_query(&v.spec, &columns, 0, 1)?;
+        if args.all_columns {
+            q.columns = views::ColumnSelection::All;
+        }
+        let app = app.clone();
+        let worker = app.clone();
+        let op = app
+            .ops()
+            .spawn("export-view", true, move |token, progress| {
+                Box::pin(async move {
+                    let path = PathBuf::from(&args.path);
+                    let worker_token = token.clone();
+                    let result = worker
+                        .read_pool()
+                        .run_snapshot(v.session.key, move |file, _| {
+                            Ok((|| {
+                                if os_store::queries::change_seq(file.conn())
+                                    .map_err(|e| store_error(&e))?
+                                    != args.version
+                                {
+                                    return Err(view::stale());
+                                }
+                                let tabs =
+                                    os_analyze::tabs::configured_for_file(&v.session.config, file);
+                                let stage = Stage::new(parent(&path))?;
+                                let staged = stage.0.join("view");
+                                let result = os_export::pipeline::write_view_with_upload_order(
+                                    &tabs,
+                                    file,
+                                    &v.session.config,
+                                    &q,
+                                    args.preserve_upload_order,
+                                    || {
+                                        writer(
+                                            &staged,
+                                            fmt,
+                                            &v.session.config,
+                                            &worker_token,
+                                            &progress,
+                                        )
+                                    },
+                                );
+                                checked(&worker_token)?;
+                                result.map_err(export_error)?;
+                                to_json(&stage.publish(&staged, &path, &worker_token)?)
+                            })())
+                        })
+                        .await?;
+                    checked(&token)?;
+                    result
+                })
+            });
+        to_json(&op)
+    })
+}
+async fn selection_ids(
+    app: &App,
+    ctx: &CallCtx,
+    selection: &Selection,
+) -> Result<Vec<os_model::UrlId>, CmdError> {
+    match selection {
+        Selection::Ids { ids } => {
+            let mut seen = std::collections::HashSet::new();
+            Ok(ids
+                .iter()
+                .copied()
+                .filter(|id| seen.insert(*id))
+                .map(os_model::UrlId)
+                .collect())
+        }
+        Selection::All {
+            view_id,
+            version,
+            except,
+        } => {
+            let v = view::get(app, ctx, view_id)?;
+            if *version != v.version {
+                return Err(view::stale());
+            }
+            let mut ids = Vec::new();
+            let mut offset = 0;
+            loop {
+                let p = view::page(
+                    app,
+                    &v.session,
+                    v.spec.clone(),
+                    v.columns.clone(),
+                    offset,
+                    500,
+                    Some(*version),
+                )
+                .await?;
+                ids.extend(
+                    p.keys
+                        .iter()
+                        .filter(|id| !except.contains(id))
+                        .copied()
+                        .map(os_model::UrlId),
+                );
+                offset += p.keys.len() as u64;
+                if p.keys.is_empty() || offset >= p.total {
+                    break;
+                }
+            }
+            Ok(ids)
+        }
+    }
+}
+fn export_detail<'a>(
+    app: &'a App,
+    ctx: CallCtx,
+    args: serde_json::Value,
+) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let args: ExportDetailArgs = parse_args(args)?;
+        let fmt = format(args.format)?;
+        let s = catalog::session(app, &ctx)?;
+        let app = app.clone();
+        let worker = app.clone();
+        let op = app
+            .ops()
+            .spawn("export-detail", true, move |token, progress| {
+                Box::pin(async move {
+                    let ids = selection_ids(&worker, &ctx, &args.selection).await?;
+                    let mut spec = args.spec;
+                    match &mut spec {
+                        ViewSpec::Inlinks { url_ids, .. }
+                        | ViewSpec::Outlinks { url_ids, .. }
+                        | ViewSpec::Resources { url_ids, .. }
+                        | ViewSpec::Images { url_ids, .. }
+                        | ViewSpec::Detail { url_ids, .. } => {
+                            *url_ids = ids.iter().map(|id| id.0).collect()
+                        }
+                        ViewSpec::Tab { .. } => {}
+                    };
+                    let path = PathBuf::from(args.path);
+                    let worker_token = token.clone();
+                    let result = worker
+                        .read_pool()
+                        .run_snapshot(s.key, move |file, _| {
+                            Ok((|| {
+                                let stage = Stage::new(parent(&path))?;
+                                let staged = stage.0.join("detail");
+                                let mut out = detail_writer(
+                                    &staged,
+                                    fmt,
+                                    &s.config,
+                                    &worker_token,
+                                    &progress,
+                                    detail_name(&spec),
+                                )
+                                .map_err(export_error)?;
+                                let report = |n| progress.report(n, None);
+                                let mut context = ExportCtx {
+                                    cancel: &worker_token,
+                                    progress: &report,
+                                    skip_empty: false,
+                                    workbook: None,
+                                    skipped: vec![],
+                                };
+                                if matches!(spec, ViewSpec::Tab { .. }) {
+                                    // URL Details uses the existing Tab descriptor as its property schema.
+                                    let many = ids.len() > 1;
+                                    let names = if many {
+                                        vec!["Address".into(), "Name".into(), "Value".into()]
+                                    } else {
+                                        vec!["Name".into(), "Value".into()]
+                                    };
+                                    out.header(&names).map_err(export_error)?;
+                                    for id in &ids {
+                                        checked(&worker_token)?;
+                                        let props = os_analyze::details::url_properties(
+                                            file, &s.config, *id,
+                                        )
+                                        .map_err(catalog::view_error)?;
+                                        let address = props
+                                            .iter()
+                                            .find(|(n, _)| n == "Address")
+                                            .map(|(_, v)| v.clone())
+                                            .unwrap_or(Value::Null);
+                                        for (name, value) in props {
+                                            let value = if catalog::extraction_key(&name)
+                                                .is_some_and(|key| {
+                                                    !catalog::config_on(&s.config, key)
+                                                }) {
+                                                Value::Null
+                                            } else {
+                                                value
+                                            };
+                                            let mut values = vec![Value::Text(name), value];
+                                            let mut kinds =
+                                                vec![ColumnKind::Text, ColumnKind::Text];
+                                            if many {
+                                                values.insert(0, address.clone());
+                                                kinds.insert(0, ColumnKind::Url);
+                                            }
+                                            out.row(&kinds, &values).map_err(export_error)?;
+                                        }
+                                    }
+                                } else if let Some((kind, ids, params, sort)) =
+                                    view::detail_spec(&spec)
+                                {
+                                    if let Some(gate) = view::detail_gate(kind, &s.config) {
+                                        return Err(CmdError::new(
+                                            ErrorCode::Unsupported,
+                                            "err-detail-unavailable",
+                                        )
+                                        .with_arg(
+                                            "state",
+                                            serde_json::to_value(gate).unwrap_or_default(),
+                                        ));
+                                    }
+                                    let tabs =
+                                        os_analyze::tabs::configured_for_file(&s.config, file);
+                                    let job = TableJob {
+                                        file,
+                                        cfg: &s.config,
+                                        tabs: &tabs,
+                                        entry_name: detail_name(&spec),
+                                    };
+                                    os_export::detail_export::export_detail_with_ctx(
+                                        kind,
+                                        &job,
+                                        &os_analyze::details::DetailReq {
+                                            url_ids: &ids,
+                                            params: &params,
+                                            sort: &sort,
+                                            offset: 0,
+                                            limit: 500,
+                                        },
+                                        out.as_mut(),
+                                        &mut context,
+                                    )
+                                    .map_err(export_error)?;
+                                } else {
+                                    let mut offset = 0;
+                                    let mut names = None;
+                                    loop {
+                                        checked(&worker_token)?;
+                                        let (selection, page) =
+                                            view::link_selection(&spec, &s.config, offset, 500)?;
+                                        let p = os_store::queries::app_support::selected_links(
+                                            file.conn(),
+                                            &selection,
+                                            &page,
+                                        )
+                                        .map_err(|e| store_error(&e))?;
+                                        if names.is_none() {
+                                            let header = os_export::links_export::link_header();
+                                            out.header(&header).map_err(export_error)?;
+                                            names = Some(header);
+                                        }
+                                        for row in &p.rows {
+                                            out.row(
+                                                &os_export::links_export::link_kinds(),
+                                                &row[..15],
+                                            )
+                                            .map_err(export_error)?;
+                                        }
+                                        offset += p.rows.len() as u64;
+                                        if p.rows.is_empty() || offset >= p.total {
+                                            break;
+                                        }
+                                    }
+                                }
+                                checked(&worker_token)?;
+                                out.finish().map_err(export_error)?;
+                                to_json(&stage.publish(&staged, &path, &worker_token)?)
+                            })())
+                        })
+                        .await?;
+                    checked(&token)?;
+                    result
+                })
+            });
+        to_json(&op)
+    })
+}
+fn named<'a>(
+    app: &'a App,
+    ctx: CallCtx,
+    args: serde_json::Value,
+    kind: ExportKind,
+) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let args: ExportBulkArgs = parse_args(args)?;
+        let fmt = format(args.format)?;
+        let s = catalog::session(app, &ctx)?;
+        let resolved = core::resolve_with(kind, &args.name, &s.config)
+            .map_err(|e| export_error(ExportError::Name(e)))?;
+        let name = match resolved {
+            ExportRef::Bulk(n) | ExportRef::Report(n) => n,
+            _ => unreachable!(),
+        };
+        let worker = app.clone();
+        let op = app
+            .ops()
+            .spawn("export-catalog-item", true, move |token, progress| {
+                Box::pin(async move {
+                    let work_token = token.clone();
+                    let result = worker
+                        .read_pool()
+                        .run_snapshot(s.key, move |file, _| {
+                            Ok((|| {
+                                let entries = if kind == ExportKind::Bulk {
+                                    core::bulk_tables()
+                                } else {
+                                    os_export::reports::report_tables()
+                                };
+                                let availability = os_export::reports::prereq::availability(
+                                    &name,
+                                    requirement(kind, &name, &entries),
+                                    file,
+                                    &s.config,
+                                );
+                                if !availability.enabled {
+                                    return Err(CmdError::new(
+                                        ErrorCode::Unsupported,
+                                        "err-export-unavailable",
+                                    )
+                                    .with_arg("reason", availability.reason.unwrap_or_default()));
+                                }
+                                let dir = PathBuf::from(args.dir);
+                                let stage = Stage::new(&dir)?;
+                                if kind == ExportKind::Bulk && name == core::bulk_issues::BULK_NAME
+                                {
+                                    let tabs =
+                                        os_analyze::tabs::configured_for_file(&s.config, file);
+                                    let result = core::bulk_issues::export_in(
+                                        &tabs, file, &s.config, &stage.0, fmt,
+                                    )
+                                    .map_err(export_error)?;
+                                    checked(&work_token)?;
+                                    let mut bytes = 0;
+                                    for info in result.files {
+                                        let relative =
+                                            info.path.strip_prefix(&stage.0).map_err(|e| {
+                                                CmdError::new(
+                                                    ErrorCode::Internal,
+                                                    "err-export-path",
+                                                )
+                                                .with_detail(e.to_string())
+                                            })?;
+                                        let target = dir.join(relative);
+                                        std::fs::create_dir_all(parent(&target))
+                                            .map_err(|e| io_error(&target, e))?;
+                                        bytes +=
+                                            stage.publish(&info.path, &target, &work_token)?.bytes;
+                                    }
+                                    return to_json(&FileResult {
+                                        path: dir.display().to_string(),
+                                        bytes,
+                                    });
+                                }
+                                let filename = if let Some(e) = core::find_table(&entries, &name) {
+                                    e.file_name(fmt.extension())
+                                } else if kind == ExportKind::Report {
+                                    core::reports::resolve(&name)
+                                        .map_err(|e| export_error(ExportError::Name(e)))?
+                                        .file_name(fmt.extension())
+                                } else {
+                                    os_export::naming::file_name(&name, None, fmt.extension())
+                                };
+                                let target = dir.join(&filename);
+                                let staged = stage.0.join(filename);
+                                let mut out =
+                                    writer(&staged, fmt, &s.config, &work_token, &progress)
+                                        .map_err(export_error)?;
+                                let tabs = os_analyze::tabs::configured_for_file(&s.config, file);
+                                let job = TableJob {
+                                    file,
+                                    cfg: &s.config,
+                                    tabs: &tabs,
+                                    entry_name: &name,
+                                };
+                                let report = |n| progress.report(n, None);
+                                let mut context = ExportCtx {
+                                    cancel: &work_token,
+                                    progress: &report,
+                                    skip_empty: false,
+                                    workbook: None,
+                                    skipped: vec![],
+                                };
+                                if kind == ExportKind::Report {
+                                    os_export::reports::save_report_to(
+                                        &job,
+                                        out.as_mut(),
+                                        &mut context,
+                                    )
+                                    .map_err(export_error)?;
+                                } else if let Some(e) = core::find_table(&entries, &name) {
+                                    let header = match e.header_fn {
+                                        Some(f) => f(&job).map_err(export_error)?,
+                                        None => e.header.iter().map(|n| (*n).into()).collect(),
+                                    };
+                                    out.header(&header).map_err(export_error)?;
+                                    (e.run)(&job, out.as_mut()).map_err(export_error)?;
+                                } else if let Some(e) = core::dynamic_entries(&s.config)
+                                    .into_iter()
+                                    .find(|e| e.name == name)
+                                {
+                                    out.header(&e.header).map_err(export_error)?;
+                                    (e.run)(&job, out.as_mut()).map_err(export_error)?;
+                                } else if name == core::bulk_issues::BULK_NAME {
+                                    core::bulk_issues::export_to(&job, out.as_mut(), &mut context)
+                                        .map_err(export_error)?;
+                                } else {
+                                    let e = core::bulk_links::resolve(&name)
+                                        .map_err(|e| export_error(ExportError::Name(e)))?;
+                                    os_export::links_export::export_link_entry_to(
+                                        e,
+                                        &job,
+                                        out.as_mut(),
+                                        &mut context,
+                                    )
+                                    .map_err(export_error)?;
+                                }
+                                checked(&work_token)?;
+                                out.finish().map_err(export_error)?;
+                                to_json(&stage.publish(&staged, &target, &work_token)?)
+                            })())
+                        })
+                        .await?;
+                    checked(&token)?;
+                    result
+                })
+            });
+        to_json(&op)
+    })
+}
+fn bulk<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
+    named(app, ctx, args, ExportKind::Bulk)
+}
+fn report<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
+    named(app, ctx, args, ExportKind::Report)
+}
+fn sitemap<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let args: ExportSitemapArgs = parse_args(args)?;
+        let s = catalog::session(app, &ctx)?;
+        let mut options: os_model::SitemapGenConfig = match args.options {
+            Some(value) => parse_args(value)?,
+            None => s.config.sitemap_gen.clone(),
+        };
+        match args.sitemap_kind.as_str() {
+            "pages" => {}
+            "images" => options.images.enabled = true,
+            _ => return Err(CmdError::invalid_input("err-sitemap-kind", "sitemapKind")),
+        };
+        let worker = app.clone();
+        let clock = app.config().clock.clone();
+        let op = app
+            .ops()
+            .spawn("export-sitemap", true, move |token, progress| {
+                Box::pin(async move {
+                    let work_token = token.clone();
+                    let result = worker
+                        .read_pool()
+                        .run_snapshot(s.key, move |file, _| {
+                            Ok((|| {
+                                checked(&work_token)?;
+                                let dir = PathBuf::from(args.dir);
+                                let stage = Stage::new(&dir)?;
+                                let report = os_export::sitemap_gen::generate_configured(
+                                    file,
+                                    &options,
+                                    clock.as_ref(),
+                                    &stage.0,
+                                )
+                                .map_err(export_error)?;
+                                checked(&work_token)?;
+                                let mut bytes = 0;
+                                for info in report.files {
+                                    let target =
+                                        dir.join(info.path.file_name().unwrap_or_default());
+                                    bytes += stage.publish(&info.path, &target, &work_token)?.bytes;
+                                }
+                                progress.report(report.urls, Some(report.urls));
+                                to_json(&FileResult {
+                                    path: dir.display().to_string(),
+                                    bytes,
+                                })
+                            })())
+                        })
+                        .await?;
+                    checked(&token)?;
+                    result
+                })
+            });
+        to_json(&op)
+    })
+}
+fn panel<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let args: ExportPanelArgs = parse_args(args)?;
+        let fmt = format(args.format)?;
+        let s = catalog::session(app, &ctx)?;
+        let worker = app.clone();
+        let op = app
+            .ops()
+            .spawn("export-panel", true, move |token, progress| {
+                Box::pin(async move {
+                    let work_token = token.clone();
+                    let result = worker
+                        .read_pool()
+                        .run_snapshot(s.key, move |file, _| {
+                            Ok((|| {
+                                let path = PathBuf::from(args.path);
+                                let stage = Stage::new(parent(&path))?;
+                                let staged = stage.0.join("panel");
+                                let mut out =
+                                    writer(&staged, fmt, &s.config, &work_token, &progress)
+                                        .map_err(export_error)?;
+                                let tabs = os_analyze::tabs::configured_for_file(&s.config, file);
+                                let job = TableJob {
+                                    file,
+                                    cfg: &s.config,
+                                    tabs: &tabs,
+                                    entry_name: "Issues:All Issues",
+                                };
+                                let report = |n| progress.report(n, None);
+                                let mut context = ExportCtx {
+                                    cancel: &work_token,
+                                    progress: &report,
+                                    skip_empty: false,
+                                    workbook: None,
+                                    skipped: vec![],
+                                };
+                                match args.which {
+                                    PanelKind::Issues => {
+                                        core::bulk_issues::export_to(
+                                            &job,
+                                            out.as_mut(),
+                                            &mut context,
+                                        )
+                                        .map_err(export_error)?;
+                                    }
+                                    PanelKind::Overview => {
+                                        let counts =
+                                            views::filter_counts_in(&tabs, file, &s.config)
+                                                .map_err(catalog::view_error)?;
+                                        out.header(&[
+                                            "Name".into(),
+                                            "URLs".into(),
+                                            "% of Total".into(),
+                                        ])
+                                        .map_err(export_error)?;
+                                        for row in super::sidebar::summary_rows(
+                                            os_store::queries::app_support::overview_summary(
+                                                file.conn(),
+                                            )
+                                            .map_err(|e| store_error(&e))?,
+                                        ) {
+                                            out.row(
+                                                &[
+                                                    ColumnKind::Text,
+                                                    ColumnKind::Int,
+                                                    ColumnKind::Float { decimals: 1 },
+                                                ],
+                                                &[
+                                                    row.key.into(),
+                                                    Value::Int(row.count as i64),
+                                                    row.pct.into(),
+                                                ],
+                                            )
+                                            .map_err(export_error)?;
+                                        }
+                                        for c in counts {
+                                            out.row(
+                                                &[
+                                                    ColumnKind::Text,
+                                                    ColumnKind::Int,
+                                                    ColumnKind::Float { decimals: 1 },
+                                                ],
+                                                &[
+                                                    Value::Text(format!("{}: {}", c.tab, c.label)),
+                                                    c.count.map(|n| n as i64).into(),
+                                                    c.pct.into(),
+                                                ],
+                                            )
+                                            .map_err(export_error)?;
+                                        }
+                                    }
+                                    PanelKind::SiteStructure | PanelKind::ResponseTimes => {
+                                        let name = if args.which == PanelKind::SiteStructure {
+                                            "Sidebar:Site Structure"
+                                        } else {
+                                            "Sidebar:Response Times"
+                                        };
+                                        let job = TableJob {
+                                            entry_name: name,
+                                            ..job
+                                        };
+                                        os_export::reports::save_report_to(
+                                            &job,
+                                            out.as_mut(),
+                                            &mut context,
+                                        )
+                                        .map_err(export_error)?;
+                                    }
+                                    _ => {
+                                        return Err(CmdError::unsupported(
+                                            "sidebar panel",
+                                            "M2-K03",
+                                        ))
+                                    }
+                                }
+                                checked(&work_token)?;
+                                out.finish().map_err(export_error)?;
+                                to_json(&stage.publish(&staged, &path, &work_token)?)
+                            })())
+                        })
+                        .await?;
+                    checked(&token)?;
+                    result
+                })
+            });
+        to_json(&op)
+    })
+}
+pub fn register(r: &mut Registry) {
+    for (name, args, ret, long_running, h) in [
+        (
+            "export.catalog",
+            "void",
+            "ExportCatalog",
+            false,
+            catalog_command as crate::registry::Handler,
+        ),
+        (
+            "export.suggestName",
+            "SuggestNameArgs",
+            "string",
+            false,
+            suggest,
+        ),
+        (
+            "export.view",
+            "ExportViewArgs",
+            "FileResult",
+            true,
+            export_view,
+        ),
+        (
+            "export.detail",
+            "ExportDetailArgs",
+            "FileResult",
+            true,
+            export_detail,
+        ),
+        ("export.bulk", "ExportBulkArgs", "FileResult", true, bulk),
+        (
+            "export.report",
+            "ExportBulkArgs",
+            "FileResult",
+            true,
+            report,
+        ),
+        (
+            "export.sitemap",
+            "ExportSitemapArgs",
+            "FileResult",
+            true,
+            sitemap,
+        ),
+        (
+            "export.issues",
+            "ExportPanelArgs",
+            "FileResult",
+            true,
+            panel,
+        ),
+        (
+            "export.sidebar",
+            "ExportPanelArgs",
+            "FileResult",
+            true,
+            panel,
+        ),
+    ] {
+        r.register(
+            CommandMeta {
+                name,
+                args,
+                ret,
+                long_running,
+            },
+            h,
+        );
+    }
+}
