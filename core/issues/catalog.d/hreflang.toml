@@ -1,8 +1,100 @@
-# OpenSpider – Issue-Katalog ab M2, Tab „Hreflang“ (UI-063/UI-064).
-#
-# Einträge wie in core/issues/catalog.toml (`[[issue]]` mit id, tab, filter, type, priority, type_rule, priority_rule,
-# doc_key, optional override_reason/needs_crawl_analysis/text_params); `tab` ist hier immer "Hreflang". Der Loader liest die
-# M1-Datei und alle Dateien dieses Ordners. Texte: core/issues/texts/{de,en}.d/hreflang.toml (Schlüssel issues.<id>).
-# M2-F02 legt nur die Datei an; die Einträge liefert das Paket des Tabs.
-
 schema = 1
+
+[[issue]]
+id = "hreflang-unlinked-hreflang-urls"
+tab = "Hreflang"
+filter = "Unlinked Hreflang URLs"
+type = "Issue"
+priority = "Medium"
+type_rule = "T-I2"
+priority_rule = "P-M1"
+needs_crawl_analysis = true
+doc_key = "hreflang-unlinked-hreflang-urls"
+
+[[issue]]
+id = "hreflang-inconsistent-language-region-return-links"
+tab = "Hreflang"
+filter = "Inconsistent Language & Region Return Links"
+type = "Issue"
+priority = "High"
+type_rule = "T-I3"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "hreflang-inconsistent-language-region-return-links"
+
+[[issue]]
+id = "hreflang-non-canonical-return-links"
+tab = "Hreflang"
+filter = "Non-Canonical Return Links"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "hreflang-non-canonical-return-links"
+
+[[issue]]
+id = "hreflang-noindex-return-links"
+tab = "Hreflang"
+filter = "Noindex Return Links"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "hreflang-noindex-return-links"
+
+[[issue]]
+id = "hreflang-multiple-entries"
+tab = "Hreflang"
+filter = "Multiple Entries"
+type = "Issue"
+priority = "High"
+type_rule = "T-I3"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "hreflang-multiple-entries"
+
+[[issue]]
+id = "hreflang-missing-self-reference"
+tab = "Hreflang"
+filter = "Missing Self Reference"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W3"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "hreflang-missing-self-reference"
+
+[[issue]]
+id = "hreflang-not-using-canonical"
+tab = "Hreflang"
+filter = "Not Using Canonical"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "hreflang-not-using-canonical"
+
+[[issue]]
+id = "hreflang-missing-x-default"
+tab = "Hreflang"
+filter = "Missing X-Default"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W3"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "hreflang-missing-x-default"
+
+[[issue]]
+id = "hreflang-outside-head"
+tab = "Hreflang"
+filter = "Outside <head>"
+type = "Issue"
+priority = "High"
+type_rule = "T-I1"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "hreflang-outside-head"

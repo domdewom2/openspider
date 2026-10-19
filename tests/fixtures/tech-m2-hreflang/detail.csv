@@ -1,0 +1,11 @@
+Source,Language Code,Hreflang URL,Status Code,Indexability,Confirmation
+html,en-GB,https://site.test/1,200,Indexable,Self
+html,de,https://site.test/2,200,Indexable,Confirmed
+html,fr,https://site.test/3,200,Indexable,Missing
+html,it,https://site.test/4,404,Non-Indexable,Non-200
+html,nl,https://site.test/5,,,Not Crawled
+html,es,https://site.test/6,200,Non-Indexable,Noindex
+html,pt,https://site.test/7,200,Non-Indexable,Non-Canonical
+html,sv,https://site.test/8,200,Indexable,Not Applicable
+html,pl,https://site.test/9,200,Indexable,Not Applicable
+html,da,https://site.test/16,200,Indexable,Missing

@@ -1,2 +1,45 @@
-# OpenSpider – Issue-Texte (English) ab M2, Tab „Hreflang“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/en.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.hreflang-unlinked-hreflang-urls]
+what = "An alternate has no incoming hyperlink from an internal page."
+why = "Language annotations alone leave a gap in navigation and discovery."
+fix = "Link the alternate from relevant internal pages and verify the annotation target."
+
+[issues.hreflang-inconsistent-language-region-return-links]
+what = "A return annotation uses a different code from the source page’s self annotation."
+why = "Conflicting language assignments make the intended language set ambiguous."
+fix = "Use the same language and region code for a page throughout the set."
+
+[issues.hreflang-non-canonical-return-links]
+what = "An alternate points to a page whose canonical identifies another URL."
+why = "The annotated variant can be discarded in favour of its canonical."
+fix = "Point the language annotation at the canonical page and check its return annotation."
+
+[issues.hreflang-noindex-return-links]
+what = "An alternate has an effective noindex directive."
+why = "An excluded page cannot reliably serve as an indexed language alternative."
+fix = "Remove unintended noindex directives or annotate an indexable replacement."
+
+[issues.hreflang-multiple-entries]
+what = "A language code occurs more than once in the page’s annotation set."
+why = "Repeated codes can assign several targets to one language."
+fix = "Keep one annotation per code and reconcile HTML, HTTP and sitemap declarations."
+
+[issues.hreflang-missing-self-reference]
+what = "The page declares alternates but no annotation points to itself."
+why = "A self reference makes membership in the language set explicit."
+fix = "Add an annotation for this page with its language code or x-default."
+
+[issues.hreflang-not-using-canonical]
+what = "The page is canonicalised and none of its annotations uses its canonical URL."
+why = "Language signals and canonical signals identify different page variants."
+fix = "Use the canonical URL in the annotation set and align the return annotations."
+
+[issues.hreflang-missing-x-default]
+what = "The annotation set has no x-default entry."
+why = "Users without a matching language have no explicitly assigned fallback."
+fix = "If a fallback is useful, add x-default pointing to a suitable selector or default page."
+
+[issues.hreflang-outside-head]
+what = "An HTML language annotation is outside the parsed head element."
+why = "Search engines may ignore annotations placed outside the document head."
+fix = "Move the element into a valid head and fix markup that closes the head prematurely."

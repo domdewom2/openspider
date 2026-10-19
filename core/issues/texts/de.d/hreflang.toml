@@ -1,2 +1,45 @@
-# OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „Hreflang“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.hreflang-unlinked-hreflang-urls]
+what = "Ein Sprachziel hat keinen eingehenden Hyperlink von einer internen Seite."
+why = "Sprachangaben allein lassen Lücken bei Navigation und Auffindbarkeit."
+fix = "Verlinke das Ziel von passenden internen Seiten und prüfe die Zieladresse."
+
+[issues.hreflang-inconsistent-language-region-return-links]
+what = "Ein Rückverweis verwendet einen anderen Code als die Selbstreferenz der Quellseite."
+why = "Widersprüchliche Codes machen die Zuordnung der Sprachvarianten uneindeutig."
+fix = "Verwende im ganzen Set denselben Sprach- und Regionscode für jede Seite."
+
+[issues.hreflang-non-canonical-return-links]
+what = "Ein Sprachziel nennt eine andere URL als maßgebliches Canonical."
+why = "Die annotierte Variante kann zugunsten der kanonischen Seite verworfen werden."
+fix = "Verwende die kanonische Zieladresse und prüfe deren Rückverweis."
+
+[issues.hreflang-noindex-return-links]
+what = "Ein Sprachziel hat eine wirksame noindex-Anweisung."
+why = "Eine ausgeschlossene Seite eignet sich nicht als indexierte Sprachalternative."
+fix = "Entferne unbeabsichtigtes noindex oder verwende eine indexierbare Ersatzseite."
+
+[issues.hreflang-multiple-entries]
+what = "Ein Sprachcode kommt im Annotationssatz der Seite mehrfach vor."
+why = "Mehrfache Codes können einer Sprache mehrere Ziele zuordnen."
+fix = "Behalte eine Angabe je Code und gleiche HTML, HTTP-Header und Sitemap ab."
+
+[issues.hreflang-missing-self-reference]
+what = "Die Seite nennt Sprachvarianten, aber keine Annotation verweist auf sie selbst."
+why = "Eine Selbstreferenz macht die Zugehörigkeit zum Sprachsatz ausdrücklich."
+fix = "Ergänze eine Selbstreferenz mit dem passenden Sprachcode oder x-default."
+
+[issues.hreflang-not-using-canonical]
+what = "Die Seite ist kanonisiert und keine ihrer Annotationen verwendet ihre Canonical-URL."
+why = "Sprachangaben und Canonical zeigen auf verschiedene Seitenvarianten."
+fix = "Verwende die Canonical-URL im Sprachsatz und passe die Rückverweise an."
+
+[issues.hreflang-missing-x-default]
+what = "Der Annotationssatz enthält keinen x-default-Eintrag."
+why = "Für Nutzer ohne passende Sprache ist kein ausdrückliches Ausweichziel zugeordnet."
+fix = "Ergänze bei Bedarf x-default für eine Sprachauswahl oder geeignete Standardseite."
+
+[issues.hreflang-outside-head]
+what = "Eine HTML-Sprachannotation steht außerhalb des geparsten head-Elements."
+why = "Suchmaschinen können Angaben außerhalb des Dokumentkopfs ignorieren."
+fix = "Verschiebe die Angabe in einen gültigen head und behebe Markup, das den Kopf vorzeitig beendet."

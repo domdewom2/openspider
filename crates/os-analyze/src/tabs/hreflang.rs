@@ -23,14 +23,19 @@
 //! geprüft (K-35). Ist `hreflang.allow_script_subtag` aus, gilt jeder Code in der Form `ll-Ssss[-RR]` als
 //! ungültig – die Entscheidung fällt hier im Prädikat und wirkt nach einer Konfigurationsänderung ohne Recrawl.
 
-use os_model::{CrawlConfig, Value};
+use crate::defs::{intern, Requirement};
+use crate::details::{DetailReq, DetailRows};
+use crate::ViewError;
+use os_model::{AnalysisStep, CrawlConfig, HreflangOverLimit, Value};
+use os_store::CrawlFile;
+use std::sync::OnceLock;
 
 use crate::defs::{
     ColumnDef, ColumnKind, ColumnSql, FilterDef, FilterKind, PairedPart, SortKey, TabDef,
 };
 
 /// Grundmenge: interne Seiten mit hreflang-Bezug; `:store` ist `spider.hreflang.store`.
-const POPULATION: &str = "u.is_internal = 1 AND u.in_tables = 1 AND :store = 1 AND (\
+const POPULATION: &str = "u.is_internal = 1 AND u.in_tables = 1 AND :store = 1 AND (:skip = 0 OR NOT EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id = u.id AND e.key IN ('hreflang.truncated', 'hreflang.truncated_sitemap') AND e.v_int > 0)) AND (\
     (u.content_class = 'HTML' AND u.status_code BETWEEN 200 AND 299) \
     OR EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id AND h.source <> 'html') \
     OR (u.state = 'done' AND EXISTS \
@@ -39,18 +44,45 @@ const POPULATION: &str = "u.is_internal = 1 AND u.in_tables = 1 AND :store = 1 A
 /// Die Seite hat mindestens eine Annotation (aus beliebiger Quelle).
 const HAS_ANNOTATION: &str = "EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id)";
 
-/// Mindestens ein Alternate (≠ Seite) antwortet nicht mit 200: robots-gesperrt, ohne Antwort, 3xx, 4xx, 5xx.
-/// Nicht abgerufene Ziele (`state <> 'done'`) zählen nicht (TECH-074).
-const NON_200: &str = "EXISTS (SELECT 1 FROM hreflang h JOIN urls t ON t.id = h.target_id \
-    WHERE h.url_id = u.id AND t.id <> u.id AND t.state = 'done' AND COALESCE(t.status_code, 0) <> 200)";
+/// Relationship predicates use `u` (source), `h` (annotation), `q` (target).
+/// Reports and filters share these predicates (K2-46).
+const PARSED: &str = "q.id <> u.id AND q.is_internal = 1 AND q.state = 'done' AND q.status_code = 200 \
+    AND (q.content_class = 'HTML' OR EXISTS (SELECT 1 FROM hreflang qh WHERE qh.url_id = q.id AND qh.source = 'http'))";
+const NON_200: &str = "q.id <> u.id AND q.state = 'done' AND COALESCE(q.status_code, 0) <> 200";
+const MISSING_RETURN: &str =
+    "NOT EXISTS (SELECT 1 FROM hreflang r WHERE r.url_id = q.id AND r.target_id = u.id)";
+const INCONSISTENT: &str = "EXISTS (SELECT 1 FROM hreflang self JOIN hreflang r ON r.url_id = q.id AND r.target_id = u.id \
+    WHERE self.url_id = u.id AND self.target_id = u.id AND self.code_norm <> r.code_norm)";
+const NON_CANONICAL: &str =
+    "q.id <> u.id AND q.state = 'done' AND q.status_code = 200 AND q.content_class = 'HTML' \
+    AND q.canonical_count > 0 AND q.canonical_self = 0";
+const NOINDEX: &str =
+    "q.id <> u.id AND q.state = 'done' AND q.status_code = 200 AND q.effective_index = 0";
+pub(crate) const FLAG_UNLINKED: &str = "hreflang_unlinked";
+const UNLINKED: &str = "q.id <> u.id AND EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = q.id AND f.flag = 'hreflang_unlinked')";
 
-/// Mindestens ein Alternate Q (intern, mit 200 als HTML bzw. mit HTTP-hreflang geparst) verweist nicht auf die
-/// Seite zurück; der Rücklink darf aus jeder Quelle stammen, verglichen wird die URL-Kennung (TECH-002).
-const MISSING_RETURN: &str = "EXISTS (SELECT 1 FROM hreflang h JOIN urls q ON q.id = h.target_id \
-    WHERE h.url_id = u.id AND q.id <> u.id AND q.is_internal = 1 AND q.state = 'done' AND q.status_code = 200 \
-    AND (q.content_class = 'HTML' OR EXISTS \
-        (SELECT 1 FROM hreflang qh WHERE qh.url_id = q.id AND qh.source = 'http')) \
-    AND NOT EXISTS (SELECT 1 FROM hreflang r WHERE r.url_id = q.id AND r.target_id = u.id))";
+fn relationship_predicate(filter: &str) -> String {
+    match filter {
+        "Non-200 Hreflang URLs" => NON_200.into(),
+        "Unlinked Hreflang URLs" => UNLINKED.into(),
+        "Missing Return Links" => format!("({PARSED}) AND ({MISSING_RETURN})"),
+        "Inconsistent Language & Region Return Links" => format!("({PARSED}) AND ({INCONSISTENT})"),
+        "Non-Canonical Return Links" => NON_CANONICAL.into(),
+        "Noindex Return Links" => NOINDEX.into(),
+        _ => "1".into(),
+    }
+}
+
+fn relationship_filter(id: &'static str) -> FilterDef {
+    let mut def = filter(id, intern(&format!(
+        "EXISTS (SELECT 1 FROM hreflang h JOIN urls q ON q.id = h.target_id WHERE h.url_id = u.id AND ({}))",
+        relationship_predicate(id)
+    )));
+    if id == "Unlinked Hreflang URLs" {
+        def.kind = FilterKind::PostCrawl(AnalysisStep::Hreflang);
+    }
+    def
+}
 
 /// Mindestens eine Annotation hat einen ungültigen Code (TECH-072); bei abgeschaltetem Script-Subtag gilt auch
 /// `ll-Ssss` und `ll-Ssss-RR` (normalisiert kleingeschrieben) als ungültig.
@@ -133,6 +165,12 @@ fn params(cfg: &CrawlConfig) -> Vec<(&'static str, Value)> {
     vec![
         ("store", Value::Int(i64::from(cfg.spider.hreflang.store))),
         (
+            "skip",
+            Value::Int(i64::from(
+                cfg.hreflang.over_limit == HreflangOverLimit::Skip,
+            )),
+        ),
+        (
             "allow_script",
             Value::Int(i64::from(cfg.hreflang.allow_script_subtag)),
         ),
@@ -176,14 +214,25 @@ pub fn tab() -> TabDef {
             paired("HTML hreflang", paired_parts!("html")),
             paired("HTTP hreflang", paired_parts!("http")),
             paired("Sitemap hreflang", paired_parts!("sitemap")),
+            ColumnDef::new("Indexability", "u.indexability", ColumnKind::Text, true),
+            ColumnDef::new("Indexability Status", "u.indexability_status", ColumnKind::Text, true),
         ],
         filters: vec![
             filter("All", "1"),
             filter("Contains Hreflang", HAS_ANNOTATION),
-            filter("Non-200 Hreflang URLs", NON_200),
-            filter("Missing Return Links", MISSING_RETURN),
+            relationship_filter("Non-200 Hreflang URLs"),
+            relationship_filter("Missing Return Links"),
             filter("Incorrect Language & Region Codes", INCORRECT_CODES),
             filter("Missing", MISSING),
+            relationship_filter("Unlinked Hreflang URLs"),
+            relationship_filter("Inconsistent Language & Region Return Links"),
+            relationship_filter("Non-Canonical Return Links"),
+            relationship_filter("Noindex Return Links"),
+            filter("Multiple Entries", "EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id GROUP BY h.code_norm HAVING COUNT(*) >= 2)"),
+            filter("Missing Self Reference", "EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id) AND NOT EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id AND h.target_id = u.id)"),
+            filter("Not Using Canonical", "EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id) AND u.canonical_count > 0 AND u.canonical_self = 0 AND NOT EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id AND h.url = u.canonical_url)"),
+            filter("Missing X-Default", "EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id) AND NOT EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id AND h.code_norm = 'x-default')"),
+            outside_filter(),
         ],
         default_sort: vec![SortKey {
             column: "Address".to_string(),
@@ -194,22 +243,259 @@ pub fn tab() -> TabDef {
     }
 }
 
-/// Detail-Erweiterungspunkt für M2-D07.
-// STUB(M2-D07)
-pub fn detail_rows(
-    _: &os_store::CrawlFile,
-    _: &os_model::CrawlConfig,
-    _: &crate::details::DetailReq<'_>,
-) -> Result<crate::details::DetailRows, crate::ViewError> {
-    Err(crate::ViewError::NotImplemented("M2-D07"))
+fn outside_filter() -> FilterDef {
+    let mut def = filter("Outside <head>", "EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id AND h.source = 'html' AND h.in_head = 0) AND EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id = u.id AND e.key = 'validation.checked' AND e.v_int = 1)");
+    def.requires.push(Requirement::Coverage {
+        config: "advanced.html_validation",
+        marker: "validation.checked",
+    });
+    def
 }
 
-/// URL-Beiträge des Fachpakets M2-D07.
-// STUB(M2-D07)
+fn confirmation_sql() -> &'static str {
+    static SQL: OnceLock<String> = OnceLock::new();
+    SQL.get_or_init(|| {
+        format!(
+            "CASE
+        WHEN h.target_id = u.id THEN 'Self'
+        WHEN q.id IS NULL OR q.state <> 'done' THEN 'Not Crawled'
+        WHEN COALESCE(q.status_code, 0) <> 200 THEN 'Non-200'
+        WHEN ({NOINDEX}) THEN 'Noindex'
+        WHEN ({NON_CANONICAL}) THEN 'Non-Canonical'
+        WHEN NOT ({PARSED}) THEN 'Not Applicable'
+        WHEN ({MISSING_RETURN}) THEN 'Missing'
+        WHEN ({INCONSISTENT}) THEN 'Inconsistent'
+        ELSE 'Confirmed' END"
+        )
+    })
+}
+
+const TARGET_URL: &str = "COALESCE(q.address, h.url, h.href_raw)";
+const TARGET_STATUS: &str = "CASE WHEN q.state = 'done' THEN q.status_code END";
+const TARGET_INDEX: &str = "CASE WHEN q.state = 'done' THEN q.indexability END";
+
+/// A bounded SQL page of annotations, shared by details and reports. Sorting is whitelist-based,
+/// uses the store collation and always has a deterministic relationship tie-breaker.
+fn query_relationships(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    req: &DetailReq<'_>,
+    fields: &[(&str, ColumnKind, &str)],
+    predicate: &str,
+    selected_only: bool,
+) -> Result<DetailRows, ViewError> {
+    let ids =
+        serde_json::to_string(&req.url_ids.iter().map(|id| id.0).collect::<Vec<_>>()).expect("ids");
+    let where_sql = format!(
+        "({POPULATION}) AND ({predicate}) {}",
+        if selected_only {
+            "AND u.id IN (SELECT value FROM json_each(:ids))"
+        } else {
+            ""
+        }
+    );
+    let from = format!("FROM hreflang h JOIN urls u ON u.id = h.url_id LEFT JOIN urls q ON q.id = h.target_id WHERE {where_sql}");
+    let bind = |stmt: &mut rusqlite::Statement<'_>| -> Result<(), rusqlite::Error> {
+        for (name, value) in [
+            (":store", i64::from(cfg.spider.hreflang.store)),
+            (
+                ":skip",
+                i64::from(cfg.hreflang.over_limit == HreflangOverLimit::Skip),
+            ),
+        ] {
+            if let Some(i) = stmt.parameter_index(name)? {
+                stmt.raw_bind_parameter(i, value)?;
+            }
+        }
+        if let Some(i) = stmt.parameter_index(":ids")? {
+            stmt.raw_bind_parameter(i, &ids)?;
+        }
+        Ok(())
+    };
+    let mut count = file.conn().prepare(&format!("SELECT COUNT(*) {from}"))?;
+    bind(&mut count)?;
+    let total = count.raw_query().next()?.expect("count").get(0)?;
+    let mut order = Vec::new();
+    for key in req.sort {
+        let Some((_, kind, expr)) = fields.iter().find(|(name, _, _)| *name == key.column) else {
+            return Err(ViewError::Name(crate::NameError::Unknown {
+                input: key.column.clone(),
+                suggestions: fields.iter().map(|(n, _, _)| n.to_string()).collect(),
+            }));
+        };
+        order.push(format!("({expr}) IS NULL ASC"));
+        order.push(format!(
+            "({expr}) {} {}",
+            if matches!(kind, ColumnKind::Text) {
+                "COLLATE OS_TEXT"
+            } else {
+                ""
+            },
+            if key.descending { "DESC" } else { "ASC" }
+        ));
+    }
+    order.push("u.address, u.id, h.source, h.position".into());
+    let sql = format!(
+        "SELECT {} {from} ORDER BY {} LIMIT :limit OFFSET :offset",
+        fields
+            .iter()
+            .map(|(_, _, expr)| *expr)
+            .collect::<Vec<_>>()
+            .join(","),
+        order.join(",")
+    );
+    let mut stmt = file.conn().prepare(&sql)?;
+    bind(&mut stmt)?;
+    stmt.raw_bind_parameter(
+        stmt.parameter_index(":limit")?.expect("limit"),
+        req.limit.min(500),
+    )?;
+    stmt.raw_bind_parameter(
+        stmt.parameter_index(":offset")?.expect("offset"),
+        req.offset.min(i64::MAX as u64),
+    )?;
+    let mut cursor = stmt.raw_query();
+    let mut rows = Vec::new();
+    while let Some(row) = cursor.next()? {
+        rows.push(
+            (0..fields.len())
+                .map(|i| {
+                    Ok(match row.get_ref(i)? {
+                        rusqlite::types::ValueRef::Null => Value::Null,
+                        rusqlite::types::ValueRef::Integer(v) => Value::Int(v),
+                        rusqlite::types::ValueRef::Real(v) => Value::Float(v),
+                        rusqlite::types::ValueRef::Text(v) => {
+                            Value::Text(String::from_utf8_lossy(v).into_owned())
+                        }
+                        rusqlite::types::ValueRef::Blob(_) => Value::Null,
+                    })
+                })
+                .collect::<Result<Vec<_>, rusqlite::Error>>()?,
+        );
+    }
+    Ok(DetailRows {
+        columns: fields.iter().map(|(n, k, _)| (n.to_string(), *k)).collect(),
+        rows,
+        total,
+        notes: Vec::new(),
+    })
+}
+
+/// Selected annotations with confirmation precedence from TECH-089 and K2-46.
+pub fn detail_rows(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    req: &DetailReq<'_>,
+) -> Result<DetailRows, ViewError> {
+    let mut fields = Vec::new();
+    if req.url_ids.len() > 1 {
+        fields.push(("Address", ColumnKind::Url, "u.address"));
+    }
+    fields.extend([
+        ("Source", ColumnKind::Text, "h.source"),
+        ("Language Code", ColumnKind::Text, "h.code_raw"),
+        ("Hreflang URL", ColumnKind::Url, TARGET_URL),
+        ("Status Code", ColumnKind::Int, TARGET_STATUS),
+        ("Indexability", ColumnKind::Text, TARGET_INDEX),
+        ("Confirmation", ColumnKind::Text, confirmation_sql()),
+    ]);
+    let mut data = query_relationships(file, cfg, req, &fields, "1", true)?;
+    for id in req
+        .url_ids
+        .iter()
+        .collect::<std::collections::BTreeSet<_>>()
+    {
+        data.notes.extend(url_details(file, cfg, *id)?);
+    }
+    Ok(data)
+}
+
+/// Per-URL truncation notice, including HTTP/HTML and sitemap counters transported by F05a.
 pub fn url_details(
-    _: &os_store::CrawlFile,
-    _: &os_model::CrawlConfig,
-    _: os_model::UrlId,
-) -> Result<Vec<(String, String)>, crate::ViewError> {
-    Ok(Vec::new())
+    file: &CrawlFile,
+    _: &CrawlConfig,
+    url: os_model::UrlId,
+) -> Result<Vec<(String, String)>, ViewError> {
+    let n: i64 = file.conn().query_row("SELECT COALESCE(SUM(v_int), 0) FROM url_ext WHERE url_id = ?1 AND key IN ('hreflang.truncated', 'hreflang.truncated_sitemap')", [url.0], |r| r.get(0))?;
+    Ok(if n > 0 {
+        vec![("Hreflang Truncated".into(), n.to_string())]
+    } else {
+        Vec::new()
+    })
+}
+
+/// Bounded report page; relationship selection exactly matches the corresponding tab filter (K2-46).
+/// `All` selects every annotation of the Hreflang population.
+pub fn report_rows(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    filter: &str,
+    offset: u64,
+) -> Result<DetailRows, ViewError> {
+    let text = ColumnKind::Text;
+    let url = ColumnKind::Url;
+    let mut fields = vec![
+        ("Address", url, "u.address"),
+        ("Hreflang Language", text, "h.code_raw"),
+        ("Hreflang URL", url, TARGET_URL),
+    ];
+    match filter {
+        "All" | "Non-200 Hreflang URLs" | "Unlinked Hreflang URLs" => {
+            fields.extend([
+                ("Annotation Source", text, "CASE h.source WHEN 'html' THEN 'HTML' WHEN 'http' THEN 'HTTP Header' ELSE 'XML Sitemap' END"),
+                ("Status Code", ColumnKind::Int, TARGET_STATUS),
+                ("Indexability", text, TARGET_INDEX),
+                ("Is Self Reference", text, "CASE WHEN h.target_id = u.id THEN 'True' ELSE 'False' END"),
+            ]);
+            if filter == "Non-200 Hreflang URLs" {
+                fields.push(("Status", text, "q.status"));
+            }
+        }
+        "Missing Return Links" => fields.extend([
+            ("Hreflang URL Status Code", ColumnKind::Int, TARGET_STATUS),
+            ("Hreflang URL Indexability", text, TARGET_INDEX),
+            ("Missing Return Link To", url, "u.address"),
+        ]),
+        "Inconsistent Language & Region Return Links" => {
+            // The same mismatch pair supplies both output codes. K2-46 overrides the older OUT-094 direction.
+            fields = vec![("Address", url, "u.address"), ("Hreflang URL", url, TARGET_URL),
+                ("Expected Language", text, "(SELECT s.code_raw FROM hreflang s JOIN hreflang r ON r.url_id = q.id AND r.target_id = u.id WHERE s.url_id = u.id AND s.target_id = u.id AND s.code_norm <> r.code_norm ORDER BY s.source, s.position, r.source, r.position LIMIT 1)"),
+                ("Actual Language", text, "(SELECT r.code_raw FROM hreflang s JOIN hreflang r ON r.url_id = q.id AND r.target_id = u.id WHERE s.url_id = u.id AND s.target_id = u.id AND s.code_norm <> r.code_norm ORDER BY s.source, s.position, r.source, r.position LIMIT 1)")];
+        }
+        "Non-Canonical Return Links" => {
+            fields.push(("Canonical Of Hreflang URL", url, "q.canonical_url"))
+        }
+        "Noindex Return Links" => {
+            fields.push(("Indexability Status", text, "q.indexability_status"))
+        }
+        _ => {
+            return Err(ViewError::Name(crate::NameError::Unknown {
+                input: filter.into(),
+                suggestions: Vec::new(),
+            }))
+        }
+    }
+    if filter != "All" && !crate::views::state_of(file, cfg, "Hreflang", filter)?.yields_rows() {
+        return Ok(DetailRows {
+            columns: fields.iter().map(|(n, k, _)| (n.to_string(), *k)).collect(),
+            rows: Vec::new(),
+            total: 0,
+            notes: Vec::new(),
+        });
+    }
+    let req = DetailReq {
+        url_ids: &[],
+        params: &serde_json::Value::Null,
+        sort: &[],
+        offset,
+        limit: 500,
+    };
+    query_relationships(
+        file,
+        cfg,
+        &req,
+        &fields,
+        &relationship_predicate(filter),
+        false,
+    )
 }
