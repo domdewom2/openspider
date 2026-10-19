@@ -420,13 +420,21 @@ fn dynamic_column_sources_are_registered_per_tab_and_names_are_interned() {
         columns.iter().map(|c| c.key).collect::<Vec<_>>(),
         ["Links Truncated", "Truncated"]
     );
-    // M2-D15 (Custom Extraction), M2-E01 (Internal), M2-D09 (Structured Data) melden je eine Quelle.
+    // M2-D15 (Custom Extraction und eine Internal-Quelle), M2-E01 (Internal), M2-D09 (Structured Data).
     let mut sources = tabs::column_sources()
         .iter()
         .map(|(tab, _)| *tab)
         .collect::<Vec<_>>();
     sources.sort_unstable();
-    assert_eq!(sources, ["Custom Extraction", "Internal", "Structured Data"]);
+    assert_eq!(
+        sources,
+        [
+            "Custom Extraction",
+            "Internal",
+            "Internal",
+            "Structured Data"
+        ]
+    );
     // Namen zur Laufzeit: gleicher Text, dieselbe Referenz.
     let a = intern("Preis (Extraktor 1)");
     let b = intern(&String::from("Preis (Extraktor 1)"));

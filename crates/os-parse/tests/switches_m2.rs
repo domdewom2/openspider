@@ -40,7 +40,8 @@ fn switch_application_drops_only_disabled_facts_and_keeps_independent_directive_
             && page.titles.is_empty()
     );
     assert_eq!(page.h1.len(), 1);
-    assert!(page.ext.is_empty());
+    // Andere Pakete legen eigene ext-Fakten ab; hier zählt nur der abgeschaltete Namensraum.
+    assert!(page.ext.iter().all(|(k, _)| k.namespace() != "readability"));
     let mut directives = os_parse::parse_headers(
         &url,
         &[("X-Robots-Tag".into(), "noindex,nofollow".into())],

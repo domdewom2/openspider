@@ -576,6 +576,9 @@ fn reports_share_the_workbook_and_asset_manifests_stay_separate() {
         &file,
         "UPDATE urls SET status_code=301, redirect_target_id=2 WHERE id=3",
     );
+    // Der echte Redirect-Report (OUT-085) folgt im Listenmodus der Eingabeliste; die Fixture-Liste
+    // enthält die weitergeleitete URL 3 nicht, daher für diesen Crawl-Fall (nicht Listenmodus) leeren.
+    exec(&file, "DELETE FROM list_input");
     let mut cfg = CrawlConfig::default();
     cfg.extraction.store_html = true;
     let cancel = CancelToken::new();

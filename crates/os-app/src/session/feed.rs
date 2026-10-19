@@ -173,11 +173,6 @@ pub async fn refresh(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
             } else {
                 Vec::new()
             };
-            if seq != before.seq && ids.len() <= CHANGE_LIMIT as usize {
-                // K03 maintains its read-side aggregate cache from the same snapshot.
-                os_analyze::aggregates::live::apply_changes(f, &cfg, &ids)
-                    .map_err(|e| os_store::StoreError::InvalidInput(e.to_string()))?;
-            }
             let m = f.meta()?;
             // Resume returns before its first metadata batch is committed. The
             // local handle is authoritative until its durable completion is joined.
@@ -266,6 +261,13 @@ pub async fn refresh(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
                 status.rate = 0.0;
             }
             tx.commit()?;
+            if seq != before.seq && ids.len() <= CHANGE_LIMIT as usize {
+                // K03 maintains its read-side aggregate cache with its own transaction,
+                // directly after the snapshot read above has been closed (nested
+                // transactions are not possible on one connection).
+                os_analyze::aggregates::live::apply_changes(f, &cfg, &ids)
+                    .map_err(|e| os_store::StoreError::InvalidInput(e.to_string()))?;
+            }
             Ok((seq, reset, ids, status))
         })
         .await?;
