@@ -75,6 +75,8 @@ pub struct SitemapWarning {
 /// Ergebnis von [`ingest_with_warnings`].
 #[derive(Debug, Clone, Default)]
 pub struct SitemapIngest {
+    /// Parsefehler je angefragter Sitemap; vollständige Einträge bleiben verwendbar.
+    pub errors: std::collections::HashMap<String, String>,
     /// Abgerufene Sitemaps in Abrufreihenfolge.
     pub sitemaps: Vec<FetchedSitemap>,
     /// Hinweise (zu tiefe Indizes, Zyklen).
@@ -209,7 +211,10 @@ pub async fn ingest_configured<F: Fetch + ?Sized>(
             done.insert(end_key);
         }
         done.insert(requested_key);
-        let doc = parse(&todo.url, &fetch);
+        let (doc, error) = parse(&todo.url, &fetch);
+        if let Some(error) = error {
+            out.errors.insert(todo.url.to_string(), error);
+        }
         let mut fetch = fetch;
         drop_body(&mut fetch);
         let index = out.sitemaps.len();
@@ -311,25 +316,22 @@ async fn fetch_following_redirects<F: Fetch + ?Sized>(
 }
 
 /// Wertet die Antwort aus, falls sie 2xx war.
-fn parse(requested: &url::Url, fetch: &FetchResult) -> Option<SitemapDoc> {
+fn parse(requested: &url::Url, fetch: &FetchResult) -> (Option<SitemapDoc>, Option<String>) {
     let FetchOutcome::Response(r) = &fetch.outcome else {
-        return None;
+        return (None, None);
     };
     if !(200..300).contains(&r.status) {
-        return None;
+        return (None, None);
     }
-    let content_type = r
-        .headers
-        .iter()
-        .find(|(n, _)| n.eq_ignore_ascii_case("content-type"))
-        .map(|(_, v)| v.as_str());
+
     // Relative Angaben in Sitemaps lösen sich gegen die Endadresse der Antwort auf.
     let base = if fetch.url.as_str().is_empty() {
         requested
     } else {
         &fetch.url
     };
-    Some(os_parse::parse_sitemap(base, &r.body, content_type))
+    let (doc, error) = os_parse::sitemap::parse_reader(base, r.body.as_ref());
+    (Some(doc), error)
 }
 
 /// Gibt den Body frei, nachdem er ausgewertet wurde.

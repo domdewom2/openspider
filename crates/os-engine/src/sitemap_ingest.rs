@@ -17,7 +17,10 @@ pub(crate) async fn ingest_sitemaps<F: Fetch>(
     sh: &Arc<Shared<F>>,
     seeds: Vec<SitemapSeed>,
 ) -> Result<(), Failure> {
-    if seeds.is_empty() {
+    let _ingest = sh.sitemap_ingest_lock.lock().await;
+    if seeds.is_empty()
+        || sh.ctl.stop.load(std::sync::atomic::Ordering::SeqCst) != crate::worker::STOP_NONE
+    {
         return Ok(());
     }
     let (fresh, known) = {
@@ -59,17 +62,54 @@ pub(crate) async fn ingest_sitemaps<F: Fetch>(
                 .insert(sitemaps::sitemap_key(&fs.fetch.url));
         }
     }
+    let mut authorized = std::collections::HashSet::new();
+    for fs in &fetched {
+        let Some(doc) = &fs.doc else { continue };
+        let Ok(source) = Url::parse(&fs.url) else {
+            continue;
+        };
+        for loc in &doc.locs {
+            let Some(target) = loc.url.as_deref().and_then(|s| Url::parse(s).ok()) else {
+                continue;
+            };
+            if target.scheme() != source.scheme()
+                || target.port_or_known_default() != source.port_or_known_default()
+                || sh.scope.classify(&os_url::normalize(&target)) != ScopeClass::Internal
+            {
+                continue;
+            }
+            if target.host_str() == source.host_str() {
+                continue;
+            }
+            let check = sh.gate.check(&*sh.fetcher, &target).await;
+            if let Some((fetch, write)) = check.robots_fetch {
+                crate::robots_glue::record_robots(sh, fetch, write).await?;
+            }
+            let mut ancestor = Some(fs);
+            while let Some(file) = ancestor {
+                if Url::parse(&file.url).is_ok_and(|url| sh.gate.submits_sitemap(&target, &url)) {
+                    authorized.insert((fs.url.clone(), target.origin().ascii_serialization()));
+                    break;
+                }
+                ancestor = file.parent.and_then(|index| fetched.get(index));
+            }
+        }
+    }
     let slot = sh.writer.reserve().await?;
     {
         let mut core = sh.lock_core();
-        let mut batch = build_sitemap_batch(
+        let mut batch = build_authorized_batch(
             &mut core,
             &sh.cfg,
             &sh.scope,
             &sh.rules,
             &fetched,
             sh.clock.now(),
+            &authorized,
         );
+        for sitemap in &mut batch.sitemaps {
+            sitemap.error = out.errors.get(&sitemap.url).cloned();
+        }
         batch.events.extend(events);
         // unter der Sperre senden (siehe Entdeckung in `process`, K-78 b)
         slot.send(batch);
@@ -85,6 +125,7 @@ pub(crate) async fn ingest_sitemaps<F: Fetch>(
 /// übereinstimmen. Andere Einträge zählen wie ungültige (`invalid_entries`), bekommen keine URL-Zeile und
 /// keinen Warteschlangeneintrag; je Datei meldet ein `CrawlEvent` (warn) ihre Anzahl. Cross-Submission per
 /// robots.txt ist M2.
+#[cfg(test)]
 pub(crate) fn build_sitemap_batch(
     core: &mut Core,
     cfg: &CrawlConfig,
@@ -92,6 +133,19 @@ pub(crate) fn build_sitemap_batch(
     rules: &os_url::RuleSet,
     fetched: &[FetchedSitemap],
     now: Timestamp,
+) -> WriteBatch {
+    build_authorized_batch(core, cfg, scope, rules, fetched, now, &Default::default())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn build_authorized_batch(
+    core: &mut Core,
+    cfg: &CrawlConfig,
+    scope: &impl Classify,
+    rules: &os_url::RuleSet,
+    fetched: &[FetchedSitemap],
+    now: Timestamp,
+    authorized: &std::collections::HashSet<(String, String)>,
 ) -> WriteBatch {
     let mut batch = WriteBatch::default();
     let base = core.next_sitemap_id;
@@ -148,6 +202,7 @@ pub(crate) fn build_sitemap_batch(
             None => (SitemapKind::Invalid, 0, 0, 0),
         };
         let mut entry_urls = Vec::new();
+        let mut entry_meta = Vec::new();
         let mut hreflang_rows: Vec<(UrlId, HreflangRow)> = Vec::new();
         // Spider-Modus: Einträge ohne Tiefe (Priorität 1, nur über die Sitemap erreicht). Listenmodus: die
         // Einträge sind Listen-URLs der Tiefe 0 (CRAWL-027).
@@ -169,7 +224,10 @@ pub(crate) fn build_sitemap_batch(
                 if !matches!(parsed.scheme(), "http" | "https") || parsed.host_str().is_none() {
                     continue;
                 }
-                if !same_origin(&parsed, &sitemap_origins) {
+                if !same_origin(&parsed, &sitemap_origins)
+                    && !authorized
+                        .contains(&(fs.url.clone(), parsed.origin().ascii_serialization()))
+                {
                     foreign += 1;
                     continue;
                 }
@@ -191,6 +249,27 @@ pub(crate) fn build_sitemap_batch(
                 };
                 let id = core.discover(&cand, entry_depth, 0, 0, rules, &mut batch);
                 entry_urls.push((id, loc.loc_raw.clone(), loc.lastmod.clone()));
+                entry_meta.push(os_model::SitemapEntryMeta {
+                    url: id,
+                    changefreq: loc.changefreq.clone(),
+                    priority: loc.priority,
+                    images: loc
+                        .extensions
+                        .iter()
+                        .filter(|e| e.kind == os_model::SitemapExtKind::Image)
+                        .count() as u32,
+                    videos: loc
+                        .extensions
+                        .iter()
+                        .filter(|e| e.kind == os_model::SitemapExtKind::Video)
+                        .count() as u32,
+                    news: loc
+                        .extensions
+                        .iter()
+                        .filter(|e| e.kind == os_model::SitemapExtKind::News)
+                        .count() as u32,
+                    extensions: loc.extensions.clone(),
+                });
                 if loc.hreflang_truncated > 0 {
                     batch.ext.push(os_model::ExtWrite {
                         url: id,
@@ -241,7 +320,7 @@ pub(crate) fn build_sitemap_batch(
             entry_urls,
             hreflang: hreflang_rows,
             error: None,
-            entry_meta: Vec::new(),
+            entry_meta,
         });
     }
     batch

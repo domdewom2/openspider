@@ -1,0 +1,44 @@
+name: Resources nightly
+on:
+  schedule:
+    - cron: '25 2 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  resources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+      CARGO_PROFILE_TEST_DEBUG: line-tables-only
+      OPENSPIDER_SECRET_STORE: memory
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Resource pause and consistent resume
+        run: cargo test -p os-engine --test memory_m2 --locked
+      - name: One million URLs (OUT-267)
+        run: cargo run --release -p os-loadtest --locked -- run --scenario perf-001 --size large --out target/resources/report.json
+      - name: Enforce 2 GiB RSS limit
+        run: |
+          python3 - <<'PY'
+          import json
+          report = json.load(open('target/resources/report.json'))
+          def rss(value):
+              if isinstance(value, dict):
+                  for key, item in value.items():
+                      if key == 'crawler_peak_rss_bytes': yield item
+                      else: yield from rss(item)
+              elif isinstance(value, list):
+                  for item in value: yield from rss(item)
+          values = list(rss(report))
+          assert values and all(0 < value < 2 * 1024**3 for value in values), values
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: resources-report
+          path: target/resources/

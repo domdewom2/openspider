@@ -1,5 +1,5 @@
 //! Leseschnittstelle der Crawl-Datei im Zusammenspiel mit den Exporten (OUT-233, OUT-234) gegen `out-basic-site`:
-//! `q_urls` ↔ `Internal:All`, `q_links` ↔ `Links:All Inlinks`, `user_agent` ↔ Request-Log, Golden aller `q_`-Sichten für
+//! `q_urls` ↔ `Internal:All`, `q_links` ↔ `Links:All Inlinks`, `user_agent` ↔ Request-Log, Goldens aller `q_`-Sichten für
 //! eine neu geschriebene und eine aus Schema v2 migrierte Datei, Beispielleser in Python (`scripts/ci/read_api_smoke.py`,
 //! `sqlite3` im Modus `ro`, ohne OpenSpider-Code) für eine abgeschlossene Datei und neben einem laufenden Crawl.
 //!
@@ -363,9 +363,9 @@ fn mask_loopback_base(text: &str) -> String {
     out
 }
 
-// spec: OUT-234
+// spec: OUT-234, CRAWL-101
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn the_golden_of_all_views_is_identical_for_a_new_crawl_and_a_file_migrated_from_schema_v2() {
+async fn all_views_match_the_new_crawl_and_preserved_schema_v2_goldens() {
     let site = site("out-basic-site").await;
     let env = Env::new();
     let path = crawl_with_exports(&env, &site).await;
@@ -400,11 +400,10 @@ async fn the_golden_of_all_views_is_identical_for_a_new_crawl_and_a_file_migrate
     );
     let migrated_dump = dump_views(&migrated);
 
-    assert_eq!(
-        fresh_dump, migrated_dump,
-        "neue und migrierte Datei zeigen dieselben Sichten"
-    );
-    assert_golden(golden_dir().join("out-basic-site.q.txt"), &fresh_dump);
+    // Die Migration bewahrt die gespeicherte Sichtbarkeit des M1-Crawls.
+    assert_golden(golden_dir().join("out-basic-site.q.txt"), &migrated_dump);
+    // CRAWL-101: Neue Crawls blenden die externe Sperre aus; Links bleiben erhalten.
+    assert_golden(golden_dir().join("out-basic-site.m2.q.txt"), &fresh_dump);
 }
 
 // --- Beispielleser in Python (Standardbibliothek, kein OpenSpider-Code) -----------------------------------------

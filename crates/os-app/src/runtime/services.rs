@@ -3,6 +3,7 @@ use super::{lifecycle_bus::CrawlEvent, App};
 pub fn start(app: &App) {
     crate::session::init(app);
     crate::commands::sidebar_ext::on_startup(app);
+    os_engine::memory::apply_settings(&app.settings_snapshot().storage);
     crate::logging::init_for_app(app);
     crate::commands::api::on_startup(app);
     crate::commands::crawls::start_retention(app);
@@ -14,6 +15,7 @@ pub fn start(app: &App) {
     }));
 }
 pub fn settings_changed(app: &App) {
+    os_engine::memory::apply_settings(&app.settings_snapshot().storage);
     crate::logging::apply_settings(app);
     crate::commands::crawls::on_settings_changed(app);
 }

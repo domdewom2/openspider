@@ -443,19 +443,117 @@ pub async fn resume_crawl<F: Fetch>(
     }))
 }
 
-// STUB(M2-E02)
+/// Nimmt zusätzliche URLs atomar in Frontier und Writer auf.
 pub(crate) fn admit_added<F: os_fetch::Fetch>(
-    _core: &mut crate::frontier::Core,
-    _urls: &[String],
-    _shared: &crate::worker::Shared<F>,
+    core: &mut crate::frontier::Core,
+    urls: &[String],
+    shared: &crate::worker::Shared<F>,
 ) -> Result<crate::AddUrlsSummary, EngineError> {
-    Err(EngineError::NotImplemented("M2-E02"))
+    let slot = shared.writer.try_reserve().map_err(|_| {
+        EngineError::Invalid("Schreibwarteschlange belegt – erneut versuchen".into())
+    })?;
+    let (summary, batch) = added_batch(core, urls, &shared.cfg, &shared.scope, &shared.rules)?;
+    slot.send(batch);
+    shared.ctl.notify.notify_one();
+    Ok(summary)
 }
-// STUB(M2-E02)
+
+fn added_batch(
+    core: &mut crate::frontier::Core,
+    urls: &[String],
+    cfg: &CrawlConfig,
+    scope: &impl crate::frontier::Classify,
+    rules: &RuleSet,
+) -> Result<(crate::AddUrlsSummary, WriteBatch), EngineError> {
+    use crate::frontier::{Cand, Purpose};
+    if cfg.mode != CrawlMode::Spider {
+        return Err(EngineError::Invalid(
+            "URLs hinzufügen verlangt einen Spider-Crawl".into(),
+        ));
+    }
+    let mut summary = crate::AddUrlsSummary::default();
+    let mut batch = WriteBatch::default();
+    for raw in urls {
+        let Ok(url) = url::Url::parse(raw.trim()) else {
+            summary.invalid += 1;
+            continue;
+        };
+        if !matches!(url.scheme(), "http" | "https") || !url.has_host() {
+            summary.invalid += 1;
+            continue;
+        }
+        let norm = os_url::normalize(&url);
+        if core.lookup(&norm.encoded).is_some() {
+            summary.duplicates += 1;
+            continue;
+        }
+        if scope.classify(&norm) != os_url::ScopeClass::Internal
+            || !matches!(rules.decide(&norm.encoded), RuleDecision::Allowed)
+        {
+            summary.excluded += 1;
+            continue;
+        }
+        core.discover(
+            &Cand {
+                norm: &norm,
+                internal: true,
+                kind: os_model::DiscoveryKind::ListInput,
+                store: true,
+                crawl: true,
+                reason: None,
+                resource_like: false,
+                apply_rules: true,
+                purpose: Purpose::Page,
+                source: None,
+            },
+            None,
+            0,
+            0,
+            rules,
+            &mut batch,
+        );
+        summary.added += 1;
+    }
+    if summary.added > 0 {
+        batch.meta.extend([
+            ("analysis_stale".into(), "1".into()),
+            ("analysis_state".into(), "stale".into()),
+        ]);
+    }
+    Ok((summary, batch))
+}
+
+/// Reiht URLs in eine geöffnete, nicht laufende Datei ein. Der Aufrufer setzt sie anschließend fort.
 pub fn add_urls_to_file(
-    _file: &mut CrawlFile,
-    _urls: &[String],
-    _cfg: &CrawlConfig,
+    file: &mut CrawlFile,
+    urls: &[String],
+    cfg: &CrawlConfig,
 ) -> Result<crate::AddUrlsSummary, EngineError> {
-    Err(EngineError::NotImplemented("M2-E02"))
+    use os_store::CrawlSink;
+    let meta = file.meta()?;
+    if file.effective_state(&os_model::SystemClock)? == CrawlState::Running
+        || meta.state == CrawlState::Failed
+    {
+        return Err(EngineError::Invalid(
+            "Der Crawl kann keine zusätzlichen URLs aufnehmen".into(),
+        ));
+    }
+    let start = meta
+        .start_url
+        .ok_or_else(|| EngineError::Invalid("Start-URL fehlt".into()))?;
+    let norm = os_url::parse_start_url(&start).map_err(|e| EngineError::Invalid(e.to_string()))?;
+    check_config_change(&file.config()?, cfg)?;
+    let rules = RuleSet::compile(
+        &cfg.scope.include,
+        &cfg.scope.exclude,
+        cfg.scope.regex_partial_match,
+    )
+    .map_err(|e| EngineError::Invalid(e.to_string()))?;
+    let scope = CrawlScope::new(Scope::new(&norm, &cfg.scope).with_cdns(&cfg.cdns));
+    let mut restored = resume::restore(file, cfg, meta.mode, true)?;
+    let (summary, batch) = added_batch(&mut restored.core, urls, cfg, &scope, &rules)?;
+    let mut sink = SqliteSink::open(file.path(), os_store::StorageProfile::Balanced)?;
+    sink.write(batch)?;
+    sink.checkpoint()?;
+    Ok(summary)
 }

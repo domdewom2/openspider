@@ -9,14 +9,17 @@
 //! hier steckt keine Entscheidungslogik über Sperren.
 
 use crate::{
-    frontier::{F_QUEUED, F_RULE_OK},
+    frontier::{Purpose, QueueItem, F_QUEUED, F_RULE_OK},
     worker::{header_rows, plain_page, Shared},
     writer_thread::WriterGone,
 };
 use os_fetch::robots::RobotsDecision;
 use os_fetch::{Fetch, FetchResult};
 use os_model::{Clock, CrawlConfig, FetchFacts, NoResponseReason, RobotsMode};
-use os_model::{DiscoveryKind, UrlState, WriteBatch};
+use os_model::{
+    DiscoveryKind, Indexability, IndexabilityInput, PageWrite, QueueOp, UrlState, UrlUpdate,
+    WriteBatch,
+};
 use os_url::ScopeClass;
 use std::sync::Arc;
 use url::Url;
@@ -135,6 +138,70 @@ pub fn annotate_report_only(facts: &mut FetchFacts, decision: &RobotsDecision) {
         };
         facts.robots_txt_url = Some(robots_url.clone());
     }
+}
+
+/// Speichert eine robots-Sperre ohne Seitenabruf und gibt das reservierte URL-Limit frei.
+pub(crate) async fn record_blocked<F: Fetch>(
+    sh: &Arc<Shared<F>>,
+    item: &QueueItem,
+    decision: &RobotsDecision,
+) -> Result<(), WriterGone> {
+    let cfg = &*sh.cfg;
+    let internal = item.purpose != Purpose::External;
+    let facts = blocked_fetch_facts(decision, &*sh.clock);
+    sh.lock_core().refund();
+    let counter = if internal {
+        "robots_blocked_internal"
+    } else {
+        "robots_blocked_external"
+    };
+    let mut batch = WriteBatch::default();
+    batch.counters.push((counter.to_string(), 1));
+    // CRAWL-101: Nur die Tabellen-Sichtbarkeit ändern; URL und Inlinks bleiben erhalten.
+    batch.url_updates.push(UrlUpdate::InTables {
+        id: item.id,
+        value: if internal {
+            cfg.robots.show_blocked_internal
+        } else {
+            cfg.robots.show_blocked_external
+        },
+    });
+    batch.pages.push(PageWrite {
+        url_id: item.id,
+        replace: item.replace,
+        indexability: Indexability::NonIndexable,
+        indexability_status: None,
+        fetch: facts,
+        page: None,
+        links: vec![],
+        images: vec![],
+        canonicals: vec![],
+        directives: vec![],
+        refresh: vec![],
+        hreflang: vec![],
+        pagination: vec![],
+        headers: vec![],
+        html: None,
+    });
+    let page = &mut batch.pages[0];
+    let (ind, status) = os_model::evaluate(&IndexabilityInput {
+        fetch: &page.fetch,
+        page: None,
+        page_url: &item.url,
+        refresh: &[],
+        cfg,
+        same_url: os_url::eq_for_compare,
+    });
+    page.indexability = ind;
+    page.indexability_status = status;
+    batch.queue.push(QueueOp::Pop { id: item.id });
+    sh.writer.send(batch).await?;
+    sh.progress
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .record_completion(sh.clock_mono(), None);
+    sh.ctl.notify.notify_one();
+    Ok(())
 }
 
 pub(crate) async fn record_robots<F: Fetch>(

@@ -111,30 +111,6 @@ function = "tab"
 signature = "pub fn tab() -> TabDef"
 
 [[stub]]
-owner = "M2-E02"
-file = "crates/os-engine/src/lib.rs"
-function = "add_urls"
-signature = "pub async fn add_urls( handle: &CrawlHandle, urls: &[String], ) -> Result<AddUrlsSummary, EngineError>"
-
-[[stub]]
-owner = "M2-E02"
-file = "crates/os-engine/src/lifecycle.rs"
-function = "add_urls_to_file"
-signature = "pub fn add_urls_to_file( _file: &mut CrawlFile, _urls: &[String], _cfg: &CrawlConfig, ) -> Result<crate::AddUrlsSummary, EngineError>"
-
-[[stub]]
-owner = "M2-E02"
-file = "crates/os-engine/src/lifecycle.rs"
-function = "admit_added"
-signature = "pub(crate) fn admit_added<F: os_fetch::Fetch>( _core: &mut crate::frontier::Core, _urls: &[String], _shared: &crate::worker::Shared<F>, ) -> Result<crate::AddUrlsSummary, EngineError>"
-
-[[stub]]
-owner = "M2-E02"
-file = "crates/os-engine/src/memory.rs"
-function = "tick"
-signature = "pub fn tick(_input: &MemoryInputs<'_>) -> MemoryAction"
-
-[[stub]]
 owner = "M2-E03"
 file = "crates/os-engine/src/host_pace.rs"
 function = "on_response"
@@ -161,12 +137,6 @@ signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &Cancel
 [[stub]]
 owner = "M2-F02"
 file = "crates/os-analyze/src/analysis/steps/links.rs"
-function = "run"
-signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
-
-[[stub]]
-owner = "M2-F02"
-file = "crates/os-analyze/src/analysis/steps/near_duplicates.rs"
 function = "run"
 signature = "pub fn run( _file: &CrawlFile, _cfg: &CrawlConfig, _cancel: &CancelToken, ) -> Result<StepState, AnalyzeError>"
 

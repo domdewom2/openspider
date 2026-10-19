@@ -21,6 +21,9 @@ const MAX_REDIRECTS: u32 = 5;
 pub struct RobotsGateConfig {
     /// robots.txt-Token, mit dem der Crawler Gruppen auswählt.
     pub token: String,
+    /// Eigene Dateien je Host oder Origin.
+    pub custom_files: std::collections::BTreeMap<String, String>,
+    pub respect_crawl_delay: bool,
     /// Umgang mit robots.txt.
     pub mode: RobotsMode,
     /// Verhalten bei nicht erreichbarer robots.txt.
@@ -39,6 +42,13 @@ impl RobotsGateConfig {
     pub fn from_crawl_config(cfg: &CrawlConfig) -> Self {
         RobotsGateConfig {
             token: crate::user_agents::resolve(&cfg.user_agent).robots_token,
+            custom_files: cfg
+                .robots
+                .custom_files
+                .iter()
+                .map(|(host, text)| (host.to_ascii_lowercase(), text.clone()))
+                .collect(),
+            respect_crawl_delay: cfg.robots.respect_crawl_delay,
             mode: cfg.robots.mode,
             unreachable_policy: cfg.robots.unreachable_policy,
             retries: cfg.robots.retries,
@@ -200,6 +210,63 @@ impl RobotsGate {
         url: &Url,
     ) -> (OriginState, Option<(FetchResult, RobotsWrite)>) {
         let robots_url = robots_url_for(url);
+        if let Some(text) = self
+            .cfg
+            .custom_files
+            .get(&url.origin().ascii_serialization())
+            .or_else(|| {
+                self.cfg
+                    .custom_files
+                    .get(url.host_str().unwrap_or_default())
+            })
+        {
+            let text = text.chars().take(MAX_BYTES).collect::<String>();
+            let rules = parse(&text);
+            let response = crate::http::HttpResponse {
+                status: 200,
+                status_text: "Eigene robots.txt".into(),
+                body: text.clone().into(),
+                request_headers: vec![],
+                set_cookies: vec![],
+                content_length: None,
+                untruncated_bytes: None,
+                synthetic: None,
+                attempts: 0,
+                reason_phrase: None,
+                http_version: String::new(),
+                headers: vec![],
+                size_bytes: text.len() as u64,
+                transferred_bytes: 0,
+                response_time_ms: 0,
+                truncated: false,
+                decode_error: None,
+                md5_hex: String::new(),
+            };
+            let fetch = FetchResult {
+                url: robots_url.clone(),
+                started_at: os_model::Timestamp::UNIX_EPOCH,
+                outcome: FetchOutcome::Response(response),
+            };
+            let write = RobotsWrite {
+                origin: url.origin().ascii_serialization(),
+                robots_url: robots_url.to_string(),
+                fetch_status: "custom".into(),
+                status_code: Some(200),
+                attempts: 0,
+                note: Some(
+                    self.delay_note(&rules)
+                        .unwrap_or_else(|| "Eigene robots.txt".into()),
+                ),
+                body: Some(text),
+            };
+            return (
+                OriginState {
+                    robots_url: robots_url.to_string(),
+                    rules: OriginRules::Rules(rules),
+                },
+                Some((fetch, write)),
+            );
+        }
         let max_attempts = self.cfg.retries.saturating_add(1);
         let mut attempt = 0;
         let (first_result, last) = loop {
@@ -233,8 +300,8 @@ impl RobotsGate {
                 if txt.rule_count() == 0 && txt.sitemaps().is_empty() {
                     notes.push(format!("robots.txt: {status} – keine Regeln"));
                 }
-                if let Some(delay) = txt.crawl_delay(&self.cfg.token) {
-                    notes.push(format!("Crawl-delay: {delay} s (nicht angewandt)"));
+                if let Some(note) = self.delay_note(&txt) {
+                    notes.push(note);
                 }
                 if !notes.is_empty() {
                     write.note = Some(notes.join("; "));
@@ -264,6 +331,37 @@ impl RobotsGate {
             rules,
         };
         (state, Some((first_result, write)))
+    }
+
+    fn delay_note(&self, txt: &RobotsTxt) -> Option<String> {
+        txt.crawl_delay(&self.cfg.token).map(|delay| {
+            let applied = if self.cfg.respect_crawl_delay {
+                "angewandt"
+            } else {
+                "nicht angewandt"
+            };
+            format!("Crawl-delay: {delay} s ({applied})")
+        })
+    }
+
+    /// Freigabe einer fremden Sitemap durch die robots.txt des Zielhosts (TECH-210).
+    pub fn submits_sitemap(&self, target: &Url, sitemap: &Url) -> bool {
+        let origins = self.origins.lock().unwrap_or_else(|e| e.into_inner());
+        let Some(state) = origins
+            .get(&target.origin().ascii_serialization())
+            .and_then(|c| c.get())
+        else {
+            return false;
+        };
+        let OriginRules::Rules(txt) = &state.rules else {
+            return false;
+        };
+        let Ok(base) = Url::parse(&state.robots_url) else {
+            return false;
+        };
+        txt.sitemaps()
+            .iter()
+            .any(|raw| base.join(raw.trim()).is_ok_and(|u| u == *sitemap))
     }
 
     /// Ein Abrufversuch inklusive Weiterleitungen. Liefert die erste Antwort und das Endergebnis.
@@ -569,6 +667,8 @@ mod tests {
 
     fn cfg(mode: RobotsMode, policy: RobotsUnreachablePolicy) -> RobotsGateConfig {
         RobotsGateConfig {
+            custom_files: Default::default(),
+            respect_crawl_delay: false,
             token: "OpenSpider".to_string(),
             mode,
             unreachable_policy: policy,

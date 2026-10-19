@@ -480,7 +480,7 @@ async fn start_writes_owner_state_and_the_start_url_first() {
 // spec: CRAWL-127, CRAWL-130
 // Infrastruktur (M2-F05a) für CRAWL-127/130; Fachprüfung M2-E02.
 #[tokio::test(start_paused = true)]
-async fn added_urls_reach_the_owner_stub_and_progress_is_persisted_during_a_crawl() {
+async fn added_urls_reach_admission_and_progress_is_persisted_during_a_crawl() {
     let sink = MemorySink::new();
     let site = SimSite::new()
         .page("https://site.test/", "<title>fixture</title>")
@@ -490,7 +490,7 @@ async fn added_urls_reach_the_owner_stub_and_progress_is_persisted_during_a_craw
         handle
             .add_urls(vec!["https://site.test/added".into()])
             .await,
-        Err(os_engine::EngineError::NotImplemented("M2-E02"))
+        Ok(os_engine::AddUrlsSummary { added: 1, .. })
     ));
     handle.wait().await.unwrap();
     let snapshots: Vec<_> = sink

@@ -59,7 +59,7 @@ pub struct AddUrlsSummary {
 
 /// Fügt einem laufenden oder pausierten Crawl URLs hinzu (CRAWL-131 [P1], Command `crawl.addUrls`).
 ///
-/// STUB(M2-E02): liefert bis zur Umsetzung `EngineError::NotImplemented`.
+/// Delegiert an den Kanal der laufenden Engine.
 pub async fn add_urls(
     handle: &CrawlHandle,
     urls: &[String],

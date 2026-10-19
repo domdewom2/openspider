@@ -189,6 +189,7 @@ impl Ops {
         let id = op_id.clone();
         let run_token = token.clone();
         let body = async move {
+            let _resources = os_engine::memory::watch_operation(token.clone());
             let outcome = match std::panic::catch_unwind(AssertUnwindSafe(|| f(token, sink))) {
                 Ok(fut) => AssertUnwindSafe(fut).catch_unwind().await,
                 Err(p) => Err(p),
