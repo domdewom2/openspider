@@ -801,12 +801,6 @@ function = "start_apis_mode"
 signature = "pub async fn start_apis_mode( _file: &os_store::CrawlFile, _cfg: &os_model::CrawlConfig, ) -> Result<(), crate::IntegError>"
 
 [[stub]]
-owner = "M2-K01"
-file = "crates/os-analyze/src/views/session/mod.rs"
-function = "open"
-signature = "pub fn open( _file: &CrawlFile, _cfg: &CrawlConfig, spec: SessionSpec, budget: Budget, ) -> Result<ViewSession, ViewError>"
-
-[[stub]]
 owner = "M2-K02"
 file = "crates/os-analyze/src/search/mod.rs"
 function = "compile"
