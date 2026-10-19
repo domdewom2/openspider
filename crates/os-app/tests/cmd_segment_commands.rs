@@ -176,3 +176,67 @@ async fn readonly_sessions_reject_changes_and_crawl_reopen_restores_rules() {
     assert_eq!(call(&app, "segment.list", Value::Null).await, json!([b]));
     drop(file);
 }
+
+// spec: UI-068 [P1]
+// spec: CRAWL-134
+#[tokio::test]
+async fn validation_checks_references_at_the_requested_position_of_existing_ids() {
+    let dir = tempfile::tempdir().unwrap();
+    let app = common::new_app(dir.path());
+    let _file = setup(&app, dir.path());
+    let base = definition("base", "Base", "/b");
+    let mut dependent = definition("dependent", "Dependent", "");
+    dependent["order"] = json!(1);
+    dependent["rules"] = json!({"kind":"cond","column":"Segment","op":"equals","value":"Base"});
+    call(
+        &app,
+        "segment.save",
+        json!({"segments":[base.clone(),dependent.clone()]}),
+    )
+    .await;
+    assert_eq!(
+        call(
+            &app,
+            "segment.validate",
+            json!({"segment":dependent.clone()})
+        )
+        .await,
+        json!([])
+    );
+    dependent["order"] = json!(0);
+    let issues = call(
+        &app,
+        "segment.validate",
+        json!({"segment":dependent.clone()}),
+    )
+    .await;
+    assert!(issues
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|issue| issue["warning"] == false
+            && issue["args"]["reason"] == "segment-reference-must-be-above"));
+    assert!(app
+        .dispatch(
+            CallCtx::for_window("main"),
+            "segment.save",
+            json!({"segments":[dependent.clone(),base.clone()]})
+        )
+        .await
+        .is_err());
+    let mut moved_base = base.clone();
+    moved_base["order"] = json!(1);
+    assert!(
+        !call(&app, "segment.validate", json!({"segment":moved_base}))
+            .await
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
+    dependent["order"] = json!(99);
+    assert_eq!(
+        call(&app, "segment.validate", json!({"segment":dependent})).await,
+        json!([])
+    );
+    assert_eq!(call(&app, "segment.list", Value::Null).await[0], base);
+}

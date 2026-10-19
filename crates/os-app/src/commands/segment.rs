@@ -292,11 +292,10 @@ fn validate<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdRes
             })
             .await?;
         if let Some(index) = defs.iter().position(|s| s.id == args.segment.id) {
-            defs[index] = args.segment;
-        } else {
-            let index = (args.segment.order as usize).min(defs.len());
-            defs.insert(index, args.segment);
+            defs.remove(index);
         }
+        let index = (args.segment.order as usize).min(defs.len());
+        defs.insert(index, args.segment);
         let cfg = config(&session.config, &defs)?;
         let issues = app
             .read_pool()
