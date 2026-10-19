@@ -5,9 +5,14 @@ import { uistate } from "../ipc/uistate";
 import type { TabInfo } from "../ipc/gen/TabInfo";
 import type { SortKey } from "../ipc/gen/SortKey";
 import type { JsonValue } from "../ipc/gen/serde_json/JsonValue";
+import type { RuleNode } from "../ipc/gen/RuleNode";
 
-export interface TabQuery { filter: string; search: string; sort: SortKey[] }
+/** Advanced search (UI-011 [P1]): the core-parsed rule tree plus its text syntax. */
+export interface RuleQuery { tree: RuleNode; caseSensitive: boolean; text: string }
+export interface TabQuery { filter: string; search: string; sort: SortKey[]; rules?: RuleQuery | null }
 export const defaultQuery = (): TabQuery => ({ filter: "All", search: "", sort: [] });
+/** Tabs that can never be closed (UI-004, UI-112). */
+export const MANDATORY_TAB = "Internal";
 export function cycleSort(sort: SortKey[], column: string, extend = false): SortKey[] {
   const previous = sort.find(s => s.column === column);
   const rest = extend ? sort.filter(s => s.column !== column) : [];
@@ -29,6 +34,10 @@ interface TabsState {
   load(): Promise<void>; select(id: string, filter?: string): void;
   query(patch: Partial<TabQuery>): void; reorder(ids: string[]): Promise<void>;
   show(id: string, visible: boolean): Promise<void>; reset(): Promise<void>;
+  /** Bulk hide (UI-112 „Andere/Alle schließen“); the mandatory tab stays visible. */
+  hide(ids: string[]): Promise<void>;
+  /** Apply a complete order and visibility at once („Tabs konfigurieren“). */
+  layout(order: string[], hidden: string[]): Promise<void>;
   focus(id: string, urlId: number): void;
 }
 export const useTabs = create<TabsState>((set, get) => ({
@@ -59,12 +68,24 @@ export const useTabs = create<TabsState>((set, get) => ({
     set({ hidden, ...(id === get().active && !visible ? { active: "Internal" } : {}) });
     await saveTableState({ topTabs: { order: get().order, hidden } });
   },
+  async hide(ids) {
+    const known = ids.filter(id => id !== MANDATORY_TAB && get().catalog.some(t => t.id === id));
+    const hidden = [...new Set([...get().hidden, ...known])];
+    set({ hidden, ...(hidden.includes(get().active) ? { active: MANDATORY_TAB } : {}) });
+    await saveTableState({ topTabs: { order: get().order, hidden } });
+  },
+  async layout(ids, hiddenIds) {
+    const order = [...new Set([...ids, ...get().order])].filter(id => get().catalog.some(t => t.id === id));
+    const hidden = [...new Set(hiddenIds)].filter(id => id !== MANDATORY_TAB && order.includes(id));
+    set({ order, hidden, ...(hidden.includes(get().active) ? { active: MANDATORY_TAB } : {}) });
+    await saveTableState({ topTabs: { order, hidden } });
+  },
   async reset() {
     const order = [...get().catalog].sort((a, b) => a.defaultOrder - b.defaultOrder).map(t => t.id);
     set({ order, hidden: [] }); await saveTableState({ topTabs: { order, hidden: [] } });
   },
   focus(id, urlId) {
-    get().select(id, "All"); get().query({ search: "" });
+    get().select(id, "All"); get().query({ search: "", rules: null });
     set({ hidden: get().hidden.filter(t => t !== id), focusId: urlId, focusRequest: get().focusRequest + 1 });
   },
 }));
