@@ -1,0 +1,2 @@
+.u10-top-tabs { display: flex; height: 100%; min-width: 0; }
+.u10-top-tabs > .os-tabbar { flex: 1; min-width: 0; }

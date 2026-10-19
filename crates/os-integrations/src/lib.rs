@@ -7,6 +7,7 @@
 //! `os_fetch::secrets` (Regel C13); alle HTTP-Aufrufe über das Workspace-`reqwest`, in Tests gegen die Mocks von
 //! `os-testsite` (Basis-URL je Quelle, INTEG-019).
 
+pub mod browser;
 pub mod core;
 pub mod crawl_glue;
 pub mod credentials;

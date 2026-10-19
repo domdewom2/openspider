@@ -50,6 +50,13 @@ pub trait WindowHost: Send + Sync {
 }
 /// Betriebssystemaktionen ohne Abhängigkeit auf Tauri.
 pub trait DesktopActions: Send + Sync {
+    /// Opens bounded HTTP(S) URLs; older hosts retain the unsupported default.
+    fn open_urls(&self, _urls: &[String]) -> Result<(), crate::dto::CmdError> {
+        Err(crate::dto::CmdError::new(
+            crate::dto::ErrorCode::Unsupported,
+            "err-desktop-platform",
+        ))
+    }
     fn write_clipboard(&self, text: &str) -> Result<(), crate::dto::CmdError>;
     fn reveal_paths(&self, p: &[std::path::PathBuf]) -> Result<(), crate::dto::CmdError>;
 }
@@ -60,4 +67,12 @@ pub trait TickPolicy: Send + Sync {
 /// Wartet, bis ein Dienst seine Abschlussarbeit gespeichert hat.
 pub trait CompletionBarrier: Send + Sync {
     fn wait(&self, key: crate::pool::CrawlKey) -> BoxFuture<'static, ()>;
+}
+
+/// Native browser adapter shared with integrations; never invokes a shell on desktop targets.
+pub fn launch_browser_urls(urls: &[String]) -> Result<(), crate::dto::CmdError> {
+    os_integrations::browser::open_urls(urls).map_err(|error| {
+        crate::dto::CmdError::new(crate::dto::ErrorCode::Io, "err-desktop-action")
+            .with_detail(error.to_string())
+    })
 }

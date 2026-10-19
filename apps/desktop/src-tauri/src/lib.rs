@@ -102,7 +102,8 @@ pub fn run() {
         )
         .invoke_handler(tauri::generate_handler![
             app_version,
-            desktop::open_export_folder
+            desktop::open_export_folder,
+            desktop::browser_open
         ])
         .setup(move |tauri_app| {
             desktop::install(&setup_app, tauri_app.handle(), setup_quitting.clone());

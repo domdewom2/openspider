@@ -44,6 +44,9 @@ impl<R: Runtime> WindowHost for Host<R> {
     }
 }
 impl<R: Runtime> DesktopActions for Host<R> {
+    fn open_urls(&self, urls: &[String]) -> Result<(), CmdError> {
+        os_app::runtime::hooks::launch_browser_urls(urls)
+    }
     fn write_clipboard(&self, text: &str) -> Result<(), CmdError> {
         self.0.clipboard().write_text(text).map_err(failure)
     }
@@ -255,6 +258,76 @@ mod linux_tests {
     #[test]
     fn reveal_is_explicitly_unsupported() {
         assert_eq!(reveal(&[]).unwrap_err().code, ErrorCode::Unsupported);
+    }
+}
+
+/// Native platform action for the upper table; no crawl data crosses this boundary.
+#[tauri::command]
+pub fn browser_open(app: tauri::State<'_, App>, urls: Vec<String>) -> Result<(), CmdError> {
+    let urls = browser_urls(&urls)?;
+    app.desktop_actions()
+        .ok_or_else(|| CmdError::new(ErrorCode::Unsupported, "err-desktop-platform"))?
+        .open_urls(&urls.iter().map(ToString::to_string).collect::<Vec<_>>())
+}
+
+fn browser_urls(urls: &[String]) -> Result<Vec<tauri::Url>, CmdError> {
+    if urls.is_empty() || urls.len() > 10 {
+        return Err(CmdError::new(ErrorCode::InvalidInput, "err-invalid-input"));
+    }
+    urls.iter()
+        .map(|text| {
+            let url = tauri::Url::parse(text).map_err(failure)?;
+            if !matches!(url.scheme(), "http" | "https") || url.host_str().is_none() {
+                return Err(CmdError::new(ErrorCode::InvalidInput, "err-invalid-input"));
+            }
+            Ok(url)
+        })
+        .collect()
+}
+
+#[cfg(test)]
+mod browser_tests {
+    use super::*;
+
+    // spec: UI-110
+    #[test]
+    fn browser_accepts_only_bounded_web_urls() {
+        let fixture = vec!["https://fixture.test/a?b=c#d".to_string()];
+        assert_eq!(browser_urls(&fixture).unwrap()[0].as_str(), fixture[0]);
+        for invalid in [
+            vec![],
+            vec![fixture[0].clone(); 11],
+            vec!["file:///tmp/x".into()],
+            vec!["javascript:alert(1)".into()],
+        ] {
+            assert!(browser_urls(&invalid).is_err());
+        }
+    }
+
+    // spec: UI-110
+    #[test]
+    fn browser_registry_is_not_replaced_by_a_later_handler() {
+        let source = include_str!("lib.rs");
+        assert_eq!(source.matches(".invoke_handler(").count(), 1);
+        assert!(source.contains("desktop::browser_open"));
+    }
+
+    // spec: UI-110
+    #[test]
+    fn browser_adapter_validates_the_entire_batch_before_launching() {
+        let fixture: serde_json::Value = serde_json::from_str(include_str!(
+            "../../src/features/table/fixtures/u10-contract.json"
+        ))
+        .unwrap();
+        let valid = fixture["rows"][0]["Address"].as_str().unwrap().to_owned();
+        for invalid in [
+            vec![],
+            vec![valid.clone(); 11],
+            vec![valid.clone(), "file:///tmp/a".into()],
+        ] {
+            assert!(os_app::runtime::hooks::launch_browser_urls(&invalid).is_err());
+        }
+        }
     }
 }
 

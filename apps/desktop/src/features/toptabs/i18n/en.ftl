@@ -1,0 +1,9 @@
+u10-tabs = Data tabs
+u10-tabs-overflow = More data tabs
+u10-tabs-configure = Configure tabs
+u10-tabs-reset = Reset tabs
+u10-tabs-internal = Internal is always visible
+u10-tabs-error = Could not load or save tabs
+u10-tabs-open = Show tab
+u10-tabs-up = Move { $tab } up
+u10-tabs-down = Move { $tab } down

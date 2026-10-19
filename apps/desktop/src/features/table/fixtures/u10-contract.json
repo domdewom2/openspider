@@ -1,0 +1,240 @@
+{
+  "columns": [
+    {
+      "key": "Row",
+      "kind": {
+        "kind": "int"
+      },
+      "defaultVisible": true,
+      "defaultWidth": 150,
+      "align": "left",
+      "sortable": false,
+      "searchable": [],
+      "extension": false
+    },
+    {
+      "key": "Address",
+      "kind": {
+        "kind": "url"
+      },
+      "defaultVisible": true,
+      "defaultWidth": 150,
+      "align": "left",
+      "sortable": true,
+      "searchable": [],
+      "extension": false
+    },
+    {
+      "key": "Status Code",
+      "kind": {
+        "kind": "int"
+      },
+      "defaultVisible": true,
+      "defaultWidth": 150,
+      "align": "left",
+      "sortable": true,
+      "searchable": [],
+      "extension": false
+    },
+    {
+      "key": "Word Count",
+      "kind": {
+        "kind": "int"
+      },
+      "defaultVisible": true,
+      "defaultWidth": 150,
+      "align": "left",
+      "sortable": true,
+      "searchable": [],
+      "extension": false
+    },
+    {
+      "key": "Title 1",
+      "kind": {
+        "kind": "text"
+      },
+      "defaultVisible": true,
+      "defaultWidth": 150,
+      "align": "left",
+      "sortable": true,
+      "searchable": [],
+      "extension": false
+    },
+    {
+      "key": "Meta Keywords 1",
+      "kind": {
+        "kind": "text"
+      },
+      "defaultVisible": true,
+      "defaultWidth": 150,
+      "align": "left",
+      "sortable": true,
+      "searchable": [],
+      "extension": false
+    }
+  ],
+  "tabs": [
+    {
+      "id": "Internal",
+      "defaultOrder": 0,
+      "filters": [
+        {
+          "id": "All",
+          "labelTemplate": "All",
+          "params": {},
+          "count": 3,
+          "state": {
+            "kind": "ready"
+          }
+        },
+        {
+          "id": "Client Error (4xx)",
+          "labelTemplate": "Client Error (4xx)",
+          "params": {},
+          "count": 1,
+          "state": {
+            "kind": "ready"
+          }
+        },
+        {
+          "id": "Unlinked",
+          "labelTemplate": "Unlinked",
+          "params": {},
+          "count": null,
+          "state": {
+            "kind": "needsCrawlAnalysis"
+          }
+        }
+      ],
+      "detailCapable": true
+    },
+    {
+      "id": "External",
+      "defaultOrder": 1,
+      "filters": [
+        {
+          "id": "All",
+          "labelTemplate": "All",
+          "params": {},
+          "count": 3,
+          "state": {
+            "kind": "ready"
+          }
+        },
+        {
+          "id": "Client Error (4xx)",
+          "labelTemplate": "Client Error (4xx)",
+          "params": {},
+          "count": 1,
+          "state": {
+            "kind": "ready"
+          }
+        },
+        {
+          "id": "Unlinked",
+          "labelTemplate": "Unlinked",
+          "params": {},
+          "count": null,
+          "state": {
+            "kind": "needsCrawlAnalysis"
+          }
+        }
+      ],
+      "detailCapable": true
+    },
+    {
+      "id": "Images",
+      "defaultOrder": 2,
+      "filters": [
+        {
+          "id": "All",
+          "labelTemplate": "All",
+          "params": {},
+          "count": 3,
+          "state": {
+            "kind": "ready"
+          }
+        },
+        {
+          "id": "Client Error (4xx)",
+          "labelTemplate": "Client Error (4xx)",
+          "params": {},
+          "count": 1,
+          "state": {
+            "kind": "ready"
+          }
+        },
+        {
+          "id": "Unlinked",
+          "labelTemplate": "Unlinked",
+          "params": {},
+          "count": null,
+          "state": {
+            "kind": "needsCrawlAnalysis"
+          }
+        }
+      ],
+      "detailCapable": true
+    },
+    {
+      "id": "AMP",
+      "defaultOrder": 3,
+      "filters": [
+        {
+          "id": "All",
+          "labelTemplate": "All",
+          "params": {},
+          "count": 3,
+          "state": {
+            "kind": "ready"
+          }
+        },
+        {
+          "id": "Client Error (4xx)",
+          "labelTemplate": "Client Error (4xx)",
+          "params": {},
+          "count": 1,
+          "state": {
+            "kind": "ready"
+          }
+        },
+        {
+          "id": "Unlinked",
+          "labelTemplate": "Unlinked",
+          "params": {},
+          "count": null,
+          "state": {
+            "kind": "needsCrawlAnalysis"
+          }
+        }
+      ],
+      "detailCapable": true
+    }
+  ],
+  "rows": [
+    {
+      "id": 1,
+      "Address": "https://fixture.invalid/a",
+      "Status Code": 200,
+      "Word Count": 2,
+      "Title 1": "Alpha",
+      "Meta Keywords 1": "a"
+    },
+    {
+      "id": 2,
+      "Address": "https://fixture.invalid/b",
+      "Status Code": 404,
+      "Word Count": 10,
+      "Title 1": "Beta",
+      "Meta Keywords 1": "b"
+    },
+    {
+      "id": 3,
+      "Address": "https://fixture.invalid/c",
+      "Status Code": 200,
+      "Word Count": null,
+      "Title 1": "Gamma",
+      "Meta Keywords 1": ""
+    }
+  ]
+}
