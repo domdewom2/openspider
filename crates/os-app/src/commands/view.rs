@@ -218,6 +218,13 @@ pub(crate) fn detail_gate(kind: DetailKind, cfg: &CrawlConfig) -> Option<EmptySt
     if let Some(k) = feature.filter(|k| !catalog::config_on(cfg, k)) {
         return Some(catalog::empty(EmptyCode::FeatureDisabled, Some(k.into())));
     }
+    // M2-D19 (UI-047): ohne Rechtschreib- und Grammatikprüfung bleibt der Detail-Tab leer.
+    if kind == DetailKind::Spelling && !cfg.spelling.enabled && !cfg.grammar.enabled {
+        return Some(catalog::empty(
+            EmptyCode::FeatureDisabled,
+            Some("spelling.enabled".into()),
+        ));
+    }
     if matches!(
         kind,
         DetailKind::ConsoleLog
@@ -639,6 +646,19 @@ async fn page_query(
                             ))
                             || (n == "Link Crawlability"
                                 && matches!(spec, ViewSpec::Inlinks { .. }))
+                        {
+                            c.extension = true;
+                            c.default_visible = false;
+                        }
+                        // M2-D19 (ONPAGE-157): `Page Section` und `Rule ID` erst nach Einblenden.
+                        if matches!(
+                            spec,
+                            ViewSpec::Detail {
+                                detail: DetailTable::Spelling,
+                                ..
+                            }
+                        ) && os_analyze::tabs::content::SPELLING_DETAIL_EXTENSIONS
+                            .contains(&n.as_str())
                         {
                             c.extension = true;
                             c.default_visible = false;
