@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { uistate } from "../../../ipc/uistate";
 import type { UiStateJson } from "../../../ipc/gen/UiStateJson";
 import { z } from "zod";
@@ -13,17 +13,21 @@ export function useSidebarLayout() {
   const [layout, setLayout] = useState(DEFAULT_LAYOUT);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<unknown>();
+  const initial = useRef<SidebarLayout | null>(null);
   useEffect(() => {
     let live = true;
     void uistate.load().then(dto => {
       if (!live) return;
-      setLayout(schema.parse(object(dto.state).sidebar ?? {}));
+      const parsed = schema.parse(object(dto.state).sidebar ?? {});
+      initial.current = parsed;
+      setLayout(parsed);
       setLoaded(true);
     }).catch(e => { if (live) { setError(e); setLoaded(true); } });
     return () => { live = false; };
   }, []);
   useEffect(() => {
-    if (!loaded) return;
+    // Unchanged layouts are not written: an extra save at start-up would overwrite the .bak of a corrupt ui-state.json (UI-125).
+    if (!loaded || layout === initial.current) return;
     let live = true;
     const timer = setTimeout(() => {
       void uistate.load().then(dto => {

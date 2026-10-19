@@ -39,10 +39,12 @@ async function drag(page: Page, pane: "sidebar" | "detail", size: number) {
   const grip = page.locator(`.os-shell-divider-${pane}`);
   const box = (await grip.boundingBox())!;
   const current = (await sizes(page))[pane];
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  // Integer pointer coordinates: WebKit rounds fractional ones, and the header height is fractional since M2-U03.
+  const x = Math.round(box.x + box.width / 2); const y = Math.round(box.y + box.height / 2);
+  await page.mouse.move(x, y);
   await page.mouse.down();
-  await page.mouse.move(box.x + box.width / 2 + (pane === "sidebar" ? current - size : 0),
-    box.y + box.height / 2 + (pane === "detail" ? current - size : 0), { steps: 8 });
+  await page.mouse.move(x + (pane === "sidebar" ? Math.round(current - size) : 0),
+    y + (pane === "detail" ? Math.round(current - size) : 0), { steps: 8 });
   await page.mouse.up();
 }
 

@@ -1,7 +1,9 @@
 import { test, expect } from "@playwright/test";
 import { startFakeBridge, type FakeBridge } from "../support/fake-bridge";
 import fixture from "./sidebar-dto.json" with { type: "json" };
-import tick from "../../src/ipc/__fixtures__/Tick.json" with { type: "json" };
+import tickFixture from "../../src/ipc/__fixtures__/Tick.json" with { type: "json" };
+// Integration: the main window now mounts the notification dialogs (M2-U03); the fixture's low-disk warning would cover the sidebar.
+const tick = { ...tickFixture, notices: [] };
 import type { Tick } from "../../src/ipc/gen/Tick";
 
 // Browser contract tests over real WebSocket IPC; the core commands are still K04/K06 stubs on this branch.
@@ -57,10 +59,10 @@ test("filters issues and shows the shared export integration placeholder", async
   await page.getByLabel("Issue Priority", { exact: true }).selectOption("medium");
   await page.getByLabel("Search issues", { exact: true }).fill("duplicate");
   await expect(page.getByRole("table").getByRole("row")).toHaveCount(2);
-  await page.getByRole("button", { name: "Export", exact: true }).click();
+  await page.getByRole("complementary", { name: "Sidebar" }).getByRole("button", { name: "Export", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Export is not available in this build yet." })).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  expect(bridge.core.calls.some(c => c.cmd.startsWith("export."))).toBe(false);
+  expect(bridge.core.calls.some(c => c.cmd.startsWith("export.") && c.cmd !== "export.catalog")).toBe(false);
 });
 
 // spec: UI-080, UI-082 [M2], ONPAGE-140 [M2]

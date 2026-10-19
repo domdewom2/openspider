@@ -315,7 +315,8 @@ fn repository_m2_report_includes_all_586_ids_including_spikes() {
     run(&args).unwrap();
     let doc: Value =
         serde_json::from_str(&std::fs::read_to_string(args.write.unwrap()).unwrap()).unwrap();
-    assert_eq!(doc["summary"]["total"], 586);
+    // 586 spec_ids + AGENT-016 … 019 (M2-M03-Nachtrag) = 590.
+    assert_eq!(doc["summary"]["total"], 590);
     for id in ["UI-007", "UI-012", "UI-140", "PERF-001"] {
         assert!(doc["specs"].get(id).is_some(), "{id}");
     }

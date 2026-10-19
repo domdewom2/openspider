@@ -33,7 +33,8 @@ export function Shell() {
     const measure = () => {
       const header = root.querySelector<HTMLElement>(":scope > header");
       const footer = root.querySelector<HTMLElement>(":scope > footer");
-      setViewport({ width: root.clientWidth, height: root.clientHeight - (header?.offsetHeight ?? 40) - (footer?.offsetHeight ?? 24) });
+      // Fractional heights (header/status bar content from other packages) must not be rounded to whole pixels.
+      setViewport({ width: root.clientWidth, height: root.clientHeight - (header?.getBoundingClientRect().height ?? 40) - (footer?.getBoundingClientRect().height ?? 24) });
     };
     measure();
     const observer = new ResizeObserver(measure);
