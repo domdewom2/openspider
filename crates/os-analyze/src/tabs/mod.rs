@@ -173,6 +173,7 @@ pub fn column_sources() -> Vec<(&'static str, Box<dyn ColumnSource>)> {
     add("Custom Extraction", custom_extraction::column_source());
     add("Custom JavaScript", custom_js::column_source());
     add("Link Metrics", link_metrics::column_source());
+    add("Analytics", analytics::column_source());
     add("Internal", dynamic_api::column_source());
     add("Internal", custom_extraction::internal_column_source());
     add("Internal", links::column_source());
