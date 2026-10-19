@@ -98,6 +98,7 @@ test.describe("UI-146 Budgets", () => {
     const expand = await toggle();
     expect(await page.evaluate(() => window.__osViz!.nodes)).toBe(10_000);
     await info.attach("ui-146-tree", { body: JSON.stringify({ collapse, expand, strict: STRICT }), contentType: "application/json" });
+    console.log(`[ui-146-tree] ${JSON.stringify({ collapse, expand })}`);
     expect(collapse).toBeLessThanOrEqual(200 * SLACK);
     expect(expand).toBeLessThanOrEqual(200 * SLACK);
   });
