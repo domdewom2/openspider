@@ -1,25 +1,16 @@
-// Fenster `viz-*` (Visualisierungen, nicht modal): Gerüst – der Inhalt kommt mit M2-U24.
+// Fenster `viz-*` (Visualisierungen, nicht modal, M2-U24).
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { useT } from "../i18n";
-import { EmptyState } from "../ui/primitives/EmptyState";
+import { readWindowParams, VizWindow } from "../features/viz";
 import { bootWindow } from "./runtime";
 import "../ui/ui.css";
 
-function VizPlaceholder() {
-  const t = useT();
-  return (
-    <main aria-label={t("app-viz-title")} style={{ height: "100%" }}>
-      <EmptyState state={{ code: "NO_DATA_YET" }} />
-    </main>
-  );
-}
-
-const runtime = bootWindow({ kind: "viz" });
+const params = readWindowParams(location.search);
+const runtime = bootWindow({ kind: "viz", label: params.label });
 void runtime.ready.then(() => {
   ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <React.StrictMode>
-      <VizPlaceholder />
+      <VizWindow params={params} exportDir={runtime.transportName === "tauri" ? null : new URLSearchParams(location.search).get("exportDir")} />
     </React.StrictMode>,
   );
 });
