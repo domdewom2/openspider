@@ -3,6 +3,106 @@
 # Einträge wie in core/issues/catalog.toml (`[[issue]]` mit id, tab, filter, type, priority, type_rule, priority_rule,
 # doc_key, optional override_reason/needs_crawl_analysis/text_params); `tab` ist hier immer "Search Console". Der Loader liest die
 # M1-Datei und alle Dateien dieses Ordners. Texte: core/issues/texts/{de,en}.d/search_console.toml (Schlüssel issues.<id>).
-# M2-F02 legt nur die Datei an; die Einträge liefert das Paket des Tabs.
+# Einträge: M2-I03. Klassifizierung abgeleitet aus öffentlicher Dokumentation der Referenz (Benchmark), begründet nach UI-063.
+# „Rich Result Invalid“ ist in docs/plan/M2-filters.toml kein Befund-Filter (ohne issue = true) und fehlt daher hier.
 
 schema = 1
+
+[[issue]]
+id = "search-console-page-is-not-mobile-friendly"
+tab = "Search Console"
+filter = "Page Is Not Mobile Friendly"
+type = "Issue"
+priority = "High"
+type_rule = "T-I3"
+priority_rule = "P-H3"
+needs_crawl_analysis = false
+doc_key = "search-console-page-is-not-mobile-friendly"
+
+[[issue]]
+id = "search-console-orphan-urls"
+tab = "Search Console"
+filter = "Orphan URLs"
+type = "Issue"
+priority = "Medium"
+type_rule = "T-I3"
+priority_rule = "P-M2"
+needs_crawl_analysis = false
+doc_key = "search-console-orphan-urls"
+
+[[issue]]
+id = "search-console-url-is-on-google-but-has-issues"
+tab = "Search Console"
+filter = "URL is on Google, But Has Issues"
+type = "Issue"
+priority = "Medium"
+type_rule = "T-I3"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "search-console-url-is-on-google-but-has-issues"
+
+[[issue]]
+id = "search-console-amp-url-is-invalid"
+tab = "Search Console"
+filter = "AMP URL Is Invalid"
+type = "Issue"
+priority = "Medium"
+type_rule = "T-I3"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "search-console-amp-url-is-invalid"
+
+[[issue]]
+id = "search-console-indexable-url-not-indexed"
+tab = "Search Console"
+filter = "Indexable URL Not Indexed"
+type = "Warning"
+priority = "High"
+type_rule = "T-W3"
+priority_rule = "P-H1"
+needs_crawl_analysis = false
+doc_key = "search-console-indexable-url-not-indexed"
+
+[[issue]]
+id = "search-console-user-declared-canonical-not-selected"
+tab = "Search Console"
+filter = "User-Declared Canonical Not Selected"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W3"
+priority_rule = "P-M1"
+needs_crawl_analysis = false
+doc_key = "search-console-user-declared-canonical-not-selected"
+
+[[issue]]
+id = "search-console-no-search-analytics-data"
+tab = "Search Console"
+filter = "No Search Analytics Data"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W3"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "search-console-no-search-analytics-data"
+
+[[issue]]
+id = "search-console-non-indexable-with-search-analytics-data"
+tab = "Search Console"
+filter = "Non-Indexable with Search Analytics Data"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W3"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "search-console-non-indexable-with-search-analytics-data"
+
+[[issue]]
+id = "search-console-url-is-not-on-google"
+tab = "Search Console"
+filter = "URL Is Not on Google"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W3"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "search-console-url-is-not-on-google"
