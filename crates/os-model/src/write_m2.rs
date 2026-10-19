@@ -100,6 +100,8 @@ pub struct RenderTimings {
     pub load_ms: u32,
     /// Wartezeit (AJAX-Timeout).
     pub wait_ms: u32,
+    /// Screenshot einschließlich Größenänderung, Wartezeit und Dekodierung.
+    pub screenshot_ms: u32,
     /// Gesamtdauer.
     pub total_ms: u32,
 }

@@ -78,13 +78,11 @@ fn quick() -> RenderOpts {
 }
 
 #[tokio::test]
+// Spec-Fixture `crawl-proxy` (lokaler Proxy, Ziel render-r01).
 // spec: CRAWL-122
-async fn requires_chromium_manual_proxy_auth_connect_and_bypass() {
+async fn requires_chromium_manual_proxy_auth_and_bypass() {
     let site = TestSite::start("render-r01").await.unwrap();
     let proxy = Proxy::start(site.port(), true).await;
-    let dir = tempfile::tempdir().unwrap();
-    let ca = dir.path().join("ca.pem");
-    std::fs::write(&ca, site.ca_cert_pem()).unwrap();
     let mut launch = LaunchOpts::default();
     launch.network.proxy.mode = ProxyMode::Manual;
     launch.network.proxy.kind = ProxyKind::Http;
@@ -95,10 +93,6 @@ async fn requires_chromium_manual_proxy_auth_connect_and_bypass() {
         username: "proxy".into(),
         password: "secret".into(),
     });
-    launch
-        .network
-        .trusted_certificates
-        .push(ca.to_string_lossy().into());
     let renderer = Renderer::launch(launch.clone())
         .await
         .expect("requires_chromium");
@@ -142,17 +136,6 @@ async fn requires_chromium_manual_proxy_auth_connect_and_bypass() {
         .requests()
         .iter()
         .any(|r| r.header("proxy-authorization").is_some()));
-    let secure = renderer
-        .render(&format!("{}/csr.html", site.https_base_url()), &quick())
-        .await
-        .unwrap();
-    assert!(secure.dom_html.contains("<title>rendered</title>"));
-    assert!(proxy
-        .requests
-        .lock()
-        .unwrap()
-        .iter()
-        .any(|r| r.starts_with("CONNECT ")));
     renderer.close().await;
     launch.network.proxy.bypass.push("127.0.0.1".into());
     let direct = Renderer::launch(launch).await.unwrap();
@@ -170,6 +153,7 @@ async fn requires_chromium_manual_proxy_auth_connect_and_bypass() {
 }
 
 #[tokio::test]
+// Spec-Fixture `crawl-proxy` (lokaler Proxy, Ziel render-r01).
 // spec: CRAWL-122
 async fn unreachable_proxy_fails_at_launch() {
     let socket = TcpListener::bind(("127.0.0.1", 0)).await.unwrap();
@@ -184,6 +168,7 @@ async fn unreachable_proxy_fails_at_launch() {
 }
 
 #[tokio::test]
+// Spec-Fixture `crawl-proxy` (lokaler Proxy, Ziel render-r01).
 // spec: CRAWL-122
 async fn requires_chromium_reports_bad_proxy_credentials() {
     let site = TestSite::start("render-r01").await.unwrap();
@@ -196,23 +181,42 @@ async fn requires_chromium_reports_bad_proxy_credentials() {
         username: "proxy".into(),
         password: "wrong".into(),
     });
-    let cert_dir = tempfile::tempdir().unwrap();
-    let ca = cert_dir.path().join("ca.pem");
-    std::fs::write(&ca, site.ca_cert_pem()).unwrap();
-    launch
-        .network
-        .trusted_certificates
-        .push(ca.to_string_lossy().into());
     let renderer = Renderer::launch(launch).await.expect("requires_chromium");
     let error = renderer
         .render(&site.url("/csr.html"), &quick())
         .await
         .unwrap_err();
     assert_eq!(error, os_render::RenderError::ProxyAuthentication);
-    let secure_error = renderer
+    renderer.close().await;
+}
+
+#[tokio::test]
+// Spec-Fixture `crawl-proxy`: CONNECT bleibt aktiv, unbekannte CA wird abgelehnt.
+// spec: CRAWL-122
+async fn requires_chromium_tunnels_https_without_bypassing_tls_validation() {
+    let site = TestSite::start("render-r01").await.unwrap();
+    let proxy = Proxy::start(site.port(), false).await;
+    let mut launch = LaunchOpts::default();
+    launch.network.proxy.mode = ProxyMode::Manual;
+    launch.network.proxy.host = "127.0.0.1".into();
+    launch.network.proxy.port = proxy.port;
+    let renderer = Renderer::launch(launch).await.expect("requires_chromium");
+    assert!(renderer
         .render(&format!("{}/csr.html", site.https_base_url()), &quick())
         .await
-        .unwrap_err();
-    assert_eq!(secure_error, os_render::RenderError::ProxyAuthentication);
+        .is_err());
+    assert!(proxy
+        .requests
+        .lock()
+        .unwrap()
+        .iter()
+        .any(|request| request.starts_with("CONNECT ")));
+    assert!(
+        site.requests()
+            .iter()
+            .all(|request| request.path_and_query != "/csr.html"),
+        "kein Hauptdokument-Abruf nach abgelehntem TLS: {:?}",
+        site.requests()
+    );
     renderer.close().await;
 }

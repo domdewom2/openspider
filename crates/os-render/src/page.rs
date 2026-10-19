@@ -12,7 +12,8 @@ use chromiumoxide::{
         emulation::{SetDeviceMetricsOverrideParams, SetTouchEmulationEnabledParams},
         inspector::EventTargetCrashed,
         network::{
-            Headers, SetBypassServiceWorkerParams, SetCookiesParams, SetExtraHttpHeadersParams,
+            CookieParam, Headers, SetBypassServiceWorkerParams, SetCookiesParams,
+            SetExtraHttpHeadersParams,
         },
         page::{
             CaptureScreenshotFormat, CaptureScreenshotParams, EventLoadEventFired, NavigateParams,
@@ -25,13 +26,23 @@ use chromiumoxide::{
 use futures_util::StreamExt;
 use os_model::{ImageRenderFacts, RenderTimings, ScreenshotTile};
 use serde_json::{json, Value};
-use std::time::{Duration, Instant};
+use std::{
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+    time::{Duration, Instant},
+};
 
-// A separate control connection can dispose a context even when its JavaScript
-// thread is unresponsive. Dropping a render future must stop it immediately,
-// without waiting for another render to retire the browser generation.
+#[cfg(test)]
+pub(super) type TargetSender =
+    tokio::sync::mpsc::UnboundedSender<(Page, tokio::sync::oneshot::Sender<()>)>;
+
+// Ein eigener Steuerkanal räumt den Kontext auch bei blockierter JS-Schleife auf.
+// Abbruch eines Renderauftrags wartet dafür nicht auf den nächsten Browserstart.
 struct ContextCleanup {
     websocket: String,
+    retired: Arc<AtomicBool>,
     context: Option<chromiumoxide::cdp::browser_protocol::browser::BrowserContextId>,
     target: Option<chromiumoxide::cdp::browser_protocol::target::TargetId>,
 }
@@ -41,12 +52,16 @@ impl Drop for ContextCleanup {
             if let Ok(runtime) = tokio::runtime::Handle::try_current() {
                 let websocket = self.websocket.clone();
                 let target = self.target.take();
+                let retired = self.retired.clone();
                 runtime.spawn(async move {
-                    let _ = tokio::time::timeout(
-                        Duration::from_secs(2),
+                    let result = tokio::time::timeout(
+                        Duration::from_secs(5),
                         super::intercept::dispose_context(&websocket, context, target),
                     )
                     .await;
+                    if !matches!(result, Ok(Ok(()))) {
+                        retired.store(true, Ordering::Release);
+                    }
                 });
             }
         }
@@ -58,9 +73,11 @@ pub async fn render(
     url: &str,
     opts: &RenderOpts,
     launch: &super::LaunchOpts,
+    retired: Arc<AtomicBool>,
+    #[cfg(test)] targets: Option<TargetSender>,
 ) -> Result<RenderedPage, RenderError> {
-    // Per-render contexts isolate storage/cookies and prevent concurrent pages from
-    // changing each other's identity. They are disposed even after hard timeouts.
+    // Eigene Kontexte isolieren Speicher und Cookies paralleler Seiten.
+    // Auch nach einer harten Zeitgrenze wird der Kontext aufgeräumt.
     let context = tokio::time::timeout(
         Duration::from_secs(5),
         browser.create_browser_context(
@@ -74,6 +91,7 @@ pub async fn render(
     .map_err(|e| RenderError::Crashed(e.to_string()))?;
     let mut cleanup = ContextCleanup {
         websocket: browser.websocket_address().clone(),
+        retired: retired.clone(),
         context: Some(context.clone()),
         target: None,
     };
@@ -125,25 +143,35 @@ pub async fn render(
             .event_listener::<EventTargetCrashed>()
             .await
             .map_err(protocol)?;
-        let result = tokio::select! {
-            result = run(&page, browser.websocket_address(), url, opts, launch) => result,
-            _ = crashed.next() => Err(RenderError::Crashed(url.into())),
+        let run = async {
+            #[cfg(test)]
+            if let Some(targets) = &targets {
+                let (resume, ready) = tokio::sync::oneshot::channel();
+                if targets.send((page.clone(), resume)).is_ok() {
+                    let _ = ready.await;
+                }
+            }
+            run(&page, browser.websocket_address(), url, opts, launch).await
         };
-        let _ = tokio::time::timeout(Duration::from_millis(300), page.close()).await;
-        result
+        tokio::select! {
+            biased;
+            _ = crashed.next() => Err(RenderError::Crashed(url.into())),
+            result = run => result,
+        }
     };
     let result = tokio::time::timeout(Duration::from_millis(budget), work)
         .await
         .unwrap_or_else(|_| Err(RenderError::Timeout(url.into())));
-    if matches!(
-        tokio::time::timeout(
-            Duration::from_secs(1),
-            browser.dispose_browser_context(context)
-        )
-        .await,
-        Ok(Ok(()))
-    ) {
-        cleanup.context = None;
+    // Ein eigener Steuerkanal schließt auch Tabs mit blockierter JS-Schleife.
+    // Erst ein gescheiterter Kontextabbau zieht die gesamte Generation zurück.
+    let disposed = tokio::time::timeout(
+        Duration::from_secs(5),
+        super::intercept::dispose_context(&cleanup.websocket, context, cleanup.target.take()),
+    )
+    .await;
+    cleanup.context = None;
+    if !matches!(disposed, Ok(Ok(()))) {
+        retired.store(true, Ordering::Release);
     }
     result
 }
@@ -196,15 +224,27 @@ async fn run(
     page.execute(SetBypassServiceWorkerParams::new(true))
         .await
         .map_err(protocol)?;
-    // Also prevent registrations: bypass alone still permits worker side effects.
+    // Registrierungen ebenfalls verhindern: Bypass allein erlaubt Worker-Nebeneffekte.
     page.evaluate_on_new_document("if ('serviceWorker' in navigator) { Object.defineProperty(ServiceWorkerContainer.prototype, 'register', {value: () => Promise.reject(new DOMException('Service workers disabled', 'NotAllowedError'))}); }").await.map_err(protocol)?;
     if !opts.cookies.is_empty() {
-        let mut cookies = opts.cookies.clone();
-        for cookie in &mut cookies {
-            if cookie.url.is_none() && cookie.domain.is_none() {
-                cookie.url = Some(url.into());
-            }
-        }
+        let cookies = opts
+            .cookies
+            .iter()
+            .map(|cookie| {
+                let mut param = CookieParam::new(&cookie.name, &cookie.value);
+                param.domain = cookie.domain.clone();
+                param.url = cookie.domain.is_none().then(|| url.to_owned());
+                param.path = cookie.path.clone();
+                param.secure = Some(cookie.secure);
+                param.http_only = Some(cookie.http_only);
+                param.expires = cookie.expires.map(|seconds| {
+                    chromiumoxide::cdp::browser_protocol::network::TimeSinceEpoch::new(
+                        seconds as f64,
+                    )
+                });
+                param
+            })
+            .collect::<Vec<_>>();
         page.execute(SetCookiesParams::new(cookies))
             .await
             .map_err(protocol)?;
@@ -217,8 +257,8 @@ async fn run(
     let intercept = Intercept::start(ws, page, url, opts, launch, capture.data.clone()).await?;
     capture.begin_navigation();
     let start = Instant::now();
-    // Use raw Page.navigate: Page.goto waits for chromiumoxide's navigation/idle
-    // heuristic, which is not the load event required by CRAWL-080.
+    // Page.navigate verwenden: Page.goto wartet auf die Idle-Heuristik von
+    // chromiumoxide, statt auf das von CRAWL-080 geforderte load-Ereignis.
     let navigation = async {
         match page.execute(NavigateParams::new(url)).await {
             Ok(nav) => {
@@ -226,9 +266,9 @@ async fn run(
                     return Err(protocol(error));
                 }
             }
-            // chromiumoxide 0.9's CommandFuture has a fixed 30-second timer.
-            // The navigation continues in Chrome; our response timeout owns the
-            // deadline, including configured values above 30 seconds.
+            // CommandFuture in chromiumoxide 0.9 hat eine feste 30-Sekunden-Grenze.
+            // Die Navigation läuft in Chrome weiter; unser Antwort-Timeout gilt
+            // auch für konfigurierte Werte oberhalb von 30 Sekunden.
             Err(chromiumoxide::error::CdpError::Timeout) => {}
             Err(error) => return Err(protocol(error)),
         }
@@ -292,9 +332,10 @@ async fn run(
         })
         .collect();
     let mut screenshot_tiles = Vec::new();
+    let screenshot_start = Instant::now();
     if opts.screenshots {
         let mut size = opts.screenshot.size.unwrap_or(opts.viewport);
-        // Establish width before measuring height (responsive layout).
+        // Breite vor der Höhenmessung setzen (responsives Layout).
         metrics(page, opts, size).await?;
         if opts.screenshot.fit_content {
             size.1 = document_height(page).await?;
@@ -322,6 +363,11 @@ async fn run(
             height: (size.1 as f64 * opts.device_scale_factor).round() as u32,
         });
     }
+    let screenshot_ms = if opts.screenshots {
+        screenshot_start.elapsed().as_millis() as u32
+    } else {
+        0
+    };
     drop(intercept);
     let mut data = capture.data.lock().expect("capture");
     data.console.sort_by_key(|e| e.timestamp_ms);
@@ -344,6 +390,7 @@ async fn run(
         timings: RenderTimings {
             load_ms,
             wait_ms: opts.ajax_timeout_ms,
+            screenshot_ms,
             total_ms: start.elapsed().as_millis() as u32,
         },
         load_timed_out: !loaded,

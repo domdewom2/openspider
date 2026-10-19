@@ -29,6 +29,7 @@ fn png_size(bytes: &[u8]) -> (u32, u32) {
 }
 
 #[tokio::test]
+// Spec-Fixture `crawl-js` (paketeigen unter render-r01).
 // spec: CRAWL-077 [P1]
 async fn missing_chromium_is_actionable() {
     let dir = tempfile::tempdir().unwrap();
@@ -46,7 +47,8 @@ async fn missing_chromium_is_actionable() {
 }
 
 #[tokio::test]
-// spec: CRAWL-078 [M2]
+// Spec-Fixture `crawl-js` (paketeigen unter render-r01).
+// spec: CRAWL-078
 async fn requires_chromium_renders_and_reuses_engine_response() {
     let _lock = CHROMIUM.lock().await;
     let site = TestSite::start("render-r01").await.unwrap();
@@ -54,14 +56,14 @@ async fn requires_chromium_renders_and_reuses_engine_response() {
     let mut opts = quick();
     opts.user_agent = Some("OpenSpider-Fixture".into());
     opts.headers.insert("X-Fixture".into(), "render".into());
-    opts.cookies.push(
-        chromiumoxide::cdp::browser_protocol::network::CookieParam::builder()
-            .name("session")
-            .value("fixture")
-            .url(site.base_url())
-            .build()
-            .unwrap(),
-    );
+    opts.cookies.push(os_render::api::Cookie {
+        name: "session".into(),
+        value: "fixture".into(),
+        path: Some("/".into()),
+        http_only: true,
+        expires: Some(4_102_444_800),
+        ..Default::default()
+    });
     let result = renderer
         .render(&site.url("/csr.html"), &opts)
         .await
@@ -109,6 +111,7 @@ async fn requires_chromium_renders_and_reuses_engine_response() {
 }
 
 #[tokio::test]
+// Spec-Fixture `crawl-js` (paketeigen unter render-r01).
 // spec: CRAWL-080
 async fn requires_chromium_waits_after_load_and_preserves_partial_dom() {
     let _lock = CHROMIUM.lock().await;
@@ -138,6 +141,7 @@ async fn requires_chromium_waits_after_load_and_preserves_partial_dom() {
     assert!(partial.dom_html.contains("partial DOM"));
     assert!(partial.dom_html.contains("data-ran=\"yes\""));
     assert!(partial.timings.total_ms >= 600);
+    assert_eq!(partial.timings.screenshot_ms, 0);
     opts.ajax_timeout_ms = 1;
     assert!(renderer
         .render(&site.url("/csr.html"), &opts)
@@ -147,6 +151,7 @@ async fn requires_chromium_waits_after_load_and_preserves_partial_dom() {
 }
 
 #[tokio::test]
+// Spec-Fixture `crawl-js` (paketeigen unter render-r01).
 // spec: CRAWL-081
 async fn requires_chromium_emulates_devices_and_expands_google_viewport() {
     let _lock = CHROMIUM.lock().await;
@@ -195,6 +200,7 @@ async fn requires_chromium_emulates_devices_and_expands_google_viewport() {
 }
 
 #[tokio::test]
+// Spec-Fixture `crawl-js` (paketeigen unter render-r01).
 // spec: CRAWL-082
 async fn requires_chromium_captures_sized_png_jpeg_and_content_cap() {
     let _lock = CHROMIUM.lock().await;
@@ -210,6 +216,8 @@ async fn requires_chromium_captures_sized_png_jpeg_and_content_cap() {
         .await
         .unwrap();
     assert_eq!(png_size(&result.screenshot_tiles[0].data), (1024, 768));
+    assert!(result.timings.screenshot_ms >= opts.screenshot.resize_wait_ms);
+    assert!(result.timings.total_ms >= result.timings.screenshot_ms);
     opts.device_scale_factor = 2.0;
     let result = renderer
         .render(&site.url("/tall.html"), &opts)
@@ -256,7 +264,9 @@ impl ResourcePolicy for Robots {
     }
 }
 #[tokio::test]
+// Spec-Fixture `crawl-js` (paketeigen unter render-r01).
 // spec: CRAWL-083
+// spec: CRAWL-084
 async fn requires_chromium_blocks_before_network_and_records_http_errors() {
     let _lock = CHROMIUM.lock().await;
     let site = TestSite::start("render-r01").await.unwrap();
@@ -282,7 +292,12 @@ async fn requires_chromium_blocks_before_network_and_records_http_errors() {
         .requests()
         .iter()
         .any(|r| r.path_and_query == "/private-js/app.js"));
-    opts.resource_policy = None; // Engine's ignore/custom robots policy releases it.
+    assert!(
+        result.console.is_empty(),
+        "interne 404/500-Meldungen: {:?}",
+        result.console
+    );
+    opts.resource_policy = None; // Engine gibt die Ressource über ihre robots-Richtlinie frei.
     let result = renderer
         .render(&site.url("/blocked.html"), &opts)
         .await
@@ -293,6 +308,7 @@ async fn requires_chromium_blocks_before_network_and_records_http_errors() {
 }
 
 #[tokio::test]
+// Spec-Fixture `crawl-js` (paketeigen unter render-r01).
 // spec: CRAWL-084
 async fn requires_chromium_bounds_console_with_locations_and_cutoff() {
     let _lock = CHROMIUM.lock().await;
@@ -335,17 +351,18 @@ async fn requires_chromium_bounds_console_with_locations_and_cutoff() {
 }
 
 #[tokio::test]
+// Spec-Fixture `crawl-js` (paketeigen unter render-r01).
 // spec: PERF-006
 async fn requires_chromium_recycles_and_recovers_after_hanging_js() {
     let _lock = CHROMIUM.lock().await;
     let site = TestSite::start("render-r01").await.unwrap();
     let renderer = requires_chromium(LaunchOpts {
-        restart_after_pages: 2,
+        restart_after_pages: 3,
         max_tabs: 2,
         ..Default::default()
     })
     .await;
-    for _ in 0..3 {
+    for _ in 0..4 {
         renderer
             .render(&site.url("/csr.html"), &quick())
             .await
@@ -369,29 +386,31 @@ async fn requires_chromium_recycles_and_recovers_after_hanging_js() {
         .unwrap()
         .dom_html
         .contains("<title>rendered</title>"));
-    assert_eq!(renderer.generation(), 3);
+    assert_eq!(renderer.generation(), 2);
     renderer.close().await;
     let memory = requires_chromium(LaunchOpts {
         memory_limit_mb: 1,
         ..Default::default()
     })
     .await;
-    memory
-        .render(&site.url("/csr.html"), &quick())
-        .await
-        .unwrap();
-    memory
-        .render(&site.url("/csr.html"), &quick())
-        .await
-        .unwrap();
+    tokio::time::timeout(Duration::from_secs(30), async {
+        while memory.generation() == 1 {
+            memory
+                .render(&site.url("/csr.html"), &quick())
+                .await
+                .unwrap();
+        }
+    })
+    .await
+    .expect("Speichermonitor zieht die benutzte Generation zurück");
     assert_eq!(memory.generation(), 2);
     memory.close().await;
 }
 
 #[tokio::test]
+// Spec-Fixture `crawl-js` (paketeigen unter render-r01).
 // spec: CRAWL-122
-async fn requires_chromium_uses_additional_ca_without_disabling_tls_checks() {
-    let _lock = CHROMIUM.lock().await;
+async fn custom_truststore_and_authenticated_socks_fail_explicitly_until_n01() {
     let site = TestSite::start("render-r01").await.unwrap();
     let dir = tempfile::tempdir().unwrap();
     let cert = dir.path().join("ca.pem");
@@ -401,35 +420,38 @@ async fn requires_chromium_uses_additional_ca_without_disabling_tls_checks() {
         .network
         .trusted_certificates
         .push(cert.to_string_lossy().into());
-    launch.network.proxy.mode = os_model::ProxyMode::None;
-    launch.host_resolver_rules.push(format!(
-        "MAP expired.fixture.test 127.0.0.1:{}",
-        site.port()
-    ));
-    let renderer = requires_chromium(launch).await;
-    let result = renderer
-        .render(&format!("{}/csr.html", site.https_base_url()), &quick())
-        .await
-        .unwrap();
-    assert!(result.dom_html.contains("<title>rendered</title>"));
-    assert!(renderer
-        .render(
-            &format!("https://expired.fixture.test:{}/csr.html", site.port()),
-            &quick()
-        )
-        .await
-        .is_err());
-    renderer.close().await;
-    let untrusted = requires_chromium(LaunchOpts::default()).await;
-    assert!(untrusted
-        .render(&format!("{}/csr.html", site.https_base_url()), &quick())
-        .await
-        .is_err());
-    untrusted.close().await;
+    assert!(
+        matches!(Renderer::launch(launch).await, Err(RenderError::NotImplemented(message)) if message.contains("M2-N01") && message.contains("Truststore"))
+    );
+    let mut launch = LaunchOpts::default();
+    launch.network.proxy.mode = os_model::ProxyMode::Manual;
+    launch.network.proxy.kind = os_model::ProxyKind::Socks5;
+    launch.proxy_credentials = Some(Credentials {
+        username: "fixture".into(),
+        password: "secret".into(),
+    });
+    assert!(
+        matches!(Renderer::launch(launch).await, Err(RenderError::NotImplemented(message)) if message.contains("SOCKS5"))
+    );
 }
 
 #[tokio::test]
-// spec: CRAWL-078 [M2]
+// Spec-Fixture `crawl-js` (paketeigen unter render-r01).
+// spec: CRAWL-122
+async fn requires_chromium_rejects_untrusted_tls() {
+    let _lock = CHROMIUM.lock().await;
+    let site = TestSite::start("render-r01").await.unwrap();
+    let renderer = requires_chromium(LaunchOpts::default()).await;
+    assert!(renderer
+        .render(&format!("{}/csr.html", site.https_base_url()), &quick())
+        .await
+        .is_err());
+    renderer.close().await;
+}
+
+#[tokio::test]
+// Spec-Fixture `crawl-js` (paketeigen unter render-r01).
+// spec: CRAWL-078
 async fn requires_chromium_uses_http_auth_credentials() {
     let _lock = CHROMIUM.lock().await;
     let site = TestSite::start("render-r01").await.unwrap();
@@ -450,6 +472,7 @@ async fn requires_chromium_uses_http_auth_credentials() {
 }
 
 #[tokio::test]
+// Spec-Fixture `crawl-js` (paketeigen unter render-r01).
 // spec: PERF-006
 async fn requires_chromium_limits_tabs_and_recovers_from_cancellation() {
     let _lock = CHROMIUM.lock().await;
@@ -493,11 +516,12 @@ async fn requires_chromium_limits_tabs_and_recovers_from_cancellation() {
         .render(&site.url("/csr.html"), &quick())
         .await
         .unwrap();
-    assert_eq!(renderer.generation(), 2);
+    assert_eq!(renderer.generation(), 1);
     renderer.close().await;
 }
 
 #[tokio::test]
+// Spec-Fixture `crawl-js` (paketeigen unter render-r01).
 // spec: CRAWL-077 [P1]
 async fn missing_environment_path_does_not_fall_back_to_system_chrome() {
     const CHILD: &str = "OPENSPIDER_R01_MISSING_PATH_CHILD";
@@ -525,6 +549,7 @@ async fn missing_environment_path_does_not_fall_back_to_system_chrome() {
 }
 
 #[tokio::test]
+// Spec-Fixture `crawl-js` (paketeigen unter render-r01).
 // spec: CRAWL-082
 async fn requires_chromium_screenshot_wait_captures_late_paint_pixels() {
     use base64::{prelude::BASE64_STANDARD, Engine};
@@ -569,6 +594,7 @@ async fn requires_chromium_screenshot_wait_captures_late_paint_pixels() {
 
 #[tokio::test]
 #[ignore = "Benchmark: 100 pages with/without screenshots, run on a quiet machine"]
+// Spec-Fixture `crawl-js` (paketeigen unter render-r01).
 // spec: CRAWL-082
 async fn requires_chromium_screenshot_overhead_100_pages() {
     let site = TestSite::start("render-r01").await.unwrap();
@@ -607,4 +633,83 @@ async fn requires_chromium_screenshot_overhead_100_pages() {
         totals[0],
         totals[1]
     );
+}
+
+#[tokio::test]
+// Spec-Fixture `crawl-js`: fünf parallele Ressourcen mit Sitzungscookie und Set-Cookie.
+// spec: CRAWL-078
+async fn requires_chromium_preserves_cookies_for_parallel_resources() {
+    let _lock = CHROMIUM.lock().await;
+    let site = TestSite::start("render-r01").await.unwrap();
+    let renderer = requires_chromium(LaunchOpts::default()).await;
+    let opts = RenderOpts {
+        ajax_timeout_ms: 1000,
+        cookies: vec![os_render::api::Cookie {
+            name: "session".into(),
+            value: "fixture".into(),
+            http_only: true,
+            ..Default::default()
+        }],
+        ..quick()
+    };
+    let page = renderer
+        .render(&site.url("/cookie-resources.html"), &opts)
+        .await
+        .unwrap();
+    assert!(page.dom_html.contains("data-finished=\"yes\""));
+    assert!(
+        site.max_concurrency() >= 5,
+        "Ressourcen werden parallel angefordert"
+    );
+    let requests = site.requests();
+    for i in 0..5 {
+        let request = requests
+            .iter()
+            .find(|r| r.path_and_query == format!("/parallel-{i}.js"))
+            .unwrap();
+        assert!(request
+            .header("cookie")
+            .unwrap()
+            .contains("session=fixture"));
+    }
+    let echoed = requests
+        .iter()
+        .find(|r| r.path_and_query == "/echo")
+        .unwrap()
+        .header("cookie")
+        .unwrap();
+    for i in 0..5 {
+        assert!(echoed.contains(&format!("resource{i}=present")));
+    }
+    renderer.close().await;
+}
+
+#[tokio::test]
+// Spec-Fixture `crawl-js`: eingespieltes Hauptdokument bei normalisierter URL.
+// spec: CRAWL-078
+async fn requires_chromium_replays_normalized_main_url() {
+    let _lock = CHROMIUM.lock().await;
+    let site = TestSite::start("render-r01").await.unwrap();
+    let renderer = requires_chromium(LaunchOpts {
+        host_resolver_rules: vec![format!("MAP replay.fixture.test 127.0.0.1:{}", site.port())],
+        ..Default::default()
+    })
+    .await;
+    let opts = RenderOpts {
+        main_response: Some(MainResponse {
+            status: 200,
+            headers: vec![("Content-Type".into(), "text/html".into())],
+            body: b"<!doctype html><link rel='icon' href='data:,'><title>replayed</title>".to_vec(),
+        }),
+        ..quick()
+    };
+    for url in [
+        "http://replay.fixture.test:80#fragment".to_owned(),
+        site.base_url().to_owned(),
+    ] {
+        let page = renderer.render(&url, &opts).await.unwrap();
+        assert!(page.dom_html.contains("<title>replayed</title>"));
+    }
+    assert!(site.requests().iter().all(|r| r.path_and_query != "/"));
+    renderer.close().await;
 }

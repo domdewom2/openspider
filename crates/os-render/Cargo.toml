@@ -10,9 +10,6 @@ authors.workspace = true
 
 [dependencies]
 os-model.workspace = true
-# K2-61: shared proxy/truststore client for CDP HTTPS response fulfillment.
-os-fetch.workspace = true
-reqwest.workspace = true
 # M2-F01 (3.2): Chromium über das DevTools-Protokoll; Rendering, Screenshots, Konsole, blockierte Ressourcen (M2-R01)
 chromiumoxide.workspace = true
 serde.workspace = true

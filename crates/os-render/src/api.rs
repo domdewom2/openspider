@@ -1,5 +1,5 @@
-//! Chromium renderer contracts. The engine supplies request policy and fetched responses;
-//! this crate owns browser execution, bounded capture and browser recovery.
+//! Verträge des Chromium-Renderers. Die Engine übergibt Richtlinien und Antworten;
+//! dieses Crate steuert Browser, begrenzte Erfassung und Wiederherstellung.
 use std::{collections::BTreeMap, path::PathBuf, sync::Arc};
 
 use os_model::settings::NetworkSettings;
@@ -38,7 +38,7 @@ pub enum RenderError {
     Protocol(String),
 }
 
-/// Secrets are supplied by the caller's SecretStore, never read or persisted here.
+/// Zugangsdaten stammen aus dem SecretStore des Aufrufers und werden hier nicht gespeichert.
 #[derive(Clone, PartialEq, Eq)]
 pub struct Credentials {
     pub username: String,
@@ -55,17 +55,17 @@ pub struct LaunchOpts {
     pub chromium_path: Option<PathBuf>,
     pub headless: bool,
     pub user_data_dir: Option<PathBuf>,
-    /// E05 resolves the RAM/threads/profile default (K2-36); at least one tab.
+    /// E05 bestimmt den Standard aus RAM, Threads und Profil (K2-36); mindestens ein Tab.
     pub max_tabs: usize,
-    /// Zero disables the respective recycling trigger.
+    /// Null deaktiviert den jeweiligen Neustartauslöser.
     pub restart_after_pages: u64,
     pub memory_limit_mb: u64,
     pub network: NetworkSettings,
     pub proxy_credentials: Option<Credentials>,
-    /// Chromium host resolver rules, supplied from the crawl's host mapping.
+    /// Chromium-Regeln aus der Host-Zuordnung des Crawls.
     pub host_resolver_rules: Vec<String>,
     pub launch_timeout_ms: u32,
-    /// Explicit opt-in for containers that cannot provide Chromium's sandbox.
+    /// Explizite Freigabe für Container ohne Chromium-Sandbox.
     pub no_sandbox: bool,
 }
 impl Default for LaunchOpts {
@@ -117,16 +117,16 @@ impl Default for ScreenshotOpts {
     }
 }
 
-/// A response already fetched by the engine. Fulfilled via CDP at the original URL.
+/// Bereits von der Engine abgerufene Antwort, über CDP an der Original-URL eingespielt.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MainResponse {
     pub status: u16,
     pub headers: Vec<(String, String)>,
-    /// Decoded body; transport Content-Encoding/Length headers are removed on replay.
+    /// Dekodierter Inhalt; Content-Encoding/Length werden beim Einspielen entfernt.
     pub body: Vec<u8>,
 }
-/// Engine-owned robots policy, including custom robots and the ignore switch.
-/// Returning false prevents the request from reaching the network.
+/// robots-Richtlinie der Engine einschließlich eigener Regeln und Ignorieren-Schalter.
+/// Bei false gelangt die Anfrage nicht ins Netz.
 pub trait ResourcePolicy: Send + Sync + std::fmt::Debug {
     fn allowed<'a>(
         &'a self,
@@ -134,6 +134,21 @@ pub trait ResourcePolicy: Send + Sync + std::fmt::Debug {
     ) -> std::pin::Pin<Box<dyn std::future::Future<Output = bool> + Send + 'a>>;
 }
 
+/// Cookie der Engine; ohne Bindung an Chromium/CDP. Ohne Domain gilt die Render-URL.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct Cookie {
+    pub name: String,
+    pub value: String,
+    pub domain: Option<String>,
+    pub path: Option<String>,
+    pub secure: bool,
+    pub http_only: bool,
+    /// Unix-Zeit in Sekunden; None bezeichnet ein Sitzungscookie.
+    pub expires: Option<i64>,
+}
+
+/// Renderoptionen enthalten eine dynamische Ressourcenrichtlinie und implementieren
+/// deshalb bewusst kein PartialEq.
 #[derive(Debug, Clone)]
 pub struct RenderOpts {
     pub viewport: (u32, u32),
@@ -145,13 +160,13 @@ pub struct RenderOpts {
     pub mobile: bool,
     pub touch: bool,
     pub response_timeout_ms: u32,
-    /// Hard ceiling including an unresponsive JS engine. Zero derives it from load,
-    /// AJAX and screenshot budgets plus a bounded five-second extraction allowance.
+    /// Harte Grenze auch bei blockierter JS-Engine. Null leitet sie aus Laden,
+    /// AJAX und Screenshot sowie fünf Sekunden für die Extraktion ab.
     pub page_timeout_ms: u32,
     pub screenshot: ScreenshotOpts,
     pub js_error_reporting: bool,
     pub headers: BTreeMap<String, String>,
-    pub cookies: Vec<chromiumoxide::cdp::browser_protocol::network::CookieParam>,
+    pub cookies: Vec<Cookie>,
     pub credentials: Option<Credentials>,
     pub resource_policy: Option<Arc<dyn ResourcePolicy>>,
     pub main_response: Option<MainResponse>,
@@ -232,10 +247,10 @@ pub struct RenderedPage {
     pub network: Vec<NetworkEntry>,
     pub screenshot_tiles: Vec<ScreenshotTile>,
     pub timings: RenderTimings,
-    /// True when load did not fire; the available DOM is still returned.
+    /// Kein load-Ereignis; das bis dahin verfügbare DOM wird dennoch zurückgegeben.
     pub load_timed_out: bool,
     pub final_url: String,
-    /// DOM image order, including duplicate URLs (different display sizes).
+    /// DOM-Bildreihenfolge einschließlich gleicher URLs mit verschiedenen Anzeigegrößen.
     pub images: Vec<(String, ImageRenderFacts)>,
 }
 

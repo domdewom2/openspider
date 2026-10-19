@@ -1,6 +1,5 @@
-//! A separate CDP session owns Fetch. chromiumoxide's page handler automatically
-//! answers auth challenges with one shared credential pair; isolating Fetch lets
-//! us distinguish proxy credentials from origin credentials without leaking either.
+//! Eine eigene CDP-Sitzung steuert Fetch. So werden Proxy- und Origin-Zugangsdaten
+//! getrennt beantwortet; chromiumoxide würde sonst dasselbe Paar für beide nutzen.
 use super::{capture::Data, protocol, LaunchOpts, RenderError, RenderOpts};
 use base64::{prelude::BASE64_STANDARD, Engine};
 use chromiumoxide::{
@@ -75,9 +74,16 @@ impl Intercept {
         .await?;
         let policy = opts.resource_policy.clone();
         let mut response = opts.main_response.clone();
-        let main_url = url.split('#').next().unwrap_or(url).to_owned();
-        let response_timeout_ms = opts.response_timeout_ms;
-        // Ask Chromium to canonicalize the origin (including default ports/IDNs).
+        let main_url: String = page
+            .evaluate(format!(
+                "(() => {{ const u = new URL({}); u.hash = ''; return u.href; }})()",
+                serde_json::to_string(url).map_err(protocol)?
+            ))
+            .await
+            .map_err(protocol)?
+            .into_value()
+            .map_err(protocol)?;
+        // Chromium normalisiert den Origin einschließlich Standardports und IDNs.
         let origin: String = page
             .evaluate(format!(
                 "new URL({}).origin",
@@ -89,7 +95,6 @@ impl Intercept {
             .map_err(protocol)?;
         let credentials = opts.credentials.clone();
         let proxy = launch.proxy_credentials.clone();
-        let launch = launch.clone();
         let task = tokio::spawn(async move {
             let mut authenticated = HashSet::new();
             while let Some(Ok(message)) = conn.next().await {
@@ -164,40 +169,6 @@ impl Intercept {
                                 "Fetch.fulfillRequest",
                                 json!({"requestId":id,"responseCode":response.status,"responseHeaders":headers,"body":BASE64_STANDARD.encode(response.body)}),
                             )
-                        } else if super::trust::needs_bridge(&launch, resource_url) {
-                            match super::trust::fetch(
-                                &launch,
-                                &p["request"],
-                                &origin,
-                                credentials.as_ref(),
-                                response_timeout_ms,
-                            )
-                            .await
-                            {
-                                Ok(response) => {
-                                    let headers: Vec<_> = response
-                                        .headers
-                                        .into_iter()
-                                        .map(|(name, value)| json!({"name":name,"value":value}))
-                                        .collect();
-                                    (
-                                        "Fetch.fulfillRequest",
-                                        json!({"requestId":id,"responseCode":response.status,"responseHeaders":headers,"body":BASE64_STANDARD.encode(response.body)}),
-                                    )
-                                }
-                                Err(error) => {
-                                    let mut capture = data.lock().expect("capture");
-                                    if error == RenderError::ProxyAuthentication {
-                                        capture.proxy_auth_failed = true;
-                                    }
-                                    capture.block(resource_url.into(), "error", None);
-                                    drop(capture);
-                                    (
-                                        "Fetch.failRequest",
-                                        json!({"requestId":id,"errorReason":"Failed"}),
-                                    )
-                                }
-                            }
                         } else {
                             ("Fetch.continueRequest", json!({"requestId":id}))
                         }
@@ -225,13 +196,13 @@ pub async fn dispose_context(
         .await
         .map_err(protocol)?;
     if let Some(target) = target {
-        command(
+        let _ = command(
             &mut conn,
             None,
             "Target.closeTarget",
             json!({"targetId":target}),
         )
-        .await?;
+        .await;
     }
     command(
         &mut conn,

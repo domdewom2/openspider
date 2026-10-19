@@ -1,4 +1,4 @@
-//! Resident memory of Chromium's process tree, without shell commands.
+//! Residenter Speicher des Chromium-Prozessbaums, ohne Shell-Aufruf.
 #[cfg(target_os = "linux")]
 pub fn resident_bytes(pid: u32) -> Option<u64> {
     let text = std::fs::read_to_string(
@@ -24,10 +24,10 @@ pub fn resident_bytes(pid: u32) -> Option<u64> {
             size: i32,
         ) -> i32;
     }
-    // PROC_PIDTASKINFO starts with virtual_size and resident_size (two u64).
-    // The oversized aligned buffer accommodates the complete kernel structure.
+    // PROC_PIDTASKINFO beginnt mit virtual_size und resident_size (zweimal u64).
+    // Der ausgerichtete Puffer bietet Platz für die vollständige Kernel-Struktur.
     let mut info = [0u64; 32];
-    // SAFETY: writable aligned buffer of the advertised size, no retained pointers.
+    // SAFETY: beschreibbarer, ausgerichteter Puffer in angegebener Größe; keine gespeicherten Zeiger.
     let count = unsafe {
         proc_pidinfo(
             pid as i32,
@@ -64,8 +64,8 @@ pub fn resident_bytes(pid: u32) -> Option<u64> {
             size: u32,
         ) -> i32;
     }
-    // SAFETY: process handle is closed on every successful open; counters has the
-    // documented PROCESS_MEMORY_COUNTERS layout and is valid for the call.
+    // SAFETY: Jeder erfolgreich geöffnete Prozess-Handle wird geschlossen; counters
+    // entspricht PROCESS_MEMORY_COUNTERS und bleibt während des Aufrufs gültig.
     unsafe {
         let handle = OpenProcess(0x0400 | 0x0010, 0, pid);
         if handle.is_null() {

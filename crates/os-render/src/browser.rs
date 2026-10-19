@@ -8,7 +8,10 @@ use futures_util::StreamExt;
 use os_model::{ProxyKind, ProxyMode};
 use std::{
     path::PathBuf,
-    sync::atomic::{AtomicBool, AtomicU64, Ordering},
+    sync::{
+        atomic::{AtomicBool, AtomicU64, Ordering},
+        Arc,
+    },
     time::Duration,
 };
 use tokio::sync::{RwLock, Semaphore};
@@ -19,6 +22,8 @@ pub struct Renderer {
     session: RwLock<Option<Session>>,
     tabs: Semaphore,
     generations: AtomicU64,
+    #[cfg(test)]
+    targets: std::sync::Mutex<Option<super::page::TargetSender>>,
 }
 impl Drop for Renderer {
     fn drop(&mut self) {
@@ -28,21 +33,25 @@ impl Drop for Renderer {
                     shutdown(&mut session).await;
                 });
             }
-            // Without a runtime Browser's kill-on-drop still terminates the child.
+            // Ohne Laufzeit beendet Browser das Kind weiterhin beim Drop.
         }
     }
 }
 #[derive(Debug)]
 struct Session {
-    browser: Browser,
+    browser: Arc<Browser>,
     handler: tokio::task::JoinHandle<()>,
-    pages: AtomicU64,
-    retired: AtomicBool,
+    pages: Arc<AtomicU64>,
+    retired: Arc<AtomicBool>,
+    memory_monitor: Option<tokio::task::JoinHandle<()>>,
     _profile: Profile,
 }
 impl Drop for Session {
     fn drop(&mut self) {
         self.handler.abort();
+        if let Some(monitor) = &self.memory_monitor {
+            monitor.abort();
+        }
     }
 }
 #[derive(Debug)]
@@ -63,7 +72,8 @@ impl Profile {
                 std::process::id(),
                 NEXT.fetch_add(1, Ordering::Relaxed)
             ));
-            #[cfg_attr(not(unix), allow(unused_mut))] // Unix-only permission configuration below.
+            #[cfg_attr(not(unix), allow(unused_mut))]
+            // Rechtekonfiguration unten gilt nur unter Unix.
             let mut builder = std::fs::DirBuilder::new();
             #[cfg(unix)]
             {
@@ -79,8 +89,8 @@ impl Profile {
     }
 }
 
-/// Explicit path wins over environment; an invalid explicit/environment path never
-/// silently falls back to another installation.
+/// Expliziter Pfad hat Vorrang vor der Umgebung; ungültige Vorgaben führen
+/// niemals still zu einer anderen Installation.
 pub(super) fn executable(opts: &LaunchOpts) -> Result<PathBuf, RenderError> {
     if let Some(path) = opts
         .chromium_path
@@ -149,6 +159,7 @@ pub(super) fn executable(opts: &LaunchOpts) -> Result<PathBuf, RenderError> {
 }
 
 async fn start(opts: &LaunchOpts) -> Result<Session, RenderError> {
+    trust::validate(opts)?;
     let profile = if opts.user_data_dir.is_none() {
         Profile::new()?
     } else {
@@ -218,7 +229,7 @@ async fn start(opts: &LaunchOpts) -> Result<Session, RenderError> {
                 )
                 .as_str(),
             ));
-            // Chromium otherwise bypasses loopback implicitly, even for an empty list.
+            // Chromium umgeht sonst Loopback implizit, auch bei leerer Ausnahmeliste.
             let bypass = std::iter::once("<-loopback>".to_owned())
                 .chain(proxy.bypass.clone())
                 .collect::<Vec<_>>()
@@ -232,7 +243,6 @@ async fn start(opts: &LaunchOpts) -> Result<Session, RenderError> {
             opts.host_resolver_rules.join(",").as_str(),
         ));
     }
-    trust::validate(&opts.network)?;
     let (browser, mut handler) = Browser::launch(config.build().map_err(RenderError::Launch)?)
         .await
         .map_err(|e| RenderError::Launch(e.to_string()))?;
@@ -243,11 +253,25 @@ async fn start(opts: &LaunchOpts) -> Result<Session, RenderError> {
             }
         }
     });
+    let browser = Arc::new(browser);
+    let retired = Arc::new(AtomicBool::new(false));
+    let pages = Arc::new(AtomicU64::new(0));
+    let memory_monitor = if opts.memory_limit_mb > 0 {
+        Some(tokio::spawn(watch_memory(
+            browser.clone(),
+            retired.clone(),
+            pages.clone(),
+            opts.memory_limit_mb,
+        )))
+    } else {
+        None
+    };
     let session = Session {
         browser,
         handler,
-        pages: AtomicU64::new(0),
-        retired: AtomicBool::new(false),
+        pages,
+        retired,
+        memory_monitor,
         _profile: profile,
     };
     session
@@ -273,9 +297,11 @@ impl Renderer {
             opts,
             session: RwLock::new(Some(session)),
             generations: AtomicU64::new(1),
+            #[cfg(test)]
+            targets: std::sync::Mutex::new(None),
         })
     }
-    /// Observable generation for diagnostics and restart tests.
+    /// Sichtbare Generation für Diagnose und Neustarttests.
     pub fn generation(&self) -> u64 {
         self.generations.load(Ordering::Acquire)
     }
@@ -304,30 +330,24 @@ impl Renderer {
                 }
             };
             let session = guard.as_ref().expect("active session");
-            // A cancelled render also retires the generation, so an orphan/hung tab
-            // cannot consume capacity forever. Normal completion disarms the guard.
-            struct InFlight<'a>(&'a AtomicBool, bool);
-            impl Drop for InFlight<'_> {
-                fn drop(&mut self) {
-                    if self.1 {
-                        self.0.store(true, Ordering::Release);
-                    }
-                }
-            }
-            let mut in_flight = InFlight(&session.retired, true);
-            let result = tokio::select! {
-                result = page::render(&session.browser, url, opts, &self.opts) => result,
-                () = watch_memory(session, self.opts.memory_limit_mb) => unreachable!("memory monitor runs until cancelled"),
-            };
-            in_flight.1 = false;
-            let unhealthy = matches!(
-                result,
-                Err(RenderError::Timeout(_)) | Err(RenderError::Crashed(_))
-            ) || session.handler.is_finished();
+            #[cfg(test)]
+            let targets = self.targets.lock().expect("targets").clone();
+            let result = page::render(
+                &session.browser,
+                url,
+                opts,
+                &self.opts,
+                session.retired.clone(),
+                #[cfg(test)]
+                targets,
+            )
+            .await;
+            let unhealthy =
+                matches!(result, Err(RenderError::Crashed(_))) || session.handler.is_finished();
             if unhealthy {
                 session.retired.store(true, Ordering::Release);
             }
-            // Retry a crashed target once, not an endlessly executing script.
+            // Ein abgestürztes Ziel wird einmal wiederholt; eine JS-Endlosschleife nicht.
             if attempt == 0 && matches!(result, Err(RenderError::Crashed(_))) {
                 continue;
             }
@@ -367,7 +387,7 @@ impl Renderer {
         self.generations.fetch_add(1, Ordering::AcqRel);
         Ok(())
     }
-    /// Waits for active renders, reaps Chromium and removes the temporary profile.
+    /// Wartet laufende Renderaufträge ab, beendet Chromium und entfernt das temporäre Profil.
     pub async fn close(&self) {
         self.tabs.close();
         if let Some(mut session) = self.session.write().await.take() {
@@ -376,9 +396,14 @@ impl Renderer {
     }
 }
 async fn shutdown(session: &mut Session) {
-    let _ = tokio::time::timeout(Duration::from_secs(2), session.browser.close()).await;
-    let _ = session.browser.kill().await;
-    let _ = session.browser.wait().await;
+    if let Some(monitor) = session.memory_monitor.take() {
+        monitor.abort();
+        let _ = monitor.await;
+    }
+    let browser = Arc::get_mut(&mut session.browser).expect("Sitzung besitzt Browser exklusiv");
+    let _ = tokio::time::timeout(Duration::from_secs(2), browser.close()).await;
+    let _ = browser.kill().await;
+    let _ = browser.wait().await;
 }
 
 fn reserve_page(pages: &AtomicU64, limit: u64) -> bool {
@@ -398,14 +423,22 @@ fn reserve_page(pages: &AtomicU64, limit: u64) -> bool {
         }
     }
 }
-async fn watch_memory(session: &Session, limit_mb: u64) {
-    if limit_mb == 0 {
-        std::future::pending::<()>().await;
-    }
+async fn watch_memory(
+    browser: Arc<Browser>,
+    retired: Arc<AtomicBool>,
+    pages: Arc<AtomicU64>,
+    limit_mb: u64,
+) {
     loop {
+        // Eine frische Generation muss mindestens einen Auftrag annehmen können,
+        // selbst wenn bereits der Chromium-Grundbedarf die Grenze überschreitet.
+        if pages.load(Ordering::Acquire) == 0 {
+            tokio::time::sleep(Duration::from_millis(250)).await;
+            continue;
+        }
         if let Ok(Ok(info)) = tokio::time::timeout(
             Duration::from_secs(1),
-            session.browser.execute(GetProcessInfoParams::default()),
+            browser.execute(GetProcessInfoParams::default()),
         )
         .await
         {
@@ -416,7 +449,8 @@ async fn watch_memory(session: &Session, limit_mb: u64) {
                 .filter_map(|p| super::memory::resident_bytes(p.id as u32))
                 .sum();
             if rss >= limit_mb.saturating_mul(1024 * 1024) {
-                session.retired.store(true, Ordering::Release);
+                retired.store(true, Ordering::Release);
+                return;
             }
         }
         tokio::time::sleep(Duration::from_millis(250)).await;
@@ -429,67 +463,57 @@ mod tests {
     use chromiumoxide::cdp::browser_protocol::page::CrashParams;
     use std::sync::Arc;
 
-    async fn crash_current(
-        renderer: &Renderer,
-        site: &os_testsite::TestSite,
-        minimum_requests: usize,
-    ) {
-        tokio::time::timeout(Duration::from_secs(10), async {
-            loop {
-                if site
-                    .requests()
-                    .iter()
-                    .filter(|r| r.path_and_query == "/csr.html")
-                    .count()
-                    >= minimum_requests
-                {
-                    let guard = renderer.session.read().await;
-                    if let Some(session) = guard.as_ref() {
-                        for page in session.browser.pages().await.unwrap_or_default() {
-                            if page
-                                .url()
-                                .await
-                                .ok()
-                                .flatten()
-                                .is_some_and(|u| u.ends_with("/csr.html"))
-                            {
-                                let _ = tokio::time::timeout(
-                                    Duration::from_millis(100),
-                                    page.execute(CrashParams::default()),
-                                )
-                                .await;
-                                return;
-                            }
-                        }
-                    }
-                }
-                tokio::time::sleep(Duration::from_millis(10)).await;
+    async fn crash_target(page: chromiumoxide::Page) {
+        use chromiumoxide::cdp::browser_protocol::inspector::EventTargetCrashed;
+        let mut crashed = page.event_listener::<EventTargetCrashed>().await.unwrap();
+        tokio::time::timeout(Duration::from_secs(60), async {
+            let command = page.execute(CrashParams::default());
+            tokio::pin!(command);
+            tokio::select! {
+                event = crashed.next() => { event.expect("Crash-Ereignis"); },
+                _ = &mut command => { crashed.next().await.expect("Crash-Ereignis"); },
             }
         })
         .await
-        .expect("render target appeared");
+        .expect("Crash wurde bestätigt");
     }
 
-    #[tokio::test]
-    // spec: CRAWL-078 [M2]
+    #[tokio::test(flavor = "multi_thread")]
+    // Spec-Fixture `crawl-js`: Renderziel wird vor Navigation per Kanal übergeben.
+    // spec: CRAWL-078
     async fn requires_chromium_retries_target_crash_exactly_once() {
         let site = os_testsite::TestSite::start("render-r01").await.unwrap();
         let renderer = Arc::new(
-            Renderer::launch(LaunchOpts::default())
-                .await
-                .expect("requires_chromium"),
+            Renderer::launch(LaunchOpts {
+                memory_limit_mb: 0,
+                ..Default::default()
+            })
+            .await
+            .expect("requires_chromium"),
         );
+        let (tx, mut targets) = tokio::sync::mpsc::unbounded_channel();
+        *renderer.targets.lock().unwrap() = Some(tx);
         let opts = RenderOpts {
-            ajax_timeout_ms: 1000,
+            ajax_timeout_ms: 100,
             screenshots: false,
+            page_timeout_ms: 120_000,
             ..Default::default()
         };
         let r = renderer.clone();
         let url = site.url("/csr.html");
         let first_opts = opts.clone();
         let task = tokio::spawn(async move { r.render(&url, &first_opts).await });
-        crash_current(&renderer, &site, 1).await;
-        let result = tokio::time::timeout(Duration::from_secs(15), task)
+        let (page, _resume) = tokio::time::timeout(Duration::from_secs(60), targets.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        crash_target(page).await;
+        let (_page, resume) = tokio::time::timeout(Duration::from_secs(60), targets.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        resume.send(()).unwrap();
+        let result = tokio::time::timeout(Duration::from_secs(60), task)
             .await
             .unwrap()
             .unwrap()
@@ -499,26 +523,34 @@ mod tests {
         let r = renderer.clone();
         let url = site.url("/csr.html");
         let task = tokio::spawn(async move { r.render(&url, &opts).await });
-        crash_current(&renderer, &site, 3).await;
-        crash_current(&renderer, &site, 4).await;
+        for _ in 0..2 {
+            let (page, _resume) = tokio::time::timeout(Duration::from_secs(60), targets.recv())
+                .await
+                .unwrap()
+                .unwrap();
+            crash_target(page).await;
+        }
         assert!(matches!(
-            tokio::time::timeout(Duration::from_secs(15), task)
+            tokio::time::timeout(Duration::from_secs(60), task)
                 .await
                 .unwrap()
                 .unwrap(),
             Err(RenderError::Crashed(_))
         ));
+        assert_eq!(renderer.generation(), 3);
+        assert!(targets.try_recv().is_err(), "keine dritte Verarbeitung");
         assert_eq!(
             site.requests()
                 .iter()
                 .filter(|r| r.path_and_query == "/csr.html")
                 .count(),
-            4
+            1
         );
         renderer.close().await;
     }
     #[tokio::test]
-    // spec: CRAWL-078 [M2]
+    // Spec-Fixture `crawl-js` (paketeigen unter render-r01).
+    // spec: CRAWL-078
     async fn requires_chromium_denies_downloads_in_each_context() {
         use chromiumoxide::cdp::browser_protocol::browser::{
             DownloadProgressState, EventDownloadProgress,
@@ -561,7 +593,86 @@ mod tests {
         .unwrap();
         renderer.close().await;
     }
+    #[tokio::test(flavor = "multi_thread")]
+    // Spec-Fixture `crawl-js`: ein aktiver Nachbartab darf die Erholung nicht blockieren.
+    // spec: PERF-006
+    async fn requires_chromium_timeout_keeps_parallel_session_available() {
+        let site = os_testsite::TestSite::start("render-r01").await.unwrap();
+        let renderer = Arc::new(
+            Renderer::launch(LaunchOpts {
+                max_tabs: 3,
+                memory_limit_mb: 0,
+                restart_after_pages: 0,
+                ..Default::default()
+            })
+            .await
+            .expect("requires_chromium"),
+        );
+        let (tx, mut targets) = tokio::sync::mpsc::unbounded_channel();
+        *renderer.targets.lock().unwrap() = Some(tx);
+        let opts = RenderOpts {
+            screenshots: false,
+            ajax_timeout_ms: 0,
+            page_timeout_ms: 60_000,
+            ..Default::default()
+        };
+        let r = renderer.clone();
+        let url = site.url("/csr.html");
+        let held_opts = opts.clone();
+        let held = tokio::spawn(async move { r.render(&url, &held_opts).await });
+        let (_held_page, resume_held) =
+            tokio::time::timeout(Duration::from_secs(30), targets.recv())
+                .await
+                .unwrap()
+                .unwrap();
+        let r = renderer.clone();
+        let url = site.url("/hang.html");
+        let hang = tokio::spawn(async move {
+            r.render(
+                &url,
+                &RenderOpts {
+                    screenshots: false,
+                    page_timeout_ms: 1500,
+                    ..Default::default()
+                },
+            )
+            .await
+        });
+        let (_page, resume) = tokio::time::timeout(Duration::from_secs(30), targets.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        resume.send(()).unwrap();
+        assert!(matches!(
+            tokio::time::timeout(Duration::from_secs(15), hang)
+                .await
+                .unwrap()
+                .unwrap(),
+            Err(RenderError::Timeout(_))
+        ));
+        let r = renderer.clone();
+        let url = site.url("/csr.html");
+        let next = tokio::spawn(async move { r.render(&url, &opts).await });
+        let (_page, resume) = tokio::time::timeout(Duration::from_secs(15), targets.recv())
+            .await
+            .expect("Folgerender wartet nicht auf Nachbartab")
+            .unwrap();
+        resume.send(()).unwrap();
+        assert!(tokio::time::timeout(Duration::from_secs(15), next)
+            .await
+            .unwrap()
+            .unwrap()
+            .unwrap()
+            .dom_html
+            .contains("<title>rendered</title>"));
+        assert_eq!(renderer.generation(), 1);
+        resume_held.send(()).unwrap();
+        held.await.unwrap().unwrap();
+        renderer.close().await;
+    }
+
     #[tokio::test]
+    // Spec-Fixture `crawl-js` (paketeigen unter render-r01).
     // spec: PERF-006
     async fn requires_chromium_cancellation_closes_idle_hung_target() {
         let site = os_testsite::TestSite::start("render-r01").await.unwrap();
