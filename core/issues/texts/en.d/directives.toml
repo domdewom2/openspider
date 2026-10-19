@@ -1,2 +1,25 @@
-# OpenSpider – Issue-Texte (English) ab M2, Tab „Directives“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/en.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.directives-nosnippet]
+what = "A robots directive disables search result snippets."
+why = "Missing preview text can make the result harder to assess."
+fix = "Review the intended presentation and remove nosnippet if previews should be allowed."
+
+[issues.directives-noimageindex]
+what = "The page declares the noimageindex robots directive."
+why = "Search engines are asked not to index images through this page. Page indexing is evaluated separately."
+fix = "Review image visibility and remove the directive if images should be discovered through this page."
+
+[issues.directives-notranslate]
+what = "A meta or header directive requests notranslate."
+why = "This directive can suppress translation options in search results."
+fix = "Check whether the restriction is still intended and remove it when appropriate."
+
+[issues.directives-unavailable-after]
+what = "A robots directive declares an unavailable_after expiry."
+why = "An overlooked expiry may later remove the page from search results. Invalid values may be ignored."
+fix = "Check the date, time zone and format. Remove the directive if the page should remain available."
+
+[issues.directives-outside-head]
+what = "At least one robots meta element is outside the HTML head."
+why = "Crawlers may interpret directives outside the head differently. OpenSpider applies them as a precaution."
+fix = "Move robots meta elements into the head and check for elements that close the head prematurely."

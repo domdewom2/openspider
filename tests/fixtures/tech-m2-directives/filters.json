@@ -1,0 +1,50 @@
+{
+  "NoArchive": [
+    "/body.html",
+    "/gone.html",
+    "/header.html",
+    "/noarchive.html",
+    "/pdf.html"
+  ],
+  "NoSnippet": [
+    "/header.html",
+    "/nosnippet.html"
+  ],
+  "Max-Snippet": [
+    "/conflict.html",
+    "/header.html",
+    "/max-invalid.html",
+    "/max-zero.html",
+    "/max.html"
+  ],
+  "Max-Image-Preview": [
+    "/header.html",
+    "/max-invalid.html",
+    "/max.html"
+  ],
+  "Max-Video-Preview": [
+    "/header.html",
+    "/max-invalid.html",
+    "/max.html"
+  ],
+  "NoImageIndex": [
+    "/header.html",
+    "/noimageindex.html"
+  ],
+  "NoTranslate": [
+    "/google-notranslate.html",
+    "/header.html",
+    "/notranslate.html"
+  ],
+  "Unavailable_After": [
+    "/header.html",
+    "/unavailable-invalid.html",
+    "/unavailable-past.html",
+    "/unavailable.html"
+  ],
+  "Outside <head>": [
+    "/after-img.html",
+    "/body.html",
+    "/other-agent.html"
+  ]
+}

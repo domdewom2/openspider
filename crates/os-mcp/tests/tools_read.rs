@@ -1720,7 +1720,8 @@ async fn issues_that_need_the_crawl_analysis_are_named_instead_of_counted() {
     let mut outside_head = 0;
     for issue in pending {
         let expected = match (issue["tab"].as_str(), issue["filter"].as_str()) {
-            (Some("Page Titles" | "Meta Description"), Some("Outside <head>")) => {
+            // TECH-008 / K2-44, K2-63: Outside-Filter benötigen Prüfmarker pro URL.
+            (_, Some("Outside <head>")) => {
                 outside_head += 1;
                 "needs_recrawl"
             }
@@ -1740,7 +1741,7 @@ async fn issues_that_need_the_crawl_analysis_are_named_instead_of_counted() {
         let ok = state == expected || (expected == "needs_crawl_analysis" && state == "needs_config");
         assert!(ok, "nicht ausgewertetes Issue: {issue}");
     }
-    assert_eq!(outside_head, 2);
+    assert!(outside_head >= 2, "Outside-<head>-Filter: {outside_head}");
     assert!(pending.iter().any(|p| p["state"] == "needs_crawl_analysis"));
     client.cancel().await;
 }

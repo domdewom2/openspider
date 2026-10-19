@@ -249,6 +249,81 @@ pub fn extract(doc: &Document, tokens: &[String]) -> Vec<Directive> {
     out
 }
 
+/// Datum einer `unavailable_after`-Angabe (TECH-063), ohne zeitabhängige Wirkung.
+/// Akzeptiert ISO 8601 sowie RFC 822/1123 und RFC 850. Ungültige Angaben bleiben
+/// als Rohwert erhalten; der Aufrufer bekommt dann `None`.
+pub fn parse_unavailable_after(value: &str) -> Option<os_model::Timestamp> {
+    let value = value.trim();
+    let value = value
+        .split_once(':')
+        .filter(|(name, _)| name.eq_ignore_ascii_case("unavailable_after"))
+        .map_or(value, |(_, date)| date.trim());
+    if let Ok(date) = os_model::Timestamp::from_db(value) {
+        return Some(date);
+    }
+    if value.len() == 10 && value.as_bytes().get(4) == Some(&b'-') {
+        return os_model::Timestamp::from_db(&format!("{value}T00:00:00Z")).ok();
+    }
+    let value = value.split_once(',').map_or(value, |(_, date)| date).trim();
+    let parts: Vec<&str> = value.split_whitespace().collect();
+    let (day, month, year, clock, zone) = match parts.as_slice() {
+        [day, month, year, clock, zone] => (*day, *month, *year, *clock, *zone),
+        [date, clock, zone] => {
+            let mut date = date.split('-');
+            let result = (date.next()?, date.next()?, date.next()?, *clock, *zone);
+            if date.next().is_some() {
+                return None;
+            }
+            result
+        }
+        _ => return None,
+    };
+    let day: u8 = day.parse().ok()?;
+    let mut year: u16 = year.parse().ok()?;
+    if year < 100 {
+        year += if year >= 70 { 1900 } else { 2000 };
+    }
+    let month = [
+        "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec",
+    ]
+    .iter()
+    .position(|m| month.eq_ignore_ascii_case(m))?
+        + 1;
+    let zone = if ["gmt", "utc", "ut", "z"]
+        .iter()
+        .any(|z| zone.eq_ignore_ascii_case(z))
+    {
+        "Z".to_string()
+    } else if let Some((_, offset)) = [
+        ("est", "-05:00"),
+        ("edt", "-04:00"),
+        ("cst", "-06:00"),
+        ("cdt", "-05:00"),
+        ("mst", "-07:00"),
+        ("mdt", "-06:00"),
+        ("pst", "-08:00"),
+        ("pdt", "-07:00"),
+    ]
+    .iter()
+    .find(|(name, _)| zone.eq_ignore_ascii_case(name))
+    {
+        offset.to_string()
+    } else if zone.len() == 5
+        && matches!(zone.as_bytes()[0], b'+' | b'-')
+        && zone.as_bytes()[1..].iter().all(u8::is_ascii_digit)
+    {
+        format!("{}:{}", &zone[..3], &zone[3..])
+    } else {
+        return None;
+    };
+    let clock = if clock.len() == 5 {
+        format!("{clock}:00")
+    } else {
+        clock.to_string()
+    };
+    os_model::Timestamp::from_db(&format!("{year:04}-{month:02}-{day:02}T{clock}{zone}")).ok()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
