@@ -677,7 +677,7 @@
    "UI-148"
   ],
   "owns": [
-   "crates/os-loadtest/src/bin/gen_ui_large.rs",
+   "crates/os-loadtest/src/bin/gen-ui-large.rs",
    "crates/os-loadtest/src/gen_ui/**",
    "crates/os-loadtest/tests/gen_ui_large_*.rs",
    "crates/*/tests/pending_w1_k19.rs (nur Platzhalter nach C9, nur in Crates, deren Tests das Paket besitzt)"
@@ -689,7 +689,7 @@
   ],
   "size": "S",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Rev. 5 (M2.md 3.14): Start erst nach M2-F05a und M2-F05b (Schnittstellen-Vorbau); deren Bericht listet alle Stubs je Besitzer und ist die Startcheckliste. Nur die Rümpfe der eigenen Stub-Funktionen füllen, F05-Aufrufstellen und eingefrorene Dateien (3.14.13) nicht ändern. Integrationstests gegen Erweiterungspunkte, deren Rumpf ein anderes Welle-1-Paket füllt, als vollständige Tests mit Ignore „wartet auf M2-xx“ in pending_w1_<kurz-id>.rs (K2-26); Fachlogik ohne Ignore gegen die F05-Verträge (WriteBatch-/Store-Fixtures, SimFetcher, SessionRegistry::set_current). Fixture-Unterordner nach K2-24; Kriterien anderer Schichten erfüllen nach K2-25 die Pakete, die die ID als extra_spec_ids führen. Schreibt direkt über os-store (Schema v3), Seed fest; Kleinvariante 100 000 im Test, Großvariante nur als Benchmark-Ignore. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. Rev. 5: den Eintrag [[bin]] gen-ui-large (Pfad src/bin/gen_ui_large.rs) legt M2-F05a im Manifest an."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Rev. 5 (M2.md 3.14): Start erst nach M2-F05a und M2-F05b (Schnittstellen-Vorbau); deren Bericht listet alle Stubs je Besitzer und ist die Startcheckliste. Nur die Rümpfe der eigenen Stub-Funktionen füllen, F05-Aufrufstellen und eingefrorene Dateien (3.14.13) nicht ändern. Integrationstests gegen Erweiterungspunkte, deren Rumpf ein anderes Welle-1-Paket füllt, als vollständige Tests mit Ignore „wartet auf M2-xx“ in pending_w1_<kurz-id>.rs (K2-26); Fachlogik ohne Ignore gegen die F05-Verträge (WriteBatch-/Store-Fixtures, SimFetcher, SessionRegistry::set_current). Fixture-Unterordner nach K2-24; Kriterien anderer Schichten erfüllen nach K2-25 die Pakete, die die ID als extra_spec_ids führen. Schreibt direkt über os-store (Schema v3), Seed fest; Kleinvariante 100 000 im Test, Großvariante nur als Benchmark-Ignore. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. Rev. 5: den Eintrag [[bin]] gen-ui-large (Pfad src/bin/gen-ui-large.rs) legt M2-F05a im Manifest an. Fix-Runde K19: owns an den Manifestpfad berichtigt; der F05a-Kommentar STUB(M2-K05) war falsch beschriftet, Besitzer des Generators ist K19."
  },
  {
   "id": "M2-E01",
