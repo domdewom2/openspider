@@ -50,10 +50,16 @@ export interface MenuItemSpec {
   id: string;
   /** Fluent-Schlüssel der Beschriftung (bei `predefined` und Trennern entfällt sie). */
   labelKey?: string;
+  /** Dynamischer Text (z. B. Dateipfad); bei labelKey englischer Kanon-Fallback. */
+  label?: string;
   /** Aktions-ID, die bei Auswahl läuft; zugleich Schlüssel im Kürzelregister, wenn `shortcut` fehlt. */
   action?: ActionId;
   /** Kürzel aus dem Register, falls abweichend von `action`. */
   shortcut?: ActionId;
+  /** false: Kürzel nur anzeigen; der Dispatcher wahrt Textfeld-/Dialog-Scopes. */
+  nativeAccelerator?: boolean;
+  /** Native Menüs zeigen den Deaktivierungsgrund im Text, wenn kein Tooltip verfügbar ist. */
+  showDisabledReason?: boolean;
   separator?: boolean;
   predefined?: PredefinedKind;
   items?: readonly MenuItemSpec[];
@@ -84,6 +90,10 @@ export interface ResolvedItem {
   shortcutText?: string;
   /** Natives Accelerator-Format für Tauri (`CmdOrCtrl+N`), nur wenn das Betriebssystem das Kürzel abfangen soll. */
   accelerator?: string;
+  /** Kürzel als Text anzeigen, wenn der Feature-Beitrag native Accelerators ausschließt. */
+  shortcutInLabel?: boolean;
+  /** Opt-in für native Statusbeschriftung deaktivierter Feature-Einträge. */
+  showDisabledReason?: boolean;
   enabled: boolean;
   disabledReason?: string;
   checked?: boolean;

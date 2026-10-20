@@ -6,6 +6,8 @@ import { Notifications } from "./features/notifications/Notifications";
 import { SidebarMount } from "./features/sidebar/frame/SidebarMount";
 import { IntegrationsHeaderSlot, IntegrationsHost } from "./features/integrations";
 import { TasksHost } from "./features/tasks";
+import { MenuAvailability } from "./features/help/MenuAvailability";
+import { HelpDialogs } from "./features/help/HelpDialogs";
 import { useEffect, useState, type ComponentType } from "react";
 import { RegionBoundary } from "./app/ErrorBoundary";
 import { Providers } from "./app/Providers";
@@ -50,6 +52,7 @@ export function App() {
       <ExportHost />
       <IntegrationsHost />
       <TasksHost />
+      <HelpDialogs />
       <div className="os-app">
         <Shell />
         <header className="os-app-header" role="banner" aria-label={t("app-region-header")}>
@@ -68,6 +71,7 @@ export function App() {
         <aside className="os-app-sidebar" aria-label={t("app-region-sidebar")} />
         <footer className="os-app-status" role="contentinfo" aria-label={t("app-region-status")}>
           <Statusbar />
+          <MenuAvailability />
           {version !== null && <span data-testid="version">{t("app-version", { version })}</span>}
         </footer>
         <Notifications />
