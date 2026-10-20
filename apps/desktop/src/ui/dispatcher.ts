@@ -83,7 +83,9 @@ export function isInTable(target: EventTarget | null): boolean {
 }
 
 export function isModalOpen(doc: Document = document): boolean {
-  return doc.querySelector('[aria-modal="true"], dialog[open]') !== null;
+  // `.os-modal`: modale Dialoge der Primitive (React Aria setzt kein aria-modal), sonst schluckt ein globales Esc-Kürzel
+  // (search.clear) die Esc-Taste, bevor der Dialog sie erhält.
+  return doc.querySelector('[aria-modal="true"], dialog[open], .os-modal') !== null;
 }
 
 export interface DispatcherOptions {

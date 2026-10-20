@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { installShortcutDispatcher, eventCombo, resolveShortcut, isTextField, type DispatchContext, type KeyLike } from "./dispatcher";
+import { installShortcutDispatcher, eventCombo, resolveShortcut, isModalOpen, isTextField, type DispatchContext, type KeyLike } from "./dispatcher";
 import { registerAction } from "./actions";
 import {
   canonicalCombo,
@@ -174,6 +174,16 @@ describe("Dispatcher (Kontextregeln UI-113)", () => {
   it("In modalen Dialogen sind globale Kürzel aus", () => {
     expect(resolveShortcut(key("n", { code: "KeyN", ctrlKey: true }), ctx({ modal: true }))).toBeNull();
     expect(resolveShortcut(key("F6"), ctx({ modal: true }))).toBeNull();
+  });
+
+  // spec: UI-113
+  it("erkennt die modalen Dialoge der Primitive (.os-modal) auch ohne aria-modal", () => {
+    expect(isModalOpen()).toBe(false);
+    const modal = document.createElement("div");
+    modal.className = "os-modal";
+    document.body.append(modal);
+    expect(isModalOpen()).toBe(true);
+    modal.remove();
   });
 
   // spec: UI-113
