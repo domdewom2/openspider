@@ -173,6 +173,29 @@ describe("Rahmen: Navigation, Suche, Entwurf", () => {
   });
 });
 
+describe("Aktionen und Menü", () => {
+  beforeEach(() => setup());
+
+  // spec: OUT-220
+  it("config.profiles öffnet die Profilseite, config.diff die Abweichungen; der Menübeitrag nennt alle drei Aktionen", async () => {
+    act(() => {
+      runAction("config.profiles");
+    });
+    const dialog = await screen.findByRole("dialog", { name: "Crawl configuration" });
+    await waitFor(() => expect(within(dialog).getByRole("button", { name: "Profiles" })).toHaveAttribute("aria-current", "page"));
+    act(() => closeConfig());
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    act(() => {
+      runAction("config.diff");
+    });
+    const again = await screen.findByRole("dialog", { name: "Crawl configuration" });
+    expect(await within(again).findByTestId("config-diff-empty")).toBeInTheDocument();
+    const { allMenuContributions } = await import("../../ui/menu/registry");
+    const items = allMenuContributions().filter((c) => c.menu === "config").flatMap((c) => c.items.map((i) => i.action));
+    expect(items).toEqual(expect.arrayContaining(["config.spider", "config.profiles", "config.diff"]));
+  });
+});
+
 describe("Sperren nach Crawl-Zustand (F-13, F-14, CRAWL-126)", () => {
   // spec: CRAWL-126 [M2]
   it("während „Läuft“ sind nur die freigegebenen Gruppen editierbar; „Pausieren und bearbeiten“ pausiert", async () => {
@@ -206,6 +229,22 @@ describe("Sperren nach Crawl-Zustand (F-13, F-14, CRAWL-126)", () => {
     expect((fake.config.speed as Record<string, unknown>).threads).toBe(9);
     // Kein Dialogende ohne Rückmeldung nötig: nur threads geändert → nichts aufgeschoben.
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  // spec: CRAWL-126 [M2]
+  it("Änderungen an Schwellwerten während „Läuft“ werden übernommen; die Rückmeldung nennt, was erst nach der Pause wirkt", async () => {
+    await setup(undefined, "running");
+    const dialog = await open("title.max_chars");
+    const group = dialog.querySelector('[data-group="title"]') as HTMLElement;
+    type(within(group).getByRole("textbox", { name: "Max. characters" }), "65");
+    fireEvent.click(within(dialog).getByRole("button", { name: "OK" }));
+    await waitFor(() => expect(within(dialog).getByText(/These changes take effect after the crawl is paused: title\.max_chars/)).toBeInTheDocument());
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect((fake.config.title as Record<string, unknown>).max_chars).toBe(65);
+    // Zweites OK ohne weitere Änderung schließt.
+    fireEvent.click(within(dialog).getByRole("button", { name: "OK" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(fake.setCalls).toHaveLength(1);
   });
 
   // spec: CRAWL-126 [M2]
