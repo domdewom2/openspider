@@ -13,22 +13,23 @@ on:
   push:
     # Paketbranches (m2/<kurz-id>) laufen ohne Pull-Request mit (Definition of Done: CI-Matrix des Branches grün)
     branches: [main, "m2/**"]
-    paths:
+    # Schmale Positivliste (K2-67: Markdown und assets lösen keinen Lauf aus; die Ausschlüsse stehen am Ende).
+    paths: &ui-paths
       - "apps/desktop/**"
       - "crates/os-app/**"
       - "crates/os-model/**"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/ui-e2e.yml"
+      - "!**/*.md"
+      - "!assets/**"
   pull_request:
-    paths:
-      - "apps/desktop/**"
-      - "crates/os-app/**"
-      - "crates/os-model/**"
-      - "package.json"
-      - "package-lock.json"
-      - ".github/workflows/ui-e2e.yml"
+    paths: *ui-paths
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
   CARGO_TERM_COLOR: always
@@ -38,6 +39,8 @@ env:
 jobs:
   e2e-a:
     name: e2e-a (${{ matrix.name }})
+    # Pull-Requests von m2/*-Zweigen überspringen den Job: derselbe Stand läuft schon über den Push-Lauf (K2-67, keine Doppelläufe).
+    if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'm2/') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     strategy:

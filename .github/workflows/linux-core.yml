@@ -5,15 +5,28 @@ name: linux-core
 
 on:
   push:
+    # Reine Doku-Commits lösen keinen Lauf aus (K2-67; Muster der Reihe nach, später gewinnt): Markdown, docs/plan/M2-reports
+    # und assets bleiben draußen. Ausnahmen, weil Tests oder Jobs diese Dateien lesen: docs/spec, docs/issues (Issue-Katalog-Tests),
+    # docs/plan/M2.md (os-parity coverage, Anhang B), tests/** (u. a. tests/golden/parity/README.md).
+    paths: &doc-paths
+      - "**"
+      - "!**/*.md"
+      - "docs/spec/**"
+      - "docs/issues/**"
+      - "docs/plan/M2.md"
+      - "tests/**"
+      - "!docs/plan/M2-reports/**"
+      - "!assets/**"
   pull_request:
+    paths: *doc-paths
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: linux-core-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
   CARGO_TERM_COLOR: always

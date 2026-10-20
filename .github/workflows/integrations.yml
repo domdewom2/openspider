@@ -22,6 +22,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 env:
   CARGO_INCREMENTAL: "0"
   CARGO_PROFILE_DEV_DEBUG: line-tables-only
@@ -32,6 +36,8 @@ env:
 jobs:
   marketplace:
     name: Skill and marketplace (${{ matrix.os }})
+    # K2-67: Pull-Requests von m2/*-Zweigen überspringen den Job (macOS-Slots): derselbe Stand läuft schon über den Push-Lauf.
+    if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'm2/') }}
     strategy:
       fail-fast: false
       matrix:
