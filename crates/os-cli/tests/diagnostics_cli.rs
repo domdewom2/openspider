@@ -50,5 +50,7 @@ fn standalone_diagnostics_respects_portable_home_and_omits_crawl_files() {
         .unwrap()
         .read_to_string(&mut system)
         .unwrap();
-    assert!(system.contains(env.home.path().to_str().unwrap()));
+    // system.txt ist JSON: Windows-Pfade stehen dort mit verdoppelten Backslashes.
+    let home = serde_json::to_string(env.home.path().to_str().unwrap()).unwrap();
+    assert!(system.contains(home.trim_matches('"')), "{system}");
 }
