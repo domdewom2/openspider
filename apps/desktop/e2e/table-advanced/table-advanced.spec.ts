@@ -9,6 +9,8 @@ const lastSearch = (page: Page) => page.evaluate(() => {
   const calls = window.__osMock!.calls.filter(c => c.cmd === "view.open");
   return (calls.at(-1)?.args as { spec: { search?: unknown } }).spec.search ?? null;
 });
+// The full App also renders the sidebar tabs; the top tab bar is the "Data views" region.
+const topTabs = (page: Page) => page.getByRole("navigation", { name: "Data views", exact: true }).getByRole("tab");
 const panel = (page: Page) => page.getByRole("region", { name: "Advanced search" });
 
 // spec: UI-011
@@ -90,7 +92,7 @@ test("configures 60+ columns with two lists and applies template „Basis“ to 
 test("tab context menu closes all but Internal; the dropdown shows closed tabs again; the dialog survives a restart", async ({ page }) => {
   await page.getByRole("tab", { name: "Images", exact: true }).click({ button: "right" });
   await page.getByRole("menuitem", { name: "Close all tabs", exact: true }).click();
-  await expect(page.getByRole("tab")).toHaveText(["Internal"]);
+  await expect(topTabs(page)).toHaveText(["Internal"]);
   await page.getByRole("tab", { name: "Internal", exact: true }).focus();
   await page.keyboard.press("Shift+F10");
   await expect(page.getByRole("menuitem", { name: "Close tab", exact: true })).toBeDisabled();
@@ -100,7 +102,7 @@ test("tab context menu closes all but Internal; the dropdown shows closed tabs a
   await page.getByRole("button", { name: "Configure tabs", exact: true }).click();
   await page.getByRole("menuitemcheckbox", { name: "AMP", exact: true }).click();
   await page.mouse.click(640, 790);
-  await expect(page.getByRole("tab")).toHaveText(["Internal", "AMP"]);
+  await expect(topTabs(page)).toHaveText(["Internal", "AMP"]);
   await page.getByRole("tab", { name: "AMP", exact: true }).click({ button: "right" });
   await page.getByRole("menuitem", { name: "Configure tabs…", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Configure tabs" });
@@ -109,10 +111,10 @@ test("tab context menu closes all but Internal; the dropdown shows closed tabs a
   await dialog.getByRole("button", { name: "Move AMP up", exact: true }).click();
   await dialog.getByRole("button", { name: "Move AMP up", exact: true }).click();
   await dialog.getByRole("button", { name: "OK", exact: true }).click();
-  await expect(page.getByRole("tab")).toHaveText(["Internal", "AMP", "External"]);
+  await expect(topTabs(page)).toHaveText(["Internal", "AMP", "External"]);
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("u20.fixture.uiState") ?? "{}").state?.topTabs?.order?.slice(0, 3))).toEqual(["Internal", "AMP", "External"]);
   await page.reload();
-  await expect(page.getByRole("tab")).toHaveText(["Internal", "AMP", "External"]);
+  await expect(topTabs(page)).toHaveText(["Internal", "AMP", "External"]);
 });
 
 // spec: UI-021
@@ -137,7 +139,7 @@ test("resets the columns of all tables after confirmation and keeps the template
   await expect(confirm).toBeHidden();
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("u20.fixture.uiState") ?? "{}").state?.tableColumns)).toBeUndefined();
   await page.reload();
-  await expect(page.getByRole("tab").first()).toHaveText("Images");
+  await expect(topTabs(page).first()).toHaveText("Images");
   await page.getByRole("button", { name: "Configure columns…", exact: true }).click();
   await expect(page.getByRole("dialog", { name: "Configure columns" }).getByRole("listbox", { name: "Displayed columns" }).getByRole("option", { name: "Word Count" })).toBeVisible();
   await expect(page.getByLabel("Template", { exact: true }).getByRole("option", { name: "Basis" })).toHaveCount(1);
