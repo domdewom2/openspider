@@ -308,10 +308,16 @@ async fn base_set_is_internal_html_with_2xx() {
         .unwrap();
     assert_eq!(in_urls, 4);
     for f in os_analyze::tabs::content::tab().filters {
-        if f.id == "Near Duplicates" {
+        let needs = match f.id {
+            "Near Duplicates" => Some("duplicates.near_enabled"),
+            "Spelling Errors" => Some("spelling.enabled"),
+            "Grammar Errors" => Some("grammar.enabled"),
+            _ => None,
+        };
+        if let Some(key) = needs {
             assert_eq!(
                 os_analyze::views::state_of(&fx.file, &cfg, TAB, f.id).unwrap(),
-                FilterState::NeedsConfig("duplicates.near_enabled".into())
+                FilterState::NeedsConfig(key.into())
             );
             assert_eq!(view(&fx, &cfg, TAB, f.id).total, 0);
             continue;

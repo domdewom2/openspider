@@ -4,6 +4,7 @@ pub fn start(app: &App) {
     crate::session::init(app);
     crate::commands::segment::on_startup(app);
     crate::commands::sidebar_ext::on_startup(app);
+    crate::commands::detail_spelling::on_startup(app);
     os_engine::memory::apply_settings(&app.settings_snapshot().storage);
     crate::commands::settings_network::on_startup(app);
     crate::logging::init_for_app(app);

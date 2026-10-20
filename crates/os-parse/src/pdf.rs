@@ -119,6 +119,16 @@ fn parse_inner(body: &[u8], cfg: &crate::ParseConfig) -> os_model::PdfResult {
                     ExtKey::from_static("content.text"),
                     Value::Text(text.clone()),
                 ));
+                // M2-D19 (ONPAGE-166): Rechtschreibung/Grammatik auf Dokumenttitel und Textlayer.
+                if cfg.spelling.enabled || cfg.grammar.enabled {
+                    let lang = crate::spelling::pdf_language(&doc);
+                    result.ext.extend(crate::spelling::check_pdf(
+                        lang.as_deref(),
+                        result.meta.title.as_deref(),
+                        &text,
+                        cfg,
+                    ));
+                }
                 result.text = Some(text);
             }
             Err(_) => result.error = Some("PDF-Textlayer konnte nicht gelesen werden".into()),
