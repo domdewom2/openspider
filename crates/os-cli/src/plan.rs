@@ -41,9 +41,21 @@ pub enum Source {
     },
 }
 
+/// Zusätzliche Exportoptionen geplanter Aufgaben (OUT-007, OUT-012, OUT-075): Die Exporte laufen als
+/// Stapel gegen einen gemeinsamen Lesestand; unbekannte Exportnamen sind dann Warnungen statt Fehler.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct BatchSettings {
+    /// Tabellen als Blätter einer Arbeitsmappe (nur XLSX).
+    pub single_workbook: bool,
+    /// Leere Exporte auslassen.
+    pub skip_empty: bool,
+}
+
 /// Ablaufplan nach der Validierung.
 #[derive(Debug)]
 pub struct Plan {
+    /// Stapelmodus der Exporte (geplante Aufgaben); `None` = einzeln wie auf der Kommandozeile.
+    pub batch: Option<BatchSettings>,
     /// Optionaler Segmentkontext; ohne Flag bleibt der Export ungefiltert.
     pub segment: Option<String>,
     /// Quelle.
@@ -265,7 +277,11 @@ fn output_mode(args: &RunArgs, rep: &Reporter) -> OutputMode {
     }
 }
 
-fn resolve_exports(args: &RunArgs, cfg: &os_model::CrawlConfig) -> Result<Vec<Resolved>, CliError> {
+fn resolve_exports(
+    args: &RunArgs,
+    cfg: &os_model::CrawlConfig,
+    lenient: Option<&Reporter>,
+) -> Result<Vec<Resolved>, CliError> {
     let mut exports: Vec<Resolved> = Vec::new();
     let mut problems: Vec<String> = Vec::new();
     for (kind, lists) in [
@@ -281,7 +297,14 @@ fn resolve_exports(args: &RunArgs, cfg: &os_model::CrawlConfig) -> Result<Vec<Re
                             exports.push(resolved);
                         }
                     }
-                    Err(unknown) => problems.push(names::unknown_message(kind, &unknown)),
+                    Err(unknown) => match lenient {
+                        // Vorlage aus einer neueren Version: Warnung, die übrigen Exporte laufen (OUT-075).
+                        Some(rep) => rep.warn(format!(
+                            "Export übersprungen – {}",
+                            names::unknown_message(kind, &unknown)
+                        )),
+                        None => problems.push(names::unknown_message(kind, &unknown)),
+                    },
                 }
             }
         }
@@ -295,6 +318,26 @@ fn resolve_exports(args: &RunArgs, cfg: &os_model::CrawlConfig) -> Result<Vec<Re
 
 /// Prüft alle Argumente und bereitet den Lauf vor. Kein Netzzugriff.
 pub fn build(args: &RunArgs, paths: AppPaths, rep: &Reporter) -> Result<Plan, CliError> {
+    build_impl(args, paths, rep, None)
+}
+
+/// Wie [`build`] für geplante Aufgaben: Exporte als Stapel mit den Optionen aus `batch`, unbekannte
+/// Exportnamen werden zu Warnungen.
+pub fn build_for_task(
+    args: &RunArgs,
+    paths: AppPaths,
+    rep: &Reporter,
+    batch: BatchSettings,
+) -> Result<Plan, CliError> {
+    build_impl(args, paths, rep, Some(batch))
+}
+
+fn build_impl(
+    args: &RunArgs,
+    paths: AppPaths,
+    rep: &Reporter,
+    batch: Option<BatchSettings>,
+) -> Result<Plan, CliError> {
     let unsupported = args.unsupported();
     if !unsupported.is_empty() {
         return Err(CliError::usage(format!(
@@ -415,7 +458,7 @@ pub fn build(args: &RunArgs, paths: AppPaths, rep: &Reporter) -> Result<Plan, Cl
         }
     };
 
-    let exports = resolve_exports(args, &config)?;
+    let exports = resolve_exports(args, &config, batch.is_some().then_some(rep))?;
 
     // Ausgabeordner (nur, wenn Dateien entstehen)
     let output = if !exports.is_empty() || args.save_crawl {
@@ -450,6 +493,7 @@ pub fn build(args: &RunArgs, paths: AppPaths, rep: &Reporter) -> Result<Plan, Cl
         }
     }
     Ok(Plan {
+        batch,
         segment: args.segment.clone(),
         source,
         config,

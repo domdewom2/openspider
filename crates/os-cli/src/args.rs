@@ -61,6 +61,17 @@ pub struct RunArgs {
     )]
     pub help: Option<Option<String>>,
 
+    // ---- Aufgaben -----------------------------------------------------------------------------
+    /// Führt eine geplante Aufgabe aus (Einstieg des OS-Planers, OUT-209): lädt `schedules/<ID>.ostask`,
+    /// crawlt, exportiert und schreibt Laufhistorie und Lauf-Log.
+    #[arg(long, value_name = "ID", help_heading = "Aufgaben")]
+    pub run_task: Option<String>,
+
+    /// [OS-Erweiterung] Trägt alle OpenSpider-Aufgaben beim Betriebssystem-Planer aus (Deinstallation,
+    /// OUT-166); die Aufgabendateien bleiben erhalten.
+    #[arg(long, help_heading = "Aufgaben")]
+    pub unregister_tasks: bool,
+
     // ---- Quelle -------------------------------------------------------------------------------
     /// Crawlt eine Website ab der URL (Spider-Modus); ohne Schema wird `http://` ergänzt.
     #[arg(long, value_name = "URL", help_heading = "Quelle")]
@@ -461,6 +472,8 @@ mod tests {
             "--json-progress",
             "--fail-on-start-error",
             "--strict",
+            "--run-task",
+            "--unregister-tasks",
         ] {
             assert!(names.contains(&flag.to_string()), "{flag} fehlt");
         }

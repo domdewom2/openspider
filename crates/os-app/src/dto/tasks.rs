@@ -74,11 +74,24 @@ pub struct TaskCrawl {
     pub overrides: Option<serde_json::Value>,
 }
 
+/// Umgang mit überlappenden Läufen derselben Aufgabe (OUT-167).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub enum TaskOverlap {
+    /// Parallel starten (Standard).
+    Parallel,
+    /// Überspringen, wenn der Vorlauf noch aktiv ist.
+    Skip,
+}
+
 /// Ausführung (OUT-163).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(optional_fields = nullable)]
 pub struct TaskExecution {
+    /// Überlappung (OUT-167); nicht gesetzt = parallel (Ergänzung M2-T01, K2-61).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub overlap: Option<TaskOverlap>,
     /// Ohne Oberfläche ausführen (CLI).
     pub headless: bool,
     /// Höchstlaufzeit in Minuten.

@@ -5,8 +5,9 @@
 //! einmal je Sekunde eine JSON-Zeile. Warnungen werden gezählt (für `--strict`).
 
 use std::io::Write;
-use std::sync::atomic::{AtomicU32, Ordering};
-use std::sync::Arc;
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::{Arc, Mutex};
 
 use os_model::Progress;
 use serde_json::json;
@@ -16,7 +17,16 @@ use serde_json::json;
 pub struct Reporter {
     warnings: AtomicU32,
     json: bool,
+    /// Meldungen zusätzlich als `tracing`-Ereignisse ins Lauf-Log schreiben (geplante Läufe, OUT-240).
+    log_events: AtomicBool,
+    /// Text der Warnungen (für die Laufhistorie, OUT-169); höchstens [`MAX_KEPT`].
+    kept_warnings: Mutex<Vec<String>>,
+    /// Geschriebene Exportdateien (für die Laufhistorie).
+    exported: Mutex<Vec<PathBuf>>,
 }
+
+/// Höchstzahl gemerkter Warnungen.
+const MAX_KEPT: usize = 200;
 
 fn write_stderr(text: &str) {
     let mut err = std::io::stderr().lock();
@@ -30,7 +40,41 @@ impl Reporter {
         Arc::new(Reporter {
             warnings: AtomicU32::new(0),
             json,
+            log_events: AtomicBool::new(false),
+            kept_warnings: Mutex::new(Vec::new()),
+            exported: Mutex::new(Vec::new()),
         })
+    }
+
+    /// Wie [`Reporter::new`], schreibt Hinweise, Warnungen und Fehler zusätzlich ins Lauf-Log.
+    pub fn for_task(json: bool) -> Arc<Self> {
+        let rep = Reporter::new(json);
+        rep.log_events.store(true, Ordering::SeqCst);
+        rep
+    }
+
+    /// Merkt eine geschriebene Exportdatei.
+    pub fn note_export(&self, path: &Path) {
+        self.exported
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .push(path.to_path_buf());
+    }
+
+    /// Die geschriebenen Exportdateien in Reihenfolge.
+    pub fn exported_files(&self) -> Vec<PathBuf> {
+        self.exported
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .clone()
+    }
+
+    /// Der Text der bisherigen Warnungen (ohne das Präfix „Warnung:“).
+    pub fn warning_messages(&self) -> Vec<String> {
+        self.kept_warnings
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .clone()
     }
 
     /// Mit `--json-progress`?
@@ -41,17 +85,32 @@ impl Reporter {
     /// Hinweis ohne Warnwirkung.
     pub fn info(&self, msg: impl AsRef<str>) {
         write_stderr(msg.as_ref());
+        if self.log_events.load(Ordering::SeqCst) {
+            tracing::info!(target: "os_cli::task", "{}", msg.as_ref());
+        }
     }
 
     /// Warnung; zählt für `--strict`.
     pub fn warn(&self, msg: impl AsRef<str>) {
         self.warnings.fetch_add(1, Ordering::SeqCst);
         write_stderr(&format!("Warnung: {}", msg.as_ref()));
+        {
+            let mut kept = self.kept_warnings.lock().unwrap_or_else(|p| p.into_inner());
+            if kept.len() < MAX_KEPT {
+                kept.push(msg.as_ref().to_string());
+            }
+        }
+        if self.log_events.load(Ordering::SeqCst) {
+            tracing::warn!(target: "os_cli::task", "{}", msg.as_ref());
+        }
     }
 
     /// Fehlermeldung (Export fehlgeschlagen o. Ä.); zählt nicht als Warnung.
     pub fn error(&self, msg: impl AsRef<str>) {
         write_stderr(&format!("Fehler: {}", msg.as_ref()));
+        if self.log_events.load(Ordering::SeqCst) {
+            tracing::error!(target: "os_cli::task", "{}", msg.as_ref());
+        }
     }
 
     /// Anzahl der Warnungen bisher.
