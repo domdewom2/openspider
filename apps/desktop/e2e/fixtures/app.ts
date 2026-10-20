@@ -19,31 +19,41 @@ interface Worker {
 }
 
 let announced = false;
+async function launch(): Promise<Worker> {
+  let bridge: Bridge | null = null;
+  let mode: TransportMode = "mock";
+  if (REQUESTED !== "mock") {
+    bridge = await startBridge();
+    if (bridge) mode = "bridge";
+    else if (REQUESTED === "bridge") throw new Error("OS_E2E_TRANSPORT=bridge, aber os-app-bridge startet nicht (cargo build -p os-app --features e2e-bridge --bin os-app-bridge)");
+  }
+  if (!announced) {
+    announced = true;
+    console.log(`[e2e] Transport: ${mode}${mode === "mock" ? " (os-app-bridge nicht verfügbar)" : ""}`);
+  }
+  return { bridge, mode };
+}
 
-// Eine Bridge je Test (leeres Home): persistierte Einstellungen (Sprache, Theme, Akzent) wirken sonst auf später im selben
-// Worker laufende Tests; welche Tests das trifft, hängt von der Worker-Verteilung ab und ändert sich mit jedem neuen Spec.
-export const test = base.extend<{ app: AppFixture; testBridge: Worker }>({
-  testBridge: [
+export const test = base.extend<{ app: AppFixture; freshState: boolean }, { workerBridge: Worker }>({
+  /**
+   * `test.use({ freshState: true })`: eigene Bridge mit leerem Home für jeden Test. Nötig für Specs, die persistierte
+   * Einstellungen (Sprache, Theme, Akzent) ändern oder den Ausgangszustand voraussetzen; die Bridge je Worker behält
+   * sonst Einstellungen früherer Tests desselben Workers.
+   */
+  freshState: [false, { option: true }],
+
+  workerBridge: [
     async ({}, use) => {
-      let bridge: Bridge | null = null;
-      let mode: TransportMode = "mock";
-      if (REQUESTED !== "mock") {
-        bridge = await startBridge();
-        if (bridge) mode = "bridge";
-        else if (REQUESTED === "bridge") throw new Error("OS_E2E_TRANSPORT=bridge, aber os-app-bridge startet nicht (cargo build -p os-app --features e2e-bridge --bin os-app-bridge)");
-      }
-      if (!announced) {
-        announced = true;
-        console.log(`[e2e] Transport: ${mode}${mode === "mock" ? " (os-app-bridge nicht verfügbar)" : ""}`);
-      }
-      await use({ bridge, mode });
-      await bridge?.stop();
+      const worker = await launch();
+      await use(worker);
+      await worker.bridge?.stop();
     },
-    { scope: "test" },
+    { scope: "worker", auto: true },
   ],
 
-  app: async ({ testBridge }, use, testInfo) => {
-    const { bridge, mode } = testBridge;
+  app: async ({ workerBridge, freshState }, use, testInfo) => {
+    const own = freshState ? await launch() : null;
+    const { bridge, mode } = own ?? workerBridge;
     testInfo.annotations.push({ type: "transport", description: mode });
     const query = (extra: Record<string, string> = {}) => {
       const p = new URLSearchParams(extra);
@@ -59,6 +69,7 @@ export const test = base.extend<{ app: AppFixture; testBridge: Worker }>({
         else await page.goto(`/?${query({ harness: target.harness, ...target.params })}`);
       },
     });
+    await own?.bridge?.stop();
   },
 });
 

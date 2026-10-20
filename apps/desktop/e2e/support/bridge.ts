@@ -27,7 +27,14 @@ export async function startBridge(opts: { fixture?: string; timeoutMs?: number }
   const home = mkdtempSync(join(tmpdir(), "os-bridge-"));
   const args = ["--home", home, ...(opts.fixture ? ["--fixture", opts.fixture] : [])];
   const child: ChildProcess = spawn(bridgeBinary(), args, { stdio: ["ignore", "pipe", "inherit"] });
-  const cleanup = () => rmSync(home, { recursive: true, force: true });
+  // Windows hält Dateien des beendeten Prozesses kurz gesperrt (EBUSY): erneut versuchen, Aufräumen ist nur Best Effort.
+  const cleanup = () => {
+    try {
+      rmSync(home, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+    } catch {
+      /* Temp-Verzeichnis bleibt liegen */
+    }
+  };
 
   const line = await new Promise<string | null>((resolveLine) => {
     let buf = "";

@@ -1,6 +1,9 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, backgroundOf } from "../fixtures/app";
 
+// Diese Specs ändern persistierte Einstellungen bzw. setzen den Ausgangszustand voraus.
+test.use({ freshState: true });
+
 const LIGHT_BG = "rgb(238, 240, 243)";
 const DARK_BG = "rgb(19, 20, 22)";
 

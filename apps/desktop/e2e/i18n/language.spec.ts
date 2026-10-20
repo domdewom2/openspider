@@ -1,5 +1,8 @@
 import { expect, test } from "../fixtures/app";
 
+// Diese Specs ändern persistierte Einstellungen bzw. setzen den Ausgangszustand voraus.
+test.use({ freshState: true });
+
 test.describe("Sprachwechsel ohne Neustart", () => {
   // spec: UI-121
   test("Deutsch/Englisch wechselt in allen Fenstern und baut das Menü neu auf", async ({ page, context, app }) => {
