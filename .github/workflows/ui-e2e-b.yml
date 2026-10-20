@@ -1,0 +1,86 @@
+name: ui-e2e-b
+
+on:
+  schedule:
+    - cron: "23 2 * * *"
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      mode:
+        type: string
+        default: smoke
+      platforms:
+        type: string
+        default: '["macos-15", "windows-latest"]'
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    name: native-${{ inputs.mode || 'smoke' }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(inputs.platforms || '["macos-15", "windows-latest"]') }}
+    env:
+      CARGO_INCREMENTAL: "0"
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+      OPENSPIDER_SECRET_STORE: memory
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: s02-native
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run -w apps/desktop check:licenses
+      - run: npx --no-install tsc -p apps/desktop/spikes/tsconfig.json
+      - run: node --test apps/desktop/e2e-b/measurement.test.mjs apps/desktop/e2e-b/readiness.test.mjs apps/desktop/e2e-b/focus.test.mjs
+      - name: Build macOS embedded driver
+        if: runner.os == 'macOS'
+        run: |
+          cargo build --locked -p openspider-desktop --features e2e-webdriver
+          swiftc apps/desktop/spikes/macos.swift -o "$RUNNER_TEMP/s02-macos"
+          echo "S02_MAC_HELPER=$RUNNER_TEMP/s02-macos" >> "$GITHUB_ENV"
+          echo "S02_GUI=1" >> "$GITHUB_ENV"
+      - name: Build Windows app and tauri-driver
+        if: runner.os == 'Windows'
+        run: |
+          cargo build --locked -p openspider-desktop
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cargo install tauri-driver --version 2.1.0 --locked
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: WebView2 driver
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./apps/desktop/e2e-b/setup-windows.ps1
+      - name: Native check
+        shell: bash
+        env:
+          MODE: ${{ inputs.mode || 'smoke' }}
+        run: |
+          binary=target/debug/openspider-desktop
+          if [ "$RUNNER_OS" = Windows ]; then binary="$binary.exe"; fi
+          node apps/desktop/e2e-b/run.mjs "$binary" "$MODE" apps/desktop/test-results/native
+      - name: Evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s02-${{ inputs.mode || 'smoke' }}-${{ matrix.os }}
+          path: apps/desktop/test-results/native/
+          if-no-files-found: warn
+      - name: Summary
+        if: always()
+        shell: bash
+        run: |
+          echo "Platform: $RUNNER_OS; run: $GITHUB_RUN_ID; mode: ${{ inputs.mode || 'smoke' }}" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f apps/desktop/test-results/native/report.json ]; then
+            cat apps/desktop/test-results/native/report.json >> "$GITHUB_STEP_SUMMARY"
+          fi

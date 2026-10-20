@@ -1,0 +1,38 @@
+{
+  "checkedAt": "2026-10-19",
+  "note": "Existing CI runs read through GitHub connector; not runs of the fix commit.",
+  "s5": {
+    "run": 39135561316,
+    "commit": "0ab4e38bffe0c3e07ef06a9345f2168e3bf5d663",
+    "jobs": [
+      {
+        "id": 117699243620,
+        "platform": "macOS 15.7.9 arm64",
+        "result": "success",
+        "tests": 15,
+        "seconds": 45,
+        "transport": "bridge",
+        "engine": "webkit"
+      },
+      {
+        "id": 117699243420,
+        "platform": "Ubuntu 24",
+        "result": "success",
+        "tests": 31,
+        "duration": "1.1m",
+        "transport": "bridge",
+        "engine": "chromium,webkit"
+      }
+    ]
+  },
+  "python": {
+    "run": 39135555277,
+    "commit": "ef32c7f1dcd90659a30e86eb312dfaf1f39ca9a9",
+    "job": 117699227077,
+    "platform": "ubuntu-latest",
+    "result": "success",
+    "readApiTests": 6,
+    "seconds": 4.18,
+    "finished": "2026-10-18T15:32:27Z"
+  }
+}

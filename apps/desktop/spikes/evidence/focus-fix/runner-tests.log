@@ -1,0 +1,76 @@
+TAP version 13
+# Subtest: waits for visible WebView focus, then verifies focus after targeting
+ok 1 - waits for visible WebView focus, then verifies focus after targeting
+  ---
+  duration_ms: 1.255166
+  type: 'test'
+  ...
+# Subtest: reacquires focus when the native foreground changes after targeting
+ok 2 - reacquires focus when the native foreground changes after targeting
+  ---
+  duration_ms: 0.694583
+  type: 'test'
+  ...
+# Subtest: resets stability on focus loss and rechecks the DOM after targeting
+ok 3 - resets stability on focus loss and rechecks the DOM after targeting
+  ---
+  duration_ms: 0.205458
+  type: 'test'
+  ...
+# Subtest: fails closed for hidden, unfocused, minimized, or wrong-target fixtures
+ok 4 - fails closed for hidden, unfocused, minimized, or wrong-target fixtures
+  ---
+  duration_ms: 0.713166
+  type: 'test'
+  ...
+# Subtest: five-state fixture accepts throttling and visible recovery with a boundary tick
+ok 5 - five-state fixture accepts throttling and visible recovery with a boundary tick
+  ---
+  duration_ms: 1.341291
+  type: 'test'
+  ...
+# Subtest: empty, stopped, too short and over-limit observations never pass
+ok 6 - empty, stopped, too short and over-limit observations never pass
+  ---
+  duration_ms: 0.943625
+  type: 'test'
+  ...
+# Subtest: locked or unrestored windows cannot be accepted as a visible baseline
+ok 7 - locked or unrestored windows cannot be accepted as a visible baseline
+  ---
+  duration_ms: 0.610875
+  type: 'test'
+  ...
+# Subtest: rate excludes ticks outside the measured interval
+ok 8 - rate excludes ticks outside the measured interval
+  ---
+  duration_ms: 0.098875
+  type: 'test'
+  ...
+# Subtest: recognizes all five recorded CI startup logs, colored and plain
+ok 9 - recognizes all five recorded CI startup logs, colored and plain
+  ---
+  duration_ms: 6.963833
+  type: 'test'
+  ...
+# Subtest: waits for the complete endpoint across output chunks
+ok 10 - waits for the complete endpoint across output chunks
+  ---
+  duration_ms: 0.314708
+  type: 'test'
+  ...
+# Subtest: rejects missing readiness and a different dev server port
+ok 11 - rejects missing readiness and a different dev server port
+  ---
+  duration_ms: 0.075625
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 57.533459

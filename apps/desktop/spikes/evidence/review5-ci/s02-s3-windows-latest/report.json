@@ -1,0 +1,18 @@
+{
+  "mode": "s3",
+  "platform": "win32",
+  "release": "10.0.26100",
+  "arch": "x64",
+  "node": "v22.23.3",
+  "startedAt": "2026-10-20T05:56:29.836Z",
+  "revision": "6e31faaffe1214fd0e3dabceeb363b4f73c31834",
+  "runnerSha256": "569d61e3f4a3cb473d163d0d2ac1ebe9bb218cc83c3cb5558ce2e29e7ad7fafd",
+  "probeSha256": "9f9c2ec2bcd8161b13f8c41635b4db5611faf400f3dc00b7d553f4fd4618c404",
+  "launch": "child-process",
+  "checks": [],
+  "errors": [
+    "Error: Vite ready: timed out"
+  ],
+  "seconds": 30.213,
+  "status": "failed"
+}

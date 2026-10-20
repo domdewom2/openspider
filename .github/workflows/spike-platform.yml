@@ -1,0 +1,18 @@
+name: spike-platform
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  menu:
+    uses: ./.github/workflows/ui-e2e-b.yml
+    with:
+      mode: s3
+  visibility:
+    uses: ./.github/workflows/ui-e2e-b.yml
+    with:
+      mode: s6
+      platforms: '["macos-15"]'
