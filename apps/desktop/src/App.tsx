@@ -1,5 +1,5 @@
 import { ExportHost, ExportViewButton } from "./features/export";
-import { McpHost, McpStatusField } from "./features/mcp";
+import { McpHost } from "./features/mcp";
 import { Shell } from "./features/shell/Shell";
 import { Header } from "./features/header/Header";
 import { Statusbar } from "./features/statusbar/Statusbar";
@@ -67,7 +67,6 @@ export function App() {
         </main>
         <aside className="os-app-sidebar" aria-label={t("app-region-sidebar")} />
         <footer className="os-app-status" role="contentinfo" aria-label={t("app-region-status")}>
-          <McpStatusField />
           <Statusbar />
           {version !== null && <span data-testid="version">{t("app-version", { version })}</span>}
         </footer>
