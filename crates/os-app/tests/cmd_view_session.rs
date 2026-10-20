@@ -488,7 +488,7 @@ async fn segment_restrictions_come_from_the_provider_and_finish_in_the_operation
         release: AtomicBool::new(false),
     });
     os_app::views::set_restrict_provider(&fx.app, Arc::new(Provider(slow)));
-    let building = fx.open(segment_spec(), json!(["Address"])).await;
+    let building = fx.open_raw(segment_spec(), json!(["Address"])).await;
     assert_eq!(building["state"], "building");
     let status = wait_op(&fx, &building["op"]).await;
     assert_eq!(status.state, OpState::Done, "{status:?}");

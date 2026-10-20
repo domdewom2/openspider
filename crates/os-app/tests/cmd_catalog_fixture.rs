@@ -90,7 +90,31 @@ impl Fx {
         let file = CrawlFile::open(&self.path, OpenMode::ReadWrite).unwrap();
         file.conn().execute_batch(sql).unwrap();
     }
+    /// Opens a view and returns its ready handle. A build slower than `SYNC_BUILD` (loaded CI runners) is answered
+    /// with a `building` handle and an operation; the result of that operation is the ready handle.
     pub async fn open(&self, spec: Value, columns: Value) -> Value {
+        let handle = self.open_raw(spec, columns).await;
+        if handle["state"] != "building" {
+            return handle;
+        }
+        let op: OpHandle = serde_json::from_value(handle["op"].clone()).unwrap();
+        let start = std::time::Instant::now();
+        loop {
+            let status = self.app.ops().status(&op.op_id).unwrap();
+            match status.state {
+                OpState::Done => return status.result.unwrap(),
+                OpState::Failed | OpState::Cancelled => panic!("view build: {status:?}"),
+                _ => {}
+            }
+            assert!(
+                start.elapsed() < Duration::from_secs(20),
+                "view build timeout: {status:?}"
+            );
+            tokio::time::sleep(Duration::from_millis(2)).await;
+        }
+    }
+    /// `view.open` exactly as answered (including a `building` handle).
+    pub async fn open_raw(&self, spec: Value, columns: Value) -> Value {
         self.call("view.open", json!({"spec":spec,"columns":columns}))
             .await
     }
