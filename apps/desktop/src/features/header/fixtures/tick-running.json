@@ -1,0 +1,43 @@
+{
+  "seq": 1,
+  "at": "2026-10-16T08:00:00Z",
+  "crawl": {
+    "crawlId": "0198f3a0-7b5e-7cc2-9d11-5f2a2f0c1a11",
+    "phase": "running",
+    "mode": "spider",
+    "endReason": null,
+    "crawled": 1200,
+    "queued": 800,
+    "discovered": 2000,
+    "percent": 60,
+    "rate": 42.5,
+    "avgRate": 40.1,
+    "avgResponseTime": 0.231,
+    "elapsedS": 30,
+    "pausedS": 0,
+    "etaS": 20,
+    "activeThreads": 5,
+    "memoryStage": "normal",
+    "fileBytes": 12582912,
+    "owner": {
+      "kind": "app",
+      "pid": 4242,
+      "live": true,
+      "controllable": true
+    },
+    "memoryUsedBytes": 800000000,
+    "memoryLimitBytes": 1000000000
+  },
+  "analysis": null,
+  "views": [],
+  "countsVersion": 0,
+  "issuesVersion": 0,
+  "sidebarVersion": 0,
+  "ops": [],
+  "mcp": {
+    "kind": "connected",
+    "port": 8765,
+    "clients": 1
+  },
+  "notices": []
+}

@@ -1,0 +1,8 @@
+     Running tests/check.rs (target/debug/deps/check-abcd)
+test passes ... ok
+test deferred ... ignored, M3: spätere Funktion
+test extra ... ok
+test criteria_do_not_leak ... ok
+test measurement ... ok
+     Running tests/pending_w1_d12.rs (target/debug/deps/pending_w1_d12-abcd)
+test integration ... ignored, wartet auf M2-E03

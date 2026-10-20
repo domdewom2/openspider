@@ -253,9 +253,11 @@ mod tests {
         }
         std::fs::remove_dir(home.path().join("profiles")).unwrap();
         std::fs::write(home.path().join("profiles"), "not a directory").unwrap();
-        assert!(matches!(
-            config(&ctx, &json!({"config_profile":"missing"})),
-            Err(ToolError::Internal(_))
-        ));
+        // Unix meldet ENOTDIR (Internal); Windows meldet ERROR_PATH_NOT_FOUND und damit NotFound (InvalidArguments).
+        let result = config(&ctx, &json!({"config_profile":"missing"}));
+        #[cfg(windows)]
+        assert!(matches!(result, Err(ToolError::InvalidArguments(_))));
+        #[cfg(not(windows))]
+        assert!(matches!(result, Err(ToolError::Internal(_))));
     }
 }

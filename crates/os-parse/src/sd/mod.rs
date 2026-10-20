@@ -7,6 +7,7 @@ pub mod jsonld;
 pub mod microdata;
 pub mod model;
 pub mod rdfa;
+pub mod validate;
 
 use os_model::ParsedPage;
 
@@ -24,6 +25,8 @@ pub fn run(ctx: &PageCtx<'_>, page: &mut ParsedPage) {
     if cfg.rdfa {
         page.structured_data.extend(rdfa::extract(ctx));
     }
+    // M2-D20 (K2-61): schema.org- und Rich-Result-Validierung der extrahierten Elemente.
+    validate::run(ctx, page);
 }
 
 pub fn to_writes(

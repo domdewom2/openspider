@@ -1,2 +1,97 @@
 # OpenSpider – Issue-Texte (English) ab M2, Tab „PageSpeed“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/en.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+# Platzhalter wie in core/issues/texts/en.toml. Texts by M2-I04.
+
+[issues.pagespeed-document-request-latency]
+what = "The HTML document itself arrives late: redirects, a slow server response or missing text compression lengthen the request."
+why = "Every delay on the document postpones all later steps, so first render and the largest element appear later."
+fix = "Link straight to the final URL, speed up the server response (caching, faster queries) and serve HTML compressed."
+
+[issues.pagespeed-lcp-request-discovery]
+what = "The resource of the largest visible element (LCP) is discovered late or loaded with low priority, for example lazily or without a high fetch priority."
+why = "The browser can request the most important image only late, which worsens Largest Contentful Paint."
+fix = "Reference the LCP image directly in the HTML, do not lazy-load it and add fetchpriority=\"high\"."
+
+[issues.pagespeed-render-blocking-requests]
+what = "Stylesheets or scripts hold up the first render of the page."
+why = "While blocking resources load the user sees nothing, so first render is measurably delayed."
+fix = "Inline critical CSS, load the remaining CSS later and mark scripts with defer or async."
+
+[issues.pagespeed-network-dependency-tree]
+what = "Critical resources depend on each other in long chains, so each is requested only after the previous one."
+why = "Long request chains add up network latency and delay rendering."
+fix = "Shorten the chains, preload important resources and open connections to required hosts early (preconnect)."
+
+[issues.pagespeed-use-efficient-cache-lifetimes]
+what = "Static resources are served without a cache lifetime or with one that is too short."
+why = "Returning visitors download the same files again, which costs bytes and time."
+fix = "Give versioned static files long cache lifetimes (Cache-Control max-age)."
+
+[issues.pagespeed-layout-shift-culprits]
+what = "Elements shift the layout after the fact, for example images without dimensions, late-loaded content or web fonts."
+why = "Jumping content disturbs reading and clicking and worsens Cumulative Layout Shift."
+fix = "Reserve space for images, embeds and late-loaded areas and avoid inserting content above existing content."
+
+[issues.pagespeed-improve-image-delivery]
+what = "Images are larger than needed: unsuitable format, excessive resolution or weak compression."
+why = "Unnecessary image bytes lengthen load time, especially on mobile networks."
+fix = "Serve images at the displayed size in modern formats (WebP, AVIF) with sensible compression."
+
+[issues.pagespeed-forced-reflow]
+what = "JavaScript reads layout values right after changing the DOM and forces the browser to recalculate immediately."
+why = "Forced recalculations block the main thread and make the page sluggish."
+fix = "Batch reads of layout values before writes and avoid reading right after DOM changes."
+
+[issues.pagespeed-legacy-javascript]
+what = "Modern browsers receive polyfills and transpiled code they do not need."
+why = "Unneeded code increases download size and execution time."
+fix = "Build a separate bundle for modern browsers and ship polyfills only where needed."
+
+[issues.pagespeed-duplicated-javascript]
+what = "The same modules or libraries are contained several times in the delivered scripts."
+why = "Duplicate code is downloaded and executed more than once."
+fix = "Check the bundles for duplicate dependencies and move shared code into a single module."
+
+[issues.pagespeed-avoid-enormous-network-payloads]
+what = "The page transfers a very large amount of data in total."
+why = "Large payloads lengthen load time and cost users on metered connections money."
+fix = "Reduce images, scripts and fonts, remove unused parts and load secondary content on demand."
+
+[issues.pagespeed-minify-css]
+what = "CSS files contain whitespace and comments that can be removed without changing behaviour."
+why = "Unminified stylesheets transfer unnecessary bytes before the first render."
+fix = "Minify CSS in the build process and serve it compressed."
+
+[issues.pagespeed-minify-javascript]
+what = "JavaScript files contain whitespace, comments and long names that can be shrunk."
+why = "Unminified scripts transfer and parse unnecessary bytes."
+fix = "Minify scripts in the build process and serve them compressed."
+
+[issues.pagespeed-reduce-unused-css]
+what = "A large share of the loaded CSS rules is not used on the page."
+why = "Unused rules lengthen download and style calculation."
+fix = "Remove unused rules or split stylesheets by page type and load only what the page needs."
+
+[issues.pagespeed-reduce-unused-javascript]
+what = "A large share of the loaded JavaScript is not executed while the page loads."
+why = "Unused code costs download bytes and parse and compile time."
+fix = "Split bundles (code splitting), load features on demand and remove libraries you do not need."
+
+[issues.pagespeed-reduce-javascript-execution-time]
+what = "Parsing, compiling and running JavaScript takes a long time."
+why = "Long script execution blocks the main thread and delays interactions."
+fix = "Reduce and defer script work, drop expensive third-party scripts and break up long tasks."
+
+[issues.pagespeed-minimize-main-thread-work]
+what = "The main thread is busy for a long time with style calculation, layout, painting and scripts during load."
+why = "A busy main thread responds late to input."
+fix = "Reduce script work, simplify styles and layout and postpone non-urgent tasks."
+
+[issues.pagespeed-optimize-dom-size]
+what = "The page has a very large DOM and style or layout calculations on it take long."
+why = "Large DOM trees make every calculation more expensive and increase memory use."
+fix = "Reduce the number of elements, render long lists in windows and avoid deep nesting."
+
+[issues.pagespeed-font-display]
+what = "Web fonts keep text invisible while they load."
+why = "Invisible text delays the moment content becomes readable."
+fix = "Use font-display: swap or optional so a fallback font is shown immediately."

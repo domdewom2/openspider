@@ -40,3 +40,16 @@ export function createTauriTransport(): Transport {
     },
   };
 }
+
+/** Additive shell helper (M2-U03, K2-61): native notification plugin, no app command bypass. */
+export async function sendDesktopNotification(title: string, body: string): Promise<void> {
+  const granted = await tauriInvoke<boolean | null>("plugin:notification|is_permission_granted");
+  if (granted === false) return;
+  if (granted === null && await tauriInvoke<string>("plugin:notification|request_permission") !== "granted") return;
+  await tauriInvoke("plugin:notification|notify", { options: { title, body } });
+}
+
+/** Additive shell helper (M2-U03, K2-61): copy diagnostic text through the installed clipboard plugin. */
+export async function copyDesktopText(text: string): Promise<void> {
+  await tauriInvoke("plugin:clipboard-manager|write_text", { text });
+}

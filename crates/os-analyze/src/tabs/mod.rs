@@ -178,6 +178,7 @@ pub fn column_sources() -> Vec<(&'static str, Box<dyn ColumnSource>)> {
     add("Internal", links::column_source());
     add("Structured Data", structured_data::column_source());
     add("Internal", internal_crawl::column_source());
+    add("PageSpeed", pagespeed::column_source());
     #[cfg(feature = "testing")]
     add("Internal", testing::source());
     out
@@ -1139,6 +1140,7 @@ fn configure_sources(
                     tab.filters.push(filter);
                 }
             }
+            tab.filters.retain(|f| source.keeps_filter(cfg, f.id));
             apply_meta_defaults(&mut tab.columns);
         }
     }

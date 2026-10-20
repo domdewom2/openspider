@@ -21,3 +21,47 @@ type_rule = "T-I1"
 priority_rule = "P-H1"
 needs_crawl_analysis = false
 doc_key = "structured-data-parse-errors"
+
+[[issue]]
+id = "structured-data-validation-errors"
+tab = "Structured Data"
+filter = "Validation Errors"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "structured-data-validation-errors"
+
+[[issue]]
+id = "structured-data-validation-warnings"
+tab = "Structured Data"
+filter = "Validation Warnings"
+type = "Opportunity"
+priority = "Low"
+type_rule = "T-O2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "structured-data-validation-warnings"
+
+[[issue]]
+id = "structured-data-rich-result-errors"
+tab = "Structured Data"
+filter = "Rich Result Validation Errors"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "structured-data-rich-result-errors"
+
+[[issue]]
+id = "structured-data-rich-result-warnings"
+tab = "Structured Data"
+filter = "Rich Result Validation Warnings"
+type = "Opportunity"
+priority = "Low"
+type_rule = "T-O2"
+priority_rule = "P-L1"
+needs_crawl_analysis = false
+doc_key = "structured-data-rich-result-warnings"

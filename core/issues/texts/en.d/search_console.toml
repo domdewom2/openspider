@@ -1,2 +1,47 @@
 # OpenSpider – Issue-Texte (English) ab M2, Tab „Search Console“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/en.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+# Platzhalter wie in core/issues/texts/en.toml. Texte: M2-I03.
+
+[issues.search-console-page-is-not-mobile-friendly]
+what = "Google's URL Inspection reports a failed mobile usability check for this page."
+why = "Visitors on phones may struggle to read or use the page, and Google evaluates the mobile version first."
+fix = "Open the listed mobile usability issues, fix layout, font size and tap targets, then inspect the URL again."
+
+[issues.search-console-orphan-urls]
+what = "The page has Search Analytics data but no internal link from another crawled page points to it."
+why = "Pages that are only reachable from outside receive no internal link signals and are easy to lose track of."
+fix = "Link the page from a relevant section of the site, or redirect or remove it if it is no longer needed."
+
+[issues.search-console-url-is-on-google-but-has-issues]
+what = "Google has indexed the URL, but a mobile, AMP or rich result check failed or passed only partly."
+why = "The page can appear in search, yet some enhancements may be missing or shown in reduced form."
+fix = "Review the failing part of the inspection result and correct the reported markup or layout problems."
+
+[issues.search-console-amp-url-is-invalid]
+what = "URL Inspection reports the AMP version of this page as invalid."
+why = "An invalid AMP page is not served as AMP, so the related search features are not available for it."
+fix = "Correct the AMP validation errors listed in the AMP Issues column and inspect the URL again."
+
+[issues.search-console-indexable-url-not-indexed]
+what = "OpenSpider rates the URL as indexable, but Google reports that it is not on Google."
+why = "A page that is meant for search but missing from the index cannot bring organic traffic."
+fix = "Check the coverage state, improve internal links and content quality, and request indexing once the cause is resolved."
+
+[issues.search-console-user-declared-canonical-not-selected]
+what = "Google chose a different canonical URL than the one the page declares."
+why = "Google ignores the declared canonical, so signals are consolidated on a URL you did not intend."
+fix = "Make duplicate pages clearly distinct, or align canonical tags, redirects, internal links and sitemaps on one URL."
+
+[issues.search-console-no-search-analytics-data]
+what = "The crawled HTML page received no impressions in Search Analytics for the selected period."
+why = "Either the page is not shown in search results or it has not been indexed yet."
+fix = "Check indexing with URL Inspection and review whether the page targets queries people search for."
+
+[issues.search-console-non-indexable-with-search-analytics-data]
+what = "The page is non-indexable today but still collected impressions in the selected period."
+why = "Non-indexable pages with search visibility may lose their traffic once Google processes the change."
+fix = "Confirm the noindex, canonical or status change is intended; otherwise make the page indexable again."
+
+[issues.search-console-url-is-not-on-google]
+what = "URL Inspection reports that the URL is not on Google."
+why = "The URL cannot appear in Google search results; this is fine for pages that are meant to stay out of the index."
+fix = "Compare with the Indexable URL Not Indexed filter and only act on pages that should be found in search."

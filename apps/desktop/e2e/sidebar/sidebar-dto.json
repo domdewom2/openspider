@@ -1,0 +1,309 @@
+{
+  "overview": {
+    "summary": [
+      {
+        "key": "Total URLs Encountered",
+        "count": 29,
+        "pct": 100.0
+      },
+      {
+        "key": "Total URLs Crawled",
+        "count": 25,
+        "pct": 86.20689655172413
+      },
+      {
+        "key": "Total Internal Blocked by robots.txt",
+        "count": 2,
+        "pct": 6.896551724137931
+      },
+      {
+        "key": "Total External Blocked by robots.txt",
+        "count": 0,
+        "pct": 0.0
+      },
+      {
+        "key": "Total URLs Displayed",
+        "count": 27,
+        "pct": 93.10344827586206
+      },
+      {
+        "key": "Total Internal URLs",
+        "count": 25,
+        "pct": 86.20689655172413
+      },
+      {
+        "key": "Total External URLs",
+        "count": 2,
+        "pct": 6.896551724137931
+      },
+      {
+        "key": "Total Internal Indexable URLs",
+        "count": 23,
+        "pct": 79.3103448275862
+      },
+      {
+        "key": "Total Internal Non-Indexable URLs",
+        "count": 1,
+        "pct": 3.4482758620689653
+      }
+    ],
+    "tabs": [
+      {
+        "tab": "Internal",
+        "filters": [
+          {
+            "id": "All",
+            "labelTemplate": "All",
+            "params": {},
+            "count": 25,
+            "pct": 100.0,
+            "state": {
+              "kind": "ready"
+            },
+            "issue": null
+          },
+          {
+            "id": "Indexable",
+            "labelTemplate": "Indexable",
+            "params": {},
+            "count": 23,
+            "pct": 92.0,
+            "state": {
+              "kind": "ready"
+            },
+            "issue": null
+          },
+          {
+            "id": "Non-Indexable",
+            "labelTemplate": "Non-Indexable",
+            "params": {},
+            "count": 1,
+            "pct": 4.0,
+            "state": {
+              "kind": "ready"
+            },
+            "issue": null
+          }
+        ]
+      },
+      {
+        "tab": "Page Titles",
+        "filters": [
+          {
+            "id": "All",
+            "labelTemplate": "All",
+            "params": {},
+            "count": 25,
+            "pct": 100.0,
+            "state": {
+              "kind": "ready"
+            },
+            "issue": null
+          },
+          {
+            "id": "Duplicate",
+            "labelTemplate": "Duplicate",
+            "params": {},
+            "count": 2,
+            "pct": 8.0,
+            "state": {
+              "kind": "ready"
+            },
+            "issue": {
+              "issueType": "opportunity",
+              "priority": "medium"
+            }
+          },
+          {
+            "id": "Outside <head>",
+            "labelTemplate": "Outside <head>",
+            "params": {},
+            "count": null,
+            "pct": null,
+            "state": {
+              "kind": "needsRecrawl"
+            },
+            "issue": null
+          }
+        ]
+      },
+      {
+        "tab": "Content",
+        "filters": [
+          {
+            "id": "All",
+            "labelTemplate": "All",
+            "params": {},
+            "count": 25,
+            "pct": 100.0,
+            "state": {
+              "kind": "ready"
+            },
+            "issue": null
+          },
+          {
+            "id": "Near Duplicates",
+            "labelTemplate": "Near Duplicates",
+            "params": {},
+            "count": null,
+            "pct": null,
+            "state": {
+              "kind": "needsCrawlAnalysis"
+            },
+            "issue": null
+          },
+          {
+            "id": "Low Content Pages",
+            "labelTemplate": "Low Content Pages",
+            "params": {},
+            "count": 3,
+            "pct": 12.0,
+            "state": {
+              "kind": "stale"
+            },
+            "issue": null
+          },
+          {
+            "id": "Lorem Ipsum Placeholder",
+            "labelTemplate": "Lorem Ipsum Placeholder",
+            "params": {},
+            "count": 2,
+            "pct": 8.0,
+            "state": {
+              "kind": "incomplete",
+              "unchecked": 7
+            },
+            "issue": null
+          },
+          {
+            "id": "Spelling Errors",
+            "labelTemplate": "Spelling Errors",
+            "params": {},
+            "count": null,
+            "pct": null,
+            "state": {
+              "kind": "needsConfig",
+              "key": "content.spelling"
+            },
+            "issue": null
+          },
+          {
+            "id": "Semantically Similar",
+            "labelTemplate": "Semantically Similar",
+            "params": {},
+            "count": null,
+            "pct": null,
+            "state": {
+              "kind": "needsRendering"
+            },
+            "issue": null
+          }
+        ]
+      }
+    ]
+  },
+  "issues": [
+    {
+      "id": "Page Titles/Duplicate",
+      "tab": "Page Titles",
+      "filter": "Duplicate",
+      "type": "opportunity",
+      "priority": "medium",
+      "count": 2,
+      "pct": 8.0,
+      "segmentShares": [
+        {
+          "segment": "Shop",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "Images/Missing Alt Attribute",
+      "tab": "Images",
+      "filter": "Missing Alt Attribute",
+      "type": "issue",
+      "priority": "low",
+      "count": 1,
+      "pct": 4.0,
+      "segmentShares": [
+        {
+          "segment": "Shop",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "Response Codes/Internal Client Error (4xx)",
+      "tab": "Response Codes",
+      "filter": "Internal Client Error (4xx)",
+      "type": "issue",
+      "priority": "high",
+      "count": 1,
+      "pct": 4.0,
+      "segmentShares": [
+        {
+          "segment": "Shop",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "Response Codes/Internal Redirection (3xx)",
+      "tab": "Response Codes",
+      "filter": "Internal Redirection (3xx)",
+      "type": "warning",
+      "priority": "low",
+      "count": 1,
+      "pct": 4.0,
+      "segmentShares": [
+        {
+          "segment": "Shop",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "Meta Description/Missing",
+      "tab": "Meta Description",
+      "filter": "Missing",
+      "type": "opportunity",
+      "priority": "medium",
+      "count": 1,
+      "pct": 4.0,
+      "segmentShares": [
+        {
+          "segment": "Shop",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "explanation": {
+    "what": "A title exceeds the configured limit of 65 characters.",
+    "why": "Long titles can make the search result harder to scan.",
+    "fix": "Edit the title to convey its subject within 65 characters.",
+    "rule": "T-O1: Outside the recommended range; P-M1: Search appearance.",
+    "learnMoreUrl": "https://openspider.example/docs/issues/title-length"
+  },
+  "analysis": {
+    "running": false,
+    "steps": [
+      {
+        "step": "link_score",
+        "state": "done",
+        "stale": false
+      },
+      {
+        "step": "near_duplicates",
+        "state": "pending",
+        "stale": true
+      },
+      {
+        "step": "content",
+        "state": "needsRecrawl",
+        "stale": true
+      }
+    ]
+  }
+}

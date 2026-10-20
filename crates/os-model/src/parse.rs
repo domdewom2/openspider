@@ -5,7 +5,7 @@ use crate::enums::{
     SitemapKind,
 };
 use crate::ext::ExtKey;
-use crate::parse_m2::{ExtractedValue, FormRef, SdItem, SearchHit, ValidationFacts};
+use crate::parse_m2::{ExtractedValue, FormRef, SdFinding, SdItem, SearchHit, ValidationFacts};
 use crate::value::Value;
 
 /// Ein extrahierter Text, bereits mit N(x) normalisiert (ONPAGE-003).
@@ -234,6 +234,8 @@ pub struct ParsedPage {
     pub ext: Vec<(ExtKey, Value)>,
     /// Strukturierte Daten (ab M2).
     pub structured_data: Vec<SdItem>,
+    /// Befunde der Validierung strukturierter Daten (ab M2-D20, TECH-187/188; K2-61).
+    pub sd_findings: Vec<SdFinding>,
     /// Formulare (ab M2).
     pub forms: Vec<FormRef>,
     /// Ergebnis der HTML-Validierung, wenn `advanced.html_validation` an ist (ab M2).

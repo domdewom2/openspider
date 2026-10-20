@@ -7,3 +7,23 @@ fix = "Decide whether structured data suits the content. Enable the relevant ext
 what = "At least one structured data block could not be read."
 why = "Syntax errors or unresolved type identifiers prevent reliable interpretation of this block. Other readable blocks are still extracted."
 fix = "Open the structured data details. Correct the reported location using its line, column and snippet, then check the page again."
+
+[issues.structured-data-validation-errors]
+what = "At least one structured data item uses a type, property or value that does not fit the schema.org vocabulary."
+why = "Unknown names, properties on unsuitable types and values of the wrong kind can cause the markup to be ignored or misread."
+fix = "Open the structured data details and correct each finding at the listed property path. Check spelling and case against the schema.org reference."
+
+[issues.structured-data-validation-warnings]
+what = "At least one structured data item still uses the retired data-vocabulary.org vocabulary."
+why = "Search services no longer evaluate this vocabulary, so the markup has no effect."
+fix = "Replace the items with equivalent schema.org types and properties and check the page again."
+
+[issues.structured-data-rich-result-errors]
+what = "At least one detected rich result feature lacks a required property or contains an invalid value."
+why = "A feature with errors is not eligible for the corresponding enhanced search result presentation."
+fix = "Open the structured data details, add the missing required properties and correct invalid values for each listed feature."
+
+[issues.structured-data-rich-result-warnings]
+what = "At least one detected rich result feature lacks a recommended property."
+why = "The feature remains eligible, but additional information could make the search result presentation more complete."
+fix = "Add the recommended properties where the information is available on the page."

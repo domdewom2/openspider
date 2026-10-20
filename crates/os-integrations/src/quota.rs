@@ -124,6 +124,29 @@ impl QuotaLedger {
         self.write(&ledger)?;
         Ok(true)
     }
+    /// Reserviert bis zu `n` Einheiten der Tagesperiode in einer Schreiboperation und liefert die bewilligte Anzahl
+    /// (M2-I03, K2-61: URL Inspection reserviert je Property alle Abfragen eines Laufs auf einmal).
+    pub fn reserve_up_to(
+        &self,
+        source: &str,
+        property: &str,
+        now: Timestamp,
+        limit: u64,
+        n: u64,
+    ) -> Result<u64, ApiError> {
+        let _lock = self.lock.lock().unwrap_or_else(|p| p.into_inner());
+        let _file = self.lock_file()?;
+        let mut ledger = self.read()?;
+        prune(&mut ledger, now, None);
+        let count = ledger
+            .counts
+            .entry(Self::key(source, property, now))
+            .or_default();
+        let granted = limit.saturating_sub(*count).min(n);
+        *count += granted;
+        self.write(&ledger)?;
+        Ok(granted)
+    }
     pub fn remaining_period(
         &self,
         source: &str,

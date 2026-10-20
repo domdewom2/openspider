@@ -39,12 +39,6 @@ function = "run"
 signature = "pub fn run(_ctx: &PageCtx<'_>, _page: &mut ParsedPage)"
 
 [[stub]]
-owner = "M2-D20"
-file = "crates/os-export/src/reports/structured_data.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
 owner = "M2-D21"
 file = "crates/os-analyze/src/tabs/accessibility.rs"
 function = "tab"
@@ -135,20 +129,8 @@ function = "tab"
 signature = "pub fn tab() -> TabDef"
 
 [[stub]]
-owner = "M2-F02"
-file = "crates/os-analyze/src/tabs/search_console.rs"
-function = "tab"
-signature = "pub fn tab() -> TabDef"
-
-[[stub]]
 owner = "M2-I02"
 file = "crates/os-analyze/src/tabs/analytics.rs"
-function = "tab"
-signature = "pub fn tab() -> TabDef"
-
-[[stub]]
-owner = "M2-I03"
-file = "crates/os-analyze/src/tabs/search_console.rs"
 function = "tab"
 signature = "pub fn tab() -> TabDef"
 

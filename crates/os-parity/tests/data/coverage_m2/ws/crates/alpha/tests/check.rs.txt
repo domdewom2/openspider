@@ -1,0 +1,21 @@
+// spec: CRAWL-001
+#[test]
+fn passes() {}
+
+// spec: CRAWL-002
+#[test]
+#[ignore = "M3: spätere Funktion"]
+fn deferred() {}
+
+// spec: OUT-020 [M2]
+#[test]
+fn extra() {}
+
+// spec: TECH-001 [P1]
+// spec: TECH-002 [M2]
+#[test]
+fn criteria_do_not_leak() {}
+
+// spec: PERF-001
+#[test]
+fn measurement() {}

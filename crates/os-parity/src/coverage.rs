@@ -18,7 +18,14 @@
 //!    optionalen Feld `extra_spec_ids` eines Pakets erscheinen im Berichtsabschnitt `extra`, lösen keine
 //!    Warnung „unbekannte IDs“ aus und zählen weder für die Zusammenfassung noch für `--strict`.
 
+//!
+//! M2 (--milestone M2): zusätzlich TS-Tags und vitest-/Playwright-JUnit, Messpakete,
+//! M2-Ignore-Gründe und Anhang B je (ID, Paket). Entwicklung verlangt ausgewählte gemergte Pakete;
+//! --gate verlangt alle Wellen ohne Platzhalter und ohne deferred Pflicht-IDs. Siehe Modul `m2`.
+
 pub mod evidence;
+pub mod frontend;
+pub mod m2;
 pub mod results;
 pub mod scan;
 pub mod targets;
@@ -34,19 +41,45 @@ use results::{Outcome, TestResult};
 use scan::{FileScan, TestFn};
 use targets::Resolved;
 
+/// Unterstützte Meilensteine der Spec-Abdeckung.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+pub enum Milestone {
+    /// Unveränderte M1-Statusregeln.
+    #[value(name = "M1")]
+    M1,
+    /// M2 einschließlich Frontend und Anhang B.
+    #[value(name = "M2")]
+    M2,
+}
+
 /// Argumente von `os-parity coverage`.
 #[derive(Debug, Clone, clap::Args)]
 pub struct CoverageArgs {
-    /// Paketliste (`docs/plan/M1-packages.json`).
+    /// Meilenstein; ohne --packages wird dessen kanonische Paketliste gelesen.
+    #[arg(long, value_enum, default_value = "M1")]
+    pub milestone: Milestone,
+    /// M2-Abnahme: alle Wellen, keine Platzhalter, alle Pflicht-IDs implementiert.
     #[arg(long)]
-    pub packages: PathBuf,
+    pub gate: bool,
+    /// M2-Entwicklung: Pakete bis einschließlich dieser Welle als gemergt behandeln (Standard 0).
+    #[arg(long, default_value_t = 0)]
+    pub wave: u32,
+    /// M2-Entwicklung: zusätzliche gemergte Paket-IDs, z. B. --merged D12,U10.
+    #[arg(long, value_delimiter = ',')]
+    pub merged: Vec<String>,
+    /// JUnit aus vitest oder Playwright (wiederholbar).
+    #[arg(long)]
+    pub frontend_junit: Vec<PathBuf>,
+    /// Paketliste (Standard: docs/plan/<Meilenstein>-packages.json unter --root).
+    #[arg(long)]
+    pub packages: Option<PathBuf>,
     /// Ausgabe von `cargo test --workspace --exclude openspider-desktop --no-fail-fast`.
     #[arg(long)]
     pub test_output: Option<PathBuf>,
     /// JUnit-XML aus `cargo nextest` (Alternative oder Ergänzung zu `--test-output`).
     #[arg(long)]
     pub junit: Option<PathBuf>,
-    /// Statusdatei (`docs/plan/M1-status.json`).
+    /// Statusdatei (z. B. docs/plan/M2-status.json).
     #[arg(long)]
     pub write: Option<PathBuf>,
     /// Wurzel des Repositories (enthält `crates/` und `tests/`).
@@ -247,6 +280,24 @@ pub fn compute(
     results: &[TestResult],
     previous: Option<&Value>,
 ) -> CoverageReport {
+    compute_with_reason(
+        package_specs,
+        scans,
+        targets_found,
+        results,
+        previous,
+        &valid_defer_reason,
+    )
+}
+
+pub(crate) fn compute_with_reason(
+    package_specs: &PackageSpecs,
+    scans: &BTreeMap<String, FileScan>,
+    targets_found: Vec<targets::Target>,
+    results: &[TestResult],
+    previous: Option<&Value>,
+    valid_reason: &dyn Fn(&str) -> bool,
+) -> CoverageReport {
     let tests: Vec<TestFn> = scans.values().flat_map(|s| s.tests.clone()).collect();
     let index = targets::build_index(targets_found, scans, &tests);
     let mut warnings: Vec<String> = Vec::new();
@@ -363,7 +414,7 @@ pub fn compute(
         } else if states.iter().all(|s| *s == TestState::Ignored) {
             let all_valid = idxs
                 .iter()
-                .all(|&i| reason_of(i).is_some_and(|r| valid_defer_reason(&r)));
+                .all(|&i| reason_of(i).is_some_and(|r| valid_reason(&r)));
             if all_valid {
                 (Status::Deferred, None)
             } else {
@@ -563,7 +614,14 @@ impl CoverageReport {
 
 /// Ermittelt den Status; `Ok(true)` = keine ID mit Status `open`.
 pub fn run(args: &CoverageArgs) -> Result<bool, ParityError> {
-    let package_specs = load_packages(&args.packages)?;
+    if args.milestone == Milestone::M2 {
+        return m2::run(args);
+    }
+    let packages = args
+        .packages
+        .clone()
+        .unwrap_or_else(|| args.root.join("docs/plan/M1-packages.json"));
+    let package_specs = load_packages(&packages)?;
     let root = &args.root;
 
     let mut scans: BTreeMap<String, FileScan> = BTreeMap::new();
@@ -606,6 +664,26 @@ pub fn run(args: &CoverageArgs) -> Result<bool, ParityError> {
     );
 
     let mut report = report;
+    apply_parity(&mut report, args)?;
+
+    if let Some(out) = &args.write {
+        if let Some(dir) = out.parent().filter(|d| !d.as_os_str().is_empty()) {
+            std::fs::create_dir_all(dir)?;
+        }
+        let text = serde_json::to_string_pretty(&report.to_json())
+            .map_err(|e| ParityError::Invalid(format!("Status nicht serialisierbar: {e}")))?;
+        std::fs::write(out, text + "\n")?;
+    }
+    print!("{}", report.summary_text());
+    let strict_ok = !args.strict || report.ignored_without_valid_reason.is_empty();
+    Ok(report.open_count() == 0 && strict_ok)
+}
+
+/// Ergänzt frische Paritätsbelege; gemeinsame Statusregeln für beide Meilensteine.
+pub(crate) fn apply_parity(
+    report: &mut CoverageReport,
+    args: &CoverageArgs,
+) -> Result<(), ParityError> {
     if let (Some(rep), Some(ev)) = (&args.parity_report, &args.evidence) {
         let parity: Value =
             serde_json::from_str(&std::fs::read_to_string(rep).map_err(|e| {
@@ -639,15 +717,5 @@ pub fn run(args: &CoverageArgs) -> Result<bool, ParityError> {
         report.summary.insert("verified".into(), verified);
     }
 
-    if let Some(out) = &args.write {
-        if let Some(dir) = out.parent().filter(|d| !d.as_os_str().is_empty()) {
-            std::fs::create_dir_all(dir)?;
-        }
-        let text = serde_json::to_string_pretty(&report.to_json())
-            .map_err(|e| ParityError::Invalid(format!("Status nicht serialisierbar: {e}")))?;
-        std::fs::write(out, text + "\n")?;
-    }
-    print!("{}", report.summary_text());
-    let strict_ok = !args.strict || report.ignored_without_valid_reason.is_empty();
-    Ok(report.open_count() == 0 && strict_ok)
+    Ok(())
 }

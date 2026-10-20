@@ -1,0 +1,18 @@
+import { describe, test, it } from 'vitest';
+const fake = `// spec: UI-999
+ test('fake', () => {});`;
+/* // spec: UI-998
+ test('fake block', () => {}); */
+describe('Tabelle', () => {
+  // spec: UI-001
+  test('zeigt Zeilen & Größen', () => {});
+  describe('Sortierung', () => {
+    // spec: UI-002
+    it('sortiert', () => {});
+  });
+  // spec: OUT-020 [M2]
+  // spec: OUT-021 [P1]
+  test('kopiert', () => {});
+  // spec: OUT-021 [M2]
+  test('fügt ein', () => {});
+});

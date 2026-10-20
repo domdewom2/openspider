@@ -1,0 +1,8 @@
+<testsuites tests="2" failures="0" skipped="1" errors="0">
+  <testsuite name="table/table.spec.ts" tests="2" skipped="1" hostname="chromium">
+    <testcase name="Browser › zeigt Browser" classname="table/table.spec.ts" time="0.1">
+      <system-out><![CDATA[Browserausgabe mit < & >]]></system-out>
+    </testcase>
+    <testcase name="Browser › späterer Browser" classname="table/table.spec.ts" time="0"><skipped message="M4: Browserfunktion"/></testcase>
+  </testsuite>
+</testsuites>
