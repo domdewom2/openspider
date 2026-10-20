@@ -5110,6 +5110,8 @@ dependencies = [
  "fancy-regex",
  "os-analyze",
  "os-engine",
+ "os-fetch",
+ "os-integrations",
  "os-model",
  "os-parse",
  "os-store",

@@ -186,3 +186,14 @@ pub fn overview_summary(conn: &Connection) -> Result<Vec<(String, u64)>, StoreEr
 pub fn http_status_line(conn: &Connection, id: UrlId) -> Result<String, StoreError> {
     Ok(conn.query_row("SELECT COALESCE(http_version,'') || CASE WHEN status_code IS NULL THEN '' ELSE ' ' || status_code END FROM urls WHERE id=?1", [id.0], |r| r.get(0)).optional()?.unwrap_or_default())
 }
+
+/// Resolve the system timezone at a particular instant, including historical DST.
+/// Call on a read-pool worker. No process-start offset or timezone mutation is used.
+pub fn local_offset_seconds(conn: &Connection, at: os_model::Timestamp) -> Result<i32, StoreError> {
+    conn.query_row(
+        "SELECT CAST(strftime('%s', ?1, 'localtime') AS INTEGER) - CAST(strftime('%s', ?1) AS INTEGER)",
+        [at.to_db()],
+        |row| row.get(0),
+    )
+    .map_err(StoreError::from)
+}

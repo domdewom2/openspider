@@ -8,7 +8,7 @@ use support::*;
 async fn connections_list_exactly_six_probe_once_disconnect_keeps_credentials() {
     let h = Harness::new().await;
     let rows = h.call("api.list", json!(null)).await.unwrap();
-    assert_eq!(rows.as_array().unwrap().len(), 6);
+    assert_eq!(rows.as_array().unwrap().len(), 7);
     assert!(rows
         .as_array()
         .unwrap()

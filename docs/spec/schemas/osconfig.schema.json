@@ -184,6 +184,7 @@
               "retries": 5,
               "window_s": 60
             },
+            "oauth_client_id": null,
             "root_folder": null
           },
           "description": "Google Drive."
@@ -830,6 +831,14 @@
             "window_s": 60
           },
           "description": "Anfragegrenzen (INTEG-005/006)."
+        },
+        "oauth_client_id": {
+          "default": null,
+          "description": "Eigene Google-OAuth-Client-ID für den Systembrowser.",
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "root_folder": {
           "default": null,
@@ -3408,6 +3417,7 @@
             "retries": 5,
             "window_s": 60
           },
+          "oauth_client_id": null,
           "root_folder": null
         },
         "ga4": {

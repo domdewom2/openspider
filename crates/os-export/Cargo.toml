@@ -12,6 +12,7 @@ authors.workspace = true
 fancy-regex.workspace = true
 toml.workspace = true
 
+os-integrations.workspace = true
 os-model.workspace = true
 os-store.workspace = true
 os-analyze.workspace = true
@@ -28,6 +29,7 @@ time.workspace = true
 url.workspace = true
 
 [dev-dependencies]
+os-fetch.workspace = true
 os-analyze = { workspace = true, features = ["testing"] }
 os-engine = { workspace = true, features = ["testing"] }
 os-testsite.workspace = true

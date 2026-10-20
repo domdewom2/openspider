@@ -320,3 +320,42 @@ fn encode_form(form: &[(&str, &str)]) -> String {
         .extend_pairs(form.iter().copied())
         .finish()
 }
+
+// Additive constructor for the drive.file-only exporter (M2-X03, K2-61).
+impl Authorization {
+    pub async fn begin_drive(client_id: &str, endpoints: &Endpoints) -> Result<Self, ApiError> {
+        if client_id.trim().is_empty() {
+            return Err(ApiError::Unauthorized(
+                "Eigene Google-Client-ID erforderlich".into(),
+            ));
+        }
+        let listener = TcpListener::bind(("127.0.0.1", 0))
+            .await
+            .map_err(|_| transport())?;
+        let redirect = format!(
+            "http://127.0.0.1:{}/callback",
+            listener.local_addr().map_err(|_| transport())?.port()
+        );
+        let state = CsrfToken::new_random();
+        let (challenge, verifier) = PkceCodeChallenge::new_random_sha256();
+        let mut url = Url::parse(&endpoints.authorize).map_err(|_| transport())?;
+        url.query_pairs_mut().extend_pairs([
+            ("response_type", "code"),
+            ("client_id", client_id),
+            ("redirect_uri", redirect.as_str()),
+            ("scope", crate::drive::SCOPE),
+            ("state", state.secret()),
+            ("code_challenge", challenge.as_str()),
+            ("code_challenge_method", "S256"),
+            ("access_type", "offline"),
+            ("prompt", "consent"),
+        ]);
+        Ok(Self {
+            url,
+            redirect,
+            listener,
+            state,
+            verifier,
+        })
+    }
+}

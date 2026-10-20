@@ -20,13 +20,14 @@ use std::{
     time::Duration,
 };
 
-const KINDS: [ApiKind; 6] = [
+const KINDS: [ApiKind; 7] = [
     ApiKind::Ga4,
     ApiKind::Gsc,
     ApiKind::Psi,
     ApiKind::Majestic,
     ApiKind::Ahrefs,
     ApiKind::Moz,
+    ApiKind::Drive,
 ];
 #[derive(Clone)]
 struct Connection {
@@ -222,6 +223,7 @@ fn endpoints(state: &ApiState) -> oauth::Endpoints {
 }
 fn client_id(cfg: &CrawlConfig, kind: ApiKind) -> Option<&str> {
     match kind {
+        ApiKind::Drive => cfg.api.drive.oauth_client_id.as_deref(),
         ApiKind::Ga4 => cfg.api.ga4.oauth_client_id.as_deref(),
         ApiKind::Gsc => cfg.api.gsc.oauth_client_id.as_deref(),
         _ => None,
@@ -242,7 +244,16 @@ async fn probe(
         .get(name(kind))
         .cloned();
     let ctx = api_ctx(app, config);
-    if let Some(source) = source {
+    if kind == ApiKind::Drive {
+        os_integrations::drive::DriveClient::new(
+            &ctx,
+            &credential.account_id,
+            app.config().clock.now(),
+        )?
+        .test_connection()
+        .await?;
+        Ok(credential.clone())
+    } else if let Some(source) = source {
         source.test_connection(&ctx, credential).await
     } else {
         http::probe(
@@ -428,6 +439,47 @@ async fn connect_now(app: App, ctx: CallCtx, args: ApiConnectArgs) -> Result<Api
         let reused_ahrefs = args.kind == ApiKind::Ahrefs && saved.is_some();
         let mut credential = if let Some(credential) = saved {
             credential
+        } else if args.kind == ApiKind::Drive {
+            let id = client_id(&cfg, args.kind)
+                .filter(|id| !id.trim().is_empty())
+                .ok_or_else(|| {
+                    CmdError::invalid_input("err-api-client-id", "oauth_client_id")
+                        .with_detail("Eigene Google-Client-ID erforderlich")
+                })?;
+            let context = api_ctx(&app, cfg.clone());
+            let endpoints = endpoints(&state);
+            let open = state
+                .browser
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .clone();
+            let credentials = state.credentials(&app);
+            if let Some(open) = open {
+                os_integrations::drive::connect(
+                    &context,
+                    credentials,
+                    id,
+                    args.client_secret.as_deref(),
+                    &endpoints,
+                    app.config().clock.clone(),
+                    args.remember.unwrap_or(true),
+                    move |url| open(url),
+                )
+                .await
+                .map_err(error)?
+            } else {
+                os_integrations::drive::connect_in_browser(
+                    &context,
+                    credentials,
+                    id,
+                    args.client_secret.as_deref(),
+                    &endpoints,
+                    app.config().clock.clone(),
+                    args.remember.unwrap_or(true),
+                )
+                .await
+                .map_err(error)?
+            }
         } else if matches!(args.kind, ApiKind::Ga4 | ApiKind::Gsc) {
             let id = client_id(&cfg, args.kind)
                 .ok_or_else(|| CmdError::invalid_input("err-api-client-id", "oauth_client_id"))?;
@@ -473,7 +525,30 @@ async fn connect_now(app: App, ctx: CallCtx, args: ApiConnectArgs) -> Result<Api
                 scopes: vec![],
             }
         };
-        if matches!(args.kind, ApiKind::Ga4 | ApiKind::Gsc) {
+        if args.kind == ApiKind::Drive {
+            let id = client_id(&cfg, args.kind)
+                .filter(|id| !id.trim().is_empty())
+                .ok_or_else(|| {
+                    CmdError::invalid_input("err-api-client-id", "oauth_client_id")
+                        .with_detail("Eigene Google-Client-ID erforderlich")
+                })?;
+            os_integrations::drive::refresh_account(
+                &api_ctx(&app, cfg.clone()),
+                state.credentials(&app),
+                &credential.account_id,
+                id,
+                &endpoints(&state),
+                app.config().clock.as_ref(),
+            )
+            .await
+            .map_err(error)?;
+            credential = os_integrations::credentials::read_account(
+                state.credentials(&app).as_ref(),
+                os_model::ApiKind::Drive,
+                Some(&credential.account_id),
+            )
+            .map_err(error)?;
+        } else if matches!(args.kind, ApiKind::Ga4 | ApiKind::Gsc) {
             oauth::refresh(
                 &mut credential,
                 &http::client_for(&api_ctx(&app, cfg.clone())).map_err(error)?,
@@ -577,6 +652,11 @@ fn connect<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture
         ))
     })
 }
+// Keep the review-authorized Drive branch separate from existing provider behavior.
+#[expect(
+    clippy::if_same_then_else,
+    reason = "strictly additive Drive OAuth branch (K2-61)"
+)]
 fn list<'a>(app: &'a App, ctx: CallCtx, _args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
         let state = app.ext::<ApiState>();
@@ -604,7 +684,9 @@ fn list<'a>(app: &'a App, ctx: CallCtx, _args: serde_json::Value) -> BoxFuture<'
             rows.push(ApiSourceInfo {
                 kind,
                 label_key: format!("api-{}", name(kind)),
-                auth: if matches!(kind, ApiKind::Ga4 | ApiKind::Gsc) {
+                auth: if kind == ApiKind::Drive {
+                    ApiAuthKind::Oauth
+                } else if matches!(kind, ApiKind::Ga4 | ApiKind::Gsc) {
                     ApiAuthKind::Oauth
                 } else {
                     ApiAuthKind::ApiKey
@@ -1739,4 +1821,9 @@ pub fn register(r: &mut Registry) {
             handler,
         );
     }
+}
+
+// Additive export access to the same persisted/session-only accounts (M2-X03, K2-61).
+pub fn export_credentials(app: &App) -> Arc<Credentials> {
+    app.ext::<ApiState>().credentials(app).clone()
 }

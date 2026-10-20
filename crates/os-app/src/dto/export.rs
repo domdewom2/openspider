@@ -226,6 +226,18 @@ pub struct ExportSel {
     pub name: String,
 }
 
+/// Konsolidierter Sheets-Export (OUT-005); Schnittstelle für Dialog und Aufgaben.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportSheetsArgs {
+    /// Verbundenes Drive-Konto.
+    pub account: String,
+    /// Tabellen aus dem gemeinsamen Exportkatalog.
+    pub selections: Vec<ExportSel>,
+    /// Name der Google-Tabelle.
+    pub name: String,
+}
+
 /// Command-Vertrag ExportMultiArgs (M2.md 3.14.9).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]

@@ -8,6 +8,7 @@ import type { ExportMultiArgs } from "./gen/ExportMultiArgs";
 import type { ExportPanelArgs } from "./gen/ExportPanelArgs";
 import type { ExportPreset } from "./gen/ExportPreset";
 import type { ExportPresetArgs } from "./gen/ExportPresetArgs";
+import type { ExportSheetsArgs } from "./gen/ExportSheetsArgs";
 import type { ExportSitemapArgs } from "./gen/ExportSitemapArgs";
 import type { ExportViewArgs } from "./gen/ExportViewArgs";
 import type { OpHandle } from "./gen/OpHandle";
@@ -45,4 +46,6 @@ export const exportApi = {
   customSummaryMetrics: (signal?: AbortSignal) => client.invoke<CustomSummaryMetric[]>("export.customSummaryMetrics", undefined, signal),
   /** `export.customSummary` – lang laufend: liefert sofort `OpHandle`, Ergebnis (FileResult) über `Tick.ops[].result`. */
   customSummary: (args: CustomSummaryArgs, signal?: AbortSignal) => client.invoke<OpHandle>("export.customSummary", args, signal),
+  /** `export.sheets` – lang laufend: liefert sofort `OpHandle`, Ergebnis (FileResult) über `Tick.ops[].result`. */
+  sheets: (args: ExportSheetsArgs, signal?: AbortSignal) => client.invoke<OpHandle>("export.sheets", args, signal),
 } as const;

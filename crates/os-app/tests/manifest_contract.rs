@@ -152,6 +152,7 @@ const CATALOG_3_6A: &[&str] = &[
     "export.presetDelete",
     "export.customSummaryMetrics",
     "export.customSummary",
+    "export.sheets",
     "api.list",
     "api.connect",
     "api.disconnect",
@@ -203,6 +204,7 @@ const CATALOG_3_6A: &[&str] = &[
 const LONG_RUNNING: &[&str] = &[
     "export.multi",
     "export.customSummary",
+    "export.sheets",
     // 3.6a
     "api.connect",
     "api.fetch",
@@ -417,28 +419,6 @@ fn every_command_file_is_a_marked_stub_with_a_known_owner() {
         n += 1;
     }
     assert!(n >= 30, "{n} Command-Dateien");
-}
-
-// Infrastruktur (M2-F05b); Fachprüfung durch die jeweiligen Besitzer.
-// spec: UI-140
-#[tokio::test]
-async fn every_f05_command_reports_its_exact_owner() {
-    let dir = tempfile::tempdir().unwrap();
-    let app = App::new(AppConfig::new(dir.path())).unwrap();
-    for (owner, commands) in [(
-        "M2-X03",
-        vec!["export.customSummaryMetrics", "export.customSummary"],
-    )] {
-        for command in commands {
-            let err = app
-                .dispatch(CallCtx::for_window("main"), command, serde_json::json!({}))
-                .await
-                .unwrap_err();
-            assert_eq!(err.code, ErrorCode::Unsupported, "{command}");
-            assert_eq!(err.args["command"], command);
-            assert_eq!(err.args["owner"], owner);
-        }
-    }
 }
 
 // spec: UI-140
