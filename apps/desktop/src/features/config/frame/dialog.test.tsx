@@ -2,16 +2,16 @@
 // stammen. Das Verhalten gegen den echten Kern prüft e2e/config/bridge.spec.ts.
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { setLanguage } from "../../i18n";
-import { createClient, setClient } from "../../ipc/client";
-import type { CrawlStatus } from "../../ipc/gen/CrawlStatus";
-import { MockCore } from "../../ipc/transport/mock";
-import { useSession } from "../../state/session";
-import { runAction } from "../../ui/actions";
-import { ConfigHost } from "./frame/ConfigHost";
-import { closeConfig, openConfig } from "./frame/store";
-import { installConfigCore, withConfig, type FakeConfigCore } from "./frame/testing";
-import type { ConfigJson } from "./frame/model";
+import { setLanguage } from "../../../i18n";
+import { createClient, setClient } from "../../../ipc/client";
+import type { CrawlStatus } from "../../../ipc/gen/CrawlStatus";
+import { MockCore } from "../../../ipc/transport/mock";
+import { useSession } from "../../../state/session";
+import { runAction } from "../../../ui/actions";
+import { ConfigHost } from "./ConfigHost";
+import { closeConfig, openConfig } from "./store";
+import { installConfigCore, withConfig, type FakeConfigCore } from "./testing";
+import type { ConfigJson } from "./model";
 
 let core: MockCore;
 let fake: FakeConfigCore;
@@ -190,7 +190,7 @@ describe("Aktionen und Menü", () => {
     });
     const again = await screen.findByRole("dialog", { name: "Crawl configuration" });
     expect(await within(again).findByTestId("config-diff-empty")).toBeInTheDocument();
-    const { allMenuContributions } = await import("../../ui/menu/registry");
+    const { allMenuContributions } = await import("../../../ui/menu/registry");
     const items = allMenuContributions().filter((c) => c.menu === "config").flatMap((c) => c.items.map((i) => i.action));
     expect(items).toEqual(expect.arrayContaining(["config.spider", "config.profiles", "config.diff"]));
   });
@@ -275,6 +275,18 @@ describe("Sperren nach Crawl-Zustand (F-13, F-14, CRAWL-126)", () => {
 
 describe("Rendering (CRAWL-077)", () => {
   // spec: CRAWL-077 [P1]
+  it.each(["rendering.page_timeout_s", "rendering.tabs"])("ein Bereichsfehler an %s bleibt am Feld und erzeugt keinen Chromium-Banner", async (path) => {
+    await setup(withConfig({ [path]: 0 }));
+    const dialog = await open(path);
+    const anchor = dialog.querySelector<HTMLElement>(`[data-setting-anchor="${path}"]`)!;
+    expect(await within(anchor).findByText("muss mindestens 1 sein (ist 0)")).toBeInTheDocument();
+    expect(within(anchor).getByRole("textbox")).toHaveAttribute("aria-invalid", "true");
+    expect(within(dialog).queryByTestId("rendering-problem")).toBeNull();
+    expect(within(dialog).queryByRole("link", { name: "Download Chromium" })).toBeNull();
+    expect(core.calls.some((c) => c.cmd === "config.validate")).toBe(true);
+  });
+
+  // spec: CRAWL-077 [P1]
   it("der Rendering-Umschalter ist während „Läuft“ und „Pausiert“ gesperrt, mit Hinweis „neuer Crawl nötig“", async () => {
     for (const mode of ["running", "paused"] as const) {
       await setup(undefined, mode);
@@ -321,11 +333,11 @@ describe("Include/Exclude und Umschreibung mit Testfeld (CRAWL-111, CRAWL-107)",
   beforeEach(() => setup());
 
   // spec: CRAWL-111
-  it("der Tester im Dialog zeigt Eingeschlossen/Ausgeschlossen, die Zeilennummer, den Teilstück-Hinweis und Syntaxfehler zeilengenau", async () => {
+  it("der Tester zeigt Treffer und Syntaxfehler zeilengenau ohne leere Eingabezeilen mitzuzählen", async () => {
     const dialog = await open();
     await goPage(dialog, "Include / Exclude");
-    type(within(dialog).getByRole("textbox", { name: "Include rules" }), "https://site.test/blog\nhttps://site.test/shop/.*");
-    type(within(dialog).getByRole("textbox", { name: "Exclude rules" }), "https://site.test/shop/private/.*\n(");
+    type(within(dialog).getByRole("textbox", { name: "Include rules" }), "\nhttps://site.test/blog\n   \nhttps://site.test/shop/.*\n");
+    type(within(dialog).getByRole("textbox", { name: "Exclude rules" }), "\nhttps://site.test/shop/private/.*\n\n(");
     type(field(dialog, "Test URL"), "https://site.test/shop/a b");
     const verdict = await within(dialog).findByTestId("regex-result");
     await waitFor(() => expect(verdict).toHaveAttribute("data-verdict", "included"));

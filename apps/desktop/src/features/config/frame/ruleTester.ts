@@ -11,7 +11,7 @@ export type ListName = "include" | "exclude";
 
 export interface LineRef {
   list: ListName;
-  /** 1-basiert wie in der Eingabe (leere Zeilen zählen mit). */
+  /** 1-basiert in der Liste des Entwurfs (leere Eingabezeilen zählen nicht mit). */
   line: number;
 }
 

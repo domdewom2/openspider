@@ -4,22 +4,22 @@
 // kein Spec-Tag dieser Fachfunktionen (nur Tags aus M2-U13: OUT-220 für Konfigurationsdialog und Profile).
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { getT, i18n, setLanguage } from "../../i18n";
-import { createClient, setClient } from "../../ipc/client";
-import { MockCore } from "../../ipc/transport/mock";
-import { useSession } from "../../state/session";
-import uaToml from "../../../../../crates/os-fetch/resources/user-agents.toml?raw";
-import { ConfigHost } from "./frame/ConfigHost";
-import { fieldLabelKey } from "./frame/fields";
-import { fieldMeta } from "./frame/schema";
-import { resolvePages } from "./frame/registry";
-import { closeConfig, openConfig } from "./frame/store";
-import { installConfigCore, SCHEMA, type FakeConfigCore } from "./frame/testing";
-import { resolveUa } from "./pages/user-agent";
-import { UA_PRESETS } from "./pages/user-agent/presets";
-import { secretRefFor, hostOfPrefix } from "./pages/auth";
-import { hostOfUrl, normalizeHost } from "./pages/robots";
-import { HIGH_THREADS } from "./pages/speed";
+import { getT, i18n, setLanguage } from "../../../i18n";
+import { createClient, setClient } from "../../../ipc/client";
+import { MockCore } from "../../../ipc/transport/mock";
+import { useSession } from "../../../state/session";
+import uaToml from "../../../../../../crates/os-fetch/resources/user-agents.toml?raw";
+import { ConfigHost } from "./ConfigHost";
+import { fieldLabelKey } from "./fields";
+import { fieldMeta } from "./schema";
+import { resolvePages } from "./registry";
+import { closeConfig, openConfig } from "./store";
+import { installConfigCore, SCHEMA, type FakeConfigCore } from "./testing";
+import { resolveUa } from "../pages/user-agent";
+import { UA_PRESETS } from "../pages/user-agent/presets";
+import { secretRefFor, hostOfPrefix } from "../pages/auth";
+import { hostOfUrl, normalizeHost } from "../pages/robots";
+import { HIGH_THREADS } from "../pages/speed";
 
 let core: MockCore;
 let fake: FakeConfigCore;

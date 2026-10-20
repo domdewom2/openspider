@@ -3,8 +3,8 @@ config-ie-desc = Regular expressions, one per line. A rule has to match the whol
 config-sec-include = Include
 config-sec-exclude = Exclude
 config-sec-match = Matching
-config-hint-include = Only URLs matching at least one line are crawled. Empty = no restriction.
-config-hint-exclude = URLs matching any line are not crawled.
+config-hint-include = Only URLs matching at least one line are crawled. Empty = no restriction. Blank lines do not count toward line numbers.
+config-hint-exclude = URLs matching any line are not crawled. Blank lines do not count toward line numbers.
 config-hint-partial = Also match parts of the URL. Without it, use .* to match the rest.
 config-f-scope-include = Include rules
 config-f-scope-exclude = Exclude rules

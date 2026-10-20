@@ -36,9 +36,9 @@ export const renderingFields: FieldDef[] = [
   f("rendering.viewport.touch"),
 ];
 
-/** Meldungen des Kerns, die Chromium oder das Rendering betreffen (Pfad `rendering.*` oder Chromium im Schlüssel/Grund). */
+/** Meldungen des Kerns zu Chromium (Pfad `rendering.chromium_path` oder Chromium im Schlüssel/Grund). */
 export function renderingProblems(issues: readonly ValidationIssue[]): ValidationIssue[] {
-  return issues.filter((i) => !i.warning && (i.path.startsWith("rendering.") || /chromium/i.test(`${i.messageKey} ${String(i.args.reason ?? "")}`)));
+  return issues.filter((i) => !i.warning && (i.path === "rendering.chromium_path" || /chromium/i.test(`${i.messageKey} ${String(i.args.reason ?? "")}`)));
 }
 
 export function Rendering() {
