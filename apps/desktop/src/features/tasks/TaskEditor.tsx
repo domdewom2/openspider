@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useT } from "../../i18n";
 import { tasks } from "../../ipc/tasks";
 import { mail } from "../../ipc/mail";
+import { auth } from "../../ipc/auth";
+import type { AuthProfileInfo } from "../../ipc/gen/AuthProfileInfo";
 import { exportApi } from "../../ipc/export";
 import type { TaskDef } from "../../ipc/gen/TaskDef";
 import type { ScheduleDef } from "../../ipc/gen/ScheduleDef";
@@ -24,6 +26,8 @@ export function TaskEditor({ initial, onClose, onSaved }: { initial: TaskDef; on
   const [tab, setTab] = useState("general");
   const [subtab, setSubtab] = useState("output");
   const [accounts, setAccounts] = useState<MailAccountInfo[]>([]);
+  const [authProfiles, setAuthProfiles] = useState<AuthProfileInfo[]>([]);
+  const authListId = useId();
   const [presets, setPresets] = useState<ExportPreset[]>([]);
   const [issues, setIssues] = useState<ValidationIssue[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -34,11 +38,12 @@ export function TaskEditor({ initial, onClose, onSaved }: { initial: TaskDef; on
   const patch = (next: Partial<TaskDef>) => { setTask(v => ({ ...v, ...next })); setIssues([]); };
   useEffect(() => {
     const abort = new AbortController();
-    void Promise.allSettled([mail.listAccounts(abort.signal), exportApi.presetList(abort.signal)]).then(([mailResult, presetResult]) => {
+    void Promise.allSettled([mail.listAccounts(abort.signal), exportApi.presetList(abort.signal), auth.listProfiles(abort.signal)]).then(([mailResult, presetResult, authResult]) => {
       if (abort.signal.aborted) return;
       if (mailResult.status === "fulfilled") setAccounts(mailResult.value);
       if (presetResult.status === "fulfilled") setPresets(presetResult.value);
-      for (const result of [mailResult, presetResult]) if (result.status === "rejected") reportError(result.reason);
+      if (authResult.status === "fulfilled") setAuthProfiles(authResult.value);
+      for (const result of [mailResult, presetResult, authResult]) if (result.status === "rejected") reportError(result.reason);
     });
     return () => abort.abort();
   }, []);
@@ -77,7 +82,7 @@ export function TaskEditor({ initial, onClose, onSaved }: { initial: TaskDef; on
     <label className="os-field">{t("tasks-interval")}<select value={schedule.kind} onChange={e => changeKind(e.target.value as ScheduleDef["kind"])}>
       {["once", "daily", "weekly", "monthly"].map(kind => <option key={kind} value={kind}>{t(`tasks-${kind}`)}</option>)}
     </select></label>
-    {schedule.kind === "once" ? <label className="os-field">{t("tasks-start")}<input type="datetime-local" value={schedule.at ? schedule.at.slice(0, 16) : ""} onChange={e => patch({ schedule: { kind: "once", at: e.target.value ? localDateWithOffset(e.target.value) : "" } })} /></label> :
+    {schedule.kind === "once" ? <label className="os-field">{t("tasks-start")}<input type="datetime-local" value={localDateInput(schedule.at)} onChange={e => patch({ schedule: { kind: "once", at: e.target.value ? localDateWithOffset(e.target.value) : "" } })} /></label> :
       <label className="os-field">{t("tasks-time")}<input type="time" value={schedule.time} onChange={e => patch({ schedule: { ...schedule, time: e.target.value } })} /></label>}
     {schedule.kind === "weekly" && <fieldset><legend>{t("tasks-weekdays")}</legend>{Array.from({ length: 7 }, (_, i) => i + 1).map(day => <Checkbox key={day} isSelected={schedule.days.includes(day)} onChange={checked => patch({ schedule: { ...schedule, days: checked ? [...schedule.days, day].sort() : schedule.days.filter(d => d !== day) } })}>{t(`tasks-day-${day}`)}</Checkbox>)}</fieldset>}
     {schedule.kind === "monthly" && <TextField type="number" label={t("tasks-month-day")} value={String(schedule.day)} onChange={v => patch({ schedule: { ...schedule, day: Number(v) } })} />}
@@ -89,6 +94,8 @@ export function TaskEditor({ initial, onClose, onSaved }: { initial: TaskDef; on
     <label className="os-field">{t("tasks-mode")}<select value={task.crawl.source.kind} onChange={e => patch({ crawl: { ...task.crawl, source: e.target.value === "list" ? { kind: "list", path: "" } : { kind: "spider", url: "" } } })}><option value="spider">Spider</option><option value="list">{t("tasks-list-mode")}</option></select></label>
     {task.crawl.source.kind === "spider" ? field("source", task.crawl.source.url, url => patch({ crawl: { ...task.crawl, source: { kind: "spider", url } } })) : field("source", task.crawl.source.path, path => patch({ crawl: { ...task.crawl, source: { kind: "list", path } } }))}
     {field("profile", task.crawl.profile ?? "", profile => patch({ crawl: { ...task.crawl, profile: profile || null } }))}
+    <label className="os-field">{t("tasks-auth-profile")}<input list={authListId} value={task.crawl.authProfile ?? ""} onChange={e => patch({ crawl: { ...task.crawl, authProfile: e.target.value || null } })} /></label>
+    <datalist id={authListId}>{authProfiles.map(profile => <option key={profile.name} value={profile.name}>{profile.host}</option>)}</datalist>
     <Checkbox isDisabled={!task.project?.trim()} isSelected={task.execution.autoCompare} onChange={autoCompare => patch({ execution: { ...task.execution, autoCompare } })}>{t("tasks-auto-compare")}</Checkbox>
     {task.id && <p>{t("tasks-next-run-note")}</p>}
   </>;
@@ -138,4 +145,12 @@ export function localDateWithOffset(value: string): string {
   const hh = String(Math.floor(Math.abs(offset) / 60)).padStart(2, "0");
   const mm = String(Math.abs(offset) % 60).padStart(2, "0");
   return `${value}:00${sign}${hh}:${mm}`;
+}
+
+/** datetime-local needs wall time in the current zone, not a sliced source offset. */
+export function localDateInput(value: string): string {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }

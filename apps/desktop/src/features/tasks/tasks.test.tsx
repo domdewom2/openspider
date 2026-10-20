@@ -16,6 +16,7 @@ import { useState } from "react";
 
 let fx: ReturnType<typeof taskFixture>;
 beforeEach(async () => {
+  vi.spyOn(Date, "now").mockReturnValue(Date.parse("2026-10-20T12:00:00Z"));
   fx = taskFixture(); setClient(createClient(fx.core.transport("main")));
   useTaskOperations.setState({ handles: {} }); useTaskWindow.setState({ open: false }); useSession.setState({ ops: {} });
   await setLanguage("en");
@@ -67,6 +68,40 @@ it("rejects a once-only past time locally and shows backend validation without s
   expect(fx.core.calls.some(c => c.cmd === "tasks.save")).toBe(false);
 });
 
+// spec: OUT-161 [P1]
+it("edits an imported once-only instant in the current zone without shifting its hour", async () => {
+  const saved = vi.fn();
+  render(<TaskEditor initial={structuredClone(fixture.importedOnce) as TaskDef} onClose={vi.fn()} onSaved={saved} />);
+  const input = screen.getByLabelText("Start date and time");
+  const date = new Date("2026-11-01T14:00:00Z");
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const wallTime = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:00`;
+  expect(input).toHaveValue(wallTime);
+  click("Save"); await waitFor(() => expect(saved).toHaveBeenCalledOnce());
+  const original = (fx.core.calls.find(c => c.cmd === "tasks.save")!.args as { task: TaskDef }).task;
+  expect(original.schedule).toEqual(fixture.importedOnce.schedule);
+  fireEvent.change(input, { target: { value: wallTime.replace(/:00$/, ":01") } });
+  click("Save"); await waitFor(() => expect(saved).toHaveBeenCalledTimes(2));
+  const changed = (fx.core.calls.filter(c => c.cmd === "tasks.save")[1].args as { task: TaskDef }).task.schedule;
+  expect(changed.kind === "once" && Date.parse(changed.at)).toBe(Date.parse("2026-11-01T14:01:00Z"));
+});
+
+// spec: OUT-160
+it("offers saved auth profiles separately from configuration and saves edited or cleared references", async () => {
+  const saved = vi.fn();
+  render(<TaskEditor initial={structuredClone(fixture.task) as TaskDef} onClose={vi.fn()} onSaved={saved} />);
+  fireEvent.click(screen.getByRole("tab", { name: "Spider" }));
+  const input = screen.getByLabelText(/Auth profile/);
+  expect(input).toHaveValue("shop-login");
+  await waitFor(() => expect(document.querySelector("datalist option[value='shop-login']")).toBeInTheDocument());
+  fireEvent.change(input, { target: { value: "profiles/imported.osauth" } });
+  click("Save"); await waitFor(() => expect(saved).toHaveBeenCalledOnce());
+  expect(fx.definitions()[0].crawl).toMatchObject({ profile: "shop", authProfile: "profiles/imported.osauth", overrides: { "speed.threads": 10 } });
+  fireEvent.change(input, { target: { value: "" } });
+  click("Save"); await waitFor(() => expect(saved).toHaveBeenCalledTimes(2));
+  expect(fx.definitions()[0].crawl.authProfile).toBeNull();
+});
+
 // spec: OUT-160
 it("retries a failed OS registration with the saved ID instead of duplicating the task", async () => {
   fx.control.registrationsFail = true;
@@ -87,6 +122,21 @@ it("starts a run and retains the abort handle after closing and reopening", asyn
   expect(fx.core.calls.find(c => c.cmd === "op.cancel")?.args).toEqual({ opId: "operation-1" });
   expect(fx.core.calls.filter(c => c.cmd === "tasks.run")).toHaveLength(1);
   expect(screen.queryByRole("button", { name: /pause/i })).not.toBeInTheDocument();
+});
+
+// spec: OUT-160
+it("cancels an already running scheduled crawl from the core mapping after a fresh dialog open", async () => {
+  fx.control.lastRun = structuredClone(fixture.runningRun) as import("../../ipc/gen/TaskRunRow").TaskRunRow;
+  const view = render(<TaskManager onClose={vi.fn()} />);
+  await screen.findByRole("button", { name: "Abort run" });
+  expect(useTaskOperations.getState().handles).toEqual({});
+  view.unmount();
+  render(<TaskManager onClose={vi.fn()} />);
+  fireEvent.click(await screen.findByRole("button", { name: "Abort run" }));
+  await waitFor(() => expect(fx.core.calls.find(c => c.cmd === "op.cancel")?.args).toEqual({ opId: "planned-operation" }));
+  expect(fx.core.calls.some(c => c.cmd === "tasks.run")).toBe(false);
+  act(() => useSession.setState({ ops: { "planned-operation": { opId: "planned-operation", labelKey: "tasks-op-cancelled", done: 1, state: "cancelled" } } }));
+  await waitFor(() => expect(screen.queryByRole("button", { name: "Abort run" })).not.toBeInTheDocument());
 });
 
 // spec: OUT-160
@@ -119,14 +169,24 @@ it("duplicates with a new ID and only deletes after confirmation", async () => {
 });
 
 // spec: OUT-169 [P1]
-it("shows the history fixture with warning and aborted states, duration, crawl IDs and exports", async () => {
+it("shows every history column and opens the selected run's log", async () => {
   render(<TaskHistory id="nightly" onClose={vi.fn()} />);
   expect(await screen.findByText("Completed with warnings")).toBeInTheDocument();
   expect(screen.getByText("Aborted")).toBeInTheDocument();
   expect(screen.getByText("60 s")).toBeInTheDocument(); expect(screen.getByText("crawl-list")).toBeInTheDocument();
   expect(screen.getByText("output/internal.csv")).toBeInTheDocument(); expect(screen.getByText("PSI unavailable")).toBeInTheDocument();
   expect(fx.core.calls.find(c => c.cmd === "tasks.history")?.args).toEqual({ id: "nightly", offset: 0, limit: 100 });
-  click("Open logs folder"); await waitFor(() => expect(fx.core.calls.some(c => c.cmd === "diag.openLogs")).toBe(true));
+  expect(screen.getAllByRole("columnheader").map(h => h.textContent)).toEqual(["Started", "Finished", "Duration", "Result", "URLs crawled", "Crawl ID", "Output folder", "Output files", "Message", "Open run log"]);
+  expect(screen.getByText("1,234")).toBeInTheDocument();
+  expect(screen.getByText("0")).toBeInTheDocument();
+  expect(screen.getByText("output/list-run")).toBeInTheDocument();
+  expect(screen.getByText("output/aborted-run")).toBeInTheDocument();
+  const warningRow = screen.getByText("crawl-list").closest("tr")!;
+  fireEvent.click(within(warningRow).getByRole("button", { name: "Open run log" }));
+  const abortedRow = screen.getByText("saved-partial").closest("tr")!;
+  fireEvent.click(within(abortedRow).getByRole("button", { name: "Open run log" }));
+  await waitFor(() => expect(fx.core.calls.filter(c => c.cmd === "tasks.openLog").map(c => c.args)).toEqual([{ id: "run-list" }, { id: "run-aborted" }]));
+  expect(fx.core.calls.some(c => c.cmd === "diag.openLogs")).toBe(false);
 });
 
 function SummaryHarness({ initial = { account: "google", target: "report", metrics: [] } }: { initial?: CustomSummaryArgs }) {

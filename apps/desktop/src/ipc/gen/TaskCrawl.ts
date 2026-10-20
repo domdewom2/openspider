@@ -15,6 +15,10 @@ source: TaskSource,
  */
 profile?: string | null, 
 /**
+ * Separates Auth-Profil (`auth.listProfiles`); `null` = keine Anmeldung.
+ */
+authProfile?: string | null, 
+/**
  * Überschreibungen einzelner Schlüssel (`--set`-Form: Pfad → Wert).
  */
 overrides?: JsonValue | null, };

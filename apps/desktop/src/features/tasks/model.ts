@@ -15,7 +15,7 @@ export const useTaskOperations = create<{ handles: Record<string, OpHandle>; tra
 
 export function newTask(): TaskDef {
   return { id: null, name: "", project: null, enabled: true, schedule: { kind: "daily", time: "03:00" },
-    crawl: { source: { kind: "spider", url: "" }, profile: null, overrides: null },
+    crawl: { source: { kind: "spider", url: "" }, profile: null, authProfile: null, overrides: null },
     execution: { headless: true, runIfMissed: true, autoCompare: false }, apis: [], exports: [],
     notify: { onSuccess: false, onFailure: true, account: null, to: [] } };
 }

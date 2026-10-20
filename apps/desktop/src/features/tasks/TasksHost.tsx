@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useT, useFormat } from "../../i18n";
 import { tasks } from "../../ipc/tasks";
 import { op } from "../../ipc/op";
-import { diag } from "../../ipc/diag";
 import type { TaskDef } from "../../ipc/gen/TaskDef";
 import type { TaskInfo } from "../../ipc/gen/TaskInfo";
 import type { TaskRunRow } from "../../ipc/gen/TaskRunRow";
@@ -40,7 +39,18 @@ export function TaskManager({ desktop = taskDesktop, onClose }: { desktop?: Task
   const lock = useRef(false);
   const request = useRef(0);
   const seen = useRef(new Set<string>());
-  const handles = useTaskOperations(s => s.handles);
+  const localHandles = useTaskOperations(s => s.handles);
+  // The core supplies handles for OS-scheduled runs; local starts are deduplicated by opId.
+  const handles = useMemo(() => {
+    const merged = { ...localHandles };
+    for (const { info } of rows) {
+      const run = info.lastRun;
+      if (run?.state === "running" && run.operation && !Object.values(merged).some(h => h.opId === run.operation!.opId)) {
+        merged[`run:${info.id}:${run.runId}`] = run.operation;
+      }
+    }
+    return merged;
+  }, [localHandles, rows]);
   const statuses = useSession(s => s.ops);
   const refresh = useCallback(async () => {
     const sequence = ++request.current;
@@ -58,7 +68,9 @@ export function TaskManager({ desktop = taskDesktop, onClose }: { desktop?: Task
   }, [t]);
   useEffect(() => {
     void refresh().catch(e => setError(taskError(e)));
-    return () => { request.current++; };
+    // Scheduled runs can begin in another process while this dialog stays open.
+    const timer = setInterval(() => { void refresh().catch(e => setError(taskError(e))); }, 5000);
+    return () => { clearInterval(timer); request.current++; };
   }, [refresh]);
   useEffect(() => {
     let changed = false;
@@ -137,9 +149,9 @@ export function TaskHistory({ id, onClose }: { id: string; onClose(): void }) {
   const date = (value?: string | null) => value ? f.dateTime(value) : "—";
   return <Dialog title={t("tasks-history")} isOpen onOpenChange={open => { if (!open) onClose(); }} size="large" footer={<Button onPress={onClose}>{t("ui-dialog-close")}</Button>}>
     {error && <p role="alert">{error}</p>}
-    <div className="os-tasks-scroll"><table className="os-tasks-table" aria-busy={busy}><thead><tr>{["started", "finished", "duration", "result", "crawl-id", "output-files", "message"].map(key => <th key={key} scope="col">{t(`tasks-${key}`)}</th>)}</tr></thead>
-      <tbody>{rows.map(run => <tr key={run.runId}><td>{date(run.startedAt)}</td><td>{date(run.endedAt)}</td><td>{duration(run)}</td><td>{runResult(run)}</td><td>{run.crawlId ?? "—"}</td><td>{run.exports.map(path => <div key={path}>{path}</div>)}</td><td>{run.error}</td></tr>)}</tbody></table></div>
+    <div className="os-tasks-scroll"><table className="os-tasks-table" aria-busy={busy}><thead><tr>{["started", "finished", "duration", "result", "urls-crawled", "crawl-id", "directory", "output-files", "message", "open-log"].map(key => <th key={key} scope="col">{t(`tasks-${key}`)}</th>)}</tr></thead>
+      <tbody>{rows.map(run => <tr key={run.runId}><td>{date(run.startedAt)}</td><td>{date(run.endedAt)}</td><td>{duration(run)}</td><td>{runResult(run)}</td><td>{run.urlsCrawled == null ? "—" : f.integer(run.urlsCrawled)}</td><td>{run.crawlId ?? "—"}</td><td>{run.outputFolder ?? "—"}</td><td>{run.exports.map(path => <div key={path}>{path}</div>)}</td><td>{run.error}</td><td><Button isDisabled={!run.logPath} onPress={() => void tasks.openLog({ id: run.runId }).catch(e => setError(taskError(e)))}>{t("tasks-open-log")}</Button></td></tr>)}</tbody></table></div>
     <div className="os-tasks-actions"><Button isDisabled={busy || offset === 0} onPress={() => setOffset(n => Math.max(0, n - 100))}>{t("tasks-previous")}</Button><Button isDisabled={busy || rows.length < 100} onPress={() => setOffset(n => n + 100)}>{t("tasks-next")}</Button>
-      <Button onPress={() => void diag.openLogs().catch(e => setError(taskError(e)))}>{t("tasks-open-logs")}</Button></div>
+    </div>
   </Dialog>;
 }

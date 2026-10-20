@@ -1,7 +1,38 @@
 import { test, expect } from "@playwright/test";
 import type {} from "./harness";
 
-test.beforeEach(async ({ page }) => { await page.goto("/e2e/tasks/index.html"); await page.waitForFunction(() => !!window.taskFixture); });
+test.use({ timezoneId: "Europe/Berlin" });
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-10-20T12:00:00Z"));
+  await page.goto("/e2e/tasks/index.html"); await page.waitForFunction(() => !!window.taskFixture);
+});
+
+// spec: OUT-161 [P1]
+test("an imported New York instant displays and edits in Berlin time", async ({ page }) => {
+  await page.evaluate(() => window.taskFixture.prepareOnceImport());
+  await page.getByRole("button", { name: "Scheduling", exact: true }).click();
+  await page.getByRole("button", { name: "Import tasks…", exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.taskFixture.calls().some(c => c.cmd === "tasks.import"))).toBe(true);
+  await page.evaluate(() => window.taskFixture.complete());
+  await page.getByRole("checkbox", { name: "Select Nightly" }).check();
+  await page.getByRole("button", { name: "Edit task", exact: true }).click();
+  const input = page.getByLabel("Start date and time", { exact: true });
+  await expect(input).toHaveValue("2026-11-01T15:00");
+  await input.fill("2026-11-01T15:01");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  const args = await page.evaluate(() => window.taskFixture.calls().filter(c => c.cmd === "tasks.save").at(-1)!.args);
+  expect(args).toMatchObject({ task: { schedule: { kind: "once", at: "2026-11-01T15:01:00+01:00" } } });
+});
+
+// spec: OUT-160
+test("an OS-scheduled run can be aborted without a manual start", async ({ page }) => {
+  await page.evaluate(() => window.taskFixture.scheduledRun());
+  await page.getByRole("button", { name: "Scheduling", exact: true }).click();
+  await page.getByRole("button", { name: "Abort run", exact: true }).click();
+  const calls = await page.evaluate(() => window.taskFixture.calls());
+  expect(calls.find(c => c.cmd === "op.cancel")?.args).toEqual({ opId: "planned-operation" });
+  expect(calls.some(c => c.cmd === "tasks.run")).toBe(false);
+});
 
 // spec: OUT-160
 // spec: OUT-161 [P1]
@@ -17,12 +48,15 @@ test("task editor tabs support keyboard navigation and persist edits", async ({ 
   await page.keyboard.press("ArrowRight");
   await expect(tabs.getByRole("tab", { name: "Spider", exact: true })).toBeFocused();
   await page.keyboard.press("Enter");
+  await expect(editor.getByLabel(/Auth profile/)).toHaveValue("shop-login");
+  await editor.getByLabel(/Auth profile/).fill("profiles/imported.osauth");
   await tabs.getByRole("tab", { name: "Exports", exact: true }).click();
   await expect(editor.getByRole("tablist", { name: "Export settings", exact: true }).getByRole("tab")).toHaveText(["Output settings", "Tables", "Local files", "Looker Studio", "Templates / presets", "Notifications"]);
   await editor.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByRole("cell", { name: "Nightly edited", exact: true })).toBeVisible();
   const saves = await page.evaluate(() => window.taskFixture.calls().filter(c => c.cmd === "tasks.save"));
   expect(saves).toHaveLength(1);
+  expect(saves[0].args).toMatchObject({ task: { crawl: { profile: "shop", authProfile: "profiles/imported.osauth" } } });
 });
 
 // spec: OUT-210 [M2]
@@ -52,6 +86,14 @@ test("run history and abort are available without a pause action", async ({ page
   await page.getByRole("button", { name: "Run history", exact: true }).click();
   await expect(page.getByRole("cell", { name: "Completed with warnings", exact: true })).toBeVisible();
   await expect(page.getByRole("cell", { name: "Aborted", exact: true })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "URLs crawled", exact: true })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "1,234", exact: true })).toBeVisible();
+  const warning = page.getByRole("row").filter({ has: page.getByRole("cell", { name: "crawl-list", exact: true }) });
+  await expect(warning.getByRole("cell", { name: "output/list-run", exact: true })).toBeVisible();
+  await warning.getByRole("button", { name: "Open run log", exact: true }).click();
+  const calls = await page.evaluate(() => window.taskFixture.calls());
+  expect(calls.find(c => c.cmd === "tasks.openLog")?.args).toEqual({ id: "run-list" });
+  expect(calls.some(c => c.cmd === "diag.openLogs")).toBe(false);
   await expect(page.getByRole("button", { name: /pause/i })).toHaveCount(0);
 });
 

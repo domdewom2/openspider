@@ -7,4 +7,4 @@
 .os-tasks-table th { white-space: nowrap; }
 .os-tasks-fields li { padding-block: 4px; }
 .os-tasks-fields textarea { min-block-size: 100px; }
-.os-tasks-editor select, .os-tasks-editor input[type="time"], .os-tasks-editor input[type="datetime-local"] { color: var(--os-text); background: var(--os-bg-surface); font: inherit; padding: 4px; }
+.os-tasks-editor select, .os-tasks-editor input[type="time"], .os-tasks-editor input[type="datetime-local"], .os-tasks-editor input[list] { color: var(--os-text); background: var(--os-bg-surface); font: inherit; padding: 4px; }

@@ -21,7 +21,8 @@
       "profile": "shop",
       "overrides": {
         "speed.threads": 10
-      }
+      },
+      "authProfile": "shop-login"
     },
     "execution": {
       "headless": true,
@@ -82,7 +83,10 @@
       "exports": [
         "output/internal.csv"
       ],
-      "error": "PSI unavailable"
+      "error": "PSI unavailable",
+      "urlsCrawled": 1234,
+      "outputFolder": "output/list-run",
+      "logPath": "logs/run-list.log"
     },
     {
       "runId": "run-aborted",
@@ -93,7 +97,10 @@
       "exitCode": null,
       "crawlId": "saved-partial",
       "exports": [],
-      "error": null
+      "error": null,
+      "urlsCrawled": 0,
+      "outputFolder": "output/aborted-run",
+      "logPath": "logs/run-aborted.log"
     }
   ],
   "account": {
@@ -118,5 +125,84 @@
       "id": "Average:Response Time",
       "labelKey": "metric-2"
     }
-  ]
+  ],
+  "authProfiles": [
+    {
+      "name": "shop-login",
+      "kind": "form",
+      "host": "https://example.test/",
+      "createdAt": "2026-10-01T00:00:00Z",
+      "hasSecret": true
+    }
+  ],
+  "runningRun": {
+    "runId": "planned-run",
+    "taskId": "nightly",
+    "startedAt": "2026-10-19T00:30:00Z",
+    "endedAt": null,
+    "state": "running",
+    "exitCode": null,
+    "crawlId": "crawl-list",
+    "exports": [
+      "output/internal.csv"
+    ],
+    "error": null,
+    "urlsCrawled": 1234,
+    "outputFolder": "output/list-run",
+    "logPath": "logs/run-list.log",
+    "operation": {
+      "opId": "planned-operation",
+      "labelKey": "tasks-op-running",
+      "cancellable": true
+    }
+  },
+  "importedOnce": {
+    "id": "nightly",
+    "name": "Nightly",
+    "project": "Shop",
+    "enabled": true,
+    "schedule": {
+      "kind": "once",
+      "at": "2026-11-01T09:00:00-05:00"
+    },
+    "crawl": {
+      "source": {
+        "kind": "spider",
+        "url": "https://example.test/"
+      },
+      "profile": "shop",
+      "overrides": {
+        "speed.threads": 10
+      },
+      "authProfile": "shop-login"
+    },
+    "execution": {
+      "headless": true,
+      "timeoutMin": 120,
+      "runIfMissed": true,
+      "autoCompare": true
+    },
+    "apis": [
+      "gsc"
+    ],
+    "exports": [
+      {
+        "kind": "bulk",
+        "name": "All Inlinks",
+        "format": "csv",
+        "dir": null
+      }
+    ],
+    "notify": {
+      "onSuccess": false,
+      "onFailure": true,
+      "account": "work",
+      "to": [
+        "seo@example.test"
+      ]
+    },
+    "exportOptions": null,
+    "exportPreset": null,
+    "customSummary": null
+  }
 }

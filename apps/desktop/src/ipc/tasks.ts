@@ -28,6 +28,8 @@ export const tasks = {
   run: (args: IdArgs, signal?: AbortSignal) => client.invoke<OpHandle>("tasks.run", args, signal),
   /** `tasks.history` */
   history: (args: TasksHistoryArgs, signal?: AbortSignal) => client.invoke<TaskRunRow[]>("tasks.history", args, signal),
+  /** `tasks.openLog` */
+  openLog: (args: IdArgs, signal?: AbortSignal) => client.invoke<void>("tasks.openLog", args, signal),
   /** `tasks.register` */
   register: (args: TaskRegisterArgs, signal?: AbortSignal) => client.invoke<PlannerPreview>("tasks.register", args, signal),
   /** `tasks.unregister` */

@@ -67,6 +67,9 @@ pub struct TaskCrawl {
     pub source: TaskSource,
     /// Konfigurationsprofil; `null` = Standard.
     pub profile: Option<String>,
+    /// Separates Auth-Profil (`auth.listProfiles`); `null` = keine Anmeldung.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub auth_profile: Option<String>,
     /// Überschreibungen einzelner Schlüssel (`--set`-Form: Pfad → Wert).
     pub overrides: Option<serde_json::Value>,
 }
@@ -210,6 +213,18 @@ pub struct TaskRunRow {
     pub exports: Vec<String>,
     /// Fehler (redigiert).
     pub error: Option<String>,
+    /// Abbruchzuordnung des Kerns, auch für vom OS-Planer gestartete Läufe.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub operation: Option<super::common::OpHandle>,
+    /// Anzahl gecrawlter URLs; unbekannt bei älteren Historieneinträgen.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub urls_crawled: Option<u64>,
+    /// Tatsächlicher Ausgabeordner dieses Laufs.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub output_folder: Option<String>,
+    /// Lauf-Logdatei; `tasks.openLog` löst die Laufkennung im Kern auf.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub log_path: Option<String>,
 }
 
 /// Eintrag von `tasks.list`.

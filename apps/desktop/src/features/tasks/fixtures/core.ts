@@ -5,6 +5,7 @@ import type { TaskInfo } from "../../../ipc/gen/TaskInfo";
 import type { MailAccountInfo } from "../../../ipc/gen/MailAccountInfo";
 import type { MailAccountInput } from "../../../ipc/gen/MailAccountInput";
 import type { ValidationIssue } from "../../../ipc/gen/ValidationIssue";
+import type { TaskRunRow } from "../../../ipc/gen/TaskRunRow";
 import fixture from "./out-schedule.json";
 
 export function taskFixture() {
@@ -12,8 +13,8 @@ export function taskFixture() {
   let definitions: TaskDef[] = [structuredClone(fixture.task) as TaskDef];
   let accounts: MailAccountInfo[] = [structuredClone(fixture.account) as MailAccountInfo];
   const registered = new Set(["nightly"]);
-  const control = { issues: [] as ValidationIssue[], registrationsFail: false, nextId: 0, operation: 0 };
-  const info = (task: TaskDef): TaskInfo => ({ ...fixture.info, id: task.id!, name: task.name, project: task.project, schedule: task.schedule, enabled: task.enabled, registered: registered.has(task.id!) });
+  const control = { issues: [] as ValidationIssue[], registrationsFail: false, nextId: 0, operation: 0, lastRun: null as TaskRunRow | null, importedTask: null as TaskDef | null };
+  const info = (task: TaskDef): TaskInfo => ({ ...fixture.info, lastRun: control.lastRun, id: task.id!, name: task.name, project: task.project, schedule: task.schedule, enabled: task.enabled, registered: registered.has(task.id!) });
   core.handlers.set("tasks.list", () => definitions.map(info));
   core.handlers.set("tasks.get", args => structuredClone(definitions.find(d => d.id === (args as { id: string }).id)!));
   core.handlers.set("tasks.validate", () => control.issues);
@@ -31,7 +32,15 @@ export function taskFixture() {
   core.handlers.set("tasks.unregister", args => { registered.delete((args as { id: string }).id); });
   core.handlers.set("tasks.delete", args => { const id = (args as { id: string }).id; definitions = definitions.filter(d => d.id !== id); registered.delete(id); });
   core.handlers.set("tasks.history", () => fixture.runs);
-  for (const command of ["tasks.run", "tasks.export", "tasks.import", "mail.testAccount"]) core.handlers.set(command, () => ({ opId: `operation-${++control.operation}`, labelKey: "tasks-op-running", cancellable: true }));
+  core.handlers.set("tasks.openLog", args => {
+    if (!fixture.runs.some(run => run.runId === (args as { id: string }).id)) throw new Error("Unknown fixture run");
+  });
+  core.handlers.set("auth.listProfiles", () => fixture.authProfiles);
+  for (const command of ["tasks.run", "tasks.export", "mail.testAccount"]) core.handlers.set(command, () => ({ opId: `operation-${++control.operation}`, labelKey: "tasks-op-running", cancellable: true }));
+  core.handlers.set("tasks.import", () => {
+    if (control.importedTask) definitions = [...definitions.filter(d => d.id !== control.importedTask!.id), structuredClone(control.importedTask)];
+    return { opId: `operation-${++control.operation}`, labelKey: "tasks-op-running", cancellable: true };
+  });
   core.handlers.set("op.cancel", () => undefined);
   core.handlers.set("mail.listAccounts", () => accounts);
   core.handlers.set("mail.saveAccount", args => {
@@ -45,6 +54,5 @@ export function taskFixture() {
   core.handlers.set("export.customSummaryMetrics", () => fixture.metrics);
   core.handlers.set("export.catalog", () => ({ bulk: [], reports: [], sitemaps: [] }));
   core.handlers.set("export.presetList", () => []);
-  core.handlers.set("diag.openLogs", () => undefined);
   return { core, control, definitions: () => definitions };
 }

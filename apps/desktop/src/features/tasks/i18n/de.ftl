@@ -113,3 +113,7 @@ tasks-result-warnings = Mit Warnungen abgeschlossen
 tasks-result-failed = Fehlgeschlagen
 tasks-result-cancelled = Abgebrochen
 tasks-result-skipped = Übersprungen
+
+tasks-auth-profile = Auth-Profil (Name oder .osauth-Datei; leer = keines)
+tasks-urls-crawled = Gecrawlte URLs
+tasks-open-log = Lauf-Log öffnen
