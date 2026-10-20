@@ -19,7 +19,8 @@ for (const platform of ["mac", "win"] as const) for (const language of ["de", "e
     const file = model.menus.find((m) => m.id === "file")!;
     expect(file.items.find((i) => i.id === "file.saveAs")?.enabled).toBe(false);
     expect(file.items.find((i) => i.id === "file.saveAs")?.disabledReason).toBeTruthy();
-    expect(model.menus.find((m) => m.id === "mcp")?.items.find((i) => i.id === "mcp.start")?.enabled).toBe(true);
+    // Das MCP-Menü gehört U25 (Start/Stopp erst bei verfügbarem Dienst); der Eintrag erscheint genau einmal.
+    expect(model.menus.find((m) => m.id === "mcp")?.items.filter((i) => i.id === "mcp.start")).toHaveLength(1);
     await page.evaluate(async () => {
       // @ts-expect-error Vite lädt das Quellmodul im E2E-Browser.
       const { runAction } = await import("/src/ui/actions.ts");

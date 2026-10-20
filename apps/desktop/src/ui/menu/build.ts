@@ -96,13 +96,22 @@ function resolveItem(spec: MenuItemSpec, o: BuildOptions, native: Set<ActionId>)
 
 function resolveItems(specs: readonly MenuItemSpec[], o: BuildOptions, native: Set<ActionId>): ResolvedItem[] {
   const out: ResolvedItem[] = [];
-  // Gleiche Eintrags-ID in mehreren Beiträgen: der später registrierte Beitrag ersetzt den früheren.
+  // Gleiche Eintrags-ID in mehreren Beiträgen: der später registrierte Beitrag ersetzt den früheren; mit `override`
+  // bleibt die Stelle des ersten Vorkommens.
+  const firstIndex = new Map<string, number>();
   const lastIndex = new Map<string, number>();
   specs.forEach((sp, i) => {
-    if (!sp.separator) lastIndex.set(sp.id, i);
+    if (sp.separator) return;
+    if (!firstIndex.has(sp.id)) firstIndex.set(sp.id, i);
+    lastIndex.set(sp.id, i);
   });
-  for (const [i, spec] of specs.entries()) {
-    if (!spec.separator && lastIndex.get(spec.id) !== i) continue;
+  for (const [i, listed] of specs.entries()) {
+    let spec = listed;
+    if (!listed.separator) {
+      const winner = specs[lastIndex.get(listed.id)!]!;
+      if (i !== (winner.override ? firstIndex.get(listed.id)! : lastIndex.get(listed.id)!)) continue;
+      spec = winner;
+    }
     const item = resolveItem(spec, o, native);
     if (!item) continue;
     // keine doppelten/führenden Trenner

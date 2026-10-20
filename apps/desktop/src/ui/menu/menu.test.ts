@@ -15,6 +15,23 @@ afterEach(async () => {
 
 describe("Menüaufbau (UI-002, F-5)", () => {
   // spec: UI-002
+  it("Eintrag mit override ersetzt die Definition gleicher ID und bleibt an der ersten Stelle", () => {
+    const modes: MenuContribution = { menu: "mode", group: "modes", order: 10, items: [
+      { id: "mode.spider", label: "Spider", action: "mode.spider" },
+      { id: "mode.apis", label: "Generic", action: "mode.apis" },
+      { id: "mode.compare", label: "Compare", action: "mode.compare" },
+    ] };
+    const feature = (override: boolean): MenuContribution => ({ menu: "mode", group: "variants", order: 40, items: [
+      { id: "mode.apis", override, label: "APIs", action: "mode.apis", checked: () => true },
+    ] });
+    const ids = (c: MenuContribution) => build("win", "en", {}, false, [modes, c]).menus.find((m) => m.id === "mode")?.items;
+    expect(ids(feature(true))?.map((i) => i.id)).toEqual(["mode.spider", "mode.apis", "mode.compare"]);
+    expect(ids(feature(true))?.[1]).toMatchObject({ label: "APIs", kind: "check", checked: true });
+    // ohne override gilt weiter: die später einsortierte Definition steht an ihrer eigenen Stelle
+    expect(ids(feature(false))?.map((i) => i.id)).toEqual(["mode.spider", "mode.compare", "sep.mode.variants", "mode.apis"]);
+  });
+
+  // spec: UI-002
   it("macOS: App-Menü ganz links, „Bearbeiten“ direkt nach „Datei“, „Fenster“ vor „Hilfe“", () => {
     const ids = build("mac").menus.map((m) => m.id);
     expect(ids).toEqual(["app", "file", "edit", "view", "window", "help"]);

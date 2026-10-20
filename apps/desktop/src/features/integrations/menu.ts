@@ -24,7 +24,8 @@ export function integrationsMenu(apiMode: boolean): MenuContribution[] {
       menu: "mode",
       group: "variants",
       order: 40,
-      items: [{ id: "mode.apis", labelKey: "integ-menu-mode-apis", action: "mode.apis", checked: () => apiMode }],
+      // override: der Eintrag bleibt im Modusblock des Hauptmenüs (Spider, Liste, SERP, APIs, Vergleich).
+      items: [{ id: "mode.apis", override: true, labelKey: "integ-menu-mode-apis", action: "mode.apis", checked: () => apiMode }],
     },
   ];
 }

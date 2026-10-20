@@ -50,6 +50,12 @@ export interface MenuItemSpec {
   literalLabel?: string;
   /** Eindeutig innerhalb des Menüs, z. B. `file.new`. */
   id: string;
+  /**
+   * Gleiche ID in mehreren Beiträgen: sonst gilt die Definition des zuletzt einsortierten Beitrags an dessen Stelle.
+   * Mit `override` ersetzt dieser Eintrag die Definition, bleibt aber an der Stelle des ersten Vorkommens
+   * (z. B. „Modus → APIs“ aus der Integrationsfunktion im Modusblock des Hauptmenüs).
+   */
+  override?: boolean;
   /** Fluent-Schlüssel der Beschriftung (bei `predefined` und Trennern entfällt sie). */
   labelKey?: string;
   /** Dynamischer Text (z. B. Dateipfad); bei labelKey englischer Kanon-Fallback. */
