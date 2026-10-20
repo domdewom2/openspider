@@ -1,3 +1,4 @@
+import { ConfigHost } from "./features/config/frame";
 import { ExportHost, ExportViewButton } from "./features/export";
 import { Shell } from "./features/shell/Shell";
 import { Header } from "./features/header/Header";
@@ -47,6 +48,7 @@ export function App() {
   return (
     <Providers>
       <ExportHost />
+      <ConfigHost />
       <IntegrationsHost />
       <div className="os-app">
         <Shell />

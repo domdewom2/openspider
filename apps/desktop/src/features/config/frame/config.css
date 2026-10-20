@@ -1,0 +1,68 @@
+/* Konfigurationsdialog (M2-U13): große Fläche, Seitennavigation links, Seite rechts. Nur Tokens aus ui.css. */
+.os-config-modal { width: min(1040px, calc(100vw - 32px)); height: min(720px, calc(100vh - 32px)); }
+.os-config-dialog { height: 100%; gap: 8px; }
+.os-config-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.os-config-profile { min-width: 220px; }
+.os-config-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 12px; }
+
+.os-config-nav { display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow: auto; border-right: 1px solid var(--os-border); padding-right: 8px; }
+.os-config-nav ul { list-style: none; margin: 0; padding: 0; }
+.os-config-nav ul ul { padding-left: 14px; }
+.os-config-group, .os-config-item, .os-config-result { display: flex; align-items: center; gap: 4px; width: 100%; min-height: 24px; padding: 2px 6px; border: 0; border-radius: var(--os-radius); background: transparent; color: var(--os-text); font: inherit; text-align: left; cursor: pointer; }
+.os-config-group { font-weight: 600; }
+.os-config-group[aria-expanded="true"] .os-config-chevron { transform: rotate(90deg); }
+.os-config-item[aria-current="page"] { background: var(--os-bg-selection); font-weight: 600; box-shadow: inset 3px 0 0 var(--os-accent); }
+.os-config-item[data-pending="true"] { color: var(--os-text-muted); }
+.os-config-group:hover, .os-config-item:hover, .os-config-result:hover { background: var(--os-bg-hover); }
+.os-config-group:focus-visible, .os-config-item:focus-visible, .os-config-result:focus-visible { outline: 2px solid var(--os-focus); outline-offset: -2px; }
+.os-config-result { flex-direction: column; align-items: flex-start; gap: 0; }
+
+.os-config-content { min-width: 0; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
+.os-cfg-page { display: flex; flex-direction: column; gap: 10px; }
+.os-cfg-page-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.os-cfg-page-title { margin: 0; font-size: 13px; line-height: 18px; font-weight: 600; }
+.os-cfg-section { margin: 8px 0 0; font-size: 13px; line-height: 18px; font-weight: 600; border-bottom: 1px solid var(--os-border); padding-bottom: 2px; }
+.os-cfg-fields { display: flex; flex-direction: column; gap: 8px; }
+.os-cfg-row { display: flex; flex-direction: column; gap: 4px; }
+.os-cfg-field { display: flex; flex-direction: column; gap: 4px; }
+.os-cfg-field[data-lock] { opacity: 0.75; }
+.os-cfg-number { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.os-cfg-input { min-width: 180px; }
+.os-cfg-wide { flex: 1; min-width: 260px; }
+.os-cfg-unit { padding-bottom: 6px; color: var(--os-text-muted); }
+.os-cfg-inline { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; }
+.os-cfg-textarea { height: auto; min-height: 96px; padding: 4px 8px; font-family: var(--os-font-mono); resize: vertical; }
+.os-cfg-lines { width: 100%; }
+.os-cfg-line-errors { margin: 0; padding-left: 16px; color: var(--os-status-4xx); font-size: 11px; line-height: 14px; }
+.os-cfg-warning { margin: 0; font-size: 11px; line-height: 14px; color: var(--os-status-3xx); }
+.os-cfg-group { border: 1px solid var(--os-border); border-radius: var(--os-radius); padding: 8px 12px; display: flex; flex-direction: column; gap: 8px; margin: 0; }
+.os-cfg-group > legend { font-weight: 600; padding: 0 4px; }
+.os-cfg-storecrawl { display: flex; align-items: center; gap: 16px; border: 0; padding: 0; margin: 0; flex-wrap: wrap; }
+.os-cfg-storecrawl > legend { float: left; min-width: 220px; padding: 0; }
+.os-cfg-table { width: 100%; border-collapse: collapse; }
+.os-cfg-table th, .os-cfg-table td { text-align: left; vertical-align: top; padding: 4px 6px; border-bottom: 1px solid var(--os-border); font-weight: normal; }
+.os-cfg-table thead th { font-weight: 600; }
+.os-cfg-table tbody th { font-weight: 600; }
+.os-cfg-actions { white-space: nowrap; }
+.os-cfg-actions > * + * { margin-left: 4px; }
+.os-cfg-tester { border: 1px solid var(--os-border); border-radius: var(--os-radius); padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; background: var(--os-bg-zebra); }
+.os-cfg-steps { margin: 0; padding-left: 20px; }
+.os-cfg-steps li { display: flex; gap: 8px; flex-wrap: wrap; }
+.os-cfg-steps code, .os-cfg-path { font-family: var(--os-font-mono); word-break: break-all; }
+.os-cfg-path { display: block; color: var(--os-text-muted); font-weight: normal; }
+.os-cfg-mark { background: var(--os-bg-selection); padding: 0 4px; margin-left: 4px; font-family: var(--os-font-mono); }
+.os-cfg-link { border: 0; background: transparent; color: var(--os-link); font: inherit; cursor: pointer; padding: 0; text-align: left; text-decoration: underline; }
+.os-cfg-hosts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; min-width: 160px; }
+.os-cfg-hosts [aria-pressed="true"] { font-weight: 600; text-decoration: none; }
+.os-cfg-robots-editor { display: flex; gap: 12px; align-items: flex-start; }
+.os-cfg-robots-file { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.os-cfg-badge { font-size: 11px; color: var(--os-text-muted); }
+.os-cfg-placeholder { color: var(--os-text-muted); }
+.os-mono { font-family: var(--os-font-mono); }
+.os-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.os-cfg-diff { display: flex; flex-direction: column; gap: 8px; }
+
+@media (max-width: 760px) {
+  .os-config-body { grid-template-columns: 1fr; }
+  .os-config-nav { border-right: 0; max-height: 140px; }
+}
