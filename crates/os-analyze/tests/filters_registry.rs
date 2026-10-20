@@ -285,9 +285,9 @@ fn every_tab_is_a_real_definition_or_a_marked_stub() {
         }
     }
     // Alle 15 neuen Tabs sind in M2-F02 Stubs; die 16 Tabs von M1 sind echte Definitionen.
-    // M2-D01 implements Meta Keywords; M2-D05 Pagination, M2-D14 Custom Search, M2-I03 Search Console, M2-I04 PageSpeed.
+    // M2-D01 implements Meta Keywords; M2-D05 Pagination, M2-D14 Custom Search, M2-I03 Search Console, M2-I04 PageSpeed, M2-I02 Analytics.
     assert_eq!(
-        stubs, 7,
+        stubs, 6,
         "Stub-Tabs (Structured Data: M2-D09, Validation: M2-D10, Custom Extraction: M2-D15)"
     );
 }
@@ -430,6 +430,7 @@ fn dynamic_column_sources_are_registered_per_tab_and_names_are_interned() {
     assert_eq!(
         sources,
         [
+            "Analytics",
             "Custom Extraction",
             "Custom Search",
             "Internal",

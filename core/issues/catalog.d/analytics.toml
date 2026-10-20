@@ -6,3 +6,50 @@
 # M2-F02 legt nur die Datei an; die Einträge liefert das Paket des Tabs.
 
 schema = 1
+# Klassifizierung abgeleitet aus öffentlicher Dokumentation der Referenz (Benchmark), begründet nach UI-063.
+# M2-I02: alle vier Befundfilter sind live (M2-filters.toml); der Orphan-Filter wartet über seine Bedingung auf die
+# Crawl-Analyse, needs_crawl_analysis bleibt daher false (Abgleich mit der Filterart).
+
+[[issue]]
+id = "analytics-orphan-urls"
+tab = "Analytics"
+filter = "Orphan URLs"
+type = "Issue"
+priority = "Medium"
+type_rule = "T-I3"
+priority_rule = "P-M2"
+needs_crawl_analysis = false
+doc_key = "analytics-orphan-urls"
+
+[[issue]]
+id = "analytics-bounce-rate-above-70"
+tab = "Analytics"
+filter = "Bounce Rate Above 70%"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W3"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "analytics-bounce-rate-above-70"
+
+[[issue]]
+id = "analytics-no-ga-data"
+tab = "Analytics"
+filter = "No GA Data"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W3"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "analytics-no-ga-data"
+
+[[issue]]
+id = "analytics-non-indexable-with-ga-data"
+tab = "Analytics"
+filter = "Non-Indexable with GA Data"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W3"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "analytics-non-indexable-with-ga-data"
