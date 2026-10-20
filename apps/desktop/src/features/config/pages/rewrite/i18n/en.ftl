@@ -1,0 +1,21 @@
+# URL rewriting page (M2-U13)
+config-rewrite-desc = Rewrites apply to URLs discovered during the crawl. They do not apply to the start URL or to URLs of an uploaded list. Order: remove parameters, then regex replacements.
+config-sec-rewrite-params = Remove parameters
+config-hint-remove-params = One parameter name per line (exact match, case-sensitive).
+config-f-rewrite-remove-parameters = Parameters to remove
+config-f-rewrite-remove-all-parameters = Remove the whole query string
+config-rewrite-regex = Regex replace
+config-rewrite-regex-hint = Rules run from top to bottom. Use $1 for capture groups in the replacement.
+config-rewrite-pattern = Regular expression
+config-rewrite-replacement = Replacement
+config-rewrite-pattern-n = Regular expression, rule { $n }
+config-rewrite-replacement-n = Replacement, rule { $n }
+config-rewrite-up = Move rule { $n } up
+config-rewrite-down = Move rule { $n } down
+config-rewrite-remove = Remove rule { $n }
+config-rewrite-add = Add rule
+config-rewrite-tester = Test field
+config-rewrite-result = Rewritten URL
+config-rewrite-steps = Intermediate results
+config-rewrite-step-params = After removing parameters
+config-rewrite-step-regex = Regex rule { $line }
