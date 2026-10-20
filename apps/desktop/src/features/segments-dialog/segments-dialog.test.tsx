@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { Providers } from "../../app/Providers";
+import { createQueryClient, Providers } from "../../app/Providers";
 import { setLanguage } from "../../i18n";
 import { createClient, setClient } from "../../ipc/client";
 import { MockCore } from "../../ipc/transport/mock";
@@ -31,6 +31,7 @@ function assign(list: SegmentDef[]) {
   return { counts: [...counts].map(([id, urls]) => ({ id, urls })), unassigned };
 }
 
+let queryClient: ReturnType<typeof createQueryClient>;
 let core: MockCore;
 let saved: SegmentSaveArgs | null;
 let issues: (segment: SegmentDef) => ValidationIssue[];
@@ -38,6 +39,7 @@ let opSeq = 0;
 const original = () => structuredClone(fixture.segmentList) as SegmentDef[];
 
 beforeEach(async () => {
+  queryClient = createQueryClient();
   saved = null;
   issues = () => [];
   core = new MockCore();
@@ -51,17 +53,20 @@ beforeEach(async () => {
     return { opId, labelKey: "op-segment-preview", cancellable: true };
   });
   core.handlers.set("segment.save", args => { saved = args as SegmentSaveArgs; return { invalidatedSteps: [] }; });
-  core.handlers.set("segment.reassign", () => ({ opId: "reassign-1", labelKey: "op-segment-reassign", cancellable: true }));
+  core.handlers.set("segment.reassign", () => {
+    queueMicrotask(() => useSession.setState(s => ({ ops: { ...s.ops, "reassign-1": { opId: "reassign-1", labelKey: "op-segment-reassign", done: 1, total: 1, state: "done" } } })));
+    return { opId: "reassign-1", labelKey: "op-segment-reassign", cancellable: true };
+  });
   core.handlers.set("op.cancel", () => undefined);
   setClient(createClient(core.transport()));
   useSession.setState({ ops: {} });
   closeSegmentsDialog();
   await setLanguage("en");
 });
-afterEach(() => { cleanup(); closeSegmentsDialog(); setClient(null); vi.restoreAllMocks(); });
+afterEach(() => { cleanup(); closeSegmentsDialog(); setClient(null); queryClient.clear(); vi.restoreAllMocks(); });
 
 async function open() {
-  render(<Providers><SegmentsDialogHost /></Providers>);
+  render(<Providers queryClient={queryClient}><SegmentsDialogHost /></Providers>);
   act(() => openSegmentsDialog());
   const list = await screen.findByRole("list", { name: "Segments in priority order" });
   await within(list).findByRole("button", { name: /^Blog/ });
@@ -225,6 +230,53 @@ it("saves the full list in priority order with chosen colours, then reassigns wi
 });
 
 // spec: UI-068
+it("waits for reassignment to finish before invalidating sidebar counters and closing", async () => {
+  core.handlers.set("segment.reassign", () => ({ opId: "reassign-slow", labelKey: "op-segment-reassign", cancellable: false }));
+  queryClient.setQueryData(["sidebar", "segments"], fixture.segmentRows.indexability);
+  const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+  await open();
+  await waitFor(() => expect(ok()).toBeEnabled());
+  fireEvent.click(ok());
+  await waitFor(() => expect(core.calls.some(c => c.cmd === "segment.reassign")).toBe(true));
+  const status = { opId: "reassign-slow", labelKey: "op-segment-reassign", done: 0, total: 1, state: "running" as const };
+  act(() => useSession.setState(s => ({ ops: { ...s.ops, [status.opId]: status } })));
+  expect(useSegmentsDialog.getState().open).toBe(true);
+  expect(ok()).toBeDisabled();
+  expect(invalidate).not.toHaveBeenCalled();
+  expect(queryClient.getQueryState(["sidebar", "segments"])?.isInvalidated).toBe(false);
+  act(() => useSession.setState(s => ({ ops: { ...s.ops, [status.opId]: { ...status, state: "done", done: 1 } } })));
+  await waitFor(() => expect(useSegmentsDialog.getState().open).toBe(false));
+  expect(invalidate).toHaveBeenCalledExactlyOnceWith({ queryKey: ["sidebar"] });
+  expect(queryClient.getQueryState(["sidebar", "segments"])?.isInvalidated).toBe(true);
+});
+
+// spec: UI-068
+it.each(["failed", "cancelled"] as const)("keeps the dialog open after reassignment is %s and permits retry", async state => {
+  core.handlers.set("segment.reassign", () => ({ opId: "reassign-error", labelKey: "op-segment-reassign", cancellable: true }));
+  const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+  await open();
+  await waitFor(() => expect(ok()).toBeEnabled());
+  fireEvent.click(ok());
+  await waitFor(() => expect(core.calls.some(c => c.cmd === "segment.reassign")).toBe(true));
+  act(() => useSession.setState(s => ({ ops: { ...s.ops, "reassign-error": {
+    opId: "reassign-error", labelKey: "op-segment-reassign", done: 0, total: 1, state,
+    error: state === "failed" ? { code: "Internal", messageKey: "err-internal", args: {}, retryable: true } : null,
+  } } })));
+  await waitFor(() => expect(screen.getAllByRole("alert").length).toBeGreaterThan(0));
+  expect(useSegmentsDialog.getState().open).toBe(true);
+  expect(invalidate).not.toHaveBeenCalled();
+  await waitFor(() => expect(ok()).toBeEnabled());
+  core.handlers.set("segment.reassign", () => {
+    const opId = "reassign-retry";
+    useSession.setState(s => ({ ops: { ...s.ops, [opId]: { opId, labelKey: "op-segment-reassign", done: 1, total: 1, state: "done" } } }));
+    return { opId, labelKey: "op-segment-reassign", cancellable: true };
+  });
+  fireEvent.click(ok());
+  await waitFor(() => expect(useSegmentsDialog.getState().open).toBe(false));
+  expect(invalidate).toHaveBeenCalledExactlyOnceWith({ queryKey: ["sidebar"] });
+});
+
+// spec: UI-068
 it("keeps the dialog open and shows the error when saving fails; Cancel discards the draft", async () => {
   core.handlers.set("segment.save", () => { throw Object.assign(new Error("x"), { cmdError: true }); });
   await open();
@@ -240,7 +292,7 @@ it("keeps the dialog open and shows the error when saving fails; Cancel discards
 
 // spec: UI-068
 it("opens through the action segments.configure and builds new segments with a free palette colour", async () => {
-  render(<Providers><SegmentsDialogHost /></Providers>);
+  render(<Providers queryClient={queryClient}><SegmentsDialogHost /></Providers>);
   expect(screen.queryByRole("dialog")).toBeNull();
   act(() => { runAction("segments.configure"); });
   expect(await screen.findByRole("dialog", { name: "Configure segments" })).toBeVisible();

@@ -3,7 +3,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useT, useFormat } from "../../i18n";
 import { catalog } from "../../ipc/catalog";
 import { segment as segmentApi } from "../../ipc/segment";
+import { localError } from "../../ipc/errors";
 import type { SegmentDef } from "../../ipc/gen/SegmentDef";
+import { useSession } from "../../state/session";
 import { registerAction } from "../../ui/actions";
 import { Dialog, DialogFooter } from "../../ui/primitives/Dialog";
 import { SEGMENT_PALETTE, segmentLabelColor } from "../../ui/tokens/tokens";
@@ -33,6 +35,8 @@ export function SegmentsDialog() {
   const [selected, setSelected] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<unknown>();
+  const [reassignId, setReassignId] = useState<string | null>(null);
+  const reassignStatus = useSession(s => reassignId ? s.ops[reassignId] : undefined);
   const [drag, setDrag] = useState<number | null>(null);
   const [json, setJson] = useState("");
   const [jsonError, setJsonError] = useState<string | null>(null);
@@ -76,16 +80,30 @@ export function SegmentsDialog() {
   };
   const shift = (from: number, to: number) => setSegments(cur => cur && move(cur, from, to));
 
-  async function save(close: () => void) {
+  useEffect(() => {
+    if (!reassignStatus || reassignStatus.state === "running") return;
+    setReassignId(null);
+    setSaving(false);
+    if (reassignStatus.state === "done") {
+      void queryClient.invalidateQueries({ queryKey: ["sidebar"] });
+      closeSegmentsDialog();
+    } else {
+      setSaveError(reassignStatus.error ?? localError(
+        reassignStatus.state === "cancelled" ? "Cancelled" : "Internal",
+        reassignStatus.state === "cancelled" ? "err-cancelled" : "err-internal",
+      ));
+    }
+  }, [reassignStatus, queryClient]);
+
+  async function save() {
     if (!segments) return;
     setSaving(true);
     setSaveError(undefined);
     try {
       await segmentApi.save({ segments: renumber(segments) });
-      await segmentApi.reassign();
-      void queryClient.invalidateQueries({ queryKey: ["sidebar"] });
-      close();
-    } catch (e) { setSaveError(e); } finally { setSaving(false); }
+      const handle = await segmentApi.reassign();
+      setReassignId(handle.opId);
+    } catch (e) { setSaveError(e); setSaving(false); }
   }
 
   function applyImport() {
@@ -108,7 +126,7 @@ export function SegmentsDialog() {
   const nameMessage = current ? nameError(list, index) : null;
   const colorValue = hex ?? current?.color ?? "";
   return <Dialog title={t("sgd-title")} isOpen onOpenChange={open => { if (!open) closeSegmentsDialog(); }} size="large" isDismissable={false}
-    footer={close => <DialogFooter okLabel={t("ui-dialog-ok")} cancelLabel={t("ui-dialog-cancel")} okDisabled={!canSave} onOk={() => void save(() => { close(); closeSegmentsDialog(); })} onCancel={() => { close(); closeSegmentsDialog(); }} />}>
+    footer={close => <DialogFooter okLabel={t("ui-dialog-ok")} cancelLabel={t("ui-dialog-cancel")} okDisabled={!canSave} onOk={() => void save()} onCancel={() => { close(); closeSegmentsDialog(); }} />}>
     <div className="os-segdlg" data-segments-dialog>
       <QueryFeedback error={loadError ?? saveError ?? validation.error} loading={segments === null && !loadError} />
       {segments && <>

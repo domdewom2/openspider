@@ -37,7 +37,11 @@ test.beforeEach(async ({ page }) => {
   core.handlers.set("catalog.columns", () => fixture.columns);
   core.handlers.set("segment.validate", () => []);
   core.handlers.set("segment.save", () => ({ invalidatedSteps: [] }));
-  core.handlers.set("segment.reassign", () => ({ opId: `reassign-${++opSeq}`, labelKey: "op-segment-reassign", cancellable: false }));
+  core.handlers.set("segment.reassign", () => {
+    const opId = `reassign-${++opSeq}`;
+    setTimeout(() => core.emit("main", { kind: "tick", tick: { ...tick, seq: ++seq, ops: [{ opId, labelKey: "op-segment-reassign", done: 1, total: 1, state: "done" }] } as Tick }), 30);
+    return { opId, labelKey: "op-segment-reassign", cancellable: false };
+  });
   core.handlers.set("op.cancel", () => undefined);
   // The long-running preview answers through a tick, exactly like the real core: counters follow the order of the list.
   core.handlers.set("segment.preview", args => {

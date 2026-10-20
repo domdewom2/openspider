@@ -101,7 +101,7 @@ function classCondition(view: SiteStructureView, cls: string): RuleNode[] {
   if (view === "indexability") return [cond("Indexability", "equals", cls)];
   const range = STATUS_RANGE[cls];
   if (range) return [cond("Status Code", "greaterThan", String(range[0])), cond("Status Code", "lessThan", String(range[1]))];
-  if (cls === "Blocked by robots.txt") return [cond("Indexability Status", "equals", "Blocked by robots.txt")];
+  if (cls === "Blocked by robots.txt") return [cond("Indexability Status", "startsWith", "Blocked by Robots.txt")];
   return [cond("Status Code", "isEmpty", null)];
 }
 

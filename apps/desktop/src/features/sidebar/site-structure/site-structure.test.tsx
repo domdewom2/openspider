@@ -108,6 +108,8 @@ it("switches the view with stacked bars, absolute-number tooltips and bar clicks
   expect(bar.style.background).toContain("--os-status-4xx");
   fireEvent.click(bar);
   expect(search()?.search).toMatchObject({ tree: { children: [{ column: "Crawl Depth", value: "4" }, { column: "Status Code", op: "greaterThan", value: "399" }, { column: "Status Code", op: "lessThan", value: "500" }] } });
+  fireEvent.click(screen.getByRole("button", { name: "3 – Blocked by robots.txt: 1" }));
+  expect(search()?.search).toMatchObject({ caseSensitive: true, tree: { children: [{ column: "Crawl Depth", op: "equals", value: "3" }, { column: "Indexability Status", op: "startsWith", value: "Blocked by Robots.txt" }] } });
   fireEvent.click(screen.getByRole("button", { name: "10+ – 2xx: 3" }));
   expect(search()?.search).toMatchObject({ tree: { children: [{ column: "Crawl Depth", op: "greaterThan", value: "9" }, expect.anything(), expect.anything()] } });
   fireEvent.change(screen.getByLabelText("View"), { target: { value: "crawlDepth" } });
