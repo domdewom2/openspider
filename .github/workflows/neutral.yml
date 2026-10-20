@@ -1,0 +1,30 @@
+name: neutral
+
+# Neutralitätsprüfung (M2-H01, docs/plan/M2.md 3.12): kein namentlicher Bezug auf das Referenzprodukt in versionierten
+# Textdateien (scripts/check-neutral.sh, Ausnahmen in scripts/check-neutral.allow). Bis K2-66 ein Schritt in parity.yml
+# (macOS); seit K2-67 eigener, billiger Ubuntu-Lauf ohne Pfadfilter, weil die Prüfung auch Markdown und Doku-Commits
+# abdecken muss, die parity.yml und ci.yml nicht mehr starten.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  neutral:
+    name: neutral (ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Neutralitätsprüfung (kein namentlicher Bezug auf das Referenzprodukt)
+        run: scripts/check-neutral.sh

@@ -1,11 +1,44 @@
 name: CI
 
+# K2-67 (docs/plan/M2.md): schlanke CI. Im öffentlichen Repository laufen höchstens 5 macOS-Jobs gleichzeitig; ein Lauf mit
+# ~10 macOS-Jobs, die je neu kompilierten, kostete 1,5–3 h Wartezeit. Jetzt gibt es je Plattform EINEN Job `ci`, der einmal
+# kompiliert und Frontend, Rust-Prüfungen, Tauri-Check, Crawl-Datei (Erzeugen) und Lasttest als Schritte enthält. Die
+# plattformübergreifende Stufe `crawlfile load` kompiliert nicht neu, sondern nimmt die CLI aus dem Artefakt `cli-bin-<name>`.
+# macOS Intel (macos-15-intel) läuft nur nächtlich (`schedule`), von Hand (`workflow_dispatch`) und auf Tags `v*`.
+
 on:
   push:
     branches: [main]
+    tags: ["v*"]
+    # Reine Doku-Commits lösen keinen Lauf aus (Muster werden der Reihe nach angewendet, später gewinnt):
+    # Markdown, docs/plan/M2-reports und assets bleiben draußen. Ausnahmen, weil Tests oder Jobs diese Dateien lesen:
+    # docs/spec (Spec-Schemas, Spec-Abdeckung), docs/issues (Issue-Katalog-Tests lesen die Doku-Seiten und die README),
+    # docs/plan/M2.md (os-parity coverage liest Anhang B), tests/** (u. a. tests/golden/parity/README.md).
+    paths: &ci-paths
+      - "**"
+      - "!**/*.md"
+      - "docs/spec/**"
+      - "docs/issues/**"
+      - "docs/plan/M2.md"
+      - "tests/**"
+      - "!docs/plan/M2-reports/**"
+      - "!assets/**"
   pull_request:
+    paths: *ci-paths
   # M1-P30: grüner Lauf aller Jobs auf dem Paketbranch ohne Pull-Request (`gh workflow run ci.yml --ref <branch>`)
   workflow_dispatch:
+    inputs:
+      intel:
+        description: "macOS Intel (macos-15-intel) mitlaufen lassen"
+        type: boolean
+        default: true
+  # Nächtlich auf main (der Zeitplan läuft nur auf dem Standardzweig): mit macOS Intel.
+  schedule:
+    - cron: "30 1 * * *"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
   CARGO_TERM_COLOR: always
@@ -32,24 +65,56 @@ jobs:
         with:
           command: check licenses bans sources advisories
 
-  build:
-    name: build (${{ matrix.name }})
+  # Plattform-Matrix: macOS Intel nur bei schedule, Tag `v*` und workflow_dispatch (Eingabe `intel`, Standard an).
+  plan:
+    name: plan (Plattform-Matrix)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      others: ${{ steps.matrix.outputs.others }}
+    steps:
+      - id: matrix
+        env:
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          INTEL_INPUT: ${{ inputs.intel }}
+        run: |
+          intel=false
+          if [ "$EVENT" = "schedule" ]; then intel=true; fi
+          if [ "$EVENT" = "workflow_dispatch" ] && [ "$INTEL_INPUT" != "false" ]; then intel=true; fi
+          case "$REF" in refs/tags/v*) intel=true ;; esac
+          arm='{"name":"macos-arm64","os":"macos-14"}'
+          x64='{"name":"macos-x64","os":"macos-15-intel"}'
+          win='{"name":"windows-x64","os":"windows-latest"}'
+          if [ "$intel" = "true" ]; then
+            matrix="[$arm,$x64,$win]"
+            others=2
+          else
+            matrix="[$arm,$win]"
+            others=1
+          fi
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "others=$others" >> "$GITHUB_OUTPUT"
+          echo "Plattformen: $matrix (Ereignis $EVENT, Ref $REF)" >> "$GITHUB_STEP_SUMMARY"
+
+  # Ein Job je Plattform, ein Kompilat: Frontend (M2-F04), Clippy, Rust-Tests, Tauri-Check, Crawl-Datei erzeugen
+  # (A6, OUT-230) und Lasttest small (PERF-009). Spätere Abschnitte laufen auch nach einem roten früheren (`!cancelled()`),
+  # damit jeder Befund einzeln sichtbar bleibt wie vorher bei getrennten Jobs.
+  ci:
+    name: ci (${{ matrix.name }})
+    needs: plan
     runs-on: ${{ matrix.os }}
-    # Obergrenze je Build-Job (Fable-Gate Welle 1: Windows-Haenger in setup-node ohne Abbruch).
-    timeout-minutes: 100
+    # Obergrenze je Plattform-Job (vorher: build 100 min, frontend 30, loadtest-small 40, crawlfile create 40; Windows-Haenger in
+    # setup-node ohne Abbruch, Fable-Gate Welle 1). Die Testausführung hat unten eine eigene Grenze.
+    timeout-minutes: 150
     # Integration Teil 4: ohne Debuginfo (macOS-arm64: "No space left on device" beim Tauri-Check, Windows/macOS-x64 am 75-min-Limit).
     env:
       CARGO_PROFILE_DEV_DEBUG: "0"
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: macos-arm64
-            os: macos-14
-          - name: macos-x64
-            os: macos-15-intel
-          - name: windows-x64
-            os: windows-latest
+        include: ${{ fromJSON(needs.plan.outputs.matrix) }}
     defaults:
       run:
         shell: bash
@@ -70,149 +135,54 @@ jobs:
       - name: npm ci
         run: npm ci
 
+      # --- Frontend (M2-F04): Typprüfung, vitest, statische Prüfungen aus M2-ui-concept 7.1 inkl. npm-Lizenzprüfung gegen die
+      # Positivliste von deny.toml und Vertragstest der IPC-Wrapper. E2E-A läuft in ui-e2e.yml. ---
+      - name: Typecheck
+        run: npm run -w apps/desktop typecheck
+
+      - name: vitest
+        if: ${{ !cancelled() }}
+        run: npm run -w apps/desktop test
+
+      - name: Statische Prüfungen (i18n, Kürzel, Voraussetzungsregister, Token-Kontrast, Lizenzen, Glide-Pin, gen:ipc)
+        if: ${{ !cancelled() }}
+        run: npm run -w apps/desktop check:static
+
+      - name: Vite-Build (Hauptfenster, Einstellungen, Visualisierungen)
+        if: ${{ !cancelled() }}
+        run: npm run -w apps/desktop build
+
+      # --- Rust ---
       - name: Clippy
+        if: ${{ !cancelled() }}
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
 
       # A1 / K-81: die Grenze von 15 min gilt der reinen Testausführung. Kompilieren steht deshalb in einem eigenen Schritt
       # (Dauer hängt am Cache-Treffer und an der Runner-Hardware; Obergrenze ist das Job-Timeout).
       - name: Rust tests (build)
+        if: ${{ !cancelled() }}
         run: cargo test --workspace --locked --no-run
 
       - name: Rust tests
+        if: ${{ !cancelled() }}
         # A1-Ziel bleibt < 15 min je Plattform; Limit vorübergehend 50 min (K2-64, 19.10.: Welle-1-Suite ~14,6 min auf macOS),
         # Beschleunigung der langsamsten Testprogramme ist Auftrag von M2-N01. Alle Workspace-Tests einschließlich Doctests.
         timeout-minutes: 50
         run: cargo test --workspace --locked
 
       - name: Tauri build check (debug, no bundle)
+        if: ${{ !cancelled() }}
         run: npm run -w apps/desktop tauri -- build --debug --no-bundle
 
-  # M2-F04: Frontend (Typprüfung, vitest, statische Prüfungen aus M2-ui-concept 7.1 inkl. npm-Lizenzprüfung gegen die
-  # Positivliste von deny.toml und Vertragstest der IPC-Wrapper) auf allen drei Plattformen. E2E-A läuft in ui-e2e.yml.
-  frontend:
-    name: frontend (${{ matrix.name }})
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: macos-arm64
-            os: macos-14
-          - name: macos-x64
-            os: macos-15-intel
-          - name: windows-x64
-            os: windows-latest
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        timeout-minutes: 10
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: npm ci
-        run: npm ci
-
-      - name: Typecheck
-        run: npm run -w apps/desktop typecheck
-
-      - name: vitest
-        run: npm run -w apps/desktop test
-
-      - name: Statische Prüfungen (i18n, Kürzel, Voraussetzungsregister, Token-Kontrast, Lizenzen, Glide-Pin, gen:ipc)
-        run: npm run -w apps/desktop check:static
-
-      - name: Vite-Build (Hauptfenster, Einstellungen, Visualisierungen)
-        run: npm run -w apps/desktop build
-
-  # Lasttest-Suite, kleine Varianten (PERF-009): PERF-001 (Speicherobergrenze, 10 000 Seiten x 30 Links),
-  # PERF-003 (Gegendruck, SlowSink 100 ms je Batch), PERF-005 (gesäte harte Abbrüche, Fortsetzen) sowie die
-  # Server-Messung der übrigen Szenarien. Bericht: target/loadtest/report.json (plus ein Bericht je Szenario).
-  # Die Großvarianten (1 Mio. Seiten) laufen nicht in der CI, sondern vor Meilensteinen per
-  # `cargo run --release -p os-loadtest -- run --scenario perf-001 --size large --work-dir <ordner>`.
-  loadtest-small:
-    name: loadtest-small (${{ matrix.name }})
-    runs-on: ${{ matrix.os }}
-    # Build (mit Cache) plus Lauf; der Lauf selbst hat unten eine eigene Grenze von 10 Minuten.
-    timeout-minutes: 40
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: macos-arm64
-            os: macos-14
-          - name: macos-x64
-            os: macos-15-intel
-          - name: windows-x64
-            os: windows-latest
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: loadtest
-
-      - name: Build (release)
-        run: |
-          cargo build --release --locked -p os-loadtest
-          cargo build --release --locked -p os-engine --example crawl_child
-
-      - name: Lasttest small (PERF-001, PERF-003, PERF-005, PERF-009)
-        timeout-minutes: 10
-        run: cargo run --release --locked -p os-loadtest -- run --scenario all --size small --out target/loadtest/report.json
-
-      - name: Bericht anzeigen
-        if: always()
-        run: cat target/loadtest/report.json || true
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: loadtest-small-${{ matrix.name }}
-          path: target/loadtest/
-          if-no-files-found: warn
-
-  # Crawl-Datei zwischen den Plattformen (A6, OUT-230): jede Plattform crawlt dieselbe Fixture-Site, legt die
-  # .ospider-Datei und die Exporte Internal:All und Links:All Inlinks ab; im zweiten Job laden alle Plattformen die
-  # Dateien der anderen, exportieren erneut und vergleichen byte-gleich (macOS → Windows und Windows → macOS).
-  crawlfile-create:
-    name: crawlfile create (${{ matrix.name }})
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 40
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: macos-arm64
-            os: macos-14
-          - name: macos-x64
-            os: macos-15-intel
-          - name: windows-x64
-            os: windows-latest
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: crawlfile
-
+      # --- Crawl-Datei zwischen den Plattformen (A6, OUT-230), Teil 1: jede Plattform crawlt dieselbe Fixture-Site, legt die
+      # .ospider-Datei und die Exporte Internal:All und Links:All Inlinks ab. Teil 2 (Job crawlfile-load) lädt die Dateien der
+      # anderen Plattformen mit der hier gebauten CLI und vergleicht byte-gleich (macOS → Windows und Windows → macOS). ---
       - name: Build (openspider, os-testsite)
+        if: ${{ !cancelled() }}
         run: cargo build --locked -p os-cli -p os-testsite
 
       - name: Fixture-Site crawlen, Crawl-Datei speichern, exportieren
+        if: ${{ !cancelled() }}
         run: |
           set -euo pipefail
           out="crawlfile-out/${{ matrix.name }}"
@@ -235,39 +205,89 @@ jobs:
           test -s "$out/links_all_inlinks.csv"
 
       - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
         with:
           name: crawlfile-${{ matrix.name }}
           path: crawlfile-out/${{ matrix.name }}
           if-no-files-found: error
 
-  crawlfile-crossplatform:
+      # Die CLI für den Ladevergleich (kein zweites Kompilieren in crawlfile-load).
+      - name: CLI für crawlfile-load bereitstellen
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          mkdir -p ci-bin
+          bin=target/debug/openspider
+          if [ "$RUNNER_OS" = "Windows" ]; then bin="$bin.exe"; fi
+          cp "$bin" ci-bin/
+          ls -l ci-bin
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: cli-bin-${{ matrix.name }}
+          path: ci-bin/
+          retention-days: 3
+          if-no-files-found: error
+
+      # Platz schaffen für den Release-Build des Lasttests (macOS-arm64: "No space left on device"): Testprogramme und
+      # inkrementelle Daten des Debug-Profils braucht danach niemand mehr; der rust-cache-Post-Schritt räumt sie ohnehin ab.
+      - name: Speicherplatz freigeben (Debug-Testprogramme)
+        if: ${{ !cancelled() && runner.os != 'Windows' }}
+        run: |
+          df -h . | tail -n 1 || true
+          rm -rf target/debug/incremental
+          find target/debug/deps -maxdepth 1 -type f -perm -u+x ! -name '*.dylib' ! -name '*.so' -delete || true
+          df -h . | tail -n 1 || true
+
+      # --- Lasttest-Suite, kleine Varianten (PERF-009): PERF-001 (Speicherobergrenze, 10 000 Seiten x 30 Links),
+      # PERF-003 (Gegendruck, SlowSink 100 ms je Batch), PERF-005 (gesäte harte Abbrüche, Fortsetzen) sowie die
+      # Server-Messung der übrigen Szenarien. Bericht: target/loadtest/report.json (plus ein Bericht je Szenario).
+      # Die Großvarianten (1 Mio. Seiten) laufen nicht in der CI, sondern vor Meilensteinen per
+      # `cargo run --release -p os-loadtest -- run --scenario perf-001 --size large --work-dir <ordner>`. ---
+      - name: Build loadtest (release)
+        if: ${{ !cancelled() }}
+        run: |
+          cargo build --release --locked -p os-loadtest
+          cargo build --release --locked -p os-engine --example crawl_child
+
+      - name: Lasttest small (PERF-001, PERF-003, PERF-005, PERF-009)
+        if: ${{ !cancelled() }}
+        timeout-minutes: 10
+        run: cargo run --release --locked -p os-loadtest -- run --scenario all --size small --out target/loadtest/report.json
+
+      - name: Bericht anzeigen
+        if: always()
+        run: cat target/loadtest/report.json || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: loadtest-small-${{ matrix.name }}
+          path: target/loadtest/
+          if-no-files-found: warn
+
+  # Crawl-Datei zwischen den Plattformen (A6, OUT-230), Teil 2: alle Plattformen laden die Dateien der anderen, exportieren
+  # erneut und vergleichen byte-gleich. Kompiliert nicht: die CLI kommt als Artefakt `cli-bin-<name>` aus dem Job `ci`.
+  crawlfile-load:
     name: crawlfile load (${{ matrix.name }})
-    needs: crawlfile-create
+    needs: [plan, ci]
+    # Läuft auch, wenn ein anderer Abschnitt von `ci` rot ist; fehlt ein Artefakt, schlägt der Job selbst fehl.
+    if: ${{ !cancelled() && needs.plan.result == 'success' }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 40
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: macos-arm64
-            os: macos-14
-          - name: macos-x64
-            os: macos-15-intel
-          - name: windows-x64
-            os: windows-latest
+        include: ${{ fromJSON(needs.plan.outputs.matrix) }}
     defaults:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions/download-artifact@v4
         with:
-          key: crawlfile
-
-      - name: Build (openspider)
-        run: cargo build --locked -p os-cli
+          name: cli-bin-${{ matrix.name }}
+          path: bin
 
       - uses: actions/download-artifact@v4
         with:
@@ -275,8 +295,12 @@ jobs:
           path: crawlfiles
 
       - name: Crawl-Dateien der anderen Plattformen laden und byte-gleich exportieren
+        env:
+          # Alle übrigen Plattformen der Matrix müssen verglichen worden sein (2 mit Intel, sonst 1).
+          EXPECTED_OTHERS: ${{ needs.plan.outputs.others }}
         run: |
           set -euo pipefail
+          if [ "$RUNNER_OS" != "Windows" ]; then chmod +x bin/openspider; fi
           ls -R crawlfiles | head -40
           compared=0
           for dir in crawlfiles/crawlfile-*; do
@@ -285,7 +309,7 @@ jobs:
             work="reload/$origin"
             mkdir -p "$work"
             cp "$dir/crawl.ospider" "$work/crawl-copy.ospider"
-            target/debug/openspider --load-crawl "$work/crawl-copy.ospider" \
+            bin/openspider --load-crawl "$work/crawl-copy.ospider" \
               --output-folder "$work" --overwrite \
               --export-tabs "Internal:All" --bulk-export "Links:All Inlinks"
             cmp "$dir/internal_all.csv" "$work/internal_all.csv"
@@ -293,7 +317,7 @@ jobs:
             echo "Crawl-Datei von $origin auf ${{ matrix.name }}: Exporte byte-gleich"
             compared=$((compared + 1))
           done
-          test "$compared" -ge 2
+          test "$compared" -ge "$EXPECTED_OTHERS"
 
   # Spec-Abdeckung (A2, A9): alle Tests laufen, danach wird der Status je Spec-ID aus den Tags und den Ergebnissen ermittelt.
   # Die Testausgabe muss stdout UND stderr enthalten (cargo schreibt die `Running`-Zeilen nach stderr). Der Job schlägt

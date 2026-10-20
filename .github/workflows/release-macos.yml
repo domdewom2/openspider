@@ -22,6 +22,10 @@ on:
           - aarch64
           - x86_64
         default: universal
+      intel:
+        description: "Zusätzlich ein Intel-DMG nativ auf macos-15-intel bauen (OUT-261)"
+        type: boolean
+        default: true
   push:
     tags:
       - "v*"
@@ -35,14 +39,22 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  # Bei Tag-Auslösung gibt es keine Eingabe: dann universal.
-  ARCH: ${{ inputs.arch || 'universal' }}
 
 jobs:
   macos:
-    name: signiertes DMG (${{ inputs.arch || 'universal' }})
-    runs-on: macos-15
+    # K2-67 / OUT-261: Matrix aus dem bisherigen Lauf (macos-15, Architektur laut Eingabe, bei Tags universal) und dem
+    # Intel-DMG (nativ auf macos-15-intel). Der Intel-Eintrag läuft bei Tags und bei workflow_dispatch mit Eingabe `intel`.
+    # Beide Einträge führen dieselben Signier- und Notarisierungsschritte aus.
+    name: signiertes DMG (${{ matrix.arch || inputs.arch || 'universal' }}${{ matrix.suffix }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(github.event_name == 'workflow_dispatch' && !inputs.intel && '[{"os":"macos-15","arch":"","suffix":""}]' || '[{"os":"macos-15","arch":"","suffix":""},{"os":"macos-15-intel","arch":"x86_64","suffix":"-intel"}]') }}
+    env:
+      # Hauptlauf (arch leer): Eingabe, bei Tag-Auslösung universal. Intel-Eintrag: x86_64.
+      ARCH: ${{ matrix.arch || inputs.arch || 'universal' }}
     defaults:
       run:
         shell: bash
@@ -238,7 +250,7 @@ jobs:
         if: always() && steps.check.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: openspider-macos-${{ inputs.arch || 'universal' }}
+          name: openspider-macos-${{ env.ARCH }}${{ matrix.suffix }}
           path: release-artifacts/
           retention-days: 14
           if-no-files-found: warn

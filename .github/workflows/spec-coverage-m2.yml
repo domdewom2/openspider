@@ -3,18 +3,25 @@ name: Spec coverage M2
 on:
   push:
     branches: [main, 'm2/**']
+    # K2-67: Markdown löst keinen Lauf aus, außer was Tests oder Jobs lesen (docs/spec, docs/issues, docs/plan/M2*.md,
+    # tests/**). Muster der Reihe nach, später gewinnt.
     paths: &coverage-paths
       - 'crates/**'
-      - 'tests/**'
       - 'apps/desktop/**'
+      - 'core/**'
       - 'docs/plan/M2*.json'
-      - 'docs/plan/M2*.md'
       - 'docs/plan/M1-packages.json'
+      - 'docs/plan/*.toml'
       - 'Cargo.*'
       - 'rust-toolchain.toml'
       - 'package*.json'
       - '.github/workflows/spec-coverage-m2.yml'
       - '.github/workflows/ui-e2e.yml'
+      - '!**/*.md'
+      - 'tests/**'
+      - 'docs/spec/**'
+      - 'docs/issues/**'
+      - 'docs/plan/M2*.md'
   pull_request:
     paths: *coverage-paths
   workflow_dispatch:
@@ -28,8 +35,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: spec-coverage-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
   OPENSPIDER_SECRET_STORE: memory
@@ -40,6 +47,8 @@ env:
 
 jobs:
   evidence:
+    # Pull-Requests von m2/*-Zweigen überspringen den Job: derselbe Stand läuft schon über den Push-Lauf (K2-67).
+    if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'm2/') }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -84,6 +93,8 @@ jobs:
   # Übergang bis ci.yml/ui-e2e.yml JUnit exportieren (Schnittstellenbedarf im Q01-Bericht).
   # Runner, Browserinstallation, Matrix und Transport entsprechen ui-e2e.yml.
   e2e:
+    # Pull-Requests von m2/*-Zweigen überspringen den Job: derselbe Stand läuft schon über den Push-Lauf (K2-67).
+    if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'm2/') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     strategy:
@@ -149,7 +160,7 @@ jobs:
   spec-coverage-m2:
     name: spec-coverage-m2
     needs: [evidence, e2e]
-    if: ${{ !cancelled() }}
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || !startsWith(github.head_ref, 'm2/')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
