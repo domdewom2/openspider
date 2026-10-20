@@ -1,1 +1,8 @@
-<!doctype html><title>rendered</title><link rel="icon" href="data:,"><script src="/slow.js"></script>
+<!doctype html><title>rendered</title><link rel="icon" href="data:,">
+<script>
+// Erst das ausgeführte Dokument fordert die Ressource an. Ein statisches src
+// könnte bereits vom Preload-Scanner vor dem Navigationsabschluss geladen werden.
+const resource = document.createElement('script');
+resource.src = '/slow.js';
+document.head.appendChild(resource);
+</script>

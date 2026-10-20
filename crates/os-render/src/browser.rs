@@ -465,6 +465,7 @@ mod tests {
 
     #[derive(Debug, Default)]
     struct HoldFirstResource {
+        path: &'static str,
         held: AtomicBool,
         started: tokio::sync::Notify,
     }
@@ -474,7 +475,7 @@ mod tests {
             url: &'a str,
         ) -> std::pin::Pin<Box<dyn std::future::Future<Output = bool> + Send + 'a>> {
             Box::pin(async move {
-                if url.ends_with("/slow.js") && !self.held.swap(true, Ordering::AcqRel) {
+                if url.ends_with(self.path) && !self.held.swap(true, Ordering::AcqRel) {
                     self.started.notify_one();
                     std::future::pending::<()>().await;
                 }
@@ -494,17 +495,15 @@ mod tests {
     }
 
     async fn crash_target(mut crashed: TargetWatch) {
-        tokio::time::timeout(Duration::from_secs(60), async {
-            crashed.crash();
-            crashed.wait().await.expect("Crash-Ereignis");
-        })
-        .await
-        .expect("Crash wurde bestätigt");
+        tokio::time::timeout(Duration::from_secs(60), crashed.crash())
+            .await
+            .expect("Crash wurde bestätigt")
+            .expect("Page.crash ausführen und Crash-Ereignis empfangen");
     }
 
     #[tokio::test(flavor = "multi_thread")]
-    // Spec-Fixture `crawl-js`: erster Crash während Fetch auf die Richtlinie wartet,
-    // weitere Crashes vor Navigation. Kein Inspector-Listener beteiligt.
+    // Spec-Fixture `crawl-js`: erster Crash nach Navigationsabschluss, während Fetch
+    // auf die Richtlinie wartet; weitere Crashes vor Navigation.
     // spec: CRAWL-078
     async fn requires_chromium_retries_target_crash_exactly_once() {
         let site = os_testsite::TestSite::start("render-r01").await.unwrap();
@@ -518,7 +517,10 @@ mod tests {
         );
         let (tx, mut targets) = tokio::sync::mpsc::unbounded_channel();
         *renderer.targets.lock().unwrap() = Some(tx);
-        let policy = Arc::new(HoldFirstResource::default());
+        let policy = Arc::new(HoldFirstResource {
+            path: "/slow.js",
+            ..Default::default()
+        });
         let opts = RenderOpts {
             ajax_timeout_ms: 100,
             screenshots: false,
@@ -539,7 +541,7 @@ mod tests {
         resume.send(()).unwrap();
         tokio::time::timeout(Duration::from_secs(30), policy.started.notified())
             .await
-            .expect("Navigation erreicht Ressourcenrichtlinie");
+            .expect("Ausgeführtes Dokument erreicht Ressourcenrichtlinie");
         crash_target(crashed).await;
         let (_page, resume) = tokio::time::timeout(Duration::from_secs(60), async {
             tokio::select! {
@@ -586,6 +588,61 @@ mod tests {
         );
         renderer.close().await;
     }
+
+    #[tokio::test(flavor = "multi_thread")]
+    // Spec-Fixture `crawl-js`: eine noch nicht freigegebene Hauptnavigation darf
+    // nicht als erfolgreicher Crash gelten oder einen ereignislosen Timeout erzeugen.
+    // spec: CRAWL-078
+    async fn requires_chromium_reports_rejected_crash_command() {
+        let site = os_testsite::TestSite::start("render-r01").await.unwrap();
+        let renderer = Arc::new(
+            Renderer::launch(LaunchOpts {
+                memory_limit_mb: 0,
+                ..Default::default()
+            })
+            .await
+            .expect("requires_chromium"),
+        );
+        let (tx, mut targets) = tokio::sync::mpsc::unbounded_channel();
+        *renderer.targets.lock().unwrap() = Some(tx);
+        let policy = Arc::new(HoldFirstResource {
+            path: "/csr.html",
+            ..Default::default()
+        });
+        let opts = RenderOpts {
+            screenshots: false,
+            response_timeout_ms: 120_000,
+            page_timeout_ms: 120_000,
+            resource_policy: Some(policy.clone()),
+            ..Default::default()
+        };
+        let r = renderer.clone();
+        let url = site.url("/csr.html");
+        let task = tokio::spawn(async move { r.render(&url, &opts).await });
+        let (target, resume) = tokio::time::timeout(Duration::from_secs(30), targets.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        let mut watch = watch_target(target).await;
+        resume.send(()).unwrap();
+        tokio::time::timeout(Duration::from_secs(30), policy.started.notified())
+            .await
+            .expect("Hauptnavigation wird angehalten");
+        let error = tokio::time::timeout(Duration::from_secs(10), watch.crash())
+            .await
+            .expect("Ablehnung wird sofort statt als Crash-Timeout gemeldet")
+            .unwrap_err();
+        assert!(
+            matches!(error, RenderError::Protocol(ref detail)
+                if detail.contains("Page.crash") && detail.contains("pending navigations")),
+            "{error:?}"
+        );
+        task.abort();
+        assert!(task.await.unwrap_err().is_cancelled());
+        drop(watch);
+        renderer.close().await;
+    }
+
     #[tokio::test]
     // Spec-Fixture `crawl-js` (paketeigen unter render-r01).
     // spec: CRAWL-078

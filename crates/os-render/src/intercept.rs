@@ -90,11 +90,27 @@ impl TargetWatch {
     }
 
     #[cfg(test)]
-    pub fn crash(&mut self) {
-        // Page.crash bestätigt den Befehl nicht zuverlässig; nur das Ereignis zählt.
-        self.conn
+    pub async fn crash(&mut self) -> Result<(), RenderError> {
+        // Page.crash bestätigt Erfolg nicht zuverlässig; nur das Ereignis zählt.
+        // Eine Ablehnung (z. B. während Navigation) ist dagegen sofort ein Fehler.
+        let id = self
+            .conn
             .submit_command("Page.crash".into(), Some(self.session.clone()), json!({}))
-            .expect("Crash-Befehl senden");
+            .map_err(protocol)?;
+        while let Some(message) = self.conn.next().await {
+            match message.map_err(protocol)? {
+                Message::Event(event) if target_lost(&event, &self.target, &self.session) => {
+                    return Ok(());
+                }
+                Message::Response(response) if response.id == id => {
+                    if let Some(error) = response.error {
+                        return Err(protocol(format!("CDP Page.crash abgelehnt: {error:?}")));
+                    }
+                }
+                _ => {}
+            }
+        }
+        Err(RenderError::Crashed("CDP-Verbindung geschlossen".into()))
     }
 }
 
