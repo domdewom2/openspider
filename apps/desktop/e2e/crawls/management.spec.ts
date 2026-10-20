@@ -55,6 +55,7 @@ test("import cancellation leaves the core untouched, progress persists outside t
   await page.evaluate(() => window.crawlsFixture.setPaths(["/fixture/Alpha.ospider"]));
   await page.getByRole("button", { name: "Import crawls…" }).click();
   await expect(page.getByRole("progressbar")).toBeVisible();
+  await expect.poll(() => page.getByRole("dialog").evaluate(dialog => dialog.contains(document.activeElement))).toBe(true);
   await page.keyboard.press("Escape"); await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.getByRole("progressbar")).toBeVisible();
   await page.evaluate(() => window.crawlsFixture.complete());

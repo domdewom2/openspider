@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useT, i18n, currentLanguage } from "../../i18n";
 import { crawl } from "../../ipc/crawl";
 import { crawls } from "../../ipc/crawls";
@@ -56,20 +56,21 @@ export function CrawlsHost({ desktop = nativeCrawlDesktop }: { desktop?: CrawlDe
   const disabled = busy || running || loading;
   // Disabling a pressed native button moves focus to body in WebKit/Chromium. Keep it inside
   // the active modal so Escape and screen-reader navigation continue to work during an operation.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) return;
-    let frame = 0;
+    let mounted = true;
     const keepFocus = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (document.activeElement !== document.body) return;
-        const dialogs = document.querySelectorAll<HTMLElement>('[role="dialog"]');
-        dialogs[dialogs.length - 1]?.focus();
-      });
+      if (!mounted) return;
+      const focused = document.activeElement;
+      if (focused !== document.body && !focused?.matches(":disabled")) return;
+      const dialogs = document.querySelectorAll<HTMLElement>('[role="dialog"]');
+      dialogs[dialogs.length - 1]?.focus();
     };
+    // Restore before paint/key input; a deferred animation frame can lose Escape on WebKit.
     keepFocus();
-    document.addEventListener("focusout", keepFocus);
-    return () => { cancelAnimationFrame(frame); document.removeEventListener("focusout", keepFocus); };
+    const onFocusOut = () => queueMicrotask(keepFocus);
+    document.addEventListener("focusout", onFocusOut);
+    return () => { mounted = false; document.removeEventListener("focusout", onFocusOut); };
   }, [open, disabled]);
   const textError = useCallback((e: unknown) => {
     const error = toCmdError(e);

@@ -27,6 +27,9 @@ in Toolbar und Kontextmenü mit übersetzter Begründung deaktiviert.
 Der erfolgreiche Mock ist entfernt; ein Test über die echte Bridge
 prüft diesen Zustand mit zwei realen Crawl-Dateien. Die vollständige
 OUT-228-Vergleichsaktion bleibt bis zur Integration von C01/U27 offen.
+Der vollständige [C9-Test](../../../e2e/crawls/compare.pending.spec.ts)
+prüft danach Aktivierung, UI-Aufruf und echte Kernantwort; N02 entfernt das
+Fixme nach der Fachintegration.
 
 Dateiaktionen laufen über die bestehenden IPC-Verträge und die ergänzten
 nativen Dateiadapter. Operationen zeigen Fortschritt, Abbruch und Ergebnis
@@ -36,10 +39,14 @@ Konfiguration wird nur auf ausdrückliche Aktion übernommen. Tatsächlich
 fehlende Dateien werden beim Anklicken aus dem Verlauf entfernt;
 Berechtigungs-, Format- und Versionsfehler erhalten den Eintrag.
 
-[K2-61.patch](K2-61.patch) belegt die sieben additiven Fremdergänzungen der
-ursprünglichen Umsetzung. Diese Fix-Runde verändert keine fremde
-Implementierung, Tests, Goldens, Manifeste oder generierten IPC-Dateien.
-Der angeforderte Bericht ist die einzige neue Datei außerhalb von `owns`.
+Der vollständige Fremddiff im
+[Paketbericht](../../../../../docs/plan/M2-reports/u15.md#fremdergänzungen-k2-61)
+belegt die sieben additiven Fremdergänzungen der ursprünglichen Umsetzung.
+Diese Fix-Runde verändert keine fremde Implementierung, Tests, Goldens,
+Manifeste oder generierten IPC-Dateien.
+Der angeforderte Bericht ist die einzige bearbeitete Datei außerhalb von `owns`.
+Er benennt außerdem die drei regulären Crawl-Datei-Commands für N02 und
+den noch offenen Windows-Kopierfehler aus dem R5-CI-Nachweis.
 
 Fixtures: `fixtures/management.json`, `fixtures/fake.ospider` und daraus
 abgeleitete 1.005 Metadaten. Vitest prüft Verträge und Grenzfälle;

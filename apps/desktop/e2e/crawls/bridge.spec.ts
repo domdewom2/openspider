@@ -29,6 +29,8 @@ test("real core manages portable crawls, reports comparison availability and rej
     await expect.poll(() => page.evaluate(() => window.crawlsBridge.phase()), { timeout: 20_000 }).toBe("completed");
     await page.getByRole("button", { name: "Manage", exact: true }).click();
     await expect(page.getByRole("table", { name: "Saved crawls" })).toBeVisible();
+    await expect(page.getByRole("checkbox")).toHaveCount(2);
+    await expect(page.getByRole("button", { name: "Refresh", exact: true })).toBeEnabled();
     await page.getByRole("checkbox", { name: "Select all filtered crawls" }).check();
     await page.getByRole("button", { name: "Rename", exact: true }).click();
     await page.getByRole("textbox", { name: "Name", exact: true }).fill("U15 renamed fixture");
