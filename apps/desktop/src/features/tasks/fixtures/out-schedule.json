@@ -1,0 +1,208 @@
+{
+  "task": {
+    "id": "nightly",
+    "name": "Nightly",
+    "project": "Shop",
+    "enabled": true,
+    "schedule": {
+      "kind": "weekly",
+      "days": [
+        1,
+        3,
+        5
+      ],
+      "time": "02:30"
+    },
+    "crawl": {
+      "source": {
+        "kind": "spider",
+        "url": "https://example.test/"
+      },
+      "profile": "shop",
+      "overrides": {
+        "speed.threads": 10
+      },
+      "authProfile": "shop-login"
+    },
+    "execution": {
+      "headless": true,
+      "timeoutMin": 120,
+      "runIfMissed": true,
+      "autoCompare": true
+    },
+    "apis": [
+      "gsc"
+    ],
+    "exports": [
+      {
+        "kind": "bulk",
+        "name": "All Inlinks",
+        "format": "csv",
+        "dir": null
+      }
+    ],
+    "notify": {
+      "onSuccess": false,
+      "onFailure": true,
+      "account": "work",
+      "to": [
+        "seo@example.test"
+      ]
+    },
+    "exportOptions": null,
+    "exportPreset": null,
+    "customSummary": null
+  },
+  "info": {
+    "id": "nightly",
+    "name": "Nightly",
+    "project": "Shop",
+    "schedule": {
+      "kind": "weekly",
+      "days": [
+        1,
+        3,
+        5
+      ],
+      "time": "02:30"
+    },
+    "nextRun": "2026-10-21T00:30:00Z",
+    "enabled": true,
+    "registered": true,
+    "lastRun": null
+  },
+  "runs": [
+    {
+      "runId": "run-list",
+      "taskId": "nightly",
+      "startedAt": "2026-10-19T00:30:00Z",
+      "endedAt": "2026-10-19T00:31:00Z",
+      "state": "succeeded",
+      "exitCode": 4,
+      "crawlId": "crawl-list",
+      "exports": [
+        "output/internal.csv"
+      ],
+      "error": "PSI unavailable",
+      "urlsCrawled": 1234,
+      "outputFolder": "output/list-run",
+      "logPath": "logs/run-list.log"
+    },
+    {
+      "runId": "run-aborted",
+      "taskId": "nightly",
+      "startedAt": "2026-10-18T00:30:00Z",
+      "endedAt": "2026-10-18T00:30:10Z",
+      "state": "cancelled",
+      "exitCode": null,
+      "crawlId": "saved-partial",
+      "exports": [],
+      "error": null,
+      "urlsCrawled": 0,
+      "outputFolder": "output/aborted-run",
+      "logPath": "logs/run-aborted.log"
+    }
+  ],
+  "account": {
+    "id": "work",
+    "label": "Work SMTP",
+    "host": "smtp.example.test",
+    "port": 587,
+    "tls": "starttls",
+    "from": "crawler@example.test",
+    "hasSecret": true
+  },
+  "metrics": [
+    {
+      "id": "Internal:HTML",
+      "labelKey": "metric-0"
+    },
+    {
+      "id": "Response Codes:Client Error (4xx)",
+      "labelKey": "metric-1"
+    },
+    {
+      "id": "Average:Response Time",
+      "labelKey": "metric-2"
+    }
+  ],
+  "authProfiles": [
+    {
+      "name": "shop-login",
+      "kind": "form",
+      "host": "https://example.test/",
+      "createdAt": "2026-10-01T00:00:00Z",
+      "hasSecret": true
+    }
+  ],
+  "runningRun": {
+    "runId": "planned-run",
+    "taskId": "nightly",
+    "startedAt": "2026-10-19T00:30:00Z",
+    "endedAt": null,
+    "state": "running",
+    "exitCode": null,
+    "crawlId": "crawl-list",
+    "exports": [
+      "output/internal.csv"
+    ],
+    "error": null,
+    "urlsCrawled": 1234,
+    "outputFolder": "output/list-run",
+    "logPath": "logs/run-list.log",
+    "operation": {
+      "opId": "planned-operation",
+      "labelKey": "tasks-op-running",
+      "cancellable": true
+    }
+  },
+  "importedOnce": {
+    "id": "nightly",
+    "name": "Nightly",
+    "project": "Shop",
+    "enabled": true,
+    "schedule": {
+      "kind": "once",
+      "at": "2026-11-01T09:00:00-05:00"
+    },
+    "crawl": {
+      "source": {
+        "kind": "spider",
+        "url": "https://example.test/"
+      },
+      "profile": "shop",
+      "overrides": {
+        "speed.threads": 10
+      },
+      "authProfile": "shop-login"
+    },
+    "execution": {
+      "headless": true,
+      "timeoutMin": 120,
+      "runIfMissed": true,
+      "autoCompare": true
+    },
+    "apis": [
+      "gsc"
+    ],
+    "exports": [
+      {
+        "kind": "bulk",
+        "name": "All Inlinks",
+        "format": "csv",
+        "dir": null
+      }
+    ],
+    "notify": {
+      "onSuccess": false,
+      "onFailure": true,
+      "account": "work",
+      "to": [
+        "seo@example.test"
+      ]
+    },
+    "exportOptions": null,
+    "exportPreset": null,
+    "customSummary": null
+  }
+}

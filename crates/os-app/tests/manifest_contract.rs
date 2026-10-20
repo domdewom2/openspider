@@ -166,6 +166,7 @@ const CATALOG_3_6A: &[&str] = &[
     "tasks.delete",
     "tasks.run",
     "tasks.history",
+    "tasks.openLog",
     "tasks.register",
     "tasks.unregister",
     "tasks.export",

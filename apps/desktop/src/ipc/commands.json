@@ -954,6 +954,12 @@
     "longRunning": false
   },
   {
+    "name": "tasks.openLog",
+    "args": "IdArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
     "name": "tasks.register",
     "args": "TaskRegisterArgs",
     "ret": "PlannerPreview",

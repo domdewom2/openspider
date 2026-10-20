@@ -14,6 +14,8 @@ stub_commands!(
         ("tasks.delete", "IdArgs", "void", false),
         ("tasks.run", "IdArgs", "TaskRunRow", true),
         ("tasks.history", "TasksHistoryArgs", "TaskRunRow[]", false),
+        // Schnittstellenbedarf M2-U27 / OUT-169: IdArgs.id ist die Laufkennung.
+        ("tasks.openLog", "IdArgs", "void", false),
         (
             "tasks.register",
             "TaskRegisterArgs",
