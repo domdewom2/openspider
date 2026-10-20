@@ -158,11 +158,16 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       const width = Math.max(0, rect.width);
       const height = Math.max(0, rect.height);
       size.current = { width, height, dpr };
-      c.width = Math.max(1, Math.round(width * dpr));
-      c.height = Math.max(1, Math.round(height * dpr));
+      const bw = Math.max(1, Math.round(width * dpr));
+      const bh = Math.max(1, Math.round(height * dpr));
       c.style.width = `${width}px`;
       c.style.height = `${height}px`;
-      schedule();
+      // Jede Zuweisung leert das Bild: nur bei echter Größenänderung setzen und dann sofort neu zeichnen (kein leeres Bild).
+      if (c.width !== bw || c.height !== bh) {
+        c.width = bw;
+        c.height = bh;
+        draw();
+      } else schedule();
     };
     resize();
     const ro = typeof ResizeObserver === "function" ? new ResizeObserver(resize) : null;
@@ -173,7 +178,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       ro?.disconnect();
       media?.removeEventListener?.("change", resize);
     };
-  }, [schedule]);
+  }, [draw, schedule]);
 
   useEffect(() => {
     schedule();
