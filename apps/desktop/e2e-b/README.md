@@ -44,5 +44,13 @@ shell provides that measurement seam. See the precise handoff in `S-6.md`.
 
 `ui-e2e-b.yml` runs nightly, manually, and as a reusable workflow;
 `spike-platform.yml` manually calls it for S3 (both platforms) and S6 (macOS).
-The Windows path is prepared but has not been executed in the no-push local fix
-round. Actual evidence and outstanding gates live in `docs/plan/M2-spikes/`.
+The first branch CI runs on `6e31faa` reached Vite but timed out before app startup:
+ANSI colors split the readiness strings. The runner now normalizes that output;
+regression fixtures retain the five actual CI logs and reports. Run both suites:
+
+```sh
+node --test apps/desktop/e2e-b/measurement.test.mjs apps/desktop/e2e-b/readiness.test.mjs
+```
+
+A Windows run of the corrected runner and an unlocked macOS GUI run are still
+required. Actual evidence and outstanding gates live in `docs/plan/M2-spikes/`.

@@ -12,6 +12,7 @@ import { createServer as httpServer } from "node:http";
 import { setTimeout as delay } from "node:timers/promises";
 import { remote } from "webdriverio";
 import { measure, validateRate } from "./measurement.mjs";
+import { viteReady } from "./readiness.mjs";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const binary = process.argv[2] && resolve(process.argv[2]);
@@ -29,6 +30,7 @@ const report = { mode, platform: process.platform, release: release(), arch: arc
   startedAt: new Date(started).toISOString(),
   revision: execFileSync("git", ["rev-parse", "HEAD"], { cwd: repo, encoding: "utf8" }).trim(),
   runnerSha256: createHash("sha256").update(await readFile(fileURLToPath(import.meta.url))).digest("hex"),
+  readinessSha256: createHash("sha256").update(await readFile(new URL("./readiness.mjs", import.meta.url))).digest("hex"),
   probeSha256: createHash("sha256").update(await readFile(join(repo, "apps/desktop/spikes/probe.ts"))).digest("hex"),
   launch: process.env.S02_GUI === "1" ? "LaunchServices" : "child-process", checks: [], errors: [] };
 
@@ -105,7 +107,7 @@ try {
   const vite = child(process.execPath, [join(repo, "node_modules/vite/bin/vite.js"), join(repo, "apps/desktop"), "--host", "localhost"], {});
   await until(async () => {
     if (vite.exitCode !== null) throw new Error(`Vite exited ${vite.exitCode}: ${logs}`);
-    return logs.includes("Local:") || logs.includes("http://localhost:1420");
+    return viteReady(logs);
   }, "Vite ready");
   const port = await freePort();
   const env = { OPENSPIDER_HOME: home, OPENSPIDER_SECRET_STORE: "memory", TAURI_WEBDRIVER_PORT: String(port) };

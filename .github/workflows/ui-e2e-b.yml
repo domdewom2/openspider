@@ -45,7 +45,7 @@ jobs:
       - run: npm ci
       - run: npm run -w apps/desktop check:licenses
       - run: npx --no-install tsc -p apps/desktop/spikes/tsconfig.json
-      - run: node --test apps/desktop/e2e-b/measurement.test.mjs
+      - run: node --test apps/desktop/e2e-b/measurement.test.mjs apps/desktop/e2e-b/readiness.test.mjs
       - name: Build macOS embedded driver
         if: runner.os == 'macOS'
         run: |

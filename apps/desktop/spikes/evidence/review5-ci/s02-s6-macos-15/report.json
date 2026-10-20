@@ -1,0 +1,18 @@
+{
+  "mode": "s6",
+  "platform": "darwin",
+  "release": "24.6.0",
+  "arch": "arm64",
+  "node": "v22.23.2",
+  "startedAt": "2026-10-20T05:54:55.797Z",
+  "revision": "6e31faaffe1214fd0e3dabceeb363b4f73c31834",
+  "runnerSha256": "569d61e3f4a3cb473d163d0d2ac1ebe9bb218cc83c3cb5558ce2e29e7ad7fafd",
+  "probeSha256": "9f9c2ec2bcd8161b13f8c41635b4db5611faf400f3dc00b7d553f4fd4618c404",
+  "launch": "LaunchServices",
+  "checks": [],
+  "errors": [
+    "Error: Vite ready: timed out"
+  ],
+  "seconds": 30.262,
+  "status": "failed"
+}
