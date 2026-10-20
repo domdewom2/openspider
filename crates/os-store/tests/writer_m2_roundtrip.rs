@@ -316,6 +316,7 @@ fn render_results_roundtrip_with_children_and_replace_per_url() {
             load_ms: 100,
             wait_ms: 200,
             total_ms: 300,
+            ..Default::default()
         },
         console: (0..console)
             .map(|i| ConsoleEntry {

@@ -1,0 +1,82 @@
+[[route]]
+path = "/csr.html"
+requires_chromium = true
+[[route]]
+path = "/slow.js"
+content_type = "application/javascript"
+delay_ms = 700
+body = "window.slowScriptLoaded = true;"
+[[route]]
+path = "/hang.png"
+hang = true
+[[route]]
+path = "/missing.css"
+status = 404
+content_type = "text/css"
+body = ""
+[[route]]
+path = "/failed.js"
+status = 500
+content_type = "application/javascript"
+body = ""
+[[route]]
+path = "/echo"
+echo = "headers"
+[[route]]
+path = "/pixel.png"
+png_size = 100
+[[route]]
+path = "/auth"
+sequence = [401, 200]
+body = "authenticated"
+[route.headers]
+WWW-Authenticate = 'Basic realm="fixture"'
+[[route]]
+path = "/tab-limit"
+delay_ms = 700
+body = '<!doctype html><link rel="icon" href="data:,"><title>tab limit</title>'
+[[route]]
+path = "/attachment"
+body = "download must be denied"
+[route.headers]
+Content-Disposition = 'attachment; filename="fixture.txt"'
+
+[[route]]
+path = "/parallel-0.js"
+content_type = "application/javascript"
+delay_ms = 300
+body = "window.loadedResources = (window.loadedResources || 0) + 1;"
+[route.headers]
+Set-Cookie = "resource0=present; Path=/; HttpOnly; SameSite=Lax"
+
+[[route]]
+path = "/parallel-1.js"
+content_type = "application/javascript"
+delay_ms = 300
+body = "window.loadedResources = (window.loadedResources || 0) + 1;"
+[route.headers]
+Set-Cookie = "resource1=present; Path=/; HttpOnly; SameSite=Lax"
+
+[[route]]
+path = "/parallel-2.js"
+content_type = "application/javascript"
+delay_ms = 300
+body = "window.loadedResources = (window.loadedResources || 0) + 1;"
+[route.headers]
+Set-Cookie = "resource2=present; Path=/; HttpOnly; SameSite=Lax"
+
+[[route]]
+path = "/parallel-3.js"
+content_type = "application/javascript"
+delay_ms = 300
+body = "window.loadedResources = (window.loadedResources || 0) + 1;"
+[route.headers]
+Set-Cookie = "resource3=present; Path=/; HttpOnly; SameSite=Lax"
+
+[[route]]
+path = "/parallel-4.js"
+content_type = "application/javascript"
+delay_ms = 300
+body = "window.loadedResources = (window.loadedResources || 0) + 1;"
+[route.headers]
+Set-Cookie = "resource4=present; Path=/; HttpOnly; SameSite=Lax"
