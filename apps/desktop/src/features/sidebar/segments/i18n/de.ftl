@@ -1,0 +1,15 @@
+sg-configure = Segmente konfigurieren
+sg-create = Segmente anlegen
+sg-clear-filter = Segmentfilter aufheben
+sg-empty = Es sind noch keine Segmente konfiguriert. Segmente fassen URLs anhand von Regeln zusammen, zum Beispiel Blog oder Shop.
+sg-view = Ansicht
+sg-view-overview = Übersicht
+sg-view-crawlDepth = Crawl-Tiefe
+sg-view-responseCodes = Response Codes
+sg-view-indexability = Indexierbarkeit
+sg-view-issuePriority = Issues nach Priorität
+sg-table = Kennzahlen je Segment
+sg-segment = Segment
+sg-percent-segmented = % segmentiert
+sg-none = Ohne Segment
+sg-filter-by = Nach Segment filtern: { $name }

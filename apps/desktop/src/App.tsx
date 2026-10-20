@@ -5,6 +5,7 @@ import { Statusbar } from "./features/statusbar/Statusbar";
 import { Notifications } from "./features/notifications/Notifications";
 import { SidebarMount } from "./features/sidebar/frame/SidebarMount";
 import { IntegrationsHeaderSlot, IntegrationsHost } from "./features/integrations";
+import { SegmentsDialogHost } from "./features/segments-dialog";
 import { useEffect, useState, type ComponentType } from "react";
 import { RegionBoundary } from "./app/ErrorBoundary";
 import { Providers } from "./app/Providers";
@@ -48,6 +49,7 @@ export function App() {
     <Providers>
       <ExportHost />
       <IntegrationsHost />
+      <SegmentsDialogHost />
       <div className="os-app">
         <Shell />
         <header className="os-app-header" role="banner" aria-label={t("app-region-header")}>
