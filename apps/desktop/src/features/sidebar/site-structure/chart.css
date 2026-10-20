@@ -1,0 +1,14 @@
+.os-sidebar-bars { list-style: none; margin: 0; padding: 6px; display: grid; gap: 3px; }
+.os-sidebar-bars li { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: 6px; }
+.os-sidebar-bar-label { font-variant-numeric: tabular-nums; text-align: end; color: var(--os-text-muted); }
+.os-sidebar-bar { display: flex; height: 14px; min-width: 2px; gap: 1px; }
+.os-sidebar-bar-part { min-width: 2px; padding: 0; border: 0; }
+.os-sidebar-bar-part[data-class="Blocked by robots.txt"] { background-image: repeating-linear-gradient(45deg, transparent 0 3px, rgb(255 255 255 / 55%) 3px 5px) !important; }
+.os-sidebar-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0; padding: 0 6px 6px; list-style: none; font-size: 11px; }
+.os-sidebar-legend i { display: inline-block; width: 10px; height: 10px; margin-inline-end: 4px; vertical-align: -1px; }
+.os-sidebar-view { display: flex; gap: 6px; align-items: center; padding: 6px; }
+.os-sidebar-note { margin: 0; padding: 4px 6px; color: var(--os-text-muted); font-size: 11px; }
+.os-sidebar-tree-name { display: inline-flex; align-items: center; gap: 2px; }
+.os-sidebar-toggle { width: 18px; padding: 0; border: 0; background: transparent; }
+.os-sidebar-count { text-align: end; }
+@media (forced-colors: active) { .os-sidebar-bar-part { border: 1px solid ButtonText; } }
