@@ -1,0 +1,21 @@
+# Seite URL-Umschreibung (M2-U13)
+config-rewrite-desc = Umschreibungen gelten für URLs, die während des Crawls entdeckt werden – nicht für die Start-URL und nicht für hochgeladene Listen-URLs. Reihenfolge: Parameter entfernen, dann Regex-Ersetzungen.
+config-sec-rewrite-params = Parameter entfernen
+config-hint-remove-params = Ein Parametername pro Zeile (exakte Übereinstimmung, Groß-/Kleinschreibung zählt).
+config-f-rewrite-remove-parameters = Zu entfernende Parameter
+config-f-rewrite-remove-all-parameters = Gesamten Query-String entfernen
+config-rewrite-regex = Regex ersetzen
+config-rewrite-regex-hint = Die Regeln laufen von oben nach unten. In der Ersetzung steht $1 für Gruppen.
+config-rewrite-pattern = Regulärer Ausdruck
+config-rewrite-replacement = Ersetzung
+config-rewrite-pattern-n = Regulärer Ausdruck, Regel { $n }
+config-rewrite-replacement-n = Ersetzung, Regel { $n }
+config-rewrite-up = Regel { $n } nach oben
+config-rewrite-down = Regel { $n } nach unten
+config-rewrite-remove = Regel { $n } entfernen
+config-rewrite-add = Regel hinzufügen
+config-rewrite-tester = Testfeld
+config-rewrite-result = Umgeschriebene URL
+config-rewrite-steps = Zwischenergebnisse
+config-rewrite-step-params = Nach dem Entfernen der Parameter
+config-rewrite-step-regex = Regex-Regel { $line }
