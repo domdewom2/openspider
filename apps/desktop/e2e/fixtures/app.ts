@@ -18,8 +18,12 @@ interface Worker {
   mode: TransportMode;
 }
 
-export const test = base.extend<{ app: AppFixture }, { workerBridge: Worker }>({
-  workerBridge: [
+let announced = false;
+
+// Eine Bridge je Test (leeres Home): persistierte Einstellungen (Sprache, Theme, Akzent) wirken sonst auf später im selben
+// Worker laufende Tests; welche Tests das trifft, hängt von der Worker-Verteilung ab und ändert sich mit jedem neuen Spec.
+export const test = base.extend<{ app: AppFixture; testBridge: Worker }>({
+  testBridge: [
     async ({}, use) => {
       let bridge: Bridge | null = null;
       let mode: TransportMode = "mock";
@@ -28,15 +32,18 @@ export const test = base.extend<{ app: AppFixture }, { workerBridge: Worker }>({
         if (bridge) mode = "bridge";
         else if (REQUESTED === "bridge") throw new Error("OS_E2E_TRANSPORT=bridge, aber os-app-bridge startet nicht (cargo build -p os-app --features e2e-bridge --bin os-app-bridge)");
       }
-      console.log(`[e2e] Transport: ${mode}${mode === "mock" ? " (os-app-bridge nicht verfügbar)" : ""}`);
+      if (!announced) {
+        announced = true;
+        console.log(`[e2e] Transport: ${mode}${mode === "mock" ? " (os-app-bridge nicht verfügbar)" : ""}`);
+      }
       await use({ bridge, mode });
       await bridge?.stop();
     },
-    { scope: "worker", auto: true },
+    { scope: "test" },
   ],
 
-  app: async ({ workerBridge }, use, testInfo) => {
-    const { bridge, mode } = workerBridge;
+  app: async ({ testBridge }, use, testInfo) => {
+    const { bridge, mode } = testBridge;
     testInfo.annotations.push({ type: "transport", description: mode });
     const query = (extra: Record<string, string> = {}) => {
       const p = new URLSearchParams(extra);
