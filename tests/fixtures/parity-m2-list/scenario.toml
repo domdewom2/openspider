@@ -1,0 +1,27 @@
+# M2-P01: generiert durch tests/parity/gen/m2_sites.py.
+
+[[route]]
+path = "/Case.html"
+content_type = "text/html"
+body = "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>/Case.html</title></head>\n<body>\n<h1>/Case.html</h1></body>\n</html>\n"
+
+[[route]]
+path = "/case.html"
+content_type = "text/html"
+body = "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>/case.html</title></head>\n<body>\n<h1>/case.html</h1></body>\n</html>\n"
+
+[[route]]
+path = "/redirect"
+status = 301
+location = "/item-00.html"
+
+[[route]]
+path = "/chain"
+status = 301
+location = "/redirect"
+
+[[route]]
+path = "/"
+status = 200
+[route.headers]
+"Last-Modified" = "Thu, 01 Oct 2026 10:00:00 GMT"

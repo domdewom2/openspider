@@ -1,0 +1,327 @@
+[
+  {
+    "path": "/canonical-relative.html",
+    "spec": "TECH-010",
+    "status": 200
+  },
+  {
+    "path": "/canonical-unlinked.html",
+    "spec": "TECH-010",
+    "status": 200
+  },
+  {
+    "path": "/canonical-invalid-attribute.html",
+    "spec": "TECH-010",
+    "status": 200
+  },
+  {
+    "path": "/canonical-fragment.html",
+    "spec": "TECH-010",
+    "status": 200
+  },
+  {
+    "path": "/canonical-target.html",
+    "spec": "TECH-010",
+    "status": 200
+  },
+  {
+    "path": "/canonical-unlinked-target.html",
+    "spec": "TECH-019",
+    "status": 200
+  },
+  {
+    "path": "/canonical-outside.html",
+    "spec": "TECH-023",
+    "status": 200
+  },
+  {
+    "path": "/canonical-chain-a.html",
+    "spec": "TECH-026",
+    "status": 200
+  },
+  {
+    "path": "/canonical-chain-b.html",
+    "spec": "TECH-026",
+    "status": 200
+  },
+  {
+    "path": "/canonical-to-noindex.html",
+    "spec": "TECH-018",
+    "status": 200
+  },
+  {
+    "path": "/canonical-noindex.html",
+    "spec": "TECH-018",
+    "status": 200
+  },
+  {
+    "path": "/page-1.html",
+    "spec": "TECH-031",
+    "status": 200
+  },
+  {
+    "path": "/page-2.html",
+    "spec": "TECH-031",
+    "status": 200
+  },
+  {
+    "path": "/page-3.html",
+    "spec": "TECH-031",
+    "status": 200
+  },
+  {
+    "path": "/page-4.html",
+    "spec": "TECH-031",
+    "status": 200
+  },
+  {
+    "path": "/pagination-only-link.html",
+    "spec": "TECH-035",
+    "status": 200
+  },
+  {
+    "path": "/pagination-404.html",
+    "spec": "TECH-035",
+    "status": 200
+  },
+  {
+    "path": "/pagination-noindex.html",
+    "spec": "TECH-035",
+    "status": 200
+  },
+  {
+    "path": "/pagination-unlinked.html",
+    "spec": "TECH-037",
+    "status": 200
+  },
+  {
+    "path": "/pagination-404-target.html",
+    "spec": "TECH-036",
+    "status": 404
+  },
+  {
+    "path": "/pagination-noindex.html",
+    "spec": "TECH-038",
+    "status": 200
+  },
+  {
+    "path": "/pagination-multiple.html",
+    "spec": "TECH-039",
+    "status": 200
+  },
+  {
+    "path": "/pagination-loop-a.html",
+    "spec": "TECH-040",
+    "status": 200
+  },
+  {
+    "path": "/pagination-loop-b.html",
+    "spec": "TECH-040",
+    "status": 200
+  },
+  {
+    "path": "/pagination-sequence.html",
+    "spec": "TECH-041",
+    "status": 200
+  },
+  {
+    "path": "/directive-0.html",
+    "spec": "TECH-050",
+    "status": 200
+  },
+  {
+    "path": "/directive-1.html",
+    "spec": "TECH-050",
+    "status": 200
+  },
+  {
+    "path": "/directive-2.html",
+    "spec": "TECH-050",
+    "status": 200
+  },
+  {
+    "path": "/directive-3.html",
+    "spec": "TECH-050",
+    "status": 200
+  },
+  {
+    "path": "/directive-4.html",
+    "spec": "TECH-050",
+    "status": 200
+  },
+  {
+    "path": "/directive-5.html",
+    "spec": "TECH-050",
+    "status": 200
+  },
+  {
+    "path": "/directive-6.html",
+    "spec": "TECH-050",
+    "status": 200
+  },
+  {
+    "path": "/directive-7.html",
+    "spec": "TECH-050",
+    "status": 200
+  },
+  {
+    "path": "/robots-outside.html",
+    "spec": "TECH-065",
+    "status": 200
+  },
+  {
+    "path": "/xrobots-noindex.html",
+    "spec": "TECH-050",
+    "status": 200
+  },
+  {
+    "path": "/xrobots-bot.html",
+    "spec": "TECH-050",
+    "status": 200
+  },
+  {
+    "path": "/xrobots-all.html",
+    "spec": "TECH-050",
+    "status": 200
+  },
+  {
+    "path": "/lang-valid.html",
+    "spec": "TECH-070",
+    "status": 200
+  },
+  {
+    "path": "/lang-valid-return.html",
+    "spec": "TECH-077",
+    "status": 200
+  },
+  {
+    "path": "/lang-inconsistent.html",
+    "spec": "TECH-070",
+    "status": 200
+  },
+  {
+    "path": "/lang-inconsistent-return.html",
+    "spec": "TECH-077",
+    "status": 200
+  },
+  {
+    "path": "/lang-noindex.html",
+    "spec": "TECH-070",
+    "status": 200
+  },
+  {
+    "path": "/lang-noindex-return.html",
+    "spec": "TECH-077",
+    "status": 200
+  },
+  {
+    "path": "/lang-noncanonical.html",
+    "spec": "TECH-070",
+    "status": 200
+  },
+  {
+    "path": "/lang-noncanonical-return.html",
+    "spec": "TECH-077",
+    "status": 200
+  },
+  {
+    "path": "/lang-unlinked.html",
+    "spec": "TECH-075",
+    "status": 200
+  },
+  {
+    "path": "/lang-unlinked-target.html",
+    "spec": "TECH-075",
+    "status": 200
+  },
+  {
+    "path": "/lang-to-404.html",
+    "spec": "TECH-074",
+    "status": 200
+  },
+  {
+    "path": "/lang-multiple.html",
+    "spec": "TECH-081",
+    "status": 200
+  },
+  {
+    "path": "/lang-missing-self.html",
+    "spec": "TECH-082",
+    "status": 200
+  },
+  {
+    "path": "/lang-not-canonical.html",
+    "spec": "TECH-083",
+    "status": 200
+  },
+  {
+    "path": "/lang-missing-default.html",
+    "spec": "TECH-084",
+    "status": 200
+  },
+  {
+    "path": "/lang-outside.html",
+    "spec": "TECH-086",
+    "status": 200
+  },
+  {
+    "path": "/validation-img-head.html",
+    "spec": "TECH-282",
+    "status": 200
+  },
+  {
+    "path": "/validation-head-not-first.html",
+    "spec": "TECH-283",
+    "status": 200
+  },
+  {
+    "path": "/validation-head-missing.html",
+    "spec": "TECH-284",
+    "status": 200
+  },
+  {
+    "path": "/validation-head-multiple.html",
+    "spec": "TECH-285",
+    "status": 200
+  },
+  {
+    "path": "/validation-body-missing.html",
+    "spec": "TECH-286",
+    "status": 200
+  },
+  {
+    "path": "/validation-body-multiple.html",
+    "spec": "TECH-287",
+    "status": 200
+  },
+  {
+    "path": "/validation-body-before-html.html",
+    "spec": "TECH-288",
+    "status": 200
+  },
+  {
+    "path": "/large.html",
+    "spec": "TECH-289",
+    "status": 200
+  },
+  {
+    "path": "/refresh.html",
+    "spec": "ONPAGE-059",
+    "status": 200
+  },
+  {
+    "path": "/refresh-self.html",
+    "spec": "ONPAGE-059",
+    "status": 200
+  },
+  {
+    "path": "/ext-noindex.html",
+    "spec": "TECH-063",
+    "status": 200
+  },
+  {
+    "path": "/",
+    "spec": "CRAWL-001",
+    "status": 200
+  }
+]

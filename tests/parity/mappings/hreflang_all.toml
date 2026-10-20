@@ -33,8 +33,8 @@ drop_ref_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Refer
 "Sitemap hreflang 1 URL" = { ignore = true, reason = "Sitemap-Hreflang: die Referenz (Free) crawlt keine Sitemaps (K-53, REF-FREE)" }
 "Sitemap hreflang 2" = { ignore = true, reason = "Sitemap-Hreflang: die Referenz (Free) crawlt keine Sitemaps (K-53, REF-FREE)" }
 "Sitemap hreflang 2 URL" = { ignore = true, reason = "Sitemap-Hreflang: die Referenz (Free) crawlt keine Sitemaps (K-53, REF-FREE)" }
-"Indexability" = { ignore = true, reason = "Spaltenliste TECH-071 fuehrt Indexability nicht; die Referenz exportiert sie (Abnahmebericht, Spec-Luecke)" }
-"Indexability Status" = { ignore = true, reason = "Spaltenliste TECH-071 fuehrt Indexability Status nicht; die Referenz exportiert sie (Abnahmebericht, Spec-Luecke)" }
+"Indexability" = "Indexability"
+"Indexability Status" = "Indexability Status"
 
 [normalize]
 base_url = true          # http://127.0.0.1:<port> -> {BASE}, http://localhost:<port> -> {EXT}

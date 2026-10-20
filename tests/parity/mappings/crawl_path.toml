@@ -1,0 +1,19 @@
+# M2-P01: Spec-abgeleitete Spalten; keine Referenzwerte oder Beschreibungstexte.
+key = ["Target Address", "Step"]
+drop_ref_columns = ["Description", "How To Fix"]
+
+[columns]
+"Target Address" = "Target Address"
+"Step" = "Step"
+"Address" = "Address"
+"Status Code" = "Status Code"
+"Link Type" = "Link Type"
+"Anchor" = "Anchor"
+"Crawl Depth" = "Crawl Depth"
+
+[normalize]
+base_url = true
+trim = true
+bool = "case-insensitive"
+number_decimals = 3
+empty_equals_null = true

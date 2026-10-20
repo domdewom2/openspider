@@ -26,3 +26,5 @@ pub mod run;
 pub mod thresholds;
 
 pub use error::ParityError;
+
+mod xml;

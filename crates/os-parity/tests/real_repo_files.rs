@@ -88,6 +88,8 @@ fn deviations_schema_example_from_the_real_file_parses() {
 fn real_thresholds_file_loads_and_covers_the_a3_exports() {
     let t = Thresholds::load(&repo().join("tests/parity/thresholds.toml")).unwrap();
     assert_eq!(t.min_sites_present, 4);
+    assert_eq!(t.min_legacy_sites_present, 4);
+    assert_eq!(t.min_m2_sites_present, 4);
     for name in ["redirects_to_errors", "all_error_inlinks"] {
         assert!(t.agreement_pct.contains_key(name), "{name}");
         assert_eq!(t.agreement_for(name), 97.0, "{name}");
@@ -110,6 +112,12 @@ fn real_mappings_and_manifests_load_and_reference_each_other() {
         Mapping::load(m).unwrap_or_else(|e| panic!("{}: {e}", m.display()));
         names.push(m.file_stem().unwrap().to_string_lossy().into_owned());
     }
+    // Das Overview-Mapping löst M1-/M2-Platzhalter mit CrawlConfig-Defaults auf.
+    let filters = Mapping::load(&root.join("tests/parity/mappings/crawl_overview.toml"))
+        .unwrap()
+        .blocks
+        .m1_filters
+        .unwrap();
     let sites_dir = root.join("tests/golden/parity");
     let mut sites = 0;
     for entry in std::fs::read_dir(&sites_dir).unwrap() {
@@ -128,8 +136,16 @@ fn real_mappings_and_manifests_load_and_reference_each_other() {
         );
         assert!(!m.export.is_empty(), "{}", manifest.display());
         for e in &m.export {
-            OsExport::parse(&e.os)
-                .unwrap_or_else(|err| panic!("{}: {:?}: {err}", manifest.display(), e.os));
+            if let OsExport::Tab { tab, filter } = OsExport::parse(&e.os)
+                .unwrap_or_else(|err| panic!("{}: {:?}: {err}", manifest.display(), e.os))
+            {
+                assert!(
+                    filters.contains(&(tab.to_lowercase(), filter.to_lowercase())),
+                    "{}: unbekannter Filter {:?}",
+                    manifest.display(),
+                    e.os
+                );
+            }
             assert!(
                 names.contains(&e.mapping),
                 "{}: Mapping {:?} existiert nicht",
@@ -138,5 +154,80 @@ fn real_mappings_and_manifests_load_and_reference_each_other() {
             );
         }
     }
-    assert_eq!(sites, 5, "erwartet: out-basic-site + 4 parity-* Sites");
+    assert_eq!(sites, 10, "erwartet: fünf M1- und fünf M2-Sites");
+}
+
+// spec: OUT-080
+#[test]
+fn overview_includes_m2_default_labels_and_contract_columns_are_not_ignored() {
+    let root = repo();
+    let overview = Mapping::load(&root.join("tests/parity/mappings/crawl_overview.toml")).unwrap();
+    let filters = overview.blocks.m1_filters.unwrap();
+    for (tab, filter) in [
+        ("page titles", "over 561 pixels"),
+        ("meta description", "below 400 pixels"),
+        ("meta keywords", "multiple"),
+        ("links", "pages with high internal outlinks"),
+        ("validation", "html document over 2mb"),
+    ] {
+        assert!(
+            filters.contains(&(tab.to_string(), filter.to_string())),
+            "{tab}:{filter}"
+        );
+    }
+    for (name, columns) in [
+        (
+            "directives_all",
+            vec!["Indexability", "Indexability Status"],
+        ),
+        ("hreflang_all", vec!["Indexability", "Indexability Status"]),
+        ("links_all", vec!["Inlinks", "Link Score"]),
+    ] {
+        let mapping =
+            Mapping::load(&root.join(format!("tests/parity/mappings/{name}.toml"))).unwrap();
+        for column in columns {
+            assert!(!mapping.column(column).unwrap().ignore, "{name}:{column}");
+        }
+    }
+}
+
+// spec: OUT-015
+// spec: OUT-023
+// spec: OUT-133
+#[test]
+fn new_manifests_preserve_list_source_sitemap_variants_and_crawl_path_target() {
+    let root = repo();
+    let listed =
+        Manifest::load(&root.join("tests/golden/parity/parity-m2-list/manifest.toml")).unwrap();
+    assert_eq!(listed.list_source.as_deref(), Some("list.txt"));
+    let mapping = Mapping::load(&root.join("tests/parity/mappings/list_internal.toml")).unwrap();
+    assert!(mapping.ordered && mapping.key.iter().any(|k| k == "#"));
+    let links =
+        Manifest::load(&root.join("tests/golden/parity/parity-m2-links/manifest.toml")).unwrap();
+    let path = links
+        .export
+        .iter()
+        .find(|e| e.ref_file == "crawl_path_deep8.csv")
+        .unwrap();
+    assert_eq!(path.select["Target Address"], "/deep/8.html");
+    let onpage =
+        Manifest::load(&root.join("tests/golden/parity/parity-m2-onpage/manifest.toml")).unwrap();
+    let xml: Vec<_> = onpage
+        .export
+        .iter()
+        .filter(|e| matches!(OsExport::parse(&e.os).unwrap(), OsExport::Sitemap(_)))
+        .collect();
+    assert_eq!(xml.len(), 3);
+    assert!(xml.iter().any(|e| e
+        .config
+        .get("sitemap_gen.changefreq.basis")
+        .is_some_and(|s| s == "depth")));
+    for e in onpage
+        .export
+        .iter()
+        .chain(links.export.iter())
+        .chain(listed.export.iter())
+    {
+        assert_eq!(e.status, os_parity::manifest::ExportStatus::Pending);
+    }
 }

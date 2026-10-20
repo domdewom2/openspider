@@ -1,0 +1,31 @@
+# M2-P01: generiert durch tests/parity/gen/m2_sites.py.
+
+[[route]]
+path = "/real404.html"
+status = 404
+
+[[route]]
+path = "/fixture.swf"
+content_type = "application/x-shockwave-flash"
+
+[[route]]
+path = "/fixture.mp4"
+content_type = "video/mp4"
+
+[[route]]
+path = "/fixture.woff2"
+content_type = "font/woff2"
+
+[[route]]
+path = "/fixture.xml"
+content_type = "application/xml"
+
+[[route]]
+path = "/search"
+content_type = "text/html"
+
+[[route]]
+path = "/"
+status = 200
+[route.headers]
+"Last-Modified" = "Thu, 01 Oct 2026 10:00:00 GMT"

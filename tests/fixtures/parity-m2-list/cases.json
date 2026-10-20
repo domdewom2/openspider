@@ -1,0 +1,227 @@
+[
+  {
+    "path": "/item-00.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-01.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-02.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-03.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-04.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-05.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-06.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-07.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-08.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-09.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-10.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-11.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-12.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-13.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-14.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-15.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-16.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-17.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-18.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-19.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-20.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-21.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-22.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-23.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-24.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-25.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-26.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-27.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-28.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-29.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-30.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-31.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-32.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-33.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-34.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-35.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-36.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-37.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-38.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/item-39.html",
+    "spec": "CRAWL-029",
+    "status": 200
+  },
+  {
+    "path": "/Case.html",
+    "spec": "CRAWL-030",
+    "status": 200
+  },
+  {
+    "path": "/case.html",
+    "spec": "CRAWL-030",
+    "status": 200
+  },
+  {
+    "path": "/canonical.html",
+    "spec": "CRAWL-030",
+    "status": 200
+  },
+  {
+    "path": "/canonical-source.html",
+    "spec": "CRAWL-030",
+    "status": 200
+  },
+  {
+    "path": "/",
+    "spec": "CRAWL-001",
+    "status": 200
+  }
+]

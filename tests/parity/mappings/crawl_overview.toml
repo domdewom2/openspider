@@ -3,13 +3,14 @@
 # Nur Spaltennamen der Kopfzeile; Beschreibungsspalten werden beim Einlesen verworfen (Clean-Room, A8).
 # Die Referenz schreibt ein Blockformat (Kopfzeilen, dann je Abschnitt eine Kopfzeile und Eintraege, Dezimalkomma `100,00%`);
 # der Runner ueberfuehrt es in (Section, Item, URLs, % of Total) und verwirft die Spalten `Total URLs`/`Total URLs Description`.
-# Verglichen werden die M1-Filter (docs/plan/M1-filters.toml); Zeilen der Referenz zu anderen Filtern werden nur gezaehlt.
+# Verglichen werden M1- und M2-Filter; zusätzliche Abschnitte werden weiterhin berichtet.
 key = ["Section", "Item"]
 drop_ref_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Referenz nie einlesen
 format = "blocks"
 
 [blocks]
 m1_filters = "docs/plan/M1-filters.toml"
+filters = ["docs/plan/M2-filters.toml"]
 os_only_rows_ok = true
 section_map = { "Depth (Clicks from Start URL)" = "Crawl Depth" }
 

@@ -9,7 +9,7 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use crate::csvio::{read_csv, read_reference, Table};
+use crate::csvio::{read_output, read_reference, Table};
 use crate::deviations::{Deviation, Deviations, Scope};
 use crate::error::ParityError;
 use crate::mapping::{Mapping, RefFormat, ORDINAL_KEY};
@@ -434,6 +434,12 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
         .collect();
 
     Ok(Report {
+        row_order_identical: mapping.ordered.then(|| {
+            ref_rows
+                .iter()
+                .map(|r| &r.id)
+                .eq(os_rows.iter().map(|r| &r.id))
+        }),
         export: (*export).to_string(),
         site: site.map(str::to_string),
         ref_rows: reference.rows.len() as u64,
@@ -466,6 +472,9 @@ pub fn evaluate(report: &mut Report, thresholds: &Thresholds) {
     let need = thresholds.agreement_for(&report.export);
     report.threshold_pct = need;
     let mut failures = Vec::new();
+    if report.row_order_identical == Some(false) {
+        failures.push("Zeilenfolge weicht von der Upload-Reihenfolge ab (OUT-015)".into());
+    }
     let enough = if report.cells_compared == 0 {
         report.url_set_identical
     } else {
@@ -500,7 +509,7 @@ pub fn export_name_of(mapping_path: &Path) -> String {
 pub fn run(args: &DiffArgs) -> Result<bool, ParityError> {
     let mapping = Mapping::load(&args.mapping)?;
     let reference = read_reference(&args.reference, &mapping)?;
-    let os = read_csv(&args.os, &[])?;
+    let os = read_output(&args.os, &mapping)?;
     let deviations = match &args.deviations {
         Some(p) => Deviations::load(p)?,
         None => Deviations::default(),

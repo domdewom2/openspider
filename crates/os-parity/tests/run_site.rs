@@ -358,6 +358,9 @@ fn run_rejects_missing_binary_and_missing_site_selection() {
 #[test]
 fn command_line_for_openspider_follows_the_cli_spec() {
     let req = ExportRequest {
+        list_source: None,
+        config: Default::default(),
+        sitemap: None,
         site: "s".into(),
         base_url: "http://127.0.0.1:8902/".into(),
         profile: Some(PathBuf::from("p.osconfig")),
@@ -446,6 +449,9 @@ fn command_exporter_reports_nonzero_exit() {
     // Nicht startbares Binär.
     let bad = CommandExporter::new(repo.root().join("nix"));
     let req = ExportRequest {
+        list_source: None,
+        config: Default::default(),
+        sitemap: None,
         site: "s".into(),
         base_url: "http://x/".into(),
         profile: None,
@@ -521,4 +527,266 @@ fn the_markdown_summary_lists_deviations_and_free_restrictions_separately() {
     assert!(plain < free);
     assert!(md[plain..free].contains("DEV-1") && !md[plain..free].contains("REF-FREE-01"));
     assert!(md[free..].contains("REF-FREE-01"));
+}
+
+// spec: CRAWL-029
+// spec: OUT-015
+#[test]
+fn list_source_and_configuration_variants_are_separate_requests_with_cli_arguments() {
+    let repo = repo();
+    write(
+        &repo.root().join("tests/fixtures/site-a/list.txt"),
+        "http://127.0.0.1:8910/\n",
+    );
+    let manifest = repo.root().join("tests/golden/parity/site-a/manifest.toml");
+    let mut text = std::fs::read_to_string(&manifest).unwrap();
+    text = format!("list_source = \"list.txt\"\n{text}");
+    text.push_str("\n[[export]]\nref_file = \"variant.csv\"\nos = \"tab:Internal:All\"\nmapping = \"internal_all\"\nos_file = \"internal_all.csv\"\nstatus = \"present\"\n[export.config]\n\"sitemap_gen.images.enabled\" = \"true\"\n");
+    write(&manifest, &text);
+    write(
+        &repo
+            .root()
+            .join("tests/golden/parity/site-a/ref/variant.csv"),
+        &ref_csv(repo.port).replace("Start", "Variant"),
+    );
+    let seen = std::sync::Mutex::new(Vec::new());
+    let exporter = |req: &ExportRequest| {
+        let args = CommandExporter::args(req);
+        assert_eq!(args[0], "--crawl-list");
+        assert!(req.list_source.as_ref().unwrap().is_file());
+        assert!(!args.contains(&"--crawl".to_string()));
+        seen.lock().unwrap().push(req.clone());
+        fake(if req.config.is_empty() {
+            "Start"
+        } else {
+            "Variant"
+        })(req)
+    };
+    let summary = run_sites(&repo.opts(&["site-a"], false), &exporter).unwrap();
+    assert!(summary.passed, "{:?}", summary.failures);
+    let requests = seen.lock().unwrap();
+    assert_eq!(requests.len(), 2);
+    assert_ne!(requests[0].out_dir, requests[1].out_dir);
+    let args = CommandExporter::args(&requests[1]);
+    assert!(args
+        .windows(2)
+        .any(|a| a == ["--set", "sitemap_gen.images.enabled=true"]));
+}
+
+// spec: OUT-023
+#[test]
+fn target_selection_preserves_steps_and_reports_missing_os_target_as_difference() {
+    let repo = repo();
+    let manifest = repo.root().join("tests/golden/parity/site-a/manifest.toml");
+    write(&manifest, &format!("site = \"site-a\"\nport = {}\n[[export]]\nref_file = \"path.csv\"\nos = \"report:Crawl Path Report\"\nmapping = \"path\"\nstatus = \"present\"\n[export.select]\n\"Target Address\" = \"/deep/8.html\"\n", repo.port));
+    write(&repo.root().join("tests/parity/mappings/path.toml"), "key = [\"Target Address\", \"Step\"]\n[columns]\n\"Target Address\" = \"Target Address\"\n\"Step\" = \"Step\"\n\"Address\" = \"Address\"\n");
+    let data = format!("Target Address,Step,Address\nhttp://127.0.0.1:{0}/deep/8.html,0,http://127.0.0.1:{0}/deep/8.html\nhttp://127.0.0.1:{0}/deep/8.html,1,http://127.0.0.1:{0}/deep/7.html\n", repo.port);
+    write(
+        &repo.root().join("tests/golden/parity/site-a/ref/path.csv"),
+        &data,
+    );
+    let exporter = |req: &ExportRequest| {
+        let data = format!(
+            "{data}http://127.0.0.1:{}/other.html,0,http://127.0.0.1:{}/other.html\n",
+            repo.port, repo.port
+        );
+        write(&req.out_dir.join("crawl_path_report.csv"), &data);
+        Ok(())
+    };
+    let summary = run_sites(&repo.opts(&["site-a"], false), &exporter).unwrap();
+    assert!(summary.passed, "{:?}", summary.failures);
+    let Outcome::Compared { report } = single_export(&summary) else {
+        panic!();
+    };
+    assert_eq!(report.matched, 2);
+    let missing = |req: &ExportRequest| {
+        write(
+            &req.out_dir.join("crawl_path_report.csv"),
+            "Target Address,Step,Address\n",
+        );
+        Ok(())
+    };
+    let summary = run_sites(&repo.opts(&["site-a"], false), &missing).unwrap();
+    assert!(!summary.passed);
+    let Outcome::Compared { report } = single_export(&summary) else {
+        panic!("Ein fehlendes OS-Ziel muss als Abweichung berichtet werden");
+    };
+    assert_eq!(report.missing_in_os.len(), 2);
+    assert_eq!(report.agreement_pct, 0.0);
+    assert!(!report.url_set_identical);
+    assert_eq!(report.matched, 0);
+
+    // Eine leere Referenzauswahl bleibt dagegen ein Konfigurationsfehler,
+    // auch wenn die OS-Seite ebenfalls leer ist.
+    write(
+        &repo.root().join("tests/golden/parity/site-a/ref/path.csv"),
+        &data.replace("/deep/8.html", "/other.html"),
+    );
+    let summary = run_sites(&repo.opts(&["site-a"], false), &missing).unwrap();
+    assert!(matches!(single_export(&summary), Outcome::Error { message }
+        if message.contains("Zielauswahl der Referenz hat keine Zeilen")));
+}
+
+// spec: OUT-120
+// spec: OUT-123
+// spec: OUT-126
+// spec: OUT-133
+#[test]
+fn sitemap_xml_is_compared_by_urls_and_attributes_in_both_run_and_diff() {
+    let repo = repo();
+    let manifest = repo.root().join("tests/golden/parity/site-a/manifest.toml");
+    write(&manifest, &format!("site = \"site-a\"\nport = {}\n[[export]]\nref_file = \"sitemap.xml\"\nos = \"sitemap:default\"\nmapping = \"sitemap_xml\"\nstatus = \"present\"\n", repo.port));
+    let mapping = repo.root().join("tests/parity/mappings/sitemap_xml.toml");
+    write(&mapping, "format = \"xml\"\nkey = [\"Address\"]\n[columns]\n\"Address\" = \"Address\"\n\"Priority\" = \"Priority\"\n\"Images\" = \"Images\"\n");
+    let reference = repo
+        .root()
+        .join("tests/golden/parity/site-a/ref/sitemap.xml");
+    let xml = |priority: &str, address: &str| {
+        format!("<urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'><url><loc>http://127.0.0.1:{}/{address}</loc><priority>{priority}</priority></url></urlset>", repo.port)
+    };
+    write(&reference, &xml("0.9", "a.html"));
+    let make_exporter = |priority: &'static str, address: &'static str| {
+        let xml = xml(priority, address);
+        move |req: &ExportRequest| {
+            assert_eq!(req.sitemap.as_deref(), Some("default"));
+            assert!(CommandExporter::args(req).contains(&"--create-sitemap".to_string()));
+            write(&req.out_dir.join("sitemap.xml"), &xml);
+            Ok(())
+        }
+    };
+    let summary = run_sites(
+        &repo.opts(&["site-a"], false),
+        &make_exporter("0.9", "a.html"),
+    )
+    .unwrap();
+    assert!(summary.passed, "{:?}", summary.failures);
+    for (priority, address) in [("0.8", "a.html"), ("0.9", "b.html")] {
+        let summary = run_sites(
+            &repo.opts(&["site-a"], false),
+            &make_exporter(priority, address),
+        )
+        .unwrap();
+        assert!(!summary.passed, "changed attribute or URL must fail");
+    }
+    let output = repo.root().join("same.xml");
+    write(&output, &xml("0.9", "a.html"));
+    assert!(os_parity::diff::run(&os_parity::diff::DiffArgs {
+        reference,
+        os: output,
+        mapping,
+        ref_base: format!("http://127.0.0.1:{}", repo.port),
+        os_base: format!("http://127.0.0.1:{}", repo.port),
+        out: None,
+        deviations: None,
+        thresholds: None,
+        site: None
+    })
+    .unwrap());
+}
+
+// spec: OUT-015
+#[test]
+fn ordered_mapping_rejects_a_permutation_even_when_every_cell_and_duplicate_matches() {
+    let repo = repo();
+    write(
+        &repo.root().join("tests/parity/mappings/internal_all.toml"),
+        &(String::from("ordered = true\n") + MAPPING),
+    );
+    let exporter = |req: &ExportRequest| {
+        let base = req.base_url.trim_end_matches('/');
+        write(
+            &req.out_dir.join("internal_all.csv"),
+            &format!("Address,Status Code,Title 1\n{base}/a.html,404,\n{base}/,200,Start\n"),
+        );
+        Ok(())
+    };
+    let summary = run_sites(&repo.opts(&["site-a"], false), &exporter).unwrap();
+    let Outcome::Compared { report } = single_export(&summary) else {
+        panic!();
+    };
+    assert_eq!(report.agreement_pct, 100.0);
+    assert!(report.url_set_identical);
+    assert_eq!(report.row_order_identical, Some(false));
+    assert!(!summary.passed);
+    assert!(summary.failures[0].contains("Upload-Reihenfolge"));
+}
+
+// spec: OUT-080
+#[test]
+fn m2_presence_gate_activates_only_when_m2_exports_are_present() {
+    let repo = repo_with_thresholds(
+        "min_sites_present = 1\nmin_legacy_sites_present = 1\nmin_m2_sites_present = 2\n",
+    );
+    let site = "parity-m2-example";
+    let manifest = repo
+        .root()
+        .join(format!("tests/golden/parity/{site}/manifest.toml"));
+    let text = format!("site = \"{site}\"\nport = {}\n[[export]]\nref_file = \"internal_all.csv\"\nos = \"tab:Internal:All\"\nmapping = \"internal_all\"\nstatus = \"pending\"\n", free_port());
+    write(&manifest, &text);
+    let opts = repo.opts(&["site-a", site], true);
+    let summary = run_sites(&opts, &fake("Start")).unwrap();
+    assert!(summary.passed, "{:?}", summary.failures);
+    assert_eq!(summary.sites_present, 1);
+
+    write(
+        &repo
+            .root()
+            .join(format!("tests/fixtures/{site}/index.html")),
+        "<title>Start</title>",
+    );
+    let m = os_parity::manifest::Manifest::load(&manifest).unwrap();
+    write(
+        &repo
+            .root()
+            .join(format!("tests/golden/parity/{site}/ref/internal_all.csv")),
+        &ref_csv(m.port),
+    );
+    write(&manifest, &text.replace("pending", "present"));
+    let summary = run_sites(&opts, &fake("Start")).unwrap();
+    assert_eq!(summary.sites_present, 2);
+    assert!(!summary.passed);
+    assert!(summary
+        .failures
+        .iter()
+        .any(|f| f.contains("nur 1 M2-Sites")));
+
+    write(
+        &repo.root().join("tests/parity/thresholds.toml"),
+        "min_sites_present = 1\nmin_legacy_sites_present = 1\nmin_m2_sites_present = 1\n",
+    );
+    let summary = run_sites(&opts, &fake("Start")).unwrap();
+    assert!(summary.passed, "{:?}", summary.failures);
+    let summary = run_sites(&repo.opts(&[site], true), &fake("Start")).unwrap();
+    assert!(!summary.passed);
+    assert!(summary
+        .failures
+        .iter()
+        .any(|f| f.contains("nur 0 M1-Sites")));
+}
+
+// spec: OUT-008
+#[test]
+fn tab_and_bulk_outputs_with_the_same_cli_filename_cannot_overwrite_each_other() {
+    let repo = repo();
+    let manifest = repo.root().join("tests/golden/parity/site-a/manifest.toml");
+    let mut text = std::fs::read_to_string(&manifest).unwrap();
+    text.push_str("\n[[export]]\nref_file = \"bulk_internal_all.csv\"\nos = \"bulk:Internal:All\"\nmapping = \"internal_all\"\nstatus = \"present\"\n");
+    write(&manifest, &text);
+    write(
+        &repo
+            .root()
+            .join("tests/golden/parity/site-a/ref/bulk_internal_all.csv"),
+        &ref_csv(repo.port).replace("Start", "Bulk"),
+    );
+    let seen = std::sync::Mutex::new(Vec::new());
+    let exporter = |req: &ExportRequest| {
+        seen.lock().unwrap().push(req.out_dir.clone());
+        assert!(req.tabs.is_empty() || req.bulk.is_empty());
+        fake(if req.bulk.is_empty() { "Start" } else { "Bulk" })(req)
+    };
+    let summary = run_sites(&repo.opts(&["site-a"], false), &exporter).unwrap();
+    assert!(summary.passed, "{:?}", summary.failures);
+    let dirs = seen.lock().unwrap();
+    assert_eq!(dirs.len(), 2);
+    assert_ne!(dirs[0], dirs[1]);
 }
