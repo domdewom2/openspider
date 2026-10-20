@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Source>OpenSpider</Source>
+    <Description>OpenSpider: Täglich &lt;03:00&gt; &amp; mehr</Description>
+    <URI>\OpenSpider\m</URI>
+  </RegistrationInfo>
+  <Triggers>
+    <CalendarTrigger>
+      <StartBoundary>2000-01-01T01:00:00</StartBoundary>
+      <Enabled>true</Enabled>
+      <ScheduleByMonth>
+        <DaysOfMonth><Day>31</Day></DaysOfMonth>
+        <Months><January/><March/><May/><July/><August/><October/><December/></Months>
+      </ScheduleByMonth>
+    </CalendarTrigger>
+    <CalendarTrigger>
+      <StartBoundary>2000-01-01T01:00:00</StartBoundary>
+      <Enabled>true</Enabled>
+      <ScheduleByMonth>
+        <DaysOfMonth><Day>Last</Day></DaysOfMonth>
+        <Months><February/><April/><June/><September/><November/></Months>
+      </ScheduleByMonth>
+    </CalendarTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <LogonType>InteractiveToken</LogonType>
+      <RunLevel>LeastPrivilege</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <MultipleInstancesPolicy>Parallel</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
+    <IdleSettings>
+      <StopOnIdleEnd>false</StopOnIdleEnd>
+      <RestartOnIdle>false</RestartOnIdle>
+    </IdleSettings>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <Enabled>true</Enabled>
+    <Hidden>false</Hidden>
+    <RunOnlyIfIdle>false</RunOnlyIfIdle>
+    <WakeToRun>false</WakeToRun>
+    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
+    <Priority>7</Priority>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>/Applications/OpenSpider.app/Contents/MacOS/openspider</Command>
+      <Arguments>--run-task m</Arguments>
+    </Exec>
+  </Actions>
+</Task>
