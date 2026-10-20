@@ -454,6 +454,13 @@ enabled = false
 levels = []
 metrics = []
 
+[api.majestic.options]
+historic = false
+include_external = false
+average_volume = false
+moz_paid = false
+moz_free_interval_s = 10
+
 [api.majestic.limits]
 retries = 5
 concurrency = 5
@@ -464,6 +471,13 @@ enabled = false
 levels = []
 metrics = []
 
+[api.ahrefs.options]
+historic = false
+include_external = false
+average_volume = false
+moz_paid = false
+moz_free_interval_s = 10
+
 [api.ahrefs.limits]
 retries = 5
 concurrency = 5
@@ -473,6 +487,13 @@ window_s = 60
 enabled = false
 levels = []
 metrics = []
+
+[api.moz.options]
+historic = false
+include_external = false
+average_volume = false
+moz_paid = false
+moz_free_interval_s = 10
 
 [api.moz.limits]
 retries = 5

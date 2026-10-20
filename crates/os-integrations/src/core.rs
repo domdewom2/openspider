@@ -139,6 +139,9 @@ pub struct ProviderQuota {
     pub resets_at: Option<os_model::Timestamp>,
 }
 
+/// Ergebnisse eines Abrufs, einschließlich URL-bezogener Anbieterfehler.
+pub type FetchOutcomes = Vec<(UrlRef, Result<Vec<ApiValueWrite>, ApiError>)>;
+
 /// Eine API-Quelle.
 pub trait ApiSource: Send + Sync {
     /// Welche Quelle das ist.
@@ -150,6 +153,33 @@ pub trait ApiSource: Send + Sync {
         urls: &'a [UrlRef],
         ctx: &'a ApiCtx,
     ) -> BoxFuture<'a, Result<Vec<ApiValueWrite>, ApiError>>;
+
+    /// URL-bezogene Ergebnisse für Anbieter mit gemischten Bündelantworten.
+    /// Bestehende Quellen behalten ihren bisherigen Alles-oder-Fehler-Vertrag.
+    fn fetch_outcomes<'a>(
+        &'a self,
+        urls: &'a [UrlRef],
+        ctx: &'a ApiCtx,
+    ) -> BoxFuture<'a, FetchOutcomes> {
+        Box::pin(async move {
+            let result = self.fetch(urls, ctx).await;
+            urls.iter()
+                .map(|url| {
+                    let outcome = result
+                        .as_ref()
+                        .map(|values| {
+                            values
+                                .iter()
+                                .filter(|value| value.url_id == url.url_id && value.url == url.url)
+                                .cloned()
+                                .collect()
+                        })
+                        .map_err(Clone::clone);
+                    (url.clone(), outcome)
+                })
+                .collect()
+        })
+    }
 
     /// Genau ein Prüfabruf. Quellen können Kontoname, Ablauf und Scopes ergänzen.
     /// I02/I03 müssen account_id und label aus der Property-/Site-Liste oder Konto-Antwort

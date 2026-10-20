@@ -354,4 +354,17 @@ pub fn change_all_v2_fields(c: &mut CrawlConfig) {
         ignore_trailing_slash: false,
         ignore_case: false,
     };
+    // INTEG-152/153/154/157: additive, nicht geheime Linkmetrik-Optionen.
+    for source in [&mut c.api.majestic, &mut c.api.ahrefs, &mut c.api.moz] {
+        source.options = LinkMetricsOptions {
+            historic: true,
+            include_external: true,
+            oauth_client_id: Some("fixture-client".into()),
+            workspace: Some("fixture-workspace".into()),
+            country: Some("de".into()),
+            average_volume: true,
+            moz_paid: true,
+            moz_free_interval_s: 20,
+        };
+    }
 }

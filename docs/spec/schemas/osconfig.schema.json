@@ -157,7 +157,17 @@
               "retries": 5,
               "window_s": 60
             },
-            "metrics": []
+            "metrics": [],
+            "options": {
+              "average_volume": false,
+              "country": null,
+              "historic": false,
+              "include_external": false,
+              "moz_free_interval_s": 10,
+              "moz_paid": false,
+              "oauth_client_id": null,
+              "workspace": null
+            }
           },
           "description": "Ahrefs."
         },
@@ -252,7 +262,17 @@
               "retries": 5,
               "window_s": 60
             },
-            "metrics": []
+            "metrics": [],
+            "options": {
+              "average_volume": false,
+              "country": null,
+              "historic": false,
+              "include_external": false,
+              "moz_free_interval_s": 10,
+              "moz_paid": false,
+              "oauth_client_id": null,
+              "workspace": null
+            }
           },
           "description": "Majestic."
         },
@@ -270,7 +290,17 @@
               "retries": 5,
               "window_s": 60
             },
-            "metrics": []
+            "metrics": [],
+            "options": {
+              "average_volume": false,
+              "country": null,
+              "historic": false,
+              "include_external": false,
+              "moz_free_interval_s": 10,
+              "moz_paid": false,
+              "oauth_client_id": null,
+              "workspace": null
+            }
           },
           "description": "Moz."
         },
@@ -299,6 +329,7 @@
     "ApiLevel": {
       "enum": [
         "url",
+        "url_both",
         "subdomain",
         "domain"
       ],
@@ -1663,6 +1694,69 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "options": {
+          "$ref": "#/$defs/LinkMetricsOptions",
+          "default": {
+            "average_volume": false,
+            "country": null,
+            "historic": false,
+            "include_external": false,
+            "moz_free_interval_s": 10,
+            "moz_paid": false,
+            "oauth_client_id": null,
+            "workspace": null
+          },
+          "description": "Nicht geheime Anbieteroptionen (INTEG-152/153/154/157)."
+        }
+      },
+      "type": "object"
+    },
+    "LinkMetricsOptions": {
+      "description": "Optionen der Linkdatenanbieter; fehlende Werte erhalten die Spec-Standards.",
+      "properties": {
+        "average_volume": {
+          "default": false,
+          "type": "boolean"
+        },
+        "country": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "historic": {
+          "default": false,
+          "type": "boolean"
+        },
+        "include_external": {
+          "default": false,
+          "type": "boolean"
+        },
+        "moz_free_interval_s": {
+          "default": 10,
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "moz_paid": {
+          "default": false,
+          "type": "boolean"
+        },
+        "oauth_client_id": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "workspace": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "type": "object"
@@ -3291,7 +3385,17 @@
             "retries": 5,
             "window_s": 60
           },
-          "metrics": []
+          "metrics": [],
+          "options": {
+            "average_volume": false,
+            "country": null,
+            "historic": false,
+            "include_external": false,
+            "moz_free_interval_s": 10,
+            "moz_paid": false,
+            "oauth_client_id": null,
+            "workspace": null
+          }
         },
         "drive": {
           "account": null,
@@ -3370,7 +3474,17 @@
             "retries": 5,
             "window_s": 60
           },
-          "metrics": []
+          "metrics": [],
+          "options": {
+            "average_volume": false,
+            "country": null,
+            "historic": false,
+            "include_external": false,
+            "moz_free_interval_s": 10,
+            "moz_paid": false,
+            "oauth_client_id": null,
+            "workspace": null
+          }
         },
         "moz": {
           "account": null,
@@ -3384,7 +3498,17 @@
             "retries": 5,
             "window_s": 60
           },
-          "metrics": []
+          "metrics": [],
+          "options": {
+            "average_volume": false,
+            "country": null,
+            "historic": false,
+            "include_external": false,
+            "moz_free_interval_s": 10,
+            "moz_paid": false,
+            "oauth_client_id": null,
+            "workspace": null
+          }
         },
         "psi": {
           "account": null,
