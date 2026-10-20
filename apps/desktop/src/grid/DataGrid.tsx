@@ -16,6 +16,8 @@ export interface DataGridProps {
   /** Optional upper-table sorting gesture and title decoration (M2-U10). */
   onSortGesture?: (column: string, extend: boolean) => void;
   headerTitle?: (column: string) => string;
+  /** Optional label colours per cell, e.g. the segment column (M2-U20, UI-020); additive, default none. */
+  cellColors?: (column: string, value: unknown) => { background: string; text: string } | undefined;
   source: ViewDataSource;
   columns: ColumnState[];
   selection: SelectionModel;
@@ -177,7 +179,11 @@ export function DataGrid(props: DataGridProps) {
   }, []);
   const cell = (col: number, row: number) => {
     const meta = metadata.get(visible[col].key);
-    return meta ? gridCell(source.getCell(meta.index, row), meta.column, props.locale, theme.tokens) : { text: "", color: theme.tokens.text, align: "left" as const, loading: false };
+    if (!meta) return { text: "", color: theme.tokens.text, align: "left" as const, loading: false };
+    const raw = source.getCell(meta.index, row);
+    const cell = gridCell(raw, meta.column, props.locale, theme.tokens);
+    const colors = raw === LOADING ? undefined : props.cellColors?.(meta.column.key, raw);
+    return colors ? { ...cell, color: colors.text, background: colors.background } : cell;
   };
   useLayoutEffect(() => {
     const element = canvas.current!;
@@ -205,6 +211,8 @@ export function DataGrid(props: DataGridProps) {
       for (const c of layout) {
         ctx.save(); ctx.beginPath(); ctx.rect(c.clipLeft, y, c.clipRight - c.clipLeft, h); ctx.clip();
         const value = header ? { text: props.headerTitle?.(c.key) ?? c.key + (c.sort ? ` ${c.sort === "asc" ? "↑" : "↓"} ${visible.filter(c => c.sort).findIndex(s => s.key === c.key) + 1}` : ""), color: t.text, align: "left" as const } : cell(c.index, row);
+        const background = "background" in value ? value.background : undefined;
+        if (background) { ctx.fillStyle = background; ctx.fillRect(c.x, y, c.width, h); }
         ctx.fillStyle = value.color; ctx.textAlign = value.align;
         const x = c.x + (value.align === "right" ? c.width - 8 : value.align === "center" ? c.width / 2 : 8);
         ctx.fillText(ellipsis(measure, value.text, c.width - (header ? 30 : 16)), x, y + h / 2);

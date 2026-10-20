@@ -29,6 +29,17 @@ import { confirmsRemoval } from "./RemovalConfirmationSettings";
 import { saveTableState } from "../../state/tabs";
 import { TableController } from "./controller";
 import { contextSelection, openSelected, launchBrowser } from "./actions";
+import { hasAction, runAction } from "../../ui/actions";
+import { registerMenuContributions } from "../../ui/menu/registry";
+import { viz } from "../../ipc/viz";
+import { view } from "../../ipc/view";
+import { segmentLabelColor } from "../../ui/tokens/tokens";
+import { AdvancedSearch, parseQuery, searchErrorText, validateRules } from "../table-advanced/AdvancedSearch";
+import { ColumnConfigurator } from "../table-advanced/ColumnConfigurator";
+import { SegmentControls } from "../table-advanced/SegmentControls";
+import { advancedContextEntries } from "../table-advanced/contextEntries";
+import { formatRule } from "../table-advanced/query";
+import { segmentColor, useSearchHistory, useSegments } from "../table-advanced/stores";
 import "./table.css";
 
 export function UpperTable() {
@@ -38,6 +49,12 @@ export function UpperTable() {
   const crawlId = useSession(s => s.crawl?.crawlId);
   const columnState = useColumns();
   const columns = columnState.byTab[tabs.active] ?? [];
+  const segments = useSegments();
+  const segmentKey = `${JSON.stringify(segments.filter)}:${segments.revision}`;
+  const [advanced, setAdvanced] = useState(false);
+  const [configurator, setConfigurator] = useState(false);
+  const [resetAll, setResetAll] = useState(false);
+  const [searchError, setSearchError] = useState<string>();
   const controller = useMemo(() => new TableController(), []);
   useSyncExternalStore(controller.subscribe, controller.snapshot);
   const source = controller.source;
@@ -75,11 +92,17 @@ export function UpperTable() {
     if (!tabs.loaded) return;
     void controller.open(tabs.active, query);
     setText(query.search);
-  }, [controller, tabs.loaded, tabs.active, query.filter, query.search, JSON.stringify(query.sort), crawlId]);
+    if (query.rules) setText(query.rules.text);
+  }, [controller, tabs.loaded, tabs.active, query.filter, query.search, JSON.stringify(query.sort), JSON.stringify(query.rules ?? null), crawlId, segmentKey]);
   useEffect(() => {
     void controller.refreshCounts();
     return eventBus.on("tick", tick => { void controller.tick(tick).catch(fail); });
-  }, [controller, crawlId]);
+  }, [controller, crawlId, segmentKey]);
+  // Segment label colours (UI-020); stable between renders so the grid does not redraw every cell.
+  const cellColors = useCallback((column: string, value: unknown) => {
+    const color = column === "Segment" ? segmentColor(segments.segments, value) : undefined;
+    return color ? { background: color, text: segmentLabelColor(color) } : undefined;
+  }, [segments.segments]);
   const setGrid = useCallback((value: GridController | null) => { grid.current = value; }, []);
   useEffect(() => {
     const id = tabs.focusId ?? controller.selection.focus;
@@ -122,7 +145,24 @@ export function UpperTable() {
     setOperation({ id: result.opId, total: exportSpec ? count : source.total }); setExportOpen(false);
   };
   useAction("search.focus", () => search.current?.querySelector("input")?.focus());
-  useAction("search.clear", () => { tabs.query({ search: "" }); setText(""); });
+  useAction("search.clear", () => { tabs.query({ search: "", rules: null }); setText(""); });
+  useAction("view.resetAllColumns", () => setResetAll(true));
+  useEffect(() => registerMenuContributions("table-advanced", [{ menu: "view", group: "tabs", order: 31, items: [
+    { id: "view.resetAllColumns", labelKey: "u20-columns-reset-all", action: "view.resetAllColumns" },
+  ] }]), []);
+  // Advanced mode: the field takes the text syntax, parsed by the core into the rule tree (UI-011 [P1]).
+  const submitSearch = (value: string) => {
+    if (!advanced) { tabs.query({ search: value, rules: null }); return; }
+    if (!value.trim()) { tabs.query({ search: "", rules: null }); return; }
+    void (async () => {
+      const parsed = await parseQuery(value);
+      const checked = await validateRules(parsed, source?.columns ?? [], locale, t);
+      const first = Object.values(checked.errors)[0];
+      if (first) { setSearchError(first); return; }
+      const rules = { tree: checked.tree, caseSensitive: query.rules?.caseSensitive ?? false, text: formatRule(checked.tree) };
+      setSearchError(undefined); tabs.query({ search: "", rules }); void useSearchHistory.getState().add(rules).catch(fail);
+    })().catch(error => setSearchError(searchErrorText(t, error)));
+  };
   useAction("filter.open", () => filterRef.current?.querySelector("button")?.click());
   useAction("export.view", () => openExport());
   useAction("crawl.recrawl", () => { void actOnSelection("recrawl").catch(fail); });
@@ -137,8 +177,17 @@ export function UpperTable() {
     const rect = grid.current?.bounds(1, grid.current.visible().y);
     showContext({ column: "Address", urlId: controller.selection.focus, x: rect?.x ?? 0, y: rect?.y ?? 0 });
   });
+  const filterSegmentOf = async (urlId: number | undefined) => {
+    if (!source || urlId === undefined) return;
+    const row = await source.locate(urlId); if (row === null) return;
+    const result = await view.rows({ viewId: source.viewId, version: source.version, offset: row, limit: 1, columns: ["Segment"] });
+    const name = result.cells[0]?.[0];
+    segments.setFilter(typeof name === "string" && name ? { kind: "segment", name } : { kind: "none" });
+  };
   const entries: MenuEntry[] = context && context.urlId === undefined ? [
     { id: "pin", label: t("u10-pin-address"), onAction: () => void columnState.change(tabs.active, columns.map(c => c.key === "Address" ? { ...c, pinned: !c.pinned } : c)).catch(fail) },
+    { id: "columns-configure", label: t("u20-columns-title"), onAction: () => setConfigurator(true) },
+    { id: "columns-reset-all", label: t("u20-columns-reset-all"), onAction: () => setResetAll(true) },
   ] : [
     { id: "copy-rows", label: t("u10-copy-rows"), onAction: () => copy(exportColumns(columns)) },
     { id: "copy-url", label: t("u10-copy-url"), onAction: () => copy(["Address"]) },
@@ -152,6 +201,11 @@ export function UpperTable() {
       openExport(kind === "crawlPath" ? { kind: "detail", detail: "crawlPath", urlIds, params: null, sort: [] } :
         kind === "images" ? { kind, urlIds, sort: [] } : { kind, urlIds, filter: { id: "All" }, sort: [] });
     } })),
+    ...advancedContextEntries(t, { count, hasSegments: segments.segments.length > 0, hasAction }, {
+      run: id => { runAction(id); },
+      viz: kind => { const id = controller.selection.focus ?? context?.urlId; void viz.open({ kind, rootUrlId: id ?? null }).catch(fail); },
+      filterSegment: () => { void filterSegmentOf(context?.urlId ?? controller.selection.focus).catch(fail); },
+    }),
   ];
   const available = count > 0;
   const menuEntries = entries.map(e => ({ ...e, isDisabled: e.isDisabled || (!available && context?.urlId !== undefined),
@@ -169,12 +223,23 @@ export function UpperTable() {
           badge: f.issue ? <><Badge tone={f.issue.issueType === "issue" ? "danger" : f.issue.issueType === "warning" ? "warning" : "neutral"}>{t(`u10-issue-${f.issue.issueType}`)}</Badge>
             <Badge tone={f.issue.priority === "high" ? "danger" : f.issue.priority === "medium" ? "warning" : "neutral"}>{t(`u10-priority-${f.issue.priority}`)}</Badge></> : undefined,
         }))} /></div>
-      <div ref={search}><SearchField label={t("u10-search")} value={text} onChange={setText}
-        onSubmit={value => tabs.query({ search: value })} onClear={() => { setText(""); tabs.query({ search: "" }); }} clearLabel={t("u10-clear-search")} /></div>
+      <SegmentControls crawlId={crawlId} />
+      <div ref={search} className="u20-search" data-invalid={searchError ? "true" : undefined}>
+        <SearchField label={t(advanced ? "u20-search-syntax-field" : "u10-search")} value={text} onChange={value => { setText(value); setSearchError(undefined); }}
+          isLoading={controller.pending && Boolean(query.search || query.rules)}
+          onSubmit={submitSearch} onClear={() => { setText(""); setSearchError(undefined); tabs.query({ search: "", rules: null }); }} clearLabel={t("u10-clear-search")} />
+        <Button aria-label={t("u20-search-advanced")} aria-expanded={advanced} onPress={() => setAdvanced(!advanced)}>{advanced ? "▴" : "▾"}</Button>
+      </div>
       <Button onPress={() => openExport()} isDisabled={!source}>{t("u10-export")}</Button>
+      <Button onPress={() => setConfigurator(true)} isDisabled={!columns.length}>{t("u20-columns-open")}</Button>
       <ColumnsMenu columns={columns} onChange={next => void columnState.change(tabs.active, next).catch(fail)} onReset={() => void columnState.reset(tabs.active).catch(fail)} />
     </div>
-    {controller.error != null && <div role="alert">{t(toCmdError(controller.error).messageKey, toCmdError(controller.error).args)}</div>}
+    {searchError && <p role="alert" className="u20-error">{searchError}</p>}
+    {advanced && <AdvancedSearch columns={source?.columns ?? columnState.metadata[tabs.active] ?? []} value={query.rules} locale={locale}
+      onApply={rules => { setSearchError(undefined); setText(rules.text); tabs.query({ search: "", rules }); }}
+      onClear={() => { setText(""); tabs.query({ search: "", rules: null }); }} />}
+    {controller.error != null && <div role="alert">{/^err-search/.test(toCmdError(controller.error).messageKey) || toCmdError(controller.error).code === "Timeout"
+      ? searchErrorText(t, controller.error) : t(toCmdError(controller.error).messageKey, toCmdError(controller.error).args)}</div>}
     {stale && <p role="status">{t("u10-stale")}</p>}
     {operation && <div role="status" className="u10-operation">
       <span>{t(`u10-op-${status?.state ?? "running"}`)}</span>
@@ -186,6 +251,7 @@ export function UpperTable() {
       {empty ? <EmptyState state={empty} /> : source && columns.length > 0 ?
         <DataGrid source={source} columns={columns.map(c => ({ ...c, sort: query.sort.find(s => s.column === c.key)?.dir }))}
           selection={controller.selection} onSelectionChange={controller.setSelection}
+          cellColors={cellColors}
           onSortChange={sort => tabs.query({ sort })} onSortGesture={(column, extend) => tabs.query({ sort: cycleSort(query.sort, column, extend) })}
           headerTitle={column => { const index = query.sort.findIndex(s => s.column === column); return index < 0 ? column : `${column} ${query.sort[index].dir === "asc" ? "↑" : "↓"}${query.sort.length > 1 ? index + 1 : ""}`; }}
           onColumnsChange={next => void columnState.change(tabs.active, next).catch(fail)}
@@ -197,11 +263,19 @@ export function UpperTable() {
         <EmptyState state={{ code: controller.pending ? "NO_DATA_YET" : "NO_MATCH" }} />}
     </div>
     <div className="u10-counter" role="status">{t("u10-count", { shown: empty ? 0 : source?.total ?? 0, total: total ?? "–" })}
-      {query.search && ` · ${t("u10-search-active")}`}{count > 0 && ` · ${t("u10-selected", { count })}`}</div>
+      {(query.search || query.rules) && ` · ${t("u10-search-active")}`}{count > 0 && ` · ${t("u10-selected", { count })}`}</div>
     <span ref={anchor} className="u10-menu-anchor" style={{ left: context?.x ?? 0, top: context?.y ?? 0 }} />
     <Popover triggerRef={anchor} isOpen={context !== undefined} onOpenChange={open => { if (!open) setContext(undefined); }} className="os-popover">
       <MenuBody entries={menuEntries} label={t("u10-context")} />
     </Popover>
+    <ColumnConfigurator tab={tabs.active} isOpen={configurator} onOpenChange={setConfigurator}
+      tabs={tabs.order.map(id => ({ id, label: t(`tab-${id.toLowerCase().replaceAll(" ", "-")}`, undefined, { fallback: id }) }))}
+      label={id => t(`tab-${id.toLowerCase().replaceAll(" ", "-")}`, undefined, { fallback: id })} />
+    <Dialog title={t("u20-columns-reset-all")} isOpen={resetAll} onOpenChange={setResetAll}
+      footer={<DialogFooter okLabel={t("u20-reset")} cancelLabel={t("u10-cancel")} okVariant="danger"
+        onOk={() => { setResetAll(false); void columnState.resetAll().catch(fail); }} onCancel={() => setResetAll(false)} />}>
+      <p>{t("u20-columns-reset-all-confirm")}</p>
+    </Dialog>
     <Dialog title={t("u10-remove")} isOpen={remove} onOpenChange={setRemove}
       footer={<DialogFooter okLabel={t("u10-remove")} cancelLabel={t("u10-cancel")} okVariant="danger"
         onOk={() => void (async () => { if (skipRemoval) await saveTableState({ tableConfirmRemove: false }); await actOnSelection("remove"); })().catch(fail)} onCancel={() => setRemove(false)} />}>

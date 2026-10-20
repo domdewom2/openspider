@@ -1,0 +1,113 @@
+u20-ok = OK
+u20-cancel = Cancel
+u20-reset = Reset
+u20-search-advanced = Advanced search
+u20-search-syntax-field = Search query (text syntax)
+u20-search-syntax-label = Query
+u20-search-parse = Parse
+u20-search-history = Recent searches
+u20-search-history-pick = { $count ->
+    [0] No recent searches
+    [one] 1 recent search
+   *[other] { $count } recent searches
+}
+u20-search-condition = Condition
+u20-search-column = Column
+u20-search-all-columns = All visible columns
+u20-search-operator = Operator
+u20-search-value = Value
+u20-search-remove = Remove condition
+u20-search-remove-group = Remove group
+u20-search-combine = Match
+u20-search-and = all (AND)
+u20-search-or = any (OR)
+u20-search-add-condition = Add condition
+u20-search-add-group = Add group
+u20-search-case = Case sensitive
+u20-search-apply = Search
+u20-search-clear = Clear
+u20-search-number = Enter a number
+u20-search-syntax = Query syntax error at character { $position }
+u20-search-regex = Invalid regular expression: { $detail }
+u20-search-too-expensive = Expression too expensive – the search was stopped
+u20-op-contains = contains
+u20-op-notContains = does not contain
+u20-op-equals = equals
+u20-op-notEquals = does not equal
+u20-op-startsWith = starts with
+u20-op-endsWith = ends with
+u20-op-regex = matches regex
+u20-op-notRegex = does not match regex
+u20-op-greaterThan = greater than
+u20-op-lessThan = less than
+u20-op-isEmpty = is empty
+u20-op-isNotEmpty = is not empty
+u20-columns-open = Configure columns…
+u20-columns-title = Configure columns
+u20-columns-search = Find columns
+u20-columns-available = Available columns
+u20-columns-displayed = Displayed columns
+u20-columns-add = Add
+u20-columns-remove = Remove
+u20-columns-top = To top
+u20-columns-up = Move up
+u20-columns-down = Move down
+u20-columns-bottom = To bottom
+u20-columns-defaults = Restore defaults
+u20-columns-disabled = disabled in the configuration ({ $setting })
+u20-columns-missing = { $count ->
+    [one] 1 column of the template is not available here and was skipped: { $columns }
+   *[other] { $count } columns of the template are not available here and were skipped: { $columns }
+}
+u20-columns-missing-tab = Applied to { $tab }; { $count ->
+    [one] 1 column is not available there and was skipped: { $columns }
+   *[other] { $count } columns are not available there and were skipped: { $columns }
+}
+u20-columns-applied = Template applied to { $tab }
+u20-columns-loaded = Template { $name } loaded
+u20-columns-reset-all = Reset columns of all tables
+u20-columns-reset-all-confirm = Visibility, order, width, pinning and sorting of every table return to their defaults. Named column templates, tab order, filters and searches stay unchanged.
+u20-templates = Column templates
+u20-template = Template
+u20-template-name = Template name
+u20-template-save = Save as template
+u20-template-load = Load template
+u20-template-rename = Rename
+u20-template-delete = Delete template
+u20-template-target = Apply to tab
+u20-template-apply = Apply template to tab
+u20-template-saved = Template { $name } saved
+u20-template-renamed = Template renamed to { $name }
+u20-template-exists = A template named { $name } already exists
+u20-tab-menu = Tab actions
+u20-tab-close = Close tab
+u20-tab-close-others = Close other tabs
+u20-tab-close-all = Close all tabs
+u20-tab-mandatory = This tab is always shown
+u20-tabs-configure = Configure tabs…
+u20-tabs-configure-title = Configure tabs
+u20-tabs-reset = Reset tabs
+u20-tab-up = Move { $tab } up
+u20-tab-down = Move { $tab } down
+u20-segment = Segment
+u20-segment-all = All segments
+u20-segment-none = No segment
+u20-segment-active = Segment filter: { $name }
+u20-segment-reassigning = Reassigning segments
+u20-ctx-screenshot = Open rendered screenshot
+u20-ctx-crawl-path = Show crawl path
+u20-ctx-check-with = Check with…
+u20-ctx-segment-filter = Filter by this URL's segment
+u20-ctx-segment-jump = Jump to segment
+u20-ctx-single = Only available for a single URL
+u20-ctx-no-selection = Select a URL first
+u20-ctx-unavailable = Not available in this window
+u20-ctx-no-segments = No segments configured
+u20-viz-crawlTree = Crawl tree
+u20-viz-crawlGraph = Force-directed crawl graph
+u20-viz-directoryTree = Directory tree
+u20-viz-directoryGraph = Force-directed directory graph
+u20-viz-crawlGraph3d = 3D crawl graph
+u20-viz-directoryGraph3d = 3D directory graph
+u20-viz-anchorWords = Inlink anchor text word cloud
+u20-viz-bodyWords = Body text word cloud

@@ -1,0 +1,113 @@
+u20-ok = OK
+u20-cancel = Abbrechen
+u20-reset = Zurücksetzen
+u20-search-advanced = Erweiterte Suche
+u20-search-syntax-field = Suchabfrage (Textsyntax)
+u20-search-syntax-label = Abfrage
+u20-search-parse = Übernehmen
+u20-search-history = Letzte Suchen
+u20-search-history-pick = { $count ->
+    [0] Noch keine Suchen
+    [one] 1 letzte Suche
+   *[other] { $count } letzte Suchen
+}
+u20-search-condition = Bedingung
+u20-search-column = Spalte
+u20-search-all-columns = Alle sichtbaren Spalten
+u20-search-operator = Operator
+u20-search-value = Wert
+u20-search-remove = Bedingung entfernen
+u20-search-remove-group = Gruppe entfernen
+u20-search-combine = Treffer, wenn
+u20-search-and = alle zutreffen (UND)
+u20-search-or = eine zutrifft (ODER)
+u20-search-add-condition = Bedingung hinzufügen
+u20-search-add-group = Gruppe hinzufügen
+u20-search-case = Groß/Klein beachten
+u20-search-apply = Suchen
+u20-search-clear = Leeren
+u20-search-number = Bitte eine Zahl eingeben
+u20-search-syntax = Fehler in der Abfrage bei Zeichen { $position }
+u20-search-regex = Ungültiger regulärer Ausdruck: { $detail }
+u20-search-too-expensive = Ausdruck zu aufwendig – die Suche wurde abgebrochen
+u20-op-contains = enthält
+u20-op-notContains = enthält nicht
+u20-op-equals = ist gleich
+u20-op-notEquals = ist ungleich
+u20-op-startsWith = beginnt mit
+u20-op-endsWith = endet mit
+u20-op-regex = entspricht Regex
+u20-op-notRegex = entspricht nicht Regex
+u20-op-greaterThan = größer als
+u20-op-lessThan = kleiner als
+u20-op-isEmpty = ist leer
+u20-op-isNotEmpty = ist nicht leer
+u20-columns-open = Spalten konfigurieren…
+u20-columns-title = Spalten konfigurieren
+u20-columns-search = Spalten suchen
+u20-columns-available = Verfügbare Spalten
+u20-columns-displayed = Angezeigte Spalten
+u20-columns-add = Hinzufügen
+u20-columns-remove = Entfernen
+u20-columns-top = Ganz oben
+u20-columns-up = Nach oben
+u20-columns-down = Nach unten
+u20-columns-bottom = Ganz unten
+u20-columns-defaults = Auf Standard zurücksetzen
+u20-columns-disabled = in der Konfiguration abgeschaltet ({ $setting })
+u20-columns-missing = { $count ->
+    [one] 1 Spalte der Vorlage gibt es hier nicht; sie wurde übersprungen: { $columns }
+   *[other] { $count } Spalten der Vorlage gibt es hier nicht; sie wurden übersprungen: { $columns }
+}
+u20-columns-missing-tab = Auf { $tab } angewendet; { $count ->
+    [one] 1 Spalte gibt es dort nicht und wurde übersprungen: { $columns }
+   *[other] { $count } Spalten gibt es dort nicht und wurden übersprungen: { $columns }
+}
+u20-columns-applied = Vorlage auf { $tab } angewendet
+u20-columns-loaded = Vorlage { $name } geladen
+u20-columns-reset-all = Spalten aller Tabellen zurücksetzen
+u20-columns-reset-all-confirm = Sichtbarkeit, Reihenfolge, Breite, Anheftung und Sortierung aller Tabellen werden auf den Standard gesetzt. Benannte Spaltenvorlagen, Tab-Reihenfolge, Filter und Suchen bleiben erhalten.
+u20-templates = Spaltenvorlagen
+u20-template = Vorlage
+u20-template-name = Name der Vorlage
+u20-template-save = Als Vorlage speichern
+u20-template-load = Vorlage laden
+u20-template-rename = Umbenennen
+u20-template-delete = Vorlage löschen
+u20-template-target = Auf Tab anwenden
+u20-template-apply = Vorlage auf Tab anwenden
+u20-template-saved = Vorlage { $name } gespeichert
+u20-template-renamed = Vorlage in { $name } umbenannt
+u20-template-exists = Eine Vorlage { $name } gibt es bereits
+u20-tab-menu = Tab-Aktionen
+u20-tab-close = Tab schließen
+u20-tab-close-others = Andere Tabs schließen
+u20-tab-close-all = Alle Tabs schließen
+u20-tab-mandatory = Dieser Tab wird immer angezeigt
+u20-tabs-configure = Tabs konfigurieren…
+u20-tabs-configure-title = Tabs konfigurieren
+u20-tabs-reset = Tabs zurücksetzen
+u20-tab-up = { $tab } nach oben
+u20-tab-down = { $tab } nach unten
+u20-segment = Segment
+u20-segment-all = Alle Segmente
+u20-segment-none = Kein Segment
+u20-segment-active = Segmentfilter: { $name }
+u20-segment-reassigning = Segmente werden neu zugeordnet
+u20-ctx-screenshot = Gerenderten Screenshot öffnen
+u20-ctx-crawl-path = Crawl-Pfad anzeigen
+u20-ctx-check-with = Prüfen mit…
+u20-ctx-segment-filter = Nach Segment dieser URL filtern
+u20-ctx-segment-jump = Zu Segment springen
+u20-ctx-single = Nur für eine einzelne URL verfügbar
+u20-ctx-no-selection = Bitte zuerst eine URL wählen
+u20-ctx-unavailable = In diesem Fenster nicht verfügbar
+u20-ctx-no-segments = Keine Segmente konfiguriert
+u20-viz-crawlTree = Crawl-Baum
+u20-viz-crawlGraph = Kraftgerichteter Crawl-Graph
+u20-viz-directoryTree = Verzeichnisbaum
+u20-viz-directoryGraph = Kraftgerichteter Verzeichnisgraph
+u20-viz-crawlGraph3d = 3D-Crawl-Graph
+u20-viz-directoryGraph3d = 3D-Verzeichnisgraph
+u20-viz-anchorWords = Wortwolke Inlink-Ankertexte
+u20-viz-bodyWords = Wortwolke Body-Text

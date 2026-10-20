@@ -8,9 +8,13 @@ import type { ViewSpec } from "../../ipc/gen/ViewSpec";
 import type { Tick } from "../../ipc/gen/Tick";
 import { SelectionModel } from "../../state/selection";
 import type { TabQuery } from "../../state/tabs";
+import type { SegmentFilter } from "../../ipc/gen/SegmentFilter";
+import { useSegments } from "../table-advanced/stores";
 
-export function tabSpec(tab: string, query: TabQuery): ViewSpec {
-  return { kind: "tab", tab, filter: query.filter, search: query.search ? { kind: "simple", text: query.search } : null, sort: query.sort };
+export function tabSpec(tab: string, query: TabQuery, segment: SegmentFilter | null = useSegments.getState().filter): ViewSpec {
+  const search = query.rules ? { kind: "rules" as const, tree: query.rules.tree, caseSensitive: query.rules.caseSensitive }
+    : query.search ? { kind: "simple" as const, text: query.search } : null;
+  return { kind: "tab", tab, filter: query.filter, search, sort: query.sort, ...(segment ? { segment } : {}) };
 }
 /** Owns one active view. An open finishing after a tab switch is closed immediately. */
 export class TableController {
@@ -60,7 +64,8 @@ export class TableController {
   async refreshCounts(): Promise<void> {
     const request = ++this.countsRequest;
     try {
-      const counts = await catalog.filterCounts({});
+      const segment = useSegments.getState().filter;
+      const counts = await catalog.filterCounts(segment ? { segment } : {});
       if (!this.disposed && request === this.countsRequest && counts.version >= this.counts.version) { this.counts = counts; this.emit(); }
     } catch (error) { this.fail(error); }
   }
