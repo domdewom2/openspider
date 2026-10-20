@@ -661,6 +661,8 @@ pub(crate) fn launch<F: Fetch>(setup: Setup<F>) -> CrawlHandle {
     let deps = crate::memory::resource_deps(deps);
     // Nur Kennung und Betriebsparameter loggen: URLs und Konfiguration können Geheimnisse enthalten.
     tracing::info!(%crawl_id, threads = cfg.speed.threads, "Crawl gestartet");
+    // OUT-240 (K2-61): additional, secret-free configuration summary at initialization.
+    tracing::info!(%crawl_id, mode = ?cfg.mode, start_url = %os_fetch::redact::url(&start_encoded), limits = ?cfg.limits, rendering = ?cfg.rendering.mode, "Crawl-Konfiguration Start");
     // RAM-Fenster der Warteschlange (K-78 b); beim Fortsetzen hat `resume::restore` es schon eingeschaltet
     if !core.frontier.spill_enabled() {
         core.frontier
@@ -962,6 +964,8 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
     };
     publish(&sh, &progress_tx);
     tracing::info!(%crawl_id, state = state.as_str(), crawled, "Crawl beendet");
+    // OUT-240 (K2-61): repeat the summary for independently useful end records.
+    tracing::info!(%crawl_id, mode = ?sh.cfg.mode, start_url = %os_fetch::redact::url(&sh.start_url), limits = ?sh.cfg.limits, rendering = ?sh.cfg.rendering.mode, "Crawl-Konfiguration Ende");
 
     if sh.cfg.advanced.crawl_fragments && end != End::Failed {
         sh.writer

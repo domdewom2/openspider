@@ -217,6 +217,10 @@ where
 
 /// Führt den Befehl aus und gibt den Exit-Code zurück.
 pub fn run(cli: Cli) -> i32 {
+    // OUT-244 (K2-61): additive standalone branch, using the already parsed CLI.
+    if let Some(code) = logging::run_diagnostics(&cli) {
+        return code;
+    }
     if let Some(Sub::Mcp(args)) = cli.command {
         return os_mcp::cli::run(args);
     }
