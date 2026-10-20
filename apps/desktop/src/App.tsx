@@ -1,6 +1,7 @@
 import { CrawlsHost } from "./features/crawls";
 import { ConfigHost } from "./features/config/frame";
 import { ExportHost, ExportViewButton } from "./features/export";
+import { McpHost } from "./features/mcp";
 import { Shell } from "./features/shell/Shell";
 import { Header } from "./features/header/Header";
 import { Statusbar } from "./features/statusbar/Statusbar";
@@ -51,6 +52,7 @@ export function App() {
     <Providers>
       <ExportHost />
       <ConfigHost />
+      <McpHost />
       <IntegrationsHost />
       <TasksHost />
       <HelpDialogs />

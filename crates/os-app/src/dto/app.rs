@@ -162,6 +162,14 @@ pub struct AccountSettingsDto {
 pub struct McpSettingsDto {
     /// Beim Start der App starten.
     pub autostart: bool,
+    /// Gespeicherte Klassenfreigaben; fehlt der Wert, gilt nur `read` (AGENT-003).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub classes: Option<Vec<String>>,
+    /// Konfigurierter HTTP-Port; ohne Wert wählt der Server einen Port (OUT-285).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub port: Option<u16>,
 }
 
 /// Antwort von `settings.get` / `settings.set`: App-Einstellungen (`settings.toml`, OUT-222).

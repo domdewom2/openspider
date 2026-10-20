@@ -1,0 +1,4 @@
+{
+  "build": {"beforeBuildCommand":"npx vite build --config e2e/mcp/native.vite.ts", "frontendDist":"../dist/mcp-native"},
+  "app": {"windows":[{"label":"main","title":"OpenSpider MCP Clipboard Test","url":"e2e/mcp/native.html","width":800,"height":600}]}
+}

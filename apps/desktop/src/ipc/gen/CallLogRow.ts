@@ -31,4 +31,8 @@ ok: boolean,
 /**
  * Kurzfassung der Argumente (redigiert).
  */
-argsSummary: string, };
+argsSummary: string, 
+/**
+ * Ergebnisgröße in Byte; fehlt bei älteren Protokolleinträgen (AGENT-043).
+ */
+resultBytes?: number, };

@@ -127,4 +127,8 @@ pub struct CallLogRow {
     pub ok: bool,
     /// Kurzfassung der Argumente (redigiert).
     pub args_summary: String,
+    /// Ergebnisgröße in Byte; fehlt bei älteren Protokolleinträgen (AGENT-043).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub result_bytes: Option<u32>,
 }
