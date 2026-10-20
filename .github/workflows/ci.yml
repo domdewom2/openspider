@@ -302,6 +302,9 @@ jobs:
     name: spec-coverage
     runs-on: macos-14
     timeout-minutes: 60
+    # Integration Teil 5: ohne Debuginfo (macOS-arm64: "No space left on device" im Post-Schritt von rust-cache, wie bei build).
+    env:
+      CARGO_PROFILE_DEV_DEBUG: "0"
     steps:
       - uses: actions/checkout@v4
 
