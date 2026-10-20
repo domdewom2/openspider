@@ -32,11 +32,8 @@ fn spec(id: &str, schedule: Schedule) -> PlannerSpec {
         task_id: id.into(),
         task_name: "Täglich <03:00> & mehr".into(),
         schedule,
-        binary: if cfg!(windows) {
-            PathBuf::from("C:\\Program Files\\OpenSpider\\openspider.exe")
-        } else {
-            PathBuf::from("/Applications/OpenSpider.app/Contents/MacOS/openspider")
-        },
+        // Plattformunabhängig: Goldens enthalten feste Pfade.
+        binary: PathBuf::from("/Applications/OpenSpider.app/Contents/MacOS/openspider"),
         home: None,
         run_if_missed: true,
         on_battery: true,
