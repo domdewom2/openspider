@@ -1144,6 +1144,10 @@ fn configure_sources(
             apply_meta_defaults(&mut tab.columns);
         }
     }
+    for tab in &mut tabs {
+        tab.columns.extend(crate::segments::columns(cfg));
+        apply_meta_defaults(&mut tab.columns);
+    }
     if cfg.ui.parity_filters {
         for tab in &mut tabs {
             if tab.id == "Internal" {

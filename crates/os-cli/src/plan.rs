@@ -44,6 +44,8 @@ pub enum Source {
 /// Ablaufplan nach der Validierung.
 #[derive(Debug)]
 pub struct Plan {
+    /// Optionaler Segmentkontext; ohne Flag bleibt der Export ungefiltert.
+    pub segment: Option<String>,
     /// Quelle.
     pub source: Source,
     /// Wirksame Konfiguration (bei `Load` ohne `--resume` die gespeicherte).
@@ -442,7 +444,13 @@ pub fn build(args: &RunArgs, paths: AppPaths, rep: &Reporter) -> Result<Plan, Cl
         .or(project_default_name)
         .unwrap_or_default();
 
+    if let Some(segment) = args.segment.as_deref() {
+        if segment != "all" && !config.segments.list.iter().any(|s| s.name == segment) {
+            return Err(CliError::usage(format!("Unbekanntes Segment: {segment}")));
+        }
+    }
     Ok(Plan {
+        segment: args.segment.clone(),
         source,
         config,
         resume_config,
