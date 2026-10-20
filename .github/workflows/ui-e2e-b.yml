@@ -1,9 +1,6 @@
 name: ui-e2e-b
 
 on:
-  # Temporary S02 branch trigger: remove before merge, unless the planner retains it for reruns.
-  push:
-    branches: [m2/s02]
   schedule:
     - cron: "23 2 * * *"
   workflow_dispatch:

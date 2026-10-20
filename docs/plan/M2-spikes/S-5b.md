@@ -70,6 +70,14 @@ unveränderten S6-Tests. Echter Vite-Start unter CI-Farbumgebung: alter Detektor
 falsch, neuer richtig, HTTP 200. Der Workflow führt die Regression mit aus.
 Ein korrigierter Windows-/macOS-CI-Nachlauf steht wegen des Push-Verbots aus.
 
+## Befund 3: temporäre Push-Trigger entfernt
+
+Nach Auswertung aller vier Läufe wurden `on.push.branches: [m2/s02]` samt
+temporärem Kommentar aus `ui-e2e-b.yml` und `spike-platform.yml` entfernt,
+in einem eigenen Commit. Nightly, `workflow_dispatch` und `workflow_call`
+bleiben erhalten. Beide Workflows bestehen `actionlint`; die Regressionstests
+bleiben Teil des nativen Workflows. Keine Planer-Ausnahme zum Behalten nötig.
+
 ## Befund 2: Referenz A und Produktbedarf
 
 Referenz A: Mac mini M1, 16 GiB, macOS 26.3 (25D125), arm64, Node 22.20.0.
