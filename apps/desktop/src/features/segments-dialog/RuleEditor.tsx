@@ -27,7 +27,7 @@ export function RuleEditor({ list, index, issues, columns, pending, onChange }: 
     <datalist id={listId}>{columns.map(c => <option key={c} value={c} />)}</datalist>
     {groups.map((group, g) => <section key={g} className="os-segdlg-group" aria-label={t("sgd-group", { n: g + 1 })}>
       {g > 0 && <div className="os-segdlg-or" aria-hidden="true">{t("sgd-or")}</div>}
-      <h4>{t("sgd-group", { n: g + 1 })}</h4>
+      <p className="os-segdlg-group-title">{t("sgd-group", { n: g + 1 })}</p>
       <ul>{group.map((cond, c) => {
         const local = conditionError(list, index, cond);
         const core = coreIssues(g, c);
@@ -35,14 +35,14 @@ export function RuleEditor({ list, index, issues, columns, pending, onChange }: 
         const hints = core.filter(i => i.warning).map(i => t(i.messageKey, i.args as Record<string, string>));
         const waiting = !!cond.column && pending.has(cond.column);
         const errId = `${listId}-${g}-${c}`;
-        return <li key={c} className="os-segdlg-cond" role="group" aria-label={t("sgd-condition", { g: g + 1, c: c + 1 })}>
+        return <li key={c}><div className="os-segdlg-cond" role="group" aria-label={t("sgd-condition", { g: g + 1, c: c + 1 })}>
           <input className="os-input" list={listId} aria-label={t("sgd-column")} placeholder={t("sgd-any-column")} value={cond.column ?? ""} onChange={e => patch(g, c, { column: e.target.value === "" ? null : e.target.value })} />
           <select className="os-input" aria-label={t("sgd-operator")} value={cond.op} onChange={e => patch(g, c, { op: e.target.value as Condition["op"] })}>{OPS.map(op => <option key={op} value={op}>{t(`sgd-op-${op}`)}</option>)}</select>
           {!NO_VALUE.includes(cond.op) && <input className="os-input" aria-label={t("sgd-value")} aria-invalid={errors.length > 0 || undefined} aria-describedby={errors.length > 0 ? errId : undefined} value={cond.value ?? ""} onChange={e => patch(g, c, { value: e.target.value })} />}
           {waiting && <span className="os-segdlg-pending" title={t("sgd-pending-hint")}>{t("sgd-pending")}</span>}
           <button type="button" className="os-btn os-btn-tool" aria-label={t("sgd-remove-condition", { g: g + 1, c: c + 1 })} disabled={group.length === 1 && groups.length === 1} onClick={() => set(group.length === 1 ? groups.filter((_, gi) => gi !== g) : groups.map((grp, gi) => gi === g ? grp.filter((_, ci) => ci !== c) : grp))}>×</button>
           {(errors.length > 0 || hints.length > 0) && <div id={errId} className="os-segdlg-issues">{errors.map((m, i) => <p key={`e${i}`} className="os-error" role="alert" data-segdlg-error>{m}</p>)}{hints.map((m, i) => <p key={`w${i}`} className="os-hint">{m}</p>)}</div>}
-        </li>;
+        </div></li>;
       })}</ul>
       <button type="button" className="os-btn os-btn-secondary" onClick={() => set(groups.map((grp, gi) => gi === g ? [...grp, emptyCondition()] : grp))}>{t("sgd-add-condition")}</button>
     </section>)}

@@ -116,9 +116,9 @@ export function SegmentsDialog() {
           <div className="os-segdlg-list">
             <ul aria-label={t("sgd-list")}>{list.map((s, i) => {
               const count = preview.counts.get(s.id);
-              return <li key={s.id} draggable aria-selected={s.id === selected} data-segment-id={s.id}
+              return <li key={s.id} draggable data-selected={s.id === selected || undefined} data-segment-id={s.id}
                 onDragStart={() => setDrag(i)} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); if (drag != null) shift(drag, i); setDrag(null); }}>
-                <button type="button" className="os-segdlg-pick" aria-label={s.name || t("sgd-unnamed")} aria-current={s.id === selected} onClick={() => { setSelected(s.id); setHex(null); }}>
+                <button type="button" className="os-segdlg-pick" aria-current={s.id === selected} onClick={() => { setSelected(s.id); setHex(null); }}>
                   <span className="os-segdlg-swatch" style={{ background: s.color }} aria-hidden="true" />
                   <span className="os-segdlg-name">{s.name || t("sgd-unnamed")}</span>
                   <span className="os-segdlg-count" data-preview-count aria-busy={preview.busy || undefined}>{count == null ? "–" : t("sgd-matches", { count: f.integer(count) })}</span>

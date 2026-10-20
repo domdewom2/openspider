@@ -124,7 +124,7 @@
     { "key": "Word Count", "kind": { "kind": "int" }, "defaultVisible": true, "defaultWidth": 80, "align": "right", "sortable": true, "searchable": ["greaterThan", "lessThan"], "extension": false, "needs": null },
     { "key": "Link Score", "kind": { "kind": "int" }, "defaultVisible": false, "defaultWidth": 80, "align": "right", "sortable": true, "searchable": ["greaterThan", "lessThan"], "extension": false, "needs": { "code": "NEEDS_CRAWL_ANALYSIS" } }
   ],
-  "preview": { "counts": [{ "id": "seg-blog", "urls": 10 }, { "id": "seg-thin", "urls": 6 }, { "id": "seg-rest", "urls": 4 }], "unassigned": 20 },
+  "preview": { "counts": [{ "id": "seg-blog", "urls": 3 }, { "id": "seg-thin", "urls": 2 }, { "id": "seg-rest", "urls": 1 }], "unassigned": 0 },
   "api": [
     { "kind": "ga4", "labelKey": "api-ga4", "connected": true, "requested": 10, "received": 8, "errors": 0, "quotaLeft": null, "running": true, "completed": 8, "resetAt": null },
     { "kind": "gsc", "labelKey": "api-gsc", "connected": true, "requested": 2000, "received": 2000, "errors": 0, "quotaLeft": 0, "running": false, "completed": 2000, "resetAt": "2026-10-19T07:00:00Z" },

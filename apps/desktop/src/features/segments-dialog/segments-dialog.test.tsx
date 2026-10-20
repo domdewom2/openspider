@@ -64,13 +64,13 @@ async function open() {
   render(<Providers><SegmentsDialogHost /></Providers>);
   act(() => openSegmentsDialog());
   const list = await screen.findByRole("list", { name: "Segments in priority order" });
-  await within(list).findByRole("button", { name: "Blog" });
+  await within(list).findByRole("button", { name: /^Blog/ });
   return list;
 }
 const ok = () => screen.getByRole("button", { name: "OK" });
 const names = (list: HTMLElement) => within(list).getAllByRole("listitem").map(li => li.querySelector(".os-segdlg-name")?.textContent);
 const counts = (list: HTMLElement) => within(list).getAllByRole("listitem").map(li => li.querySelector("[data-preview-count]")?.textContent);
-const selectSegment = (name: string) => fireEvent.click(screen.getByRole("button", { name }));
+const selectSegment = (name: string) => fireEvent.click(screen.getByRole("button", { name: new RegExp(`^${name}`) }));
 const errors = () => screen.queryAllByRole("alert").map(a => a.textContent);
 
 // spec: UI-068
