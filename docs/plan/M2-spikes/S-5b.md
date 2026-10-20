@@ -87,8 +87,41 @@ wurden beim Nutzer angefragt; sie lassen sich nicht durch einen Codefix ersetzen
 Die C11-Abnahme benötigt S3, Smoke und S6 in entsperrter GUI-Sitzung.
 Die nativen Gates bleiben offen; S3 ist Merge-Bedingung für U04/U11.
 
-Der bestehende Produktbedarf bleibt getrennt: Der lokale Smoke der Vorrunde
-lieferte bei laufender Fixture tatsächlich
+**Aktueller Nachlauf:** LaunchServices, frischer Feature-Build, Revision
+`06ea8be`, erzwungene CI-Farbausgabe; UTC-Start
+**2026-10-20T08:24:29.547Z**, Dauer **36,666 s**, Exit 1.
+`smoke-gui.json` wurde durch diesen aktuellen Report ersetzt.
+
+| Check (exakter Reportname) | Status / Beleg |
+|---|---|
+| `main window and real IPC` | passed |
+| `active native desktop` | passed: Frontend sichtbar und fokussiert |
+| `separate settings window` | passed |
+| `app.requestQuit confirms a running fixture crawl` | passed: `{"kind":"confirm","reasons":["crawl"]}` |
+| `closing during a running fixture crawl asks before quitting` | failed: kein Rückfragedialog innerhalb von 30 s |
+
+Finale native Aktivierung: `active=true`, `postEventAccess=false`,
+`screenLocked=false`, `onConsole=false`. Die Sitzung wurde während der ersten
+S6-Aufnahme entsperrt; der Agent hat diese Änderung nicht veranlasst. S3 und
+Smoke wurden deshalb erneut ausgeführt. Der finale S3-Lauf (4,899 s) erreicht
+jetzt die native Tasteneingabe; beide Kürzel-Checks scheitern ausdrücklich an
+`Native key injection unavailable (PostEvent access)`.
+
+Die vorgeschaltete Ruheprüfung `wait_quiet.sh 2 1` scheiterte nach 60,08 s mit
+Load **3,49 ≥ 2**; nach S6 lag Load1 bei 12,33. Alle Modi laufen unter
+`caffeinate -di`, gelten unter diesen Bedingungen aber ausschließlich als
+Diagnosen. Die ersten S3-/Smoke-Nachläufe (4,666/35,824 s) hatten noch
+`screenLocked=true`, `active=false` und versteckte WebView. Ihre Ergebnisse
+bleiben in `review5-validation.json`; die drei `*-gui.json` enthalten jeweils
+den letzten Lauf. S6 hat jetzt zwei bestandene Ratenchecks (sichtbar/minimiert),
+jedoch weiterhin Restore-/Occlusion-Fehler, siehe [S-6](S-6.md).
+
+Die geforderte vollständige Referenz-A-Abnahme bleibt **offen**: PostEvent-
+Berechtigung und Ruhebedingung fehlen. Keine Rückmeldung zur angefragten
+Berechtigung lag bis zum letzten Nachlauf vor.
+
+Der bestehende Produktbedarf wird durch den aktuellen Smoke erneut belegt:
+Er lieferte bei laufender Fixture tatsächlich
 `{"kind":"confirm","reasons":["crawl"]}`, aber keinen sichtbaren Rückfragedialog.
 `apps/desktop/src-tauri/src/window.rs::request_quit` beendet bei `Quit`, stellt
 bei `Confirm` jedoch keinen Dialog dar; `apps/desktop/src/app/windows.ts::quitApp`
@@ -112,3 +145,77 @@ keine Änderungen an Manifesten/Lockfiles, keine Hüllen-/UI-Fachänderungen.
 Clean-Room eingehalten. `M2-S02.spec_ids=[]`; die Spike-Bezüge
 UI-002/UI-113/OUT-222/OUT-232/UI-143 werden nicht als vollständig abgenommen markiert.
 Frühere Runden samt Prüfzeiten bleiben über `6e31faa` nachvollziehbar.
+
+## Abschlussprüfungen R5
+
+| Prüfung | Ergebnis | Laufzeit |
+|---|---|---:|
+| `npm ci` | grün, Lockfile unverändert; weiterhin 7 Audit-Befunde (6 hoch, 1 moderat) | 5,02 s |
+| `npm run -w apps/desktop typecheck` | grün | 1,30 s |
+| `npm run -w apps/desktop test` | grün, 162 Tests | 5,78 s |
+| `npm run -w apps/desktop check:static` | grün, inkl. Lizenzen und 28 Tests; nach dem Fix erneut grün | 1,25 s (erster Lauf) |
+| `cargo fmt --all --check` | grün | 1,71 s |
+| `cargo clippy --workspace --all-targets -- -D warnings` | grün | 125,87 s |
+| `cargo test --workspace` | grün, 2.819 bestanden, 0 fehlgeschlagen, 68 bestehende Ignores, inklusive Desktop und Doc-Tests | 630,86 s (vollständiger erfolgreicher Nachlauf) |
+| `cargo deny check licenses bans sources` | grün | 1,77 s |
+| Desktop-Feature-Build `--locked --features e2e-webdriver` | grün | 41,93 s |
+| Node-Fixture-Tests | grün, 7 Tests | < 1 s |
+| Echter Vite-Start mit `CI=true`, `FORCE_COLOR=1`, ohne `NO_COLOR` | neuer Detektor grün, alter Detektor falsch, HTTP 200 | 0,22 s |
+| Spike-Typecheck, Node-Syntax, Swift-Kompilierung, beide Workflows/actionlint, Diff-Whitespace | grün | kurze Einzelchecks |
+| Neutralitätsprüfung | grün; vier geerbte verwaiste Allowlist-Einträge als Warnungen | < 1 s |
+
+Prüfumgebung: Rust/Cargo 1.99.1, Node 22.20.0, Memory-Secret-Store.
+Ein temporärer `python3`-Link nutzt das vorhandene Homebrew-Python 3.10.13 /
+SQLite 3.43.2 wie in der Vorrunde; keine Änderungen an Python-Lesertests.
+
+**Ressourcenfehler und Wiederholungen offengelegt:** Der erste Workspace-Lauf
+brach nach 529,94 s beim unveränderten
+`crawl_cmd_lifecycle::fixture_pause_copy_reopen_resume_matches_uninterrupted_crawl`
+mit `crawl.resume: Store / disk I/O error` ab. Anschließend sank der freie
+Speicher auf rund 300 MiB. Ein gezielter Paket-Nachlauf wurde vor Testausführung
+abgebrochen. Nur das eigene Target wurde per `cargo clean` bereinigt (27 GiB).
+
+Abweichung von C5 ausschließlich in der lokalen Prüfumgebung: Für Wiederholung
+und Feature-Build wurden `CARGO_PROFILE_DEV_DEBUG=0` und
+`CARGO_PROFILE_TEST_DEBUG=0` gesetzt; `CARGO_INCREMENTAL=0` blieb gesetzt.
+Die erste Wiederholung scheiterte nach 298,89 s mit Linker-`errno=28` (kein
+Speicherplatz). 282 bereits erzeugte eigene Mach-O-Programme wurden mit
+`strip` verkleinert, lokal ad hoc neu signiert und mit `codesign --verify`
+geprüft (3.920.385.104 Bytes eingespart). Der nächste Lauf scheiterte nach
+245,37 s an einem aus dem fehlgeschlagenen `rust-objcopy` verbliebenen
+2.560-Byte-Dateifragment für `cmd_api_framework` (`Permission denied`, nie
+ausgeführt). Genau dieses erzeugte Artefakt und sein Cargo-Fingerprint wurden
+entfernt. Der darauf folgende **vollständige** `cargo test --workspace` bestand
+alle Tests, einschließlich Lifecycle und `cmd_api_framework`, ohne
+Compilerwarnungen. Es wurden keine Tests gefiltert, deaktiviert oder angepasst.
+Die ursprüngliche SQLite-Ursache ist damit nicht abschließend bewiesen;
+der Fehler trat im vollständigen Nachlauf mit freiem Speicher nicht mehr auf.
+
+Nach dem grünen Gesamtlauf wurden ausschließlich die 345 ausgeführten eigenen
+Testprogramme entfernt (12.726.012.112 Bytes), um Platz für den anschließend
+grünen Feature-Build zu schaffen. Keine fremden Worktrees, Targets oder
+Repository-Dateien wurden bereinigt. Alle Versuche, Profile, Ergebnisse und
+Laufzeiten stehen in `apps/desktop/spikes/evidence/review5-validation.json`.
+
+## Abschluss je R5-Befund
+
+1. **CI-Auswertung und S02-Startfehler behoben:** alle vier Läufe beendet
+   ausgewertet, fünf Originalreports/-logs mit Artefakt-IDs und geprüften
+   ZIP-Digests gesichert. ANSI-Startdetektor korrigiert; sieben Fixture-Tests,
+   echter farbiger Vite-Start und lokale native App-Starts bestanden. Windows
+   benötigt weiterhin einen Nachlauf des korrigierten Runners; der alte Lauf
+   enthält keine App-Antwort und belegt keinen Windows-Dialogfehler.
+2. **Teilweise nachgemessen, Freigabe weiterhin blockiert:** S3, Smoke und S6
+   frisch ausgeführt; nach Entsperrung S3/Smoke nochmals ausgeführt und alle drei
+   Evidenz-JSONs aktualisiert. Smoke 4/5 grün, sichtbare/minimierte S6-Raten grün;
+   S3 scheitert nun konkret an fehlender PostEvent-Berechtigung. Ruhebedingung,
+   vollständiger nativer Nachweis, Dialog-/Restore-/Occlusion-Bedarf und grünes
+   Windows-S3 bleiben offen. S-3 und U04/U11 werden ausdrücklich nicht freigegeben.
+3. **Behoben:** beide temporären Push-Trigger in eigenem Commit `06ea8be`
+   entfernt; beide Workflows mit `actionlint` geprüft.
+
+Alle beauftragten Cargo-/npm-Pflichtprüfungen sind abschließend grün. Der
+Ressourcenverlauf und die roten nativen Checks sind vollständig offengelegt.
+Target-Größe nach Testartefakt-Bereinigung und Feature-Build: **6,3 GiB**.
+Nur eigene Pfade committet, keine Fremdergänzungen oder fremden
+Test-Erwartungsänderungen. **Kein Push, kein PR.**

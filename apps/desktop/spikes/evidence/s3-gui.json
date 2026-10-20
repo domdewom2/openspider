@@ -4,10 +4,11 @@
   "release": "25.3.0",
   "arch": "arm64",
   "node": "v22.20.0",
-  "startedAt": "2026-10-19T12:09:29.051Z",
-  "revision": "56581228b436fec03d560d850c6c65b53a7c751f",
-  "runnerSha256": "35ba32838980ef6ed363262f06be97ba42a6b8cededabc3b441bdeaf006d095c",
-  "probeSha256": "6360345eb3201413ce8c8b5cfd72cce3a4e7afb081e32d9e8861d8d3e4a0c7f8",
+  "startedAt": "2026-10-20T08:24:21.294Z",
+  "revision": "06ea8bef87b197e385f6d6ef8dda605ddf48f828",
+  "runnerSha256": "d6d359988cbec8b8f69e217daaef141c53873f5d744420abc902c001fe39732f",
+  "readinessSha256": "e9d24d70cc579251e27fa8d4de6b9a2f21ef33359107730fa9392e07b914d325",
+  "probeSha256": "9f9c2ec2bcd8161b13f8c41635b4db5611faf400f3dc00b7d553f4fd4618c404",
   "launch": "LaunchServices",
   "checks": [
     {
@@ -15,9 +16,9 @@
       "status": "passed",
       "value": {
         "actions": [],
-        "at": 2652,
-        "focus": false,
-        "frontend": "hidden",
+        "at": 1916.0000000000002,
+        "focus": true,
+        "frontend": "visible",
         "keys": [],
         "menu": {
           "model": {
@@ -344,23 +345,27 @@
     {
       "name": "native editing shortcuts in a text field",
       "status": "failed",
-      "error": "AssertionError [ERR_ASSERTION]: Native keyboard proof requires visible WKWebView\n+ actual - expected\n\n+ 'hidden'\n- 'visible'\n"
+      "error": "Error: Command failed: /var/folders/fz/9flwb7b55t788nq02b9q761h0000gp/T//s02-macos key 72822 a\nNative key injection unavailable (PostEvent access)\n"
     },
     {
       "name": "table fixture C/A dispatch once; V/X/Z do not mutate it",
       "status": "failed",
-      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'hidden'\n- 'visible'\n"
+      "error": "Error: Command failed: /var/folders/fz/9flwb7b55t788nq02b9q761h0000gp/T//s02-macos key 72822 c\nNative key injection unavailable (PostEvent access)\n"
     }
   ],
   "errors": [
-    "native editing shortcuts in a text field: AssertionError [ERR_ASSERTION]: Native keyboard proof requires visible WKWebView\n+ actual - expected\n\n+ 'hidden'\n- 'visible'\n",
-    "table fixture C/A dispatch once; V/X/Z do not mutate it: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'hidden'\n- 'visible'\n"
+    "native editing shortcuts in a text field: Error: Command failed: /var/folders/fz/9flwb7b55t788nq02b9q761h0000gp/T//s02-macos key 72822 a\nNative key injection unavailable (PostEvent access)\n",
+    "table fixture C/A dispatch once; V/X/Z do not mutate it: Error: Command failed: /var/folders/fz/9flwb7b55t788nq02b9q761h0000gp/T//s02-macos key 72822 c\nNative key injection unavailable (PostEvent access)\n"
   ],
+  "startup": {
+    "attempts": 6,
+    "transientErrors": []
+  },
   "beforeActivation": {
     "actions": [],
-    "at": 1850,
-    "focus": false,
-    "frontend": "hidden",
+    "at": 1055,
+    "focus": true,
+    "frontend": "visible",
     "keys": [],
     "menu": {
       "model": {
@@ -685,9 +690,9 @@
   },
   "afterTauriActivation": {
     "actions": [],
-    "at": 1874,
-    "focus": false,
-    "frontend": "hidden",
+    "at": 1070,
+    "focus": true,
+    "frontend": "visible",
     "keys": [],
     "menu": {
       "model": {
@@ -1012,21 +1017,21 @@
   },
   "nativeActivation": {
     "activationPolicy": 0,
-    "active": false,
+    "active": true,
     "hidden": false,
-    "pid": 48096,
+    "pid": 72822,
     "postEventAccess": false,
     "session": {
       "loginDone": true,
       "onConsole": false,
-      "screenLocked": true
+      "screenLocked": false
     }
   },
   "afterNativeActivation": {
     "actions": [],
-    "at": 2638,
-    "focus": false,
-    "frontend": "hidden",
+    "at": 1899,
+    "focus": true,
+    "frontend": "visible",
     "keys": [],
     "menu": {
       "model": {
@@ -1351,9 +1356,9 @@
   },
   "final": {
     "actions": [],
-    "at": 2889.0000000000005,
-    "focus": false,
-    "frontend": "hidden",
+    "at": 2053,
+    "focus": true,
+    "frontend": "visible",
     "keys": [],
     "menu": {
       "model": {
@@ -1676,6 +1681,6 @@
     "transport": "tauri",
     "visibility": []
   },
-  "seconds": 7.437,
+  "seconds": 4.899,
   "status": "failed"
 }

@@ -4,10 +4,11 @@
   "release": "25.3.0",
   "arch": "arm64",
   "node": "v22.20.0",
-  "startedAt": "2026-10-19T12:07:27.997Z",
-  "revision": "56581228b436fec03d560d850c6c65b53a7c751f",
-  "runnerSha256": "eea6a6439496bc31a30154ab41a03c529302f2884448b067144b569f25492f90",
-  "probeSha256": "6360345eb3201413ce8c8b5cfd72cce3a4e7afb081e32d9e8861d8d3e4a0c7f8",
+  "startedAt": "2026-10-20T08:24:29.547Z",
+  "revision": "06ea8bef87b197e385f6d6ef8dda605ddf48f828",
+  "runnerSha256": "d6d359988cbec8b8f69e217daaef141c53873f5d744420abc902c001fe39732f",
+  "readinessSha256": "e9d24d70cc579251e27fa8d4de6b9a2f21ef33359107730fa9392e07b914d325",
+  "probeSha256": "9f9c2ec2bcd8161b13f8c41635b4db5611faf400f3dc00b7d553f4fd4618c404",
   "launch": "LaunchServices",
   "checks": [
     {
@@ -15,9 +16,9 @@
       "status": "passed",
       "value": {
         "actions": [],
-        "at": 2136,
-        "focus": false,
-        "frontend": "hidden",
+        "at": 1660.0000000000002,
+        "focus": true,
+        "frontend": "visible",
         "keys": [],
         "menu": {
           "model": {
@@ -343,17 +344,20 @@
     },
     {
       "name": "active native desktop",
-      "status": "failed",
-      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'hidden'\n- 'visible'\n"
+      "status": "passed",
+      "value": {
+        "frontend": "visible",
+        "focus": true
+      }
     },
     {
       "name": "separate settings window",
       "status": "passed",
       "value": {
         "actions": [],
-        "at": 363,
-        "focus": false,
-        "frontend": "hidden",
+        "at": 641,
+        "focus": true,
+        "frontend": "visible",
         "keys": [],
         "menu": null,
         "shell": {
@@ -382,14 +386,17 @@
     }
   ],
   "errors": [
-    "active native desktop: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'hidden'\n- 'visible'\n",
     "closing during a running fixture crawl asks before quitting: Error: quit confirmation: timed out"
   ],
+  "startup": {
+    "attempts": 5,
+    "transientErrors": []
+  },
   "beforeActivation": {
     "actions": [],
-    "at": 1383,
-    "focus": false,
-    "frontend": "hidden",
+    "at": 835,
+    "focus": true,
+    "frontend": "visible",
     "keys": [],
     "menu": {
       "model": {
@@ -714,9 +721,9 @@
   },
   "afterTauriActivation": {
     "actions": [],
-    "at": 1395,
-    "focus": false,
-    "frontend": "hidden",
+    "at": 851,
+    "focus": true,
+    "frontend": "visible",
     "keys": [],
     "menu": {
       "model": {
@@ -1041,21 +1048,21 @@
   },
   "nativeActivation": {
     "activationPolicy": 0,
-    "active": false,
+    "active": true,
     "hidden": false,
-    "pid": 46487,
+    "pid": 73444,
     "postEventAccess": false,
     "session": {
       "loginDone": true,
       "onConsole": false,
-      "screenLocked": true
+      "screenLocked": false
     }
   },
   "afterNativeActivation": {
     "actions": [],
-    "at": 2120,
-    "focus": false,
-    "frontend": "hidden",
+    "at": 1642.0000000000002,
+    "focus": true,
+    "frontend": "visible",
     "keys": [],
     "menu": {
       "model": {
@@ -1379,8 +1386,8 @@
     "visibility": []
   },
   "crawlStart": {
-    "crawlId": "01a1540f-556f-7c2b-b5d7-078e74339655",
-    "file": "/var/folders/fz/9flwb7b55t788nq02b9q761h0000gp/T/openspider-s02-DLzfvQ/crawls/01a1540f-556f-7c2b-b5d7-078e74339655.ospider"
+    "crawlId": "01a15869-8f2d-797a-b555-fa6a4e829501",
+    "file": "/var/folders/fz/9flwb7b55t788nq02b9q761h0000gp/T/openspider-s02-LeJ0ts/crawls/01a15869-8f2d-797a-b555-fa6a4e829501.ospider"
   },
   "quitDecision": {
     "kind": "confirm",
@@ -1390,9 +1397,9 @@
   },
   "final": {
     "actions": [],
-    "at": 34652,
+    "at": 33193,
     "focus": false,
-    "frontend": "hidden",
+    "frontend": "visible",
     "keys": [],
     "menu": {
       "model": {
@@ -1704,7 +1711,7 @@
         ],
         "platform": "mac"
       },
-      "rebuilds": 53
+      "rebuilds": 58
     },
     "shell": {
       "minimized": false,
@@ -1712,282 +1719,282 @@
     },
     "ticks": [
       {
-        "at": 3226,
+        "at": 2994,
         "phase": "running",
         "seq": 1
       },
       {
-        "at": 3827,
+        "at": 3592,
         "phase": "running",
         "seq": 2
       },
       {
-        "at": 4431,
+        "at": 4201.000000000001,
         "phase": "running",
         "seq": 3
       },
       {
-        "at": 4925,
+        "at": 4791,
         "phase": "running",
         "seq": 4
       },
       {
-        "at": 5523,
+        "at": 5293,
         "phase": "running",
         "seq": 5
       },
       {
-        "at": 6024,
+        "at": 5793,
         "phase": "running",
         "seq": 6
       },
       {
-        "at": 6527,
+        "at": 6294.000000000001,
         "phase": "running",
         "seq": 7
       },
       {
-        "at": 7125,
+        "at": 6892,
         "phase": "running",
         "seq": 8
       },
       {
-        "at": 7724,
+        "at": 7393,
         "phase": "running",
         "seq": 9
       },
       {
-        "at": 8224,
+        "at": 7894,
         "phase": "running",
         "seq": 10
       },
       {
-        "at": 8725,
+        "at": 8492,
         "phase": "running",
         "seq": 11
       },
       {
-        "at": 9225,
+        "at": 8992,
         "phase": "running",
         "seq": 12
       },
       {
-        "at": 9825.000000000002,
+        "at": 9494,
         "phase": "running",
         "seq": 13
       },
       {
-        "at": 10325.000000000002,
+        "at": 9994,
         "phase": "running",
         "seq": 14
       },
       {
-        "at": 10924,
+        "at": 10593,
         "phase": "running",
         "seq": 15
       },
       {
-        "at": 11426,
+        "at": 11192,
         "phase": "running",
         "seq": 16
       },
       {
-        "at": 11927,
+        "at": 11693,
         "phase": "running",
         "seq": 17
       },
       {
-        "at": 12525,
+        "at": 12193,
         "phase": "running",
         "seq": 18
       },
       {
-        "at": 13027.000000000002,
+        "at": 12693,
         "phase": "running",
         "seq": 19
       },
       {
-        "at": 13624,
+        "at": 13292,
         "phase": "running",
         "seq": 20
       },
       {
-        "at": 14124,
+        "at": 13893,
         "phase": "running",
         "seq": 21
       },
       {
-        "at": 14625,
+        "at": 14492,
         "phase": "running",
         "seq": 22
       },
       {
-        "at": 15225,
+        "at": 14993,
         "phase": "running",
         "seq": 23
       },
       {
-        "at": 15726,
+        "at": 15593,
         "phase": "running",
         "seq": 24
       },
       {
-        "at": 16326,
+        "at": 16094.000000000002,
         "phase": "running",
         "seq": 25
       },
       {
-        "at": 16926.000000000004,
+        "at": 16595,
         "phase": "running",
         "seq": 26
       },
       {
-        "at": 17526,
+        "at": 17194,
         "phase": "running",
         "seq": 27
       },
       {
-        "at": 18125,
+        "at": 17793,
         "phase": "running",
         "seq": 28
       },
       {
-        "at": 18628,
+        "at": 18392,
         "phase": "running",
         "seq": 29
       },
       {
-        "at": 19226,
+        "at": 18992,
         "phase": "running",
         "seq": 30
       },
       {
-        "at": 19826,
+        "at": 19492,
         "phase": "running",
         "seq": 31
       },
       {
-        "at": 20424,
+        "at": 19993.000000000004,
         "phase": "running",
         "seq": 32
       },
       {
-        "at": 20925,
+        "at": 20494,
         "phase": "running",
         "seq": 33
       },
       {
-        "at": 21426.000000000004,
+        "at": 21094,
         "phase": "running",
         "seq": 34
       },
       {
-        "at": 21926.000000000004,
+        "at": 21691,
         "phase": "running",
         "seq": 35
       },
       {
-        "at": 22527,
+        "at": 22192,
         "phase": "running",
         "seq": 36
       },
       {
-        "at": 23125,
+        "at": 22792,
         "phase": "running",
         "seq": 37
       },
       {
-        "at": 23727,
+        "at": 23294,
         "phase": "running",
         "seq": 38
       },
       {
-        "at": 24326,
+        "at": 23894.000000000004,
         "phase": "running",
         "seq": 39
       },
       {
-        "at": 24927,
+        "at": 24395,
         "phase": "running",
         "seq": 40
       },
       {
-        "at": 25525.000000000004,
+        "at": 24992,
         "phase": "running",
         "seq": 41
       },
       {
-        "at": 26126,
+        "at": 25492,
         "phase": "running",
         "seq": 42
       },
       {
-        "at": 26625,
+        "at": 26092.000000000004,
         "phase": "running",
         "seq": 43
       },
       {
-        "at": 27127,
+        "at": 26592.000000000004,
         "phase": "running",
         "seq": 44
       },
       {
-        "at": 27724,
+        "at": 27092.000000000004,
         "phase": "running",
         "seq": 45
       },
       {
-        "at": 28225,
+        "at": 27592.000000000004,
         "phase": "running",
         "seq": 46
       },
       {
-        "at": 28825,
+        "at": 28093,
         "phase": "running",
         "seq": 47
       },
       {
-        "at": 29325,
+        "at": 28693,
         "phase": "running",
         "seq": 48
       },
       {
-        "at": 29924,
+        "at": 29292,
         "phase": "running",
         "seq": 49
       },
       {
-        "at": 30844,
+        "at": 29794,
         "phase": "running",
         "seq": 50
       },
       {
-        "at": 33225,
+        "at": 30393,
         "phase": "running",
         "seq": 51
       },
       {
-        "at": 33441,
+        "at": 30994,
         "phase": "running",
         "seq": 52
       },
       {
-        "at": 33962,
+        "at": 31594,
         "phase": "running",
         "seq": 53
       },
       {
-        "at": 34028,
+        "at": 32192,
         "phase": "running",
         "seq": 54
       },
       {
-        "at": 34547.00000000001,
+        "at": 32692,
         "phase": "running",
         "seq": 55
       },
       {
-        "at": 34724.00000000001,
+        "at": 33194,
         "phase": "running",
         "seq": 56
       }
@@ -1995,6 +2002,6 @@
     "transport": "tauri",
     "visibility": []
   },
-  "seconds": 39.905,
+  "seconds": 36.666,
   "status": "failed"
 }

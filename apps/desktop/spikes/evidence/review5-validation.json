@@ -1,0 +1,1146 @@
+{
+  "checkedAt": "2026-10-20T08:25:51.865761+00:00",
+  "revision": "06ea8bef87b197e385f6d6ef8dda605ddf48f828",
+  "platform": {
+    "os": "macOS 26.3 (25D125)",
+    "machine": "Macmini9,1 / Apple M1 / 16 GiB",
+    "node": "v22.20.0",
+    "cargo": "cargo 1.99.1 (5f94df478 2026-08-27)",
+    "python": "Homebrew Python 3.10.13 / SQLite 3.43.2"
+  },
+  "checks": [
+    {
+      "name": "npm-ci",
+      "command": [
+        "npm",
+        "ci"
+      ],
+      "exit": 0,
+      "seconds": 5.02,
+      "startedAt": "2026-10-20T07:40:01.821188+00:00"
+    },
+    {
+      "name": "typecheck",
+      "command": [
+        "npm",
+        "run",
+        "-w",
+        "apps/desktop",
+        "typecheck"
+      ],
+      "exit": 0,
+      "seconds": 1.3,
+      "startedAt": "2026-10-20T07:40:06.841423+00:00"
+    },
+    {
+      "name": "desktop-test",
+      "command": [
+        "npm",
+        "run",
+        "-w",
+        "apps/desktop",
+        "test"
+      ],
+      "exit": 0,
+      "seconds": 5.78,
+      "startedAt": "2026-10-20T07:40:08.142222+00:00"
+    },
+    {
+      "name": "static",
+      "command": [
+        "npm",
+        "run",
+        "-w",
+        "apps/desktop",
+        "check:static"
+      ],
+      "exit": 0,
+      "seconds": 1.25,
+      "startedAt": "2026-10-20T07:40:13.918081+00:00"
+    },
+    {
+      "name": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 1.71,
+      "startedAt": "2026-10-20T07:40:15.164240+00:00"
+    },
+    {
+      "name": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0,
+      "seconds": 125.87,
+      "startedAt": "2026-10-20T07:40:16.876590+00:00"
+    },
+    {
+      "name": "workspace-test-complete",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace"
+      ],
+      "exit": 0,
+      "seconds": 630.86,
+      "startedAt": "2026-10-20T08:07:15.401872+00:00"
+    },
+    {
+      "name": "deny",
+      "command": [
+        "cargo",
+        "deny",
+        "check",
+        "licenses",
+        "bans",
+        "sources"
+      ],
+      "exit": 0,
+      "seconds": 1.77,
+      "startedAt": "2026-10-20T08:17:46.271253+00:00"
+    },
+    {
+      "name": "feature-build",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "openspider-desktop",
+        "--features",
+        "e2e-webdriver"
+      ],
+      "exit": 0,
+      "seconds": 41.93,
+      "startedAt": "2026-10-20T08:17:48.048097+00:00"
+    }
+  ],
+  "failedWorkspaceAttempts": [
+    {
+      "name": "workspace-test",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace"
+      ],
+      "exit": 101,
+      "seconds": 529.94,
+      "startedAt": "2026-10-20T07:42:22.743012+00:00",
+      "failure": "crawl_cmd_lifecycle::fixture_pause_copy_reopen_resume_matches_uninterrupted_crawl: crawl.resume Store / disk I/O error"
+    },
+    {
+      "name": "workspace-test-retry",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace"
+      ],
+      "exit": 101,
+      "seconds": 298.89,
+      "startedAt": "2026-10-20T07:53:25.979288+00:00",
+      "failure": "Linker errno=28 / No space left on device"
+    },
+    {
+      "name": "workspace-test-final",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace"
+      ],
+      "exit": 101,
+      "seconds": 245.37,
+      "startedAt": "2026-10-20T08:01:45.303993+00:00",
+      "failure": "cmd_api_framework never executed: Permission denied; cached output was a non-executable 2560-byte fragment from failed rust-objcopy"
+    }
+  ],
+  "resourceRecovery": {
+    "initialProfiles": "CARGO_INCREMENTAL=0; CARGO_PROFILE_DEV_DEBUG=line-tables-only; CARGO_PROFILE_TEST_DEBUG=line-tables-only",
+    "repeatProfiles": "CARGO_INCREMENTAL=0; CARGO_PROFILE_DEV_DEBUG=0; CARGO_PROFILE_TEST_DEBUG=0",
+    "cargoCleanGiB": 27,
+    "postTestCleanup": {
+      "executablesRemovedAfterSuccessfulWorkspaceTest": 345,
+      "bytes": 12726012112
+    },
+    "strippedAndAdHocSignedGeneratedExecutables": {
+      "executables": 282,
+      "beforeBytes": 11479588160,
+      "afterBytes": 7559203056,
+      "savedBytes": 3920385104
+    },
+    "targetedLifecycleRetry": "aborted before tests when disk was almost full; no passing result claimed",
+    "corruptArtifactRecovery": "Removed only generated cmd_api_framework-a45f7b82118fb9ad and its own Cargo fingerprint before complete retry",
+    "foreignFilesChanged": false
+  },
+  "rustTests": {
+    "binaries": 363,
+    "passed": 2819,
+    "failed": 0,
+    "ignored": 68
+  },
+  "desktopTests": 162,
+  "staticTests": 28,
+  "nodeFixtureTests": 7,
+  "extraChecks": {
+    "nodeTests": "passed",
+    "nodeSyntax": "passed",
+    "spikeTypecheck": "passed",
+    "actionlintBothWorkflows": "passed",
+    "neutrality": "passed, four inherited orphan allowlist warnings"
+  },
+  "viteColorIntegration": {
+    "startedAt": "2026-10-20T07:42:16.594Z",
+    "seconds": 0.22,
+    "status": "passed",
+    "forceColor": true,
+    "ci": true,
+    "noColor": false,
+    "oldDetector": false,
+    "newDetector": true,
+    "httpStatus": 200
+  },
+  "guiPreflight": {
+    "checkedAt": "2026-10-20T07:46:07.134370+00:00",
+    "revision": "06ea8bef87b197e385f6d6ef8dda605ddf48f828",
+    "helper": "apps/desktop/spikes/macos.swift",
+    "note": "Preflight inspects this Python process, not the app. Only session and postEventAccess determine GUI readiness.",
+    "result": {
+      "activationPolicy": -1,
+      "active": false,
+      "hidden": true,
+      "pid": 46801,
+      "postEventAccess": false,
+      "session": {
+        "loginDone": true,
+        "onConsole": false,
+        "screenLocked": true
+      }
+    }
+  },
+  "quiet": {
+    "startedAt": "2026-10-20T08:18:54.948552+00:00",
+    "command": "sh scripts/bench/wait_quiet.sh 2 1",
+    "exit": 1,
+    "seconds": 60.08,
+    "output": "load1=3.49 blieb >= 2\n"
+  },
+  "nativeRuns": [
+    {
+      "mode": "s3",
+      "exit": 1,
+      "status": "failed",
+      "seconds": 4.899,
+      "checks": [
+        {
+          "name": "main window and real IPC",
+          "status": "passed"
+        },
+        {
+          "name": "native editing shortcuts in a text field",
+          "status": "failed",
+          "error": "Error: Command failed: /var/folders/fz/9flwb7b55t788nq02b9q761h0000gp/T//s02-macos key 72822 a\nNative key injection unavailable (PostEvent access)\n"
+        },
+        {
+          "name": "table fixture C/A dispatch once; V/X/Z do not mutate it",
+          "status": "failed",
+          "error": "Error: Command failed: /var/folders/fz/9flwb7b55t788nq02b9q761h0000gp/T//s02-macos key 72822 c\nNative key injection unavailable (PostEvent access)\n"
+        }
+      ]
+    },
+    {
+      "mode": "smoke",
+      "exit": 1,
+      "status": "failed",
+      "seconds": 36.666,
+      "checks": [
+        {
+          "name": "main window and real IPC",
+          "status": "passed"
+        },
+        {
+          "name": "active native desktop",
+          "status": "passed"
+        },
+        {
+          "name": "separate settings window",
+          "status": "passed"
+        },
+        {
+          "name": "app.requestQuit confirms a running fixture crawl",
+          "status": "passed"
+        },
+        {
+          "name": "closing during a running fixture crawl asks before quitting",
+          "status": "failed",
+          "error": "Error: quit confirmation: timed out"
+        }
+      ]
+    },
+    {
+      "mode": "s6",
+      "exit": 1,
+      "status": "failed",
+      "seconds": 171.435,
+      "checks": [
+        {
+          "name": "main window and real IPC",
+          "status": "passed"
+        },
+        {
+          "name": "running fixture crawl prerequisite",
+          "status": "passed"
+        },
+        {
+          "name": "window-state-visible",
+          "status": "passed"
+        },
+        {
+          "name": "visible",
+          "status": "measured"
+        },
+        {
+          "name": "frontend-rate-visible",
+          "status": "passed"
+        },
+        {
+          "name": "window-state-minimized",
+          "status": "passed"
+        },
+        {
+          "name": "minimized",
+          "status": "measured"
+        },
+        {
+          "name": "frontend-rate-minimized",
+          "status": "passed"
+        },
+        {
+          "name": "window-state-restored",
+          "status": "failed",
+          "error": "Error: \"window.unminimize not allowed. Permissions associated with this command: core:window:allow-unminimize\""
+        },
+        {
+          "name": "restored",
+          "status": "measured"
+        },
+        {
+          "name": "frontend-rate-restored",
+          "status": "failed",
+          "error": "AssertionError [ERR_ASSERTION]: restored: unexpected frontend visibility\n\u001b[32mactual\u001b[39m \u001b[31mexpected\u001b[39m\n\n\u001b[39m'\u001b[39m\u001b[32mh\u001b[39m\u001b[31mv\u001b[39m\u001b[39mi\u001b[39m\u001b[32md\u001b[39m\u001b[32md\u001b[39m\u001b[31ms\u001b[39m\u001b[31mi\u001b[39m\u001b[31mb\u001b[39m\u001b[31ml\u001b[39m\u001b[39me\u001b[39m\u001b[32mn\u001b[39m\u001b[39m'\u001b[39m\n"
+        },
+        {
+          "name": "window-state-covered",
+          "status": "passed"
+        },
+        {
+          "name": "covered",
+          "status": "measured"
+        },
+        {
+          "name": "frontend-rate-covered",
+          "status": "failed",
+          "error": "AssertionError [ERR_ASSERTION]: covered: unexpected minimization\n\ntrue !== false\n"
+        },
+        {
+          "name": "window-state-uncovered",
+          "status": "failed",
+          "error": "Error: \"window.unminimize not allowed. Permissions associated with this command: core:window:allow-unminimize\""
+        },
+        {
+          "name": "uncovered",
+          "status": "measured"
+        },
+        {
+          "name": "frontend-rate-uncovered",
+          "status": "failed",
+          "error": "AssertionError [ERR_ASSERTION]: uncovered: unexpected frontend visibility\n\u001b[32mactual\u001b[39m \u001b[31mexpected\u001b[39m\n\n\u001b[39m'\u001b[39m\u001b[32mh\u001b[39m\u001b[31mv\u001b[39m\u001b[39mi\u001b[39m\u001b[32md\u001b[39m\u001b[32md\u001b[39m\u001b[31ms\u001b[39m\u001b[31mi\u001b[39m\u001b[31mb\u001b[39m\u001b[31ml\u001b[39m\u001b[39me\u001b[39m\u001b[32mn\u001b[39m\u001b[39m'\u001b[39m\n"
+        },
+        {
+          "name": "native-occlusion-source",
+          "status": "failed",
+          "error": "AssertionError [ERR_ASSERTION]: window.rs lacks NSWindowOcclusionState observation and separate telemetry for frontend/shell sources (N01 interface requirement)"
+        }
+      ]
+    }
+  ],
+  "initialNativeRuns": [
+    {
+      "mode": "s3",
+      "startedAt": "2026-10-20T08:19:55.350Z",
+      "checks": [
+        {
+          "name": "main window and real IPC",
+          "status": "passed",
+          "value": {
+            "actions": [],
+            "at": 1640.0000000000002,
+            "focus": false,
+            "frontend": "hidden",
+            "keys": [],
+            "menu": {
+              "model": {
+                "lang": "de",
+                "menus": [
+                  {
+                    "id": "app",
+                    "items": [
+                      {
+                        "action": "app.about",
+                        "enabled": true,
+                        "id": "app.about",
+                        "kind": "item",
+                        "label": "\u00dcber OpenSpider"
+                      },
+                      {
+                        "enabled": false,
+                        "id": "sep.app.settings",
+                        "kind": "separator",
+                        "label": ""
+                      },
+                      {
+                        "accelerator": "CmdOrCtrl+,",
+                        "action": "app.settings",
+                        "enabled": true,
+                        "id": "app.settings",
+                        "kind": "item",
+                        "label": "Einstellungen\u2026",
+                        "shortcutText": "\u2318,"
+                      },
+                      {
+                        "enabled": false,
+                        "id": "sep.app.system",
+                        "kind": "separator",
+                        "label": ""
+                      },
+                      {
+                        "enabled": true,
+                        "id": "app.services",
+                        "kind": "predefined",
+                        "label": "Dienste",
+                        "predefined": "services"
+                      },
+                      {
+                        "enabled": true,
+                        "id": "app.hide",
+                        "kind": "predefined",
+                        "label": "OpenSpider ausblenden",
+                        "predefined": "hide"
+                      },
+                      {
+                        "enabled": true,
+                        "id": "app.hideOthers",
+                        "kind": "predefined",
+                        "label": "Andere ausblenden",
+                        "predefined": "hideOthers"
+                      },
+                      {
+                        "enabled": true,
+                        "id": "app.showAll",
+                        "kind": "predefined",
+                        "label": "Alle einblenden",
+                        "predefined": "showAll"
+                      },
+                      {
+                        "enabled": false,
+                        "id": "sep.app.quit",
+                        "kind": "separator",
+                        "label": ""
+                      },
+                      {
+                        "action": "app.quit",
+                        "enabled": true,
+                        "id": "app.quit",
+                        "kind": "item",
+                        "label": "OpenSpider beenden"
+                      }
+                    ],
+                    "label": "OpenSpider"
+                  },
+                  {
+                    "id": "file",
+                    "items": [
+                      {
+                        "accelerator": "CmdOrCtrl+N",
+                        "action": "crawl.new",
+                        "enabled": true,
+                        "id": "file.new",
+                        "kind": "item",
+                        "label": "Neuer Crawl",
+                        "shortcutText": "\u2318N"
+                      },
+                      {
+                        "accelerator": "CmdOrCtrl+O",
+                        "action": "crawl.open",
+                        "enabled": true,
+                        "id": "file.open",
+                        "kind": "item",
+                        "label": "Crawl \u00f6ffnen",
+                        "shortcutText": "\u2318O"
+                      },
+                      {
+                        "accelerator": "CmdOrCtrl+S",
+                        "action": "crawl.saveAs",
+                        "disabledReason": "\u00d6ffne oder starte zuerst einen Crawl.",
+                        "enabled": false,
+                        "id": "file.saveAs",
+                        "kind": "item",
+                        "label": "Crawl speichern unter\u2026",
+                        "shortcutText": "\u2318S"
+                      }
+                    ],
+                    "label": "Datei"
+                  },
+                  {
+                    "id": "edit",
+                    "items": [
+                      {
+                        "enabled": true,
+                        "id": "edit.undo",
+                        "kind": "predefined",
+                        "label": "R\u00fcckg\u00e4ngig",
+                        "predefined": "undo"
+                      },
+                      {
+                        "enabled": true,
+                        "id": "edit.redo",
+                        "kind": "predefined",
+                        "label": "Wiederholen",
+                        "predefined": "redo"
+                      },
+                      {
+                        "enabled": false,
+                        "id": "edit.sep1",
+                        "kind": "separator",
+                        "label": ""
+                      },
+                      {
+                        "enabled": true,
+                        "id": "edit.cut",
+                        "kind": "predefined",
+                        "label": "Ausschneiden",
+                        "predefined": "cut"
+                      },
+                      {
+                        "enabled": true,
+                        "id": "edit.copy",
+                        "kind": "predefined",
+                        "label": "Kopieren",
+                        "predefined": "copy"
+                      },
+                      {
+                        "enabled": true,
+                        "id": "edit.paste",
+                        "kind": "predefined",
+                        "label": "Einf\u00fcgen",
+                        "predefined": "paste"
+                      },
+                      {
+                        "enabled": true,
+                        "id": "edit.selectAll",
+                        "kind": "predefined",
+                        "label": "Alles ausw\u00e4hlen",
+                        "predefined": "selectAll"
+                      }
+                    ],
+                    "label": "Bearbeiten"
+                  },
+                  {
+                    "id": "bulkExport",
+                    "items": [
+                      {
+                        "action": "export.multi",
+                        "enabled": false,
+                        "id": "export.multi",
+                        "kind": "item",
+                        "label": "Mehrfachexport\u2026"
+                      }
+                    ],
+                    "label": "Bulk-Export"
+                  },
+                  {
+                    "id": "sitemaps",
+                    "items": [
+                      {
+                        "action": "export.sitemap.pages",
+                        "enabled": false,
+                        "id": "export.sitemap.pages",
+                        "kind": "item",
+                        "label": "XML-Sitemap erstellen\u2026"
+                      },
+                      {
+                        "action": "export.sitemap.images",
+                        "enabled": false,
+                        "id": "export.sitemap.images",
+                        "kind": "item",
+                        "label": "Bild-Sitemap erstellen\u2026"
+                      }
+                    ],
+                    "label": "Sitemaps"
+                  },
+                  {
+                    "id": "view",
+                    "items": [
+                      {
+                        "accelerator": "CmdOrCtrl+J",
+                        "action": "view.toggleDetail",
+                        "enabled": true,
+                        "id": "view.detail",
+                        "kind": "item",
+                        "label": "Detailfenster ein- oder ausblenden",
+                        "shortcutText": "\u2318J"
+                      },
+                      {
+                        "accelerator": "CmdOrCtrl+Shift+J",
+                        "action": "view.toggleSidebar",
+                        "enabled": true,
+                        "id": "view.sidebar",
+                        "kind": "item",
+                        "label": "Seitenleiste ein- oder ausblenden",
+                        "shortcutText": "\u21e7\u2318J"
+                      },
+                      {
+                        "enabled": false,
+                        "id": "sep.view.zoom",
+                        "kind": "separator",
+                        "label": ""
+                      },
+                      {
+                        "accelerator": "CmdOrCtrl+=",
+                        "action": "zoom.in",
+                        "enabled": true,
+                        "id": "view.zoomIn",
+                        "kind": "item",
+                        "label": "Vergr\u00f6\u00dfern",
+                        "shortcutText": "\u2318="
+                      },
+                      {
+                        "accelerator": "CmdOrCtrl+-",
+                        "action": "zoom.out",
+                        "enabled": true,
+                        "id": "view.zoomOut",
+                        "kind": "item",
+                        "label": "Verkleinern",
+                        "shortcutText": "\u2318-"
+                      },
+                      {
+                        "accelerator": "CmdOrCtrl+0",
+                        "action": "zoom.reset",
+                        "enabled": true,
+                        "id": "view.zoomReset",
+                        "kind": "item",
+                        "label": "Zoom auf 100 % zur\u00fccksetzen",
+                        "shortcutText": "\u23180"
+                      }
+                    ],
+                    "label": "Ansicht"
+                  },
+                  {
+                    "id": "window",
+                    "items": [
+                      {
+                        "enabled": true,
+                        "id": "window.minimize",
+                        "kind": "predefined",
+                        "label": "Im Dock ablegen",
+                        "predefined": "minimize"
+                      },
+                      {
+                        "enabled": true,
+                        "id": "window.zoom",
+                        "kind": "predefined",
+                        "label": "Zoomen",
+                        "predefined": "maximize"
+                      },
+                      {
+                        "enabled": true,
+                        "id": "window.front",
+                        "kind": "predefined",
+                        "label": "Alle nach vorne bringen",
+                        "predefined": "bringAllToFront"
+                      }
+                    ],
+                    "label": "Fenster"
+                  },
+                  {
+                    "id": "help",
+                    "items": [
+                      {
+                        "action": "help.shortcuts",
+                        "enabled": true,
+                        "id": "help.shortcuts",
+                        "kind": "item",
+                        "label": "Tastaturk\u00fcrzel"
+                      }
+                    ],
+                    "label": "Hilfe"
+                  }
+                ],
+                "nativeAccelerators": [
+                  "app.settings",
+                  "crawl.new",
+                  "crawl.open",
+                  "crawl.saveAs",
+                  "view.toggleDetail",
+                  "view.toggleSidebar",
+                  "zoom.in",
+                  "zoom.out",
+                  "zoom.reset"
+                ],
+                "platform": "mac"
+              },
+              "rebuilds": 3
+            },
+            "shell": {
+              "minimized": false,
+              "visible": true
+            },
+            "ticks": [],
+            "transport": "tauri",
+            "visibility": []
+          }
+        },
+        {
+          "name": "native editing shortcuts in a text field",
+          "status": "failed",
+          "error": "AssertionError [ERR_ASSERTION]: Native keyboard proof requires visible WKWebView\n\u001b[32mactual\u001b[39m \u001b[31mexpected\u001b[39m\n\n\u001b[39m'\u001b[39m\u001b[32mh\u001b[39m\u001b[31mv\u001b[39m\u001b[39mi\u001b[39m\u001b[32md\u001b[39m\u001b[32md\u001b[39m\u001b[31ms\u001b[39m\u001b[31mi\u001b[39m\u001b[31mb\u001b[39m\u001b[31ml\u001b[39m\u001b[39me\u001b[39m\u001b[32mn\u001b[39m\u001b[39m'\u001b[39m\n"
+        },
+        {
+          "name": "table fixture C/A dispatch once; V/X/Z do not mutate it",
+          "status": "failed",
+          "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\u001b[32mactual\u001b[39m \u001b[31mexpected\u001b[39m\n\n\u001b[39m'\u001b[39m\u001b[32mh\u001b[39m\u001b[31mv\u001b[39m\u001b[39mi\u001b[39m\u001b[32md\u001b[39m\u001b[32md\u001b[39m\u001b[31ms\u001b[39m\u001b[31mi\u001b[39m\u001b[31mb\u001b[39m\u001b[31ml\u001b[39m\u001b[39me\u001b[39m\u001b[32mn\u001b[39m\u001b[39m'\u001b[39m\n"
+        }
+      ],
+      "nativeActivation": {
+        "activationPolicy": 0,
+        "active": false,
+        "hidden": false,
+        "pid": 67497,
+        "postEventAccess": false,
+        "session": {
+          "loginDone": true,
+          "onConsole": false,
+          "screenLocked": true
+        }
+      },
+      "seconds": 4.666,
+      "status": "failed"
+    },
+    {
+      "mode": "smoke",
+      "startedAt": "2026-10-20T08:20:03.312Z",
+      "checks": [
+        {
+          "name": "main window and real IPC",
+          "status": "passed",
+          "value": {
+            "actions": [],
+            "at": 1574,
+            "focus": false,
+            "frontend": "hidden",
+            "keys": [],
+            "menu": {
+              "model": {
+                "lang": "de",
+                "menus": [
+                  {
+                    "id": "app",
+                    "items": [
+                      {
+                        "action": "app.about",
+                        "enabled": true,
+                        "id": "app.about",
+                        "kind": "item",
+                        "label": "\u00dcber OpenSpider"
+                      },
+                      {
+                        "enabled": false,
+                        "id": "sep.app.settings",
+                        "kind": "separator",
+                        "label": ""
+                      },
+                      {
+                        "accelerator": "CmdOrCtrl+,",
+                        "action": "app.settings",
+                        "enabled": true,
+                        "id": "app.settings",
+                        "kind": "item",
+                        "label": "Einstellungen\u2026",
+                        "shortcutText": "\u2318,"
+                      },
+                      {
+                        "enabled": false,
+                        "id": "sep.app.system",
+                        "kind": "separator",
+                        "label": ""
+                      },
+                      {
+                        "enabled": true,
+                        "id": "app.services",
+                        "kind": "predefined",
+                        "label": "Dienste",
+                        "predefined": "services"
+                      },
+                      {
+                        "enabled": true,
+                        "id": "app.hide",
+                        "kind": "predefined",
+                        "label": "OpenSpider ausblenden",
+                        "predefined": "hide"
+                      },
+                      {
+                        "enabled": true,
+                        "id": "app.hideOthers",
+                        "kind": "predefined",
+                        "label": "Andere ausblenden",
+                        "predefined": "hideOthers"
+                      },
+                      {
+                        "enabled": true,
+                        "id": "app.showAll",
+                        "kind": "predefined",
+                        "label": "Alle einblenden",
+                        "predefined": "showAll"
+                      },
+                      {
+                        "enabled": false,
+                        "id": "sep.app.quit",
+                        "kind": "separator",
+                        "label": ""
+                      },
+                      {
+                        "action": "app.quit",
+                        "enabled": true,
+                        "id": "app.quit",
+                        "kind": "item",
+                        "label": "OpenSpider beenden"
+                      }
+                    ],
+                    "label": "OpenSpider"
+                  },
+                  {
+                    "id": "file",
+                    "items": [
+                      {
+                        "accelerator": "CmdOrCtrl+N",
+                        "action": "crawl.new",
+                        "enabled": true,
+                        "id": "file.new",
+                        "kind": "item",
+                        "label": "Neuer Crawl",
+                        "shortcutText": "\u2318N"
+                      },
+                      {
+                        "accelerator": "CmdOrCtrl+O",
+                        "action": "crawl.open",
+                        "enabled": true,
+                        "id": "file.open",
+                        "kind": "item",
+                        "label": "Crawl \u00f6ffnen",
+                        "shortcutText": "\u2318O"
+                      },
+                      {
+                        "accelerator": "CmdOrCtrl+S",
+                        "action": "crawl.saveAs",
+                        "disabledReason": "\u00d6ffne oder starte zuerst einen Crawl.",
+                        "enabled": false,
+                        "id": "file.saveAs",
+                        "kind": "item",
+                        "label": "Crawl speichern unter\u2026",
+                        "shortcutText": "\u2318S"
+                      }
+                    ],
+                    "label": "Datei"
+                  },
+                  {
+                    "id": "edit",
+                    "items": [
+                      {
+                        "enabled": true,
+                        "id": "edit.undo",
+                        "kind": "predefined",
+                        "label": "R\u00fcckg\u00e4ngig",
+                        "predefined": "undo"
+                      },
+                      {
+                        "enabled": true,
+                        "id": "edit.redo",
+                        "kind": "predefined",
+                        "label": "Wiederholen",
+                        "predefined": "redo"
+                      },
+                      {
+                        "enabled": false,
+                        "id": "edit.sep1",
+                        "kind": "separator",
+                        "label": ""
+                      },
+                      {
+                        "enabled": true,
+                        "id": "edit.cut",
+                        "kind": "predefined",
+                        "label": "Ausschneiden",
+                        "predefined": "cut"
+                      },
+                      {
+                        "enabled": true,
+                        "id": "edit.copy",
+                        "kind": "predefined",
+                        "label": "Kopieren",
+                        "predefined": "copy"
+                      },
+                      {
+                        "enabled": true,
+                        "id": "edit.paste",
+                        "kind": "predefined",
+                        "label": "Einf\u00fcgen",
+                        "predefined": "paste"
+                      },
+                      {
+                        "enabled": true,
+                        "id": "edit.selectAll",
+                        "kind": "predefined",
+                        "label": "Alles ausw\u00e4hlen",
+                        "predefined": "selectAll"
+                      }
+                    ],
+                    "label": "Bearbeiten"
+                  },
+                  {
+                    "id": "bulkExport",
+                    "items": [
+                      {
+                        "action": "export.multi",
+                        "enabled": false,
+                        "id": "export.multi",
+                        "kind": "item",
+                        "label": "Mehrfachexport\u2026"
+                      }
+                    ],
+                    "label": "Bulk-Export"
+                  },
+                  {
+                    "id": "sitemaps",
+                    "items": [
+                      {
+                        "action": "export.sitemap.pages",
+                        "enabled": false,
+                        "id": "export.sitemap.pages",
+                        "kind": "item",
+                        "label": "XML-Sitemap erstellen\u2026"
+                      },
+                      {
+                        "action": "export.sitemap.images",
+                        "enabled": false,
+                        "id": "export.sitemap.images",
+                        "kind": "item",
+                        "label": "Bild-Sitemap erstellen\u2026"
+                      }
+                    ],
+                    "label": "Sitemaps"
+                  },
+                  {
+                    "id": "view",
+                    "items": [
+                      {
+                        "accelerator": "CmdOrCtrl+J",
+                        "action": "view.toggleDetail",
+                        "enabled": true,
+                        "id": "view.detail",
+                        "kind": "item",
+                        "label": "Detailfenster ein- oder ausblenden",
+                        "shortcutText": "\u2318J"
+                      },
+                      {
+                        "accelerator": "CmdOrCtrl+Shift+J",
+                        "action": "view.toggleSidebar",
+                        "enabled": true,
+                        "id": "view.sidebar",
+                        "kind": "item",
+                        "label": "Seitenleiste ein- oder ausblenden",
+                        "shortcutText": "\u21e7\u2318J"
+                      },
+                      {
+                        "enabled": false,
+                        "id": "sep.view.zoom",
+                        "kind": "separator",
+                        "label": ""
+                      },
+                      {
+                        "accelerator": "CmdOrCtrl+=",
+                        "action": "zoom.in",
+                        "enabled": true,
+                        "id": "view.zoomIn",
+                        "kind": "item",
+                        "label": "Vergr\u00f6\u00dfern",
+                        "shortcutText": "\u2318="
+                      },
+                      {
+                        "accelerator": "CmdOrCtrl+-",
+                        "action": "zoom.out",
+                        "enabled": true,
+                        "id": "view.zoomOut",
+                        "kind": "item",
+                        "label": "Verkleinern",
+                        "shortcutText": "\u2318-"
+                      },
+                      {
+                        "accelerator": "CmdOrCtrl+0",
+                        "action": "zoom.reset",
+                        "enabled": true,
+                        "id": "view.zoomReset",
+                        "kind": "item",
+                        "label": "Zoom auf 100 % zur\u00fccksetzen",
+                        "shortcutText": "\u23180"
+                      }
+                    ],
+                    "label": "Ansicht"
+                  },
+                  {
+                    "id": "window",
+                    "items": [
+                      {
+                        "enabled": true,
+                        "id": "window.minimize",
+                        "kind": "predefined",
+                        "label": "Im Dock ablegen",
+                        "predefined": "minimize"
+                      },
+                      {
+                        "enabled": true,
+                        "id": "window.zoom",
+                        "kind": "predefined",
+                        "label": "Zoomen",
+                        "predefined": "maximize"
+                      },
+                      {
+                        "enabled": true,
+                        "id": "window.front",
+                        "kind": "predefined",
+                        "label": "Alle nach vorne bringen",
+                        "predefined": "bringAllToFront"
+                      }
+                    ],
+                    "label": "Fenster"
+                  },
+                  {
+                    "id": "help",
+                    "items": [
+                      {
+                        "action": "help.shortcuts",
+                        "enabled": true,
+                        "id": "help.shortcuts",
+                        "kind": "item",
+                        "label": "Tastaturk\u00fcrzel"
+                      }
+                    ],
+                    "label": "Hilfe"
+                  }
+                ],
+                "nativeAccelerators": [
+                  "app.settings",
+                  "crawl.new",
+                  "crawl.open",
+                  "crawl.saveAs",
+                  "view.toggleDetail",
+                  "view.toggleSidebar",
+                  "zoom.in",
+                  "zoom.out",
+                  "zoom.reset"
+                ],
+                "platform": "mac"
+              },
+              "rebuilds": 3
+            },
+            "shell": {
+              "minimized": false,
+              "visible": true
+            },
+            "ticks": [],
+            "transport": "tauri",
+            "visibility": []
+          }
+        },
+        {
+          "name": "active native desktop",
+          "status": "failed",
+          "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\u001b[32mactual\u001b[39m \u001b[31mexpected\u001b[39m\n\n\u001b[39m'\u001b[39m\u001b[32mh\u001b[39m\u001b[31mv\u001b[39m\u001b[39mi\u001b[39m\u001b[32md\u001b[39m\u001b[32md\u001b[39m\u001b[31ms\u001b[39m\u001b[31mi\u001b[39m\u001b[31mb\u001b[39m\u001b[31ml\u001b[39m\u001b[39me\u001b[39m\u001b[32mn\u001b[39m\u001b[39m'\u001b[39m\n"
+        },
+        {
+          "name": "separate settings window",
+          "status": "passed",
+          "value": {
+            "actions": [],
+            "at": 407,
+            "focus": false,
+            "frontend": "hidden",
+            "keys": [],
+            "menu": null,
+            "shell": {
+              "minimized": false,
+              "visible": true
+            },
+            "ticks": [],
+            "transport": "tauri",
+            "visibility": []
+          }
+        },
+        {
+          "name": "app.requestQuit confirms a running fixture crawl",
+          "status": "passed",
+          "value": {
+            "kind": "confirm",
+            "reasons": [
+              "crawl"
+            ]
+          }
+        },
+        {
+          "name": "closing during a running fixture crawl asks before quitting",
+          "status": "failed",
+          "error": "Error: quit confirmation: timed out"
+        }
+      ],
+      "nativeActivation": {
+        "activationPolicy": 0,
+        "active": false,
+        "hidden": false,
+        "pid": 67538,
+        "postEventAccess": false,
+        "session": {
+          "loginDone": true,
+          "onConsole": false,
+          "screenLocked": true
+        }
+      },
+      "seconds": 35.824,
+      "status": "failed"
+    }
+  ],
+  "ci": {
+    "evaluatedRunIds": [
+      39376824496,
+      39376824502,
+      39376824390,
+      39376824418
+    ],
+    "newRunIds": [],
+    "reason": "No push or PR; evaluated existing runs on 6e31faa"
+  },
+  "npmAudit": {
+    "moderate": 1,
+    "high": 6,
+    "total": 7
+  },
+  "lockfilesUnchanged": true,
+  "targetSize": "6.3G"
+}
