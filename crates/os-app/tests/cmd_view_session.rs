@@ -286,13 +286,24 @@ async fn regex_step_limit_preserves_the_published_view() {
     let before = fx.rows(&h, 0, 500, json!([])).await;
     // The backreference forces fancy-regex backtracking instead of a linear regex fast path.
     let tree = json!({"kind":"group","op":"and","children":[{"kind":"cond","column":"Address","op":"regex","value":r"^https://site.test/(a|aa)+\1$"}]});
-    let e = try_call(
+    let result = try_call(
         &fx,
         "view.update",
         json!({"viewId":h["viewId"],"spec":search(json!({"kind":"rules","tree":tree,"caseSensitive":false}))}),
     )
-    .await
-    .unwrap_err();
+    .await;
+    // Depending on build speed, the step limit is reported directly or through an operation.
+    let e = match result {
+        Err(e) => e,
+        Ok(v) if v["state"] == "building" => {
+            let status = wait_op(&fx, &v["op"]).await;
+            assert_eq!(status.state, OpState::Failed, "{status:?}");
+            status
+                .error
+                .expect("failed search operation must report its error")
+        }
+        Ok(v) => panic!("expected a regex step-limit error or a building view, got {v:?}"),
+    };
     assert_ne!(e.code, ErrorCode::Stale, "{e:?}");
     assert!(
         e.detail
