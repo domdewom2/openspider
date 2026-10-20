@@ -1,0 +1,129 @@
+## Visualisierungen (M2-U24)
+viz-kind-crawlTree = Crawl-Baum
+viz-kind-crawlGraph = Kraftgerichteter Crawl-Graph
+viz-kind-directoryTree = Verzeichnisbaum
+viz-kind-anchorWords = Wortwolke der Inlink-Ankertexte
+viz-pick-kind = Art der Visualisierung
+viz-data-changed = Daten geändert
+viz-refresh = Aktualisieren
+viz-provenance-missing = Diese Crawl-Datei enthält nicht, wo jede URL zuerst gefunden wurde. Die Struktur wird stattdessen aus den Links abgeleitet.
+viz-sidebar-label = Einstellungen der Visualisierung
+viz-trail-start = Start-URL
+viz-trail-label = Wurzelpfad
+viz-loading = Wird geladen …
+viz-truncated = Knotenbudget erreicht: { $count } Knoten angezeigt
+viz-node-count = { $count } Knoten
+viz-canvas-label = { $kind } mit { $count } Knoten. Mit dem Suchfeld eine URL finden; Plus und Minus zoomen, Pfeiltasten verschieben.
+viz-hidden-children = { $count } Unterseiten ausgeblendet (gesamt { $total } Nachfahren)
+
+viz-menu-label = Knotenaktionen
+viz-menu-show-in-table = In Tabelle zeigen
+viz-menu-explore = Teilbaum öffnen
+viz-menu-focus = Als Wurzel setzen
+viz-menu-release = Fixierung lösen
+viz-menu-reset-view = Ansicht zurücksetzen
+viz-reason-path-node = Dieser Knoten ist ein Verzeichnis ohne gecrawlte URL.
+viz-reason-nothing-hidden = Keine ausgeblendeten Unterseiten.
+viz-confirm-title = Zu viele Unterseiten
+viz-confirm-body = Dieser Knoten würde { $count } Unterseiten hinzufügen und das Knotenbudget um mehr als 1.000 Knoten überschreiten. Stattdessen als Wurzel setzen?
+
+viz-section-search = Suche
+viz-search-label = URL suchen
+viz-search-placeholder = Teil der Adresse
+viz-search-clear = Suche leeren
+viz-search-prev = Vorheriger Treffer
+viz-search-next = Nächster Treffer
+viz-search-count = { $index } von { $total }
+viz-search-none = Keine Treffer
+
+viz-section-nodes = Knoten und Linien
+viz-orientation = Ausrichtung
+viz-orientation-lr = Links nach rechts
+viz-orientation-tb = Oben nach unten
+viz-expand-depth = Aufklappen bis Tiefe
+viz-expand-apply = Anwenden
+viz-level-gap = Abstand der Ebenen (px)
+viz-node-gap = Abstand der Knoten (px)
+viz-label-mode = Beschriftung
+viz-label-path = Pfad
+viz-label-url = Volle URL
+viz-r0 = Basisradius (px)
+viz-falloff = Abnahme je Ebene
+viz-allow-overlap = Überlappung erlauben
+viz-repulsion = Abstoßungsstärke
+viz-spring = Federlänge (px)
+viz-label-zoom = Beschriftung ab Zoomstufe
+viz-seed = Zufallsstartwert
+viz-pause = Simulation pausieren
+viz-resume = Simulation fortsetzen
+viz-layout-idle = Layout nicht gestartet
+viz-layout-running = Layout läuft ({ $steps } Schritte)
+viz-layout-paused = Layout pausiert ({ $steps } Schritte)
+viz-layout-done = Layout fertig ({ $steps } Schritte)
+viz-line-width = Linienbreite (px)
+viz-include-non-html = Nicht-HTML-URLs einbeziehen
+viz-include-non-indexable = Nicht indexierbare Seiten einbeziehen
+
+viz-section-colors = Farbe und Größe
+viz-color-mode = Färben nach
+viz-color-indexability = Indexierbarkeit
+viz-color-statusClass = Klasse des Antwortcodes
+viz-color-segment = Segment
+viz-color-metric = Metrik-Verlauf
+viz-palette = Farbschema
+viz-palette-standard = Standard
+viz-palette-colorblind = Farbfehlsichtigkeitstauglich
+viz-metric = Skalierungsmetrik
+viz-metric-unavailable = Keine Daten für diese Metrik (API nicht verbunden)
+viz-size-by-metric = Knotengröße nach Metrik skalieren
+viz-min-radius = Min. Radius (px)
+viz-max-radius = Max. Radius (px)
+
+viz-section-budget = Knotenbudget
+viz-budget = Höchstzahl Knoten
+viz-budget-warning = Mehr als 10.000 Knoten können Zeichnen und Bedienung der Ansicht verlangsamen.
+
+viz-section-legend = Legende
+viz-legend-indexable = Indexierbar
+viz-legend-non-indexable = Nicht indexierbar
+viz-legend-status-2xx = 2xx Erfolg
+viz-legend-status-3xx = 3xx Weiterleitung
+viz-legend-status-4xx = 4xx Clientfehler
+viz-legend-status-5xx = 5xx Serverfehler
+viz-legend-status-none = Keine Antwort
+viz-legend-no-segment = Kein Segment
+viz-legend-capped = Unterseiten ausgeblendet (Badge = Anzahl)
+viz-legend-path = Verzeichnis ohne gecrawlte URL
+viz-legend-missing = Kein Wert für die Metrik
+viz-legend-min = Min. { $value }
+viz-legend-max = Max. { $value }
+viz-legend-size = Größe: { $metric } (Fläche wächst mit dem Wert; { $max } = { $rmax } px, kleinste { $rmin } px)
+viz-legend-depth = Größe und Helligkeit nehmen mit der Klicktiefe ab.
+
+viz-section-export = Export
+viz-export-svg = SVG
+viz-export-png = PNG { $factor }×
+viz-export-csv = Knoten und Kanten exportieren (CSV)
+viz-export-csv-dir = Zielordner
+viz-export-csv-choose = Ordner für nodes.csv und edges.csv auswählen
+viz-export-csv-collapsed = Zuerst alle Knoten aufklappen: Der CSV-Export enthält genau die für diese Ansicht gelieferten Knoten.
+viz-export-running = Wird exportiert …
+viz-export-done = nodes.csv und edges.csv in { $path } gespeichert
+viz-export-failed = Der Export ist fehlgeschlagen.
+
+viz-section-words = Wortwolke
+viz-words-unit = Einheit
+viz-words-phrase = Ganze Phrase
+viz-words-word = Einzelnes Wort
+viz-words-stopwords = Stoppwörter entfernen
+viz-words-nofollow = Nofollow-Links einbeziehen
+viz-words-max = Höchstzahl Begriffe
+viz-section-terms = Begriffe
+viz-word-label = { $term }: { $count } Links. Diese Inlinks in der Tabelle zeigen.
+
+notice-viz-data-changed = Die Crawl-Daten einer Visualisierung haben sich geändert.
+notice-viz-provenance-missing = Diese Crawl-Datei enthält nicht, wo jede URL zuerst gefunden wurde.
+notice-viz-stopwords-unavailable = Für „{ $language }“ gibt es keine Stoppwortliste.
+err-viz-snapshot-closed = Diese Visualisierung ist nicht mehr verfügbar. Bitte aus dem Hauptfenster neu öffnen.
+err-viz-kind = Diese Art der Visualisierung ist nicht verfügbar.
+err-viz-main-crawl-changed = Das Hauptfenster zeigt inzwischen einen anderen Crawl.

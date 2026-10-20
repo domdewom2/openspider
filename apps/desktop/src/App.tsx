@@ -9,6 +9,7 @@ import { IntegrationsHeaderSlot, IntegrationsHost } from "./features/integration
 import { TasksHost } from "./features/tasks";
 import { MenuAvailability } from "./features/help/MenuAvailability";
 import { HelpDialogs } from "./features/help/HelpDialogs";
+import { VizHost } from "./features/viz";
 import { useEffect, useState, type ComponentType } from "react";
 import { RegionBoundary } from "./app/ErrorBoundary";
 import { Providers } from "./app/Providers";
@@ -55,6 +56,7 @@ export function App() {
       <TasksHost />
       <HelpDialogs />
       <CrawlsHost />
+      <VizHost />
       <div className="os-app">
         <Shell />
         <header className="os-app-header" role="banner" aria-label={t("app-region-header")}>
