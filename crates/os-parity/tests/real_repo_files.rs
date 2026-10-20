@@ -112,12 +112,14 @@ fn real_mappings_and_manifests_load_and_reference_each_other() {
         Mapping::load(m).unwrap_or_else(|e| panic!("{}: {e}", m.display()));
         names.push(m.file_stem().unwrap().to_string_lossy().into_owned());
     }
-    // Das Overview-Mapping löst M1-/M2-Platzhalter mit CrawlConfig-Defaults auf.
-    let filters = Mapping::load(&root.join("tests/parity/mappings/crawl_overview.toml"))
+    // K2-66: Das Overview-Mapping vergleicht bis Q02 nur M1-Filter. Die Manifeste der M2-Sites verweisen aber auf
+    // M2-Filter; dafür lädt ein temporäres Mapping beide Listen (löst Platzhalter mit CrawlConfig-Defaults auf).
+    let mut filters = Mapping::load(&root.join("tests/parity/mappings/crawl_overview.toml"))
         .unwrap()
         .blocks
         .m1_filters
         .unwrap();
+    filters.extend(m2_filters(&root));
     let sites_dir = root.join("tests/golden/parity");
     let mut sites = 0;
     for entry in std::fs::read_dir(&sites_dir).unwrap() {
@@ -157,12 +159,27 @@ fn real_mappings_and_manifests_load_and_reference_each_other() {
     assert_eq!(sites, 10, "erwartet: fünf M1- und fünf M2-Sites");
 }
 
+/// M2-Filterliste über ein temporäres Overview-Mapping im Repository (die Filterlisten werden relativ gesucht).
+fn m2_filters(root: &Path) -> std::collections::BTreeSet<(String, String)> {
+    let dir = tempfile::tempdir_in(root.join("tests/parity")).unwrap();
+    let path = dir.path().join("overview_m2.toml");
+    std::fs::write(
+        &path,
+        "key = [\"Section\", \"Item\"]\nformat = \"blocks\"\n[blocks]\nfilters = [\"docs/plan/M2-filters.toml\"]\n[columns]\n\"URLs\" = \"URLs\"\n",
+    )
+    .unwrap();
+    Mapping::load(&path).unwrap().blocks.m1_filters.unwrap()
+}
+
 // spec: OUT-080
+// K2-66: Die M2-Filter und -Spalten sind vorbereitet (Listen, Mappings, Sites), werden aber erst in Q02 scharf
+// geschaltet: das Overview-Mapping vergleicht nur M1-Filter, links_all ignoriert Link Score und Inlinks.
 #[test]
-fn overview_includes_m2_default_labels_and_contract_columns_are_not_ignored() {
+fn m2_filters_are_prepared_but_not_compared_before_q02() {
     let root = repo();
     let overview = Mapping::load(&root.join("tests/parity/mappings/crawl_overview.toml")).unwrap();
-    let filters = overview.blocks.m1_filters.unwrap();
+    let compared = overview.blocks.m1_filters.unwrap();
+    let m2 = m2_filters(&root);
     for (tab, filter) in [
         ("page titles", "over 561 pixels"),
         ("meta description", "below 400 pixels"),
@@ -170,22 +187,22 @@ fn overview_includes_m2_default_labels_and_contract_columns_are_not_ignored() {
         ("links", "pages with high internal outlinks"),
         ("validation", "html document over 2mb"),
     ] {
+        let key = (tab.to_string(), filter.to_string());
+        assert!(m2.contains(&key), "M2-Liste: {tab}:{filter}");
         assert!(
-            filters.contains(&(tab.to_string(), filter.to_string())),
-            "{tab}:{filter}"
+            !compared.contains(&key),
+            "noch nicht verglichen: {tab}:{filter}"
         );
     }
-    for (name, columns) in [
-        (
-            "directives_all",
-            vec!["Indexability", "Indexability Status"],
-        ),
-        ("hreflang_all", vec!["Indexability", "Indexability Status"]),
-        ("links_all", vec!["Inlinks", "Link Score"]),
-    ] {
+    for column in ["Inlinks", "Link Score"] {
+        let mapping = Mapping::load(&root.join("tests/parity/mappings/links_all.toml")).unwrap();
+        assert!(mapping.column(column).unwrap().ignore, "links_all:{column}");
+    }
+    // Indexability-Spalten sind bereits scharf (TECH-051/-071, K2-04).
+    for name in ["directives_all", "hreflang_all"] {
         let mapping =
             Mapping::load(&root.join(format!("tests/parity/mappings/{name}.toml"))).unwrap();
-        for column in columns {
+        for column in ["Indexability", "Indexability Status"] {
             assert!(!mapping.column(column).unwrap().ignore, "{name}:{column}");
         }
     }
