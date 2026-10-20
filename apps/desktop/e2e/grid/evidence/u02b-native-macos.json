@@ -1,0 +1,318 @@
+{
+  "bare_binary": {
+    "platform": "darwin",
+    "native": true,
+    "processScale": 1,
+    "zoom": [],
+    "frames": [],
+    "errors": [
+      "Error: Native window remains hidden after show/setFocus; paint, FPS and zoom/hit-test gates require an active desktop session"
+    ],
+    "activation": {
+      "focus": false,
+      "visibility": "hidden"
+    },
+    "initial": {
+      "bounds": {
+        "height": 26,
+        "width": 320,
+        "x": 90,
+        "y": 66
+      },
+      "cachedRows": 200,
+      "canvas": [
+        {
+          "cssHeight": 722,
+          "cssWidth": 1266,
+          "height": 722,
+          "heightError": 0,
+          "width": 1266,
+          "widthError": 0
+        }
+      ],
+      "cellWidth": 320,
+      "columns": 65,
+      "documentFocus": false,
+      "domRows": 28,
+      "dpr": 1,
+      "focus": null,
+      "headerBounds": {
+        "height": 30,
+        "width": 320,
+        "x": 90,
+        "y": 36
+      },
+      "innerHeight": 772,
+      "innerWidth": 1280,
+      "last": "loading",
+      "rowCount": "5000001",
+      "selection": {
+        "ids": [],
+        "kind": "ids"
+      },
+      "total": 5000000,
+      "visibility": "hidden",
+      "visible": {
+        "height": 27,
+        "width": 8,
+        "x": 2,
+        "y": 0
+      },
+      "zoom": 1
+    },
+    "unpaintedJump": {
+      "bounds": {
+        "height": 26,
+        "width": 320,
+        "x": 90,
+        "y": 66
+      },
+      "cachedRows": 400,
+      "canvas": [
+        {
+          "cssHeight": 722,
+          "cssWidth": 1266,
+          "height": 722,
+          "heightError": 0,
+          "width": 1266,
+          "widthError": 0
+        }
+      ],
+      "cellWidth": 320,
+      "columns": 65,
+      "documentFocus": false,
+      "domRows": 27,
+      "dpr": 1,
+      "focus": null,
+      "headerBounds": {
+        "height": 30,
+        "width": 320,
+        "x": 90,
+        "y": 36
+      },
+      "innerHeight": 772,
+      "innerWidth": 1280,
+      "last": 5000000,
+      "rowCount": "5000001",
+      "selection": {
+        "ids": [],
+        "kind": "ids"
+      },
+      "total": 5000000,
+      "visibility": "hidden",
+      "visible": {
+        "height": 26,
+        "width": 8,
+        "x": 2,
+        "y": 4999974
+      },
+      "zoom": 1
+    },
+    "failureSnapshot": {
+      "bounds": {
+        "height": 26,
+        "width": 320,
+        "x": 90,
+        "y": 66
+      },
+      "cachedRows": 400,
+      "canvas": [
+        {
+          "cssHeight": 722,
+          "cssWidth": 1266,
+          "height": 722,
+          "heightError": 0,
+          "width": 1266,
+          "widthError": 0
+        }
+      ],
+      "cellWidth": 320,
+      "columns": 65,
+      "documentFocus": false,
+      "domRows": 27,
+      "dpr": 1,
+      "focus": null,
+      "headerBounds": {
+        "height": 30,
+        "width": 320,
+        "x": 90,
+        "y": 36
+      },
+      "innerHeight": 772,
+      "innerWidth": 1280,
+      "last": 5000000,
+      "rowCount": "5000001",
+      "selection": {
+        "ids": [],
+        "kind": "ids"
+      },
+      "total": 5000000,
+      "visibility": "hidden",
+      "visible": {
+        "height": 26,
+        "width": 8,
+        "x": 2,
+        "y": 4999974
+      },
+      "zoom": 1
+    }
+  },
+  "app_bundle": {
+    "platform": "darwin",
+    "native": true,
+    "processScale": 1,
+    "zoom": [],
+    "frames": [],
+    "errors": [
+      "Error: Native window remains hidden after show/setFocus; paint, FPS and zoom/hit-test gates require an active desktop session"
+    ],
+    "activation": {
+      "focus": false,
+      "visibility": "hidden"
+    },
+    "initial": {
+      "bounds": {
+        "height": 26,
+        "width": 320,
+        "x": 90,
+        "y": 66
+      },
+      "cachedRows": 200,
+      "canvas": [
+        {
+          "cssHeight": 722,
+          "cssWidth": 1266,
+          "height": 722,
+          "heightError": 0,
+          "width": 1266,
+          "widthError": 0
+        }
+      ],
+      "cellWidth": 320,
+      "columns": 65,
+      "documentFocus": false,
+      "domRows": 28,
+      "dpr": 1,
+      "focus": null,
+      "headerBounds": {
+        "height": 30,
+        "width": 320,
+        "x": 90,
+        "y": 36
+      },
+      "innerHeight": 772,
+      "innerWidth": 1280,
+      "last": "loading",
+      "rowCount": "5000001",
+      "selection": {
+        "ids": [],
+        "kind": "ids"
+      },
+      "total": 5000000,
+      "visibility": "hidden",
+      "visible": {
+        "height": 27,
+        "width": 8,
+        "x": 2,
+        "y": 0
+      },
+      "zoom": 1
+    },
+    "unpaintedJump": {
+      "bounds": {
+        "height": 26,
+        "width": 320,
+        "x": 90,
+        "y": 66
+      },
+      "cachedRows": 400,
+      "canvas": [
+        {
+          "cssHeight": 722,
+          "cssWidth": 1266,
+          "height": 722,
+          "heightError": 0,
+          "width": 1266,
+          "widthError": 0
+        }
+      ],
+      "cellWidth": 320,
+      "columns": 65,
+      "documentFocus": false,
+      "domRows": 27,
+      "dpr": 1,
+      "focus": null,
+      "headerBounds": {
+        "height": 30,
+        "width": 320,
+        "x": 90,
+        "y": 36
+      },
+      "innerHeight": 772,
+      "innerWidth": 1280,
+      "last": 5000000,
+      "rowCount": "5000001",
+      "selection": {
+        "ids": [],
+        "kind": "ids"
+      },
+      "total": 5000000,
+      "visibility": "hidden",
+      "visible": {
+        "height": 26,
+        "width": 8,
+        "x": 2,
+        "y": 4999974
+      },
+      "zoom": 1
+    },
+    "failureSnapshot": {
+      "bounds": {
+        "height": 26,
+        "width": 320,
+        "x": 90,
+        "y": 66
+      },
+      "cachedRows": 400,
+      "canvas": [
+        {
+          "cssHeight": 722,
+          "cssWidth": 1266,
+          "height": 722,
+          "heightError": 0,
+          "width": 1266,
+          "widthError": 0
+        }
+      ],
+      "cellWidth": 320,
+      "columns": 65,
+      "documentFocus": false,
+      "domRows": 27,
+      "dpr": 1,
+      "focus": null,
+      "headerBounds": {
+        "height": 30,
+        "width": 320,
+        "x": 90,
+        "y": 36
+      },
+      "innerHeight": 772,
+      "innerWidth": 1280,
+      "last": 5000000,
+      "rowCount": "5000001",
+      "selection": {
+        "ids": [],
+        "kind": "ids"
+      },
+      "total": 5000000,
+      "visibility": "hidden",
+      "visible": {
+        "height": 26,
+        "width": 8,
+        "x": 2,
+        "y": 4999974
+      },
+      "zoom": 1
+    }
+  }
+}

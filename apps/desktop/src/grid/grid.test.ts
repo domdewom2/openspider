@@ -4,7 +4,7 @@ import { ViewDataSource } from "../data/ViewDataSource";
 import { SelectionModel } from "../state/selection";
 import { resolveTokens } from "../ui/tokens/tokens";
 import { copySelection } from "./copy";
-import { cellTooltip, formatCell, gridCell } from "./cells";
+import { cellTooltip, ellipsis, formatCell, gridCell } from "./cells";
 import fixture from "./fixtures/fx-ui-basic.json";
 const handle = fixture as ViewHandle;
 // spec: UI-007
@@ -14,7 +14,7 @@ it("formats fx-ui-basic in de/en with raw bytes, precise seconds and empty null 
   expect(cellTooltip(12345, handle.columns[2], "en")).toBe("12.06 KB / 0.01 MB");
   expect(cellTooltip("x".repeat(2100), handle.columns[4], "de")).toHaveLength(2001);
   const status = { ...handle.columns[0], key: "Status Code" };
-  expect(gridCell(404, status, "en", resolveTokens("light", "#2f855a"))).toMatchObject({ displayData: "404", readonly: true, allowOverlay: false });
+  expect(gridCell(404, status, "en", resolveTokens("light", "#2f855a"))).toMatchObject({ text: "404", loading: false });
 });
 // spec: UI-012
 it("selects URL ids, toggles, ranges, and all-except without materializing unloaded rows", () => {
@@ -43,4 +43,13 @@ it("delegates copy with visible column order, warns for large selections and off
   copy.mockClear();
   await copySelection(source, selection.all(handle.viewId, 1), ["Address"], { confirmLarge, offerExport });
   expect(copy).not.toHaveBeenCalled();
+});
+
+// spec: UI-007
+it("clips long fixture addresses with an ellipsis without splitting surrogate pairs", () => {
+  const measure = (text: string) => text.length * 8;
+  const address = String(fixture.row[1]);
+  expect(ellipsis(measure, address, 120)).toBe(address.slice(0, 14) + "…");
+  expect(ellipsis(measure, "A😀B", 24)).toBe("A…");
+  expect(ellipsis(measure, "", 120)).toBe("");
 });

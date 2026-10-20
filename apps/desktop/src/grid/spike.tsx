@@ -78,7 +78,7 @@ const api = {
       const bounds = c.getBoundingClientRect();
       return { width: c.width, height: c.height, cssWidth: bounds.width, cssHeight: bounds.height,
         widthError: c.width - bounds.width * devicePixelRatio, heightError: c.height - bounds.height * devicePixelRatio };
-    }), cellWidth: controller ? controller.bounds(2, controller.visible().y)!.x - controller.bounds(1, controller.visible().y)!.x : null,
+    }), cellWidth: controller ? controller.bounds(1, controller.visible().y)!.width : null,
     bounds: controller?.bounds(1, controller.visible().y), headerBounds: controller?.bounds(1, -1) }),
   bounds: (column: number, row: number) => controller?.bounds(column, row),
   jump: async (row: number, column = 0) => {

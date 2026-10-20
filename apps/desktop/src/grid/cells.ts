@@ -1,4 +1,3 @@
-import { GridCellKind, type GridCell } from "@glideapps/glide-data-grid";
 import type { ColumnMeta } from "../ipc/gen/ColumnMeta";
 import { LOADING, type CellValue } from "../data/ViewDataSource";
 import type { TokenMap } from "../ui/tokens/tokens";
@@ -31,16 +30,28 @@ export function cellTooltip(value: CellValue, column: ColumnMeta, locale: string
   const text = String(value);
   return text.length > 2000 ? `${text.slice(0, 2000)}…` : text;
 }
-export function gridCell(value: CellValue | typeof LOADING, column: ColumnMeta, locale: string, tokens: TokenMap): GridCell {
-  if (value === LOADING) return { kind: GridCellKind.Loading, allowOverlay: false };
-  const text = formatCell(value, column, locale);
-  if (column.kind.kind === "bool" && value !== null) return { kind: GridCellKind.Boolean, data: Boolean(value), readonly: true, allowOverlay: false };
+export interface CanvasCell { text: string; color: string; align: CanvasTextAlign; loading: boolean }
+export function gridCell(value: CellValue | typeof LOADING, column: ColumnMeta, locale: string, tokens: TokenMap): CanvasCell {
+  if (value === LOADING) return { text: "…", color: tokens["text.muted"], align: column.align, loading: true };
   let color = tokens.text;
   if (column.kind.kind === "url") color = tokens.link;
   if (column.key === "Status Code") {
     const status = Number(value);
     color = tokens[status >= 500 ? "status.5xx" : status >= 400 ? "status.4xx" : status >= 300 ? "status.3xx" : status >= 200 ? "status.2xx" : "status.none"];
   }
-  return { kind: GridCellKind.Text, data: text, displayData: text, allowOverlay: false, readonly: true,
-    contentAlign: column.align, themeOverride: { textDark: color } };
+  return { text: formatCell(value, column, locale), color, align: column.align, loading: false };
+}
+
+/** Binary search bounds text measurement work even for very long cell values. */
+export function ellipsis(measure: (text: string) => number, text: string, width: number): string {
+  if (measure(text) <= width) return text;
+  let lo = 0, hi = text.length;
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    if (measure(text.slice(0, mid) + "…") <= width) lo = mid;
+    else hi = mid - 1;
+  }
+  // Never split a UTF-16 surrogate pair at the clipping boundary.
+  if (lo > 0 && /[\uD800-\uDBFF]/.test(text[lo - 1])) lo--;
+  return text.slice(0, lo) + "…";
 }
