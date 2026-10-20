@@ -369,6 +369,39 @@ impl TabView {
             }
         }
         let _builder = self.builder.lock().await;
+        let expected_core = {
+            let st = lock(&self.state);
+            // A build or maintenance run may have published while we waited for the builder.
+            if st.published.as_ref().map(|p| p.version) != Some(version) {
+                return Err(crate::commands::view::stale());
+            }
+            if let Some(snapshot) = &st.snapshot {
+                return Ok((snapshot.clone(), st.core));
+            }
+            st.core
+        };
+        // Cancellation can discard a result after the core has committed it. Never resurrect that spec
+        // when the published snapshot has been released. A detached build may still hold the session.
+        let diverged = self
+            .session
+            .try_lock()
+            .map(|s| s.as_ref().is_none_or(|s| s.version() != expected_core))
+            .unwrap_or(true);
+        if diverged {
+            self.maintain_locked(
+                app,
+                Pending {
+                    reset: true,
+                    ..Default::default()
+                },
+            )
+            .await?;
+            let st = lock(&self.state);
+            if st.published.as_ref().map(|p| p.version) != Some(version) {
+                return Err(crate::commands::view::stale());
+            }
+            return Ok((st.snapshot.clone().expect("rebuilt snapshot"), st.core));
+        }
         let slot = self.session.clone();
         let (snapshot, core, seq, total) = app
             .read_pool()
@@ -522,11 +555,16 @@ impl TabView {
     }
 
     /// K-1c: geänderte URLs gegen Filter, Suche und Sortierung nachführen bzw. neu aufbauen.
-    async fn maintain(&self, app: &App, mut pending: Pending) -> Result<(), CmdError> {
+    async fn maintain(&self, app: &App, pending: Pending) -> Result<(), CmdError> {
+        let _builder = self.builder.lock().await;
+        self.maintain_locked(app, pending).await
+    }
+
+    /// Caller holds `builder`, so a lazy rebuild and feed maintenance restore the same published spec.
+    async fn maintain_locked(&self, app: &App, mut pending: Pending) -> Result<(), CmdError> {
         let Some(published) = self.published() else {
             return Ok(());
         };
-        let _builder = self.builder.lock().await;
         let expected_core = lock(&self.state).core;
         // A cancelled build may have finished in the core after all: then rebuild the published specification.
         // try_lock: a detached, cancelled build may still hold the session on a pool thread.

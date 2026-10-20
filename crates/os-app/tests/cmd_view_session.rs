@@ -11,22 +11,26 @@ use os_app::{
     views::RestrictProvider,
     App, AppConfig, CallCtx, WindowId,
 };
-use os_model::{ManualClock, SeededIds, Timestamp};
+use os_model::{Clock, ManualClock, SeededIds, Timestamp};
 use roaring::RoaringBitmap;
 use serde_json::{json, Value};
 use std::{
     sync::{
         atomic::{AtomicBool, Ordering},
-        Arc,
+        Arc, Mutex,
     },
     time::{Duration, Instant},
 };
 
 /// Fixture with a manual clock (change feed cadence and idle release).
 fn fx_clock() -> (Fx, Arc<ManualClock>, tempfile::TempDir) {
+    let clock = Arc::new(ManualClock::new(Timestamp::UNIX_EPOCH));
+    let (fx, home) = fx_with_clock(clock.clone());
+    (fx, clock, home)
+}
+fn fx_with_clock(clock: Arc<dyn Clock>) -> (Fx, tempfile::TempDir) {
     let mut fx = Fx::new();
     let home = tempfile::tempdir().unwrap();
-    let clock = Arc::new(ManualClock::new(Timestamp::UNIX_EPOCH));
     let app = App::new(
         AppConfig::new(home.path())
             .with_ids(Arc::new(SeededIds::new(7)))
@@ -38,7 +42,7 @@ fn fx_clock() -> (Fx, Arc<ManualClock>, tempfile::TempDir) {
         .set_current(main(), fx.app.sessions().current(&main()).unwrap());
     app.set_desktop_actions(fx.clipboard.clone());
     fx.app = app;
-    (fx, clock, home)
+    (fx, home)
 }
 fn main() -> WindowId {
     WindowId("main".into())
@@ -95,8 +99,8 @@ impl FilterSource for Slow {
         Ok(self.ids.iter().copied().collect())
     }
 }
-struct Provider(Arc<Slow>);
-impl RestrictProvider for Provider {
+struct Provider<T>(Arc<T>);
+impl<T: FilterSource + 'static> RestrictProvider for Provider<T> {
     fn restrict(
         &self,
         _: &CrawlKey,
@@ -149,6 +153,25 @@ async fn tab_rows_come_from_the_session_with_random_access_and_locate() {
         .await
         .unwrap_err();
     assert_eq!(e.code, ErrorCode::InvalidInput);
+}
+
+// spec: UI-142
+#[tokio::test]
+async fn visible_columns_in_the_projection_keep_the_published_window_during_a_crawl() {
+    let fx = Fx::new();
+    let visible = json!(["Address", "Word Count"]);
+    let h = fx.open(tab(), visible.clone()).await;
+    let before = fx.rows(&h, 0, 500, visible.clone()).await;
+    insert_url(&fx, 30, "/blog/new", 43);
+    // U02 must project every visible column; before feed maintenance they remain in the double buffer.
+    assert_eq!(fx.rows(&h, 0, 500, visible).await, before);
+    let mut args = rows_args(&h, &h["version"], 0, 500);
+    args["columns"] = json!(["Address", "Status Code"]);
+    // Non-projected columns use a live SQL read and can already be stale (documented client constraint).
+    assert_eq!(
+        try_call(&fx, "view.rows", args).await.unwrap_err().code,
+        ErrorCode::Stale
+    );
 }
 
 // spec: UI-011
@@ -251,6 +274,147 @@ async fn invalid_regex_is_rejected_without_changing_the_published_view() {
     .unwrap_err();
     assert_eq!(e.code, ErrorCode::InvalidInput, "{e:?}");
     assert_eq!(fx.rows(&h, 0, 500, json!([])).await, before);
+}
+
+// spec: UI-011 [P1]
+// spec: UI-141
+#[tokio::test]
+async fn regex_step_limit_preserves_the_published_view() {
+    let fx = Fx::new();
+    insert_url(&fx, 22, &format!("/{}b", "a".repeat(40)), 42);
+    let h = fx.open(tab(), json!(["Address"])).await;
+    let before = fx.rows(&h, 0, 500, json!([])).await;
+    // The backreference forces fancy-regex backtracking instead of a linear regex fast path.
+    let tree = json!({"kind":"group","op":"and","children":[{"kind":"cond","column":"Address","op":"regex","value":r"^https://site.test/(a|aa)+\1$"}]});
+    let e = try_call(
+        &fx,
+        "view.update",
+        json!({"viewId":h["viewId"],"spec":search(json!({"kind":"rules","tree":tree,"caseSensitive":false}))}),
+    )
+    .await
+    .unwrap_err();
+    assert_ne!(e.code, ErrorCode::Stale, "{e:?}");
+    assert!(
+        e.detail
+            .as_deref()
+            .is_some_and(|d| d.contains("Regex-Schrittlimit erreicht")),
+        "{e:?}"
+    );
+    assert_eq!(fx.rows(&h, 0, 500, json!([])).await, before);
+}
+
+/// Stops the build's clock read in Cache::touch, after update_controlled's final cancellation check.
+/// Other threads keep using the manual clock, so op.cancel and the app remain responsive.
+struct CommitBarrier {
+    clock: Arc<ManualClock>,
+    ids: Vec<u32>,
+    armed: AtomicBool,
+    build_thread: Mutex<Option<std::thread::ThreadId>>,
+    reached: tokio::sync::Notify,
+    resume: Mutex<std::sync::mpsc::Receiver<()>>,
+}
+impl FilterSource for CommitBarrier {
+    fn key(&self) -> String {
+        "test:commit-barrier".into()
+    }
+    fn bitmap(&self, _: &os_store::CrawlFile) -> Result<RoaringBitmap, ViewError> {
+        if self.armed.swap(false, Ordering::SeqCst) {
+            *self.build_thread.lock().unwrap() = Some(std::thread::current().id());
+        }
+        Ok(self.ids.iter().copied().collect())
+    }
+}
+impl Clock for CommitBarrier {
+    fn now(&self) -> Timestamp {
+        self.clock.now()
+    }
+    fn monotonic(&self) -> Duration {
+        let block = {
+            let mut thread = self.build_thread.lock().unwrap();
+            if *thread == Some(std::thread::current().id()) {
+                thread.take();
+                true
+            } else {
+                false
+            }
+        };
+        if block {
+            self.reached.notify_one();
+            self.resume
+                .lock()
+                .unwrap()
+                .recv_timeout(Duration::from_secs(10))
+                .unwrap();
+        }
+        self.clock.monotonic()
+    }
+}
+
+// spec: UI-141
+// spec: UI-142
+#[tokio::test]
+async fn cancelled_core_commit_rebuilds_the_published_spec_after_idle_release() {
+    // Cover different totals and equal totals with a changed order; rows and locate can each rebuild first.
+    for (same_total, locate_first) in [(false, false), (false, true), (true, false), (true, true)] {
+        let clock = Arc::new(ManualClock::new(Timestamp::UNIX_EPOCH));
+        let (resume, receiver) = std::sync::mpsc::channel();
+        let barrier = Arc::new(CommitBarrier {
+            clock: clock.clone(),
+            armed: AtomicBool::new(true),
+            ids: if same_total {
+                vec![1, 2, 3, 4, 5, 8]
+            } else {
+                vec![2]
+            },
+            build_thread: Mutex::new(None),
+            reached: tokio::sync::Notify::new(),
+            resume: Mutex::new(receiver),
+        });
+        let (fx, _home) = fx_with_clock(barrier.clone());
+        os_app::views::set_restrict_provider(&fx.app, Arc::new(Provider(barrier.clone())));
+        let h = fx.open(tab(), json!(["Address"])).await;
+        let before = fx.rows(&h, 0, 500, json!([])).await;
+        let mut spec = segment_spec();
+        spec["sort"] = json!([{"column":"Address","dir":"desc"}]);
+        let building = fx
+            .call("view.update", json!({"viewId":h["viewId"],"spec":spec}))
+            .await;
+        assert_eq!(building["state"], "building");
+        tokio::time::timeout(Duration::from_secs(5), barrier.reached.notified())
+            .await
+            .unwrap();
+        fx.call("op.cancel", json!({"opId":building["op"]["opId"]}))
+            .await;
+        assert_eq!(
+            wait_op(&fx, &building["op"]).await.state,
+            OpState::Cancelled
+        );
+        resume.send(()).unwrap();
+        // Drain the detached pool job: the core has now committed the cancelled specification.
+        drop(
+            fx.app
+                .read_pool()
+                .exclusive(&CrawlKey("fx-ui-basic".into()))
+                .await,
+        );
+        assert_eq!(fx.rows(&h, 0, 500, json!([])).await, before);
+        clock.advance(Duration::from_secs(60));
+        os_app::views::release_idle(&fx.app);
+        assert_eq!(os_app::views::retained_bytes(&fx.app), 0);
+        let locate = || {
+            fx.call(
+                "view.locate",
+                json!({"viewId":h["viewId"],"urlId":before["rowKeys"][0]}),
+            )
+        };
+        if locate_first {
+            assert_eq!(locate().await, 0);
+        }
+        assert_eq!(fx.rows(&h, 0, 500, json!([])).await, before);
+        if !locate_first {
+            assert_eq!(locate().await, 0);
+        }
+    }
 }
 
 // spec: UI-141
