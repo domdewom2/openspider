@@ -19,6 +19,7 @@ use crate::reporter::Reporter;
 pub struct Signals {
     interrupted: Arc<AtomicBool>,
     first: watch::Receiver<bool>,
+    first_tx: Arc<watch::Sender<bool>>,
     cancel: CancelToken,
 }
 
@@ -28,7 +29,9 @@ impl Signals {
     pub fn install(cancel: CancelToken, rep: Arc<Reporter>) -> std::io::Result<Signals> {
         let interrupted = Arc::new(AtomicBool::new(false));
         let (tx, rx) = watch::channel(false);
+        let tx = Arc::new(tx);
         let mut source = Source::new()?;
+        let first_tx = Arc::clone(&tx);
         let flag = Arc::clone(&interrupted);
         let token = cancel.clone();
         tokio::spawn(async move {
@@ -51,8 +54,29 @@ impl Signals {
         Ok(Signals {
             interrupted,
             first: rx,
+            first_tx,
             cancel,
         })
+    }
+
+    /// Ohne Betriebssystem-Handler: Abbruch nur über [`Signals::request_stop`] (Tests, eingebettete Läufe).
+    pub fn manual(cancel: CancelToken) -> Signals {
+        let (tx, rx) = watch::channel(false);
+        Signals {
+            interrupted: Arc::new(AtomicBool::new(false)),
+            first: rx,
+            first_tx: Arc::new(tx),
+            cancel,
+        }
+    }
+
+    /// Löst den ersten Abbruch ohne Signal aus, wie ein erstes SIGINT: Der Crawl wird pausiert und
+    /// gespeichert, es folgen keine Exporte (Abbruchmarke geplanter Läufe, OUT-171).
+    pub fn request_stop(&self) {
+        if !self.interrupted.swap(true, Ordering::SeqCst) {
+            self.cancel.cancel();
+            let _ = self.first_tx.send(true);
+        }
     }
 
     /// Kam schon ein Signal?

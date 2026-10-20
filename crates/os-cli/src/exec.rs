@@ -36,14 +36,31 @@ pub struct Outcome {
     pub exit: Exit,
     /// Kurzfassung für die Schlusszeile (ohne Exit-Code).
     pub summary: String,
+    /// Crawl-Datei des Laufs, sobald es eine gibt (für die Laufhistorie, OUT-169).
+    pub crawl_path: Option<PathBuf>,
+    /// Crawl-ID des Laufs.
+    pub crawl_id: Option<String>,
+    /// Anzahl gecrawlter URLs.
+    pub crawled: Option<u64>,
 }
 
 impl Outcome {
-    fn new(exit: Exit, summary: impl Into<String>) -> Self {
+    /// Ergebnis ohne Angaben zum Crawl.
+    pub fn new(exit: Exit, summary: impl Into<String>) -> Self {
         Outcome {
             exit,
             summary: summary.into(),
+            crawl_path: None,
+            crawl_id: None,
+            crawled: None,
         }
+    }
+
+    fn with_crawl(mut self, path: &Path, crawled: Option<u64>) -> Self {
+        self.crawl_id = path.file_stem().map(|s| s.to_string_lossy().into_owned());
+        self.crawl_path = Some(path.to_path_buf());
+        self.crawled = crawled;
+        self
     }
 }
 
@@ -95,7 +112,8 @@ async fn run(plan: &Plan, rep: &Arc<Reporter>, signals: &Signals) -> Result<Outc
                             "Unterbrochen – der Crawl ist pausiert und gespeichert (ID {id}); \
                              fortsetzen mit: openspider --load-crawl {id} --resume"
                         ),
-                    ));
+                    )
+                    .with_crawl(&registry::path_for(&plan.paths.crawls, &id), None));
                 }
             }
         }
@@ -131,7 +149,8 @@ async fn run(plan: &Plan, rep: &Arc<Reporter>, signals: &Signals) -> Result<Outc
                 return Ok(Outcome::new(
                     Exit::Interrupted,
                     "Unterbrochen – die Exporte sind unvollständig",
-                ));
+                )
+                .with_crawl(&crawled.path, Some(crawled.crawled)));
             }
         }
     }
@@ -146,19 +165,24 @@ async fn run(plan: &Plan, rep: &Arc<Reporter>, signals: &Signals) -> Result<Outc
         "{} URLs gecrawlt, {} Exportdateien, {} Warnungen",
         crawled.crawled, files, warnings
     );
+    // Nach `--no-store` gibt es die Datei nicht mehr; ihre Kennung bleibt für die Historie.
+    let crawl_info = |outcome: Outcome| outcome.with_crawl(&crawled.path, Some(crawled.crawled));
     if failures > 0 {
-        return Ok(Outcome::new(
+        return Ok(crawl_info(Outcome::new(
             Exit::ExportFailed,
             format!("Crawl erfolgreich, aber {failures} Export(e) fehlgeschlagen ({base})"),
-        ));
+        )));
     }
     if plan.strict && warnings > 0 {
-        return Ok(Outcome::new(
+        return Ok(crawl_info(Outcome::new(
             Exit::ExportFailed,
             format!("Warnungen mit --strict als Fehler gewertet ({base})"),
-        ));
+        )));
     }
-    Ok(Outcome::new(Exit::Ok, format!("Fertig: {base}")))
+    Ok(crawl_info(Outcome::new(
+        Exit::Ok,
+        format!("Fertig: {base}"),
+    )))
 }
 
 // ---------------------------------------------------------------------------------------------------
@@ -485,6 +509,7 @@ fn describe(item: &Resolved) -> String {
 }
 
 fn report_file(rep: &Reporter, info: &ExportFileInfo) {
+    rep.note_export(&info.path);
     rep.info(format!(
         "Export: {} ({} Zeilen)",
         info.path.display(),
@@ -567,7 +592,24 @@ fn export_phase(plan: &Plan, rep: &Reporter, signals: &Signals, crawled: &Crawle
         }
     }
 
-    for item in &plan.exports {
+    if let (Some(batch), None) = (plan.batch, plan.segment.as_deref()) {
+        if !plan.exports.is_empty() {
+            match run_batch(&file, &cfg, plan, batch, out, signals, rep) {
+                Ok(n) => files += n,
+                Err(BatchEnd::Interrupted) => return ExportEnd::Interrupted,
+                Err(BatchEnd::Failed(message)) => {
+                    failures += 1;
+                    rep.error(format!("Exporte fehlgeschlagen: {message}"));
+                }
+            }
+        }
+    }
+    let one_by_one: &[Resolved] = if plan.batch.is_some() && plan.segment.is_none() {
+        &[]
+    } else {
+        &plan.exports
+    };
+    for item in one_by_one {
         if signals.is_interrupted() {
             return ExportEnd::Interrupted;
         }
@@ -651,6 +693,75 @@ fn run_export(
             }
             Ok(result.files.len())
         }
+    }
+}
+
+enum BatchEnd {
+    Interrupted,
+    Failed(String),
+}
+
+/// Geplante Aufgaben: alle Tabellen in einem Stapel gegen denselben Lesestand (OUT-007, OUT-012).
+fn run_batch(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    plan: &Plan,
+    batch: crate::plan::BatchSettings,
+    out: &Path,
+    signals: &Signals,
+    rep: &Reporter,
+) -> Result<usize, BatchEnd> {
+    let selections: Vec<os_export::types::ExportSelection> = plan
+        .exports
+        .iter()
+        .map(|item| {
+            let (kind, name) = match item {
+                Resolved::Tab { tab, filter } => ("tab", format!("{tab}:{filter}")),
+                Resolved::Bulk(name) => ("bulk", name.clone()),
+                Resolved::Issues => ("bulk", os_export::catalog::bulk_issues::BULK_NAME.into()),
+                Resolved::Report(name) => ("report", name.clone()),
+            };
+            os_export::types::ExportSelection {
+                kind: kind.into(),
+                name,
+            }
+        })
+        .collect();
+    let token = signals.cancel_token();
+    let crawl_name = file
+        .meta()
+        .map(|m| m.name)
+        .ok()
+        .filter(|n| !n.trim().is_empty())
+        .unwrap_or_else(|| "crawl".to_string());
+    let mut ctx = os_export::types::ExportCtx {
+        cancel: &token,
+        progress: &|_| {},
+        skip_empty: batch.skip_empty,
+        workbook: None,
+        skipped: Vec::new(),
+    };
+    let options = os_export::pipeline::BatchOptions {
+        format: plan.format,
+        directory: out,
+        crawl_name: &crawl_name,
+        single_workbook: batch.single_workbook,
+    };
+    match os_export::pipeline::export_batch(file, cfg, &selections, &options, &mut ctx) {
+        Ok(result) => {
+            for info in &result.files {
+                report_file(rep, info);
+            }
+            for warning in &result.warnings {
+                rep.warn(warning);
+            }
+            for name in &result.skipped {
+                rep.warn(format!("Export übersprungen: {name}"));
+            }
+            Ok(result.files.len())
+        }
+        Err(_) if signals.is_interrupted() => Err(BatchEnd::Interrupted),
+        Err(e) => Err(BatchEnd::Failed(e.to_string())),
     }
 }
 

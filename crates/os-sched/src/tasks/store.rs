@@ -113,6 +113,11 @@ pub fn folder_name(name: &str) -> String {
     }
 }
 
+/// `<Dokumente>/OpenSpider/Exports` (OUT-222); `None`, wenn das System keinen Dokumente-Ordner kennt.
+pub fn documents_export_dir() -> Option<PathBuf> {
+    dirs::document_dir().map(|d| d.join("OpenSpider").join("Exports"))
+}
+
 /// Aufgabenordner im Einstellungsordner.
 #[derive(Debug, Clone)]
 pub struct TaskStore {

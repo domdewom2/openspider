@@ -22,6 +22,7 @@ pub mod logging;
 pub mod plan;
 pub mod registry;
 pub mod reporter;
+pub mod run_task;
 pub mod signals;
 
 use std::ffi::OsString;
@@ -226,6 +227,11 @@ pub fn run(cli: Cli) -> i32 {
     }
     let args = cli.run;
 
+    // OUT-209: Aufgabe des OS-Planers (eigener Ablauf mit Historie und Lauf-Log).
+    if let Some(task) = args.run_task.clone() {
+        return run_task::run(&task, &args);
+    }
+
     // Hilfe und Auflistungen: nur stdout, kein Crawl, kein Netz.
     if let Some(topic) = &args.help {
         match topic {
@@ -292,10 +298,10 @@ pub fn run(cli: Cli) -> i32 {
         let signals = match signals::Signals::install(CancelToken::new(), Arc::clone(&rep)) {
             Ok(s) => s,
             Err(e) => {
-                return exec::Outcome {
-                    exit: Exit::Internal,
-                    summary: format!("Signalbehandlung nicht installierbar: {e}"),
-                }
+                return exec::Outcome::new(
+                    Exit::Internal,
+                    format!("Signalbehandlung nicht installierbar: {e}"),
+                )
             }
         };
         exec::execute(plan, Arc::clone(&rep), signals).await
