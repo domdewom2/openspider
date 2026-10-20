@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Entitlements der OpenSpider-Desktop-App (M2-Z01). Die App ist nicht sandboxed und läuft mit Hardened Runtime
+  (tauri.conf.json: bundle.macOS.hardenedRuntime). Bewusst KEINE Ausnahmen:
+
+  - JIT / unsigned executable memory (com.apple.security.cs.allow-jit, allow-unsigned-executable-memory):
+    nicht nötig. Das JavaScript von WKWebView läuft im WebContent-Prozess, den Apple selbst signiert und startet;
+    die App-Binärdatei erzeugt keinen ausführbaren Speicher (kein eingebetteter JS-/Wasm-Interpreter im Workspace).
+  - Netzwerk (com.apple.security.network.client): gilt nur für die App Sandbox; ohne Sandbox sind ausgehende
+    Verbindungen erlaubt.
+  - disable-library-validation / allow-dyld-environment-variables: nicht nötig, es werden keine fremd signierten
+    Bibliotheken geladen. Chromium (os-render) startet als externer Kindprozess der Nutzerinstallation und wird von
+    der Hardened Runtime der App nicht berührt.
+  - Schlüsselbund: keyring nutzt den Anmelde-Schlüsselbund; keychain-access-groups (Data-Protection-Keychain)
+    bräuchte ein Provisioning Profile und wird nicht verwendet.
+
+  Wird eine Ausnahme nötig, hier einzeln eintragen und in docs/release/macos-signing.md begründen.
+-->
+<plist version="1.0">
+<dict/>
+</plist>
