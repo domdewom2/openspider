@@ -10,6 +10,7 @@ pub fn start(app: &App) {
     crate::logging::init_for_app(app);
     crate::commands::api::on_startup(app);
     crate::commands::crawls::start_retention(app);
+    crate::commands::tasks::on_startup(app);
     app.crawl_events().subscribe(Box::new(|app, event| {
         if let CrawlEvent::ConfigChanged { key, old, new } = event {
             crate::commands::api::on_config_changed(app, key, old, new);

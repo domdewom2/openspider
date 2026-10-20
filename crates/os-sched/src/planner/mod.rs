@@ -192,6 +192,15 @@ pub fn dry_run(backend: Backend, dir: &Path) -> Arc<dyn OsPlanner> {
     }
 }
 
+/// Trägt alle eingetragenen OpenSpider-Aufgaben aus (Deinstallation, OUT-166); Anzahl der entfernten Einträge.
+pub fn uninstall_all(planner: &dyn OsPlanner) -> usize {
+    planner
+        .registered_ids()
+        .iter()
+        .filter(|id| planner.uninstall(id).is_ok())
+        .count()
+}
+
 /// Das Backend dieses Betriebssystems (für Dry-Run-Anzeigen auf anderen Systemen: launchd).
 pub fn native_backend() -> Backend {
     if cfg!(target_os = "windows") {

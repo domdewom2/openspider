@@ -61,6 +61,8 @@ impl Entry {
 struct Shared {
     entries: Mutex<Vec<Entry>>,
     changed: Notify,
+    /// Zeitpunkt (Unix-Millisekunden) des letzten `cancel_all` (Beenden der App); 0 = nie.
+    shutdown: std::sync::atomic::AtomicU64,
 }
 
 impl Shared {
@@ -127,6 +129,12 @@ pub struct OpsDeps {
     pub clock: Arc<dyn Clock>,
 }
 
+fn unix_millis() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(1, |d| u64::try_from(d.as_millis()).unwrap_or(1).max(1))
+}
+
 /// Verwaltung der laufenden Operationen.
 #[derive(Clone)]
 pub struct Ops {
@@ -149,6 +157,7 @@ impl Ops {
             shared: Arc::new(Shared {
                 entries: Mutex::new(Vec::new()),
                 changed: Notify::new(),
+                shutdown: std::sync::atomic::AtomicU64::new(0),
             }),
             deps: Arc::new(deps),
         }
@@ -231,6 +240,9 @@ impl Ops {
 
     /// Bricht alle laufenden abbrechbaren Operationen ab (Beenden); Anzahl der betroffenen Operationen.
     pub fn cancel_all(&self) -> usize {
+        self.shared
+            .shutdown
+            .store(unix_millis(), std::sync::atomic::Ordering::SeqCst);
         let tokens: Vec<CancelToken> = self
             .shared
             .lock()
@@ -243,6 +255,16 @@ impl Ops {
         }
         self.deps.hub.poke();
         tokens.len()
+    }
+
+    /// Wurde `cancel_all` aufgerufen, d. h. beendet sich die App? (Operationen, die Arbeit außerhalb des
+    /// Prozesses beobachten, brechen diese dann nicht ab – M2-T01.)
+    pub fn shutting_down(&self) -> bool {
+        let at = self
+            .shared
+            .shutdown
+            .load(std::sync::atomic::Ordering::SeqCst);
+        at != 0 && unix_millis().saturating_sub(at) < 60_000
     }
 
     /// Ist die Operation bekannt, und ist sie abbrechbar? (`None` = unbekannt oder schon gemeldet)

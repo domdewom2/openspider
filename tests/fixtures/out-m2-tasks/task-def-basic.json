@@ -1,0 +1,31 @@
+{
+  "id": null,
+  "name": "Nightly",
+  "project": null,
+  "enabled": true,
+  "schedule": { "kind": "daily", "time": "03:00" },
+  "crawl": {
+    "source": { "kind": "spider", "url": "https://example.test/" },
+    "profile": null,
+    "authProfile": null,
+    "overrides": { "speed.threads": 2, "network.proxy.password": "geheim-proxy-kennwort" }
+  },
+  "execution": { "headless": true, "runIfMissed": true, "autoCompare": false },
+  "apis": [],
+  "exports": [
+    { "kind": "sitemap", "name": "pages", "format": "csv", "dir": "{OUT}" }
+  ],
+  "notify": { "onSuccess": false, "onFailure": false, "account": null, "to": [] },
+  "exportOptions": {
+    "items": [
+      { "kind": "tab", "name": "Internal:All" },
+      { "kind": "report", "name": "Crawl Overview" }
+    ],
+    "format": "csv",
+    "dir": "{OUT}",
+    "singleWorkbook": false,
+    "skipEmpty": true
+  },
+  "exportPreset": null,
+  "customSummary": null
+}
