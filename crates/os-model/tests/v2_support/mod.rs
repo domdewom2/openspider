@@ -226,6 +226,7 @@ pub fn change_all_v2_fields(c: &mut CrawlConfig) {
             ..Default::default()
         },
         drive: DriveConfig {
+            oauth_client_id: Some("fixture-client".into()),
             enabled: true,
             base_url: Some("http://127.0.0.1:9/drive".into()),
             root_folder: Some("Crawls".into()),

@@ -252,3 +252,260 @@ fn summary_resolves_winter_and_summer_at_crawl_start() {
             }
         });
 }
+
+async fn command_op(app: &App, command: &str, args: serde_json::Value) -> os_app::dto::OpStatus {
+    let handle: OpHandle = serde_json::from_value(
+        app.dispatch(CallCtx::for_window("main"), command, args)
+            .await
+            .unwrap(),
+    )
+    .unwrap();
+    assert!(handle.cancellable);
+    app.ops().wait(&handle.op_id).await.unwrap()
+}
+
+// spec: OUT-005
+#[tokio::test]
+async fn drive_connect_lists_oauth_account_refreshes_exports_and_forgets_it() {
+    use os_app::commands::api::{export_credentials, ApiState};
+    use os_integrations::oauth;
+    use os_testsite::mocks::oauth::OAuthMock;
+    let directory = tempfile::tempdir().unwrap();
+    let drive = DriveMock::default();
+    let oauth = Arc::new(OAuthMock::default());
+    let server = MockServer::start(vec![Arc::new(drive.clone()), oauth.clone()])
+        .await
+        .unwrap();
+    let app = App::new(AppConfig::new(directory.path())).unwrap();
+    fixture(&app, directory.path(), &server.base_url("drive"));
+    // No pre-seeded account: export must use the account obtained via api.connect.
+    export_credentials(&app)
+        .remove(ApiKind::Drive, "fixture")
+        .unwrap();
+    let mut session = app.sessions().current(&WindowId("main".into())).unwrap();
+    Arc::make_mut(&mut session.config).api.drive.oauth_client_id = Some("fixture-client".into());
+    app.sessions().set_current(WindowId("main".into()), session);
+    let base = server.base_url("oauth");
+    let state = app.ext::<ApiState>();
+    state.set_oauth_endpoints(oauth::Endpoints {
+        authorize: format!("{base}/authorize"),
+        token: format!("{base}/token"),
+        revoke: format!("{base}/revoke"),
+    });
+    let browser = os_integrations::http::client(&Default::default()).unwrap();
+    state.set_oauth_browser(Arc::new(move |url| {
+        let request = browser.get(url).build().unwrap();
+        let url = request.url();
+        assert_eq!(
+            url.query_pairs().find(|(k, _)| k == "scope").unwrap().1,
+            SCOPE
+        );
+        assert_eq!(
+            url.query_pairs()
+                .find(|(k, _)| k == "code_challenge_method")
+                .unwrap()
+                .1,
+            "S256"
+        );
+        let browser = browser.clone();
+        tokio::spawn(async move {
+            let response = browser.execute(request).await.unwrap();
+            let callback = response.headers()["location"].to_str().unwrap();
+            browser.get(callback).send().await.unwrap();
+        });
+        Ok(())
+    }));
+    let connected = command_op(
+        &app,
+        "api.connect",
+        json!({"kind":"drive","remember":false}),
+    )
+    .await;
+    assert_eq!(connected.state, OpState::Done, "{:?}", connected.error);
+    let id = connected.result.unwrap()["accountId"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let rows = app
+        .dispatch(CallCtx::for_window("main"), "api.list", json!(null))
+        .await
+        .unwrap();
+    let row = rows
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|r| r["kind"] == "drive")
+        .unwrap();
+    assert_eq!(row["auth"], "oauth");
+    assert_eq!(row["connected"], true);
+    assert_eq!(row["accounts"].as_array().unwrap().len(), 1);
+    assert_eq!(row["accounts"][0]["accountId"], id);
+    assert!(!rows.to_string().contains("fixture-access"));
+    let result = command_op(
+        &app,
+        "export.customSummary",
+        json!({
+            "account":id,"target":"Connected","metrics":["Internal:HTML"]
+        }),
+    )
+    .await;
+    assert_eq!(result.state, OpState::Done, "{:?}", result.error);
+    assert!(drive
+        .files()
+        .iter()
+        .any(|f| f.name == "Connected_custom_summary_report"));
+    app.dispatch(
+        CallCtx::for_window("main"),
+        "api.disconnect",
+        json!({"kind":"drive"}),
+    )
+    .await
+    .unwrap();
+    let credentials = export_credentials(&app);
+    let mut expired = credentials.list(ApiKind::Drive).unwrap().pop().unwrap();
+    expired.expires_at = Some(Timestamp::UNIX_EPOCH);
+    credentials.put(ApiKind::Drive, expired, false).unwrap();
+    let refreshed = command_op(
+        &app,
+        "api.connect",
+        json!({"kind":"drive","accountId":id,"remember":false}),
+    )
+    .await;
+    assert_eq!(refreshed.state, OpState::Done, "{:?}", refreshed.error);
+    assert_eq!(
+        oauth
+            .log
+            .calls()
+            .iter()
+            .filter(|c| c.path == "token")
+            .count(),
+        2
+    );
+    app.dispatch(
+        CallCtx::for_window("main"),
+        "api.removeAccount",
+        json!({"kind":"drive","accountId":id}),
+    )
+    .await
+    .unwrap();
+    assert!(credentials.list(ApiKind::Drive).unwrap().is_empty());
+}
+
+// spec: OUT-005
+#[tokio::test]
+async fn drive_connect_requires_own_client_id_before_opening_browser() {
+    let directory = tempfile::tempdir().unwrap();
+    let app = App::new(AppConfig::new(directory.path())).unwrap();
+    app.ext::<os_app::commands::api::ApiState>()
+        .set_oauth_browser(Arc::new(|_| {
+            panic!("missing client ID must fail before opening the browser")
+        }));
+    let result = command_op(
+        &app,
+        "api.connect",
+        json!({"kind":"drive","remember":false}),
+    )
+    .await;
+    assert_eq!(result.state, OpState::Failed);
+    let error = result.error.unwrap();
+    assert_eq!(error.message_key, "err-api-client-id");
+    assert!(serde_json::to_string(&error)
+        .unwrap()
+        .contains("Eigene Google-Client-ID erforderlich"));
+}
+
+// spec: OUT-005
+#[tokio::test]
+async fn sheets_command_consolidates_tabs_preserves_raw_text_and_reports_binary_skips() {
+    let directory = tempfile::tempdir().unwrap();
+    let mock = DriveMock::default();
+    let server = MockServer::start(vec![Arc::new(mock.clone())])
+        .await
+        .unwrap();
+    let app = App::new(AppConfig::new(directory.path())).unwrap();
+    fixture(&app, directory.path(), &server.base_url("drive"));
+    let file = CrawlFile::open(
+        &directory.path().join("summary.ospider"),
+        os_store::OpenMode::ReadWrite,
+    )
+    .unwrap();
+    file.conn()
+        .execute("UPDATE urls SET title_1 = '=1+1' WHERE id = 1", [])
+        .unwrap();
+    drop(file);
+    let result = command_op(
+        &app,
+        "export.sheets",
+        json!({
+            "account":"fixture", "name":"Combined", "selections":[
+                {"kind":"tab","name":"Internal:All"},
+                {"kind":"tab","name":"Page Titles:All"},
+                {"kind":"bulk","name":"Web:Screenshots"}
+            ]
+        }),
+    )
+    .await;
+    assert_eq!(result.state, OpState::Done, "{:?}", result.error);
+    let files = mock.files();
+    let sheets: Vec<_> = files
+        .iter()
+        .filter(|f| f.mime == os_integrations::drive::SPREADSHEET)
+        .collect();
+    assert_eq!(sheets.len(), 1);
+    let sheet = sheets[0];
+    assert_eq!(sheet.name, "Combined");
+    assert_eq!(sheet.sheets.len(), 2);
+    assert_eq!(sheet.sheets[0].title, "Internal All");
+    assert_eq!(sheet.sheets[1].title, "Page Titles All");
+    assert!(sheet.sheets[1].rows.iter().flatten().any(|v| v == "=1+1"));
+    assert_eq!(
+        result.result.unwrap()["path"],
+        os_integrations::drive::link(&sheet.id)
+    );
+    let notices = app.assemble_tick().unwrap().notices;
+    assert!(notices.iter().any(|n| n.code == "notice-export-warning"
+        && n.args["message"].as_str().unwrap().contains("Binärdateien")));
+    assert!(mock
+        .requests()
+        .iter()
+        .filter(|r| r.method == "PUT")
+        .all(|r| r.query.get("valueInputOption").is_some_and(|v| v == "RAW")));
+}
+
+// spec: OUT-005
+#[tokio::test]
+async fn cancelled_sheets_command_sends_no_puts() {
+    let directory = tempfile::tempdir().unwrap();
+    let mock = DriveMock::default();
+    let server = MockServer::start(vec![Arc::new(mock.clone())])
+        .await
+        .unwrap();
+    let app = App::new(AppConfig::new(directory.path())).unwrap();
+    fixture(&app, directory.path(), &server.base_url("drive"));
+    // On this current-thread runtime, cancel before yielding to the spawned operation.
+    let early: OpHandle = serde_json::from_value(app.dispatch(CallCtx::for_window("main"), "export.sheets", json!({
+        "account":"fixture", "name":"Never started", "selections":[{"kind":"tab","name":"Internal:All"}]
+    })).await.unwrap()).unwrap();
+    assert!(app.ops().cancel(&early.op_id));
+    assert_eq!(
+        app.ops().wait(&early.op_id).await.unwrap().state,
+        OpState::Cancelled
+    );
+    assert!(mock.requests().is_empty());
+    // Pause before upload, then cancel the actual operation while it is in flight.
+    mock.timeout_next("GET", "/drive/v3/files", std::time::Duration::from_secs(5));
+    let handle: OpHandle = serde_json::from_value(app.dispatch(CallCtx::for_window("main"), "export.sheets", json!({
+        "account":"fixture", "name":"Cancelled", "selections":[{"kind":"tab","name":"Internal:All"}]
+    })).await.unwrap()).unwrap();
+    tokio::time::timeout(std::time::Duration::from_secs(5), async {
+        while mock.requests().is_empty() {
+            tokio::time::sleep(std::time::Duration::from_millis(5)).await;
+        }
+    })
+    .await
+    .unwrap();
+    assert!(app.ops().cancel(&handle.op_id));
+    let status = app.ops().wait(&handle.op_id).await.unwrap();
+    assert_eq!(status.state, OpState::Cancelled);
+    assert!(!mock.requests().iter().any(|r| r.method == "PUT"));
+}

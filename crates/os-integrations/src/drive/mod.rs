@@ -156,6 +156,10 @@ impl DriveClient {
             }
         }
     }
+    /// Validate the connected account without creating or modifying files.
+    pub async fn test_connection(&self) -> Result<(), ApiError> {
+        self.find("trashed = false").await.map(|_| ())
+    }
     pub async fn find_or_create(
         &self,
         parent: &str,

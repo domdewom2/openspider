@@ -150,6 +150,7 @@ const CATALOG_3_6A: &[&str] = &[
     "export.presetDelete",
     "export.customSummaryMetrics",
     "export.customSummary",
+    "export.sheets",
     "api.list",
     "api.connect",
     "api.disconnect",
@@ -200,6 +201,7 @@ const CATALOG_3_6A: &[&str] = &[
 const LONG_RUNNING: &[&str] = &[
     "export.multi",
     "export.customSummary",
+    "export.sheets",
     // 3.6a
     "api.connect",
     "api.fetch",

@@ -714,6 +714,12 @@
     "longRunning": true
   },
   {
+    "name": "export.sheets",
+    "args": "ExportSheetsArgs",
+    "ret": "FileResult",
+    "longRunning": true
+  },
+  {
     "name": "compare.open",
     "args": "CompareOpenArgs",
     "ret": "CompareSession",

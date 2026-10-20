@@ -730,6 +730,8 @@ pub struct LinkMetricsConfig {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(default)]
 pub struct DriveConfig {
+    /// Eigene Google-OAuth-Client-ID für den Systembrowser.
+    pub oauth_client_id: Option<String>,
     /// Export nach Google Sheets einschalten.
     pub enabled: bool,
     /// Alternative Basis-URL (INTEG-019).

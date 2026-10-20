@@ -167,6 +167,7 @@ where
     client.batch(&id, requests).await.map_err(failure)?;
     let mut written = 0;
     for (table, limit) in tables.into_iter().zip(allowed) {
+        check(cancel)?;
         let name = drive::quote_sheet(&table.name);
         client
             .write(
@@ -191,6 +192,7 @@ where
                 }
                 block.push(row.into_iter().map(raw).collect());
             }
+            check(cancel)?;
             client
                 .write(&id, &format!("{name}!A{position}"), &block)
                 .await

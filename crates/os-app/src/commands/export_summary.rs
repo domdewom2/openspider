@@ -1,8 +1,8 @@
 //! Custom Crawl Overview: pool-backed measurement, cancellable Sheets operation.
 use crate::{
     dto::{
-        CmdError, CustomSummaryArgs, CustomSummaryMetric, ErrorCode, FileResult, Notice,
-        NoticeLevel,
+        CmdError, CustomSummaryArgs, CustomSummaryMetric, ErrorCode, ExportSheetsArgs, FileResult,
+        Notice, NoticeLevel,
     },
     registry::{CmdResult, CommandMeta, Registry},
     runtime::{App, CallCtx},
@@ -35,6 +35,13 @@ pub fn register(registry: &mut Registry) {
             "FileResult",
             true,
             summary,
+        ),
+        (
+            "export.sheets",
+            "ExportSheetsArgs",
+            "FileResult",
+            true,
+            sheets,
         ),
     ] {
         registry.register(
@@ -187,6 +194,133 @@ async fn run_summary(
         bytes: 0,
     })
     .map_err(failure)
+}
+/// Public command boundary for U27 (export dialog) and T01 (scheduled exports).
+fn sheets<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let args: ExportSheetsArgs = serde_json::from_value(args)
+            .map_err(|_| CmdError::invalid_input("err-invalid-args", "sheets"))?;
+        if args.account.trim().is_empty()
+            || args.name.trim().is_empty()
+            || args.selections.is_empty()
+        {
+            return Err(CmdError::invalid_input("err-invalid-args", "sheets"));
+        }
+        let session = app
+            .sessions()
+            .current(&ctx.window)
+            .ok_or_else(|| CmdError::new(ErrorCode::NoCrawl, "err-no-crawl"))?;
+        let app = app.clone();
+        let handle = app
+            .clone()
+            .ops()
+            .spawn("op-export", true, move |cancel, progress| {
+                Box::pin(async move {
+                    let state = app.ext::<SummaryState>();
+                    let _guard = until_cancelled(state.serial.lock(), &cancel).await?;
+                    let context = ApiCtx {
+                        cfg: (*session.config).clone(),
+                        secrets: super::api::export_credentials(&app),
+                        network: app.settings_snapshot().network,
+                        allow_api_override: false,
+                    };
+                    let client =
+                        DriveClient::new(&context, &args.account, app.config().clock.now())
+                            .map_err(failure)?;
+                    let selections: Vec<_> = args
+                        .selections
+                        .into_iter()
+                        .map(|selection| os_export::types::ExportSelection {
+                            kind: selection.kind,
+                            name: selection.name,
+                        })
+                        .collect();
+                    // Keep the temporary directory alive through the final upload. Staging,
+                    // metadata and catalog reads share the same read-pool snapshot.
+                    let (directory, staged, mut destination) = app
+                        .read_pool()
+                        .run_with(session.key, cancel.clone(), move |file, token| {
+                            Ok(os_export::pipeline::snapshot(file, || {
+                                let directory = tempfile::tempdir()
+                                    .map_err(|e| os_export::ExportError::Write(e.to_string()))?;
+                                let metadata = file.meta()?;
+                                let mut control = os_export::types::ExportCtx {
+                                    cancel: token,
+                                    progress: &|_| {},
+                                    skip_empty: false,
+                                    workbook: None,
+                                    skipped: Vec::new(),
+                                };
+                                let staged = target_gsheet::stage_batch(
+                                    file,
+                                    &session.config,
+                                    &selections,
+                                    directory.path(),
+                                    &mut control,
+                                )?;
+                                let destination = Destination::new(
+                                    if metadata.project.is_empty() {
+                                        "Default"
+                                    } else {
+                                        &metadata.project
+                                    },
+                                    if metadata.name.is_empty() {
+                                        "Crawl"
+                                    } else {
+                                        &metadata.name
+                                    },
+                                    &args.name,
+                                );
+                                Ok((directory, staged, destination))
+                            })
+                            .map_err(|error| {
+                                if token.is_cancelled() {
+                                    CmdError::new(ErrorCode::Cancelled, "err-cancelled")
+                                } else {
+                                    failure(error)
+                                }
+                            }))
+                        })
+                        .await??;
+                    if let Some(root) = context.cfg.api.drive.root_folder {
+                        destination.root = root;
+                    }
+                    for warning in staged.warnings {
+                        export_warning(&app, warning);
+                    }
+                    let tables = staged
+                        .tables
+                        .iter()
+                        .map(|(name, info)| target_gsheet::staged_table(name, info))
+                        .collect::<Result<Vec<_>, _>>()
+                        .map_err(failure)?;
+                    let result = until_cancelled(
+                        target_gsheet::export(&client, &destination, tables, &cancel),
+                        &cancel,
+                    )
+                    .await?
+                    .map_err(failure)?;
+                    for warning in result.warnings {
+                        export_warning(&app, warning);
+                    }
+                    drop(directory);
+                    progress.report(1, Some(1));
+                    serde_json::to_value(FileResult {
+                        path: result.url,
+                        bytes: 0,
+                    })
+                    .map_err(failure)
+                })
+            });
+        serde_json::to_value(handle).map_err(failure)
+    })
+}
+fn export_warning(app: &App, warning: String) {
+    app.push_notice(Notice {
+        level: NoticeLevel::Warning,
+        code: "notice-export-warning".into(),
+        args: [("message".into(), Value::String(warning))].into(),
+    });
 }
 async fn until_cancelled<T>(
     future: impl std::future::Future<Output = T>,
