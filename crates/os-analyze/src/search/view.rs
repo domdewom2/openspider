@@ -213,3 +213,65 @@ pub fn compile_visible(
         },
     )
 }
+
+/// Additiv (K2-61, M2-K05): die Suche einer View-Sitzung als Bitmap-Einschränkung. Wertet `prepared_query`
+/// (Unicode, auch für Klartext) über Population und Filter mit der Abbruchmarke des Aufbaus aus; die Sitzung
+/// selbst führt dann kein Such-SQL aus (keine temporäre Tabelle auf der Pool-Verbindung nötig).
+pub struct SearchFilter {
+    query: ViewQuery,
+    cfg: CrawlConfig,
+    cancel: CancelToken,
+}
+impl SearchFilter {
+    /// `None` ohne Suche in `q`.
+    pub fn new(q: &ViewQuery, cfg: &CrawlConfig, cancel: CancelToken) -> Option<SearchFilter> {
+        q.search.as_ref()?;
+        Some(SearchFilter {
+            query: prepared_query(q),
+            cfg: cfg.clone(),
+            cancel,
+        })
+    }
+}
+impl super::FilterSource for SearchFilter {
+    fn key(&self) -> String {
+        crate::cursor::query_hash(&[
+            "search",
+            &self.query.tab,
+            &self.query.filter,
+            &format!("{:?}", self.query.search),
+            &format!("{:?}", self.query.search_visible),
+        ])
+    }
+    fn bitmap(&self, file: &CrawlFile) -> Result<roaring::RoaringBitmap, crate::ViewError> {
+        let q = &self.query;
+        let spec = q.search.as_ref().expect("constructed with a search");
+        let tabs = crate::tabs::configured_for_file(&self.cfg, file);
+        let tab = tabs
+            .iter()
+            .find(|t| t.id.eq_ignore_ascii_case(&q.tab))
+            .ok_or_else(|| SearchError::InvalidRule("unknown-tab".into()))?;
+        let visible: Vec<_> = tab
+            .columns
+            .iter()
+            .filter(|c| c.default_visible)
+            .map(|c| c.key)
+            .collect();
+        let compiled = compile_ctx(
+            spec,
+            &SearchCtx {
+                tab,
+                columns: &tab.columns,
+                visible: &visible,
+            },
+        )?;
+        let compiled = compile_visible(compiled, spec, q, tab)?;
+        let mut unsearched = q.clone();
+        unsearched.search = None;
+        let plan = views::plan_in(&tabs, &unsearched, &self.cfg)?;
+        let predicate = format!("({}) AND ({})", plan.population_sql, plan.filter_sql);
+        let far = Instant::now() + std::time::Duration::from_secs(24 * 3600);
+        let deadline = compiled.bounded_deadline(file, far, &self.cancel)?;
+        Ok(compiled.matches_where(file, deadline, &self.cancel, &predicate, &plan.params)?)
+    }
+}

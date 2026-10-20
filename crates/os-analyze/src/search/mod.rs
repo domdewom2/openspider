@@ -101,6 +101,7 @@ mod parser;
 mod view;
 pub use eval::{compile, compile_ctx, search_budget, validate_regex, SearchCtx, SearchError};
 pub use parser::format;
+pub use view::SearchFilter;
 pub use view::{
     compile_visible, extend_query_hash, prepare_view, prepared_query, query_identity,
     PreparedSearch,

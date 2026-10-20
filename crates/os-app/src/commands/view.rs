@@ -1,4 +1,5 @@
-//! Offset-based views over M1 queries; replaced by cached sessions in M2-K05.
+//! `view.*`: tab views run on the K-1 view sessions (`crate::views`, M2-K05); detail and link views keep their
+//! offset queries. The command API is unchanged from M2-K06.
 use super::catalog::{self, session, view_error};
 use crate::{
     dto::*,
@@ -8,6 +9,7 @@ use crate::{
         sessions::SessionInfo,
         App, CallCtx, WindowId,
     },
+    views::{Built, LinkView, TabView},
 };
 use futures_util::future::BoxFuture;
 use os_analyze::{
@@ -20,9 +22,13 @@ use std::{
     collections::HashMap,
     sync::{
         atomic::{AtomicBool, Ordering},
-        Mutex,
+        Arc, Mutex,
     },
+    time::Duration,
 };
+
+/// Builds that take longer return `Building` with a cancellable operation (UI-141: indicator after 300 ms).
+pub const SYNC_BUILD: Duration = Duration::from_millis(300);
 
 #[derive(Clone)]
 pub(crate) struct OpenView {
@@ -31,6 +37,18 @@ pub(crate) struct OpenView {
     pub spec: ViewSpec,
     pub columns: Vec<String>,
     pub version: u64,
+    /// K-1 session of a tab view; its published state overrides the fields above.
+    pub tab: Option<Arc<TabView>>,
+    /// Materialized link IDs of an inlinks/outlinks/resources view (K-1g).
+    pub links: Option<Arc<LinkView>>,
+}
+/// Link tables with a materialized ID list; the anchor aggregation stays a detail source.
+fn link_list(app: &App, s: &SessionInfo, spec: &ViewSpec) -> Option<Arc<LinkView>> {
+    (matches!(
+        spec,
+        ViewSpec::Inlinks { .. } | ViewSpec::Outlinks { .. } | ViewSpec::Resources { .. }
+    ) && detail_spec(spec).is_none())
+    .then(|| LinkView::new(app, s.key.clone()))
 }
 #[derive(Default)]
 struct Views {
@@ -61,7 +79,7 @@ fn registry(app: &App) -> std::sync::Arc<Views> {
     views
 }
 fn get_owned(app: &App, ctx: &CallCtx, id: &str) -> Result<OpenView, CmdError> {
-    let v = registry(app)
+    let mut v = registry(app)
         .entries
         .lock()
         .unwrap_or_else(|p| p.into_inner())
@@ -69,6 +87,12 @@ fn get_owned(app: &App, ctx: &CallCtx, id: &str) -> Result<OpenView, CmdError> {
         .cloned()
         .filter(|v| v.owner == ctx.window)
         .ok_or_else(|| CmdError::new(ErrorCode::NotFound, "err-view-not-found"))?;
+    if let Some(p) = v.tab.as_ref().and_then(|t| t.published()) {
+        v.session = p.session;
+        v.spec = p.spec;
+        v.columns = p.columns;
+        v.version = p.version;
+    }
     if session(app, ctx)?.key != v.session.key {
         return Err(CmdError::new(ErrorCode::Stale, "err-view-stale"));
     }
@@ -136,18 +160,59 @@ pub(crate) fn tab_query(
     offset: u64,
     limit: u32,
 ) -> Result<views::ViewQuery, CmdError> {
+    if let ViewSpec::Tab {
+        segment, compare, ..
+    } = spec
+    {
+        catalog::check_scope(segment, compare)?;
+    }
+    query_of(spec, columns, offset, limit)
+}
+/// K-1 session specification of a tab view. Segment and comparison come from `views::RestrictProvider`; the
+/// search is evaluated as a Unicode bitmap restriction with the build's cancel token (K2-38).
+pub(crate) fn session_spec(
+    app: &App,
+    s: &SessionInfo,
+    spec: &ViewSpec,
+    columns: &[String],
+    cancel: os_model::CancelToken,
+) -> Result<views::session::SessionSpec, CmdError> {
+    let ViewSpec::Tab {
+        segment, compare, ..
+    } = spec
+    else {
+        return Err(CmdError::invalid_input("err-tab-required", "spec"));
+    };
+    let mut restrict = crate::views::restrictions(app, &s.key, segment.as_ref(), compare.as_ref())?;
+    let q = query_of(spec, columns, 0, 1)?;
+    if let Some(search) = os_analyze::search::SearchFilter::new(&q, &s.config, cancel) {
+        restrict.push(Arc::new(search));
+    }
+    Ok(views::session::SessionSpec {
+        tab: q.tab,
+        filter: q.filter,
+        search: None,
+        sort: q.sort,
+        columns: q.columns,
+        restrict,
+    })
+}
+fn query_of(
+    spec: &ViewSpec,
+    columns: &[String],
+    offset: u64,
+    limit: u32,
+) -> Result<views::ViewQuery, CmdError> {
     let ViewSpec::Tab {
         tab,
         filter,
         search,
         sort,
-        segment,
-        compare,
+        ..
     } = spec
     else {
         return Err(CmdError::invalid_input("err-tab-required", "spec"));
     };
-    catalog::check_scope(segment, compare)?;
     let mut q = views::ViewQuery::new(tab, filter);
     q.columns = if columns.is_empty() {
         views::ColumnSelection::Default
@@ -383,6 +448,49 @@ pub(crate) fn link_selection(
         .collect();
     Ok((selection, page))
 }
+fn tab_empty(state: os_model::FilterState, total: u64, searching: bool) -> Option<EmptyState> {
+    match state {
+        os_model::FilterState::NeedsConfig(k) => {
+            Some(catalog::empty(EmptyCode::FeatureDisabled, Some(k)))
+        }
+        os_model::FilterState::NeedsRendering => {
+            Some(catalog::empty(EmptyCode::NeedsJsRendering, None))
+        }
+        os_model::FilterState::NeedsCrawlAnalysis | os_model::FilterState::Stale => {
+            Some(catalog::empty(EmptyCode::NeedsCrawlAnalysis, None))
+        }
+        os_model::FilterState::NeedsRecrawl => Some(catalog::empty(
+            EmptyCode::NoDataYet,
+            Some("needsRecrawl".into()),
+        )),
+        _ if total == 0 => Some(catalog::empty(
+            if searching {
+                EmptyCode::NoMatch
+            } else {
+                EmptyCode::NoDataYet
+            },
+            None,
+        )),
+        _ => None,
+    }
+}
+/// Cells of columns with a missing prerequisite stay empty.
+fn cells(rows: Vec<Vec<os_model::Value>>, meta: &[ColumnMeta]) -> Vec<Vec<serde_json::Value>> {
+    rows.into_iter()
+        .map(|row| {
+            row.into_iter()
+                .zip(meta)
+                .map(|(v, c)| {
+                    if c.needs.is_some() {
+                        serde_json::Value::Null
+                    } else {
+                        serde_json::to_value(v).unwrap_or_default()
+                    }
+                })
+                .collect()
+        })
+        .collect()
+}
 #[derive(Clone)]
 pub(crate) struct DataPage {
     pub keys: Vec<i64>,
@@ -411,6 +519,7 @@ pub(crate) async fn page(
         PageSelection {
             expected,
             ids: None,
+            ordered: false,
         },
     )
     .await
@@ -434,6 +543,7 @@ pub(crate) async fn selected_page(
         PageSelection {
             expected: Some(v.version),
             ids: Some(ids),
+            ordered: false,
         },
     )
     .await
@@ -441,6 +551,31 @@ pub(crate) async fn selected_page(
 struct PageSelection {
     expected: Option<u64>,
     ids: Option<Vec<i64>>,
+    /// `ids` are already a window of a materialized link list in view order (read by primary key).
+    ordered: bool,
+}
+/// Window of a materialized link list (K-1g): rows by primary key in list order.
+async fn ordered_link_page(
+    app: &App,
+    v: &OpenView,
+    columns: Vec<String>,
+    ids: Vec<i64>,
+    limit: u32,
+) -> Result<DataPage, CmdError> {
+    page_query(
+        app,
+        &v.session,
+        v.spec.clone(),
+        columns,
+        0,
+        limit,
+        PageSelection {
+            expected: Some(v.version),
+            ids: Some(ids),
+            ordered: true,
+        },
+    )
+    .await
 }
 async fn page_query(
     app: &App,
@@ -454,6 +589,7 @@ async fn page_query(
     let PageSelection {
         expected,
         ids: selected_ids,
+        ordered,
     } = selection;
     #[cfg(test)]
     app.ext::<PageReads>().0.fetch_add(1, Ordering::Relaxed);
@@ -497,47 +633,8 @@ async fn page_query(
                     let meta = catalog::expanded_columns(t, &p.columns, &cfg);
                     let state = views::state_of_in(&registry, file, &cfg, tab, filter)
                         .map_err(view_error)?;
-                    let empty = match state {
-                        os_model::FilterState::NeedsConfig(k) => {
-                            Some(catalog::empty(EmptyCode::FeatureDisabled, Some(k)))
-                        }
-                        os_model::FilterState::NeedsRendering => {
-                            Some(catalog::empty(EmptyCode::NeedsJsRendering, None))
-                        }
-                        os_model::FilterState::NeedsCrawlAnalysis
-                        | os_model::FilterState::Stale => {
-                            Some(catalog::empty(EmptyCode::NeedsCrawlAnalysis, None))
-                        }
-                        os_model::FilterState::NeedsRecrawl => Some(catalog::empty(
-                            EmptyCode::NoDataYet,
-                            Some("needsRecrawl".into()),
-                        )),
-                        _ if p.total == 0 => Some(catalog::empty(
-                            if search.is_some() {
-                                EmptyCode::NoMatch
-                            } else {
-                                EmptyCode::NoDataYet
-                            },
-                            None,
-                        )),
-                        _ => None,
-                    };
-                    let cells = p
-                        .rows
-                        .into_iter()
-                        .map(|row| {
-                            row.into_iter()
-                                .zip(&meta)
-                                .map(|(v, c)| {
-                                    if c.needs.is_some() {
-                                        serde_json::Value::Null
-                                    } else {
-                                        serde_json::to_value(v).unwrap_or_default()
-                                    }
-                                })
-                                .collect()
-                        })
-                        .collect();
+                    let empty = tab_empty(state, p.total, search.is_some());
+                    let cells = cells(p.rows, &meta);
                     return Ok(DataPage {
                         keys: p.row_keys.iter().map(|id| id.0).collect(),
                         columns: meta,
@@ -585,12 +682,23 @@ async fn page_query(
                         (names, kinds, p.rows, keys, p.total, None)
                     } else {
                         let (mut selection, req) = link_selection(&spec, &cfg, offset, limit)?;
-                        selection.row_ids = selected_ids;
-                        let p = os_store::queries::app_support::selected_links(
-                            file.conn(),
-                            &selection,
-                            &req,
-                        )
+                        let p = match selected_ids {
+                            Some(ids) if ordered => {
+                                os_store::queries::app_support::selected_links_by_ids(
+                                    file.conn(),
+                                    &selection,
+                                    &ids,
+                                )
+                            }
+                            ids => {
+                                selection.row_ids = ids;
+                                os_store::queries::app_support::selected_links(
+                                    file.conn(),
+                                    &selection,
+                                    &req,
+                                )
+                            }
+                        }
                         .map_err(|e| crate::runtime::error::store_error(&e))?;
                         let names = [
                             "Type",
@@ -723,28 +831,139 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
     Box::pin(async move {
         let args: ViewOpenArgs = parse_args(args)?;
         let s = session(app, &ctx)?;
-        let p = page(app, &s, args.spec.clone(), args.columns.clone(), 0, 1, None).await?;
         let id = app
             .config()
             .ids
             .new_crawl_id(app.config().clock.now())
             .to_string();
-        registry(app)
-            .entries
-            .lock()
-            .unwrap_or_else(|p| p.into_inner())
-            .insert(
-                id.clone(),
+        if matches!(args.spec, ViewSpec::Tab { .. }) {
+            let tab = TabView::new(app, id.clone(), s.key.clone());
+            let built = start_build(
+                app,
+                &tab,
+                s.clone(),
+                args.spec.clone(),
+                args.columns.clone(),
+            );
+            let h = settle(app, &id, &args.spec, built).await?;
+            insert(
+                app,
+                id,
                 OpenView {
                     owner: ctx.window,
                     session: s,
                     spec: args.spec,
                     columns: args.columns,
-                    version: p.version,
+                    version: h.version,
+                    tab: Some(tab),
+                    links: None,
                 },
             );
-        to_json(&handle(id, p))
+            return to_json(&h);
+        }
+        let p = page(app, &s, args.spec.clone(), args.columns.clone(), 0, 1, None).await?;
+        let h = handle(id.clone(), p);
+        let links = link_list(app, &s, &args.spec);
+        insert(
+            app,
+            id,
+            OpenView {
+                owner: ctx.window,
+                session: s,
+                spec: args.spec,
+                columns: args.columns,
+                version: h.version,
+                tab: None,
+                links,
+            },
+        );
+        to_json(&h)
     })
+}
+async fn link_ids(app: &App, v: &OpenView, links: &LinkView) -> Result<Arc<Vec<i64>>, CmdError> {
+    let (selection, page) = link_selection(&v.spec, &v.session.config, 0, 1)?;
+    links.ids(app, v.version, selection, page).await
+}
+fn insert(app: &App, id: String, view: OpenView) {
+    registry(app)
+        .entries
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .insert(id, view);
+}
+type Building = tokio::task::JoinHandle<Result<Built, CmdError>>;
+/// Starts a private build; the published view stays readable until it succeeds (double buffer).
+fn start_build(
+    app: &App,
+    tab: &Arc<TabView>,
+    s: SessionInfo,
+    spec: ViewSpec,
+    columns: Vec<String>,
+) -> (Building, os_model::CancelToken) {
+    let token = os_model::CancelToken::default();
+    let (app, tab, cancel) = (app.clone(), tab.clone(), token.clone());
+    let task = app
+        .handle()
+        .spawn(async move { tab.build(&app, s, spec, columns, cancel).await });
+    (task, token)
+}
+/// Waits up to [`SYNC_BUILD`]; slower builds continue as a cancellable operation (`ViewState::Building`).
+async fn settle(
+    app: &App,
+    id: &str,
+    spec: &ViewSpec,
+    (mut task, token): (Building, os_model::CancelToken),
+) -> Result<ViewHandle, CmdError> {
+    match tokio::time::timeout(SYNC_BUILD, &mut task).await {
+        Ok(joined) => {
+            let built = joined
+                .map_err(|e| crate::runtime::error::internal("view.build", e.to_string()))??;
+            Ok(tab_handle(id.to_string(), spec, built))
+        }
+        Err(_) => {
+            let (view_id, spec) = (id.to_string(), spec.clone());
+            let op = app.ops().spawn("view-build", true, move |cancel, _| {
+                Box::pin(async move {
+                    let forward = token.clone();
+                    let _bridge = cancel.on_cancel(move || forward.cancel());
+                    if cancel.is_cancelled() {
+                        token.cancel();
+                    }
+                    let built = task.await.map_err(|e| {
+                        crate::runtime::error::internal("view.build", e.to_string())
+                    })??;
+                    to_json(&tab_handle(view_id, &spec, built))
+                })
+            });
+            Ok(ViewHandle {
+                view_id: id.to_string(),
+                version: 0,
+                total: None,
+                columns: Vec::new(),
+                state: ViewState::Building,
+                op: Some(op),
+                empty_state: None,
+            })
+        }
+    }
+}
+fn tab_handle(view_id: String, spec: &ViewSpec, built: Built) -> ViewHandle {
+    let searching = matches!(
+        spec,
+        ViewSpec::Tab {
+            search: Some(_),
+            ..
+        }
+    );
+    ViewHandle {
+        view_id,
+        version: built.version,
+        total: Some(built.total),
+        empty_state: tab_empty(built.state, built.total, searching),
+        columns: built.meta,
+        state: ViewState::Ready,
+        op: None,
+    }
 }
 fn handle(view_id: String, p: DataPage) -> ViewHandle {
     ViewHandle {
@@ -762,48 +981,117 @@ fn update<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
         let args: ViewUpdateArgs = parse_args(args)?;
         let mut v = get_owned(app, &ctx, &args.view_id)?;
         v.session = session(app, &ctx)?;
-        let p = page(
-            app,
-            &v.session,
-            args.spec.clone(),
-            v.columns.clone(),
-            0,
-            1,
-            None,
-        )
-        .await?;
-        v.spec = args.spec;
-        v.version = p.version;
+        let tab = match (&args.spec, v.tab.take()) {
+            (ViewSpec::Tab { .. }, Some(tab)) => Some(tab),
+            (ViewSpec::Tab { .. }, _) => Some(TabView::new(
+                app,
+                args.view_id.clone(),
+                v.session.key.clone(),
+            )),
+            _ => None,
+        };
+        let h = if let Some(tab) = &tab {
+            let built = start_build(
+                app,
+                tab,
+                v.session.clone(),
+                args.spec.clone(),
+                v.columns.clone(),
+            );
+            settle(app, &args.view_id, &args.spec, built).await?
+        } else {
+            let p = page(
+                app,
+                &v.session,
+                args.spec.clone(),
+                v.columns.clone(),
+                0,
+                1,
+                None,
+            )
+            .await?;
+            handle(args.view_id.clone(), p)
+        };
         let state = registry(app);
         let mut entries = state.entries.lock().unwrap_or_else(|p| p.into_inner());
         if !entries.contains_key(&args.view_id) {
             return Err(CmdError::new(ErrorCode::NotFound, "err-view-not-found"));
         }
+        v.links = link_list(app, &v.session, &args.spec);
+        v.spec = args.spec;
+        v.version = h.version;
+        v.tab = tab;
         entries.insert(args.view_id.clone(), v);
-        to_json(&handle(args.view_id, p))
+        to_json(&h)
     })
 }
 fn rows<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
         let args: RowsArgs = parse_args(args)?;
         let v = get(app, &ctx, &args.view_id)?;
+        if !(1..=500).contains(&args.limit) {
+            return Err(CmdError::invalid_input("err-invalid-limit", "limit"));
+        }
         if args.version != v.version {
             return Err(stale());
         }
-        let p = page(
-            app,
-            &v.session,
-            v.spec,
-            if args.columns.is_empty() {
-                v.columns
-            } else {
-                args.columns
-            },
-            args.offset,
-            args.limit,
-            Some(args.version),
-        )
-        .await?;
+        if let Some(tab) = &v.tab {
+            let w = tab.rows(app, args.version, args.offset, args.limit).await?;
+            let projected = w.meta.iter().map(|c| c.key.clone()).collect::<Vec<_>>();
+            if !args.columns.is_empty() && args.columns != projected {
+                // Other columns than the projection: same row keys, values read by ID.
+                let p = selected_page(app, &v, args.columns, w.keys.clone(), 0, args.limit).await?;
+                let by_key = p.keys.iter().zip(p.cells).collect::<HashMap<_, _>>();
+                let width = p.columns.len();
+                return to_json(&RowWindow {
+                    view_id: args.view_id,
+                    version: args.version,
+                    offset: args.offset,
+                    cells: w
+                        .keys
+                        .iter()
+                        .map(|k| {
+                            by_key
+                                .get(k)
+                                .cloned()
+                                .unwrap_or_else(|| vec![serde_json::Value::Null; width])
+                        })
+                        .collect(),
+                    row_keys: w.keys,
+                    columns: p.columns.into_iter().map(|c| c.key).collect(),
+                });
+            }
+            return to_json(&RowWindow {
+                view_id: args.view_id,
+                version: args.version,
+                offset: args.offset,
+                row_keys: w.keys,
+                columns: projected,
+                cells: cells(w.rows, &w.meta),
+            });
+        }
+        let columns = if args.columns.is_empty() {
+            v.columns.clone()
+        } else {
+            args.columns
+        };
+        let p = if let Some(links) = &v.links {
+            let ids = link_ids(app, &v, links).await?;
+            let start = (args.offset.min(ids.len() as u64)) as usize;
+            let end = start.saturating_add(args.limit as usize).min(ids.len());
+            ordered_link_page(app, &v, columns, ids[start..end].to_vec(), args.limit).await?
+        } else {
+            page(
+                app,
+                &v.session,
+                v.spec,
+                columns,
+                args.offset,
+                args.limit,
+                Some(args.version),
+            )
+            .await?
+        };
         to_json(&RowWindow {
             view_id: args.view_id,
             version: p.version,
@@ -818,6 +1106,17 @@ fn locate<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
     Box::pin(async move {
         let args: LocateArgs = parse_args(args)?;
         let v = get(app, &ctx, &args.view_id)?;
+        if let Some(tab) = &v.tab {
+            return to_json(&tab.locate(app, v.version, args.url_id).await?);
+        }
+        if let Some(links) = &v.links {
+            let ids = link_ids(app, &v, links).await?;
+            return to_json(
+                &ids.iter()
+                    .position(|id| *id == args.url_id)
+                    .map(|i| i as u64),
+            );
+        }
         let mut offset = 0;
         loop {
             let p = page(
