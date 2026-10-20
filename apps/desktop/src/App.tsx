@@ -66,8 +66,8 @@ export function App() {
           <RegionBoundary name="table">
             {TableRegion ? <TableRegion /> : <EmptyState state={{ code: "NO_DATA_YET" }} />}
           </RegionBoundary>
-          {DetailRegion && <RegionBoundary name="detail"><DetailRegion /></RegionBoundary>}
         </main>
+        {DetailRegion && <RegionBoundary name="detail"><DetailRegion /></RegionBoundary>}
         <aside className="os-app-sidebar" aria-label={t("app-region-sidebar")} />
         <footer className="os-app-status" role="contentinfo" aria-label={t("app-region-status")}>
           <Statusbar />

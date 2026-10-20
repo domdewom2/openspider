@@ -31,6 +31,9 @@ export interface DataGridProps {
   onExportSelection: () => void;
   rowHeight: number;
   theme: GridTheme;
+  /** Optional feature-specific titles and empty-cell explanations; canonical keys remain unchanged. */
+  columnTitles?: Readonly<Record<string, string>>;
+  columnHints?: Readonly<Record<string, string>>;
   ariaLabel: string;
   locale: string;
   /** Measurement/navigation API; never exposes renderer types to consumers. */
@@ -210,7 +213,7 @@ export function DataGrid(props: DataGridProps) {
       metrics.current.setFont(ctx.font);
       for (const c of layout) {
         ctx.save(); ctx.beginPath(); ctx.rect(c.clipLeft, y, c.clipRight - c.clipLeft, h); ctx.clip();
-        const value = header ? { text: props.headerTitle?.(c.key) ?? c.key + (c.sort ? ` ${c.sort === "asc" ? "↑" : "↓"} ${visible.filter(c => c.sort).findIndex(s => s.key === c.key) + 1}` : ""), color: t.text, align: "left" as const } : cell(c.index, row);
+        const value = header ? { text: props.headerTitle?.(c.key) ?? (props.columnTitles?.[c.key] ?? c.key) + (c.sort ? ` ${c.sort === "asc" ? "↑" : "↓"} ${visible.filter(c => c.sort).findIndex(s => s.key === c.key) + 1}` : ""), color: t.text, align: "left" as const } : cell(c.index, row);
         const background = (value as { background?: string }).background;
         if (background) { ctx.fillStyle = background; ctx.fillRect(c.x, y, c.width, h); }
         ctx.fillStyle = value.color; ctx.textAlign = value.align;
@@ -324,7 +327,7 @@ export function DataGrid(props: DataGridProps) {
         }
         const h = hit(event.clientX, event.clientY); const meta = h && metadata.get(h.column.key);
         const value = h && meta && h.row >= 0 ? source.getCell(meta.index, h.row) : LOADING;
-        const text = value === LOADING || !meta ? "" : cellTooltip(value, meta.column, props.locale);
+        const text = value === LOADING || !meta ? "" : cellTooltip(value, meta.column, props.locale) || props.columnHints?.[meta.column.key] || "";
         setTooltip(old => old?.text === text ? old : text ? { text, x: event.clientX, y: event.clientY + 18 } : undefined);
         event.currentTarget.style.cursor = h?.row === -1 && h.column.x + h.column.width - h.x < 6 ? "col-resize" : "default";
       }}
@@ -360,7 +363,7 @@ export function DataGrid(props: DataGridProps) {
     <span ref={measuring} className="os-grid-measure" aria-hidden="true" />
     <div className="os-grid-a11y">
       <div role="row" aria-rowindex={1}>{layout.map(c => <div role="columnheader" id={cellId(c.index, -1)} key={c.key} aria-colindex={c.index + 1}
-        aria-sort={c.sort === "asc" ? "ascending" : c.sort === "desc" ? "descending" : undefined}>{props.headerTitle?.(c.key) ?? c.key}</div>)}</div>
+        aria-sort={c.sort === "asc" ? "ascending" : c.sort === "desc" ? "descending" : undefined}>{props.headerTitle?.(c.key) ?? props.columnTitles?.[c.key] ?? c.key}</div>)}</div>
       {Array.from({ length: Math.max(0, count) }, (_, index) => {
         const row = first + index, key = source.rowKey(row);
         return <div role="row" aria-rowindex={row + 2} aria-busy={key === undefined} aria-selected={key !== undefined && selection.has(key)} key={row}>

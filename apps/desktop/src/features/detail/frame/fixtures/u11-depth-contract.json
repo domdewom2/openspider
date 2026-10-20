@@ -1,0 +1,74 @@
+[
+  {
+    "Target Address": "https://site.test/step7",
+    "Step": 0,
+    "Address": "https://site.test/step7",
+    "Status Code": 200,
+    "Link Type": "Hyperlink",
+    "Anchor": "Step 7",
+    "Crawl Depth": 7
+  },
+  {
+    "Target Address": "https://site.test/step7",
+    "Step": 1,
+    "Address": "https://site.test/step6",
+    "Status Code": 200,
+    "Link Type": "Hyperlink",
+    "Anchor": "Step 6",
+    "Crawl Depth": 6
+  },
+  {
+    "Target Address": "https://site.test/step7",
+    "Step": 2,
+    "Address": "https://site.test/step5",
+    "Status Code": 200,
+    "Link Type": "Hyperlink",
+    "Anchor": "Step 5",
+    "Crawl Depth": 5
+  },
+  {
+    "Target Address": "https://site.test/step7",
+    "Step": 3,
+    "Address": "https://site.test/step4",
+    "Status Code": 200,
+    "Link Type": "Hyperlink",
+    "Anchor": "Step 4",
+    "Crawl Depth": 4
+  },
+  {
+    "Target Address": "https://site.test/step7",
+    "Step": 4,
+    "Address": "https://site.test/step3",
+    "Status Code": 200,
+    "Link Type": "Hyperlink",
+    "Anchor": "Step 3",
+    "Crawl Depth": 3
+  },
+  {
+    "Target Address": "https://site.test/step7",
+    "Step": 5,
+    "Address": "https://site.test/step2",
+    "Status Code": 200,
+    "Link Type": "Hyperlink",
+    "Anchor": "Step 2",
+    "Crawl Depth": 2
+  },
+  {
+    "Target Address": "https://site.test/step7",
+    "Step": 6,
+    "Address": "https://site.test/step1",
+    "Status Code": 200,
+    "Link Type": "Hyperlink",
+    "Anchor": "Step 1",
+    "Crawl Depth": 1
+  },
+  {
+    "Target Address": "https://site.test/step7",
+    "Step": 7,
+    "Address": "https://site.test/",
+    "Status Code": 200,
+    "Link Type": "",
+    "Anchor": "",
+    "Crawl Depth": 0
+  }
+]
