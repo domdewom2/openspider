@@ -20,6 +20,8 @@ const CATALOG_4_4: &[&str] = &[
     "events.subscribe",
     "events.setVisibility",
     "events.setInterval",
+    "settings.resources", // UI-123 / OUT-267: hardware limits in settings
+    "settings.importCertificates", // OUT-270: explicitly accepted probe certificates
     "settings.get",
     "settings.set",
     "uistate.load",

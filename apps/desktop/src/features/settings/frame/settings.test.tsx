@@ -36,7 +36,7 @@ describe("Einstellungsfenster: Rahmen", () => {
   it("kennt alle Abschnitte aus 1.5; Allgemein und Oberfläche sind fertig, die übrigen Platzhalter", () => {
     const sections = resolveSections();
     expect(sections.map((s) => s.id)).toEqual(KNOWN_SECTIONS.map((k) => k.id));
-    expect(sections.filter((s) => s.Component).map((s) => s.id)).toEqual(["general", "appearance", "email"]);
+    expect(sections.filter((s) => s.Component).map((s) => s.id)).toEqual(["general", "appearance", "storage", "crawls", "exports", "network", "accounts", "email", "mcp"]);
     expect(sectionOfAnchor("appearance.zoom")).toBe("appearance");
   });
 
@@ -45,7 +45,7 @@ describe("Einstellungsfenster: Rahmen", () => {
     const nav = screen.getByRole("tablist", { name: "Settings sections" });
     expect(within(nav).getAllByRole("tab")).toHaveLength(KNOWN_SECTIONS.length);
     fireEvent.click(within(nav).getByRole("tab", { name: "Storage" }));
-    expect(document.querySelector('[data-settings-placeholder="storage"]')).not.toBeNull();
+    expect(document.querySelector('[data-settings-section="storage"]')).not.toBeNull();
   });
 
   // spec: UI-016

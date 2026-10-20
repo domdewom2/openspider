@@ -2,11 +2,16 @@
 import type { AppSettingsDto } from "./gen/AppSettingsDto";
 import type { CertificateChainDto } from "./gen/CertificateChainDto";
 import type { CertificateProbeArgs } from "./gen/CertificateProbeArgs";
+import type { JsonValue } from "./gen/serde_json/JsonValue";
 import type { ProxyPasswordArgs } from "./gen/ProxyPasswordArgs";
 import type { SettingsPatch } from "./gen/SettingsPatch";
 import { client } from "./client";
 
 export const settings = {
+  /** `settings.resources` */
+  resources: (signal?: AbortSignal) => client.invoke<JsonValue>("settings.resources", undefined, signal),
+  /** `settings.importCertificates` */
+  importCertificates: (args: JsonValue, signal?: AbortSignal) => client.invoke<string[]>("settings.importCertificates", args, signal),
   /** `settings.get` */
   get: (signal?: AbortSignal) => client.invoke<AppSettingsDto>("settings.get", undefined, signal),
   /** `settings.set` */

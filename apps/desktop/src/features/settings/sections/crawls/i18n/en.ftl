@@ -1,0 +1,15 @@
+u14-retention = Crawl retention
+u14-retention-never = Never delete automatically
+u14-retention-one_week = 1 week
+u14-retention-one_month = 1 month
+u14-retention-three_months = 3 months
+u14-retention-six_months = 6 months
+u14-retention-one_year = 1 year
+u14-retention-custom = Custom (days)
+u14-retention-days = Retention in days
+u14-positive-days = Enter at least one whole day.
+u14-retention-protection = Locked crawls and projects, open crawls and running crawls are protected. Age is measured from completion, or the last change for incomplete crawls.
+u14-retention-enable = Enable retention
+u14-retention-warning = Old crawls will be deleted automatically. This also affects crawls used in saved comparisons: those comparisons become unavailable. Locked, open and running crawls remain protected.
+u14-retention-custom-title = Set retention duration
+u14-retention-custom-apply = Apply retention
