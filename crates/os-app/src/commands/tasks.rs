@@ -841,6 +841,19 @@ fn watch_run(
     handle
 }
 
+/// Wartet kurz auf das Ende des Kindprozesses, damit er nicht als Zombie liegen bleibt.
+async fn reap(child: Option<&mut Box<dyn RunningChild>>) {
+    let Some(child) = child else {
+        return;
+    };
+    for _ in 0..20 {
+        if matches!(child.try_wait(), Ok(Some(_)) | Err(_)) {
+            return;
+        }
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+}
+
 async fn follow_run(
     app: &App,
     task_id: &str,
@@ -856,6 +869,7 @@ async fn follow_run(
     loop {
         if let Some(record) = history.get(task_id, run_id) {
             if record.result != RunResult::Running {
+                reap(child.as_mut()).await;
                 if cancel_sent.is_some() && record.result == RunResult::Aborted {
                     return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"));
                 }

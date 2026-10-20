@@ -227,6 +227,10 @@ pub fn run(cli: Cli) -> i32 {
     }
     let args = cli.run;
 
+    // OUT-166: Deinstallation entfernt alle Planer-Einträge.
+    if args.unregister_tasks {
+        return run_task::unregister_tasks(&args);
+    }
     // OUT-209: Aufgabe des OS-Planers (eigener Ablauf mit Historie und Lauf-Log).
     if let Some(task) = args.run_task.clone() {
         return run_task::run(&task, &args);

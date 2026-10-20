@@ -67,6 +67,11 @@ pub struct RunArgs {
     #[arg(long, value_name = "ID", help_heading = "Aufgaben")]
     pub run_task: Option<String>,
 
+    /// [OS-Erweiterung] Trägt alle OpenSpider-Aufgaben beim Betriebssystem-Planer aus (Deinstallation,
+    /// OUT-166); die Aufgabendateien bleiben erhalten.
+    #[arg(long, help_heading = "Aufgaben")]
+    pub unregister_tasks: bool,
+
     // ---- Quelle -------------------------------------------------------------------------------
     /// Crawlt eine Website ab der URL (Spider-Modus); ohne Schema wird `http://` ergänzt.
     #[arg(long, value_name = "URL", help_heading = "Quelle")]
@@ -468,6 +473,7 @@ mod tests {
             "--fail-on-start-error",
             "--strict",
             "--run-task",
+            "--unregister-tasks",
         ] {
             assert!(names.contains(&flag.to_string()), "{flag} fehlt");
         }

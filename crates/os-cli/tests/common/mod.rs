@@ -55,6 +55,8 @@ impl Env {
     pub fn command(&self) -> Command {
         let mut cmd = Command::new(env!("CARGO_BIN_EXE_openspider"));
         cmd.env("OPENSPIDER_HOME", self.home.path())
+            // C13: Tests öffnen nie den Schlüsselbund des Betriebssystems.
+            .env("OPENSPIDER_SECRET_STORE", "memory")
             .env_remove("OPENSPIDER_LOG")
             .env_remove("RUST_LOG")
             .current_dir(self.work.path())
@@ -225,4 +227,18 @@ pub fn read_xlsx(path: &Path) -> Vec<Vec<String>> {
         .rows()
         .map(|r| r.iter().map(|c| c.to_string()).collect())
         .collect()
+}
+
+/// Ist der Lauf `Completed`? Der Hinweis auf wenig freien Speicherplatz (Plattenwächter der Engine) hängt vom
+/// Testrechner ab und zählt nicht.
+pub fn is_completed(record: &os_sched::history::RunRecord) -> bool {
+    use os_sched::history::RunResult;
+    match record.result {
+        RunResult::Completed => true,
+        RunResult::CompletedWithWarnings => record
+            .warnings
+            .iter()
+            .all(|w| w.contains("freier Speicherplatz")),
+        _ => false,
+    }
 }

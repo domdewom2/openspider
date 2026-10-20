@@ -166,7 +166,7 @@ async fn a_scheduled_run_exports_exactly_like_the_equivalent_manual_call_and_rec
     let runs = history(&env).list(Some("nightly"), 0, 10);
     assert_eq!(runs.len(), 1);
     let run = &runs[0];
-    assert_eq!(run.result, RunResult::Completed, "{run:?}");
+    assert!(common::is_completed(run), "{run:?}");
     assert_eq!(run.exit_code, Some(0));
     assert!(run.urls_crawled.unwrap_or(0) > 5);
     let crawls = env.crawl_files();
@@ -385,14 +385,12 @@ async fn two_tasks_at_the_same_time_make_two_processes_and_two_crawl_files() {
     assert_eq!(a.code, 0, "{}", a.dump());
     assert_eq!(b.code, 0, "{}", b.dump());
     assert_eq!(env.crawl_files().len(), 2);
-    assert_eq!(
-        history(&env).list(Some("alpha"), 0, 5)[0].result,
-        RunResult::Completed
-    );
-    assert_eq!(
-        history(&env).list(Some("beta"), 0, 5)[0].result,
-        RunResult::Completed
-    );
+    assert!(common::is_completed(
+        &history(&env).list(Some("alpha"), 0, 5)[0]
+    ));
+    assert!(common::is_completed(
+        &history(&env).list(Some("beta"), 0, 5)[0]
+    ));
     // Jede Aufgabe schreibt in ihren eigenen Ordner.
     assert!(run_folder(&out, "Shop", "Alpha")
         .join("internal_all.csv")
@@ -539,7 +537,7 @@ async fn list_mode_runs_appear_in_the_history_like_spider_runs() {
         .await;
     assert_eq!(run.code, 0, "{}", run.dump());
     let record = history(&env).last("lister").unwrap();
-    assert_eq!(record.result, RunResult::Completed);
+    assert!(common::is_completed(&record), "{record:?}");
     assert_eq!(record.urls_crawled, Some(2), "Duplikate zählen einmal");
     let folder = run_folder(&out, "Shop", "Lister");
     assert!(folder.join("internal_all.csv").is_file());
@@ -571,8 +569,7 @@ async fn a_disabled_task_is_skipped_by_the_scheduler_but_runs_when_started_by_ha
             .await
             .unwrap();
     assert_eq!(out_run.code, 0, "{}", out_run.dump());
-    assert_eq!(
-        history(&env).get("off", "manual-1").unwrap().result,
-        RunResult::Completed
-    );
+    assert!(common::is_completed(
+        &history(&env).get("off", "manual-1").unwrap()
+    ));
 }

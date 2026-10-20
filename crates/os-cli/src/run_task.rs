@@ -571,7 +571,19 @@ pub async fn run_in(
         Ok(e) => e,
         Err(message) => return finish(&live, RunResult::Failed, Exit::Usage, Some(message)),
     };
-    let args = to_run_args(&task, &ctx.paths, &exports, &ctx.export_dir);
+    // Gleichzeitige Läufe schreiben nie in dieselbe Exportdatei (OUT-167): Läuft derselbe Lauf schon, geht
+    // ein Lauf im Überschreiben-Modus in einen Zeitstempel-Ordner.
+    let mut effective = task.clone();
+    if task.output.mode == OutputMode::Overwrite
+        && history
+            .active(&task.id, ctx.clock.now())
+            .iter()
+            .any(|r| r.run_id != run_id)
+    {
+        effective.output.mode = OutputMode::Timestamped;
+        rep.warn("another run of this task is active – writing to a timestamped folder instead of overwriting");
+    }
+    let args = to_run_args(&effective, &ctx.paths, &exports, &ctx.export_dir);
     rep.phase("validate");
     let mut plan = match plan::build_for_task(&args, ctx.paths.clone(), &rep, exports.batch) {
         Ok(plan) => plan,
@@ -587,7 +599,7 @@ pub async fn run_in(
     }
     // Sitemaps brauchen einen Ausgabeordner, auch ohne Tabellenexporte.
     if plan.output.is_none() && (exports.sitemap_pages || exports.sitemap_images) {
-        let mode = match task.output.mode {
+        let mode = match effective.output.mode {
             OutputMode::Timestamped => os_export::output::OutputMode::Timestamped,
             OutputMode::Overwrite => os_export::output::OutputMode::Overwrite,
         };
@@ -852,6 +864,26 @@ fn init_task_log(paths: &AppPaths, task_id: &str, args: &RunArgs) -> PathBuf {
         }));
     }
     path
+}
+
+/// Trägt alle OpenSpider-Aufgaben beim Planer aus und meldet die Anzahl auf stderr.
+pub fn unregister_with(planner: &dyn os_sched::planner::OsPlanner) -> usize {
+    os_sched::planner::uninstall_all(planner)
+}
+
+/// `openspider --unregister-tasks` (Deinstallation, OUT-166): trägt alle Aufgaben beim Planer des
+/// Betriebssystems aus; die Aufgabendateien bleiben.
+pub fn unregister_tasks(_args: &RunArgs) -> i32 {
+    let paths = app_paths();
+    let dir = paths.settings.join("schedules").join("planner");
+    let Some(planner) = os_sched::planner::system(Arc::new(os_sched::planner::SystemRunner), &dir)
+    else {
+        eprintln!("openspider: auf diesem System gibt es keinen Planer (Exit-Code 0)");
+        return Exit::Ok.code();
+    };
+    let removed = unregister_with(planner.as_ref());
+    eprintln!("openspider: {removed} Planer-Einträge entfernt (Exit-Code 0)");
+    Exit::Ok.code()
 }
 
 /// Einstieg von `openspider --run-task <id>`; liefert den Exit-Code.

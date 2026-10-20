@@ -140,7 +140,7 @@ fn a_run_that_ended_without_finishing_becomes_failed_with_unexpected_termination
         RunResult::Running
     );
     assert!(store.reconcile(now).is_empty());
-    assert!(STALE_AFTER_SECS >= 30);
+    const { assert!(STALE_AFTER_SECS >= 30) };
 }
 
 // spec: OUT-167
