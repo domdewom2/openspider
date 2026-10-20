@@ -1,5 +1,6 @@
 // Rahmen des Konfigurationsdialogs (M2-U13, M2-ui-concept 1.5 / W3): Seitennavigation mit Suche, Profilwahl, Hinweise zum
 // Crawl-Zustand (CRAWL-126, F-13/F-14), Abweichungen und die Fußleiste. Die Seiten kommen aus `features/config/pages/*`.
+import "./config.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dialog as RacDialog, Heading, Modal, ModalOverlay } from "react-aria-components";
 import { ChevronRight } from "lucide-react";

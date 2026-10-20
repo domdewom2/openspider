@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { DiffRow } from "../../../ipc/gen/DiffRow";
-import { changedPaths, deviations, getPath, isLiveField, issuesFor, lineIndexOf, lockReason, pageForAnchor, PRESET_KEYS, runModeOf, setPath, STRUCTURAL_FIELDS } from "./model";
+import { changedPaths, deviations, firstPerPath, getPath, isLiveField, issuesFor, lineIndexOf, lockReason, pageForAnchor, PRESET_KEYS, runModeOf, setPath, STRUCTURAL_FIELDS } from "./model";
 import { asSchema, defaultsFromSchema, fieldMeta, nodeAt } from "./schema";
 import { SCHEMA, defaultConfig } from "./testing";
 
@@ -87,6 +87,13 @@ describe("Abweichungen, Prüfmeldungen, Sprungziele", () => {
     expect(lineIndexOf("limits.max_urls")).toBeNull();
   });
 
+  // spec: CRAWL-111
+  it("firstPerPath zeigt einen doppelt gemeldeten Regex-Fehler (gleicher Pfad) nur einmal", () => {
+    const issue = (path: string, reason: string) => ({ path, messageKey: "k", args: { reason }, line: null, column: null, warning: false });
+    const all = [issue("scope.exclude[1]", "a"), issue("scope.exclude[1]", "in Zeile 0: b"), issue("scope.exclude[2]", "c")];
+    expect(firstPerPath(all).map((i) => i.args.reason)).toEqual(["a", "c"]);
+  });
+
   // spec: OUT-220
   it("Sprungziele: genauer Feldpfad vor Präfix", () => {
     const pages = [
@@ -112,6 +119,9 @@ describe("Schema des Kerns als Quelle für Typen und Grenzen", () => {
     expect(fieldMeta(SCHEMA, "robots.mode")?.enum).toEqual(["respect", "ignore", "ignore_but_report"]);
     expect(fieldMeta(SCHEMA, "scope.include")).toMatchObject({ type: "array", items: "string" });
     expect(fieldMeta(SCHEMA, "extraction.structured_data.json_ld")?.type).toBe("boolean");
+    expect(fieldMeta(SCHEMA, "limits.max_links_per_url")).toMatchObject({ unsigned: true, maximum: 1073741824 });
+    expect(fieldMeta(SCHEMA, "limits.max_depth")).toMatchObject({ unsigned: true, typeMaximum: 4294967295 });
+    expect(fieldMeta(SCHEMA, "rendering.screenshots.jpeg_quality")).toMatchObject({ unsigned: true, typeMaximum: 255 });
     expect(fieldMeta(SCHEMA, "does.not.exist")).toBeNull();
     expect(nodeAt(null, "a")).toBeUndefined();
     expect(asSchema(null)).toBeNull();

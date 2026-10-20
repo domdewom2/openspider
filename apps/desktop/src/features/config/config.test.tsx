@@ -127,6 +127,24 @@ describe("Rahmen: Navigation, Suche, Entwurf", () => {
   });
 
   // spec: OUT-220
+  it("Zahlenfelder lehnen Unsinn schon lokal ab: Buchstaben, negative Werte bei vorzeichenlosen Feldern, Werte über dem Typ", async () => {
+    const dialog = await open("limits.max_depth");
+    fireEvent.click(within(field(dialog, "Max. crawl depth").closest(".os-cfg-number") as HTMLElement).getByRole("checkbox", { name: "Unlimited" }));
+    const depth = field(dialog, "Max. crawl depth");
+    type(depth, "abc");
+    expect(within(dialog).getByText("Enter a whole number of 0 or more.")).toBeInTheDocument();
+    type(depth, "-3");
+    expect(within(dialog).getByText("Enter a whole number of 0 or more.")).toBeInTheDocument();
+    type(depth, "99999999999");
+    expect(within(dialog).getByText(/Allowed values: 0 to 4,294,967,295|Allowed values: 0 to 4294967295/)).toBeInTheDocument();
+    type(depth, "12");
+    expect(within(field(dialog, "Max. crawl depth").closest(".os-cfg-number") as HTMLElement).queryByText(/whole number|4,294,967,295|4294967295/)).toBeNull();
+    // Die ungültigen Eingaben haben nie den Entwurf erreicht.
+    fireEvent.click(within(dialog).getByRole("button", { name: "OK" }));
+    await waitFor(() => expect((fake.config.limits as Record<string, unknown>).max_depth).toBe(12));
+  });
+
+  // spec: OUT-220
   it("Sprungziel openConfig({anchor}) öffnet die Seite und fokussiert das Ziel-Steuerelement (UI-016)", async () => {
     const dialog = await open("rendering.mode");
     await waitFor(() => expect(within(dialog).getByRole("button", { name: "Rendering" })).toHaveAttribute("aria-current", "page"));

@@ -16,6 +16,7 @@ config-auth-user-n = Benutzername, Zeile { $n }
 config-auth-password-n = Passwort, Zeile { $n }
 config-auth-password-stored = im Schlüsselbund gespeichert
 config-auth-save-password = Passwort speichern
+config-auth-secret-missing = Passwort speichern, um diese Zeile zu vervollständigen.
 config-auth-saved = Passwort im Schlüsselbund gespeichert.
 config-auth-remove = Zeile { $n } entfernen
 config-auth-add = Zeile hinzufügen

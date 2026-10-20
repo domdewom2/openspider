@@ -46,6 +46,7 @@ config-range = Allowed values: { $min } to { $max }
 config-range-min = Minimum: { $min }
 config-required = A value is required.
 config-not-integer = Enter a whole number.
+config-not-unsigned = Enter a whole number of 0 or more.
 config-not-number = Enter a number.
 config-unlimited = Unlimited
 config-auto = Automatic

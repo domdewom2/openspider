@@ -16,6 +16,7 @@ config-auth-user-n = User name, row { $n }
 config-auth-password-n = Password, row { $n }
 config-auth-password-stored = stored in the keychain
 config-auth-save-password = Save password
+config-auth-secret-missing = Save the password to complete this row.
 config-auth-saved = Password saved in the keychain.
 config-auth-remove = Remove row { $n }
 config-auth-add = Add row

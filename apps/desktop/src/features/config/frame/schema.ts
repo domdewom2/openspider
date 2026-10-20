@@ -11,6 +11,10 @@ export interface FieldMeta {
   minimum?: number;
   maximum?: number;
   enum?: readonly string[];
+  /** Der Wert ist eine vorzeichenlose ganze Zahl (`format: uintN`). */
+  unsigned?: boolean;
+  /** Größter Wert, den der Typ im Kern aufnimmt (aus `format`), falls das Schema kein `maximum` nennt. */
+  typeMaximum?: number;
   /** Werkseinstellung laut Schema. */
   default?: unknown;
   /** Elementtyp bei Listen. */
@@ -59,6 +63,11 @@ export function fieldMeta(schema: ConfigSchema | null, path: string): FieldMeta 
     type: en ? "string" : ((main as FieldMeta["type"]) ?? "unknown"),
     nullable,
   };
+  const format = typeof node.format === "string" ? node.format : "";
+  if (format.startsWith("uint")) {
+    meta.unsigned = true;
+    meta.typeMaximum = format === "uint8" ? 255 : format === "uint16" ? 65535 : format === "uint32" ? 4294967295 : Number.MAX_SAFE_INTEGER;
+  }
   if (typeof node.minimum === "number") meta.minimum = node.minimum;
   if (typeof node.maximum === "number") meta.maximum = node.maximum;
   if (en) meta.enum = en;

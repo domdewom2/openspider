@@ -5,7 +5,7 @@ import { Label, Radio, RadioGroup as RacRadioGroup, TextArea, TextField as RacTe
 import { useT } from "../../../i18n";
 import { Checkbox, Select, Switch, TextField } from "../../../ui/primitives";
 import { issueText, useConfig, useConfigValue } from "./context";
-import { lineIndexOf } from "./model";
+import { firstPerPath, lineIndexOf } from "./model";
 import type { FieldMeta } from "./schema";
 import type { FieldDef } from "./types";
 
@@ -14,10 +14,11 @@ export const fieldLabelKey = (path: string): string => `config-f-${slug(path)}`;
 export const enumLabelKey = (path: string, value: string): string => `config-e-${slug(path)}-${value.replace(/_/g, "-")}`;
 
 /** Zahl aus der Eingabe: ganze Zahl bzw. Dezimalzahl (Komma oder Punkt); `undefined`, wenn keine Zahl. */
-export function parseNumber(text: string, integer: boolean): number | undefined {
+export function parseNumber(text: string, integer: boolean, unsigned = false): number | undefined {
   const s = text.trim().replace(",", ".");
   if (s === "") return undefined;
-  if (integer ? !/^-?\d+$/.test(s) : !/^-?(\d+\.?\d*|\.\d+)$/.test(s)) return undefined;
+  const sign = unsigned ? "" : "-?";
+  if (integer ? !new RegExp(`^${sign}\\d+$`).test(s) : !new RegExp(`^${sign}(\\d+\\.?\\d*|\\.\\d+)$`).test(s)) return undefined;
   const n = Number(s);
   return Number.isFinite(n) ? n : undefined;
 }
@@ -49,7 +50,7 @@ export function FieldFrame({ path, hint, children, showIssues = true }: { path: 
         </p>
       )}
       {showIssues &&
-        issues.map((i, n) => (
+        firstPerPath(issues).map((i, n) => (
           <p key={n} className={i.warning ? "os-cfg-warning" : "os-error"} role="alert" data-issue-path={i.path}>
             {issueText(t, i)}
           </p>
@@ -69,7 +70,8 @@ export function NumberInput({ def, meta }: { def: FieldDef; meta: FieldMeta }) {
   const t = useT();
   const { value, set, lock, issues } = useConfigValue<number | null>(def.path);
   const integer = meta.type === "integer";
-  const [text, setText] = useLocalText<number | null>(value ?? null, (s) => (s.trim() === "" ? undefined : (parseNumber(s, integer) ?? undefined)), (v) => (v === null ? "" : String(v)));
+  const unsigned = meta.unsigned === true;
+  const [text, setText] = useLocalText<number | null>(value ?? null, (s) => (s.trim() === "" ? undefined : (parseNumber(s, integer, unsigned) ?? undefined)), (v) => (v === null ? "" : String(v)));
   const [localError, setLocalError] = useState<string | null>(null);
   const nullable = meta.nullable;
   const unset = value === null || value === undefined;
@@ -77,14 +79,18 @@ export function NumberInput({ def, meta }: { def: FieldDef; meta: FieldMeta }) {
   const apiError = issues.find((i) => !i.warning);
   const onText = (s: string) => {
     setText(s);
-    const n = parseNumber(s, integer);
+    const n = parseNumber(s, integer, unsigned);
     if (s.trim() === "") {
       setLocalError(nullable ? null : t("config-required"));
       if (nullable) set(null);
       return;
     }
     if (n === undefined) {
-      setLocalError(t(integer ? "config-not-integer" : "config-not-number"));
+      setLocalError(t(integer ? (unsigned ? "config-not-unsigned" : "config-not-integer") : "config-not-number"));
+      return;
+    }
+    if (meta.maximum === undefined && meta.typeMaximum !== undefined && n > meta.typeMaximum) {
+      setLocalError(t("config-range", { min: meta.minimum ?? 0, max: meta.typeMaximum }));
       return;
     }
     setLocalError(null);
@@ -148,9 +154,8 @@ export function LinesInput({ def, rows = 6, mono = false }: { def: FieldDef; row
   const { value, set, lock, issues } = useConfigValue<string[] | null>(def.path);
   const list = value ?? [];
   const [text, setText] = useLocalText<string[]>(list, (s) => parseLines(s), (v) => v.join("\n"));
-  const ownIssues = issues.filter((i) => !i.warning);
+  const ownIssues = firstPerPath(issues.filter((i) => !i.warning));
   const lines = ownIssues.map((i) => ({ idx: lineIndexOf(i.path), issue: i })).sort((a, b) => (a.idx ?? -1) - (b.idx ?? -1));
-  const seen = new Set<string>();
   return (
     <RacTextField className="os-field os-cfg-lines" isDisabled={lock !== null} isInvalid={ownIssues.length > 0} value={text} onChange={(s) => {
       setText(s);
@@ -163,9 +168,6 @@ export function LinesInput({ def, rows = 6, mono = false }: { def: FieldDef; row
         <ul className="os-cfg-line-errors" role="alert">
           {lines.map(({ idx, issue }, n) => {
             const msg = issueText(t, issue);
-            const key = `${idx}|${msg}`;
-            if (seen.has(key)) return null;
-            seen.add(key);
             return (
               <li key={n} data-issue-path={issue.path} data-line={idx === null ? undefined : idx + 1}>
                 {idx === null ? msg : t("config-line-error", { line: idx + 1, text: list[idx] ?? "", reason: msg })}

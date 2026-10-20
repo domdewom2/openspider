@@ -148,6 +148,12 @@ export function issuesFor(issues: readonly ValidationIssue[], path: string): Val
   return issues.filter((i) => i.path === path || i.path.startsWith(`${path}[`) || i.path.startsWith(`${path}.`));
 }
 
+/** Erste Meldung je Pfad: Der Kern meldet manche Fehler (z. B. ungültige Regex) doppelt mit demselben Pfad. */
+export function firstPerPath<T extends { path: string }>(issues: readonly T[]): T[] {
+  const seen = new Set<string>();
+  return issues.filter((i) => (seen.has(i.path) ? false : (seen.add(i.path), true)));
+}
+
 /** Index einer Listenzeile aus `scope.include[2]` (0-basiert); `null` ohne Index. */
 export function lineIndexOf(path: string): number | null {
   const m = /\[(\d+)\]/.exec(path);

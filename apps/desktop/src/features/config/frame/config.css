@@ -3,7 +3,7 @@
 .os-config-dialog { height: 100%; gap: 8px; }
 .os-config-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
 .os-config-profile { min-width: 220px; }
-.os-config-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 12px; }
+.os-config-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 240px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 12px; }
 
 .os-config-nav { display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow: auto; border-right: 1px solid var(--os-border); padding-right: 8px; }
 .os-config-nav ul { list-style: none; margin: 0; padding: 0; }

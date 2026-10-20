@@ -86,15 +86,18 @@ function BasicTable() {
         </thead>
         <tbody>
           {rows.map((r, i) => {
-            const errs = issuesFor(draft.issues, `auth.basic[${i}]`).filter((x) => !x.warning);
+            const errOf = (key: string) => issuesFor(draft.issues, `auth.basic[${i}].${key}`).find((x) => !x.warning);
+            const prefixErr = errOf("prefix");
+            const userErr = errOf("username");
+            const refMissing = errOf("secret_ref") !== undefined;
             const st = status[i];
             return (
               <tr key={i} data-row={i + 1}>
                 <td>
-                  <TextField label={t("config-auth-prefix-n", { n: i + 1 })} value={r.prefix} onChange={(prefix) => update(i, { prefix })} isDisabled={lock !== null} error={errs[0] ? issueText(t, errs[0]) : null} placeholder="https://stage.example.test/" className="os-cfg-input os-cfg-wide" />
+                  <TextField label={t("config-auth-prefix-n", { n: i + 1 })} value={r.prefix} onChange={(prefix) => update(i, { prefix })} isDisabled={lock !== null} error={prefixErr ? issueText(t, prefixErr) : null} placeholder="https://stage.example.test/" className="os-cfg-input os-cfg-wide" />
                 </td>
                 <td>
-                  <TextField label={t("config-auth-user-n", { n: i + 1 })} value={r.username} onChange={(username) => update(i, { username })} isDisabled={lock !== null} className="os-cfg-input" />
+                  <TextField label={t("config-auth-user-n", { n: i + 1 })} value={r.username} onChange={(username) => update(i, { username })} isDisabled={lock !== null} error={userErr ? issueText(t, userErr) : null} className="os-cfg-input" />
                 </td>
                 <td>
                   <TextField
@@ -109,6 +112,7 @@ function BasicTable() {
                   <Button variant="secondary" onPress={() => void savePassword(i)} isDisabled={lock !== null || !(passwords[i] ?? "").length || r.prefix.trim() === ""}>
                     {t("config-auth-save-password")}
                   </Button>
+                  {refMissing && !st && <p className="os-hint" data-testid="auth-secret-missing">{t("config-auth-secret-missing")}</p>}
                   {st && (
                     <p className={st.kind === "error" ? "os-error" : "os-hint"} role={st.kind === "error" ? "alert" : "status"}>
                       {st.text}

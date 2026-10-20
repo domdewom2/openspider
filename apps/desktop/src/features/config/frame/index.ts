@@ -1,5 +1,3 @@
-import "./config.css";
-
 export { ConfigHost } from "./ConfigHost";
 export { ConfigDialog } from "./ConfigDialog";
 export { focusAnchor } from "./focus";
