@@ -211,7 +211,7 @@ export function DataGrid(props: DataGridProps) {
       for (const c of layout) {
         ctx.save(); ctx.beginPath(); ctx.rect(c.clipLeft, y, c.clipRight - c.clipLeft, h); ctx.clip();
         const value = header ? { text: props.headerTitle?.(c.key) ?? c.key + (c.sort ? ` ${c.sort === "asc" ? "↑" : "↓"} ${visible.filter(c => c.sort).findIndex(s => s.key === c.key) + 1}` : ""), color: t.text, align: "left" as const } : cell(c.index, row);
-        const background = "background" in value ? value.background : undefined;
+        const background = (value as { background?: string }).background;
         if (background) { ctx.fillStyle = background; ctx.fillRect(c.x, y, c.width, h); }
         ctx.fillStyle = value.color; ctx.textAlign = value.align;
         const x = c.x + (value.align === "right" ? c.width - 8 : value.align === "center" ? c.width / 2 : 8);
