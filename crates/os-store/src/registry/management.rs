@@ -591,6 +591,7 @@ pub fn copy_snapshot(
             .open(&tmp)
             .map_err(|e| StoreError::io(&tmp, e))?;
         f.sync_all().map_err(|e| StoreError::io(&tmp, e))?;
+        drop(f);
         if !progress(total, total) {
             return Err(rusqlite::Error::SqliteFailure(
                 rusqlite::ffi::Error::new(rusqlite::ffi::SQLITE_INTERRUPT),
