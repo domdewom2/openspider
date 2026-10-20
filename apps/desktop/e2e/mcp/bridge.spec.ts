@@ -58,7 +58,14 @@ test("real bridge reports service availability without a mock fallback", async (
       try { return { status: await window.mcpBridge.invoke<McpStatus>("mcp.status") }; }
       catch (error) { return { code: (error as { code: string }).code }; }
     });
-    if (result.code === "Unsupported") await expect(page.getByRole("alert")).toContainText("not available in this build");
+    if (result.code === "Unsupported") {
+      await expect(page.getByRole("alert")).toContainText("not available in this build");
+      await page.reload();
+      await page.waitForFunction(() => !!window.mcpBridge);
+      await expect(page.getByRole("alert")).toHaveCount(0);
+      await page.getByRole("button", { name: "Open MCP", exact: true }).click();
+      await expect(page.getByRole("alert")).toContainText("not available in this build");
+    }
     else { expect(result.code).toBeUndefined(); expect(result.status?.kind).toBe("off"); }
   } finally { await bridge.stop(); }
 });

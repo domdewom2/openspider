@@ -73,3 +73,4 @@ mcp-no-calls = No MCP calls recorded on this page.
 mcp-previous = Previous page
 mcp-next = Next page
 mcp-page = Page { $page }
+mcp-preview-unavailable = Changes cannot be displayed safely. Writing is disabled.

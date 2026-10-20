@@ -1,8 +1,8 @@
 # M2-U25 – MCP-Oberfläche
 
-Menü, Statusleiste und fünf Dialogreiter verwenden die typisierten IPC-Commands. Zugangsdaten werden nur nach ausdrücklichem Anzeigen ins DOM aufgenommen. Client-Vorschauen redigieren strukturierte JSON-/TOML-Werte vor dem Erzeugen des sichtbaren Diffs; unbekannte Syntax wird ausgeblendet. Kopieren verwendet den nativen Tauri-Clipboard-Schreibpfad.
+Menü, Statusleiste und fünf Dialogreiter verwenden die typisierten IPC-Commands. Ein passiver `Unsupported`-Status bleibt beim App-Start ohne Fehlerbanner; beim Öffnen des Dialogs oder nach einer Nutzeraktion wird der Fehler angezeigt. Zugangsdaten werden nur nach ausdrücklichem Anzeigen ins DOM aufgenommen. Client-Vorschauen vergleichen redigierte JSON-/TOML-Dokumente zeilenweise per LCS mit unverändertem Kontext. Unbekannte Syntax wird ausgeblendet und sperrt Bestätigung sowie Schreiben, auch bei der erneuten Prüfung direkt vor dem Schreiben. Kopieren verwendet den nativen Tauri-Clipboard-Schreibpfad.
 
-Der vollständige [Paketbericht](../../../../../docs/plan/M2-reports/u25.md) enthält den Bericht je Reviewbefund, sämtliche Fremdergänzungen mit Diff, Prüfresultate und die verbindliche Zuordnung der offenen Integrationskriterien.
+Der vollständige [Paketbericht](../../../../../docs/plan/M2-reports/u25.md) enthält den Bericht je Reviewbefund, sämtliche Fremdergänzungen mit eingebettetem Diff, Prüfresultate und die verbindliche Zuordnung der offenen Integrationskriterien. Die separate Patch-Datei im Feature-Verzeichnis ist entfernt.
 
 `mcp.test.tsx` und `e2e/mcp/dialog.spec.ts` prüfen den UI-Vertrag mit MockCore. Die vom Browsertest selbst geschriebenen Sicherungen und injizierten Aufrufe/Sitzungen sind ausschließlich Fixtures. Sie belegen keine Produktionsintegration.
 

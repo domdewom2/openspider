@@ -124,11 +124,37 @@ export function redactConfig(source: string, kind: McpClientKind): string {
   } catch { return HIDDEN; }
 }
 
+/** Compare sanitized lines using their longest common subsequence. Unchanged lines retain context. */
+function lineDiff(before: string, after: string): string {
+  if (before === after) return "";
+  const oldLines = before ? before.split("\n") : [];
+  const newLines = after ? after.split("\n") : [];
+  const lengths = Array.from({ length: oldLines.length + 1 }, () => new Uint32Array(newLines.length + 1));
+  for (let i = oldLines.length - 1; i >= 0; i--) {
+    for (let j = newLines.length - 1; j >= 0; j--) {
+      lengths[i]![j] = oldLines[i] === newLines[j]
+        ? lengths[i + 1]![j + 1]! + 1 : Math.max(lengths[i + 1]![j]!, lengths[i]![j + 1]!);
+    }
+  }
+  const lines = ["--- before", "+++ after"];
+  let i = 0, j = 0;
+  while (i < oldLines.length || j < newLines.length) {
+    if (i < oldLines.length && j < newLines.length && oldLines[i] === newLines[j]) {
+      lines.push(` ${oldLines[i++]}`); j++;
+    } else if (i < oldLines.length && (j === newLines.length || lengths[i + 1]![j]! >= lengths[i]![j + 1]!)) {
+      lines.push(`-${oldLines[i++]}`);
+    } else {
+      lines.push(`+${newLines[j++]}`);
+    }
+  }
+  return lines.join("\n");
+}
+
 /** Build the displayed diff only from sanitized documents, never from the backend's unified diff. */
-export function safeClientPreview(preview: McpClientPreview, kind: McpClientKind): { after: string; diff: string } {
+export function safeClientPreview(preview: McpClientPreview, kind: McpClientKind): { after: string; diff: string; canWrite: boolean } {
   const before = redactConfig(preview.before, kind);
   const after = redactConfig(preview.after, kind);
-  const diff = preview.before === preview.after ? "" : ["--- before", "+++ after",
-    ...before.split("\n").map(line => `-${line}`), ...after.split("\n").map(line => `+${line}`)].join("\n");
-  return { after, diff };
+  if (before === HIDDEN || after === HIDDEN) return { after, diff: HIDDEN, canWrite: false };
+  const diff = lineDiff(before, after);
+  return { after, diff, canWrite: diff !== "" };
 }

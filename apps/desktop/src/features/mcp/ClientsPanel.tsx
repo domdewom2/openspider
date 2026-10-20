@@ -43,13 +43,14 @@ export function ClientsPanel({ initialClient, desktop }: { initialClient: McpCli
       <p className="os-mcp-path">{redactText(preview.path)}</p>
       <pre className="os-mcp-preview" aria-label={t("mcp-diff")}>{displayed?.diff || t("mcp-no-changes")}</pre>
       <details><summary>{t("mcp-config-content")}</summary><pre className="os-mcp-preview">{displayed?.after}</pre></details>
-      <Checkbox isSelected={confirmed} isDisabled={busy || !displayed?.diff} onChange={setConfirmed}>{t("mcp-confirm-write")}</Checkbox>
+      {displayed && !displayed.canWrite && displayed.diff && <Banner kind="error">{t("mcp-preview-unavailable")}</Banner>}
+      <Checkbox isSelected={confirmed} isDisabled={busy || !displayed?.canWrite} onChange={setConfirmed}>{t("mcp-confirm-write")}</Checkbox>
       <div className="os-mcp-actions">
-        <Button isDisabled={busy || !confirmed || !displayed?.diff} onPress={() => void run(async () => {
+        <Button isDisabled={busy || !confirmed || !displayed?.canWrite} onPress={() => void run(async () => {
           // Re-read immediately before writing: never confirm a diff that has changed on disk.
           const fresh = await mcp.clientConfigPreview({ client: kind });
           if (!alive.current) return;
-          if (fresh.path !== preview.path || fresh.before !== preview.before || fresh.after !== preview.after) {
+          if (!safeClientPreview(fresh, kind).canWrite || fresh.path !== preview.path || fresh.before !== preview.before || fresh.after !== preview.after) {
             setPreview(fresh); setConfirmed(false); setMessage("mcp-preview-changed"); return;
           }
           const result = await mcp.clientConfigWrite({ client: kind });

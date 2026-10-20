@@ -32,13 +32,14 @@ export function McpStatusField() {
 export function McpHost({ desktop = nativeMcpDesktop }: { desktop?: McpDesktop }) {
   const t = useT();
   const controller = useMcpController();
-  const { prefs, busy, available, error, setError, perform, changeServer, autostart } = controller;
+  const { prefs, busy, available, error, setError, perform, changeServer, autostart, refresh } = controller;
   const tab = useMcpUi(s => s.tab);
   const status = useMcpUi(s => s.status);
   const [port, setPort] = useState("");
   const [clientKind, setClientKind] = useState<McpClientKind>("claudeDesktop");
   const [downloaded, setDownloaded] = useState(false);
   const running = status.kind !== "off";
+  useEffect(() => { if (tab) void refresh(true); }, [tab, refresh]);
   useEffect(() => { setPort(prefs?.port == null ? "" : String(prefs.port)); }, [prefs?.port]);
   const start = () => {
     const parsed = parsePort(port);
@@ -78,7 +79,7 @@ export function McpHost({ desktop = nativeMcpDesktop }: { desktop?: McpDesktop }
     <div className="os-mcp-actions">
       <Button variant="primary" isDisabled={busy || !available || running || parsePort(port) === undefined} onPress={start}>{t("mcp-start")}</Button>
       <Button isDisabled={busy || !available || !running} onPress={() => void changeServer(null, true)}>{t("mcp-stop")}</Button>
-      <Button isDisabled={busy} onPress={() => { setError(null); void controller.refresh(); }}>{t("mcp-refresh")}</Button>
+      <Button isDisabled={busy} onPress={() => { setError(null); void refresh(true); }}>{t("mcp-refresh")}</Button>
     </div>
   </section>;
   return <>

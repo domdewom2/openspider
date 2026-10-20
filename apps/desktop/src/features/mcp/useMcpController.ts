@@ -24,7 +24,7 @@ export function useMcpController() {
     const dto = await settings.get();
     if (alive.current && version === settingsVersion.current) setPrefs(dto.mcp);
   }, []);
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (interactive = false) => {
     const version = ++statusVersion.current;
     const results = await Promise.allSettled([mcp.status(), refreshSettings()]);
     if (!alive.current) return;
@@ -33,7 +33,11 @@ export function useMcpController() {
       if (status.status === "fulfilled") {
         useMcpUi.setState({ status: status.value });
         setAvailable(true);
-      } else { setAvailable(false); report(status.reason); }
+      } else {
+        setAvailable(false);
+        // A missing K17 service is expected during a passive startup probe.
+        if (interactive || errorKey(status.reason) !== "mcp-unavailable") report(status.reason);
+      }
     }
     if (results[1].status === "rejected") report(results[1].reason);
   }, [refreshSettings, report]);

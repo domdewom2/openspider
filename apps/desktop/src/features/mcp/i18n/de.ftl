@@ -73,3 +73,4 @@ mcp-no-calls = Auf dieser Seite sind noch keine MCP-Aufrufe erfasst.
 mcp-previous = Vorherige Seite
 mcp-next = Nächste Seite
 mcp-page = Seite { $page }
+mcp-preview-unavailable = Die Änderungen können nicht sicher angezeigt werden. Das Schreiben ist gesperrt.

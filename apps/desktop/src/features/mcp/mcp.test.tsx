@@ -106,15 +106,32 @@ it("reports a port failure without changing Off and serializes duplicate starts"
 });
 
 // spec: UI-129
-it("shows a recoverable error for the current K17 stub and cleans up event listeners and menu contributions", async () => {
+it("keeps the passive K17 probe silent, reports unavailability after opening the dialog and cleans up", async () => {
   const listeners = eventBus.listenerCount();
   fixture.core.handlers.set("mcp.status", () => { throw new IpcError(localError("Unsupported", "err-unsupported")); });
-  render(<McpHost desktop={desktop} />);
+  await act(async () => { render(<McpHost desktop={desktop} />); });
+  await waitFor(() => expect(calls("mcp.status")).toHaveLength(1));
+  await waitFor(() => expect(calls("settings.get")).toHaveLength(1));
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  const start = allMenuContributions().flatMap(c => c.items).find(item => item.id === "mcp.start");
+  expect(start?.enabled?.({})).toBe(false);
+  act(() => openMcp());
   expect(await screen.findByRole("alert")).toHaveTextContent("not available in this build");
+  expect(screen.getByRole("button", { name: "Start server" })).toBeDisabled();
   expect(eventBus.listenerCount()).toBe(listeners + 3);
   cleanup();
   expect(eventBus.listenerCount()).toBe(listeners);
   expect(allMenuContributions().filter(c => c.menu === "mcp")).toEqual([]);
+});
+
+// spec: UI-129
+it("reports Unsupported from an explicit server start after a successful passive probe", async () => {
+  fixture.core.handlers.set("mcp.start", () => { throw new IpcError(localError("Unsupported", "err-unsupported")); });
+  await host();
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  await click("Start server");
+  expect(await screen.findByRole("alert")).toHaveTextContent("not available in this build");
+  expect(calls("mcp.start")).toHaveLength(1);
 });
 
 // spec: OUT-285 [P1]
@@ -332,4 +349,40 @@ it("fails closed for malformed or unsupported configurations instead of displayi
     for (const kind of ["codex", "claudeDesktop"] as const) expect(redactConfig(source, kind)).toBe("[redacted]");
   }
   expect(redactConfig(`args = ['--token', '${TEST_TOKEN}', '--api-key=${TEST_TOKEN}']`, "codex")).not.toContain(TEST_TOKEN);
+});
+
+// spec: AGENT-043
+it("blocks confirmation and writing if either preview document cannot be safely displayed", async () => {
+  for (const kind of ["claudeDesktop", "claudeCode", "codex"] as const) {
+    for (const side of ["before", "after"] as const) {
+      cleanup();
+      const value = clientPreview(kind);
+      value[side] = kind === "codex" ? `token = '''${TEST_TOKEN}'''` : `invalid JSON ${TEST_TOKEN}`;
+      fixture.core.handlers.set("mcp.clientConfigPreview", () => value);
+      render(<ClientsPanel initialClient={kind} desktop={desktop} />);
+      await click("Preview changes");
+      expect(await screen.findByRole("alert")).toHaveTextContent("Writing is disabled");
+      const confirm = screen.getByRole("checkbox", { name: /I have reviewed/ });
+      expect(confirm).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Write configuration with backup" })).toBeDisabled();
+      expect(calls("mcp.clientConfigWrite")).toHaveLength(0);
+      expect(document.body.innerHTML).not.toContain(TEST_TOKEN);
+    }
+  }
+});
+
+// spec: AGENT-043
+it("revokes confirmation when the fresh preview becomes unsupported before writing", async () => {
+  render(<ClientsPanel initialClient="codex" desktop={desktop} />);
+  await click("Preview changes");
+  fireEvent.click(await screen.findByRole("checkbox", { name: /I have reviewed/ }));
+  const value = clientPreview("codex");
+  value.before = `token = '''${TEST_TOKEN}'''`;
+  fixture.core.handlers.set("mcp.clientConfigPreview", () => value);
+  await click("Write configuration with backup");
+  expect(await screen.findByRole("alert")).toHaveTextContent("Writing is disabled");
+  expect(screen.getByRole("checkbox", { name: /I have reviewed/ })).not.toBeChecked();
+  expect(screen.getByRole("checkbox", { name: /I have reviewed/ })).toBeDisabled();
+  expect(calls("mcp.clientConfigWrite")).toHaveLength(0);
+  expect(document.body.innerHTML).not.toContain(TEST_TOKEN);
 });
