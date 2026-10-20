@@ -14,6 +14,7 @@
 
 pub mod assets;
 pub mod commands;
+pub mod crawl_files;
 pub mod desktop;
 pub mod events;
 mod manual;
@@ -105,7 +106,10 @@ pub fn run() {
             app_version,
             desktop::open_export_folder,
             desktop::browser_open,
-            manual::open_manual
+            manual::open_manual,
+            crawl_files::crawl_file_check,
+            crawl_files::crawl_file_config,
+            crawl_files::crawl_file_repair,
         ])
         .setup(move |tauri_app| {
             desktop::install(&setup_app, tauri_app.handle(), setup_quitting.clone());

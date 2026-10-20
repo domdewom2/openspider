@@ -77,6 +77,7 @@ function resolveItem(spec: MenuItemSpec, o: BuildOptions, native: Set<ActionId>)
     ...(spec.action ? { action: spec.action } : {}),
     ...(!enabled && spec.disabledReasonKey ? { disabledReason: o.t(spec.disabledReasonKey) } : {}),
   };
+  if (spec.literalLabel !== undefined) base.label = spec.literalLabel;
   if (spec.checked) base.checked = spec.checked(o.ctx);
   if (sc) {
     const combo = sc.keys[o.platform];

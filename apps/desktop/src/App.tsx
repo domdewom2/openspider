@@ -1,3 +1,4 @@
+import { CrawlsHost } from "./features/crawls";
 import { ExportHost, ExportViewButton } from "./features/export";
 import { Shell } from "./features/shell/Shell";
 import { Header } from "./features/header/Header";
@@ -53,6 +54,7 @@ export function App() {
       <IntegrationsHost />
       <TasksHost />
       <HelpDialogs />
+      <CrawlsHost />
       <div className="os-app">
         <Shell />
         <header className="os-app-header" role="banner" aria-label={t("app-region-header")}>

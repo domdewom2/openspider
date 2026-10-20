@@ -1,0 +1,17 @@
+.os-crawls { display: grid; gap: 12px; min-width: 0; }
+.os-crawls-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.os-crawls label { display: flex; gap: 8px; align-items: center; }
+.os-crawls input, .os-crawls select { font: inherit; color: var(--os-text); background: var(--os-bg-surface); border: 1px solid var(--os-border); padding: 4px; }
+.os-crawls-layout { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(0, 4fr); gap: 12px; }
+.os-crawls-layout aside { display: flex; flex-direction: column; gap: 8px; }
+.os-crawls-layout section { min-width: 0; }
+.os-crawls-scroll { overflow: auto; max-height: 45vh; }
+.os-crawls table { border-collapse: collapse; white-space: nowrap; width: 100%; }
+.os-crawls th { position: sticky; top: 0; background: var(--os-bg-surface); }
+.os-crawls td, .os-crawls th { padding: 8px; border-bottom: 1px solid var(--os-border); text-align: start; }
+.os-crawls tr[aria-selected="true"] { background: var(--os-bg-selection); }
+.os-crawls button:focus-visible, .os-crawls input:focus-visible, .os-crawls select:focus-visible { outline: 2px solid var(--os-focus); outline-offset: 2px; }
+.os-crawls th button { font: inherit; color: inherit; background: transparent; border: 0; cursor: pointer; }
+.os-crawls-notices { position: fixed; bottom: 16px; right: 16px; z-index: 20; }
+@media (max-width: 700px) { .os-crawls-layout { grid-template-columns: 1fr; } }
+.os-modal-large:has(.os-crawls) { width: min(1200px, calc(100vw - 32px)); max-width: calc(100vw - 32px); }
