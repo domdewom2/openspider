@@ -494,11 +494,14 @@ mod tests {
         .unwrap()
     }
 
+    // Unter Unix beendet SIGKILL den Renderer unabhängig vom Absturzbehandler, den Page.crash
+    // anstößt (Chrome 155 unter Linux meldete danach nichts); sonst bleibt Page.crash.
     async fn crash_target(mut crashed: TargetWatch) {
-        tokio::time::timeout(Duration::from_secs(60), crashed.crash())
-            .await
-            .expect("Crash wurde bestätigt")
-            .expect("Page.crash ausführen und Crash-Ereignis empfangen");
+        #[cfg(unix)]
+        let result = crashed.kill_renderers(Duration::from_secs(60)).await;
+        #[cfg(not(unix))]
+        let result = crashed.crash(Duration::from_secs(60)).await;
+        result.expect("Renderer beenden und Crash-Ereignis empfangen");
     }
 
     #[tokio::test(flavor = "multi_thread")]
@@ -628,10 +631,7 @@ mod tests {
         tokio::time::timeout(Duration::from_secs(30), policy.started.notified())
             .await
             .expect("Hauptnavigation wird angehalten");
-        let error = tokio::time::timeout(Duration::from_secs(10), watch.crash())
-            .await
-            .expect("Ablehnung wird sofort statt als Crash-Timeout gemeldet")
-            .unwrap_err();
+        let error = watch.crash(Duration::from_secs(10)).await.unwrap_err();
         assert!(
             matches!(error, RenderError::Protocol(ref detail)
                 if detail.contains("Page.crash") && detail.contains("pending navigations")),

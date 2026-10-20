@@ -41,6 +41,14 @@ async fn command(
     Err(RenderError::Crashed("CDP-Verbindung geschlossen".into()))
 }
 
+// Nur für `TargetWatch::kill_renderers`; spart eine Manifestabhängigkeit (SIGKILL ist 9 unter Linux und macOS).
+#[cfg(all(test, unix))]
+extern "C" {
+    fn kill(pid: i32, signal: i32) -> i32;
+}
+#[cfg(all(test, unix))]
+const SIGKILL: i32 = 9;
+
 /// Browser-Ereignisse bleiben auch nach dem Verlust der Seiten-Session erreichbar.
 /// Der Kanal ist unabhängig von Fetch, damit auch eine wartende Ressourcenrichtlinie
 /// die Crash-Erkennung nicht blockiert.
@@ -90,27 +98,101 @@ impl TargetWatch {
     }
 
     #[cfg(test)]
-    pub async fn crash(&mut self) -> Result<(), RenderError> {
+    pub async fn crash(&mut self, timeout: std::time::Duration) -> Result<(), RenderError> {
         // Page.crash bestätigt Erfolg nicht zuverlässig; nur das Ereignis zählt.
         // Eine Ablehnung (z. B. während Navigation) ist dagegen sofort ein Fehler.
         let id = self
             .conn
             .submit_command("Page.crash".into(), Some(self.session.clone()), json!({}))
             .map_err(protocol)?;
-        while let Some(message) = self.conn.next().await {
-            match message.map_err(protocol)? {
-                Message::Event(event) if target_lost(&event, &self.target, &self.session) => {
-                    return Ok(());
-                }
-                Message::Response(response) if response.id == id => {
-                    if let Some(error) = response.error {
-                        return Err(protocol(format!("CDP Page.crash abgelehnt: {error:?}")));
-                    }
-                }
-                _ => {}
+        self.await_loss(Some(id), timeout).await
+    }
+
+    /// Beendet die Renderer-Prozesse des Browsers hart (SIGKILL). Page.crash läuft über den
+    /// Absturzbehandler des Renderers; unter Linux (Chrome 155) blieb dort jedes Ereignis aus.
+    /// Das Ziel ist der einzige Tab des Test-Browsers; ein Reserve-Renderer stirbt harmlos mit.
+    #[cfg(all(test, unix))]
+    pub async fn kill_renderers(
+        &mut self,
+        timeout: std::time::Duration,
+    ) -> Result<(), RenderError> {
+        let info = command(&mut self.conn, None, "SystemInfo.getProcessInfo", json!({})).await?;
+        let pids: Vec<i32> = info["processInfo"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter(|process| process["type"] == "renderer")
+            .filter_map(|process| process["id"].as_i64()?.try_into().ok())
+            .collect();
+        if pids.is_empty() {
+            return Err(protocol(format!("Kein Renderer-Prozess: {info}")));
+        }
+        for pid in &pids {
+            // SAFETY: kill(2) mit gültiger PID und Signal greift auf keinen Speicher zu.
+            if unsafe { kill(*pid, SIGKILL) } != 0 {
+                return Err(protocol(format!(
+                    "SIGKILL für Renderer {pid}: {}",
+                    std::io::Error::last_os_error()
+                )));
             }
         }
-        Err(RenderError::Crashed("CDP-Verbindung geschlossen".into()))
+        self.await_loss(None, timeout).await
+    }
+
+    /// Wartet auf das Verlustereignis des Ziels und protokolliert jede empfangene Nachricht,
+    /// damit eine Zeitüberschreitung ihre Ursache nennt statt nur `Elapsed`.
+    #[cfg(test)]
+    async fn await_loss(
+        &mut self,
+        crash_command: Option<chromiumoxide::types::CallId>,
+        timeout: std::time::Duration,
+    ) -> Result<(), RenderError> {
+        let started = std::time::Instant::now();
+        let mut log = Vec::new();
+        let wait = tokio::time::timeout(timeout, async {
+            while let Some(message) = self.conn.next().await {
+                let at = started.elapsed().as_millis();
+                match message.map_err(protocol)? {
+                    Message::Event(event) => {
+                        log.push(format!(
+                            "+{at}ms Ereignis {} session={:?} params={}",
+                            event.method, event.session_id, event.params
+                        ));
+                        if target_lost(&event, &self.target, &self.session) {
+                            return Ok(());
+                        }
+                    }
+                    Message::Response(response) => {
+                        log.push(format!(
+                            "+{at}ms Antwort id={} result={:?} error={:?}",
+                            response.id, response.result, response.error
+                        ));
+                        if Some(response.id) == crash_command {
+                            if let Some(error) = response.error {
+                                return Err(protocol(format!(
+                                    "CDP Page.crash abgelehnt: {error:?}"
+                                )));
+                            }
+                        }
+                    }
+                }
+            }
+            Err(RenderError::Crashed("CDP-Verbindung geschlossen".into()))
+        })
+        .await;
+        if let Ok(result) = wait {
+            return result;
+        }
+        let targets = command(&mut self.conn, None, "Target.getTargets", json!({}));
+        let targets = tokio::time::timeout(std::time::Duration::from_secs(5), targets)
+            .await
+            .map_or_else(|_| "Zeitüberschreitung".to_owned(), |r| format!("{r:?}"));
+        Err(protocol(format!(
+            "Kein Crash-Ereignis nach {timeout:?} (target={:?}, session={:?}):\n{}\nTarget.getTargets: {targets}",
+            self.target,
+            self.session,
+            log.join("\n")
+        )))
     }
 }
 
