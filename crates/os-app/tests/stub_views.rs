@@ -152,7 +152,8 @@ async fn feature_does_not_replace_handlers_without_opt_in() {
         .await
         .unwrap_err()
         .code,
-        ErrorCode::Unsupported
+        // view.open ist inzwischen ein echter Handler (ohne Crawl: NoCrawl); der Stub ersetzt ihn ohne Opt-in nicht.
+        ErrorCode::NoCrawl
     );
 }
 
