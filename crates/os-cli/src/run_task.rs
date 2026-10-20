@@ -119,7 +119,21 @@ pub fn append_series(
         file: &file,
         cfg: &cfg,
     };
-    let measurement = os_export::timeseries::measure(&job).map_err(|e| e.to_string())?;
+    let mut measurement = os_export::timeseries::measure(&job).map_err(|e| e.to_string())?;
+    // Die Auswahl darf die Schreibweise der Spec verwenden (`Client Error (4xx)`); der Katalog führt
+    // `(4XX)`. Die gewählte Schreibweise bleibt Spaltenname, der Wert kommt aus dem Katalogeintrag.
+    for name in &summary.metrics {
+        if !measurement.values.contains_key(name) {
+            let alias = measurement
+                .values
+                .iter()
+                .find(|(known, _)| known.eq_ignore_ascii_case(name))
+                .map(|(_, value)| value.clone());
+            if let Some(value) = alias {
+                measurement.values.insert(name.clone(), value);
+            }
+        }
+    }
     let table = series_table(task);
     let existing = sink.header(&table)?;
     let offset = zone.offset_at(measurement.started_at.0);
