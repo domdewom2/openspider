@@ -1,0 +1,10 @@
+rt-times = Response Times
+rt-number-of-urls = Number of URLs
+rt-table = Response time distribution
+rt-chart = Response time chart
+rt-seconds = { $range } s
+rt-scope = URLs
+rt-scope-all = All
+rt-scope-internalHtml = Internal HTML only
+rt-no-response = No response: { $count }
+rt-note = Response time is the time from sending the request until the document has been received completely, without rendering and without sub-resources.

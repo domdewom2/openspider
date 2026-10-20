@@ -12,6 +12,7 @@ import { MenuAvailability } from "./features/help/MenuAvailability";
 import { HelpDialogs } from "./features/help/HelpDialogs";
 import { VizHost } from "./features/viz";
 import { useEffect, useState } from "react";
+import { SegmentsDialogHost } from "./features/segments-dialog";
 import { RegionBoundary } from "./app/ErrorBoundary";
 import { mainRegions, registerMainRegions } from "./app/mainRegions";
 import { Providers } from "./app/Providers";
@@ -55,6 +56,7 @@ export function App() {
       <HelpDialogs />
       <CrawlsHost />
       <VizHost />
+      <SegmentsDialogHost />
       <div className="os-app">
         <Shell />
         <header className="os-app-header" role="banner" aria-label={t("app-region-header")}>

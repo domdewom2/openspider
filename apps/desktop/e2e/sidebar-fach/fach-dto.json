@@ -1,0 +1,140 @@
+{
+  "siteStructure": {
+    "paths": [
+      {
+        "name": "site.test", "path": "https://site.test/", "count": 12, "byClass": { "Indexable": 10, "Non-Indexable": 2 }, "hasMoreChildren": false,
+        "children": [
+          {
+            "name": "a/", "path": "https://site.test/a/", "count": 7, "byClass": { "Indexable": 6, "Non-Indexable": 1 }, "hasMoreChildren": false,
+            "children": [
+              {
+                "name": "b/", "path": "https://site.test/a/b/", "count": 4, "byClass": { "Indexable": 3, "Non-Indexable": 1 }, "hasMoreChildren": false,
+                "children": [
+                  { "name": "c/", "path": "https://site.test/a/b/c/", "count": 3, "byClass": { "Indexable": 3, "Non-Indexable": 0 }, "children": [], "hasMoreChildren": true }
+                ]
+              }
+            ]
+          },
+          { "name": "blog/", "path": "https://site.test/blog/", "count": 5, "byClass": { "Indexable": 4, "Non-Indexable": 1 }, "children": [], "hasMoreChildren": false }
+        ]
+      }
+    ],
+    "depths": {
+      "indexability": [
+        { "depth": 1, "count": 1, "byClass": { "Indexable": 1, "Non-Indexable": 0 } },
+        { "depth": 2, "count": 1, "byClass": { "Indexable": 1, "Non-Indexable": 0 } },
+        { "depth": 3, "count": 1, "byClass": { "Indexable": 0, "Non-Indexable": 1 } },
+        { "depth": 4, "count": 1, "byClass": { "Indexable": 0, "Non-Indexable": 1 } },
+        { "depth": 5, "count": 1, "byClass": { "Indexable": 1, "Non-Indexable": 0 } },
+        { "depth": 6, "count": 1, "byClass": { "Indexable": 1, "Non-Indexable": 0 } },
+        { "depth": 7, "count": 1, "byClass": { "Indexable": 1, "Non-Indexable": 0 } },
+        { "depth": 8, "count": 1, "byClass": { "Indexable": 1, "Non-Indexable": 0 } },
+        { "depth": 9, "count": 1, "byClass": { "Indexable": 1, "Non-Indexable": 0 } },
+        { "depth": 10, "count": 3, "byClass": { "Indexable": 3, "Non-Indexable": 0 } }
+      ],
+      "responseCodes": [
+        { "depth": 1, "count": 1, "byClass": { "2xx": 1, "3xx": 0, "4xx": 0, "5xx": 0, "Blocked by robots.txt": 0, "No Response": 0 } },
+        { "depth": 2, "count": 1, "byClass": { "2xx": 1, "3xx": 0, "4xx": 0, "5xx": 0, "Blocked by robots.txt": 0, "No Response": 0 } },
+        { "depth": 3, "count": 1, "byClass": { "2xx": 0, "3xx": 0, "4xx": 0, "5xx": 0, "Blocked by robots.txt": 1, "No Response": 0 } },
+        { "depth": 4, "count": 1, "byClass": { "2xx": 0, "3xx": 0, "4xx": 1, "5xx": 0, "Blocked by robots.txt": 0, "No Response": 0 } },
+        { "depth": 5, "count": 1, "byClass": { "2xx": 1, "3xx": 0, "4xx": 0, "5xx": 0, "Blocked by robots.txt": 0, "No Response": 0 } },
+        { "depth": 6, "count": 1, "byClass": { "2xx": 1, "3xx": 0, "4xx": 0, "5xx": 0, "Blocked by robots.txt": 0, "No Response": 0 } },
+        { "depth": 7, "count": 1, "byClass": { "2xx": 1, "3xx": 0, "4xx": 0, "5xx": 0, "Blocked by robots.txt": 0, "No Response": 0 } },
+        { "depth": 8, "count": 1, "byClass": { "2xx": 1, "3xx": 0, "4xx": 0, "5xx": 0, "Blocked by robots.txt": 0, "No Response": 0 } },
+        { "depth": 9, "count": 1, "byClass": { "2xx": 1, "3xx": 0, "4xx": 0, "5xx": 0, "Blocked by robots.txt": 0, "No Response": 0 } },
+        { "depth": 10, "count": 3, "byClass": { "2xx": 3, "3xx": 0, "4xx": 0, "5xx": 0, "Blocked by robots.txt": 0, "No Response": 0 } }
+      ],
+      "crawlDepth": [
+        { "depth": 1, "count": 1, "byClass": {} },
+        { "depth": 2, "count": 1, "byClass": {} },
+        { "depth": 3, "count": 1, "byClass": {} },
+        { "depth": 4, "count": 1, "byClass": {} },
+        { "depth": 5, "count": 1, "byClass": {} },
+        { "depth": 6, "count": 1, "byClass": {} },
+        { "depth": 7, "count": 1, "byClass": {} },
+        { "depth": 8, "count": 1, "byClass": {} },
+        { "depth": 9, "count": 1, "byClass": {} },
+        { "depth": 10, "count": 3, "byClass": {} }
+      ]
+    },
+    "moreChildren": [
+      { "name": "x.html", "path": "https://site.test/a/b/c/x.html", "count": 1, "byClass": { "Indexable": 1, "Non-Indexable": 0 }, "children": [], "hasMoreChildren": false },
+      { "name": "y.html", "path": "https://site.test/a/b/c/y.html", "count": 2, "byClass": { "Indexable": 2, "Non-Indexable": 0 }, "children": [], "hasMoreChildren": false }
+    ]
+  },
+  "responseTimes": {
+    "all": {
+      "buckets": [
+        { "fromMs": 0, "toMs": 1000, "count": 2 },
+        { "fromMs": 1000, "toMs": 2000, "count": 1 },
+        { "fromMs": 2000, "toMs": 3000, "count": 1 },
+        { "fromMs": 3000, "toMs": 4000, "count": 0 },
+        { "fromMs": 4000, "toMs": 5000, "count": 1 },
+        { "fromMs": 5000, "toMs": 6000, "count": 0 },
+        { "fromMs": 6000, "toMs": 7000, "count": 0 },
+        { "fromMs": 7000, "toMs": 8000, "count": 1 },
+        { "fromMs": 8000, "toMs": 9000, "count": 0 },
+        { "fromMs": 9000, "toMs": 10000, "count": 0 },
+        { "fromMs": 10000, "toMs": null, "count": 1 }
+      ],
+      "noResponse": 2
+    },
+    "internalHtml": {
+      "buckets": [
+        { "fromMs": 0, "toMs": 1000, "count": 1 },
+        { "fromMs": 1000, "toMs": 2000, "count": 1 },
+        { "fromMs": 2000, "toMs": 3000, "count": 0 },
+        { "fromMs": 3000, "toMs": 4000, "count": 0 },
+        { "fromMs": 4000, "toMs": 5000, "count": 0 },
+        { "fromMs": 5000, "toMs": 6000, "count": 0 },
+        { "fromMs": 6000, "toMs": 7000, "count": 0 },
+        { "fromMs": 7000, "toMs": 8000, "count": 0 },
+        { "fromMs": 8000, "toMs": 9000, "count": 0 },
+        { "fromMs": 9000, "toMs": 10000, "count": 0 },
+        { "fromMs": 10000, "toMs": null, "count": 0 }
+      ],
+      "noResponse": 0
+    }
+  },
+  "segmentRows": {
+    "indexability": [
+      { "name": "Blog", "color": "#D54F3A", "urls": 10, "byClass": { "Indexable": 8, "Non-Indexable": 2, "Issues": 3, "Warnings": 2, "Opportunities": 5, "High": 2, "Medium": 3, "Low": 1 } },
+      { "name": "Thin pages", "color": "#447AD7", "urls": 6, "byClass": { "Indexable": 6, "Non-Indexable": 0, "Issues": 1, "Warnings": 0, "Opportunities": 2, "High": 0, "Medium": 1, "Low": 2 } },
+      { "name": "Rest", "color": "#1E8C64", "urls": 4, "byClass": { "Indexable": 3, "Non-Indexable": 1, "Issues": 0, "Warnings": 1, "Opportunities": 0, "High": 0, "Medium": 0, "Low": 1 } },
+      { "name": null, "color": null, "urls": 20, "byClass": { "Indexable": 15, "Non-Indexable": 5, "Issues": 4, "Warnings": 3, "Opportunities": 6, "High": 1, "Medium": 4, "Low": 2 } }
+    ],
+    "crawlDepth": [
+      { "name": "Blog", "color": "#D54F3A", "urls": 10, "byClass": { "0": 0, "1": 4, "2": 3, "3": 1, "10": 1, "11": 1 } },
+      { "name": null, "color": null, "urls": 20, "byClass": { "0": 1, "1": 5, "2": 6, "3": 8 } }
+    ],
+    "responseCodes": [
+      { "name": "Blog", "color": "#D54F3A", "urls": 10, "byClass": { "2xx": 9, "3xx": 0, "4xx": 1, "5xx": 0, "Blocked by robots.txt": 0, "No Response": 0 } }
+    ],
+    "empty": [
+      { "name": null, "color": null, "urls": 30, "byClass": { "Indexable": 25, "Non-Indexable": 5 } }
+    ]
+  },
+  "segmentList": [
+    { "id": "seg-blog", "name": "Blog", "color": "#D54F3A", "order": 0, "rules": { "kind": "group", "op": "or", "children": [{ "kind": "group", "op": "and", "children": [{ "kind": "cond", "column": "Address", "op": "contains", "value": "/blog/" }] }] } },
+    { "id": "seg-thin", "name": "Thin pages", "color": "#447AD7", "order": 1, "rules": { "kind": "group", "op": "or", "children": [{ "kind": "group", "op": "and", "children": [{ "kind": "cond", "column": "Word Count", "op": "lessThan", "value": "200" }] }] } },
+    { "id": "seg-rest", "name": "Rest", "color": "#1E8C64", "order": 2, "rules": { "kind": "group", "op": "or", "children": [{ "kind": "group", "op": "and", "children": [{ "kind": "cond", "column": "Address", "op": "contains", "value": "/" }] }] } }
+  ],
+  "columns": [
+    { "key": "Address", "kind": { "kind": "url" }, "defaultVisible": true, "defaultWidth": 300, "align": "left", "sortable": true, "searchable": ["contains", "equals", "startsWith"], "extension": false, "needs": null },
+    { "key": "Word Count", "kind": { "kind": "int" }, "defaultVisible": true, "defaultWidth": 80, "align": "right", "sortable": true, "searchable": ["greaterThan", "lessThan"], "extension": false, "needs": null },
+    { "key": "Link Score", "kind": { "kind": "int" }, "defaultVisible": false, "defaultWidth": 80, "align": "right", "sortable": true, "searchable": ["greaterThan", "lessThan"], "extension": false, "needs": { "code": "NEEDS_CRAWL_ANALYSIS" } }
+  ],
+  "preview": { "counts": [{ "id": "seg-blog", "urls": 3 }, { "id": "seg-thin", "urls": 2 }, { "id": "seg-rest", "urls": 1 }], "unassigned": 0 },
+  "api": [
+    { "kind": "ga4", "labelKey": "api-ga4", "connected": true, "requested": 10, "received": 8, "errors": 0, "quotaLeft": null, "running": true, "completed": 8, "resetAt": null },
+    { "kind": "gsc", "labelKey": "api-gsc", "connected": true, "requested": 2000, "received": 2000, "errors": 0, "quotaLeft": 0, "running": false, "completed": 2000, "resetAt": "2026-10-19T07:00:00Z" },
+    { "kind": "psi", "labelKey": "api-psi", "connected": true, "requested": 10, "received": 8, "errors": 2, "quotaLeft": null, "running": false, "completed": 10, "resetAt": null },
+    { "kind": "majestic", "labelKey": "api-majestic", "connected": false, "requested": 0, "received": 0, "errors": 0, "quotaLeft": null, "running": false, "completed": 0, "resetAt": null },
+    { "kind": "ahrefs", "labelKey": "api-ahrefs", "connected": false, "requested": 0, "received": 0, "errors": 0, "quotaLeft": null, "running": false, "completed": 0, "resetAt": null },
+    { "kind": "moz", "labelKey": "api-moz", "connected": false, "requested": 0, "received": 0, "errors": 0, "quotaLeft": null, "running": false, "completed": 0, "resetAt": null }
+  ],
+  "apiErrors": [
+    { "at": "2026-10-18T09:00:01Z", "url": "https://site.test/a/", "status": 500, "message": "HTTP 500: internal error, api_key=AIzaSyDUMMYSECRET123 rejected" },
+    { "at": "2026-10-18T09:00:02Z", "url": "https://site.test/blog/", "status": 429, "message": "Quota exceeded" }
+  ]
+}

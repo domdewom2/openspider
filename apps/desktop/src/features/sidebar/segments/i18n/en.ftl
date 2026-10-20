@@ -1,0 +1,15 @@
+sg-configure = Configure segments
+sg-create = Create segments
+sg-clear-filter = Clear segment filter
+sg-empty = No segments are configured yet. Segments group URLs by rules, for example a blog or a shop.
+sg-view = View
+sg-view-overview = Overview
+sg-view-crawlDepth = Crawl depth
+sg-view-responseCodes = Response codes
+sg-view-indexability = Indexability
+sg-view-issuePriority = Issues by priority
+sg-table = Key figures per segment
+sg-segment = Segment
+sg-percent-segmented = % Segmented
+sg-none = No segment
+sg-filter-by = Filter by segment: { $name }
