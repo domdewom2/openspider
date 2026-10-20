@@ -5,10 +5,17 @@ import { defineConfig, devices } from "@playwright/test";
 // (≈ WebView2); auf macOS-CI nur WebKit, auf Windows-CI nur Chromium (OS_E2E_PROJECTS), in der Cloud (Linux) beide.
 const wanted = (process.env.OS_E2E_PROJECTS ?? "chromium,webkit").split(",").map((s) => s.trim());
 
-const all = [
+// Laufzeitbudgets (UI-146) werden erst nach allen übrigen Tests und ohne parallele Last gemessen: je Engine ein eigenes
+// Projekt `<engine>-perf`, das vom Hauptprojekt abhängt. `OS_E2E_PROJECTS` nennt weiterhin nur die Engines.
+const PERF = /viz[\\/]perf\.spec\.ts$/;
+const engines = [
   { name: "chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } } },
   { name: "webkit", use: { ...devices["Desktop Safari"], viewport: { width: 1280, height: 800 } } },
 ];
+const all = engines.flatMap((engine) => [
+  { ...engine, testIgnore: PERF },
+  { name: `${engine.name}-perf`, use: engine.use, testMatch: PERF, dependencies: [engine.name] },
+]);
 
 export default defineConfig({
   testDir: "./e2e",
@@ -23,7 +30,7 @@ export default defineConfig({
     trace: "retain-on-failure",
     reducedMotion: "reduce",
   },
-  projects: all.filter((p) => wanted.includes(p.name)),
+  projects: all.filter((p) => wanted.includes(p.name.replace(/-perf$/, ""))),
   webServer: {
     command: "npm run dev",
     url: "http://localhost:1420",
