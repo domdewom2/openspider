@@ -10,18 +10,15 @@ import { TasksHost } from "./features/tasks";
 import { MenuAvailability } from "./features/help/MenuAvailability";
 import { HelpDialogs } from "./features/help/HelpDialogs";
 import { VizHost } from "./features/viz";
-import { useEffect, useState, type ComponentType } from "react";
+import { useEffect, useState } from "react";
 import { RegionBoundary } from "./app/ErrorBoundary";
+import { mainRegions, registerMainRegions } from "./app/mainRegions";
 import { Providers } from "./app/Providers";
 import { useT } from "./i18n";
 import { app as appApi } from "./ipc/app";
 import { EmptyState } from "./ui/primitives/EmptyState";
 
-/** Optional main-window regions; absent registrations retain the scaffold defaults. */
-const mainRegions: { tabs?: ComponentType; table?: ComponentType; detail?: ComponentType } = {};
-export function registerMainRegions(regions: Partial<typeof mainRegions>): void {
-  Object.assign(mainRegions, regions);
-}
+export { registerMainRegions };
 
 /**
  * Hauptfenster (Gerüst, M2-F04): Landmarks nach M2-ui-concept 1.2 mit leeren Regionen. Die Fachpakete (U01 Layout,
@@ -30,7 +27,6 @@ export function registerMainRegions(regions: Partial<typeof mainRegions>): void 
 export function App() {
   const TabsRegion = mainRegions.tabs;
   const TableRegion = mainRegions.table;
-  const DetailRegion = mainRegions.detail;
   const t = useT();
   const [version, setVersion] = useState<string | null>(null);
 
@@ -71,7 +67,6 @@ export function App() {
             {TableRegion ? <TableRegion /> : <EmptyState state={{ code: "NO_DATA_YET" }} />}
           </RegionBoundary>
         </main>
-        {DetailRegion && <RegionBoundary name="detail"><DetailRegion /></RegionBoundary>}
         <aside className="os-app-sidebar" aria-label={t("app-region-sidebar")} />
         <footer className="os-app-status" role="contentinfo" aria-label={t("app-region-status")}>
           <Statusbar />

@@ -1,4 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { RegionBoundary } from "../../app/ErrorBoundary";
+import { mainRegions } from "../../app/mainRegions";
 import { useT } from "../../i18n";
 import { toCmdError } from "../../ipc/errors";
 import { useLayout, persistLayout } from "../../state/layout";
@@ -14,6 +16,7 @@ import "./shell.css";
 /** Additive shell controller: existing header/table/sidebar/status regions remain feature-owned. */
 export function Shell() {
   const t = useT();
+  const DetailRegion = mainRegions.detail;
   const anchor = useRef<HTMLSpanElement>(null);
   const [viewport, setViewport] = useState<Viewport>({ width: 0, height: 0 });
   const [preview, setPreview] = useState<Partial<Record<Pane, number>>>({});
@@ -101,8 +104,12 @@ export function Shell() {
       onPreview={(size) => setPreview((old) => ({ ...old, [pane]: size ?? undefined }))}
       onRestore={() => { const s = useLayout.getState(); if (!s.loaded) return; s.setLayout({ ...s.layout, [pane]: { ...s.layout[pane], collapsed: false } }); }}
       onReset={() => { const s = useLayout.getState(); if (!s.loaded) return; s.setLayout(resetDivider(s.layout, pane, viewport)); }} />)}
-    <section id="shell-detail" className="os-shell-detail" role="region" aria-label={t("shell-details")} hidden={pixels.detail === 0}>
-      <div className="os-shell-detail-placeholder">{t("shell-detail-empty")}</div>
+    {/* Eine registrierte Detailregion (U11) bringt ihren eigenen Landmark mit; ohne sie gilt der Platzhalter. */}
+    <section id="shell-detail" className="os-shell-detail" hidden={pixels.detail === 0}
+      {...(DetailRegion ? {} : { role: "region", "aria-label": t("shell-details") })}>
+      {DetailRegion
+        ? <RegionBoundary name="detail"><DetailRegion /></RegionBoundary>
+        : <div className="os-shell-detail-placeholder">{t("shell-detail-empty")}</div>}
     </section>
     {error && <div className="os-shell-error" role="alert">{t("shell-state-error")} <Button onPress={() => {
       const s = useLayout.getState();

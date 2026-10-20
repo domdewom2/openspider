@@ -58,11 +58,12 @@ describe("detail frame and URL properties", () => {
   // spec: UI-030
   it("keeps the shell default and registers details as a separate region outside the upper table", async () => {
     const scaffold = render(<App />); await settle();
-    expect(screen.queryByRole("region", { name: "Details" })).toBeNull();
+    expect(screen.getByText("Select a URL to see its details.")).toBeInTheDocument();
     scaffold.unmount();
     registerMainRegions({ detail: DetailFrame });
     try {
       render(<App />); await settle();
+      expect(screen.queryByText("Select a URL to see its details.")).toBeNull();
       expect(screen.getByRole("region", { name: "Details" }).closest("main")).toBeNull();
       expect(screen.getByRole("main")).toBeInTheDocument();
     } finally { registerMainRegions({ detail: undefined }); }
