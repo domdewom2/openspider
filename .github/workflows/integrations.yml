@@ -1,0 +1,77 @@
+name: integrations
+
+on:
+  push:
+    paths:
+      - integrations/**
+      - crates/os-mcp/**
+      - crates/os-cli/**
+      - tests/fixtures/out-basic-site/**
+      - tests/fixtures/out-redirects/**
+      - .github/workflows/integrations.yml
+  pull_request:
+    paths:
+      - integrations/**
+      - crates/os-mcp/**
+      - crates/os-cli/**
+      - tests/fixtures/out-basic-site/**
+      - tests/fixtures/out-redirects/**
+      - .github/workflows/integrations.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_INCREMENTAL: "0"
+  CARGO_PROFILE_DEV_DEBUG: line-tables-only
+  CARGO_PROFILE_TEST_DEBUG: line-tables-only
+  OPENSPIDER_SECRET_STORE: memory
+  CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
+
+jobs:
+  marketplace:
+    name: Skill and marketplace (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: integrations/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Integration dependencies (locked)
+        run: npm ci --prefix integrations
+      - name: Format, schemas, references and tool catalog
+        run: npm run --prefix integrations validate
+      - name: Contract and launcher tests
+        run: npm test --prefix integrations
+      - name: Build CLI and fixture server
+        run: cargo build --locked -p os-cli -p os-testsite --bins
+      - name: Claude Code validation tool
+        run: |
+          npm install --prefix "$RUNNER_TEMP/openspider-claude" --no-audit --no-fund @anthropic-ai/claude-code@2.1.303
+          echo "OPENSPIDER_CLAUDE_BINARY=$RUNNER_TEMP/openspider-claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe" >> "$GITHUB_ENV"
+      - name: Marketplace installation, installed slash command and MCP fixture (AGENT-042)
+        run: npm run --prefix integrations smoke
+      - name: Optional skill evaluation report (AGENT-041)
+        if: always()
+        run: npm run --prefix integrations eval:report
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integrations-eval-${{ matrix.os }}
+          path: |
+            target/integrations/eval-report.json
+            target/integrations/slash-smoke.json
+          if-no-files-found: error

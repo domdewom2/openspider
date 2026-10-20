@@ -1,0 +1,74 @@
+[
+  {
+    "id": "basic-audit", "fixture": "out-basic-site",
+    "prompt": "Audit the saved basic-site crawl. Prioritize the three most actionable technical findings with URL evidence.",
+    "tools": ["list_crawls", "crawl_overview", "list_issues", "query_urls", "url_details"],
+    "criteria": ["Identify the chosen crawl and completion state", "Include /missing.html as 404 and /old-page as redirect evidence", "Use issue counts and what/why/fix without inventing traffic impact"]
+  },
+  {
+    "id": "basic-404", "fixture": "out-basic-site",
+    "prompt": "Find all internal 404 pages and show where they are linked from.",
+    "tools": ["query_urls", "url_details"],
+    "criteria": ["Find /missing.html", "Show an inlink from the homepage", "Follow pagination or explicitly mark a sample"]
+  },
+  {
+    "id": "basic-redirect", "fixture": "out-basic-site",
+    "prompt": "Which internal links should bypass redirects? Give old URL, final target and a source page to update.",
+    "tools": ["query_urls", "url_details"],
+    "criteria": ["Find /old-page to /about.html", "Identify homepage as a linking source", "Recommend updating the source link to the final target"]
+  },
+  {
+    "id": "basic-canonical", "fixture": "out-basic-site",
+    "prompt": "Does /about.html declare a canonical? Is that enough to guarantee search-engine indexing?",
+    "tools": ["url_details"],
+    "criteria": ["Identify its self-referencing canonical", "Separate observed directive from guaranteed indexing", "Cite the saved snapshot"]
+  },
+  {
+    "id": "basic-robots", "fixture": "out-basic-site",
+    "prompt": "Was /privat/intern.html fetched in the default crawl? Check its saved response and robots directives. Does its /privat/ path prove that robots.txt blocks it?",
+    "tools": ["url_details"],
+    "criteria": ["Confirm the saved HTTP 200 response", "Report no robots meta directive in the saved page", "Do not infer robots.txt blocking from /privat/ or guarantee indexing from a successful fetch"]
+  },
+  {
+    "id": "basic-links", "fixture": "out-basic-site",
+    "prompt": "List the inlinks to /products/widget.html and explain the limits of an orphan claim.",
+    "tools": ["url_details"],
+    "criteria": ["Include /products.html as source", "Use link-section totals/cursors", "Do not extrapolate crawler inlinks to the entire web"]
+  },
+  {
+    "id": "basic-german", "fixture": "out-basic-site",
+    "prompt": "Erkläre die wichtigsten Issues auf Deutsch mit Anzahl, Beispielen und Prüfung nach der Korrektur.",
+    "tools": ["list_issues", "query_urls"],
+    "criteria": ["Request lang de", "Return German findings with server counts", "Include a concrete retest for each proposed fix"]
+  },
+  {
+    "id": "basic-compare", "fixture": "out-basic-site",
+    "prompt": "Compare two independently saved crawls of the unchanged basic fixture. Report what changed, matching by URL.",
+    "tools": ["list_crawls", "crawl_overview", "list_issues", "query_urls"],
+    "criteria": ["Establish previous/current order", "Report no unsupported regression", "Use URL matching rather than local numeric IDs", "Describe snapshot-comparison limitations"]
+  },
+  {
+    "id": "redirect-chains", "fixture": "out-redirects",
+    "prompt": "Find redirect chains on this testsite and show the complete chain starting at /c.",
+    "tools": ["query_urls", "url_details"],
+    "criteria": ["Include /c to /d to /e", "Inspect the final response", "Separate redirect loops from chains"]
+  },
+  {
+    "id": "redirect-loops", "fixture": "out-redirects",
+    "prompt": "Find the two-URL redirect cycle and the self-loop. Show how traversal terminates.",
+    "tools": ["query_urls", "url_details"],
+    "criteria": ["Find /f to /g to /f", "Find /s to /s", "Use visited-set or bounded traversal rather than endless fetching"]
+  },
+  {
+    "id": "redirect-broken-target", "fixture": "out-redirects",
+    "prompt": "Investigate the redirect starting at /m. Does reaching a destination mean success?",
+    "tools": ["url_details"],
+    "criteria": ["Find /m to /n", "Identify final 404", "Recommend selecting a valid relevant destination rather than accepting any redirect"]
+  },
+  {
+    "id": "redirect-long-chain", "fixture": "out-redirects",
+    "prompt": "Trace /l1 and /long1, distinguishing a long finite chain from a loop or an interrupted crawl.",
+    "tools": ["query_urls", "url_details"],
+    "criteria": ["Identify /l6 and /long7 as intended final targets", "Report configured hop-limit or missing coverage if traversal is incomplete", "Do not label a hop limit as proof of a cycle"]
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "name": "openspider-marketplace",
+  "description": "OpenSpider crawl auditing tools for agents.",
+  "owner": { "name": "OpenSpider contributors" },
+  "plugins": [
+    {
+      "name": "openspider",
+      "source": "./claude-plugin",
+      "description": "Local crawl audits, issue investigation and crawl comparisons with OpenSpider."
+    }
+  ]
+}
