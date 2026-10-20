@@ -108,3 +108,14 @@ Ohne abweichendes `CARGO_TARGET_DIR`: `target/debug/openspider-desktop`; Windows
 
 Implementierungs-Commits: `4cc458b` (Canvas-Grid und Fixture-Tests), `4766329` (Controller-Geometrie außerhalb des sichtbaren Ausschnitts). Messsuite, Rohdaten und dieser Bericht folgen im Abschlusscommit, dessen Kennung im Übergabebericht steht.
 
+
+## Referenzmessung 20.10.
+
+U02B Referenzmessung (Gate-G0-Bedingung 1), 20.10.2026 03:58–04:12, Mac mini M1 16 GB, `origin/m2/u02b`.
+
+- Befehl: OS_GRID_STRICT_BUDGETS=1 npm run -w apps/desktop e2e -- --config e2e/grid/playwright.config.ts --project=chromium --project=webkit (unter caffeinate, Bridge os-app-bridge mit e2e-bridge,stub-views gebaut)
+- Lauf 1: 16/16 passed (1,1 min) – wait_quiet rc=1 (Last durch vorherigen cargo build)
+- Lauf 2 (ohne Build): 16/16 passed (1,0 min) – wait_quiet rc=1, load 11,5/11,7/7,2 (Spotlight-Indexierung des frischen Worktrees inkl. node_modules)
+- Strenge Budgets (≥ 55 fps, kein Frame > 50 ms, Sprung ≤ 150 ms laut S-1b) in Chromium UND WebKit unter Last eingehalten → Bedingung (1) inhaltlich erfüllt, formal nicht unter Load < 2 gemessen.
+- Offen aus G0: (2) spike-grid.yml auf m2/u02b (macos-15), (3) nativer Lauf aus GUI-Sitzung + VoiceOver-Ansage.
+- Rohdaten: liegen nicht mehr vor (nur die Zusammenfassung oben ist erhalten). `jump.contentMs` wird in N01 nachgemessen.
