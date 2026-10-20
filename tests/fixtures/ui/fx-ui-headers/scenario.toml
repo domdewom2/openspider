@@ -1,0 +1,16 @@
+[[route]]
+path = "/created"
+status = 201
+content_type = "text/html"
+body = "<html><body>created response</body></html>"
+
+[[route]]
+path = "/missing"
+status = 404
+content_type = "text/html"
+body = "<html><body>missing response</body></html>"
+
+[[route]]
+path = "/style.css"
+content_type = "text/css"
+body = "body { color: red; }"

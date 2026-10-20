@@ -76,6 +76,10 @@ pub struct ExportFileInfo {
 
 /// Zeilenweiser Tabellenschreiber (konstanter Speicher).
 pub trait TableWriter {
+    /// Checks cancellation during work that does not emit a row (OUT-010).
+    fn checkpoint(&mut self) -> Result<(), ExportError> {
+        Ok(())
+    }
     /// Schreibt die Kopfzeile.
     fn header(&mut self, columns: &[String]) -> Result<(), ExportError>;
     /// Schreibt eine Datenzeile; `kinds` bestimmt die Zellart je Spalte.

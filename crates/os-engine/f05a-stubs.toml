@@ -15,24 +15,6 @@ function = "ngram_details"
 signature = "pub fn ngram_details( _: &os_store::CrawlFile, _: &os_model::CrawlConfig, _: &crate::details::DetailReq<'_>, ) -> Result<crate::details::DetailRows, crate::ViewError>"
 
 [[stub]]
-owner = "M2-D18"
-file = "crates/os-export/src/catalog/bulk_web.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
-owner = "M2-D18"
-file = "crates/os-export/src/reports/cookies.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
-owner = "M2-D18"
-file = "crates/os-export/src/reports/http_headers.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
 owner = "M2-D19"
 file = "crates/os-parse/src/spelling/mod.rs"
 function = "run"

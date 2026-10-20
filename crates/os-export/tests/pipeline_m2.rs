@@ -624,7 +624,7 @@ fn reports_share_the_workbook_and_asset_manifests_stay_separate() {
             .height(),
         2
     );
-    assert!(dir.path().join("web_all_page_source.xlsx").is_file());
+    assert!(dir.path().join("page_source/index.csv").is_file());
 }
 
 // spec: OUT-075

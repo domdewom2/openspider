@@ -1,0 +1,5 @@
+Header Name,URLs,% of Total,Distinct Values,Most Common Value
+cache-control,10,83.33,2,max-age=60
+content-type,12,100.00,1,text/html
+link,1,8.33,2,</a>; rel=next
+set-cookie,1,8.33,2,a=1

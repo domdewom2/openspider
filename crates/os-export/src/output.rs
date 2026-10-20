@@ -252,6 +252,11 @@ impl DeferredWriter<'_, '_> {
     }
 }
 impl TableWriter for DeferredWriter<'_, '_> {
+    fn checkpoint(&mut self) -> Result<(), ExportError> {
+        self.cancel
+            .checkpoint()
+            .map_err(|_| ExportError::Write("Export abgebrochen".into()))
+    }
     fn header(&mut self, columns: &[String]) -> Result<(), ExportError> {
         if self.header.is_some() {
             return Err(ExportError::Write("Duplicate table header".into()));

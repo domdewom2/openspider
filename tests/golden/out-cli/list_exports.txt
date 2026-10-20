@@ -467,6 +467,8 @@ Accessibility:Best Practice
 Accessibility:Incomplete
 Web:All Page Source
 Web:All Page Text
+Web:All Rendered Page Source
+Content:All Page Text
 Web:All HTTP Request Headers
 Web:All HTTP Response Headers
 Web:All Cookies

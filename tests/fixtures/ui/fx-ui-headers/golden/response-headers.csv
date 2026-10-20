@@ -1,0 +1,27 @@
+Address,Header Name,Header Value
+https://www.site.test/01,cache-control,max-age=60
+https://www.site.test/01,content-type,text/html
+https://www.site.test/01,Set-Cookie,a=1
+https://www.site.test/01,Set-Cookie,b=2
+https://www.site.test/01,Link,</a>; rel=next
+https://www.site.test/01,Link,</b>; rel=prev
+https://www.site.test/02,Cache-Control,max-age=60
+https://www.site.test/02,Content-Type,text/html
+https://www.site.test/03,cache-control,max-age=60
+https://www.site.test/03,content-type,text/html
+https://www.site.test/04,Cache-Control,max-age=60
+https://www.site.test/04,Content-Type,text/html
+https://www.site.test/05,cache-control,max-age=60
+https://www.site.test/05,content-type,text/html
+https://www.site.test/06,Cache-Control,max-age=60
+https://www.site.test/06,Content-Type,text/html
+https://www.site.test/07,cache-control,max-age=60
+https://www.site.test/07,content-type,text/html
+https://www.site.test/08,Cache-Control,max-age=60
+https://www.site.test/08,Content-Type,text/html
+https://www.site.test/09,cache-control,no-cache
+https://www.site.test/09,content-type,text/html
+https://www.site.test/10,Cache-Control,no-cache
+https://www.site.test/10,Content-Type,text/html
+https://www.site.test/11,content-type,text/html
+https://www.site.test/12,Content-Type,text/html

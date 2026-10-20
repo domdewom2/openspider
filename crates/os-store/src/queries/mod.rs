@@ -598,6 +598,22 @@ pub fn stored_html(file: &crate::CrawlFile, url: UrlId) -> Result<Option<StoredH
     row.map(|(charset, bytes, compression)| decode_html(charset, bytes, compression))
         .transpose()
 }
+/// Gespeichertes gerendertes DOM, dekomprimiert als UTF-8 (OUT-045).
+pub fn stored_rendered_html(
+    file: &crate::CrawlFile,
+    url: UrlId,
+) -> Result<Option<StoredHtml>, StoreError> {
+    let row = file
+        .conn()
+        .query_row(
+            "SELECT html, compression FROM render_pages WHERE url_id = ?1 AND html IS NOT NULL",
+            [url.0],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .optional()?;
+    row.map(|(bytes, compression)| decode_html(Some("UTF-8".into()), bytes, compression))
+        .transpose()
+}
 pub fn for_each_stored_html(
     file: &crate::CrawlFile,
     mut f: impl FnMut(UrlId, StoredHtml) -> Result<(), StoreError>,

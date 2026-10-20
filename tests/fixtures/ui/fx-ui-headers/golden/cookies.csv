@@ -1,0 +1,20 @@
+Address,Cookie Name,Cookie Value,Domain,Path,Expires,Max-Age,Secure,HttpOnly,SameSite,Type,Session,First-Party
+https://www.site.test/01,shared,v1,.site.test,/,,86400,True,True,Lax,HTTP,False,True
+https://www.site.test/01,shared,another,.site.test,/,,86400,True,True,Lax,HTTP,False,True
+https://www.site.test/01,session,1,www.site.test,/,,,True,True,Strict,HTTP,True,True
+https://www.site.test/01,third,1,tracker.test,/,,,False,False,None,JavaScript,True,False
+https://www.site.test/01,third,2,tracker.test,/,,,False,False,None,HTTP,True,False
+https://www.site.test/01,sibling,3,cdn.site.test,/,,,False,False,,HTTP,True,True
+https://www.site.test/01,trap,4,not-site.test,/,,,False,False,,HTTP,True,False
+https://www.site.test/01,expires,5,www.site.test,/,2030-01-02T00:00:00Z,,False,False,,HTTP,False,True
+https://www.site.test/02,shared,v2,.site.test,/,,86400,True,True,Lax,HTTP,False,True
+https://www.site.test/03,shared,v3,.site.test,/,,86400,True,True,Lax,HTTP,False,True
+https://www.site.test/04,shared,v4,.site.test,/,,86400,True,True,Lax,HTTP,False,True
+https://www.site.test/05,shared,v5,.site.test,/,,86400,True,True,Lax,HTTP,False,True
+https://www.site.test/06,shared,v6,.site.test,/,,86400,True,True,Lax,HTTP,False,True
+https://www.site.test/07,shared,v7,.site.test,/,,86400,True,True,Lax,HTTP,False,True
+https://www.site.test/08,shared,v8,.site.test,/,,86400,True,True,Lax,HTTP,False,True
+https://www.site.test/09,shared,v9,.site.test,/,,86400,True,True,Lax,HTTP,False,True
+https://www.site.test/10,shared,v10,.site.test,/,,86400,True,True,Lax,HTTP,False,True
+https://www.site.test/11,shared,v11,.site.test,/,,86400,True,True,Lax,HTTP,False,True
+https://www.site.test/12,shared,v12,.site.test,/,,86400,True,True,Lax,HTTP,False,True

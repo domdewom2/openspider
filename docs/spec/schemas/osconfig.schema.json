@@ -858,6 +858,11 @@
           "default": "crlf",
           "description": "Zeilenende in CSV-Dateien."
         },
+        "show_credentials": {
+          "default": false,
+          "description": "Zugangsdaten in Request-Header-Exporten anzeigen (OUT-048, Standard aus).",
+          "type": "boolean"
+        },
         "utf8_bom": {
           "default": true,
           "description": "UTF-8-BOM in CSV-Dateien.",
@@ -3518,6 +3523,7 @@
       "default": {
         "inlinks_for_all_filters": true,
         "line_ending": "crlf",
+        "show_credentials": false,
         "utf8_bom": true
       },
       "description": "Export."

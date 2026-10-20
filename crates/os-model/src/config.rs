@@ -1109,6 +1109,8 @@ impl Default for ValidationConfig {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct ExportConfig {
+    /// Zugangsdaten in Request-Header-Exporten anzeigen (OUT-048, Standard aus).
+    pub show_credentials: bool,
     /// UTF-8-BOM in CSV-Dateien.
     pub utf8_bom: bool,
     /// Zeilenende in CSV-Dateien.
@@ -1120,6 +1122,7 @@ pub struct ExportConfig {
 impl Default for ExportConfig {
     fn default() -> Self {
         ExportConfig {
+            show_credentials: false,
             inlinks_for_all_filters: true,
 
             utf8_bom: true,
