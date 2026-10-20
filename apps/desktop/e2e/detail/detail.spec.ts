@@ -33,9 +33,11 @@ test("Anchors uses core aggregation, default exclusions and exact drill-down", a
   await expect.poll(() => calls(page, "view.rows")).not.toEqual([]);
   const canvas = page.getByLabel("Inlinks", { exact: true }).locator("canvas").first();
   await expect(canvas).toBeVisible();
-  await canvas.focus();
+  // Keyboard focus lives on the grid element (the canvas is decorative in the shared grid).
+  const grid = page.getByRole("grid", { name: "Inlinks", exact: true });
+  await grid.focus();
   // Selecting the first row already activates the Anchors drill-down.
-  await canvas.press("Home");
+  await grid.press("Home");
   await expect.poll(async () => JSON.stringify(await calls(page, "view.open"))).toContain('"anchor":"Produkte"');
 });
 

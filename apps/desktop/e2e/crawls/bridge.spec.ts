@@ -66,10 +66,11 @@ test("real core manages portable crawls, reports comparison availability and rej
     await page.keyboard.press("Escape");
     await expect(page.getByText("Crawl comparison is not available yet.", { exact: true })).toBeVisible();
     const ids = (await page.evaluate(() => window.crawlsBridge.invoke("crawls.list", { show: "all" })) as typeof rows).map(r => r.crawl.crawlId);
+    // The core (M2-C01) implements compare.open now; the dialog action stays disabled until the N02 activation.
     expect(await page.evaluate(async ids => {
-      try { await window.crawlsBridge.invoke("compare.open", { current: ids[0], previous: ids[1], mapping: [], elements: [] }); return "unexpected-success"; }
+      try { await window.crawlsBridge.invoke("compare.open", { current: ids[0], previous: ids[1], mapping: [], elements: [] }); return "opened"; }
       catch (error) { return (error as { code: string }).code; }
-    }, ids)).toBe("Unsupported");
+    }, ids)).toBe("opened");
 
     // The same real bridge supplies the duplicate-name error to the active project form.
     await page.evaluate(() => window.crawlsBridge.invoke("projects.create", { name: "Existing project" }));
