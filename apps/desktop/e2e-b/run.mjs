@@ -13,6 +13,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { remote } from "webdriverio";
 import { measure, validateRate } from "./measurement.mjs";
 import { viteReady } from "./readiness.mjs";
+import { prepareKeyboard } from "./focus.mjs";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const binary = process.argv[2] && resolve(process.argv[2]);
@@ -21,6 +22,7 @@ const output = resolve(process.argv[4] ?? `apps/desktop/e2e-b/artifacts/s02-${mo
 if (!binary || !["smoke", "s3", "s6"].includes(mode)) throw new Error("Usage: node apps/desktop/e2e-b/run.mjs <debug binary> [smoke|s3|s6] [output]");
 if (!["darwin", "win32"].includes(process.platform)) throw new Error("Native spike requires macOS or Windows");
 const started = Date.now();
+const guiLaunch = process.platform === "darwin" && process.env.S02_GUI !== "0";
 await mkdir(output, { recursive: true });
 const home = await mkdtemp(join(tmpdir(), "openspider-s02-"));
 const children = [];
@@ -31,8 +33,11 @@ const report = { mode, platform: process.platform, release: release(), arch: arc
   revision: execFileSync("git", ["rev-parse", "HEAD"], { cwd: repo, encoding: "utf8" }).trim(),
   runnerSha256: createHash("sha256").update(await readFile(fileURLToPath(import.meta.url))).digest("hex"),
   readinessSha256: createHash("sha256").update(await readFile(new URL("./readiness.mjs", import.meta.url))).digest("hex"),
+  focusSha256: createHash("sha256").update(await readFile(new URL("./focus.mjs", import.meta.url))).digest("hex"),
+  nativeFocusSha256: createHash("sha256").update(await readFile(join(repo, process.platform === "darwin" ?
+    "apps/desktop/spikes/macos.swift" : "apps/desktop/e2e-b/focus-windows.ps1"))).digest("hex"),
   probeSha256: createHash("sha256").update(await readFile(join(repo, "apps/desktop/spikes/probe.ts"))).digest("hex"),
-  launch: process.env.S02_GUI === "1" ? "LaunchServices" : "child-process", checks: [], errors: [] };
+  launch: guiLaunch ? "LaunchServices" : "child-process", checks: [], errors: [], keyboardFocus: [] };
 
 async function freePort() {
   const server = createServer();
@@ -43,7 +48,7 @@ async function freePort() {
   return port;
 }
 function child(command, args, env = {}) {
-  const p = spawn(command, args, { cwd: repo, env: { ...process.env, ...env }, stdio: ["ignore", "pipe", "pipe"] });
+  const p = spawn(command, args, { cwd: repo, env: { ...process.env, ...env }, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
   p.on("error", e => { logs += `${command}: ${e}\n`; });
   p.stdout.on("data", d => { logs += d; });
   p.stderr.on("data", d => { logs += d; });
@@ -73,15 +78,36 @@ async function check(name, fn) {
 function native(action, key) {
   const helper = process.env.S02_MAC_HELPER;
   assert.ok(helper, "Set S02_MAC_HELPER to compiled spikes/macos.swift");
-  return execFileSync(helper, [action, String(appPid), ...(key ? [key] : [])], { encoding: "utf8" });
+  return execFileSync(helper, [action, String(appPid), ...(key ? [key] : [])], { encoding: "utf8", timeout: 10_000 });
 }
-async function key(value) {
+function nativeFocus(action) {
+  if (process.platform === "darwin") return JSON.parse(native(action));
+  return JSON.parse(execFileSync("powershell.exe", ["-NoLogo", "-NoProfile", "-NonInteractive",
+    "-ExecutionPolicy", "Bypass",
+    "-File", join(repo, "apps/desktop/e2e-b/focus-windows.ps1"), "-Action", action, "-Binary", binary],
+  { encoding: "utf8", windowsHide: true, timeout: 15_000 }));
+}
+async function key(value, target) {
+  const trace = { key: value, target, at: new Date().toISOString() };
+  report.keyboardFocus.push(trace);
+  await prepareKeyboard({
+    activate: async () => {
+      await evaluate("window.s02.activate()");
+      return nativeFocus("activate");
+    },
+    snapshot: () => evaluate("window.s02.keyboardFocus()"),
+    focusTarget: () => browser.execute((id) => document.getElementById(id).focus(), target),
+    inspect: async () => nativeFocus("inspect"),
+    trace,
+  });
   if (process.platform === "darwin") native("key", value);
   else await browser.performActions([{ type: "key", id: "keyboard", actions: [
     { type: "keyDown", value: "\uE009" }, { type: "keyDown", value },
     { type: "keyUp", value }, { type: "keyUp", value: "\uE009" },
   ] }]);
+  trace.injected = true;
   await delay(250);
+  trace.afterKey = await evaluate("window.s02.keyboardFocus()");
 }
 async function startFixture() {
   let requests = 0;
@@ -117,7 +143,7 @@ try {
     browser = await remote({ hostname: "127.0.0.1", port, logLevel: "error", connectionRetryCount: 0,
       capabilities: { "tauri:options": { application: binary } } });
   } else {
-    if (process.env.S02_GUI === "1") {
+    if (guiLaunch) {
       const bundle = join(home, "S02.app");
       await mkdir(join(bundle, "Contents/MacOS"), { recursive: true });
       await copyFile(binary, join(bundle, "Contents/MacOS/OpenSpider"));
@@ -147,6 +173,9 @@ try {
   if (process.platform === "darwin" && process.env.S02_MAC_HELPER) {
     report.nativeActivation = JSON.parse(native("activate"));
     report.afterNativeActivation = await evaluate("window.s02.snapshot()");
+  } else if (process.platform === "win32") {
+    report.nativeActivation = nativeFocus("activate");
+    report.afterNativeActivation = await evaluate("window.s02.snapshot()");
   }
   // spec: UI-001, OUT-232
   await check("main window and real IPC", async () => {
@@ -159,33 +188,24 @@ try {
   if (mode === "s3") {
     await evaluate("window.s02.installKeyboardFixture()");
     await check("native editing shortcuts in a text field", async () => {
-      const state = await evaluate("window.s02.snapshot()");
-      assert.equal(state.frontend, "visible", "Native keyboard proof requires visible WKWebView");
-      assert.equal(state.focus, true, "Native keyboard proof requires focus");
-      await browser.execute("document.querySelector('#s02-input').focus()");
-      await key("a");
+      await key("a", "s02-input");
       let result = await evaluate("window.s02.keyboardSnapshot()");
       assert.deepEqual(result.selection, [0, 13]);
-      await key("c");
-      await browser.execute("document.querySelector('#s02-paste').focus()");
-      await key("v");
+      await key("c", "s02-input");
+      await key("v", "s02-paste");
       result = await evaluate("window.s02.keyboardSnapshot()");
       assert.equal(result.paste, "fixture alpha");
-      await browser.execute("document.querySelector('#s02-input').focus()");
-      await key("a"); await key("x");
+      await key("a", "s02-input"); await key("x", "s02-input");
       assert.equal((await evaluate("window.s02.keyboardSnapshot()")).value, "");
-      await key("z");
+      await key("z", "s02-input");
       result = await evaluate("window.s02.keyboardSnapshot()");
       assert.equal(result.value, "fixture alpha");
       assert.deepEqual(result.actions, [], "Editing must not dispatch table/global commands");
       return result;
     });
     await check("table fixture C/A dispatch once; V/X/Z do not mutate it", async () => {
-      const state = await evaluate("window.s02.snapshot()");
-      assert.equal(state.frontend, "visible"); assert.equal(state.focus, true);
-      await browser.execute("document.querySelector('#s02-grid').focus()");
       const before = await evaluate("window.s02.keyboardSnapshot()");
-      for (const k of ["c", "a", "v", "x", "z"]) await key(k);
+      for (const k of ["c", "a", "v", "x", "z"]) await key(k, "s02-grid");
       const after = await evaluate("window.s02.keyboardSnapshot()");
       assert.deepEqual(after.actions.slice(before.actions.length), ["table.copy", "table.selectAll"]);
       assert.equal(after.value, before.value);
@@ -280,7 +300,7 @@ finally {
   for (const p of children.reverse()) {
     if (p.exitCode === null) { p.kill(); await Promise.race([once(p, "exit"), delay(3000)]); if (p.exitCode === null) p.kill("SIGKILL"); }
   }
-  if (process.env.S02_GUI === "1" && appPid) { try { process.kill(appPid, "SIGTERM"); } catch {} }
+  if (guiLaunch && appPid) { try { process.kill(appPid, "SIGTERM"); } catch {} }
   if (fixture) { fixture.closeAllConnections(); fixture.close(); }
   report.seconds = (Date.now() - started) / 1000;
   report.status = report.errors.length ? "failed" : "passed";

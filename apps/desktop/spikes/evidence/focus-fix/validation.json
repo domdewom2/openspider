@@ -1,0 +1,150 @@
+{
+  "recordedAt": "2026-10-20T13:42:47.273498+00:00",
+  "baseRevision": "216e7a07ddd5d8609f972a6e42dab323c7eb1d53",
+  "branch": "m2/s02",
+  "platform": {
+    "system": "Darwin",
+    "release": "25.3.0",
+    "architecture": "arm64",
+    "node": "v22.20.0"
+  },
+  "environment": {
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
+    "CARGO_PROFILE_TEST_DEBUG": "line-tables-only",
+    "OPENSPIDER_SECRET_STORE": "memory"
+  },
+  "checks": [
+    {
+      "command": "cargo fmt --all --check",
+      "exitCode": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "logBytes": 0,
+      "outputTail": ""
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exitCode": 0,
+      "logSha256": "d29ffefa06eb380958f7cab68c23769abf52d73154d3d5a747e1427f061f168c",
+      "logBytes": 21797,
+      "outputTail": "fication-sys v0.6.15\n    Checking pxfm v0.1.30\n   Compiling tauri-plugin v2.7.2\n   Compiling tauri-build v2.7.2\n    Checking chromiumoxide v0.9.1\n   Compiling tauri-codegen v2.7.2\n    Checking quick-error v2.0.1\n    Checking weezl v0.1.12\n    Checking fax v0.2.7\n    Checking moxcms v0.8.1\n    Checking tiff v0.11.3\n    Checking os-render v0.1.0 (/Users/dominikwojcik/Projects/wt-s02/crates/os-render)\n    Checking os-engine v0.1.0 (/Users/dominikwojcik/Projects/wt-s02/crates/os-engine)\n   Compiling rfd v0.16.0\n    Checking byteorder-lite v0.1.0\n    Checking os-mcp v0.1.0 (/Users/dominikwojcik/Projects/wt-s02/crates/os-mcp)\n    Checking image v0.25.10\n    Checking os-app v0.1.0 (/Users/dominikwojcik/Projects/wt-s02/crates/os-app)\n    Checking os-parity v0.1.0 (/Users/dominikwojcik/Projects/wt-s02/crates/os-parity)\n    Checking arboard v3.7.0\n    Checking os_info v3.15.0\n   Compiling tauri v2.12.3\n   Compiling tauri-macros v2.7.2\n   Compiling tauri-plugin-fs v2.7.1\n   Compiling tauri-plugin-deep-link v2.6.2\n   Compiling tauri-plugin-os v2.4.0\n   Compiling tauri-plugin-clipboard-manager v2.5.0\n   Compiling tauri-plugin-dialog v2.8.3\n   Compiling tauri-plugin-notification v2.7.0\n   Compiling openspider-desktop v0.1.0 (/Users/dominikwojcik/Projects/wt-s02/apps/desktop/src-tauri)\n    Checking gethostname v1.1.0\n    Checking sys-locale v0.3.2\n    Checking os-loadtest v0.1.0 (/Users/dominikwojcik/Projects/wt-s02/crates/os-loadtest)\n    Checking notify-rust v4.18.2\n    Checking tauri-plugin-single-instance v2.5.4\n    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2m 04s\n"
+    },
+    {
+      "command": "cargo test --workspace",
+      "exitCode": 0,
+      "logSha256": "e477ed5dcb8c1a50d1f622fd08abd0accdbe7165650de267cbbd3a6839d822f6",
+      "logBytes": 309315,
+      "outputTail": "0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n   Doc-tests os_integrations\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n   Doc-tests os_loadtest\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n   Doc-tests os_mcp\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n   Doc-tests os_model\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n   Doc-tests os_parity\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n   Doc-tests os_parse\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n   Doc-tests os_render\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n   Doc-tests os_sched\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n   Doc-tests os_store\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n   Doc-tests os_testsite\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n   Doc-tests os_url\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n"
+    },
+    {
+      "command": "npm ci",
+      "exitCode": 0,
+      "logSha256": "8a69dcb9a151ab1c4e3a4da85ae1a2a185f57d73b9e8eb37ad3dcaf3092f42f7",
+      "logBytes": 3260,
+      "outputTail": "i@izs.me\nnpm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me\nnpm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me\nnpm warn deprecated glob@8.1.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me\nnpm warn deprecated glob@8.1.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me\nnpm warn deprecated uuid@9.0.1: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).\n\nadded 420 packages, and audited 422 packages in 8s\n\n63 packages are looking for funding\n  run `npm fund` for details\n\n7 vulnerabilities (1 moderate, 6 high)\n\nTo address all issues (including breaking changes), run:\n  npm audit fix --force\n\nRun `npm audit` for details.\n"
+    },
+    {
+      "command": "npm run -w apps/desktop typecheck",
+      "exitCode": 0,
+      "logSha256": "3a6565aa94beb8731c9fde17f4daf3ba03dd39b6b05cec01ff0ccbdbbac97556",
+      "logBytes": 55,
+      "outputTail": "\n> @openspider/desktop@0.1.0 typecheck\n> tsc --noEmit\n\n"
+    },
+    {
+      "command": "npm run -w apps/desktop test",
+      "exitCode": 0,
+      "logSha256": "b5a9752a9d80f529fd34261f8b4d4c2b36ca4826b8824a972aa33c148e9d8dc6",
+      "logBytes": 580,
+      "outputTail": "\n> @openspider/desktop@0.1.0 test\n> vitest run\n\n\n RUN  v5.0.4 /Users/dominikwojcik/Projects/wt-s02/apps/desktop\n\n\n Test Files  17 passed (17)\n      Tests  162 passed (162)\n   Start at  15:23:54\n   Duration  5.01s (environment 43%, tests 21%, transform 15%, import 14%, setup 7%)\n\nEnvironment  jsdom was created 17 times · 12.18s total, 43% of tracked time\n             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)\n             learn more: https://vitest.dev/guide/improving-performance#test-environments\n\n"
+    },
+    {
+      "command": "node --test apps/desktop/e2e-b/measurement.test.mjs apps/desktop/e2e-b/readiness.test.mjs apps/desktop/e2e-b/focus.test.mjs",
+      "exitCode": 0,
+      "logSha256": "ea98b05cc208c38a1ebe507d988b01e0708e4a455c5de79f6aba23a95e1dd277",
+      "logBytes": 2316,
+      "outputTail": "k 4 - fails closed for hidden, unfocused, minimized, or wrong-target fixtures\n  ---\n  duration_ms: 0.713166\n  type: 'test'\n  ...\n# Subtest: five-state fixture accepts throttling and visible recovery with a boundary tick\nok 5 - five-state fixture accepts throttling and visible recovery with a boundary tick\n  ---\n  duration_ms: 1.341291\n  type: 'test'\n  ...\n# Subtest: empty, stopped, too short and over-limit observations never pass\nok 6 - empty, stopped, too short and over-limit observations never pass\n  ---\n  duration_ms: 0.943625\n  type: 'test'\n  ...\n# Subtest: locked or unrestored windows cannot be accepted as a visible baseline\nok 7 - locked or unrestored windows cannot be accepted as a visible baseline\n  ---\n  duration_ms: 0.610875\n  type: 'test'\n  ...\n# Subtest: rate excludes ticks outside the measured interval\nok 8 - rate excludes ticks outside the measured interval\n  ---\n  duration_ms: 0.098875\n  type: 'test'\n  ...\n# Subtest: recognizes all five recorded CI startup logs, colored and plain\nok 9 - recognizes all five recorded CI startup logs, colored and plain\n  ---\n  duration_ms: 6.963833\n  type: 'test'\n  ...\n# Subtest: waits for the complete endpoint across output chunks\nok 10 - waits for the complete endpoint across output chunks\n  ---\n  duration_ms: 0.314708\n  type: 'test'\n  ...\n# Subtest: rejects missing readiness and a different dev server port\nok 11 - rejects missing readiness and a different dev server port\n  ---\n  duration_ms: 0.075625\n  type: 'test'\n  ...\n1..11\n# tests 11\n# suites 0\n# pass 11\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 57.533459\n"
+    },
+    {
+      "command": "npm run -w apps/desktop check:static",
+      "exitCode": 0,
+      "logSha256": "a0b7ad1f4a20dfa60bf449481940504b39cc04f1d21db87237b77be3b45e9c1d",
+      "logBytes": 610,
+      "outputTail": "\n> @openspider/desktop@0.1.0 check:static\n> node scripts/check-static.mjs\n\n\n== check:static / gen:ipc --check\ngen:ipc: 26 Wrapper-Dateien aktuell\n\n== check:static / npm-Lizenzen\nnpm-Lizenzprüfung: 474 Pakete, alle unter der Positivliste (0BSD, Apache-2.0, Apache-2.0 OR MIT, BSD-2-Clause, BSD-3-Clause, ISC, MIT, MIT-0, MPL-2.0)\n\n== check:static / vitest static + Tokens\n\n RUN  v5.0.4 /Users/dominikwojcik/Projects/wt-s02/apps/desktop\n\n\n Test Files  2 passed (2)\n      Tests  28 passed (28)\n   Start at  15:26:30\n   Duration  2.24s (environment 46%, import 26%, transform 19%, setup 7%, tests 2%, worker 1%)\n\n"
+    },
+    {
+      "command": "npm run -w apps/desktop check:licenses",
+      "exitCode": 0,
+      "logSha256": "1577094719c1f8246a3b1a8aeb2419cf6cbd3b550e2c59cac90f6cb6869ccd4e",
+      "logBytes": 231,
+      "outputTail": "\n> @openspider/desktop@0.1.0 check:licenses\n> node scripts/check-licenses.mjs\n\nnpm-Lizenzprüfung: 474 Pakete, alle unter der Positivliste (0BSD, Apache-2.0, Apache-2.0 OR MIT, BSD-2-Clause, BSD-3-Clause, ISC, MIT, MIT-0, MPL-2.0)\n"
+    },
+    {
+      "command": "cargo deny check licenses bans sources",
+      "exitCode": 0,
+      "logSha256": "d8cfc37d3a98c7680ae2bde4d21c4c9c72988e3abfec1bc81f90c19ce3e1a8da",
+      "logBytes": 733732,
+      "outputTail": "   │   └── icu_locale_fallback v2.3.0 (*)\n          └── tinystr v0.8.4\n              ├── icu_locale_core v2.3.0 (*)\n              └── icu_locale_fallback v2.3.0 (*)\n\nwarning[duplicate]: found 2 duplicate entries for crate 'zip'\n    ┌─ /Users/dominikwojcik/Projects/wt-s02/Cargo.lock:682:1\n    │  \n682 │ ╭ zip 8.6.0 registry+https://github.com/rust-lang/crates.io-index\n683 │ │ zip 9.0.4 registry+https://github.com/rust-lang/crates.io-index\n    │ ╰───────────────────────────────────────────────────────────────┘ lock entries\n    │  \n    ├ zip v8.6.0\n      ├── calamine v0.36.1\n      │   ├── (dev) os-cli v0.1.0\n      │   ├── os-engine v0.1.0\n      │   │   ├── (dev) os-analyze v0.1.0\n      │   │   │   ├── os-app v0.1.0\n      │   │   │   │   └── openspider-desktop v0.1.0\n      │   │   │   ├── os-cli v0.1.0 (*)\n      │   │   │   ├── os-export v0.1.0\n      │   │   │   │   ├── os-app v0.1.0 (*)\n      │   │   │   │   ├── os-cli v0.1.0 (*)\n      │   │   │   │   └── os-mcp v0.1.0\n      │   │   │   │       ├── os-app v0.1.0 (*)\n      │   │   │   │       └── os-cli v0.1.0 (*)\n      │   │   │   └── os-mcp v0.1.0 (*)\n      │   │   ├── os-app v0.1.0 (*)\n      │   │   ├── os-cli v0.1.0 (*)\n      │   │   ├── (dev) os-engine v0.1.0 (*)\n      │   │   ├── (dev) os-export v0.1.0 (*)\n      │   │   ├── os-loadtest v0.1.0\n      │   │   └── os-mcp v0.1.0 (*)\n      │   └── (dev) os-export v0.1.0 (*)\n      └── rust_xlsxwriter v0.99.1\n          └── os-export v0.1.0 (*)\n    ├ zip v9.0.4\n      ├── os-app v0.1.0\n      │   └── openspider-desktop v0.1.0\n      └── os-cli v0.1.0\n\nbans ok, licenses ok, sources ok\n"
+    },
+    {
+      "command": "cargo build --locked -p openspider-desktop --features e2e-webdriver",
+      "exitCode": 0,
+      "logSha256": "2341c97162452725f2596a36a78c32cefc1da48371b3ce8cf967e05e2ac42983",
+      "logBytes": 2565,
+      "outputTail": "-rustls v0.26.6\n   Compiling rustls-platform-verifier v0.7.1\n   Compiling lettre v0.11.23\n   Compiling rmcp v3.5.1\n   Compiling hyper v1.12.0\n   Compiling hyper-util v0.1.21\n   Compiling hyper-rustls v0.27.10\n   Compiling axum v0.8.9\n   Compiling reqwest v0.13.5\n   Compiling os-fetch v0.1.0 (/Users/dominikwojcik/Projects/wt-s02/crates/os-fetch)\n   Compiling chromiumoxide v0.9.1\n   Compiling os-sched v0.1.0 (/Users/dominikwojcik/Projects/wt-s02/crates/os-sched)\n   Compiling os-render v0.1.0 (/Users/dominikwojcik/Projects/wt-s02/crates/os-render)\n   Compiling objc2-web-kit v0.3.2\n   Compiling tao v0.37.1\n   Compiling window-vibrancy v0.8.1\n   Compiling muda v0.20.0\n   Compiling webbrowser v1.2.4\n   Compiling arboard v3.7.0\n   Compiling rfd v0.16.0\n   Compiling os-integrations v0.1.0 (/Users/dominikwojcik/Projects/wt-s02/crates/os-integrations)\n   Compiling os-engine v0.1.0 (/Users/dominikwojcik/Projects/wt-s02/crates/os-engine)\n   Compiling os-mcp v0.1.0 (/Users/dominikwojcik/Projects/wt-s02/crates/os-mcp)\n   Compiling os-app v0.1.0 (/Users/dominikwojcik/Projects/wt-s02/crates/os-app)\n   Compiling tauri-runtime v2.12.1\n   Compiling wry v0.57.0\n   Compiling tauri-runtime-wry v2.12.1\n   Compiling tauri v2.12.3\n   Compiling tauri-plugin-fs v2.7.1\n   Compiling tauri-plugin-notification v2.7.0\n   Compiling tauri-plugin-clipboard-manager v2.5.0\n   Compiling tauri-plugin-os v2.4.0\n   Compiling tauri-plugin-deep-link v2.6.2\n   Compiling tauri-plugin-single-instance v2.5.4\n   Compiling tauri-plugin-dialog v2.8.3\n    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3m 07s\n"
+    },
+    {
+      "command": "swiftc apps/desktop/spikes/macos.swift -o <temporary helper>",
+      "exitCode": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "logBytes": 0,
+      "outputTail": ""
+    },
+    {
+      "command": "npx --no-install tsc -p apps/desktop/spikes/tsconfig.json",
+      "exitCode": 0,
+      "output": ""
+    }
+  ],
+  "rustTests": {
+    "completedHarnesses": 363,
+    "passed": 2819,
+    "failed": 0,
+    "ignored": 68
+  },
+  "frontendTests": {
+    "files": 17,
+    "passed": 162
+  },
+  "runnerTests": {
+    "passed": 11,
+    "failed": 0
+  },
+  "sourceSha256": {
+    "apps/desktop/e2e-b/run.mjs": "f3f8e71b24c99345c32cad6043e5941de540eb26c18bdb5d2909e53682b8bbeb",
+    "apps/desktop/e2e-b/focus.mjs": "c4c9a519f477e6b58274002945da1089da3e8dfd073ce338fcf374dbcd3075b2",
+    "apps/desktop/e2e-b/focus.test.mjs": "7627a01cd758024812e16862afa8f91b6cd77ea0539c6ed22cc47896acf99b2d",
+    "apps/desktop/e2e-b/focus-windows.ps1": "0c914fb0241dc8ca985ed102730a48f5812165cc11d1cdf0cda6685ba9f2afaa",
+    "apps/desktop/spikes/macos.swift": "e926cacb48c92a44ebdc2d192d082eb5f6ce7a2692605d25f35c8ec7851e5ca3",
+    "apps/desktop/spikes/probe.ts": "7556a0b469d096a74234c73476a1dec1d64bb4ba92b9581697b9705b4dc045c4",
+    ".github/workflows/ui-e2e-b.yml": "7f9c253aa5d3618918754e83e6f086878b3dd72de6ea833fa8e57b7ae6074067"
+  },
+  "nativeBinarySha256": "18d1b9e58f7645daf26c5f932d56d6678fb25cb0a9bee6c23ac12052aac06d8d",
+  "nativeHelperSha256": "1d4c7ce44d87ae3d29cb8a39268e156e4237338497b6d9d22743b84efd721b02",
+  "targetSizeBytes": 30958075904,
+  "nativeProof": {
+    "macos": {
+      "report": "macos-terminal-report.json",
+      "terminalProgram": "Apple_Terminal",
+      "status": "blocked",
+      "reason": "GUI session locked; loginwindow foreground; no keys injected"
+    },
+    "windows": {
+      "status": "pending",
+      "reason": "Updated sources remain local because this task prohibits push/PR; spike-platform.yml requires a published revision"
+    },
+    "gate": "open"
+  },
+  "foreignChanges": [],
+  "pushPerformed": false,
+  "prCreated": false
+}

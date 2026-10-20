@@ -32,6 +32,15 @@ export async function activate() {
   return snapshot();
 }
 
+export async function keyboardFocus() {
+  const win = getCurrentWindow();
+  return {
+    at: performance.now(), frontend: document.visibilityState, focus: document.hasFocus(),
+    shell: { visible: await win.isVisible(), minimized: await win.isMinimized() },
+    target: document.activeElement?.id ?? "",
+  };
+}
+
 export function installKeyboardFixture() {
   document.getElementById("s02-fixture")?.remove();
   const root = document.createElement("section");
