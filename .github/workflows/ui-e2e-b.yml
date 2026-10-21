@@ -4,6 +4,13 @@ on:
   schedule:
     - cron: "23 2 * * *"
   workflow_dispatch:
+    inputs:
+      mode:
+        type: string
+        default: smoke
+      platforms:
+        type: string
+        default: '["macos-15", "windows-latest"]'
   workflow_call:
     inputs:
       mode:
@@ -50,12 +57,10 @@ jobs:
           swiftc apps/desktop/spikes/macos.swift -o "$RUNNER_TEMP/s02-macos"
           echo "S02_MAC_HELPER=$RUNNER_TEMP/s02-macos" >> "$GITHUB_ENV"
           echo "S02_GUI=1" >> "$GITHUB_ENV"
-      - name: Build Windows app and tauri-driver
+      - name: Build Windows app
         if: runner.os == 'Windows'
         run: |
           cargo build --locked -p openspider-desktop
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          cargo install tauri-driver --version 2.1.0 --locked
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: WebView2 driver
         if: runner.os == 'Windows'

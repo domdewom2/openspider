@@ -41,7 +41,8 @@ pub(super) fn issues(cfg: &CrawlConfig) -> Vec<ValidationIssue> {
     let report = cfg.validate();
     // The engine checks (regex dialect, rule sets) repeat findings of the model validation with a 0-based line;
     // one message per path is enough (CRAWL-109/110).
-    let known: std::collections::HashSet<_> = report.errors.iter().map(|i| i.path.clone()).collect();
+    let known: std::collections::HashSet<_> =
+        report.errors.iter().map(|i| i.path.clone()).collect();
     let extra: Vec<_> = os_engine::config_check::validate(cfg)
         .into_iter()
         .filter(|i| !known.contains(&i.path))

@@ -138,10 +138,31 @@ try {
   const port = await freePort();
   const env = { OPENSPIDER_HOME: home, OPENSPIDER_SECRET_STORE: "memory", TAURI_WEBDRIVER_PORT: String(port) };
   if (process.platform === "win32") {
-    child(process.env.TAURI_DRIVER ?? "tauri-driver", ["--port", String(port), "--native-port", String(await freePort())], env);
-    await until(async () => (await fetch(`http://127.0.0.1:${port}/status`, { signal: AbortSignal.timeout(1000) })).ok, "tauri-driver");
-    browser = await remote({ hostname: "127.0.0.1", port, logLevel: "error", connectionRetryCount: 0,
-      capabilities: { "tauri:options": { application: binary } } });
+    const capabilities = { browserName: "webview2", "ms:edgeOptions": { binary, webviewOptions: {} } };
+    // N01b (K2-65/ui-e2e-b): the runner talks to msedgedriver itself with the capabilities tauri-driver would build
+    // (`browserName: webview2`, `ms:edgeOptions.binary`). tauri-driver only maps these and hides the native driver's
+    // output; the verbose msedgedriver log is the evidence for "DevToolsActivePort file doesn't exist". S02_WINDOWS_DRIVER=tauri
+    // restores the old path.
+    const useTauriDriver = process.env.S02_WINDOWS_DRIVER === "tauri";
+    const startDriver = async attempt => {
+      if (useTauriDriver) child(process.env.TAURI_DRIVER ?? "tauri-driver", ["--port", String(port), "--native-port", String(await freePort())], env);
+      else child(process.env.EDGE_DRIVER ?? "msedgedriver", [`--port=${port}`, "--verbose", `--log-path=${join(output, `msedgedriver-${attempt}.log`)}`], env);
+      await until(async () => (await fetch(`http://127.0.0.1:${port}/status`, { signal: AbortSignal.timeout(1000) })).ok, "windows webdriver");
+      return remote({ hostname: "127.0.0.1", port, logLevel: "error", connectionRetryCount: 0,
+        capabilities: useTauriDriver ? { "tauri:options": { application: binary } } : capabilities });
+    };
+    // A first WebView2 start on a fresh runner can miss the driver's DevToolsActivePort deadline; one clean retry.
+    for (let attempt = 1; !browser; attempt++) {
+      try { browser = await startDriver(attempt); }
+      catch (e) {
+        report.startup = { ...report.startup, [`sessionAttempt${attempt}`]: String(e) };
+        report.processes = (() => { try { return execFileSync("powershell.exe", ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command",
+          "Get-Process | Where-Object { $_.ProcessName -match 'openspider|msedge' } | Select-Object ProcessName,Id,StartTime | ConvertTo-Json"], { encoding: "utf8", windowsHide: true, timeout: 15_000 }); } catch (err) { return String(err); } })();
+        if (attempt >= 2) throw e;
+        for (const image of ["openspider-desktop.exe", "msedgewebview2.exe", "msedgedriver.exe"]) { try { execFileSync("taskkill", ["/F", "/T", "/IM", image], { stdio: "ignore", windowsHide: true }); } catch { /* not running */ } }
+        await delay(2000);
+      }
+    }
   } else {
     if (guiLaunch) {
       const bundle = join(home, "S02.app");
@@ -284,9 +305,15 @@ try {
     });
     await check("closing during a running fixture crawl asks before quitting", async () => {
       assert.equal(report.quitDecision?.kind, "confirm", "Requires a running crawl and confirmation decision");
-      assert.equal(await browser.execute("return !!document.querySelector('[role=alertdialog], [role=dialog], dialog[open]')"), false);
+      const dialogOpen = () => browser.execute("return !!document.querySelector('[role=alertdialog], [role=dialog], dialog[open]')");
+      // N01b: app.requestQuit (previous check) already shows the same "Quit OpenSpider?" confirmation. Cancel it, so that the
+      // window close below is judged on its own (the CI screenshot of the failed run shows that dialog).
+      await until(dialogOpen, "quit confirmation of app.requestQuit");
+      const cancel = await browser.$("//*[@role='alertdialog' or @role='dialog']//button[normalize-space()='Cancel']");
+      await cancel.click();
+      await until(async () => !(await dialogOpen()), "quit confirmation cancelled");
       await evaluate("window.s02.close()");
-      await until(() => browser.execute("return !!document.querySelector('[role=alertdialog], [role=dialog], dialog[open]')"), "quit confirmation");
+      await until(dialogOpen, "quit confirmation");
       return await browser.execute("return document.querySelector('[role=alertdialog], [role=dialog], dialog[open]').textContent");
     });
   }

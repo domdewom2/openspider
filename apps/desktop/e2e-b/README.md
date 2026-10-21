@@ -35,10 +35,14 @@ keyboard actions use JavaScript and cannot verify NSMenu accelerator routing.
 If native posting is unavailable, S3 fails explicitly. The table is a fixture
 endpoint for the production dispatcher, not an implementation of the later grid.
 
-On Windows build without `e2e-webdriver`, install `tauri-driver` 2.1.0, and put a
-WebView2-compatible `msedgedriver` on PATH (`setup-windows.ps1` in CI). Then run
+On Windows build without `e2e-webdriver` and put a WebView2-compatible `msedgedriver`
+on PATH (`setup-windows.ps1` in CI). Then run
 `node apps/desktop/e2e-b/run.mjs target/debug/openspider-desktop.exe s3`. The runner
-starts `tauri-driver` on two free ports and connects WebdriverIO directly to it.
+starts `msedgedriver` itself (`--verbose`, log `msedgedriver-<attempt>.log` in the
+output folder) and connects WebdriverIO with the capabilities `tauri-driver` would
+build (`browserName: webview2`, `ms:edgeOptions.binary`); session creation is retried
+once after killing leftover app/WebView2 processes. `S02_WINDOWS_DRIVER=tauri` selects
+`tauri-driver` 2.1.0 (`cargo install tauri-driver --version 2.1.0 --locked`) instead.
 The runner invokes `focus-windows.ps1` without showing a console window. It
 identifies the target by its exact executable path, restores it, requests foreground
 permission and temporarily attaches the input threads around `SetForegroundWindow`.
