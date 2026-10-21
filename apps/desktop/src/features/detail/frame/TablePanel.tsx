@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Popover } from "react-aria-components";
 import { view } from "../../../ipc/view";
+import { toCmdError } from "../../../ipc/errors";
 import type { ViewSpec } from "../../../ipc/gen/ViewSpec";
 import type { SortKey } from "../../../ipc/gen/SortKey";
 import { ViewDataSource, LOADING } from "../../../data/ViewDataSource";
@@ -24,6 +25,8 @@ import type { DetailPanelProps } from "./types";
 export interface TablePanelProps extends DetailPanelProps {
   spec: ViewSpec;
   columns: readonly string[];
+  /** Used when the core rejects `columns` with err-unknown-column (columns the core does not offer yet). */
+  fallbackColumns?: readonly string[];
   hiddenColumns?: readonly string[];
   title: string;
   onSort: (sort: SortKey[]) => void;
@@ -53,7 +56,12 @@ export function TablePanel(props: TablePanelProps) {
   const result = useDetailRequest(key, async signal => {
     // Do not let the client discard a late handle on cancellation: it must still be closed.
     void signal;
-    const handle = await view.open({ spec, columns: [...props.columns] });
+    let handle: Awaited<ReturnType<typeof view.open>>;
+    try { handle = await view.open({ spec, columns: [...props.columns] }); }
+    catch (error) {
+      if (!props.fallbackColumns || toCmdError(error).messageKey !== "err-unknown-column") throw error;
+      handle = await view.open({ spec, columns: [...props.fallbackColumns] });
+    }
     const source = new ViewDataSource(handle);
     source.setSorted(spec.sort.length > 0);
     return { handle, source };

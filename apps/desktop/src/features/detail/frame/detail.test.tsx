@@ -360,7 +360,7 @@ describe("headers and images", () => {
   it("shows image instances in parity order with empty non-rendered dimensions and hidden extensions", async () => {
     render(<DetailFrame selection={selection} actions={actions} rendering={false} />); await settle(); await selectTab("Image Details");
     const table = screen.getByRole("table", { name: "Image Details" });
-    expect(within(table).getAllByRole("columnheader").map(e => e.textContent)).toEqual(IMAGE_COLUMNS.slice(0, -2));
+    expect(within(table).getAllByRole("columnheader").map(e => e.textContent)).toEqual(IMAGE_COLUMNS);
     expect(screen.getByText("400x300")).toBeInTheDocument(); expect(screen.getByText("HTML")).toBeInTheDocument();
     expect(fixture.core.calls.some(c => c.cmd === "detail.imagePreview")).toBe(false);
   });

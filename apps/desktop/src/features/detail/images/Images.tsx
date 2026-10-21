@@ -11,8 +11,10 @@ import { TablePanel } from "../frame/TablePanel";
 import { useDetailRequest } from "../frame/request";
 import { DetailError, DetailLoading } from "../frame/Feedback";
 import type { DetailPanelProps } from "../frame/types";
-export const IMAGE_COLUMNS = ["From", "To", "Alt Text", "Real Dimensions (WxH)", "Dimensions in Attributes (WxH)", "Display Dimensions (WxH)", "Potential Savings", "Path Type", "Link Path", "Link Position", "Link Origin", "Alt Text Length", "Source"];
-export const IMAGE_HIDDEN = ["Alt Text Length", "Source"];
+/** Columns the core delivers for `view.open` of kind `images` (ONPAGE-172); `Alt Text Length` and `Source` need the
+ *  `extensions` parameter, which the view spec does not carry, so asking for them fails with err-unknown-column (A01-12). */
+export const IMAGE_COLUMNS = ["From", "To", "Alt Text", "Real Dimensions (WxH)", "Dimensions in Attributes (WxH)", "Display Dimensions (WxH)", "Potential Savings", "Path Type", "Link Path", "Link Position", "Link Origin"];
+export const IMAGE_HIDDEN: readonly string[] = [];
 
 /** Resolves an instance's image URL without relying on detail row keys being URL ids. */
 async function imageId(address: string, signal: AbortSignal): Promise<number | undefined> {
