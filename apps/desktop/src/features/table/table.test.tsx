@@ -17,6 +17,7 @@ import { useSession } from "../../state/session";
 import { setLanguage } from "../../i18n";
 import { ViewDataSource } from "../../data/ViewDataSource";
 import { UpperTable } from "./UpperTable";
+import { ExportHost } from "../export/ExportHost";
 import { useDetailSelection } from "../detail/frame/selection";
 import { useSidebarNavigation } from "../sidebar/frame/state";
 import { TableController } from "./controller";
@@ -267,17 +268,21 @@ it("lets settings restore the removal confirmation preference", async () => {
 });
 
 // spec: OUT-009
-it("exports visible columns in their configured order and keeps the all-columns option explicit", async () => {
-  await mounted();
+// spec: OUT-006
+it("exports visible columns in their configured order through the shared export dialog and keeps the all-columns option explicit", async () => {
+  fx.core.handlers.set("export.suggestName", () => "fixture.csv");
+  const desktop = { choose: vi.fn(async () => "/out/fixture.csv"), directory: vi.fn(async () => "/out"), reveal: vi.fn(async () => undefined) };
+  render(<><UpperTable /><ExportHost desktop={desktop} /></>); await screen.findByTestId("grid"); await waitFor(() => expect(capture.grid?.source.rowKey(0)).toBe(1));
   const next = [...capture.grid!.columns];
   const title = next.splice(next.findIndex(c => c.key === "Title 1"), 1)[0]; next.splice(2, 0, title);
   next.find(c => c.key === "Meta Keywords 1")!.visible = false;
   await act(async () => { await useColumns.getState().change("Internal", next); });
   fireEvent.click(screen.getByRole("button", { name: "Export" }));
-  fireEvent.change(await screen.findByLabelText("Destination CSV file"), { target: { value: "fixture.csv" } });
-  const dialog = screen.getByRole("dialog");
-  fireEvent.click(dialog.querySelector('[data-role="ok"]')!);
-  await waitFor(() => expect(fx.core.calls.find(c => c.cmd === "export.view")?.args).toMatchObject({ allColumns: false, columns: ["Address", "Title 1", "Status Code", "Word Count"] }));
+  const dialog = await screen.findByRole("dialog", { name: "Export options" });
+  expect(within(dialog).getByRole("button", { name: /File format/ })).toBeInTheDocument();
+  await waitFor(() => expect(within(dialog).getByText(/Suggested filename: fixture\.csv/)).toBeInTheDocument());
+  fireEvent.click(within(dialog).getByRole("button", { name: "Save…" }));
+  await waitFor(() => expect(fx.core.calls.find(c => c.cmd === "export.view")?.args).toMatchObject({ allColumns: false, columns: ["Address", "Title 1", "Status Code", "Word Count"], path: "/out/fixture.csv", format: "csv" }));
 });
 
 // spec: UI-004

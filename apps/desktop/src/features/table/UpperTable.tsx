@@ -5,7 +5,6 @@ import { currentLanguage, useT } from "../../i18n";
 import { crawl } from "../../ipc/crawl";
 import { eventBus } from "../../ipc/events";
 import { toCmdError } from "../../ipc/errors";
-import { exportApi } from "../../ipc/export";
 import { op } from "../../ipc/op";
 import type { ViewSpec } from "../../ipc/gen/ViewSpec";
 import { useColumns, exportColumns } from "../../state/columns";
@@ -18,7 +17,7 @@ import { Button } from "../../ui/primitives/Button";
 import { Dialog, DialogFooter } from "../../ui/primitives/Dialog";
 import { ComboBox } from "../../ui/primitives/ComboBox";
 import { Badge } from "../../ui/primitives/Feedback";
-import { Checkbox, SearchField, TextField } from "../../ui/primitives/fields";
+import { Checkbox, SearchField } from "../../ui/primitives/fields";
 import { EmptyState } from "../../ui/primitives/EmptyState";
 import { MenuBody, type MenuEntry } from "../../ui/primitives/Menu";
 import { Popover } from "react-aria-components";
@@ -30,6 +29,7 @@ import { saveTableState } from "../../state/tabs";
 import { TableController } from "./controller";
 import { setDetailSelection } from "../detail/frame/selection";
 import { useSidebarNavigation } from "../sidebar/frame/state";
+import { openExport as openExportDialog, registerExportContext } from "../export/model";
 import { contextSelection, openSelected, launchBrowser } from "./actions";
 import { hasAction, runAction } from "../../ui/actions";
 import { registerMenuContributions } from "../../ui/menu/registry";
@@ -75,9 +75,6 @@ export function UpperTable() {
   const confirmLargeCopy = () => new Promise<boolean>(resolve => { copyResolve.current?.(false); copyResolve.current = resolve; setCopyConfirm(true); });
   const [browserConfirm, setBrowserConfirm] = useState(false);
   const browserResolve = useRef<((ok: boolean) => void) | undefined>(undefined);
-  const [exportSpec, setExportSpec] = useState<ViewSpec>();
-  const [path, setPath] = useState(""); const [allColumns, setAllColumns] = useState(false);
-  const [exportOpen, setExportOpen] = useState(false);
   const count = source ? controller.selection.count(source.total) : 0;
   const current = tabs.catalog.find(tab => tab.id === tabs.active);
   const filters = (current?.filters ?? []).map(f => controller.counts.filters.find(row => row.tab === tabs.active && row.filter.id === f.id)?.filter ?? f)
@@ -157,20 +154,22 @@ export function UpperTable() {
   const copy = (keys: string[], cell = false) => {
     if (!source) return;
     const selection = cell && context?.urlId !== undefined ? controller.selection.select(context.urlId) : controller.selection;
-    void copySelection(source, selection, keys, { confirmLarge: confirmLargeCopy, offerExport: () => setExportOpen(true), withHeader: false }).catch(fail);
+    void copySelection(source, selection, keys, { confirmLarge: confirmLargeCopy, offerExport: () => openExport(), withHeader: false }).catch(fail);
   };
   const openBrowser = () => {
     if (!source) return;
     void openSelected(source, controller.selection, () => new Promise(resolve => { browserResolve.current = resolve; setBrowserConfirm(true); }),
       launchBrowser).catch(fail);
   };
-  const openExport = (spec?: ViewSpec) => { setExportSpec(spec); setPath(""); setExportOpen(true); setContext(undefined); };
-  const exportSelection = async () => {
-    if (!source || !path.trim()) return;
-    const result = exportSpec
-      ? await exportApi.detail({ spec: exportSpec, selection: controller.selection.value, path, format: "csv" })
-      : await exportApi.view({ viewId: source.viewId, version: source.version, path, format: "csv", allColumns, columns: exportColumns(columns) });
-    setOperation({ id: result.opId, total: exportSpec ? count : source.total }); setExportOpen(false);
+  // OUT-006/UI-015: every table export goes through the shared export dialog (format choice, suggested name, status);
+  // the same snapshot backs the toolbar button, the large export button and Mod+E (A01-14).
+  const exportView = source ? { kind: "view" as const, tab: tabs.active, filter: query.filter, viewId: source.viewId, version: source.version, columns: exportColumns(columns) } : null;
+  const exportKey = JSON.stringify(exportView);
+  useEffect(() => exportView ? registerExportContext("view", exportView) : undefined, [exportKey]);
+  const openExport = (spec?: ViewSpec) => {
+    setContext(undefined);
+    if (spec) openExportDialog({ kind: "detail", spec, selection: controller.selection.value });
+    else if (exportView) openExportDialog(exportView);
   };
   useAction("search.focus", () => search.current?.querySelector("input")?.focus());
   useAction("search.clear", () => { tabs.query({ search: "", rules: null }); setText(""); });
@@ -192,7 +191,6 @@ export function UpperTable() {
     })().catch(error => setSearchError(searchErrorText(t, error)));
   };
   useAction("filter.open", () => filterRef.current?.querySelector("button")?.click());
-  useAction("export.view", () => openExport());
   useAction("crawl.recrawl", () => { void actOnSelection("recrawl").catch(fail); });
   useAction("table.remove", () => { void requestRemoval(true).catch(fail); });
   useAction("browser.open", openBrowser);
@@ -319,12 +317,6 @@ export function UpperTable() {
       footer={<DialogFooter okLabel={t("u10-open")} cancelLabel={t("u10-cancel")}
         onOk={() => { browserResolve.current?.(true); setBrowserConfirm(false); }} onCancel={() => { browserResolve.current?.(false); setBrowserConfirm(false); }} />}>
       {t("u10-browser-confirm", { count: Math.min(10, count) })}
-    </Dialog>
-    <Dialog title={t("u10-export")} isOpen={exportOpen} onOpenChange={setExportOpen}
-      footer={<DialogFooter okLabel={t("u10-export")} cancelLabel={t("u10-cancel")} okDisabled={!path.trim()}
-        onOk={() => void exportSelection().catch(fail)} onCancel={() => setExportOpen(false)} />}>
-      <TextField label={t("u10-export-path")} value={path} onChange={setPath} />
-      {!exportSpec && <Checkbox isSelected={allColumns} onChange={setAllColumns}>{t("u10-export-all")}</Checkbox>}
     </Dialog>
   </section>;
 }

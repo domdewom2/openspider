@@ -3,7 +3,7 @@ import { config } from "../../ipc/config";
 import type { ExportSel } from "../../ipc/gen/ExportSel";
 import type { OpHandle } from "../../ipc/gen/OpHandle";
 import type { JsonValue } from "../../ipc/gen/serde_json/JsonValue";
-import type { ExportRequest, LocalFormat } from "./model";
+import { useExportContext, type ExportRequest, type LocalFormat } from "./model";
 import { sitemapSchema, type SitemapOptions } from "./sitemap";
 
 export interface ExportChoices {
@@ -21,8 +21,14 @@ export async function executeExport(request: ExportRequest, path: string, choice
   const { format } = choices;
   const singleWorkbook = format === "xlsx" && choices.singleWorkbook;
   switch (request.kind) {
-    case "view": return exportApi.view({ viewId: request.viewId, version: request.version, path, format, allColumns: choices.allColumns,
-      columns: choices.allColumns ? null : request.columns, preserveUploadOrder: choices.preserveUploadOrder });
+    case "view": {
+      // The live table moves on while the dialog is open (ticks bump the view version): export the newest version of the
+      // same view instead of failing with "stale" (A01-14). A different view keeps the snapshot of the request.
+      const live = useExportContext.getState().view;
+      const version = live && live.viewId === request.viewId ? Math.max(live.version, request.version) : request.version;
+      return exportApi.view({ viewId: request.viewId, version, path, format, allColumns: choices.allColumns,
+        columns: choices.allColumns ? null : request.columns, preserveUploadOrder: choices.preserveUploadOrder });
+    }
     case "detail": return exportApi.detail({ spec: request.spec, selection: request.selection, path, format });
     case "sidebar": return exportApi.sidebar({ which: request.which, path, format });
     case "issues": return exportApi.issues({ which: request.which, path, format });
