@@ -1,0 +1,13 @@
+console-level = Level
+console-level-all = All levels
+console-level-error = Error
+console-level-warning = Warning
+console-level-info = Info
+console-level-log = Log
+console-export-pages = Export all pages with JavaScript issues
+console-export-summary = Console message summary of all pages
+console-export-needs-capture = Needs a crawl with JavaScript rendering and JavaScript error reporting.
+console-export-unavailable = This export is not available in this crawl.
+console-message = Message
+console-copy = Copy full message
+console-truncated = Shown shortened; the complete message has { $total } characters and is copied in full.
