@@ -82,6 +82,7 @@ pub(crate) fn info(tab: &str, filter: &defs::FilterDef, cfg: &CrawlConfig) -> Fi
         priority: priority(e.priority),
     });
     FilterInfo {
+        comparison: None,
         id: names::label(filter.id, cfg),
         label_template: filter.id.into(),
         params: {
@@ -293,30 +294,14 @@ pub(crate) fn expanded_columns(
         .collect()
 }
 fn get_tabs<'a>(app: &'a App, ctx: CallCtx, _: serde_json::Value) -> BoxFuture<'a, CmdResult> {
-    Box::pin(async move {
-        let cfg = app
-            .sessions()
-            .current(&ctx.window)
-            .map(|s| s.config)
-            .unwrap_or_default();
-        let tabs = tabs::configured(&cfg)
-            .iter()
-            .enumerate()
-            .map(|(i, t)| TabInfo {
-                id: t.id.into(),
-                default_order: i as u16,
-                filters: t.filters.iter().map(|f| info(t.id, f, &cfg)).collect(),
-                // Every registered tab has URL-backed rows (TabDef.population over urls u),
-                // so URL Details and link detail views are available (ONPAGE-036/UI-031).
-                detail_capable: true,
-            })
-            .collect::<Vec<_>>();
-        to_json(&tabs)
-    })
+    Box::pin(async move { to_json(&super::compare::change_tabs(app, &ctx).await?) })
 }
 fn columns<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
         let args: ColumnsArgs = parse_args(args)?;
+        if let Some(result) = super::compare::change_columns(app, &ctx, &args).await {
+            return result;
+        }
         let current = app.sessions().current(&ctx.window);
         let cfg = current
             .as_ref()
@@ -353,7 +338,19 @@ fn columns<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture
 fn counts<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
         let args: ScopeArgs = parse_args(args)?;
-        check_scope(&args.segment, &args.compare)?;
+        if let Some(result) = super::compare::change_overview(app, &ctx, &args, false).await {
+            return result;
+        }
+        let change_rows = super::compare::change_counts(app, &ctx, args.compare).await?;
+        let compare_scope = if matches!(
+            args.compare,
+            Some(CompareClass::Changed | CompareClass::NotChanged)
+        ) {
+            None
+        } else {
+            args.compare
+        };
+        check_scope(&args.segment, &compare_scope)?;
         let s = session(app, &ctx)?;
         app.read_pool()
             .run_snapshot(s.key, move |file, _| {
@@ -362,10 +359,10 @@ fn counts<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
                 Ok(views::filter_counts_in(&registry, file, &s.config)
                     .map_err(view_error)
                     .and_then(|counts| {
-                        to_json(&FilterCounts {
-                            version,
-                            filters: count_rows(&registry, &s.config, &counts),
-                        })
+                        let mut filters = count_rows(&registry, &s.config, &counts);
+                        filters.retain(|r| r.tab != "Change Detection");
+                        filters.extend(change_rows);
+                        to_json(&FilterCounts { version, filters })
                     }))
             })
             .await?

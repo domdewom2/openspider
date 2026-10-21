@@ -19,8 +19,9 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use futures_util::future::BoxFuture;
+use os_analyze::compare::change;
 use os_analyze::compare::{CompareError, CompareNote, Comparison, CrawlSide, Side, UrlMapping};
-use os_model::{ChangeElement, CrawlState, MappingRule};
+use os_model::{ChangeDetectionConfig, ChangeElement, CrawlState, MappingRule};
 
 use crate::dto::*;
 use crate::registry::{CmdResult, CommandMeta, Registry};
@@ -35,6 +36,8 @@ pub struct ActiveComparison {
     pub elements: Vec<String>,
     /// Schwelle für Inhaltsänderungen in Prozent.
     pub content_threshold_pct: u8,
+    /// Ansichten der Change Detection dieser Vergleichssitzung.
+    change_views: HashMap<String, ChangeView>,
 }
 
 #[derive(Default)]
@@ -285,6 +288,7 @@ async fn wait_for_memory(cancel: &os_model::CancelToken) -> Result<(), CmdError>
 
 fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
+        let use_default_elements = args.get("elements").is_none();
         let args: CompareOpenArgs = parse_args(args)?;
         if args.content_threshold_pct.is_some_and(|p| p > 100) {
             return Err(CmdError::invalid_input(
@@ -318,7 +322,7 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
             let b = CrawlSide::open(&previous, &work).map_err(compare_error)?;
             let comparison = Comparison::open(a, b, &mapping, &cancel).map_err(compare_error)?;
             let defaults = &comparison.current().config.compare.change_detection;
-            let elements = if args.elements.is_empty() {
+            let elements = if use_default_elements {
                 defaults
                     .elements
                     .iter()
@@ -331,11 +335,19 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
                 .content_threshold_pct
                 .unwrap_or(defaults.content_threshold_pct);
             notes_log(&comparison.notes());
+            let elements: Vec<String> = change::ELEMENTS
+                .iter()
+                .filter(|(e, _, _)| elements.iter().any(|s: &String| s == e.as_str()))
+                .map(|(e, _, _)| e.as_str().to_string())
+                .collect();
             let opened = ActiveComparison {
                 comparison,
                 elements,
                 content_threshold_pct,
+                change_views: HashMap::new(),
             };
+            change::calculate(&opened.comparison, &opened.change_config(), &cancel)
+                .map_err(compare_error)?;
             let result = dto(&opened, now);
             Ok((opened, result))
         })
@@ -356,6 +368,13 @@ fn swap<'a>(app: &'a App, ctx: CallCtx, _: serde_json::Value) -> BoxFuture<'a, C
         let now = app.config().clock.now();
         let session = with_active(app, &ctx.window, move |active| {
             active.comparison.swap();
+            change::calculate(
+                &active.comparison,
+                &active.change_config(),
+                &os_model::CancelToken::new(),
+            )
+            .map_err(compare_error)?;
+            active.change_views.clear();
             Ok(dto(active, now))
         })
         .await?;
@@ -442,5 +461,596 @@ pub fn register(r: &mut Registry) {
             },
             handler,
         );
+    }
+}
+
+#[derive(Clone)]
+struct ChangeView {
+    spec: ViewSpec,
+    columns: Vec<String>,
+    version: u64,
+}
+impl ActiveComparison {
+    fn change_config(&self) -> ChangeDetectionConfig {
+        ChangeDetectionConfig {
+            elements: self
+                .elements
+                .iter()
+                .filter_map(|e| e.parse().ok())
+                .collect(),
+            content_threshold_pct: self.content_threshold_pct,
+        }
+    }
+    fn change_tab(&self, changed: bool) -> os_analyze::defs::TabDef {
+        change::tab(&self.change_config(), changed)
+    }
+}
+
+/// Tab-Metadaten im Vergleich; außerhalb des Vergleichs ist Change Detection verborgen (TECH-300/301).
+pub async fn change_tabs(app: &App, ctx: &CallCtx) -> Result<Vec<TabInfo>, CmdError> {
+    let cfg = app
+        .sessions()
+        .current(&ctx.window)
+        .map(|s| s.config)
+        .unwrap_or_default();
+    let mut result: Vec<TabInfo> = os_analyze::tabs::configured(&cfg)
+        .iter()
+        .filter(|t| t.id != "Change Detection")
+        .enumerate()
+        .map(|(i, t)| TabInfo {
+            id: t.id.into(),
+            default_order: i as u16,
+            filters: t
+                .filters
+                .iter()
+                .map(|f| super::catalog::info(t.id, f, &cfg))
+                .collect(),
+            detail_capable: true,
+        })
+        .collect();
+    let filters = change_counts(app, ctx, None)
+        .await?
+        .into_iter()
+        .map(|r| r.filter)
+        .collect::<Vec<_>>();
+    if !filters.is_empty() {
+        result.push(TabInfo {
+            id: "Change Detection".into(),
+            default_order: 30,
+            filters,
+            detail_capable: true,
+        });
+    }
+    Ok(result)
+}
+
+/// Vergleichsspezifische Spalten; ohne Sitzung keine fremde Command-Logik ersetzen.
+pub async fn change_columns(app: &App, ctx: &CallCtx, args: &ColumnsArgs) -> Option<CmdResult> {
+    if args.tab != "Change Detection" {
+        return None;
+    }
+    Some(
+        with_active(app, &ctx.window, |active| {
+            let tab = active.change_tab(true);
+            let cfg = &active.comparison.current().config;
+            to_json(
+                &tab.columns
+                    .iter()
+                    .map(|c| super::catalog::column(c, c.key, cfg))
+                    .collect::<Vec<_>>(),
+            )
+        })
+        .await,
+    )
+}
+
+fn change_query(
+    view: &ChangeView,
+    columns: &[String],
+    offset: u64,
+    limit: u32,
+) -> Result<os_analyze::views::ViewQuery, CmdError> {
+    let mut spec = view.spec.clone();
+    if let ViewSpec::Tab {
+        compare, segment, ..
+    } = &mut spec
+    {
+        if segment.is_some() {
+            return Err(CmdError::unsupported("segment filter", "M2-K14"));
+        }
+        *compare = None;
+    }
+    super::view::tab_query(&spec, columns, offset, limit)
+}
+fn changed(spec: &ViewSpec) -> bool {
+    !matches!(
+        spec,
+        ViewSpec::Tab {
+            compare: Some(CompareClass::NotChanged),
+            ..
+        }
+    )
+}
+fn own_spec(spec: &ViewSpec) -> bool {
+    matches!(spec,ViewSpec::Tab{tab,..} if tab=="Change Detection")
+}
+fn change_handle(
+    active: &ActiveComparison,
+    id: String,
+    view: &ChangeView,
+) -> Result<ViewHandle, CmdError> {
+    let mut q = change_query(view, &view.columns, 0, 1)?;
+    let tab = change::tab_for_query(&active.change_config(), changed(&view.spec), &mut q);
+    let file = &active.comparison.current().file;
+    let cfg = &active.comparison.current().config;
+    let page = os_analyze::views::query_view_in(std::slice::from_ref(&tab), file, cfg, &q)
+        .map_err(super::catalog::view_error)?;
+    Ok(ViewHandle {
+        view_id: id,
+        version: view.version,
+        total: Some(page.total),
+        columns: super::catalog::expanded_columns(&tab, &page.columns, cfg),
+        state: ViewState::Ready,
+        op: None,
+        empty_state: None,
+    })
+}
+
+/// Anbindung des bisherigen leeren Tabs an `view.*`; alle anderen Views behalten ihre Handler (K2-71).
+pub async fn change_view(
+    app: &App,
+    ctx: &CallCtx,
+    command: &str,
+    args: &serde_json::Value,
+) -> Option<CmdResult> {
+    let own_id = args
+        .get("viewId")
+        .and_then(|v| v.as_str())
+        .is_some_and(|id| id.starts_with("change:"));
+    let own_tab = args
+        .get("spec")
+        .and_then(|s| s.get("tab"))
+        .and_then(|s| s.as_str())
+        == Some("Change Detection");
+    if !own_id && !own_tab {
+        return None;
+    }
+    let args = args.clone();
+    let command = command.to_string();
+    let id = format!(
+        "change:{}",
+        app.config().ids.new_crawl_id(app.config().clock.now())
+    );
+    Some(
+        with_active(app, &ctx.window, move |active| match command.as_str() {
+            "view.open" => {
+                let args: ViewOpenArgs = parse_args(args)?;
+                if !own_spec(&args.spec) || active.elements.is_empty() {
+                    return Err(CmdError::invalid_input("err-change-disabled", "spec"));
+                }
+                let view = ChangeView {
+                    spec: args.spec,
+                    columns: args.columns,
+                    version: active.comparison.version(),
+                };
+                let handle = change_handle(active, id.clone(), &view)?;
+                active.change_views.insert(id, view);
+                to_json(&handle)
+            }
+            "view.update" => {
+                let args: ViewUpdateArgs = parse_args(args)?;
+                if !own_spec(&args.spec) {
+                    return Err(CmdError::invalid_input("err-change-tab", "spec"));
+                }
+                let old = active
+                    .change_views
+                    .get(&args.view_id)
+                    .ok_or_else(|| CmdError::new(ErrorCode::NotFound, "err-view-not-found"))?;
+                let view = ChangeView {
+                    spec: args.spec,
+                    columns: old.columns.clone(),
+                    version: old.version + 1,
+                };
+                let handle = change_handle(active, args.view_id.clone(), &view)?;
+                active.change_views.insert(args.view_id, view);
+                to_json(&handle)
+            }
+            "view.rows" => {
+                let args: RowsArgs = parse_args(args)?;
+                let view = active
+                    .change_views
+                    .get(&args.view_id)
+                    .ok_or_else(|| CmdError::new(ErrorCode::NotFound, "err-view-not-found"))?;
+                if args.version != view.version {
+                    return Err(super::view::stale());
+                }
+                let columns = if args.columns.is_empty() {
+                    &view.columns
+                } else {
+                    &args.columns
+                };
+                let mut q = change_query(view, columns, args.offset, args.limit)?;
+                let tab =
+                    change::tab_for_query(&active.change_config(), changed(&view.spec), &mut q);
+                let page = os_analyze::views::query_view_in(
+                    &[tab],
+                    &active.comparison.current().file,
+                    &active.comparison.current().config,
+                    &q,
+                )
+                .map_err(super::catalog::view_error)?;
+                to_json(&RowWindow {
+                    view_id: args.view_id,
+                    version: view.version,
+                    offset: args.offset,
+                    row_keys: page.row_keys.iter().map(|i| i.0).collect(),
+                    columns: page.columns,
+                    cells: page
+                        .rows
+                        .iter()
+                        .map(|r| {
+                            r.iter()
+                                .map(|v| serde_json::to_value(v).unwrap_or_default())
+                                .collect()
+                        })
+                        .collect(),
+                })
+            }
+            "view.close" => {
+                let args: ViewCloseArgs = parse_args(args)?;
+                active
+                    .change_views
+                    .remove(&args.view_id)
+                    .ok_or_else(|| CmdError::new(ErrorCode::NotFound, "err-view-not-found"))?;
+                to_json(&())
+            }
+            _ => Err(CmdError::invalid_input("err-change-command", "command")),
+        })
+        .await,
+    )
+}
+
+/// Exporte nutzen denselben SQL-Plan einschließlich Changed/Not Changed (TECH-307).
+pub async fn change_export(
+    app: &App,
+    ctx: &CallCtx,
+    args: &serde_json::Value,
+) -> Option<CmdResult> {
+    if !args
+        .get("viewId")
+        .and_then(|v| v.as_str())
+        .is_some_and(|id| id.starts_with("change:"))
+    {
+        return None;
+    }
+    let args: ExportViewArgs = match parse_args(args.clone()) {
+        Ok(args) => args,
+        Err(e) => return Some(Err(e)),
+    };
+    let app_worker = app.clone();
+    let window = ctx.window.clone();
+    let op = app.ops().spawn("export-change", true, move |token, _| {
+        Box::pin(async move {
+            with_active(&app_worker, &window, move |active| {
+                let view = active
+                    .change_views
+                    .get(&args.view_id)
+                    .ok_or_else(|| CmdError::new(ErrorCode::NotFound, "err-view-not-found"))?;
+                if args.version != view.version {
+                    return Err(super::view::stale());
+                }
+                let mut q =
+                    change_query(view, args.columns.as_deref().unwrap_or(&view.columns), 0, 1)?;
+                if args.all_columns {
+                    q.columns = os_analyze::views::ColumnSelection::All;
+                }
+                let tab =
+                    change::tab_for_query(&active.change_config(), changed(&view.spec), &mut q);
+                let format = match args.format {
+                    ExportFormatDto::Csv => os_export::Format::Csv,
+                    ExportFormatDto::Xlsx => os_export::Format::Xlsx,
+                    _ => return Err(CmdError::invalid_input("err-export-format", "format")),
+                };
+                if token.is_cancelled() {
+                    return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"));
+                }
+                let mut export_ctx = os_export::types::ExportCtx {
+                    cancel: &token,
+                    progress: &|_| {},
+                    skip_empty: false,
+                    workbook: None,
+                    skipped: vec![],
+                };
+                let info = os_export::pipeline::export_view_with(
+                    &[tab],
+                    &active.comparison.current().file,
+                    &active.comparison.current().config,
+                    &q,
+                    Path::new(&args.path),
+                    format,
+                    "Change Detection",
+                    false,
+                    &mut export_ctx,
+                )
+                .map_err(|e| internal("export.change", e.to_string()))?
+                .ok_or_else(|| internal("export.change", "no output"))?;
+                to_json(&FileResult {
+                    path: info.path.to_string_lossy().into_owned(),
+                    bytes: info.bytes,
+                })
+            })
+            .await
+        })
+    });
+    Some(to_json(&op))
+}
+
+/// Zahlenquelle für Overview und Katalog; kein Element aktiv → kein Tab (TECH-300/301).
+pub async fn change_counts(
+    app: &App,
+    ctx: &CallCtx,
+    scope: Option<CompareClass>,
+) -> Result<Vec<FilterCountRow>, CmdError> {
+    if session(app, &ctx.window).is_none() {
+        return Ok(vec![]);
+    }
+    with_active(app, &ctx.window, move |active| {
+        if active.elements.is_empty() {
+            return Ok(vec![]);
+        }
+        let tab = active.change_tab(scope != Some(CompareClass::NotChanged));
+        let cfg = &active.comparison.current().config;
+        let all = change::ids(&active.comparison, "All", true)
+            .map_err(compare_error)?
+            .len();
+        tab.filters
+            .iter()
+            .map(|f| {
+                let mut info = super::catalog::info(tab.id, f, cfg);
+                let n = change::ids(
+                    &active.comparison,
+                    f.id,
+                    scope != Some(CompareClass::NotChanged),
+                )
+                .map_err(compare_error)?
+                .len();
+                info.count = Some(n);
+                let changed_count = change::ids(&active.comparison, f.id, true)
+                    .map_err(compare_error)?
+                    .len();
+                info.comparison = Some(ChangeCountDto {
+                    current: changed_count,
+                    previous: changed_count,
+                    change: changed_count,
+                });
+                info.pct = (all > 0).then(|| (n as f64 * 1000.0 / all as f64).round() / 10.0);
+                if f.id == "Content"
+                    && (!change::content_available(&active.comparison, Side::Current)
+                        .map_err(compare_error)?
+                        || !change::content_available(&active.comparison, Side::Previous)
+                            .map_err(compare_error)?)
+                {
+                    info.state = FilterStateDto::NeedsConfig {
+                        key: "content.text or minhash in both crawls".into(),
+                    };
+                }
+                Ok(FilterCountRow {
+                    tab: tab.id.into(),
+                    filter: info,
+                })
+            })
+            .collect()
+    })
+    .await
+}
+
+/// Die Vergleichssitzung liefert ihre eigenen Lesedateien; ein weiterer offener Crawl ist nicht erforderlich.
+pub async fn change_overview(
+    app: &App,
+    ctx: &CallCtx,
+    args: &ScopeArgs,
+    overview: bool,
+) -> Option<CmdResult> {
+    session(app, &ctx.window)?;
+    if args.segment.is_some()
+        || matches!(
+            args.compare,
+            Some(
+                CompareClass::Added
+                    | CompareClass::New
+                    | CompareClass::Removed
+                    | CompareClass::Missing
+            )
+        )
+    {
+        return None;
+    }
+    let change_rows = match change_counts(app, ctx, args.compare).await {
+        Ok(r) => r,
+        Err(e) => return Some(Err(e)),
+    };
+    Some(
+        with_active(app, &ctx.window, move |active| {
+            let side = active.comparison.current();
+            let tabs = os_analyze::tabs::configured_for_file(&side.config, &side.file);
+            let counts = os_analyze::views::filter_counts_in(&tabs, &side.file, &side.config)
+                .map_err(super::catalog::view_error)?;
+            let mut rows = super::catalog::count_rows(&tabs, &side.config, &counts);
+            rows.retain(|r| r.tab != "Change Detection");
+            rows.extend(change_rows);
+            if !overview {
+                return to_json(&FilterCounts {
+                    version: active.comparison.version(),
+                    filters: rows,
+                });
+            }
+            let summary = os_store::queries::app_support::overview_summary(side.file.conn())
+                .map_err(|e| store_error(&e))?;
+            let mut grouped: Vec<OverviewTab> = tabs
+                .iter()
+                .filter(|t| t.id != "Change Detection")
+                .filter_map(|t| {
+                    let filters = rows
+                        .iter()
+                        .filter(|r| r.tab == t.id)
+                        .map(|r| r.filter.clone())
+                        .collect::<Vec<_>>();
+                    (!filters.is_empty()).then(|| OverviewTab {
+                        tab: t.id.into(),
+                        filters,
+                    })
+                })
+                .collect();
+            let filters = rows
+                .into_iter()
+                .filter(|r| r.tab == "Change Detection")
+                .map(|r| r.filter)
+                .collect::<Vec<_>>();
+            if !filters.is_empty() {
+                grouped.push(OverviewTab {
+                    tab: "Change Detection".into(),
+                    filters,
+                });
+            }
+            to_json(&OverviewDto {
+                summary: super::sidebar::summary_rows(summary),
+                tabs: grouped,
+            })
+        })
+        .await,
+    )
+}
+
+#[cfg(test)]
+#[path = "../../../os-analyze/tests/change_detection_fixture.rs"]
+mod change_fixture;
+
+#[cfg(test)]
+mod change_tests {
+    use super::*;
+    use serde_json::json;
+    async fn setup() -> (tempfile::TempDir, App) {
+        let home = tempfile::tempdir().unwrap();
+        let old =
+            super::change_fixture::fixture(home.path(), 1, 1, os_model::CrawlConfig::default());
+        let new =
+            super::change_fixture::fixture(home.path(), 2, 2, os_model::CrawlConfig::default());
+        let app = App::new(crate::AppConfig::new(home.path())).unwrap();
+        app.dispatch(CallCtx::for_window("main"),"compare.open",json!({"current":new.path(),"previous":old.path(),"mapping":[],"contentThresholdPct":10})).await.unwrap();
+        (home, app)
+    }
+    // spec: TECH-301
+    // spec: TECH-307
+    #[tokio::test]
+    async fn change_view_works_without_another_open_crawl_and_inverts() {
+        let (_home, app) = setup().await;
+        let call = |name, args| app.dispatch(CallCtx::for_window("main"), name, args);
+        let spec = json!({"kind":"tab","tab":"Change Detection","filter":"Page Titles","search":null,"sort":[],"segment":null,"compare":"changed"});
+        let opened = call("view.open", json!({"spec":spec,"columns":[]}))
+            .await
+            .unwrap();
+        assert_eq!(opened["total"], 1);
+        let id = opened["viewId"].as_str().unwrap();
+        let rows=call("view.rows",json!({"viewId":id,"version":1,"offset":0,"limit":500,"columns":["Address","Title 1 (Current)","Title 1 (Previous)"]})).await.unwrap();
+        assert_eq!(
+            rows["cells"][0],
+            json!(["https://site.test/a", "shop", "Shop"])
+        );
+        let mut spec = spec;
+        spec["compare"] = json!("notChanged");
+        let updated = call("view.update", json!({"viewId":id,"spec":spec}))
+            .await
+            .unwrap();
+        assert_eq!(updated["total"], 10);
+        assert_eq!(updated["version"], 2);
+        let counts = call(
+            "catalog.filterCounts",
+            json!({"segment":null,"compare":null}),
+        )
+        .await
+        .unwrap();
+        assert!(counts["filters"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|r| r["tab"] == "Change Detection"
+                && r["filter"]["id"] == "Page Titles"
+                && r["filter"]["count"] == 1));
+        let overview = call("sidebar.overview", json!({"segment":null,"compare":null}))
+            .await
+            .unwrap();
+        assert_eq!(
+            overview["tabs"].as_array().unwrap().last().unwrap()["tab"],
+            "Change Detection"
+        );
+        let err = app
+            .dispatch(
+                CallCtx::for_window("other"),
+                "view.rows",
+                json!({"viewId":id,"version":2,"offset":0,"limit":1,"columns":[]}),
+            )
+            .await
+            .unwrap_err();
+        assert_eq!(err.code, ErrorCode::NotFound);
+    }
+    // spec: TECH-307
+    #[tokio::test]
+    async fn export_uses_the_inverted_view_and_the_file_result_contract() {
+        let (home, app) = setup().await;
+        let opened=app.dispatch(CallCtx::for_window("main"),"view.open",json!({"spec":{"kind":"tab","tab":"Change Detection","filter":"Page Titles","search":null,"sort":[],"segment":null,"compare":"notChanged"},"columns":["Address","Title 1 (Current)","Title 1 (Previous)"]})).await.unwrap();
+        let path = home.path().join("unchanged.csv");
+        let operation=app.dispatch(CallCtx::for_window("main"),"export.view",json!({"viewId":opened["viewId"],"version":opened["version"],"path":path,"format":"csv","allColumns":false})).await.unwrap();
+        let id = operation["opId"].as_str().unwrap();
+        let result = tokio::time::timeout(std::time::Duration::from_secs(5), async {
+            loop {
+                let status = app.ops().status(id).unwrap();
+                if status.state != OpState::Running {
+                    break status;
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .unwrap();
+        assert_eq!(result.state, OpState::Done, "{:?}", result.error);
+        let file: FileResult = serde_json::from_value(result.result.unwrap()).unwrap();
+        assert_eq!(file.path, path.to_string_lossy());
+        assert!(file.bytes > 0);
+        let csv = std::fs::read_to_string(path).unwrap();
+        assert_eq!(csv.lines().count(), 11);
+        assert!(!csv.contains("https://site.test/a,"));
+    }
+
+    // spec: TECH-300
+    #[tokio::test]
+    async fn tab_is_hidden_without_comparison_and_when_configuration_has_no_elements() {
+        let (_home, app) = setup().await;
+        with_active(&app, &WindowId("main".into()), |a| {
+            a.elements.clear();
+            Ok(())
+        })
+        .await
+        .unwrap();
+        let tabs = app
+            .dispatch(CallCtx::for_window("main"), "catalog.tabs", json!(null))
+            .await
+            .unwrap();
+        assert!(!tabs
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|t| t["id"] == "Change Detection"));
+        app.dispatch(CallCtx::for_window("main"), "compare.close", json!(null))
+            .await
+            .unwrap();
+        let tabs = app
+            .dispatch(CallCtx::for_window("main"), "catalog.tabs", json!(null))
+            .await
+            .unwrap();
+        assert!(!tabs
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|t| t["id"] == "Change Detection"));
     }
 }

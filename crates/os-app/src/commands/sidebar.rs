@@ -25,7 +25,19 @@ pub(crate) fn summary_rows(summary: Vec<(String, u64)>) -> Vec<SummaryRow> {
 fn overview<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
         let args: ScopeArgs = parse_args(args)?;
-        catalog::check_scope(&args.segment, &args.compare)?;
+        if let Some(result) = super::compare::change_overview(app, &ctx, &args, true).await {
+            return result;
+        }
+        let change_rows = super::compare::change_counts(app, &ctx, args.compare).await?;
+        let compare_scope = if matches!(
+            args.compare,
+            Some(CompareClass::Changed | CompareClass::NotChanged)
+        ) {
+            None
+        } else {
+            args.compare
+        };
+        catalog::check_scope(&args.segment, &compare_scope)?;
         let s = session(app, &ctx)?;
         app.read_pool()
             .run_snapshot(s.key, move |file, _| {
@@ -36,7 +48,9 @@ fn overview<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFutur
                     os_analyze::views::filter_counts_in(&registry, file, &s.config)
                         .map_err(view_error)
                         .and_then(|counts| {
-                            let rows = catalog::count_rows(&registry, &s.config, &counts);
+                            let mut rows = catalog::count_rows(&registry, &s.config, &counts);
+                            rows.retain(|r| r.tab != "Change Detection");
+                            rows.extend(change_rows);
                             let tabs = registry
                                 .iter()
                                 .filter_map(|t| {

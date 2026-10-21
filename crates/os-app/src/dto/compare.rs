@@ -27,6 +27,7 @@ pub struct CompareOpenArgs {
     /// URL-Mapping.
     pub mapping: Vec<MappingRuleDto>,
     /// Elemente der Change Detection (Kennungen laut TECH-300).
+    #[serde(default)]
     pub elements: Vec<String>,
     /// Schwelle für Inhaltsänderungen in Prozent.
     pub content_threshold_pct: Option<u8>,

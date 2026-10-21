@@ -349,6 +349,9 @@ fn export_view<'a>(
     args: serde_json::Value,
 ) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
+        if let Some(result) = super::compare::change_export(app, &ctx, &args).await {
+            return result;
+        }
         let args: ExportViewArgs = parse_args(args)?;
         let fmt = format(args.format)?;
         let v = view::get(app, &ctx, &args.view_id)?;
