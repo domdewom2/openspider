@@ -1,0 +1,13 @@
+sd-summary = { $errors } Fehler, { $warnings } Warnungen
+sd-show-all = Alle Befunde anzeigen
+sd-tree = Elemente der strukturierten Daten
+sd-issues = Validierungsmeldungen
+sd-severity-error = Fehler
+sd-severity-warning = Warnung
+sd-severity-none = Keine Befunde
+sd-position = Zeile { $line }, Spalte { $column }
+sd-no-issues = Keine Validierungsmeldungen für diese Auswahl.
+sd-link = Dokumentation
+sd-doc = Öffnen
+sd-copy-jsonld = Als JSON-LD kopieren
+sd-copy-jsonld-only = Nur für Microdata- und RDFa-Elemente verfügbar.

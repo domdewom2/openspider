@@ -1,0 +1,29 @@
+.os-src-panes { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.os-src-panes.os-src-single { grid-template-columns: minmax(0, 1fr); }
+.os-src-side { min-height: 240px; }
+.os-src-pane { flex: 1; min-height: 0; display: flex; }
+.os-src-pane .cm-editor { flex: 1; min-width: 0; height: 100%; background: var(--os-bg-surface); color: var(--os-text); font-family: var(--os-font-mono); font-size: 12px; }
+.os-src-pane .cm-editor.cm-focused { outline: 2px solid var(--os-focus); outline-offset: -2px; }
+.os-src-pane .cm-scroller { overflow: auto; font-family: inherit; line-height: 1.5; }
+.os-src-pane .cm-gutters { background: var(--os-bg-app); color: var(--os-text-muted); border-right: 1px solid var(--os-border); }
+.os-src-pane .cm-activeLine, .os-src-pane .cm-activeLineGutter { background: transparent; }
+.os-src-pane .cm-selectionBackground, .os-src-pane .cm-content ::selection { background: var(--os-bg-selection); }
+.os-src-diff-gutter { min-width: 14px; text-align: center; }
+.os-src-marker { font-weight: 700; }
+.os-src-marker-added { color: var(--os-diff-add); }
+.os-src-marker-removed { color: var(--os-diff-del); }
+.os-src-line-added { background: var(--os-diff-add-bg); }
+.os-src-line-removed { background: var(--os-diff-del-bg); }
+.os-src-word-added { background: var(--os-diff-add-bg); text-decoration: underline; }
+.os-src-word-removed { background: var(--os-diff-del-bg); text-decoration: line-through; }
+.os-src-match { background: var(--os-bg-selection-inactive); outline: 1px solid var(--os-border-strong); }
+.os-src-match-current { background: var(--os-bg-selection); outline: 2px solid var(--os-focus); }
+.os-src-target { background: var(--os-bg-selection); outline: 2px solid var(--os-accent); }
+/* Syntaxfarben nur aus Text-Tokens; Auszeichnung zusätzlich über Schnitt, damit kein Kontrast von der Hintergrundmarkierung abhängt. */
+.os-tok-tag { font-weight: 700; }
+.os-tok-attr { font-style: italic; }
+.os-tok-string, .os-tok-comment, .os-tok-doctype, .os-tok-punct { color: var(--os-text-muted); }
+.os-tok-comment { font-style: italic; }
+.os-tok-entity { text-decoration: underline dotted; }
+.os-src-line-added span, .os-src-line-removed span, .os-src-word-added, .os-src-word-removed, .os-src-match, .os-src-match span, .os-src-target, .os-src-target span { color: var(--os-text) !important; }
+.os-src-summary { font-weight: 600; }

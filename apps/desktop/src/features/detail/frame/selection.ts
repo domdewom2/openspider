@@ -13,3 +13,8 @@ export const DETAIL_BACK_EVENT = "os:detail-back";
 export function requestNavigation(request: NavigationRequest): void {
   document.dispatchEvent(new CustomEvent(DETAIL_NAVIGATE_EVENT, { detail: request }));
 }
+/** M2-U21 (additiv): Fach-Tabs bitten den Rahmen, einen anderen Detail-Tab zu zeigen (z. B. Accessibility → View Source). */
+export const DETAIL_SHOW_TAB_EVENT = "os:detail-show-tab";
+export function showDetailTab(tab: string): void {
+  document.dispatchEvent(new CustomEvent(DETAIL_SHOW_TAB_EVENT, { detail: { tab } }));
+}

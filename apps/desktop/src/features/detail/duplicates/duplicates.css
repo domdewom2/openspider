@@ -1,0 +1,11 @@
+.os-dup-list { max-height: 40%; overflow: auto; flex: none; }
+.os-dup-line { margin: 0; display: grid; grid-template-columns: 16px minmax(0, 1fr); padding: 1px 4px; overflow-wrap: anywhere; font-size: 13px; line-height: 1.5; }
+.os-dup-line[data-diff] { border-inline-start: 3px solid var(--os-border-strong); }
+.os-dup-line[data-diff="added"] { border-inline-start-color: var(--os-diff-add); background: var(--os-diff-add-bg); }
+.os-dup-line[data-diff="removed"] { border-inline-start-color: var(--os-diff-del); background: var(--os-diff-del-bg); }
+.os-dup-margin { font-weight: 700; text-align: center; }
+.os-dup-line[data-diff="added"] .os-dup-margin { color: var(--os-diff-add); }
+.os-dup-line[data-diff="removed"] .os-dup-margin { color: var(--os-diff-del); }
+.os-dup ins { text-decoration: underline; background: var(--os-diff-add-bg); color: var(--os-text); }
+.os-dup del { text-decoration: line-through; background: var(--os-diff-del-bg); color: var(--os-text); }
+.os-dup-compare { min-height: 200px; }

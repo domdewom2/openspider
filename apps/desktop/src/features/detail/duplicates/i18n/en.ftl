@@ -1,0 +1,11 @@
+dup-filter = Show
+dup-filter-exact = Exact
+dup-filter-near = Near
+dup-filter-semantic = Semantic
+dup-semantic-unavailable = Semantic similarity needs embeddings, which are not collected in this version.
+dup-match-exact = Exact
+dup-match-near = Near
+dup-list = Duplicate partners
+dup-pick = Select a partner to compare the analyzed content of both pages.
+dup-text-this = This page
+dup-summary = { $removed } words only on this page, { $added } words only on the partner page.

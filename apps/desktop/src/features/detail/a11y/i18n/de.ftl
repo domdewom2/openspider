@@ -1,0 +1,17 @@
+a11y-result = Ergebnis
+a11y-result-Violation = Violation
+a11y-result-Incomplete = Incomplete
+a11y-result-Inapplicable = Inapplicable
+a11y-result-Passed = Passed
+a11y-result-All = Alle
+a11y-rules = Regeln
+a11y-nodes = Betroffene Elemente
+a11y-node = Gewähltes Element
+a11y-summary = Zusammenfassung
+a11y-pick-rule = Wähle eine Regel, um ihre betroffenen Elemente zu sehen.
+a11y-no-elements = Keine Elemente mit Befund
+a11y-show-rendered = Im gerenderten HTML anzeigen
+a11y-show-browser = Im Browser anzeigen
+a11y-copy-selector = Selektor kopieren
+a11y-no-address = Die Adresse lässt sich nicht im Browser öffnen.
+a11y-rendered-not-stored = Das gerenderte HTML wird nicht gespeichert. Aktiviere „Gerendertes HTML speichern“ in den Einstellungen.

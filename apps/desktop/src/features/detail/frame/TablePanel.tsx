@@ -27,8 +27,12 @@ export interface TablePanelProps extends DetailPanelProps {
   hiddenColumns?: readonly string[];
   title: string;
   onSort: (sort: SortKey[]) => void;
-  onSelectRow?: (get: (column: string) => string) => void;
-  onActivateRow?: (get: (column: string) => string) => void;
+  onSelectRow?: (get: (column: string) => string, rowKey?: number) => void;
+  onActivateRow?: (get: (column: string) => string, rowKey?: number) => void;
+  /** M2-U21 (additiv): Zusatzeinträge im Kontextmenü einer Zeile, nach den Kopieraktionen. */
+  contextEntries?: (row: { key?: number; get: (column: string) => string }) => MenuEntry[];
+  /** M2-U21 (additiv): Kontextmenü ohne die Link-Endpunkt-Einträge (From/To/Quelltext) für Tabs ohne Linkzeilen. */
+  plainContext?: boolean;
   columnHints?: Record<string, string>;
   columnTitles?: Record<string, string>;
   pinAddress?: boolean;
@@ -96,10 +100,12 @@ export function TablePanel(props: TablePanelProps) {
   })) : [];
   if (target?.row !== undefined) {
     const row = target.row; const from = get(row, "From"); const to = get(row, "To"); const path = get(row, "Link Path");
+    const extra = props.contextEntries?.({ key: source.rowKey(row), get: column => get(row, column) }) ?? [];
     entries.unshift(
       { id: "copy-cell", label: t("detail-copy-cell"), onAction: () => copy(get(row, target.column)) },
       { id: "copy-row", label: t("detail-copy-row"), onAction: () => copy(columns.filter(c => c.visible).map(c => get(row, c.key).replace(/[\t\r\n]/g, " ")).join("\t")) },
-      ...(["From", "To"] as const).flatMap(side => {
+      ...extra,
+      ...(props.plainContext ? [] : [...(["From", "To"] as const).flatMap(side => {
         const address = side === "From" ? from : to;
         return [
           { id: `copy-${side}`, label: t("detail-copy-endpoint", { side }), isDisabled: !address, onAction: () => copy(address) },
@@ -108,7 +114,7 @@ export function TablePanel(props: TablePanelProps) {
         ];
       }),
       { id: "source", label: t("detail-show-source"), isDisabled: !from || !path || !props.htmlStored, disabledReason: !props.htmlStored ? t("detail-html-not-stored") : !path ? t("detail-no-path") : undefined,
-        onAction: () => actions.navigate({ address: from, tab: "auto", source: true, linkPath: path }) },
+        onAction: () => actions.navigate({ address: from, tab: "auto", source: true, linkPath: path }) }]),
       { id: "export", label: t("detail-export"), onAction: exporting },
     );
   }
@@ -116,7 +122,7 @@ export function TablePanel(props: TablePanelProps) {
     const row = await source.locate(id); if (row === null) return;
     await source.ensureRow(row);
     if (currentKey.current !== key) return;
-    if (props.onActivateRow) props.onActivateRow(column => get(row, column));
+    if (props.onActivateRow) props.onActivateRow(column => get(row, column), source.rowKey(row));
     else {
       const address = get(row, spec.kind === "inlinks" ? "From" : spec.kind === "detail" ? "Address" : "To");
       if (address) actions.navigate({ address, tab: "auto" });
@@ -142,7 +148,7 @@ export function TablePanel(props: TablePanelProps) {
       <DataGrid source={source} columns={columns} selection={selection} onSelectionChange={next => {
         setSelection(next);
         if (next.focus !== undefined && props.onSelectRow) void source.locate(next.focus).then(async row => {
-          if (row === null) return; await source.ensureRow(row); if (currentKey.current !== key) return; props.onSelectRow?.(column => get(row, column));
+          if (row === null) return; await source.ensureRow(row); if (currentKey.current !== key) return; props.onSelectRow?.(column => get(row, column), source.rowKey(row));
         }).catch(actions.reportError);
       }}
         onColumnsChange={setColumns} onSortChange={sort => { setColumns(columns.map(c => ({ ...c, sort: sort.find(s => s.column === c.key)?.dir }))); onSort(sort); }}

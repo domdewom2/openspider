@@ -1,0 +1,10 @@
+rendered-zoom = Zoom
+rendered-zoom-fit = Fit to width
+rendered-save = Save screenshot as…
+rendered-screenshot = Screenshot
+rendered-screenshot-size = Screenshot, { $width } × { $height } px
+rendered-tile = Screenshot part { $n } of { $total }
+rendered-resources = Resources loaded while rendering
+rendered-filter = Resources
+rendered-filter-blocked = Blocked resources
+rendered-filter-all = All resources

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RegionBoundary } from "../../../app/ErrorBoundary";
 import { config } from "../../../ipc/config";
 import { eventBus } from "../../../ipc/events";
@@ -26,9 +26,9 @@ import { Cookies } from "../cookies/Cookies";
 import { CrawlPath } from "../crawl-path/CrawlPath";
 import { DetailEmpty, DetailError } from "./Feedback";
 import { useDetailPreferences } from "./preferences";
-import { DETAIL_BACK_EVENT, requestNavigation, useDetailSelection } from "./selection";
+import { DETAIL_BACK_EVENT, DETAIL_SHOW_TAB_EVENT, requestNavigation, useDetailSelection } from "./selection";
 import { requestBrowser } from "./browser";
-import type { DetailActions, DetailPanelProps, DetailPlugin, DetailSelection, DetailTabId } from "./types";
+import { DETAIL_TABS, type DetailActions, type DetailPanelProps, type DetailPlugin, type DetailSelection, type DetailTabId } from "./types";
 import "./detail.css";
 
 const extensionModules = import.meta.glob<{ detailTab?: DetailPlugin }>("../*/index.tsx", { eager: true });
@@ -52,10 +52,23 @@ export function DetailFrame(props: DetailFrameProps) {
   const [showCrawlPath, setShowCrawlPath] = useState(false);
   const [features, setFeatures] = useState({ rendering: false, htmlStored: false, storeUncrawlable: false, positions: DEFAULT_POSITIONS });
   const [preferences, savePreferences, loaded] = useDetailPreferences(setError);
+  const preferencesRef = useRef(preferences); preferencesRef.current = preferences;
+  const savePreferencesRef = useRef(savePreferences); savePreferencesRef.current = savePreferences;
   const [exporting, setExporting] = useState<{ spec: ViewSpec; selection: Selection }>();
   const [path, setPath] = useState(""); const [format, setFormat] = useState<ExportFormatDto>("csv"); const [exportBusy, setExportBusy] = useState(false);
   const [exportOp, setExportOp] = useState<string>(); const op = useSession(s => exportOp ? s.ops[exportOp] : undefined);
   const [configVersion, setConfigVersion] = useState(0);
+  // M2-U21 (additiv): Fach-Tabs können einen anderen Detail-Tab anfordern (z. B. Accessibility → View Source); ein ausgeblendeter Tab wird wieder eingeblendet.
+  useEffect(() => {
+    const show = (event: Event) => {
+      const tab = (event as CustomEvent<{ tab?: string }>).detail?.tab as DetailTabId | undefined;
+      if (!tab || !DETAIL_TABS.includes(tab)) return;
+      setActive(tab); setShowCrawlPath(false);
+      if (preferencesRef.current.hidden.includes(tab)) savePreferencesRef.current({ ...preferencesRef.current, hidden: preferencesRef.current.hidden.filter(id => id !== tab) });
+    };
+    document.addEventListener(DETAIL_SHOW_TAB_EVENT, show);
+    return () => document.removeEventListener(DETAIL_SHOW_TAB_EVENT, show);
+  }, []);
   useEffect(() => eventBus.on("settingsChanged", () => setConfigVersion(version => version + 1)), []);
   useEffect(() => {
     const controller = new AbortController();

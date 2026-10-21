@@ -1,0 +1,17 @@
+a11y-result = Result
+a11y-result-Violation = Violation
+a11y-result-Incomplete = Incomplete
+a11y-result-Inapplicable = Inapplicable
+a11y-result-Passed = Passed
+a11y-result-All = All
+a11y-rules = Rules
+a11y-nodes = Affected elements
+a11y-node = Selected element
+a11y-summary = Summary
+a11y-pick-rule = Select a rule to see its affected elements.
+a11y-no-elements = No elements with findings
+a11y-show-rendered = Show in rendered HTML
+a11y-show-browser = Show in browser
+a11y-copy-selector = Copy selector
+a11y-no-address = The address cannot be opened in a browser.
+a11y-rendered-not-stored = The rendered HTML is not stored. Turn on "Store rendered HTML" in the settings.
