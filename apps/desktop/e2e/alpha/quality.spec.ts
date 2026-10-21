@@ -39,7 +39,10 @@ test("a tour through the main window produces no console errors and axe finds no
 
   // Seitenleiste und Detailfenster: jeder Reiter einmal
   for (const name of ["Issues", "Site Structure", "Segments", "Response Times", "API", "Spelling & Grammar", "Overview"]) {
-    await page.getByRole("tablist", { name: "Crawl summary" }).getByRole("tab", { name, exact: true }).click();
+    const tab = page.getByRole("tablist", { name: "Crawl summary" }).getByRole("tab", { name, exact: true });
+    await tab.focus();
+    await tab.press("Enter");
+    await expect(tab).toHaveAttribute("aria-selected", "true");
   }
   for (const name of ["Inlinks", "Outlinks", "Image Details", "Resources", "SERP Snippet", "HTTP Headers", "Cookies", "URL Details"]) {
     await page.getByRole("region", { name: "Details" }).getByRole("tab", { name, exact: true }).click();

@@ -48,6 +48,12 @@ export interface Alpha {
   /** Wechselt den oberen Tab. */
   selectTab(name: string): Promise<void>;
   /**
+   * Wartet nach einem Live-Crawl, bis der Zähler der Tabelle den Endstand zeigt. Unter Last bleibt der Zähler gelegentlich bei einem
+   * früheren Stand stehen oder die Tabelle leer (Befund A01-16); dann wird über einen anderen Tab erneut gewechselt und als Annotation
+   * `counts-stuck` vermerkt.
+   */
+  settleCounter(tab: string, expected: string): Promise<void>;
+  /**
    * Wechselt den Tab eines fertigen Crawls und wartet auf geladene Zeilen. Gelegentlich bleibt die Tabelle nach dem Wechsel direkt nach
    * dem Crawl-Ende leer („Showing: 0 of N“, Befund A01-16); dann wird über einen anderen Tab erneut gewechselt. Jeder solche Fall wird
    * als Annotation `table-reload` am Test vermerkt.
@@ -169,6 +175,19 @@ export const test = base.extend<{ alpha: Alpha }, { site: Site }>({
           .toBe(true);
         return last;
       },
+      async settleCounter(tab, expected) {
+        const other = tab === "External" ? "Response Codes" : "External";
+        for (let attempt = 0; attempt < 3; attempt++) {
+          const ok = await expect(table())
+            .toContainText(expected, { timeout: 8000 })
+            .then(() => true, () => false);
+          if (ok) return;
+          testInfo.annotations.push({ type: "counts-stuck", description: `${tab}: ${await alpha.counter().catch(() => "?")} statt ${expected}` });
+          await alpha.selectTab(other);
+          await alpha.selectTab(tab);
+        }
+        await expect(table()).toContainText(expected);
+      },
       async openTable(name) {
         const other = name === "External" ? "Response Codes" : "External";
         for (let attempt = 0; attempt < 4; attempt++) {
@@ -200,7 +219,9 @@ export const test = base.extend<{ alpha: Alpha }, { site: Site }>({
       },
     };
     await use(alpha);
+    // Fehlermeldungen werden vor dem Beenden der Bridge festgehalten: WebKit meldet beim Abbruch der Verbindung einen Konsolenfehler.
+    const errors = [...consoleErrors];
     await bridge.stop();
-    expect(consoleErrors, "Konsolenfehler im Hauptfenster oder Einstellungsfenster (Alpha-Kriterium 7)").toEqual([]);
+    expect(errors, "Konsolenfehler im Hauptfenster oder Einstellungsfenster (Alpha-Kriterium 7)").toEqual([]);
   },
 });

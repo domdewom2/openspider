@@ -232,3 +232,16 @@ test("Issue names show the configured thresholds instead of raw placeholders", a
   await expect(issues.getByRole("button", { name: CLIENT_ERROR, exact: true })).toBeVisible();
   expect(await issues.innerText()).not.toMatch(/\{[a-z_.]+\}/);
 });
+
+// Alpha 3, Seitenleiste (UI-060): jeder Reiter lässt sich mit der Maus erreichen.
+test("every sidebar tab can be selected with the mouse", async ({ alpha }) => {
+  const { page } = alpha;
+  await crawled(alpha);
+  const tabs = page.getByRole("tablist", { name: "Crawl summary" }).getByRole("tab");
+  const names = await tabs.allInnerTexts();
+  expect(names).toContain("Spelling & Grammar");
+  for (const name of names) {
+    await page.getByRole("tablist", { name: "Crawl summary" }).getByRole("tab", { name, exact: true }).click({ timeout: 5000 });
+    await expect(page.getByRole("tablist", { name: "Crawl summary" }).getByRole("tab", { name, exact: true })).toHaveAttribute("aria-selected", "true");
+  }
+});
