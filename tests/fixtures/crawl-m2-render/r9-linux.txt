@@ -1,0 +1,29 @@
+M2-E05 r9: lokaler Linux-Nachweis, 2026-10-21
+Ubuntu 26.04, aarch64, Kernel 7.0.0-34-generic, 4 vCPU, 4 GiB RAM.
+Rust 1.99.1. Playwright 1.64.1, Chrome for Testing 156.0.8078.4.
+Headless; DBUS_SESSION_BUS_ADDRESS entfernt; OPENSPIDER_SECRET_STORE=memory.
+OPENSPIDER_CHROMIUM zeigt auf das Chromium im isolierten Gast.
+Kein externer Testverkehr, ausschließlich Fixture-Server auf Loopback.
+
+Baseline: 6bc8802 (E05 plus angeforderter N01-Merge), nur Diagnoseausgaben ergänzt.
+core_limits: 10 bestanden, 2 fehlgeschlagen, 2.67 s.
+render_chromium: 3 bestanden, 6 fehlgeschlagen, 8.65 s.
+Alle vier Reviewfälle reproduziert. Zusätzliche Fehler bei geringerem Gast-RAM.
+Beobachtung bei CRAWL-112: state=Paused, crawled=0, end_reason=None.
+Memory Sample: engine_bytes=85258240, renderer_bytes=7694651392,
+physical_bytes=4084559872, available_bytes=3122216960.
+Keine RenderError-Ausgabe für die nicht gestarteten Seiten.
+Ursache: ProcessRefreshKind::nothing() aktiviert tasks standardmäßig;
+Linux-Threads erscheinen als Prozesse und teilen sich ihren RSS.
+
+Fix-Stand (ohne temporäre Diagnoseausgaben):
+cargo test -p os-engine --test render_chromium --test core_limits --locked
+Build: 17.16 s; core_limits: 12 bestanden, 0 fehlgeschlagen/ignoriert, 7.16 s.
+render_chromium: 9 bestanden, 0 fehlgeschlagen/ignoriert, 20.27 s. Exit 0.
+cargo test -p os-engine --test render_links --test pending_w1_e01 --locked
+Build: 16.56 s; pending_w1_e01: 3 bestanden, 0 fehlgeschlagen/ignoriert, 0.23 s.
+render_links: 2 bestanden, 0 fehlgeschlagen/ignoriert, 0.28 s. Exit 0.
+
+Der Worktree war nur lesend eingebunden; gebaut wurde ein isolierter Snapshot.
+VM nach Sicherung der Diagnoseprotokolle beendet und gelöscht.
+Dies ist kein linux-core-CI-Lauf und kein Nachweis für Windows/macOS x64.

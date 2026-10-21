@@ -420,7 +420,14 @@ fn dynamic_column_sources_are_registered_per_tab_and_names_are_interned() {
     let columns = tabs::dynamic_columns("Internal", &cfg);
     assert_eq!(
         columns.iter().map(|c| c.key).collect::<Vec<_>>(),
-        ["Link Score", "Links Truncated", "Truncated"]
+        [
+            "Link Score",
+            "Links Truncated",
+            "Truncated",
+            "Unique JS Inlinks",
+            "Unique JS Outlinks",
+            "Unique External JS Outlinks"
+        ]
     );
     // M2-D08 (Link Score), M2-D14 (Custom Search), M2-D15 (Custom Extraction und eine Internal-Quelle), M2-E01 (Internal), M2-D09 (Structured Data).
     let mut sources = tabs::column_sources()
@@ -434,6 +441,7 @@ fn dynamic_column_sources_are_registered_per_tab_and_names_are_interned() {
             "Analytics",
             "Custom Extraction",
             "Custom Search",
+            "Internal",
             "Internal",
             "Internal",
             "Internal",

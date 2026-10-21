@@ -1,4 +1,5 @@
 use super::{protocol, RenderError};
+use chromiumoxide::cdp::browser_protocol::network::EventDataReceived;
 use chromiumoxide::{
     cdp::{
         browser_protocol::network::{
@@ -19,6 +20,7 @@ use std::{
 
 #[derive(Default)]
 pub struct Data {
+    body_bytes: HashMap<usize, (u64, u64, Option<u64>)>,
     pub console: Vec<ConsoleEntry>,
     pub dropped: u64,
     pub blocked: Vec<BlockedResource>,
@@ -38,6 +40,27 @@ impl Drop for Capture {
     }
 }
 impl Data {
+    pub fn body_network(&self) -> Vec<NetworkEntry> {
+        self.network
+            .iter()
+            .enumerate()
+            .map(|(idx, entry)| {
+                let mut entry = entry.clone();
+                entry.bytes = self
+                    .body_bytes
+                    .get(&idx)
+                    .map_or(0, |(encoded, decoded, length)| {
+                        if *encoded > 0 {
+                            *encoded
+                        } else {
+                            length.unwrap_or(*decoded)
+                        }
+                    });
+                entry
+            })
+            .collect()
+    }
+
     fn console(&mut self, mut entry: ConsoleEntry, enabled: bool) {
         entry.timestamp_ms = entry
             .timestamp_ms
@@ -77,6 +100,10 @@ impl Capture {
             .as_millis() as u64;
     }
     pub async fn start(page: &Page, enabled: bool) -> Result<Self, RenderError> {
+        let mut body_data = page
+            .event_listener::<EventDataReceived>()
+            .await
+            .map_err(protocol)?;
         let mut console = page
             .event_listener::<EventConsoleApiCalled>()
             .await
@@ -146,7 +173,20 @@ impl Capture {
                         let mut d = shared.lock().expect("capture");
                         let status = v["response"]["status"].as_f64().unwrap_or(0.0) as u16;
                         if let Some((idx, _)) = d.requests.get(v["requestId"].as_str().unwrap_or_default()).copied() { d.network[idx].status = status; }
+                        if let Some((idx, _)) = d.requests.get(v["requestId"].as_str().unwrap_or_default()).copied() {
+                            let length = v["response"]["headers"].as_object().and_then(|headers| headers.iter().find(|(key, _)| key.eq_ignore_ascii_case("content-length"))).and_then(|(_, value)| value.as_str()).and_then(|value| value.parse().ok());
+                            d.body_bytes.entry(idx).or_default().2 = length;
+                        }
                         if status >= 400 { d.block(v["response"]["url"].as_str().unwrap_or_default().into(), "error", Some(status)); }
+                    }
+                    Some(e) = body_data.next() => {
+                        let v = serde_json::to_value(&*e).unwrap_or_default();
+                        let mut d = shared.lock().expect("capture");
+                        if let Some((idx, _)) = d.requests.get(v["requestId"].as_str().unwrap_or_default()).copied() {
+                            let entry = d.body_bytes.entry(idx).or_default();
+                            entry.0 += v["encodedDataLength"].as_u64().unwrap_or(0);
+                            entry.1 += v["dataLength"].as_u64().unwrap_or(0);
+                        }
                     }
                     Some(e) = finished.next() => {
                         let v = serde_json::to_value(&*e).unwrap_or_default(); let mut d = shared.lock().expect("capture");

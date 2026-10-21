@@ -1,0 +1,11 @@
+M2-E05 – Implementierung und Fix-Runde
+
+Der maßgebliche, aktualisierte Paketbericht steht unter
+docs/plan/M2-reports/e05.md.
+
+Vollständige Fremddiffs gegen die Paketbasis d9cc198:
+- k2-61.patch: additive Schnittstellen und Registrierungen.
+- k2-63.patch: begründete Erwartungsänderungen.
+
+Keine Manifestergänzung: Der View-Test columns.rs ist als Testmodul der
+additiven JS-Spaltenquelle registriert. Cargo.toml entspricht der Paketbasis.

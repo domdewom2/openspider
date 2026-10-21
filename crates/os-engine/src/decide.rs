@@ -111,7 +111,19 @@ pub fn decide(
         return LinkDecision::DROPPED;
     }
 
-    let sw = switch(link.link_type, scope, cfg);
+    let mut sw = switch(link.link_type, scope, cfg);
+    // CRAWL-062: browser-blocked analytics must not be fetched again through
+    // normal discovery of the rendered script/resource links.
+    if cfg.rendering.mode == os_model::RenderingMode::JavaScript
+        && !cfg.extraction.cookies
+        && link
+            .resolved
+            .as_deref()
+            .and_then(|u| url::Url::parse(u).ok())
+            .is_some_and(|u| crate::render_glue::analytics_host(u.host_str().unwrap_or_default()))
+    {
+        sw.crawl = false;
+    }
     if !sw.store && !sw.crawl {
         return LinkDecision::DROPPED;
     }

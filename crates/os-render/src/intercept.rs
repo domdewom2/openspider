@@ -230,11 +230,37 @@ impl Intercept {
                 .ok_or_else(|| protocol("CDP ohne Sitzung"))?
                 .to_owned(),
         );
+        let cookie_context = if opts.disable_cookies {
+            let info = command(
+                &mut conn,
+                None,
+                "Target.getTargetInfo",
+                json!({"targetId":page.target_id()}),
+            )
+            .await?;
+            Some(info["targetInfo"]["browserContextId"].clone())
+        } else {
+            None
+        };
+        let mut cookie_control = if opts.disable_cookies {
+            Some(
+                Connection::<CdpJsonEventMessage>::connect(ws)
+                    .await
+                    .map_err(protocol)?,
+            )
+        } else {
+            None
+        };
+        let disable_cookies = opts.disable_cookies;
+        let mut patterns = vec![json!({"urlPattern":"*"})];
+        if disable_cookies || opts.request_identity.is_some() {
+            patterns.push(json!({"urlPattern":"*", "requestStage":"Response"}));
+        }
         command(
             &mut conn,
             Some(session.clone()),
             "Fetch.enable",
-            json!({"patterns":[{"urlPattern":"*"}],"handleAuthRequests":true}),
+            json!({"patterns":patterns,"handleAuthRequests":true}),
         )
         .await?;
         let policy = opts.resource_policy.clone();
@@ -258,21 +284,43 @@ impl Intercept {
             .map_err(protocol)?
             .into_value()
             .map_err(protocol)?;
+        let main_frame = page.mainframe().await.map_err(protocol)?;
+        let identity = opts.request_identity.clone();
         let credentials = opts.credentials.clone();
         let proxy = launch.proxy_credentials.clone();
         let task = tokio::spawn(async move {
             let mut authenticated = HashSet::new();
+            let mut auth_retried = HashSet::new();
             while let Some(Ok(message)) = conn.next().await {
                 let Message::Event(event) = message else {
                     continue;
                 };
                 let p = event.params;
+                if event.method.as_ref() == "Fetch.requestPaused" {
+                    if let (Some(control), Some(context)) = (&mut cookie_control, &cookie_context) {
+                        if command(
+                            control,
+                            None,
+                            "Storage.clearCookies",
+                            json!({"browserContextId": context}),
+                        )
+                        .await
+                        .is_err()
+                        {
+                            break;
+                        }
+                    }
+                }
                 let id = p["requestId"].clone();
                 let (method, params) = match event.method.as_ref() {
                     "Fetch.authRequired" => {
                         let source = p["authChallenge"]["source"].as_str().unwrap_or_default();
                         let candidate = if source == "Proxy" {
                             proxy.as_ref()
+                        } else if identity.is_some() {
+                            // The scoped transport handles this 401 at response stage.
+                            // Giving Chromium credentials populates its origin-wide auth cache.
+                            None
                         } else if p["authChallenge"]["origin"].as_str() == Some(origin.as_str()) {
                             credentials.as_ref()
                         } else {
@@ -295,9 +343,57 @@ impl Intercept {
                             json!({"requestId":id,"authChallengeResponse":auth}),
                         )
                     }
+                    "Fetch.requestPaused" if p["responseStatusCode"].is_number() => {
+                        let resource_url = p["request"]["url"].as_str().unwrap_or_default();
+                        let authenticated = if p["responseStatusCode"] == 401
+                            && p["request"]["method"] == "GET"
+                            && auth_retried.insert(id.to_string())
+                        {
+                            match &identity {
+                                Some(identity) => identity.auth_response(resource_url).await,
+                                None => None,
+                            }
+                        } else {
+                            None
+                        };
+                        if let Some(response) = authenticated {
+                            fulfill(id, response, disable_cookies)
+                        } else if disable_cookies {
+                            let headers = p["responseHeaders"]
+                                .as_array()
+                                .cloned()
+                                .unwrap_or_default()
+                                .into_iter()
+                                .filter(|h| {
+                                    !h["name"]
+                                        .as_str()
+                                        .unwrap_or_default()
+                                        .eq_ignore_ascii_case("set-cookie")
+                                })
+                                .collect::<Vec<_>>();
+                            (
+                                "Fetch.continueResponse",
+                                json!({"requestId":id,"responseCode":p["responseStatusCode"],"responseHeaders":headers}),
+                            )
+                        } else {
+                            ("Fetch.continueResponse", json!({"requestId":id}))
+                        }
+                    }
                     "Fetch.requestPaused" => {
                         let resource_url = p["request"]["url"].as_str().unwrap_or_default();
+                        let resource_type = p["resourceType"].as_str().unwrap_or_default();
+                        let resource_type = if resource_type == "Document"
+                            && p["frameId"].as_str()
+                                == main_frame.as_ref().map(|frame| frame.as_ref())
+                        {
+                            "Navigation"
+                        } else {
+                            resource_type
+                        };
                         let allowed = match &policy {
+                            Some(policy) if resource_url != main_url => {
+                                policy.allowed_resource(resource_url, resource_type).await
+                            }
                             Some(policy) => policy.allowed(resource_url).await,
                             None => true,
                         };
@@ -315,6 +411,13 @@ impl Intercept {
                             && p["resourceType"] == "Document"
                             && response.is_some()
                         {
+                            if disable_cookies {
+                                if let Some(response) = &mut response {
+                                    response.headers.retain(|(name, _)| {
+                                        !name.eq_ignore_ascii_case("set-cookie")
+                                    });
+                                }
+                            }
                             let response = response.take().expect("main response");
                             let headers: Vec<_> = response
                                 .headers
@@ -334,6 +437,36 @@ impl Intercept {
                                 "Fetch.fulfillRequest",
                                 json!({"requestId":id,"responseCode":response.status,"responseHeaders":headers,"body":BASE64_STANDARD.encode(response.body)}),
                             )
+                        } else if identity.is_some() || disable_cookies {
+                            let mut headers = p["request"]["headers"]
+                                .as_object()
+                                .cloned()
+                                .unwrap_or_default();
+                            if identity.is_some() {
+                                headers.retain(|name, _| {
+                                    !name.eq_ignore_ascii_case("accept-language")
+                                        && !name.eq_ignore_ascii_case("authorization")
+                                });
+                            }
+                            if disable_cookies {
+                                headers.retain(|name, _| !name.eq_ignore_ascii_case("cookie"));
+                            }
+                            for (name, value) in identity
+                                .as_ref()
+                                .map(|i| i.headers(resource_url))
+                                .unwrap_or_default()
+                            {
+                                headers.retain(|key, _| !key.eq_ignore_ascii_case(&name));
+                                headers.insert(name, json!(value));
+                            }
+                            let headers = headers
+                                .into_iter()
+                                .map(|(name, value)| json!({"name":name,"value":value}))
+                                .collect::<Vec<_>>();
+                            (
+                                "Fetch.continueRequest",
+                                json!({"requestId":id,"headers":headers}),
+                            )
                         } else {
                             ("Fetch.continueRequest", json!({"requestId":id}))
                         }
@@ -350,6 +483,64 @@ impl Intercept {
         });
         Ok(Self(task))
     }
+}
+
+fn fulfill(
+    id: Value,
+    response: super::MainResponse,
+    disable_cookies: bool,
+) -> (&'static str, Value) {
+    let headers = response
+        .headers
+        .into_iter()
+        .filter(|(name, _)| {
+            ![
+                "content-length",
+                "content-encoding",
+                "transfer-encoding",
+                "connection",
+            ]
+            .contains(&name.to_ascii_lowercase().as_str())
+                && !(disable_cookies && name.eq_ignore_ascii_case("set-cookie"))
+        })
+        .map(|(name, value)| json!({"name":name,"value":value}))
+        .collect::<Vec<_>>();
+    (
+        "Fetch.fulfillRequest",
+        json!({"requestId":id,"responseCode":response.status,"responseHeaders":headers,"body":BASE64_STANDARD.encode(response.body)}),
+    )
+}
+
+/// Read the complete isolated context via the browser endpoint, including cookies
+/// whose paths/domains are absent from the current document.
+pub async fn cookies(
+    ws: &str,
+    target: &TargetId,
+) -> Result<Vec<chromiumoxide::cdp::browser_protocol::network::Cookie>, RenderError> {
+    let mut conn = Connection::<CdpJsonEventMessage>::connect(ws)
+        .await
+        .map_err(protocol)?;
+    let info = command(
+        &mut conn,
+        None,
+        "Target.getTargetInfo",
+        json!({"targetId": target}),
+    )
+    .await?;
+    let value = command(
+        &mut conn,
+        None,
+        "Storage.getCookies",
+        json!({"browserContextId": info["targetInfo"]["browserContextId"]}),
+    )
+    .await?;
+    Ok(
+        serde_json::from_value::<chromiumoxide::cdp::browser_protocol::storage::GetCookiesReturns>(
+            value,
+        )
+        .map_err(protocol)?
+        .cookies,
+    )
 }
 
 pub async fn dispose_context(

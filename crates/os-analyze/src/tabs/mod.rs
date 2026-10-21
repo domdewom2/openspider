@@ -180,6 +180,7 @@ pub fn column_sources() -> Vec<(&'static str, Box<dyn ColumnSource>)> {
     add("Internal", links::column_source());
     add("Structured Data", structured_data::column_source());
     add("Internal", internal_crawl::column_source());
+    add("Internal", internal::rendering_column_source());
     add("PageSpeed", pagespeed::column_source());
     #[cfg(feature = "testing")]
     add("Internal", testing::source());

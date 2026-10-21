@@ -76,8 +76,17 @@ pub(crate) const STOP_STOP: u8 = 1;
 /// Pausieren (Zustand `Paused`, kein Abschluss-Hook).
 pub(crate) const STOP_PAUSE: u8 = 2;
 
+/// CRAWL-075: zero disables the page limit, including transport fallbacks.
+pub(crate) fn page_body_limit(cfg: &CrawlConfig) -> u64 {
+    match cfg.limits.max_page_kb {
+        0 => u64::MAX,
+        kb => kb.saturating_mul(1024),
+    }
+}
+
 /// Zustand, den alle Worker und die Steuerschleife teilen.
 pub(crate) struct Shared<F: Fetch> {
+    pub render_session: crate::render_glue::Session,
     pub sitemap_ingest_lock: tokio::sync::Mutex<()>,
     pub add_rx: tokio::sync::Mutex<tokio::sync::mpsc::UnboundedReceiver<AddRequest>>,
     pub fetcher: Arc<F>,
@@ -226,10 +235,10 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
             url: url.clone(),
             purpose: item.purpose.fetch_purpose(),
             cookies,
-            max_body_bytes: cfg.limits.max_page_kb.saturating_mul(1024),
+            max_body_bytes: page_body_limit(cfg),
             attempt: item.attempt,
             body_limit: os_fetch::BodyLimit {
-                max_decoded_bytes: cfg.limits.max_page_kb.saturating_mul(1024),
+                max_decoded_bytes: page_body_limit(cfg),
                 abort_media_after: Some(64 * 1024),
             },
         })
@@ -448,6 +457,7 @@ pub(crate) fn facts_from_result(res: &FetchResult, cfg: &CrawlConfig) -> FetchFa
 
 #[derive(Default)]
 struct Analysis {
+    origins: HashMap<(LinkType, String), LinkOrigin>,
     extra: WriteBatch,
     html: Option<os_model::PageHtml>,
     pdf_word_count: Option<u32>,
@@ -588,8 +598,13 @@ async fn analyze<F: Fetch>(
     }
     match a.facts.content_class {
         ContentClass::Html => {
-            let parsed = parse_html_page(sh, url, resp).await;
-            a.facts.charset = parsed.charset.clone();
+            let raw = parse_html_page(sh, url, resp).await;
+            a.facts.charset = raw.charset.clone();
+            let parsed = if cfg.rendering.mode == os_model::RenderingMode::JavaScript {
+                render_page(sh, item, url, resp, raw, &mut a).await
+            } else {
+                raw
+            };
             a.refresh = parsed.refresh.clone();
             parsed_refresh(&mut a, url, &parsed.refresh);
             a.parsed = Some(parsed);
@@ -634,11 +649,260 @@ async fn analyze<F: Fetch>(
     a
 }
 
+async fn render_page<F: Fetch>(
+    sh: &Arc<Shared<F>>,
+    item: &QueueItem,
+    url: &Url,
+    resp: &HttpResponse,
+    raw: ParsedPage,
+    a: &mut Analysis,
+) -> ParsedPage {
+    let opts = crate::render_glue::options(sh, item, resp);
+    let outcome = sh.render_session.render(url.as_str(), &opts).await;
+    let mut write = os_model::RenderWrite {
+        url_id: item.id,
+        status: "ok".into(),
+        html: None,
+        word_count: None,
+        console_dropped: 0,
+        timings: Default::default(),
+        console: vec![],
+        blocked: vec![],
+        network: vec![],
+        screenshots: vec![],
+    };
+    let page = match outcome {
+        Ok(mut rendered) => {
+            if let Some(network) = rendered.body_network.take() {
+                rendered.network = network;
+                for (url, facts) in &mut rendered.images {
+                    facts.bytes = rendered
+                        .network
+                        .iter()
+                        .rev()
+                        .find(|entry| &entry.url == url)
+                        .map(|entry| entry.bytes);
+                }
+            }
+            if let Some(jar) = crate::render_glue::cookie_jar(sh, item.session) {
+                if let Some(cookies) = &rendered.cookies {
+                    crate::render_glue::sync_cookies(&jar, &opts.cookies, cookies);
+                } else {
+                    jar.store_set_cookie(
+                        url,
+                        rendered.cookie_assignments.iter().map(String::as_str),
+                    );
+                }
+            }
+            if sh.cfg.extraction.cookies {
+                let cookie_offset = a
+                    .extra
+                    .cookies
+                    .iter()
+                    .map(|c| c.position)
+                    .max()
+                    .map_or(0, |n| n.saturating_add(1));
+                a.extra.cookies.extend(
+                    crate::cookies::collect(item.id, &rendered.cookie_assignments)
+                        .into_iter()
+                        .map(|mut cookie| {
+                            cookie.origin = os_model::CookieOrigin::JavaScript;
+                            cookie.position += cookie_offset;
+                            cookie
+                        }),
+                );
+            }
+            // UTF-8 serialization must not inherit the original response charset.
+            let headers: Vec<_> = resp
+                .headers
+                .iter()
+                .filter(|(k, _)| !k.eq_ignore_ascii_case("content-type"))
+                .cloned()
+                .collect();
+            let dom_url = Url::parse(&rendered.final_url).unwrap_or_else(|_| url.clone());
+            let mut dom = parse_now(
+                &dom_url,
+                rendered.dom_html.as_bytes(),
+                resp.status,
+                Some("text/html; charset=utf-8"),
+                &headers,
+                &sh.pcfg,
+            );
+            // Relative DOM links follow document.baseURI (including pushState). HTTP
+            // annotations still belong to the original fetched URL (TECH-006).
+            dom.canonicals.retain(|c| c.source != HintSource::Http);
+            dom.canonicals.extend(
+                raw.canonicals
+                    .iter()
+                    .filter(|c| c.source == HintSource::Http)
+                    .cloned(),
+            );
+            dom.hreflang.retain(|h| h.source != HintSource::Http);
+            dom.hreflang.extend(
+                raw.hreflang
+                    .iter()
+                    .filter(|h| h.source == HintSource::Http)
+                    .cloned(),
+            );
+            dom.pagination.retain(|p| p.source != HintSource::Http);
+            dom.pagination.extend(
+                raw.pagination
+                    .iter()
+                    .filter(|p| p.source == HintSource::Http)
+                    .cloned(),
+            );
+            dom.refresh.retain(|r| r.source != RefreshSource::Header);
+            dom.refresh.extend(
+                raw.refresh
+                    .iter()
+                    .filter(|r| r.source == RefreshSource::Header)
+                    .cloned(),
+            );
+            dom.links.retain(|l| l.doc_order != u32::MAX);
+            dom.links.extend(
+                raw.links
+                    .iter()
+                    .filter(|l| l.doc_order == u32::MAX)
+                    .cloned(),
+            );
+            a.extra
+                .ext
+                .extend(crate::render_glue::comparison(&raw, &dom).into_iter().map(
+                    |(key, value)| os_model::ExtWrite {
+                        url: item.id,
+                        key,
+                        value,
+                    },
+                ));
+            a.origins = crate::render_glue::merge(&raw, &mut dom);
+            // Keep raw noindex authoritative even when a script removes it (TECH-006/105).
+            if !raw.effective_index {
+                dom.effective_index = false;
+                for d in &raw.directives {
+                    if d.applies
+                        && d.tokens.iter().any(|t| t == "noindex")
+                        && !dom.directives.contains(d)
+                    {
+                        dom.directives.push(d.clone());
+                    }
+                }
+            }
+            let raw_images: std::collections::HashSet<_> =
+                raw.images.iter().map(|i| i.resolved.clone()).collect();
+            let dom_images: std::collections::HashSet<_> =
+                dom.images.iter().map(|i| i.resolved.clone()).collect();
+            let mut facts = rendered.images.iter().collect::<Vec<_>>();
+            for image in &mut dom.images {
+                image.origin = if raw_images.contains(&image.resolved) {
+                    LinkOrigin::Both
+                } else {
+                    LinkOrigin::RenderedHtml
+                };
+                if let Some(index) = facts
+                    .iter()
+                    .position(|(target, _)| image.resolved.as_deref() == Some(target.as_str()))
+                {
+                    image.render = Some(facts.remove(index).1.clone());
+                }
+            }
+            dom.images.extend(
+                raw.images
+                    .iter()
+                    .filter(|i| !dom_images.contains(&i.resolved))
+                    .cloned(),
+            );
+            // A document navigation is distinct from a history URL change.
+            if let Some(target) = rendered
+                .navigation_url
+                .as_deref()
+                .and_then(|s| Url::parse(s).ok())
+            {
+                if !os_url::eq_for_compare(url.as_str(), target.as_str())
+                    && matches!(target.scheme(), "http" | "https")
+                {
+                    let refresh = redirect::refresh_target(url, &raw.refresh);
+                    a.redirect = refresh
+                        .redirect
+                        .or(refresh.self_refresh)
+                        .filter(|r| os_url::eq_for_compare(&r.target.encoded, target.as_str()))
+                        .or_else(|| {
+                            Some(RedirectTarget {
+                                kind: RedirectType::JavaScript,
+                                delay: None,
+                                raw: target.to_string(),
+                                target: crate::fragments::normalize(
+                                    &target,
+                                    sh.cfg.advanced.crawl_fragments,
+                                ),
+                                xpath: None,
+                            })
+                        });
+                }
+            }
+            let mut resources = HashMap::<&str, u64>::new();
+            for entry in &rendered.network {
+                if !os_url::eq_for_compare(&entry.url, url.as_str()) {
+                    resources
+                        .entry(&entry.url)
+                        .and_modify(|n| *n = (*n).max(entry.bytes))
+                        .or_insert(entry.bytes);
+                }
+            }
+            a.facts.total_transferred_bytes = resources
+                .values()
+                .fold(a.facts.transferred_bytes, |sum, n| sum.saturating_add(*n));
+            write.status = if rendered.load_timed_out {
+                a.facts.status = "Rendering fehlgeschlagen".into();
+                "timeout"
+            } else {
+                "ok"
+            }
+            .into();
+            write.html = sh
+                .cfg
+                .extraction
+                .store_rendered_html
+                .then(|| rendered.dom_html.into_bytes());
+            write.word_count = dom.word_count;
+            write.timings = rendered.timings;
+            if sh.cfg.rendering.js_error_reporting {
+                write.console = rendered.console;
+                write.console_dropped = rendered.console_dropped;
+            }
+            write.blocked = rendered.blocked;
+            write.network = rendered.network;
+            if sh.cfg.rendering.screenshots.enabled {
+                write.screenshots = rendered.screenshot_tiles;
+            }
+            dom
+        }
+        Err(error) => {
+            // Test stdout is captured by the runner and shown on failure. Keep
+            // protocol details out of persisted crawl data and production logs.
+            #[cfg(feature = "testing")]
+            eprintln!("render failed for {url}: {error:?}");
+            write.status = match error {
+                os_render::RenderError::Timeout(_) => "timeout",
+                os_render::RenderError::Crashed(_) => "crashed",
+                _ => "failed",
+            }
+            .into();
+            a.facts.status = "Rendering fehlgeschlagen".into();
+            // Error details deliberately exclude URLs/credentials from persistent logs.
+            raw
+        }
+    };
+    a.extra.render.push(write);
+    page
+}
+
 fn parsed_refresh(a: &mut Analysis, url: &Url, refs: &[os_model::RefreshRef]) {
     let outcome = redirect::refresh_target(url, refs);
     a.facts.meta_refresh_delay = outcome.delay;
     // K-57: der Selbst-Refresh ist eine Weiterleitung auf sich selbst (Typ, Redirect URL, Linkzeile, Schleife)
-    a.redirect = outcome.redirect.or(outcome.self_refresh);
+    if a.redirect.is_none() {
+        a.redirect = outcome.redirect.or(outcome.self_refresh);
+    }
 }
 
 /// Refresh-Angaben einer externen HTML-Seite: der `Refresh`-Header vor den Meta-Tags (Quelltextreihenfolge).
@@ -787,6 +1051,8 @@ struct Ref {
     row: bool,
     norm: Option<usize>,
     decision: LinkDecision,
+    /// Security outlinks remain inspectable without enabling srcset discovery.
+    captured_only: bool,
 }
 
 struct Targets {
@@ -944,6 +1210,7 @@ async fn assemble<F: Fetch>(
 ) -> Result<WriteBatch, Failure> {
     let cfg = &*sh.cfg;
     let Analysis {
+        origins,
         mut extra,
         html,
         pdf_word_count,
@@ -970,27 +1237,68 @@ async fn assemble<F: Fetch>(
     let mut targets = Targets::new();
     let mut refs: Vec<Ref> = Vec::new();
     let mut map = RefMap::default();
-    let add_ref = |refs: &mut Vec<Ref>, targets: &mut Targets, ext: ExtractedLink, row: bool| {
-        let norm = ext.resolved.as_deref().and_then(|r| targets.get(&**sh, r));
-        let scope = match norm.map(|i| targets.list[i].1) {
-            Some(true) => ScopeClass::Internal,
-            _ => ScopeClass::External,
+    let add_ref =
+        |refs: &mut Vec<Ref>, targets: &mut Targets, mut ext: ExtractedLink, row: bool| {
+            let norm = ext.resolved.as_deref().and_then(|r| targets.get(&**sh, r));
+            // Non-HTTP schemes have no URL row, but retain their raw link instance
+            // when uncrawlable-link capture is enabled (CRAWL-053 / TECH-143).
+            if norm.is_none()
+                && Url::parse(ext.href_raw.trim()).is_ok_and(|url| {
+                    matches!(
+                        url.scheme(),
+                        "mailto" | "tel" | "javascript" | "data" | "about" | "file"
+                    )
+                })
+            {
+                ext.crawlable = false;
+            }
+            let scope = match norm.map(|i| targets.list[i].1) {
+                Some(true) => ScopeClass::Internal,
+                _ => ScopeClass::External,
+            };
+            let decision = decide::decide(&ext, scope, cfg, page_follow);
+            refs.push(Ref {
+                ext,
+                row,
+                norm,
+                decision,
+                captured_only: false,
+            });
+            refs.len() - 1
         };
-        let decision = decide::decide(&ext, scope, cfg, page_follow);
-        refs.push(Ref {
-            ext,
-            row,
-            norm,
-            decision,
-        });
-        refs.len() - 1
-    };
 
     // Links aus dem Dokument (HTML) bzw. aus der CSS-Datei
     if let Some(p) = &parsed {
         for l in &p.links {
             let i = add_ref(&mut refs, &mut targets, l.clone(), true);
             map.links.push(i);
+        }
+        // ONPAGE-033/037 inspect every resource reference even when CRAWL-055
+        // disables discovery of additional image URLs. The parser retains image
+        // instances in this mode; keep each raw candidate as a hidden, unqueued
+        // target rather than enabling the extraction switch behind the user's back.
+        if !cfg.extraction.srcset {
+            for image in p
+                .images
+                .iter()
+                .filter(|im| im.source == os_model::ImageSource::Srcset)
+            {
+                let ext = ExtractedLink {
+                    link_type: LinkType::Image,
+                    href_raw: image.src_raw.clone(),
+                    resolved: image.resolved.clone(),
+                    alt_text: image.alt.clone(),
+                    path_type: path_type_of(&image.src_raw),
+                    xpath: image.xpath.clone(),
+                    position: image.link_position.clone().unwrap_or_default(),
+                    doc_order: image.doc_order,
+                    ..Default::default()
+                };
+                let i = add_ref(&mut refs, &mut targets, ext, true);
+                refs[i].captured_only = true;
+                refs[i].decision.crawl = false;
+                map.links.push(i);
+            }
         }
     }
     for l in &css_links {
@@ -1060,12 +1368,17 @@ async fn assemble<F: Fetch>(
         map.pagination.push(i);
     }
     // Bildinstanzen: nur nachschlagen (die Bild-Links stehen schon in `links`)
-    let image_targets: Vec<Option<usize>> = parsed
+    let image_targets: Vec<(Option<usize>, bool)> = parsed
         .as_ref()
         .map(|p| {
             p.images
                 .iter()
-                .map(|im| im.resolved.as_deref().and_then(|r| targets.get(&**sh, r)))
+                .map(|im| {
+                    (
+                        im.resolved.as_deref().and_then(|r| targets.get(&**sh, r)),
+                        !cfg.extraction.srcset && im.source == os_model::ImageSource::Srcset,
+                    )
+                })
                 .collect()
         })
         .unwrap_or_default();
@@ -1121,6 +1434,7 @@ async fn assemble<F: Fetch>(
                 internal: *internal,
                 kind: DiscoveryKind::Link,
                 store: d.store
+                    && !r.captured_only
                     && !hreflang_only
                     && (!outside_folder || cfg.scope.crawl_outside_start_folder),
                 crawl: d.crawl && (!outside_folder || cfg.scope.crawl_outside_start_folder),
@@ -1144,16 +1458,20 @@ async fn assemble<F: Fetch>(
             }
             ids.push(Some(id));
         }
-        for t in &image_targets {
+        for (t, captured_only) in &image_targets {
             let id = t
                 .and_then(|ti| core.lookup(&targets.list[ti].0.encoded))
+                // Security outlinks may reference hidden URL rows without
+                // turning disabled srcset candidates into extracted images.
+                // A URL discovered visibly elsewhere keeps its existing ID.
+                .filter(|s| !captured_only || s.flags & F_IN_TABLES != 0)
                 .map(|s| s.id);
             image_ids.push(id);
         }
         if let Some((r, ti)) = &redirect_plan {
             let (norm, internal) = &targets.list[*ti];
             let (store, mut crawl, mut reason) = match r.kind {
-                RedirectType::Http => (true, true, None),
+                RedirectType::Http | RedirectType::JavaScript => (true, true, None),
                 kind => {
                     // Meta-/Header-Refresh hängen am Schalter „Meta Refresh“ (K-40); Grund und Außenwirkung
                     // wie bei jedem anderen Linktyp aus der Matrix.
@@ -1268,7 +1586,10 @@ async fn assemble<F: Fetch>(
             path_type: Some(e.path_type),
             link_path: (!e.xpath.is_empty()).then(|| e.xpath.clone()),
             link_position: (!e.xpath.is_empty()).then(|| e.position.clone()),
-            link_origin: LinkOrigin::Html,
+            link_origin: origins
+                .get(&crate::render_glue::link_key(e))
+                .copied()
+                .unwrap_or(LinkOrigin::Html),
             in_head: Some(e.in_head),
             crawlable: e.crawlable,
             uncrawlable_reason: e.uncrawlable_reason,
@@ -1332,7 +1653,18 @@ async fn assemble<F: Fetch>(
                     LinkPosition::Content
                 }
             }),
-            link_origin: LinkOrigin::Html,
+            link_origin: if r.kind == RedirectType::JavaScript {
+                LinkOrigin::RenderedHtml
+            } else {
+                origins
+                    .get(&crate::render_glue::link_key(&synth_link(
+                        lt,
+                        &r.raw,
+                        Some(&r.target.encoded),
+                    )))
+                    .copied()
+                    .unwrap_or(LinkOrigin::Html)
+            },
             in_head: r.xpath.as_ref().map(|x| x.starts_with("//head/")),
             ..Default::default()
         });

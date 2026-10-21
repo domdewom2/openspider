@@ -165,6 +165,18 @@ async fn start(opts: &LaunchOpts) -> Result<Session, RenderError> {
     } else {
         Profile(None)
     };
+    if opts.disable_cookie_storage {
+        let root = profile.0.as_ref().ok_or_else(|| {
+            RenderError::Launch("Cookie-Sperre benötigt ein temporäres Browserprofil".into())
+        })?;
+        let directory = root.join("Default");
+        std::fs::create_dir(&directory).map_err(|e| RenderError::Launch(e.to_string()))?;
+        std::fs::write(
+            directory.join("Preferences"),
+            r#"{"profile":{"default_content_setting_values":{"cookies":2}}}"#,
+        )
+        .map_err(|e| RenderError::Launch(e.to_string()))?;
+    }
     let mut config = BrowserConfig::builder()
         .chrome_executable(executable(opts)?)
         .user_data_dir(
@@ -185,6 +197,9 @@ async fn start(opts: &LaunchOpts) -> Result<Session, RenderError> {
             "disable-features",
             "ServiceWorker,PushMessaging,Geolocation",
         ));
+    if opts.suppress_default_accept_language {
+        config = config.arg(("accept-lang", ""));
+    }
     if opts.headless {
         config = config.new_headless_mode();
     } else {

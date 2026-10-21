@@ -176,11 +176,12 @@ pub(crate) fn initial_sitemap_seeds(cfg: &CrawlConfig, start: Option<&Url>) -> V
 
 /// Rückfall `JavaScript-Rendering` → Fehler (CRAWL-077: kein stiller Rückfall auf den Textmodus).
 pub(crate) fn check_rendering(cfg: &CrawlConfig) -> Result<(), EngineError> {
-    if cfg.rendering.mode != RenderingMode::Text {
-        return Err(EngineError::Invalid(
-            "JavaScript-Rendering ist in dieser Version nicht verfügbar (rendering.mode = text)"
-                .to_string(),
-        ));
+    if cfg.rendering.mode == RenderingMode::JavaScript {
+        os_render::api::check_available(&os_render::LaunchOpts {
+            chromium_path: cfg.rendering.chromium_path.as_ref().map(Into::into),
+            ..Default::default()
+        })
+        .map_err(|e| EngineError::Invalid(format!("JavaScript-Rendering: {e}")))?;
     }
     Ok(())
 }
@@ -234,7 +235,9 @@ fn prepare_fresh(
     let mut cfg = req.config.clone();
     cfg.mode = mode;
     cfg.speed.threads = cfg.speed.threads.clamp(1, MAX_THREADS);
-    check_rendering(&cfg)?;
+    if deps.renderer.is_none() {
+        check_rendering(&cfg)?;
+    }
     let rules = RuleSet::compile(
         &cfg.scope.include,
         &cfg.scope.exclude,
@@ -303,6 +306,7 @@ async fn start_spider<F: Fetch>(
     let writer = WriterThread::spawn(open_sink(&deps, &req.file)?);
 
     let mut core = Core::new(cfg.limits.max_urls, cfg.limits.max_depth);
+    core.render_fragments = cfg.rendering.mode == RenderingMode::JavaScript;
     core.limits = cfg.limits.clone();
     if cfg.advanced.cookies == os_model::CookieMode::SessionOnly {
         core.sessions[0] = Some(Arc::new(CookieJar::new()));
@@ -412,6 +416,7 @@ async fn start_list<F: Fetch>(
 
     let max_depth = cfg.limits.max_depth.or(Some(0));
     let mut core = Core::new(cfg.limits.max_urls, max_depth);
+    core.render_fragments = cfg.rendering.mode == RenderingMode::JavaScript;
     core.limits = cfg.limits.clone();
     core.list_mode = true;
     if cfg.advanced.cookies == os_model::CookieMode::SessionOnly {
@@ -581,7 +586,9 @@ pub(crate) struct SharedInit<F: Fetch> {
 
 /// Gemeinsamer Zustand aus den Bausteinen; liefert auch die Steuerung (`Control`).
 pub(crate) fn make_shared<F: Fetch>(mut init: SharedInit<F>) -> (Arc<Shared<F>>, Arc<Control>) {
+    crate::memory::set_system_probe(crate::render_glue::process_memory_sample);
     init.core.limits = init.cfg.limits.clone();
+    init.core.render_fragments = init.cfg.rendering.mode == RenderingMode::JavaScript;
     if init.cfg.scope.subfolder_only {
         if let Ok(start) = Url::parse(&init.start_encoded) {
             let path = start.path();
@@ -597,7 +604,10 @@ pub(crate) fn make_shared<F: Fetch>(mut init: SharedInit<F>) -> (Arc<Shared<F>>,
         stop: AtomicU8::new(STOP_NONE),
         reason: Mutex::new(None),
     });
+    let render_session =
+        crate::render_glue::Session::new(&init.cfg, init.fetcher.render_config().as_ref());
     let sh = Arc::new(Shared {
+        render_session,
         sitemap_ingest_lock: Default::default(),
         add_rx: tokio::sync::Mutex::new(add_rx),
         fetcher: init.fetcher,
@@ -690,6 +700,9 @@ pub(crate) fn launch<F: Fetch>(setup: Setup<F>) -> CrawlHandle {
         start_encoded,
         primed_origins,
     });
+    if let Some(renderer) = &deps.renderer {
+        let _ = sh.render_session.injected.set(renderer.clone());
+    }
     if let Err(error) = hidden_result {
         sh.fail(error);
     }
@@ -967,7 +980,10 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
     // OUT-240 (K2-61): repeat the summary for independently useful end records.
     tracing::info!(%crawl_id, mode = ?sh.cfg.mode, start_url = %os_fetch::redact::url(&sh.start_url), limits = ?sh.cfg.limits, rendering = ?sh.cfg.rendering.mode, "Crawl-Konfiguration Ende");
 
-    if sh.cfg.advanced.crawl_fragments && end != End::Failed {
+    if sh.cfg.advanced.crawl_fragments
+        && sh.cfg.rendering.mode == RenderingMode::Text
+        && end != End::Failed
+    {
         sh.writer
             .flush()
             .await
@@ -1017,6 +1033,9 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
     write_ok = write_ok && writer.checkpoint().await.is_ok();
 
     let shared_error = sh.error.lock().unwrap_or_else(|p| p.into_inner()).take();
+    // Reap the crawl's Chromium tree before wait() completes or a follow-up
+    // crawl samples memory; async Drop cleanup can outlive the crawl runtime.
+    sh.render_session.close().await;
     drop(sh); // gibt den letzten Absender frei, damit der Writer-Thread enden kann
     let finished = writer.finish();
 

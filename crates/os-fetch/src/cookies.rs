@@ -211,3 +211,42 @@ mod tests {
         assert!(jar.is_empty());
     }
 }
+
+/// Scoped cookie snapshot for an isolated browser context. Values are never Debug-printed.
+#[derive(Clone)]
+pub struct BrowserCookie {
+    pub name: String,
+    pub value: String,
+    pub domain: String,
+    pub path: String,
+    pub secure: bool,
+    pub http_only: bool,
+    pub expires: Option<i64>,
+}
+impl CookieJar {
+    /// Preserves host-only scope, HttpOnly and expiry instead of flattening a Cookie header.
+    pub fn browser_snapshot(&self) -> Vec<BrowserCookie> {
+        self.lock()
+            .iter_unexpired()
+            .filter_map(|cookie| {
+                let domain = match &cookie.domain {
+                    cookie_store::CookieDomain::HostOnly(host) => host.clone(),
+                    cookie_store::CookieDomain::Suffix(host) => format!(".{host}"),
+                    _ => return None,
+                };
+                Some(BrowserCookie {
+                    name: cookie.name().into(),
+                    value: cookie.value().into(),
+                    domain,
+                    path: cookie.path.as_ref().into(),
+                    secure: cookie.secure().unwrap_or(false),
+                    http_only: cookie.http_only().unwrap_or(false),
+                    expires: match cookie.expires {
+                        cookie_store::CookieExpiration::AtUtc(t) => Some(t.unix_timestamp()),
+                        _ => None,
+                    },
+                })
+            })
+            .collect()
+    }
+}

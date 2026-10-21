@@ -24,7 +24,9 @@ mod trust;
 pub enum RenderError {
     #[error("nicht implementiert: {0}")]
     NotImplemented(&'static str),
-    #[error("err-chromium-missing: Chromium fehlt unter {path}. Chrome/Chromium installieren oder OPENSPIDER_CHROMIUM bzw. rendering.chromium_path setzen.")]
+    #[error(
+        "err-chromium-missing: Chromium fehlt unter {path}. Chrome/Chromium installieren oder OPENSPIDER_CHROMIUM bzw. rendering.chromium_path setzen."
+    )]
     ChromiumMissing { path: String },
     #[error("Chromium nicht startbar: {0}")]
     Launch(String),
@@ -64,6 +66,10 @@ pub struct LaunchOpts {
     pub proxy_credentials: Option<Credentials>,
     /// Chromium-Regeln aus der Host-Zuordnung des Crawls.
     pub host_resolver_rules: Vec<String>,
+    /// Block native cookie storage in the renderer's fresh, temporary profile.
+    pub disable_cookie_storage: bool,
+    /// Engine requests supply language explicitly, with no browser default header.
+    pub suppress_default_accept_language: bool,
     pub launch_timeout_ms: u32,
     /// Explizite Freigabe für Container ohne Chromium-Sandbox.
     pub no_sandbox: bool,
@@ -80,6 +86,8 @@ impl Default for LaunchOpts {
             network: NetworkSettings::default(),
             proxy_credentials: None,
             host_resolver_rules: Vec::new(),
+            disable_cookie_storage: false,
+            suppress_default_accept_language: false,
             launch_timeout_ms: 20_000,
             no_sandbox: false,
         }
@@ -128,6 +136,15 @@ pub struct MainResponse {
 /// robots-Richtlinie der Engine einschließlich eigener Regeln und Ignorieren-Schalter.
 /// Bei false gelangt die Anfrage nicht ins Netz.
 pub trait ResourcePolicy: Send + Sync + std::fmt::Debug {
+    /// Typed engine policy; existing standalone implementations keep their behavior.
+    fn allowed_resource<'a>(
+        &'a self,
+        url: &'a str,
+        _resource_type: &'a str,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = bool> + Send + 'a>> {
+        self.allowed(url)
+    }
+
     fn allowed<'a>(
         &'a self,
         url: &'a str,
@@ -151,6 +168,19 @@ pub struct Cookie {
 /// deshalb bewusst kein PartialEq.
 #[derive(Debug, Clone)]
 pub struct RenderOpts {
+    /// Opt in to at most two retries after a navigation destroys the DOM context.
+    /// False preserves existing callers, including custom request identities.
+    pub retry_document_context: bool,
+    /// Engine opt-in for JavaScript cookie provenance; standalone rendering is unchanged.
+    pub capture_cookie_assignments: bool,
+    /// Disable all browser cookie writes and outgoing Cookie headers.
+    pub disable_cookies: bool,
+    /// Return all context cookies, including HTTP-only and off-page resource paths.
+    pub return_cookies: bool,
+    /// HTTP language preference; applied before document scripts execute.
+    pub accept_language: Option<String>,
+    /// Optional URL-scoped identity; absent preserves standalone renderer behavior.
+    pub request_identity: Option<Arc<dyn RequestIdentity>>,
     pub viewport: (u32, u32),
     pub ajax_timeout_ms: u32,
     pub screenshots: bool,
@@ -174,6 +204,12 @@ pub struct RenderOpts {
 impl Default for RenderOpts {
     fn default() -> Self {
         Self {
+            retry_document_context: false,
+            capture_cookie_assignments: false,
+            disable_cookies: false,
+            return_cookies: false,
+            accept_language: None,
+            request_identity: None,
             viewport: (411, 731),
             ajax_timeout_ms: 5_000,
             screenshots: true,
@@ -240,6 +276,14 @@ impl RenderOpts {
 }
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct RenderedPage {
+    /// Body-only transfer sizes; excludes HTTP headers (CRAWL-022).
+    pub body_network: Option<Vec<NetworkEntry>>,
+    /// JavaScript cookie assignments, retained separately from HTTP Set-Cookie.
+    pub cookie_assignments: Vec<String>,
+    /// Complete isolated context snapshot. None preserves injected-renderer behavior.
+    pub cookies: Option<Vec<Cookie>>,
+    /// URL of the loaded document, unaffected by history.pushState.
+    pub navigation_url: Option<String>,
     pub dom_html: String,
     pub console: Vec<ConsoleEntry>,
     pub console_dropped: u64,
@@ -258,4 +302,109 @@ pub use browser::Renderer;
 
 fn protocol(error: impl std::fmt::Display) -> RenderError {
     RenderError::Protocol(error.to_string())
+}
+
+/// Verifies availability before creating a crawl file.
+pub fn check_available(opts: &LaunchOpts) -> Result<(), RenderError> {
+    browser::executable(opts)?;
+    let opts = opts.clone();
+    // This synchronous API is also called inside Tokio. A separate bounded runtime
+    // verifies an actual CDP session without nesting runtimes or invoking a shell.
+    std::thread::spawn(move || {
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .map_err(|e| RenderError::Launch(e.to_string()))?;
+        let result = runtime.block_on(async {
+            tokio::time::timeout(
+                std::time::Duration::from_millis(u64::from(opts.launch_timeout_ms) + 3_000),
+                async {
+                    let renderer = Renderer::launch(opts).await?;
+                    renderer.close().await;
+                    Ok(())
+                },
+            )
+            .await
+            .map_err(|_| RenderError::Launch("Startprüfung überschreitet Zeitgrenze".into()))?
+        });
+        runtime.shutdown_timeout(std::time::Duration::from_secs(1));
+        result
+    })
+    .join()
+    .map_err(|_| RenderError::Launch("Startprüfung abgebrochen".into()))?
+}
+
+/// Scoped request headers. Cookies/auth are resolved separately for each URL.
+pub trait RequestIdentity: Send + Sync + std::fmt::Debug {
+    /// Retry an authorized GET challenge through the scoped HTTP transport.
+    /// Native Chromium origin-auth caching would bypass path-prefix boundaries.
+    fn auth_response<'a>(
+        &'a self,
+        _url: &'a str,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Option<MainResponse>> + Send + 'a>>
+    {
+        Box::pin(async { None })
+    }
+    fn headers(&self, url: &str) -> BTreeMap<String, String>;
+}
+
+#[cfg(test)]
+mod document_read_tests {
+    use super::*;
+
+    #[derive(Debug)]
+    struct Identity;
+    impl RequestIdentity for Identity {
+        fn headers(&self, _: &str) -> BTreeMap<String, String> {
+            BTreeMap::new()
+        }
+    }
+
+    // spec: CRAWL-016
+    // spec: CRAWL-078
+    #[tokio::test(start_paused = true)]
+    async fn engine_context_retry_recovers_is_bounded_and_preserves_other_errors_and_defaults() {
+        for (retry, engine, message, recover, expected) in [
+            (true, true, "Cannot find context with specified id", true, 2),
+            (true, true, "Execution context was destroyed", false, 3),
+            (true, true, "Permission denied", false, 1),
+            (
+                false,
+                true,
+                "Cannot find context with specified id",
+                true,
+                1,
+            ),
+            (
+                false,
+                false,
+                "Cannot find context with specified id",
+                true,
+                1,
+            ),
+        ] {
+            let opts = RenderOpts {
+                retry_document_context: retry,
+                request_identity: engine.then(|| Arc::new(Identity) as Arc<dyn RequestIdentity>),
+                ..Default::default()
+            };
+            let attempts = std::cell::Cell::new(0);
+            let result = page::read_document(&opts, || {
+                let n = attempts.get();
+                attempts.set(n + 1);
+                std::future::ready(if recover && n > 0 {
+                    Ok("document")
+                } else {
+                    Err(RenderError::Protocol(message.into()))
+                })
+            })
+            .await;
+            assert_eq!(attempts.get(), expected);
+            if retry && recover {
+                assert_eq!(result.unwrap(), "document");
+            } else {
+                assert_eq!(result.unwrap_err(), RenderError::Protocol(message.into()));
+            }
+        }
+    }
 }
