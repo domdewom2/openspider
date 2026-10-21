@@ -14,8 +14,6 @@ argon2.workspace = true
 zstd.workspace = true
 os-model.workspace = true
 rusqlite.workspace = true
-# TECH-141: benannte URL-Prädikate auf jeder Store-Verbindung.
-rusqlite.features = ["functions"]
 thiserror.workspace = true
 dirs.workspace = true
 serde_json.workspace = true

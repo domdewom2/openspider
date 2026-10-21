@@ -9,7 +9,7 @@ repository.workspace = true
 authors.workspace = true
 
 [dependencies]
-h2 = "0.4"
+h2.workspace = true
 csv.workspace = true
 axum.workspace = true
 serde.workspace = true
