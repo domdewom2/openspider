@@ -1,0 +1,15 @@
+spell-filter-type = Type
+spell-filter-section = Page section
+spell-all = All
+spell-context = Text excerpt
+spell-pick = Select a row to see the finding in its text.
+spell-suggestions = Suggestions
+spell-ignore-all = Ignore (all)
+spell-ignore-rule = Ignore rule
+spell-add-dictionary = Add to dictionary
+spell-rule-grammar-only = Only grammar findings belong to a rule.
+spell-rule-missing = This finding has no rule ID.
+spell-dictionary-spelling-only = Only spelling findings can be added to the dictionary.
+spell-done-ignore = "{ $word }" is ignored in this crawl after the next check.
+spell-done-rule = Rule { $rule } is turned off for this crawl after the next check.
+spell-done-dictionary = "{ $word }" was added to your dictionary.

@@ -1,0 +1,15 @@
+spell-filter-type = Typ
+spell-filter-section = Seitenbereich
+spell-all = Alle
+spell-context = Textausschnitt
+spell-pick = Wähle eine Zeile, um den Befund in seinem Text zu sehen.
+spell-suggestions = Vorschläge
+spell-ignore-all = Ignorieren (alle)
+spell-ignore-rule = Regel ignorieren
+spell-add-dictionary = Zum Wörterbuch hinzufügen
+spell-rule-grammar-only = Nur Grammatikbefunde gehören zu einer Regel.
+spell-rule-missing = Dieser Befund hat keine Regel-ID.
+spell-dictionary-spelling-only = Nur Rechtschreibbefunde lassen sich dem Wörterbuch hinzufügen.
+spell-done-ignore = „{ $word }“ wird in diesem Crawl nach der nächsten Prüfung ignoriert.
+spell-done-rule = Regel { $rule } ist in diesem Crawl nach der nächsten Prüfung abgeschaltet.
+spell-done-dictionary = „{ $word }“ wurde deinem Wörterbuch hinzugefügt.
