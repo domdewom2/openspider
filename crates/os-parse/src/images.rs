@@ -472,6 +472,132 @@ fn avif_dimensions(b: &[u8]) -> Option<(u32, u32)> {
     None
 }
 
+/// Bounded top-left preview of an 8-bit RGB/RGBA PNG (the render screenshot encoding).
+/// Reads only the required scanline prefix; never allocates a full long-page bitmap.
+/// Returns None for unsupported encodings or invalid data. Does not render or fetch.
+pub fn png_preview(data: &[u8], max_side: u32, max_bytes: usize) -> Option<(Vec<u8>, u32, u32)> {
+    use std::io::{Read, Write};
+    if !data.starts_with(b"\x89PNG\r\n\x1a\n") {
+        return None;
+    }
+    let mut cursor = 8usize;
+    let mut header = None;
+    let mut compressed = Vec::new();
+    while cursor.checked_add(12)? <= data.len() {
+        let size = u32::from_be_bytes(data[cursor..cursor + 4].try_into().ok()?) as usize;
+        let end = cursor.checked_add(12)?.checked_add(size)?;
+        if end > data.len() {
+            return None;
+        }
+        let kind = &data[cursor + 4..cursor + 8];
+        let chunk = &data[cursor + 8..end - 4];
+        match kind {
+            b"IHDR" if size == 13 => header = Some(chunk.to_vec()),
+            b"IDAT" => compressed.extend_from_slice(chunk),
+            b"IEND" => break,
+            _ => {}
+        }
+        cursor = end;
+    }
+    let mut header = header?;
+    let original_width = u32::from_be_bytes(header[0..4].try_into().ok()?);
+    let original_height = u32::from_be_bytes(header[4..8].try_into().ok()?);
+    let channels = match header[9] {
+        2 => 3usize,
+        6 => 4,
+        _ => return None,
+    };
+    if header[8] != 8
+        || header[10..13] != [0, 0, 0]
+        || original_width == 0
+        || original_width > 16384
+        || original_height == 0
+    {
+        return None;
+    }
+    let width = original_width.min(max_side);
+    if width == 0 {
+        return None;
+    }
+    let stride = original_width as usize * channels;
+    let cropped_stride = width as usize * channels;
+    // Leave room for PNG chunks and the compressor's worst-case overhead.
+    let height = original_height
+        .min(max_side)
+        .min(u32::try_from(max_bytes.saturating_sub(2048) / (cropped_stride + 1)).ok()?);
+    if height == 0 {
+        return None;
+    }
+    let mut decoder = flate2::read::ZlibDecoder::new(compressed.as_slice());
+    let mut encoder = flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::default());
+    let mut previous = vec![0u8; stride];
+    let mut current = vec![0u8; stride];
+    let mut filter = [0u8; 1];
+    for _ in 0..height {
+        decoder.read_exact(&mut filter).ok()?;
+        decoder.read_exact(&mut current).ok()?;
+        for x in 0..stride {
+            let left = if x >= channels {
+                current[x - channels]
+            } else {
+                0
+            };
+            let up = previous[x];
+            let diagonal = if x >= channels {
+                previous[x - channels]
+            } else {
+                0
+            };
+            let prediction = match filter[0] {
+                0 => 0,
+                1 => left,
+                2 => up,
+                3 => ((u16::from(left) + u16::from(up)) / 2) as u8,
+                4 => {
+                    let p = i32::from(left) + i32::from(up) - i32::from(diagonal);
+                    let a = (p - i32::from(left)).abs();
+                    let b = (p - i32::from(up)).abs();
+                    let c = (p - i32::from(diagonal)).abs();
+                    if a <= b && a <= c {
+                        left
+                    } else if b <= c {
+                        up
+                    } else {
+                        diagonal
+                    }
+                }
+                _ => return None,
+            };
+            current[x] = current[x].wrapping_add(prediction);
+        }
+        encoder.write_all(&[0]).ok()?;
+        encoder.write_all(&current[..cropped_stride]).ok()?;
+        std::mem::swap(&mut previous, &mut current);
+    }
+    let compressed = encoder.finish().ok()?;
+    header[0..4].copy_from_slice(&width.to_be_bytes());
+    header[4..8].copy_from_slice(&height.to_be_bytes());
+    let mut output = b"\x89PNG\r\n\x1a\n".to_vec();
+    for (kind, bytes) in [
+        (b"IHDR", header.as_slice()),
+        (b"IDAT", compressed.as_slice()),
+        (b"IEND", &[]),
+    ] {
+        output.extend_from_slice(&u32::try_from(bytes.len()).ok()?.to_be_bytes());
+        output.extend_from_slice(kind);
+        output.extend_from_slice(bytes);
+        let mut crc = u32::MAX;
+        for byte in kind.iter().chain(bytes) {
+            crc ^= u32::from(*byte);
+            for _ in 0..8 {
+                crc = (crc >> 1) ^ (0xedb8_8320 & (0u32.wrapping_sub(crc & 1)));
+            }
+        }
+        output.extend_from_slice(&(!crc).to_be_bytes());
+    }
+    (output.len() <= max_bytes).then_some((output, width, height))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

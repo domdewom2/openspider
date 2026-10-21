@@ -27,6 +27,7 @@ pub mod bulk_sd;
 pub mod bulk_security;
 pub mod bulk_sitemaps;
 pub mod bulk_web;
+pub mod page_content;
 pub mod reports;
 
 use std::path::Path;
@@ -85,6 +86,9 @@ pub fn resolve_with(
             Ok(ExportRef::Tab { tab, filter })
         }
         ExportKind::Bulk => {
+            if page_content::matches(name) {
+                return Ok(ExportRef::Bulk(page_content::NAME.into()));
+            }
             if let Some(entry) = dynamic_entries(cfg)
                 .into_iter()
                 .find(|e| normalize_name(&e.name) == normalize_name(name))
@@ -135,6 +139,7 @@ pub fn list_with(kind: ExportKind, cfg: &CrawlConfig) -> Vec<String> {
             .collect(),
         ExportKind::Bulk => {
             let mut names = bulk_links::names();
+            names.push(page_content::NAME.into());
             names.extend(bulk_issues::names());
             names.extend(dynamic_entries(cfg).into_iter().map(|e| e.name));
             names.extend(bulk_tables().iter().map(|e| e.name.to_string()));

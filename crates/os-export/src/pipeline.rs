@@ -424,6 +424,11 @@ fn export_bulk_in_snapshot(
     if let Some(kind) = catalog::bulk_web::page_export(&canonical) {
         return catalog::bulk_web::export_pages(file, cfg, kind, out_dir, None);
     }
+    if catalog::page_content::matches(&canonical) {
+        return Ok(vec![catalog::page_content::export(
+            file, cfg, out_dir, false,
+        )?]);
+    }
     if !cfg.export.inlinks_for_all_filters && catalog::bulk_generic::is_generic_name(&canonical) {
         return Err(ExportError::Unsupported(format!(
             "{canonical}: enable export.inlinks_for_all_filters to export generic inlinks"
@@ -785,6 +790,31 @@ fn export_batch_in(
                 continue;
             }
             if kind == ExportKind::Bulk {
+                if catalog::page_content::matches(&name) {
+                    let progress = |rows| (ctx.progress)(done.get() + rows);
+                    let page_ctx = crate::types::ExportCtx {
+                        cancel: ctx.cancel,
+                        progress: &progress,
+                        skip_empty: ctx.skip_empty,
+                        workbook: None,
+                        skipped: Vec::new(),
+                    };
+                    let info = catalog::page_content::export_with(
+                        file,
+                        cfg,
+                        options.directory,
+                        false,
+                        Some(&page_ctx),
+                    )?;
+                    done.set(done.get() + info.rows);
+                    result.warnings.extend(info.warnings.clone());
+                    if info.rows == 0 && ctx.skip_empty {
+                        result.skipped.push(name);
+                    } else {
+                        result.files.push(info);
+                    }
+                    continue;
+                }
                 if let Some(page_kind) = catalog::bulk_web::page_export(&name) {
                     let progress = |rows| (ctx.progress)(done.get() + rows);
                     let page_ctx = crate::types::ExportCtx {

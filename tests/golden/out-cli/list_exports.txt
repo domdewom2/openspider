@@ -366,6 +366,7 @@ Response Codes:External:Redirection (HTTP Refresh) Inlinks
 Response Codes:External:Client Error (4xx) Inlinks
 Response Codes:External:Server Error (5xx) Inlinks
 Response Codes:External:All Error Inlinks
+page_content_ndjson
 Issues:All Issues
 Images:Images With Alt Text Over 100 Characters Inlinks
 Images:Images Over 100 KB Inlinks
