@@ -134,3 +134,5 @@ fach-element-external-outlinks = External Outlinks
 fach-element-unique-external-outlinks = Unique External Outlinks
 fach-element-structured-data-unique-types = Structured Data Unique Types
 fach-element-content = Content
+fach-preview-revision = Vorschau zum Datenstand { $revision }
+fach-preview-stale = Frühere Daten; aktuelle Vorschau wird angefordert

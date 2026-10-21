@@ -198,6 +198,25 @@ describe("Fachseiten against the configuration fixture", () => {
     expect(within(blog).queryByRole("option", { name: "Rest" })).toBeNull();
     expect(within(blog).queryByRole("option", { name: "Blog" })).toBeNull();
   });
+  // spec: CRAWL-134
+  it("shows the result revision and marks earlier counts while newer crawl data is pending", async () => {
+    let n = 0;
+    core.handlers.set("segment.preview", () => ({ opId: `preview-${++n}` }));
+    core.handlers.set("op.cancel", () => null);
+    act(() => useSession.setState({ crawl: { crawlId: "fixture-preview", phase: "completed", mode: "spider", crawled: 10, queued: 0, discovered: 10, percent: 100, rate: 0, avgRate: 0, elapsedS: 1, pausedS: 0, activeThreads: 0, owner: { kind: "app", live: true, controllable: true } }, countsVersion: 1 }));
+    const d = await open("segments");
+    const finish = (opId: string, urls: number) => act(() => useSession.setState(s => ({ ops: { ...s.ops, [opId]: { opId, labelKey: "preview", done: 1, state: "done", result: { counts: [{ id: "draft-0", urls }], unassigned: 0 } } } })));
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); }); finish("preview-1", 10);
+    expect(within(d).getByText("Preview for data revision 1")).toBeInTheDocument();
+    expect(within(d).getByText("Matches 10 URLs")).toBeInTheDocument();
+    await act(async () => useSession.setState({ countsVersion: 2 }));
+    expect(within(d).getByText(/Preview for data revision 1.*Earlier data; requesting an updated preview/)).toBeInTheDocument();
+    expect(within(d).getByText("Matches 10 URLs")).toBeInTheDocument();
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); }); finish("preview-2", 12);
+    expect(within(d).getByText("Preview for data revision 2")).toBeInTheDocument();
+    expect(within(d).getByText("Matches 12 URLs")).toBeInTheDocument();
+    expect(within(d).queryByText(/Earlier data/)).toBeNull();
+  });
   // spec: TECH-300
   it("renders 14 ordered elements, defaults to the first 13 and disables Content without both stored crawls", async () => {
     const d = await open("compare.change_detection"); const checkboxes = within(d).getAllByRole("checkbox");

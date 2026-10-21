@@ -41,6 +41,7 @@ function Segments() {
       <RowIssues path={`segments.list[${i}]`} />
       <RowActions index={i} count={value.length} disabled={disabled} move={to => set(moveRow(value, i, to))} remove={() => set(value.filter((_, n) => n !== i))} />
     </fieldset>)}<Action disabled={disabled} onClick={() => set([...value, { name: "", color: SEGMENT_PALETTE[value.length % SEGMENT_PALETTE.length]!.light, groups: [{ conditions: [emptyCondition()] }] }])}>{t("fach-add-segment")}</Action>
+    {preview.resultRevision !== undefined && <p role="status" className="os-hint">{t("fach-preview-revision", { revision: preview.countsVersion ?? 0 })}{preview.stale && ` · ${t("fach-preview-stale")}`}</p>}
     {preview.busy && <p role="status">{t("fach-checking")}</p>}{preview.error != null && <p role="alert" className="os-error">{t("fach-preview-error")}</p>}
     <Input multiline label={t("fach-segments-json")} value={json} onChange={setJson} disabled={disabled} />
     <Action onClick={() => setJson(exportJson(previewDefs(value)))}>{t("fach-export-json")}</Action>

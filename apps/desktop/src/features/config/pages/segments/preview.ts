@@ -12,32 +12,83 @@ export const previewRevision = (s: SessionState) => JSON.stringify([
     .map(o => [o.opId, o.state]).sort(),
 ]);
 
-/** Counters belong to the entire ordered draft and its crawl data snapshot. */
+type Snapshot = {
+  key: string;
+  revision?: string;
+  countsVersion?: number;
+  result?: SegmentPreview | null;
+  busy: boolean;
+  error?: unknown;
+};
+
+/** Debounce edits, but coalesce live data without postponing or aborting ongoing work. */
 export function useDraftPreview(segments: SegmentDef[], enabled: boolean) {
   const revision = useSession(previewRevision);
-  const key = JSON.stringify([segments, revision]);
-  const [request, setRequest] = useState<{ key: string; opId?: string; error?: unknown } | null>(null);
-  const status = useSession(s => request?.opId ? s.ops[request.opId] : undefined);
+  const crawlId = useSession(s => s.crawl?.crawlId);
+  const key = JSON.stringify([segments, crawlId]);
+  const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   useEffect(() => {
-    setRequest(null);
+    setSnapshot(null);
     if (!enabled) return;
     let live = true;
-    let opId: string | undefined;
-    const timer = setTimeout(() => {
+    let latestRevision = previewRevision(useSession.getState());
+    let requestedRevision: string | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let active: { revision: string; countsVersion: number; opId?: string } | undefined;
+    const cancel = (opId: string) => { void op.cancel({ opId }).catch(() => undefined); };
+    const start = () => {
+      timer = undefined;
+      const request = { revision: latestRevision, countsVersion: useSession.getState().countsVersion, opId: undefined as string | undefined };
+      requestedRevision = request.revision;
+      active = request;
+      setSnapshot(s => ({ ...s, key, busy: true, error: undefined }));
       void segment.preview({ segments }).then(handle => {
-        opId = handle.opId;
-        if (live) setRequest({ key, opId });
-        else void op.cancel({ opId }).catch(() => undefined);
-      }).catch(error => { if (live) setRequest({ key, error }); });
-    }, 400);
-    return () => { live = false; clearTimeout(timer); if (opId) void op.cancel({ opId }).catch(() => undefined); };
-    // The serialized key covers the complete ordered list and data revision.
+        if (!live) { cancel(handle.opId); return; }
+        request.opId = handle.opId;
+        update(); // The completion tick may have arrived before the handle.
+      }).catch(error => {
+        if (!live) return;
+        active = undefined;
+        setSnapshot(s => ({ ...s, key, busy: false, error }));
+        if (latestRevision !== requestedRevision) start();
+      });
+    };
+    const update = () => {
+      latestRevision = previewRevision(useSession.getState());
+      const status = active?.opId ? useSession.getState().ops[active.opId] : undefined;
+      if (active && status && status.state !== "running") {
+        const completed = active;
+        active = undefined;
+        if (status.state === "done") {
+          setSnapshot({ key, revision: completed.revision, countsVersion: completed.countsVersion, result: status.result as SegmentPreview | null, busy: false });
+        } else {
+          setSnapshot(s => ({ ...s, key, busy: false, error: status.error ?? new Error("Preview cancelled") }));
+        }
+        // Finish one snapshot, then request only the newest revision, never intermediate ticks.
+        if (latestRevision !== requestedRevision) start();
+      } else if (!active && timer === undefined && latestRevision !== requestedRevision) {
+        setSnapshot(s => ({ ...s, key, busy: true }));
+        // A fixed window from the first change bounds the wait even with 250-ms ticks.
+        timer = setTimeout(start, 400);
+      }
+    };
+    const unsubscribe = useSession.subscribe(update);
+    update();
+    return () => {
+      live = false;
+      unsubscribe();
+      clearTimeout(timer);
+      if (active?.opId) cancel(active.opId);
+    };
+    // The serialized key covers the ordered rules and crawl. Data revisions use the bounded scheduler above.
   }, [key, enabled]);
-  const current = enabled && request?.key === key;
-  const result = current && status?.state === "done" ? status.result as SegmentPreview | null : null;
+  const current = enabled && snapshot?.key === key ? snapshot : null;
   return {
-    counts: new Map((result?.counts ?? []).map(c => [c.id, c.urls])),
-    busy: enabled && (!current || (!request.error && (!status || status.state === "running"))),
-    error: current ? (request.error ?? (status?.state === "failed" ? status.error : undefined)) : undefined,
+    counts: new Map((current?.result?.counts ?? []).map(c => [c.id, c.urls])),
+    resultRevision: current?.revision,
+    countsVersion: current?.countsVersion,
+    stale: current?.revision !== undefined && current.revision !== revision,
+    busy: enabled && (!current || current.busy),
+    error: current?.error,
   };
 }
