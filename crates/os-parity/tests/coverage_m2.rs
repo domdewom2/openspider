@@ -242,6 +242,11 @@ fn all_new_ignore_prefixes_are_milestone_specific() {
     }
     assert!(valid_defer_reason("M2: bleibt für M1 gültig"));
     assert!(!valid_defer_reason("M4: M1 unverändert"));
+    // K2-68: M2-Klärungen bleiben im M1-Strict-Lauf gültige Zurückstellungen.
+    assert!(valid_defer_reason(
+        "Klärung K2-68: N01-C01, Besitzer M2-N01b"
+    ));
+    assert!(!valid_defer_reason("Klärung K2-x"));
 }
 
 #[test]
