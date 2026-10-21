@@ -28,6 +28,8 @@ import { ColumnsMenu } from "./ColumnsMenu";
 import { confirmsRemoval } from "./RemovalConfirmationSettings";
 import { saveTableState } from "../../state/tabs";
 import { TableController } from "./controller";
+import { setDetailSelection } from "../detail/frame/selection";
+import { useSidebarNavigation } from "../sidebar/frame/state";
 import { contextSelection, openSelected, launchBrowser } from "./actions";
 import { hasAction, runAction } from "../../ui/actions";
 import { registerMenuContributions } from "../../ui/menu/registry";
@@ -85,6 +87,32 @@ export function UpperTable() {
   const fail = controller.fail;
   useEffect(() => { controller.activate(); return () => { controller.dispose(); browserResolve.current?.(false); copyResolve.current?.(false); }; }, [controller]);
   useEffect(() => { controller.resetCrawl(); }, [controller, crawlId]);
+  // UI-006: a click in Overview/Issues sets tab, filter and search (A01-03). The store keeps the latest request, so a
+  // request made before this table mounted is applied as well; every revision is applied once.
+  const navigation = useSidebarNavigation(s => s.target);
+  const navigated = useRef(0);
+  useEffect(() => {
+    if (!navigation || !tabs.loaded || navigation.revision <= navigated.current) return;
+    navigated.current = navigation.revision;
+    const { spec } = navigation; const store = useTabs.getState();
+    if (!store.catalog.some(tab => tab.id === spec.tab)) return;
+    if (store.hidden.includes(spec.tab)) void store.show(spec.tab, true).catch(fail);
+    if (spec.segment) segments.setFilter(spec.segment);
+    store.select(spec.tab, spec.filter);
+    const search = spec.search;
+    if (search?.kind === "simple") store.query({ search: search.text, rules: null });
+    else if (search?.kind === "rules") store.query({ search: "", rules: { tree: search.tree, caseSensitive: search.caseSensitive, text: formatRule(search.tree) } });
+    else store.query({ search: "", rules: null });
+    grid.current?.scrollTo(0);
+  }, [navigation, tabs.loaded]);
+  // UI-030/UI-012: the detail pane follows the table selection (A01-02). Only explicit URL ids are published;
+  // a select-all stays a table concern and the detail pane shows its focus row.
+  const selected = controller.selection;
+  useEffect(() => {
+    const ids = selected.value.kind === "ids" ? selected.value.ids : selected.focus !== undefined ? [selected.focus] : [];
+    setDetailSelection({ urlIds: ids, ...(selected.focus !== undefined ? { focus: selected.focus } : {}), topTab: tabs.active, ...(crawlId ? { crawlId } : {}) });
+  }, [selected, tabs.active, crawlId]);
+  useEffect(() => () => setDetailSelection({ urlIds: [] }), []);
   useEffect(() => {
     void columnState.load(tabs.active).catch(fail);
   }, [tabs.active, crawlId]);

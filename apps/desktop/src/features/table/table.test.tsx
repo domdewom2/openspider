@@ -17,6 +17,8 @@ import { useSession } from "../../state/session";
 import { setLanguage } from "../../i18n";
 import { ViewDataSource } from "../../data/ViewDataSource";
 import { UpperTable } from "./UpperTable";
+import { useDetailSelection } from "../detail/frame/selection";
+import { useSidebarNavigation } from "../sidebar/frame/state";
 import { TableController } from "./controller";
 import { contextSelection, launchBrowser, openSelected } from "./actions";
 import { fixtureColumns, fixtureTabs, tableFixture } from "./fixtures/core";
@@ -331,4 +333,32 @@ it("uses an app dialog for large copies and cancellation does not write the clip
   act(() => { result = capture.grid!.confirmLargeCopy(100001); });
   fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Copy rows" }));
   await expect(result).resolves.toBe(true);
+});
+
+// spec: UI-030
+// spec: UI-012
+it("publishes the table selection and focus to the detail pane (A01-02)", async () => {
+  await mounted();
+  expect(useDetailSelection.getState().selection.urlIds).toEqual([]);
+  act(() => capture.grid!.onSelectionChange(SelectionModel.empty().select(2)));
+  await waitFor(() => expect(useDetailSelection.getState().selection).toMatchObject({ urlIds: [2], focus: 2, topTab: "Internal" }));
+  act(() => capture.grid!.onSelectionChange(SelectionModel.empty().range([1, 2, 3], 3)));
+  await waitFor(() => expect(useDetailSelection.getState().selection).toMatchObject({ urlIds: [1, 2, 3], focus: 3 }));
+  act(() => capture.grid!.onSelectionChange(SelectionModel.empty()));
+  await waitFor(() => expect(useDetailSelection.getState().selection.urlIds).toEqual([]));
+});
+
+// spec: UI-006
+it("applies a sidebar navigation request to tab and filter, once per revision (A01-03)", async () => {
+  await mounted();
+  const second = fixtureTabs.find(t => t.id !== "Internal")!;
+  const filter = second.filters.find(f => f.id !== "All")!.id;
+  act(() => useSidebarNavigation.getState().navigate(second.id, filter));
+  await waitFor(() => expect(useTabs.getState().active).toBe(second.id));
+  expect(useTabs.getState().queries[second.id].filter).toBe(filter);
+  // The user changes the filter afterwards; the old request is not applied again by an unrelated re-render.
+  act(() => useTabs.getState().query({ filter: "All" }));
+  await waitFor(() => expect(useTabs.getState().queries[second.id].filter).toBe("All"));
+  await new Promise(r => setTimeout(r, 30));
+  expect(useTabs.getState().queries[second.id].filter).toBe("All");
 });
