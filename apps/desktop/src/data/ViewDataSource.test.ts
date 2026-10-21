@@ -70,4 +70,40 @@ describe("gen-ui-large", () => {
     await source.dispose(); await source.dispose();
     expect(source.cachedRows).toBe(0); expect(api.close).toHaveBeenCalledTimes(1);
   });
+  // spec: UI-142
+  it("keeps the previous rows on screen until the new version is complete and then swaps rows, total and scroll together (A01-07)", async () => {
+    const { source, api } = setup();
+    const scroll = vi.fn(); source.onScrollTo = scroll;
+    await source.ensureRange(0, 19);
+    expect(source.getCell(0, 5)).toBe(6);
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    const original = vi.mocked(api.rows).getMockImplementation()!;
+    vi.mocked(api.rows).mockImplementationOnce(async a => { await gate; return original(a); });
+    const change = source.onViewChanged(2, fixture.total + 3);
+    await Promise.resolve();
+    // While the new window is on its way nothing is cleared: no placeholders, old version and total stay in place.
+    expect(source.getCell(0, 5)).toBe(6);
+    expect(source.version).toBe(1); expect(source.total).toBe(fixture.total);
+    expect(scroll).not.toHaveBeenCalled();
+    release(); await change;
+    expect(source.version).toBe(2); expect(source.total).toBe(fixture.total + 3);
+    expect(source.getCell(0, 5)).toBe(6);
+    expect(scroll).toHaveBeenCalledTimes(1);
+  });
+  // spec: UI-142
+  it("coalesces announcements that arrive during a swap and ends on the latest version (A01-20)", async () => {
+    const { source, api } = setup();
+    await source.ensureRange(0, 19);
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    const original = vi.mocked(api.rows).getMockImplementation()!;
+    vi.mocked(api.rows).mockImplementationOnce(async a => { await gate; return original(a); });
+    const first = source.onViewChanged(2, fixture.total + 1);
+    const second = source.onViewChanged(3, fixture.total + 2);
+    const third = source.onViewChanged(4, fixture.total + 3);
+    release(); await Promise.all([first, second, third]);
+    expect(source.version).toBe(4); expect(source.total).toBe(fixture.total + 3);
+    expect(source.getCell(0, 5)).toBe(6);
+  });
 });

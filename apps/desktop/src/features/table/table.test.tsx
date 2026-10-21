@@ -367,3 +367,56 @@ it("applies a sidebar navigation request to tab and filter, once per revision (A
   await new Promise(r => setTimeout(r, 30));
   expect(useTabs.getState().queries[second.id].filter).toBe("All");
 });
+
+// spec: UI-142
+it("waits for a building view and continues with the columns and version of its build operation (A01-16, A01-09)", async () => {
+  const ready = fx.core.handlers.get("view.open")!;
+  let opened = 0;
+  fx.core.handlers.set("view.open", async (args, ctx) => {
+    const handle = await ready(args, ctx) as ViewHandle;
+    if (opened++ > 0) return handle;
+    // The core answers `building` after its synchronous window: no columns, version 0, no total.
+    return { viewId: handle.viewId, version: 0, total: null, columns: [], state: "building", op: { opId: "build-1", labelKey: "view-build", cancellable: true } };
+  });
+  const controller = new TableController();
+  const opening = controller.open("Internal", defaultQuery());
+  await waitFor(() => expect(controller.pending).toBe(true));
+  expect(controller.source).toBeUndefined();
+  const handle = await (ready as (a: unknown, c: unknown) => Promise<ViewHandle>)({ spec: { kind: "tab", tab: "Internal", filter: "All", search: null, sort: [] }, columns: [] }, undefined);
+  const viewId = [...fx.views.keys()][0]!;
+  fx.views.set(viewId, fx.views.get(handle.viewId)!);
+  act(() => useSession.getState().applyTick({ ...tick(50), ops: [{ opId: "build-1", labelKey: "view-build", done: 1, total: 1, state: "done", result: { ...handle, viewId } as never }] }));
+  await opening;
+  expect(controller.error).toBeNull();
+  expect(controller.source?.viewId).toBe(viewId);
+  expect(controller.source!.columns.length).toBeGreaterThan(0);
+  await waitFor(() => expect(controller.source!.rowKey(0)).toBe(1));
+  controller.dispose();
+});
+
+// spec: UI-142
+it("applies a version announcement that reached the session store before the source existed (A01-21)", async () => {
+  const controller = new TableController();
+  const open = fx.core.handlers.get("view.open")!;
+  fx.core.handlers.set("view.open", async (args, ctx) => {
+    const handle = await open(args, ctx) as ViewHandle;
+    // The core announces a newer version in a tick that overtakes the open reply.
+    useSession.getState().applyTick({ ...tick(60, [{ viewId: handle.viewId, version: handle.version + 4, total: 2 }]) });
+    return handle;
+  });
+  await controller.open("Internal", defaultQuery());
+  await waitFor(() => expect(controller.source!.version).toBe(1 + 4));
+  expect(controller.source!.total).toBe(2);
+  controller.dispose();
+});
+
+// spec: UI-018
+it("refreshes the filter counts for every new counts version of the tick, independent of the file's change sequence (A01-20)", async () => {
+  const controller = new TableController();
+  const counts = vi.spyOn(catalog, "filterCounts");
+  // The file's change sequence (FilterCounts.version) is far ahead of the core's tick counter.
+  counts.mockResolvedValue({ version: 500, filters: [] });
+  await controller.tick(tick(1)); await controller.tick(tick(2)); await controller.tick(tick(2)); await controller.tick(tick(3));
+  expect(counts).toHaveBeenCalledTimes(3);
+  controller.dispose();
+});

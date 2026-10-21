@@ -288,7 +288,7 @@ export function UpperTable() {
             fontFamily: FONT_STACKS[currentPlatform()].ui, fontSize: SIZES.fontTable[appearance.density], zebra: appearance.zebra }} /> :
         <EmptyState state={{ code: controller.pending ? "NO_DATA_YET" : "NO_MATCH" }} />}
     </div>
-    <div className="u10-counter" role="status">{t("u10-count", { shown: empty ? 0 : source?.total ?? 0, total: total ?? "–" })}
+    <div className="u10-counter" role="status">{t("u10-count", { shown: empty ? 0 : source?.total ?? 0, total: total == null ? "–" : Math.max(total, empty ? 0 : source?.total ?? 0) })}
       {(query.search || query.rules) && ` · ${t("u10-search-active")}`}{count > 0 && ` · ${t("u10-selected", { count })}`}</div>
     <span ref={anchor} className="u10-menu-anchor" style={{ left: context?.x ?? 0, top: context?.y ?? 0 }} />
     <Popover triggerRef={anchor} isOpen={context !== undefined} onOpenChange={open => { if (!open) setContext(undefined); }} className="os-popover">
