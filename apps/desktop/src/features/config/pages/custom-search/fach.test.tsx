@@ -14,6 +14,7 @@ import fixture from "./fixtures/fach.json";
 import { bulkAdd, importExpressions, newFilter } from "./model";
 import { DEFAULT_RULES } from "../link-positions";
 import { ELEMENTS } from "../change-detection";
+import changeElements from "../change-detection/fixtures/elements.json";
 import { importSegments, previewDefs } from "../segments/model";
 import { changeMode } from "../custom-extraction";
 
@@ -186,7 +187,8 @@ describe("Fachseiten against the configuration fixture", () => {
   // spec: TECH-300
   it("renders 14 ordered elements, defaults to the first 13 and disables Content without both stored crawls", async () => {
     const d = await open("compare.change_detection"); const checkboxes = within(d).getAllByRole("checkbox");
-    expect(ELEMENTS).toHaveLength(14); expect(checkboxes).toHaveLength(14);
+    expect(ELEMENTS).toEqual(changeElements.map(e => e.id)); expect(checkboxes).toHaveLength(14);
+    expect(checkboxes.map(c => c.parentElement?.textContent)).toEqual(changeElements.map(e => e.label));
     checkboxes.slice(0, 13).forEach(c => expect(c).toBeChecked()); expect(checkboxes[13]).not.toBeChecked(); expect(checkboxes[13]).toBeDisabled();
     expect(within(d).getByRole("textbox", { name: "Content change threshold (%)" })).toHaveValue("10");
   });
