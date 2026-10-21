@@ -20,6 +20,11 @@ pub trait Fetch: Send + Sync + 'static {
         None
     }
 
+    /// Cookie store actually used by this transport for browser synchronization.
+    fn render_cookie_jar(&self, session: Option<Arc<CookieJar>>) -> Option<Arc<CookieJar>> {
+        session
+    }
+
     /// Optional policy denial before and after robots checks (AGENT-020).
     /// Default leaves existing fetchers unchanged. A denial contains no network response.
     fn target_denial<'a>(

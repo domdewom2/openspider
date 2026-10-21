@@ -65,6 +65,13 @@ impl<F: Fetch> PrimedFetch<F> {
 }
 
 impl<F: Fetch> Fetch for PrimedFetch<F> {
+    fn render_cookie_jar(
+        &self,
+        session: Option<std::sync::Arc<os_fetch::CookieJar>>,
+    ) -> Option<std::sync::Arc<os_fetch::CookieJar>> {
+        self.inner.render_cookie_jar(session)
+    }
+
     fn render_config(&self) -> Option<os_fetch::FetchConfig> {
         self.inner.render_config()
     }

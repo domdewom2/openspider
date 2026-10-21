@@ -205,3 +205,255 @@ async fn hash_routes_receive_separate_render_passes() {
         .unwrap();
     assert_eq!(titles, vec!["none", "#a", "#b"]);
 }
+
+fn header<'a>(request: &'a os_testsite::RequestRecord, name: &str) -> Option<&'a str> {
+    request
+        .headers
+        .iter()
+        .find(|(key, _)| key.eq_ignore_ascii_case(name))
+        .map(|(_, value)| value.as_str())
+}
+
+// spec: CRAWL-078
+// spec: CRAWL-117
+#[tokio::test]
+async fn challenges_respect_the_actual_request_path() {
+    let _guard = BROWSER.lock().await;
+    let mut c = cfg();
+    c.auth.basic.push(os_model::BasicAuth {
+        prefix: "http://127.0.0.1/private/".into(),
+        username: "fixture".into(),
+        secret_ref: "fixture-password".into(),
+    });
+    let mut deps = test_deps();
+    let secrets = std::sync::Arc::new(os_fetch::MemorySecretStore::new());
+    secrets.set("fixture-password", "private-only");
+    deps.secrets = secrets;
+    let fx = crawl_fixture_with("crawl-m2-render", "/private/page", c, deps).await;
+    assert_eq!(
+        int(&fx, "SELECT COUNT(*) FROM render_pages WHERE status='ok'"),
+        1
+    );
+    assert_eq!(
+        text(
+            &fx,
+            "SELECT title_1 FROM urls WHERE url LIKE '%/private/page'"
+        ),
+        "private-authorized"
+    );
+    let requests = fx.site.requests();
+    assert!(requests
+        .iter()
+        .any(|r| r.path_and_query == "/private/challenge" && header(r, "Authorization").is_some()));
+    let public = requests
+        .iter()
+        .filter(|r| r.path_and_query == "/public/challenge")
+        .collect::<Vec<_>>();
+    assert!(
+        !public.is_empty(),
+        "must exercise an out-of-prefix challenge"
+    );
+    assert!(
+        public.iter().all(|r| header(r, "Authorization").is_none()),
+        "{public:?}"
+    );
+}
+
+// spec: CRAWL-078
+// spec: CRAWL-088
+#[tokio::test]
+async fn persistent_login_cookies_roundtrip_between_fetcher_and_browser() {
+    let _guard = BROWSER.lock().await;
+    let mut c = cfg();
+    c.advanced.cookies = os_model::CookieMode::Persistent;
+    c.speed.threads = 1;
+    c.limits.max_depth = Some(1);
+    let fx = crawl_fixture_with("crawl-m2-render", "/login", c, test_deps()).await;
+    assert_eq!(
+        int(&fx, "SELECT COUNT(*) FROM render_pages WHERE status='ok'"),
+        2
+    );
+    let requests = fx.site.requests();
+    let first = requests
+        .iter()
+        .find(|r| r.path_and_query == "/login-resource")
+        .unwrap();
+    assert!(header(first, "Cookie")
+        .unwrap()
+        .contains("login=authenticated"));
+    for path in ["/login-next", "/login-check"] {
+        let request = requests.iter().find(|r| r.path_and_query == path).unwrap();
+        let cookies = header(request, "Cookie")
+            .unwrap_or_else(|| panic!("login cookies shared for {path}: {requests:?}"));
+        for expected in [
+            "login=authenticated",
+            "browser_http=active",
+            "browser_js=active",
+        ] {
+            assert!(cookies.contains(expected), "{path}: {cookies}");
+        }
+        assert!(
+            !cookies.contains("delete_me="),
+            "browser deletion must reach HTTP fetcher: {cookies}"
+        );
+    }
+}
+
+// spec: CRAWL-078
+// spec: CRAWL-088
+#[tokio::test]
+async fn cookie_none_blocks_javascript_and_resource_response_cookies() {
+    let _guard = BROWSER.lock().await;
+    let mut c = cfg();
+    c.advanced.cookies = os_model::CookieMode::None;
+    c.speed.threads = 1;
+    c.limits.max_depth = Some(1);
+    let fx = crawl_fixture_with("crawl-m2-render", "/login", c, test_deps()).await;
+    assert_eq!(
+        int(&fx, "SELECT COUNT(*) FROM render_pages WHERE status='ok'"),
+        2
+    );
+    let requests = fx.site.requests();
+    assert!(requests.iter().any(|r| r.path_and_query == "/login-check"));
+    assert!(
+        requests.iter().all(|r| header(r, "Cookie").is_none()),
+        "{requests:?}"
+    );
+}
+
+// spec: CRAWL-022 [P1]
+// spec: ONPAGE-012 [P1]
+// spec: CRAWL-039 [M2]
+#[tokio::test]
+async fn disabled_images_are_not_requested_or_counted_as_transferred() {
+    let _guard = BROWSER.lock().await;
+    let mut c = cfg();
+    c.spider.images.crawl = false;
+    let fx = crawl_fixture_with("crawl-m2-render", "/", c, test_deps()).await;
+    assert_eq!(
+        int(&fx, "SELECT COUNT(*) FROM render_pages WHERE status='ok'"),
+        1
+    );
+    assert!(!fx
+        .site
+        .requests()
+        .iter()
+        .any(|r| r.path_and_query == "/lazy.png"));
+    assert_eq!(
+        int(
+            &fx,
+            "SELECT COUNT(*) FROM render_network WHERE url LIKE '%/lazy.png' AND bytes>0"
+        ),
+        0
+    );
+    assert_eq!(int(&fx, "SELECT total_transferred_bytes-transferred_bytes FROM urls WHERE in_tables=1 AND url LIKE '%/'"), 0);
+    let main = fx
+        .site
+        .requests()
+        .into_iter()
+        .find(|r| r.path_and_query == "/")
+        .unwrap();
+    assert_eq!(
+        int(
+            &fx,
+            "SELECT total_transferred_bytes FROM urls WHERE in_tables=1 AND url LIKE '%/'"
+        ),
+        main.sent_body_bytes as i64
+    );
+}
+
+// spec: CRAWL-116
+#[tokio::test]
+async fn language_preferences_apply_before_scripts_and_default_header_is_absent() {
+    let _guard = BROWSER.lock().await;
+    for language in [Some("de-DE,de;q=0.9"), None] {
+        let mut c = cfg();
+        c.http.accept_language = language.map(str::to_owned);
+        let fx = crawl_fixture_with("crawl-m2-render", "/language", c, test_deps()).await;
+        assert_eq!(
+            int(&fx, "SELECT COUNT(*) FROM render_pages WHERE status='ok'"),
+            1
+        );
+        let requests = fx.site.requests();
+        for path in ["/language", "/language-check"] {
+            let request = requests.iter().find(|r| r.path_and_query == path).unwrap();
+            assert_eq!(header(request, "Accept-Language"), language);
+        }
+        if language.is_some() {
+            let title = text(&fx, "SELECT title_1 FROM urls WHERE url LIKE '%/language'");
+            let values: serde_json::Value = serde_json::from_str(&title).unwrap();
+            assert_eq!(
+                values,
+                serde_json::json!(["de-DE", ["de-DE", "de"], "de-DE"])
+            );
+        }
+    }
+}
+
+// spec: CRAWL-062
+#[tokio::test]
+async fn analytics_hosts_follow_cookie_extraction_switch() {
+    let _guard = BROWSER.lock().await;
+    let hosts = [
+        "google-analytics.com",
+        "www.google-analytics.com",
+        "googletagmanager.com",
+        "analytics.google.com",
+        "notgoogle-analytics.com",
+    ];
+    for capture in [false, true] {
+        let site = os_testsite::TestSite::start("crawl-m2-render")
+            .await
+            .unwrap();
+        let mut c = cfg();
+        c.extraction.cookies = capture;
+        c.spider.external.crawl = true;
+        for host in hosts {
+            c.network.resolve.push(format!("{host}={}", site.addr()));
+        }
+        let deps = test_deps();
+        let fetcher = os_engine::testing::site_fetcher(&site, &c, &deps);
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("analytics.ospider");
+        os_engine::start_crawl(
+            fetcher,
+            os_engine::CrawlRequest {
+                config: c,
+                source: os_engine::CrawlSource::Spider {
+                    start_url: site.url("/analytics"),
+                },
+                file: file.clone(),
+                project: "test".into(),
+                name: "analytics".into(),
+            },
+            deps,
+        )
+        .await
+        .unwrap()
+        .wait()
+        .await
+        .unwrap();
+        let crawl = os_store::CrawlFile::open(&file, os_store::OpenMode::ReadWrite).unwrap();
+        assert_eq!(
+            crawl
+                .conn()
+                .query_row(
+                    "SELECT COUNT(*) FROM render_pages WHERE status='ok'",
+                    [],
+                    |r| r.get::<_, i64>(0)
+                )
+                .unwrap(),
+            1
+        );
+        let requests = site.requests();
+        for host in hosts {
+            assert_eq!(
+                requests
+                    .iter()
+                    .any(|r| r.host == host && r.path_and_query == "/analytics.js"),
+                capture || host == "notgoogle-analytics.com",
+                "{host}, capture={capture}: {requests:?}"
+            );
+        }
+    }
+}

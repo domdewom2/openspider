@@ -393,3 +393,12 @@ pub fn rendering_column_source() -> Option<Box<dyn crate::defs::ColumnSource>> {
     }
     Some(Box::new(RenderingColumns))
 }
+
+#[cfg(test)]
+mod rendering_tests {
+    use crate as os_analyze;
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../tests/fixtures/crawl-m2-render/columns.rs"
+    ));
+}

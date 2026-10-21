@@ -6,7 +6,7 @@ body = "User-agent: *\nDisallow: /blocked.js\n"
 [[route]]
 path = "/"
 content_type = "text/html"
-body = '''<!doctype html><html><head><title>Raw</title><meta name="robots" content="noindex"></head><body><p id="removed">Removed-Marker</p><a href="/both">both</a><a id="raw" href="/raw">raw</a><img id="lazy" data-src="/lazy.png"><script>
+body = '''<!doctype html><html><head><link rel="icon" href="data:,"><title>Raw</title><meta name="robots" content="noindex"></head><body><p id="removed">Removed-Marker</p><a href="/both">both</a><a id="raw" href="/raw">raw</a><img id="lazy" data-src="/lazy.png"><script>
 document.title='Rendered';
 document.querySelector('[name=robots]').remove();
 document.querySelector('#removed').remove();
@@ -68,3 +68,64 @@ body = "<a href='/fragment#a'>a</a><a href='/fragment#b'>b</a><script>document.t
 path = "/meta-redirect"
 content_type = "text/html"
 body = "<meta http-equiv='refresh' content='0;url=/js-only'>"
+
+[[route]]
+path = "/private/page"
+content_type = "text/html"
+body = "<script>(async()=>{const r=await fetch('/private/challenge'); document.title=r.status===200?'private-authorized':'private-failed'; await fetch('/public/challenge');})()</script>"
+
+[[route]]
+path = "/private/challenge"
+sequence = [401, 200]
+[route.headers]
+WWW-Authenticate = 'Basic realm="fixture"'
+
+[[route]]
+path = "/public/challenge"
+status = 401
+[route.headers]
+WWW-Authenticate = 'Basic realm="fixture"'
+
+[[route]]
+path = "/login"
+content_type = "text/html"
+set_cookie = ["login=authenticated; Path=/; HttpOnly", "delete_me=old; Path=/"]
+body = "<a href='/login-next'>next</a><script>(async()=>{document.cookie='browser_js=active; Path=/'; await fetch('/login-resource'); await fetch('/cookie-delete'); document.title='login-ready';})()</script>"
+
+[[route]]
+path = "/login-resource"
+set_cookie = "browser_http=active; Path=/; HttpOnly"
+body = "login-resource"
+
+[[route]]
+path = "/cookie-delete"
+set_cookie = "delete_me=; Path=/; Max-Age=0"
+body = "deleted"
+
+[[route]]
+path = "/login-next"
+content_type = "text/html"
+body = "<script>fetch('/login-check').then(()=>document.title='checked');</script>"
+
+[[route]]
+path = "/login-check"
+echo = "headers"
+
+[[route]]
+path = "/language"
+content_type = "text/html"
+body = "<script>document.title=JSON.stringify([navigator.language,navigator.languages,new Intl.DateTimeFormat().resolvedOptions().locale]); fetch('/language-check')</script>"
+
+[[route]]
+path = "/language-check"
+echo = "headers"
+
+[[route]]
+path = "/analytics"
+content_type = "text/html"
+body = "<script>for (const host of ['google-analytics.com','www.google-analytics.com','googletagmanager.com','analytics.google.com','notgoogle-analytics.com']) { const s=document.createElement('script'); s.src='http://'+host+':'+location.port+'/analytics.js'; document.head.append(s); }</script>"
+
+[[route]]
+path = "/analytics.js"
+content_type = "application/javascript"
+body = "document.title='analytics-loaded'; document.cookie='analytics=active; Path=/';"

@@ -52,6 +52,8 @@ impl Session {
         let mut launch = os_render::LaunchOpts {
             chromium_path: cfg.rendering.chromium_path.as_ref().map(Into::into),
             max_tabs: tabs,
+            suppress_default_accept_language: true,
+            disable_cookie_storage: cfg.advanced.cookies == os_model::CookieMode::None,
             restart_after_pages: cfg.rendering.restart_after_pages.into(),
             memory_limit_mb: cfg.rendering.restart_memory_mb.into(),
             host_resolver_rules: cfg
@@ -120,11 +122,47 @@ impl<F: Fetch> std::fmt::Debug for Policy<F> {
     }
 }
 impl<F: Fetch> os_render::api::ResourcePolicy for Policy<F> {
+    fn allowed_resource<'a>(&'a self, url: &'a str, resource_type: &'a str) -> BoxFuture<'a, bool> {
+        Box::pin(async move {
+            let (Some(sh), Ok(target)) = (self.0.upgrade(), Url::parse(url)) else {
+                return false;
+            };
+            let scope = sh.scope.classify(&os_url::normalize(&target));
+            if scope == os_url::ScopeClass::External && !sh.cfg.spider.external.crawl {
+                return false;
+            }
+            let kind = match resource_type {
+                "Image" => Some(LinkType::Image),
+                "Stylesheet" | "Font" | "Other" => Some(LinkType::Css),
+                "Script" => Some(LinkType::JavaScript),
+                "Media" => Some(LinkType::Media),
+                "Document" => Some(LinkType::Iframe),
+                "Navigation" => Some(LinkType::Hyperlink),
+                _ => None,
+            };
+            if let Some(kind) = kind {
+                let link = ExtractedLink {
+                    link_type: kind,
+                    resolved: Some(url.into()),
+                    crawlable: true,
+                    ..Default::default()
+                };
+                if !crate::decide::decide(&link, scope, &sh.cfg, true).crawl {
+                    return false;
+                }
+            }
+            self.allowed(url).await
+        })
+    }
+
     fn allowed<'a>(&'a self, url: &'a str) -> BoxFuture<'a, bool> {
         Box::pin(async move {
             let (Some(sh), Ok(url)) = (self.0.upgrade(), Url::parse(url)) else {
                 return false;
             };
+            if !sh.cfg.extraction.cookies && analytics_host(url.host_str().unwrap_or_default()) {
+                return false;
+            }
             if sh.fetcher.target_denial(&url).await.is_some() {
                 return false;
             }
@@ -144,9 +182,25 @@ impl<F: Fetch> os_render::api::ResourcePolicy for Policy<F> {
         })
     }
 }
+pub(crate) fn analytics_host(host: &str) -> bool {
+    [
+        "google-analytics.com",
+        "googletagmanager.com",
+        "analytics.google.com",
+    ]
+    .iter()
+    .any(|known| {
+        host == *known
+            || host
+                .strip_suffix(known)
+                .is_some_and(|prefix| prefix.ends_with('.'))
+    })
+}
+
 struct Identity<F: Fetch> {
     sh: Weak<crate::worker::Shared<F>>,
     auth: os_fetch::auth::AuthMatcher,
+    cookies: Option<Arc<os_fetch::CookieJar>>,
 }
 impl<F: Fetch> std::fmt::Debug for Identity<F> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -154,6 +208,34 @@ impl<F: Fetch> std::fmt::Debug for Identity<F> {
     }
 }
 impl<F: Fetch> os_render::api::RequestIdentity for Identity<F> {
+    fn auth_response<'a>(
+        &'a self,
+        url: &'a str,
+    ) -> BoxFuture<'a, Option<os_render::api::MainResponse>> {
+        Box::pin(async move {
+            let sh = self.sh.upgrade()?;
+            let target = Url::parse(url).ok()?;
+            self.auth.rendering_credentials(&target)?;
+            let fetched = sh
+                .fetcher
+                .fetch(os_fetch::FetchRequest {
+                    url: target,
+                    purpose: os_fetch::FetchPurpose::Resource,
+                    cookies: self.cookies.clone(),
+                    max_body_bytes: sh.cfg.limits.max_page_kb.saturating_mul(1024),
+                    attempt: 1,
+                    body_limit: Default::default(),
+                })
+                .await;
+            let os_fetch::FetchOutcome::Response(response) = fetched.outcome else {
+                return None;
+            };
+            Some(browser_response(
+                &response,
+                sh.cfg.advanced.cookies != os_model::CookieMode::None,
+            ))
+        })
+    }
     fn headers(&self, url: &str) -> BTreeMap<String, String> {
         let mut headers = BTreeMap::new();
         let (Some(sh), Ok(url)) = (self.sh.upgrade(), Url::parse(url)) else {
@@ -192,15 +274,10 @@ pub(crate) fn options<F: Fetch>(
         .as_ref()
         .and_then(|f| os_fetch::auth::AuthMatcher::new(&f.basic_auth).ok())
         .unwrap_or_default();
-    let credentials = Url::parse(&item.url)
-        .ok()
-        .and_then(|url| auth.rendering_credentials(&url))
-        .map(|c| os_render::api::Credentials {
-            username: c.username,
-            password: c.password,
-        });
     let mut opts = RenderOpts {
-        credentials,
+        disable_cookies: cfg.advanced.cookies == os_model::CookieMode::None,
+        return_cookies: cfg.advanced.cookies != os_model::CookieMode::None,
+        accept_language: cfg.http.accept_language.clone(),
         capture_cookie_assignments: true,
         viewport: (r.viewport.width, r.viewport.height),
         device: match r.viewport.preset.as_str() {
@@ -241,30 +318,16 @@ pub(crate) fn options<F: Fetch>(
         request_identity: Some(Arc::new(Identity {
             sh: Arc::downgrade(sh),
             auth,
+            cookies: cookie_jar(sh, item.session),
         })),
-        main_response: Some(os_render::api::MainResponse {
-            status: response.status,
-            // Persisted header values may be redacted; cookies have a separate
-            // unredacted transport field. Never replay placeholder Set-Cookie.
-            headers: response
-                .headers
-                .iter()
-                .filter(|(name, _)| !name.eq_ignore_ascii_case("set-cookie"))
-                .cloned()
-                .chain(
-                    response
-                        .set_cookies
-                        .iter()
-                        .filter(|_| cfg.advanced.cookies != os_model::CookieMode::None)
-                        .map(|raw| ("Set-Cookie".into(), raw.clone())),
-                )
-                .collect(),
-            body: response.body.to_vec(),
-        }),
+        main_response: Some(browser_response(
+            response,
+            cfg.advanced.cookies != os_model::CookieMode::None,
+        )),
         ..Default::default()
     };
     // The browser receives every scoped session cookie before any scripts execute.
-    if let Some(jar) = sh.lock_core().session_jar(item.session) {
+    if let Some(jar) = cookie_jar(sh, item.session) {
         opts.cookies = jar
             .browser_snapshot()
             .into_iter()
@@ -280,6 +343,94 @@ pub(crate) fn options<F: Fetch>(
             .collect();
     }
     opts
+}
+
+fn browser_response(
+    response: &os_fetch::HttpResponse,
+    cookies: bool,
+) -> os_render::api::MainResponse {
+    os_render::api::MainResponse {
+        status: response.status,
+        // Persisted headers may be redacted; use unredacted cookie transport data.
+        headers: response
+            .headers
+            .iter()
+            .filter(|(name, _)| !name.eq_ignore_ascii_case("set-cookie"))
+            .cloned()
+            .chain(
+                response
+                    .set_cookies
+                    .iter()
+                    .filter(|_| cookies)
+                    .map(|raw| ("Set-Cookie".into(), raw.clone())),
+            )
+            .collect(),
+        body: response.body.to_vec(),
+    }
+}
+
+pub(crate) fn cookie_jar<F: Fetch>(
+    sh: &crate::worker::Shared<F>,
+    session: u32,
+) -> Option<Arc<os_fetch::CookieJar>> {
+    sh.fetcher
+        .render_cookie_jar(sh.lock_core().session_jar(session))
+}
+
+/// Apply only changed browser cookies: parallel tabs cannot erase unrelated writes.
+pub(crate) fn sync_cookies(
+    jar: &os_fetch::CookieJar,
+    before: &[os_render::api::Cookie],
+    after: &[os_render::api::Cookie],
+) {
+    let key = |c: &os_render::api::Cookie| (c.name.clone(), c.domain.clone(), c.path.clone());
+    for cookie in before
+        .iter()
+        .filter(|c| !after.iter().any(|a| key(c) == key(a)))
+    {
+        store_cookie(jar, cookie, true);
+    }
+    for cookie in after.iter().filter(|c| !before.contains(c)) {
+        store_cookie(jar, cookie, false);
+    }
+}
+fn store_cookie(jar: &os_fetch::CookieJar, cookie: &os_render::api::Cookie, deleted: bool) {
+    let Some(domain) = &cookie.domain else {
+        return;
+    };
+    let mut url = Url::parse(if cookie.secure {
+        "https://cookie.invalid/"
+    } else {
+        "http://cookie.invalid/"
+    })
+    .expect("static URL");
+    if url.set_host(Some(domain.trim_start_matches('.'))).is_err() {
+        return;
+    }
+    let mut raw = format!(
+        "{}={}; Path={}",
+        cookie.name,
+        cookie.value,
+        cookie.path.as_deref().unwrap_or("/")
+    );
+    if domain.starts_with('.') {
+        raw.push_str(&format!("; Domain={domain}"));
+    }
+    if cookie.secure {
+        raw.push_str("; Secure");
+    }
+    if cookie.http_only {
+        raw.push_str("; HttpOnly");
+    }
+    if deleted {
+        raw.push_str("; Max-Age=0");
+    } else if let Some(expires) = cookie.expires {
+        let age = expires
+            .saturating_sub(time::OffsetDateTime::now_utc().unix_timestamp())
+            .max(0);
+        raw.push_str(&format!("; Max-Age={age}"));
+    }
+    jar.insert_raw(&url, &raw);
 }
 
 /// Target identity for provenance and JS counts is independent of XPath/text changes.

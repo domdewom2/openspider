@@ -64,6 +64,10 @@ pub struct LaunchOpts {
     pub proxy_credentials: Option<Credentials>,
     /// Chromium-Regeln aus der Host-Zuordnung des Crawls.
     pub host_resolver_rules: Vec<String>,
+    /// Block native cookie storage in the renderer's fresh, temporary profile.
+    pub disable_cookie_storage: bool,
+    /// Engine requests supply language explicitly, with no browser default header.
+    pub suppress_default_accept_language: bool,
     pub launch_timeout_ms: u32,
     /// Explizite Freigabe für Container ohne Chromium-Sandbox.
     pub no_sandbox: bool,
@@ -80,6 +84,8 @@ impl Default for LaunchOpts {
             network: NetworkSettings::default(),
             proxy_credentials: None,
             host_resolver_rules: Vec::new(),
+            disable_cookie_storage: false,
+            suppress_default_accept_language: false,
             launch_timeout_ms: 20_000,
             no_sandbox: false,
         }
@@ -128,6 +134,15 @@ pub struct MainResponse {
 /// robots-Richtlinie der Engine einschließlich eigener Regeln und Ignorieren-Schalter.
 /// Bei false gelangt die Anfrage nicht ins Netz.
 pub trait ResourcePolicy: Send + Sync + std::fmt::Debug {
+    /// Typed engine policy; existing standalone implementations keep their behavior.
+    fn allowed_resource<'a>(
+        &'a self,
+        url: &'a str,
+        _resource_type: &'a str,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = bool> + Send + 'a>> {
+        self.allowed(url)
+    }
+
     fn allowed<'a>(
         &'a self,
         url: &'a str,
@@ -153,6 +168,12 @@ pub struct Cookie {
 pub struct RenderOpts {
     /// Engine opt-in for JavaScript cookie provenance; standalone rendering is unchanged.
     pub capture_cookie_assignments: bool,
+    /// Disable all browser cookie writes and outgoing Cookie headers.
+    pub disable_cookies: bool,
+    /// Return all context cookies, including HTTP-only and off-page resource paths.
+    pub return_cookies: bool,
+    /// HTTP language preference; applied before document scripts execute.
+    pub accept_language: Option<String>,
     /// Optional URL-scoped identity; absent preserves standalone renderer behavior.
     pub request_identity: Option<Arc<dyn RequestIdentity>>,
     pub viewport: (u32, u32),
@@ -179,6 +200,9 @@ impl Default for RenderOpts {
     fn default() -> Self {
         Self {
             capture_cookie_assignments: false,
+            disable_cookies: false,
+            return_cookies: false,
+            accept_language: None,
             request_identity: None,
             viewport: (411, 731),
             ajax_timeout_ms: 5_000,
@@ -250,6 +274,8 @@ pub struct RenderedPage {
     pub body_network: Option<Vec<NetworkEntry>>,
     /// JavaScript cookie assignments, retained separately from HTTP Set-Cookie.
     pub cookie_assignments: Vec<String>,
+    /// Complete isolated context snapshot. None preserves injected-renderer behavior.
+    pub cookies: Option<Vec<Cookie>>,
     /// URL of the loaded document, unaffected by history.pushState.
     pub navigation_url: Option<String>,
     pub dom_html: String,
@@ -274,10 +300,44 @@ fn protocol(error: impl std::fmt::Display) -> RenderError {
 
 /// Verifies availability before creating a crawl file.
 pub fn check_available(opts: &LaunchOpts) -> Result<(), RenderError> {
-    browser::executable(opts).map(|_| ())
+    browser::executable(opts)?;
+    let opts = opts.clone();
+    // This synchronous API is also called inside Tokio. A separate bounded runtime
+    // verifies an actual CDP session without nesting runtimes or invoking a shell.
+    std::thread::spawn(move || {
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .map_err(|e| RenderError::Launch(e.to_string()))?;
+        let result = runtime.block_on(async {
+            tokio::time::timeout(
+                std::time::Duration::from_millis(u64::from(opts.launch_timeout_ms) + 3_000),
+                async {
+                    let renderer = Renderer::launch(opts).await?;
+                    renderer.close().await;
+                    Ok(())
+                },
+            )
+            .await
+            .map_err(|_| RenderError::Launch("Startprüfung überschreitet Zeitgrenze".into()))?
+        });
+        runtime.shutdown_timeout(std::time::Duration::from_secs(1));
+        result
+    })
+    .join()
+    .map_err(|_| RenderError::Launch("Startprüfung abgebrochen".into()))?
 }
 
 /// Scoped request headers. Cookies/auth are resolved separately for each URL.
 pub trait RequestIdentity: Send + Sync + std::fmt::Debug {
+    /// Retry an authorized GET challenge through the scoped HTTP transport.
+    /// Native Chromium origin-auth caching would bypass path-prefix boundaries.
+    fn auth_response<'a>(
+        &'a self,
+        _url: &'a str,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Option<MainResponse>> + Send + 'a>>
+    {
+        Box::pin(async { None })
+    }
     fn headers(&self, url: &str) -> BTreeMap<String, String>;
 }

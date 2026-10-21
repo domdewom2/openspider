@@ -223,9 +223,47 @@ async fn run(
     if opts.capture_cookie_assignments {
         page.evaluate_on_new_document("(() => { const d = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie'); const writes = []; Object.defineProperty(window, '__openspiderCookieWrites', {value:writes}); if (d?.set) Object.defineProperty(Document.prototype, 'cookie', {get:d.get, set(value) { d.set.call(this,value); writes.push(String(value)); }}); })()").await.map_err(protocol)?;
     }
+    if opts.disable_cookies {
+        page.evaluate_on_new_document("Object.defineProperty(Document.prototype, 'cookie', {get: () => '', set: () => {}}); if (typeof CookieStore !== 'undefined') { CookieStore.prototype.set = () => Promise.resolve(); CookieStore.prototype.delete = () => Promise.resolve(); }").await.map_err(protocol)?;
+    }
     metrics(page, opts, opts.viewport).await?;
     if let Some(ua) = &opts.user_agent {
         page.set_user_agent(ua.clone()).await.map_err(protocol)?;
+    }
+    if opts.request_identity.is_some() || opts.accept_language.is_some() {
+        let preferences = opts.accept_language.as_deref().unwrap_or("");
+        let languages = preferences
+            .split(',')
+            .filter_map(|p| p.split(';').next())
+            .map(str::trim)
+            .filter(|p| !p.is_empty() && *p != "*")
+            .collect::<Vec<_>>();
+        if let Some(language) = languages.first() {
+            page.execute(
+                chromiumoxide::cdp::browser_protocol::emulation::SetLocaleOverrideParams::builder()
+                    .locale(*language)
+                    .build(),
+            )
+            .await
+            .map_err(protocol)?;
+        }
+        let ua = match &opts.user_agent {
+            Some(ua) => ua.clone(),
+            None => eval(page, "navigator.userAgent")
+                .await?
+                .as_str()
+                .unwrap_or_default()
+                .to_owned(),
+        };
+        page.execute(
+            chromiumoxide::cdp::browser_protocol::network::SetUserAgentOverrideParams::builder()
+                .user_agent(ua)
+                .accept_language(languages.join(","))
+                .build()
+                .map_err(protocol)?,
+        )
+        .await
+        .map_err(protocol)?;
     }
     page.execute(SetExtraHttpHeadersParams::new(Headers::new(json!(
         opts.headers
@@ -245,6 +283,15 @@ async fn run(
                 let mut param = CookieParam::new(&cookie.name, &cookie.value);
                 param.domain = cookie.domain.clone();
                 param.url = cookie.domain.is_none().then(|| url.to_owned());
+                if opts.return_cookies {
+                    if let Some(domain) = cookie.domain.as_ref().filter(|d| !d.starts_with('.')) {
+                        param.domain = None;
+                        param.url = Some(format!(
+                            "{}://{domain}/",
+                            if cookie.secure { "https" } else { "http" }
+                        ));
+                    }
+                }
                 param.path = cookie.path.clone();
                 param.secure = Some(cookie.secure);
                 param.http_only = Some(cookie.http_only);
@@ -394,6 +441,25 @@ async fn run(
     } else {
         0
     };
+    let cookies: Option<Vec<super::Cookie>> = if opts.return_cookies && !opts.disable_cookies {
+        Some(
+            super::intercept::cookies(ws, page.target_id())
+                .await?
+                .into_iter()
+                .map(|c| super::Cookie {
+                    name: c.name,
+                    value: c.value,
+                    domain: Some(c.domain),
+                    path: Some(c.path),
+                    secure: c.secure,
+                    http_only: c.http_only,
+                    expires: (!c.session).then_some(c.expires as i64),
+                })
+                .collect(),
+        )
+    } else {
+        None
+    };
     drop(intercept);
     let mut data = capture.data.lock().expect("capture");
     data.console.sort_by_key(|e| e.timestamp_ms);
@@ -408,6 +474,7 @@ async fn run(
     Ok(RenderedPage {
         body_network: Some(data.body_network()),
         cookie_assignments,
+        cookies,
         navigation_url,
         dom_html,
         final_url,

@@ -676,8 +676,15 @@ async fn render_page<F: Fetch>(
                         .map(|entry| entry.bytes);
                 }
             }
-            if let Some(jar) = sh.lock_core().session_jar(item.session) {
-                jar.store_set_cookie(url, rendered.cookie_assignments.iter().map(String::as_str));
+            if let Some(jar) = crate::render_glue::cookie_jar(sh, item.session) {
+                if let Some(cookies) = &rendered.cookies {
+                    crate::render_glue::sync_cookies(&jar, &opts.cookies, cookies);
+                } else {
+                    jar.store_set_cookie(
+                        url,
+                        rendered.cookie_assignments.iter().map(String::as_str),
+                    );
+                }
             }
             if sh.cfg.extraction.cookies {
                 let cookie_offset = a

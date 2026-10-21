@@ -516,3 +516,45 @@ async fn a_refresh_inserted_into_the_dom_has_rendered_provenance() {
         "meta_refresh"
     );
 }
+
+// spec: CRAWL-077 [P1]
+#[tokio::test]
+async fn existing_but_unlaunchable_browsers_fail_before_crawl_file_creation() {
+    let dir = tempfile::tempdir().unwrap();
+    let invalid = dir.path().join("invalid-browser");
+    std::fs::write(&invalid, b"not a browser executable").unwrap();
+    // The current test runner is executable, but cannot establish a Chromium CDP session.
+    for (index, browser) in [invalid, std::env::current_exe().unwrap()]
+        .into_iter()
+        .enumerate()
+    {
+        let file = dir.path().join(format!("unlaunchable-{index}.ospider"));
+        let mut config = cfg();
+        config.rendering.chromium_path = Some(browser.to_string_lossy().into_owned());
+        let started = std::time::Instant::now();
+        let result = os_engine::start_crawl(
+            os_engine::testing::SimFetcher::new(os_engine::testing::SimSite::new()),
+            os_engine::CrawlRequest {
+                config,
+                source: os_engine::CrawlSource::Spider {
+                    start_url: "https://site.test/".into(),
+                },
+                file: file.clone(),
+                project: "test".into(),
+                name: "unlaunchable".into(),
+            },
+            test_deps(),
+        )
+        .await;
+        let error = result
+            .err()
+            .expect("unusable executable must fail the start check")
+            .to_string();
+        assert!(error.contains("Chromium nicht startbar"), "{error}");
+        assert!(
+            !file.exists(),
+            "a failed browser start must not create a crawl file"
+        );
+        assert!(started.elapsed() < std::time::Duration::from_secs(25));
+    }
+}

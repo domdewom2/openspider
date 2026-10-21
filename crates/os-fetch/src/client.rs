@@ -887,6 +887,14 @@ impl HttpFetcher {
     }
 }
 impl Fetch for HttpFetcher {
+    fn render_cookie_jar(&self, session: Option<Arc<CookieJar>>) -> Option<Arc<CookieJar>> {
+        match self.cfg.cookies {
+            CookieMode::None => None,
+            CookieMode::SessionOnly => session,
+            CookieMode::Persistent => Some(session.unwrap_or_else(|| self.global_jar.clone())),
+        }
+    }
+
     fn render_config(&self) -> Option<FetchConfig> {
         Some(self.cfg.clone())
     }
