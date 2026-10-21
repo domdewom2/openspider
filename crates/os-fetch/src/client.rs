@@ -444,8 +444,11 @@ impl HttpFetcher {
             req.body_limit.max_decoded_bytes
         } else if req.max_body_bytes > 0 {
             req.max_body_bytes
-        } else {
+        } else if self.cfg.max_body_bytes > 0 {
             self.cfg.max_body_bytes
+        } else {
+            // CRAWL-075 (K2-68): a page size limit of 0 means unlimited, never "truncate at zero bytes".
+            u64::MAX
         };
         let jar = self.jar_for(&req);
         tracing::debug!(url = %redact::url(url.as_str()), purpose = ?req.purpose, "Abruf beginnt");
