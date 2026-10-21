@@ -5,7 +5,7 @@ mod fixture;
 mod session;
 use fixture::*;
 use serde_json::json;
-use std::io::Read;
+use std::{io::Read, time::Duration};
 
 fn workbook_xml(path: &str) -> String {
     let mut archive = zip::ZipArchive::new(std::fs::File::open(path).unwrap()).unwrap();
@@ -141,4 +141,18 @@ async fn profile_list_ranks_the_recently_loaded_profiles() {
     assert_eq!(rank("a"), json!(0));
     assert_eq!(rank("c"), json!(1));
     assert_eq!(rank("b"), json!(null));
+}
+
+// spec: OUT-206
+#[tokio::test]
+async fn shutting_down_follows_the_injected_clock() {
+    let dir = tempfile::tempdir().unwrap();
+    let (app, clock) = session::manual_app(dir.path());
+    assert!(!app.ops().shutting_down());
+    app.ops().cancel_all();
+    assert!(app.ops().shutting_down());
+    clock.advance(Duration::from_secs(59));
+    assert!(app.ops().shutting_down());
+    clock.advance(Duration::from_secs(2));
+    assert!(!app.ops().shutting_down(), "the 60 s window ends on the injected clock");
 }
