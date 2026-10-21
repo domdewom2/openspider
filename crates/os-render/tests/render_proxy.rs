@@ -8,6 +8,9 @@ use tokio::{
     net::{TcpListener, TcpStream},
 };
 
+// Echte Browsertests nacheinander (Windows-Runner: parallele Chromium-Starts laufen in den Start-Timeout).
+static CHROMIUM: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
 struct Proxy {
     port: u16,
     requests: Arc<Mutex<Vec<String>>>,
@@ -81,6 +84,7 @@ fn quick() -> RenderOpts {
 // Spec-Fixture `crawl-proxy` (lokaler Proxy, Ziel render-r01).
 // spec: CRAWL-122
 async fn requires_chromium_manual_proxy_auth_and_bypass() {
+    let _chromium = CHROMIUM.lock().await;
     let site = TestSite::start("render-r01").await.unwrap();
     let proxy = Proxy::start(site.port(), true).await;
     let mut launch = LaunchOpts::default();
@@ -171,6 +175,7 @@ async fn unreachable_proxy_fails_at_launch() {
 // Spec-Fixture `crawl-proxy` (lokaler Proxy, Ziel render-r01).
 // spec: CRAWL-122
 async fn requires_chromium_reports_bad_proxy_credentials() {
+    let _chromium = CHROMIUM.lock().await;
     let site = TestSite::start("render-r01").await.unwrap();
     let proxy = Proxy::start(site.port(), true).await;
     let mut launch = LaunchOpts::default();
@@ -194,6 +199,7 @@ async fn requires_chromium_reports_bad_proxy_credentials() {
 // Spec-Fixture `crawl-proxy`: CONNECT bleibt aktiv, unbekannte CA wird abgelehnt.
 // spec: CRAWL-122
 async fn requires_chromium_tunnels_https_without_bypassing_tls_validation() {
+    let _chromium = CHROMIUM.lock().await;
     let site = TestSite::start("render-r01").await.unwrap();
     let proxy = Proxy::start(site.port(), false).await;
     let mut launch = LaunchOpts::default();

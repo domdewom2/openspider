@@ -463,6 +463,10 @@ mod tests {
     use super::*;
     use std::sync::Arc;
 
+    // Echte Browsertests nacheinander: parallele Chromium-Starts überschreiten auf dem Windows-Runner die Startzeit
+    // ("Timeout while resolving websocket URL"). Gleiche Regel wie in tests/render_chromium.rs.
+    static CHROMIUM: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
     #[derive(Debug, Default)]
     struct HoldFirstResource {
         path: &'static str,
@@ -509,6 +513,7 @@ mod tests {
     // auf die Richtlinie wartet; weitere Crashes vor Navigation.
     // spec: CRAWL-078
     async fn requires_chromium_retries_target_crash_exactly_once() {
+        let _chromium = CHROMIUM.lock().await;
         let site = os_testsite::TestSite::start("render-r01").await.unwrap();
         let renderer = Arc::new(
             Renderer::launch(LaunchOpts {
@@ -597,6 +602,7 @@ mod tests {
     // nicht als erfolgreicher Crash gelten oder einen ereignislosen Timeout erzeugen.
     // spec: CRAWL-078
     async fn requires_chromium_reports_rejected_crash_command() {
+        let _chromium = CHROMIUM.lock().await;
         let site = os_testsite::TestSite::start("render-r01").await.unwrap();
         let renderer = Arc::new(
             Renderer::launch(LaunchOpts {
@@ -647,6 +653,7 @@ mod tests {
     // Spec-Fixture `crawl-js` (paketeigen unter render-r01).
     // spec: CRAWL-078
     async fn requires_chromium_denies_downloads_in_each_context() {
+        let _chromium = CHROMIUM.lock().await;
         use chromiumoxide::cdp::browser_protocol::browser::{
             DownloadProgressState, EventDownloadProgress,
         };
@@ -692,6 +699,7 @@ mod tests {
     // Spec-Fixture `crawl-js`: ein aktiver Nachbartab darf die Erholung nicht blockieren.
     // spec: PERF-006
     async fn requires_chromium_timeout_keeps_parallel_session_available() {
+        let _chromium = CHROMIUM.lock().await;
         let site = os_testsite::TestSite::start("render-r01").await.unwrap();
         let renderer = Arc::new(
             Renderer::launch(LaunchOpts {
@@ -770,6 +778,7 @@ mod tests {
     // Spec-Fixture `crawl-js` (paketeigen unter render-r01).
     // spec: PERF-006
     async fn requires_chromium_cancellation_closes_idle_hung_target() {
+        let _chromium = CHROMIUM.lock().await;
         let site = os_testsite::TestSite::start("render-r01").await.unwrap();
         let renderer = Arc::new(
             Renderer::launch(LaunchOpts {
