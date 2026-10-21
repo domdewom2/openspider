@@ -180,9 +180,22 @@ async fn segment_reassign_is_idempotent_and_moves_the_versions_only_once() {
             )
             .unwrap()
     };
+    // The automatic live assignment after `segment.save` may still write in the background (slow runners): measure
+    // only after the change sequence has been quiet for a moment.
+    let settled = || async {
+        loop {
+            let before = seq();
+            tokio::time::sleep(Duration::from_millis(400)).await;
+            if seq() == before {
+                return before;
+            }
+        }
+    };
+    settled().await;
     let first = operation(&app, "segment.reassign", Value::Null).await;
-    let after_first = seq();
+    let after_first = settled().await;
     let second = operation(&app, "segment.reassign", Value::Null).await;
+    settled().await;
     assert_eq!(first, json!({"count":3}));
     assert_eq!(second, first);
     assert_eq!(
