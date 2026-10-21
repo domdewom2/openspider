@@ -710,3 +710,6 @@ pub fn session_counts(conn: &Connection) -> Result<SessionCounts, StoreError> {
 
 /// App read helpers (additive K2-61 extension).
 pub mod app_support;
+
+/// Selection-scoped detail readers and preview writes (M2-K09, K2-61).
+pub mod detail_ext;
