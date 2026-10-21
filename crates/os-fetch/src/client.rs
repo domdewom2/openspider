@@ -414,7 +414,7 @@ impl HttpFetcher {
                     started_at: clock.now(),
                     outcome: FetchOutcome::Response(HttpResponse {
                         status: 307,
-                        status_text: "HSTS-Richtlinie".into(),
+                        status_text: "HSTS Policy".into(),
                         headers: vec![("location".into(), target.to_string())],
                         synthetic: Some(crate::SyntheticResponse::Hsts),
                         attempts: req.attempt.saturating_add(1),
