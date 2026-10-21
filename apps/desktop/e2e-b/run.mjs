@@ -116,14 +116,19 @@ async function probeApp() {
   const folder = join(home, "wv2-probe");
   let out = "";
   const p = spawn(binary, [], { cwd: repo, windowsHide: true, stdio: ["ignore", "pipe", "pipe"],
-    env: { ...process.env, OPENSPIDER_HOME: home, OPENSPIDER_SECRET_STORE: "memory", WEBVIEW2_USER_DATA_FOLDER: folder, WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: "--remote-debugging-port=0" } });
+    env: { ...process.env, OPENSPIDER_HOME: home, OPENSPIDER_SECRET_STORE: "memory", WEBVIEW2_USER_DATA_FOLDER: folder, WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: "--remote-debugging-port=9333 --enable-logging --v=0" } });
   p.stdout.on("data", d => { out += d; }); p.stderr.on("data", d => { out += d; });
   p.on("error", e => { out += `spawn: ${e}\n`; });
   await delay(20_000);
   const found = [];
   const walk = async dir => { try { for (const e of await readdir(dir, { withFileTypes: true })) { const f = join(dir, e.name); if (e.isDirectory()) { if (found.length < 40) await walk(f); } else if (/DevToolsActivePort/.test(e.name)) found.push(f); } } catch { /* absent */ } };
   await walk(folder);
-  const result = { exitCode: p.exitCode, output: out.slice(0, 4000), devToolsActivePort: found, folderExists: existsSync(folder) };
+  const listing = [];
+  const list = async (dir, depth) => { try { for (const e of await readdir(dir, { withFileTypes: true })) { listing.push(join(dir, e.name).slice(folder.length)); if (e.isDirectory() && depth < 2 && listing.length < 80) await list(join(dir, e.name), depth + 1); } } catch { /* absent */ } };
+  await list(folder, 0);
+  let debugPort = null;
+  try { debugPort = await (await fetch("http://127.0.0.1:9333/json/version", { signal: AbortSignal.timeout(3000) })).text(); } catch (e) { debugPort = `no answer: ${e}`; }
+  const result = { exitCode: p.exitCode, output: out.slice(0, 4000), devToolsActivePort: found, folderExists: existsSync(folder), listing, debugPort: String(debugPort).slice(0, 600) };
   if (p.exitCode === null) p.kill();
   return result;
 }
