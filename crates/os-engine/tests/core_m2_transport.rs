@@ -61,7 +61,11 @@ async fn decoded_body_and_media_limits_are_passed_to_the_fetch_contract_includin
         .unwrap();
         assert_eq!(
             *probe.limits.lock().unwrap(),
-            [(kb * 1024, kb * 1024, Some(64 * 1024))]
+            if kb == 0 {
+                [(u64::MAX, u64::MAX, Some(64 * 1024))]
+            } else {
+                [(kb * 1024, kb * 1024, Some(64 * 1024))]
+            }
         );
     }
 }

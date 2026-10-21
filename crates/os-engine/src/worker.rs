@@ -76,6 +76,14 @@ pub(crate) const STOP_STOP: u8 = 1;
 /// Pausieren (Zustand `Paused`, kein Abschluss-Hook).
 pub(crate) const STOP_PAUSE: u8 = 2;
 
+/// CRAWL-075: zero disables the page limit, including transport fallbacks.
+pub(crate) fn page_body_limit(cfg: &CrawlConfig) -> u64 {
+    match cfg.limits.max_page_kb {
+        0 => u64::MAX,
+        kb => kb.saturating_mul(1024),
+    }
+}
+
 /// Zustand, den alle Worker und die Steuerschleife teilen.
 pub(crate) struct Shared<F: Fetch> {
     pub render_session: crate::render_glue::Session,
@@ -227,10 +235,10 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
             url: url.clone(),
             purpose: item.purpose.fetch_purpose(),
             cookies,
-            max_body_bytes: cfg.limits.max_page_kb.saturating_mul(1024),
+            max_body_bytes: page_body_limit(cfg),
             attempt: item.attempt,
             body_limit: os_fetch::BodyLimit {
-                max_decoded_bytes: cfg.limits.max_page_kb.saturating_mul(1024),
+                max_decoded_bytes: page_body_limit(cfg),
                 abort_media_after: Some(64 * 1024),
             },
         })
@@ -869,6 +877,10 @@ async fn render_page<F: Fetch>(
             dom
         }
         Err(error) => {
+            // Test stdout is captured by the runner and shown on failure. Keep
+            // protocol details out of persisted crawl data and production logs.
+            #[cfg(feature = "testing")]
+            eprintln!("render failed for {url}: {error:?}");
             write.status = match error {
                 os_render::RenderError::Timeout(_) => "timeout",
                 os_render::RenderError::Crashed(_) => "crashed",
@@ -1039,6 +1051,8 @@ struct Ref {
     row: bool,
     norm: Option<usize>,
     decision: LinkDecision,
+    /// Security outlinks remain inspectable without enabling srcset discovery.
+    captured_only: bool,
 }
 
 struct Targets {
@@ -1223,27 +1237,68 @@ async fn assemble<F: Fetch>(
     let mut targets = Targets::new();
     let mut refs: Vec<Ref> = Vec::new();
     let mut map = RefMap::default();
-    let add_ref = |refs: &mut Vec<Ref>, targets: &mut Targets, ext: ExtractedLink, row: bool| {
-        let norm = ext.resolved.as_deref().and_then(|r| targets.get(&**sh, r));
-        let scope = match norm.map(|i| targets.list[i].1) {
-            Some(true) => ScopeClass::Internal,
-            _ => ScopeClass::External,
+    let add_ref =
+        |refs: &mut Vec<Ref>, targets: &mut Targets, mut ext: ExtractedLink, row: bool| {
+            let norm = ext.resolved.as_deref().and_then(|r| targets.get(&**sh, r));
+            // Non-HTTP schemes have no URL row, but retain their raw link instance
+            // when uncrawlable-link capture is enabled (CRAWL-053 / TECH-143).
+            if norm.is_none()
+                && Url::parse(ext.href_raw.trim()).is_ok_and(|url| {
+                    matches!(
+                        url.scheme(),
+                        "mailto" | "tel" | "javascript" | "data" | "about" | "file"
+                    )
+                })
+            {
+                ext.crawlable = false;
+            }
+            let scope = match norm.map(|i| targets.list[i].1) {
+                Some(true) => ScopeClass::Internal,
+                _ => ScopeClass::External,
+            };
+            let decision = decide::decide(&ext, scope, cfg, page_follow);
+            refs.push(Ref {
+                ext,
+                row,
+                norm,
+                decision,
+                captured_only: false,
+            });
+            refs.len() - 1
         };
-        let decision = decide::decide(&ext, scope, cfg, page_follow);
-        refs.push(Ref {
-            ext,
-            row,
-            norm,
-            decision,
-        });
-        refs.len() - 1
-    };
 
     // Links aus dem Dokument (HTML) bzw. aus der CSS-Datei
     if let Some(p) = &parsed {
         for l in &p.links {
             let i = add_ref(&mut refs, &mut targets, l.clone(), true);
             map.links.push(i);
+        }
+        // ONPAGE-033/037 inspect every resource reference even when CRAWL-055
+        // disables discovery of additional image URLs. The parser retains image
+        // instances in this mode; keep each raw candidate as a hidden, unqueued
+        // target rather than enabling the extraction switch behind the user's back.
+        if !cfg.extraction.srcset {
+            for image in p
+                .images
+                .iter()
+                .filter(|im| im.source == os_model::ImageSource::Srcset)
+            {
+                let ext = ExtractedLink {
+                    link_type: LinkType::Image,
+                    href_raw: image.src_raw.clone(),
+                    resolved: image.resolved.clone(),
+                    alt_text: image.alt.clone(),
+                    path_type: path_type_of(&image.src_raw),
+                    xpath: image.xpath.clone(),
+                    position: image.link_position.clone().unwrap_or_default(),
+                    doc_order: image.doc_order,
+                    ..Default::default()
+                };
+                let i = add_ref(&mut refs, &mut targets, ext, true);
+                refs[i].captured_only = true;
+                refs[i].decision.crawl = false;
+                map.links.push(i);
+            }
         }
     }
     for l in &css_links {
@@ -1313,12 +1368,17 @@ async fn assemble<F: Fetch>(
         map.pagination.push(i);
     }
     // Bildinstanzen: nur nachschlagen (die Bild-Links stehen schon in `links`)
-    let image_targets: Vec<Option<usize>> = parsed
+    let image_targets: Vec<(Option<usize>, bool)> = parsed
         .as_ref()
         .map(|p| {
             p.images
                 .iter()
-                .map(|im| im.resolved.as_deref().and_then(|r| targets.get(&**sh, r)))
+                .map(|im| {
+                    (
+                        im.resolved.as_deref().and_then(|r| targets.get(&**sh, r)),
+                        !cfg.extraction.srcset && im.source == os_model::ImageSource::Srcset,
+                    )
+                })
                 .collect()
         })
         .unwrap_or_default();
@@ -1374,6 +1434,7 @@ async fn assemble<F: Fetch>(
                 internal: *internal,
                 kind: DiscoveryKind::Link,
                 store: d.store
+                    && !r.captured_only
                     && !hreflang_only
                     && (!outside_folder || cfg.scope.crawl_outside_start_folder),
                 crawl: d.crawl && (!outside_folder || cfg.scope.crawl_outside_start_folder),
@@ -1397,9 +1458,13 @@ async fn assemble<F: Fetch>(
             }
             ids.push(Some(id));
         }
-        for t in &image_targets {
+        for (t, captured_only) in &image_targets {
             let id = t
                 .and_then(|ti| core.lookup(&targets.list[ti].0.encoded))
+                // Security outlinks may reference hidden URL rows without
+                // turning disabled srcset candidates into extracted images.
+                // A URL discovered visibly elsewhere keeps its existing ID.
+                .filter(|s| !captured_only || s.flags & F_IN_TABLES != 0)
                 .map(|s| s.id);
             image_ids.push(id);
         }

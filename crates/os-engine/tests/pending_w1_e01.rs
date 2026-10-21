@@ -6,7 +6,6 @@ use support::*;
 
 // spec: CRAWL-075
 #[tokio::test]
-#[ignore = "Klärung K2-68: N01-C15, Besitzer M2-E05 (worker.rs) und M2-N01b (Bodylimit os-fetch), max_page_kb = 0 unbegrenzt"]
 async fn unlimited_page_size_does_not_truncate_the_body_at_zero_bytes() {
     let mut cfg = CrawlConfig::default();
     cfg.limits.max_page_kb = 0;

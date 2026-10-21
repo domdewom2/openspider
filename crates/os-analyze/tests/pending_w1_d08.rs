@@ -3,7 +3,6 @@ use os_model::{CrawlConfig, Value};
 
 // spec: TECH-143
 #[tokio::test]
-#[ignore = "Klärung K2-68: N01-C02, Besitzer M2-E05 (Nachtrag: nicht crawlbare Links bei store_uncrawlable_links erfassen)"]
 async fn captured_uncrawlable_navigation_is_filterable_and_never_queued() {
     let mut cfg = CrawlConfig::default();
     cfg.spider.store_uncrawlable_links = true;
