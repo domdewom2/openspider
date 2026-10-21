@@ -267,12 +267,8 @@ pub async fn refresh(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
                 status.crawled = counts.crawled;
             }
             if state == CrawlState::Completed {
-                status.percent = completed_percent(
-                    status.percent,
-                    end_reason,
-                    status.crawled,
-                    status.queued,
-                );
+                status.percent =
+                    completed_percent(status.percent, end_reason, status.crawled, status.queued);
             }
             if f.get_meta("source_mode")?.as_deref() == Some("apis") {
                 status.mode = CrawlModeDto::Apis;
@@ -396,8 +392,14 @@ mod tests {
         assert_eq!(completed_percent(100, Some(EndReason::Stopped), 11, 16), 40);
         assert_eq!(completed_percent(100, Some(EndReason::Stopped), 999, 1), 99);
         assert_eq!(completed_percent(100, Some(EndReason::Stopped), 11, 0), 100);
-        assert_eq!(completed_percent(100, Some(EndReason::QueueEmpty), 27, 0), 100);
+        assert_eq!(
+            completed_percent(100, Some(EndReason::QueueEmpty), 27, 0),
+            100
+        );
         // Grenze erreicht: der Wert der Engine bleibt (CRAWL-130)
-        assert_eq!(completed_percent(100, Some(EndReason::LimitReached), 10, 5), 100);
+        assert_eq!(
+            completed_percent(100, Some(EndReason::LimitReached), 10, 5),
+            100
+        );
     }
 }
