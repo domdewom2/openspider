@@ -145,7 +145,7 @@ describe("Geschwindigkeit, Header, Authentifizierung, Voreinstellungen", () => {
   // spec: OUT-220
   it("Header-Tabelle und Accept-Language werden in die Konfiguration geschrieben", async () => {
     const dialog = await open("http.headers");
-    fireEvent.click(within(dialog).getByRole("button", { name: "Add header" }));
+    fireEvent.click(await within(dialog).findByRole("button", { name: "Add header" }));
     type(within(dialog).getByRole("textbox", { name: "Header name, row 1" }), "X-Test");
     type(within(dialog).getByRole("textbox", { name: "Header value, row 1" }), "1");
     type(within(dialog).getByRole("textbox", { name: "Host, row 1" }), "stage.example.test");
