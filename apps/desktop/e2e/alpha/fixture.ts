@@ -1,9 +1,10 @@
 // Fixture der Alpha-Abnahme (M2-A01): je Test eine echte Bridge mit eigenem Home, je Worker ein Fixture-Server
 // (fx-ui-basic). Jede Seite wird auf Konsolenfehler überwacht (Alpha-Kriterium 7).
-import { test as base, expect, type Locator, type Page } from "@playwright/test";
+import { test as base, expect as baseExpect, type Locator, type Page } from "@playwright/test";
 import { ensureTools, startAlphaBridge, startSite, type AlphaBridge, type Site } from "./support";
 
-export { expect };
+// Der Vite-Entwicklungsserver übersetzt Module beim ersten Zugriff; unter paralleler Last braucht das länger als die 5 s der Vorgabe.
+export const expect = baseExpect.configure({ timeout: 15_000 });
 
 export interface GridWindow {
   headers: string[];
@@ -42,6 +43,8 @@ export interface Alpha {
   /** Text des Zählers „Showing: N of M“. */
   counter(): Promise<string>;
   gridWindow(): Promise<GridWindow>;
+  /** Wie `gridWindow`, wartet aber, bis keine Platzhalterzellen („…“, Zeilen werden nachgeladen) mehr sichtbar sind. */
+  settledGrid(): Promise<GridWindow>;
   /** Wechselt den oberen Tab. */
   selectTab(name: string): Promise<void>;
   /** Überschreibt den nativen Zielordner-/Datei-Dialog des Exports (im Browser nicht vorhanden). */
@@ -131,7 +134,7 @@ export const test = base.extend<{ alpha: Alpha }, { site: Site }>({
       invoke,
       table,
       async counter() {
-        return table().locator("[role=status]").innerText();
+        return table().getByText(/^(Showing|Angezeigt): /).innerText();
       },
       async gridWindow() {
         return page.evaluate(() => {
@@ -149,6 +152,16 @@ export const test = base.extend<{ alpha: Alpha }, { site: Site }>({
               })),
           };
         });
+      },
+      async settledGrid() {
+        let last: GridWindow = { headers: [], rows: [] };
+        await expect
+          .poll(async () => {
+            last = await alpha.gridWindow();
+            return last.rows.length > 0 && last.rows.every((r) => r.cells.every((c) => c !== "…"));
+          }, { timeout: 10_000 })
+          .toBe(true);
+        return last;
       },
       async selectTab(name) {
         await page.getByRole("tab", { name, exact: true }).click();
