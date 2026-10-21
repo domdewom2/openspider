@@ -30,7 +30,7 @@ test("a tour through the main window produces no console errors and axe finds no
   await alpha.table().getByRole("button", { name: /Filter/, exact: true }).click();
   await page.getByRole("option", { name: /^Success \(2XX\)\s*25$/ }).click();
   await expect(alpha.table()).toContainText("Showing: 25 of 27");
-  const search = page.getByLabel("Search Address", { exact: true });
+  const search = page.getByRole("searchbox", { name: "Search Address", exact: true });
   await search.fill("page-2");
   await search.press("Enter");
   await expect(alpha.table()).toContainText(/Search active/);

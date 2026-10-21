@@ -127,7 +127,7 @@ test("simple search matches the Address on Enter, shows N of M and clears with E
   const { page } = alpha;
   await crawled(alpha, "Response Codes");
   await expect(alpha.table()).toContainText("Showing: 27 of 27");
-  const search = page.getByLabel("Search Address", { exact: true });
+  const search = page.getByRole("searchbox", { name: "Search Address", exact: true });
   await search.fill("PAGE-1");
   // ohne Enter ändert sich nichts
   await expect(alpha.table()).toContainText("Showing: 27 of 27");
