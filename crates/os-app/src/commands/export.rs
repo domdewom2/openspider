@@ -273,34 +273,15 @@ fn catalog_command<'a>(
                 Ok(to_json(&ExportCatalog {
                     bulk: groups(ExportKind::Bulk),
                     reports: groups(ExportKind::Report),
-                    sitemaps: vec![
-                        ExportItem {
-                            name: "pages".into(),
-                            label_key: "export-sitemap-pages".into(),
-                            enabled: os_export::sitemap_gen::supports_configuration(
-                                &s.config.sitemap_gen,
-                            ),
-                            disabled_reason: (!os_export::sitemap_gen::supports_configuration(
-                                &s.config.sitemap_gen,
-                            ))
-                            .then(|| "M2-X02".into()),
-                        },
-                        ExportItem {
-                            name: "images".into(),
-                            label_key: "export-sitemap-images".into(),
-                            enabled: {
-                                let mut config = s.config.sitemap_gen.clone();
-                                config.images.enabled = true;
-                                os_export::sitemap_gen::supports_configuration(&config)
-                            },
-                            disabled_reason: {
-                                let mut config = s.config.sitemap_gen.clone();
-                                config.images.enabled = true;
-                                (!os_export::sitemap_gen::supports_configuration(&config))
-                                    .then(|| "M2-X02".into())
-                            },
-                        },
-                    ],
+                    sitemaps: ["pages", "images"]
+                        .into_iter()
+                        .map(|name| ExportItem {
+                            name: name.into(),
+                            label_key: format!("export-sitemap-{name}"),
+                            enabled: true,
+                            disabled_reason: None,
+                        })
+                        .collect(),
                 }))
             })
             .await?
@@ -814,11 +795,17 @@ fn sitemap<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture
             Some(value) => parse_args(value)?,
             None => s.config.sitemap_gen.clone(),
         };
-        match args.sitemap_kind.as_str() {
-            "pages" => {}
-            "images" => options.images.enabled = true,
+        let images = match args.sitemap_kind.as_str() {
+            "pages" => false,
+            "images" => {
+                options.images.enabled = true;
+                true
+            }
             _ => return Err(CmdError::invalid_input("err-sitemap-kind", "sitemapKind")),
         };
+        // OUT-124: the sitemap generator reads the complete configuration; the dialog options replace its sitemap part.
+        let mut config = (*s.config).clone();
+        config.sitemap_gen = options;
         let worker = app.clone();
         let clock = app.config().clock.clone();
         let op = app
@@ -833,12 +820,26 @@ fn sitemap<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture
                                 checked(&work_token)?;
                                 let dir = PathBuf::from(args.dir);
                                 let stage = Stage::new(&dir)?;
-                                let report = os_export::sitemap_gen::generate_configured(
-                                    file,
-                                    &options,
-                                    clock.as_ref(),
-                                    &stage.0,
-                                )
+                                let sitemap_options = os_export::SitemapOptions::default();
+                                let report = if images {
+                                    os_export::sitemap_gen::generate_image_sitemap_with(
+                                        file,
+                                        &sitemap_options,
+                                        &config,
+                                        None,
+                                        clock.as_ref(),
+                                        &stage.0,
+                                    )
+                                } else {
+                                    os_export::sitemap_gen::generate_sitemap_configured_with(
+                                        file,
+                                        &sitemap_options,
+                                        &config,
+                                        None,
+                                        clock.as_ref(),
+                                        &stage.0,
+                                    )
+                                }
                                 .map_err(export_error)?;
                                 checked(&work_token)?;
                                 let mut bytes = 0;

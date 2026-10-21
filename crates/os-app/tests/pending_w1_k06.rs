@@ -58,7 +58,6 @@ async fn image_instances_are_available_through_view_images() {
 }
 // spec: TECH-146
 #[tokio::test]
-#[ignore = "Klärung K2-68: N01-C09, Besitzer M2-N01b (Anchors-Leser an view.rs anbinden)"]
 async fn anchors_mode_aggregates_hyperlinks_with_self_links_excluded() {
     let fx = Fx::new();
     let mut spec = links(true);
@@ -93,7 +92,6 @@ async fn crawl_path_export_uses_the_registered_detail_source() {
 
 // spec: OUT-124
 #[tokio::test]
-#[ignore = "Klärung K2-68: N01-C11, Besitzer M2-N01b (Provider der Bild-Sitemap nicht angebunden)"]
 async fn image_sitemap_options_reach_the_configuration_aware_provider() {
     let fx = Fx::new();
     let path = fx.dir.path().join("image-sitemap");
@@ -103,7 +101,8 @@ async fn image_sitemap_options_reach_the_configuration_aware_provider() {
     )
     .await
     .unwrap();
-    let xml = std::fs::read_to_string(path.join("sitemap.xml")).unwrap();
+    // OUT-127: the image sitemap is named image-sitemap.xml (Standardname), not sitemap.xml.
+    let xml = std::fs::read_to_string(path.join("image-sitemap.xml")).unwrap();
     assert!(xml.contains("image:loc"));
     assert!(xml.contains("https://site.test/image.png"));
 }
