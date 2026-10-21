@@ -318,6 +318,7 @@ try {
         for (const handle of await browser.getWindowHandles()) {
           if (handle === before[0]) continue;
           await browser.switchToWindow(handle);
+          report.settingsProbe = [...(report.settingsProbe ?? []).slice(-8), await browser.execute("return {label: window.__osRuntime?.label ?? null, href: location.href, text: document.body.innerText.length, ready: document.readyState}").catch(e => String(e))];
           if (await browser.execute("return window.__osRuntime?.label === 'settings' && document.body.innerText.length > 0").catch(() => false)) { settings = handle; return true; }
         }
         await browser.switchToWindow(before[0]);
