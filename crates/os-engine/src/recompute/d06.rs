@@ -27,7 +27,7 @@ pub fn run(
     }
     cancel.checkpoint().map_err(|_| EngineError::Cancelled)?;
     // Eine Transaktion: Abbruch verwirft auch Sichtbarkeit, Marker und Änderungsfeed.
-    let tx = sql(file.conn().unchecked_transaction())?;
+    let tx = sql(os_store::profile::RecomputeSavepoint::new(file.conn()))?;
     let seq = file
         .get_meta("change_seq")?
         .unwrap_or_default()

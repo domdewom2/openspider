@@ -2,8 +2,7 @@
 import assert from "node:assert/strict";
 import { spawn, execFileSync } from "node:child_process";
 import { once } from "node:events";
-import { mkdtemp, mkdir, rm, writeFile, copyFile, readFile, readdir } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { mkdtemp, mkdir, rm, writeFile, copyFile, readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { tmpdir, release, arch } from "node:os";
 import { resolve, join, dirname } from "node:path";
@@ -110,32 +109,6 @@ async function key(value, target) {
   await delay(250);
   trace.afterKey = await evaluate("window.s02.keyboardFocus()");
 }
-// Diagnostic for "DevToolsActivePort file doesn't exist": does the app start on its own with the WebView2 environment that
-// msedgedriver sets, and where does WebView2 write its DevToolsActivePort file?
-async function probeApp() {
-  const folder = join(home, "wv2-probe");
-  let out = "";
-  const p = spawn(binary, [], { cwd: repo, windowsHide: true, stdio: ["ignore", "pipe", "pipe"],
-    env: { ...process.env, OPENSPIDER_HOME: home, OPENSPIDER_SECRET_STORE: "memory", WEBVIEW2_USER_DATA_FOLDER: folder, WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: "--remote-debugging-port=9333 --enable-logging --v=0" } });
-  p.stdout.on("data", d => { out += d; }); p.stderr.on("data", d => { out += d; });
-  p.on("error", e => { out += `spawn: ${e}\n`; });
-  await delay(20_000);
-  const found = [];
-  const walk = async dir => { try { for (const e of await readdir(dir, { withFileTypes: true })) { const f = join(dir, e.name); if (e.isDirectory()) { if (found.length < 40) await walk(f); } else if (/DevToolsActivePort/.test(e.name)) found.push(f); } } catch { /* absent */ } };
-  await walk(folder);
-  const listing = [];
-  const list = async (dir, depth) => { try { for (const e of await readdir(dir, { withFileTypes: true })) { listing.push(join(dir, e.name).slice(folder.length)); if (e.isDirectory() && depth < 2 && listing.length < 80) await list(join(dir, e.name), depth + 1); } } catch { /* absent */ } };
-  await list(folder, 0);
-  let debugPort = null;
-  try { debugPort = await (await fetch("http://127.0.0.1:9333/json/version", { signal: AbortSignal.timeout(3000) })).text(); } catch (e) { debugPort = `no answer: ${e}`; }
-  let commandLines = "";
-  try { commandLines = execFileSync("powershell.exe", ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command",
-    "Get-CimInstance Win32_Process | Where-Object { $_.Name -match 'openspider|msedgewebview2' -and $_.CommandLine -notmatch 'type=(renderer|gpu-process|utility|crashpad)' } | Select-Object Name,ProcessId,ParentProcessId,CommandLine | ConvertTo-Json -Depth 3"],
-    { encoding: "utf8", windowsHide: true, timeout: 20_000 }); } catch (e) { commandLines = String(e); }
-  const result = { exitCode: p.exitCode, commandLines: commandLines.slice(0, 5000), output: out.slice(0, 4000), devToolsActivePort: found, folderExists: existsSync(folder), listing, debugPort: String(debugPort).slice(0, 600) };
-  if (p.exitCode === null) p.kill();
-  return result;
-}
 async function startFixture() {
   let requests = 0;
   fixture = httpServer((req, res) => {
@@ -165,32 +138,10 @@ try {
   const port = await freePort();
   const env = { OPENSPIDER_HOME: home, OPENSPIDER_SECRET_STORE: "memory", TAURI_WEBDRIVER_PORT: String(port) };
   if (process.platform === "win32") {
-    const capabilities = { browserName: "webview2", "ms:edgeOptions": { binary, webviewOptions: {} } };
-    // N01b (K2-65/ui-e2e-b): the runner talks to msedgedriver itself with the capabilities tauri-driver would build
-    // (`browserName: webview2`, `ms:edgeOptions.binary`). tauri-driver only maps these and hides the native driver's
-    // output; the verbose msedgedriver log is the evidence for "DevToolsActivePort file doesn't exist". S02_WINDOWS_DRIVER=tauri
-    // restores the old path.
-    const useTauriDriver = process.env.S02_WINDOWS_DRIVER === "tauri";
-    const startDriver = async attempt => {
-      if (useTauriDriver) child(process.env.TAURI_DRIVER ?? "tauri-driver", ["--port", String(port), "--native-port", String(await freePort())], env);
-      else child(process.env.EDGE_DRIVER ?? "msedgedriver", [`--port=${port}`, "--verbose", `--log-path=${join(output, `msedgedriver-${attempt}.log`)}`], env);
-      await until(async () => (await fetch(`http://127.0.0.1:${port}/status`, { signal: AbortSignal.timeout(1000) })).ok, "windows webdriver");
-      return remote({ hostname: "127.0.0.1", port, logLevel: "error", connectionRetryCount: 0,
-        capabilities: useTauriDriver ? { "tauri:options": { application: binary } } : capabilities });
-    };
-    // A first WebView2 start on a fresh runner can miss the driver's DevToolsActivePort deadline; one clean retry.
-    for (let attempt = 1; !browser; attempt++) {
-      try { browser = await startDriver(attempt); }
-      catch (e) {
-        report.startup = { ...report.startup, [`sessionAttempt${attempt}`]: String(e) };
-        report.processes = (() => { try { return execFileSync("powershell.exe", ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command",
-          "Get-Process | Where-Object { $_.ProcessName -match 'openspider|msedge' } | Select-Object ProcessName,Id,StartTime | ConvertTo-Json"], { encoding: "utf8", windowsHide: true, timeout: 15_000 }); } catch (err) { return String(err); } })();
-        if (attempt === 1) report.appProbe = await probeApp();
-        if (attempt >= 2) throw e;
-        for (const image of ["openspider-desktop.exe", "msedgewebview2.exe", "msedgedriver.exe"]) { try { execFileSync("taskkill", ["/F", "/T", "/IM", image], { stdio: "ignore", windowsHide: true }); } catch { /* not running */ } }
-        await delay(2000);
-      }
-    }
+    child(process.env.TAURI_DRIVER ?? "tauri-driver", ["--port", String(port), "--native-port", String(await freePort())], env);
+    await until(async () => (await fetch(`http://127.0.0.1:${port}/status`, { signal: AbortSignal.timeout(1000) })).ok, "tauri-driver");
+    browser = await remote({ hostname: "127.0.0.1", port, logLevel: "error", connectionRetryCount: 0,
+      capabilities: { "tauri:options": { application: binary } } });
   } else {
     if (guiLaunch) {
       const bundle = join(home, "S02.app");
@@ -311,43 +262,32 @@ try {
     await check("separate settings window", async () => {
       const before = await browser.getWindowHandles();
       await evaluate("window.s02.settings()");
-      // The Windows test build creates the (hidden) settings window at startup (see ui-e2e-b.yml), so it may already be among
-      // the handles; find it by its label instead of by a new handle.
-      let settings;
-      await until(async () => {
-        for (const handle of await browser.getWindowHandles()) {
-          if (handle === before[0]) continue;
-          await browser.switchToWindow(handle);
-          report.settingsProbe = [...(report.settingsProbe ?? []).slice(-8), await browser.execute("return {label: window.__osRuntime?.label ?? null, href: location.href, text: document.body.innerText.length, ready: document.readyState}").catch(e => String(e))];
-          if (await browser.execute("return window.__osRuntime?.label === 'settings' && document.body.innerText.length > 0").catch(() => false)) { settings = handle; return true; }
-        }
-        await browser.switchToWindow(before[0]);
-        return false;
-      }, "settings window");
+      const handles = await until(async () => { const h = await browser.getWindowHandles(); return h.length > before.length && h; }, "settings window");
+      const settings = handles.find(h => !before.includes(h));
+      await browser.switchToWindow(settings);
+      await until(() => browser.execute("return window.__osRuntime?.label === 'settings' && document.body.innerText.length > 0"), "settings content");
       await evaluate("import('/spikes/probe.ts').then(m => { window.s02 = m; })");
       const value = await evaluate("window.s02.snapshot()");
       assert.equal(value.transport, "tauri");
       assert.equal(value.shell.visible, true);
       assert.equal(value.shell.minimized, false);
       await browser.switchToWindow(before[0]);
-      return { ...value, handle: settings };
+      return value;
     });
     // spec: UI-113, OUT-232
-    // N01b: app.requestQuit itself opens the "Quit OpenSpider?" confirmation (CI screenshot of the failed run), so the window
-    // close is judged first, while no dialog is open; the quit decision is read afterwards from the same running crawl.
-    const dialogOpen = () => browser.execute("return !!document.querySelector('[role=alertdialog], [role=dialog], dialog[open]')");
-    await check("closing during a running fixture crawl asks before quitting", async () => {
-      await startFixture();
-      assert.equal(await dialogOpen(), false);
-      await evaluate("window.s02.close()");
-      await until(dialogOpen, "quit confirmation");
-      return await browser.execute("return document.querySelector('[role=alertdialog], [role=dialog], dialog[open]').textContent");
-    });
     await check("app.requestQuit confirms a running fixture crawl", async () => {
+      await startFixture();
       report.quitDecision = await evaluate("window.s02.requestQuit()");
       assert.equal(report.quitDecision.kind, "confirm");
       assert.ok(report.quitDecision.reasons.includes("crawl"));
       return report.quitDecision;
+    });
+    await check("closing during a running fixture crawl asks before quitting", async () => {
+      assert.equal(report.quitDecision?.kind, "confirm", "Requires a running crawl and confirmation decision");
+      assert.equal(await browser.execute("return !!document.querySelector('[role=alertdialog], [role=dialog], dialog[open]')"), false);
+      await evaluate("window.s02.close()");
+      await until(() => browser.execute("return !!document.querySelector('[role=alertdialog], [role=dialog], dialog[open]')"), "quit confirmation");
+      return await browser.execute("return document.querySelector('[role=alertdialog], [role=dialog], dialog[open]').textContent");
     });
   }
 } catch (e) { report.errors.push(String(e)); }

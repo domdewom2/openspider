@@ -129,7 +129,13 @@ fn set_default<'a>(app: &'a App, _: CallCtx, args: Value) -> BoxFuture<'a, CmdRe
 }
 fn import<'a>(app: &'a App, _: CallCtx, args: Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
-        let PathArgs { path } = parse_args(args)?;
+        #[derive(serde::Deserialize)]
+        struct ImportArgs {
+            path: String,
+            password: Option<String>,
+        }
+        let ImportArgs { path, password } = parse_args(args)?;
+        let secrets = app.config().secrets.clone();
         let store = store(app);
         let loaded = app
             .write_queue()
@@ -139,19 +145,7 @@ fn import<'a>(app: &'a App, _: CallCtx, args: Value) -> BoxFuture<'a, CmdResult>
                     .file_stem()
                     .and_then(|n| n.to_str())
                     .ok_or_else(|| CmdError::invalid_input("err-profile-name", "path"))?;
-                let loaded = CrawlConfig::load_file(path).map_err(|e| {
-                    let mut error = CmdError::invalid_input(
-                        "err-profile-format",
-                        e.field.unwrap_or_else(|| "path".into()),
-                    );
-                    if let Some(line) = e.line {
-                        error = error.with_arg("line", line);
-                    }
-                    if let Some(col) = e.column {
-                        error = error.with_arg("column", col);
-                    }
-                    error
-                })?;
+                let (loaded, credentials) = read_export(path, password.as_deref())?;
                 valid(&loaded.config)?;
                 store
                     .save(name, &loaded.config, false)
@@ -163,6 +157,11 @@ fn import<'a>(app: &'a App, _: CallCtx, args: Value) -> BoxFuture<'a, CmdResult>
                         }
                         _ => store_error(&e),
                     })?;
+                for (key, value) in credentials {
+                    secrets
+                        .set(&key, &value)
+                        .map_err(|_| CmdError::new(ErrorCode::Io, "err-profile-secrets"))?;
+                }
                 Ok((loaded, info(&store, name)?))
             })
             .await?;
@@ -273,5 +272,64 @@ pub fn register(r: &mut Registry) {
             },
             handler,
         );
+    }
+}
+
+/// Password-protected profile reader for import before CLI/scheduling use.
+/// Credentials are returned separately for installation in the caller's SecretStore.
+pub fn read_export(
+    path: &Path,
+    password: Option<&str>,
+) -> Result<
+    (
+        os_model::LoadedConfig,
+        std::collections::BTreeMap<String, String>,
+    ),
+    CmdError,
+> {
+    let bytes =
+        std::fs::read(path).map_err(|_| CmdError::new(ErrorCode::Io, "err-profile-read"))?;
+    let invalid = || CmdError::invalid_input("err-profile-format", "path");
+    if let Some(envelope) = bytes.strip_prefix(SECRET_EXPORT_MAGIC) {
+        let password = password
+            .filter(|p| !p.is_empty())
+            .ok_or_else(|| CmdError::invalid_input("err-export-password-required", "password"))?;
+        let plain = os_integrations::secret_export::decrypt_with_password(envelope, password)
+            .map_err(|_| {
+                CmdError::invalid_input("err-profile-password-or-integrity", "password")
+            })?;
+        #[derive(serde::Deserialize)]
+        struct Payload {
+            config: Value,
+            secrets: std::collections::BTreeMap<String, String>,
+        }
+        let payload: Payload = serde_json::from_slice(&plain).map_err(|_| invalid())?;
+        let loaded = os_model::LoadedConfig::from_config(
+            serde_json::from_value(payload.config).map_err(|_| invalid())?,
+        );
+        valid(&loaded.config)?;
+        if payload.secrets.keys().any(|key| {
+            !os_model::ApiKind::ALL
+                .iter()
+                .any(|kind| key == &format!("api/{kind}"))
+        }) {
+            return Err(invalid());
+        }
+        Ok((loaded, payload.secrets))
+    } else {
+        let loaded = CrawlConfig::load_file(path).map_err(|e| {
+            let mut error = CmdError::invalid_input(
+                "err-profile-format",
+                e.field.unwrap_or_else(|| "path".into()),
+            );
+            if let Some(line) = e.line {
+                error = error.with_arg("line", line);
+            }
+            if let Some(col) = e.column {
+                error = error.with_arg("column", col);
+            }
+            error
+        })?;
+        Ok((loaded, Default::default()))
     }
 }

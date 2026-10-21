@@ -25,7 +25,7 @@
 //! `serp_edits`, `url_segments`, `near_duplicates`), damit ein erneuter Abruf keine Reste des alten Abrufs behält.
 
 use os_model::{ExtKey, SdIssueWrite, UrlId, Value as ModelValue, WriteBatch};
-use rusqlite::{params, OptionalExtension, Transaction};
+use rusqlite::{params, Connection, OptionalExtension};
 
 use crate::error::StoreError;
 
@@ -52,7 +52,7 @@ pub(crate) fn parts_empty(batch: &WriteBatch) -> bool {
 }
 
 /// Löscht die seitenbezogenen M2-Zeilen einer URL (`PageWrite.replace`).
-pub(crate) fn clear_page_children(tx: &Transaction<'_>, id: i64) -> Result<(), StoreError> {
+pub(crate) fn clear_page_children(tx: &Connection, id: i64) -> Result<(), StoreError> {
     let namespaces = os_model::ext::NAMESPACES
         .iter()
         .filter(|(ns, _)| os_model::ext::is_fetch_scoped(ns))
@@ -88,7 +88,7 @@ pub(crate) fn clear_page_children(tx: &Transaction<'_>, id: i64) -> Result<(), S
 
 /// Schreibt den Quelltext einer Seite (`page_html`, CRAWL-063).
 pub(crate) fn write_page_html(
-    tx: &Transaction<'_>,
+    tx: &Connection,
     id: i64,
     html: &os_model::PageHtml,
 ) -> Result<(), StoreError> {
@@ -108,7 +108,7 @@ fn distinct(ids: impl Iterator<Item = i64>) -> Vec<i64> {
 }
 
 /// Stempelt `urls.change_seq` der URLs; eine unbekannte URL ist ein Fehler.
-fn stamp_urls(tx: &Transaction<'_>, part: &str, ids: &[i64], seq: i64) -> Result<(), StoreError> {
+fn stamp_urls(tx: &Connection, part: &str, ids: &[i64], seq: i64) -> Result<(), StoreError> {
     if ids.is_empty() {
         return Ok(());
     }
@@ -122,7 +122,7 @@ fn stamp_urls(tx: &Transaction<'_>, part: &str, ids: &[i64], seq: i64) -> Result
 }
 
 /// Schreibt alle M2-Teile des Batches (nach den Seiten, damit die URL-Zeilen existieren).
-pub(crate) fn write(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
+pub(crate) fn write(tx: &Connection, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
     write_w1(tx, batch, seq)?;
     write_ext(tx, batch, seq)?;
     write_structured_data(tx, batch, seq)?;
@@ -136,7 +136,7 @@ pub(crate) fn write(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Resul
     Ok(())
 }
 
-fn write_ext(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
+fn write_ext(tx: &Connection, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
     if batch.ext.is_empty() {
         return Ok(());
     }
@@ -170,11 +170,7 @@ fn write_ext(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<(), S
     Ok(())
 }
 
-fn write_structured_data(
-    tx: &Transaction<'_>,
-    batch: &WriteBatch,
-    seq: i64,
-) -> Result<(), StoreError> {
+fn write_structured_data(tx: &Connection, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
     if batch.structured_data.is_empty() && batch.sd_issues.is_empty() {
         return Ok(());
     }
@@ -245,7 +241,7 @@ fn write_structured_data(
 
 /// `SdIssueWrite.item` → `sd_items.id`: Index in den Elementen der URL aus diesem Batch, sonst in den gespeicherten.
 fn resolve_item(
-    tx: &Transaction<'_>,
+    tx: &Connection,
     batch_ids: &std::collections::HashMap<i64, Vec<i64>>,
     issue: &SdIssueWrite,
 ) -> Result<Option<i64>, StoreError> {
@@ -273,7 +269,7 @@ fn resolve_item(
     })
 }
 
-fn write_render(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
+fn write_render(tx: &Connection, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
     if batch.render.is_empty() {
         return Ok(());
     }
@@ -353,7 +349,7 @@ fn write_render(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<()
     Ok(())
 }
 
-fn write_a11y(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
+fn write_a11y(tx: &Connection, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
     if batch.a11y.is_empty() {
         return Ok(());
     }
@@ -385,7 +381,7 @@ fn write_a11y(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<(), 
     Ok(())
 }
 
-fn write_spelling(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
+fn write_spelling(tx: &Connection, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
     if batch.spelling.is_empty() {
         return Ok(());
     }
@@ -422,7 +418,7 @@ fn write_spelling(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<
     Ok(())
 }
 
-fn write_custom(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
+fn write_custom(tx: &Connection, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
     if !batch.custom_search.is_empty() {
         let ids = distinct(batch.custom_search.iter().map(|c| c.url_id.0));
         stamp_urls(tx, "custom_search", &ids, seq)?;
@@ -471,7 +467,7 @@ fn write_custom(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<()
     Ok(())
 }
 
-fn write_forms(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
+fn write_forms(tx: &Connection, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
     if batch.forms.is_empty() {
         return Ok(());
     }
@@ -510,7 +506,7 @@ pub fn decode_minhash(bytes: &[u8]) -> Option<Vec<u32>> {
     )
 }
 
-fn write_minhash(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
+fn write_minhash(tx: &Connection, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
     if batch.minhash.is_empty() {
         return Ok(());
     }
@@ -528,7 +524,7 @@ fn write_minhash(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<(
     Ok(())
 }
 
-fn write_api_values(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
+fn write_api_values(tx: &Connection, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
     if batch.api_values.is_empty() {
         return Ok(());
     }
@@ -577,7 +573,7 @@ pub(crate) fn compress(bytes: &[u8]) -> Result<Vec<u8>, StoreError> {
     zstd::stream::encode_all(bytes, 3)
         .map_err(|e| StoreError::InvalidInput(format!("HTML-Kompression: {e}")))
 }
-fn write_w1(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
+fn write_w1(tx: &Connection, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
     let mut stamp = tx.prepare_cached("UPDATE urls SET change_seq = ?1 WHERE id = ?2")?;
     for id in distinct(batch.cookies.iter().map(|c| c.url_id.0)) {
         if stamp.execute(params![seq, id])? == 0 {

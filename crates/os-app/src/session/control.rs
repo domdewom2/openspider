@@ -128,7 +128,13 @@ pub async fn start(app: &App, ctx: CallCtx, req: StartRequest) -> Result<CrawlRe
     }
     // CRAWL-122: app-wide proxy settings reach the crawl; an unreachable proxy fails here, before any session or file exists.
     let fetch = Arc::new(crate::commands::settings_network::crawl_fetcher(app, &cfg).await?);
-    start_with_fetcher(app, ctx, req, cfg, fetch).await
+    let result = start_with_fetcher(app, ctx, req, cfg, fetch.clone()).await?;
+    app.ext::<CrawlFetchers>()
+        .0
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .insert(CrawlKey(result.crawl_id.clone()), fetch);
+    Ok(result)
 }
 
 /// The same production lifecycle with an injected fetcher for deterministic fixture tests.
@@ -313,6 +319,11 @@ pub async fn open(
     Ok(summary)
 }
 
+#[derive(Default)]
+struct CrawlFetchers(
+    std::sync::Mutex<std::collections::HashMap<CrawlKey, Arc<os_fetch::HttpFetcher>>>,
+);
+
 pub async fn resume(app: &App, ctx: CallCtx) -> Result<(), CmdError> {
     let service = app.ext::<SessionService>();
     let _guard = service.mutation.lock().await;
@@ -326,7 +337,17 @@ pub async fn resume(app: &App, ctx: CallCtx) -> Result<(), CmdError> {
         .run(s.key.clone(), |f, _| f.config())
         .await?;
     let runtime = app.handle();
-    let fetch = fetcher(app, &cfg)?;
+    let saved = app
+        .ext::<CrawlFetchers>()
+        .0
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .get(&s.key)
+        .cloned();
+    let fetch = match saved {
+        Some(fetch) => fetch,
+        None => fetcher(app, &cfg)?,
+    };
     let path = s.path.clone();
     let deps = deps(app);
     let h = tokio::task::spawn_blocking(move || {

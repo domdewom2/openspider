@@ -545,7 +545,23 @@ pub fn on_startup(app: &App) {
                     .write_queue()
                     .submit_file(&key, move |file| {
                         let cfg = file.config().map_err(|e| failure(e.into()))?;
-                        if incremental
+                        // A command may have completed assignment since the observer read
+                        // its snapshot. Check the durable completion under the write lock.
+                        let current = segments::live_snapshot(file, 0).map_err(failure)?;
+                        let fresh = if let Some(current) = current {
+                            file.get_meta("segments.assignment_seq")
+                                .map_err(|e| failure(e.into()))?
+                                == Some(current.sequence.to_string())
+                                && file
+                                    .get_meta("segments.assignment_fingerprint")
+                                    .map_err(|e| failure(e.into()))?
+                                    == Some(current.fingerprint)
+                        } else {
+                            true
+                        };
+                        if fresh {
+                            // Nothing to write; preserve the command's sequence and versions.
+                        } else if incremental
                             && os_store::queries::change_seq(file.conn())
                                 .map_err(|e| failure(e.into()))?
                                 == seq

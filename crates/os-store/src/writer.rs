@@ -635,7 +635,7 @@ fn completes_crawl(batch: &WriteBatch) -> bool {
         .is_some_and(|(_, value)| value == CrawlState::Completed.as_str())
 }
 
-fn read_change_seq(tx: &Transaction<'_>) -> Result<i64, StoreError> {
+fn read_change_seq(tx: &rusqlite::Connection) -> Result<i64, StoreError> {
     let value: Option<String> = {
         let mut stmt =
             tx.prepare_cached("SELECT value FROM crawl_meta WHERE key = 'change_seq'")?;
@@ -1291,7 +1291,7 @@ fn apply_queue(tx: &Transaction<'_>, ops: &[QueueOp]) -> Result<(), StoreError> 
 }
 
 /// Hebt einen numerischen `crawl_meta`-Wert auf mindestens `value` an.
-fn raise_meta_counter(tx: &Transaction<'_>, key: &str, value: i64) -> Result<(), StoreError> {
+fn raise_meta_counter(tx: &rusqlite::Connection, key: &str, value: i64) -> Result<(), StoreError> {
     tx.prepare_cached(
         "INSERT INTO crawl_meta (key, value) VALUES (?1, ?2) \
          ON CONFLICT(key) DO UPDATE SET value = excluded.value WHERE CAST(value AS INTEGER) < ?2",
@@ -1437,7 +1437,7 @@ fn write_robots(
     Ok(())
 }
 
-fn write_meta(tx: &Transaction<'_>, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
+fn write_meta(tx: &rusqlite::Connection, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
     if !batch.meta.is_empty() {
         let mut stmt = tx.prepare_cached(
             "INSERT INTO crawl_meta (key, value) VALUES (?1, ?2) \
@@ -1480,7 +1480,7 @@ fn write_events_and_counters(tx: &Transaction<'_>, batch: &WriteBatch) -> Result
     Ok(())
 }
 
-fn stamp_dependants(tx: &Transaction<'_>, id: i64, seq: i64) -> Result<(), StoreError> {
+fn stamp_dependants(tx: &rusqlite::Connection, id: i64, seq: i64) -> Result<(), StoreError> {
     tx.prepare_cached("UPDATE urls SET change_seq = ?1 WHERE id IN (SELECT url_id FROM pagination WHERE target_id = ?2 UNION SELECT url_id FROM canonicals WHERE target_id = ?2 UNION SELECT url_id FROM hreflang WHERE target_id = ?2)")?.execute(params![seq, id])?;
     Ok(())
 }
@@ -1497,7 +1497,7 @@ pub fn apply_fact_updates(
     file: &mut crate::CrawlFile,
     updates: &FactUpdates,
 ) -> Result<Vec<UrlId>, StoreError> {
-    let tx = file.conn().unchecked_transaction()?;
+    let tx = crate::profile::RecomputeSavepoint::new(file.conn())?;
     let seq = read_change_seq(&tx)? + 1;
     let mut changed = std::collections::BTreeSet::new();
     for (id, position) in &updates.link_positions {
