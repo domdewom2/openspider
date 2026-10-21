@@ -4,7 +4,7 @@ use os_model::CrawlConfig;
 
 // spec: ONPAGE-033, ONPAGE-037
 #[tokio::test]
-#[ignore = "Klärung K2-68: N01-C03, Besitzer M2-E05 (Weitergabe) und M2-N01b (Parser, srcset)"]
+#[ignore = "Klärung K2-68: N01-C03, Spec-Unklarheit ONPAGE-033/037 gegen A-42 (Einzel-Links aus srcset nur mit extraction.srcset; Linkzeile ohne Abruf bei ausgeschalteter Option ist eine Engine-Entscheidung, M2-E05); Parser geprüft, mit Option an grün"]
 async fn srcset_resources_are_available_as_individual_outlinks() {
     let mut cfg = CrawlConfig::default();
     cfg.spider.external.crawl = false;
