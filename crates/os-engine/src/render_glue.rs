@@ -8,6 +8,62 @@ use os_model::{CrawlConfig, ExtKey, ExtractedLink, LinkOrigin, LinkType, ParsedP
 pub use os_render::{RenderError, RenderOpts, RenderedPage};
 use url::Url;
 
+/// Linux exposes threads as processes in sysinfo by default. Summing their
+/// shared address spaces would charge Chromium's RSS once per thread.
+pub(crate) fn process_memory_sample() -> crate::memory::Sample {
+    use crate::memory::Sample;
+    use std::time::{Duration, Instant};
+    static SYSTEM: OnceLock<std::sync::Mutex<(sysinfo::System, Option<Instant>, Sample)>> =
+        OnceLock::new();
+    let mut state = SYSTEM
+        .get_or_init(|| std::sync::Mutex::new((sysinfo::System::new(), None, Sample::default())))
+        .lock()
+        .unwrap_or_else(|p| p.into_inner());
+    if state
+        .1
+        .is_some_and(|at| at.elapsed() < Duration::from_secs(1))
+    {
+        return state.2;
+    }
+    let sys = &mut state.0;
+    sys.refresh_memory();
+    sys.refresh_processes_specifics(
+        sysinfo::ProcessesToUpdate::All,
+        true,
+        sysinfo::ProcessRefreshKind::nothing()
+            .with_memory()
+            .without_tasks(),
+    );
+    let pid = sysinfo::Pid::from_u32(std::process::id());
+    let mut descendants = HashSet::from([pid]);
+    loop {
+        let before = descendants.len();
+        for (id, process) in sys.processes() {
+            if process.parent().is_some_and(|p| descendants.contains(&p)) {
+                descendants.insert(*id);
+            }
+        }
+        if before == descendants.len() {
+            break;
+        }
+    }
+    let sample = Sample {
+        engine_bytes: sys.process(pid).map_or(0, |p| p.memory()),
+        renderer_bytes: sys
+            .processes()
+            .iter()
+            .filter(|(id, _)| **id != pid && descendants.contains(id))
+            .map(|(_, p)| p.memory())
+            .sum(),
+        physical_bytes: sys.total_memory(),
+        available_bytes: sys.available_memory(),
+        injected_limit: None,
+    };
+    state.1 = Some(Instant::now());
+    state.2 = sample;
+    sample
+}
+
 pub trait Renderer: Send + Sync {
     fn render<'a>(
         &'a self,
@@ -43,12 +99,18 @@ pub(crate) struct Session {
 }
 impl Session {
     pub fn new(cfg: &CrawlConfig, fetch: Option<&os_fetch::FetchConfig>) -> Self {
-        let (limit, _, processes) = crate::memory::resource_limits();
-        let sample = crate::memory::sample();
-        let budget = limit
-            .saturating_sub(sample.used())
-            .min(sample.available_bytes);
-        let tabs = tab_limit(cfg, processes, budget);
+        // Text crawls allocate no browser resources and must not prime the
+        // process-wide memory sample with unrelated browser startup activity.
+        let tabs = if cfg.rendering.mode == os_model::RenderingMode::JavaScript {
+            let (limit, _, processes) = crate::memory::resource_limits();
+            let sample = crate::memory::sample();
+            let budget = limit
+                .saturating_sub(sample.used())
+                .min(sample.available_bytes);
+            tab_limit(cfg, processes, budget)
+        } else {
+            1
+        };
         let mut launch = os_render::LaunchOpts {
             chromium_path: cfg.rendering.chromium_path.as_ref().map(Into::into),
             max_tabs: tabs,
@@ -112,6 +174,12 @@ impl Session {
             .await?
             .render(url, opts)
             .await
+    }
+
+    pub async fn close(&self) {
+        if let Some(browser) = self.browser.get() {
+            browser.close().await;
+        }
     }
 }
 
@@ -222,7 +290,7 @@ impl<F: Fetch> os_render::api::RequestIdentity for Identity<F> {
                     url: target,
                     purpose: os_fetch::FetchPurpose::Resource,
                     cookies: self.cookies.clone(),
-                    max_body_bytes: sh.cfg.limits.max_page_kb.saturating_mul(1024),
+                    max_body_bytes: crate::worker::page_body_limit(&sh.cfg),
                     attempt: 1,
                     body_limit: Default::default(),
                 })
@@ -275,6 +343,7 @@ pub(crate) fn options<F: Fetch>(
         .and_then(|f| os_fetch::auth::AuthMatcher::new(&f.basic_auth).ok())
         .unwrap_or_default();
     let mut opts = RenderOpts {
+        retry_document_context: true,
         disable_cookies: cfg.advanced.cookies == os_model::CookieMode::None,
         return_cookies: cfg.advanced.cookies != os_model::CookieMode::None,
         accept_language: cfg.http.accept_language.clone(),

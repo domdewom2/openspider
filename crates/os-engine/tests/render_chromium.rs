@@ -16,6 +16,19 @@ fn int(fx: &FixtureCrawl, sql: &str) -> i64 {
 fn text(fx: &FixtureCrawl, sql: &str) -> String {
     fx.file.conn().query_row(sql, [], |r| r.get(0)).unwrap()
 }
+fn assert_rendered(fx: &FixtureCrawl) {
+    let mut stmt = fx
+        .file
+        .conn()
+        .prepare("SELECT status FROM render_pages")
+        .unwrap();
+    let statuses: Vec<String> = stmt
+        .query_map([], |r| r.get(0))
+        .unwrap()
+        .map(Result::unwrap)
+        .collect();
+    assert_eq!(statuses, ["ok"], "crawl: {:?}", fx.summary);
+}
 static BROWSER: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 
 // spec: CRAWL-078
@@ -46,6 +59,7 @@ async fn headless_engine_reuses_response_and_stores_browser_facts() {
     });
     c.http.accept_language = Some("de-DE,de;q=0.9".into());
     let fx = crawl_fixture_with("crawl-m2-render", "/", c, test_deps()).await;
+    assert_rendered(&fx);
     assert_eq!(
         text(
             &fx,
@@ -161,6 +175,7 @@ async fn navigation_is_a_redirect_but_pushstate_and_late_navigation_are_not() {
         ("/meta-redirect", 0),
     ] {
         let fx = crawl_fixture_with("crawl-m2-render", path, cfg(), test_deps()).await;
+        assert_rendered(&fx);
         assert_eq!(
             int(
                 &fx,
@@ -230,10 +245,7 @@ async fn challenges_respect_the_actual_request_path() {
     secrets.set("fixture-password", "private-only");
     deps.secrets = secrets;
     let fx = crawl_fixture_with("crawl-m2-render", "/private/page", c, deps).await;
-    assert_eq!(
-        int(&fx, "SELECT COUNT(*) FROM render_pages WHERE status='ok'"),
-        1
-    );
+    assert_rendered(&fx);
     assert_eq!(
         text(
             &fx,
@@ -370,10 +382,7 @@ async fn language_preferences_apply_before_scripts_and_default_header_is_absent(
         let mut c = cfg();
         c.http.accept_language = language.map(str::to_owned);
         let fx = crawl_fixture_with("crawl-m2-render", "/language", c, test_deps()).await;
-        assert_eq!(
-            int(&fx, "SELECT COUNT(*) FROM render_pages WHERE status='ok'"),
-            1
-        );
+        assert_rendered(&fx);
         let requests = fx.site.requests();
         for path in ["/language", "/language-check"] {
             let request = requests.iter().find(|r| r.path_and_query == path).unwrap();
@@ -415,7 +424,7 @@ async fn analytics_hosts_follow_cookie_extraction_switch() {
         let fetcher = os_engine::testing::site_fetcher(&site, &c, &deps);
         let dir = tempfile::tempdir().unwrap();
         let file = dir.path().join("analytics.ospider");
-        os_engine::start_crawl(
+        let summary = os_engine::start_crawl(
             fetcher,
             os_engine::CrawlRequest {
                 config: c,
@@ -443,7 +452,8 @@ async fn analytics_hosts_follow_cookie_extraction_switch() {
                     |r| r.get::<_, i64>(0)
                 )
                 .unwrap(),
-            1
+            1,
+            "capture={capture}, crawl: {summary:?}"
         );
         let requests = site.requests();
         for host in hosts {

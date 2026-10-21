@@ -210,6 +210,28 @@ async fn eval(page: &Page, expression: &str) -> Result<Value, RenderError> {
         .into_value()
         .map_err(protocol)
 }
+
+/// Engine navigation can replace the execution context between a load event
+/// and a DOM read. Retry only that transient CDP error, in the same tab.
+pub(super) async fn read_document<T, F, Fut>(
+    opts: &RenderOpts,
+    mut read: F,
+) -> Result<T, RenderError>
+where
+    F: FnMut() -> Fut,
+    Fut: std::future::Future<Output = Result<T, RenderError>>,
+{
+    for attempt in 0..3 {
+        let result = read().await;
+        let context_lost = opts.retry_document_context
+            && matches!(&result, Err(RenderError::Protocol(detail)) if detail.contains("Cannot find context with specified id") || detail.contains("Execution context was destroyed"));
+        if !context_lost || attempt == 2 {
+            return result;
+        }
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+    unreachable!("bounded context retry")
+}
 async fn document_height(page: &Page) -> Result<u32, RenderError> {
     Ok(eval(page, "Math.max(document.documentElement.scrollHeight, document.body ? document.body.scrollHeight : 0)").await?.as_u64().unwrap_or(1).clamp(1,8192) as u32)
 }
@@ -355,7 +377,7 @@ async fn run(
     capture.data.lock().expect("capture").console_until_ms =
         Some(load_ms as u64 + opts.ajax_timeout_ms as u64);
     if loaded && opts.device != Device::Fixed {
-        let height = document_height(page).await?;
+        let height = read_document(opts, || document_height(page)).await?;
         metrics(page, opts, (opts.viewport.0, height)).await?;
     }
     tokio::time::sleep_until(tokio::time::Instant::from_std(deadline)).await;
@@ -364,28 +386,31 @@ async fn run(
             .await
             .map_err(protocol)?;
     }
-    let dom_html = page.content().await.map_err(protocol)?;
-    let final_url = eval(page, "location.href")
+    let dom_html = read_document(opts, || async { page.content().await.map_err(protocol) }).await?;
+    let final_url = read_document(opts, || eval(page, "location.href"))
         .await?
         .as_str()
         .unwrap_or(url)
         .to_owned();
     // Navigation timing refers to the document load, unlike location.href after pushState.
-    let navigation_url = eval(
-        page,
-        "performance.getEntriesByType('navigation')[0]?.name || null",
-    )
+    let navigation_url = read_document(opts, || {
+        eval(
+            page,
+            "performance.getEntriesByType('navigation')[0]?.name || null",
+        )
+    })
     .await?
     .as_str()
     .map(str::to_owned);
-    let cookie_assignments: Vec<String> = eval(page, "window.__openspiderCookieWrites || []")
-        .await?
-        .as_array()
-        .into_iter()
-        .flatten()
-        .filter_map(|v| v.as_str().map(str::to_owned))
-        .collect();
-    let image_values = eval(page, "Array.from(document.images, img => { const r=img.getBoundingClientRect(); return {url:img.currentSrc || img.src,w:img.naturalWidth,h:img.naturalHeight,dw:Math.round(r.width),dh:Math.round(r.height),visible:r.bottom>0 && r.right>0 && r.top<innerHeight && r.left<innerWidth}; })").await?;
+    let cookie_assignments: Vec<String> =
+        read_document(opts, || eval(page, "window.__openspiderCookieWrites || []"))
+            .await?
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|v| v.as_str().map(str::to_owned))
+            .collect();
+    let image_values = read_document(opts, || eval(page, "Array.from(document.images, img => { const r=img.getBoundingClientRect(); return {url:img.currentSrc || img.src,w:img.naturalWidth,h:img.naturalHeight,dw:Math.round(r.width),dh:Math.round(r.height),visible:r.bottom>0 && r.right>0 && r.top<innerHeight && r.left<innerWidth}; })")).await?;
     let mut images: Vec<_> = image_values
         .as_array()
         .into_iter()

@@ -25,6 +25,11 @@ pub struct Sample {
 }
 pub type Probe = Arc<dyn Fn() -> Sample + Send + Sync>;
 static PROBE: Mutex<Option<Probe>> = Mutex::new(None);
+// Optional production sampler; explicit test probes retain precedence.
+static SYSTEM_PROBE: OnceLock<fn() -> Sample> = OnceLock::new();
+pub(crate) fn set_system_probe(probe: fn() -> Sample) {
+    let _ = SYSTEM_PROBE.set(probe);
+}
 static TEST_LIMIT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 /// Injiziert nur die Grenze, ohne die echte Prozessmessung zu ersetzen.
 #[cfg(feature = "testing")]
@@ -148,6 +153,9 @@ pub fn stage(used: u64, limit: u64) -> MemoryStage {
 pub fn sample() -> Sample {
     let probe = PROBE.lock().unwrap_or_else(|p| p.into_inner()).clone();
     if let Some(probe) = probe {
+        return probe();
+    }
+    if let Some(probe) = SYSTEM_PROBE.get() {
         return probe();
     }
     static SYSTEM: OnceLock<Mutex<(sysinfo::System, Option<Instant>, Sample)>> = OnceLock::new();

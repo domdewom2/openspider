@@ -586,6 +586,7 @@ pub(crate) struct SharedInit<F: Fetch> {
 
 /// Gemeinsamer Zustand aus den Bausteinen; liefert auch die Steuerung (`Control`).
 pub(crate) fn make_shared<F: Fetch>(mut init: SharedInit<F>) -> (Arc<Shared<F>>, Arc<Control>) {
+    crate::memory::set_system_probe(crate::render_glue::process_memory_sample);
     init.core.limits = init.cfg.limits.clone();
     init.core.render_fragments = init.cfg.rendering.mode == RenderingMode::JavaScript;
     if init.cfg.scope.subfolder_only {
@@ -1032,6 +1033,9 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
     write_ok = write_ok && writer.checkpoint().await.is_ok();
 
     let shared_error = sh.error.lock().unwrap_or_else(|p| p.into_inner()).take();
+    // Reap the crawl's Chromium tree before wait() completes or a follow-up
+    // crawl samples memory; async Drop cleanup can outlive the crawl runtime.
+    sh.render_session.close().await;
     drop(sh); // gibt den letzten Absender frei, damit der Writer-Thread enden kann
     let finished = writer.finish();
 

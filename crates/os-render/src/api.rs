@@ -24,7 +24,9 @@ mod trust;
 pub enum RenderError {
     #[error("nicht implementiert: {0}")]
     NotImplemented(&'static str),
-    #[error("err-chromium-missing: Chromium fehlt unter {path}. Chrome/Chromium installieren oder OPENSPIDER_CHROMIUM bzw. rendering.chromium_path setzen.")]
+    #[error(
+        "err-chromium-missing: Chromium fehlt unter {path}. Chrome/Chromium installieren oder OPENSPIDER_CHROMIUM bzw. rendering.chromium_path setzen."
+    )]
     ChromiumMissing { path: String },
     #[error("Chromium nicht startbar: {0}")]
     Launch(String),
@@ -166,6 +168,9 @@ pub struct Cookie {
 /// deshalb bewusst kein PartialEq.
 #[derive(Debug, Clone)]
 pub struct RenderOpts {
+    /// Opt in to at most two retries after a navigation destroys the DOM context.
+    /// False preserves existing callers, including custom request identities.
+    pub retry_document_context: bool,
     /// Engine opt-in for JavaScript cookie provenance; standalone rendering is unchanged.
     pub capture_cookie_assignments: bool,
     /// Disable all browser cookie writes and outgoing Cookie headers.
@@ -199,6 +204,7 @@ pub struct RenderOpts {
 impl Default for RenderOpts {
     fn default() -> Self {
         Self {
+            retry_document_context: false,
             capture_cookie_assignments: false,
             disable_cookies: false,
             return_cookies: false,
@@ -340,4 +346,65 @@ pub trait RequestIdentity: Send + Sync + std::fmt::Debug {
         Box::pin(async { None })
     }
     fn headers(&self, url: &str) -> BTreeMap<String, String>;
+}
+
+#[cfg(test)]
+mod document_read_tests {
+    use super::*;
+
+    #[derive(Debug)]
+    struct Identity;
+    impl RequestIdentity for Identity {
+        fn headers(&self, _: &str) -> BTreeMap<String, String> {
+            BTreeMap::new()
+        }
+    }
+
+    // spec: CRAWL-016
+    // spec: CRAWL-078
+    #[tokio::test(start_paused = true)]
+    async fn engine_context_retry_recovers_is_bounded_and_preserves_other_errors_and_defaults() {
+        for (retry, engine, message, recover, expected) in [
+            (true, true, "Cannot find context with specified id", true, 2),
+            (true, true, "Execution context was destroyed", false, 3),
+            (true, true, "Permission denied", false, 1),
+            (
+                false,
+                true,
+                "Cannot find context with specified id",
+                true,
+                1,
+            ),
+            (
+                false,
+                false,
+                "Cannot find context with specified id",
+                true,
+                1,
+            ),
+        ] {
+            let opts = RenderOpts {
+                retry_document_context: retry,
+                request_identity: engine.then(|| Arc::new(Identity) as Arc<dyn RequestIdentity>),
+                ..Default::default()
+            };
+            let attempts = std::cell::Cell::new(0);
+            let result = page::read_document(&opts, || {
+                let n = attempts.get();
+                attempts.set(n + 1);
+                std::future::ready(if recover && n > 0 {
+                    Ok("document")
+                } else {
+                    Err(RenderError::Protocol(message.into()))
+                })
+            })
+            .await;
+            assert_eq!(attempts.get(), expected);
+            if retry && recover {
+                assert_eq!(result.unwrap(), "document");
+            } else {
+                assert_eq!(result.unwrap_err(), RenderError::Protocol(message.into()));
+            }
+        }
+    }
 }
