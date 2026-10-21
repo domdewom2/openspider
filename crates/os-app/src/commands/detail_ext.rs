@@ -359,7 +359,8 @@ fn dispatch<'a>(
                                     diff: None,
                                 });
                             }
-                            let mut focus = None;
+                            let focus = storage::content_text(file.conn(), a.url_id)
+                                .map_err(|e| store_error(&e))?;
                             if let Some(id) = a.partner_id {
                                 let partner = partners
                                     .iter_mut()
@@ -370,8 +371,6 @@ fn dispatch<'a>(
                                             "partnerId",
                                         )
                                     })?;
-                                focus = storage::content_text(file.conn(), a.url_id)
-                                    .map_err(|e| store_error(&e))?;
                                 partner.text = storage::content_text(file.conn(), id)
                                     .map_err(|e| store_error(&e))?;
                                 partner.diff = match (&focus, &partner.text) {

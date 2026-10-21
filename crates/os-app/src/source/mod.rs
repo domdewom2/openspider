@@ -275,7 +275,7 @@ pub fn diff(
     if old_work.saturating_mul(new_work) > 4_000_000 {
         return Err(CmdError::invalid_input(
             "err-source-diff-too-complex",
-            "mode",
+            "text",
         ));
     }
     drop((old_units, new_units));

@@ -394,7 +394,7 @@ async fn crawl_path_is_root_first_with_discovery_anchors() {
 // spec: OUT-023
 // spec: UI-050
 #[tokio::test]
-async fn crawl_path_export_matches_the_command_in_root_order_with_fallback() {
+async fn crawl_path_export_reverses_command_order_and_ends_at_root_with_fallback() {
     let fx = fixture();
     for discovery in [
         "DELETE FROM discovery_edges; INSERT INTO discovery_edges(seq,target_id,source_id,kind,link_type,anchor,depth) VALUES(1,1,NULL,'link',NULL,NULL,0),(2,2,1,'link','Hyperlink','go to blog',1)",
@@ -412,7 +412,10 @@ async fn crawl_path_export_matches_the_command_in_root_order_with_fallback() {
         let mut lines = csv.lines();
         assert_eq!(lines.next().unwrap().trim_start_matches('\u{feff}'),
             "Target Address,Step,Address,Status Code,Link Type,Anchor,Crawl Depth");
-        for (step, item) in path.as_array().unwrap().iter().enumerate() {
+        let path = path.as_array().unwrap();
+        assert_eq!(path[0]["address"], "https://site.test/");
+        assert_eq!(path[1]["address"], "https://site.test/blog/a");
+        for (step, item) in path.iter().rev().enumerate() {
             let columns = lines.next().unwrap().split(',').collect::<Vec<_>>();
             assert_eq!(columns[0], path[1]["address"].as_str().unwrap());
             assert_eq!(columns[1], step.to_string());
@@ -420,6 +423,11 @@ async fn crawl_path_export_matches_the_command_in_root_order_with_fallback() {
             assert_eq!(columns[3], item["statusCode"].to_string());
             assert_eq!(columns[5], item["anchor"].as_str().unwrap_or(""));
             assert_eq!(columns[6], item["depth"].to_string());
+            if step == path.len() - 1 {
+                assert_eq!(columns[2], "https://site.test/");
+                assert_eq!(columns[4], "");
+                assert_eq!(columns[5], "");
+            }
         }
         assert!(lines.next().is_none());
     }
@@ -838,7 +846,7 @@ async fn bold_terms_preserve_unicode_word_boundaries_and_short_hint_uses_minimum
 // spec: UI-044
 // spec: ONPAGE-145
 #[tokio::test]
-async fn duplicates_page_metadata_and_load_only_the_selected_partner() {
+async fn duplicates_always_include_focus_text_and_load_only_the_selected_partner() {
     let fx = fixture();
     fx.write("WITH RECURSIVE n(i) AS (VALUES(20) UNION ALL SELECT i+1 FROM n WHERE i<1020) INSERT INTO urls(id,url,address,origin,is_internal,state,discovered_via,folder_depth,url_length,content_class,status_code,hash_md5) SELECT i,'https://site.test/dup/'||i,'https://site.test/dup/'||i,'https://site.test',1,'done','link',1,30,'HTML',200,'same' FROM n; INSERT INTO url_ext(url_id,key,v_text) SELECT id,'content.text','one two three' FROM urls WHERE id>=20");
     let first = fx
@@ -849,12 +857,24 @@ async fn duplicates_page_metadata_and_load_only_the_selected_partner() {
         .await;
     assert_eq!(first["total"], 1002);
     assert_eq!(first["nextOffset"], 2);
-    assert_eq!(first["text"], Value::Null);
+    assert_eq!(first["text"], "one two");
     for partner in first["partners"].as_array().unwrap() {
         assert_eq!(partner["text"], Value::Null);
         assert_eq!(partner["diff"], Value::Null);
     }
     let selected = first["partners"][0]["urlId"].as_i64().unwrap();
+    // U21 fetches the other column by making the partner the focus, without partnerId.
+    let other = fx
+        .call(
+            "detail.duplicates",
+            json!({"urlId":selected,"kind":"exact","limit":2}),
+        )
+        .await;
+    assert_eq!(other["text"], "one two three");
+    for partner in other["partners"].as_array().unwrap() {
+        assert_eq!(partner["text"], Value::Null);
+        assert_eq!(partner["diff"], Value::Null);
+    }
     let focused = fx
         .call(
             "detail.duplicates",
@@ -1158,6 +1178,7 @@ fn divergent_diff_rejects_deterministically_instead_of_approximating() {
         let error = os_app::source::diff(&left, &right, DiffMode::Words, &cancel).unwrap_err();
         assert_eq!(error.code, ErrorCode::InvalidInput);
         assert_eq!(error.message_key, "err-source-diff-too-complex");
+        assert_eq!(error.field.as_deref(), Some("text"));
     }
 }
 

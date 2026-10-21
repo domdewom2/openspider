@@ -562,7 +562,7 @@ fn export_detail<'a>(
                                         ..
                                     }
                                 ) {
-                                    // K2-68 N01-C10: use the same root fallback and order as crawl.path.
+                                    // OUT-023: keep target-first report order, including the root fallback.
                                     let names = os_store::queries::crawl_path::HEADER
                                         .iter()
                                         .map(|name| (*name).to_owned())
@@ -579,10 +579,9 @@ fn export_detail<'a>(
                                     out.header(&names).map_err(export_error)?;
                                     for id in &ids {
                                         checked(&worker_token)?;
-                                        let data = crate::source::root_first_crawl_path(
+                                        let data =
                                             os_store::queries::detail_ext::path_rows(file, id.0)
-                                                .map_err(|e| store_error(&e))?,
-                                        );
+                                                .map_err(|e| store_error(&e))?;
                                         for row in data.rows {
                                             checked(&worker_token)?;
                                             out.row(&kinds, &row).map_err(export_error)?;
