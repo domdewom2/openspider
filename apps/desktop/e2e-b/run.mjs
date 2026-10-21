@@ -2,7 +2,8 @@
 import assert from "node:assert/strict";
 import { spawn, execFileSync } from "node:child_process";
 import { once } from "node:events";
-import { mkdtemp, mkdir, rm, writeFile, copyFile, readFile } from "node:fs/promises";
+import { mkdtemp, mkdir, rm, writeFile, copyFile, readFile, readdir } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { tmpdir, release, arch } from "node:os";
 import { resolve, join, dirname } from "node:path";
@@ -109,6 +110,23 @@ async function key(value, target) {
   await delay(250);
   trace.afterKey = await evaluate("window.s02.keyboardFocus()");
 }
+// Diagnostic for "DevToolsActivePort file doesn't exist": does the app start on its own with the WebView2 environment that
+// msedgedriver sets, and where does WebView2 write its DevToolsActivePort file?
+async function probeApp() {
+  const folder = join(home, "wv2-probe");
+  let out = "";
+  const p = spawn(binary, [], { cwd: repo, windowsHide: true, stdio: ["ignore", "pipe", "pipe"],
+    env: { ...process.env, OPENSPIDER_HOME: home, OPENSPIDER_SECRET_STORE: "memory", WEBVIEW2_USER_DATA_FOLDER: folder, WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: "--remote-debugging-port=0" } });
+  p.stdout.on("data", d => { out += d; }); p.stderr.on("data", d => { out += d; });
+  p.on("error", e => { out += `spawn: ${e}\n`; });
+  await delay(20_000);
+  const found = [];
+  const walk = async dir => { try { for (const e of await readdir(dir, { withFileTypes: true })) { const f = join(dir, e.name); if (e.isDirectory()) { if (found.length < 40) await walk(f); } else if (/DevToolsActivePort/.test(e.name)) found.push(f); } } catch { /* absent */ } };
+  await walk(folder);
+  const result = { exitCode: p.exitCode, output: out.slice(0, 4000), devToolsActivePort: found, folderExists: existsSync(folder) };
+  if (p.exitCode === null) p.kill();
+  return result;
+}
 async function startFixture() {
   let requests = 0;
   fixture = httpServer((req, res) => {
@@ -158,6 +176,7 @@ try {
         report.startup = { ...report.startup, [`sessionAttempt${attempt}`]: String(e) };
         report.processes = (() => { try { return execFileSync("powershell.exe", ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command",
           "Get-Process | Where-Object { $_.ProcessName -match 'openspider|msedge' } | Select-Object ProcessName,Id,StartTime | ConvertTo-Json"], { encoding: "utf8", windowsHide: true, timeout: 15_000 }); } catch (err) { return String(err); } })();
+        if (attempt === 1) report.appProbe = await probeApp();
         if (attempt >= 2) throw e;
         for (const image of ["openspider-desktop.exe", "msedgewebview2.exe", "msedgedriver.exe"]) { try { execFileSync("taskkill", ["/F", "/T", "/IM", image], { stdio: "ignore", windowsHide: true }); } catch { /* not running */ } }
         await delay(2000);
@@ -296,25 +315,21 @@ try {
       return value;
     });
     // spec: UI-113, OUT-232
-    await check("app.requestQuit confirms a running fixture crawl", async () => {
+    // N01b: app.requestQuit itself opens the "Quit OpenSpider?" confirmation (CI screenshot of the failed run), so the window
+    // close is judged first, while no dialog is open; the quit decision is read afterwards from the same running crawl.
+    const dialogOpen = () => browser.execute("return !!document.querySelector('[role=alertdialog], [role=dialog], dialog[open]')");
+    await check("closing during a running fixture crawl asks before quitting", async () => {
       await startFixture();
+      assert.equal(await dialogOpen(), false);
+      await evaluate("window.s02.close()");
+      await until(dialogOpen, "quit confirmation");
+      return await browser.execute("return document.querySelector('[role=alertdialog], [role=dialog], dialog[open]').textContent");
+    });
+    await check("app.requestQuit confirms a running fixture crawl", async () => {
       report.quitDecision = await evaluate("window.s02.requestQuit()");
       assert.equal(report.quitDecision.kind, "confirm");
       assert.ok(report.quitDecision.reasons.includes("crawl"));
       return report.quitDecision;
-    });
-    await check("closing during a running fixture crawl asks before quitting", async () => {
-      assert.equal(report.quitDecision?.kind, "confirm", "Requires a running crawl and confirmation decision");
-      const dialogOpen = () => browser.execute("return !!document.querySelector('[role=alertdialog], [role=dialog], dialog[open]')");
-      // N01b: app.requestQuit (previous check) already shows the same "Quit OpenSpider?" confirmation. Cancel it, so that the
-      // window close below is judged on its own (the CI screenshot of the failed run shows that dialog).
-      await until(dialogOpen, "quit confirmation of app.requestQuit");
-      const cancel = await browser.$("//*[@role='alertdialog' or @role='dialog']//button[normalize-space()='Cancel']");
-      await cancel.click();
-      await until(async () => !(await dialogOpen()), "quit confirmation cancelled");
-      await evaluate("window.s02.close()");
-      await until(dialogOpen, "quit confirmation");
-      return await browser.execute("return document.querySelector('[role=alertdialog], [role=dialog], dialog[open]').textContent");
     });
   }
 } catch (e) { report.errors.push(String(e)); }
