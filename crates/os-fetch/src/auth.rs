@@ -70,6 +70,11 @@ impl AuthMatcher {
         Ok(AuthMatcher { entries: out })
     }
 
+    /// Frozen credentials for a browser challenge, subject to the same URL matching.
+    pub fn rendering_credentials(&self, url: &Url) -> Option<BasicAuthEntry> {
+        self.credentials_for(url).cloned()
+    }
+
     pub(crate) fn credentials_for(&self, url: &Url) -> Option<&BasicAuthEntry> {
         let header = self.authorization_for(url)?;
         self.entries

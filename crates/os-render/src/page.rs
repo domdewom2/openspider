@@ -220,6 +220,9 @@ async fn run(
     opts: &RenderOpts,
     launch: &super::LaunchOpts,
 ) -> Result<RenderedPage, RenderError> {
+    if opts.capture_cookie_assignments {
+        page.evaluate_on_new_document("(() => { const d = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie'); const writes = []; Object.defineProperty(window, '__openspiderCookieWrites', {value:writes}); if (d?.set) Object.defineProperty(Document.prototype, 'cookie', {get:d.get, set(value) { d.set.call(this,value); writes.push(String(value)); }}); })()").await.map_err(protocol)?;
+    }
     metrics(page, opts, opts.viewport).await?;
     if let Some(ua) = &opts.user_agent {
         page.set_user_agent(ua.clone()).await.map_err(protocol)?;
@@ -320,6 +323,21 @@ async fn run(
         .as_str()
         .unwrap_or(url)
         .to_owned();
+    // Navigation timing refers to the document load, unlike location.href after pushState.
+    let navigation_url = eval(
+        page,
+        "performance.getEntriesByType('navigation')[0]?.name || null",
+    )
+    .await?
+    .as_str()
+    .map(str::to_owned);
+    let cookie_assignments: Vec<String> = eval(page, "window.__openspiderCookieWrites || []")
+        .await?
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|v| v.as_str().map(str::to_owned))
+        .collect();
     let image_values = eval(page, "Array.from(document.images, img => { const r=img.getBoundingClientRect(); return {url:img.currentSrc || img.src,w:img.naturalWidth,h:img.naturalHeight,dw:Math.round(r.width),dh:Math.round(r.height),visible:r.bottom>0 && r.right>0 && r.top<innerHeight && r.left<innerWidth}; })").await?;
     let mut images: Vec<_> = image_values
         .as_array()
@@ -388,6 +406,9 @@ async fn run(
             .map(|r| r.bytes);
     }
     Ok(RenderedPage {
+        body_network: Some(data.body_network()),
+        cookie_assignments,
+        navigation_url,
         dom_html,
         final_url,
         console: std::mem::take(&mut data.console),

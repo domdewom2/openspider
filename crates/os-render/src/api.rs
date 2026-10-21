@@ -151,6 +151,10 @@ pub struct Cookie {
 /// deshalb bewusst kein PartialEq.
 #[derive(Debug, Clone)]
 pub struct RenderOpts {
+    /// Engine opt-in for JavaScript cookie provenance; standalone rendering is unchanged.
+    pub capture_cookie_assignments: bool,
+    /// Optional URL-scoped identity; absent preserves standalone renderer behavior.
+    pub request_identity: Option<Arc<dyn RequestIdentity>>,
     pub viewport: (u32, u32),
     pub ajax_timeout_ms: u32,
     pub screenshots: bool,
@@ -174,6 +178,8 @@ pub struct RenderOpts {
 impl Default for RenderOpts {
     fn default() -> Self {
         Self {
+            capture_cookie_assignments: false,
+            request_identity: None,
             viewport: (411, 731),
             ajax_timeout_ms: 5_000,
             screenshots: true,
@@ -240,6 +246,12 @@ impl RenderOpts {
 }
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct RenderedPage {
+    /// Body-only transfer sizes; excludes HTTP headers (CRAWL-022).
+    pub body_network: Option<Vec<NetworkEntry>>,
+    /// JavaScript cookie assignments, retained separately from HTTP Set-Cookie.
+    pub cookie_assignments: Vec<String>,
+    /// URL of the loaded document, unaffected by history.pushState.
+    pub navigation_url: Option<String>,
     pub dom_html: String,
     pub console: Vec<ConsoleEntry>,
     pub console_dropped: u64,
@@ -258,4 +270,14 @@ pub use browser::Renderer;
 
 fn protocol(error: impl std::fmt::Display) -> RenderError {
     RenderError::Protocol(error.to_string())
+}
+
+/// Verifies availability before creating a crawl file.
+pub fn check_available(opts: &LaunchOpts) -> Result<(), RenderError> {
+    browser::executable(opts).map(|_| ())
+}
+
+/// Scoped request headers. Cookies/auth are resolved separately for each URL.
+pub trait RequestIdentity: Send + Sync + std::fmt::Debug {
+    fn headers(&self, url: &str) -> BTreeMap<String, String>;
 }

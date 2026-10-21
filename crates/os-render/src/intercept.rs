@@ -258,6 +258,7 @@ impl Intercept {
             .map_err(protocol)?
             .into_value()
             .map_err(protocol)?;
+        let identity = opts.request_identity.clone();
         let credentials = opts.credentials.clone();
         let proxy = launch.proxy_credentials.clone();
         let task = tokio::spawn(async move {
@@ -333,6 +334,23 @@ impl Intercept {
                             (
                                 "Fetch.fulfillRequest",
                                 json!({"requestId":id,"responseCode":response.status,"responseHeaders":headers,"body":BASE64_STANDARD.encode(response.body)}),
+                            )
+                        } else if let Some(identity) = &identity {
+                            let mut headers = p["request"]["headers"]
+                                .as_object()
+                                .cloned()
+                                .unwrap_or_default();
+                            for (name, value) in identity.headers(resource_url) {
+                                headers.retain(|key, _| !key.eq_ignore_ascii_case(&name));
+                                headers.insert(name, json!(value));
+                            }
+                            let headers = headers
+                                .into_iter()
+                                .map(|(name, value)| json!({"name":name,"value":value}))
+                                .collect::<Vec<_>>();
+                            (
+                                "Fetch.continueRequest",
+                                json!({"requestId":id,"headers":headers}),
                             )
                         } else {
                             ("Fetch.continueRequest", json!({"requestId":id}))

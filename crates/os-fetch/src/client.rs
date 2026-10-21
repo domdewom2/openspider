@@ -887,6 +887,10 @@ impl HttpFetcher {
     }
 }
 impl Fetch for HttpFetcher {
+    fn render_config(&self) -> Option<FetchConfig> {
+        Some(self.cfg.clone())
+    }
+
     fn fetch(&self, req: FetchRequest) -> Pin<Box<dyn Future<Output = FetchResult> + Send + '_>> {
         Box::pin(self.fetch_impl(req))
     }

@@ -65,6 +65,10 @@ impl<F: Fetch> PrimedFetch<F> {
 }
 
 impl<F: Fetch> Fetch for PrimedFetch<F> {
+    fn render_config(&self) -> Option<os_fetch::FetchConfig> {
+        self.inner.render_config()
+    }
+
     fn target_denial<'a>(
         &'a self,
         url: &'a url::Url,
