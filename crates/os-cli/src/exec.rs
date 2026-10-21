@@ -950,7 +950,6 @@ fn comparison_batch(
             None
         };
         let mut files = 0;
-        let mut tables = 0;
         for item in &plan.exports {
             if token.is_cancelled() {
                 return Err("Export cancelled".into());
@@ -1025,9 +1024,6 @@ fn comparison_batch(
                     report_file(rep, &info);
                     files += 1;
                 }
-                if ctx.skipped.is_empty() {
-                    tables += 1;
-                }
             } else {
                 let (kind, name) = match item {
                     Resolved::Bulk(n) => ("bulk", n.clone()),
@@ -1055,13 +1051,10 @@ fn comparison_batch(
                 for warning in result.warnings {
                     rep.warn(warning);
                 }
-                if result.skipped.is_empty() {
-                    tables += 1;
-                }
             }
         }
         if let Some(workbook) = workbook {
-            if tables > 0 {
+            if workbook.has_tables() {
                 let info = Box::new(workbook).finish().map_err(|e| e.to_string())?;
                 report_file(rep, &info);
                 files += 1;

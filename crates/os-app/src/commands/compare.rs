@@ -1021,6 +1021,64 @@ mod change_tests {
         assert!(!csv.contains("https://site.test/a,"));
     }
 
+    // spec: OUT-152
+    #[test]
+    fn mixed_empty_and_populated_exports_keep_the_shared_workbook() {
+        let dir = tempfile::tempdir().unwrap();
+        let file =
+            super::change_fixture::fixture(dir.path(), 1, 1, os_model::CrawlConfig::default());
+        let cfg = file.config().unwrap();
+        let mut workbook = os_export::xlsx::XlsxWriter::create(
+            &dir.path().join("mixed.xlsx"),
+            "Export",
+            &os_export::WriterOptions::default(),
+        )
+        .unwrap();
+        let cancel = os_model::CancelToken::new();
+        {
+            let mut ctx = os_export::types::ExportCtx {
+                cancel: &cancel,
+                progress: &|_| {},
+                skip_empty: true,
+                workbook: Some(&mut workbook),
+                skipped: vec![],
+            };
+            let options = os_export::pipeline::BatchOptions {
+                format: os_export::Format::Xlsx,
+                directory: dir.path(),
+                crawl_name: "mixed",
+                single_workbook: false,
+            };
+            let result = os_export::pipeline::export_batch(
+                &file,
+                &cfg,
+                &[
+                    os_export::types::ExportSelection {
+                        kind: "tab".into(),
+                        name: "Page Titles:Missing".into(),
+                    },
+                    os_export::types::ExportSelection {
+                        kind: "tab".into(),
+                        name: "Internal:All".into(),
+                    },
+                ],
+                &options,
+                &mut ctx,
+            )
+            .unwrap();
+            assert_eq!(result.skipped.len(), 1);
+            assert!(result.files.is_empty());
+        }
+        assert!(workbook.has_tables());
+        let empty = os_export::xlsx::XlsxWriter::create(
+            &dir.path().join("empty.xlsx"),
+            "Export",
+            &os_export::WriterOptions::default(),
+        )
+        .unwrap();
+        assert!(!empty.has_tables());
+    }
+
     // spec: TECH-300
     #[test]
     fn ordinary_crawl_overview_has_no_change_detection_section() {

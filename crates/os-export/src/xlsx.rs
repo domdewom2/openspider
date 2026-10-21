@@ -285,6 +285,11 @@ impl XlsxWriter {
         self.cancel = Some(cancel);
     }
 
+    /// Ob bereits mindestens eine Tabellenkopfzeile geschrieben wurde (auch bei übersprungenen leeren Tabellen).
+    pub fn has_tables(&self) -> bool {
+        self.header.is_some() || self.tables > 1
+    }
+
     /// Namen der bisher angelegten Blätter.
     pub fn sheet_names(&self) -> &[String] {
         &self.sheet_names
