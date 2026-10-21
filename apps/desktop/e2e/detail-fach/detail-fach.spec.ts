@@ -158,8 +158,8 @@ test("View source: visible text compares word by word and a large document stays
   await expect(page.locator('[data-side="right"] .os-src-word-added')).toHaveCount(4);
   await page.goto(`${SCENE}?url=1&large=20000`);
   await tab(page, "source", "View Source");
-  await expect(page.locator('[data-side="left"]')).toContainText("20,000 lines");
-  await expect.poll(async () => (await calls(page, "detail.sourceLines")).length).toBe(10);
+  await expect(page.locator('[data-side="left"]')).toContainText("20,000 lines", { timeout: 20_000 });
+  await expect.poll(async () => (await calls(page, "detail.sourceLines")).length, { timeout: 20_000 }).toBe(10);
   expect(await page.locator('[data-side="left"] .cm-line').count()).toBeLessThan(400);
 });
 

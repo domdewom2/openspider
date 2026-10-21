@@ -8,10 +8,12 @@ import { SELECTION_DEBOUNCE_MS } from "../frame/request";
 import type { CodePaneHandle } from "./CodePane";
 
 export const CHUNK_LINES = 4000;
-export interface DocState { status: "idle" | "loading" | "ready" | "error"; loaded: number; lines: number; bytes: number; error?: unknown }
+export interface DocState { status: "idle" | "loading" | "ready" | "error"; loaded: number; lines: number; bytes: number; error?: unknown; key?: string }
 const IDLE: DocState = { status: "idle", loaded: 0, lines: 0, bytes: 0 };
 export function useDocLoader(handle: RefObject<CodePaneHandle | null>, o: { enabled: boolean; urlId: number; crawlId?: string; which: SourceWhich; mode: SourceMode; pretty: boolean }): DocState {
-  const [state, setState] = useState<DocState>(IDLE);
+  const key = `${o.enabled}:${o.urlId}:${o.crawlId}:${o.which}:${o.mode}:${o.pretty}`;
+  const [state, setStateRaw] = useState<DocState>(IDLE);
+  const setState = (next: DocState) => setStateRaw({ ...next, key });
   useEffect(() => {
     if (!o.enabled) { setState(IDLE); return; }
     const controller = new AbortController();
@@ -41,5 +43,6 @@ export function useDocLoader(handle: RefObject<CodePaneHandle | null>, o: { enab
     // `handle` ist ein stabiles Ref-Objekt; die übrigen Werte beschreiben das Dokument vollständig.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [o.enabled, o.urlId, o.crawlId, o.which, o.mode, o.pretty]);
-  return state;
+  // Ein Dokument, das nicht zum aktuellen Schlüssel gehört, gilt sofort als „lädt“: kein Fenster, in dem alter Inhalt als bereit erscheint.
+  return state.key === key ? state : o.enabled ? { status: "loading", loaded: 0, lines: 0, bytes: 0 } : IDLE;
 }

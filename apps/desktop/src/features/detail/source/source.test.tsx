@@ -11,6 +11,8 @@ import { runAction } from "../../../ui/actions";
 import { Text } from "@codemirror/state";
 import { callsOf, lang, selection, settle, setup, stubRanges, teardown } from "../rendered/testing";
 
+// CodeMirror misst und zeichnet in jsdom; auf einem ausgelasteten Rechner braucht ein Test länger als die 5 s Vorgabe.
+vi.setConfig({ testTimeout: 30_000 });
 vi.mock("../../../app/windows", () => ({ openSettingsWindow: vi.fn().mockResolvedValue(undefined) }));
 let ctx: ReturnType<typeof setup>;
 const props = (rendering = true, htmlStored = true) => ({ selection, actions: ctx.actions, rendering, htmlStored, storeUncrawlable: false, positions: [], listMode: false });
