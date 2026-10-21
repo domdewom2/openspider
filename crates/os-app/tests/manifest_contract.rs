@@ -111,6 +111,7 @@ const CATALOG_4_4: &[&str] = &[
     "compare.open",
     "compare.swap",
     "compare.testMapping",
+    "compare.contentAvailable", // TECH-300: read-only prerequisite for Content selection
     "compare.close",
     "viz.open",
     "viz.graph",
