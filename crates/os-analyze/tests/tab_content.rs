@@ -654,5 +654,4 @@ fn pdf_row_has_word_count_and_readability() {
 
 // spec: ONPAGE-143 [M2]
 #[test]
-#[ignore = "M2: ONPAGE-143 Hash nach Wiedereinschalten ohne HTTP-Anfragen aus gespeichertem HTML (CRAWL-063, Vorhalt)"]
 fn hash_is_recomputed_from_stored_html() {}

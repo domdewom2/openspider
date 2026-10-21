@@ -162,6 +162,18 @@ async fn internal_site() -> FixtureCrawl {
     crawl_fixture("onpage-internal", cfg).await
 }
 
+// K2-64: Fehlerstatus prüfen, ohne produktive Timeouts und Wiederholungen abzuwarten.
+async fn response_codes_site() -> FixtureCrawl {
+    let mut cfg = CrawlConfig::default();
+    cfg.advanced.response_timeout_s = 1;
+    cfg.http.retries_network = 0;
+    cfg.http.throttle_on_429 = false;
+    cfg.robots.retries = 0;
+    cfg.robots.retry_delay_s = 0;
+    cfg.robots.unreachable_policy = os_model::RobotsUnreachablePolicy::AllowAll;
+    crawl_fixture("onpage-rc", cfg).await
+}
+
 /// Crawl der Inhaltstypen-Fixture mit kurzem Antwort-Timeout (die Route `/timeout` antwortet erst nach 3 s).
 async fn ctype_site() -> FixtureCrawl {
     let mut cfg = CrawlConfig::default();
@@ -250,9 +262,29 @@ async fn address_is_shown_decoded_and_the_requested_form_is_in_url_encoded_addre
 
 // spec: ONPAGE-010 [M2]
 #[tokio::test]
-#[ignore = "M2: ONPAGE-010 HTTP/2-Antwort (os-testsite spricht nur HTTP/1.1, ALPN http/1.1); Ersatz: leere Reason-Phrase"]
 async fn http2_404_has_the_standard_status_text() {
-    unreachable!("benötigt einen HTTP/2-Testserver");
+    // Diese Fixture enthält keine HTTP/1.1-only-Routen (chunked/custom reason).
+    let fx = crawl_fixture_from(
+        "crawl-m2-http",
+        "https://site.test/missing",
+        CrawlConfig::default(),
+    )
+    .await;
+    let t = query(
+        &fx,
+        &CrawlConfig::default(),
+        "Internal",
+        "All",
+        ColumnSelection::All,
+    );
+    let row = &t.rows[0];
+    assert_eq!(
+        row[t.col("Address")],
+        Value::Text("https://site.test/missing".into())
+    );
+    assert_eq!(row[t.col("HTTP Version")], Value::Text("2".into()));
+    assert_eq!(row[t.col("Status Code")], Value::Int(404));
+    assert_eq!(row[t.col("Status")], Value::Text("Not Found".into()));
 }
 
 // ---------------------------------------------------------------------------------------------------
@@ -436,7 +468,7 @@ async fn non_html_urls_have_empty_element_columns_and_pdfs_use_document_properti
 async fn error_and_redirect_pages_have_empty_element_columns_even_with_a_body() {
     // K-60/N-01: /e400, /e404, /e500 liefern HTML mit <title> und <h1>, /r301 leitet um; nur interne
     // HTML-Seiten mit 2xx tragen Element-, Längen-, Pixel-, Word-Count- und Text-Ratio-Werte.
-    let fx = crawl_fixture("onpage-rc", CrawlConfig::default()).await;
+    let fx = response_codes_site().await;
     let t = all_columns(&fx, "All");
     for p in ["/e400", "/e404", "/e500", "/r301"] {
         if !t.contains(p) {
@@ -941,7 +973,7 @@ async fn hash_is_empty_for_non_html_responses_and_redirects() {
         assert!(t.is_empty_cell(path, "Hash"), "{path}");
     }
     // Fehlerseiten mit HTML-Körper: kein Hash (die Referenz schreibt ihn nur für 2xx)
-    let rc = crawl_fixture("onpage-rc", CrawlConfig::default()).await;
+    let rc = response_codes_site().await;
     let rt = all_columns(&rc, "All");
     for path in ["/e400", "/e404", "/e500", "/s999"] {
         assert!(rt.is_empty_cell(path, "Hash"), "{path}");
@@ -1304,4 +1336,38 @@ async fn every_column_of_the_three_tabs_can_be_selected_sorted_and_counted() {
         Some(38),
         "alle Internal-URLs sind http"
     );
+}
+
+// spec: ONPAGE-143 [M2]
+#[tokio::test]
+async fn enabling_hash_recomputes_internal_values_and_duplicates_without_http_requests() {
+    let mut old = CrawlConfig::default();
+    old.extraction.hash = false;
+    old.extraction.store_html = true;
+    let mut fx = crawl_fixture("onpage-content-dupes", old.clone()).await;
+    let requests = fx.site.total_requests();
+    let mut new = old.clone();
+    new.extraction.hash = true;
+    let duplicates = |fx: &FixtureCrawl, cfg: &CrawlConfig| {
+        query(fx, cfg, "Content", "Exact Duplicates", ColumnSelection::All)
+    };
+    assert!(duplicates(&fx, &old).rows.is_empty());
+    let cancel = os_model::CancelToken::new();
+    let changed = os_engine::recompute::e01::run(&mut fx.file, &old, &new, &cancel).unwrap();
+    assert!(!changed.is_empty());
+    let internal = query(&fx, &new, "Internal", "All", ColumnSelection::All);
+    let hash = internal.text("/a.html", "Hash");
+    assert_eq!(hash.len(), 32);
+    assert_eq!(internal.text("/b.html", "Hash"), hash);
+    assert_ne!(internal.text("/c.html", "Hash"), hash);
+    let page = duplicates(&fx, &new);
+    assert!(page.contains("/a.html"));
+    assert!(page.contains("/b.html"));
+    assert!(!page.contains("/c.html"));
+    assert!(
+        os_engine::recompute::e01::run(&mut fx.file, &old, &new, &cancel)
+            .unwrap()
+            .is_empty()
+    );
+    assert_eq!(fx.site.total_requests(), requests);
 }

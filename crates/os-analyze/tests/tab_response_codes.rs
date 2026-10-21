@@ -44,6 +44,9 @@ fn config() -> CrawlConfig {
     // /timeout antwortet nach 3 s; ein Host ohne erreichbare robots.txt (nohost.invalid, geschlossener Port) soll
     // seinen Fehlerstatus zeigen und nicht als „robots.txt nicht erreichbar“ gesperrt werden (CRAWL-100).
     cfg.advanced.response_timeout_s = 1;
+    // K2-64: Der Tab prüft Statuswerte; Retry und Drosselung haben eigene Engine-Tests.
+    cfg.http.retries_network = 0;
+    cfg.http.throttle_on_429 = false;
     cfg.robots.unreachable_policy = RobotsUnreachablePolicy::AllowAll;
     cfg.robots.retries = 0;
     cfg.robots.retry_delay_s = 0;
@@ -1048,10 +1051,11 @@ fn server_errors_list_5xx() {
 
 // spec: ONPAGE-063 [M2]
 #[test]
-#[ignore = "M2: ONPAGE-063 „Retry liefert 200“ setzt Wiederholungen bei 5xx voraus (CRAWL-096, P1)"]
 fn a_retry_that_returns_200_removes_the_url_from_the_filter() {
-    // /flaky liefert erst 503, dann 200. Ohne Retry (CRAWL-096) bleibt das erste Ergebnis stehen.
-    let d = crawl("http://site.test/flaky-start.html", config());
+    // /flaky liefert erst 503, dann 200. Retries ausdrücklich aktivieren.
+    let mut cfg = config();
+    cfg.http.retries_5xx = 1;
+    let d = crawl("http://site.test/flaky-start.html", cfg);
     assert!(!contains(&d, "Server Error (5XX)", "{BASE}/flaky"));
     assert!(contains(&d, "Success (2XX)", "{BASE}/flaky"));
 }
