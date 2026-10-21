@@ -178,7 +178,7 @@ async function selectWhileSortedRowsArrive(alpha: Alpha): Promise<{ origin: Snap
   // Die Fenstergröße hängt von der Engine ab: so weit scrollen, bis „page-2.html“ im Bild ist (der Crawl steht, die Tabelle ist ruhig).
   await page.locator(".os-data-grid").hover({ position: { x: 160, y: 60 } });
   // Die Zeile soll nicht die letzte im Bild sein: Mit klassischer Bildlaufleiste (Windows) verdeckt die waagerechte Leiste die unterste
-  // Zeile teilweise, ein Klick auf deren Mitte träfe nichts. Nur am Ende der Liste (Fenster ändert sich nicht mehr) genügt die letzte.
+  // Zeile teilweise, ein Klick auf deren Mitte träfe nichts. Nur am Ende der Liste (Fenster ändert sich nicht mehr) genügt die letzte (Befund aus der Windows-CI, Integrationsrunde 8).
   let target = -1;
   let previousFirst = -1;
   for (let i = 0; i < 40; i++) {
