@@ -32,6 +32,12 @@ fn info(store: &ConfigProfiles, name: &str) -> Result<ConfigProfileInfo, CmdErro
             == Some(name),
         modified_at: os_model::Timestamp(stamp).to_db(),
         path: path.to_string_lossy().into_owned(),
+        recent_rank: store
+            .recent()
+            .map_err(|e| store_error(&e))?
+            .iter()
+            .position(|n| n == name)
+            .map(|i| i as u32),
     })
 }
 fn list<'a>(app: &'a App, _: CallCtx, _: Value) -> BoxFuture<'a, CmdResult> {

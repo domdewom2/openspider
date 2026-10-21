@@ -166,6 +166,11 @@ pub struct ConfigProfileInfo {
     pub modified_at: String,
     /// Datei.
     pub path: String,
+
+    /// Rang unter den zuletzt geladenen Profilen (0 = zuletzt, höchstens zehn; OUT-220).
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub recent_rank: Option<u32>,
 }
 
 /// Argument von `profile.save`.

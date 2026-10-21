@@ -110,3 +110,35 @@ async fn config_validate_reports_an_invalid_regex_once_per_path() {
     assert_eq!(paths, ["scope.include[1]", "rewrite.regex_replace[0].pattern"]);
     assert!(!issues.to_string().contains("Zeile 0"));
 }
+
+// spec: OUT-220 [M2]
+#[tokio::test]
+async fn profile_list_ranks_the_recently_loaded_profiles() {
+    let dir = tempfile::tempdir().unwrap();
+    let app = session::app(dir.path());
+    let config = serde_json::to_value(session::cfg()).unwrap();
+    let dto = json!({"schemaVersion": 2, "generator": "n01b", "config": config});
+    for name in ["a", "b", "c"] {
+        session::call(
+            &app,
+            "profile.save",
+            json!({"name": name, "config": dto, "overwrite": false}),
+        )
+        .await;
+    }
+    for name in ["a", "c", "a"] {
+        session::call(&app, "profile.load", json!({"name": name})).await;
+    }
+    let list = session::call(&app, "profile.list", json!(null)).await;
+    let rank = |name: &str| {
+        list.as_array()
+            .unwrap()
+            .iter()
+            .find(|p| p["name"] == name)
+            .unwrap()["recentRank"]
+            .clone()
+    };
+    assert_eq!(rank("a"), json!(0));
+    assert_eq!(rank("c"), json!(1));
+    assert_eq!(rank("b"), json!(null));
+}
