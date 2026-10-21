@@ -166,7 +166,8 @@ jobs:
       - name: Rust tests
         if: ${{ !cancelled() }}
         # A1-Ziel bleibt < 15 min je Plattform; Limit vorübergehend 50 min (K2-64, 19.10.: Welle-1-Suite ~14,6 min auf macOS),
-        # Beschleunigung der langsamsten Testprogramme ist Auftrag von M2-N01. Alle Workspace-Tests einschließlich Doctests.
+        # K2-64-Restarbeiten, Besitzer und fehlende Plattformnachweise: docs/plan/M2-reports/n01.md.
+        # Erst nach belegter Laufzeit < 15 min auf allen Zielplattformen auf 15 zurücksetzen. Einschließlich Doctests.
         timeout-minutes: 50
         run: cargo test --workspace --locked
 

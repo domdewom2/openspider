@@ -178,6 +178,8 @@ async fn response_codes_site() -> FixtureCrawl {
 async fn ctype_site() -> FixtureCrawl {
     let mut cfg = CrawlConfig::default();
     cfg.advanced.response_timeout_s = 1;
+    // K2-64: Dieser Test prüft den Timeout-Status, nicht die separat getesteten Wiederholungen.
+    cfg.http.retries_network = 0;
     crawl_fixture("onpage-ctype", cfg).await
 }
 
