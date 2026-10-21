@@ -37,7 +37,6 @@ const addresses = (rows: { cells: string[] }[]) => rows.map((r) => r.cells[0]!);
 // spec: UI-004
 // spec: UI-007
 test("the Internal tab lists all 25 internal URLs with the default columns after a crawl", async ({ alpha }) => {
-  test.fixme(true, "Befund A01-01 (docs/plan/M2-acceptance/alpha/befunde.md): view.open scheitert im Kern für Spalten mit benannten Parametern („Wrong number of parameters passed to query“); die Tabelle zeigt „Store“ statt der 25 Zeilen");
   await alpha.open();
   await alpha.startFromHeader();
   await alpha.waitCompleted();
