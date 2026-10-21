@@ -67,11 +67,8 @@ impl Tool for ListCatalog {
                     os_analyze::views::column_names_in(&tabs, &c.file, &cfg, &q).map_err(internal)?
                 } else { tab.columns.iter().map(|c| c.key.to_string()).collect() };
                 columns.into_iter().filter_map(|name| {
-                    let column = tab.columns.iter().find(|c| c.key == name || match c.sql {
-                        ColumnSql::Multi { base, .. } | ColumnSql::MultiCrawlWide { base, .. } | ColumnSql::MultiPaired { base, .. } => name.starts_with(&format!("{base} ")),
-                        _ => false,
-                    })?;
-                    let data_type = match column.kind {
+                    let (column, kind) = tab.columns.iter().find_map(|c| column_kind(c, &name).map(|kind| (c, kind)))?;
+                    let data_type = match kind {
                         ColumnKind::Int => "integer", ColumnKind::Float { .. } | ColumnKind::Seconds3 => "number", ColumnKind::Bool => "boolean", ColumnKind::Timestamp => "timestamp", ColumnKind::Url => "url", ColumnKind::Hash => "hash", ColumnKind::Text => "text",
                     };
                     Some(json!({"name":name,"data_type":data_type,"description":format!("{} — {} ({data_type})", tab.id, column.key)}))
@@ -109,4 +106,33 @@ impl Tool for ListCatalog {
             next_cursor: (end < total).then(|| encode_cursor(&binding, end)),
         })
     }
+}
+
+/// Catalog output uses canonical names: resolve both the positive index and the part suffix.
+fn column_kind(column: &os_analyze::ColumnDef, name: &str) -> Option<ColumnKind> {
+    let (base, parts) = match column.sql {
+        ColumnSql::MultiPaired { base, parts } => (base, parts),
+        ColumnSql::Multi { base, .. } | ColumnSql::MultiCrawlWide { base, .. } => {
+            return (name == column.key || numbered_part(name, base, "")).then_some(column.kind);
+        }
+        ColumnSql::Expr(_) => return (name == column.key).then_some(column.kind),
+    };
+    if name == column.key {
+        return parts.first().map(|p| p.kind);
+    }
+    parts
+        .iter()
+        .find(|p| numbered_part(name, base, p.suffix))
+        .map(|p| p.kind)
+}
+
+fn numbered_part(name: &str, base: &str, suffix: &str) -> bool {
+    let Some(rest) = name.strip_prefix(base).and_then(|s| s.strip_prefix(' ')) else {
+        return false;
+    };
+    let (number, tail) = rest.split_once(' ').unwrap_or((rest, ""));
+    tail == suffix
+        && !number.is_empty()
+        && number.bytes().all(|b| b.is_ascii_digit())
+        && number.parse::<usize>().is_ok_and(|n| n > 0)
 }

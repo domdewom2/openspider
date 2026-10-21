@@ -521,60 +521,76 @@ pub fn png_preview(data: &[u8], max_side: u32, max_bytes: usize) -> Option<(Vec<
     }
     let stride = original_width as usize * channels;
     let cropped_stride = width as usize * channels;
-    // Leave room for PNG chunks and the compressor's worst-case overhead.
-    let height = original_height
-        .min(max_side)
-        .min(u32::try_from(max_bytes.saturating_sub(2048) / (cropped_stride + 1)).ok()?);
+    // Signature + IHDR/IDAT/IEND = 57 bytes; a flushed zlib stream needs
+    // at most eight more bytes for finalization. Height follows compressed size.
+    let compressed_budget = max_bytes.checked_sub(57 + 8)?;
+    let mut height = original_height.min(max_side);
     if height == 0 {
         return None;
     }
-    let mut decoder = flate2::read::ZlibDecoder::new(compressed.as_slice());
-    let mut encoder = flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::default());
-    let mut previous = vec![0u8; stride];
-    let mut current = vec![0u8; stride];
-    let mut filter = [0u8; 1];
-    for _ in 0..height {
-        decoder.read_exact(&mut filter).ok()?;
-        decoder.read_exact(&mut current).ok()?;
-        for x in 0..stride {
-            let left = if x >= channels {
-                current[x - channels]
-            } else {
-                0
-            };
-            let up = previous[x];
-            let diagonal = if x >= channels {
-                previous[x - channels]
-            } else {
-                0
-            };
-            let prediction = match filter[0] {
-                0 => 0,
-                1 => left,
-                2 => up,
-                3 => ((u16::from(left) + u16::from(up)) / 2) as u8,
-                4 => {
-                    let p = i32::from(left) + i32::from(up) - i32::from(diagonal);
-                    let a = (p - i32::from(left)).abs();
-                    let b = (p - i32::from(up)).abs();
-                    let c = (p - i32::from(diagonal)).abs();
-                    if a <= b && a <= c {
-                        left
-                    } else if b <= c {
-                        up
-                    } else {
-                        diagonal
+    let compressed = 'encode: loop {
+        let mut decoder = flate2::read::ZlibDecoder::new(compressed.as_slice());
+        let mut encoder =
+            flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::default());
+        let mut previous = vec![0u8; stride];
+        let mut current = vec![0u8; stride];
+        let mut filter = [0u8; 1];
+        let rows = height;
+        for row in 0..rows {
+            decoder.read_exact(&mut filter).ok()?;
+            decoder.read_exact(&mut current).ok()?;
+            for x in 0..stride {
+                let left = if x >= channels {
+                    current[x - channels]
+                } else {
+                    0
+                };
+                let up = previous[x];
+                let diagonal = if x >= channels {
+                    previous[x - channels]
+                } else {
+                    0
+                };
+                let prediction = match filter[0] {
+                    0 => 0,
+                    1 => left,
+                    2 => up,
+                    3 => ((u16::from(left) + u16::from(up)) / 2) as u8,
+                    4 => {
+                        let p = i32::from(left) + i32::from(up) - i32::from(diagonal);
+                        let a = (p - i32::from(left)).abs();
+                        let b = (p - i32::from(up)).abs();
+                        let c = (p - i32::from(diagonal)).abs();
+                        if a <= b && a <= c {
+                            left
+                        } else if b <= c {
+                            up
+                        } else {
+                            diagonal
+                        }
                     }
+                    _ => return None,
+                };
+                current[x] = current[x].wrapping_add(prediction);
+            }
+            encoder.write_all(&[0]).ok()?;
+            encoder.write_all(&current[..cropped_stride]).ok()?;
+            // Flush makes total_out reflect this row rather than buffered input. Keep
+            // space for the final deflate block/checksum as well as the PNG chunks.
+            encoder.flush().ok()?;
+            if encoder.total_out() > compressed_budget as u64 {
+                height = row;
+                if height == 0 {
+                    return None;
                 }
-                _ => return None,
-            };
-            current[x] = current[x].wrapping_add(prediction);
+                // Replay only the accepted prefix with a fresh encoder. This avoids
+                // retaining a full decoded bitmap or publishing a partial zlib stream.
+                continue 'encode;
+            }
+            std::mem::swap(&mut previous, &mut current);
         }
-        encoder.write_all(&[0]).ok()?;
-        encoder.write_all(&current[..cropped_stride]).ok()?;
-        std::mem::swap(&mut previous, &mut current);
-    }
-    let compressed = encoder.finish().ok()?;
+        break encoder.finish().ok()?;
+    };
     header[0..4].copy_from_slice(&width.to_be_bytes());
     header[4..8].copy_from_slice(&height.to_be_bytes());
     let mut output = b"\x89PNG\r\n\x1a\n".to_vec();

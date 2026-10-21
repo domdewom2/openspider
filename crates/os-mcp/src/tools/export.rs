@@ -192,7 +192,7 @@ impl Tool for Export {
         ToolClass::Write
     }
     fn description(&self) -> &'static str {
-        "Export a tab, bulk export or report using canonical CLI names and the core CSV/XLSX writers. kind: tab|bulk|report|page_content_ndjson. page_content_ndjson writes NDJSON (optional include_html), also available as bulk name page_content_ndjson. Optional path is resolved relative to export.directory and restricted to that directory or configured MCP export_dirs; symlinks outside are rejected. Existing files are preserved with a (2) suffix. Without path use the OUT-020 filename. Returns absolute paths."
+        "Export a tab, bulk export or report using canonical CLI names and the core CSV/XLSX writers. kind: tab|bulk|report|page_content_ndjson. page_content_ndjson requires name page_content_ndjson and format ndjson (optional include_html), also available as bulk name page_content_ndjson. Optional path is resolved relative to export.directory and restricted to that directory or configured MCP export_dirs; symlinks outside are rejected. Existing files are preserved with a (2) suffix. Without path use the OUT-020 filename. Returns absolute paths."
     }
     fn input_schema(&self) -> Value {
         json!({"type":"object","properties":{"crawl_id":{"type":"string"},"kind":{"type":"string","enum":["tab","bulk","report","page_content_ndjson"]},"name":{"type":"string"},"format":{"type":"string","enum":["csv","xlsx","ndjson"]},"path":{"type":"string"},"include_html":{"type":"boolean","default":false}},"required":["crawl_id","kind","name","format"],"additionalProperties":false})
@@ -207,7 +207,17 @@ impl Tool for Export {
         {
             return export_page_content(ctx, &args);
         }
-        reject_unknown(&args, &["crawl_id", "kind", "name", "format", "path"])?;
+        reject_unknown(
+            &args,
+            &["crawl_id", "kind", "name", "format", "path", "include_html"],
+        )?;
+        match args.get("include_html") {
+            None | Some(Value::Bool(false)) => {}
+            Some(Value::Bool(true)) => {
+                return Err(invalid("include_html requires page_content_ndjson"));
+            }
+            _ => return Err(invalid("include_html: boolean")),
+        }
         let crawl = open_crawl(ctx, &args)?;
         let kind = match req_str(&args, "kind")? {
             "tab" => ExportKind::Tab,
@@ -305,15 +315,11 @@ fn export_page_content(ctx: &ToolContext, args: &Value) -> Result<ToolOutput, To
         args,
         &["crawl_id", "kind", "name", "format", "path", "include_html"],
     )?;
-    if let Some(name) = opt_str(args, "name")? {
-        if !catalog::page_content::matches(name) {
-            return Err(invalid("name: page_content_ndjson"));
-        }
+    if !catalog::page_content::matches(req_str(args, "name")?) {
+        return Err(invalid("name: page_content_ndjson"));
     }
-    if let Some(format) = opt_str(args, "format")? {
-        if format != "ndjson" {
-            return Err(invalid("page_content_ndjson format: ndjson"));
-        }
+    if req_str(args, "format")? != "ndjson" {
+        return Err(invalid("page_content_ndjson format: ndjson"));
     }
     let include_html = match args.get("include_html") {
         None | Some(Value::Null) => false,

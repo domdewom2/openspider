@@ -13,19 +13,64 @@ fn items(output: &os_mcp::ToolOutput) -> &[Value] {
         .unwrap()
 }
 
+fn export_context(world: &World, export_dir: &std::path::Path) -> ToolContext {
+    let mut settings = os_model::settings::AppSettings::default();
+    settings.export.directory = Some(export_dir.to_string_lossy().into_owned());
+    settings.save(world.dir.path()).unwrap();
+    let mut ctx = ToolContext::new(world.dir.path().into());
+    ctx.settings_dir = world.dir.path().into();
+    ctx
+}
+
+fn assert_export(ctx: &ToolContext, crawl_id: &str, kind: &str, name: &str) {
+    let format = if catalog::page_content::matches(name) {
+        "ndjson"
+    } else {
+        "csv"
+    };
+    let result = os_mcp::tools::export::Export.call(
+        ctx,
+        json!({
+            "crawl_id":crawl_id,"kind":kind,"name":name,"format":format,"include_html":false
+        }),
+    );
+    let output = result.unwrap_or_else(|e| panic!("{kind}:{name}: {e}"));
+    let files = output.summary["files"].as_array().unwrap();
+    assert!(!files.is_empty(), "{kind}:{name}: no files");
+    for path in files {
+        let path = std::path::Path::new(path.as_str().unwrap());
+        assert!(path.is_file(), "{kind}:{name}: {}", path.display());
+        assert!(
+            path.metadata().unwrap().len() > 0,
+            "{kind}:{name}: empty output"
+        );
+        let extension = path.extension().unwrap().to_str().unwrap();
+        let allowed = match catalog::bulk_web::page_export(name) {
+            Some(
+                catalog::bulk_web::PageExport::Original | catalog::bulk_web::PageExport::Rendered,
+            ) => ["csv", "html"],
+            Some(catalog::bulk_web::PageExport::Text) => ["csv", "txt"],
+            None => [format, format],
+        };
+        assert!(allowed.contains(&extension), "{kind}:{name}: {extension}");
+    }
+}
+
 // spec: AGENT-016
 #[tokio::test]
-async fn entire_catalog_roundtrips_through_queries_and_export_resolution() {
+async fn entire_catalog_roundtrips_through_queries_and_mcp_exports() {
     let world = World::new();
+    let mut cfg = base_config();
+    cfg.sitemaps.crawl_linked = true;
+    cfg.sitemaps
+        .urls
+        .push("http://out-basic-site.test/sitemap.xml".into());
+    cfg.extraction.store_html = true;
     let stored = world
-        .add(
-            "out-basic-site",
-            "http://out-basic-site.test/",
-            base_config(),
-            3,
-        )
+        .add("out-basic-site", "http://out-basic-site.test/", cfg, 3)
         .await;
-    let ctx = ToolContext::new(world.dir.path().into());
+    let export_dir = tempfile::tempdir().unwrap();
+    let ctx = export_context(&world, export_dir.path());
     let catalog = ListCatalog
         .call(
             &ctx,
@@ -43,10 +88,7 @@ async fn entire_catalog_roundtrips_through_queries_and_export_resolution() {
                 tab["name"].as_str().unwrap(),
                 filter.as_str().unwrap()
             );
-            assert!(
-                catalog::resolve_with(ExportKind::Tab, &name, &stored.cfg).is_ok(),
-                "{name}"
-            );
+            assert_export(&ctx, &stored.id, "tab", &name);
         }
         let columns = ListCatalog
             .call(
@@ -73,11 +115,19 @@ async fn entire_catalog_roundtrips_through_queries_and_export_resolution() {
         let mut seen = Vec::new();
         loop {
             let result = ListCatalog
-                .call(&ctx, json!({"kind":kind,"limit":17,"cursor":cursor}))
+                .call(
+                    &ctx,
+                    json!({"kind":kind,"crawl_id":stored.id,"limit":17,"cursor":cursor}),
+                )
                 .unwrap();
             for name in items(&result) {
                 let name = name.as_str().unwrap();
-                assert!(catalog::resolve(export_kind, name).is_ok(), "{name}");
+                assert_export(
+                    &ctx,
+                    &stored.id,
+                    if kind == "reports" { "report" } else { "bulk" },
+                    name,
+                );
                 seen.push(name.to_string());
             }
             cursor = result.next_cursor;
@@ -85,9 +135,101 @@ async fn entire_catalog_roundtrips_through_queries_and_export_resolution() {
                 break;
             }
         }
-        assert_eq!(seen, catalog::list(export_kind));
+        assert_eq!(seen, catalog::list_with(export_kind, &stored.cfg));
         if kind == "bulk_exports" {
             assert!(seen.contains(&"page_content_ndjson".into()));
+        }
+    }
+}
+
+// spec: AGENT-016
+#[tokio::test]
+async fn paired_catalog_columns_use_each_part_type() {
+    let world = World::new();
+    let stored = world
+        .add(
+            "out-basic-site",
+            "http://out-basic-site.test/",
+            base_config(),
+            31,
+        )
+        .await;
+    let file = os_store::CrawlFile::open(
+        &world.dir.path().join(format!("{}.ospider", stored.id)),
+        os_store::OpenMode::ReadWrite,
+    )
+    .unwrap();
+    let id = os_store::queries::url_by_address(file.conn(), "http://out-basic-site.test/")
+        .unwrap()
+        .unwrap()
+        .id;
+    for (position, code, url) in [
+        (1, "en", "https://example.test/en"),
+        (2, "de", "https://example.test/de"),
+    ] {
+        file.conn().execute("INSERT INTO hreflang(url_id,source,position,code_raw,code_norm,code_valid,href_raw,url,in_head) VALUES(?1,'html',?2,?3,?3,1,?4,?4,1)", (id.0, position, code, url)).unwrap();
+    }
+    let ctx = ToolContext::new(world.dir.path().into());
+    let result = ListCatalog
+        .call(
+            &ctx,
+            json!({"kind":"columns","tab":"Hreflang","crawl_id":stored.id,"limit":500}),
+        )
+        .unwrap();
+    for (name, kind) in [
+        ("HTML hreflang 1", "text"),
+        ("HTML hreflang 1 URL", "url"),
+        ("HTML hreflang 2", "text"),
+        ("HTML hreflang 2 URL", "url"),
+        ("Address", "url"),
+        ("Occurrences", "integer"),
+    ] {
+        let column = items(&result)
+            .iter()
+            .find(|c| c["name"] == name)
+            .unwrap_or_else(|| panic!("missing {name}: {result:?}"));
+        assert_eq!(column["data_type"], kind, "{name}");
+    }
+}
+
+// spec: AGENT-019
+#[tokio::test]
+async fn normal_exports_accept_the_schema_default_include_html_false() {
+    let world = World::new();
+    let stored = world
+        .add(
+            "out-basic-site",
+            "http://out-basic-site.test/",
+            base_config(),
+            32,
+        )
+        .await;
+    let export_dir = tempfile::tempdir().unwrap();
+    let ctx = export_context(&world, export_dir.path());
+    let tool = os_mcp::tools::export::Export;
+    assert_eq!(
+        tool.input_schema()["properties"]["include_html"]["default"],
+        false
+    );
+    for (kind, name) in [
+        ("tab", "Internal:All"),
+        ("report", catalog::list(ExportKind::Report)[0].as_str()),
+    ] {
+        for format in ["csv", "xlsx"] {
+            let mut args = json!({"crawl_id":stored.id,"kind":kind,"name":name,"format":format});
+            let original = tool.call(&ctx, args.clone()).unwrap();
+            args["include_html"] = json!(false);
+            let explicit = tool.call(&ctx, args.clone()).unwrap();
+            let before = std::fs::read(original.summary["files"][0].as_str().unwrap()).unwrap();
+            let after = std::fs::read(explicit.summary["files"][0].as_str().unwrap()).unwrap();
+            assert_eq!(before, after, "{kind}:{name}:{format}");
+            for bad in [json!(true), json!("false"), Value::Null] {
+                args["include_html"] = bad;
+                assert!(matches!(
+                    tool.call(&ctx, args.clone()),
+                    Err(ToolError::InvalidArguments(_))
+                ));
+            }
         }
     }
 }
@@ -373,6 +515,26 @@ async fn ndjson_export_uses_allowed_directory_preserves_files_and_matches_core_b
     ctx.settings_dir = settings_dir.path().into();
     let args = json!({"crawl_id":stored.id,"kind":"bulk","name":"page_content_ndjson","format":"ndjson","include_html":true});
     let tool = os_mcp::tools::export::Export;
+    for kind in ["bulk", "page_content_ndjson"] {
+        for key in ["name", "format"] {
+            for value in [None, Some(Value::Null), Some(json!(1))] {
+                let mut bad = args.clone();
+                bad["kind"] = json!(kind);
+                if let Some(value) = value {
+                    bad[key] = value;
+                } else {
+                    bad.as_object_mut().unwrap().remove(key);
+                }
+                assert!(matches!(
+                    tool.call(&ctx, bad),
+                    Err(ToolError::InvalidArguments(_))
+                ));
+            }
+        }
+    }
+    let mut direct = args.clone();
+    direct["kind"] = json!("page_content_ndjson");
+    assert!(tool.call(&ctx, direct).is_ok());
     let reply = tool.call(&ctx, args.clone()).unwrap();
     let path = std::path::PathBuf::from(reply.summary["files"][0].as_str().unwrap());
     assert!(path.starts_with(export_dir.path().canonicalize().unwrap()));

@@ -12,11 +12,14 @@ and per-installation availability; disabled classes/tools are omitted.
 | `url_details` | `read` | A URL's details, inlinks/outlinks, headers and directives. |
 | `list_issues` | `read` | Issue priorities, counts, explanations, examples and query references. |
 | `sql_query` | `read` | Bounded, read-only SQL when tab queries cannot answer the question. |
+| `list_catalog` | `read` | Canonical tabs/filters, columns, reports, bulk exports and export formats. |
+| `url_content` | `read` | Saved HTML or extracted text of a crawled URL (untrusted data). |
+| `url_screenshot` | `read` | Saved render screenshot of a URL as image content. |
 | `start_crawl` | `crawl` | Start a spider/list crawl with a saved profile and safe overrides. |
 | `crawl_status` | `crawl` | Poll progress and completion for a crawl. |
 | `stop_crawl` | `crawl` | Stop a crawl owned by this server, preserving its queue. |
 | `resume_crawl` | `crawl` | Resume a stopped, paused or interrupted crawl. |
-| `export` | `write` | Save a requested CSV/XLSX tab, bulk export or report. |
+| `export` | `write` | Save a requested CSV/XLSX tab, bulk export or report, or page content as NDJSON. |
 
 The `cost` class is reserved for paid operations; this register has none. A server
 started with `--read-only` exposes only `read`, including for existing saved crawls.

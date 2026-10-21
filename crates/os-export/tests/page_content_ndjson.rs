@@ -55,6 +55,22 @@ async fn ndjson_has_one_record_per_html_url_and_matches_core_text_extraction() {
         Format::Csv,
     )
     .unwrap();
+    assert!(files[0]
+        .warnings
+        .iter()
+        .any(|w| w.contains("requested csv format is ignored")));
+    let xlsx = export_bulk(
+        &fx.file,
+        &cfg,
+        catalog::page_content::NAME,
+        dir.path(),
+        Format::Xlsx,
+    )
+    .unwrap();
+    assert!(xlsx[0]
+        .warnings
+        .iter()
+        .any(|w| w.contains("requested xlsx format is ignored")));
     let default = std::fs::read_to_string(&files[0].path).unwrap();
     assert!(default.lines().all(|l| serde_json::from_str::<Value>(l)
         .unwrap()
@@ -86,6 +102,14 @@ async fn ndjson_has_one_record_per_html_url_and_matches_core_text_extraction() {
     let batch =
         os_export::pipeline::export_batch(&fx.file, &cfg, &selection, &options, &mut ctx).unwrap();
     assert_eq!(batch.files.len(), 1);
+    assert!(batch.files[0]
+        .warnings
+        .iter()
+        .any(|w| w.contains("requested xlsx format is ignored")));
+    assert!(batch
+        .warnings
+        .iter()
+        .any(|w| w.contains("requested xlsx format is ignored")));
     assert_eq!(batch.files[0].path.extension().unwrap(), "ndjson");
     assert_eq!(
         std::fs::read_to_string(&batch.files[0].path).unwrap(),
@@ -259,4 +283,92 @@ fn png_preview_decodes_all_five_scanline_filters_before_cropping() {
         catalog::page_content::screenshot_preview(plain, 3, 4096),
         catalog::page_content::screenshot_preview(filtered, 3, 4096)
     );
+}
+
+// A deterministic RGBA fixture, using uncompressed deflate blocks so the test
+// does not need an additional image/codec dependency.
+fn rgba_png_fixture(width: u32, height: u32, noisy: bool) -> Vec<u8> {
+    fn chunk(output: &mut Vec<u8>, kind: &[u8; 4], bytes: &[u8]) {
+        output.extend_from_slice(&(bytes.len() as u32).to_be_bytes());
+        output.extend_from_slice(kind);
+        output.extend_from_slice(bytes);
+        let mut crc = u32::MAX;
+        for byte in kind.iter().chain(bytes) {
+            crc ^= u32::from(*byte);
+            for _ in 0..8 {
+                crc = (crc >> 1) ^ (0xedb8_8320 & (0u32.wrapping_sub(crc & 1)));
+            }
+        }
+        output.extend_from_slice(&(!crc).to_be_bytes());
+    }
+    let stride = width as usize * 4 + 1;
+    let mut raw = vec![0; stride * height as usize];
+    let mut random = 123456789u32;
+    for row in raw.chunks_exact_mut(stride) {
+        for channel in &mut row[1..] {
+            random ^= random << 13;
+            random ^= random >> 17;
+            random ^= random << 5;
+            *channel = if noisy { random as u8 } else { 255 };
+        }
+    }
+    let mut zlib = vec![0x78, 0x01];
+    let mut chunks = raw.chunks(65535).peekable();
+    while let Some(bytes) = chunks.next() {
+        zlib.push(u8::from(chunks.peek().is_none()));
+        let len = bytes.len() as u16;
+        zlib.extend_from_slice(&len.to_le_bytes());
+        zlib.extend_from_slice(&(!len).to_le_bytes());
+        zlib.extend_from_slice(bytes);
+    }
+    let (mut a, mut b) = (1u32, 0u32);
+    for byte in raw {
+        a = (a + u32::from(byte)) % 65521;
+        b = (b + a) % 65521;
+    }
+    zlib.extend_from_slice(&((b << 16) | a).to_be_bytes());
+    let mut png = b"\x89PNG\r\n\x1a\n".to_vec();
+    let mut header = Vec::new();
+    header.extend_from_slice(&width.to_be_bytes());
+    header.extend_from_slice(&height.to_be_bytes());
+    header.extend_from_slice(&[8, 6, 0, 0, 0]);
+    chunk(&mut png, b"IHDR", &header);
+    chunk(&mut png, b"IDAT", &zlib);
+    chunk(&mut png, b"IEND", &[]);
+    png
+}
+
+// spec: AGENT-018
+#[test]
+fn wide_rgba_preview_uses_compressed_size_and_remains_decodable_at_the_byte_limit() {
+    let limit = 2 * 1024 * 1024;
+    let png = rgba_png_fixture(1280, 3000, false);
+    let (preview, width, height) =
+        catalog::page_content::screenshot_preview(&png, 4096, limit).unwrap();
+    assert_eq!((width, height), (1280, 3000));
+    assert!(height > 409);
+    assert!(preview.len() <= limit);
+    assert_eq!(
+        catalog::page_content::screenshot_preview(&preview, 4096, limit)
+            .unwrap()
+            .0,
+        preview
+    );
+    let (_, width, height) = catalog::page_content::screenshot_preview(&png, 1000, limit).unwrap();
+    assert_eq!((width, height), (1000, 1000));
+
+    let png = rgba_png_fixture(1280, 600, true);
+    let (preview, width, height) =
+        catalog::page_content::screenshot_preview(&png, 4096, limit).unwrap();
+    assert_eq!(width, 1280);
+    assert!(height > 0 && height < 600);
+    assert!(preview.len() <= limit);
+    assert!(preview.len() > limit - 8192);
+    assert_eq!(
+        catalog::page_content::screenshot_preview(&preview, 4096, limit)
+            .unwrap()
+            .0,
+        preview
+    );
+    assert!(catalog::page_content::screenshot_preview(&png, 4096, 4096).is_none());
 }

@@ -425,9 +425,12 @@ fn export_bulk_in_snapshot(
         return catalog::bulk_web::export_pages(file, cfg, kind, out_dir, None);
     }
     if catalog::page_content::matches(&canonical) {
-        return Ok(vec![catalog::page_content::export(
-            file, cfg, out_dir, false,
-        )?]);
+        let mut info = catalog::page_content::export(file, cfg, out_dir, false)?;
+        info.warnings.push(format!(
+            "page_content_ndjson writes NDJSON; requested {} format is ignored",
+            format.extension()
+        ));
+        return Ok(vec![info]);
     }
     if !cfg.export.inlinks_for_all_filters && catalog::bulk_generic::is_generic_name(&canonical) {
         return Err(ExportError::Unsupported(format!(
@@ -799,13 +802,17 @@ fn export_batch_in(
                         workbook: None,
                         skipped: Vec::new(),
                     };
-                    let info = catalog::page_content::export_with(
+                    let mut info = catalog::page_content::export_with(
                         file,
                         cfg,
                         options.directory,
                         false,
                         Some(&page_ctx),
                     )?;
+                    info.warnings.push(format!(
+                        "page_content_ndjson writes NDJSON; requested {} format is ignored",
+                        options.format.extension()
+                    ));
                     done.set(done.get() + info.rows);
                     result.warnings.extend(info.warnings.clone());
                     if info.rows == 0 && ctx.skip_empty {
