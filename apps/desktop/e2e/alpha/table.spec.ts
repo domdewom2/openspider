@@ -29,7 +29,7 @@ async function crawled(alpha: Alpha, tab: string, viewport?: { width: number; he
   await alpha.open();
   await alpha.startFromHeader();
   await alpha.waitCompleted();
-  await alpha.selectTab(tab);
+  await alpha.openTable(tab);
 }
 
 const addresses = (rows: { cells: string[] }[]) => rows.map((r) => r.cells[0]!);
@@ -57,7 +57,7 @@ test("tab switching shows each tab's table and keeps the last filter chosen per 
   expect(external).toHaveLength(2);
   expect(external.every((a) => a.startsWith("http://localhost:"))).toBe(true);
 
-  await alpha.selectTab("Response Codes");
+  await alpha.openTable("Response Codes");
   await expect(alpha.table()).toContainText("Showing: 27 of 27");
   // Filter-Dropdown mit Zählern je Eintrag
   await alpha.table().getByRole("button", { name: /Filter/, exact: true }).click();
@@ -74,9 +74,9 @@ test("tab switching shows each tab's table and keeps the last filter chosen per 
   expect(failing[0]!.cells[2]).toBe("404");
 
   // Tabwechsel und zurück: der zuletzt gewählte Filter bleibt erhalten
-  await alpha.selectTab("External");
+  await alpha.openTable("External");
   await expect(alpha.table()).toContainText("Showing: 2 of 2");
-  await alpha.selectTab("Response Codes");
+  await alpha.openTable("Response Codes");
   await expect(alpha.table()).toContainText("Showing: 1 of 27");
   await expect(alpha.table().getByRole("combobox", { name: "Filter" })).toHaveValue(/Client Error \(4XX\)/);
 });
@@ -266,7 +266,7 @@ test("empty values stay empty cells, status codes and numbers appear as text and
   const home = window.rows.find((r) => r.cells[0] === alpha.startUrl)!;
   expect(home.cells[window.headers.indexOf("Title 2")]).toBe(""); // keine zweite Titelangabe: leere Zelle
   expect(home.cells[window.headers.indexOf("Title 1 Length")]).toBe("14");
-  await alpha.selectTab("Response Codes");
+  await alpha.openTable("Response Codes");
   const status = (await alpha.settledGrid()).rows.map((r) => r.cells[2]);
   expect(status).toContain("200");
   expect(status).toContain("301");

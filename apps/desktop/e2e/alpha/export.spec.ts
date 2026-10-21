@@ -90,7 +90,7 @@ test("a view exported as CSV from the table equals openspider --export-tabs of t
   const dir = tempDir("os-alpha-export-");
   try {
     const crawlFile = await crawlAndSnapshot(alpha, dir);
-    await alpha.selectTab("Response Codes");
+    await alpha.openTable("Response Codes");
     await expect(alpha.table()).toContainText("Showing: 27 of 27");
     await alpha.settledGrid();
 
@@ -289,7 +289,7 @@ test("the view export of the table offers CSV and Excel in the export dialog", a
   const dir = tempDir("os-alpha-export-");
   try {
     await crawlAndSnapshot(alpha, dir);
-    await alpha.selectTab("Response Codes");
+    await alpha.openTable("Response Codes");
     await alpha.chooseExportPath(dir);
     await page.keyboard.press(process.platform === "darwin" ? "Meta+e" : "Control+e");
     const dialog = page.getByRole("dialog", { name: "Export options" });

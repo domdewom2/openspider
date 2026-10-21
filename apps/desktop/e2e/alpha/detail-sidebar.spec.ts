@@ -64,7 +64,7 @@ test("selecting a row in the main table loads its URL Details", async ({ alpha }
   test.fixme(true, "Befund A01-02 (docs/plan/M2-acceptance/alpha/befunde.md): die Haupttabelle veröffentlicht die Auswahl nie an das Detailfenster (setDetailSelection wird in der App nirgends aufgerufen)");
   const { page } = alpha;
   await crawled(alpha);
-  await alpha.selectTab("Response Codes");
+  await alpha.openTable("Response Codes");
   await alpha.settledGrid();
   await page.locator(".os-data-grid").click({ position: { x: 160, y: 26 + 11 } });
   await expect(await openDetailTab(page, "URL Details")).toContainText(alpha.startUrl);
