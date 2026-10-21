@@ -173,7 +173,8 @@ Hauptfunktion scheitert; Mittel = Funktion verfälscht oder unzuverlässig, Umge
 
 - **Datei:** `apps/desktop/src/features/table/controller.ts` (`tick`: Zähler nur bei `tick.countsVersion > counts.version`, kein erneutes Laden beim Tabwechsel).
 - **Reproduktion:** gedrosselter Crawl (2 URL/s) mit geöffnetem Tab „Response Codes“ bis „Completed“: „Showing: 27 of 25“ bzw. „27 of 26“ bleibt
-  stehen (auch nach Wechsel zu einem anderen Tab und zurück), in etwa 2 von 3 Läufen. Bei schnellem, ungedrosseltem Crawl stimmt der Zähler.
+  stehen (auch nach Wechsel zu einem anderen Tab und zurück), in etwa 2 von 3 Läufen; in einzelnen Läufen fehlen nach „Completed“ auch die letzten ein bis zwei
+  Zeilen in der Tabelle selbst (25 statt 27, nach Address sortiert). Bei schnellem, ungedrosseltem Crawl stimmt der Zähler.
 - **Spec-ID:** UI-018 („Filterzähler … spätestens 1 s nach Abschluss einer URL aktualisiert“), UI-006 (Anzahl stimmt mit den Zeilen); Kriterium 2.
 - **Test:** `table.spec.ts` „after a throttled crawl the counter shows the final N of M“ (fixme).
 
