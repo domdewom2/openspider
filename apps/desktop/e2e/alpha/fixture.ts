@@ -68,7 +68,8 @@ export const test = base.extend<{ alpha: Alpha }, { site: Site }>({
       await use(site);
       await site.stop();
     },
-    { scope: "worker" },
+    // Fehlen CLI, Testserver und Paritätswerkzeug (die CI baut nur die Bridge), baut `ensureTools` sie beim ersten Zugriff nach.
+    { scope: "worker", timeout: 30 * 60_000 },
   ],
 
   alpha: async ({ page, context, site }, use, testInfo) => {

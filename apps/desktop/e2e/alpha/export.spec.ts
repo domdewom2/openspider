@@ -215,7 +215,7 @@ test("a bulk export and a report from the menus equal the CLI exports of the sam
     await expect(page.getByTestId("crawl-phase")).toHaveText("Ready");
     const prefs = await alpha.invoke<{ export: { directory: string | null; format: string } }>("settings.get");
     expect(prefs.export.format).toBe("xlsx");
-    expect(prefs.export.directory).toBe(out);
+    expect(prefs.export.directory?.replace(/\\/g, "/")).toBe(out.replace(/\\/g, "/"));
   } finally {
     removeDir(dir);
   }
