@@ -124,7 +124,7 @@ jobs:
       # Integrationsrunde 8: macOS-arm64 lief beim Linken der Testprogramme voll ("ld: write() failed, errno=28"), seit os-engine
       # und os-app viele Chromium-/Render-Tests tragen. Nicht gewählte Xcode-Versionen belegen auf dem Runner mehrere zehn GB und
       # werden hier im Hintergrund gelöscht, während Cache und npm laufen.
-      - name: Speicherplatz schaffen (macOS: ungenutzte Xcode-Versionen)
+      - name: "Speicherplatz schaffen (macOS, ungenutzte Xcode-Versionen)"
         if: ${{ runner.os == 'macOS' }}
         run: |
           df -h / | tail -n 1
