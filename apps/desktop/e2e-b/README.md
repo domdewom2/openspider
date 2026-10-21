@@ -35,7 +35,9 @@ keyboard actions use JavaScript and cannot verify NSMenu accelerator routing.
 If native posting is unavailable, S3 fails explicitly. The table is a fixture
 endpoint for the production dispatcher, not an implementation of the later grid.
 
-On Windows build without `e2e-webdriver` and put a WebView2-compatible `msedgedriver`
+On Windows build without `e2e-webdriver` but with `TAURI_CONFIG` adding
+`additionalBrowserArgs` (`--remote-debugging-port=0`) to the main window (see `ui-e2e-b.yml`: wry ignores
+msedgedriver's `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS`), and put a WebView2-compatible `msedgedriver`
 on PATH (`setup-windows.ps1` in CI). Then run
 `node apps/desktop/e2e-b/run.mjs target/debug/openspider-desktop.exe s3`. The runner
 starts `msedgedriver` itself (`--verbose`, log `msedgedriver-<attempt>.log` in the
