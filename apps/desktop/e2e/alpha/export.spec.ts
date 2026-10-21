@@ -42,6 +42,41 @@ async function cliExport(args: string[], dir: string, name: string): Promise<Cli
 
 const sameBytes = (a: string, b: string) => expect(readFileSync(a).equals(readFileSync(b)), `${a} und ${b} sind byte-identisch`).toBe(true);
 
+/**
+ * Führt den Kernbefehl `export.view` aus, den die Export-Dialoge aufrufen. Die Ansicht bekommt kurz nach dem Crawl-Ende noch neue Versionen
+ * (`err-view-stale`, Operation „failed“): dann wird mit einer frisch geöffneten Ansicht wiederholt.
+ */
+async function exportViewCommand(alpha: Alpha, tab: string, columns: string[], path: string, format: "csv" | "xlsx"): Promise<void> {
+  const outcome = await alpha.page.evaluate(
+    async ({ tab, columns, path, format }) => {
+      const clientPath = "/src/ipc/client.ts";
+      const sessionPath = "/src/state/session.ts";
+      const { client } = await import(/* @vite-ignore */ clientPath);
+      const { useSession } = await import(/* @vite-ignore */ sessionPath);
+      const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
+      for (let attempt = 0; attempt < 10; attempt++) {
+        if (attempt > 0) await pause(400);
+        try {
+          const handle = await client.invoke("view.open", { spec: { kind: "tab", tab, filter: "All", search: null, sort: [] }, columns });
+          const op = await client.invoke("export.view", { viewId: handle.viewId, version: handle.version, path, format, allColumns: false, columns });
+          for (let i = 0; i < 200; i++) {
+            const state = useSession.getState().ops[op.opId]?.state;
+            if (state === "done") return "done";
+            if (state === "failed" || state === "cancelled") break;
+            await pause(100);
+          }
+        } catch {
+          /* neu versuchen */
+        }
+      }
+      return "failed";
+    },
+    { tab, columns, path, format },
+  );
+  expect(outcome, `export.view ${tab} ${format}`).toBe("done");
+  expect(existsSync(path) && statSync(path).size > 0).toBe(true);
+}
+
 /** Öffnet die Exportansicht des Menüs (`export.bulk.*`, `export.report.*`) und speichert in den vorbereiteten Ordner. */
 async function exportFromMenu(page: Page, action: string, options: { format?: "xlsx" } = {}): Promise<void> {
   await page.evaluate(async (id) => {
@@ -134,13 +169,7 @@ test("the Internal:All view exported with the core command export.view equals op
     // Die Oberfläche kann Internal nicht öffnen (A01-01) und die Tabelle bietet kein XLSX (A01-14); den Befehl, den die Dialoge aufrufen,
     // führt dieser Test mit den Standardspalten des Tabs unmittelbar aus.
     const columns = (await alpha.invoke<{ key: string; defaultVisible: boolean }[]>("catalog.columns", { tab: "Internal" })).filter((c) => c.defaultVisible).map((c) => c.key);
-    const handle = await alpha.invoke<{ viewId: string; version: number }>("view.open", { spec: { kind: "tab", tab: "Internal", filter: "All", search: null, sort: [] }, columns });
-    for (const format of ["csv", "xlsx"] as const) {
-      const path = join(dir, `ui-internal.${format}`);
-      const op = await alpha.invoke<{ opId: string }>("export.view", { viewId: handle.viewId, version: handle.version, path, format, allColumns: false, columns });
-      expect(op.opId).toBeTruthy();
-      await expect.poll(() => existsSync(path) && statSync(path).size > 0, { timeout: 20_000 }).toBe(true);
-    }
+    for (const format of ["csv", "xlsx"] as const) await exportViewCommand(alpha, "Internal", columns, join(dir, `ui-internal.${format}`), format);
     const cli = await cliExport(["--load-crawl", crawlFile, "--export-tabs", "Internal:All"], dir, "cli-csv");
     const cliX = await cliExport(["--load-crawl", crawlFile, "--export-tabs", "Internal:All", "--export-format", "xlsx"], dir, "cli-xlsx");
     sameBytes(join(dir, "ui-internal.csv"), join(cli.folder, "internal_all.csv"));
@@ -164,10 +193,8 @@ test("the XLSX sheet name of a view export equals the one of openspider --export
   try {
     const crawlFile = await crawlAndSnapshot(alpha, dir);
     const columns = (await alpha.invoke<{ key: string; defaultVisible: boolean }[]>("catalog.columns", { tab: "Internal" })).filter((c) => c.defaultVisible).map((c) => c.key);
-    const handle = await alpha.invoke<{ viewId: string; version: number }>("view.open", { spec: { kind: "tab", tab: "Internal", filter: "All", search: null, sort: [] }, columns });
     const path = join(dir, "ui-internal.xlsx");
-    await alpha.invoke("export.view", { viewId: handle.viewId, version: handle.version, path, format: "xlsx", allColumns: false, columns });
-    await expect.poll(() => existsSync(path) && statSync(path).size > 0, { timeout: 20_000 }).toBe(true);
+    await exportViewCommand(alpha, "Internal", columns, path, "xlsx");
     const cli = await cliExport(["--load-crawl", crawlFile, "--export-tabs", "Internal:All", "--export-format", "xlsx"], dir, "cli-xlsx");
     expect(readXlsx(path).sheets).toEqual(readXlsx(join(cli.folder, "internal_all.xlsx")).sheets);
   } finally {

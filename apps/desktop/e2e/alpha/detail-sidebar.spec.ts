@@ -234,7 +234,8 @@ test("Issue names show the configured thresholds instead of raw placeholders", a
 });
 
 // Alpha 3, Seitenleiste (UI-060): jeder Reiter lässt sich mit der Maus erreichen.
-test("every sidebar tab can be selected with the mouse", async ({ alpha }) => {
+test("every sidebar tab can be selected with the mouse", async ({ alpha, browserName }) => {
+  test.fixme(browserName === "webkit", "Befund A01-17 (docs/plan/M2-acceptance/alpha/befunde.md): in WebKit fängt der Reiter-Container Mausklicks auf „Spelling & Grammar“ gelegentlich ab (macOS-CI Lauf 39540400349: „tablist intercepts pointer events“, beim zweiten Versuch grün)");
   const { page } = alpha;
   await crawled(alpha);
   const tabs = page.getByRole("tablist", { name: "Crawl summary" }).getByRole("tab");

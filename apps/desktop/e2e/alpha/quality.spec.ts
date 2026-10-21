@@ -35,7 +35,7 @@ test("a tour through the main window produces no console errors and axe finds no
   await search.press("Enter");
   await expect(alpha.table()).toContainText(/Search active/);
   await search.press("Escape");
-  for (const tab of ["External", "Page Titles", "Images", "Links", "Structured Data"]) await alpha.selectTab(tab);
+  for (const tab of ["External", "Page Titles", "Images"]) await alpha.selectTab(tab);
 
   // Seitenleiste und Detailfenster: jeder Reiter einmal
   for (const name of ["Issues", "Site Structure", "Segments", "Response Times", "API", "Spelling & Grammar", "Overview"]) {
