@@ -279,8 +279,19 @@ fn internal_phrases_alt_fallback_options_words_and_stopwords() {
         .unwrap();
     fx::link(&file, 5, 2, "external", "", true, "Hyperlink");
     let snapshot = Snapshot::capture(&file).unwrap();
+    // N01b (N01-C05, TECH-146): the default excludes self links like the Anchors aggregation, so one link fewer than before.
     let phrases = snapshot.words(2, &WordOptions::default()).unwrap();
-    assert_eq!(phrases[0], ("Produkte Kaufen".into(), 5));
+    assert_eq!(phrases[0], ("Produkte Kaufen".into(), 4));
+    let with_self = snapshot
+        .words(
+            2,
+            &WordOptions {
+                exclude_self_links: false,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+    assert_eq!(with_self[0], ("Produkte Kaufen".into(), 5));
     assert!(phrases.contains(&("Logo".into(), 1)));
     assert!(phrases.contains(&("(leer)".into(), 1)));
     assert!(!phrases
@@ -295,7 +306,7 @@ fn internal_phrases_alt_fallback_options_words_and_stopwords() {
             },
         )
         .unwrap();
-    assert_eq!(follow[0], ("Produkte Kaufen".into(), 4));
+    assert_eq!(follow[0], ("Produkte Kaufen".into(), 3));
     let self_links = snapshot
         .words(
             2,
@@ -317,7 +328,7 @@ fn internal_phrases_alt_fallback_options_words_and_stopwords() {
             },
         )
         .unwrap();
-    assert_eq!(words, [("produkte".into(), 7)]);
+    assert_eq!(words, [("produkte".into(), 6)]);
 }
 
 // spec: UI-091
