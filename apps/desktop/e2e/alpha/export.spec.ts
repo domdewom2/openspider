@@ -117,6 +117,21 @@ async function menuItem(page: Page, menu: string, id: string): Promise<{ enabled
   );
 }
 
+/** Öffnet den Export-Dialog über die Schaltfläche der Tabelle (CSV ist vorbelegt), speichert und liefert den geschriebenen Pfad. */
+async function exportViewFromTable(alpha: Alpha, dir: string): Promise<string> {
+  const { page } = alpha;
+  await alpha.table().getByRole("button", { name: "Export", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Export options" });
+  const hint = dialog.getByText(/^Suggested filename: .*\.csv$/);
+  await expect(hint).toBeVisible();
+  const name = (await hint.innerText()).replace(/^Suggested filename: /, "");
+  await dialog.getByRole("button", { name: "Save…" }).click();
+  await expect(page.getByRole("region", { name: "Export status" })).toContainText("Export complete.");
+  const path = join(dir, name);
+  await expect.poll(() => existsSync(path) && statSync(path).size > 0).toBe(true);
+  return path;
+}
+
 // spec: OUT-001 [M2]
 // spec: OUT-006
 test("a view exported as CSV from the table equals openspider --export-tabs of the same crawl file", async ({ alpha }) => {
@@ -129,21 +144,15 @@ test("a view exported as CSV from the table equals openspider --export-tabs of t
     await expect(alpha.table()).toContainText("Showing: 27 of 27");
     await alpha.settledGrid();
 
-    // UI: Export-Schaltfläche der Tabelle (Pfad im Dialog, CSV) – einmal für „All“, einmal für den Filter „Client Error (4XX)“
-    const uiAll = join(dir, "ui-all.csv");
-    await alpha.table().getByRole("button", { name: "Export", exact: true }).click();
-    await page.getByRole("textbox", { name: "Destination CSV file" }).fill(uiAll);
-    await page.getByRole("dialog").getByRole("button", { name: "Export", exact: true }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Complete" }).first()).toBeVisible();
+    // UI: Export-Schaltfläche der Tabelle (Export-Dialog, CSV) – einmal für „All“, einmal für den Filter „Client Error (4XX)“
+    await alpha.chooseExportPath(dir);
+    const uiAll = await exportViewFromTable(alpha, dir);
 
     await alpha.table().getByRole("button", { name: /Filter/, exact: true }).click();
     await page.getByRole("option", { name: /^Client Error \(4XX\)\s*1$/ }).click();
     await expect(alpha.table()).toContainText("Showing: 1 of 27");
-    const uiFiltered = join(dir, "ui-4xx.csv");
-    await alpha.table().getByRole("button", { name: "Export", exact: true }).click();
-    await page.getByRole("textbox", { name: "Destination CSV file" }).fill(uiFiltered);
-    await page.getByRole("dialog").getByRole("button", { name: "Export", exact: true }).click();
-    await expect.poll(() => existsSync(uiFiltered) && statSync(uiFiltered).size > 0).toBe(true);
+    const uiFiltered = await exportViewFromTable(alpha, dir);
+    expect(uiFiltered).not.toBe(uiAll);
 
     // CLI: dieselbe Crawl-Datei
     const cli = await cliExport(["--load-crawl", crawlFile, "--export-tabs", "Response Codes:All,Response Codes:Client Error (4xx)"], dir, "cli");
@@ -311,14 +320,19 @@ test("the same fixture crawled through the UI and through openspider --crawl yie
 
 // spec: OUT-006
 test("the view export of the table offers CSV and Excel in the export dialog", async ({ alpha }) => {
-  test.fixme(true, "Befund A01-14 (docs/plan/M2-acceptance/alpha/befunde.md): die Tabelle ruft den Export-Dialog von U16 nicht auf (registerExportContext wird nirgends gesetzt); sie öffnet einen eigenen CSV-Dialog mit Pfadfeld, XLSX der Ansicht ist über die Oberfläche nicht erreichbar");
   const { page } = alpha;
   const dir = tempDir("os-alpha-export-");
   try {
     await crawlAndSnapshot(alpha, dir);
     await alpha.openTable("Response Codes");
     await alpha.chooseExportPath(dir);
-    await page.keyboard.press(process.platform === "darwin" ? "Meta+e" : "Control+e");
+    // Die Oberfläche erkennt die Plattform selbst (Chromium meldet auch auf macOS Windows/Linux): deren Modifikator drücken.
+    const mac = await page.evaluate(async () => {
+      const path = "/src/ui/platform.ts";
+      const { currentPlatform } = await import(/* @vite-ignore */ path);
+      return currentPlatform() === "mac";
+    });
+    await page.keyboard.press(mac ? "Meta+e" : "Control+e");
     const dialog = page.getByRole("dialog", { name: "Export options" });
     await dialog.getByRole("button", { name: "File format" }).click();
     await page.getByRole("option", { name: "Excel Workbook (.xlsx)" }).click();
