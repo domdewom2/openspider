@@ -256,6 +256,21 @@ fn set<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdResult> 
             );
             app.write_queue()
                 .submit_file(&session.key, move |file| {
+                    // INTEG-082/K2-43: the recompute entries open their own transactions, which cannot nest inside
+                    // `config_transaction` (SQLite: "cannot start a transaction within a transaction"). They run first and are
+                    // idempotent; the configuration is stored only afterwards, so a failure leaves the old configuration.
+                    os_engine::recompute::run_triggered(file, &before, &after, &cancel).map_err(
+                        |_| {
+                            CmdError::new(
+                                if cancel.is_cancelled() {
+                                    ErrorCode::Cancelled
+                                } else {
+                                    ErrorCode::Engine
+                                },
+                                "err-config-recompute",
+                            )
+                        },
+                    )?;
                     os_store::profile::config_transaction(
                         file,
                         |e| store_error(&e),
@@ -300,17 +315,6 @@ fn set<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdResult> 
                                     }
                                 })?;
                             }
-                            os_engine::recompute::run_triggered(file, &before, &after, &cancel)
-                                .map_err(|_| {
-                                    CmdError::new(
-                                        if cancel.is_cancelled() {
-                                            ErrorCode::Cancelled
-                                        } else {
-                                            ErrorCode::Engine
-                                        },
-                                        "err-config-recompute",
-                                    )
-                                })?;
                             file.set_config_with_clock(&after, clock.as_ref())
                                 .map_err(|e| store_error(&e))?;
                             os_analyze::analysis::mark_stale(file, &stale).map_err(|_| {
