@@ -69,6 +69,10 @@ pub async fn config(
     if let Some(s) = app.sessions().current(&ctx.window) {
         return Ok((*s.config).clone());
     }
+    // A01-04: `config.set` without an open crawl edits the draft of the window; it applies to the next crawl.
+    if let Some(draft) = crate::commands::config::draft(app, &ctx.window) {
+        return Ok((*draft).clone());
+    }
     let path = app.config().paths.settings.clone();
     tokio::task::spawn_blocking(move || {
         CrawlConfig::load_default(&path)

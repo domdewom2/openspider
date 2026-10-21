@@ -92,18 +92,21 @@ pub(super) fn warn_loaded(app: &App, loaded: &os_model::LoadedConfig) {
     }
 }
 
-async fn current(app: &App, window: &WindowId) -> Result<Arc<CrawlConfig>, CmdError> {
-    if let Some(s) = app.sessions().current(window) {
-        return Ok(s.config);
-    }
-    if let Some(cfg) = app
-        .ext::<Drafts>()
+/// The not yet started configuration of the window (`config.set` without an open crawl, A01-04/CRAWL-126).
+pub(crate) fn draft(app: &App, window: &WindowId) -> Option<Arc<CrawlConfig>> {
+    app.ext::<Drafts>()
         .0
         .lock()
         .unwrap_or_else(|p| p.into_inner())
         .get(window)
         .cloned()
-    {
+}
+
+async fn current(app: &App, window: &WindowId) -> Result<Arc<CrawlConfig>, CmdError> {
+    if let Some(s) = app.sessions().current(window) {
+        return Ok(s.config);
+    }
+    if let Some(cfg) = draft(app, window) {
         return Ok(cfg);
     }
     let settings = app.config().paths.settings.clone();

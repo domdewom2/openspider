@@ -156,8 +156,14 @@ fn writer(
     cfg: &CrawlConfig,
     cancel: &CancelToken,
     progress: &ProgressSink,
+    entry: &str,
 ) -> Result<Box<dyn TableWriter>, ExportError> {
-    detail_writer(path, fmt, cfg, cancel, progress, "Export")
+    // OUT-007: the worksheet is named like the CLI does it, "<Tab> <Filter>" resp. the bulk/report name.
+    detail_writer(path, fmt, cfg, cancel, progress, &sheet_of(entry))
+}
+/// Worksheet name of a canonical `Tab:Filter`, bulk or report name (OUT-007; same rule as the CLI).
+fn sheet_of(entry: &str) -> String {
+    entry.replace(':', " ")
 }
 fn detail_writer(
     path: &Path,
@@ -382,6 +388,13 @@ fn export_view<'a>(
                                     os_analyze::tabs::configured_for_file(&v.session.config, file);
                                 let stage = Stage::new(parent(&path))?;
                                 let staged = stage.0.join("view");
+                                let sheet = os_export::tab_export::canonical_name(
+                                    &tabs,
+                                    &v.session.config,
+                                    &q.tab,
+                                    &q.filter,
+                                )
+                                .unwrap_or_else(|_| "Export".into());
                                 let result = os_export::pipeline::write_view_with_upload_order(
                                     &tabs,
                                     file,
@@ -395,6 +408,7 @@ fn export_view<'a>(
                                             &v.session.config,
                                             &worker_token,
                                             &progress,
+                                            &sheet,
                                         )
                                     },
                                 );
@@ -722,7 +736,7 @@ fn named<'a>(
                                 let target = dir.join(&filename);
                                 let staged = stage.0.join(filename);
                                 let mut out =
-                                    writer(&staged, fmt, &s.config, &work_token, &progress)
+                                    writer(&staged, fmt, &s.config, &work_token, &progress, &name)
                                         .map_err(export_error)?;
                                 let tabs = os_analyze::tabs::configured_for_file(&s.config, file);
                                 let job = TableJob {
@@ -866,9 +880,15 @@ fn panel<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'
                                 let path = PathBuf::from(args.path);
                                 let stage = Stage::new(parent(&path))?;
                                 let staged = stage.0.join("panel");
-                                let mut out =
-                                    writer(&staged, fmt, &s.config, &work_token, &progress)
-                                        .map_err(export_error)?;
+                                let mut out = writer(
+                                    &staged,
+                                    fmt,
+                                    &s.config,
+                                    &work_token,
+                                    &progress,
+                                    "Export",
+                                )
+                                .map_err(export_error)?;
                                 let tabs = os_analyze::tabs::configured_for_file(&s.config, file);
                                 let job = TableJob {
                                     file,
