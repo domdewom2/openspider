@@ -2,9 +2,12 @@
 //! Außerhalb eines Vergleichs hat dieser Registry-Eintrag keine Population.
 use crate::defs::TabDef;
 
+/// Globale Registry-Definition ohne Vergleichskontext (TECH-300).
+pub const HIDDEN_POPULATION: &str = "u.id < 0";
+
 pub fn tab() -> TabDef {
     let mut tab = crate::compare::change::tab(&os_model::ChangeDetectionConfig::default(), true);
-    tab.population = "u.id < 0";
+    tab.population = HIDDEN_POPULATION;
     for col in &mut tab.columns {
         col.sql = crate::defs::ColumnSql::Expr("NULL");
     }
