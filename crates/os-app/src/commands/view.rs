@@ -355,6 +355,53 @@ pub(crate) fn detail_spec(
         _ => None,
     }
 }
+/// Additional columns of the Resources list (UI-036), appended to the 19 link columns.
+const RESOURCE_EXTRA: [&str; 3] = ["Content Type", "Size", "Blocked By"];
+
+/// Appends `Content Type`, `Size` and `Blocked By` (robots.txt, Timeout, Error) of the link targets to the rows.
+fn append_resource_columns(
+    conn: &rusqlite::Connection,
+    rows: &mut [Vec<os_model::Value>],
+    keys: &[i64],
+) -> Result<(), os_store::StoreError> {
+    use os_model::Value;
+    let ids = serde_json::to_string(keys).expect("integer IDs");
+    let mut stmt = conn.prepare(
+        "SELECT l.id, t.content_type, t.size_bytes, t.robots_blocked, t.no_response_reason \
+         FROM links l LEFT JOIN urls t ON t.id = l.target_id WHERE l.id IN (SELECT value FROM json_each(?1))",
+    )?;
+    let mut extra = stmt
+        .query_map([ids], |r| {
+            let blocked: Option<bool> = r.get(3)?;
+            let reason: Option<String> = r.get(4)?;
+            let blocked_by = if blocked == Some(true) {
+                Value::from("robots.txt")
+            } else {
+                match reason.as_deref() {
+                    Some("connection_timeout" | "response_timeout") => Value::from("Timeout"),
+                    Some(_) => Value::from("Error"),
+                    None => Value::Null,
+                }
+            };
+            Ok((
+                r.get::<_, i64>(0)?,
+                [
+                    r.get::<_, Option<String>>(1)?
+                        .map_or(Value::Null, Value::from),
+                    r.get::<_, Option<i64>>(2)?.map_or(Value::Null, Value::from),
+                    blocked_by,
+                ],
+            ))
+        })?
+        .collect::<Result<std::collections::HashMap<_, _>, _>>()?;
+    for (row, key) in rows.iter_mut().zip(keys) {
+        let values = extra
+            .remove(key)
+            .unwrap_or([Value::Null, Value::Null, Value::Null]);
+        row.extend(values);
+    }
+    Ok(())
+}
 pub(crate) fn link_selection(
     spec: &ViewSpec,
     cfg: &CrawlConfig,
@@ -368,6 +415,7 @@ pub(crate) fn link_selection(
     CmdError,
 > {
     use os_store::queries::{app_support::LinkSelection, LinkSortKey, PageReq};
+    let mut resource_filter = None;
     let (ids, filter, search, sort, incoming, resources) = match spec {
         ViewSpec::Inlinks {
             url_ids,
@@ -399,9 +447,21 @@ pub(crate) fn link_selection(
             search,
             sort,
         } => {
-            if filter.id != "All" {
+            // UI-036: type filter of the Resources list; unknown names stay an error.
+            const TYPES: [&str; 8] = [
+                "JavaScript",
+                "CSS",
+                "Images",
+                "Fonts",
+                "Iframes",
+                "Media",
+                "Other",
+                "Blocked",
+            ];
+            if filter.id != "All" && !TYPES.contains(&filter.id.as_str()) {
                 return Err(CmdError::invalid_input("err-unknown-filter", "filter"));
             }
+            resource_filter = (filter.id != "All").then(|| filter.id.clone());
             (url_ids, None, search, sort, false, true)
         }
         _ => return Err(CmdError::invalid_input("err-links-required", "spec")),
@@ -413,6 +473,7 @@ pub(crate) fn link_selection(
         exclude_resources: !incoming && !resources,
         search: search.clone(),
         include_uncrawlable: cfg.spider.store_uncrawlable_links,
+        resource_filter,
         ..Default::default()
     };
     let mut page = PageReq::new(offset, limit);
@@ -700,6 +761,13 @@ async fn page_query(
                             }
                         }
                         .map_err(|e| crate::runtime::error::store_error(&e))?;
+                        let mut p = p;
+                        // UI-036: the Resources list adds Content Type, Size and Blocked By to the link columns.
+                        let resource_list = matches!(spec, ViewSpec::Resources { .. });
+                        if resource_list {
+                            append_resource_columns(file.conn(), &mut p.rows, &p.keys)
+                                .map_err(|e| crate::runtime::error::store_error(&e))?;
+                        }
                         let names = [
                             "Type",
                             "From",
@@ -723,11 +791,17 @@ async fn page_query(
                         ]
                         .iter()
                         .map(|n| n.to_string())
+                        .chain(
+                            resource_list
+                                .then(|| RESOURCE_EXTRA.map(String::from))
+                                .into_iter()
+                                .flatten(),
+                        )
                         .collect::<Vec<_>>();
                         let kinds = (0..names.len())
                             .map(|i| match i {
                                 1 | 2 | 17 => defs::ColumnKind::Url,
-                                3 | 6 | 18 => defs::ColumnKind::Int,
+                                3 | 6 | 18 | 20 => defs::ColumnKind::Int,
                                 8 => defs::ColumnKind::Bool,
                                 _ => defs::ColumnKind::Text,
                             })
@@ -746,6 +820,7 @@ async fn page_query(
                         let mut c = defs::ColumnDef::dynamic(n, "NULL", k, true);
                         defs::apply_meta_defaults(std::slice::from_mut(&mut c));
                         if (i >= 16
+                            && !RESOURCE_EXTRA.contains(&n.as_str())
                             && matches!(
                                 spec,
                                 ViewSpec::Inlinks { .. }

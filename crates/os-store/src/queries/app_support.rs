@@ -19,7 +19,24 @@ pub struct LinkSelection {
     pub include_uncrawlable: bool,
     pub anchor: Option<String>,
     pub search: Option<String>,
+    /// UI-036: type filter of the Resources list (`JavaScript`, `CSS`, `Images`, `Fonts`, `Iframes`, `Media`, `Other`,
+    /// `Blocked`); only evaluated together with `resources`.
+    pub resource_filter: Option<String>,
 }
+
+/// UI-036: the Resources list holds the resource link types plus fonts and other fetches (`Other`);
+/// `?14` is the optional type filter. Outlinks keep excluding only the five classic resource types.
+const RESOURCE_LIST: &str = "(l.link_type IN ('Image','CSS','JavaScript','Iframe','Media','Other') AND (?14 IS NULL
+    OR (?14='JavaScript' AND l.link_type='JavaScript') OR (?14='CSS' AND l.link_type='CSS')
+    OR (?14='Images' AND l.link_type='Image') OR (?14='Iframes' AND l.link_type='Iframe')
+    OR (?14='Media' AND l.link_type='Media')
+    OR (?14='Fonts' AND l.link_type='Other' AND (COALESCE(t.content_type,'') LIKE 'font/%' OR COALESCE(t.content_type,'') LIKE 'application/%font%'
+        OR lower(COALESCE(l.target_raw,'')) LIKE '%.woff' OR lower(COALESCE(l.target_raw,'')) LIKE '%.woff2' OR lower(COALESCE(l.target_raw,'')) LIKE '%.ttf'
+        OR lower(COALESCE(l.target_raw,'')) LIKE '%.otf' OR lower(COALESCE(l.target_raw,'')) LIKE '%.eot'))
+    OR (?14='Other' AND l.link_type='Other' AND NOT (COALESCE(t.content_type,'') LIKE 'font/%' OR COALESCE(t.content_type,'') LIKE 'application/%font%'
+        OR lower(COALESCE(l.target_raw,'')) LIKE '%.woff' OR lower(COALESCE(l.target_raw,'')) LIKE '%.woff2' OR lower(COALESCE(l.target_raw,'')) LIKE '%.ttf'
+        OR lower(COALESCE(l.target_raw,'')) LIKE '%.otf' OR lower(COALESCE(l.target_raw,'')) LIKE '%.eot'))
+    OR (?14='Blocked' AND (t.robots_blocked=1 OR t.no_response_reason IS NOT NULL))))";
 
 /// One page, including stable link IDs and the complete standard link format.
 pub struct LinkTablePage {
@@ -63,7 +80,7 @@ pub fn selected_links(
         AND (?8=1 OR l.crawlable=1)
         AND (?9 IS NULL OR COALESCE(l.anchor,l.alt_text,'')=?9)
         AND (?10 IS NULL OR instr(lower(s.address || ' ' || COALESCE(t.address,l.target_raw) || ' ' || COALESCE(l.anchor,'') || ' ' || COALESCE(l.alt_text,'')),lower(?10))>0)
-        AND (?11=0 OR {resource}) AND (?12=0 OR NOT ({resource}))
+        AND (?11=0 OR {RESOURCE_LIST}) AND (?12=0 OR NOT ({resource}))
         AND (?13 IS NULL OR l.id IN (SELECT value FROM json_each(?13)))");
     let params = params![
         ids,
@@ -78,7 +95,8 @@ pub fn selected_links(
         selection.search,
         selection.resources,
         selection.exclude_resources,
-        row_ids
+        row_ids,
+        selection.resource_filter
     ];
     let total = conn.query_row(&format!("SELECT COUNT(*) {base}"), params, |r| r.get(0))?;
     let mut stmt = conn.prepare(&format!(
@@ -235,7 +253,7 @@ pub fn selected_link_ids(
         AND (?8=1 OR l.crawlable=1)
         AND (?9 IS NULL OR COALESCE(l.anchor,l.alt_text,'')=?9)
         AND (?10 IS NULL OR instr(lower(s.address || ' ' || COALESCE(t.address,l.target_raw) || ' ' || COALESCE(l.anchor,'') || ' ' || COALESCE(l.alt_text,'')),lower(?10))>0)
-        AND (?11=0 OR {resource}) AND (?12=0 OR NOT ({resource}))
+        AND (?11=0 OR {RESOURCE_LIST}) AND (?12=0 OR NOT ({resource}))
         AND (?13 IS NULL OR l.id IN (SELECT value FROM json_each(?13)))
         ORDER BY {order}"))?;
     let keys = stmt
@@ -253,7 +271,8 @@ pub fn selected_link_ids(
                 selection.search,
                 selection.resources,
                 selection.exclude_resources,
-                row_ids
+                row_ids,
+                selection.resource_filter
             ],
             |r| r.get(0),
         )?

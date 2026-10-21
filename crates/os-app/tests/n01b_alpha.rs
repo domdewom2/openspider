@@ -4,7 +4,7 @@ mod fixture;
 #[path = "session_common.rs"]
 mod session;
 use fixture::*;
-use serde_json::json;
+use serde_json::{json, Value};
 use std::{io::Read, time::Duration};
 
 fn workbook_xml(path: &str) -> String {
@@ -107,7 +107,10 @@ async fn config_validate_reports_an_invalid_regex_once_per_path() {
         .iter()
         .map(|i| i["path"].as_str().unwrap().to_owned())
         .collect();
-    assert_eq!(paths, ["scope.include[1]", "rewrite.regex_replace[0].pattern"]);
+    assert_eq!(
+        paths,
+        ["scope.include[1]", "rewrite.regex_replace[0].pattern"]
+    );
     assert!(!issues.to_string().contains("Zeile 0"));
 }
 
@@ -154,5 +157,82 @@ async fn shutting_down_follows_the_injected_clock() {
     clock.advance(Duration::from_secs(59));
     assert!(app.ops().shutting_down());
     clock.advance(Duration::from_secs(2));
-    assert!(!app.ops().shutting_down(), "the 60 s window ends on the injected clock");
+    assert!(
+        !app.ops().shutting_down(),
+        "the 60 s window ends on the injected clock"
+    );
+}
+
+// spec: UI-036
+#[tokio::test]
+async fn resources_list_has_content_type_blocked_by_and_type_filters() {
+    let fx = Fx::new();
+    {
+        let file = os_store::CrawlFile::open(&fx.path, os_store::OpenMode::ReadWrite).unwrap();
+        file.conn()
+            .execute_batch(
+                "INSERT INTO urls(id,url,address,origin,is_internal,in_tables,state,discovered_via,folder_depth,url_length,content_type,content_class,status_code) VALUES
+                  (101,'https://site.test/s.css','https://site.test/s.css','https://site.test',1,1,'done','link',0,23,'text/css','CSS',200),
+                  (102,'https://site.test/f.woff2','https://site.test/f.woff2','https://site.test',1,1,'done','link',0,25,'font/woff2','Other',200);
+                 INSERT INTO urls(id,url,address,origin,is_internal,in_tables,state,discovered_via,folder_depth,url_length,content_class,robots_blocked) VALUES
+                  (103,'https://site.test/blocked.js','https://site.test/blocked.js','https://site.test',1,1,'done','link',0,28,'JavaScript',1);
+                 INSERT INTO urls(id,url,address,origin,is_internal,in_tables,state,discovered_via,folder_depth,url_length,content_class,no_response_reason) VALUES
+                  (104,'https://site.test/slow.js','https://site.test/slow.js','https://site.test',1,1,'done','link',0,25,'JavaScript','connection_timeout');
+                 INSERT INTO links(id,source_id,target_id,target_raw,link_type,position,follow,path_type,link_path,link_position,link_origin,crawlable) VALUES
+                  (9001,1,101,'/s.css','CSS',1,1,'Root-Relative','//link','Head','HTML',1),
+                  (9002,1,102,'/f.woff2','Other',2,1,'Root-Relative','//link','Head','HTML',1),
+                  (9003,1,103,'/blocked.js','JavaScript',3,1,'Root-Relative','//script','Head','HTML',1),
+                  (9004,1,104,'/slow.js','JavaScript',4,1,'Root-Relative','//script','Head','HTML',1)",
+            )
+            .unwrap();
+    }
+    async fn rows(fx: &Fx, filter: &str) -> Value {
+        let columns = json!(["To", "Content Type", "Size", "Blocked By", "Status Code"]);
+        let h = fx
+            .open(
+                json!({"kind":"resources","urlIds":[1],"filter":{"id":filter},"search":null,"sort":[]}),
+                columns.clone(),
+            )
+            .await;
+        fx.rows(&h, 0, 50, columns).await
+    }
+    let all = rows(&fx, "All").await;
+    let cells = all["cells"].as_array().unwrap();
+    let find = |name: &str| {
+        cells
+            .iter()
+            .find(|r| r[0].as_str().is_some_and(|t| t.ends_with(name)))
+            .unwrap()
+            .clone()
+    };
+    assert_eq!(find("s.css")[1], "text/css");
+    assert_eq!(find("blocked.js")[3], "robots.txt");
+    assert!(find("blocked.js")[4].is_null());
+    assert_eq!(find("slow.js")[3], "Timeout");
+    assert!(find("s.css")[3].is_null());
+    for (filter, expect) in [
+        ("CSS", vec!["s.css"]),
+        ("Fonts", vec!["f.woff2"]),
+        ("JavaScript", vec!["blocked.js", "slow.js"]),
+        ("Blocked", vec!["blocked.js", "slow.js"]),
+    ] {
+        let page = rows(&fx, filter).await;
+        let mut got: Vec<String> = page["cells"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|r| {
+                r[0].as_str()
+                    .unwrap()
+                    .rsplit('/')
+                    .next()
+                    .unwrap()
+                    .to_owned()
+            })
+            .collect();
+        got.sort();
+        assert_eq!(got, expect, "filter {filter}");
+    }
+    let unknown = fx.app.dispatch(os_app::CallCtx::for_window("main"), "view.open", json!({"spec":{"kind":"resources","urlIds":[1],"filter":{"id":"Nope"},"search":null,"sort":[]},"columns":[]})).await;
+    assert!(unknown.is_err());
 }
