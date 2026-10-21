@@ -2,7 +2,7 @@
 #[path = "runtime_common.rs"]
 mod common;
 use os_app::{
-    dto::OpState, pool::CrawlKey, runtime::sessions::SessionInfo, App, CallCtx, ErrorCode, WindowId,
+    dto::OpState, pool::CrawlKey, runtime::sessions::SessionInfo, App, CallCtx, WindowId,
 };
 use os_model::{CrawlConfig, CrawlState};
 use os_store::{CrawlFile, OpenMode};

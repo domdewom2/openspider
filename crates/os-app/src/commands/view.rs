@@ -358,50 +358,6 @@ pub(crate) fn detail_spec(
 /// Additional columns of the Resources list (UI-036), appended to the 19 link columns.
 const RESOURCE_EXTRA: [&str; 3] = ["Content Type", "Size", "Blocked By"];
 
-/// Appends `Content Type`, `Size` and `Blocked By` (robots.txt, Timeout, Error) of the link targets to the rows.
-fn append_resource_columns(
-    conn: &rusqlite::Connection,
-    rows: &mut [Vec<os_model::Value>],
-    keys: &[i64],
-) -> Result<(), os_store::StoreError> {
-    use os_model::Value;
-    let ids = serde_json::to_string(keys).expect("integer IDs");
-    let mut stmt = conn.prepare(
-        "SELECT l.id, t.content_type, t.size_bytes, t.robots_blocked, t.no_response_reason \
-         FROM links l LEFT JOIN urls t ON t.id = l.target_id WHERE l.id IN (SELECT value FROM json_each(?1))",
-    )?;
-    let mut extra = stmt
-        .query_map([ids], |r| {
-            let blocked: Option<bool> = r.get(3)?;
-            let reason: Option<String> = r.get(4)?;
-            let blocked_by = if blocked == Some(true) {
-                Value::from("robots.txt")
-            } else {
-                match reason.as_deref() {
-                    Some("connection_timeout" | "response_timeout") => Value::from("Timeout"),
-                    Some(_) => Value::from("Error"),
-                    None => Value::Null,
-                }
-            };
-            Ok((
-                r.get::<_, i64>(0)?,
-                [
-                    r.get::<_, Option<String>>(1)?
-                        .map_or(Value::Null, Value::from),
-                    r.get::<_, Option<i64>>(2)?.map_or(Value::Null, Value::from),
-                    blocked_by,
-                ],
-            ))
-        })?
-        .collect::<Result<std::collections::HashMap<_, _>, _>>()?;
-    for (row, key) in rows.iter_mut().zip(keys) {
-        let values = extra
-            .remove(key)
-            .unwrap_or([Value::Null, Value::Null, Value::Null]);
-        row.extend(values);
-    }
-    Ok(())
-}
 pub(crate) fn link_selection(
     spec: &ViewSpec,
     cfg: &CrawlConfig,
@@ -765,8 +721,14 @@ async fn page_query(
                         // UI-036: the Resources list adds Content Type, Size and Blocked By to the link columns.
                         let resource_list = matches!(spec, ViewSpec::Resources { .. });
                         if resource_list {
-                            append_resource_columns(file.conn(), &mut p.rows, &p.keys)
-                                .map_err(|e| crate::runtime::error::store_error(&e))?;
+                            let extras = os_store::queries::app_support::resource_extras(
+                                file.conn(),
+                                &p.keys,
+                            )
+                            .map_err(|e| crate::runtime::error::store_error(&e))?;
+                            for (row, values) in p.rows.iter_mut().zip(extras) {
+                                row.extend(values);
+                            }
                         }
                         let names = [
                             "Type",

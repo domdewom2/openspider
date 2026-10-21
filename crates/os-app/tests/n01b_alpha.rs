@@ -1,4 +1,5 @@
 //! M2-N01b: Alpha-Befunde A01-15 (XLSX-Blattname) und A01-04 (config.set ohne Crawl).
+#![allow(clippy::disallowed_types, clippy::disallowed_methods)]
 #[path = "cmd_catalog_fixture.rs"]
 mod fixture;
 #[path = "session_common.rs"]

@@ -400,14 +400,7 @@ fn reassign<'a>(app: &'a App, ctx: CallCtx, _: Value) -> BoxFuture<'a, CmdResult
                         .write_queue()
                         .submit_file(&session.key, move |f| {
                             let cfg = segments::saved_config(f).map_err(failure)?;
-                            segments::refresh_if_stale(f, &cfg, &cancel).map_err(failure)?;
-                            f.conn()
-                                .query_row(
-                                    "SELECT COUNT(*) FROM urls WHERE is_internal=1",
-                                    [],
-                                    |r| r.get::<_, u64>(0),
-                                )
-                                .map_err(|e| crate::runtime::error::rusqlite_error(&e))
+                            segments::reassign_if_stale(f, &cfg, &cancel).map_err(failure)
                         })
                         .await?;
                     progress.report(count, Some(count));

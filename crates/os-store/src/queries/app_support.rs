@@ -363,3 +363,45 @@ pub fn selected_links_by_ids(
     }
     Ok(LinkTablePage { keys, rows, total })
 }
+
+/// UI-036: `Content Type`, `Size` and `Blocked By` (robots.txt, Timeout, Error) of the targets of the given link IDs,
+/// in the order of `keys` (additive, K2-61).
+pub fn resource_extras(conn: &Connection, keys: &[i64]) -> Result<Vec<[Value; 3]>, StoreError> {
+    let ids = serde_json::to_string(keys).expect("integer IDs");
+    let mut stmt = conn.prepare(
+        "SELECT l.id, t.content_type, t.size_bytes, t.robots_blocked, t.no_response_reason \
+         FROM links l LEFT JOIN urls t ON t.id = l.target_id WHERE l.id IN (SELECT value FROM json_each(?1))",
+    )?;
+    let mut extra = stmt
+        .query_map([ids], |r| {
+            let blocked: Option<bool> = r.get(3)?;
+            let reason: Option<String> = r.get(4)?;
+            let blocked_by = if blocked == Some(true) {
+                Value::from("robots.txt")
+            } else {
+                match reason.as_deref() {
+                    Some("connection_timeout" | "response_timeout") => Value::from("Timeout"),
+                    Some(_) => Value::from("Error"),
+                    None => Value::Null,
+                }
+            };
+            Ok((
+                r.get::<_, i64>(0)?,
+                [
+                    r.get::<_, Option<String>>(1)?
+                        .map_or(Value::Null, Value::from),
+                    r.get::<_, Option<i64>>(2)?.map_or(Value::Null, Value::from),
+                    blocked_by,
+                ],
+            ))
+        })?
+        .collect::<Result<std::collections::HashMap<_, _>, _>>()?;
+    Ok(keys
+        .iter()
+        .map(|key| {
+            extra
+                .remove(key)
+                .unwrap_or([Value::Null, Value::Null, Value::Null])
+        })
+        .collect())
+}
