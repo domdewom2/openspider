@@ -201,13 +201,25 @@ fn prepare_columns(
 
 pub(super) struct Projection {
     prepared: Prepared,
+    /// Benannte Parameter der SELECT-Liste (z. B. `:readability_enabled`, `:near_ready`), bereits
+    /// mit dem Dateizustand aufgelöst; ohne sie scheitert die Zeilenabfrage (A01-01).
+    params: Vec<(String, Value)>,
     pub columns: Vec<String>,
 }
 impl Projection {
-    pub fn build(conn: &Connection, built: &Built<'_>, ready: bool) -> Result<Self, ViewError> {
+    pub fn build(
+        conn: &Connection,
+        built: &Built<'_>,
+        params: Vec<(String, Value)>,
+        ready: bool,
+    ) -> Result<Self, ViewError> {
         let prepared = prepare_columns(conn, built, ready)?;
         let columns = header(&built.columns, &prepared.plans);
-        Ok(Self { prepared, columns })
+        Ok(Self {
+            prepared,
+            params,
+            columns,
+        })
     }
     pub fn rows(
         &self,
@@ -231,7 +243,8 @@ impl Projection {
         let mut multi = multi_statements(conn, &self.prepared)?;
         let mut result = Vec::with_capacity(ids.len());
         let mut keys = Vec::with_capacity(ids.len());
-        let mut rows = stmt.query([])?;
+        super::super::exec::bind_named(&mut stmt, &self.params, &[])?;
+        let mut rows = stmt.raw_query();
         while let Some(row) = rows.next()? {
             let id: i64 = row.get(0)?;
             let mut cells = Vec::new();

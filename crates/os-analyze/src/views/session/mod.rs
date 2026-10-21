@@ -747,7 +747,10 @@ fn materialize(
     let projection = if let Some(projection) = cache.projections.get(&projection_key) {
         projection.clone()
     } else {
-        let projection = Arc::new(Projection::build(file.conn(), &built, ready)?);
+        // A01-01: die Spaltenausdrücke tragen benannte Parameter; Bereitschaft aus dem Dateizustand.
+        let mut params = built.plan.params.clone();
+        crate::tabs::content::bind_analysis_params(&mut params, file, cfg)?;
+        let projection = Arc::new(Projection::build(file.conn(), &built, params, ready)?);
         cache.projections.insert(projection_key, projection.clone());
         projection
     };
