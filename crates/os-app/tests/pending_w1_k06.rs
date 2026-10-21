@@ -5,7 +5,6 @@ use fixture::*;
 use serde_json::json;
 // spec: TECH-066 [M2]
 #[tokio::test]
-#[ignore = "M2: wartet auf M2-D06"]
 async fn directives_minimum_snippet_reaches_url_details() {
     let fx = Fx::new();
     let rows = fx.call("detail.urlDetails", json!({"urlId":1})).await;
@@ -18,7 +17,6 @@ async fn directives_minimum_snippet_reaches_url_details() {
 }
 // spec: TECH-089
 #[tokio::test]
-#[ignore = "M2: wartet auf M2-D07"]
 async fn hreflang_confirmation_reaches_detail_view() {
     let fx = Fx::new();
     fx.write("INSERT INTO hreflang(url_id,source,position,code_raw,code_norm,code_valid,href_raw,url,target_id,in_head) VALUES(1,'html',0,'en','en',1,'https://site.test/','https://site.test/',1,1)");
@@ -42,7 +40,6 @@ async fn hreflang_confirmation_reaches_detail_view() {
 }
 // spec: ONPAGE-172
 #[tokio::test]
-#[ignore = "M2: wartet auf M2-D03"]
 async fn image_instances_are_available_through_view_images() {
     let fx = Fx::new();
     let h = fx
@@ -61,7 +58,7 @@ async fn image_instances_are_available_through_view_images() {
 }
 // spec: TECH-146
 #[tokio::test]
-#[ignore = "M2: wartet auf M2-D08"]
+#[ignore = "Klärung K2-68: N01-C09, Besitzer M2-N01b (Anchors-Leser an view.rs anbinden)"]
 async fn anchors_mode_aggregates_hyperlinks_with_self_links_excluded() {
     let fx = Fx::new();
     let mut spec = links(true);
@@ -84,7 +81,7 @@ async fn anchors_mode_aggregates_hyperlinks_with_self_links_excluded() {
 }
 // spec: OUT-023
 #[tokio::test]
-#[ignore = "M2: wartet auf M2-D17"]
+#[ignore = "Klärung K2-68: N01-C10, Besitzer M2-K09 (Crawl-Pfad-Provider registrieren, Export-Dispatch)"]
 async fn crawl_path_export_uses_the_registered_detail_source() {
     let fx = Fx::new();
     let path = fx.dir.path().join("path.csv");
@@ -96,7 +93,7 @@ async fn crawl_path_export_uses_the_registered_detail_source() {
 
 // spec: OUT-124
 #[tokio::test]
-#[ignore = "M2: wartet auf M2-X02"]
+#[ignore = "Klärung K2-68: N01-C11, Besitzer M2-N01b (Provider der Bild-Sitemap nicht angebunden)"]
 async fn image_sitemap_options_reach_the_configuration_aware_provider() {
     let fx = Fx::new();
     let path = fx.dir.path().join("image-sitemap");
@@ -113,7 +110,6 @@ async fn image_sitemap_options_reach_the_configuration_aware_provider() {
 
 // spec: TECH-146
 #[tokio::test]
-#[ignore = "M2: wartet auf M2-D08"]
 async fn parameterless_anchor_details_keep_the_f05_provider_reachable() {
     let fx = Fx::new();
     let spec = json!({"kind":"detail","detail":"anchors","urlIds":[2],"params":{},"sort":[]});

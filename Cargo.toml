@@ -55,9 +55,11 @@ url = "2"
 # os-url (P01): Anzeigeform (IDN/Non-ASCII dekodiert) und Prozent-Dekodierung der Normalisierung
 idna = "1"
 percent-encoding = "2"
-rusqlite = { version = "0.37", features = ["bundled", "collation"] }
+rusqlite = { version = "0.37", features = ["bundled", "collation", "functions"] }
 clap = { version = "4", features = ["derive"] }
 axum = "0.8"
+h2 = "0.4.20"
+rustls-platform-verifier = "0.7.1"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "time", "sync", "io-util", "signal"] }
 toml = "0.9"
 serde_json = "1"

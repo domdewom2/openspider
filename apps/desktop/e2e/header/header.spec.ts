@@ -21,7 +21,7 @@ test("validates start addresses inline and shows the subfolder slash hint", asyn
 
 // spec: CRAWL-001 [M2]
 test("starts, pauses, resumes and clears a saved crawl through the bridge contract", async ({ app, page }) => {
-  test.fixme(app.mode === "bridge", "wartet auf M2-K04");
+  test.fixme(app.mode === "bridge", "Klärung K2-68: N01-E2E-2, Besitzer M2-N01b (Pause-Phase > 5 s auf Linux/Windows)");
   const server = createServer((req, res) => {
     setTimeout(() => {
       res.writeHead(200, { "Content-Type": "text/html" });

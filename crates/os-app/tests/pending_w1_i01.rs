@@ -4,7 +4,6 @@ mod support;
 use support::*;
 // spec: INTEG-009
 #[tokio::test]
-#[ignore = "M2: wartet auf M2-K06"]
 async fn selection_all_resolves_real_view_version_and_exceptions() {
     let h = Harness::new().await;
     h.connect().await;

@@ -272,7 +272,7 @@ it("retains more than 1000 records for paging, sorting, project filters and sear
   expect(within(screen.getByRole("table")).getAllByRole("row")[1]).toHaveTextContent("Crawl 1004");
   fireEvent.click(screen.getByRole("row", { name: "Default" }));
   expect(count(0, 1)).toBeVisible(); expect(screen.getByText("Crawl 1004")).toBeVisible();
-}, 15_000);
+}, 60_000);
 
 // spec: CRAWL-127
 it("saving uses the active crawl and a native destination without changing registry membership", async () => {

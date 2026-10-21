@@ -6,7 +6,7 @@ use support::*;
 
 // spec: CRAWL-075
 #[tokio::test]
-#[ignore = "M2: wartet auf M2-E03"]
+#[ignore = "Klärung K2-68: N01-C15, Besitzer M2-E05 (worker.rs) und M2-N01b (Bodylimit os-fetch), max_page_kb = 0 unbegrenzt"]
 async fn unlimited_page_size_does_not_truncate_the_body_at_zero_bytes() {
     let mut cfg = CrawlConfig::default();
     cfg.limits.max_page_kb = 0;
@@ -21,7 +21,6 @@ async fn unlimited_page_size_does_not_truncate_the_body_at_zero_bytes() {
 
 // spec: CRAWL-042 [P1]
 #[tokio::test]
-#[ignore = "M2: wartet auf M2-E03"]
 async fn media_transport_stops_after_64_kib_and_keeps_content_length() {
     let fx = crawl_fixture_from(
         "crawl-m2-switches/crawl-resources",
@@ -54,7 +53,6 @@ async fn media_transport_stops_after_64_kib_and_keeps_content_length() {
 
 // spec: CRAWL-094
 #[tokio::test]
-#[ignore = "M2: wartet auf M2-D06"]
 async fn self_refresh_recomputes_without_requests_when_the_respect_switch_changes() {
     let cfg = CrawlConfig::default();
     let mut fx = crawl_fixture_from(
