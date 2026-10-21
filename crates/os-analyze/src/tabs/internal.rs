@@ -375,3 +375,21 @@ pub fn tab() -> TabDef {
         hidden_population: None,
     }
 }
+
+/// JS link columns are additive and remain empty outside JavaScript crawls (M2-E05).
+pub fn rendering_column_source() -> Option<Box<dyn crate::defs::ColumnSource>> {
+    struct RenderingColumns;
+    impl crate::defs::ColumnSource for RenderingColumns {
+        fn columns(&self, cfg: &os_model::CrawlConfig) -> Vec<ColumnDef> {
+            let enabled = cfg.rendering.mode == os_model::RenderingMode::JavaScript;
+            // Uncorrelated grouped subqueries allow SQLite to aggregate links once,
+            // including while links_target is absent in a running crawl.
+            [
+                ("Unique JS Inlinks", "COALESCE((SELECT n FROM (SELECT l.target_id AS id,COUNT(DISTINCT l.source_id) AS n FROM links l JOIN urls s ON s.id=l.source_id WHERE l.link_type='Hyperlink' AND l.link_origin='Rendered HTML' AND s.is_internal=1 GROUP BY l.target_id) js WHERE js.id=u.id),0)"),
+                ("Unique JS Outlinks", "COALESCE((SELECT n FROM (SELECT l.source_id AS id,COUNT(DISTINCT l.target_id) AS n FROM links l JOIN urls t ON t.id=l.target_id WHERE l.link_type='Hyperlink' AND l.link_origin='Rendered HTML' AND t.is_internal=1 GROUP BY l.source_id) js WHERE js.id=u.id),0)"),
+                ("Unique External JS Outlinks", "COALESCE((SELECT n FROM (SELECT l.source_id AS id,COUNT(DISTINCT l.target_id) AS n FROM links l JOIN urls t ON t.id=l.target_id WHERE l.link_type='Hyperlink' AND l.link_origin='Rendered HTML' AND t.is_internal=0 GROUP BY l.source_id) js WHERE js.id=u.id),0)"),
+            ].into_iter().map(|(key, sql)| col(key, if enabled { sql } else { "NULL" }, ColumnKind::Int, false)).collect()
+        }
+    }
+    Some(Box::new(RenderingColumns))
+}

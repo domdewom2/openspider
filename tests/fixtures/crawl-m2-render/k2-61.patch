@@ -1,0 +1,240 @@
+diff --git a/crates/os-analyze/Cargo.toml b/crates/os-analyze/Cargo.toml
+index 54a95a5..84e429a 100644
+--- a/crates/os-analyze/Cargo.toml
++++ b/crates/os-analyze/Cargo.toml
+@@ -47,0 +48,5 @@ testing = []
++
++# M2-E05 (K2-61): register the package-owned cross-crate fixture test.
++[[test]]
++name = "render_engine_columns"
++path = "../../tests/fixtures/crawl-m2-render/columns.rs"
+diff --git a/crates/os-analyze/src/tabs/internal.rs b/crates/os-analyze/src/tabs/internal.rs
+index 95c11da..dfa6e4f 100644
+--- a/crates/os-analyze/src/tabs/internal.rs
++++ b/crates/os-analyze/src/tabs/internal.rs
+@@ -377,0 +378,18 @@ pub fn tab() -> TabDef {
++
++/// JS link columns are additive and remain empty outside JavaScript crawls (M2-E05).
++pub fn rendering_column_source() -> Option<Box<dyn crate::defs::ColumnSource>> {
++    struct RenderingColumns;
++    impl crate::defs::ColumnSource for RenderingColumns {
++        fn columns(&self, cfg: &os_model::CrawlConfig) -> Vec<ColumnDef> {
++            let enabled = cfg.rendering.mode == os_model::RenderingMode::JavaScript;
++            // Uncorrelated grouped subqueries allow SQLite to aggregate links once,
++            // including while links_target is absent in a running crawl.
++            [
++                ("Unique JS Inlinks", "COALESCE((SELECT n FROM (SELECT l.target_id AS id,COUNT(DISTINCT l.source_id) AS n FROM links l JOIN urls s ON s.id=l.source_id WHERE l.link_type='Hyperlink' AND l.link_origin='Rendered HTML' AND s.is_internal=1 GROUP BY l.target_id) js WHERE js.id=u.id),0)"),
++                ("Unique JS Outlinks", "COALESCE((SELECT n FROM (SELECT l.source_id AS id,COUNT(DISTINCT l.target_id) AS n FROM links l JOIN urls t ON t.id=l.target_id WHERE l.link_type='Hyperlink' AND l.link_origin='Rendered HTML' AND t.is_internal=1 GROUP BY l.source_id) js WHERE js.id=u.id),0)"),
++                ("Unique External JS Outlinks", "COALESCE((SELECT n FROM (SELECT l.source_id AS id,COUNT(DISTINCT l.target_id) AS n FROM links l JOIN urls t ON t.id=l.target_id WHERE l.link_type='Hyperlink' AND l.link_origin='Rendered HTML' AND t.is_internal=0 GROUP BY l.source_id) js WHERE js.id=u.id),0)"),
++            ].into_iter().map(|(key, sql)| col(key, if enabled { sql } else { "NULL" }, ColumnKind::Int, false)).collect()
++        }
++    }
++    Some(Box::new(RenderingColumns))
++}
+diff --git a/crates/os-analyze/src/tabs/mod.rs b/crates/os-analyze/src/tabs/mod.rs
+index 7af73a9..c3e94f5 100644
+--- a/crates/os-analyze/src/tabs/mod.rs
++++ b/crates/os-analyze/src/tabs/mod.rs
+@@ -182,0 +183 @@ pub fn column_sources() -> Vec<(&'static str, Box<dyn ColumnSource>)> {
++    add("Internal", internal::rendering_column_source());
+diff --git a/crates/os-engine/src/rescan.rs b/crates/os-engine/src/rescan.rs
+index 4a9e70d..8acd03e 100644
+--- a/crates/os-engine/src/rescan.rs
++++ b/crates/os-engine/src/rescan.rs
+@@ -218,0 +219,3 @@ pub async fn recrawl_urls<F: Fetch>(
++    if let Some(renderer) = &deps.renderer {
++        let _ = sh.render_session.injected.set(renderer.clone());
++    }
+diff --git a/crates/os-engine/src/resume.rs b/crates/os-engine/src/resume.rs
+index 0157e0b..44e6a49 100644
+--- a/crates/os-engine/src/resume.rs
++++ b/crates/os-engine/src/resume.rs
+@@ -67,0 +68,4 @@ impl<F: Fetch> Fetch for PrimedFetch<F> {
++    fn render_config(&self) -> Option<os_fetch::FetchConfig> {
++        self.inner.render_config()
++    }
++
+diff --git a/crates/os-fetch/src/auth.rs b/crates/os-fetch/src/auth.rs
+index 7e0b443..2072a1c 100644
+--- a/crates/os-fetch/src/auth.rs
++++ b/crates/os-fetch/src/auth.rs
+@@ -72,0 +73,5 @@ impl AuthMatcher {
++    /// Frozen credentials for a browser challenge, subject to the same URL matching.
++    pub fn rendering_credentials(&self, url: &Url) -> Option<BasicAuthEntry> {
++        self.credentials_for(url).cloned()
++    }
++
+diff --git a/crates/os-fetch/src/client.rs b/crates/os-fetch/src/client.rs
+index 2d43588..936aff1 100644
+--- a/crates/os-fetch/src/client.rs
++++ b/crates/os-fetch/src/client.rs
+@@ -889,0 +890,4 @@ impl Fetch for HttpFetcher {
++    fn render_config(&self) -> Option<FetchConfig> {
++        Some(self.cfg.clone())
++    }
++
+diff --git a/crates/os-fetch/src/cookies.rs b/crates/os-fetch/src/cookies.rs
+index 53486c6..07f075b 100644
+--- a/crates/os-fetch/src/cookies.rs
++++ b/crates/os-fetch/src/cookies.rs
+@@ -213,0 +214,39 @@ mod tests {
++
++/// Scoped cookie snapshot for an isolated browser context. Values are never Debug-printed.
++#[derive(Clone)]
++pub struct BrowserCookie {
++    pub name: String,
++    pub value: String,
++    pub domain: String,
++    pub path: String,
++    pub secure: bool,
++    pub http_only: bool,
++    pub expires: Option<i64>,
++}
++impl CookieJar {
++    /// Preserves host-only scope, HttpOnly and expiry instead of flattening a Cookie header.
++    pub fn browser_snapshot(&self) -> Vec<BrowserCookie> {
++        self.lock()
++            .iter_unexpired()
++            .filter_map(|cookie| {
++                let domain = match &cookie.domain {
++                    cookie_store::CookieDomain::HostOnly(host) => host.clone(),
++                    cookie_store::CookieDomain::Suffix(host) => format!(".{host}"),
++                    _ => return None,
++                };
++                Some(BrowserCookie {
++                    name: cookie.name().into(),
++                    value: cookie.value().into(),
++                    domain,
++                    path: cookie.path.as_ref().into(),
++                    secure: cookie.secure().unwrap_or(false),
++                    http_only: cookie.http_only().unwrap_or(false),
++                    expires: match cookie.expires {
++                        cookie_store::CookieExpiration::AtUtc(t) => Some(t.unix_timestamp()),
++                        _ => None,
++                    },
++                })
++            })
++            .collect()
++    }
++}
+diff --git a/crates/os-fetch/src/http.rs b/crates/os-fetch/src/http.rs
+index 6d7cb8c..86de8fe 100644
+--- a/crates/os-fetch/src/http.rs
++++ b/crates/os-fetch/src/http.rs
+@@ -17,0 +18,5 @@ pub trait Fetch: Send + Sync + 'static {
++    /// Frozen HTTP identity/network snapshot for browser subrequests (M2-E05, K2-61).
++    fn render_config(&self) -> Option<crate::FetchConfig> {
++        None
++    }
++
+diff --git a/crates/os-mcp/src/target.rs b/crates/os-mcp/src/target.rs
+index ecffb33..c38cd1c 100644
+--- a/crates/os-mcp/src/target.rs
++++ b/crates/os-mcp/src/target.rs
+@@ -141,0 +142,4 @@ impl Fetch for ProtectedFetcher {
++    fn render_config(&self) -> Option<os_fetch::FetchConfig> {
++        self.inner.render_config()
++    }
++
+diff --git a/crates/os-render/src/capture.rs b/crates/os-render/src/capture.rs
+index 573c98b..e8df762 100644
+--- a/crates/os-render/src/capture.rs
++++ b/crates/os-render/src/capture.rs
+@@ -1,0 +2 @@ use super::{protocol, RenderError};
++use chromiumoxide::cdp::browser_protocol::network::EventDataReceived;
+@@ -21,0 +23 @@ pub struct Data {
++    body_bytes: HashMap<usize, (u64, u64, Option<u64>)>,
+@@ -40,0 +43,21 @@ impl Data {
++    pub fn body_network(&self) -> Vec<NetworkEntry> {
++        self.network
++            .iter()
++            .enumerate()
++            .map(|(idx, entry)| {
++                let mut entry = entry.clone();
++                entry.bytes = self
++                    .body_bytes
++                    .get(&idx)
++                    .map_or(0, |(encoded, decoded, length)| {
++                        if *encoded > 0 {
++                            *encoded
++                        } else {
++                            length.unwrap_or(*decoded)
++                        }
++                    });
++                entry
++            })
++            .collect()
++    }
++
+@@ -79,0 +103,4 @@ impl Capture {
++        let mut body_data = page
++            .event_listener::<EventDataReceived>()
++            .await
++            .map_err(protocol)?;
+@@ -148,0 +176,4 @@ impl Capture {
++                        if let Some((idx, _)) = d.requests.get(v["requestId"].as_str().unwrap_or_default()).copied() {
++                            let length = v["response"]["headers"].as_object().and_then(|headers| headers.iter().find(|(key, _)| key.eq_ignore_ascii_case("content-length"))).and_then(|(_, value)| value.as_str()).and_then(|value| value.parse().ok());
++                            d.body_bytes.entry(idx).or_default().2 = length;
++                        }
+@@ -150,0 +182,9 @@ impl Capture {
++                    Some(e) = body_data.next() => {
++                        let v = serde_json::to_value(&*e).unwrap_or_default();
++                        let mut d = shared.lock().expect("capture");
++                        if let Some((idx, _)) = d.requests.get(v["requestId"].as_str().unwrap_or_default()).copied() {
++                            let entry = d.body_bytes.entry(idx).or_default();
++                            entry.0 += v["encodedDataLength"].as_u64().unwrap_or(0);
++                            entry.1 += v["dataLength"].as_u64().unwrap_or(0);
++                        }
++                    }
+diff --git a/crates/os-render/src/intercept.rs b/crates/os-render/src/intercept.rs
+index 6b26ebc..2267339 100644
+--- a/crates/os-render/src/intercept.rs
++++ b/crates/os-render/src/intercept.rs
+@@ -260,0 +261 @@ impl Intercept {
++        let identity = opts.request_identity.clone();
+@@ -336,0 +338,17 @@ impl Intercept {
++                        } else if let Some(identity) = &identity {
++                            let mut headers = p["request"]["headers"]
++                                .as_object()
++                                .cloned()
++                                .unwrap_or_default();
++                            for (name, value) in identity.headers(resource_url) {
++                                headers.retain(|key, _| !key.eq_ignore_ascii_case(&name));
++                                headers.insert(name, json!(value));
++                            }
++                            let headers = headers
++                                .into_iter()
++                                .map(|(name, value)| json!({"name":name,"value":value}))
++                                .collect::<Vec<_>>();
++                            (
++                                "Fetch.continueRequest",
++                                json!({"requestId":id,"headers":headers}),
++                            )
+diff --git a/crates/os-render/src/page.rs b/crates/os-render/src/page.rs
+index 40c71b3..c1dfdbe 100644
+--- a/crates/os-render/src/page.rs
++++ b/crates/os-render/src/page.rs
+@@ -222,0 +223,3 @@ async fn run(
++    if opts.capture_cookie_assignments {
++        page.evaluate_on_new_document("(() => { const d = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie'); const writes = []; Object.defineProperty(window, '__openspiderCookieWrites', {value:writes}); if (d?.set) Object.defineProperty(Document.prototype, 'cookie', {get:d.get, set(value) { d.set.call(this,value); writes.push(String(value)); }}); })()").await.map_err(protocol)?;
++    }
+@@ -322,0 +326,15 @@ async fn run(
++    // Navigation timing refers to the document load, unlike location.href after pushState.
++    let navigation_url = eval(
++        page,
++        "performance.getEntriesByType('navigation')[0]?.name || null",
++    )
++    .await?
++    .as_str()
++    .map(str::to_owned);
++    let cookie_assignments: Vec<String> = eval(page, "window.__openspiderCookieWrites || []")
++        .await?
++        .as_array()
++        .into_iter()
++        .flatten()
++        .filter_map(|v| v.as_str().map(str::to_owned))
++        .collect();
+@@ -390,0 +409,3 @@ async fn run(
++        body_network: Some(data.body_network()),
++        cookie_assignments,
++        navigation_url,

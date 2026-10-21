@@ -45,3 +45,8 @@ harness = false
 
 [features]
 testing = []
+
+# M2-E05 (K2-61): register the package-owned cross-crate fixture test.
+[[test]]
+name = "render_engine_columns"
+path = "../../tests/fixtures/crawl-m2-render/columns.rs"

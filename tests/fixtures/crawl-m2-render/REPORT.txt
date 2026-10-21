@@ -1,0 +1,102 @@
+M2-E05 – Implementierungsbericht
+
+Umgesetzte Spec-IDs
+CRAWL-016, CRAWL-078, CRAWL-079, TECH-006, TECH-100, ONPAGE-016,
+INTEG-030.
+Mitgeprüfte Integration: CRAWL-022, ONPAGE-012, CRAWL-039, CRAWL-077,
+OUT-273, INTEG-052, CRAWL-004, CRAWL-062, CRAWL-063, CRAWL-115,
+CRAWL-116, ONPAGE-172, CRAWL-082, CRAWL-084, PERF-006.
+
+Verhalten
+Interne HTML-Antworten werden roh ausgewertet und im JavaScript-Modus mit
+wiederverwendeter Hauptantwort gerendert. Browser-Identität, Proxy, Cookies und
+robots-Richtlinien stammen aus dem Crawl. DOM-Auswertung liefert die aktiven
+SEO- und Custom-Search/Extraction-Daten; Roh-noindex bleibt maßgeblich.
+Link-Instanzen werden zwischen den Fassungen abgeglichen; entfernte Rohlinks
+bleiben crawlbar. Scalar-Paare und normalisierte Linkmengen liegen unter
+render.raw_* / render.rendered_* in url_ext. JS-Linkspalten zählen eindeutige
+Quellen/Ziele aus der Herkunft und sind im Textmodus NULL.
+Dokumentnavigation wird von history.pushState unterschieden. Hash-Routen
+bekommen im JS-Modus eigene Renderläufe; der Textmodus behält die vorhandene
+Übernahme der Basis-Fakten. Ressourcenbytes schließen HTTP-Header aus und
+werden je Ressourcen-URL einmal zum übertragenen Seitenbody addiert.
+Tab-Anzahl folgt K2-36. Abstürze werden einmal wiederholt; Fehler und Timeouts
+beenden den Crawl nicht und erhalten die Rohdaten. HTML-Aufbewahrung,
+Screenshots, Konsole und JavaScript-Cookies folgen den Erfassungsschaltern.
+
+Fremdergänzungen (K2-61)
+Der vollständige Diff jeder folgenden Ergänzung steht in k2-61.patch.
+Alle Hunks sind additiv; keine bestehende Signatur wurde geändert.
+
+- crates/os-fetch/src/http.rs: Fetch::render_config mit Default None.
+- crates/os-fetch/src/client.rs: HttpFetcher liefert seinen eingefrorenen Snapshot.
+- crates/os-fetch/src/auth.rs: URL-geprüfte Credentials für Browser-Challenges.
+- crates/os-fetch/src/cookies.rs: BrowserCookie/browser_snapshot erhält Domain,
+  Pfad, Secure, HttpOnly und Ablaufzeit.
+- crates/os-engine/src/resume.rs: PrimedFetch reicht den Snapshot weiter.
+- crates/os-mcp/src/target.rs: ProtectedFetcher reicht den Snapshot weiter.
+- crates/os-engine/src/rescan.rs: Initialisierung des Renderer-Overrides auch
+  beim erneuten Crawlen.
+- crates/os-render/src/intercept.rs: optionale URL-bezogene Request-Identität;
+  ohne diese Option bleibt der bestehende Continue-Request-Zweig bestehen.
+- crates/os-render/src/capture.rs: zusätzlicher DataReceived-Listener und
+  separates Body-Byte-Modell; vorhandene Netzwerkdaten bleiben unverändert.
+- crates/os-render/src/page.rs: zusätzliche Erfassung der Dokumentnavigation,
+  Body-Netzwerkdaten und optionaler Cookie-Zuweisungen; Cookie-Instrumentierung
+  ist standardmäßig aus und wird durch die Engine aktiviert.
+- crates/os-analyze/src/tabs/internal.rs: neue Quelle für die drei JS-Spalten.
+- crates/os-analyze/src/tabs/mod.rs: zusätzliche Registrierung dieser Quelle.
+- crates/os-analyze/Cargo.toml: ausschließlich zusätzliches Testziel, dessen
+  Testdatei im paket-eigenen Fixture-Verzeichnis liegt (columns.rs); keine neue
+  Abhängigkeit. Testet die echten View-Abfragen auch ohne links_target und deren
+  aggregierten Abfrageplan.
+
+Stub-Ablösung (K2-60)
+In crates/os-engine/f05a-stubs.toml wurde ausschließlich der Eintrag für den
+M2-E05-Stub render_glue::render entfernt.
+
+Erwartungsänderungen (K2-63)
+- crates/os-engine/tests/core_limits.rs:
+  CRAWL-022-Ignore entfernt. Der unverändert im Textmodus laufende Test erwartet
+  jetzt Total Transferred = Seitenbody, statt Seite + Ressourcen, entsprechend
+  CRAWL-022/ONPAGE-012. Größenvergleich >= statt > der Körpergröße, weil Header
+  nicht zu Transferred gehören. Den zusätzlichen Ressourcenanteil belegen die
+  neuen Mock- und echten Chromium-Tests.
+  CRAWL-077: Mit installiertem Chromium wird jetzt erfolgreicher Start/Abschluss
+  und eine Crawl-Datei erwartet statt pauschaler Nichtverfügbarkeit. Der neue
+  negative Test setzt einen explizit fehlenden Pfad und verlangt den R01-Fehler
+  vor Dateianlage.
+- crates/os-analyze/tests/filters_registry.rs:
+  ONPAGE-016 ergänzt die erwartete Internal-Spaltenliste um die drei JS-Spalten
+  sowie eine zusätzliche Internal-Quelle; die Testlogik bleibt unverändert.
+
+Plattformen und Abweichungen
+Lokal auf macOS geprüft. Die Browser-Tests verlangen echtes Chromium und laufen
+headless; sie verwenden keine Display-/Window-API und respektieren einen über
+OPENSPIDER_CHROMIUM vorgegebenen Pfad. Der Linux-CI-Job wurde nicht lokal
+simuliert oder geändert. Keine Desktop-Frontend-Dateien geändert.
+
+Bestehende Backend-Grenzen aus M2-R01 (keine Änderung durch E05):
+Benutzerdefinierte Truststores und authentifizierte SOCKS5-Proxys werden vom
+Renderer weiterhin ausdrücklich abgelehnt. Das ist im vorhandenen R01-Test
+custom_truststore_and_authenticated_socks_fail_explicitly_until_n01 belegt
+(crates/os-render/tests/render_chromium.rs). Diese Nacharbeit gehört zu M2-N01.
+E05 reicht die Einstellungen weiter und behält bei einem Renderfehler die
+Rohdaten mit Fehlerstatus bei.
+
+Offene neue fachliche Fragen: keine.
+
+
+Abschließende Prüfungen auf dem finalen Quellstand (macOS)
+- cargo fmt --all --check: grün.
+- cargo clippy --workspace --exclude openspider-desktop --all-targets -- -D warnings: grün.
+- cargo test --workspace --exclude openspider-desktop: grün; 3542 bestanden,
+  0 fehlgeschlagen, 91 bestehende Ignores, einschließlich Doctests.
+- Paket-eigene Tests: 13 Engine-/Chromium-Tests und 1 View-Test grün;
+  keine neuen Ignores.
+- check-neutral: keine Fundstellen; vorhandene verwaiste Allowlist-Warnungen
+  wurden nicht außerhalb des Paketbesitzes bereinigt.
+- Keine Goldens mussten neu erzeugt werden. Keine Frontend-Prüfungen nötig,
+  da apps/desktop/src unverändert ist.
+- k2-61.patch enthält den vollständigen additiven Diff ohne Kontextzeilen
+  (git diff --unified=0 gegen den Ausgangsstand d9cc198).
