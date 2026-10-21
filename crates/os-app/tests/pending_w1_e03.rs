@@ -5,7 +5,6 @@ use common::*;
 use serde_json::json;
 // spec: CRAWL-122
 #[tokio::test]
-#[ignore = "M2: wartet auf M2-K04"]
 async fn crawl_start_rejects_unreachable_proxy_before_creating_a_crawl() {
     let dir = tempfile::tempdir().unwrap();
     let app = new_app(dir.path());

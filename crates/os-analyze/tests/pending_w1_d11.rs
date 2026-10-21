@@ -4,7 +4,6 @@ use os_model::CrawlConfig;
 
 // spec: ONPAGE-033, ONPAGE-037
 #[tokio::test]
-#[ignore = "M2: wartet auf M2-D03"]
 async fn srcset_resources_are_available_as_individual_outlinks() {
     let mut cfg = CrawlConfig::default();
     cfg.spider.external.crawl = false;

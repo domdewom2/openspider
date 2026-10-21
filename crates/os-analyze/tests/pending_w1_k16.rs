@@ -6,7 +6,6 @@ use os_model::{UrlId, Value};
 
 // spec: UI-099
 #[test]
-#[ignore = "M2: wartet auf M2-D08"]
 fn phrases_equal_the_anchors_detail_aggregation() {
     let (_dir, file) = fx::basic();
     for _ in 0..3 {

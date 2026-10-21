@@ -4,7 +4,6 @@ import { startBridge } from "../support/bridge";
 
 // spec: ONPAGE-192 [M2]
 test("a real local crawl connects a selected URL to properties and outlinks through the bridge", async ({ page }) => {
-  test.fixme(true, "wartet auf M2-K06 / M2-K04");
   const site = createServer((request, response) => {
     response.writeHead(request.url === "/missing" ? 404 : 200, { "content-type": "text/html" });
     response.end(request.url === "/missing" ? "<h1>Missing</h1>" : '<title>Detail fixture</title><a href="/missing">Broken destination</a>');

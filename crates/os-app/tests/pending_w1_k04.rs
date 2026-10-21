@@ -6,7 +6,6 @@ use serde_json::json;
 
 // spec: UI-013
 #[tokio::test]
-#[ignore = "M2: wartet auf M2-K03"]
 async fn analysis_status_lists_all_step_states_after_a_real_run() {
     let dir = tempfile::tempdir().unwrap();
     let app = app(dir.path());
@@ -23,7 +22,6 @@ async fn analysis_status_lists_all_step_states_after_a_real_run() {
 
 // spec: CRAWL-126 [M2]
 #[tokio::test]
-#[ignore = "M2: wartet auf M2-K07"]
 async fn named_profile_is_loaded_by_crawl_start() {
     let site = os_testsite::TestSite::start_dir(fixture(), 0)
         .await
@@ -53,7 +51,6 @@ async fn named_profile_is_loaded_by_crawl_start() {
 
 // spec: CRAWL-131
 #[tokio::test]
-#[ignore = "M2: wartet auf M2-K06"]
 async fn all_of_a_versioned_view_except_one_can_be_removed() {
     let dir = tempfile::tempdir().unwrap();
     let app = app(dir.path());

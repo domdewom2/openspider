@@ -6,7 +6,6 @@ import { startBridge } from "../support/bridge";
 // spec: UI-114
 test("real bridge: crawl, recrawl a changed page, then remove the URL and update the counts", async ({ page }) => {
   // Integration also requires K01 views and K04 crawl control. N01 resolves this C9 placeholder.
-  test.fixme(true, "wartet auf M2-K06");
   const bridge = await startBridge();
   expect(bridge).not.toBeNull();
   let title = "Initial title";

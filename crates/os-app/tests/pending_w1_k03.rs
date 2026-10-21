@@ -11,7 +11,6 @@ use std::sync::Arc;
 // spec: UI-082 [M2]
 // spec: ONPAGE-140 [M2]
 #[tokio::test]
-#[ignore = "M2: wartet auf M2-K04"]
 async fn analysis_status_command_exposes_stale_and_needs_recrawl() {
     let dir = tempfile::tempdir().unwrap();
     let app = common::new_app(dir.path());
@@ -62,7 +61,6 @@ async fn analysis_status_command_exposes_stale_and_needs_recrawl() {
 
 // spec: UI-082 [M2]
 #[tokio::test]
-#[ignore = "M2: wartet auf M2-K07"]
 async fn config_set_invalidates_only_the_near_duplicate_step() {
     let dir = tempfile::tempdir().unwrap();
     let app = common::new_app(dir.path());
