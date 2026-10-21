@@ -12,7 +12,6 @@ use std::sync::Arc;
 
 // spec: UI-011 [P1]
 #[tokio::test]
-#[ignore = "Klärung K2-68: N01-C07, Besitzer M2-N01b (view.rs/search.rs)"]
 async fn parsed_rules_reach_the_app_view_and_invalid_regex_preserves_it() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("fx-ui-basic.ospider");
@@ -33,7 +32,7 @@ async fn parsed_rules_reach_the_app_view_and_invalid_regex_preserves_it() {
         StorageProfile::Balanced,
     )
     .unwrap();
-    file.conn().execute_batch("INSERT INTO urls(id,url,address,origin,is_internal,state,discovered_via,folder_depth,url_length,status_code,word_count) VALUES (1,'https://site.test/Blog/a','https://site.test/Blog/a','https://site.test',1,'Done','Link',0,24,200,40),(2,'https://site.test/shop','https://site.test/shop','https://site.test',1,'Done','Link',0,22,200,100)").unwrap();
+    file.conn().execute_batch("INSERT INTO urls(id,url,address,origin,is_internal,state,discovered_via,folder_depth,url_length,status_code,word_count,content_class) VALUES (1,'https://site.test/Blog/a','https://site.test/Blog/a','https://site.test',1,'Done','Link',0,24,200,40,'HTML'),(2,'https://site.test/shop','https://site.test/shop','https://site.test',1,'Done','Link',0,22,200,100,'HTML')").unwrap();
     drop(file);
     let app = App::new(AppConfig::new(dir.path().join("app"))).unwrap();
     let key = CrawlKey("fixture".into());
