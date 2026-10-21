@@ -69,3 +69,24 @@ async fn config_set_without_an_open_crawl_applies_to_crawl_start() {
     assert_eq!(started.speed.threads, 1);
     assert_eq!(started.speed.max_urls_per_sec, Some(50.0));
 }
+
+// spec: CRAWL-102
+#[tokio::test]
+async fn robots_tester_uses_the_draft_user_agent_of_the_dialog() {
+    let dir = tempfile::tempdir().unwrap();
+    let app = session::app(dir.path());
+    let content = "User-agent: *\nDisallow: /blog/\nUser-agent: Special\nAllow: /blog/\n";
+    let call = |extra: serde_json::Value| {
+        let mut args = json!({"url":"https://site.test/blog/one","content":content});
+        args.as_object_mut()
+            .unwrap()
+            .extend(extra.as_object().unwrap().clone());
+        session::call(&app, "config.testRobots", args)
+    };
+    let saved = call(json!({})).await;
+    assert_eq!(saved["allowed"], false);
+    let draft = call(json!({"userAgent":"Special"})).await;
+    assert_eq!(draft["allowed"], true);
+    assert_eq!(draft["matchedLine"], 4);
+    assert_eq!(draft["userAgent"], "Special");
+}

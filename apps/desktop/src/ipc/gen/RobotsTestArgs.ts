@@ -15,4 +15,8 @@ content?: string | null,
 /**
  * Für die Prüfung verwendete Subdomain.
  */
-subdomain?: string | null, };
+subdomain?: string | null, 
+/**
+ * robots.txt-Token des Entwurfs-User-Agents; ohne Angabe gilt der gespeicherte (CRAWL-102).
+ */
+userAgent?: string | null, };

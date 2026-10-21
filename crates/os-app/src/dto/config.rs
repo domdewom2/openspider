@@ -293,6 +293,11 @@ pub struct RobotsTestArgs {
     #[serde(default)]
     #[ts(optional = nullable)]
     pub subdomain: Option<String>,
+
+    /// robots.txt-Token des Entwurfs-User-Agents; ohne Angabe gilt der gespeicherte (CRAWL-102).
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub user_agent: Option<String>,
 }
 
 /// Command-Vertrag RobotsTestResult (M2.md 3.14.9).

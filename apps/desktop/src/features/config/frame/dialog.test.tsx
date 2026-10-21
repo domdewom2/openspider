@@ -443,12 +443,16 @@ describe("robots.txt (CRAWL-102)", () => {
   });
 
   // spec: CRAWL-102
-  it("der Tester weist darauf hin, dass ein geänderter User-Agent erst nach OK gilt", async () => {
+  it("der Tester prüft mit dem Entwurfs-User-Agent des Dialogs, ohne Speichern", async () => {
     const dialog = await open();
     await goPage(dialog, "User-Agent");
-    type(field(dialog, "HTTP user agent"), "MyBot/1.0");
+    type(field(dialog, "robots.txt user agent (token)"), "Special");
     await goPage(dialog, "robots.txt");
-    expect(within(dialog).getByText("The tester uses the saved user agent. A changed user agent applies after OK.")).toBeInTheDocument();
+    type(field(dialog, "URL to test"), "https://site.test/blog/post");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Test" }));
+    await within(dialog).findByTestId("robots-result");
+    const call = core.calls.filter((c) => c.cmd === "config.testRobots").at(-1)?.args as { userAgent?: string };
+    expect(call.userAgent).toBe("Special");
   });
 });
 

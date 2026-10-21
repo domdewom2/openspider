@@ -9,6 +9,7 @@ import { messageText, useConfig, useConfigValue } from "../../frame/context";
 import { definePage, f } from "../../frame/definePage";
 import { getPath } from "../../frame/model";
 import { FieldFrame } from "../../frame/fields";
+import { resolveUa } from "../user-agent";
 import type { FieldDef } from "../../frame/types";
 
 const fields: FieldDef[] = [
@@ -51,8 +52,6 @@ function CustomRobots() {
   const [result, setResult] = useState<{ ok: true; value: RobotsTestResult; text: string | null; line: number | null } | { ok: false; text: string } | null>(null);
   const current = selected !== null && selected in files ? selected : (hosts[0] ?? null);
   const disabled = lock !== null || runMode === "foreign";
-  const savedUa = JSON.stringify(getPath(draft.saved, "user_agent"));
-  const uaChanged = savedUa !== JSON.stringify(getPath(draft.cfg, "user_agent"));
 
   const add = () => {
     const host = normalizeHost(newHost);
@@ -89,7 +88,9 @@ function CustomRobots() {
     // Der Entwurf der eigenen Datei gilt sofort, auch ohne Speichern.
     const own = host in files ? files[host] : undefined;
     try {
-      const r = await config.testRobots({ url: testUrl, content: own ?? null, subdomain: host });
+      // CRAWL-102: the draft user agent applies at once, like the draft of the file.
+      const userAgent = resolveUa(getPath(draft.cfg, "user_agent") as Parameters<typeof resolveUa>[0], null).token;
+      const r = await config.testRobots({ url: testUrl, content: own ?? null, subdomain: host, userAgent });
       const text = own !== undefined && r.matchedLine ? (own.split(/\r?\n/)[r.matchedLine - 1] ?? null) : null;
       setResult({ ok: true, value: r, text, line: r.matchedLine ?? null });
     } catch (e) {
@@ -158,7 +159,6 @@ function CustomRobots() {
             {t("config-robots-test")}
           </Button>
         </div>
-        {uaChanged && <p className="os-hint">{t("config-robots-ua-saved")}</p>}
         {result && result.ok && (
           <div role="status" data-testid="robots-result" data-allowed={result.value.allowed ? "true" : "false"}>
             <strong>{result.value.allowed ? t("config-robots-allowed") : t("config-robots-blocked")}</strong>
