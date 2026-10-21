@@ -3,14 +3,23 @@ import { segment } from "../../../../ipc/segment";
 import { op } from "../../../../ipc/op";
 import type { SegmentDef } from "../../../../ipc/gen/SegmentDef";
 import type { SegmentPreview } from "../../../../ipc/gen/SegmentPreview";
-import { useSession } from "../../../../state/session";
+import { useSession, type SessionState } from "../../../../state/session";
 
-/** Counters belong to the entire ordered draft, never to an earlier rule or priority. */
+/** Data changes, including API completion before the next counts tick, invalidate both counts and columns. */
+export const previewRevision = (s: SessionState) => JSON.stringify([
+  s.crawl?.crawlId, s.countsVersion, s.analysis?.running, s.analysis?.steps,
+  Object.values(s.ops).filter(o => o.labelKey.startsWith("op-api-") && o.state !== "running")
+    .map(o => [o.opId, o.state]).sort(),
+]);
+
+/** Counters belong to the entire ordered draft and its crawl data snapshot. */
 export function useDraftPreview(segments: SegmentDef[], enabled: boolean) {
-  const key = JSON.stringify(segments);
+  const revision = useSession(previewRevision);
+  const key = JSON.stringify([segments, revision]);
   const [request, setRequest] = useState<{ key: string; opId?: string; error?: unknown } | null>(null);
   const status = useSession(s => request?.opId ? s.ops[request.opId] : undefined);
   useEffect(() => {
+    setRequest(null);
     if (!enabled) return;
     let live = true;
     let opId: string | undefined;
@@ -22,7 +31,7 @@ export function useDraftPreview(segments: SegmentDef[], enabled: boolean) {
       }).catch(error => { if (live) setRequest({ key, error }); });
     }, 400);
     return () => { live = false; clearTimeout(timer); if (opId) void op.cancel({ opId }).catch(() => undefined); };
-    // The serialized key covers the complete ordered list.
+    // The serialized key covers the complete ordered list and data revision.
   }, [key, enabled]);
   const current = enabled && request?.key === key;
   const result = current && status?.state === "done" ? status.result as SegmentPreview | null : null;

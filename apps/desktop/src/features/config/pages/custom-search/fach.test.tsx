@@ -1,5 +1,5 @@
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setLanguage } from "../../../../i18n";
 import { createClient, setClient } from "../../../../ipc/client";
 import { MockCore } from "../../../../ipc/transport/mock";
@@ -20,9 +20,11 @@ import { changeMode } from "../custom-extraction";
 
 let core: MockCore; let fake: FakeConfigCore;
 const change = (el: HTMLElement, value: string) => fireEvent.change(el, { target: { value } });
-async function open(anchor: string) { act(() => openConfig({ anchor })); return screen.findByRole("dialog", { name: "Crawl configuration" }); }
-async function checked() { await waitFor(() => expect(screen.getByRole("button", { name: "OK" })).toBeEnabled()); }
+const advanceValidation = () => act(async () => { await vi.advanceTimersByTimeAsync(200); });
+async function open(anchor: string) { await act(async () => openConfig({ anchor })); return screen.getByRole("dialog", { name: "Crawl configuration" }); }
+async function checked() { await advanceValidation(); expect(screen.getByRole("button", { name: "OK" })).toBeEnabled(); }
 beforeEach(async () => {
+  vi.useFakeTimers(); vi.setSystemTime(new Date("2026-10-21T10:00:00Z"));
   core = new MockCore(); fake = installConfigCore(core); fake.config = { ...fake.config, ...structuredClone(fixture) };
   core.handlers.set("compare.contentAvailable", () => false);
   core.handlers.set("api.list", () => []);
@@ -30,7 +32,7 @@ beforeEach(async () => {
   setClient(createClient(core.transport("main"))); await setLanguage("en");
   useSession.setState({ crawl: null, ops: {}, analysis: null }); render(<ConfigHost />);
 });
-afterEach(() => { act(() => closeConfig()); cleanup(); });
+afterEach(() => { act(() => closeConfig()); cleanup(); vi.clearAllTimers(); vi.useRealTimers(); });
 
 describe("Fachseiten against the configuration fixture", () => {
   // spec: INTEG-020
@@ -38,8 +40,8 @@ describe("Fachseiten against the configuration fixture", () => {
     const d = await open("custom_search");
     change(within(d).getByRole("textbox", { name: "Expression" }), "line one\nline two");
     expect(fake.setCalls).toHaveLength(0); await checked();
-    fireEvent.click(within(d).getByRole("button", { name: "OK" }));
-    await waitFor(() => expect(fake.setCalls).toHaveLength(1));
+    await act(async () => { fireEvent.click(within(d).getByRole("button", { name: "OK" })); });
+    expect(fake.setCalls).toHaveLength(1);
     expect((fake.config.custom_search as typeof fixture.custom_search).filters[0]?.expression).toBe("line one\nline two");
     const again = await open("custom_search"); change(within(again).getByRole("textbox", { name: "Expression" }), "discard");
     fireEvent.click(within(again).getByRole("button", { name: "Cancel" })); expect(fake.setCalls).toHaveLength(1);
@@ -49,8 +51,8 @@ describe("Fachseiten against the configuration fixture", () => {
     const d = await open("custom_search");
     change(within(d).getByLabelText("Search scope"), "xpath");
     change(within(d).getByRole("textbox", { name: "XPath" }), "//main"); await checked();
-    fireEvent.click(within(d).getByRole("button", { name: "OK" }));
-    await waitFor(() => expect(fake.setCalls).toHaveLength(1));
+    await act(async () => { fireEvent.click(within(d).getByRole("button", { name: "OK" })); });
+    expect(fake.setCalls).toHaveLength(1);
     expect((fake.config.custom_search as typeof fixture.custom_search).filters[0]).toMatchObject({ scope: "xpath", xpath: "//main" });
   });
   // spec: INTEG-028
@@ -77,8 +79,8 @@ describe("Fachseiten against the configuration fixture", () => {
     fireEvent.click(within(bulk).getByRole("checkbox", { name: "Case sensitive" }));
     fireEvent.click(within(bulk).getByRole("button", { name: "Import" }));
     expect(within(d).getByText(/Skipped 1 empty or duplicate/)).toBeInTheDocument(); await checked();
-    fireEvent.click(within(d).getByRole("button", { name: "OK" }));
-    await waitFor(() => expect(fake.setCalls).toHaveLength(1));
+    await act(async () => { fireEvent.click(within(d).getByRole("button", { name: "OK" })); });
+    expect(fake.setCalls).toHaveLength(1);
     expect((fake.config.custom_search as typeof fixture.custom_search).filters.slice(1).map(r => r.case_sensitive)).toEqual([true, true]);
   });
   // spec: INTEG-040
@@ -86,8 +88,8 @@ describe("Fachseiten against the configuration fixture", () => {
     const d = await open("custom_extraction"); fireEvent.click(within(d).getByRole("button", { name: "Add extractor" }));
     expect(within(d).getByRole("group", { name: "Extractor 2" })).toBeInTheDocument();
     change(within(within(d).getByRole("group", { name: "Extractor 2" })).getByRole("textbox", { name: "Expression" }), "//h2");
-    await checked(); fireEvent.click(within(d).getByRole("button", { name: "OK" }));
-    await waitFor(() => expect(fake.setCalls).toHaveLength(1));
+    await checked(); await act(async () => { fireEvent.click(within(d).getByRole("button", { name: "OK" })); });
+    expect(fake.setCalls).toHaveLength(1);
     const again = await open("custom_extraction"); expect(within(again).getByRole("group", { name: "Extractor 2" })).toBeInTheDocument();
   });
   // spec: INTEG-043
@@ -95,8 +97,8 @@ describe("Fachseiten against the configuration fixture", () => {
     const d = await open("custom_extraction"); change(within(d).getByLabelText("Mode"), "css");
     change(within(d).getByRole("textbox", { name: "Attribute (optional)" }), "data-price");
     expect(within(d).getByLabelText("Output")).toBeDisabled(); await checked();
-    fireEvent.click(within(d).getByRole("button", { name: "OK" }));
-    await waitFor(() => expect(fake.setCalls).toHaveLength(1));
+    await act(async () => { fireEvent.click(within(d).getByRole("button", { name: "OK" })); });
+    expect(fake.setCalls).toHaveLength(1);
     expect((fake.config.custom_extraction as typeof fixture.custom_extraction).extractors[0]).toMatchObject({ mode: "css", attribute: "data-price" });
   });
   // spec: INTEG-048
@@ -115,7 +117,7 @@ describe("Fachseiten against the configuration fixture", () => {
       return bad ? [{ path: "custom_extraction.extractors[0].expression", messageKey: "err-config-validation", args: { reason: "XPath syntax at position 6" }, line: 1, column: 6, warning: false } satisfies ValidationIssue] : validate(args, ctx);
     });
     const d = await open("custom_extraction"); change(within(d).getByRole("textbox", { name: "Expression" }), "//div[");
-    await within(d).findAllByText(/XPath syntax at position 6/); expect(within(d).getByRole("button", { name: "OK" })).toBeDisabled();
+    await advanceValidation(); expect(within(d).getAllByText(/XPath syntax at position 6/).length).toBeGreaterThan(0); expect(within(d).getByRole("button", { name: "OK" })).toBeDisabled();
     expect(within(d).getByRole("textbox", { name: "Expression" })).toHaveAttribute("aria-invalid", "true");
     expect(within(d).getByText("✗ Invalid")).toHaveAttribute("title", expect.stringContaining("1:6"));
     fireEvent.click(within(d).getByRole("button", { name: "Crawl analysis" }));
@@ -124,10 +126,22 @@ describe("Fachseiten against the configuration fixture", () => {
   // spec: INTEG-051
   it("does not display a stale successful check as valid while a new expression is pending", async () => {
     const d = await open("custom_extraction"); await checked();
-    core.handlers.set("config.validate", () => new Promise(() => {}));
-    change(within(d).getByRole("textbox", { name: "Expression" }), "for $x in //a return $x/@href");
+    const pending: Array<(issues: ValidationIssue[]) => void> = [];
+    core.handlers.set("config.validate", () => new Promise<ValidationIssue[]>(resolve => { pending.push(resolve); }));
+    const expression = within(d).getByRole("textbox", { name: "Expression" });
+    change(expression, "//div[");
     expect(within(d).getByText("Checking …")).toBeInTheDocument();
     expect(within(d).getByRole("button", { name: "OK" })).toBeDisabled();
+    await advanceValidation(); expect(pending).toHaveLength(1);
+    change(expression, "for $x in //a return $x/@href");
+    await advanceValidation(); expect(pending).toHaveLength(2);
+    await act(async () => pending[0]!([{ path: "custom_extraction.extractors[0].expression", messageKey: "err-config-validation", args: { reason: "late error" }, warning: false }]));
+    expect(within(d).queryByText(/late error/)).toBeNull();
+    expect(within(d).getByText("Checking …")).toBeInTheDocument();
+    expect(within(d).getByRole("button", { name: "OK" })).toBeDisabled();
+    await act(async () => pending[1]!([]));
+    expect(within(d).getByText("✓ Valid")).toBeInTheDocument();
+    expect(within(d).getByRole("button", { name: "OK" })).toBeEnabled();
   });
   // spec: INTEG-060
   it("warns in text mode and edits snippets, MIME filters and action timeouts", async () => {
@@ -138,8 +152,8 @@ describe("Fachseiten against the configuration fixture", () => {
     change(within(d).getByLabelText("Type"), "action");
     change(within(d).getByLabelText("Timeout (seconds)"), "8");
     change(within(d).getByRole("textbox", { name: "JavaScript code" }), "window.scrollTo(0, 1000);");
-    await checked(); fireEvent.click(within(d).getByRole("button", { name: "OK" }));
-    await waitFor(() => expect(fake.setCalls).toHaveLength(1));
+    await checked(); await act(async () => { fireEvent.click(within(d).getByRole("button", { name: "OK" })); });
+    expect(fake.setCalls).toHaveLength(1);
     expect((fake.config.custom_js as typeof fixture.custom_js).snippets[0]).toMatchObject({ kind: "action", timeout_s: 8, code: "window.scrollTo(0, 1000);", content_types: ["text/html", "application/json"] });
   });
   // spec: INTEG-081
@@ -160,8 +174,8 @@ describe("Fachseiten against the configuration fixture", () => {
     change(within(group).getByRole("textbox", { name: "Position" }), "Breadcrumb");
     change(within(group).getByRole("textbox", { name: "Substrings (one per line)" }), "breadcrumb");
     fireEvent.click(within(group).getByRole("button", { name: "Move up" })); await checked();
-    fireEvent.click(within(d).getByRole("button", { name: "OK" }));
-    await waitFor(() => expect(fake.setCalls).toHaveLength(1));
+    await act(async () => { fireEvent.click(within(d).getByRole("button", { name: "OK" })); });
+    expect(fake.setCalls).toHaveLength(1);
     const rules = getPath(fake.config, "link_positions.rules") as typeof DEFAULT_RULES;
     expect(rules[3]).toEqual({ position: "Breadcrumb", contains: ["breadcrumb"] }); expect(rules.at(-1)?.position).toBe("Content");
   });
@@ -196,10 +210,10 @@ describe("Fachseiten against the configuration fixture", () => {
   it("enables Content from the core capability and persists ordered selection and threshold", async () => {
     core.handlers.set("compare.contentAvailable", () => true);
     const d = await open("compare.change_detection"); const c = within(d).getByRole("checkbox", { name: "Content" });
-    await waitFor(() => expect(c).toBeEnabled()); fireEvent.click(c);
+    expect(c).toBeEnabled(); fireEvent.click(c);
     change(within(d).getByRole("textbox", { name: "Content change threshold (%)" }), "25"); await checked();
-    fireEvent.click(within(d).getByRole("button", { name: "OK" }));
-    await waitFor(() => expect(fake.setCalls).toHaveLength(1));
+    await act(async () => { fireEvent.click(within(d).getByRole("button", { name: "OK" })); });
+    expect(fake.setCalls).toHaveLength(1);
     expect(getPath(fake.config, "compare.change_detection")).toEqual({ elements: [...ELEMENTS], content_threshold_pct: 25 });
   });
   // spec: INTEG-020
@@ -222,8 +236,8 @@ describe("Fachseiten against the configuration fixture", () => {
     expect(within(d).getAllByRole("switch")).toHaveLength(14);
     expect(within(d).getByRole("switch", { name: "Images" })).toBeDisabled();
     fireEvent.click(within(d).getByRole("switch", { name: "Automatically analyse at crawl end" }));
-    await checked(); fireEvent.click(within(d).getByRole("button", { name: "OK" }));
-    await waitFor(() => expect(fake.setCalls).toHaveLength(1));
+    await checked(); await act(async () => { fireEvent.click(within(d).getByRole("button", { name: "OK" })); });
+    expect(fake.setCalls).toHaveLength(1);
     expect(getPath(fake.config, "analysis.auto_at_end")).toBe(false);
   });
   // spec: INTEG-001

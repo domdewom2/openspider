@@ -7,8 +7,10 @@ let bridge: Bridge | null = null;
 test.beforeEach(async ({ page }) => {
   bridge = await startBridge();
   expect(bridge, "build os-app-bridge with e2e-bridge first").not.toBeNull();
+  await page.clock.install({ time: new Date("2026-10-21T10:00:00Z") });
+  await page.clock.pauseAt(new Date("2026-10-21T10:00:01Z"));
   await page.goto(`/e2e/config/index.html?bridge=${encodeURIComponent(bridge!.url)}`);
-  await page.waitForFunction(() => !!window.cfgFixture);
+  await expect.poll(() => page.evaluate(() => !!window.cfgFixture)).toBe(true);
 });
 test.afterEach(async () => { await bridge?.stop(); bridge = null; });
 async function open(page: Page, anchor: string) {
@@ -26,23 +28,29 @@ test("the core validates XPath 3.1, CSS and regex and the dialog prevents saving
   await d.getByRole("button", { name: "Add extractor" }).click();
   const expression = d.getByRole("textbox", { name: "Expression" });
   await expression.fill("//div[");
+  await page.clock.runFor(200);
   await expect(d.getByText("✗ Invalid", { exact: true })).toBeVisible();
   await expect(d.getByRole("button", { name: "OK", exact: true })).toBeDisabled();
   await expression.fill("for $x in //a return $x/@href");
+  await page.clock.runFor(200);
   await expect(d.getByText("✓ Valid", { exact: true })).toBeVisible();
   await d.getByLabel("Output", { exact: true }).selectOption("function_value");
   await expression.fill("count(//h1)");
+  await page.clock.runFor(200);
   await expect(d.getByRole("button", { name: "OK", exact: true })).toBeEnabled();
   await d.getByLabel("Mode", { exact: true }).selectOption("css");
   await expression.fill("div > ");
+  await page.clock.runFor(200);
   await expect(d.getByText("✗ Invalid", { exact: true })).toBeVisible();
   await d.getByLabel("Mode", { exact: true }).selectOption("regex");
   await expression.fill("(");
+  await page.clock.runFor(200);
   await expect(d.getByText("✗ Invalid", { exact: true })).toBeVisible();
   await d.getByLabel("Mode", { exact: true }).selectOption("css");
   await expression.fill("img.product");
   await d.getByRole("textbox", { name: "Attribute (optional)" }).fill("src");
   await expect(d.getByLabel("Output", { exact: true })).toBeDisabled();
+  await page.clock.runFor(200);
   await d.getByRole("button", { name: "OK", exact: true }).click();
   await expect(d).toHaveCount(0);
   expect((await saved(page)).config.custom_extraction?.extractors).toEqual([{ name: "Extractor 1", mode: "css", expression: "img.product", attribute: "src", output: "text" }]);
@@ -59,12 +67,14 @@ test("search keeps the core regex dialect, XPath scope and bulk options across s
   await d.getByLabel("Search scope", { exact: true }).selectOption("xpath");
   await d.getByRole("textbox", { name: "XPath", exact: true }).fill("//main");
   await d.getByRole("textbox", { name: "Expression", exact: true }).fill("(?is)(?=.*rot)(?=.*blau)");
+  await page.clock.runFor(200);
   await expect(d.getByText("✓ Valid", { exact: true })).toBeVisible();
   await d.getByRole("button", { name: "Bulk add search filters" }).click();
   const bulk = page.getByRole("dialog", { name: "Bulk add search filters" }).getByRole("group", { name: "Bulk add search filters" });
   await bulk.getByRole("textbox", { name: "One expression per line" }).fill("alpha\nalpha\nbeta");
   await bulk.getByRole("button", { name: "Import", exact: true }).click();
   await expect(d.getByText(/Skipped 1 empty or duplicate rows/)).toBeVisible();
+  await page.clock.runFor(200);
   await d.getByRole("button", { name: "OK", exact: true }).click(); await expect(d).toHaveCount(0);
   const filters = (await saved(page)).config.custom_search?.filters as Array<Record<string, unknown>>;
   expect(filters).toHaveLength(3); expect(filters[0]).toMatchObject({ xpath: "//main", scope: "xpath", expression: "(?is)(?=.*rot)(?=.*blau)" });
@@ -77,9 +87,12 @@ test("search keeps the core regex dialect, XPath scope and bulk options across s
 // spec: INTEG-082
 // spec: TECH-300
 test("German Fachseiten fit a small window, retain ordered defaults and have no serious accessibility findings", async ({ page }) => {
+  // axe needs its asynchronous scheduler; this read-only test asserts no debounce timing.
+  await page.clock.resume();
+  await page.clock.setFixedTime(new Date("2026-10-21T10:00:01Z"));
   await page.setViewportSize({ width: 1024, height: 640 });
   await page.goto(`/e2e/config/index.html?bridge=${encodeURIComponent(bridge!.url)}&lang=de`);
-  await page.waitForFunction(() => !!window.cfgFixture);
+  await expect.poll(() => page.evaluate(() => !!window.cfgFixture)).toBe(true);
   await page.evaluate(async fixture => {
     const dto = await window.cfgFixture.invoke("config.get") as { config: Record<string, unknown> };
     dto.config = { ...dto.config, ...fixture };
