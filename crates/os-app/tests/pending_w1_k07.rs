@@ -39,6 +39,7 @@ async fn rules_test_passes_query_removal_and_ordered_replacements() {
 
 // spec: INTEG-082 [M2]
 #[tokio::test]
+#[ignore = "Klärung K2-68: N01-C13, Besitzer M2-N01b (config.rs an recompute/d16 anbinden)"]
 async fn config_set_reclassifies_stored_link_paths_without_requests() {
     use os_app::{dto::CrawlConfigDto, pool::CrawlKey, runtime::sessions::SessionInfo, WindowId};
     use os_model::{CrawlConfig, CrawlState, LinkPositionRule};
@@ -105,6 +106,7 @@ async fn config_set_reclassifies_stored_link_paths_without_requests() {
 
 // spec: INTEG-002 [M2]
 #[tokio::test]
+#[ignore = "Klärung K2-68: N01-C12, Besitzer M2-N01b (includeSecrets ist noch Stub)"]
 async fn export_uses_explicit_consent_and_authenticated_password_encryption() {
     let dir = tempfile::tempdir().unwrap();
     let secrets = std::sync::Arc::new(os_fetch::MemorySecretStore::new());

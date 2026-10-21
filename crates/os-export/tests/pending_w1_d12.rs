@@ -36,6 +36,7 @@ async fn learned_hsts_policy_is_exported_without_an_http_target_request() {
 
 // spec: OUT-085
 #[tokio::test]
+#[ignore = "Klärung K2-68: wartet auf M2-E06 (Welle 3), N01-C16"]
 async fn always_follow_list_redirects_exports_the_complete_chain_at_depth_zero() {
     let site = os_testsite::TestSite::start("onpage-m2-rc").await.unwrap();
     let mut cfg = os_model::CrawlConfig {

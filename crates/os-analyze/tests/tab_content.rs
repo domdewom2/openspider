@@ -651,7 +651,3 @@ fn pdf_row_has_word_count_and_readability() {
     let page = query_view(&file, &cfg, &q).unwrap();
     assert_eq!(page.rows[0][2], Value::Null);
 }
-
-// spec: ONPAGE-143 [M2]
-#[test]
-fn hash_is_recomputed_from_stored_html() {}

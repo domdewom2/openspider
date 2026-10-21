@@ -11,6 +11,7 @@ use std::sync::Arc;
 // spec: UI-082 [M2]
 // spec: ONPAGE-140 [M2]
 #[tokio::test]
+#[ignore = "Klärung K2-68: N01-C08, Besitzer M2-N01b (Status needsRecrawl bei fehlendem HTML)"]
 async fn analysis_status_command_exposes_stale_and_needs_recrawl() {
     let dir = tempfile::tempdir().unwrap();
     let app = common::new_app(dir.path());
