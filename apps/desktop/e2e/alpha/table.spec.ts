@@ -177,13 +177,18 @@ async function selectWhileSortedRowsArrive(alpha: Alpha): Promise<{ origin: Snap
   await alpha.settledGrid();
   // Die Fenstergröße hängt von der Engine ab: so weit scrollen, bis „page-2.html“ im Bild ist (der Crawl steht, die Tabelle ist ruhig).
   await page.locator(".os-data-grid").hover({ position: { x: 160, y: 60 } });
+  // Die Zeile soll nicht die letzte im Bild sein: Mit klassischer Bildlaufleiste (Windows) verdeckt die waagerechte Leiste die unterste
+  // Zeile teilweise, ein Klick auf deren Mitte träfe nichts. Nur am Ende der Liste (Fenster ändert sich nicht mehr) genügt die letzte.
   let target = -1;
-  for (let i = 0; i < 30 && target < 0; i++) {
-    target = (await alpha.gridWindow()).rows.findIndex((r) => /\/page-2\.html$/.test(r.cells[0]!));
-    if (target < 0) {
-      await page.mouse.wheel(0, 44);
-      await alpha.settledGrid();
-    }
+  let previousFirst = -1;
+  for (let i = 0; i < 40; i++) {
+    const w = await alpha.gridWindow();
+    target = w.rows.findIndex((r) => /\/page-2\.html$/.test(r.cells[0]!));
+    const first = w.rows[0]?.index ?? -1;
+    if (target >= 0 && (target <= w.rows.length - 3 || first === previousFirst)) break;
+    previousFirst = first;
+    await page.mouse.wheel(0, 44);
+    await alpha.settledGrid();
   }
   expect(target, "page-2.html ist im Bild").toBeGreaterThanOrEqual(0);
   await page.locator(".os-data-grid").click({ position: { x: 160, y: 26 + 22 * target + 11 } });
