@@ -8,21 +8,21 @@ use os_store::{CrawlFile, StoreError};
 use rusqlite::{params, OptionalExtension};
 use serde::{Deserialize, Serialize};
 
-const SELECT: &str = "SELECT id, url, is_internal, content_class, indexability, crawl_depth,
+pub(crate) const SELECT: &str = "SELECT id, url, is_internal, content_class, indexability, crawl_depth,
     status_code, robots_blocked, response_time_ms, state, no_response_reason, in_tables FROM main.urls";
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Contribution {
-    paths: Vec<(String, String, String)>, // path, parent, name
-    depth: Option<u32>,
-    indexable: bool,
-    non_indexable: bool,
-    response_class: usize,
+pub(crate) struct Contribution {
+    pub(crate) paths: Vec<(String, String, String)>, // path, parent, name
+    pub(crate) depth: Option<u32>,
+    pub(crate) indexable: bool,
+    pub(crate) non_indexable: bool,
+    pub(crate) response_class: usize,
     time: Option<i32>,
     internal_html: bool,
 }
 
-fn contribution(r: &rusqlite::Row<'_>) -> rusqlite::Result<(i64, Contribution)> {
+pub(crate) fn contribution(r: &rusqlite::Row<'_>) -> rusqlite::Result<(i64, Contribution)> {
     let url: String = r.get(1)?;
     let internal: bool = r.get(2)?;
     let visible: bool = r.get(11)?;

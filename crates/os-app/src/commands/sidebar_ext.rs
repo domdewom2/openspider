@@ -44,16 +44,50 @@ fn site_structure<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, 
         if !(1..=500).contains(&args.limit) {
             return Err(CmdError::new(ErrorCode::InvalidInput, "err-invalid-limit"));
         }
-        if args.segment.is_some() {
-            return Err(CmdError::unsupported(
-                "sidebar.siteStructure.segment",
-                "M2-K14",
-            ));
-        }
         let session = app
             .sessions()
             .current(&ctx.window)
             .ok_or_else(|| no_crawl(&ctx.window.0))?;
+        if let Some(segment) = args.segment.clone() {
+            // UI-020/UI-066: path tree and depths of one segment (or of the URLs without a segment).
+            let filter = match segment {
+                crate::dto::SegmentFilter::Segment { name } => {
+                    os_analyze::segments::SegmentFilter::new(name)
+                }
+                crate::dto::SegmentFilter::None => {
+                    os_analyze::segments::SegmentFilter::unassigned()
+                }
+            };
+            let result = app
+                .read_pool()
+                .run_with(session.key, ctx.cancel, move |file, cancel| {
+                    let scoped = aggregates::scoped::collect(file, &filter, cancel)?;
+                    let view = args.view;
+                    Ok(SiteStructure {
+                        paths: scoped
+                            .path_tree(
+                                args.path.as_deref().unwrap_or(""),
+                                args.offset,
+                                args.limit,
+                                if args.path.is_some() { 1 } else { 4 },
+                            )
+                            .into_iter()
+                            .map(path_node)
+                            .collect(),
+                        depths: scoped
+                            .depths()
+                            .into_iter()
+                            .map(|(depth, c)| DepthRow {
+                                depth,
+                                count: c.count,
+                                by_class: classes(&c, view),
+                            })
+                            .collect(),
+                    })
+                })
+                .await?;
+            return to_json(&result);
+        }
         let result = app
             .read_pool()
             .run_cached(session.key, "sidebar", ctx.cancel, move |file, cancel| {

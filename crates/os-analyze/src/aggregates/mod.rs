@@ -3,6 +3,7 @@
 //! Ein erster Durchlauf baut ihn auf; danach werden nur URL-Differenzen angewandt.
 
 pub mod live;
+pub mod scoped;
 pub mod status;
 
 use std::collections::BTreeMap;
