@@ -129,11 +129,11 @@ pub async fn start(app: &App, ctx: CallCtx, req: StartRequest) -> Result<CrawlRe
     // CRAWL-122: app-wide proxy settings reach the crawl; an unreachable proxy fails here, before any session or file exists.
     let fetch = Arc::new(crate::commands::settings_network::crawl_fetcher(app, &cfg).await?);
     let result = start_with_fetcher(app, ctx, req, cfg, fetch.clone()).await?;
-    app.ext::<CrawlFetchers>()
+    app.ext::<CrawlNetworks>()
         .0
         .lock()
         .unwrap_or_else(|p| p.into_inner())
-        .insert(CrawlKey(result.crawl_id.clone()), fetch);
+        .insert(CrawlKey(result.crawl_id.clone()), fetch.network_snapshot());
     Ok(result)
 }
 
@@ -319,10 +319,10 @@ pub async fn open(
     Ok(summary)
 }
 
+type NetworkSnapshot = (os_model::settings::NetworkSettings, Option<String>);
+
 #[derive(Default)]
-struct CrawlFetchers(
-    std::sync::Mutex<std::collections::HashMap<CrawlKey, Arc<os_fetch::HttpFetcher>>>,
-);
+struct CrawlNetworks(std::sync::Mutex<std::collections::HashMap<CrawlKey, NetworkSnapshot>>);
 
 pub async fn resume(app: &App, ctx: CallCtx) -> Result<(), CmdError> {
     let service = app.ext::<SessionService>();
@@ -338,14 +338,27 @@ pub async fn resume(app: &App, ctx: CallCtx) -> Result<(), CmdError> {
         .await?;
     let runtime = app.handle();
     let saved = app
-        .ext::<CrawlFetchers>()
+        .ext::<CrawlNetworks>()
         .0
         .lock()
         .unwrap_or_else(|p| p.into_inner())
         .get(&s.key)
         .cloned();
     let fetch = match saved {
-        Some(fetch) => fetch,
+        Some((network, password)) => {
+            let mut config = os_fetch::FetchConfig::from_crawl_config(
+                &cfg,
+                app.config().secrets.as_ref(),
+                app.config().clock.clone(),
+            )
+            .map_err(|e| internal("resume fetch config", e.to_string()))?
+            .with_network(&network);
+            config.proxy_password = password;
+            Arc::new(
+                os_fetch::HttpFetcher::new(config)
+                    .map_err(|e| internal("resume fetcher", e.to_string()))?,
+            )
+        }
         None => fetcher(app, &cfg)?,
     };
     let path = s.path.clone();

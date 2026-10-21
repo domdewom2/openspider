@@ -199,6 +199,12 @@ impl std::fmt::Debug for HttpFetcher {
 }
 
 impl HttpFetcher {
+    /// Network snapshot for resume; crawl-specific request options are rebuilt separately.
+    /// The password must remain in memory and must never be logged or persisted.
+    pub fn network_snapshot(&self) -> (os_model::settings::NetworkSettings, Option<String>) {
+        (self.cfg.network.clone(), self.cfg.proxy_password.clone())
+    }
+
     /// Baut den Abrufer (HTTP-Client, Auflösung, Auth-Zuordnung, Rate-Limit).
     pub fn new(cfg: FetchConfig) -> Result<Self, FetchError> {
         if cfg.response_timeout.is_zero() {

@@ -147,6 +147,16 @@ fn import<'a>(app: &'a App, _: CallCtx, args: Value) -> BoxFuture<'a, CmdResult>
                     .ok_or_else(|| CmdError::invalid_input("err-profile-name", "path"))?;
                 let (loaded, credentials) = read_export(path, password.as_deref())?;
                 valid(&loaded.config)?;
+                // Read every previous value before making any changes.
+                let previous = credentials
+                    .keys()
+                    .map(|key| {
+                        secrets
+                            .try_get(key)
+                            .map(|value| (key.clone(), value))
+                            .map_err(|_| CmdError::new(ErrorCode::Io, "err-profile-secrets"))
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
                 store
                     .save(name, &loaded.config, false)
                     .map_err(|e| match e {
@@ -157,12 +167,32 @@ fn import<'a>(app: &'a App, _: CallCtx, args: Value) -> BoxFuture<'a, CmdResult>
                         }
                         _ => store_error(&e),
                     })?;
-                for (key, value) in credentials {
-                    secrets
-                        .set(&key, &value)
-                        .map_err(|_| CmdError::new(ErrorCode::Io, "err-profile-secrets"))?;
+                let mut attempted = 0;
+                let result = (|| {
+                    for (key, value) in &credentials {
+                        attempted += 1;
+                        secrets
+                            .set(key, value)
+                            .map_err(|_| CmdError::new(ErrorCode::Io, "err-profile-secrets"))?;
+                    }
+                    Ok((loaded, info(&store, name)?))
+                })();
+                if result.is_err() {
+                    let mut rollback_failed = false;
+                    // Include the failed write: a backend may mutate before returning an error.
+                    for (key, value) in previous[..attempted].iter().rev() {
+                        let restored = match value {
+                            Some(value) => secrets.set(key, value),
+                            None => secrets.delete(key),
+                        };
+                        rollback_failed |= restored.is_err();
+                    }
+                    rollback_failed |= store.delete(name).is_err();
+                    if rollback_failed {
+                        return Err(CmdError::new(ErrorCode::Io, "err-profile-import-rollback"));
+                    }
                 }
-                Ok((loaded, info(&store, name)?))
+                result
             })
             .await?;
         warn_loaded(app, &loaded.0);
