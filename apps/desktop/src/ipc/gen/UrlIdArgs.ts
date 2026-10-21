@@ -5,6 +5,10 @@
  */
 export type UrlIdArgs = { 
 /**
+ * Image preview only: user explicitly confirmed a live download.
+ */
+allowLive?: boolean, 
+/**
  * URL-Kennung.
  */
 urlId: number, };

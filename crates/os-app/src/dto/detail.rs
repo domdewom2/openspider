@@ -80,6 +80,12 @@ pub struct SerpMeasureArgs {
 #[serde(rename_all = "camelCase")]
 #[ts(optional_fields = nullable)]
 pub struct SerpMeasureRow {
+    /// Normalized input, including the description prefix.
+    #[serde(default)]
+    pub text: String,
+    /// Final preview including the truncation suffix.
+    #[serde(default)]
+    pub preview: String,
     /// Zeichen.
     pub chars: u32,
     /// Breite in Pixeln.
@@ -391,6 +397,15 @@ pub struct DuplicatesArgs {
 #[serde(rename_all = "camelCase")]
 #[ts(optional_fields = nullable)]
 pub struct DupPartner {
+    /// Match classification for the detail list.
+    #[serde(default)]
+    pub match_type: String,
+    /// Exact content-area text used for comparison, if stored.
+    #[serde(default)]
+    pub text: Option<String>,
+    /// Word differences against the focus URL.
+    #[serde(default)]
+    pub diff: Option<DiffHunks>,
     /// URL.
     pub url_id: i64,
     /// Adresse.

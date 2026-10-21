@@ -5,6 +5,14 @@
  */
 export type SerpMeasureRow = { 
 /**
+ * Normalized input, including the description prefix.
+ */
+text: string, 
+/**
+ * Final preview including the truncation suffix.
+ */
+preview: string, 
+/**
  * Zeichen.
  */
 chars: number, 

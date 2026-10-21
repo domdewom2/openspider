@@ -1,6 +1,7 @@
 //! Feste Start- und Änderungsreihenfolge der App-Dienste.
 use super::{lifecycle_bus::CrawlEvent, App};
 pub fn start(app: &App) {
+    crate::assets::init(app);
     crate::commands::settings::on_startup(app);
     crate::session::init(app);
     crate::commands::segment::on_startup(app);

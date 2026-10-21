@@ -192,6 +192,10 @@ pub struct AddUrlsResult {
 #[serde(rename_all = "camelCase")]
 #[ts(optional_fields = nullable)]
 pub struct CrawlPathDto {
+    /// Anchor of the discovery edge entering this step.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub anchor: Option<String>,
     /// Tiefe (0 = Start-URL).
     pub depth: u32,
     /// URL-Kennung.
