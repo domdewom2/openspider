@@ -318,7 +318,12 @@ async fn secret_references_and_plain_exports_never_persist_credentials() {
     assert_eq!(err.code, ErrorCode::InvalidInput);
     assert_eq!(err.field.as_deref(), Some("password"));
     // INTEG-002 [M2]: with the explicit consent and a password the export is written, sealed (not Unsupported anymore).
-    call(&app, "profile.export", json!({"name":"safe","path":encrypted,"includeSecrets":true,"password":"fixture-password"})).await;
+    call(
+        &app,
+        "profile.export",
+        json!({"name":"safe","path":encrypted,"includeSecrets":true,"password":"fixture-password"}),
+    )
+    .await;
     assert!(encrypted.exists());
     scan(dir.path());
 }
