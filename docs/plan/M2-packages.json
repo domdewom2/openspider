@@ -2304,6 +2304,34 @@
   "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Tabelle M2.md 5.1 Zeilen „N01“: ONPAGE-063 (Retry), ONPAGE-010 (HTTP/2), TECH-011/TECH-051 (Respect), TECH-008 (Outside <head>), ONPAGE-143 (gespeichertes HTML), CRAWL-018 HSTS und der D12-Platzhalter. Rote Tests → Befund an den Planer, kein Fachfix außerhalb dieser Dateien. Merge vor den übrigen Welle-2-Paketen. OUT-081 (M1 7.3): HSTS-Zeile im Report All Redirects nach M2-E03 scharf schalten (reports_redirects.rs). TECH-003 (M1 7.3): Outside-<head>-Kriterien mit Respect-Schaltern nach M2-E01. C9: löst alle Platzhalter `wartet auf M2-xx` der Welle 1 auf – Rust in crates/*/tests/pending_w1_*.rs, E2E-A in apps/desktop/e2e/{table,detail,sidebar,header,statusbar,menu,keyboard,shell,export}/**; nur das Ignore/test.fixme entfernen, Testinhalt unverändert; danach `grep -rn 'wartet auf M2' crates apps` ohne Treffer aus Welle 1. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. Start erst, wenn alle Pakete der Welle 1 gemergt sind (C1, depends_on vollständig, Prüfskript P11). Rev. 4: verwaiste Einträge in scripts/check-neutral.allow (Warnungen des Skripts) entfernen; keine neuen Ausnahmen. Rev. 5: ONPAGE-143 implementiert M2-E01 (recompute/e01.rs), N01 schaltet nur den M1-Test scharf; die K2-26-Platzhalter liegen ebenfalls in pending_w1_*.rs."
  },
  {
+  "id": "M2-N01b",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Nacharbeit Welle 1, Teil 2 (K2-68): besitzerlose Integrationslücken aus der C9-Auflösung schließen (N01-C01, C03-Parser, C05–C09, C11–C13, C15-Bodylimit, C18, E2E-1, E2E-2), K2-64-Restarbeit (Testsuite schneller), Auflagen aus Fable r8/T01",
+  "wave": "2b",
+  "spec_ids": [],
+  "extra_spec_ids": [],
+  "owns": [
+   "crates/os-app/src/commands/{crawl,config,sidebar_ext,export,profile,view,search}.rs",
+   "crates/os-parse/src/{validation,elements,lib}.rs",
+   "crates/os-analyze/src/graph/**",
+   "crates/os-store/src/queries/anchors.rs",
+   "crates/os-fetch/src/body.rs (bzw. die Datei des Bodylimits, nur CRAWL-075)",
+   "crates/os-app/src/ops.rs (nur shutting_down mit injizierter Clock)",
+   "crates/*/tests/pending_w1_*.rs (nur die K2-68-Ignores der eigenen Befunde entfernen)",
+   "apps/desktop/e2e/{table,header}/** (nur die K2-68-fixme entfernen)",
+   "crates/os-engine/tests/{lifecycle_crash,decide_crawl,recompute_d06_directives}.rs, crates/os-mcp/tests/tools_read.rs, crates/os-export/tests/links_response_codes.rs, crates/os-render/tests/render_chromium.rs, crates/os-app/tests/cmd_crawls_management.rs (nur Laufzeit, Assertions unverändert, K2-64)",
+   "apps/desktop/src/features/notifications/**, apps/desktop/src/features/sidebar/analysis/**, apps/desktop/src/features/detail/frame/Feedback.tsx, apps/desktop/src/features/statusbar/McpMenu.tsx (nur Sprungziele openSettingsWindow→openConfig)",
+   "docs/plan/M2-reports/n01b.md"
+  ],
+  "depends_on": [
+   "M2-N01"
+  ],
+  "runner": "local-mac",
+  "size": "M",
+  "prompt_notes": "Arbeitsliste: docs/plan/M2-reports/n01.md Tabelle 1 (Befunde N01-C01…C18, E2E-1/2 mit Entscheidung und Zielpaket) – nur die mit Besitzer M2-N01b. Je behobener Lücke das zugehörige „Klärung K2-68“-Ignore/fixme entfernen; Test bleibt unverändert und muss grün sein. E2E-2 (Pause-Phase > 5 s): Latenz von crawl.pause in Engine/Bridge prüfen; ist sie spec-gemäß, stattdessen expect-Timeout mit Beleg anheben. K2-64: Ziel CI-Schritt „Rust tests“ ≤ 15 min (Kandidaten lifecycle_crash 196 s, tools_read 53 s, decide_crawl 47 s, links_response_codes 44 s, recompute_d06_directives 38 s, render_chromium 36 s, Windows cmd_crawls_management, run_task_cli, cmd_tasks_*), Assertions unverändert; gelingt es, ci.yml-Limit in Absprache mit dem Orchestrator senken. Auflagen aus Fable r8/T01: RobotsTestArgs.userAgent (Robots-Tester mit Entwurfs-UA, CRAWL-102); Doppelmeldung der Regex-Validierung (0-basierte Zeile) in config.validate; profile.list „zuletzt geladen“; Sprungziele openSettingsWindow→openConfig (Benachrichtigungen, Seitenleiste); Lighthouse-/KI-Zeilen im API-Tab (ApiKind); ops shutting_down() mit injizierter Clock. Auflagen an K14 (byClass-Schlüssel Issues/Warnings/Opportunities/High/Medium/Low in View indexability; „Segment equals <Name>“ als „ist in Segment“; Pfadform ValidationIssues von segment.validate; Segmentfilter in sidebar.siteStructure; Idempotenz segment.reassign; Versionssprung nach reassign) gehören ebenfalls hierher, da K14 gemergt ist (Besitz additiv nach K2-61 in os-app/src/commands/segment*.rs). Teile in Dateien anderer Welle-2-Pakete (Robots-Tester-UI und Profilliste in features/config/frame/** von U13, ApiKind-Zeilen in features/sidebar/api/** von U22, Segment-Commands von K14, Testlaufzeit von run_task_cli/cmd_tasks_* von T01) nur strikt additiv nach K2-61 bzw. als Erwartungs-/Laufzeitänderung mit Begründung im Bericht; diese Pakete sind gemergt."
+ },
+ {
   "id": "M2-K05",
   "kind": "package",
   "model": "sonnet",
@@ -2470,7 +2498,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). PERF-006 bleibt bei M2-R01 belegt; hier Engine-Last mit Rendering (Tabs = Threads, gedeckelt). Zurückgestellte M1-Tests CRAWL-022/ONPAGE-012 (Total Transferred mit Ressourcen) in eigenen neuen Tests belegen. CRAWL-039 (M1 7.3): Rendering-Kriterien für Bilder (im gerenderten DOM gefundene Bilder, Lazy-Load). CRAWL-077 [P1]: Wechsel Text ↔ JavaScript während eines laufenden Crawls wird verweigert (CmdError CrawlRunning mit field rendering.mode); fehlt Chromium, bricht der Start mit der Fehlermeldung aus M2-R01 ab statt still im Textmodus zu crawlen. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. OUT-273 (nur mitprüfen): die Rendering-Tests laufen im Job linux-core (ubuntu-latest, headless, ohne Display) mit OPENSPIDER_CHROMIUM aus dem Job unverändert mit; Workflow nicht ändern, Linux-Befunde an den Planer. Rev. 5 (K2-25): für INTEG-052, CRAWL-004, CRAWL-062, CRAWL-063, CRAWL-115, CRAWL-116, ONPAGE-172, CRAWL-082, CRAWL-084, PERF-006 erfüllt dieses Paket die Rendering-Integration in der Engine (Render-Tabs nach K2-36) (eigene getaggte Tests)."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). PERF-006 bleibt bei M2-R01 belegt; hier Engine-Last mit Rendering (Tabs = Threads, gedeckelt). Zurückgestellte M1-Tests CRAWL-022/ONPAGE-012 (Total Transferred mit Ressourcen) in eigenen neuen Tests belegen. CRAWL-039 (M1 7.3): Rendering-Kriterien für Bilder (im gerenderten DOM gefundene Bilder, Lazy-Load). CRAWL-077 [P1]: Wechsel Text ↔ JavaScript während eines laufenden Crawls wird verweigert (CmdError CrawlRunning mit field rendering.mode); fehlt Chromium, bricht der Start mit der Fehlermeldung aus M2-R01 ab statt still im Textmodus zu crawlen. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. OUT-273 (nur mitprüfen): die Rendering-Tests laufen im Job linux-core (ubuntu-latest, headless, ohne Display) mit OPENSPIDER_CHROMIUM aus dem Job unverändert mit; Workflow nicht ändern, Linux-Befunde an den Planer. Rev. 5 (K2-25): für INTEG-052, CRAWL-004, CRAWL-062, CRAWL-063, CRAWL-115, CRAWL-116, ONPAGE-172, CRAWL-082, CRAWL-084, PERF-006 erfüllt dieses Paket die Rendering-Integration in der Engine (Render-Tabs nach K2-36) (eigene getaggte Tests). Nachtrag K2-68 (Fable 21.10.): N01-C02 nicht crawlbare Links bei store_uncrawlable_links in os-engine/src/worker.rs erfassen (Test os-analyze/pending_w1_d08 captured_uncrawlable_navigation…, Ignore danach selbst entfernen); N01-C03 srcset-Ressourcen als einzelne Outlinks weitergeben (pending_w1_d11, Parser-Anteil liefert N01b); N01-C15 max_page_kb = 0 = unbegrenzt (CRAWL-075, pending_w1_e01 unlimited_page_size…, Bodylimit in os-fetch liefert N01b)."
  },
  {
   "id": "M2-D18",
@@ -2877,7 +2905,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Budgets UI-145 (View Source 1 MB ≤ 300 ms, Diff ≤ 1 s); Diff im Kern mit similar. Accessibility- und Rechtschreib-Details liefern M2-D21 bzw. M2-D19 in eigenen Dateien. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. Rev. 5 (K2-25): für ONPAGE-194, ONPAGE-145, TECH-189 erfüllt dieses Paket die detail.*-Commands (eigene getaggte Tests)."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Budgets UI-145 (View Source 1 MB ≤ 300 ms, Diff ≤ 1 s); Diff im Kern mit similar. Accessibility- und Rechtschreib-Details liefern M2-D21 bzw. M2-D19 in eigenen Dateien. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. Rev. 5 (K2-25): für ONPAGE-194, ONPAGE-145, TECH-189 erfüllt dieses Paket die detail.*-Commands (eigene getaggte Tests). Nachtrag K2-68 (Fable 21.10.): N01-C10 Crawl-Pfad-Provider registrieren und Export-Dispatch in commands/export.rs additiv ergänzen (pending_w1_k06 crawl_path_export_uses_the_registered_detail_source); N01-C14 crawl.path liefern und das Ignore in crates/os-app/tests/pending_w1_k16.rs selbst entfernen (owns-Ergänzung: nur dieses Ignore). Auflagen aus U21 (Fable 21.10.): Commands detail.spellingIgnore/detail.spellingDictionary/Neu-Prüfung ONPAGE-158 registrieren (Rust-Funktionen in commands/detail_spelling.rs existieren); Zeilenschlüssel spelling = 1-basierte findingId in Standardreihenfolge, a11yNodes = nodeId; serpMeasure rows[0]=Titel, rows[1]=Beschreibung, cutAt in Codepoints, Feld für den Hinweis „kurz“ (UI-037); detail.screenshotSave/detail.sourceSave nach dialog.save."
  },
  {
   "id": "M2-M02",
@@ -3276,7 +3304,8 @@
    "M2-U24",
    "M2-U25",
    "M2-U26",
-   "M2-U27"
+   "M2-U27",
+   "M2-N01b"
   ],
   "size": "M",
   "runner": "cloud",
@@ -3499,7 +3528,7 @@
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. Rev. 5 (K2-25): für OUT-098, OUT-085 erfüllt dieses Paket den SERP-Import bzw. die Listenketten mit Always-Follow (K2-32, K2-49) (eigene getaggte Tests).",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. Rev. 5 (K2-25): für OUT-098, OUT-085 erfüllt dieses Paket den SERP-Import bzw. die Listenketten mit Always-Follow (K2-32, K2-49) (eigene getaggte Tests). Nachtrag K2-68 (Fable 21.10.): N01-C16 Listenmodus-Weiterleitungen immer folgen (OUT-085) und das Ignore in crates/os-export/tests/pending_w1_d12.rs (always_follow_list_redirects…) selbst entfernen.",
   "extra_spec_ids": [
    "OUT-098",
    "OUT-085"
