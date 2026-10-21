@@ -5,7 +5,9 @@ use os_model::{CrawlConfig, RenderingMode};
 fn cfg() -> CrawlConfig {
     let mut c = CrawlConfig::default();
     c.rendering.mode = RenderingMode::JavaScript;
-    c.rendering.ajax_timeout_s = 0.3;
+    // Integrationsrunde 8: 0,3 s reichten auf dem Windows-Runner nicht, bis die JavaScript-Abrufketten der Fixture-Seiten (Challenge,
+    // Login-Ressourcen) abgeschlossen waren; die Renderer-Wartezeit nach dem Laden ist fest, mehr Zeit kostet nur Laufzeit.
+    c.rendering.ajax_timeout_s = 1.5;
     c.rendering.screenshots.enabled = false;
     c.limits.max_depth = Some(0);
     c
