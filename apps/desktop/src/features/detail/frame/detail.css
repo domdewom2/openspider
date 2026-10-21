@@ -12,3 +12,6 @@
 .os-detail-link { color: var(--os-link); background: transparent; border: 0; text-decoration: underline; cursor: pointer; }
 .os-detail-preview { flex: 0 0 auto; max-height: 40%; overflow: auto; }
 .os-detail-preview img { object-fit: contain; }
+/* Integrationsrunde 8 (wie A01-08 bei den Top-Tabs): fitTabs summiert die Tab-Breiten ohne den Flex-Abstand; mit Abstand 0 sind die
+   gemessenen Breiten exakt (Windows-CI: „N-Grams“ ragte 15 px in „More detail tabs“, UI-001). */
+.os-detail .os-tabbar-list { gap: 0; overflow: hidden; }
