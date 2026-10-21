@@ -326,6 +326,17 @@ pub(crate) fn merge(
                 &p.raw,
             );
         }
+        for r in &page.refresh {
+            add(
+                if r.source == os_model::RefreshSource::Meta {
+                    LinkType::MetaRefresh
+                } else {
+                    LinkType::HttpRefresh
+                },
+                &r.target,
+                r.target_raw.as_deref().unwrap_or(&r.raw),
+            );
+        }
         keys
     };
     let raw_keys = keys(raw);

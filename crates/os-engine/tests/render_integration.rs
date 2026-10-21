@@ -15,6 +15,7 @@ const DOM: &str = include_str!("../../../tests/fixtures/crawl-m2-render/dom.html
 
 #[derive(Default)]
 struct Mock {
+    dom: Option<&'static str>,
     calls: Mutex<Vec<(String, RenderOpts)>>,
     failures: AtomicUsize,
     active: AtomicUsize,
@@ -40,7 +41,7 @@ impl Renderer for Mock {
                 return Err(RenderError::Crashed("fixture".into()));
             }
             Ok(RenderedPage {
-                dom_html: DOM.into(),
+                dom_html: self.dom.unwrap_or(DOM).into(),
                 navigation_url: Some(url.into()),
                 network: vec![
                     os_model::NetworkEntry {
@@ -488,5 +489,30 @@ async fn comparison_normalizes_text_and_counts_the_configured_content_area() {
             .unwrap()
             .body,
         RAW.as_bytes()
+    );
+}
+
+// spec: CRAWL-079
+// spec: TECH-006
+#[tokio::test]
+async fn a_refresh_inserted_into_the_dom_has_rendered_provenance() {
+    let renderer = Arc::new(Mock {
+        dom: Some(include_str!(
+            "../../../tests/fixtures/crawl-m2-render/dom-refresh.html"
+        )),
+        ..Default::default()
+    });
+    let mut deps = test_deps();
+    deps.renderer = Some(renderer);
+    let mut config = cfg();
+    config.limits.max_depth = Some(0);
+    let fx = crawl_fixture_with("crawl-m2-render", "/", config, deps).await;
+    assert_eq!(int(&fx,"SELECT COUNT(*) FROM links WHERE link_type='Meta Refresh' AND link_origin='Rendered HTML'"),1);
+    assert_eq!(
+        text(
+            &fx,
+            "SELECT redirect_type FROM urls WHERE in_tables=1 AND url LIKE '%/'"
+        ),
+        "meta_refresh"
     );
 }

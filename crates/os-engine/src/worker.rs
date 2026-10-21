@@ -1584,7 +1584,14 @@ async fn assemble<F: Fetch>(
             link_origin: if r.kind == RedirectType::JavaScript {
                 LinkOrigin::RenderedHtml
             } else {
-                LinkOrigin::Html
+                origins
+                    .get(&crate::render_glue::link_key(&synth_link(
+                        lt,
+                        &r.raw,
+                        Some(&r.target.encoded),
+                    )))
+                    .copied()
+                    .unwrap_or(LinkOrigin::Html)
             },
             in_head: r.xpath.as_ref().map(|x| x.starts_with("//head/")),
             ..Default::default()
