@@ -7,7 +7,7 @@ import { expect, test, type Alpha } from "./fixture";
 
 const CLIENT_ERROR = "Response Codes: Internal Client Error (4XX)";
 
-/** Veröffentlicht die Auswahl über die Übergabeschnittstelle des Detailfensters (siehe Befund A01-02, die Haupttabelle tut es nicht). */
+/** Veröffentlicht die Auswahl über die Übergabeschnittstelle des Detailfensters (siehe Klärung K2-69: Befund A01-02, die Haupttabelle tut es nicht). */
 async function selectInDetails(page: Page, address: string): Promise<number> {
   return page.evaluate(async (address) => {
     const viewPath = "/src/ipc/view.ts";

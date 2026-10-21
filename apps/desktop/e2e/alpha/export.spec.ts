@@ -183,7 +183,7 @@ test("the Internal:All view exported with the core command export.view equals op
     const cliX = await cliExport(["--load-crawl", crawlFile, "--export-tabs", "Internal:All", "--export-format", "xlsx"], dir, "cli-xlsx");
     sameBytes(join(dir, "ui-internal.csv"), join(cli.folder, "internal_all.csv"));
     expect(readCsv(join(dir, "ui-internal.csv"))).toHaveLength(26); // 25 interne URLs plus Kopfzeile
-    // XLSX: ZIP-Zeitstempel unterscheiden sich, die Zellen nicht; der Blattname weicht ab (eigener Test, Befund A01-15)
+    // XLSX: ZIP-Zeitstempel unterscheiden sich, die Zellen nicht; der Blattname weicht ab (eigener Test, Klärung K2-69: Befund A01-15)
     const ui = readXlsx(join(dir, "ui-internal.xlsx"));
     const reference = readXlsx(join(cliX.folder, "internal_all.xlsx"));
     expect(ui.sheets).toHaveLength(1);
@@ -235,7 +235,7 @@ test("a bulk export and a report from the menus equal the CLI exports of the sam
     const cliX = await cliExport(["--load-crawl", crawlFile, "--bulk-export", "Links:All Inlinks", "--export-format", "xlsx"], dir, "cli-xlsx");
     sameBytes(join(out, "links_all_inlinks.csv"), join(cli.folder, "links_all_inlinks.csv"));
     sameBytes(join(out, "crawl_overview.csv"), join(cli.folder, "crawl_overview.csv"));
-    // XLSX: gleiche Zellen; der Blattname weicht ab („Export“ statt „Links All Inlinks“, Befund A01-15)
+    // XLSX: gleiche Zellen; der Blattname weicht ab („Export“ statt „Links All Inlinks“, Klärung K2-69: Befund A01-15)
     const ui = readXlsx(join(out, "links_all_inlinks.xlsx"));
     const reference = readXlsx(join(cliX.folder, "links_all_inlinks.xlsx"));
     expect(Object.values(ui.data)).toEqual(Object.values(reference.data));

@@ -27,7 +27,7 @@ export interface Alpha {
   startUrl: string;
   /**
    * Speichert ein Profil (Abschnitt für Abschnitt über die Werkseinstellungen gelegt) und macht es zum Standard. Die Kopfleiste
-   * startet Crawls ohne Profilangabe, also mit dem Standardprofil. `config.set` ohne offenen Crawl genügt dafür nicht (Befund A01-04).
+   * startet Crawls ohne Profilangabe, also mit dem Standardprofil. `config.set` ohne offenen Crawl genügt dafür nicht (Klärung K2-69: Befund A01-04).
    */
   useProfile(name: string, sections: Record<string, Record<string, unknown>>): Promise<void>;
   /** Drosselt Crawls auf `rate` URL/s mit einem Thread, damit Pause, Fortsetzen und Live-Verhalten beobachtbar sind. */
@@ -47,7 +47,7 @@ export interface Alpha {
   settledGrid(): Promise<GridWindow>;
   /** Wechselt den oberen Tab. */
   selectTab(name: string): Promise<void>;
-  /** Wechselt den Tab eines fertigen Crawls und wartet auf geladene Zeilen (keine Wiederholung: die Tabelle lädt nach dem Wechsel immer, Befund A01-21). */
+  /** Wechselt den Tab eines fertigen Crawls und wartet auf geladene Zeilen (keine Wiederholung: die Tabelle lädt nach dem Wechsel immer, Klärung K2-69: Befund A01-21). */
   openTable(name: string): Promise<void>;
   /** Überschreibt den nativen Zielordner-/Datei-Dialog des Exports (im Browser nicht vorhanden). */
   chooseExportPath(resolve: string): Promise<void>;

@@ -151,7 +151,7 @@ type Snapshot = { address: string; relative: number; absolute: number };
  * Sortiert die Tabelle nach Address, startet einen gedrosselten Crawl (1 URL/s), markiert „page-2.html“ sobald
  * neun Zeilen da sind und beobachtet die Zeile bis zum Ende des Crawls. Sie sortiert hinter „page-10.html“ … „page-20.html“, die
  * erst später entdeckt werden: Es kommen also sicher Zeilen oberhalb der Auswahl dazu. Gewertet werden nur Momentaufnahmen, die zweimal im
- * Abstand von 150 ms gleich sind (die Live-Aktualisierung zeigt keine Platzhalter mehr, Befund A01-07).
+ * Abstand von 150 ms gleich sind (die Live-Aktualisierung zeigt keine Platzhalter mehr, Klärung K2-69: Befund A01-07).
  */
 async function selectWhileSortedRowsArrive(alpha: Alpha): Promise<{ origin: Snapshot; samples: Snapshot[]; last: Snapshot }> {
   const { page } = alpha;
@@ -269,7 +269,7 @@ test("the sort gesture on a column header takes effect while the crawl is runnin
   await expect.poll(() => alpha.counter().catch(() => ""), { timeout: 30_000 }).toMatch(/Showing: ([89]|1\d|2\d) of/);
   await alpha.settledGrid();
   const byte = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
-  // Die Geste (Kopfklick) sortiert aufsteigend, dann absteigend, auch wenn die Ansicht im Aufbau war (Befund A01-09).
+  // Die Geste (Kopfklick) sortiert aufsteigend, dann absteigend, auch wenn die Ansicht im Aufbau war (Klärung K2-69: Befund A01-09).
   await sortBy(alpha, "Response Codes", "Address");
   await expect.poll(async () => (await alpha.gridWindow()).headers.join("|")).toContain("Address ↑");
   await expect(async () => {
@@ -322,7 +322,7 @@ test("the selected row keeps its screen position while rows are sorted in above 
 
 const dataTabsOf = (page: Page) => page.getByRole("tablist", { name: "Data tabs" }).getByRole("tab");
 
-/** „Configure tabs“ per Tastatur öffnen (ein Tab überdeckt die Schaltfläche für Mausklicks, Befund A01-08); ein offenes Menü bleibt offen. */
+/** „Configure tabs“ per Tastatur öffnen (ein Tab überdeckt die Schaltfläche für Mausklicks, Klärung K2-69: Befund A01-08); ein offenes Menü bleibt offen. */
 async function openConfigureTabs(page: Page): Promise<void> {
   const reset = page.getByRole("menuitem", { name: "Reset tabs", exact: true });
   if ((await reset.count()) === 0) {
