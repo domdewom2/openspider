@@ -216,6 +216,9 @@ pub async fn recrawl_urls<F: Fetch>(
         primed_origins,
     });
 
+    if let Some(renderer) = &deps.renderer {
+        let _ = sh.render_session.injected.set(renderer.clone());
+    }
     let mut set: JoinSet<()> = JoinSet::new();
     let mut pending = items.into_iter();
     loop {

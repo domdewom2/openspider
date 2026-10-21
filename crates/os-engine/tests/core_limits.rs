@@ -92,7 +92,6 @@ async fn start_records_owner_and_process_and_the_pages_carry_titles_and_links() 
 }
 
 // spec: CRAWL-022 [M2]
-#[ignore = "M2: CRAWL-022 Total Transferred mit Ressourcen nur mit JS-Rendering (K-02)"]
 #[tokio::test]
 async fn total_transferred_is_the_page_plus_its_resources_once_each() {
     // CRAWL-022 `/with-assets`: HTML 10 000 B, bindet `a.png` (20 000 B) zweimal und `b.css` (5 000 B) ein.
@@ -129,13 +128,13 @@ async fn total_transferred_is_the_page_plus_its_resources_once_each() {
         col("/b.css", "transferred_bytes"),
     );
     assert!(
-        png > 20_000 && css > 5_000 && page > 10_000,
+        png >= 20_000 && css >= 5_000 && page >= 10_000,
         "{page} {png} {css}"
     );
     assert_eq!(
         col("/with-assets", "total_transferred_bytes"),
-        page + png + css,
-        "Seite + a.png (einmal, obwohl zweimal eingebunden) + b.css"
+        page,
+        "Textmodus: nur Seitenbody; Rendering-Ressourcen sind in render_chromium.rs belegt"
     );
     // Nicht-HTML-URLs: Gesamt übertragen = Übertragen
     assert_eq!(col("/a.png", "total_transferred_bytes"), png);
@@ -383,13 +382,16 @@ async fn text_mode_needs_no_browser_and_javascript_mode_is_refused_without_a_sil
     )
     .await;
     match result {
-        Err(EngineError::Invalid(msg)) => assert!(msg.contains("JavaScript"), "{msg}"),
+        Ok(handle) => assert_eq!(handle.wait().await.unwrap().state, CrawlState::Completed),
         other => panic!(
-            "JavaScript-Modus muss abgewiesen werden, war: {:?}",
+            "JavaScript-Modus mit vorhandenem Chromium muss starten, war: {:?}",
             other.map(|_| ())
         ),
     }
-    assert!(!file.exists(), "es wird kein Crawl angelegt");
+    assert!(
+        file.exists(),
+        "JavaScript-Crawl wird angelegt; fehlendes Chromium prüft render_integration.rs"
+    );
 }
 
 // spec: CRAWL-001

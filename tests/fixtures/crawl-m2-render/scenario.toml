@@ -1,0 +1,70 @@
+[[route]]
+path = "/robots.txt"
+content_type = "text/plain"
+body = "User-agent: *\nDisallow: /blocked.js\n"
+
+[[route]]
+path = "/"
+content_type = "text/html"
+body = '''<!doctype html><html><head><title>Raw</title><meta name="robots" content="noindex"></head><body><p id="removed">Removed-Marker</p><a href="/both">both</a><a id="raw" href="/raw">raw</a><img id="lazy" data-src="/lazy.png"><script>
+document.title='Rendered';
+document.querySelector('[name=robots]').remove();
+document.querySelector('#removed').remove();
+document.querySelector('#raw').remove();
+document.querySelector('#lazy').src='/lazy.png';
+document.head.insertAdjacentHTML('beforeend','<link rel="canonical" href="/canonical">');
+document.body.insertAdjacentHTML('beforeend','<h1>DOM heading</h1><p id="late">Injected-Marker</p><a href="/js-only">JS only</a><a href="/js-only">twice</a><a href="http://external.test/out">external</a>');
+const blocked=document.createElement('script'); blocked.src='/blocked.js'; document.head.append(blocked);
+document.cookie='js_session=active; Path=/';
+document.body.dataset.visibleCookies=document.cookie;
+console.error('fixture-js-error');
+</script></body></html>'''
+
+[route.headers]
+Set-Cookie = "http_secret=only-http; Path=/; HttpOnly"
+
+[[route]]
+path = "/lazy.png"
+png_size = 20000
+
+[[route]]
+path = "/both"
+body = "both"
+[[route]]
+path = "/raw"
+body = "raw"
+[[route]]
+path = "/js-only"
+body = "js"
+[[route]]
+path = "/canonical"
+body = "canonical"
+[[route]]
+path = "/out"
+body = "external"
+[[route]]
+path = "/blocked.js"
+content_type = "application/javascript"
+body = "console.error('must not load')"
+
+[[route]]
+path = "/redirect"
+content_type = "text/html"
+body = "<script>location.replace('/js-only')</script>"
+[[route]]
+path = "/pushstate"
+content_type = "text/html"
+body = "<script>history.pushState({},'', '/js-only')</script><h1>same document</h1>"
+[[route]]
+path = "/late"
+content_type = "text/html"
+body = "<script>setTimeout(()=>location.href='/js-only',10000)</script>"
+[[route]]
+path = "/fragment"
+content_type = "text/html"
+body = "<a href='/fragment#a'>a</a><a href='/fragment#b'>b</a><script>document.title=location.hash||'none'</script>"
+
+[[route]]
+path = "/meta-redirect"
+content_type = "text/html"
+body = "<meta http-equiv='refresh' content='0;url=/js-only'>"

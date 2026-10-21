@@ -244,6 +244,8 @@ pub enum Pop {
 
 /// Gemeinsamer Zustand aller Worker (hinter einer Sperre).
 pub struct Core {
+    /// JS hash routes require independent browser passes (CRAWL-004).
+    pub render_fragments: bool,
     pub respect_hidden: std::collections::HashSet<UrlId>,
     pub folder_policy: Option<(String, bool)>,
     pub limits: os_model::LimitsConfig,
@@ -332,6 +334,7 @@ impl Core {
     /// Leerer Zustand.
     pub fn new(max_urls: u64, max_depth: Option<u32>) -> Self {
         Core {
+            render_fragments: false,
             respect_hidden: std::collections::HashSet::new(),
             folder_policy: None,
             limits: os_model::LimitsConfig::default(),
@@ -575,7 +578,7 @@ impl Core {
         } else {
             c
         };
-        if c.norm.url.fragment().is_some() {
+        if c.norm.url.fragment().is_some() && !self.render_fragments {
             let base = os_url::normalize(&c.norm.url);
             let admitted = self.admit(c, depth, 0, rules);
             let base_cand = Cand {

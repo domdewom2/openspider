@@ -33,8 +33,8 @@ pub struct EngineDeps {
     /// Wer den Crawl besitzt, für `crawl_meta.owner_kind`: `"cli"` (Kommandozeile), `"app"` (Oberfläche),
     /// `"mcp-stdio"` (MCP-Server). Keine weitere Steuerung.
     pub owner_kind: &'static str,
-    /// JavaScript-Rendering (ab M2, `rendering.mode = javascript`): `None` = Textmodus. Die Engine ruft den Renderer pro
-    /// Seite auf (`render_glue`); M2-E05 setzt den Ablauf um.
+    /// Optional renderer override. In JavaScript mode, None launches Chromium lazily;
+    /// text mode never calls a renderer.
     pub renderer: Option<Arc<dyn crate::render_glue::Renderer>>,
 }
 
