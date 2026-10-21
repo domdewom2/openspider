@@ -1,0 +1,2 @@
+import { definePage, f } from "../../frame/definePage";
+export const page = definePage({ id: "analysis", order: 170, anchors: ["analysis"], fields: ["auto_at_end", "link_score", "canonicals", "pagination", "hreflang", "links", "sitemaps", "content", "near_duplicates", "images", "analytics", "search_console", "link_metrics", "amp"].map(key => f(`analysis.${key}`, { labelKey: `fach-analysis-${key.replaceAll("_", "-")}`, ...(key === "images" ? { enabledWhen: { path: "rendering.mode", equals: "javascript" }, hintKey: "fach-images-hint" } : {}) })) });
