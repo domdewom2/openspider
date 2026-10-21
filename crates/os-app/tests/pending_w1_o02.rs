@@ -8,7 +8,6 @@ use serde_json::json;
 
 // spec: CRAWL-143
 #[tokio::test]
-#[ignore = "M2: wartet auf M2-K04"]
 async fn duplicate_opens_by_copied_id_and_resumes_without_changing_original() {
     let dir = tempfile::tempdir().unwrap();
     let app = common::new_app(dir.path());

@@ -2,7 +2,7 @@ use os_model::{CrawlConfig, Value};
 use os_parse::{parse_html, ParseConfig, ParseInput};
 // spec: TECH-008 [P1]
 #[test]
-#[ignore = "M2: wartet auf M2-D10"]
+#[ignore = "Klärung K2-68: N01-C18, Besitzer M2-N01b (Validierung und Outside-Fakten bei direktem parse_html)"]
 fn validation_marker_accompanies_outside_facts_in_real_parser() {
     let mut crawl = CrawlConfig::default();
     crawl.advanced.html_validation = true;

@@ -4,7 +4,6 @@ use support::*;
 
 // spec: OUT-066
 #[test]
-#[ignore = "M2: wartet auf M2-D05"]
 fn pagination_filter_inlinks_are_supplied_by_the_pagination_package() {
     let dir = tempfile::tempdir().unwrap();
     let file = new_file(dir.path(), "pagination.ospider");

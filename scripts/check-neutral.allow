@@ -3,8 +3,4 @@
 # Teiltext enthält. Verwaiste Einträge meldet das Skript als Warnung; entfernt werden sie von M2-N01.
 tests/fixtures/tech/multi-columns/c510.html	hreflang="sf" href="/hl/sf.html"	Test-Sprachcode im hreflang-Attribut und Linkziel; die Goldens hängen daran
 tests/fixtures/tech/multi-columns/d500.html	hreflang="sf" href="/hl/sf.html"	Test-Sprachcode im hreflang-Attribut und Linkziel; die Goldens hängen daran
-.github/workflows/ci.yml	Referenzexporte (SF 24.3 Free	vorübergehend bis zum Merge von M2-F04 (alter Job parity)
-.github/workflows/ci.yml	*/sf/ Referenzdateien	vorübergehend bis zum Merge von M2-F04 (alter Job parity)
-.github/workflows/ci.yml	*/sf/*.csv >/dev/null	vorübergehend bis zum Merge von M2-F04 (alter Job parity)
-.github/workflows/ci.yml	*/sf/ – Paritätslauf	vorübergehend bis zum Merge von M2-F04 (alter Job parity)
 package-lock.json	sha512-9rTIZ4ZjWwalCPiaY+kPiALLfOKgAz5CTi/Zb1L+qSZ8PH3zVo1T8JcgXIIqg1iM3pZ6hF+n9xO5r2jZ/SF+jg==	M2-S02/K2-61: exakter npm-Integritaetshash von devtools-protocol@0.0.1260888, zufaelliger Base64-Treffer, kein Produktbezug

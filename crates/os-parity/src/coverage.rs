@@ -201,6 +201,10 @@ pub fn valid_defer_reason(reason: &str) -> bool {
             return rest.chars().next().is_some_and(|c| c.is_ascii_digit());
         }
     }
+    // M2-Klärungen (`Klärung K2-<Zahl>`, z. B. K2-68) sind auch für den M1-Strict-Lauf gültig.
+    if let Some(rest) = r.strip_prefix("Klärung K2-") {
+        return rest.chars().next().is_some_and(|c| c.is_ascii_digit());
+    }
     false
 }
 

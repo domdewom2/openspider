@@ -381,8 +381,7 @@ async fn files_are_named_after_the_report_and_xlsx_holds_the_same_table() {
     ));
 }
 
-// spec: OUT-081 [M2]
-// spec: CRAWL-018 [M2]
+// spec: OUT-081
 #[tokio::test]
 async fn hsts_policy_hop_is_307_hsts_policy() {
     let (fx, cfg) = crawl(None, &[]).await;
@@ -393,6 +392,78 @@ async fn hsts_policy_hop_is_307_hsts_policy() {
     assert_eq!(hop(&t, r, "Status Code", 1), "307");
     assert_eq!(hop(&t, r, "Status", 1), "HSTS Policy");
     assert_eq!(t.get(r, "Temp Redirect in Chain"), "False");
+}
+
+// spec: OUT-081 [M2]
+// spec: CRAWL-018 [M2]
+#[tokio::test]
+async fn all_redirects_exports_a_policy_learned_from_an_https_fixture() {
+    let mut cfg = base_config();
+    cfg.http.respect_hsts = true;
+    cfg.speed.threads = 1;
+    let fx = crawl_fixture_from("onpage-m2-rc", "https://site.test/hsts", cfg.clone()).await;
+    let requests = fx.site.requests();
+    assert!(requests
+        .iter()
+        .any(|r| r.path_and_query == "/hsts" && r.tls));
+    let targets: Vec<_> = requests
+        .iter()
+        .filter(|r| r.path_and_query == "/hsts-target")
+        .collect();
+    assert_eq!(targets.len(), 1);
+    assert!(targets[0].tls, "HSTS upgrades without an HTTP request");
+
+    let (_tmp, t) = load(&fx, &cfg, "Redirects:All Redirects");
+    assert_eq!(t.rows.len(), 1);
+    let r = t.row("Address", "/hsts-target");
+    assert_eq!(t.get(r, "Address"), "http://site.test/hsts-target");
+    assert_eq!(t.get(r, "Chain Type"), "HSTS Policy");
+    assert_eq!(t.get(r, "Number of Redirects"), "1");
+    assert_eq!(hop(&t, r, "Redirect Type", 1), "HSTS Policy");
+    assert_eq!(
+        hop(&t, r, "Redirect URL", 1),
+        "https://site.test/hsts-target"
+    );
+    assert_eq!(hop(&t, r, "Status Code", 1), "307");
+    assert_eq!(hop(&t, r, "Status", 1), "HSTS Policy");
+    assert_eq!(t.get(r, "Temp Redirect in Chain"), "False");
+    assert_eq!(t.get(r, "Final Address"), "https://site.test/hsts-target");
+    assert_eq!(t.get(r, "Final Status Code"), "404");
+}
+
+// spec: OUT-081 [M2]
+// spec: CRAWL-018 [M2]
+#[tokio::test]
+async fn all_redirects_omits_synthetic_hops_when_hsts_is_disabled() {
+    let mut cfg = base_config();
+    cfg.http.respect_hsts = false;
+    cfg.speed.threads = 1;
+    let fx = crawl_fixture_from("onpage-m2-rc", "https://site.test/hsts", cfg.clone()).await;
+    let requests = fx.site.requests();
+    assert!(requests
+        .iter()
+        .any(|r| r.path_and_query == "/hsts" && r.tls));
+    let targets: Vec<_> = requests
+        .iter()
+        .filter(|r| r.path_and_query == "/hsts-target")
+        .collect();
+    assert_eq!(targets.len(), 1);
+    assert!(!targets[0].tls, "disabled HSTS uses the HTTP response");
+
+    // This fixture returns an HTTP 404, so there is no real server redirect either.
+    let (_tmp, t) = load(&fx, &cfg, "Redirects:All Redirects");
+    assert!(t.rows.is_empty());
+    let (status, redirect): (i64, Option<String>) = fx
+        .file
+        .conn()
+        .query_row(
+            "SELECT status_code, redirect_type FROM urls WHERE address = ?1",
+            ["http://site.test/hsts-target"],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .unwrap();
+    assert_eq!(status, 404);
+    assert_eq!(redirect, None);
 }
 
 // spec: OUT-081 [M2]

@@ -9,7 +9,6 @@ import type {} from "./harness";
 
 // spec: OUT-020 [M2]
 test("real bridge exports the filtered view into the predetermined save path", async ({ page }) => {
-  test.fixme(true, "wartet auf M2-K04/M2-K06: crawl.start, view.open und export.view sind F05-Stubs (C9)");
   const output = await mkdtemp(join(tmpdir(), "os-export-u16-"));
   const server = createServer((request, response) => {
     response.setHeader("Content-Type", request.url === "/robots.txt" ? "text/plain" : "text/html");

@@ -550,3 +550,43 @@ async fn goldens_directives() {
     let c = crawl(CrawlConfig::default()).await;
     golden(&c, FILTERS);
 }
+
+// spec: TECH-003 [M2]
+// spec: TECH-008 [M2]
+// spec: TECH-051 [M2]
+#[tokio::test]
+async fn outside_head_flags_survive_validation_and_respect_switches() {
+    for validation in [true, false] {
+        let mut cfg = CrawlConfig::default();
+        cfg.advanced.html_validation = validation;
+        cfg.advanced.respect_noindex = true;
+        let c = Crawled {
+            fx: crawl_fixture("tech-m2-directives", cfg.clone()).await,
+            cfg,
+        };
+        // Body-Element und implizit durch img geschlossener Head bleiben extrahiert.
+        for (path, expected) in [
+            ("/body.html", "noindex, noarchive"),
+            ("/after-img.html", "noindex"),
+        ] {
+            assert_eq!(c.text_cell("Noindex", path, "Meta Robots 1"), expected);
+        }
+        let outside = c.set("Outside <head>");
+        if validation {
+            assert!(outside.contains("/body.html"));
+            assert!(outside.contains("/after-img.html"));
+            assert!(!outside.contains("/noarchive.html"));
+        } else {
+            assert!(outside.is_empty());
+        }
+        let mut stmt = c.fx.file.conn().prepare(
+            "SELECT r.in_head FROM directives r JOIN urls u ON u.id = r.url_id WHERE r.source = 'meta_robots' AND (u.address LIKE '%/body.html' OR u.address LIKE '%/after-img.html')"
+        ).unwrap();
+        let flags = stmt
+            .query_map([], |r| r.get::<_, bool>(0))
+            .unwrap()
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        assert_eq!(flags, vec![false, false]);
+    }
+}
