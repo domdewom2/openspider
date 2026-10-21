@@ -311,17 +311,25 @@ try {
     await check("separate settings window", async () => {
       const before = await browser.getWindowHandles();
       await evaluate("window.s02.settings()");
-      const handles = await until(async () => { const h = await browser.getWindowHandles(); return h.length > before.length && h; }, "settings window");
-      const settings = handles.find(h => !before.includes(h));
-      await browser.switchToWindow(settings);
-      await until(() => browser.execute("return window.__osRuntime?.label === 'settings' && document.body.innerText.length > 0"), "settings content");
+      // The Windows test build creates the (hidden) settings window at startup (see ui-e2e-b.yml), so it may already be among
+      // the handles; find it by its label instead of by a new handle.
+      let settings;
+      await until(async () => {
+        for (const handle of await browser.getWindowHandles()) {
+          if (handle === before[0]) continue;
+          await browser.switchToWindow(handle);
+          if (await browser.execute("return window.__osRuntime?.label === 'settings' && document.body.innerText.length > 0").catch(() => false)) { settings = handle; return true; }
+        }
+        await browser.switchToWindow(before[0]);
+        return false;
+      }, "settings window");
       await evaluate("import('/spikes/probe.ts').then(m => { window.s02 = m; })");
       const value = await evaluate("window.s02.snapshot()");
       assert.equal(value.transport, "tauri");
       assert.equal(value.shell.visible, true);
       assert.equal(value.shell.minimized, false);
       await browser.switchToWindow(before[0]);
-      return value;
+      return { ...value, handle: settings };
     });
     // spec: UI-113, OUT-232
     // N01b: app.requestQuit itself opens the "Quit OpenSpider?" confirmation (CI screenshot of the failed run), so the window

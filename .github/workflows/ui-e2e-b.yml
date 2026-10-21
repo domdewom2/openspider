@@ -59,22 +59,23 @@ jobs:
           echo "S02_GUI=1" >> "$GITHUB_ENV"
       - name: Build Windows app
         if: runner.os == 'Windows'
-        run: |
-          cargo build --locked -p openspider-desktop
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: WebView2 remote debugging policy
-        if: runner.os == 'Windows'
         shell: pwsh
         run: |
           # msedgedriver hands "--remote-debugging-port=0" to WebView2 through WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS. The app
           # ignores it: wry sets its own additional browser arguments through the API (the WebView2 command line of the failed
-          # runs shows only wry's defaults), hence "DevToolsActivePort file doesn't exist". The WebView2 policy value applies to
-          # every WebView2 environment of the app (main and settings window must share identical options) without changing
-          # the product configuration.
-          $key = 'HKCU:\Software\Policies\Microsoft\Edge\WebView2\AdditionalBrowserArguments'
-          New-Item -Path $key -Force | Out-Null
-          Set-ItemProperty -Path $key -Name 'openspider-desktop.exe' -Value '--remote-debugging-port=0'
-          Get-ItemProperty -Path $key | Format-List
+          # runs shows only wry's defaults), hence "DevToolsActivePort file doesn't exist"; a WebView2 policy value is ignored
+          # as well. Only for this test build, TAURI_CONFIG adds the flag to both windows. They must carry identical
+          # arguments (WebViews of one data directory), so the settings window exists from the start (hidden) and is shown by
+          # openSettingsWindow instead of being created at runtime. The product configuration stays unchanged.
+          $conf = Get-Content apps/desktop/src-tauri/tauri.conf.json -Raw | ConvertFrom-Json
+          foreach ($w in $conf.app.windows) {
+            $w | Add-Member -NotePropertyName additionalBrowserArgs -NotePropertyValue '--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --remote-debugging-port=0' -Force
+            if ($w.label -eq 'settings') { $w.PSObject.Properties.Remove('create') }
+          }
+          $env:TAURI_CONFIG = (@{ app = @{ windows = $conf.app.windows } } | ConvertTo-Json -Depth 10 -Compress)
+          Write-Host "TAURI_CONFIG=$env:TAURI_CONFIG"
+          cargo build --locked -p openspider-desktop
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: WebView2 driver
         if: runner.os == 'Windows'
         shell: pwsh
