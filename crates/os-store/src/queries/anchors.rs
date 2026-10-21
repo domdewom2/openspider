@@ -143,38 +143,101 @@ pub fn detail_rows_with(
     limit: u64,
     options: AnchorOptions,
 ) -> Result<super::DetailData, crate::StoreError> {
+    aggregate(file, ids, offset, limit, options, &Extras::default(), &[])
+}
+
+/// Additional restrictions of the parameter-aware aggregation (position, one anchor group, free text).
+#[derive(Default)]
+struct Extras {
+    position: Option<String>,
+    anchor: Option<String>,
+    search: Option<String>,
+}
+
+/// Sortable aggregate columns (display name, SQL expression).
+const SORTABLE: [(&str, &str); 7] = [
+    ("Anchor Text", "({TEXT}) COLLATE OS_ANCHOR_SORT"),
+    ("Links", "COUNT(*)"),
+    ("Unique Sources", "COUNT(DISTINCT l.source_id)"),
+    ("Unique Targets", "COUNT(DISTINCT l.target_id)"),
+    ("Follow Links", "SUM(l.follow <> 0)"),
+    ("Nofollow Links", "SUM(l.follow = 0)"),
+    ("% of Links", "COUNT(*)"),
+];
+
+fn aggregate(
+    file: &crate::CrawlFile,
+    ids: &[UrlId],
+    offset: u64,
+    limit: u64,
+    options: AnchorOptions,
+    extras: &Extras,
+    sort: &[super::LinkSortKey],
+) -> Result<super::DetailData, crate::StoreError> {
+    // The free-text clause needs the source/target addresses, hence the joins exist only with a search.
+    let (joins, search) = if extras.search.is_some() {
+        (
+            "JOIN urls s ON s.id = l.source_id LEFT JOIN urls t ON t.id = l.target_id",
+            "AND instr(lower(s.address || ' ' || COALESCE(t.address, l.target_raw) || ' ' || \
+             COALESCE(l.anchor, '') || ' ' || COALESCE(l.alt_text, '')), lower(?5)) > 0",
+        )
+    } else {
+        ("", "AND ?5 IS NULL")
+    };
     let base = format!(
-        "FROM links l WHERE {} GROUP BY ({TEXT_SQL}) COLLATE OS_ANCHOR",
+        "FROM links l {joins} WHERE {} AND (?3 IS NULL OR l.link_position = ?3) \
+         AND (?4 IS NULL OR ({TEXT_SQL}) COLLATE OS_ANCHOR = ?4) {search} \
+         GROUP BY ({TEXT_SQL}) COLLATE OS_ANCHOR",
         condition(ids, options)
     );
+    let bind = params![
+        limit.min(i64::MAX as u64),
+        offset.min(i64::MAX as u64),
+        extras.position,
+        extras.anchor,
+        extras.search
+    ];
     let total = file.conn().query_row(
         &format!("SELECT COUNT(*) FROM (SELECT 1 {base})"),
-        [],
+        params![0, 0, extras.position, extras.anchor, extras.search],
         |r| r.get(0),
     )?;
+    let mut order = Vec::new();
+    for key in sort {
+        if let Some((_, expr)) = SORTABLE
+            .iter()
+            .find(|(name, _)| name.eq_ignore_ascii_case(&key.column))
+        {
+            order.push(format!(
+                "{} {}",
+                expr.replace("{TEXT}", TEXT_SQL),
+                if key.desc { "DESC" } else { "ASC" }
+            ));
+        }
+    }
+    order.push("COUNT(*) DESC".into());
+    order.push(format!("({TEXT_SQL}) COLLATE OS_ANCHOR_SORT ASC"));
     let mut stmt = file.conn().prepare(&format!(
         "SELECT {TEXT_SQL}, COUNT(*), COUNT(DISTINCT l.source_id),
         COUNT(DISTINCT l.target_id), SUM(l.follow <> 0), SUM(l.follow = 0),
         100.0 * COUNT(*) / SUM(COUNT(*)) OVER () {base}
-        ORDER BY COUNT(*) DESC, ({TEXT_SQL}) COLLATE OS_ANCHOR_SORT ASC LIMIT ?1 OFFSET ?2"
+        ORDER BY {} LIMIT ?1 OFFSET ?2",
+        order.join(", ")
     ))?;
     let rows = stmt
-        .query_map(
-            params![limit.min(i64::MAX as u64), offset.min(i64::MAX as u64)],
-            |r| {
-                let anchor = normalize(&r.get::<_, String>(0)?);
-                let mut values = vec![Value::Text(if anchor.is_empty() {
-                    "(leer)".into()
-                } else {
-                    anchor
-                })];
-                for i in 1..6 {
-                    values.push(Value::Int(r.get(i)?));
-                }
-                values.push(Value::Float(r.get(6)?));
-                Ok(values)
-            },
-        )?
+        .query_map(bind, |r| {
+            let anchor = normalize(&r.get::<_, String>(0)?);
+            let mut values = vec![Value::Text(if anchor.is_empty() {
+                "(leer)".into()
+            } else {
+                anchor
+            })];
+            for i in 1..6 {
+                values.push(Value::Int(r.get(i)?));
+            }
+            values.push(Value::Float(r.get(6)?));
+            Ok(values)
+        })?
         .collect::<Result<Vec<_>, _>>()?;
     Ok(super::DetailData {
         columns: [
@@ -212,15 +275,46 @@ pub fn matching_link_ids(
 }
 
 /// Parameter-aware extension missing from the original F05 anchor contract (K2-61).
-/// M2-D08 fills direction, self/nofollow/position/search and sorting together.
-// STUB(M2-D08)
+///
+/// Reads `incoming` (default true; alternatively `direction`/`outlinks`), `excludeSelf` (default true, TECH-146),
+/// `excludeNofollow`, `position`, `anchor` (restricts to one group) and `search`; sorts by the aggregate columns.
 pub fn selected_detail_rows(
-    _file: &crate::CrawlFile,
-    _urls: &[os_model::UrlId],
-    _params: &serde_json::Value,
-    _sort: &[super::LinkSortKey],
-    _offset: u64,
-    _limit: u64,
+    file: &crate::CrawlFile,
+    urls: &[os_model::UrlId],
+    params: &serde_json::Value,
+    sort: &[super::LinkSortKey],
+    offset: u64,
+    limit: u64,
 ) -> Result<super::DetailData, crate::StoreError> {
-    Err(crate::StoreError::NotImplemented("M2-D08"))
+    let flag = |camel: &str, default: bool| {
+        params
+            .get(camel)
+            .and_then(serde_json::Value::as_bool)
+            .unwrap_or(default)
+    };
+    let text = |key: &str| {
+        params
+            .get(key)
+            .and_then(serde_json::Value::as_str)
+            .filter(|s| !s.is_empty())
+            .map(str::to_owned)
+    };
+    let outlinks = match params.get("incoming").and_then(serde_json::Value::as_bool) {
+        Some(incoming) => !incoming,
+        None => {
+            flag("outlinks", false)
+                || params.get("direction").and_then(serde_json::Value::as_str) == Some("outlinks")
+        }
+    };
+    let options = AnchorOptions {
+        outlinks,
+        exclude_self: flag("excludeSelf", true),
+        exclude_nofollow: flag("excludeNofollow", false),
+    };
+    let extras = Extras {
+        position: text("position"),
+        anchor: text("anchor"),
+        search: text("search"),
+    };
+    aggregate(file, urls, offset, limit, options, &extras, sort)
 }
