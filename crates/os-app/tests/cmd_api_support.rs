@@ -101,8 +101,9 @@ impl Harness {
     }
     pub async fn op(&self, name: &str, args: Value) -> Result<Value, os_app::CmdError> {
         let handle = self.call(name, args).await?;
+        // 15 s were too tight on loaded Windows runners (cmd_api_support.rs:109, K2-64); the operations finish in < 1 s locally.
         let status = tokio::time::timeout(
-            Duration::from_secs(15),
+            Duration::from_secs(90),
             self.app.ops().wait(handle["opId"].as_str().unwrap()),
         )
         .await

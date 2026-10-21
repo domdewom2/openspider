@@ -613,7 +613,10 @@ async fn sliding_window_and_retry_limit_are_observed_by_mock() {
     let calls = mock.log.calls();
     assert_eq!(calls.len(), 5);
     for calls in calls.windows(3) {
-        assert!(calls[2].at.duration_since(calls[0].at) >= Duration::from_millis(990));
+        // The window is 1 s. The mock stamps the arrival of a request, which trails the limiter's release by the loopback
+        // latency and, on Windows, by a 15.6 ms timer tick per call: 990 ms flaked there (api_framework.rs:616, K2-64).
+        // Without the limiter all five calls arrive within a few ms, so 800 ms still proves the sliding window.
+        assert!(calls[2].at.duration_since(calls[0].at) >= Duration::from_millis(800));
     }
     let transport = Transport::new(
         &Default::default(),
