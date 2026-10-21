@@ -557,7 +557,9 @@ async fn reaching_the_maximum_runtime_stops_the_crawl_but_exports_the_state_so_f
     t.execution.timeout_min = Some(1);
     fx.save(&t);
     let mut ctx = fx.ctx();
-    ctx.timeout_scale = 0.03; // 1 Minute -> 1,8 s
+    // 1 Minute -> 4,8 s. K2-64: 1,8 s reichten unter Last (parallele Testprogramme, CI) nicht für die erste Seite (400 ms je Seite,
+    // ein Thread); 4,8 s halten die Aussage „Teilstand, 1 bis 19 von 21 Seiten“ (rund 12 Seiten) robust.
+    ctx.timeout_scale = 0.08;
     let run = run_in(
         &ctx,
         "capped",
