@@ -90,3 +90,23 @@ async fn robots_tester_uses_the_draft_user_agent_of_the_dialog() {
     assert_eq!(draft["matchedLine"], 4);
     assert_eq!(draft["userAgent"], "Special");
 }
+
+// spec: CRAWL-109
+#[tokio::test]
+async fn config_validate_reports_an_invalid_regex_once_per_path() {
+    let dir = tempfile::tempdir().unwrap();
+    let app = session::app(dir.path());
+    let mut config = serde_json::to_value(os_model::CrawlConfig::default()).unwrap();
+    config["scope"]["include"] = json!(["a", "["]);
+    config["rewrite"]["regex_replace"] = json!([{"pattern":"[","replacement":"x"}]);
+    let dto = json!({"schemaVersion": 2, "generator": "n01b", "config": config});
+    let issues = session::call(&app, "config.validate", dto).await;
+    let paths: Vec<_> = issues
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|i| i["path"].as_str().unwrap().to_owned())
+        .collect();
+    assert_eq!(paths, ["scope.include[1]", "rewrite.regex_replace[0].pattern"]);
+    assert!(!issues.to_string().contains("Zeile 0"));
+}

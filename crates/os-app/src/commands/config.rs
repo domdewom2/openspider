@@ -39,7 +39,13 @@ pub(super) fn decode(dto: CrawlConfigDto) -> Result<CrawlConfig, CmdError> {
 
 pub(super) fn issues(cfg: &CrawlConfig) -> Vec<ValidationIssue> {
     let report = cfg.validate();
-    let extra = os_engine::config_check::validate(cfg);
+    // The engine checks (regex dialect, rule sets) repeat findings of the model validation with a 0-based line;
+    // one message per path is enough (CRAWL-109/110).
+    let known: std::collections::HashSet<_> = report.errors.iter().map(|i| i.path.clone()).collect();
+    let extra: Vec<_> = os_engine::config_check::validate(cfg)
+        .into_iter()
+        .filter(|i| !known.contains(&i.path))
+        .collect();
     report
         .errors
         .into_iter()
