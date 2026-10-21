@@ -126,7 +126,8 @@ pub async fn start(app: &App, ctx: CallCtx, req: StartRequest) -> Result<CrawlRe
     if let StartSource::List { .. } = &req.source {
         cfg = os_engine::list_input::list_config(cfg);
     }
-    let fetch = fetcher(app, &cfg)?;
+    // CRAWL-122: app-wide proxy settings reach the crawl; an unreachable proxy fails here, before any session or file exists.
+    let fetch = Arc::new(crate::commands::settings_network::crawl_fetcher(app, &cfg).await?);
     start_with_fetcher(app, ctx, req, cfg, fetch).await
 }
 

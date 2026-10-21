@@ -5,7 +5,6 @@ use common::*;
 use serde_json::json;
 // spec: CRAWL-122
 #[tokio::test]
-#[ignore = "Klärung K2-68: N01-C06, Besitzer M2-N01b (Proxy-Preflight vor Sitzung/Datei)"]
 async fn crawl_start_rejects_unreachable_proxy_before_creating_a_crawl() {
     let dir = tempfile::tempdir().unwrap();
     let app = new_app(dir.path());
