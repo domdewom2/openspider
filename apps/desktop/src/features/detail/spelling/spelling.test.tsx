@@ -82,6 +82,8 @@ describe("Spelling & grammar details", () => {
     render(<Spelling {...props()} />); await settle(400);
     expect(document.querySelector('[data-empty-state="FEATURE_DISABLED(spelling.enabled)"]')).not.toBeNull();
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Open setting" })); await Promise.resolve(); });
-    const { openSettingsWindow } = await import("../../../app/windows"); expect(openSettingsWindow).toHaveBeenCalledWith("spelling.enabled");
+    // N01b: the prerequisite jump opens the crawl configuration dialog at the field (UI-016).
+    const { useConfigDialog, closeConfig } = await import("../../config/frame/store");
+    expect(useConfigDialog.getState()).toMatchObject({ open: true, anchor: "spelling.enabled" }); closeConfig();
   });
 });

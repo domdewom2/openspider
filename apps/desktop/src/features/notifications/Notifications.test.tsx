@@ -10,6 +10,7 @@ import { usePrefs } from "../../state/prefs";
 import { setLanguage } from "../../i18n";
 import type { Notice } from "../../ipc/gen/Notice";
 import { IpcError, localError } from "../../ipc/errors";
+import { closeConfig, useConfigDialog } from "../config/frame/store";
 
 let core: ReturnType<typeof setupHeader>;
 beforeEach(async () => { core = setupHeader(); await setLanguage("en"); usePrefs.setState({ notifications: true }); });
@@ -26,7 +27,10 @@ it("shows DNS, connection, TLS, robots and cross-host failures without hiding th
     expect(screen.getByText(text)).toBeVisible();
     if (code === "start-robots") {
       fireEvent.click(screen.getByRole("button", { name: /Ignore robots.txt/ }));
-      expect(open).toHaveBeenCalledWith("settings.html#robots.mode", "settings", expect.any(String));
+      // N01b: configuration anchors open the in-app configuration dialog (UI-016), not the settings window.
+      expect(useConfigDialog.getState()).toMatchObject({ open: true, anchor: "robots.mode" });
+      expect(open).not.toHaveBeenCalled();
+      closeConfig();
       expect(core.calls.some((c) => c.cmd === "config.set")).toBe(false);
     }
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
@@ -130,6 +134,7 @@ it("cancel resumes without saving credentials", async () => {
 });
 
 // spec: CRAWL-129
+// spec: UI-016
 it("shows the memory pause banner and three direct settings links", () => {
   const open = vi.spyOn(window, "open").mockReturnValue(null);
   useSession.getState().applyTick({ ...tick, crawl: { ...tick.crawl!, memoryStage: "paused" } });
@@ -137,7 +142,8 @@ it("shows the memory pause banner and three direct settings links", () => {
   expect(screen.getByText("Low memory – crawl paused")).toBeVisible();
   for (const [name, anchor] of [["Reduce threads", "speed.threads"], ["Disable rendering", "rendering.mode"], ["Disable HTML storage", "extraction.store_html"]]) {
     fireEvent.click(screen.getByRole("button", { name }));
-    expect(open).toHaveBeenLastCalledWith(`settings.html#${anchor}`, "settings", expect.any(String));
+    expect(useConfigDialog.getState()).toMatchObject({ open: true, anchor });
+    expect(open).not.toHaveBeenCalled();
   }
 });
 
