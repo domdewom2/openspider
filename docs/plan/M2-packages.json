@@ -2329,7 +2329,36 @@
   ],
   "runner": "local-mac",
   "size": "M",
-  "prompt_notes": "Arbeitsliste: docs/plan/M2-reports/n01.md Tabelle 1 (Befunde N01-C01…C18, E2E-1/2 mit Entscheidung und Zielpaket) – nur die mit Besitzer M2-N01b. Je behobener Lücke das zugehörige „Klärung K2-68“-Ignore/fixme entfernen; Test bleibt unverändert und muss grün sein. E2E-2 (Pause-Phase > 5 s): Latenz von crawl.pause in Engine/Bridge prüfen; ist sie spec-gemäß, stattdessen expect-Timeout mit Beleg anheben. K2-64: Ziel CI-Schritt „Rust tests“ ≤ 15 min (Kandidaten lifecycle_crash 196 s, tools_read 53 s, decide_crawl 47 s, links_response_codes 44 s, recompute_d06_directives 38 s, render_chromium 36 s, Windows cmd_crawls_management, run_task_cli, cmd_tasks_*), Assertions unverändert; gelingt es, ci.yml-Limit in Absprache mit dem Orchestrator senken. Auflagen aus Fable r8/T01: RobotsTestArgs.userAgent (Robots-Tester mit Entwurfs-UA, CRAWL-102); Doppelmeldung der Regex-Validierung (0-basierte Zeile) in config.validate; profile.list „zuletzt geladen“; Sprungziele openSettingsWindow→openConfig (Benachrichtigungen, Seitenleiste); Lighthouse-/KI-Zeilen im API-Tab (ApiKind); ops shutting_down() mit injizierter Clock. Auflagen an K14 (byClass-Schlüssel Issues/Warnings/Opportunities/High/Medium/Low in View indexability; „Segment equals <Name>“ als „ist in Segment“; Pfadform ValidationIssues von segment.validate; Segmentfilter in sidebar.siteStructure; Idempotenz segment.reassign; Versionssprung nach reassign) gehören ebenfalls hierher, da K14 gemergt ist (Besitz additiv nach K2-61 in os-app/src/commands/segment*.rs). Teile in Dateien anderer Welle-2-Pakete (Robots-Tester-UI und Profilliste in features/config/frame/** von U13, ApiKind-Zeilen in features/sidebar/api/** von U22, Segment-Commands von K14, Testlaufzeit von run_task_cli/cmd_tasks_* von T01) nur strikt additiv nach K2-61 bzw. als Erwartungs-/Laufzeitänderung mit Begründung im Bericht; diese Pakete sind gemergt."
+  "prompt_notes": "Arbeitsliste: docs/plan/M2-reports/n01.md Tabelle 1 (Befunde N01-C01…C18, E2E-1/2 mit Entscheidung und Zielpaket) – nur die mit Besitzer M2-N01b. Je behobener Lücke das zugehörige „Klärung K2-68“-Ignore/fixme entfernen; Test bleibt unverändert und muss grün sein. E2E-2 (Pause-Phase > 5 s): Latenz von crawl.pause in Engine/Bridge prüfen; ist sie spec-gemäß, stattdessen expect-Timeout mit Beleg anheben. K2-64: Ziel CI-Schritt „Rust tests“ ≤ 15 min (Kandidaten lifecycle_crash 196 s, tools_read 53 s, decide_crawl 47 s, links_response_codes 44 s, recompute_d06_directives 38 s, render_chromium 36 s, Windows cmd_crawls_management, run_task_cli, cmd_tasks_*), Assertions unverändert; gelingt es, ci.yml-Limit in Absprache mit dem Orchestrator senken. Auflagen aus Fable r8/T01: RobotsTestArgs.userAgent (Robots-Tester mit Entwurfs-UA, CRAWL-102); Doppelmeldung der Regex-Validierung (0-basierte Zeile) in config.validate; profile.list „zuletzt geladen“; Sprungziele openSettingsWindow→openConfig (Benachrichtigungen, Seitenleiste); Lighthouse-/KI-Zeilen im API-Tab (ApiKind); ops shutting_down() mit injizierter Clock. Auflagen an K14 (byClass-Schlüssel Issues/Warnings/Opportunities/High/Medium/Low in View indexability; „Segment equals <Name>“ als „ist in Segment“; Pfadform ValidationIssues von segment.validate; Segmentfilter in sidebar.siteStructure; Idempotenz segment.reassign; Versionssprung nach reassign) gehören ebenfalls hierher, da K14 gemergt ist (Besitz additiv nach K2-61 in os-app/src/commands/segment*.rs). Teile in Dateien anderer Welle-2-Pakete (Robots-Tester-UI und Profilliste in features/config/frame/** von U13, ApiKind-Zeilen in features/sidebar/api/** von U22, Segment-Commands von K14, Testlaufzeit von run_task_cli/cmd_tasks_* von T01) nur strikt additiv nach K2-61 bzw. als Erwartungs-/Laufzeitänderung mit Begründung im Bericht; diese Pakete sind gemergt. Alpha-Befunde (K2-69, docs/plan/M2-acceptance/alpha/befunde.md): A01-04 config.set ohne offenen Crawl muss auf crawl.start wirken (commands/config.rs Drafts ↔ session/control.rs config(); additiv in session/control.rs nach K2-61); A01-15 XLSX-Blattname der UI-Exporte wie die CLI („Internal All“, „Links All Inlinks“ statt „Export“, commands/export.rs). Danach die zugehörigen fixme in apps/desktop/e2e/alpha/** entfernen."
+ },
+ {
+  "id": "M2-N02a",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Alpha-Befunde (K2-69): Blocker und Fehler aus der Alpha-Integration A01 beheben – Tabs Internal/Content öffnen, Auswahl → Detailfenster, Navigation aus Overview/Issues, Image Details/Resources, Export-Dialog mit Formatwahl, Live-Tabelle (Sortierung, Auswahl, Zähler), Statusleiste nach Stopp, Tab-Leiste, Menü-/Issue-Texte",
+  "wave": "2b",
+  "spec_ids": [],
+  "extra_spec_ids": [],
+  "owns": [
+   "crates/os-analyze/src/views/**",
+   "crates/os-app/src/session/{feed,selection}.rs",
+   "apps/desktop/src/features/table/**",
+   "apps/desktop/src/features/toptabs/**",
+   "apps/desktop/src/features/detail/{frame,images,resources,headers}/** (ohne apps/desktop/src/features/detail/frame/Feedback.tsx)",
+   "apps/desktop/src/features/sidebar/{frame,overview,issues}/**",
+   "apps/desktop/src/features/export/**",
+   "apps/desktop/src/features/statusbar/Statusbar.tsx, apps/desktop/src/features/statusbar/statusbar.css",
+   "apps/desktop/src/features/shell/menu/** bzw. die Menü-Beschriftungen (A01-22)",
+   "apps/desktop/src/grid/**",
+   "apps/desktop/e2e/alpha/** (nur die K2-69-fixme der eigenen Befunde entfernen)",
+   "docs/plan/M2-reports/n02a.md"
+  ],
+  "depends_on": [
+   "M2-A01"
+  ],
+  "runner": "local-mac",
+  "size": "L",
+  "prompt_notes": "Arbeitsliste: docs/plan/M2-acceptance/alpha/befunde.md (aus M2-A01) – zu beheben A01-01 (Blocker, zuerst: view.open für Internal/Content, „Wrong number of parameters passed to query“ in os-analyze views/session), A01-02, A01-03, A01-12, A01-14 (hoch), A01-06, A01-08, A01-09, A01-10, A01-16, A01-19, A01-20, A01-21 (mittel), A01-07, A01-11, A01-13, A01-17, A01-18, A01-22 (niedrig). Nicht hier: A01-04, A01-15 (→ N01b), A01-05 (entschieden, K2-69: kein Stopp-Bedienelement). Je Befund: Ursache, Korrektur, Test mit // spec: der genannten Spec-ID, dann das fixme „Klärung K2-69: Befund A01-nn“ in apps/desktop/e2e/alpha/** entfernen; die Alpha-Suite muss auf Linux, macOS-WebKit und Windows-Chromium grün laufen. Wettläufe der Live-Tabelle (A01-07/09/10/16/20/21) gemeinsam analysieren (Versionen/countsVersion, Auswahl über rowKey statt Index). Fremdergänzungen nur nach K2-61. Grid nur über DataGridProps; Änderungen am Grid selbst begründen."
  },
  {
   "id": "M2-K05",
@@ -3305,7 +3334,8 @@
    "M2-U25",
    "M2-U26",
    "M2-U27",
-   "M2-N01b"
+   "M2-N01b",
+   "M2-N02a"
   ],
   "size": "M",
   "runner": "cloud",
