@@ -61,7 +61,6 @@ test("without a selection every detail tab asks for a URL in the upper table", a
 
 // spec: UI-030
 test("selecting a row in the main table loads its URL Details", async ({ alpha }) => {
-  test.fixme(true, "Befund A01-02 (docs/plan/M2-acceptance/alpha/befunde.md): die Haupttabelle veröffentlicht die Auswahl nie an das Detailfenster (setDetailSelection wird in der App nirgends aufgerufen)");
   const { page } = alpha;
   await crawled(alpha);
   await alpha.openTable("Response Codes");
@@ -114,7 +113,6 @@ test("HTTP Headers without header extraction name the setting that is missing", 
 
 // spec: UI-030
 test("Image Details list the images of the selected page", async ({ alpha }) => {
-  test.fixme(true, "Befund A01-12 (docs/plan/M2-acceptance/alpha/befunde.md): die Oberfläche fragt die Spalte „Alt Text Length“ an, die der Kern nicht kennt (err-unknown-column) – Anzeige „The input is invalid.“");
   const { page } = alpha;
   await crawled(alpha);
   await selectInDetails(page, alpha.startUrl);
@@ -124,7 +122,6 @@ test("Image Details list the images of the selected page", async ({ alpha }) => 
 
 // spec: UI-030
 test("Resources list the resources of the selected page", async ({ alpha }) => {
-  test.fixme(true, "Befund A01-12 (docs/plan/M2-acceptance/alpha/befunde.md): die Oberfläche fragt die Spalte „Content Type“ an, die der Kern für Resources nicht kennt (err-unknown-column) – Anzeige „The input is invalid.“");
   const { page } = alpha;
   await crawled(alpha);
   await selectInDetails(page, alpha.startUrl);
@@ -212,7 +209,6 @@ test("a click on an issue publishes tab and filter as the table navigation targe
 });
 
 test("a click on an issue or an Overview row navigates the table to that tab and filter", async ({ alpha }) => {
-  test.fixme(true, "Befund A01-03 (docs/plan/M2-acceptance/alpha/befunde.md): niemand liest die Navigationsanfrage der Seitenleiste (os:table-navigate / useSidebarNavigation.target); die Tabelle bleibt unverändert");
   const { page } = alpha;
   await crawled(alpha);
   await page.getByRole("tab", { name: "Issues", exact: true }).click();
