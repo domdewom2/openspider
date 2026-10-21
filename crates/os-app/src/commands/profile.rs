@@ -178,13 +178,21 @@ fn export<'a>(app: &'a App, _: CallCtx, args: Value) -> BoxFuture<'a, CmdResult>
             return Err(CmdError::invalid_input("err-export-absolute-path", "path"));
         }
         let store = store(app);
+        let secrets = app.config().secrets.clone();
         app.write_queue()
-            .submit_admin(move || export_file(&store, args))
+            .submit_admin(move || export_file(&store, secrets.as_ref(), args))
             .await
     })
 }
 
-fn export_file(store: &ConfigProfiles, args: ProfileExportArgs) -> CmdResult {
+/// File marker of a password-protected profile export (INTEG-002); followed by the `OSAPIP1` envelope.
+const SECRET_EXPORT_MAGIC: &[u8] = b"OSCFGSEC1\n";
+
+fn export_file(
+    store: &ConfigProfiles,
+    secrets: &dyn os_fetch::SecretStore,
+    args: ProfileExportArgs,
+) -> CmdResult {
     let cfg = store.load(&args.name).map_err(|e| store_error(&e))?.config;
     valid(&cfg)?;
     let path = Path::new(&args.path);
@@ -196,11 +204,32 @@ fn export_file(store: &ConfigProfiles, args: ProfileExportArgs) -> CmdResult {
         ));
     }
     if args.include_secrets == Some(true) {
-        // K2-52: Format, KDF und AES-256-GCM-Helfer gehören M2-I01.
-        return Err(CmdError::unsupported(
-            "profile.export.includeSecrets",
-            "M2-I01",
-        ));
+        // INTEG-002: the explicit consent is `includeSecrets`; configuration and API credentials are sealed together
+        // with Argon2id + AES-256-GCM, so the file never contains a plaintext secret.
+        let io = || {
+            CmdError::new(ErrorCode::Io, "err-profile-export").with_arg("path", args.path.as_str())
+        };
+        let mut stored = serde_json::Map::new();
+        for kind in os_model::ApiKind::ALL {
+            let id = format!("api/{kind}");
+            if let Some(value) = secrets.try_get(&id).map_err(|_| io())? {
+                stored.insert(id, Value::String(value));
+            }
+        }
+        let plain = serde_json::to_vec(&serde_json::json!({
+            "config": serde_json::to_value(&cfg).map_err(|_| io())?,
+            "secrets": stored,
+        }))
+        .map_err(|_| io())?;
+        let envelope = os_integrations::secret_export::encrypt_with_password(
+            &plain,
+            args.password.as_deref().unwrap_or_default(),
+        )
+        .map_err(|_| io())?;
+        let mut bytes = SECRET_EXPORT_MAGIC.to_vec();
+        bytes.extend_from_slice(&envelope);
+        std::fs::write(path, bytes).map_err(|_| io())?;
+        return Ok(Value::Null);
     }
     cfg.save_file(path).map_err(|_| {
         CmdError::new(ErrorCode::Io, "err-profile-export").with_arg("path", args.path)
