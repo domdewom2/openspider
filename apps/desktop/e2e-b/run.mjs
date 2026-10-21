@@ -128,7 +128,11 @@ async function probeApp() {
   await list(folder, 0);
   let debugPort = null;
   try { debugPort = await (await fetch("http://127.0.0.1:9333/json/version", { signal: AbortSignal.timeout(3000) })).text(); } catch (e) { debugPort = `no answer: ${e}`; }
-  const result = { exitCode: p.exitCode, output: out.slice(0, 4000), devToolsActivePort: found, folderExists: existsSync(folder), listing, debugPort: String(debugPort).slice(0, 600) };
+  let commandLines = "";
+  try { commandLines = execFileSync("powershell.exe", ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command",
+    "Get-CimInstance Win32_Process | Where-Object { $_.Name -match 'openspider|msedgewebview2' -and $_.CommandLine -notmatch 'type=(renderer|gpu-process|utility|crashpad)' } | Select-Object Name,ProcessId,ParentProcessId,CommandLine | ConvertTo-Json -Depth 3"],
+    { encoding: "utf8", windowsHide: true, timeout: 20_000 }); } catch (e) { commandLines = String(e); }
+  const result = { exitCode: p.exitCode, commandLines: commandLines.slice(0, 5000), output: out.slice(0, 4000), devToolsActivePort: found, folderExists: existsSync(folder), listing, debugPort: String(debugPort).slice(0, 600) };
   if (p.exitCode === null) p.kill();
   return result;
 }
