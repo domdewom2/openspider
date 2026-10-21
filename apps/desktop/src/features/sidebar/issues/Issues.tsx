@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useT, useFormat, type TFn } from "../../../i18n";
 import { sidebar } from "../../../ipc/sidebar";
+import { config } from "../../../ipc/config";
 import type { IssueRow } from "../../../ipc/gen/IssueRow";
 import type { IssueTypeDto } from "../../../ipc/gen/IssueTypeDto";
 import type { IssuePriorityDto } from "../../../ipc/gen/IssuePriorityDto";
@@ -15,6 +16,14 @@ import { SEGMENT_PALETTE } from "../../../ui/tokens/tokens";
 
 const TYPES: IssueTypeDto[] = ["issue", "warning", "opportunity"];
 const PRIORITIES: IssuePriorityDto[] = ["high", "medium", "low"];
+/** Filter ids carry placeholders for configured thresholds (`Below {title.min_chars} Characters`); replace them by the current value (UI-064, A01-13). */
+export function resolveThresholds(name: string, root: unknown): string {
+  return name.replace(/\{([A-Za-z0-9_.]+)\}/g, (match, path: string) => {
+    let value: unknown = root;
+    for (const key of path.split(".")) value = value !== null && typeof value === "object" ? (value as Record<string, unknown>)[key] : undefined;
+    return typeof value === "number" || typeof value === "string" ? String(value) : match;
+  });
+}
 export function sortIssues(rows: readonly IssueRow[]): IssueRow[] {
   return rows.filter(r => r.count > 0).slice().sort((a, b) => TYPES.indexOf(a.type) - TYPES.indexOf(b.type) || PRIORITIES.indexOf(a.priority) - PRIORITIES.indexOf(b.priority) || b.count - a.count || `${a.tab}: ${a.filter}`.localeCompare(`${b.tab}: ${b.filter}`, "en"));
 }
@@ -38,7 +47,9 @@ export function Issues({ needsAnalysis }: { needsAnalysis: boolean }) {
   const args = { ...scope, type: type || null, priority: priority || null, search: search || null };
   const query = useQuery({ queryKey: ["sidebar", "issues", crawl, args, version, counts], queryFn: ({ signal }) => sidebar.issues(args, signal), enabled: !!crawl, gcTime: 0 });
   // Keep the same contract even when a fixture supplies an unfiltered list.
-  const rows = sortIssues(query.data ?? []).filter(r => (!type || r.type === type) && (!priority || r.priority === priority) && `${r.tab}: ${r.filter}`.toLocaleLowerCase().includes(search.toLocaleLowerCase()));
+  const settings = useQuery({ queryKey: ["sidebar", "issues-config", crawl], queryFn: ({ signal }) => config.get(signal), enabled: !!crawl, gcTime: 0 });
+  const named = (name: string) => resolveThresholds(name, settings.data?.config);
+  const rows = sortIssues(query.data ?? []).filter(r => (!type || r.type === type) && (!priority || r.priority === priority) && `${r.tab}: ${named(r.filter)}`.toLocaleLowerCase().includes(search.toLocaleLowerCase()));
   const issue = rows.find(r => r.id === selected);
   return <>
     <div className="os-sidebar-filters"><label>{t("sidebar-type")}<select aria-label={t("sidebar-type")} value={type} onChange={e => setType(e.target.value as typeof type)}><option value="">{t("sidebar-all")}</option>{TYPES.map(v => <option value={v} key={v}>{t(`sidebar-type-${v}`)}</option>)}</select></label>
@@ -47,11 +58,11 @@ export function Issues({ needsAnalysis }: { needsAnalysis: boolean }) {
     {needsAnalysis && <p role="status">{t("sidebar-more-issues")}</p>}
     <QueryFeedback error={query.error} loading={!!crawl && query.isPending} retry={() => void query.refetch()} />
     {!crawl && <p>{t("sidebar-no-crawl")}</p>}
-    {query.data && <><PanelActions which="issues" rows={issueRows(rows, t)} /><table className="os-sidebar-table"><thead><tr><th>{t("sidebar-issue-name")}</th><th>{t("sidebar-type")}</th><th>{t("sidebar-priority")}</th><th>{t("sidebar-urls")}</th><th>{t("sidebar-percent-total")}</th></tr></thead><tbody>{rows.map(row => <tr key={row.id} aria-selected={selected === row.id}>
-      <th scope="row"><button type="button" onClick={() => { setSelected(row.id); navigate(row.tab, row.filter); }} onDoubleClick={() => navigate(row.tab, row.filter, true)}>{row.tab}: {row.filter}</button>
+    {query.data && <><PanelActions which="issues" rows={issueRows(rows.map(r => ({ ...r, filter: named(r.filter) })), t)} /><table className="os-sidebar-table"><thead><tr><th>{t("sidebar-issue-name")}</th><th>{t("sidebar-type")}</th><th>{t("sidebar-priority")}</th><th>{t("sidebar-urls")}</th><th>{t("sidebar-percent-total")}</th></tr></thead><tbody>{rows.map(row => <tr key={row.id} aria-selected={selected === row.id}>
+      <th scope="row"><button type="button" onClick={() => { setSelected(row.id); navigate(row.tab, row.filter); }} onDoubleClick={() => navigate(row.tab, row.filter, true)}>{row.tab}: {named(row.filter)}</button>
       {row.segmentShares.length > 0 && <div className="os-sidebar-segments" aria-label={t("sidebar-segments")}>{row.segmentShares.map((share, i) => <button type="button" key={share.segment} title={`${share.segment}: ${f.integer(share.count)}`} aria-label={`${share.segment}: ${f.integer(share.count)}`} style={{ flexGrow: share.count, background: SEGMENT_PALETTE[i % SEGMENT_PALETTE.length]?.light }} onClick={() => setScope({ ...scope, segment: { kind: "segment", name: share.segment } })} />)}</div>}</th>
       <td><IssueBadge badge={{ issueType: row.type, priority: row.priority }} /></td><td className={`os-sidebar-priority-${row.priority}`}>{t(`sidebar-priority-${row.priority}`)}</td><td>{f.integer(row.count)}</td><td>{row.pct == null ? "–" : `${f.decimal(row.pct, 1)} %`}</td>
     </tr>)}</tbody></table>{rows.length === 0 && <p>{t("sidebar-no-issues")}</p>}</>}
-    {issue && <IssueExplanation issue={issue} />}
+    {issue && <IssueExplanation issue={{ ...issue, filter: named(issue.filter) }} />}
   </>;
 }
