@@ -95,7 +95,7 @@ export function ViewSource(props: DetailPanelProps) {
   // --- „Im gerenderten HTML anzeigen“ (UI-048): markiert die Stelle in der gerenderten Fassung ---
   const target = useSourceTarget(s => s.target); const handled = useRef(0);
   useEffect(() => {
-    if (!target || target.id === handled.current || target.urlId !== focus || (target.crawlId ?? crawlId) !== crawlId) return;
+    if (!cfg.loaded || !target || target.id === handled.current || target.urlId !== focus || (target.crawlId ?? crawlId) !== crawlId) return;
     if (!renderedOk) { handled.current = target.id; setNotice(t("source-target-unavailable")); return; }
     setMode("html"); setActive("right");
     if (rightDoc.status !== "ready" || mode !== "html") return;
@@ -104,7 +104,7 @@ export function ViewSource(props: DetailPanelProps) {
     const range = findSnippet(r.getText(), target.snippet);
     if (range) { r.setOverlay({ target: range }); r.scrollTo(range.from, range); setNotice(t("source-target-found", { selector: target.selector })); }
     else setNotice(t("source-target-missing", { selector: target.selector }));
-  }, [target, focus, crawlId, renderedOk, rightDoc.status, mode, t]);
+  }, [target, focus, crawlId, cfg.loaded, renderedOk, rightDoc.status, mode, t]);
 
   const exportActive = async () => {
     const text = pane(active).current?.getText() ?? ""; const address = String((await detail.urlDetails({ urlId: focus })).find(row => row.name === "Address")?.value ?? focus);

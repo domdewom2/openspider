@@ -17,13 +17,13 @@ export const RESOURCE_COLUMNS = ["Address", "Type", "Status Code", "Blocked By"]
 /** Kachel `n` von `tiles` hat die Höhe `ceil(height / tiles)` (letzte Kachel der Rest); Basis der Platzhalter vor dem Laden. */
 export const tileHeight = (info: Pick<ScreenshotInfo, "height" | "tiles">): number => Math.max(1, Math.ceil(info.height / Math.max(1, info.tiles)));
 
-function Tile({ src, index, total, width, height, scale, label }: { src: string; index: number; total: number; width: number; height: number; scale: number; label: string }) {
+function Tile({ src, index, total, width, height, scale, label, scroller }: { src: string; index: number; total: number; width: number; height: number; scale: number; label: string; scroller: () => HTMLElement | null }) {
   const host = useRef<HTMLDivElement>(null);
   const [near, setNear] = useState(typeof IntersectionObserver === "undefined");
   const [natural, setNatural] = useState<number>();
   useEffect(() => {
     if (near || !host.current) return;
-    const observer = new IntersectionObserver(entries => { if (entries.some(e => e.isIntersecting)) { setNear(true); observer.disconnect(); } }, { rootMargin: "600px 0px" });
+    const observer = new IntersectionObserver(entries => { if (entries.some(e => e.isIntersecting)) { setNear(true); observer.disconnect(); } }, { root: scroller(), rootMargin: "600px 0px" });
     observer.observe(host.current);
     return () => observer.disconnect();
   }, [near]);
@@ -83,7 +83,7 @@ export function Rendered(props: DetailPanelProps) {
             <ContextMenu label={t("rendered-screenshot")} entries={[{ id: "save", label: t("rendered-save"), onAction: () => void save() }]}>
               <figure className="os-rendered-figure" aria-label={t("rendered-screenshot-size", { width: info.width, height: info.height })} data-tiles={info.tiles}>
                 {Array.from({ length: info.tiles }, (_, tile) => <Tile key={tile} src={`${info.url}/${tile}`} index={tile} total={info.tiles} width={info.width} height={tileHeight(info)} scale={scale}
-                  label={t("rendered-tile", { n: tile + 1, total: info.tiles })} />)}
+                  label={t("rendered-tile", { n: tile + 1, total: info.tiles })} scroller={() => area.current} />)}
               </figure>
             </ContextMenu>}
         </div>

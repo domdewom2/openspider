@@ -19,11 +19,11 @@
 .os-src-match { background: var(--os-bg-selection-inactive); outline: 1px solid var(--os-border-strong); }
 .os-src-match-current { background: var(--os-bg-selection); outline: 2px solid var(--os-focus); }
 .os-src-target { background: var(--os-bg-selection); outline: 2px solid var(--os-accent); }
-.os-tok-tag { color: var(--os-accent); font-weight: 600; }
-.os-tok-attr { color: var(--os-text); font-style: italic; }
-.os-tok-string { color: var(--os-text-muted); }
-.os-tok-comment { color: var(--os-text-muted); font-style: italic; }
-.os-tok-entity { color: var(--os-status-3xx); }
-.os-tok-doctype { color: var(--os-text-muted); }
-.os-tok-punct { color: var(--os-text-muted); }
+/* Syntaxfarben nur aus Text-Tokens; Auszeichnung zusätzlich über Schnitt, damit kein Kontrast von der Hintergrundmarkierung abhängt. */
+.os-tok-tag { font-weight: 700; }
+.os-tok-attr { font-style: italic; }
+.os-tok-string, .os-tok-comment, .os-tok-doctype, .os-tok-punct { color: var(--os-text-muted); }
+.os-tok-comment { font-style: italic; }
+.os-tok-entity { text-decoration: underline dotted; }
+.os-src-line-added span, .os-src-line-removed span, .os-src-word-added, .os-src-word-removed, .os-src-match, .os-src-match span, .os-src-target, .os-src-target span { color: var(--os-text) !important; }
 .os-src-summary { font-weight: 600; }

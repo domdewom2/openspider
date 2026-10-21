@@ -94,7 +94,7 @@ describe("SERP snippet", () => {
     expect(boldSegments("Hello World hello", ["hello"])).toEqual([{ text: "Hello", bold: true }, { text: " World ", bold: false }, { text: "hello", bold: true }]);
     expect(datePrefix("2026-10-13", "de-AT")).toBe("13.10.2026 — "); expect(datePrefix("2026-10-13", "en")).toBe("Oct 13, 2026 — ");
   });
-  // spec: ONPAGE-192
+  // spec: ONPAGE-192 [M2]
   it("is the SERP lower tab of a Page Titles row and shows Title 1 and Meta Description 1", async () => {
     render(<DetailFrame selection={{ ...selection, topTab: "Page Titles" }} actions={ctx.actions} />); await settle(250);
     await act(async () => { fireEvent.click(screen.getByRole("tab", { name: "SERP Snippet", hidden: true })); await vi.advanceTimersByTimeAsync(300); });

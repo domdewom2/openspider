@@ -96,6 +96,15 @@ describe("View source", () => {
     expect(screen.getByTestId("match-count")).toHaveTextContent("Match 1 of 1");
   });
   // spec: UI-041
+  it("moves Cmd/Ctrl+F to the search field while the focus is inside the detail view", async () => {
+    await open();
+    fireEvent.focus(pane("left").querySelector(".cm-content")!); (pane("left").querySelector(".cm-content") as HTMLElement).focus();
+    act(() => { runAction("search.focus"); });
+    expect(screen.getByRole("searchbox", { name: "Search in the active side" })).toHaveFocus();
+    expect(runAction("search.focus")).toBe(true);
+    (document.activeElement as HTMLElement).blur(); expect(runAction("search.focus")).toBe(false);
+  });
+  // spec: UI-041
   it("passes the pretty-print display option to the core and keeps the text mode unformatted", async () => {
     await open();
     fireEvent.click(screen.getByRole("checkbox", { name: "Format HTML (display only)" })); await settle(500);

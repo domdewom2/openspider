@@ -13,7 +13,7 @@ afterEach(async () => { cleanup(); await teardown(); vi.useRealTimers(); });
 const select = async (name: string) => { await act(async () => { fireEvent.click(screen.getByRole("tab", { name, hidden: true })); }); await settle(500); };
 
 describe("detail frame with the technical tabs", () => {
-  // spec: ONPAGE-192
+  // spec: ONPAGE-192 [M2]
   it("serves SERP Snippet, Rendered Page, View Source, Duplicate Details and Spelling & Grammar Details for any row of a content tab", async () => {
     render(<DetailFrame selection={{ ...selection, topTab: "Page Titles" }} actions={ctx.actions} />); await settle(300);
     for (const name of ["SERP Snippet", "Rendered Page", "View Source", "Duplicate Details", "Spelling & Grammar Details"]) {

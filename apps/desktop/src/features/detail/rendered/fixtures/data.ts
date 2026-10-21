@@ -55,6 +55,6 @@ export const A11Y_RULES = [
 ];
 export const A11Y_NODES: Record<string, { id: number; Address: string; "Location on Page": string; HTML: string }[]> = {
   "image-alt": [{ id: 101, Address: "https://site.test/", "Location on Page": "img.hero", HTML: '<img class="hero" src="a.png">' }, { id: 102, Address: "https://site.test/", "Location on Page": "#late > img", HTML: '<img src="b.png">' }],
-  "heading-order": [{ id: 103, Address: "https://site.test/", "Location on Page": "h4", HTML: "<h4>Skipped</h4>" }],
+  "heading-order": [{ id: 103, Address: "https://site.test/", "Location on Page": "h1", HTML: "<h1>Welcome</h1>" }],
   "color-contrast": [{ id: 104, Address: "https://site.test/", "Location on Page": "p.hero", HTML: '<p class="hero">Text over image</p>' }],
 };
