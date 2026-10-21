@@ -88,12 +88,3 @@ fn non_indexable_reason_change_is_detected_even_without_status_change() {
     change::calculate(&c, &fixture::all(), &CancelToken::new()).unwrap();
     assert!(change::ids(&c, "Indexability", true).unwrap().contains(1));
 }
-
-// spec: TECH-300
-#[test]
-fn ordinary_crawl_overview_has_no_change_detection_section() {
-    let dir = tempfile::tempdir().unwrap();
-    let file = fixture::fixture(dir.path(), 1, 1, CrawlConfig::default());
-    let counts = views::filter_counts(&file, &file.config().unwrap()).unwrap();
-    assert!(!counts.iter().any(|count| count.tab == "Change Detection"));
-}

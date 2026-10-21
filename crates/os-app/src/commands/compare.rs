@@ -1022,6 +1022,21 @@ mod change_tests {
     }
 
     // spec: TECH-300
+    #[test]
+    fn ordinary_crawl_overview_has_no_change_detection_section() {
+        let dir = tempfile::tempdir().unwrap();
+        let file =
+            super::change_fixture::fixture(dir.path(), 1, 1, os_model::CrawlConfig::default());
+        let cfg = file.config().unwrap();
+        let tabs = os_analyze::tabs::configured_for_file(&cfg, &file);
+        let overview = os_export::reports::overview::build(&file, &cfg, &tabs).unwrap();
+        assert!(!overview
+            .rows
+            .iter()
+            .any(|row| row.section == "Change Detection"));
+    }
+
+    // spec: TECH-300
     #[tokio::test]
     async fn tab_is_hidden_without_comparison_and_when_configuration_has_no_elements() {
         let (_home, app) = setup().await;

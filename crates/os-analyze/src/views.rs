@@ -296,10 +296,7 @@ pub fn filter_counts_in(
     // umsetzt: Berichte und Übersichten zeigen nur Befüllbares (Crawl Overview bleibt für M1-Crawls unverändert).
     counts.retain(|c| {
         tabs.iter().find(|t| t.id == c.tab).is_none_or(|t| {
-            (t.id != crate::compare::CHANGE_DETECTION_TAB
-                || t.population != tabs::change_detection::HIDDEN_POPULATION)
-                && !t.is_stub()
-                && !t.filters.iter().any(|f| f.id == c.filter && f.is_stub())
+            !t.is_stub() && !t.filters.iter().any(|f| f.id == c.filter && f.is_stub())
         })
     });
     Ok(counts)
