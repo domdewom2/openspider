@@ -47,11 +47,7 @@ export interface Alpha {
   settledGrid(): Promise<GridWindow>;
   /** Wechselt den oberen Tab. */
   selectTab(name: string): Promise<void>;
-  /**
-   * Wechselt den Tab eines fertigen Crawls und wartet auf geladene Zeilen. Gelegentlich bleibt die Tabelle nach dem Wechsel direkt nach
-   * dem Crawl-Ende leer („Showing: 0 of N“, Befund A01-21); dann wird über einen anderen Tab erneut gewechselt. Jeder solche Fall wird
-   * als Annotation `table-reload` am Test vermerkt.
-   */
+  /** Wechselt den Tab eines fertigen Crawls und wartet auf geladene Zeilen (keine Wiederholung: die Tabelle lädt nach dem Wechsel immer, Befund A01-21). */
   openTable(name: string): Promise<void>;
   /** Überschreibt den nativen Zielordner-/Datei-Dialog des Exports (im Browser nicht vorhanden). */
   chooseExportPath(resolve: string): Promise<void>;
@@ -72,7 +68,7 @@ export const test = base.extend<{ alpha: Alpha }, { site: Site }>({
     { scope: "worker", timeout: 30 * 60_000 },
   ],
 
-  alpha: async ({ page, context, site }, use, testInfo) => {
+  alpha: async ({ page, context, site }, use) => {
     const bridge = await startAlphaBridge();
     const consoleErrors: string[] = [];
     const track = (p: Page) => {
@@ -171,19 +167,8 @@ export const test = base.extend<{ alpha: Alpha }, { site: Site }>({
         return last;
       },
       async openTable(name) {
-        const other = name === "External" ? "Response Codes" : "External";
-        for (let attempt = 0; attempt < 4; attempt++) {
-          await alpha.selectTab(name);
-          const loaded = await expect
-            .poll(async () => !/^(Showing|Angezeigt): 0 (of|von) /.test(await alpha.counter().catch(() => "Showing: 0 of –")), { timeout: 4000 })
-            .toBe(true)
-            .then(() => true, () => false);
-          if (loaded) return;
-          testInfo.annotations.push({ type: "table-reload", description: `${name}: Tabelle blieb leer (Versuch ${attempt + 1})` });
-          await alpha.selectTab(other);
-        }
         await alpha.selectTab(name);
-        await expect.poll(() => alpha.counter(), { timeout: 10_000 }).not.toMatch(/^(Showing|Angezeigt): 0 (of|von) /);
+        await expect.poll(async () => !/^(Showing|Angezeigt): 0 (of|von) /.test(await alpha.counter().catch(() => "Showing: 0 of –")), { timeout: 15_000 }).toBe(true);
       },
       async selectTab(name) {
         await page.getByRole("tab", { name, exact: true }).click();

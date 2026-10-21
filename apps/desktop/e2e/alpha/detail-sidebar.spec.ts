@@ -104,7 +104,6 @@ test("HTTP Headers show request and response headers when header extraction is o
 
 // spec: UI-030
 test("HTTP Headers without header extraction name the setting that is missing", async ({ alpha }) => {
-  test.fixme(true, "Befund A01-11 (docs/plan/M2-acceptance/alpha/befunde.md): der Detail-Tab zeigt „This function is not available yet.“ statt der Voraussetzung extraction.http_headers (Kern liefert FEATURE_DISABLED mit Sprungziel)");
   const { page } = alpha;
   await crawled(alpha);
   await selectInDetails(page, alpha.startUrl);
@@ -220,7 +219,6 @@ test("a click on an issue or an Overview row navigates the table to that tab and
 
 // Alpha 3, Issue-Namen (UI-062, UI-064): Schwellwerte in den Namen sind aufgelöst, keine Platzhalter der Filterdefinition.
 test("Issue names show the configured thresholds instead of raw placeholders", async ({ alpha }) => {
-  test.fixme(true, "Befund A01-13 (docs/plan/M2-acceptance/alpha/befunde.md): die Issue-Liste zeigt „Page Titles: Below {title.min_chars} Characters“ und „Meta Description: Below {meta_description.min_chars} Characters“ mit unaufgelösten Platzhaltern");
   const { page } = alpha;
   await crawled(alpha);
   await page.getByRole("tab", { name: "Issues", exact: true }).click();
@@ -230,8 +228,7 @@ test("Issue names show the configured thresholds instead of raw placeholders", a
 });
 
 // Alpha 3, Seitenleiste (UI-060): jeder Reiter lässt sich mit der Maus erreichen.
-test("every sidebar tab can be selected with the mouse", async ({ alpha, browserName }) => {
-  test.fixme(browserName === "webkit", "Befund A01-17 (docs/plan/M2-acceptance/alpha/befunde.md): in WebKit fängt der Reiter-Container Mausklicks auf „Spelling & Grammar“ gelegentlich ab (macOS-CI Lauf 39540400349: „tablist intercepts pointer events“, beim zweiten Versuch grün)");
+test("every sidebar tab can be selected with the mouse", async ({ alpha }) => {
   const { page } = alpha;
   await crawled(alpha);
   const tabs = page.getByRole("tablist", { name: "Crawl summary" }).getByRole("tab");

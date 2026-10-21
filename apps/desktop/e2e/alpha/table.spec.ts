@@ -148,27 +148,45 @@ test("simple search matches the Address on Enter, shows N of M and clears with E
 type Snapshot = { address: string; relative: number; absolute: number };
 
 /**
- * Sortiert die Tabelle während eines laufenden (gedrosselten) Crawls nach Address, markiert eine Zeile mitten im Bild und beobachtet
- * sie bis zum Ende des Crawls. Gewertet werden nur Momentaufnahmen, die zweimal im Abstand von 150 ms gleich sind: Während der
- * Live-Aktualisierung zeigt die Tabelle kurz Platzhalter („…“) und die Auswahl ist für Augenblicke nicht markiert (Befund A01-07).
+ * Sortiert die Tabelle nach Address, startet einen gedrosselten Crawl (1 URL/s), markiert „page-2.html“ sobald
+ * neun Zeilen da sind und beobachtet die Zeile bis zum Ende des Crawls. Sie sortiert hinter „page-10.html“ … „page-20.html“, die
+ * erst später entdeckt werden: Es kommen also sicher Zeilen oberhalb der Auswahl dazu. Gewertet werden nur Momentaufnahmen, die zweimal im
+ * Abstand von 150 ms gleich sind (die Live-Aktualisierung zeigt keine Platzhalter mehr, Befund A01-07).
  */
 async function selectWhileSortedRowsArrive(alpha: Alpha): Promise<{ origin: Snapshot; samples: Snapshot[]; last: Snapshot }> {
   const { page } = alpha;
+  // Niedriges Fenster: Die Tabelle fasst weniger Zeilen als beim Markieren schon da sind. Nur dann kann sie beim Einsortieren oberhalb
+  // mitscrollen (UI-018); passt sie ganz ins Bild, rutscht die markierte Zeile zwangsläufig nach unten.
+  await page.setViewportSize({ width: 1280, height: 600 });
   await alpha.open();
-  await alpha.slowCrawl(2);
+  await alpha.slowCrawl(1);
   await alpha.selectTab("Response Codes");
-  await alpha.startFromHeader();
-  // Sobald die Tabelle gefüllt ist, nach Address aufsteigend sortieren und eine Zeile markieren. Gesetzt wird die Sortierung über den
-  // Zustand der Tabellen-Tabs: der Kopfklick bzw. Enter blieben während eines laufenden Crawls oft wirkungslos (Befund A01-09).
-  await expect.poll(() => alpha.counter().catch(() => ""), { timeout: 20_000 }).toMatch(/Showing: (1\d|2\d) of/);
   await page.evaluate(async () => {
     const path = "/src/state/tabs.ts";
     const { useTabs } = await import(/* @vite-ignore */ path);
     useTabs.getState().query({ sort: [{ column: "Address", dir: "asc" }] });
   });
+  await alpha.startFromHeader();
+  await expect.poll(() => alpha.counter().catch(() => ""), { timeout: 30_000 }).toMatch(/Showing: (9|1\d|2\d) of/);
   await expect.poll(async () => (await alpha.gridWindow()).headers.join("|")).toContain("Address ↑");
+  // Der Crawl wird zum Markieren angehalten: Ausgangslage und Klick liegen dann zwischen zwei Versionen der Ansicht und die
+  // Bildschirmposition vor dem ersten Einsortieren ist eindeutig.
+  await page.getByRole("button", { name: "Pause", exact: true }).click();
+  await expect(page.getByTestId("crawl-phase")).toHaveText("Paused");
+  await expect.poll(async () => { const a = await alpha.counter(); await page.waitForTimeout(600); return a === (await alpha.counter()); }).toBe(true);
   await alpha.settledGrid();
-  await page.locator(".os-data-grid").click({ position: { x: 160, y: 26 + 22 * 4 + 11 } });
+  // Die Fenstergröße hängt von der Engine ab: so weit scrollen, bis „page-2.html“ im Bild ist (der Crawl steht, die Tabelle ist ruhig).
+  await page.locator(".os-data-grid").hover({ position: { x: 160, y: 60 } });
+  let target = -1;
+  for (let i = 0; i < 30 && target < 0; i++) {
+    target = (await alpha.gridWindow()).rows.findIndex((r) => /\/page-2\.html$/.test(r.cells[0]!));
+    if (target < 0) {
+      await page.mouse.wheel(0, 44);
+      await alpha.settledGrid();
+    }
+  }
+  expect(target, "page-2.html ist im Bild").toBeGreaterThanOrEqual(0);
+  await page.locator(".os-data-grid").click({ position: { x: 160, y: 26 + 22 * target + 11 } });
   await expect(alpha.table()).toContainText("1 selected");
 
   const read = async (): Promise<Snapshot | null> => {
@@ -187,49 +205,41 @@ async function selectWhileSortedRowsArrive(alpha: Alpha): Promise<{ origin: Snap
   let origin: Snapshot | null = null;
   for (let i = 0; i < 40 && !origin; i++) origin = await stable();
   expect(origin, "markierte Zeile ist nach dem Klick sichtbar").not.toBeNull();
+  await page.getByRole("button", { name: "Resume", exact: true }).click();
+  await expect(page.getByTestId("crawl-phase")).toHaveText("Running");
   const samples: Snapshot[] = [];
-  for (let i = 0; i < 80; i++) {
+  for (let i = 0; i < 120; i++) {
     const state = await stable();
     if (state) samples.push(state);
     if (/Completed/.test(await page.getByTestId("crawl-phase").innerText())) break;
     await page.waitForTimeout(200);
   }
   await alpha.waitCompleted();
-  // Nach dem Ende wird die markierte Zeile wiedergefunden. Unter Last bleibt die Tabelle gelegentlich leer oder zeigt einen Fehler (Befund A01-16);
-  // dann wird über einen anderen Tab erneut gewechselt (Annotation `counts-stuck`). Der Zähler „N von M“ wird in anderen Tests geprüft.
+  // Nach dem Ende ist die markierte Zeile zu sehen; die Tabelle lädt ohne Zutun alle Zeilen der letzten Version.
   let last: Snapshot | null = null;
-  for (let attempt = 0; attempt < 3 && !last; attempt++) {
-    for (let i = 0; i < 30 && !last; i++) last = await stable();
-    if (!last) {
-      test.info().annotations.push({ type: "counts-stuck", description: `Response Codes: markierte Zeile nach Crawl-Ende nicht sichtbar (${await alpha.counter().catch(() => "?")})` });
-      await alpha.selectTab("External");
-      await alpha.selectTab("Response Codes");
-    }
-  }
+  for (let i = 0; i < 30 && !last; i++) last = await stable();
   expect(last, "markierte Zeile nach Abschluss sichtbar").not.toBeNull();
   return { origin: origin!, samples, last: last! };
 }
 
 // spec: UI-018
 test("rows arriving during the crawl are sorted into the table in order", async ({ alpha }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(120_000);
   const { page } = alpha;
   await page.setViewportSize(TALL);
   await alpha.open();
-  await alpha.slowCrawl(2);
+  await alpha.slowCrawl(1);
   await alpha.selectTab("Response Codes");
-  await alpha.startFromHeader();
-  await expect.poll(() => alpha.counter().catch(() => ""), { timeout: 20_000 }).toMatch(/Showing: ([89]|1\d|2\d) of/);
-  // Sortierung über den Zustand der Tabellen-Tabs gesetzt: der Kopfklick blieb während eines laufenden Crawls oft wirkungslos (Befund A01-09)
   await page.evaluate(async () => {
     const path = "/src/state/tabs.ts";
     const { useTabs } = await import(/* @vite-ignore */ path);
     useTabs.getState().query({ sort: [{ column: "Address", dir: "asc" }] });
   });
+  await alpha.startFromHeader();
   await expect.poll(async () => (await alpha.gridWindow()).headers.join("|")).toContain("Address ↑");
   const byte = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
   const seen = new Set<number>();
-  for (let i = 0; i < 80; i++) {
+  for (let i = 0; i < 160; i++) {
     const w = await alpha.gridWindow();
     if (w.rows.length > 0 && w.rows.every((r) => r.cells.every((c) => c !== "…"))) {
       const addresses = w.rows.map((r) => r.cells[0]!);
@@ -241,15 +251,46 @@ test("rows arriving during the crawl are sorted into the table in order", async 
   }
   await alpha.waitCompleted();
   expect(seen.size, "die Tabelle wuchs während der Beobachtung").toBeGreaterThanOrEqual(2);
-  // Nach dem Ende bleiben gelegentlich die letzten ein bis zwei Zeilen aus (Befund A01-20); die Vollständigkeit prüft der eigene Test dazu.
+  // Nach dem Ende zeigt die Tabelle alle Zeilen (A01-20: auch die letzten), nach Address sortiert.
+  await expect(alpha.table()).toContainText("Showing: 27 of 27");
   const final = (await alpha.settledGrid()).rows.map((r) => r.cells[0]!);
   expect(final.length).toBeGreaterThanOrEqual(20);
   expect(final).toEqual([...final].sort(byte));
 });
 
+// spec: UI-010
+test("the sort gesture on a column header takes effect while the crawl is running", async ({ alpha }) => {
+  test.setTimeout(90_000);
+  const { page } = alpha;
+  await alpha.open();
+  await alpha.slowCrawl(1);
+  await alpha.selectTab("Response Codes");
+  await alpha.startFromHeader();
+  await expect.poll(() => alpha.counter().catch(() => ""), { timeout: 30_000 }).toMatch(/Showing: ([89]|1\d|2\d) of/);
+  await alpha.settledGrid();
+  const byte = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+  // Die Geste (Kopfklick) sortiert aufsteigend, dann absteigend, auch wenn die Ansicht im Aufbau war (Befund A01-09).
+  await sortBy(alpha, "Response Codes", "Address");
+  await expect.poll(async () => (await alpha.gridWindow()).headers.join("|")).toContain("Address ↑");
+  await expect(async () => {
+    const rows = addresses((await alpha.settledGrid()).rows);
+    expect(rows).toEqual([...rows].sort(byte));
+  }).toPass();
+  await sortBy(alpha, "Response Codes", "Address");
+  await expect.poll(async () => (await alpha.gridWindow()).headers.join("|")).toContain("Address ↓");
+  await expect(async () => {
+    const rows = addresses((await alpha.settledGrid()).rows);
+    expect(rows).toEqual([...rows].sort((a, b) => byte(b, a)));
+  }).toPass();
+  expect(await page.evaluate(async () => {
+    const path = "/src/state/tabs.ts";
+    const { useTabs } = await import(/* @vite-ignore */ path);
+    return useTabs.getState().queries["Response Codes"].sort;
+  })).toEqual([{ column: "Address", dir: "desc" }]);
+});
+
 // spec: UI-018
 test("after a throttled crawl the counter shows the final N of M", async ({ alpha }) => {
-  test.fixme(true, "Befund A01-20 (docs/plan/M2-acceptance/alpha/befunde.md): nach einem gedrosselten Crawl bleibt der Filterzähler dauerhaft hinter den Zeilen zurück („Showing: 27 of 25/26“), auch nach Tabwechseln; UI-018 verlangt Aktualisierung spätestens 1 s nach Abschluss einer URL");
   test.setTimeout(90_000);
   await alpha.open();
   await alpha.slowCrawl(2);
@@ -261,7 +302,6 @@ test("after a throttled crawl the counter shows the final N of M", async ({ alph
 
 // spec: UI-018
 test("the selected URL stays selected while rows are sorted in above it during the crawl", async ({ alpha }) => {
-  test.fixme(true, "Befund A01-16 (docs/plan/M2-acceptance/alpha/befunde.md): unter Last und teils auch allein (etwa 30 % der Läufe) erscheint nach dem Klick auf eine Zeile der laufenden, sortierten Tabelle „An unexpected error occurred.“ und die Auswahl geht verloren");
   test.setTimeout(90_000);
   const { origin, samples, last } = await selectWhileSortedRowsArrive(alpha);
   expect(samples.length, "genügend auswertbare Momentaufnahmen").toBeGreaterThanOrEqual(2);
@@ -274,10 +314,10 @@ test("the selected URL stays selected while rows are sorted in above it during t
 
 // spec: UI-018
 test("the selected row keeps its screen position while rows are sorted in above it (anchor on the focus row)", async ({ alpha }) => {
-  test.fixme(true, "Befund A01-10 (docs/plan/M2-acceptance/alpha/befunde.md): die markierte Zeile rutscht beim Einsortieren neuer Zeilen um 1–2 Positionen nach unten (UI-018, Anker auf Fokuszeile)");
   test.setTimeout(90_000);
   const { origin, samples, last } = await selectWhileSortedRowsArrive(alpha);
-  for (const s of [...samples, last]) expect(s.relative).toBe(origin.relative);
+  const history = [origin, ...samples, last].map((s) => `${s.absolute - s.relative}/${s.relative}`).join(" ");
+  for (const s of [...samples, last]) expect(s.relative, `Verlauf (erste Zeile/Abstand): ${history}`).toBe(origin.relative);
 });
 
 const dataTabsOf = (page: Page) => page.getByRole("tablist", { name: "Data tabs" }).getByRole("tab");
