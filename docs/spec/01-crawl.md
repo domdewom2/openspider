@@ -461,7 +461,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 - **Priorität:** P1
 - **Beschreibung:** Sendet ein HTTPS-Host einen `Strict-Transport-Security`-Header, werden spätere `http://`-Links auf diesen Host intern auf HTTPS umgeschrieben, ohne den HTTP-Request auszuführen – wie ein Browser.
 - **Eingaben/Konfiguration:** Erweitert › „HSTS-Richtlinie respektieren“ (Referenz-Default (abgeleitet): an – die Doku beschreibt nur, dass die Option abgeschaltet werden kann, nennt den Standard aber nicht ausdrücklich; siehe Q26).
-- **Ausgabe:** Die `http://`-URL erhält Statuscode 307, Status „HSTS-Richtlinie“, Weiterleitungstyp „HSTS-Richtlinie“.
+- **Ausgabe:** Die `http://`-URL erhält Statuscode 307, Status `HSTS Policy`, Weiterleitungstyp `HSTS Policy` (englische Spaltenwerte wie in ONPAGE-064, Annahme A-21).
 - **Akzeptanzkriterien:**
   - [ ] Option an: Nach dem ersten HTTPS-Abruf mit HSTS-Header wird `http://site.test/x` nicht angefragt (Request-Log leer für Port 80), aber als 307 → `https://site.test/x` gespeichert.
   - [ ] `includeSubDomains` wird für Subdomains berücksichtigt; `max-age=0` hebt die Richtlinie auf.
@@ -1130,7 +1130,7 @@ Gemeinsame Regeln: Ein Limit von 0 oder leer bedeutet „unbegrenzt“, sofern n
 ### CRAWL-075 Maximale Seitengröße
 - **Priorität:** P1
 - **Beschreibung:** Bodies über dem Grenzwert werden nicht weiter heruntergeladen; die Seite wird bis zur Grenze verarbeitet.
-- **Eingaben/Konfiguration:** Limits › „Max. Seitengröße (KB)“ (Standard: 51 200 KB = 50 MB; Referenz-Default).
+- **Eingaben/Konfiguration:** Limits › „Max. Seitengröße (KB)“ (Standard: 51 200 KB = 50 MB; Referenz-Default). `0` bedeutet unbegrenzt (gemeinsame Regel der Limits); der Body wird dann vollständig gelesen, der Zip-Bomben-Schutz greift weiter über das Speicherlimit der Engine.
 - **Ausgabe:** `Größe` zeigt die tatsächliche Größe aus `Content-Length`, sofern vorhanden, sonst die gelesene; Vermerk `Abgeschnitten` = ja.
 - **Akzeptanzkriterien:**
   - [ ] Limit 1 MB, Seite 3 MB: höchstens 1 MB + 64 KB Puffer werden gelesen (Byte-Zähler im Fixture-Server), Links aus dem ersten MB sind vorhanden.

@@ -10,6 +10,9 @@ export default mergeConfig(
       globals: false,
       include: ["src/**/*.test.{ts,tsx}"],
       exclude: ["e2e/**", "node_modules/**"],
+      // Langsame CI-Runner (macOS Intel, Windows): großzügige Grenzen statt Flakes.
+      testTimeout: 30_000,
+      hookTimeout: 30_000,
     },
   }),
 );
