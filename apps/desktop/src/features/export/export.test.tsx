@@ -9,7 +9,7 @@ import { runAction } from "../../ui/actions";
 import type { ExportRequest } from "./model";
 import { openExport, registerExportContext, useExportContext, useExportDialog } from "./model";
 import { ExportDialog } from "./ExportDialog";
-import { ExportButton, ExportHost, ExportViewButton } from "./ExportHost";
+import { ExportButton, ExportHost, ExportViewButton, menuLabel } from "./ExportHost";
 import { executeExport, type ExportChoices } from "./execute";
 import { defaultSitemapOptions, sitemapSchema } from "./sitemap";
 import { nativeExportDesktop, type ExportDesktop } from "./native";
@@ -287,4 +287,12 @@ it("remembers XLSX after selection and recovers a failed name lookup", async () 
   await save();
   await waitFor(() => expect(core.settings.export.format).toBe("xlsx"));
   expect(desktop.choose).toHaveBeenCalledWith(expect.objectContaining({ extension: "xlsx", defaultName: fixture.name.replace(".csv", ".xlsx") }));
+});
+
+// spec: UI-002
+// spec: UI-121
+it("labels catalog entries without a translation by their name and keeps translated keys (A01-22)", () => {
+  expect(menuLabel("Accessibility:WCAG 2.0 A", "Accessibility:")).toEqual({ label: "WCAG 2.0 A" });
+  expect(menuLabel("Links:All Inlinks")).toEqual({ label: "Links:All Inlinks" });
+  expect(menuLabel("export-multi")).toEqual({ labelKey: "export-multi" });
 });

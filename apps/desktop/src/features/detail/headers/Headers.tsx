@@ -5,7 +5,9 @@ import { useT } from "../../../i18n";
 import { SearchField } from "../../../ui/primitives/fields";
 import { ContextMenu } from "../../../ui/primitives/ContextMenu";
 import { useDetailRequest } from "../frame/request";
-import { DetailError, DetailLoading } from "../frame/Feedback";
+import { DetailEmpty, DetailError, DetailLoading } from "../frame/Feedback";
+import { toCmdError } from "../../../ipc/errors";
+import { EMPTY_CODES, type EmptyState } from "../../../ui/emptyState/codes";
 import type { DetailPanelProps } from "../frame/types";
 
 export const HEADER_PREVIEW_BYTES = 8192;
@@ -15,11 +17,18 @@ export function headerPreview(value: string): string {
   for (const char of value) { bytes += new TextEncoder().encode(char).length; if (bytes > HEADER_PREVIEW_BYTES) break; text += char; }
   return `${text}…`;
 }
+/** The core answers a missing prerequisite with `err-detail-unavailable` and the empty state in `args.state` (UI-016). */
+export function unavailableState(error: unknown): EmptyState | null {
+  const state = toCmdError(error).args.state as Partial<EmptyState> | undefined;
+  if (!state || typeof state !== "object" || !(EMPTY_CODES as readonly string[]).includes(state.code as string)) return null;
+  // The core names the setting by its configuration path (`extraction.http_headers`); the texts are keyed by the short name.
+  return { ...state, ...(state.arg ? { arg: state.arg.replace(/^extraction\./, "") } : {}) } as EmptyState;
+}
 export function Headers({ selection, actions }: DetailPanelProps) {
   const t = useT(); const [search, setSearch] = useState("");
   const focus = selection.focus ?? selection.urlIds[0];
   const result = useDetailRequest(`headers:${selection.crawlId}:${focus}`, signal => detail.headers({ urlId: focus }, signal));
-  if (result.error) return <DetailError error={result.error} />;
+  if (result.error) { const state = unavailableState(result.error); return state ? <DetailEmpty state={state} /> : <DetailError error={result.error} />; }
   if (!result.value) return <DetailLoading />;
   const needle = search.toLocaleLowerCase();
   return <><Button onPress={() => actions.export({ kind: "detail", detail: "headers", urlIds: [focus], params: { search }, sort: [] }, { kind: "ids", ids: [focus] })}>{t("detail-export")}</Button><SearchField label={t("detail-search")} value={search} onChange={setSearch} clearLabel={t("detail-clear")} />

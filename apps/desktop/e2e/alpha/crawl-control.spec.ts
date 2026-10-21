@@ -83,7 +83,7 @@ test("Stop ends a running crawl: no further progress and no running state", asyn
   await alpha.startFromHeader();
   await expect(page.getByTestId("crawl-phase")).toHaveText("Running");
   await expect.poll(async () => (await done(page))[0], { timeout: 15_000 }).toBeGreaterThanOrEqual(3);
-  // Die Oberfläche hat kein Bedienelement für `crawl.stop` (Befund A01-05); der Befehl ist trotzdem Teil des Vertrags (UI-003, CRAWL-126).
+  // Klärung K2-69: A01-05 entschieden, Stopp über crawl.stop (kein Bedienelement; UI-003 sieht Start/Pause/Löschen vor, CRAWL-126).
   await alpha.invoke("crawl.stop");
   await expect(page.getByTestId("crawl-phase")).not.toHaveText("Running");
   await expect(button(page, "Pause")).toBeDisabled();
@@ -94,7 +94,6 @@ test("Stop ends a running crawl: no further progress and no running state", asyn
 
 // spec: UI-013
 test("a stopped crawl never reports 100 % while URLs remain in the queue", async ({ alpha }) => {
-  test.fixme(true, "Befund A01-06 (docs/plan/M2-acceptance/alpha/befunde.md): nach crawl.stop zeigt die Statusleiste „Completed“ und 100 % bei Remaining > 0 (UI-013: 100 % erst bei leerer Warteschlange)");
   const { page } = alpha;
   await alpha.open();
   await alpha.slowCrawl(3);

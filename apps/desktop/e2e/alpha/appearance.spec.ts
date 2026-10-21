@@ -150,7 +150,6 @@ test("at 1024 x 640 the sidebar starts collapsed and every interactive element l
 
 // spec: UI-001
 test("at 1024 x 640 no interactive elements overlap", async ({ alpha }) => {
-  test.fixme(true, "Befund A01-08 (docs/plan/M2-acceptance/alpha/befunde.md): die Tab-Leiste überlappt die Schaltfläche „Configure tabs“ (Tab „Pagination“ 18 × 24 px, „Directives“ 4 × 24 px); der Tab fängt Mausklicks auf die Schaltfläche ab");
   const { page } = alpha;
   await page.setViewportSize({ width: 1024, height: 640 });
   await alpha.open();

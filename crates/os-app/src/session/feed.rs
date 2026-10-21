@@ -43,6 +43,24 @@ pub fn phase(s: CrawlState) -> CrawlPhase {
         CrawlState::Failed => CrawlPhase::Failed,
     }
 }
+/// Prozent eines abgeschlossenen Crawls (UI-013: 100 % erst bei leerer Warteschlange). Ein gestoppter Crawl
+/// (`EndReason::Stopped`) mit Rest zeigt den Anteil der erledigten URLs, höchstens 99; andere Gründe (Warteschlange
+/// leer, Grenze erreicht) behalten den Wert der Engine, eine leere Warteschlange ergibt 100.
+pub(crate) fn completed_percent(
+    engine: u8,
+    end_reason: Option<os_model::EndReason>,
+    crawled: u64,
+    queued: u64,
+) -> u8 {
+    if queued == 0 {
+        return 100;
+    }
+    if end_reason == Some(os_model::EndReason::Stopped) {
+        let total = crawled.saturating_add(queued);
+        return (u128::from(crawled) * 100 / u128::from(total)).min(99) as u8;
+    }
+    engine
+}
 pub fn mode(m: os_model::CrawlMode) -> CrawlModeDto {
     match m {
         os_model::CrawlMode::Spider => CrawlModeDto::Spider,
@@ -248,8 +266,9 @@ pub async fn refresh(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
                 status.queued = counts.queued;
                 status.crawled = counts.crawled;
             }
-            if state == CrawlState::Completed && status.queued == 0 {
-                status.percent = 100;
+            if state == CrawlState::Completed {
+                status.percent =
+                    completed_percent(status.percent, end_reason, status.crawled, status.queued);
             }
             if f.get_meta("source_mode")?.as_deref() == Some("apis") {
                 status.mode = CrawlModeDto::Apis;
@@ -359,5 +378,28 @@ pub fn invalidate(app: &App, key: &CrawlKey) {
         .get_mut(key)
     {
         cursor.last = None;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::completed_percent;
+    use os_model::EndReason;
+
+    // spec: UI-013
+    #[test]
+    fn a_stopped_crawl_with_a_remaining_queue_never_reports_one_hundred_percent() {
+        assert_eq!(completed_percent(100, Some(EndReason::Stopped), 11, 16), 40);
+        assert_eq!(completed_percent(100, Some(EndReason::Stopped), 999, 1), 99);
+        assert_eq!(completed_percent(100, Some(EndReason::Stopped), 11, 0), 100);
+        assert_eq!(
+            completed_percent(100, Some(EndReason::QueueEmpty), 27, 0),
+            100
+        );
+        // Grenze erreicht: der Wert der Engine bleibt (CRAWL-130)
+        assert_eq!(
+            completed_percent(100, Some(EndReason::LimitReached), 10, 5),
+            100
+        );
     }
 }

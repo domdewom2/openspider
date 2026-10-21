@@ -1,5 +1,7 @@
 .os-sidebar { height: 100%; min-width: 0; overflow: auto; color: var(--os-text); background: var(--os-bg-surface); font-size: var(--os-font-table); }
-.os-sidebar .os-tablist { overflow: auto; flex-wrap: nowrap; }
+.os-sidebar .os-tablist { overflow: auto; flex-wrap: nowrap; scrollbar-width: none; }
+/* A01-17: WebKit's overlay scrollbar of the tab strip covered the outer tabs and took their mouse clicks; the strip scrolls by wheel and keys. */
+.os-sidebar .os-tablist::-webkit-scrollbar { display: none; }
 .os-sidebar .os-tab { white-space: nowrap; }
 .os-sidebar-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 .os-sidebar-table caption { text-align: start; font-weight: 600; padding: 6px; }

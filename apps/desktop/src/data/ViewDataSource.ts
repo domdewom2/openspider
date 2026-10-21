@@ -27,6 +27,10 @@ export class ViewDataSource {
   private focus: { key: number; row: number } | undefined;
   private tail = false;
   private sorted = false;
+  /** A newer version is being fetched in the background; the previous rows stay on screen until it is complete (UI-142, A01-07). */
+  private swap: AbortController | undefined;
+  private swapping: Promise<void> | undefined;
+  private queued: { version: number; total: number } | undefined;
   onScrollTo?: (row: number) => void;
   onError?: (error: unknown) => void;
 
@@ -62,6 +66,8 @@ export class ViewDataSource {
     this.first = Math.max(0, Math.min(Math.floor(first), this.total - 1));
     this.last = Math.max(this.first, Math.min(Math.floor(last), this.total - 1));
     this.tail = !this.sorted && this.last === this.total - 1;
+    // The visible window of a pending version is fetched by the swap itself; a request for the outdated version cannot succeed.
+    if (this.swap) return;
     const visibleFirst = this.first;
     const visibleLast = this.last;
     const generation = this.generation;
@@ -110,28 +116,78 @@ export class ViewDataSource {
     const row = await this.api.locate({ viewId: this.viewId, urlId: key }, this.controller.signal);
     return generation === this.generation && !this.disposed ? row : null;
   }
-  async onViewChanged(version: number, total: number): Promise<void> {
-    if (version <= this.version || this.disposed) return;
+  /**
+   * A new version of the view (tick). The rows of the visible window are fetched in the background and swapped in together
+   * with version, total and scroll position, so the table never shows placeholders or half-updated rows (UI-142, A01-07)
+   * and the focus row keeps its screen offset (UI-018, A01-10). Announcements that arrive while a swap is running are
+   * coalesced: the running swap finishes (the table keeps moving under load) and the latest version follows.
+   */
+  onViewChanged(version: number, total: number): Promise<void> {
+    if (this.disposed || version <= Math.max(this.version, this.queued?.version ?? 0)) return this.swapping ?? Promise.resolve();
+    this.queued = { version, total };
+    this.swapping ??= (async () => {
+      try {
+        while (this.queued && !this.disposed) {
+          const next = this.queued;
+          this.queued = undefined;
+          if (next.version > this.version) await this.swapTo(next.version, next.total);
+        }
+      } finally { this.swapping = undefined; }
+    })();
+    return this.swapping;
+  }
+  private async swapTo(version: number, total: number): Promise<void> {
     const anchor = this.focus ?? { key: this.rowKey(this.first), row: this.first };
     const relative = anchor.row - this.first;
     const height = this.last - this.first;
     const tail = this.tail;
+    const job = new AbortController();
+    this.swap = job;
+    let first = Math.min(this.first, Math.max(0, total - 1));
+    const fresh = new Map<number, Block>();
+    let located: number | undefined;
+    try {
+      if (tail) first = Math.max(0, total - height - 1);
+      else if (anchor.key !== undefined) {
+        try {
+          const row = await this.api.locate({ viewId: this.viewId, urlId: anchor.key }, job.signal);
+          if (job.signal.aborted || this.disposed) return;
+          if (row !== null) { first = Math.max(0, row - relative); located = row; }
+        } catch (error) { if (job.signal.aborted || this.disposed) return; if (!isSilentError(error)) this.onError?.(error); else return; }
+      }
+      first = Math.min(first, Math.max(0, total - 1));
+      const last = Math.min(total - 1, first + height);
+      const columns = this.columns.map(c => c.key);
+      const loads: Promise<void>[] = [];
+      for (let index = Math.floor(first / BLOCK_SIZE); total > 0 && index <= Math.floor(last / BLOCK_SIZE); index++) {
+        const offset = index * BLOCK_SIZE;
+        loads.push(this.api.rows({ viewId: this.viewId, version, offset, limit: BLOCK_SIZE, columns }, job.signal).then(result => {
+          if (result.version !== version || result.viewId !== this.viewId || result.offset !== offset || result.columns.join("\0") !== columns.join("\0")
+            || result.rowKeys.length !== result.cells.length || result.cells.length > BLOCK_SIZE) throw new Error("Invalid row window");
+          fresh.set(index, { keys: result.rowKeys, cells: result.cells });
+        }));
+      }
+      await Promise.all(loads);
+    } catch (error) {
+      // A request that outlived its version is dropped; the next announcement starts a new swap.
+      if (!job.signal.aborted && !this.disposed && !isSilentError(error)) this.onError?.(error);
+      return;
+    } finally {
+      if (this.swap === job) this.swap = undefined;
+    }
+    if (job.signal.aborted || this.disposed) return;
     this.controller.abort();
     this.controller = new AbortController();
-    const generation = ++this.generation;
+    this.generation++;
     this.version = version;
     this.total = total;
     this.blocks.clear(); this.pending.clear();
+    for (const [index, block] of fresh) this.blocks.set(index, block);
+    // Focus row and window move together: a following announcement computes its offset from both.
+    if (this.focus && anchor.key === this.focus.key && located !== undefined) this.focus = { key: this.focus.key, row: located };
+    this.first = first; this.last = Math.max(first, Math.min(total - 1, first + height));
+    this.tail = !this.sorted && total > 0 && this.last === total - 1;
     this.emit();
-    let first = Math.min(this.first, Math.max(0, total - 1));
-    if (tail) first = Math.max(0, total - height - 1);
-    else if (anchor.key !== undefined) {
-      try {
-        const row = await this.locate(anchor.key);
-        if (row !== null) { first = Math.max(0, row - relative); if (this.focus) this.focus = { key: anchor.key, row }; }
-      } catch (error) { if (!isSilentError(error)) this.onError?.(error); }
-    }
-    if (generation !== this.generation || this.disposed) return;
     this.onScrollTo?.(first);
     await this.ensureRange(first, Math.min(total - 1, first + height));
   }
@@ -148,7 +204,7 @@ export class ViewDataSource {
   }
   async dispose(): Promise<void> {
     if (this.disposed) return;
-    this.disposed = true; this.generation++; this.controller.abort();
+    this.disposed = true; this.generation++; this.controller.abort(); this.swap?.abort(); this.swap = undefined;
     this.blocks.clear(); this.pending.clear(); this.listeners.clear();
     await this.api.close({ viewId: this.viewId });
   }

@@ -2,6 +2,7 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useEffect, useState } from "react";
 import { createClient, setClient } from "../../../ipc/client";
+import { IpcError } from "../../../ipc/errors";
 import { useSession } from "../../../state/session";
 import { App, registerMainRegions } from "../../../App";
 import { eventBus } from "../../../ipc/events";
@@ -350,6 +351,14 @@ describe("headers and images", () => {
     expect(screen.getByText("noindex")).toBeInTheDocument(); expect(screen.queryByText("set-cookie")).toBeNull();
     expect(headerPreview("ä".repeat(5000))).toHaveLength(4097);
   });
+  // spec: UI-030
+  // spec: UI-016
+  it("names the missing prerequisite instead of a generic error when header storage is off (A01-11)", async () => {
+    fixture.core.handlers.set("detail.headers", () => { throw new IpcError({ code: "Unsupported", messageKey: "err-detail-unavailable", args: { state: { code: "FEATURE_DISABLED", arg: "http_headers", action: { kind: "openSetting", anchor: "extraction.http_headers" } } }, retryable: false }); });
+    render(<DetailFrame selection={selection} actions={actions} />); await settle(); await selectTab("HTTP Headers"); await settle();
+    expect(screen.getByText(/HTTP headers are not stored/)).toBeInTheDocument();
+    expect(screen.queryByText("This function is not available yet.")).toBeNull();
+  });
   // spec: UI-035
   it("does not load an unstored image until explicit consent, using an img element for safe SVG display", async () => {
     fixture.options.stored = false; render(<DetailFrame selection={{ ...selection, topTab: "Images" }} actions={actions} />); await settle(); await selectTab("Image Details");
@@ -360,7 +369,7 @@ describe("headers and images", () => {
   it("shows image instances in parity order with empty non-rendered dimensions and hidden extensions", async () => {
     render(<DetailFrame selection={selection} actions={actions} rendering={false} />); await settle(); await selectTab("Image Details");
     const table = screen.getByRole("table", { name: "Image Details" });
-    expect(within(table).getAllByRole("columnheader").map(e => e.textContent)).toEqual(IMAGE_COLUMNS.slice(0, -2));
+    expect(within(table).getAllByRole("columnheader").map(e => e.textContent)).toEqual(IMAGE_COLUMNS);
     expect(screen.getByText("400x300")).toBeInTheDocument(); expect(screen.getByText("HTML")).toBeInTheDocument();
     expect(fixture.core.calls.some(c => c.cmd === "detail.imagePreview")).toBe(false);
   });

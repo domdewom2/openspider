@@ -61,7 +61,6 @@ test("without a selection every detail tab asks for a URL in the upper table", a
 
 // spec: UI-030
 test("selecting a row in the main table loads its URL Details", async ({ alpha }) => {
-  test.fixme(true, "Befund A01-02 (docs/plan/M2-acceptance/alpha/befunde.md): die Haupttabelle veröffentlicht die Auswahl nie an das Detailfenster (setDetailSelection wird in der App nirgends aufgerufen)");
   const { page } = alpha;
   await crawled(alpha);
   await alpha.openTable("Response Codes");
@@ -105,7 +104,6 @@ test("HTTP Headers show request and response headers when header extraction is o
 
 // spec: UI-030
 test("HTTP Headers without header extraction name the setting that is missing", async ({ alpha }) => {
-  test.fixme(true, "Befund A01-11 (docs/plan/M2-acceptance/alpha/befunde.md): der Detail-Tab zeigt „This function is not available yet.“ statt der Voraussetzung extraction.http_headers (Kern liefert FEATURE_DISABLED mit Sprungziel)");
   const { page } = alpha;
   await crawled(alpha);
   await selectInDetails(page, alpha.startUrl);
@@ -114,7 +112,6 @@ test("HTTP Headers without header extraction name the setting that is missing", 
 
 // spec: UI-030
 test("Image Details list the images of the selected page", async ({ alpha }) => {
-  test.fixme(true, "Befund A01-12 (docs/plan/M2-acceptance/alpha/befunde.md): die Oberfläche fragt die Spalte „Alt Text Length“ an, die der Kern nicht kennt (err-unknown-column) – Anzeige „The input is invalid.“");
   const { page } = alpha;
   await crawled(alpha);
   await selectInDetails(page, alpha.startUrl);
@@ -124,7 +121,6 @@ test("Image Details list the images of the selected page", async ({ alpha }) => 
 
 // spec: UI-030
 test("Resources list the resources of the selected page", async ({ alpha }) => {
-  test.fixme(true, "Befund A01-12 (docs/plan/M2-acceptance/alpha/befunde.md): die Oberfläche fragt die Spalte „Content Type“ an, die der Kern für Resources nicht kennt (err-unknown-column) – Anzeige „The input is invalid.“");
   const { page } = alpha;
   await crawled(alpha);
   await selectInDetails(page, alpha.startUrl);
@@ -212,7 +208,6 @@ test("a click on an issue publishes tab and filter as the table navigation targe
 });
 
 test("a click on an issue or an Overview row navigates the table to that tab and filter", async ({ alpha }) => {
-  test.fixme(true, "Befund A01-03 (docs/plan/M2-acceptance/alpha/befunde.md): niemand liest die Navigationsanfrage der Seitenleiste (os:table-navigate / useSidebarNavigation.target); die Tabelle bleibt unverändert");
   const { page } = alpha;
   await crawled(alpha);
   await page.getByRole("tab", { name: "Issues", exact: true }).click();
@@ -224,7 +219,6 @@ test("a click on an issue or an Overview row navigates the table to that tab and
 
 // Alpha 3, Issue-Namen (UI-062, UI-064): Schwellwerte in den Namen sind aufgelöst, keine Platzhalter der Filterdefinition.
 test("Issue names show the configured thresholds instead of raw placeholders", async ({ alpha }) => {
-  test.fixme(true, "Befund A01-13 (docs/plan/M2-acceptance/alpha/befunde.md): die Issue-Liste zeigt „Page Titles: Below {title.min_chars} Characters“ und „Meta Description: Below {meta_description.min_chars} Characters“ mit unaufgelösten Platzhaltern");
   const { page } = alpha;
   await crawled(alpha);
   await page.getByRole("tab", { name: "Issues", exact: true }).click();
@@ -234,8 +228,7 @@ test("Issue names show the configured thresholds instead of raw placeholders", a
 });
 
 // Alpha 3, Seitenleiste (UI-060): jeder Reiter lässt sich mit der Maus erreichen.
-test("every sidebar tab can be selected with the mouse", async ({ alpha, browserName }) => {
-  test.fixme(browserName === "webkit", "Befund A01-17 (docs/plan/M2-acceptance/alpha/befunde.md): in WebKit fängt der Reiter-Container Mausklicks auf „Spelling & Grammar“ gelegentlich ab (macOS-CI Lauf 39540400349: „tablist intercepts pointer events“, beim zweiten Versuch grün)");
+test("every sidebar tab can be selected with the mouse", async ({ alpha }) => {
   const { page } = alpha;
   await crawled(alpha);
   const tabs = page.getByRole("tablist", { name: "Crawl summary" }).getByRole("tab");

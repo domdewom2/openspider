@@ -1,4 +1,4 @@
-import { saveUiState } from "./uistate";
+import { flushUiState, saveUiState } from "./uistate";
 import { create } from "zustand";
 import { catalog } from "../ipc/catalog";
 import { uistate } from "../ipc/uistate";
@@ -40,12 +40,18 @@ interface TabsState {
   layout(order: string[], hidden: string[]): Promise<void>;
   focus(id: string, urlId: number): void;
 }
+/** Counts local layout edits (reorder, show, hide, layout, reset): a `load()` that overlaps an edit must not undo it (A01-19). */
+let layoutEdits = 0;
 export const useTabs = create<TabsState>((set, get) => ({
   catalog: [], order: [], hidden: [], active: "Internal", queries: {}, loaded: false, error: null, focusRequest: 0,
   async load() {
     try {
+      const edits = layoutEdits;
+      // Local edits are saved with a delay: let them reach the file before it is read, otherwise the stale file wins.
+      await flushUiState().catch(() => undefined);
       const [tabs, dto] = await Promise.all([catalog.tabs(), uistate.load()]);
       const defaults = [...tabs].sort((a, b) => a.defaultOrder - b.defaultOrder).map(t => t.id);
+      if (edits !== layoutEdits) { set({ catalog: tabs, order: [...new Set([...get().order, ...defaults])], loaded: true, error: null }); return; }
       const saved = object(object(dto.state).topTabs);
       const order = Array.isArray(saved.order) ? saved.order.filter((v): v is string => typeof v === "string" && defaults.includes(v)) : [];
       const hidden = Array.isArray(saved.hidden) ? saved.hidden.filter((v): v is string => typeof v === "string" && v !== "Internal" && defaults.includes(v)) : [];
@@ -59,28 +65,33 @@ export const useTabs = create<TabsState>((set, get) => ({
   },
   query(patch) { const s = get(); set({ queries: { ...s.queries, [s.active]: { ...(s.queries[s.active] ?? defaultQuery()), ...patch } } }); },
   async reorder(ids) {
+    layoutEdits++;
     const order = [...new Set([...ids, ...get().order])].filter(id => get().catalog.some(t => t.id === id));
     set({ order }); await saveTableState({ topTabs: { order, hidden: get().hidden } });
   },
   async show(id, visible) {
+    layoutEdits++;
     if (id === "Internal" || !get().catalog.some(t => t.id === id)) return;
     const hidden = visible ? get().hidden.filter(v => v !== id) : [...new Set([...get().hidden, id])];
     set({ hidden, ...(id === get().active && !visible ? { active: "Internal" } : {}) });
     await saveTableState({ topTabs: { order: get().order, hidden } });
   },
   async hide(ids) {
+    layoutEdits++;
     const known = ids.filter(id => id !== MANDATORY_TAB && get().catalog.some(t => t.id === id));
     const hidden = [...new Set([...get().hidden, ...known])];
     set({ hidden, ...(hidden.includes(get().active) ? { active: MANDATORY_TAB } : {}) });
     await saveTableState({ topTabs: { order: get().order, hidden } });
   },
   async layout(ids, hiddenIds) {
+    layoutEdits++;
     const order = [...new Set([...ids, ...get().order])].filter(id => get().catalog.some(t => t.id === id));
     const hidden = [...new Set(hiddenIds)].filter(id => id !== MANDATORY_TAB && order.includes(id));
     set({ order, hidden, ...(hidden.includes(get().active) ? { active: MANDATORY_TAB } : {}) });
     await saveTableState({ topTabs: { order, hidden } });
   },
   async reset() {
+    layoutEdits++;
     const order = [...get().catalog].sort((a, b) => a.defaultOrder - b.defaultOrder).map(t => t.id);
     set({ order, hidden: [] }); await saveTableState({ topTabs: { order, hidden: [] } });
   },

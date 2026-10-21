@@ -84,11 +84,11 @@ export function DataGrid(props: DataGridProps) {
 
   // Keep exact logical rows separate from the compressed native scrollbar. Its rounded
   // scroll event must never replace a requested row (5M rows exceed CSS pixel precision).
-  const move = (row: number, left = position.left) => {
-    row = Math.round(clamp(row, maxFirst));
+  const move = (row: number, left = position.left, limit = maxFirst) => {
+    row = Math.round(clamp(row, limit));
     const element = scroller.current;
     if (element) {
-      element.scrollTop = rowToScroll(row, maxFirst, element.scrollHeight - element.clientHeight);
+      element.scrollTop = rowToScroll(row, limit, element.scrollHeight - element.clientHeight);
       expectedTop.current = element.scrollTop;
       element.scrollLeft = left;
       left = element.scrollLeft;
@@ -145,7 +145,8 @@ export function DataGrid(props: DataGridProps) {
     let frame = 0;
     const unsubscribe = source.subscribe(() => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; refresh(n => n + 1); }); });
     source.onError = error => latest.current.onError(error);
-    source.onScrollTo = row => actions.current.move(row);
+    // A new version brings a new total before the next render: clamp against the source's current total, not the rendered one (A01-10).
+    source.onScrollTo = row => actions.current.move(row, undefined, rowWindow(source.total, runtime.current.size.height, latest.current.rowHeight).maxFirst);
     return () => { unsubscribe(); cancelAnimationFrame(frame); source.onError = undefined; source.onScrollTo = undefined; selectionRequest.current++; };
   }, [source]);
   useEffect(() => { void source.ensureRange(first, first + Math.max(1, count) - 1); }, [source, source.version, first, count]);
@@ -230,9 +231,15 @@ export function DataGrid(props: DataGridProps) {
     if (!source.total) return;
     const request = ++selectionRequest.current, version = source.version;
     row = clamp(row, source.total - 1);
-    await source.ensureRow(row);
-    const key = source.rowKey(row);
-    if (key === undefined || request !== selectionRequest.current || version !== source.version) return;
+    // A click targets the row on screen: resolve its URL id synchronously when the block is loaded, so a view update that
+    // lands meanwhile cannot swallow the click (A01-16). Only a block that still has to be fetched is bound to its version.
+    let key = source.rowKey(row);
+    if (key === undefined) {
+      await source.ensureRow(row);
+      if (version !== source.version) return;
+      key = source.rowKey(row);
+    }
+    if (key === undefined || request !== selectionRequest.current) return;
     let next = latest.current.selection.select(key, toggle);
     if (shift && latest.current.selection.anchor !== undefined) {
       const anchor = await source.locate(latest.current.selection.anchor!);
@@ -243,7 +250,7 @@ export function DataGrid(props: DataGridProps) {
           : latest.current.selection.range(await source.keys(firstSelected, lastSelected), key);
       }
     }
-    if (request !== selectionRequest.current || version !== source.version) return;
+    if (request !== selectionRequest.current || (shift && version !== source.version)) return;
     source.setFocus(key, row); setFocus({ col, row }); latest.current.onSelectionChange(next);
     actions.current.reveal(row, col);
   };

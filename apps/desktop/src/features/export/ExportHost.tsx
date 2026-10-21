@@ -39,6 +39,16 @@ function resultInfo(value: JsonValue | null | undefined): { files: FileResult[];
   return { files: batch.files ?? [], warnings: batch.warnings ?? [], skipped: batch.skipped ?? [] };
 }
 
+/**
+ * The export catalog names its entries with `labelKey`, but for many of them the key is the catalog name itself
+ * (`Accessibility:WCAG 2.0 A`): it has no translation, and Fluent would read the dot as an attribute separator (A01-22).
+ * Translated keys keep their translation; the others show the name, without the group prefix the submenu already carries.
+ */
+export function menuLabel(key: string, groupPrefix = ""): { labelKey: string } | { label: string } {
+  if (i18n.has(currentLanguage(), key)) return { labelKey: key };
+  return { label: groupPrefix && key.startsWith(groupPrefix) ? key.slice(groupPrefix.length) : key };
+}
+
 /** One window-wide host; operation state survives closing the options dialog. */
 export function ExportHost({ desktop = nativeExportDesktop }: { desktop?: ExportDesktop }) {
   const t = useT();
@@ -83,9 +93,9 @@ export function ExportHost({ desktop = nativeExportDesktop }: { desktop?: Export
         const items = group.items.map(item => {
           const action = `export.${kind}.${item.name}`;
           offs.push(registerAction(action, () => { if (item.enabled && !running) openExport({ kind, name: item.name }); }));
-          return { id: action, action, labelKey: item.labelKey, enabled: () => item.enabled && !running, disabledReasonKey: item.disabledReason ?? undefined };
+          return { id: action, action, ...menuLabel(item.labelKey, `${group.key}:`), enabled: () => item.enabled && !running, disabledReasonKey: item.disabledReason ?? undefined };
         });
-        menu.push({ menu: key === "bulk" ? "bulkExport" : "reports", group: `export-${group.key}`, order: 10, items: [{ id: `export-group-${key}-${group.key}`, labelKey: group.labelKey, items }] });
+        menu.push({ menu: key === "bulk" ? "bulkExport" : "reports", group: `export-${group.key}`, order: 10, items: [{ id: `export-group-${key}-${group.key}`, ...menuLabel(group.labelKey), items }] });
       }
     }
     for (const sitemapKind of ["pages", "images"] as const) {

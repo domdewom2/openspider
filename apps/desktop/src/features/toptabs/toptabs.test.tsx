@@ -81,3 +81,30 @@ it("reloads catalog tabs and persisted preferences after switching crawls", asyn
   act(() => useSession.setState({ crawl: { crawlId: "changed-crawl" } as CrawlStatus }));
   await waitFor(() => expect(load).toHaveBeenCalledTimes(before + 1));
 });
+
+// spec: UI-004 [P1]
+it("keeps a reorder, a hide and a reset made while an older load is in flight (A01-19)", async () => {
+  await useTabs.getState().load();
+  let release!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  const original = uistate.load.bind(uistate);
+  // The read of the slow load returns the layout as saved before the edits.
+  const stale = await original();
+  vi.spyOn(uistate, "load").mockImplementationOnce(async () => { await gate; return stale; });
+  const slow = useTabs.getState().load();
+  await useTabs.getState().reorder(["Images", "Internal", "External", "AMP"]);
+  await useTabs.getState().show("AMP", false);
+  release(); await slow;
+  expect(useTabs.getState().order[0]).toBe("Images");
+  expect(useTabs.getState().hidden).toEqual(["AMP"]);
+  await flushUiState();
+  expect((await original()).state).toMatchObject({ topTabs: { order: ["Images", "Internal", "External", "AMP"], hidden: ["AMP"] } });
+  // A reset followed by a late load stays reset.
+  const stale2 = await original();
+  vi.spyOn(uistate, "load").mockImplementationOnce(async () => { await gate; return stale2; });
+  const slow2 = useTabs.getState().load();
+  await useTabs.getState().reset();
+  await slow2;
+  expect(useTabs.getState().hidden).toEqual([]);
+  expect(useTabs.getState().order).toEqual(fixtureTabs.map(t => t.id));
+});

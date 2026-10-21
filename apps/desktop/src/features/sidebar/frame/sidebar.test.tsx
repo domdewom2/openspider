@@ -279,3 +279,16 @@ it("localizes the percent heading in summary, filter and issue tables and copied
   fireEvent.click(screen.getByRole("button", { name: "Kopieren" }));
   await waitFor(() => expect(writeText).toHaveBeenLastCalledWith(expect.stringContaining("Befundname\tBefundtyp\tPriorität\tURLs\t% gesamt")));
 });
+
+// spec: UI-062
+// spec: UI-064
+it("shows the configured thresholds instead of placeholders in issue names, navigation keeps the filter id (A01-13)", async () => {
+  const issue = { ...fixture.issues[3]!, id: "Page Titles/Below {title.min_chars} Characters", tab: "Page Titles", filter: "Below {title.min_chars} Characters" } as IssueRow;
+  core.handlers.set("sidebar.issues", () => [issue, ...fixture.issues]);
+  core.handlers.set("config.get", () => ({ schemaVersion: 2, generator: "fixture", config: { title: { min_chars: 30 } } }));
+  mount(); await tab("Issues");
+  const row = await screen.findByRole("button", { name: "Page Titles: Below 30 Characters" });
+  expect(document.body.textContent).not.toMatch(/\{[a-z_.]+\}/);
+  fireEvent.click(row);
+  expect(useSidebarNavigation.getState().target?.spec).toMatchObject({ tab: "Page Titles", filter: "Below {title.min_chars} Characters" });
+});
