@@ -1,3 +1,4 @@
+import type { ConfigDraft } from "./draft";
 import { GROUP_ORDER, KNOWN_PAGES, pageTitleKey, type ConfigPage } from "./types";
 
 type PageModule = { page?: ConfigPage; pages?: ConfigPage[] };
@@ -42,4 +43,9 @@ export function navigation(pages: readonly ResolvedPage[]): NavGroup[] {
     else out.push({ id: `group:${p.group}`, group: p.group, pages: [p] });
   }
   return out.sort((a, b) => (GROUP_ORDER[a.group ?? ""] ?? a.pages[0]?.order ?? 0) - (GROUP_ORDER[b.group ?? ""] ?? b.pages[0]?.order ?? 0));
+}
+
+/** Optional constraints of loaded pages; absent guards do not affect the dialog. */
+export function pageSaveBlocked(pages: readonly ResolvedPage[], draft: ConfigDraft): boolean {
+  return pages.some(page => page.saveGuard?.(draft) === true);
 }
