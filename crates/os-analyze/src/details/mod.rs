@@ -107,6 +107,7 @@ pub fn app_detail_source(kind: DetailKind) -> (&'static str, DetailFn) {
         match kind {
             DetailKind::Headers => stored_header_details,
             DetailKind::Anchors => selected_anchor_details,
+            DetailKind::CrawlPath => selected_crawl_paths,
             _ => source,
         },
     )
@@ -355,4 +356,69 @@ pub fn selected_anchor_details(
         total: rows.total,
         notes: Vec::new(),
     })
+}
+
+/// App path source including imported parentless start roots (UI-050, OUT-023).
+pub fn selected_crawl_paths(
+    file: &CrawlFile,
+    _: &CrawlConfig,
+    req: &DetailReq<'_>,
+) -> Result<DetailRows, ViewError> {
+    let mut rows = Vec::new();
+    let mut total = 0u64;
+    for id in req.url_ids {
+        let page = os_store::queries::detail_ext::path_rows(file, id.0)?;
+        for row in page.rows {
+            if total >= req.offset && rows.len() < req.limit.min(500) as usize {
+                rows.push(row);
+            }
+            total += 1;
+        }
+    }
+    Ok(DetailRows {
+        columns: os_store::queries::crawl_path::HEADER
+            .iter()
+            .enumerate()
+            .map(|(i, n)| {
+                (
+                    (*n).into(),
+                    match i {
+                        0 | 2 => ColumnKind::Url,
+                        1 | 3 | 6 => ColumnKind::Int,
+                        _ => ColumnKind::Text,
+                    },
+                )
+            })
+            .collect(),
+        rows,
+        total,
+        notes: Vec::new(),
+    })
+}
+
+/// Stable context keys for detail rows, independent of display sorting / filtering (U21).
+pub fn app_detail_keys(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    kind: DetailKind,
+    req: &DetailReq<'_>,
+    data: &DetailRows,
+) -> Result<Option<Vec<i64>>, ViewError> {
+    if kind == DetailKind::Spelling {
+        return crate::tabs::content::spelling_detail_keys(file, cfg, req).map(Some);
+    }
+    if kind == DetailKind::A11yNodes {
+        if let Some(index) = data.columns.iter().position(|(name, _)| name == "id") {
+            return Ok(Some(
+                data.rows
+                    .iter()
+                    .map(|row| match row[index] {
+                        Value::Int(id) => id,
+                        _ => 0,
+                    })
+                    .collect(),
+            ));
+        }
+    }
+    Ok(None)
 }

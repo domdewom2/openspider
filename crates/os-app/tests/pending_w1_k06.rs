@@ -84,7 +84,6 @@ async fn anchors_mode_aggregates_hyperlinks_with_self_links_excluded() {
 }
 // spec: OUT-023
 #[tokio::test]
-#[ignore = "M2: wartet auf M2-D17"]
 async fn crawl_path_export_uses_the_registered_detail_source() {
     let fx = Fx::new();
     let path = fx.dir.path().join("path.csv");

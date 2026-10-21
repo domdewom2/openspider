@@ -811,3 +811,59 @@ pub fn recheck_spelling(
     }
     Ok(changed)
 }
+
+/// Per-URL 1-based ordinal in the standard finding order, retained through filters and sorting.
+pub fn spelling_detail_keys(
+    file: &os_store::CrawlFile,
+    cfg: &os_model::CrawlConfig,
+    req: &crate::details::DetailReq<'_>,
+) -> Result<Vec<i64>, crate::ViewError> {
+    let ids = serde_json::to_string(&req.url_ids.iter().map(|id| id.0).collect::<Vec<_>>())
+        .expect("integer list");
+    let param = |name: &str| {
+        req.params
+            .get(name)
+            .and_then(|v| v.as_str())
+            .map(str::to_string)
+    };
+    let (section, kind) = (param("section"), param("type"));
+    let sql_columns = [
+        "f.text",
+        "f.kind",
+        "f.detail",
+        "f.suggestion",
+        "f.section",
+        "f.rule_id",
+    ];
+    let mut order = Vec::new();
+    for key in req.sort {
+        if let Some(i) = SPELLING_DETAIL_COLUMNS
+            .iter()
+            .position(|c| *c == key.column)
+        {
+            let direction = if key.descending { "DESC" } else { "ASC" };
+            order.push(format!("{} COLLATE BINARY {direction}", sql_columns[i]));
+        }
+    }
+    order.push("f.id".into());
+    let filter = "f.url_id IN (SELECT value FROM json_each(?1)) AND ((LOWER(f.kind)='spelling' AND ?2) OR (LOWER(f.kind)='grammar' AND ?3)) AND (?4 IS NULL OR f.section=?4) AND (?5 IS NULL OR LOWER(f.kind)=LOWER(?5))";
+    let mut stmt = file.conn().prepare(&format!(
+        "SELECT f.finding_id FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY url_id ORDER BY id) AS finding_id FROM spelling_findings WHERE ((LOWER(kind)='spelling' AND ?2) OR (LOWER(kind)='grammar' AND ?3))) f WHERE {filter} ORDER BY {} LIMIT ?6 OFFSET ?7",
+        order.join(",")
+    ))?;
+    let keys = stmt
+        .query_map(
+            rusqlite::params![
+                ids,
+                cfg.spelling.enabled,
+                cfg.grammar.enabled,
+                section,
+                kind,
+                req.limit.min(i64::MAX as u64) as i64,
+                req.offset.min(i64::MAX as u64) as i64,
+            ],
+            |r| r.get(0),
+        )?
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(keys)
+}

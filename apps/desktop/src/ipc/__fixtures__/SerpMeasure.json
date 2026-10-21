@@ -8,7 +8,9 @@
       "truncated": false,
       "cutAt": null,
       "text": "",
-      "preview": ""
+      "preview": "",
+      "short": false,
+      "minPx": 200.0
     },
     {
       "chars": 190,
@@ -18,7 +20,9 @@
       "truncated": true,
       "cutAt": 152,
       "text": "",
-      "preview": ""
+      "preview": "",
+      "short": false,
+      "minPx": 400.0
     }
   ]
 }

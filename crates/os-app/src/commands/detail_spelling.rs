@@ -43,6 +43,7 @@ pub fn register(r: &mut Registry) {
         },
         spelling_context,
     );
+    crate::source::register_spelling_actions(r);
 }
 
 /// Wörterbuchorte des Prozesses unter dem Einstellungsordner der App (`dictionaries/`, persönliches Wörterbuch in

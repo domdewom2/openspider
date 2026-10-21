@@ -3,6 +3,7 @@ import type { A11yNodeArgs } from "./gen/A11yNodeArgs";
 import type { A11yNodeDetail } from "./gen/A11yNodeDetail";
 import type { DuplicatesArgs } from "./gen/DuplicatesArgs";
 import type { DuplicatesResult } from "./gen/DuplicatesResult";
+import type { FileResult } from "./gen/FileResult";
 import type { HeadersDto } from "./gen/HeadersDto";
 import type { ImagePreview } from "./gen/ImagePreview";
 import type { LighthouseArgs } from "./gen/LighthouseArgs";
@@ -10,6 +11,7 @@ import type { LighthouseDto } from "./gen/LighthouseDto";
 import type { NameValue } from "./gen/NameValue";
 import type { OpHandle } from "./gen/OpHandle";
 import type { ScreenshotInfo } from "./gen/ScreenshotInfo";
+import type { ScreenshotSaveArgs } from "./gen/ScreenshotSaveArgs";
 import type { SdTree } from "./gen/SdTree";
 import type { SerpArgs } from "./gen/SerpArgs";
 import type { SerpData } from "./gen/SerpData";
@@ -20,8 +22,11 @@ import type { SourceDiffArgs } from "./gen/SourceDiffArgs";
 import type { SourceDoc } from "./gen/SourceDoc";
 import type { SourceLinesArgs } from "./gen/SourceLinesArgs";
 import type { SourceOpenArgs } from "./gen/SourceOpenArgs";
+import type { SourceSaveArgs } from "./gen/SourceSaveArgs";
 import type { SpellingContext } from "./gen/SpellingContext";
 import type { SpellingContextArgs } from "./gen/SpellingContextArgs";
+import type { SpellingDictionaryArgs } from "./gen/SpellingDictionaryArgs";
+import type { SpellingIgnoreArgs } from "./gen/SpellingIgnoreArgs";
 import type { UrlIdArgs } from "./gen/UrlIdArgs";
 import { client } from "./client";
 
@@ -38,6 +43,10 @@ export const detail = {
   serpSaveEdit: (args: SerpEditArgs, signal?: AbortSignal) => client.invoke<void>("detail.serpSaveEdit", args, signal),
   /** `detail.serpReset` */
   serpReset: (args: SerpEditArgs, signal?: AbortSignal) => client.invoke<void>("detail.serpReset", args, signal),
+  /** `detail.sourceSave` */
+  sourceSave: (args: SourceSaveArgs, signal?: AbortSignal) => client.invoke<FileResult>("detail.sourceSave", args, signal),
+  /** `detail.screenshotSave` */
+  screenshotSave: (args: ScreenshotSaveArgs, signal?: AbortSignal) => client.invoke<FileResult>("detail.screenshotSave", args, signal),
   /** `detail.sourceOpen` */
   sourceOpen: (args: SourceOpenArgs, signal?: AbortSignal) => client.invoke<SourceDoc>("detail.sourceOpen", args, signal),
   /** `detail.sourceLines` */
@@ -56,6 +65,12 @@ export const detail = {
   lighthouse: (args: LighthouseArgs, signal?: AbortSignal) => client.invoke<LighthouseDto>("detail.lighthouse", args, signal),
   /** `detail.spellingContext` */
   spellingContext: (args: SpellingContextArgs, signal?: AbortSignal) => client.invoke<SpellingContext>("detail.spellingContext", args, signal),
+  /** `detail.spellingIgnore` – lang laufend: liefert sofort `OpHandle`, Ergebnis (void) über `Tick.ops[].result`. */
+  spellingIgnore: (args: SpellingIgnoreArgs, signal?: AbortSignal) => client.invoke<OpHandle>("detail.spellingIgnore", args, signal),
+  /** `detail.spellingDictionary` – lang laufend: liefert sofort `OpHandle`, Ergebnis (void) über `Tick.ops[].result`. */
+  spellingDictionary: (args: SpellingDictionaryArgs, signal?: AbortSignal) => client.invoke<OpHandle>("detail.spellingDictionary", args, signal),
+  /** `detail.spellingRecheck` – lang laufend: liefert sofort `OpHandle`, Ergebnis (void) über `Tick.ops[].result`. */
+  spellingRecheck: (signal?: AbortSignal) => client.invoke<OpHandle>("detail.spellingRecheck", undefined, signal),
   /** `detail.a11yNode` */
   a11yNode: (args: A11yNodeArgs, signal?: AbortSignal) => client.invoke<A11yNodeDetail>("detail.a11yNode", args, signal),
 } as const;

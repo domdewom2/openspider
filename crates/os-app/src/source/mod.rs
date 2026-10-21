@@ -7,12 +7,24 @@ use crate::{
 use std::{
     collections::VecDeque,
     sync::{Arc, Mutex},
-    time::Duration,
 };
 
 mod serp;
+mod spelling;
+pub use spelling::register as register_spelling_actions;
 pub mod structured;
 pub use serp::{measure, serp_data};
+
+/// Canonical app crawl path: root to target, with a zero-based step in that order.
+pub fn root_first_crawl_path(
+    mut data: os_store::queries::DetailData,
+) -> os_store::queries::DetailData {
+    data.rows.reverse();
+    for (step, row) in data.rows.iter_mut().enumerate() {
+        row[1] = os_model::Value::Int(step as i64);
+    }
+    data
+}
 
 pub const MAX_DOCUMENT_BYTES: usize = 20 * 1024 * 1024;
 const CACHE_BYTES: usize = 128 * 1024 * 1024;
@@ -238,9 +250,38 @@ pub fn diff(
     if cancel.is_cancelled() {
         return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"));
     }
+    // A deterministic complexity gate rejects divergent large inputs before exact Myers work.
+    // Common prefixes/suffixes do not contribute, so large identical documents remain cheap.
+    fn units(text: &str, mode: DiffMode) -> Vec<&str> {
+        match mode {
+            DiffMode::Words => text.split_whitespace().collect(),
+            DiffMode::Lines => text.split_inclusive('\n').collect(),
+        }
+    }
+    let (old_units, new_units) = (units(old, mode), units(new, mode));
+    let prefix = old_units
+        .iter()
+        .zip(&new_units)
+        .take_while(|(a, b)| a == b)
+        .count();
+    let suffix = old_units[prefix..]
+        .iter()
+        .rev()
+        .zip(new_units[prefix..].iter().rev())
+        .take_while(|(a, b)| a == b)
+        .count();
+    let old_work = old_units.len() - prefix - suffix;
+    let new_work = new_units.len() - prefix - suffix;
+    if old_work.saturating_mul(new_work) > 4_000_000 {
+        return Err(CmdError::invalid_input(
+            "err-source-diff-too-complex",
+            "mode",
+        ));
+    }
+    drop((old_units, new_units));
     let mut config = similar::TextDiff::configure();
-    // Bound pathological Myers work; checking cancellation between hunks keeps output work cooperative.
-    config.timeout(Duration::from_millis(80));
+    // No wall-clock deadline: Myers must produce the same exact result on every machine.
+    config.algorithm(similar::Algorithm::Myers);
     let old_words: Vec<_> = if mode == DiffMode::Words {
         old.split_whitespace().collect()
     } else {
@@ -299,4 +340,25 @@ pub fn diff(
         result.hunks.push(hunk);
     }
     Ok(result)
+}
+
+/// Publish a complete file atomically in the destination directory chosen by dialog.save.
+pub fn save_file(path: &str, bytes: &[u8]) -> Result<FileResult, CmdError> {
+    use std::io::Write;
+    let target = std::path::Path::new(path);
+    let parent = target
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or(std::path::Path::new("."));
+    let fail = |e: std::io::Error| {
+        CmdError::new(ErrorCode::Io, "err-detail-save").with_detail(e.to_string())
+    };
+    let mut temporary = tempfile::NamedTempFile::new_in(parent).map_err(fail)?;
+    temporary.write_all(bytes).map_err(fail)?;
+    temporary.flush().map_err(fail)?;
+    temporary.persist(target).map_err(|e| fail(e.error))?;
+    Ok(FileResult {
+        path: path.into(),
+        bytes: bytes.len() as u64,
+    })
 }

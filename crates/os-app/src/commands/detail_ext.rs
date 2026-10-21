@@ -110,6 +110,45 @@ fn dispatch<'a>(
                 source::ensure_url(saved)?;
                 Ok(serde_json::Value::Null)
             }
+            "detail.sourceSave" => {
+                let a: SourceSaveArgs = parse_args(args)?;
+                source_gate(&s.config, a.which)?;
+                app.read_pool()
+                    .run_snapshot(s.key, move |file, _| {
+                        Ok((|| {
+                            let html = load_source!(file, a.url_id, a.which);
+                            let text = match a.mode {
+                                SourceMode::Html => html,
+                                SourceMode::Text => source::visible_text(&html),
+                            };
+                            to_json(&source::save_file(&a.path, text.as_bytes())?)
+                        })())
+                    })
+                    .await?
+            }
+            "detail.screenshotSave" => {
+                let a: ScreenshotSaveArgs = parse_args(args)?;
+                app.read_pool()
+                    .run_snapshot(s.key.clone(), move |file, _| {
+                        Ok((|| {
+                            ensure_url!(file, a.url_id);
+                            let summary = storage::screenshot_summary(file.conn(), a.url_id)
+                                .map_err(|e| store_error(&e))?;
+                            assets::screenshot(summary, &s.key, a.url_id, &s.config)?;
+                            let bytes = storage::screenshot_tile(
+                                file.conn(),
+                                a.url_id,
+                                a.tile.unwrap_or(0),
+                            )
+                            .map_err(|e| store_error(&e))?
+                            .ok_or_else(|| {
+                                CmdError::new(ErrorCode::NotFound, "err-screenshot-not-stored")
+                            })?;
+                            to_json(&source::save_file(&a.path, &bytes)?)
+                        })())
+                    })
+                    .await?
+            }
             "detail.sourceOpen" => {
                 let a: SourceOpenArgs = parse_args(args)?;
                 source_gate(&s.config, a.which)?;
@@ -274,71 +313,78 @@ fn dispatch<'a>(
                             {
                                 return Err(source::unavailable("duplicates.exact_enabled"));
                             }
-                            let focus = storage::content_text(file.conn(), a.url_id)
-                                .map_err(|e| store_error(&e))?;
                             let mode = match a.kind {
                                 DupKind::Exact => "Exact",
                                 DupKind::Near => "Near",
                             };
                             let params = serde_json::json!({"filter":mode});
                             let ids = [UrlId(a.url_id)];
-                            let mut partners = vec![];
-                            let mut offset = 0;
-                            loop {
-                                if cancel.is_cancelled() {
-                                    return Err(CmdError::new(
-                                        ErrorCode::Cancelled,
-                                        "err-cancelled",
-                                    ));
-                                }
-                                let rows = os_analyze::tabs::duplicates::detail_rows(
-                                    file,
-                                    &s.config,
-                                    &os_analyze::details::DetailReq {
-                                        url_ids: &ids,
-                                        params: &params,
-                                        sort: &[],
-                                        offset,
-                                        limit: 500,
-                                    },
-                                )
-                                .map_err(view_error)?;
-                                for row in rows.rows {
-                                    let Value::Text(address) = &row[0] else {
-                                        continue;
-                                    };
-                                    let id = storage::url_id_by_address(file.conn(), address)
-                                        .map_err(|e| store_error(&e))?
-                                        .ok_or_else(|| {
-                                            CmdError::new(ErrorCode::NotFound, "err-url-not-found")
-                                        })?;
-                                    let text = storage::content_text(file.conn(), id)
-                                        .map_err(|e| store_error(&e))?;
-                                    let diff = match (&focus, &text) {
-                                        (Some(f), Some(o)) => {
-                                            Some(source::diff(f, o, DiffMode::Words, cancel)?)
-                                        }
-                                        _ => None,
-                                    };
-                                    let similarity = match row[1] {
+                            let offset = a.offset.unwrap_or(0);
+                            let limit = a.limit.unwrap_or(100).clamp(1, 500);
+                            if cancel.is_cancelled() {
+                                return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"));
+                            }
+                            let rows = os_analyze::tabs::duplicates::detail_rows(
+                                file,
+                                &s.config,
+                                &os_analyze::details::DetailReq {
+                                    url_ids: &ids,
+                                    params: &params,
+                                    sort: &[],
+                                    offset,
+                                    limit: u64::from(limit),
+                                },
+                            )
+                            .map_err(view_error)?;
+                            let total = rows.total;
+                            let mut partners = Vec::with_capacity(rows.rows.len());
+                            for row in rows.rows {
+                                let Value::Text(address) = &row[0] else {
+                                    continue;
+                                };
+                                let id = storage::url_id_by_address(file.conn(), address)
+                                    .map_err(|e| store_error(&e))?
+                                    .ok_or_else(|| {
+                                        CmdError::new(ErrorCode::NotFound, "err-url-not-found")
+                                    })?;
+                                partners.push(DupPartner {
+                                    url_id: id,
+                                    address: address.clone(),
+                                    similarity: match row[1] {
                                         Value::Int(n) => Some(n as f64),
                                         _ => None,
-                                    };
-                                    partners.push(DupPartner {
-                                        url_id: id,
-                                        address: address.clone(),
-                                        similarity,
-                                        match_type: mode.into(),
-                                        text,
-                                        diff,
-                                    });
-                                }
-                                offset += 500;
-                                if offset >= rows.total {
-                                    break;
-                                }
+                                    },
+                                    match_type: Some(mode.into()),
+                                    text: None,
+                                    diff: None,
+                                });
                             }
+                            let mut focus = None;
+                            if let Some(id) = a.partner_id {
+                                let partner = partners
+                                    .iter_mut()
+                                    .find(|p| p.url_id == id)
+                                    .ok_or_else(|| {
+                                        CmdError::invalid_input(
+                                            "err-duplicate-partner",
+                                            "partnerId",
+                                        )
+                                    })?;
+                                focus = storage::content_text(file.conn(), a.url_id)
+                                    .map_err(|e| store_error(&e))?;
+                                partner.text = storage::content_text(file.conn(), id)
+                                    .map_err(|e| store_error(&e))?;
+                                partner.diff = match (&focus, &partner.text) {
+                                    (Some(f), Some(o)) => {
+                                        Some(source::diff(f, o, DiffMode::Words, cancel)?)
+                                    }
+                                    _ => None,
+                                };
+                            }
+                            let end = offset.saturating_add(partners.len() as u64);
                             to_json(&DuplicatesResult {
+                                total: Some(total),
+                                next_offset: (end < total && !partners.is_empty()).then_some(end),
                                 partners,
                                 text: focus,
                             })
@@ -352,10 +398,11 @@ fn dispatch<'a>(
                     .run_snapshot(s.key, move |file, _| {
                         Ok((|| {
                             ensure_url!(file, a.url_id);
-                            let path =
-                                storage::path_rows(file, a.url_id).map_err(|e| store_error(&e))?;
+                            let path = source::root_first_crawl_path(
+                                storage::path_rows(file, a.url_id).map_err(|e| store_error(&e))?,
+                            );
                             let mut result = vec![];
-                            for row in path.rows.into_iter().rev() {
+                            for row in path.rows {
                                 let Value::Text(address) = &row[2] else {
                                     continue;
                                 };
@@ -416,6 +463,13 @@ pub fn register(r: &mut Registry) {
     );
     command!("detail.serpSaveEdit", "SerpEditArgs", "void", false);
     command!("detail.serpReset", "SerpEditArgs", "void", false);
+    command!("detail.sourceSave", "SourceSaveArgs", "FileResult", false);
+    command!(
+        "detail.screenshotSave",
+        "ScreenshotSaveArgs",
+        "FileResult",
+        false
+    );
     command!("detail.sourceOpen", "SourceOpenArgs", "SourceDoc", false);
     command!("detail.sourceLines", "SourceLinesArgs", "string[]", false);
     command!("detail.sourceDiff", "SourceDiffArgs", "DiffHunks", true);

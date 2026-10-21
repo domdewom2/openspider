@@ -50,45 +50,20 @@ pub fn serp_data(
 fn styled_width(text: &str, size: f64, terms: &[String]) -> u32 {
     pixel::width_px_with_bold_terms(text, size, terms)
 }
-fn row(text: String, max: u32, size: f64, terms: &[String]) -> SerpMeasureRow {
-    if terms.iter().all(String::is_empty) {
-        let m = pixel::measure_serp(&text, max, size, false);
-        return SerpMeasureRow {
-            text,
-            preview: m.preview,
-            chars: m.chars,
-            px: f64::from(m.px),
-            max_px: f64::from(m.max_px),
-            remaining: m.remaining as f64,
-            truncated: m.cut_at.is_some(),
-            cut_at: m.cut_at,
-        };
-    }
+fn row(text: String, min: u32, max: u32, size: f64, terms: &[String]) -> SerpMeasureRow {
     let px = styled_width(&text, size, terms);
-    let cut_at = if px <= max {
-        None
-    } else {
-        // Core word boundaries and suffix semantics; bold terms affect the fitting test as well.
-        let mut cut = 0;
-        for (i, c) in text.char_indices() {
-            if c.is_whitespace() && i > 0 {
-                if styled_width(&format!("{} …", text[..i].trim_end()), size, terms) > max {
-                    break;
-                }
-                cut = text[..i].trim_end().chars().count() as u32;
-            }
-        }
-        Some(cut)
-    };
+    let cut_at = pixel::truncate_at_with_width(&text, max, |s| styled_width(s, size, terms));
     let preview = match cut_at {
         None => text.clone(),
         Some(_) if styled_width(" …", size, terms) > max => String::new(),
         Some(cut) => format!("{} …", text.chars().take(cut as usize).collect::<String>()),
     };
     SerpMeasureRow {
+        min_px: Some(f64::from(min)),
+        short: Some(px < min),
         chars: text.chars().count() as u32,
-        text,
-        preview,
+        text: Some(text),
+        preview: Some(preview),
         px: f64::from(px),
         max_px: f64::from(max),
         remaining: f64::from(max) - f64::from(px),
@@ -118,8 +93,14 @@ pub fn measure(cfg: &CrawlConfig, args: SerpMeasureArgs) -> Result<SerpMeasure, 
         .collect::<Vec<_>>();
     Ok(SerpMeasure {
         rows: vec![
-            row(title, title_max, title_size, &terms),
-            row(description, desc_max, desc_size, &terms),
+            row(title, cfg.title.min_px, title_max, title_size, &terms),
+            row(
+                description,
+                cfg.meta_description.min_px,
+                desc_max,
+                desc_size,
+                &terms,
+            ),
         ],
     })
 }

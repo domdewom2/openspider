@@ -6,6 +6,18 @@ import type { DupKind } from "./DupKind";
  */
 export type DuplicatesArgs = { 
 /**
+ * First partner in the ordered list.
+ */
+offset?: number, 
+/**
+ * Requested page size, capped at 500 (default 100).
+ */
+limit?: number | null, 
+/**
+ * Load content and diff only for this partner; it must belong to this page.
+ */
+partnerId?: number | null, 
+/**
  * URL.
  */
 urlId: number, 

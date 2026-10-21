@@ -143,14 +143,19 @@ pub fn annotate(texts: &mut Vec<ExtractedText>, size_px: f64, bold: bool) {
 /// Some(0) means no complete word fits. Append ` …` to the selected prefix;
 /// when even the suffix exceeds the limit, display an empty preview.
 pub fn truncate_at(text: &str, max_px: u32, size_px: f64, bold: bool) -> Option<u32> {
-    if width_px(text, size_px, bold) <= max_px {
+    truncate_at_with_width(text, max_px, |s| width_px(s, size_px, bold))
+}
+
+/// Identical Unicode word boundaries for regular and mixed-style SERP measurements.
+pub fn truncate_at_with_width(text: &str, max_px: u32, width: impl Fn(&str) -> u32) -> Option<u32> {
+    if width(text) <= max_px {
         return None;
     }
     let mut cut = 0;
     for (byte, word) in text.unicode_word_indices() {
         let end = byte + word.len();
         let candidate = format!("{} …", text[..end].trim_end());
-        if width_px(&candidate, size_px, bold) <= max_px {
+        if width(&candidate) <= max_px {
             cut = text[..end].chars().count() as u32;
         } else {
             break;

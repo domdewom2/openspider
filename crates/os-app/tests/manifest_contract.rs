@@ -197,11 +197,19 @@ const CATALOG_3_6A: &[&str] = &[
     "mail.deleteAccount",
     "mail.testAccount",
     "detail.spellingContext",
+    "detail.spellingIgnore",
+    "detail.spellingDictionary",
+    "detail.spellingRecheck",
+    "detail.screenshotSave",
+    "detail.sourceSave",
     "detail.a11yNode",
 ];
 
 /// `long_running` laut den Tabellen (liefert sofort einen `OpHandle`).
 const LONG_RUNNING: &[&str] = &[
+    "detail.spellingIgnore",
+    "detail.spellingDictionary",
+    "detail.spellingRecheck",
     "export.multi",
     "export.customSummary",
     "export.sheets",

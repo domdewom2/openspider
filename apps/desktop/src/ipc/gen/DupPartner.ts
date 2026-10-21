@@ -8,7 +8,7 @@ export type DupPartner = {
 /**
  * Match classification for the detail list.
  */
-matchType: string, 
+matchType?: string, 
 /**
  * Exact content-area text used for comparison, if stored.
  */

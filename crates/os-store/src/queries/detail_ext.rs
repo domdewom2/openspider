@@ -213,6 +213,14 @@ pub fn path_rows(file: &CrawlFile, id: i64) -> Result<super::DetailData, StoreEr
     let Some(start) = file.get_meta("start_url")? else {
         return Ok(data);
     };
+    if !file
+        .conn()
+        .query_row("SELECT EXISTS(SELECT 1 FROM discovery_edges)", [], |r| {
+            r.get::<_, bool>(0)
+        })?
+    {
+        return legacy_seed_path(file, id, &start, data);
+    }
     let mut seen = std::collections::HashSet::new();
     let mut current = Some(id);
     let mut chain = Vec::new();
@@ -269,6 +277,74 @@ pub fn path_rows(file: &CrawlFile, id: i64) -> Result<super::DetailData, StoreEr
             ]
         })
         .collect();
+    data.total = data.rows.len() as u64;
+    Ok(data)
+}
+
+/// Legacy app crawls used `seed` for the start URL, before the provenance writer existed.
+fn legacy_seed_path(
+    file: &CrawlFile,
+    id: i64,
+    start: &str,
+    mut data: super::DetailData,
+) -> Result<super::DetailData, StoreError> {
+    use os_model::Value;
+    use std::collections::{HashMap, VecDeque};
+    let root = file.conn().query_row(
+        "SELECT id FROM urls WHERE discovered_via='seed' AND (url=?1 OR address=?1) ORDER BY id LIMIT 1",
+        [start], |r| r.get::<_, i64>(0),
+    ).optional()?;
+    let Some(root) = root else { return Ok(data) };
+    let mut parents = HashMap::from([(root, (None, None, None, 0i64))]);
+    let mut queue = VecDeque::from([root]);
+    let mut links = file.conn().prepare(
+        "SELECT target_id,link_type,anchor FROM links WHERE source_id=?1 AND target_id IS NOT NULL ORDER BY position,id",
+    )?;
+    while let Some(source) = queue.pop_front() {
+        if parents.contains_key(&id) {
+            break;
+        }
+        let depth = parents[&source].3 + 1;
+        for row in links.query_map([source], |r| {
+            Ok((
+                r.get::<_, i64>(0)?,
+                r.get::<_, Option<String>>(1)?,
+                r.get::<_, Option<String>>(2)?,
+            ))
+        })? {
+            let (target, via, anchor) = row?;
+            if let std::collections::hash_map::Entry::Vacant(entry) = parents.entry(target) {
+                entry.insert((Some(source), via, anchor, depth));
+                queue.push_back(target);
+            }
+        }
+    }
+    let target = file
+        .conn()
+        .query_row("SELECT address FROM urls WHERE id=?1", [id], |r| {
+            r.get::<_, String>(0)
+        })?;
+    let mut current = Some(id);
+    while let Some(cursor) = current {
+        let Some((parent, via, anchor, depth)) = parents.get(&cursor) else {
+            return Ok(data);
+        };
+        let (address, status) = file.conn().query_row(
+            "SELECT address,status_code FROM urls WHERE id=?1",
+            [cursor],
+            |r| Ok((r.get::<_, String>(0)?, r.get::<_, Option<i64>>(1)?)),
+        )?;
+        data.rows.push(vec![
+            Value::Text(target.clone()),
+            Value::Int(data.rows.len() as i64),
+            Value::Text(address),
+            status.map_or(Value::Null, Value::Int),
+            via.clone().map_or(Value::Null, Value::Text),
+            anchor.clone().map_or(Value::Null, Value::Text),
+            Value::Int(*depth),
+        ]);
+        current = *parent;
+    }
     data.total = data.rows.len() as u64;
     Ok(data)
 }
