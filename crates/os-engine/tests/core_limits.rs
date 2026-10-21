@@ -91,12 +91,12 @@ async fn start_records_owner_and_process_and_the_pages_carry_titles_and_links() 
     );
 }
 
-// spec: CRAWL-022 [M2]
+// spec: CRAWL-022
 #[tokio::test]
-async fn total_transferred_is_the_page_plus_its_resources_once_each() {
+async fn text_mode_total_transferred_equals_transferred() {
     // CRAWL-022 `/with-assets`: HTML 10 000 B, bindet `a.png` (20 000 B) zweimal und `b.css` (5 000 B) ein.
-    // In M1 gilt K-02: `total_transferred_bytes = transferred_bytes` (siehe der Test oben); die Summe mit
-    // Ressourcen gibt es nur mit JavaScript-Rendering (M2). Dieser Test hält das Kriterium aus CRAWL-022 fest.
+    // Im Textmodus gilt `total_transferred_bytes = transferred_bytes`; Ressourcenbytes mit
+    // JavaScript-Rendering belegt render_chromium.rs (CRAWL-022 [P1], ONPAGE-012 [P1]).
     let dir = tempfile::tempdir().unwrap();
     let html = "<!doctype html><html><head><link rel=\\\"stylesheet\\\" href=\\\"/b.css\\\"></head>\
                 <body><img src=\\\"/a.png\\\" alt=\\\"a\\\"><img src=\\\"/a.png\\\" alt=\\\"a\\\"></body></html>";

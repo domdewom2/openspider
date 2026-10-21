@@ -1,0 +1,26 @@
+diff --git a/crates/os-engine/tests/core_limits.rs b/crates/os-engine/tests/core_limits.rs
+index eeac7fb..7717be2 100644
+--- a/crates/os-engine/tests/core_limits.rs
++++ b/crates/os-engine/tests/core_limits.rs
+@@ -94 +94 @@ async fn start_records_owner_and_process_and_the_pages_carry_titles_and_links()
+-// spec: CRAWL-022 [M2]
++// spec: CRAWL-022
+@@ -96 +96 @@ async fn start_records_owner_and_process_and_the_pages_carry_titles_and_links()
+-async fn total_transferred_is_the_page_plus_its_resources_once_each() {
++async fn text_mode_total_transferred_equals_transferred() {
+@@ -98,2 +98,2 @@ async fn total_transferred_is_the_page_plus_its_resources_once_each() {
+-    // In M1 gilt K-02: `total_transferred_bytes = transferred_bytes` (siehe der Test oben); die Summe mit
+-    // Ressourcen gibt es nur mit JavaScript-Rendering (M2). Dieser Test hält das Kriterium aus CRAWL-022 fest.
++    // Im Textmodus gilt `total_transferred_bytes = transferred_bytes`; Ressourcenbytes mit
++    // JavaScript-Rendering belegt render_chromium.rs (CRAWL-022 [P1], ONPAGE-012 [P1]).
+diff --git a/crates/os-engine/tests/core_m2_transport.rs b/crates/os-engine/tests/core_m2_transport.rs
+index 34d2ed8..d2d9e13 100644
+--- a/crates/os-engine/tests/core_m2_transport.rs
++++ b/crates/os-engine/tests/core_m2_transport.rs
+@@ -64 +64,5 @@ async fn decoded_body_and_media_limits_are_passed_to_the_fetch_contract_includin
+-            [(kb * 1024, kb * 1024, Some(64 * 1024))]
++            if kb == 0 {
++                [(u64::MAX, u64::MAX, Some(64 * 1024))]
++            } else {
++                [(kb * 1024, kb * 1024, Some(64 * 1024))]
++            }
