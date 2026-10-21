@@ -24,7 +24,7 @@ impl Default for WordOptions {
             language: "en".into(),
             max_terms: 100,
             include_nofollow: true,
-            exclude_self_links: false,
+            exclude_self_links: true,
         }
     }
 }
