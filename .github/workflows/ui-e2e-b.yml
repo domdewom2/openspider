@@ -70,7 +70,7 @@ jobs:
           $conf = Get-Content apps/desktop/src-tauri/tauri.conf.json -Raw | ConvertFrom-Json
           foreach ($w in $conf.app.windows) {
             $w | Add-Member -NotePropertyName additionalBrowserArgs -NotePropertyValue '--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --remote-debugging-port=0' -Force
-            if ($w.label -eq 'settings') { $w.PSObject.Properties.Remove('create') }
+            if ($w.label -eq 'settings') { $w.PSObject.Properties.Remove('create'); $w | Add-Member -NotePropertyName url -NotePropertyValue 'settings.html' -Force }
           }
           $env:TAURI_CONFIG = (@{ app = @{ windows = $conf.app.windows } } | ConvertTo-Json -Depth 10 -Compress)
           Write-Host "TAURI_CONFIG=$env:TAURI_CONFIG"
