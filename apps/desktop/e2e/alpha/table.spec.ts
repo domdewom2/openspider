@@ -354,7 +354,6 @@ test("tabs can be hidden, the choice persists through a restart, Reset tabs show
 
 // spec: UI-004 [P1]
 test("reordering and then hiding a tab keeps both changes in the saved tab layout", async ({ alpha }) => {
-  test.fixme(true, "Befund A01-19 (docs/plan/M2-acceptance/alpha/befunde.md): nach Umordnen und anschließendem Ausblenden über das Menü ist die gespeicherte Reihenfolge in etwa jedem fünften Lauf wieder die Standardreihenfolge (verlorene Aktualisierung)");
   test.setTimeout(60_000);
   const { page } = alpha;
   await alpha.open();
