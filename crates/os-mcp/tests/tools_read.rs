@@ -18,6 +18,17 @@ use os_store::{registry, CrawlFile, OpenMode};
 use serde_json::{json, Value};
 use support::*;
 
+/// K2-64: the fixture crawls run without production network/robots retries and 429 throttling (the fixtures contain
+/// dropped and 5xx routes). Every assertion is unchanged; shadows `support::base_config`.
+fn base_config() -> CrawlConfig {
+    let mut cfg = CrawlConfig::default();
+    cfg.http.retries_network = 0;
+    cfg.http.throttle_on_429 = false;
+    cfg.robots.retries = 0;
+    cfg.robots.retry_delay_s = 0;
+    cfg
+}
+
 // ---------------------------------------------------------------------------------------------------------
 // AGENT-010 list_crawls
 
@@ -1262,7 +1273,12 @@ async fn an_excluded_url_reports_the_exclude_rule_as_reason() {
             .join("exclude.osconfig"),
     )
     .unwrap();
-    let cfg = CrawlConfig::from_toml_str(&text).unwrap();
+    let mut cfg = CrawlConfig::from_toml_str(&text).unwrap();
+    // K2-64: like `base_config` (the exclude rule is what the test reads).
+    cfg.http.retries_network = 0;
+    cfg.http.throttle_on_429 = false;
+    cfg.robots.retries = 0;
+    cfg.robots.retry_delay_s = 0;
     let stored = world.add("out-basic-site", "/", cfg, 1).await;
     let client = world.client().await;
     let excluded: String = stored
@@ -1294,7 +1310,10 @@ async fn an_excluded_url_reports_the_exclude_rule_as_reason() {
 #[tokio::test]
 async fn a_url_blocked_by_robots_txt_reports_robots_txt_as_reason() {
     let world = World::new();
-    let stored = world.add("crawl-robots", "/", base_config(), 1).await;
+    // K2-64: the fixture robots.txt has `Crawl-delay: 2`; the reason of a blocked URL does not depend on the pacing.
+    let mut cfg = base_config();
+    cfg.robots.respect_crawl_delay = false;
+    let stored = world.add("crawl-robots", "/", cfg, 1).await;
     let client = world.client().await;
     let blocked: String = stored
         .fx

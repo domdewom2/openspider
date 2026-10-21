@@ -7,6 +7,7 @@ mod support;
 use std::collections::BTreeSet;
 
 use os_analyze::tabs;
+use os_engine::testing::{crawl_fixture_from, FixtureCrawl};
 use os_export::catalog::bulk_links::{self, Selection};
 use os_export::catalog::{self, ExportKind, ExportRef};
 use os_export::pipeline::export_bulk_in;
@@ -14,6 +15,17 @@ use os_export::{export_bulk, naming, ExportFileInfo, Format};
 use os_model::CrawlConfig;
 use os_store::CrawlFile;
 use support::*;
+
+/// K2-64: Statusfixture ohne produktive Netzwerk-/Robots-Wiederholungen und 429-Drosselung (die Route `/drop` bricht nach
+/// den Headern ab); alle Status-, Export- und Golden-Aussagen bleiben unverändert. Verdeckt `support::crawl_codes`.
+async fn crawl_codes() -> FixtureCrawl {
+    let mut cfg = CrawlConfig::default();
+    cfg.http.retries_network = 0;
+    cfg.http.throttle_on_429 = false;
+    cfg.robots.retries = 0;
+    cfg.robots.retry_delay_s = 0;
+    crawl_fixture_from("out-response-codes", "http://www.site.test/", cfg).await
+}
 
 const SCOPES: [&str; 3] = ["Internal & External", "Internal", "External"];
 const ENTRIES: [&str; 12] = [

@@ -99,14 +99,12 @@ fn crawled_of(line: &str) -> Option<u64> {
 // spec: CRAWL-125, CRAWL-128
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn a_killed_crawl_is_incomplete_and_consistent_and_resumes_to_the_reference_result() {
-    // Referenz: ununterbrochen, im eigenen Prozess
+    // Referenz: ununterbrochen, im eigenen Prozess. K2-64: sie läuft nebenläufig zum Kindprozess (eigene Site, eigene
+    // Datei) und wird erst vor dem Vergleich abgewartet; die Aussagen bleiben unverändert.
     let ref_site = site().await;
     let ref_work = tempfile::tempdir().unwrap();
     let ref_path = crawl_file_in(&ref_work, "ref.ospider");
-    let ref_summary =
-        run_to_end(start(config_for(&ref_site, THREADS), &ref_path, deps()).await).await;
-    assert_eq!(ref_summary.end_reason, Some(EndReason::QueueEmpty));
-    assert!(ref_summary.crawled >= 1_000, "{}", ref_summary.crawled);
+    let ref_handle = start(config_for(&ref_site, THREADS), &ref_path, deps()).await;
 
     // Kindprozess crawlt dieselbe Site (andere Instanz, anderer Port, gleicher Host `site.test`)
     let site = site().await;
@@ -191,6 +189,11 @@ async fn a_killed_crawl_is_incomplete_and_consistent_and_resumes_to_the_referenc
         "Warteschlange und Zustand stimmen überein"
     );
     drop(file);
+
+    // Referenz abwarten
+    let ref_summary = run_to_end(ref_handle).await;
+    assert_eq!(ref_summary.end_reason, Some(EndReason::QueueEmpty));
+    assert!(ref_summary.crawled >= 1_000, "{}", ref_summary.crawled);
 
     // Fortsetzen
     let cfg = resume_config(&path, &site, |_| {});
