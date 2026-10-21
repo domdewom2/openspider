@@ -11,11 +11,14 @@ pub mod common;
 pub mod crawl;
 pub mod crawl_overview;
 pub mod export;
+pub mod list_catalog;
 pub mod list_crawls;
 pub mod list_issues;
 pub mod query_urls;
 pub mod sql_query;
+pub mod url_content;
 pub mod url_details;
+pub mod url_screenshot;
 
 use crate::tool::Tool;
 
@@ -33,6 +36,9 @@ pub fn all() -> Vec<Box<dyn Tool>> {
         Box::new(crawl::CrawlTool("stop_crawl")),
         Box::new(crawl::CrawlTool("resume_crawl")),
         Box::new(export::Export),
+        Box::new(list_catalog::ListCatalog),
+        Box::new(url_content::UrlContent),
+        Box::new(url_screenshot::UrlScreenshot),
     ]
 }
 
@@ -58,7 +64,10 @@ mod tests {
                 "crawl_status",
                 "stop_crawl",
                 "resume_crawl",
-                "export"
+                "export",
+                "list_catalog",
+                "url_content",
+                "url_screenshot"
             ]
         );
         assert_eq!(
@@ -66,7 +75,7 @@ mod tests {
                 .iter()
                 .filter(|t| t.class() == ToolClass::Read)
                 .count(),
-            6
+            9
         );
         for t in &tools {
             assert_eq!(t.input_schema()["type"], "object", "{}", t.name());
