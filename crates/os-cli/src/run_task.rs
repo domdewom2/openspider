@@ -59,11 +59,20 @@ pub trait TaskHooks: Send + Sync {
     }
 
     /// Vergleich mit dem vorherigen Crawl des Projekts (OUT-152).
-    fn compare_with_previous(&self, _task: &Task, _crawl: Option<&Path>) -> Result<(), String> {
-        Err(
-            "comparison with the previous crawl is not available in headless runs of this version"
-                .into(),
+    fn compare_with_previous(&self, _task: &Task, crawl: Option<&Path>) -> Result<(), String> {
+        let crawl = crawl.ok_or("Auto comparison: no crawl file available")?;
+        let dir = crawl
+            .parent()
+            .ok_or("Auto comparison: crawl directory missing")?;
+        os_analyze::compare::change::auto::run(
+            crawl,
+            dir,
+            &dir.join("comparisons"),
+            None,
+            &os_model::CancelToken::new(),
         )
+        .map_err(|e| e.to_string())?;
+        Ok(())
     }
 
     /// Zeitreihen-Zeile für Looker Studio (OUT-210); Rückgabe = Hinweise (Warnungen) des Laufs.
@@ -318,6 +327,7 @@ fn to_run_args(task: &Task, paths: &AppPaths, exports: &ExportPlan, export_dir: 
         Source::Spider { url } => args.crawl = Some(url.trim().to_string()),
         Source::List { .. } => args.crawl_list = task.crawl.source.list_sources(),
     }
+    args.compare_with_previous = task.execution.auto_compare;
     args.config = task
         .crawl
         .config

@@ -125,11 +125,11 @@ pub struct RunArgs {
     #[arg(long, num_args = 0.., value_name = "ID1 ID2", help_heading = "Vergleich")]
     pub crawl_comparison: Option<Vec<String>>,
 
-    /// [noch nicht unterstützt] Vergleicht mit dem vorherigen Crawl des Projekts.
+    /// Vergleicht mit dem vorherigen erfolgreichen Crawl des Projekts.
     #[arg(long, num_args = 0..=1, value_name = "true|false", help_heading = "Vergleich")]
     pub project_crawl_comparison: Option<Option<String>>,
 
-    /// [noch nicht unterstützt] Alias für `--project-crawl-comparison true`.
+    /// Alias für `--project-crawl-comparison true`.
     #[arg(long, help_heading = "Vergleich")]
     pub compare_with_previous: bool,
 
@@ -284,7 +284,7 @@ pub fn long_option_names() -> Vec<String> {
 impl RunArgs {
     /// Die noch nicht unterstützten Optionen, die der Aufruf enthält (Namen mit `--`).
     pub fn unsupported(&self) -> Vec<&'static str> {
-        let checks: [(bool, &'static str); 17] = [
+        let checks: [(bool, &'static str); 15] = [
             (self.crawl_google_sheet.is_some(), "--crawl-google-sheet"),
             (
                 self.google_drive_account.is_some(),
@@ -292,11 +292,6 @@ impl RunArgs {
             ),
             (self.auth_config.is_some(), "--auth-config"),
             (self.crawl_comparison.is_some(), "--crawl-comparison"),
-            (
-                self.project_crawl_comparison.is_some(),
-                "--project-crawl-comparison",
-            ),
-            (self.compare_with_previous, "--compare-with-previous"),
             (
                 self.use_google_analytics_4.is_some(),
                 "--use-google-analytics-4",

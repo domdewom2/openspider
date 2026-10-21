@@ -54,6 +54,8 @@ pub struct BatchSettings {
 /// Ablaufplan nach der Validierung.
 #[derive(Debug)]
 pub struct Plan {
+    /// Auto-Vergleich nach erfolgreichem Abschluss (OUT-152).
+    pub compare_with_previous: bool,
     /// Stapelmodus der Exporte (geplante Aufgaben); `None` = einzeln wie auf der Kommandozeile.
     pub batch: Option<BatchSettings>,
     /// Optionaler Segmentkontext; ohne Flag bleibt der Export ungefiltert.
@@ -346,6 +348,26 @@ fn build_impl(
         )));
     }
 
+    let compare_with_previous =
+        match args.project_crawl_comparison.as_ref() {
+            None => args.compare_with_previous,
+            Some(Some(value)) if value == "true" => true,
+            Some(Some(value)) if value == "false" && !args.compare_with_previous => false,
+            _ => return Err(CliError::usage(
+                "--project-crawl-comparison requires true or false; conflicting comparison options",
+            )),
+        };
+    if compare_with_previous
+        && (args
+            .project_name
+            .as_ref()
+            .is_none_or(|p| p.trim().is_empty())
+            || args.no_store)
+    {
+        return Err(CliError::usage(
+            "Auto comparison requires --project-name and a stored crawl",
+        ));
+    }
     let format = parse_format(args)?;
 
     // Quelle
@@ -493,6 +515,7 @@ fn build_impl(
         }
     }
     Ok(Plan {
+        compare_with_previous,
         batch,
         segment: args.segment.clone(),
         source,

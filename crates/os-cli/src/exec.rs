@@ -134,6 +134,23 @@ async fn run(plan: &Plan, rep: &Arc<Reporter>, signals: &Signals) -> Result<Outc
         }
     }
 
+    if plan.compare_with_previous {
+        match os_analyze::compare::change::auto::run(
+            &crawled.path,
+            &plan.paths.crawls,
+            &plan.paths.crawls.join("comparisons"),
+            Some(&plan.config.compare),
+            &signals.cancel_token(),
+        ) {
+            Ok(os_analyze::compare::change::auto::AutoResult::NoPrevious) => {
+                rep.info("kein vorheriger Crawl")
+            }
+            Ok(os_analyze::compare::change::auto::AutoResult::Saved(path)) => {
+                rep.info(format!("Vergleich gespeichert: {}", path.display()))
+            }
+            Err(e) => rep.warn(format!("Auto-Vergleich: {e}")),
+        }
+    }
     let mut failures = 0u32;
     let mut files = 0usize;
     if plan.output.is_some() {
@@ -613,6 +630,23 @@ fn export_phase(plan: &Plan, rep: &Reporter, signals: &Signals, crawled: &Crawle
         if signals.is_interrupted() {
             return ExportEnd::Interrupted;
         }
+        if plan.compare_with_previous {
+            if let Some(result) =
+                comparison_export(&file, &cfg, item, out, plan.format, &signals.cancel_token())
+            {
+                match result {
+                    Ok(info) => {
+                        report_file(rep, &info);
+                        files += 1;
+                    }
+                    Err(message) => {
+                        failures += 1;
+                        rep.error(message);
+                    }
+                }
+                continue;
+            }
+        }
         if let Some(segment) = plan.segment.as_deref() {
             match run_segment_export(&file, &cfg, item, out, plan.format, segment, rep) {
                 Ok(n) => files += n,
@@ -711,6 +745,9 @@ fn run_batch(
     signals: &Signals,
     rep: &Reporter,
 ) -> Result<usize, BatchEnd> {
+    if plan.compare_with_previous && file.get_meta("compare.latest").ok().flatten().is_some() {
+        return comparison_batch(file, cfg, plan, batch, out, signals, rep);
+    }
     let selections: Vec<os_export::types::ExportSelection> = plan
         .exports
         .iter()
@@ -806,4 +843,235 @@ fn run_segment_export(
         .map_err(|e| e.to_string())?;
     files.iter().for_each(|info| report_file(rep, info));
     Ok(files.len())
+}
+
+/// Vergleichs-Tabellen verwenden die gespeicherte Zuordnung und Ergebnisse (OUT-152).
+fn comparison_export(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    item: &Resolved,
+    out: &Path,
+    format: Format,
+    cancel: &os_model::CancelToken,
+) -> Option<Result<ExportFileInfo, String>> {
+    let Resolved::Tab { tab, filter } = item else {
+        return None;
+    };
+    let path = match file.get_meta("compare.latest") {
+        Ok(Some(path)) => path,
+        Ok(None) => return None,
+        Err(e) => return Some(Err(e.to_string())),
+    };
+    Some((|| {
+        let (mut c, config) = os_analyze::compare::change::auto::load(Path::new(&path), cancel)
+            .map_err(|e| e.to_string())?;
+        let mut q = ViewQuery::new(tab, filter);
+        if tab == "Change Detection" {
+            let def =
+                os_analyze::compare::change::tab_for_query(&config.change_detection, true, &mut q);
+            return os_export::tab_export::export_tab_in(
+                &[def],
+                &c.current().file,
+                cfg,
+                &q,
+                out,
+                format,
+            )
+            .map_err(|e| e.to_string());
+        }
+        let name = format!("{tab}:{filter}");
+        let target = out.join(os_export::naming::file_name(
+            &name,
+            None,
+            format.extension(),
+        ));
+        let mut writer = os_export::open_writer(
+            &target,
+            format,
+            &name,
+            &os_export::pipeline::writer_options(cfg),
+        )
+        .map_err(|e| e.to_string())?;
+        let mut ctx = os_export::types::ExportCtx {
+            cancel,
+            progress: &|_| {},
+            skip_empty: false,
+            workbook: None,
+            skipped: vec![],
+        };
+        let spec = os_export::compare::TabSelection {
+            tab: tab.clone(),
+            filter: filter.clone(),
+            class: None,
+            columns: q.columns,
+        };
+        os_export::compare::write_tab(&mut c, &spec, writer.as_mut(), &mut ctx)
+            .map_err(|e| e.to_string())?;
+        writer.finish().map_err(|e| e.to_string())
+    })())
+}
+
+/// Scheduling verwendet dieselben Vergleichs-Tabellen auch in Arbeitsmappen (OUT-152).
+fn comparison_batch(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    plan: &Plan,
+    batch: crate::plan::BatchSettings,
+    out: &Path,
+    signals: &Signals,
+    rep: &Reporter,
+) -> Result<usize, BatchEnd> {
+    use os_export::types::TableWriter;
+    let run = || -> Result<usize, String> {
+        let token = signals.cancel_token();
+        let path = file
+            .get_meta("compare.latest")
+            .map_err(|e| e.to_string())?
+            .ok_or("comparison missing")?;
+        let (mut comparison, config) =
+            os_analyze::compare::change::auto::load(Path::new(&path), &token)
+                .map_err(|e| e.to_string())?;
+        let name = file.meta().map_err(|e| e.to_string())?.name;
+        let destination = out.join(os_export::naming::file_name(
+            &format!("{name} export"),
+            None,
+            "xlsx",
+        ));
+        let mut workbook = if batch.single_workbook && plan.format == Format::Xlsx {
+            let mut w = os_export::xlsx::XlsxWriter::create(
+                &destination,
+                "Export",
+                &os_export::pipeline::writer_options(cfg),
+            )
+            .map_err(|e| e.to_string())?;
+            w.set_cancel(token.clone());
+            Some(w)
+        } else {
+            None
+        };
+        let mut files = 0;
+        let mut tables = 0;
+        for item in &plan.exports {
+            if token.is_cancelled() {
+                return Err("Export cancelled".into());
+            }
+            let mut ctx = os_export::types::ExportCtx {
+                cancel: &token,
+                progress: &|_| {},
+                skip_empty: batch.skip_empty,
+                workbook: workbook
+                    .as_mut()
+                    .map(|w| w as &mut dyn os_export::types::WorkbookTarget),
+                skipped: vec![],
+            };
+            if let Resolved::Tab { tab, filter } = item {
+                let label = format!("{tab}:{filter}");
+                let target = out.join(os_export::naming::file_name(
+                    &label,
+                    None,
+                    plan.format.extension(),
+                ));
+                let result = if tab == "Change Detection" {
+                    let mut q = ViewQuery::new(tab, filter);
+                    let def = os_analyze::compare::change::tab_for_query(
+                        &config.change_detection,
+                        true,
+                        &mut q,
+                    );
+                    os_export::pipeline::export_view_with(
+                        &[def],
+                        &comparison.current().file,
+                        cfg,
+                        &q,
+                        &target,
+                        plan.format,
+                        &label,
+                        false,
+                        &mut ctx,
+                    )
+                } else {
+                    os_export::output::write_table(
+                        &target,
+                        plan.format,
+                        &label,
+                        &os_export::pipeline::writer_options(cfg),
+                        &mut ctx,
+                        |writer| {
+                            let selection = os_export::compare::TabSelection {
+                                tab: tab.clone(),
+                                filter: filter.clone(),
+                                class: None,
+                                columns: os_analyze::views::ColumnSelection::Default,
+                            };
+                            let mut inner = os_export::types::ExportCtx {
+                                cancel: &token,
+                                progress: &|_| {},
+                                skip_empty: false,
+                                workbook: None,
+                                skipped: vec![],
+                            };
+                            os_export::compare::write_tab(
+                                &mut comparison,
+                                &selection,
+                                writer,
+                                &mut inner,
+                            )
+                            .map(|_| ())
+                        },
+                    )
+                }
+                .map_err(|e| e.to_string())?;
+                if let Some(info) = result {
+                    report_file(rep, &info);
+                    files += 1;
+                }
+                if ctx.skipped.is_empty() {
+                    tables += 1;
+                }
+            } else {
+                let (kind, name) = match item {
+                    Resolved::Bulk(n) => ("bulk", n.clone()),
+                    Resolved::Issues => ("bulk", os_export::catalog::bulk_issues::BULK_NAME.into()),
+                    Resolved::Report(n) => ("report", n.clone()),
+                    _ => unreachable!(),
+                };
+                let selection = os_export::types::ExportSelection {
+                    kind: kind.into(),
+                    name: name.clone(),
+                };
+                let options = os_export::pipeline::BatchOptions {
+                    format: plan.format,
+                    directory: out,
+                    crawl_name: &name,
+                    single_workbook: false,
+                };
+                let result =
+                    os_export::pipeline::export_batch(file, cfg, &[selection], &options, &mut ctx)
+                        .map_err(|e| e.to_string())?;
+                for info in &result.files {
+                    report_file(rep, info);
+                }
+                files += result.files.len();
+                for warning in result.warnings {
+                    rep.warn(warning);
+                }
+                if result.skipped.is_empty() {
+                    tables += 1;
+                }
+            }
+        }
+        if let Some(workbook) = workbook {
+            if tables > 0 {
+                let info = Box::new(workbook).finish().map_err(|e| e.to_string())?;
+                report_file(rep, &info);
+                files += 1;
+            }
+        }
+        Ok(files)
+    };
+    match run() {
+        Ok(n) => Ok(n),
+        Err(_) if signals.is_interrupted() => Err(BatchEnd::Interrupted),
+        Err(e) => Err(BatchEnd::Failed(e)),
+    }
 }
