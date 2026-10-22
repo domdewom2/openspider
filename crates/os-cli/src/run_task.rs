@@ -180,11 +180,15 @@ impl TaskHooks for SeriesHooks {
     }
 }
 
-/// Standardumsetzung ohne Erweiterungen.
+/// Standardumsetzung mit konfiguriertem Abschlussmail-Versand für Auto-Compare (OUT-152).
 #[derive(Debug, Default, Clone, Copy)]
 pub struct DefaultHooks;
 
-impl TaskHooks for DefaultHooks {}
+impl TaskHooks for DefaultHooks {
+    fn notify(&self, task: &Task, record: &RunRecord) -> Result<(), String> {
+        comparison_mail::notify_configured(task, record)
+    }
+}
 
 /// Umgebung eines Laufs.
 pub struct RunCtx {

@@ -228,6 +228,96 @@ async fn cli_crawl_content_uses_the_content_area_and_reclassifies_partial_change
 // spec: OUT-282
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn scheduled_task_runs_persist_exactly_one_comparison_of_the_last_two_crawls() {
+    scheduled_task_mail(false).await;
+}
+
+// spec: OUT-152
+// spec: TECH-308
+// spec: CRAWL-036
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn standard_run_task_sends_configured_smtp_comparison_mail() {
+    scheduled_task_mail(true).await;
+}
+
+// spec: OUT-152
+#[test]
+fn standard_task_entry_child() {
+    if std::env::var_os("OPENSPIDER_C02_SMTP_CHILD").is_none() {
+        return;
+    }
+    // Nur der Testprozess befüllt den prozessweiten Memory-Store. Kein Kennwort in argv oder Dateien.
+    os_fetch::secret_store_from_env()
+        .set("mail/c02", "fixture-secret-never-in-mail")
+        .unwrap();
+    assert_eq!(
+        crate::main_entry(["openspider", "--run-task", "c02-auto"]),
+        0
+    );
+}
+
+// spec: OUT-152
+// spec: TECH-308
+#[test]
+fn configured_smtp_requires_credentials_and_confirmation_without_leaking_secrets() {
+    use os_sched::mail::completion::{SmtpAccount, SmtpCompletionSender, SmtpTls};
+    let home = tempfile::tempdir().unwrap();
+    std::fs::create_dir_all(home.path().join("mail")).unwrap();
+    let secrets = os_fetch::MemorySecretStore::new();
+    let mut account = SmtpAccount {
+        host: "127.0.0.1".into(),
+        port: 25,
+        tls: SmtpTls::None,
+        username: "fixture-user".into(),
+        from: "sender@example.test".into(),
+        allow_insecure: false,
+    };
+    let write = |account: &SmtpAccount| {
+        std::fs::write(
+            home.path().join("mail/c02.json"),
+            serde_json::to_vec(account).unwrap(),
+        )
+        .unwrap();
+    };
+    write(&account);
+    let error = SmtpCompletionSender::from_account(home.path(), "c02", &secrets)
+        .err()
+        .unwrap();
+    assert!(error.contains("explicit confirmation"));
+    account.allow_insecure = true;
+    write(&account);
+    assert!(
+        SmtpCompletionSender::from_account(home.path(), "c02", &secrets)
+            .err()
+            .unwrap()
+            .contains("credential missing")
+    );
+    secrets.set("mail/c02", "fixture-secret-never-in-mail");
+    for tls in [SmtpTls::None, SmtpTls::Tls, SmtpTls::Starttls] {
+        account.tls = tls;
+        write(&account);
+        assert!(SmtpCompletionSender::from_account(home.path(), "c02", &secrets).is_ok());
+    }
+    for id in ["../c02", "", "/c02", "c02/other"] {
+        assert!(
+            SmtpCompletionSender::from_account(home.path(), id, &secrets)
+                .err()
+                .unwrap()
+                .contains("invalid account ID")
+        );
+    }
+    std::fs::write(
+        home.path().join("mail/c02.json"),
+        r#"{"password":"fixture-secret-never-in-mail"}"#,
+    )
+    .unwrap();
+    let error = SmtpCompletionSender::from_account(home.path(), "c02", &secrets)
+        .err()
+        .unwrap();
+    assert!(error.contains("invalid SMTP account configuration"));
+    assert!(!error.contains("fixture-secret-never-in-mail"));
+}
+
+async fn scheduled_task_mail(standard_process: bool) {
     use crate::run_task::{comparison_mail::ComparisonMailHooks, run_in, RunCtx};
     use os_sched::tasks::{Task, TaskStore};
     let home = tempfile::tempdir().unwrap();
@@ -252,7 +342,23 @@ async fn scheduled_task_runs_persist_exactly_one_comparison_of_the_last_two_craw
     let site = os_testsite::TestSite::start_dir(site_dir.path(), 0)
         .await
         .unwrap();
-    let (port, smtp) = smtp_fixture().await;
+    let (port, smtp) = smtp_fixture(standard_process).await;
+    if standard_process {
+        std::fs::create_dir_all(paths.settings.join("mail")).unwrap();
+        let account = os_sched::mail::completion::SmtpAccount {
+            host: "127.0.0.1".into(),
+            port,
+            tls: os_sched::mail::completion::SmtpTls::None,
+            username: "fixture-user".into(),
+            from: "configured-sender@example.test".into(),
+            allow_insecure: true,
+        };
+        std::fs::write(
+            paths.settings.join("mail/c02.json"),
+            serde_json::to_vec(&account).unwrap(),
+        )
+        .unwrap();
+    }
     let hooks = ComparisonMailHooks {
         crawls: paths.crawls.clone(),
         sender: Arc::new(
@@ -296,16 +402,48 @@ async fn scheduled_task_runs_persist_exactly_one_comparison_of_the_last_two_craw
             .unwrap();
             std::fs::write(site_dir.path().join("i.html"), "<html><head><title>I</title><meta name=robots content=noindex></head><body>I</body></html>").unwrap();
         }
-        let run = run_in(
-            &ctx,
-            &task.id,
-            &hooks,
-            Signals::manual(CancelToken::new()),
-            Reporter::for_task(false),
-        )
-        .await;
-        assert_eq!(run.exit, Exit::Ok, "{}", run.summary);
-        let record = run.record.unwrap();
+        let record = if standard_process {
+            // Eigener Prozess: echter CLI-Dispatcher, run(), DefaultHooks, Konto-Datei und SecretStore.
+            // Die Umgebung des parallelen Testprozesses bleibt unverändert.
+            let output = tokio::process::Command::new(std::env::current_exe().unwrap())
+                .args([
+                    "--exact",
+                    "exec::change_tests::standard_task_entry_child",
+                    "--nocapture",
+                ])
+                .env("OPENSPIDER_C02_SMTP_CHILD", "1")
+                .env("OPENSPIDER_HOME", home.path())
+                .env("OPENSPIDER_SECRET_STORE", "memory")
+                .env_remove(crate::run_task::RUN_ID_ENV)
+                .output()
+                .await
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "{}\n{}",
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            );
+            assert!(String::from_utf8_lossy(&output.stdout).contains("1 passed"));
+            assert!(!String::from_utf8_lossy(&output.stderr)
+                .contains("Benachrichtigung nicht gesendet"));
+            os_sched::history::HistoryStore::in_settings(&paths.settings)
+                .list(Some(&task.id), 0, 10)
+                .into_iter()
+                .next()
+                .unwrap()
+        } else {
+            let run = run_in(
+                &ctx,
+                &task.id,
+                &hooks,
+                Signals::manual(CancelToken::new()),
+                Reporter::for_task(false),
+            )
+            .await;
+            assert_eq!(run.exit, Exit::Ok, "{}", run.summary);
+            run.record.unwrap()
+        };
         assert!(record.warnings.is_empty(), "{:?}", record.warnings);
         ids.push(record.crawl_id.unwrap());
         clock.advance(std::time::Duration::from_secs(60));
@@ -316,14 +454,18 @@ async fn scheduled_task_runs_persist_exactly_one_comparison_of_the_last_two_craw
         .unwrap();
     assert_eq!(artifacts.len(), 1);
     let (comparison, config) = auto::load(&artifacts[0].path(), &CancelToken::new()).unwrap();
-    assert_eq!(
-        comparison.previous().meta.started_at,
-        Some(os_model::Timestamp::from_unix_millis(1_800_000_000_000))
-    );
-    assert_eq!(
-        comparison.current().meta.started_at,
-        Some(os_model::Timestamp::from_unix_millis(1_800_000_060_000))
-    );
+    if standard_process {
+        assert!(comparison.previous().meta.started_at < comparison.current().meta.started_at);
+    } else {
+        assert_eq!(
+            comparison.previous().meta.started_at,
+            Some(os_model::Timestamp::from_unix_millis(1_800_000_000_000))
+        );
+        assert_eq!(
+            comparison.current().meta.started_at,
+            Some(os_model::Timestamp::from_unix_millis(1_800_000_060_000))
+        );
+    }
     assert_eq!(comparison.previous().meta.crawl_id.to_string(), ids[0]);
     assert_eq!(comparison.current().meta.crawl_id.to_string(), ids[1]);
     assert_eq!(
@@ -333,6 +475,10 @@ async fn scheduled_task_runs_persist_exactly_one_comparison_of_the_last_two_craw
     let messages = smtp.await.unwrap();
     assert_eq!(messages.len(), 2);
     for message in &messages {
+        if standard_process {
+            assert!(message.contains("From: configured-sender@example.test"));
+            assert!(message.contains("To: receiver@example.test"));
+        }
         assert!(message.contains("multipart/alternative"));
         assert!(message.contains("text/plain"));
         assert!(message.contains("text/html"));
@@ -401,7 +547,7 @@ async fn scheduled_task_runs_persist_exactly_one_comparison_of_the_last_two_craw
 }
 
 /// Lokaler SMTP-Empfänger: prüft den tatsächlichen DATA-Inhalt, kein Transport-Mock.
-async fn smtp_fixture() -> (u16, tokio::task::JoinHandle<Vec<String>>) {
+async fn smtp_fixture(require_auth: bool) -> (u16, tokio::task::JoinHandle<Vec<String>>) {
     use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
     let listener = tokio::net::TcpListener::bind(("127.0.0.1", 0))
         .await
@@ -418,14 +564,24 @@ async fn smtp_fixture() -> (u16, tokio::task::JoinHandle<Vec<String>>) {
                     .write_all(b"220 fixture ESMTP\r\n")
                     .await
                     .unwrap();
+                let mut authenticated = false;
                 loop {
                     let mut line = String::new();
                     if stream.read_line(&mut line).await.unwrap() == 0 {
                         break;
                     }
                     let reply = if line.starts_with("EHLO") {
-                        "250-fixture\r\n250 8BITMIME\r\n"
+                        "250-fixture\r\n250-AUTH PLAIN\r\n250 8BITMIME\r\n"
+                    } else if line.starts_with("AUTH PLAIN ") {
+                        // Base64(\0fixture-user\0fixture-secret-never-in-mail).
+                        assert_eq!(
+                            line.trim(),
+                            "AUTH PLAIN AGZpeHR1cmUtdXNlcgBmaXh0dXJlLXNlY3JldC1uZXZlci1pbi1tYWls"
+                        );
+                        authenticated = true;
+                        "235 authenticated\r\n"
                     } else if line.starts_with("DATA") {
+                        assert!(!require_auth || authenticated);
                         stream
                             .get_mut()
                             .write_all(b"354 send mail\r\n")
