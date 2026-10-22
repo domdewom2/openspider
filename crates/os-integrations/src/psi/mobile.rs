@@ -303,7 +303,7 @@ mod tests {
     }
 
     /// Testbinary itself writes the fixture LHR, so local tests need neither a shell nor Node/Chrome.
-    // spec: TECH-230
+    // Process fixture only; the calling test below verifies TECH-230 / INTEG-140.
     #[test]
     fn fake_mobile_lighthouse() {
         let Ok(output) = std::env::var("D23_LIGHTHOUSE_OUTPUT") else {
