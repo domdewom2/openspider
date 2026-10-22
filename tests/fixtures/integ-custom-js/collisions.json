@@ -1,0 +1,13 @@
+{
+  "snippets": [
+    { "name": "All" },
+    { "name": "Address" },
+    { "name": "x" },
+    { "name": "x Error" },
+    { "name": "x 1" },
+    { "name": "Title 1" },
+    { "name": "shared" },
+    { "name": "All (JavaScript 1)" },
+    { "name": "scroll", "kind": "action", "timeout_s": 1 }
+  ]
+}

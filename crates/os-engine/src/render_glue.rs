@@ -157,7 +157,10 @@ impl Session {
             // Test/custom renderers have the same hard deadline as Chromium.
             for attempt in 0..2 {
                 let result = tokio::time::timeout(
-                    std::time::Duration::from_millis(u64::from(opts.page_timeout_ms)),
+                    std::time::Duration::from_millis(
+                        opts.snippets
+                            .page_budget_ms(u64::from(opts.page_timeout_ms)),
+                    ),
                     renderer.render(url, opts),
                 )
                 .await
@@ -343,6 +346,16 @@ pub(crate) fn options<F: Fetch>(
         .and_then(|f| os_fetch::auth::AuthMatcher::new(&f.basic_auth).ok())
         .unwrap_or_default();
     let mut opts = RenderOpts {
+        snippets: os_render::snippets::RunOptions::for_response(
+            cfg,
+            item.purpose != crate::frontier::Purpose::External,
+            response.status,
+            response
+                .headers
+                .iter()
+                .find(|(k, _)| k.eq_ignore_ascii_case("content-type"))
+                .map_or("", |(_, v)| v.as_str()),
+        ),
         retry_document_context: true,
         disable_cookies: cfg.advanced.cookies == os_model::CookieMode::None,
         return_cookies: cfg.advanced.cookies != os_model::CookieMode::None,
