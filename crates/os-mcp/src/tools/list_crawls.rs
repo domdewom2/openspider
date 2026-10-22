@@ -111,6 +111,7 @@ fn entry_json(listing: &CrawlListing) -> Json {
     let mode = match meta.mode {
         CrawlMode::Spider => "spider",
         CrawlMode::List => "list",
+        CrawlMode::Serp => "serp",
     };
     let mut entry = json!({
         "crawl_id": meta.crawl_id.to_string(),

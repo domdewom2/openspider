@@ -198,7 +198,7 @@ pub fn read_items(path: &Path) -> Result<Vec<String>, EngineError> {
 }
 
 /// UTF-8 (mit oder ohne BOM) bzw. UTF-16 mit BOM; sonst verlustbehaftetes UTF-8.
-fn decode_text(bytes: &[u8]) -> String {
+pub(crate) fn decode_text(bytes: &[u8]) -> String {
     if let Some(rest) = bytes.strip_prefix(&[0xEF, 0xBB, 0xBF]) {
         return String::from_utf8_lossy(rest).into_owned();
     }

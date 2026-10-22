@@ -201,6 +201,10 @@ pub async fn start_crawl<F: Fetch>(
     deps: EngineDeps,
 ) -> Result<CrawlHandle, EngineError> {
     match &req.source {
+        CrawlSource::Serp { rows, label } => {
+            let (rows, label) = (rows.clone(), label.clone());
+            start_serp(fetcher, req, deps, rows, label).await
+        }
         CrawlSource::Spider { start_url } => {
             let mut start = os_url::parse_start_url(start_url)
                 .map_err(|e| EngineError::Invalid(format!("Start-URL: {e}")))?;
@@ -235,7 +239,7 @@ fn prepare_fresh(
     let mut cfg = req.config.clone();
     cfg.mode = mode;
     cfg.speed.threads = cfg.speed.threads.clamp(1, MAX_THREADS);
-    if deps.renderer.is_none() {
+    if mode != CrawlMode::Serp && deps.renderer.is_none() {
         check_rendering(&cfg)?;
     }
     let rules = RuleSet::compile(
@@ -539,6 +543,75 @@ async fn start_list<F: Fetch>(
         paused_total: Duration::ZERO,
         primed_origins: HashSet::new(),
         seeds,
+    }))
+}
+
+async fn start_serp<F: Fetch>(
+    fetcher: Arc<F>,
+    req: CrawlRequest,
+    deps: EngineDeps,
+    rows: Vec<crate::serp_input::SerpRow>,
+    label: String,
+) -> Result<CrawlHandle, EngineError> {
+    let Fresh {
+        cfg,
+        rules,
+        crawl_id,
+        now,
+    } = prepare_fresh(&req, &deps, CrawlMode::Serp)?;
+    let file = CrawlFile::create(
+        &req.file,
+        &CrawlInit {
+            crawl_id,
+            mode: CrawlMode::Serp,
+            start_url: None,
+            list_source: Some(label),
+            project: req.project.clone(),
+            name: req.name.clone(),
+            config: (*cfg).clone(),
+            created_at: now,
+        },
+        deps.profile,
+    )?;
+    crate::serp_input::seed(&file, &rows)?;
+    let mut core = Core::new(0, None);
+    for i in 0..rows.len() {
+        core.register(
+            &format!("urn:openspider:serp:{}", i + 1),
+            os_model::UrlId((i + 1) as i64),
+            None,
+            crate::frontier::F_QUEUED | crate::frontier::F_IN_TABLES,
+        );
+    }
+    core.next_url_id = rows.len() as i64 + 1;
+    drop(file);
+    let anchor = os_url::parse_start_url("https://serp.invalid/").expect("static URL");
+    let scope = CrawlScope::new(Scope::new(&anchor, &cfg.scope));
+    let writer = WriterThread::spawn(open_sink(&deps, &req.file)?);
+    let first = WriteBatch {
+        meta: start_meta(&deps, now),
+        ..Default::default()
+    };
+    if writer.sender().send(first).await.is_err() {
+        return Err(writer_error(writer.finish().err()));
+    }
+    Ok(launch(Setup {
+        fetcher,
+        cfg,
+        rules,
+        deps,
+        file: req.file,
+        crawl_id,
+        core,
+        scope,
+        start_encoded: String::new(),
+        writer,
+        tracker_started_at: now,
+        tracker_elapsed: Duration::ZERO,
+        crawled: 0,
+        paused_total: Duration::ZERO,
+        primed_origins: HashSet::new(),
+        seeds: Vec::new(),
     }))
 }
 

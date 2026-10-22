@@ -65,6 +65,7 @@ pub fn mode(m: os_model::CrawlMode) -> CrawlModeDto {
     match m {
         os_model::CrawlMode::Spider => CrawlModeDto::Spider,
         os_model::CrawlMode::List => CrawlModeDto::List,
+        os_model::CrawlMode::Serp => CrawlModeDto::Serp,
     }
 }
 pub fn from_progress(id: String, m: CrawlModeDto, owner: CrawlOwner, p: &Progress) -> CrawlStatus {

@@ -175,6 +175,7 @@ async fn listing(app: &App, args: serde_json::Value) -> CmdResult {
                 mode: match l.meta.mode {
                     CrawlMode::Spider => CrawlModeDto::Spider,
                     CrawlMode::List => CrawlModeDto::List,
+                    CrawlMode::Serp => CrawlModeDto::Serp,
                 },
                 started_at: l.meta.started_at.map(|t| t.to_db()).unwrap_or_default(),
                 finished_at: l.meta.ended_at.map(|t| t.to_db()),

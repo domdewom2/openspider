@@ -56,6 +56,11 @@ pub struct CrawlSummary {
 /// Quelle der zu crawlenden URLs.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CrawlSource {
+    /// Offline title/description drafts; never schedules HTTP requests.
+    Serp {
+        rows: Vec<crate::serp_input::SerpRow>,
+        label: String,
+    },
     /// Spider-Modus ab einer Start-URL.
     Spider {
         /// Start-URL (wie eingegeben).

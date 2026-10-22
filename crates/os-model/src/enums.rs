@@ -388,6 +388,7 @@ string_enum! {
         #[default]
         Spider => "spider",
         List => "list",
+        Serp => "serp",
     }
 }
 
