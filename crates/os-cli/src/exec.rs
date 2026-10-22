@@ -80,6 +80,29 @@ struct Crawled {
     crawled: u64,
 }
 
+tokio::task_local! {
+    static EXECUTION_CLOCK: Arc<dyn Clock>;
+}
+
+fn execution_clock() -> Arc<dyn Clock> {
+    EXECUTION_CLOCK
+        .try_with(Arc::clone)
+        .unwrap_or_else(|_| Arc::new(SystemClock))
+}
+
+/// Wie execute, mit einer nur für diesen Ablauf geltenden Uhr bis zur Crawl-Erzeugung.
+/// Die Engine erhält dieselbe Arc explizit in ihren EngineDeps, auch in gestarteten Tasks.
+pub async fn execute_with_clock(
+    plan: Plan,
+    rep: Arc<Reporter>,
+    signals: Signals,
+    clock: Arc<dyn Clock>,
+) -> Outcome {
+    EXECUTION_CLOCK
+        .scope(clock, execute(plan, rep, signals))
+        .await
+}
+
 /// Führt den Plan aus; jeder Fehler wird zu einem Ergebnis mit Exit-Code.
 pub async fn execute(plan: Plan, rep: Arc<Reporter>, signals: Signals) -> Outcome {
     match run(&plan, &rep, &signals).await {
@@ -272,7 +295,7 @@ fn deps(id: Option<CrawlId>, hook: FinishedHook) -> EngineDeps {
         None => Arc::new(RandomIds),
     };
     EngineDeps {
-        clock: Arc::new(SystemClock),
+        clock: execution_clock(),
         ids,
         profile: StorageProfile::Balanced,
         secrets: Arc::new(KeyringSecretStore::new()),
@@ -324,6 +347,7 @@ async fn crawl_phase(
         ))
     })?;
     let hook = analysis_hook(rep, signals);
+    let clock = execution_clock();
 
     let (handle, path, id) = match &plan.source {
         Source::Load { path } => {
@@ -345,7 +369,7 @@ async fn crawl_phase(
             let stored = file.config().map_err(store_err)?;
             drop(file);
             let cfg = plan.resume_config.clone().unwrap_or(stored);
-            let fetcher = build_fetcher(&cfg, &KeyringSecretStore::new(), Arc::new(SystemClock))?;
+            let fetcher = build_fetcher(&cfg, &KeyringSecretStore::new(), clock.clone())?;
             warn_disk(path, rep);
             rep.phase("crawl");
             let handle = resume_crawl(
@@ -359,7 +383,7 @@ async fn crawl_phase(
             (handle, path.clone(), meta.crawl_id)
         }
         Source::Spider { .. } | Source::List { .. } => {
-            let id = RandomIds.new_crawl_id(SystemClock.now());
+            let id = RandomIds.new_crawl_id(clock.now());
             let path = registry::path_for(&plan.paths.crawls, &id);
             let source = match &plan.source {
                 Source::Spider { start_url } => CrawlSource::Spider {
@@ -371,11 +395,7 @@ async fn crawl_phase(
                 },
                 Source::Load { .. } => unreachable!("oben behandelt"),
             };
-            let fetcher = build_fetcher(
-                &plan.config,
-                &KeyringSecretStore::new(),
-                Arc::new(SystemClock),
-            )?;
+            let fetcher = build_fetcher(&plan.config, &KeyringSecretStore::new(), clock.clone())?;
             warn_disk(&path, rep);
             rep.phase("crawl");
             let request = CrawlRequest {

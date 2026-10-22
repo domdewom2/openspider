@@ -1,6 +1,7 @@
 //! Wertänderungen zwischen zugeordneten, beantworteten internen HTML-Seiten (TECH-300–307).
 //! Ergebnisse liegen in SQLite-Temptabellen; es lebt immer nur ein Seitenpaar im Arbeitsspeicher.
 pub mod auto;
+pub mod notification;
 mod page;
 
 use super::{checkpoint, CompareError, Comparison, RoaringBitmap, Side};

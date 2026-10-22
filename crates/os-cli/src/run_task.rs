@@ -41,6 +41,10 @@ use crate::plan::{self, BatchSettings};
 use crate::reporter::Reporter;
 use crate::signals::Signals;
 
+/// SMTP-Abschlussmails mit dem gespeicherten Auto-Compare-Ergebnis (OUT-152).
+#[path = "../../os-analyze/src/compare/change/mail_hooks.rs"]
+pub mod comparison_mail;
+
 /// Umgebungsvariable, mit der die App die Kennung des Laufs vorgibt („Jetzt ausführen“).
 pub const RUN_ID_ENV: &str = "OPENSPIDER_TASK_RUN_ID";
 
@@ -667,7 +671,8 @@ pub async fn run_in(
         })
     };
 
-    let mut outcome = exec::execute(plan, Arc::clone(&rep), signals.clone()).await;
+    let mut outcome =
+        exec::execute_with_clock(plan, Arc::clone(&rep), signals.clone(), ctx.clock.clone()).await;
     watcher.abort();
     let _ = watcher.await;
     let timeout_hit = timed_out.load(Ordering::SeqCst) && outcome.exit == Exit::Interrupted;

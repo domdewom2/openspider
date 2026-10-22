@@ -225,26 +225,58 @@ async fn cli_crawl_content_uses_the_content_area_and_reclassifies_partial_change
 // spec: OUT-152
 // spec: TECH-308
 // spec: CRAWL-036
+// spec: OUT-282
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn scheduled_task_runs_persist_exactly_one_comparison_of_the_last_two_crawls() {
-    use crate::run_task::{run_in, DefaultHooks, RunCtx};
+    use crate::run_task::{comparison_mail::ComparisonMailHooks, run_in, RunCtx};
     use os_sched::tasks::{Task, TaskStore};
     let home = tempfile::tempdir().unwrap();
     let paths = paths(home.path());
-    let site = os_testsite::TestSite::start("out-basic-site")
+    let site_dir = tempfile::tempdir().unwrap();
+    std::fs::write(site_dir.path().join("scenario.toml"), "").unwrap();
+    std::fs::write(
+        site_dir.path().join("index.html"),
+        "<html><body><a href='/a.html'>A</a><a href='/i.html'>I</a></body></html>",
+    )
+    .unwrap();
+    std::fs::write(
+        site_dir.path().join("a.html"),
+        "<html><head><title>Before</title></head><body>A</body></html>",
+    )
+    .unwrap();
+    std::fs::write(
+        site_dir.path().join("i.html"),
+        "<html><head><title>I</title></head><body>I</body></html>",
+    )
+    .unwrap();
+    let site = os_testsite::TestSite::start_dir(site_dir.path(), 0)
         .await
         .unwrap();
+    let (port, smtp) = smtp_fixture().await;
+    let hooks = ComparisonMailHooks {
+        crawls: paths.crawls.clone(),
+        sender: Arc::new(
+            os_sched::mail::completion::SmtpCompletionSender::loopback(port, "sender@example.test")
+                .unwrap(),
+        ),
+    };
     let task: Task = serde_json::from_value(serde_json::json!({
         "id":"c02-auto","name":"C02 Auto","project":"project",
         "schedule":{"kind":"daily","time":"03:00"},
         "crawl":{"source":{"kind":"spider","url":site.base_url()},"overrides":{"threads":"1","robots.retries":"0"}},
-        "execution":{"auto_compare":true}
+        "execution":{"auto_compare":true},
+        "notify":{"on_success":true,"account":"c02","to":["receiver@example.test"]}
     })).unwrap();
     let task = TaskStore::in_settings(&paths.settings).save(task).unwrap();
+    let clock = Arc::new(os_model::ManualClock::new(
+        os_model::Timestamp::from_unix_millis(1_800_000_000_000),
+    ));
+    let secrets = Arc::new(os_fetch::MemorySecretStore::new());
+    secrets.set("mail/c02", "fixture-secret-never-in-mail");
     let ctx = RunCtx {
         paths: paths.clone(),
-        clock: Arc::new(os_model::SystemClock),
-        secrets: Arc::new(os_fetch::MemorySecretStore::new()),
+        clock: clock.clone(),
+        secrets,
         run_id: None,
         manual: false,
         log_path: None,
@@ -255,17 +287,28 @@ async fn scheduled_task_runs_persist_exactly_one_comparison_of_the_last_two_craw
         timeout_scale: 1.0,
     };
     let mut ids = Vec::new();
-    for _ in 0..2 {
+    for version in 0..2 {
+        if version == 1 {
+            std::fs::write(
+                site_dir.path().join("a.html"),
+                "<html><head><title>After</title></head><body>A</body></html>",
+            )
+            .unwrap();
+            std::fs::write(site_dir.path().join("i.html"), "<html><head><title>I</title><meta name=robots content=noindex></head><body>I</body></html>").unwrap();
+        }
         let run = run_in(
             &ctx,
             &task.id,
-            &DefaultHooks,
+            &hooks,
             Signals::manual(CancelToken::new()),
             Reporter::for_task(false),
         )
         .await;
         assert_eq!(run.exit, Exit::Ok, "{}", run.summary);
-        ids.push(run.record.unwrap().crawl_id.unwrap());
+        let record = run.record.unwrap();
+        assert!(record.warnings.is_empty(), "{:?}", record.warnings);
+        ids.push(record.crawl_id.unwrap());
+        clock.advance(std::time::Duration::from_secs(60));
     }
     let artifacts = std::fs::read_dir(paths.crawls.join("comparisons"))
         .unwrap()
@@ -273,10 +316,171 @@ async fn scheduled_task_runs_persist_exactly_one_comparison_of_the_last_two_craw
         .unwrap();
     assert_eq!(artifacts.len(), 1);
     let (comparison, config) = auto::load(&artifacts[0].path(), &CancelToken::new()).unwrap();
+    assert_eq!(
+        comparison.previous().meta.started_at,
+        Some(os_model::Timestamp::from_unix_millis(1_800_000_000_000))
+    );
+    assert_eq!(
+        comparison.current().meta.started_at,
+        Some(os_model::Timestamp::from_unix_millis(1_800_000_060_000))
+    );
     assert_eq!(comparison.previous().meta.crawl_id.to_string(), ids[0]);
     assert_eq!(comparison.current().meta.crawl_id.to_string(), ids[1]);
     assert_eq!(
         auto::saved_counts(&artifacts[0].path(), false).unwrap(),
         change::counts(&comparison, &config.change_detection, false).unwrap()
     );
+    let messages = smtp.await.unwrap();
+    assert_eq!(messages.len(), 2);
+    for message in &messages {
+        assert!(message.contains("multipart/alternative"));
+        assert!(message.contains("text/plain"));
+        assert!(message.contains("text/html"));
+        assert!(!message.contains("fixture-secret-never-in-mail"));
+    }
+    let first_text = smtp_body(&messages[0], "text/plain");
+    let second_text = smtp_body(&messages[1], "text/plain");
+    let second_html = smtp_body(&messages[1], "text/html");
+    assert!(smtp_body(&messages[0], "text/html").contains("kein vorheriger Crawl"));
+    assert!(first_text.contains("kein vorheriger Crawl"));
+    assert!(!first_text.contains("Previous\tCurrent"));
+    assert!(!second_text.contains("kein vorheriger Crawl"));
+    let mut manual = fixture::comparison(
+        CrawlFile::open(comparison.current().file.path(), OpenMode::ReadOnly).unwrap(),
+        CrawlFile::open(comparison.previous().file.path(), OpenMode::ReadOnly).unwrap(),
+    );
+    change::calculate(&manual, &config.change_detection, &CancelToken::new()).unwrap();
+    let expected =
+        change::notification::rows(&mut manual, &config.change_detection, false).unwrap();
+    assert_eq!(
+        expected
+            .iter()
+            .find(|r| r.label == "Indexability")
+            .unwrap()
+            .change,
+        1
+    );
+    assert_eq!(
+        expected
+            .iter()
+            .find(|r| r.label == "Page Titles")
+            .unwrap()
+            .change,
+        1
+    );
+    let expected_lines: Vec<_> = expected
+        .iter()
+        .map(|row| {
+            let pct = row.percent.map(|p| format!("{p:.2}")).unwrap_or_default();
+            format!(
+                "{}\t{}\t{}\t{}\t{pct}",
+                row.label, row.previous, row.current, row.change
+            )
+        })
+        .collect();
+    let table = second_text
+        .split_once("Issue / Filter\tPrevious\tCurrent\tChange\tChange %\r\n")
+        .unwrap()
+        .1;
+    let actual_lines: Vec<_> = table.split_once("URLs:").unwrap().0.lines().collect();
+    assert_eq!(actual_lines, expected_lines);
+    for row in expected {
+        let pct = row.percent.map(|p| format!("{p:.2}")).unwrap_or_default();
+        assert!(second_html.contains(&format!(
+            "</td><td>{}</td><td>{}</td><td>{}</td><td>{pct}</td></tr>",
+            row.previous, row.current, row.change
+        )));
+        assert!(
+            second_text.contains(&format!(
+                "{}\t{}\t{}\t{}\t{pct}\r\n",
+                row.label, row.previous, row.current, row.change
+            )),
+            "missing mail row: {row:?}"
+        );
+    }
+}
+
+/// Lokaler SMTP-Empfänger: prüft den tatsächlichen DATA-Inhalt, kein Transport-Mock.
+async fn smtp_fixture() -> (u16, tokio::task::JoinHandle<Vec<String>>) {
+    use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+    let listener = tokio::net::TcpListener::bind(("127.0.0.1", 0))
+        .await
+        .unwrap();
+    let port = listener.local_addr().unwrap().port();
+    let handle = tokio::spawn(async move {
+        tokio::time::timeout(std::time::Duration::from_secs(30), async move {
+            let mut messages = Vec::new();
+            while messages.len() < 2 {
+                let (socket, _) = listener.accept().await.unwrap();
+                let mut stream = BufReader::new(socket);
+                stream
+                    .get_mut()
+                    .write_all(b"220 fixture ESMTP\r\n")
+                    .await
+                    .unwrap();
+                loop {
+                    let mut line = String::new();
+                    if stream.read_line(&mut line).await.unwrap() == 0 {
+                        break;
+                    }
+                    let reply = if line.starts_with("EHLO") {
+                        "250-fixture\r\n250 8BITMIME\r\n"
+                    } else if line.starts_with("DATA") {
+                        stream
+                            .get_mut()
+                            .write_all(b"354 send mail\r\n")
+                            .await
+                            .unwrap();
+                        let mut data = String::new();
+                        loop {
+                            let mut part = String::new();
+                            assert!(stream.read_line(&mut part).await.unwrap() > 0);
+                            if part == ".\r\n" {
+                                break;
+                            }
+                            data.push_str(part.strip_prefix('.').unwrap_or(&part));
+                        }
+                        messages.push(data);
+                        "250 accepted\r\n"
+                    } else if line.starts_with("QUIT") {
+                        stream.get_mut().write_all(b"221 bye\r\n").await.unwrap();
+                        break;
+                    } else {
+                        "250 ok\r\n"
+                    };
+                    stream.get_mut().write_all(reply.as_bytes()).await.unwrap();
+                }
+            }
+            messages
+        })
+        .await
+        .expect("SMTP fixture timed out")
+    });
+    (port, handle)
+}
+
+/// Decodiert den tatsächlich übertragenen Quoted-Printable-MIME-Part.
+fn smtp_body(message: &str, mime: &str) -> String {
+    let part = message
+        .split(&format!("Content-Type: {mime}"))
+        .nth(1)
+        .unwrap();
+    let (headers, body) = part.split_once("\r\n\r\n").unwrap();
+    assert!(headers.contains("quoted-printable"));
+    let body = body.split("\r\n--").next().unwrap().as_bytes();
+    let mut decoded = Vec::new();
+    let mut n = 0;
+    while n < body.len() {
+        if body[n..].starts_with(b"=\r\n") {
+            n += 3;
+        } else if body[n] == b'=' {
+            let pair = std::str::from_utf8(&body[n + 1..n + 3]).unwrap();
+            decoded.push(u8::from_str_radix(pair, 16).unwrap());
+            n += 3;
+        } else {
+            decoded.push(body[n]);
+            n += 1;
+        }
+    }
+    String::from_utf8(decoded).unwrap()
 }
