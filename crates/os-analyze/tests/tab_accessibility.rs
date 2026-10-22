@@ -134,3 +134,52 @@ fn ui_parameters_and_stable_node_keys_survive_sorting_and_paging() {
     };
     assert_eq!(a11y::rule_details(&file, &cfg, &req).unwrap().total, 6);
 }
+
+// spec: TECH-250
+// spec: TECH-251
+// spec: TECH-259
+#[tokio::test]
+async fn requires_chromium_engine_persists_audit_in_the_crawl_file() {
+    let mut cfg = CrawlConfig::default();
+    cfg.rendering.mode = RenderingMode::JavaScript;
+    cfg.rendering.ajax_timeout_s = 0.0;
+    cfg.rendering.page_timeout_s = 60;
+    cfg.rendering.screenshots.enabled = false;
+    cfg.extraction.accessibility = true;
+    let fx =
+        os_engine::testing::crawl_fixture_from("ui/fx-ui-a11y", "/result-types.html", cfg.clone())
+            .await;
+    let page = query_view(
+        &fx.file,
+        &cfg,
+        &ViewQuery::new("Accessibility", "image-alt"),
+    )
+    .unwrap();
+    assert_eq!(page.total, 1);
+    let url = page.row_keys[0];
+    let count: i64 = fx
+        .file
+        .conn()
+        .query_row(
+            "SELECT COUNT(*) FROM a11y_rules WHERE url_id=?1",
+            [url.0],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(count, 93);
+    let params = serde_json::json!({"ruleId":"image-alt","result":"Violation"});
+    let ids = [url];
+    let nodes = a11y::node_details(
+        &fx.file,
+        &cfg,
+        &os_analyze::details::DetailReq {
+            url_ids: &ids,
+            params: &params,
+            sort: &[],
+            offset: 0,
+            limit: 500,
+        },
+    )
+    .unwrap();
+    assert_eq!(nodes.total, 2);
+}
