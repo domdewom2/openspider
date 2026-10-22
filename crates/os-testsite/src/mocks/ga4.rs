@@ -155,7 +155,6 @@ pub const EXPECTED_FILTERS: &[(&str, u64)] = &[
     ("Bounce Rate Above 70%", 1),
     ("No GA Data", 1),
     ("Non-Indexable with GA Data", 1),
-    ("Orphan URLs", 1),
 ];
 
 impl SiteRow {

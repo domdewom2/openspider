@@ -151,7 +151,14 @@ async fn five_filters_match_the_expected_fixture_counts() {
     let cfg = config();
     let (_dir, fx) = crawl(&cfg).await;
     // Vor der Crawl-Analyse bleibt „Orphan URLs“ leer.
-    assert_eq!(count(&fx, &cfg, "Orphan URLs"), 0);
+    assert_eq!(
+        counts(&fx, &cfg)
+            .into_iter()
+            .find(|(f, ..)| f == "Orphan URLs")
+            .unwrap()
+            .2,
+        FilterState::NeedsConfig("api.ga4.crawl_new_urls".into())
+    );
     analyse(&fx, &cfg);
     for (filter, expected) in EXPECTED_FILTERS {
         assert_eq!(count(&fx, &cfg, filter), *expected, "{filter}");
@@ -162,7 +169,7 @@ async fn five_filters_match_the_expected_fixture_counts() {
         addresses(&fx, &cfg, "Non-Indexable with GA Data"),
         ["/noindex"]
     );
-    assert_eq!(addresses(&fx, &cfg, "Orphan URLs"), ["/orphan"]);
+    assert!(addresses(&fx, &cfg, "Orphan URLs").is_empty());
     let mut above = addresses(&fx, &cfg, "Sessions Above 0");
     above.sort();
     assert_eq!(
@@ -200,10 +207,24 @@ async fn orphan_filter_respects_ignore_non_indexable_but_non_indexable_filter_do
         )
         .unwrap();
     assert!(cfg.issues.ignore_non_indexable);
-    assert_eq!(count(&fx, &cfg, "Orphan URLs"), 0);
+    assert_eq!(
+        counts(&fx, &cfg)
+            .into_iter()
+            .find(|(f, ..)| f == "Orphan URLs")
+            .unwrap()
+            .2,
+        FilterState::NeedsConfig("api.ga4.crawl_new_urls".into())
+    );
     assert_eq!(count(&fx, &cfg, "Non-Indexable with GA Data"), 2);
     cfg.issues.ignore_non_indexable = false;
-    assert_eq!(count(&fx, &cfg, "Orphan URLs"), 1);
+    assert_eq!(
+        counts(&fx, &cfg)
+            .into_iter()
+            .find(|(f, ..)| f == "Orphan URLs")
+            .unwrap()
+            .2,
+        FilterState::NeedsConfig("api.ga4.crawl_new_urls".into())
+    );
     assert_eq!(count(&fx, &cfg, "Non-Indexable with GA Data"), 2);
 }
 
