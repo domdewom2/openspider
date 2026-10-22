@@ -14,6 +14,7 @@ pub mod columns;
 pub mod eta;
 pub mod lighthouse;
 pub mod local;
+pub mod mobile;
 pub mod remote;
 pub mod settings;
 
@@ -190,6 +191,7 @@ impl PsiSource {
             .filter(|k| !k.trim().is_empty())
             .ok_or_else(|| ApiError::NotConnected("PSI-API-Schlüssel fehlt".into()))?;
         let url = remote::request_url(&remote::base(ctx), page, &key, psi.device)?;
+        let url = mobile::request_categories(url, &ctx.cfg);
         let transport = self.transport(ctx)?;
         let retries = settings::effective_limits(psi).retries;
         let quota = settings::daily_quota(psi);
@@ -255,6 +257,11 @@ impl PsiSource {
             .ok_or_else(|| ApiError::NotConnected(local::RUNTIME_MISSING.into()))?;
         let mut headers = local::config_headers(&ctx.cfg, page);
         headers.extend(self.local_headers.iter().cloned());
+        if mobile::selected(&ctx.cfg) {
+            return Ok(runner
+                .run_selected(page, ctx.cfg.api.psi.device, &headers, true)
+                .await);
+        }
         Ok(runner.run(page, ctx.cfg.api.psi.device, &headers).await)
     }
 
@@ -264,6 +271,10 @@ impl PsiSource {
             Source::Remote => self.fetch_remote(page, ctx).await,
             Source::Local => self.fetch_local(page, ctx).await,
         };
+        let outcome = outcome.map(|mut out| {
+            mobile::apply_config(&mut out, &ctx.cfg);
+            out
+        });
         match &outcome {
             Ok(o) if o.is_success() => self.done.fetch_add(1, Ordering::SeqCst),
             _ => self.failed.fetch_add(1, Ordering::SeqCst),

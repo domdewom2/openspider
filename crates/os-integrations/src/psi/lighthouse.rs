@@ -88,6 +88,7 @@ pub fn parse_psi(body: &Value) -> Outcome {
     };
     let mut out = parse_lighthouse(lh);
     if out.is_success() {
+        super::mobile::remote(&mut out);
         out.cells.extend(parse_crux(body));
     }
     out
@@ -112,6 +113,7 @@ pub fn parse_lighthouse(lh: &Value) -> Outcome {
     insights(&a, &mut out);
     diagnostics(&a, &mut out);
     fails(&a, &mut out);
+    super::mobile::append(lh, &mut out);
     out
 }
 
