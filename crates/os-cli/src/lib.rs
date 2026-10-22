@@ -14,6 +14,7 @@
 //! letzte stderr-Zeile fasst Ergebnis und Exit-Code zusammen (OUT-204).
 
 pub mod args;
+pub mod auth;
 pub mod exec;
 pub mod exit;
 pub mod help;
