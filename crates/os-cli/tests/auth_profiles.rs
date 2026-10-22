@@ -40,6 +40,30 @@ fn machine_bound_profiles_use_only_the_supplied_secret_store_and_missing_keys_fa
     store.set("auth/fixture", &key);
     let session = os_cli::auth::load_with(&cfg, &paths, &rep, &store, None).unwrap();
     assert!(!format!("{session:?}").contains("fixture-secret"));
+    // Explicit schemes must never fall back to preemptive Basic authentication.
+    for scheme in ["digest", "ntlm"] {
+        let mut explicit = profile.clone();
+        explicit["profile"]["kind"] = serde_json::json!(scheme);
+        let envelope = os_store::auth_profiles::seal(
+            &explicit,
+            os_store::auth_profiles::Protection::Machine {
+                key_ref: "auth/fixture",
+                key: &key,
+            },
+        )
+        .unwrap();
+        std::fs::write(&file, envelope).unwrap();
+        assert!(os_cli::auth::load_with(&cfg, &paths, &rep, &store, None).is_err());
+    }
+    let envelope = os_store::auth_profiles::seal(
+        &profile,
+        os_store::auth_profiles::Protection::Machine {
+            key_ref: "auth/fixture",
+            key: &key,
+        },
+    )
+    .unwrap();
+    std::fs::write(&file, envelope).unwrap();
     let args = os_cli::RunArgs {
         crawl: Some("https://site.test/".into()),
         auth_config: Some(file),

@@ -106,7 +106,7 @@ impl AuthSession {
             ));
         }
         match string(p, "kind")? {
-            "basic" | "digest" => self.basic.push(BasicAuthEntry {
+            "basic" => self.basic.push(BasicAuthEntry {
                 prefix,
                 username: string(p, "username")?.into(),
                 password: string(p, "secret")?.into(),
@@ -166,7 +166,16 @@ impl AuthSession {
                     tracing::warn!("authentication cookies expired");
                 }
             }
-            "ntlm" => return Err(CliError::usage("NTLM-Transport ist noch nicht verfügbar")),
+            "digest" => {
+                return Err(CliError::usage(
+                    "Digest-Authentifizierung wird noch nicht unterstützt",
+                ))
+            }
+            "ntlm" => {
+                return Err(CliError::usage(
+                    "NTLM-Authentifizierung wird noch nicht unterstützt",
+                ))
+            }
             _ => return Err(CliError::usage("Unbekannte Authentifizierungsart")),
         }
         Ok(())
