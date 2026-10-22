@@ -111,7 +111,8 @@ fn populate_comparison(path: &std::path::Path, side: &str, fixture: &Value) {
         }
         if let Some(types) = values["types"].as_array() {
             for ty in types {
-                file.conn().execute("INSERT INTO sd_items(url_id,format,type_path,json) VALUES (?1,'json-ld',?2,'{}')", rusqlite::params![id,ty.as_str()]).unwrap();
+                // Store both representations, as the parser does: C02 reads the JSON types.
+                file.conn().execute("INSERT INTO sd_items(url_id,format,type_path,json) VALUES (?1,'json-ld',?2,?3)", rusqlite::params![id,ty.as_str(),json!({"@type":ty}).to_string()]).unwrap();
             }
         }
         if let Some(changed) = values["signature"].as_u64() {
