@@ -6,7 +6,11 @@ use os_model::{CrawlConfig, Value};
 
 const ELIGIBLE: &str = super::pagespeed::POPULATION;
 const HAS_ERROR: &str = "EXISTS (SELECT 1 FROM api_errors e WHERE e.source='psi' AND e.url=u.url)";
-const ALTERNATE: &str = "(SELECT v_text FROM url_ext WHERE url_id=u.id AND key='mobile.alternate')";
+// E01 already stored Mobile Alternate links before D23 existed. Preserve access to those crawl files.
+const ALTERNATE: &str =
+    "COALESCE((SELECT v_text FROM url_ext WHERE url_id=u.id AND key='mobile.alternate'), \
+    (SELECT t.url FROM links l JOIN urls t ON t.id=l.target_id \
+     WHERE l.source_id=u.id AND l.link_type='Mobile Alternate' ORDER BY l.position,l.id LIMIT 1))";
 
 /// Zugehörige Score-Spalte je kanonischem Filter (TECH-232–236).
 pub const FILTERS: [(&str, &str); 5] = [
@@ -208,7 +212,8 @@ pub fn alternate_count(
     file: &os_store::CrawlFile,
     url: os_model::UrlId,
 ) -> Result<u64, crate::ViewError> {
-    Ok(file.conn().query_row("SELECT COALESCE((SELECT v_int FROM url_ext WHERE url_id=?1 AND key='mobile.alternate_count'),0)", [url.0], |r| r.get(0))?)
+    Ok(file.conn().query_row("SELECT COALESCE((SELECT v_int FROM url_ext WHERE url_id=?1 AND key='mobile.alternate_count'), \
+        (SELECT COUNT(*) FROM links l JOIN urls t ON t.id=l.target_id WHERE l.source_id=?1 AND l.link_type='Mobile Alternate'))", [url.0], |r| r.get(0))?)
 }
 /// Die kompatible Spaltenbezeichnung erklärt die Schriftgrößenprüfung.
 pub fn column_tooltip(column: &str) -> Option<&'static str> {

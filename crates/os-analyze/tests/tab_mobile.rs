@@ -243,6 +243,20 @@ async fn html_and_header_alternates_work_without_psi_and_respect_order_base_and_
     ] {
         assert!(!keys(&all).contains(&id(&fx, path)), "{path}");
     }
+    // E01 persisted mobile links before D23's parser facts existed: older crawls need no recrawl.
+    fx.file
+        .conn()
+        .execute(
+            "DELETE FROM url_ext WHERE key IN ('mobile.alternate','mobile.alternate_count')",
+            [],
+        )
+        .unwrap();
+    let legacy = page(&fx, &off, "Mobile Alternate Link");
+    assert_eq!(legacy.rows, all.rows);
+    assert_eq!(
+        mobile::alternate_count(&fx.file, UrlId(id(&fx, "m-alternate-relative.html"))).unwrap(),
+        2
+    );
     off.spider.mobile_alternate.store = false;
     assert!(page(&fx, &off, "All").rows.is_empty());
     let fx = crawl_fixture_from("tech-m2-mobile", "/m-alternate.html", off).await;
