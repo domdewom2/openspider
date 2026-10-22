@@ -30,7 +30,7 @@ impl Tool for CompareCrawls {
         for crawl in [&current, &previous] {
             if crawl
                 .file
-                .effective_state(&os_model::SystemClock)
+                .effective_state(ctx.clock.as_ref())
                 .map_err(internal)?
                 == CrawlState::Running
                 || ctx

@@ -32,7 +32,10 @@ async fn comparison_matches_app_classes_swaps_and_rejects_unknown_or_running_cra
             42,
         )
         .await;
-    let ctx = ToolContext::new(world.dir.path().into());
+    let mut ctx = ToolContext::new(world.dir.path().into());
+    let now = os_model::Timestamp::from_db("2026-01-01T00:00:00.000Z").unwrap();
+    let clock = Arc::new(os_model::ManualClock::new(now));
+    ctx.clock = clock.clone();
     let result = CompareCrawls
         .call(&ctx, json!({"a":a.id,"b":b.id}))
         .unwrap();
@@ -87,11 +90,24 @@ async fn comparison_matches_app_classes_swaps_and_rejects_unknown_or_running_cra
     )
     .unwrap();
     file.set_meta("state", "Running").unwrap();
-    file.set_meta("heartbeat_at", &os_model::Timestamp::now_utc().to_db())
-        .unwrap();
-    assert!(CompareCrawls
-        .call(&ctx, json!({"a":a.id,"b":b.id}))
-        .is_err());
+    file.set_meta("heartbeat_at", &now.to_db()).unwrap();
+    for elapsed in [0, 10_000] {
+        clock.advance(std::time::Duration::from_millis(elapsed));
+        assert!(CompareCrawls
+            .call(&ctx, json!({"a":a.id,"b":b.id}))
+            .is_err());
+    }
+    clock.advance(std::time::Duration::from_millis(1));
+    assert!(CompareCrawls.call(&ctx, json!({"a":a.id,"b":b.id})).is_ok());
+    let server = os_mcp::server::McpServer::new(
+        os_mcp::tools::all(),
+        os_mcp::permissions::Permissions::resolve(&[], false, &Default::default()).unwrap(),
+        ctx,
+    );
+    server.call("list_crawls", None).await;
+    let row = &server.call_log().rows()[0];
+    assert_eq!(row.at, now.plus(std::time::Duration::from_millis(10_001)));
+    assert_eq!(row.duration_ms, 0);
 }
 // spec: AGENT-015
 #[tokio::test]
@@ -114,37 +130,65 @@ async fn page_title_changes_are_counted_and_paginated() {
             42,
         )
         .await;
+    let file = os_store::CrawlFile::open(
+        &world.dir.path().join(format!("{}.ospider", a.id)),
+        os_store::OpenMode::ReadWrite,
+    )
+    .unwrap();
+    assert_eq!(file.conn().execute(
+        "UPDATE urls SET title_1='Second changed title' WHERE url='http://www.site.test/dup2.html'", [],
+    ).unwrap(), 1);
+    drop(file);
     let ctx = ToolContext::new(world.dir.path().into());
     let summary = CompareCrawls
         .call(&ctx, json!({"a":a.id,"b":b.id}))
         .unwrap();
-    assert!(!summary.summary["change_detection"]
-        .as_array()
-        .unwrap()
-        .is_empty());
+    let counts = summary.summary["change_detection"].as_array().unwrap();
+    for (element, expected) in [
+        ("Page Titles", 2),
+        ("Meta Description", 0),
+        ("External Outlinks", 0),
+        ("Structured Data Unique Types", 0),
+    ] {
+        let row = counts.iter().find(|r| r["element"] == element).unwrap();
+        assert_eq!(row["count"], expected, "{element}");
+    }
     let first = CompareCrawls
         .call(
             &ctx,
             json!({"a":a.id,"b":b.id,"element":"page_title","limit":1}),
         )
         .unwrap();
-    assert_eq!(first.total, Some(1));
+    assert_eq!(first.total, Some(2));
+    let cursor = first.next_cursor.expect("second page");
     let mut urls = first.untrusted.unwrap()["urls"].as_array().unwrap().clone();
-    let mut cursor = first.next_cursor;
-    while let Some(c) = cursor {
-        let page = CompareCrawls
-            .call(
-                &ctx,
-                json!({"a":a.id,"b":b.id,"element":"page_title","limit":1,"cursor":c}),
-            )
-            .unwrap();
-        urls.extend(page.untrusted.unwrap()["urls"].as_array().unwrap().clone());
-        cursor = page.next_cursor;
-    }
-    assert_eq!(urls.len() as u64, first.total.unwrap());
+    assert_eq!(urls.len(), 1);
+    let second = CompareCrawls
+        .call(
+            &ctx,
+            json!({
+                "a":a.id,"b":b.id,"element":"page_title","limit":1,"cursor":cursor
+            }),
+        )
+        .unwrap();
+    assert_eq!(second.total, Some(2));
+    assert!(second.next_cursor.is_none());
+    let second_urls = second.untrusted.unwrap()["urls"]
+        .as_array()
+        .unwrap()
+        .clone();
+    assert_eq!(second_urls.len(), 1);
+    urls.extend(second_urls);
     let unique: std::collections::HashSet<_> = urls.iter().map(|v| v.as_str().unwrap()).collect();
-    assert_eq!(urls.len(), unique.len());
-    assert_eq!(urls, vec![json!("http://www.site.test/dup1.html")]);
+    assert_eq!(unique.len(), 2);
+    urls.sort_by_key(|v| v.as_str().unwrap().to_owned());
+    assert_eq!(
+        urls,
+        vec![
+            json!("http://www.site.test/dup1.html"),
+            json!("http://www.site.test/dup2.html")
+        ]
+    );
 }
 // spec: AGENT-003 [M2]
 #[tokio::test]

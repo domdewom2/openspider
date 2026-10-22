@@ -26,10 +26,12 @@ pub enum ToolClass {
 /// bereitstellt) kommen ohne Umbau der Aufrufer hinzu: Konstruktion nur über [`ToolContext::new`] und
 /// [`ToolContext::with_session`].
 #[non_exhaustive]
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct ToolContext {
     /// Ordner mit den Crawl-Dateien.
     pub crawl_dir: PathBuf,
+    /// Host-provided wall and monotonic clock.
+    pub clock: Arc<dyn os_model::Clock>,
     /// Höchstzahl Zeichen einer Antwort (Standard 50 000).
     pub max_chars: usize,
     /// Zugriff auf die Sitzung der App (ab M2, K-17): Crawl-Liste, Start/Stopp und Live-Status im App-Prozess. `None` im
@@ -48,11 +50,21 @@ pub struct ToolContext {
     pub sql_worker: Option<(PathBuf, Vec<String>)>,
 }
 
+impl std::fmt::Debug for ToolContext {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ToolContext")
+            .field("crawl_dir", &self.crawl_dir)
+            .field("session", &self.session)
+            .finish_non_exhaustive()
+    }
+}
+
 impl ToolContext {
     /// Kontext mit der Standard-Antwortgrenze von 50 000 Zeichen und ohne Sitzung.
     pub fn new(crawl_dir: PathBuf) -> Self {
         ToolContext {
             crawl_dir,
+            clock: Arc::new(os_model::SystemClock),
             max_chars: 50_000,
             session: None,
             settings_dir: os_store::paths::app_paths().settings,

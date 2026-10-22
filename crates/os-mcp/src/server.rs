@@ -151,9 +151,8 @@ impl McpServer {
         args: Option<Map<String, Value>>,
         client: Option<String>,
     ) -> CallToolResult {
-        use os_model::Clock;
-        let at = os_model::SystemClock.now();
-        let started = std::time::Instant::now();
+        let at = self.inner.ctx.clock.now();
+        let started = self.inner.ctx.clock.monotonic();
         let safe = crate::audit::redacted(&json!(args));
         let result = self.call_inner(name, args).await;
         let tool = self.inner.tools.iter().find(|t| t.name() == name);
@@ -165,7 +164,14 @@ impl McpServer {
                 format!("{:?}", t.class()).to_ascii_lowercase()
             }),
             args: safe,
-            duration_ms: started.elapsed().as_millis().min(u32::MAX as u128) as u32,
+            duration_ms: self
+                .inner
+                .ctx
+                .clock
+                .monotonic()
+                .saturating_sub(started)
+                .as_millis()
+                .min(u32::MAX as u128) as u32,
             result_bytes: serde_json::to_vec(&result)
                 .map_or(0, |v| v.len().min(u32::MAX as usize) as u32),
             ok: result.is_error != Some(true),

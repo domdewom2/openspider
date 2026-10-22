@@ -150,7 +150,10 @@ async fn client_config_requires_preview_preserves_other_servers_and_backs_up() {
 #[tokio::test]
 async fn invocation_log_redacts_credentials_and_records_sizes() {
     let home = tempfile::tempdir().unwrap();
-    let app = App::new(AppConfig::new(home.path())).unwrap();
+    let mut config = AppConfig::new(home.path());
+    let now = os_model::Timestamp::from_db("2026-01-02T03:04:05Z").unwrap();
+    config.clock = std::sync::Arc::new(os_model::ManualClock::new(now));
+    let app = App::new(config).unwrap();
     call(&app, "mcp.start", json!({"port":0})).await;
     let service = app.ext::<os_app::mcp::Service>();
     let server = service.state.lock().await.server.clone().unwrap();
@@ -164,7 +167,8 @@ async fn invocation_log_redacts_credentials_and_records_sizes() {
     for row in log.as_array().unwrap() {
         assert!(row["resultBytes"].as_u64().unwrap() > 0);
         assert_eq!(row["client"], "fixture-client");
-        assert!(row["at"].as_str().unwrap().ends_with('Z'));
+        assert_eq!(row["at"], "2026-01-02T03:04:05Z");
+        assert_eq!(row["durationMs"], 0);
     }
     call(&app, "mcp.stop", Value::Null).await;
 }

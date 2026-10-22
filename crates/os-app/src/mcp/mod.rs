@@ -56,6 +56,7 @@ pub fn server(app: &App, settings: McpSettings) -> Result<McpServer, CmdError> {
             vec!["mcp".into(), "--sql-worker".into()],
         ));
     }
+    ctx.clock = app.config().clock.clone();
     ctx.settings_dir = app.config().paths.settings.clone();
     ctx.api_environment = Some(os_mcp::tools::link_metrics::ApiEnvironment {
         secrets: app.config().secrets.clone(),
