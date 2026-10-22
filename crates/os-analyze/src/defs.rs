@@ -231,6 +231,10 @@ pub trait ColumnSource: Send + Sync {
     fn filters(&self, _cfg: &CrawlConfig) -> Vec<FilterDef> {
         Vec::new()
     }
+    /// Zusätzliche Filterdefinitionen mit dateiabhängigen Voraussetzungen (TECH-230).
+    fn file_filters(&self, _cfg: &CrawlConfig, _file: &os_store::CrawlFile) -> Vec<FilterDef> {
+        Vec::new()
+    }
     /// Bleibt der Filter `filter` im konfigurierten Tab? (M2-I04, K2-61: Filter abgewählter Metrikgruppen, INTEG-133)
     fn keeps_filter(&self, _cfg: &CrawlConfig, _filter: &str) -> bool {
         true

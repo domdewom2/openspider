@@ -1,2 +1,31 @@
-# OpenSpider – Issue-Texte (English) ab M2, Tab „Mobile“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/en.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+# Eigene Issue-Texte für Mobile.
+
+[issues.mobile-viewport-not-set]
+what = "The page has no effective viewport declaration for mobile display. Lighthouse reports a score below 100 for this audit."
+why = "Without an appropriate viewport the desktop layout is scaled down, which can make content and controls unusable on small devices."
+fix = "Add a viewport meta tag with width=device-width in the head and check the layout on a narrow screen."
+
+[issues.mobile-target-size]
+what = "Lighthouse reports interactive targets that are too small or too close together. The Tap Targets score is below 100."
+why = "Small targets are hard to hit on touchscreens and users may activate an adjacent control by mistake."
+fix = "Make interactive targets at least 24 by 24 CSS pixels or leave sufficient space between neighboring targets."
+
+[issues.mobile-content-not-sized-correctly]
+what = "The local Lighthouse audit reports content wider than the viewport. The Content Width score is below 100."
+why = "Horizontal scrolling makes small screens difficult to use and can hide essential content outside the visible area."
+fix = "Remove fixed content widths, constrain images and embeds to the available width and check the responsive layout."
+
+[issues.mobile-illegible-font-size]
+what = "Lighthouse reports an excessive share of small text. The compatibility column named Font Display contains a score below 100."
+why = "Small text excludes users with reduced vision and makes extended reading on mobile devices difficult."
+fix = "Use readable font sizes and inspect substantial text areas below 12 CSS pixels in the mobile layout."
+
+[issues.mobile-unsupported-plugins]
+what = "The page contains an unsupported browser plugin or the Lighthouse Plugins audit reports a score below 100."
+why = "Flash, Silverlight and Java applets do not run on mobile devices, leaving their content and functionality inaccessible."
+fix = "Replace the plugin with HTML, CSS and current browser APIs and make essential content available without plugins."
+
+[issues.mobile-mobile-alternate-link]
+what = "The page points to a separate mobile version through an alternate link element or an HTTP Link header."
+why = "Separate mobile URLs can be intentional, but differing content and conflicting mapping signals can cause the wrong version to be served."
+fix = "Check that both versions are reachable and equivalent and verify their canonical and alternate links. Consider a responsive layout."
