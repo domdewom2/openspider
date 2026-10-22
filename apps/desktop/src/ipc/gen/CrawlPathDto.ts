@@ -5,6 +5,10 @@
  */
 export type CrawlPathDto = { 
 /**
+ * Anchor of the discovery edge entering this step.
+ */
+anchor?: string | null, 
+/**
  * Tiefe (0 = Start-URL).
  */
 depth: number, 

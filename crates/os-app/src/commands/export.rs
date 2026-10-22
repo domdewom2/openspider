@@ -550,6 +550,38 @@ fn export_detail<'a>(
                                             out.row(&kinds, &values).map_err(export_error)?;
                                         }
                                     }
+                                } else if matches!(
+                                    spec,
+                                    ViewSpec::Detail {
+                                        detail: DetailTable::CrawlPath,
+                                        ..
+                                    }
+                                ) {
+                                    // OUT-023: keep target-first report order, including the root fallback.
+                                    let names = os_store::queries::crawl_path::HEADER
+                                        .iter()
+                                        .map(|name| (*name).to_owned())
+                                        .collect::<Vec<_>>();
+                                    let kinds = [
+                                        ColumnKind::Url,
+                                        ColumnKind::Int,
+                                        ColumnKind::Url,
+                                        ColumnKind::Int,
+                                        ColumnKind::Text,
+                                        ColumnKind::Text,
+                                        ColumnKind::Int,
+                                    ];
+                                    out.header(&names).map_err(export_error)?;
+                                    for id in &ids {
+                                        checked(&worker_token)?;
+                                        let data =
+                                            os_store::queries::detail_ext::path_rows(file, id.0)
+                                                .map_err(|e| store_error(&e))?;
+                                        for row in data.rows {
+                                            checked(&worker_token)?;
+                                            out.row(&kinds, &row).map_err(export_error)?;
+                                        }
+                                    }
                                 } else if let Some((kind, ids, params, sort)) =
                                     view::detail_spec(&spec)
                                 {

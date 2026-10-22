@@ -123,6 +123,10 @@ pub struct Header {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct UrlIdArgs {
+    /// Image preview only: user explicitly confirmed a live download.
+    #[serde(default)]
+    #[ts(optional)]
+    pub allow_live: Option<bool>,
     /// URL-Kennung.
     pub url_id: i64,
 }

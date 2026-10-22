@@ -312,6 +312,18 @@
     "longRunning": false
   },
   {
+    "name": "detail.sourceSave",
+    "args": "SourceSaveArgs",
+    "ret": "FileResult",
+    "longRunning": false
+  },
+  {
+    "name": "detail.screenshotSave",
+    "args": "ScreenshotSaveArgs",
+    "ret": "FileResult",
+    "longRunning": false
+  },
+  {
     "name": "detail.sourceOpen",
     "args": "SourceOpenArgs",
     "ret": "SourceDoc",
@@ -370,6 +382,24 @@
     "args": "SpellingContextArgs",
     "ret": "SpellingContext",
     "longRunning": false
+  },
+  {
+    "name": "detail.spellingIgnore",
+    "args": "SpellingIgnoreArgs",
+    "ret": "void",
+    "longRunning": true
+  },
+  {
+    "name": "detail.spellingDictionary",
+    "args": "SpellingDictionaryArgs",
+    "ret": "void",
+    "longRunning": true
+  },
+  {
+    "name": "detail.spellingRecheck",
+    "args": "void",
+    "ret": "void",
+    "longRunning": true
   },
   {
     "name": "detail.a11yNode",

@@ -6,7 +6,11 @@
       "maxPx": 561.0,
       "remaining": 20.5,
       "truncated": false,
-      "cutAt": null
+      "cutAt": null,
+      "text": "",
+      "preview": "",
+      "short": false,
+      "minPx": 200.0
     },
     {
       "chars": 190,
@@ -14,7 +18,11 @@
       "maxPx": 985.0,
       "remaining": -115.0,
       "truncated": true,
-      "cutAt": 152
+      "cutAt": 152,
+      "text": "",
+      "preview": "",
+      "short": false,
+      "minPx": 400.0
     }
   ]
 }

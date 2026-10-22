@@ -143,14 +143,19 @@ pub fn annotate(texts: &mut Vec<ExtractedText>, size_px: f64, bold: bool) {
 /// Some(0) means no complete word fits. Append ` …` to the selected prefix;
 /// when even the suffix exceeds the limit, display an empty preview.
 pub fn truncate_at(text: &str, max_px: u32, size_px: f64, bold: bool) -> Option<u32> {
-    if width_px(text, size_px, bold) <= max_px {
+    truncate_at_with_width(text, max_px, |s| width_px(s, size_px, bold))
+}
+
+/// Identical Unicode word boundaries for regular and mixed-style SERP measurements.
+pub fn truncate_at_with_width(text: &str, max_px: u32, width: impl Fn(&str) -> u32) -> Option<u32> {
+    if width(text) <= max_px {
         return None;
     }
     let mut cut = 0;
     for (byte, word) in text.unicode_word_indices() {
         let end = byte + word.len();
         let candidate = format!("{} …", text[..end].trim_end());
-        if width_px(&candidate, size_px, bold) <= max_px {
+        if width(&candidate) <= max_px {
             cut = text[..end].chars().count() as u32;
         } else {
             break;
@@ -204,4 +209,60 @@ pub fn measure_serp(text: &str, max_px: u32, size_px: f64, bold: bool) -> SerpMe
         cut_at,
         preview,
     }
+}
+
+/// Mixed Regular/Bold SERP text, keeping extended grapheme clusters indivisible (UI-038).
+/// Search terms are literal, case-insensitive and may overlap; callers normalize entities/whitespace first.
+pub fn width_px_with_bold_terms(text: &str, size_px: f64, terms: &[String]) -> u32 {
+    if terms.iter().all(String::is_empty) {
+        return width_px(text, size_px, false);
+    }
+    let mut boundaries: Vec<_> = text.char_indices().map(|(byte, _)| byte).collect();
+    boundaries.push(text.len());
+    let prepared: Vec<_> = terms
+        .iter()
+        .filter(|t| !t.is_empty())
+        .map(|t| {
+            (
+                t.as_str(),
+                t.chars().count(),
+                (!t.is_ascii()).then(|| t.to_lowercase()),
+            )
+        })
+        .collect();
+    let mut marked = vec![false; text.len()];
+    let mut matched = false;
+    for (i, &start) in boundaries[..boundaries.len() - 1].iter().enumerate() {
+        for (term, count, lower) in &prepared {
+            if let Some(&end) = boundaries.get(i + count) {
+                let candidate = &text[start..end];
+                if candidate.eq_ignore_ascii_case(term)
+                    || lower
+                        .as_ref()
+                        .is_some_and(|t| candidate.to_lowercase() == *t)
+                {
+                    marked[start..end].fill(true);
+                    matched = true;
+                }
+            }
+        }
+    }
+    if !matched {
+        return width_px(text, size_px, false);
+    }
+    let mut sum = 0.0;
+    for (start, grapheme) in text.grapheme_indices(true) {
+        let bold = marked[start..start + grapheme.len()].iter().any(|b| *b);
+        sum += if !bold {
+            calibrated::table_for(size_px)
+                .map(|table| f64::from(calibrated_grapheme_px(grapheme, table, size_px)))
+                .unwrap_or_else(|| {
+                    f64::from(grapheme_units(grapheme, false)) / f64::from(metrics::UNITS_PER_EM)
+                        * size_px
+                })
+        } else {
+            f64::from(grapheme_units(grapheme, true)) / f64::from(metrics::UNITS_PER_EM) * size_px
+        };
+    }
+    (sum + 0.5).floor() as u32
 }
