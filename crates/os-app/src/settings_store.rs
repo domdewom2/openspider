@@ -140,7 +140,9 @@ impl SettingsStore {
 
     /// Aktuelle Einstellungen als DTO der Oberfläche.
     pub fn dto(&self, restart_required: &[String]) -> AppSettingsDto {
-        settings_to_dto(&self.get(), restart_required)
+        let mut dto = settings_to_dto(&self.get(), restart_required);
+        crate::mcp::enrich_settings(&self.dir, &mut dto);
+        dto
     }
 
     /// Wendet einen Merge-Patch (camelCase, über `AppSettingsDto`) an und schreibt bei einer Änderung atomar.
