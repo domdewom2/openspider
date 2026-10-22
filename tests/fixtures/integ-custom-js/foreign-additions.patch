@@ -1,0 +1,188 @@
+diff --git a/crates/os-analyze/src/tabs/mod.rs b/crates/os-analyze/src/tabs/mod.rs
+index c3e94f5a..739622c6 100644
+--- a/crates/os-analyze/src/tabs/mod.rs
++++ b/crates/os-analyze/src/tabs/mod.rs
+@@ -174,0 +175 @@ pub fn column_sources() -> Vec<(&'static str, Box<dyn ColumnSource>)> {
++    add("Internal", custom_js::internal_column_source());
+diff --git a/crates/os-analyze/tests/filters_registry.rs b/crates/os-analyze/tests/filters_registry.rs
+index 26e8678d..d83131b7 100644
+--- a/crates/os-analyze/tests/filters_registry.rs
++++ b/crates/os-analyze/tests/filters_registry.rs
+@@ -291 +291 @@ fn every_tab_is_a_real_definition_or_a_marked_stub() {
+-        stubs, 5,
++        stubs, 4,
+@@ -442,0 +443 @@ fn dynamic_column_sources_are_registered_per_tab_and_names_are_interned() {
++            "Custom JavaScript",
+@@ -448,0 +450 @@ fn dynamic_column_sources_are_registered_per_tab_and_names_are_interned() {
++            "Internal",
+diff --git a/crates/os-analyze/tests/framework_registry.rs b/crates/os-analyze/tests/framework_registry.rs
+index 9b530347..44803224 100644
+--- a/crates/os-analyze/tests/framework_registry.rs
++++ b/crates/os-analyze/tests/framework_registry.rs
+@@ -144,2 +144,6 @@ fn overview_labels_use_the_current_thresholds_and_states_are_complete() {
+-            FilterState::Ready,
+-            "{}:All ist immer bereit",
++            if c.tab == "Custom JavaScript" {
++                FilterState::NeedsRendering
++            } else {
++                FilterState::Ready
++            },
++            "{}:All hat den erwarteten Zustand",
+@@ -150 +154,5 @@ fn overview_labels_use_the_current_thresholds_and_states_are_complete() {
+-            Some(true),
++            if c.tab == "Custom JavaScript" {
++                None
++            } else {
++                Some(true)
++            },
+diff --git a/crates/os-cli/src/plan.rs b/crates/os-cli/src/plan.rs
+index 6b5eb1f5..f3161bf5 100644
+--- a/crates/os-cli/src/plan.rs
++++ b/crates/os-cli/src/plan.rs
+@@ -156,0 +157,5 @@ fn build_config(
++    for issue in os_engine::config_check::validate(&loaded.config) {
++        if issue.code == "custom-js-network" {
++            rep.warn(format!("Konfiguration: {issue}"));
++        }
++    }
+diff --git a/crates/os-engine/f05a-stubs.toml b/crates/os-engine/f05a-stubs.toml
+index 219f36ca..5758cb22 100644
+--- a/crates/os-engine/f05a-stubs.toml
++++ b/crates/os-engine/f05a-stubs.toml
+@@ -35,6 +34,0 @@ signature = "pub fn entries() -> &'static [TableEntry]"
+-[[stub]]
+-owner = "M2-D22"
+-file = "crates/os-analyze/src/tabs/custom_js.rs"
+-function = "tab"
+-signature = "pub fn tab() -> TabDef"
+-
+@@ -64,6 +57,0 @@ signature = "pub fn tab() -> TabDef"
+-
+-[[stub]]
+-owner = "M2-F02"
+-file = "crates/os-analyze/src/tabs/custom_js.rs"
+-function = "tab"
+-signature = "pub fn tab() -> TabDef"
+diff --git a/crates/os-engine/src/config_check.rs b/crates/os-engine/src/config_check.rs
+index 5dd3bfb2..8c4c4c76 100644
+--- a/crates/os-engine/src/config_check.rs
++++ b/crates/os-engine/src/config_check.rs
+@@ -5,0 +6 @@ pub fn validate(cfg: &os_model::CrawlConfig) -> Vec<os_model::ConfigIssue> {
++    issues.extend(os_render::snippets::network_warning(cfg));
+diff --git a/crates/os-engine/src/render_glue.rs b/crates/os-engine/src/render_glue.rs
+index 9b028746..9c28cc83 100644
+--- a/crates/os-engine/src/render_glue.rs
++++ b/crates/os-engine/src/render_glue.rs
+@@ -160 +160,4 @@ impl Session {
+-                    std::time::Duration::from_millis(u64::from(opts.page_timeout_ms)),
++                    std::time::Duration::from_millis(
++                        opts.snippets
++                            .page_budget_ms(u64::from(opts.page_timeout_ms)),
++                    ),
+@@ -345,0 +349,10 @@ pub(crate) fn options<F: Fetch>(
++        snippets: os_render::snippets::RunOptions::for_response(
++            cfg,
++            item.purpose != crate::frontier::Purpose::External,
++            response.status,
++            response
++                .headers
++                .iter()
++                .find(|(k, _)| k.eq_ignore_ascii_case("content-type"))
++                .map_or("", |(_, v)| v.as_str()),
++        ),
+diff --git a/crates/os-engine/src/worker.rs b/crates/os-engine/src/worker.rs
+index c53c7c32..2b1731c5 100644
+--- a/crates/os-engine/src/worker.rs
++++ b/crates/os-engine/src/worker.rs
+@@ -485,0 +486,3 @@ async fn analyze<F: Fetch>(
++    if !cfg.custom_js.snippets.is_empty() {
++        a.extra.ext.extend(os_render::snippets::trace(item.id, &[]));
++    }
+@@ -598,0 +602,22 @@ async fn analyze<F: Fetch>(
++    if !cfg.custom_js.snippets.is_empty()
++        && cfg.rendering.mode == os_model::RenderingMode::JavaScript
++        && !matches!(
++            a.facts.content_class,
++            ContentClass::Html | ContentClass::Pdf
++        )
++    {
++        let opts = crate::render_glue::options(sh, item, resp);
++        if !opts.snippets.snippets.is_empty() {
++            match sh.render_session.render(url.as_str(), &opts).await {
++                Ok(rendered) => {
++                    a.extra
++                        .custom_js
++                        .extend(os_render::snippets::writes(item.id, &rendered.snippets));
++                    a.extra
++                        .ext
++                        .extend(os_render::snippets::trace(item.id, &rendered.snippets));
++                }
++                Err(error) => tracing::warn!(%error, "Custom JavaScript render failed"),
++            }
++        }
++    }
+@@ -675,0 +701,8 @@ async fn render_page<F: Fetch>(
++            a.extra
++                .custom_js
++                .extend(os_render::snippets::writes(item.id, &rendered.snippets));
++            if !sh.cfg.custom_js.snippets.is_empty() {
++                a.extra
++                    .ext
++                    .extend(os_render::snippets::trace(item.id, &rendered.snippets));
++            }
+diff --git a/crates/os-model/src/config/v2.rs b/crates/os-model/src/config/v2.rs
+index 964e9445..70e3d5ff 100644
+--- a/crates/os-model/src/config/v2.rs
++++ b/crates/os-model/src/config/v2.rs
+@@ -255 +255 @@ impl Default for JsSnippet {
+-            timeout_s: 10,
++            timeout_s: 0,
+diff --git a/crates/os-render/src/api.rs b/crates/os-render/src/api.rs
+index 74fcf984..aad87668 100644
+--- a/crates/os-render/src/api.rs
++++ b/crates/os-render/src/api.rs
+@@ -170,0 +171,2 @@ pub struct RenderOpts {
++    /// Custom JavaScript, already gated by response status, scope and MIME type.
++    pub snippets: crate::snippets::RunOptions,
+@@ -206,0 +209 @@ impl Default for RenderOpts {
++            snippets: crate::snippets::RunOptions::default(),
+@@ -278,0 +282,2 @@ pub struct RenderedPage {
++    /// Ordered snippet values and execution trace, including empty/error results.
++    pub snippets: Vec<crate::snippets::SnippetResult>,
+diff --git a/crates/os-render/src/intercept.rs b/crates/os-render/src/intercept.rs
+index a72bbd33..132e6685 100644
+--- a/crates/os-render/src/intercept.rs
++++ b/crates/os-render/src/intercept.rs
+@@ -290,0 +291,2 @@ impl Intercept {
++        let snippets = opts.snippets.clone();
++        let snippet_target = page.target_id().as_ref().to_owned();
+@@ -392,0 +395,12 @@ impl Intercept {
++                        // INTEG-061/072: stop passive page resources during extraction;
++                        // explicit Fetch/XHR still pass through the existing policy.
++                        if snippets.blocks_resource(&snippet_target, resource_type) {
++                            conn.submit_command(
++                                "Fetch.failRequest".into(),
++                                Some(session.clone()),
++                                json!({"requestId":id,"errorReason":"BlockedByClient"}),
++                            )
++                            .map_err(protocol)
++                            .ok();
++                            continue;
++                        }
+diff --git a/crates/os-render/src/page.rs b/crates/os-render/src/page.rs
+index e51e4f81..07665507 100644
+--- a/crates/os-render/src/page.rs
++++ b/crates/os-render/src/page.rs
+@@ -110,0 +111 @@ pub async fn render(
++    let budget = opts.snippets.page_budget_ms(budget);
+@@ -388,0 +390 @@ async fn run(
++    let snippets = crate::snippets::run(page, &opts.snippets).await?;
+@@ -499,0 +502 @@ async fn run(
++        snippets,
+diff --git a/docs/spec/schemas/osconfig.schema.json b/docs/spec/schemas/osconfig.schema.json
+index afc1a9bf..95adf691 100644
+--- a/docs/spec/schemas/osconfig.schema.json
++++ b/docs/spec/schemas/osconfig.schema.json
+@@ -1540 +1540 @@
+-          "default": 10,
++          "default": 0,
