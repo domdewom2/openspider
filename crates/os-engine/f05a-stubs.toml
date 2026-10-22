@@ -33,12 +33,6 @@ function = "entries"
 signature = "pub fn entries() -> &'static [TableEntry]"
 
 [[stub]]
-owner = "M2-D22"
-file = "crates/os-analyze/src/tabs/custom_js.rs"
-function = "tab"
-signature = "pub fn tab() -> TabDef"
-
-[[stub]]
 owner = "M2-D23"
 file = "crates/os-analyze/src/tabs/mobile.rs"
 function = "tab"
@@ -59,12 +53,6 @@ signature = "pub fn tab() -> TabDef"
 [[stub]]
 owner = "M2-F02"
 file = "crates/os-analyze/src/tabs/change_detection.rs"
-function = "tab"
-signature = "pub fn tab() -> TabDef"
-
-[[stub]]
-owner = "M2-F02"
-file = "crates/os-analyze/src/tabs/custom_js.rs"
 function = "tab"
 signature = "pub fn tab() -> TabDef"
 

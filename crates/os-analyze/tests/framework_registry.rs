@@ -141,13 +141,21 @@ fn overview_labels_use_the_current_thresholds_and_states_are_complete() {
         }
         assert_eq!(
             c.state,
-            FilterState::Ready,
-            "{}:All ist immer bereit",
+            if c.tab == "Custom JavaScript" {
+                FilterState::NeedsRendering
+            } else {
+                FilterState::Ready
+            },
+            "{}:All hat den erwarteten Zustand",
             c.tab
         );
         assert_eq!(
             c.pct.map(|p| p == 100.0 || p == 0.0),
-            Some(true),
+            if c.tab == "Custom JavaScript" {
+                None
+            } else {
+                Some(true)
+            },
             "{}",
             c.tab
         );

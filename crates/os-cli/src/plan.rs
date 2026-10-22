@@ -154,6 +154,11 @@ fn build_config(
         os_fetch::resolve::ResolveRule::parse(rule).map_err(CliError::usage)?;
         loaded.config.network.resolve.push(rule.clone());
     }
+    for issue in os_engine::config_check::validate(&loaded.config) {
+        if issue.code == "custom-js-network" {
+            rep.warn(format!("Konfiguration: {issue}"));
+        }
+    }
     let report = loaded.validate();
     for w in &report.warnings {
         rep.warn(format!("Konfiguration: {w}"));
