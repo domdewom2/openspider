@@ -240,13 +240,13 @@ pub struct CustomSummary {
 }
 
 /// Benachrichtigung (OUT-281).
-#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Notify {
     /// Bei Erfolg senden.
     #[serde(default)]
     pub on_success: bool,
     /// Bei Fehler senden.
-    #[serde(default)]
+    #[serde(default = "crate::mail::default_on_failure")]
     pub on_failure: bool,
     /// Mail-Konto.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -254,6 +254,17 @@ pub struct Notify {
     /// Empfänger.
     #[serde(default)]
     pub to: Vec<String>,
+}
+
+impl Default for Notify {
+    fn default() -> Self {
+        Self {
+            on_success: false,
+            on_failure: true,
+            account: None,
+            to: vec![],
+        }
+    }
 }
 
 /// Eine geplante Aufgabe.

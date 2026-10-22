@@ -1,0 +1,10 @@
+[
+  {"host":"smtp.site.test","pattern":"site.test","bypass":true},
+  {"host":"site.test","pattern":".site.test","bypass":true},
+  {"host":"smtp.SITE.test.","pattern":" SITE.TEST ","bypass":true},
+  {"host":"not-site.test","pattern":"site.test","bypass":false},
+  {"host":"site.test.invalid","pattern":"site.test","bypass":false},
+  {"host":"127.0.0.1","pattern":"0.0.1","bypass":false},
+  {"host":"127.0.0.1","pattern":"127.0.0.1","bypass":true},
+  {"host":"anything.test","pattern":"*","bypass":true}
+]
