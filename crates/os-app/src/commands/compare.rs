@@ -596,6 +596,116 @@ fn change_handle(
     })
 }
 
+fn change_page(
+    active: &ActiveComparison,
+    view: &ChangeView,
+    columns: &[String],
+    offset: u64,
+) -> Result<os_analyze::views::ViewPage, CmdError> {
+    let mut q = change_query(view, columns, offset, 500)?;
+    let tab = change::tab_for_query(&active.change_config(), changed(&view.spec), &mut q);
+    os_analyze::views::query_view_in(
+        &[tab],
+        &active.comparison.current().file,
+        &active.comparison.current().config,
+        &q,
+    )
+    .map_err(super::catalog::view_error)
+}
+
+/// Clipboard-Anbindung für fenstergebundene Change-Views (TECH-301/307).
+pub async fn change_copy(app: &App, ctx: &CallCtx, args: &serde_json::Value) -> Option<CmdResult> {
+    if !args
+        .get("viewId")
+        .and_then(|id| id.as_str())
+        .is_some_and(|id| id.starts_with("change:"))
+    {
+        return None;
+    }
+    let args = args.clone();
+    Some(
+        async {
+            let args: CopyArgs = parse_args(args)?;
+            let (text, count) = with_active(app, &ctx.window, move |active| {
+                let view = active
+                    .change_views
+                    .get(&args.view_id)
+                    .ok_or_else(|| CmdError::new(ErrorCode::NotFound, "err-view-not-found"))?;
+                let (ids, except) = match &args.selection {
+                    Selection::Ids { ids } => (
+                        Some(
+                            ids.iter()
+                                .copied()
+                                .collect::<std::collections::HashSet<_>>(),
+                        ),
+                        std::collections::HashSet::new(),
+                    ),
+                    Selection::All {
+                        view_id,
+                        version,
+                        except,
+                    } => {
+                        if view_id != &args.view_id || *version != view.version {
+                            return Err(super::view::stale());
+                        }
+                        (None, except.iter().copied().collect())
+                    }
+                };
+                let mut text = String::new();
+                let mut count = 0u64;
+                let mut offset = 0;
+                loop {
+                    let page = change_page(active, view, &args.columns, offset)?;
+                    let width = page.columns.len() as u64;
+                    if width == 0 {
+                        return Err(CmdError::invalid_input("err-copy-columns", "columns"));
+                    }
+                    if offset == 0 && args.with_header {
+                        text.push_str(&crate::clipboard::tsv_row(
+                            &page
+                                .columns
+                                .iter()
+                                .map(|c| serde_json::json!(c))
+                                .collect::<Vec<_>>(),
+                            cfg!(windows),
+                        ));
+                    }
+                    for (id, row) in page.row_keys.iter().zip(&page.rows) {
+                        if ids.as_ref().is_none_or(|ids| ids.contains(&id.0))
+                            && !except.contains(&id.0)
+                        {
+                            count += 1;
+                            if count > crate::clipboard::MAX_COPY_CELLS / width {
+                                return Err(crate::clipboard::too_large());
+                            }
+                            let values = row
+                                .iter()
+                                .map(|v| serde_json::to_value(v).unwrap_or_default())
+                                .collect::<Vec<_>>();
+                            text.push_str(&crate::clipboard::tsv_row(&values, cfg!(windows)));
+                        }
+                    }
+                    offset += page.row_keys.len() as u64;
+                    if page.row_keys.is_empty() || offset >= page.total {
+                        break;
+                    }
+                }
+                Ok((text, count))
+            })
+            .await?;
+            let desktop = app
+                .desktop_actions()
+                .ok_or_else(|| CmdError::new(ErrorCode::Unsupported, "err-desktop-unavailable"))?;
+            let bytes = text.len() as u64;
+            tokio::task::spawn_blocking(move || desktop.write_clipboard(&text))
+                .await
+                .map_err(|e| internal("view.copy", e.to_string()))??;
+            to_json(&CopyResult { rows: count, bytes })
+        }
+        .await,
+    )
+}
+
 /// Anbindung des bisherigen leeren Tabs an `view.*`; alle anderen Views behalten ihre Handler (K2-71).
 pub async fn change_view(
     app: &App,
@@ -695,6 +805,24 @@ pub async fn change_view(
                         })
                         .collect(),
                 })
+            }
+            "view.locate" => {
+                let args: LocateArgs = parse_args(args)?;
+                let view = active
+                    .change_views
+                    .get(&args.view_id)
+                    .ok_or_else(|| CmdError::new(ErrorCode::NotFound, "err-view-not-found"))?;
+                let mut offset = 0;
+                loop {
+                    let page = change_page(active, view, &["Address".into()], offset)?;
+                    if let Some(i) = page.row_keys.iter().position(|id| id.0 == args.url_id) {
+                        return to_json(&Some(offset + i as u64));
+                    }
+                    offset += page.row_keys.len() as u64;
+                    if page.row_keys.is_empty() || offset >= page.total {
+                        return to_json(&Option::<u64>::None);
+                    }
+                }
             }
             "view.close" => {
                 let args: ViewCloseArgs = parse_args(args)?;
@@ -938,6 +1066,85 @@ mod change_tests {
         let app = App::new(crate::AppConfig::new(home.path())).unwrap();
         app.dispatch(CallCtx::for_window("main"),"compare.open",json!({"current":new.path(),"previous":old.path(),"mapping":[],"contentThresholdPct":10})).await.unwrap();
         (home, app)
+    }
+    #[derive(Default)]
+    struct Clipboard(Mutex<String>);
+    impl crate::runtime::hooks::DesktopActions for Clipboard {
+        fn write_clipboard(&self, text: &str) -> Result<(), CmdError> {
+            *self.0.lock().unwrap() = text.into();
+            Ok(())
+        }
+        fn reveal_paths(&self, _: &[PathBuf]) -> Result<(), CmdError> {
+            Ok(())
+        }
+    }
+    // spec: TECH-301
+    // spec: TECH-307
+    #[tokio::test]
+    async fn change_locate_and_copy_follow_sort_selection_version_and_window() {
+        let (_home, app) = setup().await;
+        let clipboard = Arc::new(Clipboard::default());
+        app.set_desktop_actions(clipboard.clone());
+        let call = |name, args| app.dispatch(CallCtx::for_window("main"), name, args);
+        let mut spec = json!({"kind":"tab","tab":"Change Detection","filter":"Page Titles","search":null,"sort":[{"column":"Address","dir":"desc"}],"segment":null,"compare":"notChanged"});
+        let view = call("view.open", json!({"spec":spec,"columns":["Address"]}))
+            .await
+            .unwrap();
+        let id = &view["viewId"];
+        assert_eq!(
+            call("view.locate", json!({"viewId":id,"urlId":11}))
+                .await
+                .unwrap(),
+            0
+        );
+        assert_eq!(
+            call("view.locate", json!({"viewId":id,"urlId":1}))
+                .await
+                .unwrap(),
+            json!(null)
+        );
+        let copied = call("view.copy",json!({"viewId":id,"selection":{"kind":"ids","ids":[2,11,11,1,999]},"columns":["Title 1 (Current)","Address"],"withHeader":true})).await.unwrap();
+        assert_eq!(copied["rows"], 2);
+        let eol = if cfg!(windows) { "\r\n" } else { "\n" };
+        assert_eq!(*clipboard.0.lock().unwrap(),format!("Title 1 (Current)\tAddress{eol}Shop\thttps://site.test/k{eol}Shop\thttps://site.test/b{eol}"));
+        let copied = call("view.copy",json!({"viewId":id,"selection":{"kind":"all","viewId":id,"version":view["version"],"except":[11,999]},"columns":["Address"],"withHeader":false})).await.unwrap();
+        assert_eq!(copied["rows"], 9);
+        let before = clipboard.0.lock().unwrap().clone();
+        spec["compare"] = json!("changed");
+        call("view.update", json!({"viewId":id,"spec":spec}))
+            .await
+            .unwrap();
+        let err = call("view.copy",json!({"viewId":id,"selection":{"kind":"all","viewId":id,"version":view["version"],"except":[]},"columns":["Address"],"withHeader":false})).await.unwrap_err();
+        assert_eq!(err.code, ErrorCode::Stale);
+        assert_eq!(*clipboard.0.lock().unwrap(), before);
+        assert_eq!(
+            call("view.locate", json!({"viewId":id,"urlId":1}))
+                .await
+                .unwrap(),
+            0
+        );
+        for name in ["view.locate", "view.copy"] {
+            let args = if name == "view.locate" {
+                json!({"viewId":id,"urlId":1})
+            } else {
+                json!({"viewId":id,"selection":{"kind":"ids","ids":[1]},"columns":["Address"],"withHeader":false})
+            };
+            assert_eq!(
+                app.dispatch(CallCtx::for_window("other"), name, args)
+                    .await
+                    .unwrap_err()
+                    .code,
+                ErrorCode::NotFound
+            );
+        }
+        call("compare.swap", json!({})).await.unwrap();
+        assert_eq!(
+            call("view.locate", json!({"viewId":id,"urlId":1}))
+                .await
+                .unwrap_err()
+                .code,
+            ErrorCode::NotFound
+        );
     }
     // spec: TECH-301
     // spec: TECH-307

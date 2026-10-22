@@ -92,6 +92,15 @@ pub fn calculate(
     cfg: &ChangeDetectionConfig,
     cancel: &CancelToken,
 ) -> Result<(), CompareError> {
+    calculate_with_similarity(c, cfg, cancel, signature_similarity)
+}
+
+fn calculate_with_similarity(
+    c: &Comparison,
+    cfg: &ChangeDetectionConfig,
+    cancel: &CancelToken,
+    similarity: impl Fn(&[u8], &[u8]) -> Option<f64>,
+) -> Result<(), CompareError> {
     if cfg.content_threshold_pct > 100 {
         return Err(CompareError::Invalid(
             "content threshold must be 0..100".into(),
@@ -130,7 +139,7 @@ pub fn calculate(
                 else {
                     continue;
                 };
-                let similarity = signature_similarity(a, b);
+                let similarity = similarity(a, b);
                 let Some(similarity) = similarity else {
                     continue;
                 };
@@ -392,4 +401,62 @@ pub fn tab_for_query(
         q.columns = ColumnSelection::Named(original);
     }
     tab
+}
+
+#[cfg(test)]
+mod boundary_tests {
+    use super::*;
+    use os_model::{CrawlConfig, CrawlMode, IdSource, SeededIds, Timestamp};
+    use os_store::{CrawlFile, CrawlInit, StorageProfile};
+
+    // spec: TECH-305
+    // spec: OUT-145
+    #[test]
+    fn injected_boundary_values_classify_the_actual_content_filter() {
+        let dir = tempfile::tempdir().unwrap();
+        let side = |seed| {
+            let at = Timestamp::from_db("2026-01-01T00:00:00.000Z").unwrap();
+            let id = SeededIds::new(seed).new_crawl_id(at);
+            let path = dir.path().join(format!("{id}.ospider"));
+            let file = CrawlFile::create(
+                &path,
+                &CrawlInit {
+                    crawl_id: id,
+                    mode: CrawlMode::Spider,
+                    start_url: Some("https://site.test/".into()),
+                    list_source: None,
+                    project: "boundary".into(),
+                    name: "boundary".into(),
+                    config: CrawlConfig::default(),
+                    created_at: at,
+                },
+                StorageProfile::Balanced,
+            )
+            .unwrap();
+            file.conn().execute_batch("INSERT INTO urls(id,url,address,origin,is_internal,in_tables,state,discovered_via,folder_depth,url_length,content_class,status_code) VALUES(1,'https://site.test/','https://site.test/','https://site.test',1,1,'done','link',0,18,'HTML',200); INSERT INTO url_ext(url_id,key,v_text) VALUES(1,'content.text','one two three four')").unwrap();
+            crate::compare::CrawlSide::from_file(file, path, None).unwrap()
+        };
+        let c = Comparison::open(side(1), side(2), &[], &CancelToken::new()).unwrap();
+        let cfg = ChangeDetectionConfig {
+            elements: vec![ChangeElement::Content],
+            content_threshold_pct: 10,
+        };
+        for (similarity, pct, changed) in [(0.90, 10.0, false), (0.8999, 10.01, true)] {
+            calculate_with_similarity(&c, &cfg, &CancelToken::new(), |_, _| Some(similarity))
+                .unwrap();
+            assert_eq!(ids(&c, "Content", true).unwrap().contains(1), changed);
+            assert_eq!(ids(&c, "Content", false).unwrap().contains(1), !changed);
+            let stored: f64 = c
+                .current()
+                .file
+                .conn()
+                .query_row(
+                    "SELECT pct FROM temp.c02_cells WHERE element='content'",
+                    [],
+                    |r| r.get(0),
+                )
+                .unwrap();
+            assert_eq!(stored, pct);
+        }
+    }
 }

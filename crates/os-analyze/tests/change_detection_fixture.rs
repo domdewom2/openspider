@@ -49,7 +49,7 @@ pub fn fixture(dir: &std::path::Path, seed: u64, version: i64, config: CrawlConf
         (13, "m"),
     ] {
         let address = format!("https://site.test/{path}");
-        file.conn().execute("INSERT INTO urls(id,url,address,origin,is_internal,in_tables,state,discovered_via,folder_depth,url_length,content_class,status_code,title_1,h1_1,word_count,crawl_depth,indexability,indexability_status) VALUES(?1,?2,?2,'https://site.test',1,1,'done','link',0,30,'HTML',200,'Shop','Heading',100,1,'Indexable','')",rusqlite::params![id,address]).unwrap();
+        file.conn().execute("INSERT INTO urls(id,url,address,origin,is_internal,in_tables,state,discovered_via,folder_depth,url_length,content_class,status_code,title_1,h1_1,word_count,crawl_depth,indexability,indexability_status) VALUES(?1,?2,?2,'https://site.test',1,1,'done','link',0,30,'HTML',200,'Shop','Heading',100,1,'Indexable','')",(id, address)).unwrap();
         file.conn().execute("INSERT INTO sd_items(url_id,format,type_path,json) VALUES(?1,'json-ld','Product','{\"@type\":\"Product\"}')",[id]).unwrap();
         file.conn().execute("INSERT INTO url_ext(url_id,key,v_text) VALUES(?1,'content.text','one two three four five six seven')",[id]).unwrap();
     }

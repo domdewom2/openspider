@@ -134,6 +134,8 @@ async fn run(plan: &Plan, rep: &Arc<Reporter>, signals: &Signals) -> Result<Outc
         }
     }
 
+    let mut failures = 0u32;
+    let mut comparison_failed = false;
     if plan.compare_with_previous {
         match os_analyze::compare::change::auto::run(
             &crawled.path,
@@ -148,18 +150,21 @@ async fn run(plan: &Plan, rep: &Arc<Reporter>, signals: &Signals) -> Result<Outc
             Ok(os_analyze::compare::change::auto::AutoResult::Saved(path)) => {
                 rep.info(format!("Vergleich gespeichert: {}", path.display()))
             }
-            Err(e) => rep.warn(format!("Auto-Vergleich: {e}")),
+            Err(e) => {
+                failures += 1;
+                comparison_failed = true;
+                rep.error(format!("Auto-Vergleich fehlgeschlagen: {e}"));
+            }
         }
     }
-    let mut failures = 0u32;
     let mut files = 0usize;
-    if plan.output.is_some() {
+    if plan.output.is_some() && !comparison_failed {
         match export_phase(plan, rep, signals, &crawled) {
             ExportEnd::Done {
                 failures: f,
                 files: n,
             } => {
-                failures = f;
+                failures += f;
                 files = n;
             }
             ExportEnd::Interrupted => {
@@ -185,10 +190,12 @@ async fn run(plan: &Plan, rep: &Arc<Reporter>, signals: &Signals) -> Result<Outc
     // Nach `--no-store` gibt es die Datei nicht mehr; ihre Kennung bleibt für die Historie.
     let crawl_info = |outcome: Outcome| outcome.with_crawl(&crawled.path, Some(crawled.crawled));
     if failures > 0 {
-        return Ok(crawl_info(Outcome::new(
-            Exit::ExportFailed,
-            format!("Crawl erfolgreich, aber {failures} Export(e) fehlgeschlagen ({base})"),
-        )));
+        let message = if comparison_failed {
+            format!("Crawl erfolgreich, aber Auto-Vergleich fehlgeschlagen ({base})")
+        } else {
+            format!("Crawl erfolgreich, aber {failures} Export(e) fehlgeschlagen ({base})")
+        };
+        return Ok(crawl_info(Outcome::new(Exit::ExportFailed, message)));
     }
     if plan.strict && warnings > 0 {
         return Ok(crawl_info(Outcome::new(
@@ -631,13 +638,21 @@ fn export_phase(plan: &Plan, rep: &Reporter, signals: &Signals, crawled: &Crawle
             return ExportEnd::Interrupted;
         }
         if plan.compare_with_previous {
-            if let Some(result) =
-                comparison_export(&file, &cfg, item, out, plan.format, &signals.cancel_token())
-            {
+            if let Some(result) = comparison_export(
+                &file,
+                &cfg,
+                item,
+                out,
+                plan.format,
+                plan.segment.as_deref(),
+                &signals.cancel_token(),
+            ) {
                 match result {
-                    Ok(info) => {
-                        report_file(rep, &info);
-                        files += 1;
+                    Ok(infos) => {
+                        for info in infos {
+                            report_file(rep, &info);
+                            files += 1;
+                        }
                     }
                     Err(message) => {
                         failures += 1;
@@ -852,8 +867,9 @@ fn comparison_export(
     item: &Resolved,
     out: &Path,
     format: Format,
+    segment: Option<&str>,
     cancel: &os_model::CancelToken,
-) -> Option<Result<ExportFileInfo, String>> {
+) -> Option<Result<Vec<ExportFileInfo>, String>> {
     let Resolved::Tab { tab, filter } = item else {
         return None;
     };
@@ -865,49 +881,75 @@ fn comparison_export(
     Some((|| {
         let (mut c, config) = os_analyze::compare::change::auto::load(Path::new(&path), cancel)
             .map_err(|e| e.to_string())?;
-        let mut q = ViewQuery::new(tab, filter);
-        if tab == "Change Detection" {
-            let def =
-                os_analyze::compare::change::tab_for_query(&config.change_detection, true, &mut q);
-            return os_export::tab_export::export_tab_in(
-                &[def],
-                &c.current().file,
-                cfg,
-                &q,
-                out,
+        let scopes = os_export::segment::selections(file, segment).map_err(|e| e.to_string())?;
+        let mut files = Vec::new();
+        for scope in scopes {
+            let mut q = ViewQuery::new(tab, filter);
+            let name = format!("{tab}:{filter}");
+            let target = out.join(os_export::naming::file_name(
+                &name,
+                scope.as_ref().and_then(|s| s.name.as_deref()),
+                format.extension(),
+            ));
+            let mut writer = os_export::open_writer(
+                &target,
                 format,
+                &name,
+                &os_export::pipeline::writer_options(cfg),
             )
-            .map_err(|e| e.to_string());
-        }
-        let name = format!("{tab}:{filter}");
-        let target = out.join(os_export::naming::file_name(
-            &name,
-            None,
-            format.extension(),
-        ));
-        let mut writer = os_export::open_writer(
-            &target,
-            format,
-            &name,
-            &os_export::pipeline::writer_options(cfg),
-        )
-        .map_err(|e| e.to_string())?;
-        let mut ctx = os_export::types::ExportCtx {
-            cancel,
-            progress: &|_| {},
-            skip_empty: false,
-            workbook: None,
-            skipped: vec![],
-        };
-        let spec = os_export::compare::TabSelection {
-            tab: tab.clone(),
-            filter: filter.clone(),
-            class: None,
-            columns: q.columns,
-        };
-        os_export::compare::write_tab(&mut c, &spec, writer.as_mut(), &mut ctx)
             .map_err(|e| e.to_string())?;
-        writer.finish().map_err(|e| e.to_string())
+            let mut ctx = os_export::types::ExportCtx {
+                cancel,
+                progress: &|_| {},
+                skip_empty: false,
+                workbook: None,
+                skipped: vec![],
+            };
+            if tab == "Change Detection" {
+                let mut def = os_analyze::compare::change::tab_for_query(
+                    &config.change_detection,
+                    true,
+                    &mut q,
+                );
+                if let Some(scope) = &scope {
+                    def.population = os_analyze::defs::intern(&format!(
+                        "({}) AND ({})",
+                        def.population,
+                        scope.population_sql()
+                    ));
+                }
+                os_export::pipeline::write_view_to(
+                    &[def],
+                    &c.current().file,
+                    cfg,
+                    &q,
+                    false,
+                    writer.as_mut(),
+                )
+                .map_err(|e| e.to_string())?;
+            } else {
+                let spec = os_export::compare::TabSelection {
+                    tab: tab.clone(),
+                    filter: filter.clone(),
+                    class: None,
+                    columns: q.columns,
+                };
+                if let Some(scope) = &scope {
+                    os_export::compare::write_tab_in_segment(
+                        &mut c,
+                        &spec,
+                        scope,
+                        writer.as_mut(),
+                        &mut ctx,
+                    )
+                } else {
+                    os_export::compare::write_tab(&mut c, &spec, writer.as_mut(), &mut ctx)
+                }
+                .map_err(|e| e.to_string())?;
+            }
+            files.push(writer.finish().map_err(|e| e.to_string())?);
+        }
+        Ok(files)
     })())
 }
 
@@ -1068,3 +1110,7 @@ fn comparison_batch(
         Err(e) => Err(BatchEnd::Failed(e)),
     }
 }
+
+#[cfg(test)]
+#[path = "../../os-analyze/src/compare/change/cli_tests.rs"]
+mod change_tests;

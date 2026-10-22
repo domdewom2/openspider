@@ -82,6 +82,9 @@ pub fn run(
                 "comparison identity collision".into(),
             ));
         }
+        // Ein existierender Dateiname allein belegt keinen vollständigen Vergleich.
+        load(&path, cancel)?;
+        saved_counts(&path, false)?;
         let file = CrawlFile::open(current, OpenMode::ReadWrite)?;
         file.set_meta("compare.latest", &path.to_string_lossy())?;
         file.set_meta("compare.auto_state", "available")?;

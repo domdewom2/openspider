@@ -1113,6 +1113,9 @@ fn rows<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
 }
 fn locate<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
+        if let Some(result) = super::compare::change_view(app, &ctx, "view.locate", &args).await {
+            return result;
+        }
         let args: LocateArgs = parse_args(args)?;
         let v = get(app, &ctx, &args.view_id)?;
         if let Some(tab) = &v.tab {
@@ -1150,6 +1153,9 @@ fn locate<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
 }
 fn copy<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
+        if let Some(result) = super::compare::change_copy(app, &ctx, &args).await {
+            return result;
+        }
         let args: CopyArgs = parse_args(args)?;
         crate::clipboard::copy(app, &ctx, args)
             .await
