@@ -42,7 +42,7 @@ pub struct Completion {
 fn clean(s: &str) -> String {
     os_fetch::redact::text(s).replace(['\r', '\n'], " ")
 }
-fn html(s: &str) -> String {
+pub(super) fn html(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
         .replace('>', "&gt;")

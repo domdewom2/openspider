@@ -81,8 +81,14 @@ async fn commands_persist_only_metadata_keep_null_password_and_deliver_or_report
     .await;
     assert_eq!(info["hasSecret"], true);
     assert!(info.get("password").is_none());
-    let disk =
-        std::fs::read_to_string(app.config().paths.settings.join("mail/fixture.json")).unwrap();
+    let disk = std::fs::read_to_string(
+        app.config()
+            .paths
+            .settings
+            .join("mail")
+            .join("fixture.json"),
+    )
+    .unwrap();
     assert!(!disk.contains("fixture-password"));
     app_call(&app, "mail.saveAccount", input(&mock, Value::Null)).await;
     assert_eq!(
@@ -471,7 +477,7 @@ async fn failed_metadata_replacement_preserves_the_previous_keychain_secret() {
     let store = mail::AccountStore::new(dir.path());
     let secrets = MemorySecretStore::new();
     secrets.set("mail/fixture", "previous-password");
-    std::fs::create_dir_all(dir.path().join("mail/fixture.json")).unwrap();
+    std::fs::create_dir_all(dir.path().join("mail").join("fixture.json")).unwrap();
     assert!(store
         .save(
             &account(&mock, Tls::None),
@@ -501,8 +507,14 @@ async fn oauth_application_secret_is_kept_only_in_the_injected_secret_store() {
     assert!(!reply.to_string().contains("fixture-client-secret"));
     let saved: Value = serde_json::from_str(&secrets.get("mail/fixture").unwrap()).unwrap();
     assert_eq!(saved["client_secret"], "fixture-client-secret");
-    let disk =
-        std::fs::read_to_string(app.config().paths.settings.join("mail/fixture.json")).unwrap();
+    let disk = std::fs::read_to_string(
+        app.config()
+            .paths
+            .settings
+            .join("mail")
+            .join("fixture.json"),
+    )
+    .unwrap();
     assert!(!disk.contains("fixture-client-secret"));
 }
 
@@ -558,4 +570,33 @@ async fn oauth_token_requests_share_the_smtp_proxy_and_injected_proxy_secret() {
     let token: Value = serde_json::from_str(&response).unwrap();
     assert_eq!(token["access_token"], "fixture-access");
     proxy.abort();
+}
+
+// spec: OUT-282
+#[tokio::test]
+async fn credentials_are_masked_in_html_even_when_their_characters_are_escaped() {
+    let mock = SmtpMock::start(Config {
+        password: "x&y".into(),
+        ..Default::default()
+    })
+    .await
+    .unwrap();
+    let secrets = MemorySecretStore::new();
+    secrets.set("mail/fixture", "x&y");
+    let mut completion = fixture();
+    completion.project = "x&y".into();
+    mail::send(
+        &account(&mock, Tls::None),
+        &secrets,
+        &network(),
+        &["recipient@site.test".into()],
+        &completion,
+    )
+    .await
+    .unwrap();
+    let messages = mock.messages();
+    assert_eq!(messages.len(), 1);
+    assert!(!messages[0].data.contains("x&y"));
+    assert!(!messages[0].data.contains("x&amp;y"));
+    assert!(messages[0].data.contains("&lt;redacted&gt;"));
 }

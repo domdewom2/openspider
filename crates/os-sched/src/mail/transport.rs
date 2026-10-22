@@ -300,7 +300,7 @@ async fn send_inner(
             }
             for value in values.into_iter().filter(|s| !s.is_empty()) {
                 text = text.replace(&value, "<redacted>");
-                html = html.replace(&value, "&lt;redacted&gt;");
+                html = html.replace(&super::content::html(&value), "&lt;redacted&gt;");
                 subject = subject.replace(&value, "<redacted>");
             }
         }
