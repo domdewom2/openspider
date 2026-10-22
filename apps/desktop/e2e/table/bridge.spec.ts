@@ -5,7 +5,6 @@ import { startBridge } from "../support/bridge";
 // spec: UI-018
 // spec: UI-114
 test("real bridge: crawl, recrawl a changed page, then remove the URL and update the counts", async ({ page }) => {
-  test.fixme(true, "Klärung K2-68: N01-E2E-1 – Ursache A01-01 (view.open Store-Fehler, behoben in M2-N02a); nach dem Merge von N02a entfernen (Rest, Auswahl nach Entfernen, in M2-N01b behoben)");
   // Integration also requires K01 views and K04 crawl control. N01 resolves this C9 placeholder.
   const bridge = await startBridge();
   expect(bridge).not.toBeNull();

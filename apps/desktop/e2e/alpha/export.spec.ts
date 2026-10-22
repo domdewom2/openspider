@@ -197,7 +197,6 @@ test("the Internal:All view exported with the core command export.view equals op
 
 // spec: OUT-001 [M2]
 test("the XLSX sheet name of a view export equals the one of openspider --export-tabs", async ({ alpha }) => {
-  test.fixme(true, "Klärung K2-69: Befund A01-15 (docs/plan/M2-acceptance/alpha/befunde.md): export.view schreibt das Blatt „Export“, die CLI „Internal All“ (OUT-001: UI und CLI liefern dieselbe Datei; Blattname aus „Tab Filter“, OUT-007)");
   const dir = tempDir("os-alpha-export-");
   try {
     const crawlFile = await crawlAndSnapshot(alpha, dir);
