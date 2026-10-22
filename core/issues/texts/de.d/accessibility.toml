@@ -1,2 +1,465 @@
-# OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „Accessibility“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.accessibility-accesskeys]
+what = "Die automatische Barrierefreiheitsprüfung meldet: accesskey-Werte sind nicht eindeutig."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-presentation-role-conflict]
+what = "Die automatische Barrierefreiheitsprüfung meldet: als präsentational markierte Elemente sind dennoch fokussierbar/mit globalen ARIA-Attributen."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-tabindex]
+what = "Die automatische Barrierefreiheitsprüfung meldet: tabindex größer 0."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-skip-link]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Ziel eines Sprunglinks fehlt oder ist nicht fokussierbar."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-text]
+what = "Die automatische Barrierefreiheitsprüfung meldet: role=text mit fokussierbaren Nachfahren."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-dialog-name]
+what = "Die automatische Barrierefreiheitsprüfung meldet: dialog/alertdialog ohne zugänglichen Namen."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-allowed-role]
+what = "Die automatische Barrierefreiheitsprüfung meldet: ARIA-Rolle passt nicht zum Element."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-treeitem-name]
+what = "Die automatische Barrierefreiheitsprüfung meldet: treeitem ohne zugänglichen Namen."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-region]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Seiteninhalt außerhalb von Landmarks."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-landmark-one-main]
+what = "Die automatische Barrierefreiheitsprüfung meldet: kein main-Landmark."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-landmark-no-duplicate-banner]
+what = "Die automatische Barrierefreiheitsprüfung meldet: mehr als ein banner."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-landmark-banner-is-top-level]
+what = "Die automatische Barrierefreiheitsprüfung meldet: banner in anderem Landmark verschachtelt."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-landmark-no-duplicate-contentinfo]
+what = "Die automatische Barrierefreiheitsprüfung meldet: mehr als ein contentinfo."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-landmark-no-duplicate-main]
+what = "Die automatische Barrierefreiheitsprüfung meldet: mehr als ein main."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-landmark-complementary-is-top-level]
+what = "Die automatische Barrierefreiheitsprüfung meldet: complementary/aside nicht auf oberster Ebene."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-landmark-contentinfo-is-top-level]
+what = "Die automatische Barrierefreiheitsprüfung meldet: contentinfo verschachtelt."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-landmark-main-is-top-level]
+what = "Die automatische Barrierefreiheitsprüfung meldet: main verschachtelt."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-landmark-unique]
+what = "Die automatische Barrierefreiheitsprüfung meldet: gleichartige Landmarks ohne unterscheidenden Namen."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-label-title-only]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Formularfeld nur über title/aria-describedby beschriftet, kein sichtbares Label."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-frame-tested]
+what = "Die automatische Barrierefreiheitsprüfung meldet: iframe-Inhalt konnte nicht mit axe geprüft werden."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-page-has-heading-one]
+what = "Die automatische Barrierefreiheitsprüfung meldet: keine h1."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-heading-order]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Überschriftenebene springt um mehr als 1."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-empty-heading]
+what = "Die automatische Barrierefreiheitsprüfung meldet: leere Überschrift."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-meta-viewport-large]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Viewport verhindert Zoom bis 500 %."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-image-redundant-alt]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Alt-Text wiederholt umgebenden Text."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-empty-table-header]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Tabellenkopfzelle ohne erkennbaren Text."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-table-duplicate-name]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Tabelle mit identischem summary und caption."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-scope-attr-valid]
+what = "Die automatische Barrierefreiheitsprüfung meldet: scope-Attribut falsch verwendet."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-scrollable-region-focusable]
+what = "Die automatische Barrierefreiheitsprüfung meldet: scrollbarer Bereich nicht per Tastatur erreichbar."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-required-attr]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Pflicht-ARIA-Attribute der Rolle fehlen."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-conditional-attr]
+what = "Die automatische Barrierefreiheitsprüfung meldet: ARIA-Attribut entgegen den Regeln der Rolle verwendet."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-valid-attr-value]
+what = "Die automatische Barrierefreiheitsprüfung meldet: ungültiger Wert eines ARIA-Attributs."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-valid-attr]
+what = "Die automatische Barrierefreiheitsprüfung meldet: ungültiger ARIA-Attributname."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-command-name]
+what = "Die automatische Barrierefreiheitsprüfung meldet: button/link/menuitem-Rolle ohne Namen."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-input-field-name]
+what = "Die automatische Barrierefreiheitsprüfung meldet: ARIA-Eingabefeld ohne Namen."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-meter-name]
+what = "Die automatische Barrierefreiheitsprüfung meldet: meter ohne Namen."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-progressbar-name]
+what = "Die automatische Barrierefreiheitsprüfung meldet: progressbar ohne Namen."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-required-parent]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Rolle ohne erforderliches Elternelement."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-roles]
+what = "Die automatische Barrierefreiheitsprüfung meldet: ungültiger role-Wert."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-toggle-field-name]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Umschaltfeld ohne Namen."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-tooltip-name]
+what = "Die automatische Barrierefreiheitsprüfung meldet: tooltip ohne Namen."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-required-children]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Rolle ohne erforderliche Kindrollen."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-deprecated-role]
+what = "Die automatische Barrierefreiheitsprüfung meldet: veraltete ARIA-Rolle."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-braille-equivalent]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Braille-Attribut ohne Nicht-Braille-Gegenstück."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-hidden-focus]
+what = "Die automatische Barrierefreiheitsprüfung meldet: aria-hidden-Bereich enthält fokussierbare Elemente."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-hidden-body]
+what = "Die automatische Barrierefreiheitsprüfung meldet: aria-hidden=\"true\" am body."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-prohibited-attr]
+what = "Die automatische Barrierefreiheitsprüfung meldet: für die Rolle verbotenes ARIA-Attribut."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-aria-allowed-attr]
+what = "Die automatische Barrierefreiheitsprüfung meldet: für die Rolle nicht erlaubtes ARIA-Attribut."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-duplicate-id-aria]
+what = "Die automatische Barrierefreiheitsprüfung meldet: in ARIA/Labels referenzierte ID doppelt."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-bypass]
+what = "Die automatische Barrierefreiheitsprüfung meldet: kein Mechanismus zum Überspringen wiederholter Blöcke."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-label]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Formularfeld ohne Beschriftung."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-form-field-multiple-labels]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Formularfeld mit mehreren label-Elementen."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-frame-title]
+what = "Die automatische Barrierefreiheitsprüfung meldet: iframe/frame ohne title."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-frame-title-unique]
+what = "Die automatische Barrierefreiheitsprüfung meldet: iframe-titles nicht eindeutig."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-frame-focusable-content]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Frame mit fokussierbarem Inhalt hat tabindex=-1."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-document-title]
+what = "Die automatische Barrierefreiheitsprüfung meldet: kein `<title>`."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-html-lang-valid]
+what = "Die automatische Barrierefreiheitsprüfung meldet: ungültiger lang-Wert am html-Element."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-html-has-lang]
+what = "Die automatische Barrierefreiheitsprüfung meldet: html-Element ohne lang."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-html-xml-lang-mismatch]
+what = "Die automatische Barrierefreiheitsprüfung meldet: lang und xml:lang widersprechen sich."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-meta-refresh]
+what = "Die automatische Barrierefreiheitsprüfung meldet: zeitgesteuerter Meta Refresh (< 20 h)."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-input-image-alt]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Bild-Button ohne Alternativtext."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-image-alt]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Bild ohne Alternativtext."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-object-alt]
+what = "Die automatische Barrierefreiheitsprüfung meldet: object ohne Alternativtext."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-area-alt]
+what = "Die automatische Barrierefreiheitsprüfung meldet: area ohne Alternativtext."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-role-img-alt]
+what = "Die automatische Barrierefreiheitsprüfung meldet: role=img ohne Alternativtext."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-svg-img-alt]
+what = "Die automatische Barrierefreiheitsprüfung meldet: SVG mit Bildrolle ohne zugänglichen Text."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-server-side-image-map]
+what = "Die automatische Barrierefreiheitsprüfung meldet: serverseitige Image-Map."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-video-caption]
+what = "Die automatische Barrierefreiheitsprüfung meldet: video ohne Untertitel-Track."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-no-autoplay-audio]
+what = "Die automatische Barrierefreiheitsprüfung meldet: audio/video spielt automatisch mit Ton."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-button-name]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Button ohne erkennbaren Text."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-input-button-name]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Eingabe-Button ohne erkennbaren Text."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-link-in-text-block]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Link im Fließtext nur durch Farbe unterscheidbar."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-link-name]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Link ohne erkennbaren Text."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-select-name]
+what = "Die automatische Barrierefreiheitsprüfung meldet: select ohne zugänglichen Namen."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-summary-name]
+what = "Die automatische Barrierefreiheitsprüfung meldet: summary ohne erkennbaren Text."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-marquee]
+what = "Die automatische Barrierefreiheitsprüfung meldet: marquee-Element."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-blink]
+what = "Die automatische Barrierefreiheitsprüfung meldet: blink-Element."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-nested-interactive]
+what = "Die automatische Barrierefreiheitsprüfung meldet: verschachtelte interaktive Elemente."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-listitem]
+what = "Die automatische Barrierefreiheitsprüfung meldet: li außerhalb von ul/ol."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-list]
+what = "Die automatische Barrierefreiheitsprüfung meldet: ul/ol mit unzulässigen direkten Kindern."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-definition-list]
+what = "Die automatische Barrierefreiheitsprüfung meldet: dl mit unzulässigem Inhalt/Reihenfolge."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-dlitem]
+what = "Die automatische Barrierefreiheitsprüfung meldet: dt/dd außerhalb von dl."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-th-has-data-cells]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Tabellenkopf ohne zugehörige Datenzellen."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-td-headers-attr]
+what = "Die automatische Barrierefreiheitsprüfung meldet: headers-Attribut verweist auf Zelle außerhalb der Tabelle."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-meta-viewport]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Viewport deaktiviert Zoom/Skalierung (`user-scalable=no` oder `maximum-scale < 2`)."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-valid-lang]
+what = "Die automatische Barrierefreiheitsprüfung meldet: ungültiger lang-Wert an einem Element im Body."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-color-contrast]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Textkontrast unter 4,5:1 (normal) bzw. 3:1 (groß ≥ 24 px oder ≥ 18,66 px fett)."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-meta-refresh-no-exceptions]
+what = "Die automatische Barrierefreiheitsprüfung meldet: verzögerter Meta Refresh jeglicher Dauer."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-identical-links-same-purpose]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Links mit gleichem zugänglichen Namen führen zu verschiedenen Zielen."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-color-contrast-enhanced]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Textkontrast unter 7:1 bzw. 4,5:1 für großen Text."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-autocomplete-valid]
+what = "Die automatische Barrierefreiheitsprüfung meldet: autocomplete-Wert ungültig oder unpassend für das Feld."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-avoid-inline-spacing]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Inline-Textabstände mit `!important` nicht anpassbar."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."
+
+[issues.accessibility-target-size]
+what = "Die automatische Barrierefreiheitsprüfung meldet: Touch-Ziele zu klein bzw. zu eng."
+why = "Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung."
+fix = "Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien."

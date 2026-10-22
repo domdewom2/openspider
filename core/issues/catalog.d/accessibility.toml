@@ -1,8 +1,1024 @@
-# OpenSpider – Issue-Katalog ab M2, Tab „Accessibility“ (UI-063/UI-064).
-#
-# Einträge wie in core/issues/catalog.toml (`[[issue]]` mit id, tab, filter, type, priority, type_rule, priority_rule,
-# doc_key, optional override_reason/needs_crawl_analysis/text_params); `tab` ist hier immer "Accessibility". Der Loader liest die
-# M1-Datei und alle Dateien dieses Ordners. Texte: core/issues/texts/{de,en}.d/accessibility.toml (Schlüssel issues.<id>).
-# M2-F02 legt nur die Datei an; die Einträge liefert das Paket des Tabs.
-
 schema = 1
+
+[[issue]]
+id = "accessibility-accesskeys"
+tab = "Accessibility"
+filter = "accesskeys"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-accesskeys"
+
+[[issue]]
+id = "accessibility-presentation-role-conflict"
+tab = "Accessibility"
+filter = "presentation-role-conflict"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "accessibility-presentation-role-conflict"
+
+[[issue]]
+id = "accessibility-tabindex"
+tab = "Accessibility"
+filter = "tabindex"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-tabindex"
+
+[[issue]]
+id = "accessibility-skip-link"
+tab = "Accessibility"
+filter = "skip-link"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W2"
+priority_rule = "P-M2"
+needs_crawl_analysis = false
+doc_key = "accessibility-skip-link"
+
+[[issue]]
+id = "accessibility-aria-text"
+tab = "Accessibility"
+filter = "aria-text"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-text"
+
+[[issue]]
+id = "accessibility-aria-dialog-name"
+tab = "Accessibility"
+filter = "aria-dialog-name"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-dialog-name"
+
+[[issue]]
+id = "accessibility-aria-allowed-role"
+tab = "Accessibility"
+filter = "aria-allowed-role"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-allowed-role"
+
+[[issue]]
+id = "accessibility-aria-treeitem-name"
+tab = "Accessibility"
+filter = "aria-treeitem-name"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-treeitem-name"
+
+[[issue]]
+id = "accessibility-region"
+tab = "Accessibility"
+filter = "region"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W2"
+priority_rule = "P-M2"
+needs_crawl_analysis = false
+doc_key = "accessibility-region"
+
+[[issue]]
+id = "accessibility-landmark-one-main"
+tab = "Accessibility"
+filter = "landmark-one-main"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W2"
+priority_rule = "P-M2"
+needs_crawl_analysis = false
+doc_key = "accessibility-landmark-one-main"
+
+[[issue]]
+id = "accessibility-landmark-no-duplicate-banner"
+tab = "Accessibility"
+filter = "landmark-no-duplicate-banner"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W2"
+priority_rule = "P-M2"
+needs_crawl_analysis = false
+doc_key = "accessibility-landmark-no-duplicate-banner"
+
+[[issue]]
+id = "accessibility-landmark-banner-is-top-level"
+tab = "Accessibility"
+filter = "landmark-banner-is-top-level"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W2"
+priority_rule = "P-M2"
+needs_crawl_analysis = false
+doc_key = "accessibility-landmark-banner-is-top-level"
+
+[[issue]]
+id = "accessibility-landmark-no-duplicate-contentinfo"
+tab = "Accessibility"
+filter = "landmark-no-duplicate-contentinfo"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W2"
+priority_rule = "P-M2"
+needs_crawl_analysis = false
+doc_key = "accessibility-landmark-no-duplicate-contentinfo"
+
+[[issue]]
+id = "accessibility-landmark-no-duplicate-main"
+tab = "Accessibility"
+filter = "landmark-no-duplicate-main"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W2"
+priority_rule = "P-M2"
+needs_crawl_analysis = false
+doc_key = "accessibility-landmark-no-duplicate-main"
+
+[[issue]]
+id = "accessibility-landmark-complementary-is-top-level"
+tab = "Accessibility"
+filter = "landmark-complementary-is-top-level"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W2"
+priority_rule = "P-M2"
+needs_crawl_analysis = false
+doc_key = "accessibility-landmark-complementary-is-top-level"
+
+[[issue]]
+id = "accessibility-landmark-contentinfo-is-top-level"
+tab = "Accessibility"
+filter = "landmark-contentinfo-is-top-level"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W2"
+priority_rule = "P-M2"
+needs_crawl_analysis = false
+doc_key = "accessibility-landmark-contentinfo-is-top-level"
+
+[[issue]]
+id = "accessibility-landmark-main-is-top-level"
+tab = "Accessibility"
+filter = "landmark-main-is-top-level"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W2"
+priority_rule = "P-M2"
+needs_crawl_analysis = false
+doc_key = "accessibility-landmark-main-is-top-level"
+
+[[issue]]
+id = "accessibility-landmark-unique"
+tab = "Accessibility"
+filter = "landmark-unique"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W2"
+priority_rule = "P-M2"
+needs_crawl_analysis = false
+doc_key = "accessibility-landmark-unique"
+
+[[issue]]
+id = "accessibility-label-title-only"
+tab = "Accessibility"
+filter = "label-title-only"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-label-title-only"
+
+[[issue]]
+id = "accessibility-frame-tested"
+tab = "Accessibility"
+filter = "frame-tested"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-frame-tested"
+
+[[issue]]
+id = "accessibility-page-has-heading-one"
+tab = "Accessibility"
+filter = "page-has-heading-one"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W2"
+priority_rule = "P-M2"
+needs_crawl_analysis = false
+doc_key = "accessibility-page-has-heading-one"
+
+[[issue]]
+id = "accessibility-heading-order"
+tab = "Accessibility"
+filter = "heading-order"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W2"
+priority_rule = "P-M2"
+needs_crawl_analysis = false
+doc_key = "accessibility-heading-order"
+
+[[issue]]
+id = "accessibility-empty-heading"
+tab = "Accessibility"
+filter = "empty-heading"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "accessibility-empty-heading"
+
+[[issue]]
+id = "accessibility-meta-viewport-large"
+tab = "Accessibility"
+filter = "meta-viewport-large"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "accessibility-meta-viewport-large"
+
+[[issue]]
+id = "accessibility-image-redundant-alt"
+tab = "Accessibility"
+filter = "image-redundant-alt"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "accessibility-image-redundant-alt"
+
+[[issue]]
+id = "accessibility-empty-table-header"
+tab = "Accessibility"
+filter = "empty-table-header"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "accessibility-empty-table-header"
+
+[[issue]]
+id = "accessibility-table-duplicate-name"
+tab = "Accessibility"
+filter = "table-duplicate-name"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "accessibility-table-duplicate-name"
+
+[[issue]]
+id = "accessibility-scope-attr-valid"
+tab = "Accessibility"
+filter = "scope-attr-valid"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-scope-attr-valid"
+
+[[issue]]
+id = "accessibility-scrollable-region-focusable"
+tab = "Accessibility"
+filter = "scrollable-region-focusable"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-scrollable-region-focusable"
+
+[[issue]]
+id = "accessibility-aria-required-attr"
+tab = "Accessibility"
+filter = "aria-required-attr"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-required-attr"
+
+[[issue]]
+id = "accessibility-aria-conditional-attr"
+tab = "Accessibility"
+filter = "aria-conditional-attr"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-conditional-attr"
+
+[[issue]]
+id = "accessibility-aria-valid-attr-value"
+tab = "Accessibility"
+filter = "aria-valid-attr-value"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-valid-attr-value"
+
+[[issue]]
+id = "accessibility-aria-valid-attr"
+tab = "Accessibility"
+filter = "aria-valid-attr"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-valid-attr"
+
+[[issue]]
+id = "accessibility-aria-command-name"
+tab = "Accessibility"
+filter = "aria-command-name"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-command-name"
+
+[[issue]]
+id = "accessibility-aria-input-field-name"
+tab = "Accessibility"
+filter = "aria-input-field-name"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-input-field-name"
+
+[[issue]]
+id = "accessibility-aria-meter-name"
+tab = "Accessibility"
+filter = "aria-meter-name"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-meter-name"
+
+[[issue]]
+id = "accessibility-aria-progressbar-name"
+tab = "Accessibility"
+filter = "aria-progressbar-name"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-progressbar-name"
+
+[[issue]]
+id = "accessibility-aria-required-parent"
+tab = "Accessibility"
+filter = "aria-required-parent"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-required-parent"
+
+[[issue]]
+id = "accessibility-aria-roles"
+tab = "Accessibility"
+filter = "aria-roles"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-roles"
+
+[[issue]]
+id = "accessibility-aria-toggle-field-name"
+tab = "Accessibility"
+filter = "aria-toggle-field-name"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-toggle-field-name"
+
+[[issue]]
+id = "accessibility-aria-tooltip-name"
+tab = "Accessibility"
+filter = "aria-tooltip-name"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-tooltip-name"
+
+[[issue]]
+id = "accessibility-aria-required-children"
+tab = "Accessibility"
+filter = "aria-required-children"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-required-children"
+
+[[issue]]
+id = "accessibility-aria-deprecated-role"
+tab = "Accessibility"
+filter = "aria-deprecated-role"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-deprecated-role"
+
+[[issue]]
+id = "accessibility-aria-braille-equivalent"
+tab = "Accessibility"
+filter = "aria-braille-equivalent"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-braille-equivalent"
+
+[[issue]]
+id = "accessibility-aria-hidden-focus"
+tab = "Accessibility"
+filter = "aria-hidden-focus"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-hidden-focus"
+
+[[issue]]
+id = "accessibility-aria-hidden-body"
+tab = "Accessibility"
+filter = "aria-hidden-body"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-hidden-body"
+
+[[issue]]
+id = "accessibility-aria-prohibited-attr"
+tab = "Accessibility"
+filter = "aria-prohibited-attr"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-prohibited-attr"
+
+[[issue]]
+id = "accessibility-aria-allowed-attr"
+tab = "Accessibility"
+filter = "aria-allowed-attr"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-aria-allowed-attr"
+
+[[issue]]
+id = "accessibility-duplicate-id-aria"
+tab = "Accessibility"
+filter = "duplicate-id-aria"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-duplicate-id-aria"
+
+[[issue]]
+id = "accessibility-bypass"
+tab = "Accessibility"
+filter = "bypass"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-bypass"
+
+[[issue]]
+id = "accessibility-label"
+tab = "Accessibility"
+filter = "label"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-label"
+
+[[issue]]
+id = "accessibility-form-field-multiple-labels"
+tab = "Accessibility"
+filter = "form-field-multiple-labels"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W2"
+priority_rule = "P-M2"
+needs_crawl_analysis = false
+doc_key = "accessibility-form-field-multiple-labels"
+
+[[issue]]
+id = "accessibility-frame-title"
+tab = "Accessibility"
+filter = "frame-title"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-frame-title"
+
+[[issue]]
+id = "accessibility-frame-title-unique"
+tab = "Accessibility"
+filter = "frame-title-unique"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-frame-title-unique"
+
+[[issue]]
+id = "accessibility-frame-focusable-content"
+tab = "Accessibility"
+filter = "frame-focusable-content"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-frame-focusable-content"
+
+[[issue]]
+id = "accessibility-document-title"
+tab = "Accessibility"
+filter = "document-title"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-document-title"
+
+[[issue]]
+id = "accessibility-html-lang-valid"
+tab = "Accessibility"
+filter = "html-lang-valid"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-html-lang-valid"
+
+[[issue]]
+id = "accessibility-html-has-lang"
+tab = "Accessibility"
+filter = "html-has-lang"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-html-has-lang"
+
+[[issue]]
+id = "accessibility-html-xml-lang-mismatch"
+tab = "Accessibility"
+filter = "html-xml-lang-mismatch"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W2"
+priority_rule = "P-M2"
+needs_crawl_analysis = false
+doc_key = "accessibility-html-xml-lang-mismatch"
+
+[[issue]]
+id = "accessibility-meta-refresh"
+tab = "Accessibility"
+filter = "meta-refresh"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-meta-refresh"
+
+[[issue]]
+id = "accessibility-input-image-alt"
+tab = "Accessibility"
+filter = "input-image-alt"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-input-image-alt"
+
+[[issue]]
+id = "accessibility-image-alt"
+tab = "Accessibility"
+filter = "image-alt"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-image-alt"
+
+[[issue]]
+id = "accessibility-object-alt"
+tab = "Accessibility"
+filter = "object-alt"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-object-alt"
+
+[[issue]]
+id = "accessibility-area-alt"
+tab = "Accessibility"
+filter = "area-alt"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-area-alt"
+
+[[issue]]
+id = "accessibility-role-img-alt"
+tab = "Accessibility"
+filter = "role-img-alt"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-role-img-alt"
+
+[[issue]]
+id = "accessibility-svg-img-alt"
+tab = "Accessibility"
+filter = "svg-img-alt"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-svg-img-alt"
+
+[[issue]]
+id = "accessibility-server-side-image-map"
+tab = "Accessibility"
+filter = "server-side-image-map"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "accessibility-server-side-image-map"
+
+[[issue]]
+id = "accessibility-video-caption"
+tab = "Accessibility"
+filter = "video-caption"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-video-caption"
+
+[[issue]]
+id = "accessibility-no-autoplay-audio"
+tab = "Accessibility"
+filter = "no-autoplay-audio"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-no-autoplay-audio"
+
+[[issue]]
+id = "accessibility-button-name"
+tab = "Accessibility"
+filter = "button-name"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-button-name"
+
+[[issue]]
+id = "accessibility-input-button-name"
+tab = "Accessibility"
+filter = "input-button-name"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-input-button-name"
+
+[[issue]]
+id = "accessibility-link-in-text-block"
+tab = "Accessibility"
+filter = "link-in-text-block"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-link-in-text-block"
+
+[[issue]]
+id = "accessibility-link-name"
+tab = "Accessibility"
+filter = "link-name"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-link-name"
+
+[[issue]]
+id = "accessibility-select-name"
+tab = "Accessibility"
+filter = "select-name"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-select-name"
+
+[[issue]]
+id = "accessibility-summary-name"
+tab = "Accessibility"
+filter = "summary-name"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-summary-name"
+
+[[issue]]
+id = "accessibility-marquee"
+tab = "Accessibility"
+filter = "marquee"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-marquee"
+
+[[issue]]
+id = "accessibility-blink"
+tab = "Accessibility"
+filter = "blink"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-blink"
+
+[[issue]]
+id = "accessibility-nested-interactive"
+tab = "Accessibility"
+filter = "nested-interactive"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-nested-interactive"
+
+[[issue]]
+id = "accessibility-listitem"
+tab = "Accessibility"
+filter = "listitem"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-listitem"
+
+[[issue]]
+id = "accessibility-list"
+tab = "Accessibility"
+filter = "list"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-list"
+
+[[issue]]
+id = "accessibility-definition-list"
+tab = "Accessibility"
+filter = "definition-list"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-definition-list"
+
+[[issue]]
+id = "accessibility-dlitem"
+tab = "Accessibility"
+filter = "dlitem"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-dlitem"
+
+[[issue]]
+id = "accessibility-th-has-data-cells"
+tab = "Accessibility"
+filter = "th-has-data-cells"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-th-has-data-cells"
+
+[[issue]]
+id = "accessibility-td-headers-attr"
+tab = "Accessibility"
+filter = "td-headers-attr"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-td-headers-attr"
+
+[[issue]]
+id = "accessibility-meta-viewport"
+tab = "Accessibility"
+filter = "meta-viewport"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-meta-viewport"
+
+[[issue]]
+id = "accessibility-valid-lang"
+tab = "Accessibility"
+filter = "valid-lang"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-valid-lang"
+
+[[issue]]
+id = "accessibility-color-contrast"
+tab = "Accessibility"
+filter = "color-contrast"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-color-contrast"
+
+[[issue]]
+id = "accessibility-meta-refresh-no-exceptions"
+tab = "Accessibility"
+filter = "meta-refresh-no-exceptions"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "accessibility-meta-refresh-no-exceptions"
+
+[[issue]]
+id = "accessibility-identical-links-same-purpose"
+tab = "Accessibility"
+filter = "identical-links-same-purpose"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W2"
+priority_rule = "P-L2"
+needs_crawl_analysis = false
+doc_key = "accessibility-identical-links-same-purpose"
+
+[[issue]]
+id = "accessibility-color-contrast-enhanced"
+tab = "Accessibility"
+filter = "color-contrast-enhanced"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-color-contrast-enhanced"
+
+[[issue]]
+id = "accessibility-autocomplete-valid"
+tab = "Accessibility"
+filter = "autocomplete-valid"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-autocomplete-valid"
+
+[[issue]]
+id = "accessibility-avoid-inline-spacing"
+tab = "Accessibility"
+filter = "avoid-inline-spacing"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-avoid-inline-spacing"
+
+[[issue]]
+id = "accessibility-target-size"
+tab = "Accessibility"
+filter = "target-size"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+needs_crawl_analysis = false
+doc_key = "accessibility-target-size"

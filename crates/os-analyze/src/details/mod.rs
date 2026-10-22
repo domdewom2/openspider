@@ -101,6 +101,11 @@ pub fn detail_source(kind: DetailKind) -> (&'static str, DetailFn) {
 
 /// App views and paged exports share the same canonical adapters (UI-042/OUT-021).
 pub fn app_detail_source(kind: DetailKind) -> (&'static str, DetailFn) {
+    match kind {
+        DetailKind::A11yRules => return ("M2-D21", crate::tabs::accessibility::rule_details),
+        DetailKind::A11yNodes => return ("M2-D21", crate::tabs::accessibility::node_details),
+        _ => {}
+    }
     let (owner, source) = detail_source(kind);
     (
         owner,
