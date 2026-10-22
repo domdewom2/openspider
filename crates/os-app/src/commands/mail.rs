@@ -253,12 +253,16 @@ async fn test_now(app: App, args: MailTestArgs) -> Result<MailTestResult, CmdErr
         project: "Testmail".into(),
         ..Default::default()
     };
-    let result = os_sched::mail::send(
+    let result = os_sched::mail::send_with_context(
         &a,
         app.config().secrets.as_ref(),
         &app.settings_snapshot().network,
         &[args.to],
         &completion,
+        &os_sched::mail::DeliveryContext {
+            clock: app.config().clock.as_ref(),
+            ..Default::default()
+        },
     )
     .await;
     Ok(MailTestResult {
@@ -397,12 +401,16 @@ fn queue_ui(app: &App, key: &crate::pool::CrawlKey, failed: bool) {
                     if failed {
                         completion.error = Some("Crawl fehlgeschlagen".into());
                     }
-                    if let Err(e) = os_sched::mail::notify(
+                    if let Err(e) = os_sched::mail::notify_with_context(
                         &app.config().paths.settings,
                         app.config().secrets.as_ref(),
                         &settings.network,
                         &policy,
                         &completion,
+                        &os_sched::mail::DeliveryContext {
+                            clock: app.config().clock.as_ref(),
+                            ..Default::default()
+                        },
                     )
                     .await
                     {

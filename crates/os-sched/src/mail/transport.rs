@@ -115,11 +115,73 @@ fn bypass(host: &str, patterns: &[String]) -> bool {
     let host = host.trim_end_matches('.').to_ascii_lowercase();
     patterns.iter().any(|p| {
         let p = p.trim().trim_start_matches('.').to_ascii_lowercase();
-        p == "*"
+        (p == "<local>" && !host.contains('.') && !host.contains(':'))
+            || wildcard(&host, &p)
+            || in_network(&host, &p)
             || host == p
             || (host.parse::<std::net::IpAddr>().is_err() && host.ends_with(&format!(".{p}")))
     })
 }
+// macOS system exclusions and NO_PROXY can contain IP networks.
+fn in_network(host: &str, pattern: &str) -> bool {
+    use std::net::{IpAddr, Ipv4Addr};
+    let Some((network, prefix)) = pattern.split_once('/') else {
+        return false;
+    };
+    let Ok(prefix) = prefix.parse::<u32>() else {
+        return false;
+    };
+    let network = network.parse::<IpAddr>().ok().or_else(|| {
+        // SystemConfiguration also emits abbreviated IPv4 networks, e.g. 169.254/16.
+        let parts = network.split('.').collect::<Vec<_>>();
+        if parts.is_empty() || parts.len() > 4 {
+            return None;
+        }
+        let mut octets = [0u8; 4];
+        for (i, part) in parts.iter().enumerate() {
+            octets[i] = part.parse().ok()?;
+        }
+        Some(IpAddr::V4(Ipv4Addr::from(octets)))
+    });
+    match (host.parse::<IpAddr>().ok(), network) {
+        (Some(IpAddr::V4(host)), Some(IpAddr::V4(network))) if prefix <= 32 => {
+            let mask = u32::MAX.checked_shl(32 - prefix).unwrap_or(0);
+            u32::from(host) & mask == u32::from(network) & mask
+        }
+        (Some(IpAddr::V6(host)), Some(IpAddr::V6(network))) if prefix <= 128 => {
+            let mask = u128::MAX.checked_shl(128 - prefix).unwrap_or(0);
+            u128::from(host) & mask == u128::from(network) & mask
+        }
+        _ => false,
+    }
+}
+
+// Native system exclusions may contain shell-style host wildcards.
+fn wildcard(host: &str, pattern: &str) -> bool {
+    let (h, p) = (host.as_bytes(), pattern.as_bytes());
+    let (mut i, mut j, mut star, mut retry) = (0, 0, None, 0);
+    while i < h.len() {
+        if j < p.len() && (p[j] == b'?' || p[j] == h[i]) {
+            i += 1;
+            j += 1;
+        } else if j < p.len() && p[j] == b'*' {
+            star = Some(j);
+            j += 1;
+            retry = i;
+        } else if let Some(s) = star {
+            retry += 1;
+            i = retry;
+            j = s + 1;
+        } else {
+            return false;
+        }
+    }
+    while j < p.len() && p[j] == b'*' {
+        j += 1;
+    }
+    j == p.len()
+}
+
 async fn tunnel(
     a: &Account,
     n: &NetworkSettings,
@@ -257,6 +319,22 @@ async fn tunnel(
     Ok(s)
 }
 
+/// Delivery dependencies; callers with an application clock pass it here.
+pub struct DeliveryContext<'a> {
+    pub clock: &'a dyn os_model::Clock,
+    pub gmail_token_endpoint: &'a str,
+    pub microsoft_token_endpoint: &'a str,
+}
+impl Default for DeliveryContext<'_> {
+    fn default() -> Self {
+        Self {
+            clock: &os_model::SystemClock,
+            gmail_token_endpoint: "https://oauth2.googleapis.com/token",
+            microsoft_token_endpoint: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+        }
+    }
+}
+
 pub async fn send(
     a: &Account,
     secrets: &dyn SecretStoreMut,
@@ -264,9 +342,20 @@ pub async fn send(
     to: &[String],
     completion: &Completion,
 ) -> Result<(), MailError> {
+    send_with_context(a, secrets, n, to, completion, &DeliveryContext::default()).await
+}
+
+pub async fn send_with_context(
+    a: &Account,
+    secrets: &dyn SecretStoreMut,
+    n: &NetworkSettings,
+    to: &[String],
+    completion: &Completion,
+    context: &DeliveryContext<'_>,
+) -> Result<(), MailError> {
     tokio::time::timeout(
         Duration::from_secs(30),
-        send_inner(a, secrets, n, to, completion),
+        send_inner(a, secrets, n, to, completion, context),
     )
     .await
     .map_err(|_| MailError::new("Mail-Versand: Zeitüberschreitung nach 30 Sekunden"))?
@@ -277,6 +366,7 @@ async fn send_inner(
     n: &NetworkSettings,
     to: &[String],
     c: &Completion,
+    context: &DeliveryContext<'_>,
 ) -> Result<(), MailError> {
     a.validate()?;
     let (mut text, mut html) = c.render();
@@ -371,9 +461,8 @@ async fn send_inner(
             let expired = token["expires_at"]
                 .as_str()
                 .and_then(|t| os_model::Timestamp::from_db(t).ok())
-                .is_none_or(|t| t <= os_model::SystemClock.now());
+                .is_none_or(|t| t <= context.clock.now());
             if expired {
-                use os_model::Clock;
                 let client = a
                     .client_id
                     .as_deref()
@@ -382,9 +471,9 @@ async fn send_inner(
                     .as_str()
                     .ok_or_else(|| MailError::new("OAuth erneut autorisieren"))?;
                 let endpoint = if a.auth == Auth::Gmail {
-                    "https://oauth2.googleapis.com/token"
+                    context.gmail_token_endpoint
                 } else {
-                    "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+                    context.microsoft_token_endpoint
                 };
                 let proxy_pass = secrets.get(os_fetch::net::PROXY_PASSWORD);
                 let mut form = vec![
@@ -403,11 +492,17 @@ async fn send_inner(
                         .map_err(MailError::new)?;
                 let value: serde_json::Value = serde_json::from_str(&response)
                     .map_err(|_| MailError::new("OAuth-Tokenantwort ungültig"))?;
+                if value["access_token"].as_str().is_none_or(str::is_empty)
+                    || value["expires_in"].as_u64().is_none_or(|n| n == 0)
+                {
+                    return Err(MailError::new("OAuth-Tokenantwort ungültig"));
+                }
                 token["access_token"] = value["access_token"].clone();
                 if value["refresh_token"].is_string() {
                     token["refresh_token"] = value["refresh_token"].clone();
                 }
-                token["expires_at"] = serde_json::json!(os_model::SystemClock
+                token["expires_at"] = serde_json::json!(context
+                    .clock
                     .now()
                     .plus(Duration::from_secs(
                         value["expires_in"].as_u64().unwrap_or(3600)
@@ -435,7 +530,6 @@ async fn send_inner(
     let _ = connection.quit().await;
     Ok(())
 }
-use os_model::Clock;
 
 #[cfg(test)]
 mod tests {

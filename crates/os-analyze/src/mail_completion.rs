@@ -68,7 +68,29 @@ fn element_changes(
         } else {
             "NULL".into()
         };
-        format!("SELECT json_array(u.indexability,u.indexability_status),u.title_1,u.meta_desc_1,u.h1_1,CAST(u.word_count AS TEXT),CAST(u.crawl_depth AS TEXT),CAST(c.inlinks AS TEXT),CAST(c.unique_inlinks AS TEXT),CAST(c.outlinks AS TEXT),CAST(c.unique_outlinks AS TEXT),CAST(c.external_outlinks AS TEXT),CAST(c.unique_external_outlinks AS TEXT),{types},(SELECT hex(sig) FROM minhash m WHERE m.url_id=u.id) FROM urls u LEFT JOIN url_counters c ON c.url_id=u.id WHERE u.id=?1 AND u.is_internal=1 AND u.content_class='HTML' AND u.status_code>0 AND u.state='done'")
+        // Reuse the displayed Links columns, including their self-link subtraction.
+        let links = crate::tabs::links::tab();
+        let counters = [
+            "Inlinks",
+            "Unique Inlinks",
+            "Outlinks",
+            "Unique Outlinks",
+            "External Outlinks",
+            "Unique External Outlinks",
+        ]
+        .map(|key| {
+            let column = links
+                .columns
+                .iter()
+                .find(|c| c.key == key)
+                .expect("Links column");
+            let crate::defs::ColumnSql::Expr(sql) = column.sql else {
+                unreachable!("Links counters are SQL expressions")
+            };
+            format!("CAST({sql} AS TEXT)")
+        })
+        .join(",");
+        format!("SELECT json_array(u.indexability,u.indexability_status),u.title_1,u.meta_desc_1,u.h1_1,CAST(u.word_count AS TEXT),CAST(u.crawl_depth AS TEXT),{counters},{types},(SELECT hex(sig) FROM minhash m WHERE m.url_id=u.id) FROM urls u LEFT JOIN url_counters c ON c.url_id=u.id WHERE u.id=?1 AND u.is_internal=1 AND u.content_class='HTML' AND u.status_code>0 AND u.state='done'")
     }
     let cq = query(&cmp.current().config);
     let pq = query(&cmp.previous().config);

@@ -4,7 +4,7 @@ mod content;
 mod transport;
 pub use accounts::{Account, AccountStore, Auth, Tls};
 pub use content::{Change, Completion, Issue};
-pub use transport::send;
+pub use transport::{send, send_with_context, DeliveryContext};
 
 use os_fetch::secrets::SecretStoreMut;
 use os_model::settings::{AppSettings, NetworkSettings};
@@ -69,11 +69,30 @@ pub async fn notify(
     policy: &Policy,
     completion: &Completion,
 ) -> Result<bool, MailError> {
+    notify_with_context(
+        dir,
+        secrets,
+        network,
+        policy,
+        completion,
+        &DeliveryContext::default(),
+    )
+    .await
+}
+
+pub async fn notify_with_context(
+    dir: &Path,
+    secrets: &dyn SecretStoreMut,
+    network: &NetworkSettings,
+    policy: &Policy,
+    completion: &Completion,
+    context: &DeliveryContext<'_>,
+) -> Result<bool, MailError> {
     if !policy.enabled(completion.error.is_some()) {
         return Ok(false);
     }
     let account = AccountStore::new(dir).get(policy.account.as_deref().unwrap())?;
-    send(&account, secrets, network, &policy.to, completion).await?;
+    send_with_context(&account, secrets, network, &policy.to, completion, context).await?;
     Ok(true)
 }
 
@@ -84,7 +103,28 @@ pub async fn notify_task(
     secrets: &dyn SecretStoreMut,
     task: &crate::tasks::Task,
     record: &crate::history::RunRecord,
+    completion: Completion,
+) -> Result<bool, MailError> {
+    notify_task_with_context(
+        dir,
+        _crawls,
+        secrets,
+        task,
+        record,
+        completion,
+        &DeliveryContext::default(),
+    )
+    .await
+}
+
+pub async fn notify_task_with_context(
+    dir: &Path,
+    _crawls: &Path,
+    secrets: &dyn SecretStoreMut,
+    task: &crate::tasks::Task,
+    record: &crate::history::RunRecord,
     mut completion: Completion,
+    context: &DeliveryContext<'_>,
 ) -> Result<bool, MailError> {
     use crate::history::RunResult;
     if matches!(record.result, RunResult::Skipped | RunResult::Running) {
@@ -118,7 +158,15 @@ pub async fn notify_task(
         to: task.notify.to.clone(),
     };
     // Per-task recipients override the global policy, including an explicitly empty list.
-    notify(dir, secrets, &settings.network, &policy, &completion).await
+    notify_with_context(
+        dir,
+        secrets,
+        &settings.network,
+        &policy,
+        &completion,
+        context,
+    )
+    .await
 }
 pub fn duration(start: &str, end: &str) -> i64 {
     match (

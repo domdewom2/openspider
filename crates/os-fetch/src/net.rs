@@ -205,7 +205,7 @@ pub async fn mail_token_response(
 
 /// Resolve a system proxy for SMTP. Manual settings never consult this resolver.
 pub fn mail_system_proxy(host: &str, _port: u16) -> Option<os_model::settings::ProxySettings> {
-    let bypass = std::env::var("no_proxy")
+    let mut bypass: Vec<String> = std::env::var("no_proxy")
         .or_else(|_| std::env::var("NO_PROXY"))
         .unwrap_or_default()
         .split(',')
@@ -222,7 +222,11 @@ pub fn mail_system_proxy(host: &str, _port: u16) -> Option<os_model::settings::P
     .iter()
     .find_map(|key| std::env::var(key).ok());
     let _ = host;
-    let value = value.or_else(mail_platform_proxy)?;
+    let value = value.or_else(|| {
+        let native = mail_platform_proxy()?;
+        bypass.extend(native.bypass);
+        Some(native.url)
+    })?;
     let url = url::Url::parse(&value).ok()?;
     Some(os_model::settings::ProxySettings {
         mode: ProxyMode::Manual,
@@ -239,12 +243,11 @@ pub fn mail_system_proxy(host: &str, _port: u16) -> Option<os_model::settings::P
     })
 }
 #[cfg(not(any(target_os = "macos", target_os = "windows")))]
-fn mail_platform_proxy() -> Option<String> {
+fn mail_platform_proxy() -> Option<mail_proxy_platform::NativeProxy> {
     None
 }
 #[cfg(any(target_os = "macos", target_os = "windows"))]
-fn mail_platform_proxy() -> Option<String> {
+fn mail_platform_proxy() -> Option<mail_proxy_platform::NativeProxy> {
     mail_proxy_platform::resolve()
 }
-#[cfg(any(target_os = "macos", target_os = "windows"))]
 mod mail_proxy_platform;

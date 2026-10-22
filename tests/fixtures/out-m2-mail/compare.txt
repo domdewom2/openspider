@@ -1,0 +1,250 @@
+Aufgabe: –
+Projekt: Projekt
+Start-URL: https://site.test/
+Start:
+Ende:
+Dauer: 0 ms
+Total URLs Encountered: 13
+Total URLs Crawled: 12
+Total Internal Blocked by robots.txt: 0
+Total External Blocked by robots.txt: 0
+Total URLs Displayed: 13
+Total Internal URLs: 12
+Total External URLs: 1
+Total Internal Indexable URLs: 9
+Total Internal Non-Indexable URLs: 1
+Antwortcodes
+200: 12
+Issues: Name | Typ | Priorität | URLs
+Page Titles / Missing | Issue | High | 1
+Links / Pages Without Internal Outlinks | Warning | High | 8
+Canonicals / Missing | Warning | Medium | 9
+H2 / Missing | Warning | Low | 9
+Content / Low Content Pages | Opportunity | Medium | 9
+Page Titles / Duplicate | Opportunity | Medium | 6
+Meta Keywords / Missing | Opportunity | Low | 9
+H1 / Duplicate | Opportunity | Low | 7
+Meta Description / Duplicate | Opportunity | Low | 7
+Page Titles / Same as H1 | Opportunity | Low | 7
+Structured Data / Missing Structured Data | Opportunity | Low | 7
+Issue / Filter | Previous | Current | Change | Change %
+New | 0 | 3 | +3 |
+Missing | 2 | 0 | -2 | -100.00%
+Analytics / All | 10 | 11 | +1 | 10.00%
+Canonicals / All | 9 | 10 | +1 | 11.11%
+Content | 0 | 1 | +1 |
+Content / All | 9 | 10 | +1 | 11.11%
+Content / Low Content Pages | 8 | 9 | +1 | 12.50%
+Crawl Depth | 0 | 1 | +1 |
+Custom Extraction / All | 9 | 10 | +1 | 11.11%
+Directives / All | 10 | 11 | +1 | 10.00%
+External Outlinks | 0 | 1 | +1 |
+H1 | 0 | 1 | +1 |
+H1 / All | 9 | 10 | +1 | 11.11%
+H2 / All | 9 | 10 | +1 | 11.11%
+Hreflang / All | 9 | 10 | +1 | 11.11%
+Hreflang / Missing | 9 | 10 | +1 | 11.11%
+Indexability | 0 | 1 | +1 |
+Inlinks | 0 | 1 | +1 |
+Internal / All | 11 | 12 | +1 | 9.09%
+Internal / HTML | 10 | 11 | +1 | 10.00%
+Internal Outlinks | 0 | 1 | +1 |
+Link Metrics / All | 10 | 11 | +1 | 10.00%
+Links / All | 9 | 10 | +1 | 11.11%
+Meta Description | 0 | 1 | +1 |
+Meta Description / All | 9 | 10 | +1 | 11.11%
+Meta Keywords / All | 9 | 10 | +1 | 11.11%
+Page Titles | 0 | 1 | +1 |
+Page Titles / All | 9 | 10 | +1 | 11.11%
+PageSpeed / All | 9 | 10 | +1 | 11.11%
+Pagination / All | 9 | 10 | +1 | 11.11%
+Response Codes / All | 11 | 12 | +1 | 9.09%
+Response Codes / Internal All | 10 | 11 | +1 | 10.00%
+Response Codes / Internal Success (2XX) | 10 | 11 | +1 | 10.00%
+Response Codes / Success (2XX) | 11 | 12 | +1 | 9.09%
+Search Console / All | 11 | 12 | +1 | 9.09%
+Security / All | 11 | 12 | +1 | 9.09%
+Security / HTTPS URLs | 11 | 12 | +1 | 9.09%
+Structured Data / All | 9 | 10 | +1 | 11.11%
+Structured Data Unique Types | 0 | 1 | +1 |
+URL / All | 10 | 11 | +1 | 10.00%
+Unique External Outlinks | 0 | 1 | +1 |
+Unique Inlinks | 0 | 1 | +1 |
+Unique Internal Outlinks | 0 | 1 | +1 |
+Validation / All | 9 | 10 | +1 | 11.11%
+Word Count | 0 | 1 | +1 |
+Canonicals / Canonical Is Relative | 0 | 0 | +0 |
+Canonicals / Canonicalised | 0 | 0 | +0 |
+Canonicals / Contains Canonical | 0 | 0 | +0 |
+Canonicals / Contains Fragment URL | 0 | 0 | +0 |
+Canonicals / Invalid Attribute In Annotation | 0 | 0 | +0 |
+Canonicals / Missing | 9 | 9 | +0 | 0.00%
+Canonicals / Multiple | 0 | 0 | +0 |
+Canonicals / Multiple Conflicting | 0 | 0 | +0 |
+Canonicals / Self Referencing | 0 | 0 | +0 |
+Content / Exact Duplicates | 0 | 0 | +0 |
+Content / Lorem Ipsum Placeholder | 0 | 0 | +0 |
+Content / Readability Difficult | 0 | 0 | +0 |
+Content / Readability Very Difficult | 0 | 0 | +0 |
+Content / Soft 404 Pages | 0 | 0 | +0 |
+Custom Search / All | 0 | 0 | +0 |
+Directives / Follow | 0 | 0 | +0 |
+Directives / Index | 0 | 0 | +0 |
+Directives / Max-Image-Preview | 0 | 0 | +0 |
+Directives / Max-Snippet | 0 | 0 | +0 |
+Directives / Max-Video-Preview | 0 | 0 | +0 |
+Directives / NoArchive | 0 | 0 | +0 |
+Directives / NoImageIndex | 0 | 0 | +0 |
+Directives / NoSnippet | 0 | 0 | +0 |
+Directives / NoTranslate | 0 | 0 | +0 |
+Directives / Nofollow | 0 | 0 | +0 |
+Directives / Noindex | 0 | 0 | +0 |
+Directives / None | 0 | 0 | +0 |
+Directives / Refresh | 0 | 0 | +0 |
+Directives / Unavailable_After | 0 | 0 | +0 |
+External / All | 1 | 1 | +0 | 0.00%
+External / CSS | 0 | 0 | +0 |
+External / Flash | 0 | 0 | +0 |
+External / HTML | 1 | 1 | +0 | 0.00%
+External / Images | 0 | 0 | +0 |
+External / JavaScript | 0 | 0 | +0 |
+External / Other | 0 | 0 | +0 |
+External / PDF | 0 | 0 | +0 |
+External / Unknown | 0 | 0 | +0 |
+H1 / Alt Text in h1 | 0 | 0 | +0 |
+H1 / Duplicate | 7 | 7 | +0 | 0.00%
+H1 / Missing | 0 | 0 | +0 |
+H1 / Multiple | 0 | 0 | +0 |
+H1 / Non-sequential | 0 | 0 | +0 |
+H1 / Over 70 Characters | 0 | 0 | +0 |
+H2 / Duplicate | 0 | 0 | +0 |
+H2 / Missing | 9 | 9 | +0 | 0.00%
+H2 / Multiple | 0 | 0 | +0 |
+H2 / Non-sequential | 0 | 0 | +0 |
+H2 / Over 70 Characters | 0 | 0 | +0 |
+Hreflang / Contains Hreflang | 0 | 0 | +0 |
+Hreflang / Inconsistent Language & Region Return Links | 0 | 0 | +0 |
+Hreflang / Incorrect Language & Region Codes | 0 | 0 | +0 |
+Hreflang / Missing Return Links | 0 | 0 | +0 |
+Hreflang / Missing Self Reference | 0 | 0 | +0 |
+Hreflang / Missing X-Default | 0 | 0 | +0 |
+Hreflang / Multiple Entries | 0 | 0 | +0 |
+Hreflang / Noindex Return Links | 0 | 0 | +0 |
+Hreflang / Non-200 Hreflang URLs | 0 | 0 | +0 |
+Hreflang / Non-Canonical Return Links | 0 | 0 | +0 |
+Hreflang / Not Using Canonical | 0 | 0 | +0 |
+Images / All | 0 | 0 | +0 |
+Images / Alt Text Over 100 Characters | 0 | 0 | +0 |
+Images / Missing Alt Attribute | 0 | 0 | +0 |
+Images / Missing Alt Text | 0 | 0 | +0 |
+Images / Over 100 KB | 0 | 0 | +0 |
+Internal / CSS | 0 | 0 | +0 |
+Internal / Flash | 0 | 0 | +0 |
+Internal / Images | 0 | 0 | +0 |
+Internal / JavaScript | 0 | 0 | +0 |
+Internal / Other | 0 | 0 | +0 |
+Internal / PDF | 0 | 0 | +0 |
+Internal / Unknown | 0 | 0 | +0 |
+Links / Internal Nofollow Outlinks | 0 | 0 | +0 |
+Links / Internal Outlinks With No Anchor Text | 0 | 0 | +0 |
+Links / Non-Descriptive Anchor Text In Internal Outlinks | 0 | 0 | +0 |
+Links / Outlinks To Localhost | 0 | 0 | +0 |
+Links / Pages With High Crawl Depth | 0 | 0 | +0 |
+Links / Pages With High External Outlinks | 0 | 0 | +0 |
+Links / Pages With High Internal Outlinks | 0 | 0 | +0 |
+Links / Pages With Uncrawlable Internal Outlinks | 0 | 0 | +0 |
+Links / Pages Without Internal Outlinks | 8 | 8 | +0 | 0.00%
+Meta Description / Below 400 Pixels | 0 | 0 | +0 |
+Meta Description / Below 70 Characters | 0 | 0 | +0 |
+Meta Description / Duplicate | 7 | 7 | +0 | 0.00%
+Meta Description / Missing | 0 | 0 | +0 |
+Meta Description / Multiple | 0 | 0 | +0 |
+Meta Description / Over 155 Characters | 0 | 0 | +0 |
+Meta Description / Over 985 Pixels | 0 | 0 | +0 |
+Meta Keywords / Duplicate | 0 | 0 | +0 |
+Meta Keywords / Missing | 9 | 9 | +0 | 0.00%
+Meta Keywords / Multiple | 0 | 0 | +0 |
+Page Titles / Below 200 Pixels | 0 | 0 | +0 |
+Page Titles / Below 30 Characters | 0 | 0 | +0 |
+Page Titles / Duplicate | 6 | 6 | +0 | 0.00%
+Page Titles / Missing | 1 | 1 | +0 | 0.00%
+Page Titles / Multiple | 0 | 0 | +0 |
+Page Titles / Over 561 Pixels | 0 | 0 | +0 |
+Page Titles / Over 60 Characters | 0 | 0 | +0 |
+Page Titles / Same as H1 | 7 | 7 | +0 | 0.00%
+Pagination / Contains Pagination | 0 | 0 | +0 |
+Pagination / First Page | 0 | 0 | +0 |
+Pagination / Multiple Pagination URLs | 0 | 0 | +0 |
+Pagination / Non-200 Pagination URLs | 0 | 0 | +0 |
+Pagination / Non-Indexable | 0 | 0 | +0 |
+Pagination / Paginated 2+ Pages | 0 | 0 | +0 |
+Pagination / Pagination URL Not In Anchor Tag | 0 | 0 | +0 |
+Response Codes / Blocked by Robots.txt | 0 | 0 | +0 |
+Response Codes / Client Error (4XX) | 0 | 0 | +0 |
+Response Codes / External All | 1 | 1 | +0 | 0.00%
+Response Codes / External Blocked by Robots.txt | 0 | 0 | +0 |
+Response Codes / External Client Error (4XX) | 0 | 0 | +0 |
+Response Codes / External No Response | 0 | 0 | +0 |
+Response Codes / External Other | 0 | 0 | +0 |
+Response Codes / External Redirect Chain | 0 | 0 | +0 |
+Response Codes / External Redirect Loop | 0 | 0 | +0 |
+Response Codes / External Redirection (3XX) | 0 | 0 | +0 |
+Response Codes / External Redirection (HTTP Refresh) | 0 | 0 | +0 |
+Response Codes / External Redirection (Meta Refresh) | 0 | 0 | +0 |
+Response Codes / External Server Error (5XX) | 0 | 0 | +0 |
+Response Codes / External Success (2XX) | 1 | 1 | +0 | 0.00%
+Response Codes / Internal Blocked by Robots.txt | 0 | 0 | +0 |
+Response Codes / Internal Client Error (4XX) | 0 | 0 | +0 |
+Response Codes / Internal No Response | 0 | 0 | +0 |
+Response Codes / Internal Other | 0 | 0 | +0 |
+Response Codes / Internal Redirect Chain | 0 | 0 | +0 |
+Response Codes / Internal Redirect Loop | 0 | 0 | +0 |
+Response Codes / Internal Redirection (3XX) | 0 | 0 | +0 |
+Response Codes / Internal Redirection (HTTP Refresh) | 0 | 0 | +0 |
+Response Codes / Internal Redirection (Meta Refresh) | 0 | 0 | +0 |
+Response Codes / Internal Server Error (5XX) | 0 | 0 | +0 |
+Response Codes / No Response | 0 | 0 | +0 |
+Response Codes / Other | 0 | 0 | +0 |
+Response Codes / Redirect Chain | 0 | 0 | +0 |
+Response Codes / Redirect Loop | 0 | 0 | +0 |
+Response Codes / Redirection (3XX) | 0 | 0 | +0 |
+Response Codes / Redirection (HTTP Refresh) | 0 | 0 | +0 |
+Response Codes / Redirection (Meta Refresh) | 0 | 0 | +0 |
+Response Codes / Server Error (5XX) | 0 | 0 | +0 |
+Security / Bad Content Type | 0 | 0 | +0 |
+Security / Form URL Insecure | 0 | 0 | +0 |
+Security / Form on HTTP URL | 0 | 0 | +0 |
+Security / HTTP URLs | 0 | 0 | +0 |
+Security / Missing Content-Security-Policy Header | 0 | 0 | +0 |
+Security / Missing HSTS Header | 0 | 0 | +0 |
+Security / Missing Secure Referrer-Policy Header | 0 | 0 | +0 |
+Security / Missing X-Content-Type-Options Header | 0 | 0 | +0 |
+Security / Missing X-Frame-Options Header | 0 | 0 | +0 |
+Security / Mixed Content | 0 | 0 | +0 |
+Security / Protocol-Relative Resource Links | 0 | 0 | +0 |
+Security / Unsafe Cross-Origin Links | 0 | 0 | +0 |
+Sitemaps / All | 0 | 0 | +0 |
+Sitemaps / XML Sitemap With Over 50MB | 0 | 0 | +0 |
+Sitemaps / XML Sitemap With Over 50k URLs | 0 | 0 | +0 |
+Structured Data / Contains Structured Data | 2 | 2 | +0 | 0.00%
+Structured Data / JSON-LD URLs | 2 | 2 | +0 | 0.00%
+Structured Data / Microdata URLs | 0 | 0 | +0 |
+Structured Data / Missing Structured Data | 7 | 7 | +0 | 0.00%
+Structured Data / Parse Errors | 0 | 0 | +0 |
+Structured Data / RDFa URLs | 0 | 0 | +0 |
+Structured Data / Rich Result Validation Errors | 0 | 0 | +0 |
+Structured Data / Rich Result Validation Warnings | 0 | 0 | +0 |
+Structured Data / Validation Errors | 0 | 0 | +0 |
+Structured Data / Validation Warnings | 0 | 0 | +0 |
+URL / Contains A Space | 0 | 0 | +0 |
+URL / GA Tracking Parameters | 0 | 0 | +0 |
+URL / Internal Search | 0 | 0 | +0 |
+URL / Multiple Slashes | 0 | 0 | +0 |
+URL / Non ASCII Characters | 0 | 0 | +0 |
+URL / Over 115 Characters | 0 | 0 | +0 |
+URL / Parameters | 0 | 0 | +0 |
+URL / Repetitive Path | 0 | 0 | +0 |
+URL / Underscores | 0 | 0 | +0 |
+URL / Uppercase | 0 | 0 | +0 |
+Validation / HTML Document Over 2MB | 0 | 0 | +0 |
+Validation / Resource Over 2MB | 0 | 0 | +0 |

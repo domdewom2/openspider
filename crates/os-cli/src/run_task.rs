@@ -973,6 +973,7 @@ fn send_completion_mail(ctx: &RunCtx, task: &Task, record: &RunRecord) -> Result
         return Ok(());
     }
     let secrets = ctx.secrets.clone();
+    let clock = ctx.clock.clone();
     std::thread::spawn(move || {
         let runtime = tokio::runtime::Builder::new_current_thread()
             .enable_all()
@@ -1012,7 +1013,7 @@ fn send_completion_mail(ctx: &RunCtx, task: &Task, record: &RunRecord) -> Result
             None => os_sched::mail::Completion::default(),
         };
         runtime
-            .block_on(os_sched::mail::notify_task(
+            .block_on(os_sched::mail::notify_task_with_context(
                 &dir,
                 &crawls,
                 secrets
@@ -1021,6 +1022,10 @@ fn send_completion_mail(ctx: &RunCtx, task: &Task, record: &RunRecord) -> Result
                 &task,
                 &record,
                 completion,
+                &os_sched::mail::DeliveryContext {
+                    clock: clock.as_ref(),
+                    ..Default::default()
+                },
             ))
             .map_err(|e| e.to_string())?;
         Ok(())

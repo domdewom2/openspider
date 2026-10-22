@@ -65,44 +65,160 @@ fn save_account(dir: &std::path::Path, mock: &SmtpMock, secrets: &MemorySecretSt
         )
         .unwrap();
 }
+fn populate_comparison(path: &std::path::Path, side: &str, fixture: &Value) {
+    let file = CrawlFile::open(path, OpenMode::ReadWrite).unwrap();
+    file.set_meta("state", "Completed").unwrap();
+    let mut cfg = file.config().unwrap();
+    cfg.compare.change_detection.elements = os_model::ChangeElement::ALL.to_vec();
+    cfg.compare.change_detection.content_threshold_pct =
+        fixture["content_threshold_pct"].as_u64().unwrap() as u8;
+    cfg.extraction.structured_data.json_ld = true;
+    file.set_config_with_clock(&cfg, &os_model::ManualClock::new(common::created_at()))
+        .unwrap();
+    for (index, row) in fixture["rows"].as_array().unwrap().iter().enumerate() {
+        if row["only"].as_str().is_some_and(|only| only != side) {
+            continue;
+        }
+        let mut values = json!({"title_1":"Original", "meta_desc_1":"Original", "h1_1":"Original",
+            "word_count":10, "crawl_depth":1, "indexability":"Indexable", "indexability_status":"",
+            "is_internal":true, "state":"done", "content_class":"HTML", "status_code":200});
+        for overlay in [&row["both"], &row[side]] {
+            if let Some(fields) = overlay.as_object() {
+                for (key, value) in fields {
+                    values[key] = value.clone();
+                }
+            }
+        }
+        let id = index as i64 + 1;
+        let url = format!("https://site.test/{}", row["name"].as_str().unwrap());
+        file.conn().execute("INSERT INTO urls(id,url,address,origin,is_internal,state,discovered_via,folder_depth,url_length,content_class,status_code,title_count,title_1,indexability,indexability_status,meta_desc_1,h1_1,word_count,crawl_depth) VALUES (?1,?2,?2,'https://site.test',?3,?4,'hyperlink',0,30,?5,?6,1,?7,?8,?9,?10,?11,?12,?13)", rusqlite::params![id,url,values["is_internal"].as_bool().unwrap(),values["state"].as_str(),values["content_class"].as_str(),values["status_code"].as_i64(),values["title_1"].as_str(),values["indexability"].as_str(),values["indexability_status"].as_str(),values["meta_desc_1"].as_str(),values["h1_1"].as_str(),values["word_count"].as_i64(),values["crawl_depth"].as_i64()]).unwrap();
+        for key in [
+            "inlinks",
+            "unique_inlinks",
+            "self_inlinks",
+            "outlinks",
+            "unique_outlinks",
+            "self_outlinks",
+            "external_outlinks",
+            "unique_external_outlinks",
+        ] {
+            file.conn()
+                .execute(
+                    &format!("UPDATE url_counters SET {key}=?1 WHERE url_id=?2"),
+                    rusqlite::params![values["counters"][key].as_i64().unwrap_or(0), id],
+                )
+                .unwrap();
+        }
+        if let Some(types) = values["types"].as_array() {
+            for ty in types {
+                file.conn().execute("INSERT INTO sd_items(url_id,format,type_path,json) VALUES (?1,'json-ld',?2,'{}')", rusqlite::params![id,ty.as_str()]).unwrap();
+            }
+        }
+        if let Some(changed) = values["signature"].as_u64() {
+            let mut sig = vec![0u8; 512];
+            sig[..changed as usize * 4].fill(1);
+            file.conn()
+                .execute(
+                    "INSERT INTO minhash(url_id,sig) VALUES (?1,?2)",
+                    rusqlite::params![id, sig],
+                )
+                .unwrap();
+        }
+    }
+}
+
 // spec: OUT-282
 #[test]
-fn overview_and_comparison_numbers_share_the_real_crawl_queries() {
+fn overview_and_all_comparison_rows_match_manual_queries_and_fixture_golden() {
     let dir = tempfile::tempdir().unwrap();
     let previous = common::make_crawl(dir.path(), "previous.ospider");
     let current = common::make_crawl(dir.path(), "current.ospider");
-    populate(&previous, false);
-    populate(&current, true);
-    let data = os_analyze::mail_completion(&current, Some(&previous), true, true).unwrap();
-    let completion: Completion = serde_json::from_value(data).unwrap();
+    let fixture: Value = serde_json::from_str(include_str!(
+        "../../../tests/fixtures/out-m2-mail/compare.json"
+    ))
+    .unwrap();
+    populate_comparison(&previous, "previous", &fixture);
+    populate_comparison(&current, "current", &fixture);
+    let data = os_analyze::mail_completion(&current, Some(&previous), true, false).unwrap();
+    let completion: Completion = serde_json::from_value(data.clone()).unwrap();
     let f = CrawlFile::open(&current, OpenMode::ReadOnly).unwrap();
     assert_eq!(
         completion.overview,
         os_store::queries::app_support::overview_summary(f.conn()).unwrap()
     );
-    let changes = completion.changes.as_ref().unwrap();
-    for (name, previous, current) in [
-        ("New", 0, 3),
-        ("Missing", 2, 0),
-        ("Indexability", 0, 1),
-        ("Page Titles", 0, 1),
-    ] {
-        let row = changes.iter().find(|r| r.name == name).unwrap();
-        assert_eq!((row.previous, row.current), (previous, current), "{name}");
-    }
-    let cmp = os_analyze::compare::Comparison::open(
+    let cancel = os_model::CancelToken::new();
+    let mut cmp = os_analyze::compare::Comparison::open(
         os_analyze::compare::CrawlSide::open(&current, dir.path()).unwrap(),
         os_analyze::compare::CrawlSide::open(&previous, dir.path()).unwrap(),
         &[],
-        &os_model::CancelToken::new(),
+        &cancel,
     )
     .unwrap();
+    // Every available manual overview row must be identical, not just New/Missing.
+    let manual = cmp.overview(&cancel).unwrap().into_iter().filter_map(|row| Some(json!({
+        "name":format!("{} / {}",row.tab,row.label), "previous":row.previous?, "current":row.current?}))).collect::<Vec<_>>();
+    let changes = data["changes"].as_array().unwrap();
+    assert_eq!(&changes[..manual.len()], manual);
     let p = cmp.pairing();
-    assert_eq!((&p.current - &p.paired_current).len(), 3);
-    assert_eq!((&p.previous - &p.paired_previous).len(), 2);
+    assert_eq!(
+        changes[manual.len()]["current"],
+        (&p.current - &p.paired_current).len()
+    );
+    assert_eq!(
+        changes[manual.len() + 1]["previous"],
+        (&p.previous - &p.paired_previous).len()
+    );
+    // C02's manual Change Detection interface is still a stub on this branch.
+    // Independently specified golden covers every element until that interface is available.
+    let golden: Vec<Value> = serde_json::from_str(include_str!(
+        "../../../tests/fixtures/out-m2-mail/compare-counts.json"
+    ))
+    .unwrap();
+    assert_eq!(&changes[manual.len()..], golden);
     let text = completion.render().0;
-    assert!(text.contains("Page Titles | 0 | 1 | +1"));
-    assert!(text.contains("Indexability | 0 | 1 | +1"));
+    let golden_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../tests/fixtures/out-m2-mail/compare.txt");
+    let golden_text = format!(
+        "{}\n",
+        text.lines()
+            .map(str::trim_end)
+            .collect::<Vec<_>>()
+            .join("\n")
+    );
+    if std::env::var_os("UPDATE_GOLDEN").is_some() {
+        std::fs::write(&golden_path, &golden_text).unwrap();
+    }
+    assert_eq!(golden_text, std::fs::read_to_string(golden_path).unwrap());
+    for row in golden.iter().skip(2) {
+        assert!(
+            text.contains(&format!("{} | 0 | 1 | +1", row["name"].as_str().unwrap())),
+            "{row}"
+        );
+    }
+    // Check actual displayed counters on both self-link-only changes in both crawls.
+    for side in [cmp.current(), cmp.previous()] {
+        for id in [4, 5] {
+            let counters: (i64,i64,i64,i64) = side.file.conn().query_row(
+                "SELECT c.inlinks-c.self_inlinks,c.unique_inlinks-(c.self_inlinks>0),c.outlinks-c.self_outlinks,c.unique_outlinks-(c.self_outlinks>0) FROM url_counters c WHERE url_id=?1", [id], |r| Ok((r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)?))).unwrap();
+            assert_eq!(counters, (0, 0, 0, 0));
+        }
+    }
+    assert!(os_analyze::mail_completion(&current, None, true, false).unwrap()["changes"].is_null());
+    assert!(
+        os_analyze::mail_completion(&current, Some(&previous), false, false).unwrap()["changes"]
+            .is_null()
+    );
+    // Identical crawls: skip_empty suppresses all zero rows; disabling it preserves them.
+    let same: Completion = serde_json::from_value(
+        os_analyze::mail_completion(&current, Some(&current), true, true).unwrap(),
+    )
+    .unwrap();
+    assert!(!same.render().0.contains("Page Titles |"));
+    let same: Completion = serde_json::from_value(
+        os_analyze::mail_completion(&current, Some(&current), true, false).unwrap(),
+    )
+    .unwrap();
+    assert!(same.render().0.contains("Page Titles | 0 | 0 | +0"));
 }
 // spec: OUT-281
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

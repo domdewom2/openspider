@@ -307,7 +307,7 @@ async fn gmail_and_microsoft_oauth_use_pkce_send_scope_and_xoauth2_over_tls() {
             .to_owned();
         let callback = tokio::spawn(async move { client.get(redirect).send().await.unwrap() });
         let clock = Arc::new(os_model::ManualClock::new(
-            os_model::Timestamp::from_db("2099-01-01T00:00:00.000Z").unwrap(),
+            os_model::Timestamp::from_db("2026-10-20T00:00:00.000Z").unwrap(),
         ));
         let token = auth
             .finish(
@@ -315,7 +315,7 @@ async fn gmail_and_microsoft_oauth_use_pkce_send_scope_and_xoauth2_over_tls() {
                 "fixture-client",
                 Some("fixture-client-secret"),
                 &endpoints,
-                clock,
+                clock.clone(),
             )
             .await
             .unwrap();
@@ -342,9 +342,20 @@ async fn gmail_and_microsoft_oauth_use_pkce_send_scope_and_xoauth2_over_tls() {
         let mut c = fixture();
         c.project = "fixture-access".into();
         c.error = Some("fixture-refresh".into());
-        mail::send(&a, &secrets, &n, &["recipient@site.test".into()], &c)
-            .await
-            .unwrap();
+        mail::send_with_context(
+            &a,
+            &secrets,
+            &n,
+            &["recipient@site.test".into()],
+            &c,
+            &mail::DeliveryContext {
+                clock: clock.as_ref(),
+                gmail_token_endpoint: &endpoints.token,
+                microsoft_token_endpoint: &endpoints.token,
+            },
+        )
+        .await
+        .unwrap();
         let messages = mock.messages();
         assert_eq!(messages.len(), 1);
         assert!(!messages[0].data.contains("fixture-access"));
@@ -599,4 +610,152 @@ async fn credentials_are_masked_in_html_even_when_their_characters_are_escaped()
     assert!(!messages[0].data.contains("x&y"));
     assert!(!messages[0].data.contains("x&amp;y"));
     assert!(messages[0].data.contains("&lt;redacted&gt;"));
+}
+
+// spec: OUT-280
+#[tokio::test]
+async fn oauth_refresh_obeys_injected_clock_and_endpoint_and_preserves_tokens_on_failure() {
+    use os_model::Clock;
+    // The listener accepts exactly one refresh. A valid or renewed token must not contact it.
+    for kind in [Auth::Gmail, Auth::Microsoft365] {
+        for response in ["ok", "http_error", "invalid_json", "missing_access"] {
+            let listener = tokio::net::TcpListener::bind(("127.0.0.1", 0))
+                .await
+                .unwrap();
+            let endpoint = format!("http://{}/token", listener.local_addr().unwrap());
+            let http = tokio::spawn(async move {
+                let (mut socket, _) = listener.accept().await.unwrap();
+                let mut request = Vec::new();
+                let header_end = loop {
+                    request.push(socket.read_u8().await.unwrap());
+                    if request.ends_with(b"\r\n\r\n") {
+                        break request.len();
+                    }
+                };
+                let header = String::from_utf8(request.clone()).unwrap();
+                let length: usize = header
+                    .lines()
+                    .find_map(|l| {
+                        l.to_ascii_lowercase()
+                            .strip_prefix("content-length:")
+                            .map(|v| v.trim().parse().unwrap())
+                    })
+                    .unwrap();
+                request.resize(header_end + length, 0);
+                socket.read_exact(&mut request[header_end..]).await.unwrap();
+                let form = String::from_utf8_lossy(&request[header_end..]);
+                assert!(form.contains("grant_type=refresh_token"), "{form}");
+                assert!(form.contains("refresh_token=old-refresh"), "{form}");
+                assert!(form.contains("client_secret=client-secret"), "{form}");
+                let (status, body) = match response {
+                    "ok" => (
+                        "200 OK",
+                        r#"{"access_token":"new-access","refresh_token":"new-refresh","expires_in":120}"#,
+                    ),
+                    "http_error" => ("400 Bad Request", "client-secret provider-private-error"),
+                    "invalid_json" => ("200 OK", "provider-private-error"),
+                    _ => ("200 OK", r#"{"expires_in":120}"#),
+                };
+                socket.write_all(format!("HTTP/1.1 {status}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len()).as_bytes()).await.unwrap();
+            });
+            let now = os_model::Timestamp::from_db("2026-10-20T00:00:00.000Z").unwrap();
+            let clock = os_model::ManualClock::new(now);
+            let context = mail::DeliveryContext {
+                clock: &clock,
+                gmail_token_endpoint: &endpoint,
+                microsoft_token_endpoint: &endpoint,
+            };
+            let mock = SmtpMock::start(Config {
+                password: "old-access".into(),
+                security: Security::Starttls,
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+            let renewed = SmtpMock::start(Config {
+                password: "new-access".into(),
+                security: Security::Starttls,
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+            let dir = tempfile::tempdir().unwrap();
+            let mut n = network();
+            for (name, server) in [("old", &mock), ("new", &renewed)] {
+                let path = dir.path().join(format!("{name}.pem"));
+                std::fs::write(&path, &server.ca_pem).unwrap();
+                n.trusted_certificates
+                    .push(path.to_string_lossy().into_owned());
+            }
+            let mut a = account(&mock, Tls::Starttls);
+            a.auth = kind;
+            a.client_id = Some("fixture-client".into());
+            let secrets = MemorySecretStore::new();
+            let token = json!({"access_token":"old-access", "refresh_token":"old-refresh",
+                "client_secret":"client-secret", "expires_at": now.plus(Duration::from_secs(1)).to_db()});
+            secrets.set("mail/fixture", &token.to_string());
+            // Valid until one millisecond before expiry: no refresh, unchanged secret.
+            mail::send_with_context(
+                &a,
+                &secrets,
+                &n,
+                &["recipient@site.test".into()],
+                &fixture(),
+                &context,
+            )
+            .await
+            .unwrap();
+            assert_eq!(secrets.get("mail/fixture").unwrap(), token.to_string());
+            assert_eq!(mock.messages().len(), 1);
+            clock.advance(Duration::from_secs(1)); // Exactly expired, refresh is mandatory.
+            a.port = renewed.addr.port();
+            let result = mail::send_with_context(
+                &a,
+                &secrets,
+                &n,
+                &["recipient@site.test".into()],
+                &fixture(),
+                &context,
+            )
+            .await;
+            tokio::time::timeout(Duration::from_secs(5), http)
+                .await
+                .unwrap()
+                .unwrap();
+            if response == "ok" {
+                result.unwrap();
+                let saved: Value =
+                    serde_json::from_str(&secrets.get("mail/fixture").unwrap()).unwrap();
+                assert_eq!(
+                    saved["expires_at"],
+                    clock.now().plus(Duration::from_secs(120)).to_db()
+                );
+                assert_eq!(saved["access_token"], "new-access");
+                assert_eq!(saved["refresh_token"], "new-refresh");
+                // A repeated send uses the renewed token, even though the endpoint has closed.
+                clock.advance(Duration::from_secs(119));
+                mail::send_with_context(
+                    &a,
+                    &secrets,
+                    &n,
+                    &["recipient@site.test".into()],
+                    &fixture(),
+                    &context,
+                )
+                .await
+                .unwrap();
+                assert_eq!(renewed.messages().len(), 2);
+            } else {
+                let error = result.unwrap_err().message;
+                assert!(
+                    !error.contains("client-secret") && !error.contains("provider-private-error")
+                );
+                if response == "http_error" {
+                    assert!(error.contains("400"));
+                }
+                assert_eq!(secrets.get("mail/fixture").unwrap(), token.to_string());
+                assert!(renewed.messages().is_empty());
+            }
+        }
+    }
 }
