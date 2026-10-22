@@ -257,6 +257,8 @@ mod signals {
         cmd.spawn().unwrap()
     }
 
+    // spec: OUT-206
+    // spec: OUT-228
     // spec: OUT-204, CRAWL-135
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn the_first_sigint_pauses_and_saves_with_exit_code_130_and_resume_completes_the_crawl() {
@@ -266,6 +268,7 @@ mod signals {
         extra.push(env.out().to_string_lossy().into_owned());
         let mut child = spawn(&env, extra);
         wait_until_running(&site, &env, 3).await;
+        let interrupted_at = Instant::now();
         if !send_sigint(&child) {
             eprintln!("Signal nicht zustellbar (keine Konsole) – Test übersprungen");
             let _ = child.kill();
@@ -276,6 +279,7 @@ mod signals {
             .await
             .unwrap();
         let run = common::Run::from_output(out);
+        assert!(interrupted_at.elapsed() < Duration::from_secs(10));
         assert_eq!(run.code, 130, "{}", run.dump());
         assert!(
             run.last_line().ends_with("(Exit-Code 130)"),
@@ -325,6 +329,8 @@ mod signals {
         assert!(urls.contains(&"/q20.html".to_string()), "{urls:?}");
     }
 
+    // spec: OUT-206
+    // spec: OUT-228
     // spec: OUT-204, CRAWL-135
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn a_second_sigint_within_five_seconds_ends_the_process_immediately() {

@@ -211,7 +211,7 @@ impl RunCtx {
             clock: Arc::new(SystemClock),
             secrets: os_fetch::secret_store_from_env(),
             log_path: None,
-            json_progress: args.json_progress,
+            json_progress: args.json_progress || args.progress.as_deref() == Some("json"),
             heartbeat: Duration::from_secs(HEARTBEAT_SECS),
             poll: Duration::from_millis(500),
             timeout_scale: 1.0,
@@ -318,6 +318,12 @@ fn to_run_args(task: &Task, paths: &AppPaths, exports: &ExportPlan, export_dir: 
         Source::Spider { url } => args.crawl = Some(url.trim().to_string()),
         Source::List { .. } => args.crawl_list = task.crawl.source.list_sources(),
     }
+    args.auth_config = task
+        .crawl
+        .auth_profile
+        .as_deref()
+        .filter(|s| !s.trim().is_empty())
+        .map(|profile| crate::auth::profile_path(paths, profile));
     args.config = task
         .crawl
         .config
@@ -585,18 +591,16 @@ pub async fn run_in(
     }
     let args = to_run_args(&effective, &ctx.paths, &exports, &ctx.export_dir);
     rep.phase("validate");
-    let mut plan = match plan::build_for_task(&args, ctx.paths.clone(), &rep, exports.batch) {
+    let mut plan = match plan::build_for_task_with_secrets(
+        &args,
+        ctx.paths.clone(),
+        &rep,
+        exports.batch,
+        ctx.secrets.as_ref(),
+    ) {
         Ok(plan) => plan,
         Err(e) => return finish(&live, RunResult::Failed, e.exit, Some(e.message)),
     };
-    if let Some(profile) = task
-        .crawl
-        .auth_profile
-        .as_deref()
-        .filter(|p| !p.trim().is_empty())
-    {
-        plan.config.auth.profile_refs.push(profile.to_string());
-    }
     // Sitemaps brauchen einen Ausgabeordner, auch ohne Tabellenexporte.
     if plan.output.is_none() && (exports.sitemap_pages || exports.sitemap_images) {
         let mode = match effective.output.mode {
@@ -912,7 +916,7 @@ pub fn run_with(task_id: &str, args: &RunArgs, hooks: &dyn TaskHooks) -> i32 {
         let _ =
             diagnostics::LogFile::new(paths.logs.join("openspider.log"), true).write_line(&line);
     }
-    let rep = Reporter::for_task(args.json_progress);
+    let rep = Reporter::task_configured(ctx.json_progress, args.quiet);
     let runtime = match tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
@@ -937,6 +941,9 @@ pub fn run_with(task_id: &str, args: &RunArgs, hooks: &dyn TaskHooks) -> i32 {
         run_in(&ctx, task_id, hooks, signals, Arc::clone(&rep)).await
     });
     runtime.shutdown_background();
+    if args.quiet && run.exit == Exit::Ok {
+        return run.exit.code();
+    }
     let mut err = std::io::stderr().lock();
     use std::io::Write;
     let _ = writeln!(

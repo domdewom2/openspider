@@ -40,4 +40,15 @@ fn machine_bound_profiles_use_only_the_supplied_secret_store_and_missing_keys_fa
     store.set("auth/fixture", &key);
     let session = os_cli::auth::load_with(&cfg, &paths, &rep, &store, None).unwrap();
     assert!(!format!("{session:?}").contains("fixture-secret"));
+    let args = os_cli::RunArgs {
+        crawl: Some("https://site.test/".into()),
+        auth_config: Some(file),
+        ..Default::default()
+    };
+    let plan =
+        os_cli::plan::build_for_task_with_secrets(&args, paths, &rep, Default::default(), &store)
+            .unwrap();
+    assert!(!serde_json::to_string(&plan.config)
+        .unwrap()
+        .contains("fixture-secret"));
 }

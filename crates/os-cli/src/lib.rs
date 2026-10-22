@@ -18,6 +18,7 @@ pub mod auth;
 pub mod browser;
 pub mod exec;
 pub mod exit;
+pub mod google;
 pub mod help;
 pub mod listing;
 pub mod logging;
@@ -25,8 +26,10 @@ pub mod plan;
 pub mod registry;
 pub mod reporter;
 pub mod run_task;
+mod segment_workbook;
 pub mod signals;
 mod staging;
+pub mod upload;
 pub mod xls;
 
 use std::ffi::OsString;
@@ -55,6 +58,14 @@ fn finish(summary: &str, exit: Exit) -> i32 {
     let _ = writeln!(err, "openspider: {summary} (Exit-Code {})", exit.code());
     let _ = err.flush();
     exit.code()
+}
+
+fn finish_quiet(summary: &str, exit: Exit, quiet: bool) -> i32 {
+    if quiet && exit == Exit::Ok {
+        exit.code()
+    } else {
+        finish(summary, exit)
+    }
 }
 
 /// Meldung eines Aufruffehlers samt Schlusszeile.
@@ -271,6 +282,22 @@ pub fn run(cli: Cli) -> i32 {
     logging::init(&args);
     let paths = app_paths();
 
+    if args.install_browser {
+        let runtime = match tokio::runtime::Runtime::new() {
+            Ok(rt) => rt,
+            Err(e) => return fail(&CliError::internal(e.to_string())),
+        };
+        return match runtime.block_on(browser::install(&paths)) {
+            Ok(path) => {
+                if !args.quiet {
+                    print_stdout(&format!("{}\n", path.display()));
+                }
+                finish_quiet("Chromium installiert", Exit::Ok, args.quiet)
+            }
+            Err(e) => fail(&e),
+        };
+    }
+
     if args.list_crawls {
         return match listing::collect(&paths.crawls, args.project_name.as_deref()) {
             Ok((rows, skipped)) => {
@@ -282,13 +309,20 @@ pub fn run(cli: Cli) -> i32 {
                 for (path, why) in &skipped {
                     eprintln!("Warnung: {path} nicht lesbar: {why}");
                 }
-                finish(&format!("{} Crawl(s) aufgelistet", rows.len()), Exit::Ok)
+                finish_quiet(
+                    &format!("{} Crawl(s) aufgelistet", rows.len()),
+                    Exit::Ok,
+                    args.quiet,
+                )
             }
             Err(e) => fail(&e),
         };
     }
 
-    let rep = Reporter::new(args.json_progress);
+    let rep = Reporter::configured(
+        args.json_progress || args.progress.as_deref() == Some("json"),
+        args.quiet,
+    );
     rep.phase("validate");
     let plan = match plan::build(&args, paths, &rep) {
         Ok(plan) => plan,
@@ -316,7 +350,7 @@ pub fn run(cli: Cli) -> i32 {
     });
     // Offene Hintergrundaufgaben (Signalwächter) nicht abwarten.
     runtime.shutdown_background();
-    finish(&outcome.summary, outcome.exit)
+    finish_quiet(&outcome.summary, outcome.exit, args.quiet)
 }
 
 /// Hilfe für Tests: die Befehlsbeschreibung.

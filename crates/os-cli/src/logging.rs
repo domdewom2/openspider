@@ -17,13 +17,20 @@ pub fn init(args: &crate::args::RunArgs) {
         )),
         false,
     );
-    let directives = args
-        .log_level
-        .clone()
-        .or_else(|| std::env::var("OPENSPIDER_LOG").ok())
-        .unwrap_or_else(|| "info".into());
-    let filter =
-        EnvFilter::try_new(format!("info,{directives}")).unwrap_or_else(|_| EnvFilter::new("info"));
+    let directives = if args.quiet {
+        "error".into()
+    } else {
+        args.log_level
+            .clone()
+            .or_else(|| std::env::var("OPENSPIDER_LOG").ok())
+            .unwrap_or_else(|| "info".into())
+    };
+    let directives = if args.quiet {
+        directives
+    } else {
+        format!("info,{directives}")
+    };
+    let filter = EnvFilter::try_new(directives).unwrap_or_else(|_| EnvFilter::new("info"));
     let _ = diagnostics::cleanup(&paths.logs, SystemTime::now(), 30, 500 * 1024 * 1024);
     let json = args.log_format.as_deref() == Some("json");
     let subscriber = tracing_subscriber::registry()

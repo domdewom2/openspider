@@ -216,6 +216,7 @@ fn regex_like_timestamp(line: &str) -> bool {
 
 // spec: OUT-165
 // spec: OUT-166
+// spec: OUT-133
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn internal_all_redirect_chains_and_an_xml_sitemap_make_three_files() {
     let site = site("out-basic-site").await;
@@ -572,4 +573,51 @@ async fn a_disabled_task_is_skipped_by_the_scheduler_but_runs_when_started_by_ha
     assert!(common::is_completed(
         &history(&env).get("off", "manual-1").unwrap()
     ));
+}
+
+// spec: OUT-207
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn scheduled_headless_rendering_persists_dom_and_screenshot() {
+    let server = site("render-r01").await;
+    let env = Env::new();
+    let mut task = task(
+        "render-headless",
+        "Render",
+        &format!("{}/csr.html", server.base_url()),
+        &env.out(),
+        &[("tab", "Internal:All")],
+    );
+    for (key, value) in [
+        ("rendering.mode", "javascript"),
+        ("rendering.ajax_timeout_s", "0.1"),
+        ("rendering.screenshots.enabled", "true"),
+        ("extraction.store_rendered_html", "true"),
+        ("limits.max_depth", "0"),
+    ] {
+        task.crawl.overrides.insert(key.into(), value.into());
+    }
+    save(&env, &task);
+    let run = env.run_async(vec!["--run-task", "render-headless"]).await;
+    assert_eq!(run.code, 0, "{}", run.dump());
+    let paths = env.crawl_files();
+    assert_eq!(paths.len(), 1);
+    let file = CrawlFile::open(&paths[0], OpenMode::ReadOnly).unwrap();
+    let (id, title): (i64, String) = file
+        .conn()
+        .query_row(
+            "SELECT id,title_1 FROM urls WHERE url LIKE '%/csr.html'",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .unwrap();
+    assert_eq!(title, "rendered");
+    let dom = os_store::queries::stored_rendered_html(&file, os_model::UrlId(id))
+        .unwrap()
+        .unwrap();
+    assert!(String::from_utf8_lossy(&dom.bytes).contains("JS link"));
+    let screenshots: i64 = file
+        .conn()
+        .query_row("SELECT COUNT(*) FROM screenshots", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(screenshots, 1);
 }

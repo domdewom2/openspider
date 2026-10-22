@@ -1,0 +1,9 @@
+name = "CLI fixture"
+singleWorkbook = true
+skipEmpty = true
+[[items]]
+kind = "tab"
+name = "Internal:All"
+[[items]]
+kind = "tab"
+name = "Page Titles:Missing"

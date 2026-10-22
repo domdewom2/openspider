@@ -14,9 +14,7 @@ use os_analyze::views::ViewQuery;
 use os_engine::types::{CrawlRequest, CrawlSource, CrawlSummary, EngineDeps, FinishedHook};
 use os_engine::{disk_guard, resume_crawl, start_crawl, CrawlHandle, EngineError};
 use os_export::catalog::bulk_issues;
-use os_export::{export_bulk, export_tab, save_report, ExportFileInfo, Format};
-use os_fetch::secrets::KeyringSecretStore;
-use os_fetch::{FetchConfig, HttpFetcher, SecretStore};
+use os_export::{export_bulk, save_report, ExportFileInfo, Format};
 use os_model::{
     Clock, CrawlConfig, CrawlId, CrawlState, IdSource, Progress, RandomIds, SystemClock, Timestamp,
 };
@@ -137,7 +135,7 @@ async fn run(plan: &Plan, rep: &Arc<Reporter>, signals: &Signals) -> Result<Outc
     let mut failures = 0u32;
     let mut files = 0usize;
     if plan.output.is_some() {
-        match export_phase(plan, rep, signals, &crawled) {
+        match export_phase(plan, rep, signals, &crawled).await {
             ExportEnd::Done {
                 failures: f,
                 files: n,
@@ -159,6 +157,7 @@ async fn run(plan: &Plan, rep: &Arc<Reporter>, signals: &Signals) -> Result<Outc
         discard(&crawled.path, rep);
     }
 
+    rep.phase("notify");
     rep.phase("done");
     let warnings = rep.warnings();
     let base = format!(
@@ -230,18 +229,6 @@ enum CrawlEnd {
     Interrupted { id: CrawlId },
 }
 
-fn build_fetcher(
-    cfg: &CrawlConfig,
-    secrets: &dyn SecretStore,
-    clock: Arc<dyn Clock>,
-) -> Result<Arc<HttpFetcher>, CliError> {
-    let fetch_cfg = FetchConfig::from_crawl_config(cfg, secrets, clock)
-        .map_err(|e| CliError::usage(e.to_string()))?;
-    HttpFetcher::new(fetch_cfg)
-        .map(Arc::new)
-        .map_err(|e| CliError::usage(e.to_string()))
-}
-
 fn deps(id: Option<CrawlId>, hook: FinishedHook) -> EngineDeps {
     let ids: Arc<dyn IdSource> = match id {
         Some(id) => Arc::new(FixedId(id)),
@@ -251,7 +238,7 @@ fn deps(id: Option<CrawlId>, hook: FinishedHook) -> EngineDeps {
         clock: Arc::new(SystemClock),
         ids,
         profile: StorageProfile::Balanced,
-        secrets: Arc::new(KeyringSecretStore::new()),
+        secrets: os_fetch::secret_store_from_env(),
         sink_factory: None,
         on_finished: Some(hook),
         owner_kind: "cli",
@@ -321,7 +308,7 @@ async fn crawl_phase(
             let stored = file.config().map_err(store_err)?;
             drop(file);
             let cfg = plan.resume_config.clone().unwrap_or(stored);
-            let fetcher = build_fetcher(&cfg, &KeyringSecretStore::new(), Arc::new(SystemClock))?;
+            let fetcher = plan.auth.fetcher(&cfg, Arc::new(SystemClock))?;
             warn_disk(path, rep);
             rep.phase("crawl");
             let handle = resume_crawl(
@@ -341,17 +328,13 @@ async fn crawl_phase(
                 Source::Spider { start_url } => CrawlSource::Spider {
                     start_url: start_url.clone(),
                 },
-                Source::List { items, label } => CrawlSource::List {
+                Source::List { items, label, .. } => CrawlSource::List {
                     items: items.clone(),
                     label: label.clone(),
                 },
                 Source::Load { .. } => unreachable!("oben behandelt"),
             };
-            let fetcher = build_fetcher(
-                &plan.config,
-                &KeyringSecretStore::new(),
-                Arc::new(SystemClock),
-            )?;
+            let fetcher = plan.auth.fetcher(&plan.config, Arc::new(SystemClock))?;
             warn_disk(&path, rep);
             rep.phase("crawl");
             let request = CrawlRequest {
@@ -381,6 +364,9 @@ async fn crawl_phase(
         .await
         .map_err(|e| engine_error(e, plan.resume))?;
 
+    if let Source::List { originals, .. } = &plan.source {
+        crate::upload::restore(&path, originals).map_err(CliError::internal)?;
+    }
     match summary.state {
         CrawlState::Paused if signals.is_interrupted() => return Ok(CrawlEnd::Interrupted { id }),
         CrawlState::Paused => {
@@ -464,6 +450,12 @@ async fn monitor(
             }
         }
     }
+    rep.snapshot(
+        &handle.progress(),
+        count_errors
+            .then(|| error_count(&mut error_reader, path))
+            .flatten(),
+    );
     drop(error_reader);
     handle.wait().await
 }
@@ -520,13 +512,37 @@ fn report_file(rep: &Reporter, info: &ExportFileInfo) {
     }
 }
 
-fn export_phase(plan: &Plan, rep: &Reporter, signals: &Signals, crawled: &Crawled) -> ExportEnd {
+async fn export_phase(
+    plan: &Plan,
+    rep: &Reporter,
+    signals: &Signals,
+    crawled: &Crawled,
+) -> ExportEnd {
     let Some(out) = plan.output.as_deref() else {
         return ExportEnd::Done {
             failures: 0,
             files: 0,
         };
     };
+    let final_out = out;
+    let segment_workbook = plan.segment.is_some()
+        && plan.batch.is_some_and(|b| b.single_workbook)
+        && (plan.format == Format::Xlsx || plan.google.is_some());
+    let staging = if (plan.xls || plan.google.is_some()) && !segment_workbook {
+        match crate::staging::Staging::new(out) {
+            Ok(dir) => Some(dir),
+            Err(e) => {
+                rep.error(format!("Export-Zwischenspeicher: {e}"));
+                return ExportEnd::Done {
+                    failures: 1,
+                    files: 0,
+                };
+            }
+        }
+    } else {
+        None
+    };
+    let out = staging.as_ref().map(|s| s.path.as_path()).unwrap_or(out);
     rep.phase("export");
     let file = match CrawlFile::open(&crawled.path, OpenMode::ReadWrite) {
         Ok(f) => f,
@@ -592,6 +608,16 @@ fn export_phase(plan: &Plan, rep: &Reporter, signals: &Signals, crawled: &Crawle
         }
     }
 
+    if segment_workbook {
+        match crate::segment_workbook::export(&file, &cfg, plan, out, signals, rep).await {
+            Ok(n) => files += n,
+            Err(_) if signals.is_interrupted() => return ExportEnd::Interrupted,
+            Err(e) => {
+                failures += 1;
+                rep.error(e);
+            }
+        }
+    }
     if let (Some(batch), None) = (plan.batch, plan.segment.as_deref()) {
         if !plan.exports.is_empty() {
             match run_batch(&file, &cfg, plan, batch, out, signals, rep) {
@@ -604,17 +630,18 @@ fn export_phase(plan: &Plan, rep: &Reporter, signals: &Signals, crawled: &Crawle
             }
         }
     }
-    let one_by_one: &[Resolved] = if plan.batch.is_some() && plan.segment.is_none() {
-        &[]
-    } else {
-        &plan.exports
-    };
+    let one_by_one: &[Resolved] =
+        if (plan.batch.is_some() && plan.segment.is_none()) || segment_workbook {
+            &[]
+        } else {
+            &plan.exports
+        };
     for item in one_by_one {
         if signals.is_interrupted() {
             return ExportEnd::Interrupted;
         }
-        if let Some(segment) = plan.segment.as_deref() {
-            match run_segment_export(&file, &cfg, item, out, plan.format, segment, rep) {
+        if plan.segment.is_some() {
+            match run_segment_export(&file, &cfg, item, out, plan, rep) {
                 Ok(n) => files += n,
                 Err(message) => {
                     failures += 1;
@@ -638,6 +665,121 @@ fn export_phase(plan: &Plan, rep: &Reporter, signals: &Signals, crawled: &Crawle
         }
     }
 
+    if let Some(staging) = &staging {
+        let staged: Vec<_> = rep
+            .exported_files()
+            .into_iter()
+            .filter(|p| p.starts_with(&staging.path))
+            .collect();
+        let mut csv = Vec::new();
+        files = 0;
+        for path in staged {
+            if path.extension().is_some_and(|e| e == "csv") && plan.google.is_some() {
+                csv.push(path);
+                continue;
+            }
+            let relative = path.strip_prefix(&staging.path).expect("staging path");
+            let mut destination = final_out.join(relative);
+            if let Some(parent) = destination.parent() {
+                if let Err(e) = std::fs::create_dir_all(parent) {
+                    failures += 1;
+                    rep.error(e.to_string());
+                    continue;
+                }
+            }
+            let result = if plan.xls && path.extension().is_some_and(|e| e == "csv") {
+                destination.set_extension("xls");
+                crate::xls::convert_with(&path, &destination, &signals.cancel_token()).map(
+                    |warnings| {
+                        for w in warnings {
+                            rep.warn(w);
+                        }
+                    },
+                )
+            } else {
+                std::fs::copy(&path, &destination).map(|_| ())
+            };
+            match result {
+                Ok(()) => {
+                    files += 1;
+                    rep.note_export(&destination);
+                    rep.info(format!("Export: {}", destination.display()));
+                }
+                Err(e) => {
+                    failures += 1;
+                    rep.error(format!("Export: {e}"));
+                }
+            }
+        }
+        if let Some(target) = &plan.google {
+            let upload = match target.client(&plan.config, &plan.paths) {
+                Ok(client) => {
+                    crate::google::upload(
+                        &client,
+                        &plan.project,
+                        &plan.name,
+                        &csv,
+                        plan.batch.is_some_and(|b| b.single_workbook),
+                        &signals.cancel_token(),
+                        rep,
+                    )
+                    .await
+                }
+                Err(e) => Err(e.message),
+            };
+            match upload {
+                Ok(n) => files += n,
+                Err(e) => {
+                    failures += 1;
+                    rep.error(e);
+                }
+            }
+        }
+        rep.forget_staging(&staging.path);
+    }
+    let out = final_out;
+    if signals.is_interrupted() {
+        return ExportEnd::Interrupted;
+    }
+    for images in [false, true] {
+        if if images {
+            !plan.create_images_sitemap
+        } else {
+            !plan.create_sitemap
+        } {
+            continue;
+        }
+        let opts = os_export::types::SitemapOptions::default();
+        let result = if images {
+            os_export::sitemap_gen::generate_image_sitemap_with(
+                &file,
+                &opts,
+                &cfg,
+                None,
+                &SystemClock,
+                out,
+            )
+        } else {
+            os_export::sitemap_gen::generate_sitemap_configured_with(
+                &file,
+                &opts,
+                &cfg,
+                None,
+                &SystemClock,
+                out,
+            )
+        };
+        match result {
+            Ok(report) => {
+                files += report.files.len();
+                report.files.iter().for_each(|info| report_file(rep, info));
+            }
+            Err(e) => {
+                failures += 1;
+                rep.error(format!("Sitemap: {e}"));
+            }
+        }
+    }
     if plan.save_crawl {
         if signals.is_interrupted() {
             return ExportEnd::Interrupted;
@@ -671,9 +813,24 @@ fn run_export(
     match item {
         Resolved::Tab { tab, filter } => {
             let query = ViewQuery::new(tab.clone(), filter.clone());
-            let info = export_tab(file, cfg, &query, out, format).map_err(|e| e.to_string())?;
-            report_file(rep, &info);
-            Ok(1)
+            let cancel = os_model::CancelToken::new();
+            let mut ctx = os_export::types::ExportCtx {
+                cancel: &cancel,
+                progress: &|_| {},
+                skip_empty: false,
+                workbook: None,
+                skipped: Vec::new(),
+            };
+            let info = os_export::tab_export::export_tab_with(
+                file, cfg, &query, out, format, true, &mut ctx,
+            )
+            .map_err(|e| e.to_string())?;
+            if let Some(info) = info {
+                report_file(rep, &info);
+                Ok(1)
+            } else {
+                Ok(0)
+            }
         }
         Resolved::Bulk(name) => {
             let infos = export_bulk(file, cfg, name, out, format).map_err(|e| e.to_string())?;
@@ -745,7 +902,7 @@ fn run_batch(
         format: plan.format,
         directory: out,
         crawl_name: &crawl_name,
-        single_workbook: batch.single_workbook,
+        single_workbook: batch.single_workbook && plan.google.is_none(),
     };
     match os_export::pipeline::export_batch(file, cfg, &selections, &options, &mut ctx) {
         Ok(result) => {
@@ -788,8 +945,7 @@ fn run_segment_export(
     cfg: &CrawlConfig,
     item: &Resolved,
     out: &Path,
-    format: Format,
-    segment: &str,
+    plan: &Plan,
     rep: &Reporter,
 ) -> Result<usize, String> {
     let (kind, name) = match item {
@@ -802,8 +958,44 @@ fn run_segment_export(
         kind: kind.into(),
         name,
     };
-    let files = os_export::segment::export_all(file, cfg, &selection, Some(segment), out, format)
+    let skip_empty = plan.batch.is_some_and(|settings| settings.skip_empty);
+    let staging = skip_empty
+        .then(|| crate::staging::Staging::new(out))
+        .transpose()
         .map_err(|e| e.to_string())?;
-    files.iter().for_each(|info| report_file(rep, info));
-    Ok(files.len())
+    let target = staging.as_ref().map(|s| s.path.as_path()).unwrap_or(out);
+    let files = os_export::segment::export_all(
+        file,
+        cfg,
+        &selection,
+        plan.segment.as_deref(),
+        target,
+        plan.format,
+    )
+    .map_err(|e| e.to_string())?;
+    let mut count = 0;
+    for mut info in files {
+        if skip_empty && info.rows == 0 {
+            rep.info(format!(
+                "Leerer Export übersprungen: {}",
+                info.path.display()
+            ));
+            continue;
+        }
+        if let Some(stage) = &staging {
+            let relative = info
+                .path
+                .strip_prefix(&stage.path)
+                .map_err(|e| e.to_string())?;
+            let destination = out.join(relative);
+            if let Some(parent) = destination.parent() {
+                std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+            }
+            std::fs::rename(&info.path, &destination).map_err(|e| e.to_string())?;
+            info.path = destination;
+        }
+        report_file(rep, &info);
+        count += 1;
+    }
+    Ok(count)
 }

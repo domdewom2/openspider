@@ -1,0 +1,8 @@
+[[segments.list]]
+name = "About"
+color = "#336699"
+[[segments.list.groups]]
+[[segments.list.groups.conditions]]
+field = "Address"
+op = "contains"
+value = "/about.html"

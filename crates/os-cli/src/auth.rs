@@ -15,6 +15,7 @@ use crate::{exit::CliError, reporter::Reporter};
 pub struct AuthSession {
     basic: Vec<BasicAuthEntry>,
     cookies: Arc<CookieJar>,
+    secrets: os_fetch::MemorySecretStore,
 }
 impl std::fmt::Debug for AuthSession {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -60,6 +61,15 @@ pub fn load_with(
     passphrase: Option<&str>,
 ) -> Result<AuthSession, CliError> {
     let mut session = AuthSession::default();
+    for entry in &cfg.auth.basic {
+        let password = secrets.get(&entry.secret_ref).ok_or_else(|| {
+            CliError::usage(format!(
+                "Passwort nicht verfügbar: SecretStore-Eintrag {:?} fehlt",
+                entry.secret_ref
+            ))
+        })?;
+        session.secrets.set(&entry.secret_ref, &password);
+    }
     for profile in &cfg.auth.profile_refs {
         let bytes = std::fs::read(profile_path(paths, profile))
             .map_err(|_| CliError::usage("Authentifizierungsprofil nicht lesbar"))?;
@@ -167,8 +177,7 @@ impl AuthSession {
         cfg: &CrawlConfig,
         clock: Arc<dyn Clock>,
     ) -> Result<Arc<ProfileFetcher>, CliError> {
-        let secrets = os_fetch::secret_store_from_env();
-        let mut config = FetchConfig::from_crawl_config(cfg, secrets.as_ref(), clock)
+        let mut config = FetchConfig::from_crawl_config(cfg, &self.secrets, clock)
             .map_err(|e| CliError::usage(e.to_string()))?;
         config.basic_auth.extend(self.basic.clone());
         let fetcher = HttpFetcher::new(config).map_err(|e| CliError::usage(e.to_string()))?;

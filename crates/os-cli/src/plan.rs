@@ -31,6 +31,8 @@ pub enum Source {
     List {
         /// Eingabezeilen bzw. -URLs in Reihenfolge.
         items: Vec<String>,
+        /// Original spelling of corrected standalone inputs, indexed by upload position.
+        originals: Vec<(u64, String)>,
         /// Bezeichnung der Quelle (Dateiname bzw. Host der Sitemap).
         label: String,
     },
@@ -56,6 +58,15 @@ pub struct BatchSettings {
 pub struct Plan {
     /// Stapelmodus der Exporte (geplante Aufgaben); `None` = einzeln wie auf der Kommandozeile.
     pub batch: Option<BatchSettings>,
+    /// Decrypted credentials, held only for this process.
+    pub auth: crate::auth::AuthSession,
+    /// XML exports requested after a successful crawl.
+    pub create_sitemap: bool,
+    pub create_images_sitemap: bool,
+    /// Legacy binary output, generated from the common table stream.
+    pub xls: bool,
+    /// Validated Google target; local staging uses CSV.
+    pub google: Option<crate::google::GoogleTarget>,
     /// Optionaler Segmentkontext; ohne Flag bleibt der Export ungefiltert.
     pub segment: Option<String>,
     /// Quelle.
@@ -106,19 +117,10 @@ fn parse_format(args: &RunArgs) -> Result<Format, CliError> {
     match raw.trim().to_ascii_lowercase().as_str() {
         "csv" => Ok(Format::Csv),
         "xlsx" => Ok(Format::Xlsx),
-        "xls" => Err(CliError::usage(
-            "Exportformat 'xls' wird nicht unterstützt – bitte 'xlsx' verwenden",
-        )),
-        "gsheet" => Err(CliError::usage(if args.google_drive_account.is_none() {
-            "Exportformat 'gsheet' braucht --google-drive-account und wird in dieser Version \
-             ohnehin nicht unterstützt – bitte 'csv' oder 'xlsx' verwenden"
-        } else {
-            "Exportformat 'gsheet' wird in dieser Version nicht unterstützt – bitte 'csv' oder \
-             'xlsx' verwenden"
-        })),
+        "xls" | "gsheet" => Ok(Format::Csv),
         other => Err(CliError::usage(format!(
             "unbekanntes Exportformat '{other}' – gültig: csv, xls, xlsx, gsheet \
-             (unterstützt: csv, xlsx)"
+            "
         ))),
     }
 }
@@ -318,7 +320,7 @@ fn resolve_exports(
 
 /// Prüft alle Argumente und bereitet den Lauf vor. Kein Netzzugriff.
 pub fn build(args: &RunArgs, paths: AppPaths, rep: &Reporter) -> Result<Plan, CliError> {
-    build_impl(args, paths, rep, None)
+    build_impl(args, paths, rep, None, None)
 }
 
 /// Wie [`build`] für geplante Aufgaben: Exporte als Stapel mit den Optionen aus `batch`, unbekannte
@@ -329,7 +331,18 @@ pub fn build_for_task(
     rep: &Reporter,
     batch: BatchSettings,
 ) -> Result<Plan, CliError> {
-    build_impl(args, paths, rep, Some(batch))
+    build_impl(args, paths, rep, Some(batch), None)
+}
+
+/// Task execution keeps its injected secret backend, including machine-bound auth profiles.
+pub fn build_for_task_with_secrets(
+    args: &RunArgs,
+    paths: AppPaths,
+    rep: &Reporter,
+    batch: BatchSettings,
+    secrets: &dyn os_fetch::SecretStore,
+) -> Result<Plan, CliError> {
+    build_impl(args, paths, rep, Some(batch), Some(secrets))
 }
 
 fn build_impl(
@@ -337,6 +350,7 @@ fn build_impl(
     paths: AppPaths,
     rep: &Reporter,
     batch: Option<BatchSettings>,
+    secrets: Option<&dyn os_fetch::SecretStore>,
 ) -> Result<Plan, CliError> {
     let unsupported = args.unsupported();
     if !unsupported.is_empty() {
@@ -347,6 +361,11 @@ fn build_impl(
     }
 
     let format = parse_format(args)?;
+    let xls = args
+        .export_format
+        .as_deref()
+        .is_some_and(|s| s.eq_ignore_ascii_case("xls"));
+    let google = crate::google::validate(args, &paths)?;
 
     // Quelle
     let list_sources: Vec<String> = args
@@ -383,85 +402,197 @@ fn build_impl(
         || args.max_urls.is_some()
         || !args.resolve.is_empty();
 
-    let (source, config, resume_config, project_default_name) = if let Some(arg) = &args.load_crawl
-    {
-        let (path, stored) = open_loaded(arg, &paths)?;
-        let mut resume_config = None;
-        let mut config = stored.clone();
-        if has_overrides {
-            if args.resume {
-                let base = match &args.config {
-                    Some(file) => load_config_file(file)?,
-                    None => LoadedConfig::from_config(stored),
-                };
-                let cfg = build_config(base, args, false, rep)?;
-                config = cfg.clone();
-                resume_config = Some(cfg);
-            } else {
-                rep.warn(
+    let (source, mut config, mut resume_config, project_default_name) =
+        if let Some(arg) = &args.load_crawl {
+            let (path, stored) = open_loaded(arg, &paths)?;
+            let mut resume_config = None;
+            let mut config = stored.clone();
+            if has_overrides {
+                if args.resume {
+                    let base = match &args.config {
+                        Some(file) => load_config_file(file)?,
+                        None => LoadedConfig::from_config(stored),
+                    };
+                    let cfg = build_config(base, args, false, rep)?;
+                    config = cfg.clone();
+                    resume_config = Some(cfg);
+                } else {
+                    rep.warn(
                     "--config, --set, --max-urls und --resolve wirken nur beim Crawlen oder mit \
                      --resume; die gespeicherte Konfiguration des Crawls bleibt maßgeblich",
                 );
+                }
             }
-        }
-        (Source::Load { path }, config, resume_config, None)
-    } else {
-        let list_mode = args.crawl.is_none();
-        let base = match &args.config {
-            Some(file) => load_config_file(file)?,
-            None => default_profile(&paths)?,
-        };
-        let mut config = build_config(base, args, list_mode, rep)?;
-        if let Some(url) = &args.crawl {
-            if !url.contains("://") {
-                rep.info(format!(
-                    "Hinweis: URL ohne Schema – 'http://' wird ergänzt ({})",
-                    os_fetch::redact::url(url)
-                ));
-            }
-            let norm = os_url::parse_start_url(url).map_err(|e| {
-                CliError::usage(format!(
-                    "ungültige Start-URL '{}': {e}",
-                    os_fetch::redact::url(url)
-                ))
-            })?;
-            let name = host_of(url);
-            (
-                Source::Spider {
-                    start_url: norm.encoded,
-                },
-                config,
-                None,
-                Some(name),
-            )
+            (Source::Load { path }, config, resume_config, None)
         } else {
-            let (items, label) = read_list_sources(&list_sources)?;
-            let plan = list_input::plan(&items, &config)
-                .map_err(|e| CliError::usage(format!("Liste nicht auswertbar: {e}")))?;
-            rep.info(list_counter_line(&plan.counts));
-            if plan.counts.read == 0 && plan.counts.sitemaps == 0 {
-                return Err(CliError::usage(
+            let list_mode = args.crawl.is_none();
+            let base = match &args.config {
+                Some(file) => load_config_file(file)?,
+                None => default_profile(&paths)?,
+            };
+            let mut config = build_config(base, args, list_mode, rep)?;
+            if let Some(url) = &args.crawl {
+                if !url.contains("://") {
+                    rep.info(format!(
+                        "Hinweis: URL ohne Schema – 'http://' wird ergänzt ({})",
+                        os_fetch::redact::url(url)
+                    ));
+                }
+                let norm = os_url::parse_start_url(url).map_err(|e| {
+                    CliError::usage(format!(
+                        "ungültige Start-URL '{}': {e}",
+                        os_fetch::redact::url(url)
+                    ))
+                })?;
+                let name = host_of(url);
+                (
+                    Source::Spider {
+                        start_url: norm.encoded,
+                    },
+                    config,
+                    None,
+                    Some(name),
+                )
+            } else {
+                let (mut items, label) = read_list_sources(&list_sources)?;
+                let originals = crate::upload::prepare(&mut items);
+                let plan = list_input::plan(&items, &config)
+                    .map_err(|e| CliError::usage(format!("Liste nicht auswertbar: {e}")))?;
+                rep.info(list_counter_line(&plan.counts));
+                if plan.counts.read == 0 && plan.counts.sitemaps == 0 {
+                    return Err(CliError::usage(
                     "Leere Liste: keine einzige URL gefunden (erwartet: http(s)-URLs, eine Sitemap \
                      oder eine Datei mit URLs)",
                 ));
+                }
+                config.mode = os_model::CrawlMode::List;
+                (
+                    Source::List {
+                        items,
+                        originals,
+                        label: label.clone(),
+                    },
+                    config,
+                    None,
+                    Some(label),
+                )
             }
-            config.mode = os_model::CrawlMode::List;
-            (
-                Source::List {
-                    items,
-                    label: label.clone(),
-                },
-                config,
-                None,
-                Some(label),
-            )
-        }
-    };
+        };
 
-    let exports = resolve_exports(args, &config, batch.is_some().then_some(rep))?;
+    let task_mode = batch.is_some();
+    let mut effective = args.clone();
+    let mut batch = batch;
+    if let Some(preset) = args.export_preset.as_deref() {
+        let candidate = Path::new(preset);
+        let path = if candidate.is_file() {
+            candidate.to_path_buf()
+        } else {
+            if candidate.components().count() != 1 || preset.contains(['/', '\\']) || preset == ".."
+            {
+                return Err(CliError::usage("Export-Preset nicht gefunden"));
+            }
+            paths
+                .settings
+                .join("export-presets")
+                .join(format!("{preset}.ospreset"))
+        };
+        let preset = os_export::types::ExportPreset::load(&path)
+            .map_err(|e| CliError::usage(format!("Export-Preset: {e}")))?;
+        batch = Some(BatchSettings {
+            single_workbook: preset.single_workbook,
+            skip_empty: preset.skip_empty,
+        });
+        for item in preset.items {
+            let name = item.name.replace(',', "\\,");
+            match item.kind.to_ascii_lowercase().as_str() {
+                "tab" | "view" => effective.export_tabs.push(name),
+                "bulk" => effective.bulk_export.push(name),
+                "report" => effective.save_report.push(name),
+                other => {
+                    return Err(CliError::usage(format!(
+                        "Unbekannte Exportart im Preset: {other}"
+                    )))
+                }
+            }
+        }
+    }
+    if args.single_workbook || args.skip_empty_exports {
+        let settings = batch.get_or_insert_with(BatchSettings::default);
+        settings.single_workbook |= args.single_workbook;
+        settings.skip_empty |= args.skip_empty_exports;
+    }
+    let exports = resolve_exports(
+        &effective,
+        &config,
+        args.export_preset
+            .is_some()
+            .then_some(rep)
+            .or_else(|| batch.is_some().then_some(rep)),
+    )?;
+    // Explicit CLI names always fail before a crawl, including when a preset is used.
+    if !task_mode {
+        resolve_exports(args, &config, None)?;
+    }
+    if batch.is_some_and(|b| b.single_workbook) && xls {
+        return Err(CliError::usage(
+            "--single-workbook benötigt xlsx oder gsheet",
+        ));
+    }
+    if let Some(segment) = args.segment.as_deref() {
+        if segment != "all" && !config.segments.list.iter().any(|s| s.name == segment) {
+            return Err(CliError::usage(format!("Unbekanntes Segment: {segment}")));
+        }
+    }
+    if let Some(profile) = &args.auth_config {
+        config
+            .auth
+            .profile_refs
+            .push(profile.to_string_lossy().into_owned());
+    }
+    let auth = if matches!(source, Source::Load { .. }) && !args.resume {
+        crate::auth::AuthSession::default()
+    } else if let Some(secrets) = secrets {
+        crate::auth::load_with(
+            &config,
+            &paths,
+            rep,
+            secrets,
+            std::env::var("OPENSPIDER_AUTH_PASSPHRASE").ok().as_deref(),
+        )?
+    } else {
+        crate::auth::load(&config, &paths, rep)?
+    };
+    if resume_config.is_some() || (args.resume && args.auth_config.is_some()) {
+        resume_config = Some(config.clone());
+    }
+    if config.rendering.chromium_path.is_none() && std::env::var_os("OPENSPIDER_CHROMIUM").is_none()
+    {
+        config.rendering.chromium_path =
+            crate::browser::installed(&paths).map(|p| p.to_string_lossy().into_owned());
+        if resume_config.is_some() {
+            resume_config = Some(config.clone());
+        }
+    }
+    if config.rendering.mode == os_model::RenderingMode::JavaScript
+        && (!matches!(source, Source::Load { .. }) || args.resume)
+    {
+        os_render::api::check_available(&os_render::LaunchOpts {
+            chromium_path: config.rendering.chromium_path.as_ref().map(Into::into),
+            ..Default::default()
+        })
+        .map_err(|e| {
+            CliError::usage(format!(
+                "JavaScript-Rendering: {e}; Chromium installieren: openspider --install-browser"
+            ))
+        })?;
+    }
 
     // Ausgabeordner (nur, wenn Dateien entstehen)
-    let output = if !exports.is_empty() || args.save_crawl {
+    let output = if !exports.is_empty()
+        || args.save_crawl
+        || args.create_sitemap
+        || args.create_images_sitemap
+    {
         let mode = output_mode(args, rep);
         let base = match &args.output_folder {
             Some(dir) => dir.clone(),
@@ -487,12 +618,12 @@ fn build_impl(
         .or(project_default_name)
         .unwrap_or_default();
 
-    if let Some(segment) = args.segment.as_deref() {
-        if segment != "all" && !config.segments.list.iter().any(|s| s.name == segment) {
-            return Err(CliError::usage(format!("Unbekanntes Segment: {segment}")));
-        }
-    }
     Ok(Plan {
+        auth,
+        create_sitemap: args.create_sitemap,
+        create_images_sitemap: args.create_images_sitemap,
+        xls,
+        google,
         batch,
         segment: args.segment.clone(),
         source,
@@ -651,11 +782,7 @@ mod tests {
     #[test]
     fn unsupported_and_unknown_formats_are_usage_errors() {
         let dir = tempfile::tempdir().unwrap();
-        for (format, needle) in [
-            ("xls", "nicht unterstützt"),
-            ("gsheet", "gsheet"),
-            ("pdf", "csv, xls, xlsx, gsheet"),
-        ] {
+        for (format, needle) in [("gsheet", "gsheet"), ("pdf", "csv, xls, xlsx, gsheet")] {
             let err = build(
                 &args(&["--crawl", "http://site.test/", "--export-format", format]),
                 paths(dir.path()),
