@@ -107,7 +107,19 @@ async fn api_source_delegates_to_i06_and_never_starts_http_crawl() {
     let dir = tempfile::tempdir().unwrap();
     let app = app(dir.path());
     let error=app.dispatch(ctx(),"crawl.start",json!({"source":{"kind":"apis","items":["https://fixture.test/"]},"scope":"domain","profile":null})).await.unwrap_err();
-    assert_eq!(error.code, os_app::ErrorCode::Unsupported);
-    assert_eq!(error.args["owner"], "M2-I06");
+    assert_eq!(error.code, os_app::ErrorCode::InvalidInput);
+    assert_eq!(error.message_key, "err-api-disconnected");
+    assert!(error
+        .detail
+        .as_deref()
+        .unwrap()
+        .contains("Mindestens eine Integration"));
+    assert!(
+        !app.config().paths.crawls.exists()
+            || std::fs::read_dir(&app.config().paths.crawls)
+                .unwrap()
+                .next()
+                .is_none()
+    );
     assert!(app.sessions().current(&window()).is_none());
 }

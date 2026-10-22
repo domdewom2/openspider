@@ -435,8 +435,9 @@ async fn start_apis(
     items: Vec<String>,
 ) -> Result<CrawlRef, CmdError> {
     let api_ctx = crate::commands::api::crawl_context(app, cfg.clone());
-    os_integrations::crawl_glue::validate_apis(&api_ctx)
-        .map_err(|e| internal("API crawl", e.to_string()))?;
+    os_integrations::crawl_glue::validate_apis(&api_ctx).map_err(|e| {
+        CmdError::invalid_input("err-api-disconnected", "source").with_detail(e.to_string())
+    })?;
     let api_clock = app.config().clock.clone();
     let items = os_engine::list_input::api_items(&items, &cfg, fetcher(app, &cfg)?.as_ref())
         .await
