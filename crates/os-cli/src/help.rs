@@ -79,14 +79,18 @@ pub fn topic(name: &str, as_json: bool) -> Result<String, CliError> {
     })
 }
 
-/// `--list-exports`: Namen für `--export-tabs` und `--bulk-export`, nach Katalog gruppiert.
+/// `--list-exports`: Namen für `--export-tabs` und `--bulk-export`, gemeinsam sortiert.
 pub fn list_exports(as_json: bool) -> String {
     let tabs = registry::names(Kind::Tab);
     let bulk = registry::names(Kind::Bulk);
     if as_json {
         json_text(&json!({ "export-tabs": tabs, "bulk-export": bulk }))
     } else {
-        format!("{}{}", lines(&tabs), lines(&bulk))
+        let mut names = tabs;
+        names.extend(bulk);
+        names.sort();
+        names.dedup();
+        lines(&names)
     }
 }
 
@@ -125,13 +129,16 @@ mod tests {
 
     // spec: OUT-203
     #[test]
-    fn list_exports_is_help_export_tabs_followed_by_help_bulk_export() {
+    fn list_exports_is_the_sorted_union_of_both_help_topics() {
         let expected = format!(
             "{}{}",
             topic("export-tabs", false).unwrap(),
             topic("bulk-export", false).unwrap()
         );
-        assert_eq!(list_exports(false), expected);
+        let mut names: Vec<_> = expected.lines().map(str::to_string).collect();
+        names.sort();
+        names.dedup();
+        assert_eq!(list_exports(false), lines(&names));
         assert_eq!(list_reports(false), topic("save-report", false).unwrap());
     }
 

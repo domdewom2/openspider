@@ -14,6 +14,8 @@ use crate::{exit::CliError, reporter::Reporter};
 #[derive(Default)]
 pub struct AuthSession {
     basic: Vec<BasicAuthEntry>,
+    digest: Vec<BasicAuthEntry>,
+    ntlm: Vec<BasicAuthEntry>,
     cookies: Arc<CookieJar>,
     secrets: os_fetch::MemorySecretStore,
 }
@@ -60,6 +62,18 @@ pub fn load_with(
     secrets: &dyn SecretStore,
     passphrase: Option<&str>,
 ) -> Result<AuthSession, CliError> {
+    load_with_clock(cfg, paths, rep, secrets, passphrase, &SystemClock)
+}
+
+/// Loads profiles against the caller's clock (including scheduling and expiry tests).
+pub fn load_with_clock(
+    cfg: &CrawlConfig,
+    paths: &AppPaths,
+    rep: &Reporter,
+    secrets: &dyn SecretStore,
+    passphrase: Option<&str>,
+    clock: &dyn Clock,
+) -> Result<AuthSession, CliError> {
     let mut session = AuthSession::default();
     for entry in &cfg.auth.basic {
         let password = secrets.get(&entry.secret_ref).ok_or_else(|| {
@@ -75,7 +89,7 @@ pub fn load_with(
             .map_err(|_| CliError::usage("Authentifizierungsprofil nicht lesbar"))?;
         let value = os_store::auth_profiles::open(&bytes, passphrase, |id| secrets.get(id))
             .map_err(|e| CliError::usage(format!("Authentifizierungsprofil: {e}; portable Profile benötigen OPENSPIDER_AUTH_PASSPHRASE")))?;
-        session.add(&value, rep)?;
+        session.add(&value, rep, clock)?;
     }
     Ok(session)
 }
@@ -86,7 +100,7 @@ fn string<'a>(value: &'a Value, key: &str) -> Result<&'a str, CliError> {
         .ok_or_else(|| CliError::usage("Ungültiger Inhalt des Authentifizierungsprofils"))
 }
 impl AuthSession {
-    fn add(&mut self, value: &Value, rep: &Reporter) -> Result<(), CliError> {
+    fn add(&mut self, value: &Value, rep: &Reporter, clock: &dyn Clock) -> Result<(), CliError> {
         let p = &value["profile"];
         let host = string(p, "host")?;
         let prefix = if host.contains("://") {
@@ -118,7 +132,7 @@ impl AuthSession {
                 let cookies = storage["cookies"]
                     .as_array()
                     .ok_or_else(|| CliError::usage("Cookies fehlen im Authentifizierungsprofil"))?;
-                let now = SystemClock.now().unix_millis() as f64 / 1000.0;
+                let now = clock.now().unix_millis() as f64 / 1000.0;
                 let mut expired = false;
                 for cookie in cookies {
                     let name = string(cookie, "name")?;
@@ -157,7 +171,7 @@ impl AuthSession {
                         raw.push_str("; Secure");
                     }
                     if let Some(expires) = expires {
-                        raw.push_str(&format!("; Max-Age={}", (expires - now) as u64));
+                        raw.push_str(&format!("; Max-Age={}", (expires - now).ceil() as u64));
                     }
                     self.cookies.insert_raw(&origin, &raw);
                 }
@@ -166,15 +180,17 @@ impl AuthSession {
                     tracing::warn!("authentication cookies expired");
                 }
             }
-            "digest" => {
-                return Err(CliError::usage(
-                    "Digest-Authentifizierung wird noch nicht unterstützt",
-                ))
-            }
-            "ntlm" => {
-                return Err(CliError::usage(
-                    "NTLM-Authentifizierung wird noch nicht unterstützt",
-                ))
+            kind @ ("digest" | "ntlm") => {
+                let entry = BasicAuthEntry {
+                    prefix,
+                    username: string(p, "username")?.into(),
+                    password: string(p, "secret")?.into(),
+                };
+                if kind == "digest" {
+                    self.digest.push(entry);
+                } else {
+                    self.ntlm.push(entry);
+                }
             }
             _ => return Err(CliError::usage("Unbekannte Authentifizierungsart")),
         }
@@ -186,10 +202,22 @@ impl AuthSession {
         cfg: &CrawlConfig,
         clock: Arc<dyn Clock>,
     ) -> Result<Arc<ProfileFetcher>, CliError> {
+        self.fetcher_with_ids(cfg, clock, Arc::new(os_model::RandomIds))
+    }
+
+    pub fn fetcher_with_ids(
+        &self,
+        cfg: &CrawlConfig,
+        clock: Arc<dyn Clock>,
+        ids: Arc<dyn os_model::IdSource>,
+    ) -> Result<Arc<ProfileFetcher>, CliError> {
         let mut config = FetchConfig::from_crawl_config(cfg, &self.secrets, clock)
             .map_err(|e| CliError::usage(e.to_string()))?;
         config.basic_auth.extend(self.basic.clone());
-        let fetcher = HttpFetcher::new(config).map_err(|e| CliError::usage(e.to_string()))?;
+        let fetcher = HttpFetcher::new(config)
+            .and_then(|f| f.with_challenge_auth(&self.digest, &self.ntlm))
+            .map(|f| f.with_auth_ids(ids))
+            .map_err(|e| CliError::usage(e.to_string()))?;
         Ok(Arc::new(ProfileFetcher {
             fetcher,
             cookies: Arc::clone(&self.cookies),

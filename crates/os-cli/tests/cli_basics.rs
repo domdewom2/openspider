@@ -125,7 +125,11 @@ fn list_exports_and_list_reports_equal_the_help_topics_and_need_no_network() {
     let tabs = env.run(&["--help", "export-tabs"]);
     let bulk = env.run(&["--help", "bulk-export"]);
     assert_eq!(exports.code, 0, "{}", exports.dump());
-    assert_eq!(exports.stdout, format!("{}{}", tabs.stdout, bulk.stdout));
+    let combined = format!("{}{}", tabs.stdout, bulk.stdout);
+    let mut expected: Vec<_> = combined.lines().collect();
+    expected.sort();
+    expected.dedup();
+    assert_eq!(exports.stdout, expected.join("\n") + "\n");
     assert_golden(golden("list_exports.txt"), &exports.stdout);
 
     let reports = env.run(&["--list-reports"]);

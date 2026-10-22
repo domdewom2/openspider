@@ -185,6 +185,9 @@ pub struct HttpFetcher {
     client: reqwest::Client,
     auth: AuthMatcher,
     digest: crate::auth::digest::DigestAuth,
+    challenge_digest: AuthMatcher,
+    challenge_ntlm: AuthMatcher,
+    auth_ids: Arc<dyn os_model::IdSource>,
     limiter: Option<RateLimiter>,
     /// Gemeinsamer Speicher für `CookieMode::Persistent`, wenn die Anfrage keinen mitbringt.
     global_jar: Arc<CookieJar>,
@@ -199,6 +202,25 @@ impl std::fmt::Debug for HttpFetcher {
 }
 
 impl HttpFetcher {
+    /// Opt-in profile authentication: never emits preemptive Basic credentials.
+    /// Existing clients retain their original authentication behavior.
+    pub fn with_challenge_auth(
+        mut self,
+        digest: &[BasicAuthEntry],
+        ntlm: &[BasicAuthEntry],
+    ) -> Result<Self, FetchError> {
+        self.challenge_digest = AuthMatcher::new(digest).map_err(FetchError::Config)?;
+        self.challenge_ntlm = AuthMatcher::new(ntlm).map_err(FetchError::Config)?;
+        Ok(self)
+    }
+
+    /// Injects the authentication nonce source; deterministic tests use SeededIds.
+    pub fn with_auth_ids(mut self, ids: Arc<dyn os_model::IdSource>) -> Self {
+        self.digest.set_ids(ids.clone(), self.cfg.clock.clone());
+        self.auth_ids = ids;
+        self
+    }
+
     /// Network snapshot for resume; crawl-specific request options are rebuilt separately.
     /// The password must remain in memory and must never be logged or persisted.
     pub fn network_snapshot(&self) -> (os_model::settings::NetworkSettings, Option<String>) {
@@ -259,6 +281,9 @@ impl HttpFetcher {
             client,
             auth,
             digest: crate::auth::digest::DigestAuth::default(),
+            challenge_digest: AuthMatcher::default(),
+            challenge_ntlm: AuthMatcher::default(),
+            auth_ids: Arc::new(os_model::RandomIds),
             limiter,
             global_jar: Arc::new(CookieJar::new()),
         })
@@ -304,6 +329,9 @@ impl HttpFetcher {
                 .map_err(|e| FetchError::Config(redact::text(&e.to_string())))?,
             auth: AuthMatcher::new(&self.cfg.basic_auth).map_err(FetchError::Config)?,
             digest: crate::auth::digest::DigestAuth::default(),
+            challenge_digest: AuthMatcher::default(),
+            challenge_ntlm: AuthMatcher::default(),
+            auth_ids: Arc::new(os_model::RandomIds),
             hsts: hsts::Policies::default(),
             limiter: None,
             global_jar: self.global_jar.clone(),
@@ -349,6 +377,9 @@ impl HttpFetcher {
                 .map_err(|e| FetchError::Config(redact::text(&e.to_string())))?,
             auth: AuthMatcher::new(&self.cfg.basic_auth).map_err(FetchError::Config)?,
             digest: crate::auth::digest::DigestAuth::default(),
+            challenge_digest: AuthMatcher::default(),
+            challenge_ntlm: AuthMatcher::default(),
+            auth_ids: Arc::new(os_model::RandomIds),
             hsts: hsts::Policies::default(),
             limiter: None,
             global_jar: self.global_jar.clone(),
@@ -580,7 +611,15 @@ impl HttpFetcher {
             );
         }
 
-        let credentials = self.auth.credentials_for(url);
+        let credentials = self
+            .challenge_digest
+            .rendering_credentials(url)
+            .or_else(|| self.auth.rendering_credentials(url));
+        let credentials = if self.challenge_ntlm.rendering_credentials(url).is_some() {
+            None
+        } else {
+            credentials.as_ref()
+        };
         let digest_key =
             credentials.map(|c| format!("{}|{}", url.origin().ascii_serialization(), c.prefix));
         if let (Some(c), Some(key)) = (credentials, &digest_key) {
@@ -598,13 +637,97 @@ impl HttpFetcher {
                 );
             }
         }
-        let mut response = self
-            .client
+        // NTLM is connection-bound: each exchange owns a fresh HTTP/1 client/pool.
+        // Parallel crawl requests cannot mix identities or handshake messages.
+        let ntlm = self.challenge_ntlm.rendering_credentials(url);
+        let dedicated = if ntlm.is_some() {
+            let mut cfg = self.cfg.clone();
+            cfg.http.version = os_model::HttpVersion::Http1;
+            Some(Self::new(cfg).map_err(|_| Failure {
+                proxy_auth_required: false,
+                reason: NoResponseReason::Malformed,
+                detail: "NTLM-Client konnte nicht erstellt werden".into(),
+            })?)
+        } else {
+            None
+        };
+        let client = dedicated.as_ref().map_or(&self.client, |f| &f.client);
+        if ntlm.is_some() {
+            headers.remove(header::AUTHORIZATION);
+        }
+        let mut response = client
             .get(url.clone())
             .headers(headers.clone())
             .send()
             .await
             .map_err(|e| classify(&e))?;
+        if let Some(c) = ntlm {
+            if response.status().as_u16() == 401
+                && response
+                    .headers()
+                    .get_all(header::WWW_AUTHENTICATE)
+                    .iter()
+                    .filter_map(|v| v.to_str().ok())
+                    .any(|v| v.eq_ignore_ascii_case("NTLM") || v.starts_with("NTLM "))
+            {
+                // Drain each challenge body to return this exact connection to its private pool.
+                crate::auth::ntlm::drain(response)
+                    .await
+                    .map_err(|e| classify(&e))?;
+                let negotiate = crate::auth::ntlm::negotiate();
+                let mut value = HeaderValue::from_str(&format!(
+                    "NTLM {}",
+                    crate::auth::base64_encode(&negotiate)
+                ))
+                .unwrap();
+                value.set_sensitive(true);
+                headers.insert(header::AUTHORIZATION, value);
+                response = client
+                    .get(url.clone())
+                    .headers(headers.clone())
+                    .send()
+                    .await
+                    .map_err(|e| classify(&e))?;
+                if response.status().as_u16() == 401 {
+                    let challenge = response
+                        .headers()
+                        .get_all(header::WWW_AUTHENTICATE)
+                        .iter()
+                        .filter_map(|v| v.to_str().ok())
+                        .find_map(|v| v.strip_prefix("NTLM ").and_then(crate::auth::ntlm::decode));
+                    if let Some(challenge) = challenge {
+                        let now = self.cfg.clock.now();
+                        let id = self.auth_ids.new_crawl_id(now);
+                        let nonce = id.0.as_bytes()[8..16].try_into().unwrap();
+                        let time = (i128::from(now.unix_millis()) + 11_644_473_600_000) * 10_000;
+                        if let Some(auth) = crate::auth::ntlm::authenticate(
+                            &challenge,
+                            &c.username,
+                            &c.password,
+                            nonce,
+                            time as u64,
+                        ) {
+                            crate::auth::ntlm::drain(response)
+                                .await
+                                .map_err(|e| classify(&e))?;
+                            let mut value = HeaderValue::from_str(&format!(
+                                "NTLM {}",
+                                crate::auth::base64_encode(&auth)
+                            ))
+                            .unwrap();
+                            value.set_sensitive(true);
+                            headers.insert(header::AUTHORIZATION, value);
+                            response = client
+                                .get(url.clone())
+                                .headers(headers.clone())
+                                .send()
+                                .await
+                                .map_err(|e| classify(&e))?;
+                        }
+                    }
+                }
+            }
+        }
         // Höchstens eine Challenge und eine stale-Nonce-Erneuerung je Abruf.
         for attempt in 0..2 {
             if response.status().as_u16() != 401 {

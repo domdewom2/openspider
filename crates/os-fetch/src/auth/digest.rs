@@ -12,8 +12,22 @@ struct Challenge {
     nc: u32,
 }
 #[derive(Default)]
-pub(crate) struct DigestAuth(Mutex<HashMap<String, Challenge>>);
+pub(crate) struct DigestAuth {
+    challenges: Mutex<HashMap<String, Challenge>>,
+    nonce_source: Option<(
+        std::sync::Arc<dyn os_model::IdSource>,
+        std::sync::Arc<dyn os_model::Clock>,
+    )>,
+}
 impl DigestAuth {
+    pub fn set_ids(
+        &mut self,
+        ids: std::sync::Arc<dyn os_model::IdSource>,
+        clock: std::sync::Arc<dyn os_model::Clock>,
+    ) {
+        self.nonce_source = Some((ids, clock));
+    }
+
     pub fn challenge(&self, key: &str, value: &str) -> bool {
         let Some((scheme, rest)) = value.split_once(' ') else {
             return false;
@@ -46,7 +60,7 @@ impl DigestAuth {
         ) {
             return false;
         }
-        let mut cache = self.0.lock().unwrap_or_else(|p| p.into_inner());
+        let mut cache = self.challenges.lock().unwrap_or_else(|p| p.into_inner());
         let nc = cache
             .get(key)
             .filter(|c| c.nonce == *nonce)
@@ -70,13 +84,17 @@ impl DigestAuth {
         username: &str,
         password: &str,
     ) -> Option<String> {
-        let mut cache = self.0.lock().unwrap_or_else(|p| p.into_inner());
+        let mut cache = self.challenges.lock().unwrap_or_else(|p| p.into_inner());
         let c = cache.get_mut(key)?;
         c.nc = c.nc.checked_add(1)?;
-        let cnonce = format!(
-            "{:016x}",
-            std::collections::hash_map::RandomState::new().hash_one((&c.nonce, c.nc))
-        );
+        let cnonce = if let Some((ids, clock)) = &self.nonce_source {
+            hex::encode(&ids.new_crawl_id(clock.now()).0.as_bytes()[8..16])
+        } else {
+            format!(
+                "{:016x}",
+                std::collections::hash_map::RandomState::new().hash_one((&c.nonce, c.nc))
+            )
+        };
         Some(response(c, url, username, password, &cnonce))
     }
 }

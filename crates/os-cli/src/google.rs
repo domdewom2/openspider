@@ -135,7 +135,7 @@ pub(crate) fn kinds(header: &[String]) -> Vec<os_analyze::ColumnKind> {
         .map(|name| {
             tabs.iter()
                 .flat_map(|tab| &tab.columns)
-                .find(|column| column.key == name)
+                .find(|column| column.key == crate::column_headers::canonical(name))
                 .map(|column| column.kind)
                 .unwrap_or(os_analyze::ColumnKind::Text)
         })

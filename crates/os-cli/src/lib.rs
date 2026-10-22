@@ -16,6 +16,7 @@
 pub mod args;
 pub mod auth;
 pub mod browser;
+mod column_headers;
 pub mod exec;
 pub mod exit;
 pub mod google;

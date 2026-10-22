@@ -56,6 +56,7 @@ pub struct BatchSettings {
 /// Ablaufplan nach der Validierung.
 #[derive(Debug)]
 pub struct Plan {
+    pub header_labels: std::collections::BTreeMap<String, String>,
     /// Stapelmodus der Exporte (geplante Aufgaben); `None` = einzeln wie auf der Kommandozeile.
     pub batch: Option<BatchSettings>,
     /// Decrypted credentials, held only for this process.
@@ -320,7 +321,7 @@ fn resolve_exports(
 
 /// Prüft alle Argumente und bereitet den Lauf vor. Kein Netzzugriff.
 pub fn build(args: &RunArgs, paths: AppPaths, rep: &Reporter) -> Result<Plan, CliError> {
-    build_impl(args, paths, rep, None, None)
+    build_impl(args, paths, rep, None, None, &SystemClock)
 }
 
 /// Wie [`build`] für geplante Aufgaben: Exporte als Stapel mit den Optionen aus `batch`, unbekannte
@@ -331,7 +332,7 @@ pub fn build_for_task(
     rep: &Reporter,
     batch: BatchSettings,
 ) -> Result<Plan, CliError> {
-    build_impl(args, paths, rep, Some(batch), None)
+    build_impl(args, paths, rep, Some(batch), None, &SystemClock)
 }
 
 /// Task execution keeps its injected secret backend, including machine-bound auth profiles.
@@ -342,7 +343,19 @@ pub fn build_for_task_with_secrets(
     batch: BatchSettings,
     secrets: &dyn os_fetch::SecretStore,
 ) -> Result<Plan, CliError> {
-    build_impl(args, paths, rep, Some(batch), Some(secrets))
+    build_for_task_with_clock(args, paths, rep, batch, secrets, &SystemClock)
+}
+
+/// Scheduling uses its own clock for imported cookie expiry as well as task timestamps.
+pub fn build_for_task_with_clock(
+    args: &RunArgs,
+    paths: AppPaths,
+    rep: &Reporter,
+    batch: BatchSettings,
+    secrets: &dyn os_fetch::SecretStore,
+    clock: &dyn os_model::Clock,
+) -> Result<Plan, CliError> {
+    build_impl(args, paths, rep, Some(batch), Some(secrets), clock)
 }
 
 fn build_impl(
@@ -351,6 +364,7 @@ fn build_impl(
     rep: &Reporter,
     batch: Option<BatchSettings>,
     secrets: Option<&dyn os_fetch::SecretStore>,
+    clock: &dyn os_model::Clock,
 ) -> Result<Plan, CliError> {
     let unsupported = args.unsupported();
     if !unsupported.is_empty() {
@@ -552,12 +566,13 @@ fn build_impl(
     let auth = if matches!(source, Source::Load { .. }) && !args.resume {
         crate::auth::AuthSession::default()
     } else if let Some(secrets) = secrets {
-        crate::auth::load_with(
+        crate::auth::load_with_clock(
             &config,
             &paths,
             rep,
             secrets,
             std::env::var("OPENSPIDER_AUTH_PASSPHRASE").ok().as_deref(),
+            clock,
         )?
     } else {
         crate::auth::load(&config, &paths, rep)?
@@ -619,6 +634,7 @@ fn build_impl(
         .unwrap_or_default();
 
     Ok(Plan {
+        header_labels: crate::column_headers::labels(args.column_headers.as_deref(), &paths)?,
         auth,
         create_sitemap: args.create_sitemap,
         create_images_sitemap: args.create_images_sitemap,

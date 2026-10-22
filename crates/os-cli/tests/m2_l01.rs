@@ -233,11 +233,10 @@ fn catalogs_are_sorted_complete_and_unknown_names_link_their_listing() {
         let run = env.run(&[list]);
         assert_eq!(run.code, 0);
         let entries: Vec<_> = run.stdout.lines().collect();
-        if list == "--list-reports" {
-            let mut sorted = entries.clone();
-            sorted.sort();
-            assert_eq!(entries, sorted);
-        }
+        let mut sorted = entries.clone();
+        sorted.sort();
+        sorted.dedup();
+        assert_eq!(entries, sorted);
         let run = env.run(&[
             "--crawl",
             "http://site.test/",
@@ -418,6 +417,7 @@ async fn encrypted_basic_and_form_profiles_authenticate_without_persisting_secre
 }
 
 // spec: INTEG-019
+// spec: OUT-196
 // spec: OUT-195 [M2]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn connected_sheets_streams_to_the_offline_mock_with_a_shared_workbook() {
@@ -487,6 +487,38 @@ async fn connected_sheets_streams_to_the_offline_mock_with_a_shared_workbook() {
         .requests()
         .iter()
         .any(|r| r.body.to_string().contains("日本語")));
+
+    let localized = tempfile::tempdir().unwrap();
+    let path = localized.path().join("localized.csv");
+    std::fs::write(
+        &path,
+        std::fs::read_to_string(fixture("legacy.csv"))
+            .unwrap()
+            .replacen(
+                "Address,Title 1,Status Code",
+                "Adresse,Titel 1,Statuscode",
+                1,
+            ),
+    )
+    .unwrap();
+    os_cli::google::upload(
+        &client,
+        "Project",
+        "German",
+        &[path],
+        true,
+        &os_model::CancelToken::new(),
+        &rep,
+    )
+    .await
+    .unwrap();
+    let files = mock.files();
+    let sheet = files.iter().find(|f| f.name == "German_export").unwrap();
+    assert_eq!(sheet.sheets[0].rows[0][0], "Adresse");
+    assert!(
+        sheet.sheets[0].rows[1][2].is_number(),
+        "localized headers preserve numeric cells"
+    );
 }
 
 // spec: OUT-196
@@ -566,4 +598,91 @@ async fn single_workbook_and_all_segments_produce_one_typed_workbook_per_scope()
         range.get_value((1, status as u32)),
         Some(calamine::Data::Int(200) | calamine::Data::Float(200.0))
     ));
+}
+
+// spec: OUT-196
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn column_header_modes_reach_csv_xlsx_batch_segments_and_xls() {
+    let server = site("out-basic-site").await;
+    for (format, batch, segment) in [
+        ("csv", false, false),
+        ("xlsx", false, false),
+        ("xlsx", true, false),
+        ("xlsx", true, true),
+        ("xls", false, false),
+    ] {
+        for (mode, expected_address, expected_status) in [
+            ("canonical", "Address", "Status Code"),
+            ("ui", "Adresse", "Statuscode"),
+        ] {
+            let env = Env::new();
+            std::fs::copy(
+                fixture("settings-de.toml"),
+                env.home.path().join("settings.toml"),
+            )
+            .unwrap();
+            let mut extra = vec![
+                "--export-tabs",
+                "Internal:All",
+                "--export-format",
+                format,
+                "--column-headers",
+                mode,
+            ];
+            if batch {
+                extra.push("--single-workbook");
+            }
+            if segment {
+                extra.extend(["--segment", "all"]);
+            }
+            let run = env.run_async(crawl(&env, &server, &extra)).await;
+            assert_eq!(run.code, 0, "{}", run.dump());
+            let output = std::fs::read_dir(env.out())
+                .unwrap()
+                .map(|p| p.unwrap().path())
+                .find(|p| p.extension().is_some_and(|s| s == format))
+                .unwrap();
+            let header = match format {
+                "csv" => common::read_csv(&output)[0].clone(),
+                "xlsx" => {
+                    let mut book: calamine::Xlsx<_> = calamine::open_workbook(&output).unwrap();
+                    let table = book.worksheet_range_at(0).unwrap().unwrap();
+                    let header: Vec<String> = table
+                        .rows()
+                        .next()
+                        .unwrap()
+                        .iter()
+                        .map(ToString::to_string)
+                        .collect();
+                    let index = header.iter().position(|h| h == expected_status).unwrap();
+                    assert!(matches!(
+                        table.rows().nth(1).unwrap()[index],
+                        calamine::Data::Int(_) | calamine::Data::Float(_)
+                    ));
+                    header
+                }
+                "xls" => {
+                    let mut book: calamine::Xls<_> = calamine::open_workbook(&output).unwrap();
+                    book.worksheet_range_at(0)
+                        .unwrap()
+                        .unwrap()
+                        .rows()
+                        .next()
+                        .unwrap()
+                        .iter()
+                        .map(ToString::to_string)
+                        .collect()
+                }
+                _ => unreachable!(),
+            };
+            assert!(
+                header.iter().any(|h| h == expected_address),
+                "{format}/{mode}/{batch}/{segment}: {header:?}"
+            );
+            assert!(header.iter().any(|h| h == expected_status));
+            assert!(!header
+                .iter()
+                .any(|h| h == if mode == "ui" { "Address" } else { "Adresse" }));
+        }
+    }
 }

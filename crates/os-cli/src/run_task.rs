@@ -591,12 +591,13 @@ pub async fn run_in(
     }
     let args = to_run_args(&effective, &ctx.paths, &exports, &ctx.export_dir);
     rep.phase("validate");
-    let mut plan = match plan::build_for_task_with_secrets(
+    let mut plan = match plan::build_for_task_with_clock(
         &args,
         ctx.paths.clone(),
         &rep,
         exports.batch,
         ctx.secrets.as_ref(),
+        ctx.clock.as_ref(),
     ) {
         Ok(plan) => plan,
         Err(e) => return finish(&live, RunResult::Failed, e.exit, Some(e.message)),

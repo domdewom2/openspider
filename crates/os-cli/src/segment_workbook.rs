@@ -46,14 +46,16 @@ pub async fn export(
                 kind: kind.into(),
                 name,
             };
-            let files = os_export::segment::export_all(
-                file,
-                cfg,
-                &selection,
-                segment,
-                &staging.path,
-                os_export::Format::Csv,
-            )
+            let files = os_export::csv::with_header_labels(&plan.header_labels, || {
+                os_export::segment::export_all(
+                    file,
+                    cfg,
+                    &selection,
+                    segment,
+                    &staging.path,
+                    os_export::Format::Csv,
+                )
+            })
             .map_err(|e| e.to_string())?;
             for mut info in files {
                 for warning in &info.warnings {

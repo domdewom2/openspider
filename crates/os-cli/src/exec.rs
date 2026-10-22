@@ -620,7 +620,9 @@ async fn export_phase(
     }
     if let (Some(batch), None) = (plan.batch, plan.segment.as_deref()) {
         if !plan.exports.is_empty() {
-            match run_batch(&file, &cfg, plan, batch, out, signals, rep) {
+            match os_export::csv::with_header_labels(&plan.header_labels, || {
+                run_batch(&file, &cfg, plan, batch, out, signals, rep)
+            }) {
                 Ok(n) => files += n,
                 Err(BatchEnd::Interrupted) => return ExportEnd::Interrupted,
                 Err(BatchEnd::Failed(message)) => {
@@ -641,7 +643,9 @@ async fn export_phase(
             return ExportEnd::Interrupted;
         }
         if plan.segment.is_some() {
-            match run_segment_export(&file, &cfg, item, out, plan, rep) {
+            match os_export::csv::with_header_labels(&plan.header_labels, || {
+                run_segment_export(&file, &cfg, item, out, plan, rep)
+            }) {
                 Ok(n) => files += n,
                 Err(message) => {
                     failures += 1;
@@ -653,7 +657,9 @@ async fn export_phase(
             }
             continue;
         }
-        match run_export(&file, &cfg, item, out, plan.format, rep) {
+        match os_export::csv::with_header_labels(&plan.header_labels, || {
+            run_export(&file, &cfg, item, out, plan.format, rep)
+        }) {
             Ok(n) => files += n,
             Err(message) => {
                 failures += 1;

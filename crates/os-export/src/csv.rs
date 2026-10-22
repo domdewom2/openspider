@@ -24,6 +24,39 @@ use crate::error::ExportError;
 use crate::fs_paths;
 use crate::types::{ExportFileInfo, TableWriter, WriterOptions};
 
+// A synchronous export scope: no state survives a closure, panic, or thread boundary.
+thread_local! {
+    static HEADER_LABELS: std::cell::RefCell<std::collections::BTreeMap<String, String>> = const { std::cell::RefCell::new(std::collections::BTreeMap::new()) };
+}
+
+/// Applies presentation labels to CSV/XLSX output within a synchronous export job.
+/// Canonical query keys, sorting and cell kinds are unaffected. Do not return a future.
+pub fn with_header_labels<R>(
+    labels: &std::collections::BTreeMap<String, String>,
+    job: impl FnOnce() -> R,
+) -> R {
+    struct Restore(std::collections::BTreeMap<String, String>);
+    impl Drop for Restore {
+        fn drop(&mut self) {
+            HEADER_LABELS.with(|slot| {
+                slot.replace(std::mem::take(&mut self.0));
+            });
+        }
+    }
+    let _restore = Restore(HEADER_LABELS.with(|slot| slot.replace(labels.clone())));
+    job()
+}
+
+pub(crate) fn header_labels(columns: &[String]) -> Vec<String> {
+    HEADER_LABELS.with(|slot| {
+        let labels = slot.borrow();
+        columns
+            .iter()
+            .map(|key| labels.get(key).unwrap_or(key).clone())
+            .collect()
+    })
+}
+
 /// UTF-8-BOM.
 const BOM: [u8; 3] = [0xEF, 0xBB, 0xBF];
 
@@ -99,7 +132,7 @@ impl TableWriter for CsvWriter {
         }
         self.columns = Some(columns.len());
         self.writer
-            .write_record(columns.iter().map(|c| c.as_bytes()))
+            .write_record(header_labels(columns).iter().map(|c| c.as_bytes()))
             .map_err(|e| self.map_err(e))
     }
 

@@ -356,7 +356,7 @@ impl TableWriter for XlsxWriter {
                 columns.len()
             )));
         }
-        self.header = Some(columns.to_vec());
+        self.header = Some(crate::csv::header_labels(columns));
         self.write_header_row()
     }
 
