@@ -273,7 +273,7 @@ fn configured_smtp_requires_credentials_and_confirmation_without_leaking_secrets
     };
     let write = |account: &SmtpAccount| {
         std::fs::write(
-            home.path().join("mail/c02.json"),
+            home.path().join("mail").join("c02.json"),
             serde_json::to_vec(account).unwrap(),
         )
         .unwrap();
@@ -306,7 +306,7 @@ fn configured_smtp_requires_credentials_and_confirmation_without_leaking_secrets
         );
     }
     std::fs::write(
-        home.path().join("mail/c02.json"),
+        home.path().join("mail").join("c02.json"),
         r#"{"password":"fixture-secret-never-in-mail"}"#,
     )
     .unwrap();
@@ -354,7 +354,7 @@ async fn scheduled_task_mail(standard_process: bool) {
             allow_insecure: true,
         };
         std::fs::write(
-            paths.settings.join("mail/c02.json"),
+            paths.settings.join("mail").join("c02.json"),
             serde_json::to_vec(&account).unwrap(),
         )
         .unwrap();
