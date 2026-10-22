@@ -108,6 +108,7 @@ pub async fn render(
             + opts.screenshot.resize_wait_ms as u64
             + 5_000
     };
+    let budget = opts.snippets.page_budget_ms(budget);
     let work = async {
         browser
             .execute(
@@ -386,6 +387,7 @@ async fn run(
             .await
             .map_err(protocol)?;
     }
+    let snippets = crate::snippets::run(page, &opts.snippets).await?;
     let dom_html = read_document(opts, || async { page.content().await.map_err(protocol) }).await?;
     let final_url = read_document(opts, || eval(page, "location.href"))
         .await?
@@ -497,6 +499,7 @@ async fn run(
             .map(|r| r.bytes);
     }
     Ok(RenderedPage {
+        snippets,
         body_network: Some(data.body_network()),
         cookie_assignments,
         cookies,

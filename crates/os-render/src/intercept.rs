@@ -288,6 +288,8 @@ impl Intercept {
         let identity = opts.request_identity.clone();
         let credentials = opts.credentials.clone();
         let proxy = launch.proxy_credentials.clone();
+        let snippets = opts.snippets.clone();
+        let snippet_target = page.target_id().as_ref().to_owned();
         let task = tokio::spawn(async move {
             let mut authenticated = HashSet::new();
             let mut auth_retried = HashSet::new();
@@ -390,6 +392,18 @@ impl Intercept {
                         } else {
                             resource_type
                         };
+                        // INTEG-061/072: stop passive page resources during extraction;
+                        // explicit Fetch/XHR still pass through the existing policy.
+                        if snippets.blocks_resource(&snippet_target, resource_type) {
+                            conn.submit_command(
+                                "Fetch.failRequest".into(),
+                                Some(session.clone()),
+                                json!({"requestId":id,"errorReason":"BlockedByClient"}),
+                            )
+                            .map_err(protocol)
+                            .ok();
+                            continue;
+                        }
                         let allowed = match &policy {
                             Some(policy) if resource_url != main_url => {
                                 policy.allowed_resource(resource_url, resource_type).await

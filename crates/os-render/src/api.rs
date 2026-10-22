@@ -168,6 +168,8 @@ pub struct Cookie {
 /// deshalb bewusst kein PartialEq.
 #[derive(Debug, Clone)]
 pub struct RenderOpts {
+    /// Custom JavaScript, already gated by response status, scope and MIME type.
+    pub snippets: crate::snippets::RunOptions,
     /// Opt in to at most two retries after a navigation destroys the DOM context.
     /// False preserves existing callers, including custom request identities.
     pub retry_document_context: bool,
@@ -204,6 +206,7 @@ pub struct RenderOpts {
 impl Default for RenderOpts {
     fn default() -> Self {
         Self {
+            snippets: crate::snippets::RunOptions::default(),
             retry_document_context: false,
             capture_cookie_assignments: false,
             disable_cookies: false,
@@ -276,6 +279,8 @@ impl RenderOpts {
 }
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct RenderedPage {
+    /// Ordered snippet values and execution trace, including empty/error results.
+    pub snippets: Vec<crate::snippets::SnippetResult>,
     /// Body-only transfer sizes; excludes HTTP headers (CRAWL-022).
     pub body_network: Option<Vec<NetworkEntry>>,
     /// JavaScript cookie assignments, retained separately from HTTP Set-Cookie.

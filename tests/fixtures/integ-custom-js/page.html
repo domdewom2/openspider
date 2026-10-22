@@ -1,0 +1,10 @@
+<!doctype html><html><head><title>Snippet fixture</title></head><body>
+<h2>Alpha</h2><h2>Beta</h2><h2>Gamma</h2>
+<a href="/p1">First page</a><button id="hover">Hover</button><div id="tooltip" hidden>Visible detail</div>
+<script>
+window.order = [];
+document.querySelector('#hover').addEventListener('mouseover', () => document.querySelector('#tooltip').hidden = false);
+window.addEventListener('scroll', () => { if (!document.querySelector('#p2')) {
+  document.body.insertAdjacentHTML('beforeend', '<a id="p2" href="/p2">Second</a><a href="/p3">Third</a>');
+}});
+</script></body></html>
