@@ -571,7 +571,18 @@ impl Core {
     ) -> UrlId {
         let adjusted;
         let c = if let Some((folder, check)) = &self.folder_policy {
-            if c.internal && !c.resource_like && !c.norm.url.path().starts_with(folder) {
+            let follow_canonical = self.always_follow_canonicals
+                && c.source.as_ref().is_some_and(|(_, kind, _)| {
+                    matches!(
+                        kind,
+                        os_model::LinkType::Canonical | os_model::LinkType::HttpCanonical
+                    )
+                });
+            if c.internal
+                && !c.resource_like
+                && !follow_canonical
+                && !c.norm.url.path().starts_with(folder)
+            {
                 adjusted = Cand {
                     store: c.store && *check,
                     crawl: c.crawl && *check,

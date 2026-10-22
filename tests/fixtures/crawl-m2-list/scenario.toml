@@ -42,3 +42,16 @@ body = '<link rel="alternate" hreflang="fr" href="http://other.test/fr">'
 path = "/fr"
 content_type = "text/html"
 body = '<title>Français</title><link rel="alternate" hreflang="de" href="http://site.test/de">'
+
+[[route]]
+path = "/folder/start"
+content_type = "text/html"
+body = '<link rel="canonical" href="/elsewhere/second"><a href="/unrelated">Ordinary link</a>'
+[[route]]
+path = "/elsewhere/second"
+content_type = "text/html"
+body = '<link rel="canonical" href="/final/end">'
+[[route]]
+path = "/final/end"
+content_type = "text/html"
+body = '<title>Canonical destination</title>'

@@ -217,3 +217,53 @@ async fn resuming_a_limited_list_keeps_external_canonicals_and_the_hop_budget() 
         );
     }
 }
+
+// spec: CRAWL-030
+#[tokio::test]
+async fn canonical_crosses_start_folder_but_respects_rules_and_hops() {
+    for (enabled, hops, include, exclude, expected) in [
+        (false, 10, "", "", 0),
+        (true, 10, "", "", 2),
+        (true, 1, "", "", 1),
+        (true, 10, ".*/folder/.*", "", 0),
+        (true, 10, "", ".*/elsewhere/.*", 0),
+    ] {
+        let mut cfg = CrawlConfig::default();
+        cfg.scope.subfolder_only = true;
+        cfg.scope.crawl_outside_start_folder = false;
+        cfg.limits.max_depth = Some(0);
+        cfg.limits.max_redirects = hops;
+        cfg.advanced.always_follow_canonicals = enabled;
+        if !include.is_empty() {
+            cfg.scope.include = vec![include.into()];
+        }
+        if !exclude.is_empty() {
+            cfg.scope.exclude = vec![exclude.into()];
+        }
+        let (site, _dir, file) = run(cfg, &["http://site.test/folder/start"], true).await;
+        let requests = site.requests();
+        assert_eq!(
+            requests
+                .iter()
+                .filter(|r| matches!(
+                    r.path_and_query.as_str(),
+                    "/elsewhere/second" | "/final/end"
+                ))
+                .count(),
+            expected
+        );
+        assert!(!requests.iter().any(|r| r.path_and_query == "/unrelated"));
+        if expected == 2 {
+            assert_eq!(
+                file.conn()
+                    .query_row(
+                        "SELECT title_1 FROM urls WHERE address='http://site.test/final/end'",
+                        [],
+                        |r| r.get::<_, String>(0)
+                    )
+                    .unwrap(),
+                "Canonical destination"
+            );
+        }
+    }
+}

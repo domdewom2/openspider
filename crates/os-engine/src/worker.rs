@@ -1446,13 +1446,20 @@ async fn assemble<F: Fetch>(
                 store: d.store
                     && !r.captured_only
                     && !hreflang_only
-                    && (!outside_folder || cfg.scope.crawl_outside_start_folder),
+                    && (follow_canonical
+                        || !outside_folder
+                        || cfg.scope.crawl_outside_start_folder),
                 crawl: d.crawl
                     && !canonical_limit
-                    && (!outside_folder || cfg.scope.crawl_outside_start_folder),
+                    && (follow_canonical
+                        || !outside_folder
+                        || cfg.scope.crawl_outside_start_folder),
                 reason: if canonical_limit {
                     Some(NotCrawledReason::RedirectLimit)
-                } else if outside_folder && !cfg.scope.crawl_outside_start_folder {
+                } else if !follow_canonical
+                    && outside_folder
+                    && !cfg.scope.crawl_outside_start_folder
+                {
                     Some(NotCrawledReason::OutsideScope)
                 } else {
                     d.reason
