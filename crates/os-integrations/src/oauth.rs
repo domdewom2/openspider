@@ -359,3 +359,35 @@ impl Authorization {
         })
     }
 }
+
+/// SMTP OAuth with PKCE and the existing one-shot loopback callback (OUT-280, K2-61).
+impl Authorization {
+    pub async fn begin_mail(
+        client_id: &str,
+        microsoft: bool,
+        endpoints: &Endpoints,
+    ) -> Result<Self, ApiError> {
+        let mut auth = Self::begin_drive(client_id, endpoints).await?;
+        let pairs = auth
+            .url
+            .query_pairs()
+            .map(|(k, v)| {
+                (
+                    k.clone().into_owned(),
+                    if k == "scope" {
+                        if microsoft {
+                            "offline_access https://outlook.office.com/SMTP.Send".into()
+                        } else {
+                            "https://mail.google.com/".into()
+                        }
+                    } else {
+                        v.into_owned()
+                    },
+                )
+            })
+            .collect::<Vec<(String, String)>>();
+        auth.url.set_query(None);
+        auth.url.query_pairs_mut().extend_pairs(pairs);
+        Ok(auth)
+    }
+}

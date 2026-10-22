@@ -6,6 +6,14 @@ import type { DupPartner } from "./DupPartner";
  */
 export type DuplicatesResult = { 
 /**
+ * Total partners, independent of the requested page.
+ */
+total?: number, 
+/**
+ * Offset for the next page, absent at the end.
+ */
+nextOffset?: number | null, 
+/**
  * Partner.
  */
 partners: Array<DupPartner>, 

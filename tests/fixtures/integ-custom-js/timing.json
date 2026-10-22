@@ -1,0 +1,8 @@
+{
+  "snippets": [
+    { "name": "pending", "code": "pending" },
+    { "name": "first", "kind": "action", "timeout_s": 3, "code": "first" },
+    { "name": "second", "kind": "action", "timeout_s": 8, "code": "second" },
+    { "name": "after", "timeout_s": 2, "code": "after" }
+  ]
+}

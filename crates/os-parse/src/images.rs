@@ -614,6 +614,139 @@ pub fn png_preview(data: &[u8], max_side: u32, max_bytes: usize) -> Option<(Vec<
     (output.len() <= max_bytes).then_some((output, width, height))
 }
 
+/// Image-header dimensions for local previews (M2-K09, K2-61).
+pub fn preview_dimensions(body: &[u8]) -> Option<(u32, u32)> {
+    header_dimensions(body)
+}
+
+/// Restrictive SVG preview: retain geometry, remove active content, external references and CSS.
+/// The source file is never modified. Unknown elements are omitted with their entire subtree.
+pub fn safe_svg_preview(body: &[u8]) -> Option<Vec<u8>> {
+    use quick_xml::{
+        events::{BytesStart, Event},
+        Reader, Writer,
+    };
+    let mut reader = Reader::from_reader(body);
+    let mut writer = Writer::new(Vec::new());
+    let mut skip = 0usize;
+    let mut root = false;
+    loop {
+        match reader.read_event().ok()? {
+            Event::Start(e) | Event::Empty(e) => {
+                let empty =
+                    body.get(reader.buffer_position().saturating_sub(2) as usize) == Some(&b'/');
+                let name = e.name();
+                let allowed = matches!(
+                    name.as_ref(),
+                    "svg"
+                        | "g"
+                        | "path"
+                        | "rect"
+                        | "circle"
+                        | "ellipse"
+                        | "line"
+                        | "polyline"
+                        | "polygon"
+                        | "text"
+                        | "tspan"
+                        | "defs"
+                        | "linearGradient"
+                        | "radialGradient"
+                        | "stop"
+                        | "clipPath"
+                        | "mask"
+                        | "title"
+                        | "desc"
+                );
+                if skip > 0 || !allowed {
+                    if !empty {
+                        skip += 1;
+                    }
+                    continue;
+                }
+                let label = name.as_ref();
+                if !root {
+                    if label != "svg" {
+                        return None;
+                    }
+                    root = true;
+                }
+                let mut tag = BytesStart::new(label);
+                for attr in e.attributes() {
+                    let attr = attr.ok()?;
+                    let key = attr.key.as_ref();
+                    let value = attr
+                        .normalized_value(quick_xml::XmlVersion::Implicit1_0)
+                        .ok()?;
+                    let allowed = matches!(
+                        key,
+                        "xmlns"
+                            | "viewBox"
+                            | "width"
+                            | "height"
+                            | "x"
+                            | "y"
+                            | "x1"
+                            | "y1"
+                            | "x2"
+                            | "y2"
+                            | "cx"
+                            | "cy"
+                            | "r"
+                            | "rx"
+                            | "ry"
+                            | "d"
+                            | "points"
+                            | "transform"
+                            | "fill"
+                            | "fill-rule"
+                            | "fill-opacity"
+                            | "stroke"
+                            | "stroke-width"
+                            | "stroke-opacity"
+                            | "opacity"
+                            | "offset"
+                            | "stop-color"
+                            | "stop-opacity"
+                            | "font-size"
+                            | "font-family"
+                            | "text-anchor"
+                            | "id"
+                            | "gradientUnits"
+                            | "gradientTransform"
+                    );
+                    if allowed
+                        && !value.to_lowercase().contains("url(")
+                        && !value.contains(['<', '>'])
+                    {
+                        tag.push_attribute((key, value.as_ref()));
+                    }
+                }
+                writer
+                    .write_event(if empty {
+                        Event::Empty(tag)
+                    } else {
+                        Event::Start(tag)
+                    })
+                    .ok()?;
+            }
+            Event::End(e) => {
+                if skip > 0 {
+                    skip -= 1;
+                } else {
+                    writer.write_event(Event::End(e)).ok()?;
+                }
+            }
+            Event::Text(e) if skip == 0 => {
+                writer.write_event(Event::Text(e)).ok()?;
+            }
+            Event::Eof => break,
+            _ => {}
+        }
+    }
+    root.then(|| writer.into_inner())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

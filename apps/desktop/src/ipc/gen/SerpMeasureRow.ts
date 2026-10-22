@@ -5,6 +5,22 @@
  */
 export type SerpMeasureRow = { 
 /**
+ * Minimum pixel width for the short hint, independent of truncation.
+ */
+minPx?: number, 
+/**
+ * Below the configured minimum pixel width (hint only).
+ */
+short?: boolean, 
+/**
+ * Normalized input, including the description prefix.
+ */
+text?: string, 
+/**
+ * Final preview including the truncation suffix.
+ */
+preview?: string, 
+/**
  * Zeichen.
  */
 chars: number, 

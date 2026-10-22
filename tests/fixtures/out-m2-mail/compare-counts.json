@@ -1,0 +1,82 @@
+[
+  {
+    "name": "New",
+    "previous": 0,
+    "current": 3
+  },
+  {
+    "name": "Missing",
+    "previous": 2,
+    "current": 0
+  },
+  {
+    "name": "Indexability",
+    "previous": 0,
+    "current": 1
+  },
+  {
+    "name": "Page Titles",
+    "previous": 0,
+    "current": 1
+  },
+  {
+    "name": "Meta Description",
+    "previous": 0,
+    "current": 1
+  },
+  {
+    "name": "H1",
+    "previous": 0,
+    "current": 1
+  },
+  {
+    "name": "Word Count",
+    "previous": 0,
+    "current": 1
+  },
+  {
+    "name": "Crawl Depth",
+    "previous": 0,
+    "current": 1
+  },
+  {
+    "name": "Inlinks",
+    "previous": 0,
+    "current": 1
+  },
+  {
+    "name": "Unique Inlinks",
+    "previous": 0,
+    "current": 1
+  },
+  {
+    "name": "Internal Outlinks",
+    "previous": 0,
+    "current": 1
+  },
+  {
+    "name": "Unique Internal Outlinks",
+    "previous": 0,
+    "current": 1
+  },
+  {
+    "name": "External Outlinks",
+    "previous": 0,
+    "current": 1
+  },
+  {
+    "name": "Unique External Outlinks",
+    "previous": 0,
+    "current": 1
+  },
+  {
+    "name": "Structured Data Unique Types",
+    "previous": 0,
+    "current": 1
+  },
+  {
+    "name": "Content",
+    "previous": 0,
+    "current": 1
+  }
+]

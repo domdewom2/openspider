@@ -1,8 +1,71 @@
-# OpenSpider – Issue-Katalog ab M2, Tab „Mobile“ (UI-063/UI-064).
-#
-# Einträge wie in core/issues/catalog.toml (`[[issue]]` mit id, tab, filter, type, priority, type_rule, priority_rule,
-# doc_key, optional override_reason/needs_crawl_analysis/text_params); `tab` ist hier immer "Mobile". Der Loader liest die
-# M1-Datei und alle Dateien dieses Ordners. Texte: core/issues/texts/{de,en}.d/mobile.toml (Schlüssel issues.<id>).
-# M2-F02 legt nur die Datei an; die Einträge liefert das Paket des Tabs.
-
+# Mobile: eigene Herleitung nach UI-063; Erwartungsabgleich UI-064 / TECH-232–237.
 schema = 1
+
+[[issue]]
+id = "mobile-viewport-not-set"
+tab = "Mobile"
+filter = "Viewport Not Set"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H3"
+doc_key = "mobile-viewport-not-set"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "mobile-target-size"
+tab = "Mobile"
+filter = "Target Size"
+type = "Issue"
+priority = "Medium"
+type_rule = "T-W2"
+priority_rule = "P-M1"
+doc_key = "mobile-target-size"
+needs_crawl_analysis = false
+override_reason = "benchmark-parity: TECH-233 / UI-064 ordnen die ausführungsabhängige Bedienbarkeitsprüfung als Issue ein."
+
+[[issue]]
+id = "mobile-content-not-sized-correctly"
+tab = "Mobile"
+filter = "Content Not Sized Correctly"
+type = "Issue"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H3"
+doc_key = "mobile-content-not-sized-correctly"
+needs_crawl_analysis = false
+override_reason = "benchmark-parity: TECH-234 / UI-064 stufen den ausführungsabhängigen Ausschluss mobiler Nutzer als Issue ein."
+
+[[issue]]
+id = "mobile-illegible-font-size"
+tab = "Mobile"
+filter = "Illegible Font Size"
+type = "Issue"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H3"
+doc_key = "mobile-illegible-font-size"
+needs_crawl_analysis = false
+override_reason = "benchmark-parity: TECH-235 / UI-064 stufen die ausführungsabhängige Unlesbarkeit als Issue ein."
+
+[[issue]]
+id = "mobile-unsupported-plugins"
+tab = "Mobile"
+filter = "Unsupported Plugins"
+type = "Issue"
+priority = "High"
+type_rule = "T-I2"
+priority_rule = "P-H3"
+doc_key = "mobile-unsupported-plugins"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "mobile-mobile-alternate-link"
+tab = "Mobile"
+filter = "Mobile Alternate Link"
+type = "Warning"
+priority = "High"
+type_rule = "T-W1"
+priority_rule = "P-H2"
+doc_key = "mobile-mobile-alternate-link"
+needs_crawl_analysis = false

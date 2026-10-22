@@ -1,0 +1,38 @@
+[[route]]
+path = "/missing.html"
+status = 404
+body = "Missing"
+[[route]]
+path = "/charset"
+content_type = "Text/HTML; charset=UTF-8"
+body = "<h2>Charset</h2>"
+[[route]]
+path = "/doc.pdf"
+content_type = "application/pdf"
+body = "%PDF-1.4"
+[[route]]
+path = "/image.png"
+content_type = "image/png"
+png_size = 100
+[[route]]
+path = "/p1"
+body = "<h1>First</h1>"
+[[route]]
+path = "/p2"
+body = "<h1>Second</h1>"
+[[route]]
+path = "/p3"
+body = "<h1>Third</h1>"
+[[route]]
+path = "/api"
+content_type = "application/json"
+body = '{"ok":true}'
+[[route]]
+path = "/passive.png"
+content_type = "image/png"
+png_size = 100
+[[route]]
+path = "/overlap"
+delay_ms = 250
+content_type = "text/html"
+body = "<h2>Parallel page</h2>"

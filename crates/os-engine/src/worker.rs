@@ -483,6 +483,9 @@ async fn analyze<F: Fetch>(
         headers: header_rows(result, cfg),
         ..Analysis::default()
     };
+    if !cfg.custom_js.snippets.is_empty() {
+        a.extra.ext.extend(os_render::snippets::trace(item.id, &[]));
+    }
     let FetchOutcome::Response(resp) = &result.outcome else {
         return a;
     };
@@ -596,6 +599,28 @@ async fn analyze<F: Fetch>(
         }
         return a;
     }
+    if !cfg.custom_js.snippets.is_empty()
+        && cfg.rendering.mode == os_model::RenderingMode::JavaScript
+        && !matches!(
+            a.facts.content_class,
+            ContentClass::Html | ContentClass::Pdf
+        )
+    {
+        let opts = crate::render_glue::options(sh, item, resp);
+        if !opts.snippets.snippets.is_empty() {
+            match sh.render_session.render(url.as_str(), &opts).await {
+                Ok(rendered) => {
+                    a.extra
+                        .custom_js
+                        .extend(os_render::snippets::writes(item.id, &rendered.snippets));
+                    a.extra
+                        .ext
+                        .extend(os_render::snippets::trace(item.id, &rendered.snippets));
+                }
+                Err(error) => tracing::warn!(%error, "Custom JavaScript render failed"),
+            }
+        }
+    }
     match a.facts.content_class {
         ContentClass::Html => {
             let raw = parse_html_page(sh, url, resp).await;
@@ -673,6 +698,14 @@ async fn render_page<F: Fetch>(
     };
     let page = match outcome {
         Ok(mut rendered) => {
+            a.extra
+                .custom_js
+                .extend(os_render::snippets::writes(item.id, &rendered.snippets));
+            if !sh.cfg.custom_js.snippets.is_empty() {
+                a.extra
+                    .ext
+                    .extend(os_render::snippets::trace(item.id, &rendered.snippets));
+            }
             if let Some(network) = rendered.body_network.take() {
                 rendered.network = network;
                 for (url, facts) in &mut rendered.images {

@@ -80,7 +80,6 @@ async fn anchors_mode_aggregates_hyperlinks_with_self_links_excluded() {
 }
 // spec: OUT-023
 #[tokio::test]
-#[ignore = "Klärung K2-68: N01-C10, Besitzer M2-K09 (Crawl-Pfad-Provider registrieren, Export-Dispatch)"]
 async fn crawl_path_export_uses_the_registered_detail_source() {
     let fx = Fx::new();
     let path = fx.dir.path().join("path.csv");

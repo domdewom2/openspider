@@ -111,6 +111,7 @@ const CATALOG_4_4: &[&str] = &[
     "compare.open",
     "compare.swap",
     "compare.testMapping",
+    "compare.contentAvailable", // TECH-300: read-only prerequisite for Content selection
     "compare.close",
     "viz.open",
     "viz.graph",
@@ -197,11 +198,19 @@ const CATALOG_3_6A: &[&str] = &[
     "mail.deleteAccount",
     "mail.testAccount",
     "detail.spellingContext",
+    "detail.spellingIgnore",
+    "detail.spellingDictionary",
+    "detail.spellingRecheck",
+    "detail.screenshotSave",
+    "detail.sourceSave",
     "detail.a11yNode",
 ];
 
 /// `long_running` laut den Tabellen (liefert sofort einen `OpHandle`).
 const LONG_RUNNING: &[&str] = &[
+    "detail.spellingIgnore",
+    "detail.spellingDictionary",
+    "detail.spellingRecheck",
     "export.multi",
     "export.customSummary",
     "export.sheets",
@@ -376,7 +385,7 @@ async fn stubs_answer_unsupported_with_command_and_owner() {
         owners.insert(err.args["owner"].as_str().unwrap().to_string());
     }
     // Besitzer laut Modulkarte 3.6
-    for o in ["M2-K09", "M2-K17", "M2-D21", "M2-T02", "M2-U17"] {
+    for o in ["M2-K17", "M2-D21", "M2-U17"] {
         assert!(owners.contains(o), "kein Stub mit Besitzer {o}");
     }
 }

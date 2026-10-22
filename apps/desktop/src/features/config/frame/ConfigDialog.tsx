@@ -1,3 +1,4 @@
+import { pageSaveBlocked } from "./registry";
 // Rahmen des Konfigurationsdialogs (M2-U13, M2-ui-concept 1.5 / W3): Seitennavigation mit Suche, Profilwahl, Hinweise zum
 // Crawl-Zustand (CRAWL-126, F-13/F-14), Abweichungen und die Fußleiste. Die Seiten kommen aus `features/config/pages/*`.
 import "./config.css";
@@ -252,6 +253,7 @@ export function ConfigDialog() {
             onOk={() => void onOk()}
             onCancel={closeConfig}
             okDisabled={draft.status !== "ready" || draft.saving}
+            {...(pageSaveBlocked(pages, draft) ? { okDisabled: true } : {})}
             extra={
               <Button variant="secondary" onPress={() => setShowDiff((v) => !v)} isDisabled={draft.status !== "ready"} data-testid="config-deviations">
                 {t("config-deviations", { count: deviationCount })}

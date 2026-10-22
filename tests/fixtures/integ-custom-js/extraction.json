@@ -1,0 +1,17 @@
+{"snippets":[
+{"name":"count", "code":"window.order.push('count'); return openspider.data(document.querySelectorAll('h2').length);"},
+{"name":"list", "code":"return seoSpider.data([...document.querySelectorAll('h2')].map(e => e.textContent));"},
+{"name":"async", "code":"await new Promise(r => setTimeout(r,100)); return openspider.data('later');"},
+{"name":"noreturn", "code":"openspider.data('ignored');"},
+{"name":"hang", "timeout_s":1, "code":"while(true) {}"},
+{"name":"throws", "code":"throw new Error('fixture failure');"},
+{"name":"third", "code":"window.order.push('third'); return openspider.data(window.order);"},
+{"name":"error", "code":"return openspider.error('kein Preis');"},
+{"name":"null", "code":"return openspider.data(null);"},
+{"name":"undefined", "code":"return seoSpider.data(undefined);"},
+{"name":"empty", "code":"return openspider.data([]);"},
+{"name":"object", "code":"return openspider.data({price:42});"},
+{"name":"security", "code":"return openspider.data([typeof window.__TAURI__, typeof require, typeof process, window.openspider === window.seoSpider]);"},
+{"name":"traversal", "code":"await openspider.saveText('x','../../x');"},
+{"name":"network", "code":"const i = new Image(); i.src = '/passive.png'; await new Promise(r => setTimeout(r,100)); return openspider.data((await (await fetch('/api')).json()).ok);"}
+]}

@@ -1,0 +1,16 @@
+[
+  {"id":"indexability","label":"Indexability"},
+  {"id":"page_titles","label":"Page Titles"},
+  {"id":"meta_description","label":"Meta Description"},
+  {"id":"h1","label":"H1"},
+  {"id":"word_count","label":"Word Count"},
+  {"id":"crawl_depth","label":"Crawl Depth"},
+  {"id":"inlinks","label":"Inlinks"},
+  {"id":"unique_inlinks","label":"Unique Inlinks"},
+  {"id":"internal_outlinks","label":"Internal Outlinks"},
+  {"id":"unique_internal_outlinks","label":"Unique Internal Outlinks"},
+  {"id":"external_outlinks","label":"External Outlinks"},
+  {"id":"unique_external_outlinks","label":"Unique External Outlinks"},
+  {"id":"structured_data_unique_types","label":"Structured Data Unique Types"},
+  {"id":"content","label":"Content"}
+]

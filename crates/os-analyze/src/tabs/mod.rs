@@ -172,6 +172,7 @@ pub fn column_sources() -> Vec<(&'static str, Box<dyn ColumnSource>)> {
     add("Custom Search", custom_search::column_source());
     add("Custom Extraction", custom_extraction::column_source());
     add("Custom JavaScript", custom_js::column_source());
+    add("Internal", custom_js::internal_column_source());
     add("Link Metrics", link_metrics::column_source());
     add("Analytics", analytics::column_source());
     add("Internal", link_metrics::column_source());
@@ -182,6 +183,7 @@ pub fn column_sources() -> Vec<(&'static str, Box<dyn ColumnSource>)> {
     add("Internal", internal_crawl::column_source());
     add("Internal", internal::rendering_column_source());
     add("PageSpeed", pagespeed::column_source());
+    add("Mobile", mobile::column_source());
     #[cfg(feature = "testing")]
     add("Internal", testing::source());
     out
@@ -1144,6 +1146,15 @@ fn configure_sources(
                 }
             }
             tab.filters.retain(|f| source.keeps_filter(cfg, f.id));
+            if let Some(file) = file {
+                for filter in source.file_filters(cfg, file) {
+                    if let Some(slot) = tab.filters.iter_mut().find(|f| f.id == filter.id) {
+                        *slot = filter;
+                    } else {
+                        tab.filters.push(filter);
+                    }
+                }
+            }
             apply_meta_defaults(&mut tab.columns);
         }
     }

@@ -687,6 +687,9 @@ async fn page_query(
                         };
                         let (_, source) = os_analyze::details::app_detail_source(kind);
                         let p = source(file, &cfg, &req).map_err(view_error)?;
+                        let context_keys =
+                            os_analyze::details::app_detail_keys(file, &cfg, kind, &req, &p)
+                                .map_err(view_error)?;
                         let (names, kinds): (Vec<_>, Vec<_>) = p.columns.into_iter().unzip();
                         let keys = (0..p.rows.len())
                             .map(|i| {
@@ -696,6 +699,7 @@ async fn page_query(
                                     .min(i64::MAX as u64) as i64
                             })
                             .collect();
+                        let keys = context_keys.unwrap_or(keys);
                         (names, kinds, p.rows, keys, p.total, None)
                     } else {
                         let (mut selection, req) = link_selection(&spec, &cfg, offset, limit)?;

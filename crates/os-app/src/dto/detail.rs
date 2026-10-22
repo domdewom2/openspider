@@ -80,6 +80,22 @@ pub struct SerpMeasureArgs {
 #[serde(rename_all = "camelCase")]
 #[ts(optional_fields = nullable)]
 pub struct SerpMeasureRow {
+    /// Minimum pixel width for the short hint, independent of truncation.
+    #[serde(default)]
+    #[ts(optional)]
+    pub min_px: Option<f64>,
+    /// Below the configured minimum pixel width (hint only).
+    #[serde(default)]
+    #[ts(optional)]
+    pub short: Option<bool>,
+    /// Normalized input, including the description prefix.
+    #[serde(default)]
+    #[ts(optional)]
+    pub text: Option<String>,
+    /// Final preview including the truncation suffix.
+    #[serde(default)]
+    #[ts(optional)]
+    pub preview: Option<String>,
     /// Zeichen.
     pub chars: u32,
     /// Breite in Pixeln.
@@ -380,6 +396,18 @@ pub enum DupKind {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct DuplicatesArgs {
+    /// First partner in the ordered list.
+    #[serde(default)]
+    #[ts(optional)]
+    pub offset: Option<u64>,
+    /// Requested page size, capped at 500 (default 100).
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub limit: Option<u32>,
+    /// Load content and diff only for this partner; it must belong to this page.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub partner_id: Option<i64>,
     /// URL.
     pub url_id: i64,
     /// Art.
@@ -391,6 +419,16 @@ pub struct DuplicatesArgs {
 #[serde(rename_all = "camelCase")]
 #[ts(optional_fields = nullable)]
 pub struct DupPartner {
+    /// Match classification for the detail list.
+    #[serde(default)]
+    #[ts(optional)]
+    pub match_type: Option<String>,
+    /// Exact content-area text used for comparison, if stored.
+    #[serde(default)]
+    pub text: Option<String>,
+    /// Word differences against the focus URL.
+    #[serde(default)]
+    pub diff: Option<DiffHunks>,
     /// URL.
     pub url_id: i64,
     /// Adresse.
@@ -404,6 +442,13 @@ pub struct DupPartner {
 #[serde(rename_all = "camelCase")]
 #[ts(optional_fields = nullable)]
 pub struct DuplicatesResult {
+    /// Total partners, independent of the requested page.
+    #[serde(default)]
+    #[ts(optional)]
+    pub total: Option<u64>,
+    /// Offset for the next page, absent at the end.
+    #[serde(default)]
+    pub next_offset: Option<u64>,
     /// Partner.
     pub partners: Vec<DupPartner>,
     /// Text des Inhaltsbereichs der Fokus-URL.
@@ -484,4 +529,60 @@ pub struct A11yNodeDetail {
     pub snippet: String,
     /// i18n-Schlüssel der Kurzbeschreibung.
     pub summary_key: String,
+}
+
+/// Save a selected stored screenshot tile after dialog.save.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct ScreenshotSaveArgs {
+    /// Focus URL.
+    pub url_id: i64,
+    /// Destination chosen with dialog.save.
+    pub path: String,
+    /// Tile index (the renderer stores a full-page screenshot at tile 0).
+    #[serde(default)]
+    #[ts(optional)]
+    pub tile: Option<u32>,
+}
+
+/// Save original or rendered HTML / visible text after dialog.save.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct SourceSaveArgs {
+    /// Focus URL.
+    pub url_id: i64,
+    /// Stored version.
+    pub which: SourceWhich,
+    /// HTML or visible text.
+    pub mode: SourceMode,
+    /// Destination chosen with dialog.save.
+    pub path: String,
+}
+
+/// Ignore all occurrences of a word, or a grammar rule, then recheck stored content.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct SpellingIgnoreArgs {
+    /// Focus URL for context validation; the action applies to the entire crawl.
+    #[serde(default)]
+    #[ts(optional)]
+    pub url_id: Option<i64>,
+    /// Word to ignore (omitted for a grammar rule).
+    #[serde(default)]
+    #[ts(optional)]
+    pub word: Option<String>,
+    /// Grammar rule to disable (omitted for a word).
+    #[serde(default)]
+    #[ts(optional)]
+    pub rule_id: Option<String>,
+}
+
+/// Add a word to the personal dictionary, then recheck stored content.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct SpellingDictionaryArgs {
+    /// Language, such as de-DE.
+    pub language: String,
+    /// Word.
+    pub word: String,
 }

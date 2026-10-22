@@ -25,6 +25,7 @@ pub mod hreflang;
 pub mod images;
 pub mod link_position;
 pub mod links;
+pub mod mobile;
 pub mod pagination;
 pub mod pdf;
 pub mod pixel;
@@ -249,6 +250,7 @@ pub fn parse_html(input: &ParseInput) -> ParsedPage {
     elements::annotate_facts(&doc, cfg, &mut page);
     content::run(&ctx, &mut page);
     security::run(&ctx, &mut page);
+    mobile::run(&ctx, &mut page);
     if cfg.html_validation {
         validation::run(&ctx, &mut page);
         validation::set_document_bytes(&mut page, input.body.len() as u64);

@@ -1,0 +1,18 @@
+[[route]]
+path = "/m-alternate-header"
+content_type = "text/html"
+body = "<!doctype html><title>Header alternate</title><p>Header only</p>"
+[route.headers]
+Link = '</m/header>; rel="alternate"; media="handheld"'
+
+[[route]]
+path = "/html-before-header"
+content_type = "text/html"
+body = '<!doctype html><link rel="alternate" media="handheld" href="/m/html"><title>First</title>'
+[route.headers]
+Link = '</m/header>; rel="alternate"; media="handheld"'
+
+[[route]]
+path = "/pagespeedonline/v5/runPagespeed"
+content_type = "application/json"
+body = "{\n  \"lighthouseResult\": {\n    \"lighthouseVersion\": \"fixture-13\",\n    \"audits\": {\n      \"viewport\": {\n        \"score\": 0\n      },\n      \"target-size\": {\n        \"score\": 0.5\n      },\n      \"plugins\": {\n        \"score\": 0\n      }\n    }\n  }\n}\n"

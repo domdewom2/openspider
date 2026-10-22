@@ -1537,7 +1537,7 @@
           "type": "string"
         },
         "timeout_s": {
-          "default": 10,
+          "default": 0,
           "description": "Zeitlimit in Sekunden (Aktion: Pflicht, 1–120).",
           "format": "uint32",
           "minimum": 0,

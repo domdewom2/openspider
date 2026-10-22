@@ -11,6 +11,10 @@ use std::sync::{Arc, Mutex, OnceLock};
 
 /// Quelle für Geheimnisse, die nie in Konfigurationsdateien stehen (`secret_ref`).
 pub trait SecretStore: Send + Sync {
+    /// Optional writable view for services that receive the read-only contract (K2-61).
+    fn as_mut_store(&self) -> Option<&dyn SecretStoreMut> {
+        None
+    }
     /// Liefert das Geheimnis zur Kennung.
     fn get(&self, id: &str) -> Option<String>;
     fn try_get(&self, id: &str) -> Result<Option<String>, SecretError> {
@@ -49,6 +53,9 @@ impl MemorySecretStore {
 }
 
 impl SecretStore for MemorySecretStore {
+    fn as_mut_store(&self) -> Option<&dyn SecretStoreMut> {
+        Some(self)
+    }
     fn get(&self, id: &str) -> Option<String> {
         self.values
             .lock()
@@ -105,6 +112,9 @@ impl Default for KeyringSecretStore {
 }
 
 impl SecretStore for KeyringSecretStore {
+    fn as_mut_store(&self) -> Option<&dyn SecretStoreMut> {
+        Some(self)
+    }
     fn get(&self, id: &str) -> Option<String> {
         self.try_get(id).ok().flatten()
     }
