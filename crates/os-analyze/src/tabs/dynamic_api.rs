@@ -37,6 +37,16 @@ fn gsc(cfg: &CrawlConfig) -> Vec<ColumnDef> {
         })
         .collect()
 }
+fn psi_status(cfg: &CrawlConfig) -> Vec<ColumnDef> {
+    if !cfg.api.psi.enabled {
+        return Vec::new();
+    }
+    super::pagespeed::tab()
+        .columns
+        .into_iter()
+        .filter(|c| matches!(c.needs, Some(crate::defs::Needs::Api("psi"))))
+        .collect()
+}
 impl ColumnSource for InternalColumns {
     fn columns(&self, cfg: &CrawlConfig) -> Vec<ColumnDef> {
         let mut out: Vec<_> = sources(cfg)
@@ -44,6 +54,7 @@ impl ColumnSource for InternalColumns {
             .flat_map(|s| s.columns(cfg))
             .collect();
         out.extend(gsc(cfg));
+        out.extend(psi_status(cfg));
         out
     }
     fn columns_for_file(&self, cfg: &CrawlConfig, file: &os_store::CrawlFile) -> Vec<ColumnDef> {
@@ -51,7 +62,7 @@ impl ColumnSource for InternalColumns {
         if file
             .conn()
             .query_row(
-                "SELECT EXISTS(SELECT 1 FROM api_values WHERE source='psi')",
+                "SELECT EXISTS(SELECT 1 FROM api_values WHERE source='psi') OR EXISTS(SELECT 1 FROM api_errors WHERE source='psi')",
                 [],
                 |r| r.get::<_, bool>(0),
             )
@@ -75,6 +86,7 @@ impl ColumnSource for InternalColumns {
             effective.api.gsc.enabled = true;
         }
         out.extend(gsc(&effective));
+        out.extend(psi_status(&effective));
         out
     }
 }
