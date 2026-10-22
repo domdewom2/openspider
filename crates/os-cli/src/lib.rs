@@ -15,6 +15,7 @@
 
 pub mod args;
 pub mod auth;
+pub mod browser;
 pub mod exec;
 pub mod exit;
 pub mod help;
