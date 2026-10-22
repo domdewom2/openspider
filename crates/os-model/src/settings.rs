@@ -220,15 +220,39 @@ pub struct NetworkSettings {
 }
 
 /// Verweise auf Konten; die Zugangsdaten liegen im Schlüsselbund.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct AccountSettings {
     /// Kennungen der E-Mail-Konten (OUT-280).
     pub mail_accounts: Vec<String>,
     /// Konto für Benachrichtigungen bei Crawl-Ende; nicht gesetzt = keine Mail.
     pub notify_account: Option<String>,
+    /// Global completion recipients (OUT-281); empty disables mail.
+    #[serde(default)]
+    pub notify_to: Vec<String>,
+    #[serde(default)]
+    pub notify_on_success: bool,
+    #[serde(default = "notify_failure_default")]
+    pub notify_on_failure: bool,
     /// API-Quellen, die beim Start automatisch verbunden werden (INTEG-011), als Quellen-Kennung (`ga4`, `gsc`, …).
     pub auto_connect: Vec<String>,
+}
+
+impl Default for AccountSettings {
+    fn default() -> Self {
+        Self {
+            mail_accounts: vec![],
+            notify_account: None,
+            auto_connect: vec![],
+            notify_to: vec![],
+            notify_on_success: false,
+            notify_on_failure: true,
+        }
+    }
+}
+
+fn notify_failure_default() -> bool {
+    true
 }
 
 /// MCP in der App.

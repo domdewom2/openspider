@@ -36,4 +36,16 @@ from: string,
 /**
  * Kennwort; `null` = unverändert lassen.
  */
-password?: string | null, };
+password?: string | null, 
+/**
+ * Explicit consent required for cleartext SMTP.
+ */
+allowInsecure?: boolean | null, 
+/**
+ * password (default), gmail or microsoft365.
+ */
+auth?: string | null, clientId?: string | null, 
+/**
+ * OAuth application secret; stored only in the secret store.
+ */
+clientSecret?: string | null, };

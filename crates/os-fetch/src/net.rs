@@ -158,6 +158,18 @@ where
     Ok(client)
 }
 
+/// OAuth client for mail, including the caller's injected proxy credential (OUT-280 / K2-33).
+pub fn mail_oauth_client(
+    settings: &NetworkSettings,
+    password: Option<&str>,
+) -> Result<reqwest::Client, String> {
+    client_builder_with_password(settings, password)
+        .redirect(reqwest::redirect::Policy::none())
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+        .map_err(|_| "OAuth-Client nicht verfügbar".into())
+}
+
 /// OAuth token request sharing app-wide proxy/roots; errors never contain the response body.
 pub async fn mail_token_response(
     settings: &NetworkSettings,
@@ -165,11 +177,7 @@ pub async fn mail_token_response(
     endpoint: &str,
     form: &[(&str, &str)],
 ) -> Result<String, String> {
-    let client = client_builder_with_password(settings, password)
-        .redirect(reqwest::redirect::Policy::none())
-        .timeout(std::time::Duration::from_secs(30))
-        .build()
-        .map_err(|_| "OAuth-Client nicht verfügbar")?;
+    let client = mail_oauth_client(settings, password)?;
     let body = url::form_urlencoded::Serializer::new(String::new())
         .extend_pairs(form.iter().copied())
         .finish();

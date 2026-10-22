@@ -58,6 +58,17 @@ pub struct MailAccountInput {
     pub from: String,
     /// Kennwort; `null` = unverändert lassen.
     pub password: Option<String>,
+    /// Explicit consent required for cleartext SMTP.
+    #[serde(default)]
+    pub allow_insecure: Option<bool>,
+    /// password (default), gmail or microsoft365.
+    #[serde(default)]
+    pub auth: Option<String>,
+    #[serde(default)]
+    pub client_id: Option<String>,
+    /// OAuth application secret; stored only in the secret store.
+    #[serde(default)]
+    pub client_secret: Option<String>,
 }
 
 /// Argument von `mail.saveAccount`.

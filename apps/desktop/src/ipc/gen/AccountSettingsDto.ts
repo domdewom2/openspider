@@ -11,7 +11,7 @@ mailAccounts: Array<string>,
 /**
  * Konto für Benachrichtigungen.
  */
-notifyAccount?: string | null, 
+notifyAccount?: string | null, notifyTo?: Array<string> | null, notifyOnSuccess?: boolean | null, notifyOnFailure?: boolean | null, 
 /**
  * Beim Start automatisch zu verbindende API-Quellen.
  */

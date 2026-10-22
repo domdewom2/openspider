@@ -308,7 +308,13 @@ pub fn run(cli: Cli) -> i32 {
                 )
             }
         };
-        exec::execute(plan, Arc::clone(&rep), signals).await
+        let settings_dir = plan.paths.settings.clone();
+        let completion_mail = plan.resume || !matches!(&plan.source, plan::Source::Load { .. });
+        let outcome = exec::execute(plan, Arc::clone(&rep), signals).await;
+        if completion_mail {
+            mail::notify_global(&settings_dir, &outcome, &rep).await;
+        }
+        outcome
     });
     // Offene Hintergrundaufgaben (Signalwächter) nicht abwarten.
     runtime.shutdown_background();
@@ -353,3 +359,5 @@ mod tests {
         assert!(args.read_only);
     }
 }
+
+mod mail;
