@@ -274,6 +274,8 @@ pub struct Core {
     pub redirects: RedirectGraph,
     /// Tiefengrenze (`None` = unbegrenzt).
     pub max_depth: Option<u32>,
+    pub always_follow_redirects: bool,
+    pub always_follow_canonicals: bool,
     /// Schlüssel (URL Encoded Address) der Sitemap-Dateien, die in diesem Crawl schon abgerufen werden oder
     /// wurden – angefragte und End-URL (K-41a: genau ein Abruf je Sitemap-Datei, nur über `sitemaps::ingest`).
     pub sitemap_keys: std::collections::HashSet<String>,
@@ -351,6 +353,8 @@ impl Core {
             sessions: vec![None],
             redirects: RedirectGraph::default(),
             max_depth,
+            always_follow_redirects: false,
+            always_follow_canonicals: false,
             sitemap_keys: std::collections::HashSet::new(),
             sitemap_hreflang_next: HashMap::new(),
             list_mode: false,
@@ -516,7 +520,15 @@ impl Core {
             };
         }
         // 3. Tiefengrenze (Ressourcen und externe Prüfungen der letzten Ebene bleiben erlaubt)
-        if let (Some(max), Some(d)) = (self.max_depth, depth) {
+        let follow_chain = (self.always_follow_redirects && c.kind == DiscoveryKind::Redirect)
+            || (self.always_follow_canonicals
+                && c.source.as_ref().is_some_and(|(_, kind, _)| {
+                    matches!(
+                        kind,
+                        os_model::LinkType::Canonical | os_model::LinkType::HttpCanonical
+                    )
+                }));
+        if let (Some(max), Some(d)) = (self.max_depth.filter(|_| !follow_chain), depth) {
             // Im Listenmodus gibt es keine Zugabe für die letzte Ebene (CRAWL-028: Ressourcen und externe
             // Ziele der Listenseiten werden bei Tiefe 0 nicht angefragt).
             let allowance =
@@ -797,6 +809,100 @@ impl Core {
             },
         );
     }
+}
+
+/// Restore chain work after a limit/pause without downgrading external canonical pages
+/// to status-only checks. Chain items are pinned in the RAM queue by their hop count.
+pub(crate) fn restore_follow_chains(
+    file: &os_store::CrawlFile,
+    cfg: &os_model::CrawlConfig,
+    core: &mut Core,
+) -> Result<(), crate::error::EngineError> {
+    if !cfg.advanced.always_follow_canonicals && !cfg.advanced.always_follow_redirects {
+        return Ok(());
+    }
+    let db = |e| crate::error::EngineError::Store(os_store::StoreError::from(e));
+    let conn = file.conn();
+    let mut parents = HashMap::new();
+    let mut roots = std::collections::HashSet::new();
+    let mut stmt = conn
+        .prepare(
+            "SELECT id,redirect_target_id,canonical_target_id,discovered_via FROM urls
+         WHERE redirect_target_id IS NOT NULL OR canonical_target_id IS NOT NULL ORDER BY id",
+        )
+        .map_err(db)?;
+    let rows = stmt
+        .query_map([], |r| {
+            Ok((
+                r.get::<_, i64>(0)?,
+                r.get::<_, Option<i64>>(1)?,
+                r.get::<_, Option<i64>>(2)?,
+                r.get::<_, String>(3)?,
+            ))
+        })
+        .map_err(db)?;
+    for row in rows {
+        let (source, redirect, canonical, via) = row.map_err(db)?;
+        if matches!(via.as_str(), "start" | "list_input") {
+            roots.insert(source);
+        }
+        for target in [
+            redirect.filter(|_| cfg.advanced.always_follow_redirects),
+            canonical.filter(|_| cfg.advanced.always_follow_canonicals),
+        ]
+        .into_iter()
+        .flatten()
+        {
+            if source != target {
+                parents.entry(target).or_insert(source);
+            }
+        }
+    }
+    let mut stmt = conn.prepare(
+        "SELECT q.url_id,u.url,q.depth,q.priority,q.seq FROM queue q JOIN urls u ON u.id=q.url_id
+         WHERE u.discovered_via NOT IN ('start','list_input')"
+    ).map_err(db)?;
+    let rows = stmt
+        .query_map([], |r| {
+            Ok((
+                r.get::<_, i64>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, Option<u32>>(2)?,
+                r.get::<_, u8>(3)?,
+                r.get::<_, u64>(4)?,
+            ))
+        })
+        .map_err(db)?;
+    for row in rows {
+        let (id, url, depth, priority, seq) = row.map_err(db)?;
+        if !parents.contains_key(&id) {
+            continue;
+        }
+        let mut current = id;
+        let mut visited = std::collections::HashSet::new();
+        while let Some(&source) = parents.get(&current) {
+            if roots.contains(&current) {
+                break;
+            }
+            if !visited.insert(current) {
+                break;
+            }
+            current = source;
+        }
+        core.frontier.push(QueueItem {
+            id: UrlId(id),
+            url: url.into_boxed_str(),
+            depth,
+            priority,
+            seq,
+            purpose: Purpose::Page,
+            hops: visited.len() as u32,
+            session: 0,
+            replace: false,
+            attempt: 0,
+        });
+    }
+    Ok(())
 }
 
 /// Ein eindeutiger Überspringzähler je URL; Länge wird nach Umschreibung/Normalisierung geprüft.

@@ -588,6 +588,8 @@ pub(crate) struct SharedInit<F: Fetch> {
 pub(crate) fn make_shared<F: Fetch>(mut init: SharedInit<F>) -> (Arc<Shared<F>>, Arc<Control>) {
     crate::memory::set_system_probe(crate::render_glue::process_memory_sample);
     init.core.limits = init.cfg.limits.clone();
+    init.core.always_follow_redirects = init.cfg.advanced.always_follow_redirects;
+    init.core.always_follow_canonicals = init.cfg.advanced.always_follow_canonicals;
     init.core.render_fragments = init.cfg.rendering.mode == RenderingMode::JavaScript;
     if init.cfg.scope.subfolder_only {
         if let Ok(start) = Url::parse(&init.start_encoded) {

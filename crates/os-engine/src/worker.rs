@@ -1419,7 +1419,17 @@ async fn assemble<F: Fetch>(
             let lt = r.ext.link_type;
             let resource_like = lt.is_resource() || lt == LinkType::Other;
             let outside_folder = *internal && !resource_like && outside_start_folder(sh, norm);
-            let purpose = if !*internal || outside_folder {
+            let follow_canonical = cfg.advanced.always_follow_canonicals
+                && matches!(lt, LinkType::Canonical | LinkType::HttpCanonical);
+            let canonical_limit = follow_canonical
+                && norm.encoded != *item.url
+                && item.hops >= cfg.limits.max_redirects;
+            if canonical_limit {
+                url_flags.push((item.id, redirect::FLAG_LIMIT.to_string(), None));
+            }
+            let purpose = if follow_canonical {
+                Purpose::Page
+            } else if !*internal || outside_folder {
                 Purpose::External
             } else if resource_like {
                 Purpose::Resource
@@ -1437,8 +1447,12 @@ async fn assemble<F: Fetch>(
                     && !r.captured_only
                     && !hreflang_only
                     && (!outside_folder || cfg.scope.crawl_outside_start_folder),
-                crawl: d.crawl && (!outside_folder || cfg.scope.crawl_outside_start_folder),
-                reason: if outside_folder && !cfg.scope.crawl_outside_start_folder {
+                crawl: d.crawl
+                    && !canonical_limit
+                    && (!outside_folder || cfg.scope.crawl_outside_start_folder),
+                reason: if canonical_limit {
+                    Some(NotCrawledReason::RedirectLimit)
+                } else if outside_folder && !cfg.scope.crawl_outside_start_folder {
                     Some(NotCrawledReason::OutsideScope)
                 } else {
                     d.reason
@@ -1448,7 +1462,12 @@ async fn assemble<F: Fetch>(
                 purpose,
                 source: Some((item.id, lt, r.ext.anchor.clone())),
             };
-            let id = core.discover(&cand, depth, 0, item.session, &sh.rules, &mut disc);
+            let hops = if follow_canonical {
+                item.hops.saturating_add(1)
+            } else {
+                0
+            };
+            let id = core.discover(&cand, depth, hops, item.session, &sh.rules, &mut disc);
             if hreflang_only
                 && !core
                     .lookup(&norm.encoded)
@@ -1505,7 +1524,11 @@ async fn assemble<F: Fetch>(
                     }
                 }
             } else {
-                if !internal && crawl && !cfg.spider.external.crawl {
+                if !internal
+                    && crawl
+                    && !cfg.spider.external.crawl
+                    && !cfg.advanced.always_follow_redirects
+                {
                     crawl = false;
                     reason = Some(NotCrawledReason::ExternalNotChecked);
                 }
@@ -1527,7 +1550,7 @@ async fn assemble<F: Fetch>(
                         reason,
                         resource_like: false,
                         apply_rules: norm.encoded != sh.start_url,
-                        purpose: if internal {
+                        purpose: if internal || cfg.advanced.always_follow_redirects {
                             Purpose::Page
                         } else {
                             Purpose::External

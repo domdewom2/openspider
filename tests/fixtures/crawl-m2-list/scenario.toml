@@ -1,0 +1,44 @@
+[[route]]
+path = "/a"
+status = 301
+location = "/b"
+[[route]]
+path = "/b"
+status = 302
+location = "/c"
+[[route]]
+path = "/c"
+content_type = "text/html"
+body = '<title>Final</title><a href="/unrelated">Not part of the chain</a>'
+[[route]]
+path = "/p1"
+content_type = "text/html"
+body = '<link rel="canonical" href="/p2">'
+[[route]]
+path = "/p2"
+content_type = "text/html"
+body = '<link rel="canonical" href="http://other.test/p3">'
+[[route]]
+path = "/p3"
+content_type = "text/html"
+body = '<link rel="canonical" href="/p4">'
+[[route]]
+path = "/p4"
+content_type = "text/html"
+body = '<link rel="canonical" href="/p4">'
+[[route]]
+path = "/ext"
+status = 301
+location = "http://other.test/a"
+[[route]]
+path = "/loop"
+status = 301
+location = "/loop"
+[[route]]
+path = "/de"
+content_type = "text/html"
+body = '<link rel="alternate" hreflang="fr" href="http://other.test/fr">'
+[[route]]
+path = "/fr"
+content_type = "text/html"
+body = '<title>Français</title><link rel="alternate" hreflang="de" href="http://site.test/de">'
