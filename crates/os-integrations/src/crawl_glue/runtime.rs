@@ -162,7 +162,14 @@ impl ApiRun {
     /// Admission into the frontier remains the engine's job (rules, robots, limits).
     pub async fn discover(&self, file: &CrawlFile) -> Result<Vec<String>, ApiError> {
         let urls = urls(file)?;
-        let hosts: BTreeSet<_> = urls.iter().filter_map(|u| host(&u.url)).collect();
+        let mut hosts: BTreeSet<_> = urls.iter().filter_map(|u| host(&u.url)).collect();
+        if let Some(start) = file
+            .get_meta("start_url")
+            .map_err(db)?
+            .and_then(|u| host(&u))
+        {
+            hosts.insert(start);
+        }
         let mut candidates = BTreeSet::new();
         if self.ctx.cfg.api.ga4.enabled && self.sources.iter().any(|s| s.kind() == ApiKind::Ga4) {
             self.validate_ga4_selection().await?;
@@ -172,6 +179,7 @@ impl ApiRun {
                 .values()
                 .flat_map(|rows| rows.keys().cloned())
                 .collect();
+            let capture = file.conn().unchecked_transaction().map_err(db)?;
             for address in addresses {
                 if host(&address).is_some_and(|h| hosts.contains(&h)) {
                     record_source(file, &address, "ga4", self.clock.now())?;
@@ -180,6 +188,8 @@ impl ApiRun {
                     }
                 }
             }
+            capture.execute("INSERT INTO crawl_meta(key,value) VALUES('api_raw_hosts.ga4',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value", [serde_json::to_string(&hosts).map_err(db)?]).map_err(db)?;
+            capture.commit().map_err(db)?;
         }
         if self.ctx.cfg.api.gsc.enabled && self.sources.iter().any(|s| s.kind() == ApiKind::Gsc) {
             let options =
@@ -196,6 +206,7 @@ impl ApiRun {
             if let Some(e) = &report.error {
                 return Err(e.to_api_error());
             }
+            let capture = file.conn().unchecked_transaction().map_err(db)?;
             for row in &report.rows {
                 if host(&row.page).is_some_and(|h| hosts.contains(&h)) {
                     record_source(file, &row.page, "gsc", self.clock.now())?;
@@ -204,6 +215,8 @@ impl ApiRun {
                     }
                 }
             }
+            capture.execute("INSERT INTO crawl_meta(key,value) VALUES('api_raw_hosts.gsc',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value", [serde_json::to_string(&hosts).map_err(db)?]).map_err(db)?;
+            capture.commit().map_err(db)?;
         }
         Ok(candidates.into_iter().collect())
     }

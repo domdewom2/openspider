@@ -806,9 +806,6 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
     } = parts;
     let ctl = Arc::clone(&sh.ctl);
 
-    // INTEG-015/017: discover before workers start; the regular frontier applies crawl rules.
-    let api_run = initialize_apis(&file, api_ctx, clock.clone(), &writer, &sh).await?;
-
     // Sitemaps aus Konfiguration bzw. Start-URL bzw. Liste
     if !seeds.is_empty() {
         if let Err(worker::Failure::Engine(e)) =
@@ -817,6 +814,9 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
             sh.fail(e);
         }
     }
+
+    // INTEG-015/017: sitemap seeds are known; workers still use the regular frontier/robots gate.
+    let api_run = initialize_apis(&file, api_ctx, clock.clone(), &writer, &sh).await?;
 
     let mut set: JoinSet<()> = JoinSet::new();
     let mut progress_tick = interval(PROGRESS_INTERVAL);

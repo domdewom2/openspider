@@ -212,7 +212,7 @@ async fn api_only_urls_are_recorded_and_same_host_discovery_is_opt_in() {
         ]
     });
     let server = MockServer::start(vec![Arc::new(ga)]).await.unwrap();
-    for crawl_new in [false, true] {
+    for (crawl_new, sitemap_only) in [(false, false), (true, false), (true, true)] {
         let mut cfg = CrawlConfig::default();
         cfg.api.ga4.enabled = true;
         cfg.api.ga4.property = Some(STREAM.into());
@@ -220,6 +220,12 @@ async fn api_only_urls_are_recorded_and_same_host_discovery_is_opt_in() {
         cfg.api.ga4.crawl_new_urls = crawl_new;
         let dir = tempfile::tempdir().unwrap();
         let file = file(&dir, &cfg);
+        if sitemap_only {
+            file.conn().execute("DELETE FROM urls", []).unwrap();
+            file.set_meta("mode", "spider").unwrap();
+            file.set_meta("start_url", "https://integ.test/map.xml")
+                .unwrap();
+        }
         let run = ApiRun::new(context(cfg), clock(), dir.path().join("quota.json"));
         let candidates = run.discover(&file).await.unwrap();
         assert_eq!(

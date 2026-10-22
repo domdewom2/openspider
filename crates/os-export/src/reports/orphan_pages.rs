@@ -44,13 +44,36 @@ fn run(job: &TableJob<'_>, writer: &mut dyn TableWriter) -> Result<u64, ExportEr
         })
     };
     // Only source URLs are retained, rather than a crawl-wide address index.
+    let raw_hosts: BTreeMap<_, std::collections::BTreeSet<String>> = ["ga4", "gsc"]
+        .into_iter()
+        .map(|source| {
+            let value = db(job.file.get_meta(&format!("api_raw_hosts.{source}")))?;
+            let hosts = value
+                .and_then(|v| serde_json::from_str(&v).ok())
+                .unwrap_or_default();
+            Ok::<_, ExportError>((source, hosts))
+        })
+        .collect::<Result<_, _>>()?;
     let mut sources: BTreeMap<String, u8> = BTreeMap::new();
-    let mut stmt = db(job.file.conn().prepare("SELECT url,source FROM api_urls WHERE source IN ('ga4','gsc') UNION SELECT u.url,a.source FROM api_values a JOIN urls u ON u.id=a.url_id WHERE a.source IN ('ga4','gsc') UNION SELECT u.url,'sitemap' FROM url_flags f JOIN urls u ON u.id=f.url_id JOIN sitemap_entries e ON e.url_id=COALESCE(CAST(NULLIF(f.value,'') AS INTEGER),u.id) WHERE f.flag='orphan' UNION SELECT u.url,'sitemap' FROM sitemap_entries e JOIN urls u ON u.id=e.url_id JOIN sitemaps s ON s.id=e.sitemap_id WHERE s.kind='urlset'"))?;
+    let mut stmt = db(job.file.conn().prepare("SELECT url,source,0 FROM api_urls WHERE source IN ('ga4','gsc') UNION SELECT u.url,a.source,1 FROM api_values a JOIN urls u ON u.id=a.url_id WHERE a.source IN ('ga4','gsc') UNION SELECT u.url,'sitemap',0 FROM url_flags f JOIN urls u ON u.id=f.url_id JOIN sitemap_entries e ON e.url_id=COALESCE(CAST(NULLIF(f.value,'') AS INTEGER),u.id) WHERE f.flag='orphan' UNION SELECT u.url,'sitemap',0 FROM sitemap_entries e JOIN urls u ON u.id=e.url_id JOIN sitemaps s ON s.id=e.sitemap_id WHERE s.kind='urlset'"))?;
     let mut rows = db(stmt.query([]))?;
     while let Some(row) = db(rows.next())? {
         writer.checkpoint()?;
         let address: String = db(row.get(0))?;
         let source: String = db(row.get(1))?;
+        let mapped: bool = db(row.get(2))?;
+        if mapped
+            && url::Url::parse(&address)
+                .ok()
+                .and_then(|u| u.host_str().map(str::to_lowercase))
+                .is_some_and(|host| {
+                    raw_hosts
+                        .get(source.as_str())
+                        .is_some_and(|hosts| hosts.contains(&host))
+                })
+        {
+            continue; // OUT-099 uses raw URL provenance, not the looser INTEG-014 metric match.
+        }
         if let Some(key) = normalize(&address) {
             *sources.entry(key).or_default() |= match source.as_str() {
                 "ga4" => 1,
@@ -292,6 +315,14 @@ body = "User-agent: *\nDisallow: /blocked"
             }
         }
         conn.execute("INSERT INTO api_urls(url,source,first_seen) VALUES('http://integ.test/p1/','ga4','2026-10-19T12:00:00Z')",[]).unwrap();
+        // INTEG-014 can assign /p4/ metrics to /p4; OUT-099 must keep their sources separate.
+        conn.execute("INSERT INTO api_urls(url,source,first_seen) VALUES('http://integ.test/p4/','ga4','2026-10-19T12:00:00Z')",[]).unwrap();
+        conn.execute("INSERT INTO api_values(url_id,source,metric,level,v_real,fetched_at) VALUES(104,'ga4','sessions','url',42,'2026-10-19T12:00:00Z')",[]).unwrap();
+        conn.execute("INSERT INTO api_urls(url,source,first_seen) VALUES('https://integ.test/p6','ga4','2026-10-19T12:00:00Z')",[]).unwrap();
+        conn.execute("INSERT INTO api_values(url_id,source,metric,level,v_real,fetched_at) VALUES(106,'ga4','sessions','url',42,'2026-10-19T12:00:00Z')",[]).unwrap();
+        fx.file
+            .set_meta("api_raw_hosts.ga4", r#"["integ.test"]"#)
+            .unwrap();
         // A normalized variant with an inlink suppresses all source variants of that address.
         conn.execute("UPDATE url_counters SET inlinks_all=1 WHERE url_id=107", [])
             .unwrap();
@@ -325,6 +356,10 @@ body = "User-agent: *\nDisallow: /blocked"
                 .any(|r| r[0] == format!("http://integ.test/p{mask}") && &r[1] == source));
         }
         assert!(!rows.iter().any(|r| r[0].ends_with("/p7")));
+        assert!(rows.iter().any(|r| r[0].ends_with("/p4/") && &r[1] == "GA"));
+        assert!(rows
+            .iter()
+            .any(|r| &r[0] == "https://integ.test/p6" && &r[1] == "GA"));
         assert!(rows
             .iter()
             .any(|r| r[0].ends_with("/p1/") && r[2].is_empty()));
