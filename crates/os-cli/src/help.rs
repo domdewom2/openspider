@@ -54,8 +54,16 @@ pub fn topic(name: &str, as_json: bool) -> Result<String, CliError> {
         "export-tabs" => registry::names(Kind::Tab),
         "bulk-export" => registry::names(Kind::Bulk),
         "save-report" => registry::names(Kind::Report),
-        // Metriken des Looker-Studio-Exports (OUT-210) gibt es in dieser Version nicht.
-        "export-custom-summary" => Vec::new(),
+        "export-custom-summary" => {
+            let mut names: Vec<_> = os_export::timeseries::catalog(&os_analyze::tabs::configured(
+                &os_model::CrawlConfig::default(),
+            ))
+            .into_iter()
+            .map(|m| m.name)
+            .collect();
+            names.sort();
+            names
+        }
         "set" => os_model::settable_keys().to_vec(),
         other => {
             return Err(CliError::usage(format!(

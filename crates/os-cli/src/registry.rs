@@ -89,11 +89,14 @@ fn union(mut first: Vec<String>, more: Vec<String>) -> Vec<String> {
 
 /// Alle gültigen Namen der Kategorie in Menüreihenfolge. Schwellen in Tab-Namen stehen als `X`.
 pub fn names(kind: Kind) -> Vec<String> {
-    match kind {
+    let mut names = match kind {
         Kind::Tab => catalog::list(ExportKind::Tab),
         Kind::Bulk => union(catalog::list(ExportKind::Bulk), bulk_issues::names()),
         Kind::Report => union(catalog::list(ExportKind::Report), reports::names()),
-    }
+    };
+    names.sort();
+    names.dedup();
+    names
 }
 
 /// Vergleichsform: Kleinschreibung, Leerräume um `:` und innerhalb zusammengefasst.
@@ -164,9 +167,10 @@ pub fn unknown_message(kind: Kind, unknown: &Unknown) -> String {
     let noun = kind.noun();
     match unknown.suggestions.as_slice() {
         [] => {
-            let mut msg = format!(
-                "unknown {noun} '{}' – no similar name; valid names:",
-                unknown.input
+            let mut msg =
+                format!(
+                "unknown {noun} '{}' – no similar name; openspider --list-{} lists valid names:",
+                unknown.input, if kind == Kind::Report { "reports" } else { "exports" }
             );
             for name in names(kind) {
                 msg.push('\n');
@@ -174,13 +178,26 @@ pub fn unknown_message(kind: Kind, unknown: &Unknown) -> String {
             }
             msg
         }
-        [one] => format!("unknown {noun} '{}' – did you mean '{one}'?", unknown.input),
+        [one] => format!(
+            "unknown {noun} '{}' – did you mean '{one}'? (openspider --list-{})",
+            unknown.input,
+            if kind == Kind::Report {
+                "reports"
+            } else {
+                "exports"
+            }
+        ),
         many => {
             let list: Vec<String> = many.iter().map(|s| format!("'{s}'")).collect();
             format!(
-                "unknown {noun} '{}' – did you mean {}?",
+                "unknown {noun} '{}' – did you mean {}? (openspider --list-{})",
                 unknown.input,
-                list.join(" or ")
+                list.join(" or "),
+                if kind == Kind::Report {
+                    "reports"
+                } else {
+                    "exports"
+                }
             )
         }
     }
@@ -252,7 +269,7 @@ mod tests {
         let unknown = resolve(Kind::Tab, "Internal:Al").unwrap_err();
         assert_eq!(
             unknown_message(Kind::Tab, &unknown),
-            "unknown export 'Internal:Al' – did you mean 'Internal:All'?"
+            "unknown export 'Internal:Al' – did you mean 'Internal:All'? (openspider --list-exports)"
         );
     }
 

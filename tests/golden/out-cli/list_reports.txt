@@ -1,34 +1,32 @@
-Crawl Overview
-Redirects:All Redirects
-Redirects:Redirect Chains
-SERP Summary
+Accessibility:Violations Summary
 Canonicals:Canonical Chains
 Canonicals:Non-Indexable Canonicals
-Redirects:Redirects to Errors
-Redirects:Redirect & Canonical Chains
+Cookie Summary
+Crawl Overview
+HTTP Header Summary
 Hreflang:All Hreflang URLs
+Hreflang:Inconsistent Language & Region Return Links
+Hreflang:Missing Return Links
+Hreflang:Noindex Return Links
+Hreflang:Non Canonical Return Links
 Hreflang:Non-200 Hreflang URLs
 Hreflang:Unlinked Hreflang URLs
-Hreflang:Missing Return Links
-Hreflang:Inconsistent Language & Region Return Links
-Hreflang:Non Canonical Return Links
-Hreflang:Noindex Return Links
 Insecure Content
 Orphan Pages
-Structured Data:Validation Errors & Warnings Summary
-Structured Data:Validation Errors & Warnings
-Structured Data:Google Rich Results Features Summary
-Structured Data:Google Rich Results Features
-Accessibility:Violations Summary
-HTTP Header Summary
-Cookie Summary
-Crawl Path Report
-Queued URLs
-Sidebar:Overview
+Redirects:All Redirects
+Redirects:Redirect & Canonical Chains
+Redirects:Redirect Chains
+Redirects:Redirects to Errors
+SERP Summary
+Sidebar:API
 Sidebar:Issues
-Sidebar:Site Structure
-Sidebar:Site Structure Depth
+Sidebar:Overview
 Sidebar:Response Times
 Sidebar:Segments
+Sidebar:Site Structure
+Sidebar:Site Structure Depth
 Sidebar:Spelling & Grammar
-Sidebar:API
+Structured Data:Google Rich Results Features
+Structured Data:Google Rich Results Features Summary
+Structured Data:Validation Errors & Warnings
+Structured Data:Validation Errors & Warnings Summary

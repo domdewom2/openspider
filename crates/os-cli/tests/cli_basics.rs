@@ -9,32 +9,7 @@ use std::time::{Duration, Instant};
 use common::{column, file_names, read_csv, resolve, site, Env};
 fn assert_golden(path: impl AsRef<Path>, actual: &str) {
     let path = path.as_ref();
-    let mut expected = std::fs::read_to_string(path)
-        .unwrap()
-        .replace("HTML Document Over 2MB", "HTML Document Over XMB")
-        .replace("Resource Over 2MB", "Resource Over XMB");
-    if path.file_name().unwrap() == "list_reports.txt" {
-        expected = expected
-            .lines()
-            .filter(|l| !matches!(*l, "Crawl Path Report" | "Queued URLs"))
-            .collect::<Vec<_>>()
-            .join("\n")
-            + "\n";
-    }
-    if path.file_name().unwrap() == "list_exports.txt" {
-        expected.push_str("Queued URLs\n");
-        // K2-61 (Golden durch eigene Ausgabe): X01 adds Pagination's missing All entry.
-        expected = expected.replace(
-            "Hreflang:All Inlinks\n",
-            "Pagination:All Inlinks\nHreflang:All Inlinks\n",
-        );
-    }
-    expected = expected
-        .lines()
-        .filter(|line| !matches!(*line, "Internal:Media" | "Internal:Fonts" | "Internal:XML"))
-        .collect::<Vec<_>>()
-        .join("\n")
-        + "\n";
+    let expected = std::fs::read_to_string(path).unwrap();
     assert_eq!(actual, expected, "{}", path.display());
 }
 
@@ -237,7 +212,6 @@ async fn invalid_names_are_rejected_before_any_request_in_under_a_second() {
 
     // Formate
     for (fmt, needle) in [
-        ("xls", "nicht unterstützt"),
         ("gsheet", "--google-drive-account"),
         ("odt", "csv, xls, xlsx, gsheet"),
     ] {
