@@ -1,0 +1,154 @@
+import { runAction } from "../../ui/actions";
+import { ComparisonDetail } from "./ComparisonDetail";
+import { comparisonCsv } from "./export";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { createClient, setClient } from "../../ipc/client";
+import { setLanguage } from "../../i18n";
+import { ComparisonControls } from "./ComparisonControls";
+import { ComparisonNumbers } from "./ComparisonNumbers";
+import { ComparisonLinks } from "./ComparisonLinks";
+import { ComparisonTable, ComparisonTabs } from "./ComparisonTable";
+import { closeComparison, comparisonRows, navigateComparison, openComparison, selectComparisonUrl, useComparison } from "./model";
+import { comparisonFixture, current, previous, session, snapshot } from "./fixtures/out-compare/core";
+let fixture:ReturnType<typeof comparisonFixture>;
+const calls=(cmd:string)=>fixture.core.calls.filter(c=>c.cmd===cmd);
+beforeEach(async()=>{
+  fixture=comparisonFixture();setClient(createClient(fixture.core.transport()));await setLanguage("en");
+  useComparison.setState({dialog:false,session:null,snapshot:null,busy:false,error:null,revision:0,query:{tab:"Internal",filter:"All",side:"Current"},selected:null});
+});
+afterEach(()=>{cleanup();setClient(null);useComparison.setState({session:null,dialog:false,busy:false,error:null});vi.restoreAllMocks();});
+function active(){useComparison.setState({session,snapshot});}
+// spec: OUT-140
+it("selects two distinct fixture crawls, defaults to the newer Current, and opens the core comparison",async()=>{
+  render(<ComparisonControls />);fireEvent.click(screen.getByRole("button",{name:"Compare crawls"}));
+  await waitFor(()=>expect(screen.getByLabelText("Current")).toHaveValue(current.crawlId));
+  expect(screen.getByLabelText("Previous")).toHaveValue(previous.crawlId);
+  fireEvent.change(screen.getByLabelText("Previous"),{target:{value:current.crawlId}});
+  expect(screen.getByRole("button",{name:"Compare"})).toBeDisabled();
+  fireEvent.change(screen.getByLabelText("Previous"),{target:{value:previous.crawlId}});
+  await waitFor(()=>expect(screen.getByRole("button",{name:"Compare"})).toBeEnabled());
+  fireEvent.click(screen.getByRole("button",{name:"Compare"}));
+  await waitFor(()=>expect(useComparison.getState().session).toEqual(session));
+  expect(calls("compare.open")[0]?.args).toMatchObject({current:"current",previous:"previous",mapping:[]});
+  expect(useComparison.getState().snapshot).toEqual(snapshot);
+});
+// spec: OUT-141
+it("swaps through the core and refreshes all comparison data, then closes the session",async()=>{
+  active();render(<ComparisonControls />);fireEvent.click(screen.getByRole("button",{name:"Swap Current / Previous"}));
+  await waitFor(()=>expect(useComparison.getState().session?.current.crawlId).toBe("previous"));
+  expect(calls("sidebar.overview")).toHaveLength(1);
+  await act(()=>closeComparison());expect(calls("compare.close")).toHaveLength(1);expect(useComparison.getState().snapshot).toBeNull();
+});
+// spec: OUT-142
+it("routes each Overview category and each source count to exactly that tab/filter population",()=>{
+  active();render(<ComparisonNumbers />);
+  const row=within(screen.getByRole("rowheader",{name:"Internal: HTML"}).closest("tr")!);
+  const buttons=row.getAllByRole("button");
+  for(const [i,category] of ["Added","New","Removed","Missing"].entries()){
+    fireEvent.click(buttons[i+2]!);expect(useComparison.getState().query).toEqual({tab:"Internal",filter:"HTML",class:category,side:"Current"});
+  }
+  fireEvent.click(buttons[1]!);expect(useComparison.getState().query.side).toBe("Previous");
+});
+// spec: OUT-143
+it("keeps Previous-only issues with Current zero, sorts Change both ways, and routes an issue count",()=>{
+  active();render(<ComparisonNumbers issues />);
+  let rows=screen.getAllByRole("row").slice(1);expect(rows[0]).toHaveTextContent("Page Titles: Missing");
+  fireEvent.click(screen.getByRole("button",{name:"Change ↓"}));
+  rows=screen.getAllByRole("row").slice(1);expect(rows[0]).toHaveTextContent("Client Error (4xx)");
+  expect(within(rows[0]!).getAllByRole("button")[0]).toHaveTextContent("0");
+  fireEvent.click(within(rows[0]!).getAllByRole("button")[4]!);
+  expect(useComparison.getState().query).toMatchObject({tab:"Response Codes",filter:"Client Error (4xx)",class:"Removed"});
+});
+// spec: OUT-146
+it("tests ordered mappings through the core, blocks invalid patterns and allows rule reorder/removal",async()=>{
+  render(<ComparisonControls />);fireEvent.click(screen.getByRole("button",{name:"Compare crawls"}));
+  await screen.findByLabelText("Current");fireEvent.click(screen.getByRole("button",{name:"Add mapping rule"}));
+  fireEvent.change(screen.getByLabelText("Pattern 1"),{target:{value:"["}});
+  await screen.findByText("invalid regular expression at position 1");expect(screen.getByRole("button",{name:"Compare"})).toBeDisabled();
+  fireEvent.change(screen.getByLabelText("Pattern 1"),{target:{value:"first"}});
+  fireEvent.click(screen.getByRole("button",{name:"Add mapping rule"}));fireEvent.change(screen.getByLabelText("Pattern 2"),{target:{value:"second"}});
+  fireEvent.click(screen.getByRole("button",{name:"Move rule up 2"}));expect(screen.getByLabelText("Pattern 1")).toHaveValue("second");
+  fireEvent.click(screen.getByRole("button",{name:"Remove rule 2"}));
+  await waitFor(()=>expect(calls("compare.testMapping").at(-1)?.args).toMatchObject({rules:[{pattern:"second",replacement:""}]}));
+});
+// spec: CRAWL-144
+it("Auto follows the upper source, explicit source overrides it, and link changes keep the canonical columns",async()=>{
+  active();render(<ComparisonLinks direction="outlinks" urlId={1} />);
+  await screen.findByText("Neu");expect(screen.queryByText("https://site.test/b")).toBeNull();
+  act(()=>useComparison.setState({query:{tab:"Internal",filter:"All",side:"Previous"}}));await screen.findByText("https://site.test/b");
+  fireEvent.change(screen.getByLabelText("Source"),{target:{value:"Current"}});await screen.findByText("Neu");
+  fireEvent.change(screen.getByLabelText("Link change"),{target:{value:"Anchor Changed"}});
+  await waitFor(()=>expect(screen.getAllByRole("row")).toHaveLength(2));expect(screen.getByText("Neu")).toBeVisible();expect(screen.getByText("Alt")).toBeVisible();
+  for(const name of ["Link Change","Crawl","Previous Anchor"])expect(screen.getByRole("columnheader",{name})).toBeVisible();
+});
+// spec: OUT-149
+it("shows removed links from Previous even while Current is the source, in both directions",async()=>{
+  active();const mounted=render(<ComparisonLinks direction="inlinks" urlId={1} />);await screen.findByText("Neu");
+  fireEvent.change(screen.getByLabelText("Link change"),{target:{value:"Removed"}});await screen.findByText("https://site.test/b");expect(screen.getByRole("cell",{name:"Previous"})).toBeVisible();
+  expect(calls("view.rows").at(-1)?.args).toMatchObject({comparison:{tab:"inlinks",side:"Current",source:"Auto",change:"Removed"}});
+  mounted.rerender(<ComparisonLinks direction="outlinks" urlId={1} />);await waitFor(()=>expect(calls("view.rows").at(-1)?.args).toMatchObject({comparison:{tab:"outlinks",change:"Removed"}}));
+});
+// spec: CRAWL-144
+it("disables all change categories for a one-sided URL and still shows its existing links",async()=>{
+  active();render(<ComparisonLinks direction="outlinks" urlId={99} />);await screen.findByText("https://site.test/a");
+  for(const name of ["Added","Removed","Anchor Changed","Unchanged"])expect(screen.getByRole("option",{name})).toBeDisabled();
+  expect(screen.getByRole("combobox",{name:"Link change"})).toBeDisabled();
+});
+// spec: TECH-301
+it("puts Change Detection last and sends the element and Changed population to the paired view",async()=>{
+  active();render(<><ComparisonTabs /><ComparisonTable /></>);
+  const tabs=screen.getAllByRole("tab");expect(tabs.at(-1)).toHaveTextContent("Change Detection");
+  fireEvent.click(tabs.at(-1)!);fireEvent.change(screen.getByLabelText("Filter"),{target:{value:"Page Titles"}});
+  fireEvent.change(screen.getByLabelText("Comparison status"),{target:{value:"changed"}});
+  await waitFor(()=>expect(calls("view.rows").at(-1)?.args).toMatchObject({comparison:{tab:"Change Detection",filter:"Page Titles",class:"changed"}}));
+});
+// spec: CRAWL-144
+it("ignores an old link response after a source switch",async()=>{
+  active();let resolve!: (value:unknown)=>void;
+  const normal=fixture.core.handlers.get("view.rows")!;let first=true;
+  fixture.core.handlers.set("view.rows",args=>{if(first){first=false;return new Promise(r=>{resolve=r;});}return normal(args, {window:"main",core:fixture.core});});
+  render(<ComparisonLinks direction="outlinks" urlId={1} />);
+  fireEvent.change(screen.getByLabelText("Source"),{target:{value:"Previous"}});await screen.findByText("https://site.test/b");
+  await act(async()=>{resolve({viewId:"late",version:1,offset:0,rowKeys:[],columns:["Address"],cells:[["late-response"]],total:1,side:"Current",filtersEnabled:true});});
+  expect(screen.queryByText("late-response")).toBeNull();
+});
+// spec: OUT-140
+it("serializes double submissions and preserves the current view when opening fails",async()=>{
+  active();fixture.core.handlers.set("compare.open",async()=>{throw new Error("fixture failure");});
+  await openComparison({current:"current",previous:"previous",mapping:[],elements:[]});expect(useComparison.getState().session).toEqual(session);expect(useComparison.getState().error).toBeTruthy();
+  selectComparisonUrl(1,"Current");navigateComparison("Internal","All");expect(useComparison.getState().selected).toBeNull();
+  await comparisonRows({tab:"Internal",filter:"All",side:"Previous"});expect(calls("view.rows").at(-1)?.args).toMatchObject({version:1,limit:100,comparison:{current:"current",previous:"previous",side:"Previous"}});
+});
+
+// spec: OUT-149
+it("exports the active link projection with all three comparison columns and the previous anchor",async()=>{
+  active();const csv=await comparisonCsv({tab:"outlinks",filter:"All",side:"Current",urlId:1,source:"Auto",change:"Anchor Changed"});
+  expect(csv.split("\r\n")[0]).toBe("Source,Destination,Type,Anchor,Link Change,Crawl,Previous Anchor");
+  expect(csv).toContain("https://site.test/c,Hyperlink,Neu,Anchor Changed,Current,Alt");
+  expect(csv).not.toContain("https://site.test/b");
+});
+
+// spec: CRAWL-144
+it("keeps the mapped partner selected when the upper source changes and Auto follows without another click",async()=>{
+  active();render(<><ComparisonTable /><ComparisonDetail /></>);
+  const table=await screen.findByRole("table",{name:"Comparison table"});
+  fireEvent.click(within(table).getByRole("button",{name:"https://site.test/start"}));
+  await screen.findByRole("region",{name:"inlinks"});
+  fireEvent.change(screen.getAllByLabelText("Source")[0]!,{target:{value:"Previous"}});
+  await waitFor(()=>expect(calls("view.rows").at(-1)?.args).toMatchObject({comparison:{tab:"inlinks",side:"Previous",urlId:101,source:"Auto"}}));
+  expect(useComparison.getState().selected).toBe(101);
+});
+// spec: OUT-140
+it("suppresses a second open while the first core comparison is pending",async()=>{
+  let resolve!:(value:unknown)=>void;fixture.core.handlers.set("compare.open",()=>new Promise(r=>{resolve=r;}));
+  const args={current:"current",previous:"previous",mapping:[],elements:[]};const first=openComparison(args);await openComparison(args);
+  expect(calls("compare.open")).toHaveLength(1);resolve(session);await first;expect(useComparison.getState().busy).toBe(false);
+});
+
+// spec: OUT-140
+it("reopens the selection from Mode → Compare after the dialog was cancelled",async()=>{
+  render(<ComparisonControls />);act(()=>{runAction("mode.compare");});await screen.findByLabelText("Current");
+  fireEvent.click(screen.getByRole("button",{name:"Cancel"}));await waitFor(()=>expect(screen.queryByLabelText("Current")).toBeNull());
+  act(()=>{runAction("mode.compare");});await screen.findByLabelText("Current");
+});

@@ -21,15 +21,12 @@ Restwarteschlange fortsetzbar. Der gewählte Crawl wird zuerst geöffnet.
 Laufende und gesperrte Crawls haben die vorgesehenen Aktionseinschränkungen.
 Formularfehler erscheinen im aktiven Formular und erhalten die Eingaben.
 
-**Offene Vergleichsintegration:** `compare.open` liefert im tatsächlichen
-Kern weiterhin `Unsupported` (M2-C01). „Zum Vergleich wählen“ ist deshalb
-in Toolbar und Kontextmenü mit übersetzter Begründung deaktiviert.
-Der erfolgreiche Mock ist entfernt; ein Test über die echte Bridge
-prüft diesen Zustand mit zwei realen Crawl-Dateien. Die vollständige
-OUT-228-Vergleichsaktion bleibt bis zur Integration von C01/U27 offen.
-Der vollständige [C9-Test](../../../e2e/crawls/compare.pending.spec.ts)
-prüft danach Aktivierung, UI-Aufruf und echte Kernantwort; N02 entfernt das
-Fixme nach der Fachintegration.
+**Vergleichsintegration (M2-U23):** „Zum Vergleich wählen“ ist bei genau zwei
+nicht laufenden Crawls aktiv. Toolbar und Kontextmenü öffnen über `openComparison`
+die echte C01-Sitzung und schließen danach die Verwaltung. Der neuere Crawl wird
+Current. U23 zeigt Mapping, Vergleichsspalten und Linkdetails. Der zuvor wartende
+[C9-Test](../../../e2e/crawls/compare.pending.spec.ts) läuft ohne Fixme gegen die
+echte Bridge in Chromium und WebKit.
 
 Dateiaktionen laufen über die bestehenden IPC-Verträge und die ergänzten
 nativen Dateiadapter. Operationen zeigen Fortschritt, Abbruch und Ergebnis

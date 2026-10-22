@@ -1,3 +1,6 @@
+import { ComparisonControls } from "../compare/ComparisonControls";
+import { ComparisonTabs } from "../compare/ComparisonTable";
+import { useComparison } from "../compare/model";
 import { useEffect, useState } from "react";
 import { useT } from "../../i18n";
 import { eventBus } from "../../ipc/events";
@@ -12,6 +15,10 @@ import type { MenuEntry } from "../../ui/primitives/Menu";
 import "./toptabs.css";
 
 export function TopTabs() {
+  const active = useComparison(s => !!s.session);
+  return <div className="os-compare-tab-strip">{active ? <ComparisonTabs /> : <RegularTopTabs />}<ComparisonControls /></div>;
+}
+function RegularTopTabs() {
   const t = useT(); const s = useTabs();
   const [configure, setConfigure] = useState(false);
   const layout = { order: s.order, hidden: s.hidden, mandatory: MANDATORY_TAB };

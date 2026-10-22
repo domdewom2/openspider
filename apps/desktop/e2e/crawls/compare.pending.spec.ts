@@ -9,7 +9,6 @@ import type {} from "./bridge-harness";
 // spec: UI-124
 // spec: OUT-228
 test("two selected non-running crawls enable comparison and open a real core comparison session", async ({ page }) => {
-  test.fixme(true, "wartet auf M2-C01");
   test.setTimeout(60_000);
   const server = createServer((request, response) => {
     response.setHeader("Content-Type", request.url === "/robots.txt" ? "text/plain" : "text/html");

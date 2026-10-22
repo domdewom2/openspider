@@ -1,3 +1,5 @@
+import { ComparisonTable } from "../compare/ComparisonTable";
+import { useComparison } from "../compare/model";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { DataGrid, type GridController } from "../../grid/DataGrid";
 import { copySelection } from "../../grid/copy";
@@ -43,6 +45,10 @@ import { segmentColor, useSearchHistory, useSegments } from "../table-advanced/s
 import "./table.css";
 
 export function UpperTable() {
+  const active = useComparison(s => !!s.session);
+  return active ? <ComparisonTable /> : <RegularUpperTable />;
+}
+function RegularUpperTable() {
   const t = useT(); const locale = currentLanguage(); const tabs = useTabs();
   const query = tabs.queries[tabs.active] ?? defaultQuery();
   const appearance = usePrefs(s => s.appearance);

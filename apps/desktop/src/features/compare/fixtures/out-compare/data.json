@@ -1,0 +1,24 @@
+{
+  "overview": [
+    {"tab":"Internal","filter":"All","label":"All","current":4,"previous":4,"change":0,"classes":[0,1,0,1]},
+    {"tab":"Internal","filter":"HTML","label":"HTML","current":4,"previous":4,"change":0,"classes":[0,1,0,1]},
+    {"tab":"Response Codes","filter":"Client Error (4xx)","label":"Client Error (4xx)","current":0,"previous":1,"change":-1,"classes":[0,0,1,0]},
+    {"tab":"Response Codes","filter":"Success (2xx)","label":"Success (2xx)","current":4,"previous":3,"change":1,"classes":[1,1,0,1]}
+  ],
+  "issues": [
+    {"tab":"Response Codes","filter":"Client Error (4xx)","label":"Client Error (4xx)","current":0,"previous":1,"change":-1,"classes":[0,0,1,0]},
+    {"tab":"Page Titles","filter":"Missing","label":"Missing","current":2,"previous":0,"change":2,"classes":[2,0,0,0]}
+  ],
+  "notes": [],
+  "linkColumns": ["Source","Destination","Type","Anchor","Link Change","Crawl","Previous Anchor"],
+  "currentLinks": [
+    ["https://site.test/start","https://site.test/a","Hyperlink","A","Added","Current",null],
+    ["https://site.test/start","https://site.test/c","Hyperlink","Neu","Anchor Changed","Current","Alt"],
+    ["https://site.test/start","https://site.test/same","Hyperlink","Same","Unchanged","Current",null]
+  ],
+  "previousLinks": [
+    ["https://site.test/start","https://site.test/b","Hyperlink","B","Removed","Previous",null],
+    ["https://site.test/start","https://site.test/c","Hyperlink","Alt","Anchor Changed","Previous","Alt"],
+    ["https://site.test/start","https://site.test/same","Hyperlink","Same","Unchanged","Previous",null]
+  ]
+}

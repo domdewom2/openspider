@@ -344,3 +344,13 @@ pub fn selected_links_by_ids(
     }
     Ok(LinkTablePage { keys, rows, total })
 }
+
+/// Stored deterministic MinHash signature, used by comparison projections without loading page bodies (TECH-301).
+pub fn comparison_signature(conn: &Connection, id: UrlId) -> Result<Option<Vec<u32>>, StoreError> {
+    let bytes: Option<Vec<u8>> = conn
+        .query_row("SELECT sig FROM minhash WHERE url_id=?1", [id.0], |r| {
+            r.get(0)
+        })
+        .optional()?;
+    Ok(bytes.and_then(|b| crate::writer_m2::decode_minhash(&b)))
+}

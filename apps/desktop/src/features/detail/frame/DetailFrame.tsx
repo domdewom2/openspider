@@ -1,3 +1,5 @@
+import { ComparisonDetail } from "../../compare/ComparisonDetail";
+import { useComparison } from "../../compare/model";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RegionBoundary } from "../../../app/ErrorBoundary";
 import { config } from "../../../ipc/config";
@@ -46,6 +48,10 @@ export interface DetailFrameProps {
   plugins?: DetailPlugin[];
 }
 export function DetailFrame(props: DetailFrameProps) {
+  const activeComparison = useComparison(s => !!s.session);
+  return activeComparison ? <ComparisonDetail /> : <RegularDetailFrame {...props} />;
+}
+function RegularDetailFrame(props: DetailFrameProps) {
   const t = useT(); const shared = useDetailSelection(s => s.selection); const selection = props.selection ?? shared;
   const crawl = useSession(s => s.crawl);
   const [active, setActive] = useState<DetailTabId>("urlDetails"); const [error, setError] = useState<unknown>();

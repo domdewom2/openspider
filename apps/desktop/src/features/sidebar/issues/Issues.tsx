@@ -1,3 +1,5 @@
+import { ComparisonNumbers } from "../../compare/ComparisonNumbers";
+import { useComparison } from "../../compare/model";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useT, useFormat, type TFn } from "../../../i18n";
@@ -23,6 +25,10 @@ export function issueRows(rows: readonly IssueRow[], t: TFn): (string | number)[
 }
 
 export function Issues({ needsAnalysis }: { needsAnalysis: boolean }) {
+  const active = useComparison(s => !!s.session);
+  return active ? <ComparisonNumbers issues /> : <RegularIssues needsAnalysis={needsAnalysis} />;
+}
+function RegularIssues({ needsAnalysis }: { needsAnalysis: boolean }) {
   const t = useT();
   const f = useFormat();
   const [type, setType] = useState<IssueTypeDto | "">("");

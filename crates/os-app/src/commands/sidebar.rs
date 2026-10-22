@@ -24,6 +24,9 @@ pub(crate) fn summary_rows(summary: Vec<(String, u64)>) -> Vec<SummaryRow> {
 }
 fn overview<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
+        if args.get("comparison").and_then(serde_json::Value::as_bool) == Some(true) {
+            return super::compare::ui::overview(app, ctx).await;
+        }
         let args: ScopeArgs = parse_args(args)?;
         catalog::check_scope(&args.segment, &args.compare)?;
         let s = session(app, &ctx)?;
