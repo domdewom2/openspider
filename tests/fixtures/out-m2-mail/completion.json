@@ -1,0 +1,22 @@
+{
+  "task": "Nightly",
+  "project": "Fixture project",
+  "start_url": "https://site.test/?token=private-value",
+  "started": "2026-10-21T00:00:00.000Z",
+  "ended": "2026-10-21T00:00:02.000Z",
+  "duration_ms": 2000,
+  "overview": [["Total URLs Crawled", 12], ["Total Internal Indexable URLs", 10], ["Total Internal Non-Indexable URLs", 2]],
+  "response_codes": [["200", 10], ["404", 2]],
+  "issues": [{"name": "Page Titles / Missing", "kind": "Issue", "priority": "High", "urls": 2}],
+  "auto_compare": true,
+  "changes": [
+    {"name":"New", "previous":0, "current":3},
+    {"name":"Missing", "previous":2, "current":0},
+    {"name":"Indexability", "previous":0, "current":1},
+    {"name":"Page Titles", "previous":0, "current":1},
+    {"name":"Unchanged", "previous":5, "current":5},
+    {"name":"Non-Indexable", "previous":10, "current":20}
+  ],
+  "skip_empty": true,
+  "error": null
+}

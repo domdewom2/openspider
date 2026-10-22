@@ -165,8 +165,6 @@ async fn invalid_tasks_are_reported_with_reasons_and_not_saved() {
         "tasks-issue-start-url-invalid",
         "tasks-issue-config-missing",
         "tasks-issue-api-credentials",
-        "tasks-issue-mail-account-missing",
-        "tasks-issue-mail-recipients-missing",
     ] {
         assert!(keys.contains(&expected), "{expected} in {keys:?}");
     }

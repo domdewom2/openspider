@@ -31,3 +31,14 @@ pub use defs::{
     Requirement, SearchOps, SortKey, TabDef,
 };
 pub use error::{AnalyzeError, NameError, ViewError};
+
+mod mail_completion;
+/// Completion email data using the same overview, issue and comparison sources as the UI.
+pub fn mail_completion(
+    path: &std::path::Path,
+    previous: Option<&std::path::Path>,
+    auto_compare: bool,
+    skip_empty: bool,
+) -> Result<serde_json::Value, String> {
+    mail_completion::snapshot(path, previous, auto_compare, skip_empty)
+}

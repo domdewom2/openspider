@@ -131,6 +131,9 @@ async fn finish_operation(
         },
     };
     publish(&app, &s.key, final_status.clone());
+    if automatic {
+        crate::commands::mail::after_analysis(&app, &s.key);
+    }
     super::feed::invalidate(&app, &s.key);
     if cancel.is_cancelled() {
         return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"));

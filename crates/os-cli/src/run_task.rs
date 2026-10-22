@@ -48,6 +48,10 @@ pub const RUN_ID_ENV: &str = "OPENSPIDER_TASK_RUN_ID";
 /// ([`DefaultHooks`]) meldet jede angeforderte Erweiterung als Warnung (der Lauf endet dann mit
 /// „Completed with warnings“); Tests und spätere Pakete setzen eigene Umsetzungen ein.
 pub trait TaskHooks: Send + Sync {
+    /// Opt in to the built-in completion mail; custom hooks retain their own notification path.
+    fn builtin_completion_mail(&self) -> bool {
+        false
+    }
     /// API-Quellen der Aufgabe (OUT-164): Abruf für den fertigen Crawl; Rückgabe = Warnungen.
     fn fetch_apis(&self, task: &Task, _crawl: Option<&Path>) -> Vec<String> {
         task.apis
@@ -171,7 +175,11 @@ impl TaskHooks for SeriesHooks {
 #[derive(Debug, Default, Clone, Copy)]
 pub struct DefaultHooks;
 
-impl TaskHooks for DefaultHooks {}
+impl TaskHooks for DefaultHooks {
+    fn builtin_completion_mail(&self) -> bool {
+        true
+    }
+}
 
 /// Umgebung eines Laufs.
 pub struct RunCtx {
@@ -515,6 +523,11 @@ pub async fn run_in(
             exit.code(),
             record.warnings.len()
         );
+        if hooks.builtin_completion_mail() {
+            if let Err(e) = send_completion_mail(ctx, &task, &record) {
+                rep.warn(format!("Benachrichtigung nicht gesendet: {}", redact(&e)));
+            }
+        }
         if let Err(e) = hooks.notify(&task, &record) {
             rep.warn(format!("Benachrichtigung nicht gesendet: {}", redact(&e)));
         }
@@ -946,4 +959,77 @@ pub fn run_with(task_id: &str, args: &RunArgs, hooks: &dyn TaskHooks) -> i32 {
         run.exit.code()
     );
     run.exit.code()
+}
+
+// Additive completion hook (OUT-281 / OUT-282, K2-61).
+fn send_completion_mail(ctx: &RunCtx, task: &Task, record: &RunRecord) -> Result<(), String> {
+    let dir = ctx.paths.settings.clone();
+    let crawls = ctx.paths.crawls.clone();
+    let task = task.clone();
+    let record = record.clone();
+    if task.notify.to.iter().all(|s| s.trim().is_empty())
+        || !(task.notify.on_success || task.notify.on_failure)
+    {
+        return Ok(());
+    }
+    let secrets = ctx.secrets.clone();
+    let clock = ctx.clock.clone();
+    std::thread::spawn(move || {
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .map_err(|_| "Mail-Laufzeit nicht verfügbar".to_string())?;
+        let current = record
+            .crawl_id
+            .as_ref()
+            .map(|id| crawls.join(format!("{id}.ospider")))
+            .filter(|p| p.exists());
+        let previous = if task.execution.auto_compare {
+            os_store::registry::list_crawls(&crawls)
+                .unwrap_or_default()
+                .into_iter()
+                .filter(|c| {
+                    Some(&c.path) != current.as_ref()
+                        && c.meta.project == task.project_name()
+                        && c.meta.state == os_model::CrawlState::Completed
+                        && c.meta.started_at.is_some_and(|t| {
+                            os_model::Timestamp::from_db(&record.started_at)
+                                .is_ok_and(|start| t < start)
+                        })
+                })
+                .max_by_key(|c| c.meta.started_at)
+                .map(|c| c.path)
+        } else {
+            None
+        };
+        let completion = match current {
+            Some(path) => serde_json::from_value(os_analyze::mail_completion(
+                &path,
+                previous.as_deref(),
+                task.execution.auto_compare,
+                task.export_options.as_ref().is_some_and(|o| o.skip_empty),
+            )?)
+            .map_err(|_| "Mail-Daten ungültig".to_string())?,
+            None => os_sched::mail::Completion::default(),
+        };
+        runtime
+            .block_on(os_sched::mail::notify_task_with_context(
+                &dir,
+                &crawls,
+                secrets
+                    .as_mut_store()
+                    .ok_or("Mail-Schlüsselbund ist schreibgeschützt")?,
+                &task,
+                &record,
+                completion,
+                &os_sched::mail::DeliveryContext {
+                    clock: clock.as_ref(),
+                    ..Default::default()
+                },
+            ))
+            .map_err(|e| e.to_string())?;
+        Ok(())
+    })
+    .join()
+    .map_err(|_| "Mail-Versand abgebrochen".to_string())?
 }

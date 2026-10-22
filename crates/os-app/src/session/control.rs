@@ -446,6 +446,9 @@ pub async fn settle(app: &App, s: &SessionInfo, action: Option<bool>) -> Result<
                 .map_err(|e| crate::runtime::error::store_error(&e))
         })
         .await?;
+    if result.is_err() {
+        crate::commands::mail::on_failed(app, &s.key);
+    }
     let summary = result?;
     let event = match summary.state {
         CrawlState::Paused => CrawlEvent::Paused(s.key.clone()),

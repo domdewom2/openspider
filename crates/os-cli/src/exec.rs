@@ -42,6 +42,8 @@ pub struct Outcome {
     pub crawl_id: Option<String>,
     /// Anzahl gecrawlter URLs.
     pub crawled: Option<u64>,
+    /// Optional completion data retained before --no-store discards the database (OUT-281/282).
+    pub mail_completion: Option<serde_json::Value>,
 }
 
 impl Outcome {
@@ -53,6 +55,7 @@ impl Outcome {
             crawl_path: None,
             crawl_id: None,
             crawled: None,
+            mail_completion: None,
         }
     }
 
@@ -155,6 +158,11 @@ async fn run(plan: &Plan, rep: &Arc<Reporter>, signals: &Signals) -> Result<Outc
         }
     }
 
+    let mail_completion = if plan.no_store {
+        crate::mail::capture_before_discard(&plan.paths.settings, &crawled.path)
+    } else {
+        None
+    };
     if plan.no_store {
         discard(&crawled.path, rep);
     }
@@ -166,7 +174,11 @@ async fn run(plan: &Plan, rep: &Arc<Reporter>, signals: &Signals) -> Result<Outc
         crawled.crawled, files, warnings
     );
     // Nach `--no-store` gibt es die Datei nicht mehr; ihre Kennung bleibt für die Historie.
-    let crawl_info = |outcome: Outcome| outcome.with_crawl(&crawled.path, Some(crawled.crawled));
+    let crawl_info = |outcome: Outcome| {
+        let mut outcome = outcome.with_crawl(&crawled.path, Some(crawled.crawled));
+        outcome.mail_completion = mail_completion.clone();
+        outcome
+    };
     if failures > 0 {
         return Ok(crawl_info(Outcome::new(
             Exit::ExportFailed,

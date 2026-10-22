@@ -289,19 +289,15 @@ pub fn validate(task: &Task, env: &dyn Env) -> Vec<Issue> {
     }
 
     // Benachrichtigung
-    if task.notify.on_success || task.notify.on_failure {
+    if (task.notify.on_success || task.notify.on_failure)
+        && task.notify.to.iter().any(|a| !a.trim().is_empty())
+    {
         match task.notify.account.as_deref() {
             Some(id) if env.mail_account_exists(id) => {}
             other => out.push(
                 Issue::error("notify.account", "tasks-issue-mail-account-missing")
                     .with("account", other.unwrap_or("")),
             ),
-        }
-        if task.notify.to.iter().all(|a| a.trim().is_empty()) {
-            out.push(Issue::error(
-                "notify.to",
-                "tasks-issue-mail-recipients-missing",
-            ));
         }
     }
     out

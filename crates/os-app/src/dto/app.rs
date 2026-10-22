@@ -152,6 +152,12 @@ pub struct AccountSettingsDto {
     pub mail_accounts: Vec<String>,
     /// Konto für Benachrichtigungen.
     pub notify_account: Option<String>,
+    #[serde(default)]
+    pub notify_to: Option<Vec<String>>,
+    #[serde(default)]
+    pub notify_on_success: Option<bool>,
+    #[serde(default)]
+    pub notify_on_failure: Option<bool>,
     /// Beim Start automatisch zu verbindende API-Quellen.
     pub auto_connect: Vec<String>,
 }
