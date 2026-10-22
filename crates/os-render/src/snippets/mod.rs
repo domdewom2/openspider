@@ -1,5 +1,6 @@
 //! Custom JavaScript execution and configuration (INTEG-060 … 063, 071, 072).
 //! Only the isolated render browser evaluates user code; no host bindings are exposed.
+mod clock;
 mod manage;
 mod runtime;
 #[cfg(test)]

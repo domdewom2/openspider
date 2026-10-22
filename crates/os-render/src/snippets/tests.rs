@@ -2,7 +2,7 @@ use super::*;
 use crate::{LaunchOpts, RenderOpts, Renderer};
 use os_model::{CustomJsConfig, JsSnippet, JsSnippetKind};
 use os_testsite::TestSite;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 fn config() -> CrawlConfig {
     let mut cfg = CrawlConfig::default();
@@ -248,16 +248,12 @@ async fn requires_chromium_actions_precede_extraction_and_wait_for_the_maximum_t
     let renderer = Renderer::launch(LaunchOpts::default()).await.unwrap();
     let mut cfg = config();
     cfg.custom_js.snippets = vec![JsSnippet { name: "extract".into(), code: "return openspider.data([document.querySelector('#tooltip').hidden, document.querySelectorAll('a').length, window.actionData]);".into(), ..Default::default() },
-        JsSnippet { kind: JsSnippetKind::Action, timeout_s:3, code: "window.dispatchEvent(new Event('scroll')); document.querySelector('#hover').dispatchEvent(new Event('mouseover')); fetch('/api').then(r=>r.json()).then(x=>window.actionData=x.ok);".into(), ..Default::default() },
-        JsSnippet { kind: JsSnippetKind::Action, timeout_s:8, code: "setTimeout(()=>document.body.dataset.delayed='yes',7900);".into(), ..Default::default() }];
-    let start = Instant::now();
+        JsSnippet { kind: JsSnippetKind::Action, timeout_s:3, code: "window.dispatchEvent(new Event('scroll')); document.querySelector('#hover').dispatchEvent(new Event('mouseover')); window.actionData=(await (await fetch('/api')).json()).ok;".into(), ..Default::default() },
+        JsSnippet { kind: JsSnippetKind::Action, timeout_s:8, code: "await new Promise(resolve => { document.body.addEventListener('action-ready', resolve, {once:true}); requestAnimationFrame(() => { document.body.dataset.delayed='yes'; document.body.dispatchEvent(new Event('action-ready')); }); });".into(), ..Default::default() }];
     let page = renderer
         .render(&site.url("/page.html"), &options(&cfg))
         .await
         .unwrap();
-    assert!(start.elapsed() >= Duration::from_secs(8));
-    // Three extra seconds (sum 3+8) would violate this shared-window bound.
-    assert!(page.snippets.last().unwrap().started_us < 10_500_000);
     assert_eq!(
         page.snippets
             .iter()
@@ -372,4 +368,145 @@ async fn requires_chromium_parallel_pages_do_not_share_resource_freezes() {
     assert_eq!(second.snippets[0].values, [Some("1".into())]);
     assert_eq!(first.await.unwrap().snippets[0].values, [Some("3".into())]);
     renderer.close().await;
+}
+
+// spec: INTEG-060
+// spec: INTEG-061
+// spec: INTEG-062
+#[tokio::test]
+async fn injected_clock_drives_shared_budget_timeouts_and_persisted_trace() {
+    use super::{clock::Clock, runtime::SnippetPage};
+    use os_model::{ManualClock, Timestamp};
+    use std::sync::{
+        atomic::{AtomicUsize, Ordering},
+        Mutex,
+    };
+    struct TestClock {
+        time: ManualClock,
+        waits: Mutex<Vec<Duration>>,
+    }
+    impl Clock for TestClock {
+        fn now(&self) -> Duration {
+            os_model::Clock::monotonic(&self.time)
+        }
+        async fn sleep(&self, duration: Duration) {
+            self.waits.lock().unwrap().push(duration);
+            self.time.advance(duration);
+        }
+    }
+    struct TestPage<'a> {
+        clock: &'a TestClock,
+        calls: AtomicUsize,
+        terminated: AtomicUsize,
+        stopped: Mutex<Vec<Duration>>,
+        pending_actions: bool,
+    }
+    impl SnippetPage for TestPage<'_> {
+        fn target(&self) -> String {
+            "fixture-page".into()
+        }
+        async fn stop_loading(&self) -> Result<(), crate::RenderError> {
+            self.stopped.lock().unwrap().push(self.clock.now());
+            Ok(())
+        }
+        async fn terminate(&self) -> Result<(), crate::RenderError> {
+            self.terminated.fetch_add(1, Ordering::SeqCst);
+            Ok(())
+        }
+        async fn evaluate(&self, source: String) -> Result<serde_json::Value, String> {
+            let (marker, seconds) = match self.calls.fetch_add(1, Ordering::SeqCst) {
+                0 => ("first", 1),
+                1 => ("second", 2),
+                2 => {
+                    assert!(source.contains("pending"));
+                    return std::future::pending().await;
+                }
+                3 => ("after", 1),
+                _ => panic!("unexpected evaluation"),
+            };
+            assert!(source.contains(marker));
+            if self.pending_actions && marker != "after" {
+                return std::future::pending().await;
+            }
+            self.clock.time.advance(Duration::from_secs(seconds));
+            Ok(serde_json::json!({"values":[marker], "error":null}))
+        }
+    }
+    let mut cfg = config();
+    cfg.custom_js = serde_json::from_str(include_str!(
+        "../../../../tests/fixtures/integ-custom-js/timing.json"
+    ))
+    .unwrap();
+    cfg.rendering.page_timeout_s = 4;
+    let opts = options(&cfg).snippets;
+    assert_eq!(opts.page_budget_ms(1000), 15_000); // 1 + max(3,8) + 4 + 2.
+    let clock = TestClock {
+        time: ManualClock::new(Timestamp::UNIX_EPOCH),
+        waits: Mutex::default(),
+    };
+    let page = TestPage {
+        clock: &clock,
+        calls: AtomicUsize::new(0),
+        terminated: AtomicUsize::new(0),
+        stopped: Mutex::default(),
+        pending_actions: false,
+    };
+    let results = runtime::execute(&page, &opts, &clock).await.unwrap();
+    assert_eq!(
+        results
+            .iter()
+            .map(|r| (r.def_index, r.started_us, r.finished_us))
+            .collect::<Vec<_>>(),
+        [
+            (1, 0, 1_000_000),
+            (2, 1_000_001, 3_000_000),
+            (0, 8_000_000, 12_000_000),
+            (3, 12_000_001, 13_000_000),
+        ]
+    );
+    assert_eq!(
+        *clock.waits.lock().unwrap(),
+        [Duration::from_secs(5), Duration::from_secs(4)]
+    );
+    assert_eq!(*page.stopped.lock().unwrap(), [Duration::from_secs(8)]);
+    assert_eq!(page.terminated.load(Ordering::SeqCst), 1);
+    assert_eq!(results[2].error.as_deref(), Some("Timeout"));
+    assert_eq!(results[3].values, [Some("after".into())]);
+    let trace = trace(UrlId(1), &results);
+    assert_eq!(trace[0].value, Value::Int(4));
+    assert_eq!(trace[1].value, Value::Text("[[1,true,0,1000000,null],[2,true,1000001,3000000,null],[0,false,8000000,12000000,\"Timeout\"],[3,false,12000001,13000000,null]]".into()));
+    assert!(!opts.blocks_resource("fixture-page", "Image"));
+
+    // Hanging actions share the same deadline: first 3 s, then only the
+    // remaining 5 s of the second action's 8 s window, never another 8 s.
+    let clock = TestClock {
+        time: ManualClock::new(Timestamp::UNIX_EPOCH),
+        waits: Mutex::default(),
+    };
+    let page = TestPage {
+        clock: &clock,
+        calls: AtomicUsize::new(0),
+        terminated: AtomicUsize::new(0),
+        stopped: Mutex::default(),
+        pending_actions: true,
+    };
+    let results = runtime::execute(&page, &opts, &clock).await.unwrap();
+    assert_eq!(results[0].finished_us, 3_000_000);
+    assert_eq!(results[1].finished_us, 8_000_000);
+    assert_eq!(results[2].finished_us, 12_000_000);
+    assert!(results[..3]
+        .iter()
+        .all(|r| r.error.as_deref() == Some("Timeout")));
+    assert_eq!(page.terminated.load(Ordering::SeqCst), 3);
+    assert_eq!(
+        *clock.waits.lock().unwrap(),
+        [
+            Duration::from_secs(3),
+            Duration::from_secs(5),
+            Duration::ZERO,
+            Duration::from_secs(4)
+        ]
+    );
+    assert_eq!(*page.stopped.lock().unwrap(), [Duration::from_secs(8)]);
+    assert_eq!(results[3].values, [Some("after".into())]);
 }

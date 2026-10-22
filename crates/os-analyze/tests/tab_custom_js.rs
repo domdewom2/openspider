@@ -304,3 +304,116 @@ async fn renderer_overrides_receive_the_same_additional_action_budget() {
         .unwrap();
     assert_eq!(executed, 1); // A one-second parent deadline must allow this three-second action.
 }
+
+// spec: INTEG-060
+// spec: INTEG-061
+// spec: INTEG-071
+#[test]
+fn colliding_names_keep_all_filter_and_both_tabs_value_and_error_columns_distinct() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("collisions.ospider");
+    let file = fixture::create(&path);
+    let mut cfg = file.config().unwrap();
+    cfg.custom_js = serde_json::from_str(include_str!(
+        "../../../tests/fixtures/integ-custom-js/collisions.json"
+    ))
+    .unwrap();
+    cfg.custom_extraction.extractors = vec![os_model::Extractor {
+        name: "shared".into(),
+        ..Default::default()
+    }];
+    file.set_config_with_clock(
+        &cfg,
+        &os_model::ManualClock::new(os_model::Timestamp::UNIX_EPOCH),
+    )
+    .unwrap();
+    file.conn()
+        .execute("DELETE FROM custom_js_values", [])
+        .unwrap();
+    for i in 0..8 {
+        file.conn().execute(
+            "INSERT INTO custom_js_values(url_id,def_index,number,value,error) VALUES (1,?1,0,?2,?3)",
+            (i, format!("value-{i}"), format!("error-{i}")),
+        ).unwrap();
+    }
+    let names = [
+        "All (JavaScript 1)",
+        "Address (JavaScript 1)",
+        "x",
+        "x Error (JavaScript 1)",
+        "x 1 (JavaScript 1)",
+        "Title 1 (JavaScript 1)",
+        "shared (JavaScript 1)",
+        "All (JavaScript 1) (JavaScript 1)",
+    ];
+    let configured = tabs::configured(&cfg);
+    let tab = configured
+        .iter()
+        .find(|t| t.id == "Custom JavaScript")
+        .unwrap();
+    assert_eq!(
+        tab.filters.iter().map(|f| f.id).collect::<Vec<_>>(),
+        std::iter::once("All")
+            .chain(names.iter().copied())
+            .collect::<Vec<_>>()
+    );
+    let all = views::query_view(&file, &cfg, &ViewQuery::new("Custom JavaScript", "All")).unwrap();
+    assert_eq!(all.total, 3); // Only one URL executed snippets; All must retain the whole population.
+    assert_eq!(all.columns.len(), 20); // Four base columns + eight distinct pairs, no action.
+    assert_eq!(
+        all.columns
+            .iter()
+            .collect::<std::collections::HashSet<_>>()
+            .len(),
+        20
+    );
+    for (i, name) in names.iter().enumerate() {
+        let filtered =
+            views::query_view(&file, &cfg, &ViewQuery::new("Custom JavaScript", *name)).unwrap();
+        assert_eq!(filtered.total, 1);
+        assert_eq!(
+            &filtered.columns[4..],
+            [format!("{name} 1"), format!("{name} Error")]
+        );
+        assert_eq!(
+            &filtered.rows[0][4..],
+            [
+                Value::Text(format!("value-{i}")),
+                Value::Text(format!("error-{i}"))
+            ]
+        );
+        for tab in ["Custom JavaScript", "Internal"] {
+            // Test both the multi-column base key and its numbered projection.
+            for value_key in [name.to_string(), format!("{name} 1")] {
+                let mut query = ViewQuery::new(tab, "All");
+                query.columns = ColumnSelection::Named(vec![
+                    "Address".into(),
+                    value_key,
+                    format!("{name} Error"),
+                ]);
+                let page = views::query_view(&file, &cfg, &query).unwrap();
+                let row = page
+                    .rows
+                    .iter()
+                    .find(|r| r[0] == Value::Text("https://extract.test/a".into()))
+                    .unwrap();
+                assert_eq!(
+                    &row[1..],
+                    [
+                        Value::Text(format!("value-{i}")),
+                        Value::Text(format!("error-{i}"))
+                    ],
+                    "{tab}: {name}"
+                );
+            }
+        }
+    }
+    drop(file);
+    let reopened = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
+    let cfg = reopened.config().unwrap();
+    assert_eq!(cfg.custom_js.snippets[0].name, "All"); // No silent config rewrite.
+    let restored =
+        views::query_view(&reopened, &cfg, &ViewQuery::new("Custom JavaScript", "All")).unwrap();
+    assert_eq!(restored.columns, all.columns);
+    assert_eq!(restored.rows, all.rows);
+}

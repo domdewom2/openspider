@@ -1,0 +1,265 @@
+{
+  "package": "M2-D22",
+  "base_commit": "abfd2d62",
+  "branch": "m2/d22",
+  "platform": {
+    "os": "macOS",
+    "version": "26.3",
+    "arch": "arm64",
+    "cloud": false
+  },
+  "tools": {
+    "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+    "cargo": "cargo 1.99.1 (5f94df478 2026-08-27)",
+    "node": "v22.20.0",
+    "npm": "10.9.3"
+  },
+  "rust_profile": {
+    "incremental": false,
+    "dev_debug": 0,
+    "test_debug": 0,
+    "dev_strip": "debuginfo",
+    "test_strip": "debuginfo",
+    "dev_opt_level": 1,
+    "test_opt_level": 1,
+    "debug_assertions": true,
+    "overflow_checks": true
+  },
+  "target_size": "19 GiB (du -sh, rounded)",
+  "mandatory_checks_green": true,
+  "runs": {
+    "npm-ci": {
+      "run_id": "d22-local-npm-ci-2026-10-22T09:26:57.014415+00:00",
+      "command": [
+        "npm",
+        "ci"
+      ],
+      "completed_utc": "2026-10-22T09:26:57.014415+00:00",
+      "exit_code": 0,
+      "log_sha256": "7ef5e78efd26a10411fd0ffe498cd2f09d517239dfe40509ea4d0830a6c047e7"
+    },
+    "typecheck": {
+      "run_id": "d22-local-typecheck-2026-10-22T09:29:01.213847+00:00",
+      "command": [
+        "npm",
+        "run",
+        "-w",
+        "apps/desktop",
+        "typecheck"
+      ],
+      "completed_utc": "2026-10-22T09:29:01.213847+00:00",
+      "exit_code": 0,
+      "log_sha256": "3a6565aa94beb8731c9fde17f4daf3ba03dd39b6b05cec01ff0ccbdbbac97556"
+    },
+    "vitest": {
+      "run_id": "d22-local-vitest-2026-10-22T09:30:06.269373+00:00",
+      "command": [
+        "npm",
+        "run",
+        "-w",
+        "apps/desktop",
+        "test"
+      ],
+      "completed_utc": "2026-10-22T09:30:06.269373+00:00",
+      "exit_code": 0,
+      "log_sha256": "e3cb5fafe68c992f6dc2f42f52290e8ab1ad8c2ba51e5d9056b6f93088997a33"
+    },
+    "static": {
+      "run_id": "d22-local-static-2026-10-22T09:30:11.046376+00:00",
+      "command": [
+        "npm",
+        "run",
+        "-w",
+        "apps/desktop",
+        "check:static"
+      ],
+      "completed_utc": "2026-10-22T09:30:11.046376+00:00",
+      "exit_code": 0,
+      "log_sha256": "ead74514280385560daf7093d80c7937762efee4c17a3b20d61244ee8fbb966c"
+    },
+    "npm-licenses": {
+      "run_id": "d22-local-npm-licenses-2026-10-22T09:30:58.059896+00:00",
+      "command": [
+        "npm",
+        "run",
+        "-w",
+        "apps/desktop",
+        "check:licenses"
+      ],
+      "completed_utc": "2026-10-22T09:30:58.059896+00:00",
+      "exit_code": 0,
+      "log_sha256": "1577094719c1f8246a3b1a8aeb2419cf6cbd3b550e2c59cac90f6cb6869ccd4e"
+    },
+    "deny": {
+      "run_id": "d22-local-deny-2026-10-22T09:30:59.753475+00:00",
+      "command": [
+        "cargo",
+        "deny",
+        "check",
+        "licenses",
+        "bans",
+        "sources"
+      ],
+      "completed_utc": "2026-10-22T09:30:59.753475+00:00",
+      "exit_code": 0,
+      "log_sha256": "ab7cef29173fdf82a6216696e3ee1f740bd811bb216073aa721e7283160a0334"
+    },
+    "neutral": {
+      "run_id": "d22-local-neutral-2026-10-22T09:30:58.218627+00:00",
+      "command": [
+        "scripts/check-neutral.sh"
+      ],
+      "completed_utc": "2026-10-22T09:30:58.218627+00:00",
+      "exit_code": 0,
+      "log_sha256": "2e5a6dd4a934c4adaebc867e2ab85e12a8b03374ec529702949772215717d8c4"
+    },
+    "clippy": {
+      "run_id": "d22-local-clippy-2026-10-22T09:31:13.244600+00:00",
+      "command": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "completed_utc": "2026-10-22T09:31:13.244600+00:00",
+      "exit_code": 0,
+      "log_sha256": "9837de29770251fc0a4fd0eb25adcebd5a4c8743e7cc9d4f07f061e352270b0d"
+    },
+    "fmt": {
+      "run_id": "d22-local-fmt-2026-10-22T09:33:26.648441+00:00",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "start_utc": "2026-10-22T09:33:26.648441+00:00",
+      "duration_s": 6.48,
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "rust-tests": {
+      "run_id": "d22-local-rust-tests-2026-10-22T09:31:31.741165+00:00",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace"
+      ],
+      "start_utc": "2026-10-22T09:31:31.741165+00:00",
+      "duration_s": 1942.78,
+      "exit_code": 0,
+      "log_sha256": "98f853d8874200f9b9cc6bd0fe9cd298f4b8b4e88934b99d5a1c45279c6a351e"
+    },
+    "bridge-build": {
+      "run_id": "d22-local-bridge-build-2026-10-22T09:37:59.179456+00:00",
+      "command": [
+        "cargo",
+        "build",
+        "-p",
+        "os-app",
+        "--features",
+        "e2e-bridge",
+        "--bin",
+        "os-app-bridge"
+      ],
+      "start_utc": "2026-10-22T09:37:59.179456+00:00",
+      "duration_s": 423.83,
+      "exit_code": 0,
+      "log_sha256": "c81f4bfad1c71d7813442f72496c97ad7df12b3f68a8af643c4e5eeb4d816021"
+    },
+    "e2e": {
+      "run_id": "d22-local-e2e-2026-10-22T09:46:20.821584+00:00",
+      "command": [
+        "npm",
+        "run",
+        "-w",
+        "apps/desktop",
+        "e2e",
+        "--",
+        "--project=chromium",
+        "--project=webkit"
+      ],
+      "start_utc": "2026-10-22T09:46:20.821584+00:00",
+      "duration_s": 542.24,
+      "exit_code": 1,
+      "log_sha256": "bf89d3224bf40ad396c609b98353c0569e7b2d15bd7b56611fa179422b87f31f"
+    },
+    "e2e-recheck": {
+      "run_id": "d22-local-e2e-recheck-2026-10-22T09:56:24.942647+00:00",
+      "command": [
+        "npm",
+        "run",
+        "-w",
+        "apps/desktop",
+        "e2e",
+        "--",
+        "--project=chromium",
+        "--project=webkit",
+        "--last-failed",
+        "--workers=1"
+      ],
+      "start_utc": "2026-10-22T09:56:24.942647+00:00",
+      "duration_s": 20.52,
+      "exit_code": 1,
+      "log_sha256": "36569a8ce9543a7f6eec69461d3fdba63635b91a53987809526071a37a97e6a4"
+    }
+  },
+  "results": {
+    "rust": {
+      "programs": 479,
+      "passed": 3617,
+      "failed": 0,
+      "ignored": 64,
+      "program_duration_sum_s": 946.48
+    },
+    "vitest": {
+      "files": 72,
+      "passed": 711
+    },
+    "static": {
+      "files": 2,
+      "passed": 28
+    },
+    "e2e": {
+      "passed": 592,
+      "failed": 2,
+      "skipped": 24,
+      "workers": 4
+    },
+    "e2e_recheck": {
+      "passed": 1,
+      "failed": 1,
+      "workers": 1,
+      "remaining_failure": "chromium e2e/mcp/dialog.spec.ts:58 (AGENT-002, M2-U25)"
+    }
+  },
+  "c4_complete": false,
+  "ci_matrix": {
+    "run_id": null,
+    "status": "not_run: user forbids push/PR; no CI evidence for final commit",
+    "required": [
+      "macos-arm64",
+      "macos-x64",
+      "windows-x64",
+      "linux-core"
+    ]
+  },
+  "diagnostics": [
+    "npm ci exited 0 with engine warnings for four existing locked dependencies under Node 22.20.0; manifests unchanged.",
+    "E2E logs include environment colour warnings and missing translation warnings in unchanged frontend code.",
+    "Full E2E-A exited 1; targeted single-worker recheck still fails on MCP Escape. No foreign test expectations changed."
+  ],
+  "validated_code_sha256": {
+    "crates/os-analyze/src/tabs/custom_js.rs": "4f087716b0306fd2ba4f9700b0c97196e00dfaa38fec34c696124c5bb5698e8c",
+    "crates/os-analyze/tests/tab_custom_js.rs": "6d93c6e3d1e36cb014aacedb4153b8ee4aa95d8a65fcbfe6a7f4a3193a1966c1",
+    "crates/os-render/src/snippets/clock.rs": "750c60e12f16787eda940654233c82d082c75692283c3fd2412a76c6b7c7375a",
+    "crates/os-render/src/snippets/mod.rs": "589dc94e8500e0626feac9e627b247d9a39851334cb4ad2f6d6161bada45da57",
+    "crates/os-render/src/snippets/runtime.rs": "b2df9c172f9a541fbc9a927340205184392951588f17bbb508a553cef0374c1a",
+    "crates/os-render/src/snippets/tests.rs": "7b2abc83f80f03fba68372d14518989dca13bb210985ff6d79791e5498488940",
+    "tests/fixtures/integ-custom-js/collisions.json": "163b2ed986afa197d03c1321caea6642692f89a90b483ac426befb3939588038",
+    "tests/fixtures/integ-custom-js/timing.json": "88b947613eef515cb21ae37a7fe448f8fc462a661e77f733ea6ae8047cfce757"
+  }
+}

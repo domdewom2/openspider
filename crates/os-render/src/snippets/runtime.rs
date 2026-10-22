@@ -6,7 +6,9 @@ use chromiumoxide::{
 };
 use os_model::JsSnippetKind;
 use serde_json::Value;
-use std::time::{Duration, Instant};
+use std::{future::Future, time::Duration};
+
+use super::clock::{Clock, TokioClock};
 
 // data/error carry a closure-private identity; arbitrary returned objects remain data.
 const WRAPPER: &str = include_str!("runtime.js");
@@ -14,12 +16,60 @@ const WRAPPER: &str = include_str!("runtime.js");
 /// Actions run first in table order, with a shared wait equal to the largest
 /// action timeout. Extractions then run sequentially against that DOM.
 pub async fn run(page: &Page, opts: &RunOptions) -> Result<Vec<SnippetResult>, RenderError> {
+    execute(page, opts, &TokioClock::default()).await
+}
+
+// The scheduler depends on an injected clock and browser operations, so budget
+// boundaries and the persisted trace can be tested without a live browser.
+pub(super) trait SnippetPage: Sync {
+    fn stop_loading(&self) -> impl Future<Output = Result<(), RenderError>> + Send;
+    fn evaluate(&self, source: String) -> impl Future<Output = Result<Value, String>> + Send;
+    fn terminate(&self) -> impl Future<Output = Result<(), RenderError>> + Send;
+    fn target(&self) -> String;
+}
+impl SnippetPage for Page {
+    async fn stop_loading(&self) -> Result<(), RenderError> {
+        self.execute(chromiumoxide::cdp::browser_protocol::page::StopLoadingParams::default())
+            .await
+            .map(|_| ())
+            .map_err(|e| RenderError::Protocol(e.to_string()))
+    }
+    async fn evaluate(&self, source: String) -> Result<Value, String> {
+        self.evaluate_expression(
+            EvaluateParams::builder()
+                .expression(source)
+                .await_promise(true)
+                .return_by_value(true)
+                .build()
+                .map_err(|e| e.to_string())?,
+        )
+        .await
+        .map_err(|e| e.to_string())?
+        .into_value::<Value>()
+        .map_err(|e| e.to_string())
+    }
+    async fn terminate(&self) -> Result<(), RenderError> {
+        self.execute(TerminateExecutionParams::default())
+            .await
+            .map(|_| ())
+            .map_err(|e| RenderError::Protocol(e.to_string()))
+    }
+    fn target(&self) -> String {
+        self.target_id().as_ref().to_owned()
+    }
+}
+
+pub(super) async fn execute(
+    page: &impl SnippetPage,
+    opts: &RunOptions,
+    clock: &impl Clock,
+) -> Result<Vec<SnippetResult>, RenderError> {
     if opts.snippets.is_empty() {
         return Ok(Vec::new());
     }
-    let epoch = Instant::now();
+    let epoch = clock.now();
     let mut results = Vec::new();
-    let actions_started = Instant::now();
+    let actions_started = epoch;
     let wait = opts
         .snippets
         .iter()
@@ -36,12 +86,13 @@ pub async fn run(page: &Page, opts: &RunOptions) -> Result<Vec<SnippetResult>, R
                 .remove(&self.1);
         }
     }
-    let target = page.target_id().as_ref().to_owned();
+    let target = page.target();
     let _guard = ExtractionGuard(opts.extracting.clone(), target.clone());
     for action in [true, false] {
         if !action {
-            let remaining = Duration::from_secs(wait).saturating_sub(actions_started.elapsed());
-            tokio::time::sleep(remaining).await;
+            let remaining = Duration::from_secs(wait)
+                .saturating_sub(clock.now().saturating_sub(actions_started));
+            clock.sleep(remaining).await;
             if !opts
                 .snippets
                 .iter()
@@ -54,15 +105,13 @@ pub async fn run(page: &Page, opts: &RunOptions) -> Result<Vec<SnippetResult>, R
                 .unwrap_or_else(|e| e.into_inner())
                 .insert(target.clone());
             // Cancel unfinished passive loads before evaluating the extraction.
-            page.execute(chromiumoxide::cdp::browser_protocol::page::StopLoadingParams::default())
-                .await
-                .map_err(|e| RenderError::Protocol(e.to_string()))?;
+            page.stop_loading().await?;
         }
         for (index, snippet) in &opts.snippets {
             if (snippet.kind == JsSnippetKind::Action) != action {
                 continue;
             }
-            let started_us = (epoch.elapsed().as_micros() as u64).max(
+            let started_us = (clock.now().saturating_sub(epoch).as_micros() as u64).max(
                 results
                     .last()
                     .map_or(0, |r: &SnippetResult| r.finished_us.saturating_add(1)),
@@ -75,7 +124,7 @@ pub async fn run(page: &Page, opts: &RunOptions) -> Result<Vec<SnippetResult>, R
             let timeout_ms = if action {
                 timeout_ms.min(
                     Duration::from_secs(wait)
-                        .saturating_sub(actions_started.elapsed())
+                        .saturating_sub(clock.now().saturating_sub(actions_started))
                         .as_millis() as u32,
                 )
             } else {
@@ -84,27 +133,13 @@ pub async fn run(page: &Page, opts: &RunOptions) -> Result<Vec<SnippetResult>, R
             let source = WRAPPER
                 .replace("/* ACTION */", if action { "true" } else { "false" })
                 .replace("/* USER_CODE */", &snippet.code);
-            let evaluate = async {
-                page.evaluate_expression(
-                    EvaluateParams::builder()
-                        .expression(source)
-                        .await_promise(true)
-                        .return_by_value(true)
-                        .build()
-                        .map_err(|e| e.to_string())?,
-                )
-                .await
-                .map_err(|e| e.to_string())?
-                .into_value::<Value>()
-                .map_err(|e| e.to_string())
+            let evaluated = tokio::select! {
+                biased;
+                value = page.evaluate(source) => Some(value),
+                () = clock.sleep(Duration::from_millis(timeout_ms.into())) => None,
             };
-            let (values, error) = match tokio::time::timeout(
-                Duration::from_millis(timeout_ms.into()),
-                evaluate,
-            )
-            .await
-            {
-                Ok(Ok(value)) => {
+            let (values, error) = match evaluated {
+                Some(Ok(value)) => {
                     let error = value["error"].as_str().map(str::to_owned);
                     let values = value["values"]
                         .as_array()
@@ -114,16 +149,15 @@ pub async fn run(page: &Page, opts: &RunOptions) -> Result<Vec<SnippetResult>, R
                         .collect();
                     (values, error)
                 }
-                Ok(Err(error)) => (Vec::new(), Some(error)),
-                Err(_) => {
+                Some(Err(error)) => (Vec::new(), Some(error)),
+                None => {
                     // Unlike a Promise.race in the page this stops synchronous loops.
-                    tokio::time::timeout(
-                        Duration::from_secs(2),
-                        page.execute(TerminateExecutionParams::default()),
-                    )
-                    .await
-                    .map_err(|_| RenderError::Timeout("Snippet termination".into()))?
-                    .map_err(|e| RenderError::Protocol(e.to_string()))?;
+                    tokio::select! {
+                        biased;
+                        result = page.terminate() => result?,
+                        () = clock.sleep(Duration::from_secs(2)) =>
+                            return Err(RenderError::Timeout("Snippet termination".into())),
+                    }
                     (Vec::new(), Some("Timeout".into()))
                 }
             };
@@ -133,7 +167,7 @@ pub async fn run(page: &Page, opts: &RunOptions) -> Result<Vec<SnippetResult>, R
                 values: if action { Vec::new() } else { values },
                 error,
                 started_us,
-                finished_us: (epoch.elapsed().as_micros() as u64).max(started_us),
+                finished_us: (clock.now().saturating_sub(epoch).as_micros() as u64).max(started_us),
             });
         }
     }

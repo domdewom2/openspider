@@ -26,13 +26,72 @@ pub fn tab() -> TabDef {
         params: |_| Vec::new(),
     }
 }
-fn name(cfg: &CrawlConfig, i: usize) -> String {
-    let s = &cfg.custom_js.snippets[i].name;
-    if s.trim().is_empty() {
-        format!("Snippet {}", i + 1)
-    } else {
-        s.trim().to_owned()
+/// Keep ordinary snippet names; disambiguate only view keys. Configuration and
+/// persisted def_index values remain unchanged. Reserve both tabs' column
+/// namespaces, including numbered values, before allocating names in table order.
+fn names(cfg: &CrawlConfig) -> Vec<(usize, &'static str)> {
+    if !cfg
+        .custom_js
+        .snippets
+        .iter()
+        .take(100)
+        .any(|s| s.kind == JsSnippetKind::Extraction)
+    {
+        return Vec::new();
     }
+    let mut without_js = cfg.clone();
+    without_js.custom_js.snippets.clear();
+    let mut reserved = super::internal::tab();
+    reserved
+        .columns
+        .extend(super::dynamic_columns("Internal", &without_js));
+    reserved.columns.extend(tab().columns);
+    reserved.columns.extend(crate::segments::columns(cfg));
+    let mut out = Vec::new();
+    for (i, snippet) in cfg.custom_js.snippets.iter().take(100).enumerate() {
+        if snippet.kind != JsSnippetKind::Extraction {
+            continue;
+        }
+        let original = if snippet.name.trim().is_empty() {
+            format!("Snippet {}", i + 1)
+        } else {
+            snippet.name.trim().to_owned()
+        };
+        let mut candidate = original.clone();
+        let mut suffix = 1;
+        loop {
+            let mut proposed = tab();
+            proposed.columns = vec![
+                ColumnDef {
+                    key: intern(&candidate),
+                    sql: ColumnSql::MultiCrawlWide {
+                        base: intern(&candidate),
+                        list_sql: "",
+                    },
+                    ..ColumnDef::META
+                },
+                ColumnDef::dynamic(
+                    &format!("{candidate} Error"),
+                    "NULL",
+                    ColumnKind::Text,
+                    true,
+                ),
+            ];
+            let resolves = crate::views::column_name_resolves;
+            let collision = candidate.eq_ignore_ascii_case("All")
+                || candidate == "<Snippetname> (je Extraktions-Snippet, dynamisch)"
+                || proposed.columns.iter().any(|c| resolves(&reserved, c.key))
+                || reserved.columns.iter().any(|c| resolves(&proposed, c.key));
+            if !collision {
+                out.push((i, intern(&candidate)));
+                reserved.columns.extend(proposed.columns);
+                break;
+            }
+            candidate = format!("{original} (JavaScript {suffix})");
+            suffix += 1;
+        }
+    }
+    out
 }
 struct JsColumns {
     internal: bool,
@@ -40,11 +99,7 @@ struct JsColumns {
 impl ColumnSource for JsColumns {
     fn columns(&self, cfg: &CrawlConfig) -> Vec<ColumnDef> {
         let mut columns = Vec::new();
-        for (i, snippet) in cfg.custom_js.snippets.iter().take(100).enumerate() {
-            if snippet.kind != JsSnippetKind::Extraction {
-                continue;
-            }
-            let name = intern(&name(cfg, i));
+        for (i, name) in names(cfg) {
             columns.push(ColumnDef {
                 key: name,
                 sql: ColumnSql::MultiCrawlWide { base: name, list_sql: intern(&format!(
@@ -62,9 +117,7 @@ impl ColumnSource for JsColumns {
         if self.internal {
             return Vec::new();
         }
-        cfg.custom_js.snippets.iter().take(100).enumerate()
-            .filter(|(_, s)| s.kind == JsSnippetKind::Extraction).map(|(i, _)| {
-                let name = intern(&name(cfg, i));
+        names(cfg).into_iter().map(|(i, name)| {
                 FilterDef {
                     id: name, predicate: intern(&format!(
                         "EXISTS (SELECT 1 FROM custom_js_values j WHERE j.url_id = u.id AND j.def_index = {i})"
