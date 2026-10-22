@@ -207,7 +207,11 @@ async fn api_sources_comparison_and_notification_are_handed_to_the_hooks_after_t
         .await;
     assert_eq!(run.exit.code(), 0, "{}", run.summary);
     let record = run.record.unwrap();
-    assert!(common::is_completed(&record), "{record:?}");
+    assert_eq!(
+        record.result,
+        RunResult::CompletedWithWarnings,
+        "{record:?}"
+    );
     assert_eq!(
         calls.apis.lock().unwrap().as_slice(),
         [(vec!["gsc".to_string(), "psi".to_string()], true)]
@@ -215,7 +219,7 @@ async fn api_sources_comparison_and_notification_are_handed_to_the_hooks_after_t
     assert_eq!(*calls.compare.lock().unwrap(), 1);
     let notified = calls.notified.lock().unwrap();
     assert_eq!(notified.len(), 1);
-    assert!(common::is_completed(&notified[0]));
+    assert_eq!(notified[0].result, RunResult::CompletedWithWarnings);
     assert_eq!(notified[0].run_id, record.run_id);
 }
 
@@ -242,7 +246,7 @@ async fn without_extensions_requested_apis_end_as_completed_with_warnings_and_ex
         record
             .warnings
             .iter()
-            .any(|w| w.contains("API source 'gsc'")),
+            .any(|w| w.contains("gsc: Konto Standard nicht verbunden")),
         "{:?}",
         record.warnings
     );
