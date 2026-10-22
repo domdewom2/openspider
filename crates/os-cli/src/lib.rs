@@ -24,6 +24,8 @@ pub mod registry;
 pub mod reporter;
 pub mod run_task;
 pub mod signals;
+mod staging;
+pub mod xls;
 
 use std::ffi::OsString;
 use std::io::Write;

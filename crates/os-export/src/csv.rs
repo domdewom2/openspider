@@ -234,6 +234,29 @@ pub(crate) fn timestamp_export(v: &Value, offset: Option<UtcOffset>) -> Option<S
     }
 }
 
+/// An owned, streaming table reader for alternate export targets.
+pub type CsvRows = Box<dyn Iterator<Item = Result<Vec<String>, ExportError>> + Send>;
+
+/// Reads a staged CSV table without collecting its rows (CLI target adapters, OUT-195).
+/// Owns the file, so consumers can stream rows across asynchronous upload boundaries.
+pub fn read_table(path: &Path) -> Result<(Vec<String>, CsvRows), ExportError> {
+    let mut reader = csv::ReaderBuilder::new()
+        .flexible(true)
+        .from_path(fs_paths::fs_path(path))
+        .map_err(|e| ExportError::Write(e.to_string()))?;
+    let header = reader
+        .headers()
+        .map_err(|e| ExportError::Write(e.to_string()))?
+        .iter()
+        .map(str::to_owned)
+        .collect();
+    let rows = reader.into_records().map(|row| {
+        row.map(|r| r.iter().map(str::to_owned).collect())
+            .map_err(|e| ExportError::Write(e.to_string()))
+    });
+    Ok((header, Box::new(rows)))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
