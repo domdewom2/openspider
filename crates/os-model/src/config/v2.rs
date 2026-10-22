@@ -252,7 +252,7 @@ impl Default for JsSnippet {
             name: String::new(),
             kind: JsSnippetKind::Extraction,
             content_types: vec!["text/html".to_string()],
-            timeout_s: 10,
+            timeout_s: 0,
             code: String::new(),
         }
     }
