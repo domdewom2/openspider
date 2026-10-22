@@ -151,7 +151,17 @@ pub(crate) fn open_crawl(ctx: &ToolContext, args: &Json) -> Result<OpenCrawl, To
             "crawl_id \"{raw}\" ist keine Crawl-Kennung (UUID). Die Kennungen liefert list_crawls."
         ))
     })?;
-    let Some(path) = registry::find(&ctx.crawl_dir, &id) else {
+    let Some(path) = ctx
+        .session
+        .as_ref()
+        .and_then(|s| {
+            s.crawls()
+                .into_iter()
+                .find(|c| c.crawl_id == raw)
+                .map(|c| c.file)
+        })
+        .or_else(|| registry::find(&ctx.crawl_dir, &id))
+    else {
         return Err(unknown_crawl(ctx, raw));
     };
     let file = CrawlFile::open(&path, OpenMode::ReadOnly).map_err(internal)?;

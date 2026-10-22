@@ -25,4 +25,10 @@ pub use tool::{Tool, ToolClass, ToolContext, ToolError, ToolOutput};
 mod crawl_service;
 pub mod http;
 pub mod prompts;
-mod target;
+pub mod target;
+
+pub mod audit;
+
+pub mod client_config;
+
+pub mod render_guard;

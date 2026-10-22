@@ -54,6 +54,8 @@ impl std::fmt::Debug for Credentials {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LaunchOpts {
+    /// MCP gateway mode: disable network paths that bypass the mandatory proxy.
+    pub protected_network: bool,
     pub chromium_path: Option<PathBuf>,
     pub headless: bool,
     pub user_data_dir: Option<PathBuf>,
@@ -77,6 +79,7 @@ pub struct LaunchOpts {
 impl Default for LaunchOpts {
     fn default() -> Self {
         Self {
+            protected_network: false,
             chromium_path: None,
             headless: true,
             user_data_dir: None,

@@ -61,8 +61,9 @@ pub struct McpServer {
 
 struct Inner {
     tools: Vec<Arc<dyn Tool>>,
-    permissions: Permissions,
+    permissions: std::sync::RwLock<Permissions>,
     ctx: ToolContext,
+    log: crate::audit::CallLog,
 }
 
 impl McpServer {
@@ -80,15 +81,27 @@ impl McpServer {
         McpServer {
             inner: Arc::new(Inner {
                 tools,
-                permissions,
+                permissions: std::sync::RwLock::new(permissions),
                 ctx,
+                log: crate::audit::CallLog::default(),
             }),
         }
     }
 
     /// Die Freigaben dieses Servers.
-    pub fn permissions(&self) -> &Permissions {
-        &self.inner.permissions
+    pub fn permissions(&self) -> Permissions {
+        self.inner
+            .permissions
+            .read()
+            .unwrap_or_else(|p| p.into_inner())
+            .clone()
+    }
+    pub fn set_permissions(&self, permissions: Permissions) {
+        *self
+            .inner
+            .permissions
+            .write()
+            .unwrap_or_else(|p| p.into_inner()) = permissions;
     }
 
     /// Namen der freigegebenen Werkzeuge in Registrierungsreihenfolge (Inhalt von `tools/list`).
@@ -100,9 +113,23 @@ impl McpServer {
         self.inner
             .tools
             .iter()
-            .filter(|t| self.inner.permissions.access(t.as_ref()) == Access::Allowed)
+            .filter(|t| self.permissions().access(t.as_ref()) == Access::Allowed)
     }
 
+    /// Local UI catalogue includes disabled tools so they can be enabled again.
+    pub fn catalog(&self) -> Vec<(McpTool, ToolClass, bool)> {
+        self.inner
+            .tools
+            .iter()
+            .map(|t| {
+                (
+                    describe(t.as_ref()),
+                    t.class(),
+                    self.permissions().access(t.as_ref()) == Access::Allowed,
+                )
+            })
+            .collect()
+    }
     /// Werkzeugliste für `tools/list`: nur freigegebene Werkzeuge.
     pub fn list(&self) -> Vec<McpTool> {
         self.exposed().map(|t| describe(t.as_ref())).collect()
@@ -110,27 +137,63 @@ impl McpServer {
 
     /// Führt einen Werkzeugaufruf aus (Freigabe, Argumentprüfung, Domain-Liste, Werkzeug, Aufbereitung).
     /// Fehler jeder Art kommen als Werkzeugfehler zurück (siehe Moduldoku).
+    pub fn call_log(&self) -> crate::audit::CallLog {
+        self.inner.log.clone()
+    }
+
     pub async fn call(&self, name: &str, args: Option<Map<String, Value>>) -> CallToolResult {
+        self.call_as(name, args, None).await
+    }
+
+    pub async fn call_as(
+        &self,
+        name: &str,
+        args: Option<Map<String, Value>>,
+        client: Option<String>,
+    ) -> CallToolResult {
+        use os_model::Clock;
+        let at = os_model::SystemClock.now();
+        let started = std::time::Instant::now();
+        let safe = crate::audit::redacted(&json!(args));
+        let result = self.call_inner(name, args).await;
+        let tool = self.inner.tools.iter().find(|t| t.name() == name);
+        self.inner.log.push(crate::audit::CallRecord {
+            at,
+            client: client.map(|s| s.chars().take(128).collect()),
+            tool: tool.map_or("unknown", |t| t.name()).into(),
+            class: tool.map_or("unknown".into(), |t| {
+                format!("{:?}", t.class()).to_ascii_lowercase()
+            }),
+            args: safe,
+            duration_ms: started.elapsed().as_millis().min(u32::MAX as u128) as u32,
+            result_bytes: serde_json::to_vec(&result)
+                .map_or(0, |v| v.len().min(u32::MAX as usize) as u32),
+            ok: result.is_error != Some(true),
+        });
+        result
+    }
+
+    async fn call_inner(&self, name: &str, args: Option<Map<String, Value>>) -> CallToolResult {
         let Some(tool) = self.inner.tools.iter().find(|t| t.name() == name) else {
             let available = self.exposed_tool_names().join(", ");
             return tool_error(format!(
                 "Unbekanntes Werkzeug \"{name}\". Verfügbare Werkzeuge: {available}."
             ));
         };
-        let access = self.inner.permissions.access(tool.as_ref());
+        let access = self.permissions().access(tool.as_ref());
         if access != Access::Allowed {
             tracing::info!(
                 tool = name,
                 "Aufruf eines nicht freigegebenen Werkzeugs abgelehnt"
             );
-            return tool_error(self.inner.permissions.denial_message(name, access));
+            return tool_error(self.permissions().denial_message(name, access));
         }
         let args = Value::Object(args.unwrap_or_default());
         if let Err(e) = paging::validate_args(&args) {
             return tool_error(e.to_string());
         }
         if tool.class() == ToolClass::Crawl {
-            if let Err(msg) = self.inner.permissions.domains().check_args(&args) {
+            if let Err(msg) = self.permissions().domains().check_args(&args) {
                 tracing::info!(
                     tool = name,
                     "Crawl-Ziel außerhalb der erlaubten Domains abgelehnt"
@@ -153,7 +216,8 @@ impl McpServer {
                 Err(e) => return tool_error(format!("Interner Bildwerkzeugfehler: {e}")),
             }
         }
-        let (tool, ctx) = (Arc::clone(tool), self.inner.ctx.clone());
+        let (tool, mut ctx) = (Arc::clone(tool), self.inner.ctx.clone());
+        ctx.target_policy = self.permissions().domains().clone();
         let joined = tokio::task::spawn_blocking(move || tool.call(&ctx, args)).await;
         match joined {
             Ok(Ok(output)) => self.render(output),
@@ -196,7 +260,7 @@ impl McpServer {
 
     /// Wandelt ein Werkzeugergebnis in Antwortblöcke um (Format siehe Moduldoku), kürzt zu lange Antworten.
     pub fn render(&self, output: ToolOutput) -> CallToolResult {
-        let write_enabled = self.inner.permissions.allows_class(ToolClass::Write);
+        let write_enabled = self.permissions().allows_class(ToolClass::Write);
         render_output(output, self.inner.ctx.max_chars, write_enabled)
     }
 }
@@ -338,9 +402,16 @@ impl ServerHandler for McpServer {
     async fn call_tool(
         &self,
         request: CallToolRequestParams,
-        _context: RequestContext<RoleServer>,
+        context: RequestContext<RoleServer>,
     ) -> Result<CallToolResponse, ErrorData> {
-        Ok(self.call(&request.name, request.arguments).await.into())
+        Ok(self
+            .call_as(
+                &request.name,
+                request.arguments,
+                context.peer.peer_info().map(|p| p.client_info.name.clone()),
+            )
+            .await
+            .into())
     }
 
     // Ressourcen gibt es in M1 nicht (Daten kommen über Werkzeuge).

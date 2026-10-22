@@ -61,13 +61,39 @@ impl Tool for ListCrawls {
         let report = super::common::discover(&ctx.crawl_dir).map_err(internal)?;
         // Dateinamen sind UUID v7: aufsteigend = Anlegereihenfolge; neueste zuerst.
         let mut crawls = report.crawls;
+        if let Some(session) = &ctx.session {
+            for c in session.crawls() {
+                if !crawls
+                    .iter()
+                    .any(|r| r.meta.crawl_id.to_string() == c.crawl_id)
+                {
+                    if let Ok(listing) = os_store::registry::read_listing(&c.file) {
+                        crawls.push(listing);
+                    }
+                }
+            }
+            crawls.sort_by_key(|c| c.meta.crawl_id.to_string());
+        }
         crawls.reverse();
         let total = crawls.len() as u64;
         let start = usize::try_from(offset)
             .unwrap_or(usize::MAX)
             .min(crawls.len());
         let end = start.saturating_add(page.limit as usize).min(crawls.len());
-        let entries: Vec<Json> = crawls[start..end].iter().map(entry_json).collect();
+        let entries: Vec<Json> = crawls[start..end]
+            .iter()
+            .map(|listing| {
+                let mut entry = entry_json(listing);
+                if let Some(live) = ctx
+                    .session
+                    .as_ref()
+                    .and_then(|s| s.status(&listing.meta.crawl_id.to_string()))
+                {
+                    entry["state"] = json!(live.state.as_str());
+                }
+                entry
+            })
+            .collect();
         let next_cursor =
             (end < crawls.len()).then(|| paging::encode_cursor(CURSOR_BINDING, end as u64));
 

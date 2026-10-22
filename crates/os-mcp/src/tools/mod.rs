@@ -8,9 +8,11 @@
 //! Zählung, keine eigene Sortierung.
 
 pub mod common;
+pub mod compare_crawls;
 pub mod crawl;
 pub mod crawl_overview;
 pub mod export;
+pub mod link_metrics;
 pub mod list_catalog;
 pub mod list_crawls;
 pub mod list_issues;
@@ -25,6 +27,8 @@ use crate::tool::Tool;
 /// Alle Werkzeuge (nach Freigabe gefiltert durch `permissions`), in der Reihenfolge von `tools/list`.
 pub fn all() -> Vec<Box<dyn Tool>> {
     vec![
+        Box::new(link_metrics::FetchLinkMetrics),
+        Box::new(compare_crawls::CompareCrawls),
         Box::new(list_crawls::ListCrawls),
         Box::new(crawl_overview::CrawlOverview),
         Box::new(query_urls::QueryUrls),
@@ -54,6 +58,8 @@ mod tests {
         assert_eq!(
             names,
             [
+                "fetch_link_metrics",
+                "compare_crawls",
                 "list_crawls",
                 "crawl_overview",
                 "query_urls",
@@ -75,7 +81,7 @@ mod tests {
                 .iter()
                 .filter(|t| t.class() == ToolClass::Read)
                 .count(),
-            9
+            10
         );
         for t in &tools {
             assert_eq!(t.input_schema()["type"], "object", "{}", t.name());

@@ -732,10 +732,24 @@ async fn crawl_dir_defaults_to_the_app_crawl_folder_and_can_be_overridden() {
 
 // spec: AGENT-001 [M2]
 #[test]
-#[ignore = "M2: AGENT-001 App-Konfigurationsschreiben (Klassenfreigabe aus der App speichern, AGENT-043)"]
-fn app_writes_class_settings_through_the_shared_save() {}
-
-// spec: AGENT-003 [M2]
-#[test]
-#[ignore = "M2: AGENT-003 cost-Fall (Kostenschätzung, confirm: true) gegen den PSI-Mock"]
-fn cost_tools_report_an_estimate_and_run_only_with_confirm() {}
+fn app_writes_class_settings_through_the_shared_save() {
+    let home = tempfile::tempdir().unwrap();
+    let path = home.path().join("mcp.toml");
+    let settings = os_mcp::McpSettings {
+        classes: vec![os_mcp::ToolClass::Write],
+        ..Default::default()
+    };
+    os_mcp::settings::save(&path, &settings).unwrap();
+    let loaded = os_mcp::settings::load(&path).unwrap();
+    assert!(
+        os_mcp::permissions::Permissions::resolve(&[], false, &loaded)
+            .unwrap()
+            .allows_class(os_mcp::ToolClass::Write)
+    );
+    assert!(
+        !os_mcp::permissions::Permissions::resolve(&[], true, &loaded)
+            .unwrap()
+            .allows_class(os_mcp::ToolClass::Write)
+    );
+}
+// The real provider confirmation test lives in k17_tools.rs (K2-08: link metrics, not PSI).

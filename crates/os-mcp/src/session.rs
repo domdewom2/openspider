@@ -5,8 +5,7 @@
 //! reicht die App ein Trait-Objekt in den [`crate::ToolContext`]: `ToolContext.session: Option<Arc<dyn SessionAccess>>`.
 //! Der STDIO-Server (`openspider mcp`) hat keine App-Sitzung (`None`); M01 verwaltet eigene Engine-Handles.
 //!
-//! STUB(M2-K17): M2-F02 legt Trait und Typen an; die Umsetzung in der App (und die Werkzeuge, die sie nutzen) liefern
-//! M2-K17 und M2-M01.
+//! M2-F02 defines the transport-independent contract; os-app::mcp supplies the live implementation.
 
 use std::path::PathBuf;
 
@@ -83,6 +82,27 @@ pub enum SessionError {
 
 /// Zugriff auf die Sitzung der App. Die Implementierung liefert `os-app` (K-17).
 pub trait SessionAccess: Send + Sync + std::fmt::Debug {
+    fn current_config(&self) -> Option<os_model::CrawlConfig> {
+        None
+    }
+
+    /// Start with validated safe overrides and the immutable MCP target policy.
+    fn start_configured(
+        &self,
+        start: SessionStart,
+        _config: os_model::CrawlConfig,
+        _policy: crate::permissions::DomainPolicy,
+    ) -> Result<SessionCrawl, SessionError> {
+        self.start_crawl(start)
+    }
+    fn resume_crawl(
+        &self,
+        id: &str,
+        _policy: crate::permissions::DomainPolicy,
+    ) -> Result<SessionCrawl, SessionError> {
+        Err(SessionError::NotControllable(id.into()))
+    }
+
     /// Die Crawls der Sitzung.
     fn crawls(&self) -> Vec<SessionCrawl>;
 

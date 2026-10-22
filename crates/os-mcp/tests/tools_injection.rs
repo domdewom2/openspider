@@ -192,10 +192,34 @@ async fn no_tool_fetches_urls_that_are_only_mentioned_in_page_text() {
 }
 
 // spec: AGENT-004 [M2]
-#[test]
-#[ignore = "M2: 04"]
-fn a_custom_extraction_value_with_an_instruction_appears_only_inside_the_data_block() {
-    // Custom Extraction kommt mit M2 (04): Die Fixture bekommt dann eine Extraktionsregel, und der Wert
-    // gehört wie Title und H1 ausschließlich in den markierten Datenblock von query_urls/url_details.
-    panic!("Custom Extraction ist in M1 nicht umgesetzt (M2, 04)");
+#[tokio::test]
+async fn a_custom_extraction_value_with_an_instruction_appears_only_inside_the_data_block() {
+    let world = World::new();
+    let mut cfg = os_model::CrawlConfig::default();
+    cfg.custom_extraction
+        .extractors
+        .push(os_model::config::Extractor {
+            name: "Injection".into(),
+            mode: os_model::ExtractorMode::Css,
+            expression: "#custom-extract".into(),
+            ..Default::default()
+        });
+    let stored = world.add("agent-injection", START, cfg, 71).await;
+    let client = world.client().await;
+    let reply = client
+        .call(
+            "query_urls",
+            json!({"crawl_id":stored.id,"tab":"Custom Extraction","columns":"all"}),
+        )
+        .await;
+    assert!(!reply.is_error, "{:?}", reply.blocks);
+    assert!(reply.untrusted_text().contains("[EXTRACTION]"));
+    assert!(!reply.summary().to_string().contains("[EXTRACTION]"));
+    assert!(!stored
+        .fx
+        .site
+        .requests()
+        .iter()
+        .any(|r| format!("{r:?}").contains("/geheim")));
+    client.cancel().await;
 }

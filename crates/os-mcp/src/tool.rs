@@ -44,6 +44,7 @@ pub struct ToolContext {
     /// Shared handles of headless crawls owned by this server process.
     pub(crate) crawls: Arc<crate::crawl_service::CrawlService>,
     /// SQL worker executable and arguments for embedded hosts (K17); headless defaults to itself.
+    pub api_environment: Option<crate::tools::link_metrics::ApiEnvironment>,
     pub sql_worker: Option<(PathBuf, Vec<String>)>,
 }
 
@@ -59,6 +60,7 @@ impl ToolContext {
             target_policy: crate::permissions::DomainPolicy::default(),
             crawls: Arc::new(crate::crawl_service::CrawlService::default()),
             sql_worker: None,
+            api_environment: None,
         }
     }
 

@@ -148,6 +148,7 @@ pub struct HttpServer {
     shutdown: tokio::sync::watch::Sender<bool>,
     tasks: Vec<tokio::task::JoinHandle<()>>,
     cancel: Box<dyn Fn() + Send + Sync>,
+    manager: Arc<LocalSessionManager>,
 }
 impl HttpServer {
     /// Bind both loopbacks, or fail atomically. Port 0 chooses an ephemeral port.
@@ -172,8 +173,9 @@ impl HttpServer {
             .flat_map(|s| ["localhost", "127.0.0.1", "[::1]"].map(move |h| format!("{s}://{h}:*")))
             .collect();
         let cancellation = config.cancellation_token.clone();
+        let manager = Arc::new(manager);
         let service =
-            StreamableHttpService::new(move || Ok(server.clone()), Arc::new(manager), config);
+            StreamableHttpService::new(move || Ok(server.clone()), manager.clone(), config);
         let router = axum::Router::new()
             .nest_service("/mcp", service)
             .layer(middleware::from_fn_with_state(Guard { token, port }, check));
@@ -199,10 +201,20 @@ impl HttpServer {
             .collect();
         Ok(Self {
             port,
+            manager,
             shutdown,
             tasks,
             cancel: Box::new(move || cancellation.cancel()),
         })
+    }
+    /// Active transport sessions, maintained by rmcp (DELETE, idle expiry and disconnect).
+    pub async fn clients(&self) -> u32 {
+        self.manager
+            .sessions
+            .read()
+            .await
+            .len()
+            .min(u32::MAX as usize) as u32
     }
     /// Port shared by the two listeners.
     pub fn port(&self) -> u16 {

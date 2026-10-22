@@ -35,21 +35,10 @@ impl CrawlService {
         if cfg.rendering.mode == os_model::RenderingMode::Text {
             return Ok(None);
         }
-        if !ctx.target_policy.allows_private_targets() {
-            return Err(invalid("Protected JavaScript rendering is unavailable; use rendering.mode=text. Private targets can be permitted only in local MCP settings"));
-        }
-        let renderer = tokio::runtime::Handle::current()
-            .block_on(os_render::Renderer::launch(os_render::LaunchOpts {
-                chromium_path: cfg
-                    .rendering
-                    .chromium_path
-                    .as_ref()
-                    .map(std::path::PathBuf::from),
-                headless: true,
-                ..Default::default()
-            }))
-            .map_err(invalid)?;
-        Ok(Some(Arc::new(renderer)))
+        tokio::runtime::Handle::current()
+            .block_on(crate::render_guard::launch(cfg, ctx.target_policy.clone()))
+            .map(Some)
+            .map_err(invalid)
     }
 
     fn deps(&self, id: Option<CrawlId>) -> EngineDeps {
