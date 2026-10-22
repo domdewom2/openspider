@@ -1,0 +1,994 @@
+{
+  "ok.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "no-viewport.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 0.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "viewport-no-width.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 0.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "viewport-scale-only.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "viewport-fixed-1024.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "wide-content.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 0.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "small-font-41.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 0.0,
+        "scoreDisplayMode": "binary",
+        "details": {
+          "type": "table",
+          "items": [
+            {
+              "node": {
+                "selector": "span"
+              },
+              "fontSize": "11px",
+              "percentage": 41
+            }
+          ]
+        }
+      }
+    }
+  },
+  "small-font-40.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "small-font-12px.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "flash.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "silverlight.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "applet.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "js-flash.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "js-flash-rendered.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "svg-object.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "object-pdf.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "html-embed.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "m-alternate.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "m-alternate-relative.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "hreflang-only.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "rss-alternate.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "body-alternate.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "plugin-variants.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "target-size/adjacent-16.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 0.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "target-size/adjacent-23.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 0.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "target-size/adjacent-24.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "target-size/spaced-16-24.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "target-size/spaced-16-23.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 0.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "target-size/spaced-16-30.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "target-size/inline-link.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "target-size/hidden-small.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "target-size/below-fold.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 0.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "partial-target.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 0.5,
+        "scoreDisplayMode": "numeric",
+        "details": {
+          "type": "table",
+          "items": [
+            {
+              "node": {
+                "selector": "#small"
+              },
+              "width": 16,
+              "height": 16,
+              "nearestTarget": "#next",
+              "distance": 8
+            }
+          ]
+        }
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "plugin-futuresplash.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "plugin-java-mime.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "plugin-flash-classid.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "plugin-silverlight-classid.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "plugin-java-classid.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "plugin-java-version-classid.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "plugin-jar.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "plugin-class.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "plugin-xap.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "plugin-movie.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "plugin-template.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "plugin-image.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  },
+  "plugin-unrelated-classid.html": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "target-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "numeric"
+      },
+      "content-width": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      },
+      "font-size": {
+        "score": 1.0,
+        "scoreDisplayMode": "binary"
+      }
+    }
+  }
+}

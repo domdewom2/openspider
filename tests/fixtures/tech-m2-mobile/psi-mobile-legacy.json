@@ -1,0 +1,12 @@
+{
+  "lighthouseResult": {
+    "audits": {
+      "tap-targets": {
+        "score": 0.5
+      },
+      "plugins": {
+        "score": 1
+      }
+    }
+  }
+}

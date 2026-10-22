@@ -32,11 +32,6 @@ file = "crates/os-export/src/reports/a11y_summary.rs"
 function = "entries"
 signature = "pub fn entries() -> &'static [TableEntry]"
 
-[[stub]]
-owner = "M2-D23"
-file = "crates/os-analyze/src/tabs/mobile.rs"
-function = "tab"
-signature = "pub fn tab() -> TabDef"
 
 [[stub]]
 owner = "M2-F02"
@@ -71,12 +66,6 @@ signature = "pub fn tab() -> TabDef"
 [[stub]]
 owner = "M2-F02"
 file = "crates/os-analyze/src/tabs/meta_keywords.rs"
-function = "tab"
-signature = "pub fn tab() -> TabDef"
-
-[[stub]]
-owner = "M2-F02"
-file = "crates/os-analyze/src/tabs/mobile.rs"
 function = "tab"
 signature = "pub fn tab() -> TabDef"
 

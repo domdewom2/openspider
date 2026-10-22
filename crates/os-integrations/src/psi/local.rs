@@ -92,6 +92,10 @@ pub struct Job {
 pub trait Launcher: Send + Sync {
     /// Befehl für einen Lauf (ohne Shell).
     fn command(&self, job: &Job) -> Command;
+    /// Mobiler Lauf; vorhandene Test-/Spezialläufer behalten standardmäßig ihr Verhalten.
+    fn mobile_command(&self, job: &Job) -> Command {
+        self.command(job)
+    }
     /// Befehl, der die Lighthouse-Version auf stdout ausgibt.
     fn version_command(&self) -> Command;
 }
@@ -181,6 +185,17 @@ impl Launcher for NodeLighthouse {
     fn version_command(&self) -> Command {
         let mut cmd = Command::new(&self.program);
         cmd.args(&self.prefix).arg("--version");
+        cmd
+    }
+
+    fn mobile_command(&self, job: &Job) -> Command {
+        let mut cmd = Command::new(&self.program);
+        cmd.args(&self.prefix).args(
+            Self::args(job)
+                .into_iter()
+                .filter(|a| a != "--only-categories=performance"),
+        );
+        cmd.arg("--only-categories=performance,seo,accessibility");
         cmd
     }
 }
@@ -317,6 +332,17 @@ impl LocalRunner {
 
     /// Ein Lauf für `url`. Fehler (Start, Timeout, Absturz, Laufzeitfehler) sind Ergebnisse mit `PSI Status = Error`.
     pub async fn run(&self, url: &str, device: PsiDevice, headers: &[(String, String)]) -> Outcome {
+        self.run_selected(url, device, headers, false).await
+    }
+
+    /// Lauf mit zusätzlicher Mobile-Audit-Auswahl (TECH-230, INTEG-140).
+    pub async fn run_selected(
+        &self,
+        url: &str,
+        device: PsiDevice,
+        headers: &[(String, String)],
+        mobile: bool,
+    ) -> Outcome {
         let Ok(_permit) = self.permits.acquire().await else {
             return Outcome::error("LIGHTHOUSE_CLOSED Lighthouse-Läufer beendet");
         };
@@ -341,7 +367,11 @@ impl LocalRunner {
             output: output.clone(),
         };
         let started = Instant::now();
-        let outcome = self.execute(&job).await;
+        let outcome = if mobile {
+            self.execute_mobile(&job).await
+        } else {
+            self.execute(&job).await
+        };
         let ms = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
         self.runs.fetch_add(1, Ordering::SeqCst);
         self.run_ms.fetch_add(ms, Ordering::SeqCst);
@@ -353,6 +383,15 @@ impl LocalRunner {
 
     async fn execute(&self, job: &Job) -> Outcome {
         let mut cmd = self.launcher.command(job);
+        self.execute_command(job, &mut cmd).await
+    }
+
+    async fn execute_mobile(&self, job: &Job) -> Outcome {
+        let mut cmd = self.launcher.mobile_command(job);
+        self.execute_command(job, &mut cmd).await
+    }
+
+    async fn execute_command(&self, job: &Job, cmd: &mut Command) -> Outcome {
         cmd.stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null());

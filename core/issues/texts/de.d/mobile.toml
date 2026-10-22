@@ -1,2 +1,31 @@
-# OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „Mobile“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+# Eigene Issue-Texte für Mobile.
+
+[issues.mobile-viewport-not-set]
+what = "Der Seite fehlt eine wirksame Viewport-Angabe für die mobile Darstellung. Lighthouse meldet dafür einen Score unter 100."
+why = "Ohne passenden Viewport wird das Desktop-Layout verkleinert. Inhalte und Bedienelemente können auf kleinen Geräten unbenutzbar werden."
+fix = "Setzen Sie im Head ein Viewport-Meta mit width=device-width und prüfen Sie das Layout auf einem schmalen Bildschirm."
+
+[issues.mobile-target-size]
+what = "Lighthouse beanstandet zu kleine oder zu dicht benachbarte interaktive Ziele. Der Score für Tap Targets liegt unter 100."
+why = "Kleine Ziele lassen sich auf Touchscreens schwer treffen. Nutzer können versehentlich das benachbarte Bedienelement auslösen."
+fix = "Vergrößern Sie interaktive Ziele auf mindestens 24 mal 24 CSS-Pixel oder schaffen Sie ausreichenden Abstand zu benachbarten Zielen."
+
+[issues.mobile-content-not-sized-correctly]
+what = "Der Inhalt ist laut lokalem Lighthouse-Audit breiter als der Viewport. Der Score für Content Width liegt unter 100."
+why = "Horizontales Scrollen erschwert die Bedienung auf kleinen Geräten und kann wesentliche Inhalte außerhalb des sichtbaren Bereichs verbergen."
+fix = "Entfernen Sie starre Inhaltsbreiten, begrenzen Sie Bilder und Einbettungen auf die verfügbare Breite und prüfen Sie das responsive Layout."
+
+[issues.mobile-illegible-font-size]
+what = "Lighthouse meldet einen zu großen Anteil kleiner Schrift. Die kompatibel benannte Spalte Font Display zeigt einen Score unter 100."
+why = "Zu kleine Schrift schließt Nutzer mit eingeschränktem Sehvermögen aus und macht längere Texte auf mobilen Geräten schwer lesbar."
+fix = "Verwenden Sie gut lesbare Schriftgrößen. Prüfen Sie besonders längere Textbereiche unter 12 CSS-Pixeln im mobilen Layout."
+
+[issues.mobile-unsupported-plugins]
+what = "Die Seite enthält ein nicht unterstütztes Browser-Plugin oder das Lighthouse-Audit Plugins meldet einen Score unter 100."
+why = "Flash, Silverlight und Java-Applets werden auf mobilen Geräten nicht ausgeführt. Inhalte und Funktionen bleiben dadurch unzugänglich."
+fix = "Ersetzen Sie das Plugin durch HTML, CSS und moderne Browser-APIs und stellen Sie wesentliche Inhalte ohne Plugin bereit."
+
+[issues.mobile-mobile-alternate-link]
+what = "Die Seite verweist über ein Alternate-Link-Element oder einen HTTP-Link-Header auf eine separate mobile Version."
+why = "Getrennte mobile URLs können beabsichtigt sein. Unterschiedliche Inhalte und widersprüchliche Zuordnungssignale können jedoch die falsche Version ausliefern."
+fix = "Prüfen Sie die Erreichbarkeit und Inhaltsgleichheit beider Versionen sowie ihre Canonical- und Alternate-Verweise. Erwägen Sie ein responsives Layout."
