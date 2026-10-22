@@ -104,6 +104,18 @@ pub enum ToolError {
 
 /// Ein Werkzeug des MCP-Servers.
 pub trait Tool: Send + Sync {
+    /// Text tools retain their single blocking call by default.
+    fn has_image_output(&self) -> bool {
+        false
+    }
+    /// Optional image reply; existing text tools keep their call/render path unchanged.
+    fn call_image(
+        &self,
+        _ctx: &ToolContext,
+        _args: &serde_json::Value,
+    ) -> Option<Result<rmcp::model::CallToolResult, ToolError>> {
+        None
+    }
     /// Name im MCP (`tools/list`).
     fn name(&self) -> &'static str;
     /// Klasse (Freigabe).

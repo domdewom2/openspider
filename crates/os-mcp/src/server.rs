@@ -138,6 +138,21 @@ impl McpServer {
                 return tool_error(msg);
             }
         }
+        // Image tools have an optional additive response path; permissions and argument checks above apply.
+        if tool.has_image_output() {
+            let (image_tool, image_ctx, image_args) =
+                (Arc::clone(tool), self.inner.ctx.clone(), args.clone());
+            match tokio::task::spawn_blocking(move || {
+                image_tool.call_image(&image_ctx, &image_args)
+            })
+            .await
+            {
+                Ok(Some(Ok(reply))) => return reply,
+                Ok(Some(Err(e))) => return tool_error(tool_error_text(&e)),
+                Ok(None) => {}
+                Err(e) => return tool_error(format!("Interner Bildwerkzeugfehler: {e}")),
+            }
+        }
         let (tool, ctx) = (Arc::clone(tool), self.inner.ctx.clone());
         let joined = tokio::task::spawn_blocking(move || tool.call(&ctx, args)).await;
         match joined {

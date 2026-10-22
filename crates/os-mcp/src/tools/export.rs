@@ -192,13 +192,32 @@ impl Tool for Export {
         ToolClass::Write
     }
     fn description(&self) -> &'static str {
-        "Export a tab, bulk export or report using canonical CLI names and the core CSV/XLSX writers. kind: tab|bulk|report. Optional path is resolved relative to export.directory and restricted to that directory or configured MCP export_dirs; symlinks outside are rejected. Existing files are preserved with a (2) suffix. Without path use the OUT-020 filename. Returns absolute paths."
+        "Export a tab, bulk export or report using canonical CLI names and the core CSV/XLSX writers. kind: tab|bulk|report|page_content_ndjson. page_content_ndjson requires name page_content_ndjson and format ndjson (optional include_html), also available as bulk name page_content_ndjson. Optional path is resolved relative to export.directory and restricted to that directory or configured MCP export_dirs; symlinks outside are rejected. Existing files are preserved with a (2) suffix. Without path use the OUT-020 filename. Returns absolute paths."
     }
     fn input_schema(&self) -> Value {
-        json!({"type":"object","properties":{"crawl_id":{"type":"string"},"kind":{"type":"string","enum":["tab","bulk","report"]},"name":{"type":"string"},"format":{"type":"string","enum":["csv","xlsx"]},"path":{"type":"string"}},"required":["crawl_id","kind","name","format"],"additionalProperties":false})
+        json!({"type":"object","properties":{"crawl_id":{"type":"string"},"kind":{"type":"string","enum":["tab","bulk","report","page_content_ndjson"]},"name":{"type":"string"},"format":{"type":"string","enum":["csv","xlsx","ndjson"]},"path":{"type":"string"},"include_html":{"type":"boolean","default":false}},"required":["crawl_id","kind","name","format"],"additionalProperties":false})
     }
     fn call(&self, ctx: &ToolContext, args: Value) -> Result<ToolOutput, ToolError> {
-        reject_unknown(&args, &["crawl_id", "kind", "name", "format", "path"])?;
+        if args.get("kind").and_then(Value::as_str) == Some("page_content_ndjson")
+            || (args.get("kind").and_then(Value::as_str) == Some("bulk")
+                && args
+                    .get("name")
+                    .and_then(Value::as_str)
+                    .is_some_and(catalog::page_content::matches))
+        {
+            return export_page_content(ctx, &args);
+        }
+        reject_unknown(
+            &args,
+            &["crawl_id", "kind", "name", "format", "path", "include_html"],
+        )?;
+        match args.get("include_html") {
+            None | Some(Value::Bool(false)) => {}
+            Some(Value::Bool(true)) => {
+                return Err(invalid("include_html requires page_content_ndjson"));
+            }
+            _ => return Err(invalid("include_html: boolean")),
+        }
         let crawl = open_crawl(ctx, &args)?;
         let kind = match req_str(&args, "kind")? {
             "tab" => ExportKind::Tab,
@@ -288,4 +307,41 @@ impl Tool for Export {
             next_cursor: None,
         })
     }
+}
+
+/// NDJSON shares the existing destination validation, private staging and collision-safe publication.
+fn export_page_content(ctx: &ToolContext, args: &Value) -> Result<ToolOutput, ToolError> {
+    reject_unknown(
+        args,
+        &["crawl_id", "kind", "name", "format", "path", "include_html"],
+    )?;
+    if !catalog::page_content::matches(req_str(args, "name")?) {
+        return Err(invalid("name: page_content_ndjson"));
+    }
+    if req_str(args, "format")? != "ndjson" {
+        return Err(invalid("page_content_ndjson format: ndjson"));
+    }
+    let include_html = match args.get("include_html") {
+        None | Some(Value::Null) => false,
+        Some(Value::Bool(value)) => *value,
+        _ => return Err(invalid("include_html: boolean")),
+    };
+    let crawl = open_crawl(ctx, args)?;
+    let root = export_root(ctx)?;
+    let target = destination(
+        ctx,
+        &root,
+        opt_str(args, "path")?,
+        "page_content_ndjson.ndjson",
+    )?;
+    let staging = stage(&root)?;
+    let file = catalog::page_content::export(&crawl.file, &crawl.cfg, &staging.0, include_html)
+        .map_err(internal)?;
+    let path = publish(&file.path, &target)?;
+    Ok(ToolOutput {
+        summary: json!({"files":[path],"rows":file.rows,"warnings":file.warnings}),
+        untrusted: None,
+        total: None,
+        next_cursor: None,
+    })
 }
