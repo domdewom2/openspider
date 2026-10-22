@@ -430,6 +430,50 @@ pub fn list_config(mut cfg: CrawlConfig) -> CrawlConfig {
     cfg
 }
 
+/// Expand files and sitemap sources for an API-only run, without requesting target pages (INTEG-012).
+pub async fn api_items<F: os_fetch::Fetch>(
+    items: &[String],
+    cfg: &CrawlConfig,
+    fetcher: &F,
+) -> Result<Vec<String>, EngineError> {
+    let mut expanded = Vec::new();
+    for item in items {
+        if !item.contains("://") && Path::new(item).is_file() {
+            expanded.extend(read_items(Path::new(item))?);
+        } else {
+            expanded.push(item.clone());
+        }
+    }
+    let planned = plan(&expanded, cfg)?;
+    let mut seeds = Vec::new();
+    let mut output = Vec::new();
+    for entry in planned.entries {
+        if let Some(url) = entry.url {
+            match entry.outcome {
+                ListOutcome::Ok => output.push(url.encoded),
+                ListOutcome::Sitemap => seeds.push(crate::sitemaps::SitemapSeed {
+                    url: url.url,
+                    found_via: "list".into(),
+                }),
+                _ => {}
+            }
+        }
+    }
+    if !seeds.is_empty() {
+        for map in crate::sitemaps::ingest(fetcher, seeds, 3).await {
+            let Some(doc) = map.doc else {
+                return Err(EngineError::Invalid(
+                    "API-Listen-Sitemap konnte nicht gelesen werden".into(),
+                ));
+            };
+            if doc.kind == os_model::SitemapKind::Urlset {
+                output.extend(doc.locs.into_iter().filter_map(|loc| loc.url));
+            }
+        }
+    }
+    Ok(output)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -15,6 +15,11 @@ pub use url::Url as FetchUrl;
 
 /// Abruf eines einzelnen URL-Objekts. Redirects verfolgt der Aufrufer (die Engine), nicht der Fetcher.
 pub trait Fetch: Send + Sync + 'static {
+    /// Network snapshot shared with crawl-bound API clients (INTEG-017).
+    fn network_settings(&self) -> Option<os_model::settings::NetworkSettings> {
+        None
+    }
+
     /// Optional policy denial before and after robots checks (AGENT-020).
     /// Default leaves existing fetchers unchanged. A denial contains no network response.
     fn target_denial<'a>(

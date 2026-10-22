@@ -246,14 +246,18 @@ async fn invalid_names_are_rejected_before_any_request_in_under_a_second() {
         assert!(run.stderr.contains(needle), "{fmt}: {}", run.dump());
     }
 
-    // Nicht unterstützte Google-/API-Optionen enden ebenfalls vor dem Netz mit Exit-Code 2.
-    let run = env.run_async(base(&["--use-pagespeed"])).await;
-    assert_eq!(run.code, 2, "{}", run.dump());
-
     assert_eq!(
         site.total_requests(),
         0,
-        "vor der Validierung darf kein Request erfolgen"
+        "Aufruffehler müssen vor jedem Request enden"
+    );
+    // OUT-201 / INTEG-017: eine optionale API ohne Schlüssel warnt; der Crawl läuft.
+    let run = env.run_async(base(&["--use-pagespeed"])).await;
+    assert_eq!(run.code, 0, "{}", run.dump());
+
+    assert!(
+        site.total_requests() > 0,
+        "der gültige Aufruf mit optionaler API muss crawlen"
     );
     assert!(!env.out().exists(), "kein Ausgabeordner bei Aufruffehlern");
 }

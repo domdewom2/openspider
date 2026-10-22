@@ -887,6 +887,9 @@ impl HttpFetcher {
     }
 }
 impl Fetch for HttpFetcher {
+    fn network_settings(&self) -> Option<os_model::settings::NetworkSettings> {
+        Some(self.cfg.network.clone())
+    }
     fn fetch(&self, req: FetchRequest) -> Pin<Box<dyn Future<Output = FetchResult> + Send + '_>> {
         Box::pin(self.fetch_impl(req))
     }

@@ -31,7 +31,7 @@ pub fn deps(app: &App) -> EngineDeps {
             os_model::PerformanceProfile::MaxSpeed => os_store::StorageProfile::MaxSpeed,
             os_model::PerformanceProfile::MinMemory => os_store::StorageProfile::MinMemory,
         },
-        secrets: app.config().secrets.clone(),
+        secrets: crate::commands::api::crawl_context(app, CrawlConfig::default()).secrets,
         sink_factory: None,
         on_finished: None,
         owner_kind: "app",
@@ -434,6 +434,14 @@ async fn start_apis(
     id: os_model::CrawlId,
     items: Vec<String>,
 ) -> Result<CrawlRef, CmdError> {
+    let api_ctx = crate::commands::api::crawl_context(app, cfg.clone());
+    os_integrations::crawl_glue::validate_apis(&api_ctx)
+        .map_err(|e| internal("API crawl", e.to_string()))?;
+    let api_clock = app.config().clock.clone();
+    let items = os_engine::list_input::api_items(&items, &cfg, fetcher(app, &cfg)?.as_ref())
+        .await
+        .map_err(engine_error)?;
+
     let key = CrawlKey(id.to_string());
     let init = os_store::CrawlInit {
         crawl_id: id,
@@ -484,7 +492,9 @@ async fn start_apis(
                     .map_err(|e| internal("API inputs", e.to_string()))?,
             )
             .map_err(|e| crate::runtime::error::store_error(&e))?;
-            let result = runtime.block_on(os_integrations::crawl_glue::start_apis_mode(f, &cfg));
+            let result = runtime.block_on(os_integrations::crawl_glue::start_apis_mode_with(
+                f, api_ctx, api_clock,
+            ));
             f.set_meta(
                 "state",
                 if result.is_ok() {

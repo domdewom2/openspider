@@ -154,6 +154,8 @@ fn build_config(
         os_fetch::resolve::ResolveRule::parse(rule).map_err(CliError::usage)?;
         loaded.config.network.resolve.push(rule.clone());
     }
+    // OUT-201 / INTEG-017: apply selections before validating and before creating a crawl.
+    apply_api_options(&mut loaded.config, args, rep)?;
     let report = loaded.validate();
     for w in &report.warnings {
         rep.warn(format!("Konfiguration: {w}"));
@@ -510,6 +512,38 @@ fn build_impl(
         name,
         paths,
     })
+}
+
+fn apply_api_options(
+    cfg: &mut CrawlConfig,
+    args: &RunArgs,
+    rep: &Reporter,
+) -> Result<(), CliError> {
+    os_integrations::crawl_glue::configure_google(
+        cfg,
+        args.use_google_analytics_4.as_deref(),
+        args.use_google_search_console.as_deref(),
+    )
+    .map_err(|e| CliError::usage(e.to_string()))?;
+    cfg.api.psi.enabled |= args.use_pagespeed;
+    cfg.api.ahrefs.enabled |= args.use_ahrefs;
+    cfg.api.majestic.enabled |= args.use_majestic;
+    cfg.api.moz.enabled |= args.use_mozscape;
+    let ctx = os_integrations::ApiCtx {
+        cfg: cfg.clone(),
+        secrets: os_integrations::crawl_glue::environment_view_for(
+            os_fetch::secret_store_from_env(),
+            cfg,
+        ),
+        network: Default::default(),
+        allow_api_override: false,
+    };
+    for warning in os_integrations::crawl_glue::preflight(&ctx, args.require_apis)
+        .map_err(|e| CliError::usage(e.to_string()))?
+    {
+        rep.warn(&warning);
+    }
+    Ok(())
 }
 
 #[cfg(test)]

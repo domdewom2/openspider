@@ -1827,3 +1827,8 @@ pub fn register(r: &mut Registry) {
 pub fn export_credentials(app: &App) -> Arc<Credentials> {
     app.ext::<ApiState>().credentials(app).clone()
 }
+
+/// Context for the APIs-only lifecycle, preserving session credentials and app network settings.
+pub(crate) fn crawl_context(app: &App, cfg: CrawlConfig) -> ApiCtx {
+    api_ctx(app, cfg)
+}
