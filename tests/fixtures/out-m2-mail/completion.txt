@@ -1,0 +1,20 @@
+Aufgabe: Nightly
+Projekt: Fixture project
+Start-URL: https://site.test/?token=<redacted>
+Start: 2026-10-21T00:00:00.000Z
+Ende: 2026-10-21T00:00:02.000Z
+Dauer: 2000 ms
+Total URLs Crawled: 12
+Total Internal Indexable URLs: 10
+Total Internal Non-Indexable URLs: 2
+Antwortcodes
+200: 10
+404: 2
+Issues: Name | Typ | Priorität | URLs
+Page Titles / Missing | Issue | High | 2
+Issue / Filter | Previous | Current | Change | Change %
+* Non-Indexable | 10 | 20 | +10 | 100.00%
+New | 0 | 3 | +3 | 
+Missing | 2 | 0 | -2 | -100.00%
+Indexability | 0 | 1 | +1 | 
+Page Titles | 0 | 1 | +1 | 
