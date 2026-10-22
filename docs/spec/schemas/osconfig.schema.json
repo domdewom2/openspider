@@ -193,7 +193,9 @@
           "$ref": "#/$defs/Ga4Config",
           "default": {
             "account": null,
+            "analytics_account": null,
             "base_url": null,
+            "crawl_new_urls": false,
             "date_range": {
               "from": null,
               "preset": "last_30_days",
@@ -224,6 +226,7 @@
           "default": {
             "account": null,
             "base_url": null,
+            "crawl_new_urls": false,
             "date_range": {
               "from": null,
               "preset": "last_30_days",
@@ -1135,6 +1138,14 @@
             "null"
           ]
         },
+        "analytics_account": {
+          "default": null,
+          "description": "Selected GA4 Analytics account (OUT-201), distinct from the OAuth account.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "base_url": {
           "default": null,
           "description": "Alternative Basis-URL (nur Debug-/Testbuilds oder `--allow-api-override`, INTEG-019).",
@@ -1142,6 +1153,11 @@
             "string",
             "null"
           ]
+        },
+        "crawl_new_urls": {
+          "default": false,
+          "description": "Crawl same-host URLs discovered in this API (INTEG-015); disabled by default.",
+          "type": "boolean"
         },
         "date_range": {
           "$ref": "#/$defs/DateRangeConfig",
@@ -1256,6 +1272,11 @@
             "string",
             "null"
           ]
+        },
+        "crawl_new_urls": {
+          "default": false,
+          "description": "Crawl same-host URLs discovered in this API (INTEG-015); disabled by default.",
+          "type": "boolean"
         },
         "date_range": {
           "$ref": "#/$defs/DateRangeConfig",
@@ -3422,7 +3443,9 @@
         },
         "ga4": {
           "account": null,
+          "analytics_account": null,
           "base_url": null,
+          "crawl_new_urls": false,
           "date_range": {
             "from": null,
             "preset": "last_30_days",
@@ -3449,6 +3472,7 @@
         "gsc": {
           "account": null,
           "base_url": null,
+          "crawl_new_urls": false,
           "date_range": {
             "from": null,
             "preset": "last_30_days",

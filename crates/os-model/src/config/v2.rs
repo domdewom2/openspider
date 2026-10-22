@@ -636,6 +636,10 @@ pub struct DateRangeConfig {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(default)]
 pub struct Ga4Config {
+    /// Selected GA4 Analytics account (OUT-201), distinct from the OAuth account.
+    pub analytics_account: Option<String>,
+    /// Crawl same-host URLs discovered in this API (INTEG-015); disabled by default.
+    pub crawl_new_urls: bool,
     /// Quelle beim Crawl abfragen.
     pub enabled: bool,
     /// Alternative Basis-URL (nur Debug-/Testbuilds oder `--allow-api-override`, INTEG-019).
@@ -664,6 +668,8 @@ pub struct Ga4Config {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(default)]
 pub struct GscConfig {
+    /// Crawl same-host URLs discovered in this API (INTEG-015); disabled by default.
+    pub crawl_new_urls: bool,
     /// Quelle beim Crawl abfragen.
     pub enabled: bool,
     /// Alternative Basis-URL (INTEG-019).
