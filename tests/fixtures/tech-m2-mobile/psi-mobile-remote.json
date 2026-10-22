@@ -1,0 +1,16 @@
+{
+  "lighthouseResult": {
+    "lighthouseVersion": "fixture-13",
+    "audits": {
+      "viewport": {
+        "score": 0
+      },
+      "target-size": {
+        "score": 0.5
+      },
+      "plugins": {
+        "score": 0
+      }
+    }
+  }
+}

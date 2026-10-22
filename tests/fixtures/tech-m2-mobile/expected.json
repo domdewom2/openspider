@@ -1,0 +1,324 @@
+{
+  "ok.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "no-viewport.html": {
+    "Viewport": 0,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "viewport-no-width.html": {
+    "Viewport": 0,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "viewport-scale-only.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "viewport-fixed-1024.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "wide-content.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 0,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "small-font-41.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 0,
+    "Plugins": 100
+  },
+  "small-font-40.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "small-font-12px.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "flash.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 0
+  },
+  "silverlight.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 0
+  },
+  "applet.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 0
+  },
+  "js-flash.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "js-flash-rendered.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 0
+  },
+  "svg-object.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "object-pdf.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "html-embed.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "m-alternate.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "m-alternate-relative.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "hreflang-only.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "rss-alternate.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "body-alternate.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "plugin-variants.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 0
+  },
+  "target-size/adjacent-16.html": {
+    "Viewport": 100,
+    "Tap Targets": 0,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "target-size/adjacent-23.html": {
+    "Viewport": 100,
+    "Tap Targets": 0,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "target-size/adjacent-24.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "target-size/spaced-16-24.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "target-size/spaced-16-23.html": {
+    "Viewport": 100,
+    "Tap Targets": 0,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "target-size/spaced-16-30.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "target-size/inline-link.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "target-size/hidden-small.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "target-size/below-fold.html": {
+    "Viewport": 100,
+    "Tap Targets": 0,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "partial-target.html": {
+    "Viewport": 100,
+    "Tap Targets": 50,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "plugin-futuresplash.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 0
+  },
+  "plugin-java-mime.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 0
+  },
+  "plugin-flash-classid.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 0
+  },
+  "plugin-silverlight-classid.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 0
+  },
+  "plugin-java-classid.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 0
+  },
+  "plugin-java-version-classid.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 0
+  },
+  "plugin-jar.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 0
+  },
+  "plugin-class.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 0
+  },
+  "plugin-xap.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 0
+  },
+  "plugin-movie.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 0
+  },
+  "plugin-template.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "plugin-image.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  },
+  "plugin-unrelated-classid.html": {
+    "Viewport": 100,
+    "Tap Targets": 100,
+    "Content Width": 100,
+    "Font Display": 100,
+    "Plugins": 100
+  }
+}
