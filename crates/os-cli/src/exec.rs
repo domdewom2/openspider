@@ -99,6 +99,11 @@ async fn run(plan: &Plan, rep: &Arc<Reporter>, signals: &Signals) -> Result<Outc
         ));
     }
 
+    // INTEG-017 / OUT-201: credentials are validated against the host's store before any crawl.
+    if plan.resume || !matches!(plan.source, Source::Load { .. }) {
+        preflight_apis(plan, rep)?;
+    }
+
     let crawled = match (&plan.source, plan.resume) {
         (Source::Load { path }, false) => open_only(path, rep)?,
         _ => {
@@ -259,6 +264,32 @@ fn deps(id: Option<CrawlId>, hook: FinishedHook) -> EngineDeps {
     }
 }
 
+fn api_secrets(plan: &Plan) -> Arc<dyn SecretStore> {
+    plan.api_secrets
+        .as_ref()
+        .map(|s| s.0.clone())
+        .unwrap_or_else(|| os_fetch::secret_store_from_env())
+}
+fn deps_with_apis(plan: &Plan, id: Option<CrawlId>, hook: FinishedHook) -> EngineDeps {
+    let mut value = deps(id, hook);
+    value.secrets = api_secrets(plan);
+    value
+}
+fn preflight_apis(plan: &Plan, rep: &Reporter) -> Result<(), CliError> {
+    let ctx = os_integrations::ApiCtx {
+        cfg: plan.config.clone(),
+        secrets: os_integrations::crawl_glue::environment_view_for(api_secrets(plan), &plan.config),
+        network: Default::default(),
+        allow_api_override: false,
+    };
+    for warning in os_integrations::crawl_glue::preflight(&ctx, plan.require_apis)
+        .map_err(|e| CliError::usage(e.to_string()))?
+    {
+        rep.warn(warning);
+    }
+    Ok(())
+}
+
 /// Hook am Crawl-Ende (CRAWL-141): Die Crawl-Analyse läuft sofort danach, vor der Auflösung von `wait()`.
 fn analysis_hook(rep: &Arc<Reporter>, signals: &Signals) -> FinishedHook {
     let rep = Arc::clone(rep);
@@ -328,7 +359,7 @@ async fn crawl_phase(
                 fetcher,
                 path.clone(),
                 plan.resume_config.clone(),
-                deps(None, hook),
+                deps_with_apis(plan, None, hook),
             )
             .await
             .map_err(|e| engine_error(e, true))?;
@@ -361,7 +392,7 @@ async fn crawl_phase(
                 project: plan.project.clone(),
                 name: plan.name.clone(),
             };
-            let handle = start_crawl(fetcher, request, deps(Some(id), hook))
+            let handle = start_crawl(fetcher, request, deps_with_apis(plan, Some(id), hook))
                 .await
                 .map_err(|e| engine_error(e, false))?;
             (handle, path, id)

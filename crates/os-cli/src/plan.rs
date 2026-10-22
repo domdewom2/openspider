@@ -54,6 +54,10 @@ pub struct BatchSettings {
 /// Ablaufplan nach der Validierung.
 #[derive(Debug)]
 pub struct Plan {
+    /// Optional API credential view supplied by a scheduled host (default None).
+    pub api_secrets: Option<os_integrations::crawl_glue::SecretSnapshot>,
+    /// Require every requested API; default false.
+    pub require_apis: bool,
     /// Stapelmodus der Exporte (geplante Aufgaben); `None` = einzeln wie auf der Kommandozeile.
     pub batch: Option<BatchSettings>,
     /// Optionaler Segmentkontext; ohne Flag bleibt der Export ungefiltert.
@@ -155,7 +159,7 @@ fn build_config(
         loaded.config.network.resolve.push(rule.clone());
     }
     // OUT-201 / INTEG-017: apply selections before validating and before creating a crawl.
-    apply_api_options(&mut loaded.config, args, rep)?;
+    apply_api_options(&mut loaded.config, args)?;
     let report = loaded.validate();
     for w in &report.warnings {
         rep.warn(format!("Konfiguration: {w}"));
@@ -495,6 +499,8 @@ fn build_impl(
         }
     }
     Ok(Plan {
+        api_secrets: None,
+        require_apis: args.require_apis,
         batch,
         segment: args.segment.clone(),
         source,
@@ -514,11 +520,7 @@ fn build_impl(
     })
 }
 
-fn apply_api_options(
-    cfg: &mut CrawlConfig,
-    args: &RunArgs,
-    rep: &Reporter,
-) -> Result<(), CliError> {
+fn apply_api_options(cfg: &mut CrawlConfig, args: &RunArgs) -> Result<(), CliError> {
     os_integrations::crawl_glue::configure_google(
         cfg,
         args.use_google_analytics_4.as_deref(),
@@ -529,20 +531,6 @@ fn apply_api_options(
     cfg.api.ahrefs.enabled |= args.use_ahrefs;
     cfg.api.majestic.enabled |= args.use_majestic;
     cfg.api.moz.enabled |= args.use_mozscape;
-    let ctx = os_integrations::ApiCtx {
-        cfg: cfg.clone(),
-        secrets: os_integrations::crawl_glue::environment_view_for(
-            os_fetch::secret_store_from_env(),
-            cfg,
-        ),
-        network: Default::default(),
-        allow_api_override: false,
-    };
-    for warning in os_integrations::crawl_glue::preflight(&ctx, args.require_apis)
-        .map_err(|e| CliError::usage(e.to_string()))?
-    {
-        rep.warn(&warning);
-    }
     Ok(())
 }
 

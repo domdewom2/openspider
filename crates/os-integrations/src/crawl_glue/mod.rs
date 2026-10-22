@@ -134,3 +134,12 @@ pub fn configure_google(
     }
     Ok(())
 }
+
+/// Optional host-provided credential view for scheduled/headless runs; Debug never reveals keys.
+#[derive(Clone)]
+pub struct SecretSnapshot(pub Arc<dyn os_fetch::SecretStore>);
+impl std::fmt::Debug for SecretSnapshot {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("SecretSnapshot([redacted])")
+    }
+}

@@ -589,6 +589,9 @@ pub async fn run_in(
         Ok(plan) => plan,
         Err(e) => return finish(&live, RunResult::Failed, e.exit, Some(e.message)),
     };
+    plan.api_secrets = Some(os_integrations::crawl_glue::SecretSnapshot(
+        ctx.secrets.clone(),
+    ));
     if let Some(profile) = task
         .crawl
         .auth_profile
