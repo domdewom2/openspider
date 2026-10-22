@@ -37,7 +37,17 @@ fn notification_uses_saved_configuration_and_filters_empty_rows() {
         .iter()
         .filter(|r| r.previous == 0)
         .all(|r| r.percent.is_none()));
+    new.set_meta(
+        "start_url",
+        "https://fixture-user:fixture-url-secret@site.test/?contact=a@b",
+    )
+    .unwrap();
     let mail = notification::content(&new, "<Task & C02>", true, false).unwrap();
+    for body in [&mail.text, &mail.html] {
+        assert!(!body.contains("fixture-url-secret"));
+        assert!(!body.contains("fixture-user"));
+        assert!(body.contains("https://site.test/?contact=a@b"));
+    }
     assert!(mail.html.contains("&lt;Task &amp; C02&gt;"));
     assert!(!mail.html.contains("<Task & C02>"));
     assert!(mail.text.contains("Page Titles\t0\t1\t1\t\n"));

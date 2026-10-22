@@ -85,6 +85,20 @@ fn escape(value: &str) -> String {
         .replace('"', "&quot;")
 }
 
+/// Crawl-Metadaten bewahren die normalisierte Start-URL einschließlich Userinfo.
+/// In der Abschlussmail darf diese Benutzername/Passwort-Komponente nicht erscheinen.
+fn start_address(value: &str) -> String {
+    let Some((scheme, rest)) = value.split_once("://") else {
+        return String::new();
+    };
+    if !matches!(scheme, "http" | "https") {
+        return String::new();
+    }
+    let end = rest.find(['/', '?', '#']).unwrap_or(rest.len());
+    let authority = rest[..end].rsplit('@').next().unwrap_or_default();
+    format!("{scheme}://{authority}{}", &rest[end..])
+}
+
 /// Fertige Alternativen für den SMTP-Adapter; kein Exportinhalt und keine Zugangsdaten.
 pub struct Content {
     pub text: String,
@@ -103,7 +117,7 @@ pub fn content(
     let mut text = format!(
         "Task: {task}\nProject: {}\nStart URL: {}\nStart: {}\nEnd: {}\n",
         meta.project,
-        meta.start_url.as_deref().unwrap_or(""),
+        start_address(meta.start_url.as_deref().unwrap_or("")),
         meta.started_at.map(|v| v.to_db()).unwrap_or_default(),
         meta.ended_at.map(|v| v.to_db()).unwrap_or_default()
     );
