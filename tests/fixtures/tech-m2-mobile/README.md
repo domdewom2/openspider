@@ -12,3 +12,5 @@ Plugin fallback and alternate detection are additionally tested through the real
 K2-09: use fixture reports for the local runner; bundling Lighthouse is M3.
 TECH-230 leads tab availability; its explicit empty-column/overview-hint behavior takes precedence over
 INTEG-133's conflicting instruction to remove the Mobile columns and filters.
+
+[Paketbericht](REPORT.md) mit Spec-Abdeckung, Prüfungen und Diffs der Besitz-Ausnahmen.
