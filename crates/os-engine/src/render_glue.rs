@@ -343,6 +343,7 @@ pub(crate) fn options<F: Fetch>(
         .and_then(|f| os_fetch::auth::AuthMatcher::new(&f.basic_auth).ok())
         .unwrap_or_default();
     let mut opts = RenderOpts {
+        accessibility: cfg.extraction.accessibility,
         retry_document_context: true,
         disable_cookies: cfg.advanced.cookies == os_model::CookieMode::None,
         return_cookies: cfg.advanced.cookies != os_model::CookieMode::None,
