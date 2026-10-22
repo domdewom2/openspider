@@ -1,0 +1,6 @@
+﻿Address,Issue,Rule ID,Guideline,Impact,Priority,Location on Page,HTML,Help URL
+https://a.test/one,leere Überschrift,empty-heading,Best Practice,Minor,Low,h2,<h2></h2>,https://dequeuniversity.com/rules/axe/4.11/empty-heading
+https://a.test/one,Überschriftenebene springt um mehr als 1,heading-order,Best Practice,Moderate,Medium,h3,<h3>Heading</h3>,https://dequeuniversity.com/rules/axe/4.11/heading-order
+https://a.test/one,Bild ohne Alternativtext,image-alt,WCAG 2.0 A,Critical,High,#a,"<img id=""a"">",https://dequeuniversity.com/rules/axe/4.11/image-alt
+https://a.test/one,Bild ohne Alternativtext,image-alt,WCAG 2.0 A,Critical,High,#b,"<img id=""b"">",https://dequeuniversity.com/rules/axe/4.11/image-alt
+https://a.test/two,Bild ohne Alternativtext,image-alt,WCAG 2.0 A,Critical,High,#c,"<img id=""c"">",https://dequeuniversity.com/rules/axe/4.11/image-alt

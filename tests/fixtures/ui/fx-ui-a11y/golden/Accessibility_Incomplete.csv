@@ -1,0 +1,2 @@
+﻿Address,Issue,Rule ID,Guideline,Impact,Priority,Location on Page,HTML,Help URL
+https://a.test/one,"Textkontrast unter 4,5:1 (normal) bzw. 3:1 (groß ≥ 24 px oder ≥ 18,66 px fett)",color-contrast,WCAG 2.0 AA,Serious,High,p,<p>Background image</p>,https://dequeuniversity.com/rules/axe/4.11/color-contrast

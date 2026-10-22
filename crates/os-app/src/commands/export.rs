@@ -492,6 +492,27 @@ fn export_detail<'a>(
                         .read_pool()
                         .run_snapshot(s.key, move |file, _| {
                             Ok((|| {
+                                if let Some((kind, selected, params, sort)) = view::detail_spec(&spec) {
+                                    if matches!(kind, os_analyze::details::DetailKind::A11yRules | os_analyze::details::DetailKind::A11yNodes) {
+                                        if let Some(gate) = view::detail_gate(kind, &s.config) {
+                                            return Err(CmdError::new(ErrorCode::Unsupported, "err-detail-unavailable").with_arg("state", serde_json::to_value(gate).unwrap_or_default()));
+                                        }
+                                        let stage = Stage::new(parent(&path))?;
+                                        let staged = stage.0.join(path.file_name().unwrap_or_default());
+                                        let tabs = os_analyze::tabs::configured_for_file(&s.config, file);
+                                        let job = TableJob {file, cfg: &s.config, tabs: &tabs, entry_name: "Accessibility Details"};
+                                        let report = |n| progress.report(n, None);
+                                        let mut context = ExportCtx {cancel: &worker_token, progress: &report, skip_empty: false, workbook: None, skipped: vec![]};
+                                        let files = os_export::catalog::bulk_a11y::export_details(&job, &os_analyze::details::DetailReq {url_ids: &selected, params: &params, sort: &sort, offset: 0, limit: 500}, &staged, fmt, &mut context).map_err(export_error)?;
+                                        let mut published = Vec::new();
+                                        for info in files {
+                                            let target = parent(&path).join(info.path.file_name().unwrap_or_default());
+                                            published.push(stage.publish(&info.path, &target, &worker_token)?);
+                                        }
+                                        let first = published.first().expect("detail files");
+                                        return Ok(serde_json::json!({"path": first.path, "bytes": published.iter().map(|f|f.bytes).sum::<u64>(), "files": published}));
+                                    }
+                                }
                                 let stage = Stage::new(parent(&path))?;
                                 let staged = stage.0.join("detail");
                                 let mut out = detail_writer(
