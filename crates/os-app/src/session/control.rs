@@ -439,7 +439,7 @@ async fn start_apis(
         CmdError::invalid_input("err-api-disconnected", "source").with_detail(e.to_string())
     })?;
     let api_clock = app.config().clock.clone();
-    let items = os_engine::list_input::api_items(&items, &cfg, fetcher(app, &cfg)?.as_ref())
+    let plan = os_engine::list_input::api_plan(&items, &cfg, fetcher(app, &cfg)?.as_ref())
         .await
         .map_err(engine_error)?;
 
@@ -454,7 +454,17 @@ async fn start_apis(
         config: cfg.clone(),
         created_at: app.config().clock.now(),
     };
-    let plan = os_engine::list_input::plan(&items, &cfg).map_err(engine_error)?;
+    let rows: Vec<_> = plan
+        .entries
+        .iter()
+        .map(|entry| os_store::queries::api::InputRow {
+            position: entry.position,
+            original: entry.original.clone(),
+            outcome: entry.outcome.as_str().into(),
+            url: entry.url.as_ref().map(|url| url.encoded.clone()),
+        })
+        .collect();
+    let counts = plan.counts;
     let mut initial = os_model::WriteBatch::default();
     for entry in plan
         .entries
@@ -478,6 +488,18 @@ async fn start_apis(
             });
         }
     }
+    for (key, value) in [
+        ("list_read", counts.read),
+        ("list_invalid", counts.invalid),
+        ("list_ignored_lines", counts.ignored_lines),
+        ("list_duplicates", counts.duplicates),
+        ("list_excluded", counts.excluded),
+        ("list_not_included", counts.not_included),
+        ("list_sitemaps", counts.sitemaps),
+        ("list_to_crawl", counts.to_crawl),
+    ] {
+        initial.counters.push((key.into(), value as i64));
+    }
     initial.meta.push(("source_mode".into(), "apis".into()));
     app.write_queue()
         .create_file(key.clone(), path.clone(), init, initial)
@@ -487,6 +509,8 @@ async fn start_apis(
     let result = app
         .write_queue()
         .submit_file(&key, move |f| {
+            os_store::queries::api::store_input_rows(f.conn(), &rows)
+                .map_err(|e| crate::runtime::error::store_error(&e))?;
             f.set_meta(
                 "api_input_urls",
                 &serde_json::to_string(&items)

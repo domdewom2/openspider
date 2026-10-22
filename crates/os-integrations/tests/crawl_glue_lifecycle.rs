@@ -358,3 +358,69 @@ fn environment_keys_work_for_named_profile_accounts_without_logging_secrets() {
     assert!(!String::from_utf8_lossy(&output.stdout).contains("fixture-env-key"));
     assert!(!String::from_utf8_lossy(&output.stderr).contains("fixture-env-key"));
 }
+
+async fn discovery_failure_preserves_other_source(failed: ApiKind) {
+    let ga = Ga4Mock::default();
+    ga.configure(|cfg| cfg.rows = vec![MockRow::sessions("https://integ.test/ga-orphan", 12.0)]);
+    let gsc = GscMock::new();
+    gsc.set_rows(&[("https://integ.test/gsc-orphan", 3.0, 50.0, 0.06, 2.0)]);
+    if failed == ApiKind::Ga4 {
+        ga.set_scenario("400-invalid-date-range");
+    } else {
+        gsc.set_scenario(Some("error"));
+    }
+    let server = MockServer::start(vec![Arc::new(ga.clone()), Arc::new(gsc.clone())])
+        .await
+        .unwrap();
+    let mut cfg = CrawlConfig::default();
+    cfg.api.ga4.enabled = true;
+    cfg.api.ga4.crawl_new_urls = true;
+    cfg.api.ga4.property = Some(STREAM.into());
+    cfg.api.ga4.base_url = Some(server.base_url("ga4"));
+    cfg.api.gsc.enabled = true;
+    cfg.api.gsc.crawl_new_urls = true;
+    cfg.api.gsc.site = Some("sc-domain:integ.test".into());
+    cfg.api.gsc.base_url = Some(server.base_url("gsc"));
+    let dir = tempfile::tempdir().unwrap();
+    let file = file(&dir, &cfg);
+    let run = ApiRun::new(context(cfg), clock(), dir.path().join("quota.json"));
+    let expected = if failed == ApiKind::Ga4 {
+        "https://integ.test/gsc-orphan"
+    } else {
+        "https://integ.test/ga-orphan"
+    };
+    // Repeated discovery neither duplicates the error nor loses successful provenance.
+    for _ in 0..2 {
+        assert_eq!(run.discover(&file).await.unwrap(), vec![expected]);
+        let errors =
+            os_store::queries::api::errors(file.conn(), &failed.to_string(), 0, 10).unwrap();
+        assert_eq!(errors.len(), 1);
+        assert_eq!(errors[0].code, "api_discovery");
+        assert_eq!(errors[0].url, None);
+        assert!(!errors[0].message.is_empty());
+        assert!(!errors[0].message.contains("fixture-token"));
+        let (url, source): (String, String) = file
+            .conn()
+            .query_row("SELECT url,source FROM api_urls", [], |r| {
+                Ok((r.get(0)?, r.get(1)?))
+            })
+            .unwrap();
+        assert_eq!(url, expected);
+        assert_eq!(source, if failed == ApiKind::Ga4 { "gsc" } else { "ga4" });
+    }
+    assert!(!ga.requests().is_empty());
+    assert!(!gsc.requests_to("query").is_empty());
+    server.stop().await;
+}
+
+// spec: INTEG-015
+#[tokio::test]
+async fn ga4_failure_does_not_skip_gsc_orphan_discovery() {
+    discovery_failure_preserves_other_source(ApiKind::Ga4).await;
+}
+
+// spec: INTEG-015
+#[tokio::test]
+async fn gsc_failure_does_not_discard_ga4_orphan_discovery() {
+    discovery_failure_preserves_other_source(ApiKind::Gsc).await;
+}

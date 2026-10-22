@@ -171,54 +171,80 @@ impl ApiRun {
             hosts.insert(start);
         }
         let mut candidates = BTreeSet::new();
-        if self.ctx.cfg.api.ga4.enabled && self.sources.iter().any(|s| s.kind() == ApiKind::Ga4) {
-            self.validate_ga4_selection().await?;
-            let report = self.ga4.report(&self.ctx).await?;
-            let addresses: BTreeSet<_> = report
-                .rows
-                .values()
-                .flat_map(|rows| rows.keys().cloned())
-                .collect();
+        for (kind, crawl_new) in [
+            (ApiKind::Ga4, self.ctx.cfg.api.ga4.crawl_new_urls),
+            (ApiKind::Gsc, self.ctx.cfg.api.gsc.crawl_new_urls),
+        ] {
+            if !self.sources.iter().any(|source| source.kind() == kind) {
+                continue;
+            }
+            // A provider failure must not discard another provider's URLs or skip its request.
+            let (addresses, error) = match self.discovery_urls(kind).await {
+                Ok(result) => result,
+                Err(error) => (BTreeSet::new(), Some(error)),
+            };
+            let source = kind.to_string();
             let capture = file.conn().unchecked_transaction().map_err(db)?;
+            capture
+                .execute(
+                    "DELETE FROM api_errors WHERE source=?1 AND code='api_discovery'",
+                    [&source],
+                )
+                .map_err(db)?;
+            if let Some(error) = error {
+                capture.execute(
+                    "INSERT INTO api_errors(source,url,code,message,at) VALUES(?1,NULL,'api_discovery',?2,?3)",
+                    (&source, error.public_message(), self.clock.now().to_db()),
+                ).map_err(db)?;
+            }
             for address in addresses {
                 if host(&address).is_some_and(|h| hosts.contains(&h)) {
-                    record_source(file, &address, "ga4", self.clock.now())?;
-                    if self.ctx.cfg.api.ga4.crawl_new_urls {
+                    record_source(file, &address, &source, self.clock.now())?;
+                    if crawl_new {
                         candidates.insert(address);
                     }
                 }
             }
-            capture.execute("INSERT INTO crawl_meta(key,value) VALUES('api_raw_hosts.ga4',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value", [serde_json::to_string(&hosts).map_err(db)?]).map_err(db)?;
-            capture.commit().map_err(db)?;
-        }
-        if self.ctx.cfg.api.gsc.enabled && self.sources.iter().any(|s| s.kind() == ApiKind::Gsc) {
-            let options =
-                crate::gsc::options::GscOptions::from_config(&self.ctx.cfg.api.gsc).map_err(db)?;
-            let token = crate::credentials::read_account(
-                self.ctx.secrets.as_ref(),
-                ApiKind::Gsc,
-                self.ctx.cfg.api.gsc.account.as_deref(),
-            )?
-            .access_token;
-            let http =
-                crate::gsc::client::GscHttp::new(&self.ctx, &options, token, self.clock.clone())?;
-            let report = self.gsc.report(&http, &options).await;
-            if let Some(e) = &report.error {
-                return Err(e.to_api_error());
-            }
-            let capture = file.conn().unchecked_transaction().map_err(db)?;
-            for row in &report.rows {
-                if host(&row.page).is_some_and(|h| hosts.contains(&h)) {
-                    record_source(file, &row.page, "gsc", self.clock.now())?;
-                    if self.ctx.cfg.api.gsc.crawl_new_urls {
-                        candidates.insert(row.page.clone());
-                    }
-                }
-            }
-            capture.execute("INSERT INTO crawl_meta(key,value) VALUES('api_raw_hosts.gsc',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value", [serde_json::to_string(&hosts).map_err(db)?]).map_err(db)?;
+            capture.execute(
+                "INSERT INTO crawl_meta(key,value) VALUES(?1,?2) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                (format!("api_raw_hosts.{source}"), serde_json::to_string(&hosts).map_err(db)?),
+            ).map_err(db)?;
             capture.commit().map_err(db)?;
         }
         Ok(candidates.into_iter().collect())
+    }
+
+    async fn discovery_urls(
+        &self,
+        kind: ApiKind,
+    ) -> Result<(BTreeSet<String>, Option<ApiError>), ApiError> {
+        if kind == ApiKind::Ga4 {
+            self.validate_ga4_selection().await?;
+            let report = self.ga4.report(&self.ctx).await?;
+            return Ok((
+                report
+                    .rows
+                    .values()
+                    .flat_map(|rows| rows.keys().cloned())
+                    .collect(),
+                None,
+            ));
+        }
+        let options =
+            crate::gsc::options::GscOptions::from_config(&self.ctx.cfg.api.gsc).map_err(db)?;
+        let token = crate::credentials::read_account(
+            self.ctx.secrets.as_ref(),
+            ApiKind::Gsc,
+            self.ctx.cfg.api.gsc.account.as_deref(),
+        )?
+        .access_token;
+        let http =
+            crate::gsc::client::GscHttp::new(&self.ctx, &options, token, self.clock.clone())?;
+        let report = self.gsc.report(&http, &options).await;
+        Ok((
+            report.rows.iter().map(|row| row.page.clone()).collect(),
+            report.error.as_ref().map(|error| error.to_api_error()),
+        ))
     }
 
     /// Completion barrier: all results and per-URL failures are durable before returning.

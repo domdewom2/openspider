@@ -430,12 +430,12 @@ pub fn list_config(mut cfg: CrawlConfig) -> CrawlConfig {
     cfg
 }
 
-/// Expand files and sitemap sources for an API-only run, without requesting target pages (INTEG-012).
-pub async fn api_items<F: os_fetch::Fetch>(
+/// Expand API-only inputs while retaining the list entries and all CRAWL-027 counters.
+pub async fn api_plan<F: os_fetch::Fetch>(
     items: &[String],
     cfg: &CrawlConfig,
     fetcher: &F,
-) -> Result<Vec<String>, EngineError> {
+) -> Result<ListPlan, EngineError> {
     let mut expanded = Vec::new();
     for item in items {
         if !item.contains("://") && Path::new(item).is_file() {
@@ -445,20 +445,20 @@ pub async fn api_items<F: os_fetch::Fetch>(
         }
     }
     let planned = plan(&expanded, cfg)?;
-    let mut seeds = Vec::new();
-    let mut output = Vec::new();
-    for entry in planned.entries {
-        if let Some(url) = entry.url {
-            match entry.outcome {
-                ListOutcome::Ok => output.push(url.encoded),
-                ListOutcome::Sitemap => seeds.push(crate::sitemaps::SitemapSeed {
+    let seeds: Vec<_> = planned
+        .entries
+        .into_iter()
+        .filter_map(|entry| {
+            if entry.outcome == ListOutcome::Sitemap {
+                entry.url.map(|url| crate::sitemaps::SitemapSeed {
                     url: url.url,
                     found_via: "list".into(),
-                }),
-                _ => {}
+                })
+            } else {
+                None
             }
-        }
-    }
+        })
+        .collect();
     if !seeds.is_empty() {
         for map in crate::sitemaps::ingest(fetcher, seeds, 3).await {
             let Some(doc) = map.doc else {
@@ -467,11 +467,27 @@ pub async fn api_items<F: os_fetch::Fetch>(
                 ));
             };
             if doc.kind == os_model::SitemapKind::Urlset {
-                output.extend(doc.locs.into_iter().filter_map(|loc| loc.url));
+                expanded.extend(doc.locs.into_iter().filter_map(|loc| loc.url));
             }
         }
     }
-    Ok(output)
+    // Plan the complete input, including rejected lines and duplicates from every source.
+    plan(&expanded, cfg)
+}
+
+/// Accepted API-only URLs for callers that do not need the upload summary.
+pub async fn api_items<F: os_fetch::Fetch>(
+    items: &[String],
+    cfg: &CrawlConfig,
+    fetcher: &F,
+) -> Result<Vec<String>, EngineError> {
+    Ok(api_plan(items, cfg, fetcher)
+        .await?
+        .entries
+        .into_iter()
+        .filter(|entry| entry.outcome == ListOutcome::Ok)
+        .filter_map(|entry| entry.url.map(|url| url.encoded))
+        .collect())
 }
 
 #[cfg(test)]

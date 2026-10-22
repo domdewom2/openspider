@@ -168,3 +168,59 @@ async fn opted_in_orphan_filters_require_analysis_and_respect_indexability() {
         }
     }
 }
+
+// spec: CRAWL-037
+// spec: INTEG-012
+#[tokio::test]
+async fn api_upload_keeps_the_same_counts_and_rejected_entries_as_list_upload() {
+    use os_engine::{
+        list_input,
+        testing::{SimFetcher, SimSite},
+    };
+    let text = include_str!("../../os-integrations/src/crawl_glue/api-input-counts.txt");
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("urls.txt");
+    std::fs::write(&path, text).unwrap();
+    let mut cfg = CrawlConfig::default();
+    cfg.scope.include = vec!["https://integ.test/keep/.*".into()];
+    cfg.scope.exclude = vec![".*/private/.*".into()];
+    let list = list_input::plan(&list_input::read_items(&path).unwrap(), &cfg).unwrap();
+    assert_eq!(
+        list.counts,
+        list_input::ListCounts {
+            read: 7,
+            invalid: 1,
+            ignored_lines: 2,
+            duplicates: 2,
+            excluded: 1,
+            not_included: 1,
+            sitemaps: 0,
+            to_crawl: 2,
+        }
+    );
+    let fetcher = SimFetcher::new(SimSite::new());
+    for items in [
+        list_input::text_items(text),
+        vec![path.to_string_lossy().into_owned()],
+    ] {
+        let api = list_input::api_plan(&items, &cfg, fetcher.as_ref())
+            .await
+            .unwrap();
+        assert_eq!(api.counts, list.counts);
+        let entries = |plan: list_input::ListPlan| {
+            plan.entries
+                .into_iter()
+                .map(|entry| {
+                    (
+                        entry.position,
+                        entry.original,
+                        entry.outcome,
+                        entry.url.map(|url| url.encoded),
+                    )
+                })
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(entries(api), entries(list.clone()));
+    }
+    assert!(fetcher.requests().is_empty());
+}
