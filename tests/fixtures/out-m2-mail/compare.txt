@@ -164,6 +164,8 @@ Meta Description / Over 985 Pixels | 0 | 0 | +0 |
 Meta Keywords / Duplicate | 0 | 0 | +0 |
 Meta Keywords / Missing | 9 | 9 | +0 | 0.00%
 Meta Keywords / Multiple | 0 | 0 | +0 |
+Mobile / All | 0 | 0 | +0 |
+Mobile / Mobile Alternate Link | 0 | 0 | +0 |
 Page Titles / Below 200 Pixels | 0 | 0 | +0 |
 Page Titles / Below 30 Characters | 0 | 0 | +0 |
 Page Titles / Duplicate | 6 | 6 | +0 | 0.00%
