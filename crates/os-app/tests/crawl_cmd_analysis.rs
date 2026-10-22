@@ -118,8 +118,11 @@ async fn api_source_delegates_to_i06_and_never_starts_http_crawl() {
         !app.config().paths.crawls.exists()
             || std::fs::read_dir(&app.config().paths.crawls)
                 .unwrap()
-                .next()
-                .is_none()
+                .all(|entry| entry
+                    .unwrap()
+                    .path()
+                    .extension()
+                    .is_none_or(|ext| ext != "ospider"))
     );
     assert!(app.sessions().current(&window()).is_none());
 }

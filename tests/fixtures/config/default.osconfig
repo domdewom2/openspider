@@ -406,6 +406,7 @@ respect_hsts = true
 ignore_certificate_errors = false
 
 [api.ga4]
+crawl_new_urls = false
 enabled = false
 metrics = []
 
@@ -422,6 +423,7 @@ ignore_trailing_slash = true
 ignore_case = true
 
 [api.gsc]
+crawl_new_urls = false
 enabled = false
 search_type = "web"
 url_inspection = false
