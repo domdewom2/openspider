@@ -14,6 +14,8 @@ import { asSchema, fieldMeta, type ConfigSchema, type FieldMeta } from "./schema
 const VALIDATE_DELAY_MS = 200;
 
 export interface ConfigDraft {
+  /** Snapshot checked by config.validate; undefined while the first check is pending. */
+  validatedConfig?: ConfigJson;
   status: "loading" | "ready" | "error";
   loadError: CmdError | null;
   /** Gespeicherter Stand (zuletzt gelesen oder geschrieben). */
@@ -53,6 +55,7 @@ export function useConfigDraft(active: boolean): ConfigDraft {
   const [cfg, setCfg] = useState<ConfigJson>({});
   const [schema, setSchema] = useState<ConfigSchema | null>(null);
   const [defaultRows, setDefaultRows] = useState<DiffRow[]>([]);
+  const [validatedConfig, setValidatedConfig] = useState<ConfigJson>();
   const [issues, setIssues] = useState<ValidationIssue[]>([]);
   const [saveError, setSaveError] = useState<CmdError | null>(null);
   const [deferred, setDeferred] = useState<string[]>([]);
@@ -71,6 +74,7 @@ export function useConfigDraft(active: boolean): ConfigDraft {
     const mine = ++seq.current;
     try {
       const found = await configApi.validate(dtoOf(base, config));
+      if (mine === seq.current) setValidatedConfig(config);
       if (mine === seq.current) setIssues(found);
     } catch (e) {
       if (mine === seq.current) setIssues([{ path: "", messageKey: toCmdError(e).messageKey, args: {}, warning: false, line: null, column: null }]);
@@ -177,6 +181,7 @@ export function useConfigDraft(active: boolean): ConfigDraft {
   }, [issues, saveError]);
 
   return {
+    validatedConfig,
     status,
     loadError,
     saved,

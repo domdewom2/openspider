@@ -1,3 +1,4 @@
+import type { ConfigDraft } from "./draft";
 import type { FC } from "react";
 
 export type FieldKind = "auto" | "bool" | "int" | "number" | "enum" | "radio" | "text" | "lines" | "storeCrawl";
@@ -28,6 +29,8 @@ export interface FieldDef {
 
 /** Eine Seite der Seitennavigation. Seitenmodule liegen unter `features/config/pages/<id>/index.tsx` und exportieren `page` oder `pages`. */
 export interface ConfigPage {
+  /** Optional save constraint supplied by a specialist page. */
+  saveGuard?: (draft: ConfigDraft) => boolean;
   id: string;
   /** Gruppe in der Navigation (`spider`, `custom`); ohne Gruppe steht die Seite auf der obersten Ebene. */
   group?: string;

@@ -57,9 +57,9 @@ describe("Rahmen: Navigation, Suche, Entwurf", () => {
     for (const name of ["Crawl", "Extraction", "Limits", "Rendering", "Advanced", "Presets", "robots.txt", "URL rewriting", "Include / Exclude", "Speed", "User-Agent", "HTTP headers", "Authentication", "Profiles"]) {
       expect(within(nav).getByRole("button", { name }), name).toBeInTheDocument();
     }
-    expect(within(nav).getByRole("button", { name: "Segments" })).toHaveAttribute("data-pending", "true");
+    expect(within(nav).getByRole("button", { name: "Segments" })).not.toHaveAttribute("data-pending");
     fireEvent.click(within(nav).getByRole("button", { name: "Segments" }));
-    expect(await within(dialog).findByTestId("config-placeholder")).toBeInTheDocument();
+    expect(await within(dialog).findByRole("button", { name: "Add segment" })).toBeInTheDocument();
   });
 
   // spec: OUT-220

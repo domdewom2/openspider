@@ -1,3 +1,4 @@
+import type { ConfigDraft } from "./draft";
 // Hilfsfunktion für Seitenmodule: Überschrift, optionaler Kopf- und Fußbereich und die Feldliste.
 import type { ComponentType } from "react";
 import { useT } from "../../../i18n";
@@ -5,6 +6,7 @@ import { FieldList, PageHeading } from "./fields";
 import { pageTitleKey, type ConfigPage, type FieldDef } from "./types";
 
 export function definePage(opts: {
+  saveGuard?: (draft: ConfigDraft) => boolean;
   id: string;
   group?: string;
   order: number;
@@ -30,6 +32,7 @@ export function definePage(opts: {
     );
   }
   return {
+    saveGuard: opts.saveGuard,
     id: opts.id,
     group: opts.group,
     order: opts.order,

@@ -415,8 +415,38 @@ fn close<'a>(app: &'a App, ctx: CallCtx, _: serde_json::Value) -> BoxFuture<'a, 
     })
 }
 
+/// Read-only capability for TECH-300: selection requires stored content on both sides.
+fn content_available<'a>(
+    app: &'a App,
+    ctx: CallCtx,
+    _: serde_json::Value,
+) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        if active_version(app, &ctx.window).is_none() {
+            return to_json(&false);
+        }
+        let available = with_active(app, &ctx.window, |active| {
+            active
+                .comparison
+                .content_comparable()
+                .map_err(compare_error)
+        })
+        .await?;
+        to_json(&available)
+    })
+}
+
 /// Trägt die Commands dieser Domäne in die Registry ein (Namen und Typen unverändert laut Katalog).
 pub fn register(r: &mut Registry) {
+    r.register(
+        CommandMeta {
+            name: "compare.contentAvailable",
+            args: "void",
+            ret: "JsonValue",
+            long_running: false,
+        },
+        content_available,
+    );
     for (name, args, ret, handler) in [
         (
             "compare.open",

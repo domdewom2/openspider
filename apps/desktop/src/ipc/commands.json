@@ -762,6 +762,12 @@
     "longRunning": true
   },
   {
+    "name": "compare.contentAvailable",
+    "args": "void",
+    "ret": "JsonValue",
+    "longRunning": false
+  },
+  {
     "name": "compare.open",
     "args": "CompareOpenArgs",
     "ret": "CompareSession",

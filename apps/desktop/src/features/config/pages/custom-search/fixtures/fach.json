@@ -1,0 +1,6 @@
+{
+  "custom_search": {"filters": [{"name":"Tracking","contains":true,"kind":"text","expression":"GTM-LOCAL","scope":"html","xpath":null,"case_sensitive":false}],"regex_timeout_ms":2000},
+  "custom_extraction": {"extractors":[{"name":"Price","mode":"xpath","expression":"//span[@class='price']","attribute":null,"output":"text"}]},
+  "custom_js": {"snippets":[{"name":"Headings","kind":"extraction","code":"return openspider.data(document.querySelectorAll('h2').length);","content_types":["text/html"],"timeout_s":10}]},
+  "segments": {"list":[{"name":"Blog","color":"#3355aa","groups":[{"conditions":[{"field":"Address","op":"contains","value":"/blog/"}]}]},{"name":"Rest","color":"#aa5533","groups":[{"conditions":[{"field":"Segment","op":"in_no_segment","value":""}]}]}]}
+}
