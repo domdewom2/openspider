@@ -73,6 +73,20 @@ pub fn refresh_if_stale(
     }
     Ok(())
 }
+/// Idempotent reassignment for `segment.reassign` (additive, K2-61): recomputes only when URL facts, analysis results or
+/// the definitions changed (see [`refresh_if_stale`]); returns the number of evaluated (internal) URLs.
+pub fn reassign_if_stale(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    cancel: &CancelToken,
+) -> Result<u64, SegmentError> {
+    refresh_if_stale(file, cfg, cancel)?;
+    Ok(file
+        .conn()
+        .query_row("SELECT COUNT(*) FROM urls WHERE is_internal=1", [], |r| {
+            r.get(0)
+        })?)
+}
 /// Incremental live assignment for one bounded change-feed batch.
 /// Configuration changes automatically fall back to a complete replacement.
 pub fn reassign_urls(

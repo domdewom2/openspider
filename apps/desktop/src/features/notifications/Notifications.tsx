@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { getT, i18n, useLanguageStore, useT } from "../../i18n";
-import { openSettingsWindow } from "../../app/windows";
+import { openConfig } from "../config/frame/store";
 import { auth } from "../../ipc/auth";
 import { config } from "../../ipc/config";
 import { crawl } from "../../ipc/crawl";
@@ -103,7 +103,7 @@ export function Notifications() {
   const httpsFailure = current && ["start-connection", "start-dns", "err-start-connection"].includes(current.code) && String(current.args.startUrl ?? "").startsWith("https:");
   return <>
     {stage === "paused" && <div className="os-memory-banner"><Banner kind="error"><strong>{t("notify-memory-paused")}</strong>
-      {[["speed.threads", "notify-reduce-threads"], ["rendering.mode", "notify-disable-rendering"], ["extraction.store_html", "notify-disable-html"]].map(([anchor, label]) => <Button key={anchor} onPress={() => void openSettingsWindow(anchor)}>{t(label!)}</Button>)}
+      {[["speed.threads", "notify-reduce-threads"], ["rendering.mode", "notify-disable-rendering"], ["extraction.store_html", "notify-disable-html"]].map(([anchor, label]) => <Button key={anchor} onPress={() => openConfig({ anchor })}>{t(label!)}</Button>)}
     </Banner></div>}
     <ToastRegion label={t("notify-title")} />
     <Dialog title={t(isAuth ? "notify-auth-title" : "notify-title")} isOpen={!!current} isDismissable={!busy} onOpenChange={(open) => { if (!open) cancelDialog(); }}>
@@ -112,7 +112,7 @@ export function Notifications() {
       {current?.args.status != null && <p>{t("notify-status", { status: String(current.args.status) })}</p>}
       {current?.args.path != null && <p>{String(current.args.path)} · {t("notify-free", { free: String(current.args.freeBytes ?? "–") })}</p>}
       {current?.args.target != null && <p>{String(current.args.target)}</p>}
-      {current?.code === "start-robots" && <Button onPress={() => void openSettingsWindow("robots.mode")}>{t("notify-robots-setting")}</Button>}
+      {current?.code === "start-robots" && <Button onPress={() => openConfig({ anchor: "robots.mode" })}>{t("notify-robots-setting")}</Button>}
       {httpsFailure && <Button isDisabled={busy} onPress={() => {
         const startUrl = String(current.args.startUrl);
         useHeader.setState({ url: startUrl.replace(/^https:/, "http:") }); dismiss();

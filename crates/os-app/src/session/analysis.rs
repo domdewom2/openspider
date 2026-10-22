@@ -37,21 +37,11 @@ pub async fn status(app: &App, s: &SessionInfo) -> Result<AnalysisStatus, CmdErr
     app.read_pool()
         .run(s.key.clone(), move |f, _| {
             let data = os_analyze::aggregates::status::analysis_status(f, &cfg);
-            let snapshot = os_analyze::state::AnalysisSnapshot::load(f)
-                .map_err(|e| os_store::StoreError::InvalidInput(e.to_string()))?;
-            let cfg_json = serde_json::to_value(cfg.as_ref())
-                .map_err(|e| os_store::StoreError::InvalidInput(e.to_string()))?;
+            // UI-082/ONPAGE-140: stale and needsRecrawl come from the K03 status, not from the freshness alone.
+            let steps = crate::commands::sidebar_ext::step_statuses(&data)
+                .map_err(|e| os_store::StoreError::InvalidInput(e.message_key.to_string()))?;
             Ok(AnalysisStatus {
-                steps: data
-                    .steps
-                    .into_iter()
-                    .map(|(step, state)| AnalysisStepStatus {
-                        step: step.as_str().into(),
-                        state: step_state(state),
-                        stale: snapshot.freshness(step, &cfg_json)
-                            == os_analyze::state::Freshness::Stale,
-                    })
-                    .collect(),
+                steps,
                 running: f.get_meta("analysis_state")?.as_deref() == Some("running"),
                 current: None,
                 percent: None,

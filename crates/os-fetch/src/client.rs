@@ -199,6 +199,12 @@ impl std::fmt::Debug for HttpFetcher {
 }
 
 impl HttpFetcher {
+    /// Network snapshot for resume; crawl-specific request options are rebuilt separately.
+    /// The password must remain in memory and must never be logged or persisted.
+    pub fn network_snapshot(&self) -> (os_model::settings::NetworkSettings, Option<String>) {
+        (self.cfg.network.clone(), self.cfg.proxy_password.clone())
+    }
+
     /// Baut den Abrufer (HTTP-Client, Auflösung, Auth-Zuordnung, Rate-Limit).
     pub fn new(cfg: FetchConfig) -> Result<Self, FetchError> {
         if cfg.response_timeout.is_zero() {
@@ -444,8 +450,11 @@ impl HttpFetcher {
             req.body_limit.max_decoded_bytes
         } else if req.max_body_bytes > 0 {
             req.max_body_bytes
-        } else {
+        } else if self.cfg.max_body_bytes > 0 {
             self.cfg.max_body_bytes
+        } else {
+            // CRAWL-075 (K2-68): a page size limit of 0 means unlimited, never "truncate at zero bytes".
+            u64::MAX
         };
         let jar = self.jar_for(&req);
         tracing::debug!(url = %redact::url(url.as_str()), purpose = ?req.purpose, "Abruf beginnt");

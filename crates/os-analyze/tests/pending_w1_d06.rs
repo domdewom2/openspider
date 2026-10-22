@@ -38,7 +38,6 @@ async fn respect_noindex_hides_noindex_urls_except_in_the_directives_filters() {
 // spec: TECH-008 [M2]
 // spec: TECH-065
 #[tokio::test]
-#[ignore = "Klärung K2-68: N01-C01, Besitzer M2-N01b (Validierungsmarker fehlt für 2 HTML-Seiten der Fixture tech-m2-directives)"]
 async fn outside_head_filter_needs_html_validation() {
     let cfg = CrawlConfig::default();
     let fx = crawl_fixture("tech-m2-directives", cfg.clone()).await;

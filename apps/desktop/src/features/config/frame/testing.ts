@@ -160,7 +160,7 @@ export function installConfigCore(core: MockCore, initial: ConfigJson = defaultC
       const m = /^\s*Disallow:\s*(\S+)/i.exec(l);
       if (m && path.startsWith(m[1] as string) && line === null) line = i + 1;
     });
-    return { allowed: line === null, matchedLine: line, userAgent: "OpenSpider" };
+    return { allowed: line === null, matchedLine: line, userAgent: (args as { userAgent?: string | null }).userAgent || "OpenSpider" };
   });
   h.set("config.loadRobots", () => "User-agent: *\nDisallow: /live-blocked/\n");
   h.set("profile.list", () => [...st.profiles.keys()].sort().map(info));

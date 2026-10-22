@@ -19,6 +19,7 @@ import { sortIssues } from "../issues/Issues";
 import type { IssueRow } from "../../../ipc/gen/IssueRow";
 import { documentationUrl } from "../issues/IssueExplanation";
 import { tsv } from "./PanelActions";
+import { closeConfig, useConfigDialog } from "../../config/frame/store";
 
 let core: MockCore;
 beforeEach(async () => {
@@ -129,7 +130,10 @@ it("uses the core needsRecrawl state for the saved HTML notice and points at the
   mount();
   expect(await screen.findByText("Reanalysis needs saved HTML. Recrawl required.")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "HTML storage setting" }));
-  expect(open).toHaveBeenCalledWith(expect.stringContaining("#extraction.store_html"), "settings", expect.any(String));
+  // N01b: the jump target is the crawl configuration dialog (UI-016), not the settings window.
+  expect(useConfigDialog.getState()).toMatchObject({ open: true, anchor: "extraction.store_html" });
+  expect(open).not.toHaveBeenCalled();
+  closeConfig();
 });
 
 // spec: UI-080

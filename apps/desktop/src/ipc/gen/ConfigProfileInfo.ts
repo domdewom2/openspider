@@ -19,4 +19,8 @@ modifiedAt: string,
 /**
  * Datei.
  */
-path: string, };
+path: string, 
+/**
+ * Rang unter den zuletzt geladenen Profilen (0 = zuletzt, höchstens zehn; OUT-220).
+ */
+recentRank?: number | null, };

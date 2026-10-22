@@ -29,7 +29,6 @@ config-robots-tester = Tester
 config-robots-test-url = URL to test
 config-robots-test = Test
 config-robots-test-url-invalid = Enter a valid URL.
-config-robots-ua-saved = The tester uses the saved user agent. A changed user agent applies after OK.
 config-robots-allowed = Allowed
 config-robots-blocked = Blocked
 config-robots-ua = User agent: { $ua }

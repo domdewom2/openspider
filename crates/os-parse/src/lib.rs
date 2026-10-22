@@ -252,6 +252,11 @@ pub fn parse_html(input: &ParseInput) -> ParsedPage {
     if cfg.html_validation {
         validation::run(&ctx, &mut page);
         validation::set_document_bytes(&mut page, input.body.len() as u64);
+        // TECH-008: the checked marker accompanies the outside facts already at the parser (the store upserts).
+        page.ext.push((
+            os_model::ExtKey::from_static("validation.checked"),
+            os_model::Value::Bool(true),
+        ));
     }
     if cfg.readability || cfg.minhash {
         readability::run(&ctx, &mut page);

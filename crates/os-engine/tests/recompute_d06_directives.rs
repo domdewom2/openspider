@@ -8,6 +8,11 @@ async fn recompute_matches_crawl_for_every_fixture_url() {
         for respect_self_refresh in [false, true] {
             let mut cfg = CrawlConfig::default();
             cfg.advanced.respect_self_ref_meta_refresh = respect_self_refresh;
+            // K2-64: der externe Fixture-Link auf `localhost` wird nicht erreicht; keine Netzwerk-Wiederholungen abwarten.
+            cfg.http.retries_network = 0;
+            cfg.http.throttle_on_429 = false;
+            cfg.robots.retries = 0;
+            cfg.robots.retry_delay_s = 0;
             let mut fx = crawl_fixture(fixture, cfg.clone()).await;
             let snapshot = |file: &os_store::CrawlFile| {
                 file.conn()

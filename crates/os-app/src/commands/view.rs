@@ -355,6 +355,9 @@ pub(crate) fn detail_spec(
         _ => None,
     }
 }
+/// Additional columns of the Resources list (UI-036), appended to the 19 link columns.
+const RESOURCE_EXTRA: [&str; 3] = ["Content Type", "Size", "Blocked By"];
+
 pub(crate) fn link_selection(
     spec: &ViewSpec,
     cfg: &CrawlConfig,
@@ -368,6 +371,7 @@ pub(crate) fn link_selection(
     CmdError,
 > {
     use os_store::queries::{app_support::LinkSelection, LinkSortKey, PageReq};
+    let mut resource_filter = None;
     let (ids, filter, search, sort, incoming, resources) = match spec {
         ViewSpec::Inlinks {
             url_ids,
@@ -399,9 +403,21 @@ pub(crate) fn link_selection(
             search,
             sort,
         } => {
-            if filter.id != "All" {
+            // UI-036: type filter of the Resources list; unknown names stay an error.
+            const TYPES: [&str; 8] = [
+                "JavaScript",
+                "CSS",
+                "Images",
+                "Fonts",
+                "Iframes",
+                "Media",
+                "Other",
+                "Blocked",
+            ];
+            if filter.id != "All" && !TYPES.contains(&filter.id.as_str()) {
                 return Err(CmdError::invalid_input("err-unknown-filter", "filter"));
             }
+            resource_filter = (filter.id != "All").then(|| filter.id.clone());
             (url_ids, None, search, sort, false, true)
         }
         _ => return Err(CmdError::invalid_input("err-links-required", "spec")),
@@ -413,6 +429,7 @@ pub(crate) fn link_selection(
         exclude_resources: !incoming && !resources,
         search: search.clone(),
         include_uncrawlable: cfg.spider.store_uncrawlable_links,
+        resource_filter,
         ..Default::default()
     };
     let mut page = PageReq::new(offset, limit);
@@ -700,6 +717,19 @@ async fn page_query(
                             }
                         }
                         .map_err(|e| crate::runtime::error::store_error(&e))?;
+                        let mut p = p;
+                        // UI-036: the Resources list adds Content Type, Size and Blocked By to the link columns.
+                        let resource_list = matches!(spec, ViewSpec::Resources { .. });
+                        if resource_list {
+                            let extras = os_store::queries::app_support::resource_extras(
+                                file.conn(),
+                                &p.keys,
+                            )
+                            .map_err(|e| crate::runtime::error::store_error(&e))?;
+                            for (row, values) in p.rows.iter_mut().zip(extras) {
+                                row.extend(values);
+                            }
+                        }
                         let names = [
                             "Type",
                             "From",
@@ -723,11 +753,17 @@ async fn page_query(
                         ]
                         .iter()
                         .map(|n| n.to_string())
+                        .chain(
+                            resource_list
+                                .then(|| RESOURCE_EXTRA.map(String::from))
+                                .into_iter()
+                                .flatten(),
+                        )
                         .collect::<Vec<_>>();
                         let kinds = (0..names.len())
                             .map(|i| match i {
                                 1 | 2 | 17 => defs::ColumnKind::Url,
-                                3 | 6 | 18 => defs::ColumnKind::Int,
+                                3 | 6 | 18 | 20 => defs::ColumnKind::Int,
                                 8 => defs::ColumnKind::Bool,
                                 _ => defs::ColumnKind::Text,
                             })
@@ -746,6 +782,7 @@ async fn page_query(
                         let mut c = defs::ColumnDef::dynamic(n, "NULL", k, true);
                         defs::apply_meta_defaults(std::slice::from_mut(&mut c));
                         if (i >= 16
+                            && !RESOURCE_EXTRA.contains(&n.as_str())
                             && matches!(
                                 spec,
                                 ViewSpec::Inlinks { .. }

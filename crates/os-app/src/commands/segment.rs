@@ -33,6 +33,23 @@ fn failure(e: SegmentError) -> CmdError {
     }
     error
 }
+/// `segments.0.groups.1.conditions.2` -> `segments[0].groups[1].conditions[2]` (the form of `config.validate`).
+fn bracket_path(path: &str) -> String {
+    let mut out = String::new();
+    for (i, part) in path.split('.').enumerate() {
+        if part.chars().all(|c| c.is_ascii_digit()) && !part.is_empty() && i > 0 {
+            out.push('[');
+            out.push_str(part);
+            out.push(']');
+        } else {
+            if i > 0 {
+                out.push('.');
+            }
+            out.push_str(part);
+        }
+    }
+    out
+}
 fn invalid(field: &str) -> CmdError {
     CmdError::invalid_input("err-invalid-segment", field)
 }
@@ -303,7 +320,7 @@ fn validate<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdRes
                 let mut issues = segments::validate_file(file, &cfg)
                     .into_iter()
                     .map(|v| ValidationIssue {
-                        path: v.path,
+                        path: bracket_path(&v.path),
                         message_key: "err-invalid-segment".into(),
                         args: BTreeMap::from([("reason".into(), v.message.into())]),
                         line: Some(v.line),
@@ -315,7 +332,7 @@ fn validate<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdRes
                     segments::pending_conditions(file, &cfg).map_err(|e| pool_error(failure(e)))?
                 {
                     issues.push(ValidationIssue {
-                        path,
+                        path: bracket_path(&path),
                         message_key: "segment-pending".into(),
                         args: BTreeMap::new(),
                         line: None,
@@ -376,15 +393,16 @@ fn reassign<'a>(app: &'a App, ctx: CallCtx, _: Value) -> BoxFuture<'a, CmdResult
             .ops()
             .spawn("segment-reassign", true, move |cancel, progress| {
                 Box::pin(async move {
-                    let assignment = app2
+                    // Idempotent: the assignment is recomputed only when URL facts, analysis results or the
+                    // definitions changed since the last one (segment.save already reassigns), so a repeated call
+                    // neither rewrites url_segments nor moves the counts/sidebar versions.
+                    let count = app2
                         .write_queue()
                         .submit_file(&session.key, move |f| {
                             let cfg = segments::saved_config(f).map_err(failure)?;
-                            segments::reassign(f, &cfg, &cancel).map_err(failure)
+                            segments::reassign_if_stale(f, &cfg, &cancel).map_err(failure)
                         })
                         .await?;
-                    let count = assignment.segments.iter().map(|s| s.len()).sum::<u64>()
-                        + assignment.unassigned.len();
                     progress.report(count, Some(count));
                     Ok(json!({"count":count}))
                 })
@@ -408,7 +426,17 @@ fn sidebar<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdResu
                             SiteStructureView::CrawlDepth => s.depths,
                             SiteStructureView::ResponseCodes => s.response_codes,
                             SiteStructureView::Indexability => {
-                                let mut counts = s.issues;
+                                // The UI reads the plural spellings (UI-067); the core counts "Issue", "Warning", "Opportunity".
+                                let mut counts = BTreeMap::new();
+                                for (key, n) in s.issues {
+                                    let key = match key.as_str() {
+                                        "Issue" => "Issues".to_owned(),
+                                        "Warning" => "Warnings".to_owned(),
+                                        "Opportunity" => "Opportunities".to_owned(),
+                                        _ => key,
+                                    };
+                                    counts.insert(key, n);
+                                }
                                 counts.insert("Indexable".into(), s.indexable);
                                 counts.insert("Non-Indexable".into(), s.non_indexable);
                                 counts
@@ -517,7 +545,23 @@ pub fn on_startup(app: &App) {
                     .write_queue()
                     .submit_file(&key, move |file| {
                         let cfg = file.config().map_err(|e| failure(e.into()))?;
-                        if incremental
+                        // A command may have completed assignment since the observer read
+                        // its snapshot. Check the durable completion under the write lock.
+                        let current = segments::live_snapshot(file, 0).map_err(failure)?;
+                        let fresh = if let Some(current) = current {
+                            file.get_meta("segments.assignment_seq")
+                                .map_err(|e| failure(e.into()))?
+                                == Some(current.sequence.to_string())
+                                && file
+                                    .get_meta("segments.assignment_fingerprint")
+                                    .map_err(|e| failure(e.into()))?
+                                    == Some(current.fingerprint)
+                        } else {
+                            true
+                        };
+                        if fresh {
+                            // Nothing to write; preserve the command's sequence and versions.
+                        } else if incremental
                             && os_store::queries::change_seq(file.conn())
                                 .map_err(|e| failure(e.into()))?
                                 == seq

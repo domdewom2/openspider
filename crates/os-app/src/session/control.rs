@@ -69,6 +69,10 @@ pub async fn config(
     if let Some(s) = app.sessions().current(&ctx.window) {
         return Ok((*s.config).clone());
     }
+    // A01-04: `config.set` without an open crawl edits the draft of the window; it applies to the next crawl.
+    if let Some(draft) = crate::commands::config::draft(app, &ctx.window) {
+        return Ok((*draft).clone());
+    }
     let path = app.config().paths.settings.clone();
     tokio::task::spawn_blocking(move || {
         CrawlConfig::load_default(&path)
@@ -122,8 +126,15 @@ pub async fn start(app: &App, ctx: CallCtx, req: StartRequest) -> Result<CrawlRe
     if let StartSource::List { .. } = &req.source {
         cfg = os_engine::list_input::list_config(cfg);
     }
-    let fetch = fetcher(app, &cfg)?;
-    start_with_fetcher(app, ctx, req, cfg, fetch).await
+    // CRAWL-122: app-wide proxy settings reach the crawl; an unreachable proxy fails here, before any session or file exists.
+    let fetch = Arc::new(crate::commands::settings_network::crawl_fetcher(app, &cfg).await?);
+    let result = start_with_fetcher(app, ctx, req, cfg, fetch.clone()).await?;
+    app.ext::<CrawlNetworks>()
+        .0
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .insert(CrawlKey(result.crawl_id.clone()), fetch.network_snapshot());
+    Ok(result)
 }
 
 /// The same production lifecycle with an injected fetcher for deterministic fixture tests.
@@ -308,6 +319,11 @@ pub async fn open(
     Ok(summary)
 }
 
+type NetworkSnapshot = (os_model::settings::NetworkSettings, Option<String>);
+
+#[derive(Default)]
+struct CrawlNetworks(std::sync::Mutex<std::collections::HashMap<CrawlKey, NetworkSnapshot>>);
+
 pub async fn resume(app: &App, ctx: CallCtx) -> Result<(), CmdError> {
     let service = app.ext::<SessionService>();
     let _guard = service.mutation.lock().await;
@@ -321,7 +337,30 @@ pub async fn resume(app: &App, ctx: CallCtx) -> Result<(), CmdError> {
         .run(s.key.clone(), |f, _| f.config())
         .await?;
     let runtime = app.handle();
-    let fetch = fetcher(app, &cfg)?;
+    let saved = app
+        .ext::<CrawlNetworks>()
+        .0
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .get(&s.key)
+        .cloned();
+    let fetch = match saved {
+        Some((network, password)) => {
+            let mut config = os_fetch::FetchConfig::from_crawl_config(
+                &cfg,
+                app.config().secrets.as_ref(),
+                app.config().clock.clone(),
+            )
+            .map_err(|e| internal("resume fetch config", e.to_string()))?
+            .with_network(&network);
+            config.proxy_password = password;
+            Arc::new(
+                os_fetch::HttpFetcher::new(config)
+                    .map_err(|e| internal("resume fetcher", e.to_string()))?,
+            )
+        }
+        None => fetcher(app, &cfg)?,
+    };
     let path = s.path.clone();
     let deps = deps(app);
     let h = tokio::task::spawn_blocking(move || {

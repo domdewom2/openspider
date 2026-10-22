@@ -18,7 +18,14 @@ fn test<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
         let norm = os_url::parse_start_url(&args.url)
             .map_err(|e| CmdError::invalid_input("err-url", "url").with_detail(e.to_string()))?;
         let cfg = config(app, &ctx);
-        let user_agent = os_fetch::user_agents::resolve(&cfg.user_agent).robots_token;
+        // CRAWL-102: the draft user agent of the open dialog wins over the saved one.
+        let user_agent = args
+            .user_agent
+            .as_deref()
+            .map(str::trim)
+            .filter(|token| !token.is_empty())
+            .map(str::to_owned)
+            .unwrap_or_else(|| os_fetch::user_agents::resolve(&cfg.user_agent).robots_token);
         let content = match args
             .content
             .or_else(|| cfg.robots.custom_files.get(&norm.origin).cloned())

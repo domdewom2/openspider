@@ -166,6 +166,11 @@ pub struct ConfigProfileInfo {
     pub modified_at: String,
     /// Datei.
     pub path: String,
+
+    /// Rang unter den zuletzt geladenen Profilen (0 = zuletzt, höchstens zehn; OUT-220).
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub recent_rank: Option<u32>,
 }
 
 /// Argument von `profile.save`.
@@ -293,6 +298,11 @@ pub struct RobotsTestArgs {
     #[serde(default)]
     #[ts(optional = nullable)]
     pub subdomain: Option<String>,
+
+    /// robots.txt-Token des Entwurfs-User-Agents; ohne Angabe gilt der gespeicherte (CRAWL-102).
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub user_agent: Option<String>,
 }
 
 /// Command-Vertrag RobotsTestResult (M2.md 3.14.9).

@@ -6,7 +6,6 @@ use os_model::{UrlId, Value};
 
 // spec: UI-099
 #[test]
-#[ignore = "Klärung K2-68: N01-C05, Besitzer M2-N01b (Graph zählt Self-Links, TECH-146)"]
 fn phrases_equal_the_anchors_detail_aggregation() {
     let (_dir, file) = fx::basic();
     for _ in 0..3 {

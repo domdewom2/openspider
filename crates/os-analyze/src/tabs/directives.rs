@@ -9,7 +9,9 @@
 //! `noindex` zugleich stehen in beiden Filtern, `all` zählt nicht als `index`, `none` nicht als `noindex`. Die
 //! Tokens stehen kommagetrennt in `directives.tokens`; verglichen wird mit Kommagrenzen.
 
-use crate::defs::{ColumnDef, ColumnKind, FilterDef, FilterKind, Requirement, TabDef};
+use crate::defs::{
+    register_coverage_domain, ColumnDef, ColumnKind, FilterDef, FilterKind, Requirement, TabDef,
+};
 
 use super::canonicals::{
     canonical_link_element_column, column, extension_column, http_canonical_column,
@@ -55,6 +57,13 @@ fn meta_refresh_column() -> ColumnDef {
 
 /// Definition des Tabs „Directives“.
 pub fn tab() -> TabDef {
+    // TECH-008/TECH-065: only parsed HTML responses can carry the validation marker; PDFs and images in the
+    // population (X-Robots-Tag) must not count as unchecked (N01-C01).
+    register_coverage_domain(
+        "Directives",
+        "validation.checked",
+        "u.content_class = 'HTML'",
+    );
     TabDef {
         id: "Directives",
         population: POPULATION,

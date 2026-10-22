@@ -6,6 +6,7 @@ config-profiles-none = No profiles saved yet.
 config-profiles-name = Name
 config-profiles-modified = Modified
 config-profiles-default = Default
+config-profiles-recent = Recent { $n }
 config-profiles-load = Load
 config-profiles-load-n = Load profile { $name }
 config-profiles-make-default = Make default

@@ -496,3 +496,38 @@ pub fn refilter_config_queue(
     }
     Ok(removed)
 }
+
+/// Nested atomic write scope, also usable inside a configuration transaction.
+pub struct RecomputeSavepoint<'a> {
+    conn: &'a rusqlite::Connection,
+    committed: bool,
+}
+impl<'a> RecomputeSavepoint<'a> {
+    pub fn new(conn: &'a rusqlite::Connection) -> Result<Self, StoreError> {
+        conn.execute_batch("SAVEPOINT os_recompute")?;
+        Ok(Self {
+            conn,
+            committed: false,
+        })
+    }
+    pub fn commit(mut self) -> Result<(), StoreError> {
+        self.conn.execute_batch("RELEASE os_recompute")?;
+        self.committed = true;
+        Ok(())
+    }
+}
+impl std::ops::Deref for RecomputeSavepoint<'_> {
+    type Target = rusqlite::Connection;
+    fn deref(&self) -> &Self::Target {
+        self.conn
+    }
+}
+impl Drop for RecomputeSavepoint<'_> {
+    fn drop(&mut self) {
+        if !self.committed {
+            let _ = self
+                .conn
+                .execute_batch("ROLLBACK TO os_recompute; RELEASE os_recompute");
+        }
+    }
+}

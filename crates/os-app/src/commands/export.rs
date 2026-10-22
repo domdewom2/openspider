@@ -156,8 +156,14 @@ fn writer(
     cfg: &CrawlConfig,
     cancel: &CancelToken,
     progress: &ProgressSink,
+    entry: &str,
 ) -> Result<Box<dyn TableWriter>, ExportError> {
-    detail_writer(path, fmt, cfg, cancel, progress, "Export")
+    // OUT-007: the worksheet is named like the CLI does it, "<Tab> <Filter>" resp. the bulk/report name.
+    detail_writer(path, fmt, cfg, cancel, progress, &sheet_of(entry))
+}
+/// Worksheet name of a canonical `Tab:Filter`, bulk or report name (OUT-007; same rule as the CLI).
+fn sheet_of(entry: &str) -> String {
+    entry.replace(':', " ")
 }
 fn detail_writer(
     path: &Path,
@@ -267,34 +273,15 @@ fn catalog_command<'a>(
                 Ok(to_json(&ExportCatalog {
                     bulk: groups(ExportKind::Bulk),
                     reports: groups(ExportKind::Report),
-                    sitemaps: vec![
-                        ExportItem {
-                            name: "pages".into(),
-                            label_key: "export-sitemap-pages".into(),
-                            enabled: os_export::sitemap_gen::supports_configuration(
-                                &s.config.sitemap_gen,
-                            ),
-                            disabled_reason: (!os_export::sitemap_gen::supports_configuration(
-                                &s.config.sitemap_gen,
-                            ))
-                            .then(|| "M2-X02".into()),
-                        },
-                        ExportItem {
-                            name: "images".into(),
-                            label_key: "export-sitemap-images".into(),
-                            enabled: {
-                                let mut config = s.config.sitemap_gen.clone();
-                                config.images.enabled = true;
-                                os_export::sitemap_gen::supports_configuration(&config)
-                            },
-                            disabled_reason: {
-                                let mut config = s.config.sitemap_gen.clone();
-                                config.images.enabled = true;
-                                (!os_export::sitemap_gen::supports_configuration(&config))
-                                    .then(|| "M2-X02".into())
-                            },
-                        },
-                    ],
+                    sitemaps: ["pages", "images"]
+                        .into_iter()
+                        .map(|name| ExportItem {
+                            name: name.into(),
+                            label_key: format!("export-sitemap-{name}"),
+                            enabled: true,
+                            disabled_reason: None,
+                        })
+                        .collect(),
                 }))
             })
             .await?
@@ -382,6 +369,13 @@ fn export_view<'a>(
                                     os_analyze::tabs::configured_for_file(&v.session.config, file);
                                 let stage = Stage::new(parent(&path))?;
                                 let staged = stage.0.join("view");
+                                let sheet = os_export::tab_export::canonical_name(
+                                    &tabs,
+                                    &v.session.config,
+                                    &q.tab,
+                                    &q.filter,
+                                )
+                                .unwrap_or_else(|_| "Export".into());
                                 let result = os_export::pipeline::write_view_with_upload_order(
                                     &tabs,
                                     file,
@@ -395,6 +389,7 @@ fn export_view<'a>(
                                             &v.session.config,
                                             &worker_token,
                                             &progress,
+                                            &sheet,
                                         )
                                     },
                                 );
@@ -722,7 +717,7 @@ fn named<'a>(
                                 let target = dir.join(&filename);
                                 let staged = stage.0.join(filename);
                                 let mut out =
-                                    writer(&staged, fmt, &s.config, &work_token, &progress)
+                                    writer(&staged, fmt, &s.config, &work_token, &progress, &name)
                                         .map_err(export_error)?;
                                 let tabs = os_analyze::tabs::configured_for_file(&s.config, file);
                                 let job = TableJob {
@@ -800,11 +795,17 @@ fn sitemap<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture
             Some(value) => parse_args(value)?,
             None => s.config.sitemap_gen.clone(),
         };
-        match args.sitemap_kind.as_str() {
-            "pages" => {}
-            "images" => options.images.enabled = true,
+        let images = match args.sitemap_kind.as_str() {
+            "pages" => false,
+            "images" => {
+                options.images.enabled = true;
+                true
+            }
             _ => return Err(CmdError::invalid_input("err-sitemap-kind", "sitemapKind")),
         };
+        // OUT-124: the sitemap generator reads the complete configuration; the dialog options replace its sitemap part.
+        let mut config = (*s.config).clone();
+        config.sitemap_gen = options;
         let worker = app.clone();
         let clock = app.config().clock.clone();
         let op = app
@@ -819,12 +820,26 @@ fn sitemap<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture
                                 checked(&work_token)?;
                                 let dir = PathBuf::from(args.dir);
                                 let stage = Stage::new(&dir)?;
-                                let report = os_export::sitemap_gen::generate_configured(
-                                    file,
-                                    &options,
-                                    clock.as_ref(),
-                                    &stage.0,
-                                )
+                                let sitemap_options = os_export::SitemapOptions::default();
+                                let report = if images {
+                                    os_export::sitemap_gen::generate_image_sitemap_with(
+                                        file,
+                                        &sitemap_options,
+                                        &config,
+                                        None,
+                                        clock.as_ref(),
+                                        &stage.0,
+                                    )
+                                } else {
+                                    os_export::sitemap_gen::generate_sitemap_configured_with(
+                                        file,
+                                        &sitemap_options,
+                                        &config,
+                                        None,
+                                        clock.as_ref(),
+                                        &stage.0,
+                                    )
+                                }
                                 .map_err(export_error)?;
                                 checked(&work_token)?;
                                 let mut bytes = 0;
@@ -866,9 +881,15 @@ fn panel<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'
                                 let path = PathBuf::from(args.path);
                                 let stage = Stage::new(parent(&path))?;
                                 let staged = stage.0.join("panel");
-                                let mut out =
-                                    writer(&staged, fmt, &s.config, &work_token, &progress)
-                                        .map_err(export_error)?;
+                                let mut out = writer(
+                                    &staged,
+                                    fmt,
+                                    &s.config,
+                                    &work_token,
+                                    &progress,
+                                    "Export",
+                                )
+                                .map_err(export_error)?;
                                 let tabs = os_analyze::tabs::configured_for_file(&s.config, file);
                                 let job = TableJob {
                                     file,

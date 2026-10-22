@@ -39,7 +39,14 @@ pub(super) fn decode(dto: CrawlConfigDto) -> Result<CrawlConfig, CmdError> {
 
 pub(super) fn issues(cfg: &CrawlConfig) -> Vec<ValidationIssue> {
     let report = cfg.validate();
-    let extra = os_engine::config_check::validate(cfg);
+    // The engine checks (regex dialect, rule sets) repeat findings of the model validation with a 0-based line;
+    // one message per path is enough (CRAWL-109/110).
+    let known: std::collections::HashSet<_> =
+        report.errors.iter().map(|i| i.path.clone()).collect();
+    let extra: Vec<_> = os_engine::config_check::validate(cfg)
+        .into_iter()
+        .filter(|i| !known.contains(&i.path))
+        .collect();
     report
         .errors
         .into_iter()
@@ -92,18 +99,21 @@ pub(super) fn warn_loaded(app: &App, loaded: &os_model::LoadedConfig) {
     }
 }
 
-async fn current(app: &App, window: &WindowId) -> Result<Arc<CrawlConfig>, CmdError> {
-    if let Some(s) = app.sessions().current(window) {
-        return Ok(s.config);
-    }
-    if let Some(cfg) = app
-        .ext::<Drafts>()
+/// The not yet started configuration of the window (`config.set` without an open crawl, A01-04/CRAWL-126).
+pub(crate) fn draft(app: &App, window: &WindowId) -> Option<Arc<CrawlConfig>> {
+    app.ext::<Drafts>()
         .0
         .lock()
         .unwrap_or_else(|p| p.into_inner())
         .get(window)
         .cloned()
-    {
+}
+
+async fn current(app: &App, window: &WindowId) -> Result<Arc<CrawlConfig>, CmdError> {
+    if let Some(s) = app.sessions().current(window) {
+        return Ok(s.config);
+    }
+    if let Some(cfg) = draft(app, window) {
         return Ok(cfg);
     }
     let settings = app.config().paths.settings.clone();
@@ -257,6 +267,18 @@ fn set<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdResult> 
                         file,
                         |e| store_error(&e),
                         |file| {
+                            os_engine::recompute::run_triggered(file, &before, &after, &cancel)
+                                .map_err(|_| {
+                                    CmdError::new(
+                                        if cancel.is_cancelled() {
+                                            ErrorCode::Cancelled
+                                        } else {
+                                            ErrorCode::Engine
+                                        },
+                                        "err-config-recompute",
+                                    )
+                                })?;
+
                             if cancel.is_cancelled() {
                                 return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"));
                             }
@@ -297,22 +319,14 @@ fn set<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdResult> 
                                     }
                                 })?;
                             }
-                            os_engine::recompute::run_triggered(file, &before, &after, &cancel)
-                                .map_err(|_| {
-                                    CmdError::new(
-                                        if cancel.is_cancelled() {
-                                            ErrorCode::Cancelled
-                                        } else {
-                                            ErrorCode::Engine
-                                        },
-                                        "err-config-recompute",
-                                    )
-                                })?;
                             file.set_config_with_clock(&after, clock.as_ref())
                                 .map_err(|e| store_error(&e))?;
                             os_analyze::analysis::mark_stale(file, &stale).map_err(|_| {
                                 CmdError::new(ErrorCode::Store, "err-analysis-stale")
                             })?;
+                            if cancel.is_cancelled() {
+                                return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"));
+                            }
                             Ok(())
                         },
                     )

@@ -129,12 +129,6 @@ pub struct OpsDeps {
     pub clock: Arc<dyn Clock>,
 }
 
-fn unix_millis() -> u64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_or(1, |d| u64::try_from(d.as_millis()).unwrap_or(1).max(1))
-}
-
 /// Verwaltung der laufenden Operationen.
 #[derive(Clone)]
 pub struct Ops {
@@ -242,7 +236,7 @@ impl Ops {
     pub fn cancel_all(&self) -> usize {
         self.shared
             .shutdown
-            .store(unix_millis(), std::sync::atomic::Ordering::SeqCst);
+            .store(self.now_millis(), std::sync::atomic::Ordering::SeqCst);
         let tokens: Vec<CancelToken> = self
             .shared
             .lock()
@@ -257,6 +251,11 @@ impl Ops {
         tokens.len()
     }
 
+    /// Aktuelle Zeit der injizierten Uhr in Millisekunden (mindestens 1, damit 0 „nie“ bleibt).
+    fn now_millis(&self) -> u64 {
+        u64::try_from(self.deps.clock.now().unix_millis()).map_or(1, |ms| ms.max(1))
+    }
+
     /// Wurde `cancel_all` aufgerufen, d. h. beendet sich die App? (Operationen, die Arbeit außerhalb des
     /// Prozesses beobachten, brechen diese dann nicht ab – M2-T01.)
     pub fn shutting_down(&self) -> bool {
@@ -264,7 +263,7 @@ impl Ops {
             .shared
             .shutdown
             .load(std::sync::atomic::Ordering::SeqCst);
-        at != 0 && unix_millis().saturating_sub(at) < 60_000
+        at != 0 && self.now_millis().saturating_sub(at) < 60_000
     }
 
     /// Ist die Operation bekannt, und ist sie abbrechbar? (`None` = unbekannt oder schon gemeldet)

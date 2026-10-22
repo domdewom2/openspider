@@ -157,6 +157,7 @@ function ProfilesPage() {
                 <th scope="row">
                   {p.name}
                   {p.isDefault && <span className="os-cfg-badge"> {t("config-profiles-default")}</span>}
+                  {p.recentRank != null && <span className="os-cfg-badge" data-testid="profile-recent"> {t("config-profiles-recent", { n: p.recentRank + 1 })}</span>}
                 </th>
                 <td>{formatDate(p.modifiedAt)}</td>
                 <td className="os-cfg-actions">

@@ -30,6 +30,7 @@ import { TableController } from "./controller";
 import { setDetailSelection } from "../detail/frame/selection";
 import { useSidebarNavigation } from "../sidebar/frame/state";
 import { openExport as openExportDialog, registerExportContext } from "../export/model";
+import { SelectionModel } from "../../state/selection";
 import { contextSelection, openSelected, launchBrowser } from "./actions";
 import { hasAction, runAction } from "../../ui/actions";
 import { registerMenuContributions } from "../../ui/menu/registry";
@@ -65,7 +66,7 @@ export function UpperTable() {
   const [text, setText] = useState(query.search);
   const [context, setContext] = useState<{ column: string; urlId?: number; x: number; y: number }>();
   const anchor = useRef<HTMLSpanElement>(null);
-  const [operation, setOperation] = useState<{ id: string; total: number }>();
+  const [operation, setOperation] = useState<{ id: string; total: number; action?: "recrawl" | "remove" }>();
   const status = useSession(s => operation ? s.ops[operation.id] : undefined);
   const analysis = useSession(s => s.analysis);
   const [stale, setStale] = useState(false);
@@ -137,6 +138,8 @@ export function UpperTable() {
     return () => { live = false; };
   }, [source, tabs.focusRequest]);
   useEffect(() => { if (status?.state === "failed" && status.error) fail(status.error); }, [status]);
+  // UI-114: removed URLs cannot stay selected; the counter would otherwise keep showing "1 selected" for an empty table.
+  useEffect(() => { if (operation?.action === "remove" && status?.state === "done") controller.setSelection(SelectionModel.empty()); }, [operation, status?.state, controller]);
   useEffect(() => { if (analysis && !analysis.running && analysis.steps.length && analysis.steps.every(step => !step.stale)) setStale(false); }, [analysis]);
   const busy = operation !== undefined && (!status || status.state === "running");
   const actOnSelection = async (action: "recrawl" | "remove") => {
@@ -144,7 +147,7 @@ export function UpperTable() {
     const selection = controller.selection.forVersion(source.viewId, source.version);
     const total = selection.count(source.total); if (!total) return;
     const result = await crawl[action]({ selection: selection.value });
-    setOperation({ id: result.opId, total }); setStale(true); setRemove(false); setContext(undefined);
+    setOperation({ id: result.opId, total, action }); setStale(true); setRemove(false); setContext(undefined);
   };
   const requestRemoval = async (fromKeyboard = false) => {
     if (!count || busy) return;

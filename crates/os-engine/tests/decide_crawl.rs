@@ -1093,7 +1093,12 @@ async fn sitemap_hreflang_with_store_off_and_crawl_on_requests_the_target_withou
 // spec: CRAWL-098
 #[tokio::test]
 async fn robots_respect_blocks_with_status_zero_and_lists_robots_txt_as_url() {
-    let fx = crawl_fixture("crawl-robots", CrawlConfig::default()).await;
+    // K2-64: die Fixture-robots.txt hat `Crawl-delay: 2`; die Aussagen hängen nicht vom Abstand ab.
+    let fx = crawl_fixture(
+        "crawl-robots",
+        with(|c| c.robots.respect_crawl_delay = false),
+    )
+    .await;
     assert_eq!(
         hits(&fx, "/robots.txt"),
         1,
@@ -1188,7 +1193,11 @@ async fn robots_ignore_never_fetches_robots_txt() {
 async fn robots_ignore_but_report_fetches_and_marks_would_be_blocked() {
     let fx = crawl_fixture(
         "crawl-robots",
-        with(|c| c.robots.mode = RobotsMode::IgnoreButReport),
+        with(|c| {
+            c.robots.mode = RobotsMode::IgnoreButReport;
+            // K2-64: `Crawl-delay: 2` der Fixture-robots.txt, nicht Gegenstand dieses Tests.
+            c.robots.respect_crawl_delay = false;
+        }),
     )
     .await;
     assert_eq!(hits(&fx, "/robots.txt"), 1);
