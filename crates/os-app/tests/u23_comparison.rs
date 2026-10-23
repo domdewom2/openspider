@@ -195,3 +195,92 @@ async fn change_projection_has_only_paired_html_and_numeric_deltas() {
         }
     }
 }
+
+// spec: TECH-301
+#[tokio::test(flavor = "multi_thread")]
+async fn change_percent_sort_is_global_before_paging_and_empty_is_positive_infinity() {
+    let old = v1().await;
+    let new = v2().await;
+    // The fixture pages remain unchanged; vary their stored counts to exercise
+    // negative, positive and undefined percentages with identical paired HTML.
+    for file in [&old.file, &new.file] {
+        file.conn()
+            .execute(
+                "UPDATE urls SET word_count=10 WHERE content_class='HTML'",
+                [],
+            )
+            .unwrap();
+    }
+    for (path, previous, current) in [
+        ("/a.html", 20, 10),
+        ("/c.html", 10, 20),
+        ("/start.html", 0, 5),
+    ] {
+        for (file, count) in [(&old.file, previous), (&new.file, current)] {
+            file.conn()
+                .execute(
+                    "UPDATE urls SET word_count=?1 WHERE address=?2",
+                    rusqlite::params![count, www(path)],
+                )
+                .unwrap();
+        }
+    }
+    let home = tempfile::tempdir().unwrap();
+    let app = App::new(AppConfig::new(home.path())).unwrap();
+    let s = open_pair(&app, old.file.path(), new.file.path()).await;
+    let query = |dir: &str| {
+        args(
+            &s,
+            json!({"tab":"Change Detection","filter":"Word Count","class":"changed","sort":{"column":"Word Count Change %","dir":dir}}),
+        )
+    };
+    let asc = read(&app, query("asc")).await;
+    assert_eq!(asc["total"], 3);
+    let cols = asc["columns"].as_array().unwrap();
+    let pct = cols
+        .iter()
+        .position(|v| v == "Word Count Change %")
+        .unwrap();
+    let cur = cols
+        .iter()
+        .position(|v| v == "Word Count (Current)")
+        .unwrap();
+    let prev = cols
+        .iter()
+        .position(|v| v == "Word Count (Previous)")
+        .unwrap();
+    assert_eq!(asc["cells"][0][pct], -50.);
+    assert_eq!(asc["cells"][1][pct], 100.);
+    assert!(asc["cells"][2][pct].is_null());
+    assert_eq!(asc["cells"][2][cur], 5);
+    assert_eq!(asc["cells"][2][prev], 0);
+    let desc = read(&app, query("desc")).await;
+    assert!(desc["cells"][0][pct].is_null());
+    assert_eq!(desc["cells"][1][pct], 100.);
+    assert_eq!(desc["cells"][2][pct], -50.);
+    for (dir, full) in [("asc", &asc), ("desc", &desc)] {
+        for offset in 0..=3 {
+            let mut req = query(dir);
+            req["offset"] = json!(offset);
+            req["limit"] = json!(1);
+            let page = read(&app, req).await;
+            assert_eq!(page["total"], 3);
+            if offset < 3 {
+                assert_eq!(page["cells"][0], full["cells"][offset]);
+                assert_eq!(page["rowKeys"][0], full["rowKeys"][offset]);
+                assert_eq!(page["partnerKeys"][0], full["partnerKeys"][offset]);
+            } else {
+                assert_eq!(page["cells"], json!([]));
+            }
+        }
+    }
+    let mut invalid = query("asc");
+    invalid["comparison"]["sort"]["column"] = json!("unknown");
+    assert_eq!(
+        app.dispatch(CallCtx::for_window("main"), "view.rows", invalid)
+            .await
+            .unwrap_err()
+            .code,
+        ErrorCode::InvalidInput
+    );
+}

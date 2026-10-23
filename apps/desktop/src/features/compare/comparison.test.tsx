@@ -10,7 +10,7 @@ import { ComparisonNumbers } from "./ComparisonNumbers";
 import { ComparisonLinks } from "./ComparisonLinks";
 import { ComparisonTable, ComparisonTabs } from "./ComparisonTable";
 import { closeComparison, comparisonRows, navigateComparison, openComparison, selectComparisonUrl, useComparison } from "./model";
-import { comparisonFixture, current, previous, session, snapshot } from "./fixtures/out-compare/core";
+import { comparisonFixture, current, previous, session, snapshot, pagedLinks } from "./fixtures/out-compare/core";
 let fixture:ReturnType<typeof comparisonFixture>;
 const calls=(cmd:string)=>fixture.core.calls.filter(c=>c.cmd===cmd);
 beforeEach(async()=>{
@@ -151,4 +151,55 @@ it("reopens the selection from Mode → Compare after the dialog was cancelled",
   render(<ComparisonControls />);act(()=>{runAction("mode.compare");});await screen.findByLabelText("Current");
   fireEvent.click(screen.getByRole("button",{name:"Cancel"}));await waitFor(()=>expect(screen.queryByLabelText("Current")).toBeNull());
   act(()=>{runAction("mode.compare");});await screen.findByLabelText("Current");
+});
+
+// spec: CRAWL-144
+it("resets the page when switching from 105 Inlinks to three Outlinks and back",async()=>{
+  active();
+  fixture.core.handlers.set("view.rows",args=>{
+    const a=args as {comparison:{tab:"inlinks"|"outlinks"};offset:number;limit:number};
+    const all=pagedLinks[a.comparison.tab];
+    return {viewId:"paged-links",version:1,offset:a.offset,columns:["Source","Destination"],rowKeys:[],cells:all.slice(a.offset,a.offset+a.limit),total:all.length,side:"Current",filtersEnabled:true};
+  });
+  const mounted=render(<ComparisonLinks direction="inlinks" urlId={1} />);
+  await screen.findByText("https://site.test/in-0");
+  fireEvent.click(screen.getByRole("button",{name:"Next page"}));
+  await screen.findByText("https://site.test/in-100");
+  expect(screen.getAllByRole("row")).toHaveLength(6);
+  mounted.rerender(<ComparisonLinks direction="outlinks" urlId={1} />);
+  await screen.findByText("https://site.test/out-0");
+  expect(screen.getAllByRole("row")).toHaveLength(4);
+  expect(screen.getByText("3 rows")).toBeVisible();
+  expect(screen.getByRole("button",{name:"Previous page"})).toBeDisabled();
+  expect(screen.getByRole("button",{name:"Next page"})).toBeDisabled();
+  expect(calls("view.rows").at(-1)?.args).toMatchObject({offset:0,comparison:{tab:"outlinks"}});
+  mounted.rerender(<ComparisonLinks direction="inlinks" urlId={1} />);
+  await screen.findByText("https://site.test/in-0");
+  expect(screen.getAllByRole("row")).toHaveLength(101);
+});
+// spec: TECH-301
+it("toggles Change % sorting through the core, resets paging, and exports the sorted query",async()=>{
+  active();navigateComparison("Change Detection","All");
+  fixture.core.handlers.set("view.rows",args=>{
+    const a=args as {offset:number;comparison:{sort?:{dir:string}}};
+    const rows=a.comparison.sort?.dir==="desc" ? [["empty",null],["positive",50],["negative",-50]] : [["negative",-50],["positive",50],["empty",null]];
+    return {viewId:"sort-fixture",version:1,offset:a.offset,columns:["Address","Word Count Change %"],cells:rows,rowKeys:[1,2,3],partnerKeys:[101,102,103],total:103,side:"Current",filtersEnabled:true};
+  });
+  render(<ComparisonTable />);
+  await screen.findByRole("button",{name:"Word Count Change %"});
+  fireEvent.click(screen.getByRole("button",{name:"Next page"}));
+  await waitFor(()=>expect(calls("view.rows").at(-1)?.args).toMatchObject({offset:100}));
+  fireEvent.click(screen.getByRole("button",{name:"Word Count Change %"}));
+  await waitFor(()=>expect(calls("view.rows").at(-1)?.args).toMatchObject({offset:0,comparison:{sort:{column:"Word Count Change %",dir:"asc"}}}));
+  expect(screen.getByRole("columnheader",{name:"Word Count Change %"})).toHaveAttribute("aria-sort","ascending");
+  fireEvent.click(screen.getByRole("button",{name:"Word Count Change %"}));
+  await waitFor(()=>expect(calls("view.rows").at(-1)?.args).toMatchObject({offset:0,comparison:{sort:{column:"Word Count Change %",dir:"desc"}}}));
+  expect(screen.getByRole("columnheader",{name:"Word Count Change %"})).toHaveAttribute("aria-sort","descending");
+  expect(screen.getAllByRole("row")[1]).toHaveTextContent("empty");
+  const query={...useComparison.getState().query};
+  // The production numeric ordering is asserted against real crawl fixtures in u23_comparison.rs.
+  fixture.core.handlers.set("view.rows",()=>({viewId:"export",version:1,offset:0,columns:["Address","Word Count Change %"],cells:[["empty",null],["positive",50],["negative",-50]],rowKeys:[1,2,3],total:3,side:"Current",filtersEnabled:true}));
+  const csv=await comparisonCsv(query);
+  expect(csv).toContain("empty,\r\npositive,50\r\nnegative,-50");
+  expect(calls("view.rows").at(-1)?.args).toMatchObject({comparison:{sort:{column:"Word Count Change %",dir:"desc"}}});
 });

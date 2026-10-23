@@ -30,3 +30,9 @@ export function comparisonFixture(){
   });
   return {core};
 }
+
+/** Direction-switch regression: two Inlinks pages and three Outlinks. */
+export const pagedLinks = {
+  inlinks: Array.from({length: 105}, (_, i) => [`https://site.test/in-${i}`, "https://site.test/selected"]),
+  outlinks: Array.from({length: 3}, (_, i) => ["https://site.test/selected", `https://site.test/out-${i}`]),
+};

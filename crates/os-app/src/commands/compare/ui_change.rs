@@ -1,6 +1,6 @@
 //! TECH-301: bounded paired projections from the ordinary tab registry, with the same numeric deltas as exports.
 use super::compare_error;
-use crate::dto::{CmdError, ErrorCode};
+use crate::dto::{CmdError, ErrorCode, SortDir, SortKey};
 use os_analyze::{
     compare::{Comparison, Side},
     views::{self, ColumnSelection, ViewQuery},
@@ -122,12 +122,25 @@ pub(super) struct PageRequest<'a> {
     pub offset: u64,
     pub limit: u32,
     pub content_threshold_pct: u8,
+    pub sort: Option<&'a SortKey>,
 }
 pub(super) fn page(
     c: &mut Comparison,
     elements: &[String],
     req: PageRequest<'_>,
     cancel: &CancelToken,
+) -> Result<Json, CmdError> {
+    project_page(c, elements, req, cancel, None)
+}
+
+// The first pass retains only sort values and IDs. Only the requested page is
+// projected again, so sorting never buffers every row's selected element cells.
+fn project_page(
+    c: &mut Comparison,
+    elements: &[String],
+    req: PageRequest<'_>,
+    cancel: &CancelToken,
+    selected: Option<Vec<u32>>,
 ) -> Result<Json, CmdError> {
     let filter = elements
         .iter()
@@ -185,17 +198,28 @@ pub(super) fn page(
         .map_err(compare_error)?
         .and_then(|f| f.ids.clone())
         .unwrap_or_default();
-    let ids: Vec<_> = c
-        .pairing()
-        .paired_current
-        .iter()
-        .filter(|id| {
-            cur_html.contains(*id)
-                && c.pairing()
-                    .previous_of(*id)
-                    .is_some_and(|p| prev_html.contains(p))
+    let ids: Vec<_> = selected.unwrap_or_else(|| {
+        c.pairing()
+            .paired_current
+            .iter()
+            .filter(|id| {
+                cur_html.contains(*id)
+                    && c.pairing()
+                        .previous_of(*id)
+                        .is_some_and(|p| prev_html.contains(p))
+            })
+            .collect()
+    });
+    let sort_column = req
+        .sort
+        .map(|sort| {
+            columns
+                .iter()
+                .position(|column| column == &sort.column)
+                .ok_or_else(|| CmdError::invalid_input("err-compare-input", "sort"))
         })
-        .collect();
+        .transpose()?;
+    let mut order = Vec::new();
     let mut cells = Vec::new();
     let mut keys = Vec::new();
     let mut partners = Vec::new();
@@ -293,17 +317,68 @@ pub(super) fn page(
             {
                 continue;
             }
-            if total >= req.offset && cells.len() < (req.limit as usize) {
+            if let Some(column) = sort_column {
+                order.push((row[column].clone(), *id));
+            } else if total >= req.offset && cells.len() < (req.limit as usize) {
                 cells.push(row);
-                keys.push(id);
+                keys.push(*id);
                 partners.push(partner);
             }
             total += 1;
         }
     }
+    if let Some(sort) = req.sort {
+        order.sort_by(|(a, id_a), (b, id_b)| {
+            let cmp = sort_values(a, b);
+            let cmp = if sort.dir == SortDir::Desc {
+                cmp.reverse()
+            } else {
+                cmp
+            };
+            cmp.then_with(|| id_a.cmp(id_b))
+        });
+        cancel
+            .checkpoint()
+            .map_err(|_| CmdError::new(ErrorCode::Cancelled, "err-cancelled"))?;
+        let selected = order
+            .into_iter()
+            .skip(usize::try_from(req.offset).unwrap_or(usize::MAX))
+            .take(req.limit as usize)
+            .map(|(_, id)| id)
+            .collect();
+        let page = project_page(
+            c,
+            elements,
+            PageRequest {
+                sort: None,
+                offset: 0,
+                ..req
+            },
+            cancel,
+            Some(selected),
+        )?;
+        return Ok(
+            json!({"columns":columns,"cells":page["cells"],"rowKeys":page["rowKeys"],"partnerKeys":page["partnerKeys"],"total":total,"side":"Current","filtersEnabled":true,"changedCounts":changed_counts,"changedTotal":changed_total,"contentAvailable":content_available}),
+        );
+    }
     Ok(
         json!({"columns":columns,"cells":cells,"rowKeys":keys,"partnerKeys":partners,"total":total,"side":"Current","filtersEnabled":true,"changedCounts":changed_counts,"changedTotal":changed_total,"contentAvailable":content_available}),
     )
+}
+
+// Null sorts as +infinity, including empty Change % cells with Previous=0.
+// Reverse the complete ordering for descending; IDs break ties in either direction.
+fn sort_values(a: &Value, b: &Value) -> std::cmp::Ordering {
+    use std::cmp::Ordering;
+    match (a, b) {
+        (Value::Null, Value::Null) => Ordering::Equal,
+        (Value::Null, _) => Ordering::Greater,
+        (_, Value::Null) => Ordering::Less,
+        (Value::Text(a), Value::Text(b)) => {
+            os_store::collation::compare(a, b).then_with(|| a.cmp(b))
+        }
+        _ => number(a).unwrap_or(0.).total_cmp(&number(b).unwrap_or(0.)),
+    }
 }
 
 fn content_percent(c: &Comparison, current: u32, previous: u32) -> Result<Option<f64>, CmdError> {

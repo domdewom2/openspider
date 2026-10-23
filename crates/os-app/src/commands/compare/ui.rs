@@ -23,7 +23,7 @@ pub(crate) async fn overview(app: &App, ctx: CallCtx) -> Result<Json, CmdError> 
     with_active(app, &ctx.window, move |a| {
         let rows = a.comparison.overview(&ctx.cancel).map_err(compare_error)?;
         let mut overview:Vec<_>=rows.iter().map(filter_json).collect();
-        let changes=super::ui_change::page(&mut a.comparison,&a.elements,super::ui_change::PageRequest{filter:"All",change:Some("changed"),offset:0,limit:1,content_threshold_pct:a.content_threshold_pct},&ctx.cancel)?;
+        let changes=super::ui_change::page(&mut a.comparison,&a.elements,super::ui_change::PageRequest{filter:"All",change:Some("changed"),offset:0,limit:1,content_threshold_pct:a.content_threshold_pct,sort:None},&ctx.cancel)?;
         for element in std::iter::once("All").chain(a.elements.iter().map(|e|super::ui_change::filter_name(e))) {
             let n=if element=="All" {changes["changedTotal"].as_u64().unwrap_or(0)} else {changes["changedCounts"][element].as_u64().unwrap_or(0)};
             overview.push(json!({"tab":"Change Detection","filter":element,"label":element,"current":n,"previous":n,"change":n,"classes":null}));
@@ -56,6 +56,7 @@ struct Query {
     change: Option<String>,
     #[serde(default)]
     search: String,
+    sort: Option<SortKey>,
 }
 fn default_side() -> String {
     "Current".into()
@@ -82,7 +83,7 @@ pub(crate) async fn rows(app: &App, ctx: CallCtx, raw: Json) -> Result<Json, Cmd
         }
         ctx.cancel.checkpoint().map_err(|_| CmdError::new(ErrorCode::Cancelled,"err-cancelled"))?;
         if q.tab == "Change Detection" {
-            let mut page = super::ui_change::page(c, &a.elements, super::ui_change::PageRequest { filter: &q.filter, change: q.class.as_deref(), offset: args.offset, limit: args.limit, content_threshold_pct: a.content_threshold_pct }, &ctx.cancel)?;
+            let mut page = super::ui_change::page(c, &a.elements, super::ui_change::PageRequest { filter: &q.filter, change: q.class.as_deref(), offset: args.offset, limit: args.limit, content_threshold_pct: a.content_threshold_pct, sort: q.sort.as_ref() }, &ctx.cancel)?;
             page["viewId"] = json!(args.view_id); page["version"] = json!(args.version); page["offset"] = json!(args.offset);
             return Ok(page);
         }

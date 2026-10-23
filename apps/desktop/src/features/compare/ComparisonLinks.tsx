@@ -5,7 +5,7 @@ import { describeError, toCmdError } from "../../ipc/errors";
 import { comparisonRows, LINK_CHANGES, type ComparisonPage, type Side, useComparison } from "./model";
 export function ComparisonLinks({direction,urlId}:{direction:"inlinks"|"outlinks";urlId:number}) {
   const t=useT();const state=useComparison();const [source,setSource]=useState<"Auto"|Side>("Auto");const [change,setChange]=useState("All");const [page,setPage]=useState<ComparisonPage>();const [error,setError]=useState<unknown>();const [offset,setOffset]=useState(0);const [exporting,setExporting]=useState(false);
-  useEffect(()=>{setOffset(0);},[source,change,urlId,state.query.side,state.revision]);
+  useEffect(()=>{setOffset(0);},[direction,source,change,urlId,state.query.side,state.revision]);
   useEffect(()=>{
     const controller=new AbortController();setPage(undefined);setError(undefined);
     void comparisonRows({tab:direction,filter:"All",side:state.query.side,urlId,source,change},offset,controller.signal).then(result=>{if(!controller.signal.aborted)setPage(result);}).catch(e=>{if(!controller.signal.aborted)setError(e);});

@@ -3,6 +3,7 @@ import { compare } from "../../ipc/compare";
 import { client } from "../../ipc/client";
 import type { CompareOpenArgs } from "../../ipc/gen/CompareOpenArgs";
 import type { CompareSession } from "../../ipc/gen/CompareSession";
+import type { SortKey } from "../../ipc/gen/SortKey";
 import type { RowWindow } from "../../ipc/gen/RowWindow";
 import { setDetailSelection } from "../detail/frame/selection";
 
@@ -11,7 +12,7 @@ export type Category = "Added" | "New" | "Removed" | "Missing";
 export type FilterComparison = { tab: string; filter: string; label: string; current: number | null; previous: number | null; change: number | null; classes: [number, number, number, number] | null };
 export type Snapshot = { overview: FilterComparison[]; issues: FilterComparison[]; notes: { kind: "modes" | "migration" | "collision" | "mapping"; address?: string; winner?: string; rule?: number }[] };
 export type ComparisonPage = RowWindow & { total: number; side: Side; filtersEnabled: boolean; partnerKeys?: (number | null)[]; contentAvailable?: boolean };
-export type ComparisonQuery = { tab: string; filter: string; class?: Category | "changed" | "notChanged"; side: Side; search?: string; urlId?: number; source?: "Auto" | Side; change?: string };
+export type ComparisonQuery = { tab: string; filter: string; class?: Category | "changed" | "notChanged"; side: Side; search?: string; urlId?: number; source?: "Auto" | Side; change?: string; sort?: SortKey };
 export const ELEMENT_FILTERS:Record<string,string>={indexability:"Indexability",page_titles:"Page Titles",meta_description:"Meta Description",h1:"H1",word_count:"Word Count",crawl_depth:"Crawl Depth",inlinks:"Inlinks",unique_inlinks:"Unique Inlinks",internal_outlinks:"Internal Outlinks",unique_internal_outlinks:"Unique Internal Outlinks",external_outlinks:"External Outlinks",unique_external_outlinks:"Unique External Outlinks",structured_data_unique_types:"Structured Data Unique Types",content:"Content"};
 export const CATEGORIES: Category[] = ["Added", "New", "Removed", "Missing"];
 export const LINK_CHANGES = ["All", "Added", "Removed", "Anchor Changed", "Unchanged"] as const;
