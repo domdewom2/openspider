@@ -234,3 +234,41 @@ async fn unavailable_ipv6_loopback_reports_the_cause_and_releases_ipv4() {
             .is_ok()
     );
 }
+
+// spec: OUT-285 [P1]
+// spec: AGENT-002 [M2]
+#[tokio::test]
+async fn active_sessions_count_only_initialized_clients_and_delete_removes_them() {
+    let home = tempfile::tempdir().unwrap();
+    let tokens = TokenStore::open(Arc::new(MemorySecretStore::new())).unwrap();
+    let token = tokens.copy_token().unwrap();
+    let http = HttpServer::bind(server(home.path()), 0, tokens)
+        .await
+        .unwrap();
+    let address = ([127, 0, 0, 1], http.port()).into();
+    assert_eq!(http.clients().await, 0);
+    let first = request(address, Some(&token), None, None, "POST", None, init()).await;
+    assert_eq!(status(&first), 200);
+    let session = first
+        .lines()
+        .find_map(|line| {
+            line.split_once(':')
+                .filter(|(key, _)| key.eq_ignore_ascii_case("mcp-session-id"))
+                .map(|(_, value)| value.trim().to_owned())
+        })
+        .unwrap();
+    assert_eq!(http.clients().await, 1);
+    let response = request(
+        address,
+        Some(&token),
+        None,
+        None,
+        "DELETE",
+        Some(&session),
+        json!({}),
+    )
+    .await;
+    assert_eq!(status(&response), 202);
+    assert_eq!(http.clients().await, 0);
+    http.stop().await;
+}

@@ -30,6 +30,7 @@ async fn the_five_reading_tools_work_over_stdio() {
     assert_eq!(
         client.tool_names().await,
         [
+            "compare_crawls",
             "crawl_overview",
             "list_catalog",
             "list_crawls",
@@ -40,7 +41,7 @@ async fn the_five_reading_tools_work_over_stdio() {
             "url_details",
             "url_screenshot"
         ],
-        "im Auslieferungszustand genau die neun lesenden Werkzeuge"
+        "im Auslieferungszustand genau die zehn lesenden Werkzeuge"
     );
     let crawls = client.call("list_crawls", json!({})).await;
     assert_eq!(

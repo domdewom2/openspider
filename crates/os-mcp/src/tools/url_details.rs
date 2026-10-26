@@ -223,12 +223,50 @@ impl Tool for UrlDetails {
         if wants("hreflang") {
             untrusted.insert("hreflang".into(), hreflang(&crawl, url_id)?);
         }
-        for name in ["structured_data", "rendering"] {
-            if wants(name) {
+        if wants("structured_data") {
+            let details =
+                os_store::queries::structured_data::detail_rows(&crawl.file, &[url_id], 0, 500)
+                    .map_err(internal)?;
+            if details.total > 0 {
                 summary.push((
-                    name,
-                    json!({"status": "not_collected", "message": NOT_COLLECTED}),
+                    "structured_data",
+                    json!({"status":"collected","total":details.total,"columns":details.columns}),
                 ));
+                untrusted.insert(
+                    "structured_data".into(),
+                    json!(details
+                        .rows
+                        .iter()
+                        .map(|r| r.iter().map(super::common::value_json).collect::<Vec<_>>())
+                        .collect::<Vec<_>>()),
+                );
+            } else {
+                summary.push((
+                    "structured_data",
+                    json!({"status":"not_collected","message":NOT_COLLECTED}),
+                ));
+            }
+        }
+        if wants("rendering") {
+            {
+                let id = url_id;
+                let mut stmt = crawl.file.conn().prepare("SELECT status,word_count,load_ms,wait_ms,total_ms FROM render_pages WHERE url_id=?1").map_err(internal)?;
+                let rows = stmt.query_map([id.0], |r| Ok(json!({"status":r.get::<_,String>(0)?,"word_count":r.get::<_,Option<i64>>(1)?,"load_ms":r.get::<_,i64>(2)?,"wait_ms":r.get::<_,i64>(3)?,"total_ms":r.get::<_,i64>(4)?}))).map_err(internal)?.collect::<Result<Vec<_>,_>>().map_err(internal)?;
+                if let Some(row) = rows.first() {
+                    summary.push(("rendering", row.clone()));
+                    let raw = os_store::queries::stored_html(&crawl.file, id)
+                        .map_err(internal)?
+                        .map(|v| String::from_utf8_lossy(&v.bytes).into_owned());
+                    let dom = os_store::queries::stored_rendered_html(&crawl.file, id)
+                        .map_err(internal)?
+                        .map(|v| String::from_utf8_lossy(&v.bytes).into_owned());
+                    untrusted.insert("rendering".into(), json!({"html_changed":raw.as_ref().zip(dom.as_ref()).map(|(a,b)| a != b),"original_html":raw,"rendered_html":dom}));
+                } else {
+                    summary.push((
+                        "rendering",
+                        json!({"status":"not_collected","message":NOT_COLLECTED}),
+                    ));
+                }
             }
         }
 

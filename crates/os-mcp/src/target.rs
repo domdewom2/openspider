@@ -18,7 +18,7 @@ const DNS_TTL: Duration = Duration::from_secs(2);
 type AddressResult = Result<Vec<SocketAddr>, (NoResponseReason, String)>;
 type ClientKey = (String, u16, Vec<SocketAddr>);
 
-pub(crate) struct ProtectedFetcher {
+pub struct ProtectedFetcher {
     inner: HttpFetcher,
     resolver: os_fetch::resolve::HostResolver,
     allow_private: bool,

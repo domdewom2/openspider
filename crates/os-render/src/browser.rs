@@ -197,6 +197,12 @@ async fn start(opts: &LaunchOpts) -> Result<Session, RenderError> {
             "disable-features",
             "ServiceWorker,PushMessaging,Geolocation",
         ));
+    if opts.protected_network {
+        config = config
+            .arg("disable-quic")
+            .arg(("force-webrtc-ip-handling-policy", "disable_non_proxied_udp"))
+            .arg("disable-extensions");
+    }
     if opts.suppress_default_accept_language {
         config = config.arg(("accept-lang", ""));
     }

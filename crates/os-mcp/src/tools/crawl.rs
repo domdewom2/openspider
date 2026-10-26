@@ -64,6 +64,8 @@ fn config(ctx: &ToolContext, args: &Value) -> Result<CrawlConfig, ToolError> {
             ));
         }
         CrawlConfig::load_file(&path).map_err(internal)?.config
+    } else if let Some(cfg) = ctx.session.as_ref().and_then(|s| s.current_config()) {
+        cfg
     } else {
         CrawlConfig::load_default(&ctx.settings_dir)
             .map_err(internal)?
@@ -182,12 +184,29 @@ impl Tool for CrawlTool {
                 }
             };
             let cfg = config(ctx, &args)?;
-            if ctx.session.is_some() {
-                return Err(ToolError::InvalidArguments(
-                    "This host has no configured in-app crawl controller; use the headless MCP server".into(),
-                ));
+            if let Some(session) = &ctx.session {
+                let source = match source {
+                    CrawlSource::Spider { start_url } => {
+                        crate::SessionSource::Spider { url: start_url }
+                    }
+                    CrawlSource::List { items, label } => {
+                        crate::SessionSource::List { items, label }
+                    }
+                };
+                let crawl = session
+                    .start_configured(
+                        crate::SessionStart {
+                            source,
+                            profile: opt_str(&args, "config_profile")?.map(str::to_owned),
+                        },
+                        cfg,
+                        ctx.target_policy.clone(),
+                    )
+                    .map_err(internal)?;
+                json!({"crawl_id":crawl.crawl_id,"state":crawl.state.as_str()})
+            } else {
+                ctx.crawls.start(ctx, source, cfg)?
             }
-            ctx.crawls.start(ctx, source, cfg)?
         } else {
             reject_unknown(&args, &["crawl_id", "id"])?;
             let id = opt_str(&args, "crawl_id")?
@@ -197,10 +216,23 @@ impl Tool for CrawlTool {
                 })?;
             match self.0 {
                 "stop_crawl" => {
-                    ctx.crawls.stop(id)?;
+                    if let Some(session) = &ctx.session {
+                        session.stop_crawl(id).map_err(internal)?;
+                    } else {
+                        ctx.crawls.stop(id)?;
+                    }
                     json!({"crawl_id":id,"stopping":true})
                 }
-                "resume_crawl" => ctx.crawls.resume(ctx, id)?,
+                "resume_crawl" => {
+                    if let Some(session) = &ctx.session {
+                        let crawl = session
+                            .resume_crawl(id, ctx.target_policy.clone())
+                            .map_err(internal)?;
+                        json!({"crawl_id":crawl.crawl_id,"state":crawl.state.as_str()})
+                    } else {
+                        ctx.crawls.resume(ctx, id)?
+                    }
+                }
                 _ => {
                     let crawl = open_crawl(ctx, &json!({"crawl_id":id}))?;
                     let errors: i64 = crawl
@@ -213,14 +245,20 @@ impl Tool for CrawlTool {
                         )
                         .map_err(internal)?;
                     let mut status = ctx
-                        .crawls
-                        .status(id)
+                        .session
+                        .as_ref()
+                        .and_then(|s| s.status(id))
+                        .map(|s| json!({"crawl_id":id,"progress":s.progress}))
+                        .or_else(|| ctx.crawls.status(id))
                         .unwrap_or_else(|| json!({"crawl_id":id}));
-                    status["state"] = json!(crawl
-                        .file
-                        .effective_state(&os_model::SystemClock)
-                        .map_err(internal)?
-                        .as_str());
+                    let state = match ctx.session.as_ref().and_then(|s| s.status(id)) {
+                        Some(live) => live.state,
+                        None => crawl
+                            .file
+                            .effective_state(&os_model::SystemClock)
+                            .map_err(internal)?,
+                    };
+                    status["state"] = json!(state.as_str());
                     status["errors"] = json!(errors);
                     status
                 }

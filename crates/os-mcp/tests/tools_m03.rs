@@ -565,9 +565,11 @@ fn registered_tools_expose_no_code_execution_or_free_filesystem_access() {
     assert_eq!(
         names,
         [
+            "compare_crawls",
             "crawl_overview",
             "crawl_status",
             "export",
+            "fetch_link_metrics",
             "list_catalog",
             "list_crawls",
             "list_issues",
