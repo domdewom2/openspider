@@ -356,6 +356,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Runde 10: spec-coverage lief auf macOS-14 mit < 1 GB frei; die Engine pausiert Crawls darunter (Ressourcenschutz) und
+      # Engine-/CLI-/Export-Tests scheitern. Gleicher Aufräumschritt wie im Job ci.
+      - name: "Speicherplatz schaffen (macOS, ungenutzte Xcode-Versionen)"
+        if: ${{ runner.os == 'macOS' }}
+        run: |
+          df -h / | tail -n 1
+          selected="$(xcode-select -p | sed 's|/Contents/Developer$||')"
+          echo "Gewähltes Xcode: $selected"
+          case "$selected" in
+            /Applications/Xcode*.app) ;;
+            *) echo "Kein Xcode.app gewählt, nichts gelöscht"; exit 0 ;;
+          esac
+          selected_real="$(realpath "$selected")"
+          for app in /Applications/Xcode*.app; do
+            [ -L "$app" ] && continue
+            [ "$(realpath "$app")" = "$selected_real" ] && continue
+            echo "Entferne $app"
+            sudo nohup rm -rf "$app" > /dev/null 2>&1 &
+          done
+          sudo nohup rm -rf "$HOME/Library/Android" > /dev/null 2>&1 &
+          sleep 1
+
+
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
