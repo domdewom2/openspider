@@ -448,6 +448,7 @@ fn dynamic_column_sources_are_registered_per_tab_and_names_are_interned() {
             "Internal",
             "Internal",
             "Internal",
+            "Internal",
             "Link Metrics",
             "Mobile",
             "PageSpeed",

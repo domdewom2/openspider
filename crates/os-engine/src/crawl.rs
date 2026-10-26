@@ -763,6 +763,12 @@ pub(crate) fn launch<F: Fetch>(setup: Setup<F>) -> CrawlHandle {
         paused_total,
     );
     tracker.track_file(&file);
+    let api_ctx = os_integrations::ApiCtx {
+        cfg: (*cfg).clone(),
+        secrets: os_integrations::crawl_glue::environment_view_for(deps.secrets.clone(), &cfg),
+        network: fetcher.network_settings().unwrap_or_default(),
+        allow_api_override: false,
+    };
     let (sh, control) = make_shared(SharedInit {
         fetcher,
         cfg,
@@ -800,6 +806,7 @@ pub(crate) fn launch<F: Fetch>(setup: Setup<F>) -> CrawlHandle {
         progress_tx,
         crawl_id,
         file,
+        api_ctx,
         hook: deps.on_finished.clone(),
         seeds,
         clock: deps.clock.clone(),
@@ -815,6 +822,7 @@ pub(crate) fn launch<F: Fetch>(setup: Setup<F>) -> CrawlHandle {
 }
 
 struct RunParts<F: Fetch> {
+    api_ctx: os_integrations::ApiCtx,
     sh: Arc<Shared<F>>,
     writer: WriterThread,
     progress_tx: watch::Sender<Progress>,
@@ -874,6 +882,7 @@ fn rule_events<F: Fetch>(sh: &Shared<F>, batch: &mut WriteBatch) {
 
 async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> {
     let RunParts {
+        api_ctx,
         sh,
         writer,
         progress_tx,
@@ -893,6 +902,9 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
             sh.fail(e);
         }
     }
+
+    // INTEG-015/017: sitemap seeds are known; workers still use the regular frontier/robots gate.
+    let api_run = initialize_apis(&file, api_ctx, clock.clone(), &writer, &sh).await?;
 
     let mut set: JoinSet<()> = JoinSet::new();
     let mut progress_tick = interval(PROGRESS_INTERVAL);
@@ -1133,6 +1145,20 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
         end_reason: reason,
         crawled,
     };
+    if state == CrawlState::Completed {
+        if let Some(api_run) = api_run {
+            let path = summary.file.clone();
+            let runtime = tokio::runtime::Handle::current();
+            tokio::task::spawn_blocking(move || {
+                let file = CrawlFile::open(&path, os_store::OpenMode::ReadWrite)?;
+                runtime
+                    .block_on(api_run.collect(&file))
+                    .map_err(|e| EngineError::Invalid(e.public_message()))
+            })
+            .await
+            .map_err(|e| EngineError::Join(e.to_string()))??;
+        }
+    }
     // CRAWL-141: Hook nach regulärem Ende, Limit oder Stopp – nach dem Checkpoint, vor der Auflösung von
     // `wait()`; nie bei Pause oder Fehler.
     if state == CrawlState::Completed {
@@ -1144,4 +1170,81 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
         }
     }
     Ok(summary)
+}
+
+// K2-61: API work runs off the asynchronous worker threads; SQLite connections stay on that thread.
+async fn initialize_apis<F: Fetch>(
+    path: &Path,
+    ctx: os_integrations::ApiCtx,
+    clock: Arc<dyn Clock>,
+    writer: &WriterThread,
+    sh: &Arc<Shared<F>>,
+) -> Result<Option<os_integrations::crawl_glue::ApiRun>, EngineError> {
+    if os_integrations::crawl_glue::enabled(&ctx.cfg).is_empty() {
+        return Ok(None);
+    }
+    writer
+        .flush()
+        .await
+        .map_err(|_| EngineError::Join("API writer flush failed".into()))?;
+    let path = path.to_path_buf();
+    let runtime = tokio::runtime::Handle::current();
+    let (run, candidates) = tokio::task::spawn_blocking(move || {
+        let mut run = os_integrations::crawl_glue::ApiRun::new(
+            ctx,
+            clock,
+            path.with_extension("api-quotas.json"),
+        );
+        for warning in run
+            .validate(false)
+            .map_err(|e| EngineError::Invalid(e.to_string()))?
+        {
+            tracing::warn!("{warning}");
+        }
+        let file = CrawlFile::open(&path, os_store::OpenMode::ReadWrite)?;
+        let candidates = match runtime.block_on(run.discover(&file)) {
+            Ok(urls) => urls,
+            Err(error) => {
+                tracing::warn!(message = %error.public_message(), "API discovery failed");
+                Vec::new()
+            }
+        };
+        Ok::<_, EngineError>((run, candidates))
+    })
+    .await
+    .map_err(|e| EngineError::Join(e.to_string()))??;
+    let mut batch = WriteBatch::default();
+    {
+        let mut core = sh.lock_core();
+        for address in candidates {
+            let Ok(url) = Url::parse(&address) else {
+                continue;
+            };
+            let norm = os_url::normalize(&url);
+            core.discover(
+                &Cand {
+                    norm: &norm,
+                    internal: true,
+                    kind: DiscoveryKind::Link,
+                    store: true,
+                    crawl: true,
+                    reason: None,
+                    resource_like: false,
+                    apply_rules: true,
+                    purpose: Purpose::Page,
+                    source: None,
+                },
+                Some(0),
+                0,
+                0,
+                &sh.rules,
+                &mut batch,
+            );
+        }
+    }
+    sh.writer
+        .send(batch)
+        .await
+        .map_err(|_| EngineError::Join("API frontier write failed".into()))?;
+    Ok(Some(run))
 }

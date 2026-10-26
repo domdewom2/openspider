@@ -28,7 +28,7 @@ use crate::defs::{
 };
 
 /// Grundmenge des Tabs.
-const POPULATION: &str = "u.is_internal = 1 AND u.in_tables = 1 AND u.content_class = 'HTML'";
+const POPULATION: &str = "u.is_internal = 1 AND u.in_tables = 1 AND (u.content_class = 'HTML' OR EXISTS(SELECT 1 FROM crawl_meta WHERE key='source_mode' AND value='apis'))";
 
 /// Die URL hat mindestens eine GA4-Zeile.
 macro_rules! has_ga {

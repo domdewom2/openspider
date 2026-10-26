@@ -134,31 +134,31 @@ pub struct RunArgs {
     pub compare_with_previous: bool,
 
     // ---- APIs ---------------------------------------------------------------------------------
-    /// [noch nicht unterstützt] Google Analytics 4.
+    /// Google Analytics 4.
     #[arg(long, num_args = 0.., value_name = "KONTO ACCOUNT PROPERTY STROM", help_heading = "APIs")]
     pub use_google_analytics_4: Option<Vec<String>>,
 
-    /// [noch nicht unterstützt] Google Search Console.
+    /// Google Search Console.
     #[arg(long, num_args = 0.., value_name = "KONTO WEBSITE", help_heading = "APIs")]
     pub use_google_search_console: Option<Vec<String>>,
 
-    /// [noch nicht unterstützt] PageSpeed Insights.
+    /// PageSpeed Insights.
     #[arg(long, help_heading = "APIs")]
     pub use_pagespeed: bool,
 
-    /// [noch nicht unterstützt] Ahrefs.
+    /// Ahrefs.
     #[arg(long, help_heading = "APIs")]
     pub use_ahrefs: bool,
 
-    /// [noch nicht unterstützt] Majestic.
+    /// Majestic.
     #[arg(long, help_heading = "APIs")]
     pub use_majestic: bool,
 
-    /// [noch nicht unterstützt] Moz.
+    /// Moz.
     #[arg(long, help_heading = "APIs")]
     pub use_mozscape: bool,
 
-    /// [noch nicht unterstützt] Angeforderte Integrationen werden verpflichtend.
+    /// Angeforderte Integrationen werden verpflichtend.
     #[arg(long, help_heading = "APIs")]
     pub require_apis: bool,
 
@@ -284,7 +284,7 @@ pub fn long_option_names() -> Vec<String> {
 impl RunArgs {
     /// Die noch nicht unterstützten Optionen, die der Aufruf enthält (Namen mit `--`).
     pub fn unsupported(&self) -> Vec<&'static str> {
-        let checks: [(bool, &'static str); 17] = [
+        let checks: [(bool, &'static str); 10] = [
             (self.crawl_google_sheet.is_some(), "--crawl-google-sheet"),
             (
                 self.google_drive_account.is_some(),
@@ -297,19 +297,6 @@ impl RunArgs {
                 "--project-crawl-comparison",
             ),
             (self.compare_with_previous, "--compare-with-previous"),
-            (
-                self.use_google_analytics_4.is_some(),
-                "--use-google-analytics-4",
-            ),
-            (
-                self.use_google_search_console.is_some(),
-                "--use-google-search-console",
-            ),
-            (self.use_pagespeed, "--use-pagespeed"),
-            (self.use_ahrefs, "--use-ahrefs"),
-            (self.use_majestic, "--use-majestic"),
-            (self.use_mozscape, "--use-mozscape"),
-            (self.require_apis, "--require-apis"),
             (self.create_sitemap, "--create-sitemap"),
             (self.create_images_sitemap, "--create-images-sitemap"),
             (self.email_on_complete.is_some(), "--email-on-complete"),

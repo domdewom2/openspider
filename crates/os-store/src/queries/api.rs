@@ -200,3 +200,27 @@ pub fn linkmetrics_urls(
         "SELECT id,url FROM urls u WHERE in_tables=1 AND ((is_internal=1 AND content_class='HTML') OR (is_internal=0 AND ?3)) AND (NOT ?2 OR NOT EXISTS(SELECT 1 FROM api_values a WHERE a.url_id=u.id AND a.source=?1)) ORDER BY id"
     )?.query_map(params![source,missing,include_external], |r| Ok((UrlId(r.get(0)?),r.get(1)?)))?.collect::<Result<_,_>>()?)
 }
+
+/// Original API-upload entry, including rejected and duplicate list inputs (CRAWL-037).
+#[derive(Debug, Clone)]
+pub struct InputRow {
+    pub position: u64,
+    pub original: String,
+    pub outcome: String,
+    pub url: Option<String>,
+}
+
+/// Persist the upload plan after its accepted URLs have been inserted by the writer.
+pub fn store_input_rows(conn: &Connection, rows: &[InputRow]) -> Result<(), StoreError> {
+    let tx = conn.unchecked_transaction()?;
+    {
+        let mut insert = tx.prepare_cached(
+            "INSERT INTO list_input(position,original,outcome,url_id) VALUES(?1,?2,?3,(SELECT id FROM urls WHERE url=?4))",
+        )?;
+        for row in rows {
+            insert.execute(params![row.position, row.original, row.outcome, row.url])?;
+        }
+    }
+    tx.commit()?;
+    Ok(())
+}

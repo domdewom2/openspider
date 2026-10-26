@@ -54,6 +54,10 @@ pub struct BatchSettings {
 /// Ablaufplan nach der Validierung.
 #[derive(Debug)]
 pub struct Plan {
+    /// Optional API credential view supplied by a scheduled host (default None).
+    pub api_secrets: Option<os_integrations::crawl_glue::SecretSnapshot>,
+    /// Require every requested API; default false.
+    pub require_apis: bool,
     /// Stapelmodus der Exporte (geplante Aufgaben); `None` = einzeln wie auf der Kommandozeile.
     pub batch: Option<BatchSettings>,
     /// Optionaler Segmentkontext; ohne Flag bleibt der Export ungefiltert.
@@ -159,6 +163,8 @@ fn build_config(
             rep.warn(format!("Konfiguration: {issue}"));
         }
     }
+    // OUT-201 / INTEG-017: apply selections before validating and before creating a crawl.
+    apply_api_options(&mut loaded.config, args)?;
     let report = loaded.validate();
     for w in &report.warnings {
         rep.warn(format!("Konfiguration: {w}"));
@@ -498,6 +504,8 @@ fn build_impl(
         }
     }
     Ok(Plan {
+        api_secrets: None,
+        require_apis: args.require_apis,
         batch,
         segment: args.segment.clone(),
         source,
@@ -515,6 +523,20 @@ fn build_impl(
         name,
         paths,
     })
+}
+
+fn apply_api_options(cfg: &mut CrawlConfig, args: &RunArgs) -> Result<(), CliError> {
+    os_integrations::crawl_glue::configure_google(
+        cfg,
+        args.use_google_analytics_4.as_deref(),
+        args.use_google_search_console.as_deref(),
+    )
+    .map_err(|e| CliError::usage(e.to_string()))?;
+    cfg.api.psi.enabled |= args.use_pagespeed;
+    cfg.api.ahrefs.enabled |= args.use_ahrefs;
+    cfg.api.majestic.enabled |= args.use_majestic;
+    cfg.api.moz.enabled |= args.use_mozscape;
+    Ok(())
 }
 
 #[cfg(test)]

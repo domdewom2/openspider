@@ -53,13 +53,9 @@ pub trait TaskHooks: Send + Sync {
         false
     }
     /// API-Quellen der Aufgabe (OUT-164): Abruf für den fertigen Crawl; Rückgabe = Warnungen.
-    fn fetch_apis(&self, task: &Task, _crawl: Option<&Path>) -> Vec<String> {
-        task.apis
-            .iter()
-            .map(|api| {
-                format!("API source '{api}' is not available in headless runs of this version")
-            })
-            .collect()
+    fn fetch_apis(&self, _task: &Task, _crawl: Option<&Path>) -> Vec<String> {
+        // INTEG-017: the engine completes these requests before analysis and exports.
+        Vec::new()
     }
 
     /// Vergleich mit dem vorherigen Crawl des Projekts (OUT-152).
@@ -338,6 +334,10 @@ fn to_run_args(task: &Task, paths: &AppPaths, exports: &ExportPlan, export_dir: 
         .iter()
         .map(|(k, v)| format!("{k}={v}"))
         .collect();
+    // INTEG-017: use the same profile settings and lifecycle as interactive/CLI runs.
+    for source in &task.apis {
+        args.set.push(format!("api.{source}.enabled=true"));
+    }
     for (kind, name) in &exports.items {
         let list = vec![escape_name(name)];
         match kind.to_ascii_lowercase().as_str() {
@@ -602,6 +602,9 @@ pub async fn run_in(
         Ok(plan) => plan,
         Err(e) => return finish(&live, RunResult::Failed, e.exit, Some(e.message)),
     };
+    plan.api_secrets = Some(os_integrations::crawl_glue::SecretSnapshot(
+        ctx.secrets.clone(),
+    ));
     if let Some(profile) = task
         .crawl
         .auth_profile

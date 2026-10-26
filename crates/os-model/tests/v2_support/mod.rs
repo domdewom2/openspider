@@ -169,6 +169,8 @@ pub fn change_all_v2_fields(c: &mut CrawlConfig) {
     };
     c.api = ApiConfig {
         ga4: Ga4Config {
+            analytics_account: Some("accounts/123".into()),
+            crawl_new_urls: true,
             enabled: true,
             base_url: Some("http://127.0.0.1:9/ga4".into()),
             property: Some("properties/123".into()),
@@ -183,6 +185,7 @@ pub fn change_all_v2_fields(c: &mut CrawlConfig) {
             ..Default::default()
         },
         gsc: GscConfig {
+            crawl_new_urls: true,
             enabled: true,
             base_url: Some("http://127.0.0.1:9/gsc".into()),
             site: Some("sc-domain:a.test".into()),

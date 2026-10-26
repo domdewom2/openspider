@@ -202,6 +202,17 @@ pub(crate) fn filter_states_for_file(
         .iter()
         .map(|def| filter_state(def, cfg, cfg_json, analysis))
         .collect();
+    // INTEG-015: API orphan filters retain their canonical live-SQL definitions,
+    // while the file-bound state supplies the required configuration/analysis hints.
+    for (def, state) in defs.iter().zip(&mut states) {
+        if state.yields_rows() {
+            if let Some(required) =
+                crate::tabs::dynamic_api::orphan_state(def, tab, cfg, cfg_json, analysis)
+            {
+                *state = required;
+            }
+        }
+    }
     let markers: std::collections::BTreeSet<_> = defs
         .iter()
         .zip(&states)

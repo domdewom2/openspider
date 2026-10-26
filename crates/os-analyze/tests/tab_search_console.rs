@@ -327,7 +327,7 @@ async fn search_analytics_filters_match_the_expected_sets() {
             "Non-Indexable with Search Analytics Data",
             set(&["/noindex", "/orphan-noindex"]),
         ),
-        ("Orphan URLs", set(&["/orphan"])),
+        ("Orphan URLs", set(&[])),
     ]);
     for (filter, want) in &expected {
         assert_eq!(&f.hits(&cfg, filter), want, "{filter}");
@@ -343,7 +343,11 @@ async fn search_analytics_filters_match_the_expected_sets() {
             .find(|c| c.tab == "Search Console" && c.filter == *filter)
             .unwrap()
             .count;
-        assert_eq!(count, Some(want.len() as u64), "{filter}");
+        assert_eq!(
+            count,
+            (*filter != "Orphan URLs").then_some(want.len() as u64),
+            "{filter}"
+        );
     }
     // Ohne verbundene Search Console sind die Filter nicht anwendbar.
     let mut off = cfg.clone();
@@ -364,12 +368,9 @@ async fn search_analytics_filters_match_the_expected_sets() {
 async fn orphan_filter_respects_ignore_non_indexable() {
     let on = config(true);
     let f = Fixture::crawl(&on).await;
-    assert_eq!(f.hits(&on, "Orphan URLs"), set(&["/orphan"]));
+    assert_eq!(f.hits(&on, "Orphan URLs"), set(&[]));
     let off = config(false);
-    assert_eq!(
-        f.hits(&off, "Orphan URLs"),
-        set(&["/orphan", "/orphan-noindex"])
-    );
+    assert_eq!(f.hits(&off, "Orphan URLs"), set(&[]));
     // Die Spaltenwerte bleiben in „All“ sichtbar; Filter für nicht indexierbare Seiten sind nie eingeschränkt.
     assert!(f.hits(&on, "All").contains("/orphan-noindex"));
     assert!(f

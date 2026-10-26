@@ -20,7 +20,7 @@ use crate::defs::{
 
 /// Grundmenge (INTEG-130): interne HTML-URLs mit Status 200 – genau die URLs, die abgefragt werden.
 pub const POPULATION: &str =
-    "u.is_internal = 1 AND u.in_tables = 1 AND u.content_class = 'HTML' AND u.status_code = 200";
+    "u.is_internal = 1 AND u.in_tables = 1 AND ((u.content_class = 'HTML' AND u.status_code = 200) OR EXISTS(SELECT 1 FROM crawl_meta WHERE key='source_mode' AND value='apis'))";
 
 /// Die URL hat einen jüngeren Abruffehler in `api_errors`.
 const HAS_ERROR: &str =

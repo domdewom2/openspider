@@ -430,6 +430,66 @@ pub fn list_config(mut cfg: CrawlConfig) -> CrawlConfig {
     cfg
 }
 
+/// Expand API-only inputs while retaining the list entries and all CRAWL-027 counters.
+pub async fn api_plan<F: os_fetch::Fetch>(
+    items: &[String],
+    cfg: &CrawlConfig,
+    fetcher: &F,
+) -> Result<ListPlan, EngineError> {
+    let mut expanded = Vec::new();
+    for item in items {
+        if !item.contains("://") && Path::new(item).is_file() {
+            expanded.extend(read_items(Path::new(item))?);
+        } else {
+            expanded.push(item.clone());
+        }
+    }
+    let planned = plan(&expanded, cfg)?;
+    let seeds: Vec<_> = planned
+        .entries
+        .into_iter()
+        .filter_map(|entry| {
+            if entry.outcome == ListOutcome::Sitemap {
+                entry.url.map(|url| crate::sitemaps::SitemapSeed {
+                    url: url.url,
+                    found_via: "list".into(),
+                })
+            } else {
+                None
+            }
+        })
+        .collect();
+    if !seeds.is_empty() {
+        for map in crate::sitemaps::ingest(fetcher, seeds, 3).await {
+            let Some(doc) = map.doc else {
+                return Err(EngineError::Invalid(
+                    "API-Listen-Sitemap konnte nicht gelesen werden".into(),
+                ));
+            };
+            if doc.kind == os_model::SitemapKind::Urlset {
+                expanded.extend(doc.locs.into_iter().filter_map(|loc| loc.url));
+            }
+        }
+    }
+    // Plan the complete input, including rejected lines and duplicates from every source.
+    plan(&expanded, cfg)
+}
+
+/// Accepted API-only URLs for callers that do not need the upload summary.
+pub async fn api_items<F: os_fetch::Fetch>(
+    items: &[String],
+    cfg: &CrawlConfig,
+    fetcher: &F,
+) -> Result<Vec<String>, EngineError> {
+    Ok(api_plan(items, cfg, fetcher)
+        .await?
+        .entries
+        .into_iter()
+        .filter(|entry| entry.outcome == ListOutcome::Ok)
+        .filter_map(|entry| entry.url.map(|url| url.encoded))
+        .collect())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,0 +1,8 @@
+Kommentar ohne URL
+https://integ.test/keep/a
+HTTPS://INTEG.test/keep/a
+https://integ.test/keep/private/a
+https://integ.test/outside
+https://[invalid
+www.integ.test/ohne-schema
+https://integ.test/keep/b https://integ.test/keep/a
