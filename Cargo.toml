@@ -144,7 +144,7 @@ whatlang = "0.18"
 spellbook = "0.4"
 
 # M2-F05a: komprimierte HTML-Ablage.
-zstd = "0.13"
+zstd = "0.14"
 
 # Welle-1-Vorbau (K2-57; MIT/Apache-2.0).
 xee-xpath = "0.1"
