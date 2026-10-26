@@ -15,6 +15,7 @@ use os_engine::types::{CrawlRequest, CrawlSource, CrawlSummary, EngineDeps, Fini
 use os_engine::{disk_guard, resume_crawl, start_crawl, CrawlHandle, EngineError};
 use os_export::catalog::bulk_issues;
 use os_export::{export_bulk, save_report, ExportFileInfo, Format};
+use os_fetch::SecretStore;
 use os_model::{
     Clock, CrawlConfig, CrawlId, CrawlState, IdSource, Progress, RandomIds, SystemClock, Timestamp,
 };
