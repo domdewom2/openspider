@@ -1,0 +1,8 @@
+{
+  "profile": {
+    "name": "boundaries",
+    "host": "https://site.test/",
+    "kind": "form",
+    "secret": "{\"cookies\": [{\"name\": \"valid\", \"value\": \"yes\", \"expires\": 1767225660}, {\"name\": \"expired\", \"value\": \"no\", \"expires\": 1767225600}, {\"name\": \"near\", \"value\": \"yes\", \"expires\": 1767225600.001}]}"
+  }
+}

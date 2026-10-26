@@ -1,0 +1,13 @@
+{
+  "digest": {
+    "username": "User",
+    "challenge": "Digest realm=\"fixture\", nonce=\"fixture-nonce\", algorithm=MD5, qop=\"auth\"",
+    "authorization": "Digest username=\"User\", realm=\"fixture\", nonce=\"fixture-nonce\", uri=\"/protected\", algorithm=MD5, response=\"22eca6e8eab1c915158a4f74fdd24812\", qop=auth, nc=00000001, cnonce=\"8081828384858687\""
+  },
+  "ntlm": {
+    "username": "Domain\\User",
+    "challenge": "NTLM TlRMTVNTUAACAAAAAAAAADAAAAAFAogAASNFZ4mrze8AAAAAAAAAACAAIAAwAAAAAgAMAEQAbwBtAGEAaQBuAAcACAAAQLoZ4FvbAQAAAAA=",
+    "negotiate": "NTLM TlRMTVNTUAABAAAABQKIAAAAAAAAAAAAAAAAAAAAAAA=",
+    "authorization": "NTLM TlRMTVNTUAADAAAAGAAYAFgAAABYAFgAcAAAAAwADADIAAAACAAIANQAAAAAAAAA3AAAAAAAAADcAAAABQKIAAAAAAAAAAAAucAamA7pDck6uCpXWZlhHgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJfrhiwtPoDoxp9nrm2LMloBAQAAAAAAAABAuhngW9sBgIGCg4SFhocAAAAAAgAMAEQAbwBtAGEAaQBuAAYABAACAAAABwAIAABAuhngW9sBAAAAAAAAAABEAG8AbQBhAGkAbgBVAHMAZQByAA=="
+  }
+}

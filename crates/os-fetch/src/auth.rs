@@ -14,6 +14,7 @@
 //! Benutzername und Passwort werden UTF-8-kodiert (Referenz-Fix 20.3).
 
 pub(crate) mod digest;
+pub(crate) mod ntlm;
 use url::Url;
 
 use crate::client::BasicAuthEntry;

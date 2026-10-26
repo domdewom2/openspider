@@ -17,6 +17,8 @@ use serde_json::json;
 pub struct Reporter {
     warnings: AtomicU32,
     json: bool,
+    quiet: bool,
+    snapshot: Mutex<serde_json::Value>,
     /// Meldungen zusätzlich als `tracing`-Ereignisse ins Lauf-Log schreiben (geplante Läufe, OUT-240).
     log_events: AtomicBool,
     /// Text der Warnungen (für die Laufhistorie, OUT-169); höchstens [`MAX_KEPT`].
@@ -37,9 +39,17 @@ fn write_stderr(text: &str) {
 impl Reporter {
     /// Neuer Berichterstatter; `json` = `--json-progress`.
     pub fn new(json: bool) -> Arc<Self> {
+        Self::configured(json, false)
+    }
+
+    pub fn configured(json: bool, quiet: bool) -> Arc<Self> {
         Arc::new(Reporter {
             warnings: AtomicU32::new(0),
             json,
+            quiet,
+            snapshot: Mutex::new(
+                json!({"crawled":0,"queued":0,"errors":0,"elapsed_s":0,"eta_s":null}),
+            ),
             log_events: AtomicBool::new(false),
             kept_warnings: Mutex::new(Vec::new()),
             exported: Mutex::new(Vec::new()),
@@ -61,6 +71,13 @@ impl Reporter {
             .push(path.to_path_buf());
     }
 
+    pub fn forget_staging(&self, directory: &Path) {
+        self.exported
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .retain(|p| !p.starts_with(directory));
+    }
+
     /// Die geschriebenen Exportdateien in Reihenfolge.
     pub fn exported_files(&self) -> Vec<PathBuf> {
         self.exported
@@ -77,6 +94,12 @@ impl Reporter {
             .clone()
     }
 
+    pub fn task_configured(json: bool, quiet: bool) -> Arc<Self> {
+        let rep = Self::configured(json, quiet);
+        rep.log_events.store(true, Ordering::SeqCst);
+        rep
+    }
+
     /// Mit `--json-progress`?
     pub fn json(&self) -> bool {
         self.json
@@ -84,7 +107,9 @@ impl Reporter {
 
     /// Hinweis ohne Warnwirkung.
     pub fn info(&self, msg: impl AsRef<str>) {
-        write_stderr(msg.as_ref());
+        if !self.quiet {
+            write_stderr(msg.as_ref());
+        }
         if self.log_events.load(Ordering::SeqCst) {
             tracing::info!(target: "os_cli::task", "{}", msg.as_ref());
         }
@@ -93,7 +118,9 @@ impl Reporter {
     /// Warnung; zählt für `--strict`.
     pub fn warn(&self, msg: impl AsRef<str>) {
         self.warnings.fetch_add(1, Ordering::SeqCst);
-        write_stderr(&format!("Warnung: {}", msg.as_ref()));
+        if !self.quiet {
+            write_stderr(&format!("Warnung: {}", msg.as_ref()));
+        }
         {
             let mut kept = self.kept_warnings.lock().unwrap_or_else(|p| p.into_inner());
             if kept.len() < MAX_KEPT {
@@ -121,13 +148,29 @@ impl Reporter {
     /// Beginn einer Phase (`validate`, `crawl`, `analysis`, `export`, `notify`, `done`), nur mit
     /// `--json-progress`.
     pub fn phase(&self, name: &str) {
-        if self.json {
-            write_stderr(&json!({ "phase": name }).to_string());
+        if self.json && !self.quiet {
+            let mut line = self
+                .snapshot
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .clone();
+            line["phase"] = json!(name);
+            write_stderr(&line.to_string());
         }
+    }
+
+    pub fn snapshot(&self, p: &Progress, errors: Option<u64>) {
+        *self.snapshot.lock().unwrap_or_else(|p| p.into_inner()) = json!({
+            "crawled":p.crawled,"queued":p.queued,"errors":errors,
+            "elapsed_s":p.elapsed_s,"eta_s":p.eta_s
+        });
     }
 
     /// Fortschrittszeile des Crawls: JSON mit `--json-progress`, sonst eine Textzeile.
     pub fn progress(&self, phase: &str, p: &Progress, errors: Option<u64>) {
+        if self.quiet {
+            return;
+        }
         if self.json {
             let line = json!({
                 "phase": phase,
@@ -140,6 +183,7 @@ impl Reporter {
                 "rate": (p.rate * 10.0).round() / 10.0,
                 "state": p.state.as_str(),
             });
+            *self.snapshot.lock().unwrap_or_else(|p| p.into_inner()) = line.clone();
             write_stderr(&line.to_string());
         } else {
             write_stderr(&format!(

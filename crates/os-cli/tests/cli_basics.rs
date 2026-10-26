@@ -9,32 +9,7 @@ use std::time::{Duration, Instant};
 use common::{column, file_names, read_csv, resolve, site, Env};
 fn assert_golden(path: impl AsRef<Path>, actual: &str) {
     let path = path.as_ref();
-    let mut expected = std::fs::read_to_string(path)
-        .unwrap()
-        .replace("HTML Document Over 2MB", "HTML Document Over XMB")
-        .replace("Resource Over 2MB", "Resource Over XMB");
-    if path.file_name().unwrap() == "list_reports.txt" {
-        expected = expected
-            .lines()
-            .filter(|l| !matches!(*l, "Crawl Path Report" | "Queued URLs"))
-            .collect::<Vec<_>>()
-            .join("\n")
-            + "\n";
-    }
-    if path.file_name().unwrap() == "list_exports.txt" {
-        expected.push_str("Queued URLs\n");
-        // K2-61 (Golden durch eigene Ausgabe): X01 adds Pagination's missing All entry.
-        expected = expected.replace(
-            "Hreflang:All Inlinks\n",
-            "Pagination:All Inlinks\nHreflang:All Inlinks\n",
-        );
-    }
-    expected = expected
-        .lines()
-        .filter(|line| !matches!(*line, "Internal:Media" | "Internal:Fonts" | "Internal:XML"))
-        .collect::<Vec<_>>()
-        .join("\n")
-        + "\n";
+    let expected = std::fs::read_to_string(path).unwrap();
     assert_eq!(actual, expected, "{}", path.display());
 }
 
@@ -150,7 +125,11 @@ fn list_exports_and_list_reports_equal_the_help_topics_and_need_no_network() {
     let tabs = env.run(&["--help", "export-tabs"]);
     let bulk = env.run(&["--help", "bulk-export"]);
     assert_eq!(exports.code, 0, "{}", exports.dump());
-    assert_eq!(exports.stdout, format!("{}{}", tabs.stdout, bulk.stdout));
+    let combined = format!("{}{}", tabs.stdout, bulk.stdout);
+    let mut expected: Vec<_> = combined.lines().collect();
+    expected.sort();
+    expected.dedup();
+    assert_eq!(exports.stdout, expected.join("\n") + "\n");
     assert_golden(golden("list_exports.txt"), &exports.stdout);
 
     let reports = env.run(&["--list-reports"]);
@@ -237,7 +216,6 @@ async fn invalid_names_are_rejected_before_any_request_in_under_a_second() {
 
     // Formate
     for (fmt, needle) in [
-        ("xls", "nicht unterstützt"),
         ("gsheet", "--google-drive-account"),
         ("odt", "csv, xls, xlsx, gsheet"),
     ] {

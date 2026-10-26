@@ -72,6 +72,10 @@ pub struct RunArgs {
     #[arg(long, help_heading = "Aufgaben")]
     pub unregister_tasks: bool,
 
+    /// Installiert die stabile Chromium-Komponente für Headless-Rendering (OUT-207).
+    #[arg(long, help_heading = "Konfiguration")]
+    pub install_browser: bool,
+
     // ---- Quelle -------------------------------------------------------------------------------
     /// Crawlt eine Website ab der URL (Spider-Modus); ohne Schema wird `http://` ergänzt.
     #[arg(long, value_name = "URL", help_heading = "Quelle")]
@@ -95,7 +99,7 @@ pub struct RunArgs {
     #[arg(long, num_args = 0.., value_name = "KONTO URL", help_heading = "Quelle")]
     pub crawl_google_sheet: Option<Vec<String>>,
 
-    /// [noch nicht unterstützt] Google-Konto für Drive und Sheets.
+    /// Verbundenes Google-Konto für Drive und Sheets.
     #[arg(long, value_name = "KONTO", help_heading = "Quelle")]
     pub google_drive_account: Option<String>,
 
@@ -104,7 +108,7 @@ pub struct RunArgs {
     #[arg(long, value_name = "DATEI", help_heading = "Konfiguration")]
     pub config: Option<PathBuf>,
 
-    /// [noch nicht unterstützt] Authentifizierungsprofil.
+    /// Verschlüsseltes Authentifizierungsprofil (.osauth); Passphrase über OPENSPIDER_AUTH_PASSPHRASE.
     #[arg(long, value_name = "DATEI", help_heading = "Konfiguration")]
     pub auth_config: Option<PathBuf>,
 
@@ -180,8 +184,7 @@ pub struct RunArgs {
     #[arg(long, value_name = "REPORT,…", help_heading = "Exporte")]
     pub save_report: Vec<String>,
 
-    /// Format der Exporte: `csv` (Standard) oder `xlsx`; `xls` und `gsheet` werden in dieser Version nicht
-    /// unterstützt.
+    /// Format der Exporte: csv (Standard), xls, xlsx oder gsheet (verbundenes Google-Konto).
     #[arg(long, value_name = "FORMAT", help_heading = "Exporte")]
     pub export_format: Option<String>,
 
@@ -213,11 +216,11 @@ pub struct RunArgs {
     #[arg(long, help_heading = "Exporte")]
     pub json: bool,
 
-    /// [noch nicht unterstützt] XML-Sitemap erzeugen.
+    /// XML-Sitemap mit den Einstellungen des Crawl-Profils erzeugen.
     #[arg(long, help_heading = "Exporte")]
     pub create_sitemap: bool,
 
-    /// [noch nicht unterstützt] Bilder-Sitemap erzeugen.
+    /// Bilder-Sitemap mit den Einstellungen des Crawl-Profils erzeugen.
     #[arg(long, help_heading = "Exporte")]
     pub create_images_sitemap: bool,
 
@@ -228,6 +231,34 @@ pub struct RunArgs {
     /// [noch nicht unterstützt] Looker-Studio-Export.
     #[arg(long, value_name = "METRIK,…", help_heading = "Exporte")]
     pub export_custom_summary: Option<String>,
+
+    /// Multi-Export-Vorlage (.ospreset): Name im Profilordner oder Dateipfad.
+    #[arg(long, value_name = "NAME|DATEI", help_heading = "Exporte")]
+    pub export_preset: Option<String>,
+
+    /// Tabellen als Blätter einer gemeinsamen Arbeitsmappe exportieren.
+    #[arg(long, help_heading = "Exporte")]
+    pub single_workbook: bool,
+
+    /// Exporte ohne Datenzeilen überspringen.
+    #[arg(long, help_heading = "Exporte")]
+    pub skip_empty_exports: bool,
+
+    /// Spaltenköpfe der englischen UI oder kanonische englische Namen.
+    #[arg(long, value_parser = ["ui", "canonical"], help_heading = "Exporte")]
+    pub column_headers: Option<String>,
+
+    /// Fortschrittsformat auf stderr (Alias: --json-progress).
+    #[arg(long, value_parser = ["text", "json"], help_heading = "Allgemein")]
+    pub progress: Option<String>,
+
+    /// Nur Fehler auf stderr ausgeben.
+    #[arg(long, help_heading = "Allgemein")]
+    pub quiet: bool,
+
+    /// API-Basis-URLs aus der Umgebung auch im Release freigeben (INTEG-019).
+    #[arg(long, help_heading = "APIs")]
+    pub allow_api_override: bool,
 
     // ---- OS-Erweiterungen ---------------------------------------------------------------------
     /// [OS-Erweiterung] Host-Auflösung `host=ip[:port]` bzw. `*.domain=ip[:port]` statt DNS; mehrfach
@@ -284,21 +315,14 @@ pub fn long_option_names() -> Vec<String> {
 impl RunArgs {
     /// Die noch nicht unterstützten Optionen, die der Aufruf enthält (Namen mit `--`).
     pub fn unsupported(&self) -> Vec<&'static str> {
-        let checks: [(bool, &'static str); 10] = [
+        let checks: [(bool, &'static str); 6] = [
             (self.crawl_google_sheet.is_some(), "--crawl-google-sheet"),
-            (
-                self.google_drive_account.is_some(),
-                "--google-drive-account",
-            ),
-            (self.auth_config.is_some(), "--auth-config"),
             (self.crawl_comparison.is_some(), "--crawl-comparison"),
             (
                 self.project_crawl_comparison.is_some(),
                 "--project-crawl-comparison",
             ),
             (self.compare_with_previous, "--compare-with-previous"),
-            (self.create_sitemap, "--create-sitemap"),
-            (self.create_images_sitemap, "--create-images-sitemap"),
             (self.email_on_complete.is_some(), "--email-on-complete"),
             (
                 self.export_custom_summary.is_some(),
