@@ -38,7 +38,7 @@ M1_SPERRE = ("crates/os-store", "crates/os-engine", "crates/os-analyze")
 M1_SPERRE_BIS = "M1-N27"
 SPERR_WELLEN = ["0a"]
 SPERR_PROBEN = ("Cargo.toml", "src/lib.rs", "src/q.rs", "src/q/z.rs", "tests/q.rs", "migrations/q.sql", "benches/q.rs")
-WELLEN = ["0a", "0b", "0c", "0d", "0e", "1", "2", "2b", "3", "4", "4b", "5"]  # 2b: M2-N01b (K2-68)
+WELLEN = ["0a", "0b", "0c", "0d", "0e", "1", "2", "2b", "3", "4a", "4", "4b", "5"]  # 2b: M2-N01b (K2-68); 4a: M2-E07 vor Q03 (K2-74)
 ID_RE = r"\b(?:CRAWL|ONPAGE|TECH|OUT|AGENT|UI|INTEG|PERF)-\d{3}\b"
 
 # M2.md Abschnitt 9: bewusst nicht in M2 (Grund in Klammern). Wird von P5/P6 als Ausnahme gelesen.
