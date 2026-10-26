@@ -183,7 +183,7 @@ fn bool_enum_and_float_values() {
     );
     assert_eq!(
         err("mode", "turbo"),
-        "ungültiger Wert für mode: einer von spider, list erwartet"
+        "ungültiger Wert für mode: einer von spider, list, serp erwartet"
     );
 
     assert_eq!(

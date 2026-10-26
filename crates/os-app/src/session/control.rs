@@ -165,6 +165,7 @@ pub async fn start_with_fetcher<F: os_fetch::Fetch>(
     let name = match &source {
         os_engine::CrawlSource::Spider { start_url } => start_url.clone(),
         os_engine::CrawlSource::List { label, .. } => label.clone(),
+        os_engine::CrawlSource::Serp { label, .. } => label.clone(),
     };
     let request = os_engine::CrawlRequest {
         config: cfg,

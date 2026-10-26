@@ -73,3 +73,6 @@ pub mod host_pace;
 pub mod retry;
 
 mod sitemap_ingest;
+
+/// Offline SERP file import.
+pub mod serp_input;

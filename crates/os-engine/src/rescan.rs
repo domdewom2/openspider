@@ -80,6 +80,10 @@ fn prepare_recrawl(
     .map_err(|e| EngineError::Invalid(e.to_string()))?;
     let mut restored = resume::restore(&file, &cfg, meta.mode, false)?;
     let (scope, start_encoded) = match meta.mode {
+        CrawlMode::Serp => return Err(EngineError::Invalid(
+            "SERP-Entwürfe werden offline importiert; für neue Werte die Datei erneut hochladen"
+                .into(),
+        )),
         CrawlMode::Spider => {
             let enc = meta.start_url.clone().ok_or_else(|| {
                 EngineError::Invalid("Die Crawl-Datei enthält keine Start-URL".to_string())

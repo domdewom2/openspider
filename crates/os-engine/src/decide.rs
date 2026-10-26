@@ -180,6 +180,22 @@ fn switch_off_reason(scope: ScopeClass) -> NotCrawledReason {
 /// Wirksamer Schalter eines Linktyps für das Ziel im Bereich `scope`.
 fn switch(t: LinkType, scope: ScopeClass, cfg: &CrawlConfig) -> StoreCrawl {
     let s = &cfg.spider;
+    if cfg.advanced.always_follow_canonicals
+        && matches!(t, LinkType::Canonical | LinkType::HttpCanonical)
+    {
+        return StoreCrawl::ON;
+    }
+    if cfg.advanced.always_follow_redirects
+        && matches!(
+            t,
+            LinkType::HttpRedirect
+                | LinkType::JavaScriptRedirect
+                | LinkType::MetaRefresh
+                | LinkType::HttpRefresh
+        )
+    {
+        return StoreCrawl::ON;
+    }
     let own = match t {
         LinkType::Hyperlink | LinkType::PdfLink => match scope {
             ScopeClass::Internal => return s.internal,

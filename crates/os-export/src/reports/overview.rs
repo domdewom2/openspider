@@ -153,6 +153,7 @@ fn summary(file: &CrawlFile, rows: &mut Vec<OverviewRow>) -> Result<(), ExportEr
     let list_source = db(file.get_meta("list_source"))?.filter(|v| !v.is_empty());
     let (first_item, first_value) = match meta.mode {
         CrawlMode::List => ("List File", list_source),
+        CrawlMode::Serp => ("SERP File", list_source),
         CrawlMode::Spider => ("Start URL", meta.start_url.clone()),
     };
     let text = |v: Option<String>| v.map_or(Cell::Empty, Cell::Text);
@@ -160,6 +161,7 @@ fn summary(file: &CrawlFile, rows: &mut Vec<OverviewRow>) -> Result<(), ExportEr
     let mode = match meta.mode {
         CrawlMode::Spider => "Spider",
         CrawlMode::List => "List",
+        CrawlMode::Serp => "SERP",
     };
     rows.push(OverviewRow::new(
         S,
