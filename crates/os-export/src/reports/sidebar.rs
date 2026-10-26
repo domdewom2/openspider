@@ -314,7 +314,7 @@ pub fn export_site_structure(
             source,
         })?;
     }
-    let mut workbook = rust_xlsxwriter::Workbook::new();
+    let mut workbook = crate::xlsx::deterministic_workbook();
     let mut count = 0;
     for (name, table) in [("Directories", dirs), ("Crawl Depth", depths)] {
         let sheet = workbook.add_worksheet_with_constant_memory();

@@ -22,7 +22,7 @@ use std::path::{Path, PathBuf};
 
 use os_analyze::ColumnKind;
 use os_model::Value;
-use rust_xlsxwriter::{ExcelDateTime, Format, Workbook, XlsxError};
+use rust_xlsxwriter::{DocProperties, ExcelDateTime, Format, Workbook, XlsxError};
 
 use crate::csv::timestamp_export;
 use crate::error::ExportError;
@@ -263,7 +263,7 @@ impl XlsxWriter {
         let name = sheet_name(sheet);
         let mut w = XlsxWriter {
             path: path.to_path_buf(),
-            workbook: Workbook::new(),
+            workbook: deterministic_workbook(),
             base_name: name.clone(),
             sheet_names: Vec::new(),
             sheet_rows: Vec::new(),
@@ -546,9 +546,32 @@ impl std::io::Write for CancellableOutput {
     }
 }
 
+/// Neue Arbeitsmappe mit fester Erstellungszeit: `rust_xlsxwriter` setzt sonst die aktuelle Uhrzeit in
+/// `docProps/core.xml`, und zwei Exporte derselben Auswahl wären nicht byte-identisch (OUT-001).
+pub(crate) fn deterministic_workbook() -> Workbook {
+    let mut workbook = Workbook::new();
+    if let Ok(epoch) = ExcelDateTime::from_ymd(2000, 1, 1) {
+        workbook.set_properties(&DocProperties::new().set_creation_datetime(&epoch));
+    }
+    workbook
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // spec: OUT-001
+    #[test]
+    fn workbooks_are_byte_identical_across_seconds() {
+        let save = || {
+            let mut workbook = deterministic_workbook();
+            workbook.add_worksheet().write_string(0, 0, "x").unwrap();
+            workbook.save_to_buffer().unwrap()
+        };
+        let first = save();
+        std::thread::sleep(std::time::Duration::from_millis(1100));
+        assert_eq!(first, save());
+    }
 
     #[test]
     fn sheet_names_are_valid() {
