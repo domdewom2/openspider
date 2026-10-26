@@ -17,15 +17,29 @@ fn all_93_rules_have_spec_priorities_and_bilingual_texts() {
         .filter(|e| e.tab == "Accessibility")
         .collect();
     assert_eq!(entries.len(), 93);
-    for r in accessibility::rules() {
+    let snapshot: Vec<_> = include_str!("../../../tests/fixtures/ui/fx-ui-a11y/spec-rules.tsv")
+        .lines()
+        .filter(|line| !line.starts_with('#'))
+        .map(|line| line.split('\t').collect::<Vec<_>>())
+        .collect();
+    assert_eq!(snapshot.len(), 93);
+    assert_eq!(accessibility::rules().len(), snapshot.len());
+    let mut ids = std::collections::BTreeSet::new();
+    for expected in snapshot {
+        assert!(ids.insert(expected[0]));
+        let r = accessibility::rule(expected[0]).unwrap();
+        assert_eq!(r.group, expected[1], "{} group", r.id);
+        assert_eq!(expected[2], "Warning");
+        assert_eq!(r.priority, expected[3], "{} priority", r.id);
         let e = entries.iter().find(|e| e.filter == r.id).unwrap();
         assert_eq!(e.issue_type, IssueType::Warning);
         assert_eq!(
             e.priority,
-            match r.priority.as_str() {
+            match expected[3] {
                 "High" => IssuePriority::High,
                 "Medium" => IssuePriority::Medium,
-                _ => IssuePriority::Low,
+                "Low" => IssuePriority::Low,
+                other => panic!("unknown priority {other}"),
             }
         );
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))

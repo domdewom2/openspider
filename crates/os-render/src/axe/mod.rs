@@ -203,6 +203,19 @@ mod tests {
                 .status,
             "inapplicable"
         );
+        assert_eq!(
+            write
+                .rules
+                .iter()
+                .find(|r| r.rule_id == "color-contrast")
+                .unwrap()
+                .status,
+            "incomplete"
+        );
+        assert!(write
+            .nodes
+            .iter()
+            .any(|n| n.rule_id == "color-contrast" && n.target == "#background-contrast"));
         assert!(write.nodes.iter().all(|n| n.snippet.chars().count() <= 500));
         let clean_opts = crate::RenderOpts {
             main_response: Some(crate::api::MainResponse {

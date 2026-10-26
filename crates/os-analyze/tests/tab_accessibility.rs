@@ -138,6 +138,7 @@ fn ui_parameters_and_stable_node_keys_survive_sorting_and_paging() {
 // spec: TECH-250
 // spec: TECH-251
 // spec: TECH-259
+// spec: UI-064 [P1]
 #[tokio::test]
 async fn requires_chromium_engine_persists_audit_in_the_crawl_file() {
     let mut cfg = CrawlConfig::default();
@@ -157,6 +158,44 @@ async fn requires_chromium_engine_persists_audit_in_the_crawl_file() {
     .unwrap();
     assert_eq!(page.total, 1);
     let url = page.row_keys[0];
+    for (rule, priority) in [
+        ("image-alt", os_model::IssuePriority::High),
+        ("heading-order", os_model::IssuePriority::Medium),
+        ("empty-heading", os_model::IssuePriority::Low),
+    ] {
+        assert_eq!(
+            query_view(&fx.file, &cfg, &ViewQuery::new("Accessibility", rule))
+                .unwrap()
+                .row_keys,
+            [url]
+        );
+        let issue = os_analyze::issues::catalog()
+            .iter()
+            .find(|e| e.tab == "Accessibility" && e.filter == rule)
+            .unwrap();
+        assert_eq!(issue.issue_type, os_model::IssueType::Warning);
+        assert_eq!(issue.priority, priority);
+    }
+    assert_eq!(
+        query_view(
+            &fx.file,
+            &cfg,
+            &ViewQuery::new("Accessibility", "color-contrast")
+        )
+        .unwrap()
+        .total,
+        0
+    );
+    let status: String = fx
+        .file
+        .conn()
+        .query_row(
+            "SELECT status FROM a11y_rules WHERE url_id=?1 AND rule_id='color-contrast'",
+            [url.0],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(status, "incomplete");
     let count: i64 = fx
         .file
         .conn()
@@ -182,4 +221,162 @@ async fn requires_chromium_engine_persists_audit_in_the_crawl_file() {
     )
     .unwrap();
     assert_eq!(nodes.total, 2);
+}
+
+// spec: TECH-252
+// spec: TECH-253
+// spec: TECH-254
+// spec: TECH-255
+// spec: TECH-256
+// spec: TECH-257
+// spec: UI-064 [P1]
+#[tokio::test]
+async fn requires_chromium_group_fixtures_drive_rule_filters_and_counters() {
+    let cases: &[(&str, &str, &[&str])] = &[
+        (
+            "best-practice",
+            "Best Practice",
+            &[
+                "tabindex",
+                "region",
+                "landmark-one-main",
+                "page-has-heading-one",
+                "heading-order",
+                "empty-heading",
+                "image-redundant-alt",
+                "accesskeys",
+            ],
+        ),
+        (
+            "wcag20a",
+            "WCAG 2.0 A",
+            &[
+                "image-alt",
+                "link-name",
+                "button-name",
+                "label",
+                "html-has-lang",
+                "listitem",
+                "marquee",
+                "frame-title",
+            ],
+        ),
+        ("wcag20a-document-title", "WCAG 2.0 A", &["document-title"]),
+        ("wcag20a-meta-refresh", "WCAG 2.0 A", &["meta-refresh"]),
+        (
+            "wcag20aa",
+            "WCAG 2.0 AA",
+            &["meta-viewport", "valid-lang", "color-contrast"],
+        ),
+        (
+            "wcag20aaa",
+            "WCAG 2.0 AAA",
+            &["meta-refresh-no-exceptions", "color-contrast-enhanced"],
+        ),
+        (
+            "wcag21aa",
+            "WCAG 2.1 AA",
+            &["autocomplete-valid", "avoid-inline-spacing"],
+        ),
+        ("wcag22aa", "WCAG 2.2 AA", &["target-size"]),
+    ];
+    for (fixture, group, expected) in cases {
+        let mut cfg = CrawlConfig::default();
+        cfg.rendering.mode = RenderingMode::JavaScript;
+        cfg.rendering.ajax_timeout_s = 0.0;
+        cfg.rendering.page_timeout_s = 60;
+        cfg.rendering.screenshots.enabled = false;
+        cfg.extraction.accessibility = true;
+        cfg.limits.max_urls = 1;
+        let fx = os_engine::testing::crawl_fixture_from(
+            "ui/fx-ui-a11y",
+            &format!("/{fixture}.html"),
+            cfg.clone(),
+        )
+        .await;
+        let mut q = ViewQuery::new("Accessibility", "All");
+        q.columns = ColumnSelection::All;
+        let page = query_view(&fx.file, &cfg, &q).unwrap();
+        assert_eq!(page.total, 1, "{fixture}");
+        let url = page.row_keys[0];
+        for rule in *expected {
+            let status: String = fx
+                .file
+                .conn()
+                .query_row(
+                    "SELECT status FROM a11y_rules WHERE url_id=?1 AND rule_id=?2",
+                    rusqlite::params![url.0, rule],
+                    |r| r.get(0),
+                )
+                .unwrap();
+            assert_eq!(status, "violation", "{fixture}: {rule}");
+            let filtered =
+                query_view(&fx.file, &cfg, &ViewQuery::new("Accessibility", *rule)).unwrap();
+            assert_eq!(filtered.row_keys, [url], "{fixture}: {rule}");
+        }
+        if *fixture == "wcag20aaa" {
+            // axe cannot decide whether different destinations have the same purpose.
+            let status: String = fx.file.conn().query_row("SELECT status FROM a11y_rules WHERE url_id=?1 AND rule_id='identical-links-same-purpose'", [url.0], |r| r.get(0)).unwrap();
+            assert_eq!(status, "incomplete");
+            assert_eq!(
+                query_view(
+                    &fx.file,
+                    &cfg,
+                    &ViewQuery::new("Accessibility", "identical-links-same-purpose")
+                )
+                .unwrap()
+                .total,
+                0
+            );
+        }
+        // Count against the independent specification snapshot, not production groups.
+        let snapshot = include_str!("../../../tests/fixtures/ui/fx-ui-a11y/spec-rules.tsv");
+        let mut total = 0;
+        for expected_group in [
+            "Best Practice",
+            "WCAG 2.0 A",
+            "WCAG 2.0 AA",
+            "WCAG 2.0 AAA",
+            "WCAG 2.1 AA",
+            "WCAG 2.2 AA",
+        ] {
+            let mut count = 0;
+            for line in snapshot.lines().filter(|l| !l.starts_with('#')) {
+                let fields: Vec<_> = line.split('\t').collect();
+                if fields[1] == expected_group {
+                    let status: String = fx
+                        .file
+                        .conn()
+                        .query_row(
+                            "SELECT status FROM a11y_rules WHERE url_id=?1 AND rule_id=?2",
+                            rusqlite::params![url.0, fields[0]],
+                            |r| r.get(0),
+                        )
+                        .unwrap();
+                    count += i64::from(status == "violation");
+                }
+            }
+            let column = format!("{expected_group} Violations");
+            assert_eq!(
+                page.rows[0][page.columns.iter().position(|c| c == &column).unwrap()],
+                Value::Int(count),
+                "{fixture}: {expected_group}"
+            );
+            total += count;
+        }
+        assert_eq!(
+            page.rows[0][page
+                .columns
+                .iter()
+                .position(|c| c == "All Violations")
+                .unwrap()],
+            Value::Int(total)
+        );
+        let column = format!("{group} Violations");
+        assert_eq!(
+            page.rows[0][page.columns.iter().position(|c| c == &column).unwrap()],
+            Value::Int(expected.len() as i64),
+            "{fixture}: group count"
+        );
+    }
 }

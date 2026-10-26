@@ -1,0 +1,94 @@
+# Independent snapshot from docs/spec/03-tabs-technical.md TECH-252–257; UI-064
+accesskeys	Best Practice	Warning	High
+presentation-role-conflict	Best Practice	Warning	Low
+tabindex	Best Practice	Warning	High
+skip-link	Best Practice	Warning	Medium
+aria-text	Best Practice	Warning	High
+aria-dialog-name	Best Practice	Warning	High
+aria-allowed-role	Best Practice	Warning	Low
+aria-treeitem-name	Best Practice	Warning	High
+region	Best Practice	Warning	Medium
+landmark-one-main	Best Practice	Warning	Medium
+landmark-no-duplicate-banner	Best Practice	Warning	Medium
+landmark-banner-is-top-level	Best Practice	Warning	Medium
+landmark-no-duplicate-contentinfo	Best Practice	Warning	Medium
+landmark-no-duplicate-main	Best Practice	Warning	Medium
+landmark-complementary-is-top-level	Best Practice	Warning	Medium
+landmark-contentinfo-is-top-level	Best Practice	Warning	Medium
+landmark-main-is-top-level	Best Practice	Warning	Medium
+landmark-unique	Best Practice	Warning	Medium
+label-title-only	Best Practice	Warning	High
+frame-tested	Best Practice	Warning	High
+page-has-heading-one	Best Practice	Warning	Medium
+heading-order	Best Practice	Warning	Medium
+empty-heading	Best Practice	Warning	Low
+meta-viewport-large	Best Practice	Warning	Low
+image-redundant-alt	Best Practice	Warning	Low
+empty-table-header	Best Practice	Warning	Low
+table-duplicate-name	Best Practice	Warning	Low
+scope-attr-valid	Best Practice	Warning	High
+scrollable-region-focusable	WCAG 2.0 A	Warning	High
+aria-required-attr	WCAG 2.0 A	Warning	High
+aria-conditional-attr	WCAG 2.0 A	Warning	High
+aria-valid-attr-value	WCAG 2.0 A	Warning	High
+aria-valid-attr	WCAG 2.0 A	Warning	High
+aria-command-name	WCAG 2.0 A	Warning	High
+aria-input-field-name	WCAG 2.0 A	Warning	High
+aria-meter-name	WCAG 2.0 A	Warning	High
+aria-progressbar-name	WCAG 2.0 A	Warning	High
+aria-required-parent	WCAG 2.0 A	Warning	High
+aria-roles	WCAG 2.0 A	Warning	High
+aria-toggle-field-name	WCAG 2.0 A	Warning	High
+aria-tooltip-name	WCAG 2.0 A	Warning	High
+aria-required-children	WCAG 2.0 A	Warning	High
+aria-deprecated-role	WCAG 2.0 A	Warning	Low
+aria-braille-equivalent	WCAG 2.0 A	Warning	High
+aria-hidden-focus	WCAG 2.0 A	Warning	High
+aria-hidden-body	WCAG 2.0 A	Warning	High
+aria-prohibited-attr	WCAG 2.0 A	Warning	High
+aria-allowed-attr	WCAG 2.0 A	Warning	High
+duplicate-id-aria	WCAG 2.0 A	Warning	High
+bypass	WCAG 2.0 A	Warning	High
+label	WCAG 2.0 A	Warning	High
+form-field-multiple-labels	WCAG 2.0 A	Warning	Medium
+frame-title	WCAG 2.0 A	Warning	High
+frame-title-unique	WCAG 2.0 A	Warning	High
+frame-focusable-content	WCAG 2.0 A	Warning	High
+document-title	WCAG 2.0 A	Warning	High
+html-lang-valid	WCAG 2.0 A	Warning	High
+html-has-lang	WCAG 2.0 A	Warning	High
+html-xml-lang-mismatch	WCAG 2.0 A	Warning	Medium
+meta-refresh	WCAG 2.0 A	Warning	High
+input-image-alt	WCAG 2.0 A	Warning	High
+image-alt	WCAG 2.0 A	Warning	High
+object-alt	WCAG 2.0 A	Warning	High
+area-alt	WCAG 2.0 A	Warning	High
+role-img-alt	WCAG 2.0 A	Warning	High
+svg-img-alt	WCAG 2.0 A	Warning	High
+server-side-image-map	WCAG 2.0 A	Warning	Low
+video-caption	WCAG 2.0 A	Warning	High
+no-autoplay-audio	WCAG 2.0 A	Warning	High
+button-name	WCAG 2.0 A	Warning	High
+input-button-name	WCAG 2.0 A	Warning	High
+link-in-text-block	WCAG 2.0 A	Warning	High
+link-name	WCAG 2.0 A	Warning	High
+select-name	WCAG 2.0 A	Warning	High
+summary-name	WCAG 2.0 A	Warning	High
+marquee	WCAG 2.0 A	Warning	High
+blink	WCAG 2.0 A	Warning	High
+nested-interactive	WCAG 2.0 A	Warning	High
+listitem	WCAG 2.0 A	Warning	High
+list	WCAG 2.0 A	Warning	High
+definition-list	WCAG 2.0 A	Warning	High
+dlitem	WCAG 2.0 A	Warning	High
+th-has-data-cells	WCAG 2.0 A	Warning	High
+td-headers-attr	WCAG 2.0 A	Warning	High
+meta-viewport	WCAG 2.0 AA	Warning	High
+valid-lang	WCAG 2.0 AA	Warning	High
+color-contrast	WCAG 2.0 AA	Warning	High
+meta-refresh-no-exceptions	WCAG 2.0 AAA	Warning	Low
+identical-links-same-purpose	WCAG 2.0 AAA	Warning	Low
+color-contrast-enhanced	WCAG 2.0 AAA	Warning	High
+autocomplete-valid	WCAG 2.1 AA	Warning	High
+avoid-inline-spacing	WCAG 2.1 AA	Warning	High
+target-size	WCAG 2.2 AA	Warning	High
