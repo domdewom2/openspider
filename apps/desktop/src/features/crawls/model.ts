@@ -23,8 +23,8 @@ export function permissions(rows: CrawlListing[]) {
   return { open: rows.length === 1, resume: rows.length === 1 && rows[0]!.canResume,
     rename: rows.length === 1 && !running && !locked, delete: any && !running && !locked,
     move: any && !running, export: any && !running, duplicate: any && !running, lock: any, unlock: any, copyIds: any, reveal: any,
-    // M2-C01 still returns Unsupported for compare.open; enable with its real integration.
-    compare: false };
+    // OUT-140: exactly two completed or idle files may be compared.
+    compare: rows.length === 2 && !running };
 }
 const recentKey = "openspider.recent-crawls.v1";
 export function readRecent(): string[] {

@@ -54,16 +54,16 @@ it("shows task names and projects from the index, combines search with project a
 });
 
 // spec: OUT-228
-it("sorts every column, preserves ordered IDs and explains the unavailable comparison even with two inputs", async () => {
+it("sorts every column, preserves ordered IDs and enables comparison with two inputs", async () => {
   await mount();
   click("Name"); select("Beta"); select("Alpha");
   click("Copy database ID");
   await waitFor(() => expect(calls("crawls.copyIds")[0]?.args).toEqual({ ids: fixtureRows.slice(0, 2).map(r => r.crawl.crawlId) }));
-  expect(button("Choose for comparison")).toBeDisabled();
-  expect(button("Choose for comparison").parentElement).toHaveAttribute("title", "Crawl comparison is not available yet.");
-  expect(screen.getByText("Crawl comparison is not available yet.")).toBeVisible();
+  expect(button("Choose for comparison")).toBeEnabled();
+  expect(button("Choose for comparison").parentElement).not.toHaveAttribute("title");
+  expect(screen.queryByText("Crawl comparison is not available yet.")).toBeNull();
   click("Choose for comparison");
-  expect(calls("compare.open")).toHaveLength(0);
+  expect(calls("compare.open")).toHaveLength(1);
   for (const column of columns) expect(sortRows(fixtureRows, column, "asc")).toHaveLength(fixtureRows.length);
 });
 

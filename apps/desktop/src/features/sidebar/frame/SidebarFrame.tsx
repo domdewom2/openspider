@@ -1,3 +1,5 @@
+import { ComparisonSidebar } from "../../compare/ComparisonSidebar";
+import { useComparison } from "../../compare/model";
 import { useMemo, useState, type ComponentType } from "react";
 import { useT } from "../../../i18n";
 import { Tabs } from "../../../ui/primitives/Tabs";
@@ -18,6 +20,7 @@ const modules = import.meta.glob<{ panel?: SidebarPanel }>("../*/index.tsx", { e
 const BASE = ["overview", "issues", "siteStructure", "segments", "responseTimes", "api", "spellingGrammar"];
 
 export function SidebarFrame({ panels = Object.values(modules).flatMap(m => m.panel ? [m.panel] : []), embeddingsEnabled = false }: { panels?: readonly SidebarPanel[]; embeddingsEnabled?: boolean }) {
+  const activeComparison = useComparison(s => !!s.session);
   const t = useT();
   const { layout, setLayout, loaded, error } = useSidebarLayout();
   const [menu, setMenu] = useState<string | null>(null);
@@ -38,6 +41,7 @@ export function SidebarFrame({ panels = Object.values(modules).flatMap(m => m.pa
     const Panel = panels.find(p => p.id === id)?.Component;
     return Panel ? <Panel /> : <p>{t("sidebar-panel-unavailable")}</p>;
   };
+  if (activeComparison) return <ComparisonSidebar />;
   return <div className="os-sidebar" data-sidebar-ready={loaded}>
     <QueryFeedback error={error ?? controls.error ?? analysis.error} />
     <AnalysisNotice status={analysis.data} controls={controls} />

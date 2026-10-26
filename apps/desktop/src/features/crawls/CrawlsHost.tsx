@@ -1,3 +1,4 @@
+import { openComparison, useComparison } from "../compare/model";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useT, i18n, currentLanguage } from "../../i18n";
 import { crawl } from "../../ipc/crawl";
@@ -175,13 +176,15 @@ export function CrawlsHost({ desktop = nativeCrawlDesktop }: { desktop?: CrawlDe
     return () => { for (const off of offs.reverse()) off(); };
   }, [recent, disabled, t, rows]);
   const actions: MenuEntry[] = (Object.keys(allowed) as (keyof typeof allowed)[]).map(action => ({ id: action, label: t(action === "open" ? "crawls-open-selected" : `crawls-${action}`),
-    isDisabled: disabled || !allowed[action], disabledReason: action === "compare" ? t("crawls-compare-unavailable") : chosen.some(r => r.crawl.phase === "running") ? t("crawls-running") : t("crawls-selection-reason"),
+    isDisabled: disabled || !allowed[action], disabledReason: chosen.some(r => r.crawl.phase === "running") ? t("crawls-running") : t("crawls-selection-reason"),
     onAction: () => {
       if (!allowed[action] || disabled) return;
       if (action === "delete") { setDeletion([...chosen]); return; }
       if (action === "rename" || action === "move") { setForm({ kind: action, ids: [...ids], value: action === "rename" ? chosen[0]!.crawl.name : "" }); return; }
       void attempt(async () => {
         switch (action) {
+          case "compare": await openComparison({ current: ids[0]!, previous: ids[1]!, mapping: [], elements: [] });
+            if (useComparison.getState().session) useCrawlsDialog.setState({ open: false }); break;
           case "open": await requestOpen({ kind: "id", crawlId: ids[0]! }); break;
           case "resume": await requestOpen({ kind: "id", crawlId: ids[0]! }, true); break;
           case "export": { const dest = ids.length === 1 ? await desktop.chooseSave(t("crawls-export"), `${chosen[0]!.crawl.name}.ospider`) : await desktop.chooseDirectory(t("crawls-export")); if (dest) startOp(await crawls.export({ ids, dest })); break; }
@@ -272,7 +275,6 @@ export function CrawlsHost({ desktop = nativeCrawlDesktop }: { desktop?: CrawlDe
           <div className="os-crawls-toolbar"><Button isDisabled={page === 0} onPress={() => setPage(p => p - 1)}>{t("crawls-prev")}</Button><span>{t("crawls-count", { count: chosen.length, total: visible.length })}</span><Button isDisabled={(page + 1) * 100 >= visible.length} onPress={() => setPage(p => p + 1)}>{t("crawls-next")}</Button></div>
         </section></div>
         <div className="os-crawls-toolbar">{actions.map(a => <span key={a.id} title={a.isDisabled ? a.disabledReason : undefined}><Button isDisabled={a.isDisabled} onPress={a.onAction}>{a.label}</Button></span>)}</div>
-        {chosen.length === 2 && <p>{t("crawls-compare-unavailable")}</p>}
         {chosen.length === 1 && <div className="os-crawls-toolbar"><Button isDisabled={disabled || chosen[0]!.crawl.phase === "running"} onPress={() => void attempt(async () => { const path = chosen[0]!.crawl.file; try { await desktop.check(path); setError({ text: t("crawls-integrity-ok"), kind: "info" }); } catch (e) { const err = toCmdError(e); setError({ text: `${path}: ${textError(e)}`, path: err.messageKey === "err-crawl-corrupt" ? path : undefined }); } })}>{t("crawls-check")}</Button>
           <Button isDisabled={disabled || phase === "running"} onPress={() => void attempt(async () => { await config.set(await desktop.configuration(chosen[0]!.crawl.file)); setError({ text: t("crawls-config-applied"), kind: "info" }); })}>{t("crawls-config")}</Button></div>}
         {recent.length > 0 && <nav aria-label={t("crawls-recent")}><h3>{t("crawls-recent")}</h3>{recent.map(path => <Button key={path} isDisabled={disabled} onPress={() => void attempt(() => requestOpen({ kind: "path", path }))}>{path}</Button>)}</nav>}

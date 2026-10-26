@@ -1068,6 +1068,9 @@ fn update<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
 }
 fn rows<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
+        if args.get("comparison").is_some() {
+            return super::compare::ui::rows(app, ctx, args).await;
+        }
         let args: RowsArgs = parse_args(args)?;
         let v = get(app, &ctx, &args.view_id)?;
         if !(1..=500).contains(&args.limit) {

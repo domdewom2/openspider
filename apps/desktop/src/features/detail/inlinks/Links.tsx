@@ -1,3 +1,5 @@
+import { ComparisonLinks } from "../../compare/ComparisonLinks";
+import { useComparison } from "../../compare/model";
 import { useState } from "react";
 import { useT } from "../../../i18n";
 import { Checkbox, SearchField, Select } from "../../../ui/primitives/fields";
@@ -9,6 +11,11 @@ import type { DetailPanelProps } from "../frame/types";
 
 const NO_ORIGIN = ["Link Origin"];
 export function Links(props: DetailPanelProps & { direction: "inlinks" | "outlinks" }) {
+  const active = useComparison(s => !!s.session);
+  const id = props.selection.focus ?? props.selection.urlIds[0];
+  return active && id != null ? <ComparisonLinks direction={props.direction} urlId={id} /> : <RegularLinks {...props} />;
+}
+function RegularLinks(props: DetailPanelProps & { direction: "inlinks" | "outlinks" }) {
   const { direction } = props; const t = useT();
   const [options, setOptions] = useState(DEFAULT_LINK_OPTIONS); const [search, setSearch] = useState(""); const [sort, setSort] = useState<SortKey[]>([]);
   const spec = linkSpec(direction, props.selection.urlIds, options, search, sort);

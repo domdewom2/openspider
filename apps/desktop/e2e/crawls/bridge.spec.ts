@@ -49,7 +49,7 @@ test("real core manages portable crawls, reports comparison availability and rej
     expect(original.byteLength).toBeGreaterThan(0);
     const after = await page.evaluate(async () => window.crawlsBridge.invoke("crawls.list", { show: "all" })) as typeof rows;
     expect(after[0]!.crawl.crawlId).toBe(rows[0]!.crawl.crawlId);
-    // Exercise an actual core rejection, rather than a successful comparison mock.
+    // OUT-140: two saved crawls enable the integrated comparison action.
     await page.getByRole("button", { name: "Duplicate", exact: true }).click();
     await expect.poll(async () => (await page.evaluate(() => window.crawlsBridge.invoke("crawls.list", { show: "all" })) as typeof rows).length).toBe(2);
     await expect(page.getByRole("button", { name: "Refresh", exact: true })).toBeEnabled();
@@ -57,16 +57,16 @@ test("real core manages portable crawls, reports comparison availability and rej
     await expect(page.getByRole("checkbox")).toHaveCount(3);
     await page.getByRole("checkbox", { name: "Select all filtered crawls" }).check();
     const comparison = page.getByRole("button", { name: "Choose for comparison", exact: true });
-    await expect(comparison).toBeDisabled();
-    await expect(comparison.locator("..")).toHaveAttribute("title", "Crawl comparison is not available yet.");
+    await expect(comparison).toBeEnabled();
+    await expect(comparison.locator("..")).not.toHaveAttribute("title");
     await page.getByRole("checkbox", { name: "Select all filtered crawls" }).focus();
     await page.keyboard.press("Shift+F10");
     const comparisonItem = page.getByRole("menuitem", { name: "Choose for comparison", exact: true });
-    await expect(comparisonItem).toHaveAttribute("aria-disabled", "true");
+    await expect(comparisonItem).not.toHaveAttribute("aria-disabled", "true");
     await page.keyboard.press("Escape");
-    await expect(page.getByText("Crawl comparison is not available yet.", { exact: true })).toBeVisible();
+    await expect(page.getByText("Crawl comparison is not available yet.", { exact: true })).toHaveCount(0);
     const ids = (await page.evaluate(() => window.crawlsBridge.invoke("crawls.list", { show: "all" })) as typeof rows).map(r => r.crawl.crawlId);
-    // The core (M2-C01) implements compare.open now; the dialog action stays disabled until the N02 activation.
+    // The same real core supplies the comparison session.
     expect(await page.evaluate(async ids => {
       try { await window.crawlsBridge.invoke("compare.open", { current: ids[0], previous: ids[1], mapping: [], elements: [] }); return "opened"; }
       catch (error) { return (error as { code: string }).code; }
