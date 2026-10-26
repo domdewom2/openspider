@@ -192,6 +192,11 @@ impl Tool for CrawlTool {
                     CrawlSource::List { items, label } => {
                         crate::SessionSource::List { items, label }
                     }
+                    CrawlSource::Serp { .. } => {
+                        return Err(ToolError::InvalidArguments(
+                            "SERP inputs are not supported by start_crawl".into(),
+                        ));
+                    }
                 };
                 let crawl = session
                     .start_configured(
