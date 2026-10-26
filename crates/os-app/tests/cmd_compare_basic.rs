@@ -62,9 +62,9 @@ async fn open_orders_the_crawls_by_start_time() {
     );
     assert!(s.current.started_at > s.previous.started_at);
     assert_eq!(s.version, 1);
-    // TECH-300: explizit leere Elementauswahl deaktiviert Change Detection; fehlendes Feld nutzt Konfigurationsdefaults.
+    // Standard der Change Detection aus der Konfiguration des Current-Crawls (M2-C02 wertet aus).
     assert_eq!(s.content_threshold_pct, 10);
-    assert!(s.elements.is_empty());
+    assert!(!s.elements.is_empty());
     assert!(!s.elements.iter().any(|e| e == "content"));
     // Existierende (gecrawlte) URLs je Crawl.
     assert!(s.current.urls > s.previous.urls);

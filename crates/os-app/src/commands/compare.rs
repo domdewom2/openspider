@@ -288,7 +288,6 @@ async fn wait_for_memory(cancel: &os_model::CancelToken) -> Result<(), CmdError>
 
 fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
-        let use_default_elements = args.get("elements").is_none();
         let args: CompareOpenArgs = parse_args(args)?;
         if args.content_threshold_pct.is_some_and(|p| p > 100) {
             return Err(CmdError::invalid_input(
@@ -322,7 +321,7 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
             let b = CrawlSide::open(&previous, &work).map_err(compare_error)?;
             let comparison = Comparison::open(a, b, &mapping, &cancel).map_err(compare_error)?;
             let defaults = &comparison.current().config.compare.change_detection;
-            let elements = if use_default_elements {
+            let elements = if args.elements.is_empty() {
                 defaults
                     .elements
                     .iter()
@@ -1066,6 +1065,58 @@ mod change_tests {
         let app = App::new(crate::AppConfig::new(home.path())).unwrap();
         app.dispatch(CallCtx::for_window("main"),"compare.open",json!({"current":new.path(),"previous":old.path(),"mapping":[],"contentThresholdPct":10})).await.unwrap();
         (home, app)
+    }
+
+    // spec: TECH-300
+    // spec: TECH-301
+    #[tokio::test]
+    async fn empty_or_missing_ipc_elements_use_current_configuration_defaults() {
+        for configured in [
+            os_model::ChangeDetectionConfig::default().elements,
+            vec![ChangeElement::PageTitles],
+            vec![],
+        ] {
+            let home = tempfile::tempdir().unwrap();
+            let old =
+                super::change_fixture::fixture(home.path(), 1, 1, os_model::CrawlConfig::default());
+            let mut config = os_model::CrawlConfig::default();
+            config.compare.change_detection.elements = configured.clone();
+            config.compare.change_detection.content_threshold_pct = 23;
+            let new = super::change_fixture::fixture(home.path(), 2, 2, config);
+            let app = App::new(crate::AppConfig::new(home.path())).unwrap();
+            let expected: Vec<_> = configured.iter().map(|e| e.as_str()).collect();
+            for elements in [None, Some(json!([])), Some(json!(["h1"]))] {
+                let mut args = json!({
+                    "current": old.path(), "previous": new.path(), "mapping": []
+                });
+                if let Some(elements) = &elements {
+                    args["elements"] = elements.clone();
+                }
+                let opened = app
+                    .dispatch(CallCtx::for_window("main"), "compare.open", args)
+                    .await
+                    .unwrap();
+                let opened: CompareSession = serde_json::from_value(opened).unwrap();
+                let expected = if elements == Some(json!(["h1"])) {
+                    vec!["h1"]
+                } else {
+                    expected.clone()
+                };
+                assert_eq!(opened.elements, expected);
+                assert_eq!(opened.content_threshold_pct, 23);
+                let tabs = app
+                    .dispatch(CallCtx::for_window("main"), "catalog.tabs", json!(null))
+                    .await
+                    .unwrap();
+                assert_eq!(
+                    tabs.as_array()
+                        .unwrap()
+                        .iter()
+                        .any(|tab| tab["id"] == "Change Detection"),
+                    !expected.is_empty()
+                );
+            }
+        }
     }
     #[derive(Default)]
     struct Clipboard(Mutex<String>);

@@ -27,6 +27,7 @@ pub struct CompareOpenArgs {
     /// URL-Mapping.
     pub mapping: Vec<MappingRuleDto>,
     /// Elemente der Change Detection (Kennungen laut TECH-300).
+    // Leer oder fehlend: Auswahl aus der Konfiguration des Current-Crawls.
     #[serde(default)]
     pub elements: Vec<String>,
     /// Schwelle für Inhaltsänderungen in Prozent.

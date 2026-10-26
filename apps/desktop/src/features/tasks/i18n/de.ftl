@@ -50,6 +50,7 @@ tasks-catch-up = Verpassten Lauf nach dem Aufwachen nachholen
 tasks-list-mode = Liste
 tasks-profile = Konfigurationsprofil (leer = Standard)
 tasks-auto-compare = Mit vorherigem Projekt-Crawl vergleichen
+tasks-issue-auto-compare-project-required = Für den automatischen Vergleich ist ein Projektname erforderlich.
 tasks-next-run-note = Änderungen gelten ab dem nächsten Lauf. Ein laufender Crawl behält seine Einstellungen.
 tasks-editor-tabs = Aufgabeneinstellungen
 tasks-general = Allgemein
