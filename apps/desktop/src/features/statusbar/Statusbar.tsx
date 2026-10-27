@@ -1,3 +1,4 @@
+import { loginStatus } from "../config/pages/auth-forms/session";
 import { useEffect, useState } from "react";
 import { useFormat, useT } from "../../i18n";
 import { useSession, type SessionState } from "../../state/session";
@@ -24,6 +25,14 @@ export function Statusbar() {
   const t = useT();
   const f = useFormat();
   const { crawl: c, analysis, mcp, throttled } = useStatusSnapshot();
+  const [sessionLost, setSessionLost] = useState(false);
+  useEffect(() => {
+    let live = true; setSessionLost(false);
+    if (!c) return;
+    const refresh = () => void loginStatus().then((rows) => { if (live) setSessionLost(rows.some((r) => r.state === "lost")); }).catch(() => undefined);
+    refresh(); const timer = setInterval(refresh, 1000);
+    return () => { live = false; clearInterval(timer); };
+  }, [c?.crawlId]);
   const chosenMode = useHeader((s) => s.mode);
   const phase = analysis?.running ? t("status-analysis") : t(`status-${c?.phase ?? "idle"}`);
   const unknown = "–";
@@ -32,6 +41,7 @@ export function Statusbar() {
   const memory = (bytes: number | null | undefined) => bytes == null ? unknown : f.bytes(bytes);
   return <div className="os-crawl-status" data-testid="crawl-status">
     <span>{t("status-mode", { mode: t(`header-${c?.mode ?? chosenMode}`) })}</span>
+    {sessionLost && <span role="status" className="os-status-warning">{t("form-login-session-lost")}</span>}
     <span data-testid="crawl-phase">{phase}{c?.endReason === "limit_reached" && ` (${t("status-limit")})`}</span>
     {Object.keys(throttled).length > 0 && <span className="os-status-warning">{t("status-throttled")}</span>}
     <span>{t("status-rate", { value: f.decimal(c?.rate ?? 0) })}</span>

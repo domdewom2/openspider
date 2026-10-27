@@ -37,6 +37,7 @@ pub fn deps(app: &App) -> EngineDeps {
         owner_kind: "app",
         renderer: None,
     }
+    .with_form_profile_dir(app.config().paths.settings.join("auth"))
 }
 pub fn fetcher(app: &App, cfg: &CrawlConfig) -> Result<Arc<os_fetch::HttpFetcher>, CmdError> {
     os_fetch::FetchConfig::from_crawl_config(
