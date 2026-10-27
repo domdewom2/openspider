@@ -212,3 +212,6 @@ mod tests {
         }
     }
 }
+
+/// Standalone form-authentication fixture; existing scenarios are unchanged.
+pub mod form_login;

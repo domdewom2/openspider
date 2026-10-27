@@ -249,6 +249,11 @@ async fn run(
     if opts.disable_cookies {
         page.evaluate_on_new_document("Object.defineProperty(Document.prototype, 'cookie', {get: () => '', set: () => {}}); if (typeof CookieStore !== 'undefined') { CookieStore.prototype.set = () => Promise.resolve(); CookieStore.prototype.delete = () => Promise.resolve(); }").await.map_err(protocol)?;
     }
+    if !opts.login_storage.is_empty() {
+        page.evaluate_on_new_document(crate::login::storage_script(&opts.login_storage)?)
+            .await
+            .map_err(protocol)?;
+    }
     metrics(page, opts, opts.viewport).await?;
     if let Some(ua) = &opts.user_agent {
         page.set_user_agent(ua.clone()).await.map_err(protocol)?;

@@ -1,3 +1,4 @@
+import { FormLoginsPanel } from "../auth-forms";
 // Authentifizierung (CRAWL-117 … 121): Standard-Anmeldung (Basic; Digest erkennt der Kern aus der Challenge), formularbasierte
 // Anmeldungen (Tabelle), Sitzungsschutz-Muster und Verweise auf Profile. Passwörter stehen nie in der Konfiguration oder im
 // Entwurf: Sie gehen nur beim Speichern als Argument an `auth.saveProfile` (Schlüsselbund, OUT-223/OUT-225).
@@ -19,12 +20,6 @@ interface BasicAuth {
   secret_ref: string;
 }
 
-interface FormLogin {
-  login_url: string;
-  profile: string | null;
-  captured_at: string | null;
-  cookie_count: number;
-}
 
 const fields: FieldDef[] = [
   f("auth.basic", { hidden: true, labelKey: "config-auth-basic" }),
@@ -134,47 +129,7 @@ function BasicTable() {
   );
 }
 
-function FormLogins() {
-  const t = useT();
-  const { value, set, lock } = useConfigValue<FormLogin[] | undefined>("auth.form");
-  const rows = value ?? [];
-  return (
-    <FieldFrame path="auth.form">
-      <h3 className="os-cfg-section">{t("config-auth-form")}</h3>
-      <p className="os-hint">{t("config-auth-form-hint")}</p>
-      {rows.length === 0 ? (
-        <p className="os-hint">{t("config-auth-form-none")}</p>
-      ) : (
-        <table className="os-cfg-table" data-testid="auth-form">
-          <thead>
-            <tr>
-              <th scope="col">{t("config-auth-login-url")}</th>
-              <th scope="col">{t("config-auth-status")}</th>
-              <th scope="col">{t("config-auth-captured")}</th>
-              <th scope="col">{t("config-auth-cookies")}</th>
-              <th scope="col">
-                <span className="os-sr-only">{t("config-rewrite-actions")}</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r, i) => (
-              <tr key={i}>
-                <td>{r.login_url}</td>
-                <td>{r.cookie_count > 0 ? t("config-auth-status-active") : t("config-auth-status-empty")}</td>
-                <td>{r.captured_at ?? "–"}</td>
-                <td>{r.cookie_count}</td>
-                <td className="os-cfg-actions">
-                  <IconButton label={t("config-auth-remove-form", { url: r.login_url })} icon={<Trash2 size={14} />} onPress={() => set(rows.filter((_, n) => n !== i))} isDisabled={lock !== null} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </FieldFrame>
-  );
-}
+function FormLogins() { return <FormLoginsPanel />; }
 
 export const page = definePage({
   id: "auth",

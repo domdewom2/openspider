@@ -273,6 +273,7 @@ fn prepare(
 
     let mut restored = resume::restore(&file, &cfg, meta.mode, true)?;
     crate::frontier::restore_follow_chains(&file, &cfg, &mut restored.core)?;
+    crate::session_guard::initialize(&mut restored.core, &cfg, deps)?;
     let (scope, start_encoded, start_url) = match meta.mode {
         CrawlMode::Serp => return Err(EngineError::Invalid(
             "SERP-Entwürfe werden offline importiert; für neue Werte die Datei erneut hochladen"

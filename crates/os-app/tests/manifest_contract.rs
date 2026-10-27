@@ -186,6 +186,7 @@ const CATALOG_3_6A: &[&str] = &[
     "auth.deleteProfile",
     "auth.openLogin",
     "auth.finishLogin",
+    "auth.loginStatus", // CRAWL-120, additive secret-free status query (K2-61).
     "profile.list",
     "profile.load",
     "profile.save",
@@ -383,10 +384,6 @@ async fn stubs_answer_unsupported_with_command_and_owner() {
         assert_eq!(err.code, ErrorCode::Unsupported, "{}", m.name);
         assert_eq!(err.args["command"], m.name);
         owners.insert(err.args["owner"].as_str().unwrap().to_string());
-    }
-    // Besitzer laut Modulkarte 3.6
-    for o in ["M2-U17"] {
-        assert!(owners.contains(o), "kein Stub mit Besitzer {o}");
     }
 }
 

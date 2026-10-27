@@ -1080,6 +1080,12 @@
     "longRunning": false
   },
   {
+    "name": "auth.loginStatus",
+    "args": "void",
+    "ret": "JsonValue",
+    "longRunning": false
+  },
+  {
     "name": "mail.listAccounts",
     "args": "void",
     "ret": "MailAccountInfo[]",

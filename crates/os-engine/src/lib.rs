@@ -76,3 +76,5 @@ mod sitemap_ingest;
 
 /// Offline SERP file import.
 pub mod serp_input;
+/// Form-session protection (CRAWL-120).
+pub mod session_guard;

@@ -713,3 +713,22 @@ pub mod app_support;
 
 /// Selection-scoped detail readers and preview writes (M2-K09, K2-61).
 pub mod detail_ext;
+/// Form-profile names whose session was lost in this crawl (CRAWL-120).
+/// Values are counters/identifiers only; callers run this through the app read pool.
+pub fn form_session_losses(
+    conn: &Connection,
+) -> Result<std::collections::BTreeSet<String>, StoreError> {
+    let mut stmt = conn.prepare(
+        "SELECT key FROM crawl_counters WHERE key GLOB 'session_lost_profile:*' AND value > 0",
+    )?;
+    let rows = stmt.query_map([], |r| r.get::<_, String>(0))?;
+    rows.map(|row| {
+        row.map(|key| {
+            key.strip_prefix("session_lost_profile:")
+                .unwrap_or(&key)
+                .to_owned()
+        })
+        .map_err(StoreError::from)
+    })
+    .collect()
+}

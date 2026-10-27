@@ -367,6 +367,7 @@ string_enum! {
 string_enum! {
     /// Grund, warum eine URL nicht gecrawlt wurde (AGENT-012); nur gesetzt, wenn der Zustand nicht `Done` ist.
     pub enum NotCrawledReason {
+        SessionGuard => "session_guard",
         Excluded => "excluded",
         NotIncluded => "not_included",
         OutsideScope => "outside_scope",

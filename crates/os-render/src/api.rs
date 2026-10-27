@@ -194,6 +194,8 @@ pub struct RenderOpts {
     /// Opt in to at most two retries after a navigation destroys the DOM context.
     /// False preserves existing callers, including custom request identities.
     pub retry_document_context: bool,
+    /// Origin-scoped storage restored before scripts run (CRAWL-120).
+    pub login_storage: Vec<crate::login::OriginStorage>,
     /// Engine opt-in for JavaScript cookie provenance; standalone rendering is unchanged.
     pub capture_cookie_assignments: bool,
     /// Disable all browser cookie writes and outgoing Cookie headers.
@@ -230,6 +232,7 @@ impl Default for RenderOpts {
             snippets: crate::snippets::RunOptions::default(),
             accessibility: false,
             retry_document_context: false,
+            login_storage: Vec::new(),
             capture_cookie_assignments: false,
             disable_cookies: false,
             return_cookies: false,
@@ -379,6 +382,32 @@ pub trait RequestIdentity: Send + Sync + std::fmt::Debug {
         Box::pin(async { None })
     }
     fn headers(&self, url: &str) -> BTreeMap<String, String>;
+}
+
+/// All cookies of a dedicated login browser, including HTTP-only cookies.
+pub(crate) async fn login_cookies(
+    ws: &str,
+    page: &chromiumoxide::Page,
+) -> Result<Vec<chromiumoxide::cdp::browser_protocol::network::Cookie>, RenderError> {
+    intercept::cookies(ws, page.target_id()).await
+}
+
+/// Reuses the renderer's proxy-only challenge handling for interactive navigation.
+pub(crate) async fn login_proxy(
+    ws: &str,
+    page: &chromiumoxide::Page,
+    url: &str,
+    launch: &LaunchOpts,
+) -> Result<impl Send + Sync, RenderError> {
+    intercept::Intercept::start(
+        ws,
+        page,
+        url,
+        &RenderOpts::default(),
+        launch,
+        Default::default(),
+    )
+    .await
 }
 
 #[cfg(test)]

@@ -1,3 +1,4 @@
+import { needsGuardConfirmation } from "../config/pages/auth-forms/session";
 import { useEffect, useRef, useState } from "react";
 import { useT } from "../../i18n";
 import { config } from "../../ipc/config";
@@ -29,6 +30,7 @@ export function Header() {
   const [sitemap, setSitemap] = useState("");
   const [listLabel, setListLabel] = useState("");
   const [confirm, setConfirm] = useState<null | { mode?: CrawlModeDto; request?: StartRequest }>(null);
+  const [guardRequest, setGuardRequest] = useState<StartRequest | null>(null);
   const [threads, setThreads] = useState(0);
   const input = useRef<HTMLInputElement>(null);
   const normalized = normalizeInput(url);
@@ -84,9 +86,13 @@ export function Header() {
     } catch (e) { reportError(e); }
   }
 
-  async function start(request: StartRequest) {
+  async function start(request: StartRequest, guardConfirmed = false) {
     await perform(async () => {
       try {
+        if (!guardConfirmed && needsGuardConfirmation((await config.get()).config)) {
+          setGuardRequest(request);
+          return;
+        }
         await crawl.start(request);
         if (request.source.kind === "spider") await saveHistory(request.source.url);
       } catch (e) {
@@ -180,6 +186,10 @@ export function Header() {
     {mode === "spider" && missingFolderSlash(normalized, scope) && <span className="os-header-hint" role="status">{t("header-slash")}</span>}
     {Math.max(threads, status?.activeThreads ?? 0) >= 20 && <span className="os-header-hint" role="status">{t("header-thread-warning")}</span>}
     {foreign && <span className="os-header-hint">{t("header-readonly")}</span>}
+    <Dialog title={t("form-login-guard-title")} isOpen={guardRequest !== null} onOpenChange={(open) => { if (!open) setGuardRequest(null); }}
+      footer={<DialogFooter okLabel={t("form-login-guard-start")} cancelLabel={t("form-login-cancel")} onCancel={() => setGuardRequest(null)} onOk={() => { const request = guardRequest; setGuardRequest(null); if (request) void start(request, true); }} />}>
+      {t("form-login-guard-warning")}
+    </Dialog>
     <Dialog title={t("header-confirm-title")} isOpen={confirm !== null} onOpenChange={(open) => { if (!open) setConfirm(null); }}
       footer={<DialogFooter okLabel={t("header-confirm")} cancelLabel={t("header-cancel")} onCancel={() => setConfirm(null)} onOk={() => {
         const choice = confirm; setConfirm(null);
