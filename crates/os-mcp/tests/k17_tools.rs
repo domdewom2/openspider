@@ -111,7 +111,6 @@ async fn comparison_matches_app_classes_swaps_and_rejects_unknown_or_running_cra
 }
 // spec: AGENT-015
 #[tokio::test]
-#[ignore = "Klärung K2-72: wartet auf M2-C02"]
 async fn page_title_changes_are_counted_and_paginated() {
     let world = World::new();
     let b = world

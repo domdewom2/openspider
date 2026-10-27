@@ -1,7 +1,7 @@
 //! Read-only comparison through the same classifier as the app (AGENT-015).
 use super::common::{internal, open_crawl, opt_str, reject_unknown, req_str};
 use crate::{paging, Tool, ToolClass, ToolContext, ToolError, ToolOutput};
-use os_analyze::compare::{CompareClass, Comparison, CrawlSide};
+use os_analyze::compare::{change, CompareClass, Comparison, CrawlSide};
 use os_model::{CancelToken, CrawlState, MappingRule};
 use serde_json::{json, Value};
 pub struct CompareCrawls;
@@ -61,45 +61,23 @@ impl Tool for CompareCrawls {
         if comparison.current().meta.crawl_id.to_string() != a {
             comparison.swap();
         }
-        let tabs = os_analyze::tabs::configured_for_file(
-            &comparison.current().config,
-            &comparison.current().file,
-        );
-        let changes = tabs.iter().find(|t| t.id == "Change Detection");
+        let config = comparison.current().config.compare.change_detection.clone();
+        change::calculate(&comparison, &config, &cancel).map_err(internal)?;
         if let Some(element) = opt_str(&args, "element")? {
-            let tab = changes.ok_or_else(|| {
-                ToolError::InvalidArguments("Change Detection is unavailable".into())
-            })?;
             let requested = if element == "page_title" {
                 "Page Titles"
             } else {
                 element
             };
-            let filter = tab
-                .filters
+            let (_, filter, _) = change::ELEMENTS
                 .iter()
-                .find(|f| {
-                    f.id.eq_ignore_ascii_case(requested)
-                        || os_analyze::names::label(f.id, &comparison.current().config)
-                            .eq_ignore_ascii_case(requested)
+                .find(|(id, label, _)| {
+                    config.elements.contains(id)
+                        && (label.eq_ignore_ascii_case(requested)
+                            || id.as_str().eq_ignore_ascii_case(requested))
                 })
                 .ok_or_else(|| ToolError::InvalidArguments(format!("Unknown element {element}")))?;
-            if tab.is_stub() || filter.is_stub() {
-                return Err(ToolError::InvalidArguments(
-                    "Change Detection requires M2-C02".into(),
-                ));
-            }
-            let set = os_analyze::compare::classify::filter_set(
-                &tabs,
-                &comparison.current().file,
-                &comparison.current().config,
-                tab.id,
-                filter.id,
-            )
-            .map_err(internal)?;
-            let ids = set.ids.ok_or_else(|| {
-                ToolError::InvalidArguments("Change Detection is not ready".into())
-            })?;
+            let ids = change::ids(&comparison, filter, true).map_err(internal)?;
             let page = paging::PageArgs::from_args(&args)?;
             let binding = format!("compare:{a}:{b}:{element}:{}", json!(rules));
             let offset = page
@@ -129,20 +107,11 @@ impl Tool for CompareCrawls {
             });
         }
         let rows = comparison.overview(&cancel).map_err(internal)?.iter().map(|r| json!({"tab":r.tab,"filter":r.label,"current":r.current,"previous":r.previous,"added":r.class(CompareClass::Added),"new":r.class(CompareClass::New),"removed":r.class(CompareClass::Removed),"missing":r.class(CompareClass::Missing)})).collect::<Vec<_>>();
-        let mut detection = Vec::new();
-        if let Some(tab) = changes.filter(|t| !t.is_stub()) {
-            for filter in tab.filters.iter().filter(|f| !f.is_stub()) {
-                let set = os_analyze::compare::classify::filter_set(
-                    &tabs,
-                    &comparison.current().file,
-                    &comparison.current().config,
-                    tab.id,
-                    filter.id,
-                )
-                .map_err(internal)?;
-                detection.push(json!({"element":filter.id,"count":set.ids.map(|ids| ids.len())}));
-            }
-        }
+        let detection = change::counts(&comparison, &config, false)
+            .map_err(internal)?
+            .into_iter()
+            .map(|row| json!({"element":row.element,"count":row.change}))
+            .collect::<Vec<_>>();
         Ok(ToolOutput {
             summary: json!({"current":a,"previous":b,"filters":rows,"change_detection":detection}),
             untrusted: None,
