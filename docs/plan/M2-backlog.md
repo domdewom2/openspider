@@ -31,3 +31,13 @@ Stand: 2026-10-15 (Nachtrag M2-S04 … M2-S06 aus K-66 … K-71) · Planer: Opus
 - Windows: `localhost` gegen nur auf IPv4 lauschende Server (Welle-4c-Rückmeldung) → M2, Netzwerkschicht.
 - `url_details::overview`, Zweig `ColumnSql::MultiPaired`, ist heute unerreichbar. Er wird bei späteren Tabs mit Mehrfachspalten genutzt.
 - Fixture `ext-noindex.html` gehört zu keiner der fünf Paritäts-Sites und ist damit nicht gegen die Referenz prüfbar. Mit einer Erweiterung der Paritäts-Sites in M2 nachholen.
+
+## 5 Abweichungen und Restpunkte aus den Gates Welle 3a/3b (K2-74)
+
+Vollständige Liste mit Zielpaketen: `docs/plan/M2-reports/n02-auflagen.md`.
+
+- **INTEG-072 (D22):** `saveText`/`saveUrls` im freigegebenen Ausgabeverzeichnis fehlen, die Laufzeit wirft „File access is not enabled“; das Traversal-Kriterium ist nur trivial erfüllt. Entscheidung K2-74: Umsetzung in M2-N02. Geht das nicht ohne die von R02/U17 bearbeiteten os-render-Dateien, wandert der Punkt nach M3.
+- **M3, ohne fachliche Wirkung:** thread_local-Header-Scope in `os-export/src/csv.rs` durch einen expliziten Parameter der Writer-Optionen ersetzen; NTLM-Client je Origin cachen (`os-fetch/src/client.rs`); MD4/HMAC-MD5 optional über eine geprüfte Bibliothek.
+- **Offen aus N01b:** Lighthouse-/KI-Zeilen im API-Tab brauchen neue `ApiKind`-Varianten (lokales Lighthouse, KI-Anbieter M4). `commands/viz.rs` übergibt `exclude_self_links = false` als UI-Standard, die Anchors-Aggregation schließt Selbstlinks aus (TECH-146), das klärt Fable.
+- **Offen aus N02a:** Nach einem Stopp lautet der Zustandstext „Completed“ (`EndReason::Stopped`); ein eigener Text bräuchte eine Engine-Phase. Den WebKit-Wettlauf A01-10 (1 von ~30 Läufen unter Last) beobachtet U32.
+- **Beobachten:** MCP-`start_crawl` wird bei jeder laufenden App-Operation abgelehnt (`os-app/src/mcp/session.rs`). Der Credentials-Wrapper in `os-app/src/session/control.rs` gilt für alle Crawls.
