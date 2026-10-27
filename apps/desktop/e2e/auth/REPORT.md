@@ -1,0 +1,1081 @@
+# M2-U17 – Umsetzungsbericht
+
+## Umfang
+
+CRAWL-120 vollständig umgesetzt: sichtbares Chromium über CDP, konfigurierter User-Agent/Proxy, manuelle Anmeldung einschließlich 2FA, Übernehmen/Abbrechen, verschlüsselte Cookie-/Storage-Profile, Sitzungsschutz, Cookie-/Storage-Wiederherstellung im Crawl, Verlust-/Ablaufstatus und UI. OUT-223 mitgeprüft: verschlüsselter Export/Import mit unabhängigen MemorySecretStores und erfolgreichem headless Crawl aus dem importierten Formularprofil. Keine Änderung am FormLogin-Modell oder Konfigurationsschema.
+
+Der Worktree war beim Start sauber. Implementierung ausschließlich aus der Spec und Projektarchitektur; kein Zugriff auf das Referenzprodukt. auth.openLogin/auth.finishLogin behalten ihre vereinbarten Argumente, Ergebnisse und longRunning-Eigenschaften. Der additive Command auth.loginStatus liefert nur Profilverweise, Status, Zeitpunkt und Anzahlen.
+
+## Prüfungen
+
+- `cargo fmt --all --check`: grün.
+- `cargo clippy --workspace --exclude openspider-desktop --all-targets --locked -- -D warnings`: grün (letzter Lauf 34,94 s).
+- `cargo test -p os-app --test cmd_auth_login_flow --locked`: 4/4 grün (9,92 s), einschließlich Wiederherstellung beim Resume mit frischem Fetcher.
+- `OPENSPIDER_SECRET_STORE=memory cargo test --workspace --exclude openspider-desktop --locked`: **3633 bestanden, 0 fehlgeschlagen**, 53 bestehende Ignores, 479 Testgruppen einschließlich Doc-Tests. Summe der gemeldeten Gruppenlaufzeiten: 824.75 s. Keine neuen Ignores. Exit-Code 0; Build mit `CARGO_BUILD_JOBS=2`.
+- `npm ci` und `npm run -w apps/desktop typecheck`: grün.
+- `npm run -w apps/desktop test`: 73 Dateien, 714 Tests grün.
+- `npm run -w apps/desktop e2e -- e2e/auth/forms.spec.ts --project=chromium --project=webkit`: 2/2 grün (5,3 s).
+- `npm run -w apps/desktop check:static`: grün; 28 statische/Token-Tests und Lizenzprüfung für 474 npm-Pakete.
+- `cargo deny check licenses bans sources`: bans/Prüfung der Lizenzen/Quellen grün, keine neuen Abhängigkeiten.
+- `scripts/check-neutral.sh` und `git diff --check`: grün.
+- Symbolabhängige Bestandsprüfungen unverändert grün: `logging_rotation` 9/9 und `logging_cli` 4/4.
+
+Implementierungscommits: `fdd58bdd` (Renderer/Fixture), `bf4e3124` (Engine/Store/Übersicht), `383c8d8a` (Service/UI/Vertragstests).
+
+## Abweichungen und offene Fragen
+
+Keine fachlichen Spec-Abweichungen und keine offenen Implementierungsfragen. Das sichtbare Chromium-Fenster und native Nutzer-Schließen bleiben gemäß Paketauftrag im lokalen Smoke/U32 (E2E-B). Formularbedienung, 2FA, Übernahme und Abbruch sind automatisiert mit headless Chromium/CDP und der lokalen os-testsite-Fixture geprüft. Die Bedienung der App läuft zusätzlich in Chromium und WebKit.
+
+Keine neuen Abhängigkeiten. Kein Push, Merge oder PR; daher keine Remote-CI-Lauf-ID. Ausführung lokal auf macOS arm64. Der erste vollständige Workspace-Testbau scheiterte am freien Plattenplatz (Linker errno=28); nur Symbole eigener Mach-O-Build-Artefakte wurden entfernt und diese erneut ad hoc signiert, weitere Link-Schritte auf zwei begrenzt. Die vorhandenen Backtrace-Prüfungen `logging_rotation` und `logging_cli` benötigen Funktionssymbole und wurden anschließend mit vollständigen Symbolen neu verlinkt; ihre Erwartungen bleiben unverändert. Quellcode/Fixtures fremder Pakete wurden dafür nicht verändert.
+
+## Lokaler Fenster-Smoke für U32
+
+1. Konfiguration → Authentifizierung → Login-URL eingeben → Hinzufügen: sichtbares Chromium öffnet mit dem konfigurierten User-Agent und Proxy.
+2. Im Formular einschließlich 2FA anmelden, anschließend in der App „Sitzung übernehmen“: Metadaten und Schutzmuster erscheinen, Tokens/Cookies erscheinen nicht in der Konfiguration.
+3. Neuer Anmeldeversuch → Abbrechen bzw. Chromium-Fenster schließen: Sitzung wird verworfen, Chromium beendet und das temporäre Browserprofil entfernt.
+4. Schutzmuster leeren → Start: Bestätigungsdialog abbrechen startet keinen Crawl; bestätigen lässt Logout zu und zeigt bei mindestens drei Login-Weiterleitungen „Sitzung verloren“.
+
+## Fremdänderung (K2-73)
+
+### `crates/os-model/src/enums.rs`
+
+CRAWL-120: neuer Nicht-Crawl-Grund SessionGuard.
+
+```diff
+diff --git a/crates/os-model/src/enums.rs b/crates/os-model/src/enums.rs
+index d4ae8384..229b8a11 100644
+--- a/crates/os-model/src/enums.rs
++++ b/crates/os-model/src/enums.rs
+@@ -368,4 +368,5 @@ string_enum! {
+     /// Grund, warum eine URL nicht gecrawlt wurde (AGENT-012); nur gesetzt, wenn der Zustand nicht `Done` ist.
+     pub enum NotCrawledReason {
++        SessionGuard => "session_guard",
+         Excluded => "excluded",
+         NotIncluded => "not_included",
+```
+
+### `crates/os-engine/src/session_guard.rs`
+
+CRAWL-120: nur aktive Formularprofile; vollständige Regex-Abgleiche, Cookies/Storage, profilbezogene Verlustzähler. with_form_profile_dir ergänzt einen Aufrufpfad ohne EngineDeps-Literale zu ändern.
+
+```diff
+diff --git a/crates/os-engine/src/session_guard.rs b/crates/os-engine/src/session_guard.rs
+new file mode 100644
+index 00000000..1fa5523f
+--- /dev/null
++++ b/crates/os-engine/src/session_guard.rs
+@@ -0,0 +1,220 @@
++//! CRAWL-120: active form sessions, scoped cookies/storage and state-changing URL protection.
++use crate::{frontier::Core, EngineDeps, EngineError};
++use os_fetch::{CookieJar, SecretStore};
++use os_model::{CrawlConfig, CrawlEvent, WriteBatch};
++use os_render::login::CapturedSession;
++use os_url::{RuleDecision, RuleSet};
++use std::{
++    path::{Path, PathBuf},
++    sync::{
++        atomic::{AtomicU32, Ordering},
++        Arc,
++    },
++};
++
++pub struct SessionGuard {
++    rules: RuleSet,
++    logins: Vec<LoginState>,
++    pub storage: Vec<os_render::login::OriginStorage>,
++}
++struct LoginState {
++    url: url::Url,
++    profile: String,
++    redirects: AtomicU32,
++}
++impl SessionGuard {
++    pub fn blocks(&self, url: &str) -> bool {
++        matches!(self.rules.decide(url), RuleDecision::Excluded(_))
++    }
++}
++/// Profile names use the same byte encoding as auth.saveProfile (OUT-223).
++pub fn read_profile(dir: &Path, name: &str, secrets: &dyn SecretStore) -> Option<CapturedSession> {
++    let filename: String = name.as_bytes().iter().map(|b| format!("{b:02x}")).collect();
++    let bytes = std::fs::read(dir.join(format!("{filename}.osauth"))).ok()?;
++    let value = os_store::auth_profiles::open(&bytes, None, |id| secrets.get(id)).ok()?;
++    if value["profile"]["kind"] != "form" {
++        return None;
++    }
++    serde_json::from_str(value["profile"]["secret"].as_str()?).ok()
++}
++// Adapt only the form-session namespace; all pre-existing secret lookups delegate unchanged.
++struct ProfileSecrets {
++    dir: PathBuf,
++    inner: Arc<dyn SecretStore>,
++}
++impl SecretStore for ProfileSecrets {
++    fn get(&self, id: &str) -> Option<String> {
++        if let Some(name) = id.strip_prefix("form-session/") {
++            return serde_json::to_string(&read_profile(&self.dir, name, &*self.inner)?).ok();
++        }
++        self.inner.get(id)
++    }
++    fn try_get(&self, id: &str) -> Result<Option<String>, os_fetch::secrets::SecretError> {
++        if id.starts_with("form-session/") {
++            Ok(self.get(id))
++        } else {
++            self.inner.try_get(id)
++        }
++    }
++}
++impl EngineDeps {
++    /// Override the standard encrypted form-profile directory, without changing other dependencies.
++    pub fn with_form_profile_dir(mut self, dir: PathBuf) -> Self {
++        self.secrets = Arc::new(ProfileSecrets {
++            dir,
++            inner: self.secrets,
++        });
++        self
++    }
++}
++pub(crate) fn initialize(
++    core: &mut Core,
++    cfg: &CrawlConfig,
++    deps: &EngineDeps,
++) -> Result<(), EngineError> {
++    let active: Vec<_> = cfg
++        .auth
++        .form
++        .iter()
++        .filter(|f| f.profile.is_some())
++        .collect();
++    if active.is_empty() {
++        return Ok(());
++    }
++    let patterns = cfg
++        .auth
++        .session_guard
++        .iter()
++        .map(|p| format!("(?i){p}"))
++        .collect::<Vec<_>>();
++    let rules = RuleSet::compile(&[], &patterns, false)
++        .map_err(|_| EngineError::Invalid("Ungültiges Sitzungsschutz-Muster".into()))?;
++    let mut sessions = Vec::new();
++    let mut urls = Vec::new();
++    for form in active {
++        let name = form.profile.as_deref().expect("active profile");
++        let session = deps
++            .secrets
++            .get(&format!("form-session/{name}"))
++            .and_then(|s| serde_json::from_str(&s).ok())
++            .or_else(|| {
++                read_profile(
++                    &os_store::paths::app_paths().settings.join("auth"),
++                    name,
++                    &*deps.secrets,
++                )
++            })
++            .ok_or_else(|| EngineError::Invalid("Formular-Profil nicht verfügbar".into()))?;
++        let url = url::Url::parse(&form.login_url)
++            .map_err(|_| EngineError::Invalid("Ungültige Login-URL".into()))?;
++        urls.push(LoginState {
++            url,
++            profile: name.into(),
++            redirects: AtomicU32::new(0),
++        });
++        sessions.push(session);
++    }
++    let jar = Arc::new(CookieJar::new());
++    let mut storage = Vec::new();
++    for session in sessions {
++        for c in session.cookies {
++            let host = c.domain.trim_start_matches('.');
++            let Ok(origin) = url::Url::parse(&format!(
++                "{}://{host}/",
++                if c.secure { "https" } else { "http" }
++            )) else {
++                continue;
++            };
++            let mut raw = format!("{}={}; Path={}", c.name, c.value, c.path);
++            if c.domain.starts_with('.') {
++                raw.push_str(&format!("; Domain={}", c.domain));
++            }
++            if c.secure {
++                raw.push_str("; Secure");
++            }
++            if c.http_only {
++                raw.push_str("; HttpOnly");
++            }
++            if let Some(expires) = c.expires {
++                raw.push_str(&format!(
++                    "; Max-Age={}",
++                    expires
++                        .saturating_sub(deps.clock.now().unix_millis() / 1000)
++                        .max(0)
++                ));
++            }
++            jar.insert_raw(&origin, &raw);
++        }
++        storage.extend(session.storage);
++    }
++    // Active form logins share the authenticated browser session across crawl seeds.
++    for slot in &mut core.sessions {
++        *slot = Some(jar.clone());
++    }
++    core.session_guard = Some(Arc::new(SessionGuard {
++        rules,
++        logins: urls,
++        storage,
++    }));
++    Ok(())
++}
++pub(crate) fn observe_redirect(
++    core: &Core,
++    target: Option<&crate::redirect::RedirectTarget>,
++    at: os_model::Timestamp,
++    batch: &mut WriteBatch,
++) {
++    let (Some(guard), Some(target)) = (&core.session_guard, target) else {
++        return;
++    };
++    let Ok(url) = url::Url::parse(&target.target.encoded) else {
++        return;
++    };
++    for login in &guard.logins {
++        if login.url.origin() == url.origin()
++            && login.url.path() == url.path()
++            && login.url.query() == url.query()
++            && login.redirects.fetch_add(1, Ordering::AcqRel) == 2
++        {
++            batch.counters.push(("session_lost".into(), 1));
++            batch
++                .counters
++                .push((format!("session_lost_profile:{}", login.profile), 1));
++            batch.events.push(CrawlEvent {
++                at,
++                kind: "warn".into(),
++                code: "session_lost".into(),
++                message: "Sitzung im Crawl verloren".into(),
++            });
++        }
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    // spec: CRAWL-120
++    #[test]
++    fn fixture_patterns_are_case_insensitive_full_matches_and_inactive_without_profiles() {
++        let patterns = vec!["https://fixture.test/logout".to_owned()];
++        let mut cfg = CrawlConfig::default();
++        cfg.auth.session_guard = patterns;
++        let mut core = Core::new(0, None);
++        let deps = crate::testing::test_deps();
++        initialize(&mut core, &cfg, &deps).unwrap();
++        assert!(core.session_guard.is_none());
++        let guard = SessionGuard {
++            rules: RuleSet::compile(&[], &["(?i)https://fixture.test/logout".into()], false)
++                .unwrap(),
++            logins: vec![],
++            storage: vec![],
++        };
++        for (url, blocked) in [
++            ("https://fixture.test/LOGOUT", true),
++            ("https://fixture.test/logout/extra", false),
++            ("https://other.test/logout", false),
++        ] {
++            assert_eq!(guard.blocks(url), blocked);
++        }
++    }
++}
+```
+
+### `crates/os-engine/src/lib.rs`
+
+CRAWL-120: zusätzliche Modulzeile.
+
+```diff
+diff --git a/crates/os-engine/src/lib.rs b/crates/os-engine/src/lib.rs
+index 69e07478..dcb361f3 100644
+--- a/crates/os-engine/src/lib.rs
++++ b/crates/os-engine/src/lib.rs
+@@ -74,2 +74,5 @@ pub mod retry;
+ 
+ mod sitemap_ingest;
++
++/// Form-session protection (CRAWL-120).
++pub mod session_guard;
+```
+
+### `crates/os-engine/src/frontier.rs`
+
+CRAWL-120: optionaler Zustand mit Default None; Schutzprüfung nach Include/Exclude; Zähler analog excluded_skipped.
+
+```diff
+diff --git a/crates/os-engine/src/frontier.rs b/crates/os-engine/src/frontier.rs
+index e9634c0d..0dbba432 100644
+--- a/crates/os-engine/src/frontier.rs
++++ b/crates/os-engine/src/frontier.rs
+@@ -245,4 +245,6 @@ pub enum Pop {
+ /// Gemeinsamer Zustand aller Worker (hinter einer Sperre).
+ pub struct Core {
++    /// Active form login, absent for all other crawls (CRAWL-120).
++    pub session_guard: Option<Arc<crate::session_guard::SessionGuard>>,
+     /// JS hash routes require independent browser passes (CRAWL-004).
+     pub render_fragments: bool,
+@@ -335,4 +337,5 @@ impl Core {
+     pub fn new(max_urls: u64, max_depth: Option<u32>) -> Self {
+         Core {
++            session_guard: None,
+             render_fragments: false,
+             respect_hidden: std::collections::HashSet::new(),
+@@ -499,4 +502,16 @@ impl Core {
+             };
+         }
++        if self
++            .session_guard
++            .as_ref()
++            .is_some_and(|g| g.blocks(&c.norm.encoded))
++        {
++            return Admission {
++                enqueue: false,
++                in_tables: false,
++                reason: Some(NotCrawledReason::SessionGuard),
++                rule_flag,
++            };
++        }
+         if url_limit_counter(&self.limits, c.norm).is_some() {
+             return Admission {
+@@ -719,4 +734,7 @@ impl Core {
+         }
+         match adm.reason {
++            Some(NotCrawledReason::SessionGuard) => {
++                batch.counters.push(("session_guard_skipped".into(), 1));
++            }
+             Some(NotCrawledReason::Excluded) => {
+                 batch.counters.push((COUNTER_EXCLUDED.to_string(), 1));
+```
+
+### `crates/os-engine/src/worker.rs`
+
+CRAWL-120: ein zusätzlicher Beobachter im bestehenden 3xx-Zweig; Redirect-Ergebnis unverändert.
+
+```diff
+diff --git a/crates/os-engine/src/worker.rs b/crates/os-engine/src/worker.rs
+index c53c7c32..949d3b5d 100644
+--- a/crates/os-engine/src/worker.rs
++++ b/crates/os-engine/src/worker.rs
+@@ -562,4 +562,10 @@ async fn analyze<F: Fetch>(
+         }
+         a.redirect = redirect::http_target(url, &resp.headers);
++        crate::session_guard::observe_redirect(
++            &sh.lock_core(),
++            a.redirect.as_ref(),
++            sh.clock.now(),
++            &mut a.extra,
++        );
+         if resp.synthetic == Some(os_fetch::SyntheticResponse::Hsts) {
+             if let Some(target) = &mut a.redirect {
+```
+
+### `crates/os-engine/src/crawl.rs`
+
+CRAWL-120: Initialisierung vor Erstaufnahme; authentifizierter Jar für Listen-Seeds.
+
+```diff
+diff --git a/crates/os-engine/src/crawl.rs b/crates/os-engine/src/crawl.rs
+index 22bb76c8..bdcc6ddc 100644
+--- a/crates/os-engine/src/crawl.rs
++++ b/crates/os-engine/src/crawl.rs
+@@ -312,4 +312,5 @@ async fn start_spider<F: Fetch>(
+         core.sessions[0] = Some(Arc::new(CookieJar::new()));
+     }
++    crate::session_guard::initialize(&mut core, &cfg, &deps)?;
+     let scope = CrawlScope::new(Scope::new(&start, &cfg.scope).with_cdns(&cfg.cdns));
+ 
+@@ -423,4 +424,5 @@ async fn start_list<F: Fetch>(
+         core.sessions[0] = Some(Arc::new(CookieJar::new()));
+     }
++    crate::session_guard::initialize(&mut core, &cfg, &deps)?;
+     let mut scope = CrawlScope::new(Scope::new(&anchor, &cfg.scope).with_cdns(&cfg.cdns));
+     for e in &plan.entries {
+@@ -443,5 +445,9 @@ async fn start_list<F: Fetch>(
+                     && cfg.advanced.cookies == os_model::CookieMode::SessionOnly
+                 {
+-                    core.new_session(Some(Arc::new(CookieJar::new())))
++                    core.new_session(if core.session_guard.is_some() {
++                        core.session_jar(0)
++                    } else {
++                        Some(Arc::new(CookieJar::new()))
++                    })
+                 } else {
+                     0
+```
+
+### `crates/os-engine/src/lifecycle.rs`
+
+CRAWL-120: Wiederherstellung beim gemeinsamen Start-/Resume-Pfad.
+
+```diff
+diff --git a/crates/os-engine/src/lifecycle.rs b/crates/os-engine/src/lifecycle.rs
+index 3c3edb5d..b8090a47 100644
+--- a/crates/os-engine/src/lifecycle.rs
++++ b/crates/os-engine/src/lifecycle.rs
+@@ -273,4 +273,5 @@ fn prepare(
+ 
+     let mut restored = resume::restore(&file, &cfg, meta.mode, true)?;
++    crate::session_guard::initialize(&mut restored.core, &cfg, deps)?;
+     let (scope, start_encoded, start_url) = match meta.mode {
+         CrawlMode::Spider => {
+```
+
+### `crates/os-app/src/session/control.rs`
+
+CRAWL-120: additiver Builder-Aufruf für den tatsächlichen App-Profilordner, auch bei benutzerdefiniertem AppConfig.
+
+```diff
+diff --git a/crates/os-app/src/session/control.rs b/crates/os-app/src/session/control.rs
+index 58ded3c9..feeb5fbb 100644
+--- a/crates/os-app/src/session/control.rs
++++ b/crates/os-app/src/session/control.rs
+@@ -38,4 +38,5 @@ pub fn deps(app: &App) -> EngineDeps {
+         renderer: None,
+     }
++    .with_form_profile_dir(app.config().paths.settings.join("auth"))
+ }
+ pub fn fetcher(app: &App, cfg: &CrawlConfig) -> Result<Arc<os_fetch::HttpFetcher>, CmdError> {
+```
+
+### `crates/os-engine/src/render_glue.rs`
+
+CRAWL-120: Login-Storage nur bei aktivem Formularprofil an RenderOpts übergeben.
+
+```diff
+diff --git a/crates/os-engine/src/render_glue.rs b/crates/os-engine/src/render_glue.rs
+index 9b028746..ae8174fd 100644
+--- a/crates/os-engine/src/render_glue.rs
++++ b/crates/os-engine/src/render_glue.rs
+@@ -396,4 +396,7 @@ pub(crate) fn options<F: Fetch>(
+         ..Default::default()
+     };
++    if let Some(guard) = &sh.lock_core().session_guard {
++        opts.login_storage = guard.storage.clone();
++    }
+     // The browser receives every scoped session cookie before any scripts execute.
+     if let Some(jar) = cookie_jar(sh, item.session) {
+```
+
+### `crates/os-render/src/api.rs`
+
+CRAWL-120: neues RenderOpts-Feld login_storage mit leerem Default. Die zusätzlichen login_cookies/login_proxy-Helfer in derselben Datei sind strikt additive K2-61-Erweiterungen.
+
+```diff
+diff --git a/crates/os-render/src/api.rs b/crates/os-render/src/api.rs
+index 74fcf984..a083c030 100644
+--- a/crates/os-render/src/api.rs
++++ b/crates/os-render/src/api.rs
+@@ -172,4 +172,6 @@ pub struct RenderOpts {
+     /// False preserves existing callers, including custom request identities.
+     pub retry_document_context: bool,
++    /// Origin-scoped storage restored before scripts run (CRAWL-120).
++    pub login_storage: Vec<crate::login::OriginStorage>,
+     /// Engine opt-in for JavaScript cookie provenance; standalone rendering is unchanged.
+     pub capture_cookie_assignments: bool,
+@@ -206,4 +208,5 @@ impl Default for RenderOpts {
+         Self {
+             retry_document_context: false,
++            login_storage: Vec::new(),
+             capture_cookie_assignments: false,
+             disable_cookies: false,
+@@ -349,4 +352,30 @@ pub trait RequestIdentity: Send + Sync + std::fmt::Debug {
+ }
+ 
++/// All cookies of a dedicated login browser, including HTTP-only cookies.
++pub(crate) async fn login_cookies(
++    ws: &str,
++    page: &chromiumoxide::Page,
++) -> Result<Vec<chromiumoxide::cdp::browser_protocol::network::Cookie>, RenderError> {
++    intercept::cookies(ws, page.target_id()).await
++}
++
++/// Reuses the renderer's proxy-only challenge handling for interactive navigation.
++pub(crate) async fn login_proxy(
++    ws: &str,
++    page: &chromiumoxide::Page,
++    url: &str,
++    launch: &LaunchOpts,
++) -> Result<impl Send + Sync, RenderError> {
++    intercept::Intercept::start(
++        ws,
++        page,
++        url,
++        &RenderOpts::default(),
++        launch,
++        Default::default(),
++    )
++    .await
++}
++
+ #[cfg(test)]
+ mod document_read_tests {
+```
+
+### `crates/os-render/src/page.rs`
+
+CRAWL-120: origin-gebundene Storage-Wiederherstellung vor der Navigation.
+
+```diff
+diff --git a/crates/os-render/src/page.rs b/crates/os-render/src/page.rs
+index e51e4f81..a0461e68 100644
+--- a/crates/os-render/src/page.rs
++++ b/crates/os-render/src/page.rs
+@@ -249,4 +249,9 @@ async fn run(
+         page.evaluate_on_new_document("Object.defineProperty(Document.prototype, 'cookie', {get: () => '', set: () => {}}); if (typeof CookieStore !== 'undefined') { CookieStore.prototype.set = () => Promise.resolve(); CookieStore.prototype.delete = () => Promise.resolve(); }").await.map_err(protocol)?;
+     }
++    if !opts.login_storage.is_empty() {
++        page.evaluate_on_new_document(crate::login::storage_script(&opts.login_storage)?)
++            .await
++            .map_err(protocol)?;
++    }
+     metrics(page, opts, opts.viewport).await?;
+     if let Some(ua) = &opts.user_agent {
+```
+
+### `crates/os-export/src/reports/overview.rs`
+
+CRAWL-120: zusätzliche Übersichtszeile ausschließlich für Crawls mit aktiven Formularprofilen; bestehende Goldens ohne Formularanmeldung bleiben identisch.
+
+```diff
+diff --git a/crates/os-export/src/reports/overview.rs b/crates/os-export/src/reports/overview.rs
+index f4404e6f..1ba14955 100644
+--- a/crates/os-export/src/reports/overview.rs
++++ b/crates/os-export/src/reports/overview.rs
+@@ -281,4 +281,12 @@ fn summary(file: &CrawlFile, rows: &mut Vec<OverviewRow>) -> Result<(), ExportEr
+         ));
+     }
++    if file.config()?.auth.form.iter().any(|f| f.profile.is_some()) {
++        rows.push(OverviewRow::new(
++            S,
++            "Durch Sitzungsschutz übersprungen",
++            Cell::Int(counter(file, "session_guard_skipped")?),
++            None,
++        ));
++    }
+     Ok(())
+ }
+```
+
+### `apps/desktop/src/features/statusbar/Statusbar.tsx`
+
+CRAWL-120: zusätzliche Anzeige des persistierten Verluststatus.
+
+```diff
+diff --git a/apps/desktop/src/features/statusbar/Statusbar.tsx b/apps/desktop/src/features/statusbar/Statusbar.tsx
+index 98a985a3..c302aed5 100644
+--- a/apps/desktop/src/features/statusbar/Statusbar.tsx
++++ b/apps/desktop/src/features/statusbar/Statusbar.tsx
+@@ -1,2 +1,3 @@
++import { loginStatus } from "../config/pages/auth-forms/session";
+ import { useEffect, useState } from "react";
+ import { useFormat, useT } from "../../i18n";
+@@ -25,4 +26,12 @@ export function Statusbar() {
+   const f = useFormat();
+   const { crawl: c, analysis, mcp, throttled } = useStatusSnapshot();
++  const [sessionLost, setSessionLost] = useState(false);
++  useEffect(() => {
++    let live = true; setSessionLost(false);
++    if (!c) return;
++    const refresh = () => void loginStatus().then((rows) => { if (live) setSessionLost(rows.some((r) => r.state === "lost")); }).catch(() => undefined);
++    refresh(); const timer = setInterval(refresh, 1000);
++    return () => { live = false; clearInterval(timer); };
++  }, [c?.crawlId]);
+   const chosenMode = useHeader((s) => s.mode);
+   const phase = analysis?.running ? t("status-analysis") : t(`status-${c?.phase ?? "idle"}`);
+@@ -33,4 +42,5 @@ export function Statusbar() {
+   return <div className="os-crawl-status" data-testid="crawl-status">
+     <span>{t("status-mode", { mode: t(`header-${c?.mode ?? chosenMode}`) })}</span>
++    {sessionLost && <span role="status" className="os-status-warning">{t("form-login-session-lost")}</span>}
+     <span data-testid="crawl-phase">{phase}{c?.endReason === "limit_reached" && ` (${t("status-limit")})`}</span>
+     {Object.keys(throttled).length > 0 && <span className="os-status-warning">{t("status-throttled")}</span>}
+```
+
+### `apps/desktop/src/features/header/Header.tsx`
+
+CRAWL-120: Bestätigungsdialog vor crawl.start nur bei aktiven Formularprofilen und leerer Musterliste.
+
+```diff
+diff --git a/apps/desktop/src/features/header/Header.tsx b/apps/desktop/src/features/header/Header.tsx
+index dd0d70e0..610008c4 100644
+--- a/apps/desktop/src/features/header/Header.tsx
++++ b/apps/desktop/src/features/header/Header.tsx
+@@ -1,2 +1,3 @@
++import { needsGuardConfirmation } from "../config/pages/auth-forms/session";
+ import { useEffect, useRef, useState } from "react";
+ import { useT } from "../../i18n";
+@@ -30,4 +31,5 @@ export function Header() {
+   const [listLabel, setListLabel] = useState("");
+   const [confirm, setConfirm] = useState<null | { mode?: CrawlModeDto; request?: StartRequest }>(null);
++  const [guardRequest, setGuardRequest] = useState<StartRequest | null>(null);
+   const [threads, setThreads] = useState(0);
+   const input = useRef<HTMLInputElement>(null);
+@@ -85,7 +87,11 @@ export function Header() {
+   }
+ 
+-  async function start(request: StartRequest) {
++  async function start(request: StartRequest, guardConfirmed = false) {
+     await perform(async () => {
+       try {
++        if (!guardConfirmed && needsGuardConfirmation((await config.get()).config)) {
++          setGuardRequest(request);
++          return;
++        }
+         await crawl.start(request);
+         if (request.source.kind === "spider") await saveHistory(request.source.url);
+@@ -181,4 +187,8 @@ export function Header() {
+     {Math.max(threads, status?.activeThreads ?? 0) >= 20 && <span className="os-header-hint" role="status">{t("header-thread-warning")}</span>}
+     {foreign && <span className="os-header-hint">{t("header-readonly")}</span>}
++    <Dialog title={t("form-login-guard-title")} isOpen={guardRequest !== null} onOpenChange={(open) => { if (!open) setGuardRequest(null); }}
++      footer={<DialogFooter okLabel={t("form-login-guard-start")} cancelLabel={t("form-login-cancel")} onCancel={() => setGuardRequest(null)} onOk={() => { const request = guardRequest; setGuardRequest(null); if (request) void start(request, true); }} />}>
++      {t("form-login-guard-warning")}
++    </Dialog>
+     <Dialog title={t("header-confirm-title")} isOpen={confirm !== null} onOpenChange={(open) => { if (!open) setConfirm(null); }}
+       footer={<DialogFooter okLabel={t("header-confirm")} cancelLabel={t("header-cancel")} onCancel={() => setConfirm(null)} onOk={() => {
+```
+
+## Fremdergänzungen (K2-61)
+
+### `crates/os-render/src/api.rs` – zusätzliche Helfer
+
+CRAWL-120: neue Funktionen `login_cookies` und `login_proxy` nutzen die vorhandene Cookie-Abfrage und Proxy-/Origin-Challenge-Trennung. Bestehende Signaturen und Renderer-Verhalten bleiben erhalten. Das neue RenderOpts-Feld ist getrennt unter K2-73 aufgeführt.
+
+```diff
+diff --git a/crates/os-render/src/api.rs b/crates/os-render/src/api.rs
+index 74fcf984..a083c030 100644
+--- a/crates/os-render/src/api.rs
++++ b/crates/os-render/src/api.rs
+@@ -349,4 +352,30 @@ pub trait RequestIdentity: Send + Sync + std::fmt::Debug {
+ }
+ 
++/// All cookies of a dedicated login browser, including HTTP-only cookies.
++pub(crate) async fn login_cookies(
++    ws: &str,
++    page: &chromiumoxide::Page,
++) -> Result<Vec<chromiumoxide::cdp::browser_protocol::network::Cookie>, RenderError> {
++    intercept::cookies(ws, page.target_id()).await
++}
++
++/// Reuses the renderer's proxy-only challenge handling for interactive navigation.
++pub(crate) async fn login_proxy(
++    ws: &str,
++    page: &chromiumoxide::Page,
++    url: &str,
++    launch: &LaunchOpts,
++) -> Result<impl Send + Sync, RenderError> {
++    intercept::Intercept::start(
++        ws,
++        page,
++        url,
++        &RenderOpts::default(),
++        launch,
++        Default::default(),
++    )
++    .await
++}
++
+ #[cfg(test)]
+ mod document_read_tests {
+```
+
+### `crates/os-render/src/browser.rs`
+
+Neue Methode open_login_page: dedizierter temporärer Chromium-Kontext; bestehende Render-Aufrufe unverändert. API-Helfer login_cookies/login_proxy siehe Diff von api.rs oben; wiederverwendet die bestehende Trennung zwischen Proxy- und Origin-Zugangsdaten.
+
+```diff
+diff --git a/crates/os-render/src/browser.rs b/crates/os-render/src/browser.rs
+index f5ea8974..52e5a9b0 100644
+--- a/crates/os-render/src/browser.rs
++++ b/crates/os-render/src/browser.rs
+@@ -317,4 +317,34 @@ impl Renderer {
+         })
+     }
++    /// Dedicated login tab in this renderer's temporary browser profile (CRAWL-120).
++    pub async fn open_login_page(&self) -> Result<(chromiumoxide::Page, String), RenderError> {
++        self.ensure_session().await?;
++        let guard = self.session.read().await;
++        let session = guard
++            .as_ref()
++            .ok_or_else(|| protocol("Browser geschlossen"))?;
++        let context = session
++            .browser
++            .create_browser_context(
++                chromiumoxide::cdp::browser_protocol::target::CreateBrowserContextParams::builder()
++                    .dispose_on_detach(true)
++                    .build(),
++            )
++            .await
++            .map_err(protocol)?;
++        let page = session
++            .browser
++            .new_page(
++                chromiumoxide::cdp::browser_protocol::target::CreateTargetParams::builder()
++                    .url("about:blank")
++                    .browser_context_id(context)
++                    .build()
++                    .map_err(protocol)?,
++            )
++            .await
++            .map_err(protocol)?;
++        Ok((page, session.browser.websocket_address().clone()))
++    }
++
+     /// Sichtbare Generation für Diagnose und Neustarttests.
+     pub fn generation(&self) -> u64 {
+```
+
+### `crates/os-store/src/queries/mod.rs`
+
+Neue reine Lesefunktion form_session_losses; SQL bleibt im Store, der App-Aufruf läuft über den ReadPool.
+
+```diff
+diff --git a/crates/os-store/src/queries/mod.rs b/crates/os-store/src/queries/mod.rs
+index 0b40acb4..9cc3cf15 100644
+--- a/crates/os-store/src/queries/mod.rs
++++ b/crates/os-store/src/queries/mod.rs
+@@ -711,2 +711,22 @@ pub fn session_counts(conn: &Connection) -> Result<SessionCounts, StoreError> {
+ /// App read helpers (additive K2-61 extension).
+ pub mod app_support;
++
++/// Form-profile names whose session was lost in this crawl (CRAWL-120).
++/// Values are counters/identifiers only; callers run this through the app read pool.
++pub fn form_session_losses(
++    conn: &Connection,
++) -> Result<std::collections::BTreeSet<String>, StoreError> {
++    let mut stmt = conn.prepare(
++        "SELECT key FROM crawl_counters WHERE key GLOB 'session_lost_profile:*' AND value > 0",
++    )?;
++    let rows = stmt.query_map([], |r| r.get::<_, String>(0))?;
++    rows.map(|row| {
++        row.map(|key| {
++            key.strip_prefix("session_lost_profile:")
++                .unwrap_or(&key)
++                .to_owned()
++        })
++        .map_err(StoreError::from)
++    })
++    .collect()
++}
+```
+
+### `crates/os-testsite/src/mocks/mod.rs`
+
+Zusätzliche Modulregistrierung der eigenständigen Login-Fixture, ohne Änderungen bestehender Szenarien.
+
+```diff
+diff --git a/crates/os-testsite/src/mocks/mod.rs b/crates/os-testsite/src/mocks/mod.rs
+index 091b5969..76840c78 100644
+--- a/crates/os-testsite/src/mocks/mod.rs
++++ b/crates/os-testsite/src/mocks/mod.rs
+@@ -213,2 +213,5 @@ mod tests {
+     }
+ }
++
++/// Standalone form-authentication fixture; existing scenarios are unchanged.
++pub mod form_login;
+```
+
+### `crates/os-testsite/src/mocks/form_login.rs`
+
+Das bestehende crawl-auth-Szenario enthält nur Standard-Authentifizierung; daher fehlt der Formular-Fixture-Einstieg. Neue opt-in Fixture-Funktion FormLoginSite::start: Formular/2FA, HttpOnly-Cookie, beide Storage-Arten, geschützter Bereich, Logout und Request-Log; keine bestehende Mock-API verändert.
+
+```diff
+diff --git a/crates/os-testsite/src/mocks/form_login.rs b/crates/os-testsite/src/mocks/form_login.rs
+new file mode 100644
+index 00000000..8134d91c
+--- /dev/null
++++ b/crates/os-testsite/src/mocks/form_login.rs
+@@ -0,0 +1,140 @@
++//! Opt-in CRAWL-120 fixture: real form submission, two-factor code and revocable server session.
++use axum::{
++    extract::{Request, State},
++    http::{header, StatusCode},
++    response::{Html, IntoResponse, Response},
++    Router,
++};
++use std::sync::{
++    atomic::{AtomicBool, Ordering},
++    Arc, Mutex,
++};
++
++#[derive(Clone, Default)]
++struct Session {
++    active: Arc<AtomicBool>,
++    requests: Arc<Mutex<Vec<(String, String)>>>,
++}
++pub struct FormLoginSite {
++    base: String,
++    session: Session,
++    task: tokio::task::JoinHandle<()>,
++}
++impl Drop for FormLoginSite {
++    fn drop(&mut self) {
++        self.task.abort();
++    }
++}
++impl FormLoginSite {
++    pub async fn start() -> std::io::Result<Self> {
++        let listener = tokio::net::TcpListener::bind((std::net::Ipv4Addr::LOCALHOST, 0)).await?;
++        let base = format!("http://{}", listener.local_addr()?);
++        let session = Session::default();
++        let router = Router::new().fallback(handle).with_state(session.clone());
++        let task = tokio::spawn(async move {
++            let _ = axum::serve(listener, router).await;
++        });
++        Ok(Self {
++            base,
++            session,
++            task,
++        })
++    }
++    pub fn url(&self, path: &str) -> String {
++        format!("{}{path}", self.base)
++    }
++    pub fn requests(&self) -> Vec<(String, String)> {
++        self.session.requests.lock().unwrap().clone()
++    }
++    pub fn clear_requests(&self) {
++        self.session.requests.lock().unwrap().clear();
++    }
++}
++async fn handle(State(s): State<Session>, req: Request) -> Response {
++    let path = req.uri().path().to_owned();
++    let query = req.uri().query().unwrap_or_default().to_owned();
++    let cookie = req
++        .headers()
++        .get(header::COOKIE)
++        .and_then(|h| h.to_str().ok())
++        .unwrap_or_default()
++        .to_owned();
++    let ua = req
++        .headers()
++        .get(header::USER_AGENT)
++        .and_then(|h| h.to_str().ok())
++        .unwrap_or_default()
++        .to_owned();
++    s.requests.lock().unwrap().push((
++        format!(
++            "{path}{}",
++            if query.is_empty() {
++                String::new()
++            } else {
++                format!("?{query}")
++            }
++        ),
++        ua,
++    ));
++    if path == "/robots.txt" {
++        return (StatusCode::OK, "User-agent: *\nDisallow:\n").into_response();
++    }
++    if path == "/login" || path == "/login-2fa" {
++        let two_factor = path == "/login-2fa";
++        return Html(format!(r#"<!doctype html><title>Sign in</title><form><label>User<input name=user></label><label>Password<input name=password type=password></label><label>Code<input name=code></label><button>Sign in</button></form><script>
++        document.querySelector('form').onsubmit=async e=>{{e.preventDefault();const f=new FormData(e.target); const r=await fetch('/session?twoFactor={two_factor}',{{method:'POST',body:new URLSearchParams(f)}});if(r.ok){{localStorage.token='LOCAL-FIXTURE';sessionStorage.token='SESSION-FIXTURE';location.href='/mitglieder/';}}}};</script>"#)).into_response();
++    }
++    if path == "/session" {
++        let body = axum::body::to_bytes(req.into_body(), 4096)
++            .await
++            .unwrap_or_default();
++        let body = String::from_utf8_lossy(&body);
++        if !body.contains("user=fixture")
++            || !body.contains("password=secret")
++            || (query == "twoFactor=true" && !body.contains("code=123456"))
++        {
++            return StatusCode::UNAUTHORIZED.into_response();
++        }
++        s.active.store(true, Ordering::SeqCst);
++        return (
++            [(
++                header::SET_COOKIE,
++                "session=COOKIE-FIXTURE; Path=/; HttpOnly; SameSite=Lax",
++            )],
++            "ok",
++        )
++            .into_response();
++    }
++    if path == "/storage-probe" {
++        return Html("<!doctype html><title>Token missing</title><script>document.title=localStorage.token==='LOCAL-FIXTURE'&&sessionStorage.token==='SESSION-FIXTURE'?'Token ok':'Token missing';</script>").into_response();
++    }
++    if path == "/logout" {
++        s.active.store(false, Ordering::SeqCst);
++        return (
++            [(header::SET_COOKIE, "session=; Path=/; Max-Age=0")],
++            "Logged out",
++        )
++            .into_response();
++    }
++    if path.starts_with("/mitglieder/") || path.starts_with("/konto/") {
++        if !cookie
++            .split(';')
++            .any(|c| c.trim() == "session=COOKIE-FIXTURE")
++            || !s.active.load(Ordering::SeqCst)
++        {
++            return (StatusCode::FOUND, [(header::LOCATION, "/login")]).into_response();
++        }
++        if path == "/mitglieder/app" {
++            return Html("<!doctype html><title>Token missing</title><script>document.title=localStorage.token==='LOCAL-FIXTURE'&&sessionStorage.token==='SESSION-FIXTURE'?'Token ok':'Token missing';</script>").into_response();
++        }
++        let links = if path == "/mitglieder/" {
++            (0..20)
++                .map(|n| format!("<a href='/mitglieder/{n}'>Member {n}</a>"))
++                .collect::<String>()
++        } else {
++            String::new()
++        };
++        return Html(format!("<!doctype html><title>Members</title><a href='/logout'>Log out</a><a href='/konto/loeschen?id=1'>Delete</a><a href='/mitglieder/app'>App</a>{links}")).into_response();
++    }
++    StatusCode::NOT_FOUND.into_response()
++}
+```
+
+### `apps/desktop/src/ipc/commands.json`
+
+Generiertes Katalog-Golden: ausschließlich zusätzlicher Command auth.loginStatus (JsonValue, Metadaten/Status ohne Geheimnisse).
+
+```diff
+diff --git a/apps/desktop/src/ipc/commands.json b/apps/desktop/src/ipc/commands.json
+index cb3e0fc0..4892e1a7 100644
+--- a/apps/desktop/src/ipc/commands.json
++++ b/apps/desktop/src/ipc/commands.json
+@@ -1044,4 +1044,10 @@
+     "longRunning": false
+   },
++  {
++    "name": "auth.loginStatus",
++    "args": "void",
++    "ret": "JsonValue",
++    "longRunning": false
++  },
+   {
+     "name": "mail.listAccounts",
+```
+
+### `apps/desktop/src/ipc/auth.ts`
+
+Mit gen:ipc neu erzeugter zusätzlicher Wrapper auth.loginStatus, vorhandene Signaturen unverändert.
+
+```diff
+diff --git a/apps/desktop/src/ipc/auth.ts b/apps/desktop/src/ipc/auth.ts
+index 12542b5b..d970bedf 100644
+--- a/apps/desktop/src/ipc/auth.ts
++++ b/apps/desktop/src/ipc/auth.ts
+@@ -7,4 +7,5 @@ import type { AuthProfileInfo } from "./gen/AuthProfileInfo";
+ import type { AuthSaveProfileArgs } from "./gen/AuthSaveProfileArgs";
+ import type { FileResult } from "./gen/FileResult";
++import type { JsonValue } from "./gen/serde_json/JsonValue";
+ import type { NameArgs } from "./gen/NameArgs";
+ import type { OpHandle } from "./gen/OpHandle";
+@@ -26,3 +27,5 @@ export const auth = {
+   /** `auth.finishLogin` */
+   finishLogin: (args: AuthFinishLoginArgs, signal?: AbortSignal) => client.invoke<AuthProfileInfo | null>("auth.finishLogin", args, signal),
++  /** `auth.loginStatus` */
++  loginStatus: (signal?: AbortSignal) => client.invoke<JsonValue>("auth.loginStatus", undefined, signal),
+ } as const;
+```
+
+## Platzhalter-Ablösung (K2-71)
+
+### `apps/desktop/src/features/config/pages/auth/index.tsx`
+
+CRAWL-120: bisher nur lesende Formular-Tabelle durch FormLoginsPanel aus dem eigenen Paketpfad ersetzt. Unbenutzten bisherigen Tabellen-Typ entfernt; Standard-Authentifizierung unverändert.
+
+```diff
+diff --git a/apps/desktop/src/features/config/pages/auth/index.tsx b/apps/desktop/src/features/config/pages/auth/index.tsx
+index 75411dca..690cb1a4 100644
+--- a/apps/desktop/src/features/config/pages/auth/index.tsx
++++ b/apps/desktop/src/features/config/pages/auth/index.tsx
+@@ -1,2 +1,3 @@
++import { FormLoginsPanel } from "../auth-forms";
+ // Authentifizierung (CRAWL-117 … 121): Standard-Anmeldung (Basic; Digest erkennt der Kern aus der Challenge), formularbasierte
+ // Anmeldungen (Tabelle), Sitzungsschutz-Muster und Verweise auf Profile. Passwörter stehen nie in der Konfiguration oder im
+@@ -20,10 +21,4 @@ interface BasicAuth {
+ }
+ 
+-interface FormLogin {
+-  login_url: string;
+-  profile: string | null;
+-  captured_at: string | null;
+-  cookie_count: number;
+-}
+ 
+ const fields: FieldDef[] = [
+@@ -135,45 +130,5 @@ function BasicTable() {
+ }
+ 
+-function FormLogins() {
+-  const t = useT();
+-  const { value, set, lock } = useConfigValue<FormLogin[] | undefined>("auth.form");
+-  const rows = value ?? [];
+-  return (
+-    <FieldFrame path="auth.form">
+-      <h3 className="os-cfg-section">{t("config-auth-form")}</h3>
+-      <p className="os-hint">{t("config-auth-form-hint")}</p>
+-      {rows.length === 0 ? (
+-        <p className="os-hint">{t("config-auth-form-none")}</p>
+-      ) : (
+-        <table className="os-cfg-table" data-testid="auth-form">
+-          <thead>
+-            <tr>
+-              <th scope="col">{t("config-auth-login-url")}</th>
+-              <th scope="col">{t("config-auth-status")}</th>
+-              <th scope="col">{t("config-auth-captured")}</th>
+-              <th scope="col">{t("config-auth-cookies")}</th>
+-              <th scope="col">
+-                <span className="os-sr-only">{t("config-rewrite-actions")}</span>
+-              </th>
+-            </tr>
+-          </thead>
+-          <tbody>
+-            {rows.map((r, i) => (
+-              <tr key={i}>
+-                <td>{r.login_url}</td>
+-                <td>{r.cookie_count > 0 ? t("config-auth-status-active") : t("config-auth-status-empty")}</td>
+-                <td>{r.captured_at ?? "–"}</td>
+-                <td>{r.cookie_count}</td>
+-                <td className="os-cfg-actions">
+-                  <IconButton label={t("config-auth-remove-form", { url: r.login_url })} icon={<Trash2 size={14} />} onPress={() => set(rows.filter((_, n) => n !== i))} isDisabled={lock !== null} />
+-                </td>
+-              </tr>
+-            ))}
+-          </tbody>
+-        </table>
+-      )}
+-    </FieldFrame>
+-  );
+-}
++function FormLogins() { return <FormLoginsPanel />; }
+ 
+ export const page = definePage({
+```
+
+## Vertragserwartungen (K2-60 / K2-63)
+
+### `crates/os-app/tests/manifest_contract.rs`
+
+K2-60: ausschließlich M2-U17 aus der Liste verbleibender Stub-Besitzer entfernt. K2-63, CRAWL-120: erwarteten Katalog um auth.loginStatus ergänzt; keine Testlogik geändert. Generiertes Katalog-Golden und Wrapper sind unter K2-61 aufgeführt.
+
+```diff
+diff --git a/crates/os-app/tests/manifest_contract.rs b/crates/os-app/tests/manifest_contract.rs
+index e5bedfb0..1bc8342c 100644
+--- a/crates/os-app/tests/manifest_contract.rs
++++ b/crates/os-app/tests/manifest_contract.rs
+@@ -186,4 +186,5 @@ const CATALOG_3_6A: &[&str] = &[
+     "auth.openLogin",
+     "auth.finishLogin",
++    "auth.loginStatus", // CRAWL-120, additive secret-free status query (K2-61).
+     "profile.list",
+     "profile.load",
+@@ -377,5 +378,5 @@ async fn stubs_answer_unsupported_with_command_and_owner() {
+     }
+     // Besitzer laut Modulkarte 3.6
+-    for o in ["M2-K09", "M2-K17", "M2-D21", "M2-T02", "M2-U17"] {
++    for o in ["M2-K09", "M2-K17", "M2-D21", "M2-T02"] {
+         assert!(owners.contains(o), "kein Stub mit Besitzer {o}");
+     }
+```
+
