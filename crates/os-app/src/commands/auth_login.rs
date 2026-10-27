@@ -21,16 +21,29 @@ struct Pending {
     profile: Option<String>,
 }
 /// Headless CDP override for fixture tests; production defaults to a visible window.
-#[derive(Default)]
 pub struct LoginBrowserMode {
     pub headless: std::sync::atomic::AtomicBool,
     /// Native CDP automation seam; never set from IPC arguments.
     pub on_ready: Mutex<Option<std::sync::Arc<LoginAutomation>>>,
 }
+impl Default for LoginBrowserMode {
+    fn default() -> Self {
+        Self {
+            // Only the native E2E bridge may opt into headless browser automation.
+            headless: std::sync::atomic::AtomicBool::new(
+                cfg!(feature = "e2e-bridge")
+                    && std::env::var_os("OPENSPIDER_LOGIN_HEADLESS").is_some(),
+            ),
+            on_ready: Mutex::new(None),
+        }
+    }
+}
 pub type LoginAutomation =
     dyn for<'a> Fn(&'a LoginSession) -> BoxFuture<'a, Result<(), CmdError>> + Send + Sync;
 #[derive(Default)]
 struct Logins(Mutex<HashMap<String, Pending>>);
+#[derive(Default)]
+struct Captures(Mutex<HashMap<WindowId, Vec<Value>>>);
 fn error() -> CmdError {
     CmdError::new(ErrorCode::InvalidInput, "err-form-login")
 }
@@ -170,10 +183,27 @@ fn finish<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdResul
         };
         pending.finish.send(()).map_err(|_| cancelled())?;
         let captured = pending.result.await.map_err(|_| cancelled())??;
-        let name = a
+        let requested = a
             .save_as
             .or(pending.profile)
             .unwrap_or_else(|| format!("form-{}", a.op_id));
+        let profiles = app
+            .dispatch(ctx.clone(), "auth.listProfiles", Value::Null)
+            .await?;
+        // Never overwrite a profile used by the current configuration. Cancelling the
+        // outer draft must preserve both its reference and its encrypted session.
+        let name = if profiles
+            .as_array()
+            .is_some_and(|rows| rows.iter().any(|r| r["name"] == requested))
+        {
+            if requested.len() + a.op_id.len() < 120 {
+                format!("{requested}-{}", a.op_id)
+            } else {
+                format!("form-{}", a.op_id)
+            }
+        } else {
+            requested
+        };
         let host = os_url::parse_start_url(&pending.url)
             .map_err(|_| error())?
             .url
@@ -181,28 +211,15 @@ fn finish<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdResul
             .ok_or_else(error)?
             .to_string();
         let value=app.dispatch(ctx.clone(),"auth.saveProfile",json!({"profile":{"name":name,"kind":"form","host":host,"username":null,"secret":serde_json::to_string(&captured).map_err(|_|error())?}})).await?;
-        // Only profile references and counts enter the configuration; session values never do.
-        let mut cfg = crate::session::control::config(app, &ctx, None).await?;
-        let first = !cfg.auth.form.iter().any(|f| f.profile.is_some());
-        cfg.auth.form.retain(|f| f.login_url != pending.url);
-        cfg.auth.form.push(os_model::FormLogin {
-            login_url: pending.url,
-            profile: Some(name),
-            captured_at: Some(app.config().clock.now().to_db()),
-            cookie_count: captured.cookies.len() as u32,
-        });
-        if first && cfg.auth.session_guard.is_empty() {
-            cfg.auth.session_guard = os_render::login::SESSION_GUARD_DEFAULTS
-                .iter()
-                .map(|s| (*s).into())
-                .collect();
-        }
-        app.dispatch(
-            ctx,
-            "config.set",
-            to_json(&crate::commands::config::dto(&cfg)?)?,
-        )
-        .await?;
+        // Profile saving is independent of activation, like profile.load. Only the
+        // outer configuration dialog applies auth.form/session_guard via config.set.
+        let row = json!({"profile":name,"loginUrl":pending.url,"state":"active",
+            "cookies":captured.cookies.len(),"capturedAt":app.config().clock.now().to_db()});
+        let captures = app.ext::<Captures>();
+        let mut windows = captures.0.lock().unwrap_or_else(|p| p.into_inner());
+        let rows = windows.entry(ctx.window).or_default();
+        rows.retain(|r| r["loginUrl"] != row["loginUrl"]);
+        rows.push(row);
         Ok(value)
     })
 }
@@ -219,15 +236,27 @@ fn status<'a>(app: &'a App, ctx: CallCtx, _: Value) -> BoxFuture<'a, CmdResult> 
         } else {
             std::collections::BTreeSet::new()
         };
+        let drafts = app
+            .ext::<Captures>()
+            .0
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .get(&ctx.window)
+            .cloned()
+            .unwrap_or_default();
         let dir = app.config().paths.settings.join("auth");
         let secrets = app.config().secrets.clone();
         let now = app.config().clock.now().unix_millis() / 1000;
         tokio::task::spawn_blocking(move || {
-            let rows:Vec<_>=cfg.auth.form.iter().map(|f| {
+            let mut rows:Vec<_>=cfg.auth.form.iter().map(|f| {
                 let session=f.profile.as_deref().and_then(|name|os_engine::session_guard::read_profile(&dir,name,&*secrets));
                 let state=if f.profile.as_ref().is_some_and(|p|lost.contains(p)) {"lost"} else if session.as_ref().is_some_and(|s|s.expired(now)) {"expired"} else if session.is_some(){"active"}else{"missing"};
                 json!({"profile":f.profile,"loginUrl":f.login_url,"state":state,"cookies":f.cookie_count,"capturedAt":f.captured_at})
             }).collect();
+            // Include unactivated metadata for the owning window's configuration draft.
+            for draft in drafts {
+                if !rows.iter().any(|row| row["profile"] == draft["profile"]) { rows.push(draft); }
+            }
             Ok(Value::Array(rows))
         }).await.map_err(|_|error())?
     })

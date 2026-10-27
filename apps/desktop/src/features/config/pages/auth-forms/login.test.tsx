@@ -15,7 +15,8 @@ import { guardDefaults } from "./session";
 afterEach(() => { cleanup(); setClient(null); });
 // spec: CRAWL-120
 it("captures metadata into the draft, populates guard rules, and cancels a pending browser", async () => {
-  const core = new MockCore(); installConfigCore(core);
+  const core = new MockCore(); const configCore = installConfigCore(core);
+  const original = structuredClone(configCore.config);
   setClient(createClient(core.transport("main"))); await setLanguage("en");
   useSession.setState({ crawl: null, ops: {}, notices: [] });
   let saved = false;
@@ -37,6 +38,13 @@ it("captures metadata into the draft, populates guard rules, and cancels a pendi
   const next = await screen.findByRole("dialog", { name: "Form authentication" });
   fireEvent.click(within(next).getByRole("button", { name: "Cancel" }));
   await waitFor(() => expect(core.calls.filter((c) => c.cmd === "op.cancel")).toHaveLength(1));
+  fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(configCore.config).toEqual(original);
+  expect(configCore.setCalls).toHaveLength(0);
+  act(() => openConfig({ anchor: "auth.form" }));
+  const reopened = await screen.findByRole("dialog", { name: "Crawl configuration" });
+  expect(within(reopened).getByTestId("auth-form").querySelectorAll("tbody tr")).toHaveLength(0);
 });
 // spec: CRAWL-120
 it("requires explicit confirmation before starting with an active form session and empty guard list", async () => {

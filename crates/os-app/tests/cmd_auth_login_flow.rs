@@ -65,6 +65,23 @@ async fn login(app: &App, site: &FormLoginSite) -> Value {
     assert!(!serde_json::to_string(&done).unwrap().contains("FIXTURE"));
     info
 }
+async fn activate(app: &App, site: &FormLoginSite) {
+    let info = login(app, site).await;
+    let rows = call(app, "auth.loginStatus", Value::Null).await;
+    let row = rows
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|r| r["profile"] == info["name"])
+        .unwrap();
+    let mut dto = call(app, "config.get", Value::Null).await;
+    dto["config"]["auth"]["form"] = json!([{
+        "login_url":row["loginUrl"],"profile":info["name"],
+        "captured_at":row["capturedAt"],"cookie_count":row["cookies"]
+    }]);
+    dto["config"]["auth"]["session_guard"] = json!(os_render::login::SESSION_GUARD_DEFAULTS);
+    call(app, "config.set", dto).await;
+}
 async fn crawl(
     app: &App,
     site: &FormLoginSite,
@@ -110,8 +127,7 @@ async fn encrypted_form_profile_roundtrip_protects_crawl_and_restores_renderer_s
     let app =
         App::new(AppConfig::new(home.path()).with_secrets(Arc::new(MemorySecretStore::new())))
             .unwrap();
-    let info = login(&app, &site).await;
-    assert_eq!(info["kind"], "form");
+    activate(&app, &site).await;
     let dto = call(&app, "config.get", Value::Null).await;
     assert!(!dto.to_string().contains("FIXTURE"));
     let mut cfg: CrawlConfig = serde_json::from_value(dto["config"].clone()).unwrap();
@@ -238,7 +254,7 @@ async fn clearing_guard_allows_logout_and_records_session_loss_without_stopping(
     let app =
         App::new(AppConfig::new(home.path()).with_secrets(Arc::new(MemorySecretStore::new())))
             .unwrap();
-    login(&app, &site).await;
+    activate(&app, &site).await;
     let dto = call(&app, "config.get", Value::Null).await;
     let mut cfg: CrawlConfig = serde_json::from_value(dto["config"].clone()).unwrap();
     // The fixture's guarded pages redirect to /login after logout.
@@ -364,4 +380,54 @@ async fn status_derives_expiry_from_encrypted_cookie_metadata_without_exposing_v
     let statuses = call(&app, "auth.loginStatus", Value::Null).await;
     assert_eq!(statuses[0]["state"], "expired");
     assert!(!statuses.to_string().contains("EXPIRY-SECRET"));
+}
+
+// spec: CRAWL-120
+// spec: OUT-223
+#[tokio::test]
+async fn capturing_then_discarding_configuration_preserves_config_and_active_profile() {
+    let _lock = CHROMIUM.lock().await;
+    let site = FormLoginSite::start().await.unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let app =
+        App::new(AppConfig::new(home.path()).with_secrets(Arc::new(MemorySecretStore::new())))
+            .unwrap();
+    let original = call(&app, "config.get", Value::Null).await;
+    let info = login(&app, &site).await;
+    assert_eq!(info["kind"], "form");
+    // Dropping the UI draft sends no config.set. The command itself must not activate it.
+    assert_eq!(call(&app, "config.get", Value::Null).await, original);
+    assert_eq!(
+        call(&app, "auth.loginStatus", Value::Null).await[0]["cookies"],
+        1
+    );
+    activate(&app, &site).await;
+    let original = call(&app, "config.get", Value::Null).await;
+    let active = original["config"]["auth"]["form"][0]["profile"]
+        .as_str()
+        .unwrap();
+    let dir = home.path().join("auth");
+    let before =
+        os_engine::session_guard::read_profile(&dir, active, &*app.config().secrets).unwrap();
+    let op = call(
+        &app,
+        "auth.openLogin",
+        json!({"url":site.url("/login-2fa"),"profile":active}),
+    )
+    .await;
+    let renewed = call(
+        &app,
+        "auth.finishLogin",
+        json!({"opId":op["opId"],"saveAs":active}),
+    )
+    .await;
+    assert_ne!(renewed["name"], active);
+    assert_eq!(call(&app, "config.get", Value::Null).await, original);
+    let after =
+        os_engine::session_guard::read_profile(&dir, active, &*app.config().secrets).unwrap();
+    assert_eq!(
+        serde_json::to_value(before).unwrap(),
+        serde_json::to_value(after).unwrap()
+    );
+    assert!(!original.to_string().contains("FIXTURE"));
 }

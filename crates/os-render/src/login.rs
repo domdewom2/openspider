@@ -1,9 +1,16 @@
 //! Interactive Chromium login and origin-scoped session capture (CRAWL-120).
 use crate::{api, LaunchOpts, RenderError, Renderer};
 use chromiumoxide::{
-    cdp::browser_protocol::{emulation::SetDeviceMetricsOverrideParams, page::NavigateParams},
+    cdp::{
+        browser_protocol::{
+            emulation::SetDeviceMetricsOverrideParams,
+            page::{NavigateParams, RemoveScriptToEvaluateOnNewDocumentParams},
+        },
+        js_protocol::runtime::{AddBindingParams, EventBindingCalled},
+    },
     Page,
 };
+use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -83,6 +90,7 @@ pub struct LoginSession {
     websocket: String,
     storage: BTreeMap<String, OriginStorage>,
     _proxy: Option<Box<dyn Send + Sync>>,
+    restore_task: Option<tokio::task::JoinHandle<()>>,
 }
 fn error(_: impl std::fmt::Display) -> RenderError {
     RenderError::Protocol("Anmeldefenster nicht erreichbar".into())
@@ -130,10 +138,44 @@ impl LoginSession {
         } else {
             None
         };
-        if let Some(initial) = &opts.initial {
-            page.evaluate_on_new_document(storage_script(&initial.storage)?)
+        // Each origin gets a separate initializer, removed as soon as it has run.
+        // No marker is stored in website storage, so clear/remove operations stay intact.
+        let restore_task = if let Some(initial) = &opts.initial {
+            let binding = "__openspiderStorageRestored";
+            page.execute(AddBindingParams::new(binding))
                 .await
                 .map_err(error)?;
+            let mut events = page
+                .event_listener::<EventBindingCalled>()
+                .await
+                .map_err(error)?;
+            let mut scripts = BTreeMap::new();
+            for storage in &initial.storage {
+                let origin = serde_json::to_string(&storage.origin).map_err(error)?;
+                let script = storage_script(std::slice::from_ref(storage))?;
+                let id = page
+                    .evaluate_on_new_document(format!(
+                    "if(location.origin==={origin}) {{ {script}; window.{binding}({origin}); }}"
+                ))
+                    .await
+                    .map_err(error)?;
+                scripts.insert(storage.origin.clone(), id);
+            }
+            let restore_page = page.clone();
+            let task = tokio::spawn(async move {
+                while let Some(event) = events.next().await {
+                    if event.name == binding {
+                        if let Some(id) = scripts.remove(&event.payload) {
+                            let _ = restore_page
+                                .execute(RemoveScriptToEvaluateOnNewDocumentParams::new(id))
+                                .await;
+                        }
+                        if scripts.is_empty() {
+                            break;
+                        }
+                    }
+                }
+            });
             let cookies = initial
                 .cookies
                 .iter()
@@ -151,12 +193,17 @@ impl LoginSession {
                     p
                 })
                 .collect();
-            page.execute(
-                chromiumoxide::cdp::browser_protocol::network::SetCookiesParams::new(cookies),
-            )
-            .await
-            .map_err(error)?;
-        }
+            if !initial.cookies.is_empty() {
+                page.execute(
+                    chromiumoxide::cdp::browser_protocol::network::SetCookiesParams::new(cookies),
+                )
+                .await
+                .map_err(error)?;
+            }
+            Some(task)
+        } else {
+            None
+        };
         page.execute(NavigateParams::new(url))
             .await
             .map_err(error)?;
@@ -166,6 +213,7 @@ impl LoginSession {
             websocket,
             storage: BTreeMap::new(),
             _proxy: proxy,
+            restore_task,
         })
     }
     /// CDP access for automated fixture interaction; application commands never expose this handle.
@@ -197,8 +245,18 @@ impl LoginSession {
             storage: self.storage.values().cloned().collect(),
         })
     }
-    pub async fn close(self) {
+    pub async fn close(mut self) {
+        if let Some(task) = self.restore_task.take() {
+            task.abort();
+        }
         self.renderer.close().await;
+    }
+}
+impl Drop for LoginSession {
+    fn drop(&mut self) {
+        if let Some(task) = &self.restore_task {
+            task.abort();
+        }
     }
 }
 /// JSON encoding prevents storage keys/values from becoming executable script; origin check prevents token leakage.

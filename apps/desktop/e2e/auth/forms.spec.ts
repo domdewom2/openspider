@@ -12,7 +12,7 @@ test("captures a form session into configuration and discards a cancelled browse
     let saved = false;
     core.handlers.set("auth.openLogin", () => ({ opId: "form-login-op" }));
     core.handlers.set("auth.finishLogin", () => { saved = true; return { name: "fixture-profile", kind: "form", host: "fixture.test", createdAt: "2026-10-27T00:00:00Z", hasSecret: true }; });
-    core.handlers.set("auth.loginStatus", () => saved ? [{ loginUrl: "https://fixture.test/login", state: "active", cookies: 1, capturedAt: "2026-10-27T00:00:00Z" }] : []);
+    core.handlers.set("auth.loginStatus", () => saved ? [{ profile: "fixture-profile", loginUrl: "https://fixture.test/login", state: "active", cookies: 1, capturedAt: "2026-10-27T00:00:00Z" }] : []);
     core.handlers.set("op.cancel", () => undefined);
     window.cfgFixture.open("auth.form");
   });

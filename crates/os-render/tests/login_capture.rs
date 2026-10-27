@@ -43,7 +43,16 @@ async fn form_and_two_factor_capture_http_only_cookies_and_both_storages() {
                             .iter()
                             .any(|s| s.local_storage.contains_key("token"))
                     {
-                        break session;
+                        let loaded = login
+                            .page()
+                            .evaluate("document.readyState !== 'loading'")
+                            .await
+                            .ok()
+                            .and_then(|v| v.into_value::<bool>().ok())
+                            == Some(true);
+                        if loaded {
+                            break session;
+                        }
                     }
                 }
                 tokio::time::sleep(Duration::from_millis(20)).await;
@@ -138,4 +147,106 @@ async fn capture_expiry_is_earliest_cookie_and_rejects_non_web_urls() {
     };
     assert!(!session.expired(99));
     assert!(session.expired(100));
+}
+
+// spec: CRAWL-120
+#[tokio::test]
+async fn renewing_profile_restores_each_origin_once_and_keeps_rotated_or_removed_tokens() {
+    use os_render::login::{CapturedSession, OriginStorage};
+    let site = FormLoginSite::start().await.unwrap();
+    let origin = site.url("");
+    let foreign = origin.replace("127.0.0.1", "localhost");
+    let initial = CapturedSession {
+        storage: [origin.clone(), foreign.clone()]
+            .into_iter()
+            .map(|origin| OriginStorage {
+                origin,
+                local_storage: [("token".into(), "OLD-LOCAL".into())].into(),
+                session_storage: [("token".into(), "OLD-SESSION".into())].into(),
+            })
+            .collect(),
+        ..Default::default()
+    };
+    let mut login = LoginSession::open(
+        &site.url("/login-2fa"),
+        LoginOpts {
+            headless: true,
+            initial: Some(initial),
+            ..Default::default()
+        },
+    )
+    .await
+    .unwrap();
+    wait_for_token(&mut login, "OLD-LOCAL", &site.url("/login-2fa")).await;
+    login.page().evaluate("document.querySelector('[name=user]').value='fixture';document.querySelector('[name=password]').value='secret';document.querySelector('[name=code]').value='123456';document.querySelector('form').requestSubmit();").await.unwrap();
+    let captured = wait_for_token(&mut login, "LOCAL-FIXTURE", &site.url("/mitglieder/")).await;
+    assert!(captured.final_url.ends_with("/mitglieder/"));
+    assert_eq!(
+        captured.storage[0].session_storage["token"],
+        "SESSION-FIXTURE"
+    );
+    login
+        .page()
+        .goto(format!("{foreign}/storage-probe"))
+        .await
+        .unwrap();
+    wait_for_token(&mut login, "OLD-LOCAL", &format!("{foreign}/storage-probe")).await;
+    login.page().goto(site.url("/storage-probe")).await.unwrap();
+    wait_for_token(&mut login, "LOCAL-FIXTURE", &site.url("/storage-probe")).await;
+    // Clearing storage is also a legitimate session change; no bootstrap marker remains.
+    login
+        .page()
+        .evaluate(
+            "localStorage.clear();sessionStorage.clear();location.href='/storage-probe?cleared';",
+        )
+        .await
+        .unwrap();
+    tokio::time::timeout(Duration::from_secs(10), async {
+        loop {
+            if let Ok(session) = login.capture().await {
+                if session.final_url.ends_with("?cleared") {
+                    let storage = session.storage.iter().find(|s| s.origin == origin).unwrap();
+                    assert!(storage.local_storage.is_empty());
+                    assert!(storage.session_storage.is_empty());
+                    break;
+                }
+            }
+            tokio::time::sleep(Duration::from_millis(20)).await;
+        }
+    })
+    .await
+    .unwrap();
+    login.close().await;
+}
+async fn wait_for_token(
+    login: &mut LoginSession,
+    token: &str,
+    url: &str,
+) -> os_render::login::CapturedSession {
+    tokio::time::timeout(Duration::from_secs(10), async {
+        loop {
+            if let Ok(session) = login.capture().await {
+                if session.final_url == url
+                    && session.storage.iter().any(|s| {
+                        session.final_url.starts_with(&s.origin)
+                            && s.local_storage.get("token").is_some_and(|t| t == token)
+                    })
+                {
+                    let loaded = login
+                        .page()
+                        .evaluate("document.readyState !== 'loading'")
+                        .await
+                        .ok()
+                        .and_then(|v| v.into_value::<bool>().ok())
+                        == Some(true);
+                    if loaded {
+                        break session;
+                    }
+                }
+            }
+            tokio::time::sleep(Duration::from_millis(20)).await;
+        }
+    })
+    .await
+    .unwrap()
 }

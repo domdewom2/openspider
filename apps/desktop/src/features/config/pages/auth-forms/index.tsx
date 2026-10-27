@@ -63,7 +63,7 @@ export function FormLoginsPanel() {
   return <FieldFrame path="auth.form">
     <h3>{t("form-login-title")}</h3>
     <table className="os-cfg-table" data-testid="auth-form"><thead><tr><th>{t("form-login-url")}</th><th>{t("form-login-state")}</th><th>{t("form-login-time")}</th><th>{t("form-login-cookies")}</th><th>{t("form-login-actions")}</th></tr></thead>
-      <tbody>{rows.map((row) => <tr key={row.login_url}><td>{row.login_url}</td><td>{t(`form-login-${statuses.find((s) => s.loginUrl === row.login_url)?.state ?? "missing"}`, { count: row.cookie_count })}</td><td>{row.captured_at ?? "–"}</td><td>{row.cookie_count}</td><td>
+      <tbody>{rows.map((row) => <tr key={row.login_url}><td>{row.login_url}</td><td>{t(`form-login-${statuses.find((s) => s.profile === row.profile && s.loginUrl === row.login_url)?.state ?? "missing"}`, { count: row.cookie_count })}</td><td>{row.captured_at ?? "–"}</td><td>{row.cookie_count}</td><td>
         <Button isDisabled={lock !== null || busy || !!operation} onPress={() => { setUrl(row.login_url); void open(row.profile ?? undefined, row.login_url); }}>{t("form-login-renew")}</Button>
         <Button isDisabled={lock !== null || busy} onPress={() => set(rows.filter((r) => r !== row))}>{t("form-login-remove")}</Button>
       </td></tr>)}</tbody></table>
