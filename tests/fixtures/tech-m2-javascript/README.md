@@ -23,6 +23,13 @@ ONPAGE-090/170 [M2], ONPAGE-172/178/180/181, OUT-043. Tests live in
 `os-export/tests/reports_redirects.rs`, and the two JavaScript/screenshot export
 modules. CSV and XLSX checks use the same persisted facts.
 
-The screenshot bulk export requires saved PNG captures. JPEG capture is an
-optional rendering extension and is rejected before writing output rather than
-being mislabeled as PNG. The current renderer writes one tile (tile 0) per page.
+`screenshot.jpg` is a synthetic JPEG derived from the same 32×24 PNG fixture.
+Mixed PNG/JPEG captures export as PNG, with decoded JPEG pixels preserved.
+The current renderer writes one tile (tile 0) per page. Repeated exports replace
+the complete screenshot folder, including its index; failed or cancelled
+replacements retain the previous folder.
+
+`app_screenshots.rs` supplies the test-only app command regression for this
+fixture (mixed formats and a repeated export from three pages to two). The
+production export module includes it only under `cfg(test)`, keeping direct
+fixture database access outside production source files.
