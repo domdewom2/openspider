@@ -675,6 +675,57 @@ fn named<'a>(
                                 }
                                 let dir = PathBuf::from(args.dir);
                                 let stage = Stage::new(&dir)?;
+                                // OUT-043 uses local files through the same read snapshot and staging area.
+                                if kind == ExportKind::Bulk && name == core::bulk_screenshots::NAME
+                                {
+                                    let report = |rows| progress.report(rows, None);
+                                    let context = ExportCtx {
+                                        cancel: &work_token,
+                                        progress: &report,
+                                        skip_empty: false,
+                                        workbook: None,
+                                        skipped: vec![],
+                                    };
+                                    core::bulk_screenshots::export(
+                                        file,
+                                        &s.config,
+                                        &stage.0,
+                                        Some(&context),
+                                    )
+                                    .map_err(export_error)?;
+                                    checked(&work_token)?;
+                                    let source = stage.0.join("screenshots");
+                                    let target = dir.join("screenshots");
+                                    std::fs::create_dir_all(&target)
+                                        .map_err(|e| io_error(&target, e))?;
+                                    let paths = std::fs::read_dir(&source)
+                                        .map_err(|e| io_error(&source, e))?;
+                                    let index = source.join("index.csv");
+                                    let mut bytes = 0;
+                                    for entry in paths {
+                                        checked(&work_token)?;
+                                        let path = entry.map_err(|e| io_error(&source, e))?.path();
+                                        if path == index {
+                                            continue;
+                                        }
+                                        let destination =
+                                            target.join(path.file_name().ok_or_else(|| {
+                                                CmdError::new(
+                                                    ErrorCode::Internal,
+                                                    "err-export-path",
+                                                )
+                                            })?);
+                                        bytes +=
+                                            stage.publish(&path, &destination, &work_token)?.bytes;
+                                    }
+                                    bytes += stage
+                                        .publish(&index, &target.join("index.csv"), &work_token)?
+                                        .bytes;
+                                    return to_json(&FileResult {
+                                        path: target.display().to_string(),
+                                        bytes,
+                                    });
+                                }
                                 if kind == ExportKind::Bulk && name == core::bulk_issues::BULK_NAME
                                 {
                                     let tabs =

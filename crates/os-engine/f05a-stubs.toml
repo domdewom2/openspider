@@ -133,15 +133,3 @@ owner = "M2-K05"
 file = "crates/os-loadtest/src/bin/gen-ui-large.rs"
 function = "main"
 signature = "fn main()"
-
-[[stub]]
-owner = "M2-R02"
-file = "crates/os-export/src/catalog/bulk_javascript.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"
-
-[[stub]]
-owner = "M2-R02"
-file = "crates/os-export/src/catalog/bulk_screenshots.rs"
-function = "entries"
-signature = "pub fn entries() -> &'static [TableEntry]"

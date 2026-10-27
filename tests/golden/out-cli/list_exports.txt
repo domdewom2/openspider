@@ -445,6 +445,8 @@ Sitemaps:URLs In Multiple Sitemaps Details
 Sitemaps:XML Sitemap With Over 50k URLs Details
 Sitemaps:XML Sitemap Over 50MB Details
 Sitemaps:Orphan URLs Details
+JavaScript:Pages With JavaScript Issues
+JavaScript:Blocked Resources
 JavaScript:Blocked Resource Inlinks
 JavaScript:Contains JavaScript Links Inlinks
 JavaScript:Contains JavaScript Content Inlinks
