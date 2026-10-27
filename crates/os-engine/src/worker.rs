@@ -787,6 +787,18 @@ async fn render_page<F: Fetch>(
                     }
                 }
             }
+            // TECH-106: original nofollow/none remains authoritative after rendering.
+            if !raw.effective_follow {
+                dom.effective_follow = false;
+                for d in &raw.directives {
+                    if d.applies
+                        && d.tokens.iter().any(|t| t == "nofollow" || t == "none")
+                        && !dom.directives.contains(d)
+                    {
+                        dom.directives.push(d.clone());
+                    }
+                }
+            }
             let raw_images: std::collections::HashSet<_> =
                 raw.images.iter().map(|i| i.resolved.clone()).collect();
             let dom_images: std::collections::HashSet<_> =
@@ -811,6 +823,7 @@ async fn render_page<F: Fetch>(
                     .filter(|i| !dom_images.contains(&i.resolved))
                     .cloned(),
             );
+            crate::render_glue::add_resource_images(&mut dom, &rendered, &sh.cfg, &mut a.origins);
             // A document navigation is distinct from a history URL change.
             if let Some(target) = rendered
                 .navigation_url

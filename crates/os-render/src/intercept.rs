@@ -390,19 +390,26 @@ impl Intercept {
                         } else {
                             resource_type
                         };
-                        let allowed = match &policy {
-                            Some(policy) if resource_url != main_url => {
-                                policy.allowed_resource(resource_url, resource_type).await
+                        let blocked_reason = match &policy {
+                            Some(policy) if resource_url == main_url => {
+                                if policy.allowed(resource_url).await {
+                                    None
+                                } else {
+                                    policy
+                                        .blocked_reason(resource_url, resource_type)
+                                        .await
+                                        .or(Some("robots"))
+                                }
                             }
-                            Some(policy) => policy.allowed(resource_url).await,
-                            None => true,
+                            Some(policy) => {
+                                policy.blocked_reason(resource_url, resource_type).await
+                            }
+                            None => None,
                         };
-                        if !allowed {
-                            data.lock().expect("capture").block(
-                                resource_url.into(),
-                                "robots",
-                                None,
-                            );
+                        if let Some(reason) = blocked_reason {
+                            data.lock()
+                                .expect("capture")
+                                .block(resource_url.into(), reason, None);
                             (
                                 "Fetch.failRequest",
                                 json!({"requestId":id,"errorReason":"BlockedByClient"}),

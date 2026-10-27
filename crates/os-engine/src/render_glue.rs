@@ -190,6 +190,62 @@ impl<F: Fetch> std::fmt::Debug for Policy<F> {
     }
 }
 impl<F: Fetch> os_render::api::ResourcePolicy for Policy<F> {
+    fn blocked_reason<'a>(
+        &'a self,
+        url: &'a str,
+        resource_type: &'a str,
+    ) -> BoxFuture<'a, Option<&'static str>> {
+        Box::pin(async move {
+            let (Some(sh), Ok(target)) = (self.0.upgrade(), Url::parse(url)) else {
+                return Some("excluded");
+            };
+            let scope = sh.scope.classify(&os_url::normalize(&target));
+            if scope == os_url::ScopeClass::External && !sh.cfg.spider.external.crawl {
+                return Some("excluded");
+            }
+            let kind = match resource_type {
+                "Image" => Some(LinkType::Image),
+                "Stylesheet" | "Font" | "Other" => Some(LinkType::Css),
+                "Script" => Some(LinkType::JavaScript),
+                "Media" => Some(LinkType::Media),
+                "Document" => Some(LinkType::Iframe),
+                "Navigation" => Some(LinkType::Hyperlink),
+                _ => None,
+            };
+            if let Some(kind) = kind {
+                let link = ExtractedLink {
+                    link_type: kind,
+                    resolved: Some(url.into()),
+                    crawlable: true,
+                    ..Default::default()
+                };
+                if !crate::decide::decide(&link, scope, &sh.cfg, true).crawl {
+                    return Some("excluded");
+                }
+            }
+            if !sh.cfg.extraction.cookies && analytics_host(target.host_str().unwrap_or_default()) {
+                return Some("excluded");
+            }
+            if sh.fetcher.target_denial(&target).await.is_some() {
+                return Some("excluded");
+            }
+            let check = sh.gate.check(&*sh.fetcher, &target).await;
+            if let Some((result, write)) = check.robots_fetch {
+                if crate::robots_glue::record_robots(&sh, result, write)
+                    .await
+                    .is_err()
+                {
+                    return Some("excluded");
+                }
+            }
+            matches!(
+                check.decision,
+                os_fetch::robots::RobotsDecision::Blocked { .. }
+            )
+            .then_some("robots")
+        })
+    }
+
     fn allowed_resource<'a>(&'a self, url: &'a str, resource_type: &'a str) -> BoxFuture<'a, bool> {
         Box::pin(async move {
             let (Some(sh), Ok(target)) = (self.0.upgrade(), Url::parse(url)) else {
@@ -617,6 +673,18 @@ pub(crate) fn comparison(raw: &ParsedPage, dom: &ParsedPage) -> Vec<(ExtKey, Val
                 value.map(Value::Text).unwrap_or(Value::Null),
             ));
         }
+        // TECH-107/108: HTTP hints must not mask the HTML-only comparison.
+        let html_canonical = page
+            .canonicals
+            .iter()
+            .filter(|c| c.source == os_model::HintSource::Html && c.resolved.is_some())
+            .min_by_key(|c| !c.in_head)
+            .and_then(|c| c.resolved.as_deref())
+            .and_then(os_url::compare::compare_key);
+        facts.push((
+            ExtKey::new("render", &format!("{prefix}_html_canonical")).expect("static key"),
+            html_canonical.map(Value::Text).unwrap_or(Value::Null),
+        ));
         facts.push((
             ExtKey::new("render", &format!("{prefix}_word_count")).expect("static key"),
             page.word_count
@@ -635,4 +703,90 @@ pub(crate) fn comparison(raw: &ParsedPage, dom: &ParsedPage) -> Vec<(ExtKey, Val
         ));
     }
     facts
+}
+
+/// ONPAGE-170/178: add loaded CSS and markup-free image instances to the normal image path.
+pub(crate) fn add_resource_images(
+    dom: &mut ParsedPage,
+    rendered: &RenderedPage,
+    cfg: &CrawlConfig,
+    origins: &mut HashMap<(LinkType, String), LinkOrigin>,
+) {
+    let key = |url: &str| os_url::compare::compare_key(url).unwrap_or_else(|| url.into());
+    let loaded: HashSet<_> = rendered
+        .network
+        .iter()
+        .filter(|n| n.resource_type.eq_ignore_ascii_case("image") && (200..300).contains(&n.status))
+        .map(|n| key(&n.url))
+        .collect();
+    let mut extra = rendered
+        .resource_images
+        .iter()
+        .filter(|i| {
+            i.resolved
+                .as_deref()
+                .is_some_and(|url| loaded.contains(&key(url)))
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+    let non_content: HashSet<_> = rendered
+        .non_content_image_urls
+        .iter()
+        .map(|url| key(url))
+        .collect();
+    let referenced: HashSet<_> = dom
+        .images
+        .iter()
+        .chain(&extra)
+        .filter_map(|i| i.resolved.as_deref().map(key))
+        .collect();
+    for n in &rendered.network {
+        if !n.resource_type.eq_ignore_ascii_case("image")
+            || !(200..300).contains(&n.status)
+            || referenced.contains(&key(&n.url))
+            || non_content.contains(&key(&n.url))
+            || extra.iter().any(|i| {
+                i.resolved
+                    .as_deref()
+                    .is_some_and(|url| key(url) == key(&n.url))
+            })
+        {
+            continue;
+        }
+        extra.push(os_model::ImageInstance {
+            src_raw: n.url.clone(),
+            resolved: Some(n.url.clone()),
+            source: os_model::ImageSource::Css,
+            origin: LinkOrigin::DynamicallyLoaded,
+            ..Default::default()
+        });
+    }
+    for mut image in extra {
+        if dom.images.iter().any(|i| {
+            i.source == image.source && i.resolved == image.resolved && i.xpath == image.xpath
+        }) {
+            continue;
+        }
+        image.doc_order = dom.images.len().min(u32::MAX as usize) as u32;
+        let position = os_parse::link_position::classify(
+            &image.xpath,
+            os_model::LinkPosition::Content,
+            &cfg.link_positions,
+        );
+        image.link_position = Some(position.clone());
+        let link = ExtractedLink {
+            link_type: LinkType::Image,
+            href_raw: image.src_raw.clone(),
+            resolved: image.resolved.clone(),
+            xpath: image.xpath.clone(),
+            position,
+            path_type: os_model::PathType::Absolute,
+            crawlable: true,
+            doc_order: image.doc_order,
+            ..Default::default()
+        };
+        image.origin = *origins.entry(link_key(&link)).or_insert(image.origin);
+        dom.links.push(link);
+        dom.images.push(image);
+    }
 }

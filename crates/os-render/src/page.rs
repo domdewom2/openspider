@@ -429,6 +429,10 @@ async fn run(
             )
         })
         .collect();
+    let resource_images = resource_images(page, opts).await?;
+    let non_content_image_urls = read_document(opts, || eval(page,
+        r#"Array.from(document.querySelectorAll('link[rel~="icon"],meta[property="og:image"]'), e => {try{return new URL(e.href || e.content,document.baseURI).href;}catch{return '';}})"#
+    )).await?.as_array().into_iter().flatten().filter_map(|v|v.as_str().map(str::to_owned)).collect();
     let mut screenshot_tiles = Vec::new();
     let screenshot_start = Instant::now();
     if opts.screenshots {
@@ -516,5 +520,52 @@ async fn run(
         },
         load_timed_out: !loaded,
         images,
+        resource_images,
+        non_content_image_urls,
     })
+}
+
+/// Collect CSS references from computed styles without changing the serialized DOM.
+async fn resource_images(
+    page: &Page,
+    opts: &RenderOpts,
+) -> Result<Vec<os_model::ImageInstance>, RenderError> {
+    let values = read_document(opts, || eval(page, r#"(() => {
+      const path = e => { const parts=[]; while(e && e.nodeType===1) {
+        const name=e.localName; let n=1; for(let p=e.previousElementSibling;p;p=p.previousElementSibling) if(p.localName===name)n++;
+        parts.unshift(name+'['+n+']'); e=e.parentElement;
+      } return '/'+parts.join('/'); };
+      const rows=[]; const seen=new Set();
+      for(const e of document.querySelectorAll('*')) {
+        for(const pseudo of [null,'::before','::after']) {
+          const style=getComputedStyle(e,pseudo);
+          for(const value of [style.backgroundImage,style.content]) {
+            for(const match of value.matchAll(/url\(["']?([^"')]+)["']?\)/g)) {
+              let url; try {url=new URL(match[1],document.baseURI).href;} catch {continue;}
+              if(!/^https?:/.test(url))continue;
+              const key=url+'\n'+path(e);
+              if(seen.has(key))continue;
+              seen.add(key);rows.push({url,path:path(e)});
+            }
+          }
+        }
+      }
+      return rows;
+    })()"#)).await?;
+    Ok(values
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|v| {
+            let url = v["url"].as_str()?.to_string();
+            Some(os_model::ImageInstance {
+                src_raw: url.clone(),
+                resolved: Some(url),
+                source: os_model::ImageSource::Css,
+                xpath: v["path"].as_str().unwrap_or_default().into(),
+                origin: os_model::LinkOrigin::RenderedHtml,
+                ..Default::default()
+            })
+        })
+        .collect())
 }
