@@ -16,7 +16,7 @@ import "./toptabs.css";
 
 export function TopTabs() {
   const active = useComparison(s => !!s.session);
-  return <div className="os-compare-tab-strip">{active ? <ComparisonTabs /> : <RegularTopTabs />}<ComparisonControls /></div>;
+  return <div className="os-compare-tab-strip">{active ? <ComparisonTabs /> : <RegularTopTabs />}<ComparisonControls compact={!active} /></div>;
 }
 function RegularTopTabs() {
   const t = useT(); const s = useTabs();

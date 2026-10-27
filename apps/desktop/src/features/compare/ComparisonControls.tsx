@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { GitCompareArrows } from "lucide-react";
 import { useT } from "../../i18n";
 import { compare } from "../../ipc/compare";
 import { crawls } from "../../ipc/crawls";
@@ -7,12 +8,13 @@ import type { MappingRuleDto } from "../../ipc/gen/MappingRuleDto";
 import type { RuleTrace } from "../../ipc/gen/RuleTrace";
 import { describeError, toCmdError } from "../../ipc/errors";
 import { Dialog, DialogFooter } from "../../ui/primitives/Dialog";
-import { Button } from "../../ui/primitives/Button";
+import { Button, IconButton } from "../../ui/primitives/Button";
+import { Tooltip } from "../../ui/primitives/Tooltip";
 import { useMainMode } from "../help/state";
 import { closeComparison, openComparison, showComparison, swapComparison, useComparison } from "./model";
 import "./compare.css";
 
-export function ComparisonControls() {
+export function ComparisonControls({ compact = false }: { compact?: boolean }) {
   const t = useT(); const state = useComparison();
   const [rows, setRows] = useState<CrawlListing[]>([]);
   const [current, setCurrent] = useState(""); const [previous, setPrevious] = useState("");
@@ -48,7 +50,7 @@ export function ComparisonControls() {
   const patch = (index: number, value: Partial<MappingRuleDto>) => setRules(r => r.map((rule,i) => i === index ? { ...rule, ...value } : rule));
   const move = (index: number, delta: number) => setRules(r => { const next = [...r]; [next[index], next[index + delta]] = [next[index + delta]!, next[index]!]; return next; });
   return <div className="os-compare-controls">
-    <Button onPress={showComparison} isDisabled={state.busy}>{t("compare-open")}</Button>
+    {compact ? <Tooltip text={t("compare-open")}><IconButton label={t("compare-open")} icon={<GitCompareArrows size={16} aria-hidden="true" />} onPress={showComparison} isDisabled={state.busy} /></Tooltip> : <Button onPress={showComparison} isDisabled={state.busy}>{t("compare-open")}</Button>}
     {state.session && <><span title={`${state.session.current.name} / ${state.session.previous.name}`}>{state.session.current.name} / {state.session.previous.name}</span>
       <Button onPress={() => void swapComparison()} isDisabled={state.busy}>{t("compare-swap")}</Button>
       <Button onPress={() => void closeComparison()} isDisabled={state.busy}>{t("compare-close")}</Button></>}

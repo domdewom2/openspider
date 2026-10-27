@@ -203,3 +203,17 @@ it("toggles Change % sorting through the core, resets paging, and exports the so
   expect(csv).toContain("empty,\r\npositive,50\r\nnegative,-50");
   expect(calls("view.rows").at(-1)?.args).toMatchObject({comparison:{sort:{column:"Word Count Change %",dir:"desc"}}});
 });
+
+// spec: UI-004
+// spec: OUT-140
+it("opens comparison with the accessible compact launcher beside normal crawl tabs",async()=>{
+  render(<ComparisonControls compact />);
+  const launcher=screen.getByRole("button",{name:"Compare crawls"});
+  expect(launcher.textContent).toBe("");
+  fireEvent.click(launcher);
+  await screen.findByLabelText("Current");
+  await waitFor(()=>expect(screen.getByLabelText("Previous")).toHaveValue(previous.crawlId));
+  await waitFor(()=>expect(screen.getByRole("button",{name:"Compare"})).toBeEnabled());
+  fireEvent.click(screen.getByRole("button",{name:"Compare"}));
+  await waitFor(()=>expect(useComparison.getState().session).toEqual(session));
+});
