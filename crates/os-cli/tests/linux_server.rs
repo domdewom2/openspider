@@ -80,6 +80,21 @@ fn spawn_reader(stream: impl std::io::Read + Send + 'static) -> Receiver<String>
     rx
 }
 
+/// Sammelt die gelesenen Zeilen, bis der Lese-Thread am Dateiende aufhört. `try_iter` direkt nach dem Prozessende
+/// verliert Zeilen, die der Thread noch nicht weitergereicht hat; die Obergrenze verhindert ein Hängen, falls ein
+/// Enkelprozess die Pipe offen hält.
+fn collect_lines(rx: Receiver<String>) -> String {
+    let deadline = Instant::now() + FAST;
+    let mut lines = Vec::new();
+    while let Some(left) = deadline.checked_duration_since(Instant::now()) {
+        match rx.recv_timeout(left) {
+            Ok(line) => lines.push(line),
+            Err(_) => break,
+        }
+    }
+    lines.join("\n")
+}
+
 // spec: OUT-273
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn headless_crawl_of_the_basic_site_matches_the_internal_all_golden() {
@@ -113,8 +128,7 @@ async fn headless_crawl_of_the_basic_site_matches_the_internal_all_golden() {
         let stdout = spawn_reader(child.stdout.take().unwrap());
         let stderr = spawn_reader(child.stderr.take().unwrap());
         let status = wait_for_exit(&mut child, SLOW);
-        let text = |rx: Receiver<String>| rx.try_iter().collect::<Vec<_>>().join("\n");
-        (status, text(stdout), text(stderr))
+        (status, collect_lines(stdout), collect_lines(stderr))
     })
     .await
     .unwrap();
@@ -222,7 +236,7 @@ fn a_command_that_needs_a_secret_reports_an_error_within_five_seconds() {
     let stderr = spawn_reader(child.stderr.take().unwrap());
     let status = wait_for_exit(&mut child, FAST);
     let elapsed = start.elapsed();
-    let log = stderr.try_iter().collect::<Vec<_>>().join("\n");
+    let log = collect_lines(stderr);
 
     let status = status.unwrap_or_else(|| panic!("hängt statt zu melden ({elapsed:?}): {log}"));
     assert!(!status.success(), "Fehler erwartet: {log}");
