@@ -421,6 +421,9 @@ fn export_bulk_in_snapshot(
         ExportRef::Bulk(canonical) => canonical,
         other => unreachable!("Bulk-Auflösung lieferte {other:?}"),
     };
+    if canonical == catalog::bulk_screenshots::NAME {
+        return catalog::bulk_screenshots::export(file, cfg, out_dir, None);
+    }
     if let Some(kind) = catalog::bulk_web::page_export(&canonical) {
         return catalog::bulk_web::export_pages(file, cfg, kind, out_dir, None);
     }
@@ -793,6 +796,32 @@ fn export_batch_in(
                 continue;
             }
             if kind == ExportKind::Bulk {
+                if name == catalog::bulk_screenshots::NAME {
+                    let progress = |rows| (ctx.progress)(done.get() + rows);
+                    let screenshot_ctx = crate::types::ExportCtx {
+                        cancel: ctx.cancel,
+                        progress: &progress,
+                        skip_empty: ctx.skip_empty,
+                        workbook: None,
+                        skipped: vec![],
+                    };
+                    let files = catalog::bulk_screenshots::export(
+                        file,
+                        cfg,
+                        options.directory,
+                        Some(&screenshot_ctx),
+                    )?;
+                    for info in files {
+                        done.set(done.get() + info.rows);
+                        result.warnings.extend(info.warnings.clone());
+                        if info.rows == 0 && ctx.skip_empty {
+                            result.skipped.push(name.clone());
+                        } else {
+                            result.files.push(info);
+                        }
+                    }
+                    continue;
+                }
                 if catalog::page_content::matches(&name) {
                     let progress = |rows| (ctx.progress)(done.get() + rows);
                     let page_ctx = crate::types::ExportCtx {

@@ -59,7 +59,7 @@ pub struct ConsoleEntry {
 pub struct BlockedResource {
     /// URL der Ressource.
     pub url: String,
-    /// Grund: `robots` oder `error`.
+    /// Grund: `robots`, `error` oder `excluded` (Crawl-/Scope-Ausschluss).
     pub reason: String,
     /// Statuscode, falls abgerufen.
     pub status: Option<u16>,

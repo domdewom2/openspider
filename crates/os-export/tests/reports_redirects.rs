@@ -467,9 +467,29 @@ async fn all_redirects_omits_synthetic_hops_when_hsts_is_disabled() {
 }
 
 // spec: OUT-081 [M2]
-#[test]
-#[ignore = "M2: ONPAGE-057 JavaScript-Weiterleitungen gibt es nur mit Rendering"]
-fn javascript_redirect_hop_needs_rendering() {}
+#[tokio::test]
+async fn javascript_redirect_hop_needs_rendering() {
+    let mut cfg = base_config();
+    cfg.rendering.mode = os_model::RenderingMode::JavaScript;
+    cfg.rendering.ajax_timeout_s = 0.1;
+    cfg.rendering.screenshots.enabled = false;
+    let fx = crawl_fixture_from(
+        "tech-m2-javascript",
+        "http://site.test/redirect",
+        cfg.clone(),
+    )
+    .await;
+    let (_tmp, t) = load(&fx, &cfg, "Redirects:All Redirects");
+    assert_eq!(t.rows.len(), 1);
+    assert_eq!(
+        hop(&t, &t.rows[0], "Redirect Type", 1),
+        "JavaScript Redirect"
+    );
+    assert_eq!(
+        t.get(&t.rows[0], "Final Address"),
+        "http://site.test/target"
+    );
+}
 
 // spec: OUT-112
 #[tokio::test]
@@ -697,4 +717,72 @@ async fn real_list_crawl_reports_unfollowed_targets_in_upload_order() {
     )
     .unwrap();
     assert_eq!(result.files[0].rows, 0);
+}
+
+// spec: ONPAGE-172
+// spec: ONPAGE-178
+// spec: ONPAGE-180
+// spec: ONPAGE-181
+#[tokio::test]
+async fn rendered_image_bulk_exports_keep_instance_dimensions_and_background_origins() {
+    use os_analyze::analysis::{self, CancelToken};
+    use os_model::{AnalysisStep, StepState};
+    let mut cfg = base_config();
+    cfg.rendering.mode = os_model::RenderingMode::JavaScript;
+    cfg.rendering.viewport.preset = "custom".into();
+    cfg.rendering.ajax_timeout_s = 0.5;
+    cfg.rendering.screenshots.enabled = false;
+    let fx = crawl_fixture_from("tech-m2-javascript", "/images", cfg.clone()).await;
+    assert_eq!(
+        analysis::steps::images::run(&fx.file, &cfg, &CancelToken::new()).unwrap(),
+        StepState::Done
+    );
+    analysis::persist::write_step(
+        &fx.file,
+        AnalysisStep::Images,
+        StepState::Done,
+        None,
+        Some(&os_analyze::state::step_config_hash(
+            AnalysisStep::Images,
+            &cfg,
+        )),
+    )
+    .unwrap();
+    let out = tempfile::tempdir().unwrap();
+    let files = os_export::export_bulk(
+        &fx.file,
+        &cfg,
+        "Images:All Image Inlinks",
+        out.path(),
+        Format::Csv,
+    )
+    .unwrap();
+    let table = Table::read(&files[0].path);
+    let lazy = table
+        .rows
+        .iter()
+        .find(|r| table.get(r, "To").ends_with("/image.png"))
+        .unwrap();
+    assert_eq!(table.get(lazy, "Real Dimensions (WxH)"), "800x600");
+    assert_eq!(table.get(lazy, "Display Dimensions (WxH)"), "400x300");
+    assert_eq!(table.get(lazy, "Potential Savings"), "15000");
+    assert_eq!(table.get(lazy, "Link Origin"), "Rendered HTML");
+    let dynamic = table
+        .rows
+        .iter()
+        .find(|r| table.get(r, "To").ends_with("/dynamic.png"))
+        .unwrap();
+    assert_eq!(table.get(dynamic, "Link Origin"), "Dynamically Loaded");
+    for (name, count) in [
+        ("Images:Background Images Inlinks", 3),
+        ("Images:Incorrectly Sized Images Inlinks", 1),
+    ] {
+        for format in [Format::Csv, Format::Xlsx] {
+            assert_eq!(
+                os_export::export_bulk(&fx.file, &cfg, name, out.path(), format).unwrap()[0].rows,
+                count,
+                "{name}"
+            );
+        }
+    }
 }

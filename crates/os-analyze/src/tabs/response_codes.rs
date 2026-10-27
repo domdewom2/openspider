@@ -30,7 +30,7 @@ const POPULATION: &str = "u.in_tables = 1 AND u.status_code IS NOT NULL";
 
 macro_rules! blocked {
     () => {
-        "u.robots_blocked = 1"
+        "u.robots_blocked = 1 AND NOT EXISTS (SELECT 1 FROM render_blocked b WHERE b.url=u.url AND b.reason IN ('robots','error'))"
     };
 }
 macro_rules! no_response {
@@ -341,6 +341,24 @@ pub fn configure_filters(tab: &mut TabDef) {
             "Redirection (HTTP Refresh)" => predicates.0,
             "Internal Redirection (HTTP Refresh)" => predicates.1,
             "External Redirection (HTTP Refresh)" => predicates.2,
+            "Blocked Resource" | "Internal Blocked Resource" | "External Blocked Resource" => {
+                filter.requires = vec![crate::defs::Requirement::Rendering];
+                match filter.id {
+                    "Internal Blocked Resource" => "u.is_internal=1 AND u.id IN (SELECT t.id FROM render_blocked b JOIN urls t ON t.url=b.url WHERE b.reason IN ('robots','error'))",
+                    "External Blocked Resource" => "u.is_internal=0 AND u.id IN (SELECT t.id FROM render_blocked b JOIN urls t ON t.url=b.url WHERE b.reason IN ('robots','error'))",
+                    _ => "u.id IN (SELECT t.id FROM render_blocked b JOIN urls t ON t.url=b.url WHERE b.reason IN ('robots','error'))",
+                }
+            }
+            "Redirection (JavaScript)"
+            | "Internal Redirection (JavaScript)"
+            | "External Redirection (JavaScript)" => {
+                filter.requires = vec![crate::defs::Requirement::Rendering];
+                if filter.id.starts_with("External") {
+                    "0"
+                } else {
+                    "u.is_internal=1 AND u.content_class='HTML' AND u.status_code BETWEEN 200 AND 299 AND u.redirect_type='javascript'"
+                }
+            }
             _ => continue,
         };
     }

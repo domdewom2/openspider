@@ -1,2 +1,70 @@
-# OpenSpider – Issue-Texte (Deutsch) ab M2, Tab „JavaScript“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/de.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.javascript-pages-with-blocked-resources]
+what = "Beim Rendern wurden Ressourcen durch robots.txt gesperrt."
+why = "Gesperrte Ressourcen können Inhalte verbergen oder die Darstellung verändern."
+fix = "Prüfe die robots.txt-Regeln und erlaube die für das Rendern benötigten Ressourcen."
+
+[issues.javascript-contains-javascript-links]
+what = "Einige Hyperlinks erscheinen erst im gerenderten Dokument."
+why = "Ihre Ziele lassen sich erst nach der JavaScript-Ausführung entdecken."
+fix = "Stelle wichtige Navigationslinks bereits im ausgelieferten HTML bereit."
+
+[issues.javascript-contains-javascript-content]
+what = "Das gerenderte Dokument enthält mehr Wörter als das Original."
+why = "Zusätzliche Inhalte hängen vom erfolgreichen Rendern ab."
+fix = "Liefere wichtige Texte im Original-HTML und prüfe das gerenderte Ergebnis."
+
+[issues.javascript-noindex-only-in-original-html]
+what = "Das Original enthält noindex, im gerenderten Dokument fehlt die Direktive."
+why = "Die Einschränkung des Originals bleibt trotz der Skriptänderung wirksam."
+fix = "Setze die beabsichtigten Robots-Direktiven im ausgelieferten HTML."
+
+[issues.javascript-nofollow-only-in-original-html]
+what = "Das Original enthält nofollow, im gerenderten Dokument fehlt die Direktive."
+why = "Die Einschränkung des Originals bleibt trotz der Skriptänderung wirksam."
+fix = "Setze die beabsichtigten Robots-Direktiven im ausgelieferten HTML."
+
+[issues.javascript-canonical-only-in-rendered-html]
+what = "Ein HTML-Canonical wird erst beim Rendern ergänzt."
+why = "Die Erkennung des Canonicals hängt von JavaScript ab."
+fix = "Ergänze den Canonical-Link im Head des ausgelieferten HTML."
+
+[issues.javascript-canonical-mismatch]
+what = "Original und gerendertes HTML nennen verschiedene Canonical-URLs."
+why = "Widersprüchliche Hinweise können zur falschen kanonischen Auswahl führen."
+fix = "Verwende in beiden Fassungen dieselbe beabsichtigte Canonical-URL."
+
+[issues.javascript-page-title-only-in-rendered-html]
+what = "Page Title wird durch JavaScript ergänzt oder geändert."
+why = "Suchmaschinen müssen die Seite für den endgültigen Wert rendern."
+fix = "Liefere den beabsichtigten Wert im Original-HTML und halte beide Fassungen konsistent."
+
+[issues.javascript-page-title-updated-by-javascript]
+what = "Page Title wird durch JavaScript ergänzt oder geändert."
+why = "Suchmaschinen müssen die Seite für den endgültigen Wert rendern."
+fix = "Liefere den beabsichtigten Wert im Original-HTML und halte beide Fassungen konsistent."
+
+[issues.javascript-meta-description-only-in-rendered-html]
+what = "Meta Description wird durch JavaScript ergänzt oder geändert."
+why = "Suchmaschinen müssen die Seite für den endgültigen Wert rendern."
+fix = "Liefere den beabsichtigten Wert im Original-HTML und halte beide Fassungen konsistent."
+
+[issues.javascript-meta-description-updated-by-javascript]
+what = "Meta Description wird durch JavaScript ergänzt oder geändert."
+why = "Suchmaschinen müssen die Seite für den endgültigen Wert rendern."
+fix = "Liefere den beabsichtigten Wert im Original-HTML und halte beide Fassungen konsistent."
+
+[issues.javascript-h1-only-in-rendered-html]
+what = "H1 wird durch JavaScript ergänzt oder geändert."
+why = "Suchmaschinen müssen die Seite für den endgültigen Wert rendern."
+fix = "Liefere den beabsichtigten Wert im Original-HTML und halte beide Fassungen konsistent."
+
+[issues.javascript-h1-updated-by-javascript]
+what = "H1 wird durch JavaScript ergänzt oder geändert."
+why = "Suchmaschinen müssen die Seite für den endgültigen Wert rendern."
+fix = "Liefere den beabsichtigten Wert im Original-HTML und halte beide Fassungen konsistent."
+
+[issues.javascript-pages-with-javascript-errors]
+what = "Beim Rendern wurde ein Konsolenfehler oder eine unbehandelte Ausnahme erfasst."
+why = "Fehlerhafte Skripte können Seitenfunktionen verhindern."
+fix = "Prüfe den vollständigen Konsolenkontext und korrigiere das betroffene Skript."

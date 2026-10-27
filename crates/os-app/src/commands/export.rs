@@ -730,6 +730,40 @@ fn named<'a>(
                                     .with_arg("reason", availability.reason.unwrap_or_default()));
                                 }
                                 let dir = PathBuf::from(args.dir);
+                                // OUT-043 publishes one complete local snapshot in the exporter.
+                                if kind == ExportKind::Bulk && name == core::bulk_screenshots::NAME
+                                {
+                                    let report = |rows| progress.report(rows, None);
+                                    let context = ExportCtx {
+                                        cancel: &work_token,
+                                        progress: &report,
+                                        skip_empty: false,
+                                        workbook: None,
+                                        skipped: vec![],
+                                    };
+                                    core::bulk_screenshots::export(
+                                        file,
+                                        &s.config,
+                                        &dir,
+                                        Some(&context),
+                                    )
+                                    .map_err(export_error)?;
+                                    let target = dir.join("screenshots");
+                                    let mut bytes = 0;
+                                    for entry in std::fs::read_dir(&target)
+                                        .map_err(|e| io_error(&target, e))?
+                                    {
+                                        let entry = entry.map_err(|e| io_error(&target, e))?;
+                                        bytes += entry
+                                            .metadata()
+                                            .map_err(|e| io_error(&entry.path(), e))?
+                                            .len();
+                                    }
+                                    return to_json(&FileResult {
+                                        path: target.display().to_string(),
+                                        bytes,
+                                    });
+                                }
                                 let stage = Stage::new(&dir)?;
                                 if kind == ExportKind::Bulk && name == core::bulk_issues::BULK_NAME
                                 {
@@ -840,6 +874,7 @@ fn named<'a>(
 fn bulk<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     named(app, ctx, args, ExportKind::Bulk)
 }
+
 fn report<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     named(app, ctx, args, ExportKind::Report)
 }
@@ -1124,3 +1159,7 @@ pub fn register(r: &mut Registry) {
         );
     }
 }
+
+#[cfg(test)]
+#[path = "../../../../tests/fixtures/tech-m2-javascript/app_screenshots.rs"]
+mod screenshot_tests;

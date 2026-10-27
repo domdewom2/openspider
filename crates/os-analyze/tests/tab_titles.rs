@@ -695,6 +695,13 @@ async fn tab_is_empty_when_titles_are_not_stored() {
 }
 
 // spec: ONPAGE-090 [M2]
-#[test]
-#[ignore = "M2: ONPAGE-090 Titel aus dem gerenderten DOM (js-title.html) braucht JavaScript-Rendering"]
-fn rendering_mode_takes_the_title_from_the_rendered_dom() {}
+#[tokio::test]
+async fn rendering_mode_takes_the_title_from_the_rendered_dom() {
+    let fx = javascript_rendering::rendered_fixture().await;
+    let cfg = fx.file.config().unwrap();
+    let p = view(&fx, &cfg, TAB, "All");
+    assert_eq!(cell(&fx, &p, "/spa", "Title 1"), text("Rendered title"));
+    assert_eq!(cell(&fx, &p, "/mutate", "Title 1"), text("New title"));
+}
+#[path = "tab_javascript_support.rs"]
+mod javascript_rendering;

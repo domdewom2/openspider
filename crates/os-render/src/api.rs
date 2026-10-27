@@ -148,6 +148,22 @@ pub trait ResourcePolicy: Send + Sync + std::fmt::Debug {
         self.allowed(url)
     }
 
+    /// Reason for denying a resource; standalone policies retain their robots default.
+    fn blocked_reason<'a>(
+        &'a self,
+        url: &'a str,
+        resource_type: &'a str,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Option<&'static str>> + Send + 'a>>
+    {
+        Box::pin(async move {
+            if self.allowed_resource(url, resource_type).await {
+                None
+            } else {
+                Some("robots")
+            }
+        })
+    }
+
     fn allowed<'a>(
         &'a self,
         url: &'a str,
@@ -309,6 +325,10 @@ pub struct RenderedPage {
     pub final_url: String,
     /// DOM-Bildreihenfolge einschließlich gleicher URLs mit verschiedenen Anzeigegrößen.
     pub images: Vec<(String, ImageRenderFacts)>,
+    /// Computed CSS image references, including stylesheet and pseudo-element rules (ONPAGE-178).
+    pub resource_images: Vec<os_model::ImageInstance>,
+    /// Icons and social image metadata are separate from content image instances (ONPAGE-170).
+    pub non_content_image_urls: Vec<String>,
 }
 
 pub use browser::Renderer;

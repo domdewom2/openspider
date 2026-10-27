@@ -1,0 +1,147 @@
+[[route]]
+path = "/"
+content_type = "text/html"
+body = "<!doctype html><html><head><link rel=\"icon\" href=\"data:,\"></head><body><a href=\"/spa\">spa</a><a href=\"/mutate\">mutate</a><a href=\"/static\">static</a><a href=\"/robots\">robots</a><a href=\"/error\">error</a><a href=\"/warn\">warn</a><a href=\"/noindex\">noindex</a><a href=\"/nofollow\">nofollow</a><a href=\"/none\">none</a><a href=\"/canonical\">canonical</a><a href=\"/hostcase\">hostcase</a><a href=\"/images\">images</a><a href=\"/redirect\">redirect</a><a href=\"/hash\">hash</a><a href=\"/late\">late</a><a href=\"/excluded\">excluded</a><a href=\"/httpcanonical\">httpcanonical</a></body></html>"
+
+[[route]]
+path = "/spa"
+content_type = "text/html"
+body = "<!doctype html><html><head><link rel=\"icon\" href=\"data:,\"></head><body><script>document.title='Rendered title';document.head.insertAdjacentHTML('beforeend','<meta name=description content=Description><link rel=canonical href=/spa>');document.body.insertAdjacentHTML('beforeend','<h1>Rendered heading</h1><p>new visible words</p><a href=/static>one</a><a href=/static>two</a><a href=\"http://external.test:'+location.port+'/target\">external</a>');</script></body></html>"
+
+[[route]]
+path = "/mutate"
+content_type = "text/html"
+body = "<!doctype html><html><head><link rel=\"icon\" href=\"data:,\"><title>Old title</title><meta name=description content=\"Old description\"><link rel=canonical href=/a></head><body><h1>Old heading</h1><script>document.title='New title';document.querySelector('[name=description]').content='New description';document.querySelector('h1').textContent='New heading';document.querySelector('[rel=canonical]').href='/b';</script></body></html>"
+
+[[route]]
+path = "/static"
+content_type = "text/html"
+body = "<!doctype html><html><head><link rel=\"icon\" href=\"data:,\"><title>Static</title></head><body><p>unchanged words</p></body></html>"
+
+[[route]]
+path = "/noindex"
+content_type = "text/html"
+body = "<!doctype html><html><head><link rel=\"icon\" href=\"data:,\"><meta name=robots content=noindex></head><body><a href=/target>target</a><script>document.querySelector('[name=robots]').remove()</script></body></html>"
+
+[[route]]
+path = "/nofollow"
+content_type = "text/html"
+body = "<!doctype html><html><head><link rel=\"icon\" href=\"data:,\"><meta name=robots content=nofollow></head><body><a href=/target>target</a><script>document.querySelector('[name=robots]').remove()</script></body></html>"
+
+[[route]]
+path = "/none"
+content_type = "text/html"
+body = "<!doctype html><html><head><link rel=\"icon\" href=\"data:,\"><meta name=robots content=none></head><body><a href=/target>target</a><script>document.querySelector('[name=robots]').remove()</script></body></html>"
+
+[[route]]
+path = "/canonical"
+content_type = "text/html"
+body = "<!doctype html><html><head><link rel=\"icon\" href=\"data:,\"></head><body><script>document.head.insertAdjacentHTML('beforeend','<link rel=canonical href=/canonical>')</script></body></html>"
+
+[[route]]
+path = "/hostcase"
+content_type = "text/html"
+body = "<!doctype html><html><head><link rel=\"icon\" href=\"data:,\"><link rel=canonical href=\"http://SITE.TEST/path\"></head><body><script>document.querySelector('[rel=canonical]').href='http://site.test/path'</script></body></html>"
+
+[[route]]
+path = "/httpcanonical"
+content_type = "text/html"
+body = "<!doctype html><html><head><link rel=\"icon\" href=\"data:,\"></head><body><script>document.head.insertAdjacentHTML('beforeend','<link rel=canonical href=/b>')</script></body></html>"
+[route.headers]
+Link = "</a>; rel=canonical"
+
+[[route]]
+path = "/robots"
+content_type = "text/html"
+body = "<!doctype html><html><head><link rel=\"icon\" href=\"data:,\"></head><body><script src=/blocked/app.js></script><link rel=stylesheet href=/e500.css><script>const s=document.createElement('script');s.src='http://external.test:'+location.port+'/blocked/ext.js';document.head.append(s)</script></body></html>"
+
+[[route]]
+path = "/excluded"
+content_type = "text/html"
+body = "<!doctype html><html><head><link rel=\"icon\" href=\"data:,\"></head><body><script src=http://google-analytics.com/excluded.js></script></body></html>"
+
+[[route]]
+path = "/error"
+content_type = "text/html"
+body = "<!doctype html><html><head><link rel=\"icon\" href=\"data:,\"></head><body><script>console.warn('context');console.error('explicit error');throw new Error('uncaught exception')</script></body></html>"
+
+[[route]]
+path = "/warn"
+content_type = "text/html"
+body = "<!doctype html><html><head><link rel=\"icon\" href=\"data:,\"></head><body><script>console.warn('warning only');console.log('ordinary log')</script></body></html>"
+
+[[route]]
+path = "/images"
+content_type = "text/html"
+body = "<!doctype html><html><head><link rel=\"icon\" href=\"data:,\"></head><body><img id=lazy data-src=/image.png width=400 height=300 alt=Lazy><img src=/offscreen.png width=400 height=300 style=\"position:absolute;top:3000px\"><div style=\"width:10px;height:10px;background-image:url(/bg.png)\"></div><div class=hero style=\"width:10px;height:10px\"></div><link rel=stylesheet href=/hero.css><script>document.querySelector('#lazy').src='/image.png';new Image().src='/dynamic.png'</script></body></html>"
+
+[[route]]
+path = "/redirect"
+content_type = "text/html"
+body = "<!doctype html><html><head><link rel=\"icon\" href=\"data:,\"></head><body><script>location.replace('/target')</script></body></html>"
+
+[[route]]
+path = "/hash"
+content_type = "text/html"
+body = "<!doctype html><html><head><link rel=\"icon\" href=\"data:,\"></head><body><script>location.hash='changed'</script></body></html>"
+
+[[route]]
+path = "/late"
+content_type = "text/html"
+body = "<!doctype html><html><head><link rel=\"icon\" href=\"data:,\"></head><body><script>setTimeout(()=>location.replace('/target'),10000)</script></body></html>"
+
+[[route]]
+path = "/target"
+content_type = "text/html"
+body = "<!doctype html><html><head><link rel=\"icon\" href=\"data:,\"><title>Target</title></head><body>target</body></html>"
+
+[[route]]
+path = "/blocked/app.js"
+content_type = "application/javascript"
+body = "throw new Error(\"must not load\")"
+
+[[route]]
+path = "/blocked/ext.js"
+content_type = "application/javascript"
+body = "throw new Error(\"must not load\")"
+
+[[route]]
+path = "/excluded.js"
+content_type = "application/javascript"
+body = "throw new Error(\"must not load\")"
+
+[[route]]
+path = "/e500.css"
+content_type = "text/css"
+body = "broken css"
+status = 500
+
+[[route]]
+path = "/hero.css"
+content_type = "text/css"
+body = ".hero{background:url(/hero.png)}"
+
+[[route]]
+path = "/robots.txt"
+content_type = "text/plain"
+body = "User-agent: *\nDisallow: /blocked/\n"
+
+[[route]]
+path = "/image.png"
+content_type = "image/png"
+
+[[route]]
+path = "/offscreen.png"
+content_type = "image/png"
+
+[[route]]
+path = "/bg.png"
+content_type = "image/png"
+
+[[route]]
+path = "/hero.png"
+content_type = "image/png"
+
+[[route]]
+path = "/dynamic.png"
+content_type = "image/png"

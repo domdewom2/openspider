@@ -9,6 +9,7 @@ repository.workspace = true
 authors.workspace = true
 
 [dependencies]
+image = { version = "=0.25.10", default-features = false, features = ["jpeg", "png"] }
 fancy-regex.workspace = true
 toml.workspace = true
 
