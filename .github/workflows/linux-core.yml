@@ -50,6 +50,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Runde 11: ubuntu-latest hatte < 1 GB frei, der Ressourcenschutz pausierte Crawls in Tests.
+      - name: Speicherplatz schaffen (ungenutzte SDKs des Runners)
+        run: |
+          df -h / | tail -n 1
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+          df -h / | tail -n 1
+
       # Rust laut rust-toolchain.toml (legt M2-F01 an); bis dahin die aktuelle stabile Version wie in ci.yml.
       - name: Rust-Toolchain
         run: |
