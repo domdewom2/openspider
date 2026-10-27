@@ -6,6 +6,8 @@ and per-installation availability; disabled classes/tools are omitted.
 
 | Tool | Class | Use |
 | --- | --- | --- |
+| `compare_crawls` | `read` | Compare saved crawls by tab/filter; change detection requires its available analysis. |
+| `fetch_link_metrics` | `cost` | Estimate provider usage for saved-crawl URLs; execute only after explicit confirmation. |
 | `list_crawls` | `read` | Discover saved crawl IDs, dates and states. |
 | `crawl_overview` | `read` | Crawl counts, filter counts, top issues and analysis gaps. |
 | `query_urls` | `read` | Paginated tab/filter rows, sorting and selected columns. |
@@ -21,7 +23,8 @@ and per-installation availability; disabled classes/tools are omitted.
 | `resume_crawl` | `crawl` | Resume a stopped, paused or interrupted crawl. |
 | `export` | `write` | Save a requested CSV/XLSX tab, bulk export or report, or page content as NDJSON. |
 
-The `cost` class is reserved for paid operations; this register has none. A server
+The `cost` class contains paid provider operations. `fetch_link_metrics` first returns
+an estimate; executing it requires the same arguments with explicit confirmation. A server
 started with `--read-only` exposes only `read`, including for existing saved crawls.
 Otherwise `mcp.toml` or `--allow crawl,write` can enable more classes. The plugin invokes
 `openspider mcp` with no permission overrides and inherits the operator's settings.
