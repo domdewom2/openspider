@@ -5,7 +5,7 @@ use crate::{ExportError, ExportFileInfo, TableWriter};
 use os_analyze::defs::ColumnKind;
 use os_model::{CrawlConfig, RenderingMode, Value};
 use os_store::CrawlFile;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 pub const NAME: &str = "Web:Screenshots";
 pub fn entries() -> &'static [TableEntry] {
@@ -56,7 +56,7 @@ fn index(job: &TableJob<'_>, writer: &mut dyn TableWriter) -> Result<u64, Export
     }
     Ok(count)
 }
-/// Exports stored PNGs without network access or any remote destination.
+/// Exports stored PNG/JPEG captures as PNGs without network access.
 pub fn export(
     file: &CrawlFile,
     cfg: &CrawlConfig,
@@ -69,22 +69,22 @@ pub fn export(
     if let Some(ctx) = ctx {
         ctx.checkpoint()?;
     }
-    if !warnings.is_empty() {
-        // Named exports retain the standard header-and-warning contract for CLI/MCP.
-        // The interactive catalogue disables this entry when prerequisites are missing.
-        return Ok(vec![write_index(file, cfg, &directory)?]);
-    }
-    let invalid: bool = crate::links_export::sql(file.conn().query_row(
-        "SELECT EXISTS(SELECT 1 FROM screenshots WHERE tile<>0 OR substr(png,1,8)<>X'89504E470D0A1A0A')", [], |r|r.get(0)))?;
-    if invalid {
-        return Err(ExportError::Unsupported("Screenshots require one stored PNG per URL; select PNG in rendering settings before crawling".into()));
+    let enabled = warnings.is_empty();
+    if enabled {
+        let invalid: bool = crate::links_export::sql(file.conn().query_row(
+            "SELECT EXISTS(SELECT 1 FROM screenshots WHERE tile<>0 OR (substr(png,1,8)<>X'89504E470D0A1A0A' AND substr(png,1,3)<>X'FFD8FF'))", [], |r|r.get(0)))?;
+        if invalid {
+            return Err(ExportError::Unsupported(
+                "Screenshots require one valid PNG or JPEG capture per URL".into(),
+            ));
+        }
     }
     let empty: bool = crate::links_export::sql(file.conn().query_row(
         "SELECT NOT EXISTS(SELECT 1 FROM screenshots)",
         [],
         |r| r.get(0),
     ))?;
-    if empty && ctx.is_some_and(|ctx| ctx.skip_empty) {
+    if enabled && empty && ctx.is_some_and(|ctx| ctx.skip_empty) {
         return Ok(vec![ExportFileInfo {
             path: directory.join("index.csv"),
             rows: 0,
@@ -92,41 +92,152 @@ pub fn export(
             warnings: vec![],
         }]);
     }
-    std::fs::create_dir_all(&directory).map_err(|source| ExportError::Io {
-        path: directory.clone(),
-        source,
-    })?;
+    let snapshot = Snapshot::new(out_dir)?;
+    let staged = snapshot.0.join("current");
     let mut statement=crate::links_export::sql(file.conn().prepare("SELECT u.address,s.png FROM screenshots s JOIN urls u ON u.id=s.url_id ORDER BY u.address COLLATE BINARY,u.id,s.tile"))?;
     let mut rows = crate::links_export::sql(statement.query([]))?;
     let mut count = 0;
-    while let Some(row) = crate::links_export::sql(rows.next())? {
-        if let Some(ctx) = ctx {
-            ctx.checkpoint()?;
+    let mut image_bytes = 0;
+    if enabled {
+        loop {
+            let Some(row) = crate::links_export::sql(rows.next())? else {
+                break;
+            };
+            if let Some(ctx) = ctx {
+                ctx.checkpoint()?;
+            }
+            let address: String = crate::links_export::sql(row.get(0))?;
+            let bytes: Vec<u8> = crate::links_export::sql(row.get(1))?;
+            let bytes = png_capture(bytes)?;
+            let path = staged.join(filename(&address));
+            std::fs::write(crate::fs_paths::fs_path(&path), &bytes).map_err(|source| {
+                ExportError::Io {
+                    path: path.clone(),
+                    source,
+                }
+            })?;
+            image_bytes += bytes.len() as u64;
+            count += 1;
+            if let Some(ctx) = ctx {
+                (ctx.progress)(count);
+            }
         }
-        let address: String = crate::links_export::sql(row.get(0))?;
-        let bytes: Vec<u8> = crate::links_export::sql(row.get(1))?;
-        let path = directory.join(filename(&address));
-        let pending = crate::output::PendingFile::new(&path)?;
-        std::fs::write(crate::fs_paths::fs_path(&pending.path), &bytes).map_err(|source| {
+    }
+    let mut info = write_index(file, cfg, &staged)?;
+    info.rows = count;
+    info.bytes += image_bytes;
+    if let Some(ctx) = ctx {
+        ctx.checkpoint()?;
+    }
+    snapshot.publish(&directory)?;
+    info.path = directory.join("index.csv");
+    Ok(vec![info])
+}
+
+fn png_capture(bytes: Vec<u8>) -> Result<Vec<u8>, ExportError> {
+    let format = image::guess_format(&bytes).map_err(|e| ExportError::Write(e.to_string()))?;
+    if !matches!(format, image::ImageFormat::Png | image::ImageFormat::Jpeg) {
+        return Err(ExportError::Unsupported("Screenshot format".into()));
+    }
+    let decoded = image::ImageReader::with_format(std::io::Cursor::new(&bytes), format)
+        .decode()
+        .map_err(|e| ExportError::Write(e.to_string()))?;
+    if format == image::ImageFormat::Png {
+        // Validate PNGs too, but keep already encoded captures byte-identical.
+        return Ok(bytes);
+    }
+    let mut png = std::io::Cursor::new(Vec::new());
+    decoded
+        .write_to(&mut png, image::ImageFormat::Png)
+        .map_err(|e| ExportError::Write(e.to_string()))?;
+    Ok(png.into_inner())
+}
+
+/// Prepare a complete sibling snapshot; failed/cancelled exports retain the old set.
+struct Snapshot(PathBuf);
+impl Snapshot {
+    fn new(out_dir: &Path) -> Result<Self, ExportError> {
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static NEXT: AtomicU64 = AtomicU64::new(0);
+        std::fs::create_dir_all(crate::fs_paths::fs_path(out_dir)).map_err(|source| {
             ExportError::Io {
-                path: path.clone(),
+                path: out_dir.into(),
                 source,
             }
         })?;
-        pending.publish(ExportFileInfo {
-            path,
-            rows: 1,
-            bytes: bytes.len() as u64,
-            warnings: vec![],
-        })?;
-        count += 1;
-        if let Some(ctx) = ctx {
-            (ctx.progress)(count);
+        loop {
+            let id = NEXT.fetch_add(1, Ordering::Relaxed);
+            let path = out_dir.join(format!(".screenshots-{}-{id}.part", std::process::id()));
+            match std::fs::create_dir(crate::fs_paths::fs_path(&path)) {
+                Ok(()) => {
+                    let snapshot = Self(path);
+                    let current = snapshot.0.join("current");
+                    std::fs::create_dir(crate::fs_paths::fs_path(&current)).map_err(|source| {
+                        ExportError::Io {
+                            path: current,
+                            source,
+                        }
+                    })?;
+                    return Ok(snapshot);
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
+                Err(source) => return Err(ExportError::Io { path, source }),
+            }
         }
     }
-    let mut info = write_index(file, cfg, &directory)?;
-    info.rows = count;
-    Ok(vec![info])
+    fn publish(&self, destination: &Path) -> Result<(), ExportError> {
+        let current = self.0.join("current");
+        let previous = self.0.join("previous");
+        let rename = |from: &Path, to: &Path| {
+            std::fs::rename(crate::fs_paths::fs_path(from), crate::fs_paths::fs_path(to))
+        };
+        let had_previous = match std::fs::symlink_metadata(crate::fs_paths::fs_path(destination)) {
+            Ok(meta) if meta.is_dir() => {
+                rename(destination, &previous).map_err(|source| ExportError::Io {
+                    path: destination.into(),
+                    source,
+                })?;
+                true
+            }
+            Ok(_) => {
+                return Err(ExportError::Output(
+                    "Screenshot destination must be a directory".into(),
+                ))
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => false,
+            Err(source) => {
+                return Err(ExportError::Io {
+                    path: destination.into(),
+                    source,
+                })
+            }
+        };
+        if let Err(source) = rename(&current, destination) {
+            if had_previous {
+                if let Err(restore) = rename(&previous, destination) {
+                    // Keep the previous set available for recovery if the filesystem rejects rollback.
+                    return Err(ExportError::Output(format!(
+                        "Screenshot publication failed ({source}); restore failed ({restore}); previous export: {}",
+                        previous.display()
+                    )));
+                }
+            }
+            return Err(ExportError::Io {
+                path: destination.into(),
+                source,
+            });
+        }
+        Ok(())
+    }
+}
+impl Drop for Snapshot {
+    fn drop(&mut self) {
+        // A previous directory still here with no current directory means publication succeeded.
+        // On failed rollback retain the backup for recovery.
+        if !self.0.join("previous").exists() || !self.0.join("current").exists() {
+            let _ = std::fs::remove_dir_all(crate::fs_paths::fs_path(&self.0));
+        }
+    }
 }
 fn write_index(
     file: &CrawlFile,
@@ -155,6 +266,7 @@ fn write_index(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use image::GenericImageView;
     use os_model::{
         time::{IdSource, SeededIds},
         CrawlMode, Timestamp,
@@ -327,5 +439,119 @@ mod tests {
         let out = dir.path().join("invalid");
         assert!(crate::export_bulk(&file, &cfg, NAME, &out, crate::Format::Csv).is_err());
         assert!(!out.exists());
+    }
+
+    // spec: OUT-043
+    #[test]
+    fn mixed_png_jpeg_captures_export_as_png_with_the_same_pixels() {
+        let (dir, file, cfg) = setup();
+        let jpeg = include_bytes!("../../../../tests/fixtures/tech-m2-javascript/screenshot.jpg");
+        file.conn()
+            .execute(
+                "UPDATE screenshots SET png=?1 WHERE url_id=2",
+                [jpeg.as_slice()],
+            )
+            .unwrap();
+        let expected = image::load_from_memory(jpeg).unwrap().to_rgb8();
+        let result = export(&file, &cfg, dir.path(), None).unwrap();
+        assert_eq!(result[0].rows, 3);
+        let bytes = std::fs::read(&result[0].path).unwrap();
+        let mut index = csv::Reader::from_reader(bytes.strip_prefix(b"\xef\xbb\xbf").unwrap());
+        for row in index.records() {
+            let row = row.unwrap();
+            let bytes = std::fs::read(dir.path().join("screenshots").join(&row[1])).unwrap();
+            assert_eq!(
+                image::guess_format(&bytes).unwrap(),
+                image::ImageFormat::Png
+            );
+            assert_eq!(
+                image::load_from_memory(&bytes).unwrap().dimensions(),
+                (32, 24)
+            );
+        }
+        let address: String = file
+            .conn()
+            .query_row("SELECT address FROM urls WHERE id=2", [], |r| r.get(0))
+            .unwrap();
+        let png = std::fs::read(dir.path().join("screenshots").join(filename(&address))).unwrap();
+        assert_eq!(image::load_from_memory(&png).unwrap().to_rgb8(), expected);
+        assert_eq!(
+            std::fs::read_dir(dir.path().join("screenshots"))
+                .unwrap()
+                .count(),
+            4
+        );
+    }
+
+    // spec: OUT-043
+    #[test]
+    fn repeated_exports_replace_the_complete_set_including_an_empty_or_disabled_capture() {
+        let (dir, file, mut cfg) = setup();
+        let out = dir.path().join("export");
+        std::fs::create_dir(&out).unwrap();
+        std::fs::write(out.join("unrelated.txt"), b"keep").unwrap();
+        export(&file, &cfg, &out, None).unwrap();
+        file.conn()
+            .execute("DELETE FROM screenshots WHERE url_id=3", [])
+            .unwrap();
+        let info = export(&file, &cfg, &out, None).unwrap();
+        assert_eq!(info[0].rows, 2);
+        let bytes = std::fs::read(&info[0].path).unwrap();
+        let mut index = csv::Reader::from_reader(bytes.strip_prefix(b"\xef\xbb\xbf").unwrap());
+        let indexed: std::collections::BTreeSet<_> =
+            index.records().map(|r| r.unwrap()[1].to_owned()).collect();
+        let images: std::collections::BTreeSet<_> = std::fs::read_dir(out.join("screenshots"))
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_str().unwrap().to_owned())
+            .filter(|name| name.ends_with(".png"))
+            .collect();
+        assert_eq!(indexed, images);
+        assert_eq!(images.len(), 2);
+        cfg.rendering.screenshots.enabled = false;
+        assert_eq!(export(&file, &cfg, &out, None).unwrap()[0].rows, 0);
+        assert_eq!(
+            std::fs::read_dir(out.join("screenshots")).unwrap().count(),
+            1
+        );
+        cfg.rendering.screenshots.enabled = true;
+        file.conn().execute("DELETE FROM screenshots", []).unwrap();
+        assert_eq!(export(&file, &cfg, &out, None).unwrap()[0].rows, 0);
+        assert_eq!(std::fs::read(out.join("unrelated.txt")).unwrap(), b"keep");
+        assert_eq!(std::fs::read_dir(&out).unwrap().count(), 2);
+    }
+
+    // spec: OUT-043
+    #[test]
+    fn failed_or_cancelled_replacement_retains_the_previous_snapshot() {
+        let (dir, file, cfg) = setup();
+        let out = dir.path().join("export");
+        let info = export(&file, &cfg, &out, None).unwrap();
+        let previous_index = std::fs::read(&info[0].path).unwrap();
+        let previous_files = std::fs::read_dir(out.join("screenshots")).unwrap().count();
+        let cancel = os_model::CancelToken::new();
+        let progress = |_| cancel.cancel();
+        let ctx = crate::types::ExportCtx {
+            cancel: &cancel,
+            progress: &progress,
+            skip_empty: false,
+            workbook: None,
+            skipped: vec![],
+        };
+        assert!(export(&file, &cfg, &out, Some(&ctx)).is_err());
+        assert_eq!(std::fs::read(&info[0].path).unwrap(), previous_index);
+        assert_eq!(
+            std::fs::read_dir(out.join("screenshots")).unwrap().count(),
+            previous_files
+        );
+        file.conn()
+            .execute("UPDATE screenshots SET png=X'FFD8FF' WHERE url_id=3", [])
+            .unwrap();
+        assert!(export(&file, &cfg, &out, None).is_err());
+        assert_eq!(std::fs::read(&info[0].path).unwrap(), previous_index);
+        assert_eq!(
+            std::fs::read_dir(out.join("screenshots")).unwrap().count(),
+            previous_files
+        );
+        assert_eq!(std::fs::read_dir(&out).unwrap().count(), 1);
     }
 }
