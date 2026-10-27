@@ -4,3 +4,4 @@
 tests/fixtures/tech/multi-columns/c510.html	hreflang="sf" href="/hl/sf.html"	Test-Sprachcode im hreflang-Attribut und Linkziel; die Goldens hängen daran
 tests/fixtures/tech/multi-columns/d500.html	hreflang="sf" href="/hl/sf.html"	Test-Sprachcode im hreflang-Attribut und Linkziel; die Goldens hängen daran
 package-lock.json	sha512-9rTIZ4ZjWwalCPiaY+kPiALLfOKgAz5CTi/Zb1L+qSZ8PH3zVo1T8JcgXIIqg1iM3pZ6hF+n9xO5r2jZ/SF+jg==	M2-S02/K2-61: exakter npm-Integritaetshash von devtools-protocol@0.0.1260888, zufaelliger Base64-Treffer, kein Produktbezug
+crates/os-render/resources/axe/axe.min.js	function sf(){if(window.perform	M2-D21: minifizierter Bezeichner sf in der unveränderten axe-core-Bibliothek (MPL-2.0), zufälliger Treffer, kein Produktbezug
