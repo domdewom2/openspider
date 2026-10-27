@@ -17,6 +17,8 @@ test("real bridge: the core parses the text syntax into the rule tree and valida
     await page.goto(`/?bridge=${encodeURIComponent(bridge!.url)}`);
     // The debug bridge needs a moment on a cold CI runner; wait until the table has settled before parsing.
     await expect(page.getByText(/^Showing:/)).toBeVisible({ timeout: 20_000 });
+    // The tab catalog may arrive after "Showing:" (slow Windows runner); it resets the search box, so wait for it first.
+    await expect(page.getByRole("tab", { name: "Internal", exact: true }).first()).toBeVisible({ timeout: 20_000 });
     await page.getByRole("button", { name: "Advanced search", exact: true }).click();
     const panel = page.getByRole("region", { name: "Advanced search" });
     const syntax = page.getByLabel("Search query (text syntax)", { exact: true });

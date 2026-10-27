@@ -25,7 +25,8 @@ test("real bridge: crawl, recrawl a changed page, then remove the URL and update
       const { crawl } = await import(modulePath);
       await crawl.start({ source: { kind: "list", items: [url], label: "u10-contract" }, scope: "domain" });
     }, `http://127.0.0.1:${address.port}/`);
-    await expect(page.getByText("Showing: 1 of 1", { exact: true })).toBeVisible();
+    // The Windows runner needs a little over 5 s for crawl, analysis and view rebuild (Runde 11).
+    await expect(page.getByText("Showing: 1 of 1", { exact: true })).toBeVisible({ timeout: 20_000 });
     const canvas = page.locator(".os-data-grid");
     await canvas.click({ position: { x: 225, y: 43 } });
     title = "Changed title";
