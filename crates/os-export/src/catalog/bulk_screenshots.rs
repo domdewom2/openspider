@@ -97,7 +97,6 @@ pub fn export(
     let mut statement=crate::links_export::sql(file.conn().prepare("SELECT u.address,s.png FROM screenshots s JOIN urls u ON u.id=s.url_id ORDER BY u.address COLLATE BINARY,u.id,s.tile"))?;
     let mut rows = crate::links_export::sql(statement.query([]))?;
     let mut count = 0;
-    let mut image_bytes = 0;
     if enabled {
         loop {
             let Some(row) = crate::links_export::sql(rows.next())? else {
@@ -116,7 +115,6 @@ pub fn export(
                     source,
                 }
             })?;
-            image_bytes += bytes.len() as u64;
             count += 1;
             if let Some(ctx) = ctx {
                 (ctx.progress)(count);
@@ -125,7 +123,6 @@ pub fn export(
     }
     let mut info = write_index(file, cfg, &staged)?;
     info.rows = count;
-    info.bytes += image_bytes;
     if let Some(ctx) = ctx {
         ctx.checkpoint()?;
     }
@@ -318,6 +315,7 @@ mod tests {
         assert_eq!(files[0].rows, 3);
         assert_eq!(files[0].path, dir.path().join("screenshots/index.csv"));
         let bytes = std::fs::read(&files[0].path).unwrap();
+        assert_eq!(files[0].bytes, bytes.len() as u64);
         let mut reader = csv::Reader::from_reader(bytes.strip_prefix(b"\xef\xbb\xbf").unwrap());
         assert_eq!(
             reader.headers().unwrap().iter().collect::<Vec<_>>(),

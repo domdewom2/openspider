@@ -685,16 +685,27 @@ fn named<'a>(
                                         workbook: None,
                                         skipped: vec![],
                                     };
-                                    let files = core::bulk_screenshots::export(
+                                    core::bulk_screenshots::export(
                                         file,
                                         &s.config,
                                         &dir,
                                         Some(&context),
                                     )
                                     .map_err(export_error)?;
+                                    let target = dir.join("screenshots");
+                                    let mut bytes = 0;
+                                    for entry in std::fs::read_dir(&target)
+                                        .map_err(|e| io_error(&target, e))?
+                                    {
+                                        let entry = entry.map_err(|e| io_error(&target, e))?;
+                                        bytes += entry
+                                            .metadata()
+                                            .map_err(|e| io_error(&entry.path(), e))?
+                                            .len();
+                                    }
                                     return to_json(&FileResult {
-                                        path: dir.join("screenshots").display().to_string(),
-                                        bytes: files.iter().map(|info| info.bytes).sum(),
+                                        path: target.display().to_string(),
+                                        bytes,
                                     });
                                 }
                                 let stage = Stage::new(&dir)?;
