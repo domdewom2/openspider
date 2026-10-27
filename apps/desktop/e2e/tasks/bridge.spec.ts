@@ -7,7 +7,6 @@ import type {} from "./harness";
 // spec: OUT-160
 // spec: OUT-161 [P1]
 test("real bridge saves and reloads a scheduled task", async ({ page }) => {
-  test.fixme(true, "wartet auf M2-T01: tasks.* sind F05-Verträge (C9 Welle 2)");
   const bridge = await startBridge();
   expect(bridge, "real bridge required").not.toBeNull();
   try {
@@ -27,7 +26,6 @@ test("real bridge saves and reloads a scheduled task", async ({ page }) => {
 // spec: OUT-210 [M2]
 // spec: OUT-211 [M2]
 test("real registry populates the custom summary dialog", async ({ page }) => {
-  test.fixme(true, "wartet auf M2-X03: export.customSummaryMetrics ist F05-Vertrag (C9 Welle 2)");
   const bridge = await startBridge();
   expect(bridge, "real bridge required").not.toBeNull();
   try {

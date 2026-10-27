@@ -1,4 +1,5 @@
 //! Shared API lifecycle for desktop, scheduled and command-line crawls (INTEG-012 … 017).
+//! EnvironmentSecrets gives configured environment credentials precedence over the keychain (INTEG-002).
 mod runtime;
 pub use runtime::{enabled, preflight, select, ApiRun};
 

@@ -72,7 +72,6 @@ test("real bridge reports service availability without a mock fallback", async (
 
 // spec: AGENT-043
 test("real writer backs up all client configs after reviewed diffs and preserves foreign entries", async ({ page }) => {
-  test.fixme(true, "wartet auf M2-K17: echte Client-Pfade, Vorschau und atomarer Schreiber; Auflösung M2-N02 nach C9");
   const bridge = await startRealBridge();
   try {
     await connect(page, bridge);
@@ -106,7 +105,6 @@ test("real writer backs up all client configs after reviewed diffs and preserves
 
 // spec: AGENT-043
 test("three genuine HTTP calls against an out-basic-site crawl appear in the UI log", async ({ page }) => {
-  test.fixme(true, "wartet auf M2-K17/M2-K04: MCP-Service, Aufrufprotokoll und Crawl-Commands; Auflösung M2-N02 nach C9");
   test.setTimeout(120_000);
   const bridge = await startRealBridge();
   let site: Awaited<ReturnType<typeof outBasicSite>> | undefined;
@@ -141,7 +139,6 @@ test("three genuine HTTP calls against an out-basic-site crawl appear in the UI 
 // spec: OUT-285 [P1]
 // spec: AGENT-003 [M2]
 test("HTTP tools/list, UI schemas and saved Markdown agree before and after disabling a tool", async ({ page }) => {
-  test.fixme(true, "wartet auf M2-K17: Freigaben, tools/list und Markdown über den echten Service; Auflösung M2-N02 nach C9");
   const bridge = await startRealBridge();
   let http: HttpMcpClient | undefined;
   try {
@@ -179,7 +176,6 @@ test("HTTP tools/list, UI schemas and saved Markdown agree before and after disa
 // spec: OUT-285 [P1]
 // spec: AGENT-002
 test("real HTTP sessions update status within a second, reject unauthorized requests and expire after ten minutes", async ({ page }) => {
-  test.fixme(true, "wartet auf M2-K17: HTTP-Sitzungszähler und Ablauf an echte Statusereignisse anbinden; Auflösung M2-N02 nach C9");
   test.setTimeout(660_000);
   const bridge = await startRealBridge();
   let first: HttpMcpClient | undefined; let second: HttpMcpClient | undefined;
@@ -214,7 +210,6 @@ test("real HTTP sessions update status within a second, reject unauthorized requ
 
 // spec: OUT-285 [P1]
 test("autostart survives a real app restart and a busy port produces a visible failure", async ({ page }) => {
-  test.fixme(true, "wartet auf M2-K17: persistierter Auto-Start und Startfehler-Notice; Auflösung M2-N02 nach C9");
   const home = await mkdtemp(join(tmpdir(), "u25-restart-"));
   let bridge: Awaited<ReturnType<typeof startRealBridge>> | undefined;
   const blocker = createServer();

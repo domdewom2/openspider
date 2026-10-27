@@ -11,7 +11,7 @@ fn target(app: &App, kind: McpClientKind) -> Result<(Client, PathBuf), CmdError>
         dirs::home_dir().ok_or_else(|| error("Home directory unavailable"))?
     };
     Ok(match kind {
-        McpClientKind::Codex => (Client::Codex, home.join(".codex/config.toml")),
+        McpClientKind::Codex => (Client::Codex, home.join(".codex").join("config.toml")),
         McpClientKind::ClaudeCode => (Client::ClaudeCode, home.join(".claude.json")),
         McpClientKind::ClaudeDesktop => {
             let dir = if app.config().documents_dir.is_some() {
