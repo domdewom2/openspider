@@ -4,38 +4,6 @@
 //! Die Dateien sind von M2-F01 als Stubs angelegt (`STUB(M2-xx)`): der Besitzer ersetzt die Datei und behält Namen,
 //! Argument-/Rückgabetypen und `long_running` bei.
 
-/// Registriert Stub-Commands: `(name, args, ret, long_running)` mit TS-Typausdrücken für `args`/`ret`
-/// (`void` = keine Argumente bzw. kein Ergebnis). Jeder antwortet mit `CmdError::unsupported(name, owner)`.
-macro_rules! stub_commands {
-    ($owner:literal, [ $( ($name:literal, $args:literal, $ret:literal, $long:literal) ),* $(,)? ]) => {
-        /// Trägt die Commands dieser Domäne in die Registry ein.
-        pub fn register(r: &mut $crate::registry::Registry) {
-            $(
-                r.register(
-                    $crate::registry::CommandMeta {
-                        name: $name,
-                        args: $args,
-                        ret: $ret,
-                        long_running: $long,
-                    },
-                    {
-                        fn stub<'a>(
-                            _app: &'a $crate::runtime::App,
-                            _ctx: $crate::runtime::CallCtx,
-                            _args: ::serde_json::Value,
-                        ) -> ::futures_util::future::BoxFuture<'a, $crate::registry::CmdResult> {
-                            Box::pin(async {
-                                Err($crate::dto::CmdError::unsupported($name, $owner))
-                            })
-                        }
-                        stub
-                    },
-                );
-            )*
-        }
-    };
-}
-
 pub mod analysis;
 pub mod api;
 pub mod app;

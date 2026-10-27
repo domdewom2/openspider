@@ -142,7 +142,7 @@ fn overview_labels_use_the_current_thresholds_and_states_are_complete() {
         }
         assert_eq!(
             c.state,
-            if matches!(c.tab, "Custom JavaScript" | "JavaScript") {
+            if matches!(c.tab.as_str(), "Custom JavaScript" | "JavaScript") {
                 FilterState::NeedsRendering
             } else {
                 FilterState::Ready
@@ -152,7 +152,7 @@ fn overview_labels_use_the_current_thresholds_and_states_are_complete() {
         );
         assert_eq!(
             c.pct.map(|p| p == 100.0 || p == 0.0),
-            if matches!(c.tab, "Custom JavaScript" | "JavaScript") {
+            if matches!(c.tab.as_str(), "Custom JavaScript" | "JavaScript") {
                 None
             } else {
                 Some(true)
