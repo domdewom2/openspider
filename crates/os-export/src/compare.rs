@@ -662,3 +662,19 @@ pub fn report_names() -> Vec<String> {
     );
     names
 }
+
+/// Vergleichs-Tab im gespeicherten Segment des Current-Crawls (OUT-152).
+pub fn write_tab_in_segment(
+    comparison: &mut Comparison,
+    selection: &TabSelection,
+    scope: &dyn SegmentScope,
+    writer: &mut dyn TableWriter,
+    ctx: &mut ExportCtx<'_>,
+) -> Result<u64, ExportError> {
+    let mut filtered = SegmentWriter {
+        allowed: segment_addresses(&comparison.current().file, scope)?,
+        inner: writer,
+        column: None,
+    };
+    write_tab(comparison, selection, &mut filtered, ctx)
+}

@@ -8,6 +8,10 @@ import type { JsonValue } from "./serde_json/JsonValue";
  */
 export type FilterInfo = { 
 /**
+ * Vergleichszähler (TECH-301); bei gewöhnlichen Filtern nicht gesetzt.
+ */
+comparison?: { current: number; previous: number; change: number } | null, 
+/**
  * Kanonische Kennung (mit aufgelösten Schwellen, z. B. `Over 60 Characters`).
  */
 id: string, 

@@ -147,6 +147,14 @@ pub fn start_url_valid(text: &str) -> bool {
 pub fn validate(task: &Task, env: &dyn Env) -> Vec<Issue> {
     let mut out = Vec::new();
 
+    // OUT-152: Auto Compare braucht einen expliziten Projektnamen; der Aufgabenname ist kein Projekt.
+    if task.execution.auto_compare && task.project.trim().is_empty() {
+        out.push(Issue::error(
+            "project",
+            "tasks-issue-auto-compare-project-required",
+        ));
+    }
+
     // Allgemein
     if task.name.trim().is_empty() {
         out.push(Issue::error("name", "tasks-issue-name-required"));

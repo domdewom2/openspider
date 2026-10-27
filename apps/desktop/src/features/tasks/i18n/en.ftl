@@ -50,6 +50,7 @@ tasks-catch-up = Catch up a missed run after waking
 tasks-list-mode = List
 tasks-profile = Configuration profile (empty = default)
 tasks-auto-compare = Compare with previous project crawl
+tasks-issue-auto-compare-project-required = Automatic comparison requires a project name.
 tasks-next-run-note = Changes apply to the next run. A current run keeps its settings.
 tasks-editor-tabs = Task settings
 tasks-general = General

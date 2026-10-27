@@ -870,6 +870,9 @@ async fn page_query(
 }
 fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
+        if let Some(result) = super::compare::change_view(app, &ctx, "view.open", &args).await {
+            return result;
+        }
         let args: ViewOpenArgs = parse_args(args)?;
         let s = session(app, &ctx)?;
         let id = app
@@ -1019,6 +1022,9 @@ fn handle(view_id: String, p: DataPage) -> ViewHandle {
 }
 fn update<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
+        if let Some(result) = super::compare::change_view(app, &ctx, "view.update", &args).await {
+            return result;
+        }
         let args: ViewUpdateArgs = parse_args(args)?;
         let mut v = get_owned(app, &ctx, &args.view_id)?;
         v.session = session(app, &ctx)?;
@@ -1070,6 +1076,9 @@ fn rows<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
     Box::pin(async move {
         if args.get("comparison").is_some() {
             return super::compare::ui::rows(app, ctx, args).await;
+        }
+        if let Some(result) = super::compare::change_view(app, &ctx, "view.rows", &args).await {
+            return result;
         }
         let args: RowsArgs = parse_args(args)?;
         let v = get(app, &ctx, &args.view_id)?;
@@ -1148,6 +1157,9 @@ fn rows<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
 }
 fn locate<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
+        if let Some(result) = super::compare::change_view(app, &ctx, "view.locate", &args).await {
+            return result;
+        }
         let args: LocateArgs = parse_args(args)?;
         let v = get(app, &ctx, &args.view_id)?;
         if let Some(tab) = &v.tab {
@@ -1185,6 +1197,9 @@ fn locate<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
 }
 fn copy<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
+        if let Some(result) = super::compare::change_copy(app, &ctx, &args).await {
+            return result;
+        }
         let args: CopyArgs = parse_args(args)?;
         crate::clipboard::copy(app, &ctx, args)
             .await
@@ -1193,6 +1208,9 @@ fn copy<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
 }
 fn close<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
+        if let Some(result) = super::compare::change_view(app, &ctx, "view.close", &args).await {
+            return result;
+        }
         let args: ViewCloseArgs = parse_args(args)?;
         let views = registry(app);
         let mut entries = views.entries.lock().unwrap_or_else(|p| p.into_inner());

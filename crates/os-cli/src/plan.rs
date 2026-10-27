@@ -61,6 +61,8 @@ pub struct Plan {
     /// Require every requested API; default false.
     pub require_apis: bool,
     pub header_labels: std::collections::BTreeMap<String, String>,
+    /// Auto-Vergleich nach erfolgreichem Abschluss (OUT-152).
+    pub compare_with_previous: bool,
     /// Stapelmodus der Exporte (geplante Aufgaben); `None` = einzeln wie auf der Kommandozeile.
     pub batch: Option<BatchSettings>,
     /// Decrypted credentials, held only for this process.
@@ -385,6 +387,26 @@ fn build_impl(
         )));
     }
 
+    let compare_with_previous =
+        match args.project_crawl_comparison.as_ref() {
+            None => args.compare_with_previous,
+            Some(Some(value)) if value == "true" => true,
+            Some(Some(value)) if value == "false" && !args.compare_with_previous => false,
+            _ => return Err(CliError::usage(
+                "--project-crawl-comparison requires true or false; conflicting comparison options",
+            )),
+        };
+    if compare_with_previous
+        && (args
+            .project_name
+            .as_ref()
+            .is_none_or(|p| p.trim().is_empty())
+            || args.no_store)
+    {
+        return Err(CliError::usage(
+            "Auto comparison requires --project-name and a stored crawl",
+        ));
+    }
     let format = parse_format(args)?;
     let xls = args
         .export_format
@@ -653,6 +675,7 @@ fn build_impl(
         create_images_sitemap: args.create_images_sitemap,
         xls,
         google,
+        compare_with_previous,
         batch,
         segment: args.segment.clone(),
         source,

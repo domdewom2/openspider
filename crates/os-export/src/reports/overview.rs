@@ -447,7 +447,11 @@ fn response_codes(
 // 5 Tabs
 
 fn tab_filters(counts: &[FilterCount], rows: &mut Vec<OverviewRow>) {
-    for c in counts {
+    // TECH-300: Change Detection gehört ausschließlich zum Vergleichskontext.
+    for c in counts
+        .iter()
+        .filter(|c| c.tab != os_analyze::compare::CHANGE_DETECTION_TAB)
+    {
         // Grundgesamtheit: der Filter „All“ desselben Tabs (nur, wenn er eine Zahl hat).
         let base = counts
             .iter()

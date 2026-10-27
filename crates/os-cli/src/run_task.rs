@@ -41,6 +41,10 @@ use crate::plan::{self, BatchSettings};
 use crate::reporter::Reporter;
 use crate::signals::Signals;
 
+/// SMTP-Abschlussmails mit dem gespeicherten Auto-Compare-Ergebnis (OUT-152).
+#[path = "../../os-analyze/src/compare/change/mail_hooks.rs"]
+pub mod comparison_mail;
+
 /// Umgebungsvariable, mit der die App die Kennung des Laufs vorgibt („Jetzt ausführen“).
 pub const RUN_ID_ENV: &str = "OPENSPIDER_TASK_RUN_ID";
 
@@ -59,11 +63,20 @@ pub trait TaskHooks: Send + Sync {
     }
 
     /// Vergleich mit dem vorherigen Crawl des Projekts (OUT-152).
-    fn compare_with_previous(&self, _task: &Task, _crawl: Option<&Path>) -> Result<(), String> {
-        Err(
-            "comparison with the previous crawl is not available in headless runs of this version"
-                .into(),
+    fn compare_with_previous(&self, _task: &Task, crawl: Option<&Path>) -> Result<(), String> {
+        let crawl = crawl.ok_or("Auto comparison: no crawl file available")?;
+        let dir = crawl
+            .parent()
+            .ok_or("Auto comparison: crawl directory missing")?;
+        os_analyze::compare::change::auto::run(
+            crawl,
+            dir,
+            &dir.join("comparisons"),
+            None,
+            &os_model::CancelToken::new(),
         )
+        .map_err(|e| e.to_string())?;
+        Ok(())
     }
 
     /// Zeitreihen-Zeile für Looker Studio (OUT-210); Rückgabe = Hinweise (Warnungen) des Laufs.
@@ -167,13 +180,16 @@ impl TaskHooks for SeriesHooks {
     }
 }
 
-/// Standardumsetzung ohne Erweiterungen.
+/// Standardumsetzung mit konfiguriertem Abschlussmail-Versand für Auto-Compare (OUT-152).
 #[derive(Debug, Default, Clone, Copy)]
 pub struct DefaultHooks;
 
 impl TaskHooks for DefaultHooks {
     fn builtin_completion_mail(&self) -> bool {
         true
+    }
+    fn notify(&self, task: &Task, record: &RunRecord) -> Result<(), String> {
+        comparison_mail::notify_configured(task, record)
     }
 }
 
@@ -328,6 +344,7 @@ fn to_run_args(task: &Task, paths: &AppPaths, exports: &ExportPlan, export_dir: 
         .as_deref()
         .filter(|s| !s.trim().is_empty())
         .map(|profile| crate::auth::profile_path(paths, profile));
+    args.compare_with_previous = task.execution.auto_compare;
     args.config = task
         .crawl
         .config
@@ -529,7 +546,7 @@ pub async fn run_in(
             exit.code(),
             record.warnings.len()
         );
-        if hooks.builtin_completion_mail() {
+        if hooks.builtin_completion_mail() && !task.execution.auto_compare {
             if let Err(e) = send_completion_mail(ctx, &task, &record) {
                 rep.warn(format!("Benachrichtigung nicht gesendet: {}", redact(&e)));
             }
@@ -686,7 +703,8 @@ pub async fn run_in(
         })
     };
 
-    let mut outcome = exec::execute(plan, Arc::clone(&rep), signals.clone()).await;
+    let mut outcome =
+        exec::execute_with_clock(plan, Arc::clone(&rep), signals.clone(), ctx.clock.clone()).await;
     watcher.abort();
     let _ = watcher.await;
     let timeout_hit = timed_out.load(Ordering::SeqCst) && outcome.exit == Exit::Interrupted;

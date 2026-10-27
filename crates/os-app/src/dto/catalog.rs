@@ -70,6 +70,13 @@ pub struct IssueBadge {
 #[serde(rename_all = "camelCase")]
 #[ts(optional_fields = nullable)]
 pub struct FilterInfo {
+    /// Vergleichszähler (TECH-301); bei gewöhnlichen Filtern nicht gesetzt.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(
+        type = "{ current: number; previous: number; change: number } | null",
+        optional
+    )]
+    pub comparison: Option<ChangeCountDto>,
     /// Kanonische Kennung (mit aufgelösten Schwellen, z. B. `Over 60 Characters`).
     pub id: String,
     /// Vorlage der Kennung mit Platzhaltern (für Übersetzung).
@@ -86,6 +93,14 @@ pub struct FilterInfo {
     pub issue: Option<IssueBadge>,
     /// Analyse-Teilschritt, von dem der Filter abhängt.
     pub analysis_step: Option<String>,
+}
+
+/// Anzahlen geänderter URLs in einem Change-Detection-Filter (TECH-301).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ChangeCountDto {
+    pub current: u64,
+    pub previous: u64,
+    pub change: u64,
 }
 
 /// Ein Tab der oberen Tabelle (`catalog.tabs`, ohne Zähler).

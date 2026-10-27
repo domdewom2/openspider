@@ -182,3 +182,6 @@ pub fn duration(start: &str, end: &str) -> i64 {
 pub fn default_on_failure() -> bool {
     true
 }
+
+/// Versandadapter für C02-Abschlussmails.
+pub mod completion;

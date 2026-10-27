@@ -12,6 +12,7 @@
 //! Lange Schritte prüfen das [`CancelToken`] an Checkpoints: eine Pause des Ressourcenwächters (CRAWL-129, K2-56)
 //! hält die Vergleichsberechnung an, statt sie abzubrechen; ein Abbruch liefert [`CompareError::Cancelled`].
 
+pub mod change;
 pub mod classify;
 pub mod links;
 pub mod mapping;

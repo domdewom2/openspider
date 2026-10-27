@@ -686,7 +686,7 @@ async fn placeholder_tabs_give_every_tab_with_all_filters_in_ui_order() {
     // Stub-Filter von M2 (M2-F02) tragen noch keine Zähler und erscheinen nicht.
     let all: Vec<_> = tabs::configured(&cfg)
         .into_iter()
-        .filter(|t| !t.is_stub())
+        .filter(|t| !t.is_stub() && t.id != "Change Detection")
         .collect();
     let tab_ids: Vec<&str> = all.iter().map(|t| t.id).collect();
     let secs = sections(&t);
