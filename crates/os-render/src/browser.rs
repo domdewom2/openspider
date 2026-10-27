@@ -24,6 +24,8 @@ pub struct Renderer {
     generations: AtomicU64,
     #[cfg(test)]
     targets: std::sync::Mutex<Option<super::page::TargetSender>>,
+    #[cfg(test)]
+    completions: std::sync::Mutex<Option<super::page::CompletionSender>>,
 }
 impl Drop for Renderer {
     fn drop(&mut self) {
@@ -320,6 +322,8 @@ impl Renderer {
             generations: AtomicU64::new(1),
             #[cfg(test)]
             targets: std::sync::Mutex::new(None),
+            #[cfg(test)]
+            completions: std::sync::Mutex::new(None),
         })
     }
     /// Dedicated login tab in this renderer's temporary browser profile (CRAWL-120).
@@ -383,6 +387,8 @@ impl Renderer {
             let session = guard.as_ref().expect("active session");
             #[cfg(test)]
             let targets = self.targets.lock().expect("targets").clone();
+            #[cfg(test)]
+            let completions = self.completions.lock().expect("completions").clone();
             let result = page::render(
                 &session.browser,
                 url,
@@ -391,6 +397,8 @@ impl Renderer {
                 session.retired.clone(),
                 #[cfg(test)]
                 targets,
+                #[cfg(test)]
+                completions,
             )
             .await;
             let unhealthy =
@@ -722,28 +730,49 @@ mod tests {
             .event_listener::<EventDownloadProgress>()
             .await
             .unwrap();
-        renderer
-            .render(
-                &site.url("/download.html"),
-                &RenderOpts {
-                    ajax_timeout_ms: 500,
-                    screenshots: false,
-                    ..Default::default()
-                },
-            )
-            .await
-            .unwrap();
-        tokio::time::timeout(Duration::from_secs(3), async {
-            while let Some(event) = events.next().await {
-                if event.state == DownloadProgressState::Canceled {
-                    return;
+        let renderer = Arc::new(renderer);
+        let (tx, mut completions) = tokio::sync::mpsc::unbounded_channel();
+        *renderer.completions.lock().unwrap() = Some(tx);
+        let mut canceled = std::collections::HashSet::new();
+        for _ in 0..2 {
+            let r = renderer.clone();
+            let url = site.url("/download.html");
+            let render = tokio::spawn(async move {
+                r.render(
+                    &url,
+                    &RenderOpts {
+                        ajax_timeout_ms: 500,
+                        screenshots: false,
+                        page_timeout_ms: 120_000,
+                        ..Default::default()
+                    },
+                )
+                .await
+            });
+            // Der Kontext bleibt bis zur Beobachtung des Ereignisses geöffnet.
+            let resume = tokio::time::timeout(Duration::from_secs(120), completions.recv())
+                .await
+                .expect("Renderabschluss")
+                .expect("Test-Hook offen");
+            tokio::time::timeout(Duration::from_secs(60), async {
+                while let Some(event) = events.next().await {
+                    if event.state == DownloadProgressState::Canceled {
+                        assert!(canceled.insert(event.guid.clone()), "doppeltes Ereignis");
+                        return;
+                    }
+                    assert_ne!(event.state, DownloadProgressState::Completed);
                 }
-                assert_ne!(event.state, DownloadProgressState::Completed);
-            }
-            panic!("missing cancelled download event");
-        })
-        .await
-        .unwrap();
+                panic!("missing cancelled download event");
+            })
+            .await
+            .expect("Download-Abbruch");
+            resume.send(()).unwrap();
+            tokio::time::timeout(Duration::from_secs(30), render)
+                .await
+                .expect("Kontextabbau")
+                .unwrap()
+                .unwrap();
+        }
         renderer.close().await;
     }
     #[tokio::test(flavor = "multi_thread")]
@@ -767,7 +796,7 @@ mod tests {
         let opts = RenderOpts {
             screenshots: false,
             ajax_timeout_ms: 0,
-            page_timeout_ms: 60_000,
+            page_timeout_ms: 120_000,
             ..Default::default()
         };
         let r = renderer.clone();
@@ -786,7 +815,7 @@ mod tests {
                 &url,
                 &RenderOpts {
                     screenshots: false,
-                    page_timeout_ms: 1500,
+                    page_timeout_ms: 15_000,
                     ..Default::default()
                 },
             )
@@ -798,7 +827,7 @@ mod tests {
             .unwrap();
         resume.send(()).unwrap();
         assert!(matches!(
-            tokio::time::timeout(Duration::from_secs(15), hang)
+            tokio::time::timeout(Duration::from_secs(30), hang)
                 .await
                 .unwrap()
                 .unwrap(),

@@ -38,6 +38,10 @@ pub(super) type TargetSender =
     tokio::sync::mpsc::UnboundedSender<(TestTarget, tokio::sync::oneshot::Sender<()>)>;
 
 #[cfg(test)]
+pub(super) type CompletionSender =
+    tokio::sync::mpsc::UnboundedSender<tokio::sync::oneshot::Sender<()>>;
+
+#[cfg(test)]
 pub(super) struct TestTarget {
     pub websocket: String,
     pub id: chromiumoxide::cdp::browser_protocol::target::TargetId,
@@ -80,6 +84,7 @@ pub async fn render(
     launch: &super::LaunchOpts,
     retired: Arc<AtomicBool>,
     #[cfg(test)] targets: Option<TargetSender>,
+    #[cfg(test)] completions: Option<CompletionSender>,
 ) -> Result<RenderedPage, RenderError> {
     // Eigene Kontexte isolieren Speicher und Cookies paralleler Seiten.
     // Auch nach einer harten Zeitgrenze wird der Kontext aufgeräumt.
@@ -171,6 +176,13 @@ pub async fn render(
     let result = tokio::time::timeout(Duration::from_millis(budget), work)
         .await
         .unwrap_or_else(|_| Err(RenderError::Timeout(url.into())));
+    #[cfg(test)]
+    if let Some(completions) = completions {
+        let (resume, ready) = tokio::sync::oneshot::channel();
+        if completions.send(resume).is_ok() {
+            let _ = ready.await;
+        }
+    }
     // Ein eigener Steuerkanal schließt auch Tabs mit blockierter JS-Schleife.
     // Erst ein gescheiterter Kontextabbau zieht die gesamte Generation zurück.
     let disposed = tokio::time::timeout(
